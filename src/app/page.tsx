@@ -10,7 +10,7 @@ export default function HomePage() {
             VITAL
           </h1>
         </div>
-        <p className="text-muted text-sm">
+        <p className="text-muted-vital text-sm">
           Health & Fitness Intelligence Dashboard
         </p>
         <div className="flex gap-2 justify-center">
