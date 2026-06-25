@@ -172,7 +172,7 @@ export interface Database {
           battery_pct: number | null
           computed_at: string
         }
-        Insert: Omit<Database['public']['Tables']['daily_scores']['Row'], 'id'>
+        Insert: Omit<Database['public']['Tables']['daily_scores']['Row'], 'id' | 'computed_at'>
         Update: Partial<Database['public']['Tables']['daily_scores']['Insert']>
       }
       user_goals: {
