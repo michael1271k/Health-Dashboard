@@ -231,7 +231,7 @@
   /* Primary button */
   .btn-primary {
     @apply inline-flex items-center gap-2 rounded-xl bg-primary text-bg font-semibold px-5 py-2.5
-           cursor-pointer transition-[background-color,box-shadow,opacity,transform] duration-200
+           cursor-pointer transition-[color,opacity,transform] duration-200
            hover:bg-primary/90 hover:shadow-glow-primary
            focus-visible:ring-2 focus-visible:ring-primary/60
            disabled:opacity-50 disabled:cursor-not-allowed;
@@ -240,7 +240,7 @@
   /* Ghost button */
   .btn-ghost {
     @apply inline-flex items-center gap-2 rounded-xl border border-border px-5 py-2.5
-           cursor-pointer transition-[border-color,color,background-color,opacity,transform] duration-200 text-muted-vital
+           cursor-pointer transition-[color,opacity,transform] duration-200 text-muted-vital
            hover:border-primary/40 hover:text-text hover:bg-surface-2
            focus-visible:ring-2 focus-visible:ring-primary/60;
   }
