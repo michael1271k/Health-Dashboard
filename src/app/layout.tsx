@@ -4,6 +4,7 @@ import { ThemeProvider } from '@/components/theme-provider'
 import { Navbar } from '@/components/nav/Navbar'
 import { BottomNav } from '@/components/nav/BottomNav'
 import { QueryProvider } from '@/components/providers/QueryProvider'
+import { SerwistRegister } from '@/components/providers/SerwistRegister'
 import './globals.css'
 
 const outfit = Outfit({
@@ -48,9 +49,20 @@ export default function RootLayout({
 }) {
   return (
     <html lang="he" dir="ltr" suppressHydrationWarning>
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+      </head>
       <body
         className={`${outfit.variable} ${inter.variable} ${jetbrainsMono.variable} bg-bg text-text font-sans antialiased`}
       >
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4
+                     focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-bg
+                     focus:rounded-xl focus:font-semibold"
+        >
+          Skip to main content
+        </a>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
@@ -70,6 +82,7 @@ export default function RootLayout({
             <BottomNav />
           </QueryProvider>
         </ThemeProvider>
+        <SerwistRegister />
       </body>
     </html>
   )
