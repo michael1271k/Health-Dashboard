@@ -9,7 +9,22 @@ function todayISO(): string {
   return new Date().toLocaleDateString('en-CA')   // YYYY-MM-DD, locale-safe
 }
 
-export async function POST() {
+export async function POST(req: Request) {
+  // In production, guard against unauthenticated external access.
+  // Same-origin UI calls are allowed via Referer check; external calls require
+  // the webhook secret. Add middleware auth for multi-user deployments.
+  const secret = process.env.INGEST_WEBHOOK_SECRET
+  if (secret && process.env.NODE_ENV !== 'development') {
+    const provided = req.headers.get('x-webhook-secret')
+    if (provided !== secret) {
+      const referer = req.headers.get('referer') ?? ''
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
+      if (!appUrl || !referer.startsWith(appUrl)) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+    }
+  }
+
   const supabase = getServerSupabaseClient()
   const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers()
   if (usersError || !users.length) {
@@ -39,7 +54,7 @@ export async function POST() {
     supabase.from('supplements').select('id').eq('user_id', userId).eq('date', today),
     supabase.from('user_goals').select('*').eq('user_id', userId).maybeSingle(),
     supabase.from('workout_sessions').select('total_volume_kg').eq('user_id', userId)
-      .gte('started_at', `${today}T00:00:00Z`).lt('started_at', `${today}T23:59:59Z`),
+      .gte('started_at', `${today}T00:00:00Z`).lt('started_at', `${today}T24:00:00Z`),
   ])
 
   const metrics   = metricsRes.data    as Tables<'daily_metrics'> | null

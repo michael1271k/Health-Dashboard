@@ -1,5 +1,8 @@
 'use client'
 
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase/client'
 import { Footprints, Flame, Droplets, Moon } from 'lucide-react'
 import { BentoGrid, BentoCell } from '@/components/dashboard/BentoGrid'
 import { ScoreCard } from '@/components/dashboard/ScoreCard'
@@ -23,6 +26,15 @@ function formatSleepHours(minutes: number | null): string {
 }
 
 export default function DashboardPage() {
+  const router = useRouter()
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        router.push('/auth')
+      }
+    })
+  }, [router])
+
   const { data: score, isLoading: scoreLoading } = useTodayScore()
   const { data: metrics, isLoading: metricsLoading } = useTodayMetrics()
   const { data: nutrition, isLoading: nutritionLoading } = useTodayNutrition()

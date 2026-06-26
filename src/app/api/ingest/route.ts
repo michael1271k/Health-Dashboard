@@ -103,7 +103,7 @@ export async function POST(request: Request) {
     )
   }
 
-  console.info('[ingest] Ingested successfully:', counts)
+  console.warn('[ingest] Ingested successfully:', counts)
   return NextResponse.json({ success: true, counts }, { status: 200 })
 }
 

@@ -3,7 +3,7 @@ import { SaveWorkoutSchema } from '@/lib/sessions/schema'
 import { getServerSupabaseClient } from '@/lib/supabase/server'
 import { getNotionClient } from '@/lib/notion/client'
 import { formatSessionForNotion, formatSetsAsBlocks } from '@/lib/notion/gym-log'
-import { epley1RM } from '@/lib/hooks/useCharts'
+import { epley1RM } from '@/lib/utils/epley'
 import type { InsertRow } from '@/lib/supabase/types'
 
 export async function POST(req: Request) {
@@ -156,7 +156,22 @@ export async function POST(req: Request) {
   })
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  // In production, guard against unauthenticated external access.
+  // Same-origin UI calls are allowed via Referer check; external calls require
+  // the webhook secret. Add middleware auth for multi-user deployments.
+  const secret = process.env.INGEST_WEBHOOK_SECRET
+  if (secret && process.env.NODE_ENV !== 'development') {
+    const provided = req.headers.get('x-webhook-secret')
+    if (provided !== secret) {
+      const referer = req.headers.get('referer') ?? ''
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
+      if (!appUrl || !referer.startsWith(appUrl)) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+    }
+  }
+
   const supabase = getServerSupabaseClient()
   const { data: { users } } = await supabase.auth.admin.listUsers()
   const userId = users?.[0]?.id

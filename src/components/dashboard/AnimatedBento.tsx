@@ -25,7 +25,7 @@ export function AnimatedCard({ children, index = 0 }: AnimatedCardProps) {
       }}
       initial="hidden"
       animate="visible"
-      style={{ willChange: 'transform, opacity' }}
+      style={shouldReduceMotion ? {} : { willChange: 'transform, opacity' }}
     >
       {children}
     </motion.div>

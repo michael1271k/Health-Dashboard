@@ -2,14 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Activity, BarChart3, Dumbbell, Settings } from 'lucide-react'
-
-const navItems = [
-  { href: '/', icon: Activity, label: 'Dashboard' },
-  { href: '/charts', icon: BarChart3, label: 'Charts' },
-  { href: '/log', icon: Dumbbell, label: 'Log' },
-  { href: '/settings', icon: Settings, label: 'Settings' },
-]
+import { Activity } from 'lucide-react'
+import { navItems } from '@/lib/nav-items'
 
 export function Navbar() {
   const pathname = usePathname()

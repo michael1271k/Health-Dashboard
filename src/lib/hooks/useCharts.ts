@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import type { Tables } from '@/lib/supabase/types'
+import { epley1RM } from '@/lib/utils/epley'
 
 function daysAgo(n: number): string {
   const d = new Date()
@@ -99,8 +100,5 @@ export function usePRHistory(exerciseId?: string, days = 60) {
   })
 }
 
-// Epley formula: 1RM estimate
-export function epley1RM(weight: number, reps: number): number {
-  if (reps === 1) return weight
-  return Math.round(weight * (1 + reps / 30) * 10) / 10
-}
+// Epley formula: re-exported from server-safe utility module
+export { epley1RM } from '@/lib/utils/epley'
