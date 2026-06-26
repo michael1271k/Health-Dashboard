@@ -3,6 +3,7 @@ import {
   parseDailyMetrics,
   parseSleepSessions,
   parseBodyComposition,
+  parseNutrition,
   parseWater,
   toDate,
 } from '@/lib/ingest/parse'
@@ -88,6 +89,11 @@ describe('toDate', () => {
     expect(toDate('2024-01-15T22:30:00Z')).toBe('2024-01-15')
     expect(toDate('2024-01-16T06:30:00+02:00')).toBe('2024-01-16')
   })
+
+  it('handles offset timestamps correctly (UTC-safe)', () => {
+    // 00:30 on Jan 16 in +03:00 is 21:30 on Jan 15 UTC
+    expect(toDate('2024-01-16T00:30:00+03:00')).toBe('2024-01-15')
+  })
 })
 
 describe('parseDailyMetrics', () => {
@@ -123,9 +129,17 @@ describe('parseSleepSessions', () => {
     const result = parseSleepSessions([FIXTURE_SLEEP])
     expect(result).toHaveLength(1)
     const session = result[0]
-    // Total: core session spans 22:30-06:30 (480min) + deep 01:00-02:00 (60min)
-    expect(session.durationMin).toBeGreaterThan(0)
+    // Both segments fall on the 2024-01-15 sleep night:
+    //   segment 1: 22:30Z→06:30Z (480 min, AsleepCore) → toSleepNightDate hour=22 → 2024-01-15
+    //   segment 2: 01:00Z→02:00Z (60 min, AsleepDeep)  → toSleepNightDate hour=1  → 2024-01-15
+    expect(session.durationMin).toBe(540)
     expect(session.deepMin).toBe(60)
+  })
+
+  it('uses deterministic earliest-start UUID', () => {
+    const result = parseSleepSessions([FIXTURE_SLEEP])
+    // segment 1 starts at 22:30Z which is earlier than segment 2 at 01:00Z (next calendar day)
+    expect(result[0].hkUuid).toBe('sleep-uuid-001')
   })
 
   it('returns empty array when no sleep data', () => {
@@ -144,6 +158,54 @@ describe('parseBodyComposition', () => {
 
   it('returns empty array when no weight data', () => {
     expect(parseBodyComposition([FIXTURE_STEPS])).toEqual([])
+  })
+
+  it('correlates body fat percentage from separate metric group', () => {
+    const bodyFatGroup: HealthMetricGroup = {
+      name: 'body_fat_percentage',
+      units: '%',
+      data: [
+        {
+          startDate: '2024-01-15T08:00:00Z',
+          endDate: '2024-01-15T08:00:00Z',
+          value: 18.5,
+        },
+      ],
+    }
+    const result = parseBodyComposition([FIXTURE_WEIGHT, bodyFatGroup])
+    expect(result[0].bodyFatPct).toBeCloseTo(18.5)
+  })
+})
+
+const FIXTURE_NUTRITION: HealthMetricGroup[] = [
+  {
+    name: 'dietary_energy',
+    units: 'kcal',
+    data: [
+      { startDate: '2024-01-15T12:00:00Z', endDate: '2024-01-15T12:00:00Z', value: 600 },
+      { startDate: '2024-01-15T18:00:00Z', endDate: '2024-01-15T18:00:00Z', value: 800 },
+    ],
+  },
+  {
+    name: 'dietary_protein',
+    units: 'g',
+    data: [
+      { startDate: '2024-01-15T12:00:00Z', endDate: '2024-01-15T12:00:00Z', value: 40 },
+      { startDate: '2024-01-15T18:00:00Z', endDate: '2024-01-15T18:00:00Z', value: 55 },
+    ],
+  },
+]
+
+describe('parseNutrition', () => {
+  it('aggregates calories and protein by date', () => {
+    const result = parseNutrition(FIXTURE_NUTRITION)
+    expect(result).toHaveLength(1)
+    expect(result[0].calories).toBeCloseTo(1400)
+    expect(result[0].proteinG).toBeCloseTo(95)
+  })
+
+  it('returns empty array for non-nutrition groups', () => {
+    expect(parseNutrition([FIXTURE_STEPS])).toEqual([])
   })
 })
 

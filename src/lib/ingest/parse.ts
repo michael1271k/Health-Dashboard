@@ -1,8 +1,8 @@
 import type { HealthMetricGroup } from './schema'
 
-// Extract date string (YYYY-MM-DD) from ISO datetime
+// Extract date string (YYYY-MM-DD) from ISO datetime — UTC-safe
 export function toDate(isoString: string): string {
-  return isoString.slice(0, 10)
+  return new Date(isoString).toISOString().slice(0, 10)
 }
 
 // Group daily aggregates by date for active energy + steps + HR
@@ -15,6 +15,7 @@ export interface DailyAggregate {
 
 export function parseDailyMetrics(groups: HealthMetricGroup[]): DailyAggregate[] {
   const byDate = new Map<string, DailyAggregate>()
+  const hrAccum = new Map<string, { sum: number; count: number }>()
 
   for (const group of groups) {
     const metricName = group.name.toLowerCase().replace(/\s+/g, '_')
@@ -28,13 +29,22 @@ export function parseDailyMetrics(groups: HealthMetricGroup[]): DailyAggregate[]
       } else if (metricName.includes('active_energy')) {
         existing.activeCal = (existing.activeCal ?? 0) + Math.round(sample.value)
       } else if (metricName.includes('resting_heart')) {
-        // Take average for resting HR
-        existing.restHr = existing.restHr
-          ? Math.round((existing.restHr + sample.value) / 2)
-          : Math.round(sample.value)
+        // Accumulate for correct running average (not iterative halving)
+        const acc = hrAccum.get(date) ?? { sum: 0, count: 0 }
+        acc.sum += sample.value
+        acc.count += 1
+        hrAccum.set(date, acc)
       }
 
       byDate.set(date, existing)
+    }
+  }
+
+  // Apply correct HR averages from accumulators
+  for (const [date, aggregate] of byDate.entries()) {
+    const acc = hrAccum.get(date)
+    if (acc && acc.count > 0) {
+      aggregate.restHr = Math.round(acc.sum / acc.count)
     }
   }
 
@@ -74,6 +84,8 @@ export function parseSleepSessions(groups: HealthMetricGroup[]): ParsedSleepSess
 
   // Group by sleep night date, accumulate stage minutes
   const byDate = new Map<string, ParsedSleepSession>()
+  // Track the segment with the earliest startDate per night for deterministic UUID
+  const earliestByDate = new Map<string, { startDate: string; uuid?: string }>()
 
   for (const sample of sleepGroup.data) {
     const date = toSleepNightDate(sample.startDate)
@@ -83,8 +95,13 @@ export function parseSleepSessions(groups: HealthMetricGroup[]): ParsedSleepSess
 
     if (durationMin <= 0) continue
 
+    // Track earliest-start segment for deterministic UUID on re-send
+    const earlyInfo = earliestByDate.get(date)
+    if (!earlyInfo || sample.startDate < earlyInfo.startDate) {
+      earliestByDate.set(date, { startDate: sample.startDate, uuid: sample.uuid })
+    }
+
     const existing = byDate.get(date) ?? {
-      hkUuid: sample.uuid,
       startTime: sample.startDate,
       endTime: sample.endDate,
       durationMin: 0,
@@ -114,6 +131,11 @@ export function parseSleepSessions(groups: HealthMetricGroup[]): ParsedSleepSess
     }
 
     byDate.set(date, existing)
+  }
+
+  // Apply deterministic UUID = earliest-start segment's UUID
+  for (const [date, session] of byDate.entries()) {
+    session.hkUuid = earliestByDate.get(date)?.uuid
   }
 
   return Array.from(byDate.values())
@@ -173,15 +195,30 @@ export interface ParsedBodyComp {
 }
 
 export function parseBodyComposition(groups: HealthMetricGroup[]): ParsedBodyComp[] {
-  const weightGroup = groups.find((g) => g.name.toLowerCase().includes('body_mass') || g.name.toLowerCase().includes('weight'))
+  const weightGroup = groups.find(
+    (g) => g.name.toLowerCase().includes('body_mass') || g.name.toLowerCase().includes('weight'),
+  )
   if (!weightGroup) return []
 
-  return weightGroup.data.map((sample) => ({
-    hkUuid: sample.uuid,
-    measuredAt: sample.startDate,
-    date: toDate(sample.startDate),
-    weightKg: sample.value,
-  }))
+  // Build body fat lookup by date from separate metric group
+  const bodyFatGroup = groups.find((g) => g.name.toLowerCase().includes('body_fat'))
+  const bodyFatByDate = new Map<string, number>()
+  if (bodyFatGroup) {
+    for (const s of bodyFatGroup.data) {
+      bodyFatByDate.set(new Date(s.startDate).toISOString().slice(0, 10), s.value)
+    }
+  }
+
+  return weightGroup.data.map((sample) => {
+    const date = new Date(sample.startDate).toISOString().slice(0, 10)
+    return {
+      hkUuid: sample.uuid,
+      measuredAt: sample.startDate,
+      date,
+      weightKg: sample.value,
+      bodyFatPct: bodyFatByDate.get(date),
+    }
+  })
 }
 
 export interface ParsedWater {

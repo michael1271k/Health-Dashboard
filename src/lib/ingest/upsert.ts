@@ -71,12 +71,11 @@ export async function upsertSleepSessions(
         .upsert(row as unknown as any, { onConflict: 'hk_uuid', ignoreDuplicates: true })
       if (error) throw new Error(`upsertSleepSessions (uuid) failed: ${error.message}`)
     } else {
-      // Fallback: insert with ignore on duplicate
-      const { error } = await db
-        .from('sleep_sessions')
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .insert(row as unknown as any)
-      if (error && !error.message.includes('duplicate')) {
+      // Fallback: insert, skip on unique violation (23505), throw on any other error
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await db.from('sleep_sessions').insert(row as unknown as any)
+      if (error) {
+        if (error.code === '23505') continue // unique violation — safe to skip
         throw new Error(`upsertSleepSessions (no uuid) failed: ${error.message}`)
       }
     }
@@ -107,16 +106,17 @@ export async function upsertNutrition(
   // No hk_uuid for nutrition aggregates — dedup by user_id+date
   // Since there's no UNIQUE(user_id,date) on nutrition_entries, use delete+insert pattern
   for (const row of data) {
-    await db
+    const { error: delErr } = await db
       .from('nutrition_entries')
       .delete()
       .eq('user_id', userId)
       .eq('date', row.date)
       .eq('meal_type', 'daily')
+    if (delErr) throw new Error(`upsertNutrition (delete) failed: ${delErr.message}`)
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await db.from('nutrition_entries').insert(row as unknown as any)
-    if (error) throw new Error(`upsertNutrition failed: ${error.message}`)
+    const { error: insErr } = await db.from('nutrition_entries').insert(row as unknown as any)
+    if (insErr) throw new Error(`upsertNutrition (insert) failed: ${insErr.message}`)
   }
 }
 
@@ -140,12 +140,29 @@ export async function upsertBodyComposition(
     bmi: null,
   }))
 
-  const { error } = await db
-    .from('body_composition')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .upsert(data as unknown as any, { onConflict: 'hk_uuid', ignoreDuplicates: true })
+  // NULL != NULL in PostgreSQL UNIQUE constraints — split on hk_uuid presence
+  const withUuid = data.filter((r) => r.hk_uuid !== null)
+  const withoutUuid = data.filter((r) => r.hk_uuid === null)
 
-  if (error) throw new Error(`upsertBodyComposition failed: ${error.message}`)
+  if (withUuid.length > 0) {
+    const { error } = await db
+      .from('body_composition')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .upsert(withUuid as unknown as never[], { onConflict: 'hk_uuid', ignoreDuplicates: false })
+    if (error) throw new Error(`upsertBodyComposition (uuid) failed: ${error.message}`)
+  }
+
+  for (const row of withoutUuid) {
+    const { error: delErr } = await db
+      .from('body_composition')
+      .delete()
+      .eq('user_id', userId)
+      .eq('date', row.date)
+    if (delErr) throw new Error(`upsertBodyComposition (delete) failed: ${delErr.message}`)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: insErr } = await db.from('body_composition').insert(row as unknown as never)
+    if (insErr) throw new Error(`upsertBodyComposition (insert) failed: ${insErr.message}`)
+  }
 }
 
 export async function upsertWater(
@@ -163,10 +180,27 @@ export async function upsertWater(
     amount_ml: Math.round(r.amountMl * 10) / 10,
   }))
 
-  const { error } = await db
-    .from('water_intake')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .upsert(data as unknown as any, { onConflict: 'hk_uuid', ignoreDuplicates: true })
+  // NULL != NULL in PostgreSQL UNIQUE constraints — split on hk_uuid presence
+  const withUuid = data.filter((r) => r.hk_uuid !== null)
+  const withoutUuid = data.filter((r) => r.hk_uuid === null)
 
-  if (error) throw new Error(`upsertWater failed: ${error.message}`)
+  if (withUuid.length > 0) {
+    const { error } = await db
+      .from('water_intake')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .upsert(withUuid as unknown as never[], { onConflict: 'hk_uuid', ignoreDuplicates: false })
+    if (error) throw new Error(`upsertWater (uuid) failed: ${error.message}`)
+  }
+
+  for (const row of withoutUuid) {
+    const { error: delErr } = await db
+      .from('water_intake')
+      .delete()
+      .eq('user_id', userId)
+      .eq('date', row.date)
+    if (delErr) throw new Error(`upsertWater (delete) failed: ${delErr.message}`)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: insErr } = await db.from('water_intake').insert(row as unknown as never)
+    if (insErr) throw new Error(`upsertWater (insert) failed: ${insErr.message}`)
+  }
 }
