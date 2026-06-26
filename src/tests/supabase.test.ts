@@ -13,15 +13,16 @@ describe('Supabase client', () => {
 })
 
 describe('Database types', () => {
-  it('PPL_SPLITS covers all three split days', () => {
-    expect(Object.keys(PPL_SPLITS)).toEqual(['push', 'pull', 'legs'])
-    expect(PPL_SPLITS.push.color).toBe('#00E5A0')
+  it('PPL_SPLITS covers all five PPL+ split days', () => {
+    expect(Object.keys(PPL_SPLITS)).toEqual(['push', 'pull', 'legs', 'upper', 'lower'])
     expect((PPL_SPLITS as Record<string, unknown>)['energy']).toBeUndefined()
   })
 
-  it('PPL_SPLITS has correct colors matching design tokens', () => {
-    expect(PPL_SPLITS.push.color).toBe('#00E5A0')   // primary
-    expect(PPL_SPLITS.pull.color).toBe('#7C5CFF')   // energy
-    expect(PPL_SPLITS.legs.color).toBe('#38BDF8')   // info
+  it('PPL_SPLITS has correct colors matching APEX design tokens', () => {
+    expect(PPL_SPLITS.push.color).toBe('#3D7DFF')    // primary blue
+    expect(PPL_SPLITS.pull.color).toBe('#7C5CFF')    // energy violet
+    expect(PPL_SPLITS.legs.color).toBe('#38BDF8')    // info blue
+    expect(PPL_SPLITS.upper.color).toBe('#2DD4A7')   // success teal
+    expect(PPL_SPLITS.lower.color).toBe('#FFB020')   // warm
   })
 })

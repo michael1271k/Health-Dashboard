@@ -27,10 +27,11 @@ enabled = true
 site_url = "http://localhost:3000"
 additional_redirect_urls = ["https://health-fitness-dashboard.netlify.app"]
 jwt_expiry = 3600
-enable_signup = true
+# Single-user app — signup locked to owner's account (enforced by DB trigger in 006)
+enable_signup = false
 
 [auth.email]
-enable_signup = true
+enable_signup = false
 double_confirm_changes = true
 enable_confirmations = false
 

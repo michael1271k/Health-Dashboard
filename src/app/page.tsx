@@ -11,6 +11,7 @@ import { MetricCard } from '@/components/dashboard/MetricCard'
 import { ReadinessCard } from '@/components/dashboard/ReadinessCard'
 import { AnimatedCard } from '@/components/dashboard/AnimatedBento'
 import { WeeklyReviewCard } from '@/components/dashboard/WeeklyReviewCard'
+import { Greeting } from '@/components/dashboard/Greeting'
 import {
   useTodayScore,
   useTodayMetrics,
@@ -49,25 +50,23 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="font-heading text-2xl font-bold text-text">Dashboard</h1>
-        <p className="text-muted-vital text-sm mt-0.5">{today}</p>
+      <div className="flex flex-col gap-0.5">
+        <Greeting />
+        <p className="text-muted-vital text-sm">{today}</p>
       </div>
 
       {/* Main bento grid */}
       <BentoGrid>
-        {/* Score: 2 cols wide */}
-        <BentoCell span={2} rowSpan={2}>
-          <AnimatedCard index={0}>
-            <ScoreCard score={score ?? null} isLoading={scoreLoading} />
-          </AnimatedCard>
-        </BentoCell>
-
-        {/* Battery: 2 cols wide */}
-        <BentoCell span={2} rowSpan={2}>
-          <AnimatedCard index={1}>
-            <BatteryCard battery={score?.battery_pct ?? null} isLoading={scoreLoading} />
-          </AnimatedCard>
+        {/* Score + Battery: equal-height pair in a 2-col sub-grid */}
+        <BentoCell span={4}>
+          <div className="grid grid-cols-2 gap-4 items-stretch h-full">
+            <AnimatedCard index={0}>
+              <ScoreCard score={score ?? null} isLoading={scoreLoading} />
+            </AnimatedCard>
+            <AnimatedCard index={1}>
+              <BatteryCard battery={score?.battery_pct ?? null} isLoading={scoreLoading} />
+            </AnimatedCard>
+          </div>
         </BentoCell>
 
         {/* Metric cards row */}

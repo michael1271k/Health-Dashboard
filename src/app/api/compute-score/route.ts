@@ -88,10 +88,13 @@ export async function POST(req: Request) {
     .eq('is_pr', true)
     .gte('created_at', `${today}T00:00:00Z`)
 
+  // PPL+ schedule: 0=Sun(Push), 1=Mon(Pull), 2=Tue(Legs), 3=Wed(Rest), 4=Thu(Upper), 5=Fri(Lower), 6=Sat(Rest)
+  const isRestDay = [3, 6].includes(new Date().getDay())
+
   const g = goals ?? {
-    sleep_goal_hours: 8, calorie_goal: 2500, protein_goal_g: 180,
-    carbs_goal_g: 300, fat_goal_g: 80, steps_goal: 10000,
-    active_cal_goal: 600, water_goal_ml: 2500,
+    sleep_goal_hours: 8, calorie_goal: 1935, protein_goal_g: 180,
+    carbs_goal_g: 180, fat_goal_g: 55, steps_goal: 10000,
+    active_cal_goal: 500, water_goal_ml: 3000,
   }
 
   const totalWaterMl = (water ?? []).reduce((s, r) => s + r.amount_ml, 0)
@@ -119,6 +122,7 @@ export async function POST(req: Request) {
     stepsGoal:             g.steps_goal,
     activeCalGoal:         g.active_cal_goal,
     workoutLogged:         (todaySessions?.length ?? 0) > 0,
+    isRestDay,
     newPRsToday:           prCount ?? 0,
     sessionVolumeKg,
     trailingAvgVolumeKg:   trailingAvg,
@@ -126,6 +130,7 @@ export async function POST(req: Request) {
     waterGoalMl:           g.water_goal_ml,
     supplementsTaken:      supplements?.length ?? 0,
     supplementsGoal:       3,
+    contextMode:           (g as typeof g & { context_mode?: string }).context_mode as ScoringInputs['contextMode'] ?? 'normal',
   }
 
   const components = computeDailyScore(inputs)

@@ -1,11 +1,11 @@
 {
-  "name": "MERIDIAN — Health & Fitness Dashboard",
-  "short_name": "MERIDIAN",
-  "description": "Personal health and fitness tracking dashboard",
+  "name": "APEX — Precision Human Performance OS",
+  "short_name": "APEX",
+  "description": "Engineer Your Ascent — personal health and fitness command center",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0B0E13",
-  "theme_color": "#00E5A0",
+  "background_color": "#0A0E1A",
+  "theme_color": "#3D7DFF",
   "orientation": "portrait-primary",
   "icons": [
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },

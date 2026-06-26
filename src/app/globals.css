@@ -6,19 +6,20 @@
    VITAL Design Tokens (Tailwind v4 @theme)
    ============================================ */
 @theme {
-  /* VITAL Color Palette */
-  --color-bg: #0B0E13;
-  --color-surface: #141A22;
-  --color-surface-2: #1C232C;
-  --color-primary: #00E5A0;
-  --color-energy: #7C5CFF;
+  /* APEX Color Palette — Deep Indigo/Navy */
+  --color-bg: #0A0E1A;
+  --color-surface: #111726;
+  --color-surface-2: #1A2236;
+  --color-primary: #3D7DFF;     /* vibrant blue accent */
+  --color-energy: #7C5CFF;      /* violet — battery orb */
   --color-info: #38BDF8;
+  --color-success: #2DD4A7;     /* positive deltas (ex-primary green) */
   --color-warn: #FFB020;
   --color-danger: #FF4D6D;
-  --color-text: #E8EDF2;
-  --color-muted-vital: #94A3B8;
-  --color-border: #243040;
-  /* Light mode */
+  --color-text: #E8EDF6;
+  --color-muted-vital: #8A97B0;
+  --color-border: #1E2A42;      /* hairline */
+  /* Light mode (kept for completeness) */
   --color-light-bg: #F4F6FA;
   --color-light-surface: #FFFFFF;
   --color-light-text: #0F172A;
@@ -29,10 +30,10 @@
   --font-sans: var(--font-inter), sans-serif;
   --font-mono: var(--font-jetbrains), monospace;
 
-  /* VITAL Shadows */
-  --shadow-card: 0 1px 3px rgba(0,0,0,0.3), 0 0 0 1px rgba(36,48,64,0.8);
-  --shadow-card-hover: 0 4px 16px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,229,160,0.2);
-  --shadow-glow-primary: 0 0 20px rgba(0,229,160,0.3);
+  /* APEX Shadows */
+  --shadow-card: 0 1px 2px rgba(0,0,0,0.4), 0 0 0 1px rgba(30,42,66,0.9);
+  --shadow-card-hover: 0 4px 16px rgba(0,0,0,0.5), 0 0 0 1px rgba(61,125,255,0.2);
+  --shadow-glow-primary: 0 0 20px rgba(61,125,255,0.3);
   --shadow-glow-energy: 0 0 20px rgba(124,92,255,0.3);
 
   /* VITAL Animations */
@@ -189,8 +190,8 @@
   /* Scrollbar */
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #243040; border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+  ::-webkit-scrollbar-thumb { background: #1E2A42; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #8A97B0; }
 
   /* Focus visible */
   :focus-visible {
@@ -215,9 +216,10 @@
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
   }
 
-  /* Card base */
+  /* Card base — hairline border */
   .vital-card {
     @apply bg-surface rounded-2xl border border-border p-5 shadow-card transition-shadow duration-200;
+    border-width: 1px;
   }
   .vital-card:hover {
     @apply shadow-card-hover;

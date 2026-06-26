@@ -27,22 +27,22 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Dashboard — MERIDIAN',
-    template: '%s — MERIDIAN',
+    default: 'Dashboard — APEX',
+    template: '%s — APEX',
   },
-  description: 'Your personal health & fitness intelligence dashboard',
+  description: 'Engineer Your Ascent — Precision Human Performance OS',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'MERIDIAN',
+    title: 'APEX',
   },
 }
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#0B0E13',
+  themeColor: '#0A0E1A',
 }
 
 export default function RootLayout({

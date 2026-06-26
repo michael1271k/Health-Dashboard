@@ -1,5 +1,5 @@
 // ============================================
-// MERIDIAN Supabase Database Types
+// APEX Supabase Database Types
 // Hand-authored (run `supabase gen types` after provisioning to regenerate)
 // ============================================
 
@@ -116,7 +116,7 @@ export interface Database {
           user_id: string
           name: string
           name_he: string | null
-          split_day: 'push' | 'pull' | 'legs'
+          split_day: 'push' | 'pull' | 'legs' | 'upper' | 'lower'
           muscle_groups: string[] | null
           is_compound: boolean
           created_at: string
@@ -131,7 +131,7 @@ export interface Database {
           notion_page_id: string | null
           started_at: string
           ended_at: string | null
-          split_day: 'push' | 'pull' | 'legs'
+          split_day: 'push' | 'pull' | 'legs' | 'upper' | 'lower'
           notes: string | null
           total_volume_kg: number | null
           session_score: number | null
@@ -187,11 +187,28 @@ export interface Database {
           steps_goal: number
           active_cal_goal: number
           water_goal_ml: number
+          context_mode: 'normal' | 'travel' | 'illness' | 'emergency'
+          goal_preset: string | null
           created_at: string
           updated_at: string
         }
         Insert: Omit<Database['public']['Tables']['user_goals']['Row'], 'id' | 'created_at' | 'updated_at'>
         Update: Partial<Database['public']['Tables']['user_goals']['Insert']>
+      }
+      reports: {
+        Row: {
+          id: string
+          user_id: string
+          type: 'weekly'
+          period_start: string
+          period_end: string
+          content_md: string
+          metrics: Record<string, unknown> | null
+          notion_page_id: string | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['reports']['Row'], 'id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['reports']['Insert']>
       }
     }
     Views: Record<string, never>

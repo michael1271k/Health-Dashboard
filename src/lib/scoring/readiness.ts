@@ -20,7 +20,7 @@ export function computeReadiness(
       level: 'train_hard',
       label: 'Train Hard',
       labelHe: 'תתאמן בעוצמה',
-      color: '#00E5A0',
+      color: '#3D7DFF',
       reason: 'Sleep, battery, and recovery are all strong today.',
     }
   }

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Activity } from 'lucide-react'
+import { ApexMark } from '@/components/ApexMark'
 import { navItems } from '@/lib/nav-items'
 
 export function Navbar() {
@@ -12,8 +12,8 @@ export function Navbar() {
     <header className="fixed top-4 left-4 right-4 z-50 hidden md:flex items-center justify-between
                        bg-surface/80 backdrop-blur-md border border-border rounded-2xl px-5 py-3">
       <div className="flex items-center gap-2">
-        <Activity className="w-5 h-5 text-primary" aria-hidden="true" />
-        <span className="font-heading font-bold text-lg">MERIDIAN</span>
+        <ApexMark className="w-5 h-5 text-primary" />
+        <span className="font-heading font-bold text-lg tracking-wide">APEX</span>
       </div>
 
       <nav aria-label="Main navigation">

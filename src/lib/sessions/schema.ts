@@ -11,7 +11,7 @@ export const WorkoutSetSchema = z.object({
 })
 
 export const SaveWorkoutSchema = z.object({
-  splitDay: z.enum(['push', 'pull', 'legs']),
+  splitDay: z.enum(['push', 'pull', 'legs', 'upper', 'lower']),
   startedAt: z.string().datetime(),
   endedAt: z.string().datetime(),
   sets: z.array(WorkoutSetSchema).min(1),
