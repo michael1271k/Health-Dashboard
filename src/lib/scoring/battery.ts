@@ -45,7 +45,9 @@ export function computeBattery(
   hoursAwake: number,
 ): BatteryState {
   // Compute sleep score inline (avoids circular import) using same formula
-  const sleepRatio = Math.min(1, inputs.sleepHours / inputs.sleepGoalHours)
+  const sleepRatio = inputs.sleepGoalHours
+    ? Math.min(1, inputs.sleepHours / inputs.sleepGoalHours)
+    : 1
   const sleepScore = Math.min(100, sleepRatio * 100 +
     (inputs.deepMinutes >= 90 ? 5 : 0) +
     (inputs.remMinutes >= 90 ? 5 : 0))

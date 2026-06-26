@@ -12,6 +12,7 @@ function clamp(v: number, min = 0, max = 100): number {
 export function computeSleepScore(inputs: Pick<ScoringInputs,
   'sleepHours' | 'deepMinutes' | 'remMinutes' | 'sleepGoalHours'>
 ): number {
+  if (!inputs.sleepGoalHours) return 100
   const base = clamp((inputs.sleepHours / inputs.sleepGoalHours) * 100)
   const deepBonus = inputs.deepMinutes >= 90 ? 5 : 0
   const remBonus = inputs.remMinutes >= 90 ? 5 : 0

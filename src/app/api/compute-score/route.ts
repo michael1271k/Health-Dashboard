@@ -31,7 +31,7 @@ export async function POST() {
   ] = await Promise.all([
     supabase.from('daily_metrics').select('*').eq('user_id', userId).eq('date', today).maybeSingle(),
     supabase.from('sleep_sessions').select('*').eq('user_id', userId)
-      .gte('start_time', `${today}T00:00:00Z`).lt('start_time', `${today}T23:59:59Z`)
+      .gte('start_time', `${today}T00:00:00Z`).lt('start_time', `${today}T24:00:00Z`)
       .order('start_time', { ascending: false }).limit(1).maybeSingle(),
     supabase.from('nutrition_entries').select('*').eq('user_id', userId)
       .eq('date', today).eq('meal_type', 'daily').maybeSingle(),

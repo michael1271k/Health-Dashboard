@@ -71,6 +71,12 @@ describe('computeSleepScore', () => {
     const score = computeSleepScore({ sleepHours: 12, deepMinutes: 120, remMinutes: 120, sleepGoalHours: 8 })
     expect(score).toBeLessThanOrEqual(100)
   })
+
+  it('returns 100 (goal met) when sleepGoalHours is 0 — no NaN', () => {
+    const score = computeSleepScore({ sleepHours: 0, deepMinutes: 0, remMinutes: 0, sleepGoalHours: 0 })
+    expect(score).toBe(100)
+    expect(Number.isNaN(score)).toBe(false)
+  })
 })
 
 // ---- Nutrition Score ----
