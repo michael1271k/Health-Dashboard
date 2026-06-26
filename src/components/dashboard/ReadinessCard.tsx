@@ -1,50 +1,5 @@
 import type { Tables } from '@/lib/supabase/types'
-
-type ReadinessLevel = 'hard' | 'light' | 'rest'
-
-function computeReadiness(
-  score: Tables<'daily_scores'> | null,
-  sleep: Tables<'sleep_sessions'> | null,
-): ReadinessLevel {
-  if (!score && !sleep) return 'rest'
-
-  const sleepScore = score?.sleep_score ?? 50
-  const batteryPct = score?.battery_pct ?? 50
-  const recoveryScore = score?.recovery_score ?? 50
-
-  const readiness = sleepScore * 0.4 + batteryPct * 0.4 + recoveryScore * 0.2
-
-  if (readiness >= 70) return 'hard'
-  if (readiness >= 45) return 'light'
-  return 'rest'
-}
-
-const READINESS_CONFIG = {
-  hard: {
-    label: 'Train Hard',
-    labelHe: 'אימון קשה',
-    description: 'Your recovery is excellent. Push for PRs today.',
-    color: 'text-primary',
-    bg: 'bg-primary/10',
-    border: 'border-primary/30',
-  },
-  light: {
-    label: 'Train Light',
-    labelHe: 'אימון קל',
-    description: 'Moderate recovery. Good for technique work.',
-    color: 'text-warn',
-    bg: 'bg-warn/10',
-    border: 'border-warn/30',
-  },
-  rest: {
-    label: 'Rest Today',
-    labelHe: 'מנוחה',
-    description: 'Recovery is low. Prioritize sleep and nutrition.',
-    color: 'text-danger',
-    bg: 'bg-danger/10',
-    border: 'border-danger/30',
-  },
-}
+import { computeReadiness } from '@/lib/scoring/readiness'
 
 interface ReadinessCardProps {
   score: Tables<'daily_scores'> | null
@@ -52,12 +7,29 @@ interface ReadinessCardProps {
   isLoading?: boolean
 }
 
-export function ReadinessCard({ score, sleep, isLoading }: ReadinessCardProps) {
-  const level = computeReadiness(score, sleep)
-  const config = READINESS_CONFIG[level]
+export function ReadinessCard({ score, sleep: _sleep, isLoading }: ReadinessCardProps) {
+  const sleepScore = score?.sleep_score ?? 0
+  const batteryPct = score?.battery_pct ?? 0
+  const recoveryScore = score?.recovery_score ?? 0
+
+  const readiness = !score
+    ? computeReadiness({ sleepScore: 0, recoveryScore: 0 }, 0)
+    : computeReadiness({ sleepScore, recoveryScore }, batteryPct)
+
+  const borderColor = readiness.level === 'train_hard'
+    ? 'border-primary/30'
+    : readiness.level === 'train_light'
+    ? 'border-warn/30'
+    : 'border-danger/30'
+
+  const bgColor = readiness.level === 'train_hard'
+    ? 'bg-primary/10'
+    : readiness.level === 'train_light'
+    ? 'bg-warn/10'
+    : 'bg-danger/10'
 
   return (
-    <div className={`vital-card border ${config.border} ${config.bg}`}>
+    <div className={`vital-card border ${borderColor} ${bgColor}`}>
       <h2 className="font-heading font-semibold text-sm text-muted-vital uppercase tracking-wider mb-3">
         Readiness Coach
       </h2>
@@ -70,14 +42,22 @@ export function ReadinessCard({ score, sleep, isLoading }: ReadinessCardProps) {
       ) : (
         <div className="space-y-1">
           <div className="flex items-center gap-3">
-            <p className={`font-heading font-bold text-xl ${config.color}`}>
-              {config.label}
+            <p
+              className="font-heading font-bold text-xl"
+              style={{ color: readiness.color }}
+            >
+              {readiness.label}
             </p>
-            <span className={`text-sm font-medium ${config.color} opacity-70`} dir="rtl">
-              {config.labelHe}
+            <span
+              className="text-sm font-medium opacity-70"
+              style={{ color: readiness.color }}
+              dir="rtl"
+              lang="he"
+            >
+              {readiness.labelHe}
             </span>
           </div>
-          <p className="text-muted-vital text-sm">{config.description}</p>
+          <p className="text-muted-vital text-sm">{readiness.reason}</p>
         </div>
       )}
     </div>
