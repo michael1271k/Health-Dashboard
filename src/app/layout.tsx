@@ -26,7 +26,10 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'VITAL',
+  title: {
+    default: 'Dashboard — VITAL',
+    template: '%s — VITAL',
+  },
   description: 'Your personal health & fitness intelligence dashboard',
   manifest: '/manifest.json',
   appleWebApp: {
@@ -49,9 +52,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="he" dir="ltr" suppressHydrationWarning>
-      <head>
-        <link rel="manifest" href="/manifest.json" />
-      </head>
+      <head />
       <body
         className={`${outfit.variable} ${inter.variable} ${jetbrainsMono.variable} bg-bg text-text font-sans antialiased`}
       >

@@ -10,7 +10,7 @@ interface AnimatedNumberProps {
   className?: string
 }
 
-export function AnimatedNumber({ value, duration = 0.8, decimals = 0, className }: AnimatedNumberProps) {
+export function AnimatedNumber({ value, duration = 0.3, decimals = 0, className }: AnimatedNumberProps) {
   const ref = useRef<HTMLSpanElement>(null)
   const prevRef = useRef(0)
 

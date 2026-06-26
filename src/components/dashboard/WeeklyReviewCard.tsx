@@ -33,44 +33,44 @@ function useWeekStats() {
       const [scores, sleep, sessions, water, prs] = await Promise.all([
         supabase
           .from('daily_scores')
-          .select('*')
+          .select('score')
           .gte('date', since)
           .lte('date', until),
         supabase
           .from('sleep_sessions')
-          .select('*')
+          .select('duration_min')
           .gte('start_time', `${since}T00:00:00Z`)
           .lte('start_time', `${until}T23:59:59Z`),
         supabase
           .from('workout_sessions')
-          .select('*')
+          .select('id')
           .gte('started_at', `${since}T00:00:00Z`)
           .lte('started_at', `${until}T23:59:59Z`),
         supabase
           .from('water_intake')
-          .select('*')
+          .select('amount_ml, date')
           .gte('date', since)
           .lte('date', until),
         supabase
           .from('workout_sets')
-          .select('*')
+          .select('id')
           .eq('is_pr', true)
           .gte('created_at', `${since}T00:00:00Z`)
           .lte('created_at', `${until}T23:59:59Z`),
       ])
 
-      const scoreRows = (scores.data ?? []) as Tables<'daily_scores'>[]
+      const scoreRows = (scores.data ?? []) as Array<{ score: number }>
       const avgScore = scoreRows.length
         ? Math.round(scoreRows.reduce((s, r) => s + r.score, 0) / scoreRows.length)
         : null
 
-      const sleepRows = (sleep.data ?? []) as Tables<'sleep_sessions'>[]
+      const sleepRows = (sleep.data ?? []) as Array<{ duration_min: number }>
       const avgSleepH = sleepRows.length
         ? Math.round((sleepRows.reduce((s, r) => s + r.duration_min / 60, 0) / sleepRows.length) * 10) / 10
         : null
 
       // Water: sum per day, then average across days
-      const waterRows = (water.data ?? []) as Tables<'water_intake'>[]
+      const waterRows = (water.data ?? []) as Array<{ amount_ml: number; date: string }>
       const waterByDay = new Map<string, number>()
       for (const r of waterRows) {
         waterByDay.set(r.date, (waterByDay.get(r.date) ?? 0) + r.amount_ml)
