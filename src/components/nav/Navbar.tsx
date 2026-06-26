@@ -31,6 +31,7 @@ export function Navbar() {
                 <Link
                   href={href}
                   aria-label={label}
+                  aria-current={active ? 'page' : undefined}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium
                               cursor-pointer transition-[color,opacity,background-color] duration-200
                               ${active

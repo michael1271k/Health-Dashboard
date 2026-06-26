@@ -8,7 +8,6 @@ interface MetricCardProps {
   iconColor?: string
   subtext?: string
   isLoading?: boolean
-  trend?: 'up' | 'down' | 'neutral'
 }
 
 export function MetricCard({
