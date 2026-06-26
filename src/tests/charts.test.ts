@@ -23,7 +23,7 @@ describe('epley1RM', () => {
     expect(epley1RM(120, 5)).toBeGreaterThan(epley1RM(100, 5))
   })
 
-  it('handles edge case: 0 reps returns 0 × factor = 0', () => {
+  it('handles 0 reps: weight × (1 + 0/30) = weight unchanged', () => {
     expect(epley1RM(100, 0)).toBe(100) // 100 * (1 + 0/30) = 100
   })
 

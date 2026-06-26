@@ -55,6 +55,15 @@ export function WeightTrendChart({ data, isLoading }: WeightTrendChartProps) {
   }
 
   const weights = data.map((d) => d.weight_kg).filter((w): w is number => w !== null)
+
+  if (!weights.length) {
+    return (
+      <div className="vital-card h-64 flex items-center justify-center">
+        <p className="text-muted-vital text-sm">No weight data yet. Sync Health Auto Export to see trends.</p>
+      </div>
+    )
+  }
+
   const minWeight = Math.floor(Math.min(...weights) - 2)
   const maxWeight = Math.ceil(Math.max(...weights) + 2)
 
