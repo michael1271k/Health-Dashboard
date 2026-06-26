@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from 'next'
 import { Outfit, Inter, JetBrains_Mono } from 'next/font/google'
 import { ThemeProvider } from '@/components/theme-provider'
+import { Navbar } from '@/components/nav/Navbar'
+import { BottomNav } from '@/components/nav/BottomNav'
+import { QueryProvider } from '@/components/providers/QueryProvider'
 import './globals.css'
 
 const outfit = Outfit({
@@ -54,7 +57,18 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
-          {children}
+          <QueryProvider>
+            <Navbar />
+            <main
+              id="main-content"
+              className="min-h-screen bg-bg pt-4 pb-24 md:pt-24 md:pb-8 px-4"
+            >
+              <div className="max-w-7xl mx-auto">
+                {children}
+              </div>
+            </main>
+            <BottomNav />
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>
