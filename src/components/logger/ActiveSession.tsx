@@ -6,7 +6,7 @@ import { ExerciseList } from './ExerciseList'
 import { WorkoutForm } from './WorkoutForm'
 import { useExercises, useSaveSession, type SaveResult } from '@/lib/hooks/useLogger'
 import type { SplitDay, WorkoutSet } from '@/lib/types/workout'
-import { Dumbbell } from 'lucide-react'
+import { Dumbbell, Check } from 'lucide-react'
 
 interface ActiveSessionProps {
   onSaved?: (result: SaveResult) => void
@@ -54,7 +54,10 @@ export function ActiveSession({ onSaved }: ActiveSessionProps) {
         <div className="space-y-1 text-muted-vital text-sm">
           <p>{sets.length} sets · {Math.round(savedResult.totalVolumeKg)}kg total volume</p>
           {savedResult.notionPageId && (
-            <p className="text-primary text-xs">✓ Logged to Notion</p>
+            <p className="text-primary text-xs flex items-center gap-1">
+              <Check className="w-3 h-3" aria-hidden="true" />
+              Logged to Notion
+            </p>
           )}
         </div>
         {savedResult.newPRs.length > 0 && (

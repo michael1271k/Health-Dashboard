@@ -48,7 +48,7 @@ export function ExerciseList({ exercises, sets, onAddSet, isLoading }: ExerciseL
               onClick={() => setOpenId(isOpen ? null : ex.id)}
               aria-expanded={isOpen}
               aria-controls={`exercise-sets-${ex.id}`}
-              className="w-full flex items-center justify-between cursor-pointer"
+              className="w-full flex items-center justify-between cursor-pointer py-3"
             >
               <div className="flex flex-col items-start gap-0.5">
                 <span className="font-medium text-text">{ex.name}</span>

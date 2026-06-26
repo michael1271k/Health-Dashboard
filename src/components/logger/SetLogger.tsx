@@ -58,7 +58,7 @@ export function SetLogger({
           onChange={(e) => setWeight(e.target.value)}
           placeholder="80"
           required
-          className="vital-number bg-surface-2 border border-border rounded-xl px-3 py-2
+          className="vital-number bg-surface-2 border border-border rounded-xl px-3 py-3
                      text-text placeholder:text-muted-vital focus:outline-none focus:ring-2
                      focus:ring-primary/60 w-full"
         />
@@ -76,7 +76,7 @@ export function SetLogger({
           onChange={(e) => setReps(e.target.value)}
           placeholder="8"
           required
-          className="vital-number bg-surface-2 border border-border rounded-xl px-3 py-2
+          className="vital-number bg-surface-2 border border-border rounded-xl px-3 py-3
                      text-text placeholder:text-muted-vital focus:outline-none focus:ring-2
                      focus:ring-primary/60 w-full"
         />
@@ -95,14 +95,14 @@ export function SetLogger({
           value={rpe}
           onChange={(e) => setRpe(e.target.value)}
           placeholder="8"
-          className="vital-number bg-surface-2 border border-border rounded-xl px-3 py-2
+          className="vital-number bg-surface-2 border border-border rounded-xl px-3 py-3
                      text-text placeholder:text-muted-vital focus:outline-none focus:ring-2
                      focus:ring-primary/60 w-full"
         />
       </div>
       <button
         type="submit"
-        className="btn-primary h-10 px-4 shrink-0"
+        className="btn-primary h-11 px-4 shrink-0"
         aria-label="Add set"
       >
         + Set

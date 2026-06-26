@@ -23,10 +23,14 @@ export function SplitPicker({ value, onChange }: SplitPickerProps) {
                 className={`vital-card flex flex-col items-center gap-1 py-5 cursor-pointer
                             transition-[color,opacity,box-shadow,border-color] duration-200
                             ${isActive
-                              ? 'border-[1.5px] shadow-[0_0_12px_rgba(0,229,160,0.25)]'
+                              ? 'border-[1.5px]'
                               : 'hover:border-border/60 hover:bg-surface-2'
                             }`}
-                style={isActive ? { borderColor: config.color, color: config.color } : {}}
+                style={isActive ? {
+                  borderColor: config.color,
+                  color: config.color,
+                  boxShadow: `0 0 12px ${config.color}40`,
+                } : {}}
               >
                 <span className="text-xl font-heading font-bold">
                   {config.label}

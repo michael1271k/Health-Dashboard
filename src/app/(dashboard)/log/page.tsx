@@ -5,7 +5,7 @@ import { ActiveSession } from '@/components/logger/ActiveSession'
 import { useRecentSessions } from '@/lib/hooks/useLogger'
 import { PPL_SPLITS } from '@/lib/types/workout'
 import type { SplitDay } from '@/lib/types/workout'
-import type { SaveResult } from '@/lib/hooks/useLogger'
+import { Check } from 'lucide-react'
 
 export default function LogPage() {
   const [showHistory, setShowHistory] = useState(false)
@@ -73,7 +73,10 @@ export default function LogPage() {
                       </div>
                     )}
                     {s.notion_page_id && (
-                      <span className="text-xs text-primary">Notion ✓</span>
+                      <span className="text-xs text-primary flex items-center gap-1">
+                        <Check className="w-3 h-3" aria-hidden="true" />
+                        Logged to Notion
+                      </span>
                     )}
                   </div>
                 </div>
