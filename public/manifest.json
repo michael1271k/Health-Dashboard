@@ -1,6 +1,6 @@
 {
-  "name": "VITAL — Health & Fitness Dashboard",
-  "short_name": "VITAL",
+  "name": "MERIDIAN — Health & Fitness Dashboard",
+  "short_name": "MERIDIAN",
   "description": "Personal health and fitness tracking dashboard",
   "start_url": "/",
   "display": "standalone",

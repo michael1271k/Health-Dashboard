@@ -49,6 +49,6 @@ export interface ReadinessResult {
   level: ReadinessLevel
   label: string         // "Train Hard" | "Train Light" | "Rest Today"
   labelHe: string       // Hebrew label
-  color: string         // VITAL palette hex
+  color: string         // MERIDIAN palette hex
   reason: string        // 1-sentence English reason
 }

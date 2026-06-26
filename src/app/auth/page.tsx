@@ -35,7 +35,7 @@ export default function AuthPage() {
       <div className="vital-card max-w-sm w-full space-y-6">
         <div className="flex items-center gap-2">
           <Activity className="w-6 h-6 text-primary" aria-hidden="true" />
-          <h1 className="font-heading text-2xl font-bold">VITAL</h1>
+          <h1 className="font-heading text-2xl font-bold">MERIDIAN</h1>
         </div>
 
         {sent ? (

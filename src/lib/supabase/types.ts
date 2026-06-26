@@ -1,5 +1,5 @@
 // ============================================
-// VITAL Supabase Database Types
+// MERIDIAN Supabase Database Types
 // Hand-authored (run `supabase gen types` after provisioning to regenerate)
 // ============================================
 

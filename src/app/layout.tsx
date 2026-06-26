@@ -27,15 +27,15 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Dashboard — VITAL',
-    template: '%s — VITAL',
+    default: 'Dashboard — MERIDIAN',
+    template: '%s — MERIDIAN',
   },
   description: 'Your personal health & fitness intelligence dashboard',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'VITAL',
+    title: 'MERIDIAN',
   },
 }
 

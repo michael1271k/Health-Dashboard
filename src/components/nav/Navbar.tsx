@@ -13,7 +13,7 @@ export function Navbar() {
                        bg-surface/80 backdrop-blur-md border border-border rounded-2xl px-5 py-3">
       <div className="flex items-center gap-2">
         <Activity className="w-5 h-5 text-primary" aria-hidden="true" />
-        <span className="font-heading font-bold text-lg">VITAL</span>
+        <span className="font-heading font-bold text-lg">MERIDIAN</span>
       </div>
 
       <nav aria-label="Main navigation">

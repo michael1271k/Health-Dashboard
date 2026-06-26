@@ -1,4 +1,4 @@
-# VITAL Supabase Setup
+# MERIDIAN Supabase Setup
 
 ## Provisioning
 
