@@ -4,9 +4,12 @@ import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Loader2, DatabaseZap } from 'lucide-react'
 
+interface ImportError { pageId: string; source: string; stage: string; message: string }
 interface Counts {
   dailyPages: number; gymPages: number; nutrition: number
   bodyComp: number; metrics: number; sleep: number; sessions: number
+  skipped?: number
+  errors?: ImportError[]
 }
 
 export function HistoricalImport() {
@@ -60,15 +63,39 @@ export function HistoricalImport() {
         <div className="text-xs text-muted-vital">
           <p className="text-text font-medium mb-1">Dry run — would import:</p>
           {summary(preview)}
+          <ErrorList counts={preview} />
         </div>
       )}
       {done && (
         <div className="text-xs text-success">
           <p className="font-medium mb-1">Imported ✓</p>
           {summary(done)}
+          <ErrorList counts={done} />
         </div>
       )}
     </section>
+  )
+}
+
+function ErrorList({ counts }: { counts: Counts }) {
+  const errors = counts.errors ?? []
+  if (!errors.length && !counts.skipped) return null
+  return (
+    <div className="mt-2 space-y-1">
+      {counts.skipped ? <p className="text-warn">Skipped {counts.skipped} page(s).</p> : null}
+      {errors.length > 0 && (
+        <details className="text-danger">
+          <summary className="cursor-pointer">{errors.length} issue(s) — click for details</summary>
+          <ul className="mt-1 space-y-0.5 max-h-48 overflow-y-auto">
+            {errors.map((e, i) => (
+              <li key={i} className="font-mono text-[10px] leading-snug">
+                [{e.source}/{e.stage}] page {e.pageId.slice(0, 8)}… — {e.message}
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+    </div>
   )
 }
 

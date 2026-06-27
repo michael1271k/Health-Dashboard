@@ -2,15 +2,14 @@
 
 import { Fragment, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { useReports, useMonthActivity, useGymReports, useProgramStart } from '@/lib/hooks/useWeekly'
-import { useUserGoals } from '@/lib/hooks/useDashboard'
+import { useReports, useMonthActivity, useGymReports } from '@/lib/hooks/useWeekly'
 import { PPL_SPLITS, type SplitDay } from '@/lib/types/workout'
-import { ChevronLeft, ChevronRight, Loader2, Sparkles, Dumbbell, Scale } from 'lucide-react'
+import { getWeekPhase, phaseBadgeStyle } from '@/lib/phases'
+import { ChevronLeft, ChevronRight, Loader2, Dumbbell, Scale } from 'lucide-react'
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 const iso = (d: Date) => d.toISOString().slice(0, 10)
 const addDays = (d: Date, n: number) => { const x = new Date(d); x.setUTCDate(x.getUTCDate() + n); return x }
-const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
 export default function WeeklyPage() {
   const qc = useQueryClient()
@@ -23,9 +22,6 @@ export default function WeeklyPage() {
 
   const { data: reports } = useReports()
   const { data: gymReports } = useGymReports()
-  const { data: programStart } = useProgramStart()
-  const { data: goals } = useUserGoals()
-  const presetLabel = goals?.goal_preset ? cap(goals.goal_preset) : null
 
   const weeks = useMemo(() => {
     const first = new Date(Date.UTC(month.y, month.m, 1))
@@ -36,19 +32,6 @@ export default function WeeklyPage() {
   const gridFrom = iso(weeks[0][0])
   const gridTo = iso(weeks[5][6])
   const { data: activity } = useMonthActivity(gridFrom, gridTo)
-
-  // Program anchor (Sunday of the first logged week) → "Week N" counter
-  const anchorSunday = useMemo(() => {
-    if (!programStart) return null
-    const d = new Date(`${programStart}T00:00:00Z`)
-    return addDays(d, -d.getUTCDay())
-  }, [programStart])
-
-  function weekIndex(weekStart: Date): number | null {
-    if (!anchorSunday) return null
-    const diff = Math.round((weekStart.getTime() - anchorSunday.getTime()) / (7 * 86400000))
-    return diff >= 0 ? diff + 1 : null
-  }
 
   async function generate(weekStart: string) {
     setSelectedWeekStart(weekStart)
@@ -92,27 +75,22 @@ export default function WeeklyPage() {
           {weeks.map((row) => {
             const weekStart = iso(row[0])
             const selected = selectedWeekStart === weekStart
-            const hasData = row.some((d) => activity?.workoutDates.has(iso(d)) || activity?.dataDates.has(iso(d)))
-            const n = weekIndex(row[0])
-            const badge = n !== null && hasData ? `${presetLabel ?? 'Wk'} ${n}` : null
+            const phase = getWeekPhase(weekStart)
             return (
               <Fragment key={weekStart}>
                 {/* Epic phase badge / generate trigger */}
                 <button
                   onClick={() => generate(weekStart)}
                   disabled={generating}
-                  aria-label={`Generate report for week of ${weekStart}`}
+                  title={phase ? phase.label : `Generate report for week of ${weekStart}`}
+                  aria-label={phase ? `${phase.label} — generate report` : `Generate report for week of ${weekStart}`}
                   className={`text-[9px] font-bold leading-tight rounded-lg py-1 px-1 my-0.5 transition-all
-                    ${badge
-                      ? selected ? 'text-primary' : 'text-primary/90'
-                      : 'text-muted-vital hover:bg-white/[0.05]'}`}
-                  style={badge ? {
-                    background: 'rgba(61,125,255,0.10)',
-                    border: '1px solid rgba(61,125,255,0.30)',
-                    boxShadow: selected ? '0 0 14px rgba(61,125,255,0.45)' : '0 0 8px rgba(61,125,255,0.18)',
-                  } : {}}
+                    ${phase ? '' : 'text-muted-vital hover:bg-white/[0.05]'}`}
+                  style={phase ? phaseBadgeStyle(phase.kind, selected) : {}}
                 >
-                  {generating && selected ? <Loader2 className="w-3 h-3 animate-spin mx-auto" /> : (badge ?? 'Go')}
+                  {generating && selected
+                    ? <Loader2 className="w-3 h-3 animate-spin mx-auto" />
+                    : (phase ? phase.short : 'Go')}
                 </button>
                 {row.map((day) => {
                   const ds = iso(day)
@@ -134,10 +112,12 @@ export default function WeeklyPage() {
             )
           })}
         </div>
-        <p className="text-[11px] text-muted-vital flex gap-3">
+        <p className="text-[11px] text-muted-vital flex gap-3 flex-wrap">
           <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-primary inline-block" /> workout</span>
           <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-muted-vital inline-block" /> logged</span>
-          {presetLabel && <span className="ml-auto text-primary/80">Phase: {presetLabel}</span>}
+          {selectedWeekStart && getWeekPhase(selectedWeekStart) && (
+            <span className="ml-auto font-semibold text-text">{getWeekPhase(selectedWeekStart)!.label}</span>
+          )}
         </p>
       </section>
 
