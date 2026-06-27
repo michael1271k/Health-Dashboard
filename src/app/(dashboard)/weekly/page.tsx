@@ -1,14 +1,16 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { useReports, useMonthActivity } from '@/lib/hooks/useWeekly'
-import { ChevronLeft, ChevronRight, Loader2, Sparkles } from 'lucide-react'
+import { useReports, useMonthActivity, useGymReports, useProgramStart } from '@/lib/hooks/useWeekly'
+import { useUserGoals } from '@/lib/hooks/useDashboard'
+import { PPL_SPLITS, type SplitDay } from '@/lib/types/workout'
+import { ChevronLeft, ChevronRight, Loader2, Sparkles, Dumbbell, Scale } from 'lucide-react'
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
-
-function iso(d: Date) { return d.toISOString().slice(0, 10) }
-function addDays(d: Date, n: number) { const x = new Date(d); x.setUTCDate(x.getUTCDate() + n); return x }
+const iso = (d: Date) => d.toISOString().slice(0, 10)
+const addDays = (d: Date, n: number) => { const x = new Date(d); x.setUTCDate(x.getUTCDate() + n); return x }
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
 export default function WeeklyPage() {
   const qc = useQueryClient()
@@ -19,32 +21,41 @@ export default function WeeklyPage() {
   const [report, setReport] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  // Build a 6×7 grid of weeks starting on the Sunday on/before the 1st
+  const { data: reports } = useReports()
+  const { data: gymReports } = useGymReports()
+  const { data: programStart } = useProgramStart()
+  const { data: goals } = useUserGoals()
+  const presetLabel = goals?.goal_preset ? cap(goals.goal_preset) : null
+
   const weeks = useMemo(() => {
     const first = new Date(Date.UTC(month.y, month.m, 1))
-    const gridStart = addDays(first, -first.getUTCDay()) // back to Sunday
-    const rows: Date[][] = []
-    for (let w = 0; w < 6; w++) {
-      const row: Date[] = []
-      for (let d = 0; d < 7; d++) row.push(addDays(gridStart, w * 7 + d))
-      rows.push(row)
-    }
-    return rows
+    const gridStart = addDays(first, -first.getUTCDay())
+    return Array.from({ length: 6 }, (_, w) => Array.from({ length: 7 }, (_, d) => addDays(gridStart, w * 7 + d)))
   }, [month])
 
   const gridFrom = iso(weeks[0][0])
   const gridTo = iso(weeks[5][6])
   const { data: activity } = useMonthActivity(gridFrom, gridTo)
-  const { data: reports } = useReports()
+
+  // Program anchor (Sunday of the first logged week) → "Week N" counter
+  const anchorSunday = useMemo(() => {
+    if (!programStart) return null
+    const d = new Date(`${programStart}T00:00:00Z`)
+    return addDays(d, -d.getUTCDay())
+  }, [programStart])
+
+  function weekIndex(weekStart: Date): number | null {
+    if (!anchorSunday) return null
+    const diff = Math.round((weekStart.getTime() - anchorSunday.getTime()) / (7 * 86400000))
+    return diff >= 0 ? diff + 1 : null
+  }
 
   async function generate(weekStart: string) {
     setSelectedWeekStart(weekStart)
     setGenerating(true); setError(null); setReport(null)
     try {
       const res = await fetch('/api/ai/weekly-report', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ weekStart }),
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ weekStart }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? `Error ${res.status}`)
@@ -52,9 +63,7 @@ export default function WeeklyPage() {
       qc.invalidateQueries({ queryKey: ['reports'] })
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unknown error')
-    } finally {
-      setGenerating(false)
-    }
+    } finally { setGenerating(false) }
   }
 
   const monthLabel = new Date(Date.UTC(month.y, month.m, 1)).toLocaleDateString('en-IL', { month: 'long', year: 'numeric' })
@@ -66,106 +75,136 @@ export default function WeeklyPage() {
         <p className="text-muted-vital text-sm mt-0.5">Pick a week → unified weight + gym report</p>
       </div>
 
-      {/* Calendar */}
+      {/* ── Calendar ── */}
       <section className="vital-card space-y-3">
         <div className="flex items-center justify-between">
           <button onClick={() => setMonth((p) => ({ y: p.m === 0 ? p.y - 1 : p.y, m: p.m === 0 ? 11 : p.m - 1 }))}
-            className="p-1.5 rounded-lg hover:bg-white/[0.05] text-muted-vital" aria-label="Previous month">
-            <ChevronLeft className="w-4 h-4" />
-          </button>
+            className="p-1.5 rounded-lg hover:bg-white/[0.05] text-muted-vital" aria-label="Previous month"><ChevronLeft className="w-4 h-4" /></button>
           <h2 className="font-heading font-semibold text-text">{monthLabel}</h2>
           <button onClick={() => setMonth((p) => ({ y: p.m === 11 ? p.y + 1 : p.y, m: p.m === 11 ? 0 : p.m + 1 }))}
-            className="p-1.5 rounded-lg hover:bg-white/[0.05] text-muted-vital" aria-label="Next month">
-            <ChevronRight className="w-4 h-4" />
-          </button>
+            className="p-1.5 rounded-lg hover:bg-white/[0.05] text-muted-vital" aria-label="Next month"><ChevronRight className="w-4 h-4" /></button>
         </div>
 
-        <div className="grid grid-cols-[auto_repeat(7,1fr)] gap-1 text-center">
+        <div className="grid grid-cols-[3.2rem_repeat(7,1fr)] gap-1 text-center items-center">
           <div />
           {WEEKDAYS.map((d, i) => <div key={i} className="text-[10px] text-muted-vital font-medium pb-1">{d}</div>)}
 
           {weeks.map((row) => {
             const weekStart = iso(row[0])
             const selected = selectedWeekStart === weekStart
+            const hasData = row.some((d) => activity?.workoutDates.has(iso(d)) || activity?.dataDates.has(iso(d)))
+            const n = weekIndex(row[0])
+            const badge = n !== null && hasData ? `${presetLabel ?? 'Wk'} ${n}` : null
             return (
-              <FragmentRow key={weekStart}>
+              <Fragment key={weekStart}>
+                {/* Epic phase badge / generate trigger */}
                 <button
                   onClick={() => generate(weekStart)}
                   disabled={generating}
-                  className={`text-[10px] px-1.5 rounded-md transition-colors my-0.5
-                    ${selected ? 'bg-primary/20 text-primary' : 'text-muted-vital hover:bg-white/[0.05]'}`}
                   aria-label={`Generate report for week of ${weekStart}`}
+                  className={`text-[9px] font-bold leading-tight rounded-lg py-1 px-1 my-0.5 transition-all
+                    ${badge
+                      ? selected ? 'text-primary' : 'text-primary/90'
+                      : 'text-muted-vital hover:bg-white/[0.05]'}`}
+                  style={badge ? {
+                    background: 'rgba(61,125,255,0.10)',
+                    border: '1px solid rgba(61,125,255,0.30)',
+                    boxShadow: selected ? '0 0 14px rgba(61,125,255,0.45)' : '0 0 8px rgba(61,125,255,0.18)',
+                  } : {}}
                 >
-                  {generating && selected ? <Loader2 className="w-3 h-3 animate-spin mx-auto" /> : 'Go'}
+                  {generating && selected ? <Loader2 className="w-3 h-3 animate-spin mx-auto" /> : (badge ?? 'Go')}
                 </button>
                 {row.map((day) => {
                   const ds = iso(day)
                   const inMonth = day.getUTCMonth() === month.m
                   const hasWorkout = activity?.workoutDates.has(ds)
-                  const hasData = activity?.dataDates.has(ds)
+                  const hasScore = activity?.dataDates.has(ds)
                   return (
-                    <div
-                      key={ds}
-                      className={`aspect-square flex flex-col items-center justify-center rounded-lg text-xs
-                        ${inMonth ? 'text-text' : 'text-muted-vital/40'}
-                        ${selected ? 'bg-primary/5' : ''}`}
-                    >
+                    <div key={ds} className={`aspect-square flex flex-col items-center justify-center rounded-lg text-xs
+                      ${inMonth ? 'text-text' : 'text-muted-vital/40'} ${selected ? 'bg-primary/5' : ''}`}>
                       <span>{day.getUTCDate()}</span>
                       <span className="flex gap-0.5 mt-0.5 h-1">
                         {hasWorkout && <span className="w-1 h-1 rounded-full bg-primary" />}
-                        {hasData && !hasWorkout && <span className="w-1 h-1 rounded-full bg-muted-vital" />}
+                        {hasScore && !hasWorkout && <span className="w-1 h-1 rounded-full bg-muted-vital" />}
                       </span>
                     </div>
                   )
                 })}
-              </FragmentRow>
+              </Fragment>
             )
           })}
         </div>
         <p className="text-[11px] text-muted-vital flex gap-3">
           <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-primary inline-block" /> workout</span>
           <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-muted-vital inline-block" /> logged</span>
+          {presetLabel && <span className="ml-auto text-primary/80">Phase: {presetLabel}</span>}
         </p>
       </section>
 
       {error && <div className="vital-card border-danger/40"><p className="text-danger text-sm">{error}</p></div>}
-
       {generating && (
         <div className="vital-card flex items-center gap-3 text-muted-vital text-sm">
           <Loader2 className="w-4 h-4 animate-spin text-primary" /> Generating unified report…
         </div>
       )}
-
       {report && (
-        <article className="vital-card prose prose-invert prose-sm max-w-none whitespace-pre-wrap text-text leading-relaxed">
-          {report}
-        </article>
+        <article className="vital-card whitespace-pre-wrap text-text text-sm leading-relaxed">{report}</article>
       )}
 
-      {/* Past reports */}
-      {reports && reports.length > 0 && (
-        <section className="space-y-2">
-          <h2 className="font-heading font-semibold text-lg text-text flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-primary" /> Past Reports
-          </h2>
-          {reports.map((r) => (
-            <details key={r.id} className="vital-card">
-              <summary className="cursor-pointer text-sm font-medium text-text">
-                {r.period_start} → {r.period_end}
-                {r.notion_page_id && <span className="text-xs text-primary ml-2">· Notion ✓</span>}
-              </summary>
-              <div className="mt-3 text-sm whitespace-pre-wrap text-muted-vital leading-relaxed" dir="auto">
-                {r.content_md}
-              </div>
-            </details>
-          ))}
-        </section>
-      )}
+      {/* ── Dual folders ── */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Folder
+          title="Weight Management Summaries"
+          icon={<Scale className="w-4 h-4 text-primary" />}
+          empty="No weekly summaries yet. Pick a week above to generate one."
+          items={(reports ?? []).map((r) => ({
+            id: r.id,
+            head: <>{r.period_start} → {r.period_end}{r.notion_page_id && <span className="text-xs text-primary ml-2">Notion ✓</span>}</>,
+            body: r.content_md,
+          }))}
+        />
+        <Folder
+          title="Gym Session Reports"
+          icon={<Dumbbell className="w-4 h-4 text-primary" />}
+          empty="No session reports yet. Log a workout via the AI chat to generate one."
+          items={(gymReports ?? []).map((r) => {
+            const split = PPL_SPLITS[r.split as SplitDay]
+            return {
+              id: r.id,
+              head: <>
+                <span className="font-bold" style={{ color: split?.color }}>{split?.label ?? r.split}</span>
+                <span className="text-muted-vital ml-2">{new Date(r.date + 'T00:00:00').toLocaleDateString('en-IL', { month: 'short', day: 'numeric' })}</span>
+              </>,
+              body: r.reportMd,
+            }
+          })}
+        />
+      </div>
     </div>
   )
 }
 
-// Helper to render a row's cells as direct grid children (no wrapper div)
-function FragmentRow({ children }: { children: React.ReactNode }) {
-  return <>{children}</>
+function Folder({ title, icon, items, empty }: {
+  title: string; icon: React.ReactNode
+  items: Array<{ id: string; head: React.ReactNode; body: string }>; empty: string
+}) {
+  return (
+    <section className="vital-card space-y-3">
+      <h2 className="font-heading font-semibold text-text flex items-center gap-2">{icon}{title}
+        <span className="ml-auto text-xs text-muted-vital">{items.length}</span>
+      </h2>
+      {items.length === 0 ? (
+        <p className="text-sm text-muted-vital py-4 text-center">{empty}</p>
+      ) : (
+        <div className="space-y-2 max-h-[28rem] overflow-y-auto pr-1">
+          {items.map((it) => (
+            <details key={it.id} className="rounded-xl px-3 py-2 bg-white/[0.02] border border-white/[0.06]">
+              <summary className="cursor-pointer text-sm font-medium text-text">{it.head}</summary>
+              <div className="mt-2 text-xs whitespace-pre-wrap text-muted-vital leading-relaxed" dir="auto">{it.body}</div>
+            </details>
+          ))}
+        </div>
+      )}
+    </section>
+  )
 }

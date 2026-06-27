@@ -1,42 +1,39 @@
+/**
+ * POST /api/ingest
+ *
+ * Accepts a FLAT JSON payload from the custom iOS Shortcut and maps it to today's
+ * daily_logs row in Supabase (plus fan-out to the normalized tables used by
+ * scoring / dashboard / charts). Authenticated via the X-Webhook-Secret header.
+ *
+ * Example body:
+ *   { "steps": 8200, "water": 2500, "sleep_minutes": 430, "carbs": 180,
+ *     "protein": 175, "fats": 55, "weight": 78.4, "lean_mass": 61.2,
+ *     "bmi": 23.1, "training_minutes": 70, "active_energy": 520,
+ *     "body_fat": 16.2, "move_minutes": 95, "standing_minutes": 11,
+ *     "avg_heart_rate": 78, "blood_oxygen": 98 }
+ */
+
 import { NextResponse } from 'next/server'
 import { getServerSupabaseClient } from '@/lib/supabase/server'
-import { HealthAutoExportPayloadSchema } from '@/lib/ingest/schema'
-import {
-  parseDailyMetrics,
-  parseSleepSessions,
-  parseNutrition,
-  parseBodyComposition,
-  parseWater,
-} from '@/lib/ingest/parse'
-import {
-  upsertDailyMetrics,
-  upsertSleepSessions,
-  upsertNutrition,
-  upsertBodyComposition,
-  upsertWater,
-} from '@/lib/ingest/upsert'
+import { ShortcutPayloadSchema } from '@/lib/ingest/schema'
+import { ingestDailyLog } from '@/lib/ingest/dailyLog'
 
 const WEBHOOK_SECRET = process.env.INGEST_WEBHOOK_SECRET
 
-// Health Auto Export must be configured to send this header:
-// X-Webhook-Secret: <same value as INGEST_WEBHOOK_SECRET>
+// The Shortcut must send:  X-Webhook-Secret: <INGEST_WEBHOOK_SECRET>
 function verifySecret(request: Request): boolean {
   if (!WEBHOOK_SECRET) {
-    // In development without a secret set, allow through (log warning)
     console.warn('[ingest] INGEST_WEBHOOK_SECRET not set — running without auth check')
     return true
   }
-  const provided = request.headers.get('X-Webhook-Secret')
-  return provided === WEBHOOK_SECRET
+  return request.headers.get('X-Webhook-Secret') === WEBHOOK_SECRET
 }
 
 export async function POST(request: Request) {
-  // 1. Verify webhook secret
   if (!verifySecret(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // 2. Parse JSON body
   let body: unknown
   try {
     body = await request.json()
@@ -44,70 +41,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
 
-  // 3. Validate with Zod
-  const parsed = HealthAutoExportPayloadSchema.safeParse(body)
+  const parsed = ShortcutPayloadSchema.safeParse(body)
   if (!parsed.success) {
-    console.error('[ingest] Payload validation failed:', parsed.error.flatten())
-    return NextResponse.json(
-      { error: 'Invalid payload', details: parsed.error.flatten() },
-      { status: 422 },
-    )
+    return NextResponse.json({ error: 'Invalid payload', details: parsed.error.flatten() }, { status: 422 })
   }
 
-  const { metrics } = parsed.data.data
-
-  // 4. Get user from Supabase — single-user app, get the first (only) user
-  // The service role client bypasses RLS so we can look up the user
   const db = getServerSupabaseClient()
   const { data: users, error: userError } = await db.auth.admin.listUsers()
   if (userError || !users?.users?.length) {
-    console.error('[ingest] No user found:', userError)
     return NextResponse.json({ error: 'No authenticated user found' }, { status: 500 })
   }
   const userId = users.users[0].id
 
-  // 5. Parse all metric types
-  const dailyMetrics = parseDailyMetrics(metrics)
-  const sleepSessions = parseSleepSessions(metrics)
-  const nutrition = parseNutrition(metrics)
-  const bodyComp = parseBodyComposition(metrics)
-  const water = parseWater(metrics)
-
-  // 6. Upsert all in parallel (each handles its own dedup)
-  const results = await Promise.allSettled([
-    upsertDailyMetrics(db, userId, dailyMetrics),
-    upsertSleepSessions(db, userId, sleepSessions),
-    upsertNutrition(db, userId, nutrition),
-    upsertBodyComposition(db, userId, bodyComp),
-    upsertWater(db, userId, water),
-  ])
-
-  // 7. Report results
-  const errors = results
-    .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
-    .map((r) => (r.reason as Error).message)
-
-  const counts = {
-    dailyMetrics: dailyMetrics.length,
-    sleepSessions: sleepSessions.length,
-    nutrition: nutrition.length,
-    bodyComp: bodyComp.length,
-    water: water.length,
+  try {
+    const result = await ingestDailyLog(db, userId, parsed.data)
+    return NextResponse.json({ success: true, ...result })
+  } catch (err) {
+    console.error('[ingest] failed:', err)
+    return NextResponse.json({ error: 'Ingest failed', detail: String(err) }, { status: 500 })
   }
-
-  if (errors.length > 0) {
-    console.error('[ingest] Partial failure:', errors)
-    return NextResponse.json(
-      { success: false, counts, errors },
-      { status: 207 }, // 207 Multi-Status: partial success
-    )
-  }
-
-  console.warn('[ingest] Ingested successfully:', counts)
-  return NextResponse.json({ success: true, counts }, { status: 200 })
 }
 
 // Health check
 export async function GET() {
-  return NextResponse.json({ status: 'ok', service: 'vital-ingest' })
+  return NextResponse.json({ status: 'ok', service: 'apex-ingest', schema: 'flat-shortcut-v1' })
 }

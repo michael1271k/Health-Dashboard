@@ -28,6 +28,50 @@ export function useReports() {
   })
 }
 
+export interface GymReportRow {
+  id: string
+  date: string
+  split: string
+  reportMd: string
+}
+
+/** Gym session reports (workout_sessions that have an AI-generated report). */
+export function useGymReports(limit = 30) {
+  return useQuery({
+    queryKey: ['gym_reports', limit],
+    queryFn: async (): Promise<GymReportRow[]> => {
+      const { data, error } = await supabase
+        .from('workout_sessions')
+        .select('id, started_at, split_day, report_md')
+        .not('report_md', 'is', null)
+        .order('started_at', { ascending: false })
+        .limit(limit)
+      if (error) throw error
+      return ((data ?? []) as Array<{ id: string; started_at: string; split_day: string; report_md: string | null }>)
+        .filter((r) => r.report_md)
+        .map((r) => ({ id: r.id, date: r.started_at.slice(0, 10), split: r.split_day, reportMd: r.report_md as string }))
+    },
+    staleTime: 60_000,
+  })
+}
+
+/** Earliest logged session date — anchors the "Week N" program counter. */
+export function useProgramStart() {
+  return useQuery({
+    queryKey: ['program_start'],
+    queryFn: async (): Promise<string | null> => {
+      const { data } = await supabase
+        .from('workout_sessions')
+        .select('started_at')
+        .order('started_at', { ascending: true })
+        .limit(1)
+      const rows = (data ?? []) as Array<{ started_at: string }>
+      return rows.length ? rows[0].started_at.slice(0, 10) : null
+    },
+    staleTime: 10 * 60_000,
+  })
+}
+
 export interface MonthActivity {
   workoutDates: Set<string>
   dataDates: Set<string>

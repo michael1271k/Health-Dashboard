@@ -215,6 +215,40 @@ export interface Database {
         Insert: Omit<Database['public']['Tables']['user_goals']['Row'], 'id' | 'created_at' | 'updated_at'>
         Update: Partial<Database['public']['Tables']['user_goals']['Insert']>
       }
+      daily_logs: {
+        Row: {
+          id: string
+          user_id: string
+          date: string
+          steps: number | null
+          water_ml: number | null
+          sleep_minutes: number | null
+          carbs_g: number | null
+          protein_g: number | null
+          fats_g: number | null
+          weight_kg: number | null
+          lean_mass_kg: number | null
+          bmi: number | null
+          training_minutes: number | null
+          active_energy: number | null
+          body_fat_pct: number | null
+          move_minutes: number | null
+          standing_minutes: number | null
+          avg_heart_rate: number | null
+          blood_oxygen: number | null
+          muscle_percent: number | null
+          water_percent: number | null
+          bone_mineral: number | null
+          visceral_fat: number | null
+          bmr: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: { user_id: string; date: string } & Partial<
+          Omit<Database['public']['Tables']['daily_logs']['Row'], 'id' | 'user_id' | 'date' | 'created_at' | 'updated_at'>
+        >
+        Update: Partial<Database['public']['Tables']['daily_logs']['Insert']>
+      }
       reports: {
         Row: {
           id: string
