@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- Supabase v2 hand-authored Insert/Update types resolve to `never`; payloads are cast at write sites. */
 /**
  * POST /api/ai/complete-daily
  *

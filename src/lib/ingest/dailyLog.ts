@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- Supabase v2 hand-authored Insert types resolve to `never`; payloads are cast at write sites. */
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/lib/supabase/types'
 import type { ShortcutPayload } from './schema'
@@ -44,9 +45,10 @@ export async function ingestDailyLog(
   set('training_minutes', payload.training_minutes)
   set('active_energy', payload.active_energy)
   set('body_fat_pct', payload.body_fat)
-  set('move_minutes', payload.move_minutes)
   set('standing_minutes', payload.standing_minutes)
   set('avg_heart_rate', payload.avg_heart_rate)
+  set('avg_rest_heart_rate', payload.avg_rest_heart_rate)
+  set('respiratory_rate', payload.respiratory_rate)
   set('blood_oxygen', payload.blood_oxygen)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -58,13 +60,14 @@ export async function ingestDailyLog(
     fanOut: { metrics: false, nutrition: false, body: false, water: false, sleep: false },
   }
 
-  // ── 2. Fan-out: daily_metrics (steps, active cal, avg HR proxy) ──
-  if (payload.steps !== undefined || payload.active_energy !== undefined || payload.avg_heart_rate !== undefined) {
+  // ── 2. Fan-out: daily_metrics (steps, active cal, resting HR) ──
+  const restHr = payload.avg_rest_heart_rate ?? payload.avg_heart_rate
+  if (payload.steps !== undefined || payload.active_energy !== undefined || restHr !== undefined) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const m: Record<string, any> = { user_id: userId, date }
     if (payload.steps !== undefined) m.steps = Math.round(payload.steps)
     if (payload.active_energy !== undefined) m.active_cal = Math.round(payload.active_energy)
-    if (payload.avg_heart_rate !== undefined) m.rest_hr = Math.round(payload.avg_heart_rate)
+    if (restHr !== undefined) m.rest_hr = Math.round(restHr)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await db.from('daily_metrics').upsert(m as any, { onConflict: 'user_id,date', ignoreDuplicates: false })
     result.fanOut.metrics = true

@@ -5,6 +5,7 @@ import { Sidebar } from '@/components/nav/Sidebar'
 import { BottomNav } from '@/components/nav/BottomNav'
 import { AuroraBackground } from '@/components/fx/AuroraBackground'
 import { QueryProvider } from '@/components/providers/QueryProvider'
+import { RealtimeProvider } from '@/components/providers/RealtimeProvider'
 import { SerwistRegister } from '@/components/providers/SerwistRegister'
 import './globals.css'
 
@@ -72,17 +73,19 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <QueryProvider>
-            <AuroraBackground />
-            <Sidebar />
-            <main
-              id="main-content"
-              className="min-h-screen pt-4 pb-28 md:pl-64 md:pt-8 md:pb-8 px-4"
-            >
-              <div className="max-w-7xl mx-auto">
-                {children}
-              </div>
-            </main>
-            <BottomNav />
+            <RealtimeProvider>
+              <AuroraBackground />
+              <Sidebar />
+              <main
+                id="main-content"
+                className="min-h-screen pt-4 pb-28 md:pl-64 md:pt-8 md:pb-8 px-4"
+              >
+                <div className="max-w-7xl mx-auto">
+                  {children}
+                </div>
+              </main>
+              <BottomNav />
+            </RealtimeProvider>
           </QueryProvider>
         </ThemeProvider>
         <SerwistRegister />

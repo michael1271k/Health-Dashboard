@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
-import { HistoricalImport } from '@/components/settings/HistoricalImport'
 import type { Tables } from '@/lib/supabase/types'
 
 type ContextMode = 'normal' | 'travel' | 'illness' | 'emergency'
@@ -118,9 +117,6 @@ export default function SettingsPage() {
           <span className="opacity-70"> — change it in the Nutrition tab.</span>
         </p>
       )}
-
-      {/* Historical import */}
-      <HistoricalImport />
 
       {/* Context mode */}
       <section className="vital-card space-y-3">

@@ -31,6 +31,21 @@ export function useTodayScore() {
   })
 }
 
+export function useTodayDailyLog() {
+  return useQuery({
+    queryKey: ['daily_logs', 'today'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('daily_logs')
+        .select('*')
+        .eq('date', todayLocal())
+        .maybeSingle()
+      if (error) throw error
+      return data as Tables<'daily_logs'> | null
+    },
+  })
+}
+
 export function useTodayMetrics() {
   return useQuery({
     queryKey: ['daily_metrics', 'today'],

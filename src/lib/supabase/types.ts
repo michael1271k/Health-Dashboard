@@ -232,9 +232,10 @@ export interface Database {
           training_minutes: number | null
           active_energy: number | null
           body_fat_pct: number | null
-          move_minutes: number | null
           standing_minutes: number | null
           avg_heart_rate: number | null
+          avg_rest_heart_rate: number | null
+          respiratory_rate: number | null
           blood_oxygen: number | null
           muscle_percent: number | null
           water_percent: number | null

@@ -48,3 +48,6 @@ next-env.d.ts
 
 # Local Claude Code skills / tooling
 .claude/
+
+# Generated Notion → SQL dump (run scripts/generate_notion_seed.ts locally)
+historical_seed.sql
