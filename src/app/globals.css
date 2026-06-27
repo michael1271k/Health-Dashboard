@@ -6,19 +6,22 @@
    VITAL Design Tokens (Tailwind v4 @theme)
    ============================================ */
 @theme {
-  /* APEX Color Palette — Obsidian + single electric accent (Phase 5) */
-  --color-bg: #06080F;          /* near-black indigo (obsidian) */
-  --color-surface: #0E1320;     /* used mostly via translucent glass now */
-  --color-surface-2: #161D2E;   /* raised solid surfaces (sliders, inputs) */
-  --color-primary: #3D7DFF;     /* the single electric-blue accent */
-  --color-energy: #7C5CFF;      /* violet — reserved for the battery orb only */
-  --color-info: #38BDF8;        /* data only */
-  --color-success: #2DD4A7;     /* data semantics only (positive deltas) */
-  --color-warn: #FFB020;        /* data semantics only */
-  --color-danger: #FF4D6D;      /* data semantics only */
-  --color-text: #E8EDF6;
-  --color-muted-vital: #8A97B0;
-  --color-border: #1E2A42;      /* hairline (legacy solid contexts) */
+  /* APEX Color Palette — "Midnight Luxe" (Phase 7)
+     Near-black royal base, royal-indigo primary, neon-teal + ice-cyan accents,
+     warm gold for PRs / positive highlights. */
+  --color-bg: #050711;          /* deepest near-black obsidian */
+  --color-surface: #0A0E1C;     /* raised glass base */
+  --color-surface-2: #131A2E;   /* solid raised surfaces (sliders, inputs) */
+  --color-primary: #6D5BFF;     /* royal indigo — the signature accent */
+  --color-energy: #8B7BFF;      /* lighter indigo — battery / recovery */
+  --color-info: #5AD7FF;        /* ice cyan — data */
+  --color-success: #19E3B1;     /* neon teal — positive deltas */
+  --color-warn: #FFB020;        /* amber — caution */
+  --color-danger: #FF5470;      /* rose — negative */
+  --color-gold: #E8C57A;        /* warm gold — PRs / luxury highlight */
+  --color-text: #EAF0FA;
+  --color-muted-vital: #8B97B2;
+  --color-border: #1C2742;      /* hairline (legacy solid contexts) */
   /* Light mode (kept for completeness) */
   --color-light-bg: #F4F6FA;
   --color-light-surface: #FFFFFF;
@@ -206,8 +209,14 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     @apply bg-background text-foreground;
-    /* Obsidian base — the animated Aurora layer (fixed, -z-10) refracts through glass */
+    /* Obsidian base — the animated Aurora layer (fixed, -z-10) refracts through glass.
+       These fixed radial gradients add luxury depth on every screen incl. mobile. */
     background-color: var(--color-bg);
+    background-image:
+      radial-gradient(1100px 760px at 12% -12%, rgba(109,91,255,0.12), transparent 60%),
+      radial-gradient(980px 680px at 112% 8%, rgba(25,227,177,0.09), transparent 55%),
+      radial-gradient(900px 900px at 50% 122%, rgba(90,215,255,0.07), transparent 60%);
+    background-attachment: fixed;
   }
 
   html {
@@ -322,6 +331,25 @@
            focus-visible:ring-2 focus-visible:ring-primary/60;
   }
 
+  /* Frosted glass button — luxury block with a subtle gradient hairline (Phase 7) */
+  .btn-glass {
+    background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    border: 1px solid rgba(255,255,255,0.10);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.14),
+      inset 0 -1px 0 rgba(0,0,0,0.25),
+      0 8px 24px rgba(0,0,0,0.40);
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-text font-semibold
+           cursor-pointer transition-[transform,border-color,box-shadow] duration-150
+           hover:border-primary/45 active:scale-[0.98]
+           focus-visible:ring-2 focus-visible:ring-primary/60;
+  }
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .btn-glass { background: var(--color-surface-2); }
+  }
+
   /* ── Mobile / safe-area utilities (Phase 6) ───────────────────────────── */
   /* Honour iOS/Android notches & home indicator. max() keeps a sane min pad. */
   .safe-pb { padding-bottom: max(0.75rem, env(safe-area-inset-bottom)); }
@@ -339,6 +367,16 @@
 
   /* Perfectly circular media box regardless of parent width (battery orb fix). */
   .circle-square { aspect-ratio: 1 / 1; }
+
+  /* Glowing APEX wordmark (Phase 7) — indigo→cyan→teal gradient + soft glow. */
+  .apex-wordmark {
+    background: linear-gradient(90deg, #6D5BFF 0%, #5AD7FF 52%, #19E3B1 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 16px rgba(109,91,255,0.45));
+  }
 }
 
 /* Bottom-sheet entrance (used by ui/Sheet) — transform/opacity only (GPU). */

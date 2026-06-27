@@ -10,15 +10,16 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
+  ReferenceLine,
 } from 'recharts'
 import { ChartTooltip } from './ChartTooltip'
 
 const COLORS = {
-  weight: '#3D7DFF',   // electric blue (was stale #00E5A0)
-  muscle: '#2DD4A7',   // success teal
-  bodyFat: '#7C5CFF',  // energy violet
+  weight: '#6D5BFF',   // royal indigo (Midnight Luxe)
+  muscle: '#19E3B1',   // neon teal
+  bodyFat: '#5AD7FF',  // ice cyan
   grid: 'rgba(255,255,255,0.06)',
-  text: '#8A97B0',
+  text: '#8B97B2',
 }
 
 interface WeightDataPoint {
@@ -62,6 +63,13 @@ export function WeightTrendChart({ data, isLoading }: WeightTrendChartProps) {
   const minMass = Math.floor(Math.min(...allMass) - 2)
   const maxMass = Math.ceil(Math.max(...weights) + 2)
 
+  // Baseline + delta highlights (initial → latest)
+  const firstWeight = weights[0]
+  const lastWeight = weights[weights.length - 1]
+  const weightDelta = Math.round((lastWeight - firstWeight) * 10) / 10
+  const fats = data.map((d) => d.body_fat_pct).filter((f): f is number => f != null)
+  const fatDelta = fats.length >= 2 ? Math.round((fats[fats.length - 1] - fats[0]) * 10) / 10 : null
+
   const chartData = data.map((d) => ({
     date: formatDate(d.date),
     weight: d.weight_kg,
@@ -71,10 +79,33 @@ export function WeightTrendChart({ data, isLoading }: WeightTrendChartProps) {
 
   return (
     <div className="vital-card">
-      <h3 className="font-heading font-semibold text-base mb-4">Body Composition</h3>
+      <div className="flex items-baseline justify-between gap-2 mb-4 flex-wrap">
+        <h3 className="font-heading font-semibold text-base">Body Composition</h3>
+        <div className="flex items-center gap-3 text-fluid-xs text-muted-vital">
+          <span>
+            Weight <span className="vital-number text-text">{firstWeight}</span> →{' '}
+            <span className="vital-number text-text">{lastWeight}</span>kg
+            <span className={`vital-number ml-1 ${weightDelta <= 0 ? 'text-success' : 'text-warn'}`}>
+              {weightDelta > 0 ? '+' : ''}{weightDelta}
+            </span>
+          </span>
+          {fatDelta != null && (
+            <span>
+              Fat <span className={`vital-number ${fatDelta <= 0 ? 'text-success' : 'text-warn'}`}>
+                {fatDelta > 0 ? '+' : ''}{fatDelta}%
+              </span>
+            </span>
+          )}
+        </div>
+      </div>
       <div role="img" aria-label="Body composition breakdown chart">
-        <ResponsiveContainer width="100%" height={240}>
-          <ComposedChart data={chartData} margin={{ top: 4, right: 16, bottom: 0, left: 0 }}>
+        <ResponsiveContainer width="100%" height={280}>
+          <ComposedChart data={chartData} margin={{ top: 8, right: 18, bottom: 4, left: 0 }}>
+            <ReferenceLine
+              yAxisId="mass" y={firstWeight}
+              stroke={COLORS.weight} strokeOpacity={0.4} strokeDasharray="2 4"
+              label={{ value: 'baseline', position: 'insideTopLeft', fill: COLORS.text, fontSize: 10 }}
+            />
             <defs>
               <linearGradient id="weightFill" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={COLORS.weight} stopOpacity={0.35} />

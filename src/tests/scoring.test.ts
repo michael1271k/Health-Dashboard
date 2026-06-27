@@ -304,13 +304,13 @@ describe('computeReadiness', () => {
   it('returns train_hard when all scores are high (≥70)', () => {
     const result = computeReadiness({ sleepScore: 90, recoveryScore: 90 }, 90)
     expect(result.level).toBe('train_hard')
-    expect(result.color).toBe('#3D7DFF')
+    expect(result.color).toBe('#19E3B1')
   })
 
   it('returns rest when all scores are low (<45)', () => {
     const result = computeReadiness({ sleepScore: 20, recoveryScore: 20 }, 20)
     expect(result.level).toBe('rest')
-    expect(result.color).toBe('#FF4D6D')
+    expect(result.color).toBe('#FF5470')
   })
 
   it('returns train_light for moderate scores (45–69)', () => {
@@ -319,13 +319,13 @@ describe('computeReadiness', () => {
     expect(result.color).toBe('#FFB020')
   })
 
-  it('returns Hebrew labels for all levels', () => {
+  it('returns strict-English labels for all levels', () => {
     const hard  = computeReadiness({ sleepScore: 90, recoveryScore: 90 }, 90)
     const light = computeReadiness({ sleepScore: 55, recoveryScore: 55 }, 55)
     const rest  = computeReadiness({ sleepScore: 20, recoveryScore: 20 }, 20)
-    expect(hard.labelHe).toBe('תתאמן בעוצמה')
-    expect(light.labelHe).toBe('אימון קל')
-    expect(rest.labelHe).toBe('מנוחה היום')
+    expect(hard.label).toBe('Train Hard')
+    expect(light.label).toBe('Train Light')
+    expect(rest.label).toBe('Rest Today')
   })
 })
 

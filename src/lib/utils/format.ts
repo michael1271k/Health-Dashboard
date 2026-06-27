@@ -32,3 +32,22 @@ export function mlToL(ml: number | null | undefined, digits = 1): string {
   if (ml == null || !Number.isFinite(ml)) return '—'
   return (ml / 1000).toFixed(digits)
 }
+
+/**
+ * Human "time ago" for sync timestamps. "just now" · "12m ago" · "3h ago" ·
+ * "2d ago" · then an absolute date. Null/invalid → "—".
+ */
+export function formatRelativeTime(input: string | Date | null | undefined): string {
+  if (!input) return '—'
+  const d = typeof input === 'string' ? new Date(input) : input
+  if (Number.isNaN(d.getTime())) return '—'
+  const sec = Math.round((Date.now() - d.getTime()) / 1000)
+  if (sec < 45) return 'just now'
+  const min = Math.round(sec / 60)
+  if (min < 60) return `${min}m ago`
+  const hr = Math.round(min / 60)
+  if (hr < 24) return `${hr}h ago`
+  const day = Math.round(hr / 24)
+  if (day < 7) return `${day}d ago`
+  return d.toLocaleDateString('en-IL', { day: 'numeric', month: 'short' })
+}

@@ -136,7 +136,13 @@ async function main(): Promise<void> {
   lines.push('BEGIN;')
   lines.push('')
   lines.push('-- ── Clean slate (scoped to the single app user) ──')
-  for (const t of ['workout_sessions', 'daily_logs', 'nutrition_entries', 'body_composition', 'daily_metrics', 'sleep_sessions']) {
+  lines.push('-- Wipes all transactional tables; PRESERVES exercises catalog + user_goals.')
+  lines.push('-- Children before parents (workout_sets → workout_sessions).')
+  for (const t of [
+    'workout_sets', 'workout_sessions', 'nutrition_entries', 'body_composition',
+    'daily_metrics', 'sleep_sessions', 'water_intake', 'supplements',
+    'daily_scores', 'daily_logs', 'reports',
+  ]) {
     lines.push(`DELETE FROM ${t} WHERE user_id = ${USER};`)
   }
   lines.push('')

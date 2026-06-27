@@ -58,8 +58,7 @@ export type ReadinessLevel = 'train_hard' | 'train_light' | 'rest'
 
 export interface ReadinessResult {
   level: ReadinessLevel
-  label: string         // "Train Hard" | "Train Light" | "Rest Today"
-  labelHe: string       // Hebrew label
+  label: string         // "Train Hard" | "Train Light" | "Rest Today" (strict English)
   color: string         // APEX palette hex
   reason: string        // 1-sentence English reason
 }

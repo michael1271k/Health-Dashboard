@@ -1,8 +1,10 @@
 'use client'
 
+import { useState } from 'react'
 import dynamic from 'next/dynamic'
 import { useWeightTrend, useMacroHistory, usePRHistory, useVolumeTrend } from '@/lib/hooks/useCharts'
 import { useUserGoals } from '@/lib/hooks/useDashboard'
+import { RangeSelector } from '@/components/charts/RangeSelector'
 
 // Dynamically import the recharts-heavy components (client-only) so they don't
 // inflate the route's first-load JS.
@@ -17,17 +19,21 @@ const MacroProgressChart = dynamic(() => import('@/components/charts/MacroProgre
 const PRHistoryChart = dynamic(() => import('@/components/charts/PRHistoryChart').then((m) => m.PRHistoryChart), { ssr: false, loading: chartFallback })
 
 export default function ChartsPage() {
-  const { data: weightData, isLoading: weightLoading } = useWeightTrend(90)
-  const { data: volumeData, isLoading: volumeLoading } = useVolumeTrend(90)
-  const { data: macroData, isLoading: macroLoading } = useMacroHistory(14)
-  const { data: prData, isLoading: prLoading } = usePRHistory(undefined, 60)
+  const [days, setDays] = useState(30) // 1 Month default
+  const { data: weightData, isLoading: weightLoading } = useWeightTrend(days)
+  const { data: volumeData, isLoading: volumeLoading } = useVolumeTrend(days)
+  const { data: macroData, isLoading: macroLoading } = useMacroHistory(days)
+  const { data: prData, isLoading: prLoading } = usePRHistory(undefined, days)
   const { data: goals, isLoading: goalsLoading } = useUserGoals()
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-heading text-fluid-2xl font-bold text-text">Charts</h1>
-        <p className="text-muted-vital text-fluid-sm mt-0.5">Trends &amp; progress over time</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="font-heading text-fluid-2xl font-bold text-text">Charts</h1>
+          <p className="text-muted-vital text-fluid-sm mt-0.5">Trends &amp; progress over time</p>
+        </div>
+        <RangeSelector value={days} onChange={setDays} />
       </div>
 
       <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">

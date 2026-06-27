@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { MetricCard } from '@/components/dashboard/MetricCard'
-import { ReadinessCard } from '@/components/dashboard/ReadinessCard'
+import { ScoreRings } from '@/components/dashboard/ScoreRings'
 import { BatteryOrbFallback } from '@/components/three/BatteryOrbFallback'
 import { Footprints } from 'lucide-react'
 
@@ -39,20 +39,23 @@ describe('BatteryOrbFallback', () => {
   })
 })
 
-describe('ReadinessCard', () => {
-  it('shows Train Hard when score is high', () => {
-    const highScore = {
-      id: '1', user_id: 'u1', date: '2024-01-15',
-      score: 90, sleep_score: 85, nutrition_score: 90,
-      activity_score: 80, workout_score: 75, recovery_score: 90,
-      battery_pct: 85, computed_at: new Date().toISOString(),
-    } as const
-    render(<ReadinessCard score={highScore} sleep={null} />)
-    expect(screen.getByText('Train Hard')).toBeInTheDocument()
+describe('ScoreRings', () => {
+  it('renders the centered value and an SVG of ring tracks', () => {
+    const { container } = render(
+      <ScoreRings
+        centerValue={82}
+        centerUnit="%"
+        rings={[{ label: 'Battery', value: 82, color: '#6D5BFF' }]}
+        caption="Good Energy"
+      />,
+    )
+    expect(screen.getByText('82')).toBeInTheDocument()
+    expect(screen.getByText('Good Energy')).toBeInTheDocument()
+    expect(container.querySelector('svg')).toBeTruthy()
   })
 
-  it('shows Rest Today when no data', () => {
-    render(<ReadinessCard score={null} sleep={null} />)
-    expect(screen.getByText('Rest Today')).toBeInTheDocument()
+  it('shows an em-dash when there is no value', () => {
+    render(<ScoreRings centerValue={null} rings={[{ label: 'x', value: 0, color: '#fff' }]} />)
+    expect(screen.getByText('—')).toBeInTheDocument()
   })
 })

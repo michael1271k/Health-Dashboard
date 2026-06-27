@@ -19,7 +19,7 @@ interface ActiveGoals {
 function fmtNum(v: number | null, unit = '') {
   if (v === null) return <span className="text-muted-vital">—</span>
   return (
-    <span>
+    <span className="vital-number">
       {Math.round(v)}
       {unit && <span className="text-xs text-muted-vital ml-0.5">{unit}</span>}
     </span>
@@ -32,10 +32,10 @@ function gradedVal(v: number | null, goal: number | null, unit: string, higherIs
   if (goal === null || goal === 0) return fmtNum(v, unit)
   const ratio = v / goal
   const color = higherIsBetter
-    ? ratio >= 0.95 ? '#2DD4A7' : ratio >= 0.75 ? '#FFB020' : '#FF4D6D'
-    : ratio <= 1.05 ? '#2DD4A7' : ratio <= 1.20 ? '#FFB020' : '#FF4D6D'
+    ? ratio >= 0.95 ? '#19E3B1' : ratio >= 0.75 ? '#FFB020' : '#FF5470'
+    : ratio <= 1.05 ? '#19E3B1' : ratio <= 1.20 ? '#FFB020' : '#FF5470'
   return (
-    <span className="font-semibold" style={{ color }}>
+    <span className="vital-number font-semibold" style={{ color }}>
       {Math.round(v)}
       <span className="text-xs font-normal text-muted-vital ml-0.5">{unit}</span>
     </span>

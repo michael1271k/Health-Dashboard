@@ -38,8 +38,18 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     }
     channel.subscribe()
 
+    // Safety net (still zero serverless cost — pure client refetch against
+    // Supabase): if the tab was backgrounded or offline during one of the
+    // scheduled 10/12/14/16/18/20/22 Shortcut syncs and missed the socket
+    // event, refresh on return-to-visible / reconnect.
+    const onVisible = () => { if (document.visibilityState === 'visible') refresh() }
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('online', refresh)
+
     return () => {
       if (timer) clearTimeout(timer)
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('online', refresh)
       supabase.removeChannel(channel)
     }
   }, [queryClient])

@@ -20,12 +20,12 @@ const TrendStrip = dynamic(
 )
 import { DomainWidget } from '@/components/dashboard/DomainWidget'
 import { StatTile } from '@/components/dashboard/StatTile'
-import { ReadinessCard } from '@/components/dashboard/ReadinessCard'
+import { InsightCoach } from '@/components/dashboard/InsightCoach'
 import { AnimatedCard } from '@/components/dashboard/AnimatedBento'
 import { WeeklyReviewCard } from '@/components/dashboard/WeeklyReviewCard'
-import { Greeting } from '@/components/dashboard/Greeting'
+import { BrandHeader } from '@/components/dashboard/BrandHeader'
 import { WidgetDeck, type DeckItem } from '@/components/ui/WidgetDeck'
-import { formatSleep, mlToL } from '@/lib/utils/format'
+import { formatSleep, mlToL, formatRelativeTime } from '@/lib/utils/format'
 import {
   useTodayScore,
   useEnsureTodayScore,
@@ -39,10 +39,11 @@ import {
 import { PPL_SPLITS } from '@/lib/types/workout'
 import type { SplitDay } from '@/lib/types/workout'
 
-const VIOLET = '#7C5CFF'
-const BLUE = '#3D7DFF'
-const TEAL = '#2DD4A7'
-const CYAN = '#38BDF8'
+// Midnight Luxe accents
+const VIOLET = '#8B7BFF'
+const BLUE = '#6D5BFF'
+const TEAL = '#19E3B1'
+const CYAN = '#5AD7FF'
 
 const n1 = (v: number | null | undefined): string | null =>
   v == null || !Number.isFinite(v) ? null : Number(v).toFixed(1)
@@ -71,10 +72,6 @@ export default function DashboardPage() {
   const { data: sleep, isLoading: sleepLoading } = useTodaySleep()
   const { data: goals } = useUserGoals()
   const { data: sessions } = useRecentSessions(5)
-
-  const today = new Intl.DateTimeFormat('en-IL', {
-    weekday: 'long', day: 'numeric', month: 'long',
-  }).format(new Date())
 
   // Derived (daily_logs is the richest source; fall back to fan-out tables)
   const sleepMin = log?.sleep_minutes ?? sleep?.duration_min ?? null
@@ -121,7 +118,10 @@ export default function DashboardPage() {
     {
       id: 'body', label: 'Body', icon: Scale,
       node: (
-        <DomainWidget title="Body Composition" icon={Scale} accent={TEAL}>
+        <DomainWidget
+          title="Body Composition" icon={Scale} accent={TEAL}
+          footer={log?.updated_at ? <>Updated {formatRelativeTime(log.updated_at)}</> : undefined}
+        >
           <StatTile label="Weight" value={n1(log?.weight_kg)} unit="kg" accent={TEAL} isLoading={logLoading} />
           <StatTile label="BMI" value={n1(log?.bmi)} isLoading={logLoading} />
           <StatTile label="Lean Mass" value={n1(log?.lean_mass_kg)} unit="kg" isLoading={logLoading} />
@@ -158,15 +158,12 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-0.5">
-        <Greeting />
-        <p className="text-muted-vital text-fluid-sm">{today}</p>
-      </div>
+      <BrandHeader />
 
       {/* Command-center hero: stacks on mobile, pairs on sm, gains a trends column on xl */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-[1.1fr_1fr_1.3fr]">
         <AnimatedCard index={0}><ScoreCard score={score ?? null} isLoading={scoreLoading} /></AnimatedCard>
-        <AnimatedCard index={1}><BatteryCard battery={score?.battery_pct ?? null} isLoading={scoreLoading} /></AnimatedCard>
+        <AnimatedCard index={1}><BatteryCard battery={score?.battery_pct ?? null} sleepScore={score?.sleep_score ?? null} recoveryScore={score?.recovery_score ?? null} isLoading={scoreLoading} /></AnimatedCard>
         <div className="hidden xl:block"><AnimatedCard index={2}><TrendStrip /></AnimatedCard></div>
       </div>
 
@@ -182,9 +179,9 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Readiness + Weekly review */}
+      {/* Insight Coach + Weekly review */}
       <AnimatedCard index={6}>
-        <ReadinessCard score={score ?? null} sleep={sleep ?? null} isLoading={scoreLoading || sleepLoading} />
+        <InsightCoach />
       </AnimatedCard>
       <AnimatedCard index={7}>
         <WeeklyReviewCard />
