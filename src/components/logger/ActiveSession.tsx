@@ -4,7 +4,8 @@ import { useState, useCallback } from 'react'
 import { SplitPicker } from './SplitPicker'
 import { ExerciseList } from './ExerciseList'
 import { WorkoutForm } from './WorkoutForm'
-import { useExercises, useSaveSession, type SaveResult } from '@/lib/hooks/useLogger'
+import { useExercises, useLastSets, useSaveSession, type SaveResult } from '@/lib/hooks/useLogger'
+import { getTodaysSplit } from '@/lib/types/workout'
 import type { SplitDay, WorkoutSet } from '@/lib/types/workout'
 import { Dumbbell, Check } from 'lucide-react'
 
@@ -13,13 +14,18 @@ interface ActiveSessionProps {
 }
 
 export function ActiveSession({ onSaved }: ActiveSessionProps) {
-  const [splitDay, setSplitDay] = useState<SplitDay | null>(null)
+  // Default to today's scheduled split; user can override
+  const todayDefault = getTodaysSplit()
+  const [splitDay, setSplitDay] = useState<SplitDay | null>(
+    todayDefault === 'rest' ? null : todayDefault
+  )
   const [startedAt] = useState(() => new Date().toISOString())
   const [sets, setSets] = useState<WorkoutSet[]>([])
   const [notes, setNotes] = useState('')
   const [savedResult, setSavedResult] = useState<SaveResult | null>(null)
 
   const { data: exercises, isLoading: exercisesLoading } = useExercises(splitDay)
+  const { data: lastSets, isLoading: lastSetsLoading } = useLastSets(splitDay)
   const { mutate: saveSession, isPending: isSaving } = useSaveSession()
 
   const handleAddSet = useCallback((set: WorkoutSet) => {
@@ -54,7 +60,7 @@ export function ActiveSession({ onSaved }: ActiveSessionProps) {
         <div className="space-y-1 text-muted-vital text-sm">
           <p>{sets.length} sets · {Math.round(savedResult.totalVolumeKg)}kg total volume</p>
           {savedResult.notionPageId && (
-            <p className="text-primary text-xs flex items-center gap-1">
+            <p className="text-primary text-xs flex items-center gap-1 justify-center">
               <Check className="w-3 h-3" aria-hidden="true" />
               Logged to Notion
             </p>
@@ -75,7 +81,7 @@ export function ActiveSession({ onSaved }: ActiveSessionProps) {
         <button
           type="button"
           onClick={() => {
-            setSplitDay(null)
+            setSplitDay(todayDefault === 'rest' ? null : todayDefault)
             setSets([])
             setNotes('')
             setSavedResult(null)
@@ -90,11 +96,21 @@ export function ActiveSession({ onSaved }: ActiveSessionProps) {
 
   return (
     <div className="space-y-6">
+      {/* Split selector */}
       <div>
-        <h2 className="font-heading font-semibold text-lg text-text mb-3">Select Split</h2>
+        <h2 className="font-heading font-semibold text-lg text-text mb-3">
+          Select Split
+          {todayDefault !== 'rest' && (
+            <span className="text-xs font-normal text-muted-vital ml-2">(today's schedule pre-selected)</span>
+          )}
+          {todayDefault === 'rest' && (
+            <span className="text-xs font-normal text-warn ml-2">Rest day — override to log anyway</span>
+          )}
+        </h2>
         <SplitPicker value={splitDay} onChange={setSplitDay} />
       </div>
 
+      {/* Exercise sliders */}
       {splitDay && (
         <>
           <div>
@@ -103,7 +119,8 @@ export function ActiveSession({ onSaved }: ActiveSessionProps) {
               exercises={exercises ?? []}
               sets={sets}
               onAddSet={handleAddSet}
-              isLoading={exercisesLoading}
+              lastSets={lastSets ?? new Map()}
+              isLoading={exercisesLoading || lastSetsLoading}
             />
           </div>
 

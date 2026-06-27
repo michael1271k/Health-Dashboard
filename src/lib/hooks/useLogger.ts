@@ -5,6 +5,62 @@ import { supabase } from '@/lib/supabase/client'
 import type { SaveWorkoutPayload, SplitDay } from '@/lib/types/workout'
 import type { Tables } from '@/lib/supabase/types'
 
+// Map from exercise_id (UUID) → { weightKg, reps } from the most recent session
+export type LastSetsMap = Map<string, { weightKg: number; reps: number }>
+
+/**
+ * Returns the most recent set per exercise for the given split.
+ * "Legs" also includes the legacy "lower" split_day for backward compatibility.
+ * Used to pre-fill sliders and show progressive-overload memory.
+ */
+export function useLastSets(splitDay: SplitDay | null) {
+  return useQuery({
+    queryKey: ['workout_sets', 'last', splitDay],
+    queryFn: async (): Promise<LastSetsMap> => {
+      if (!splitDay) return new Map()
+
+      // For legs, also include legacy 'lower' sessions
+      const splitDays = splitDay === 'legs' ? ['legs', 'lower'] : [splitDay]
+
+      // 1. Get the most recent session for this split
+      const { data: sessions } = await supabase
+        .from('workout_sessions')
+        .select('id')
+        .in('split_day', splitDays)
+        .order('started_at', { ascending: false })
+        .limit(1)
+
+      const session = (sessions ?? []) as Array<{ id: string }>
+      if (!session.length) return new Map()
+
+      const sessionId = session[0].id
+
+      // 2. Get all sets from that session
+      const { data: setsRaw } = await supabase
+        .from('workout_sets')
+        .select('exercise_id, weight_kg, reps')
+        .eq('session_id', sessionId)
+
+      const sets = (setsRaw ?? []) as Array<{
+        exercise_id: string
+        weight_kg: number
+        reps: number
+      }>
+
+      // 3. Dedupe by exercise_id (take first = highest set_number / any from that session)
+      const map: LastSetsMap = new Map()
+      for (const s of sets) {
+        if (!map.has(s.exercise_id)) {
+          map.set(s.exercise_id, { weightKg: s.weight_kg, reps: s.reps })
+        }
+      }
+      return map
+    },
+    enabled: !!splitDay,
+    staleTime: 60_000,
+  })
+}
+
 export function useExercises(splitDay: SplitDay | null) {
   return useQuery({
     queryKey: ['exercises', splitDay],

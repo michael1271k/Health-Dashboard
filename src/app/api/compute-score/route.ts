@@ -4,6 +4,7 @@ import { computeDailyScore } from '@/lib/scoring/score'
 import { computeBattery } from '@/lib/scoring/battery'
 import type { ScoringInputs } from '@/lib/scoring/types'
 import type { Tables, InsertRow } from '@/lib/supabase/types'
+import { WEEKDAY_SPLIT } from '@/lib/types/workout'
 
 function todayISO(): string {
   return new Date().toLocaleDateString('en-CA')   // YYYY-MM-DD, locale-safe
@@ -88,8 +89,8 @@ export async function POST(req: Request) {
     .eq('is_pr', true)
     .gte('created_at', `${today}T00:00:00Z`)
 
-  // PPL+ schedule: 0=Sun(Push), 1=Mon(Pull), 2=Tue(Legs), 3=Wed(Rest), 4=Thu(Upper), 5=Fri(Lower), 6=Sat(Rest)
-  const isRestDay = [3, 6].includes(new Date().getDay())
+  // Fixed weekday cycle: Sun=Upper, Mon=Legs/Lower, Tue=Push, Wed=Pull, Thu=Legs/Lower, Fri=Rest, Sat=Rest
+  const isRestDay = WEEKDAY_SPLIT[new Date().getDay()] === 'rest'
 
   const g = goals ?? {
     sleep_goal_hours: 8, calorie_goal: 1935, protein_goal_g: 180,

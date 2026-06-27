@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Outfit, Inter, JetBrains_Mono } from 'next/font/google'
 import { ThemeProvider } from '@/components/theme-provider'
-import { Navbar } from '@/components/nav/Navbar'
+import { Sidebar } from '@/components/nav/Sidebar'
 import { BottomNav } from '@/components/nav/BottomNav'
 import { QueryProvider } from '@/components/providers/QueryProvider'
 import { SerwistRegister } from '@/components/providers/SerwistRegister'
@@ -71,10 +71,10 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <QueryProvider>
-            <Navbar />
+            <Sidebar />
             <main
               id="main-content"
-              className="min-h-screen bg-bg pt-4 pb-24 md:pt-24 md:pb-8 px-4"
+              className="min-h-screen bg-bg pt-4 pb-24 md:pl-64 md:pt-8 md:pb-8 px-4"
             >
               <div className="max-w-7xl mx-auto">
                 {children}

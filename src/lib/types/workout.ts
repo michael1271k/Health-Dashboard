@@ -31,8 +31,8 @@ export interface SaveWorkoutPayload {
   notes: string
 }
 
-// PPL+ split schedule
-// Sun=Push, Mon=Pull, Tue=Legs, Wed=Rest, Thu=Upper, Fri=Lower, Sat=Rest
+// Full 5-entry map — kept for history rendering (all historical split_day values)
+// "lower" is legacy; new sessions use "legs" for Legs/Lower
 export const PPL_SPLITS: Record<SplitDay, { label: string; labelHe: string; color: string }> = {
   push: {
     label: 'Push',
@@ -45,7 +45,7 @@ export const PPL_SPLITS: Record<SplitDay, { label: string; labelHe: string; colo
     color: '#7C5CFF',   // energy violet
   },
   legs: {
-    label: 'Legs',
+    label: 'Legs/Lower',
     labelHe: 'רגליים',
     color: '#38BDF8',   // info blue
   },
@@ -55,10 +55,36 @@ export const PPL_SPLITS: Record<SplitDay, { label: string; labelHe: string; colo
     color: '#2DD4A7',   // success teal
   },
   lower: {
-    label: 'Lower',
+    label: 'Lower',     // legacy — maps to 'legs' in new sessions
     labelHe: 'פלג גוף תחתון',
     color: '#FFB020',   // warm
   },
+}
+
+// Logger-only 4-entry list — English only, no Hebrew, canonical Legs/Lower → 'legs'
+// Used by SplitPicker to render the 4 active training splits in one row.
+export const LOGGER_SPLITS: Array<{ day: SplitDay; label: string; color: string }> = [
+  { day: 'upper', label: 'Upper',      color: '#2DD4A7' },
+  { day: 'legs',  label: 'Legs/Lower', color: '#38BDF8' },
+  { day: 'push',  label: 'Push',       color: '#3D7DFF' },
+  { day: 'pull',  label: 'Pull',       color: '#7C5CFF' },
+]
+
+// Fixed-weekday cycle (Sun–Sat):
+//   Sun=Upper, Mon=Legs/Lower, Tue=Push, Wed=Pull, Thu=Legs/Lower, Fri=Rest, Sat=Rest
+// Single source of truth for the logger's default suggestion and scoring's rest-day detection.
+export const WEEKDAY_SPLIT: Record<number, SplitDay | 'rest'> = {
+  0: 'upper',  // Sunday
+  1: 'legs',   // Monday
+  2: 'push',   // Tuesday
+  3: 'pull',   // Wednesday
+  4: 'legs',   // Thursday
+  5: 'rest',   // Friday
+  6: 'rest',   // Saturday
+}
+
+export function getTodaysSplit(): SplitDay | 'rest' {
+  return WEEKDAY_SPLIT[new Date().getDay()] ?? 'rest'
 }
 
 // Cut preset — intentional: 55g fat is strict but deliberate (0.3–0.4 kg/wk loss)
