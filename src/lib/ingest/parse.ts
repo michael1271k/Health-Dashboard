@@ -192,15 +192,22 @@ export interface ParsedBodyComp {
   date: string
   weightKg: number
   bodyFatPct?: number
+  muscleMassKg?: number
 }
 
 export function parseBodyComposition(groups: HealthMetricGroup[]): ParsedBodyComp[] {
   const weightGroup = groups.find(
     (g) => g.name.toLowerCase().includes('body_mass') || g.name.toLowerCase().includes('weight'),
   )
-  if (!weightGroup) return []
+  // Don't early-return: lean_body_mass is named "lean_body_mass" which also
+  // contains "body_mass"; ensure we pick the WEIGHT group specifically.
+  const weight = groups.find((g) => {
+    const n = g.name.toLowerCase()
+    return (n.includes('body_mass') || n === 'weight' || n.includes('weight')) && !n.includes('lean')
+  }) ?? weightGroup
+  if (!weight) return []
 
-  // Build body fat lookup by date from separate metric group
+  // Body fat % lookup by date
   const bodyFatGroup = groups.find((g) => g.name.toLowerCase().includes('body_fat'))
   const bodyFatByDate = new Map<string, number>()
   if (bodyFatGroup) {
@@ -209,7 +216,19 @@ export function parseBodyComposition(groups: HealthMetricGroup[]): ParsedBodyCom
     }
   }
 
-  return weightGroup.data.map((sample) => {
+  // Lean / muscle mass lookup by date (Apple Health: lean_body_mass)
+  const leanGroup = groups.find((g) => {
+    const n = g.name.toLowerCase()
+    return n.includes('lean_body_mass') || n.includes('muscle')
+  })
+  const muscleByDate = new Map<string, number>()
+  if (leanGroup) {
+    for (const s of leanGroup.data) {
+      muscleByDate.set(new Date(s.startDate).toISOString().slice(0, 10), s.value)
+    }
+  }
+
+  return weight.data.map((sample) => {
     const date = new Date(sample.startDate).toISOString().slice(0, 10)
     return {
       hkUuid: sample.uuid,
@@ -217,6 +236,7 @@ export function parseBodyComposition(groups: HealthMetricGroup[]): ParsedBodyCom
       date,
       weightKg: sample.value,
       bodyFatPct: bodyFatByDate.get(date),
+      muscleMassKg: muscleByDate.get(date),
     }
   })
 }

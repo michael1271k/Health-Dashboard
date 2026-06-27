@@ -61,6 +61,53 @@ export function useLastSets(splitDay: SplitDay | null) {
   })
 }
 
+// All exercises grouped by canonical logger split (lower → legs)
+export type GroupedExercises = Record<'upper' | 'legs' | 'push' | 'pull', Tables<'exercises'>[]>
+
+export function useAllExercises() {
+  return useQuery({
+    queryKey: ['exercises', 'all'],
+    queryFn: async (): Promise<GroupedExercises> => {
+      const { data, error } = await supabase
+        .from('exercises')
+        .select('*')
+        .order('is_compound', { ascending: false })
+        .order('name')
+      if (error) throw error
+      const rows = (data ?? []) as Tables<'exercises'>[]
+      const grouped: GroupedExercises = { upper: [], legs: [], push: [], pull: [] }
+      for (const ex of rows) {
+        const key = ex.split_day === 'lower' ? 'legs' : ex.split_day
+        if (key in grouped) grouped[key as keyof GroupedExercises].push(ex)
+      }
+      return grouped
+    },
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+/** Most recent set per exercise across all sessions — powers the "Previous: Xkg × Y" memory. */
+export function useExerciseMemory() {
+  return useQuery({
+    queryKey: ['workout_sets', 'memory'],
+    queryFn: async (): Promise<LastSetsMap> => {
+      const { data, error } = await supabase
+        .from('workout_sets')
+        .select('exercise_id, weight_kg, reps, created_at')
+        .order('created_at', { ascending: false })
+        .limit(800)
+      if (error) throw error
+      const rows = (data ?? []) as Array<{ exercise_id: string; weight_kg: number; reps: number }>
+      const map: LastSetsMap = new Map()
+      for (const r of rows) {
+        if (!map.has(r.exercise_id)) map.set(r.exercise_id, { weightKg: r.weight_kg, reps: r.reps })
+      }
+      return map
+    },
+    staleTime: 60_000,
+  })
+}
+
 export function useExercises(splitDay: SplitDay | null) {
   return useQuery({
     queryKey: ['exercises', splitDay],

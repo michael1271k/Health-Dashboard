@@ -58,19 +58,21 @@ export function computeNutritionScore(inputs: Pick<ScoringInputs,
   const pMult = penaltyMult(inputs.contextMode)
 
   function pctError(actual: number, goal: number, asymmetric = false): number {
-    if (goal === 0) return 0
     const err = (actual - goal) / goal
     if (asymmetric && err > 0) return err * 1.5 * 100  // over-eating on a cut: harsher
     return Math.abs(err) * 100
   }
 
-  const errors = [
-    pctError(inputs.calories, inputs.calorieGoal, true),
-    pctError(inputs.proteinG, inputs.proteinGoalG),  // weight 1
-    pctError(inputs.proteinG, inputs.proteinGoalG),  // weight 2 (protein counted double)
-    pctError(inputs.carbsG, inputs.carbsGoalG),
-    pctError(inputs.fatG, inputs.fatGoalG),
-  ]
+  // Only grade macros that have a target (>0). Bulk/Maintenance leave macros
+  // null → graded on calories only. Calories are always graded.
+  const errors: number[] = [pctError(inputs.calories, inputs.calorieGoal, true)]
+  if (inputs.proteinGoalG > 0) {
+    errors.push(pctError(inputs.proteinG, inputs.proteinGoalG))  // weight 1
+    errors.push(pctError(inputs.proteinG, inputs.proteinGoalG))  // weight 2 (protein double)
+  }
+  if (inputs.carbsGoalG > 0) errors.push(pctError(inputs.carbsG, inputs.carbsGoalG))
+  if (inputs.fatGoalG > 0)   errors.push(pctError(inputs.fatG, inputs.fatGoalG))
+
   const meanError = errors.reduce((s, e) => s + e, 0) / errors.length
   return clamp(100 - meanError * pMult)
 }

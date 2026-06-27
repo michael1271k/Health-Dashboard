@@ -11,17 +11,36 @@ function daysAgo(n: number): string {
   return d.toLocaleDateString('en-CA')
 }
 
-export function useWeightTrend(days = 30) {
+export function useWeightTrend(days = 90) {
   return useQuery({
     queryKey: ['body_composition', 'trend', days],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('body_composition')
-        .select('date, weight_kg, body_fat_pct')
+        .select('date, weight_kg, body_fat_pct, muscle_mass_kg')
         .gte('date', daysAgo(days))
         .order('date', { ascending: true })
       if (error) throw error
-      return (data ?? []) as Pick<Tables<'body_composition'>, 'date' | 'weight_kg' | 'body_fat_pct'>[]
+      return (data ?? []) as Pick<Tables<'body_composition'>, 'date' | 'weight_kg' | 'body_fat_pct' | 'muscle_mass_kg'>[]
+    },
+  })
+}
+
+export type VolumePoint = { date: string; volume: number; split: string }
+
+export function useVolumeTrend(days = 90) {
+  return useQuery({
+    queryKey: ['workout_sessions', 'volume_trend', days],
+    queryFn: async (): Promise<VolumePoint[]> => {
+      const { data, error } = await supabase
+        .from('workout_sessions')
+        .select('started_at, total_volume_kg, split_day, notes')
+        .gte('started_at', new Date(Date.now() - days * 86400000).toISOString())
+        .order('started_at', { ascending: true })
+      if (error) throw error
+      return ((data ?? []) as Array<{ started_at: string; total_volume_kg: number | null; split_day: string; notes: string | null }>)
+        .filter((r) => r.total_volume_kg != null && !r.notes?.startsWith('__seed_'))
+        .map((r) => ({ date: r.started_at.slice(0, 10), volume: Math.round(r.total_volume_kg as number), split: r.split_day }))
     },
   })
 }

@@ -1,27 +1,30 @@
 /**
  * POST /api/ai/parse-workout
  *
- * Accepts a free-form Hebrew gym log (or English) and uses Claude to extract
- * a structured SaveWorkoutPayload. The extracted data is then forwarded to
- * the existing POST /api/sessions route which handles volume calc, PR
- * detection, Supabase insert, and Notion gym-log push.
+ * The AI Chat workout logger. Accepts a free-form Hebrew/English session
+ * description and:
+ *  1. Extracts a structured schema (sets + session metrics) via Claude.
+ *  2. Fills missing BPM/calories/duration from Apple Health (matchWorkoutMetrics).
+ *  3. Resolves exercise names → real exercises.id UUIDs (creates missing).
+ *  4. Saves via the shared saveSession() service (volume, PRs, Notion push).
+ *  5. Generates a markdown "Gym Session Report" and stores it on the session.
  *
- * Body: { text: string }  — the raw Hebrew/English workout description
- *
- * Returns the same shape as POST /api/sessions on success.
+ * Body: { text: string, splitDay?: 'push'|'pull'|'legs'|'upper'|'lower' }
  */
 
 import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { z } from 'zod'
 import { getServerSupabaseClient } from '@/lib/supabase/server'
-
-// ─── Schema for what Claude must return ───────────────────────────────────────
+import { denyIfUnauthorized } from '@/lib/auth/guard'
+import { resolveExercises } from '@/lib/sessions/resolveExercises'
+import { saveSession } from '@/lib/sessions/save'
+import { matchWorkoutMetrics } from '@/lib/health/matchWorkout'
+import type { SaveWorkoutPayload, SplitDay } from '@/lib/types/workout'
 
 const ParsedSetSchema = z.object({
-  exerciseId:     z.string().describe('Canonical English exercise name (used as placeholder ID)'),
-  exerciseName:   z.string().describe('Canonical English exercise name'),
-  exerciseNameHe: z.string().optional().describe('Hebrew exercise name if provided'),
+  exerciseName:   z.string().min(1),
+  exerciseNameHe: z.string().optional(),
   setNumber:      z.number().int().positive(),
   weightKg:       z.number().nonnegative(),
   reps:           z.number().int().positive(),
@@ -29,89 +32,102 @@ const ParsedSetSchema = z.object({
 })
 
 const ParsedWorkoutSchema = z.object({
-  splitDay:  z.enum(['push', 'pull', 'legs', 'upper', 'lower'])
-              .describe('Infer from exercises if not stated'),
-  startedAt: z.string().describe('ISO 8601 datetime — use today if not specified'),
-  endedAt:   z.string().describe('ISO 8601 datetime — estimate +1h if not specified'),
-  sets:      z.array(ParsedSetSchema).min(1),
-  notes:     z.string().default('').describe('Preserve the original Hebrew notes verbatim'),
+  splitDay:       z.enum(['push', 'pull', 'legs', 'upper', 'lower']),
+  startedAt:      z.string(),
+  endedAt:        z.string(),
+  durationMin:    z.number().nullable().optional(),
+  avgBpm:         z.number().nullable().optional(),
+  caloriesBurned: z.number().nullable().optional(),
+  sets:           z.array(ParsedSetSchema).min(1),
+  notes:          z.string().default(''),
 })
-
 type ParsedWorkout = z.infer<typeof ParsedWorkoutSchema>
 
-// ─── System prompt ─────────────────────────────────────────────────────────────
-const SYSTEM_PROMPT = `You are a workout-log parser for a personal fitness tracking app.
-The user logs their gym sessions in Hebrew or English.
-
-Your ONLY job is to extract the structured data exactly as described in the JSON schema.
+const PARSE_SYSTEM = `You are a workout-log parser for a personal fitness app. The user logs gym sessions in Hebrew or English.
+Extract the structured data EXACTLY per the JSON schema.
 Rules:
-1. Map Hebrew exercise names to their canonical English names (e.g. "לחיצת חזה" → "Bench Press").
-2. Infer split_day from the exercises if not explicitly stated.
-3. NEVER invent sets, weights, reps, or RPE — only extract what is explicitly stated.
-4. If a date/time is mentioned, parse it. Otherwise use the current UTC datetime for startedAt and startedAt + 60 minutes for endedAt.
-5. Preserve the user's original notes (Hebrew or English) verbatim in the notes field.
-6. Return ONLY valid JSON matching the schema — no markdown, no commentary.`
+1. Map Hebrew exercise names to canonical English names (e.g. "לחיצת חזה" → "Bench Press"); keep the Hebrew in exerciseNameHe.
+2. Infer splitDay from the exercises if not explicitly stated.
+3. NEVER invent sets, weights, reps, RPE, BPM, calories, or duration — only extract what is explicitly stated. Use null for unstated durationMin/avgBpm/caloriesBurned.
+4. If a date/time is mentioned, parse it; otherwise use the provided current UTC time for startedAt and startedAt+60min for endedAt.
+5. Preserve the user's original notes (Hebrew or English) verbatim.
+6. Return ONLY valid JSON matching the schema.`
 
-// ─── Route handler ─────────────────────────────────────────────────────────────
+const REPORT_SYSTEM = `You are an elite strength coach writing a concise "Gym Session Report" in Markdown, mirroring a personal training journal.
+Structure:
+## Session Summary
+One or two sentences on the session's focus and quality.
+## Top Sets
+Bullet the heaviest/most notable set per exercise.
+## PRs
+List any personal records (or "None this session").
+## Volume
+Total volume and how it compares to the trailing average (if provided).
+## Feel & Notes
+Reflect the athlete's stated feelings/notes; add one brief coaching cue.
+Rules: base everything strictly on the supplied data; do not fabricate numbers. Be direct and motivating, not flowery.`
+
 export async function POST(req: Request) {
-  // Auth guard
+  const denied = denyIfUnauthorized(req)
+  if (denied) return denied
+
   const supabase = getServerSupabaseClient()
   const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers()
   if (usersError || !users.length) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  const userId = users[0].id
 
-  // Parse request body
   let text: string
+  let hintSplit: SplitDay | undefined
   try {
-    const body = await req.json() as { text?: unknown }
+    const body = await req.json() as { text?: unknown; splitDay?: unknown }
     if (typeof body.text !== 'string' || !body.text.trim()) {
       return NextResponse.json({ error: '`text` (string) is required' }, { status: 400 })
     }
     text = body.text.trim()
+    if (typeof body.splitDay === 'string') hintSplit = body.splitDay as SplitDay
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  // Check API key
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
     return NextResponse.json({ error: 'ANTHROPIC_API_KEY not configured' }, { status: 500 })
   }
-
-  // Call Claude with structured output
   const client = new Anthropic({ apiKey })
-  const today = new Date().toISOString()
+  const nowIso = new Date().toISOString()
 
+  // ── 1. Parse ──────────────────────────────────────────────────────────────
   let parsed: ParsedWorkout
   try {
     const response = await client.messages.create({
       model: 'claude-opus-4-8',
       max_tokens: 2048,
       thinking: { type: 'adaptive' },
-      system: SYSTEM_PROMPT,
-      messages: [
-        {
-          role: 'user',
-          content: `Parse this workout log. Current UTC time: ${today}\n\n${text}`,
-        },
-      ],
+      system: PARSE_SYSTEM,
+      messages: [{
+        role: 'user',
+        content: `Parse this workout log. Current UTC time: ${nowIso}.${hintSplit ? ` The user opened the "${hintSplit}" split.` : ''}\n\n${text}`,
+      }],
       output_config: {
         format: {
           type: 'json_schema' as const,
           schema: {
             type: 'object',
             properties: {
-              splitDay:  { type: 'string', enum: ['push', 'pull', 'legs', 'upper', 'lower'] },
-              startedAt: { type: 'string' },
-              endedAt:   { type: 'string' },
-              notes:     { type: 'string' },
+              splitDay:       { type: 'string', enum: ['push', 'pull', 'legs', 'upper', 'lower'] },
+              startedAt:      { type: 'string' },
+              endedAt:        { type: 'string' },
+              durationMin:    { type: ['number', 'null'] },
+              avgBpm:         { type: ['number', 'null'] },
+              caloriesBurned: { type: ['number', 'null'] },
+              notes:          { type: 'string' },
               sets: {
                 type: 'array',
                 items: {
                   type: 'object',
                   properties: {
-                    exerciseId:     { type: 'string' },
                     exerciseName:   { type: 'string' },
                     exerciseNameHe: { type: 'string' },
                     setNumber:      { type: 'number' },
@@ -119,7 +135,7 @@ export async function POST(req: Request) {
                     reps:           { type: 'number' },
                     rpe:            { type: 'number' },
                   },
-                  required: ['exerciseId', 'exerciseName', 'setNumber', 'weightKg', 'reps'],
+                  required: ['exerciseName', 'setNumber', 'weightKg', 'reps'],
                 },
               },
             },
@@ -128,35 +144,109 @@ export async function POST(req: Request) {
         },
       },
     })
-
     const textBlock = response.content.find((b) => b.type === 'text')
-    if (!textBlock || textBlock.type !== 'text') {
-      throw new Error('No text block in Claude response')
-    }
+    if (!textBlock || textBlock.type !== 'text') throw new Error('No text block in Claude response')
     parsed = ParsedWorkoutSchema.parse(JSON.parse(textBlock.text))
   } catch (err) {
-    console.error('[ai/parse-workout] Claude error:', err)
-    return NextResponse.json(
-      { error: 'Failed to parse workout log', detail: String(err) },
-      { status: 422 },
-    )
+    console.error('[ai/parse-workout] parse error:', err)
+    return NextResponse.json({ error: 'Failed to parse workout log', detail: String(err) }, { status: 422 })
   }
 
-  // Forward to the existing /api/sessions route (reuse all its logic)
-  const origin = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
-  const sessRes = await fetch(`${origin}/api/sessions`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(parsed),
+  const splitDay = hintSplit ?? parsed.splitDay
+  const dateISO = parsed.startedAt.slice(0, 10)
+
+  // ── 2. Fill metrics from Apple Health ───────────────────────────────────────
+  const metrics = await matchWorkoutMetrics(supabase, userId, dateISO, {
+    durationMin: parsed.durationMin ?? null,
+    avgBpm: parsed.avgBpm ?? null,
+    caloriesBurned: parsed.caloriesBurned ?? null,
   })
 
-  const sessBody = await sessRes.json()
-  if (!sessRes.ok) {
-    return NextResponse.json(
-      { error: 'Session save failed', detail: sessBody },
-      { status: sessRes.status },
-    )
+  // ── 3. Resolve exercise names → UUIDs ───────────────────────────────────────
+  const nameMap = await resolveExercises(
+    supabase, userId, splitDay,
+    parsed.sets.map((s) => ({ name: s.exerciseName, nameHe: s.exerciseNameHe })),
+  )
+
+  const payload: SaveWorkoutPayload = {
+    splitDay,
+    startedAt: parsed.startedAt,
+    endedAt: parsed.endedAt,
+    notes: parsed.notes,
+    sets: parsed.sets
+      .filter((s) => nameMap.has(s.exerciseName))
+      .map((s) => ({
+        exerciseId: nameMap.get(s.exerciseName)!,
+        exerciseName: s.exerciseName,
+        exerciseNameHe: s.exerciseNameHe,
+        setNumber: s.setNumber,
+        weightKg: s.weightKg,
+        reps: s.reps,
+        rpe: s.rpe,
+      })),
   }
 
-  return NextResponse.json({ ...sessBody, parsedWorkout: parsed })
+  if (!payload.sets.length) {
+    return NextResponse.json({ error: 'No resolvable sets parsed from text' }, { status: 422 })
+  }
+
+  // ── 4. Save (volume, PRs, Notion) ───────────────────────────────────────────
+  let result
+  try {
+    result = await saveSession(supabase, userId, payload, {
+      durationMin: metrics.durationMin,
+      avgBpm: metrics.avgBpm,
+      caloriesBurned: metrics.caloriesBurned,
+    })
+  } catch (err) {
+    console.error('[ai/parse-workout] save error:', err)
+    return NextResponse.json({ error: 'Failed to save session', detail: String(err) }, { status: 500 })
+  }
+
+  // ── 5. Generate the Gym Session Report ──────────────────────────────────────
+  let reportMd = ''
+  try {
+    const reportInput = {
+      splitDay,
+      date: dateISO,
+      durationMin: metrics.durationMin,
+      avgBpm: metrics.avgBpm,
+      caloriesBurned: metrics.caloriesBurned,
+      totalVolumeKg: Math.round(result.totalVolumeKg),
+      prCount: result.prCount,
+      newPRs: result.newPRs,
+      sets: payload.sets.map((s) => ({ exercise: s.exerciseName, weightKg: s.weightKg, reps: s.reps, rpe: s.rpe })),
+      notes: parsed.notes,
+    }
+    const rpt = await client.messages.create({
+      model: 'claude-opus-4-8',
+      max_tokens: 1500,
+      thinking: { type: 'adaptive' },
+      system: REPORT_SYSTEM,
+      messages: [{ role: 'user', content: `Write the session report from this data:\n\n${JSON.stringify(reportInput, null, 2)}` }],
+    })
+    const block = rpt.content.find((b) => b.type === 'text')
+    reportMd = block && block.type === 'text' ? block.text : ''
+    if (reportMd) {
+      await supabase
+        .from('workout_sessions')
+        .update({ report_md: reportMd } as unknown as never)
+        .eq('id', result.sessionId)
+    }
+  } catch (err) {
+    console.error('[ai/parse-workout] report error (non-fatal):', err)
+  }
+
+  return NextResponse.json({
+    sessionId: result.sessionId,
+    splitDay,
+    totalVolumeKg: result.totalVolumeKg,
+    setCount: result.setCount,
+    prCount: result.prCount,
+    newPRs: result.newPRs,
+    notionPageId: result.notionPageId,
+    metrics,
+    reportMd,
+    parsed,
+  })
 }

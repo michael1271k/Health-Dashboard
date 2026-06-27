@@ -135,10 +135,30 @@ export interface Database {
           notes: string | null
           total_volume_kg: number | null
           session_score: number | null
+          set_count: number | null
+          pr_count: number | null
+          duration_min: number | null
+          calories_burned: number | null
+          avg_bpm: number | null
+          report_md: string | null
+          migrated_from_notion: boolean
           created_at: string
           updated_at: string
         }
-        Insert: Omit<Database['public']['Tables']['workout_sessions']['Row'], 'id' | 'created_at' | 'updated_at'>
+        Insert: Omit<
+          Database['public']['Tables']['workout_sessions']['Row'],
+          'id' | 'created_at' | 'updated_at'
+            | 'set_count' | 'pr_count' | 'duration_min' | 'calories_burned'
+            | 'avg_bpm' | 'report_md' | 'migrated_from_notion'
+        > & {
+          set_count?: number | null
+          pr_count?: number | null
+          duration_min?: number | null
+          calories_burned?: number | null
+          avg_bpm?: number | null
+          report_md?: string | null
+          migrated_from_notion?: boolean
+        }
         Update: Partial<Database['public']['Tables']['workout_sessions']['Insert']>
       }
       workout_sets: {
@@ -181,9 +201,9 @@ export interface Database {
           user_id: string
           sleep_goal_hours: number
           calorie_goal: number
-          protein_goal_g: number
-          carbs_goal_g: number
-          fat_goal_g: number
+          protein_goal_g: number | null
+          carbs_goal_g: number | null
+          fat_goal_g: number | null
           steps_goal: number
           active_cal_goal: number
           water_goal_ml: number

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
-import { CUT_PRESET } from '@/lib/types/workout'
+import { HistoricalImport } from '@/components/settings/HistoricalImport'
 import type { Tables } from '@/lib/supabase/types'
 
 type ContextMode = 'normal' | 'travel' | 'illness' | 'emergency'
@@ -98,16 +98,6 @@ export default function SettingsPage() {
     setSaving(false)
   }
 
-  function applyPreset() {
-    save({
-      calorie_goal: CUT_PRESET.calorieGoal,
-      protein_goal_g: CUT_PRESET.proteinGoalG,
-      carbs_goal_g: CUT_PRESET.carbsGoalG,
-      fat_goal_g: CUT_PRESET.fatGoalG,
-      goal_preset: CUT_PRESET.goalPreset,
-    })
-  }
-
   const inputCls =
     'w-full rounded-xl border border-border bg-surface-2 px-3 py-2 text-text text-sm ' +
     'focus:outline-none focus:ring-2 focus:ring-primary/60 transition-[border-color] duration-200'
@@ -121,23 +111,16 @@ export default function SettingsPage() {
         <p className="text-muted-vital text-sm mt-0.5">Goals &amp; context for daily scoring</p>
       </div>
 
-      {/* Quick presets */}
-      <section className="vital-card space-y-3">
-        <h2 className="font-semibold text-text">Quick Presets</h2>
-        <div className="flex flex-wrap gap-3">
-          <button
-            onClick={applyPreset}
-            disabled={saving}
-            className="btn-primary text-sm"
-          >
-            Apply Cut preset
-            <span className="ml-1 text-xs opacity-70">(1935 kcal / 180P / 180C / 55F)</span>
-          </button>
-        </div>
-        {goals.goal_preset && (
-          <p className="text-xs text-muted-vital">Active preset: <span className="text-primary capitalize">{goals.goal_preset}</span></p>
-        )}
-      </section>
+      {/* Nutrition modes moved to the Nutrition tab */}
+      {goals.goal_preset && (
+        <p className="text-xs text-muted-vital">
+          Active nutrition mode: <span className="text-primary capitalize">{goals.goal_preset}</span>
+          <span className="opacity-70"> — change it in the Nutrition tab.</span>
+        </p>
+      )}
+
+      {/* Historical import */}
+      <HistoricalImport />
 
       {/* Context mode */}
       <section className="vital-card space-y-3">

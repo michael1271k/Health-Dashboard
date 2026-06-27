@@ -134,7 +134,7 @@ export async function upsertBodyComposition(
     date: r.date,
     weight_kg: r.weightKg,
     body_fat_pct: r.bodyFatPct ?? null,
-    muscle_mass_kg: null,
+    muscle_mass_kg: r.muscleMassKg ?? null,
     water_pct: null,
     bone_mass_kg: null,
     bmi: null,

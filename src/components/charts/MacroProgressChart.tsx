@@ -16,7 +16,7 @@ import type { Tables } from '@/lib/supabase/types'
 
 const MACROS = [
   { key: 'calories' as const,  label: 'Cal',     color: '#38BDF8', unit: 'kcal', goalKey: 'calorie_goal' as const },
-  { key: 'protein_g' as const, label: 'Protein', color: '#00E5A0', unit: 'g',    goalKey: 'protein_goal_g' as const },
+  { key: 'protein_g' as const, label: 'Protein', color: '#2DD4A7', unit: 'g',    goalKey: 'protein_goal_g' as const },
   { key: 'carbs_g' as const,   label: 'Carbs',   color: '#FF4D6D', unit: 'g',    goalKey: 'carbs_goal_g' as const },
   { key: 'fat_g' as const,     label: 'Fat',     color: '#FFB020', unit: 'g',    goalKey: 'fat_goal_g' as const },
 ] as const
@@ -71,7 +71,7 @@ export function MacroProgressChart({ data, goals, isLoading }: MacroProgressChar
       <div role="img" aria-label="Protein vs goal chart">
         <ResponsiveContainer width="100%" height={200}>
           <BarChart data={chartData} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
-            <CartesianGrid stroke="#243040" strokeDasharray="3 3" vertical={false} />
+            <CartesianGrid stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" vertical={false} />
             <XAxis
               dataKey="date"
               tick={{ fill: '#94A3B8', fontSize: 11 }}
@@ -95,7 +95,7 @@ export function MacroProgressChart({ data, goals, isLoading }: MacroProgressChar
                     payload={payload.map((p) => ({
                       name: 'Protein',
                       value: (p.payload as { rawProtein: number })?.rawProtein ?? 0,
-                      color: '#00E5A0',
+                      color: '#2DD4A7',
                       unit: 'g',
                     }))}
                     label={label != null ? String(label) : undefined}
@@ -106,7 +106,7 @@ export function MacroProgressChart({ data, goals, isLoading }: MacroProgressChar
             {/* 100% goal line */}
             <ReferenceLine
               y={100}
-              stroke="#00E5A0"
+              stroke="#2DD4A7"
               strokeDasharray="4 2"
               strokeWidth={1}
               label={{ value: 'Goal', position: 'insideRight', fill: '#94A3B8', fontSize: 10 }}
@@ -115,7 +115,7 @@ export function MacroProgressChart({ data, goals, isLoading }: MacroProgressChar
               {chartData.map((entry, index) => (
                 <Cell
                   key={index}
-                  fill={entry.protein >= 100 ? '#00E5A0' : entry.protein >= 75 ? '#FFB020' : '#FF4D6D'}
+                  fill={entry.protein >= 100 ? '#2DD4A7' : entry.protein >= 75 ? '#FFB020' : '#FF4D6D'}
                 />
               ))}
             </Bar>

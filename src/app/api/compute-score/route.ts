@@ -5,26 +5,16 @@ import { computeBattery } from '@/lib/scoring/battery'
 import type { ScoringInputs } from '@/lib/scoring/types'
 import type { Tables, InsertRow } from '@/lib/supabase/types'
 import { WEEKDAY_SPLIT } from '@/lib/types/workout'
+import { denyIfUnauthorized } from '@/lib/auth/guard'
 
 function todayISO(): string {
   return new Date().toLocaleDateString('en-CA')   // YYYY-MM-DD, locale-safe
 }
 
 export async function POST(req: Request) {
-  // In production, guard against unauthenticated external access.
-  // Same-origin UI calls are allowed via Referer check; external calls require
-  // the webhook secret. Add middleware auth for multi-user deployments.
-  const secret = process.env.INGEST_WEBHOOK_SECRET
-  if (secret && process.env.NODE_ENV !== 'development') {
-    const provided = req.headers.get('x-webhook-secret')
-    if (provided !== secret) {
-      const referer = req.headers.get('referer') ?? ''
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
-      if (!appUrl || !referer.startsWith(appUrl)) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      }
-    }
-  }
+  // Same-origin UI calls allowed; external calls require the webhook secret.
+  const denied = denyIfUnauthorized(req)
+  if (denied) return denied
 
   const supabase = getServerSupabaseClient()
   const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers()
@@ -115,9 +105,9 @@ export async function POST(req: Request) {
     carbsG:                nutrition?.carbs_g ?? 0,
     fatG:                  nutrition?.fat_g ?? 0,
     calorieGoal:           g.calorie_goal,
-    proteinGoalG:          g.protein_goal_g,
-    carbsGoalG:            g.carbs_goal_g,
-    fatGoalG:              g.fat_goal_g,
+    proteinGoalG:          g.protein_goal_g ?? 0,   // null (bulk/maint) → not graded
+    carbsGoalG:            g.carbs_goal_g ?? 0,
+    fatGoalG:              g.fat_goal_g ?? 0,
     steps:                 metrics?.steps ?? 0,
     activeCal:             metrics?.active_cal ?? 0,
     stepsGoal:             g.steps_goal,

@@ -87,7 +87,19 @@ export function getTodaysSplit(): SplitDay | 'rest' {
   return WEEKDAY_SPLIT[new Date().getDay()] ?? 'rest'
 }
 
-// Cut preset — intentional: 55g fat is strict but deliberate (0.3–0.4 kg/wk loss)
+// ─── Nutrition modes / presets ───────────────────────────────────────────────
+export type NutritionMode = 'cut' | 'bulk' | 'maintenance'
+
+export interface NutritionPreset {
+  mode: NutritionMode
+  label: string
+  calorieGoal: number
+  proteinGoalG: number | null   // null = no macro target (graded on calories only)
+  carbsGoalG: number | null
+  fatGoalG: number | null
+}
+
+// Cut: 55g fat is strict but deliberate (0.3–0.4 kg/wk loss)
 export const CUT_PRESET = {
   calorieGoal: 1935,
   proteinGoalG: 180,
@@ -95,3 +107,30 @@ export const CUT_PRESET = {
   fatGoalG: 55,
   goalPreset: 'cut',
 } as const
+
+export const NUTRITION_PRESETS: Record<NutritionMode, NutritionPreset> = {
+  cut: {
+    mode: 'cut',
+    label: 'Cut',
+    calorieGoal: 1935,
+    proteinGoalG: 180,
+    carbsGoalG: 180,
+    fatGoalG: 55,
+  },
+  bulk: {
+    mode: 'bulk',
+    label: 'Bulk',
+    calorieGoal: 2650,
+    proteinGoalG: null,   // macros TBD
+    carbsGoalG: null,
+    fatGoalG: null,
+  },
+  maintenance: {
+    mode: 'maintenance',
+    label: 'Maintenance',
+    calorieGoal: 2300,
+    proteinGoalG: null,
+    carbsGoalG: null,
+    fatGoalG: null,
+  },
+}

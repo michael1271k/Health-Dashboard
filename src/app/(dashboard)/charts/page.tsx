@@ -1,13 +1,24 @@
 'use client'
 
-import { WeightTrendChart } from '@/components/charts/WeightTrendChart'
-import { MacroProgressChart } from '@/components/charts/MacroProgressChart'
-import { PRHistoryChart } from '@/components/charts/PRHistoryChart'
-import { useWeightTrend, useMacroHistory, usePRHistory } from '@/lib/hooks/useCharts'
+import dynamic from 'next/dynamic'
+import { useWeightTrend, useMacroHistory, usePRHistory, useVolumeTrend } from '@/lib/hooks/useCharts'
 import { useUserGoals } from '@/lib/hooks/useDashboard'
 
+// Dynamically import the recharts-heavy components (client-only) so they don't
+// inflate the route's first-load JS.
+const chartFallback = () => (
+  <div className="vital-card h-64 flex items-center justify-center">
+    <div className="w-full h-40 bg-surface-2 rounded-xl animate-pulse" />
+  </div>
+)
+const WeightTrendChart = dynamic(() => import('@/components/charts/WeightTrendChart').then((m) => m.WeightTrendChart), { ssr: false, loading: chartFallback })
+const VolumeChart = dynamic(() => import('@/components/charts/VolumeChart').then((m) => m.VolumeChart), { ssr: false, loading: chartFallback })
+const MacroProgressChart = dynamic(() => import('@/components/charts/MacroProgressChart').then((m) => m.MacroProgressChart), { ssr: false, loading: chartFallback })
+const PRHistoryChart = dynamic(() => import('@/components/charts/PRHistoryChart').then((m) => m.PRHistoryChart), { ssr: false, loading: chartFallback })
+
 export default function ChartsPage() {
-  const { data: weightData, isLoading: weightLoading } = useWeightTrend(30)
+  const { data: weightData, isLoading: weightLoading } = useWeightTrend(90)
+  const { data: volumeData, isLoading: volumeLoading } = useVolumeTrend(90)
   const { data: macroData, isLoading: macroLoading } = useMacroHistory(14)
   const { data: prData, isLoading: prLoading } = usePRHistory(undefined, 60)
   const { data: goals, isLoading: goalsLoading } = useUserGoals()
@@ -21,14 +32,13 @@ export default function ChartsPage() {
 
       <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
         <WeightTrendChart data={weightData ?? []} isLoading={weightLoading} />
+        <VolumeChart data={volumeData ?? []} isLoading={volumeLoading} />
         <MacroProgressChart
           data={macroData ?? []}
           goals={goals ?? null}
           isLoading={macroLoading || goalsLoading}
         />
-        <div className="lg:col-span-2">
-          <PRHistoryChart data={prData ?? []} isLoading={prLoading} />
-        </div>
+        <PRHistoryChart data={prData ?? []} isLoading={prLoading} />
       </div>
     </div>
   )

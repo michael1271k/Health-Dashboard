@@ -13,10 +13,10 @@ export function Sidebar() {
       className="fixed left-0 top-0 bottom-0 z-50 hidden md:flex flex-col w-64
                  border-r border-white/[0.06]"
       style={{
-        background: 'color-mix(in srgb, #111726 70%, transparent)',
-        backdropFilter: 'blur(20px) saturate(150%)',
-        WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-        boxShadow: '4px 0 32px rgba(0,0,0,0.3), inset -1px 0 0 rgba(255,255,255,0.04)',
+        background: 'rgba(255,255,255,0.025)',
+        backdropFilter: 'blur(28px) saturate(160%)',
+        WebkitBackdropFilter: 'blur(28px) saturate(160%)',
+        boxShadow: '4px 0 40px rgba(0,0,0,0.35), inset -1px 0 0 rgba(255,255,255,0.05)',
       }}
     >
       {/* ── Logo + wordmark */}

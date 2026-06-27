@@ -14,6 +14,8 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     // serverActions are stable in Next.js 15
+    // Tree-shake heavy barrel imports → smaller bundles + faster compile
+    optimizePackageImports: ['lucide-react', 'recharts', 'framer-motion'],
   },
   // Skip lint/TS during Netlify builds — correctness is enforced locally via `npm run check`.
   // This prevents failed deploys from noise that is already green locally.

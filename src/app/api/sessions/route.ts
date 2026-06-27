@@ -1,10 +1,8 @@
 import { NextResponse } from 'next/server'
 import { SaveWorkoutSchema } from '@/lib/sessions/schema'
+import { saveSession } from '@/lib/sessions/save'
 import { getServerSupabaseClient } from '@/lib/supabase/server'
-import { getNotionClient } from '@/lib/notion/client'
-import { formatSessionForNotion, formatSetsAsBlocks } from '@/lib/notion/gym-log'
-import { epley1RM } from '@/lib/utils/epley'
-import type { InsertRow } from '@/lib/supabase/types'
+import { denyIfUnauthorized } from '@/lib/auth/guard'
 
 export async function POST(req: Request) {
   // Auth: Supabase admin client — single-user app, get the sole user's ID
@@ -28,149 +26,25 @@ export async function POST(req: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
   }
-  const payload = parsed.data
 
-  // Calculate total volume
-  const totalVolumeKg = payload.sets.reduce(
-    (sum, s) => sum + s.weightKg * s.reps,
-    0,
-  )
-
-  // Get historical best est_1RM per exercise to detect PRs
-  // Supabase v2: column-select returns never[] when Insert is Omit<...>; cast result explicitly
-  const exerciseIds = [...new Set(payload.sets.map((s) => s.exerciseId))]
-  const { data: prHistoryRaw } = await supabase
-    .from('workout_sets')
-    .select('exercise_id, est_1rm_kg')
-    .in('exercise_id', exerciseIds)
-    .eq('user_id', userId)
-    .order('est_1rm_kg', { ascending: false })
-
-  const prHistory = (prHistoryRaw ?? []) as Array<{ exercise_id: string; est_1rm_kg: number | null }>
-
-  const bestPrMap = new Map<string, number>()
-  for (const row of prHistory) {
-    if (row.est_1rm_kg !== null && !bestPrMap.has(row.exercise_id)) {
-      bestPrMap.set(row.exercise_id, row.est_1rm_kg)
-    }
-  }
-
-  // Insert session to Supabase
-  // Supabase v2 TypeScript: Omit<...> Insert types resolve to never[] — cast via unknown as any
-  const sessionInsert: InsertRow<'workout_sessions'> = {
-    user_id: userId,
-    notion_page_id: null,
-    started_at: payload.startedAt,
-    ended_at: payload.endedAt,
-    split_day: payload.splitDay,
-    notes: payload.notes || null,
-    total_volume_kg: totalVolumeKg,
-    session_score: null,
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: sessionRaw, error: sessionError } = await supabase
-    .from('workout_sessions')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .insert(sessionInsert as unknown as any)
-    .select('id')
-    .single()
-
-  const session = sessionRaw as { id: string } | null
-
-  if (sessionError || !session) {
-    console.error('[sessions] session insert error:', sessionError)
+  try {
+    const result = await saveSession(supabase, userId, parsed.data)
+    return NextResponse.json({
+      sessionId: result.sessionId,
+      notionPageId: result.notionPageId,
+      totalVolumeKg: result.totalVolumeKg,
+      newPRs: result.newPRs,
+    })
+  } catch (err) {
+    console.error('[sessions] save error:', err)
     return NextResponse.json({ error: 'Failed to save session' }, { status: 500 })
   }
-
-  // Insert sets with PR detection
-  const setsToInsert = payload.sets.map((s) => {
-    const est1rm = epley1RM(s.weightKg, s.reps)
-    const prevBest = bestPrMap.get(s.exerciseId) ?? 0
-    const isPr = est1rm > prevBest
-    const row: InsertRow<'workout_sets'> = {
-      session_id: session.id,
-      exercise_id: s.exerciseId,
-      user_id: userId,
-      set_number: s.setNumber,
-      weight_kg: s.weightKg,
-      reps: s.reps,
-      rpe: s.rpe ?? null,
-      is_pr: isPr,
-      est_1rm_kg: est1rm,
-    }
-    return { ...row, _meta: { exerciseName: s.exerciseName, exerciseId: s.exerciseId, setNumber: s.setNumber } }
-  })
-
-  const dbSets = setsToInsert.map(({ _meta: _, ...row }) => row)
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error: setsError } = await supabase.from('workout_sets').insert(dbSets as unknown as any)
-  if (setsError) {
-    console.error('[sessions] sets insert error:', setsError)
-    // Don't fail — session is saved, sets partially failed
-  }
-
-  // Write to Notion (best-effort; don't fail the response if Notion is down)
-  let notionPageId: string | null = null
-  const gymDbId = process.env.NOTION_GYM_DB_ID
-  if (gymDbId) {
-    try {
-      const notion = getNotionClient()
-      const properties = formatSessionForNotion(payload, totalVolumeKg)
-      const children = formatSetsAsBlocks(payload)
-
-      const page = await notion.pages.create({
-        parent: { database_id: gymDbId },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        properties: properties as unknown as Parameters<typeof notion.pages.create>[0]['properties'],
-        children,
-      })
-      notionPageId = page.id
-
-      // Backfill notion_page_id
-      // Supabase v2: Update type on Omit<...> tables resolves to never — cast explicitly
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await supabase
-        .from('workout_sessions')
-        .update({ notion_page_id: notionPageId } as unknown as never)
-        .eq('id', session.id)
-    } catch (err) {
-      console.error('[sessions] Notion write failed (non-fatal):', err)
-    }
-  }
-
-  // Detect new PRs among this session's sets
-  const newPRs = setsToInsert
-    .filter((s) => s.is_pr)
-    .map((s) => ({
-      exerciseName: s._meta.exerciseName,
-      est1rm: s.est_1rm_kg as number,
-    }))
-
-  return NextResponse.json({
-    sessionId: session.id,
-    notionPageId,
-    totalVolumeKg,
-    newPRs,
-  })
 }
 
 export async function GET(req: Request) {
-  // In production, guard against unauthenticated external access.
-  // Same-origin UI calls are allowed via Referer check; external calls require
-  // the webhook secret. Add middleware auth for multi-user deployments.
-  const secret = process.env.INGEST_WEBHOOK_SECRET
-  if (secret && process.env.NODE_ENV !== 'development') {
-    const provided = req.headers.get('x-webhook-secret')
-    if (provided !== secret) {
-      const referer = req.headers.get('referer') ?? ''
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
-      if (!appUrl || !referer.startsWith(appUrl)) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      }
-    }
-  }
+  // Same-origin UI calls allowed; external calls require the webhook secret.
+  const denied = denyIfUnauthorized(req)
+  if (denied) return denied
 
   const supabase = getServerSupabaseClient()
   const { data: { users } } = await supabase.auth.admin.listUsers()

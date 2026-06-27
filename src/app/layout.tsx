@@ -3,6 +3,7 @@ import { Outfit, Inter, JetBrains_Mono } from 'next/font/google'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Sidebar } from '@/components/nav/Sidebar'
 import { BottomNav } from '@/components/nav/BottomNav'
+import { AuroraBackground } from '@/components/fx/AuroraBackground'
 import { QueryProvider } from '@/components/providers/QueryProvider'
 import { SerwistRegister } from '@/components/providers/SerwistRegister'
 import './globals.css'
@@ -71,10 +72,11 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <QueryProvider>
+            <AuroraBackground />
             <Sidebar />
             <main
               id="main-content"
-              className="min-h-screen bg-bg pt-4 pb-24 md:pl-64 md:pt-8 md:pb-8 px-4"
+              className="min-h-screen pt-4 pb-28 md:pl-64 md:pt-8 md:pb-8 px-4"
             >
               <div className="max-w-7xl mx-auto">
                 {children}

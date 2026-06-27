@@ -101,7 +101,7 @@ export function ActiveSession({ onSaved }: ActiveSessionProps) {
         <h2 className="font-heading font-semibold text-lg text-text mb-3">
           Select Split
           {todayDefault !== 'rest' && (
-            <span className="text-xs font-normal text-muted-vital ml-2">(today's schedule pre-selected)</span>
+            <span className="text-xs font-normal text-muted-vital ml-2">(today&apos;s schedule pre-selected)</span>
           )}
           {todayDefault === 'rest' && (
             <span className="text-xs font-normal text-warn ml-2">Rest day — override to log anyway</span>
