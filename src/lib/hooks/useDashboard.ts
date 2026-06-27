@@ -1,6 +1,7 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
+import { useEffect, useRef } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import type { Tables } from '@/lib/supabase/types'
 
@@ -29,6 +30,24 @@ export function useTodayScore() {
       return data as Tables<'daily_scores'> | null
     },
   })
+}
+
+/**
+ * If today's daily_scores row is missing once loading settles, trigger a single
+ * server-side compute (POST /api/compute-score) and refresh — so the battery
+ * reflects scoring/battery.ts instead of defaulting to a misleading 0%.
+ * Guarded by a ref so it fires at most once per mount.
+ */
+export function useEnsureTodayScore(shouldCompute: boolean) {
+  const qc = useQueryClient()
+  const tried = useRef(false)
+  useEffect(() => {
+    if (!shouldCompute || tried.current) return
+    tried.current = true
+    fetch('/api/compute-score', { method: 'POST' })
+      .then((r) => (r.ok ? qc.invalidateQueries({ queryKey: ['daily_scores', 'today'] }) : null))
+      .catch(() => {})
+  }, [shouldCompute, qc])
 }
 
 export function useTodayDailyLog() {

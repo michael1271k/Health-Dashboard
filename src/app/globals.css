@@ -30,6 +30,18 @@
   --font-sans: var(--font-inter), sans-serif;
   --font-mono: var(--font-jetbrains), monospace;
 
+  /* ── Fluid typography (Phase 6) — same fonts, viewport-aware sizing ──
+     Used as Tailwind utilities: text-fluid-sm … text-fluid-3xl. Each clamp
+     scales between a mobile floor and a desktop ceiling so type feels native
+     on a 6" phone and premium on a 27" monitor without per-breakpoint classes. */
+  --text-fluid-xs:   clamp(0.72rem, 0.69rem + 0.15vw, 0.80rem);
+  --text-fluid-sm:   clamp(0.82rem, 0.78rem + 0.22vw, 0.95rem);
+  --text-fluid-base: clamp(0.92rem, 0.86rem + 0.35vw, 1.05rem);
+  --text-fluid-lg:   clamp(1.05rem, 0.95rem + 0.60vw, 1.30rem);
+  --text-fluid-xl:   clamp(1.25rem, 1.05rem + 1.0vw,  1.70rem);
+  --text-fluid-2xl:  clamp(1.65rem, 1.30rem + 1.9vw, 2.55rem);
+  --text-fluid-3xl:  clamp(2.10rem, 1.55rem + 3.0vw, 3.50rem);
+
   /* APEX Shadows */
   --shadow-card: 0 1px 2px rgba(0,0,0,0.4), 0 0 0 1px rgba(30,42,66,0.9);
   --shadow-card-hover: 0 4px 16px rgba(0,0,0,0.5), 0 0 0 1px rgba(61,125,255,0.2);
@@ -309,4 +321,28 @@
            hover:border-primary/40 hover:text-text hover:bg-surface-2
            focus-visible:ring-2 focus-visible:ring-primary/60;
   }
+
+  /* ── Mobile / safe-area utilities (Phase 6) ───────────────────────────── */
+  /* Honour iOS/Android notches & home indicator. max() keeps a sane min pad. */
+  .safe-pb { padding-bottom: max(0.75rem, env(safe-area-inset-bottom)); }
+  .safe-pt { padding-top: max(0.5rem, env(safe-area-inset-top)); }
+  .safe-px {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+  /* Sticky input bars sit above the keyboard + home indicator. */
+  .keyboard-safe { padding-bottom: max(0.5rem, env(safe-area-inset-bottom)); }
+
+  /* Hidden scrollbar for swipe decks / horizontal snap rows. */
+  .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+
+  /* Perfectly circular media box regardless of parent width (battery orb fix). */
+  .circle-square { aspect-ratio: 1 / 1; }
+}
+
+/* Bottom-sheet entrance (used by ui/Sheet) — transform/opacity only (GPU). */
+@keyframes sheetUp {
+  0% { opacity: 0; transform: translateY(100%); }
+  100% { opacity: 1; transform: translateY(0); }
 }

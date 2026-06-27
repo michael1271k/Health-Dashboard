@@ -54,8 +54,8 @@ export default function WeeklyPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-heading text-2xl font-bold text-text">Weekly Summaries</h1>
-        <p className="text-muted-vital text-sm mt-0.5">Pick a week → unified weight + gym report</p>
+        <h1 className="font-heading text-fluid-2xl font-bold text-text">Weekly Summaries</h1>
+        <p className="text-muted-vital text-fluid-sm mt-0.5">Pick a week → unified weight + gym report</p>
       </div>
 
       {/* ── Calendar ── */}

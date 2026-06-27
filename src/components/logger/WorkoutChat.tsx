@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { ActiveSession } from './ActiveSession'
 import type { SplitDay } from '@/lib/types/workout'
-import { Sparkles, Check, Loader2, PenLine, MessageSquare, Dumbbell, Scale } from 'lucide-react'
+import { Sparkles, Check, Loader2, PenLine, MessageSquare, Dumbbell, Scale, ClipboardPaste } from 'lucide-react'
 
 interface WorkoutChatProps {
   splitDay: SplitDay
@@ -36,6 +36,17 @@ export function WorkoutChat({ splitDay, onClose }: WorkoutChatProps) {
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<ParseResult | null>(null)
   const [metricsResult, setMetricsResult] = useState<Record<string, number> | null>(null)
+
+  async function pasteFromHevy() {
+    setError(null)
+    try {
+      const clip = await navigator.clipboard.readText()
+      if (clip.trim()) setText(clip)
+      else setError('Clipboard is empty — copy a workout in Hevy first.')
+    } catch {
+      setError('Couldn’t read the clipboard. Paste manually into the box below.')
+    }
+  }
 
   async function submit() {
     if (!text.trim()) return
@@ -163,11 +174,20 @@ export function WorkoutChat({ splitDay, onClose }: WorkoutChatProps) {
         </div>
       )}
 
-      <p className="text-xs text-muted-vital leading-relaxed">
+      <p className="text-fluid-xs text-muted-vital leading-relaxed">
         {intent === 'workout'
-          ? 'Describe your session in Hebrew or English — exercises, weights, reps, how it felt. BPM & calories come from Apple Health.'
+          ? 'Paste a workout copied from Hevy (parsed instantly, no AI needed) — or describe your session in Hebrew/English. BPM & calories come from Apple Health.'
           : 'Type the metrics your smart scale shows that the Shortcut can’t capture (muscle %, water %, visceral fat, bone, BMR).'}
       </p>
+
+      {intent === 'workout' && (
+        <button
+          onClick={pasteFromHevy}
+          className="btn-ghost text-fluid-xs gap-1.5 w-full justify-center min-h-[44px]"
+        >
+          <ClipboardPaste className="w-4 h-4" /> Paste from Hevy
+        </button>
+      )}
 
       <textarea
         value={text}
@@ -182,13 +202,15 @@ export function WorkoutChat({ splitDay, onClose }: WorkoutChatProps) {
                    resize-none leading-relaxed"
       />
 
-      {error && <p className="text-danger text-sm">{error}</p>}
+      {error && <p className="text-danger text-fluid-sm">{error}</p>}
 
-      <button onClick={submit} disabled={busy || !text.trim()} className="btn-primary w-full justify-center disabled:opacity-50">
-        {busy
-          ? <><Loader2 className="w-4 h-4 animate-spin" /> {intent === 'workout' ? 'Parsing & saving…' : 'Updating…'}</>
-          : <><Sparkles className="w-4 h-4" /> {intent === 'workout' ? 'Parse & Save' : 'Update Today'}</>}
-      </button>
+      <div className="sticky bottom-0 z-10 pt-2 keyboard-safe">
+        <button onClick={submit} disabled={busy || !text.trim()} className="btn-primary w-full justify-center disabled:opacity-50 min-h-[48px]">
+          {busy
+            ? <><Loader2 className="w-4 h-4 animate-spin" /> {intent === 'workout' ? 'Parsing & saving…' : 'Updating…'}</>
+            : <><Sparkles className="w-4 h-4" /> {intent === 'workout' ? 'Parse & Save' : 'Update Today'}</>}
+        </button>
+      </div>
     </div>
   )
 }

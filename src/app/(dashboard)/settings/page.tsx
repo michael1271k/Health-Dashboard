@@ -106,7 +106,7 @@ export default function SettingsPage() {
   return (
     <div className="space-y-8 max-w-2xl">
       <div>
-        <h1 className="font-heading text-2xl font-bold text-text">Settings</h1>
+        <h1 className="font-heading text-fluid-2xl font-bold text-text">Settings</h1>
         <p className="text-muted-vital text-sm mt-0.5">Goals &amp; context for daily scoring</p>
       </div>
 

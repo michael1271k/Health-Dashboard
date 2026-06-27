@@ -133,8 +133,8 @@ export default function NutritionPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-heading text-2xl font-bold text-text">Nutrition</h1>
-        <p className="text-muted-vital text-sm mt-0.5">Mode &amp; daily macro compliance</p>
+        <h1 className="font-heading text-fluid-2xl font-bold text-text">Nutrition</h1>
+        <p className="text-muted-vital text-fluid-sm mt-0.5">Mode &amp; daily macro compliance</p>
       </div>
 
       {/* Mode selector */}

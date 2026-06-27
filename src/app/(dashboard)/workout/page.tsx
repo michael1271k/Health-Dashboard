@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { DataTable, type TableColumn } from '@/components/data/DataTable'
 import { WorkoutChat } from '@/components/logger/WorkoutChat'
+import { Sheet } from '@/components/ui/Sheet'
 import { useWorkoutHistory, type WorkoutSessionRow } from '@/lib/hooks/useWorkoutHistory'
 import { useAllExercises, useExerciseMemory } from '@/lib/hooks/useLogger'
 import { LOGGER_SPLITS, type SplitDay } from '@/lib/types/workout'
-import { Check, Plus, X, TrendingUp } from 'lucide-react'
+import { Check, Plus, TrendingUp } from 'lucide-react'
 
 const HISTORY_COLUMNS: TableColumn<WorkoutSessionRow>[] = [
   {
@@ -45,19 +46,11 @@ export default function WorkoutPage() {
   const { data: sessions, isLoading: histLoading } = useWorkoutHistory()
   const [openSplit, setOpenSplit] = useState<SplitDay | null>(null)
 
-  // Lock body scroll while modal open
-  useEffect(() => {
-    if (openSplit) {
-      document.body.style.overflow = 'hidden'
-      return () => { document.body.style.overflow = '' }
-    }
-  }, [openSplit])
-
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-heading text-2xl font-bold text-text">Workout</h1>
-        <p className="text-muted-vital text-sm mt-0.5">Tap a split to log · exercise memory · full history</p>
+        <h1 className="font-heading text-fluid-2xl font-bold text-text">Workout</h1>
+        <p className="text-muted-vital text-fluid-sm mt-0.5">Tap a split to log · exercise memory · full history</p>
       </div>
 
       {/* ── Split columns (horizontal snap on mobile) ── */}
@@ -119,30 +112,14 @@ export default function WorkoutPage() {
         />
       </div>
 
-      {/* ── Logger modal ── */}
-      {openSplit && (
-        <div
-          className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4"
-          role="dialog"
-          aria-modal="true"
-        >
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => setOpenSplit(null)}
-            aria-hidden="true"
-          />
-          <div className="relative w-full sm:max-w-lg max-h-[90vh] overflow-y-auto vital-card rounded-b-none sm:rounded-2xl animate-slide-up">
-            <button
-              onClick={() => setOpenSplit(null)}
-              className="absolute top-4 right-4 text-muted-vital hover:text-text"
-              aria-label="Close"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <WorkoutChat splitDay={openSplit} onClose={() => setOpenSplit(null)} />
-          </div>
-        </div>
-      )}
+      {/* ── Logger sheet (bottom-sheet on mobile, dialog on desktop) ── */}
+      <Sheet
+        open={!!openSplit}
+        onClose={() => setOpenSplit(null)}
+        title={openSplit ? `${openSplit[0].toUpperCase()}${openSplit.slice(1)} — Log Session` : undefined}
+      >
+        {openSplit && <WorkoutChat splitDay={openSplit} onClose={() => setOpenSplit(null)} />}
+      </Sheet>
     </div>
   )
 }

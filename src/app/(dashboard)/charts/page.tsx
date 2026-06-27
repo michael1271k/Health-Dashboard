@@ -26,8 +26,8 @@ export default function ChartsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-heading text-2xl font-bold text-text">Charts</h1>
-        <p className="text-muted-vital text-sm mt-0.5">Trends &amp; progress over time</p>
+        <h1 className="font-heading text-fluid-2xl font-bold text-text">Charts</h1>
+        <p className="text-muted-vital text-fluid-sm mt-0.5">Trends &amp; progress over time</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">

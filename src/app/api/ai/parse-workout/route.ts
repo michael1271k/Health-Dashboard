@@ -20,6 +20,7 @@ import { denyIfUnauthorized } from '@/lib/auth/guard'
 import { resolveExercises } from '@/lib/sessions/resolveExercises'
 import { saveSession } from '@/lib/sessions/save'
 import { matchWorkoutMetrics } from '@/lib/health/matchWorkout'
+import { parseHevyWorkout } from '@/lib/hevy/parse'
 import type { SaveWorkoutPayload, SplitDay } from '@/lib/types/workout'
 
 const ParsedSetSchema = z.object({
@@ -98,8 +99,35 @@ export async function POST(req: Request) {
   const client = new Anthropic({ apiKey })
   const nowIso = new Date().toISOString()
 
-  // ── 1. Parse ──────────────────────────────────────────────────────────────
+  // ── 0. Fast path: deterministic Hevy clipboard parser (no LLM) ──────────────
+  // A clean Hevy export is parsed instantly into structured sets; the structured
+  // data still flows downstream into resolveExercises + the AI report generator.
+  // Only when this returns null (not Hevy / freeform notes added) do we fall back
+  // to the AI extractor below.
   let parsed: ParsedWorkout
+  const hevy = parseHevyWorkout(text)
+  if (hevy) {
+    const sets = hevy.exercises.flatMap((ex) =>
+      ex.sets.map((s) => ({
+        exerciseName: ex.name,
+        setNumber: s.setNumber,
+        weightKg: s.weightKg,
+        reps: s.reps,
+        ...(s.rpe != null ? { rpe: s.rpe } : {}),
+      })),
+    )
+    parsed = ParsedWorkoutSchema.parse({
+      splitDay: hintSplit ?? hevy.splitGuess ?? 'push',
+      startedAt: nowIso,
+      endedAt: nowIso,
+      durationMin: null,
+      avgBpm: null,
+      caloriesBurned: null,
+      sets,
+      notes: '',
+    })
+  } else {
+  // ── 1. AI extraction (fallback) ─────────────────────────────────────────────
   try {
     const response = await client.messages.create({
       model: 'claude-opus-4-8',
@@ -151,6 +179,7 @@ export async function POST(req: Request) {
     console.error('[ai/parse-workout] parse error:', err)
     return NextResponse.json({ error: 'Failed to parse workout log', detail: String(err) }, { status: 422 })
   }
+  } // end AI-extraction fallback
 
   const splitDay = hintSplit ?? parsed.splitDay
   const dateISO = parsed.startedAt.slice(0, 10)

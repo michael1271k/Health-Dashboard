@@ -27,12 +27,21 @@ export async function resolveExercises(
 
   const existing = (data ?? []) as Array<{ id: string; name: string }>
   const byLower = new Map(existing.map((e) => [e.name.toLowerCase().trim(), e.id]))
+  // Normalized index: strip "(Barbell)/(Dumbbell)/…" equipment tags + punctuation
+  // so Hevy names like "Bench Press (Barbell)" map onto a system "Bench Press".
+  const normalize = (s: string) =>
+    s.toLowerCase().replace(/\([^)]*\)/g, ' ').replace(/[^a-z0-9]+/g, ' ').trim()
+  const byNorm = new Map<string, string>()
+  for (const e of existing) {
+    const nk = normalize(e.name)
+    if (nk && !byNorm.has(nk)) byNorm.set(nk, e.id)
+  }
 
   for (const { name, nameHe } of names) {
     const key = name.toLowerCase().trim()
     if (out.has(name)) continue
 
-    const found = byLower.get(key)
+    const found = byLower.get(key) ?? byNorm.get(normalize(name))
     if (found) {
       out.set(name, found)
       continue

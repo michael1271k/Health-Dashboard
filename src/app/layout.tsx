@@ -6,6 +6,7 @@ import { BottomNav } from '@/components/nav/BottomNav'
 import { AuroraBackground } from '@/components/fx/AuroraBackground'
 import { QueryProvider } from '@/components/providers/QueryProvider'
 import { RealtimeProvider } from '@/components/providers/RealtimeProvider'
+import { MotionProvider } from '@/components/providers/MotionProvider'
 import { SerwistRegister } from '@/components/providers/SerwistRegister'
 import './globals.css'
 
@@ -74,17 +75,19 @@ export default function RootLayout({
         >
           <QueryProvider>
             <RealtimeProvider>
-              <AuroraBackground />
-              <Sidebar />
-              <main
-                id="main-content"
-                className="min-h-screen pt-4 pb-28 md:pl-64 md:pt-8 md:pb-8 px-4"
-              >
-                <div className="max-w-7xl mx-auto">
-                  {children}
-                </div>
-              </main>
-              <BottomNav />
+              <MotionProvider>
+                <AuroraBackground />
+                <Sidebar />
+                <main
+                  id="main-content"
+                  className="min-h-dvh pt-4 safe-pt pb-28 md:pl-64 md:pt-8 md:pb-8 safe-px"
+                >
+                  <div className="max-w-7xl mx-auto">
+                    {children}
+                  </div>
+                </main>
+                <BottomNav />
+              </MotionProvider>
             </RealtimeProvider>
           </QueryProvider>
         </ThemeProvider>
