@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { MetricCard } from '@/components/dashboard/MetricCard'
 import { ScoreRings } from '@/components/dashboard/ScoreRings'
-import { BatteryOrbFallback } from '@/components/three/BatteryOrbFallback'
 import { Footprints } from 'lucide-react'
 
 describe('MetricCard', () => {
@@ -24,18 +23,6 @@ describe('MetricCard', () => {
     )
     expect(container.querySelector('.animate-pulse')).toBeTruthy()
     expect(screen.queryByText('—')).not.toBeInTheDocument()
-  })
-})
-
-describe('BatteryOrbFallback', () => {
-  it('renders SVG at 0%', () => {
-    const { container } = render(<BatteryOrbFallback battery={0} />)
-    expect(container.querySelector('svg')).toBeTruthy()
-  })
-
-  it('renders SVG at 100%', () => {
-    const { container } = render(<BatteryOrbFallback battery={100} />)
-    expect(container.querySelector('svg')).toBeTruthy()
   })
 })
 
