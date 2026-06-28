@@ -1,6 +1,6 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { PPL_SPLITS } from '@/lib/types/workout'
 import type { SplitDay } from '@/lib/types/workout'
@@ -15,6 +15,7 @@ export interface WorkoutSessionRow {
   totalVolumeKg: number | null
   notes: string | null
   notionSynced: boolean
+  isGhost: boolean       // auto-detected Health workout pending a report
   isoWeek: string        // e.g. "2026-W26" for grouping
 }
 
@@ -35,7 +36,7 @@ export function useWorkoutHistory(limit = 40) {
     queryFn: async (): Promise<WorkoutSessionRow[]> => {
       const { data, error } = await supabase
         .from('workout_sessions')
-        .select('id, started_at, split_day, total_volume_kg, notes, notion_page_id')
+        .select('id, started_at, split_day, total_volume_kg, notes, notion_page_id, report_md, status')
         .order('started_at', { ascending: false })
         .limit(limit)
 
@@ -48,6 +49,8 @@ export function useWorkoutHistory(limit = 40) {
         total_volume_kg: number | null
         notes: string | null
         notion_page_id: string | null
+        report_md: string | null
+        status: string | null
       }>
 
       // Filter out seed sessions (their notes are __seed_*__ sentinel values)
@@ -67,10 +70,27 @@ export function useWorkoutHistory(limit = 40) {
             totalVolumeKg: r.total_volume_kg,
             notes:         r.notes,
             notionSynced:  !!r.notion_page_id,
+            isGhost:       r.status === 'ghost',
             isoWeek:       isoWeek(date),
           }
         })
     },
     staleTime: 60_000,
+  })
+}
+
+/** Delete a workout session (and its sets) — for managing ghost/test data. */
+export function useDeleteSession() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await supabase.from('workout_sets').delete().eq('session_id', id)
+      const { error } = await supabase.from('workout_sessions').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['workout_sessions'] })
+      qc.invalidateQueries({ queryKey: ['gym_reports'] })
+    },
   })
 }

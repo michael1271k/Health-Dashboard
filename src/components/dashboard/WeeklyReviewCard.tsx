@@ -5,9 +5,10 @@ import { supabase } from '@/lib/supabase/client'
 import type { Tables } from '@/lib/supabase/types'
 import { TrendingUp, Moon, Dumbbell, Droplets } from 'lucide-react'
 
-function weekAgoISO(): string {
+/** Most recent Sunday (this calendar week's start), so the review resets weekly. */
+function startOfWeekISO(): string {
   const d = new Date()
-  d.setDate(d.getDate() - 7)
+  d.setDate(d.getDate() - d.getDay()) // getDay(): 0 = Sunday
   return d.toLocaleDateString('en-CA')
 }
 
@@ -27,7 +28,7 @@ function useWeekStats() {
   return useQuery<WeekStats>({
     queryKey: ['weekly_review'],
     queryFn: async () => {
-      const since = weekAgoISO()
+      const since = startOfWeekISO()
       const until = todayISO()
 
       const [scores, sleep, sessions, water, prs] = await Promise.all([
@@ -59,7 +60,8 @@ function useWeekStats() {
           .lte('created_at', `${until}T23:59:59Z`),
       ])
 
-      const scoreRows = (scores.data ?? []) as Array<{ score: number }>
+      const scoreRows = ((scores.data ?? []) as Array<{ score: number | null }>)
+        .filter((r) => typeof r.score === 'number' && Number.isFinite(r.score)) as Array<{ score: number }>
       const avgScore = scoreRows.length
         ? Math.round(scoreRows.reduce((s, r) => s + r.score, 0) / scoreRows.length)
         : null
@@ -129,7 +131,7 @@ export function WeeklyReviewCard() {
     <div className="vital-card">
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-heading font-semibold text-base text-text">Weekly Review</h3>
-        <span className="text-xs text-muted-vital">Last 7 days</span>
+        <span className="text-xs text-muted-vital">This week</span>
       </div>
       <div>
         <StatRow

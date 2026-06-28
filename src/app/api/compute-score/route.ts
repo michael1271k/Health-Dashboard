@@ -1,20 +1,23 @@
 import { NextResponse } from 'next/server'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { getServerSupabaseClient } from '@/lib/supabase/server'
 import { computeDailyScore } from '@/lib/scoring/score'
 import { computeBattery } from '@/lib/scoring/battery'
 import type { ScoringInputs } from '@/lib/scoring/types'
-import type { Tables, InsertRow } from '@/lib/supabase/types'
+import type { Database, Tables, InsertRow } from '@/lib/supabase/types'
 import { WEEKDAY_SPLIT } from '@/lib/types/workout'
 import { denyIfUnauthorized } from '@/lib/auth/guard'
 
+type DB = SupabaseClient<Database>
+
 function todayISO(): string {
-  return new Date().toLocaleDateString('en-CA')   // YYYY-MM-DD, locale-safe
+  return new Date().toLocaleDateString('en-CA')
+}
+function nextDay(d: string): string {
+  const x = new Date(`${d}T00:00:00Z`); x.setUTCDate(x.getUTCDate() + 1); return x.toISOString().slice(0, 10)
 }
 
-/**
- * Hours awake so far today in Israel local time (assumes a 07:00 wake). Drives
- * the time-of-day battery drain so it reads high in the morning, low at night.
- */
+/** Hours awake so far today in Israel local time (assumes a 07:00 wake). */
 function israelHoursAwake(wakeHour = 7): number {
   const parts = new Intl.DateTimeFormat('en-GB', {
     timeZone: 'Asia/Jerusalem', hour: '2-digit', minute: '2-digit', hour12: false,
@@ -24,145 +27,112 @@ function israelHoursAwake(wakeHour = 7): number {
   return Math.max(0, Math.min(18, h + m / 60 - wakeHour))
 }
 
+/** Compute + upsert the daily_scores row for a single date. */
+async function computeForDate(supabase: DB, userId: string, date: string, hoursAwake: number): Promise<void> {
+  const end = nextDay(date)
+  const [metricsRes, sleepRes, nutritionRes, waterRes, supplementsRes, goalsRes, sessionsRes] = await Promise.all([
+    supabase.from('daily_metrics').select('*').eq('user_id', userId).eq('date', date).maybeSingle(),
+    supabase.from('sleep_sessions').select('*').eq('user_id', userId)
+      .gte('start_time', `${date}T00:00:00Z`).lt('start_time', `${end}T00:00:00Z`)
+      .order('start_time', { ascending: false }).limit(1).maybeSingle(),
+    supabase.from('nutrition_entries').select('*').eq('user_id', userId)
+      .eq('date', date).eq('meal_type', 'daily').maybeSingle(),
+    supabase.from('water_intake').select('amount_ml').eq('user_id', userId).eq('date', date),
+    supabase.from('supplements').select('id').eq('user_id', userId).eq('date', date),
+    supabase.from('user_goals').select('*').eq('user_id', userId).maybeSingle(),
+    supabase.from('workout_sessions').select('total_volume_kg').eq('user_id', userId)
+      .gte('started_at', `${date}T00:00:00Z`).lt('started_at', `${end}T00:00:00Z`),
+  ])
+
+  const metrics = metricsRes.data as Tables<'daily_metrics'> | null
+  const sleep = sleepRes.data as Tables<'sleep_sessions'> | null
+  const nutrition = nutritionRes.data as Tables<'nutrition_entries'> | null
+  const water = waterRes.data as Array<{ amount_ml: number }> | null
+  const supplements = supplementsRes.data as Array<{ id: string }> | null
+  const goals = goalsRes.data as Tables<'user_goals'> | null
+  const daySessions = sessionsRes.data as Array<{ total_volume_kg: number | null }> | null
+
+  const { data: trailingRaw } = await supabase
+    .from('workout_sessions').select('total_volume_kg').eq('user_id', userId)
+    .lt('started_at', `${date}T00:00:00Z`).order('started_at', { ascending: false }).limit(7)
+  const trailing = trailingRaw as Array<{ total_volume_kg: number | null }> | null
+  const trailingAvg = trailing?.length ? trailing.reduce((s, r) => s + (r.total_volume_kg ?? 0), 0) / trailing.length : 0
+
+  const { count: prCount } = await supabase
+    .from('workout_sets').select('id', { count: 'exact', head: true })
+    .eq('user_id', userId).eq('is_pr', true)
+    .gte('created_at', `${date}T00:00:00Z`).lt('created_at', `${end}T00:00:00Z`)
+
+  const isRestDay = WEEKDAY_SPLIT[new Date(`${date}T12:00:00Z`).getUTCDay()] === 'rest'
+
+  const g = goals ?? {
+    sleep_goal_hours: 8, calorie_goal: 1935, protein_goal_g: 180, carbs_goal_g: 180,
+    fat_goal_g: 55, steps_goal: 10000, active_cal_goal: 500, water_goal_ml: 3000,
+  }
+  const totalWaterMl = (water ?? []).reduce((s, r) => s + r.amount_ml, 0)
+  const sessionVolumeKg = (daySessions ?? []).reduce((s, r) => s + (r.total_volume_kg ?? 0), 0)
+
+  const inputs: ScoringInputs = {
+    sleepHours: sleep ? sleep.duration_min / 60 : 0,
+    deepMinutes: sleep?.deep_min ?? 0,
+    remMinutes: sleep?.rem_min ?? 0,
+    sleepGoalHours: g.sleep_goal_hours,
+    calories: nutrition?.calories ?? 0,
+    proteinG: nutrition?.protein_g ?? 0,
+    carbsG: nutrition?.carbs_g ?? 0,
+    fatG: nutrition?.fat_g ?? 0,
+    calorieGoal: g.calorie_goal,
+    proteinGoalG: g.protein_goal_g ?? 0,
+    carbsGoalG: g.carbs_goal_g ?? 0,
+    fatGoalG: g.fat_goal_g ?? 0,
+    steps: metrics?.steps ?? 0,
+    activeCal: metrics?.active_cal ?? 0,
+    stepsGoal: g.steps_goal,
+    activeCalGoal: g.active_cal_goal,
+    workoutLogged: (daySessions?.length ?? 0) > 0,
+    isRestDay,
+    newPRsToday: prCount ?? 0,
+    sessionVolumeKg,
+    trailingAvgVolumeKg: trailingAvg,
+    waterMl: totalWaterMl,
+    waterGoalMl: g.water_goal_ml,
+    supplementsTaken: supplements?.length ?? 0,
+    supplementsGoal: 3,
+    contextMode: (g as typeof g & { context_mode?: string }).context_mode as ScoringInputs['contextMode'] ?? 'normal',
+  }
+
+  const components = computeDailyScore(inputs)
+  const battery = computeBattery(inputs, hoursAwake)
+  const scoreRow: InsertRow<'daily_scores'> = {
+    user_id: userId, date,
+    score: components.totalScore, sleep_score: components.sleepScore,
+    nutrition_score: components.nutritionScore, activity_score: components.activityScore,
+    workout_score: components.workoutScore, recovery_score: components.recoveryScore,
+    battery_pct: battery.currentPct,
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await supabase.from('daily_scores').upsert(scoreRow as unknown as any, { onConflict: 'user_id,date' })
+  if (error) console.error(`[compute-score] upsert ${date} failed:`, error.message)
+}
+
 export async function POST(req: Request) {
-  // Same-origin UI calls allowed; external calls require the webhook secret.
   const denied = denyIfUnauthorized(req)
   if (denied) return denied
 
   const supabase = getServerSupabaseClient()
   const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers()
-  if (usersError || !users.length) {
-    return NextResponse.json({ error: 'No user' }, { status: 401 })
-  }
+  if (usersError || !users.length) return NextResponse.json({ error: 'No user' }, { status: 401 })
   const userId = users[0].id
+
+  const body = await req.json().catch(() => ({})) as { backfillDays?: number }
+  const backfillDays = Math.max(0, Math.min(31, Number(body?.backfillDays) || 0))
+
   const today = todayISO()
-
-  // Fetch all inputs in parallel
-  // Supabase v2: Omit<> Insert types resolve to never[] — cast destructured data explicitly
-  const [
-    metricsRes,
-    sleepRes,
-    nutritionRes,
-    waterRes,
-    supplementsRes,
-    goalsRes,
-    todaySessionsRes,
-  ] = await Promise.all([
-    supabase.from('daily_metrics').select('*').eq('user_id', userId).eq('date', today).maybeSingle(),
-    supabase.from('sleep_sessions').select('*').eq('user_id', userId)
-      .gte('start_time', `${today}T00:00:00Z`).lt('start_time', `${today}T24:00:00Z`)
-      .order('start_time', { ascending: false }).limit(1).maybeSingle(),
-    supabase.from('nutrition_entries').select('*').eq('user_id', userId)
-      .eq('date', today).eq('meal_type', 'daily').maybeSingle(),
-    supabase.from('water_intake').select('amount_ml').eq('user_id', userId).eq('date', today),
-    supabase.from('supplements').select('id').eq('user_id', userId).eq('date', today),
-    supabase.from('user_goals').select('*').eq('user_id', userId).maybeSingle(),
-    supabase.from('workout_sessions').select('total_volume_kg').eq('user_id', userId)
-      .gte('started_at', `${today}T00:00:00Z`).lt('started_at', `${today}T24:00:00Z`),
-  ])
-
-  const metrics   = metricsRes.data    as Tables<'daily_metrics'> | null
-  const sleep     = sleepRes.data      as Tables<'sleep_sessions'> | null
-  const nutrition = nutritionRes.data  as Tables<'nutrition_entries'> | null
-  const water     = waterRes.data      as Array<{ amount_ml: number }> | null
-  const supplements = supplementsRes.data as Array<{ id: string }> | null
-  const goals     = goalsRes.data      as Tables<'user_goals'> | null
-  const todaySessions = todaySessionsRes.data as Array<{ total_volume_kg: number | null }> | null
-
-  // Trailing average volume (last 7 sessions, excluding today)
-  const { data: trailingRaw } = await supabase
-    .from('workout_sessions')
-    .select('total_volume_kg')
-    .eq('user_id', userId)
-    .lt('started_at', `${today}T00:00:00Z`)
-    .order('started_at', { ascending: false })
-    .limit(7)
-
-  const trailingSessions = trailingRaw as Array<{ total_volume_kg: number | null }> | null
-
-  const trailingAvg = trailingSessions?.length
-    ? (trailingSessions.reduce((s, r) => s + (r.total_volume_kg ?? 0), 0) / trailingSessions.length)
-    : 0
-
-  // New PRs today
-  const { count: prCount } = await supabase
-    .from('workout_sets')
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', userId)
-    .eq('is_pr', true)
-    .gte('created_at', `${today}T00:00:00Z`)
-
-  // Fixed weekday cycle: Sun=Upper, Mon=Legs/Lower, Tue=Push, Wed=Pull, Thu=Legs/Lower, Fri=Rest, Sat=Rest
-  const isRestDay = WEEKDAY_SPLIT[new Date().getDay()] === 'rest'
-
-  const g = goals ?? {
-    sleep_goal_hours: 8, calorie_goal: 1935, protein_goal_g: 180,
-    carbs_goal_g: 180, fat_goal_g: 55, steps_goal: 10000,
-    active_cal_goal: 500, water_goal_ml: 3000,
+  await computeForDate(supabase, userId, today, israelHoursAwake())   // today: time-of-day aware
+  for (let i = 1; i <= backfillDays; i++) {
+    const d = new Date(); d.setDate(d.getDate() - i)
+    await computeForDate(supabase, userId, d.toLocaleDateString('en-CA'), 16)  // past days: full day
   }
 
-  const totalWaterMl = (water ?? []).reduce((s, r) => s + r.amount_ml, 0)
-  const sessionVolumeKg = (todaySessions ?? []).reduce((s, r) => s + (r.total_volume_kg ?? 0), 0)
-
-  const sleepDuration = sleep
-    ? (sleep.duration_min / 60)
-    : 0
-
-  const inputs: ScoringInputs = {
-    sleepHours:            sleepDuration,
-    deepMinutes:           sleep?.deep_min ?? 0,
-    remMinutes:            sleep?.rem_min ?? 0,
-    sleepGoalHours:        g.sleep_goal_hours,
-    calories:              nutrition?.calories ?? 0,
-    proteinG:              nutrition?.protein_g ?? 0,
-    carbsG:                nutrition?.carbs_g ?? 0,
-    fatG:                  nutrition?.fat_g ?? 0,
-    calorieGoal:           g.calorie_goal,
-    proteinGoalG:          g.protein_goal_g ?? 0,   // null (bulk/maint) → not graded
-    carbsGoalG:            g.carbs_goal_g ?? 0,
-    fatGoalG:              g.fat_goal_g ?? 0,
-    steps:                 metrics?.steps ?? 0,
-    activeCal:             metrics?.active_cal ?? 0,
-    stepsGoal:             g.steps_goal,
-    activeCalGoal:         g.active_cal_goal,
-    workoutLogged:         (todaySessions?.length ?? 0) > 0,
-    isRestDay,
-    newPRsToday:           prCount ?? 0,
-    sessionVolumeKg,
-    trailingAvgVolumeKg:   trailingAvg,
-    waterMl:               totalWaterMl,
-    waterGoalMl:           g.water_goal_ml,
-    supplementsTaken:      supplements?.length ?? 0,
-    supplementsGoal:       3,
-    contextMode:           (g as typeof g & { context_mode?: string }).context_mode as ScoringInputs['contextMode'] ?? 'normal',
-  }
-
-  const components = computeDailyScore(inputs)
-  const battery = computeBattery(inputs, israelHoursAwake())
-
-  // Upsert to daily_scores
-  const scoreRow: InsertRow<'daily_scores'> = {
-    user_id:          userId,
-    date:             today,
-    score:            components.totalScore,
-    sleep_score:      components.sleepScore,
-    nutrition_score:  components.nutritionScore,
-    activity_score:   components.activityScore,
-    workout_score:    components.workoutScore,
-    recovery_score:   components.recoveryScore,
-    battery_pct:      battery.currentPct,
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error: upsertError } = await supabase
-    .from('daily_scores')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .upsert(scoreRow as unknown as any, { onConflict: 'user_id,date' })
-
-  if (upsertError) {
-    console.error('[compute-score] upsert error:', upsertError)
-    return NextResponse.json({ error: 'Failed to save score' }, { status: 500 })
-  }
-
-  return NextResponse.json({ ...components, batteryPct: battery.currentPct, morningCharge: battery.morningCharge })
+  return NextResponse.json({ ok: true, today, backfilled: backfillDays })
 }

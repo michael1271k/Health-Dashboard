@@ -6,9 +6,42 @@ import { computeInsights, type DayPoint, type SessionPoint, type Insight } from 
 import { computeReadiness } from '@/lib/scoring/readiness'
 import type { ReadinessResult } from '@/lib/scoring/types'
 import type { Tables } from '@/lib/supabase/types'
+import { getTodaysSplit, PPL_SPLITS, type SplitDay } from '@/lib/types/workout'
 
 function daysAgoISO(n: number): string {
   return new Date(Date.now() - n * 86400000).toLocaleDateString('en-CA')
+}
+
+/**
+ * Make the readiness verdict aware of the fixed PPL schedule + travel mode.
+ * Never suggests "Rest Today" on a scheduled training weekday; on a scheduled
+ * rest day it says so — unless a workout was actually logged (stay flexible).
+ * In Travel mode it switches to a vacation maintenance protocol.
+ */
+function scheduleAwareReadiness(
+  base: ReadinessResult | null,
+  ctx: { todaySplit: SplitDay | 'rest'; workoutToday: boolean; contextMode: string },
+): ReadinessResult | null {
+  if (ctx.contextMode === 'travel') {
+    return {
+      level: 'train_light', label: 'Travel Mode 🌴', color: '#19E3D0',
+      reason: 'Vacation protocol — 2–3 short maintenance sessions this week is plenty. Prioritize rest, sun, and enjoying the trip.',
+    }
+  }
+  if (ctx.todaySplit === 'rest' && !ctx.workoutToday) {
+    return { level: 'rest', label: 'Scheduled Rest', color: '#8B97B2', reason: 'Today is a rest day in your PPL cycle — recover and refuel.' }
+  }
+  if (ctx.todaySplit !== 'rest') {
+    const name = PPL_SPLITS[ctx.todaySplit]?.label ?? ctx.todaySplit
+    if (!base || base.level === 'train_hard') {
+      return { level: 'train_hard', label: `${name} Day`, color: '#19E3B1', reason: `Scheduled ${name.toLowerCase()} — recovery looks strong, train hard.` }
+    }
+    if (base.level === 'rest') {
+      return { level: 'train_light', label: `${name} Day · Go Light`, color: '#FFB020', reason: `It's your scheduled ${name.toLowerCase()} day, but recovery is low — keep it light and technical.` }
+    }
+    return { ...base, label: `${name} Day` }
+  }
+  return base
 }
 
 export interface InsightsResult {
@@ -40,7 +73,7 @@ export function useInsights() {
           .select('started_at, total_volume_kg, notes')
           .gte('started_at', fromTs).order('started_at', { ascending: true }),
         supabase.from('daily_scores').select('*').eq('date', today).maybeSingle(),
-        supabase.from('user_goals').select('calorie_goal').maybeSingle(),
+        supabase.from('user_goals').select('calorie_goal, context_mode').maybeSingle(),
       ])
 
       const logs = (logsRes.data ?? []) as Array<{
@@ -49,7 +82,7 @@ export function useInsights() {
       }>
       const nutrition = (nutritionRes.data ?? []) as Array<{ date: string; calories: number | null }>
       const calByDate = new Map(nutrition.map((n) => [n.date, n.calories]))
-      const goals = goalsRes.data as { calorie_goal: number | null } | null
+      const goals = goalsRes.data as { calorie_goal: number | null; context_mode: string | null } | null
       const calorieGoal = goals?.calorie_goal ?? null
 
       const days: DayPoint[] = logs.map((l) => ({
@@ -69,12 +102,18 @@ export function useInsights() {
         .map((s) => ({ date: s.started_at.slice(0, 10), volumeKg: s.total_volume_kg as number }))
 
       const score = scoreRes.data as Tables<'daily_scores'> | null
-      const readiness = score
+      const baseReadiness = score
         ? computeReadiness(
             { sleepScore: score.sleep_score ?? 0, recoveryScore: score.recovery_score ?? 0 },
             score.battery_pct ?? 0,
           )
         : null
+      const todayISO = new Date().toLocaleDateString('en-CA')
+      const readiness = scheduleAwareReadiness(baseReadiness, {
+        todaySplit: getTodaysSplit(),
+        workoutToday: sessions.some((s) => s.date === todayISO),
+        contextMode: goals?.context_mode ?? 'normal',
+      })
 
       return { readiness, insights: computeInsights({ days, sessions }) }
     },

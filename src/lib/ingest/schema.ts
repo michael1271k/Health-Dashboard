@@ -71,6 +71,9 @@ const BaseSchema = z.object({
   avg_rest_heart_rate: intField(),                   // bpm (resting)
   respiratory_rate:    floatField(),                 // breaths/min (numeric)
   blood_oxygen:        floatField(),                 // %
+  // Auto-detected Apple Health workout (Hevy → Health) → a "ghost" session.
+  workout_minutes:     intField(),                   // workout duration (min)
+  workout_calories:    intField(),                   // workout active energy (kcal)
   // Optional explicit date override (YYYY-MM-DD); defaults to today (Israel time)
   date:                z.string().optional(),
 }).strip()

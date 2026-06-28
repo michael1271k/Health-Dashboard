@@ -142,6 +142,7 @@ export interface Database {
           avg_bpm: number | null
           report_md: string | null
           migrated_from_notion: boolean
+          status: string
           created_at: string
           updated_at: string
         }
@@ -149,7 +150,7 @@ export interface Database {
           Database['public']['Tables']['workout_sessions']['Row'],
           'id' | 'created_at' | 'updated_at'
             | 'set_count' | 'pr_count' | 'duration_min' | 'calories_burned'
-            | 'avg_bpm' | 'report_md' | 'migrated_from_notion'
+            | 'avg_bpm' | 'report_md' | 'migrated_from_notion' | 'status'
         > & {
           set_count?: number | null
           pr_count?: number | null
@@ -158,6 +159,7 @@ export interface Database {
           avg_bpm?: number | null
           report_md?: string | null
           migrated_from_notion?: boolean
+          status?: string
         }
         Update: Partial<Database['public']['Tables']['workout_sessions']['Insert']>
       }
@@ -266,6 +268,21 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['reports']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['reports']['Insert']>
+      }
+      nutrition_phases: {
+        Row: {
+          id: string
+          user_id: string
+          mode: string
+          calorie_goal: number | null
+          protein_g: number | null
+          carbs_g: number | null
+          fat_g: number | null
+          effective_from: string
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['nutrition_phases']['Row'], 'id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['nutrition_phases']['Insert']>
       }
     }
     Views: Record<string, never>

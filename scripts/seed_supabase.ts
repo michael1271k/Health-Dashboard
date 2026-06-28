@@ -193,10 +193,14 @@ async function main(): Promise<void> {
   }
 
   // ── Gym Sessions (page body → report_md verbatim) ──
-  for (const { id, properties: p } of await fetchAllPages(notion, gymDbId)) {
+  for (const { id, properties: p, createdTime } of await fetchAllPages(notion, gymDbId)) {
     try {
-      const day = toDay(dateStart(p, 'Date'))
-      if (!day) { skip(id, 'gym', 'no valid Date property'); continue }
+      // Broadened date detection so early sessions (e.g. Mar 10–27) aren't dropped.
+      const day = toDay(
+        dateStart(p, 'Date') ?? dateStart(p, 'Date (for calendar)') ??
+        dateStart(p, 'Session Date') ?? dateStart(p, 'Day') ?? (createdTime ?? null),
+      )
+      if (!day) { skip(id, 'gym', 'no valid date (tried Date / Date (for calendar) / Session Date / Day / created)'); continue }
       const typeRaw = (select(p, 'Type') ?? '').toLowerCase()
       const splitDay = ['push', 'pull', 'legs', 'upper', 'lower'].includes(typeRaw) ? typeRaw : 'legs'
       const durationMin = parseDurationMin(richText(p, 'Duration'))

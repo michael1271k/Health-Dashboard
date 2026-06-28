@@ -37,37 +37,37 @@ export const PPL_SPLITS: Record<SplitDay, { label: string; labelHe: string; colo
   push: {
     label: 'Push',
     labelHe: 'דחיפה',
-    color: '#3D7DFF',   // primary blue
+    color: '#38E1FF',   // primary blue
   },
   pull: {
     label: 'Pull',
     labelHe: 'משיכה',
-    color: '#7C5CFF',   // energy violet
+    color: '#43F59B',   // energy violet
   },
   legs: {
     label: 'Legs/Lower',
     labelHe: 'רגליים',
-    color: '#38BDF8',   // info blue
+    color: '#4FC3FF',   // info blue
   },
   upper: {
     label: 'Upper',
     labelHe: 'פלג גוף עליון',
-    color: '#2DD4A7',   // success teal
+    color: '#19E3B1',   // success teal
   },
   lower: {
     label: 'Lower',     // legacy — maps to 'legs' in new sessions
     labelHe: 'פלג גוף תחתון',
-    color: '#FFB020',   // warm
+    color: '#E8C57A',   // warm
   },
 }
 
 // Logger-only 4-entry list — English only, no Hebrew, canonical Legs/Lower → 'legs'
 // Used by SplitPicker to render the 4 active training splits in one row.
 export const LOGGER_SPLITS: Array<{ day: SplitDay; label: string; color: string }> = [
-  { day: 'upper', label: 'Upper',      color: '#2DD4A7' },
-  { day: 'legs',  label: 'Legs/Lower', color: '#38BDF8' },
-  { day: 'push',  label: 'Push',       color: '#3D7DFF' },
-  { day: 'pull',  label: 'Pull',       color: '#7C5CFF' },
+  { day: 'upper', label: 'Upper',      color: '#19E3B1' },
+  { day: 'legs',  label: 'Legs/Lower', color: '#4FC3FF' },
+  { day: 'push',  label: 'Push',       color: '#38E1FF' },
+  { day: 'pull',  label: 'Pull',       color: '#43F59B' },
 ]
 
 // Fixed-weekday cycle (Sun–Sat):

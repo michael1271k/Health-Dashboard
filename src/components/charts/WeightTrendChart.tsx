@@ -11,6 +11,7 @@ import {
   Tooltip,
   Legend,
   ReferenceLine,
+  Brush,
 } from 'recharts'
 import { ChartTooltip } from './ChartTooltip'
 
@@ -127,6 +128,9 @@ export function WeightTrendChart({ data, isLoading }: WeightTrendChartProps) {
               <Area yAxisId="mass" type="monotone" dataKey="muscle" name="Muscle (kg)" stroke={COLORS.muscle} fill="url(#muscleFill)" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: COLORS.muscle }} connectNulls />
             )}
             <Line yAxisId="fat" type="monotone" dataKey="bodyFat" name="Body Fat (%)" stroke={COLORS.bodyFat} strokeWidth={1.5} strokeDasharray="4 2" dot={false} activeDot={{ r: 3, fill: COLORS.bodyFat }} connectNulls />
+            {chartData.length > 8 && (
+              <Brush dataKey="date" height={18} travellerWidth={8} stroke={COLORS.weight} fill="rgba(255,255,255,0.03)" tickFormatter={() => ''} />
+            )}
           </ComposedChart>
         </ResponsiveContainer>
       </div>

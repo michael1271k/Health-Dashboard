@@ -6,6 +6,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { DataTable, type TableColumn } from '@/components/data/DataTable'
 import { useDailyLogs, type DailyLog } from '@/lib/hooks/useNutrition'
 import { NUTRITION_PRESETS, type NutritionMode } from '@/lib/types/workout'
+import { useNutritionPhases, phaseForDate, useSetNutritionPhase } from '@/lib/hooks/useNutritionPhases'
 import type { Tables } from '@/lib/supabase/types'
 
 interface ActiveGoals {
@@ -45,6 +46,9 @@ function gradedVal(v: number | null, goal: number | null, unit: string, higherIs
 export default function NutritionPage() {
   const qc = useQueryClient()
   const { data: logs, isLoading } = useDailyLogs(30)
+  const { data: phases } = useNutritionPhases()
+  const setPhase = useSetNutritionPhase()
+  const [filter, setFilter] = useState<'all' | NutritionMode>('all')
 
   const [goals, setGoals] = useState<ActiveGoals>({
     calorie: 1935, protein: 180, carbs: 180, fat: 55, mode: 'cut',
@@ -93,8 +97,13 @@ export default function NutritionPage() {
       } as unknown as never, { onConflict: 'user_id' })
       qc.invalidateQueries({ queryKey: ['user_goals'] })
     }
+    setPhase.mutate(mode)  // drop a dated timeline marker (effective today)
     setSaving(false)
   }
+
+  const filteredLogs = filter === 'all'
+    ? (logs ?? [])
+    : (logs ?? []).filter((l) => phaseForDate(phases ?? [], l.date) === filter)
 
   // 7-day calorie adherence (within ±100 kcal of goal)
   const last7 = (logs ?? []).slice(0, 7)
@@ -176,14 +185,31 @@ export default function NutritionPage() {
         </div>
       </section>
 
-      {/* Daily compliance table */}
-      <DataTable
-        columns={columns}
-        rows={logs ?? []}
-        keyExtractor={(r) => r.date}
-        isLoading={isLoading}
-        emptyMessage="No nutrition data yet. Sync Apple Health via Health Auto Export."
-      />
+      {/* Phase filter + daily compliance table */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-fluid-xs text-muted-vital">Phase:</span>
+          {(['all', 'cut', 'maintenance', 'bulk'] as const).map((f) => (
+            <button key={f} onClick={() => setFilter(f)}
+              className={`px-3 py-1.5 rounded-xl text-fluid-xs font-medium capitalize transition-colors
+                ${filter === f ? 'bg-primary/15 text-primary border border-primary/30' : 'text-muted-vital border border-transparent hover:text-text'}`}>
+              {f}
+            </button>
+          ))}
+          {(phases?.length ?? 0) > 0 && (
+            <span className="ml-auto text-fluid-xs text-muted-vital">
+              {phases!.length} phase marker{phases!.length === 1 ? '' : 's'}
+            </span>
+          )}
+        </div>
+        <DataTable
+          columns={columns}
+          rows={filteredLogs}
+          keyExtractor={(r) => r.date}
+          isLoading={isLoading}
+          emptyMessage={filter === 'all' ? 'No nutrition data yet. Sync Apple Health via Health Auto Export.' : `No days logged in the ${filter} phase yet.`}
+        />
+      </div>
     </div>
   )
 }

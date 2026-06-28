@@ -24,7 +24,6 @@ import { InsightCoach } from '@/components/dashboard/InsightCoach'
 import { AnimatedCard } from '@/components/dashboard/AnimatedBento'
 import { WeeklyReviewCard } from '@/components/dashboard/WeeklyReviewCard'
 import { BrandHeader } from '@/components/dashboard/BrandHeader'
-import { WidgetDeck, type DeckItem } from '@/components/ui/WidgetDeck'
 import { formatSleep, mlToL, formatRelativeTime } from '@/lib/utils/format'
 import {
   useTodayScore,
@@ -63,8 +62,8 @@ export default function DashboardPage() {
   const logSplit = todaySplit === 'rest' ? 'push' : todaySplit
 
   const { data: score, isLoading: scoreLoading } = useTodayScore()
-  // Compute today's score once if it doesn't exist yet (fixes the "0%" battery).
-  useEnsureTodayScore(!scoreLoading && score === null)
+  // Recompute the time-of-day battery on mount + visibility (and backfill the week).
+  useEnsureTodayScore()
 
   const { data: log, isLoading: logLoading } = useTodayDailyLog()
   const { data: metrics, isLoading: metricsLoading } = useTodayMetrics()
@@ -91,69 +90,53 @@ export default function DashboardPage() {
   const calToday = nutrition?.calories ?? null
   const calPct = calGoal && calToday != null ? Math.round((calToday / calGoal) * 100) : null
 
-  // ── Build the four domain widgets once; reused by mobile deck + desktop grid ──
-  const widgets: Array<{ id: string; label: string; icon: typeof HeartPulse; node: React.ReactNode }> = [
+  // ── Four domain widgets: collapsible vertical stack on mobile, grid on desktop ──
+  const widgets: Array<{ id: string; title: string; icon: typeof HeartPulse; accent: string; footer?: React.ReactNode; tiles: React.ReactNode }> = [
     {
-      id: 'recovery', label: 'Recovery', icon: HeartPulse,
-      node: (
-        <DomainWidget title="Recovery & Sleep" icon={HeartPulse} accent={VIOLET}>
-          <StatTile label="Sleep" value={formatSleep(sleepMin)} accent={VIOLET} isLoading={recoveryLoading} />
-          <StatTile label="Resting HR" value={restHr} unit="bpm" isLoading={recoveryLoading} />
-          <StatTile label="Respiratory" value={n1(log?.respiratory_rate)} unit="br/min" isLoading={logLoading} />
-          <StatTile label="Blood O₂" value={n0(log?.blood_oxygen)} unit="%" isLoading={logLoading} />
-        </DomainWidget>
-      ),
+      id: 'recovery', title: 'Recovery & Sleep', icon: HeartPulse, accent: VIOLET,
+      tiles: (<>
+        <StatTile label="Sleep" value={formatSleep(sleepMin)} accent={VIOLET} isLoading={recoveryLoading} />
+        <StatTile label="Resting HR" value={restHr} unit="bpm" isLoading={recoveryLoading} />
+        <StatTile label="Respiratory" value={n1(log?.respiratory_rate)} unit="br/min" isLoading={logLoading} />
+        <StatTile label="Blood O₂" value={n0(log?.blood_oxygen)} unit="%" isLoading={logLoading} />
+      </>),
     },
     {
-      id: 'activity', label: 'Activity', icon: Activity,
-      node: (
-        <DomainWidget title="Daily Activity" icon={Activity} accent={BLUE}>
-          <StatTile label="Steps" value={steps?.toLocaleString() ?? null} accent={BLUE} isLoading={activityLoading} />
-          <StatTile label="Active Energy" value={activeKcal} unit="kcal" isLoading={activityLoading} />
-          <StatTile label="Water" value={log?.water_ml != null ? mlToL(log.water_ml) : null} unit="L" isLoading={logLoading} />
-          <StatTile label="Training" value={log?.training_minutes} unit="min" isLoading={logLoading} />
-        </DomainWidget>
-      ),
+      id: 'activity', title: 'Daily Activity', icon: Activity, accent: BLUE,
+      tiles: (<>
+        <StatTile label="Steps" value={steps?.toLocaleString() ?? null} accent={BLUE} isLoading={activityLoading} />
+        <StatTile label="Active Energy" value={activeKcal} unit="kcal" isLoading={activityLoading} />
+        <StatTile label="Water" value={log?.water_ml != null ? mlToL(log.water_ml) : null} unit="L" isLoading={logLoading} />
+        <StatTile label="Training" value={log?.training_minutes} unit="min" isLoading={logLoading} />
+      </>),
     },
     {
-      id: 'body', label: 'Body', icon: Scale,
-      node: (
-        <DomainWidget
-          title="Body Composition" icon={Scale} accent={TEAL}
-          footer={log?.updated_at ? <>Updated {formatRelativeTime(log.updated_at)}</> : undefined}
-        >
-          <StatTile label="Weight" value={n1(log?.weight_kg)} unit="kg" accent={TEAL} isLoading={logLoading} />
-          <StatTile label="BMI" value={n1(log?.bmi)} isLoading={logLoading} />
-          <StatTile label="Lean Mass" value={n1(log?.lean_mass_kg)} unit="kg" isLoading={logLoading} />
-          <StatTile label="Body Fat" value={n1(log?.body_fat_pct)} unit="%" isLoading={logLoading} />
-          {log?.muscle_percent != null && <StatTile label="Muscle" value={n1(log.muscle_percent)} unit="%" />}
-          {log?.water_percent != null && <StatTile label="Water" value={n1(log.water_percent)} unit="%" />}
-          {log?.visceral_fat != null && <StatTile label="Visceral" value={n1(log.visceral_fat)} />}
-          {log?.bmr != null && <StatTile label="BMR" value={n0(log.bmr)} unit="kcal" />}
-        </DomainWidget>
-      ),
+      id: 'body', title: 'Body Composition', icon: Scale, accent: TEAL,
+      footer: log?.updated_at ? <>Updated {formatRelativeTime(log.updated_at)}</> : undefined,
+      tiles: (<>
+        <StatTile label="Weight" value={n1(log?.weight_kg)} unit="kg" accent={TEAL} isLoading={logLoading} />
+        <StatTile label="BMI" value={n1(log?.bmi)} isLoading={logLoading} />
+        <StatTile label="Lean Mass" value={n1(log?.lean_mass_kg)} unit="kg" isLoading={logLoading} />
+        <StatTile label="Body Fat" value={n1(log?.body_fat_pct)} unit="%" isLoading={logLoading} />
+        {log?.muscle_percent != null && <StatTile label="Muscle" value={n1(log.muscle_percent)} unit="%" />}
+        {log?.water_percent != null && <StatTile label="Water" value={n1(log.water_percent)} unit="%" />}
+        {log?.visceral_fat != null && <StatTile label="Visceral" value={n1(log.visceral_fat)} />}
+        {log?.bmr != null && <StatTile label="BMR" value={n0(log.bmr)} unit="kcal" />}
+      </>),
     },
     {
-      id: 'gym', label: 'Gym', icon: Dumbbell,
-      node: (
-        <DomainWidget
-          title="Gym & Nutrition" icon={Dumbbell} accent={CYAN}
-          footer={
-            calToday != null && calGoal
-              ? <>Calories: <span className="text-text">{calToday.toLocaleString()}</span> / {calGoal.toLocaleString()} kcal · {calPct}%{goals?.goal_preset ? <span className="capitalize"> · {goals.goal_preset}</span> : null}</>
-              : undefined
-          }
-        >
-          <StatTile label="Last Workout" value={lastSplit?.label ?? null} sub={lastSessionDate} accent={lastSplit?.color ?? CYAN} />
-          <StatTile label="Volume" value={n0(lastSession?.total_volume_kg)} unit="kg" />
-          <StatTile label="Protein" value={n0(nutrition?.protein_g)} unit="g" isLoading={nutritionLoading} />
-          <StatTile label="Carbs" value={n0(nutrition?.carbs_g)} unit="g" isLoading={nutritionLoading} />
-        </DomainWidget>
-      ),
+      id: 'gym', title: 'Gym & Nutrition', icon: Dumbbell, accent: CYAN,
+      footer: calToday != null && calGoal
+        ? <>Calories: <span className="text-text">{calToday.toLocaleString()}</span> / {calGoal.toLocaleString()} kcal · {calPct}%{goals?.goal_preset ? <span className="capitalize"> · {goals.goal_preset}</span> : null}</>
+        : undefined,
+      tiles: (<>
+        <StatTile label="Last Workout" value={lastSplit?.label ?? null} sub={lastSessionDate} accent={lastSplit?.color ?? CYAN} />
+        <StatTile label="Volume" value={n0(lastSession?.total_volume_kg)} unit="kg" />
+        <StatTile label="Protein" value={n0(nutrition?.protein_g)} unit="g" isLoading={nutritionLoading} />
+        <StatTile label="Carbs" value={n0(nutrition?.carbs_g)} unit="g" isLoading={nutritionLoading} />
+      </>),
     },
   ]
-
-  const deckItems: DeckItem[] = widgets.map((w) => ({ id: w.id, label: w.label, icon: w.icon, content: w.node }))
 
   return (
     <div className="space-y-6">
@@ -167,15 +150,21 @@ export default function DashboardPage() {
         <div className="hidden xl:block"><AnimatedCard index={2}><TrendStrip /></AnimatedCard></div>
       </div>
 
-      {/* Mobile: swipeable widget deck */}
-      <div className="md:hidden">
-        <WidgetDeck items={deckItems} />
+      {/* Mobile: Apple-Fitness collapsible vertical stack */}
+      <div className="md:hidden space-y-3">
+        {widgets.map((w, i) => (
+          <AnimatedCard key={w.id} index={i + 2}>
+            <DomainWidget collapsible defaultOpen={i === 0} title={w.title} icon={w.icon} accent={w.accent} footer={w.footer}>{w.tiles}</DomainWidget>
+          </AnimatedCard>
+        ))}
       </div>
 
       {/* Desktop/tablet: 2×2 widget grid */}
       <div className="hidden md:grid grid-cols-2 gap-4">
         {widgets.map((w, i) => (
-          <AnimatedCard key={w.id} index={i + 2}>{w.node}</AnimatedCard>
+          <AnimatedCard key={w.id} index={i + 2}>
+            <DomainWidget title={w.title} icon={w.icon} accent={w.accent} footer={w.footer}>{w.tiles}</DomainWidget>
+          </AnimatedCard>
         ))}
       </div>
 

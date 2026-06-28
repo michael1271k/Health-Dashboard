@@ -19,12 +19,12 @@ describe('Database types', () => {
     expect((PPL_SPLITS as Record<string, unknown>)['energy']).toBeUndefined()
   })
 
-  it('PPL_SPLITS has correct colors matching APEX design tokens', () => {
-    expect(PPL_SPLITS.push.color).toBe('#3D7DFF')    // primary blue
-    expect(PPL_SPLITS.pull.color).toBe('#7C5CFF')    // energy violet
-    expect(PPL_SPLITS.legs.color).toBe('#38BDF8')    // info blue
-    expect(PPL_SPLITS.upper.color).toBe('#2DD4A7')   // success teal
-    expect(PPL_SPLITS.lower.color).toBe('#FFB020')   // warm (legacy)
+  it('PPL_SPLITS has the Cyber Mint neon colors (Phase 9)', () => {
+    expect(PPL_SPLITS.push.color).toBe('#38E1FF')    // cyan
+    expect(PPL_SPLITS.pull.color).toBe('#43F59B')    // mint
+    expect(PPL_SPLITS.legs.color).toBe('#4FC3FF')    // aqua
+    expect(PPL_SPLITS.upper.color).toBe('#19E3B1')   // teal
+    expect(PPL_SPLITS.lower.color).toBe('#E8C57A')   // gold
   })
 
   it('PPL_SPLITS legs label is Legs/Lower (canonical combined split)', () => {

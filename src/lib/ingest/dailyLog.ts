@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- Supabase v2 hand-authored Insert types resolve to `never`; payloads are cast at write sites. */
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/lib/supabase/types'
+import { WEEKDAY_SPLIT } from '@/lib/types/workout'
 import type { ShortcutPayload } from './schema'
 
 type DB = SupabaseClient<Database>
@@ -15,7 +16,7 @@ export function todayIsrael(): string {
 export interface IngestResult {
   date: string
   dailyLog: boolean
-  fanOut: { metrics: boolean; nutrition: boolean; body: boolean; water: boolean; sleep: boolean }
+  fanOut: { metrics: boolean; nutrition: boolean; body: boolean; water: boolean; sleep: boolean; ghost: boolean }
 }
 
 /**
@@ -57,7 +58,7 @@ export async function ingestDailyLog(
 
   const result: IngestResult = {
     date, dailyLog: true,
-    fanOut: { metrics: false, nutrition: false, body: false, water: false, sleep: false },
+    fanOut: { metrics: false, nutrition: false, body: false, water: false, sleep: false, ghost: false },
   }
 
   // ── 2. Fan-out: daily_metrics (steps, active cal, resting HR) ──
@@ -122,6 +123,31 @@ export async function ingestDailyLog(
         duration_min: dur, deep_min: 0, rem_min: 0, core_min: dur, awake_min: 0, sleep_score: null,
       } as any)
       result.fanOut.sleep = true
+    }
+  }
+
+  // ── 7. Ghost session: an auto-detected Health workout (duration/calories, no
+  //    sets) with no session already logged for the day → a "pending" session
+  //    the user later completes with a report. ──
+  if (payload.workout_minutes !== undefined || payload.workout_calories !== undefined) {
+    const { data: existing } = await db.from('workout_sessions').select('id')
+      .eq('user_id', userId).gte('started_at', `${date}T00:00:00Z`).lt('started_at', `${date}T23:59:59Z`).limit(1)
+    if (!((existing ?? []) as unknown[]).length) {
+      const weekday = new Date(`${date}T12:00:00Z`).getUTCDay()
+      const scheduled = WEEKDAY_SPLIT[weekday]
+      const splitDay = scheduled === 'rest' || scheduled === undefined ? 'legs' : scheduled
+      const dur = payload.workout_minutes !== undefined ? Math.round(payload.workout_minutes) : null
+      const startedAt = `${date}T18:00:00Z`
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await db.from('workout_sessions').insert({
+        user_id: userId, notion_page_id: null, started_at: startedAt,
+        ended_at: dur ? new Date(new Date(startedAt).getTime() + dur * 60000).toISOString() : null,
+        split_day: splitDay, notes: null, total_volume_kg: null, session_score: null,
+        set_count: null, pr_count: null, duration_min: dur,
+        calories_burned: payload.workout_calories !== undefined ? Math.round(payload.workout_calories) : null,
+        avg_bpm: null, report_md: null, migrated_from_notion: false, status: 'ghost',
+      } as any)
+      result.fanOut.ghost = true
     }
   }
 

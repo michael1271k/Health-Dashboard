@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Outfit, Inter, JetBrains_Mono } from 'next/font/google'
+import { Outfit, Inter, JetBrains_Mono, Space_Grotesk } from 'next/font/google'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Sidebar } from '@/components/nav/Sidebar'
 import { BottomNav } from '@/components/nav/BottomNav'
@@ -7,6 +7,7 @@ import { AuroraBackground } from '@/components/fx/AuroraBackground'
 import { QueryProvider } from '@/components/providers/QueryProvider'
 import { RealtimeProvider } from '@/components/providers/RealtimeProvider'
 import { MotionProvider } from '@/components/providers/MotionProvider'
+import { ThemeProvider as ContextThemeProvider } from '@/components/providers/ThemeProvider'
 import { SerwistRegister } from '@/components/providers/SerwistRegister'
 import './globals.css'
 
@@ -25,6 +26,12 @@ const inter = Inter({
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
   variable: '--font-jetbrains',
+  display: 'swap',
+})
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  variable: '--font-space',
   display: 'swap',
 })
 
@@ -57,7 +64,7 @@ export default function RootLayout({
     <html lang="he" dir="ltr" suppressHydrationWarning>
       <head />
       <body
-        className={`${outfit.variable} ${inter.variable} ${jetbrainsMono.variable} bg-bg text-text font-sans antialiased`}
+        className={`${outfit.variable} ${inter.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable} bg-bg text-text font-sans antialiased`}
       >
         <a
           href="#main-content"
@@ -76,6 +83,7 @@ export default function RootLayout({
           <QueryProvider>
             <RealtimeProvider>
               <MotionProvider>
+                <ContextThemeProvider />
                 <AuroraBackground />
                 <Sidebar />
                 <main

@@ -28,23 +28,31 @@ export default function ChartsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="font-heading text-fluid-2xl font-bold text-text">Charts</h1>
-          <p className="text-muted-vital text-fluid-sm mt-0.5">Trends &amp; progress over time</p>
-        </div>
+      <div>
+        <h1 className="font-heading text-fluid-2xl font-bold text-text">Charts</h1>
+        <p className="text-muted-vital text-fluid-sm mt-0.5">Trends &amp; progress over time</p>
+      </div>
+
+      {/* Mobile: horizontal range pills */}
+      <div className="lg:hidden">
         <RangeSelector value={days} onChange={setDays} />
       </div>
 
-      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-        <WeightTrendChart data={weightData ?? []} isLoading={weightLoading} />
-        <VolumeChart data={volumeData ?? []} isLoading={volumeLoading} />
-        <MacroProgressChart
-          data={macroData ?? []}
-          goals={goals ?? null}
-          isLoading={macroLoading || goalsLoading}
-        />
-        <PRHistoryChart data={prData ?? []} isLoading={prLoading} />
+      <div className="flex gap-4">
+        {/* Desktop: sticky vertical glass range rail */}
+        <div className="hidden lg:block shrink-0 sticky top-6 self-start">
+          <RangeSelector value={days} onChange={setDays} orientation="vertical" />
+        </div>
+        <div className="flex-1 min-w-0 grid gap-6 lg:grid-cols-2">
+          <WeightTrendChart data={weightData ?? []} isLoading={weightLoading} />
+          <VolumeChart data={volumeData ?? []} isLoading={volumeLoading} />
+          <MacroProgressChart
+            data={macroData ?? []}
+            goals={goals ?? null}
+            isLoading={macroLoading || goalsLoading}
+          />
+          <PRHistoryChart data={prData ?? []} isLoading={prLoading} />
+        </div>
       </div>
     </div>
   )

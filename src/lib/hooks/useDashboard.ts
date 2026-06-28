@@ -33,21 +33,38 @@ export function useTodayScore() {
 }
 
 /**
- * If today's daily_scores row is missing once loading settles, trigger a single
- * server-side compute (POST /api/compute-score) and refresh — so the battery
- * reflects scoring/battery.ts instead of defaulting to a misleading 0%.
- * Guarded by a ref so it fires at most once per mount.
+ * Recompute today's score/battery on mount and whenever the tab becomes visible
+ * or comes back online. The battery is time-of-day aware, so it must be recomputed
+ * as the day advances (the old "compute once when null" froze it for the whole day).
+ * The first run also backfills the last 7 days so weekly averages aren't empty.
+ * Throttled to once per 30s.
  */
-export function useEnsureTodayScore(shouldCompute: boolean) {
+export function useEnsureTodayScore(enabled = true) {
   const qc = useQueryClient()
-  const tried = useRef(false)
+  const lastRun = useRef(0)
   useEffect(() => {
-    if (!shouldCompute || tried.current) return
-    tried.current = true
-    fetch('/api/compute-score', { method: 'POST' })
-      .then((r) => (r.ok ? qc.invalidateQueries({ queryKey: ['daily_scores', 'today'] }) : null))
-      .catch(() => {})
-  }, [shouldCompute, qc])
+    if (!enabled) return
+    const recompute = (backfillDays = 0) => {
+      const now = Date.now()
+      if (now - lastRun.current < 30_000) return
+      lastRun.current = now
+      fetch('/api/compute-score', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ backfillDays }),
+      })
+        .then((r) => (r.ok ? qc.invalidateQueries({ queryKey: ['daily_scores'] }).then(() => qc.invalidateQueries({ queryKey: ['weekly_review'] })) : null))
+        .catch(() => {})
+    }
+    recompute(7) // first load: backfill the week
+    const onVisible = () => { if (document.visibilityState === 'visible') recompute(0) }
+    const onOnline = () => recompute(0)
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('online', onOnline)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('online', onOnline)
+    }
+  }, [enabled, qc])
 }
 
 export function useTodayDailyLog() {

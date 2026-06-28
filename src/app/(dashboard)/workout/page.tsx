@@ -4,47 +4,68 @@ import { useState } from 'react'
 import { DataTable, type TableColumn } from '@/components/data/DataTable'
 import { WorkoutChat } from '@/components/logger/WorkoutChat'
 import { Sheet } from '@/components/ui/Sheet'
-import { useWorkoutHistory, type WorkoutSessionRow } from '@/lib/hooks/useWorkoutHistory'
+import { useWorkoutHistory, useDeleteSession, type WorkoutSessionRow } from '@/lib/hooks/useWorkoutHistory'
 import { useAllExercises, useExerciseMemory } from '@/lib/hooks/useLogger'
 import { LOGGER_SPLITS, type SplitDay } from '@/lib/types/workout'
-import { Check, Plus, TrendingUp } from 'lucide-react'
-
-const HISTORY_COLUMNS: TableColumn<WorkoutSessionRow>[] = [
-  {
-    key: 'date', header: 'Date',
-    render: (r) => (
-      <div>
-        <span className="text-text font-medium">
-          {new Date(r.startedAt).toLocaleDateString('en-IL', { weekday: 'short', month: 'short', day: 'numeric' })}
-        </span>
-        <div className="text-[11px] text-muted-vital mt-0.5">{r.isoWeek.replace('-', ' ')}</div>
-      </div>
-    ),
-  },
-  { key: 'split', header: 'Split', render: (r) => <span className="text-sm font-bold" style={{ color: r.splitColor }}>{r.splitLabel}</span> },
-  {
-    key: 'volume', header: 'Volume', align: 'right',
-    render: (r) => r.totalVolumeKg !== null
-      ? <span className="vital-number font-semibold text-text">{Math.round(r.totalVolumeKg).toLocaleString()}<span className="text-xs font-normal text-muted-vital ml-0.5">kg</span></span>
-      : <span className="text-muted-vital">—</span>,
-  },
-  {
-    key: 'notes', header: 'Notes',
-    render: (r) => r.notes && !r.notes.startsWith('__seed_')
-      ? <span className="text-xs text-muted-vital line-clamp-1 max-w-[180px]" dir="auto" title={r.notes}>{r.notes}</span>
-      : <span className="text-muted-vital">—</span>,
-  },
-  {
-    key: 'notion', header: 'Notion', align: 'center',
-    render: (r) => r.notionSynced ? <Check className="w-4 h-4 text-primary mx-auto" aria-label="Synced" /> : <span className="text-muted-vital text-xs">—</span>,
-  },
-]
+import { Check, Plus, TrendingUp, Sparkles, Trash2, Ghost } from 'lucide-react'
 
 export default function WorkoutPage() {
   const { data: grouped, isLoading: exLoading } = useAllExercises()
   const { data: memory } = useExerciseMemory()
   const { data: sessions, isLoading: histLoading } = useWorkoutHistory()
+  const del = useDeleteSession()
   const [openSplit, setOpenSplit] = useState<SplitDay | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<WorkoutSessionRow | null>(null)
+
+  const ghosts = (sessions ?? []).filter((s) => s.isGhost)
+
+  const columns: TableColumn<WorkoutSessionRow>[] = [
+    {
+      key: 'date', header: 'Date',
+      render: (r) => (
+        <div>
+          <span className="text-text font-medium">
+            {new Date(r.startedAt).toLocaleDateString('en-IL', { weekday: 'short', month: 'short', day: 'numeric' })}
+          </span>
+          <div className="text-[11px] text-muted-vital mt-0.5">{r.isoWeek.replace('-', ' ')}</div>
+        </div>
+      ),
+    },
+    {
+      key: 'split', header: 'Split',
+      render: (r) => (
+        <span className="flex items-center gap-1.5">
+          <span className="text-sm font-bold split-label" style={{ color: r.splitColor }}>{r.splitLabel}</span>
+          {r.isGhost && <span className="text-[10px] font-semibold text-warn flex items-center gap-0.5"><Ghost className="w-3 h-3" />pending</span>}
+        </span>
+      ),
+    },
+    {
+      key: 'volume', header: 'Volume', align: 'right',
+      render: (r) => r.totalVolumeKg !== null
+        ? <span className="vital-number font-semibold text-text">{Math.round(r.totalVolumeKg).toLocaleString()}<span className="text-xs font-normal text-muted-vital ml-0.5">kg</span></span>
+        : <span className="text-muted-vital">—</span>,
+    },
+    {
+      key: 'notion', header: 'Notion', align: 'center',
+      render: (r) => r.notionSynced ? <Check className="w-4 h-4 text-primary mx-auto" aria-label="Synced" /> : <span className="text-muted-vital text-xs">—</span>,
+    },
+    {
+      key: 'actions', header: '', align: 'right',
+      render: (r) => (
+        <span className="flex items-center justify-end gap-1.5">
+          {r.isGhost && (
+            <button onClick={() => setOpenSplit(r.splitDay)} className="btn-glass !px-2.5 !py-1 text-[11px]" aria-label="Complete report">
+              <Sparkles className="w-3 h-3" /> Complete
+            </button>
+          )}
+          <button onClick={() => setConfirmDelete(r)} className="p-1.5 rounded-lg text-muted-vital hover:text-danger hover:bg-danger/10" aria-label="Delete session">
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </span>
+      ),
+    },
+  ]
 
   return (
     <div className="space-y-6">
@@ -53,26 +74,30 @@ export default function WorkoutPage() {
         <p className="text-muted-vital text-fluid-sm mt-0.5">Tap a split to log · exercise memory · full history</p>
       </div>
 
-      {/* ── Split columns (horizontal snap on mobile) ── */}
+      {/* Ghost-session nudge */}
+      {ghosts.length > 0 && (
+        <div className="vital-card flex items-center gap-3 border-warn/30">
+          <Ghost className="w-5 h-5 text-warn shrink-0" />
+          <p className="text-fluid-sm text-text flex-1">
+            {ghosts.length} auto-detected workout{ghosts.length === 1 ? '' : 's'} from Apple Health waiting for a report.
+          </p>
+          <button onClick={() => setOpenSplit(ghosts[0].splitDay)} className="btn-glass text-fluid-xs"><Sparkles className="w-3.5 h-3.5" /> Complete</button>
+        </div>
+      )}
+
+      {/* ── Split columns ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {LOGGER_SPLITS.map(({ day, label, color }) => {
           const exercises = grouped?.[day === 'lower' ? 'legs' : day as 'upper' | 'legs' | 'push' | 'pull'] ?? []
           return (
             <div key={day} className="glass-card p-3 flex flex-col">
-              <button
-                onClick={() => setOpenSplit(day)}
-                className="flex items-center justify-between mb-3 group"
-              >
-                <span className="font-heading font-bold text-base" style={{ color }}>{label}</span>
-                <span
-                  className="w-7 h-7 rounded-full flex items-center justify-center transition-transform group-hover:scale-110"
-                  style={{ background: `color-mix(in srgb, ${color} 18%, transparent)`, color }}
-                  aria-label={`Log ${label}`}
-                >
+              <button onClick={() => setOpenSplit(day)} className="flex items-center justify-between mb-3 group">
+                <span className="split-label font-bold text-lg" style={{ color }}>{label}</span>
+                <span className="w-7 h-7 rounded-full flex items-center justify-center transition-transform group-hover:scale-110"
+                  style={{ background: `color-mix(in srgb, ${color} 18%, transparent)`, color }} aria-label={`Log ${label}`}>
                   <Plus className="w-4 h-4" />
                 </span>
               </button>
-
               <div className="space-y-1.5 flex-1">
                 {exLoading ? (
                   [...Array(4)].map((_, i) => <div key={i} className="h-8 rounded-lg bg-surface-2 animate-pulse" />)
@@ -86,8 +111,7 @@ export default function WorkoutPage() {
                         <div className="text-xs font-medium text-text leading-tight truncate">{ex.name}</div>
                         {prev && (
                           <div className="text-[10px] text-muted-vital flex items-center gap-1 mt-0.5">
-                            <TrendingUp className="w-2.5 h-2.5 text-success" />
-                            {prev.weightKg}kg × {prev.reps}
+                            <TrendingUp className="w-2.5 h-2.5 text-success" />{prev.weightKg}kg × {prev.reps}
                           </div>
                         )}
                       </div>
@@ -104,7 +128,7 @@ export default function WorkoutPage() {
       <div>
         <h2 className="font-heading font-semibold text-lg text-text mb-3">History</h2>
         <DataTable
-          columns={HISTORY_COLUMNS}
+          columns={columns}
           rows={sessions ?? []}
           keyExtractor={(r) => r.id}
           isLoading={histLoading}
@@ -112,13 +136,30 @@ export default function WorkoutPage() {
         />
       </div>
 
-      {/* ── Logger sheet (bottom-sheet on mobile, dialog on desktop) ── */}
-      <Sheet
-        open={!!openSplit}
-        onClose={() => setOpenSplit(null)}
-        title={openSplit ? `${openSplit[0].toUpperCase()}${openSplit.slice(1)} — Log Session` : undefined}
-      >
+      {/* ── Logger sheet ── */}
+      <Sheet open={!!openSplit} onClose={() => setOpenSplit(null)}
+        title={openSplit ? `${openSplit[0].toUpperCase()}${openSplit.slice(1)} — Log Session` : undefined}>
         {openSplit && <WorkoutChat splitDay={openSplit} onClose={() => setOpenSplit(null)} />}
+      </Sheet>
+
+      {/* ── Delete confirm ── */}
+      <Sheet open={!!confirmDelete} onClose={() => setConfirmDelete(null)} title="Delete session?">
+        {confirmDelete && (
+          <div className="space-y-4">
+            <p className="text-fluid-sm text-muted-vital">
+              Delete the {confirmDelete.splitLabel} session from{' '}
+              {new Date(confirmDelete.startedAt).toLocaleDateString('en-IL', { month: 'short', day: 'numeric' })}? This can’t be undone.
+            </p>
+            <div className="flex gap-2">
+              <button onClick={() => setConfirmDelete(null)} className="btn-glass flex-1 justify-center">Cancel</button>
+              <button
+                onClick={() => { del.mutate(confirmDelete.id); setConfirmDelete(null) }}
+                className="flex-1 justify-center inline-flex items-center gap-2 rounded-xl bg-danger/90 text-bg font-semibold px-5 py-2.5 hover:bg-danger">
+                <Trash2 className="w-4 h-4" /> Delete
+              </button>
+            </div>
+          </div>
+        )}
       </Sheet>
     </div>
   )

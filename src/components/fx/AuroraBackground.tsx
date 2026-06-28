@@ -20,19 +20,19 @@ export function AuroraBackground() {
 
   // Time-of-day hue: 0–360. Morning cool-blue, midday brighter, evening violet.
   const hour = mounted ? new Date().getHours() : 12
-  // Map hour → base hue around the blue/violet band (210–270)
-  const baseHue = 210 + Math.round(30 * Math.sin((hour / 24) * Math.PI * 2))
+  // Cyber Mint neon mesh: hue drifts through the green→teal→cyan band (150–195)
+  const baseHue = 168 + Math.round(26 * Math.sin((hour / 24) * Math.PI * 2))
 
-  // Battery influence: higher battery → warmer/more saturated, lower → cooler/dimmer
+  // Battery influence: higher battery → brighter/more saturated neon
   const battery = score?.battery_pct ?? 50
   const energy = Math.max(0, Math.min(100, battery)) / 100
-  const sat = 55 + Math.round(energy * 25)        // 55–80%
-  const light = 18 + Math.round(energy * 10)       // 18–28%
-  const blobOpacity = 0.5 + energy * 0.25          // 0.5–0.75
+  const sat = 65 + Math.round(energy * 25)        // 65–90% (neon)
+  const light = 20 + Math.round(energy * 12)       // 20–32%
+  const blobOpacity = 0.55 + energy * 0.28         // 0.55–0.83
 
   const c1 = `hsl(${baseHue} ${sat}% ${light}%)`
-  const c2 = `hsl(${baseHue + 35} ${sat}% ${light + 4}%)`
-  const c3 = `hsl(${baseHue - 25} ${sat - 10}% ${light - 2}%)`
+  const c2 = `hsl(${baseHue + 40} ${sat}% ${light + 4}%)`   // → cyan
+  const c3 = `hsl(${baseHue - 30} ${sat - 8}% ${light - 1}%)` // → green
 
   return (
     <div
