@@ -9,13 +9,13 @@
   /* APEX Color Palette — "Midnight Luxe" (Phase 7)
      Near-black royal base, royal-indigo primary, neon-teal + ice-cyan accents,
      warm gold for PRs / positive highlights. */
-  --color-bg: #050711;          /* deepest near-black obsidian */
+  --color-bg: #050711;          /* deepest near-black obsidian (kept) */
   --color-surface: #0A0E1C;     /* raised glass base */
   --color-surface-2: #131A2E;   /* solid raised surfaces (sliders, inputs) */
-  --color-primary: #6D5BFF;     /* royal indigo — the signature accent */
-  --color-energy: #8B7BFF;      /* lighter indigo — battery / recovery */
-  --color-info: #5AD7FF;        /* ice cyan — data */
-  --color-success: #19E3B1;     /* neon teal — positive deltas */
+  --color-primary: #19E3B1;     /* neon teal — the Cyber Mint signature accent */
+  --color-energy: #4FC3FF;      /* aqua-blue — battery / activity */
+  --color-info: #38E1FF;        /* cyan — data */
+  --color-success: #43F59B;     /* mint green — positive deltas / recovery */
   --color-warn: #FFB020;        /* amber — caution */
   --color-danger: #FF5470;      /* rose — negative */
   --color-gold: #E8C57A;        /* warm gold — PRs / luxury highlight */
@@ -213,9 +213,9 @@
        These fixed radial gradients add luxury depth on every screen incl. mobile. */
     background-color: var(--color-bg);
     background-image:
-      radial-gradient(1100px 760px at 12% -12%, rgba(109,91,255,0.12), transparent 60%),
-      radial-gradient(980px 680px at 112% 8%, rgba(25,227,177,0.09), transparent 55%),
-      radial-gradient(900px 900px at 50% 122%, rgba(90,215,255,0.07), transparent 60%);
+      radial-gradient(1100px 760px at 12% -12%, rgba(25,227,177,0.13), transparent 60%),
+      radial-gradient(980px 680px at 112% 8%, rgba(56,225,255,0.10), transparent 55%),
+      radial-gradient(900px 900px at 50% 122%, rgba(67,245,155,0.07), transparent 60%);
     background-attachment: fixed;
   }
 
@@ -255,14 +255,14 @@
   /* ── TRUE glassmorphism (Phase 5) ───────────────────────────────────────
      Highly transparent + intense blur so the Aurora background refracts. */
   .glass-card {
-    background: rgba(255,255,255,0.03);
-    backdrop-filter: blur(24px) saturate(160%);
-    -webkit-backdrop-filter: blur(24px) saturate(160%);
-    border: 1px solid rgba(255,255,255,0.08);            /* glossy hairline */
+    background: rgba(255,255,255,0.025);
+    backdrop-filter: blur(32px) saturate(180%);          /* Apple-tier frost */
+    -webkit-backdrop-filter: blur(32px) saturate(180%);
+    border: 1px solid rgba(255,255,255,0.07);            /* glossy hairline */
     box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.10),              /* top gloss */
-      inset 0 -1px 0 rgba(0,0,0,0.20),                   /* inner depth */
-      0 16px 40px rgba(0,0,0,0.45);                       /* float */
+      inset 0 1px 0 rgba(255,255,255,0.16),              /* 1px specular highlight */
+      inset 0 -1px 0 rgba(0,0,0,0.22),                   /* inner depth */
+      0 20px 50px rgba(0,0,0,0.50);                       /* float */
     border-radius: 1.25rem;
     transition: box-shadow 0.2s, border-color 0.2s, background 0.2s;
   }
@@ -286,14 +286,14 @@
   /* Card base — true-glass values inlined (Tailwind v4 @apply can't reference
      custom @layer components classes) */
   .vital-card {
-    background: rgba(255,255,255,0.03);
-    backdrop-filter: blur(24px) saturate(160%);
-    -webkit-backdrop-filter: blur(24px) saturate(160%);
-    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.025);
+    backdrop-filter: blur(32px) saturate(180%);
+    -webkit-backdrop-filter: blur(32px) saturate(180%);
+    border: 1px solid rgba(255,255,255,0.07);
     box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.10),
-      inset 0 -1px 0 rgba(0,0,0,0.20),
-      0 16px 40px rgba(0,0,0,0.45);
+      inset 0 1px 0 rgba(255,255,255,0.16),
+      inset 0 -1px 0 rgba(0,0,0,0.22),
+      0 20px 50px rgba(0,0,0,0.50);
     border-radius: 1.25rem;
     transition: box-shadow 0.2s, border-color 0.2s, background 0.2s;
     @apply p-5;
@@ -370,12 +370,12 @@
 
   /* Glowing APEX wordmark (Phase 7) — indigo→cyan→teal gradient + soft glow. */
   .apex-wordmark {
-    background: linear-gradient(90deg, #6D5BFF 0%, #5AD7FF 52%, #19E3B1 100%);
+    background: linear-gradient(90deg, #19E3B1 0%, #38E1FF 52%, #43F59B 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
     -webkit-text-fill-color: transparent;
-    filter: drop-shadow(0 0 16px rgba(109,91,255,0.45));
+    filter: drop-shadow(0 0 16px rgba(25,227,177,0.45));
   }
 }
 

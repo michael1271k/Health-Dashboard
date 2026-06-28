@@ -8,7 +8,7 @@ import {
   computeDailyScore,
   computeAlerts,
 } from '@/lib/scoring/score'
-import { computeMorningCharge, computeBattery, computeRecharge, DRAIN_CONSTANTS } from '@/lib/scoring/battery'
+import { computeMorningCharge, computeBattery, computeRecharge, computeSleepQuality, BATTERY } from '@/lib/scoring/battery'
 import { computeReadiness } from '@/lib/scoring/readiness'
 import type { ScoringInputs } from '@/lib/scoring/types'
 
@@ -236,22 +236,13 @@ describe('computeDailyScore', () => {
 })
 
 // ─── Battery ──────────────────────────────────────────────────────────────────
-describe('computeMorningCharge', () => {
-  it('returns 40 for 0 sleep score', () => {
-    expect(computeMorningCharge(0)).toBe(40)
-  })
-
-  it('returns 100 for 100 sleep score', () => {
-    expect(computeMorningCharge(100)).toBe(100)
-  })
-
-  it('returns 70 for 50 sleep score (40 + 0.6×50)', () => {
-    expect(computeMorningCharge(50)).toBe(70)
-  })
-
-  it('never goes below 40 or above 100', () => {
-    expect(computeMorningCharge(-10)).toBe(40)
-    expect(computeMorningCharge(200)).toBe(100)
+describe('computeMorningCharge (sleep quality 0..1 → 55..100)', () => {
+  it('worst sleep → 55', () => { expect(computeMorningCharge(0)).toBe(55) })
+  it('perfect sleep → 100', () => { expect(computeMorningCharge(1)).toBe(100) })
+  it('half quality → 78 (55 + 45×0.5)', () => { expect(computeMorningCharge(0.5)).toBe(78) })
+  it('clamps out-of-range input', () => {
+    expect(computeMorningCharge(-1)).toBe(55)
+    expect(computeMorningCharge(2)).toBe(100)
   })
 })
 
@@ -273,29 +264,36 @@ describe('computeRecharge', () => {
   })
 })
 
-describe('computeBattery — calibration', () => {
-  it('perfect training day lands at ~35%', () => {
-    // charge=100 (perfect sleep), 16h awake, 10k steps, 4000kg volume, protein+water goals hit
+describe('computeBattery — phone-like (Phase 8)', () => {
+  it('is high in the morning after good sleep — never ~0% at breakfast', () => {
+    // 8h sleep, ~1.5h awake, no workout yet, light steps
+    const morning = computeBattery(
+      { ...PERFECT, sessionVolumeKg: 0, steps: 1500, activeCal: 80, proteinG: 0, waterMl: 0 },
+      1.5,
+    )
+    expect(morning.currentPct).toBeGreaterThanOrEqual(85)
+  })
+
+  it('evening training day lands in a sensible mid range', () => {
     const result = computeBattery(PERFECT_TRAINING_BATTERY, 16)
-    // drain = 2×16 + 0.6×10 + 0.008×4000 + 5 = 32+6+32+5 = 75; recharge=10; 100−75+10=35
-    expect(result.currentPct).toBeGreaterThanOrEqual(30)
-    expect(result.currentPct).toBeLessThanOrEqual(40)
+    expect(result.currentPct).toBeGreaterThanOrEqual(33)
+    expect(result.currentPct).toBeLessThanOrEqual(50)
   })
 
-  it('battery decreases with more hours awake', () => {
-    const early = computeBattery(PERFECT, 4)
-    const late  = computeBattery(PERFECT, 12)
-    expect(early.currentPct).toBeGreaterThan(late.currentPct)
+  it('drains with more hours awake', () => {
+    expect(computeBattery(PERFECT, 4).currentPct).toBeGreaterThan(computeBattery(PERFECT, 12).currentPct)
   })
 
-  it('never goes below 0', () => {
-    const result = computeBattery(ZERO, 24)
-    expect(result.currentPct).toBeGreaterThanOrEqual(0)
+  it('never drops below the floor', () => {
+    expect(computeBattery(ZERO, 24).currentPct).toBeGreaterThanOrEqual(BATTERY.floor)
   })
 
   it('never exceeds 100', () => {
-    const result = computeBattery(PERFECT, 0)
-    expect(result.currentPct).toBeLessThanOrEqual(100)
+    expect(computeBattery(PERFECT, 0).currentPct).toBeLessThanOrEqual(100)
+  })
+
+  it('worse sleep lowers the wake charge', () => {
+    expect(computeSleepQuality(ZERO)).toBeLessThan(computeSleepQuality(PERFECT))
   })
 })
 
@@ -361,11 +359,11 @@ describe('computeAlerts', () => {
   })
 })
 
-// ─── Drain Constants ──────────────────────────────────────────────────────────
-describe('DRAIN_CONSTANTS', () => {
-  it('exports k1=2.0, k2=0.6, k3=0.008 for the recalibrated ~35% perfect-day target', () => {
-    expect(DRAIN_CONSTANTS.k1).toBe(2.0)
-    expect(DRAIN_CONSTANTS.k2).toBe(0.6)
-    expect(DRAIN_CONSTANTS.k3).toBe(0.008)
+// ─── Battery constants ────────────────────────────────────────────────────────
+describe('BATTERY constants', () => {
+  it('exposes a sane floor + chronological drain rate', () => {
+    expect(BATTERY.floor).toBe(5)
+    expect(BATTERY.drainPerHour).toBe(3.0)
+    expect(BATTERY.maxAwake).toBe(18)
   })
 })

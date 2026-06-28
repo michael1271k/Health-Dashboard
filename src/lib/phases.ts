@@ -22,6 +22,8 @@ interface PhaseDef {
 }
 
 export const PHASES: PhaseDef[] = [
+  // Bulk Mar 10 → May 10 2026; anchored to the Sunday on/before Mar 10 (Mar 8).
+  { kind: 'bulk', name: 'Bulk',                    start: '2026-03-08', weeks: 9, numbered: true },
   { kind: 'cut',  name: 'Cut',                     start: '2026-05-10', weeks: 6, numbered: true },
   { kind: 'peak', name: 'Peak Week (Maintenance)', start: '2026-06-21', weeks: 1, short: 'Peak' },
 ]
@@ -48,11 +50,12 @@ export function getWeekPhase(weekStartISO: string): WeekPhase | null {
 
 /** Glow / color styling per phase kind for the calendar badge. */
 export function phaseBadgeStyle(kind: PhaseKind, selected: boolean): import('react').CSSProperties {
+  // Cyber Mint cool spectrum (all distinct, all cool)
   const palette: Record<PhaseKind, string> = {
-    cut: '61,125,255',          // electric blue
-    peak: '124,92,255',         // energy violet — distinct from Cut
-    bulk: '45,212,167',         // success teal
-    maintenance: '255,176,32',  // warm amber
+    cut: '56,225,255',          // cyan
+    peak: '25,227,177',         // teal (signature)
+    bulk: '67,245,155',         // mint green
+    maintenance: '79,195,255',  // aqua-blue
   }
   const rgb = palette[kind]
   return {

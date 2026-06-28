@@ -258,6 +258,8 @@ export interface Database {
           period_start: string
           period_end: string
           content_md: string
+          session_summary_md: string | null
+          weight_report_md: string | null
           metrics: Record<string, unknown> | null
           notion_page_id: string | null
           created_at: string

@@ -11,6 +11,19 @@ function todayISO(): string {
   return new Date().toLocaleDateString('en-CA')   // YYYY-MM-DD, locale-safe
 }
 
+/**
+ * Hours awake so far today in Israel local time (assumes a 07:00 wake). Drives
+ * the time-of-day battery drain so it reads high in the morning, low at night.
+ */
+function israelHoursAwake(wakeHour = 7): number {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Jerusalem', hour: '2-digit', minute: '2-digit', hour12: false,
+  }).formatToParts(new Date())
+  const h = Number(parts.find((p) => p.type === 'hour')?.value ?? '12') % 24
+  const m = Number(parts.find((p) => p.type === 'minute')?.value ?? '0')
+  return Math.max(0, Math.min(18, h + m / 60 - wakeHour))
+}
+
 export async function POST(req: Request) {
   // Same-origin UI calls allowed; external calls require the webhook secret.
   const denied = denyIfUnauthorized(req)
@@ -125,8 +138,7 @@ export async function POST(req: Request) {
   }
 
   const components = computeDailyScore(inputs)
-  const hoursAwake = 16  // default; future: compute from wake time
-  const battery = computeBattery(inputs, hoursAwake)
+  const battery = computeBattery(inputs, israelHoursAwake())
 
   // Upsert to daily_scores
   const scoreRow: InsertRow<'daily_scores'> = {

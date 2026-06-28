@@ -10,8 +10,8 @@ interface BatteryCardProps {
 }
 
 function batteryLabel(battery: number): { label: string; color: string } {
-  if (battery >= 80) return { label: 'Fully Charged', color: '#19E3B1' }
-  if (battery >= 60) return { label: 'Good Energy', color: '#6D5BFF' }
+  if (battery >= 80) return { label: 'Fully Charged', color: '#43F59B' }  // mint
+  if (battery >= 60) return { label: 'Good Energy', color: '#19E3B1' }    // teal
   if (battery >= 40) return { label: 'Moderate', color: '#FFB020' }
   if (battery >= 20) return { label: 'Low Energy', color: '#FFB020' }
   return { label: 'Depleted', color: '#FF5470' }
@@ -32,8 +32,8 @@ export function BatteryCard({ battery, sleepScore, recoveryScore, isLoading }: B
   const rings = hasData
     ? [
         { label: 'Battery', value, color },
-        { label: 'Sleep', value: sleepScore ?? 0, color: '#5AD7FF' },
-        { label: 'Recovery', value: recoveryScore ?? 0, color: '#8B7BFF' },
+        { label: 'Sleep', value: sleepScore ?? 0, color: '#38E1FF' },     // cyan
+        { label: 'Recovery', value: recoveryScore ?? 0, color: '#43F59B' }, // mint
       ]
     : [{ label: 'Battery', value: 6, color: '#3A4A66' }]
 

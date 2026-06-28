@@ -39,11 +39,11 @@ import {
 import { PPL_SPLITS } from '@/lib/types/workout'
 import type { SplitDay } from '@/lib/types/workout'
 
-// Midnight Luxe accents
-const VIOLET = '#8B7BFF'
-const BLUE = '#6D5BFF'
-const TEAL = '#19E3B1'
-const CYAN = '#5AD7FF'
+// Cyber Mint domain accents
+const VIOLET = '#43F59B' // Recovery — mint green
+const BLUE = '#4FC3FF'   // Activity — aqua-blue
+const TEAL = '#19E3D0'   // Body — teal
+const CYAN = '#38E1FF'   // Gym & Nutrition — cyan
 
 const n1 = (v: number | null | undefined): string | null =>
   v == null || !Number.isFinite(v) ? null : Number(v).toFixed(1)
