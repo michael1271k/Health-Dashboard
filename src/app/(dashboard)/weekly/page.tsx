@@ -5,12 +5,22 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useReports, useMonthActivity, useGymReports, type GymReportRow } from '@/lib/hooks/useWeekly'
 import { getWeekPhase, phaseBadgeStyle } from '@/lib/phases'
 import { FileSystemBrowser } from '@/components/reports/FileSystemBrowser'
+import { MarkdownView } from '@/components/reports/MarkdownView'
 import { Sheet } from '@/components/ui/Sheet'
 import { ChevronLeft, ChevronRight, Loader2, Sparkles, FolderOpen } from 'lucide-react'
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 const iso = (d: Date) => d.toISOString().slice(0, 10)
 const addDays = (d: Date, n: number) => { const x = new Date(d); x.setUTCDate(x.getUTCDate() + n); return x }
+
+function MetaChip({ label, value, accent = '#19E3B1' }: { label: string; value: string; accent?: string }) {
+  return (
+    <span className="inline-flex flex-col rounded-xl px-3 py-1.5 border" style={{ borderColor: `${accent}40`, background: `${accent}14` }}>
+      <span className="text-[9px] uppercase tracking-wide text-muted-vital leading-none">{label}</span>
+      <span className="vital-number text-fluid-sm font-bold leading-tight" style={{ color: accent }}>{value}</span>
+    </span>
+  )
+}
 
 export default function WeeklyPage() {
   const qc = useQueryClient()
@@ -62,8 +72,8 @@ export default function WeeklyPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-heading text-fluid-2xl font-bold text-text">Weekly Summaries</h1>
-        <p className="text-muted-vital text-fluid-sm mt-0.5">Tap a day for its session · tap a phase strip for that week’s files</p>
+        <h1 className="font-heading text-fluid-2xl font-bold text-text">Journey</h1>
+        <p className="text-muted-vital text-fluid-sm mt-0.5">Your training timeline · tap a day for its session · tap a phase strip for that week’s files</p>
       </div>
 
       {/* ── Calendar (compact on mobile, full-width on desktop) ── */}
@@ -144,7 +154,16 @@ export default function WeeklyPage() {
         title={daySession ? `${daySession.split[0].toUpperCase()}${daySession.split.slice(1)} · ${new Date(daySession.date + 'T00:00:00').toLocaleDateString('en-IL', { month: 'short', day: 'numeric' })}` : undefined}
       >
         {daySession && (
-          <article className="text-fluid-sm leading-relaxed whitespace-pre-wrap text-text/90" dir="auto">{daySession.reportMd}</article>
+          <div className="space-y-3">
+            <div className="flex flex-wrap gap-2">
+              {daySession.durationMin != null && <MetaChip label="Duration" value={`${daySession.durationMin}m`} />}
+              {daySession.avgBpm != null && <MetaChip label="Avg BPM" value={`${daySession.avgBpm}`} />}
+              {daySession.volumeKg != null && <MetaChip label="Volume" value={`${Math.round(daySession.volumeKg).toLocaleString()} kg`} />}
+              {daySession.setCount != null && <MetaChip label="Sets" value={`${daySession.setCount}`} />}
+              {(daySession.prCount ?? 0) > 0 && <MetaChip label="PRs" value={`${daySession.prCount}`} accent="#E8C57A" />}
+            </div>
+            <MarkdownView md={daySession.reportMd} />
+          </div>
         )}
       </Sheet>
     </div>

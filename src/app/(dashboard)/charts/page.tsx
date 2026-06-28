@@ -38,8 +38,8 @@ export default function ChartsPage() {
         <RangeSelector value={days} onChange={setDays} />
       </div>
 
-      <div className="flex gap-4">
-        {/* Desktop: sticky vertical glass range rail */}
+      <div className="flex gap-4 items-start">
+        {/* Desktop: sticky vertical glass range rail (top-aligned with the charts) */}
         <div className="hidden lg:block shrink-0 sticky top-6 self-start">
           <RangeSelector value={days} onChange={setDays} orientation="vertical" />
         </div>

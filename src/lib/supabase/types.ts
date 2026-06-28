@@ -59,9 +59,10 @@ export interface Database {
           carbs_g: number
           fat_g: number
           fiber_g: number | null
+          phase: string | null
           created_at: string
         }
-        Insert: Omit<Database['public']['Tables']['nutrition_entries']['Row'], 'id' | 'created_at'>
+        Insert: Omit<Database['public']['Tables']['nutrition_entries']['Row'], 'id' | 'created_at' | 'phase'> & { phase?: string | null }
         Update: Partial<Database['public']['Tables']['nutrition_entries']['Insert']>
       }
       body_composition: {

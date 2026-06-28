@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
+import { derivePhase, PHASE_META } from '@/lib/nutrition/phase'
 import type { Tables } from '@/lib/supabase/types'
 
 type ContextMode = 'normal' | 'travel' | 'illness' | 'emergency'
@@ -144,7 +145,20 @@ export default function SettingsPage() {
 
       {/* Nutrition goals */}
       <section className="vital-card space-y-4">
-        <h2 className="font-semibold text-text">Nutrition Goals</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="font-semibold text-text">Nutrition Goals</h2>
+          {(() => {
+            const p = derivePhase(goals.calorie_goal)
+            if (!p) return null
+            const m = PHASE_META[p]
+            return (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wide"
+                style={{ color: m.color, background: `${m.color}1f`, border: `1px solid ${m.color}55`, boxShadow: `0 0 10px ${m.color}44` }}>
+                Auto: {m.label}
+              </span>
+            )
+          })()}
+        </div>
         <div className="grid grid-cols-2 gap-4">
           {([
             { key: 'calorie_goal' as const,   label: 'Calories (kcal)',  step: 50 },

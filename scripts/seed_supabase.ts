@@ -133,6 +133,10 @@ async function fetchAllPages(notion: any, databaseId: string): Promise<Page[]> {
   return out
 }
 
+// Mirror of src/lib/nutrition/phase.ts (tsx can't resolve @/ aliases here).
+const phaseFor = (cal: number): string | null =>
+  !cal || cal <= 0 ? null : cal < 2150 ? 'cut' : cal < 2550 ? 'maintenance' : 'bulk'
+
 const chunk = <T,>(a: T[], n: number): T[][] => {
   const out: T[][] = []
   for (let i = 0; i < a.length; i += n) out.push(a.slice(i, i + n))
@@ -184,7 +188,7 @@ async function main(): Promise<void> {
         bmi, body_fat_pct: bodyFat, water_percent: waterPct, bone_mineral: bone,
       })
       if (calories != null || protein != null || carbs != null || fat != null) {
-        nutrition.push({ user_id: uid, hk_uuid: null, logged_at: `${day}T00:00:00Z`, date: day, meal_type: 'daily', calories: Math.round(calories ?? 0), protein_g: protein ?? 0, carbs_g: carbs ?? 0, fat_g: fat ?? 0, fiber_g: null })
+        nutrition.push({ user_id: uid, hk_uuid: null, logged_at: `${day}T00:00:00Z`, date: day, meal_type: 'daily', calories: Math.round(calories ?? 0), protein_g: protein ?? 0, carbs_g: carbs ?? 0, fat_g: fat ?? 0, fiber_g: null, phase: phaseFor(Math.round(calories ?? 0)) })
       }
       if (weight != null) body.push({ user_id: uid, hk_uuid: null, measured_at: `${day}T00:00:00Z`, date: day, weight_kg: weight, body_fat_pct: bodyFat, muscle_mass_kg: muscle, water_pct: waterPct, bone_mass_kg: bone, bmi })
       if (steps != null) metrics.push({ user_id: uid, date: day, steps: Math.round(steps), active_cal: null, rest_hr: null })

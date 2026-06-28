@@ -35,6 +35,11 @@ export interface GymReportRow {
   date: string
   split: string
   reportMd: string
+  durationMin: number | null
+  avgBpm: number | null
+  volumeKg: number | null
+  setCount: number | null
+  prCount: number | null
 }
 
 /** Gym session reports (workout_sessions that have an AI-generated report). */
@@ -44,14 +49,22 @@ export function useGymReports(limit = 30) {
     queryFn: async (): Promise<GymReportRow[]> => {
       const { data, error } = await supabase
         .from('workout_sessions')
-        .select('id, started_at, split_day, report_md')
+        .select('id, started_at, split_day, report_md, duration_min, avg_bpm, total_volume_kg, set_count, pr_count')
         .not('report_md', 'is', null)
         .order('started_at', { ascending: false })
         .limit(limit)
       if (error) throw error
-      return ((data ?? []) as Array<{ id: string; started_at: string; split_day: string; report_md: string | null }>)
+      return ((data ?? []) as Array<{
+        id: string; started_at: string; split_day: string; report_md: string | null
+        duration_min: number | null; avg_bpm: number | null; total_volume_kg: number | null
+        set_count: number | null; pr_count: number | null
+      }>)
         .filter((r) => r.report_md)
-        .map((r) => ({ id: r.id, date: r.started_at.slice(0, 10), split: r.split_day, reportMd: r.report_md as string }))
+        .map((r) => ({
+          id: r.id, date: r.started_at.slice(0, 10), split: r.split_day, reportMd: r.report_md as string,
+          durationMin: r.duration_min, avgBpm: r.avg_bpm, volumeKg: r.total_volume_kg,
+          setCount: r.set_count, prCount: r.pr_count,
+        }))
     },
     staleTime: 60_000,
   })

@@ -33,12 +33,11 @@ export function BrandHeader() {
 
   return (
     <header className="space-y-1.5">
-      <div className="flex items-center gap-3">
-        <ApexMark className="w-8 h-8 shrink-0 text-primary [filter:drop-shadow(0_0_10px_rgba(109,91,255,0.6))]" />
-        <h1 className="apex-wordmark font-heading text-fluid-3xl font-extrabold tracking-tight leading-none">
-          APEX
-        </h1>
-      </div>
+      {/* Logo sized in `em` so it tracks the wordmark cap-height on every screen */}
+      <h1 className="flex items-center gap-2.5 text-fluid-3xl leading-none">
+        <ApexMark className="h-[0.95em] w-[0.95em] shrink-0" />
+        <span className="apex-wordmark font-heading font-extrabold tracking-tight">APEX</span>
+      </h1>
       <p className="font-heading text-fluid-base font-medium text-text/90">Your Personal Health Dashboard</p>
       <p className="text-fluid-xs text-muted-vital">Good {period ?? 'day'} · {today}</p>
     </header>

@@ -30,6 +30,23 @@ export const PHASES: PhaseDef[] = [
 
 const isoUTC = (d: Date) => d.toISOString().slice(0, 10)
 
+export interface ProgramWeek { weekStart: string; weekEnd: string; kind: PhaseKind; n: number; label: string }
+
+/** Enumerate every week of the given phase kinds as "Week N" folders. */
+export function enumerateWeeks(kinds: PhaseKind[]): ProgramWeek[] {
+  const out: ProgramWeek[] = []
+  for (const p of PHASES) {
+    if (!kinds.includes(p.kind)) continue
+    const start = new Date(`${p.start}T00:00:00Z`)
+    for (let i = 0; i < p.weeks; i++) {
+      const ws = new Date(start); ws.setUTCDate(ws.getUTCDate() + i * 7)
+      const we = new Date(ws); we.setUTCDate(we.getUTCDate() + 6)
+      out.push({ weekStart: isoUTC(ws), weekEnd: isoUTC(we), kind: p.kind, n: i + 1, label: p.numbered ? `Week ${i + 1}` : p.name })
+    }
+  }
+  return out.reverse() // newest first
+}
+
 /** Returns the phase for a given Sunday week-start (YYYY-MM-DD), or null. */
 export function getWeekPhase(weekStartISO: string): WeekPhase | null {
   for (const p of PHASES) {

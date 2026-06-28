@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- Supabase v2 hand-authored Insert types resolve to `never`; payloads are cast at write sites. */
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/lib/supabase/types'
+import { derivePhase } from '@/lib/nutrition/phase'
 import type { ShortcutPayload } from './schema'
 
 type DB = SupabaseClient<Database>
@@ -82,6 +83,7 @@ export async function ingestDailyLog(
     await db.from('nutrition_entries').insert({
       user_id: userId, hk_uuid: null, logged_at: `${date}T00:00:00Z`, date, meal_type: 'daily',
       calories, protein_g: protein, carbs_g: carbs, fat_g: fats, fiber_g: null,
+      phase: derivePhase(calories),
     } as any)
     result.fanOut.nutrition = true
   }

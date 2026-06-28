@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
+import { derivePhase, type Phase } from '@/lib/nutrition/phase'
 
 export interface DailyLog {
   date: string
@@ -13,6 +14,7 @@ export interface DailyLog {
   activeCal: number | null
   score:     number | null
   batteryPct: number | null
+  phase:     Phase | null
 }
 
 function todayISO() {
@@ -32,7 +34,7 @@ export function useDailyLogs(days = 30) {
       const [nutritionRes, metricsRes, scoresRes] = await Promise.all([
         supabase
           .from('nutrition_entries')
-          .select('date, calories, protein_g, carbs_g, fat_g')
+          .select('date, calories, protein_g, carbs_g, fat_g, phase')
           .eq('meal_type', 'daily')
           .gte('date', from)
           .lte('date', to)
@@ -52,7 +54,7 @@ export function useDailyLogs(days = 30) {
       ])
 
       const nutrition = (nutritionRes.data ?? []) as Array<{
-        date: string; calories: number; protein_g: number; carbs_g: number; fat_g: number
+        date: string; calories: number; protein_g: number; carbs_g: number; fat_g: number; phase: string | null
       }>
       const metrics = (metricsRes.data ?? []) as Array<{
         date: string; steps: number | null; active_cal: number | null
@@ -88,6 +90,7 @@ export function useDailyLogs(days = 30) {
             activeCal:  m?.active_cal ?? null,
             score:      s?.score      ?? null,
             batteryPct: s?.battery_pct ?? null,
+            phase:      (n?.phase as Phase | null) ?? derivePhase(n?.calories ?? null),
           }
         })
     },

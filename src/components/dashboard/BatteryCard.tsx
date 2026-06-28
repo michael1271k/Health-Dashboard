@@ -9,12 +9,15 @@ interface BatteryCardProps {
   isLoading?: boolean
 }
 
+// Liquid hue shifts with charge: high = neon green/teal, mid = cyan/blue, low = orange/red.
 function batteryLabel(battery: number): { label: string; color: string } {
-  if (battery >= 80) return { label: 'Fully Charged', color: '#43F59B' }  // mint
-  if (battery >= 60) return { label: 'Good Energy', color: '#19E3B1' }    // teal
-  if (battery >= 40) return { label: 'Moderate', color: '#38E1FF' }       // cyan
-  if (battery >= 20) return { label: 'Low Energy', color: '#FFB020' }
-  return { label: 'Depleted', color: '#FF5470' }
+  if (battery >= 85) return { label: 'Fully Charged', color: '#2DF5A0' }  // neon green
+  if (battery >= 70) return { label: 'Strong', color: '#43F59B' }         // green-teal
+  if (battery >= 60) return { label: 'Good Energy', color: '#38E1FF' }    // cyan
+  if (battery >= 50) return { label: 'Steady', color: '#4F9DFF' }         // blue
+  if (battery >= 35) return { label: 'Low Energy', color: '#FFB020' }     // orange
+  if (battery >= 20) return { label: 'Running Down', color: '#FF8A3D' }   // deep orange
+  return { label: 'Depleted', color: '#FF5470' }                          // red
 }
 
 /** Daily Battery hero — a liquid-fill glass capsule, null-aware + live-updating. */
