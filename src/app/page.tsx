@@ -24,7 +24,7 @@ import { InsightCoach } from '@/components/dashboard/InsightCoach'
 import { AnimatedCard } from '@/components/dashboard/AnimatedBento'
 import { WeeklyReviewCard } from '@/components/dashboard/WeeklyReviewCard'
 import { BrandHeader } from '@/components/dashboard/BrandHeader'
-import { formatSleep, mlToL, formatRelativeTime } from '@/lib/utils/format'
+import { formatSleep, mlToL } from '@/lib/utils/format'
 import {
   useTodayScore,
   useEnsureTodayScore,
@@ -112,7 +112,9 @@ export default function DashboardPage() {
     },
     {
       id: 'body', title: 'Body Composition', icon: Scale, accent: TEAL,
-      footer: log?.updated_at ? <>Updated {formatRelativeTime(log.updated_at)}</> : undefined,
+      footer: log?.date && log?.weight_kg != null
+        ? <>Weighed in {new Date(log.date + 'T00:00:00').toLocaleDateString('en-IL', { month: 'short', day: 'numeric' })}</>
+        : undefined,
       tiles: (<>
         <StatTile label="Weight" value={n1(log?.weight_kg)} unit="kg" accent={TEAL} isLoading={logLoading} />
         <StatTile label="BMI" value={n1(log?.bmi)} isLoading={logLoading} />

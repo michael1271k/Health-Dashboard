@@ -1,22 +1,15 @@
+'use client'
+
+import { useId } from 'react'
+
 /**
- * ApexMark — APEX glass summit logo
- *
- * Design: a faceted glass prism summit — two translucent triangular planes
- * meeting at a peak, with a gradient stroke (primary blue → energy violet)
- * and a subtle highlight that simulates a glass edge catching light.
- * Reads as elevation, precision, and refraction — fitting the Glass Command
- * Center aesthetic.
- *
- * The gradient IDs are suffixed with the instance className hash to avoid
- * SVG gradient ID collisions when the logo is rendered at multiple sizes.
+ * ApexMark — a neon-glass "A" monogram. Two beveled glass facets form the A with
+ * a Cyber-Mint gradient stroke (teal → cyan → mint), a frosted inner fill, and a
+ * soft glow. Pure (gradient IDs via useId — no render-time module counter).
  */
-
-let _instanceCounter = 0
-
 export function ApexMark({ className = 'w-6 h-6' }: { className?: string }) {
-  // SSR-safe stable ID (incremented once per component tree mount)
-  const id = `apexG${++_instanceCounter}`
-
+  const uid = useId().replace(/[:]/g, '')
+  const g = `ax${uid}`
   return (
     <svg
       className={className}
@@ -25,62 +18,27 @@ export function ApexMark({ className = 'w-6 h-6' }: { className?: string }) {
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
+      style={{ filter: 'drop-shadow(0 0 5px rgba(25,227,177,0.45))' }}
     >
       <defs>
-        {/* Elevation gradient: primary blue at the base, energy violet at the peak */}
-        <linearGradient id={`${id}s`} x1="12" y1="22" x2="12" y2="2" gradientUnits="userSpaceOnUse">
-          <stop offset="0%"   stopColor="#3D7DFF" />
-          <stop offset="100%" stopColor="#7C5CFF" />
+        <linearGradient id={`${g}s`} x1="4" y1="22" x2="20" y2="3" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#19E3B1" />
+          <stop offset="55%" stopColor="#38E1FF" />
+          <stop offset="100%" stopColor="#5BFF9D" />
         </linearGradient>
-        {/* Highlight gradient for the inner glow at the apex */}
-        <linearGradient id={`${id}h`} x1="12" y1="6" x2="12" y2="12" gradientUnits="userSpaceOnUse">
-          <stop offset="0%"   stopColor="rgba(255,255,255,0.35)" />
-          <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+        <linearGradient id={`${g}f`} x1="12" y1="3.5" x2="12" y2="21" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#38E1FF" stopOpacity="0.24" />
+          <stop offset="100%" stopColor="#19E3B1" stopOpacity="0.04" />
         </linearGradient>
       </defs>
-
-      {/* ── Left glass pane (bottom-left → peak region) */}
-      <polygon
-        points="3,21 12,3 8.5,13.5"
-        fill={`url(#${id}s)`}
-        fillOpacity="0.12"
-      />
-
-      {/* ── Right glass pane (peak region → bottom-right) */}
-      <polygon
-        points="21,21 12,3 15.5,13.5"
-        fill={`url(#${id}s)`}
-        fillOpacity="0.07"
-      />
-
-      {/* ── Left edge stroke */}
-      <path
-        d="M3 21 L12 3"
-        stroke={`url(#${id}s)`}
-        strokeWidth="2"
-      />
-
-      {/* ── Right edge stroke */}
-      <path
-        d="M12 3 L21 21"
-        stroke={`url(#${id}s)`}
-        strokeWidth="2"
-      />
-
-      {/* ── Crossbar */}
-      <path
-        d="M7.5 14 L16.5 14"
-        stroke={`url(#${id}s)`}
-        strokeWidth="1.6"
-      />
-
-      {/* ── Apex highlight — glass catching light at the peak */}
-      <path
-        d="M12 3 L10 7.5"
-        stroke={`url(#${id}h)`}
-        strokeWidth="1.2"
-        strokeLinecap="round"
-      />
+      {/* Frosted glass fill */}
+      <polygon points="12,3.5 5,21 19,21" fill={`url(#${g}f)`} />
+      {/* A legs */}
+      <path d="M5 21 L12 3.5 L19 21" stroke={`url(#${g}s)`} strokeWidth="2.1" />
+      {/* Crossbar */}
+      <path d="M8.4 14.3 L15.6 14.3" stroke={`url(#${g}s)`} strokeWidth="1.8" />
+      {/* Apex specular highlight */}
+      <circle cx="12" cy="3.9" r="0.95" fill="#EAFBFF" />
     </svg>
   )
 }

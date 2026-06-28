@@ -66,8 +66,8 @@ export default function WeeklyPage() {
         <p className="text-muted-vital text-fluid-sm mt-0.5">Tap a day for its session · tap a phase strip for that week’s files</p>
       </div>
 
-      {/* ── Calendar (compact) ── */}
-      <section className="vital-card space-y-2 max-w-md">
+      {/* ── Calendar (compact on mobile, full-width on desktop) ── */}
+      <section className="vital-card space-y-2 max-w-md lg:max-w-none">
         <div className="flex items-center justify-between">
           <button onClick={() => setMonth((p) => ({ y: p.m === 0 ? p.y - 1 : p.y, m: p.m === 0 ? 11 : p.m - 1 }))}
             className="p-1.5 rounded-lg hover:bg-white/[0.05] text-muted-vital" aria-label="Previous month"><ChevronLeft className="w-4 h-4" /></button>

@@ -55,7 +55,16 @@ export function useEnsureTodayScore(enabled = true) {
         .then((r) => (r.ok ? qc.invalidateQueries({ queryKey: ['daily_scores'] }).then(() => qc.invalidateQueries({ queryKey: ['weekly_review'] })) : null))
         .catch(() => {})
     }
-    recompute(7) // first load: backfill the week
+    // Backfill the week only ONCE per browser session (8 days of server compute
+    // is too heavy to run on every dashboard mount — that was a big tab-lag source).
+    let backfilled = false
+    try { backfilled = sessionStorage.getItem('apex_backfilled') === '1' } catch {}
+    if (!backfilled) {
+      try { sessionStorage.setItem('apex_backfilled', '1') } catch {}
+      recompute(7)
+    } else {
+      recompute(0)
+    }
     const onVisible = () => { if (document.visibilityState === 'visible') recompute(0) }
     const onOnline = () => recompute(0)
     document.addEventListener('visibilitychange', onVisible)

@@ -7,7 +7,7 @@ import { Sheet } from '@/components/ui/Sheet'
 import { useWorkoutHistory, useDeleteSession, type WorkoutSessionRow } from '@/lib/hooks/useWorkoutHistory'
 import { useAllExercises, useExerciseMemory } from '@/lib/hooks/useLogger'
 import { LOGGER_SPLITS, type SplitDay } from '@/lib/types/workout'
-import { Check, Plus, TrendingUp, Sparkles, Trash2, Ghost } from 'lucide-react'
+import { Check, Plus, TrendingUp, Trash2 } from 'lucide-react'
 
 export default function WorkoutPage() {
   const { data: grouped, isLoading: exLoading } = useAllExercises()
@@ -16,8 +16,6 @@ export default function WorkoutPage() {
   const del = useDeleteSession()
   const [openSplit, setOpenSplit] = useState<SplitDay | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<WorkoutSessionRow | null>(null)
-
-  const ghosts = (sessions ?? []).filter((s) => s.isGhost)
 
   const columns: TableColumn<WorkoutSessionRow>[] = [
     {
@@ -33,12 +31,7 @@ export default function WorkoutPage() {
     },
     {
       key: 'split', header: 'Split',
-      render: (r) => (
-        <span className="flex items-center gap-1.5">
-          <span className="text-sm font-bold split-label" style={{ color: r.splitColor }}>{r.splitLabel}</span>
-          {r.isGhost && <span className="text-[10px] font-semibold text-warn flex items-center gap-0.5"><Ghost className="w-3 h-3" />pending</span>}
-        </span>
-      ),
+      render: (r) => <span className="text-sm font-bold split-label" style={{ color: r.splitColor }}>{r.splitLabel}</span>,
     },
     {
       key: 'volume', header: 'Volume', align: 'right',
@@ -54,11 +47,6 @@ export default function WorkoutPage() {
       key: 'actions', header: '', align: 'right',
       render: (r) => (
         <span className="flex items-center justify-end gap-1.5">
-          {r.isGhost && (
-            <button onClick={() => setOpenSplit(r.splitDay)} className="btn-glass !px-2.5 !py-1 text-[11px]" aria-label="Complete report">
-              <Sparkles className="w-3 h-3" /> Complete
-            </button>
-          )}
           <button onClick={() => setConfirmDelete(r)} className="p-1.5 rounded-lg text-muted-vital hover:text-danger hover:bg-danger/10" aria-label="Delete session">
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -73,17 +61,6 @@ export default function WorkoutPage() {
         <h1 className="font-heading text-fluid-2xl font-bold text-text">Workout</h1>
         <p className="text-muted-vital text-fluid-sm mt-0.5">Tap a split to log · exercise memory · full history</p>
       </div>
-
-      {/* Ghost-session nudge */}
-      {ghosts.length > 0 && (
-        <div className="vital-card flex items-center gap-3 border-warn/30">
-          <Ghost className="w-5 h-5 text-warn shrink-0" />
-          <p className="text-fluid-sm text-text flex-1">
-            {ghosts.length} auto-detected workout{ghosts.length === 1 ? '' : 's'} from Apple Health waiting for a report.
-          </p>
-          <button onClick={() => setOpenSplit(ghosts[0].splitDay)} className="btn-glass text-fluid-xs"><Sparkles className="w-3.5 h-3.5" /> Complete</button>
-        </div>
-      )}
 
       {/* ── Split columns ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

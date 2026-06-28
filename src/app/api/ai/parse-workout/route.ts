@@ -68,6 +68,25 @@ Total volume and how it compares to the trailing average (if provided).
 Reflect the athlete's stated feelings/notes; add one brief coaching cue.
 Rules: base everything strictly on the supplied data; do not fabricate numbers. Be direct and motivating, not flowery.`
 
+/** Fill sets with missing/zero weight from the user's most recent set of that exercise. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function fillWeightsFromHistory(supabase: any, userId: string, payload: SaveWorkoutPayload): Promise<void> {
+  const zeroIds = [...new Set(payload.sets.filter((s) => !s.weightKg).map((s) => s.exerciseId))]
+  if (!zeroIds.length) return
+  const { data } = await supabase
+    .from('workout_sets')
+    .select('exercise_id, weight_kg, created_at')
+    .eq('user_id', userId)
+    .in('exercise_id', zeroIds)
+    .gt('weight_kg', 0)
+    .order('created_at', { ascending: false })
+  const last = new Map<string, number>()
+  for (const r of (data ?? []) as Array<{ exercise_id: string; weight_kg: number }>) {
+    if (!last.has(r.exercise_id)) last.set(r.exercise_id, r.weight_kg)
+  }
+  for (const s of payload.sets) if (!s.weightKg && last.has(s.exerciseId)) s.weightKg = last.get(s.exerciseId) as number
+}
+
 export async function POST(req: Request) {
   const denied = denyIfUnauthorized(req)
   if (denied) return denied
@@ -218,6 +237,9 @@ export async function POST(req: Request) {
   if (!payload.sets.length) {
     return NextResponse.json({ error: 'No resolvable sets parsed from text' }, { status: 422 })
   }
+
+  // Auto-fill missing/zero weights from the most recent matching session.
+  await fillWeightsFromHistory(supabase, userId, payload)
 
   // ── 4. Save (volume, PRs, Notion) ───────────────────────────────────────────
   let result

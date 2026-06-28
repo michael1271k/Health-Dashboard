@@ -59,7 +59,7 @@ test('bottom nav is mobile-only', async ({ page }) => {
   await expect(nav).toBeHidden()
 })
 
-test('dashboard battery, when rendered, is square', async ({ page }) => {
+test('dashboard battery, when rendered, is a vertical capsule', async ({ page }) => {
   await page.setViewportSize(devices['iPhone 13'].viewport)
   await page.goto('/')
   await page.waitForTimeout(1500)
@@ -67,6 +67,6 @@ test('dashboard battery, when rendered, is square', async ({ page }) => {
   // Only assert when a session actually renders the dashboard (else it redirects).
   if (await orb.count()) {
     const bb = await orb.first().boundingBox()
-    if (bb) expect(Math.abs(bb.width - bb.height)).toBeLessThanOrEqual(2)
+    if (bb) expect(bb.height).toBeGreaterThan(bb.width) // liquid capsule is taller than wide
   }
 })

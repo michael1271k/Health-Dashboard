@@ -221,11 +221,12 @@ html[data-theme='travel'] {
     /* Obsidian base — the animated Aurora layer (fixed, -z-10) refracts through glass.
        These fixed radial gradients add luxury depth on every screen incl. mobile. */
     background-color: var(--color-bg);
+    /* Cooler cyan / ocean-teal / deep-blue depth (toned-down green). No
+       background-attachment:fixed — iOS ignores it and it forces repaints. */
     background-image:
-      radial-gradient(1100px 760px at 12% -12%, rgba(25,227,177,0.13), transparent 60%),
-      radial-gradient(980px 680px at 112% 8%, rgba(56,225,255,0.10), transparent 55%),
-      radial-gradient(900px 900px at 50% 122%, rgba(67,245,155,0.07), transparent 60%);
-    background-attachment: fixed;
+      radial-gradient(1100px 760px at 12% -12%, rgba(45,160,230,0.14), transparent 60%),
+      radial-gradient(980px 680px at 112% 8%, rgba(56,225,255,0.11), transparent 55%),
+      radial-gradient(900px 900px at 50% 122%, rgba(22,150,185,0.08), transparent 60%);
   }
 
   html {
@@ -399,4 +400,29 @@ html[data-theme='travel'] {
 @keyframes sheetUp {
   0% { opacity: 0; transform: translateY(100%); }
   100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Liquid battery surface wobble. */
+@keyframes liquidWobble {
+  0%, 100% { transform: translateX(-6%) scaleY(0.85); }
+  50%      { transform: translateX(6%) scaleY(1.15); }
+}
+.liquid-wave { animation: liquidWobble 3.6s ease-in-out infinite; }
+
+/* Mobile blur budget — a 40px backdrop blur melts phone GPUs. Halve it. */
+@media (max-width: 768px) {
+  .vital-card, .glass-card, .btn-glass {
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+  }
+}
+
+/* Premium grain/noise overlay — fixed, just above the aurora (-z-9). */
+.grain-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: -9;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }

@@ -10,22 +10,24 @@ import { PPL_SPLITS, type SplitDay } from '@/lib/types/workout'
 
 const GRID = 'rgba(255,255,255,0.06)'
 const TEXT = '#8B97B2'
-const SPLITS: Array<'all' | SplitDay> = ['all', 'push', 'pull', 'legs', 'upper', 'lower']
+// No "All" — different splits aren't comparable. Legs covers legacy "lower" too.
+const SPLITS: SplitDay[] = ['push', 'pull', 'legs', 'upper']
+const splitLabel = (s: SplitDay) => (s === 'legs' ? 'Legs/Lower' : s[0].toUpperCase() + s.slice(1))
 
 function formatDate(dateStr: string): string {
   return new Intl.DateTimeFormat('en-IL', { month: 'short', day: 'numeric' }).format(new Date(dateStr + 'T12:00:00Z'))
 }
 
 export function VolumeChart({ data, isLoading }: { data: VolumePoint[]; isLoading?: boolean }) {
-  const [split, setSplit] = useState<'all' | SplitDay>('all')
+  const [split, setSplit] = useState<SplitDay>('legs')
 
   if (isLoading) {
     return <div className="vital-card h-64 flex items-center justify-center"><div className="w-full h-40 bg-surface-2 rounded-xl animate-pulse" /></div>
   }
 
-  const filtered = split === 'all' ? data : data.filter((d) => d.split === split)
+  const filtered = data.filter((d) => d.split === split || (split === 'legs' && d.split === 'lower'))
   const chartData = filtered.map((d) => ({ date: formatDate(d.date), volume: d.volume }))
-  const color = split === 'all' ? '#19E3B1' : (PPL_SPLITS[split]?.color ?? '#19E3B1')
+  const color = PPL_SPLITS[split]?.color ?? '#19E3B1'
 
   return (
     <div className="vital-card">
@@ -34,21 +36,21 @@ export function VolumeChart({ data, isLoading }: { data: VolumePoint[]; isLoadin
         <div className="flex gap-1 overflow-x-auto no-scrollbar">
           {SPLITS.map((s) => {
             const active = split === s
-            const c = s === 'all' ? '#19E3B1' : (PPL_SPLITS[s]?.color ?? '#19E3B1')
+            const c = PPL_SPLITS[s]?.color ?? '#19E3B1'
             return (
               <button key={s} onClick={() => setSplit(s)}
-                className="px-2.5 py-1 rounded-lg text-[11px] font-semibold capitalize whitespace-nowrap transition-colors border"
+                className="px-2.5 py-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-colors border"
                 style={active ? { color: c, borderColor: `${c}55`, background: `${c}1f` } : { color: TEXT, borderColor: 'transparent' }}>
-                {s === 'legs' ? 'Legs' : s}
+                {splitLabel(s)}
               </button>
             )
           })}
         </div>
       </div>
       {chartData.length === 0 ? (
-        <div className="h-56 flex items-center justify-center"><p className="text-muted-vital text-sm">No {split === 'all' ? '' : split + ' '}sessions in range.</p></div>
+        <div className="h-56 flex items-center justify-center"><p className="text-muted-vital text-sm">No {splitLabel(split)} sessions in range.</p></div>
       ) : (
-        <div role="img" aria-label="Workout volume over time">
+        <div role="img" aria-label={`${splitLabel(split)} volume over time`}>
           <ResponsiveContainer width="100%" height={240}>
             <AreaChart data={chartData} margin={{ top: 4, right: 16, bottom: 0, left: 0 }}>
               <defs>

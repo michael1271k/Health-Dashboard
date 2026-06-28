@@ -5,27 +5,42 @@ import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 
 /**
- * Subscribes to postgres_changes on every metric table and, on any insert/
- * update/delete, debounce-invalidates the whole React Query cache (~400ms).
- * The result: ingesting from the iOS Shortcut — or editing a row in Supabase —
- * refreshes all open APEX tabs instantly, with no manual reload.
- *
- * Must be mounted inside QueryProvider so `useQueryClient` resolves the client.
+ * Pure client Supabase WebSocket → scoped React Query invalidation. A DB change
+ * only invalidates the query keys that actually depend on that table (no global
+ * `invalidateQueries()` refetch storm). The result: the battery + top stats
+ * update live the instant the ingest writes, without a tab switch, and other
+ * panels don't needlessly refetch. Zero Netlify serverless cost.
  */
-const TABLES = [
-  'daily_logs', 'daily_metrics', 'nutrition_entries',
-  'body_composition', 'sleep_sessions', 'workout_sessions', 'daily_scores',
-] as const
+const TABLE_KEYS: Record<string, string[][]> = {
+  daily_logs: [['daily_logs'], ['daily_scores'], ['coach'], ['trends']],
+  daily_metrics: [['daily_metrics'], ['daily_scores']],
+  nutrition_entries: [['nutrition_entries'], ['daily_logs'], ['daily_scores'], ['coach']],
+  body_composition: [['body_composition'], ['trends'], ['coach']],
+  sleep_sessions: [['sleep_sessions'], ['daily_scores'], ['trends'], ['weekly_review']],
+  workout_sessions: [['workout_sessions'], ['gym_reports'], ['trends'], ['weekly_review'], ['coach']],
+  daily_scores: [['daily_scores'], ['weekly_review'], ['trends'], ['coach']],
+}
+const TABLES = Object.keys(TABLE_KEYS)
 
 export function RealtimeProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient()
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | null = null
-    const refresh = () => {
-      if (timer) clearTimeout(timer)
-      timer = setTimeout(() => { queryClient.invalidateQueries() }, 400)
+    const pending = new Set<string>()
+
+    const flush = () => {
+      const keys = new Set<string>()
+      for (const t of pending) for (const k of TABLE_KEYS[t] ?? []) keys.add(JSON.stringify(k))
+      pending.clear()
+      for (const k of keys) queryClient.invalidateQueries({ queryKey: JSON.parse(k) as string[] })
     }
+    const onChange = (table: string) => {
+      pending.add(table)
+      if (timer) clearTimeout(timer)
+      timer = setTimeout(flush, 400)
+    }
+    const refreshAll = () => { for (const t of TABLES) pending.add(t); flush() }
 
     let channel = supabase.channel('apex-realtime')
     for (const table of TABLES) {
@@ -33,23 +48,21 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         'postgres_changes' as any,
         { event: '*', schema: 'public', table },
-        refresh,
+        () => onChange(table),
       )
     }
     channel.subscribe()
 
-    // Safety net (still zero serverless cost — pure client refetch against
-    // Supabase): if the tab was backgrounded or offline during one of the
-    // scheduled 10/12/14/16/18/20/22 Shortcut syncs and missed the socket
-    // event, refresh on return-to-visible / reconnect.
-    const onVisible = () => { if (document.visibilityState === 'visible') refresh() }
+    // Safety net (still zero serverless cost): refresh on return-to-visible /
+    // reconnect in case a scheduled-sync event was missed while backgrounded.
+    const onVisible = () => { if (document.visibilityState === 'visible') refreshAll() }
     document.addEventListener('visibilitychange', onVisible)
-    window.addEventListener('online', refresh)
+    window.addEventListener('online', refreshAll)
 
     return () => {
       if (timer) clearTimeout(timer)
       document.removeEventListener('visibilitychange', onVisible)
-      window.removeEventListener('online', refresh)
+      window.removeEventListener('online', refreshAll)
       supabase.removeChannel(channel)
     }
   }, [queryClient])
