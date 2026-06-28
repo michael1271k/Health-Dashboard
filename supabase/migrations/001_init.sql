@@ -214,3 +214,16 @@ BEGIN
     END IF;
   END LOOP;
 END $$;
+
+-- ── Role grants ─────────────────────────────────────────────────────────────
+-- CRITICAL after `drop schema public cascade`: the default Supabase grants are
+-- gone, so even the service_role key (which bypasses RLS but NOT table GRANTs)
+-- gets "permission denied". Restore them. RLS still scopes anon/authenticated
+-- to their own rows; service_role bypasses RLS for the seeder.
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL ROUTINES IN SCHEMA public TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON ROUTINES TO anon, authenticated, service_role;

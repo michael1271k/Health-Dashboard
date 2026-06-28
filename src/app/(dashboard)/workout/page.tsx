@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import dynamic from 'next/dynamic'
 import { DataTable, type TableColumn } from '@/components/data/DataTable'
 import { WorkoutChat } from '@/components/logger/WorkoutChat'
 import { Sheet } from '@/components/ui/Sheet'
@@ -8,6 +9,9 @@ import { useWorkoutHistory, useDeleteSession, type WorkoutSessionRow } from '@/l
 import { useAllExercises, useExerciseMemory } from '@/lib/hooks/useLogger'
 import { LOGGER_SPLITS, type SplitDay } from '@/lib/types/workout'
 import { Check, Plus, TrendingUp, Trash2 } from 'lucide-react'
+
+// recharts-heavy — lazy so it never weighs down the workout route first-load
+const StrengthTrends = dynamic(() => import('@/components/charts/StrengthTrends').then((m) => m.StrengthTrends), { ssr: false })
 
 export default function WorkoutPage() {
   const { data: grouped, isLoading: exLoading } = useAllExercises()
@@ -112,6 +116,9 @@ export default function WorkoutPage() {
           emptyMessage="No sessions yet. Tap a split above to log your first workout!"
         />
       </div>
+
+      {/* ── Strength trends (progressive overload) ── */}
+      <StrengthTrends />
 
       {/* ── Logger sheet ── */}
       <Sheet open={!!openSplit} onClose={() => setOpenSplit(null)}

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
-import { HeartPulse, Activity, Scale, Dumbbell, Plus } from 'lucide-react'
+import { HeartPulse, Activity, Scale, Dumbbell, Salad, Plus } from 'lucide-react'
 import { Fab } from '@/components/ui/Fab'
 import { Sheet } from '@/components/ui/Sheet'
 import { WorkoutChat } from '@/components/logger/WorkoutChat'
@@ -19,6 +19,7 @@ const TrendStrip = dynamic(
   { ssr: false, loading: () => <div className="vital-card min-h-[280px] animate-pulse" /> },
 )
 import { DomainWidget } from '@/components/dashboard/DomainWidget'
+import { MasonryDashboard, type MasonryTile } from '@/components/dashboard/MasonryDashboard'
 import { StatTile } from '@/components/dashboard/StatTile'
 import { InsightCoach } from '@/components/dashboard/InsightCoach'
 import { AnimatedCard } from '@/components/dashboard/AnimatedBento'
@@ -42,7 +43,8 @@ import type { SplitDay } from '@/lib/types/workout'
 const VIOLET = '#43F59B' // Recovery — mint green
 const BLUE = '#4FC3FF'   // Activity — aqua-blue
 const TEAL = '#19E3D0'   // Body — teal
-const CYAN = '#38E1FF'   // Gym & Nutrition — cyan
+const CYAN = '#38E1FF'   // Gym — cyan
+const GOLD = '#E8C57A'   // Nutrition — warm gold
 
 const n1 = (v: number | null | undefined): string | null =>
   v == null || !Number.isFinite(v) ? null : Number(v).toFixed(1)
@@ -90,10 +92,12 @@ export default function DashboardPage() {
   const calToday = nutrition?.calories ?? null
   const calPct = calGoal && calToday != null ? Math.round((calToday / calGoal) * 100) : null
 
-  // ── Four domain widgets: collapsible vertical stack on mobile, grid on desktop ──
-  const widgets: Array<{ id: string; title: string; icon: typeof HeartPulse; accent: string; footer?: React.ReactNode; tiles: React.ReactNode }> = [
+  // ── Domains: masonry tiles on mobile (Gym & Nutrition distinct), grid on desktop ──
+  const domains: Array<{ id: string; title: string; icon: typeof HeartPulse; accent: string; headline: React.ReactNode; sub?: React.ReactNode; footer?: React.ReactNode; tiles: React.ReactNode }> = [
     {
-      id: 'recovery', title: 'Recovery & Sleep', icon: HeartPulse, accent: VIOLET,
+      id: 'recovery', title: 'Recovery', icon: HeartPulse, accent: VIOLET,
+      headline: formatSleep(sleepMin),
+      sub: restHr != null ? `RHR ${restHr} bpm` : 'sleep & recovery',
       tiles: (<>
         <StatTile label="Sleep" value={formatSleep(sleepMin)} accent={VIOLET} isLoading={recoveryLoading} />
         <StatTile label="Resting HR" value={restHr} unit="bpm" isLoading={recoveryLoading} />
@@ -102,7 +106,9 @@ export default function DashboardPage() {
       </>),
     },
     {
-      id: 'activity', title: 'Daily Activity', icon: Activity, accent: BLUE,
+      id: 'activity', title: 'Activity', icon: Activity, accent: BLUE,
+      headline: steps?.toLocaleString() ?? '—',
+      sub: activeKcal != null ? `${activeKcal} active kcal` : 'steps & energy',
       tiles: (<>
         <StatTile label="Steps" value={steps?.toLocaleString() ?? null} accent={BLUE} isLoading={activityLoading} />
         <StatTile label="Active Energy" value={activeKcal} unit="kcal" isLoading={activityLoading} />
@@ -111,7 +117,9 @@ export default function DashboardPage() {
       </>),
     },
     {
-      id: 'body', title: 'Body Composition', icon: Scale, accent: TEAL,
+      id: 'body', title: 'Body', icon: Scale, accent: TEAL,
+      headline: <>{n1(log?.weight_kg) ?? '—'}{log?.weight_kg != null && <span className="text-fluid-sm"> kg</span>}</>,
+      sub: log?.body_fat_pct != null ? `${n1(log.body_fat_pct)}% body fat` : 'composition',
       footer: log?.date && log?.weight_kg != null
         ? <>Weighed in {new Date(log.date + 'T00:00:00').toLocaleDateString('en-IL', { month: 'short', day: 'numeric' })}</>
         : undefined,
@@ -127,18 +135,36 @@ export default function DashboardPage() {
       </>),
     },
     {
-      id: 'gym', title: 'Gym & Nutrition', icon: Dumbbell, accent: CYAN,
+      id: 'gym', title: 'Gym', icon: Dumbbell, accent: CYAN,
+      headline: <span style={{ color: lastSplit?.color ?? CYAN }}>{lastSplit?.label ?? '—'}</span>,
+      sub: lastSession?.total_volume_kg != null ? `${n0(lastSession.total_volume_kg)?.toLocaleString()} kg · ${lastSessionDate ?? ''}` : 'last session',
+      tiles: (<>
+        <StatTile label="Last Workout" value={lastSplit?.label ?? null} sub={lastSessionDate} accent={lastSplit?.color ?? CYAN} />
+        <StatTile label="Volume" value={n0(lastSession?.total_volume_kg)} unit="kg" />
+        <StatTile label="Split" value={lastSplit?.label ?? null} accent={lastSplit?.color ?? CYAN} />
+        <StatTile label="When" value={lastSessionDate ?? null} />
+      </>),
+    },
+    {
+      id: 'nutrition', title: 'Nutrition', icon: Salad, accent: GOLD,
+      headline: <>{calToday?.toLocaleString() ?? '—'}{calToday != null && <span className="text-fluid-sm"> kcal</span>}</>,
+      sub: calGoal && calPct != null ? `${calPct}% of goal` : 'macros',
       footer: calToday != null && calGoal
         ? <>Calories: <span className="text-text">{calToday.toLocaleString()}</span> / {calGoal.toLocaleString()} kcal · {calPct}%{goals?.goal_preset ? <span className="capitalize"> · {goals.goal_preset}</span> : null}</>
         : undefined,
       tiles: (<>
-        <StatTile label="Last Workout" value={lastSplit?.label ?? null} sub={lastSessionDate} accent={lastSplit?.color ?? CYAN} />
-        <StatTile label="Volume" value={n0(lastSession?.total_volume_kg)} unit="kg" />
+        <StatTile label="Calories" value={calToday} unit="kcal" accent={GOLD} isLoading={nutritionLoading} />
         <StatTile label="Protein" value={n0(nutrition?.protein_g)} unit="g" isLoading={nutritionLoading} />
         <StatTile label="Carbs" value={n0(nutrition?.carbs_g)} unit="g" isLoading={nutritionLoading} />
+        <StatTile label="Fats" value={n0(nutrition?.fat_g)} unit="g" isLoading={nutritionLoading} />
       </>),
     },
   ]
+
+  const masonryTiles: MasonryTile[] = domains.map((d) => ({
+    id: d.id, title: d.title, icon: d.icon, accent: d.accent,
+    headline: d.headline, sub: d.sub, detail: d.tiles, footer: d.footer,
+  }))
 
   return (
     <div className="space-y-6">
@@ -152,20 +178,16 @@ export default function DashboardPage() {
         <div className="hidden xl:block"><AnimatedCard index={2}><TrendStrip /></AnimatedCard></div>
       </div>
 
-      {/* Mobile: Apple-Fitness collapsible vertical stack */}
-      <div className="md:hidden space-y-3">
-        {widgets.map((w, i) => (
-          <AnimatedCard key={w.id} index={i + 2}>
-            <DomainWidget collapsible defaultOpen={i === 0} title={w.title} icon={w.icon} accent={w.accent} footer={w.footer}>{w.tiles}</DomainWidget>
-          </AnimatedCard>
-        ))}
+      {/* Mobile: fluid masonry hub (Gym & Nutrition are distinct tiles) */}
+      <div className="md:hidden">
+        <MasonryDashboard tiles={masonryTiles} />
       </div>
 
-      {/* Desktop/tablet: 2×2 widget grid */}
+      {/* Desktop/tablet: domain widget grid */}
       <div className="hidden md:grid grid-cols-2 gap-4">
-        {widgets.map((w, i) => (
-          <AnimatedCard key={w.id} index={i + 2}>
-            <DomainWidget title={w.title} icon={w.icon} accent={w.accent} footer={w.footer}>{w.tiles}</DomainWidget>
+        {domains.map((d, i) => (
+          <AnimatedCard key={d.id} index={i + 2}>
+            <DomainWidget title={d.title} icon={d.icon} accent={d.accent} footer={d.footer}>{d.tiles}</DomainWidget>
           </AnimatedCard>
         ))}
       </div>
