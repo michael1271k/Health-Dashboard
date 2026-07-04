@@ -4,16 +4,17 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import type { Tables } from '@/lib/supabase/types'
 import { TrendingUp, Moon, Dumbbell, Droplets } from 'lucide-react'
+import { logicalTodayISO } from '@/lib/utils/day'
 
-/** Most recent Sunday (this calendar week's start), so the review resets weekly. */
+/** Most recent Sunday (this logical week's start), so the review resets weekly. */
 function startOfWeekISO(): string {
-  const d = new Date()
+  const d = new Date(logicalTodayISO() + 'T00:00:00')
   d.setDate(d.getDate() - d.getDay()) // getDay(): 0 = Sunday
   return d.toLocaleDateString('en-CA')
 }
 
 function todayISO(): string {
-  return new Date().toLocaleDateString('en-CA')
+  return logicalTodayISO()
 }
 
 interface WeekStats {

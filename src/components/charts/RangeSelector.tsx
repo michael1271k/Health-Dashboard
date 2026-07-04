@@ -1,7 +1,7 @@
 'use client'
 
 const PRESETS: Array<[string, number]> = [
-  ['1W', 7], ['2W', 14], ['3W', 21], ['1M', 30], ['2M', 60], ['3M', 90],
+  ['1W', 7], ['2W', 14], ['1M', 30], ['2M', 60], ['3M', 90], ['4M', 120], ['5M', 150], ['6M', 180],
 ]
 
 interface RangeSelectorProps {

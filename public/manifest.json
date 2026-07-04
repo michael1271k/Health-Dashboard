@@ -1,14 +1,14 @@
 {
-  "name": "APEX — Precision Human Performance OS",
+  "name": "APEX · Human Performance Systems",
   "short_name": "APEX",
-  "description": "Engineer Your Ascent — personal health and fitness command center",
+  "description": "Sleep · Load · Nutrition · Adaptation — a precision human-performance dashboard.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0A0E1A",
-  "theme_color": "#3D7DFF",
+  "background_color": "#050711",
+  "theme_color": "#19E3B1",
   "orientation": "portrait-primary",
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    { "src": "/apple-icon", "sizes": "180x180", "type": "image/png", "purpose": "any" },
+    { "src": "/icon", "sizes": "64x64", "type": "image/png", "purpose": "any" }
   ]
 }

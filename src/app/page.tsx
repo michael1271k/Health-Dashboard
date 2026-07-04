@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
-import { HeartPulse, Activity, Scale, Dumbbell, Salad, Plus } from 'lucide-react'
+import { HeartPulse, Activity, Scale, Dumbbell, Salad, Pill, Plus } from 'lucide-react'
 import { Fab } from '@/components/ui/Fab'
 import { Sheet } from '@/components/ui/Sheet'
 import { WorkoutChat } from '@/components/logger/WorkoutChat'
@@ -21,11 +21,15 @@ const TrendStrip = dynamic(
 import { DomainWidget } from '@/components/dashboard/DomainWidget'
 import { MasonryDashboard, type MasonryTile } from '@/components/dashboard/MasonryDashboard'
 import { StatTile } from '@/components/dashboard/StatTile'
+import { SupplementChecklist } from '@/components/dashboard/SupplementChecklist'
+import { useSupplements } from '@/lib/hooks/useSupplements'
+import { TOTAL_SUPPLEMENTS } from '@/lib/supplements'
 import { InsightCoach } from '@/components/dashboard/InsightCoach'
 import { AnimatedCard } from '@/components/dashboard/AnimatedBento'
 import { WeeklyReviewCard } from '@/components/dashboard/WeeklyReviewCard'
 import { BrandHeader } from '@/components/dashboard/BrandHeader'
 import { formatSleep, mlToL } from '@/lib/utils/format'
+import { displayWeight, weightUnit } from '@/lib/utils/units'
 import {
   useTodayScore,
   useEnsureTodayScore,
@@ -45,6 +49,7 @@ const BLUE = '#4FC3FF'   // Activity — aqua-blue
 const TEAL = '#19E3D0'   // Body — teal
 const CYAN = '#38E1FF'   // Gym — cyan
 const GOLD = '#E8C57A'   // Nutrition — warm gold
+const SUPP = '#7C8CFF'   // Supplements — indigo
 
 const n1 = (v: number | null | undefined): string | null =>
   v == null || !Number.isFinite(v) ? null : Number(v).toFixed(1)
@@ -118,15 +123,15 @@ export default function DashboardPage() {
     },
     {
       id: 'body', title: 'Body', icon: Scale, accent: TEAL,
-      headline: <>{n1(log?.weight_kg) ?? '—'}{log?.weight_kg != null && <span className="text-fluid-sm"> kg</span>}</>,
+      headline: <>{displayWeight(log?.weight_kg) ?? '—'}{log?.weight_kg != null && <span className="text-fluid-sm"> {weightUnit()}</span>}</>,
       sub: log?.body_fat_pct != null ? `${n1(log.body_fat_pct)}% body fat` : 'composition',
       footer: log?.date && log?.weight_kg != null
         ? <>Weighed in {new Date(log.date + 'T00:00:00').toLocaleDateString('en-IL', { month: 'short', day: 'numeric' })}</>
         : undefined,
       tiles: (<>
-        <StatTile label="Weight" value={n1(log?.weight_kg)} unit="kg" accent={TEAL} isLoading={logLoading} />
+        <StatTile label="Weight" value={displayWeight(log?.weight_kg)} unit={weightUnit()} accent={TEAL} isLoading={logLoading} />
         <StatTile label="BMI" value={n1(log?.bmi)} isLoading={logLoading} />
-        <StatTile label="Lean Mass" value={n1(log?.lean_mass_kg)} unit="kg" isLoading={logLoading} />
+        <StatTile label="Lean Mass" value={displayWeight(log?.lean_mass_kg)} unit={weightUnit()} isLoading={logLoading} />
         <StatTile label="Body Fat" value={n1(log?.body_fat_pct)} unit="%" isLoading={logLoading} />
         {log?.muscle_percent != null && <StatTile label="Muscle" value={n1(log.muscle_percent)} unit="%" />}
         {log?.water_percent != null && <StatTile label="Water" value={n1(log.water_percent)} unit="%" />}
@@ -161,10 +166,22 @@ export default function DashboardPage() {
     },
   ]
 
-  const masonryTiles: MasonryTile[] = domains.map((d) => ({
-    id: d.id, title: d.title, icon: d.icon, accent: d.accent,
-    headline: d.headline, sub: d.sub, detail: d.tiles, footer: d.footer,
-  }))
+  const { data: takenSupps } = useSupplements()
+  const suppCount = takenSupps?.size ?? 0
+
+  const masonryTiles: MasonryTile[] = [
+    ...domains.map((d) => ({
+      id: d.id, title: d.title, icon: d.icon, accent: d.accent,
+      headline: d.headline, sub: d.sub, footer: d.footer,
+      detail: <div className="grid grid-cols-2 gap-2.5">{d.tiles}</div>,
+    })),
+    {
+      id: 'supplements', title: 'Supplements', icon: Pill, accent: SUPP,
+      headline: <>{suppCount}<span className="text-fluid-sm text-muted-vital">/{TOTAL_SUPPLEMENTS}</span></>,
+      sub: suppCount >= TOTAL_SUPPLEMENTS ? 'all taken ✓' : 'tap to check off',
+      detail: <SupplementChecklist />,
+    },
+  ]
 
   return (
     <div className="space-y-6">
@@ -183,13 +200,26 @@ export default function DashboardPage() {
         <MasonryDashboard tiles={masonryTiles} />
       </div>
 
-      {/* Desktop/tablet: domain widget grid */}
+      {/* Desktop/tablet: deliberate bento — Body + Supplements span full width */}
       <div className="hidden md:grid grid-cols-2 gap-4">
         {domains.map((d, i) => (
-          <AnimatedCard key={d.id} index={i + 2}>
-            <DomainWidget title={d.title} icon={d.icon} accent={d.accent} footer={d.footer}>{d.tiles}</DomainWidget>
-          </AnimatedCard>
+          <div key={d.id} className={d.id === 'body' ? 'col-span-2' : ''}>
+            <AnimatedCard index={i + 2}>
+              <DomainWidget title={d.title} icon={d.icon} accent={d.accent} footer={d.footer}>{d.tiles}</DomainWidget>
+            </AnimatedCard>
+          </div>
         ))}
+        <div className="col-span-2">
+          <AnimatedCard index={7}>
+            <div className="vital-card">
+              <h2 className="font-heading font-semibold text-text flex items-center gap-2 mb-3">
+                <Pill className="w-4 h-4" style={{ color: SUPP }} /> Supplement Protocol
+                <span className="text-fluid-xs text-muted-vital font-normal">{suppCount}/{TOTAL_SUPPLEMENTS} today</span>
+              </h2>
+              <SupplementChecklist />
+            </div>
+          </AnimatedCard>
+        </div>
       </div>
 
       {/* Insight Coach + Weekly review */}

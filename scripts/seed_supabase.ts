@@ -76,6 +76,30 @@ const addDays = (day: string, n: number): string => {
 function richArr(arr: Array<{ plain_text?: string }> | undefined): string {
   return arr?.length ? arr.map((t) => t.plain_text ?? '').join('') : ''
 }
+/** Render a Notion `table` block → a markdown pipe table (with a `|---|` separator). */
+async function tableToMarkdown(notion: any, tableBlockId: string): Promise<string> {
+  const rows: string[][] = []
+  let cursor: string | undefined
+  try {
+    do {
+      const resp = await notion.blocks.children.list({ block_id: tableBlockId, start_cursor: cursor, page_size: 100 })
+      for (const rb of resp.results ?? []) {
+        if (rb?.type === 'table_row') {
+          rows.push((rb.table_row?.cells ?? []).map((cell: Array<{ plain_text?: string }>) =>
+            (richArr(cell) || ' ').replace(/\|/g, '\\|').replace(/\n/g, ' ').trim() || ' '))
+        }
+      }
+      cursor = resp.has_more ? resp.next_cursor : undefined
+    } while (cursor)
+  } catch { return '' }
+  if (!rows.length) return ''
+  const width = Math.max(...rows.map((r) => r.length))
+  const pad = (r: string[]) => { const c = [...r]; while (c.length < width) c.push(' '); return c }
+  const [head, ...bodyRows] = rows.map(pad)
+  const lines = [`| ${head.join(' | ')} |`, `| ${head.map(() => '---').join(' | ')} |`, ...bodyRows.map((r) => `| ${r.join(' | ')} |`)]
+  return '\n' + lines.join('\n') + '\n'
+}
+
 /** Render a page's block children to markdown. */
 async function fetchPageMarkdown(notion: any, pageId: string): Promise<string> {
   const parts: string[] = []
@@ -93,6 +117,7 @@ async function fetchPageMarkdown(notion: any, pageId: string): Promise<string> {
         else if (t === 'bulleted_list_item' || t === 'numbered_list_item') parts.push(`- ${text}`)
         else if (t === 'to_do') parts.push(`- [${b[t]?.checked ? 'x' : ' '}] ${text}`)
         else if (t === 'quote') parts.push(`> ${text}`)
+        else if (t === 'table') { const md = await tableToMarkdown(notion, b.id); if (md) parts.push(md) }
         else if (text) parts.push(text)
       }
       cursor = resp.has_more ? resp.next_cursor : undefined
@@ -224,11 +249,11 @@ async function main(): Promise<void> {
   try {
     for (const { id, properties: p, createdTime } of await fetchAllPages(notion, weeklyDbId)) {
       try {
-        const rawStart = dateStart(p, 'Date') ?? dateStart(p, 'Week') ?? dateStart(p, 'Week Of') ?? dateStart(p, 'Period') ?? dateStart(p, 'Date (for calendar)')
+        const rawStart = dateStart(p, 'Dates') ?? dateStart(p, 'Date') ?? dateStart(p, 'Week') ?? dateStart(p, 'Week Of') ?? dateStart(p, 'Period') ?? dateStart(p, 'Date (for calendar)')
         const startDay = toDay(rawStart) ?? (createdTime ? toDay(createdTime) : null)
         if (!startDay) { skip(id, 'weekly', 'no determinable week date'); continue }
-        const endDay = toDay(p['Date']?.date?.end ?? p['Week']?.date?.end ?? p['Period']?.date?.end ?? null) ?? addDays(startDay, 6)
-        const title = richText(p, 'Name') ?? richText(p, 'Title') ?? `Week of ${startDay}`
+        const endDay = toDay(p['Dates']?.date?.end ?? p['Date']?.date?.end ?? p['Week']?.date?.end ?? p['Period']?.date?.end ?? null) ?? addDays(startDay, 6)
+        const title = richText(p, 'Week') ?? richText(p, 'Name') ?? richText(p, 'Title') ?? `Week of ${startDay}`
         const overview = await fetchPageMarkdown(notion, id)
         const subs = await fetchSubpages(notion, id)
         let sessionMd: string | null = null, weightMd: string | null = null

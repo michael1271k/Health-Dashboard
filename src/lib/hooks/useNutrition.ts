@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { derivePhase, type Phase } from '@/lib/nutrition/phase'
+import { logicalTodayISO, logicalDaysAgoISO } from '@/lib/utils/day'
 
 export interface DailyLog {
   date: string
@@ -18,10 +19,10 @@ export interface DailyLog {
 }
 
 function todayISO() {
-  return new Date().toLocaleDateString('en-CA')
+  return logicalTodayISO()
 }
 function daysAgoISO(n: number) {
-  return new Date(Date.now() - n * 24 * 60 * 60 * 1000).toLocaleDateString('en-CA')
+  return logicalDaysAgoISO(n)
 }
 
 export function useDailyLogs(days = 30) {

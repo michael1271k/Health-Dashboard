@@ -133,6 +133,9 @@ CREATE TABLE IF NOT EXISTS user_goals (
   steps_goal INTEGER DEFAULT 10000, active_cal_goal INTEGER DEFAULT 500, water_goal_ml INTEGER DEFAULT 3000,
   context_mode TEXT NOT NULL DEFAULT 'normal' CHECK (context_mode IN ('normal','travel','illness','emergency')),
   goal_preset TEXT,
+  day_cutoff_hour INTEGER NOT NULL DEFAULT 4,
+  unit_system TEXT NOT NULL DEFAULT 'kg' CHECK (unit_system IN ('kg','lb')),
+  reduce_motion BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -165,11 +168,21 @@ CREATE TABLE IF NOT EXISTS reports (
   UNIQUE(user_id, period_start, period_end)
 );
 
+-- Daily supplement protocol check-offs (hardcoded protocol lives in the app).
+CREATE TABLE IF NOT EXISTS supplement_log (
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  date DATE NOT NULL,
+  item_key TEXT NOT NULL,
+  taken BOOLEAN NOT NULL DEFAULT false,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (user_id, date, item_key)
+);
+
 -- ── updated_at triggers ─────────────────────────────────────────────────────
 DO $$
 DECLARE t TEXT;
 BEGIN
-  FOREACH t IN ARRAY ARRAY['daily_metrics','workout_sessions','user_goals','daily_logs'] LOOP
+  FOREACH t IN ARRAY ARRAY['daily_metrics','workout_sessions','user_goals','daily_logs','supplement_log'] LOOP
     EXECUTE format('DROP TRIGGER IF EXISTS set_%1$s_updated_at ON %1$s', t);
     EXECUTE format('CREATE TRIGGER set_%1$s_updated_at BEFORE UPDATE ON %1$s FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()', t);
   END LOOP;
@@ -182,7 +195,7 @@ BEGIN
   FOREACH t IN ARRAY ARRAY[
     'daily_metrics','sleep_sessions','nutrition_entries','body_composition','water_intake',
     'supplements','exercises','workout_sessions','workout_sets','daily_scores','user_goals',
-    'daily_logs','reports'
+    'daily_logs','reports','supplement_log'
   ] LOOP
     EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', t);
     EXECUTE format('DROP POLICY IF EXISTS %I ON %I', 'user_owns_' || t, t);
@@ -208,7 +221,7 @@ CREATE INDEX IF NOT EXISTS idx_reports_user_period         ON reports(user_id, p
 DO $$
 DECLARE t TEXT;
 BEGIN
-  FOREACH t IN ARRAY ARRAY['daily_logs','daily_metrics','nutrition_entries','body_composition','sleep_sessions','workout_sessions','daily_scores'] LOOP
+  FOREACH t IN ARRAY ARRAY['daily_logs','daily_metrics','nutrition_entries','body_composition','sleep_sessions','workout_sessions','daily_scores','supplement_log'] LOOP
     IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname='supabase_realtime' AND schemaname='public' AND tablename=t) THEN
       EXECUTE format('ALTER PUBLICATION supabase_realtime ADD TABLE public.%I', t);
     END IF;

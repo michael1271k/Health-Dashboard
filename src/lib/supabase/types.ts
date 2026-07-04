@@ -28,6 +28,17 @@ export interface Database {
         Insert: Omit<Database['public']['Tables']['daily_metrics']['Row'], 'id' | 'created_at' | 'updated_at'>
         Update: Partial<Database['public']['Tables']['daily_metrics']['Insert']>
       }
+      supplement_log: {
+        Row: {
+          user_id: string
+          date: string
+          item_key: string
+          taken: boolean
+          updated_at: string
+        }
+        Insert: { user_id: string; date: string; item_key: string; taken?: boolean }
+        Update: Partial<{ taken: boolean }>
+      }
       sleep_sessions: {
         Row: {
           id: string
@@ -212,10 +223,14 @@ export interface Database {
           water_goal_ml: number
           context_mode: 'normal' | 'travel' | 'illness' | 'emergency'
           goal_preset: string | null
+          day_cutoff_hour: number
+          unit_system: 'kg' | 'lb'
+          reduce_motion: boolean
           created_at: string
           updated_at: string
         }
-        Insert: Omit<Database['public']['Tables']['user_goals']['Row'], 'id' | 'created_at' | 'updated_at'>
+        Insert: Omit<Database['public']['Tables']['user_goals']['Row'], 'id' | 'created_at' | 'updated_at' | 'day_cutoff_hour' | 'unit_system' | 'reduce_motion'>
+          & { day_cutoff_hour?: number; unit_system?: 'kg' | 'lb'; reduce_motion?: boolean }
         Update: Partial<Database['public']['Tables']['user_goals']['Insert']>
       }
       daily_logs: {

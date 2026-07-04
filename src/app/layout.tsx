@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     default: 'Dashboard — APEX',
     template: '%s — APEX',
   },
-  description: 'Engineer Your Ascent — Precision Human Performance OS',
+  description: 'Human Performance Systems — Sleep · Load · Nutrition · Adaptation',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#0A0E1A',
+  themeColor: '#050711',
 }
 
 export default function RootLayout({
@@ -62,7 +62,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="he" dir="ltr" suppressHydrationWarning>
-      <head />
+      <head>
+        {/* Apply the reduce-motion pref before paint (no flash of animation). */}
+        <script dangerouslySetInnerHTML={{ __html: "try{document.documentElement.dataset.reduceMotion=localStorage.getItem('apex_reduce_motion')==='1'?'true':'false'}catch(e){}" }} />
+      </head>
       <body
         className={`${outfit.variable} ${inter.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable} bg-bg text-text font-sans antialiased`}
       >

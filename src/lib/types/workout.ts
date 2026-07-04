@@ -120,17 +120,17 @@ export const NUTRITION_PRESETS: Record<NutritionMode, NutritionPreset> = {
   bulk: {
     mode: 'bulk',
     label: 'Bulk',
-    calorieGoal: 2650,
-    proteinGoalG: null,   // macros TBD
-    carbsGoalG: null,
-    fatGoalG: null,
+    calorieGoal: 2700,
+    proteinGoalG: 175,
+    carbsGoalG: 320,
+    fatGoalG: 80,
   },
   maintenance: {
     mode: 'maintenance',
     label: 'Maintenance',
-    calorieGoal: 2300,
-    proteinGoalG: null,
-    carbsGoalG: null,
-    fatGoalG: null,
+    calorieGoal: 2415,
+    proteinGoalG: 165,
+    carbsGoalG: 270,
+    fatGoalG: 75,
   },
 }

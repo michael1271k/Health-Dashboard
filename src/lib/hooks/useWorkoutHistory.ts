@@ -13,6 +13,9 @@ export interface WorkoutSessionRow {
   splitLabel: string
   splitColor: string
   totalVolumeKg: number | null
+  setCount: number | null
+  avgBpm: number | null
+  durationMin: number | null
   notes: string | null
   notionSynced: boolean
   isGhost: boolean       // auto-detected Health workout pending a report
@@ -30,13 +33,13 @@ function isoWeek(date: Date): string {
   return `${tmp.getFullYear()}-W${String(weekNum).padStart(2, '0')}`
 }
 
-export function useWorkoutHistory(limit = 40) {
+export function useWorkoutHistory(limit = 300) {
   return useQuery({
     queryKey: ['workout_sessions', 'history', limit],
     queryFn: async (): Promise<WorkoutSessionRow[]> => {
       const { data, error } = await supabase
         .from('workout_sessions')
-        .select('id, started_at, split_day, total_volume_kg, notes, notion_page_id, report_md, status')
+        .select('id, started_at, split_day, total_volume_kg, set_count, avg_bpm, duration_min, notes, notion_page_id, report_md, status')
         .order('started_at', { ascending: false })
         .limit(limit)
 
@@ -47,6 +50,9 @@ export function useWorkoutHistory(limit = 40) {
         started_at: string
         split_day: string
         total_volume_kg: number | null
+        set_count: number | null
+        avg_bpm: number | null
+        duration_min: number | null
         notes: string | null
         notion_page_id: string | null
         report_md: string | null
@@ -68,6 +74,9 @@ export function useWorkoutHistory(limit = 40) {
             splitLabel:    splitCfg.label,
             splitColor:    splitCfg.color,
             totalVolumeKg: r.total_volume_kg,
+            setCount:      r.set_count,
+            avgBpm:        r.avg_bpm,
+            durationMin:   r.duration_min,
             notes:         r.notes,
             notionSynced:  !!r.notion_page_id,
             isGhost:       r.status === 'ghost',

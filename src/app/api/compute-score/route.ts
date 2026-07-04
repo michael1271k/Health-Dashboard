@@ -7,24 +7,15 @@ import type { ScoringInputs } from '@/lib/scoring/types'
 import type { Database, Tables, InsertRow } from '@/lib/supabase/types'
 import { WEEKDAY_SPLIT } from '@/lib/types/workout'
 import { denyIfUnauthorized } from '@/lib/auth/guard'
+import { logicalTodayISO, israelHoursAwake } from '@/lib/utils/day'
 
 type DB = SupabaseClient<Database>
 
 function todayISO(): string {
-  return new Date().toLocaleDateString('en-CA')
+  return logicalTodayISO() // logical day (04:00 cutoff), Israel time
 }
 function nextDay(d: string): string {
   const x = new Date(`${d}T00:00:00Z`); x.setUTCDate(x.getUTCDate() + 1); return x.toISOString().slice(0, 10)
-}
-
-/** Hours awake so far today in Israel local time (assumes a 07:00 wake). */
-function israelHoursAwake(wakeHour = 7): number {
-  const parts = new Intl.DateTimeFormat('en-GB', {
-    timeZone: 'Asia/Jerusalem', hour: '2-digit', minute: '2-digit', hour12: false,
-  }).formatToParts(new Date())
-  const h = Number(parts.find((p) => p.type === 'hour')?.value ?? '12') % 24
-  const m = Number(parts.find((p) => p.type === 'minute')?.value ?? '0')
-  return Math.max(0, Math.min(18, h + m / 60 - wakeHour))
 }
 
 /** Compute + upsert the daily_scores row for a single date. */

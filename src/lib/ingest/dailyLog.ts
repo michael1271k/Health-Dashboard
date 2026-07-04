@@ -2,15 +2,14 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/lib/supabase/types'
 import { derivePhase } from '@/lib/nutrition/phase'
+import { logicalTodayISO } from '@/lib/utils/day'
 import type { ShortcutPayload } from './schema'
 
 type DB = SupabaseClient<Database>
 
-/** Today's date (YYYY-MM-DD) in Israel time, regardless of server timezone. */
+/** Today's LOGICAL date (YYYY-MM-DD, 04:00 cutoff) in Israel time. */
 export function todayIsrael(): string {
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Jerusalem', year: 'numeric', month: '2-digit', day: '2-digit',
-  }).format(new Date())
+  return logicalTodayISO()
 }
 
 export interface IngestResult {

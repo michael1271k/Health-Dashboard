@@ -5,15 +5,16 @@ import { NUTRITION_PRESETS } from '@/lib/types/workout'
 describe('Nutrition modes', () => {
   it('defines Cut / Bulk / Maintenance with correct calories', () => {
     expect(NUTRITION_PRESETS.cut.calorieGoal).toBe(1935)
-    expect(NUTRITION_PRESETS.bulk.calorieGoal).toBe(2650)
-    expect(NUTRITION_PRESETS.maintenance.calorieGoal).toBe(2300)
+    expect(NUTRITION_PRESETS.bulk.calorieGoal).toBe(2700)
+    expect(NUTRITION_PRESETS.maintenance.calorieGoal).toBe(2415)
   })
 
-  it('Cut has full macros; Bulk/Maintenance leave macros null', () => {
+  it('all three presets now carry full macro targets (Phase 11)', () => {
     expect(NUTRITION_PRESETS.cut.proteinGoalG).toBe(180)
     expect(NUTRITION_PRESETS.cut.fatGoalG).toBe(55)
-    expect(NUTRITION_PRESETS.bulk.proteinGoalG).toBeNull()
-    expect(NUTRITION_PRESETS.maintenance.carbsGoalG).toBeNull()
+    expect(NUTRITION_PRESETS.bulk.proteinGoalG).toBe(175)
+    expect(NUTRITION_PRESETS.bulk.carbsGoalG).toBe(320)
+    expect(NUTRITION_PRESETS.maintenance.carbsGoalG).toBe(270)
   })
 })
 

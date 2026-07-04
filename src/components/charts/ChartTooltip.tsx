@@ -12,11 +12,11 @@ export function ChartTooltip({ active, payload, label }: TooltipProps) {
       className="rounded-xl px-3 py-2 text-sm"
       role="tooltip"
       style={{
-        background: 'rgba(255,255,255,0.05)',
-        backdropFilter: 'blur(20px) saturate(160%)',
-        WebkitBackdropFilter: 'blur(20px) saturate(160%)',
-        border: '1px solid rgba(255,255,255,0.12)',
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.10), 0 12px 32px rgba(0,0,0,0.5)',
+        // SOLID dark surface — a translucent glass tooltip absorbed the chart's
+        // neon fill on mobile and made the text unreadable.
+        background: 'rgba(9,12,24,0.97)',
+        border: '1px solid rgba(255,255,255,0.16)',
+        boxShadow: '0 12px 32px rgba(0,0,0,0.6)',
       }}
     >
       {label && (

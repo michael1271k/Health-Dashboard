@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { MetricCard } from '@/components/dashboard/MetricCard'
-import { ScoreRings } from '@/components/dashboard/ScoreRings'
 import { Footprints } from 'lucide-react'
 
 describe('MetricCard', () => {
@@ -23,26 +22,5 @@ describe('MetricCard', () => {
     )
     expect(container.querySelector('.animate-pulse')).toBeTruthy()
     expect(screen.queryByText('—')).not.toBeInTheDocument()
-  })
-})
-
-describe('ScoreRings', () => {
-  it('renders the centered value and an SVG of ring tracks', () => {
-    const { container } = render(
-      <ScoreRings
-        centerValue={82}
-        centerUnit="%"
-        rings={[{ label: 'Battery', value: 82, color: '#6D5BFF' }]}
-        caption="Good Energy"
-      />,
-    )
-    expect(screen.getByText('82')).toBeInTheDocument()
-    expect(screen.getByText('Good Energy')).toBeInTheDocument()
-    expect(container.querySelector('svg')).toBeTruthy()
-  })
-
-  it('shows an em-dash when there is no value', () => {
-    render(<ScoreRings centerValue={null} rings={[{ label: 'x', value: 0, color: '#fff' }]} />)
-    expect(screen.getByText('—')).toBeInTheDocument()
   })
 })

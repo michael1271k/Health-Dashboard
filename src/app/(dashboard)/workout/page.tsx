@@ -2,13 +2,13 @@
 
 import { useState } from 'react'
 import dynamic from 'next/dynamic'
-import { DataTable, type TableColumn } from '@/components/data/DataTable'
+import { WorkoutLogList } from '@/components/workout/WorkoutLogList'
 import { WorkoutChat } from '@/components/logger/WorkoutChat'
 import { Sheet } from '@/components/ui/Sheet'
 import { useWorkoutHistory, useDeleteSession, type WorkoutSessionRow } from '@/lib/hooks/useWorkoutHistory'
 import { useAllExercises, useExerciseMemory } from '@/lib/hooks/useLogger'
 import { LOGGER_SPLITS, type SplitDay } from '@/lib/types/workout'
-import { Check, Plus, TrendingUp, Trash2 } from 'lucide-react'
+import { Plus, TrendingUp, Trash2 } from 'lucide-react'
 
 // recharts-heavy — lazy so it never weighs down the workout route first-load
 const StrengthTrends = dynamic(() => import('@/components/charts/StrengthTrends').then((m) => m.StrengthTrends), { ssr: false })
@@ -20,44 +20,6 @@ export default function WorkoutPage() {
   const del = useDeleteSession()
   const [openSplit, setOpenSplit] = useState<SplitDay | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<WorkoutSessionRow | null>(null)
-
-  const columns: TableColumn<WorkoutSessionRow>[] = [
-    {
-      key: 'date', header: 'Date',
-      render: (r) => (
-        <div>
-          <span className="text-text font-medium">
-            {new Date(r.startedAt).toLocaleDateString('en-IL', { weekday: 'short', month: 'short', day: 'numeric' })}
-          </span>
-          <div className="text-[11px] text-muted-vital mt-0.5">{r.isoWeek.replace('-', ' ')}</div>
-        </div>
-      ),
-    },
-    {
-      key: 'split', header: 'Split',
-      render: (r) => <span className="text-sm font-bold split-label" style={{ color: r.splitColor }}>{r.splitLabel}</span>,
-    },
-    {
-      key: 'volume', header: 'Volume', align: 'right',
-      render: (r) => r.totalVolumeKg !== null
-        ? <span className="vital-number font-semibold text-text">{Math.round(r.totalVolumeKg).toLocaleString()}<span className="text-xs font-normal text-muted-vital ml-0.5">kg</span></span>
-        : <span className="text-muted-vital">—</span>,
-    },
-    {
-      key: 'notion', header: 'Notion', align: 'center',
-      render: (r) => r.notionSynced ? <Check className="w-4 h-4 text-primary mx-auto" aria-label="Synced" /> : <span className="text-muted-vital text-xs">—</span>,
-    },
-    {
-      key: 'actions', header: '', align: 'right',
-      render: (r) => (
-        <span className="flex items-center justify-end gap-1.5">
-          <button onClick={() => setConfirmDelete(r)} className="p-1.5 rounded-lg text-muted-vital hover:text-danger hover:bg-danger/10" aria-label="Delete session">
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
-        </span>
-      ),
-    },
-  ]
 
   return (
     <div className="space-y-6">
@@ -108,11 +70,10 @@ export default function WorkoutPage() {
       {/* ── History ── */}
       <div>
         <h2 className="font-heading font-semibold text-lg text-text mb-3">History</h2>
-        <DataTable
-          columns={columns}
-          rows={sessions ?? []}
-          keyExtractor={(r) => r.id}
+        <WorkoutLogList
+          sessions={sessions ?? []}
           isLoading={histLoading}
+          onDelete={setConfirmDelete}
           emptyMessage="No sessions yet. Tap a split above to log your first workout!"
         />
       </div>

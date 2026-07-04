@@ -7,9 +7,10 @@ import { computeReadiness } from '@/lib/scoring/readiness'
 import type { ReadinessResult } from '@/lib/scoring/types'
 import type { Tables } from '@/lib/supabase/types'
 import { getTodaysSplit, PPL_SPLITS, type SplitDay } from '@/lib/types/workout'
+import { logicalTodayISO, logicalDaysAgoISO } from '@/lib/utils/day'
 
 function daysAgoISO(n: number): string {
-  return new Date(Date.now() - n * 86400000).toLocaleDateString('en-CA')
+  return logicalDaysAgoISO(n)
 }
 
 /**
@@ -60,7 +61,7 @@ export function useInsights() {
     queryFn: async (): Promise<InsightsResult> => {
       const from = daysAgoISO(30)
       const fromTs = `${from}T00:00:00Z`
-      const today = new Date().toLocaleDateString('en-CA')
+      const today = logicalTodayISO()
 
       const [logsRes, nutritionRes, sessionsRes, scoreRes, goalsRes] = await Promise.all([
         supabase.from('daily_logs')
@@ -108,7 +109,7 @@ export function useInsights() {
             score.battery_pct ?? 0,
           )
         : null
-      const todayISO = new Date().toLocaleDateString('en-CA')
+      const todayISO = logicalTodayISO()
       const readiness = scheduleAwareReadiness(baseReadiness, {
         todaySplit: getTodaysSplit(),
         workoutToday: sessions.some((s) => s.date === todayISO),

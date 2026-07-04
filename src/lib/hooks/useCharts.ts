@@ -70,7 +70,7 @@ export type PRRow = {
   reps: number
 }
 
-export function usePRHistory(exerciseId?: string, days = 60) {
+export function usePRHistory(exerciseId?: string, days = 180) {
   return useQuery({
     queryKey: ['workout_sets', 'pr_history', exerciseId, days],
     queryFn: async () => {

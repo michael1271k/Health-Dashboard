@@ -4,10 +4,11 @@ import { useEffect, useRef } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import type { Tables } from '@/lib/supabase/types'
+import { logicalTodayISO } from '@/lib/utils/day'
 
-// Today's date in user's local timezone (YYYY-MM-DD)
+// Today's LOGICAL date (rolls over at the 04:00 cutoff, not midnight)
 function todayLocal(): string {
-  return new Date().toLocaleDateString('en-CA') // 'en-CA' gives YYYY-MM-DD
+  return logicalTodayISO()
 }
 
 // Last 30 days for trend charts (used by Task 5 Charts hooks)

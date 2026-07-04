@@ -409,6 +409,16 @@ html[data-theme='travel'] {
 }
 .liquid-wave { animation: liquidWobble 3.6s ease-in-out infinite; }
 
+/* Reduce-motion preference (Settings) — kill animations + heavy transitions. */
+html[data-reduce-motion='true'] *,
+html[data-reduce-motion='true'] *::before,
+html[data-reduce-motion='true'] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}
+html[data-reduce-motion='true'] .grain-overlay { display: none; }
+
 /* Mobile blur budget — a 40px backdrop blur melts phone GPUs. Halve it. */
 @media (max-width: 768px) {
   .vital-card, .glass-card, .btn-glass {
