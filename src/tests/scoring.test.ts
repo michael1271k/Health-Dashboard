@@ -52,8 +52,8 @@ describe('computeSleepScore', () => {
     expect(computeSleepScore({ sleepHours: 8, deepMinutes: 0, remMinutes: 0, sleepGoalHours: 8 })).toBe(100)
   })
 
-  it('returns 0 for 0 hours sleep', () => {
-    expect(computeSleepScore({ sleepHours: 0, deepMinutes: 0, remMinutes: 0, sleepGoalHours: 8 })).toBe(0)
+  it('returns null for 0 hours sleep (no data ≠ a zero score)', () => {
+    expect(computeSleepScore({ sleepHours: 0, deepMinutes: 0, remMinutes: 0, sleepGoalHours: 8 })).toBeNull()
   })
 
   it('within ±0.5h tolerance band → full credit', () => {
@@ -73,7 +73,7 @@ describe('computeSleepScore', () => {
     // Use 6h sleep (1.5h below 8h goal, outside the 0.5h band) so there is headroom for the bonus
     const withBonus = computeSleepScore({ sleepHours: 6, deepMinutes: 90, remMinutes: 0, sleepGoalHours: 8 })
     const without   = computeSleepScore({ sleepHours: 6, deepMinutes: 89, remMinutes: 0, sleepGoalHours: 8 })
-    expect(withBonus - without).toBe(5)
+    expect(withBonus! - without!).toBe(5)
   })
 
   it('never exceeds 100', () => {
@@ -81,16 +81,14 @@ describe('computeSleepScore', () => {
     expect(score).toBeLessThanOrEqual(100)
   })
 
-  it('returns 100 (goal met) when sleepGoalHours is 0 — no NaN', () => {
-    const score = computeSleepScore({ sleepHours: 0, deepMinutes: 0, remMinutes: 0, sleepGoalHours: 0 })
-    expect(score).toBe(100)
-    expect(Number.isNaN(score)).toBe(false)
+  it('returns null when there is no sleep data even if the goal is 0', () => {
+    expect(computeSleepScore({ sleepHours: 0, deepMinutes: 0, remMinutes: 0, sleepGoalHours: 0 })).toBeNull()
   })
 
   it('emergency context reduces penalties (same sleep → higher score in emergency vs normal)', () => {
     const normal    = computeSleepScore({ sleepHours: 4, deepMinutes: 0, remMinutes: 0, sleepGoalHours: 8, contextMode: 'normal' })
     const emergency = computeSleepScore({ sleepHours: 4, deepMinutes: 0, remMinutes: 0, sleepGoalHours: 8, contextMode: 'emergency' })
-    expect(emergency).toBeGreaterThan(normal)
+    expect(emergency!).toBeGreaterThan(normal!)
   })
 })
 
@@ -104,27 +102,20 @@ describe('computeNutritionScore', () => {
     })).toBe(100)
   })
 
-  it('returns 0 when all macros are 0 (100% error)', () => {
-    const score = computeNutritionScore({ calories: 0, proteinG: 0, carbsG: 0, fatG: 0, ...goals })
-    expect(score).toBe(0)
+  it('returns null when nothing is logged (calories 0 → no data)', () => {
+    expect(computeNutritionScore({ calories: 0, proteinG: 0, carbsG: 0, fatG: 0, ...goals })).toBeNull()
   })
 
   it('protein has double weight: 50% protein deficit scores lower than 50% carb deficit', () => {
     const proteinMiss = computeNutritionScore({ calories: 1935, proteinG: 90,  carbsG: 180, fatG: 55, ...goals })
     const carbMiss    = computeNutritionScore({ calories: 1935, proteinG: 180, carbsG: 90,  fatG: 55, ...goals })
-    expect(proteinMiss).toBeLessThan(carbMiss)
+    expect(proteinMiss!).toBeLessThan(carbMiss!)
   })
 
-  it('is always between 0 and 100', () => {
-    const extremes = [
-      { calories: 5000, proteinG: 500, carbsG: 600, fatG: 200 },
-      { calories: 0,    proteinG: 0,   carbsG: 0,   fatG: 0   },
-    ]
-    for (const e of extremes) {
-      const s = computeNutritionScore({ ...e, ...goals })
-      expect(s).toBeGreaterThanOrEqual(0)
-      expect(s).toBeLessThanOrEqual(100)
-    }
+  it('stays within 0–100 for an extreme over-eating day', () => {
+    const s = computeNutritionScore({ calories: 5000, proteinG: 500, carbsG: 600, fatG: 200, ...goals })
+    expect(s!).toBeGreaterThanOrEqual(0)
+    expect(s!).toBeLessThanOrEqual(100)
   })
 })
 
@@ -134,8 +125,8 @@ describe('computeActivityScore', () => {
     expect(computeActivityScore({ steps: 10000, activeCal: 500, stepsGoal: 10000, activeCalGoal: 500 })).toBe(100)
   })
 
-  it('returns 0 when steps and cal are both 0', () => {
-    expect(computeActivityScore({ steps: 0, activeCal: 0, stepsGoal: 10000, activeCalGoal: 500 })).toBe(0)
+  it('returns null when steps and cal are both 0 (no activity data)', () => {
+    expect(computeActivityScore({ steps: 0, activeCal: 0, stepsGoal: 10000, activeCalGoal: 500 })).toBeNull()
   })
 
   it('returns 50 when only steps hit goal', () => {
@@ -149,13 +140,25 @@ describe('computeActivityScore', () => {
 
 // ─── Workout Score ─────────────────────────────────────────────────────────────
 describe('computeWorkoutScore', () => {
-  it('returns 100 on a rest day (rest is part of the plan)', () => {
+  it('returns null on a rest day (NOT a fake 100)', () => {
     expect(computeWorkoutScore({
       workoutLogged: false, isRestDay: true, newPRsToday: 0, sessionVolumeKg: 0, trailingAvgVolumeKg: 0,
-    })).toBe(100)
+    })).toBeNull()
   })
 
-  it('returns 0 when no workout logged on a training day', () => {
+  it('returns null in travel/vacation context (no training expectation)', () => {
+    expect(computeWorkoutScore({
+      workoutLogged: false, isRestDay: false, newPRsToday: 0, sessionVolumeKg: 0, trailingAvgVolumeKg: 0, contextMode: 'travel',
+    })).toBeNull()
+  })
+
+  it('returns null (pending) for the current day before 21:00 with no session', () => {
+    expect(computeWorkoutScore({
+      workoutLogged: false, isRestDay: false, newPRsToday: 0, sessionVolumeKg: 0, trailingAvgVolumeKg: 0, isCurrentDay: true, localHour: 14,
+    })).toBeNull()
+  })
+
+  it('returns 0 for a past training day with no session (genuinely missed)', () => {
     expect(computeWorkoutScore({
       workoutLogged: false, isRestDay: false, newPRsToday: 0, sessionVolumeKg: 0, trailingAvgVolumeKg: 0,
     })).toBe(0)
@@ -187,25 +190,19 @@ describe('computeWorkoutScore', () => {
 })
 
 // ─── Recovery Score ────────────────────────────────────────────────────────────
-describe('computeRecoveryScore', () => {
-  it('returns 100 when water and supplements both at goal', () => {
-    expect(computeRecoveryScore({ waterMl: 3000, waterGoalMl: 3000, supplementsTaken: 3, supplementsGoal: 3 })).toBe(100)
+describe('computeRecoveryScore (physiological — sleep + resting HR)', () => {
+  it('returns null when there is no sleep and no HR data', () => {
+    expect(computeRecoveryScore({ sleepHours: 0, deepMinutes: 0, sleepGoalHours: 8 })).toBeNull()
   })
 
-  it('returns 0 when both are 0', () => {
-    expect(computeRecoveryScore({ waterMl: 0, waterGoalMl: 3000, supplementsTaken: 0, supplementsGoal: 3 })).toBe(0)
-  })
-
-  it('handles 0 supplementsGoal without dividing by zero', () => {
-    expect(() =>
-      computeRecoveryScore({ waterMl: 3000, waterGoalMl: 3000, supplementsTaken: 0, supplementsGoal: 0 })
-    ).not.toThrow()
+  it('scores from sleep alone when HR is absent', () => {
+    expect(computeRecoveryScore({ sleepHours: 8, deepMinutes: 90, sleepGoalHours: 8 })).toBe(100)
   })
 
   it('elevated resting HR penalizes recovery score', () => {
-    const normal   = computeRecoveryScore({ waterMl: 3000, waterGoalMl: 3000, supplementsTaken: 3, supplementsGoal: 3, restingHR: 60, baselineHR: 58 })
-    const elevated = computeRecoveryScore({ waterMl: 3000, waterGoalMl: 3000, supplementsTaken: 3, supplementsGoal: 3, restingHR: 75, baselineHR: 58 })
-    expect(elevated).toBeLessThan(normal)
+    const normal   = computeRecoveryScore({ sleepHours: 8, deepMinutes: 90, sleepGoalHours: 8, restingHR: 60, baselineHR: 58 })
+    const elevated = computeRecoveryScore({ sleepHours: 8, deepMinutes: 90, sleepGoalHours: 8, restingHR: 75, baselineHR: 58 })
+    expect(elevated!).toBeLessThan(normal!)
   })
 })
 
@@ -216,22 +213,30 @@ describe('computeDailyScore', () => {
     expect(result.totalScore).toBe(100)
   })
 
-  it('zero inputs produce score of 0', () => {
+  it('empty non-travel day: data components null, missed workout = 0, total = 0', () => {
     const result = computeDailyScore(ZERO)
+    expect(result.sleepScore).toBeNull()
+    expect(result.recoveryScore).toBeNull()
+    expect(result.workoutScore).toBe(0)   // training day, genuinely missed
     expect(result.totalScore).toBe(0)
   })
 
-  it('rest day: workout score is 100 (neutral) and total is still high', () => {
-    const restInputs: ScoringInputs = { ...PERFECT, isRestDay: true, workoutLogged: false }
-    const result = computeDailyScore(restInputs)
-    expect(result.workoutScore).toBe(100)
+  it('vacation (travel) with no data → total null (blank day, not a fake 0)', () => {
+    const result = computeDailyScore({ ...ZERO, contextMode: 'travel' })
+    expect(result.workoutScore).toBeNull()
+    expect(result.totalScore).toBeNull()
+  })
+
+  it('rest day: workout null, total renormalized over the remaining components', () => {
+    const result = computeDailyScore({ ...PERFECT, isRestDay: true, workoutLogged: false })
+    expect(result.workoutScore).toBeNull()
     expect(result.totalScore).toBe(100)
   })
 
   it('returns integer scores (Math.round applied)', () => {
     const result = computeDailyScore(PERFECT)
-    expect(Number.isInteger(result.totalScore)).toBe(true)
-    expect(Number.isInteger(result.sleepScore)).toBe(true)
+    expect(Number.isInteger(result.totalScore as number)).toBe(true)
+    expect(Number.isInteger(result.sleepScore as number)).toBe(true)
   })
 })
 

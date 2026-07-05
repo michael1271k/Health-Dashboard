@@ -10,10 +10,11 @@ export function computeReadiness(
   components: Pick<ScoreComponents, 'sleepScore' | 'recoveryScore'>,
   batteryPct: number,
 ): ReadinessResult {
-  const readinessScore =
-    components.sleepScore  * 0.40 +
-    batteryPct             * 0.40 +
-    components.recoveryScore * 0.20
+  // Sleep/recovery may be null (no data) — fall back to battery so readiness
+  // stays sensible rather than cratering to a false "Rest Today".
+  const sleep = components.sleepScore ?? batteryPct
+  const recovery = components.recoveryScore ?? batteryPct
+  const readinessScore = sleep * 0.40 + batteryPct * 0.40 + recovery * 0.20
 
   if (readinessScore >= 70) {
     return {

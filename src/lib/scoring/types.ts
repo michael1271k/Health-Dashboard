@@ -37,21 +37,28 @@ export interface ScoringInputs {
   // HR (optional)
   restingHR?: number          // today's resting HR in bpm
   baselineHR?: number         // 7-day trailing average resting HR
+  respiratoryRate?: number    // breaths/min (recovery signal)
 
   // Context modifier
   contextMode?: 'normal' | 'travel' | 'illness' | 'emergency'
 
   // Hours awake (for battery drain)
   hoursAwake?: number         // defaults to 16 if omitted
+
+  // Time / day context (drives "pending vs missed" workout logic)
+  isCurrentDay?: boolean      // true only for today
+  localHour?: number          // 0–23 local hour, for the current day
 }
 
+// Sub-scores are 0–100 OR null (null = no data / not applicable → excluded from
+// the composite, never a fake 0 or 100).
 export interface ScoreComponents {
-  sleepScore: number      // 0–100
-  nutritionScore: number  // 0–100
-  activityScore: number   // 0–100
-  workoutScore: number    // 0–100  (neutral on rest days, not penalized)
-  recoveryScore: number   // 0–100
-  totalScore: number      // 0–100 weighted composite (adaptive re-weighting)
+  sleepScore: number | null
+  nutritionScore: number | null
+  activityScore: number | null
+  workoutScore: number | null   // null on rest days / travel / pending
+  recoveryScore: number | null  // null when no sleep AND no HR data
+  totalScore: number | null     // null only if every component is null
 }
 
 export type ReadinessLevel = 'train_hard' | 'train_light' | 'rest'

@@ -34,10 +34,11 @@ export interface Database {
           date: string
           item_key: string
           taken: boolean
+          taken_at: string | null
           updated_at: string
         }
-        Insert: { user_id: string; date: string; item_key: string; taken?: boolean }
-        Update: Partial<{ taken: boolean }>
+        Insert: { user_id: string; date: string; item_key: string; taken?: boolean; taken_at?: string | null }
+        Update: Partial<{ taken: boolean; taken_at: string | null }>
       }
       sleep_sessions: {
         Row: {
@@ -226,11 +227,13 @@ export interface Database {
           day_cutoff_hour: number
           unit_system: 'kg' | 'lb'
           reduce_motion: boolean
+          auto_log_supplements: boolean
+          active_program: string
           created_at: string
           updated_at: string
         }
-        Insert: Omit<Database['public']['Tables']['user_goals']['Row'], 'id' | 'created_at' | 'updated_at' | 'day_cutoff_hour' | 'unit_system' | 'reduce_motion'>
-          & { day_cutoff_hour?: number; unit_system?: 'kg' | 'lb'; reduce_motion?: boolean }
+        Insert: Omit<Database['public']['Tables']['user_goals']['Row'], 'id' | 'created_at' | 'updated_at' | 'day_cutoff_hour' | 'unit_system' | 'reduce_motion' | 'auto_log_supplements' | 'active_program'>
+          & { day_cutoff_hour?: number; unit_system?: 'kg' | 'lb'; reduce_motion?: boolean; auto_log_supplements?: boolean; active_program?: string }
         Update: Partial<Database['public']['Tables']['user_goals']['Insert']>
       }
       daily_logs: {

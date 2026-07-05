@@ -97,13 +97,14 @@ export interface NutritionPreset {
   proteinGoalG: number | null   // null = no macro target (graded on calories only)
   carbsGoalG: number | null
   fatGoalG: number | null
+  fiberGoalG: number | null
 }
 
-// Cut: 55g fat is strict but deliberate (0.3–0.4 kg/wk loss)
+// AXIS blueprint anchors (Phase 12). Cut is the active phase.
 export const CUT_PRESET = {
-  calorieGoal: 1935,
-  proteinGoalG: 180,
-  carbsGoalG: 180,
+  calorieGoal: 1950,
+  proteinGoalG: 170,
+  carbsGoalG: 195,
   fatGoalG: 55,
   goalPreset: 'cut',
 } as const
@@ -112,25 +113,28 @@ export const NUTRITION_PRESETS: Record<NutritionMode, NutritionPreset> = {
   cut: {
     mode: 'cut',
     label: 'Cut',
-    calorieGoal: 1935,
-    proteinGoalG: 180,
-    carbsGoalG: 180,
+    calorieGoal: 1950,
+    proteinGoalG: 170,
+    carbsGoalG: 195,
     fatGoalG: 55,
+    fiberGoalG: 30,
   },
   bulk: {
     mode: 'bulk',
-    label: 'Bulk',
-    calorieGoal: 2700,
-    proteinGoalG: 175,
-    carbsGoalG: 320,
-    fatGoalG: 80,
+    label: 'Lean Bulk',
+    calorieGoal: 2600,
+    proteinGoalG: 158,
+    carbsGoalG: 337,
+    fatGoalG: 70,
+    fiberGoalG: 35,
   },
   maintenance: {
     mode: 'maintenance',
     label: 'Maintenance',
-    calorieGoal: 2415,
+    calorieGoal: 2400,
     proteinGoalG: 165,
     carbsGoalG: 270,
     fatGoalG: 75,
+    fiberGoalG: 30,
   },
 }

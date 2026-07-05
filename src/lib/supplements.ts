@@ -9,6 +9,7 @@ export const SUPPLEMENT_PROTOCOL: SupplementSlot[] = [
   ] },
   { key: 'pre', time: '11:45', label: 'Pre-Workout', accent: '#38E1FF', items: [
     { key: 'citrulline', name: 'L-Citrulline Malate 2:1', dose: '6 g' },
+    { key: 'caffeine', name: 'Nutricost Caffeine', dose: '200 mg' },
   ] },
   { key: 'post', time: '15:00', label: 'Post-Workout', accent: '#4FC3FF', items: [
     { key: 'creatine', name: 'Creatine Monohydrate', dose: '5 g' },
@@ -23,3 +24,12 @@ export const SUPPLEMENT_PROTOCOL: SupplementSlot[] = [
 
 export const ALL_SUPPLEMENT_KEYS = SUPPLEMENT_PROTOCOL.flatMap((s) => s.items.map((i) => i.key))
 export const TOTAL_SUPPLEMENTS = ALL_SUPPLEMENT_KEYS.length
+
+/** Has a slot's scheduled time ("HH:MM") passed in Israel local time? (for auto-log) */
+export function slotTimePassed(hhmm: string): boolean {
+  const [h, m] = hhmm.split(':').map(Number)
+  const now = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Jerusalem', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(new Date())
+  const nh = Number(now.find((p) => p.type === 'hour')?.value ?? '0') % 24
+  const nm = Number(now.find((p) => p.type === 'minute')?.value ?? '0')
+  return nh * 60 + nm >= h * 60 + m
+}

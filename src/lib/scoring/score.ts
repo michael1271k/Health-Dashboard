@@ -23,7 +23,8 @@ function penaltyMult(ctx: ScoringInputs['contextMode']): number {
  */
 export function computeSleepScore(inputs: Pick<ScoringInputs,
   'sleepHours' | 'deepMinutes' | 'remMinutes' | 'sleepGoalHours' | 'contextMode'>
-): number {
+): number | null {
+  if (inputs.sleepHours <= 0) return null   // no sleep data → unknown, not a fake score
   if (!inputs.sleepGoalHours) return 100
   const pMult = penaltyMult(inputs.contextMode)
   const goal = inputs.sleepGoalHours
@@ -54,7 +55,8 @@ export function computeSleepScore(inputs: Pick<ScoringInputs,
 export function computeNutritionScore(inputs: Pick<ScoringInputs,
   'calories' | 'proteinG' | 'carbsG' | 'fatG' |
   'calorieGoal' | 'proteinGoalG' | 'carbsGoalG' | 'fatGoalG' | 'contextMode'>
-): number {
+): number | null {
+  if (inputs.calories <= 0) return null   // nothing logged → unknown
   const pMult = penaltyMult(inputs.contextMode)
 
   function pctError(actual: number, goal: number, asymmetric = false): number {
@@ -84,7 +86,8 @@ export function computeNutritionScore(inputs: Pick<ScoringInputs,
  */
 export function computeActivityScore(inputs: Pick<ScoringInputs,
   'steps' | 'activeCal' | 'stepsGoal' | 'activeCalGoal'>
-): number {
+): number | null {
+  if (inputs.steps <= 0 && inputs.activeCal <= 0) return null   // no activity data
   function score(actual: number, goal: number): number {
     if (goal === 0) return 100
     const ratio = actual / goal
@@ -97,15 +100,23 @@ export function computeActivityScore(inputs: Pick<ScoringInputs,
 
 // ─── Workout Score ────────────────────────────────────────────────────────────
 /**
- * Rest day → neutral 100 (not penalized — rest is part of the plan).
- * Training day, no session → 0.
- * Session logged: base 60 + volume bonus 20 + PR bonus up to 20.
+ * Scientific & honest — never a fake full ring on a day off:
+ *   Travel/vacation → null (no training expectation).
+ *   Scheduled rest day → null (neutral, excluded from the composite).
+ *   Training day, no session yet & early in the day → null ("Pending").
+ *   Training day, no session & late/past → 0 (genuinely missed).
+ *   Session logged → 60 base + up to 20 volume + up to 20 PR.
  */
 export function computeWorkoutScore(inputs: Pick<ScoringInputs,
-  'workoutLogged' | 'isRestDay' | 'newPRsToday' | 'sessionVolumeKg' | 'trailingAvgVolumeKg'>
-): number {
-  if (inputs.isRestDay) return 100               // rest days always score perfect
-  if (!inputs.workoutLogged) return 0
+  'workoutLogged' | 'isRestDay' | 'newPRsToday' | 'sessionVolumeKg' | 'trailingAvgVolumeKg' |
+  'contextMode' | 'isCurrentDay' | 'localHour'>
+): number | null {
+  if (inputs.contextMode === 'travel') return null   // vacation — no training expectation
+  if (inputs.isRestDay) return null                  // scheduled rest → neutral
+  if (!inputs.workoutLogged) {
+    const pending = inputs.isCurrentDay && (inputs.localHour ?? 24) < 21
+    return pending ? null : 0                         // pending vs genuinely missed
+  }
   const base = 60
   const volumeBonus = inputs.trailingAvgVolumeKg > 0 &&
     inputs.sessionVolumeKg >= inputs.trailingAvgVolumeKg ? 20 : 0
@@ -113,32 +124,32 @@ export function computeWorkoutScore(inputs: Pick<ScoringInputs,
   return clamp(base + volumeBonus + prBonus)
 }
 
-// ─── Recovery Score ───────────────────────────────────────────────────────────
+// ─── Recovery Score (physiological — NOT logging adherence) ────────────────────
 /**
- * 60% water vs goal + 30% supplements + 10% HR signal (if available).
- * HR: elevated resting HR > baseline + 5 bpm → penalty.
+ * Recovery reflects the body, not whether you logged water/supps:
+ *   60% sleep quality (duration + deep) + 40% resting-HR vs baseline.
+ * Each component is dropped if its data is missing and the rest renormalized.
+ * Returns null when there is NO sleep and NO HR data (unknown ≠ 0).
  */
 export function computeRecoveryScore(inputs: Pick<ScoringInputs,
-  'waterMl' | 'waterGoalMl' | 'supplementsTaken' | 'supplementsGoal' |
-  'restingHR' | 'baselineHR' | 'contextMode'>
-): number {
+  'sleepHours' | 'deepMinutes' | 'sleepGoalHours' | 'restingHR' | 'baselineHR' | 'contextMode'>
+): number | null {
   const pMult = penaltyMult(inputs.contextMode)
-  const waterPct = clamp((inputs.waterMl / (inputs.waterGoalMl || 1)) * 100)
-  const suppPct = inputs.supplementsGoal > 0
-    ? clamp((inputs.supplementsTaken / inputs.supplementsGoal) * 100)
-    : 100
+  const parts: Array<{ v: number; w: number }> = []
 
-  let hrScore = 100
+  if (inputs.sleepHours > 0) {
+    const ratio = inputs.sleepGoalHours ? Math.min(1, inputs.sleepHours / inputs.sleepGoalHours) : 1
+    const deepQ = inputs.deepMinutes >= 75 ? 1 : Math.max(0, inputs.deepMinutes / 75)
+    parts.push({ v: clamp((0.8 * ratio + 0.2 * deepQ) * 100), w: 0.6 })
+  }
   if (inputs.restingHR != null && inputs.baselineHR != null && inputs.baselineHR > 0) {
     const delta = inputs.restingHR - inputs.baselineHR
-    if (delta > 0) hrScore = clamp(100 - delta * 4 * pMult)
+    parts.push({ v: clamp(100 - Math.max(0, delta) * 4 * pMult), w: 0.4 })
   }
 
-  if (inputs.restingHR != null && inputs.baselineHR != null) {
-    return clamp(waterPct * 0.60 + suppPct * 0.30 + hrScore * 0.10)
-  }
-  // No HR data — fall back to water/supplements ratio
-  return clamp(waterPct * 0.60 + suppPct * 0.40)
+  if (!parts.length) return null   // no physiological signal → unknown
+  const wSum = parts.reduce((s, p) => s + p.w, 0)
+  return clamp(parts.reduce((s, p) => s + p.v * p.w, 0) / wSum)
 }
 
 // ─── Composite Score (smart, context-aware, adaptive re-weighting) ────────────
@@ -149,51 +160,32 @@ export function computeRecoveryScore(inputs: Pick<ScoringInputs,
  * - Emergency: penalty multipliers on all sub-scores already applied.
  */
 export function computeDailyScore(inputs: ScoringInputs): ScoreComponents {
-  const sleepScore     = computeSleepScore(inputs)
-  const nutritionScore = computeNutritionScore(inputs)
-  const activityScore  = computeActivityScore(inputs)
-  const workoutScore   = computeWorkoutScore(inputs)
-  const recoveryScore  = computeRecoveryScore(inputs)
-
-  // Base weights
-  let w = {
-    sleep:     0.25,
-    nutrition: 0.30,
-    activity:  0.20,
-    workout:   0.15,
-    recovery:  0.10,
+  const comps: Record<string, number | null> = {
+    sleep:     computeSleepScore(inputs),
+    nutrition: computeNutritionScore(inputs),
+    activity:  computeActivityScore(inputs),
+    workout:   computeWorkoutScore(inputs),
+    recovery:  computeRecoveryScore(inputs),
+  }
+  const baseW: Record<string, number> = {
+    sleep: 0.25, nutrition: 0.30, activity: 0.20, workout: 0.15, recovery: 0.10,
   }
 
-  // Adapt for rest day: redistribute workout weight to sleep + recovery
-  if (inputs.isRestDay) {
-    w = { sleep: 0.30, nutrition: 0.30, activity: 0.20, workout: 0, recovery: 0.20 }
-  }
+  // Composite = weighted mean over ONLY the components that have data (renormalized).
+  const active = Object.keys(comps).filter((k) => comps[k] != null)
+  const wSum = active.reduce((s, k) => s + baseW[k], 0)
+  const totalScore = active.length
+    ? clamp(active.reduce((s, k) => s + (comps[k] as number) * (baseW[k] / wSum), 0))
+    : null
 
-  // Drop components without data and renormalize
-  const hasActivity = inputs.steps > 0 || inputs.activeCal > 0
-  if (!hasActivity) {
-    const freed = w.activity
-    w.activity = 0
-    const nonZeroKeys = Object.keys(w).filter((k) => w[k as keyof typeof w] > 0) as Array<keyof typeof w>
-    const total = nonZeroKeys.reduce((s, k) => s + w[k], 0)
-    for (const k of nonZeroKeys) w[k] = w[k] / total * (total + freed) // redistribute
-  }
-
-  const totalScore = clamp(
-    sleepScore     * w.sleep +
-    nutritionScore * w.nutrition +
-    activityScore  * w.activity +
-    workoutScore   * w.workout +
-    recoveryScore  * w.recovery
-  )
-
+  const r = (v: number | null) => (v == null ? null : Math.round(v))
   return {
-    sleepScore:     Math.round(sleepScore),
-    nutritionScore: Math.round(nutritionScore),
-    activityScore:  Math.round(activityScore),
-    workoutScore:   Math.round(workoutScore),
-    recoveryScore:  Math.round(recoveryScore),
-    totalScore:     Math.round(totalScore),
+    sleepScore:     r(comps.sleep),
+    nutritionScore: r(comps.nutrition),
+    activityScore:  r(comps.activity),
+    workoutScore:   r(comps.workout),
+    recoveryScore:  r(comps.recovery),
+    totalScore:     totalScore == null ? null : Math.round(totalScore),
   }
 }
 

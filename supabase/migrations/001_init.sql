@@ -136,6 +136,8 @@ CREATE TABLE IF NOT EXISTS user_goals (
   day_cutoff_hour INTEGER NOT NULL DEFAULT 4,
   unit_system TEXT NOT NULL DEFAULT 'kg' CHECK (unit_system IN ('kg','lb')),
   reduce_motion BOOLEAN NOT NULL DEFAULT false,
+  auto_log_supplements BOOLEAN NOT NULL DEFAULT false,
+  active_program TEXT NOT NULL DEFAULT 'axis5_hybrid',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -174,6 +176,7 @@ CREATE TABLE IF NOT EXISTS supplement_log (
   date DATE NOT NULL,
   item_key TEXT NOT NULL,
   taken BOOLEAN NOT NULL DEFAULT false,
+  taken_at TIMESTAMPTZ,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   PRIMARY KEY (user_id, date, item_key)
 );

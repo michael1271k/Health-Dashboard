@@ -21,6 +21,7 @@ interface Goals {
   day_cutoff_hour: number
   unit_system: 'kg' | 'lb'
   reduce_motion: boolean
+  auto_log_supplements: boolean
 }
 
 const DEFAULTS: Goals = {
@@ -37,6 +38,7 @@ const DEFAULTS: Goals = {
   day_cutoff_hour: 4,
   unit_system: 'kg',
   reduce_motion: false,
+  auto_log_supplements: false,
 }
 
 const CONTEXT_LABELS: Record<ContextMode, { label: string; desc: string }> = {
@@ -53,6 +55,7 @@ function applyPrefsToDevice(cutoff: number, units: 'kg' | 'lb', motion: boolean)
   window.localStorage.setItem('apex_units', units)
   window.localStorage.setItem('apex_reduce_motion', motion ? '1' : '0')
   document.documentElement.dataset.reduceMotion = motion ? 'true' : 'false'
+  window.dispatchEvent(new Event('apex-units-change'))
 }
 
 export default function SettingsPage() {
@@ -87,6 +90,7 @@ export default function SettingsPage() {
           day_cutoff_hour: data.day_cutoff_hour ?? 4,
           unit_system: (data.unit_system ?? 'kg') as 'kg' | 'lb',
           reduce_motion: data.reduce_motion ?? false,
+          auto_log_supplements: data.auto_log_supplements ?? false,
         })
         applyPrefsToDevice(data.day_cutoff_hour ?? 4, (data.unit_system ?? 'kg') as 'kg' | 'lb', data.reduce_motion ?? false)
       }
@@ -244,6 +248,20 @@ export default function SettingsPage() {
             className={`relative w-12 h-7 rounded-full transition-colors shrink-0 ${goals.reduce_motion ? 'bg-primary' : 'bg-surface-2 border border-border'}`}
           >
             <span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-all ${goals.reduce_motion ? 'left-6' : 'left-1'}`} />
+          </button>
+        </div>
+
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <div className="text-sm text-text font-medium">Auto-log scheduled supplements</div>
+            <div className="text-xs text-muted-vital">Mark each supplement taken once its scheduled time passes</div>
+          </div>
+          <button
+            onClick={() => save({ auto_log_supplements: !goals.auto_log_supplements })}
+            aria-pressed={goals.auto_log_supplements}
+            className={`relative w-12 h-7 rounded-full transition-colors shrink-0 ${goals.auto_log_supplements ? 'bg-primary' : 'bg-surface-2 border border-border'}`}
+          >
+            <span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-all ${goals.auto_log_supplements ? 'left-6' : 'left-1'}`} />
           </button>
         </div>
       </section>

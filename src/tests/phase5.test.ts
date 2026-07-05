@@ -4,17 +4,18 @@ import { NUTRITION_PRESETS } from '@/lib/types/workout'
 
 describe('Nutrition modes', () => {
   it('defines Cut / Bulk / Maintenance with correct calories', () => {
-    expect(NUTRITION_PRESETS.cut.calorieGoal).toBe(1935)
-    expect(NUTRITION_PRESETS.bulk.calorieGoal).toBe(2700)
-    expect(NUTRITION_PRESETS.maintenance.calorieGoal).toBe(2415)
+    expect(NUTRITION_PRESETS.cut.calorieGoal).toBe(1950)
+    expect(NUTRITION_PRESETS.bulk.calorieGoal).toBe(2600)
+    expect(NUTRITION_PRESETS.maintenance.calorieGoal).toBe(2400)
   })
 
-  it('all three presets now carry full macro targets (Phase 11)', () => {
-    expect(NUTRITION_PRESETS.cut.proteinGoalG).toBe(180)
+  it('AXIS macro anchors carry full macro + fiber targets (Phase 12)', () => {
+    expect(NUTRITION_PRESETS.cut.proteinGoalG).toBe(170)
     expect(NUTRITION_PRESETS.cut.fatGoalG).toBe(55)
-    expect(NUTRITION_PRESETS.bulk.proteinGoalG).toBe(175)
-    expect(NUTRITION_PRESETS.bulk.carbsGoalG).toBe(320)
-    expect(NUTRITION_PRESETS.maintenance.carbsGoalG).toBe(270)
+    expect(NUTRITION_PRESETS.cut.fiberGoalG).toBe(30)
+    expect(NUTRITION_PRESETS.bulk.proteinGoalG).toBe(158)
+    expect(NUTRITION_PRESETS.bulk.carbsGoalG).toBe(337)
+    expect(NUTRITION_PRESETS.bulk.fiberGoalG).toBe(35)
   })
 })
 
@@ -51,7 +52,7 @@ describe('computeNutritionScore — null-macro grading (bulk/maintenance)', () =
       calorieGoal: 1935, proteinGoalG: 180, carbsGoalG: 180, fatGoalG: 55,
     })
     expect(onTarget).toBe(100)
-    expect(lowProtein).toBeLessThan(onTarget)
+    expect(lowProtein!).toBeLessThan(onTarget!)
   })
 })
 

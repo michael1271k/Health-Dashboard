@@ -18,6 +18,25 @@ export function last30Days(): string {
   return d.toLocaleDateString('en-CA')
 }
 
+/** Newest sync timestamp across scores + logs — for the header "Last Updated" stamp. */
+export function useLastUpdated() {
+  return useQuery({
+    queryKey: ['last_updated'],
+    staleTime: 30_000,
+    queryFn: async (): Promise<string | null> => {
+      const [s, l] = await Promise.all([
+        supabase.from('daily_scores').select('computed_at').order('computed_at', { ascending: false }).limit(1).maybeSingle(),
+        supabase.from('daily_logs').select('updated_at').order('updated_at', { ascending: false }).limit(1).maybeSingle(),
+      ])
+      const times = [
+        (s.data as { computed_at?: string } | null)?.computed_at,
+        (l.data as { updated_at?: string } | null)?.updated_at,
+      ].filter(Boolean).map((t) => new Date(t as string).getTime())
+      return times.length ? new Date(Math.max(...times)).toISOString() : null
+    },
+  })
+}
+
 export function useTodayScore() {
   return useQuery({
     queryKey: ['daily_scores', 'today'],

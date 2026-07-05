@@ -55,6 +55,8 @@ async function computeForDate(supabase: DB, userId: string, date: string, hoursA
     .gte('created_at', `${date}T00:00:00Z`).lt('created_at', `${end}T00:00:00Z`)
 
   const isRestDay = WEEKDAY_SPLIT[new Date(`${date}T12:00:00Z`).getUTCDay()] === 'rest'
+  const isCurrentDay = date === todayISO()
+  const localHour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Jerusalem', hour: '2-digit', hour12: false }).format(new Date())) % 24
 
   const g = goals ?? {
     sleep_goal_hours: 8, calorie_goal: 1935, protein_goal_g: 180, carbs_goal_g: 180,
@@ -89,10 +91,15 @@ async function computeForDate(supabase: DB, userId: string, date: string, hoursA
     waterGoalMl: g.water_goal_ml,
     supplementsTaken: supplements?.length ?? 0,
     supplementsGoal: 3,
+    restingHR: metrics?.rest_hr ?? undefined,
     contextMode: (g as typeof g & { context_mode?: string }).context_mode as ScoringInputs['contextMode'] ?? 'normal',
+    isCurrentDay,
+    localHour,
   }
 
   const components = computeDailyScore(inputs)
+  // No underlying data at all → leave the day blank rather than write a fake 0.
+  if (components.totalScore == null) return
   const battery = computeBattery(inputs, hoursAwake)
   const scoreRow: InsertRow<'daily_scores'> = {
     user_id: userId, date,
