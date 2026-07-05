@@ -7,6 +7,7 @@ import {
 import { ChartTooltip } from './ChartTooltip'
 import type { VolumePoint } from '@/lib/hooks/useCharts'
 import { PPL_SPLITS, type SplitDay } from '@/lib/types/workout'
+import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 
 const GRID = 'rgba(255,255,255,0.06)'
 const TEXT = '#8B97B2'
@@ -20,13 +21,14 @@ function formatDate(dateStr: string): string {
 
 export function VolumeChart({ data, isLoading }: { data: VolumePoint[]; isLoading?: boolean }) {
   const [split, setSplit] = useState<SplitDay>('legs')
+  const unit = useUnitSystem()
 
   if (isLoading) {
     return <div className="vital-card h-64 flex items-center justify-center"><div className="w-full h-40 bg-surface-2 rounded-xl animate-pulse" /></div>
   }
 
   const filtered = data.filter((d) => d.split === split || (split === 'legs' && d.split === 'lower'))
-  const chartData = filtered.map((d) => ({ date: formatDate(d.date), volume: d.volume }))
+  const chartData = filtered.map((d) => ({ date: formatDate(d.date), volume: displayWeight(d.volume) }))
   const color = PPL_SPLITS[split]?.color ?? '#19E3B1'
 
   return (
@@ -63,7 +65,7 @@ export function VolumeChart({ data, isLoading }: { data: VolumePoint[]; isLoadin
               <XAxis dataKey="date" tick={{ fill: TEXT, fontSize: 11, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
               <YAxis tick={{ fill: TEXT, fontSize: 11, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} width={48} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
               <Tooltip content={<ChartTooltip />} cursor={{ stroke: GRID, strokeWidth: 1 }} />
-              <Area type="monotone" dataKey="volume" name="Volume (kg)" stroke={color} fill="url(#volFill)" strokeWidth={2} dot={{ r: 2, fill: color }} activeDot={{ r: 4 }} />
+              <Area type="monotone" dataKey="volume" name={`Volume (${unit})`} stroke={color} fill="url(#volFill)" strokeWidth={2} dot={{ r: 2, fill: color }} activeDot={{ r: 4 }} />
             </AreaChart>
           </ResponsiveContainer>
         </div>

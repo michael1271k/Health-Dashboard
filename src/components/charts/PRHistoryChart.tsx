@@ -12,6 +12,7 @@ import {
 } from 'recharts'
 import { ChartTooltip } from './ChartTooltip'
 import type { PRRow } from '@/lib/hooks/useCharts'
+import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 
 const EXERCISE_COLORS = [
   '#00E5A0', // primary
@@ -27,6 +28,7 @@ interface PRHistoryChartProps {
 }
 
 export function PRHistoryChart({ data, isLoading }: PRHistoryChartProps) {
+  const unit = useUnitSystem()
   if (isLoading) {
     return (
       <div className="vital-card h-64 flex items-center justify-center">
@@ -52,7 +54,7 @@ export function PRHistoryChart({ data, isLoading }: PRHistoryChartProps) {
   for (const row of data) {
     const existing = byDate.get(row.date) ?? {}
     // Take max est_1rm for this exercise on this date
-    existing[row.exercise_name] = Math.max(existing[row.exercise_name] ?? 0, row.est_1rm_kg)
+    existing[row.exercise_name] = Math.max(existing[row.exercise_name] ?? 0, displayWeight(row.est_1rm_kg) ?? 0)
     byDate.set(row.date, existing)
   }
 
@@ -84,7 +86,7 @@ export function PRHistoryChart({ data, isLoading }: PRHistoryChartProps) {
               axisLine={false}
               tickLine={false}
               width={42}
-              tickFormatter={(v) => `${v}kg`}
+              tickFormatter={(v) => `${v}${unit}`}
             />
             <Tooltip
               content={<ChartTooltip />}

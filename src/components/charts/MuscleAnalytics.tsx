@@ -6,10 +6,12 @@ import {
 } from 'recharts'
 import { useMuscleAnalytics, MUSCLE_GROUPS, GROUP_COLOR } from '@/lib/hooks/useMuscleAnalytics'
 import { ChartTooltip } from './ChartTooltip'
+import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 
 /** Hevy-killer muscle analytics — balance radar, sets/muscle/week, volume heatmap, freshness. */
 export function MuscleAnalyticsSection({ days }: { days: number }) {
   const { data, isLoading } = useMuscleAnalytics(days)
+  const unit = useUnitSystem()
   if (isLoading) return <div className="vital-card h-64 animate-pulse" />
   if (!data || data.stats.every((s) => s.sets === 0)) {
     return <div className="vital-card p-8 text-center text-muted-vital text-fluid-sm">No workout sets in this range yet.</div>
@@ -66,7 +68,7 @@ export function MuscleAnalyticsSection({ days }: { days: number }) {
               <div key={s.group}>
                 <div className="flex justify-between text-fluid-xs mb-0.5">
                   <span className="text-text">{s.group}</span>
-                  <span className="vital-number text-muted-vital">{(s.volume / 1000).toFixed(1)}t</span>
+                  <span className="vital-number text-muted-vital">{((displayWeight(s.volume) ?? 0) / 1000).toFixed(1)}{unit === 'lb' ? 'k' : 't'}</span>
                 </div>
                 <div className="h-2 rounded-full bg-white/[0.06] overflow-hidden">
                   <div className="h-full rounded-full" style={{ width: `${(s.volume / maxVol) * 100}%`, background: GROUP_COLOR[s.group] }} />
