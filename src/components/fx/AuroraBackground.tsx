@@ -39,6 +39,7 @@ export function AuroraBackground() {
         <div className="absolute inset-0"
           style={{ background: 'radial-gradient(ellipse 120% 80% at 50% 0%, transparent 40%, rgba(0,0,0,0.55) 100%)' }} />
       </div>
+      <div className="axis-wireframe" aria-hidden="true" />
       <div className="grain-overlay" aria-hidden="true" />
     </>
   )

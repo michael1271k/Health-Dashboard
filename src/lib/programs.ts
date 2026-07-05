@@ -149,3 +149,21 @@ export function programDayFor(programId: string, weekday: number): ProgramDay | 
   const p = PROGRAMS[programId] ?? AXIS5
   return p.days.find((d) => d.weekday === weekday) ?? 'rest'
 }
+
+// Map a program-day key onto the existing split_day enum (for saving sessions).
+const DAY_SPLIT: Record<string, string> = {
+  torso: 'upper', quads: 'legs', armory: 'upper', pump: 'upper', posterior: 'legs',
+  upper_a: 'upper', lower_a: 'legs', upper_b: 'upper', lower_b: 'legs',
+}
+export function daySplitEnum(dayKey: string): 'push' | 'pull' | 'legs' | 'upper' | 'lower' {
+  return (DAY_SPLIT[dayKey] ?? 'upper') as 'push' | 'pull' | 'legs' | 'upper' | 'lower'
+}
+
+const ACTIVE_KEY = 'apex_active_program'
+export function getActiveProgramId(): string {
+  if (typeof window === 'undefined') return DEFAULT_PROGRAM_ID
+  return window.localStorage.getItem(ACTIVE_KEY) || DEFAULT_PROGRAM_ID
+}
+export function setActiveProgramId(id: string): void {
+  if (typeof window !== 'undefined') window.localStorage.setItem(ACTIVE_KEY, id)
+}

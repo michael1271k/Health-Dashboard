@@ -27,6 +27,7 @@ export default function WeeklyPage() {
   const today = new Date()
   const [month, setMonth] = useState({ y: today.getUTCFullYear(), m: today.getUTCMonth() })
   const [focusWeek, setFocusWeek] = useState<string | null>(null)
+  const [era, setEra] = useState<'all' | 'ppl' | 'axis'>('all')
   const [daySession, setDaySession] = useState<GymReportRow | null>(null)
   const [generating, setGenerating] = useState(false)
   const [genWeek, setGenWeek] = useState<string | null>(null)
@@ -143,8 +144,20 @@ export default function WeeklyPage() {
       {error && <div className="vital-card border-danger/40"><p className="text-danger text-fluid-sm">{error}</p></div>}
 
       {/* ── File System ── */}
-      <div id="report-browser">
-        <FileSystemBrowser reports={reports ?? []} gymReports={gymReports ?? []} focusWeek={focusWeek} />
+      <div id="report-browser" className="space-y-3">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {([['all', 'All', '#19E3B1'], ['axis', 'AXIS Era', '#38E1FF'], ['ppl', 'PPL Legacy', '#8B97B2']] as const).map(([k, label, color]) => {
+            const active = era === k
+            return (
+              <button key={k} onClick={() => setEra(k)}
+                className="px-3 py-1.5 rounded-xl text-fluid-xs font-semibold border transition-colors"
+                style={active ? { color, borderColor: `${color}55`, background: `${color}1f`, boxShadow: `0 0 10px ${color}33` } : { color: '#8B97B2', borderColor: 'transparent' }}>
+                {label}
+              </button>
+            )
+          })}
+        </div>
+        <FileSystemBrowser reports={reports ?? []} gymReports={gymReports ?? []} focusWeek={focusWeek} era={era} />
       </div>
 
       {/* Day → session sheet */}

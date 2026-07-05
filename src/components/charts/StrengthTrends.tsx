@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import { ResponsiveContainer, LineChart, Line } from 'recharts'
 import { TrendingUp } from 'lucide-react'
 import { usePRHistory } from '@/lib/hooks/useCharts'
+import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 
 /**
  * Per-exercise est-1RM strength trends (progressive overload). Groups recent
@@ -12,6 +13,7 @@ import { usePRHistory } from '@/lib/hooks/useCharts'
  */
 export function StrengthTrends({ days = 120 }: { days?: number }) {
   const { data, isLoading } = usePRHistory(undefined, days)
+  const unit = useUnitSystem()
 
   const series = useMemo(() => {
     const byEx = new Map<string, { name: string; pts: { i: number; v: number }[] }>()
@@ -44,7 +46,7 @@ export function StrengthTrends({ days = 120 }: { days?: number }) {
           <div key={s.name} className="flex items-center gap-3">
             <div className="flex-1 min-w-0">
               <div className="text-fluid-sm font-medium text-text truncate">{s.name}</div>
-              <div className="text-fluid-xs text-muted-vital">best <span className="vital-number">{s.best}</span>kg</div>
+              <div className="text-fluid-xs text-muted-vital">best <span className="vital-number">{displayWeight(s.best)}</span>{unit}</div>
             </div>
             <div className="w-20 h-8 shrink-0">
               <ResponsiveContainer width="100%" height="100%">
@@ -54,8 +56,8 @@ export function StrengthTrends({ days = 120 }: { days?: number }) {
               </ResponsiveContainer>
             </div>
             <div className="text-right w-14 shrink-0">
-              <div className="vital-number text-fluid-base font-bold text-text leading-none">{s.current}<span className="text-[10px] text-muted-vital">kg</span></div>
-              {s.delta !== 0 && <div className={`vital-number text-[10px] ${s.delta > 0 ? 'text-success' : 'text-danger'}`}>{s.delta > 0 ? '▲' : '▼'}{Math.abs(s.delta)}</div>}
+              <div className="vital-number text-fluid-base font-bold text-text leading-none">{displayWeight(s.current)}<span className="text-[10px] text-muted-vital">{unit}</span></div>
+              {s.delta !== 0 && <div className={`vital-number text-[10px] ${s.delta > 0 ? 'text-success' : 'text-danger'}`}>{s.delta > 0 ? '▲' : '▼'}{displayWeight(Math.abs(s.delta))}</div>}
             </div>
           </div>
         ))}

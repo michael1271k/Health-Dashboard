@@ -2,6 +2,7 @@
 
 import { Trash2 } from 'lucide-react'
 import type { WorkoutSessionRow } from '@/lib/hooks/useWorkoutHistory'
+import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 
 function Badge({ label, value, accent }: { label: string; value: string | null; accent: string }) {
   const missing = value == null
@@ -20,6 +21,7 @@ export function WorkoutLogList({ sessions, isLoading, onDelete, emptyMessage }: 
   onDelete: (s: WorkoutSessionRow) => void
   emptyMessage: string
 }) {
+  const unit = useUnitSystem()
   if (isLoading) {
     return <div className="space-y-2">{[...Array(6)].map((_, i) => <div key={i} className="h-16 rounded-xl bg-surface-2/60 animate-pulse" />)}</div>
   }
@@ -44,7 +46,7 @@ export function WorkoutLogList({ sessions, isLoading, onDelete, emptyMessage }: 
                 <span className="text-fluid-xs text-muted-vital italic px-2.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.05]" dir="auto">ימולא בהמשך · to be filled</span>
               ) : (
                 <>
-                  <Badge label="Vol" value={s.totalVolumeKg != null ? `${(s.totalVolumeKg / 1000).toFixed(1)}t` : null} accent="#19E3B1" />
+                  <Badge label="Vol" value={s.totalVolumeKg != null ? `${(displayWeight(s.totalVolumeKg)! / 1000).toFixed(1)}${unit === 'lb' ? 'k' : 't'}` : null} accent="#19E3B1" />
                   <Badge label="Sets" value={s.setCount != null ? `${s.setCount}` : null} accent="#38E1FF" />
                   <Badge label="BPM" value={s.avgBpm != null ? `${s.avgBpm}` : null} accent="#FF8A3D" />
                 </>

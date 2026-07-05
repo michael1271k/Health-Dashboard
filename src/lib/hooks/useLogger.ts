@@ -86,6 +86,21 @@ export function useAllExercises() {
   })
 }
 
+/** exercise NAME → id, so program templates (programs.ts) can resolve DB exercise rows. */
+export function useExerciseMap() {
+  return useQuery({
+    queryKey: ['exercises', 'byName'],
+    queryFn: async (): Promise<Map<string, string>> => {
+      const { data, error } = await supabase.from('exercises').select('id, name')
+      if (error) throw error
+      const m = new Map<string, string>()
+      for (const e of (data ?? []) as Array<{ id: string; name: string }>) m.set(e.name, e.id)
+      return m
+    },
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
 /** Most recent set per exercise across all sessions — powers the "Previous: Xkg × Y" memory. */
 export function useExerciseMemory() {
   return useQuery({

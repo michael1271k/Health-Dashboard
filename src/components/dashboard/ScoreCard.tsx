@@ -1,6 +1,7 @@
 'use client'
 
 import type { Tables } from '@/lib/supabase/types'
+import { KineticNumber } from '@/components/fx/KineticNumber'
 
 const SCORE_COMPONENTS = [
   { key: 'sleep_score',     label: 'Sleep',      weight: 25, color: '#38BDF8' },
@@ -75,7 +76,7 @@ export function ScoreCard({ score, isLoading }: ScoreCardProps) {
     'text-danger'
 
   return (
-    <div className="vital-card flex flex-col h-full">
+    <div className="vital-card holo-sheen flex flex-col h-full">
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-heading font-semibold text-lg">Daily Score</h2>
         <span className="text-xs text-muted-vital uppercase tracking-wider">Today</span>
@@ -94,12 +95,10 @@ export function ScoreCard({ score, isLoading }: ScoreCardProps) {
         <div className="flex-1 flex flex-col gap-5">
           {/* Total score display */}
           <div className="flex items-baseline gap-2">
-            <span
+            <KineticNumber
+              value={totalScore}
               className={`vital-number text-6xl font-bold leading-none ${scoreColor}`}
-              aria-label={totalScore == null ? 'Daily score: no data yet' : `Daily score: ${totalScore} out of 100`}
-            >
-              {totalScore ?? '—'}
-            </span>
+            />
             <span className="text-muted-vital text-lg">{totalScore == null ? 'no data yet' : '/100'}</span>
           </div>
 

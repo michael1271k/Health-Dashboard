@@ -409,6 +409,31 @@ html[data-theme='travel'] {
 }
 .liquid-wave { animation: liquidWobble 3.6s ease-in-out infinite; }
 
+/* Holographic sheen — a slow specular sweep across hero glass cards (AXIS aesthetic). */
+@keyframes holoSheen {
+  0%, 100% { transform: translateX(-170%) skewX(-18deg); }
+  55%, 72% { transform: translateX(240%) skewX(-18deg); }
+}
+.holo-sheen { position: relative; overflow: hidden; }
+.holo-sheen::before {
+  content: ''; position: absolute; top: 0; left: 0; width: 55%; height: 100%;
+  background: linear-gradient(105deg, transparent, rgba(150,225,255,0.10), transparent);
+  transform: translateX(-170%) skewX(-18deg);
+  animation: holoSheen 7.5s ease-in-out infinite;
+  pointer-events: none; z-index: 1;
+}
+
+/* Faint biomechanical axis-grid motif behind content (AXIS wireframe). */
+.axis-wireframe {
+  position: fixed; inset: 0; z-index: -9; pointer-events: none; opacity: 0.05;
+  background-image:
+    linear-gradient(rgba(120,200,255,0.5) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120,200,255,0.5) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 30%, #000 30%, transparent 78%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 30%, #000 30%, transparent 78%);
+}
+
 /* Reduce-motion preference (Settings) — kill animations + heavy transitions. */
 html[data-reduce-motion='true'] *,
 html[data-reduce-motion='true'] *::before,

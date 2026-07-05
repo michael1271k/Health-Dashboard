@@ -5,6 +5,9 @@ import dynamic from 'next/dynamic'
 import { useWeightTrend, useMacroHistory, usePRHistory, useVolumeTrend } from '@/lib/hooks/useCharts'
 import { useUserGoals } from '@/lib/hooks/useDashboard'
 import { RangeSelector } from '@/components/charts/RangeSelector'
+import { eraForDate } from '@/lib/programs'
+
+const ERA_TABS = [['all', 'All', '#19E3B1'], ['axis', 'AXIS-5', '#38E1FF'], ['ppl', 'PPL Legacy', '#8B97B2']] as const
 
 // Dynamically import the recharts-heavy components (client-only) so they don't
 // inflate the route's first-load JS.
@@ -27,11 +30,33 @@ export default function ChartsPage() {
   const { data: prData, isLoading: prLoading } = usePRHistory(undefined, days)
   const { data: goals, isLoading: goalsLoading } = useUserGoals()
 
+  const [era, setEra] = useState<'all' | 'ppl' | 'axis'>('all')
+  const inEra = (d: { date: string }) => era === 'all' || eraForDate(d.date) === era
+  const wData = (weightData ?? []).filter(inEra)
+  const vData = (volumeData ?? []).filter(inEra)
+  const mData = (macroData ?? []).filter(inEra)
+  const pData = (prData ?? []).filter(inEra)
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="font-heading text-fluid-2xl font-bold text-text">Charts</h1>
-        <p className="text-muted-vital text-fluid-sm mt-0.5">Trends &amp; progress over time</p>
+        <p className="text-muted-vital text-fluid-sm mt-0.5">Trends &amp; progress · filter by training era</p>
+      </div>
+
+      {/* Era filter (PPL Legacy vs AXIS) */}
+      <div className="flex items-center gap-1.5 flex-wrap">
+        <span className="text-fluid-xs text-muted-vital mr-1">Era:</span>
+        {ERA_TABS.map(([k, label, color]) => {
+          const active = era === k
+          return (
+            <button key={k} onClick={() => setEra(k)}
+              className="px-3 py-1.5 rounded-xl text-fluid-xs font-semibold border transition-colors"
+              style={active ? { color, borderColor: `${color}55`, background: `${color}1f`, boxShadow: `0 0 10px ${color}33` } : { color: '#8B97B2', borderColor: 'transparent' }}>
+              {label}
+            </button>
+          )
+        })}
       </div>
 
       {/* Mobile: horizontal range pills */}
@@ -46,14 +71,14 @@ export default function ChartsPage() {
         </div>
         <div className="flex-1 min-w-0 space-y-6">
           <div className="grid gap-6 lg:grid-cols-2">
-            <WeightTrendChart data={weightData ?? []} isLoading={weightLoading} />
-            <VolumeChart data={volumeData ?? []} isLoading={volumeLoading} />
+            <WeightTrendChart data={wData} isLoading={weightLoading} />
+            <VolumeChart data={vData} isLoading={volumeLoading} />
             <MacroProgressChart
-              data={macroData ?? []}
+              data={mData}
               goals={goals ?? null}
               isLoading={macroLoading || goalsLoading}
             />
-            <PRHistoryChart data={prData ?? []} isLoading={prLoading} />
+            <PRHistoryChart data={pData} isLoading={prLoading} />
           </div>
           <div>
             <h2 className="font-heading text-fluid-lg font-bold text-text mb-3">Muscle Analytics <span className="text-fluid-xs text-muted-vital font-normal">Hevy-killer</span></h2>

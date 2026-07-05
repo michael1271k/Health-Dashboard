@@ -5,6 +5,7 @@ import { Folder, FolderOpen, FileText, Dumbbell, Scale, ChevronRight, Home, Arro
 import type { LucideIcon } from 'lucide-react'
 import type { ReportRow, GymReportRow } from '@/lib/hooks/useWeekly'
 import { enumerateWeeks, type ProgramWeek } from '@/lib/phases'
+import { eraForDate } from '@/lib/programs'
 import { MarkdownView } from './MarkdownView'
 
 interface FileItem { key: string; name: string; sub?: string; icon: LucideIcon; accent: string; body: string; meta?: GymReportRow }
@@ -23,10 +24,11 @@ const COLUMNS = [
  * empty-folder icon). Open a week → its files (Gym Session Summary, Weight Report,
  * per-day sessions); open a file → a beautiful rendered report (MarkdownView).
  */
-export function FileSystemBrowser({ reports, gymReports, focusWeek }: {
+export function FileSystemBrowser({ reports, gymReports, focusWeek, era = 'all' }: {
   reports: ReportRow[]
   gymReports: GymReportRow[]
   focusWeek?: string | null
+  era?: 'all' | 'ppl' | 'axis'
 }) {
   const [week, setWeek] = useState<ProgramWeek | null>(null)
   const [fileKey, setFileKey] = useState<string | null>(null)
@@ -101,7 +103,7 @@ export function FileSystemBrowser({ reports, gymReports, focusWeek }: {
         // Root: two columns — Cut & Bulk
         <div className="grid sm:grid-cols-2 gap-4">
           {COLUMNS.map((col) => {
-            const weeks = enumerateWeeks([col.kind])
+            const weeks = enumerateWeeks([col.kind]).filter((w) => era === 'all' || eraForDate(w.weekStart) === era)
             const ColIcon = col.Icon
             return (
               <div key={col.kind} className="space-y-2">
