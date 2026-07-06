@@ -67,7 +67,7 @@ const round = (n: number, d = 0) => {
 }
 
 // ── insight builders ─────────────────────────────────────────────────────────
-export interface InsightInput { days: DayPoint[]; sessions: SessionPoint[] }
+export interface InsightInput { days: DayPoint[]; sessions: SessionPoint[]; contextMode?: string }
 
 /** Sleep the night of a session vs that session's training volume. */
 function sleepVsVolume(days: DayPoint[], sessions: SessionPoint[]): Insight | null {
@@ -174,28 +174,90 @@ function calorieAdherence(days: DayPoint[]): Insight | null {
   }
 }
 
-/** Weight trajectory over the window. */
-function weightTrend(days: DayPoint[]): Insight | null {
+/**
+ * Weight trajectory — SYSTEM UPDATE v5.1 rules:
+ *   · Single-day deltas have ZERO decision authority — judge only the 7-day
+ *     rolling average, week-over-week.
+ *   · Rate targets: cut −0.40…−0.50 kg/wk · bulk +0.20…+0.25 kg/wk.
+ *   · Spikes ≤1.5 kg within 72h of a leg/heavy session or travel are auto-flagged
+ *     (neutral note, never an alert).
+ *   · STALL = 7-day average flat/rising for 14 consecutive days with no flagged
+ *     event in the final 72h.
+ *   · Maintenance-transition rebound of +0.5–1.2 kg = glycogen, never fat gain.
+ */
+function weightTrend(days: DayPoint[], sessions: SessionPoint[], contextMode?: string): Insight | null {
   const w = days.filter((d) => d.weightKg != null) as Array<DayPoint & { weightKg: number }>
-  if (w.length < 5) return null
-  const slope = linregSlope(w.map((d) => d.weightKg))
-  if (slope == null) return null
-  const perWeek = slope * 7
-  if (Math.abs(perWeek) < 0.1) {
+  if (w.length < 8) return null
+
+  const weights = w.map((d) => d.weightKg)
+  const thisWeek = mean(weights.slice(-7))
+  const lastWeek = mean(weights.slice(-14, -7))
+  if (!lastWeek) return null
+  const wow = round(thisWeek - lastWeek, 2)
+
+  // Phase intent from the calorie goal (v5.1 bands)
+  const goal = days.findLast?.((d) => d.calorieGoal)?.calorieGoal ?? days[days.length - 1]?.calorieGoal ?? null
+  const phase = goal == null ? null : goal <= 2050 ? 'cut' : goal < 2450 ? 'maintenance' : 'bulk'
+
+  // Flagged-event window: heavy session or travel within the final 72h
+  const last3 = new Set(w.slice(-3).map((d) => d.date))
+  const flagged = contextMode === 'travel' || sessions.some((s) => last3.has(s.date) && s.volumeKg > 0)
+  const lastDelta = weights.length >= 2 ? weights[weights.length - 1] - weights[weights.length - 2] : 0
+  if (flagged && lastDelta > 0 && lastDelta <= 1.5 && wow >= 0 && phase === 'cut') {
     return {
       id: 'weight-trend',
-      headline: 'Weight is holding steady',
-      detail: `Body weight is essentially flat (${round(perWeek, 2)} kg/week) over ${w.length} readings — a stable maintenance signal.`,
+      headline: 'Scale spike auto-flagged — not fat',
+      detail: `+${round(lastDelta, 1)} kg within 72h of a heavy session/travel is water + glycogen noise. The 7-day average (${round(thisWeek, 1)} kg) stays the only number with decision authority.`,
       tone: 'neutral',
-      confidence: 0.35,
+      confidence: 0.6,
+    }
+  }
+
+  // Maintenance-transition glycogen rebound
+  if (phase === 'maintenance' && wow >= 0.5 && wow <= 1.2) {
+    return {
+      id: 'weight-trend',
+      headline: 'Glycogen rebound — expected, not fat gain',
+      detail: `The 7-day average is up ${wow} kg entering maintenance — textbook glycogen + water refill (+0.5–1.2 kg band). Hold the protocol.`,
+      tone: 'positive',
+      confidence: 0.75,
+    }
+  }
+
+  // STALL detection (cut): rolling average flat/rising 14 consecutive days, no flag
+  if (phase === 'cut' && w.length >= 21 && !flagged) {
+    const rolling: number[] = []
+    for (let i = 6; i < weights.length; i++) rolling.push(mean(weights.slice(i - 6, i + 1)))
+    const win = rolling.slice(-14)
+    if (win.length === 14 && win[13] >= win[0] - 0.05) {
+      return {
+        id: 'weight-trend',
+        headline: 'Cut stall detected (14-day plateau)',
+        detail: `The 7-day average has been flat or rising for 14 consecutive days with no flagged event — a true stall by v5.1 rules. Consider a small deficit or step adjustment.`,
+        tone: 'caution',
+        confidence: 0.85,
+      }
+    }
+  }
+
+  // Rate-vs-target verdict
+  const band = phase === 'cut' ? [-0.5, -0.4] : phase === 'bulk' ? [0.2, 0.25] : null
+  if (band) {
+    const inBand = wow >= band[0] - 0.05 && wow <= band[1] + 0.05
+    return {
+      id: 'weight-trend',
+      headline: inBand ? `On-target ${phase} rate` : `${phase === 'cut' ? 'Cut' : 'Bulk'} rate off target`,
+      detail: `7-day average moved ${wow > 0 ? '+' : ''}${wow} kg week-over-week (target ${band[0]} to ${band[1]}). Rolling average only — single days carry zero authority.`,
+      tone: inBand ? 'positive' : 'caution',
+      confidence: inBand ? 0.7 : 0.75,
     }
   }
   return {
     id: 'weight-trend',
-    headline: perWeek < 0 ? 'Steady downward weight trend' : 'Weight is trending up',
-    detail: `Body weight is moving ${perWeek < 0 ? 'down' : 'up'} ${Math.abs(round(perWeek, 2))} kg/week across ${w.length} readings (${round(w[0].weightKg, 1)}→${round(w[w.length - 1].weightKg, 1)} kg).`,
+    headline: Math.abs(wow) < 0.15 ? 'Weight is holding steady' : wow < 0 ? 'Downward weekly trend' : 'Upward weekly trend',
+    detail: `7-day rolling average: ${round(lastWeek, 1)} → ${round(thisWeek, 1)} kg (${wow > 0 ? '+' : ''}${wow} kg week-over-week).`,
     tone: 'neutral',
-    confidence: Math.min(0.7, 0.4 + Math.abs(perWeek)),
+    confidence: 0.4,
   }
 }
 
@@ -208,7 +270,7 @@ export function computeInsights(input: InsightInput, limit = 3): Insight[] {
     sleepVsVolume(input.days, input.sessions),
     recoveryDrift(input.days),
     calorieAdherence(input.days),
-    weightTrend(input.days),
+    weightTrend(input.days, input.sessions, input.contextMode),
   ]
   return builders
     .filter((x): x is Insight => x !== null)

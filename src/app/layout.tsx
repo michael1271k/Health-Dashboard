@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Outfit, Inter, JetBrains_Mono, Space_Grotesk } from 'next/font/google'
+import { Sora, Inter, IBM_Plex_Mono } from 'next/font/google'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Sidebar } from '@/components/nav/Sidebar'
 import { BottomNav } from '@/components/nav/BottomNav'
@@ -11,7 +11,9 @@ import { ThemeProvider as ContextThemeProvider } from '@/components/providers/Th
 import { SerwistRegister } from '@/components/providers/SerwistRegister'
 import './globals.css'
 
-const outfit = Outfit({
+// HELIX type system: Sora (headings/display) · Inter (body) · IBM Plex Mono (data).
+// Sora fills the legacy --font-outfit slot; IBM Plex Mono fills --font-jetbrains.
+const sora = Sora({
   subsets: ['latin'],
   variable: '--font-outfit',
   display: 'swap',
@@ -23,29 +25,24 @@ const inter = Inter({
   display: 'swap',
 })
 
-const jetbrainsMono = JetBrains_Mono({
+const plexMono = IBM_Plex_Mono({
   subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
   variable: '--font-jetbrains',
-  display: 'swap',
-})
-
-const spaceGrotesk = Space_Grotesk({
-  subsets: ['latin'],
-  variable: '--font-space',
   display: 'swap',
 })
 
 export const metadata: Metadata = {
   title: {
-    default: 'Dashboard — APEX',
-    template: '%s — APEX',
+    default: 'Dashboard — HELIX',
+    template: '%s — HELIX',
   },
   description: 'Human Performance Systems — Sleep · Load · Nutrition · Adaptation',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'APEX',
+    title: 'HELIX',
   },
   icons: {
     icon: [
@@ -74,7 +71,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: "try{document.documentElement.dataset.reduceMotion=localStorage.getItem('apex_reduce_motion')==='1'?'true':'false'}catch(e){}" }} />
       </head>
       <body
-        className={`${outfit.variable} ${inter.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable} bg-bg text-text font-sans antialiased`}
+        className={`${sora.variable} ${inter.variable} ${plexMono.variable} bg-bg text-text font-sans antialiased`}
       >
         <a
           href="#main-content"

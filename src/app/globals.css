@@ -32,7 +32,7 @@
   --font-heading: var(--font-outfit), sans-serif;
   --font-sans: var(--font-inter), sans-serif;
   --font-mono: var(--font-jetbrains), monospace;
-  --font-display: var(--font-space), var(--font-outfit), sans-serif;
+  --font-display: var(--font-outfit), sans-serif; /* Sora fills the display slot (HELIX) */
 
   /* ── Fluid typography (Phase 6) — same fonts, viewport-aware sizing ──
      Used as Tailwind utilities: text-fluid-sm … text-fluid-3xl. Each clamp
@@ -433,6 +433,58 @@ html[data-theme='travel'] {
   mask-image: radial-gradient(ellipse 80% 70% at 50% 30%, #000 30%, transparent 78%);
   -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 30%, #000 30%, transparent 78%);
 }
+
+/* ── HELIX animation suite (Phase 13) ─────────────────────────────────────── */
+/* Rising bubbles inside the liquid battery */
+@keyframes bubbleRise {
+  0%   { bottom: 4%; opacity: 0; transform: translateX(0) scale(0.7); }
+  15%  { opacity: 0.75; }
+  85%  { opacity: 0.5; }
+  100% { bottom: 92%; opacity: 0; transform: translateX(4px) scale(1.05); }
+}
+.battery-bubble {
+  position: absolute; bottom: 4%; border-radius: 9999px;
+  background: rgba(255,255,255,0.55);
+  box-shadow: 0 0 4px rgba(255,255,255,0.4);
+  animation: bubbleRise 4.5s ease-in infinite;
+}
+/* Moving specular glint sweeping the capsule glass */
+@keyframes glassGlint {
+  0%, 100% { transform: translateY(-120%) rotate(8deg); opacity: 0; }
+  45%, 60% { opacity: 0.5; }
+  80%      { transform: translateY(220%) rotate(8deg); opacity: 0; }
+}
+.battery-glint {
+  position: absolute; left: 18%; right: 30%; top: 0; height: 34%;
+  background: linear-gradient(180deg, transparent, rgba(255,255,255,0.28), transparent);
+  border-radius: 50%;
+  animation: glassGlint 6.5s ease-in-out infinite;
+  pointer-events: none;
+}
+/* Low-battery heartbeat — the liquid throbs red */
+@keyframes heartbeatThrob {
+  0%, 100% { filter: none; }
+  12%      { filter: brightness(1.5) saturate(1.6); }
+  24%      { filter: none; }
+  36%      { filter: brightness(1.3) saturate(1.4); }
+}
+.battery-critical { animation: heartbeatThrob 2.4s ease-in-out infinite; }
+
+/* ECG sweep under the Daily Score */
+@keyframes ecgSweep {
+  0%   { stroke-dashoffset: 260; }
+  100% { stroke-dashoffset: -260; }
+}
+.ecg-sweep {
+  stroke-dasharray: 70 190;
+  animation: ecgSweep 2s linear infinite;
+}
+
+/* Score charge-up ring: draws once on mount (from empty to the inline level),
+   then a soft flash. No `to` — the keyframe resolves to the inline offset. */
+@keyframes ringDraw { from { stroke-dashoffset: 190; } }
+@keyframes ringFlash { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; filter: drop-shadow(0 0 6px currentColor); } }
+.score-ring-draw { stroke-dasharray: 190; opacity: 0.9; animation: ringDraw 0.9s ease-out, ringFlash 0.6s ease-in-out 0.9s; }
 
 /* Reduce-motion preference (Settings) — kill animations + heavy transitions. */
 html[data-reduce-motion='true'] *,

@@ -9,8 +9,8 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 const FROM = '2026-06-27'
-const TO = '2026-07-04'
-const END_EXCL = '2026-07-05' // exclusive upper bound for timestamp columns
+const TO = '2026-07-06'      // Phase 13: extended vacation window
+const END_EXCL = '2026-07-07' // exclusive upper bound for timestamp columns
 
 function loadEnvLocal() {
   try {

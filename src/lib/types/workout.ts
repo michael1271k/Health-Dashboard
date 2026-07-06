@@ -100,15 +100,7 @@ export interface NutritionPreset {
   fiberGoalG: number | null
 }
 
-// AXIS blueprint anchors (Phase 12). Cut is the active phase.
-export const CUT_PRESET = {
-  calorieGoal: 1950,
-  proteinGoalG: 170,
-  carbsGoalG: 195,
-  fatGoalG: 55,
-  goalPreset: 'cut',
-} as const
-
+// SYSTEM UPDATE v5.1 nutrition targets. Cut is the active phase (Jul 19 → ~Oct 10).
 export const NUTRITION_PRESETS: Record<NutritionMode, NutritionPreset> = {
   cut: {
     mode: 'cut',
@@ -117,22 +109,22 @@ export const NUTRITION_PRESETS: Record<NutritionMode, NutritionPreset> = {
     proteinGoalG: 170,
     carbsGoalG: 195,
     fatGoalG: 55,
-    fiberGoalG: 30,
+    fiberGoalG: 30,       // 28–35 g band
   },
   bulk: {
     mode: 'bulk',
     label: 'Lean Bulk',
-    calorieGoal: 2600,
-    proteinGoalG: 158,
-    carbsGoalG: 337,
-    fatGoalG: 70,
-    fiberGoalG: 35,
+    calorieGoal: 2550,    // start; titrate to 2,600–2,650
+    proteinGoalG: 158,    // 155–160 g
+    carbsGoalG: 337,      // 330–345 g
+    fatGoalG: 70,         // HARD CAP
+    fiberGoalG: 35,       // 33–38 g
   },
   maintenance: {
     mode: 'maintenance',
     label: 'Maintenance',
-    calorieGoal: 2400,
-    proteinGoalG: 165,
+    calorieGoal: 2375,    // 2,350–2,400 band
+    proteinGoalG: 160,    // ≥ 160 g
     carbsGoalG: 270,
     fatGoalG: 75,
     fiberGoalG: 30,

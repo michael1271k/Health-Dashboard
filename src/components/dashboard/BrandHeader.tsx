@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { ApexMark } from '@/components/ApexMark'
+import { HelixMark } from '@/components/HelixMark'
 import { useLastUpdated } from '@/lib/hooks/useDashboard'
 
 /** Ticking clock (client-only to avoid hydration mismatch). */
@@ -46,18 +46,19 @@ export function BrandHeader() {
 
       <div className="flex items-baseline gap-x-3 gap-y-1 flex-wrap">
         <h1 className="flex items-center gap-2.5 text-fluid-3xl leading-none">
-          <ApexMark className="h-[0.95em] w-[0.95em] shrink-0" />
-          <span className="apex-wordmark font-heading font-extrabold tracking-tight">APEX</span>
+          <HelixMark className="h-[0.95em] w-[0.95em] shrink-0" />
+          <span className="apex-wordmark font-heading font-extrabold tracking-tight">HELIX</span>
         </h1>
+        <span className="font-heading text-fluid-sm font-semibold text-muted-vital uppercase tracking-[0.18em]">Adaptation Systems</span>
         <span
           className="px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider"
           style={{ color: '#38E1FF', background: '#38E1FF1f', border: '1px solid #38E1FF55', boxShadow: '0 0 10px #38E1FF44' }}
         >
-          AXIS-5
+          APEX-5.1
         </span>
       </div>
 
-      <p className="text-fluid-sm text-muted-vital tracking-wide font-medium">Hypertrophy · Recovery · Adaptation</p>
+      <p className="text-fluid-sm text-muted-vital tracking-wide font-medium">Stimulus · Recovery · Adaptation</p>
     </header>
   )
 }

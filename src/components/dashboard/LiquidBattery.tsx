@@ -16,6 +16,7 @@ interface LiquidBatteryProps {
 export function LiquidBattery({ value, color, caption, captionColor, testId }: LiquidBatteryProps) {
   const hasData = value !== null && value !== undefined
   const pct = hasData ? Math.max(0, Math.min(100, value)) : 0
+  const critical = hasData && pct < 25   // low-battery heartbeat state
 
   return (
     <div className="flex flex-col items-center gap-3">
@@ -27,7 +28,7 @@ export function LiquidBattery({ value, color, caption, captionColor, testId }: L
         >
           {/* Liquid */}
           <div
-            className="absolute left-0 right-0 bottom-0 transition-[height] duration-700 ease-out"
+            className={`absolute left-0 right-0 bottom-0 transition-[height] duration-700 ease-out ${critical ? 'battery-critical' : ''}`}
             style={{
               height: `${hasData ? pct : 6}%`,
               background: hasData ? `linear-gradient(180deg, ${color}dd, ${color}55)` : 'rgba(120,140,170,0.25)',
@@ -39,9 +40,19 @@ export function LiquidBattery({ value, color, caption, captionColor, testId }: L
               className="liquid-wave absolute -top-2 left-[-10%] right-[-10%] h-4 rounded-[50%]"
               style={{ background: hasData ? color : 'rgba(120,140,170,0.4)', opacity: 0.55 }}
             />
+            {/* Rising bubbles */}
+            {hasData && pct > 10 && (
+              <>
+                <span className="battery-bubble" style={{ left: '22%', animationDelay: '0s', width: 5, height: 5 }} />
+                <span className="battery-bubble" style={{ left: '48%', animationDelay: '1.2s', width: 4, height: 4 }} />
+                <span className="battery-bubble" style={{ left: '68%', animationDelay: '2.1s', width: 6, height: 6 }} />
+                <span className="battery-bubble" style={{ left: '35%', animationDelay: '3.0s', width: 3, height: 3 }} />
+              </>
+            )}
           </div>
-          {/* Vertical glass sheen */}
+          {/* Vertical glass sheen + moving specular glint */}
           <div className="absolute inset-y-0 left-2 w-3 rounded-full" style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.22), transparent)' }} />
+          <div className="battery-glint" aria-hidden="true" />
         </div>
 
         {/* Centered figure */}

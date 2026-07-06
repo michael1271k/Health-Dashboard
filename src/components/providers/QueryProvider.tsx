@@ -1,6 +1,8 @@
 'use client'
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClient } from '@tanstack/react-query'
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
+import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister'
 import { useState } from 'react'
 
 export function QueryProvider({ children }: { children: React.ReactNode }) {
@@ -22,7 +24,22 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
       }),
   )
 
+  // Zero-latency cold open: the query cache persists to localStorage, so the
+  // PWA paints yesterday's data INSTANTLY on launch and refetches in background.
+  const [persister] = useState(() =>
+    createSyncStoragePersister({
+      storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+      key: 'helix_query_cache',
+      throttleTime: 2_000,
+    }),
+  )
+
   return (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{ persister, maxAge: 24 * 60 * 60 * 1000, buster: 'v13' }}
+    >
+      {children}
+    </PersistQueryClientProvider>
   )
 }

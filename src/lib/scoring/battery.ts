@@ -19,8 +19,11 @@ export const BATTERY = {
   wakeRange: 45,       // + up to 45 for perfect sleep → 100
   drainPerHour: 3.0,   // chronological drain (1h→3, 16h→48)
   activityCap: 15,
-  workoutFlat: 4,
-  workoutPerKg: 0.0025,
+  // v5.1 calibration: a 75–80min lift ≈ 350–450 kcal ≈ ~10–13% drain
+  // (flat 6 + 0.0015/kg → 4,000kg session = 12%). Zone-2 (Tue/Fri, 150–250 kcal)
+  // flows through activityDrain via active_energy.
+  workoutFlat: 6,
+  workoutPerKg: 0.0015,
   maxAwake: 18,
 } as const
 

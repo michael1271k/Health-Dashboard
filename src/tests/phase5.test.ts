@@ -5,8 +5,8 @@ import { NUTRITION_PRESETS } from '@/lib/types/workout'
 describe('Nutrition modes', () => {
   it('defines Cut / Bulk / Maintenance with correct calories', () => {
     expect(NUTRITION_PRESETS.cut.calorieGoal).toBe(1950)
-    expect(NUTRITION_PRESETS.bulk.calorieGoal).toBe(2600)
-    expect(NUTRITION_PRESETS.maintenance.calorieGoal).toBe(2400)
+    expect(NUTRITION_PRESETS.bulk.calorieGoal).toBe(2550)   // v5.1 start; titrate to 2,600–2,650
+    expect(NUTRITION_PRESETS.maintenance.calorieGoal).toBe(2375)
   })
 
   it('AXIS macro anchors carry full macro + fiber targets (Phase 12)', () => {

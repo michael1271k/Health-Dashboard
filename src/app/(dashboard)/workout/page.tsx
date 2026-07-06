@@ -14,7 +14,7 @@ import { Plus, TrendingUp, Trash2 } from 'lucide-react'
 const StrengthTrends = dynamic(() => import('@/components/charts/StrengthTrends').then((m) => m.StrengthTrends), { ssr: false })
 
 const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-const PROGRAM_ORDER = ['axis5_hybrid', 'axis4_builder', 'axis4_defender']
+const PROGRAM_ORDER = ['apex51', 'axis4_builder', 'axis4_defender']
 
 export default function WorkoutPage() {
   const { data: sessions, isLoading: histLoading } = useWorkoutHistory()
@@ -61,9 +61,12 @@ export default function WorkoutPage() {
         {program.days.map((day) => (
           <div key={day.key} className="glass-card p-3 flex flex-col" style={{ borderColor: `${day.color}33` }}>
             <button onClick={() => setOpenDay(day)} className="flex items-center justify-between mb-2.5 group">
-              <span className="flex items-baseline gap-2">
-                <span className="split-label font-bold text-lg" style={{ color: day.color }}>{day.label}</span>
-                <span className="text-[10px] text-muted-vital uppercase">{WD[day.weekday]}</span>
+              <span className="flex items-baseline gap-2 min-w-0">
+                <span className="split-label font-bold text-lg truncate" style={{ color: day.color }}>{day.label}</span>
+                <span className="text-[10px] text-muted-vital uppercase shrink-0">{WD[day.weekday]}</span>
+                {day.cutSetDelta != null && (
+                  <span className="text-[9px] px-1 rounded bg-white/[0.05] text-muted-vital shrink-0" title="Cut-mode set delta">{day.cutSetDelta} cut</span>
+                )}
               </span>
               <span className="w-7 h-7 rounded-full flex items-center justify-center transition-transform group-hover:scale-110"
                 style={{ background: `color-mix(in srgb, ${day.color} 18%, transparent)`, color: day.color }} aria-label={`Log ${day.label}`}>
@@ -76,10 +79,10 @@ export default function WorkoutPage() {
                 const prev = id ? memory?.get(id) : undefined
                 const target = displayWeight(ex.wk1Kg)
                 return (
-                  <div key={ex.name} className="rounded-lg px-2.5 py-1.5 bg-white/[0.02] border border-white/[0.05]">
+                  <div key={ex.name} className={`rounded-lg px-2.5 py-1.5 bg-white/[0.02] border border-white/[0.05] ${ex.bulkOnly ? 'opacity-50' : ''}`}>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-medium text-text leading-tight truncate">{ex.name}</span>
-                      <span className="text-[10px] text-muted-vital shrink-0">{ex.reps}</span>
+                      <span className="text-xs font-medium text-text leading-tight truncate">{ex.name}{ex.bulkOnly && <span className="text-[9px] text-muted-vital ml-1">bulk only</span>}</span>
+                      <span className="text-[10px] text-muted-vital shrink-0">{ex.sets}×{ex.reps}</span>
                     </div>
                     <div className="text-[10px] text-muted-vital flex items-center gap-2 mt-0.5">
                       {prev

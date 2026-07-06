@@ -6,22 +6,33 @@ import { computeInsights, type DayPoint, type SessionPoint, type Insight } from 
 import { computeReadiness } from '@/lib/scoring/readiness'
 import type { ReadinessResult } from '@/lib/scoring/types'
 import type { Tables } from '@/lib/supabase/types'
-import { getTodaysSplit, PPL_SPLITS, type SplitDay } from '@/lib/types/workout'
+import { programDayFor, DEFAULT_PROGRAM_ID, eraForDate, isReentryWeek } from '@/lib/programs'
+import { WEEKDAY_SPLIT, PPL_SPLITS, type SplitDay } from '@/lib/types/workout'
 import { logicalTodayISO, logicalDaysAgoISO } from '@/lib/utils/day'
 
 function daysAgoISO(n: number): string {
   return logicalDaysAgoISO(n)
 }
 
+/** Today's scheduled training-day label (program/era aware), or null on rest days. */
+function todayDayLabel(todayISO: string): string | null {
+  const weekday = new Date(`${todayISO}T12:00:00Z`).getUTCDay()
+  if (eraForDate(todayISO) === 'ppl') {
+    const s = WEEKDAY_SPLIT[weekday]
+    return s === 'rest' || !s ? null : PPL_SPLITS[s as SplitDay]?.label ?? null
+  }
+  const d = programDayFor(DEFAULT_PROGRAM_ID, weekday)
+  return d === 'rest' ? null : d.label
+}
+
 /**
- * Make the readiness verdict aware of the fixed PPL schedule + travel mode.
+ * Make the readiness verdict aware of the active program schedule + travel mode.
  * Never suggests "Rest Today" on a scheduled training weekday; on a scheduled
  * rest day it says so — unless a workout was actually logged (stay flexible).
- * In Travel mode it switches to a vacation maintenance protocol.
  */
 function scheduleAwareReadiness(
   base: ReadinessResult | null,
-  ctx: { todaySplit: SplitDay | 'rest'; workoutToday: boolean; contextMode: string },
+  ctx: { dayLabel: string | null; workoutToday: boolean; contextMode: string; reentry: boolean },
 ): ReadinessResult | null {
   if (ctx.contextMode === 'travel') {
     return {
@@ -29,18 +40,21 @@ function scheduleAwareReadiness(
       reason: 'Vacation protocol — 2–3 short maintenance sessions this week is plenty. Prioritize rest, sun, and enjoying the trip.',
     }
   }
-  if (ctx.todaySplit === 'rest' && !ctx.workoutToday) {
-    return { level: 'rest', label: 'Scheduled Rest', color: '#8B97B2', reason: 'Today is a rest day in your PPL cycle — recover and refuel.' }
+  if (!ctx.dayLabel && !ctx.workoutToday) {
+    return { level: 'rest', label: 'Zone-2 / Rest', color: '#8B97B2', reason: 'Scheduled rest in APEX-5.1 — Zone-2 cardio (150–250 kcal) or full recovery.' }
   }
-  if (ctx.todaySplit !== 'rest') {
-    const name = PPL_SPLITS[ctx.todaySplit]?.label ?? ctx.todaySplit
+  if (ctx.dayLabel) {
+    const name = ctx.dayLabel
+    if (ctx.reentry) {
+      return { level: 'train_light', label: `${name} · Re-Entry`, color: '#4FC3FF', reason: 'Re-entry week: ~90% loads, RPE cap 7–8. No PRs — groove the movements.' }
+    }
     if (!base || base.level === 'train_hard') {
-      return { level: 'train_hard', label: `${name} Day`, color: '#19E3B1', reason: `Scheduled ${name.toLowerCase()} — recovery looks strong, train hard.` }
+      return { level: 'train_hard', label: name, color: '#19E3B1', reason: `Scheduled ${name} — recovery looks strong, train hard.` }
     }
     if (base.level === 'rest') {
-      return { level: 'train_light', label: `${name} Day · Go Light`, color: '#FFB020', reason: `It's your scheduled ${name.toLowerCase()} day, but recovery is low — keep it light and technical.` }
+      return { level: 'train_light', label: `${name} · Go Light`, color: '#FFB020', reason: `Scheduled ${name}, but recovery is low — keep it light and technical.` }
     }
-    return { ...base, label: `${name} Day` }
+    return { ...base, label: name }
   }
   return base
 }
@@ -110,13 +124,15 @@ export function useInsights() {
           )
         : null
       const todayISO = logicalTodayISO()
+      const contextMode = goals?.context_mode ?? 'normal'
       const readiness = scheduleAwareReadiness(baseReadiness, {
-        todaySplit: getTodaysSplit(),
+        dayLabel: todayDayLabel(todayISO),
         workoutToday: sessions.some((s) => s.date === todayISO),
-        contextMode: goals?.context_mode ?? 'normal',
+        contextMode,
+        reentry: isReentryWeek(todayISO),
       })
 
-      return { readiness, insights: computeInsights({ days, sessions }) }
+      return { readiness, insights: computeInsights({ days, sessions, contextMode }) }
     },
   })
 }

@@ -158,9 +158,9 @@ async function fetchAllPages(notion: any, databaseId: string): Promise<Page[]> {
   return out
 }
 
-// Mirror of src/lib/nutrition/phase.ts (tsx can't resolve @/ aliases here).
+// Mirror of src/lib/nutrition/phase.ts — v5.1 bands (tsx can't resolve @/ aliases here).
 const phaseFor = (cal: number): string | null =>
-  !cal || cal <= 0 ? null : cal < 2150 ? 'cut' : cal < 2550 ? 'maintenance' : 'bulk'
+  !cal || cal <= 0 ? null : cal <= 2050 ? 'cut' : cal < 2450 ? 'maintenance' : 'bulk'
 
 const chunk = <T,>(a: T[], n: number): T[][] => {
   const out: T[][] = []

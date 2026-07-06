@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 import { LogIn } from 'lucide-react'
-import { ApexMark } from '@/components/ApexMark'
+import { HelixMark } from '@/components/HelixMark'
 
 export default function AuthPage() {
   const router = useRouter()
@@ -38,9 +38,9 @@ export default function AuthPage() {
     <main className="min-h-screen bg-bg flex items-center justify-center p-6">
       <div className="vital-card max-w-sm w-full space-y-6">
         <div className="flex items-center gap-2.5">
-          <ApexMark className="w-6 h-6 text-primary" />
+          <HelixMark className="w-6 h-6 text-primary" />
           <div>
-            <h1 className="font-heading text-2xl font-bold tracking-wide">APEX</h1>
+            <h1 className="font-heading text-2xl font-bold tracking-wide">HELIX</h1>
             <p className="text-xs text-muted-vital leading-none">Engineer Your Ascent.</p>
           </div>
         </div>

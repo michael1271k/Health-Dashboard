@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { logicalTodayISO } from '@/lib/utils/day'
 
-/** Canonicalize Notion/Hevy muscle tags into 6 display groups. */
+/** Canonicalize Notion/Hevy muscle tags into 6 display groups (v5.1 aliases included). */
 const MUSCLE_MAP: Record<string, string> = {
   chest: 'Chest', pecs: 'Chest',
   back: 'Back', lats: 'Back', traps: 'Back', rhomboids: 'Back',
@@ -12,6 +12,17 @@ const MUSCLE_MAP: Record<string, string> = {
   biceps: 'Arms', triceps: 'Arms', forearms: 'Arms', arms: 'Arms',
   quads: 'Legs', quadriceps: 'Legs', hamstrings: 'Legs', glutes: 'Legs', calves: 'Legs', legs: 'Legs',
   core: 'Core', abs: 'Core', obliques: 'Core',
+}
+
+/** v5.1 exercise-name → muscle tags (parser aliases). Used by the catalog updater. */
+export const V51_EXERCISE_ALIASES: Record<string, string[]> = {
+  'Calf Press': ['calves'],
+  'Hack/Smith Squat': ['quads', 'glutes'],
+  'Hack Squat': ['quads', 'glutes'],
+  'Smith Squat': ['quads', 'glutes'],
+  'Reverse EZ-Bar Curl': ['forearms', 'biceps'],
+  'Hanging Knee Raise': ['abs'],
+  'Cross-Body Cable Extension': ['triceps'],
 }
 export const MUSCLE_GROUPS = ['Chest', 'Back', 'Shoulders', 'Arms', 'Legs', 'Core'] as const
 export const GROUP_COLOR: Record<string, string> = {

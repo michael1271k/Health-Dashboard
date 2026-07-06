@@ -19,14 +19,30 @@ interface PhaseDef {
   weeks: number
   numbered?: boolean    // append "Week N" per week
   short?: string        // compact override
+  firstWeek?: number    // week numbering offset (blocks split around a deload)
 }
 
 export const PHASES: PhaseDef[] = [
-  // Bulk Mar 10 → May 10 2026; anchored to the Sunday on/before Mar 10 (Mar 8).
+  // ── PPL Legacy era ──
   { kind: 'bulk', name: 'Bulk',                    start: '2026-03-08', weeks: 9, numbered: true },
   { kind: 'cut',  name: 'Cut',                     start: '2026-05-10', weeks: 6, numbered: true },
   { kind: 'peak', name: 'Peak Week (Maintenance)', start: '2026-06-21', weeks: 1, short: 'Peak' },
+  // ── SYSTEM UPDATE v5.1 (APEX-5.1 era) ──
+  // Cut W1–6, scheduled maintenance week (NOT an adherence failure), Cut W7–12
+  // (nominal exit ~10-10, flex to 10-17), Transition, then Lean Bulk → 2027-01-16.
+  { kind: 'cut',         name: 'Cut',         start: '2026-07-19', weeks: 6,  numbered: true },
+  { kind: 'maintenance', name: 'Maintenance Week', start: '2026-08-30', weeks: 1, short: 'Maint' },
+  { kind: 'cut',         name: 'Cut',         start: '2026-09-06', weeks: 6,  numbered: true, firstWeek: 7 },
+  { kind: 'maintenance', name: 'Transition',  start: '2026-10-18', weeks: 2,  numbered: true, short: 'Trans' },
+  { kind: 'bulk',        name: 'Lean Bulk',   start: '2026-11-01', weeks: 11, numbered: true },
 ]
+
+/** v5.1 phase exit / kill-switch protocol (judged on 7-day averages). */
+export const PHASE_RULES = {
+  cutExit: 'Exit Cut when 7-day avg BIA ≤ 13.0% AND navel waist ≤ 74 cm · hard stop 2026-10-17',
+  bulkKill: 'Kill Lean Bulk on ANY of: BIA ≥ 16.5% · waist +4 cm vs post-cut baseline · 2027-01-16',
+  rates: 'Cut −0.40…−0.50 kg/wk · Bulk +0.20…+0.25 kg/wk — 7-day rolling average only',
+} as const
 
 const isoUTC = (d: Date) => d.toISOString().slice(0, 10)
 
@@ -41,7 +57,8 @@ export function enumerateWeeks(kinds: PhaseKind[]): ProgramWeek[] {
     for (let i = 0; i < p.weeks; i++) {
       const ws = new Date(start); ws.setUTCDate(ws.getUTCDate() + i * 7)
       const we = new Date(ws); we.setUTCDate(we.getUTCDate() + 6)
-      out.push({ weekStart: isoUTC(ws), weekEnd: isoUTC(we), kind: p.kind, n: i + 1, label: p.numbered ? `Week ${i + 1}` : p.name })
+      const n = i + (p.firstWeek ?? 1)
+      out.push({ weekStart: isoUTC(ws), weekEnd: isoUTC(we), kind: p.kind, n, label: p.numbered ? `Week ${n}` : p.name })
     }
   }
   return out.reverse() // newest first
@@ -56,7 +73,8 @@ export function getWeekPhase(weekStartISO: string): WeekPhase | null {
       ws.setUTCDate(ws.getUTCDate() + i * 7)
       if (isoUTC(ws) === weekStartISO) {
         if (p.numbered) {
-          return { kind: p.kind, label: `${p.name} Week ${i + 1}`, short: `${p.short ?? p.name} W${i + 1}` }
+          const n = i + (p.firstWeek ?? 1)
+          return { kind: p.kind, label: `${p.name} Week ${n}`, short: `${p.short ?? p.name} W${n}` }
         }
         return { kind: p.kind, label: p.name, short: p.short ?? p.name }
       }

@@ -21,6 +21,9 @@ const VolumeChart = dynamic(() => import('@/components/charts/VolumeChart').then
 const MacroProgressChart = dynamic(() => import('@/components/charts/MacroProgressChart').then((m) => m.MacroProgressChart), { ssr: false, loading: chartFallback })
 const PRHistoryChart = dynamic(() => import('@/components/charts/PRHistoryChart').then((m) => m.PRHistoryChart), { ssr: false, loading: chartFallback })
 const MuscleAnalyticsSection = dynamic(() => import('@/components/charts/MuscleAnalytics').then((m) => m.MuscleAnalyticsSection), { ssr: false, loading: chartFallback })
+const BodyHeatmap = dynamic(() => import('@/components/charts/HelixViz').then((m) => m.BodyHeatmap), { ssr: false, loading: chartFallback })
+const VolumeStream = dynamic(() => import('@/components/charts/HelixViz').then((m) => m.VolumeStream), { ssr: false, loading: chartFallback })
+const RpeCalendar = dynamic(() => import('@/components/charts/HelixViz').then((m) => m.RpeCalendar), { ssr: false, loading: chartFallback })
 
 export default function ChartsPage() {
   const [days, setDays] = useState(30) // 1 Month default
@@ -82,7 +85,14 @@ export default function ChartsPage() {
           </div>
           <div>
             <h2 className="font-heading text-fluid-lg font-bold text-text mb-3">Muscle Analytics <span className="text-fluid-xs text-muted-vital font-normal">Hevy-killer</span></h2>
-            <MuscleAnalyticsSection days={days} />
+            <div className="space-y-4">
+              <div className="grid lg:grid-cols-2 gap-4">
+                <BodyHeatmap days={days} />
+                <RpeCalendar days={days} />
+              </div>
+              <VolumeStream days={days} />
+              <MuscleAnalyticsSection days={days} />
+            </div>
           </div>
         </div>
       </div>

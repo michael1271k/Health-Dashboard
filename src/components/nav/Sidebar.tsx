@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ApexMark } from '@/components/ApexMark'
+import { HelixMark } from '@/components/HelixMark'
 import { navItems } from '@/lib/nav-items'
 
 export function Sidebar() {
@@ -21,9 +21,9 @@ export function Sidebar() {
     >
       {/* ── Logo + wordmark */}
       <div className="flex items-center gap-3 px-5 py-6 border-b border-white/[0.06]">
-        <ApexMark className="w-7 h-7 shrink-0" />
+        <HelixMark className="w-7 h-7 shrink-0" />
         <div className="leading-none">
-          <span className="font-heading font-bold text-xl tracking-widest text-text">APEX</span>
+          <span className="font-heading font-bold text-xl tracking-widest text-text">HELIX</span>
           <p className="text-[10px] text-muted-vital tracking-wider mt-0.5 uppercase">
             Performance OS
           </p>

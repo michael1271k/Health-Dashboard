@@ -5,7 +5,7 @@ import { computeDailyScore } from '@/lib/scoring/score'
 import { computeBattery } from '@/lib/scoring/battery'
 import type { ScoringInputs } from '@/lib/scoring/types'
 import type { Database, Tables, InsertRow } from '@/lib/supabase/types'
-import { WEEKDAY_SPLIT } from '@/lib/types/workout'
+import { isRestDayFor } from '@/lib/programs'
 import { denyIfUnauthorized } from '@/lib/auth/guard'
 import { logicalTodayISO, israelHoursAwake } from '@/lib/utils/day'
 
@@ -54,7 +54,7 @@ async function computeForDate(supabase: DB, userId: string, date: string, hoursA
     .eq('user_id', userId).eq('is_pr', true)
     .gte('created_at', `${date}T00:00:00Z`).lt('created_at', `${end}T00:00:00Z`)
 
-  const isRestDay = WEEKDAY_SPLIT[new Date(`${date}T12:00:00Z`).getUTCDay()] === 'rest'
+  const isRestDay = isRestDayFor(date)  // era-aware: APEX-5.1 rests Tue/Fri; PPL legacy Fri/Sat
   const isCurrentDay = date === todayISO()
   const localHour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Jerusalem', hour: '2-digit', hour12: false }).format(new Date())) % 24
 

@@ -1,7 +1,7 @@
 {
-  "name": "Apex Performance OS",
-  "short_name": "Apex",
-  "description": "Sleep · Load · Nutrition · Adaptation — a precision human-performance dashboard.",
+  "name": "HELIX — Adaptation Systems",
+  "short_name": "HELIX",
+  "description": "Stimulus · Recovery · Adaptation — a precision recomposition engine.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#050711",

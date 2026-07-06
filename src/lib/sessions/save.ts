@@ -12,6 +12,7 @@ import type { SaveWorkoutPayload } from '@/lib/types/workout'
 import { getNotionClient } from '@/lib/notion/client'
 import { formatSessionForNotion, formatSetsAsBlocks } from '@/lib/notion/gym-log'
 import { epley1RM } from '@/lib/utils/epley'
+import { isReentryWeek } from '@/lib/programs'
 
 type DB = SupabaseClient<Database>
 
@@ -56,11 +57,13 @@ export async function saveSession(
     }
   }
 
-  // Pre-compute PR count for the session row
+  // Pre-compute PR count for the session row. v5.1: RE-ENTRY weeks (Jul 19 + 26,
+  // ~90% loads) are excluded from PR flagging entirely.
+  const reentry = isReentryWeek(payload.startedAt.slice(0, 10))
   const setsToInsert = payload.sets.map((s) => {
     const est1rm = epley1RM(s.weightKg, s.reps)
     const prevBest = bestPrMap.get(s.exerciseId) ?? 0
-    const isPr = est1rm > prevBest
+    const isPr = !reentry && est1rm > prevBest
     return { s, est1rm, isPr }
   })
   const prCount = setsToInsert.filter((x) => x.isPr).length

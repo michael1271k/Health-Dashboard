@@ -13,6 +13,7 @@ import {
 import { ChartTooltip } from './ChartTooltip'
 import type { PRRow } from '@/lib/hooks/useCharts'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
+import { eraForDate } from '@/lib/programs'
 
 const EXERCISE_COLORS = [
   '#00E5A0', // primary
@@ -45,16 +46,20 @@ export function PRHistoryChart({ data, isLoading }: PRHistoryChartProps) {
     )
   }
 
-  // Group by exercise, pivot to date-keyed rows for Recharts
+  // Group by exercise, pivot to date-keyed rows for Recharts.
+  // Era ghost: PPL-legacy points pivot into a "· PPL" ghost series (30% opacity,
+  // dashed) beneath the vivid APEX-5.1 line — the era jump is instantly visible.
   const exercises = [...new Set(data.map((d) => d.exercise_name))]
   const dates = [...new Set(data.map((d) => d.date))].sort()
 
-  // Build pivot: { date, [exerciseName]: est1rm }
   const byDate = new Map<string, Record<string, number>>()
+  let hasGhost = false
   for (const row of data) {
     const existing = byDate.get(row.date) ?? {}
-    // Take max est_1rm for this exercise on this date
-    existing[row.exercise_name] = Math.max(existing[row.exercise_name] ?? 0, displayWeight(row.est_1rm_kg) ?? 0)
+    const ghost = eraForDate(row.date) === 'ppl'
+    if (ghost) hasGhost = true
+    const key = ghost ? `${row.exercise_name} · PPL` : row.exercise_name
+    existing[key] = Math.max(existing[key] ?? 0, displayWeight(row.est_1rm_kg) ?? 0)
     byDate.set(row.date, existing)
   }
 
@@ -97,19 +102,37 @@ export function PRHistoryChart({ data, isLoading }: PRHistoryChartProps) {
               iconType="circle"
               iconSize={6}
             />
-            {exercises.slice(0, 5).map((name, i) => (
-              <Line
-                key={name}
-                type="monotone"
-                dataKey={name}
-                name={name}
-                stroke={EXERCISE_COLORS[i % EXERCISE_COLORS.length]}
-                strokeWidth={2}
-                dot={false}
-                activeDot={{ r: 4 }}
-                connectNulls
-              />
-            ))}
+            {exercises.slice(0, 5).map((name, i) => {
+              const color = EXERCISE_COLORS[i % EXERCISE_COLORS.length]
+              return [
+                hasGhost && (
+                  <Line
+                    key={`${name}-ppl`}
+                    type="monotone"
+                    dataKey={`${name} · PPL`}
+                    name={`${name} · PPL`}
+                    stroke={color}
+                    strokeOpacity={0.3}
+                    strokeDasharray="5 4"
+                    strokeWidth={1.5}
+                    dot={false}
+                    legendType="none"
+                    connectNulls
+                  />
+                ),
+                <Line
+                  key={name}
+                  type="monotone"
+                  dataKey={name}
+                  name={name}
+                  stroke={color}
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 4 }}
+                  connectNulls
+                />,
+              ]
+            })}
           </LineChart>
         </ResponsiveContainer>
       </div>
