@@ -12,7 +12,7 @@ const ERA_TABS = [['all', 'All', '#19E3B1'], ['axis', 'AXIS-5', '#38E1FF'], ['pp
 // Dynamically import the recharts-heavy components (client-only) so they don't
 // inflate the route's first-load JS.
 const chartFallback = () => (
-  <div className="vital-card h-64 flex items-center justify-center">
+  <div className="helix-card h-64 flex items-center justify-center">
     <div className="w-full h-40 bg-surface-2 rounded-xl animate-pulse" />
   </div>
 )

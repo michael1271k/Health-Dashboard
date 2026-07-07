@@ -36,7 +36,7 @@ export default function AuthPage() {
 
   return (
     <main className="min-h-screen bg-bg flex items-center justify-center p-6">
-      <div className="vital-card max-w-sm w-full space-y-6">
+      <div className="helix-card max-w-sm w-full space-y-6">
         <div className="flex items-center gap-2.5">
           <HelixMark className="w-6 h-6 text-primary" />
           <div>

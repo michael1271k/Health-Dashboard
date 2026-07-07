@@ -25,11 +25,9 @@ export const SUPPLEMENT_PROTOCOL: SupplementSlot[] = [
 export const ALL_SUPPLEMENT_KEYS = SUPPLEMENT_PROTOCOL.flatMap((s) => s.items.map((i) => i.key))
 export const TOTAL_SUPPLEMENTS = ALL_SUPPLEMENT_KEYS.length
 
-/** Has a slot's scheduled time ("HH:MM") passed in Israel local time? (for auto-log) */
+/** Has a slot's scheduled time ("HH:MM") passed in the DEVICE's local time? (for auto-log) */
 export function slotTimePassed(hhmm: string): boolean {
   const [h, m] = hhmm.split(':').map(Number)
-  const now = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Jerusalem', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(new Date())
-  const nh = Number(now.find((p) => p.type === 'hour')?.value ?? '0') % 24
-  const nm = Number(now.find((p) => p.type === 'minute')?.value ?? '0')
-  return nh * 60 + nm >= h * 60 + m
+  const now = new Date()
+  return now.getHours() * 60 + now.getMinutes() >= h * 60 + m
 }

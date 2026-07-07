@@ -49,7 +49,7 @@ function RingSegment({
           )}
         </svg>
         <span
-          className="absolute inset-0 flex items-center justify-center vital-number text-[10px] font-bold"
+          className="absolute inset-0 flex items-center justify-center helix-num text-[10px] font-bold"
           style={{ color: isNull ? '#5A6B85' : color }}
         >
           {isNull ? '—' : pct}
@@ -77,7 +77,7 @@ export function ScoreCard({ score, isLoading }: ScoreCardProps) {
     'text-danger'
 
   return (
-    <div className="vital-card holo-sheen flex flex-col h-full">
+    <div className="helix-card holo-sheen flex flex-col h-full">
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-heading font-semibold text-lg">Daily Score</h2>
         <span className="text-xs text-muted-vital uppercase tracking-wider">Today</span>
@@ -113,7 +113,7 @@ export function ScoreCard({ score, isLoading }: ScoreCardProps) {
             <div className="flex items-baseline gap-2">
               <KineticNumber
                 value={totalScore}
-                className={`vital-number text-6xl font-bold leading-none ${scoreColor}`}
+                className={`helix-num text-6xl font-bold leading-none ${scoreColor}`}
               />
               <span className="text-muted-vital text-lg">{totalScore == null ? 'no data yet' : '/100'}</span>
             </div>

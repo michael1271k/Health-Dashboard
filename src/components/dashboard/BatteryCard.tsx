@@ -29,7 +29,7 @@ export function BatteryCard({ battery, isLoading }: BatteryCardProps) {
     : { label: 'Awaiting score', color: 'var(--color-muted-vital)' }
 
   return (
-    <div className="vital-card flex flex-col h-full min-h-[240px] sm:min-h-[280px]">
+    <div className="helix-card flex flex-col h-full min-h-[240px] sm:min-h-[280px]">
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-heading font-semibold text-fluid-lg">Daily Battery</h2>
         <span className="text-fluid-xs text-muted-vital uppercase tracking-wider">Today</span>

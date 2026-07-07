@@ -46,7 +46,7 @@ export function WeightTrendChart({ data, isLoading }: WeightTrendChartProps) {
   const unit = useUnitSystem()
   if (isLoading) {
     return (
-      <div className="vital-card h-64 flex items-center justify-center">
+      <div className="helix-card h-64 flex items-center justify-center">
         <div className="w-full h-40 bg-surface-2 rounded-xl animate-pulse" />
       </div>
     )
@@ -55,7 +55,7 @@ export function WeightTrendChart({ data, isLoading }: WeightTrendChartProps) {
   const weights = data.map((d) => displayWeight(d.weight_kg)).filter((w): w is number => w !== null)
   if (!data.length || !weights.length) {
     return (
-      <div className="vital-card h-64 flex items-center justify-center">
+      <div className="helix-card h-64 flex items-center justify-center">
         <p className="text-muted-vital text-sm">No body-composition data yet. Sync Apple Health or run the historical import.</p>
       </div>
     )
@@ -81,20 +81,20 @@ export function WeightTrendChart({ data, isLoading }: WeightTrendChartProps) {
   }))
 
   return (
-    <div className="vital-card">
+    <div className="helix-card">
       <div className="flex items-baseline justify-between gap-2 mb-4 flex-wrap">
         <h3 className="font-heading font-semibold text-base">Body Composition</h3>
         <div className="flex items-center gap-3 text-fluid-xs text-muted-vital">
           <span>
-            Weight <span className="vital-number text-text">{firstWeight}</span> →{' '}
-            <span className="vital-number text-text">{lastWeight}</span>{unit}
-            <span className={`vital-number ml-1 ${weightDelta <= 0 ? 'text-success' : 'text-warn'}`}>
+            Weight <span className="helix-num text-text">{firstWeight}</span> →{' '}
+            <span className="helix-num text-text">{lastWeight}</span>{unit}
+            <span className={`helix-num ml-1 ${weightDelta <= 0 ? 'text-success' : 'text-warn'}`}>
               {weightDelta > 0 ? '+' : ''}{weightDelta}
             </span>
           </span>
           {fatDelta != null && (
             <span>
-              Fat <span className={`vital-number ${fatDelta <= 0 ? 'text-success' : 'text-warn'}`}>
+              Fat <span className={`helix-num ${fatDelta <= 0 ? 'text-success' : 'text-warn'}`}>
                 {fatDelta > 0 ? '+' : ''}{fatDelta}%
               </span>
             </span>

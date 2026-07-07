@@ -51,9 +51,9 @@ const CONTEXT_LABELS: Record<ContextMode, { label: string; desc: string }> = {
 /** Mirror device prefs to localStorage (read synchronously by the logical-day + units + motion utils). */
 function applyPrefsToDevice(cutoff: number, units: 'kg' | 'lb', motion: boolean) {
   if (typeof window === 'undefined') return
-  window.localStorage.setItem('apex_day_cutoff', String(cutoff))
-  window.localStorage.setItem('apex_units', units)
-  window.localStorage.setItem('apex_reduce_motion', motion ? '1' : '0')
+  window.localStorage.setItem('helix_day_cutoff', String(cutoff))
+  window.localStorage.setItem('helix_units', units)
+  window.localStorage.setItem('helix_reduce_motion', motion ? '1' : '0')
   document.documentElement.dataset.reduceMotion = motion ? 'true' : 'false'
   window.dispatchEvent(new Event('apex-units-change'))
 }
@@ -143,7 +143,7 @@ export default function SettingsPage() {
       )}
 
       {/* Context mode */}
-      <section className="vital-card space-y-3">
+      <section className="helix-card space-y-3">
         <h2 className="font-semibold text-text">Context Mode</h2>
         <p className="text-xs text-muted-vital">
           Adjusts scoring penalties for exceptional circumstances.
@@ -167,7 +167,7 @@ export default function SettingsPage() {
       </section>
 
       {/* Nutrition goals */}
-      <section className="vital-card space-y-4">
+      <section className="helix-card space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-text">Nutrition Goals</h2>
           {(() => {
@@ -205,7 +205,7 @@ export default function SettingsPage() {
       </section>
 
       {/* Preferences */}
-      <section className="vital-card space-y-4">
+      <section className="helix-card space-y-4">
         <h2 className="font-semibold text-text">Preferences</h2>
 
         <div className="flex items-center justify-between gap-4">
@@ -267,7 +267,7 @@ export default function SettingsPage() {
       </section>
 
       {/* Activity + sleep + water */}
-      <section className="vital-card space-y-4">
+      <section className="helix-card space-y-4">
         <h2 className="font-semibold text-text">Activity &amp; Recovery Goals</h2>
         <div className="grid grid-cols-2 gap-4">
           {([

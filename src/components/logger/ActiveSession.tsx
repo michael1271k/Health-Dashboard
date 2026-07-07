@@ -54,7 +54,7 @@ export function ActiveSession({ onSaved }: ActiveSessionProps) {
   // Post-save success view
   if (savedResult) {
     return (
-      <div className="vital-card text-center space-y-4 py-8">
+      <div className="helix-card text-center space-y-4 py-8">
         <Dumbbell className="w-10 h-10 text-primary mx-auto" aria-hidden="true" />
         <h2 className="font-heading text-xl font-bold text-text">Workout Saved!</h2>
         <div className="space-y-1 text-muted-vital text-sm">

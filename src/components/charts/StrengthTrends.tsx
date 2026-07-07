@@ -32,11 +32,11 @@ export function StrengthTrends({ days = 120 }: { days?: number }) {
       .slice(0, 6)
   }, [data])
 
-  if (isLoading) return <div className="vital-card h-40 animate-pulse" />
+  if (isLoading) return <div className="helix-card h-40 animate-pulse" />
   if (!series.length) return null
 
   return (
-    <div className="vital-card space-y-3">
+    <div className="helix-card space-y-3">
       <h2 className="font-heading font-semibold text-fluid-base text-text flex items-center gap-2">
         <TrendingUp className="w-4 h-4 text-primary" /> Strength Trends
         <span className="text-fluid-xs text-muted-vital font-normal">est. 1RM</span>
@@ -46,7 +46,7 @@ export function StrengthTrends({ days = 120 }: { days?: number }) {
           <div key={s.name} className="flex items-center gap-3">
             <div className="flex-1 min-w-0">
               <div className="text-fluid-sm font-medium text-text truncate">{s.name}</div>
-              <div className="text-fluid-xs text-muted-vital">best <span className="vital-number">{displayWeight(s.best)}</span>{unit}</div>
+              <div className="text-fluid-xs text-muted-vital">best <span className="helix-num">{displayWeight(s.best)}</span>{unit}</div>
             </div>
             <div className="w-20 h-8 shrink-0">
               <ResponsiveContainer width="100%" height="100%">
@@ -56,8 +56,8 @@ export function StrengthTrends({ days = 120 }: { days?: number }) {
               </ResponsiveContainer>
             </div>
             <div className="text-right w-14 shrink-0">
-              <div className="vital-number text-fluid-base font-bold text-text leading-none">{displayWeight(s.current)}<span className="text-[10px] text-muted-vital">{unit}</span></div>
-              {s.delta !== 0 && <div className={`vital-number text-[10px] ${s.delta > 0 ? 'text-success' : 'text-danger'}`}>{s.delta > 0 ? '▲' : '▼'}{displayWeight(Math.abs(s.delta))}</div>}
+              <div className="helix-num text-fluid-base font-bold text-text leading-none">{displayWeight(s.current)}<span className="text-[10px] text-muted-vital">{unit}</span></div>
+              {s.delta !== 0 && <div className={`helix-num text-[10px] ${s.delta > 0 ? 'text-success' : 'text-danger'}`}>{s.delta > 0 ? '▲' : '▼'}{displayWeight(Math.abs(s.delta))}</div>}
             </div>
           </div>
         ))}

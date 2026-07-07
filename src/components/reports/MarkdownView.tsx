@@ -9,7 +9,7 @@ function inline(text: string, k: number) {
     <Fragment key={k}>
       {parts.map((p, i) => {
         if (p.startsWith('**') && p.endsWith('**')) return <strong key={i} className="text-text font-semibold">{p.slice(2, -2)}</strong>
-        if (p.startsWith('`') && p.endsWith('`')) return <code key={i} className="vital-number text-primary">{p.slice(1, -1)}</code>
+        if (p.startsWith('`') && p.endsWith('`')) return <code key={i} className="helix-num text-primary">{p.slice(1, -1)}</code>
         return <Fragment key={i}>{p}</Fragment>
       })}
     </Fragment>
@@ -41,7 +41,7 @@ export function MarkdownView({ md }: { md: string }) {
         <div key={key++} className="overflow-x-auto rounded-xl border border-white/[0.08]">
           <table className="w-full text-fluid-xs">
             <thead><tr className="border-b border-white/[0.08]">{header.map((h, j) => <th key={j} className="px-3 py-2 text-left font-semibold text-muted-vital">{h}</th>)}</tr></thead>
-            <tbody>{rows.map((r, ri) => <tr key={ri} className="border-b border-white/[0.04] last:border-0">{r.map((c, cj) => <td key={cj} className="px-3 py-1.5 vital-number text-text/90">{c}</td>)}</tr>)}</tbody>
+            <tbody>{rows.map((r, ri) => <tr key={ri} className="border-b border-white/[0.04] last:border-0">{r.map((c, cj) => <td key={cj} className="px-3 py-1.5 helix-num text-text/90">{c}</td>)}</tr>)}</tbody>
           </table>
         </div>,
       )

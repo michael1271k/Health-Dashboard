@@ -22,7 +22,7 @@ export function InsightCoach() {
   const insights = data?.insights ?? []
 
   return (
-    <div className="vital-card">
+    <div className="helix-card">
       <div className="flex items-center gap-2 mb-3">
         <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15 text-primary">
           <Brain className="w-4 h-4" aria-hidden="true" />

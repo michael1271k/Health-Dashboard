@@ -61,12 +61,15 @@ export default function WorkoutPage() {
         {program.days.map((day) => (
           <div key={day.key} className="glass-card p-3 flex flex-col" style={{ borderColor: `${day.color}33` }}>
             <button onClick={() => setOpenDay(day)} className="flex items-center justify-between mb-2.5 group">
-              <span className="flex items-baseline gap-2 min-w-0">
-                <span className="split-label font-bold text-lg truncate" style={{ color: day.color }}>{day.label}</span>
-                <span className="text-[10px] text-muted-vital uppercase shrink-0">{WD[day.weekday]}</span>
-                {day.cutSetDelta != null && (
-                  <span className="text-[9px] px-1 rounded bg-white/[0.05] text-muted-vital shrink-0" title="Cut-mode set delta">{day.cutSetDelta} cut</span>
-                )}
+              <span className="min-w-0">
+                <span className="flex items-baseline gap-2">
+                  <span className="split-label font-bold text-lg truncate" style={{ color: day.color }}>{day.label}</span>
+                  <span className="text-[10px] text-muted-vital uppercase shrink-0">{WD[day.weekday]}</span>
+                  {day.cutSetDelta != null && (
+                    <span className="text-[9px] px-1 rounded bg-white/[0.05] text-muted-vital shrink-0" title="Cut-mode set delta">{day.cutSetDelta} cut</span>
+                  )}
+                </span>
+                {day.sub && <span className="block text-[10px] text-muted-vital leading-none mt-0.5">{day.sub}</span>}
               </span>
               <span className="w-7 h-7 rounded-full flex items-center justify-center transition-transform group-hover:scale-110"
                 style={{ background: `color-mix(in srgb, ${day.color} 18%, transparent)`, color: day.color }} aria-label={`Log ${day.label}`}>
@@ -111,7 +114,7 @@ export default function WorkoutPage() {
       <StrengthTrends />
 
       {/* Logger sheet */}
-      <Sheet open={!!openDay} onClose={() => setOpenDay(null)} title={openDay ? `${openDay.label} — Log Session` : undefined}>
+      <Sheet open={!!openDay} onClose={() => setOpenDay(null)} title={openDay ? `${openDay.label}${openDay.sub ? ` · ${openDay.sub}` : ''} — Log Session` : undefined}>
         {openDay && <WorkoutChat splitDay={daySplitEnum(openDay.key)} onClose={() => setOpenDay(null)} />}
       </Sheet>
 

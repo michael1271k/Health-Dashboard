@@ -19,7 +19,7 @@ function nextDay(d: string): string {
 }
 
 /** Compute + upsert the daily_scores row for a single date. */
-async function computeForDate(supabase: DB, userId: string, date: string, hoursAwake: number): Promise<void> {
+async function computeForDate(supabase: DB, userId: string, date: string, hoursAwake: number, isToday = false): Promise<void> {
   const end = nextDay(date)
   const [metricsRes, sleepRes, nutritionRes, waterRes, supplementsRes, goalsRes, sessionsRes] = await Promise.all([
     supabase.from('daily_metrics').select('*').eq('user_id', userId).eq('date', date).maybeSingle(),
@@ -55,8 +55,10 @@ async function computeForDate(supabase: DB, userId: string, date: string, hoursA
     .gte('created_at', `${date}T00:00:00Z`).lt('created_at', `${end}T00:00:00Z`)
 
   const isRestDay = isRestDayFor(date)  // era-aware: APEX-5.1 rests Tue/Fri; PPL legacy Fri/Sat
-  const isCurrentDay = date === todayISO()
-  const localHour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Jerusalem', hour: '2-digit', hour12: false }).format(new Date())) % 24
+  // isToday comes from the caller (the client knows its own timezone); derive the
+  // user's local hour from hoursAwake (07:00 wake convention) instead of a fixed zone.
+  const isCurrentDay = isToday || date === todayISO()
+  const localHour = Math.min(23, 7 + Math.round(hoursAwake))
 
   const g = goals ?? {
     sleep_goal_hours: 8, calorie_goal: 1935, protein_goal_g: 180, carbs_goal_g: 180,
@@ -122,14 +124,18 @@ export async function POST(req: Request) {
   if (usersError || !users.length) return NextResponse.json({ error: 'No user' }, { status: 401 })
   const userId = users[0].id
 
-  const body = await req.json().catch(() => ({})) as { backfillDays?: number }
+  // The CLIENT knows the user's real timezone (device-local logical day + hours
+  // awake) — the server cannot. Trust client-provided values when present and
+  // fall back to the server clock only for cron/headless calls.
+  const body = await req.json().catch(() => ({})) as { backfillDays?: number; date?: string; hoursAwake?: number }
   const backfillDays = Math.max(0, Math.min(31, Number(body?.backfillDays) || 0))
+  const today = body?.date && /^\d{4}-\d{2}-\d{2}$/.test(body.date) ? body.date : todayISO()
+  const awake = Number.isFinite(body?.hoursAwake) ? Math.max(0, Math.min(18, Number(body?.hoursAwake))) : israelHoursAwake()
 
-  const today = todayISO()
-  await computeForDate(supabase, userId, today, israelHoursAwake())   // today: time-of-day aware
+  await computeForDate(supabase, userId, today, awake, true)   // today: time-of-day aware
   for (let i = 1; i <= backfillDays; i++) {
-    const d = new Date(); d.setDate(d.getDate() - i)
-    await computeForDate(supabase, userId, d.toLocaleDateString('en-CA'), 16)  // past days: full day
+    const d = new Date(`${today}T12:00:00Z`); d.setUTCDate(d.getUTCDate() - i)
+    await computeForDate(supabase, userId, d.toISOString().slice(0, 10), 16)  // past days: full day
   }
 
   return NextResponse.json({ ok: true, today, backfilled: backfillDays })

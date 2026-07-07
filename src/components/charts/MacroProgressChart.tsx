@@ -25,10 +25,10 @@ export function MacroProgressChart({ data, goals, isLoading }: { data: Nutrition
   const metric = METRICS[mi]
 
   if (isLoading) {
-    return <div className="vital-card h-64 flex items-center justify-center"><div className="w-full h-40 bg-surface-2 rounded-xl animate-pulse" /></div>
+    return <div className="helix-card h-64 flex items-center justify-center"><div className="w-full h-40 bg-surface-2 rounded-xl animate-pulse" /></div>
   }
   if (!data.length) {
-    return <div className="vital-card h-64 flex items-center justify-center"><p className="text-muted-vital text-sm">No nutrition data yet.</p></div>
+    return <div className="helix-card h-64 flex items-center justify-center"><p className="text-muted-vital text-sm">No nutrition data yet.</p></div>
   }
 
   const goal = (goals?.[metric.goalKey] as number | null) ?? null
@@ -39,7 +39,7 @@ export function MacroProgressChart({ data, goals, isLoading }: { data: Nutrition
   })
 
   return (
-    <div className="vital-card">
+    <div className="helix-card">
       <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
         <h3 className="font-heading font-semibold text-base">Macros vs Goal</h3>
         <div className="flex gap-1">

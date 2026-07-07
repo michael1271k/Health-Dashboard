@@ -12,9 +12,9 @@ import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 export function MuscleAnalyticsSection({ days }: { days: number }) {
   const { data, isLoading } = useMuscleAnalytics(days)
   const unit = useUnitSystem()
-  if (isLoading) return <div className="vital-card h-64 animate-pulse" />
+  if (isLoading) return <div className="helix-card h-64 animate-pulse" />
   if (!data || data.stats.every((s) => s.sets === 0)) {
-    return <div className="vital-card p-8 text-center text-muted-vital text-fluid-sm">No workout sets in this range yet.</div>
+    return <div className="helix-card p-8 text-center text-muted-vital text-fluid-sm">No workout sets in this range yet.</div>
   }
 
   const radarData = data.stats.map((s) => ({ group: s.group, sets: s.sets }))
@@ -24,7 +24,7 @@ export function MuscleAnalyticsSection({ days }: { days: number }) {
     <div className="space-y-4">
       <div className="grid lg:grid-cols-2 gap-4">
         {/* Balance radar */}
-        <div className="vital-card">
+        <div className="helix-card">
           <h3 className="font-heading font-semibold text-base">Muscle Balance</h3>
           <p className="text-fluid-xs text-muted-vital mb-2">Working sets per group · {days}d</p>
           <ResponsiveContainer width="100%" height={250}>
@@ -37,7 +37,7 @@ export function MuscleAnalyticsSection({ days }: { days: number }) {
         </div>
 
         {/* Sets per muscle per week */}
-        <div className="vital-card">
+        <div className="helix-card">
           <h3 className="font-heading font-semibold text-base">Sets / Muscle / Week</h3>
           <p className="text-fluid-xs text-muted-vital mb-2">Hypertrophy volume distribution</p>
           <ResponsiveContainer width="100%" height={230}>
@@ -61,14 +61,14 @@ export function MuscleAnalyticsSection({ days }: { days: number }) {
 
       <div className="grid sm:grid-cols-2 gap-4">
         {/* Volume by body part */}
-        <div className="vital-card">
+        <div className="helix-card">
           <h3 className="font-heading font-semibold text-base mb-3">Volume by Body Part</h3>
           <div className="space-y-2.5">
             {[...data.stats].sort((a, b) => b.volume - a.volume).map((s) => (
               <div key={s.group}>
                 <div className="flex justify-between text-fluid-xs mb-0.5">
                   <span className="text-text">{s.group}</span>
-                  <span className="vital-number text-muted-vital">{((displayWeight(s.volume) ?? 0) / 1000).toFixed(1)}{unit === 'lb' ? 'k' : 't'}</span>
+                  <span className="helix-num text-muted-vital">{((displayWeight(s.volume) ?? 0) / 1000).toFixed(1)}{unit === 'lb' ? 'k' : 't'}</span>
                 </div>
                 <div className="h-2 rounded-full bg-white/[0.06] overflow-hidden">
                   <div className="h-full rounded-full" style={{ width: `${(s.volume / maxVol) * 100}%`, background: GROUP_COLOR[s.group] }} />
@@ -79,7 +79,7 @@ export function MuscleAnalyticsSection({ days }: { days: number }) {
         </div>
 
         {/* Freshness */}
-        <div className="vital-card">
+        <div className="helix-card">
           <h3 className="font-heading font-semibold text-base mb-3">Muscle Freshness</h3>
           <div className="space-y-2">
             {[...data.stats].sort((a, b) => (b.daysSince ?? -1) - (a.daysSince ?? -1)).map((s) => {
@@ -88,7 +88,7 @@ export function MuscleAnalyticsSection({ days }: { days: number }) {
                 <div key={s.group} className="flex items-center gap-2.5">
                   <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: c, boxShadow: `0 0 8px ${c}88` }} />
                   <span className="flex-1 text-fluid-sm text-text">{s.group}</span>
-                  <span className="vital-number text-fluid-xs text-muted-vital">
+                  <span className="helix-num text-fluid-xs text-muted-vital">
                     {s.daysSince == null ? 'never' : s.daysSince === 0 ? 'today' : `${s.daysSince}d ago`}
                   </span>
                 </div>

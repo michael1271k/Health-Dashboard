@@ -19,7 +19,7 @@ const REGIONS: Array<{ group: string; d: string }> = [
 
 export function BodyHeatmap({ days }: { days: number }) {
   const { data, isLoading } = useMuscleAnalytics(days)
-  if (isLoading) return <div className="vital-card h-72 animate-pulse" />
+  if (isLoading) return <div className="helix-card h-72 animate-pulse" />
   if (!data || data.stats.every((s) => s.volume === 0)) return null
 
   const maxVol = Math.max(...data.stats.map((s) => s.volume), 1)
@@ -28,7 +28,7 @@ export function BodyHeatmap({ days }: { days: number }) {
     : t < 0.35 ? `rgba(56,225,255,${0.25 + t})` : t < 0.7 ? `rgba(25,227,177,${0.35 + t * 0.5})` : `rgba(255,84,112,${0.4 + t * 0.4})`
 
   return (
-    <div className="vital-card">
+    <div className="helix-card">
       <h3 className="font-heading font-semibold text-base">Muscle Contour Map</h3>
       <p className="text-fluid-xs text-muted-vital mb-2">Regional training-volume heat · {days}d</p>
       <div className="flex items-center justify-center gap-6">
@@ -50,7 +50,7 @@ export function BodyHeatmap({ days }: { days: number }) {
             <div key={s.group} className="flex items-center gap-2 text-fluid-xs">
               <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: color((heat.get(s.group) ?? 0)) }} />
               <span className="text-text w-20">{s.group}</span>
-              <span className="vital-number text-muted-vital">{Math.round((heat.get(s.group) ?? 0) * 100)}%</span>
+              <span className="helix-num text-muted-vital">{Math.round((heat.get(s.group) ?? 0) * 100)}%</span>
             </div>
           ))}
         </div>
@@ -62,11 +62,11 @@ export function BodyHeatmap({ days }: { days: number }) {
 /* ── 2. Volume stream flow — stacked river of weekly sets per muscle group ── */
 export function VolumeStream({ days }: { days: number }) {
   const { data, isLoading } = useMuscleAnalytics(days)
-  if (isLoading) return <div className="vital-card h-64 animate-pulse" />
+  if (isLoading) return <div className="helix-card h-64 animate-pulse" />
   if (!data || data.weekly.length < 2) return null
 
   return (
-    <div className="vital-card">
+    <div className="helix-card">
       <h3 className="font-heading font-semibold text-base">Volume Stream</h3>
       <p className="text-fluid-xs text-muted-vital mb-2">Weekly working sets per muscle group — training-focus drift</p>
       <ResponsiveContainer width="100%" height={220}>
@@ -108,14 +108,14 @@ export function RpeCalendar({ days }: { days: number }) {
     return weeks
   }, [data, days])
 
-  if (isLoading) return <div className="vital-card h-40 animate-pulse" />
+  if (isLoading) return <div className="helix-card h-40 animate-pulse" />
   if (!grid) return null
 
   const cell = (t: number) => t <= 0 ? 'rgba(255,255,255,0.05)'
     : t < 0.35 ? 'rgba(25,227,177,0.35)' : t < 0.7 ? 'rgba(25,227,177,0.65)' : '#19E3B1'
 
   return (
-    <div className="vital-card">
+    <div className="helix-card">
       <h3 className="font-heading font-semibold text-base">Intensity Calendar</h3>
       <p className="text-fluid-xs text-muted-vital mb-3">Session load heat (volume-scaled) · streaks &amp; deloads at a glance</p>
       <div className="flex gap-1 overflow-x-auto no-scrollbar">

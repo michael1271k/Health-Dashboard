@@ -109,7 +109,7 @@ function StatRow({ icon: Icon, iconColor, label, value }: StatRowProps) {
         <Icon className={`w-4 h-4 ${iconColor}`} aria-hidden="true" />
         <span className="text-sm text-muted-vital">{label}</span>
       </div>
-      <span className="vital-number text-sm font-semibold text-text">{value}</span>
+      <span className="helix-num text-sm font-semibold text-text">{value}</span>
     </div>
   )
 }
@@ -119,7 +119,7 @@ export function WeeklyReviewCard() {
 
   if (isLoading) {
     return (
-      <div className="vital-card h-48 animate-pulse">
+      <div className="helix-card h-48 animate-pulse">
         <div className="h-5 w-32 bg-surface-2 rounded mb-4" />
         {[...Array(4)].map((_, i) => (
           <div key={i} className="h-8 w-full bg-surface-2 rounded mb-2" />
@@ -129,7 +129,7 @@ export function WeeklyReviewCard() {
   }
 
   return (
-    <div className="vital-card">
+    <div className="helix-card">
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-heading font-semibold text-base text-text">Weekly Review</h3>
         <span className="text-xs text-muted-vital">This week</span>

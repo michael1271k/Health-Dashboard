@@ -8,8 +8,10 @@ export type PhaseKind = 'cut' | 'peak' | 'bulk' | 'maintenance'
 
 export interface WeekPhase {
   kind: PhaseKind
-  label: string         // full label, e.g. "Cut Week 3" / "Peak Week (Maintenance)"
+  label: string         // full label, e.g. "HELIX Cut Week 3" / "PPL Cut Week 2"
   short: string         // compact label for the calendar cell, e.g. "Cut W3" / "Peak"
+  eraTag: string        // era-distinct badge text: "PPL Cut" vs "HELIX Cut · Phase 1"
+  era: 'ppl' | 'helix'
 }
 
 interface PhaseDef {
@@ -20,21 +22,23 @@ interface PhaseDef {
   numbered?: boolean    // append "Week N" per week
   short?: string        // compact override
   firstWeek?: number    // week numbering offset (blocks split around a deload)
+  eraTag?: string       // era-distinct tag (defaults to the name)
+  era?: 'ppl' | 'helix'
 }
 
 export const PHASES: PhaseDef[] = [
-  // ── PPL Legacy era ──
-  { kind: 'bulk', name: 'Bulk',                    start: '2026-03-08', weeks: 9, numbered: true },
-  { kind: 'cut',  name: 'Cut',                     start: '2026-05-10', weeks: 6, numbered: true },
-  { kind: 'peak', name: 'Peak Week (Maintenance)', start: '2026-06-21', weeks: 1, short: 'Peak' },
-  // ── SYSTEM UPDATE v5.1 (APEX-5.1 era) ──
+  // ── PPL Legacy era — the historical 50-day cut MUST stay visually separate ──
+  { kind: 'bulk', name: 'Bulk',                    start: '2026-03-08', weeks: 9, numbered: true, era: 'ppl', eraTag: 'PPL Bulk' },
+  { kind: 'cut',  name: 'Cut',                     start: '2026-05-10', weeks: 6, numbered: true, era: 'ppl', eraTag: 'PPL Cut' },
+  { kind: 'peak', name: 'Peak Week (Maintenance)', start: '2026-06-21', weeks: 1, short: 'Peak',  era: 'ppl', eraTag: 'PPL Peak' },
+  // ── SYSTEM UPDATE v5.1 (HELIX era) ──
   // Cut W1–6, scheduled maintenance week (NOT an adherence failure), Cut W7–12
   // (nominal exit ~10-10, flex to 10-17), Transition, then Lean Bulk → 2027-01-16.
-  { kind: 'cut',         name: 'Cut',         start: '2026-07-19', weeks: 6,  numbered: true },
-  { kind: 'maintenance', name: 'Maintenance Week', start: '2026-08-30', weeks: 1, short: 'Maint' },
-  { kind: 'cut',         name: 'Cut',         start: '2026-09-06', weeks: 6,  numbered: true, firstWeek: 7 },
-  { kind: 'maintenance', name: 'Transition',  start: '2026-10-18', weeks: 2,  numbered: true, short: 'Trans' },
-  { kind: 'bulk',        name: 'Lean Bulk',   start: '2026-11-01', weeks: 11, numbered: true },
+  { kind: 'cut',         name: 'Cut',         start: '2026-07-19', weeks: 6,  numbered: true, era: 'helix', eraTag: 'HELIX Cut · Phase 1' },
+  { kind: 'maintenance', name: 'Maintenance Week', start: '2026-08-30', weeks: 1, short: 'Maint', era: 'helix', eraTag: 'HELIX Maintenance' },
+  { kind: 'cut',         name: 'Cut',         start: '2026-09-06', weeks: 6,  numbered: true, firstWeek: 7, era: 'helix', eraTag: 'HELIX Cut · Phase 1' },
+  { kind: 'maintenance', name: 'Transition',  start: '2026-10-18', weeks: 2,  numbered: true, short: 'Trans', era: 'helix', eraTag: 'HELIX Transition' },
+  { kind: 'bulk',        name: 'Lean Bulk',   start: '2026-11-01', weeks: 11, numbered: true, era: 'helix', eraTag: 'HELIX Lean Bulk' },
 ]
 
 /** v5.1 phase exit / kill-switch protocol (judged on 7-day averages). */
@@ -46,7 +50,7 @@ export const PHASE_RULES = {
 
 const isoUTC = (d: Date) => d.toISOString().slice(0, 10)
 
-export interface ProgramWeek { weekStart: string; weekEnd: string; kind: PhaseKind; n: number; label: string }
+export interface ProgramWeek { weekStart: string; weekEnd: string; kind: PhaseKind; n: number; label: string; eraTag: string; era: 'ppl' | 'helix' }
 
 /** Enumerate every week of the given phase kinds as "Week N" folders. */
 export function enumerateWeeks(kinds: PhaseKind[]): ProgramWeek[] {
@@ -58,7 +62,11 @@ export function enumerateWeeks(kinds: PhaseKind[]): ProgramWeek[] {
       const ws = new Date(start); ws.setUTCDate(ws.getUTCDate() + i * 7)
       const we = new Date(ws); we.setUTCDate(we.getUTCDate() + 6)
       const n = i + (p.firstWeek ?? 1)
-      out.push({ weekStart: isoUTC(ws), weekEnd: isoUTC(we), kind: p.kind, n, label: p.numbered ? `Week ${n}` : p.name })
+      out.push({
+        weekStart: isoUTC(ws), weekEnd: isoUTC(we), kind: p.kind, n,
+        label: p.numbered ? `Week ${n}` : p.name,
+        eraTag: p.eraTag ?? p.name, era: p.era ?? 'ppl',
+      })
     }
   }
   return out.reverse() // newest first
@@ -72,27 +80,30 @@ export function getWeekPhase(weekStartISO: string): WeekPhase | null {
       const ws = new Date(start)
       ws.setUTCDate(ws.getUTCDate() + i * 7)
       if (isoUTC(ws) === weekStartISO) {
+        const era = p.era ?? 'ppl'
+        const eraTag = p.eraTag ?? p.name
         if (p.numbered) {
           const n = i + (p.firstWeek ?? 1)
-          return { kind: p.kind, label: `${p.name} Week ${n}`, short: `${p.short ?? p.name} W${n}` }
+          return { kind: p.kind, label: `${eraTag} · Week ${n}`, short: `${p.short ?? p.name} W${n}`, eraTag, era }
         }
-        return { kind: p.kind, label: p.name, short: p.short ?? p.name }
+        return { kind: p.kind, label: eraTag, short: p.short ?? p.name, eraTag, era }
       }
     }
   }
   return null
 }
 
-/** Glow / color styling per phase kind for the calendar badge. */
-export function phaseBadgeStyle(kind: PhaseKind, selected: boolean): import('react').CSSProperties {
-  // Cyber Mint cool spectrum (all distinct, all cool)
+/** Glow / color styling per phase kind for the calendar badge (PPL era = muted gray). */
+export function phaseBadgeStyle(kind: PhaseKind, selected: boolean, era: 'ppl' | 'helix' = 'helix'): import('react').CSSProperties {
+  // Bioluminescent spectrum; the legacy PPL era renders desaturated so the two
+  // Cut eras can never be visually confused.
   const palette: Record<PhaseKind, string> = {
-    cut: '56,225,255',          // cyan
-    peak: '25,227,177',         // teal (signature)
+    cut: '62,224,255',          // plankton cyan
+    peak: '22,245,195',         // living teal
     bulk: '67,245,155',         // mint green
-    maintenance: '79,195,255',  // aqua-blue
+    maintenance: '139,124,255', // abyss violet
   }
-  const rgb = palette[kind]
+  const rgb = era === 'ppl' ? '139,151,178' : palette[kind]
   return {
     background: `rgba(${rgb},0.12)`,
     border: `1px solid rgba(${rgb},0.40)`,

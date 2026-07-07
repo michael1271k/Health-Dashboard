@@ -50,7 +50,7 @@ function Spark({ s }: { s: Series }) {
         <span className="flex items-center gap-1.5 text-fluid-xs text-muted-vital">
           <Icon className="w-3.5 h-3.5" style={{ color: s.color }} aria-hidden="true" /> {s.label}
         </span>
-        <span className="vital-number text-fluid-sm font-semibold text-text">
+        <span className="helix-num text-fluid-sm font-semibold text-text">
           {latest != null ? `${latest}${s.unit ?? ''}` : '—'}
           {delta != null && delta !== 0 && (
             <span className={`ml-1 text-fluid-xs ${delta > 0 ? 'text-success' : 'text-danger'}`}>
@@ -84,7 +84,7 @@ function Spark({ s }: { s: Series }) {
 export function TrendStrip() {
   const { data, isLoading } = useTrendSeries()
   return (
-    <div className="vital-card flex flex-col h-full gap-3 min-h-[280px]">
+    <div className="helix-card flex flex-col h-full gap-3 min-h-[280px]">
       <div className="flex items-center justify-between">
         <h2 className="font-heading font-semibold text-fluid-lg">30-Day Trends</h2>
         <span className="text-fluid-xs text-muted-vital uppercase tracking-wider">Last sync</span>

@@ -31,7 +31,7 @@ export function ChartTooltip({ active, payload, label }: TooltipProps) {
               aria-hidden="true"
             />
             <span className="text-muted-vital">{entry.name}:</span>
-            <span className="vital-number font-semibold text-text">
+            <span className="helix-num font-semibold text-text">
               {typeof entry.value === 'number'
                 ? entry.value % 1 === 0
                   ? entry.value.toLocaleString()

@@ -10,7 +10,7 @@ interface WorkoutFormProps {
 
 export function WorkoutForm({ notes, onNotesChange, onSave, isSaving, setsCount }: WorkoutFormProps) {
   return (
-    <div className="vital-card space-y-4">
+    <div className="helix-card space-y-4">
       <div className="flex flex-col gap-1.5">
         <label htmlFor="workout-notes" className="text-sm font-medium text-text">
           Notes <span className="text-muted-vital font-normal">(Hebrew supported)</span>

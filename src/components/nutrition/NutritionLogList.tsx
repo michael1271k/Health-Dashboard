@@ -29,7 +29,7 @@ function MacroBar({ label, value, goal }: { label: 'P' | 'C' | 'F'; value: numbe
       <div className="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
         <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
       </div>
-      <span className="vital-number text-[10px] text-muted-vital tabular-nums w-7 text-right">{value != null ? Math.round(value) : '—'}</span>
+      <span className="helix-num text-[10px] text-muted-vital tabular-nums w-7 text-right">{value != null ? Math.round(value) : '—'}</span>
     </div>
   )
 }
@@ -65,7 +65,7 @@ export function NutritionLogList({ logs, goals, isLoading, emptyMessage }: {
 
             <div className="flex-1 min-w-0">
               <div className="flex items-baseline gap-1">
-                <span className="vital-number text-fluid-lg font-bold leading-none" style={{ color: calColor }}>{l.calories != null ? Math.round(l.calories).toLocaleString() : '—'}</span>
+                <span className="helix-num text-fluid-lg font-bold leading-none" style={{ color: calColor }}>{l.calories != null ? Math.round(l.calories).toLocaleString() : '—'}</span>
                 <span className="text-[10px] text-muted-vital">kcal</span>
               </div>
               <div className="flex items-center gap-2 mt-1.5">
@@ -76,7 +76,7 @@ export function NutritionLogList({ logs, goals, isLoading, emptyMessage }: {
             </div>
 
             <div className="text-right shrink-0">
-              <div className="vital-number text-fluid-xs font-semibold text-text leading-none">{l.steps != null ? Math.round(l.steps / 1000) + 'k' : '—'}</div>
+              <div className="helix-num text-fluid-xs font-semibold text-text leading-none">{l.steps != null ? Math.round(l.steps / 1000) + 'k' : '—'}</div>
               <div className="text-[9px] text-muted-vital">steps</div>
             </div>
           </div>

@@ -1,240 +1,243 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useMemo, useState } from 'react'
 import dynamic from 'next/dynamic'
-import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase/client'
-import { HeartPulse, Activity, Scale, Dumbbell, Salad, Pill, Plus } from 'lucide-react'
+import { Moon, Flame, Dumbbell, Scale, Footprints, Pill, Plus } from 'lucide-react'
 import { Fab } from '@/components/ui/Fab'
 import { Sheet } from '@/components/ui/Sheet'
 import { WorkoutChat } from '@/components/logger/WorkoutChat'
-import { getTodaysSplit } from '@/lib/types/workout'
+import { ReadinessOrb } from '@/components/dashboard/ReadinessOrb'
+import { BioStrip, type BioStripProps } from '@/components/dashboard/BioStrip'
 import { ScoreCard } from '@/components/dashboard/ScoreCard'
 import { BatteryCard } from '@/components/dashboard/BatteryCard'
-
-// Desktop-only trends sidecar — recharts lazy-loads as a deferred chunk so it
-// never weighs down the mobile first-load.
-const TrendStrip = dynamic(
-  () => import('@/components/dashboard/TrendStrip').then((m) => ({ default: m.TrendStrip })),
-  { ssr: false, loading: () => <div className="vital-card min-h-[280px] animate-pulse" /> },
-)
-import { DomainWidget } from '@/components/dashboard/DomainWidget'
-import { MasonryDashboard, type MasonryTile } from '@/components/dashboard/MasonryDashboard'
 import { StatTile } from '@/components/dashboard/StatTile'
 import { SupplementChecklist } from '@/components/dashboard/SupplementChecklist'
-import { useSupplements } from '@/lib/hooks/useSupplements'
-import { TOTAL_SUPPLEMENTS } from '@/lib/supplements'
 import { InsightCoach } from '@/components/dashboard/InsightCoach'
 import { AnimatedCard } from '@/components/dashboard/AnimatedBento'
 import { WeeklyReviewCard } from '@/components/dashboard/WeeklyReviewCard'
 import { BrandHeader } from '@/components/dashboard/BrandHeader'
 import { formatSleep, mlToL } from '@/lib/utils/format'
 import { displayWeight, weightUnit } from '@/lib/utils/units'
+import { PHASE_META } from '@/lib/nutrition/phase'
+import { logicalTodayISO } from '@/lib/utils/day'
+import { getActiveProgramId, programDayFor, daySplitEnum, type ProgramDay } from '@/lib/programs'
+import { useSupplements } from '@/lib/hooks/useSupplements'
+import { TOTAL_SUPPLEMENTS } from '@/lib/supplements'
+import { useBioSeries } from '@/lib/hooks/useBioStrips'
+import { useDailyLogs } from '@/lib/hooks/useNutrition'
 import {
   useTodayScore,
   useEnsureTodayScore,
   useTodayDailyLog,
   useTodayMetrics,
   useTodayNutrition,
-  useTodaySleep,
   useUserGoals,
   useRecentSessions,
 } from '@/lib/hooks/useDashboard'
 import { PPL_SPLITS } from '@/lib/types/workout'
 import type { SplitDay } from '@/lib/types/workout'
 
-// Cyber Mint domain accents
-const VIOLET = '#43F59B' // Recovery — mint green
-const BLUE = '#4FC3FF'   // Activity — aqua-blue
-const TEAL = '#19E3D0'   // Body — teal
-const CYAN = '#38E1FF'   // Gym — cyan
-const GOLD = '#E8C57A'   // Nutrition — warm gold
-const SUPP = '#7C8CFF'   // Supplements — indigo
+const TrendStrip = dynamic(
+  () => import('@/components/dashboard/TrendStrip').then((m) => ({ default: m.TrendStrip })),
+  { ssr: false, loading: () => <div className="helix-card min-h-[280px] animate-pulse" /> },
+)
 
-const n1 = (v: number | null | undefined): string | null =>
-  v == null || !Number.isFinite(v) ? null : Number(v).toFixed(1)
-const n0 = (v: number | null | undefined): number | null =>
-  v == null || !Number.isFinite(v) ? null : Math.round(v)
+// Bioluminescence domain accents
+const VIOLET = '#8B7CFF' // Sleep / recovery
+const EMBER = '#FFB86B'  // Fuel
+const CYAN = '#3EE0FF'   // Train
+const TEAL = '#16F5C3'   // Body
+const AQUA = '#4FC3FF'   // Steps
+const GOLD = '#E8C57A'   // Stack
+
+const n0 = (v: number | null | undefined) => (v == null ? null : Math.round(v))
+const n1 = (v: number | null | undefined) => (v == null ? null : Math.round(v * 10) / 10)
+
+type SheetKey = 'readiness' | 'sleep' | 'fuel' | 'train' | 'body' | 'steps' | 'stack' | null
 
 export default function DashboardPage() {
-  const router = useRouter()
-  const [logOpen, setLogOpen] = useState(false)
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) router.push('/auth')
-    })
-  }, [router])
-
-  const todaySplit = getTodaysSplit()
-  const logSplit = todaySplit === 'rest' ? 'push' : todaySplit
-
-  const { data: score, isLoading: scoreLoading } = useTodayScore()
-  // Recompute the time-of-day battery on mount + visibility (and backfill the week).
   useEnsureTodayScore()
-
+  const { data: score, isLoading: scoreLoading } = useTodayScore()
   const { data: log, isLoading: logLoading } = useTodayDailyLog()
-  const { data: metrics, isLoading: metricsLoading } = useTodayMetrics()
+  const { data: metrics } = useTodayMetrics()
   const { data: nutrition, isLoading: nutritionLoading } = useTodayNutrition()
-  const { data: sleep, isLoading: sleepLoading } = useTodaySleep()
   const { data: goals } = useUserGoals()
-  const { data: sessions } = useRecentSessions(5)
+  const { data: sessions } = useRecentSessions(3)
+  const { data: taken } = useSupplements()
+  const { data: bioSeries } = useBioSeries()
+  const { data: fuelLogs } = useDailyLogs(8)
 
-  // Derived (daily_logs is the richest source; fall back to fan-out tables)
-  const sleepMin = log?.sleep_minutes ?? sleep?.duration_min ?? null
-  const restHr = log?.avg_rest_heart_rate ?? metrics?.rest_hr ?? null
-  const steps = log?.steps ?? metrics?.steps ?? null
-  const activeKcal = n0(log?.active_energy ?? metrics?.active_cal ?? null)
-  const recoveryLoading = logLoading || sleepLoading
-  const activityLoading = logLoading || metricsLoading
+  const [open, setOpen] = useState<SheetKey>(null)
+  const [logOpen, setLogOpen] = useState(false)
 
-  const lastSession = (sessions ?? []).find((s) => !s.notes?.startsWith('__seed_')) ?? null
+  // Today's scheduled program day (device-local logical day)
+  const todayDay: ProgramDay | 'rest' = useMemo(() => {
+    const weekday = new Date(logicalTodayISO() + 'T12:00:00Z').getUTCDay()
+    return programDayFor(getActiveProgramId(), weekday)
+  }, [])
+
+  const lastSession = sessions?.[0]
   const lastSplit = lastSession ? PPL_SPLITS[lastSession.split_day as SplitDay] : null
-  const lastSessionDate = lastSession
-    ? new Date(lastSession.started_at).toLocaleDateString('en-IL', { day: 'numeric', month: 'short' })
-    : undefined
-
+  const steps = metrics?.steps ?? log?.steps ?? null
+  const calToday = nutrition?.calories != null ? Math.round(nutrition.calories) : null
   const calGoal = goals?.calorie_goal ?? null
-  const calToday = nutrition?.calories ?? null
-  const calPct = calGoal && calToday != null ? Math.round((calToday / calGoal) * 100) : null
+  const phase = fuelLogs?.[0]?.date === logicalTodayISO() ? fuelLogs[0].phase : null
+  const suppCount = taken?.size ?? 0
+  const unit = weightUnit()
 
-  // ── Domains: masonry tiles on mobile (Gym & Nutrition distinct), grid on desktop ──
-  const domains: Array<{ id: string; title: string; icon: typeof HeartPulse; accent: string; headline: React.ReactNode; sub?: React.ReactNode; footer?: React.ReactNode; tiles: React.ReactNode }> = [
+  // Sparkline series (ascending 7d)
+  const kcalSeries = useMemo(() => {
+    const asc = [...(fuelLogs ?? [])].sort((a, b) => a.date.localeCompare(b.date))
+    return asc.map((d) => d.calories)
+  }, [fuelLogs])
+  const weightWoW = useMemo(() => {
+    const w = (bioSeries ?? []).map((d) => d.weightKg).filter((v): v is number => v != null)
+    if (w.length < 4) return null
+    const half = Math.floor(w.length / 2)
+    return Math.round((avg(w.slice(half)) - avg(w.slice(0, half))) * 100) / 100
+  }, [bioSeries])
+
+  const strips: Array<BioStripProps & { key: Exclude<SheetKey, null> }> = [
     {
-      id: 'recovery', title: 'Recovery', icon: HeartPulse, accent: VIOLET,
-      headline: formatSleep(sleepMin),
-      sub: restHr != null ? `RHR ${restHr} bpm` : 'sleep & recovery',
-      tiles: (<>
-        <StatTile label="Sleep" value={formatSleep(sleepMin)} accent={VIOLET} isLoading={recoveryLoading} />
-        <StatTile label="Resting HR" value={restHr} unit="bpm" isLoading={recoveryLoading} />
-        <StatTile label="Respiratory" value={n1(log?.respiratory_rate)} unit="br/min" isLoading={logLoading} />
-        <StatTile label="Blood O₂" value={n0(log?.blood_oxygen)} unit="%" isLoading={logLoading} />
-      </>),
+      key: 'sleep', icon: Moon, label: 'Sleep', accent: VIOLET,
+      value: log?.sleep_minutes != null ? formatSleep(log.sleep_minutes) : null,
+      status: log?.avg_rest_heart_rate != null ? `RHR ${log.avg_rest_heart_rate} bpm` : 'recovery',
+      series: (bioSeries ?? []).map((d) => d.sleepMin),
     },
     {
-      id: 'activity', title: 'Activity', icon: Activity, accent: BLUE,
-      headline: steps?.toLocaleString() ?? '—',
-      sub: activeKcal != null ? `${activeKcal} active kcal` : 'steps & energy',
-      tiles: (<>
-        <StatTile label="Steps" value={steps?.toLocaleString() ?? null} accent={BLUE} isLoading={activityLoading} />
-        <StatTile label="Active Energy" value={activeKcal} unit="kcal" isLoading={activityLoading} />
-        <StatTile label="Water" value={log?.water_ml != null ? mlToL(log.water_ml) : null} unit="L" isLoading={logLoading} />
-        <StatTile label="Training" value={log?.training_minutes} unit="min" isLoading={logLoading} />
-      </>),
+      key: 'fuel', icon: Flame, label: 'Fuel', accent: EMBER,
+      value: calToday, unit: 'kcal',
+      status: phase
+        ? <span style={{ color: PHASE_META[phase].color }}>{PHASE_META[phase].label} day{calGoal ? ` · goal ${calGoal.toLocaleString()}` : ''}</span>
+        : calGoal ? `goal ${calGoal.toLocaleString()}` : 'no log yet',
+      series: kcalSeries,
     },
     {
-      id: 'body', title: 'Body', icon: Scale, accent: TEAL,
-      headline: <>{displayWeight(log?.weight_kg) ?? '—'}{log?.weight_kg != null && <span className="text-fluid-sm"> {weightUnit()}</span>}</>,
-      sub: log?.body_fat_pct != null ? `${n1(log.body_fat_pct)}% body fat` : 'composition',
-      footer: log?.date && log?.weight_kg != null
-        ? <>Weighed in {new Date(log.date + 'T00:00:00').toLocaleDateString('en-IL', { month: 'short', day: 'numeric' })}</>
-        : undefined,
-      tiles: (<>
-        <StatTile label="Weight" value={displayWeight(log?.weight_kg)} unit={weightUnit()} accent={TEAL} isLoading={logLoading} />
-        <StatTile label="BMI" value={n1(log?.bmi)} isLoading={logLoading} />
-        <StatTile label="Lean Mass" value={displayWeight(log?.lean_mass_kg)} unit={weightUnit()} isLoading={logLoading} />
-        <StatTile label="Body Fat" value={n1(log?.body_fat_pct)} unit="%" isLoading={logLoading} />
-        {log?.muscle_percent != null && <StatTile label="Muscle" value={n1(log.muscle_percent)} unit="%" />}
-        {log?.water_percent != null && <StatTile label="Water" value={n1(log.water_percent)} unit="%" />}
-        {log?.visceral_fat != null && <StatTile label="Visceral" value={n1(log.visceral_fat)} />}
-        {log?.bmr != null && <StatTile label="BMR" value={n0(log.bmr)} unit="kcal" />}
-      </>),
+      key: 'train', icon: Dumbbell, label: 'Train', accent: CYAN,
+      value: todayDay === 'rest' ? 'Zone-2 / Rest' : todayDay.label,
+      status: todayDay !== 'rest' && todayDay.sub
+        ? todayDay.sub
+        : lastSession?.total_volume_kg != null
+          ? `last: ${lastSplit?.label ?? ''} · ${Math.round(displayWeight(lastSession.total_volume_kg) ?? 0).toLocaleString()} ${unit}`
+          : 'no sessions yet',
     },
     {
-      id: 'gym', title: 'Gym', icon: Dumbbell, accent: CYAN,
-      headline: <span style={{ color: lastSplit?.color ?? CYAN }}>{lastSplit?.label ?? '—'}</span>,
-      sub: lastSession?.total_volume_kg != null ? `${n0(lastSession.total_volume_kg)?.toLocaleString()} kg · ${lastSessionDate ?? ''}` : 'last session',
-      tiles: (<>
-        <StatTile label="Last Workout" value={lastSplit?.label ?? null} sub={lastSessionDate} accent={lastSplit?.color ?? CYAN} />
-        <StatTile label="Volume" value={n0(lastSession?.total_volume_kg)} unit="kg" />
-        <StatTile label="Split" value={lastSplit?.label ?? null} accent={lastSplit?.color ?? CYAN} />
-        <StatTile label="When" value={lastSessionDate ?? null} />
-      </>),
+      key: 'body', icon: Scale, label: 'Body', accent: TEAL,
+      value: displayWeight(log?.weight_kg), unit,
+      status: weightWoW != null
+        ? <span className={weightWoW <= 0 ? 'text-success' : 'text-warn'}>{weightWoW > 0 ? '+' : ''}{weightWoW} {unit}/wk (7-day avg)</span>
+        : log?.body_fat_pct != null ? `${n1(log.body_fat_pct)}% body fat` : 'composition',
+      series: (bioSeries ?? []).map((d) => displayWeight(d.weightKg)),
     },
     {
-      id: 'nutrition', title: 'Nutrition', icon: Salad, accent: GOLD,
-      headline: <>{calToday?.toLocaleString() ?? '—'}{calToday != null && <span className="text-fluid-sm"> kcal</span>}</>,
-      sub: calGoal && calPct != null ? `${calPct}% of goal` : 'macros',
-      footer: calToday != null && calGoal
-        ? <>Calories: <span className="text-text">{calToday.toLocaleString()}</span> / {calGoal.toLocaleString()} kcal · {calPct}%{goals?.goal_preset ? <span className="capitalize"> · {goals.goal_preset}</span> : null}</>
-        : undefined,
-      tiles: (<>
-        <StatTile label="Calories" value={calToday} unit="kcal" accent={GOLD} isLoading={nutritionLoading} />
-        <StatTile label="Protein" value={n0(nutrition?.protein_g)} unit="g" isLoading={nutritionLoading} />
-        <StatTile label="Carbs" value={n0(nutrition?.carbs_g)} unit="g" isLoading={nutritionLoading} />
-        <StatTile label="Fats" value={n0(nutrition?.fat_g)} unit="g" isLoading={nutritionLoading} />
-      </>),
+      key: 'steps', icon: Footprints, label: 'Steps', accent: AQUA,
+      value: steps,
+      status: log?.active_energy != null ? `${n0(log.active_energy)} active kcal` : 'movement',
+      series: (bioSeries ?? []).map((d) => d.steps),
+    },
+    {
+      key: 'stack', icon: Pill, label: 'Stack', accent: GOLD,
+      value: `${suppCount}/${TOTAL_SUPPLEMENTS}`,
+      status: suppCount >= TOTAL_SUPPLEMENTS ? 'protocol complete ✓' : 'tap to check off',
     },
   ]
 
-  const { data: takenSupps } = useSupplements()
-  const suppCount = takenSupps?.size ?? 0
-
-  const masonryTiles: MasonryTile[] = [
-    ...domains.map((d) => ({
-      id: d.id, title: d.title, icon: d.icon, accent: d.accent,
-      headline: d.headline, sub: d.sub, footer: d.footer,
-      detail: <div className="grid grid-cols-2 gap-2.5">{d.tiles}</div>,
-    })),
-    {
-      id: 'supplements', title: 'Supplements', icon: Pill, accent: SUPP,
-      headline: <>{suppCount}<span className="text-fluid-sm text-muted-vital">/{TOTAL_SUPPLEMENTS}</span></>,
-      sub: suppCount >= TOTAL_SUPPLEMENTS ? 'all taken ✓' : 'tap to check off',
-      detail: <SupplementChecklist />,
-    },
-  ]
+  const sheetTitle: Record<Exclude<SheetKey, null>, string> = {
+    readiness: 'Readiness', sleep: 'Sleep & Recovery', fuel: 'Fuel', train: 'Training',
+    body: 'Body Composition', steps: 'Activity', stack: 'Supplement Protocol',
+  }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <BrandHeader />
 
-      {/* Command-center hero: stacks on mobile, pairs on sm, gains a trends column on xl */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-[1.1fr_1fr_1.3fr]">
-        <AnimatedCard index={0}><ScoreCard score={score ?? null} isLoading={scoreLoading} /></AnimatedCard>
-        <AnimatedCard index={1}><BatteryCard battery={score?.battery_pct ?? null} sleepScore={score?.sleep_score ?? null} recoveryScore={score?.recovery_score ?? null} isLoading={scoreLoading} /></AnimatedCard>
-        <div className="hidden xl:block"><AnimatedCard index={2}><TrendStrip /></AnimatedCard></div>
-      </div>
-
-      {/* Mobile: fluid masonry hub (Gym & Nutrition are distinct tiles) */}
-      <div className="md:hidden">
-        <MasonryDashboard tiles={masonryTiles} />
-      </div>
-
-      {/* Desktop/tablet: deliberate bento — Body + Supplements span full width */}
-      <div className="hidden md:grid grid-cols-2 gap-4">
-        {domains.map((d, i) => (
-          <div key={d.id} className={d.id === 'body' ? 'col-span-2' : ''}>
-            <AnimatedCard index={i + 2}>
-              <DomainWidget title={d.title} icon={d.icon} accent={d.accent} footer={d.footer}>{d.tiles}</DomainWidget>
+      {/* ── Bio-Command hero: breathing orb + live strips ── */}
+      <div className="grid gap-5 lg:grid-cols-[auto_1fr] lg:items-start">
+        <AnimatedCard index={0}>
+          <button onClick={() => setOpen('readiness')} className="block mx-auto" aria-label="Open readiness details">
+            <ReadinessOrb score={score ?? null} isLoading={scoreLoading} />
+          </button>
+        </AnimatedCard>
+        <div className="space-y-2.5">
+          {strips.map((s, i) => (
+            <AnimatedCard key={s.key} index={i + 1}>
+              <BioStrip {...s} onClick={() => setOpen(s.key)} />
             </AnimatedCard>
-          </div>
-        ))}
-        <div className="col-span-2">
-          <AnimatedCard index={7}>
-            <div className="vital-card">
-              <h2 className="font-heading font-semibold text-text flex items-center gap-2 mb-3">
-                <Pill className="w-4 h-4" style={{ color: SUPP }} /> Supplement Protocol
-                <span className="text-fluid-xs text-muted-vital font-normal">{suppCount}/{TOTAL_SUPPLEMENTS} today</span>
-              </h2>
-              <SupplementChecklist />
-            </div>
-          </AnimatedCard>
+          ))}
         </div>
       </div>
 
-      {/* Insight Coach + Weekly review */}
-      <AnimatedCard index={6}>
-        <InsightCoach />
-      </AnimatedCard>
-      <AnimatedCard index={7}>
-        <WeeklyReviewCard />
-      </AnimatedCard>
+      {/* Desktop trends sidecar */}
+      <div className="hidden xl:block"><AnimatedCard index={7}><TrendStrip /></AnimatedCard></div>
 
-      {/* Thumb-reachable quick-log (mobile) */}
+      <AnimatedCard index={8}><InsightCoach /></AnimatedCard>
+      <AnimatedCard index={9}><WeeklyReviewCard /></AnimatedCard>
+
+      {/* ── Domain detail sheet ── */}
+      <Sheet open={!!open} onClose={() => setOpen(null)} title={open ? sheetTitle[open] : undefined}>
+        {open === 'readiness' && (
+          <div className="space-y-4">
+            <ScoreCard score={score ?? null} />
+            <BatteryCard battery={score?.battery_pct ?? null} />
+          </div>
+        )}
+        {open === 'sleep' && (
+          <div className="grid grid-cols-2 gap-2.5">
+            <StatTile label="Sleep" value={log?.sleep_minutes != null ? formatSleep(log.sleep_minutes) : null} accent={VIOLET} isLoading={logLoading} />
+            <StatTile label="Resting HR" value={log?.avg_rest_heart_rate} unit="bpm" isLoading={logLoading} />
+            <StatTile label="Respiratory" value={n1(log?.respiratory_rate)} unit="br/min" isLoading={logLoading} />
+            <StatTile label="Blood O₂" value={n0(log?.blood_oxygen)} unit="%" isLoading={logLoading} />
+          </div>
+        )}
+        {open === 'fuel' && (
+          <div className="grid grid-cols-2 gap-2.5">
+            <StatTile label="Calories" value={calToday} unit="kcal" accent={EMBER} isLoading={nutritionLoading} />
+            <StatTile label="Protein" value={n0(nutrition?.protein_g)} unit="g" isLoading={nutritionLoading} />
+            <StatTile label="Carbs" value={n0(nutrition?.carbs_g)} unit="g" isLoading={nutritionLoading} />
+            <StatTile label="Fats" value={n0(nutrition?.fat_g)} unit="g" isLoading={nutritionLoading} />
+          </div>
+        )}
+        {open === 'train' && (
+          <div className="space-y-2.5">
+            <div className="grid grid-cols-2 gap-2.5">
+              <StatTile label="Today" value={todayDay === 'rest' ? 'Zone-2 / Rest' : todayDay.label} sub={todayDay !== 'rest' ? todayDay.sub : undefined} accent={CYAN} />
+              <StatTile label="Last Volume" value={n0(displayWeight(lastSession?.total_volume_kg ?? null))} unit={unit} />
+            </div>
+            <button onClick={() => { setOpen(null); setLogOpen(true) }} className="btn-glass w-full justify-center">
+              <Plus className="w-4 h-4" /> Log {todayDay === 'rest' ? 'Session' : todayDay.label}
+            </button>
+          </div>
+        )}
+        {open === 'body' && (
+          <div className="grid grid-cols-2 gap-2.5">
+            <StatTile label="Weight" value={displayWeight(log?.weight_kg)} unit={unit} accent={TEAL} isLoading={logLoading} />
+            <StatTile label="BMI" value={n1(log?.bmi)} isLoading={logLoading} />
+            <StatTile label="Lean Mass" value={displayWeight(log?.lean_mass_kg)} unit={unit} isLoading={logLoading} />
+            <StatTile label="Body Fat" value={n1(log?.body_fat_pct)} unit="%" isLoading={logLoading} />
+            {log?.muscle_percent != null && <StatTile label="Muscle" value={n1(log.muscle_percent)} unit="%" />}
+            {log?.bmr != null && <StatTile label="BMR" value={n0(log.bmr)} unit="kcal" />}
+          </div>
+        )}
+        {open === 'steps' && (
+          <div className="grid grid-cols-2 gap-2.5">
+            <StatTile label="Steps" value={steps?.toLocaleString() ?? null} accent={AQUA} />
+            <StatTile label="Active Energy" value={n0(log?.active_energy)} unit="kcal" isLoading={logLoading} />
+            <StatTile label="Water" value={log?.water_ml != null ? mlToL(log.water_ml) : null} unit="L" isLoading={logLoading} />
+            <StatTile label="Training" value={log?.training_minutes} unit="min" isLoading={logLoading} />
+          </div>
+        )}
+        {open === 'stack' && <SupplementChecklist />}
+      </Sheet>
+
+      {/* Thumb-reachable quick-log */}
       <Fab icon={Plus} label="Log" onClick={() => setLogOpen(true)} />
       <Sheet open={logOpen} onClose={() => setLogOpen(false)} title="Quick Log">
-        <WorkoutChat splitDay={logSplit} onClose={() => setLogOpen(false)} />
+        <WorkoutChat splitDay={todayDay === 'rest' ? 'upper' : daySplitEnum(todayDay.key)} onClose={() => setLogOpen(false)} />
       </Sheet>
     </div>
   )
+}
+
+function avg(xs: number[]): number {
+  return xs.reduce((a, b) => a + b, 0) / xs.length
 }

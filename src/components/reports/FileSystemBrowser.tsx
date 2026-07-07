@@ -7,6 +7,7 @@ import type { ReportRow, GymReportRow } from '@/lib/hooks/useWeekly'
 import { enumerateWeeks, type ProgramWeek } from '@/lib/phases'
 import { eraForDate } from '@/lib/programs'
 import { MarkdownView } from './MarkdownView'
+import { SessionIntelCard } from './SessionIntelCard'
 
 interface FileItem { key: string; name: string; sub?: string; icon: LucideIcon; accent: string; body: string; meta?: GymReportRow }
 
@@ -56,7 +57,7 @@ export function FileSystemBrowser({ reports, gymReports, focusWeek, era = 'all' 
   const file = files.find((f) => f.key === fileKey) ?? null
 
   return (
-    <section className="vital-card space-y-4">
+    <section className="helix-card space-y-4">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-1.5 text-fluid-sm flex-wrap" aria-label="Breadcrumb">
         <button onClick={() => { setWeek(null); setFileKey(null) }} className="flex items-center gap-1 text-muted-vital hover:text-primary"><Home className="w-3.5 h-3.5" /> journey</button>
@@ -70,16 +71,13 @@ export function FileSystemBrowser({ reports, gymReports, focusWeek, era = 'all' 
       {file ? (
         <div className="space-y-3">
           <button onClick={() => setFileKey(null)} className="btn-glass text-fluid-xs"><ArrowLeft className="w-3.5 h-3.5" /> Back</button>
-          {file.meta && (
-            <div className="flex flex-wrap gap-2">
-              {file.meta.durationMin != null && <Chip label="Duration" value={`${file.meta.durationMin}m`} />}
-              {file.meta.avgBpm != null && <Chip label="Avg BPM" value={`${file.meta.avgBpm}`} />}
-              {file.meta.volumeKg != null && <Chip label="Volume" value={`${Math.round(file.meta.volumeKg).toLocaleString()} kg`} />}
-              {file.meta.setCount != null && <Chip label="Sets" value={`${file.meta.setCount}`} />}
-              {(file.meta.prCount ?? 0) > 0 && <Chip label="PRs" value={`${file.meta.prCount}`} accent="#E8C57A" />}
-            </div>
+          {file.meta ? (
+            /* Gym sessions render as a data-first Intel Card */
+            <SessionIntelCard session={file.meta} />
+          ) : (
+            /* Weekly prose reports (summary / weight) keep the markdown view */
+            <article className="rounded-2xl bg-black/20 border border-white/[0.06] p-4 max-h-[60vh] overflow-y-auto no-scrollbar"><MarkdownView md={file.body} /></article>
           )}
-          <article className="rounded-2xl bg-black/20 border border-white/[0.06] p-4 max-h-[60vh] overflow-y-auto no-scrollbar"><MarkdownView md={file.body} /></article>
         </div>
       ) : week ? (
         files.length === 0
@@ -100,10 +98,15 @@ export function FileSystemBrowser({ reports, gymReports, focusWeek, era = 'all' 
             </ul>
           )
       ) : (
-        // Root: two columns — Cut & Bulk
+        // Root: two columns — Cut & Bulk, weeks grouped under strict ERA sections
+        // so the historical PPL 50-day cut can never mix with the HELIX cut.
         <div className="grid sm:grid-cols-2 gap-4">
           {COLUMNS.map((col) => {
             const weeks = enumerateWeeks([col.kind]).filter((w) => era === 'all' || eraForDate(w.weekStart) === era)
+            const eraGroups = [
+              { id: 'helix', title: 'HELIX Era', color: '#16F5C3', weeks: weeks.filter((w) => w.era === 'helix') },
+              { id: 'ppl', title: 'PPL Legacy', color: '#8B97B2', weeks: weeks.filter((w) => w.era === 'ppl') },
+            ].filter((g) => g.weeks.length > 0)
             const ColIcon = col.Icon
             return (
               <div key={col.kind} className="space-y-2">
@@ -112,8 +115,14 @@ export function FileSystemBrowser({ reports, gymReports, focusWeek, era = 'all' 
                   <h3 className="font-heading font-semibold text-fluid-sm" style={{ color: col.color }}>{col.title}</h3>
                   <span className="ml-auto text-fluid-xs text-muted-vital">{weeks.length} wk</span>
                 </div>
+                {eraGroups.map((g) => (
+                <div key={g.id} className="space-y-1.5">
+                <div className="flex items-center gap-1.5 px-1 pt-1">
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: g.color, boxShadow: `0 0 6px ${g.color}88` }} />
+                  <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: g.color }}>{g.title}</span>
+                </div>
                 <ul className="space-y-1.5">
-                  {weeks.map((w) => {
+                  {g.weeks.map((w) => {
                     const has = filesFor(w).length > 0
                     return (
                       <li key={w.weekStart}>
@@ -132,6 +141,8 @@ export function FileSystemBrowser({ reports, gymReports, focusWeek, era = 'all' 
                     )
                   })}
                 </ul>
+                </div>
+                ))}
               </div>
             )
           })}
@@ -141,11 +152,3 @@ export function FileSystemBrowser({ reports, gymReports, focusWeek, era = 'all' 
   )
 }
 
-function Chip({ label, value, accent = '#19E3B1' }: { label: string; value: string; accent?: string }) {
-  return (
-    <span className="inline-flex flex-col rounded-xl px-3 py-1.5 border" style={{ borderColor: `${accent}40`, background: `${accent}14` }}>
-      <span className="text-[9px] uppercase tracking-wide text-muted-vital leading-none">{label}</span>
-      <span className="vital-number text-fluid-sm font-bold leading-tight" style={{ color: accent }}>{value}</span>
-    </span>
-  )
-}

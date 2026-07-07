@@ -20,7 +20,7 @@ export function MetricCard({
   isLoading,
 }: MetricCardProps) {
   return (
-    <div className="vital-card flex flex-col gap-3 h-full">
+    <div className="helix-card flex flex-col gap-3 h-full">
       <div className="flex items-center justify-between">
         <span className="text-sm text-muted-vital font-medium">{label}</span>
         <Icon className={`w-4 h-4 ${iconColor}`} aria-hidden="true" />
@@ -34,7 +34,7 @@ export function MetricCard({
       ) : (
         <>
           <div className="flex items-baseline gap-1.5">
-            <span className="vital-number text-3xl font-bold text-text">
+            <span className="helix-num text-3xl font-bold text-text">
               {value ?? '—'}
             </span>
             {unit && <span className="text-muted-vital text-sm">{unit}</span>}

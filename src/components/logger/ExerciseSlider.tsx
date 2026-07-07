@@ -49,7 +49,7 @@ export function ExerciseSlider({
   }
 
   return (
-    <div className="vital-card">
+    <div className="helix-card">
       {/* ── Header — always visible */}
       <button
         type="button"
@@ -107,7 +107,7 @@ export function ExerciseSlider({
               <label htmlFor={`w-${exerciseId}`} className="text-muted-vital font-medium">
                 Weight
               </label>
-              <span className="vital-number font-bold text-text text-sm tabular-nums">
+              <span className="helix-num font-bold text-text text-sm tabular-nums">
                 {weight.toFixed(weight % 1 === 0 ? 0 : 1)}
                 <span className="text-xs text-muted-vital font-normal ml-0.5">kg</span>
               </span>
@@ -136,7 +136,7 @@ export function ExerciseSlider({
               <label htmlFor={`r-${exerciseId}`} className="text-muted-vital font-medium">
                 Reps
               </label>
-              <span className="vital-number font-bold text-text text-sm tabular-nums">
+              <span className="helix-num font-bold text-text text-sm tabular-nums">
                 {reps}
                 <span className="text-xs text-muted-vital font-normal ml-0.5">reps</span>
               </span>

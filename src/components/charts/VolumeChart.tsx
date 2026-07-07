@@ -24,7 +24,7 @@ export function VolumeChart({ data, isLoading }: { data: VolumePoint[]; isLoadin
   const unit = useUnitSystem()
 
   if (isLoading) {
-    return <div className="vital-card h-64 flex items-center justify-center"><div className="w-full h-40 bg-surface-2 rounded-xl animate-pulse" /></div>
+    return <div className="helix-card h-64 flex items-center justify-center"><div className="w-full h-40 bg-surface-2 rounded-xl animate-pulse" /></div>
   }
 
   const filtered = data.filter((d) => d.split === split || (split === 'legs' && d.split === 'lower'))
@@ -32,7 +32,7 @@ export function VolumeChart({ data, isLoading }: { data: VolumePoint[]; isLoadin
   const color = PPL_SPLITS[split]?.color ?? '#19E3B1'
 
   return (
-    <div className="vital-card">
+    <div className="helix-card">
       <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
         <h3 className="font-heading font-semibold text-base">Workout Volume</h3>
         <div className="flex gap-1 overflow-x-auto no-scrollbar">

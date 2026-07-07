@@ -7,33 +7,51 @@ import { Resvg } from '@resvg/resvg-js'
 import { writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
-// HELIX — two interleaved neon strands forming an "H" with base-pair rungs.
+// HELIX v2 — the double strand suspended inside a bioluminescent liquid-glass orb.
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
   <defs>
-    <radialGradient id="bg" cx="35%" cy="28%" r="85%">
-      <stop offset="0%" stop-color="#0c2a3a"/><stop offset="62%" stop-color="#070a15"/><stop offset="100%" stop-color="#04060d"/>
+    <radialGradient id="bg" cx="50%" cy="32%" r="95%">
+      <stop offset="0%" stop-color="#081722"/><stop offset="58%" stop-color="#04070f"/><stop offset="100%" stop-color="#020409"/>
     </radialGradient>
-    <linearGradient id="sa" x1="170" y1="450" x2="220" y2="60" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#19E3B1"/><stop offset="100%" stop-color="#5BFF9D"/>
+    <radialGradient id="orb" cx="38%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#123b46" stop-opacity="0.95"/>
+      <stop offset="55%" stop-color="#071522" stop-opacity="0.92"/>
+      <stop offset="100%" stop-color="#03080f" stop-opacity="0.98"/>
+    </radialGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="55%" stop-color="#16F5C3" stop-opacity="0"/>
+      <stop offset="82%" stop-color="#16F5C3" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#3EE0FF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="sa" x1="200" y1="380" x2="235" y2="130" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#16F5C3"/><stop offset="100%" stop-color="#5BFF9D"/>
     </linearGradient>
-    <linearGradient id="sb" x1="300" y1="60" x2="350" y2="450" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#38E1FF"/><stop offset="100%" stop-color="#4F9DFF"/>
+    <linearGradient id="sb" x1="277" y1="130" x2="312" y2="380" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3EE0FF"/><stop offset="100%" stop-color="#8B7CFF"/>
     </linearGradient>
-    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="10" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="9" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
   </defs>
   <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <!-- Volumetric halo behind the orb -->
+  <circle cx="256" cy="256" r="235" fill="url(#halo)"/>
+  <!-- Liquid-glass orb -->
+  <circle cx="256" cy="256" r="182" fill="url(#orb)" stroke="rgba(150,235,255,0.28)" stroke-width="3"/>
+  <!-- Helix suspended inside -->
   <g filter="url(#glow)" stroke-linecap="round" fill="none">
-    <path d="M186 78 C230 176, 142 218, 186 316 C208 366, 208 400, 186 446" stroke="rgba(0,0,0,0.42)" stroke-width="34" transform="translate(10,8)"/>
-    <path d="M326 78 C282 176, 370 218, 326 316 C304 366, 304 400, 326 446" stroke="rgba(0,0,0,0.42)" stroke-width="34" transform="translate(10,8)"/>
-    <path d="M186 78 C230 176, 142 218, 186 316 C208 366, 208 400, 186 446" stroke="url(#sa)" stroke-width="30"/>
-    <path d="M326 78 C282 176, 370 218, 326 316 C304 366, 304 400, 326 446" stroke="url(#sb)" stroke-width="30"/>
-    <path d="M206 166 L306 166" stroke="rgba(234,251,255,0.78)" stroke-width="20"/>
-    <path d="M172 262 L340 262" stroke="rgba(234,251,255,0.95)" stroke-width="24"/>
-    <path d="M206 358 L306 358" stroke="rgba(234,251,255,0.78)" stroke-width="20"/>
-    <circle cx="326" cy="84" r="15" fill="#EAFBFF"/>
+    <path d="M216 124 C250 196, 182 226, 216 298 C232 334, 232 358, 216 392" stroke="rgba(0,0,0,0.45)" stroke-width="27" transform="translate(7,6)"/>
+    <path d="M296 124 C262 196, 330 226, 296 298 C280 334, 280 358, 296 392" stroke="rgba(0,0,0,0.45)" stroke-width="27" transform="translate(7,6)"/>
+    <path d="M216 124 C250 196, 182 226, 216 298 C232 334, 232 358, 216 392" stroke="url(#sa)" stroke-width="24"/>
+    <path d="M296 124 C262 196, 330 226, 296 298 C280 334, 280 358, 296 392" stroke="url(#sb)" stroke-width="24"/>
+    <path d="M231 190 L281 190" stroke="rgba(234,251,255,0.8)" stroke-width="16"/>
+    <path d="M205 258 L307 258" stroke="rgba(234,251,255,0.95)" stroke-width="19"/>
+    <path d="M231 326 L281 326" stroke="rgba(234,251,255,0.8)" stroke-width="16"/>
+    <circle cx="296" cy="128" r="12" fill="#EAFBFF"/>
   </g>
+  <!-- Caustic highlight arc on the glass -->
+  <path d="M136 158 A160 160 0 0 1 300 92" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="10" stroke-linecap="round" opacity="0.55"/>
+  <ellipse cx="196" cy="150" rx="52" ry="26" fill="rgba(255,255,255,0.14)" transform="rotate(-28 196 150)"/>
 </svg>`
 
 function render(size, file) {

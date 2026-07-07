@@ -5,22 +5,13 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useReports, useMonthActivity, useGymReports, type GymReportRow } from '@/lib/hooks/useWeekly'
 import { getWeekPhase, phaseBadgeStyle } from '@/lib/phases'
 import { FileSystemBrowser } from '@/components/reports/FileSystemBrowser'
-import { MarkdownView } from '@/components/reports/MarkdownView'
+import { SessionIntelCard } from '@/components/reports/SessionIntelCard'
 import { Sheet } from '@/components/ui/Sheet'
 import { ChevronLeft, ChevronRight, Loader2, Sparkles, FolderOpen } from 'lucide-react'
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 const iso = (d: Date) => d.toISOString().slice(0, 10)
 const addDays = (d: Date, n: number) => { const x = new Date(d); x.setUTCDate(x.getUTCDate() + n); return x }
-
-function MetaChip({ label, value, accent = '#19E3B1' }: { label: string; value: string; accent?: string }) {
-  return (
-    <span className="inline-flex flex-col rounded-xl px-3 py-1.5 border" style={{ borderColor: `${accent}40`, background: `${accent}14` }}>
-      <span className="text-[9px] uppercase tracking-wide text-muted-vital leading-none">{label}</span>
-      <span className="vital-number text-fluid-sm font-bold leading-tight" style={{ color: accent }}>{value}</span>
-    </span>
-  )
-}
 
 export default function WeeklyPage() {
   const qc = useQueryClient()
@@ -78,7 +69,7 @@ export default function WeeklyPage() {
       </div>
 
       {/* ── Calendar (compact on mobile, full-width on desktop) ── */}
-      <section className="vital-card space-y-2 max-w-md lg:max-w-none">
+      <section className="helix-card space-y-2 max-w-md lg:max-w-none">
         <div className="flex items-center justify-between">
           <button onClick={() => setMonth((p) => ({ y: p.m === 0 ? p.y - 1 : p.y, m: p.m === 0 ? 11 : p.m - 1 }))}
             className="p-1.5 rounded-lg hover:bg-white/[0.05] text-muted-vital" aria-label="Previous month"><ChevronLeft className="w-4 h-4" /></button>
@@ -100,7 +91,7 @@ export default function WeeklyPage() {
               <div key={weekStart} className="space-y-1">
                 {/* Neon phase strip spanning the whole week */}
                 {phase && (
-                  <div style={phaseBadgeStyle(phase.kind, isFocus)} className="w-full flex items-center justify-between rounded-lg pl-2 pr-1 py-0.5">
+                  <div style={phaseBadgeStyle(phase.kind, isFocus, phase.era)} className="w-full flex items-center justify-between rounded-lg pl-2 pr-1 py-0.5">
                     <button onClick={() => openFolder(weekStart)} className="flex items-center gap-1.5 text-[10px] font-bold leading-tight py-0.5" title={`Open ${phase.label} files`}>
                       <FolderOpen className="w-3 h-3" /> {phase.label}
                     </button>
@@ -141,7 +132,7 @@ export default function WeeklyPage() {
         </p>
       </section>
 
-      {error && <div className="vital-card border-danger/40"><p className="text-danger text-fluid-sm">{error}</p></div>}
+      {error && <div className="helix-card border-danger/40"><p className="text-danger text-fluid-sm">{error}</p></div>}
 
       {/* ── File System ── */}
       <div id="report-browser" className="space-y-3">
@@ -166,18 +157,7 @@ export default function WeeklyPage() {
         onClose={() => setDaySession(null)}
         title={daySession ? `${daySession.split[0].toUpperCase()}${daySession.split.slice(1)} · ${new Date(daySession.date + 'T00:00:00').toLocaleDateString('en-IL', { month: 'short', day: 'numeric' })}` : undefined}
       >
-        {daySession && (
-          <div className="space-y-3">
-            <div className="flex flex-wrap gap-2">
-              {daySession.durationMin != null && <MetaChip label="Duration" value={`${daySession.durationMin}m`} />}
-              {daySession.avgBpm != null && <MetaChip label="Avg BPM" value={`${daySession.avgBpm}`} />}
-              {daySession.volumeKg != null && <MetaChip label="Volume" value={`${Math.round(daySession.volumeKg).toLocaleString()} kg`} />}
-              {daySession.setCount != null && <MetaChip label="Sets" value={`${daySession.setCount}`} />}
-              {(daySession.prCount ?? 0) > 0 && <MetaChip label="PRs" value={`${daySession.prCount}`} accent="#E8C57A" />}
-            </div>
-            <MarkdownView md={daySession.reportMd} />
-          </div>
-        )}
+        {daySession && <SessionIntelCard session={daySession} />}
       </Sheet>
     </div>
   )

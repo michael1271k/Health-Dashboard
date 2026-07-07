@@ -32,7 +32,7 @@ export function PRHistoryChart({ data, isLoading }: PRHistoryChartProps) {
   const unit = useUnitSystem()
   if (isLoading) {
     return (
-      <div className="vital-card h-64 flex items-center justify-center">
+      <div className="helix-card h-64 flex items-center justify-center">
         <div className="w-full h-40 bg-surface-2 rounded-xl animate-pulse" />
       </div>
     )
@@ -40,7 +40,7 @@ export function PRHistoryChart({ data, isLoading }: PRHistoryChartProps) {
 
   if (!data.length) {
     return (
-      <div className="vital-card h-64 flex items-center justify-center">
+      <div className="helix-card h-64 flex items-center justify-center">
         <p className="text-muted-vital text-sm">Log workouts to see strength trends.</p>
       </div>
     )
@@ -71,7 +71,7 @@ export function PRHistoryChart({ data, isLoading }: PRHistoryChartProps) {
   }))
 
   return (
-    <div className="vital-card">
+    <div className="helix-card">
       <h3 className="font-heading font-semibold text-base mb-4">
         Estimated 1RM Trends
       </h3>

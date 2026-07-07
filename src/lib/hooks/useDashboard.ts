@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import type { Tables } from '@/lib/supabase/types'
-import { logicalTodayISO } from '@/lib/utils/day'
+import { logicalTodayISO, hoursAwakeToday } from '@/lib/utils/day'
 
 // Today's LOGICAL date (rolls over at the 04:00 cutoff, not midnight)
 function todayLocal(): string {
@@ -70,7 +70,9 @@ export function useEnsureTodayScore(enabled = true) {
       lastRun.current = now
       fetch('/api/compute-score', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ backfillDays }),
+        // Send the DEVICE's logical date + hours awake — the server has no idea
+        // what timezone the user is in (Thailand ≠ server clock).
+        body: JSON.stringify({ backfillDays, date: logicalTodayISO(), hoursAwake: hoursAwakeToday() }),
       })
         .then((r) => (r.ok ? qc.invalidateQueries({ queryKey: ['daily_scores'] }).then(() => qc.invalidateQueries({ queryKey: ['weekly_review'] })) : null))
         .catch(() => {})
@@ -78,9 +80,9 @@ export function useEnsureTodayScore(enabled = true) {
     // Backfill the week only ONCE per browser session (8 days of server compute
     // is too heavy to run on every dashboard mount — that was a big tab-lag source).
     let backfilled = false
-    try { backfilled = sessionStorage.getItem('apex_backfilled') === '1' } catch {}
+    try { backfilled = sessionStorage.getItem('helix_backfilled') === '1' } catch {}
     if (!backfilled) {
-      try { sessionStorage.setItem('apex_backfilled', '1') } catch {}
+      try { sessionStorage.setItem('helix_backfilled', '1') } catch {}
       recompute(7)
     } else {
       recompute(0)

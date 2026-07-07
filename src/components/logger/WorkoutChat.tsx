@@ -110,7 +110,7 @@ export function WorkoutChat({ splitDay, onClose }: WorkoutChatProps) {
           </p>
         )}
         {result.reportMd && (
-          <div className="vital-card max-h-72 overflow-y-auto">
+          <div className="helix-card max-h-72 overflow-y-auto">
             <div className="text-sm whitespace-pre-wrap text-text" dir="auto">{result.reportMd}</div>
           </div>
         )}
@@ -218,7 +218,7 @@ export function WorkoutChat({ splitDay, onClose }: WorkoutChatProps) {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="glass-card py-2.5">
-      <div className="vital-number font-bold text-text">{value}</div>
+      <div className="helix-num font-bold text-text">{value}</div>
       <div className="text-[11px] text-muted-vital">{label}</div>
     </div>
   )

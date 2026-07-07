@@ -9,7 +9,7 @@ interface StatTileProps {
 }
 
 /**
- * A single metric cell inside a DomainWidget: label on top, large value, an
+ * A single metric cell inside a domain detail sheet: label on top, large value, an
  * optional unit and a smaller sub-line. Renders an em-dash for missing values.
  */
 export function StatTile({ label, value, unit, sub, accent, isLoading }: StatTileProps) {
@@ -23,7 +23,7 @@ export function StatTile({ label, value, unit, sub, accent, isLoading }: StatTil
       ) : (
         <div className="flex items-baseline gap-1">
           <span
-            className="vital-number text-xl font-bold leading-none"
+            className="helix-num text-xl font-bold leading-none"
             style={{ color: accent ?? 'var(--color-text)' }}
           >
             {display}

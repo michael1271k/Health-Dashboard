@@ -73,8 +73,14 @@ describe('v5.1 phase engine', () => {
   it('maintenance week 2026-08-30 is MAINTENANCE, not a cut failure', () => {
     expect(getWeekPhase('2026-08-30')?.kind).toBe('maintenance')
   })
-  it('cut resumes at Week 7 after the maintenance week', () => {
-    expect(getWeekPhase('2026-09-06')?.label).toBe('Cut Week 7')
+  it('cut resumes at Week 7 after the maintenance week (era-tagged label)', () => {
+    expect(getWeekPhase('2026-09-06')?.label).toBe('HELIX Cut · Phase 1 · Week 7')
+  })
+  it('the two Cut eras carry distinct tags (never mixed)', () => {
+    expect(getWeekPhase('2026-05-10')?.eraTag).toBe('PPL Cut')
+    expect(getWeekPhase('2026-05-10')?.era).toBe('ppl')
+    expect(getWeekPhase('2026-07-19')?.eraTag).toBe('HELIX Cut · Phase 1')
+    expect(getWeekPhase('2026-07-19')?.era).toBe('helix')
   })
   it('lean bulk starts 2026-11-01', () => {
     expect(getWeekPhase('2026-11-01')?.kind).toBe('bulk')

@@ -3,25 +3,25 @@
 @import "tailwindcss";
 
 /* ============================================
-   VITAL Design Tokens (Tailwind v4 @theme)
+   HELIX Design Tokens (Tailwind v4 @theme)
    ============================================ */
 @theme {
-  /* APEX Color Palette — "Midnight Luxe" (Phase 7)
-     Near-black royal base, royal-indigo primary, neon-teal + ice-cyan accents,
-     warm gold for PRs / positive highlights. */
-  --color-bg: #050711;          /* deepest near-black obsidian (kept) */
-  --color-surface: #0A0E1C;     /* raised glass base */
-  --color-surface-2: #131A2E;   /* solid raised surfaces (sliders, inputs) */
-  --color-primary: #19E3B1;     /* neon teal — the Cyber Mint signature accent */
-  --color-energy: #4FC3FF;      /* aqua-blue — battery / activity */
-  --color-info: #38E1FF;        /* cyan — data */
-  --color-success: #43F59B;     /* mint green — positive deltas / recovery */
-  --color-warn: #FFB020;        /* amber — caution */
+  /* HELIX Color Palette — "Bioluminescence" (Phase 14)
+     Abyssal-ocean base with living bioluminescent accents: living teal,
+     plankton cyan, abyss violet for recovery, ember for fuel/caution. */
+  --color-bg: #030509;          /* abyssal near-black */
+  --color-surface: #080d18;     /* raised glass base */
+  --color-surface-2: #101728;   /* solid raised surfaces (sliders, inputs) */
+  --color-primary: #16F5C3;     /* living teal — the HELIX signature accent */
+  --color-energy: #8B7CFF;      /* abyss violet — recovery / battery accents */
+  --color-info: #3EE0FF;        /* plankton cyan — data */
+  --color-success: #43F59B;     /* mint green — positive deltas */
+  --color-warn: #FFB86B;        /* ember — fuel / caution */
   --color-danger: #FF5470;      /* rose — negative */
   --color-gold: #E8C57A;        /* warm gold — PRs / luxury highlight */
-  --color-text: #EAF0FA;
+  --color-text: #EAF2FF;
   --color-muted-vital: #8B97B2;
-  --color-border: #1C2742;      /* hairline (legacy solid contexts) */
+  --color-border: #182238;      /* hairline (legacy solid contexts) */
   /* Light mode (kept for completeness) */
   --color-light-bg: #F4F6FA;
   --color-light-surface: #FFFFFF;
@@ -295,7 +295,7 @@ html[data-theme='travel'] {
 
   /* Card base — true-glass values inlined (Tailwind v4 @apply can't reference
      custom @layer components classes) */
-  .vital-card {
+  .helix-card {
     background: rgba(255,255,255,0.045);
     backdrop-filter: blur(40px) saturate(190%);
     -webkit-backdrop-filter: blur(40px) saturate(190%);
@@ -309,9 +309,9 @@ html[data-theme='travel'] {
     @apply p-5;
   }
   @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-    .vital-card { background: var(--color-surface); border-color: var(--color-border); }
+    .helix-card { background: var(--color-surface); border-color: var(--color-border); }
   }
-  .vital-card:hover {
+  .helix-card:hover {
     border-color: rgba(255,255,255,0.14);
     box-shadow:
       inset 0 1px 0 rgba(255,255,255,0.14),
@@ -320,7 +320,7 @@ html[data-theme='travel'] {
   }
 
   /* Number display */
-  .vital-number {
+  .helix-num {
     @apply font-mono tabular-nums;
   }
 
@@ -386,13 +386,14 @@ html[data-theme='travel'] {
   }
 
   /* Glowing APEX wordmark (Phase 7) — indigo→cyan→teal gradient + soft glow. */
-  .apex-wordmark {
-    background: linear-gradient(90deg, #19E3B1 0%, #38E1FF 52%, #43F59B 100%);
+  .helix-wordmark {
+    /* Bioluminescent band: living teal → plankton cyan → abyss violet */
+    background: linear-gradient(90deg, #16F5C3 0%, #3EE0FF 55%, #8B7CFF 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
     -webkit-text-fill-color: transparent;
-    filter: drop-shadow(0 0 16px rgba(25,227,177,0.45));
+    filter: drop-shadow(0 0 16px rgba(22,245,195,0.45));
   }
 }
 
@@ -480,6 +481,13 @@ html[data-theme='travel'] {
   animation: ecgSweep 2s linear infinite;
 }
 
+/* Readiness orb "breathing" — glow-only pulse (no transform near glass). */
+@keyframes orbBreathe {
+  0%, 100% { filter: drop-shadow(0 0 14px rgba(22,245,195,0.16)); }
+  50%      { filter: drop-shadow(0 0 30px rgba(22,245,195,0.34)); }
+}
+.orb-breathe { animation: orbBreathe 5.5s ease-in-out infinite; }
+
 /* Score charge-up ring: draws once on mount (from empty to the inline level),
    then a soft flash. No `to` — the keyframe resolves to the inline offset. */
 @keyframes ringDraw { from { stroke-dashoffset: 190; } }
@@ -498,7 +506,7 @@ html[data-reduce-motion='true'] .grain-overlay { display: none; }
 
 /* Mobile blur budget — a 40px backdrop blur melts phone GPUs. Halve it. */
 @media (max-width: 768px) {
-  .vital-card, .glass-card, .btn-glass {
+  .helix-card, .glass-card, .btn-glass {
     backdrop-filter: blur(18px) saturate(160%);
     -webkit-backdrop-filter: blur(18px) saturate(160%);
   }

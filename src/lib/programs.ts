@@ -42,6 +42,7 @@ export interface ProgramExercise {
 export interface ProgramDay {
   key: string
   label: string
+  sub?: string           // split sub-type shown under the name (e.g. "Quad Focus")
   color: string
   weekday: number        // 0=Sun … 6=Sat
   cutSetDelta?: number   // total sets removed in cut mode (v5.1 plan tables)
@@ -62,7 +63,7 @@ const C = { cbA: '#38E1FF', legsA: '#4FC3FF', arms: '#43F59B', cbB: '#E8C57A', l
 export const APEX51: Program = {
   id: 'apex51', label: 'APEX-5.1', era: 'axis', active: true,
   days: [
-    { key: 'cb_a', label: 'Chest+Back A', color: C.cbA, weekday: 0, cutSetDelta: -3, exercises: [
+    { key: 'cb_a', label: 'Upper A', sub: 'Chest + Back', color: C.cbA, weekday: 0, cutSetDelta: -3, exercises: [
       { name: 'Incline DB Press', sets: 3, wk1Kg: 32, reps: '8–12', muscles: ['chest', 'shoulders'], compound: true },
       { name: 'Lat Pulldown', sets: 3, wk1Kg: 45, reps: '8–12', muscles: ['back'], compound: true },
       { name: 'Chest Press Machine', sets: 3, wk1Kg: 34, reps: '10–12', muscles: ['chest', 'triceps'], compound: true },
@@ -71,7 +72,7 @@ export const APEX51: Program = {
       { name: 'Straight-Arm Pulldown', sets: 2, wk1Kg: 15, reps: '12–15', muscles: ['back'] },
       { name: 'Face Pull', sets: 3, wk1Kg: 13.75, reps: '12–15', muscles: ['shoulders', 'back'] },
     ] },
-    { key: 'legs_a', label: 'Legs A · Quad+Core', color: C.legsA, weekday: 1, cutSetDelta: -4, exercises: [
+    { key: 'legs_a', label: 'Legs & Core', sub: 'Quad Focus', color: C.legsA, weekday: 1, cutSetDelta: -4, exercises: [
       { name: 'Leg Press', sets: 4, wk1Kg: 70, reps: '8–12', muscles: ['quads', 'glutes'], compound: true, note: '1 warm-up @40kg' },
       { name: 'Hack/Smith Squat', sets: 3, wk1Kg: null, reps: '10–12', muscles: ['quads', 'glutes'], compound: true },
       { name: 'Leg Extension', sets: 3, wk1Kg: 37.5, reps: '12–15', muscles: ['quads'] },
@@ -90,7 +91,7 @@ export const APEX51: Program = {
       { name: 'Reverse EZ-Bar Curl', sets: 2, wk1Kg: 15, reps: '12–15', muscles: ['forearms', 'biceps'] },
       { name: 'Seated DB Wrist Curl', sets: 2, wk1Kg: 16, reps: '15–20', muscles: ['forearms'], bulkOnly: true },
     ] },
-    { key: 'cb_b', label: 'Chest+Back B', color: C.cbB, weekday: 4, cutSetDelta: -3, exercises: [
+    { key: 'cb_b', label: 'Upper B', sub: 'Chest + Back', color: C.cbB, weekday: 4, cutSetDelta: -3, exercises: [
       { name: 'Machine Chest Press', sets: 3, wk1Kg: 34, reps: '10–12', muscles: ['chest', 'triceps'], compound: true },
       { name: 'Neutral-Grip Lat Pulldown', sets: 3, wk1Kg: 45, reps: '10–12', muscles: ['back'], compound: true },
       { name: 'Single-Arm Cable Fly', sets: 2, wk1Kg: 6, reps: '12–15', muscles: ['chest'], note: 'right first, left rep-matches' },
@@ -99,7 +100,7 @@ export const APEX51: Program = {
       { name: 'Machine Preacher Curl', sets: 3, wk1Kg: 15, reps: '8–12', muscles: ['biceps'] },
       { name: 'Cross-Body Cable Extension', sets: 2, wk1Kg: 6, reps: '12–15', muscles: ['triceps'], note: 'per arm' },
     ] },
-    { key: 'legs_b', label: 'Legs B · Posterior+Core', color: C.legsB, weekday: 6, cutSetDelta: -3, exercises: [
+    { key: 'legs_b', label: 'Legs & Core', sub: 'Posterior Focus', color: C.legsB, weekday: 6, cutSetDelta: -3, exercises: [
       { name: 'DB RDL', sets: 4, wk1Kg: 26, reps: '8–12', muscles: ['hamstrings', 'glutes', 'back'], compound: true },
       { name: 'Machine Hip Thrust', sets: 3, wk1Kg: 23.5, reps: '8–15', muscles: ['glutes'], compound: true },
       { name: 'Leg Press', sets: 2, wk1Kg: 65, reps: '12–15', muscles: ['quads', 'glutes'], compound: true, note: 'moderate · 1 warm-up' },
@@ -179,10 +180,10 @@ export function daySplitEnum(dayKey: string): 'push' | 'pull' | 'legs' | 'upper'
   return (DAY_SPLIT[dayKey] ?? 'upper') as 'push' | 'pull' | 'legs' | 'upper' | 'lower'
 }
 
-const ACTIVE_KEY = 'apex_active_program'
+const ACTIVE_KEY = 'helix_active_program'
 export function getActiveProgramId(): string {
   if (typeof window === 'undefined') return DEFAULT_PROGRAM_ID
-  const stored = window.localStorage.getItem(ACTIVE_KEY)
+  const stored = window.localStorage.getItem(ACTIVE_KEY) ?? window.localStorage.getItem('apex_active_program')
   return stored && PROGRAMS[stored] ? stored : DEFAULT_PROGRAM_ID
 }
 export function setActiveProgramId(id: string): void {

@@ -13,7 +13,7 @@ export function SetRow({ set, isPR }: SetRowProps) {
       <span className="text-muted-vital text-sm w-6 text-center tabular-nums">
         {set.setNumber}
       </span>
-      <span className="vital-number font-semibold text-text flex-1">
+      <span className="helix-num font-semibold text-text flex-1">
         {set.weightKg}
         <span className="text-muted-vital text-xs ml-0.5">kg</span>
         {' '}×{' '}

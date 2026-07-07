@@ -57,7 +57,7 @@ export function LiquidBattery({ value, color, caption, captionColor, testId }: L
 
         {/* Centered figure */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <span className="vital-number text-fluid-2xl font-bold text-white" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.5)' }}>
+          <span className="helix-num text-fluid-2xl font-bold text-white" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.5)' }}>
             {hasData ? pct : '—'}
             {hasData && <span className="text-fluid-base">%</span>}
           </span>

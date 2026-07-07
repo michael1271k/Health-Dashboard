@@ -16,7 +16,7 @@ export function SupplementChecklist() {
           {si < SUPPLEMENT_PROTOCOL.length - 1 && <span className="absolute left-[6px] top-5 -bottom-4 w-px bg-white/10" aria-hidden="true" />}
           <span className="absolute left-0 top-1 h-3.5 w-3.5 rounded-full border-2" style={{ borderColor: slot.accent, background: `${slot.accent}22` }} aria-hidden="true" />
           <div className="flex items-baseline gap-2 mb-2">
-            <span className="vital-number text-fluid-sm font-bold" style={{ color: slot.accent }}>{slot.time}</span>
+            <span className="helix-num text-fluid-sm font-bold" style={{ color: slot.accent }}>{slot.time}</span>
             <span className="text-fluid-xs text-muted-vital uppercase tracking-wide">{slot.label}</span>
           </div>
           <div className="space-y-1.5">
@@ -34,7 +34,7 @@ export function SupplementChecklist() {
                     {on && <Check className="h-3 w-3 text-bg" strokeWidth={3} />}
                   </span>
                   <span className="min-w-0 flex-1 text-fluid-sm font-medium text-text">{item.name}</span>
-                  <span className="vital-number text-fluid-xs text-muted-vital shrink-0">{item.dose}</span>
+                  <span className="helix-num text-fluid-xs text-muted-vital shrink-0">{item.dose}</span>
                 </button>
               )
             })}

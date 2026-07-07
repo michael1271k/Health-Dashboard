@@ -5,7 +5,8 @@ import { useEffect, useState } from 'react'
 /** Weight-unit preference (Settings) — stored in localStorage, read synchronously. */
 export function getUnitSystem(): 'kg' | 'lb' {
   if (typeof window === 'undefined') return 'kg'
-  return window.localStorage.getItem('apex_units') === 'lb' ? 'lb' : 'kg'
+  const v = window.localStorage.getItem('helix_units') ?? window.localStorage.getItem('apex_units')
+  return v === 'lb' ? 'lb' : 'kg'
 }
 
 export function weightUnit(): string {

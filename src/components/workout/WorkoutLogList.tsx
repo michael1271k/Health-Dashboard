@@ -8,7 +8,7 @@ function Badge({ label, value, accent }: { label: string; value: string | null; 
   const missing = value == null
   return (
     <div className="flex flex-col items-center px-2 py-1 rounded-lg bg-white/[0.03] border border-white/[0.05] min-w-[50px]">
-      <span className="vital-number text-fluid-sm font-bold leading-none" style={{ color: missing ? '#5A6B85' : accent }}>{missing ? '—' : value}</span>
+      <span className="helix-num text-fluid-sm font-bold leading-none" style={{ color: missing ? '#5A6B85' : accent }}>{missing ? '—' : value}</span>
       <span className="text-[9px] text-muted-vital uppercase tracking-wide mt-0.5">{label}</span>
     </div>
   )
