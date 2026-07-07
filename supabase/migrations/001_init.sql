@@ -154,6 +154,7 @@ CREATE TABLE IF NOT EXISTS daily_logs (
   respiratory_rate NUMERIC(5,2), blood_oxygen NUMERIC(5,2),
   muscle_percent NUMERIC(5,2), water_percent NUMERIC(5,2), bone_mineral NUMERIC(6,2),
   visceral_fat NUMERIC(5,1), bmr NUMERIC(7,1),
+  hrv_ms NUMERIC(6,2), exercise_minutes INTEGER, stand_hours INTEGER, vo2max NUMERIC(5,2),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE(user_id, date)

@@ -263,6 +263,10 @@ export interface Database {
           bone_mineral: number | null
           visceral_fat: number | null
           bmr: number | null
+          hrv_ms: number | null
+          exercise_minutes: number | null
+          stand_hours: number | null
+          vo2max: number | null
           created_at: string
           updated_at: string
         }

@@ -7,7 +7,7 @@ import { useUserGoals } from '@/lib/hooks/useDashboard'
 import { RangeSelector } from '@/components/charts/RangeSelector'
 import { eraForDate } from '@/lib/programs'
 
-const ERA_TABS = [['all', 'All', '#19E3B1'], ['axis', 'AXIS-5', '#38E1FF'], ['ppl', 'PPL Legacy', '#8B97B2']] as const
+const ERA_TABS = [['all', 'All', '#19E3B1'], ['axis', 'HELIX-5', '#3EE0FF'], ['ppl', 'PPL Legacy', '#8B97B2']] as const
 
 // Dynamically import the recharts-heavy components (client-only) so they don't
 // inflate the route's first-load JS.

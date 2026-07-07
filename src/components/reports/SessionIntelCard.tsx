@@ -32,13 +32,26 @@ export function SessionIntelCard({ session }: { session: GymReportRow }) {
 
   return (
     <div className="space-y-4">
-      {/* Hero chips */}
+      {/* Hero chips — volume + sets GUARANTEED (computed from sets when the row lacks them) */}
       <div className="flex flex-wrap gap-2">
         {session.durationMin != null && <Chip label="Duration" value={`${session.durationMin}m`} />}
         {session.avgBpm != null && <Chip label="Avg BPM" value={`${session.avgBpm}`} accent="#FF9F7A" />}
-        {session.volumeKg != null && <Chip label="Volume" value={`${Math.round(displayWeight(session.volumeKg) ?? 0).toLocaleString()} ${unit}`} accent="#3EE0FF" />}
-        {session.setCount != null && <Chip label="Sets" value={`${session.setCount}`} accent="#8B7CFF" />}
+        <Chip label="Volume" value={`${Math.round(displayWeight(session.volumeKg ?? intel?.computedVolumeKg ?? 0) ?? 0).toLocaleString()} ${unit}`} accent="#3EE0FF" />
+        <Chip label="Sets" value={`${session.setCount ?? intel?.computedSets ?? '—'}`} accent="#8B7CFF" />
       </div>
+
+      {/* Δ vs the previous session of this EXACT type (Upper A vs last Upper A) */}
+      {intel?.volumeDeltaPct != null && (
+        <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-3 py-2 flex items-center gap-2 text-fluid-xs">
+          <span className="text-muted-vital">vs last <span className="text-text font-medium">{intel.typeLabel}</span>:</span>
+          <span className="helix-num font-bold" style={{ color: intel.volumeDeltaPct >= 0 ? '#43F59B' : '#FF5470' }}>
+            volume {intel.volumeDeltaPct >= 0 ? '+' : ''}{intel.volumeDeltaPct}%
+          </span>
+          {intel.setsDelta != null && (
+            <span className="helix-num text-muted-vital">· sets {intel.setsDelta > 0 ? `+${intel.setsDelta}` : intel.setsDelta === 0 ? '=' : intel.setsDelta}</span>
+          )}
+        </div>
+      )}
 
       {/* PR spotlight */}
       {!!intel?.prs.length && (

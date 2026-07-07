@@ -33,6 +33,7 @@ const plexMono = IBM_Plex_Mono({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://helix-health-fitness.netlify.app'),
   title: {
     default: 'Dashboard — HELIX',
     template: '%s — HELIX',
@@ -67,8 +68,9 @@ export default function RootLayout({
   return (
     <html lang="he" dir="ltr" suppressHydrationWarning>
       <head>
-        {/* One-time apex_* → helix_* pref migration + apply reduce-motion before paint. */}
-        <script dangerouslySetInnerHTML={{ __html: "try{['day_cutoff','units','reduce_motion','active_program'].forEach(function(k){var o=localStorage.getItem('apex_'+k);if(o!==null&&localStorage.getItem('helix_'+k)===null)localStorage.setItem('helix_'+k,o)});document.documentElement.dataset.reduceMotion=localStorage.getItem('helix_reduce_motion')==='1'?'true':'false'}catch(e){}" }} />
+        {/* One-time apex_* → helix_* pref migration + reduce-motion before paint +
+            a data-hidden flag that pauses all ambient animations while backgrounded. */}
+        <script dangerouslySetInnerHTML={{ __html: "try{['day_cutoff','units','reduce_motion','active_program'].forEach(function(k){var o=localStorage.getItem('apex_'+k);if(o!==null&&localStorage.getItem('helix_'+k)===null)localStorage.setItem('helix_'+k,o)});document.documentElement.dataset.reduceMotion=localStorage.getItem('helix_reduce_motion')==='1'?'true':'false';var syncHidden=function(){document.documentElement.dataset.hidden=document.hidden?'true':'false'};document.addEventListener('visibilitychange',syncHidden);syncHidden()}catch(e){}" }} />
       </head>
       <body
         className={`${sora.variable} ${inter.variable} ${plexMono.variable} bg-bg text-text font-sans antialiased`}

@@ -87,7 +87,7 @@ export function useEnsureTodayScore(enabled = true) {
     } else {
       recompute(0)
     }
-    const onVisible = () => { if (document.visibilityState === 'visible') recompute(0) }
+    const onVisible = () => { try { if (document.visibilityState === 'visible') recompute(0) } catch { /* never crash on foreground */ } }
     const onOnline = () => recompute(0)
     document.addEventListener('visibilitychange', onVisible)
     window.addEventListener('online', onOnline)

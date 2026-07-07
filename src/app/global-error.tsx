@@ -23,6 +23,10 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
         <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: 24, textAlign: 'center' }}>
           <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '0.08em', color: '#16F5C3' }}>HELIX</div>
           <p style={{ fontSize: 16, opacity: 0.85, maxWidth: 320 }}>Something went wrong loading the dashboard. Your data is safe — just reload.</p>
+          {/* Diagnosable: surface the actual error so a screenshot tells us the root cause */}
+          <p style={{ fontSize: 11, opacity: 0.45, maxWidth: 340, fontFamily: 'ui-monospace, monospace', wordBreak: 'break-word' }}>
+            {error?.message?.slice(0, 200) || 'unknown error'}{error?.digest ? ` · ${error.digest}` : ''}
+          </p>
           <button
             onClick={() => { try { window.location.reload() } catch { reset() } }}
             style={{ padding: '10px 20px', borderRadius: 12, background: '#16F5C31f', border: '1px solid #16F5C355', color: '#16F5C3', fontWeight: 600 }}

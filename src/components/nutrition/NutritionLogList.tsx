@@ -2,10 +2,11 @@
 
 import type { DailyLog } from '@/lib/hooks/useNutrition'
 import { PHASE_META } from '@/lib/nutrition/phase'
+import { MACRO_COLORS } from '@/lib/nutrition/colors'
 
 interface Goals { calorie: number; protein: number | null; carbs: number | null; fat: number | null }
 
-const MACRO_COLOR = { P: '#38E1FF', C: '#43F59B', F: '#FFB020' } as const
+const MACRO_COLOR = { P: MACRO_COLORS.protein, C: MACRO_COLORS.carbs, F: MACRO_COLORS.fat } as const
 
 function PhaseTag({ phase }: { phase: DailyLog['phase'] }) {
   if (!phase) return null

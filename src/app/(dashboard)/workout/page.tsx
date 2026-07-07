@@ -23,6 +23,7 @@ export default function WorkoutPage() {
   const del = useDeleteSession()
   const [programId, setProgramId] = useState(DEFAULT_PROGRAM_ID)
   const [openDay, setOpenDay] = useState<ProgramDay | null>(null)
+  const [focusPicker, setFocusPicker] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState<WorkoutSessionRow | null>(null)
   const unit = weightUnit()
 
@@ -30,6 +31,13 @@ export default function WorkoutPage() {
   const program = PROGRAMS[programId] ?? PROGRAMS[DEFAULT_PROGRAM_ID]
 
   function selectProgram(id: string) { setProgramId(id); setActiveProgramId(id) }
+
+  // "Legs & Core" is ONE master card; its two focus days live behind a picker.
+  const legsDays = program.days.filter((d) => d.label === 'Legs & Core')
+  const displayDays = legsDays.length > 1
+    ? program.days.filter((d) => d.label !== 'Legs & Core' || d.key === legsDays[0].key)
+    : program.days
+  const isMergedLegs = (day: ProgramDay) => legsDays.length > 1 && day.label === 'Legs & Core'
 
   return (
     <div className="space-y-6">
@@ -56,20 +64,22 @@ export default function WorkoutPage() {
         })}
       </div>
 
-      {/* Active-program day cards */}
+      {/* Active-program day cards (Legs & Core = one master card → focus picker) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {program.days.map((day) => (
+        {displayDays.map((day) => (
           <div key={day.key} className="glass-card p-3 flex flex-col" style={{ borderColor: `${day.color}33` }}>
-            <button onClick={() => setOpenDay(day)} className="flex items-center justify-between mb-2.5 group">
+            <button onClick={() => (isMergedLegs(day) ? setFocusPicker(true) : setOpenDay(day))} className="flex items-center justify-between mb-2.5 group">
               <span className="min-w-0">
                 <span className="flex items-baseline gap-2">
                   <span className="split-label font-bold text-lg truncate" style={{ color: day.color }}>{day.label}</span>
-                  <span className="text-[10px] text-muted-vital uppercase shrink-0">{WD[day.weekday]}</span>
+                  <span className="text-[10px] text-muted-vital uppercase shrink-0">{isMergedLegs(day) ? legsDays.map((d) => WD[d.weekday]).join(' · ') : WD[day.weekday]}</span>
                   {day.cutSetDelta != null && (
                     <span className="text-[9px] px-1 rounded bg-white/[0.05] text-muted-vital shrink-0" title="Cut-mode set delta">{day.cutSetDelta} cut</span>
                   )}
                 </span>
-                {day.sub && <span className="block text-[10px] text-muted-vital leading-none mt-0.5">{day.sub}</span>}
+                <span className="block text-[10px] text-muted-vital leading-none mt-0.5">
+                  {isMergedLegs(day) ? legsDays.map((d) => d.sub).join(' / ') : day.sub}
+                </span>
               </span>
               <span className="w-7 h-7 rounded-full flex items-center justify-center transition-transform group-hover:scale-110"
                 style={{ background: `color-mix(in srgb, ${day.color} 18%, transparent)`, color: day.color }} aria-label={`Log ${day.label}`}>
@@ -112,6 +122,30 @@ export default function WorkoutPage() {
       </div>
 
       <StrengthTrends />
+
+      {/* Legs & Core focus picker */}
+      <Sheet open={focusPicker} onClose={() => setFocusPicker(false)} title="Legs & Core — pick today's focus">
+        <div className="grid gap-3">
+          {legsDays.map((d, i) => (
+            <button
+              key={d.key}
+              onClick={() => { setFocusPicker(false); setOpenDay(d) }}
+              className="glass-card w-full text-left p-4 active:opacity-80"
+              style={{ borderColor: `${d.color}44` }}
+            >
+              <div className="flex items-baseline justify-between">
+                <span className="font-heading font-bold text-fluid-base" style={{ color: d.color }}>
+                  Day {i === 0 ? 2 : 5} · {d.sub}
+                </span>
+                <span className="text-[10px] text-muted-vital uppercase">{WD[d.weekday]}</span>
+              </div>
+              <p className="text-fluid-xs text-muted-vital mt-1.5 truncate">
+                {d.exercises.slice(0, 3).map((e) => e.name).join(' · ')} +{Math.max(0, d.exercises.length - 3)}
+              </p>
+            </button>
+          ))}
+        </div>
+      </Sheet>
 
       {/* Logger sheet */}
       <Sheet open={!!openDay} onClose={() => setOpenDay(null)} title={openDay ? `${openDay.label}${openDay.sub ? ` · ${openDay.sub}` : ''} — Log Session` : undefined}>

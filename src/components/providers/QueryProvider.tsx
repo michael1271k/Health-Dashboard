@@ -31,6 +31,11 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
       storage: typeof window !== 'undefined' ? window.localStorage : undefined,
       key: 'helix_query_cache',
       throttleTime: 2_000,
+      // A corrupted/truncated cache blob must NEVER throw during restore (that
+      // crashes the app on foreground). Bad JSON → treat as no cache.
+      deserialize: (cached) => {
+        try { return JSON.parse(cached) } catch { return undefined as never }
+      },
     }),
   )
 

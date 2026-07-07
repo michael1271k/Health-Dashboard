@@ -6,7 +6,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useDailyLogs } from '@/lib/hooks/useNutrition'
 import { NUTRITION_PRESETS, type NutritionMode } from '@/lib/types/workout'
 import { NutritionLogList } from '@/components/nutrition/NutritionLogList'
-import { FuelGauge } from '@/components/nutrition/FuelGauge'
+import { MacroRings } from '@/components/nutrition/MacroRings'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { PHASE_META, type Phase } from '@/lib/nutrition/phase'
 import type { Tables } from '@/lib/supabase/types'
@@ -68,11 +68,11 @@ export default function NutritionPage() {
     <div className="space-y-6">
       <div>
         <h1 className="font-heading text-fluid-2xl font-bold text-text">Nutrition</h1>
-        <p className="text-muted-vital text-fluid-sm mt-0.5">Fuel gauge · macro arcs · auto-tagged phase</p>
+        <p className="text-muted-vital text-fluid-sm mt-0.5">Macro rings · daily fuel cells · auto-tagged phase</p>
       </div>
 
-      {/* Fuel gauge hero — today's kcal needle + macro arcs + 7-day cells */}
-      <FuelGauge
+      {/* Macro rings hero — MFP-style rings + 7-day phase cells */}
+      <MacroRings
         today={todayLog ? { calories: todayLog.calories, proteinG: todayLog.proteinG, carbsG: todayLog.carbsG, fatG: todayLog.fatG } : null}
         logs={logs ?? []}
         goals={{ calorie: goals.calorie, protein: goals.protein, carbs: goals.carbs, fat: goals.fat }}

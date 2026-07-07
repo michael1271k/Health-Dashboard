@@ -71,7 +71,12 @@ const BaseSchema = z.object({
   avg_rest_heart_rate: intField(),                   // bpm (resting)
   respiratory_rate:    floatField(),                 // breaths/min (numeric)
   blood_oxygen:        floatField(),                 // %
-  // Optional explicit date override (YYYY-MM-DD); defaults to today (Israel time)
+  // ── Phase 15 metrics ──
+  hrv:                 floatField(),                 // heart-rate variability, SDNN ms
+  exercise_minutes:    intField(),                   // Apple green-ring minutes
+  stand_hours:         intField(),                   // Apple stand hours
+  vo2max:              floatField(),                 // mL/kg/min (updates ~weekly)
+  // Optional explicit date override (YYYY-MM-DD); defaults to the logical day
   date:                z.string().optional(),
 }).strip()
 
@@ -88,6 +93,9 @@ export const ShortcutPayloadSchema = z.preprocess((raw) => {
   if (o.vilopuls !== undefined && o.avg_rest_heart_rate === undefined) {
     o.avg_rest_heart_rate = o.vilopuls
   }
+  if (o.hrv_ms !== undefined && o.hrv === undefined) o.hrv = o.hrv_ms
+  if (o.heart_rate_variability !== undefined && o.hrv === undefined) o.hrv = o.heart_rate_variability
+  if (o.vo2_max !== undefined && o.vo2max === undefined) o.vo2max = o.vo2_max
   return o
 }, BaseSchema)
 

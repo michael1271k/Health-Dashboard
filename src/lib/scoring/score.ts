@@ -127,12 +127,13 @@ export function computeWorkoutScore(inputs: Pick<ScoringInputs,
 // ─── Recovery Score (physiological — NOT logging adherence) ────────────────────
 /**
  * Recovery reflects the body, not whether you logged water/supps:
- *   60% sleep quality (duration + deep) + 40% resting-HR vs baseline.
+ *   45% sleep quality (duration + deep) + 30% resting-HR vs baseline +
+ *   25% HRV vs 7-day baseline (Phase 15 — the gold-standard recovery signal).
  * Each component is dropped if its data is missing and the rest renormalized.
- * Returns null when there is NO sleep and NO HR data (unknown ≠ 0).
+ * Returns null when there is NO physiological data at all (unknown ≠ 0).
  */
 export function computeRecoveryScore(inputs: Pick<ScoringInputs,
-  'sleepHours' | 'deepMinutes' | 'sleepGoalHours' | 'restingHR' | 'baselineHR' | 'contextMode'>
+  'sleepHours' | 'deepMinutes' | 'sleepGoalHours' | 'restingHR' | 'baselineHR' | 'hrvMs' | 'hrvBaseline' | 'contextMode'>
 ): number | null {
   const pMult = penaltyMult(inputs.contextMode)
   const parts: Array<{ v: number; w: number }> = []
@@ -140,11 +141,16 @@ export function computeRecoveryScore(inputs: Pick<ScoringInputs,
   if (inputs.sleepHours > 0) {
     const ratio = inputs.sleepGoalHours ? Math.min(1, inputs.sleepHours / inputs.sleepGoalHours) : 1
     const deepQ = inputs.deepMinutes >= 75 ? 1 : Math.max(0, inputs.deepMinutes / 75)
-    parts.push({ v: clamp((0.8 * ratio + 0.2 * deepQ) * 100), w: 0.6 })
+    parts.push({ v: clamp((0.8 * ratio + 0.2 * deepQ) * 100), w: 0.45 })
   }
   if (inputs.restingHR != null && inputs.baselineHR != null && inputs.baselineHR > 0) {
     const delta = inputs.restingHR - inputs.baselineHR
-    parts.push({ v: clamp(100 - Math.max(0, delta) * 4 * pMult), w: 0.4 })
+    parts.push({ v: clamp(100 - Math.max(0, delta) * 4 * pMult), w: 0.30 })
+  }
+  if (inputs.hrvMs != null && inputs.hrvBaseline != null && inputs.hrvBaseline > 0) {
+    // HRV at/above baseline = fully recovered; each 10% below costs ~15 pts.
+    const ratio = inputs.hrvMs / inputs.hrvBaseline
+    parts.push({ v: clamp(100 - Math.max(0, 1 - ratio) * 150 * pMult), w: 0.25 })
   }
 
   if (!parts.length) return null   // no physiological signal → unknown

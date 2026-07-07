@@ -420,9 +420,17 @@ html[data-theme='travel'] {
   content: ''; position: absolute; top: 0; left: 0; width: 55%; height: 100%;
   background: linear-gradient(105deg, transparent, rgba(150,225,255,0.10), transparent);
   transform: translateX(-170%) skewX(-18deg);
-  animation: holoSheen 7.5s ease-in-out infinite;
+  /* Two sweeps then rest — an infinite compositor layer per card was iOS jank. */
+  animation: holoSheen 7.5s ease-in-out 2;
   pointer-events: none; z-index: 1;
 }
+
+/* Pause every ambient animation while the tab is hidden (iOS battery + resume jank). */
+html[data-hidden='true'] .ecg-sweep,
+html[data-hidden='true'] .orb-breathe,
+html[data-hidden='true'] .liquid-wave,
+html[data-hidden='true'] .battery-glint,
+html[data-hidden='true'] .battery-bubble { animation-play-state: paused; }
 
 /* Faint biomechanical axis-grid motif behind content (AXIS wireframe). */
 .axis-wireframe {
@@ -504,12 +512,15 @@ html[data-reduce-motion='true'] *::after {
 }
 html[data-reduce-motion='true'] .grain-overlay { display: none; }
 
-/* Mobile blur budget — a 40px backdrop blur melts phone GPUs. Halve it. */
+/* Mobile blur budget — a 40px backdrop blur melts phone GPUs. Halve it.
+   Also drop the axis-wireframe there: mask-image compositing is expensive on iOS. */
 @media (max-width: 768px) {
   .helix-card, .glass-card, .btn-glass {
     backdrop-filter: blur(18px) saturate(160%);
     -webkit-backdrop-filter: blur(18px) saturate(160%);
   }
+  .axis-wireframe { display: none; }
+  .aurora-blob-3 { display: none; }
 }
 
 /* Premium grain/noise overlay — fixed, just above the aurora (-z-9). */

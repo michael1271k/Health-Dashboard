@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
+import { eraForDate, programDayFor, DEFAULT_PROGRAM_ID } from '@/lib/programs'
 
 export interface ExerciseDelta {
   name: string
@@ -14,7 +15,12 @@ export interface ExerciseDelta {
 export interface SessionIntel {
   deltas: ExerciseDelta[]
   prs: Array<{ name: string; kg: number; reps: number }>
-  volumes: Array<{ date: string; volumeKg: number }>  // this + previous same-split sessions (asc)
+  volumes: Array<{ date: string; volumeKg: number }>  // this + previous SAME-TYPE sessions (asc)
+  typeLabel: string          // era-aware session-type name, e.g. "Upper A"
+  volumeDeltaPct: number | null   // this vs previous same-type session
+  setsDelta: number | null
+  computedVolumeKg: number   // fallback when the session row lacks totals
+  computedSets: number
 }
 
 type SetRow = { exercise_id: string; weight_kg: number; reps: number; is_pr: boolean; exercises: { name: string } }
@@ -36,16 +42,24 @@ export function useSessionIntel(sessionId: string | null) {
         .eq('id', sessionId as string)
         .single()
       const session = sess as { id: string; started_at: string; split_day: string; total_volume_kg: number | null } | null
-      if (!session) return { deltas: [], prs: [], volumes: [] }
+      const empty: SessionIntel = { deltas: [], prs: [], volumes: [], typeLabel: '', volumeDeltaPct: null, setsDelta: null, computedVolumeKg: 0, computedSets: 0 }
+      if (!session) return empty
 
+      // SAME-TYPE matching: split_day alone mixes Upper A and Upper B (both
+      // 'upper'). The session TYPE = split_day + weekday (Upper A = Sun,
+      // Upper B = Thu), so fetch recent same-split sessions and filter by weekday.
+      const weekday = new Date(session.started_at).getUTCDay()
+      const typeLabel = sessionTypeLabel(session.started_at.slice(0, 10), session.split_day, weekday)
       const { data: prevRaw } = await supabase
         .from('workout_sessions')
         .select('id, started_at, total_volume_kg')
         .eq('split_day', session.split_day)
         .lt('started_at', session.started_at)
         .order('started_at', { ascending: false })
-        .limit(2)
-      const prev = (prevRaw ?? []) as Array<{ id: string; started_at: string; total_volume_kg: number | null }>
+        .limit(12)
+      const prev = ((prevRaw ?? []) as Array<{ id: string; started_at: string; total_volume_kg: number | null }>)
+        .filter((p) => new Date(p.started_at).getUTCDay() === weekday)
+        .slice(0, 2)
 
       const ids = [session.id, ...prev.map((p) => p.id)]
       const { data: setsRaw } = await supabase
@@ -75,15 +89,40 @@ export function useSessionIntel(sessionId: string | null) {
         }
       })
 
-      const volumes = [...prev.reverse(), { id: session.id, started_at: session.started_at, total_volume_kg: session.total_volume_kg }]
+      // Fallback totals computed from the fetched sets (guaranteed chips)
+      const thisSets = sets.filter((s) => s.session_id === session.id)
+      const computedVolumeKg = Math.round(thisSets.reduce((sum, s) => sum + s.weight_kg * s.reps, 0))
+      const computedSets = thisSets.length
+      const thisVolume = session.total_volume_kg ?? computedVolumeKg
+
+      const volumes = [...[...prev].reverse(), { id: session.id, started_at: session.started_at, total_volume_kg: thisVolume }]
         .filter((s) => s.total_volume_kg != null)
         .map((s) => ({ date: s.started_at.slice(0, 10), volumeKg: s.total_volume_kg as number }))
+
+      // Header Δ vs the previous SAME-TYPE session
+      const prevVol = prev[0]?.total_volume_kg ?? null
+      const volumeDeltaPct = prevVol && thisVolume ? Math.round(((thisVolume - prevVol) / prevVol) * 100) : null
+      const setsDelta = prev[0] ? computedSets - sets.filter((s) => s.session_id === prev[0].id).length : null
 
       return {
         deltas,
         prs: deltas.filter((d) => d.isPr).map((d) => ({ name: d.name, kg: d.topKg, reps: d.topReps })),
         volumes,
+        typeLabel,
+        volumeDeltaPct,
+        setsDelta,
+        computedVolumeKg,
+        computedSets,
       }
     },
   })
+}
+
+/** Era-aware session-type name: HELIX era → program-day label (weekday-matched); PPL → split. */
+function sessionTypeLabel(dateISO: string, splitDay: string, weekday: number): string {
+  if (eraForDate(dateISO) === 'axis') {
+    const d = programDayFor(DEFAULT_PROGRAM_ID, weekday)
+    if (d !== 'rest') return d.sub ? `${d.label} · ${d.sub}` : d.label
+  }
+  return splitDay[0].toUpperCase() + splitDay.slice(1)
 }

@@ -55,7 +55,7 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
 
     // Safety net (still zero serverless cost): refresh on return-to-visible /
     // reconnect in case a scheduled-sync event was missed while backgrounded.
-    const onVisible = () => { if (document.visibilityState === 'visible') refreshAll() }
+    const onVisible = () => { try { if (document.visibilityState === 'visible') refreshAll() } catch { /* never crash on foreground */ } }
     document.addEventListener('visibilitychange', onVisible)
     window.addEventListener('online', refreshAll)
 

@@ -17,10 +17,11 @@ import { AnimatedCard } from '@/components/dashboard/AnimatedBento'
 import { WeeklyReviewCard } from '@/components/dashboard/WeeklyReviewCard'
 import { BrandHeader } from '@/components/dashboard/BrandHeader'
 import { formatSleep, mlToL } from '@/lib/utils/format'
-import { displayWeight, weightUnit } from '@/lib/utils/units'
+import { displayWeight, weightUnit, validWeight } from '@/lib/utils/units'
 import { PHASE_META } from '@/lib/nutrition/phase'
+import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { logicalTodayISO } from '@/lib/utils/day'
-import { getActiveProgramId, programDayFor, daySplitEnum, type ProgramDay } from '@/lib/programs'
+import { scheduleDayFor, daySplitEnum, type ScheduleDay } from '@/lib/programs'
 import { useSupplements } from '@/lib/hooks/useSupplements'
 import { TOTAL_SUPPLEMENTS } from '@/lib/supplements'
 import { useBioSeries } from '@/lib/hooks/useBioStrips'
@@ -70,11 +71,9 @@ export default function DashboardPage() {
   const [open, setOpen] = useState<SheetKey>(null)
   const [logOpen, setLogOpen] = useState(false)
 
-  // Today's scheduled program day (device-local logical day)
-  const todayDay: ProgramDay | 'rest' = useMemo(() => {
-    const weekday = new Date(logicalTodayISO() + 'T12:00:00Z').getUTCDay()
-    return programDayFor(getActiveProgramId(), weekday)
-  }, [])
+  // Today's scheduled training day — ERA-AWARE (PPL before Jul 19, HELIX-5 after),
+  // shared with the Insight Coach so the whole app agrees.
+  const todayDay: ScheduleDay | 'rest' = useMemo(() => scheduleDayFor(logicalTodayISO()), [])
 
   const lastSession = sessions?.[0]
   const lastSplit = lastSession ? PPL_SPLITS[lastSession.split_day as SplitDay] : null
@@ -123,7 +122,7 @@ export default function DashboardPage() {
     },
     {
       key: 'body', icon: Scale, label: 'Body', accent: TEAL,
-      value: displayWeight(log?.weight_kg), unit,
+      value: displayWeight(validWeight(log?.weight_kg)), unit,
       status: weightWoW != null
         ? <span className={weightWoW <= 0 ? 'text-success' : 'text-warn'}>{weightWoW > 0 ? '+' : ''}{weightWoW} {unit}/wk (7-day avg)</span>
         : log?.body_fat_pct != null ? `${n1(log.body_fat_pct)}% body fat` : 'composition',
@@ -191,10 +190,10 @@ export default function DashboardPage() {
         )}
         {open === 'fuel' && (
           <div className="grid grid-cols-2 gap-2.5">
-            <StatTile label="Calories" value={calToday} unit="kcal" accent={EMBER} isLoading={nutritionLoading} />
-            <StatTile label="Protein" value={n0(nutrition?.protein_g)} unit="g" isLoading={nutritionLoading} />
-            <StatTile label="Carbs" value={n0(nutrition?.carbs_g)} unit="g" isLoading={nutritionLoading} />
-            <StatTile label="Fats" value={n0(nutrition?.fat_g)} unit="g" isLoading={nutritionLoading} />
+            <StatTile label="Calories" value={calToday} unit="kcal" accent={MACRO_COLORS.calories} isLoading={nutritionLoading} />
+            <StatTile label="Protein" value={n0(nutrition?.protein_g)} unit="g" accent={MACRO_COLORS.protein} isLoading={nutritionLoading} />
+            <StatTile label="Carbs" value={n0(nutrition?.carbs_g)} unit="g" accent={MACRO_COLORS.carbs} isLoading={nutritionLoading} />
+            <StatTile label="Fats" value={n0(nutrition?.fat_g)} unit="g" accent={MACRO_COLORS.fat} isLoading={nutritionLoading} />
           </div>
         )}
         {open === 'train' && (
@@ -210,7 +209,7 @@ export default function DashboardPage() {
         )}
         {open === 'body' && (
           <div className="grid grid-cols-2 gap-2.5">
-            <StatTile label="Weight" value={displayWeight(log?.weight_kg)} unit={unit} accent={TEAL} isLoading={logLoading} />
+            <StatTile label="Weight" value={displayWeight(validWeight(log?.weight_kg))} unit={unit} accent={TEAL} isLoading={logLoading} />
             <StatTile label="BMI" value={n1(log?.bmi)} isLoading={logLoading} />
             <StatTile label="Lean Mass" value={displayWeight(log?.lean_mass_kg)} unit={unit} isLoading={logLoading} />
             <StatTile label="Body Fat" value={n1(log?.body_fat_pct)} unit="%" isLoading={logLoading} />
@@ -232,7 +231,7 @@ export default function DashboardPage() {
       {/* Thumb-reachable quick-log */}
       <Fab icon={Plus} label="Log" onClick={() => setLogOpen(true)} />
       <Sheet open={logOpen} onClose={() => setLogOpen(false)} title="Quick Log">
-        <WorkoutChat splitDay={todayDay === 'rest' ? 'upper' : daySplitEnum(todayDay.key)} onClose={() => setLogOpen(false)} />
+        <WorkoutChat splitDay={todayDay !== 'rest' && todayDay.dayKey ? daySplitEnum(todayDay.dayKey) : 'upper'} onClose={() => setLogOpen(false)} />
       </Sheet>
     </div>
   )

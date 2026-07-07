@@ -20,6 +20,17 @@ export function displayWeight(kg: number | null | undefined): number | null {
 }
 
 /**
+ * Global body-weight validity rule (Phase 15): any reading under 50 kg is a
+ * scale/ingest artifact (0kg vacation gaps, partial syncs) and must be ignored
+ * by every chart, table, and algorithm.
+ */
+export const MIN_VALID_WEIGHT_KG = 50
+export function validWeight(kg: number | null | undefined): number | null {
+  if (kg == null || !Number.isFinite(kg) || kg < MIN_VALID_WEIGHT_KG) return null
+  return kg
+}
+
+/**
  * Reactive unit preference — re-renders the calling component when the user flips
  * kg/lb in Settings (which dispatches `apex-units-change`) or another tab changes it.
  */

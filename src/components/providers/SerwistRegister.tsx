@@ -13,11 +13,24 @@ import { useEffect } from 'react'
 export function SerwistRegister() {
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return
+    const hadController = !!navigator.serviceWorker.controller
     let reloading = false
     const onControllerChange = () => {
       if (reloading) return
-      reloading = true
-      window.location.reload()
+      // First-ever SW take-over of a fresh tab needs no reload; and NEVER yank a
+      // live foreground session (that races React mid-render → error boundary).
+      // Reload immediately only while hidden; otherwise defer to the next hide.
+      if (!hadController) return
+      if (document.visibilityState === 'hidden') {
+        reloading = true
+        window.location.reload()
+      } else {
+        const onHide = () => {
+          if (reloading) return
+          if (document.visibilityState === 'hidden') { reloading = true; window.location.reload() }
+        }
+        document.addEventListener('visibilitychange', onHide, { once: true })
+      }
     }
     navigator.serviceWorker.addEventListener('controllerchange', onControllerChange)
 

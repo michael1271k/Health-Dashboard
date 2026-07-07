@@ -44,9 +44,8 @@ export function LiquidBattery({ value, color, caption, captionColor, testId }: L
             {hasData && pct > 10 && (
               <>
                 <span className="battery-bubble" style={{ left: '22%', animationDelay: '0s', width: 5, height: 5 }} />
-                <span className="battery-bubble" style={{ left: '48%', animationDelay: '1.2s', width: 4, height: 4 }} />
-                <span className="battery-bubble" style={{ left: '68%', animationDelay: '2.1s', width: 6, height: 6 }} />
-                <span className="battery-bubble" style={{ left: '35%', animationDelay: '3.0s', width: 3, height: 3 }} />
+                <span className="battery-bubble" style={{ left: '48%', animationDelay: '1.4s', width: 4, height: 4 }} />
+                <span className="battery-bubble" style={{ left: '68%', animationDelay: '2.6s', width: 6, height: 6 }} />
               </>
             )}
           </div>

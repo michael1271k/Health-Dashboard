@@ -5,12 +5,13 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, Cell,
 } from 'recharts'
 import { ChartTooltip } from './ChartTooltip'
+import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import type { Tables } from '@/lib/supabase/types'
 
 const METRICS = [
-  { key: 'protein_g', label: 'Protein', color: '#38E1FF', goalKey: 'protein_goal_g' },
-  { key: 'carbs_g',   label: 'Carbs',   color: '#43F59B', goalKey: 'carbs_goal_g' },
-  { key: 'fat_g',     label: 'Fats',    color: '#FFB020', goalKey: 'fat_goal_g' },
+  { key: 'protein_g', label: 'Protein', color: MACRO_COLORS.protein, goalKey: 'protein_goal_g' },
+  { key: 'carbs_g',   label: 'Carbs',   color: MACRO_COLORS.carbs, goalKey: 'carbs_goal_g' },
+  { key: 'fat_g',     label: 'Fats',    color: MACRO_COLORS.fat, goalKey: 'fat_goal_g' },
 ] as const
 
 type NutritionRow = Pick<Tables<'nutrition_entries'>, 'date' | 'calories' | 'protein_g' | 'carbs_g' | 'fat_g'>

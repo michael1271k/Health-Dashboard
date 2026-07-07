@@ -49,12 +49,23 @@ async function computeForDate(supabase: DB, userId: string, date: string, hoursA
   const trailing = trailingRaw as Array<{ total_volume_kg: number | null }> | null
   const trailingAvg = trailing?.length ? trailing.reduce((s, r) => s + (r.total_volume_kg ?? 0), 0) / trailing.length : 0
 
+  // HRV + resting-HR baselines (7-day trailing) from daily_logs — Phase 15
+  const { data: dlRaw } = await supabase
+    .from('daily_logs').select('date, hrv_ms, avg_rest_heart_rate').eq('user_id', userId)
+    .lte('date', date).order('date', { ascending: false }).limit(8)
+  const dl = (dlRaw ?? []) as Array<{ date: string; hrv_ms: number | null; avg_rest_heart_rate: number | null }>
+  const todayDl = dl.find((r) => r.date === date)
+  const trail = dl.filter((r) => r.date !== date)
+  const avgOf = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null)
+  const hrvBaseline = avgOf(trail.map((r) => r.hrv_ms).filter((v): v is number => v != null))
+  const rhrBaseline = avgOf(trail.map((r) => r.avg_rest_heart_rate).filter((v): v is number => v != null))
+
   const { count: prCount } = await supabase
     .from('workout_sets').select('id', { count: 'exact', head: true })
     .eq('user_id', userId).eq('is_pr', true)
     .gte('created_at', `${date}T00:00:00Z`).lt('created_at', `${end}T00:00:00Z`)
 
-  const isRestDay = isRestDayFor(date)  // era-aware: APEX-5.1 rests Tue/Fri; PPL legacy Fri/Sat
+  const isRestDay = isRestDayFor(date)  // era-aware: HELIX-5 rests Tue/Fri; PPL legacy Fri/Sat
   // isToday comes from the caller (the client knows its own timezone); derive the
   // user's local hour from hoursAwake (07:00 wake convention) instead of a fixed zone.
   const isCurrentDay = isToday || date === todayISO()
@@ -93,7 +104,10 @@ async function computeForDate(supabase: DB, userId: string, date: string, hoursA
     waterGoalMl: g.water_goal_ml,
     supplementsTaken: supplements?.length ?? 0,
     supplementsGoal: 3,
-    restingHR: metrics?.rest_hr ?? undefined,
+    restingHR: metrics?.rest_hr ?? todayDl?.avg_rest_heart_rate ?? undefined,
+    baselineHR: rhrBaseline ?? undefined,
+    hrvMs: todayDl?.hrv_ms ?? undefined,
+    hrvBaseline: hrvBaseline ?? undefined,
     contextMode: (g as typeof g & { context_mode?: string }).context_mode as ScoringInputs['contextMode'] ?? 'normal',
     isCurrentDay,
     localHour,

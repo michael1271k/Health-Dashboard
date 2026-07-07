@@ -53,7 +53,7 @@ export function BrandHeader() {
           className="px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider self-center"
           style={{ color: '#3EE0FF', background: '#3EE0FF1f', border: '1px solid #3EE0FF55', boxShadow: '0 0 10px #3EE0FF44' }}
         >
-          APEX-5.1
+          HELIX-5
         </span>
       </div>
     </header>

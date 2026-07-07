@@ -17,14 +17,12 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.106.0",
-    "@base-ui/react": "^1.6.0",
     "@notionhq/client": "^5.22.0",
     "@serwist/next": "^9.5.11",
     "@supabase/supabase-js": "^2.108.2",
     "@tanstack/query-sync-storage-persister": "^5.101.2",
     "@tanstack/react-query": "^5.101.1",
     "@tanstack/react-query-persist-client": "^5.101.2",
-    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.42.0",
     "lucide-react": "^1.21.0",
@@ -58,7 +56,6 @@
     "postcss": "^8.5.15",
     "shadcn": "^4.11.0",
     "tailwindcss": "^4.3.1",
-    "tailwindcss-animate": "^1.0.7",
     "typescript": "^5",
     "vitest": "^4.1.9"
   }

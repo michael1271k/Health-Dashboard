@@ -1,7 +1,7 @@
 /**
  * Training programs + eras — SYSTEM UPDATE v5.1.
  * The PPL era ends and the recomposition era begins 2026-07-19 (Sunday).
- * Active program: APEX-5.1 (5-day: Sun/Mon/Wed/Thu/Sat · Tue/Fri = Zone-2 rest).
+ * Active program: HELIX-5 (5-day: Sun/Mon/Wed/Thu/Sat · Tue/Fri = Zone-2 rest).
  * Sessions are classified purely by date via `eraForDate` (no DB column needed).
  */
 export type Era = 'ppl' | 'axis'
@@ -12,8 +12,8 @@ export function eraForDate(dateISO: string): Era {
 }
 
 export const ERA_META: Record<Era, { label: string; short: string; color: string }> = {
-  ppl:  { label: 'PPL Legacy', short: 'PPL',      color: '#8B97B2' },
-  axis: { label: 'APEX-5.1',   short: 'APEX-5.1', color: '#38E1FF' },
+  ppl:  { label: 'PPL Legacy', short: 'PPL',     color: '#8B97B2' },
+  axis: { label: 'HELIX Era',  short: 'HELIX-5', color: '#3EE0FF' },
 }
 
 /** RE-ENTRY weeks (2026-07-19 + 07-26): ~90% loads, RPE cap 7–8 — excluded from
@@ -59,9 +59,9 @@ export interface Program {
 
 const C = { cbA: '#38E1FF', legsA: '#4FC3FF', arms: '#43F59B', cbB: '#E8C57A', legsB: '#19E3B1' }
 
-// ── APEX-5.1 (ACTIVE) — Sun/Mon/Wed/Thu/Sat ─────────────────────────────────
+// ── HELIX-5 (ACTIVE) — Sun/Mon/Wed/Thu/Sat ─────────────────────────────────
 export const APEX51: Program = {
-  id: 'apex51', label: 'APEX-5.1', era: 'axis', active: true,
+  id: 'apex51', label: 'HELIX-5', era: 'axis', active: true,   // id kept for localStorage compat
   days: [
     { key: 'cb_a', label: 'Upper A', sub: 'Chest + Back', color: C.cbA, weekday: 0, cutSetDelta: -3, exercises: [
       { name: 'Incline DB Press', sets: 3, wk1Kg: 32, reps: '8–12', muscles: ['chest', 'shoulders'], compound: true },
@@ -164,11 +164,34 @@ export function programDayFor(programId: string, weekday: number): ProgramDay | 
   return p.days.find((d) => d.weekday === weekday) ?? 'rest'
 }
 
-/** Era-aware rest-day check (server-safe, date-only). Tue/Fri = Zone-2 rest in APEX-5.1. */
+/** Era-aware rest-day check (server-safe, date-only). Tue/Fri = Zone-2 rest in HELIX-5. */
 export function isRestDayFor(dateISO: string): boolean {
   const weekday = new Date(`${dateISO}T12:00:00Z`).getUTCDay()
   if (eraForDate(dateISO) === 'ppl') return weekday === 5 || weekday === 6 // legacy PPL: Fri/Sat
   return programDayFor(DEFAULT_PROGRAM_ID, weekday) === 'rest'
+}
+
+// Legacy PPL weekday schedule (labels for pre-HELIX dates).
+const PPL_WEEKDAY: Record<number, string | null> = {
+  0: 'Upper', 1: 'Legs/Lower', 2: 'Push', 3: 'Pull', 4: 'Legs/Lower', 5: null, 6: null,
+}
+
+export interface ScheduleDay { label: string; sub?: string; dayKey?: string }
+
+/**
+ * The ONE era-aware "what's today's training day" helper — used by the
+ * dashboard Train strip, the quick-log default, and the Insight Coach so
+ * the whole app agrees. PPL-legacy dates show the PPL day; HELIX-era dates
+ * show the active program's day. 'rest' on scheduled rest days.
+ */
+export function scheduleDayFor(dateISO: string, programId = getActiveProgramId()): ScheduleDay | 'rest' {
+  const weekday = new Date(`${dateISO}T12:00:00Z`).getUTCDay()
+  if (eraForDate(dateISO) === 'ppl') {
+    const label = PPL_WEEKDAY[weekday]
+    return label ? { label } : 'rest'
+  }
+  const d = programDayFor(programId, weekday)
+  return d === 'rest' ? 'rest' : { label: d.label, sub: d.sub, dayKey: d.key }
 }
 
 // Map a program-day key onto the existing split_day enum (for saving sessions).

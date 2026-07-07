@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import type { Tables } from '@/lib/supabase/types'
 import { epley1RM } from '@/lib/utils/epley'
+import { validWeight } from '@/lib/utils/units'
 
 function daysAgo(n: number): string {
   const d = new Date()
@@ -21,7 +22,9 @@ export function useWeightTrend(days = 90) {
         .gte('date', daysAgo(days))
         .order('date', { ascending: true })
       if (error) throw error
-      return (data ?? []) as Pick<Tables<'body_composition'>, 'date' | 'weight_kg' | 'body_fat_pct' | 'muscle_mass_kg'>[]
+      // Global rule: sub-50kg readings are artifacts — drop the row entirely.
+      return ((data ?? []) as Pick<Tables<'body_composition'>, 'date' | 'weight_kg' | 'body_fat_pct' | 'muscle_mass_kg'>[])
+        .filter((r) => validWeight(r.weight_kg) != null)
     },
   })
 }

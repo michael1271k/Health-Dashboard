@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { logicalDaysAgoISO } from '@/lib/utils/day'
+import { validWeight } from '@/lib/utils/units'
 
 export interface BioDay {
   date: string
@@ -24,7 +25,7 @@ export function useBioSeries() {
         .order('date', { ascending: true })
       if (error) throw error
       return ((data ?? []) as Array<{ date: string; sleep_minutes: number | null; steps: number | null; weight_kg: number | null }>)
-        .map((r) => ({ date: r.date, sleepMin: r.sleep_minutes, steps: r.steps, weightKg: r.weight_kg }))
+        .map((r) => ({ date: r.date, sleepMin: r.sleep_minutes, steps: r.steps, weightKg: validWeight(r.weight_kg) }))
     },
   })
 }

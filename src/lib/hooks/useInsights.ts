@@ -6,22 +6,17 @@ import { computeInsights, type DayPoint, type SessionPoint, type Insight } from 
 import { computeReadiness } from '@/lib/scoring/readiness'
 import type { ReadinessResult } from '@/lib/scoring/types'
 import type { Tables } from '@/lib/supabase/types'
-import { programDayFor, DEFAULT_PROGRAM_ID, eraForDate, isReentryWeek } from '@/lib/programs'
-import { WEEKDAY_SPLIT, PPL_SPLITS, type SplitDay } from '@/lib/types/workout'
+import { scheduleDayFor, isReentryWeek } from '@/lib/programs'
 import { logicalTodayISO, logicalDaysAgoISO } from '@/lib/utils/day'
+import { validWeight } from '@/lib/utils/units'
 
 function daysAgoISO(n: number): string {
   return logicalDaysAgoISO(n)
 }
 
-/** Today's scheduled training-day label (program/era aware), or null on rest days. */
+/** Today's scheduled training-day label (shared era-aware helper), or null on rest days. */
 function todayDayLabel(todayISO: string): string | null {
-  const weekday = new Date(`${todayISO}T12:00:00Z`).getUTCDay()
-  if (eraForDate(todayISO) === 'ppl') {
-    const s = WEEKDAY_SPLIT[weekday]
-    return s === 'rest' || !s ? null : PPL_SPLITS[s as SplitDay]?.label ?? null
-  }
-  const d = programDayFor(DEFAULT_PROGRAM_ID, weekday)
+  const d = scheduleDayFor(todayISO)
   return d === 'rest' ? null : d.label
 }
 
@@ -41,7 +36,7 @@ function scheduleAwareReadiness(
     }
   }
   if (!ctx.dayLabel && !ctx.workoutToday) {
-    return { level: 'rest', label: 'Zone-2 / Rest', color: '#8B97B2', reason: 'Scheduled rest in APEX-5.1 — Zone-2 cardio (150–250 kcal) or full recovery.' }
+    return { level: 'rest', label: 'Zone-2 / Rest', color: '#8B97B2', reason: 'Scheduled rest in HELIX-5 — Zone-2 cardio (150–250 kcal) or full recovery.' }
   }
   if (ctx.dayLabel) {
     const name = ctx.dayLabel
@@ -105,7 +100,7 @@ export function useInsights() {
         sleepMin: l.sleep_minutes,
         restHr: l.avg_rest_heart_rate ?? l.avg_heart_rate,
         respiratory: l.respiratory_rate,
-        weightKg: l.weight_kg,
+        weightKg: validWeight(l.weight_kg),
         calories: calByDate.get(l.date) ?? null,
         calorieGoal,
       }))

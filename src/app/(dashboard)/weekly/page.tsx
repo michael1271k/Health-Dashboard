@@ -137,7 +137,7 @@ export default function WeeklyPage() {
       {/* ── File System ── */}
       <div id="report-browser" className="space-y-3">
         <div className="flex items-center gap-1.5 flex-wrap">
-          {([['all', 'All', '#19E3B1'], ['axis', 'AXIS Era', '#38E1FF'], ['ppl', 'PPL Legacy', '#8B97B2']] as const).map(([k, label, color]) => {
+          {([['all', 'All', '#19E3B1'], ['axis', 'HELIX Era', '#3EE0FF'], ['ppl', 'PPL Legacy', '#8B97B2']] as const).map(([k, label, color]) => {
             const active = era === k
             return (
               <button key={k} onClick={() => setEra(k)}

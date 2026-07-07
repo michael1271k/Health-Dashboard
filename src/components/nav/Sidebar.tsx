@@ -25,7 +25,7 @@ export function Sidebar() {
         <div className="leading-none">
           <span className="font-heading font-bold text-xl tracking-widest text-text">HELIX</span>
           <p className="text-[10px] text-muted-vital tracking-wider mt-0.5 uppercase">
-            APEX-5.1
+            HELIX-5
           </p>
         </div>
       </div>

@@ -48,7 +48,7 @@ export function PRHistoryChart({ data, isLoading }: PRHistoryChartProps) {
 
   // Group by exercise, pivot to date-keyed rows for Recharts.
   // Era ghost: PPL-legacy points pivot into a "· PPL" ghost series (30% opacity,
-  // dashed) beneath the vivid APEX-5.1 line — the era jump is instantly visible.
+  // dashed) beneath the vivid HELIX-5 line — the era jump is instantly visible.
   const exercises = [...new Set(data.map((d) => d.exercise_name))]
   const dates = [...new Set(data.map((d) => d.date))].sort()
 

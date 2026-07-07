@@ -11,7 +11,7 @@ export function KineticNumber({ value, className, duration = 900 }: { value: num
   const fromRef = useRef(value ?? 0)
 
   useEffect(() => {
-    if (value == null) return
+    if (value == null || !Number.isFinite(value)) return
     const reduce = typeof document !== 'undefined' && document.documentElement.dataset.reduceMotion === 'true'
     if (reduce) { setDisplay(value); fromRef.current = value; return }
     const from = fromRef.current
@@ -28,6 +28,6 @@ export function KineticNumber({ value, className, duration = 900 }: { value: num
     return () => cancelAnimationFrame(raf)
   }, [value, duration])
 
-  if (value == null) return <span className={className}>—</span>
-  return <span className={className}>{display}</span>
+  if (value == null || !Number.isFinite(value)) return <span className={className}>—</span>
+  return <span className={className}>{Number.isFinite(display) ? display : '—'}</span>
 }

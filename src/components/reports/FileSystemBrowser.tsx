@@ -1,29 +1,25 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Folder, FolderOpen, FileText, Dumbbell, Scale, ChevronRight, Home, ArrowLeft, Scissors, Beef } from 'lucide-react'
+import { FileText, Dumbbell, Scale, ChevronRight, Home, ArrowLeft } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { ReportRow, GymReportRow } from '@/lib/hooks/useWeekly'
 import { enumerateWeeks, type ProgramWeek } from '@/lib/phases'
-import { eraForDate } from '@/lib/programs'
 import { MarkdownView } from './MarkdownView'
 import { SessionIntelCard } from './SessionIntelCard'
+import { JourneyTimeline } from './JourneyTimeline'
 
 interface FileItem { key: string; name: string; sub?: string; icon: LucideIcon; accent: string; body: string; meta?: GymReportRow }
 
 const fmt = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString('en-IL', { month: 'short', day: 'numeric' })
 const cap = (s: string) => s[0].toUpperCase() + s.slice(1)
 const SPLIT_COLOR: Record<string, string> = { push: '#38E1FF', pull: '#43F59B', legs: '#4FC3FF', upper: '#19E3B1', lower: '#E8C57A' }
-const COLUMNS = [
-  { kind: 'cut' as const, title: 'Cut', color: '#38E1FF', Icon: Scissors },
-  { kind: 'bulk' as const, title: 'Bulk', color: '#43F59B', Icon: Beef },
-]
 
 /**
- * macOS/Windows-style file explorer for the training journey. Two columns — Cut
- * and Bulk — list every program week as a "Week N" folder (empty weeks show an
- * empty-folder icon). Open a week → its files (Gym Session Summary, Weight Report,
- * per-day sessions); open a file → a beautiful rendered report (MarkdownView).
+ * Journey browser: the Helix Timeline Spine indexes every program week; opening
+ * a node drills into that week's files (Gym Session Summary, Weight Report,
+ * per-day sessions) — gym sessions render as data-first Intel Cards, prose
+ * reports keep the MarkdownView.
  */
 export function FileSystemBrowser({ reports, gymReports, focusWeek, era = 'all' }: {
   reports: ReportRow[]
@@ -98,55 +94,14 @@ export function FileSystemBrowser({ reports, gymReports, focusWeek, era = 'all' 
             </ul>
           )
       ) : (
-        // Root: two columns — Cut & Bulk, weeks grouped under strict ERA sections
-        // so the historical PPL 50-day cut can never mix with the HELIX cut.
-        <div className="grid sm:grid-cols-2 gap-4">
-          {COLUMNS.map((col) => {
-            const weeks = enumerateWeeks([col.kind]).filter((w) => era === 'all' || eraForDate(w.weekStart) === era)
-            const eraGroups = [
-              { id: 'helix', title: 'HELIX Era', color: '#16F5C3', weeks: weeks.filter((w) => w.era === 'helix') },
-              { id: 'ppl', title: 'PPL Legacy', color: '#8B97B2', weeks: weeks.filter((w) => w.era === 'ppl') },
-            ].filter((g) => g.weeks.length > 0)
-            const ColIcon = col.Icon
-            return (
-              <div key={col.kind} className="space-y-2">
-                <div className="flex items-center gap-2 px-1 pb-1 border-b" style={{ borderColor: `${col.color}33` }}>
-                  <ColIcon className="w-4 h-4" style={{ color: col.color }} />
-                  <h3 className="font-heading font-semibold text-fluid-sm" style={{ color: col.color }}>{col.title}</h3>
-                  <span className="ml-auto text-fluid-xs text-muted-vital">{weeks.length} wk</span>
-                </div>
-                {eraGroups.map((g) => (
-                <div key={g.id} className="space-y-1.5">
-                <div className="flex items-center gap-1.5 px-1 pt-1">
-                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: g.color, boxShadow: `0 0 6px ${g.color}88` }} />
-                  <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: g.color }}>{g.title}</span>
-                </div>
-                <ul className="space-y-1.5">
-                  {g.weeks.map((w) => {
-                    const has = filesFor(w).length > 0
-                    return (
-                      <li key={w.weekStart}>
-                        <button disabled={!has} onClick={() => { setWeek(w); setFileKey(null) }}
-                          className={`w-full flex items-center gap-2.5 rounded-xl px-3 py-2.5 border text-left min-h-[48px] transition-colors
-                            ${has ? 'bg-white/[0.02] border-white/[0.06] hover:border-white/[0.18]' : 'border-white/[0.04] opacity-45 cursor-default'}`}>
-                          <span className="flex h-8 w-8 items-center justify-center rounded-lg shrink-0" style={{ background: has ? `${col.color}1f` : 'rgba(255,255,255,0.03)', color: has ? col.color : '#5A6B85' }}>
-                            {has ? <Folder className="w-4 h-4" /> : <FolderOpen className="w-4 h-4" />}
-                          </span>
-                          <span className="min-w-0">
-                            <span className="block text-fluid-sm font-medium text-text truncate">{w.label}</span>
-                            <span className="block text-fluid-xs text-muted-vital">{fmt(w.weekStart)}{has ? '' : ' · empty'}</span>
-                          </span>
-                        </button>
-                      </li>
-                    )
-                  })}
-                </ul>
-                </div>
-                ))}
-              </div>
-            )
-          })}
-        </div>
+        // Root: the Helix Timeline Spine — every week as a node on the strand,
+        // HELIX era glowing above the boundary, PPL Legacy muted below.
+        <JourneyTimeline
+          reports={reports}
+          gymReports={gymReports}
+          era={era}
+          onOpenWeek={(w) => { setWeek(w); setFileKey(null) }}
+        />
       )}
     </section>
   )
