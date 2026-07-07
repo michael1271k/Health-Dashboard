@@ -37,7 +37,10 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
   return (
     <PersistQueryClientProvider
       client={queryClient}
-      persistOptions={{ persister, maxAge: 24 * 60 * 60 * 1000, buster: 'v13' }}
+      // Bump this on any deploy that changes cached query/component shapes so
+      // a device with an older persisted cache discards it instead of feeding
+      // stale-shaped data into new components.
+      persistOptions={{ persister, maxAge: 24 * 60 * 60 * 1000, buster: 'v14' }}
     >
       {children}
     </PersistQueryClientProvider>

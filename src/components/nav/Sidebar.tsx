@@ -25,7 +25,7 @@ export function Sidebar() {
         <div className="leading-none">
           <span className="font-heading font-bold text-xl tracking-widest text-text">HELIX</span>
           <p className="text-[10px] text-muted-vital tracking-wider mt-0.5 uppercase">
-            Performance OS
+            APEX-5.1
           </p>
         </div>
       </div>
@@ -65,7 +65,7 @@ export function Sidebar() {
       {/* ── Footer hint */}
       <div className="px-5 py-4 border-t border-white/[0.06]">
         <p className="text-[11px] text-muted-vital leading-relaxed">
-          Engineer Your Ascent.
+          Stimulus · Recovery · Adaptation
         </p>
       </div>
     </aside>
