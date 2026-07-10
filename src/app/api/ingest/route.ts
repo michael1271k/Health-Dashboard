@@ -55,8 +55,10 @@ export async function POST(request: Request) {
 
   try {
     const result = await ingestDailyLog(db, userId, parsed.data)
-    return NextResponse.json({ success: true, ...result })
+    // Always 200 with the detailed report; `success` reflects per-metric errors.
+    return NextResponse.json({ success: result.errors.length === 0, ...result })
   } catch (err) {
+    // Only truly unexpected failures land here (never a normal DB/validity error).
     console.error('[ingest] failed:', err)
     return NextResponse.json({ error: 'Ingest failed', detail: String(err) }, { status: 500 })
   }

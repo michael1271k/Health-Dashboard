@@ -19,14 +19,21 @@ export interface SectionResult {
   error?: string
 }
 
+export interface FieldError { field: string; error: string }
+
 /**
- * Detailed Shortcut response (Phase 15) — the iOS Shortcut can now show exactly
- * what landed, what was skipped (no data sent), what was ignored (validity
- * rules), and precise error messages per table.
+ * Ultra-detailed Shortcut response — the iOS Shortcut shows exactly what landed
+ * (`inserted`), what wasn't sent (`omitted`), and any per-metric DB/validity
+ * problems (`errors`). `results`/`warnings` keep the richer per-table breakdown.
+ * The route NEVER 500s on a DB error: everything is reported here so the phone
+ * sees precisely what worked and what didn't.
  */
 export interface IngestResult {
   date: string
-  received: string[]
+  inserted: string[]         // metric keys stored successfully
+  omitted: string[]          // known metric keys absent/null in the payload
+  errors: FieldError[]       // per-metric DB or validity failures ([] if clean)
+  received: string[]         // metric keys present in the payload (inserted ∪ errored)
   results: {
     daily_log: SectionResult
     metrics: SectionResult
@@ -40,8 +47,20 @@ export interface IngestResult {
 
 const skipped = (): SectionResult => ({ ok: true, action: 'skipped' })
 
+/** Every metric key the Shortcut can send (canonical names, post-normalization). */
+const KNOWN_KEYS = [
+  'steps', 'water', 'sleep_minutes', 'carbs', 'protein', 'fats', 'weight', 'lean_mass',
+  'bmi', 'training_minutes', 'active_energy', 'body_fat', 'standing_minutes', 'avg_heart_rate',
+  'avg_rest_heart_rate', 'respiratory_rate', 'blood_oxygen', 'hrv', 'exercise_minutes',
+  'stand_hours', 'vo2max',
+] as const
+
 /** v5.1 metric columns that may not exist yet if the Phase-15 migration wasn't run. */
 const V51_METRIC_KEYS = ['hrv_ms', 'exercise_minutes', 'stand_hours', 'vo2max'] as const
+/** Payload key → the corresponding v5.1 daily_logs column (for error attribution). */
+const V51_PAYLOAD_TO_COLUMN: Record<string, string> = {
+  hrv: 'hrv_ms', exercise_minutes: 'exercise_minutes', stand_hours: 'stand_hours', vo2max: 'vo2max',
+}
 
 /** A Postgres/PostgREST "column does not exist / schema cache" error. */
 function isMissingColumnError(msg: string): boolean {
@@ -110,10 +129,21 @@ export async function ingestDailyLog(
   set('stand_hours', payload.stand_hours)
   set('vo2max', payload.vo2max)
 
-  const received = Object.keys(row).filter((k) => k !== 'user_id' && k !== 'date')
+  // Present = keys the Shortcut actually sent (canonical, post-normalization).
+  // Omitted = everything it didn't. A push NEVER fails for omitted keys.
+  const present = KNOWN_KEYS.filter((k) => (payload as Record<string, unknown>)[k] !== undefined)
+  const omitted = KNOWN_KEYS.filter((k) => (payload as Record<string, unknown>)[k] === undefined)
+  const errors: FieldError[] = []
+  const failed = new Set<string>()
+
+  // Weight below the validity floor is a scale artifact — reported, not stored.
+  if (payload.weight !== undefined && weight === undefined) {
+    failed.add('weight')
+    errors.push({ field: 'weight', error: `ignored — below ${MIN_VALID_WEIGHT_KG}kg validity minimum` })
+  }
 
   const result: IngestResult = {
-    date, received,
+    date, inserted: [], omitted, errors, received: present,
     results: {
       daily_log: skipped(), metrics: skipped(), nutrition: skipped(),
       body: skipped(), water: skipped(), sleep: skipped(),
@@ -123,12 +153,22 @@ export async function ingestDailyLog(
 
   const { error: dlErr, strippedV51 } = await upsertDailyLog(db, row)
   if (strippedV51) {
-    warnings.push('advanced metrics (HRV / VO₂max / exercise / stand) skipped — those daily_logs columns are not migrated yet; run the Phase-15 SQL to enable them')
+    warnings.push('advanced metrics (HRV / VO₂max / exercise / stand) skipped — those daily_logs columns are not migrated yet; run the Phase-15 SQL to store them')
+    for (const k of present) {
+      if (k in V51_PAYLOAD_TO_COLUMN) {
+        failed.add(k)
+        errors.push({ field: k, error: `daily_logs.${V51_PAYLOAD_TO_COLUMN[k]} column not migrated — run the Phase-15 SQL` })
+      }
+    }
+  }
+  if (dlErr) {
+    // Genuine DB failure: report it per the detailed contract — never throw/500.
+    for (const k of present) failed.add(k)
+    errors.push({ field: 'daily_logs', error: dlErr.message })
   }
   result.results.daily_log = dlErr
     ? { ok: false, action: 'upserted', error: dlErr.message }
     : { ok: true, action: 'upserted' }
-  if (dlErr) throw Object.assign(new Error(`daily_logs upsert failed: ${dlErr.message}`), { result })
 
   // ── 2. Fan-out: daily_metrics (steps, active cal, resting HR) ──
   const restHr = payload.avg_rest_heart_rate ?? payload.avg_heart_rate
@@ -139,6 +179,7 @@ export async function ingestDailyLog(
     if (restHr !== undefined) m.rest_hr = Math.round(restHr)
     const { error } = await db.from('daily_metrics').upsert(m as any, { onConflict: 'user_id,date', ignoreDuplicates: false })
     result.results.metrics = error ? { ok: false, action: 'upserted', error: error.message } : { ok: true, action: 'upserted' }
+    if (error) errors.push({ field: 'daily_metrics', error: error.message })
   }
 
   // ── 3. Fan-out: nutrition_entries (compute calories from macros) ──
@@ -152,6 +193,7 @@ export async function ingestDailyLog(
       phase: derivePhase(calories),
     } as any)
     result.results.nutrition = error ? { ok: false, action: 'inserted', error: error.message } : { ok: true, action: 'inserted' }
+    if (error) errors.push({ field: 'nutrition_entries', error: error.message })
   }
 
   // ── 4. Fan-out: body_composition (only with a VALID weight) ──
@@ -167,6 +209,7 @@ export async function ingestDailyLog(
         bone_mass_kg: null, bmi: payload.bmi ?? null,
       } as any)
       result.results.body = error ? { ok: false, action: 'inserted', error: error.message } : { ok: true, action: 'inserted' }
+      if (error) errors.push({ field: 'body_composition', error: error.message })
     }
   }
 
@@ -177,24 +220,26 @@ export async function ingestDailyLog(
       user_id: userId, hk_uuid: null, logged_at: `${date}T00:00:00Z`, date, amount_ml: payload.water,
     } as any)
     result.results.water = error ? { ok: false, action: 'inserted', error: error.message } : { ok: true, action: 'inserted' }
+    if (error) errors.push({ field: 'water_intake', error: error.message })
   }
 
-  // ── 6. Fan-out: sleep_sessions (synthesize if none exists for the night) ──
+  // ── 6. Fan-out: sleep_sessions — UNCONDITIONAL OVERWRITE for the night ──
+  // A daily push must always reflect the latest reading. Delete any existing
+  // session(s) for this night, then insert the fresh one (never conflict-skip).
   if (payload.sleep_minutes !== undefined && payload.sleep_minutes > 0) {
-    const { data: existing } = await db.from('sleep_sessions').select('id')
-      .eq('user_id', userId).gte('start_time', `${date}T00:00:00Z`).lt('start_time', `${date}T23:59:59Z`).limit(1)
-    if (((existing ?? []) as unknown[]).length) {
-      result.results.sleep = { ok: true, action: 'skipped', error: 'a sleep session already exists for this night' }
-    } else {
-      const dur = Math.round(payload.sleep_minutes)
-      const { error } = await db.from('sleep_sessions').insert({
-        user_id: userId, hk_uuid: null,
-        start_time: `${date}T23:00:00Z`, end_time: `${date}T23:00:00Z`,
-        duration_min: dur, deep_min: 0, rem_min: 0, core_min: dur, awake_min: 0, sleep_score: null,
-      } as any)
-      result.results.sleep = error ? { ok: false, action: 'inserted', error: error.message } : { ok: true, action: 'inserted' }
-    }
+    await db.from('sleep_sessions').delete()
+      .eq('user_id', userId).gte('start_time', `${date}T00:00:00Z`).lt('start_time', `${date}T23:59:59Z`)
+    const dur = Math.round(payload.sleep_minutes)
+    const { error } = await db.from('sleep_sessions').insert({
+      user_id: userId, hk_uuid: null,
+      start_time: `${date}T23:00:00Z`, end_time: `${date}T23:00:00Z`,
+      duration_min: dur, deep_min: 0, rem_min: 0, core_min: dur, awake_min: 0, sleep_score: null,
+    } as any)
+    result.results.sleep = error ? { ok: false, action: 'upserted', error: error.message } : { ok: true, action: 'upserted' }
+    if (error) errors.push({ field: 'sleep_sessions', error: error.message })
   }
 
+  // Finalize: everything present that didn't fail is confirmed inserted.
+  result.inserted = present.filter((k) => !failed.has(k))
   return result
 }
