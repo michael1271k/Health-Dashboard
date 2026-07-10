@@ -40,6 +40,32 @@ export interface IngestResult {
 
 const skipped = (): SectionResult => ({ ok: true, action: 'skipped' })
 
+/** v5.1 metric columns that may not exist yet if the Phase-15 migration wasn't run. */
+const V51_METRIC_KEYS = ['hrv_ms', 'exercise_minutes', 'stand_hours', 'vo2max'] as const
+
+/** A Postgres/PostgREST "column does not exist / schema cache" error. */
+function isMissingColumnError(msg: string): boolean {
+  return /column|schema cache|PGRST204|42703|could not find/i.test(msg)
+}
+
+/**
+ * Upsert daily_logs, self-healing when the DB hasn't been migrated for the v5.1
+ * metric columns yet: if the first attempt fails on a missing column, strip the
+ * v5.1 keys and retry so the core push (steps, macros, weight, sleep…) STILL
+ * lands. A push must never be lost just because an optional new column is absent.
+ */
+async function upsertDailyLog(db: DB, row: Record<string, any>): Promise<{ error: { message: string } | null; strippedV51: boolean }> {
+  const first = await db.from('daily_logs').upsert(row as any, { onConflict: 'user_id,date' })
+  const hasV51 = V51_METRIC_KEYS.some((k) => k in row)
+  if (first.error && hasV51 && isMissingColumnError(first.error.message)) {
+    const stripped = { ...row }
+    for (const k of V51_METRIC_KEYS) delete stripped[k]
+    const retry = await db.from('daily_logs').upsert(stripped as any, { onConflict: 'user_id,date' })
+    return { error: retry.error, strippedV51: true }
+  }
+  return { error: first.error, strippedV51: false }
+}
+
 /**
  * Upsert the flat Shortcut payload into daily_logs (merge — only provided keys,
  * preserving AI-completed advanced fields), then fan out to the normalized
@@ -95,7 +121,10 @@ export async function ingestDailyLog(
     warnings,
   }
 
-  const { error: dlErr } = await db.from('daily_logs').upsert(row as any, { onConflict: 'user_id,date' })
+  const { error: dlErr, strippedV51 } = await upsertDailyLog(db, row)
+  if (strippedV51) {
+    warnings.push('advanced metrics (HRV / VO₂max / exercise / stand) skipped — those daily_logs columns are not migrated yet; run the Phase-15 SQL to enable them')
+  }
   result.results.daily_log = dlErr
     ? { ok: false, action: 'upserted', error: dlErr.message }
     : { ok: true, action: 'upserted' }

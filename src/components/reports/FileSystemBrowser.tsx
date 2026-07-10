@@ -12,7 +12,7 @@ import { JourneyTimeline } from './JourneyTimeline'
 interface FileItem { key: string; name: string; sub?: string; icon: LucideIcon; accent: string; body: string; meta?: GymReportRow }
 
 const fmt = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString('en-IL', { month: 'short', day: 'numeric' })
-const cap = (s: string) => s[0].toUpperCase() + s.slice(1)
+const cap = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : 'Session')
 const SPLIT_COLOR: Record<string, string> = { push: '#38E1FF', pull: '#43F59B', legs: '#4FC3FF', upper: '#19E3B1', lower: '#E8C57A' }
 
 /**

@@ -49,10 +49,20 @@ async function computeForDate(supabase: DB, userId: string, date: string, hoursA
   const trailing = trailingRaw as Array<{ total_volume_kg: number | null }> | null
   const trailingAvg = trailing?.length ? trailing.reduce((s, r) => s + (r.total_volume_kg ?? 0), 0) / trailing.length : 0
 
-  // HRV + resting-HR baselines (7-day trailing) from daily_logs — Phase 15
-  const { data: dlRaw } = await supabase
-    .from('daily_logs').select('date, hrv_ms, avg_rest_heart_rate').eq('user_id', userId)
+  // HRV + resting-HR baselines (7-day trailing) from daily_logs — Phase 15.
+  // Self-heal if the hrv_ms column isn't migrated yet: retry without it so the
+  // RHR baseline (and the rest of scoring) is never lost to a missing column.
+  const dlQuery = (cols: string) => supabase
+    .from('daily_logs').select(cols).eq('user_id', userId)
     .lte('date', date).order('date', { ascending: false }).limit(8)
+  let dlRaw: unknown[] | null = null
+  const dlFull = await dlQuery('date, hrv_ms, avg_rest_heart_rate')
+  if (dlFull.error) {
+    const dlFallback = await dlQuery('date, avg_rest_heart_rate')
+    dlRaw = (dlFallback.data ?? []).map((r) => ({ ...(r as object), hrv_ms: null }))
+  } else {
+    dlRaw = dlFull.data
+  }
   const dl = (dlRaw ?? []) as Array<{ date: string; hrv_ms: number | null; avg_rest_heart_rate: number | null }>
   const todayDl = dl.find((r) => r.date === date)
   const trail = dl.filter((r) => r.date !== date)
