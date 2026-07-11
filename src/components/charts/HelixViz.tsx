@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts'
 import { useMuscleAnalytics, MUSCLE_GROUPS, GROUP_COLOR } from '@/lib/hooks/useMuscleAnalytics'
 import { useVolumeTrend } from '@/lib/hooks/useCharts'
+import { eraForDate } from '@/lib/programs'
 import { ChartTooltip } from './ChartTooltip'
 
 /* ── 1. Muscle contour body-map ──────────────────────────────────────────────
@@ -17,8 +18,8 @@ const REGIONS: Array<{ group: string; d: string }> = [
   { group: 'Back',      d: 'M42 30 h16 a3 3 0 0 1 3 4 l-1 4 h-20 l-1 -4 a3 3 0 0 1 3 -4' },
 ]
 
-export function BodyHeatmap({ days }: { days: number }) {
-  const { data, isLoading } = useMuscleAnalytics(days)
+export function BodyHeatmap({ days, era = 'all' }: { days: number; era?: 'all' | 'ppl' | 'axis' }) {
+  const { data, isLoading } = useMuscleAnalytics(days, era)
   if (isLoading) return <div className="helix-card h-72 animate-pulse" />
   if (!data || data.stats.every((s) => s.volume === 0)) return null
 
@@ -60,8 +61,8 @@ export function BodyHeatmap({ days }: { days: number }) {
 }
 
 /* ── 2. Volume stream flow — stacked river of weekly sets per muscle group ── */
-export function VolumeStream({ days }: { days: number }) {
-  const { data, isLoading } = useMuscleAnalytics(days)
+export function VolumeStream({ days, era = 'all' }: { days: number; era?: 'all' | 'ppl' | 'axis' }) {
+  const { data, isLoading } = useMuscleAnalytics(days, era)
   if (isLoading) return <div className="helix-card h-64 animate-pulse" />
   if (!data || data.weekly.length < 2) return null
 
@@ -84,8 +85,9 @@ export function VolumeStream({ days }: { days: number }) {
 }
 
 /* ── 3. RPE intensity calendar — GitHub-style heat grid of session load ────── */
-export function RpeCalendar({ days }: { days: number }) {
-  const { data, isLoading } = useVolumeTrend(days)
+export function RpeCalendar({ days, era = 'all' }: { days: number; era?: 'all' | 'ppl' | 'axis' }) {
+  const { data: raw, isLoading } = useVolumeTrend(days)
+  const data = raw?.filter((s) => era === 'all' || eraForDate(s.date) === era)
   const grid = useMemo(() => {
     if (!data?.length) return null
     const byDate = new Map<string, number>()

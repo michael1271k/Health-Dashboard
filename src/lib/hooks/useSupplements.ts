@@ -21,12 +21,30 @@ export function useSupplements() {
 
       const autoLog = (goalsRes.data as { auto_log_supplements?: boolean } | null)?.auto_log_supplements ?? false
       if (autoLog) {
-        // Auto-mark items whose scheduled time has passed — UNLESS an explicit
-        // record already exists (a manual tap/untap always wins).
+        // Auto-log items whose scheduled time has passed — UNLESS an explicit
+        // record already exists (a manual tap/untap always wins). Phase 17:
+        // actually WRITE the rows (ignoreDuplicates keeps manual records
+        // authoritative) so scores, history, and other devices see them too —
+        // previously this only simulated ticks client-side and persisted nothing.
         const logged = new Set(rows.map((r) => r.item_key))
+        const due: Array<{ key: string; time: string }> = []
         for (const slot of SUPPLEMENT_PROTOCOL) {
           if (!slotTimePassed(slot.time)) continue
-          for (const it of slot.items) if (!logged.has(it.key)) taken.add(it.key)
+          for (const it of slot.items) if (!logged.has(it.key)) due.push({ key: it.key, time: slot.time })
+        }
+        if (due.length) {
+          const { data: { session } } = await supabase.auth.getSession()
+          if (session) {
+            const inserts = due.map((d) => ({
+              user_id: session.user.id, date, item_key: d.key, taken: true,
+              taken_at: new Date(`${date}T${d.time}:00`).toISOString(),
+            }))
+            // Best-effort: ticks show locally either way; a failed write simply
+            // retries on the next fetch (idempotent upsert).
+            await supabase.from('supplement_log')
+              .upsert(inserts as never[], { onConflict: 'user_id,date,item_key', ignoreDuplicates: true })
+          }
+          for (const d of due) taken.add(d.key)
         }
       }
       return taken

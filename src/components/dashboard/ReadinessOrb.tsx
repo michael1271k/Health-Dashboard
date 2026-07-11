@@ -1,5 +1,7 @@
 'use client'
 
+import { memo } from 'react'
+
 import type { Tables } from '@/lib/supabase/types'
 import { KineticNumber } from '@/components/fx/KineticNumber'
 import { EcgPulse } from '@/components/fx/EcgPulse'
@@ -17,7 +19,7 @@ function scoreColor(v: number | null): string {
  * at the core, the battery as a liquid arc around the rim, ECG pulse beneath.
  * Opacity/glow animations only (the iOS backdrop-filter rule).
  */
-export function ReadinessOrb({ score, isLoading }: { score: Tables<'daily_scores'> | null; isLoading?: boolean }) {
+export const ReadinessOrb = memo(function ReadinessOrb({ score, isLoading }: { score: Tables<'daily_scores'> | null; isLoading?: boolean }) {
   const total = score?.score ?? null
   const battery = score?.battery_pct ?? null
   const color = scoreColor(total)
@@ -68,4 +70,4 @@ export function ReadinessOrb({ score, isLoading }: { score: Tables<'daily_scores
       <div className="w-52"><EcgPulse level={total} color={color} /></div>
     </div>
   )
-}
+})

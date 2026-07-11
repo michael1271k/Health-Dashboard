@@ -68,7 +68,36 @@ const round = (n: number, d = 0) => {
 }
 
 // ── insight builders ─────────────────────────────────────────────────────────
-export interface InsightInput { days: DayPoint[]; sessions: SessionPoint[]; contextMode?: string }
+export interface InsightInput { days: DayPoint[]; sessions: SessionPoint[]; contextMode?: string; todayISO?: string }
+
+/** Days since the most recent session, or null with no sessions at all. */
+export function daysSinceLastSession(sessions: SessionPoint[], todayISO: string): number | null {
+  if (!sessions.length) return null
+  const last = sessions.reduce((m, s) => (s.date > m ? s.date : m), sessions[0].date)
+  return Math.round((new Date(`${todayISO}T00:00:00Z`).getTime() - new Date(`${last}T00:00:00Z`).getTime()) / 86400000)
+}
+
+/**
+ * Data-gap awareness (Phase 17): when there's been no training for a week+,
+ * SAY SO — and the volume-comparison builders are suppressed entirely so the
+ * coach never "compares" a blank week and invents trends.
+ */
+export function trainingGap(sessions: SessionPoint[], todayISO: string): Insight | null {
+  const gap = daysSinceLastSession(sessions, todayISO)
+  if (gap == null) {
+    return {
+      id: 'training-gap', tone: 'neutral', confidence: 0.95,
+      headline: 'No training history in this window',
+      detail: 'Volume and PR comparisons are paused until your first logged session — nothing here is being estimated or invented.',
+    }
+  }
+  if (gap < 7) return null
+  return {
+    id: 'training-gap', tone: 'neutral', confidence: 0.95,
+    headline: `${gap} days since your last session`,
+    detail: `Training comparisons are paused — a ${gap}-day gap makes week-over-week volume math meaningless. Expect the first session back to feel ~10% heavier than it is; start at re-entry loads and the numbers return within two sessions.`,
+  }
+}
 
 /** Sleep the night of a session vs that session's training volume. */
 function sleepVsVolume(days: DayPoint[], sessions: SessionPoint[]): Insight | null {
@@ -311,12 +340,18 @@ export function fuelVsForce(days: DayPoint[], sessions: SessionPoint[]): Insight
 }
 
 export function computeInsights(input: InsightInput, limit = 3): Insight[] {
+  // Gap-awareness gate: with a 7-day+ training gap (or no sessions at all) the
+  // volume-comparison builders are OFF — recovery/nutrition insights still run.
+  const todayISO = input.todayISO ?? new Date().toISOString().slice(0, 10)
+  const gap = daysSinceLastSession(input.sessions, todayISO)
+  const gapped = gap == null || gap >= 7
+
   const builders = [
-    sleepVsVolume(input.days, input.sessions),
+    gapped ? trainingGap(input.sessions, todayISO) : sleepVsVolume(input.days, input.sessions),
     recoveryDrift(input.days),
     calorieAdherence(input.days),
     weightTrend(input.days, input.sessions, input.contextMode),
-    fuelVsForce(input.days, input.sessions),
+    gapped ? null : fuelVsForce(input.days, input.sessions),
   ]
   return builders
     .filter((x): x is Insight => x !== null)

@@ -6,6 +6,7 @@ import { useWeightTrend, useMacroHistory, usePRHistory, useVolumeTrend } from '@
 import { useUserGoals } from '@/lib/hooks/useDashboard'
 import { RangeSelector } from '@/components/charts/RangeSelector'
 import { eraForDate } from '@/lib/programs'
+import { DeferredMount } from '@/components/fx/DeferredMount'
 
 const ERA_TABS = [['all', 'All', '#19E3B1'], ['axis', 'HELIX-5', '#3EE0FF'], ['ppl', 'PPL Legacy', '#8B97B2']] as const
 
@@ -83,17 +84,19 @@ export default function ChartsPage() {
             />
             <PRHistoryChart data={pData} isLoading={prLoading} />
           </div>
+          <DeferredMount minHeight={480}>
           <div>
             <h2 className="font-heading text-fluid-lg font-bold text-text mb-3">Muscle Analytics <span className="text-fluid-xs text-muted-vital font-normal">Hevy-killer</span></h2>
             <div className="space-y-4">
               <div className="grid lg:grid-cols-2 gap-4">
-                <BodyHeatmap days={days} />
-                <RpeCalendar days={days} />
+                <BodyHeatmap days={days} era={era} />
+                <RpeCalendar days={days} era={era} />
               </div>
-              <VolumeStream days={days} />
-              <MuscleAnalyticsSection days={days} />
+              <VolumeStream days={days} era={era} />
+              <MuscleAnalyticsSection days={days} era={era} />
             </div>
           </div>
+          </DeferredMount>
         </div>
       </div>
     </div>

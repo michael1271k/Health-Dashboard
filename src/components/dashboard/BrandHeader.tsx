@@ -45,8 +45,10 @@ export function BrandHeader() {
 
       {/* One clean brand line — mark sized to the cap height, optically centered */}
       <div className="flex items-center gap-x-3 flex-wrap">
+        {/* items-center + leading-none on both children = true optical
+            centering; the old translate-y nudge fought it (Phase 17 fix). */}
         <h1 className="flex items-center gap-2.5 text-fluid-3xl leading-none">
-          <HelixMark className="h-[0.82em] w-[0.82em] shrink-0 translate-y-[0.02em]" />
+          <HelixMark className="h-[0.84em] w-[0.84em] shrink-0" />
           <span className="helix-wordmark font-heading font-extrabold tracking-tight leading-none">HELIX</span>
         </h1>
         <span

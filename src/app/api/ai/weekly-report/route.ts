@@ -59,6 +59,13 @@ Average daily score: X/100 | Battery avg: X%
 Rules:
 - Base EVERY number strictly on the supplied data. Do NOT fabricate stats.
 - If data is missing for a metric, write "No data" — never guess.
+- DATA GAPS ARE REAL: if training.sessionCount is 0, the Training Summary must
+  say exactly that (0 sessions, 0 volume, 0 PRs) and the verdict must treat the
+  week as a training gap / recovery week — NEVER invent sessions, PRs, or
+  percentage changes for it.
+- A percentage change may ONLY appear when BOTH the baseline and current values
+  exist in the JSON. Otherwise write "insufficient data for a trend".
+- If a dataGap flag is present, open the report by stating the gap plainly.
 - Be direct, clinical, and concise. No fluff.`
 
 // ─── Aggregate a 7-day window (defaults to the last 7 days) ────────────────────
@@ -118,7 +125,14 @@ async function aggregateWeek(
   const calGoal = goals?.calorie_goal ?? 1935
   const daysInCalRange = nutritionRows.filter((r) => Math.abs(r.calories - calGoal) <= 100).length
 
+  // Phase 17: name the gap so the model (and the deterministic fallback) can
+  // treat an empty week as a FACT instead of a canvas.
+  const dataGap = sessionRows.length === 0
+    ? (nutritionRows.length === 0 ? 'no training AND no nutrition logged this week' : 'no training sessions logged this week')
+    : null
+
   return {
+    dataGap,
     period: { from, to },
     nutritionMode: goals?.goal_preset ?? 'cut',
     goals: goals ? { calories: goals.calorie_goal, protein: goals.protein_goal_g, carbs: goals.carbs_goal_g, fat: goals.fat_goal_g } : null,
@@ -180,6 +194,24 @@ export async function POST(req: Request) {
   const statsPayload = await aggregateWeek(userId, supabase, weekStart)
   const statsJson = JSON.stringify(statsPayload, null, 2)
 
+  // FULLY empty week → deterministic gap report; no LLM call, nothing to invent.
+  const t = statsPayload.training
+  if (statsPayload.dataGap && t.sessionCount === 0 && statsPayload.nutrition.daysLogged === 0) {
+    const gapMd = [
+      `## Quick Verdict`,
+      `**Data-gap week** (${statsPayload.period.from} → ${statsPayload.period.to}): ${statsPayload.dataGap}. No analysis is possible — and none was fabricated.`,
+      ``,
+      `## Training Summary`,
+      `- Sessions completed: 0 · Total volume: 0 kg · PRs: 0`,
+      ``,
+      `## What to Focus on Next Week`,
+      `- Resume the Shortcut pushes so nutrition/sleep/steps flow again.`,
+      `- First session back: re-entry loads (~90%), RPE cap 7–8, no PR attempts.`,
+      `- Re-establish the core trio (sleep · water · food) before chasing trends.`,
+    ].join('\n')
+    return await persistAndRespond(supabase, userId, statsPayload, gapMd)
+  }
+
   // Generate report with Claude (streaming, adaptive thinking)
   const client = new Anthropic({ apiKey })
 
@@ -210,8 +242,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Empty report from Claude' }, { status: 500 })
   }
 
-  // Persist to Supabase reports table
-   
+  return await persistAndRespond(supabase, userId, statsPayload, contentMd)
+}
+
+/** Upsert the report row and shape the JSON response (shared by LLM + gap paths). */
+async function persistAndRespond(
+  supabase: ReturnType<typeof getServerSupabaseClient>,
+  userId: string,
+  statsPayload: Awaited<ReturnType<typeof aggregateWeek>>,
+  contentMd: string,
+) {
   const { data: reportRow, error: dbError } = await supabase
     .from('reports')
     .upsert({
@@ -220,7 +260,7 @@ export async function POST(req: Request) {
       period_start: statsPayload.period.from,
       period_end:   statsPayload.period.to,
       content_md:   contentMd,
-      metrics:      statsPayload as Record<string, unknown>,
+      metrics:      statsPayload as unknown as Record<string, unknown>,
     } as unknown as never, { onConflict: 'user_id,period_start,period_end' })
     .select('id')
     .single()

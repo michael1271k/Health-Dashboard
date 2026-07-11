@@ -9,8 +9,8 @@ import { ChartTooltip } from './ChartTooltip'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 
 /** Hevy-killer muscle analytics — balance radar, sets/muscle/week, volume heatmap, freshness. */
-export function MuscleAnalyticsSection({ days }: { days: number }) {
-  const { data, isLoading } = useMuscleAnalytics(days)
+export function MuscleAnalyticsSection({ days, era = 'all' }: { days: number; era?: 'all' | 'ppl' | 'axis' }) {
+  const { data, isLoading } = useMuscleAnalytics(days, era)
   const unit = useUnitSystem()
   if (isLoading) return <div className="helix-card h-64 animate-pulse" />
   if (!data || data.stats.every((s) => s.sets === 0)) {

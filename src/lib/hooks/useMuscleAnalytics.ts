@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { logicalTodayISO } from '@/lib/utils/day'
+import { eraForDate } from '@/lib/programs'
 
 /** Canonicalize Hevy muscle tags into 6 display groups (v5.1 aliases included). */
 const MUSCLE_MAP: Record<string, string> = {
@@ -35,9 +36,12 @@ export interface MuscleAnalytics {
   weekly: Array<Record<string, number | string>> // { week, Chest, Back, ... } sets per group per week
 }
 
-export function useMuscleAnalytics(days = 30) {
+export function useMuscleAnalytics(days = 30, era: 'all' | 'ppl' | 'axis' = 'all') {
+  // logicalTodayISO in the key: freshness (daysSince) must DECAY at the 04:00
+  // day boundary even when the persisted cache still holds yesterday's result.
+  const today = logicalTodayISO()
   return useQuery({
-    queryKey: ['muscle_analytics', days],
+    queryKey: ['muscle_analytics', days, era, today],
     staleTime: 60_000,
     queryFn: async (): Promise<MuscleAnalytics> => {
       const from = new Date(Date.now() - days * 86400000).toISOString()
@@ -47,11 +51,13 @@ export function useMuscleAnalytics(days = 30) {
         .gte('workout_sessions.started_at', from)
       if (error) throw error
 
-      const rows = (data ?? []) as unknown as Array<{
+      const rows = ((data ?? []) as unknown as Array<{
         weight_kg: number; reps: number
         exercises: { muscle_groups: string[] | null }
         workout_sessions: { started_at: string }
-      }>
+      }>)
+        // STRICT ERA BOUNDARY (Phase 17): workouts never mix eras in analytics.
+        .filter((r) => era === 'all' || eraForDate(r.workout_sessions.started_at.slice(0, 10)) === era)
 
       const agg = new Map<string, { sets: number; volume: number; last: string | null }>()
       const weekMap = new Map<string, Record<string, number>>()
@@ -73,10 +79,10 @@ export function useMuscleAnalytics(days = 30) {
         }
       }
 
-      const today = new Date(logicalTodayISO() + 'T00:00:00Z').getTime()
+      const todayMs = new Date(today + 'T00:00:00Z').getTime()
       const stats: MuscleStat[] = MUSCLE_GROUPS.map((g) => {
         const a = agg.get(g)
-        const daysSince = a?.last ? Math.round((today - new Date(a.last + 'T00:00:00Z').getTime()) / 86400000) : null
+        const daysSince = a?.last ? Math.round((todayMs - new Date(a.last + 'T00:00:00Z').getTime()) / 86400000) : null
         return { group: g, sets: a?.sets ?? 0, volume: Math.round(a?.volume ?? 0), daysSince }
       })
 

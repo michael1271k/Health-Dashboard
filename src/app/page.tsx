@@ -22,7 +22,7 @@ import { displayWeight, weightUnit, validWeight } from '@/lib/utils/units'
 import { PHASE_META } from '@/lib/nutrition/phase'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { logicalTodayISO } from '@/lib/utils/day'
-import { scheduleDayFor, daySplitEnum, type ScheduleDay } from '@/lib/programs'
+import { scheduleDayFor, daySplitEnum, eraForDate, type ScheduleDay } from '@/lib/programs'
 import { useSupplements } from '@/lib/hooks/useSupplements'
 import { TOTAL_SUPPLEMENTS } from '@/lib/supplements'
 import { useBioSeries } from '@/lib/hooks/useBioStrips'
@@ -76,7 +76,10 @@ export default function DashboardPage() {
   // shared with the Insight Coach so the whole app agrees.
   const todayDay: ScheduleDay | 'rest' = useMemo(() => scheduleDayFor(logicalTodayISO()), [])
 
-  const lastSession = sessions?.[0]
+  // STRICT ERA BOUNDARY (Phase 17): "last session" only looks inside the
+  // CURRENT era — a fresh HELIX era starts from "None", never from PPL history.
+  const todayEra = eraForDate(logicalTodayISO())
+  const lastSession = sessions?.find((s) => eraForDate(s.started_at.slice(0, 10)) === todayEra)
   const lastSplit = lastSession ? PPL_SPLITS[lastSession.split_day as SplitDay] : null
   const steps = metrics?.steps ?? log?.steps ?? null
   const calToday = nutrition?.calories != null ? Math.round(nutrition.calories) : null
@@ -119,7 +122,7 @@ export default function DashboardPage() {
         ? todayDay.sub
         : lastSession?.total_volume_kg != null
           ? `last: ${lastSplit?.label ?? ''} · ${Math.round(displayWeight(lastSession.total_volume_kg) ?? 0).toLocaleString()} ${unit}`
-          : 'no sessions yet',
+          : todayEra === 'axis' ? 'no HELIX sessions yet — fresh slate' : 'no sessions yet',
     },
     {
       key: 'body', icon: Scale, label: 'Body', accent: TEAL,

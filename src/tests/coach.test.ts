@@ -28,8 +28,11 @@ describe('linregSlope', () => {
 })
 
 describe('computeInsights', () => {
-  it('returns [] when there is no data', () => {
-    expect(computeInsights({ days: [], sessions: [] })).toEqual([])
+  it('states the data gap explicitly when there is no data (Phase 17 — never [] silently)', () => {
+    const out = computeInsights({ days: [], sessions: [] })
+    expect(out).toHaveLength(1)
+    expect(out[0].id).toBe('training-gap')
+    expect(out[0].headline).toMatch(/no training history/i)
   })
 
   it('flags a short-sleep training-volume drop', () => {
@@ -45,7 +48,8 @@ describe('computeInsights', () => {
       { date: '2026-06-03', volumeKg: 4000 },
       { date: '2026-06-04', volumeKg: 4200 },
     ]
-    const out = computeInsights({ days, sessions })
+    // todayISO inside the window: sleep-vs-volume only runs without a 7d+ gap.
+    const out = computeInsights({ days, sessions, todayISO: '2026-06-05' })
     const sv = out.find((i) => i.id === 'sleep-volume')
     expect(sv).toBeTruthy()
     expect(sv!.tone).toBe('caution')

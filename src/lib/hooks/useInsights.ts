@@ -129,7 +129,7 @@ export function useInsights() {
         reentry: isReentryWeek(todayISO),
       })
 
-      return { readiness, insights: computeInsights({ days, sessions, contextMode }) }
+      return { readiness, insights: computeInsights({ days, sessions, contextMode, todayISO }) }
     },
   })
 }

@@ -1,3 +1,5 @@
+import { memo } from 'react'
+
 interface StatTileProps {
   label: string
   value: string | number | null | undefined
@@ -12,7 +14,7 @@ interface StatTileProps {
  * A single metric cell inside a domain detail sheet: label on top, large value, an
  * optional unit and a smaller sub-line. Renders an em-dash for missing values.
  */
-export function StatTile({ label, value, unit, sub, accent, isLoading }: StatTileProps) {
+export const StatTile = memo(function StatTile({ label, value, unit, sub, accent, isLoading }: StatTileProps) {
   const display = value === null || value === undefined || value === '' ? '—' : value
 
   return (
@@ -34,4 +36,4 @@ export function StatTile({ label, value, unit, sub, accent, isLoading }: StatTil
       {sub && <span className="text-[10px] text-muted-vital leading-none">{sub}</span>}
     </div>
   )
-}
+})
