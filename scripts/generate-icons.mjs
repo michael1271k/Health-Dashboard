@@ -1,57 +1,87 @@
 /**
- * Rasterize the premium 3D-glass "A" monogram to static PNGs so iOS uses the real
- * icon on the Home Screen (dynamic ImageResponse routes render flat + cache badly).
+ * Rasterize the HELIX icon to static PNGs so iOS uses the real icon on the
+ * Home Screen (dynamic ImageResponse routes render flat + cache badly).
  *   node scripts/generate-icons.mjs
  */
 import { Resvg } from '@resvg/resvg-js'
 import { writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
-// HELIX v2 — the double strand suspended inside a bioluminescent liquid-glass orb.
+// HELIX v3 — "Obsidian Strand" (Phase 16). A free-floating double helix, NO orb:
+// dark liquid-metal strands with neon rim-light (teal left / cyan right), violet
+// base-pair rungs fading with depth, one specular caustic, bottom vignette.
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
   <defs>
-    <radialGradient id="bg" cx="50%" cy="32%" r="95%">
-      <stop offset="0%" stop-color="#081722"/><stop offset="58%" stop-color="#04070f"/><stop offset="100%" stop-color="#020409"/>
+    <radialGradient id="bg" cx="50%" cy="30%" r="100%">
+      <stop offset="0%" stop-color="#071019"/><stop offset="60%" stop-color="#030509"/><stop offset="100%" stop-color="#010204"/>
     </radialGradient>
-    <radialGradient id="orb" cx="38%" cy="30%" r="80%">
-      <stop offset="0%" stop-color="#123b46" stop-opacity="0.95"/>
-      <stop offset="55%" stop-color="#071522" stop-opacity="0.92"/>
-      <stop offset="100%" stop-color="#03080f" stop-opacity="0.98"/>
-    </radialGradient>
-    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
-      <stop offset="55%" stop-color="#16F5C3" stop-opacity="0"/>
-      <stop offset="82%" stop-color="#16F5C3" stop-opacity="0.22"/>
-      <stop offset="100%" stop-color="#3EE0FF" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="sa" x1="200" y1="380" x2="235" y2="130" gradientUnits="userSpaceOnUse">
+    <!-- Neon strand gradients (the rim); a dark core stroke overlays the center -->
+    <linearGradient id="neonA" x1="186" y1="88" x2="326" y2="424" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="#16F5C3"/><stop offset="100%" stop-color="#5BFF9D"/>
     </linearGradient>
-    <linearGradient id="sb" x1="277" y1="130" x2="312" y2="380" gradientUnits="userSpaceOnUse">
+    <linearGradient id="neonB" x1="326" y1="88" x2="186" y2="424" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="#3EE0FF"/><stop offset="100%" stop-color="#8B7CFF"/>
     </linearGradient>
+    <linearGradient id="rung" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#8B7CFF" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#8B7CFF" stop-opacity="0.55"/>
+    </linearGradient>
+    <radialGradient id="floor" cx="50%" cy="88%" r="45%">
+      <stop offset="0%" stop-color="#16F5C3" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#16F5C3" stop-opacity="0"/>
+    </radialGradient>
     <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
-      <feGaussianBlur stdDeviation="9" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      <feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3"/>
     </filter>
   </defs>
   <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-  <!-- Volumetric halo behind the orb -->
-  <circle cx="256" cy="256" r="235" fill="url(#halo)"/>
-  <!-- Liquid-glass orb -->
-  <circle cx="256" cy="256" r="182" fill="url(#orb)" stroke="rgba(150,235,255,0.28)" stroke-width="3"/>
-  <!-- Helix suspended inside -->
-  <g filter="url(#glow)" stroke-linecap="round" fill="none">
-    <path d="M216 124 C250 196, 182 226, 216 298 C232 334, 232 358, 216 392" stroke="rgba(0,0,0,0.45)" stroke-width="27" transform="translate(7,6)"/>
-    <path d="M296 124 C262 196, 330 226, 296 298 C280 334, 280 358, 296 392" stroke="rgba(0,0,0,0.45)" stroke-width="27" transform="translate(7,6)"/>
-    <path d="M216 124 C250 196, 182 226, 216 298 C232 334, 232 358, 216 392" stroke="url(#sa)" stroke-width="24"/>
-    <path d="M296 124 C262 196, 330 226, 296 298 C280 334, 280 358, 296 392" stroke="url(#sb)" stroke-width="24"/>
-    <path d="M231 190 L281 190" stroke="rgba(234,251,255,0.8)" stroke-width="16"/>
-    <path d="M205 258 L307 258" stroke="rgba(234,251,255,0.95)" stroke-width="19"/>
-    <path d="M231 326 L281 326" stroke="rgba(234,251,255,0.8)" stroke-width="16"/>
-    <circle cx="296" cy="128" r="12" fill="#EAFBFF"/>
+  <!-- Grounding pool so the strand "stands" in the frame -->
+  <ellipse cx="256" cy="448" rx="150" ry="30" fill="url(#floor)"/>
+
+  <!-- True antiphase helix: A left→right→left, B right→left→right,
+       crossing at y≈190 and y≈322. Rungs live in the open eyes. -->
+
+  <!-- Depth shadows -->
+  <g stroke-linecap="round" fill="none" opacity="0.5" filter="url(#soft)">
+    <path d="M186 88 C186 150, 326 192, 326 256 C326 320, 186 362, 186 424" stroke="#000" stroke-width="40" transform="translate(9,8)"/>
+    <path d="M326 88 C326 150, 186 192, 186 256 C186 320, 326 362, 326 424" stroke="#000" stroke-width="40" transform="translate(9,8)"/>
   </g>
-  <!-- Caustic highlight arc on the glass -->
-  <path d="M136 158 A160 160 0 0 1 300 92" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="10" stroke-linecap="round" opacity="0.55"/>
-  <ellipse cx="196" cy="150" rx="52" ry="26" fill="rgba(255,255,255,0.14)" transform="rotate(-28 196 150)"/>
+
+  <!-- Base-pair rungs in the three open eyes: violet neon with a hot core -->
+  <g stroke-linecap="round">
+    <g filter="url(#glow)" stroke="#8B7CFF">
+      <path d="M212 122 L300 122" stroke-width="16"/>
+      <path d="M204 256 L308 256" stroke-width="19"/>
+      <path d="M212 390 L300 390" stroke-width="16"/>
+    </g>
+    <path d="M212 122 L300 122" stroke="#D9D2FF" stroke-width="6" opacity="0.9"/>
+    <path d="M204 256 L308 256" stroke="#D9D2FF" stroke-width="7" opacity="0.95"/>
+    <path d="M212 390 L300 390" stroke="#D9D2FF" stroke-width="6" opacity="0.9"/>
+  </g>
+
+  <!-- Strand B (back at first crossing): neon rim + dark obsidian core -->
+  <g fill="none" stroke-linecap="round">
+    <path d="M326 88 C326 150, 186 192, 186 256 C186 320, 326 362, 326 424" stroke="url(#neonB)" stroke-width="36" filter="url(#glow)"/>
+    <path d="M326 88 C326 150, 186 192, 186 256 C186 320, 326 362, 326 424" stroke="#0a1420" stroke-width="20" opacity="0.92"/>
+  </g>
+  <!-- Strand A (front) -->
+  <g fill="none" stroke-linecap="round">
+    <path d="M186 88 C186 150, 326 192, 326 256 C326 320, 186 362, 186 424" stroke="url(#neonA)" stroke-width="36" filter="url(#glow)"/>
+    <path d="M186 88 C186 150, 326 192, 326 256 C326 320, 186 362, 186 424" stroke="#0a1a17" stroke-width="20" opacity="0.92"/>
+  </g>
+  <!-- Alternate the weave: B passes OVER A at the second crossing. The patch is
+       the exact de Casteljau sub-segment (t 0.25–0.75) of B's lower bezier, so
+       it overlays B's own tube invisibly and only changes the stacking order. -->
+  <g fill="none" stroke-linecap="round">
+    <path d="M207.9 300.5 C234.1 328.3, 277.9 353.3, 304.2 380.6" stroke="url(#neonB)" stroke-width="36"/>
+    <path d="M207.9 300.5 C234.1 328.3, 277.9 353.3, 304.2 380.6" stroke="#0a1420" stroke-width="20" opacity="0.92"/>
+  </g>
+
+  <!-- Specular caustic on the front strand crest -->
+  <ellipse cx="189" cy="122" rx="20" ry="7" fill="rgba(255,255,255,0.75)" transform="rotate(84 189 122)" filter="url(#soft)"/>
 </svg>`
 
 function render(size, file) {

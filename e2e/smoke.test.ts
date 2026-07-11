@@ -13,6 +13,15 @@ test('root page redirects to auth or renders dashboard', async ({ page }) => {
   expect(title).toContain('HELIX')
 })
 
+test('unauthenticated / never renders a blank dashboard — AuthGate redirects to /auth', async ({ page }) => {
+  // Phase 16 PWA fix: an isolated storage container (no session) must land on
+  // the sign-in screen, not an empty-but-"working" dashboard.
+  await page.context().clearCookies()
+  await page.goto('/')
+  await page.waitForURL(/\/auth/, { timeout: 30_000 })
+  await expect(page.getByLabel(/email/i)).toBeVisible()
+})
+
 test('log page renders without crashing', async ({ page }) => {
   await page.goto('/log')
   // /log server-redirects to /workout (or /auth when signed out) — wait for the

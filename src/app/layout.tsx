@@ -9,6 +9,7 @@ import { RealtimeProvider } from '@/components/providers/RealtimeProvider'
 import { MotionProvider } from '@/components/providers/MotionProvider'
 import { ThemeProvider as ContextThemeProvider } from '@/components/providers/ThemeProvider'
 import { SerwistRegister } from '@/components/providers/SerwistRegister'
+import { AuthGate } from '@/components/providers/AuthGate'
 import './globals.css'
 
 // HELIX type system: Sora (headings/display) · Inter (body) · IBM Plex Mono (data).
@@ -100,7 +101,7 @@ export default function RootLayout({
                   className="min-h-dvh pt-4 safe-pt pb-28 md:pl-64 md:pt-8 md:pb-8 safe-px"
                 >
                   <div className="max-w-7xl mx-auto">
-                    {children}
+                    <AuthGate>{children}</AuthGate>
                   </div>
                 </main>
                 <BottomNav />

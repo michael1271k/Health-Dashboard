@@ -521,6 +521,13 @@ html[data-reduce-motion='true'] .grain-overlay { display: none; }
   }
   .axis-wireframe { display: none; }
   .aurora-blob-3 { display: none; }
+  /* Zero-latency (Phase 16): ambient loops off on phones — the aurora freezes
+     into a static gradient wash, liquid/glint/bubble loops stop compositing.
+     !important because the blob animations are inline styles. */
+  .aurora-blob-1, .aurora-blob-2 { animation: none !important; }
+  .liquid-wave { animation: none; }
+  .battery-glint { animation: none; }
+  .battery-bubble { display: none; }
 }
 
 /* Premium grain/noise overlay — fixed, just above the aurora (-z-9). */

@@ -84,10 +84,15 @@ export default function AuthPage() {
             </p>
           )}
 
-          <button type="submit" disabled={loading} className="btn-primary w-full justify-center">
+          <button type="submit" disabled={loading} className="btn-primary w-full justify-center min-h-[44px]">
             <LogIn className="w-4 h-4" aria-hidden="true" />
             {loading ? 'Signing in…' : 'Sign in'}
           </button>
+
+          {/* Standalone-PWA reassurance: this container keeps its own session. */}
+          <p className="text-[11px] text-muted-vital text-center leading-relaxed">
+            You stay signed in on this device — sign in once and HELIX remembers you here.
+          </p>
         </form>
       </div>
     </main>

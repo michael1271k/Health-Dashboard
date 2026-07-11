@@ -7,6 +7,7 @@ import { useDailyLogs } from '@/lib/hooks/useNutrition'
 import { NUTRITION_PRESETS, type NutritionMode } from '@/lib/types/workout'
 import { NutritionLogList } from '@/components/nutrition/NutritionLogList'
 import { MacroRings } from '@/components/nutrition/MacroRings'
+import { FuelForceBand } from '@/components/nutrition/FuelForceBand'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { PHASE_META, type Phase } from '@/lib/nutrition/phase'
 import type { Tables } from '@/lib/supabase/types'
@@ -77,6 +78,9 @@ export default function NutritionPage() {
         logs={logs ?? []}
         goals={{ calorie: goals.calorie, protein: goals.protein, carbs: goals.carbs, fat: goals.fat }}
       />
+
+      {/* Fuel → Force: links today's fuel to today's session (renders only if trained) */}
+      <FuelForceBand date={logicalTodayISO()} proteinG={todayLog?.proteinG ?? null} proteinGoal={goals.protein} />
 
       {/* Targets / mode selector */}
       <section className="helix-card space-y-3">

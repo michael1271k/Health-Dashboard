@@ -6,7 +6,7 @@
  *  1. Extracts a structured schema (sets + session metrics) via Claude.
  *  2. Fills missing BPM/calories/duration from Apple Health (matchWorkoutMetrics).
  *  3. Resolves exercise names → real exercises.id UUIDs (creates missing).
- *  4. Saves via the shared saveSession() service (volume, PRs, Notion push).
+ *  4. Saves via the shared saveSession() service (volume, PRs).
  *  5. Generates a markdown "Gym Session Report" and stores it on the session.
  *
  * Body: { text: string, splitDay?: 'push'|'pull'|'legs'|'upper'|'lower' }
@@ -241,7 +241,7 @@ export async function POST(req: Request) {
   // Auto-fill missing/zero weights from the most recent matching session.
   await fillWeightsFromHistory(supabase, userId, payload)
 
-  // ── 4. Save (volume, PRs, Notion) ───────────────────────────────────────────
+  // ── 4. Save (volume, PRs) ───────────────────────────────────────────
   let result
   try {
     result = await saveSession(supabase, userId, payload, {
@@ -295,7 +295,6 @@ export async function POST(req: Request) {
     setCount: result.setCount,
     prCount: result.prCount,
     newPRs: result.newPRs,
-    notionPageId: result.notionPageId,
     metrics,
     reportMd,
     parsed,

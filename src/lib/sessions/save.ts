@@ -1,6 +1,6 @@
 /**
  * saveSession — internal service that persists a workout session + sets to
- * Supabase, computes volume + PRs (Epley), and best-effort pushes to Notion.
+ * Supabase and computes volume + PRs (Epley).
  *
  * Shared by POST /api/sessions and POST /api/ai/parse-workout so there is a
  * single write path (no internal self-fetch / NEXT_PUBLIC_APP_URL dependency).
@@ -9,8 +9,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database, InsertRow } from '@/lib/supabase/types'
 import type { SaveWorkoutPayload } from '@/lib/types/workout'
-import { getNotionClient } from '@/lib/notion/client'
-import { formatSessionForNotion, formatSetsAsBlocks } from '@/lib/notion/gym-log'
 import { epley1RM } from '@/lib/utils/epley'
 import { isReentryWeek } from '@/lib/programs'
 
@@ -25,7 +23,6 @@ export interface SessionMetrics {
 
 export interface SaveSessionResult {
   sessionId: string
-  notionPageId: string | null
   totalVolumeKg: number
   setCount: number
   prCount: number
@@ -74,7 +71,6 @@ export async function saveSession(
 
   const sessionInsert: InsertRow<'workout_sessions'> = {
     user_id: userId,
-    notion_page_id: null,
     started_at: payload.startedAt,
     ended_at: payload.endedAt,
     split_day: payload.splitDay,
@@ -89,7 +85,7 @@ export async function saveSession(
     report_md: metrics.reportMd ?? null,
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data: sessionRaw, error: sessionError } = await supabase
     .from('workout_sessions')
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -121,37 +117,12 @@ export async function saveSession(
     console.error('[saveSession] sets insert error (non-fatal):', setsError)
   }
 
-  // Best-effort Notion push
-  let notionPageId: string | null = null
-  const gymDbId = process.env.NOTION_GYM_DB_ID
-  if (gymDbId) {
-    try {
-      const notion = getNotionClient()
-      const properties = formatSessionForNotion(payload, totalVolumeKg)
-      const children = formatSetsAsBlocks(payload)
-      const page = await notion.pages.create({
-        parent: { database_id: gymDbId },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        properties: properties as unknown as Parameters<typeof notion.pages.create>[0]['properties'],
-        children,
-      })
-      notionPageId = page.id
-      await supabase
-        .from('workout_sessions')
-        .update({ notion_page_id: notionPageId } as unknown as never)
-        .eq('id', session.id)
-    } catch (err) {
-      console.error('[saveSession] Notion write failed (non-fatal):', err)
-    }
-  }
-
   const newPRs = setsToInsert
     .filter((x) => x.isPr)
     .map((x) => ({ exerciseName: x.s.exerciseName, est1rm: x.est1rm }))
 
   return {
     sessionId: session.id,
-    notionPageId,
     totalVolumeKg,
     setCount: payload.sets.length,
     prCount,

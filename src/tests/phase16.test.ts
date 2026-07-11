@@ -1,0 +1,144 @@
+import { describe, it, expect } from 'vitest'
+import { ShortcutPayloadSchema } from '@/lib/ingest/schema'
+import { computeSleepDebt } from '@/lib/hooks/useSleepDebt'
+import { fuelVsForce, type DayPoint, type SessionPoint } from '@/lib/coach/insights'
+import { dayCompleteness, type DayVaultData } from '@/lib/hooks/useDayVault'
+import { logicalTodayISO, logicalDaysAgoISO } from '@/lib/utils/day'
+
+// ── Phase 16 metrics: schema mapping ─────────────────────────────────────────
+describe('phase 16 ingest fields', () => {
+  it('accepts wrist_temp / time_in_daylight / heart_rate_recovery + aliases', () => {
+    const r = ShortcutPayloadSchema.safeParse({
+      wrist_temperature: 0.4, daylight: '95', hrr: 31,
+    })
+    expect(r.success).toBe(true)
+    if (r.success) {
+      expect(r.data.wrist_temp).toBe(0.4)
+      expect(r.data.time_in_daylight).toBe(95)
+      expect(r.data.heart_rate_recovery).toBe(31)
+    }
+  })
+
+  it('treats junk values for the new fields as absent (never throws)', () => {
+    const r = ShortcutPayloadSchema.safeParse({ wrist_temp: 'null', time_in_daylight: false, heart_rate_recovery: '' })
+    expect(r.success).toBe(true)
+    if (r.success) {
+      expect(r.data.wrist_temp).toBeUndefined()
+      expect(r.data.time_in_daylight).toBeUndefined()
+      expect(r.data.heart_rate_recovery).toBeUndefined()
+    }
+  })
+})
+
+// ── Sleep Debt Bank ──────────────────────────────────────────────────────────
+describe('computeSleepDebt', () => {
+  const today = logicalTodayISO()
+  const d = (n: number) => logicalDaysAgoISO(n)
+
+  it('accumulates shortfall vs the goal', () => {
+    // Three recent nights of 7h vs an 8h goal → 3h debt.
+    const debt = computeSleepDebt(
+      [{ date: d(3), sleepMinutes: 420 }, { date: d(2), sleepMinutes: 420 }, { date: d(1), sleepMinutes: 420 }],
+      8,
+    )
+    expect(debt.debtHours).toBe(3)
+    expect(debt.nights).toBe(3)
+    expect(debt.worstNightMin).toBe(420)
+  })
+
+  it('surplus nights repay debt but never bank credit below zero', () => {
+    const debt = computeSleepDebt(
+      [
+        { date: d(3), sleepMinutes: 420 },  // −1h
+        { date: d(2), sleepMinutes: 600 },  // +2h surplus repays…
+        { date: d(1), sleepMinutes: 480 },  // on goal
+      ],
+      8,
+    )
+    expect(debt.debtHours).toBe(0)          // …but never goes negative
+  })
+
+  it('decays week-old shortfall by 0.75', () => {
+    // One 2h-short night ~10 days ago → 1.5h effective debt.
+    const debt = computeSleepDebt([{ date: d(10), sleepMinutes: 360 }], 8)
+    expect(debt.debtHours).toBe(1.5)
+  })
+
+  it('ignores null / zero nights entirely', () => {
+    const debt = computeSleepDebt(
+      [{ date: d(2), sleepMinutes: null }, { date: d(1), sleepMinutes: 0 }, { date: today, sleepMinutes: 480 }],
+      8,
+    )
+    expect(debt.nights).toBe(1)
+    expect(debt.debtHours).toBe(0)
+  })
+})
+
+// ── Fuel → Force correlator ──────────────────────────────────────────────────
+describe('fuelVsForce', () => {
+  const day = (date: string, carbsG: number | null): DayPoint => ({
+    date, sleepMin: null, restHr: null, respiratory: null, weightKg: null,
+    calories: null, calorieGoal: null, carbsG,
+  })
+
+  it('stays silent with fewer than 8 paired sessions', () => {
+    const days = [day('2026-07-01', 200)]
+    const sessions: SessionPoint[] = [{ date: '2026-07-02', volumeKg: 10000 }]
+    expect(fuelVsForce(days, sessions)).toBeNull()
+  })
+
+  it('detects a positive carbs→volume separation', () => {
+    const days: DayPoint[] = []
+    const sessions: SessionPoint[] = []
+    // 5 low-carb (100g) days → 10t sessions; 5 high-carb (250g) days → 12t sessions.
+    for (let i = 0; i < 10; i++) {
+      const dd = `2026-06-${String(i + 1).padStart(2, '0')}`
+      const sd = `2026-06-${String(i + 2).padStart(2, '0')}`
+      const high = i % 2 === 1
+      days.push(day(dd, high ? 250 : 100))
+      sessions.push({ date: sd, volumeKg: high ? 12000 : 10000 })
+    }
+    const insight = fuelVsForce(days, sessions)
+    expect(insight).not.toBeNull()
+    expect(insight!.tone).toBe('positive')
+    expect(insight!.headline).toContain('+20%')
+  })
+
+  it('stays silent when the separation is under 5%', () => {
+    const days: DayPoint[] = []
+    const sessions: SessionPoint[] = []
+    for (let i = 0; i < 10; i++) {
+      const dd = `2026-06-${String(i + 1).padStart(2, '0')}`
+      const sd = `2026-06-${String(i + 2).padStart(2, '0')}`
+      const high = i % 2 === 1
+      days.push(day(dd, high ? 250 : 100))
+      sessions.push({ date: sd, volumeKg: high ? 10200 : 10000 })  // +2% only
+    }
+    expect(fuelVsForce(days, sessions)).toBeNull()
+  })
+})
+
+// ── Day Vault completeness ───────────────────────────────────────────────────
+describe('dayCompleteness', () => {
+  const base: DayVaultData = { log: null, score: null, nutrition: null, sessions: [] }
+
+  it('empty day → 0/3, never invalid', () => {
+    expect(dayCompleteness(base).done).toBe(0)
+  })
+
+  it('counts the core trio independently', () => {
+    const d: DayVaultData = {
+      ...base,
+      log: { sleep_minutes: 460, water_ml: 2500 } as DayVaultData['log'],
+      nutrition: { calories: 1900, protein_g: 180, carbs_g: 170, fat_g: 55, phase: 'cut' },
+    }
+    const { done, parts } = dayCompleteness(d)
+    expect(done).toBe(3)
+    expect(parts).toEqual([true, true, true])
+  })
+
+  it('optional data (weight/workout) never affects completeness', () => {
+    const d: DayVaultData = { ...base, sessions: [{ id: 'x' } as DayVaultData['sessions'][number]] }
+    expect(dayCompleteness(d).done).toBe(0)
+  })
+})

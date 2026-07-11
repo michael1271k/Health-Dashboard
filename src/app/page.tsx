@@ -16,6 +16,7 @@ import { InsightCoach } from '@/components/dashboard/InsightCoach'
 import { AnimatedCard } from '@/components/dashboard/AnimatedBento'
 import { WeeklyReviewCard } from '@/components/dashboard/WeeklyReviewCard'
 import { BrandHeader } from '@/components/dashboard/BrandHeader'
+import { DeferredMount } from '@/components/fx/DeferredMount'
 import { formatSleep, mlToL } from '@/lib/utils/format'
 import { displayWeight, weightUnit, validWeight } from '@/lib/utils/units'
 import { PHASE_META } from '@/lib/nutrition/phase'
@@ -169,8 +170,9 @@ export default function DashboardPage() {
       {/* Desktop trends sidecar */}
       <div className="hidden xl:block"><AnimatedCard index={7}><TrendStrip /></AnimatedCard></div>
 
-      <AnimatedCard index={8}><InsightCoach /></AnimatedCard>
-      <AnimatedCard index={9}><WeeklyReviewCard /></AnimatedCard>
+      {/* Below-the-fold: mount after idle so the hero owns first paint */}
+      <DeferredMount minHeight={140}><AnimatedCard index={8}><InsightCoach /></AnimatedCard></DeferredMount>
+      <DeferredMount minHeight={120}><AnimatedCard index={9}><WeeklyReviewCard /></AnimatedCard></DeferredMount>
 
       {/* ── Domain detail sheet ── */}
       <Sheet open={!!open} onClose={() => setOpen(null)} title={open ? sheetTitle[open] : undefined}>

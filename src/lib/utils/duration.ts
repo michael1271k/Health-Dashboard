@@ -1,10 +1,7 @@
 /**
- * Notion helpers retained after the live historical-import route was retired
- * (Phase 5.3) in favour of the local `scripts/generate_notion_seed.ts` SQL-dump
- * workflow. Only the duration parser remains in use.
+ * Parse a human duration string into minutes.
+ * Accepts "1h 20", "1:20", "80m", "80" → 80 (etc.); null when unparseable.
  */
-
-/** Parse a Notion "Duration" text like "1h 15m", "75", "1:15" → minutes. */
 export function parseDurationMin(raw: string | null): number | null {
   if (!raw) return null
   const s = raw.trim().toLowerCase()

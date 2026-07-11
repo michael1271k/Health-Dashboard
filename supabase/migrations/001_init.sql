@@ -155,6 +155,11 @@ CREATE TABLE IF NOT EXISTS daily_logs (
   muscle_percent NUMERIC(5,2), water_percent NUMERIC(5,2), bone_mineral NUMERIC(6,2),
   visceral_fat NUMERIC(5,1), bmr NUMERIC(7,1),
   hrv_ms NUMERIC(6,2), exercise_minutes INTEGER, stand_hours INTEGER, vo2max NUMERIC(5,2),
+  -- Phase 16: new Apple Health metrics + Day Vault subjective fields
+  wrist_temp_delta NUMERIC(4,2), time_in_daylight_min INTEGER, heart_rate_recovery INTEGER,
+  effort_rating SMALLINT CHECK (effort_rating BETWEEN 1 AND 10),
+  mood SMALLINT CHECK (mood BETWEEN 1 AND 5),
+  journal_md TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE(user_id, date)

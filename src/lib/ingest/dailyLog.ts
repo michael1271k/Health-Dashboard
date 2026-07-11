@@ -52,14 +52,18 @@ const KNOWN_KEYS = [
   'steps', 'water', 'sleep_minutes', 'carbs', 'protein', 'fats', 'weight', 'lean_mass',
   'bmi', 'training_minutes', 'active_energy', 'body_fat', 'standing_minutes', 'avg_heart_rate',
   'avg_rest_heart_rate', 'respiratory_rate', 'blood_oxygen', 'hrv', 'exercise_minutes',
-  'stand_hours', 'vo2max',
+  'stand_hours', 'vo2max', 'wrist_temp', 'time_in_daylight', 'heart_rate_recovery',
 ] as const
 
-/** v5.1 metric columns that may not exist yet if the Phase-15 migration wasn't run. */
-const V51_METRIC_KEYS = ['hrv_ms', 'exercise_minutes', 'stand_hours', 'vo2max'] as const
-/** Payload key → the corresponding v5.1 daily_logs column (for error attribution). */
+/** Newer metric columns that may not exist yet if the latest migration wasn't run. */
+const V51_METRIC_KEYS = [
+  'hrv_ms', 'exercise_minutes', 'stand_hours', 'vo2max',
+  'wrist_temp_delta', 'time_in_daylight_min', 'heart_rate_recovery',
+] as const
+/** Payload key → the corresponding daily_logs column (for error attribution). */
 const V51_PAYLOAD_TO_COLUMN: Record<string, string> = {
   hrv: 'hrv_ms', exercise_minutes: 'exercise_minutes', stand_hours: 'stand_hours', vo2max: 'vo2max',
+  wrist_temp: 'wrist_temp_delta', time_in_daylight: 'time_in_daylight_min', heart_rate_recovery: 'heart_rate_recovery',
 }
 
 /** A Postgres/PostgREST "column does not exist / schema cache" error. */
@@ -123,11 +127,18 @@ export async function ingestDailyLog(
   set('avg_rest_heart_rate', payload.avg_rest_heart_rate)
   set('respiratory_rate', payload.respiratory_rate)
   set('blood_oxygen', payload.blood_oxygen)
-  // v5.1+ metrics (Phase 15)
+  // v5.1+ metrics. The Shortcut's `training_minutes` IS Apple's exercise-ring
+  // minutes, and its `standing_minutes` is Apple's STAND-HOURS count despite
+  // the name (Apple has no standing-minutes metric; typical value 8–14) → both
+  // feed the v5.1 columns (explicit keys win); legacy columns stay dual-written.
   set('hrv_ms', payload.hrv)
-  set('exercise_minutes', payload.exercise_minutes)
-  set('stand_hours', payload.stand_hours)
+  set('exercise_minutes', payload.exercise_minutes ?? payload.training_minutes)
+  set('stand_hours', payload.stand_hours ?? (payload.standing_minutes !== undefined ? Math.round(payload.standing_minutes) : undefined))
   set('vo2max', payload.vo2max)
+  // Phase 16 metrics
+  set('wrist_temp_delta', payload.wrist_temp)
+  set('time_in_daylight_min', payload.time_in_daylight)
+  set('heart_rate_recovery', payload.heart_rate_recovery)
 
   // Present = keys the Shortcut actually sent (canonical, post-normalization).
   // Omitted = everything it didn't. A push NEVER fails for omitted keys.
@@ -153,7 +164,7 @@ export async function ingestDailyLog(
 
   const { error: dlErr, strippedV51 } = await upsertDailyLog(db, row)
   if (strippedV51) {
-    warnings.push('advanced metrics (HRV / VO₂max / exercise / stand) skipped — those daily_logs columns are not migrated yet; run the Phase-15 SQL to store them')
+    warnings.push('advanced metrics (HRV / VO₂max / exercise / stand / wrist temp / daylight / HRR) skipped — the newest daily_logs columns are not migrated yet; run the latest paste-SQL to store them')
     for (const k of present) {
       if (k in V51_PAYLOAD_TO_COLUMN) {
         failed.add(k)

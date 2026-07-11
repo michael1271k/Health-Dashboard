@@ -68,7 +68,7 @@ export function useInsights() {
     queryKey: ['coach', 'insights'],
     staleTime: 5 * 60_000,
     queryFn: async (): Promise<InsightsResult> => {
-      const from = daysAgoISO(30)
+      const from = daysAgoISO(60)   // Phase 16: 60d window feeds the Fuel→Force correlator
       const fromTs = `${from}T00:00:00Z`
       const today = logicalTodayISO()
 
@@ -77,7 +77,7 @@ export function useInsights() {
           .select('date, sleep_minutes, avg_rest_heart_rate, avg_heart_rate, respiratory_rate, weight_kg')
           .gte('date', from).order('date', { ascending: true }),
         supabase.from('nutrition_entries')
-          .select('date, calories').eq('meal_type', 'daily')
+          .select('date, calories, carbs_g').eq('meal_type', 'daily')
           .gte('date', from).order('date', { ascending: true }),
         supabase.from('workout_sessions')
           .select('started_at, total_volume_kg, notes')
@@ -90,8 +90,9 @@ export function useInsights() {
         date: string; sleep_minutes: number | null; avg_rest_heart_rate: number | null
         avg_heart_rate: number | null; respiratory_rate: number | null; weight_kg: number | null
       }>
-      const nutrition = (nutritionRes.data ?? []) as Array<{ date: string; calories: number | null }>
+      const nutrition = (nutritionRes.data ?? []) as Array<{ date: string; calories: number | null; carbs_g: number | null }>
       const calByDate = new Map(nutrition.map((n) => [n.date, n.calories]))
+      const carbsByDate = new Map(nutrition.map((n) => [n.date, n.carbs_g]))
       const goals = goalsRes.data as { calorie_goal: number | null; context_mode: string | null } | null
       const calorieGoal = goals?.calorie_goal ?? null
 
@@ -103,6 +104,7 @@ export function useInsights() {
         weightKg: validWeight(l.weight_kg),
         calories: calByDate.get(l.date) ?? null,
         calorieGoal,
+        carbsG: carbsByDate.get(l.date) ?? null,
       }))
 
       const sessions: SessionPoint[] = ((sessionsRes.data ?? []) as Array<{

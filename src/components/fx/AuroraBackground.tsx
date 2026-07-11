@@ -30,9 +30,9 @@ export function AuroraBackground() {
         className="fixed inset-0 -z-10 overflow-hidden pointer-events-none"
         style={{ backgroundColor: 'var(--color-bg)' }}
       >
-        <div className="absolute -top-1/4 -left-1/4 w-[70vw] h-[70vw] rounded-full"
+        <div className="aurora-blob-1 absolute -top-1/4 -left-1/4 w-[70vw] h-[70vw] rounded-full"
           style={{ background: `radial-gradient(circle, ${c1} 0%, transparent 65%)`, filter: 'blur(80px)', opacity: 0.6, animation: 'auroraDrift1 26s ease-in-out infinite' }} />
-        <div className="absolute -bottom-1/4 -right-1/4 w-[65vw] h-[65vw] rounded-full"
+        <div className="aurora-blob-2 absolute -bottom-1/4 -right-1/4 w-[65vw] h-[65vw] rounded-full"
           style={{ background: `radial-gradient(circle, ${c2} 0%, transparent 65%)`, filter: 'blur(90px)', opacity: 0.5, animation: 'auroraDrift2 32s ease-in-out infinite' }} />
         <div className="aurora-blob-3 absolute top-1/3 left-1/3 w-[55vw] h-[55vw] rounded-full"
           style={{ background: `radial-gradient(circle, ${c3} 0%, transparent 70%)`, filter: 'blur(100px)', opacity: 0.42, animation: 'auroraDrift3 38s ease-in-out infinite' }} />

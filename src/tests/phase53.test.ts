@@ -56,12 +56,13 @@ describe('ShortcutPayload flex() coercion', () => {
     }
   })
 
-  it('maps Swedish aliases onto canonical keys', () => {
-    const r = ShortcutPayloadSchema.safeParse({ vilopuls: 52, andningsfrekvens: 14.5 })
+  it('maps Shortcut aliases onto canonical keys (incl. the respitory_rate spelling)', () => {
+    const r = ShortcutPayloadSchema.safeParse({ respitory_rate: 14.5, heart_rate_variability: 62, vo2_max: 44.1 })
     expect(r.success).toBe(true)
     if (r.success) {
-      expect(r.data.avg_rest_heart_rate).toBe(52)
       expect(r.data.respiratory_rate).toBe(14.5)
+      expect(r.data.hrv).toBe(62)
+      expect(r.data.vo2max).toBe(44.1)
     }
   })
 
@@ -77,7 +78,7 @@ describe('ShortcutPayload flex() coercion', () => {
       steps: 8200, water: 2500, sleep_minutes: false, carbs: 180, protein: 175,
       fats: 55, weight: 78.4, lean_mass: 61.2, bmi: 23.1, training_minutes: 70,
       active_energy: 520000, body_fat: 16.2, standing_minutes: '', avg_heart_rate: 78,
-      vilopuls: 51, andningsfrekvens: 14, blood_oxygen: 98,
+      avg_rest_heart_rate: 51, respitory_rate: 14, blood_oxygen: 98,
     })
     expect(r.success).toBe(true)
     if (r.success) {
@@ -85,6 +86,7 @@ describe('ShortcutPayload flex() coercion', () => {
       expect(r.data.standing_minutes).toBeUndefined()
       expect(r.data.active_energy).toBe(520)
       expect(r.data.avg_rest_heart_rate).toBe(51)
+      expect(r.data.respiratory_rate).toBe(14)
     }
   })
 })

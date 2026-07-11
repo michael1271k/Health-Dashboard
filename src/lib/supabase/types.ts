@@ -141,7 +141,6 @@ export interface Database {
         Row: {
           id: string
           user_id: string
-          notion_page_id: string | null
           started_at: string
           ended_at: string | null
           split_day: 'push' | 'pull' | 'legs' | 'upper' | 'lower'
@@ -267,6 +266,12 @@ export interface Database {
           exercise_minutes: number | null
           stand_hours: number | null
           vo2max: number | null
+          wrist_temp_delta: number | null
+          time_in_daylight_min: number | null
+          heart_rate_recovery: number | null
+          effort_rating: number | null
+          mood: number | null
+          journal_md: string | null
           created_at: string
           updated_at: string
         }
@@ -286,7 +291,6 @@ export interface Database {
           session_summary_md: string | null
           weight_report_md: string | null
           metrics: Record<string, unknown> | null
-          notion_page_id: string | null
           created_at: string
         }
         Insert: Omit<Database['public']['Tables']['reports']['Row'], 'id' | 'created_at'>

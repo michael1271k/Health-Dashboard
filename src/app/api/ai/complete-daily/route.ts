@@ -119,14 +119,14 @@ export async function POST(req: Request) {
   const date = dateOverride && /^\d{4}-\d{2}-\d{2}$/.test(dateOverride) ? dateOverride : todayIsrael()
 
   // PATCH daily_logs today (upsert so it works even if no Shortcut row yet)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { error: dlErr } = await supabase
     .from('daily_logs')
     .upsert({ user_id: userId, date, ...provided } as any, { onConflict: 'user_id,date' })
   if (dlErr) return NextResponse.json({ error: 'Update failed', detail: dlErr.message }, { status: 500 })
 
   // Mirror overlapping fields to body_composition (so charts reflect them)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const bc: Record<string, any> = {}
   if ('water_percent' in provided) bc.water_pct = provided.water_percent
   if ('body_fat_pct' in provided)  bc.body_fat_pct = provided.body_fat_pct
@@ -138,7 +138,7 @@ export async function POST(req: Request) {
     if (((existing ?? []) as unknown[]).length) {
       await supabase.from('body_composition').update(bc as unknown as never).eq('user_id', userId).eq('date', date)
     } else if (bc.weight_kg !== undefined) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       await supabase.from('body_composition').insert({
         user_id: userId, hk_uuid: null, measured_at: `${date}T00:00:00Z`, date,
         weight_kg: bc.weight_kg, body_fat_pct: bc.body_fat_pct ?? null,

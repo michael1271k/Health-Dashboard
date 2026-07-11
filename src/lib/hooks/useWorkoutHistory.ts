@@ -17,7 +17,6 @@ export interface WorkoutSessionRow {
   avgBpm: number | null
   durationMin: number | null
   notes: string | null
-  notionSynced: boolean
   isGhost: boolean       // auto-detected Health workout pending a report
   isoWeek: string        // e.g. "2026-W26" for grouping
 }
@@ -39,7 +38,7 @@ export function useWorkoutHistory(limit = 300) {
     queryFn: async (): Promise<WorkoutSessionRow[]> => {
       const { data, error } = await supabase
         .from('workout_sessions')
-        .select('id, started_at, split_day, total_volume_kg, set_count, avg_bpm, duration_min, notes, notion_page_id, report_md, status')
+        .select('id, started_at, split_day, total_volume_kg, set_count, avg_bpm, duration_min, notes, report_md, status')
         .order('started_at', { ascending: false })
         .limit(limit)
 
@@ -54,7 +53,6 @@ export function useWorkoutHistory(limit = 300) {
         avg_bpm: number | null
         duration_min: number | null
         notes: string | null
-        notion_page_id: string | null
         report_md: string | null
         status: string | null
       }>
@@ -78,7 +76,6 @@ export function useWorkoutHistory(limit = 300) {
             avgBpm:        r.avg_bpm,
             durationMin:   r.duration_min,
             notes:         r.notes,
-            notionSynced:  !!r.notion_page_id,
             isGhost:       r.status === 'ghost',
             isoWeek:       isoWeek(date),
           }

@@ -101,6 +101,32 @@ describe('ingest — detailed inserted / omitted / errors response', () => {
   })
 })
 
+describe('ingest — Shortcut key → column mapping (Phase 16)', () => {
+  it('training_minutes feeds exercise_minutes AND legacy training_minutes', async () => {
+    const rows: any[] = []
+    const db = mockDb((row) => { rows.push(row); return { error: null } })
+    await ingestDailyLog(db, 'user-1', { date: '2026-07-10', training_minutes: 70 } as any)
+    expect(rows[0].training_minutes).toBe(70)
+    expect(rows[0].exercise_minutes).toBe(70)
+  })
+
+  it('standing_minutes (Apple stand-hours count) feeds stand_hours 1:1 + legacy column', async () => {
+    const rows: any[] = []
+    const db = mockDb((row) => { rows.push(row); return { error: null } })
+    await ingestDailyLog(db, 'user-1', { date: '2026-07-10', standing_minutes: 11 } as any)
+    expect(rows[0].standing_minutes).toBe(11)
+    expect(rows[0].stand_hours).toBe(11)
+  })
+
+  it('explicit exercise_minutes / stand_hours keys win over derived values', async () => {
+    const rows: any[] = []
+    const db = mockDb((row) => { rows.push(row); return { error: null } })
+    await ingestDailyLog(db, 'user-1', { date: '2026-07-10', training_minutes: 70, exercise_minutes: 45, standing_minutes: 11, stand_hours: 9 } as any)
+    expect(rows[0].exercise_minutes).toBe(45)
+    expect(rows[0].stand_hours).toBe(9)
+  })
+})
+
 describe('ingest — sleep is an unconditional overwrite', () => {
   it('deletes the night and re-inserts (upserted), never conflict-skips', async () => {
     const ops: string[] = []

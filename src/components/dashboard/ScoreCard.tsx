@@ -1,5 +1,7 @@
 'use client'
 
+import { memo } from 'react'
+
 import type { Tables } from '@/lib/supabase/types'
 import { KineticNumber } from '@/components/fx/KineticNumber'
 import { EcgPulse } from '@/components/fx/EcgPulse'
@@ -66,7 +68,7 @@ interface ScoreCardProps {
   isLoading?: boolean
 }
 
-export function ScoreCard({ score, isLoading }: ScoreCardProps) {
+export const ScoreCard = memo(function ScoreCard({ score, isLoading }: ScoreCardProps) {
   const totalScore = score?.score ?? null
 
   const scoreColor =
@@ -148,4 +150,4 @@ export function ScoreCard({ score, isLoading }: ScoreCardProps) {
       )}
     </div>
   )
-}
+})

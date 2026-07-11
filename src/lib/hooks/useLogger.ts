@@ -154,7 +154,6 @@ export function useRecentSessions(limit = 5) {
         split_day: string
         total_volume_kg: number | null
         notes: string | null
-        notion_page_id: string | null
       }> }
       return json.sessions.slice(0, limit)
     },
@@ -164,7 +163,6 @@ export function useRecentSessions(limit = 5) {
 
 export interface SaveResult {
   sessionId: string
-  notionPageId: string | null
   totalVolumeKg: number
   newPRs: Array<{ exerciseName: string; est1rm: number }>
 }

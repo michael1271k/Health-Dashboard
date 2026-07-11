@@ -2,15 +2,14 @@
  * POST /api/ai/weekly-report
  *
  * Aggregates the last 7 days from Supabase, sends to Claude claude-opus-4-8,
- * streams the report, persists to `reports` table, and pushes to Notion Reports DB.
+ * streams the report, and persists to the `reports` table.
  *
- * Returns: { reportId, contentMd, notionPageId }
+ * Returns: { reportId, contentMd }
  */
 
 import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { getServerSupabaseClient } from '@/lib/supabase/server'
-import { pushWeeklyReportToNotion } from '@/lib/notion/daily-log'
 import { denyIfUnauthorized } from '@/lib/auth/guard'
 
 // ─── System prompt ─────────────────────────────────────────────────────────────
@@ -212,7 +211,7 @@ export async function POST(req: Request) {
   }
 
   // Persist to Supabase reports table
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data: reportRow, error: dbError } = await supabase
     .from('reports')
     .upsert({
@@ -232,20 +231,5 @@ export async function POST(req: Request) {
 
   const reportId = (reportRow as { id?: string } | null)?.id ?? null
 
-  // Push to Notion (best-effort)
-  const notionPageId = await pushWeeklyReportToNotion({
-    periodStart: statsPayload.period.from,
-    periodEnd:   statsPayload.period.to,
-    contentMd,
-  })
-
-  // Backfill notion_page_id if we got one
-  if (notionPageId && reportId) {
-    await supabase
-      .from('reports')
-      .update({ notion_page_id: notionPageId } as never)
-      .eq('id', reportId)
-  }
-
-  return NextResponse.json({ reportId, contentMd, notionPageId })
+  return NextResponse.json({ reportId, contentMd })
 }

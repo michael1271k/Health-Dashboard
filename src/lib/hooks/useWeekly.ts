@@ -11,7 +11,6 @@ export interface ReportRow {
   session_summary_md: string | null
   weight_report_md: string | null
   created_at: string
-  notion_page_id: string | null
 }
 
 export function useReports() {
@@ -20,7 +19,7 @@ export function useReports() {
     queryFn: async (): Promise<ReportRow[]> => {
       const { data, error } = await supabase
         .from('reports')
-        .select('id, period_start, period_end, content_md, session_summary_md, weight_report_md, created_at, notion_page_id')
+        .select('id, period_start, period_end, content_md, session_summary_md, weight_report_md, created_at')
         .order('period_start', { ascending: false })
         .limit(60)
       if (error) throw error

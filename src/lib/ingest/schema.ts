@@ -20,9 +20,10 @@ import { z } from 'zod'
  *  - avg_heart_rate / avg_rest_heart_rate: bpm
  *  - respiratory_rate:   breaths per minute
  *
- * Swedish aliases from the Shortcut are accepted and normalized:
- *  - andningsfrekvens → respiratory_rate
- *  - vilopuls         → avg_rest_heart_rate
+ * Shortcut key aliases (normalized in the pre-pass below):
+ *  - respitory_rate (Shortcut's spelling) → respiratory_rate
+ *  - heart_rate_variability / hrv_ms      → hrv
+ *  - vo2_max                              → vo2max
  */
 
 /**
@@ -76,26 +77,31 @@ const BaseSchema = z.object({
   exercise_minutes:    intField(),                   // Apple green-ring minutes
   stand_hours:         intField(),                   // Apple stand hours
   vo2max:              floatField(),                 // mL/kg/min (updates ~weekly)
+  // ── Phase 16 metrics ──
+  wrist_temp:          floatField(),                 // wrist-temperature deviation, °C
+  time_in_daylight:    intField(),                   // minutes of daylight exposure
+  heart_rate_recovery: intField(),                   // 1-min post-exercise HRR, bpm
   // Optional explicit date override (YYYY-MM-DD); defaults to the logical day
   date:                z.string().optional(),
 }).strip()
 
 /**
- * Pre-pass: normalize Swedish Shortcut keys onto their canonical English names
- * (only when the canonical key isn't already present) before validation.
+ * Pre-pass: normalize Shortcut key aliases onto their canonical names (only
+ * when the canonical key isn't already present) before validation.
  */
 export const ShortcutPayloadSchema = z.preprocess((raw) => {
   if (!raw || typeof raw !== 'object') return raw
   const o = { ...(raw as Record<string, unknown>) }
-  if (o.andningsfrekvens !== undefined && o.respiratory_rate === undefined) {
-    o.respiratory_rate = o.andningsfrekvens
-  }
-  if (o.vilopuls !== undefined && o.avg_rest_heart_rate === undefined) {
-    o.avg_rest_heart_rate = o.vilopuls
+  // The Shortcut spells it "respitory_rate" — accepted as-is, by design.
+  if (o.respitory_rate !== undefined && o.respiratory_rate === undefined) {
+    o.respiratory_rate = o.respitory_rate
   }
   if (o.hrv_ms !== undefined && o.hrv === undefined) o.hrv = o.hrv_ms
   if (o.heart_rate_variability !== undefined && o.hrv === undefined) o.hrv = o.heart_rate_variability
   if (o.vo2_max !== undefined && o.vo2max === undefined) o.vo2max = o.vo2_max
+  if (o.wrist_temperature !== undefined && o.wrist_temp === undefined) o.wrist_temp = o.wrist_temperature
+  if (o.daylight !== undefined && o.time_in_daylight === undefined) o.time_in_daylight = o.daylight
+  if (o.hrr !== undefined && o.heart_rate_recovery === undefined) o.heart_rate_recovery = o.hrr
   return o
 }, BaseSchema)
 

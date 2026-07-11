@@ -31,7 +31,6 @@ export async function POST(req: Request) {
     const result = await saveSession(supabase, userId, parsed.data)
     return NextResponse.json({
       sessionId: result.sessionId,
-      notionPageId: result.notionPageId,
       totalVolumeKg: result.totalVolumeKg,
       newPRs: result.newPRs,
     })
@@ -53,7 +52,7 @@ export async function GET(req: Request) {
 
   const { data } = await supabase
     .from('workout_sessions')
-    .select('id, started_at, split_day, total_volume_kg, notes, notion_page_id')
+    .select('id, started_at, split_day, total_volume_kg, notes')
     .eq('user_id', userId)
     .order('started_at', { ascending: false })
     .limit(20)
@@ -64,7 +63,6 @@ export async function GET(req: Request) {
     split_day: string
     total_volume_kg: number | null
     notes: string | null
-    notion_page_id: string | null
   }>
 
   return NextResponse.json({ sessions })

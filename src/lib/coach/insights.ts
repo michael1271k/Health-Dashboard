@@ -12,6 +12,7 @@ export interface DayPoint {
   weightKg: number | null
   calories: number | null
   calorieGoal: number | null
+  carbsG?: number | null
 }
 
 export interface SessionPoint { date: string; volumeKg: number }
@@ -265,12 +266,57 @@ function weightTrend(days: DayPoint[], sessions: SessionPoint[], contextMode?: s
  * Compute the ranked insight set. Returns up to `limit` highest-confidence,
  * strict-English insights. Empty array when there isn't enough data yet.
  */
+/**
+ * Fuel → Force Correlator (Phase 16): day-before carbs vs next-day session
+ * volume, median-split. Only speaks with ≥4 sessions per bucket and a ≥5%
+ * volume separation — otherwise stays silent rather than inventing a pattern.
+ */
+export function fuelVsForce(days: DayPoint[], sessions: SessionPoint[]): Insight | null {
+  const carbsByDate = new Map(days.filter((d) => d.carbsG != null).map((d) => [d.date, d.carbsG as number]))
+  const prevISO = (d: string) => {
+    const x = new Date(`${d}T00:00:00Z`); x.setUTCDate(x.getUTCDate() - 1); return x.toISOString().slice(0, 10)
+  }
+  const pairs = sessions
+    .map((s) => {
+      const carbs = carbsByDate.get(prevISO(s.date))
+      return carbs != null ? { carbs, vol: s.volumeKg } : null
+    })
+    .filter((p): p is { carbs: number; vol: number } => p !== null)
+  if (pairs.length < 8) return null
+
+  const sorted = [...pairs].sort((a, b) => a.carbs - b.carbs)
+  const half = Math.floor(sorted.length / 2)
+  const low = sorted.slice(0, half), high = sorted.slice(sorted.length - half)
+  if (low.length < 4 || high.length < 4) return null
+  const lowVol = mean(low.map((p) => p.vol))
+  const highVol = mean(high.map((p) => p.vol))
+  if (lowVol <= 0) return null
+  const diffPct = Math.round(((highVol - lowVol) / lowVol) * 100)
+  if (Math.abs(diffPct) < 5) return null
+
+  const carbCut = Math.round(mean([low[low.length - 1].carbs, high[0].carbs]))
+  return diffPct > 0
+    ? {
+        id: 'fuel-force', tone: 'positive',
+        headline: `Carbs the day before are worth +${diffPct}% volume`,
+        detail: `Sessions after a ${carbCut}g+ carb day averaged ${diffPct}% more volume than after lower-carb days (${pairs.length} sessions). Front-load carbs the evening before training days.`,
+        confidence: Math.min(0.9, 0.5 + Math.abs(diffPct) / 40),
+      }
+    : {
+        id: 'fuel-force', tone: 'neutral',
+        headline: `Prior-day carbs aren't driving your volume`,
+        detail: `Higher-carb days preceded ${Math.abs(diffPct)}% LESS volume (${pairs.length} sessions) — your output is currently limited by something other than fuel (likely sleep or recovery).`,
+        confidence: Math.min(0.75, 0.4 + Math.abs(diffPct) / 50),
+      }
+}
+
 export function computeInsights(input: InsightInput, limit = 3): Insight[] {
   const builders = [
     sleepVsVolume(input.days, input.sessions),
     recoveryDrift(input.days),
     calorieAdherence(input.days),
     weightTrend(input.days, input.sessions, input.contextMode),
+    fuelVsForce(input.days, input.sessions),
   ]
   return builders
     .filter((x): x is Insight => x !== null)

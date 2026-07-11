@@ -19,7 +19,7 @@ function inline(text: string, k: number) {
 const cells = (row: string) => row.replace(/^\||\|$/g, '').split('|').map((s) => s.trim())
 
 /**
- * A premium markdown-lite renderer for AI/Notion reports — headings, pipe-tables
+ * A premium markdown-lite renderer for AI reports — headings, pipe-tables
  * (→ real styled tables), styled bullets, and quotes. No raw whitespace-pre-wrap.
  */
 export function MarkdownView({ md }: { md: string }) {

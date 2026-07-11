@@ -109,7 +109,7 @@ export default function SettingsPage() {
     if (!session) { setSaving(false); return }
 
     // Supabase v2: upsert types resolve to never[] on Omit<> Insert types — cast explicitly
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const { error } = await supabase
       .from('user_goals')
       .upsert({ user_id: session.user.id, ...next } as unknown as never, { onConflict: 'user_id' })

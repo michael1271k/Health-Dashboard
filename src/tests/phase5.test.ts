@@ -1,5 +1,5 @@
 import { computeNutritionScore } from '@/lib/scoring/score'
-import { parseDurationMin } from '@/lib/notion/import'
+import { parseDurationMin } from '@/lib/utils/duration'
 import { NUTRITION_PRESETS } from '@/lib/types/workout'
 
 describe('Nutrition modes', () => {

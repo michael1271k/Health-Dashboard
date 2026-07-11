@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { logicalTodayISO } from '@/lib/utils/day'
 
-/** Canonicalize Notion/Hevy muscle tags into 6 display groups (v5.1 aliases included). */
+/** Canonicalize Hevy muscle tags into 6 display groups (v5.1 aliases included). */
 const MUSCLE_MAP: Record<string, string> = {
   chest: 'Chest', pecs: 'Chest',
   back: 'Back', lats: 'Back', traps: 'Back', rhomboids: 'Back',

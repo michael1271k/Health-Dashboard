@@ -56,7 +56,7 @@ export async function resolveExercises(
       muscle_groups: null,
       is_compound: false,
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const { data: createdRaw } = await supabase
       .from('exercises')
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

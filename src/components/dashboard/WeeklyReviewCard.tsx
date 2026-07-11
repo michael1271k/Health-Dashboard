@@ -2,7 +2,6 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
-import type { Tables } from '@/lib/supabase/types'
 import { TrendingUp, Moon, Dumbbell, Droplets } from 'lucide-react'
 import { logicalTodayISO } from '@/lib/utils/day'
 
