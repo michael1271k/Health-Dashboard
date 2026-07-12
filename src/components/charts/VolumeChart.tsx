@@ -11,15 +11,25 @@ import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 
 const GRID = 'rgba(255,255,255,0.06)'
 const TEXT = '#8B97B2'
-// No "All" — different splits aren't comparable. Legs covers legacy "lower" too.
-const SPLITS: SplitDay[] = ['push', 'pull', 'legs', 'upper']
-const splitLabel = (s: SplitDay) => (s === 'legs' ? 'Legs/Lower' : s[0].toUpperCase() + s.slice(1))
+
+// No "All" — different splits aren't comparable. The pill set is era-specific:
+// PPL trains Push/Pull/Legs (its "upper" days are out-of-program noise), while
+// HELIX-5 logs Upper and Legs & Core. Legacy "lower" always folds into legs.
+const SPLITS_FOR_ERA: Record<'all' | 'ppl' | 'axis', SplitDay[]> = {
+  all: ['push', 'pull', 'legs', 'upper'],
+  ppl: ['push', 'pull', 'legs'],
+  axis: ['upper', 'legs'],
+}
+const splitLabel = (s: SplitDay, era: 'all' | 'ppl' | 'axis') => {
+  if (s === 'legs') return era === 'ppl' ? 'Legs' : era === 'axis' ? 'Legs & Core' : 'Legs/Lower'
+  return s[0].toUpperCase() + s.slice(1)
+}
 
 function formatDate(dateStr: string): string {
   return new Intl.DateTimeFormat('en-IL', { month: 'short', day: 'numeric' }).format(new Date(dateStr + 'T12:00:00Z'))
 }
 
-export function VolumeChart({ data, isLoading }: { data: VolumePoint[]; isLoading?: boolean }) {
+export function VolumeChart({ data, isLoading, era = 'all' }: { data: VolumePoint[]; isLoading?: boolean; era?: 'all' | 'ppl' | 'axis' }) {
   const [split, setSplit] = useState<SplitDay>('legs')
   const unit = useUnitSystem()
 
@@ -27,32 +37,35 @@ export function VolumeChart({ data, isLoading }: { data: VolumePoint[]; isLoadin
     return <div className="helix-card h-64 flex items-center justify-center"><div className="w-full h-40 bg-surface-2 rounded-xl animate-pulse" /></div>
   }
 
-  const filtered = data.filter((d) => d.split === split || (split === 'legs' && d.split === 'lower'))
+  // The selected split must exist in the active era's pill set.
+  const pills = SPLITS_FOR_ERA[era]
+  const activeSplit = pills.includes(split) ? split : pills[0]
+  const filtered = data.filter((d) => d.split === activeSplit || (activeSplit === 'legs' && d.split === 'lower'))
   const chartData = filtered.map((d) => ({ date: formatDate(d.date), volume: displayWeight(d.volume) }))
-  const color = PPL_SPLITS[split]?.color ?? '#19E3B1'
+  const color = PPL_SPLITS[activeSplit]?.color ?? '#19E3B1'
 
   return (
     <div className="helix-card">
       <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
         <h3 className="font-heading font-semibold text-base">Workout Volume</h3>
         <div className="flex gap-1 overflow-x-auto no-scrollbar">
-          {SPLITS.map((s) => {
-            const active = split === s
+          {pills.map((s) => {
+            const active = activeSplit === s
             const c = PPL_SPLITS[s]?.color ?? '#19E3B1'
             return (
               <button key={s} onClick={() => setSplit(s)}
                 className="px-2.5 py-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-colors border"
                 style={active ? { color: c, borderColor: `${c}55`, background: `${c}1f` } : { color: TEXT, borderColor: 'transparent' }}>
-                {splitLabel(s)}
+                {splitLabel(s, era)}
               </button>
             )
           })}
         </div>
       </div>
       {chartData.length === 0 ? (
-        <div className="h-56 flex items-center justify-center"><p className="text-muted-vital text-sm">No {splitLabel(split)} sessions in range.</p></div>
+        <div className="h-56 flex items-center justify-center"><p className="text-muted-vital text-sm">No {splitLabel(activeSplit, era)} sessions in range.</p></div>
       ) : (
-        <div role="img" aria-label={`${splitLabel(split)} volume over time`}>
+        <div role="img" aria-label={`${splitLabel(activeSplit, era)} volume over time`}>
           <ResponsiveContainer width="100%" height={240}>
             <AreaChart data={chartData} margin={{ top: 4, right: 16, bottom: 0, left: 0 }}>
               <defs>

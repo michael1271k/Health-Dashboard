@@ -8,7 +8,7 @@ import { HelixMark } from '@/components/HelixMark'
 type AuthState = 'resolving' | 'authed' | 'anon'
 
 /**
- * Native Session Shell (Phase 16) — fixes the iOS standalone-PWA blank screen.
+ * Native Session Shell — fixes the iOS standalone-PWA blank screen.
  *
  * iOS gives a home-screen PWA an ISOLATED storage container: a Safari login
  * does not exist inside it. Without a session every RLS query silently returns

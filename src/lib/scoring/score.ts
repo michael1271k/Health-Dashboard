@@ -128,7 +128,7 @@ export function computeWorkoutScore(inputs: Pick<ScoringInputs,
 /**
  * Recovery reflects the body, not whether you logged water/supps:
  *   45% sleep quality (duration + deep) + 30% resting-HR vs baseline +
- *   25% HRV vs 7-day baseline (Phase 15 — the gold-standard recovery signal).
+ *   25% HRV vs 7-day baseline (the gold-standard recovery signal).
  * Each component is dropped if its data is missing and the rest renormalized.
  * Returns null when there is NO physiological data at all (unknown ≠ 0).
  */

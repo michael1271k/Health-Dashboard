@@ -18,7 +18,7 @@ import { formatSleep, mlToL } from '@/lib/utils/format'
 const VIOLET = '#8B7CFF'
 
 /**
- * The Day Vault (Phase 16) — one logical day (04:00 boundary) as a master
+ * The Day Vault — one logical day (04:00 boundary) as a master
  * record: score, fuel, training (or recovery), vitals, and the subjective
  * journal that replaces Notion. Rest days reflow to recovery + nutrition.
  */

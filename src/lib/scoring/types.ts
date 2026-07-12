@@ -38,7 +38,7 @@ export interface ScoringInputs {
   restingHR?: number          // today's resting HR in bpm
   baselineHR?: number         // 7-day trailing average resting HR
   respiratoryRate?: number    // breaths/min (recovery signal)
-  hrvMs?: number              // today's HRV (SDNN ms) — Phase 15
+  hrvMs?: number              // today's HRV (SDNN ms)
   hrvBaseline?: number        // 7-day trailing average HRV
 
   // Context modifier

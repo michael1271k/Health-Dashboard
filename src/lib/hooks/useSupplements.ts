@@ -22,7 +22,7 @@ export function useSupplements() {
       const autoLog = (goalsRes.data as { auto_log_supplements?: boolean } | null)?.auto_log_supplements ?? false
       if (autoLog) {
         // Auto-log items whose scheduled time has passed — UNLESS an explicit
-        // record already exists (a manual tap/untap always wins). Phase 17:
+        // record already exists (a manual tap/untap always wins).
         // actually WRITE the rows (ignoreDuplicates keeps manual records
         // authoritative) so scores, history, and other devices see them too —
         // previously this only simulated ticks client-side and persisted nothing.

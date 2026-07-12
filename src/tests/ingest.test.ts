@@ -101,7 +101,7 @@ describe('ingest — detailed inserted / omitted / errors response', () => {
   })
 })
 
-describe('ingest — Shortcut key → column mapping (Phase 16)', () => {
+describe('ingest — Shortcut key → column mapping', () => {
   it('training_minutes feeds exercise_minutes AND legacy training_minutes', async () => {
     const rows: any[] = []
     const db = mockDb((row) => { rows.push(row); return { error: null } })

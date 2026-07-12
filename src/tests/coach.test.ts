@@ -28,7 +28,7 @@ describe('linregSlope', () => {
 })
 
 describe('computeInsights', () => {
-  it('states the data gap explicitly when there is no data (Phase 17 — never [] silently)', () => {
+  it('states the data gap explicitly when there is no data (never [] silently)', () => {
     const out = computeInsights({ days: [], sessions: [] })
     expect(out).toHaveLength(1)
     expect(out[0].id).toBe('training-gap')

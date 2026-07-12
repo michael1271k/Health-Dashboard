@@ -17,20 +17,39 @@ import { NextResponse } from 'next/server'
 import { getServerSupabaseClient } from '@/lib/supabase/server'
 import { ShortcutPayloadSchema } from '@/lib/ingest/schema'
 import { ingestDailyLog } from '@/lib/ingest/dailyLog'
+import { defaultUserId } from '@/lib/auth/identity'
 
 const WEBHOOK_SECRET = process.env.INGEST_WEBHOOK_SECRET
 
-// The Shortcut must send:  X-Webhook-Secret: <INGEST_WEBHOOK_SECRET>
-function verifySecret(request: Request): boolean {
+/**
+ * Multi-tenant secret → user resolution. Each family member's Shortcut sends
+ * their OWN key (ingest_keys table); the legacy env secret keeps resolving to
+ * the household admin so the existing Shortcut works unchanged.
+ */
+async function resolveIngestUser(request: Request, db: ReturnType<typeof getServerSupabaseClient>): Promise<string | null> {
+  const provided = request.headers.get('X-Webhook-Secret')
+
+  // Per-user key lookup (table may not be migrated yet — degrade gracefully).
+  if (provided) {
+    try {
+      const { data, error } = await db.from('ingest_keys').select('user_id').eq('secret', provided).maybeSingle()
+      if (!error && data) return (data as { user_id: string }).user_id
+    } catch { /* not migrated — fall through to the env secret */ }
+  }
+
+  // Legacy env secret → household admin.
   if (!WEBHOOK_SECRET) {
     console.warn('[ingest] INGEST_WEBHOOK_SECRET not set — running without auth check')
-    return true
+    return await defaultUserId(db)
   }
-  return request.headers.get('X-Webhook-Secret') === WEBHOOK_SECRET
+  if (provided === WEBHOOK_SECRET) return await defaultUserId(db)
+  return null
 }
 
 export async function POST(request: Request) {
-  if (!verifySecret(request)) {
+  const db = getServerSupabaseClient()
+  const userId = await resolveIngestUser(request, db)
+  if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -45,13 +64,6 @@ export async function POST(request: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: 'Invalid payload', details: parsed.error.flatten() }, { status: 422 })
   }
-
-  const db = getServerSupabaseClient()
-  const { data: users, error: userError } = await db.auth.admin.listUsers()
-  if (userError || !users?.users?.length) {
-    return NextResponse.json({ error: 'No authenticated user found' }, { status: 500 })
-  }
-  const userId = users.users[0].id
 
   try {
     const result = await ingestDailyLog(db, userId, parsed.data)

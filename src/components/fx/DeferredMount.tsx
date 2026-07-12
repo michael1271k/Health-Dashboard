@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 
 /**
- * Mounts children only after the main thread goes idle (Phase 16 zero-latency):
+ * Mounts children only after the main thread goes idle:
  * below-the-fold cards stop competing with the hero for first paint. A fixed
  * min-height placeholder prevents layout shift.
  */

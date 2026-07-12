@@ -8,6 +8,7 @@ import { getWeekPhase, phaseBadgeStyle } from '@/lib/phases'
 import { FileSystemBrowser } from '@/components/reports/FileSystemBrowser'
 import { ContinuumTimeline } from '@/components/timeline/ContinuumTimeline'
 import { Sheet } from '@/components/ui/Sheet'
+import { authedFetch } from '@/lib/utils/authedFetch'
 import { CalendarDays, ChevronLeft, ChevronRight, Loader2, Sparkles, FolderOpen } from 'lucide-react'
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
@@ -15,7 +16,7 @@ const iso = (d: Date) => d.toISOString().slice(0, 10)
 const addDays = (d: Date, n: number) => { const x = new Date(d); x.setUTCDate(x.getUTCDate() + n); return x }
 
 /**
- * Journey (Phase 16) — the Continuum. A unified day-first timeline is the
+ * Journey — the Continuum. A unified day-first timeline is the
  * primary surface (tap a day → its Day Vault); the month calendar became a
  * jump popover, and weekly report files open in a sheet from the week nodes.
  */
@@ -45,7 +46,7 @@ export default function WeeklyPage() {
   async function generate(weekStart: string) {
     setGenWeek(weekStart); setGenerating(true); setError(null)
     try {
-      const res = await fetch('/api/ai/weekly-report', {
+      const res = await authedFetch('/api/ai/weekly-report', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ weekStart }),
       })
       const data = await res.json()

@@ -22,6 +22,15 @@ test('unauthenticated / never renders a blank dashboard — AuthGate redirects t
   await expect(page.getByLabel(/email/i)).toBeVisible()
 })
 
+test('/api/version serves the deploy heartbeat with no-store', async ({ request }) => {
+  const res = await request.get('/api/version')
+  expect(res.ok()).toBe(true)
+  expect(res.headers()['cache-control']).toContain('no-store')
+  const { buildId } = await res.json()
+  expect(typeof buildId).toBe('string')
+  expect(buildId.length).toBeGreaterThan(0)
+})
+
 test('log page renders without crashing', async ({ page }) => {
   await page.goto('/log')
   // /log server-redirects to /workout (or /auth when signed out) — wait for the

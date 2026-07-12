@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic'
 import { Moon, Flame, Dumbbell, Scale, Footprints, Pill, Plus } from 'lucide-react'
 import { Fab } from '@/components/ui/Fab'
 import { Sheet } from '@/components/ui/Sheet'
+import { LiquidModal } from '@/components/ui/LiquidModal'
 import { WorkoutChat } from '@/components/logger/WorkoutChat'
 import { ReadinessOrb } from '@/components/dashboard/ReadinessOrb'
 import { BioStrip, type BioStripProps } from '@/components/dashboard/BioStrip'
@@ -76,7 +77,7 @@ export default function DashboardPage() {
   // shared with the Insight Coach so the whole app agrees.
   const todayDay: ScheduleDay | 'rest' = useMemo(() => scheduleDayFor(logicalTodayISO()), [])
 
-  // STRICT ERA BOUNDARY (Phase 17): "last session" only looks inside the
+  // STRICT ERA BOUNDARY: "last session" only looks inside the
   // CURRENT era — a fresh HELIX era starts from "None", never from PPL history.
   const todayEra = eraForDate(logicalTodayISO())
   const lastSession = sessions?.find((s) => eraForDate(s.started_at.slice(0, 10)) === todayEra)
@@ -177,8 +178,8 @@ export default function DashboardPage() {
       <DeferredMount minHeight={140}><AnimatedCard index={8}><InsightCoach /></AnimatedCard></DeferredMount>
       <DeferredMount minHeight={120}><AnimatedCard index={9}><WeeklyReviewCard /></AnimatedCard></DeferredMount>
 
-      {/* ── Domain detail sheet ── */}
-      <Sheet open={!!open} onClose={() => setOpen(null)} title={open ? sheetTitle[open] : undefined}>
+      {/* ── Domain detail: liquid-glass popup ── */}
+      <LiquidModal open={!!open} onClose={() => setOpen(null)} title={open ? sheetTitle[open] : undefined}>
         {open === 'readiness' && (
           <div className="space-y-4">
             <ScoreCard score={score ?? null} />
@@ -231,7 +232,7 @@ export default function DashboardPage() {
           </div>
         )}
         {open === 'stack' && <SupplementChecklist />}
-      </Sheet>
+      </LiquidModal>
 
       {/* Thumb-reachable quick-log */}
       <Fab icon={Plus} label="Log" onClick={() => setLogOpen(true)} />

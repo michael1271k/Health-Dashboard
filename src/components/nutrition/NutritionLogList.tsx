@@ -36,11 +36,12 @@ function MacroBar({ label, value, goal }: { label: 'P' | 'C' | 'F'; value: numbe
 }
 
 /** Dense daily-nutrition cards — one tight row per day, optimized for mobile. */
-export function NutritionLogList({ logs, goals, isLoading, emptyMessage }: {
+export function NutritionLogList({ logs, goals, isLoading, emptyMessage, onDayClick }: {
   logs: DailyLog[]
   goals: Goals
   isLoading?: boolean
   emptyMessage: string
+  onDayClick?: (date: string) => void
 }) {
   if (isLoading) {
     return <div className="space-y-2">{[...Array(6)].map((_, i) => <div key={i} className="h-16 rounded-xl bg-surface-2/60 animate-pulse" />)}</div>
@@ -57,7 +58,10 @@ export function NutritionLogList({ logs, goals, isLoading, emptyMessage }: {
           : Math.abs(l.calories - goals.calorie) <= 150 ? '#43F59B'
           : Math.abs(l.calories - goals.calorie) <= 350 ? '#FFB020' : '#FF5470'
         return (
-          <div key={l.date} className="glass-card px-3 py-2.5 flex items-center gap-3">
+          <div key={l.date} role={onDayClick ? 'button' : undefined} tabIndex={onDayClick ? 0 : undefined}
+            onClick={onDayClick ? () => onDayClick(l.date) : undefined}
+            onKeyDown={onDayClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onDayClick(l.date) } } : undefined}
+            className={`glass-card px-3 py-2.5 flex items-center gap-3 ${onDayClick ? 'cursor-pointer active:opacity-80' : ''}`}>
             <div className="w-12 shrink-0 space-y-0.5">
               <div className="text-fluid-xs font-semibold text-text leading-none">{d.toLocaleDateString('en-IL', { day: 'numeric', month: 'short' })}</div>
               <div className="text-[9px] text-muted-vital leading-none">{d.toLocaleDateString('en-IL', { weekday: 'short' })}</div>

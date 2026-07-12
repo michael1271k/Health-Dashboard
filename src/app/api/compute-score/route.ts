@@ -7,6 +7,7 @@ import type { ScoringInputs } from '@/lib/scoring/types'
 import type { Database, Tables, InsertRow } from '@/lib/supabase/types'
 import { isRestDayFor } from '@/lib/programs'
 import { denyIfUnauthorized } from '@/lib/auth/guard'
+import { resolveCallerUserId } from '@/lib/auth/identity'
 import { logicalTodayISO, israelHoursAwake } from '@/lib/utils/day'
 
 type DB = SupabaseClient<Database>
@@ -49,7 +50,7 @@ async function computeForDate(supabase: DB, userId: string, date: string, hoursA
   const trailing = trailingRaw as Array<{ total_volume_kg: number | null }> | null
   const trailingAvg = trailing?.length ? trailing.reduce((s, r) => s + (r.total_volume_kg ?? 0), 0) / trailing.length : 0
 
-  // HRV + resting-HR baselines (7-day trailing) from daily_logs — Phase 15.
+  // HRV + resting-HR baselines (7-day trailing) from daily_logs.
   // Self-heal if the hrv_ms column isn't migrated yet: retry without it so the
   // RHR baseline (and the rest of scoring) is never lost to a missing column.
   const dlQuery = (cols: string) => supabase
@@ -144,9 +145,18 @@ export async function POST(req: Request) {
   if (denied) return denied
 
   const supabase = getServerSupabaseClient()
-  const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers()
-  if (usersError || !users.length) return NextResponse.json({ error: 'No user' }, { status: 401 })
-  const userId = users[0].id
+
+  // Multi-tenant: a JWT caller gets THEIR scores computed; headless/cron calls
+  // (no JWT) sweep the whole household so every member's day stays scored.
+  const caller = await resolveCallerUserId(req, supabase)
+  let userIds: string[]
+  if (caller) {
+    userIds = [caller]
+  } else {
+    const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers()
+    if (usersError || !users.length) return NextResponse.json({ error: 'No user' }, { status: 401 })
+    userIds = users.map((u) => u.id)
+  }
 
   // The CLIENT knows the user's real timezone (device-local logical day + hours
   // awake) — the server cannot. Trust client-provided values when present and
@@ -156,11 +166,13 @@ export async function POST(req: Request) {
   const today = body?.date && /^\d{4}-\d{2}-\d{2}$/.test(body.date) ? body.date : todayISO()
   const awake = Number.isFinite(body?.hoursAwake) ? Math.max(0, Math.min(18, Number(body?.hoursAwake))) : israelHoursAwake()
 
-  await computeForDate(supabase, userId, today, awake, true)   // today: time-of-day aware
-  for (let i = 1; i <= backfillDays; i++) {
-    const d = new Date(`${today}T12:00:00Z`); d.setUTCDate(d.getUTCDate() - i)
-    await computeForDate(supabase, userId, d.toISOString().slice(0, 10), 16)  // past days: full day
+  for (const userId of userIds) {
+    await computeForDate(supabase, userId, today, awake, true)   // today: time-of-day aware
+    for (let i = 1; i <= backfillDays; i++) {
+      const d = new Date(`${today}T12:00:00Z`); d.setUTCDate(d.getUTCDate() - i)
+      await computeForDate(supabase, userId, d.toISOString().slice(0, 10), 16)  // past days: full day
+    }
   }
 
-  return NextResponse.json({ ok: true, today, backfilled: backfillDays })
+  return NextResponse.json({ ok: true, today, backfilled: backfillDays, users: userIds.length })
 }

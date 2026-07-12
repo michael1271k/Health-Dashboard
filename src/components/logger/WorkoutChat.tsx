@@ -77,7 +77,7 @@ export function WorkoutChat({ splitDay, onClose }: WorkoutChatProps) {
     }
   }
 
-  // ── Manual fallback (Phase 4 slider logger) ──
+  // ── Manual fallback (slider logger) ──
   if (view === 'manual') {
     return (
       <div className="space-y-4">

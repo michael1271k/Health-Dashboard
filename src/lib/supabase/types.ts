@@ -209,6 +209,25 @@ export interface Database {
         Insert: Omit<Database['public']['Tables']['daily_scores']['Row'], 'id' | 'computed_at'>
         Update: Partial<Database['public']['Tables']['daily_scores']['Insert']>
       }
+      profiles: {
+        Row: {
+          user_id: string
+          display_name: string | null
+          role: 'admin' | 'member'
+          created_at: string
+        }
+        Insert: { user_id: string } & Partial<Omit<Database['public']['Tables']['profiles']['Row'], 'user_id' | 'created_at'>>
+        Update: Partial<Database['public']['Tables']['profiles']['Insert']>
+      }
+      ingest_keys: {
+        Row: {
+          user_id: string
+          secret: string
+          created_at: string
+        }
+        Insert: { user_id: string; secret: string }
+        Update: Partial<Database['public']['Tables']['ingest_keys']['Insert']>
+      }
       user_goals: {
         Row: {
           id: string

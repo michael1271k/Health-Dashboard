@@ -20,7 +20,7 @@ export function displayWeight(kg: number | null | undefined): number | null {
 }
 
 /**
- * Global body-weight validity rule (Phase 15): any reading under 50 kg is a
+ * Global body-weight validity rule: any reading under 50 kg is a
  * scale/ingest artifact (0kg vacation gaps, partial syncs) and must be ignored
  * by every chart, table, and algorithm.
  */

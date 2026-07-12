@@ -8,7 +8,7 @@ import { supabase } from '@/lib/supabase/client'
 import { displayWeight, useUnitSystem } from '@/lib/utils/units'
 
 /**
- * Fuel → Force (Phase 16) — visually links the day's nutrition to its training
+ * Fuel → Force — visually links the day's nutrition to its training
  * session: session chip, protein-adequacy tick, and a jump to the Day Vault.
  * Renders nothing on days without a session.
  */

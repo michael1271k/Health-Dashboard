@@ -26,7 +26,7 @@ const isoAddDays = (d: string, n: number) => {
 }
 
 /**
- * The Continuum (Phase 16) — every logged day from program start to today as
+ * The Continuum — every logged day from program start to today as
  * one pre-joined, newest-first list. One fetch, four range queries; day cards
  * virtualize via content-visibility so the list stays light no matter how
  * long the history grows.

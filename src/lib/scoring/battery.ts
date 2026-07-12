@@ -8,7 +8,7 @@ export interface BatteryState {
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v))
 
 /**
- * Phone-like battery model (Phase 8). Calibration intent:
+ * Phone-like battery model. Calibration intent:
  *   - Wake high (≈90–100% after good sleep, never below 55%).
  *   - Drain steadily with hours awake (chronological), plus activity + workout.
  *   - Floored so it never reads ~0% at breakfast (the old 16h-flat-drain bug).

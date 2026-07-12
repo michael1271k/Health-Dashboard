@@ -11,6 +11,7 @@ import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { getServerSupabaseClient } from '@/lib/supabase/server'
 import { denyIfUnauthorized } from '@/lib/auth/guard'
+import { requireUserId } from '@/lib/auth/identity'
 
 // ─── System prompt ─────────────────────────────────────────────────────────────
 const SYSTEM_PROMPT = `You are an elite fitness and nutrition analyst for a personal health tracking app.
@@ -125,7 +126,7 @@ async function aggregateWeek(
   const calGoal = goals?.calorie_goal ?? 1935
   const daysInCalRange = nutritionRows.filter((r) => Math.abs(r.calories - calGoal) <= 100).length
 
-  // Phase 17: name the gap so the model (and the deterministic fallback) can
+  // Name the gap so the model (and the deterministic fallback) can
   // treat an empty week as a FACT instead of a canvas.
   const dataGap = sessionRows.length === 0
     ? (nutritionRows.length === 0 ? 'no training AND no nutrition logged this week' : 'no training sessions logged this week')
@@ -172,11 +173,10 @@ export async function POST(req: Request) {
   if (denied) return denied
 
   const supabase = getServerSupabaseClient()
-  const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers()
-  if (usersError || !users.length) {
+  const userId = await requireUserId(req, supabase)
+  if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
-  const userId = users[0].id
 
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {

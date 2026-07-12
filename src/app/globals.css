@@ -539,3 +539,20 @@ html[data-reduce-motion='true'] .grain-overlay { display: none; }
   opacity: 0.05;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
+
+/* Sync Pulse toast entrance — compositor-only (translate3d + opacity). */
+@keyframes syncPulseIn {
+  from { transform: translate3d(-50%, -140%, 0); opacity: 0; }
+  to   { transform: translate3d(-50%, 0, 0); opacity: 1; }
+}
+html[data-reduce-motion='true'] [role='status'][aria-live='polite'] { animation: none !important; }
+
+/* LiquidModal one-shot sheen — a translate3d-only diagonal light sweep. */
+.liquid-modal-sheen {
+  background: linear-gradient(115deg, transparent 42%, rgba(255,255,255,0.09) 50%, transparent 58%);
+  transform: translate3d(-120%, 0, 0);
+  animation: liquidSheen 900ms cubic-bezier(0.4, 0, 0.2, 1) 120ms 1 forwards;
+}
+@keyframes liquidSheen {
+  to { transform: translate3d(120%, 0, 0); }
+}

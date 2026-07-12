@@ -78,7 +78,7 @@ export function daysSinceLastSession(sessions: SessionPoint[], todayISO: string)
 }
 
 /**
- * Data-gap awareness (Phase 17): when there's been no training for a week+,
+ * Data-gap awareness: when there's been no training for a week+,
  * SAY SO — and the volume-comparison builders are suppressed entirely so the
  * coach never "compares" a blank week and invents trends.
  */
@@ -296,7 +296,7 @@ function weightTrend(days: DayPoint[], sessions: SessionPoint[], contextMode?: s
  * strict-English insights. Empty array when there isn't enough data yet.
  */
 /**
- * Fuel → Force Correlator (Phase 16): day-before carbs vs next-day session
+ * Fuel → Force Correlator: day-before carbs vs next-day session
  * volume, median-split. Only speaks with ≥4 sessions per bucket and a ≥5%
  * volume separation — otherwise stays silent rather than inventing a pattern.
  */

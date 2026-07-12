@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
+import { authedFetch } from '@/lib/utils/authedFetch'
 import type { Tables } from '@/lib/supabase/types'
 import { logicalTodayISO, hoursAwakeToday } from '@/lib/utils/day'
 
@@ -68,7 +69,7 @@ export function useEnsureTodayScore(enabled = true) {
       const now = Date.now()
       if (now - lastRun.current < 30_000) return
       lastRun.current = now
-      fetch('/api/compute-score', {
+      authedFetch('/api/compute-score', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         // Send the DEVICE's logical date + hours awake — the server has no idea
         // what timezone the user is in (Thailand ≠ server clock).

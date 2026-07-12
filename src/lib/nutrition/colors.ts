@@ -1,5 +1,5 @@
 /**
- * The global macro color system (Phase 15) — ONE source of truth used by every
+ * The global macro color system — ONE source of truth used by every
  * ring, bar, chart, tile, and tag in the app. Bioluminescent mapping:
  */
 export const MACRO_COLORS = {

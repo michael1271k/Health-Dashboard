@@ -1,6 +1,6 @@
 /**
  * Delete all tracked data in a date window (inclusive) for the app user.
- * Phase 12: wipe the Thailand vacation window 2026-06-27 … 2026-07-04.
+ * Wipe the Thailand vacation window 2026-06-27 … 2026-07-04.
  *   npx tsx scripts/purge_range.ts            # dry run (counts only)
  *   npx tsx scripts/purge_range.ts --apply    # actually delete
  */
@@ -9,7 +9,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 const FROM = '2026-06-27'
-const TO = '2026-07-06'      // Phase 13: extended vacation window
+const TO = '2026-07-06'      // extended vacation window
 const END_EXCL = '2026-07-07' // exclusive upper bound for timestamp columns
 
 function loadEnvLocal() {

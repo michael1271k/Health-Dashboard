@@ -56,7 +56,7 @@ export function useMuscleAnalytics(days = 30, era: 'all' | 'ppl' | 'axis' = 'all
         exercises: { muscle_groups: string[] | null }
         workout_sessions: { started_at: string }
       }>)
-        // STRICT ERA BOUNDARY (Phase 17): workouts never mix eras in analytics.
+        // STRICT ERA BOUNDARY: workouts never mix eras in analytics.
         .filter((r) => era === 'all' || eraForDate(r.workout_sessions.started_at.slice(0, 10)) === era)
 
       const agg = new Map<string, { sets: number; volume: number; last: string | null }>()

@@ -7,7 +7,7 @@ import {
   Settings,
 } from 'lucide-react'
 
-// Logging is unified into /workout (Phase 5), so there is no separate Log item.
+// Logging is unified into /workout, so there is no separate Log item.
 export const navItems = [
   { href: '/',          icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/nutrition', icon: Salad,           label: 'Nutrition'  },

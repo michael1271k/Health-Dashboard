@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import { Users } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { derivePhase, PHASE_META } from '@/lib/nutrition/phase'
 import type { Tables } from '@/lib/supabase/types'
@@ -291,6 +293,17 @@ export default function SettingsPage() {
         </div>
       </section>
 
+      {/* Household */}
+      <section className="helix-card space-y-2">
+        <h2 className="font-semibold text-text">Household</h2>
+        <Link href="/family" className="btn-glass w-full justify-between min-h-[44px]">
+          <span className="flex items-center gap-2"><Users className="w-4 h-4 text-primary" /> Family Pulse</span>
+          <span className="text-fluid-xs text-muted-vital">admin overview →</span>
+        </Link>
+      </section>
+
+      <CrashRecorderRow />
+
       {status && (
         <p className={`text-sm ${status.type === 'success' ? 'text-success' : 'text-danger'}`}>
           {status.msg}
@@ -299,5 +312,29 @@ export default function SettingsPage() {
 
       {saving && <p className="text-xs text-muted-vital">Saving…</p>}
     </div>
+  )
+}
+
+/** Flight-recorder readout: the last captured crash, if any, for diagnosis. */
+function CrashRecorderRow() {
+  const [crash, setCrash] = useState<{ message: string; buildId: string; at: string } | null>(null)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('helix_last_crash')
+      if (raw) setCrash(JSON.parse(raw))
+    } catch { /* ignore */ }
+  }, [])
+  if (!crash) return null
+  return (
+    <section className="helix-card space-y-2">
+      <div className="flex items-center justify-between">
+        <h2 className="font-semibold text-text">Last recorded crash</h2>
+        <button onClick={() => { try { localStorage.removeItem('helix_last_crash') } catch { /* ignore */ } setCrash(null) }}
+          className="text-fluid-xs text-muted-vital hover:text-text min-h-[32px]">clear</button>
+      </div>
+      <p className="text-[11px] font-mono text-muted-vital break-words">
+        {new Date(crash.at).toLocaleString('en-GB')} · build {crash.buildId.slice(0, 10)}<br />{crash.message}
+      </p>
+    </section>
   )
 }

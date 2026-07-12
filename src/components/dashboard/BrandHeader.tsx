@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { Settings as SettingsIcon } from 'lucide-react'
 import { HelixMark } from '@/components/HelixMark'
 import { useLastUpdated } from '@/lib/hooks/useDashboard'
 
@@ -43,12 +45,11 @@ export function BrandHeader() {
         )}
       </div>
 
-      {/* One clean brand line — mark sized to the cap height, optically centered */}
+      {/* One clean brand line — mark sized to the cap height, nudged UP a few
+          px for true optical alignment with the wordmark's cap line. */}
       <div className="flex items-center gap-x-3 flex-wrap">
-        {/* items-center + leading-none on both children = true optical
-            centering; the old translate-y nudge fought it (Phase 17 fix). */}
         <h1 className="flex items-center gap-2.5 text-fluid-3xl leading-none">
-          <HelixMark className="h-[0.84em] w-[0.84em] shrink-0" />
+          <HelixMark className="h-[0.84em] w-[0.84em] shrink-0 -translate-y-[0.05em]" />
           <span className="helix-wordmark font-heading font-extrabold tracking-tight leading-none">HELIX</span>
         </h1>
         <span
@@ -57,6 +58,11 @@ export function BrandHeader() {
         >
           HELIX-5
         </span>
+        {/* Settings is not in the 5-slot mobile nav — the gear keeps it one tap away */}
+        <Link href="/settings" aria-label="Settings"
+          className="ml-auto min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-muted-vital hover:text-text active:scale-95 transition-transform">
+          <SettingsIcon className="w-5 h-5" />
+        </Link>
       </div>
     </header>
   )

@@ -13,7 +13,7 @@ function debtColor(h: number): string {
 }
 
 /**
- * Sleep Debt Bank (Phase 16) — rolling 14-night decayed shortfall vs the sleep
+ * Sleep Debt Bank — rolling 14-night decayed shortfall vs the sleep
  * goal, as a compact horizontal gauge (0–10h scale).
  */
 export const SleepDebtGauge = memo(function SleepDebtGauge() {

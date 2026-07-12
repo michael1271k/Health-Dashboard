@@ -39,7 +39,7 @@ export function computeSleepDebt(
   return { debtHours: Math.round(debt * 10) / 10, nights: withData.length, worstNightMin: worst, goalHours }
 }
 
-/** Rolling 14-night Sleep Debt Bank (Phase 16) from daily_logs + user goal. */
+/** Rolling 14-night Sleep Debt Bank from daily_logs + user goal. */
 export function useSleepDebt() {
   return useQuery({
     queryKey: ['sleep_debt'],

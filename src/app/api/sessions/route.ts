@@ -3,16 +3,16 @@ import { SaveWorkoutSchema } from '@/lib/sessions/schema'
 import { saveSession } from '@/lib/sessions/save'
 import { getServerSupabaseClient } from '@/lib/supabase/server'
 import { denyIfUnauthorized } from '@/lib/auth/guard'
+import { requireUserId } from '@/lib/auth/identity'
 
 export async function POST(req: Request) {
   // Auth: Supabase admin client — single-user app, get the sole user's ID
   const supabase = getServerSupabaseClient()
 
-  const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers()
-  if (usersError || !users.length) {
+  const userId = await requireUserId(req, supabase)
+  if (!userId) {
     return NextResponse.json({ error: 'No authenticated user' }, { status: 401 })
   }
-  const userId = users[0].id
 
   // Parse + validate
   let body: unknown

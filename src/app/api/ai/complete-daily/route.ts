@@ -17,6 +17,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { z } from 'zod'
 import { getServerSupabaseClient } from '@/lib/supabase/server'
 import { denyIfUnauthorized } from '@/lib/auth/guard'
+import { requireUserId } from '@/lib/auth/identity'
 import { todayIsrael } from '@/lib/ingest/dailyLog'
 
 const FieldsSchema = z.object({
@@ -50,9 +51,8 @@ export async function POST(req: Request) {
   if (denied) return denied
 
   const supabase = getServerSupabaseClient()
-  const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers()
-  if (usersError || !users.length) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const userId = users[0].id
+  const userId = await requireUserId(req, supabase)
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   let text: string
   let dateOverride: string | undefined

@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
+import { authedFetch } from '@/lib/utils/authedFetch'
 import type { SaveWorkoutPayload, SplitDay } from '@/lib/types/workout'
 import type { Tables } from '@/lib/supabase/types'
 
@@ -146,7 +147,7 @@ export function useRecentSessions(limit = 5) {
   return useQuery({
     queryKey: ['workout_sessions', 'recent', limit],
     queryFn: async () => {
-      const res = await fetch('/api/sessions')
+      const res = await authedFetch('/api/sessions')
       if (!res.ok) throw new Error('Failed to fetch sessions')
       const json = await res.json() as { sessions: Array<{
         id: string
@@ -171,7 +172,7 @@ export function useSaveSession() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (payload: SaveWorkoutPayload): Promise<SaveResult> => {
-      const res = await fetch('/api/sessions', {
+      const res = await authedFetch('/api/sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

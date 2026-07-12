@@ -7,7 +7,7 @@ import { Resvg } from '@resvg/resvg-js'
 import { writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
-// HELIX v3 — "Obsidian Strand" (Phase 16). A free-floating double helix, NO orb:
+// HELIX v3 — "Obsidian Strand". A free-floating double helix, NO orb:
 // dark liquid-metal strands with neon rim-light (teal left / cyan right), violet
 // base-pair rungs fading with depth, one specular caustic, bottom vignette.
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">

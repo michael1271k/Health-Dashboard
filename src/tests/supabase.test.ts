@@ -19,7 +19,7 @@ describe('Database types', () => {
     expect((PPL_SPLITS as Record<string, unknown>)['energy']).toBeUndefined()
   })
 
-  it('PPL_SPLITS has the Cyber Mint neon colors (Phase 9)', () => {
+  it('PPL_SPLITS has the Cyber Mint neon colors', () => {
     expect(PPL_SPLITS.push.color).toBe('#38E1FF')    // cyan
     expect(PPL_SPLITS.pull.color).toBe('#43F59B')    // mint
     expect(PPL_SPLITS.legs.color).toBe('#4FC3FF')    // aqua

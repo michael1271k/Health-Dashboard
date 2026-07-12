@@ -9,6 +9,7 @@ import { NUTRITION_PRESETS, type NutritionMode } from '@/lib/types/workout'
 import { NutritionLogList } from '@/components/nutrition/NutritionLogList'
 import { MacroRings } from '@/components/nutrition/MacroRings'
 import { FuelForceBand } from '@/components/nutrition/FuelForceBand'
+import { DaySummaryModal } from '@/components/nutrition/DaySummaryModal'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { PHASE_META, type Phase } from '@/lib/nutrition/phase'
 import type { Tables } from '@/lib/supabase/types'
@@ -29,6 +30,7 @@ export default function NutritionPage() {
   const [goals, setGoals] = useState<ActiveGoals>({ calorie: 1935, protein: 180, carbs: 180, fat: 55, mode: 'cut' })
   const [saving, setSaving] = useState(false)
   const [targetsOpen, setTargetsOpen] = useState(false)
+  const [dayModal, setDayModal] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -39,7 +41,7 @@ export default function NutritionPage() {
       if (!g) return
       const mode = (g.goal_preset as NutritionMode | null) ?? null
       const preset = mode ? NUTRITION_PRESETS[mode] : null
-      // AUTO-HEAL (Phase 17): if the stored row drifted from its own preset
+      // AUTO-HEAL: if the stored row drifted from its own preset
       // (e.g. maintenance saved at 2,300 while the preset says 2,375), the
       // preset is the source of truth — re-sync the row so selector, rings,
       // and goal text can never disagree again.
@@ -123,10 +125,11 @@ export default function NutritionPage() {
           goals={goals}
           isLoading={isLoading}
           emptyMessage={filter === 'all' ? 'No nutrition data yet — paste from Hevy or sync your Shortcut.' : `No days in the ${filter} phase yet.`}
+          onDayClick={(d) => setDayModal(d)}
         />
       </div>
 
-      {/* Targets — demoted to a discreet collapsible at the bottom (Phase 17):
+      {/* Targets — demoted to a discreet collapsible at the bottom:
           changing phase is a monthly event, not prime-screen real estate. */}
       <section className="helix-card">
         <button onClick={() => setTargetsOpen((v) => !v)} aria-expanded={targetsOpen}
@@ -158,6 +161,9 @@ export default function NutritionPage() {
           </div>
         )}
       </section>
+
+      {/* Liquid-glass day summary */}
+      <DaySummaryModal date={dayModal} onClose={() => setDayModal(null)} />
     </div>
   )
 }

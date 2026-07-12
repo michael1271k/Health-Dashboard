@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase/client'
 import type { Phase } from '@/lib/nutrition/phase'
 import type { GymReportRow } from '@/lib/hooks/useWeekly'
 
-/** The full master record for one logical day (Phase 16 Day Vault). */
+/** The full master record for one logical day (the Day Vault). */
 export interface DayVaultData {
   log: {
     steps: number | null; water_ml: number | null; sleep_minutes: number | null

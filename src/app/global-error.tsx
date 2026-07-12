@@ -18,6 +18,18 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
     console.error('[GlobalError]', error)
     try { window.localStorage.removeItem('helix_query_cache') } catch { /* ignore */ }
 
+    // Flight recorder: persist the crash so Settings can show EXACTLY what and
+    // where — the next report is a diagnosis, not a guess.
+    try {
+      window.localStorage.setItem('helix_last_crash', JSON.stringify({
+        message: error?.message?.slice(0, 500) ?? 'unknown',
+        digest: error?.digest ?? null,
+        stack: error?.stack?.slice(0, 2000) ?? null,
+        buildId: process.env.NEXT_PUBLIC_BUILD_ID ?? 'unknown',
+        at: new Date().toISOString(),
+      }))
+    } catch { /* ignore */ }
+
     // Self-heal the #1 recurring crash: a stale service-worker-cached JS bundle
     // (old chunk vs new server → minified React #130 / ChunkLoadError). Purge the
     // SW + all caches and hard-reload ONCE to pull the fresh bundle. Guard with a

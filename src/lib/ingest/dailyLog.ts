@@ -135,7 +135,7 @@ export async function ingestDailyLog(
   set('exercise_minutes', payload.exercise_minutes ?? payload.training_minutes)
   set('stand_hours', payload.stand_hours ?? (payload.standing_minutes !== undefined ? Math.round(payload.standing_minutes) : undefined))
   set('vo2max', payload.vo2max)
-  // Phase 16 metrics
+  // Environmental & cardiac metrics
   set('wrist_temp_delta', payload.wrist_temp)
   set('time_in_daylight_min', payload.time_in_daylight)
   set('heart_rate_recovery', payload.heart_rate_recovery)
@@ -168,7 +168,7 @@ export async function ingestDailyLog(
     for (const k of present) {
       if (k in V51_PAYLOAD_TO_COLUMN) {
         failed.add(k)
-        errors.push({ field: k, error: `daily_logs.${V51_PAYLOAD_TO_COLUMN[k]} column not migrated — run the Phase-15 SQL` })
+        errors.push({ field: k, error: `daily_logs.${V51_PAYLOAD_TO_COLUMN[k]} column not migrated — run the latest paste-SQL` })
       }
     }
   }

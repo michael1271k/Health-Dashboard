@@ -269,7 +269,7 @@ describe('computeRecharge', () => {
   })
 })
 
-describe('computeBattery — phone-like (Phase 8)', () => {
+describe('computeBattery — phone-like', () => {
   it('is high in the morning after good sleep — never ~0% at breakfast', () => {
     // 8h sleep, ~1.5h awake, no workout yet, light steps
     const morning = computeBattery(

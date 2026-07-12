@@ -48,7 +48,7 @@ export function useSessionIntel(sessionId: string | null) {
       // SAME-TYPE matching: split_day alone mixes Upper A and Upper B (both
       // 'upper'). The session TYPE = split_day + weekday (Upper A = Sun,
       // Upper B = Thu), so fetch recent same-split sessions and filter by weekday.
-      // STRICT ERA BOUNDARY (Phase 17): a HELIX session NEVER compares against a
+      // STRICT ERA BOUNDARY: a HELIX session NEVER compares against a
       // PPL-legacy one (different program, loads, rep schemes) — the first HELIX
       // session of each type has no baseline, by design.
       const weekday = new Date(session.started_at).getUTCDay()

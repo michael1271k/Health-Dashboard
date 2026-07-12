@@ -1,5 +1,5 @@
 /**
- * Phase 15: enforce the global weight-validity rule (≥ 50 kg) in the DB.
+ * Enforce the global weight-validity rule (≥ 50 kg) in the DB.
  *   daily_logs.weight_kg < 50        → set NULL (keep the row's other metrics)
  *   body_composition.weight_kg < 50  → DELETE the row (weight is its primary key metric)
  *   npx tsx scripts/purge_bad_weights.ts [--apply]

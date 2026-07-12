@@ -72,12 +72,12 @@ const BaseSchema = z.object({
   avg_rest_heart_rate: intField(),                   // bpm (resting)
   respiratory_rate:    floatField(),                 // breaths/min (numeric)
   blood_oxygen:        floatField(),                 // %
-  // ── Phase 15 metrics ──
+  // ── Wearable recovery metrics ──
   hrv:                 floatField(),                 // heart-rate variability, SDNN ms
   exercise_minutes:    intField(),                   // Apple green-ring minutes
   stand_hours:         intField(),                   // Apple stand hours
   vo2max:              floatField(),                 // mL/kg/min (updates ~weekly)
-  // ── Phase 16 metrics ──
+  // ── Environmental & cardiac metrics ──
   wrist_temp:          floatField(),                 // wrist-temperature deviation, °C
   time_in_daylight:    intField(),                   // minutes of daylight exposure
   heart_rate_recovery: intField(),                   // 1-min post-exercise HRR, bpm

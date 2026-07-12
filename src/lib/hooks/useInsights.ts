@@ -68,7 +68,7 @@ export function useInsights() {
     queryKey: ['coach', 'insights'],
     staleTime: 5 * 60_000,
     queryFn: async (): Promise<InsightsResult> => {
-      const from = daysAgoISO(60)   // Phase 16: 60d window feeds the Fuel→Force correlator
+      const from = daysAgoISO(60)   // 60d window feeds the Fuel→Force correlator
       const fromTs = `${from}T00:00:00Z`
       const today = logicalTodayISO()
 

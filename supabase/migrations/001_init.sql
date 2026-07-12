@@ -1,5 +1,5 @@
 -- ============================================================================
--- APEX — Consolidated initial schema (Phase 10.2)
+-- HELIX — Consolidated initial schema
 -- ============================================================================
 -- Single pristine schema folding former migrations 001–015 (Apple-Health/ghost
 -- + nutrition_phases-marker bits dropped). Apply to a fresh database, then run
@@ -155,7 +155,7 @@ CREATE TABLE IF NOT EXISTS daily_logs (
   muscle_percent NUMERIC(5,2), water_percent NUMERIC(5,2), bone_mineral NUMERIC(6,2),
   visceral_fat NUMERIC(5,1), bmr NUMERIC(7,1),
   hrv_ms NUMERIC(6,2), exercise_minutes INTEGER, stand_hours INTEGER, vo2max NUMERIC(5,2),
-  -- Phase 16: new Apple Health metrics + Day Vault subjective fields
+  -- Apple Health metrics + Day Vault subjective fields
   wrist_temp_delta NUMERIC(4,2), time_in_daylight_min INTEGER, heart_rate_recovery INTEGER,
   effort_rating SMALLINT CHECK (effort_rating BETWEEN 1 AND 10),
   mood SMALLINT CHECK (mood BETWEEN 1 AND 5),
@@ -249,3 +249,96 @@ GRANT ALL ON ALL ROUTINES IN SCHEMA public TO anon, authenticated, service_role;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated, service_role;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON ROUTINES TO anon, authenticated, service_role;
+
+-- ── Multi-tenant household (profiles · roles · per-user ingest keys) ─────────
+CREATE TABLE IF NOT EXISTS profiles (
+  user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  display_name TEXT,
+  role TEXT NOT NULL DEFAULT 'member' CHECK (role IN ('admin', 'member')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE IF NOT EXISTS ingest_keys (
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  secret TEXT NOT NULL UNIQUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (user_id, secret)
+);
+ALTER TABLE ingest_keys ENABLE ROW LEVEL SECURITY;
+
+-- Auto-provision a profile on signup.
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  INSERT INTO public.profiles (user_id, display_name)
+  VALUES (NEW.id, split_part(NEW.email, '@', 1))
+  ON CONFLICT (user_id) DO NOTHING;
+  RETURN NEW;
+END $$;
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- Role check WITHOUT recursive RLS (SECURITY DEFINER reads profiles directly).
+CREATE SCHEMA IF NOT EXISTS private;
+CREATE OR REPLACE FUNCTION private.is_admin()
+RETURNS BOOLEAN LANGUAGE sql SECURITY DEFINER STABLE SET search_path = public AS
+$$ SELECT EXISTS (SELECT 1 FROM profiles WHERE user_id = (SELECT auth.uid()) AND role = 'admin') $$;
+
+-- Members see their own profile; admin sees the whole household.
+DROP POLICY IF EXISTS profiles_self ON profiles;
+CREATE POLICY profiles_self ON profiles FOR SELECT TO authenticated
+  USING (user_id = (SELECT auth.uid()) OR private.is_admin());
+
+-- Additive admin read on every data table (owner policies stay untouched).
+DO $$
+DECLARE t TEXT;
+BEGIN
+  FOREACH t IN ARRAY ARRAY[
+    'daily_metrics','sleep_sessions','nutrition_entries','body_composition',
+    'water_intake','supplements','user_goals','workout_sessions','workout_sets',
+    'daily_scores','daily_logs','reports','supplement_log'
+  ] LOOP
+    EXECUTE format('DROP POLICY IF EXISTS admin_reads_%I ON %I', t, t);
+    EXECUTE format('CREATE POLICY admin_reads_%I ON %I FOR SELECT TO authenticated USING (private.is_admin())', t, t);
+  END LOOP;
+END $$;
+
+-- Fast PR counting (partial index: only PR rows are indexed).
+CREATE INDEX IF NOT EXISTS idx_workout_sets_user_pr ON workout_sets(user_id) WHERE is_pr;
+
+-- One-round-trip day summary (security_invoker: RLS of the CALLER applies).
+CREATE OR REPLACE VIEW day_summary WITH (security_invoker = true) AS
+SELECT
+  dl.user_id, dl.date,
+  dl.steps, dl.water_ml, dl.sleep_minutes, dl.weight_kg,
+  ds.score, ds.battery_pct,
+  ne.calories, ne.protein_g AS n_protein_g, ne.carbs_g AS n_carbs_g, ne.fat_g AS n_fat_g, ne.phase,
+  ws.session_count, ws.total_volume_kg, ws.first_split
+FROM daily_logs dl
+LEFT JOIN daily_scores ds ON ds.user_id = dl.user_id AND ds.date = dl.date
+LEFT JOIN nutrition_entries ne ON ne.user_id = dl.user_id AND ne.date = dl.date AND ne.meal_type = 'daily'
+LEFT JOIN LATERAL (
+  SELECT COUNT(*) AS session_count, SUM(w.total_volume_kg) AS total_volume_kg,
+         MIN(w.split_day) AS first_split
+  FROM workout_sessions w
+  WHERE w.user_id = dl.user_id
+    AND w.started_at >= dl.date::timestamptz
+    AND w.started_at < (dl.date + 1)::timestamptz
+) ws ON TRUE;
+
+-- Realtime: make sure EVERY data table is in the publication (idempotent).
+DO $$
+DECLARE t TEXT;
+BEGIN
+  FOREACH t IN ARRAY ARRAY[
+    'daily_logs','nutrition_entries','daily_metrics','body_composition',
+    'sleep_sessions','workout_sessions','daily_scores','supplement_log','water_intake','reports'
+  ] LOOP
+    BEGIN
+      EXECUTE format('ALTER PUBLICATION supabase_realtime ADD TABLE public.%I', t);
+    EXCEPTION WHEN duplicate_object THEN NULL;
+    END;
+  END LOOP;
+END $$;

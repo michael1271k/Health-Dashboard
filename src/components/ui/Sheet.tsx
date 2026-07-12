@@ -16,7 +16,7 @@ interface SheetProps {
  * High-performance responsive modal: a swipe-to-dismiss bottom sheet on phones,
  * a centered dialog on ≥sm.
  *
- * Perf notes (Phase 7): the animated panel is a SOLID translucent surface — no
+ * Perf notes: the animated panel is a SOLID translucent surface — no
  * backdrop-filter — so dragging never triggers an expensive per-frame blur
  * repaint (the previous jank). Drag is driven by `useDragControls` started from
  * the header handle only (`dragListener={false}`), so it never fights the

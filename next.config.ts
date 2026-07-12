@@ -7,8 +7,15 @@ const withSerwist = withSerwistInit({
   disable: process.env.NODE_ENV === 'development',
 })
 
+// Build identity — inlined into BOTH the client and server bundles of the SAME
+// build, so a stale client comparing against /api/version detects a new deploy.
+// Netlify exposes the commit sha as COMMIT_REF; local builds fall back to a
+// per-build timestamp.
+const BUILD_ID = process.env.COMMIT_REF ?? `dev-${Date.now()}`
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  env: { NEXT_PUBLIC_BUILD_ID: BUILD_ID },
   images: {
     remotePatterns: [],
   },

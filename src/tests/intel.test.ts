@@ -5,8 +5,8 @@ import { computeInsights, daysSinceLastSession, fuelVsForce, trainingGap, type D
 import { dayCompleteness, type DayVaultData } from '@/lib/hooks/useDayVault'
 import { logicalTodayISO, logicalDaysAgoISO } from '@/lib/utils/day'
 
-// ── Phase 16 metrics: schema mapping ─────────────────────────────────────────
-describe('phase 16 ingest fields', () => {
+// ── Advanced-metric schema mapping ─────────────────────────────────────────
+describe('advanced ingest fields', () => {
   it('accepts wrist_temp / time_in_daylight / heart_rate_recovery + aliases', () => {
     const r = ShortcutPayloadSchema.safeParse({
       wrist_temperature: 0.4, daylight: '95', hrr: 31,
@@ -118,7 +118,7 @@ describe('fuelVsForce', () => {
   })
 })
 
-// ── Phase 17: gap-aware coach ────────────────────────────────────────────────
+// ── Gap-aware coach ────────────────────────────────────────────────
 describe('training gap awareness', () => {
   const day = (date: string): DayPoint => ({
     date, sleepMin: 420, restHr: 55, respiratory: null, weightKg: null,

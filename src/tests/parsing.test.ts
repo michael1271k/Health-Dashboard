@@ -9,7 +9,7 @@ describe('Nutrition modes', () => {
     expect(NUTRITION_PRESETS.maintenance.calorieGoal).toBe(2375)
   })
 
-  it('AXIS macro anchors carry full macro + fiber targets (Phase 12)', () => {
+  it('AXIS macro anchors carry full macro + fiber targets', () => {
     expect(NUTRITION_PRESETS.cut.proteinGoalG).toBe(170)
     expect(NUTRITION_PRESETS.cut.fatGoalG).toBe(55)
     expect(NUTRITION_PRESETS.cut.fiberGoalG).toBe(30)

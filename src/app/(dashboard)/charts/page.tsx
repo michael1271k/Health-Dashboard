@@ -76,7 +76,7 @@ export default function ChartsPage() {
         <div className="flex-1 min-w-0 space-y-6">
           <div className="grid gap-6 lg:grid-cols-2">
             <WeightTrendChart data={wData} isLoading={weightLoading} />
-            <VolumeChart data={vData} isLoading={volumeLoading} />
+            <VolumeChart data={vData} isLoading={volumeLoading} era={era} />
             <MacroProgressChart
               data={mData}
               goals={goals ?? null}
