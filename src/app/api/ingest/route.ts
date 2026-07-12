@@ -22,7 +22,7 @@ import { defaultUserId } from '@/lib/auth/identity'
 const WEBHOOK_SECRET = process.env.INGEST_WEBHOOK_SECRET
 
 /**
- * Multi-tenant secret → user resolution. Each family member's Shortcut sends
+ * Multi-tenant secret → user resolution. Each managed user's Shortcut sends
  * their OWN key (ingest_keys table); the legacy env secret keeps resolving to
  * the household admin so the existing Shortcut works unchanged.
  */

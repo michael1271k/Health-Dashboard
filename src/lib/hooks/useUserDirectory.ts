@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { logicalDaysAgoISO, logicalTodayISO } from '@/lib/utils/day'
 
-export interface FamilyMember {
+export interface ManagedUser {
   userId: string
   displayName: string
   role: 'admin' | 'member'
@@ -17,16 +17,16 @@ export interface FamilyMember {
 }
 
 /**
- * Household overview for the admin. RLS does the access control: members can
- * only ever read their own rows, so this hook naturally returns a one-member
- * "family" for them and the full household for the admin — no client-side
- * role juggling, no service keys in the browser.
+ * User-directory overview for the admin. RLS does the access control: members
+ * can only ever read their own rows, so this hook naturally returns a
+ * single-user directory for them and every managed user for the admin — no
+ * client-side role juggling, no service keys in the browser.
  */
-export function useFamilyPulse() {
+export function useUserDirectory() {
   return useQuery({
-    queryKey: ['family_pulse'],
+    queryKey: ['user_directory'],
     staleTime: 60_000,
-    queryFn: async (): Promise<{ isAdmin: boolean; members: FamilyMember[] }> => {
+    queryFn: async (): Promise<{ isAdmin: boolean; members: ManagedUser[] }> => {
       const { data: { user } } = await supabase.auth.getUser()
       const myId = user?.id ?? null
 
@@ -53,7 +53,7 @@ export function useFamilyPulse() {
       const nutritionDays = new Set(((nutritionRes.data ?? []) as Array<{ user_id: string; date: string }>).map((r) => `${r.user_id}|${r.date}`))
       const sessions = (sessionsRes.data ?? []) as Array<{ user_id: string; started_at: string; split_day: string; total_volume_kg: number | null }>
 
-      const members: FamilyMember[] = profiles.map((p) => {
+      const members: ManagedUser[] = profiles.map((p) => {
         const myScores = scores.filter((s) => s.user_id === p.user_id)
         const todayScore = myScores.find((s) => s.date === to) ?? null
         const myLogs = logs.filter((l) => l.user_id === p.user_id).sort((a, b) => a.date.localeCompare(b.date))

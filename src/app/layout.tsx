@@ -11,6 +11,7 @@ import { ThemeProvider as ContextThemeProvider } from '@/components/providers/Th
 import { SerwistRegister } from '@/components/providers/SerwistRegister'
 import { AuthGate } from '@/components/providers/AuthGate'
 import { SyncPulse } from '@/components/fx/SyncPulse'
+import { CrashRecorder } from '@/components/providers/CrashRecorder'
 import './globals.css'
 
 // HELIX type system: Sora (headings/display) · Inter (body) · IBM Plex Mono (data).
@@ -112,6 +113,7 @@ export default function RootLayout({
           </QueryProvider>
         </ThemeProvider>
         <SerwistRegister />
+        <CrashRecorder />
       </body>
     </html>
   )

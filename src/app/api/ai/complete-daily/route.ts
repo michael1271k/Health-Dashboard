@@ -18,7 +18,7 @@ import { z } from 'zod'
 import { getServerSupabaseClient } from '@/lib/supabase/server'
 import { denyIfUnauthorized } from '@/lib/auth/guard'
 import { requireUserId } from '@/lib/auth/identity'
-import { todayIsrael } from '@/lib/ingest/dailyLog'
+import { logicalTodayForUser } from '@/lib/ingest/dailyLog'
 
 const FieldsSchema = z.object({
   muscle_percent: z.number().nullable().optional(),
@@ -116,7 +116,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'No recognizable metrics in message' }, { status: 422 })
   }
 
-  const date = dateOverride && /^\d{4}-\d{2}-\d{2}$/.test(dateOverride) ? dateOverride : todayIsrael()
+  const date = dateOverride && /^\d{4}-\d{2}-\d{2}$/.test(dateOverride) ? dateOverride : await logicalTodayForUser(supabase, userId)
 
   // PATCH daily_logs today (upsert so it works even if no Shortcut row yet)
    

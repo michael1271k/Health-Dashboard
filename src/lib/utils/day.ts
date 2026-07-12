@@ -26,6 +26,28 @@ function localParts(): { y: number; mo: number; d: number; h: number } {
   return { y: now.getFullYear(), mo: now.getMonth() + 1, d: now.getDate(), h: now.getHours() }
 }
 
+/**
+ * Server-safe logical date for an EXPLICIT IANA timezone. API routes run in
+ * UTC — without this, a morning push from UTC+3 lands on YESTERDAY's row
+ * (02:25 UTC − 4h cutoff = the previous date) and renders invisible to the
+ * device, whose "today" is already the next day. Falls back to the raw UTC
+ * date when the timezone string is invalid.
+ */
+export function logicalTodayInTZ(timeZone: string, cutoff = DEFAULT_CUTOFF): string {
+  try {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hour12: false,
+    }).formatToParts(new Date())
+    const get = (t: string) => parts.find((p) => p.type === t)?.value ?? ''
+    const hour = Number(get('hour')) % 24
+    const base = new Date(`${get('year')}-${get('month')}-${get('day')}T12:00:00Z`)
+    if (hour < cutoff) base.setUTCDate(base.getUTCDate() - 1)
+    return base.toISOString().slice(0, 10)
+  } catch {
+    return new Date().toISOString().slice(0, 10)
+  }
+}
+
 /** ISO date (YYYY-MM-DD) of the current logical day, in the device timezone. */
 export function logicalTodayISO(cutoff = getDayCutoffHour()): string {
   const { y, mo, d, h } = localParts()

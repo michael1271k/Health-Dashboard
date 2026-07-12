@@ -1,7 +1,7 @@
 'use client'
 
 import { Users, Dumbbell, Flame, BatteryMedium } from 'lucide-react'
-import { useFamilyPulse, type FamilyMember } from '@/lib/hooks/useFamilyPulse'
+import { useUserDirectory, type ManagedUser } from '@/lib/hooks/useUserDirectory'
 import { displayWeight, useUnitSystem } from '@/lib/utils/units'
 
 function scoreColor(score: number | null): string {
@@ -24,7 +24,7 @@ function Spark({ points }: { points: number[] }) {
   )
 }
 
-function MemberCard({ m, unit }: { m: FamilyMember; unit: string }) {
+function MemberCard({ m, unit }: { m: ManagedUser; unit: string }) {
   const color = scoreColor(m.score)
   return (
     <section className="helix-card space-y-3" style={{ borderColor: `${color}30` }}>
@@ -75,20 +75,21 @@ function MemberCard({ m, unit }: { m: FamilyMember; unit: string }) {
 }
 
 /**
- * Family Pulse — the household at a glance. RLS is the gatekeeper: members see
- * a household of one (themselves); the admin sees everyone.
+ * User Management — every managed account at a glance. Access control is
+ * layered: RLS guarantees non-admins can never READ other users' rows, and the
+ * page itself renders an access notice for non-admin roles.
  */
-export default function FamilyPage() {
-  const { data, isLoading, error } = useFamilyPulse()
+export default function UserManagementPage() {
+  const { data, isLoading, error } = useUserDirectory()
   const unit = useUnitSystem()
 
   return (
     <div className="space-y-5">
       <div>
         <h1 className="font-heading text-fluid-2xl font-bold text-text flex items-center gap-2">
-          <Users className="w-6 h-6 text-primary" aria-hidden="true" /> Family Pulse
+          <Users className="w-6 h-6 text-primary" aria-hidden="true" /> User Management
         </h1>
-        <p className="text-muted-vital text-fluid-sm mt-0.5">The household, live · one vault each</p>
+        <p className="text-muted-vital text-fluid-sm mt-0.5">Every managed account · one isolated vault each</p>
       </div>
 
       {isLoading && <div className="space-y-3">{[0, 1].map((i) => <div key={i} className="helix-card h-36 animate-pulse" />)}</div>}
@@ -99,8 +100,8 @@ export default function FamilyPage() {
           <div className="grid gap-3 sm:grid-cols-2">
             {data.members.map((m) => <MemberCard key={m.userId} m={m} unit={unit} />)}
           </div>
-          {!data.isAdmin && data.members.length <= 1 && (
-            <p className="text-fluid-xs text-muted-vital">You see your own vault here. The household admin sees everyone.</p>
+          {!data.isAdmin && (
+            <p className="text-fluid-xs text-muted-vital">Administrator access required — you can only see your own account here.</p>
           )}
         </>
       )}

@@ -7,7 +7,7 @@ type DB = SupabaseClient<Database>
  * Multi-tenant identity resolution for API routes.
  *
  * Every route used to hardcode `listUsers()[0]` — correct for one user, silent
- * data-corruption for a family. The contract now:
+ * data-corruption for a multi-user deployment. The contract now:
  *   1. A caller presenting a Supabase JWT (Authorization: Bearer) IS that user.
  *   2. No JWT → fall back to the household admin (keeps Michael's existing
  *      Shortcut + cron calls working unchanged during/after onboarding).

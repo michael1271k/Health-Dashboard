@@ -2,15 +2,28 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/lib/supabase/types'
 import { derivePhase } from '@/lib/nutrition/phase'
-import { logicalTodayISO } from '@/lib/utils/day'
+import { logicalTodayInTZ } from '@/lib/utils/day'
 import { MIN_VALID_WEIGHT_KG } from '@/lib/utils/units'
 import type { ShortcutPayload } from './schema'
 
 type DB = SupabaseClient<Database>
 
-/** Today's LOGICAL date (YYYY-MM-DD, 04:00 cutoff) — device/server local. */
-export function todayIsrael(): string {
-  return logicalTodayISO()
+const HOME_TZ = 'Asia/Jerusalem'
+
+/**
+ * The user's logical "today" — computed in THEIR timezone, never the server's.
+ * Netlify functions run in UTC: a 09:25 local push used to be stamped with
+ * yesterday's date (02:25 UTC − 04:00 cutoff) and become invisible in the UI.
+ * Timezone comes from user_goals.timezone; home fallback if unset/unmigrated.
+ */
+export async function logicalTodayForUser(db: DB, userId: string): Promise<string> {
+  let tz = HOME_TZ
+  try {
+    const { data, error } = await db.from('user_goals').select('timezone').eq('user_id', userId).maybeSingle()
+    const stored = (data as { timezone?: string | null } | null)?.timezone
+    if (!error && stored) tz = stored
+  } catch { /* column not migrated yet — home fallback */ }
+  return logicalTodayInTZ(tz)
 }
 
 export interface SectionResult {
@@ -97,7 +110,7 @@ async function upsertDailyLog(db: DB, row: Record<string, any>): Promise<{ error
 export async function ingestDailyLog(
   db: DB, userId: string, payload: ShortcutPayload,
 ): Promise<IngestResult> {
-  const date = payload.date && /^\d{4}-\d{2}-\d{2}$/.test(payload.date) ? payload.date : todayIsrael()
+  const date = payload.date && /^\d{4}-\d{2}-\d{2}$/.test(payload.date) ? payload.date : await logicalTodayForUser(db, userId)
   const warnings: string[] = []
 
   // Global weight-validity rule: sub-50 kg readings are scale/sync artifacts.

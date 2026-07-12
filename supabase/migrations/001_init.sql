@@ -138,6 +138,7 @@ CREATE TABLE IF NOT EXISTS user_goals (
   reduce_motion BOOLEAN NOT NULL DEFAULT false,
   auto_log_supplements BOOLEAN NOT NULL DEFAULT false,
   active_program TEXT NOT NULL DEFAULT 'axis5_hybrid',
+  timezone TEXT NOT NULL DEFAULT 'Asia/Jerusalem',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

@@ -46,15 +46,17 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     // Freshest row values captured from the change payloads (for Sync Pulse).
     let latest: SyncDetail = { tables: [] }
 
-    const flush = () => {
+    // `announce` separates REAL database events (toast-worthy) from silent
+    // housekeeping refreshes (tab focus, reconnect) — the Sync Pulse must only
+    // ever fire for an actual INSERT/UPDATE payload, never a window focus.
+    const flush = (announce: boolean) => {
       const keys = new Set<string>()
       for (const t of pending) for (const k of TABLE_KEYS[t] ?? []) keys.add(JSON.stringify(k))
       const detail: SyncDetail = { ...latest, tables: [...pending] }
       pending.clear()
       latest = { tables: [] }
       for (const k of keys) queryClient.invalidateQueries({ queryKey: JSON.parse(k) as string[] })
-      // One announcement per debounce window — the Sync Pulse toast listens.
-      if (detail.tables.length) window.dispatchEvent(new CustomEvent('helix-sync', { detail }))
+      if (announce && detail.tables.length) window.dispatchEvent(new CustomEvent('helix-sync', { detail }))
     }
     const onChange = (table: string, row?: Record<string, unknown>) => {
       pending.add(table)
@@ -66,9 +68,9 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
         if (table === 'nutrition_entries' && typeof row.calories === 'number') latest.calories = row.calories
       }
       if (timer) clearTimeout(timer)
-      timer = setTimeout(flush, 400)
+      timer = setTimeout(() => flush(true), 400)
     }
-    const refreshAll = () => { for (const t of TABLES) pending.add(t); flush() }
+    const refreshAll = () => { for (const t of TABLES) pending.add(t); flush(false) }
 
     let channel: ReturnType<typeof supabase.channel> | null = null
     const subscribe = () => {

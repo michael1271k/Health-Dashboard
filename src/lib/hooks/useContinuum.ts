@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { PHASES } from '@/lib/phases'
-import { logicalTodayISO } from '@/lib/utils/day'
+import { logicalDaysAgoISO, logicalTodayISO } from '@/lib/utils/day'
 import type { Phase } from '@/lib/nutrition/phase'
 
 /** One day on the Continuum — everything a day card needs, pre-joined. */
@@ -25,17 +25,21 @@ const isoAddDays = (d: string, n: number) => {
   const x = new Date(`${d}T00:00:00Z`); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10)
 }
 
+/** Recent window fetched at first paint; older history loads on demand. */
+export const CONTINUUM_RECENT_DAYS = 45
+
 /**
- * The Continuum — every logged day from program start to today as
- * one pre-joined, newest-first list. One fetch, four range queries; day cards
- * virtualize via content-visibility so the list stays light no matter how
- * long the history grows.
+ * The Continuum — logged days as one pre-joined, newest-first list. Native-app
+ * loading discipline: the initial fetch covers only the recent window (fast
+ * first paint on a phone), and the full archive streams in ONLY when the user
+ * asks for it. Day cards additionally virtualize via content-visibility, so
+ * even the full archive renders lazily.
  */
-export function useContinuum() {
+export function useContinuum(fullHistory = false) {
   return useQuery({
-    queryKey: ['continuum'],
+    queryKey: ['continuum', fullHistory ? 'all' : 'recent'],
     queryFn: async (): Promise<ContinuumDay[]> => {
-      const from = PHASES[0].start           // program dawn (2026-03-08)
+      const from = fullHistory ? PHASES[0].start : logicalDaysAgoISO(CONTINUUM_RECENT_DAYS)
       const to = logicalTodayISO()
       const [logsRes, scoresRes, nutritionRes, sessionsRes] = await Promise.all([
         supabase.from('daily_logs').select('date, sleep_minutes, water_ml')

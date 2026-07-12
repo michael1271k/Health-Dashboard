@@ -247,11 +247,12 @@ export interface Database {
           reduce_motion: boolean
           auto_log_supplements: boolean
           active_program: string
+          timezone: string
           created_at: string
           updated_at: string
         }
         Insert: Omit<Database['public']['Tables']['user_goals']['Row'], 'id' | 'created_at' | 'updated_at' | 'day_cutoff_hour' | 'unit_system' | 'reduce_motion' | 'auto_log_supplements' | 'active_program'>
-          & { day_cutoff_hour?: number; unit_system?: 'kg' | 'lb'; reduce_motion?: boolean; auto_log_supplements?: boolean; active_program?: string }
+          & { day_cutoff_hour?: number; unit_system?: 'kg' | 'lb'; reduce_motion?: boolean; auto_log_supplements?: boolean; active_program?: string; timezone?: string }
         Update: Partial<Database['public']['Tables']['user_goals']['Insert']>
       }
       daily_logs: {

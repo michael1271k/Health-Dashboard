@@ -1,6 +1,6 @@
 'use client'
 
-import { memo, useMemo } from 'react'
+import { memo, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Dumbbell, FolderOpen, Moon, Droplets, UtensilsCrossed } from 'lucide-react'
 import { useContinuum, type ContinuumDay } from '@/lib/hooks/useContinuum'
@@ -113,7 +113,8 @@ export const ContinuumTimeline = memo(function ContinuumTimeline({ era, onOpenWe
   era: 'all' | 'ppl' | 'axis'
   onOpenWeek: (weekStart: string) => void
 }) {
-  const { data, isLoading } = useContinuum()
+  const [fullHistory, setFullHistory] = useState(false)
+  const { data, isLoading } = useContinuum(fullHistory)
   const unit = useUnitSystem()
 
   const groups = useMemo(() => {
@@ -153,6 +154,12 @@ export const ContinuumTimeline = memo(function ContinuumTimeline({ era, onOpenWe
           </div>
         </div>
       ))}
+      {!fullHistory && (
+        <button onClick={() => setFullHistory(true)}
+          className="btn-glass w-full justify-center min-h-[44px] mt-3">
+          Load full history
+        </button>
+      )}
     </div>
   )
 })

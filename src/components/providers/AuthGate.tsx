@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 import { HelixMark } from '@/components/HelixMark'
+import { hydratePrefsFromDb } from '@/lib/utils/prefsSync'
 
 type AuthState = 'resolving' | 'authed' | 'anon'
 
@@ -29,7 +30,10 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let cancelled = false
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!cancelled) setState(session ? 'authed' : 'anon')
+      if (cancelled) return
+      setState(session ? 'authed' : 'anon')
+      // DB-backed preferences hydrate every context (Safari + PWA identical).
+      if (session) void hydratePrefsFromDb()
     }).catch(() => { if (!cancelled) setState('anon') })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {

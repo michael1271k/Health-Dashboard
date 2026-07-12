@@ -293,12 +293,12 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      {/* Household */}
+      {/* Administration */}
       <section className="helix-card space-y-2">
-        <h2 className="font-semibold text-text">Household</h2>
-        <Link href="/family" className="btn-glass w-full justify-between min-h-[44px]">
-          <span className="flex items-center gap-2"><Users className="w-4 h-4 text-primary" /> Family Pulse</span>
-          <span className="text-fluid-xs text-muted-vital">admin overview →</span>
+        <h2 className="font-semibold text-text">Administration</h2>
+        <Link href="/users" className="btn-glass w-full justify-between min-h-[44px]">
+          <span className="flex items-center gap-2"><Users className="w-4 h-4 text-primary" /> User Management</span>
+          <span className="text-fluid-xs text-muted-vital">admin only →</span>
         </Link>
       </section>
 
