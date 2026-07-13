@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Moon, Footprints, Droplets, Dumbbell, ArrowRight } from 'lucide-react'
 import { LiquidModal } from '@/components/ui/LiquidModal'
 import { CompletenessArc } from '@/components/day/CompletenessArc'
+import { ExportToNotionButton } from '@/components/day/ExportToNotionButton'
 import { useDayVault, dayCompleteness } from '@/lib/hooks/useDayVault'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { PHASE_META } from '@/lib/nutrition/phase'
@@ -114,12 +115,15 @@ export function DaySummaryModal({ date, onClose }: { date: string | null; onClos
             </div>
           )}
 
-          {/* Full record */}
+          {/* Full record + curated export */}
           {date && (
-            <Link href={`/day/${date}`} onClick={onClose}
-              className="btn-glass w-full justify-center min-h-[44px]">
-              Open Day Vault <ArrowRight className="w-4 h-4" />
-            </Link>
+            <div className="grid grid-cols-2 gap-2">
+              <Link href={`/day/${date}`} onClick={onClose}
+                className="btn-glass justify-center min-h-[44px]">
+                Day Vault <ArrowRight className="w-4 h-4" />
+              </Link>
+              <ExportToNotionButton date={date} compact />
+            </div>
           )}
         </div>
       )}

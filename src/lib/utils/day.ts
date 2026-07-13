@@ -1,11 +1,11 @@
 /**
- * "Logical day" — the app's day rolls over at a cutoff hour (default 04:00),
- * not midnight, so late-night sessions (01:00–03:59) still belong to the
- * previous calendar day. All "today" reads should use this, not `new Date()`.
- * Times are computed in the DEVICE's local timezone (wherever the user is —
- * Tel Aviv, Koh Samui, anywhere), never a hardcoded zone.
+ * "Logical day" — days roll over at a configurable cutoff hour. The global
+ * standard is MIDNIGHT (0): the calendar day is the logical day. Users may
+ * raise the cutoff in Settings if they want late-night entries to count
+ * toward the previous day. Times are computed in the DEVICE's local timezone
+ * (wherever the user is), never a hardcoded zone.
  */
-const DEFAULT_CUTOFF = 4
+const DEFAULT_CUTOFF = 0
 const STORAGE_KEY = 'helix_day_cutoff'
 const LEGACY_KEY = 'apex_day_cutoff'
 

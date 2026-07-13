@@ -7,7 +7,7 @@ import { WorkoutChat } from '@/components/logger/WorkoutChat'
 import { Sheet } from '@/components/ui/Sheet'
 import { useWorkoutHistory, useDeleteSession, type WorkoutSessionRow } from '@/lib/hooks/useWorkoutHistory'
 import { useExerciseMap, useExerciseMemory } from '@/lib/hooks/useLogger'
-import { PROGRAMS, DEFAULT_PROGRAM_ID, getActiveProgramId, setActiveProgramId, daySplitEnum, type ProgramDay } from '@/lib/programs'
+import { PROGRAMS, DEFAULT_PROGRAM_ID, getActiveProgramId, setActiveProgramId, daySplitEnum, type ProgramDay, eraForDate } from '@/lib/programs'
 import { displayWeight, weightUnit } from '@/lib/utils/units'
 import { Plus, TrendingUp, Trash2 } from 'lucide-react'
 
@@ -18,6 +18,7 @@ const PROGRAM_ORDER = ['apex51', 'axis4_builder', 'axis4_defender']
 
 export default function WorkoutPage() {
   const { data: sessions, isLoading: histLoading } = useWorkoutHistory()
+  const [era, setEra] = useState<'all' | 'ppl' | 'axis'>('all')
   const { data: exMap } = useExerciseMap()
   const { data: memory } = useExerciseMemory()
   const del = useDeleteSession()
@@ -110,11 +111,25 @@ export default function WorkoutPage() {
         ))}
       </div>
 
-      {/* History */}
+      {/* History — era-scoped (HELIX and PPL never mix) */}
       <div>
-        <h2 className="font-heading font-semibold text-lg text-text mb-3">History</h2>
+        <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
+          <h2 className="font-heading font-semibold text-lg text-text">History</h2>
+          <div className="flex items-center gap-1.5">
+            {([['all', 'All', '#19E3B1'], ['axis', 'HELIX Era', '#3EE0FF'], ['ppl', 'PPL Legacy', '#8B97B2']] as const).map(([k, label, color]) => {
+              const active = era === k
+              return (
+                <button key={k} onClick={() => setEra(k)}
+                  className="px-3 py-1.5 rounded-xl text-fluid-xs font-semibold border transition-colors"
+                  style={active ? { color, borderColor: `${color}55`, background: `${color}1f`, boxShadow: `0 0 10px ${color}33` } : { color: '#8B97B2', borderColor: 'transparent' }}>
+                  {label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
         <WorkoutLogList
-          sessions={sessions ?? []}
+          sessions={(sessions ?? []).filter((s) => era === 'all' || eraForDate(s.date) === era)}
           isLoading={histLoading}
           onDelete={setConfirmDelete}
           emptyMessage="No sessions yet. Tap a day above to log your first workout!"

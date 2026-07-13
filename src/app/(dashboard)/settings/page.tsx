@@ -37,7 +37,7 @@ const DEFAULTS: Goals = {
   water_goal_ml: 3000,
   context_mode: 'normal',
   goal_preset: null,
-  day_cutoff_hour: 4,
+  day_cutoff_hour: 0,
   unit_system: 'kg',
   reduce_motion: false,
   auto_log_supplements: false,
@@ -89,12 +89,12 @@ export default function SettingsPage() {
           water_goal_ml: data.water_goal_ml ?? DEFAULTS.water_goal_ml,
           context_mode: (data.context_mode ?? 'normal') as ContextMode,
           goal_preset: data.goal_preset ?? null,
-          day_cutoff_hour: data.day_cutoff_hour ?? 4,
+          day_cutoff_hour: data.day_cutoff_hour ?? 0,
           unit_system: (data.unit_system ?? 'kg') as 'kg' | 'lb',
           reduce_motion: data.reduce_motion ?? false,
           auto_log_supplements: data.auto_log_supplements ?? false,
         })
-        applyPrefsToDevice(data.day_cutoff_hour ?? 4, (data.unit_system ?? 'kg') as 'kg' | 'lb', data.reduce_motion ?? false)
+        applyPrefsToDevice(data.day_cutoff_hour ?? 0, (data.unit_system ?? 'kg') as 'kg' | 'lb', data.reduce_motion ?? false)
       }
       setLoading(false)
     }

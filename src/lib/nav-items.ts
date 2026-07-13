@@ -17,5 +17,5 @@ export const navItems = [
   { href: '/settings',  icon: Settings,        label: 'Settings'   },
 ] as const
 
-// Mobile bottom nav — top 5 most-used items (sidebar shows all)
-export const bottomNavItems = navItems.slice(0, 5)
+// Mobile bottom nav — every destination, Settings included (icon-first, 6-up)
+export const bottomNavItems = navItems

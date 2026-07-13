@@ -1,12 +1,12 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import { useReports, useMonthActivity, useGymReports } from '@/lib/hooks/useWeekly'
 import { getWeekPhase, phaseBadgeStyle } from '@/lib/phases'
 import { FileSystemBrowser } from '@/components/reports/FileSystemBrowser'
 import { ContinuumTimeline } from '@/components/timeline/ContinuumTimeline'
+import { DaySummaryModal } from '@/components/nutrition/DaySummaryModal'
 import { Sheet } from '@/components/ui/Sheet'
 import { authedFetch } from '@/lib/utils/authedFetch'
 import { CalendarDays, ChevronLeft, ChevronRight, Loader2, Sparkles, FolderOpen } from 'lucide-react'
@@ -22,12 +22,22 @@ const addDays = (d: Date, n: number) => { const x = new Date(d); x.setUTCDate(x.
  */
 export default function WeeklyPage() {
   const qc = useQueryClient()
-  const router = useRouter()
   const today = new Date()
   const [month, setMonth] = useState({ y: today.getUTCFullYear(), m: today.getUTCMonth() })
   const [era, setEra] = useState<'all' | 'ppl' | 'axis'>('all')
   const [calOpen, setCalOpen] = useState(false)
   const [filesWeek, setFilesWeek] = useState<string | null>(null)
+  // Active day: the open (or last-viewed) day keeps its timeline row highlighted,
+  // surviving trips into the full Day Vault via sessionStorage.
+  const [activeDay, setActiveDay] = useState<string | null>(() => {
+    try { return sessionStorage.getItem('helix_last_day') } catch { return null }
+  })
+  const [dayModal, setDayModal] = useState<string | null>(null)
+  const openDay = (d: string) => {
+    setActiveDay(d)
+    setDayModal(d)
+    try { sessionStorage.setItem('helix_last_day', d) } catch { /* ignore */ }
+  }
   const [generating, setGenerating] = useState(false)
   const [genWeek, setGenWeek] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -91,7 +101,7 @@ export default function WeeklyPage() {
       {error && <div className="helix-card border-danger/40"><p className="text-danger text-fluid-sm">{error}</p></div>}
 
       {/* ── The Continuum ── */}
-      <ContinuumTimeline era={era} onOpenWeek={(ws) => setFilesWeek(ws)} />
+      <ContinuumTimeline era={era} onOpenWeek={(ws) => setFilesWeek(ws)} onOpenDay={openDay} activeDate={activeDay} />
 
       {/* ── Calendar-jump sheet ── */}
       <Sheet open={calOpen} onClose={() => setCalOpen(false)} title={monthLabel}>
@@ -132,7 +142,7 @@ export default function WeeklyPage() {
                       const hasWorkout = activity?.workoutDates.has(ds)
                       const hasScore = activity?.dataDates.has(ds)
                       return (
-                        <button key={ds} onClick={() => { setCalOpen(false); router.push(`/day/${ds}`) }}
+                        <button key={ds} onClick={() => { setCalOpen(false); openDay(ds) }}
                           title={`Open ${ds}`}
                           className={`aspect-square flex flex-col items-center justify-center rounded-md text-[11px] transition-colors hover:bg-primary/10
                             ${inMonth ? 'text-text' : 'text-muted-vital/40'}`}>
@@ -156,6 +166,9 @@ export default function WeeklyPage() {
           </p>
         </div>
       </Sheet>
+
+      {/* ── Day summary modal (keeps timeline context + active state) ── */}
+      <DaySummaryModal date={dayModal} onClose={() => setDayModal(null)} />
 
       {/* ── Week files sheet (reports drill) ── */}
       <Sheet open={!!filesWeek} onClose={() => setFilesWeek(null)} title="Week files">

@@ -110,12 +110,23 @@ describe('ingest — Shortcut key → column mapping', () => {
     expect(rows[0].exercise_minutes).toBe(70)
   })
 
-  it('standing_minutes (Apple stand-hours count) feeds stand_hours 1:1 + legacy column', async () => {
+  it('standing_minutes converts adaptively: minutes ÷60 when > 24, ring-hours pass through', async () => {
     const rows: any[] = []
     const db = mockDb((row) => { rows.push(row); return { error: null } })
+    await ingestDailyLog(db, 'user-1', { date: '2026-07-10', standing_minutes: 278 } as any)
+    expect(rows[0].standing_minutes).toBe(278)   // legacy column keeps the raw value
+    expect(rows[0].stand_hours).toBe(5)          // 278 min ≈ 5 h
     await ingestDailyLog(db, 'user-1', { date: '2026-07-10', standing_minutes: 11 } as any)
-    expect(rows[0].standing_minutes).toBe(11)
-    expect(rows[0].stand_hours).toBe(11)
+    expect(rows[1].stand_hours).toBe(11)         // ≤ 24 → already an hours count
+  })
+
+  it('reports mapped keys with destination notation and cleans satisfied targets from omitted', async () => {
+    const db = mockDb(() => ({ error: null }))
+    const result = await ingestDailyLog(db, 'user-1', { date: '2026-07-10', training_minutes: 70, standing_minutes: 278 } as any)
+    expect(result.inserted).toContain('training_minutes → exercise_minutes')
+    expect(result.inserted).toContain('standing_minutes → stand_hours')
+    expect(result.omitted).not.toContain('exercise_minutes')
+    expect(result.omitted).not.toContain('stand_hours')
   })
 
   it('explicit exercise_minutes / stand_hours keys win over derived values', async () => {

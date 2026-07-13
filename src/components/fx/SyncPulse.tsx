@@ -1,21 +1,23 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Zap } from 'lucide-react'
 import type { SyncDetail } from '@/components/providers/RealtimeProvider'
 import { formatSleep } from '@/lib/utils/format'
 
-const SHOW_MS = 3500
+const SHOW_MS = 3200
 
 /**
- * Sync Pulse — the app acknowledges a live data sync like a native companion
- * device. When realtime lands a Shortcut push, a bioluminescent glass chip
- * slides in from the top with the freshest values, then dissolves. One toast
- * per debounce window; reduce-motion collapses the slide to a fade.
+ * Charge Bolt — the app acknowledges a REAL data sync like a device charging.
+ * A liquid-glass capsule drops in (translate3d spring); inside, a lightning
+ * bolt draws itself (stroke-dashoffset) and blooms teal, while a single charge
+ * line sweeps the capsule's bottom edge. Everything animated is
+ * transform/opacity/stroke on one small element — no layout, no resident
+ * will-change, no per-frame blur. Reduce-motion collapses to a plain fade.
  */
 export function SyncPulse() {
   const [detail, setDetail] = useState<SyncDetail | null>(null)
   const [leaving, setLeaving] = useState(false)
+  const [reduceMotion, setReduceMotion] = useState(false)
 
   useEffect(() => {
     let hideTimer: ReturnType<typeof setTimeout> | null = null
@@ -23,6 +25,7 @@ export function SyncPulse() {
     const onSync = (e: Event) => {
       const d = (e as CustomEvent<SyncDetail>).detail
       if (!d?.tables?.length) return
+      setReduceMotion(document.documentElement.dataset.reduceMotion === 'true')
       setLeaving(false)
       setDetail(d)
       if (hideTimer) clearTimeout(hideTimer)
@@ -46,7 +49,7 @@ export function SyncPulse() {
   if (detail.steps != null) bits.push(`${detail.steps.toLocaleString()} steps`)
   if (detail.sleepMinutes != null && detail.sleepMinutes > 0) bits.push(`${formatSleep(detail.sleepMinutes)} sleep`)
   if (detail.calories != null) bits.push(`${Math.round(detail.calories).toLocaleString()} kcal`)
-  const summary = bits.length ? bits.join(' · ') : `${detail.tables.length} update${detail.tables.length > 1 ? 's' : ''} synced`
+  const summary = bits.length ? bits.join(' · ') : 'data synced'
 
   return (
     <div
@@ -55,25 +58,34 @@ export function SyncPulse() {
       className="fixed left-1/2 z-[90] pointer-events-none"
       style={{
         top: 'calc(env(safe-area-inset-top, 0px) + 10px)',
-        // translate3d keeps the whole entrance on the compositor.
-        transform: leaving
-          ? 'translate3d(-50%, -140%, 0)'
-          : 'translate3d(-50%, 0, 0)',
+        transform: leaving ? 'translate3d(-50%, -140%, 0)' : 'translate3d(-50%, 0, 0)',
         opacity: leaving ? 0 : 1,
         transition: 'transform 260ms cubic-bezier(0.32, 0.72, 0, 1), opacity 220ms ease',
-        animation: 'syncPulseIn 320ms cubic-bezier(0.32, 0.72, 0, 1)',
+        animation: reduceMotion ? undefined : 'syncPulseIn 340ms cubic-bezier(0.32, 0.72, 0, 1)',
       }}
     >
-      <div className="flex items-center gap-2 rounded-2xl px-3.5 py-2 border"
+      <div className="relative flex items-center gap-2.5 rounded-2xl pl-3 pr-4 py-2 border overflow-hidden"
         style={{
-          background: 'rgba(6, 14, 20, 0.88)',
+          background: 'rgba(6, 14, 20, 0.72)',
+          backdropFilter: 'blur(18px) saturate(160%)',   // static layer — never animated itself
+          WebkitBackdropFilter: 'blur(18px) saturate(160%)',
           borderColor: '#16F5C355',
-          boxShadow: '0 8px 28px rgba(0,0,0,0.5), 0 0 18px #16F5C333',
+          boxShadow: '0 10px 32px rgba(0,0,0,0.55), 0 0 20px #16F5C326, inset 0 1px 0 rgba(255,255,255,0.07)',
         }}>
-        <Zap className="w-3.5 h-3.5 shrink-0" style={{ color: '#16F5C3' }} aria-hidden="true" />
+        {/* The bolt draws itself, then blooms */}
+        <svg width="16" height="20" viewBox="0 0 12 16" fill="none" aria-hidden="true" className="shrink-0">
+          <path d="M7 1 L2 9 H5.5 L4.5 15 L10 6.5 H6.5 Z"
+            stroke="#16F5C3" strokeWidth="1.4" strokeLinejoin="round"
+            className={reduceMotion ? undefined : 'charge-bolt-draw'}
+            style={{ filter: 'drop-shadow(0 0 5px #16F5C388)' }} />
+        </svg>
         <span className="text-fluid-xs font-medium text-text whitespace-nowrap">
-          Synced <span className="helix-num" style={{ color: '#16F5C3' }}>{summary}</span>
+          <span className="helix-num" style={{ color: '#16F5C3' }}>{summary}</span>
         </span>
+        {/* One charge-line sweep along the bottom edge (translate3d only) */}
+        {!reduceMotion && (
+          <span aria-hidden="true" className="charge-line absolute bottom-0 left-0 h-[2px] w-full" />
+        )}
       </div>
     </div>
   )

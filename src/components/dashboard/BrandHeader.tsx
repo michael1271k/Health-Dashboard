@@ -1,8 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
-import { Settings as SettingsIcon } from 'lucide-react'
 import { HelixMark } from '@/components/HelixMark'
 import { useLastUpdated } from '@/lib/hooks/useDashboard'
 
@@ -58,11 +56,6 @@ export function BrandHeader() {
         >
           HELIX-5
         </span>
-        {/* Settings is not in the 5-slot mobile nav — the gear keeps it one tap away */}
-        <Link href="/settings" aria-label="Settings"
-          className="ml-auto min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-muted-vital hover:text-text active:scale-95 transition-transform">
-          <SettingsIcon className="w-5 h-5" />
-        </Link>
       </div>
     </header>
   )

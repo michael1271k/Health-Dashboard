@@ -1,8 +1,7 @@
 'use client'
 
 import { memo, useMemo, useState } from 'react'
-import Link from 'next/link'
-import { Dumbbell, FolderOpen, Moon, Droplets, UtensilsCrossed } from 'lucide-react'
+import { Dumbbell, FolderOpen, Moon } from 'lucide-react'
 import { useContinuum, type ContinuumDay } from '@/lib/hooks/useContinuum'
 import { getWeekPhase, type WeekPhase } from '@/lib/phases'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
@@ -26,59 +25,64 @@ function weekStartOf(dateISO: string): string {
   return d.toISOString().slice(0, 10)
 }
 
-const DayCard = memo(function DayCard({ d, unit }: { d: ContinuumDay; unit: string }) {
+/**
+ * Filament row — one day as a single dense line (~48px): score dot · date ·
+ * macro micro-bar · session/recovery glyph · kcal. The active (open) day locks
+ * into a teal-glow state so the timeline never loses its place.
+ */
+const DayCard = memo(function DayCard({ d, unit, active, onOpen }: {
+  d: ContinuumDay
+  unit: string
+  active: boolean
+  onOpen: (date: string) => void
+}) {
   const total = (d.proteinG ?? 0) + (d.carbsG ?? 0) + (d.fatG ?? 0)
-  const pretty = new Date(d.date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
-  const trio = [
-    { on: d.sleepOk, Icon: Moon, color: VIOLET, label: 'sleep' },
-    { on: d.waterOk, Icon: Droplets, color: '#3EE0FF', label: 'water' },
-    { on: d.foodOk, Icon: UtensilsCrossed, color: '#16F5C3', label: 'food' },
-  ]
+  const day = new Date(d.date + 'T00:00:00')
+  const sc = scoreColor(d.score)
   return (
     // content-visibility keeps offscreen history unrendered — the perf strategy.
-    <Link href={`/day/${d.date}`} prefetch={false}
-      className="helix-card flex items-center gap-3 px-3.5 py-3 active:opacity-80"
-      style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 74px' } as React.CSSProperties}>
-      {/* Score dot + date */}
-      <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: scoreColor(d.score), boxShadow: d.score != null ? `0 0 8px ${scoreColor(d.score)}66` : undefined }} aria-hidden="true" />
-      <div className="min-w-0 flex-1">
-        <div className="flex items-baseline justify-between gap-2">
-          <span className="font-heading font-semibold text-fluid-sm text-text truncate">{pretty}</span>
-          {d.score != null && <span className="helix-num text-fluid-xs" style={{ color: scoreColor(d.score) }}>{d.score}</span>}
-        </div>
-        {/* Macro micro-bar */}
-        {total > 0 ? (
-          <div className="flex h-1.5 rounded-full overflow-hidden mt-1.5 bg-white/[0.04]" aria-hidden="true">
-            <span style={{ width: `${((d.proteinG ?? 0) / total) * 100}%`, background: MACRO_COLORS.protein }} />
-            <span style={{ width: `${((d.carbsG ?? 0) / total) * 100}%`, background: MACRO_COLORS.carbs }} />
-            <span style={{ width: `${((d.fatG ?? 0) / total) * 100}%`, background: MACRO_COLORS.fat }} />
-          </div>
-        ) : (
-          <div className="h-1.5 rounded-full mt-1.5 bg-white/[0.04]" aria-hidden="true" />
-        )}
-        <div className="flex items-center gap-2 mt-1.5 text-fluid-xs text-muted-vital">
-          {d.session ? (
-            <span className="flex items-center gap-1 truncate" style={{ color: '#3EE0FF' }}>
-              <Dumbbell className="w-3 h-3 shrink-0" />
-              <span className="truncate">
-                {d.session.split[0]?.toUpperCase()}{d.session.split.slice(1)}
-                {d.session.volumeKg != null && ` · ${((displayWeight(d.session.volumeKg) ?? 0) / 1000).toFixed(1)}${unit === 'lb' ? 'k' : 't'}`}
-                {(d.session.prCount ?? 0) > 0 && ` · ${d.session.prCount} PR`}
-              </span>
-            </span>
-          ) : (
-            <span style={{ color: VIOLET }}>recovery</span>
-          )}
-          {d.calories != null && <span className="helix-num shrink-0">{Math.round(d.calories).toLocaleString()} kcal</span>}
-        </div>
-      </div>
-      {/* Core-trio ticks */}
-      <span className="flex flex-col gap-1 shrink-0" aria-label={`Logged: ${trio.filter((t) => t.on).map((t) => t.label).join(', ') || 'nothing yet'}`}>
-        {trio.map(({ on, Icon, color, label }) => (
-          <Icon key={label} className="w-3 h-3" style={{ color: on ? color : 'rgba(255,255,255,0.14)' }} aria-hidden="true" />
-        ))}
+    <button onClick={() => onOpen(d.date)} aria-current={active ? 'date' : undefined}
+      className="w-full flex items-center gap-2.5 rounded-xl px-3 min-h-[48px] text-left border transition-colors active:opacity-80"
+      style={{
+        contentVisibility: 'auto', containIntrinsicSize: 'auto 48px',
+        background: active ? '#16F5C314' : 'rgba(255,255,255,0.02)',
+        borderColor: active ? '#16F5C366' : 'rgba(255,255,255,0.06)',
+        boxShadow: active ? '0 0 14px #16F5C333' : undefined,
+      } as React.CSSProperties}>
+      {/* Score dot — swells when active */}
+      <span className="rounded-full shrink-0 transition-all"
+        style={{ width: active ? 12 : 8, height: active ? 12 : 8, background: sc, boxShadow: d.score != null ? `0 0 8px ${sc}66` : undefined }}
+        aria-hidden="true" />
+      {/* Date chip */}
+      <span className="shrink-0 w-[72px] leading-tight">
+        <span className="block font-heading font-semibold text-[12px]" style={{ color: active ? '#16F5C3' : undefined }}>
+          {day.toLocaleDateString('en-GB', { weekday: 'short' })} {day.getDate()}
+        </span>
+        <span className="block text-[9px] text-muted-vital uppercase">{day.toLocaleDateString('en-GB', { month: 'short' })}</span>
       </span>
-    </Link>
+      {/* Macro micro-bar */}
+      <span className="flex h-1.5 w-12 shrink-0 rounded-full overflow-hidden bg-white/[0.05]" aria-hidden="true">
+        {total > 0 && <>
+          <span style={{ width: `${((d.proteinG ?? 0) / total) * 100}%`, background: MACRO_COLORS.protein }} />
+          <span style={{ width: `${((d.carbsG ?? 0) / total) * 100}%`, background: MACRO_COLORS.carbs }} />
+          <span style={{ width: `${((d.fatG ?? 0) / total) * 100}%`, background: MACRO_COLORS.fat }} />
+        </>}
+      </span>
+      {/* Session / recovery glyph + label */}
+      <span className="flex items-center gap-1 min-w-0 flex-1 text-[11px] truncate"
+        style={{ color: d.session ? '#3EE0FF' : VIOLET }}>
+        {d.session ? <Dumbbell className="w-3 h-3 shrink-0" /> : <Moon className="w-3 h-3 shrink-0" />}
+        <span className="truncate">
+          {d.session
+            ? `${d.session.split[0]?.toUpperCase()}${d.session.split.slice(1)}${d.session.volumeKg != null ? ` ${((displayWeight(d.session.volumeKg) ?? 0) / 1000).toFixed(1)}${unit === 'lb' ? 'k' : 't'}` : ''}${(d.session.prCount ?? 0) > 0 ? ` · ${d.session.prCount}PR` : ''}`
+            : 'rest'}
+        </span>
+      </span>
+      {/* kcal */}
+      <span className="helix-num text-[11px] text-muted-vital shrink-0">
+        {d.calories != null ? `${Math.round(d.calories).toLocaleString()}` : '—'}
+      </span>
+    </button>
   )
 })
 
@@ -109,9 +113,11 @@ const WeekHeader = memo(function WeekHeader({ weekStart, phase, onOpenWeek }: {
  * trio), grouped under slim era-aware week nodes. Tap a day → its Day Vault;
  * tap a week's folder → that week's reports.
  */
-export const ContinuumTimeline = memo(function ContinuumTimeline({ era, onOpenWeek }: {
+export const ContinuumTimeline = memo(function ContinuumTimeline({ era, onOpenWeek, onOpenDay, activeDate }: {
   era: 'all' | 'ppl' | 'axis'
   onOpenWeek: (weekStart: string) => void
+  onOpenDay: (date: string) => void
+  activeDate: string | null
 }) {
   const [fullHistory, setFullHistory] = useState(false)
   const { data, isLoading } = useContinuum(fullHistory)
@@ -149,8 +155,8 @@ export const ContinuumTimeline = memo(function ContinuumTimeline({ era, onOpenWe
       {groups.map((g) => (
         <div key={g.weekStart}>
           <WeekHeader weekStart={g.weekStart} phase={g.phase} onOpenWeek={onOpenWeek} />
-          <div className="space-y-2">
-            {g.days.map((d) => <DayCard key={d.date} d={d} unit={unit} />)}
+          <div className="space-y-1.5">
+            {g.days.map((d) => <DayCard key={d.date} d={d} unit={unit} active={activeDate === d.date} onOpen={onOpenDay} />)}
           </div>
         </div>
       ))}

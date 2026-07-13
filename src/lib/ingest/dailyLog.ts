@@ -18,12 +18,14 @@ const HOME_TZ = 'Asia/Jerusalem'
  */
 export async function logicalTodayForUser(db: DB, userId: string): Promise<string> {
   let tz = HOME_TZ
+  let cutoff = 0 // midnight — the global standard
   try {
-    const { data, error } = await db.from('user_goals').select('timezone').eq('user_id', userId).maybeSingle()
-    const stored = (data as { timezone?: string | null } | null)?.timezone
-    if (!error && stored) tz = stored
-  } catch { /* column not migrated yet — home fallback */ }
-  return logicalTodayInTZ(tz)
+    const { data, error } = await db.from('user_goals').select('timezone, day_cutoff_hour').eq('user_id', userId).maybeSingle()
+    const g = data as { timezone?: string | null; day_cutoff_hour?: number | null } | null
+    if (!error && g?.timezone) tz = g.timezone
+    if (!error && typeof g?.day_cutoff_hour === 'number') cutoff = g.day_cutoff_hour
+  } catch { /* columns not migrated yet — defaults stand */ }
+  return logicalTodayInTZ(tz, cutoff)
 }
 
 export interface SectionResult {
@@ -77,6 +79,27 @@ const V51_METRIC_KEYS = [
 const V51_PAYLOAD_TO_COLUMN: Record<string, string> = {
   hrv: 'hrv_ms', exercise_minutes: 'exercise_minutes', stand_hours: 'stand_hours', vo2max: 'vo2max',
   wrist_temp: 'wrist_temp_delta', time_in_daylight: 'time_in_daylight_min', heart_rate_recovery: 'heart_rate_recovery',
+}
+
+/**
+ * Adaptive stand-unit conversion. Real payloads carry MINUTES here (observed:
+ * 278, 46), but small values (≤ 24) are indistinguishable from an Apple
+ * stand-hours ring count — those pass through untouched; anything larger is
+ * minutes and converts to hours.
+ */
+export function standToHours(v: number | undefined): number | undefined {
+  if (v === undefined) return undefined
+  return v > 24 ? Math.round(v / 60) : Math.round(v)
+}
+
+/**
+ * Payload key → destination column for keys whose NAME differs from where the
+ * value lands, so the response can say "training_minutes → exercise_minutes"
+ * and stop reporting satisfied targets as "omitted".
+ */
+const MAPPED_KEYS: Record<string, string> = {
+  training_minutes: 'exercise_minutes',
+  standing_minutes: 'stand_hours',
 }
 
 /** A Postgres/PostgREST "column does not exist / schema cache" error. */
@@ -146,7 +169,7 @@ export async function ingestDailyLog(
   // feed the v5.1 columns (explicit keys win); legacy columns stay dual-written.
   set('hrv_ms', payload.hrv)
   set('exercise_minutes', payload.exercise_minutes ?? payload.training_minutes)
-  set('stand_hours', payload.stand_hours ?? (payload.standing_minutes !== undefined ? Math.round(payload.standing_minutes) : undefined))
+  set('stand_hours', payload.stand_hours ?? standToHours(payload.standing_minutes))
   set('vo2max', payload.vo2max)
   // Environmental & cardiac metrics
   set('wrist_temp_delta', payload.wrist_temp)
@@ -154,9 +177,15 @@ export async function ingestDailyLog(
   set('heart_rate_recovery', payload.heart_rate_recovery)
 
   // Present = keys the Shortcut actually sent (canonical, post-normalization).
-  // Omitted = everything it didn't. A push NEVER fails for omitted keys.
-  const present = KNOWN_KEYS.filter((k) => (payload as Record<string, unknown>)[k] !== undefined)
-  const omitted = KNOWN_KEYS.filter((k) => (payload as Record<string, unknown>)[k] === undefined)
+  // Omitted = everything it didn't — EXCEPT targets satisfied through a mapped
+  // source key (training_minutes fills exercise_minutes, so exercise_minutes is
+  // NOT "omitted"). A push NEVER fails for omitted keys.
+  const p = payload as Record<string, unknown>
+  const present = KNOWN_KEYS.filter((k) => p[k] !== undefined)
+  const satisfiedTargets = new Set(
+    Object.entries(MAPPED_KEYS).filter(([src]) => p[src] !== undefined).map(([, target]) => target),
+  )
+  const omitted = KNOWN_KEYS.filter((k) => p[k] === undefined && !satisfiedTargets.has(k))
   const errors: FieldError[] = []
   const failed = new Set<string>()
 
@@ -263,7 +292,10 @@ export async function ingestDailyLog(
     if (error) errors.push({ field: 'sleep_sessions', error: error.message })
   }
 
-  // Finalize: everything present that didn't fail is confirmed inserted.
-  result.inserted = present.filter((k) => !failed.has(k))
+  // Finalize: everything present that didn't fail is confirmed inserted —
+  // mapped keys carry their destination so the Shortcut sees where data landed.
+  result.inserted = present
+    .filter((k) => !failed.has(k))
+    .map((k) => (MAPPED_KEYS[k] && p[MAPPED_KEYS[k]] === undefined ? `${k} → ${MAPPED_KEYS[k]}` : k))
   return result
 }

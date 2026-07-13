@@ -556,3 +556,22 @@ html[data-reduce-motion='true'] [role='status'][aria-live='polite'] { animation:
 @keyframes liquidSheen {
   to { transform: translate3d(120%, 0, 0); }
 }
+
+/* Charge Bolt — self-drawing lightning (stroke sweep) + teal fill bloom. */
+.charge-bolt-draw {
+  stroke-dasharray: 40;
+  stroke-dashoffset: 40;
+  fill: transparent;
+  animation: boltDraw 420ms cubic-bezier(0.4, 0, 0.2, 1) forwards,
+             boltBloom 300ms ease 420ms forwards;
+}
+@keyframes boltDraw { to { stroke-dashoffset: 0; } }
+@keyframes boltBloom { to { fill: #16F5C3; } }
+
+/* One charge-line sweep across the capsule's bottom edge (compositor-only). */
+.charge-line {
+  background: linear-gradient(90deg, transparent, #16F5C3, transparent);
+  transform: translate3d(-100%, 0, 0);
+  animation: chargeSweep 700ms cubic-bezier(0.4, 0, 0.2, 1) 380ms 1 forwards;
+}
+@keyframes chargeSweep { to { transform: translate3d(100%, 0, 0); } }

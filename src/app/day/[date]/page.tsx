@@ -8,6 +8,7 @@ import { CompletenessArc } from '@/components/day/CompletenessArc'
 import { FuelForceBand } from '@/components/nutrition/FuelForceBand'
 import { SubjectiveBlock } from '@/components/day/SubjectiveBlock'
 import { SleepDebtGauge } from '@/components/day/SleepDebtGauge'
+import { ExportToNotionButton } from '@/components/day/ExportToNotionButton'
 import { useDayVault, dayCompleteness } from '@/lib/hooks/useDayVault'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { PHASE_META } from '@/lib/nutrition/phase'
@@ -136,8 +137,11 @@ export default function DayVaultPage() {
       {/* ── Sleep Debt Bank (14-night rolling) ── */}
       <SleepDebtGauge />
 
-      {/* ── Journal (the Notion replacement) ── */}
+      {/* ── Journal ── */}
       <SubjectiveBlock date={date} effort={log?.effort_rating ?? null} mood={log?.mood ?? null} journal={log?.journal_md ?? null} />
+
+      {/* ── Curated summary export ── */}
+      <ExportToNotionButton date={date} />
     </div>
   )
 }

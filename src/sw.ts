@@ -1,6 +1,6 @@
 import { defaultCache } from '@serwist/next/worker'
 import type { PrecacheEntry, SerwistGlobalConfig } from 'serwist'
-import { Serwist } from 'serwist'
+import { NetworkFirst, Serwist } from 'serwist'
 
 declare global {
   interface ServiceWorkerGlobalScope extends SerwistGlobalConfig {
@@ -15,7 +15,16 @@ const serwist = new Serwist({
   skipWaiting: true,
   clientsClaim: true,
   navigationPreload: true,
-  runtimeCaching: defaultCache,
+  runtimeCaching: [
+    // Navigations are ALWAYS network-first: the app shell can never go stale
+    // across a deploy (the historical stale-shell → module-mismatch crash).
+    // The cached copy serves only as the offline fallback.
+    {
+      matcher: ({ request }) => request.mode === 'navigate',
+      handler: new NetworkFirst({ cacheName: 'helix-pages', networkTimeoutSeconds: 4 }),
+    },
+    ...defaultCache,
+  ],
 })
 
 serwist.addEventListeners()

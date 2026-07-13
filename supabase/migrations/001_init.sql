@@ -133,7 +133,7 @@ CREATE TABLE IF NOT EXISTS user_goals (
   steps_goal INTEGER DEFAULT 10000, active_cal_goal INTEGER DEFAULT 500, water_goal_ml INTEGER DEFAULT 3000,
   context_mode TEXT NOT NULL DEFAULT 'normal' CHECK (context_mode IN ('normal','travel','illness','emergency')),
   goal_preset TEXT,
-  day_cutoff_hour INTEGER NOT NULL DEFAULT 4,
+  day_cutoff_hour INTEGER NOT NULL DEFAULT 0,
   unit_system TEXT NOT NULL DEFAULT 'kg' CHECK (unit_system IN ('kg','lb')),
   reduce_motion BOOLEAN NOT NULL DEFAULT false,
   auto_log_supplements BOOLEAN NOT NULL DEFAULT false,

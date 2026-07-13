@@ -29,6 +29,16 @@ const TABLE_KEYS: Record<string, string[][]> = {
 }
 const TABLES = Object.keys(TABLE_KEYS)
 
+/**
+ * Only EXTERNAL data pushes deserve a toast. The app itself writes constantly
+ * (compute-score upserts daily_scores on every open; supplement auto-log) —
+ * those are real DB events but announcing them reads as a "ghost sync".
+ */
+const ANNOUNCE_TABLES = new Set([
+  'daily_logs', 'nutrition_entries', 'daily_metrics',
+  'body_composition', 'sleep_sessions', 'water_intake',
+])
+
 /** Payload detail for the Sync Pulse toast — the freshest synced values. */
 export interface SyncDetail {
   tables: string[]
@@ -52,7 +62,8 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     const flush = (announce: boolean) => {
       const keys = new Set<string>()
       for (const t of pending) for (const k of TABLE_KEYS[t] ?? []) keys.add(JSON.stringify(k))
-      const detail: SyncDetail = { ...latest, tables: [...pending] }
+      const announceTables = [...pending].filter((t) => ANNOUNCE_TABLES.has(t))
+      const detail: SyncDetail = { ...latest, tables: announceTables }
       pending.clear()
       latest = { tables: [] }
       for (const k of keys) queryClient.invalidateQueries({ queryKey: JSON.parse(k) as string[] })
