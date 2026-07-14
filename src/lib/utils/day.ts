@@ -71,5 +71,3 @@ export function hoursAwakeToday(wakeHour = 7): number {
   return Math.max(0, Math.min(18, hourOfDay - wakeHour))
 }
 
-/** @deprecated legacy name — device-local now, kept for the server import surface. */
-export const israelHoursAwake = hoursAwakeToday

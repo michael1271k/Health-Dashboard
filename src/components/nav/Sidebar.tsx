@@ -34,7 +34,7 @@ export function Sidebar() {
       <nav aria-label="Main navigation" className="flex-1 overflow-y-auto px-3 py-4">
         <ul className="space-y-1" role="list">
           {navItems.map(({ href, icon: Icon, label }) => {
-            const active = pathname === href
+            const active = (pathname === href || (href === '/weekly' && pathname.startsWith('/day')))
             return (
               <li key={href}>
                 <Link

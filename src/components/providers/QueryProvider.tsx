@@ -11,12 +11,15 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            // Data is kept fresh by the realtime WebSocket invalidation, so we can
-            // cache aggressively — navigating between tabs serves from cache
-            // instead of refetching (the main tab-switch lag source).
-            staleTime: 5 * 60 * 1000,
+            // App-open paradigm: the Shortcut/HealthKit pushes fresh data exactly
+            // when the app foregrounds, so we reconcile the UI on focus + reconnect.
+            // A short staleTime means a foreground refetch actually re-hits the DB
+            // right after the push, while tab-switches within the window still
+            // serve instantly from cache (no refetch storm).
+            staleTime: 15 * 1000,
             gcTime: 30 * 60 * 1000,
-            refetchOnWindowFocus: false,
+            refetchOnWindowFocus: true,
+            refetchOnReconnect: true,
             refetchOnMount: false,
             retry: 1,
           },

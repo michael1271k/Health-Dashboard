@@ -8,12 +8,12 @@ import type { Database, Tables, InsertRow } from '@/lib/supabase/types'
 import { isRestDayFor } from '@/lib/programs'
 import { denyIfUnauthorized } from '@/lib/auth/guard'
 import { resolveCallerUserId } from '@/lib/auth/identity'
-import { logicalTodayISO, israelHoursAwake } from '@/lib/utils/day'
+import { logicalTodayISO, hoursAwakeToday } from '@/lib/utils/day'
 
 type DB = SupabaseClient<Database>
 
 function todayISO(): string {
-  return logicalTodayISO() // logical day (04:00 cutoff), Israel time
+  return logicalTodayISO() // logical day (device-local, cutoff-aware)
 }
 function nextDay(d: string): string {
   const x = new Date(`${d}T00:00:00Z`); x.setUTCDate(x.getUTCDate() + 1); return x.toISOString().slice(0, 10)
@@ -21,6 +21,17 @@ function nextDay(d: string): string {
 
 /** Compute + upsert the daily_scores row for a single date. */
 async function computeForDate(supabase: DB, userId: string, date: string, hoursAwake: number, isToday = false): Promise<void> {
+  // FREEZE: a past day is sealed the first time it's computed after its own
+  // midnight. Today accumulates live (recomputed every call); a past day whose
+  // row is already `finalized` is immutable — re-ingesting old data never
+  // rewrites a snapshot. (A missing column just means the migration hasn't run
+  // yet — degrade to the old always-recompute behavior.)
+  if (!isToday) {
+    const { data: existing, error } = await supabase
+      .from('daily_scores').select('finalized').eq('user_id', userId).eq('date', date).maybeSingle()
+    if (!error && (existing as { finalized?: boolean } | null)?.finalized) return
+  }
+
   const end = nextDay(date)
   const [metricsRes, sleepRes, nutritionRes, waterRes, supplementsRes, goalsRes, sessionsRes] = await Promise.all([
     supabase.from('daily_metrics').select('*').eq('user_id', userId).eq('date', date).maybeSingle(),
@@ -128,16 +139,27 @@ async function computeForDate(supabase: DB, userId: string, date: string, hoursA
   // No underlying data at all → leave the day blank rather than write a fake 0.
   if (components.totalScore == null) return
   const battery = computeBattery(inputs, hoursAwake)
-  const scoreRow: InsertRow<'daily_scores'> = {
+  const scoreRow: InsertRow<'daily_scores'> & { finalized?: boolean } = {
     user_id: userId, date,
     score: components.totalScore, sleep_score: components.sleepScore,
     nutrition_score: components.nutritionScore, activity_score: components.activityScore,
     workout_score: components.workoutScore, recovery_score: components.recoveryScore,
     battery_pct: battery.currentPct,
+    // Past days are sealed on this write; today stays live (finalized=false).
+    finalized: !isToday,
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await supabase.from('daily_scores').upsert(scoreRow as unknown as any, { onConflict: 'user_id,date' })
-  if (error) console.error(`[compute-score] upsert ${date} failed:`, error.message)
+  // A missing `finalized` column (pre-migration) → retry without it so scoring
+  // keeps working until the paste-SQL is run.
+  if (error && /finalized|column|schema cache|PGRST204/i.test(error.message)) {
+    const { finalized: _drop, ...legacy } = scoreRow
+    void _drop
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await supabase.from('daily_scores').upsert(legacy as unknown as any, { onConflict: 'user_id,date' })
+  } else if (error) {
+    console.error(`[compute-score] upsert ${date} failed:`, error.message)
+  }
 }
 
 export async function POST(req: Request) {
@@ -164,7 +186,7 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => ({})) as { backfillDays?: number; date?: string; hoursAwake?: number }
   const backfillDays = Math.max(0, Math.min(31, Number(body?.backfillDays) || 0))
   const today = body?.date && /^\d{4}-\d{2}-\d{2}$/.test(body.date) ? body.date : todayISO()
-  const awake = Number.isFinite(body?.hoursAwake) ? Math.max(0, Math.min(18, Number(body?.hoursAwake))) : israelHoursAwake()
+  const awake = Number.isFinite(body?.hoursAwake) ? Math.max(0, Math.min(18, Number(body?.hoursAwake))) : hoursAwakeToday()
 
   for (const userId of userIds) {
     await computeForDate(supabase, userId, today, awake, true)   // today: time-of-day aware

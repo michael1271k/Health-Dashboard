@@ -114,3 +114,31 @@ describe('v5.1 battery lift drain', () => {
     expect(BATTERY.workoutPerKg).toBe(0.0015)
   })
 })
+
+// ── Axis-5 Week 0 injection + chart split resolver ───────────────────────────
+import { resolveChartSplit } from '@/components/charts/VolumeChart'
+
+describe('Axis-5 Week 0', () => {
+  it('maps the two transitional days (16–17 Jul) to the HELIX era', () => {
+    expect(eraForDate('2026-07-16')).toBe('axis')  // Thu
+    expect(eraForDate('2026-07-17')).toBe('axis')  // Fri
+  })
+  it('does not shift neighbouring days', () => {
+    expect(eraForDate('2026-07-15')).toBe('ppl')   // Wed before
+    expect(eraForDate('2026-07-18')).toBe('ppl')   // Sat between W0 and W1 anchor
+    expect(eraForDate('2026-07-19')).toBe('axis')  // Week-1 anchor unchanged
+  })
+})
+
+describe('resolveChartSplit', () => {
+  it('folds legacy lower into legs', () => {
+    expect(resolveChartSplit('2026-05-11', 'lower', 'ppl')).toBe('legs')
+  })
+  it('splits HELIX Wednesday upper sessions into Delts & Arms', () => {
+    expect(resolveChartSplit('2026-07-22', 'upper', 'axis')).toBe('arms')  // Wed
+    expect(resolveChartSplit('2026-07-19', 'upper', 'axis')).toBe('upper') // Sun
+  })
+  it('leaves PPL upper untouched (no arms bucket outside HELIX)', () => {
+    expect(resolveChartSplit('2026-06-24', 'upper', 'ppl')).toBe('upper')  // Wed but PPL
+  })
+})

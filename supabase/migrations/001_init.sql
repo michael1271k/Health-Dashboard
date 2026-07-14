@@ -121,6 +121,7 @@ CREATE TABLE IF NOT EXISTS daily_scores (
   workout_score INTEGER CHECK (workout_score BETWEEN 0 AND 100),
   recovery_score INTEGER CHECK (recovery_score BETWEEN 0 AND 100),
   battery_pct INTEGER CHECK (battery_pct BETWEEN 0 AND 100),
+  finalized BOOLEAN NOT NULL DEFAULT FALSE,
   computed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE(user_id, date)
 );
@@ -343,3 +344,17 @@ BEGIN
     END;
   END LOOP;
 END $$;
+
+
+-- Notion export ledger (bulk "unexported" diff — one row per synced day) -------
+CREATE TABLE IF NOT EXISTS notion_exports (
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  date DATE NOT NULL,
+  exported_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  page_url TEXT,
+  PRIMARY KEY (user_id, date)
+);
+ALTER TABLE notion_exports ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS user_owns_notion_exports ON notion_exports;
+CREATE POLICY user_owns_notion_exports ON notion_exports FOR ALL TO authenticated
+  USING (user_id = (SELECT auth.uid())) WITH CHECK (user_id = (SELECT auth.uid()));

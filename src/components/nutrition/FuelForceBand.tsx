@@ -9,7 +9,7 @@ import { displayWeight, useUnitSystem } from '@/lib/utils/units'
 
 /**
  * Fuel → Force — visually links the day's nutrition to its training
- * session: session chip, protein-adequacy tick, and a jump to the Day Vault.
+ * session: session chip, protein-adequacy tick, and a jump to the Daily Nexus.
  * Renders nothing on days without a session.
  */
 export const FuelForceBand = memo(function FuelForceBand({ date, proteinG, proteinGoal }: {

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Users } from 'lucide-react'
+import { NotionSync } from '@/components/settings/NotionSync'
 import { supabase } from '@/lib/supabase/client'
 import { derivePhase, PHASE_META } from '@/lib/nutrition/phase'
 import type { Tables } from '@/lib/supabase/types'
@@ -292,6 +293,8 @@ export default function SettingsPage() {
           ))}
         </div>
       </section>
+
+      <NotionSync />
 
       {/* Administration */}
       <section className="helix-card space-y-2">

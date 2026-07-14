@@ -18,6 +18,7 @@ import { AnimatedCard } from '@/components/dashboard/AnimatedBento'
 import { WeeklyReviewCard } from '@/components/dashboard/WeeklyReviewCard'
 import { BrandHeader } from '@/components/dashboard/BrandHeader'
 import { DeferredMount } from '@/components/fx/DeferredMount'
+import { PullToRefresh } from '@/components/ui/PullToRefresh'
 import { formatSleep, mlToL } from '@/lib/utils/format'
 import { displayWeight, weightUnit, validWeight } from '@/lib/utils/units'
 import { PHASE_META } from '@/lib/nutrition/phase'
@@ -152,6 +153,7 @@ export default function DashboardPage() {
   }
 
   return (
+    <PullToRefresh>
     <div className="space-y-6">
       <BrandHeader />
 
@@ -240,6 +242,7 @@ export default function DashboardPage() {
         <WorkoutChat splitDay={todayDay !== 'rest' && todayDay.dayKey ? daySplitEnum(todayDay.dayKey) : 'upper'} onClose={() => setLogOpen(false)} />
       </Sheet>
     </div>
+    </PullToRefresh>
   )
 }
 

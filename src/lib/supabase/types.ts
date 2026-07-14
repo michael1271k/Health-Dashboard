@@ -204,6 +204,7 @@ export interface Database {
           workout_score: number | null
           recovery_score: number | null
           battery_pct: number | null
+          finalized: boolean
           computed_at: string
         }
         Insert: Omit<Database['public']['Tables']['daily_scores']['Row'], 'id' | 'computed_at'>
@@ -218,6 +219,16 @@ export interface Database {
         }
         Insert: { user_id: string } & Partial<Omit<Database['public']['Tables']['profiles']['Row'], 'user_id' | 'created_at'>>
         Update: Partial<Database['public']['Tables']['profiles']['Insert']>
+      }
+      notion_exports: {
+        Row: {
+          user_id: string
+          date: string
+          exported_at: string
+          page_url: string | null
+        }
+        Insert: { user_id: string; date: string; exported_at?: string; page_url?: string | null }
+        Update: Partial<{ exported_at: string; page_url: string | null }>
       }
       ingest_keys: {
         Row: {

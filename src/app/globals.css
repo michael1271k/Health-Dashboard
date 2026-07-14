@@ -15,6 +15,7 @@
   --color-primary: #16F5C3;     /* living teal — the HELIX signature accent */
   --color-energy: #8B7CFF;      /* abyss violet — recovery / battery accents */
   --color-info: #3EE0FF;        /* plankton cyan — data */
+  --color-ice: #6FE9FF;         /* neon ice-blue — interactive/active accent */
   --color-success: #43F59B;     /* mint green — positive deltas */
   --color-warn: #FFB86B;        /* ember — fuel / caution */
   --color-danger: #FF5470;      /* rose — negative */

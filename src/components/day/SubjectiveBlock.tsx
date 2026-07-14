@@ -7,7 +7,7 @@ import { useSaveSubjective } from '@/lib/hooks/useDayVault'
 const MOODS = ['😖', '😕', '😐', '🙂', '🔥'] as const
 
 /**
- * Subjective block — the journal half of the Day Vault master record.
+ * Subjective block — the journal half of the Daily Nexus master record.
  * Effort (RPE 1-10), mood (1-5) and a free-form note, saved onto the day's
  * daily_logs row. Replaces the Notion daily journal.
  */

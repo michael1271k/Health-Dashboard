@@ -12,17 +12,37 @@ import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 const GRID = 'rgba(255,255,255,0.06)'
 const TEXT = '#8B97B2'
 
-// No "All" — different splits aren't comparable. The pill set is era-specific:
-// PPL trains Push/Pull/Legs (its "upper" days are out-of-program noise), while
-// HELIX-5 logs Upper and Legs & Core. Legacy "lower" always folds into legs.
-const SPLITS_FOR_ERA: Record<'all' | 'ppl' | 'axis', SplitDay[]> = {
-  all: ['push', 'pull', 'legs', 'upper'],
+// A chart bucket. 'arms' is a HELIX-only pseudo-split (Delts & Arms) that the DB
+// stores as split_day='upper' — resolved by weekday below.
+type ChartSplit = SplitDay | 'arms'
+const ARMS_COLOR = '#6FE9FF'
+
+// The pill set is era-specific. PPL trains Push/Pull/Legs (no "Upper" — zero
+// records); HELIX-5 logs Upper, Delts & Arms, and Legs & Core. Legacy "lower"
+// always folds into legs.
+const SPLITS_FOR_ERA: Record<'all' | 'ppl' | 'axis', ChartSplit[]> = {
+  all: ['push', 'pull', 'legs'],
   ppl: ['push', 'pull', 'legs'],
-  axis: ['upper', 'legs'],
+  axis: ['upper', 'arms', 'legs'],
 }
-const splitLabel = (s: SplitDay, era: 'all' | 'ppl' | 'axis') => {
-  if (s === 'legs') return era === 'ppl' ? 'Legs' : era === 'axis' ? 'Legs & Core' : 'Legs/Lower'
+const splitLabel = (s: ChartSplit, era: 'all' | 'ppl' | 'axis') => {
+  if (s === 'arms') return 'Delts & Arms'
+  if (s === 'legs') return era === 'axis' ? 'Legs & Core' : 'Legs'
   return s[0].toUpperCase() + s.slice(1)
+}
+
+/**
+ * Map a session (date + DB split_day) to its chart bucket. HELIX Delts & Arms
+ * days are logged as 'upper' but fall on Wednesday — that weekday split lets us
+ * track them separately from the Upper A/B days.
+ */
+export function resolveChartSplit(dateISO: string, split: string, era: 'all' | 'ppl' | 'axis'): ChartSplit {
+  if (split === 'lower') return 'legs'
+  if (era === 'axis' && split === 'upper') {
+    const weekday = new Date(dateISO + 'T12:00:00Z').getUTCDay()
+    return weekday === 3 ? 'arms' : 'upper'
+  }
+  return split as ChartSplit
 }
 
 function formatDate(dateStr: string): string {
@@ -30,7 +50,7 @@ function formatDate(dateStr: string): string {
 }
 
 export function VolumeChart({ data, isLoading, era = 'all' }: { data: VolumePoint[]; isLoading?: boolean; era?: 'all' | 'ppl' | 'axis' }) {
-  const [split, setSplit] = useState<SplitDay>('legs')
+  const [split, setSplit] = useState<ChartSplit>('legs')
   const unit = useUnitSystem()
 
   if (isLoading) {
@@ -40,9 +60,9 @@ export function VolumeChart({ data, isLoading, era = 'all' }: { data: VolumePoin
   // The selected split must exist in the active era's pill set.
   const pills = SPLITS_FOR_ERA[era]
   const activeSplit = pills.includes(split) ? split : pills[0]
-  const filtered = data.filter((d) => d.split === activeSplit || (activeSplit === 'legs' && d.split === 'lower'))
+  const filtered = data.filter((d) => resolveChartSplit(d.date, d.split, era) === activeSplit)
   const chartData = filtered.map((d) => ({ date: formatDate(d.date), volume: displayWeight(d.volume) }))
-  const color = PPL_SPLITS[activeSplit]?.color ?? '#19E3B1'
+  const color = activeSplit === 'arms' ? ARMS_COLOR : (PPL_SPLITS[activeSplit as SplitDay]?.color ?? '#19E3B1')
 
   return (
     <div className="helix-card">
@@ -51,7 +71,7 @@ export function VolumeChart({ data, isLoading, era = 'all' }: { data: VolumePoin
         <div className="flex gap-1 overflow-x-auto no-scrollbar">
           {pills.map((s) => {
             const active = activeSplit === s
-            const c = PPL_SPLITS[s]?.color ?? '#19E3B1'
+            const c = s === 'arms' ? ARMS_COLOR : (PPL_SPLITS[s as SplitDay]?.color ?? '#19E3B1')
             return (
               <button key={s} onClick={() => setSplit(s)}
                 className="px-2.5 py-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-colors border"

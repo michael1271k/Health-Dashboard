@@ -25,7 +25,8 @@ export function BottomNav() {
         }}
       >
         {navItems.map(({ href, icon: Icon, label }) => {
-          const active = pathname === href
+          // Section match so drilling into /day/* keeps the Journey tab lit.
+          const active = pathname === href || (href === '/weekly' && pathname.startsWith('/day'))
           return (
             <li key={href} className="flex-1">
               <Link
@@ -35,7 +36,7 @@ export function BottomNav() {
                 className={`flex flex-col items-center gap-0.5 py-1.5 px-1 rounded-xl
                             transition-[color,background] duration-200 min-h-[44px]
                             ${active ? 'text-primary' : 'text-muted-vital'}`}
-                style={active ? { background: 'rgba(61,125,255,0.10)' } : {}}
+                style={active ? { background: 'rgba(111,233,255,0.12)', color: '#6FE9FF' } : {}}
               >
                 <Icon className="w-5 h-5" aria-hidden="true" />
                 <span className="text-[10px] font-medium leading-none">{label}</span>

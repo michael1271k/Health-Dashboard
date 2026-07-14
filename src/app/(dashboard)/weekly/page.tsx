@@ -17,7 +17,7 @@ const addDays = (d: Date, n: number) => { const x = new Date(d); x.setUTCDate(x.
 
 /**
  * Journey — the Continuum. A unified day-first timeline is the
- * primary surface (tap a day → its Day Vault); the month calendar became a
+ * primary surface (tap a day → its Daily Nexus); the month calendar became a
  * jump popover, and weekly report files open in a sheet from the week nodes.
  */
 export default function WeeklyPage() {
@@ -28,7 +28,7 @@ export default function WeeklyPage() {
   const [calOpen, setCalOpen] = useState(false)
   const [filesWeek, setFilesWeek] = useState<string | null>(null)
   // Active day: the open (or last-viewed) day keeps its timeline row highlighted,
-  // surviving trips into the full Day Vault via sessionStorage.
+  // surviving trips into the full Daily Nexus via sessionStorage.
   const [activeDay, setActiveDay] = useState<string | null>(() => {
     try { return sessionStorage.getItem('helix_last_day') } catch { return null }
   })

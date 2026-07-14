@@ -1,5 +1,5 @@
 /**
- * Training programs + eras — SYSTEM UPDATE v5.1.
+ * Training programs + eras.
  * The PPL era ends and the recomposition era begins 2026-07-19 (Sunday).
  * Active program: HELIX-5 (5-day: Sun/Mon/Wed/Thu/Sat · Tue/Fri = Zone-2 rest).
  * Sessions are classified purely by date via `eraForDate` (no DB column needed).
@@ -7,7 +7,16 @@
 export type Era = 'ppl' | 'axis'
 export const AXIS_ERA_START = '2026-07-19'
 
+/**
+ * Transitional "Week 0" — the first two Axis-5 sessions (Thu/Fri, 16–17 Jul)
+ * belong to the HELIX timeline even though they precede the Week-1 anchor. Kept
+ * as an explicit set so those two days join the era WITHOUT shifting the rest of
+ * the schedule (Week 1 still anchors on 2026-07-19).
+ */
+export const AXIS_WEEK0_DATES = new Set(['2026-07-16', '2026-07-17'])
+
 export function eraForDate(dateISO: string): Era {
+  if (AXIS_WEEK0_DATES.has(dateISO)) return 'axis'
   return dateISO >= AXIS_ERA_START ? 'axis' : 'ppl'
 }
 

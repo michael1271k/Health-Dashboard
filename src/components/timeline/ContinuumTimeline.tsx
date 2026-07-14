@@ -110,7 +110,7 @@ const WeekHeader = memo(function WeekHeader({ weekStart, phase, onOpenWeek }: {
 /**
  * The Continuum — Journey's primary surface. A unified, day-first
  * timeline: every day is one card (score · macros · session/recovery · core
- * trio), grouped under slim era-aware week nodes. Tap a day → its Day Vault;
+ * trio), grouped under slim era-aware week nodes. Tap a day → its Daily Nexus;
  * tap a week's folder → that week's reports.
  */
 export const ContinuumTimeline = memo(function ContinuumTimeline({ era, onOpenWeek, onOpenDay, activeDate }: {

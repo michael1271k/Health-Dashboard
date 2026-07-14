@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { Moon, Footprints, Droplets, Dumbbell, ArrowRight } from 'lucide-react'
 import { LiquidModal } from '@/components/ui/LiquidModal'
 import { CompletenessArc } from '@/components/day/CompletenessArc'
-import { ExportToNotionButton } from '@/components/day/ExportToNotionButton'
 import { useDayVault, dayCompleteness } from '@/lib/hooks/useDayVault'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { PHASE_META } from '@/lib/nutrition/phase'
@@ -40,7 +39,7 @@ function MiniRing({ value, goalHint, color, label }: { value: number | null; goa
 /**
  * Day-summary popup for the Nutrition timeline: macros, movement, and the
  * day's training — or a deliberate Rest Day visual — inside a LiquidModal,
- * with the full Day Vault one tap away.
+ * with the full Daily Nexus one tap away.
  */
 export function DaySummaryModal({ date, onClose }: { date: string | null; onClose: () => void }) {
   const { data, isLoading } = useDayVault(date ?? '')
@@ -115,15 +114,12 @@ export function DaySummaryModal({ date, onClose }: { date: string | null; onClos
             </div>
           )}
 
-          {/* Full record + curated export */}
+          {/* Full record */}
           {date && (
-            <div className="grid grid-cols-2 gap-2">
-              <Link href={`/day/${date}`} onClick={onClose}
-                className="btn-glass justify-center min-h-[44px]">
-                Day Vault <ArrowRight className="w-4 h-4" />
-              </Link>
-              <ExportToNotionButton date={date} compact />
-            </div>
+            <Link href={`/day/${date}`} onClick={onClose}
+              className="btn-glass w-full justify-center min-h-[44px]">
+              Open Daily Nexus <ArrowRight className="w-4 h-4" />
+            </Link>
           )}
         </div>
       )}

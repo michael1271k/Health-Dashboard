@@ -9,14 +9,32 @@ import { hydratePrefsFromDb } from '@/lib/utils/prefsSync'
 type AuthState = 'resolving' | 'authed' | 'anon'
 
 /**
+ * Zero-load optimistic gate: Supabase persists its session token in
+ * localStorage (`sb-*-auth-token`). If that token exists we render the app
+ * IMMEDIATELY (no splash) and verify the session in the background — the warm
+ * start, which is every launch after the first, paints instantly. Only a
+ * genuinely missing token shows the brief splash before redirecting to /auth.
+ */
+function hasPersistedSession(): boolean {
+  if (typeof window === 'undefined') return false
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i)
+      if (k && /^sb-.*-auth-token$/.test(k) && localStorage.getItem(k)) return true
+    }
+  } catch { /* storage blocked */ }
+  return false
+}
+
+/**
  * Native Session Shell — fixes the iOS standalone-PWA blank screen.
  *
  * iOS gives a home-screen PWA an ISOLATED storage container: a Safari login
  * does not exist inside it. Without a session every RLS query silently returns
  * [] and the app renders "successfully"… empty. This gate resolves the session
  * before rendering data surfaces: no session → redirect to /auth (sign in ONCE
- * inside the container; persistSession keeps it), and while resolving it shows
- * a branded splash instead of a blank/empty dashboard.
+ * inside the container; persistSession keeps it). A persisted token lets us skip
+ * the splash entirely and paint optimistically.
  *
  * Also keeps long-idle PWAs alive: token auto-refresh is started/stopped with
  * page visibility so a session left in the app switcher for days refreshes on
@@ -25,7 +43,8 @@ type AuthState = 'resolving' | 'authed' | 'anon'
 export function AuthGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
-  const [state, setState] = useState<AuthState>('resolving')
+  // Optimistic: a persisted token → 'authed' on first paint (no splash).
+  const [state, setState] = useState<AuthState>(() => (hasPersistedSession() ? 'authed' : 'resolving'))
 
   useEffect(() => {
     let cancelled = false
