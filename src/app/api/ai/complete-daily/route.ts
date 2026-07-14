@@ -118,7 +118,7 @@ export async function POST(req: Request) {
 
   const date = dateOverride && /^\d{4}-\d{2}-\d{2}$/.test(dateOverride) ? dateOverride : await logicalTodayForUser(supabase, userId)
 
-  // PATCH daily_logs today (upsert so it works even if no Shortcut row yet)
+  // PATCH daily_logs today (upsert so it works even if no prior row yet)
    
   const { error: dlErr } = await supabase
     .from('daily_logs')

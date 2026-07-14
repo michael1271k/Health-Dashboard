@@ -4,7 +4,7 @@ import type { Database } from '@/lib/supabase/types'
 import { derivePhase } from '@/lib/nutrition/phase'
 import { logicalTodayInTZ } from '@/lib/utils/day'
 import { MIN_VALID_WEIGHT_KG } from '@/lib/utils/units'
-import type { ShortcutPayload } from './schema'
+import type { IngestPayload } from './schema'
 
 type DB = SupabaseClient<Database>
 
@@ -37,7 +37,7 @@ export interface SectionResult {
 export interface FieldError { field: string; error: string }
 
 /**
- * Ultra-detailed Shortcut response — the iOS Shortcut shows exactly what landed
+ * Ultra-detailed ingest response — the client shows exactly what landed
  * (`inserted`), what wasn't sent (`omitted`), and any per-metric DB/validity
  * problems (`errors`). `results`/`warnings` keep the richer per-table breakdown.
  * The route NEVER 500s on a DB error: everything is reported here so the phone
@@ -62,7 +62,7 @@ export interface IngestResult {
 
 const skipped = (): SectionResult => ({ ok: true, action: 'skipped' })
 
-/** Every metric key the Shortcut can send (canonical names, post-normalization). */
+/** Every metric key a push source can send (canonical names, post-normalization). */
 const KNOWN_KEYS = [
   'steps', 'water', 'sleep_minutes', 'carbs', 'protein', 'fats', 'weight', 'lean_mass',
   'bmi', 'training_minutes', 'active_energy', 'body_fat', 'standing_minutes', 'avg_heart_rate',
@@ -126,12 +126,12 @@ async function upsertDailyLog(db: DB, row: Record<string, any>): Promise<{ error
 }
 
 /**
- * Upsert the flat Shortcut payload into daily_logs (merge — only provided keys,
+ * Upsert the flat ingest payload into daily_logs (merge — only provided keys,
  * preserving AI-completed advanced fields), then fan out to the normalized
  * tables that power scoring, the dashboard, and charts.
  */
 export async function ingestDailyLog(
-  db: DB, userId: string, payload: ShortcutPayload,
+  db: DB, userId: string, payload: IngestPayload,
 ): Promise<IngestResult> {
   const date = payload.date && /^\d{4}-\d{2}-\d{2}$/.test(payload.date) ? payload.date : await logicalTodayForUser(db, userId)
   const warnings: string[] = []
@@ -163,7 +163,7 @@ export async function ingestDailyLog(
   set('avg_rest_heart_rate', payload.avg_rest_heart_rate)
   set('respiratory_rate', payload.respiratory_rate)
   set('blood_oxygen', payload.blood_oxygen)
-  // v5.1+ metrics. The Shortcut's `training_minutes` IS Apple's exercise-ring
+  // Advanced metrics. HealthKit's exercise-ring minutes arrive as `training_minutes`
   // minutes, and its `standing_minutes` is Apple's STAND-HOURS count despite
   // the name (Apple has no standing-minutes metric; typical value 8–14) → both
   // feed the v5.1 columns (explicit keys win); legacy columns stay dual-written.
@@ -176,7 +176,7 @@ export async function ingestDailyLog(
   set('time_in_daylight_min', payload.time_in_daylight)
   set('heart_rate_recovery', payload.heart_rate_recovery)
 
-  // Present = keys the Shortcut actually sent (canonical, post-normalization).
+  // Present = keys the source actually sent (canonical, post-normalization).
   // Omitted = everything it didn't — EXCEPT targets satisfied through a mapped
   // source key (training_minutes fills exercise_minutes, so exercise_minutes is
   // NOT "omitted"). A push NEVER fails for omitted keys.
@@ -293,7 +293,7 @@ export async function ingestDailyLog(
   }
 
   // Finalize: everything present that didn't fail is confirmed inserted —
-  // mapped keys carry their destination so the Shortcut sees where data landed.
+  // mapped keys carry their destination so the client sees where data landed.
   result.inserted = present
     .filter((k) => !failed.has(k))
     .map((k) => (MAPPED_KEYS[k] && p[MAPPED_KEYS[k]] === undefined ? `${k} → ${MAPPED_KEYS[k]}` : k))

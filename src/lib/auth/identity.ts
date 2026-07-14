@@ -10,7 +10,7 @@ type DB = SupabaseClient<Database>
  * data-corruption for a multi-user deployment. The contract now:
  *   1. A caller presenting a Supabase JWT (Authorization: Bearer) IS that user.
  *   2. No JWT → fall back to the household admin (keeps Michael's existing
- *      Shortcut + cron calls working unchanged during/after onboarding).
+ *      app + cron calls working unchanged during/after onboarding).
  */
 
 /** The user encoded in the caller's Supabase JWT, or null. */

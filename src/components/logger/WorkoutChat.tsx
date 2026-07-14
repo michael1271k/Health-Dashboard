@@ -177,7 +177,7 @@ export function WorkoutChat({ splitDay, onClose }: WorkoutChatProps) {
       <p className="text-fluid-xs text-muted-vital leading-relaxed">
         {intent === 'workout'
           ? 'Paste a workout copied from Hevy (parsed instantly, no AI needed) — or describe your session in Hebrew/English. BPM & calories come from Apple Health.'
-          : 'Type the metrics your smart scale shows that the Shortcut can’t capture (muscle %, water %, visceral fat, bone, BMR).'}
+          : 'Type the metrics your smart scale shows that HealthKit can’t capture (muscle %, water %, visceral fat, bone, BMR).'}
       </p>
 
       {intent === 'workout' && (

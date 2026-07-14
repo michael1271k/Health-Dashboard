@@ -100,7 +100,7 @@ export interface NutritionPreset {
   fiberGoalG: number | null
 }
 
-// SYSTEM UPDATE v5.1 nutrition targets. Cut is the active phase (Jul 19 → ~Oct 10).
+// Active nutrition targets. Cut is the current training phase (Jul 19 → ~Oct 10).
 export const NUTRITION_PRESETS: Record<NutritionMode, NutritionPreset> = {
   cut: {
     mode: 'cut',

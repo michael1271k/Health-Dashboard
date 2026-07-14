@@ -336,7 +336,8 @@ DECLARE t TEXT;
 BEGIN
   FOREACH t IN ARRAY ARRAY[
     'daily_logs','nutrition_entries','daily_metrics','body_composition',
-    'sleep_sessions','workout_sessions','daily_scores','supplement_log','water_intake','reports'
+    'sleep_sessions','workout_sessions','daily_scores','supplement_log','water_intake','reports',
+    'user_goals'
   ] LOOP
     BEGIN
       EXECUTE format('ALTER PUBLICATION supabase_realtime ADD TABLE public.%I', t);

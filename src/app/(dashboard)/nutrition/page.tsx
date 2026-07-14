@@ -124,7 +124,7 @@ export default function NutritionPage() {
           logs={filteredLogs}
           goals={goals}
           isLoading={isLoading}
-          emptyMessage={filter === 'all' ? 'No nutrition data yet — paste from Hevy or sync your Shortcut.' : `No days in the ${filter} phase yet.`}
+          emptyMessage={filter === 'all' ? 'No nutrition data yet — paste from Hevy or sync from the app.' : `No days in the ${filter} phase yet.`}
           onDayClick={(d) => setDayModal(d)}
         />
       </div>

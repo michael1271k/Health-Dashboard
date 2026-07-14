@@ -17,6 +17,9 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.106.0",
+    "@capacitor/app": "^6.0.3",
+    "@capacitor/core": "^6.2.1",
+    "@capacitor/haptics": "^6.0.3",
     "@serwist/next": "^9.5.11",
     "@supabase/supabase-js": "^2.108.2",
     "@tanstack/query-sync-storage-persister": "^5.101.2",
@@ -36,6 +39,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@capacitor/cli": "^6.2.1",
     "@eslint/eslintrc": "^3",
     "@netlify/plugin-nextjs": "^5.15.12",
     "@playwright/test": "^1.61.1",

@@ -1,5 +1,5 @@
 /**
- * Daily nutrition phase, derived from the day's calories — SYSTEM UPDATE v5.1 bands:
+ * Daily nutrition phase, derived from the day's calories — current bands:
  *   CUT DAY      ≤ 2,050 kcal
  *   MAINTENANCE  2,051 – 2,449 kcal
  *   BULK         ≥ 2,450 kcal

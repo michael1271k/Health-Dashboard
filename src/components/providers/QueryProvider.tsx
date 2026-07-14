@@ -11,7 +11,7 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            // App-open paradigm: the Shortcut/HealthKit pushes fresh data exactly
+            // App-open paradigm: the app pushes fresh HealthKit data exactly
             // when the app foregrounds, so we reconcile the UI on focus + reconnect.
             // A short staleTime means a foreground refetch actually re-hits the DB
             // right after the push, while tab-switches within the window still

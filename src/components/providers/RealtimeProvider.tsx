@@ -3,11 +3,12 @@
 import { useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
+import { hydratePrefsFromDb } from '@/lib/utils/prefsSync'
 
 /**
  * Pure client Supabase WebSocket → scoped React Query invalidation. A DB change
  * only invalidates the query keys that actually depend on that table (no global
- * refetch storm), so a Shortcut push updates the open UI live — zero serverless
+ * refetch storm), so a new health push updates the open UI live — zero serverless
  * cost, zero taps.
  *
  * iOS resilience: a backgrounded PWA's socket is suspended and may never
@@ -26,6 +27,8 @@ const TABLE_KEYS: Record<string, string[][]> = {
   supplement_log: [['supplement_log'], ['day_vault']],
   water_intake: [['daily_scores'], ['day_vault']],
   reports: [['reports'], ['weekly_review']],
+  // Settings live-sync across devices: a change on desktop invalidates the phone.
+  user_goals: [['user_goals']],
 }
 const TABLES = Object.keys(TABLE_KEYS)
 
@@ -71,6 +74,8 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     }
     const onChange = (table: string, row?: Record<string, unknown>) => {
       pending.add(table)
+      // A settings change on ANY device re-hydrates local preferences here live.
+      if (table === 'user_goals') void hydratePrefsFromDb()
       if (row) {
         if (table === 'daily_logs') {
           if (typeof row.steps === 'number') latest.steps = row.steps

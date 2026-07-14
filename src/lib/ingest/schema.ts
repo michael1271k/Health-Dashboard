@@ -1,10 +1,10 @@
 import { z } from 'zod'
 
 /**
- * Flat ingest payload — POSTed by the custom iOS Shortcut (replaces the
+ * Flat ingest payload — POSTed by the native iOS app (HealthKit bridge) or
  * third-party Health Auto Export integration).
  *
- * The Shortcut is messy: on a day with no reading it sends "", false, null,
+ * Push sources can be messy: on a day with no reading a value may be "", false, null,
  * "null" or NaN instead of omitting the key (the infamous `sleep: false`
  * crash). Every numeric field therefore goes through `flex()`, which coerces
  * all of those "absent" sentinels to `undefined` instead of throwing, and
@@ -20,8 +20,8 @@ import { z } from 'zod'
  *  - avg_heart_rate / avg_rest_heart_rate: bpm
  *  - respiratory_rate:   breaths per minute
  *
- * Shortcut key aliases (normalized in the pre-pass below):
- *  - respitory_rate (Shortcut's spelling) → respiratory_rate
+ * Payload key aliases (normalized in the pre-pass below):
+ *  - respitory_rate (the app's spelling) → respiratory_rate
  *  - heart_rate_variability / hrv_ms      → hrv
  *  - vo2_max                              → vo2max
  */
@@ -30,7 +30,7 @@ import { z } from 'zod'
  * Forgiving numeric coercion. Turns "", false, true, null, undefined, "null",
  * "false", "nan", and non-finite numbers into `undefined`; parses numeric
  * strings; otherwise passes finite numbers through. Never throws on the junk
- * the Shortcut sends — it just treats it as "no reading".
+ * a source sends — it just treats it as "no reading".
  */
 function flex() {
   return z.preprocess((v): number | undefined => {
@@ -86,13 +86,13 @@ const BaseSchema = z.object({
 }).strip()
 
 /**
- * Pre-pass: normalize Shortcut key aliases onto their canonical names (only
+ * Pre-pass: normalize payload key aliases onto their canonical names (only
  * when the canonical key isn't already present) before validation.
  */
-export const ShortcutPayloadSchema = z.preprocess((raw) => {
+export const IngestPayloadSchema = z.preprocess((raw) => {
   if (!raw || typeof raw !== 'object') return raw
   const o = { ...(raw as Record<string, unknown>) }
-  // The Shortcut spells it "respitory_rate" — accepted as-is, by design.
+  // The app spells it "respitory_rate" — accepted as-is, by design.
   if (o.respitory_rate !== undefined && o.respiratory_rate === undefined) {
     o.respiratory_rate = o.respitory_rate
   }
@@ -105,4 +105,8 @@ export const ShortcutPayloadSchema = z.preprocess((raw) => {
   return o
 }, BaseSchema)
 
-export type ShortcutPayload = z.infer<typeof ShortcutPayloadSchema>
+export type IngestPayload = z.infer<typeof IngestPayloadSchema>
+
+// Back-compat aliases (previous name) — safe to remove in a later release.
+export const ShortcutPayloadSchema = IngestPayloadSchema
+export type ShortcutPayload = IngestPayload

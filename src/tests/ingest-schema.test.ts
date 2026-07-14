@@ -1,5 +1,5 @@
 import { formatSleep, formatSleepLong, mlToL } from '@/lib/utils/format'
-import { ShortcutPayloadSchema } from '@/lib/ingest/schema'
+import { IngestPayloadSchema } from '@/lib/ingest/schema'
 
 describe('formatSleep', () => {
   it('formats minutes as "Hh Mm"', () => {
@@ -27,15 +27,15 @@ describe('mlToL', () => {
   })
 })
 
-describe('ShortcutPayload flex() coercion', () => {
+describe('IngestPayload flex() coercion', () => {
   it('does not throw on the `sleep_minutes: false` junk (the original crash)', () => {
-    const r = ShortcutPayloadSchema.safeParse({ sleep_minutes: false })
+    const r = IngestPayloadSchema.safeParse({ sleep_minutes: false })
     expect(r.success).toBe(true)
     if (r.success) expect(r.data.sleep_minutes).toBeUndefined()
   })
 
   it('coerces "", null, "null", "NaN" to absent fields', () => {
-    const r = ShortcutPayloadSchema.safeParse({
+    const r = IngestPayloadSchema.safeParse({
       blood_oxygen: '', steps: 'NaN', weight: null, bmi: 'null',
     })
     expect(r.success).toBe(true)
@@ -48,7 +48,7 @@ describe('ShortcutPayload flex() coercion', () => {
   })
 
   it('parses numeric strings and rounds integer fields', () => {
-    const r = ShortcutPayloadSchema.safeParse({ steps: '8200.6', weight: '78.4' })
+    const r = IngestPayloadSchema.safeParse({ steps: '8200.6', weight: '78.4' })
     expect(r.success).toBe(true)
     if (r.success) {
       expect(r.data.steps).toBe(8201)
@@ -57,7 +57,7 @@ describe('ShortcutPayload flex() coercion', () => {
   })
 
   it('maps Shortcut aliases onto canonical keys (incl. the respitory_rate spelling)', () => {
-    const r = ShortcutPayloadSchema.safeParse({ respitory_rate: 14.5, heart_rate_variability: 62, vo2_max: 44.1 })
+    const r = IngestPayloadSchema.safeParse({ respitory_rate: 14.5, heart_rate_variability: 62, vo2_max: 44.1 })
     expect(r.success).toBe(true)
     if (r.success) {
       expect(r.data.respiratory_rate).toBe(14.5)
@@ -67,14 +67,14 @@ describe('ShortcutPayload flex() coercion', () => {
   })
 
   it('converts active_energy from cal to kcal only when clearly cal', () => {
-    const big = ShortcutPayloadSchema.safeParse({ active_energy: 523000 })
-    const small = ShortcutPayloadSchema.safeParse({ active_energy: 520 })
+    const big = IngestPayloadSchema.safeParse({ active_energy: 523000 })
+    const small = IngestPayloadSchema.safeParse({ active_energy: 520 })
     expect(big.success && big.data.active_energy).toBe(523)
     expect(small.success && small.data.active_energy).toBe(520)
   })
 
   it('parses a full mixed payload with junk values without error', () => {
-    const r = ShortcutPayloadSchema.safeParse({
+    const r = IngestPayloadSchema.safeParse({
       steps: 8200, water: 2500, sleep_minutes: false, carbs: 180, protein: 175,
       fats: 55, weight: 78.4, lean_mass: 61.2, bmi: 23.1, training_minutes: 70,
       active_energy: 520000, body_fat: 16.2, standing_minutes: '', avg_heart_rate: 78,
@@ -87,6 +87,23 @@ describe('ShortcutPayload flex() coercion', () => {
       expect(r.data.active_energy).toBe(520)
       expect(r.data.avg_rest_heart_rate).toBe(51)
       expect(r.data.respiratory_rate).toBe(14)
+    }
+  })
+})
+
+// ── Back-compat alias + native payload shape ─────────────────────────────────
+import { IngestPayloadSchema as Canonical, ShortcutPayloadSchema as Legacy } from '@/lib/ingest/schema'
+
+describe('ingest schema rename', () => {
+  it('the legacy alias is the same schema as the canonical export', () => {
+    expect(Legacy).toBe(Canonical)
+  })
+  it('accepts a native HealthKit-shaped payload (steps/hrv/active_energy)', () => {
+    const r = Canonical.safeParse({ steps: 8240, hrv: 62, active_energy: 512, avg_rest_heart_rate: 52 })
+    expect(r.success).toBe(true)
+    if (r.success) {
+      expect(r.data.steps).toBe(8240)
+      expect(r.data.hrv).toBe(62)
     }
   })
 })

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { ShortcutPayloadSchema } from '@/lib/ingest/schema'
+import { IngestPayloadSchema } from '@/lib/ingest/schema'
 import { computeSleepDebt } from '@/lib/hooks/useSleepDebt'
 import { computeInsights, daysSinceLastSession, fuelVsForce, trainingGap, type DayPoint, type SessionPoint } from '@/lib/coach/insights'
 import { dayCompleteness, type DayVaultData } from '@/lib/hooks/useDayVault'
@@ -8,7 +8,7 @@ import { logicalTodayISO, logicalDaysAgoISO } from '@/lib/utils/day'
 // ── Advanced-metric schema mapping ─────────────────────────────────────────
 describe('advanced ingest fields', () => {
   it('accepts wrist_temp / time_in_daylight / heart_rate_recovery + aliases', () => {
-    const r = ShortcutPayloadSchema.safeParse({
+    const r = IngestPayloadSchema.safeParse({
       wrist_temperature: 0.4, daylight: '95', hrr: 31,
     })
     expect(r.success).toBe(true)
@@ -20,7 +20,7 @@ describe('advanced ingest fields', () => {
   })
 
   it('treats junk values for the new fields as absent (never throws)', () => {
-    const r = ShortcutPayloadSchema.safeParse({ wrist_temp: 'null', time_in_daylight: false, heart_rate_recovery: '' })
+    const r = IngestPayloadSchema.safeParse({ wrist_temp: 'null', time_in_daylight: false, heart_rate_recovery: '' })
     expect(r.success).toBe(true)
     if (r.success) {
       expect(r.data.wrist_temp).toBeUndefined()

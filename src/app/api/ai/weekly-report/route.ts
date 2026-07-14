@@ -205,7 +205,7 @@ export async function POST(req: Request) {
       `- Sessions completed: 0 · Total volume: 0 kg · PRs: 0`,
       ``,
       `## What to Focus on Next Week`,
-      `- Resume the Shortcut pushes so nutrition/sleep/steps flow again.`,
+      `- Confirm the app is syncing so nutrition/sleep/steps flow again.`,
       `- First session back: re-entry loads (~90%), RPE cap 7–8, no PR attempts.`,
       `- Re-establish the core trio (sleep · water · food) before chasing trends.`,
     ].join('\n')

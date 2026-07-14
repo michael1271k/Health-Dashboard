@@ -205,7 +205,7 @@ function calorieAdherence(days: DayPoint[]): Insight | null {
 }
 
 /**
- * Weight trajectory — SYSTEM UPDATE v5.1 rules:
+ * Weight trajectory rules:
  *   · Single-day deltas have ZERO decision authority — judge only the 7-day
  *     rolling average, week-over-week.
  *   · Rate targets: cut −0.40…−0.50 kg/wk · bulk +0.20…+0.25 kg/wk.
