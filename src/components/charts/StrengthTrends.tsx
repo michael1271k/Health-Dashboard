@@ -11,8 +11,8 @@ import { useUnitSystem, displayWeight } from '@/lib/utils/units'
  * compound-lift sets by exercise and sparklines the estimated 1RM, with the
  * current value, all-time best, and Δ since the first point in range.
  */
-export function StrengthTrends({ days = 120 }: { days?: number }) {
-  const { data, isLoading } = usePRHistory(undefined, days)
+export function StrengthTrends({ days = 120, era = 'all' }: { days?: number; era?: 'all' | 'ppl' | 'axis' }) {
+  const { data, isLoading } = usePRHistory(undefined, days, era)
   const unit = useUnitSystem()
 
   const series = useMemo(() => {

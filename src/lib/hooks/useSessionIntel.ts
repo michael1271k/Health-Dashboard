@@ -36,33 +36,52 @@ export function useSessionIntel(sessionId: string | null) {
     enabled: !!sessionId,
     staleTime: 5 * 60_000,
     queryFn: async (): Promise<SessionIntel> => {
-      const { data: sess } = await supabase
+      // day_key (migration 004) is the exact program-day identity; self-heal
+      // to the legacy select while the column doesn't exist yet.
+      type SessRow = { id: string; started_at: string; split_day: string; total_volume_kg: number | null; day_key?: string | null }
+      let sess: unknown = null
+      const withKey = await supabase
         .from('workout_sessions')
-        .select('id, started_at, split_day, total_volume_kg')
+        .select('id, started_at, split_day, total_volume_kg, day_key')
         .eq('id', sessionId as string)
         .single()
-      const session = sess as { id: string; started_at: string; split_day: string; total_volume_kg: number | null } | null
+      if (withKey.error) {
+        const legacy = await supabase
+          .from('workout_sessions')
+          .select('id, started_at, split_day, total_volume_kg')
+          .eq('id', sessionId as string)
+          .single()
+        sess = legacy.data
+      } else {
+        sess = withKey.data
+      }
+      const session = sess as SessRow | null
       const empty: SessionIntel = { deltas: [], prs: [], volumes: [], typeLabel: '', volumeDeltaPct: null, setsDelta: null, computedVolumeKg: 0, computedSets: 0 }
       if (!session) return empty
 
       // SAME-TYPE matching: split_day alone mixes Upper A and Upper B (both
-      // 'upper'). The session TYPE = split_day + weekday (Upper A = Sun,
-      // Upper B = Thu), so fetch recent same-split sessions and filter by weekday.
+      // 'upper'). New sessions carry day_key (exact program-day identity —
+      // robust even for off-schedule days); legacy rows fall back to the
+      // TYPE = split_day + weekday heuristic (Upper A = Sun, Upper B = Thu).
       // STRICT ERA BOUNDARY: a HELIX session NEVER compares against a
       // PPL-legacy one (different program, loads, rep schemes) — the first HELIX
       // session of each type has no baseline, by design.
       const weekday = new Date(session.started_at).getUTCDay()
       const sessionEra = eraForDate(session.started_at.slice(0, 10))
       const typeLabel = sessionTypeLabel(session.started_at.slice(0, 10), session.split_day, weekday)
-      const { data: prevRaw } = await supabase
+      const prevQuery = await supabase
         .from('workout_sessions')
-        .select('id, started_at, total_volume_kg')
+        .select(withKey.error ? 'id, started_at, total_volume_kg' : 'id, started_at, total_volume_kg, day_key')
         .eq('split_day', session.split_day)
         .lt('started_at', session.started_at)
         .order('started_at', { ascending: false })
         .limit(12)
-      const prev = ((prevRaw ?? []) as Array<{ id: string; started_at: string; total_volume_kg: number | null }>)
-        .filter((p) => new Date(p.started_at).getUTCDay() === weekday)
+      const sameType = (p: { started_at: string; day_key?: string | null }) =>
+        session.day_key && p.day_key
+          ? p.day_key === session.day_key
+          : new Date(p.started_at).getUTCDay() === weekday
+      const prev = ((prevQuery.data ?? []) as unknown as Array<{ id: string; started_at: string; total_volume_kg: number | null; day_key?: string | null }>)
+        .filter(sameType)
         .filter((p) => eraForDate(p.started_at.slice(0, 10)) === sessionEra)
         .slice(0, 2)
 

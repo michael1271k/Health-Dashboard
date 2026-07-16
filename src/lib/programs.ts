@@ -13,16 +13,14 @@ export const HELIX_CUT_START = '2026-07-15'
 export const HELIX_CUT_KCAL = 1955
 
 /**
- * Transitional "Week 0" — the days 15–17 Jul belong to the HELIX era for
- * classification even though they precede the Week-1 anchor (2026-07-19), WITHOUT
- * shifting the schedule. Training vs rest is decided purely by the weekday program
- * (Wed = rest), so Jul 15 correctly reads as a rest day.
+ * The era boundary is HELIX_CUT_START (2026-07-15): the Helix 5.1 Cut block
+ * opens there, absorbing the former Week-0 transition days (15–17 Jul) without
+ * a special case. Training vs rest is still decided purely by the weekday
+ * program (Wed = rest), so Jul 15 correctly reads as a rest day; the Week-1
+ * schedule anchor (AXIS_ERA_START) is unchanged.
  */
-export const AXIS_WEEK0_DATES = new Set(['2026-07-15', '2026-07-16', '2026-07-17'])
-
 export function eraForDate(dateISO: string): Era {
-  if (AXIS_WEEK0_DATES.has(dateISO)) return 'axis'
-  return dateISO >= AXIS_ERA_START ? 'axis' : 'ppl'
+  return dateISO >= HELIX_CUT_START ? 'axis' : 'ppl'
 }
 
 export const ERA_META: Record<Era, { label: string; short: string; color: string }> = {

@@ -5,7 +5,8 @@ import Link from 'next/link'
 import { Users } from 'lucide-react'
 import { NotionSync } from '@/components/settings/NotionSync'
 import { supabase } from '@/lib/supabase/client'
-import { derivePhase, PHASE_META } from '@/lib/nutrition/phase'
+import { derivePhase, phaseDisplay } from '@/lib/nutrition/phase'
+import { logicalTodayISO } from '@/lib/utils/day'
 import type { Tables } from '@/lib/supabase/types'
 
 type ContextMode = 'normal' | 'travel' | 'illness' | 'emergency'
@@ -176,7 +177,7 @@ export default function SettingsPage() {
           {(() => {
             const p = derivePhase(goals.calorie_goal)
             if (!p) return null
-            const m = PHASE_META[p]
+            const m = phaseDisplay(p, logicalTodayISO())
             return (
               <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wide"
                 style={{ color: m.color, background: `${m.color}1f`, border: `1px solid ${m.color}55`, boxShadow: `0 0 10px ${m.color}44` }}>

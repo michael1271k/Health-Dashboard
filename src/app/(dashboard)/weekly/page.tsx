@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import { useReports, useMonthActivity, useGymReports } from '@/lib/hooks/useWeekly'
 import { getWeekPhase, phaseBadgeStyle } from '@/lib/phases'
+import { useEraFilter } from '@/lib/era/eraFilter'
+import { EraFilterPills } from '@/components/era/EraFilterPills'
 import { FileSystemBrowser } from '@/components/reports/FileSystemBrowser'
 import { ContinuumTimeline } from '@/components/timeline/ContinuumTimeline'
 import { Sheet } from '@/components/ui/Sheet'
@@ -25,7 +27,7 @@ export default function WeeklyPage() {
   const router = useRouter()
   const today = new Date()
   const [month, setMonth] = useState({ y: today.getUTCFullYear(), m: today.getUTCMonth() })
-  const [era, setEra] = useState<'all' | 'ppl' | 'axis'>('all')
+  const { era } = useEraFilter()
   const [calOpen, setCalOpen] = useState(false)
   const [filesWeek, setFilesWeek] = useState<string | null>(null)
   // Active day: the open (or last-viewed) day keeps its timeline row highlighted,
@@ -85,19 +87,8 @@ export default function WeeklyPage() {
         </button>
       </div>
 
-      {/* ── Era filter ── */}
-      <div className="flex items-center gap-1.5 flex-wrap">
-        {([['all', 'All', '#19E3B1'], ['axis', 'HELIX Era', '#3EE0FF'], ['ppl', 'PPL Legacy', '#8B97B2']] as const).map(([k, label, color]) => {
-          const active = era === k
-          return (
-            <button key={k} onClick={() => setEra(k)}
-              className="px-3 py-1.5 rounded-xl text-fluid-xs font-semibold border transition-colors"
-              style={active ? { color, borderColor: `${color}55`, background: `${color}1f`, boxShadow: `0 0 10px ${color}33` } : { color: '#8B97B2', borderColor: 'transparent' }}>
-              {label}
-            </button>
-          )
-        })}
-      </div>
+      {/* ── Global era filter ── */}
+      <EraFilterPills label="" />
 
       {error && <div className="helix-card border-danger/40"><p className="text-danger text-fluid-sm">{error}</p></div>}
 

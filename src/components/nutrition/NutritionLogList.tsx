@@ -1,16 +1,16 @@
 'use client'
 
 import type { DailyLog } from '@/lib/hooks/useNutrition'
-import { PHASE_META } from '@/lib/nutrition/phase'
+import { phaseDisplay } from '@/lib/nutrition/phase'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 
 interface Goals { calorie: number; protein: number | null; carbs: number | null; fat: number | null }
 
 const MACRO_COLOR = { P: MACRO_COLORS.protein, C: MACRO_COLORS.carbs, F: MACRO_COLORS.fat } as const
 
-function PhaseTag({ phase }: { phase: DailyLog['phase'] }) {
+function PhaseTag({ phase, date }: { phase: DailyLog['phase']; date: string }) {
   if (!phase) return null
-  const m = PHASE_META[phase]
+  const m = phaseDisplay(phase, date)
   return (
     <span
       className="inline-flex items-center px-1.5 py-px rounded-md text-[9px] font-bold uppercase tracking-wide"
@@ -66,7 +66,7 @@ export function NutritionLogList({ logs, goals, isLoading, emptyMessage, onDayCl
             <div className="w-12 shrink-0 space-y-0.5">
               <div className="text-fluid-xs font-semibold text-text leading-none">{d.toLocaleDateString('en-IL', { day: 'numeric', month: 'short' })}</div>
               <div className="text-[9px] text-muted leading-none">{d.toLocaleDateString('en-IL', { weekday: 'short' })}</div>
-              <PhaseTag phase={l.phase} />
+              <PhaseTag phase={l.phase} date={l.date} />
             </div>
 
             <div className="flex-1 min-w-0">

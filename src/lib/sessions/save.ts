@@ -27,7 +27,12 @@ export interface SaveSessionResult {
   setCount: number
   prCount: number
   newPRs: Array<{ exerciseName: string; est1rm: number }>
+  /** True when clientSessionId matched an existing session — nothing written. */
+  duplicate?: boolean
 }
+
+/** Matches "column doesn't exist yet" errors so pre-migration writes self-heal. */
+const MISSING_COLUMN_RE = /column|schema cache|PGRST204/i
 
 export async function saveSession(
   supabase: DB,
@@ -35,6 +40,29 @@ export async function saveSession(
   payload: SaveWorkoutPayload,
   metrics: SessionMetrics = {},
 ): Promise<SaveSessionResult> {
+  // IDEMPOTENCY: the coach report's session.id is the dedupe key — a
+  // double-pasted report returns the existing session instead of duplicating.
+  // (A missing column just means migration 004 hasn't run — skip dedupe.)
+  if (payload.clientSessionId) {
+    const { data: dup, error: dupError } = await supabase
+      .from('workout_sessions')
+      .select('id, total_volume_kg, set_count, pr_count')
+      .eq('user_id', userId)
+      .eq('client_session_id', payload.clientSessionId)
+      .maybeSingle()
+    const existing = dup as { id: string; total_volume_kg: number | null; set_count: number | null; pr_count: number | null } | null
+    if (!dupError && existing) {
+      return {
+        sessionId: existing.id,
+        totalVolumeKg: existing.total_volume_kg ?? 0,
+        setCount: existing.set_count ?? 0,
+        prCount: existing.pr_count ?? 0,
+        newPRs: [],
+        duplicate: true,
+      }
+    }
+  }
+
   const totalVolumeKg = payload.sets.reduce((sum, s) => sum + s.weightKg * s.reps, 0)
 
   // Historical best est_1RM per exercise for PR detection
@@ -83,15 +111,28 @@ export async function saveSession(
     calories_burned: metrics.caloriesBurned ?? null,
     avg_bpm: metrics.avgBpm ?? null,
     report_md: metrics.reportMd ?? null,
+    client_session_id: payload.clientSessionId ?? null,
+    day_key: payload.dayKey ?? null,
+    coach_report: payload.coachReport ?? null,
+    next_session_flag: payload.nextSessionFlag ?? null,
   }
 
-   
-  const { data: sessionRaw, error: sessionError } = await supabase
+  let { data: sessionRaw, error: sessionError } = await supabase
     .from('workout_sessions')
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .insert(sessionInsert as unknown as any)
     .select('id')
     .single()
+
+  // Pre-migration self-heal: retry without the Command Center columns so a
+  // session save never fails on an unmigrated DB.
+  if (sessionError && MISSING_COLUMN_RE.test(sessionError.message)) {
+    const { client_session_id: _c, day_key: _d, coach_report: _r, next_session_flag: _n, ...legacy } = sessionInsert
+    void _c; void _d; void _r; void _n
+    ;({ data: sessionRaw, error: sessionError } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .from('workout_sessions').insert(legacy as unknown as any).select('id').single())
+  }
 
   const session = sessionRaw as { id: string } | null
   if (sessionError || !session) {
@@ -109,10 +150,17 @@ export async function saveSession(
     rpe: s.rpe ?? null,
     is_pr: isPr,
     est_1rm_kg: est1rm,
+    exercise_order: s.exerciseOrder ?? null,
   }))
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error: setsError } = await supabase.from('workout_sets').insert(dbSets as unknown as any)
+  let { error: setsError } = await supabase.from('workout_sets').insert(dbSets as unknown as any)
+  if (setsError && MISSING_COLUMN_RE.test(setsError.message)) {
+    // Pre-migration self-heal: strip exercise_order and retry.
+    const legacySets = dbSets.map(({ exercise_order: _o, ...rest }) => { void _o; return rest })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;({ error: setsError } = await supabase.from('workout_sets').insert(legacySets as unknown as any))
+  }
   if (setsError) {
     console.error('[saveSession] sets insert error (non-fatal):', setsError)
   }

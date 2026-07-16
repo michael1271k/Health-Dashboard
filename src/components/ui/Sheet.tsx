@@ -9,6 +9,8 @@ interface SheetProps {
   onClose: () => void
   title?: string
   maxHeight?: string
+  /** 'wide' widens the ≥sm dialog for dense content (the Command Center deck). */
+  size?: 'default' | 'wide'
   children: React.ReactNode
 }
 
@@ -22,7 +24,7 @@ interface SheetProps {
  * the header handle only (`dragListener={false}`), so it never fights the
  * scrollable content. Closing unmounts instantly with a short transform-only exit.
  */
-export function Sheet({ open, onClose, title, maxHeight = '90dvh', children }: SheetProps) {
+export function Sheet({ open, onClose, title, maxHeight = '90dvh', size = 'default', children }: SheetProps) {
   const controls = useDragControls()
 
   useEffect(() => {
@@ -53,7 +55,7 @@ export function Sheet({ open, onClose, title, maxHeight = '90dvh', children }: S
 
           {/* Panel — solid surface, transform-only motion */}
           <m.div
-            className="relative w-full sm:max-w-lg flex flex-col overflow-hidden rounded-t-3xl sm:rounded-3xl safe-pb sm:pb-0"
+            className={`relative w-full ${size === 'wide' ? 'sm:max-w-2xl' : 'sm:max-w-lg'} flex flex-col overflow-hidden rounded-t-3xl sm:rounded-3xl safe-pb sm:pb-0`}
             style={{
               maxHeight,
               background: 'rgba(11,15,28,0.97)',

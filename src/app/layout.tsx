@@ -8,6 +8,7 @@ import { QueryProvider } from '@/components/providers/QueryProvider'
 import { RealtimeProvider } from '@/components/providers/RealtimeProvider'
 import { MotionProvider } from '@/components/providers/MotionProvider'
 import { ThemeProvider as ContextThemeProvider } from '@/components/providers/ThemeProvider'
+import { EraFilterProvider } from '@/lib/era/eraFilter'
 import { SerwistRegister } from '@/components/providers/SerwistRegister'
 import { AuthGate } from '@/components/providers/AuthGate'
 import { SyncPulse } from '@/components/fx/SyncPulse'
@@ -95,6 +96,7 @@ export default function RootLayout({
         >
           <QueryProvider>
             <RealtimeProvider>
+              <EraFilterProvider>
               <MotionProvider>
                 <ContextThemeProvider />
                 <AuroraBackground />
@@ -110,6 +112,7 @@ export default function RootLayout({
                 <BottomNav />
                 <SyncPulse />
               </MotionProvider>
+              </EraFilterProvider>
             </RealtimeProvider>
           </QueryProvider>
         </ThemeProvider>

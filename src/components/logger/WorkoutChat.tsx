@@ -3,12 +3,16 @@
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { ActiveSession } from './ActiveSession'
+import { CoachReportSchema, coachReportToDraft } from '@/lib/coach/reportSchema'
+import type { SessionDraft } from '@/lib/sessions/draft'
 import type { SplitDay } from '@/lib/types/workout'
 import { Sparkles, Check, Loader2, PenLine, MessageSquare, Dumbbell, Scale, ClipboardPaste } from 'lucide-react'
 
 interface WorkoutChatProps {
   splitDay: SplitDay
   onClose: () => void
+  /** Strict coach JSON detected → hand the validated draft to the deck. */
+  onCoachDraft?: (draft: SessionDraft) => void
 }
 
 interface ParseResult {
@@ -27,7 +31,7 @@ const METRIC_LABELS: Record<string, string> = {
   weight_kg: 'Weight', lean_mass_kg: 'Lean Mass', bmi: 'BMI',
 }
 
-export function WorkoutChat({ splitDay, onClose }: WorkoutChatProps) {
+export function WorkoutChat({ splitDay, onClose, onCoachDraft }: WorkoutChatProps) {
   const qc = useQueryClient()
   const [view, setView] = useState<'chat' | 'manual'>('chat')
   const [intent, setIntent] = useState<'workout' | 'metrics'>('workout')
@@ -50,6 +54,29 @@ export function WorkoutChat({ splitDay, onClose }: WorkoutChatProps) {
 
   async function submit() {
     if (!text.trim()) return
+
+    // Strict coach JSON → validate client-side (zod, no LLM/network) and open
+    // the editable Command Center deck instead of parse-and-save.
+    const trimmed = text.trim()
+    if (intent === 'workout' && onCoachDraft && trimmed.startsWith('{')) {
+      let raw: unknown
+      try {
+        raw = JSON.parse(trimmed)
+      } catch {
+        setError('That looks like JSON but doesn’t parse — check for a truncated paste.')
+        return
+      }
+      const parsed = CoachReportSchema.safeParse(raw)
+      if (!parsed.success) {
+        const issues = parsed.error.issues.slice(0, 4)
+          .map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`)
+        setError(`Coach report failed validation:\n${issues.join('\n')}`)
+        return
+      }
+      onCoachDraft(coachReportToDraft(parsed.data))
+      return
+    }
+
     setBusy(true); setError(null)
     try {
       const endpoint = intent === 'workout' ? '/api/ai/parse-workout' : '/api/ai/complete-daily'
@@ -176,7 +203,7 @@ export function WorkoutChat({ splitDay, onClose }: WorkoutChatProps) {
 
       <p className="text-fluid-xs text-muted leading-relaxed">
         {intent === 'workout'
-          ? 'Paste a workout copied from Hevy (parsed instantly, no AI needed) — or describe your session in Hebrew/English. BPM & calories come from Apple Health.'
+          ? 'Paste the coach’s JSON report (opens the editable deck — instant, no AI), a workout copied from Hevy, or describe your session in Hebrew/English.'
           : 'Type the metrics your smart scale shows that HealthKit can’t capture (muscle %, water %, visceral fat, bone, BMR).'}
       </p>
 
@@ -202,7 +229,7 @@ export function WorkoutChat({ splitDay, onClose }: WorkoutChatProps) {
                    resize-none leading-relaxed"
       />
 
-      {error && <p className="text-danger text-fluid-sm">{error}</p>}
+      {error && <p className="text-danger text-fluid-sm whitespace-pre-wrap">{error}</p>}
 
       <div className="sticky bottom-0 z-10 pt-2 keyboard-safe">
         <button onClick={submit} disabled={busy || !text.trim()} className="btn-primary w-full justify-center disabled:opacity-50 min-h-[48px]">

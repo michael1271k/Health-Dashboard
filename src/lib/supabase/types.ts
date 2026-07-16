@@ -155,6 +155,10 @@ export interface Database {
           report_md: string | null
           migrated_from_notion: boolean
           status: string
+          client_session_id: string | null
+          day_key: string | null
+          coach_report: unknown | null
+          next_session_flag: string | null
           created_at: string
           updated_at: string
         }
@@ -163,6 +167,7 @@ export interface Database {
           'id' | 'created_at' | 'updated_at'
             | 'set_count' | 'pr_count' | 'duration_min' | 'calories_burned'
             | 'avg_bpm' | 'report_md' | 'migrated_from_notion' | 'status'
+            | 'client_session_id' | 'day_key' | 'coach_report' | 'next_session_flag'
         > & {
           set_count?: number | null
           pr_count?: number | null
@@ -172,6 +177,10 @@ export interface Database {
           report_md?: string | null
           migrated_from_notion?: boolean
           status?: string
+          client_session_id?: string | null
+          day_key?: string | null
+          coach_report?: unknown | null
+          next_session_flag?: string | null
         }
         Update: Partial<Database['public']['Tables']['workout_sessions']['Insert']>
       }
@@ -187,9 +196,10 @@ export interface Database {
           rpe: number | null
           is_pr: boolean
           est_1rm_kg: number | null
+          exercise_order: number | null
           created_at: string
         }
-        Insert: Omit<Database['public']['Tables']['workout_sets']['Row'], 'id' | 'created_at'>
+        Insert: Omit<Database['public']['Tables']['workout_sets']['Row'], 'id' | 'created_at' | 'exercise_order'> & { exercise_order?: number | null }
         Update: Partial<Database['public']['Tables']['workout_sets']['Insert']>
       }
       daily_scores: {

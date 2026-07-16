@@ -6,7 +6,7 @@ import { LiquidModal } from '@/components/ui/LiquidModal'
 import { CompletenessArc } from '@/components/day/CompletenessArc'
 import { useDayVault, dayCompleteness } from '@/lib/hooks/useDayVault'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
-import { PHASE_META } from '@/lib/nutrition/phase'
+import { phaseDisplay } from '@/lib/nutrition/phase'
 import { displayWeight, useUnitSystem } from '@/lib/utils/units'
 import { formatSleep, mlToL } from '@/lib/utils/format'
 
@@ -67,7 +67,7 @@ export function DaySummaryModal({ date, onClose }: { date: string | null; onClos
             </div>
             <div className="flex flex-col items-center gap-1">
               <CompletenessArc parts={parts} size={40} />
-              {n?.phase && <span className="text-[9px] font-bold uppercase" style={{ color: PHASE_META[n.phase].color }}>{PHASE_META[n.phase].label}</span>}
+              {n?.phase && date && <span className="text-[9px] font-bold uppercase" style={{ color: phaseDisplay(n.phase, date).color }}>{phaseDisplay(n.phase, date).label}</span>}
             </div>
           </div>
 

@@ -61,15 +61,16 @@ export function useContinuum(fullHistory = false) {
         if (!sessions.has(d)) sessions.set(d, { split: s.split_day, volumeKg: s.total_volume_kg, prCount: s.pr_count })
       }
 
-      // Enumerate to → from (newest first); keep only days with ANY data so the
-      // pre-tracking gap doesn't render hundreds of hollow cards.
+      // Enumerate to → from (newest first); keep only days with REAL data so the
+      // pre-tracking gap doesn't render hundreds of hollow cards. A score alone
+      // doesn't count — legacy backfill sweeps left score-only "ghost days".
       const out: ContinuumDay[] = []
       for (let d = to; d >= from; d = isoAddDays(d, -1)) {
         const log = logs.get(d)
         const n = nutrition.get(d)
         const session = sessions.get(d) ?? null
         const score = scores.get(d) ?? null
-        if (!log && !n && !session && score == null) continue
+        if (!log && !n && !session) continue
         out.push({
           date: d,
           score,

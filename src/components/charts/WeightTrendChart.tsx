@@ -15,6 +15,7 @@ import {
 } from 'recharts'
 import { ChartTooltip } from './ChartTooltip'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
+import { HELIX_CUT_START } from '@/lib/programs'
 
 const COLORS = {
   weight: '#6D5BFF',   // royal indigo (Midnight Luxe)
@@ -34,6 +35,8 @@ interface WeightDataPoint {
 interface WeightTrendChartProps {
   data: WeightDataPoint[]
   isLoading?: boolean
+  /** Draw the Helix 5.1 Cut era-start marker (shown on the all-history view). */
+  showEraBoundary?: boolean
 }
 
 function formatDate(dateStr: string): string {
@@ -42,7 +45,7 @@ function formatDate(dateStr: string): string {
   )
 }
 
-export function WeightTrendChart({ data, isLoading }: WeightTrendChartProps) {
+export function WeightTrendChart({ data, isLoading, showEraBoundary }: WeightTrendChartProps) {
   const unit = useUnitSystem()
   if (isLoading) {
     return (
@@ -80,6 +83,12 @@ export function WeightTrendChart({ data, isLoading }: WeightTrendChartProps) {
     bodyFat: d.body_fat_pct,
   }))
 
+  // Era boundary: the first data point on/after HELIX_CUT_START — only
+  // meaningful when the data spans both sides of the boundary.
+  const eraBoundaryPoint = showEraBoundary && data.some((d) => d.date < HELIX_CUT_START)
+    ? data.find((d) => d.date >= HELIX_CUT_START)
+    : undefined
+
   return (
     <div className="helix-card">
       <div className="flex items-baseline justify-between gap-2 mb-4 flex-wrap">
@@ -109,6 +118,13 @@ export function WeightTrendChart({ data, isLoading }: WeightTrendChartProps) {
               stroke={COLORS.weight} strokeOpacity={0.4} strokeDasharray="2 4"
               label={{ value: 'baseline', position: 'insideTopLeft', fill: COLORS.text, fontSize: 10 }}
             />
+            {eraBoundaryPoint && (
+              <ReferenceLine
+                yAxisId="mass" x={formatDate(eraBoundaryPoint.date)}
+                stroke="#3EE0FF" strokeOpacity={0.7} strokeDasharray="4 3"
+                label={{ value: 'Helix 5.1', position: 'insideTopRight', fill: '#3EE0FF', fontSize: 10 }}
+              />
+            )}
             <defs>
               <linearGradient id="weightFill" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={COLORS.weight} stopOpacity={0.35} />

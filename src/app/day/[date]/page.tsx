@@ -9,7 +9,7 @@ import { SleepDebtGauge } from '@/components/day/SleepDebtGauge'
 import { SessionVolumeMini } from '@/components/day/SessionVolumeMini'
 import { useDayVault, dayCompleteness } from '@/lib/hooks/useDayVault'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
-import { PHASE_META } from '@/lib/nutrition/phase'
+import { phaseDisplay } from '@/lib/nutrition/phase'
 import { ERA_META, eraForDate, scheduleDayFor } from '@/lib/programs'
 import { displayWeight, validWeight, weightUnit } from '@/lib/utils/units'
 import { formatSleep, mlToL } from '@/lib/utils/format'
@@ -109,7 +109,7 @@ export default function DailyNexusPage() {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="text-fluid-xs text-muted uppercase tracking-wide">Readiness</span>
-            {n?.phase && <span className="text-[10px] font-bold uppercase" style={{ color: PHASE_META[n.phase].color }}>{PHASE_META[n.phase].label}</span>}
+            {n?.phase && <span className="text-[10px] font-bold uppercase" style={{ color: phaseDisplay(n.phase, date).color }}>{phaseDisplay(n.phase, date).label}</span>}
           </div>
           <div className="flex items-center gap-2 mt-1">
             <span className="text-fluid-xs text-muted">Battery</span>

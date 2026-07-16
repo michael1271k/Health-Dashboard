@@ -143,6 +143,24 @@ export function useExercises(splitDay: SplitDay | null) {
   })
 }
 
+/** The most recent session's coach flag — the hero's "next session" action item. */
+export function useLatestSessionFlag() {
+  return useQuery({
+    queryKey: ['workout_sessions', 'latest_flag'],
+    staleTime: 60_000,
+    queryFn: async (): Promise<string | null> => {
+      const { data, error } = await supabase
+        .from('workout_sessions')
+        .select('next_session_flag')
+        .order('started_at', { ascending: false })
+        .limit(5)
+      if (error) return null   // pre-migration (column missing) → no flag
+      const rows = (data ?? []) as Array<{ next_session_flag: string | null }>
+      return rows.map((r) => r.next_session_flag).find((f) => !!f) ?? null
+    },
+  })
+}
+
 export function useRecentSessions(limit = 5) {
   return useQuery({
     queryKey: ['workout_sessions', 'recent', limit],

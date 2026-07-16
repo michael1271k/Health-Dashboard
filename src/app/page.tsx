@@ -21,7 +21,7 @@ import { DeferredMount } from '@/components/fx/DeferredMount'
 import { PullToRefresh } from '@/components/ui/PullToRefresh'
 import { formatSleep, mlToL } from '@/lib/utils/format'
 import { displayWeight, weightUnit, validWeight } from '@/lib/utils/units'
-import { PHASE_META } from '@/lib/nutrition/phase'
+import { phaseDisplay } from '@/lib/nutrition/phase'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { scheduleDayFor, daySplitEnum, eraForDate, isTrainingDay, type ScheduleDay } from '@/lib/programs'
@@ -114,7 +114,7 @@ export default function DashboardPage() {
       key: 'fuel', icon: Flame, label: 'Fuel', accent: EMBER,
       value: calToday, unit: 'kcal',
       status: phase
-        ? <span style={{ color: PHASE_META[phase].color }}>{PHASE_META[phase].label} day{calGoal ? ` · goal ${calGoal.toLocaleString()}` : ''}</span>
+        ? <span style={{ color: phaseDisplay(phase, logicalTodayISO()).color }}>{phaseDisplay(phase, logicalTodayISO()).label} day{calGoal ? ` · goal ${calGoal.toLocaleString()}` : ''}</span>
         : calGoal ? `goal ${calGoal.toLocaleString()}` : 'no log yet',
       series: kcalSeries,
     },

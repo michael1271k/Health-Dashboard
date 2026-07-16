@@ -7,8 +7,8 @@ import { useUserGoals } from '@/lib/hooks/useDashboard'
 import { RangeSelector } from '@/components/charts/RangeSelector'
 import { eraForDate } from '@/lib/programs'
 import { DeferredMount } from '@/components/fx/DeferredMount'
-
-const ERA_TABS = [['all', 'All', '#19E3B1'], ['axis', 'HELIX-5', '#3EE0FF'], ['ppl', 'PPL Legacy', '#8B97B2']] as const
+import { useEraFilter } from '@/lib/era/eraFilter'
+import { EraFilterPills } from '@/components/era/EraFilterPills'
 
 // Dynamically import the recharts-heavy components (client-only) so they don't
 // inflate the route's first-load JS.
@@ -34,7 +34,7 @@ export default function ChartsPage() {
   const { data: prData, isLoading: prLoading } = usePRHistory(undefined, days)
   const { data: goals, isLoading: goalsLoading } = useUserGoals()
 
-  const [era, setEra] = useState<'all' | 'ppl' | 'axis'>('all')
+  const { era } = useEraFilter()
   const inEra = (d: { date: string }) => era === 'all' || eraForDate(d.date) === era
   const wData = (weightData ?? []).filter(inEra)
   const vData = (volumeData ?? []).filter(inEra)
@@ -48,20 +48,8 @@ export default function ChartsPage() {
         <p className="text-muted text-fluid-sm mt-0.5">Trends &amp; progress · filter by training era</p>
       </div>
 
-      {/* Era filter (PPL Legacy vs AXIS) */}
-      <div className="flex items-center gap-1.5 flex-wrap">
-        <span className="text-fluid-xs text-muted mr-1">Era:</span>
-        {ERA_TABS.map(([k, label, color]) => {
-          const active = era === k
-          return (
-            <button key={k} onClick={() => setEra(k)}
-              className="px-3 py-1.5 rounded-xl text-fluid-xs font-semibold border transition-colors"
-              style={active ? { color, borderColor: `${color}55`, background: `${color}1f`, boxShadow: `0 0 10px ${color}33` } : { color: '#8B97B2', borderColor: 'transparent' }}>
-              {label}
-            </button>
-          )
-        })}
-      </div>
+      {/* Global era filter (shared across Nutrition / Charts / Journey) */}
+      <EraFilterPills />
 
       {/* Mobile: horizontal range pills */}
       <div className="lg:hidden">
@@ -75,7 +63,7 @@ export default function ChartsPage() {
         </div>
         <div className="flex-1 min-w-0 space-y-6">
           <div className="grid gap-6 lg:grid-cols-2">
-            <WeightTrendChart data={wData} isLoading={weightLoading} />
+            <WeightTrendChart data={wData} isLoading={weightLoading} showEraBoundary={era === 'all'} />
             <VolumeChart data={vData} isLoading={volumeLoading} era={era} />
             <MacroProgressChart
               data={mData}

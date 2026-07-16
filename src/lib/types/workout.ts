@@ -12,6 +12,7 @@ export interface WorkoutSet {
   weightKg: number
   reps: number
   rpe?: number
+  exerciseOrder?: number        // deck position of the parent exercise
 }
 
 // In-progress workout session (client-side, before saved to DB)
@@ -29,6 +30,11 @@ export interface SaveWorkoutPayload {
   endedAt: string
   sets: WorkoutSet[]
   notes: string
+  // ── Command Center extensions (optional on every legacy path) ──
+  clientSessionId?: string      // coach session.id — idempotency/dedupe key
+  dayKey?: string               // HELIX-5 program-day identity (cb_a … legs_b)
+  coachReport?: unknown         // full validated coach JSON, archived as JSONB
+  nextSessionFlag?: string
 }
 
 // Full 5-entry map — kept for history rendering (all historical split_day values)

@@ -25,12 +25,17 @@ function daysAgoISO(n: number) {
   return logicalDaysAgoISO(n)
 }
 
-export function useDailyLogs(days = 30) {
+/**
+ * Daily fuel/score rows. Accepts either a rolling window in days (legacy
+ * callers: home fuel widget) or an explicit inclusive {from,to} range — the
+ * era filter passes `eraDateRange(era)` so historical eras are never clipped.
+ */
+export function useDailyLogs(daysOrRange: number | { from: string; to: string } = 30) {
   return useQuery({
-    queryKey: ['daily_logs', days],
+    queryKey: ['daily_logs', typeof daysOrRange === 'number' ? daysOrRange : `${daysOrRange.from}_${daysOrRange.to}`],
     queryFn: async (): Promise<DailyLog[]> => {
-      const from = daysAgoISO(days)
-      const to   = todayISO()
+      const from = typeof daysOrRange === 'number' ? daysAgoISO(daysOrRange) : daysOrRange.from
+      const to   = typeof daysOrRange === 'number' ? todayISO() : daysOrRange.to
 
       const [nutritionRes, metricsRes, scoresRes] = await Promise.all([
         supabase

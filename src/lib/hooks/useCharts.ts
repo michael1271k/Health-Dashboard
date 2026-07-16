@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase/client'
 import type { Tables } from '@/lib/supabase/types'
 import { epley1RM } from '@/lib/utils/epley'
 import { validWeight } from '@/lib/utils/units'
+import { eraForDate } from '@/lib/programs'
 
 function daysAgo(n: number): string {
   const d = new Date()
@@ -73,9 +74,9 @@ export type PRRow = {
   reps: number
 }
 
-export function usePRHistory(exerciseId?: string, days = 180) {
+export function usePRHistory(exerciseId?: string, days = 180, era: 'all' | 'ppl' | 'axis' = 'all') {
   return useQuery({
-    queryKey: ['workout_sets', 'pr_history', exerciseId, days],
+    queryKey: ['workout_sets', 'pr_history', exerciseId, days, era],
     queryFn: async () => {
       let query = supabase
         .from('workout_sets')
@@ -88,8 +89,11 @@ export function usePRHistory(exerciseId?: string, days = 180) {
           exercises!inner(name),
           workout_sessions!inner(started_at)
         `)
+        // NOTE: no server-side order — PostgREST rejects ordering the parent
+        // rows by an embedded column ("failed to parse order"), which made
+        // this whole query 400 and left PR history silently empty. Rows are
+        // sorted client-side by date below.
         .gte('workout_sessions.started_at', new Date(Date.now() - days * 86400000).toISOString())
-        .order('workout_sessions.started_at', { ascending: true })
 
       if (exerciseId) {
         query = query.eq('exercise_id', exerciseId)
@@ -116,7 +120,9 @@ export function usePRHistory(exerciseId?: string, days = 180) {
         est_1rm_kg: row.est_1rm_kg ?? epley1RM(row.weight_kg, row.reps),
         weight_kg: row.weight_kg,
         reps: row.reps,
-      })) satisfies PRRow[]
+      }))
+        .filter((row) => era === 'all' || eraForDate(row.date) === era)
+        .sort((a, b) => a.date.localeCompare(b.date)) satisfies PRRow[]
     },
     enabled: true,
   })

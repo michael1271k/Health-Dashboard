@@ -11,7 +11,9 @@ import { MacroRings } from '@/components/nutrition/MacroRings'
 import { FuelForceBand } from '@/components/nutrition/FuelForceBand'
 import { DaySummaryModal } from '@/components/nutrition/DaySummaryModal'
 import { logicalTodayISO } from '@/lib/utils/day'
-import { PHASE_META, type Phase } from '@/lib/nutrition/phase'
+import { PHASE_META, phaseDisplay, type Phase } from '@/lib/nutrition/phase'
+import { useEraFilter, eraDateRange } from '@/lib/era/eraFilter'
+import { EraFilterPills } from '@/components/era/EraFilterPills'
 import type { Tables } from '@/lib/supabase/types'
 
 interface ActiveGoals {
@@ -24,7 +26,10 @@ interface ActiveGoals {
 
 export default function NutritionPage() {
   const qc = useQueryClient()
-  const { data: logs, isLoading } = useDailyLogs(30)
+  const { era } = useEraFilter()
+  // Era-scoped window (NOT a rolling 30 days): 'all' reaches back to the first
+  // tracked phase so the full Notion-imported history renders.
+  const { data: logs, isLoading } = useDailyLogs(eraDateRange(era))
   const [filter, setFilter] = useState<'all' | Phase>('all')
 
   const [goals, setGoals] = useState<ActiveGoals>({ calorie: 1955, protein: 170, carbs: 195, fat: 55, mode: 'cut' })
@@ -104,18 +109,23 @@ export default function NutritionPage() {
       {/* Fuel → Force: links today's fuel to today's session (renders only if trained) */}
       <FuelForceBand date={logicalTodayISO()} proteinG={todayLog?.proteinG ?? null} proteinGoal={goals.protein} />
 
-      {/* Phase filter + dense daily log */}
+      {/* Era + phase filters + dense daily log */}
       <div className="space-y-3">
+        <EraFilterPills />
         <div className="flex items-center gap-1.5 flex-wrap">
           <span className="text-fluid-xs text-muted mr-1">Phase:</span>
           {FILTERS.map((f) => {
             const active = filter === f
             const color = f === 'all' ? '#19E3B1' : PHASE_META[f].color
+            // The cut pill carries the era tag when the view is scoped to the
+            // Helix era (every cut day in that window IS a Helix 5.1 Cut day).
+            const text = f === 'cut' && era === 'axis' ? phaseDisplay('cut', logicalTodayISO()).label
+              : f === 'maintenance' ? 'Maint' : f
             return (
               <button key={f} onClick={() => setFilter(f)}
                 className="px-3 py-1.5 rounded-xl text-fluid-xs font-semibold capitalize transition-colors border"
                 style={active ? { color, borderColor: `${color}55`, background: `${color}1f`, boxShadow: `0 0 10px ${color}33` } : { color: '#8B97B2', borderColor: 'transparent' }}>
-                {f === 'maintenance' ? 'Maint' : f}
+                {text}
               </button>
             )
           })}

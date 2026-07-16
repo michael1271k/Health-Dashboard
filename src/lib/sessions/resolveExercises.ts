@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database, InsertRow } from '@/lib/supabase/types'
 import type { SplitDay } from '@/lib/types/workout'
+import { canonicalExerciseName } from '@/lib/exercises/aliases'
 
 type DB = SupabaseClient<Database>
 
@@ -15,7 +16,7 @@ export async function resolveExercises(
   supabase: DB,
   userId: string,
   splitDay: SplitDay,
-  names: Array<{ name: string; nameHe?: string }>,
+  names: Array<{ name: string; nameHe?: string; muscleGroups?: string[] }>,
 ): Promise<Map<string, string>> {
   const out = new Map<string, string>()
   if (!names.length) return out
@@ -37,11 +38,15 @@ export async function resolveExercises(
     if (nk && !byNorm.has(nk)) byNorm.set(nk, e.id)
   }
 
-  for (const { name, nameHe } of names) {
-    const key = name.toLowerCase().trim()
+  for (const { name, nameHe, muscleGroups } of names) {
     if (out.has(name)) continue
 
-    const found = byLower.get(key) ?? byNorm.get(normalize(name))
+    // Alias canonicalization FIRST (Hevy placeholder names → the true movement)
+    // so a variant name can never spawn a duplicate catalog row.
+    const canonical = canonicalExerciseName(name)
+    const key = canonical.toLowerCase().trim()
+
+    const found = byLower.get(key) ?? byNorm.get(normalize(canonical))
     if (found) {
       out.set(name, found)
       continue
@@ -50,10 +55,10 @@ export async function resolveExercises(
     // Create a new exercise for this previously-unseen name
     const insert: InsertRow<'exercises'> = {
       user_id: userId,
-      name: name.trim(),
+      name: canonical.trim(),
       name_he: nameHe ?? null,
       split_day: splitDay,
-      muscle_groups: null,
+      muscle_groups: muscleGroups?.length ? muscleGroups : null,
       is_compound: false,
     }
      

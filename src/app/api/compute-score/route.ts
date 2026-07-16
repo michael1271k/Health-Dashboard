@@ -82,6 +82,12 @@ async function computeForDate(supabase: DB, userId: string, date: string, hoursA
   const hrvBaseline = avgOf(trail.map((r) => r.hrv_ms).filter((v): v is number => v != null))
   const rhrBaseline = avgOf(trail.map((r) => r.avg_rest_heart_rate).filter((v): v is number => v != null))
 
+  // GHOST GUARD: a past day with zero underlying data must never get a score
+  // row — trailing baselines/rest-day logic can otherwise fabricate one
+  // (score-only "ghost days" polluting the Journey). Today accumulates live.
+  if (!isToday && date !== todayISO() && !metrics && !sleep && !nutrition
+      && !(water?.length) && !(supplements?.length) && !(daySessions?.length) && !todayDl) return
+
   const { count: prCount } = await supabase
     .from('workout_sets').select('id', { count: 'exact', head: true })
     .eq('user_id', userId).eq('is_pr', true)

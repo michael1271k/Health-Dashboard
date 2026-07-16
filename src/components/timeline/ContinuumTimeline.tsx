@@ -4,6 +4,7 @@ import { memo, useMemo, useState } from 'react'
 import { Dumbbell, FolderOpen, Moon } from 'lucide-react'
 import { useContinuum, type ContinuumDay } from '@/lib/hooks/useContinuum'
 import { getWeekPhase, type WeekPhase } from '@/lib/phases'
+import { eraForDate } from '@/lib/programs'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { displayWeight, useUnitSystem } from '@/lib/utils/units'
 
@@ -126,12 +127,13 @@ export const ContinuumTimeline = memo(function ContinuumTimeline({ era, onOpenWe
   const groups = useMemo(() => {
     const out: Array<{ weekStart: string; phase: WeekPhase | null; days: ContinuumDay[] }> = []
     for (const d of data ?? []) {
+      // Filter DAYS by the unified date boundary (eraForDate), not the week
+      // phase — the boundary week (12–18 Jul) straddles both eras, and its
+      // PPL days must not leak into the Helix view (or vice versa). Week
+      // headers still carry their getWeekPhase label.
+      if (era !== 'all' && eraForDate(d.date) !== era) continue
       const ws = weekStartOf(d.date)
       const phase = getWeekPhase(ws)
-      if (era !== 'all') {
-        const dayEra = phase?.era ?? 'ppl'
-        if ((era === 'axis') !== (dayEra === 'helix')) continue
-      }
       const last = out[out.length - 1]
       if (last?.weekStart === ws) last.days.push(d)
       else out.push({ weekStart: ws, phase, days: [d] })

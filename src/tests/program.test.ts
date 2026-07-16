@@ -68,20 +68,21 @@ describe('v5.1 re-entry weeks', () => {
 
 // ── [1] Phase engine timeline ─────────────────────────────────────────────────
 describe('v5.1 phase engine', () => {
-  it('era boundary is 2026-07-19', () => {
-    expect(eraForDate('2026-07-18')).toBe('ppl')
+  it('era boundary is HELIX_CUT_START (2026-07-15)', () => {
+    expect(eraForDate('2026-07-14')).toBe('ppl')
+    expect(eraForDate('2026-07-15')).toBe('axis')
     expect(eraForDate('2026-07-19')).toBe('axis')
   })
   it('maintenance week 2026-08-30 is MAINTENANCE, not a cut failure', () => {
     expect(getWeekPhase('2026-08-30')?.kind).toBe('maintenance')
   })
   it('cut resumes at Week 7 after the maintenance week (era-tagged label)', () => {
-    expect(getWeekPhase('2026-09-06')?.label).toBe('Helix Cut 5.1 · Week 7')
+    expect(getWeekPhase('2026-09-06')?.label).toBe('Helix 5.1 Cut · Week 7')
   })
   it('the two Cut eras carry distinct tags (never mixed)', () => {
     expect(getWeekPhase('2026-05-10')?.eraTag).toBe('PPL Cut')
     expect(getWeekPhase('2026-05-10')?.era).toBe('ppl')
-    expect(getWeekPhase('2026-07-19')?.eraTag).toBe('Helix Cut 5.1')
+    expect(getWeekPhase('2026-07-19')?.eraTag).toBe('Helix 5.1 Cut')
     expect(getWeekPhase('2026-07-19')?.era).toBe('helix')
   })
   it('lean bulk starts 2026-11-01', () => {
@@ -117,6 +118,25 @@ describe('v5.1 battery lift drain', () => {
   })
 })
 
+// ── Era-aware phase tag ──────────────────────────────────────────────────────
+import { phaseDisplay, PHASE_META } from '@/lib/nutrition/phase'
+
+describe('phaseDisplay — Helix 5.1 Cut era tag', () => {
+  it('labels cut days on/after 2026-07-15 as "Helix 5.1 Cut"', () => {
+    expect(phaseDisplay('cut', '2026-07-15').label).toBe('Helix 5.1 Cut')
+    expect(phaseDisplay('cut', '2026-09-10').label).toBe('Helix 5.1 Cut')
+  })
+  it('keeps the plain label for pre-boundary cut days', () => {
+    expect(phaseDisplay('cut', '2026-07-14').label).toBe('Cut')
+    expect(phaseDisplay('cut', '2026-05-10').label).toBe('Cut')
+  })
+  it('never rebrands maintenance/bulk and keeps the phase color', () => {
+    expect(phaseDisplay('maintenance', '2026-08-30').label).toBe('Maint')
+    expect(phaseDisplay('bulk', '2026-11-01').label).toBe('Bulk')
+    expect(phaseDisplay('cut', '2026-07-15').color).toBe(PHASE_META.cut.color)
+  })
+})
+
 // ── Axis-5 Week 0 injection + chart split resolver ───────────────────────────
 import { resolveChartSplit } from '@/components/charts/VolumeChart'
 
@@ -126,9 +146,9 @@ describe('Axis-5 Week 0', () => {
     expect(eraForDate('2026-07-16')).toBe('axis')  // Thu
     expect(eraForDate('2026-07-17')).toBe('axis')  // Fri
   })
-  it('does not shift neighbouring days', () => {
-    expect(eraForDate('2026-07-14')).toBe('ppl')   // Tue before Week 0
-    expect(eraForDate('2026-07-18')).toBe('ppl')   // Sat between W0 and W1 anchor
+  it('does not shift days before the boundary', () => {
+    expect(eraForDate('2026-07-14')).toBe('ppl')   // Tue before the Helix 5.1 Cut opens
+    expect(eraForDate('2026-07-18')).toBe('axis')  // unified boundary: everything ≥ Jul 15 is HELIX
     expect(eraForDate('2026-07-19')).toBe('axis')  // Week-1 anchor unchanged
   })
 })
