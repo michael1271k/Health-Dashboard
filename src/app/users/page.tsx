@@ -13,7 +13,7 @@ function scoreColor(score: number | null): string {
 }
 
 function Spark({ points }: { points: number[] }) {
-  if (points.length < 2) return <span className="text-fluid-xs text-muted-vital">—</span>
+  if (points.length < 2) return <span className="text-fluid-xs text-muted">—</span>
   const min = Math.min(...points), max = Math.max(...points)
   const norm = (v: number) => (max === min ? 0.5 : (v - min) / (max - min))
   const d = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${(i / (points.length - 1)) * 72} ${18 - norm(p) * 16}`).join(' ')
@@ -32,7 +32,7 @@ function MemberCard({ m, unit }: { m: ManagedUser; unit: string }) {
         <div className="flex items-center gap-2 min-w-0">
           <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: color, boxShadow: `0 0 8px ${color}66` }} aria-hidden="true" />
           <h2 className="font-heading font-semibold text-text truncate">{m.displayName}</h2>
-          {m.isSelf && <span className="text-[9px] uppercase tracking-wide text-muted-vital shrink-0">you</span>}
+          {m.isSelf && <span className="text-[9px] uppercase tracking-wide text-muted shrink-0">you</span>}
         </div>
         <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 rounded shrink-0"
           style={m.role === 'admin'
@@ -45,23 +45,23 @@ function MemberCard({ m, unit }: { m: ManagedUser; unit: string }) {
       <div className="grid grid-cols-3 gap-2.5 text-center">
         <div>
           <span className="helix-num text-fluid-lg font-bold" style={{ color }}>{m.score ?? '—'}</span>
-          <span className="block text-[9px] uppercase tracking-wide text-muted-vital">score</span>
+          <span className="block text-[9px] uppercase tracking-wide text-muted">score</span>
         </div>
         <div>
           <span className="helix-num text-fluid-lg font-bold text-text flex items-center justify-center gap-1">
             <BatteryMedium className="w-3.5 h-3.5 text-info" aria-hidden="true" />{m.batteryPct != null ? `${m.batteryPct}%` : '—'}
           </span>
-          <span className="block text-[9px] uppercase tracking-wide text-muted-vital">battery</span>
+          <span className="block text-[9px] uppercase tracking-wide text-muted">battery</span>
         </div>
         <div>
           <span className="helix-num text-fluid-lg font-bold text-text flex items-center justify-center gap-1">
             <Flame className="w-3.5 h-3.5 text-warn" aria-hidden="true" />{m.trioStreak}
           </span>
-          <span className="block text-[9px] uppercase tracking-wide text-muted-vital">day streak</span>
+          <span className="block text-[9px] uppercase tracking-wide text-muted">day streak</span>
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-3 text-fluid-xs text-muted-vital">
+      <div className="flex items-center justify-between gap-3 text-fluid-xs text-muted">
         <span className="flex items-center gap-1.5 min-w-0 truncate">
           <Dumbbell className="w-3 h-3 shrink-0" />
           {m.lastSession
@@ -89,7 +89,7 @@ export default function UserManagementPage() {
         <h1 className="font-heading text-fluid-2xl font-bold text-text flex items-center gap-2">
           <Users className="w-6 h-6 text-primary" aria-hidden="true" /> User Management
         </h1>
-        <p className="text-muted-vital text-fluid-sm mt-0.5">Every managed account · one isolated vault each</p>
+        <p className="text-muted text-fluid-sm mt-0.5">Every managed account · one isolated vault each</p>
       </div>
 
       {isLoading && <div className="space-y-3">{[0, 1].map((i) => <div key={i} className="helix-card h-36 animate-pulse" />)}</div>}
@@ -101,7 +101,7 @@ export default function UserManagementPage() {
             {data.members.map((m) => <MemberCard key={m.userId} m={m} unit={unit} />)}
           </div>
           {!data.isAdmin && (
-            <p className="text-fluid-xs text-muted-vital">Administrator access required — you can only see your own account here.</p>
+            <p className="text-fluid-xs text-muted">Administrator access required — you can only see your own account here.</p>
           )}
         </>
       )}

@@ -89,7 +89,7 @@ export function Sheet({ open, onClose, title, maxHeight = '90dvh', children }: S
                   : <span />}
                 <button
                   onClick={onClose}
-                  className="-mr-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-muted-vital hover:text-text active:scale-95 transition-transform"
+                  className="-mr-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-muted hover:text-text active:scale-95 transition-transform"
                   aria-label="Close"
                 >
                   <X className="w-5 h-5" />

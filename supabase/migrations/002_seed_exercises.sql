@@ -1,7 +1,7 @@
 -- ============================================
 -- Migration 007: Seed workout exercise catalog + baseline session data
 -- ============================================
--- Inserts the full Hevy-sourced exercise catalog for Push, Pull, and Legs/Lower
+-- Inserts the full Hevy-sourced exercise catalog for Push, Pull, and Legs
 -- (stored as split_day = 'legs' — canonical for the combined split).
 --
 -- Also inserts one baseline workout_session + workout_sets per split so that

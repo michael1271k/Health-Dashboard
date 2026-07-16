@@ -33,14 +33,14 @@ const splitLabel = (s: ChartSplit, era: 'all' | 'ppl' | 'axis') => {
 
 /**
  * Map a session (date + DB split_day) to its chart bucket. HELIX Delts & Arms
- * days are logged as 'upper' but fall on Wednesday — that weekday split lets us
+ * days are logged as 'upper' but fall on Tuesday — that weekday split lets us
  * track them separately from the Upper A/B days.
  */
 export function resolveChartSplit(dateISO: string, split: string, era: 'all' | 'ppl' | 'axis'): ChartSplit {
   if (split === 'lower') return 'legs'
   if (era === 'axis' && split === 'upper') {
     const weekday = new Date(dateISO + 'T12:00:00Z').getUTCDay()
-    return weekday === 3 ? 'arms' : 'upper'
+    return weekday === 2 ? 'arms' : 'upper'
   }
   return split as ChartSplit
 }
@@ -83,7 +83,7 @@ export function VolumeChart({ data, isLoading, era = 'all' }: { data: VolumePoin
         </div>
       </div>
       {chartData.length === 0 ? (
-        <div className="h-56 flex items-center justify-center"><p className="text-muted-vital text-sm">No {splitLabel(activeSplit, era)} sessions in range.</p></div>
+        <div className="h-56 flex items-center justify-center"><p className="text-muted text-sm">No {splitLabel(activeSplit, era)} sessions in range.</p></div>
       ) : (
         <div role="img" aria-label={`${splitLabel(activeSplit, era)} volume over time`}>
           <ResponsiveContainer width="100%" height={240}>

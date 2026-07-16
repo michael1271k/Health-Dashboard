@@ -44,7 +44,7 @@ export default function WorkoutPage() {
     <div className="space-y-6">
       <div>
         <h1 className="font-heading text-fluid-2xl font-bold text-text">Workout</h1>
-        <p className="text-muted-vital text-fluid-sm mt-0.5">Active program · tap a day to log · progressive overload memory</p>
+        <p className="text-muted text-fluid-sm mt-0.5">Active program · tap a day to log · progressive overload memory</p>
       </div>
 
       {/* Program selector (active + drawer backups) */}
@@ -73,12 +73,12 @@ export default function WorkoutPage() {
               <span className="min-w-0">
                 <span className="flex items-baseline gap-2">
                   <span className="split-label font-bold text-lg truncate" style={{ color: day.color }}>{day.label}</span>
-                  <span className="text-[10px] text-muted-vital uppercase shrink-0">{isMergedLegs(day) ? legsDays.map((d) => WD[d.weekday]).join(' · ') : WD[day.weekday]}</span>
+                  <span className="text-[10px] text-muted uppercase shrink-0">{isMergedLegs(day) ? legsDays.map((d) => WD[d.weekday]).join(' · ') : WD[day.weekday]}</span>
                   {day.cutSetDelta != null && (
-                    <span className="text-[9px] px-1 rounded bg-white/[0.05] text-muted-vital shrink-0" title="Cut-mode set delta">{day.cutSetDelta} cut</span>
+                    <span className="text-[9px] px-1 rounded bg-white/[0.05] text-muted shrink-0" title="Cut-mode set delta">{day.cutSetDelta} cut</span>
                   )}
                 </span>
-                <span className="block text-[10px] text-muted-vital leading-none mt-0.5">
+                <span className="block text-[10px] text-muted leading-none mt-0.5">
                   {isMergedLegs(day) ? legsDays.map((d) => d.sub).join(' / ') : day.sub}
                 </span>
               </span>
@@ -95,10 +95,10 @@ export default function WorkoutPage() {
                 return (
                   <div key={ex.name} className={`rounded-lg px-2.5 py-1.5 bg-white/[0.02] border border-white/[0.05] ${ex.bulkOnly ? 'opacity-50' : ''}`}>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-medium text-text leading-tight truncate">{ex.name}{ex.bulkOnly && <span className="text-[9px] text-muted-vital ml-1">bulk only</span>}</span>
-                      <span className="text-[10px] text-muted-vital shrink-0">{ex.sets}×{ex.reps}</span>
+                      <span className="text-xs font-medium text-text leading-tight truncate">{ex.name}{ex.bulkOnly && <span className="text-[9px] text-muted ml-1">bulk only</span>}</span>
+                      <span className="text-[10px] text-muted shrink-0">{ex.sets}×{ex.reps}</span>
                     </div>
-                    <div className="text-[10px] text-muted-vital flex items-center gap-2 mt-0.5">
+                    <div className="text-[10px] text-muted flex items-center gap-2 mt-0.5">
                       {prev
                         ? <span className="flex items-center gap-1 text-success"><TrendingUp className="w-2.5 h-2.5" />{displayWeight(prev.weightKg)}{unit} × {prev.reps}</span>
                         : target != null && <span>Wk1 {target}{unit}</span>}
@@ -152,9 +152,9 @@ export default function WorkoutPage() {
                 <span className="font-heading font-bold text-fluid-base" style={{ color: d.color }}>
                   Day {i === 0 ? 2 : 5} · {d.sub}
                 </span>
-                <span className="text-[10px] text-muted-vital uppercase">{WD[d.weekday]}</span>
+                <span className="text-[10px] text-muted uppercase">{WD[d.weekday]}</span>
               </div>
-              <p className="text-fluid-xs text-muted-vital mt-1.5 truncate">
+              <p className="text-fluid-xs text-muted mt-1.5 truncate">
                 {d.exercises.slice(0, 3).map((e) => e.name).join(' · ')} +{Math.max(0, d.exercises.length - 3)}
               </p>
             </button>
@@ -171,7 +171,7 @@ export default function WorkoutPage() {
       <Sheet open={!!confirmDelete} onClose={() => setConfirmDelete(null)} title="Delete session?">
         {confirmDelete && (
           <div className="space-y-4">
-            <p className="text-fluid-sm text-muted-vital">
+            <p className="text-fluid-sm text-muted">
               Delete the {confirmDelete.splitLabel} session from{' '}
               {new Date(confirmDelete.startedAt).toLocaleDateString('en-IL', { month: 'short', day: 'numeric' })}? This can’t be undone.
             </p>

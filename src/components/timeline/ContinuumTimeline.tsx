@@ -58,7 +58,7 @@ const DayCard = memo(function DayCard({ d, unit, active, onOpen }: {
         <span className="block font-heading font-semibold text-[12px]" style={{ color: active ? '#16F5C3' : undefined }}>
           {day.toLocaleDateString('en-GB', { weekday: 'short' })} {day.getDate()}
         </span>
-        <span className="block text-[9px] text-muted-vital uppercase">{day.toLocaleDateString('en-GB', { month: 'short' })}</span>
+        <span className="block text-[9px] text-muted uppercase">{day.toLocaleDateString('en-GB', { month: 'short' })}</span>
       </span>
       {/* Macro micro-bar */}
       <span className="flex h-1.5 w-12 shrink-0 rounded-full overflow-hidden bg-white/[0.05]" aria-hidden="true">
@@ -79,7 +79,7 @@ const DayCard = memo(function DayCard({ d, unit, active, onOpen }: {
         </span>
       </span>
       {/* kcal */}
-      <span className="helix-num text-[11px] text-muted-vital shrink-0">
+      <span className="helix-num text-[11px] text-muted shrink-0">
         {d.calories != null ? `${Math.round(d.calories).toLocaleString()}` : '—'}
       </span>
     </button>
@@ -147,7 +147,7 @@ export const ContinuumTimeline = memo(function ContinuumTimeline({ era, onOpenWe
     )
   }
   if (!groups.length) {
-    return <p className="text-fluid-sm text-muted-vital py-8 text-center">No logged days in this era yet.</p>
+    return <p className="text-fluid-sm text-muted py-8 text-center">No logged days in this era yet.</p>
   }
 
   return (

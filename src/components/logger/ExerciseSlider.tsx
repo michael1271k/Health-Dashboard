@@ -61,7 +61,7 @@ export function ExerciseSlider({
         <div className="flex flex-col items-start gap-0.5 min-w-0">
           <span className="font-medium text-text leading-snug">{exerciseName}</span>
           {/* Progressive-overload memory — always visible in header */}
-          <span className="text-xs text-muted-vital leading-snug flex items-center gap-1">
+          <span className="text-xs text-muted leading-snug flex items-center gap-1">
             {previous ? (
               <>
                 <TrendingUp className="w-3 h-3 text-success shrink-0" aria-hidden="true" />
@@ -75,12 +75,12 @@ export function ExerciseSlider({
 
         <div className="flex items-center gap-2 shrink-0 ml-3">
           {existingSets.length > 0 && (
-            <span className="text-xs text-muted-vital tabular-nums">
+            <span className="text-xs text-muted tabular-nums">
               {existingSets.length} set{existingSets.length !== 1 ? 's' : ''}
             </span>
           )}
           <ChevronDown
-            className={`w-4 h-4 text-muted-vital transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+            className={`w-4 h-4 text-muted transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
             aria-hidden="true"
           />
         </div>
@@ -104,12 +104,12 @@ export function ExerciseSlider({
           {/* ── Weight slider */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-xs">
-              <label htmlFor={`w-${exerciseId}`} className="text-muted-vital font-medium">
+              <label htmlFor={`w-${exerciseId}`} className="text-muted font-medium">
                 Weight
               </label>
               <span className="helix-num font-bold text-text text-sm tabular-nums">
                 {weight.toFixed(weight % 1 === 0 ? 0 : 1)}
-                <span className="text-xs text-muted-vital font-normal ml-0.5">kg</span>
+                <span className="text-xs text-muted font-normal ml-0.5">kg</span>
               </span>
             </div>
             <input
@@ -124,7 +124,7 @@ export function ExerciseSlider({
                          bg-surface-2 accent-primary"
               aria-label={`Weight for ${exerciseName}`}
             />
-            <div className="flex justify-between text-[10px] text-muted-vital tabular-nums">
+            <div className="flex justify-between text-[10px] text-muted tabular-nums">
               <span>{weightMin}kg</span>
               <span>{weightMax}kg</span>
             </div>
@@ -133,12 +133,12 @@ export function ExerciseSlider({
           {/* ── Reps slider */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-xs">
-              <label htmlFor={`r-${exerciseId}`} className="text-muted-vital font-medium">
+              <label htmlFor={`r-${exerciseId}`} className="text-muted font-medium">
                 Reps
               </label>
               <span className="helix-num font-bold text-text text-sm tabular-nums">
                 {reps}
-                <span className="text-xs text-muted-vital font-normal ml-0.5">reps</span>
+                <span className="text-xs text-muted font-normal ml-0.5">reps</span>
               </span>
             </div>
             <input
@@ -153,7 +153,7 @@ export function ExerciseSlider({
                          bg-surface-2 accent-primary"
               aria-label={`Reps for ${exerciseName}`}
             />
-            <div className="flex justify-between text-[10px] text-muted-vital tabular-nums">
+            <div className="flex justify-between text-[10px] text-muted tabular-nums">
               <span>{repsMin}</span>
               <span>{repsMax}</span>
             </div>

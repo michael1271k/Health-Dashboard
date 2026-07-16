@@ -31,7 +31,7 @@ export function BodyHeatmap({ days, era = 'all' }: { days: number; era?: 'all' |
   return (
     <div className="helix-card">
       <h3 className="font-heading font-semibold text-base">Muscle Contour Map</h3>
-      <p className="text-fluid-xs text-muted-vital mb-2">Regional training-volume heat · {days}d</p>
+      <p className="text-fluid-xs text-muted mb-2">Regional training-volume heat · {days}d</p>
       <div className="flex items-center justify-center gap-6">
         <svg viewBox="0 0 100 136" className="h-64" aria-label="Muscle volume body map">
           {/* Head */}
@@ -51,7 +51,7 @@ export function BodyHeatmap({ days, era = 'all' }: { days: number; era?: 'all' |
             <div key={s.group} className="flex items-center gap-2 text-fluid-xs">
               <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: color((heat.get(s.group) ?? 0)) }} />
               <span className="text-text w-20">{s.group}</span>
-              <span className="helix-num text-muted-vital">{Math.round((heat.get(s.group) ?? 0) * 100)}%</span>
+              <span className="helix-num text-muted">{Math.round((heat.get(s.group) ?? 0) * 100)}%</span>
             </div>
           ))}
         </div>
@@ -69,7 +69,7 @@ export function VolumeStream({ days, era = 'all' }: { days: number; era?: 'all' 
   return (
     <div className="helix-card">
       <h3 className="font-heading font-semibold text-base">Volume Stream</h3>
-      <p className="text-fluid-xs text-muted-vital mb-2">Weekly working sets per muscle group — training-focus drift</p>
+      <p className="text-fluid-xs text-muted mb-2">Weekly working sets per muscle group — training-focus drift</p>
       <ResponsiveContainer width="100%" height={220}>
         <AreaChart data={data.weekly} margin={{ top: 4, right: 8, bottom: 0, left: -14 }}>
           <XAxis dataKey="week" tick={{ fill: '#8B97B2', fontSize: 10, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} />
@@ -119,7 +119,7 @@ export function RpeCalendar({ days, era = 'all' }: { days: number; era?: 'all' |
   return (
     <div className="helix-card">
       <h3 className="font-heading font-semibold text-base">Intensity Calendar</h3>
-      <p className="text-fluid-xs text-muted-vital mb-3">Session load heat (volume-scaled) · streaks &amp; deloads at a glance</p>
+      <p className="text-fluid-xs text-muted mb-3">Session load heat (volume-scaled) · streaks &amp; deloads at a glance</p>
       <div className="flex gap-1 overflow-x-auto no-scrollbar">
         {grid.map((col, i) => (
           <div key={i} className="flex flex-col gap-1">

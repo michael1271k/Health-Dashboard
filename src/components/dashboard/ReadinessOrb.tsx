@@ -59,7 +59,7 @@ export const ReadinessOrb = memo(function ReadinessOrb({ score, isLoading }: { s
         {/* Core: kinetic score */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <KineticNumber value={total} className="helix-num text-6xl font-bold leading-none" />
-          <span className="text-[11px] text-muted-vital mt-1 uppercase tracking-widest">{total == null ? 'no data yet' : 'readiness'}</span>
+          <span className="text-[11px] text-muted mt-1 uppercase tracking-widest">{total == null ? 'no data yet' : 'readiness'}</span>
           {battery != null && (
             <span className="helix-num text-fluid-xs mt-0.5" style={{ color: batteryColor }}>{battery}% battery</span>
           )}

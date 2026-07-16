@@ -14,7 +14,7 @@ test('root page redirects to auth or renders dashboard', async ({ page }) => {
 })
 
 test('unauthenticated / never renders a blank dashboard — AuthGate redirects to /auth', async ({ page }) => {
-  // Phase 16 PWA fix: an isolated storage container (no session) must land on
+  // PWA storage isolation: an isolated storage container (no session) must land on
   // the sign-in screen, not an empty-but-"working" dashboard.
   await page.context().clearCookies()
   await page.goto('/')

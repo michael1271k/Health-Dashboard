@@ -97,7 +97,7 @@ export function DaySummaryModal({ date, onClose }: { date: string | null; onClos
                 <span className="block text-fluid-sm font-medium text-text truncate">
                   {session.split[0]?.toUpperCase()}{session.split.slice(1)} session
                 </span>
-                <span className="block text-fluid-xs text-muted-vital">
+                <span className="block text-fluid-xs text-muted">
                   {session.volumeKg != null && `${((displayWeight(session.volumeKg) ?? 0) / 1000).toFixed(1)}${unit === 'lb' ? 'k' : 't'} volume`}
                   {session.setCount != null && ` · ${session.setCount} sets`}
                   {(session.prCount ?? 0) > 0 && ` · ${session.prCount} PR 🏆`}
@@ -108,7 +108,7 @@ export function DaySummaryModal({ date, onClose }: { date: string | null; onClos
             <div className="rounded-2xl border px-3.5 py-4 text-center" style={{ borderColor: `${VIOLET}30`, background: `${VIOLET}0d` }}>
               <Moon className="w-6 h-6 mx-auto mb-1" style={{ color: VIOLET, filter: `drop-shadow(0 0 6px ${VIOLET}66)` }} aria-hidden="true" />
               <span className="block text-fluid-sm font-medium" style={{ color: VIOLET }}>Rest & Recovery</span>
-              <span className="block text-fluid-xs text-muted-vital mt-0.5">
+              <span className="block text-fluid-xs text-muted mt-0.5">
                 {log?.hrv_ms != null ? `HRV ${Math.round(log.hrv_ms)} ms · ` : ''}adaptation happens here
               </span>
             </div>

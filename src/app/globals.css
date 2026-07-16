@@ -6,7 +6,7 @@
    HELIX Design Tokens (Tailwind v4 @theme)
    ============================================ */
 @theme {
-  /* HELIX Color Palette — "Bioluminescence" (Phase 14)
+  /* HELIX Color Palette — "Bioluminescence"
      Abyssal-ocean base with living bioluminescent accents: living teal,
      plankton cyan, abyss violet for recovery, ember for fuel/caution. */
   --color-bg: #030509;          /* abyssal near-black */
@@ -21,7 +21,7 @@
   --color-danger: #FF5470;      /* rose — negative */
   --color-gold: #E8C57A;        /* warm gold — PRs / luxury highlight */
   --color-text: #EAF2FF;
-  --color-muted-vital: #8B97B2;
+  --color-muted: #8B97B2;
   --color-border: #182238;      /* hairline (legacy solid contexts) */
   /* Light mode (kept for completeness) */
   --color-light-bg: #F4F6FA;
@@ -29,13 +29,13 @@
   --color-light-text: #0F172A;
   --color-light-muted: #475569;
 
-  /* VITAL Fonts */
+  /* HELIX Fonts */
   --font-heading: var(--font-outfit), sans-serif;
   --font-sans: var(--font-inter), sans-serif;
   --font-mono: var(--font-jetbrains), monospace;
   --font-display: var(--font-outfit), sans-serif; /* Sora fills the display slot (HELIX) */
 
-  /* ── Fluid typography (Phase 6) — same fonts, viewport-aware sizing ──
+  /* ── Fluid typography — same fonts, viewport-aware sizing ──
      Used as Tailwind utilities: text-fluid-sm … text-fluid-3xl. Each clamp
      scales between a mobile floor and a desktop ceiling so type feels native
      on a 6" phone and premium on a 27" monitor without per-breakpoint classes. */
@@ -47,18 +47,18 @@
   --text-fluid-2xl:  clamp(1.65rem, 1.30rem + 1.9vw, 2.55rem);
   --text-fluid-3xl:  clamp(2.10rem, 1.55rem + 3.0vw, 3.50rem);
 
-  /* APEX Shadows */
+  /* HELIX Shadows */
   --shadow-card: 0 1px 2px rgba(0,0,0,0.4), 0 0 0 1px rgba(30,42,66,0.9);
   --shadow-card-hover: 0 4px 16px rgba(0,0,0,0.5), 0 0 0 1px rgba(61,125,255,0.2);
   --shadow-glow-primary: 0 0 20px rgba(61,125,255,0.3);
   --shadow-glow-energy: 0 0 20px rgba(124,92,255,0.3);
 
-  /* VITAL Animations */
+  /* HELIX Animations */
   --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   --animate-fade-in: fadeIn 0.2s ease-out;
   --animate-slide-up: slideUp 0.3s ease-out;
 
-  /* VITAL Keyframes */
+  /* HELIX Keyframes */
   @keyframes fadeIn {
     0% { opacity: 0; }
     100% { opacity: 1; }
@@ -263,7 +263,7 @@ html[data-theme='travel'] {
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
   }
 
-  /* ── TRUE glassmorphism (Phase 5) ───────────────────────────────────────
+  /* ── TRUE glassmorphism ───────────────────────────────────────
      Highly transparent + intense blur so the Aurora background refracts. */
   .glass-card {
     background: rgba(255,255,255,0.045);
@@ -337,12 +337,12 @@ html[data-theme='travel'] {
   /* Ghost button */
   .btn-ghost {
     @apply inline-flex items-center gap-2 rounded-xl border border-border px-5 py-2.5
-           cursor-pointer transition-[color,opacity,transform] duration-200 text-muted-vital
+           cursor-pointer transition-[color,opacity,transform] duration-200 text-muted
            hover:border-primary/40 hover:text-text hover:bg-surface-2
            focus-visible:ring-2 focus-visible:ring-primary/60;
   }
 
-  /* Frosted glass button — luxury block with a subtle gradient hairline (Phase 7) */
+  /* Frosted glass button — luxury block with a subtle gradient hairline */
   .btn-glass {
     background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
     backdrop-filter: blur(16px) saturate(160%);
@@ -361,7 +361,7 @@ html[data-theme='travel'] {
     .btn-glass { background: var(--color-surface-2); }
   }
 
-  /* ── Mobile / safe-area utilities (Phase 6) ───────────────────────────── */
+  /* ── Mobile / safe-area utilities ───────────────────────────── */
   /* Honour iOS/Android notches & home indicator. max() keeps a sane min pad. */
   .safe-pb { padding-bottom: max(0.75rem, env(safe-area-inset-bottom)); }
   .safe-pt { padding-top: max(0.5rem, env(safe-area-inset-top)); }
@@ -379,14 +379,14 @@ html[data-theme='travel'] {
   /* Perfectly circular media box regardless of parent width (battery orb fix). */
   .circle-square { aspect-ratio: 1 / 1; }
 
-  /* Premium display type for workout split labels (Phase 9). */
+  /* Premium display type for workout split labels. */
   .split-label {
     font-family: var(--font-display);
     font-weight: 700;
     letter-spacing: 0.005em;
   }
 
-  /* Glowing APEX wordmark (Phase 7) — indigo→cyan→teal gradient + soft glow. */
+  /* Glowing HELIX wordmark — indigo→cyan→teal gradient + soft glow. */
   .helix-wordmark {
     /* Bioluminescent band: living teal → plankton cyan → abyss violet */
     background: linear-gradient(90deg, #16F5C3 0%, #3EE0FF 55%, #8B7CFF 100%);
@@ -444,7 +444,7 @@ html[data-hidden='true'] .battery-bubble { animation-play-state: paused; }
   -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 30%, #000 30%, transparent 78%);
 }
 
-/* ── HELIX animation suite (Phase 13) ─────────────────────────────────────── */
+/* ── HELIX animation suite ─────────────────────────────────────── */
 /* Rising bubbles inside the liquid battery */
 @keyframes bubbleRise {
   0%   { bottom: 4%; opacity: 0; transform: translateX(0) scale(0.7); }
@@ -522,7 +522,7 @@ html[data-reduce-motion='true'] .grain-overlay { display: none; }
   }
   .axis-wireframe { display: none; }
   .aurora-blob-3 { display: none; }
-  /* Zero-latency (Phase 16): ambient loops off on phones — the aurora freezes
+  /* Zero-latency: ambient loops off on phones — the aurora freezes
      into a static gradient wash, liquid/glint/bubble loops stop compositing.
      !important because the blob animations are inline styles. */
   .aurora-blob-1, .aurora-blob-2 { animation: none !important; }

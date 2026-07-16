@@ -39,7 +39,7 @@ export const SleepDebtGauge = memo(function SleepDebtGauge() {
         <div className="h-full rounded-full transition-[width] duration-700"
           style={{ width: `${Math.max(2, pct * 100)}%`, background: color, boxShadow: `0 0 8px ${color}66` }} />
       </div>
-      <p className="text-fluid-xs text-muted-vital">
+      <p className="text-fluid-xs text-muted">
         14-night rolling vs {data.goalHours}h goal · surplus nights repay · last week decays ×0.75
       </p>
     </section>

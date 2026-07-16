@@ -57,8 +57,8 @@ function RingSegment({
           {isNull ? '—' : pct}
         </span>
       </div>
-      <span className="text-[10px] text-muted-vital">{label}</span>
-      <span className="text-[9px] text-muted-vital/60">{weight}%</span>
+      <span className="text-[10px] text-muted">{label}</span>
+      <span className="text-[9px] text-muted/60">{weight}%</span>
     </div>
   )
 }
@@ -72,7 +72,7 @@ export const ScoreCard = memo(function ScoreCard({ score, isLoading }: ScoreCard
   const totalScore = score?.score ?? null
 
   const scoreColor =
-    totalScore == null ? 'text-muted-vital' :
+    totalScore == null ? 'text-muted' :
     totalScore >= 80 ? 'text-primary' :
     totalScore >= 60 ? 'text-info' :
     totalScore >= 40 ? 'text-warn' :
@@ -82,7 +82,7 @@ export const ScoreCard = memo(function ScoreCard({ score, isLoading }: ScoreCard
     <div className="helix-card holo-sheen flex flex-col h-full">
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-heading font-semibold text-lg">Daily Score</h2>
-        <span className="text-xs text-muted-vital uppercase tracking-wider">Today</span>
+        <span className="text-xs text-muted uppercase tracking-wider">Today</span>
       </div>
 
       {isLoading ? (
@@ -117,7 +117,7 @@ export const ScoreCard = memo(function ScoreCard({ score, isLoading }: ScoreCard
                 value={totalScore}
                 className={`helix-num text-6xl font-bold leading-none ${scoreColor}`}
               />
-              <span className="text-muted-vital text-lg">{totalScore == null ? 'no data yet' : '/100'}</span>
+              <span className="text-muted text-lg">{totalScore == null ? 'no data yet' : '/100'}</span>
             </div>
           </div>
           <EcgPulse level={totalScore} color={totalScore == null ? '#5A6B85' : totalScore >= 60 ? '#19E3B1' : totalScore >= 40 ? '#FFB020' : '#FF5470'} />
@@ -138,7 +138,7 @@ export const ScoreCard = memo(function ScoreCard({ score, isLoading }: ScoreCard
 
           {/* Sync time */}
           {score?.computed_at && (
-            <p className="text-xs text-muted-vital mt-auto">
+            <p className="text-xs text-muted mt-auto">
               Last sync{' '}
               {new Intl.DateTimeFormat('en-IL', {
                 hour: '2-digit',

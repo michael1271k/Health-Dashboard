@@ -32,11 +32,11 @@ export function BrandHeader() {
     <header className="space-y-2">
       {/* Dedicated device-local date + live clock line */}
       <div className="flex items-center justify-between gap-3 text-fluid-xs min-h-[16px]">
-        <span className="text-muted-vital tracking-wide">
+        <span className="text-muted tracking-wide">
           {dateStr}{timeStr && <> · <span className="helix-num text-text/80">{timeStr}</span></>}
         </span>
         {lu && (
-          <span className="text-muted-vital/70 flex items-center gap-1 shrink-0">
+          <span className="text-muted/70 flex items-center gap-1 shrink-0">
             <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" aria-hidden="true" />
             Updated <span className="helix-num">{lu}</span>
           </span>

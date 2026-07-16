@@ -106,7 +106,7 @@ function StatRow({ icon: Icon, iconColor, label, value }: StatRowProps) {
     <div className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
       <div className="flex items-center gap-2">
         <Icon className={`w-4 h-4 ${iconColor}`} aria-hidden="true" />
-        <span className="text-sm text-muted-vital">{label}</span>
+        <span className="text-sm text-muted">{label}</span>
       </div>
       <span className="helix-num text-sm font-semibold text-text">{value}</span>
     </div>
@@ -131,7 +131,7 @@ export function WeeklyReviewCard() {
     <div className="helix-card">
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-heading font-semibold text-base text-text">Weekly Review</h3>
-        <span className="text-xs text-muted-vital">This week</span>
+        <span className="text-xs text-muted">This week</span>
       </div>
       <div>
         <StatRow

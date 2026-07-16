@@ -40,7 +40,7 @@ export function MarkdownView({ md }: { md: string }) {
       out.push(
         <div key={key++} className="overflow-x-auto rounded-xl border border-white/[0.08]">
           <table className="w-full text-fluid-xs">
-            <thead><tr className="border-b border-white/[0.08]">{header.map((h, j) => <th key={j} className="px-3 py-2 text-left font-semibold text-muted-vital">{h}</th>)}</tr></thead>
+            <thead><tr className="border-b border-white/[0.08]">{header.map((h, j) => <th key={j} className="px-3 py-2 text-left font-semibold text-muted">{h}</th>)}</tr></thead>
             <tbody>{rows.map((r, ri) => <tr key={ri} className="border-b border-white/[0.04] last:border-0">{r.map((c, cj) => <td key={cj} className="px-3 py-1.5 helix-num text-text/90">{c}</td>)}</tr>)}</tbody>
           </table>
         </div>,
@@ -54,14 +54,14 @@ export function MarkdownView({ md }: { md: string }) {
       const lvl = h[1].length
       const cls = lvl <= 1 ? 'text-fluid-lg font-bold text-text mt-1'
         : lvl === 2 ? 'font-heading text-fluid-base font-semibold text-text mt-1'
-        : 'text-fluid-sm font-semibold text-muted-vital uppercase tracking-wide'
+        : 'text-fluid-sm font-semibold text-muted uppercase tracking-wide'
       out.push(<p key={key++} className={cls}>{inline(h[2], 0)}</p>)
       i++; continue
     }
 
     // Quote / callout
     if (t.startsWith('>')) {
-      out.push(<blockquote key={key++} className="border-l-2 border-primary/50 pl-3 text-fluid-sm text-muted-vital italic">{inline(t.replace(/^>\s?/, ''), 0)}</blockquote>)
+      out.push(<blockquote key={key++} className="border-l-2 border-primary/50 pl-3 text-fluid-sm text-muted italic">{inline(t.replace(/^>\s?/, ''), 0)}</blockquote>)
       i++; continue
     }
 

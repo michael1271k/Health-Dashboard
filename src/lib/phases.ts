@@ -10,7 +10,7 @@ export interface WeekPhase {
   kind: PhaseKind
   label: string         // full label, e.g. "HELIX Cut Week 3" / "PPL Cut Week 2"
   short: string         // compact label for the calendar cell, e.g. "Cut W3" / "Peak"
-  eraTag: string        // era-distinct badge text: "PPL Cut" vs "HELIX Cut · Phase 1"
+  eraTag: string        // era-distinct badge text: "PPL Cut" vs "Helix Cut 5.1"
   era: 'ppl' | 'helix'
 }
 
@@ -32,13 +32,14 @@ export const PHASES: PhaseDef[] = [
   { kind: 'cut',  name: 'Cut',                     start: '2026-05-10', weeks: 6, numbered: true, era: 'ppl', eraTag: 'PPL Cut' },
   { kind: 'peak', name: 'Peak Week (Maintenance)', start: '2026-06-21', weeks: 1, short: 'Peak',  era: 'ppl', eraTag: 'PPL Peak' },
   // ── HELIX era ──
-  // Week 0 = the two transitional Axis-5 sessions (Thu/Fri 16–17 Jul) in the
-  // calendar week starting 12 Jul, then Cut W1–6 anchors on 19 Jul (unchanged),
-  // scheduled maintenance week, Cut W7–12, Transition, then Lean Bulk → 2027-01-16.
+  // Week 0 = the transitional Axis-5 ramp (Wed/Thu/Fri 15–17 Jul) in the calendar
+  // week starting 12 Jul; Helix Cut 5.1 (1935 kcal) opens 15 Jul. Cut W1–6 anchors
+  // on 19 Jul (unchanged), scheduled maintenance week, Cut W7–12, Transition, then
+  // Lean Bulk → 2027-01-16.
   { kind: 'peak',        name: 'Week 0 · Transition', start: '2026-07-12', weeks: 1, short: 'W0', era: 'helix', eraTag: 'HELIX · Week 0' },
-  { kind: 'cut',         name: 'Cut',         start: '2026-07-19', weeks: 6,  numbered: true, era: 'helix', eraTag: 'HELIX Cut · Phase 1' },
+  { kind: 'cut',         name: 'Cut',         start: '2026-07-19', weeks: 6,  numbered: true, era: 'helix', eraTag: 'Helix Cut 5.1' },
   { kind: 'maintenance', name: 'Maintenance Week', start: '2026-08-30', weeks: 1, short: 'Maint', era: 'helix', eraTag: 'HELIX Maintenance' },
-  { kind: 'cut',         name: 'Cut',         start: '2026-09-06', weeks: 6,  numbered: true, firstWeek: 7, era: 'helix', eraTag: 'HELIX Cut · Phase 1' },
+  { kind: 'cut',         name: 'Cut',         start: '2026-09-06', weeks: 6,  numbered: true, firstWeek: 7, era: 'helix', eraTag: 'Helix Cut 5.1' },
   { kind: 'maintenance', name: 'Transition',  start: '2026-10-18', weeks: 2,  numbered: true, short: 'Trans', era: 'helix', eraTag: 'HELIX Transition' },
   { kind: 'bulk',        name: 'Lean Bulk',   start: '2026-11-01', weeks: 11, numbered: true, era: 'helix', eraTag: 'HELIX Lean Bulk' },
 ]

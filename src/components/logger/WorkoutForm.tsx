@@ -13,7 +13,7 @@ export function WorkoutForm({ notes, onNotesChange, onSave, isSaving, setsCount 
     <div className="helix-card space-y-4">
       <div className="flex flex-col gap-1.5">
         <label htmlFor="workout-notes" className="text-sm font-medium text-text">
-          Notes <span className="text-muted-vital font-normal">(Hebrew supported)</span>
+          Notes <span className="text-muted font-normal">(Hebrew supported)</span>
         </label>
         <textarea
           id="workout-notes"
@@ -25,10 +25,10 @@ export function WorkoutForm({ notes, onNotesChange, onSave, isSaving, setsCount 
           placeholder="הערות לאימון... / Workout notes..."
           maxLength={2000}
           className="bg-surface-2 border border-border rounded-xl px-3 py-2.5 text-text
-                     placeholder:text-muted-vital focus:outline-none focus:ring-2
+                     placeholder:text-muted focus:outline-none focus:ring-2
                      focus:ring-primary/60 resize-none w-full text-sm leading-relaxed"
         />
-        <p className="text-xs text-muted-vital text-right" aria-live="polite">
+        <p className="text-xs text-muted text-right" aria-live="polite">
           {notes.length}/2000
         </p>
       </div>
@@ -43,7 +43,7 @@ export function WorkoutForm({ notes, onNotesChange, onSave, isSaving, setsCount 
         {isSaving ? 'Saving…' : `Save Workout (${setsCount} set${setsCount !== 1 ? 's' : ''})`}
       </button>
       {setsCount === 0 && (
-        <p className="text-xs text-muted-vital text-center">
+        <p className="text-xs text-muted text-center">
           Log at least one set before saving.
         </p>
       )}

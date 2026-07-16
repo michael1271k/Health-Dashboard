@@ -15,14 +15,14 @@ export function MetricCard({
   value,
   unit,
   icon: Icon,
-  iconColor = 'text-muted-vital',
+  iconColor = 'text-muted',
   subtext,
   isLoading,
 }: MetricCardProps) {
   return (
     <div className="helix-card flex flex-col gap-3 h-full">
       <div className="flex items-center justify-between">
-        <span className="text-sm text-muted-vital font-medium">{label}</span>
+        <span className="text-sm text-muted font-medium">{label}</span>
         <Icon className={`w-4 h-4 ${iconColor}`} aria-hidden="true" />
       </div>
 
@@ -37,10 +37,10 @@ export function MetricCard({
             <span className="helix-num text-3xl font-bold text-text">
               {value ?? '—'}
             </span>
-            {unit && <span className="text-muted-vital text-sm">{unit}</span>}
+            {unit && <span className="text-muted text-sm">{unit}</span>}
           </div>
           {subtext && (
-            <p className="text-xs text-muted-vital">{subtext}</p>
+            <p className="text-xs text-muted">{subtext}</p>
           )}
         </>
       )}

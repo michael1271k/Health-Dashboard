@@ -46,7 +46,7 @@ export function NotionSync() {
         <h2 className="font-semibold text-text">Integrations</h2>
         {configured === false && <span className="text-[11px] text-warn">Notion not configured</span>}
       </div>
-      <p className="text-fluid-xs text-muted-vital">
+      <p className="text-fluid-xs text-muted">
         Push a curated one-page summary (macros · training · sleep · effort) for every logged day to your Notion database.
         {pending != null && <> <span className="text-primary font-semibold">{pending}</span> day{pending === 1 ? '' : 's'} pending.</>}
       </p>
@@ -58,7 +58,7 @@ export function NotionSync() {
       </button>
 
       {result && (
-        <div className="text-fluid-xs text-muted-vital space-y-1">
+        <div className="text-fluid-xs text-muted space-y-1">
           <p><span className="text-success font-semibold">{result.exported}</span> exported
             {result.skipped > 0 && <> · {result.skipped} empty skipped</>}
             {result.remaining > 0 && <> · <span className="text-primary">{result.remaining} remaining</span> (tap again)</>}
@@ -70,7 +70,7 @@ export function NotionSync() {
       )}
       {error && <p className="text-danger text-fluid-xs" role="alert">{error}</p>}
       {configured === false && (
-        <p className="text-[11px] text-muted-vital flex items-center gap-1">
+        <p className="text-[11px] text-muted flex items-center gap-1">
           <ExternalLink className="w-3 h-3" /> Add NOTION_TOKEN + NOTION_DAILY_LOG_DB_ID to your environment.
         </p>
       )}

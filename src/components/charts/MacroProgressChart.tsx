@@ -29,7 +29,7 @@ export function MacroProgressChart({ data, goals, isLoading }: { data: Nutrition
     return <div className="helix-card h-64 flex items-center justify-center"><div className="w-full h-40 bg-surface-2 rounded-xl animate-pulse" /></div>
   }
   if (!data.length) {
-    return <div className="helix-card h-64 flex items-center justify-center"><p className="text-muted-vital text-sm">No nutrition data yet.</p></div>
+    return <div className="helix-card h-64 flex items-center justify-center"><p className="text-muted text-sm">No nutrition data yet.</p></div>
   }
 
   const goal = (goals?.[metric.goalKey] as number | null) ?? null
@@ -56,7 +56,7 @@ export function MacroProgressChart({ data, goals, isLoading }: { data: Nutrition
           })}
         </div>
       </div>
-      <div className="flex items-center justify-between text-xs text-muted-vital mb-2">
+      <div className="flex items-center justify-between text-xs text-muted mb-2">
         <span>{metric.label}{usePct ? ` vs ${goal}g goal` : ' (g/day)'}</span>
       </div>
       <div role="img" aria-label={`${metric.label} vs goal chart`}>

@@ -30,7 +30,7 @@ function MacroBar({ label, value, goal }: { label: 'P' | 'C' | 'F'; value: numbe
       <div className="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
         <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
       </div>
-      <span className="helix-num text-[10px] text-muted-vital tabular-nums w-7 text-right">{value != null ? Math.round(value) : '—'}</span>
+      <span className="helix-num text-[10px] text-muted tabular-nums w-7 text-right">{value != null ? Math.round(value) : '—'}</span>
     </div>
   )
 }
@@ -47,7 +47,7 @@ export function NutritionLogList({ logs, goals, isLoading, emptyMessage, onDayCl
     return <div className="space-y-2">{[...Array(6)].map((_, i) => <div key={i} className="h-16 rounded-xl bg-surface-2/60 animate-pulse" />)}</div>
   }
   if (!logs.length) {
-    return <div className="glass-card p-8 text-center text-muted-vital text-fluid-sm">{emptyMessage}</div>
+    return <div className="glass-card p-8 text-center text-muted text-fluid-sm">{emptyMessage}</div>
   }
 
   return (
@@ -65,14 +65,14 @@ export function NutritionLogList({ logs, goals, isLoading, emptyMessage, onDayCl
             style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 70px' } as React.CSSProperties}>
             <div className="w-12 shrink-0 space-y-0.5">
               <div className="text-fluid-xs font-semibold text-text leading-none">{d.toLocaleDateString('en-IL', { day: 'numeric', month: 'short' })}</div>
-              <div className="text-[9px] text-muted-vital leading-none">{d.toLocaleDateString('en-IL', { weekday: 'short' })}</div>
+              <div className="text-[9px] text-muted leading-none">{d.toLocaleDateString('en-IL', { weekday: 'short' })}</div>
               <PhaseTag phase={l.phase} />
             </div>
 
             <div className="flex-1 min-w-0">
               <div className="flex items-baseline gap-1">
                 <span className="helix-num text-fluid-lg font-bold leading-none" style={{ color: calColor }}>{l.calories != null ? Math.round(l.calories).toLocaleString() : '—'}</span>
-                <span className="text-[10px] text-muted-vital">kcal</span>
+                <span className="text-[10px] text-muted">kcal</span>
               </div>
               <div className="flex items-center gap-2 mt-1.5">
                 <MacroBar label="P" value={l.proteinG} goal={goals.protein} />
@@ -83,7 +83,7 @@ export function NutritionLogList({ logs, goals, isLoading, emptyMessage, onDayCl
 
             <div className="text-right shrink-0">
               <div className="helix-num text-fluid-xs font-semibold text-text leading-none">{l.steps != null ? Math.round(l.steps / 1000) + 'k' : '—'}</div>
-              <div className="text-[9px] text-muted-vital">steps</div>
+              <div className="text-[9px] text-muted">steps</div>
             </div>
           </div>
         )

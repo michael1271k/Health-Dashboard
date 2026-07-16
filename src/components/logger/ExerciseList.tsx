@@ -26,7 +26,7 @@ export function ExerciseList({ exercises, sets, onAddSet, lastSets, isLoading }:
 
   if (!exercises.length) {
     return (
-      <p className="text-muted-vital text-sm py-8 text-center">
+      <p className="text-muted text-sm py-8 text-center">
         No exercises found for this split. Run migration 007 in Supabase to seed them.
       </p>
     )

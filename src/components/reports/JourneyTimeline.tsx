@@ -54,7 +54,7 @@ export const JourneyTimeline = memo(function JourneyTimeline({ reports, gymRepor
               {showBoundary && (
                 <div className="flex items-center gap-2 py-2 -ml-11 pl-11">
                   <span className="h-px flex-1 bg-white/10" />
-                  <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-muted-vital">era boundary · 19 Jul 2026</span>
+                  <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-muted">era boundary · 19 Jul 2026</span>
                   <span className="h-px flex-1 bg-white/10" />
                 </div>
               )}
@@ -80,7 +80,7 @@ export const JourneyTimeline = memo(function JourneyTimeline({ reports, gymRepor
                       {helix ? 'HELIX' : 'PPL'}
                     </span>
                   </div>
-                  <div className="flex items-center gap-3 mt-1.5 text-fluid-xs text-muted-vital">
+                  <div className="flex items-center gap-3 mt-1.5 text-fluid-xs text-muted">
                     <span className="helix-num">{new Date(w.weekStart + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
                     <span className="flex items-center gap-1"><Dumbbell className="w-3 h-3" />{s.sessions}</span>
                     {s.volume > 0 && <span className="helix-num">{((displayWeight(s.volume) ?? 0) / 1000).toFixed(1)}{unit === 'lb' ? 'k' : 't'}</span>}

@@ -14,7 +14,7 @@ export function MuscleAnalyticsSection({ days, era = 'all' }: { days: number; er
   const unit = useUnitSystem()
   if (isLoading) return <div className="helix-card h-64 animate-pulse" />
   if (!data || data.stats.every((s) => s.sets === 0)) {
-    return <div className="helix-card p-8 text-center text-muted-vital text-fluid-sm">No workout sets in this range yet.</div>
+    return <div className="helix-card p-8 text-center text-muted text-fluid-sm">No workout sets in this range yet.</div>
   }
 
   const radarData = data.stats.map((s) => ({ group: s.group, sets: s.sets }))
@@ -26,7 +26,7 @@ export function MuscleAnalyticsSection({ days, era = 'all' }: { days: number; er
         {/* Balance radar */}
         <div className="helix-card">
           <h3 className="font-heading font-semibold text-base">Muscle Balance</h3>
-          <p className="text-fluid-xs text-muted-vital mb-2">Working sets per group · {days}d</p>
+          <p className="text-fluid-xs text-muted mb-2">Working sets per group · {days}d</p>
           <ResponsiveContainer width="100%" height={250}>
             <RadarChart data={radarData} outerRadius="70%">
               <PolarGrid stroke="rgba(255,255,255,0.1)" />
@@ -39,7 +39,7 @@ export function MuscleAnalyticsSection({ days, era = 'all' }: { days: number; er
         {/* Sets per muscle per week */}
         <div className="helix-card">
           <h3 className="font-heading font-semibold text-base">Sets / Muscle / Week</h3>
-          <p className="text-fluid-xs text-muted-vital mb-2">Hypertrophy volume distribution</p>
+          <p className="text-fluid-xs text-muted mb-2">Hypertrophy volume distribution</p>
           <ResponsiveContainer width="100%" height={230}>
             <BarChart data={data.weekly} margin={{ top: 4, right: 8, bottom: 0, left: -12 }}>
               <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
@@ -51,7 +51,7 @@ export function MuscleAnalyticsSection({ days, era = 'all' }: { days: number; er
           </ResponsiveContainer>
           <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
             {MUSCLE_GROUPS.map((g) => (
-              <span key={g} className="flex items-center gap-1 text-[10px] text-muted-vital">
+              <span key={g} className="flex items-center gap-1 text-[10px] text-muted">
                 <span className="w-2 h-2 rounded-full" style={{ background: GROUP_COLOR[g] }} />{g}
               </span>
             ))}
@@ -68,7 +68,7 @@ export function MuscleAnalyticsSection({ days, era = 'all' }: { days: number; er
               <div key={s.group}>
                 <div className="flex justify-between text-fluid-xs mb-0.5">
                   <span className="text-text">{s.group}</span>
-                  <span className="helix-num text-muted-vital">{((displayWeight(s.volume) ?? 0) / 1000).toFixed(1)}{unit === 'lb' ? 'k' : 't'}</span>
+                  <span className="helix-num text-muted">{((displayWeight(s.volume) ?? 0) / 1000).toFixed(1)}{unit === 'lb' ? 'k' : 't'}</span>
                 </div>
                 <div className="h-2 rounded-full bg-white/[0.06] overflow-hidden">
                   <div className="h-full rounded-full" style={{ width: `${(s.volume / maxVol) * 100}%`, background: GROUP_COLOR[s.group] }} />
@@ -88,7 +88,7 @@ export function MuscleAnalyticsSection({ days, era = 'all' }: { days: number; er
                 <div key={s.group} className="flex items-center gap-2.5">
                   <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: c, boxShadow: `0 0 8px ${c}88` }} />
                   <span className="flex-1 text-fluid-sm text-text">{s.group}</span>
-                  <span className="helix-num text-fluid-xs text-muted-vital">
+                  <span className="helix-num text-fluid-xs text-muted">
                     {s.daysSince == null ? 'never' : s.daysSince === 0 ? 'today' : `${s.daysSince}d ago`}
                   </span>
                 </div>

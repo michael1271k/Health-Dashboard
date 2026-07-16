@@ -35,7 +35,7 @@ export function BottomNav() {
                 aria-current={active ? 'page' : undefined}
                 className={`flex flex-col items-center gap-0.5 py-1.5 px-1 rounded-xl
                             transition-[color,background] duration-200 min-h-[44px]
-                            ${active ? 'text-primary' : 'text-muted-vital'}`}
+                            ${active ? 'text-primary' : 'text-muted'}`}
                 style={active ? { background: 'rgba(111,233,255,0.12)', color: '#6FE9FF' } : {}}
               >
                 <Icon className="w-5 h-5" aria-hidden="true" />

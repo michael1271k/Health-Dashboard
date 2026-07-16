@@ -1,7 +1,7 @@
 import { test, expect, devices } from '@playwright/test'
 
 /**
- * Phase 6 responsive guarantees. These run unauthenticated, so the dashboard
+ * Responsive layout guarantees. These run unauthenticated, so the dashboard
  * itself redirects to /auth — but the app shell (nav, glass, layout) and the
  * CSS contracts that fix the mobile bugs are still verifiable on every viewport.
  */

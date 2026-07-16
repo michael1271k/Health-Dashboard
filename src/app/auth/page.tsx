@@ -31,7 +31,7 @@ export default function AuthPage() {
 
   const inputClass =
     'w-full rounded-xl border border-border bg-surface-2 px-4 py-2.5 text-text text-sm ' +
-    'placeholder:text-muted-vital focus:outline-none focus:ring-2 focus:ring-primary/60 ' +
+    'placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/60 ' +
     'transition-[border-color] duration-200'
 
   return (
@@ -41,7 +41,7 @@ export default function AuthPage() {
           <HelixMark className="w-6 h-6 text-primary" />
           <div>
             <h1 className="font-heading text-2xl font-bold tracking-wide">HELIX</h1>
-            <p className="text-xs text-muted-vital leading-none">Engineer Your Ascent.</p>
+            <p className="text-xs text-muted leading-none">Engineer Your Ascent.</p>
           </div>
         </div>
 
@@ -90,7 +90,7 @@ export default function AuthPage() {
           </button>
 
           {/* Standalone-PWA reassurance: this container keeps its own session. */}
-          <p className="text-[11px] text-muted-vital text-center leading-relaxed">
+          <p className="text-[11px] text-muted text-center leading-relaxed">
             You stay signed in on this device — sign in once and HELIX remembers you here.
           </p>
         </form>

@@ -128,18 +128,18 @@ export default function SettingsPage() {
     'w-full rounded-xl border border-border bg-surface-2 px-3 py-2 text-text text-sm ' +
     'focus:outline-none focus:ring-2 focus:ring-primary/60 transition-[border-color] duration-200'
 
-  if (loading) return <p className="text-muted-vital text-sm">Loading…</p>
+  if (loading) return <p className="text-muted text-sm">Loading…</p>
 
   return (
     <div className="space-y-8 max-w-2xl">
       <div>
         <h1 className="font-heading text-fluid-2xl font-bold text-text">Settings</h1>
-        <p className="text-muted-vital text-sm mt-0.5">Goals &amp; context for daily scoring</p>
+        <p className="text-muted text-sm mt-0.5">Goals &amp; context for daily scoring</p>
       </div>
 
       {/* Nutrition modes moved to the Nutrition tab */}
       {goals.goal_preset && (
-        <p className="text-xs text-muted-vital">
+        <p className="text-xs text-muted">
           Active nutrition mode: <span className="text-primary capitalize">{goals.goal_preset}</span>
           <span className="opacity-70"> — change it in the Nutrition tab.</span>
         </p>
@@ -148,7 +148,7 @@ export default function SettingsPage() {
       {/* Context mode */}
       <section className="helix-card space-y-3">
         <h2 className="font-semibold text-text">Context Mode</h2>
-        <p className="text-xs text-muted-vital">
+        <p className="text-xs text-muted">
           Adjusts scoring penalties for exceptional circumstances.
         </p>
         <div className="grid grid-cols-2 gap-2">
@@ -160,7 +160,7 @@ export default function SettingsPage() {
               className={`rounded-xl border px-3 py-2.5 text-left text-sm transition-colors duration-150
                 ${goals.context_mode === mode
                   ? 'border-primary bg-primary/10 text-primary'
-                  : 'border-border text-muted-vital hover:border-primary/40 hover:text-text'}`}
+                  : 'border-border text-muted hover:border-primary/40 hover:text-text'}`}
             >
               <div className="font-medium">{CONTEXT_LABELS[mode].label}</div>
               <div className="text-xs opacity-70 mt-0.5">{CONTEXT_LABELS[mode].desc}</div>
@@ -193,7 +193,7 @@ export default function SettingsPage() {
             { key: 'fat_goal_g' as const,      label: 'Fat (g)',         step: 1  },
           ]).map(({ key, label, step }) => (
             <div key={key} className="space-y-1">
-              <label className="text-xs font-medium text-muted-vital">{label}</label>
+              <label className="text-xs font-medium text-muted">{label}</label>
               <input
                 type="number"
                 step={step}
@@ -214,7 +214,7 @@ export default function SettingsPage() {
         <div className="flex items-center justify-between gap-4">
           <div>
             <div className="text-sm text-text font-medium">Day rolls over at</div>
-            <div className="text-xs text-muted-vital">Late-night sessions still count as the previous day</div>
+            <div className="text-xs text-muted">Late-night sessions still count as the previous day</div>
           </div>
           <select
             value={goals.day_cutoff_hour}
@@ -228,12 +228,12 @@ export default function SettingsPage() {
         <div className="flex items-center justify-between gap-4">
           <div>
             <div className="text-sm text-text font-medium">Weight units</div>
-            <div className="text-xs text-muted-vital">Weight, volume &amp; body composition</div>
+            <div className="text-xs text-muted">Weight, volume &amp; body composition</div>
           </div>
           <div className="flex rounded-xl border border-border overflow-hidden shrink-0">
             {(['kg', 'lb'] as const).map((u) => (
               <button key={u} onClick={() => { save({ unit_system: u }); applyPrefsToDevice(goals.day_cutoff_hour, u, goals.reduce_motion) }}
-                className={`px-4 py-2 text-sm font-semibold uppercase ${goals.unit_system === u ? 'bg-primary/15 text-primary' : 'text-muted-vital'}`}>
+                className={`px-4 py-2 text-sm font-semibold uppercase ${goals.unit_system === u ? 'bg-primary/15 text-primary' : 'text-muted'}`}>
                 {u}
               </button>
             ))}
@@ -243,7 +243,7 @@ export default function SettingsPage() {
         <div className="flex items-center justify-between gap-4">
           <div>
             <div className="text-sm text-text font-medium">Reduce motion</div>
-            <div className="text-xs text-muted-vital">Disable liquid &amp; aurora animations (saves battery)</div>
+            <div className="text-xs text-muted">Disable liquid &amp; aurora animations (saves battery)</div>
           </div>
           <button
             onClick={() => { const v = !goals.reduce_motion; save({ reduce_motion: v }); applyPrefsToDevice(goals.day_cutoff_hour, goals.unit_system, v) }}
@@ -257,7 +257,7 @@ export default function SettingsPage() {
         <div className="flex items-center justify-between gap-4">
           <div>
             <div className="text-sm text-text font-medium">Auto-log scheduled supplements</div>
-            <div className="text-xs text-muted-vital">Mark each supplement taken once its scheduled time passes</div>
+            <div className="text-xs text-muted">Mark each supplement taken once its scheduled time passes</div>
           </div>
           <button
             onClick={() => save({ auto_log_supplements: !goals.auto_log_supplements })}
@@ -280,7 +280,7 @@ export default function SettingsPage() {
             { key: 'water_goal_ml' as const,      label: 'Water (ml)',          step: 100  },
           ]).map(({ key, label, step }) => (
             <div key={key} className="space-y-1">
-              <label className="text-xs font-medium text-muted-vital">{label}</label>
+              <label className="text-xs font-medium text-muted">{label}</label>
               <input
                 type="number"
                 step={step}
@@ -301,7 +301,7 @@ export default function SettingsPage() {
         <h2 className="font-semibold text-text">Administration</h2>
         <Link href="/users" className="btn-glass w-full justify-between min-h-[44px]">
           <span className="flex items-center gap-2"><Users className="w-4 h-4 text-primary" /> User Management</span>
-          <span className="text-fluid-xs text-muted-vital">admin only →</span>
+          <span className="text-fluid-xs text-muted">admin only →</span>
         </Link>
       </section>
 
@@ -313,7 +313,7 @@ export default function SettingsPage() {
         </p>
       )}
 
-      {saving && <p className="text-xs text-muted-vital">Saving…</p>}
+      {saving && <p className="text-xs text-muted">Saving…</p>}
     </div>
   )
 }
@@ -333,9 +333,9 @@ function CrashRecorderRow() {
       <div className="flex items-center justify-between">
         <h2 className="font-semibold text-text">Last recorded crash</h2>
         <button onClick={() => { try { localStorage.removeItem('helix_last_crash') } catch { /* ignore */ } setCrash(null) }}
-          className="text-fluid-xs text-muted-vital hover:text-text min-h-[32px]">clear</button>
+          className="text-fluid-xs text-muted hover:text-text min-h-[32px]">clear</button>
       </div>
-      <p className="text-[11px] font-mono text-muted-vital break-words">
+      <p className="text-[11px] font-mono text-muted break-words">
         {new Date(crash.at).toLocaleString('en-GB')} · build {crash.buildId.slice(0, 10)}<br />{crash.message}
       </p>
     </section>

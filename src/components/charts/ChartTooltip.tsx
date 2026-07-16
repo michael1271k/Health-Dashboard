@@ -20,7 +20,7 @@ export function ChartTooltip({ active, payload, label }: TooltipProps) {
       }}
     >
       {label && (
-        <p className="text-muted-vital text-xs mb-1.5 font-medium">{label}</p>
+        <p className="text-muted text-xs mb-1.5 font-medium">{label}</p>
       )}
       <div className="space-y-1">
         {payload.map((entry) => (
@@ -30,14 +30,14 @@ export function ChartTooltip({ active, payload, label }: TooltipProps) {
               style={{ backgroundColor: entry.color }}
               aria-hidden="true"
             />
-            <span className="text-muted-vital">{entry.name}:</span>
+            <span className="text-muted">{entry.name}:</span>
             <span className="helix-num font-semibold text-text">
               {typeof entry.value === 'number'
                 ? entry.value % 1 === 0
                   ? entry.value.toLocaleString()
                   : entry.value.toFixed(1)
                 : entry.value}
-              {entry.unit && <span className="text-muted-vital ml-0.5">{entry.unit}</span>}
+              {entry.unit && <span className="text-muted ml-0.5">{entry.unit}</span>}
             </span>
           </div>
         ))}

@@ -1,12 +1,12 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import { useReports, useMonthActivity, useGymReports } from '@/lib/hooks/useWeekly'
 import { getWeekPhase, phaseBadgeStyle } from '@/lib/phases'
 import { FileSystemBrowser } from '@/components/reports/FileSystemBrowser'
 import { ContinuumTimeline } from '@/components/timeline/ContinuumTimeline'
-import { DaySummaryModal } from '@/components/nutrition/DaySummaryModal'
 import { Sheet } from '@/components/ui/Sheet'
 import { authedFetch } from '@/lib/utils/authedFetch'
 import { CalendarDays, ChevronLeft, ChevronRight, Loader2, Sparkles, FolderOpen } from 'lucide-react'
@@ -22,6 +22,7 @@ const addDays = (d: Date, n: number) => { const x = new Date(d); x.setUTCDate(x.
  */
 export default function WeeklyPage() {
   const qc = useQueryClient()
+  const router = useRouter()
   const today = new Date()
   const [month, setMonth] = useState({ y: today.getUTCFullYear(), m: today.getUTCMonth() })
   const [era, setEra] = useState<'all' | 'ppl' | 'axis'>('all')
@@ -32,11 +33,11 @@ export default function WeeklyPage() {
   const [activeDay, setActiveDay] = useState<string | null>(() => {
     try { return sessionStorage.getItem('helix_last_day') } catch { return null }
   })
-  const [dayModal, setDayModal] = useState<string | null>(null)
+  // Tapping a day routes straight into its Daily Nexus (no intermediate modal).
   const openDay = (d: string) => {
     setActiveDay(d)
-    setDayModal(d)
     try { sessionStorage.setItem('helix_last_day', d) } catch { /* ignore */ }
+    router.push(`/day/${d}`)
   }
   const [generating, setGenerating] = useState(false)
   const [genWeek, setGenWeek] = useState<string | null>(null)
@@ -77,7 +78,7 @@ export default function WeeklyPage() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="font-heading text-fluid-2xl font-bold text-text">Journey</h1>
-          <p className="text-muted-vital text-fluid-sm mt-0.5">Every day, one record · tap a day to open its vault</p>
+          <p className="text-muted text-fluid-sm mt-0.5">Every day, one record · tap a day to open its vault</p>
         </div>
         <button onClick={() => setCalOpen(true)} className="btn-glass shrink-0 min-h-[44px]" aria-label="Jump to a date">
           <CalendarDays className="w-4 h-4" /> Jump
@@ -108,14 +109,14 @@ export default function WeeklyPage() {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <button onClick={() => setMonth((p) => ({ y: p.m === 0 ? p.y - 1 : p.y, m: p.m === 0 ? 11 : p.m - 1 }))}
-              className="p-2 rounded-lg hover:bg-white/[0.05] text-muted-vital min-h-[40px]" aria-label="Previous month"><ChevronLeft className="w-4 h-4" /></button>
+              className="p-2 rounded-lg hover:bg-white/[0.05] text-muted min-h-[40px]" aria-label="Previous month"><ChevronLeft className="w-4 h-4" /></button>
             <span className="font-heading font-semibold text-text text-fluid-base">{monthLabel}</span>
             <button onClick={() => setMonth((p) => ({ y: p.m === 11 ? p.y + 1 : p.y, m: p.m === 11 ? 0 : p.m + 1 }))}
-              className="p-2 rounded-lg hover:bg-white/[0.05] text-muted-vital min-h-[40px]" aria-label="Next month"><ChevronRight className="w-4 h-4" /></button>
+              className="p-2 rounded-lg hover:bg-white/[0.05] text-muted min-h-[40px]" aria-label="Next month"><ChevronRight className="w-4 h-4" /></button>
           </div>
 
           <div className="grid grid-cols-7 gap-1 text-center">
-            {WEEKDAYS.map((d, i) => <div key={i} className="text-[10px] text-muted-vital font-medium">{d}</div>)}
+            {WEEKDAYS.map((d, i) => <div key={i} className="text-[10px] text-muted font-medium">{d}</div>)}
           </div>
 
           <div className="space-y-1">
@@ -145,11 +146,11 @@ export default function WeeklyPage() {
                         <button key={ds} onClick={() => { setCalOpen(false); openDay(ds) }}
                           title={`Open ${ds}`}
                           className={`aspect-square flex flex-col items-center justify-center rounded-md text-[11px] transition-colors hover:bg-primary/10
-                            ${inMonth ? 'text-text' : 'text-muted-vital/40'}`}>
+                            ${inMonth ? 'text-text' : 'text-muted/40'}`}>
                           <span>{day.getUTCDate()}</span>
                           <span className="flex gap-0.5 mt-0.5 h-1">
                             {hasWorkout && <span className="w-1 h-1 rounded-full bg-primary" />}
-                            {hasScore && !hasWorkout && <span className="w-1 h-1 rounded-full bg-muted-vital" />}
+                            {hasScore && !hasWorkout && <span className="w-1 h-1 rounded-full bg-muted" />}
                           </span>
                         </button>
                       )
@@ -160,15 +161,12 @@ export default function WeeklyPage() {
             })}
           </div>
 
-          <p className="text-[11px] text-muted-vital flex gap-3 flex-wrap pt-1">
+          <p className="text-[11px] text-muted flex gap-3 flex-wrap pt-1">
             <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-primary inline-block" /> workout</span>
-            <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-muted-vital inline-block" /> logged</span>
+            <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-muted inline-block" /> logged</span>
           </p>
         </div>
       </Sheet>
-
-      {/* ── Day summary modal (keeps timeline context + active state) ── */}
-      <DaySummaryModal date={dayModal} onClose={() => setDayModal(null)} />
 
       {/* ── Week files sheet (reports drill) ── */}
       <Sheet open={!!filesWeek} onClose={() => setFilesWeek(null)} title="Week files">

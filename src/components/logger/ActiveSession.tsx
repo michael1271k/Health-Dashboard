@@ -57,7 +57,7 @@ export function ActiveSession({ onSaved }: ActiveSessionProps) {
       <div className="helix-card text-center space-y-4 py-8">
         <Dumbbell className="w-10 h-10 text-primary mx-auto" aria-hidden="true" />
         <h2 className="font-heading text-xl font-bold text-text">Workout Saved!</h2>
-        <div className="space-y-1 text-muted-vital text-sm">
+        <div className="space-y-1 text-muted text-sm">
           <p>{sets.length} sets · {Math.round(savedResult.totalVolumeKg)}kg total volume</p>
         </div>
         {savedResult.newPRs.length > 0 && (
@@ -66,7 +66,7 @@ export function ActiveSession({ onSaved }: ActiveSessionProps) {
               New PR{savedResult.newPRs.length !== 1 ? 's' : ''}! 🎉
             </p>
             {savedResult.newPRs.map((pr) => (
-              <p key={pr.exerciseName} className="text-xs text-muted-vital">
+              <p key={pr.exerciseName} className="text-xs text-muted">
                 {pr.exerciseName}: {pr.est1rm}kg est. 1RM
               </p>
             ))}
@@ -95,7 +95,7 @@ export function ActiveSession({ onSaved }: ActiveSessionProps) {
         <h2 className="font-heading font-semibold text-lg text-text mb-3">
           Select Split
           {todayDefault !== 'rest' && (
-            <span className="text-xs font-normal text-muted-vital ml-2">(today&apos;s schedule pre-selected)</span>
+            <span className="text-xs font-normal text-muted ml-2">(today&apos;s schedule pre-selected)</span>
           )}
           {todayDefault === 'rest' && (
             <span className="text-xs font-normal text-warn ml-2">Rest day — override to log anyway</span>

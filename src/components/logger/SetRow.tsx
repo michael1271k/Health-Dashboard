@@ -10,18 +10,18 @@ interface SetRowProps {
 export function SetRow({ set, isPR }: SetRowProps) {
   return (
     <div className="flex items-center gap-3 py-2 border-b border-border/50 last:border-0">
-      <span className="text-muted-vital text-sm w-6 text-center tabular-nums">
+      <span className="text-muted text-sm w-6 text-center tabular-nums">
         {set.setNumber}
       </span>
       <span className="helix-num font-semibold text-text flex-1">
         {set.weightKg}
-        <span className="text-muted-vital text-xs ml-0.5">kg</span>
+        <span className="text-muted text-xs ml-0.5">kg</span>
         {' '}×{' '}
         {set.reps}
-        <span className="text-muted-vital text-xs ml-0.5">reps</span>
+        <span className="text-muted text-xs ml-0.5">reps</span>
       </span>
       {set.rpe != null && (
-        <span className="text-xs text-muted-vital tabular-nums">
+        <span className="text-xs text-muted tabular-nums">
           RPE {set.rpe}
         </span>
       )}

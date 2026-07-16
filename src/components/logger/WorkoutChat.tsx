@@ -103,7 +103,7 @@ export function WorkoutChat({ splitDay, onClose }: WorkoutChatProps) {
           <Stat label="PRs" value={String(result.prCount)} />
         </div>
         {(result.metrics.caloriesBurned != null || result.metrics.durationMin != null) && (
-          <p className="text-xs text-muted-vital text-center">
+          <p className="text-xs text-muted text-center">
             {result.metrics.durationMin != null && `${result.metrics.durationMin} min`}
             {result.metrics.durationMin != null && result.metrics.caloriesBurned != null && ' · '}
             {result.metrics.caloriesBurned != null && `${result.metrics.caloriesBurned} kcal (Apple Health)`}
@@ -130,7 +130,7 @@ export function WorkoutChat({ splitDay, onClose }: WorkoutChatProps) {
         <div className="flex flex-wrap gap-2">
           {Object.entries(metricsResult).map(([k, v]) => (
             <span key={k} className="glass-card px-3 py-1.5 text-sm">
-              <span className="text-muted-vital">{METRIC_LABELS[k] ?? k}: </span>
+              <span className="text-muted">{METRIC_LABELS[k] ?? k}: </span>
               <span className="text-text font-semibold">{v}</span>
             </span>
           ))}
@@ -150,7 +150,7 @@ export function WorkoutChat({ splitDay, onClose }: WorkoutChatProps) {
             key={val}
             onClick={() => { setIntent(val); setError(null) }}
             className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-sm font-medium transition-colors
-              ${intent === val ? 'glass-card--accent text-primary' : 'text-muted-vital'}`}
+              ${intent === val ? 'glass-card--accent text-primary' : 'text-muted'}`}
           >
             <Icon className="w-3.5 h-3.5" /> {label}
           </button>
@@ -174,7 +174,7 @@ export function WorkoutChat({ splitDay, onClose }: WorkoutChatProps) {
         </div>
       )}
 
-      <p className="text-fluid-xs text-muted-vital leading-relaxed">
+      <p className="text-fluid-xs text-muted leading-relaxed">
         {intent === 'workout'
           ? 'Paste a workout copied from Hevy (parsed instantly, no AI needed) — or describe your session in Hebrew/English. BPM & calories come from Apple Health.'
           : 'Type the metrics your smart scale shows that HealthKit can’t capture (muscle %, water %, visceral fat, bone, BMR).'}
@@ -198,7 +198,7 @@ export function WorkoutChat({ splitDay, onClose }: WorkoutChatProps) {
           ? 'לדוגמה: לחיצת חזה 80 קג 3 סטים של 8...\ne.g. Bench press 80kg 3x8, felt strong'
           : 'לדוגמה: השלמה מהמשקל להיום: מים 55.6, שריר 77.2, ויסרלי 7'}
         className="w-full bg-surface-2 border border-border rounded-xl px-3 py-2.5 text-text text-sm
-                   placeholder:text-muted-vital focus:outline-none focus:ring-2 focus:ring-primary/60
+                   placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/60
                    resize-none leading-relaxed"
       />
 
@@ -219,7 +219,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="glass-card py-2.5">
       <div className="helix-num font-bold text-text">{value}</div>
-      <div className="text-[11px] text-muted-vital">{label}</div>
+      <div className="text-[11px] text-muted">{label}</div>
     </div>
   )
 }

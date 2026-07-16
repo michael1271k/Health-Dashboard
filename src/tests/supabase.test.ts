@@ -27,8 +27,8 @@ describe('Database types', () => {
     expect(PPL_SPLITS.lower.color).toBe('#E8C57A')   // gold
   })
 
-  it('PPL_SPLITS legs label is Legs/Lower (canonical combined split)', () => {
-    expect(PPL_SPLITS.legs.label).toBe('Legs/Lower')
+  it('PPL_SPLITS legs label is Legs (canonical combined split)', () => {
+    expect(PPL_SPLITS.legs.label).toBe('Legs')
   })
 })
 
@@ -50,9 +50,9 @@ describe('LOGGER_SPLITS', () => {
     }
   })
 
-  it('legs entry is labelled Legs/Lower', () => {
+  it('legs entry is labelled Legs', () => {
     const legs = LOGGER_SPLITS.find(s => s.day === 'legs')
-    expect(legs?.label).toBe('Legs/Lower')
+    expect(legs?.label).toBe('Legs')
   })
 })
 
@@ -68,8 +68,8 @@ describe('WEEKDAY_SPLIT', () => {
     expect(WEEKDAY_SPLIT[6]).toBe('rest')
   })
 
-  it('Wednesday (3) and Thursday (4) are both legs (Legs/Lower)', () => {
-    // Mon=1 and Thu=4 are Legs/Lower days; Wed=3 is Pull
+  it('Monday (1) and Thursday (4) are both legs (Legs)', () => {
+    // Mon=1 and Thu=4 are Legs days; Wed=3 is Pull
     expect(WEEKDAY_SPLIT[1]).toBe('legs')
     expect(WEEKDAY_SPLIT[4]).toBe('legs')
     expect(WEEKDAY_SPLIT[3]).toBe('pull')

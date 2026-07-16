@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Star, ChevronDown } from 'lucide-react'
+import { Star, ChevronDown, Sparkles } from 'lucide-react'
 import type { GymReportRow } from '@/lib/hooks/useWeekly'
 import { useSessionIntel } from '@/lib/hooks/useSessionIntel'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
@@ -10,7 +10,7 @@ import { MarkdownView } from './MarkdownView'
 function Chip({ label, value, accent = '#16F5C3' }: { label: string; value: string; accent?: string }) {
   return (
     <span className="inline-flex flex-col rounded-xl px-3 py-1.5 border" style={{ borderColor: `${accent}40`, background: `${accent}14` }}>
-      <span className="text-[9px] uppercase tracking-wide text-muted-vital leading-none">{label}</span>
+      <span className="text-[9px] uppercase tracking-wide text-muted leading-none">{label}</span>
       <span className="helix-num text-fluid-sm font-bold leading-tight" style={{ color: accent }}>{value}</span>
     </span>
   )
@@ -30,8 +30,23 @@ export function SessionIntelCard({ session }: { session: GymReportRow }) {
 
   const maxVol = Math.max(...(intel?.volumes.map((v) => v.volumeKg) ?? [1]), 1)
 
+  // The coach output is now a brief 2-sentence insight, surfaced up top. Older
+  // sessions may still carry a long markdown report — those stay collapsible.
+  const md = session.reportMd?.trim() ?? ''
+  const insight = md && md.length <= 280 && !md.includes('#') ? md : null
+  const longNotes = md && !insight ? md : null
+
   return (
     <div className="space-y-4">
+      {/* Coach insight — 2 sentences, front and centre (numbers are charted below) */}
+      {insight && (
+        <div className="rounded-2xl border px-3.5 py-3 flex gap-2.5 items-start"
+          style={{ borderColor: '#16F5C333', background: '#16F5C30d', boxShadow: '0 0 18px #16F5C314' }}>
+          <Sparkles className="w-4 h-4 shrink-0 mt-0.5" style={{ color: '#16F5C3', filter: 'drop-shadow(0 0 4px #16F5C3)' }} aria-hidden="true" />
+          <p className="text-fluid-sm text-text/90 leading-relaxed">{insight}</p>
+        </div>
+      )}
+
       {/* Hero chips — volume + sets GUARANTEED (computed from sets when the row lacks them) */}
       <div className="flex flex-wrap gap-2">
         {session.durationMin != null && <Chip label="Duration" value={`${session.durationMin}m`} />}
@@ -43,12 +58,12 @@ export function SessionIntelCard({ session }: { session: GymReportRow }) {
       {/* Δ vs the previous session of this EXACT type (Upper A vs last Upper A) */}
       {intel?.volumeDeltaPct != null && (
         <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-3 py-2 flex items-center gap-2 text-fluid-xs">
-          <span className="text-muted-vital">vs last <span className="text-text font-medium">{intel.typeLabel}</span>:</span>
+          <span className="text-muted">vs last <span className="text-text font-medium">{intel.typeLabel}</span>:</span>
           <span className="helix-num font-bold" style={{ color: intel.volumeDeltaPct >= 0 ? '#43F59B' : '#FF5470' }}>
             volume {intel.volumeDeltaPct >= 0 ? '+' : ''}{intel.volumeDeltaPct}%
           </span>
           {intel.setsDelta != null && (
-            <span className="helix-num text-muted-vital">· sets {intel.setsDelta > 0 ? `+${intel.setsDelta}` : intel.setsDelta === 0 ? '=' : intel.setsDelta}</span>
+            <span className="helix-num text-muted">· sets {intel.setsDelta > 0 ? `+${intel.setsDelta}` : intel.setsDelta === 0 ? '=' : intel.setsDelta}</span>
           )}
         </div>
       )}
@@ -73,7 +88,7 @@ export function SessionIntelCard({ session }: { session: GymReportRow }) {
         <div className="rounded-2xl border border-white/[0.07] overflow-hidden">
           <table className="w-full text-fluid-xs">
             <thead>
-              <tr className="border-b border-white/[0.08] text-muted-vital">
+              <tr className="border-b border-white/[0.08] text-muted">
                 <th className="px-3 py-2 text-left font-semibold">Exercise</th>
                 <th className="px-2 py-2 text-right font-semibold">Top set</th>
                 <th className="px-2 py-2 text-right font-semibold">Prev</th>
@@ -87,7 +102,7 @@ export function SessionIntelCard({ session }: { session: GymReportRow }) {
                   <tr key={d.name} className="border-b border-white/[0.04] last:border-0">
                     <td className="px-3 py-1.5 text-text/90 truncate max-w-[130px]">{d.name}{d.isPr && <Star className="inline w-3 h-3 ml-1 -mt-0.5" style={{ color: '#E8C57A' }} />}</td>
                     <td className="px-2 py-1.5 text-right helix-num text-text">{displayWeight(d.topKg)}{unit} × {d.topReps}</td>
-                    <td className="px-2 py-1.5 text-right helix-num text-muted-vital">{d.prevKg != null ? `${displayWeight(d.prevKg)}${unit}` : '—'}</td>
+                    <td className="px-2 py-1.5 text-right helix-num text-muted">{d.prevKg != null ? `${displayWeight(d.prevKg)}${unit}` : '—'}</td>
                     <td className="px-3 py-1.5 text-right font-bold" style={{ color }}>{sym}</td>
                   </tr>
                 )
@@ -100,7 +115,7 @@ export function SessionIntelCard({ session }: { session: GymReportRow }) {
       {/* Volume trail vs last same-split sessions */}
       {(intel?.volumes.length ?? 0) >= 2 && (
         <div>
-          <p className="text-[10px] uppercase tracking-wide text-muted-vital mb-1.5">Volume vs previous {intel!.volumes.length - 1} session{intel!.volumes.length > 2 ? 's' : ''}</p>
+          <p className="text-[10px] uppercase tracking-wide text-muted mb-1.5">Volume vs previous {intel!.volumes.length - 1} session{intel!.volumes.length > 2 ? 's' : ''}</p>
           <div className="flex items-end gap-2 h-14">
             {intel!.volumes.map((v, i) => {
               const isThis = i === intel!.volumes.length - 1
@@ -111,7 +126,7 @@ export function SessionIntelCard({ session }: { session: GymReportRow }) {
                     background: isThis ? '#16F5C3' : 'rgba(255,255,255,0.12)',
                     boxShadow: isThis ? '0 0 10px #16F5C366' : undefined,
                   }} />
-                  <span className="text-[8px] text-muted-vital helix-num">{new Date(v.date + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
+                  <span className="text-[8px] text-muted helix-num">{new Date(v.date + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
                 </div>
               )
             })}
@@ -119,16 +134,16 @@ export function SessionIntelCard({ session }: { session: GymReportRow }) {
         </div>
       )}
 
-      {/* Coach Notes — the old markdown, demoted + collapsible */}
-      {session.reportMd && (
+      {/* Legacy long-form report — demoted + collapsible (new sessions use the insight banner) */}
+      {longNotes && (
         <div className="rounded-2xl border border-white/[0.06] overflow-hidden">
-          <button onClick={() => setNotesOpen((v) => !v)} className="w-full flex items-center justify-between px-3 py-2.5 text-fluid-sm text-muted-vital hover:text-text">
+          <button onClick={() => setNotesOpen((v) => !v)} className="w-full flex items-center justify-between px-3 py-2.5 text-fluid-sm text-muted hover:text-text">
             Coach Notes
             <ChevronDown className={`w-4 h-4 transition-transform ${notesOpen ? 'rotate-180' : ''}`} />
           </button>
           {notesOpen && (
             <div className="px-3 pb-3 max-h-[45vh] overflow-y-auto no-scrollbar">
-              <MarkdownView md={session.reportMd} />
+              <MarkdownView md={longNotes} />
             </div>
           )}
         </div>

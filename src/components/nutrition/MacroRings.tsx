@@ -58,7 +58,7 @@ export const MacroRings = memo(function MacroRings({ today, logs, goals }: {
     <section className="helix-card">
       <div className="flex items-baseline justify-between mb-4">
         <h2 className="font-heading font-semibold text-text">Fuel</h2>
-        <span className="text-fluid-xs text-muted-vital">goal <span className="helix-num">{goals.calorie.toLocaleString()}</span> kcal</span>
+        <span className="text-fluid-xs text-muted">goal <span className="helix-num">{goals.calorie.toLocaleString()}</span> kcal</span>
       </div>
 
       <div className="flex items-center justify-center gap-5 sm:gap-8">
@@ -68,8 +68,8 @@ export const MacroRings = memo(function MacroRings({ today, logs, goals }: {
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             {kcal != null
               ? <KineticNumber value={kcal} className="helix-num text-fluid-2xl font-bold leading-none" duration={800} />
-              : <span className="helix-num text-fluid-2xl font-bold text-muted-vital">—</span>}
-            <span className="text-[10px] text-muted-vital uppercase tracking-widest mt-1">kcal</span>
+              : <span className="helix-num text-fluid-2xl font-bold text-muted">—</span>}
+            <span className="text-[10px] text-muted uppercase tracking-widest mt-1">kcal</span>
             {remaining != null && (
               <span className="helix-num text-[11px] mt-0.5" style={{ color: over ? '#FF5470' : MACRO_COLORS.calories }}>
                 {remaining >= 0 ? `${remaining.toLocaleString()} left` : `+${Math.abs(remaining).toLocaleString()} over`}
@@ -88,7 +88,7 @@ export const MacroRings = memo(function MacroRings({ today, logs, goals }: {
               </div>
               <div className="leading-tight">
                 <span className="helix-num text-fluid-sm font-bold text-text">{m.value != null ? Math.round(m.value) : '—'}</span>
-                <span className="text-[10px] text-muted-vital"> / {m.goal ?? '—'}g</span>
+                <span className="text-[10px] text-muted"> / {m.goal ?? '—'}g</span>
                 <span className="block text-[9px] uppercase tracking-wide" style={{ color: m.color }}>{m.label}</span>
               </div>
             </div>

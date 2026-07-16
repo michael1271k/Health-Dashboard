@@ -21,17 +21,19 @@ describe('v5.1 day classification (derivePhase)', () => {
   })
 })
 
-// ── [5] APEX-5.1 split ────────────────────────────────────────────────────────
-describe('APEX-5.1 split', () => {
-  it('is the default program and trains Sun/Mon/Wed/Thu/Sat', () => {
+// ── [5] HELIX-5 split ────────────────────────────────────────────────────────
+describe('HELIX-5 split', () => {
+  it('is the default program and trains Sun/Mon/Tue/Thu/Fri', () => {
     expect(DEFAULT_PROGRAM_ID).toBe('apex51')
-    expect(APEX51.days.map((d) => d.weekday).sort()).toEqual([0, 1, 3, 4, 6])
+    expect(APEX51.days.map((d) => d.weekday).sort()).toEqual([0, 1, 2, 4, 5])
   })
-  it('Tue/Fri are Zone-2 rest days in the AXIS era', () => {
-    expect(programDayFor('apex51', 2)).toBe('rest')
-    expect(programDayFor('apex51', 5)).toBe('rest')
-    expect(isRestDayFor('2026-07-21')).toBe(true)  // Tue
-    expect(isRestDayFor('2026-07-24')).toBe(true)  // Fri
+  it('Wed/Sat are Zone-2 rest days in the AXIS era', () => {
+    expect(programDayFor('apex51', 3)).toBe('rest')
+    expect(programDayFor('apex51', 6)).toBe('rest')
+    expect(isRestDayFor('2026-07-22')).toBe(true)  // Wed
+    expect(isRestDayFor('2026-07-25')).toBe(true)  // Sat
+    expect(isRestDayFor('2026-07-21')).toBe(false) // Tue = training
+    expect(isRestDayFor('2026-07-24')).toBe(false) // Fri = training
     expect(isRestDayFor('2026-07-19')).toBe(false) // Sun = D1
   })
   it('PPL-legacy era keeps Fri/Sat rest', () => {
@@ -74,12 +76,12 @@ describe('v5.1 phase engine', () => {
     expect(getWeekPhase('2026-08-30')?.kind).toBe('maintenance')
   })
   it('cut resumes at Week 7 after the maintenance week (era-tagged label)', () => {
-    expect(getWeekPhase('2026-09-06')?.label).toBe('HELIX Cut · Phase 1 · Week 7')
+    expect(getWeekPhase('2026-09-06')?.label).toBe('Helix Cut 5.1 · Week 7')
   })
   it('the two Cut eras carry distinct tags (never mixed)', () => {
     expect(getWeekPhase('2026-05-10')?.eraTag).toBe('PPL Cut')
     expect(getWeekPhase('2026-05-10')?.era).toBe('ppl')
-    expect(getWeekPhase('2026-07-19')?.eraTag).toBe('HELIX Cut · Phase 1')
+    expect(getWeekPhase('2026-07-19')?.eraTag).toBe('Helix Cut 5.1')
     expect(getWeekPhase('2026-07-19')?.era).toBe('helix')
   })
   it('lean bulk starts 2026-11-01', () => {
@@ -119,12 +121,13 @@ describe('v5.1 battery lift drain', () => {
 import { resolveChartSplit } from '@/components/charts/VolumeChart'
 
 describe('Axis-5 Week 0', () => {
-  it('maps the two transitional days (16–17 Jul) to the HELIX era', () => {
+  it('maps the transitional ramp days (15–17 Jul) to the HELIX era', () => {
+    expect(eraForDate('2026-07-15')).toBe('axis')  // Wed
     expect(eraForDate('2026-07-16')).toBe('axis')  // Thu
     expect(eraForDate('2026-07-17')).toBe('axis')  // Fri
   })
   it('does not shift neighbouring days', () => {
-    expect(eraForDate('2026-07-15')).toBe('ppl')   // Wed before
+    expect(eraForDate('2026-07-14')).toBe('ppl')   // Tue before Week 0
     expect(eraForDate('2026-07-18')).toBe('ppl')   // Sat between W0 and W1 anchor
     expect(eraForDate('2026-07-19')).toBe('axis')  // Week-1 anchor unchanged
   })
@@ -134,11 +137,11 @@ describe('resolveChartSplit', () => {
   it('folds legacy lower into legs', () => {
     expect(resolveChartSplit('2026-05-11', 'lower', 'ppl')).toBe('legs')
   })
-  it('splits HELIX Wednesday upper sessions into Delts & Arms', () => {
-    expect(resolveChartSplit('2026-07-22', 'upper', 'axis')).toBe('arms')  // Wed
+  it('splits HELIX Tuesday upper sessions into Delts & Arms', () => {
+    expect(resolveChartSplit('2026-07-21', 'upper', 'axis')).toBe('arms')  // Tue
     expect(resolveChartSplit('2026-07-19', 'upper', 'axis')).toBe('upper') // Sun
   })
   it('leaves PPL upper untouched (no arms bucket outside HELIX)', () => {
-    expect(resolveChartSplit('2026-06-24', 'upper', 'ppl')).toBe('upper')  // Wed but PPL
+    expect(resolveChartSplit('2026-06-23', 'upper', 'ppl')).toBe('upper')  // Tue but PPL
   })
 })

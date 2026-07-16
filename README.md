@@ -1,11 +1,15 @@
-# MERIDIAN
+# HELIX
 
 **Precision health & fitness intelligence — your body, charted.**
 
-MERIDIAN is a personal, single-user PWA that turns raw Apple Health data into an
+HELIX is a personal, single-user PWA that turns raw Apple Health data into an
 actionable performance dashboard: daily readiness scoring, a recovery "battery,"
 weight/macro trends, and a fast PPL workout logger with automatic PR detection — all
 mirrored to Notion for a human-friendly training log.
+
+> **Code convention:** comments describe *what the code does* — never release or
+> development phases. No "Phase N" tags or temporary developmental labels in code
+> comments, ever. Program/era names in data (e.g. "Helix Cut 5.1") are allowed.
 
 ## What it does
 

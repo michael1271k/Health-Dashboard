@@ -28,7 +28,7 @@ export function SplitPicker({ value, onChange }: SplitPickerProps) {
                 borderColor: `color-mix(in srgb, ${color} 35%, transparent)`,
                 color,
                 boxShadow: `0 0 16px ${color}30, inset 0 1px 0 rgba(255,255,255,0.06)`,
-              } : { color: 'var(--color-muted-vital)' }}
+              } : { color: 'var(--color-muted)' }}
             >
               {label}
             </button>

@@ -56,7 +56,7 @@ export function WeightTrendChart({ data, isLoading }: WeightTrendChartProps) {
   if (!data.length || !weights.length) {
     return (
       <div className="helix-card h-64 flex items-center justify-center">
-        <p className="text-muted-vital text-sm">No body-composition data yet. Sync Apple Health or run the historical import.</p>
+        <p className="text-muted text-sm">No body-composition data yet. Sync Apple Health or run the historical import.</p>
       </div>
     )
   }
@@ -84,7 +84,7 @@ export function WeightTrendChart({ data, isLoading }: WeightTrendChartProps) {
     <div className="helix-card">
       <div className="flex items-baseline justify-between gap-2 mb-4 flex-wrap">
         <h3 className="font-heading font-semibold text-base">Body Composition</h3>
-        <div className="flex items-center gap-3 text-fluid-xs text-muted-vital">
+        <div className="flex items-center gap-3 text-fluid-xs text-muted">
           <span>
             Weight <span className="helix-num text-text">{firstWeight}</span> →{' '}
             <span className="helix-num text-text">{lastWeight}</span>{unit}

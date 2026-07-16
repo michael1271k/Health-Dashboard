@@ -24,9 +24,9 @@ import { displayWeight, weightUnit, validWeight } from '@/lib/utils/units'
 import { PHASE_META } from '@/lib/nutrition/phase'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { logicalTodayISO } from '@/lib/utils/day'
-import { scheduleDayFor, daySplitEnum, eraForDate, type ScheduleDay } from '@/lib/programs'
+import { scheduleDayFor, daySplitEnum, eraForDate, isTrainingDay, type ScheduleDay } from '@/lib/programs'
 import { useSupplements } from '@/lib/hooks/useSupplements'
-import { TOTAL_SUPPLEMENTS } from '@/lib/supplements'
+import { supplementCountForDate } from '@/lib/supplements'
 import { useBioSeries } from '@/lib/hooks/useBioStrips'
 import { useDailyLogs } from '@/lib/hooks/useNutrition'
 import {
@@ -88,6 +88,7 @@ export default function DashboardPage() {
   const calGoal = goals?.calorie_goal ?? null
   const phase = fuelLogs?.[0]?.date === logicalTodayISO() ? fuelLogs[0].phase : null
   const suppCount = taken?.size ?? 0
+  const suppTotal = supplementCountForDate(isTrainingDay(logicalTodayISO()))
   const unit = weightUnit()
 
   // Sparkline series (ascending 7d)
@@ -142,8 +143,8 @@ export default function DashboardPage() {
     },
     {
       key: 'stack', icon: Pill, label: 'Stack', accent: GOLD,
-      value: `${suppCount}/${TOTAL_SUPPLEMENTS}`,
-      status: suppCount >= TOTAL_SUPPLEMENTS ? 'protocol complete ✓' : 'tap to check off',
+      value: `${suppCount}/${suppTotal}`,
+      status: suppCount >= suppTotal ? 'protocol complete ✓' : 'tap to check off',
     },
   ]
 
@@ -157,14 +158,17 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <BrandHeader />
 
-      {/* ── Bio-Command hero: breathing orb + live strips ── */}
-      <div className="grid gap-5 lg:grid-cols-[auto_1fr] lg:items-start">
+      {/* ── Bio-Command hero: breathing orb + live strips ──
+          Mobile: dense single column (orb, then stacked strips).
+          Desktop: panoramic grid — a fixed orb rail on the left, strips fan out
+          into a 2-/3-column grid so the freed width is used, not wasted. */}
+      <div className="grid gap-5 lg:grid-cols-[minmax(300px,360px)_1fr] lg:items-center">
         <AnimatedCard index={0}>
-          <button onClick={() => setOpen('readiness')} className="block mx-auto" aria-label="Open readiness details">
+          <button onClick={() => setOpen('readiness')} className="flex h-full items-center justify-center mx-auto" aria-label="Open readiness details">
             <ReadinessOrb score={score ?? null} isLoading={scoreLoading} />
           </button>
         </AnimatedCard>
-        <div className="space-y-2.5">
+        <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
           {strips.map((s, i) => (
             <AnimatedCard key={s.key} index={i + 1}>
               <BioStrip {...s} onClick={() => setOpen(s.key)} />

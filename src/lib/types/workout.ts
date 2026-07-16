@@ -32,7 +32,7 @@ export interface SaveWorkoutPayload {
 }
 
 // Full 5-entry map — kept for history rendering (all historical split_day values)
-// "lower" is legacy; new sessions use "legs" for Legs/Lower
+// "lower" is legacy; new sessions use "legs" for the Legs day
 export const PPL_SPLITS: Record<SplitDay, { label: string; labelHe: string; color: string }> = {
   push: {
     label: 'Push',
@@ -45,7 +45,7 @@ export const PPL_SPLITS: Record<SplitDay, { label: string; labelHe: string; colo
     color: '#43F59B',   // energy violet
   },
   legs: {
-    label: 'Legs/Lower',
+    label: 'Legs',
     labelHe: 'רגליים',
     color: '#4FC3FF',   // info blue
   },
@@ -61,18 +61,19 @@ export const PPL_SPLITS: Record<SplitDay, { label: string; labelHe: string; colo
   },
 }
 
-// Logger-only 4-entry list — English only, no Hebrew, canonical Legs/Lower → 'legs'
+// Logger-only 4-entry list — English only, no Hebrew, canonical Legs day → 'legs'
 // Used by SplitPicker to render the 4 active training splits in one row.
 export const LOGGER_SPLITS: Array<{ day: SplitDay; label: string; color: string }> = [
   { day: 'upper', label: 'Upper',      color: '#19E3B1' },
-  { day: 'legs',  label: 'Legs/Lower', color: '#4FC3FF' },
+  { day: 'legs',  label: 'Legs',       color: '#4FC3FF' },
   { day: 'push',  label: 'Push',       color: '#38E1FF' },
   { day: 'pull',  label: 'Pull',       color: '#43F59B' },
 ]
 
-// Fixed-weekday cycle (Sun–Sat):
-//   Sun=Upper, Mon=Legs/Lower, Tue=Push, Wed=Pull, Thu=Legs/Lower, Fri=Rest, Sat=Rest
-// Single source of truth for the logger's default suggestion and scoring's rest-day detection.
+// Legacy PPL fixed-weekday cycle (Sun–Sat) — retained only as the logger's
+// default split suggestion (via getTodaysSplit). Era-aware training/rest logic
+// lives in programs.ts (isTrainingDay / scheduleDayFor).
+//   Sun=Upper, Mon=Legs, Tue=Push, Wed=Pull, Thu=Legs, Fri=Rest, Sat=Rest
 export const WEEKDAY_SPLIT: Record<number, SplitDay | 'rest'> = {
   0: 'upper',  // Sunday
   1: 'legs',   // Monday
@@ -100,14 +101,15 @@ export interface NutritionPreset {
   fiberGoalG: number | null
 }
 
-// Active nutrition targets. Cut is the current training phase (Jul 19 → ~Oct 10).
+// Active nutrition targets. Helix Cut 5.1 opens 2026-07-15 — 1935 kcal split
+// 180P / 180C / 55F (macros sum to exactly 1935 kcal).
 export const NUTRITION_PRESETS: Record<NutritionMode, NutritionPreset> = {
   cut: {
     mode: 'cut',
     label: 'Cut',
-    calorieGoal: 1950,
-    proteinGoalG: 170,
-    carbsGoalG: 195,
+    calorieGoal: 1935,
+    proteinGoalG: 180,
+    carbsGoalG: 180,
     fatGoalG: 55,
     fiberGoalG: 30,       // 28–35 g band
   },

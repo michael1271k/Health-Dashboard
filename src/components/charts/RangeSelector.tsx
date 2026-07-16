@@ -25,7 +25,7 @@ export function RangeSelector({ value, onChange, orientation = 'horizontal' }: R
             aria-pressed={active}
             className={`min-w-fit px-3.5 py-1.5 rounded-xl text-fluid-xs font-semibold min-h-[40px] transition-colors
               ${vertical ? 'w-full' : 'flex-1 sm:flex-none'}
-              ${active ? 'bg-primary/15 text-primary border border-primary/30' : 'text-muted-vital hover:text-text border border-transparent'}`}
+              ${active ? 'bg-primary/15 text-primary border border-primary/30' : 'text-muted hover:text-text border border-transparent'}`}
           >
             {label}
           </button>

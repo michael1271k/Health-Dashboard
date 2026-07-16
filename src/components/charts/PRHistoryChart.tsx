@@ -41,7 +41,7 @@ export function PRHistoryChart({ data, isLoading }: PRHistoryChartProps) {
   if (!data.length) {
     return (
       <div className="helix-card h-64 flex items-center justify-center">
-        <p className="text-muted-vital text-sm">Log workouts to see strength trends.</p>
+        <p className="text-muted text-sm">Log workouts to see strength trends.</p>
       </div>
     )
   }
@@ -137,7 +137,7 @@ export function PRHistoryChart({ data, isLoading }: PRHistoryChartProps) {
         </ResponsiveContainer>
       </div>
       {exercises.length > 5 && (
-        <p className="text-xs text-muted-vital mt-2 text-center">
+        <p className="text-xs text-muted mt-2 text-center">
           Showing top 5 exercises. Filter by exercise in the logger.
         </p>
       )}

@@ -1,5 +1,5 @@
 // ============================================
-// APEX Supabase Database Types
+// HELIX Supabase Database Types
 // Hand-authored (run `supabase gen types` after provisioning to regenerate)
 // ============================================
 

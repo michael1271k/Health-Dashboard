@@ -26,13 +26,13 @@ export function BatteryCard({ battery, isLoading }: BatteryCardProps) {
   const value = hasData ? battery : 0
   const { label, color } = hasData
     ? batteryLabel(value)
-    : { label: 'Awaiting score', color: 'var(--color-muted-vital)' }
+    : { label: 'Awaiting score', color: 'var(--color-muted)' }
 
   return (
     <div className="helix-card flex flex-col h-full min-h-[240px] sm:min-h-[280px]">
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-heading font-semibold text-fluid-lg">Daily Battery</h2>
-        <span className="text-fluid-xs text-muted-vital uppercase tracking-wider">Today</span>
+        <span className="text-fluid-xs text-muted uppercase tracking-wider">Today</span>
       </div>
 
       {isLoading ? (
@@ -48,7 +48,7 @@ export function BatteryCard({ battery, isLoading }: BatteryCardProps) {
             caption={label}
             captionColor={color}
           />
-          <p className="text-fluid-xs text-muted-vital text-center">
+          <p className="text-fluid-xs text-muted text-center">
             {hasData ? 'Updates live as the day drains' : 'Syncing today’s data…'}
           </p>
         </div>

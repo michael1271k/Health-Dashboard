@@ -10,7 +10,7 @@ export function Sidebar() {
 
   return (
     <aside
-      className="fixed left-0 top-0 bottom-0 z-50 hidden md:flex flex-col w-64
+      className="fixed left-0 top-0 bottom-0 z-50 hidden md:flex flex-col w-64 xl:w-72
                  border-r border-white/[0.06]"
       style={{
         background: 'rgba(255,255,255,0.025)',
@@ -24,7 +24,7 @@ export function Sidebar() {
         <HelixMark className="w-7 h-7 shrink-0" />
         <div className="leading-none">
           <span className="font-heading font-bold text-xl tracking-widest text-text">HELIX</span>
-          <p className="text-[10px] text-muted-vital tracking-wider mt-0.5 uppercase">
+          <p className="text-[10px] text-muted tracking-wider mt-0.5 uppercase">
             HELIX-5
           </p>
         </div>
@@ -41,11 +41,11 @@ export function Sidebar() {
                   href={href}
                   aria-label={label}
                   aria-current={active ? 'page' : undefined}
-                  className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium
+                  className={`relative flex items-center gap-3 px-4 py-2.5 xl:py-3 rounded-xl text-sm xl:text-[15px] font-medium
                               transition-[color,background,box-shadow,border-color] duration-200 cursor-pointer
                               ${active
                                 ? 'glass-card--accent text-primary'
-                                : 'text-muted-vital hover:text-text hover:bg-white/[0.04]'
+                                : 'text-muted hover:text-text hover:bg-white/[0.04]'
                               }`}
                   style={active ? {
                     background: 'color-mix(in srgb, #3D7DFF 12%, transparent)',
@@ -53,7 +53,14 @@ export function Sidebar() {
                     boxShadow: '0 0 16px rgba(61,125,255,0.12)',
                   } : {}}
                 >
-                  <Icon className="w-[18px] h-[18px] shrink-0" aria-hidden="true" />
+                  {active && (
+                    <span
+                      className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 rounded-r-full bg-primary"
+                      style={{ boxShadow: '0 0 10px var(--color-primary)' }}
+                      aria-hidden="true"
+                    />
+                  )}
+                  <Icon className="w-[18px] h-[18px] xl:w-5 xl:h-5 shrink-0" aria-hidden="true" />
                   <span>{label}</span>
                 </Link>
               </li>
@@ -64,7 +71,7 @@ export function Sidebar() {
 
       {/* ── Footer hint */}
       <div className="px-5 py-4 border-t border-white/[0.06]">
-        <p className="text-[11px] text-muted-vital leading-relaxed">
+        <p className="text-[11px] text-muted leading-relaxed">
           Stimulus · Recovery · Adaptation
         </p>
       </div>

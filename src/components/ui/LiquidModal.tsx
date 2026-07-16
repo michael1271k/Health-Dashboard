@@ -83,7 +83,7 @@ export function LiquidModal({ open, onClose, title, accent = '#16F5C3', children
                 : <span />}
               <button
                 onClick={onClose}
-                className="-mr-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-muted-vital hover:text-text active:scale-95 transition-transform"
+                className="-mr-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-muted hover:text-text active:scale-95 transition-transform"
                 aria-label="Close"
               >
                 <X className="w-5 h-5" />

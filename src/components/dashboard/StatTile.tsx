@@ -19,7 +19,7 @@ export const StatTile = memo(function StatTile({ label, value, unit, sub, accent
 
   return (
     <div className="rounded-xl bg-surface-2/40 px-3 py-2.5 flex flex-col gap-1">
-      <span className="text-[11px] font-medium text-muted-vital leading-none">{label}</span>
+      <span className="text-[11px] font-medium text-muted leading-none">{label}</span>
       {isLoading ? (
         <div className="h-6 w-16 bg-surface-2 rounded animate-pulse mt-0.5" />
       ) : (
@@ -30,10 +30,10 @@ export const StatTile = memo(function StatTile({ label, value, unit, sub, accent
           >
             {display}
           </span>
-          {unit && display !== '—' && <span className="text-[11px] text-muted-vital">{unit}</span>}
+          {unit && display !== '—' && <span className="text-[11px] text-muted">{unit}</span>}
         </div>
       )}
-      {sub && <span className="text-[10px] text-muted-vital leading-none">{sub}</span>}
+      {sub && <span className="text-[10px] text-muted leading-none">{sub}</span>}
     </div>
   )
 })

@@ -7,7 +7,8 @@
  *  2. Fills missing BPM/calories/duration from Apple Health (matchWorkoutMetrics).
  *  3. Resolves exercise names → real exercises.id UUIDs (creates missing).
  *  4. Saves via the shared saveSession() service (volume, PRs).
- *  5. Generates a markdown "Gym Session Report" and stores it on the session.
+ *  5. Generates a brief 2-sentence coach insight and stores it on the session
+ *     (the numbers are charted natively in the Daily Nexus, not restated here).
  *
  * Body: { text: string, splitDay?: 'push'|'pull'|'legs'|'upper'|'lower' }
  */
@@ -55,19 +56,10 @@ Rules:
 5. Preserve the user's original notes (Hebrew or English) verbatim.
 6. Return ONLY valid JSON matching the schema.`
 
-const REPORT_SYSTEM = `You are an elite strength coach writing a concise "Gym Session Report" in Markdown, mirroring a personal training journal.
-Structure:
-## Session Summary
-One or two sentences on the session's focus and quality.
-## Top Sets
-Bullet the heaviest/most notable set per exercise.
-## PRs
-List any personal records (or "None this session").
-## Volume
-Total volume and how it compares to the trailing average (if provided).
-## Feel & Notes
-Reflect the athlete's stated feelings/notes; add one brief coaching cue.
-Rules: base everything strictly on the supplied data; do not fabricate numbers. Be direct and motivating, not flowery.`
+const REPORT_SYSTEM = `You are an elite strength coach for the Helix Axis-5 program (a lifting block inside a 1935 kcal cut, training Sun/Mon/Tue/Thu/Fri).
+The athlete's numbers — total volume, set count, PRs, and per-exercise progression vs last session — are ALREADY charted natively in the app, so DO NOT restate stats, list sets, or use tables/headers.
+Write EXACTLY two sentences of sharp psychological/tactical insight: what this session signals about progress or fatigue on the cut, and the single most important cue for next time.
+Rules: plain text only (no Markdown headers, lists, or tables); ground every claim strictly in the supplied data — never fabricate; direct and motivating, never flowery; 45 words maximum.`
 
 /** Fill sets with missing/zero weight from the user's most recent set of that exercise. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -254,7 +246,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Failed to save session', detail: String(err) }, { status: 500 })
   }
 
-  // ── 5. Generate the Gym Session Report ──────────────────────────────────────
+  // ── 5. Generate the 2-sentence coach insight ────────────────────────────────
   let reportMd = ''
   try {
     const reportInput = {
@@ -271,10 +263,10 @@ export async function POST(req: Request) {
     }
     const rpt = await client.messages.create({
       model: 'claude-opus-4-8',
-      max_tokens: 1500,
+      max_tokens: 400,
       thinking: { type: 'adaptive' },
       system: REPORT_SYSTEM,
-      messages: [{ role: 'user', content: `Write the session report from this data:\n\n${JSON.stringify(reportInput, null, 2)}` }],
+      messages: [{ role: 'user', content: `Write the two-sentence coach insight from this data:\n\n${JSON.stringify(reportInput, null, 2)}` }],
     })
     const block = rpt.content.find((b) => b.type === 'text')
     reportMd = block && block.type === 'text' ? block.text : ''

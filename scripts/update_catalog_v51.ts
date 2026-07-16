@@ -1,7 +1,7 @@
 /**
  * SYSTEM UPDATE v5.1 catalog migration:
  *   1. DELETE removed movements (only where they have no workout_sets — safe).
- *   2. UPSERT every APEX-5.1 / AXIS-4 exercise (new: Hack/Smith Squat, …).
+ *   2. UPSERT every HELIX-5.1 / AXIS-4 exercise (new: Hack/Smith Squat, …).
  *   3. Re-tag muscle_groups per the v5.1 alias table.
  *   npx tsx scripts/update_catalog_v51.ts [--apply]
  */

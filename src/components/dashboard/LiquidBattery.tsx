@@ -64,7 +64,7 @@ export function LiquidBattery({ value, color, caption, captionColor, testId }: L
       </div>
 
       {caption && (
-        <p className="text-fluid-sm font-medium text-center" style={{ color: captionColor ?? 'var(--color-muted-vital)' }}>{caption}</p>
+        <p className="text-fluid-sm font-medium text-center" style={{ color: captionColor ?? 'var(--color-muted)' }}>{caption}</p>
       )}
     </div>
   )

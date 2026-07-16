@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Charts — MERIDIAN',
+  title: 'Charts — HELIX',
 }
 
 export default function ChartsLayout({ children }: { children: React.ReactNode }) {

@@ -3,7 +3,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { logicalTodayISO } from '@/lib/utils/day'
-import { SUPPLEMENT_PROTOCOL, slotTimePassed } from '@/lib/supplements'
+import { protocolForDate, slotTimePassed } from '@/lib/supplements'
+import { isTrainingDay } from '@/lib/programs'
 
 /** Set of supplement item_keys taken for the current logical day (auto-log aware). */
 export function useSupplements() {
@@ -28,7 +29,8 @@ export function useSupplements() {
         // previously this only simulated ticks client-side and persisted nothing.
         const logged = new Set(rows.map((r) => r.item_key))
         const due: Array<{ key: string; time: string }> = []
-        for (const slot of SUPPLEMENT_PROTOCOL) {
+        // Rest days exclude the training-only stimulants from auto-logging.
+        for (const slot of protocolForDate(isTrainingDay(date))) {
           if (!slotTimePassed(slot.time)) continue
           for (const it of slot.items) if (!logged.has(it.key)) due.push({ key: it.key, time: slot.time })
         }

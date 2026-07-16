@@ -101,7 +101,7 @@ export default function RootLayout({
                 <Sidebar />
                 <main
                   id="main-content"
-                  className="min-h-dvh pt-4 safe-pt pb-28 md:pl-64 md:pt-8 md:pb-8 safe-px"
+                  className="min-h-dvh pt-4 safe-pt pb-28 md:pl-64 xl:pl-72 md:pt-8 md:pb-8 safe-px"
                 >
                   <div className="max-w-7xl mx-auto">
                     <AuthGate>{children}</AuthGate>

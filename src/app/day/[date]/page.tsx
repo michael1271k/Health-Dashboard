@@ -61,7 +61,7 @@ export default function DailyNexusPage() {
   const date = /^\d{4}-\d{2}-\d{2}$/.test(raw ?? '') ? raw : ''
   const { data, isLoading } = useDayVault(date)
 
-  if (!date) return <p className="text-muted-vital p-6">Invalid date.</p>
+  if (!date) return <p className="text-muted p-6">Invalid date.</p>
 
   const era = eraForDate(date)
   const eraMeta = ERA_META[era]
@@ -86,7 +86,7 @@ export default function DailyNexusPage() {
         </button>
         <div className="min-w-0 flex-1">
           <h1 className="font-heading text-fluid-lg font-bold text-text truncate">The Daily Nexus</h1>
-          <span className="text-fluid-xs text-muted-vital">{pretty}</span>
+          <span className="text-fluid-xs text-muted">{pretty}</span>
         </div>
         <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded shrink-0"
           style={{ color: eraMeta.color, background: `${eraMeta.color}1a`, border: `1px solid ${eraMeta.color}40` }}>
@@ -108,17 +108,17 @@ export default function DailyNexusPage() {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-fluid-xs text-muted-vital uppercase tracking-wide">Readiness</span>
+            <span className="text-fluid-xs text-muted uppercase tracking-wide">Readiness</span>
             {n?.phase && <span className="text-[10px] font-bold uppercase" style={{ color: PHASE_META[n.phase].color }}>{PHASE_META[n.phase].label}</span>}
           </div>
           <div className="flex items-center gap-2 mt-1">
-            <span className="text-fluid-xs text-muted-vital">Battery</span>
+            <span className="text-fluid-xs text-muted">Battery</span>
             <span className="flex-1 h-2 rounded-full bg-white/[0.06] overflow-hidden">
               <span className="block h-full rounded-full" style={{ width: `${battery ?? 0}%`, background: ICE, boxShadow: `0 0 8px ${ICE}66` }} />
             </span>
             <span className="helix-num text-fluid-xs font-bold" style={{ color: ICE }}>{battery != null ? `${battery}%` : '—'}</span>
           </div>
-          <span className="text-[11px] text-muted-vital mt-1 block truncate">{schedule === 'rest' ? 'Zone-2 / Rest' : schedule.label}</span>
+          <span className="text-[11px] text-muted mt-1 block truncate">{schedule === 'rest' ? 'Zone-2 / Rest' : schedule.label}</span>
         </div>
         <CompletenessArc parts={parts} />
       </section>
@@ -129,7 +129,7 @@ export default function DailyNexusPage() {
         <section className="helix-card col-span-2 sm:col-span-1 space-y-2">
           <div className="flex items-baseline justify-between">
             <h2 className="font-heading font-semibold text-fluid-sm text-text flex items-center gap-1.5"><Flame className="w-3.5 h-3.5" style={{ color: MACRO_COLORS.calories }} /> Fuel</h2>
-            <span className="helix-num text-fluid-xs font-bold" style={{ color: MACRO_COLORS.calories }}>{n ? `${Math.round(n.calories).toLocaleString()}` : '—'}<span className="text-muted-vital"> kcal</span></span>
+            <span className="helix-num text-fluid-xs font-bold" style={{ color: MACRO_COLORS.calories }}>{n ? `${Math.round(n.calories).toLocaleString()}` : '—'}<span className="text-muted"> kcal</span></span>
           </div>
           {n ? (
             <div className="flex items-center justify-around">
@@ -137,7 +137,7 @@ export default function DailyNexusPage() {
               <MicroRing value={n.carbs_g} goalHint={200} color={MACRO_COLORS.carbs} label="C" />
               <MicroRing value={n.fat_g} goalHint={60} color={MACRO_COLORS.fat} label="F" />
             </div>
-          ) : <p className="text-fluid-xs text-muted-vital py-2">No nutrition logged.</p>}
+          ) : <p className="text-fluid-xs text-muted py-2">No nutrition logged.</p>}
         </section>
 
         {/* Train OR Recovery block */}
@@ -145,10 +145,10 @@ export default function DailyNexusPage() {
           <section className="helix-card col-span-2 sm:col-span-1 space-y-2" style={{ borderColor: '#3EE0FF30' }}>
             <div className="flex items-baseline justify-between">
               <h2 className="font-heading font-semibold text-fluid-sm text-text flex items-center gap-1.5"><Dumbbell className="w-3.5 h-3.5" style={{ color: '#3EE0FF' }} /> Train</h2>
-              <span className="text-fluid-xs text-muted-vital truncate">{data!.sessions[0].split[0]?.toUpperCase()}{data!.sessions[0].split.slice(1)}</span>
+              <span className="text-fluid-xs text-muted truncate">{data!.sessions[0].split[0]?.toUpperCase()}{data!.sessions[0].split.slice(1)}</span>
             </div>
             <SessionVolumeMini sessionId={data!.sessions[0].id} />
-            <div className="flex items-center justify-between text-[10px] text-muted-vital">
+            <div className="flex items-center justify-between text-[10px] text-muted">
               <span>{data!.sessions[0].setCount ?? '—'} sets</span>
               <span className="helix-num" style={{ color: TEAL }}>{data!.sessions[0].volumeKg != null ? `${((displayWeight(data!.sessions[0].volumeKg) ?? 0) / 1000).toFixed(1)}${unit === 'lb' ? 'k' : 't'}` : '—'}</span>
               {(data!.sessions[0].prCount ?? 0) > 0 && <span style={{ color: ICE }}>{data!.sessions[0].prCount} PR</span>}
@@ -158,8 +158,8 @@ export default function DailyNexusPage() {
           <section className="helix-card col-span-2 sm:col-span-1 space-y-2 text-center" style={{ borderColor: `${VIOLET}30` }}>
             <h2 className="font-heading font-semibold text-fluid-sm flex items-center justify-center gap-1.5" style={{ color: VIOLET }}><Moon className="w-3.5 h-3.5" /> {restDay ? 'Recovery' : 'No session'}</h2>
             <div className="grid grid-cols-2 gap-1.5 text-[10px]">
-              <span className="text-muted-vital">HRV <span className="helix-num text-text">{log?.hrv_ms != null ? Math.round(log.hrv_ms) : '—'}</span></span>
-              <span className="text-muted-vital">Zone-2 <span className="helix-num text-text">{log?.exercise_minutes ?? log?.training_minutes ?? '—'}m</span></span>
+              <span className="text-muted">HRV <span className="helix-num text-text">{log?.hrv_ms != null ? Math.round(log.hrv_ms) : '—'}</span></span>
+              <span className="text-muted">Zone-2 <span className="helix-num text-text">{log?.exercise_minutes ?? log?.training_minutes ?? '—'}m</span></span>
             </div>
           </section>
         )}

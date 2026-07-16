@@ -27,7 +27,7 @@ export function InsightCoach() {
         <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15 text-primary">
           <Brain className="w-4 h-4" aria-hidden="true" />
         </span>
-        <h2 className="font-heading font-semibold text-fluid-sm uppercase tracking-wider text-muted-vital">
+        <h2 className="font-heading font-semibold text-fluid-sm uppercase tracking-wider text-muted">
           Insight Coach
         </h2>
       </div>
@@ -45,7 +45,7 @@ export function InsightCoach() {
               <p className="font-heading font-bold text-fluid-xl" style={{ color: readiness.color }}>
                 {readiness.label}
               </p>
-              <p className="text-fluid-sm text-muted-vital">{readiness.reason}</p>
+              <p className="text-fluid-sm text-muted">{readiness.reason}</p>
             </div>
           )}
 
@@ -58,14 +58,14 @@ export function InsightCoach() {
                     <Icon className="w-4 h-4 mt-0.5 shrink-0" style={{ color }} aria-hidden="true" />
                     <div className="min-w-0">
                       <p className="text-fluid-sm font-semibold text-text">{ins.headline}</p>
-                      <p className="text-fluid-xs text-muted-vital leading-relaxed">{ins.detail}</p>
+                      <p className="text-fluid-xs text-muted leading-relaxed">{ins.detail}</p>
                     </div>
                   </li>
                 )
               })}
             </ul>
           ) : (
-            <p className="text-fluid-xs text-muted-vital">
+            <p className="text-fluid-xs text-muted">
               Not enough history yet — keep syncing and I’ll surface mathematical correlations across sleep, recovery, nutrition, and training.
             </p>
           )}

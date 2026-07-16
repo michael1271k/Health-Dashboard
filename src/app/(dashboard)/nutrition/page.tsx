@@ -91,7 +91,7 @@ export default function NutritionPage() {
     <div className="space-y-6">
       <div>
         <h1 className="font-heading text-fluid-2xl font-bold text-text">Nutrition</h1>
-        <p className="text-muted-vital text-fluid-sm mt-0.5">Macro rings · daily fuel cells · auto-tagged phase</p>
+        <p className="text-muted text-fluid-sm mt-0.5">Macro rings · daily fuel cells · auto-tagged phase</p>
       </div>
 
       {/* Macro rings hero — MFP-style rings + 7-day phase cells */}
@@ -107,7 +107,7 @@ export default function NutritionPage() {
       {/* Phase filter + dense daily log */}
       <div className="space-y-3">
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-fluid-xs text-muted-vital mr-1">Phase:</span>
+          <span className="text-fluid-xs text-muted mr-1">Phase:</span>
           {FILTERS.map((f) => {
             const active = filter === f
             const color = f === 'all' ? '#19E3B1' : PHASE_META[f].color
@@ -135,7 +135,7 @@ export default function NutritionPage() {
         <button onClick={() => setTargetsOpen((v) => !v)} aria-expanded={targetsOpen}
           className="w-full flex items-center justify-between gap-2 min-h-[44px] text-left">
           <span className="font-semibold text-text">Targets</span>
-          <span className="flex items-center gap-2 text-xs text-muted-vital">
+          <span className="flex items-center gap-2 text-xs text-muted">
             {goals.mode && <span className="capitalize text-primary font-semibold">{NUTRITION_PRESETS[goals.mode].label}</span>}
             <span className="helix-num">{goals.calorie.toLocaleString()} kcal</span>
             {adherence !== null && <span>· 7d adherence <span className="text-primary font-semibold">{adherence}%</span></span>}
@@ -149,7 +149,7 @@ export default function NutritionPage() {
               const active = goals.mode === mode
               return (
                 <button key={mode} onClick={() => applyMode(mode)} disabled={saving} aria-pressed={active}
-                  className={`glass-card glass-hover py-3 px-2 text-center transition-all duration-200 ${active ? 'glass-card--accent text-primary' : 'text-muted-vital'}`}>
+                  className={`glass-card glass-hover py-3 px-2 text-center transition-all duration-200 ${active ? 'glass-card--accent text-primary' : 'text-muted'}`}>
                   <div className="font-semibold text-sm">{preset.label}</div>
                   <div className="text-xs opacity-70 mt-0.5 tabular-nums">{preset.calorieGoal.toLocaleString()} kcal</div>
                   <div className="text-[10px] opacity-60 mt-0.5">

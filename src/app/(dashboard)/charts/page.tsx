@@ -45,12 +45,12 @@ export default function ChartsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="font-heading text-fluid-2xl font-bold text-text">Charts</h1>
-        <p className="text-muted-vital text-fluid-sm mt-0.5">Trends &amp; progress · filter by training era</p>
+        <p className="text-muted text-fluid-sm mt-0.5">Trends &amp; progress · filter by training era</p>
       </div>
 
       {/* Era filter (PPL Legacy vs AXIS) */}
       <div className="flex items-center gap-1.5 flex-wrap">
-        <span className="text-fluid-xs text-muted-vital mr-1">Era:</span>
+        <span className="text-fluid-xs text-muted mr-1">Era:</span>
         {ERA_TABS.map(([k, label, color]) => {
           const active = era === k
           return (
@@ -86,7 +86,7 @@ export default function ChartsPage() {
           </div>
           <DeferredMount minHeight={480}>
           <div>
-            <h2 className="font-heading text-fluid-lg font-bold text-text mb-3">Muscle Analytics <span className="text-fluid-xs text-muted-vital font-normal">Hevy-killer</span></h2>
+            <h2 className="font-heading text-fluid-lg font-bold text-text mb-3">Muscle Analytics <span className="text-fluid-xs text-muted font-normal">Hevy-killer</span></h2>
             <div className="space-y-4">
               <div className="grid lg:grid-cols-2 gap-4">
                 <BodyHeatmap days={days} era={era} />

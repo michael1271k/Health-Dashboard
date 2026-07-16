@@ -52,14 +52,14 @@ export const BioStrip = memo(function BioStrip({ icon: Icon, label, accent, valu
         <Icon className="h-4.5 w-4.5" style={{ width: 18, height: 18 }} aria-hidden="true" />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[10px] font-bold uppercase tracking-[0.14em] text-muted-vital leading-none">{label}</span>
+        <span className="block text-[10px] font-bold uppercase tracking-[0.14em] text-muted leading-none">{label}</span>
         <span className="flex items-baseline gap-1 mt-0.5">
           {numeric
             ? <KineticNumber value={value as number} className="helix-num text-fluid-xl font-bold leading-none" duration={700} />
             : <span className="helix-num text-fluid-xl font-bold leading-none" style={value == null ? { color: '#5A6B85' } : undefined}>{value ?? '—'}</span>}
-          {unit && <span className="text-fluid-xs text-muted-vital">{unit}</span>}
+          {unit && <span className="text-fluid-xs text-muted">{unit}</span>}
         </span>
-        {status && <span className="block text-fluid-xs text-muted-vital mt-0.5 truncate">{status}</span>}
+        {status && <span className="block text-fluid-xs text-muted mt-0.5 truncate">{status}</span>}
       </span>
       {series && <Sparkline series={series} accent={accent} />}
     </button>

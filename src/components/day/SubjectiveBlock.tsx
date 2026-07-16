@@ -32,14 +32,14 @@ export function SubjectiveBlock({ date, effort, mood, journal }: {
     <section className="helix-card space-y-4">
       <div className="flex items-baseline justify-between">
         <h2 className="font-heading font-semibold text-text">Journal</h2>
-        <span className="text-[10px] uppercase tracking-widest text-muted-vital">subjective</span>
+        <span className="text-[10px] uppercase tracking-widest text-muted">subjective</span>
       </div>
 
       {/* Effort dial 1-10 */}
       <div>
         <div className="flex items-baseline justify-between mb-1.5">
-          <span className="text-fluid-xs text-muted-vital">Perceived effort</span>
-          <span className="helix-num text-fluid-sm font-bold" style={{ color: '#3EE0FF' }}>{e ?? '—'}<span className="text-muted-vital font-normal">/10</span></span>
+          <span className="text-fluid-xs text-muted">Perceived effort</span>
+          <span className="helix-num text-fluid-sm font-bold" style={{ color: '#3EE0FF' }}>{e ?? '—'}<span className="text-muted font-normal">/10</span></span>
         </div>
         <input
           type="range" min={1} max={10} step={1} value={e ?? 5}
@@ -51,7 +51,7 @@ export function SubjectiveBlock({ date, effort, mood, journal }: {
 
       {/* Mood 1-5 */}
       <div>
-        <span className="block text-fluid-xs text-muted-vital mb-1.5">Mood</span>
+        <span className="block text-fluid-xs text-muted mb-1.5">Mood</span>
         <div className="flex gap-2">
           {MOODS.map((emoji, i) => {
             const v = i + 1
@@ -71,7 +71,7 @@ export function SubjectiveBlock({ date, effort, mood, journal }: {
       <textarea
         value={note} onChange={(ev) => setNote(ev.target.value)} rows={3}
         placeholder="How did today actually feel?"
-        className="w-full rounded-xl border border-white/[0.06] bg-black/20 px-3 py-2.5 text-fluid-sm text-text placeholder:text-muted-vital/60 focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
+        className="w-full rounded-xl border border-white/[0.06] bg-black/20 px-3 py-2.5 text-fluid-sm text-text placeholder:text-muted/60 focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
         aria-label="Daily journal note"
       />
 

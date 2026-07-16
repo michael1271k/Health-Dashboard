@@ -47,7 +47,7 @@ function Spark({ s }: { s: Series }) {
   return (
     <div className="flex flex-col gap-1.5 flex-1 min-h-0">
       <div className="flex items-center justify-between">
-        <span className="flex items-center gap-1.5 text-fluid-xs text-muted-vital">
+        <span className="flex items-center gap-1.5 text-fluid-xs text-muted">
           <Icon className="w-3.5 h-3.5" style={{ color: s.color }} aria-hidden="true" /> {s.label}
         </span>
         <span className="helix-num text-fluid-sm font-semibold text-text">
@@ -73,7 +73,7 @@ function Spark({ s }: { s: Series }) {
             </AreaChart>
           </ResponsiveContainer>
         ) : (
-          <div className="h-full flex items-center text-fluid-xs text-muted-vital/60">Not enough data yet</div>
+          <div className="h-full flex items-center text-fluid-xs text-muted/60">Not enough data yet</div>
         )}
       </div>
     </div>
@@ -87,7 +87,7 @@ export function TrendStrip() {
     <div className="helix-card flex flex-col h-full gap-3 min-h-[280px]">
       <div className="flex items-center justify-between">
         <h2 className="font-heading font-semibold text-fluid-lg">30-Day Trends</h2>
-        <span className="text-fluid-xs text-muted-vital uppercase tracking-wider">Last sync</span>
+        <span className="text-fluid-xs text-muted uppercase tracking-wider">Last sync</span>
       </div>
       {isLoading ? (
         <div className="flex-1 space-y-4">

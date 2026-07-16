@@ -56,12 +56,12 @@ export function FileSystemBrowser({ reports, gymReports, focusWeek, era = 'all' 
     <section className="helix-card space-y-4">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-1.5 text-fluid-sm flex-wrap" aria-label="Breadcrumb">
-        <button onClick={() => { setWeek(null); setFileKey(null) }} className="flex items-center gap-1 text-muted-vital hover:text-primary"><Home className="w-3.5 h-3.5" /> journey</button>
+        <button onClick={() => { setWeek(null); setFileKey(null) }} className="flex items-center gap-1 text-muted hover:text-primary"><Home className="w-3.5 h-3.5" /> journey</button>
         {week && <>
-          <ChevronRight className="w-3.5 h-3.5 text-muted-vital/50" />
-          <button onClick={() => setFileKey(null)} className={file ? 'text-muted-vital hover:text-primary' : 'text-text font-medium'}>{cap(week.kind)} · {week.label}</button>
+          <ChevronRight className="w-3.5 h-3.5 text-muted/50" />
+          <button onClick={() => setFileKey(null)} className={file ? 'text-muted hover:text-primary' : 'text-text font-medium'}>{cap(week.kind)} · {week.label}</button>
         </>}
-        {file && <><ChevronRight className="w-3.5 h-3.5 text-muted-vital/50" /><span className="text-text font-medium truncate">{file.name}</span></>}
+        {file && <><ChevronRight className="w-3.5 h-3.5 text-muted/50" /><span className="text-text font-medium truncate">{file.name}</span></>}
       </nav>
 
       {file ? (
@@ -77,7 +77,7 @@ export function FileSystemBrowser({ reports, gymReports, focusWeek, era = 'all' 
         </div>
       ) : week ? (
         files.length === 0
-          ? <p className="text-fluid-sm text-muted-vital py-6 text-center">This week has no reports yet.</p>
+          ? <p className="text-fluid-sm text-muted py-6 text-center">This week has no reports yet.</p>
           : (
             <ul className="grid gap-2 sm:grid-cols-2">
               {files.map((f) => {
@@ -86,7 +86,7 @@ export function FileSystemBrowser({ reports, gymReports, focusWeek, era = 'all' 
                   <li key={f.key}>
                     <button onClick={() => setFileKey(f.key)} className="w-full flex items-center gap-3 rounded-xl px-3 py-3 bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.14] text-left min-h-[52px]">
                       <span className="flex h-9 w-9 items-center justify-center rounded-lg shrink-0" style={{ background: `${f.accent}1f`, color: f.accent }}><Icon className="w-4 h-4" /></span>
-                      <span className="min-w-0"><span className="block text-fluid-sm font-medium text-text truncate">{f.name}</span>{f.sub && <span className="block text-fluid-xs text-muted-vital">{f.sub}</span>}</span>
+                      <span className="min-w-0"><span className="block text-fluid-sm font-medium text-text truncate">{f.name}</span>{f.sub && <span className="block text-fluid-xs text-muted">{f.sub}</span>}</span>
                     </button>
                   </li>
                 )
