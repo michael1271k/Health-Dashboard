@@ -8,15 +8,15 @@
 export type Era = 'ppl' | 'axis'
 export const AXIS_ERA_START = '2026-07-19'
 
-/** Helix Cut 5.1 nutrition block — the 1935 kcal target activates on this date. */
+/** Helix Cut 5.1 nutrition block — the 1955 kcal target activates on this date. */
 export const HELIX_CUT_START = '2026-07-15'
-export const HELIX_CUT_KCAL = 1935
+export const HELIX_CUT_KCAL = 1955
 
 /**
- * Transitional "Week 0" — the ramp-in sessions (Wed/Thu/Fri, 15–17 Jul) belong
- * to the HELIX timeline even though they precede the Week-1 anchor. Kept as an
- * explicit set so those days join the era and count as training WITHOUT shifting
- * the rest of the schedule (Week 1 still anchors on 2026-07-19).
+ * Transitional "Week 0" — the days 15–17 Jul belong to the HELIX era for
+ * classification even though they precede the Week-1 anchor (2026-07-19), WITHOUT
+ * shifting the schedule. Training vs rest is decided purely by the weekday program
+ * (Wed = rest), so Jul 15 correctly reads as a rest day.
  */
 export const AXIS_WEEK0_DATES = new Set(['2026-07-15', '2026-07-16', '2026-07-17'])
 
@@ -86,7 +86,7 @@ export const APEX51: Program = {
       { name: 'Straight-Arm Pulldown', sets: 2, wk1Kg: 15, reps: '12–15', muscles: ['back'] },
       { name: 'Face Pull', sets: 3, wk1Kg: 13.75, reps: '12–15', muscles: ['shoulders', 'back'] },
     ] },
-    { key: 'legs_a', label: 'Legs & Core', sub: 'Quad Focus', color: C.legsA, weekday: 1, cutSetDelta: -4, exercises: [
+    { key: 'legs_a', label: 'Legs A', sub: 'Quad Focus', color: C.legsA, weekday: 1, cutSetDelta: -4, exercises: [
       { name: 'Leg Press', sets: 4, wk1Kg: 70, reps: '8–12', muscles: ['quads', 'glutes'], compound: true, note: '1 warm-up @40kg' },
       { name: 'Hack/Smith Squat', sets: 3, wk1Kg: null, reps: '10–12', muscles: ['quads', 'glutes'], compound: true },
       { name: 'Leg Extension', sets: 3, wk1Kg: 37.5, reps: '12–15', muscles: ['quads'] },
@@ -95,7 +95,7 @@ export const APEX51: Program = {
       { name: 'Crunch Machine', sets: 3, wk1Kg: 52.5, reps: '10–12', muscles: ['core'] },
       { name: 'Reverse Crunch', sets: 3, wk1Kg: null, reps: '12–15', muscles: ['core'] },
     ] },
-    { key: 'arms', label: 'Delts+Arms', color: C.arms, weekday: 2, cutSetDelta: -4, exercises: [
+    { key: 'arms', label: 'Delts & Arms', color: C.arms, weekday: 2, cutSetDelta: -4, exercises: [
       { name: 'DB Shoulder Press', sets: 3, wk1Kg: 28, reps: '8–10', muscles: ['shoulders', 'triceps'], compound: true },
       { name: 'Cable Lateral Raise', sets: 5, wk1Kg: 5, reps: '12–20', muscles: ['shoulders'], note: 'per side' },
       { name: 'Seated Incline DB Curl', sets: 3, wk1Kg: 14, reps: '8–12', muscles: ['biceps'] },
@@ -114,7 +114,7 @@ export const APEX51: Program = {
       { name: 'Machine Preacher Curl', sets: 3, wk1Kg: 15, reps: '8–12', muscles: ['biceps'] },
       { name: 'Cross-Body Cable Extension', sets: 2, wk1Kg: 6, reps: '12–15', muscles: ['triceps'], note: 'per arm' },
     ] },
-    { key: 'legs_b', label: 'Legs & Core', sub: 'Posterior Focus', color: C.legsB, weekday: 5, cutSetDelta: -3, exercises: [
+    { key: 'legs_b', label: 'Legs B', sub: 'Posterior Focus', color: C.legsB, weekday: 5, cutSetDelta: -3, exercises: [
       { name: 'DB RDL', sets: 4, wk1Kg: 26, reps: '8–12', muscles: ['hamstrings', 'glutes', 'back'], compound: true },
       { name: 'Machine Hip Thrust', sets: 3, wk1Kg: 23.5, reps: '8–15', muscles: ['glutes'], compound: true },
       { name: 'Leg Press', sets: 2, wk1Kg: 65, reps: '12–15', muscles: ['quads', 'glutes'], compound: true, note: 'moderate · 1 warm-up' },
@@ -182,10 +182,9 @@ export function programDayFor(programId: string, weekday: number): ProgramDay | 
  * Era-aware training-day check (server-safe, date-only). The single source of
  * truth for "is today a lifting day" — drives the Train strip, supplement
  * gating, and the coach. HELIX-5 trains Sun/Mon/Tue/Thu/Fri; Wed/Sat are Zone-2
- * rest. Week-0 ramp days (15–17 Jul) always count as training.
+ * rest (so Jul 15, a Wednesday, reads as rest).
  */
 export function isTrainingDay(dateISO: string): boolean {
-  if (AXIS_WEEK0_DATES.has(dateISO)) return true
   const weekday = new Date(`${dateISO}T12:00:00Z`).getUTCDay()
   if (eraForDate(dateISO) === 'ppl') return weekday !== 5 && weekday !== 6 // legacy PPL: trained Sun–Thu
   return programDayFor(DEFAULT_PROGRAM_ID, weekday) !== 'rest'
@@ -216,11 +215,7 @@ export function scheduleDayFor(dateISO: string, programId = getActiveProgramId()
     return label ? { label } : 'rest'
   }
   const d = programDayFor(programId, weekday)
-  if (d === 'rest') {
-    // Week-0 ramp days (15–17 Jul) train even on a steady-state rest weekday.
-    return AXIS_WEEK0_DATES.has(dateISO) ? { label: 'Week 0 · Re-entry', sub: 'Transitional ramp' } : 'rest'
-  }
-  return { label: d.label, sub: d.sub, dayKey: d.key }
+  return d === 'rest' ? 'rest' : { label: d.label, sub: d.sub, dayKey: d.key }
 }
 
 // Map a program-day key onto the existing split_day enum (for saving sessions).

@@ -16,8 +16,8 @@ import type { ScoringInputs } from '@/lib/scoring/types'
 
 const PERFECT: ScoringInputs = {
   sleepHours: 8, deepMinutes: 100, remMinutes: 100, sleepGoalHours: 8,
-  calories: 1935, proteinG: 180, carbsG: 180, fatG: 55,           // Cut goals
-  calorieGoal: 1935, proteinGoalG: 180, carbsGoalG: 180, fatGoalG: 55,
+  calories: 1955, proteinG: 170, carbsG: 195, fatG: 55,           // Cut goals
+  calorieGoal: 1955, proteinGoalG: 170, carbsGoalG: 195, fatGoalG: 55,
   steps: 10000, activeCal: 500, stepsGoal: 10000, activeCalGoal: 500,
   workoutLogged: true, isRestDay: false,
   newPRsToday: 2, sessionVolumeKg: 4000, trailingAvgVolumeKg: 3500,
@@ -28,13 +28,13 @@ const PERFECT: ScoringInputs = {
 const PERFECT_TRAINING_BATTERY: ScoringInputs = {
   ...PERFECT,
   steps: 10000, sessionVolumeKg: 4000,
-  proteinG: 180, waterMl: 3000,
+  proteinG: 170, waterMl: 3000,
 }
 
 const ZERO: ScoringInputs = {
   sleepHours: 0, deepMinutes: 0, remMinutes: 0, sleepGoalHours: 8,
   calories: 0, proteinG: 0, carbsG: 0, fatG: 0,
-  calorieGoal: 1935, proteinGoalG: 180, carbsGoalG: 180, fatGoalG: 55,
+  calorieGoal: 1955, proteinGoalG: 170, carbsGoalG: 195, fatGoalG: 55,
   steps: 0, activeCal: 0, stepsGoal: 10000, activeCalGoal: 500,
   workoutLogged: false, isRestDay: false,
   newPRsToday: 0, sessionVolumeKg: 0, trailingAvgVolumeKg: 0,
@@ -94,11 +94,11 @@ describe('computeSleepScore', () => {
 
 // ─── Nutrition Score ───────────────────────────────────────────────────────────
 describe('computeNutritionScore', () => {
-  const goals = { calorieGoal: 1935, proteinGoalG: 180, carbsGoalG: 180, fatGoalG: 55 }
+  const goals = { calorieGoal: 1955, proteinGoalG: 170, carbsGoalG: 195, fatGoalG: 55 }
 
   it('returns 100 when all macros exactly hit goals', () => {
     expect(computeNutritionScore({
-      calories: 1935, proteinG: 180, carbsG: 180, fatG: 55, ...goals,
+      calories: 1955, proteinG: 170, carbsG: 195, fatG: 55, ...goals,
     })).toBe(100)
   })
 
@@ -107,8 +107,8 @@ describe('computeNutritionScore', () => {
   })
 
   it('protein has double weight: 50% protein deficit scores lower than 50% carb deficit', () => {
-    const proteinMiss = computeNutritionScore({ calories: 1935, proteinG: 90,  carbsG: 180, fatG: 55, ...goals })
-    const carbMiss    = computeNutritionScore({ calories: 1935, proteinG: 180, carbsG: 90,  fatG: 55, ...goals })
+    const proteinMiss = computeNutritionScore({ calories: 1955, proteinG: 90,  carbsG: 195, fatG: 55, ...goals })
+    const carbMiss    = computeNutritionScore({ calories: 1955, proteinG: 170, carbsG: 90,  fatG: 55, ...goals })
     expect(proteinMiss!).toBeLessThan(carbMiss!)
   })
 
@@ -253,19 +253,19 @@ describe('computeMorningCharge (sleep quality 0..1 → 55..100)', () => {
 
 describe('computeRecharge', () => {
   it('returns 10 when both protein and water goals hit', () => {
-    expect(computeRecharge({ proteinG: 180, proteinGoalG: 180, waterMl: 3000, waterGoalMl: 3000 })).toBe(10)
+    expect(computeRecharge({ proteinG: 170, proteinGoalG: 170, waterMl: 3000, waterGoalMl: 3000 })).toBe(10)
   })
 
   it('returns 6 for protein only', () => {
-    expect(computeRecharge({ proteinG: 180, proteinGoalG: 180, waterMl: 0, waterGoalMl: 3000 })).toBe(6)
+    expect(computeRecharge({ proteinG: 170, proteinGoalG: 170, waterMl: 0, waterGoalMl: 3000 })).toBe(6)
   })
 
   it('returns 4 for water only', () => {
-    expect(computeRecharge({ proteinG: 0, proteinGoalG: 180, waterMl: 3000, waterGoalMl: 3000 })).toBe(4)
+    expect(computeRecharge({ proteinG: 0, proteinGoalG: 170, waterMl: 3000, waterGoalMl: 3000 })).toBe(4)
   })
 
   it('returns 0 when neither goal is hit', () => {
-    expect(computeRecharge({ proteinG: 0, proteinGoalG: 180, waterMl: 0, waterGoalMl: 3000 })).toBe(0)
+    expect(computeRecharge({ proteinG: 0, proteinGoalG: 170, waterMl: 0, waterGoalMl: 3000 })).toBe(0)
   })
 })
 

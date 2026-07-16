@@ -50,22 +50,30 @@ export async function requestHealthAuthorization(): Promise<boolean> {
   } catch { return false }
 }
 
+/** Device-local calendar day (YYYY-MM-DD) for a given instant. */
+function localDayISO(d: Date): string {
+  const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
 /**
- * Pull today's HealthKit metrics, shape the flat payload, and POST to
- * /api/ingest with the user's JWT. Returns the payload it sent (or null when
- * not native / no session / nothing new). Battery-safe: callers throttle.
+ * Pull one local day's HealthKit metrics and POST to /api/ingest with an
+ * explicit `date` so the server writes to that exact day (it upserts
+ * last-write-wins on user_id+date). `isToday` caps the query window at "now"
+ * (a live running total); past days query the full midnight-to-midnight window.
+ * Returns the payload sent, or null when not native / no session / nothing new.
  */
-export async function syncHealthKitToServer(): Promise<Record<string, number> | null> {
+async function syncDay(dateISO: string, isToday: boolean): Promise<Record<string, number> | null> {
   if (!Capacitor.isNativePlatform()) return null
   const { data: { session } } = await supabase.auth.getSession()
   if (!session?.access_token) return null
 
-  const now = new Date()
-  const start = new Date(now); start.setHours(0, 0, 0, 0)
+  const start = new Date(`${dateISO}T00:00:00`)
+  const end = isToday ? new Date() : new Date(`${dateISO}T23:59:59.999`)
   const payload: Record<string, number> = {}
   for (const m of METRIC_MAP) {
     try {
-      const { samples } = await HealthKit.queryQuantity({ sampleType: m.hk, startDate: start.toISOString(), endDate: now.toISOString() })
+      const { samples } = await HealthKit.queryQuantity({ sampleType: m.hk, startDate: start.toISOString(), endDate: end.toISOString() })
       const v = reduceSamples(samples, m.reduce)
       if (v !== undefined) payload[m.key] = v
     } catch { /* skip a metric that isn't available */ }
@@ -75,7 +83,29 @@ export async function syncHealthKitToServer(): Promise<Record<string, number> | 
   await fetch('/api/ingest', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ ...payload, date: dateISO }),
   })
   return payload
+}
+
+/** Pull today only (the live running total). Battery-safe: callers throttle. */
+export async function syncHealthKitToServer(): Promise<Record<string, number> | null> {
+  return syncDay(localDayISO(new Date()), true)
+}
+
+/**
+ * Rolling window — re-pull TODAY and YESTERDAY on every sync. Today captures the
+ * live running total; yesterday self-corrects any steps/energy/etc. that Apple
+ * recorded after the previous day's last sync (e.g. walking around before sleep
+ * post a 21:00 sync). Each day writes to its own date and upserts
+ * last-write-wins, so overlapping re-syncs never duplicate or drain the battery
+ * beyond the caller's throttle.
+ */
+export async function syncRollingWindow(): Promise<{ today: Record<string, number> | null; yesterday: Record<string, number> | null }> {
+  if (!Capacitor.isNativePlatform()) return { today: null, yesterday: null }
+  const now = new Date()
+  const yst = new Date(now); yst.setDate(yst.getDate() - 1)
+  const today = await syncDay(localDayISO(now), true)
+  const yesterday = await syncDay(localDayISO(yst), false)
+  return { today, yesterday }
 }

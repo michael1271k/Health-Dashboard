@@ -12,35 +12,47 @@ import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 const GRID = 'rgba(255,255,255,0.06)'
 const TEXT = '#8B97B2'
 
-// A chart bucket. 'arms' is a HELIX-only pseudo-split (Delts & Arms) that the DB
-// stores as split_day='upper' — resolved by weekday below.
-type ChartSplit = SplitDay | 'arms'
+// Chart buckets. 'arms' (Delts & Arms, DB split_day='upper') and 'legs_a'/'legs_b'
+// (Legs A/B, DB split_day='legs') are HELIX-only pseudo-splits resolved by weekday.
+type ChartSplit = SplitDay | 'arms' | 'legs_a' | 'legs_b'
 const ARMS_COLOR = '#6FE9FF'
+const LEGS_A_COLOR = '#4FC3FF'   // quad cyan
+const LEGS_B_COLOR = '#19E3B1'   // posterior teal
 
 // The pill set is era-specific. PPL trains Push/Pull/Legs (no "Upper" — zero
-// records); HELIX-5 logs Upper, Delts & Arms, and Legs & Core. Legacy "lower"
-// always folds into legs.
+// records); HELIX-5 logs Upper, Delts & Arms, and the two distinct Legs days.
+// Legacy "lower" always folds into legs.
 const SPLITS_FOR_ERA: Record<'all' | 'ppl' | 'axis', ChartSplit[]> = {
   all: ['push', 'pull', 'legs'],
   ppl: ['push', 'pull', 'legs'],
-  axis: ['upper', 'arms', 'legs'],
+  axis: ['upper', 'arms', 'legs_a', 'legs_b'],
 }
-const splitLabel = (s: ChartSplit, era: 'all' | 'ppl' | 'axis') => {
+const splitLabel = (s: ChartSplit) => {
   if (s === 'arms') return 'Delts & Arms'
-  if (s === 'legs') return era === 'axis' ? 'Legs & Core' : 'Legs'
+  if (s === 'legs_a') return 'Legs A'
+  if (s === 'legs_b') return 'Legs B'
+  if (s === 'legs') return 'Legs'
   return s[0].toUpperCase() + s.slice(1)
+}
+function splitColor(s: ChartSplit): string {
+  if (s === 'arms') return ARMS_COLOR
+  if (s === 'legs_a') return LEGS_A_COLOR
+  if (s === 'legs_b') return LEGS_B_COLOR
+  return PPL_SPLITS[s as SplitDay]?.color ?? '#19E3B1'
 }
 
 /**
  * Map a session (date + DB split_day) to its chart bucket. HELIX Delts & Arms
- * days are logged as 'upper' but fall on Tuesday — that weekday split lets us
- * track them separately from the Upper A/B days.
+ * sessions are logged as 'upper' but fall on Tuesday, and the two Legs days
+ * (both DB split_day='legs') fall on Monday (Legs A) and Friday (Legs B) — those
+ * weekday splits let us track each distinctly from the Upper A/B days.
  */
 export function resolveChartSplit(dateISO: string, split: string, era: 'all' | 'ppl' | 'axis'): ChartSplit {
   if (split === 'lower') return 'legs'
-  if (era === 'axis' && split === 'upper') {
+  if (era === 'axis') {
     const weekday = new Date(dateISO + 'T12:00:00Z').getUTCDay()
-    return weekday === 2 ? 'arms' : 'upper'
+    if (split === 'upper') return weekday === 2 ? 'arms' : 'upper'
+    if (split === 'legs') return weekday === 1 ? 'legs_a' : weekday === 5 ? 'legs_b' : 'legs'
   }
   return split as ChartSplit
 }
@@ -62,7 +74,7 @@ export function VolumeChart({ data, isLoading, era = 'all' }: { data: VolumePoin
   const activeSplit = pills.includes(split) ? split : pills[0]
   const filtered = data.filter((d) => resolveChartSplit(d.date, d.split, era) === activeSplit)
   const chartData = filtered.map((d) => ({ date: formatDate(d.date), volume: displayWeight(d.volume) }))
-  const color = activeSplit === 'arms' ? ARMS_COLOR : (PPL_SPLITS[activeSplit as SplitDay]?.color ?? '#19E3B1')
+  const color = splitColor(activeSplit)
 
   return (
     <div className="helix-card">
@@ -71,21 +83,21 @@ export function VolumeChart({ data, isLoading, era = 'all' }: { data: VolumePoin
         <div className="flex gap-1 overflow-x-auto no-scrollbar">
           {pills.map((s) => {
             const active = activeSplit === s
-            const c = s === 'arms' ? ARMS_COLOR : (PPL_SPLITS[s as SplitDay]?.color ?? '#19E3B1')
+            const c = splitColor(s)
             return (
               <button key={s} onClick={() => setSplit(s)}
                 className="px-2.5 py-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-colors border"
                 style={active ? { color: c, borderColor: `${c}55`, background: `${c}1f` } : { color: TEXT, borderColor: 'transparent' }}>
-                {splitLabel(s, era)}
+                {splitLabel(s)}
               </button>
             )
           })}
         </div>
       </div>
       {chartData.length === 0 ? (
-        <div className="h-56 flex items-center justify-center"><p className="text-muted text-sm">No {splitLabel(activeSplit, era)} sessions in range.</p></div>
+        <div className="h-56 flex items-center justify-center"><p className="text-muted text-sm">No {splitLabel(activeSplit)} sessions in range.</p></div>
       ) : (
-        <div role="img" aria-label={`${splitLabel(activeSplit, era)} volume over time`}>
+        <div role="img" aria-label={`${splitLabel(activeSplit)} volume over time`}>
           <ResponsiveContainer width="100%" height={240}>
             <AreaChart data={chartData} margin={{ top: 4, right: 16, bottom: 0, left: 0 }}>
               <defs>

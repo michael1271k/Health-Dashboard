@@ -122,7 +122,7 @@ describe('fuelVsForce', () => {
 describe('training gap awareness', () => {
   const day = (date: string): DayPoint => ({
     date, sleepMin: 420, restHr: 55, respiratory: null, weightKg: null,
-    calories: 1900, calorieGoal: 1935, carbsG: 180,
+    calories: 1900, calorieGoal: 1955, carbsG: 195,
   })
 
   it('daysSinceLastSession: null with no sessions, exact day count otherwise', () => {

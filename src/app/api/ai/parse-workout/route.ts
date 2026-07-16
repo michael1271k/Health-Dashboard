@@ -56,7 +56,7 @@ Rules:
 5. Preserve the user's original notes (Hebrew or English) verbatim.
 6. Return ONLY valid JSON matching the schema.`
 
-const REPORT_SYSTEM = `You are an elite strength coach for the Helix Axis-5 program (a lifting block inside a 1935 kcal cut, training Sun/Mon/Tue/Thu/Fri).
+const REPORT_SYSTEM = `You are an elite strength coach for the Helix Axis-5 program (a lifting block inside a 1955 kcal cut, training Sun/Mon/Tue/Thu/Fri).
 The athlete's numbers — total volume, set count, PRs, and per-exercise progression vs last session — are ALREADY charted natively in the app, so DO NOT restate stats, list sets, or use tables/headers.
 Write EXACTLY two sentences of sharp psychological/tactical insight: what this session signals about progress or fatigue on the cut, and the single most important cue for next time.
 Rules: plain text only (no Markdown headers, lists, or tables); ground every claim strictly in the supplied data — never fabricate; direct and motivating, never flowery; 45 words maximum.`

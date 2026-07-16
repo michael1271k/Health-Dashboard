@@ -141,6 +141,10 @@ describe('resolveChartSplit', () => {
     expect(resolveChartSplit('2026-07-21', 'upper', 'axis')).toBe('arms')  // Tue
     expect(resolveChartSplit('2026-07-19', 'upper', 'axis')).toBe('upper') // Sun
   })
+  it('splits HELIX legs sessions into Legs A (Mon) and Legs B (Fri)', () => {
+    expect(resolveChartSplit('2026-07-20', 'legs', 'axis')).toBe('legs_a') // Mon
+    expect(resolveChartSplit('2026-07-24', 'legs', 'axis')).toBe('legs_b') // Fri
+  })
   it('leaves PPL upper untouched (no arms bucket outside HELIX)', () => {
     expect(resolveChartSplit('2026-06-23', 'upper', 'ppl')).toBe('upper')  // Tue but PPL
   })

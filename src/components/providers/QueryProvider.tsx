@@ -20,7 +20,10 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
             gcTime: 30 * 60 * 1000,
             refetchOnWindowFocus: true,
             refetchOnReconnect: true,
-            refetchOnMount: false,
+            // Every cold open repaints instantly from the persisted cache, then
+            // revalidates against Supabase — so data written out-of-band (a direct
+            // DB insert / native push while the app was closed) always reconciles.
+            refetchOnMount: 'always',
             retry: 1,
           },
         },
@@ -48,7 +51,7 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
       // Bump this on any deploy that changes cached query/component shapes so
       // a device with an older persisted cache discards it instead of feeding
       // stale-shaped data into new components.
-      persistOptions={{ persister, maxAge: 24 * 60 * 60 * 1000, buster: 'v14' }}
+      persistOptions={{ persister, maxAge: 24 * 60 * 60 * 1000, buster: 'v15' }}
     >
       {children}
     </PersistQueryClientProvider>

@@ -101,15 +101,15 @@ export interface NutritionPreset {
   fiberGoalG: number | null
 }
 
-// Active nutrition targets. Helix Cut 5.1 opens 2026-07-15 — 1935 kcal split
-// 180P / 180C / 55F (macros sum to exactly 1935 kcal).
+// Active nutrition targets. Helix Cut 5.1 opens 2026-07-15 — 1955 kcal split
+// 170P / 195C / 55F (macros sum to exactly 1955 kcal).
 export const NUTRITION_PRESETS: Record<NutritionMode, NutritionPreset> = {
   cut: {
     mode: 'cut',
     label: 'Cut',
-    calorieGoal: 1935,
-    proteinGoalG: 180,
-    carbsGoalG: 180,
+    calorieGoal: 1955,
+    proteinGoalG: 170,
+    carbsGoalG: 195,
     fatGoalG: 55,
     fiberGoalG: 30,       // 28–35 g band
   },

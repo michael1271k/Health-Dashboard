@@ -27,7 +27,7 @@ export default function NutritionPage() {
   const { data: logs, isLoading } = useDailyLogs(30)
   const [filter, setFilter] = useState<'all' | Phase>('all')
 
-  const [goals, setGoals] = useState<ActiveGoals>({ calorie: 1935, protein: 180, carbs: 180, fat: 55, mode: 'cut' })
+  const [goals, setGoals] = useState<ActiveGoals>({ calorie: 1955, protein: 170, carbs: 195, fat: 55, mode: 'cut' })
   const [saving, setSaving] = useState(false)
   const [targetsOpen, setTargetsOpen] = useState(false)
   const [dayModal, setDayModal] = useState<string | null>(null)

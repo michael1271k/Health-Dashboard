@@ -94,7 +94,7 @@ async function computeForDate(supabase: DB, userId: string, date: string, hoursA
   const localHour = Math.min(23, 7 + Math.round(hoursAwake))
 
   const g = goals ?? {
-    sleep_goal_hours: 8, calorie_goal: 1935, protein_goal_g: 180, carbs_goal_g: 180,
+    sleep_goal_hours: 8, calorie_goal: 1955, protein_goal_g: 170, carbs_goal_g: 195,
     fat_goal_g: 55, steps_goal: 10000, active_cal_goal: 500, water_goal_ml: 3000,
   }
   const totalWaterMl = (water ?? []).reduce((s, r) => s + r.amount_ml, 0)

@@ -2,50 +2,98 @@
 
 import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
-import { WorkoutLogList } from '@/components/workout/WorkoutLogList'
+import Link from 'next/link'
 import { WorkoutChat } from '@/components/logger/WorkoutChat'
 import { Sheet } from '@/components/ui/Sheet'
-import { useWorkoutHistory, useDeleteSession, type WorkoutSessionRow } from '@/lib/hooks/useWorkoutHistory'
 import { useExerciseMap, useExerciseMemory } from '@/lib/hooks/useLogger'
-import { PROGRAMS, DEFAULT_PROGRAM_ID, getActiveProgramId, setActiveProgramId, daySplitEnum, type ProgramDay, eraForDate } from '@/lib/programs'
+import {
+  PROGRAMS, DEFAULT_PROGRAM_ID, getActiveProgramId, setActiveProgramId, daySplitEnum,
+  scheduleDayFor, isTrainingDay, isReentryWeek, eraForDate, ERA_META, type ProgramDay,
+} from '@/lib/programs'
+import { logicalTodayISO } from '@/lib/utils/day'
 import { displayWeight, weightUnit } from '@/lib/utils/units'
-import { Plus, TrendingUp, Trash2 } from 'lucide-react'
+import { Plus, TrendingUp, Moon, ArrowRight } from 'lucide-react'
 
 const StrengthTrends = dynamic(() => import('@/components/charts/StrengthTrends').then((m) => m.StrengthTrends), { ssr: false })
 
 const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const PROGRAM_ORDER = ['apex51', 'axis4_builder', 'axis4_defender']
+const REST_VIOLET = '#8B7CFF'
 
 export default function WorkoutPage() {
-  const { data: sessions, isLoading: histLoading } = useWorkoutHistory()
-  const [era, setEra] = useState<'all' | 'ppl' | 'axis'>('all')
   const { data: exMap } = useExerciseMap()
   const { data: memory } = useExerciseMemory()
-  const del = useDeleteSession()
   const [programId, setProgramId] = useState(DEFAULT_PROGRAM_ID)
   const [openDay, setOpenDay] = useState<ProgramDay | null>(null)
-  const [focusPicker, setFocusPicker] = useState(false)
-  const [confirmDelete, setConfirmDelete] = useState<WorkoutSessionRow | null>(null)
   const unit = weightUnit()
 
   useEffect(() => { setProgramId(getActiveProgramId()) }, [])
   const program = PROGRAMS[programId] ?? PROGRAMS[DEFAULT_PROGRAM_ID]
-
   function selectProgram(id: string) { setProgramId(id); setActiveProgramId(id) }
 
-  // "Legs & Core" is ONE master card; its two focus days live behind a picker.
-  const legsDays = program.days.filter((d) => d.label === 'Legs & Core')
-  const displayDays = legsDays.length > 1
-    ? program.days.filter((d) => d.label !== 'Legs & Core' || d.key === legsDays[0].key)
-    : program.days
-  const isMergedLegs = (day: ProgramDay) => legsDays.length > 1 && day.label === 'Legs & Core'
+  // Today, era-aware — drives the hero + the highlighted card in the week grid.
+  const today = logicalTodayISO()
+  const schedule = scheduleDayFor(today)
+  const training = isTrainingDay(today)
+  const reentry = isReentryWeek(today)
+  const eraMeta = ERA_META[eraForDate(today)]
+  const todayWD = WD[new Date(`${today}T12:00:00Z`).getUTCDay()]
+  const todayKey = schedule !== 'rest' ? schedule.dayKey : undefined
+  const todayDay = todayKey ? program.days.find((d) => d.key === todayKey) : undefined
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-heading text-fluid-2xl font-bold text-text">Workout</h1>
-        <p className="text-muted text-fluid-sm mt-0.5">Active program · tap a day to log · progressive overload memory</p>
+      {/* Header */}
+      <div className="flex items-end justify-between gap-3">
+        <div>
+          <h1 className="font-heading text-fluid-2xl font-bold text-text">Command Center</h1>
+          <p className="text-muted text-fluid-sm mt-0.5">Active program · progressive-overload memory · tap a day to log</p>
+        </div>
+        <Link href="/weekly" className="btn-glass shrink-0 min-h-[40px] text-fluid-xs" aria-label="Open workout history in Journey">
+          History <ArrowRight className="w-3.5 h-3.5" />
+        </Link>
       </div>
+
+      {/* ── Today / Next-session hero ── */}
+      <section className="helix-card holo-sheen"
+        style={{
+          borderColor: training && todayDay ? `${todayDay.color}44` : `${REST_VIOLET}33`,
+          boxShadow: training && todayDay ? `0 0 26px ${todayDay.color}1f` : undefined,
+        }}>
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded"
+            style={{ color: eraMeta.color, background: `${eraMeta.color}1a`, border: `1px solid ${eraMeta.color}40` }}>{eraMeta.short}</span>
+          {reentry && <span className="text-[10px] font-bold uppercase tracking-wide text-warn">Re-entry · ~90% loads</span>}
+          <span className="text-fluid-xs text-muted ml-auto">{todayWD} · Today</span>
+        </div>
+        {training && todayDay ? (
+          <div className="flex items-end justify-between gap-4">
+            <div className="min-w-0">
+              <h2 className="split-label font-bold text-fluid-2xl leading-tight" style={{ color: todayDay.color }}>{todayDay.label}</h2>
+              {todayDay.sub && <p className="text-fluid-sm text-muted">{todayDay.sub}</p>}
+              <p className="text-[11px] text-muted mt-1">
+                {todayDay.exercises.filter((e) => !e.bulkOnly).length} exercises · {todayDay.exercises.reduce((n, e) => n + e.sets, 0)} sets
+              </p>
+            </div>
+            <button onClick={() => setOpenDay(todayDay)}
+              className="btn-primary shrink-0 min-h-[48px]"
+              style={{ background: todayDay.color, boxShadow: `0 0 18px ${todayDay.color}55` }}>
+              <Plus className="w-4 h-4" /> Log {todayDay.label}
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-4">
+            <span className="w-12 h-12 rounded-full flex items-center justify-center shrink-0"
+              style={{ background: `${REST_VIOLET}1c`, color: REST_VIOLET, boxShadow: `0 0 14px ${REST_VIOLET}30` }}>
+              <Moon className="w-6 h-6" />
+            </span>
+            <div>
+              <h2 className="split-label font-bold text-fluid-2xl leading-tight" style={{ color: REST_VIOLET }}>Rest · Zone-2</h2>
+              <p className="text-fluid-sm text-muted">Recovery day — optional light Zone-2 cardio. No lifting scheduled.</p>
+            </div>
+          </div>
+        )}
+      </section>
 
       {/* Program selector (active + drawer backups) */}
       <div className="flex gap-1.5 flex-wrap">
@@ -65,126 +113,61 @@ export default function WorkoutPage() {
         })}
       </div>
 
-      {/* Active-program day cards (Legs & Core = one master card → focus picker) */}
+      {/* Week plan — every training day as its own card (today glows) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {displayDays.map((day) => (
-          <div key={day.key} className="glass-card p-3 flex flex-col" style={{ borderColor: `${day.color}33` }}>
-            <button onClick={() => (isMergedLegs(day) ? setFocusPicker(true) : setOpenDay(day))} className="flex items-center justify-between mb-2.5 group">
-              <span className="min-w-0">
-                <span className="flex items-baseline gap-2">
-                  <span className="split-label font-bold text-lg truncate" style={{ color: day.color }}>{day.label}</span>
-                  <span className="text-[10px] text-muted uppercase shrink-0">{isMergedLegs(day) ? legsDays.map((d) => WD[d.weekday]).join(' · ') : WD[day.weekday]}</span>
-                  {day.cutSetDelta != null && (
-                    <span className="text-[9px] px-1 rounded bg-white/[0.05] text-muted shrink-0" title="Cut-mode set delta">{day.cutSetDelta} cut</span>
-                  )}
+        {program.days.map((day) => {
+          const isToday = day.key === todayKey
+          return (
+            <div key={day.key} className="glass-card p-3 flex flex-col"
+              style={{ borderColor: isToday ? day.color : `${day.color}33`, boxShadow: isToday ? `0 0 20px ${day.color}2e` : undefined }}>
+              <button onClick={() => setOpenDay(day)} className="flex items-center justify-between mb-2.5 group">
+                <span className="min-w-0">
+                  <span className="flex items-baseline gap-2">
+                    <span className="split-label font-bold text-lg truncate" style={{ color: day.color }}>{day.label}</span>
+                    <span className="text-[10px] text-muted uppercase shrink-0">{WD[day.weekday]}</span>
+                    {isToday && <span className="text-[9px] px-1 rounded font-bold shrink-0" style={{ color: day.color, background: `${day.color}22` }}>TODAY</span>}
+                    {day.cutSetDelta != null && (
+                      <span className="text-[9px] px-1 rounded bg-white/[0.05] text-muted shrink-0" title="Cut-mode set delta">{day.cutSetDelta} cut</span>
+                    )}
+                  </span>
+                  <span className="block text-[10px] text-muted leading-none mt-0.5">{day.sub}</span>
                 </span>
-                <span className="block text-[10px] text-muted leading-none mt-0.5">
-                  {isMergedLegs(day) ? legsDays.map((d) => d.sub).join(' / ') : day.sub}
+                <span className="w-7 h-7 rounded-full flex items-center justify-center transition-transform group-hover:scale-110"
+                  style={{ background: `color-mix(in srgb, ${day.color} 18%, transparent)`, color: day.color }} aria-label={`Log ${day.label}`}>
+                  <Plus className="w-4 h-4" />
                 </span>
-              </span>
-              <span className="w-7 h-7 rounded-full flex items-center justify-center transition-transform group-hover:scale-110"
-                style={{ background: `color-mix(in srgb, ${day.color} 18%, transparent)`, color: day.color }} aria-label={`Log ${day.label}`}>
-                <Plus className="w-4 h-4" />
-              </span>
-            </button>
-            <div className="space-y-1 flex-1">
-              {day.exercises.map((ex) => {
-                const id = exMap?.get(ex.name)
-                const prev = id ? memory?.get(id) : undefined
-                const target = displayWeight(ex.wk1Kg)
-                return (
-                  <div key={ex.name} className={`rounded-lg px-2.5 py-1.5 bg-white/[0.02] border border-white/[0.05] ${ex.bulkOnly ? 'opacity-50' : ''}`}>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-medium text-text leading-tight truncate">{ex.name}{ex.bulkOnly && <span className="text-[9px] text-muted ml-1">bulk only</span>}</span>
-                      <span className="text-[10px] text-muted shrink-0">{ex.sets}×{ex.reps}</span>
+              </button>
+              <div className="space-y-1 flex-1">
+                {day.exercises.map((ex) => {
+                  const id = exMap?.get(ex.name)
+                  const prev = id ? memory?.get(id) : undefined
+                  const target = displayWeight(ex.wk1Kg)
+                  return (
+                    <div key={ex.name} className={`rounded-lg px-2.5 py-1.5 bg-white/[0.02] border border-white/[0.05] ${ex.bulkOnly ? 'opacity-50' : ''}`}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-medium text-text leading-tight truncate">{ex.name}{ex.bulkOnly && <span className="text-[9px] text-muted ml-1">bulk only</span>}</span>
+                        <span className="text-[10px] text-muted shrink-0">{ex.sets}×{ex.reps}</span>
+                      </div>
+                      <div className="text-[10px] text-muted flex items-center gap-2 mt-0.5">
+                        {prev
+                          ? <span className="flex items-center gap-1 text-success"><TrendingUp className="w-2.5 h-2.5" />{displayWeight(prev.weightKg)}{unit} × {prev.reps}</span>
+                          : target != null && <span>Wk1 {target}{unit}</span>}
+                      </div>
                     </div>
-                    <div className="text-[10px] text-muted flex items-center gap-2 mt-0.5">
-                      {prev
-                        ? <span className="flex items-center gap-1 text-success"><TrendingUp className="w-2.5 h-2.5" />{displayWeight(prev.weightKg)}{unit} × {prev.reps}</span>
-                        : target != null && <span>Wk1 {target}{unit}</span>}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* History — era-scoped (HELIX and PPL never mix) */}
-      <div>
-        <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
-          <h2 className="font-heading font-semibold text-lg text-text">History</h2>
-          <div className="flex items-center gap-1.5">
-            {([['all', 'All', '#19E3B1'], ['axis', 'HELIX Era', '#3EE0FF'], ['ppl', 'PPL Legacy', '#8B97B2']] as const).map(([k, label, color]) => {
-              const active = era === k
-              return (
-                <button key={k} onClick={() => setEra(k)}
-                  className="px-3 py-1.5 rounded-xl text-fluid-xs font-semibold border transition-colors"
-                  style={active ? { color, borderColor: `${color}55`, background: `${color}1f`, boxShadow: `0 0 10px ${color}33` } : { color: '#8B97B2', borderColor: 'transparent' }}>
-                  {label}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-        <WorkoutLogList
-          sessions={(sessions ?? []).filter((s) => era === 'all' || eraForDate(s.date) === era)}
-          isLoading={histLoading}
-          onDelete={setConfirmDelete}
-          emptyMessage="No sessions yet. Tap a day above to log your first workout!"
-        />
-      </div>
-
-      <StrengthTrends />
-
-      {/* Legs & Core focus picker */}
-      <Sheet open={focusPicker} onClose={() => setFocusPicker(false)} title="Legs & Core — pick today's focus">
-        <div className="grid gap-3">
-          {legsDays.map((d, i) => (
-            <button
-              key={d.key}
-              onClick={() => { setFocusPicker(false); setOpenDay(d) }}
-              className="glass-card w-full text-left p-4 active:opacity-80"
-              style={{ borderColor: `${d.color}44` }}
-            >
-              <div className="flex items-baseline justify-between">
-                <span className="font-heading font-bold text-fluid-base" style={{ color: d.color }}>
-                  Day {i === 0 ? 2 : 5} · {d.sub}
-                </span>
-                <span className="text-[10px] text-muted uppercase">{WD[d.weekday]}</span>
+                  )
+                })}
               </div>
-              <p className="text-fluid-xs text-muted mt-1.5 truncate">
-                {d.exercises.slice(0, 3).map((e) => e.name).join(' · ')} +{Math.max(0, d.exercises.length - 3)}
-              </p>
-            </button>
-          ))}
-        </div>
-      </Sheet>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Progression snapshot (heavy analytics live in the Charts tab) */}
+      <StrengthTrends />
 
       {/* Logger sheet */}
       <Sheet open={!!openDay} onClose={() => setOpenDay(null)} title={openDay ? `${openDay.label}${openDay.sub ? ` · ${openDay.sub}` : ''} — Log Session` : undefined}>
         {openDay && <WorkoutChat splitDay={daySplitEnum(openDay.key)} onClose={() => setOpenDay(null)} />}
-      </Sheet>
-
-      {/* Delete confirm */}
-      <Sheet open={!!confirmDelete} onClose={() => setConfirmDelete(null)} title="Delete session?">
-        {confirmDelete && (
-          <div className="space-y-4">
-            <p className="text-fluid-sm text-muted">
-              Delete the {confirmDelete.splitLabel} session from{' '}
-              {new Date(confirmDelete.startedAt).toLocaleDateString('en-IL', { month: 'short', day: 'numeric' })}? This can’t be undone.
-            </p>
-            <div className="flex gap-2">
-              <button onClick={() => setConfirmDelete(null)} className="btn-glass flex-1 justify-center">Cancel</button>
-              <button
-                onClick={() => { del.mutate(confirmDelete.id); setConfirmDelete(null) }}
-                className="flex-1 justify-center inline-flex items-center gap-2 rounded-xl bg-danger/90 text-bg font-semibold px-5 py-2.5 hover:bg-danger">
-                <Trash2 className="w-4 h-4" /> Delete
-              </button>
-            </div>
-          </div>
-        )}
       </Sheet>
     </div>
   )

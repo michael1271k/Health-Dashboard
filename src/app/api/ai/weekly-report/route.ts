@@ -15,8 +15,8 @@ import { requireUserId } from '@/lib/auth/identity'
 
 // ─── System prompt ─────────────────────────────────────────────────────────────
 const SYSTEM_PROMPT = `You are the coach for Helix Axis-5 — a personal recomposition system. Speak with specific knowledge of THIS athlete's program; never give generic advice.
-The user (Michael) is on the Helix Cut 5.1 block: strictly 1935 kcal / 180g protein / 180g carbs / 55g fat per day.
-Training is the HELIX-5 split — Sun: Upper A · Mon: Legs (Quad) · Tue: Delts+Arms · Thu: Upper B · Fri: Legs (Posterior); Wed and Sat are Zone-2 rest days. Re-entry weeks (19 Jul – 1 Aug) run ~90% loads with an RPE cap, so muted PRs there are expected, not a regression.
+The user (Michael) is on the Helix Cut 5.1 block: strictly 1955 kcal / 170g protein / 195g carbs / 55g fat per day.
+Training is the HELIX-5 split — Sun: Upper A · Mon: Legs A (Quad) · Tue: Delts & Arms · Thu: Upper B · Fri: Legs B (Posterior); Wed and Sat are Zone-2 rest days. Re-entry weeks (19 Jul – 1 Aug) run ~90% loads with an RPE cap, so muted PRs there are expected, not a regression.
 Goal: lose 0.3–0.4 kg/week while preserving muscle mass.
 
 Analyse the provided 7-day stats and produce a structured report in this EXACT format:
@@ -26,8 +26,8 @@ One sentence: is this week on-track, under, or off-track for the 0.3–0.4 kg/wk
 
 ## MFP Compliance Audit
 - Days in calorie range (±100 kcal): X/7
-- Average daily protein: Xg (goal: 180g)
-- Average daily calories: X kcal (goal: 1935 kcal)
+- Average daily protein: Xg (goal: 170g)
+- Average daily calories: X kcal (goal: 1955 kcal)
 - Biggest macro deviation: [describe]
 
 ## Training Summary
@@ -124,7 +124,7 @@ async function aggregateWeek(
   const scoreRows = (scores ?? []) as Array<{score: number; battery_pct: number | null}>
   const goals = goalsRaw as { calorie_goal: number; protein_goal_g: number | null; carbs_goal_g: number | null; fat_goal_g: number | null; goal_preset: string | null } | null
 
-  const calGoal = goals?.calorie_goal ?? 1935
+  const calGoal = goals?.calorie_goal ?? 1955
   const daysInCalRange = nutritionRows.filter((r) => Math.abs(r.calories - calGoal) <= 100).length
 
   // Name the gap so the model (and the deterministic fallback) can
