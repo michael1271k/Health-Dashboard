@@ -39,6 +39,15 @@ export function SerwistRegister() {
         if (buildId && buildId !== 'unknown' && buildId !== myBuild) {
           if (sessionStorage.getItem(VERSION_FLAG) === buildId) return // already tried for this deploy
           sessionStorage.setItem(VERSION_FLAG, buildId)
+          // Purge every cache BEFORE reloading — a bare reload can be served
+          // the same stale precached chunks that caused the mismatch, which
+          // is exactly the React #130 "element type is an object" signature.
+          try {
+            if ('caches' in window) {
+              const keys = await caches.keys()
+              await Promise.all(keys.map((k) => caches.delete(k)))
+            }
+          } catch { /* best-effort */ }
           window.location.reload()
         }
       } catch { /* offline — the SW keeps serving the consistent cached pair */ }

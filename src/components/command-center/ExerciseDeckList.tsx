@@ -15,14 +15,18 @@ import type { ExerciseHistory } from '@/lib/hooks/useExerciseSetHistory'
  * The sortable exercise deck. Long-press (250 ms) lifts a card on touch so
  * dragging never fights page scroll; the grip handle is the only activator,
  * and keyboard users reorder with space + arrows (dnd-kit sortable defaults).
+ * Stays a SINGLE column at every breakpoint — verticalListSortingStrategy +
+ * restrictToVerticalAxis are only valid for a one-column list.
  */
-export function ExerciseDeckList({ draft, history, onReorder, onUpdateSet, onAddSet, onRemoveSet }: {
+export function ExerciseDeckList({ draft, history, onReorder, onUpdateSet, onAddSet, onRemoveSet, onRemoveExercise, onSetNote }: {
   draft: SessionDraft
   history: Map<string, ExerciseHistory> | undefined
   onReorder: (orderedIds: string[]) => void
   onUpdateSet: (localId: string, setIdx: number, patch: Partial<DraftSet>) => void
   onAddSet: (localId: string) => void
   onRemoveSet: (localId: string, setIdx: number) => void
+  onRemoveExercise: (localId: string) => void
+  onSetNote: (localId: string, note: string) => void
 }) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
@@ -54,11 +58,12 @@ export function ExerciseDeckList({ draft, history, onReorder, onUpdateSet, onAdd
             <ExerciseCard
               key={ex.localId}
               exercise={ex}
-              live={draft.mode === 'live'}
               history={history?.get(ex.name) ?? null}
               onUpdateSet={(i, patch) => onUpdateSet(ex.localId, i, patch)}
               onAddSet={() => onAddSet(ex.localId)}
               onRemoveSet={(i) => onRemoveSet(ex.localId, i)}
+              onRemoveExercise={() => onRemoveExercise(ex.localId)}
+              onSetNote={(note) => onSetNote(ex.localId, note)}
             />
           ))}
         </div>

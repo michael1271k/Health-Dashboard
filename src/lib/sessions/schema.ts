@@ -13,9 +13,6 @@ export const WorkoutSetSchema = z.object({
   rpe: z.number().min(1).max(10).optional(),
   // Deck position of the parent exercise (all its sets share the value).
   exerciseOrder: z.number().int().nonnegative().optional(),
-  // Live-mode check-off — un-done sets are dropped client-side at commit,
-  // so this survives only in drafts; stripped before insert regardless.
-  done: z.boolean().optional(),
   // Seeds muscle data when the set's exercise is new to the catalog.
   muscleGroups: z.array(z.string()).optional(),
 })

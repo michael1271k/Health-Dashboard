@@ -36,25 +36,13 @@ export function useSessionIntel(sessionId: string | null) {
     enabled: !!sessionId,
     staleTime: 5 * 60_000,
     queryFn: async (): Promise<SessionIntel> => {
-      // day_key (migration 004) is the exact program-day identity; self-heal
-      // to the legacy select while the column doesn't exist yet.
+      // day_key is the exact program-day identity (null on legacy rows).
       type SessRow = { id: string; started_at: string; split_day: string; total_volume_kg: number | null; day_key?: string | null }
-      let sess: unknown = null
-      const withKey = await supabase
+      const { data: sess } = await supabase
         .from('workout_sessions')
         .select('id, started_at, split_day, total_volume_kg, day_key')
         .eq('id', sessionId as string)
         .single()
-      if (withKey.error) {
-        const legacy = await supabase
-          .from('workout_sessions')
-          .select('id, started_at, split_day, total_volume_kg')
-          .eq('id', sessionId as string)
-          .single()
-        sess = legacy.data
-      } else {
-        sess = withKey.data
-      }
       const session = sess as SessRow | null
       const empty: SessionIntel = { deltas: [], prs: [], volumes: [], typeLabel: '', volumeDeltaPct: null, setsDelta: null, computedVolumeKg: 0, computedSets: 0 }
       if (!session) return empty
@@ -71,7 +59,7 @@ export function useSessionIntel(sessionId: string | null) {
       const typeLabel = sessionTypeLabel(session.started_at.slice(0, 10), session.split_day, weekday)
       const prevQuery = await supabase
         .from('workout_sessions')
-        .select(withKey.error ? 'id, started_at, total_volume_kg' : 'id, started_at, total_volume_kg, day_key')
+        .select('id, started_at, total_volume_kg, day_key')
         .eq('split_day', session.split_day)
         .lt('started_at', session.started_at)
         .order('started_at', { ascending: false })

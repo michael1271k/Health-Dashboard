@@ -3,20 +3,18 @@
 import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import { WorkoutChat } from '@/components/logger/WorkoutChat'
-import { Sheet } from '@/components/ui/Sheet'
-import { SessionDeck } from '@/components/command-center/SessionDeck'
+import { useRouter } from 'next/navigation'
 import { useExerciseMap, useExerciseMemory, useLatestSessionFlag } from '@/lib/hooks/useLogger'
-import { useSessionDraft } from '@/lib/hooks/useSessionDraft'
-import type { SessionDraft } from '@/lib/sessions/draft'
+import { WeeklySummaryCard } from '@/components/command-center/WeeklySummaryCard'
+import { peekSessionDraft, type SessionDraft } from '@/lib/sessions/draft'
 import {
-  PROGRAMS, DEFAULT_PROGRAM_ID, getActiveProgramId, setActiveProgramId, daySplitEnum,
-  scheduleDayFor, isTrainingDay, isReentryWeek, eraForDate, ERA_META, type ProgramDay,
+  PROGRAMS, DEFAULT_PROGRAM_ID, getActiveProgramId, setActiveProgramId,
+  scheduleDayFor, isTrainingDay, isReentryWeek, eraForDate, ERA_META,
 } from '@/lib/programs'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { displayWeight, weightUnit } from '@/lib/utils/units'
 import { useEraFilter } from '@/lib/era/eraFilter'
-import { Plus, TrendingUp, Moon, ArrowRight, Flag, PlayCircle, FileClock } from 'lucide-react'
+import { Plus, TrendingUp, Moon, ArrowRight, Flag, ClipboardPaste, FileClock } from 'lucide-react'
 
 const StrengthTrends = dynamic(() => import('@/components/charts/StrengthTrends').then((m) => m.StrengthTrends), { ssr: false })
 
@@ -24,60 +22,26 @@ const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const PROGRAM_ORDER = ['apex51', 'axis4_builder', 'axis4_defender']
 const REST_VIOLET = '#8B7CFF'
 
-const HELIX_DAY_KEYS = ['cb_a', 'legs_a', 'arms', 'cb_b', 'legs_b'] as const
-
 export default function WorkoutPage() {
+  const router = useRouter()
   const { data: exMap } = useExerciseMap()
   const { data: memory } = useExerciseMemory()
   const { data: nextFlag } = useLatestSessionFlag()
   const { era } = useEraFilter()
   const [programId, setProgramId] = useState(DEFAULT_PROGRAM_ID)
-  const [openDay, setOpenDay] = useState<ProgramDay | null>(null)
-  const [deckOpen, setDeckOpen] = useState(false)
-  const deckStore = useSessionDraft()
   const unit = weightUnit()
 
-  // Coach JSON pasted in the chat → validated draft → the editable deck.
-  function openCoachDraft(draft: SessionDraft) {
-    deckStore.start(draft)
-    setOpenDay(null)
-    setDeckOpen(true)
-  }
-
-  // Live in-gym session: seed the deck from the program day, pre-filled with
-  // each exercise's previous numbers (Wk1 target as the cold-start fallback).
-  function startLiveSession(day: ProgramDay) {
-    const dayKey = (HELIX_DAY_KEYS as readonly string[]).includes(day.key)
-      ? (day.key as SessionDraft['dayKey']) : undefined
-    const exercises = day.exercises.filter((e) => !e.bulkOnly).map((ex, i) => {
-      const id = exMap?.get(ex.name)
-      const prev = id ? memory?.get(id) : undefined
-      const weightKg = prev?.weightKg ?? ex.wk1Kg ?? 20
-      const reps = prev?.reps ?? (parseInt(ex.reps, 10) || 10)
-      return {
-        localId: `live-${i}-${Math.random().toString(36).slice(2, 8)}`,
-        name: ex.name,
-        muscleGroups: ex.muscles,
-        sets: Array.from({ length: ex.sets }, () => ({ weightKg, reps, done: false })),
-      }
-    })
-    deckStore.start({
-      mode: 'live',
-      dayKey,
-      splitDay: daySplitEnum(day.key),
-      date: logicalTodayISO(),
-      title: day.sub ? `${day.label} · ${day.sub}` : day.label,
-      notes: '',
-      startedAt: new Date().toISOString(),
-      exercises,
-    })
-    setOpenDay(null)
-    setDeckOpen(true)
-  }
+  // Surviving deck draft (autosaved on /session) — offer to resume it.
+  const [resumeDraft, setResumeDraft] = useState<SessionDraft | null>(null)
+  useEffect(() => { setResumeDraft(peekSessionDraft()) }, [])
 
   useEffect(() => { setProgramId(getActiveProgramId()) }, [])
   const program = PROGRAMS[programId] ?? PROGRAMS[DEFAULT_PROGRAM_ID]
   function selectProgram(id: string) { setProgramId(id); setActiveProgramId(id) }
+
+  /** Every logging path is the fullscreen deck route. */
+  const openDeck = (templateKey?: string) =>
+    router.push(templateKey ? `/session?template=${templateKey}` : '/session')
 
   // Today, era-aware — drives the hero + the highlighted card in the week grid.
   const today = logicalTodayISO()
@@ -124,15 +88,15 @@ export default function WorkoutPage() {
               </p>
             </div>
             <div className="flex flex-col gap-1.5 shrink-0">
-              <button onClick={() => setOpenDay(todayDay)}
+              <button onClick={() => openDeck(todayDay.key)}
                 className="btn-primary min-h-[48px]"
                 style={{ background: todayDay.color, boxShadow: `0 0 18px ${todayDay.color}55` }}>
                 <Plus className="w-4 h-4" /> Log {todayDay.label}
               </button>
-              <button onClick={() => startLiveSession(todayDay)}
+              <button onClick={() => openDeck()}
                 className="btn-glass min-h-[40px] text-fluid-xs justify-center"
                 style={{ color: todayDay.color }}>
-                <PlayCircle className="w-3.5 h-3.5" /> Live Session
+                <ClipboardPaste className="w-3.5 h-3.5" /> Paste session
               </button>
             </div>
           </div>
@@ -142,10 +106,13 @@ export default function WorkoutPage() {
               style={{ background: `${REST_VIOLET}1c`, color: REST_VIOLET, boxShadow: `0 0 14px ${REST_VIOLET}30` }}>
               <Moon className="w-6 h-6" />
             </span>
-            <div>
+            <div className="flex-1 min-w-0">
               <h2 className="split-label font-bold text-fluid-2xl leading-tight" style={{ color: REST_VIOLET }}>Rest · Zone-2</h2>
               <p className="text-fluid-sm text-muted">Recovery day — optional light Zone-2 cardio. No lifting scheduled.</p>
             </div>
+            <button onClick={() => openDeck()} className="btn-glass min-h-[40px] text-fluid-xs shrink-0">
+              <ClipboardPaste className="w-3.5 h-3.5" /> Paste
+            </button>
           </div>
         )}
         {/* Coach's action item from the last committed session */}
@@ -157,15 +124,17 @@ export default function WorkoutPage() {
         )}
       </section>
 
-      {/* Surviving draft (autosaved) — resume where the gym session left off */}
-      {deckStore.hydrated && deckStore.draft && !deckOpen && (
-        <button onClick={() => setDeckOpen(true)}
+      {/* Friday week-complete summary CTA / quiet last-week review */}
+      <WeeklySummaryCard />
+
+      {/* Surviving draft (autosaved) — resume where the session left off */}
+      {resumeDraft && (
+        <button onClick={() => router.push('/session')}
           className="w-full glass-card glass-card--accent px-4 py-3 flex items-center gap-3 text-left">
           <FileClock className="w-4 h-4 text-primary shrink-0" aria-hidden="true" />
           <span className="flex-1 min-w-0">
             <span className="block text-sm font-semibold text-text truncate">
-              Resume {deckStore.draft.mode === 'live' ? 'live session' : 'session review'}
-              {deckStore.draft.title ? ` — ${deckStore.draft.title}` : ''}
+              Resume session draft{resumeDraft.title ? ` — ${resumeDraft.title}` : ''}
             </span>
             <span className="block text-[11px] text-muted">Draft autosaved · tap to continue</span>
           </span>
@@ -198,7 +167,7 @@ export default function WorkoutPage() {
           return (
             <div key={day.key} className="glass-card p-3 flex flex-col"
               style={{ borderColor: isToday ? day.color : `${day.color}33`, boxShadow: isToday ? `0 0 20px ${day.color}2e` : undefined }}>
-              <button onClick={() => setOpenDay(day)} className="flex items-center justify-between mb-2.5 group">
+              <button onClick={() => openDeck(day.key)} className="flex items-center justify-between mb-2.5 group">
                 <span className="min-w-0">
                   <span className="flex items-baseline gap-2">
                     <span className="split-label font-bold text-lg truncate" style={{ color: day.color }}>{day.label}</span>
@@ -242,23 +211,6 @@ export default function WorkoutPage() {
 
       {/* Progression snapshot (heavy analytics live in the Charts tab) */}
       <StrengthTrends era={era} />
-
-      {/* Logger / Command Center sheet. Closing the deck does NOT discard the
-          draft (it autosaves) — discard is explicit via the deck's trash. */}
-      <Sheet
-        open={!!openDay || deckOpen}
-        onClose={() => { setOpenDay(null); setDeckOpen(false) }}
-        size={deckOpen ? 'wide' : 'default'}
-        title={deckOpen
-          ? (deckStore.draft?.mode === 'live' ? 'Live Session' : 'Session Review')
-          : openDay ? `${openDay.label}${openDay.sub ? ` · ${openDay.sub}` : ''} — Log Session` : undefined}
-      >
-        {deckOpen && deckStore.draft
-          ? <SessionDeck store={deckStore} onClose={() => setDeckOpen(false)} />
-          : openDay
-            ? <WorkoutChat splitDay={daySplitEnum(openDay.key)} onClose={() => setOpenDay(null)} onCoachDraft={openCoachDraft} />
-            : null}
-      </Sheet>
     </div>
   )
 }

@@ -2,11 +2,10 @@
 
 import { useMemo, useState } from 'react'
 import dynamic from 'next/dynamic'
-import { Moon, Flame, Dumbbell, Scale, Footprints, Pill, Plus } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Moon, Flame, Dumbbell, Scale, Footprints, Pill, Plus, CalendarDays } from 'lucide-react'
 import { Fab } from '@/components/ui/Fab'
-import { Sheet } from '@/components/ui/Sheet'
 import { LiquidModal } from '@/components/ui/LiquidModal'
-import { WorkoutChat } from '@/components/logger/WorkoutChat'
 import { ReadinessOrb } from '@/components/dashboard/ReadinessOrb'
 import { BioStrip, type BioStripProps } from '@/components/dashboard/BioStrip'
 import { ScoreCard } from '@/components/dashboard/ScoreCard'
@@ -24,7 +23,7 @@ import { displayWeight, weightUnit, validWeight } from '@/lib/utils/units'
 import { phaseDisplay } from '@/lib/nutrition/phase'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { logicalTodayISO } from '@/lib/utils/day'
-import { scheduleDayFor, daySplitEnum, eraForDate, isTrainingDay, type ScheduleDay } from '@/lib/programs'
+import { scheduleDayFor, eraForDate, isTrainingDay, type ScheduleDay } from '@/lib/programs'
 import { useSupplements } from '@/lib/hooks/useSupplements'
 import { supplementCountForDate } from '@/lib/supplements'
 import { useBioSeries } from '@/lib/hooks/useBioStrips'
@@ -60,6 +59,7 @@ const n1 = (v: number | null | undefined) => (v == null ? null : Math.round(v * 
 type SheetKey = 'readiness' | 'sleep' | 'fuel' | 'train' | 'body' | 'steps' | 'stack' | null
 
 export default function DashboardPage() {
+  const router = useRouter()
   useEnsureTodayScore()
   const { data: score, isLoading: scoreLoading } = useTodayScore()
   const { data: log, isLoading: logLoading } = useTodayDailyLog()
@@ -72,7 +72,6 @@ export default function DashboardPage() {
   const { data: fuelLogs } = useDailyLogs(8)
 
   const [open, setOpen] = useState<SheetKey>(null)
-  const [logOpen, setLogOpen] = useState(false)
 
   // Today's scheduled training day — ERA-AWARE (PPL before Jul 19, HELIX-5 after),
   // shared with the Insight Coach so the whole app agrees.
@@ -214,7 +213,12 @@ export default function DashboardPage() {
               <StatTile label="Today" value={todayDay === 'rest' ? 'Zone-2 / Rest' : todayDay.label} sub={todayDay !== 'rest' ? todayDay.sub : undefined} accent={CYAN} />
               <StatTile label="Last Volume" value={n0(displayWeight(lastSession?.total_volume_kg ?? null))} unit={unit} />
             </div>
-            <button onClick={() => { setOpen(null); setLogOpen(true) }} className="btn-glass w-full justify-center">
+            <button
+              onClick={() => {
+                setOpen(null)
+                router.push(todayDay !== 'rest' && todayDay.dayKey ? `/session?template=${todayDay.dayKey}` : '/session')
+              }}
+              className="btn-glass w-full justify-center">
               <Plus className="w-4 h-4" /> Log {todayDay === 'rest' ? 'Session' : todayDay.label}
             </button>
           </div>
@@ -240,11 +244,8 @@ export default function DashboardPage() {
         {open === 'stack' && <SupplementChecklist />}
       </LiquidModal>
 
-      {/* Thumb-reachable quick-log */}
-      <Fab icon={Plus} label="Log" onClick={() => setLogOpen(true)} />
-      <Sheet open={logOpen} onClose={() => setLogOpen(false)} title="Quick Log">
-        <WorkoutChat splitDay={todayDay !== 'rest' && todayDay.dayKey ? daySplitEnum(todayDay.dayKey) : 'upper'} onClose={() => setLogOpen(false)} />
-      </Sheet>
+      {/* Thumb-reachable jump into today's Daily Nexus (log, InBody, journal) */}
+      <Fab icon={CalendarDays} label="Today" onClick={() => router.push(`/day/${logicalTodayISO()}`)} />
     </div>
     </PullToRefresh>
   )

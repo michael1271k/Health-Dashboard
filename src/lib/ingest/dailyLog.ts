@@ -171,7 +171,10 @@ export async function ingestDailyLog(
   set('exercise_minutes', payload.exercise_minutes ?? payload.training_minutes)
   set('stand_hours', payload.stand_hours ?? standToHours(payload.standing_minutes))
   set('vo2max', payload.vo2max)
-  // Environmental & cardiac metrics
+  // Environmental & cardiac metrics. NOTE: wrist_temp_delta stores the raw
+  // value the Shortcut sends — since 2026-07 that is the night's AVERAGE wrist
+  // temperature in °C, not a delta. The column name is kept as-is (renaming
+  // would risk the pinned Shortcut ingest path); the Vitals UI labels it °C.
   set('wrist_temp_delta', payload.wrist_temp)
   set('time_in_daylight_min', payload.time_in_daylight)
   set('heart_rate_recovery', payload.heart_rate_recovery)

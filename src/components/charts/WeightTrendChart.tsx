@@ -35,7 +35,7 @@ interface WeightDataPoint {
 interface WeightTrendChartProps {
   data: WeightDataPoint[]
   isLoading?: boolean
-  /** Draw the Helix 5.1 Cut era-start marker (shown on the all-history view). */
+  /** Draw the Helix Cut era-start marker (shown on the all-history view). */
   showEraBoundary?: boolean
 }
 
@@ -122,7 +122,7 @@ export function WeightTrendChart({ data, isLoading, showEraBoundary }: WeightTre
               <ReferenceLine
                 yAxisId="mass" x={formatDate(eraBoundaryPoint.date)}
                 stroke="#3EE0FF" strokeOpacity={0.7} strokeDasharray="4 3"
-                label={{ value: 'Helix 5.1', position: 'insideTopRight', fill: '#3EE0FF', fontSize: 10 }}
+                label={{ value: 'Helix Cut', position: 'insideTopRight', fill: '#3EE0FF', fontSize: 10 }}
               />
             )}
             <defs>

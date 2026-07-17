@@ -1,9 +1,11 @@
 'use client'
 
+import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Dumbbell, Moon, Flame } from 'lucide-react'
 import { SessionIntelCard } from '@/components/reports/SessionIntelCard'
 import { CompletenessArc } from '@/components/day/CompletenessArc'
+import { InBodyCard } from '@/components/day/InBodyCard'
 import { SubjectiveBlock } from '@/components/day/SubjectiveBlock'
 import { SleepDebtGauge } from '@/components/day/SleepDebtGauge'
 import { SessionVolumeMini } from '@/components/day/SessionVolumeMini'
@@ -161,6 +163,12 @@ export default function DailyNexusPage() {
               <span className="text-muted">HRV <span className="helix-num text-text">{log?.hrv_ms != null ? Math.round(log.hrv_ms) : '—'}</span></span>
               <span className="text-muted">Zone-2 <span className="helix-num text-text">{log?.exercise_minutes ?? log?.training_minutes ?? '—'}m</span></span>
             </div>
+            {schedule !== 'rest' && schedule.dayKey && (
+              <Link href={`/session?template=${schedule.dayKey}&date=${date}`}
+                className="btn-glass w-full justify-center min-h-[40px] text-fluid-xs" style={{ color: '#3EE0FF' }}>
+                <Dumbbell className="w-3.5 h-3.5" aria-hidden="true" /> Log {schedule.label}
+              </Link>
+            )}
           </section>
         )}
 
@@ -184,6 +192,9 @@ export default function DailyNexusPage() {
           </div>
         </section>
       </div>
+
+      {/* InBody & Scale Metrics — manual entry for what Apple Health can't sync */}
+      <InBodyCard date={date} log={log ?? null} />
 
       {/* Full session intel when trained */}
       {trained && data!.sessions.map((s) => <SessionIntelCard key={s.id} session={s} />)}

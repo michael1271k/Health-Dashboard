@@ -13,7 +13,7 @@ export const HELIX_CUT_START = '2026-07-15'
 export const HELIX_CUT_KCAL = 1955
 
 /**
- * The era boundary is HELIX_CUT_START (2026-07-15): the Helix 5.1 Cut block
+ * The era boundary is HELIX_CUT_START (2026-07-15): the Helix Cut block
  * opens there, absorbing the former Week-0 transition days (15–17 Jul) without
  * a special case. Training vs rest is still decided purely by the weekday
  * program (Wed = rest), so Jul 15 correctly reads as a rest day; the Week-1

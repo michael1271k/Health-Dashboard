@@ -78,9 +78,9 @@ const BaseSchema = z.object({
   stand_hours:         intField(),                   // Apple stand hours
   vo2max:              floatField(),                 // mL/kg/min (updates ~weekly)
   // ── Environmental & cardiac metrics ──
-  wrist_temp:          floatField(),                 // wrist-temperature deviation, °C
-  time_in_daylight:    intField(),                   // minutes of daylight exposure
-  heart_rate_recovery: intField(),                   // 1-min post-exercise HRR, bpm
+  wrist_temp:          floatField(),                 // night's AVERAGE wrist temp, °C (Shortcut-aggregated; stored in wrist_temp_delta)
+  time_in_daylight:    intField(),                   // total minutes of daylight exposure
+  heart_rate_recovery: floatField(),                 // 1-min post-exercise HRR, bpm — float (Shortcut sends aggregated averages)
   // Optional explicit date override (YYYY-MM-DD); defaults to the logical day
   date:                z.string().optional(),
 }).strip()

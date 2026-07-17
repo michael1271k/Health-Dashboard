@@ -90,6 +90,19 @@ export interface Database {
           water_pct: number | null
           bone_mass_kg: number | null
           bmi: number | null
+          // ── InBody extended columns (migration 003) — optional so writers
+          // that only know the core scale fields keep compiling.
+          fat_mass_kg?: number | null
+          body_water_mass_kg?: number | null
+          protein_mass_kg?: number | null
+          muscle_pct?: number | null
+          protein_pct?: number | null
+          bone_mineral_pct?: number | null
+          skeletal_muscle_mass_kg?: number | null
+          fat_free_mass_kg?: number | null
+          waist_hip_ratio?: number | null
+          visceral_fat?: number | null
+          bmr?: number | null
           created_at: string
         }
         Insert: Omit<Database['public']['Tables']['body_composition']['Row'], 'id' | 'created_at'>

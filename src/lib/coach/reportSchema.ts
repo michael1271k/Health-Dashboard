@@ -109,7 +109,6 @@ export function coachReportToDraft(report: CoachReport): SessionDraft {
   }))
 
   return {
-    mode: 'review',
     clientSessionId: report.session.id,
     dayKey,
     splitDay: daySplitEnum(dayKey),

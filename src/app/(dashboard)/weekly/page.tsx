@@ -9,6 +9,7 @@ import { useEraFilter } from '@/lib/era/eraFilter'
 import { EraFilterPills } from '@/components/era/EraFilterPills'
 import { FileSystemBrowser } from '@/components/reports/FileSystemBrowser'
 import { ContinuumTimeline } from '@/components/timeline/ContinuumTimeline'
+import { ScheduleShortcut } from '@/components/day/ScheduleShortcut'
 import { Sheet } from '@/components/ui/Sheet'
 import { authedFetch } from '@/lib/utils/authedFetch'
 import { CalendarDays, ChevronLeft, ChevronRight, Loader2, Sparkles, FolderOpen } from 'lucide-react'
@@ -89,6 +90,9 @@ export default function WeeklyPage() {
 
       {/* ── Global era filter ── */}
       <EraFilterPills label="" />
+
+      {/* Training-day shortcut → the deck, pre-seeded (hidden once logged) */}
+      <ScheduleShortcut />
 
       {error && <div className="helix-card border-danger/40"><p className="text-danger text-fluid-sm">{error}</p></div>}
 

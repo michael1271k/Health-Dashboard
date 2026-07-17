@@ -6,21 +6,25 @@ import { useEffect, useState } from 'react'
  * Root error boundary — Next.js renders this in place of the ENTIRE root
  * layout when an unhandled exception escapes any client component.
  *
- * Recovery is SILENT: the first attempt in a session shows only the branded
+ * Recovery is SILENT: the first attempt per BUILD shows only the branded
  * splash (indistinguishable from a normal launch) while it purges the service
  * worker + caches and reloads onto the fresh bundle. Error text appears ONLY
- * when recovery already ran this session — a genuine, reproducible crash —
- * and by then the flight recorder holds the full stack for diagnosis.
+ * when recovery already ran for this same build — a genuine, reproducible
+ * crash — and by then the flight recorder holds the full stack for diagnosis.
+ * Keying the flag by build id (not '1') means a session that crashed on an
+ * old deploy still gets one fresh silent recovery when the next deploy lands,
+ * instead of being stranded on the diagnostic screen.
  */
 const RECOVER_FLAG = 'helix_sw_recovered'
+const BUILD_ID = process.env.NEXT_PUBLIC_BUILD_ID ?? 'unknown'
 
-function alreadyRecoveredThisSession(): boolean {
-  try { return sessionStorage.getItem(RECOVER_FLAG) === '1' } catch { return true }
+function alreadyRecoveredForThisBuild(): boolean {
+  try { return sessionStorage.getItem(RECOVER_FLAG) === BUILD_ID } catch { return true }
 }
 
 export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   // Computed once per mount: decides between silent splash and diagnostic screen.
-  const [silent] = useState(() => !alreadyRecoveredThisSession())
+  const [silent] = useState(() => !alreadyRecoveredForThisBuild())
 
   useEffect(() => {
     console.error('[GlobalError]', error)
@@ -40,9 +44,9 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
 
     if (!silent) return
 
-    // Stale-bundle self-heal: purge the SW + all caches, reload fresh. Session
-    // flag prevents a genuine code bug from looping the reload.
-    try { sessionStorage.setItem(RECOVER_FLAG, '1') } catch { /* ignore */ }
+    // Stale-bundle self-heal: purge the SW + all caches, reload fresh. The
+    // per-build flag prevents a genuine code bug from looping the reload.
+    try { sessionStorage.setItem(RECOVER_FLAG, BUILD_ID) } catch { /* ignore */ }
     const purge = async () => {
       try {
         if ('serviceWorker' in navigator) {

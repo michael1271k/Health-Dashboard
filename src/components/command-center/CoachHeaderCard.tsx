@@ -1,41 +1,83 @@
 'use client'
 
-import { Flag, Sparkles } from 'lucide-react'
+import { useRef } from 'react'
+import { CalendarDays, Flag, Sparkles } from 'lucide-react'
 import type { SessionDraft } from '@/lib/sessions/draft'
 import { draftTotals } from '@/lib/sessions/draft'
+import { logicalTodayISO } from '@/lib/utils/day'
 
 /**
- * Deck header: session identity + coach stats strip + the 2-sentence insight
- * and the gold next-session flag. Volume/set counts are LIVE — they re-derive
- * from the edited draft, not the coach's original numbers.
+ * Deck header: session identity, the date picker (late logging), the stats
+ * strip, the coach insight and the gold next-session flag. Volume/set counts
+ * are LIVE — they re-derive from the edited draft, not the source numbers.
  */
-export function CoachHeaderCard({ draft }: { draft: SessionDraft }) {
+export function CoachHeaderCard({ draft, onSetDate }: {
+  draft: SessionDraft
+  onSetDate: (dateISO: string) => void
+}) {
   const totals = draftTotals(draft)
   const s = draft.stats
+  const dateInputRef = useRef<HTMLInputElement>(null)
+
+  // Native <input type="date"> behind a styled chip: zero deps, native iOS
+  // wheel. showPicker() where supported; focus() opens it on older Safari.
+  const openPicker = () => {
+    const el = dateInputRef.current
+    if (!el) return
+    if (typeof el.showPicker === 'function') {
+      try { el.showPicker(); return } catch { /* fall through */ }
+    }
+    el.focus()
+    el.click()
+  }
+
+  const dateLabel = new Date(draft.date + 'T12:00:00Z')
+    .toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
 
   return (
     <div className="helix-card holo-sheen !p-4 space-y-3">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <h3 className="font-heading font-bold text-fluid-lg text-text leading-tight truncate">
+          <h3 className="font-heading font-bold text-fluid-xl text-text leading-tight truncate">
             {draft.title ?? draft.splitDay.toUpperCase()}
           </h3>
           <p className="text-xs text-muted mt-0.5">
-            {new Date(draft.date + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
-            {draft.week != null && <> · Week {draft.week}</>}
-            {draft.phase && <> · <span className="text-info font-semibold">{draft.phase === 'CUT' ? 'Helix 5.1 Cut' : draft.phase}</span></>}
+            {draft.week != null && <>Week {draft.week} · </>}
+            {draft.phase && <span className="text-info font-semibold">{draft.phase === 'CUT' ? 'Helix Cut' : draft.phase}</span>}
           </p>
         </div>
-        {draft.mode === 'review' && draft.clientSessionId && (
-          <span className="shrink-0 text-[10px] text-muted font-mono mt-1">{draft.clientSessionId}</span>
-        )}
+        {/* Date chip — tap to back-date a late log; startedAt follows in lockstep */}
+        <div className="relative shrink-0">
+          <button
+            type="button"
+            onClick={openPicker}
+            className="glass-card flex items-center gap-1.5 px-2.5 min-h-[40px] text-fluid-xs font-semibold text-text
+                       hover:border-primary/40 transition-colors"
+            aria-label={`Session date: ${dateLabel}. Tap to change`}
+          >
+            <CalendarDays className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+            {dateLabel}
+          </button>
+          <input
+            ref={dateInputRef}
+            type="date"
+            value={draft.date}
+            max={logicalTodayISO()}
+            onChange={(e) => { if (e.target.value) onSetDate(e.target.value) }}
+            className="absolute inset-0 opacity-0 pointer-events-none"
+            tabIndex={-1}
+            aria-hidden="true"
+          />
+        </div>
       </div>
 
-      {/* Stats strip — live draft totals + coach-reported context */}
-      <div className="grid grid-cols-4 gap-2 text-center">
+      {/* Stats strip — live draft totals + reported context (— when unknown) */}
+      <div className="grid grid-cols-3 lg:grid-cols-6 gap-2 text-center">
         <Stat label="Volume" value={`${totals.volumeKg.toLocaleString()}kg`} />
         <Stat label="Sets" value={String(totals.sets)} />
-        <Stat label="Duration" value={s?.duration_min ? `${s.duration_min}m` : '—'} />
+        <Stat label="Duration" value={s?.duration_min != null ? `${s.duration_min}m` : '—'} />
+        <Stat label="Avg HR" value={s?.avg_hr_bpm != null ? `${s.avg_hr_bpm}` : '—'} />
+        <Stat label="Calories" value={s?.calories_kcal != null ? `${s.calories_kcal}` : '—'} />
         <Stat
           label="Δ vs prior"
           value={s?.volume_delta_pct_vs_prior != null ? `${s.volume_delta_pct_vs_prior > 0 ? '+' : ''}${s.volume_delta_pct_vs_prior}%` : '—'}

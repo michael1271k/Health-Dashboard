@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { Check, CopyCheck, Flag, Trophy } from 'lucide-react'
+import { Check, CopyCheck, Trophy } from 'lucide-react'
 import { CoachHeaderCard } from './CoachHeaderCard'
 import { ExerciseDeckList } from './ExerciseDeckList'
+import { SessionNotesCard } from './SessionNotesCard'
 import { CommitBar } from './CommitBar'
 import { useExerciseSetHistory } from '@/lib/hooks/useExerciseSetHistory'
 import { eraForDate } from '@/lib/programs'
@@ -11,32 +12,35 @@ import { tapSuccess } from '@/lib/native/haptics'
 import type { useSessionDraft, CommitResult } from '@/lib/hooks/useSessionDraft'
 
 /**
- * The Command Center deck — ONE component system, two entry points:
- * review mode (pasted coach JSON → fine-tune → commit) and live mode
- * (in-gym logger seeded from the program day, per-set check-off).
+ * The Command Center deck — the ONE logging surface. Hosted fullscreen on
+ * /session; every entry point (paste, template, schedule shortcut) feeds the
+ * same draft store. Mobile: single column, sticky commit. Desktop (≥lg):
+ * sticky left rail (identity/insight/notes/commit) + the sortable deck.
  */
-export function SessionDeck({ store, onClose }: {
+export function SessionDeck({ store, onClose, onViewDay }: {
   store: ReturnType<typeof useSessionDraft>
   onClose: () => void
+  onViewDay?: (date: string) => void
 }) {
-  const { draft, updateSet, addSet, removeSet, reorder, discard, commit } = store
+  const { draft, updateSet, addSet, removeSet, removeExercise, reorder, setNotes, setExerciseNote, setDate, discard, commit } = store
   const [result, setResult] = useState<CommitResult | null>(null)
+  const [committedDate, setCommittedDate] = useState<string | null>(null)
 
   // Era-aware previous-session memory for every exercise in the deck.
-  const names = draft?.exercises.map((ex) => ex.name) ?? []
+  const names = draft?.exercises.filter((ex) => ex.kind !== 'cardio').map((ex) => ex.name) ?? []
   const { data: history } = useExerciseSetHistory(names, draft ? eraForDate(draft.date) : undefined)
 
   if (result) {
     return (
-      <div className="space-y-4">
+      <div className="max-w-md mx-auto space-y-4 pt-6">
         <div className="flex items-center gap-2 text-success">
           {result.duplicate ? <CopyCheck className="w-5 h-5" aria-hidden="true" /> : <Check className="w-5 h-5" aria-hidden="true" />}
-          <h3 className="font-heading font-bold text-lg text-text">
+          <h3 className="font-heading font-bold text-fluid-lg text-text">
             {result.duplicate ? 'Already logged' : 'Session Committed'}
           </h3>
         </div>
         {result.duplicate ? (
-          <p className="text-sm text-muted">This coach report was committed before — nothing was duplicated.</p>
+          <p className="text-sm text-muted">This session was committed before — nothing was duplicated.</p>
         ) : (
           <>
             <div className="grid grid-cols-3 gap-2 text-center">
@@ -57,40 +61,60 @@ export function SessionDeck({ store, onClose }: {
             )}
           </>
         )}
-        <button onClick={onClose} className="btn-primary w-full justify-center min-h-[48px]">Done</button>
+        <div className="flex flex-col gap-2">
+          {onViewDay && committedDate && (
+            <button onClick={() => onViewDay(committedDate)} className="btn-primary w-full justify-center min-h-[48px]">
+              View day in the Nexus
+            </button>
+          )}
+          <button onClick={onClose} className={`${onViewDay && committedDate ? 'btn-glass' : 'btn-primary'} w-full justify-center min-h-[48px]`}>
+            Done
+          </button>
+        </div>
       </div>
     )
   }
 
   if (!draft) return null
 
+  const commitBar = (
+    <CommitBar
+      draft={draft}
+      busy={commit.isPending}
+      error={commit.isError ? (commit.error instanceof Error ? commit.error.message : 'Save failed') : null}
+      onCommit={() => {
+        setCommittedDate(draft.date)
+        commit.mutate(undefined, {
+          onSuccess: (r) => { if (!r.duplicate) void tapSuccess(); setResult(r) },
+        })
+      }}
+      onDiscard={() => { discard(); onClose() }}
+    />
+  )
+
   return (
-    <div className="space-y-3">
-      <CoachHeaderCard draft={draft} />
-      <ExerciseDeckList
-        draft={draft}
-        history={history}
-        onReorder={reorder}
-        onUpdateSet={updateSet}
-        onAddSet={addSet}
-        onRemoveSet={removeSet}
-      />
-      {draft.mode === 'live' && draft.nextSessionFlag && (
-        <p className="text-xs flex items-center gap-1.5 px-1" style={{ color: '#E8C57A' }} dir="auto">
-          <Flag className="w-3 h-3 shrink-0" aria-hidden="true" /> {draft.nextSessionFlag}
-        </p>
-      )}
-      <CommitBar
-        draft={draft}
-        busy={commit.isPending}
-        error={commit.isError ? (commit.error instanceof Error ? commit.error.message : 'Save failed') : null}
-        onCommit={() => {
-          commit.mutate(undefined, {
-            onSuccess: (r) => { if (!r.duplicate) void tapSuccess(); setResult(r) },
-          })
-        }}
-        onDiscard={() => { discard(); onClose() }}
-      />
+    <div className="lg:grid lg:grid-cols-[minmax(320px,380px)_1fr] lg:gap-5 lg:items-start">
+      {/* ── Left rail (sticky on desktop): identity, insight, notes, commit ── */}
+      <div className="space-y-3 lg:sticky lg:top-4">
+        <CoachHeaderCard draft={draft} onSetDate={setDate} />
+        <SessionNotesCard notes={draft.notes} onChange={setNotes} />
+        <div className="hidden lg:block">{commitBar}</div>
+      </div>
+
+      {/* ── The deck (single column — required by the vertical sort strategy) ── */}
+      <div className="space-y-3 mt-3 lg:mt-0">
+        <ExerciseDeckList
+          draft={draft}
+          history={history}
+          onReorder={reorder}
+          onUpdateSet={updateSet}
+          onAddSet={addSet}
+          onRemoveSet={removeSet}
+          onRemoveExercise={removeExercise}
+          onSetNote={setExerciseNote}
+        />
+        <div className="lg:hidden">{commitBar}</div>
+      </div>
     </div>
   )
 }

@@ -7,6 +7,10 @@ import { bottomNavItems as navItems } from '@/lib/nav-items'
 export function BottomNav() {
   const pathname = usePathname()
 
+  // The session deck is a fullscreen takeover — its own CommitBar owns the
+  // bottom edge (and the safe area) there.
+  if (pathname.startsWith('/session')) return null
+
   return (
     <nav
       aria-label="Mobile navigation"

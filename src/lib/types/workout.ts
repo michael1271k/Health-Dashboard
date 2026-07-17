@@ -67,33 +67,6 @@ export const PPL_SPLITS: Record<SplitDay, { label: string; labelHe: string; colo
   },
 }
 
-// Logger-only 4-entry list — English only, no Hebrew, canonical Legs day → 'legs'
-// Used by SplitPicker to render the 4 active training splits in one row.
-export const LOGGER_SPLITS: Array<{ day: SplitDay; label: string; color: string }> = [
-  { day: 'upper', label: 'Upper',      color: '#19E3B1' },
-  { day: 'legs',  label: 'Legs',       color: '#4FC3FF' },
-  { day: 'push',  label: 'Push',       color: '#38E1FF' },
-  { day: 'pull',  label: 'Pull',       color: '#43F59B' },
-]
-
-// Legacy PPL fixed-weekday cycle (Sun–Sat) — retained only as the logger's
-// default split suggestion (via getTodaysSplit). Era-aware training/rest logic
-// lives in programs.ts (isTrainingDay / scheduleDayFor).
-//   Sun=Upper, Mon=Legs, Tue=Push, Wed=Pull, Thu=Legs, Fri=Rest, Sat=Rest
-export const WEEKDAY_SPLIT: Record<number, SplitDay | 'rest'> = {
-  0: 'upper',  // Sunday
-  1: 'legs',   // Monday
-  2: 'push',   // Tuesday
-  3: 'pull',   // Wednesday
-  4: 'legs',   // Thursday
-  5: 'rest',   // Friday
-  6: 'rest',   // Saturday
-}
-
-export function getTodaysSplit(): SplitDay | 'rest' {
-  return WEEKDAY_SPLIT[new Date().getDay()] ?? 'rest'
-}
-
 // ─── Nutrition modes / presets ───────────────────────────────────────────────
 export type NutritionMode = 'cut' | 'bulk' | 'maintenance'
 

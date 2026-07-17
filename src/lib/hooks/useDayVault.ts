@@ -13,6 +13,8 @@ export interface DayVaultData {
     avg_rest_heart_rate: number | null; hrv_ms: number | null; respiratory_rate: number | null
     blood_oxygen: number | null; training_minutes: number | null; exercise_minutes: number | null
     stand_hours: number | null; vo2max: number | null; active_energy: number | null
+    muscle_percent: number | null; water_percent: number | null; bone_mineral: number | null
+    visceral_fat: number | null; bmr: number | null; bmi: number | null
     effort_rating: number | null; mood: number | null; journal_md: string | null
   } | null
   score: { score: number | null; battery_pct: number | null } | null
@@ -36,7 +38,7 @@ export function useDayVault(date: string) {
     queryFn: async (): Promise<DayVaultData> => {
       const nextDay = (() => { const x = new Date(`${date}T00:00:00Z`); x.setUTCDate(x.getUTCDate() + 1); return x.toISOString().slice(0, 10) })()
       const [logRes, scoreRes, nutritionRes, sessionsRes] = await Promise.all([
-        supabase.from('daily_logs').select('steps, water_ml, sleep_minutes, weight_kg, lean_mass_kg, body_fat_pct, avg_rest_heart_rate, hrv_ms, respiratory_rate, blood_oxygen, training_minutes, exercise_minutes, stand_hours, vo2max, active_energy, effort_rating, mood, journal_md')
+        supabase.from('daily_logs').select('steps, water_ml, sleep_minutes, weight_kg, lean_mass_kg, body_fat_pct, avg_rest_heart_rate, hrv_ms, respiratory_rate, blood_oxygen, training_minutes, exercise_minutes, stand_hours, vo2max, active_energy, muscle_percent, water_percent, bone_mineral, visceral_fat, bmr, bmi, effort_rating, mood, journal_md')
           .eq('date', date).maybeSingle(),
         supabase.from('daily_scores').select('score, battery_pct').eq('date', date).maybeSingle(),
         supabase.from('nutrition_entries').select('calories, protein_g, carbs_g, fat_g, phase')
@@ -81,5 +83,69 @@ export function useSaveSubjective(date: string) {
       if (error) throw new Error(error.message)
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['day_vault', date] }) },
+  })
+}
+
+/** The InBody card's structured fields — all daily_logs columns. */
+export interface BodyMetricsPatch {
+  weight_kg?: number | null
+  body_fat_pct?: number | null
+  muscle_percent?: number | null
+  water_percent?: number | null
+  lean_mass_kg?: number | null
+  bone_mineral?: number | null
+  visceral_fat?: number | null
+  bmr?: number | null
+  bmi?: number | null
+}
+
+/**
+ * Save the InBody & Scale Metrics card: upsert onto the day's daily_logs row
+ * (the home Body modal + Nexus read it), then mirror the overlapping fields
+ * into body_composition (the weight-trend charts read that). Mirror semantics
+ * follow the old /api/ai/complete-daily route this replaces: update-if-exists,
+ * INSERT only when a weight is present — body_composition.weight_kg is NOT NULL.
+ */
+export function useSaveBodyMetrics(date: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (patch: BodyMetricsPatch) => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not signed in')
+      const { error } = await supabase.from('daily_logs')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .upsert({ user_id: user.id, date, ...patch } as any, { onConflict: 'user_id,date' })
+      if (error) throw new Error(error.message)
+
+      const mirror: Record<string, number | null> = {}
+      if (patch.weight_kg !== undefined) mirror.weight_kg = patch.weight_kg
+      if (patch.body_fat_pct !== undefined) mirror.body_fat_pct = patch.body_fat_pct
+      if (patch.lean_mass_kg !== undefined) mirror.muscle_mass_kg = patch.lean_mass_kg
+      if (patch.water_percent !== undefined) mirror.water_pct = patch.water_percent
+      if (patch.muscle_percent !== undefined) mirror.muscle_pct = patch.muscle_percent
+      if (patch.bone_mineral !== undefined) mirror.bone_mineral_pct = patch.bone_mineral
+      if (patch.visceral_fat !== undefined) mirror.visceral_fat = patch.visceral_fat
+      if (patch.bmr !== undefined) mirror.bmr = patch.bmr
+      if (patch.bmi !== undefined) mirror.bmi = patch.bmi
+      if (Object.keys(mirror).length) {
+        const { data: existing } = await supabase.from('body_composition')
+          .select('id').eq('user_id', user.id).eq('date', date).limit(1).maybeSingle()
+        if (existing) {
+          const { error: e2 } = await supabase.from('body_composition')
+            .update(mirror as unknown as never).eq('id', (existing as { id: string }).id)
+          if (e2) throw new Error(e2.message)
+        } else if (mirror.weight_kg != null) {
+          const { error: e3 } = await supabase.from('body_composition')
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .insert({ user_id: user.id, date, measured_at: `${date}T07:00:00Z`, hk_uuid: null, ...mirror } as any)
+          if (e3) throw new Error(e3.message)
+        }
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['day_vault', date] })
+      qc.invalidateQueries({ queryKey: ['daily_logs'] })
+      qc.invalidateQueries({ queryKey: ['body_composition'] })
+    },
   })
 }

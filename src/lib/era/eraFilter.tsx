@@ -4,7 +4,7 @@
  * Global training-era filter — ONE filter state shared by every table, chart,
  * and weight graph (Nutrition, Charts, Journey, Command Center trends).
  *
- * Defaults to the CURRENT era (Helix 5.1 Cut) for a clean-slate daily view;
+ * Defaults to the CURRENT era (Helix Cut) for a clean-slate daily view;
  * the choice persists in localStorage across navigation and reloads. The
  * 'axis' token deliberately matches `eraForDate`'s return value so existing
  * era-aware hooks (useMuscleAnalytics, HelixViz) plug in without renames.
@@ -23,13 +23,13 @@ const isoAddDays = (d: string, n: number) => {
 export type EraFilter = 'all' | 'ppl' | 'axis'
 
 export const ERA_FILTER_META: Record<EraFilter, { label: string; color: string }> = {
-  axis: { label: 'Helix 5.1 Cut', color: '#3EE0FF' },
-  ppl:  { label: 'PPL Legacy',    color: '#8B97B2' },
-  all:  { label: 'All',           color: '#19E3B1' },
+  axis: { label: 'Helix Cut',  color: '#3EE0FF' },
+  ppl:  { label: 'PPL Legacy', color: '#8B97B2' },
+  all:  { label: 'All',        color: '#19E3B1' },
 }
 
-/** Pill display order — current era first (it's also the default). */
-export const ERA_FILTER_ORDER: EraFilter[] = ['axis', 'ppl', 'all']
+/** Pill display order — "All" far-left; the default selection stays 'axis'. */
+export const ERA_FILTER_ORDER: EraFilter[] = ['all', 'axis', 'ppl']
 
 const STORAGE_KEY = 'helix_era_filter'
 

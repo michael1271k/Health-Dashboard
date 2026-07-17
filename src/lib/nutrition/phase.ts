@@ -26,11 +26,11 @@ export const PHASE_META: Record<Phase, { label: string; color: string }> = {
 
 /**
  * Era-aware phase tag: cut days on/after HELIX_CUT_START (2026-07-15) belong to
- * the Helix 5.1 Cut block and are labeled accordingly; everything earlier keeps
+ * the Helix Cut block and are labeled accordingly; everything earlier keeps
  * the plain PHASE_META label. Use this wherever a per-day phase chip renders.
  */
 export function phaseDisplay(phase: Phase, dateISO: string): { label: string; color: string } {
   const meta = PHASE_META[phase]
-  if (phase === 'cut' && dateISO >= HELIX_CUT_START) return { ...meta, label: 'Helix 5.1 Cut' }
+  if (phase === 'cut' && dateISO >= HELIX_CUT_START) return { ...meta, label: 'Helix Cut' }
   return meta
 }

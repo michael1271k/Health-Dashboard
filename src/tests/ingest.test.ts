@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- test doubles for the Supabase client are intentionally loose. */
 import { describe, it, expect } from 'vitest'
 import { ingestDailyLog } from '@/lib/ingest/dailyLog'
+import { IngestPayloadSchema } from '@/lib/ingest/schema'
 
 /**
  * Ingest contract: partial pushes are bulletproof (missing keys never fail),
@@ -135,6 +136,38 @@ describe('ingest — Shortcut key → column mapping', () => {
     await ingestDailyLog(db, 'user-1', { date: '2026-07-10', training_minutes: 70, exercise_minutes: 45, standing_minutes: 11, stand_hours: 9 } as any)
     expect(rows[0].exercise_minutes).toBe(45)
     expect(rows[0].stand_hours).toBe(9)
+  })
+})
+
+describe('ingest — recovery keys: heart_rate_recovery / wrist_temp / time_in_daylight', () => {
+  it('accepts all three and stores them in their daily_logs columns', async () => {
+    const rows: any[] = []
+    const db = mockDb((row) => { rows.push(row); return { error: null } })
+    const result = await ingestDailyLog(db, 'user-1', {
+      date: '2026-07-17', heart_rate_recovery: 31.5, wrist_temp: 36.2, time_in_daylight: 45,
+    } as any)
+
+    expect(rows[0].heart_rate_recovery).toBe(31.5)      // float accepted, precision kept
+    expect(rows[0].wrist_temp_delta).toBe(36.2)         // column stores the night's avg °C as sent
+    expect(rows[0].time_in_daylight_min).toBe(45)
+    expect(result.inserted).toEqual(expect.arrayContaining(['heart_rate_recovery', 'wrist_temp', 'time_in_daylight']))
+    expect(result.errors).toHaveLength(0)
+  })
+
+  it('normalizes the alias forms (hrr / wrist_temperature / daylight) via the schema', async () => {
+    const parsed = IngestPayloadSchema.parse({ hrr: '30.5', wrist_temperature: 36.4, daylight: 62, steps: 100 })
+    expect(parsed.heart_rate_recovery).toBe(30.5)       // floatField — no rounding
+    expect(parsed.wrist_temp).toBe(36.4)
+    expect(parsed.time_in_daylight).toBe(62)
+  })
+
+  it('silently drops unknown keys alongside the new ones (strict-accept, graceful-ignore)', async () => {
+    const parsed = IngestPayloadSchema.parse({ wrist_temp: 36.1, some_future_metric: 999 })
+    expect(parsed.wrist_temp).toBe(36.1)
+    expect('some_future_metric' in parsed).toBe(false)
+    const db = mockDb(() => ({ error: null }))
+    const result = await ingestDailyLog(db, 'user-1', parsed as any)
+    expect(result.errors).toHaveLength(0)
   })
 })
 

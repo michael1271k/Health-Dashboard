@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   CoachReportSchema, coachReportToDraft, parseSetsReps, COACH_SPLIT_TO_DAY_KEY, CoachSplit,
 } from '@/lib/coach/reportSchema'
-import { buildCommitPayload, draftTotals } from '@/lib/sessions/draft'
+import { buildCommitPayload } from '@/lib/sessions/draft'
 import { canonicalExerciseName } from '@/lib/exercises/aliases'
 import { SaveWorkoutSchema } from '@/lib/sessions/schema'
 
@@ -106,7 +106,6 @@ describe('alias canonicalization', () => {
 describe('coachReportToDraft', () => {
   it('expands sets_reps × weight_kg into per-set rows with deck order', () => {
     const draft = coachReportToDraft(CoachReportSchema.parse(SPEC_SAMPLE))
-    expect(draft.mode).toBe('review')
     expect(draft.clientSessionId).toBe('2026-07-19-D1')
     expect(draft.dayKey).toBe('cb_a')
     expect(draft.splitDay).toBe('upper')
@@ -146,7 +145,7 @@ describe('buildCommitPayload', () => {
   const draft = coachReportToDraft(CoachReportSchema.parse(SPEC_SAMPLE))
 
   it('produces a body that satisfies SaveWorkoutSchema (round-trip)', () => {
-    const body = buildCommitPayload(draft, '2026-07-19T18:02:00.000Z')
+    const body = buildCommitPayload(draft)
     const parsed = SaveWorkoutSchema.safeParse(body)
     expect(parsed.success).toBe(true)
     expect(body.clientSessionId).toBe('2026-07-19-D1')
@@ -157,12 +156,11 @@ describe('buildCommitPayload', () => {
     expect(body.metrics?.durationMin).toBe(62)
   })
 
-  it('live mode commits only checked-off sets', () => {
-    const live = { ...draft, mode: 'live' as const }
-    live.exercises = [{ ...draft.exercises[0], sets: draft.exercises[0].sets.map((s, i) => ({ ...s, done: i < 2 })) }]
-    const body = buildCommitPayload(live, '2026-07-19T18:02:00.000Z')
-    expect(body.sets).toHaveLength(2)
-    expect(draftTotals(live, true).doneSets).toBe(2)
+  it('derives endedAt from startedAt + duration (late logging stays sane)', () => {
+    const body = buildCommitPayload(draft)
+    const windowMin = (new Date(body.endedAt).getTime() - new Date(body.startedAt).getTime()) / 60_000
+    expect(windowMin).toBe(62)                          // stats.duration_min, never wall-clock "now"
+    expect(body.endedAt.slice(0, 10)).toBe('2026-07-19')
   })
 
   it('reordered exercises carry their new deck position', () => {
@@ -174,7 +172,7 @@ describe('buildCommitPayload', () => {
       ],
     }))
     two.exercises = [two.exercises[1], two.exercises[0]]   // drag row to the top
-    const body = buildCommitPayload(two, '2026-07-19T18:02:00.000Z')
+    const body = buildCommitPayload(two)
     const rowSets = body.sets.filter((s) => s.exerciseName === 'Chest-Supported Row')
     expect(rowSets.every((s) => s.exerciseOrder === 0)).toBe(true)
     const pressSets = body.sets.filter((s) => s.exerciseName === 'Incline DB Press')

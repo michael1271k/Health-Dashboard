@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { ChevronDown } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { useQueryClient } from '@tanstack/react-query'
@@ -9,7 +10,7 @@ import { NUTRITION_PRESETS, type NutritionMode } from '@/lib/types/workout'
 import { NutritionLogList } from '@/components/nutrition/NutritionLogList'
 import { MacroRings } from '@/components/nutrition/MacroRings'
 import { FuelForceBand } from '@/components/nutrition/FuelForceBand'
-import { DaySummaryModal } from '@/components/nutrition/DaySummaryModal'
+import { ScheduleShortcut } from '@/components/day/ScheduleShortcut'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { PHASE_META, phaseDisplay, type Phase } from '@/lib/nutrition/phase'
 import { useEraFilter, eraDateRange } from '@/lib/era/eraFilter'
@@ -26,6 +27,7 @@ interface ActiveGoals {
 
 export default function NutritionPage() {
   const qc = useQueryClient()
+  const router = useRouter()
   const { era } = useEraFilter()
   // Era-scoped window (NOT a rolling 30 days): 'all' reaches back to the first
   // tracked phase so the full Notion-imported history renders.
@@ -35,7 +37,6 @@ export default function NutritionPage() {
   const [goals, setGoals] = useState<ActiveGoals>({ calorie: 1955, protein: 170, carbs: 195, fat: 55, mode: 'cut' })
   const [saving, setSaving] = useState(false)
   const [targetsOpen, setTargetsOpen] = useState(false)
-  const [dayModal, setDayModal] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -109,6 +110,9 @@ export default function NutritionPage() {
       {/* Fuel → Force: links today's fuel to today's session (renders only if trained) */}
       <FuelForceBand date={logicalTodayISO()} proteinG={todayLog?.proteinG ?? null} proteinGoal={goals.protein} />
 
+      {/* Training-day shortcut → the deck, pre-seeded (hidden once logged) */}
+      <ScheduleShortcut />
+
       {/* Era + phase filters + dense daily log */}
       <div className="space-y-3">
         <EraFilterPills />
@@ -118,7 +122,7 @@ export default function NutritionPage() {
             const active = filter === f
             const color = f === 'all' ? '#19E3B1' : PHASE_META[f].color
             // The cut pill carries the era tag when the view is scoped to the
-            // Helix era (every cut day in that window IS a Helix 5.1 Cut day).
+            // Helix era (every cut day in that window IS a Helix Cut day).
             const text = f === 'cut' && era === 'axis' ? phaseDisplay('cut', logicalTodayISO()).label
               : f === 'maintenance' ? 'Maint' : f
             return (
@@ -135,7 +139,7 @@ export default function NutritionPage() {
           goals={goals}
           isLoading={isLoading}
           emptyMessage={filter === 'all' ? 'No nutrition data yet — paste from Hevy or sync from the app.' : `No days in the ${filter} phase yet.`}
-          onDayClick={(d) => setDayModal(d)}
+          onDayClick={(d) => router.push(`/day/${d}`)}
         />
       </div>
 
@@ -171,9 +175,6 @@ export default function NutritionPage() {
           </div>
         )}
       </section>
-
-      {/* Liquid-glass day summary */}
-      <DaySummaryModal date={dayModal} onClose={() => setDayModal(null)} />
     </div>
   )
 }

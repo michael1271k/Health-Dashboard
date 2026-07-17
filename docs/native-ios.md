@@ -43,18 +43,14 @@ minutes→hours, `training_minutes`→`exercise_minutes`).
 - **Battery:** per-metric last-synced watermark; `.immediate` delivery only for
   sleep on wake.
 
-## Your build steps (Apple toolchain)
-1. Join the **Apple Developer Program** ($99/yr).
-2. `npm install` then `npx cap add ios` (needs Xcode + CocoaPods).
-3. Add a HealthKit Capacitor plugin pod (e.g. `@perfood/capacitor-healthkit`) and
-   ensure it registers as `CapacitorHealthkit` (matches `registerPlugin` in
-   `healthkit.ts`) — or adjust the plugin name to your chosen library.
-4. In Xcode: add the **HealthKit** capability, `NSHealthShareUsageDescription`
-   ("HELIX reads your health metrics to compute readiness."), and **Background
-   Modes → Background fetch / processing**.
-5. Set the bundle id to `app.helix.health` (or your own; update `capacitor.config.ts`).
-6. `npx cap sync ios`, run on device, grant Health permission.
-7. Release via **Fastlane → TestFlight → App Store**.
+## Your build steps
+
+**→ Follow [`docs/ios-deploy-guide.md`](./ios-deploy-guide.md)** — the complete,
+zero-assumed-knowledge walkthrough for putting HELIX on your iPhone with a
+**free Apple ID** (no $99 Developer Program needed for personal installs;
+HealthKit works on a free "Personal Team"). The paid program is only required
+later for TestFlight/App Store distribution and for background-delivery
+entitlements that survive longer provisioning windows.
 
 ## App Store review notes
 - The shell is more than a webview wrapper: native HealthKit integration + background
