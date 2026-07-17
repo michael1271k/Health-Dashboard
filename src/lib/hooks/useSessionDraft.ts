@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { authedFetch } from '@/lib/utils/authedFetch'
-import { DRAFT_STORAGE_KEY, buildCommitPayload, peekSessionDraft, type SessionDraft, type DraftSet } from '@/lib/sessions/draft'
+import { DRAFT_STORAGE_KEY, buildCommitPayload, cascadeSetEdit, peekSessionDraft, type SessionDraft, type DraftSet } from '@/lib/sessions/draft'
 
 export interface CommitResult {
   sessionId: string
@@ -58,13 +58,13 @@ export function useSessionDraft() {
     try { localStorage.removeItem(DRAFT_STORAGE_KEY) } catch { /* ignore */ }
   }, [])
 
+  // Editing Set 1's weight/reps cascades to later matching sets (Hevy-style);
+  // see cascadeSetEdit. Other rows and setType (W/F) edits stay local.
   const updateSet = useCallback((localId: string, setIdx: number, patch: Partial<DraftSet>) => {
     setDraft((d) => d && ({
       ...d,
-      exercises: d.exercises.map((ex) => ex.localId !== localId ? ex : {
-        ...ex,
-        sets: ex.sets.map((s, i) => (i === setIdx ? { ...s, ...patch } : s)),
-      }),
+      exercises: d.exercises.map((ex) =>
+        ex.localId !== localId ? ex : { ...ex, sets: cascadeSetEdit(ex.sets, setIdx, patch) }),
     }))
   }, [])
 

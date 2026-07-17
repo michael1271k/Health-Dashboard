@@ -3,8 +3,7 @@
 import { useMemo, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
-import { Moon, Flame, Dumbbell, Scale, Footprints, Pill, Plus, CalendarDays } from 'lucide-react'
-import { Fab } from '@/components/ui/Fab'
+import { Moon, Flame, Dumbbell, Scale, Footprints, Pill, Plus } from 'lucide-react'
 import { LiquidModal } from '@/components/ui/LiquidModal'
 import { ReadinessOrb } from '@/components/dashboard/ReadinessOrb'
 import { BioStrip, type BioStripProps } from '@/components/dashboard/BioStrip'
@@ -243,9 +242,6 @@ export default function DashboardPage() {
         )}
         {open === 'stack' && <SupplementChecklist />}
       </LiquidModal>
-
-      {/* Thumb-reachable jump into today's Daily Nexus (log, InBody, journal) */}
-      <Fab icon={CalendarDays} label="Today" onClick={() => router.push(`/day/${logicalTodayISO()}`)} />
     </div>
     </PullToRefresh>
   )

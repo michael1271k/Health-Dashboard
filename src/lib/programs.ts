@@ -103,24 +103,28 @@ export const APEX51: Program = {
       { name: 'Reverse EZ-Bar Curl', sets: 2, wk1Kg: 15, reps: '12–15', muscles: ['forearms', 'biceps'] },
       { name: 'Seated DB Wrist Curl', sets: 2, wk1Kg: 16, reps: '15–20', muscles: ['forearms'], bulkOnly: true },
     ] },
+    // Names match the canonical (alias-resolved) catalog rows the sessions commit
+    // under, so useExerciseMemory pre-loads the last logged numbers per exercise.
     { key: 'cb_b', label: 'Upper B', sub: 'Chest + Back', color: C.cbB, weekday: 4, cutSetDelta: -3, exercises: [
-      { name: 'Machine Chest Press', sets: 3, wk1Kg: 34, reps: '10–12', muscles: ['chest', 'triceps'], compound: true },
+      { name: 'Chest Press (Machine)', sets: 3, wk1Kg: 35, reps: '10–12', muscles: ['chest', 'triceps'], compound: true },
       { name: 'Neutral-Grip Lat Pulldown', sets: 3, wk1Kg: 45, reps: '10–12', muscles: ['back'], compound: true },
-      { name: 'Single-Arm Cable Fly', sets: 2, wk1Kg: 6, reps: '12–15', muscles: ['chest'], note: 'right first, left rep-matches' },
-      { name: 'Wide-Grip Cable Row', sets: 3, wk1Kg: 34, reps: '10–12', muscles: ['back'], compound: true },
-      { name: 'Cable Lateral Raise', sets: 4, wk1Kg: 4.5, reps: '15–20', muscles: ['shoulders'] },
-      { name: 'Machine Preacher Curl', sets: 3, wk1Kg: 15, reps: '8–12', muscles: ['biceps'] },
-      { name: 'Cross-Body Cable Extension', sets: 2, wk1Kg: 6, reps: '12–15', muscles: ['triceps'], note: 'per arm' },
+      { name: 'Seated Cable Row - Bar Wide Grip', sets: 3, wk1Kg: 35, reps: '10–12', muscles: ['back'], compound: true },
+      { name: 'Single Arm Cable Crossover', sets: 2, wk1Kg: 7.5, reps: '12–15', muscles: ['chest'], note: 'per arm' },
+      { name: 'Single Arm Lateral Raise (Cable)', sets: 3, wk1Kg: 3.75, reps: '15–20', muscles: ['shoulders'], note: 'per side' },
+      { name: 'Single Arm Triceps Pushdown (Cable)', sets: 2, wk1Kg: 5, reps: '12–15', muscles: ['triceps'], note: 'per arm' },
+      { name: 'Preacher Curl (Machine)', sets: 3, wk1Kg: 15, reps: '8–12', muscles: ['biceps'] },
     ] },
+    // Cold-start loads/reps mirror the user's real Legs B (memory overrides once
+    // logged under these canonical names); bodyweight moves seed at 0 kg.
     { key: 'legs_b', label: 'Legs B', sub: 'Posterior Focus', color: C.legsB, weekday: 5, cutSetDelta: -3, exercises: [
-      { name: 'DB RDL', sets: 4, wk1Kg: 26, reps: '8–12', muscles: ['hamstrings', 'glutes', 'back'], compound: true },
-      { name: 'Machine Hip Thrust', sets: 3, wk1Kg: 23.5, reps: '8–15', muscles: ['glutes'], compound: true },
-      { name: 'Leg Press', sets: 2, wk1Kg: 65, reps: '12–15', muscles: ['quads', 'glutes'], compound: true, note: 'moderate · 1 warm-up' },
+      { name: 'Romanian Deadlift (Dumbbell)', sets: 4, wk1Kg: 30, reps: '12–15', muscles: ['hamstrings', 'glutes', 'back'], compound: true },
+      { name: 'Hip Thrust (Machine)', sets: 3, wk1Kg: 25, reps: '14–16', muscles: ['glutes'], compound: true },
+      { name: 'Leg Press Horizontal', sets: 3, wk1Kg: 70, reps: '12–15', muscles: ['quads', 'glutes'], compound: true },
+      { name: 'Seated Leg Curl', sets: 3, wk1Kg: 45, reps: '15–20', muscles: ['hamstrings'] },
+      { name: 'Calf Press', sets: 4, wk1Kg: 67.5, reps: '14–18', muscles: ['calves'] },
+      { name: 'Hanging Knee Raise', sets: 3, wk1Kg: null, reps: '16–20', muscles: ['core'] },
+      { name: 'Side Plank', sets: 2, wk1Kg: null, reps: '55s', muscles: ['core'], note: 'per side' },
       { name: 'Hip Adduction', sets: 2, wk1Kg: 50, reps: '12–15', muscles: ['glutes'], bulkOnly: true },
-      { name: 'Seated Leg Curl', sets: 2, wk1Kg: 40, reps: '10–15', muscles: ['hamstrings'] },
-      { name: 'Calf Press', sets: 4, wk1Kg: 65, reps: '10–15', muscles: ['calves'] },
-      { name: 'Hanging Knee Raise', sets: 3, wk1Kg: null, reps: '10–15', muscles: ['core'] },
-      { name: 'Side Plank', sets: 2, wk1Kg: null, reps: '45–60s', muscles: ['core'], note: 'per side' },
     ] },
   ],
 }

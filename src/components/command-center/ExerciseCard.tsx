@@ -68,7 +68,7 @@ export function ExerciseCard({ exercise, history, onUpdateSet, onAddSet, onRemov
   if (exercise.kind === 'cardio') {
     return (
       <div ref={setNodeRef} style={sortableStyle}
-        className={`helix-card !p-3 ${dragClass}`}
+        className={`helix-card !p-2.5 ${dragClass}`}
       >
         <div className="flex items-center gap-2">
           {grip}
@@ -192,7 +192,7 @@ export function ExerciseCard({ exercise, history, onUpdateSet, onAddSet, onRemov
 
       {/* ── Set rows ── */}
       {open && (
-        <div className="mt-2.5 border-t border-white/[0.06] pt-2 space-y-1">
+        <div className="mt-2 border-t border-white/[0.06] pt-1.5 space-y-0.5">
           {exercise.sets.map((s, i) => (
             <SetEditorRow
               key={i}

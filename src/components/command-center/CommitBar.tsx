@@ -38,7 +38,7 @@ export function CommitBar({ draft, busy, error, onCommit, onDiscard }: {
           {busy
             ? <><Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> Committing…</>
             : <><Check className="w-4 h-4" aria-hidden="true" />
-                Commit Session
+                Finish Session
                 <span className="text-xs opacity-70 ml-1">{totals.sets} sets · {totals.volumeKg.toLocaleString()}kg</span></>}
         </button>
       </div>

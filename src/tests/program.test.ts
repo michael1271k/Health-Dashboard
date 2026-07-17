@@ -121,10 +121,10 @@ describe('v5.1 battery lift drain', () => {
 // ── Era-aware phase tag ──────────────────────────────────────────────────────
 import { phaseDisplay, PHASE_META } from '@/lib/nutrition/phase'
 
-describe('phaseDisplay — Helix Cut era tag', () => {
-  it('labels cut days on/after 2026-07-15 as "Helix Cut"', () => {
-    expect(phaseDisplay('cut', '2026-07-15').label).toBe('Helix Cut')
-    expect(phaseDisplay('cut', '2026-09-10').label).toBe('Helix Cut')
+describe('phaseDisplay — cut phase label', () => {
+  it('labels cut days as the plain sub-phase "Cut" (era tag now nests under Helix 5.1)', () => {
+    expect(phaseDisplay('cut', '2026-07-15').label).toBe('Cut')
+    expect(phaseDisplay('cut', '2026-09-10').label).toBe('Cut')
   })
   it('keeps the plain label for pre-boundary cut days', () => {
     expect(phaseDisplay('cut', '2026-07-14').label).toBe('Cut')
@@ -157,9 +157,10 @@ describe('resolveChartSplit', () => {
   it('folds legacy lower into legs', () => {
     expect(resolveChartSplit('2026-05-11', 'lower', 'ppl')).toBe('legs')
   })
-  it('splits HELIX Tuesday upper sessions into Delts & Arms', () => {
-    expect(resolveChartSplit('2026-07-21', 'upper', 'axis')).toBe('arms')  // Tue
-    expect(resolveChartSplit('2026-07-19', 'upper', 'axis')).toBe('upper') // Sun
+  it('splits HELIX upper sessions into Upper A (Sun), Delts & Arms (Tue), Upper B (Thu)', () => {
+    expect(resolveChartSplit('2026-07-19', 'upper', 'axis')).toBe('upper_a') // Sun
+    expect(resolveChartSplit('2026-07-21', 'upper', 'axis')).toBe('arms')    // Tue
+    expect(resolveChartSplit('2026-07-23', 'upper', 'axis')).toBe('upper_b') // Thu
   })
   it('splits HELIX legs sessions into Legs A (Mon) and Legs B (Fri)', () => {
     expect(resolveChartSplit('2026-07-20', 'legs', 'axis')).toBe('legs_a') // Mon

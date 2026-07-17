@@ -31,6 +31,6 @@ export const PHASE_META: Record<Phase, { label: string; color: string }> = {
  */
 export function phaseDisplay(phase: Phase, dateISO: string): { label: string; color: string } {
   const meta = PHASE_META[phase]
-  if (phase === 'cut' && dateISO >= HELIX_CUT_START) return { ...meta, label: 'Helix Cut' }
+  if (phase === 'cut' && dateISO >= HELIX_CUT_START) return { ...meta, label: 'Cut' }
   return meta
 }

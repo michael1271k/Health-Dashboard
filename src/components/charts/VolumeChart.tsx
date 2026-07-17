@@ -12,22 +12,26 @@ import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 const GRID = 'rgba(255,255,255,0.06)'
 const TEXT = '#8B97B2'
 
-// Chart buckets. 'arms' (Delts & Arms, DB split_day='upper') and 'legs_a'/'legs_b'
-// (Legs A/B, DB split_day='legs') are HELIX-only pseudo-splits resolved by weekday.
-type ChartSplit = SplitDay | 'arms' | 'legs_a' | 'legs_b'
-const ARMS_COLOR = '#6FE9FF'
+// Chart buckets. HELIX-only pseudo-splits resolved by weekday: 'upper_a'/'upper_b'
+// (both DB split_day='upper', Sun vs Thu), 'arms' (Delts & Arms, also DB 'upper',
+// Tue) and 'legs_a'/'legs_b' (Legs A/B, both DB split_day='legs', Mon vs Fri).
+type ChartSplit = SplitDay | 'upper_a' | 'upper_b' | 'arms' | 'legs_a' | 'legs_b'
+const UPPER_A_COLOR = '#38E1FF'  // Upper A cyan (programs C.cbA)
+const UPPER_B_COLOR = '#E8C57A'  // Upper B gold (programs C.cbB)
+const ARMS_COLOR = '#43F59B'     // Delts & Arms mint (programs C.arms)
 const LEGS_A_COLOR = '#4FC3FF'   // quad cyan
 const LEGS_B_COLOR = '#19E3B1'   // posterior teal
 
 // The pill set is era-specific. PPL trains Push/Pull/Legs (no "Upper" — zero
-// records); HELIX-5 logs Upper, Delts & Arms, and the two distinct Legs days.
-// Legacy "lower" always folds into legs.
+// records); HELIX-5 logs the five real splits. Legacy "lower" folds into legs.
 const SPLITS_FOR_ERA: Record<'all' | 'ppl' | 'axis', ChartSplit[]> = {
   all: ['push', 'pull', 'legs'],
   ppl: ['push', 'pull', 'legs'],
-  axis: ['upper', 'arms', 'legs_a', 'legs_b'],
+  axis: ['upper_a', 'upper_b', 'arms', 'legs_a', 'legs_b'],
 }
 const splitLabel = (s: ChartSplit) => {
+  if (s === 'upper_a') return 'Upper A'
+  if (s === 'upper_b') return 'Upper B'
   if (s === 'arms') return 'Delts & Arms'
   if (s === 'legs_a') return 'Legs A'
   if (s === 'legs_b') return 'Legs B'
@@ -35,6 +39,8 @@ const splitLabel = (s: ChartSplit) => {
   return s[0].toUpperCase() + s.slice(1)
 }
 function splitColor(s: ChartSplit): string {
+  if (s === 'upper_a') return UPPER_A_COLOR
+  if (s === 'upper_b') return UPPER_B_COLOR
   if (s === 'arms') return ARMS_COLOR
   if (s === 'legs_a') return LEGS_A_COLOR
   if (s === 'legs_b') return LEGS_B_COLOR
@@ -42,16 +48,16 @@ function splitColor(s: ChartSplit): string {
 }
 
 /**
- * Map a session (date + DB split_day) to its chart bucket. HELIX Delts & Arms
- * sessions are logged as 'upper' but fall on Tuesday, and the two Legs days
- * (both DB split_day='legs') fall on Monday (Legs A) and Friday (Legs B) — those
- * weekday splits let us track each distinctly from the Upper A/B days.
+ * Map a session (date + DB split_day) to its chart bucket by weekday. HELIX logs
+ * all upper days as DB split_day='upper': Sun→Upper A, Tue→Delts & Arms, Thu→
+ * Upper B. Both Legs days log as 'legs': Mon→Legs A, Fri→Legs B. The weekday
+ * disambiguates the five real Helix splits.
  */
 export function resolveChartSplit(dateISO: string, split: string, era: 'all' | 'ppl' | 'axis'): ChartSplit {
   if (split === 'lower') return 'legs'
   if (era === 'axis') {
     const weekday = new Date(dateISO + 'T12:00:00Z').getUTCDay()
-    if (split === 'upper') return weekday === 2 ? 'arms' : 'upper'
+    if (split === 'upper') return weekday === 2 ? 'arms' : weekday === 4 ? 'upper_b' : 'upper_a'
     if (split === 'legs') return weekday === 1 ? 'legs_a' : weekday === 5 ? 'legs_b' : 'legs'
   }
   return split as ChartSplit

@@ -11,6 +11,9 @@ export interface DraftSet {
   weightKg: number
   reps: number
   rpe?: number
+  /** Hevy-style set modifier; absent = a normal working set. Warmups are
+   *  excluded from volume/PR (live and on commit). */
+  setType?: 'warmup' | 'failure'
 }
 
 export interface DraftExercise {
@@ -69,11 +72,33 @@ export function draftTotals(draft: SessionDraft): { volumeKg: number; sets: numb
   for (const ex of draft.exercises) {
     if (ex.kind === 'cardio') continue
     for (const s of ex.sets) {
+      if (s.setType === 'warmup') continue // warmups don't count toward volume/sets
       sets += 1
       volumeKg += s.weightKg * s.reps
     }
   }
   return { volumeKg: Math.round(volumeKg), sets }
+}
+
+/**
+ * Hevy-style cascade for a set edit: apply `patch` to `setIdx`, and when the
+ * first set changed, propagate its new weight/reps to every later set that
+ * still shared the first set's *previous* value (manually-tuned sets are left
+ * alone). setType (W/F) is never cascaded.
+ */
+export function cascadeSetEdit(sets: DraftSet[], setIdx: number, patch: Partial<DraftSet>): DraftSet[] {
+  const prev = sets[setIdx]
+  if (!prev) return sets
+  const next = sets.map((s, i) => (i === setIdx ? { ...s, ...patch } : s))
+  if (setIdx === 0) {
+    for (let i = 1; i < next.length; i++) {
+      const upd: Partial<DraftSet> = {}
+      if (patch.weightKg != null && next[i].weightKg === prev.weightKg) upd.weightKg = patch.weightKg
+      if (patch.reps != null && next[i].reps === prev.reps) upd.reps = patch.reps
+      if (Object.keys(upd).length) next[i] = { ...next[i], ...upd }
+    }
+  }
+  return next
 }
 
 const fmtCardioDuration = (sec: number): string => {
@@ -114,6 +139,7 @@ export function buildCommitPayload(draft: SessionDraft): SaveWorkoutInput {
         weightKg: s.weightKg,
         reps: s.reps,
         rpe: s.rpe,
+        setType: s.setType,
         exerciseOrder: order,
         muscleGroups: ex.status === 'NEW' ? ex.muscleGroups : undefined,
       })
@@ -178,6 +204,7 @@ function sanitizeDraft(value: unknown): SessionDraft | null {
     sets: (ex.sets ?? []).map((s) => {
       const clean: DraftSet = { weightKg: s.weightKg, reps: s.reps }
       if (s.rpe != null) clean.rpe = s.rpe
+      if (s.setType === 'warmup' || s.setType === 'failure') clean.setType = s.setType
       return clean
     }),
   }))

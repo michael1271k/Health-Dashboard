@@ -12,8 +12,7 @@ import { MacroRings } from '@/components/nutrition/MacroRings'
 import { FuelForceBand } from '@/components/nutrition/FuelForceBand'
 import { ScheduleShortcut } from '@/components/day/ScheduleShortcut'
 import { logicalTodayISO } from '@/lib/utils/day'
-import { PHASE_META, phaseDisplay, type Phase } from '@/lib/nutrition/phase'
-import { useEraFilter, eraDateRange } from '@/lib/era/eraFilter'
+import { useEraFilter, eraDateRange, SUB_PHASE_META } from '@/lib/era/eraFilter'
 import { EraFilterPills } from '@/components/era/EraFilterPills'
 import type { Tables } from '@/lib/supabase/types'
 
@@ -28,11 +27,10 @@ interface ActiveGoals {
 export default function NutritionPage() {
   const qc = useQueryClient()
   const router = useRouter()
-  const { era } = useEraFilter()
+  const { era, resolvedPhase } = useEraFilter()
   // Era-scoped window (NOT a rolling 30 days): 'all' reaches back to the first
   // tracked phase so the full Notion-imported history renders.
   const { data: logs, isLoading } = useDailyLogs(eraDateRange(era))
-  const [filter, setFilter] = useState<'all' | Phase>('all')
 
   const [goals, setGoals] = useState<ActiveGoals>({ calorie: 1955, protein: 170, carbs: 195, fat: 55, mode: 'cut' })
   const [saving, setSaving] = useState(false)
@@ -82,14 +80,14 @@ export default function NutritionPage() {
     setSaving(false)
   }
 
-  // Phase is DERIVED per-day from calories (stored in the DB); filter on it.
-  const filteredLogs = filter === 'all' ? (logs ?? []) : (logs ?? []).filter((l) => l.phase === filter)
+  // The nested sub-phase (Cut / Maint / Bulk under Helix 5.1) narrows the day
+  // list by its DB-stored per-day phase. Only the Helix era carries the sub-
+  // phase row; 'all' / 'ppl' show every day in the era window.
+  const filteredLogs = era === 'axis' ? (logs ?? []).filter((l) => l.phase === resolvedPhase) : (logs ?? [])
 
   const last7 = (logs ?? []).slice(0, 7)
   const inRange = last7.filter((l) => l.calories !== null && Math.abs(l.calories - goals.calorie) <= 100).length
   const adherence = last7.length ? Math.round((inRange / last7.length) * 100) : null
-
-  const FILTERS: Array<'all' | Phase> = ['all', 'cut', 'maintenance', 'bulk']
 
   const todayLog = (logs ?? []).find((l) => l.date === logicalTodayISO()) ?? null
 
@@ -113,32 +111,16 @@ export default function NutritionPage() {
       {/* Training-day shortcut → the deck, pre-seeded (hidden once logged) */}
       <ScheduleShortcut />
 
-      {/* Era + phase filters + dense daily log */}
+      {/* Era + nested sub-phase filter + dense daily log */}
       <div className="space-y-3">
         <EraFilterPills />
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-fluid-xs text-muted mr-1">Phase:</span>
-          {FILTERS.map((f) => {
-            const active = filter === f
-            const color = f === 'all' ? '#19E3B1' : PHASE_META[f].color
-            // The cut pill carries the era tag when the view is scoped to the
-            // Helix era (every cut day in that window IS a Helix Cut day).
-            const text = f === 'cut' && era === 'axis' ? phaseDisplay('cut', logicalTodayISO()).label
-              : f === 'maintenance' ? 'Maint' : f
-            return (
-              <button key={f} onClick={() => setFilter(f)}
-                className="px-3 py-1.5 rounded-xl text-fluid-xs font-semibold capitalize transition-colors border"
-                style={active ? { color, borderColor: `${color}55`, background: `${color}1f`, boxShadow: `0 0 10px ${color}33` } : { color: '#8B97B2', borderColor: 'transparent' }}>
-                {text}
-              </button>
-            )
-          })}
-        </div>
         <NutritionLogList
           logs={filteredLogs}
           goals={goals}
           isLoading={isLoading}
-          emptyMessage={filter === 'all' ? 'No nutrition data yet — paste from Hevy or sync from the app.' : `No days in the ${filter} phase yet.`}
+          emptyMessage={era === 'axis'
+            ? `No ${SUB_PHASE_META[resolvedPhase].label} days yet in Helix 5.1.`
+            : 'No nutrition data yet — paste from Hevy or sync from the app.'}
           onDayClick={(d) => router.push(`/day/${d}`)}
         />
       </div>

@@ -12,6 +12,7 @@ export interface WorkoutSet {
   weightKg: number
   reps: number
   rpe?: number
+  setType?: 'normal' | 'warmup' | 'failure'  // Hevy-style modifier; warmups excluded from volume/PR
   exerciseOrder?: number        // deck position of the parent exercise
 }
 

@@ -43,7 +43,7 @@ export function CoachHeaderCard({ draft, onSetDate }: {
           </h3>
           <p className="text-xs text-muted mt-0.5">
             {draft.week != null && <>Week {draft.week} · </>}
-            {draft.phase && <span className="text-info font-semibold">{draft.phase === 'CUT' ? 'Helix Cut' : draft.phase}</span>}
+            {draft.phase && <span className="text-info font-semibold">{draft.phase === 'CUT' ? 'Cut' : draft.phase}</span>}
           </p>
         </div>
         {/* Date chip — tap to back-date a late log; startedAt follows in lockstep */}
@@ -51,11 +51,11 @@ export function CoachHeaderCard({ draft, onSetDate }: {
           <button
             type="button"
             onClick={openPicker}
-            className="glass-card flex items-center gap-1.5 px-2.5 min-h-[40px] text-fluid-xs font-semibold text-text
-                       hover:border-primary/40 transition-colors"
+            className="flex items-center gap-2 px-3.5 min-h-[44px] rounded-xl text-fluid-sm font-semibold text-text
+                       bg-primary/10 border border-primary/30 hover:bg-primary/15 hover:border-primary/50 transition-colors"
             aria-label={`Session date: ${dateLabel}. Tap to change`}
           >
-            <CalendarDays className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+            <CalendarDays className="w-4 h-4 text-primary" aria-hidden="true" />
             {dateLabel}
           </button>
           <input
@@ -71,17 +71,18 @@ export function CoachHeaderCard({ draft, onSetDate }: {
         </div>
       </div>
 
-      {/* Stats strip — live draft totals + reported context (— when unknown) */}
-      <div className="grid grid-cols-3 lg:grid-cols-6 gap-2 text-center">
-        <Stat label="Volume" value={`${totals.volumeKg.toLocaleString()}kg`} />
-        <Stat label="Sets" value={String(totals.sets)} />
-        <Stat label="Duration" value={s?.duration_min != null ? `${s.duration_min}m` : '—'} />
-        <Stat label="Avg HR" value={s?.avg_hr_bpm != null ? `${s.avg_hr_bpm}` : '—'} />
-        <Stat label="Calories" value={s?.calories_kcal != null ? `${s.calories_kcal}` : '—'} />
-        <Stat
+      {/* Stats strip — live draft totals + reported context (colored badges,
+          — when unknown). 3×2 in the narrow deck rail on every breakpoint. */}
+      <div className="grid grid-cols-3 gap-2">
+        <Badge label="Volume" value={`${totals.volumeKg.toLocaleString()}`} unit="kg" color="#16F5C3" />
+        <Badge label="Sets" value={String(totals.sets)} color="#3EE0FF" />
+        <Badge label="Duration" value={s?.duration_min != null ? `${s.duration_min}` : '—'} unit={s?.duration_min != null ? 'm' : undefined} color="#8B7CFF" />
+        <Badge label="Avg HR" value={s?.avg_hr_bpm != null ? `${s.avg_hr_bpm}` : '—'} unit={s?.avg_hr_bpm != null ? 'bpm' : undefined} color="#FF5470" />
+        <Badge label="Calories" value={s?.calories_kcal != null ? `${s.calories_kcal}` : '—'} unit={s?.calories_kcal != null ? 'kcal' : undefined} color="#FFB86B" />
+        <Badge
           label="Δ vs prior"
           value={s?.volume_delta_pct_vs_prior != null ? `${s.volume_delta_pct_vs_prior > 0 ? '+' : ''}${s.volume_delta_pct_vs_prior}%` : '—'}
-          color={s?.volume_delta_pct_vs_prior != null ? (s.volume_delta_pct_vs_prior >= 0 ? '#43F59B' : '#FF5470') : undefined}
+          color={s?.volume_delta_pct_vs_prior != null ? (s.volume_delta_pct_vs_prior >= 0 ? '#43F59B' : '#FF5470') : '#8B97B2'}
         />
       </div>
 
@@ -104,11 +105,13 @@ export function CoachHeaderCard({ draft, onSetDate }: {
   )
 }
 
-function Stat({ label, value, color }: { label: string; value: string; color?: string }) {
+function Badge({ label, value, unit, color }: { label: string; value: string; unit?: string; color: string }) {
   return (
-    <div className="glass-card py-2">
-      <div className="helix-num font-bold text-fluid-sm tabular-nums" style={{ color: color ?? 'var(--color-text)' }}>{value}</div>
-      <div className="text-[10px] text-muted">{label}</div>
+    <div className="rounded-xl px-2 py-2 text-center" style={{ background: `${color}14`, border: `1px solid ${color}33` }}>
+      <div className="helix-num font-bold text-fluid-base tabular-nums leading-tight" style={{ color }}>
+        {value}{unit && <span className="text-[10px] font-normal ml-0.5 opacity-70">{unit}</span>}
+      </div>
+      <div className="text-[10px] text-muted mt-0.5">{label}</div>
     </div>
   )
 }

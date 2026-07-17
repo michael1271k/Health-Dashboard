@@ -58,7 +58,11 @@ export async function saveSession(
     }
   }
 
-  const totalVolumeKg = payload.sets.reduce((sum, s) => sum + s.weightKg * s.reps, 0)
+  // Warmup sets are logged but never count toward volume, set count, or PRs
+  // (Hevy semantics). A helper keeps the three call-sites consistent.
+  const isWarmup = (s: (typeof payload.sets)[number]) => s.setType === 'warmup'
+  const workingSets = payload.sets.filter((s) => !isWarmup(s))
+  const totalVolumeKg = workingSets.reduce((sum, s) => sum + s.weightKg * s.reps, 0)
 
   // Historical best est_1RM per exercise for PR detection
   const exerciseIds = [...new Set(payload.sets.map((s) => s.exerciseId))]
@@ -83,7 +87,7 @@ export async function saveSession(
   const setsToInsert = payload.sets.map((s) => {
     const est1rm = epley1RM(s.weightKg, s.reps)
     const prevBest = bestPrMap.get(s.exerciseId) ?? 0
-    const isPr = !reentry && est1rm > prevBest
+    const isPr = !reentry && !isWarmup(s) && est1rm > prevBest
     return { s, est1rm, isPr }
   })
   const prCount = setsToInsert.filter((x) => x.isPr).length
@@ -100,7 +104,7 @@ export async function saveSession(
     notes: payload.notes || null,
     total_volume_kg: totalVolumeKg,
     session_score: null,
-    set_count: payload.sets.length,
+    set_count: workingSets.length,
     pr_count: prCount,
     duration_min: durationMin,
     calories_burned: metrics.caloriesBurned ?? null,
@@ -136,6 +140,7 @@ export async function saveSession(
     is_pr: isPr,
     est_1rm_kg: est1rm,
     exercise_order: s.exerciseOrder ?? null,
+    set_type: s.setType ?? 'normal',
   }))
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -151,7 +156,7 @@ export async function saveSession(
   return {
     sessionId: session.id,
     totalVolumeKg,
-    setCount: payload.sets.length,
+    setCount: workingSets.length,
     prCount,
     newPRs,
   }

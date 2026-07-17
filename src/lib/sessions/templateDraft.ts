@@ -24,7 +24,8 @@ export function buildTemplateDraft(
   const exercises = day.exercises.filter((e) => !e.bulkOnly).map((ex, i) => {
     const id = exMap?.get(ex.name)
     const prev = id ? memory?.get(id) : undefined
-    const weightKg = prev?.weightKg ?? ex.wk1Kg ?? 20
+    // Bodyweight / timed moves (wk1Kg null) seed at 0 kg, not a phantom 20 kg.
+    const weightKg = prev?.weightKg ?? ex.wk1Kg ?? 0
     const reps = prev?.reps ?? (parseInt(ex.reps, 10) || 10)
     return {
       localId: `tpl-${i}-${Math.random().toString(36).slice(2, 8)}`,

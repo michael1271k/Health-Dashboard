@@ -50,6 +50,7 @@ export async function POST(req: Request) {
       weightKg: s.weightKg,
       reps: s.reps,
       rpe: s.rpe,
+      setType: s.setType,
       exerciseOrder: s.exerciseOrder,
     }))
     const missing = sets.filter((s) => !s.exerciseId).map((s) => s.exerciseName)

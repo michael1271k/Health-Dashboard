@@ -210,9 +210,10 @@ export interface Database {
           is_pr: boolean
           est_1rm_kg: number | null
           exercise_order: number | null
+          set_type: string
           created_at: string
         }
-        Insert: Omit<Database['public']['Tables']['workout_sets']['Row'], 'id' | 'created_at' | 'exercise_order'> & { exercise_order?: number | null }
+        Insert: Omit<Database['public']['Tables']['workout_sets']['Row'], 'id' | 'created_at' | 'exercise_order' | 'set_type'> & { exercise_order?: number | null; set_type?: string }
         Update: Partial<Database['public']['Tables']['workout_sets']['Insert']>
       }
       daily_scores: {
