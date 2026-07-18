@@ -46,6 +46,14 @@ export async function saveSession(
   const totalVolumeKg = workingSets.reduce((sum, s) => sum + s.weightKg * s.reps, 0)
   const exerciseIds = [...new Set(payload.sets.map((s) => s.exerciseId))]
 
+  // EDIT flow: replace an existing session in place — delete it (+ its sets)
+  // up front so the one-per-date guard doesn't block the re-commit and the
+  // fresh insert below becomes the edited session.
+  if (payload.replaceSessionId) {
+    await supabase.from('workout_sets').delete().eq('session_id', payload.replaceSessionId).eq('user_id', userId)
+    await supabase.from('workout_sessions').delete().eq('id', payload.replaceSessionId).eq('user_id', userId)
+  }
+
   // ONE parallel round-trip for both the date's existing sessions (idempotency
   // + one-session-per-date) and the PR-history baseline. Parallelizing here (not
   // three sequential Netlify→Supabase hops) keeps the function well under its
@@ -101,7 +109,10 @@ export async function saveSession(
   const setsToInsert = payload.sets.map((s) => {
     const est1rm = epley1RM(s.weightKg, s.reps)
     const prevBest = bestPrMap.get(s.exerciseId) ?? 0
-    const isPr = !reentry && !isWarmup(s) && est1rm > prevBest
+    // A PR requires beating an existing baseline — the FIRST time an exercise is
+    // ever logged is never a PR (no fake gold stars).
+    const hadBaseline = bestPrMap.has(s.exerciseId)
+    const isPr = !reentry && !isWarmup(s) && hadBaseline && est1rm > prevBest
     return { s, est1rm, isPr }
   })
   const prCount = setsToInsert.filter((x) => x.isPr).length

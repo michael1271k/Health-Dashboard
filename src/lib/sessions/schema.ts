@@ -27,6 +27,7 @@ export const SaveWorkoutSchema = z.object({
   notes: z.string().max(2000).default(''),
   // ── Command Center extensions (all optional — manual logger untouched) ──
   clientSessionId: z.string().min(1).max(64).optional(),  // coach session.id → dedupe key
+  replaceSessionId: z.string().uuid().optional(),          // EDIT: replace this session in place
   dayKey: z.enum(['cb_a', 'legs_a', 'arms', 'cb_b', 'legs_b']).optional(),
   coachReport: z.unknown().optional(),                    // validated client-side; archived as JSONB
   nextSessionFlag: z.string().max(300).optional(),

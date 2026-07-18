@@ -65,6 +65,7 @@ export async function POST(req: Request) {
       sets,
       notes: input.notes,
       clientSessionId: input.clientSessionId,
+      replaceSessionId: input.replaceSessionId,
       dayKey: input.dayKey,
       coachReport: input.coachReport,
       nextSessionFlag: input.nextSessionFlag,

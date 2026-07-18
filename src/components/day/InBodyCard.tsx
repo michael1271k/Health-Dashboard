@@ -65,16 +65,30 @@ export function InBodyCard({ date, log, defaultOpen = false }: { date: string; l
           <Scale className="w-4 h-4" aria-hidden="true" />
         </span>
         <span className="flex-1 min-w-0">
-          <span className="block font-heading font-semibold text-fluid-sm text-text">InBody & Scale Metrics</span>
-          <span className="block text-[11px] text-muted truncate">
-            {log?.weight_kg != null ? `${log.weight_kg} kg` : 'no reading'}
-            {log?.body_fat_pct != null && ` · ${log.body_fat_pct}% fat`}
-            {log?.visceral_fat != null && ` · VF ${log.visceral_fat}`}
-            {log?.bmr != null && ` · ${Math.round(log.bmr)} kcal BMR`}
-          </span>
+          <span className="block font-heading font-semibold text-fluid-sm text-text">InBody &amp; Scale Metrics</span>
+          <span className="block text-[11px] text-muted truncate">{open ? 'Editing — all metrics' : 'Weight · BMI · BF% · Lean — tap for more'}</span>
         </span>
         <ChevronDown className={`w-4 h-4 text-muted shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
       </button>
+
+      {/* Collapsed: the top-4 headline readings. */}
+      {!open && (
+        <div className="grid grid-cols-4 gap-2">
+          {([
+            { label: 'Weight', v: log?.weight_kg, u: 'kg' },
+            { label: 'BMI', v: log?.bmi, u: '' },
+            { label: 'Body Fat', v: log?.body_fat_pct, u: '%' },
+            { label: 'Lean', v: log?.lean_mass_kg, u: 'kg' },
+          ]).map((s) => (
+            <div key={s.label} className="rounded-lg bg-white/[0.02] border border-white/[0.05] px-1 py-1.5 text-center">
+              <span className="helix-num block text-fluid-sm font-bold text-text leading-tight">
+                {s.v != null ? s.v : '—'}{s.v != null && s.u ? <span className="text-[9px] text-muted font-normal ml-0.5">{s.u}</span> : null}
+              </span>
+              <span className="text-[8px] uppercase tracking-wide" style={{ color: TEAL }}>{s.label}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {open && (
         <div className="space-y-3 pt-1">

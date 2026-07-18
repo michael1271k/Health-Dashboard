@@ -9,14 +9,16 @@
 
 export interface SeedSet { weightKg: number; reps: number }
 export interface SeedExercise { name: string; muscles?: string[]; sets: SeedSet[] }
-export interface SeedCardio { name: string; distanceKm?: number; durationSec?: number }
+export interface SeedCardio { name: string; distanceKm?: number; durationSec?: number; note?: string }
 export interface SeedTemplate { cardio?: SeedCardio; exercises: SeedExercise[] }
 
-const TREADMILL: SeedCardio = { name: 'Treadmill', distanceKm: 0.4, durationSec: 300 }
+/** The standard Treadmill warm-up prepended to EVERY seeded deck. */
+export const WARMUP_CARDIO: SeedCardio = {
+  name: 'Treadmill', distanceKm: 0.37, durationSec: 300, note: 'Pace rising 4.3 to 5.0',
+}
 
 export const SEED_TEMPLATES: Record<string, SeedTemplate> = {
   cb_b: {
-    cardio: TREADMILL,
     exercises: [
       { name: 'Chest Press (Machine)', muscles: ['chest', 'triceps'], sets: [{ weightKg: 35, reps: 12 }, { weightKg: 37.5, reps: 12 }, { weightKg: 37.5, reps: 12 }] },
       { name: 'Neutral-Grip Lat Pulldown', muscles: ['back'], sets: [{ weightKg: 45, reps: 12 }, { weightKg: 45, reps: 12 }] },
@@ -28,7 +30,6 @@ export const SEED_TEMPLATES: Record<string, SeedTemplate> = {
     ],
   },
   legs_b: {
-    cardio: TREADMILL,
     exercises: [
       { name: 'Romanian Deadlift (Dumbbell)', muscles: ['hamstrings', 'glutes', 'back'], sets: [{ weightKg: 30, reps: 12 }, { weightKg: 30, reps: 12 }, { weightKg: 30, reps: 12 }] },
       { name: 'Hip Thrust (Machine)', muscles: ['glutes'], sets: [{ weightKg: 25, reps: 14 }, { weightKg: 25, reps: 13 }, { weightKg: 25, reps: 12 }] },

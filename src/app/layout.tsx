@@ -14,6 +14,7 @@ import { AuthGate } from '@/components/providers/AuthGate'
 import { SyncPulse } from '@/components/fx/SyncPulse'
 import { CrashRecorder } from '@/components/providers/CrashRecorder'
 import { NativeBoot } from '@/components/providers/NativeBoot'
+import { ReloadHome } from '@/components/providers/ReloadHome'
 import './globals.css'
 
 // HELIX type system: Sora (headings/display) · Inter (body) · IBM Plex Mono (data).
@@ -119,6 +120,7 @@ export default function RootLayout({
         <SerwistRegister />
         <CrashRecorder />
         <NativeBoot />
+        <ReloadHome />
       </body>
     </html>
   )

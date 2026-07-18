@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 const WD = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
@@ -8,9 +9,11 @@ const iso = (y: number, m: number, d: number) =>
   `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
 
 /**
- * Compact month calendar for back-dating a session. Future dates and dates that
- * already have a logged session are grayed/disabled (except the current
- * selection) so a second session can never be logged for the same date.
+ * Back-dating calendar. Rendered in a PORTAL over a backdrop with a SOLID
+ * themed panel + high z-index, so it can never be clipped by the metadata card
+ * or read as transparent (the old "can't see days 12–30" bug). Future dates and
+ * dates that already have a logged session are disabled (a colored dot marks the
+ * logged ones) — a second session can never be logged for the same date.
  */
 export function DatePickerPopover({ value, max, disabledDates, onSelect, onClose }: {
   value: string
@@ -21,6 +24,13 @@ export function DatePickerPopover({ value, max, disabledDates, onSelect, onClose
 }) {
   const [y, setY] = useState(() => Number(value.slice(0, 4)))
   const [m, setM] = useState(() => Number(value.slice(5, 7)) - 1)
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
 
   const firstDay = new Date(Date.UTC(y, m, 1)).getUTCDay()
   const daysInMonth = new Date(Date.UTC(y, m + 1, 0)).getUTCDate()
@@ -30,46 +40,61 @@ export function DatePickerPopover({ value, max, disabledDates, onSelect, onClose
   const nextMonth = () => (m === 11 ? (setY(y + 1), setM(0)) : setM(m + 1))
   const canGoNext = iso(y, m, daysInMonth) < max
 
-  return (
-    <div className="absolute right-0 top-full mt-2 z-30 helix-card !p-3 w-[17rem] shadow-2xl" role="dialog" aria-label="Pick session date">
-      <div className="flex items-center justify-between mb-2">
-        <button type="button" onClick={prevMonth} aria-label="Previous month"
-          className="min-h-[32px] min-w-[32px] rounded-lg flex items-center justify-center text-muted hover:text-text">
-          <ChevronLeft className="w-4 h-4" aria-hidden="true" />
-        </button>
-        <span className="text-fluid-sm font-semibold text-text">{monthLabel}</span>
-        <button type="button" onClick={nextMonth} disabled={!canGoNext} aria-label="Next month"
-          className="min-h-[32px] min-w-[32px] rounded-lg flex items-center justify-center text-muted hover:text-text disabled:opacity-30">
-          <ChevronRight className="w-4 h-4" aria-hidden="true" />
-        </button>
+  if (!mounted) return null
+
+  return createPortal(
+    <div className="fixed inset-0 z-[90] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Pick session date">
+      <button type="button" aria-label="Close" onClick={onClose}
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div className="relative w-[19rem] max-w-full rounded-2xl border p-4 shadow-2xl"
+        style={{ background: '#0B111B', borderColor: 'rgba(255,255,255,0.12)', boxShadow: '0 24px 64px rgba(0,0,0,0.7)' }}>
+        <div className="flex items-center justify-between mb-3">
+          <button type="button" onClick={prevMonth} aria-label="Previous month"
+            className="min-h-[36px] min-w-[36px] rounded-lg flex items-center justify-center text-muted hover:text-text hover:bg-white/[0.06]">
+            <ChevronLeft className="w-4 h-4" aria-hidden="true" />
+          </button>
+          <span className="text-fluid-sm font-semibold text-text">{monthLabel}</span>
+          <button type="button" onClick={nextMonth} disabled={!canGoNext} aria-label="Next month"
+            className="min-h-[36px] min-w-[36px] rounded-lg flex items-center justify-center text-muted hover:text-text hover:bg-white/[0.06] disabled:opacity-30">
+            <ChevronRight className="w-4 h-4" aria-hidden="true" />
+          </button>
+        </div>
+        <div className="grid grid-cols-7 gap-1 text-center">
+          {WD.map((d, i) => <span key={i} className="text-[10px] text-muted py-1">{d}</span>)}
+          {cells.map((d, i) => {
+            if (d == null) return <span key={i} />
+            const ds = iso(y, m, d)
+            const isSelected = ds === value
+            const isFuture = ds > max
+            const isLogged = disabledDates.has(ds)
+            const disabled = isFuture || (isLogged && !isSelected)
+            return (
+              <button
+                key={i}
+                type="button"
+                disabled={disabled}
+                onClick={() => { onSelect(ds); onClose() }}
+                title={isLogged ? 'Already logged' : undefined}
+                className={`relative min-h-[38px] rounded-lg text-fluid-sm tabular-nums transition-colors
+                  ${isSelected ? 'bg-primary text-bg font-bold'
+                    : disabled ? 'text-muted/30 cursor-not-allowed'
+                    : 'text-text hover:bg-white/[0.10]'}`}
+              >
+                {d}
+                {isLogged && !isSelected && (
+                  <span className="absolute left-1/2 -translate-x-1/2 bottom-1 w-1 h-1 rounded-full"
+                    style={{ background: '#16F5C3' }} aria-hidden="true" />
+                )}
+              </button>
+            )
+          })}
+        </div>
+        <p className="text-[10px] text-muted mt-3 flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: '#16F5C3' }} aria-hidden="true" />
+          Dot = already logged (can&apos;t double-log). Future dates disabled.
+        </p>
       </div>
-      <div className="grid grid-cols-7 gap-1 text-center">
-        {WD.map((d, i) => <span key={i} className="text-[10px] text-muted py-1">{d}</span>)}
-        {cells.map((d, i) => {
-          if (d == null) return <span key={i} />
-          const ds = iso(y, m, d)
-          const isSelected = ds === value
-          const isFuture = ds > max
-          const isLogged = disabledDates.has(ds) && !isSelected
-          const disabled = isFuture || isLogged
-          return (
-            <button
-              key={i}
-              type="button"
-              disabled={disabled}
-              onClick={() => { onSelect(ds); onClose() }}
-              title={isLogged ? 'Already logged' : undefined}
-              className={`min-h-[34px] rounded-lg text-fluid-xs tabular-nums transition-colors
-                ${isSelected ? 'bg-primary text-bg font-bold'
-                  : disabled ? 'text-muted/30 line-through cursor-not-allowed'
-                  : 'text-text hover:bg-white/[0.08]'}`}
-            >
-              {d}
-            </button>
-          )
-        })}
-      </div>
-      <p className="text-[10px] text-muted mt-2">Grayed dates already have a logged session.</p>
-    </div>
+    </div>,
+    document.body,
   )
 }

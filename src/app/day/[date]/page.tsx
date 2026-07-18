@@ -14,7 +14,7 @@ import { SwapDayControl } from '@/components/day/SwapDayControl'
 import { useDayVault, dayCompleteness, type DayVaultData } from '@/lib/hooks/useDayVault'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { phaseDisplay } from '@/lib/nutrition/phase'
-import { ERA_META, eraForDate, scheduleDayFor } from '@/lib/programs'
+import { ERA_META, eraForDate, scheduleDayFor, PROGRAMS, DEFAULT_PROGRAM_ID, getActiveProgramId } from '@/lib/programs'
 import { displayWeight, validWeight, weightUnit } from '@/lib/utils/units'
 import { formatSleep, mlToL } from '@/lib/utils/format'
 
@@ -69,6 +69,12 @@ function MetaChip({ emoji, value, label, color }: { emoji: string; value: string
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return <h2 className="font-heading text-fluid-base font-bold text-text px-1 pt-2">{children}</h2>
+}
+
+/** Program-day label from day_key (→ "Upper B", robust on swaps), else split. */
+function sessionLabel(dayKey: string | null | undefined, split: string): string {
+  const program = PROGRAMS[getActiveProgramId()] ?? PROGRAMS[DEFAULT_PROGRAM_ID]
+  return (dayKey && program.days.find((d) => d.key === dayKey)?.label) ?? (split[0]?.toUpperCase() + split.slice(1))
 }
 
 function hasScaleMetrics(log: DayVaultData['log']): boolean {
@@ -129,7 +135,7 @@ export default function DailyNexusPage() {
       <SectionTitle>Vitals &amp; Nutrition</SectionTitle>
 
       {/* Readiness hero band */}
-      <section className="helix-card flex items-center gap-4 py-4"
+      <section className="helix-card holo-sheen flex items-center gap-4 py-4"
         style={{ borderColor: `${scoreColor(score)}30`, boxShadow: score != null ? `0 0 22px ${scoreColor(score)}1f` : undefined }}>
         <div className="relative shrink-0 flex items-center justify-center" style={{ width: 64, height: 64 }}>
           <svg width="64" height="64" viewBox="0 0 64 64" className="-rotate-90" aria-hidden="true">
@@ -189,6 +195,8 @@ export default function DailyNexusPage() {
               </div>
             ))}
           </div>
+          {/* Sleep debt folded in — no longer a standalone oversized card */}
+          <SleepDebtGauge compact />
         </section>
 
         {/* Vitals & Body */}
@@ -228,42 +236,61 @@ export default function DailyNexusPage() {
         </button>
       )}
 
-      {/* ══ SECTION 2 · The Workout ══ */}
-      <SectionTitle>The Workout</SectionTitle>
+      {/* ══ SECTION 2 · The Workout ══ (hidden as an empty block on rest days) */}
       {trained ? (
-        sessions.map((s) => (
-          <section key={s.id} className="helix-card space-y-3" style={{ borderColor: `${CYAN}30`, boxShadow: `0 0 22px ${CYAN}14` }}>
-            <div className="flex items-center gap-2">
-              <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: `${CYAN}1a`, color: CYAN }}>
-                <Dumbbell className="w-4 h-4" aria-hidden="true" />
-              </span>
-              <h3 className="font-heading font-bold text-fluid-lg text-text">{s.split[0]?.toUpperCase()}{s.split.slice(1)}</h3>
-            </div>
-            {/* Hevy-style colored metadata header */}
-            <div className="flex flex-wrap gap-2">
-              <MetaChip emoji="🏋️" value={`${Math.round(displayWeight(s.volumeKg) ?? 0).toLocaleString()}`} label={unit} color={TEAL} />
-              <MetaChip emoji="🔁" value={`${s.setCount ?? '—'}`} label="sets" color={CYAN} />
-              <MetaChip emoji="⏱️" value={s.durationMin != null ? `${s.durationMin}` : '—'} label="min" color={VIOLET} />
-              <MetaChip emoji="❤️" value={s.avgBpm != null ? `${s.avgBpm}` : '—'} label="bpm" color={ROSE} />
-              <MetaChip emoji="🔥" value={s.calories != null ? `${s.calories}` : '—'} label="kcal" color={EMBER} />
-            </div>
-            <SessionVolumeMini sessionId={s.id} />
-          </section>
-        ))
-      ) : (
-        <section className="helix-card space-y-3 text-center" style={{ borderColor: `${VIOLET}30` }}>
-          <h3 className="font-heading font-semibold text-fluid-base flex items-center justify-center gap-1.5" style={{ color: VIOLET }}>
-            <Moon className="w-4 h-4" /> {restDay ? 'Rest · Zone-2 Recovery' : 'No session logged'}
-          </h3>
-          <p className="text-fluid-xs text-muted">{restDay ? 'Recovery day — optional light Zone-2 cardio.' : 'This training day has no session yet.'}</p>
-          {schedule !== 'rest' && schedule.dayKey && (
-            <Link href={`/session?template=${schedule.dayKey}&date=${date}`}
-              className="btn-glass w-full justify-center min-h-[44px]" style={{ color: CYAN }}>
-              <Dumbbell className="w-4 h-4" aria-hidden="true" /> Log {schedule.label}
-            </Link>
-          )}
-          <SwapDayControl date={date} className="flex flex-col items-center" />
+        <>
+          <SectionTitle>The Workout</SectionTitle>
+          {sessions.map((s) => (
+            <section key={s.id} className="helix-card holo-sheen space-y-3" style={{ borderColor: `${CYAN}30`, boxShadow: `0 0 24px ${CYAN}18` }}>
+              <div className="flex items-center gap-2">
+                <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: `${CYAN}1a`, color: CYAN }}>
+                  <Dumbbell className="w-4 h-4" aria-hidden="true" />
+                </span>
+                <h3 className="font-heading font-bold text-fluid-lg text-text">{sessionLabel(s.dayKey, s.split)}</h3>
+              </div>
+              {/* Hevy-style colored metadata header */}
+              <div className="flex flex-wrap gap-2">
+                <MetaChip emoji="🏋️" value={`${Math.round(displayWeight(s.volumeKg) ?? 0).toLocaleString()}`} label={unit} color={TEAL} />
+                <MetaChip emoji="🔁" value={`${s.setCount ?? '—'}`} label="sets" color={CYAN} />
+                <MetaChip emoji="⏱️" value={s.durationMin != null ? `${s.durationMin}` : '—'} label="min" color={VIOLET} />
+                <MetaChip emoji="❤️" value={s.avgBpm != null ? `${s.avgBpm}` : '—'} label="bpm" color={ROSE} />
+                <MetaChip emoji="🔥" value={s.calories != null ? `${s.calories}` : '—'} label="kcal" color={EMBER} />
+              </div>
+              <SessionVolumeMini sessionId={s.id} />
+            </section>
+          ))}
+        </>
+      ) : restDay ? (
+        /* Rest day → a compact premium badge, NOT a big empty workout block */
+        <section className="helix-card holo-sheen flex items-center gap-3 py-4"
+          style={{ borderColor: `${VIOLET}30`, boxShadow: `0 0 24px ${VIOLET}1f` }}>
+          <span className="w-11 h-11 rounded-full flex items-center justify-center shrink-0"
+            style={{ background: `${VIOLET}1c`, color: VIOLET, boxShadow: `0 0 18px ${VIOLET}55` }}>
+            <Moon className="w-5 h-5" aria-hidden="true" />
+          </span>
+          <div className="flex-1 min-w-0">
+            <p className="font-heading font-bold text-fluid-base" style={{ color: VIOLET }}>Rest · Zone-2 Recovery</p>
+            <p className="text-fluid-xs text-muted">Adaptation happens now — no lifting scheduled.</p>
+          </div>
+          <SwapDayControl date={date} />
         </section>
+      ) : (
+        /* A training day with no session yet → the log CTA + swap */
+        <>
+          <SectionTitle>The Workout</SectionTitle>
+          <section className="helix-card space-y-3" style={{ borderColor: `${CYAN}26` }}>
+            <p className="text-fluid-sm text-text font-medium">
+              No session logged for {schedule !== 'rest' ? schedule.label : 'today'} yet.
+            </p>
+            {schedule !== 'rest' && schedule.dayKey && (
+              <Link href={`/session?template=${schedule.dayKey}&date=${date}`}
+                className="btn-primary w-full justify-center min-h-[44px]" style={{ background: CYAN, boxShadow: `0 0 18px ${CYAN}55` }}>
+                <Dumbbell className="w-4 h-4" aria-hidden="true" /> Log {schedule.label}
+              </Link>
+            )}
+            <SwapDayControl date={date} />
+          </section>
+        </>
       )}
 
       {/* ══ SECTION 3 · Progression & Insights ══ */}
@@ -274,8 +301,7 @@ export default function DailyNexusPage() {
         </>
       )}
 
-      {/* Recovery + journal */}
-      <SleepDebtGauge />
+      {/* Journal (sleep debt now folded into the Sleep & Recovery block above) */}
       <SubjectiveBlock date={date} effort={log?.effort_rating ?? null} mood={log?.mood ?? null} journal={log?.journal_md ?? null} />
 
       {isLoading && <div className="helix-card h-20 animate-pulse" aria-hidden="true" />}

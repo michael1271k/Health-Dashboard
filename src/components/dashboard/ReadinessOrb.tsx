@@ -20,7 +20,10 @@ function scoreColor(v: number | null): string {
  * Opacity/glow animations only (the iOS backdrop-filter rule).
  */
 export const ReadinessOrb = memo(function ReadinessOrb({ score, isLoading }: { score: Tables<'daily_scores'> | null; isLoading?: boolean }) {
-  const total = score?.score ?? null
+  // Readiness = physiological recovery (sleep + HRV + resting-HR) — reads high
+  // after good sleep. The blended adherence composite is the smaller "Daily Score".
+  const total = score?.recovery_score ?? score?.score ?? null
+  const composite = score?.score ?? null
   const battery = score?.battery_pct ?? null
   const color = scoreColor(total)
   const batteryColor = battery == null ? '#5A6B85' : battery >= 60 ? '#3EE0FF' : battery >= 30 ? '#FFB86B' : '#FF5470'
@@ -56,10 +59,13 @@ export const ReadinessOrb = memo(function ReadinessOrb({ score, isLoading }: { s
             />
           )}
         </svg>
-        {/* Core: kinetic score */}
+        {/* Core: kinetic recovery-based readiness + the smaller Daily Score */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <KineticNumber value={total} className="helix-num text-6xl font-bold leading-none" />
           <span className="text-[11px] text-muted mt-1 uppercase tracking-widest">{total == null ? 'no data yet' : 'readiness'}</span>
+          {composite != null && (
+            <span className="text-[10px] text-muted mt-1">Daily Score <span className="helix-num font-semibold text-text">{composite}</span></span>
+          )}
           {battery != null && (
             <span className="helix-num text-fluid-xs mt-0.5" style={{ color: batteryColor }}>{battery}% battery</span>
           )}

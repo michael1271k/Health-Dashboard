@@ -2,25 +2,27 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
-import { eraForDate, programDayFor, DEFAULT_PROGRAM_ID } from '@/lib/programs'
+import { eraForDate, programDayFor, PROGRAMS, DEFAULT_PROGRAM_ID } from '@/lib/programs'
 
 export interface ExerciseDelta {
   name: string
   topKg: number
   topReps: number
   prevKg: number | null
-  delta: -1 | 0 | 1
+  /** null = first time this exercise is logged (no baseline to compare). */
+  delta: -1 | 0 | 1 | null
   isPr: boolean
 }
 export interface SessionIntel {
   deltas: ExerciseDelta[]
   prs: Array<{ name: string; kg: number; reps: number }>
   volumes: Array<{ date: string; volumeKg: number }>  // this + previous SAME-TYPE sessions (asc)
-  typeLabel: string          // era-aware session-type name, e.g. "Upper A"
+  typeLabel: string          // era-aware session-type name, e.g. "Upper B"
   volumeDeltaPct: number | null   // this vs previous same-type session
   setsDelta: number | null
   computedVolumeKg: number   // fallback when the session row lacks totals
   computedSets: number
+  isFirstOfType: boolean     // no previous same-type session → hide progression
 }
 
 type SetRow = { exercise_id: string; weight_kg: number; reps: number; is_pr: boolean; exercises: { name: string } }
@@ -44,7 +46,7 @@ export function useSessionIntel(sessionId: string | null) {
         .eq('id', sessionId as string)
         .single()
       const session = sess as SessRow | null
-      const empty: SessionIntel = { deltas: [], prs: [], volumes: [], typeLabel: '', volumeDeltaPct: null, setsDelta: null, computedVolumeKg: 0, computedSets: 0 }
+      const empty: SessionIntel = { deltas: [], prs: [], volumes: [], typeLabel: '', volumeDeltaPct: null, setsDelta: null, computedVolumeKg: 0, computedSets: 0, isFirstOfType: true }
       if (!session) return empty
 
       // SAME-TYPE matching: split_day alone mixes Upper A and Upper B (both
@@ -56,7 +58,7 @@ export function useSessionIntel(sessionId: string | null) {
       // session of each type has no baseline, by design.
       const weekday = new Date(session.started_at).getUTCDay()
       const sessionEra = eraForDate(session.started_at.slice(0, 10))
-      const typeLabel = sessionTypeLabel(session.started_at.slice(0, 10), session.split_day, weekday)
+      const typeLabel = sessionTypeLabel(session.started_at.slice(0, 10), session.split_day, weekday, session.day_key ?? null)
       const prevQuery = await supabase
         .from('workout_sessions')
         .select('id, started_at, total_volume_kg, day_key')
@@ -96,8 +98,10 @@ export function useSessionIntel(sessionId: string | null) {
         const p = prevTop.get(exId)
         return {
           name: t.name, topKg: t.kg, topReps: t.reps, prevKg: p?.kg ?? null,
-          delta: p == null ? 0 : t.kg > p.kg ? 1 : t.kg < p.kg ? -1 : 0,
-          isPr: t.isPr,
+          // null = first log of this exercise (no baseline). A PR also requires a
+          // baseline to beat — never a gold star the first time.
+          delta: p == null ? null : t.kg > p.kg ? 1 : t.kg < p.kg ? -1 : 0,
+          isPr: t.isPr && p != null,
         }
       })
 
@@ -125,16 +129,23 @@ export function useSessionIntel(sessionId: string | null) {
         setsDelta,
         computedVolumeKg,
         computedSets,
+        isFirstOfType: prev.length === 0,
       }
     },
   })
 }
 
-/** Era-aware session-type name: HELIX era → program-day label (weekday-matched); PPL → split. */
-function sessionTypeLabel(dateISO: string, splitDay: string, weekday: number): string {
+/**
+ * Era-aware session-type name. HELIX era prefers the exact program-day identity
+ * (day_key → "Upper B", correct even on a swapped/off-weekday), falling back to
+ * the weekday match, then the raw split. PPL → split.
+ */
+function sessionTypeLabel(dateISO: string, splitDay: string, weekday: number, dayKey: string | null): string {
   if (eraForDate(dateISO) === 'axis') {
-    const d = programDayFor(DEFAULT_PROGRAM_ID, weekday)
-    if (d !== 'rest') return d.sub ? `${d.label} · ${d.sub}` : d.label
+    const byKey = dayKey ? PROGRAMS[DEFAULT_PROGRAM_ID]?.days.find((d) => d.key === dayKey) : undefined
+    const byWeekday = programDayFor(DEFAULT_PROGRAM_ID, weekday)
+    const d = byKey ?? (byWeekday === 'rest' ? undefined : byWeekday)
+    if (d) return d.sub ? `${d.label} · ${d.sub}` : d.label
   }
   return splitDay[0].toUpperCase() + splitDay.slice(1)
 }

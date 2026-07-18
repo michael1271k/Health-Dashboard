@@ -7,6 +7,7 @@ import { useUserGoals } from '@/lib/hooks/useDashboard'
 import { RangeSelector } from '@/components/charts/RangeSelector'
 import { eraForDate } from '@/lib/programs'
 import { DeferredMount } from '@/components/fx/DeferredMount'
+import { WidgetBoundary } from '@/components/fx/WidgetBoundary'
 import { useEraFilter } from '@/lib/era/eraFilter'
 import { EraFilterPills } from '@/components/era/EraFilterPills'
 
@@ -62,6 +63,7 @@ export default function ChartsPage() {
           <RangeSelector value={days} onChange={setDays} orientation="vertical" />
         </div>
         <div className="flex-1 min-w-0 space-y-6">
+          <WidgetBoundary label="Charts" minHeight={280}>
           <div className="grid gap-6 lg:grid-cols-2">
             <WeightTrendChart data={wData} isLoading={weightLoading} showEraBoundary={era === 'all'} />
             <VolumeChart data={vData} isLoading={volumeLoading} era={era} />
@@ -72,7 +74,9 @@ export default function ChartsPage() {
             />
             <PRHistoryChart data={pData} isLoading={prLoading} />
           </div>
+          </WidgetBoundary>
           <DeferredMount minHeight={480}>
+          <WidgetBoundary label="Muscle analytics" minHeight={280}>
           <div>
             <h2 className="font-heading text-fluid-lg font-bold text-text mb-3">Muscle Analytics <span className="text-fluid-xs text-muted font-normal">Hevy-killer</span></h2>
             <div className="space-y-4">
@@ -84,6 +88,7 @@ export default function ChartsPage() {
               <MuscleAnalyticsSection days={days} era={era} />
             </div>
           </div>
+          </WidgetBoundary>
           </DeferredMount>
         </div>
       </div>

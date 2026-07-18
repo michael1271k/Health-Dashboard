@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { authedFetch } from '@/lib/utils/authedFetch'
 import { eraForDate, AXIS_ERA_START } from '@/lib/programs'
-import { hoursAwakeToday } from '@/lib/utils/day'
+import { hoursAwakeToday, logicalTodayISO } from '@/lib/utils/day'
 import type { Phase } from '@/lib/nutrition/phase'
 import type { GymReportRow } from '@/lib/hooks/useWeekly'
 
@@ -112,7 +112,7 @@ export function useDeleteSession(date: string) {
       try {
         await authedFetch('/api/compute-score', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ date, backfillDays: 0, hoursAwake: hoursAwakeToday() }),
+          body: JSON.stringify({ date, force: true, isToday: date === logicalTodayISO(), backfillDays: 0, hoursAwake: hoursAwakeToday() }),
         })
       } catch { /* score recompute is best-effort */ }
     },

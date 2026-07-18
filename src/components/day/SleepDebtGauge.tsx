@@ -16,13 +16,32 @@ function debtColor(h: number): string {
  * Sleep Debt Bank — rolling 14-night decayed shortfall vs the sleep
  * goal, as a compact horizontal gauge (0–10h scale).
  */
-export const SleepDebtGauge = memo(function SleepDebtGauge() {
+export const SleepDebtGauge = memo(function SleepDebtGauge({ compact = false }: { compact?: boolean }) {
   const { data, isLoading } = useSleepDebt()
-  if (isLoading) return <div className="helix-card h-[72px] animate-pulse" aria-hidden="true" />
+  if (isLoading) return compact ? null : <div className="helix-card h-[72px] animate-pulse" aria-hidden="true" />
   if (!data || data.nights < 3) return null   // not enough history to be honest about debt
 
   const color = debtColor(data.debtHours)
   const pct = Math.min(1, data.debtHours / 10)
+
+  // Compact: a slim inline bar folded into the Nexus Sleep & Recovery block.
+  if (compact) {
+    return (
+      <div className="space-y-1">
+        <div className="flex items-baseline justify-between">
+          <span className="text-[10px] uppercase tracking-wide text-muted">Sleep debt · 14-night</span>
+          <span className="helix-num text-[11px] font-bold" style={{ color }}>
+            {data.debtHours <= 0.1 ? 'settled ✓' : `−${data.debtHours}h`}
+          </span>
+        </div>
+        <div className="h-1.5 rounded-full bg-white/[0.05] overflow-hidden" role="img"
+          aria-label={`Sleep debt ${data.debtHours} hours over ${data.nights} nights`}>
+          <div className="h-full rounded-full transition-[width] duration-700"
+            style={{ width: `${Math.max(2, pct * 100)}%`, background: color, boxShadow: `0 0 8px ${color}66` }} />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <section className="helix-card space-y-2.5" style={{ borderColor: `${VIOLET}30` }}>

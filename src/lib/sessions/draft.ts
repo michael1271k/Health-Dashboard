@@ -38,6 +38,8 @@ export interface DraftExercise {
 export interface SessionDraft {
   /** Idempotency key: coach session.id, or a synthetic id for Hevy pastes. */
   clientSessionId?: string
+  /** EDIT flow: the committed session this draft replaces (delete + re-insert). */
+  replaceSessionId?: string
   dayKey?: 'cb_a' | 'legs_a' | 'arms' | 'cb_b' | 'legs_b'
   splitDay: SplitDay
   date: string                  // YYYY-MM-DD (startedAt must stay in sync — use the store's setDate)
@@ -160,6 +162,7 @@ export function buildCommitPayload(draft: SessionDraft): SaveWorkoutInput {
     sets,
     notes: [draft.notes.trim(), ...cardioLines].filter(Boolean).join('\n'),
     clientSessionId: draft.clientSessionId,
+    replaceSessionId: draft.replaceSessionId,
     dayKey: draft.dayKey,
     coachReport: draft.coachReport,
     nextSessionFlag: draft.nextSessionFlag,

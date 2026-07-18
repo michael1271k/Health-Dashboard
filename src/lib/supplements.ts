@@ -34,14 +34,20 @@ export const TOTAL_SUPPLEMENTS = ALL_SUPPLEMENT_KEYS.length
 /**
  * The protocol for a given day. On rest days the training-only stimulants
  * (pre-workout caffeine + citrulline) are dropped, and any slot left empty is
- * removed. Callers pass `isTraining` (from programs.isTrainingDay) so this file
- * stays a pure leaf with no schedule dependency.
+ * removed. The Multivitamin is 1 tab daily EXCEPT Monday & Friday (2 tabs).
+ * Callers pass `isTraining` (from programs.isTrainingDay) + the weekday so this
+ * file stays a pure leaf with no schedule dependency.
  */
-export function protocolForDate(isTraining: boolean): SupplementSlot[] {
-  if (isTraining) return SUPPLEMENT_PROTOCOL
-  return SUPPLEMENT_PROTOCOL
-    .map((slot) => ({ ...slot, items: slot.items.filter((i) => !i.trainingOnly) }))
-    .filter((slot) => slot.items.length > 0)
+export function protocolForDate(isTraining: boolean, weekday: number = new Date().getDay()): SupplementSlot[] {
+  const multiDose = weekday === 1 || weekday === 5 ? '2 tabs' : '1 tab'
+  const withDose = (slot: SupplementSlot): SupplementSlot => ({
+    ...slot,
+    items: slot.items.map((i) => (i.key === 'multivitamin' ? { ...i, dose: multiDose } : i)),
+  })
+  const base = isTraining
+    ? SUPPLEMENT_PROTOCOL
+    : SUPPLEMENT_PROTOCOL.map((slot) => ({ ...slot, items: slot.items.filter((i) => !i.trainingOnly) }))
+  return base.map(withDose).filter((slot) => slot.items.length > 0)
 }
 
 /** How many supplements are scheduled for the day (denominator for the Stack tile). */

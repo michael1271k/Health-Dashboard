@@ -9,7 +9,7 @@
  */
 import { daySplitEnum, type ProgramDay } from '@/lib/programs'
 import type { SessionDraft, DraftExercise } from '@/lib/sessions/draft'
-import { SEED_TEMPLATES } from '@/lib/sessions/seedTemplates'
+import { SEED_TEMPLATES, WARMUP_CARDIO } from '@/lib/sessions/seedTemplates'
 
 export const HELIX_DAY_KEYS = ['cb_a', 'legs_a', 'arms', 'cb_b', 'legs_b'] as const
 
@@ -34,13 +34,14 @@ export function buildTemplateDraft(
   const seed = SEED_TEMPLATES[day.key]
   const exercises: DraftExercise[] = []
 
+  // Every seeded deck opens with the standard Treadmill warm-up.
+  exercises.push({
+    localId: localId(), name: WARMUP_CARDIO.name, kind: 'cardio',
+    distanceKm: WARMUP_CARDIO.distanceKm, durationSec: WARMUP_CARDIO.durationSec,
+    note: WARMUP_CARDIO.note, sets: [],
+  })
+
   if (seed) {
-    if (seed.cardio) {
-      exercises.push({
-        localId: localId(), name: seed.cardio.name, kind: 'cardio',
-        distanceKm: seed.cardio.distanceKm, durationSec: seed.cardio.durationSec, sets: [],
-      })
-    }
     for (const ex of seed.exercises) {
       const prev = memoryFor(ex.name)
       // Memory overrides the fallback numbers (keeping the seed's set count);

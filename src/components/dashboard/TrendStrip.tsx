@@ -84,17 +84,17 @@ function Spark({ s }: { s: Series }) {
 export function TrendStrip() {
   const { data, isLoading } = useTrendSeries()
   return (
-    <div className="helix-card flex flex-col h-full gap-3 min-h-[280px]">
-      <div className="flex items-center justify-between">
-        <h2 className="font-heading font-semibold text-fluid-lg">30-Day Trends</h2>
-        <span className="text-fluid-xs text-muted uppercase tracking-wider">Last sync</span>
+    <div className="helix-card gap-2">
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="font-heading font-semibold text-fluid-base">30-Day Trends</h2>
+        <span className="text-fluid-xs text-muted uppercase tracking-wider">score · weight · sleep</span>
       </div>
       {isLoading ? (
-        <div className="flex-1 space-y-4">
+        <div className="grid grid-cols-3 gap-4">
           {[0, 1, 2].map((i) => <div key={i} className="h-14 bg-surface-2 rounded-lg animate-pulse" />)}
         </div>
       ) : (
-        <div className="flex-1 flex flex-col gap-4 justify-between">
+        <div className="grid grid-cols-3 gap-4">
           {(data ?? []).map((s) => <Spark key={s.label} s={s} />)}
         </div>
       )}

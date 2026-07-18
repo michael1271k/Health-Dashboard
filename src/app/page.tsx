@@ -14,6 +14,7 @@ import { SupplementChecklist } from '@/components/dashboard/SupplementChecklist'
 import { InsightCoach } from '@/components/dashboard/InsightCoach'
 import { AnimatedCard } from '@/components/dashboard/AnimatedBento'
 import { WeeklyReviewCard } from '@/components/dashboard/WeeklyReviewCard'
+import { WidgetBoundary } from '@/components/fx/WidgetBoundary'
 import { BrandHeader } from '@/components/dashboard/BrandHeader'
 import { DeferredMount } from '@/components/fx/DeferredMount'
 import { PullToRefresh } from '@/components/ui/PullToRefresh'
@@ -156,31 +157,38 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <BrandHeader />
 
-      {/* ── Bio-Command hero: breathing orb + live strips ──
-          Mobile: dense single column (orb, then stacked strips).
-          Desktop: panoramic grid — a fixed orb rail on the left, strips fan out
-          into a 2-/3-column grid so the freed width is used, not wasted. */}
-      <div className="grid gap-5 lg:grid-cols-[minmax(300px,360px)_1fr] lg:items-center">
+      {/* ── Hero: the two prominent daily widgets — Readiness (recovery) + Battery ── */}
+      <div className="grid gap-4 sm:grid-cols-2">
         <AnimatedCard index={0}>
-          <button onClick={() => setOpen('readiness')} className="flex h-full items-center justify-center mx-auto" aria-label="Open readiness details">
+          <button onClick={() => setOpen('readiness')}
+            className="helix-card holo-sheen w-full flex items-center justify-center min-h-[300px]" aria-label="Open readiness details">
             <ReadinessOrb score={score ?? null} isLoading={scoreLoading} />
           </button>
         </AnimatedCard>
-        <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
-          {strips.map((s, i) => (
-            <AnimatedCard key={s.key} index={i + 1}>
-              <BioStrip {...s} onClick={() => setOpen(s.key)} />
-            </AnimatedCard>
-          ))}
-        </div>
+        <AnimatedCard index={1}>
+          <button onClick={() => setOpen('readiness')} className="w-full text-left" aria-label="Open battery details">
+            <BatteryCard battery={score?.battery_pct ?? null} isLoading={scoreLoading} />
+          </button>
+        </AnimatedCard>
       </div>
 
-      {/* Desktop trends sidecar */}
-      <div className="hidden xl:block"><AnimatedCard index={7}><TrendStrip /></AnimatedCard></div>
+      {/* Daily domain strips */}
+      <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+        {strips.map((s, i) => (
+          <AnimatedCard key={s.key} index={i + 2}>
+            <BioStrip {...s} onClick={() => setOpen(s.key)} />
+          </AnimatedCard>
+        ))}
+      </div>
+
+      {/* Compact 30-day trends (shrunk from the old tall sidecar) */}
+      <div className="hidden md:block">
+        <AnimatedCard index={8}><WidgetBoundary label="30-day trends" minHeight={120}><TrendStrip /></WidgetBoundary></AnimatedCard>
+      </div>
 
       {/* Below-the-fold: mount after idle so the hero owns first paint */}
-      <DeferredMount minHeight={140}><AnimatedCard index={8}><InsightCoach /></AnimatedCard></DeferredMount>
-      <DeferredMount minHeight={120}><AnimatedCard index={9}><WeeklyReviewCard /></AnimatedCard></DeferredMount>
+      <DeferredMount minHeight={140}><AnimatedCard index={9}><InsightCoach /></AnimatedCard></DeferredMount>
+      <DeferredMount minHeight={120}><AnimatedCard index={10}><WeeklyReviewCard /></AnimatedCard></DeferredMount>
 
       {/* ── Domain detail: liquid-glass popup ── */}
       <LiquidModal open={!!open} onClose={() => setOpen(null)} title={open ? sheetTitle[open] : undefined}>

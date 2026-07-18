@@ -33,6 +33,7 @@ export interface SaveWorkoutPayload {
   notes: string
   // ── Command Center extensions (optional on every legacy path) ──
   clientSessionId?: string      // coach session.id — idempotency/dedupe key
+  replaceSessionId?: string     // EDIT flow: delete this session then re-insert
   dayKey?: string               // HELIX-5 program-day identity (cb_a … legs_b)
   coachReport?: unknown         // full validated coach JSON, archived as JSONB
   nextSessionFlag?: string

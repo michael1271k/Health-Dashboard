@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { m } from 'framer-motion'
 import { HelixMark } from '@/components/HelixMark'
 import { navItems } from '@/lib/nav-items'
 
@@ -42,26 +43,25 @@ export function Sidebar() {
                   aria-label={label}
                   aria-current={active ? 'page' : undefined}
                   className={`relative flex items-center gap-3 px-4 py-2.5 xl:py-3 rounded-xl text-sm xl:text-[15px] font-medium
-                              transition-[color,background,box-shadow,border-color] duration-200 cursor-pointer
-                              ${active
-                                ? 'glass-card--accent text-primary'
-                                : 'text-muted hover:text-text hover:bg-white/[0.04]'
-                              }`}
-                  style={active ? {
-                    background: 'color-mix(in srgb, #3D7DFF 12%, transparent)',
-                    borderColor: 'color-mix(in srgb, #3D7DFF 35%, transparent)',
-                    boxShadow: '0 0 16px rgba(61,125,255,0.12)',
-                  } : {}}
+                              transition-colors duration-200 cursor-pointer
+                              ${active ? 'text-primary' : 'text-muted hover:text-text hover:bg-white/[0.04]'}`}
                 >
+                  {/* Sliding active indicator — glides between tabs */}
                   {active && (
-                    <span
-                      className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 rounded-r-full bg-primary"
-                      style={{ boxShadow: '0 0 10px var(--color-primary)' }}
+                    <m.span
+                      layoutId="sidebar-active"
+                      className="absolute inset-0 rounded-xl"
+                      style={{
+                        background: 'color-mix(in srgb, #3D7DFF 12%, transparent)',
+                        border: '1px solid color-mix(in srgb, #3D7DFF 35%, transparent)',
+                        boxShadow: '0 0 16px rgba(61,125,255,0.14)',
+                      }}
+                      transition={{ type: 'spring', stiffness: 420, damping: 36 }}
                       aria-hidden="true"
                     />
                   )}
-                  <Icon className="w-[18px] h-[18px] xl:w-5 xl:h-5 shrink-0" aria-hidden="true" />
-                  <span>{label}</span>
+                  <Icon className="relative z-10 w-[18px] h-[18px] xl:w-5 xl:h-5 shrink-0" aria-hidden="true" />
+                  <span className="relative z-10">{label}</span>
                 </Link>
               </li>
             )

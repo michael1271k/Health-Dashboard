@@ -16,7 +16,12 @@ function Chip({ label, value, accent = '#16F5C3' }: { label: string; value: stri
   )
 }
 
-const DELTA = { 1: ['▲', '#43F59B'], 0: ['═', '#5A6B85'], [-1]: ['▼', '#FF5470'] } as const
+/** Strict progression glyphs: ⬆️ improved · ✅ matched/defended · ⬇️ regressed;
+ *  🆕 = first time this exercise is logged (no baseline). */
+function deltaGlyph(delta: -1 | 0 | 1 | null): string {
+  if (delta == null) return '🆕'
+  return delta === 1 ? '⬆️' : delta === -1 ? '⬇️' : '✅'
+}
 
 /**
  * Session Intel Card — the data-first report view: metadata chips, a gold PR
@@ -81,10 +86,17 @@ export function SessionIntelCard({ session }: { session: GymReportRow }) {
         </div>
       )}
 
-      {/* Exercise Δ table */}
+      {/* First session of this type → nothing to compare against yet. */}
+      {!isLoading && intel?.isFirstOfType && !!intel.deltas.length && (
+        <p className="text-fluid-xs text-muted flex items-center gap-1.5">
+          <span aria-hidden="true">💪</span> First {intel.typeLabel || 'session'} of this era — baseline set. Progression appears next time.
+        </p>
+      )}
+
+      {/* Exercise Δ table — only once there's a baseline to compare against */}
       {isLoading ? (
         <div className="h-32 rounded-2xl bg-surface-2/60 animate-pulse" />
-      ) : !!intel?.deltas.length && (
+      ) : (!intel?.isFirstOfType && !!intel?.deltas.length) && (
         <div className="rounded-2xl border border-white/[0.07] overflow-hidden">
           <table className="w-full text-fluid-xs">
             <thead>
@@ -96,24 +108,21 @@ export function SessionIntelCard({ session }: { session: GymReportRow }) {
               </tr>
             </thead>
             <tbody>
-              {intel.deltas.map((d) => {
-                const [sym, color] = DELTA[d.delta]
-                return (
-                  <tr key={d.name} className="border-b border-white/[0.04] last:border-0">
-                    <td className="px-3 py-1.5 text-text/90 truncate max-w-[130px]">{d.name}{d.isPr && <Star className="inline w-3 h-3 ml-1 -mt-0.5" style={{ color: '#E8C57A' }} />}</td>
-                    <td className="px-2 py-1.5 text-right helix-num text-text">{displayWeight(d.topKg)}{unit} × {d.topReps}</td>
-                    <td className="px-2 py-1.5 text-right helix-num text-muted">{d.prevKg != null ? `${displayWeight(d.prevKg)}${unit}` : '—'}</td>
-                    <td className="px-3 py-1.5 text-right font-bold" style={{ color }}>{sym}</td>
-                  </tr>
-                )
-              })}
+              {intel.deltas.map((d) => (
+                <tr key={d.name} className="border-b border-white/[0.06] last:border-0">
+                  <td className="px-3 py-2.5 text-text/90 truncate max-w-[130px]">{d.name}{d.isPr && <Star className="inline w-3 h-3 ml-1 -mt-0.5" style={{ color: '#E8C57A' }} />}</td>
+                  <td className="px-2 py-2.5 text-right helix-num text-text">{displayWeight(d.topKg)}{unit} × {d.topReps}</td>
+                  <td className="px-2 py-2.5 text-right helix-num text-muted">{d.prevKg != null ? `${displayWeight(d.prevKg)}${unit}` : '—'}</td>
+                  <td className="px-3 py-2.5 text-right text-base leading-none" aria-label={d.delta == null ? 'new' : d.delta === 1 ? 'improved' : d.delta === -1 ? 'regressed' : 'matched'}>{deltaGlyph(d.delta)}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
       )}
 
-      {/* Volume trail vs last same-split sessions */}
-      {(intel?.volumes.length ?? 0) >= 2 && (
+      {/* Volume trail vs last same-split sessions (hidden on the first of a type) */}
+      {!intel?.isFirstOfType && (intel?.volumes.length ?? 0) >= 2 && (
         <div>
           <p className="text-[10px] uppercase tracking-wide text-muted mb-1.5">Volume vs previous {intel!.volumes.length - 1} session{intel!.volumes.length > 2 ? 's' : ''}</p>
           <div className="flex items-end gap-2 h-14">

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { m } from 'framer-motion'
 import { MoreHorizontal, type LucideIcon } from 'lucide-react'
 import { coreNavItems, moreNavItems } from '@/lib/nav-items'
 import { Sheet } from '@/components/ui/Sheet'
@@ -44,13 +45,17 @@ export function BottomNav() {
               aria-label="More"
               aria-haspopup="dialog"
               aria-expanded={moreOpen}
-              className={`w-full flex flex-col items-center gap-0.5 py-1.5 px-1 rounded-xl
-                          transition-[color,background] duration-200 min-h-[44px]
-                          ${moreActive ? 'text-primary' : 'text-muted'}`}
-              style={moreActive ? { background: 'rgba(111,233,255,0.12)', color: '#6FE9FF' } : {}}
+              className={`relative w-full flex flex-col items-center gap-0.5 py-1.5 px-1 rounded-xl
+                          transition-colors duration-200 min-h-[44px] ${moreActive ? '' : 'text-muted'}`}
+              style={moreActive ? { color: '#6FE9FF' } : {}}
             >
-              <MoreHorizontal className="w-5 h-5" aria-hidden="true" />
-              <span className="text-[10px] font-medium leading-none">More</span>
+              {moreActive && (
+                <m.span layoutId="bottomnav-active" className="absolute inset-0 rounded-xl"
+                  style={{ background: 'rgba(111,233,255,0.12)' }}
+                  transition={{ type: 'spring', stiffness: 420, damping: 36 }} aria-hidden="true" />
+              )}
+              <MoreHorizontal className="relative z-10 w-5 h-5" aria-hidden="true" />
+              <span className="relative z-10 text-[10px] font-medium leading-none">More</span>
             </button>
           </li>
         </ul>
@@ -89,13 +94,17 @@ function NavCell({ href, Icon, label, active }: { href: string; Icon: LucideIcon
         href={href}
         aria-label={label}
         aria-current={active ? 'page' : undefined}
-        className={`flex flex-col items-center gap-0.5 py-1.5 px-1 rounded-xl
-                    transition-[color,background] duration-200 min-h-[44px]
-                    ${active ? 'text-primary' : 'text-muted'}`}
-        style={active ? { background: 'rgba(111,233,255,0.12)', color: '#6FE9FF' } : {}}
+        className={`relative flex flex-col items-center gap-0.5 py-1.5 px-1 rounded-xl
+                    transition-colors duration-200 min-h-[44px] ${active ? '' : 'text-muted'}`}
+        style={active ? { color: '#6FE9FF' } : {}}
       >
-        <Icon className="w-5 h-5" aria-hidden="true" />
-        <span className="text-[10px] font-medium leading-none">{label}</span>
+        {active && (
+          <m.span layoutId="bottomnav-active" className="absolute inset-0 rounded-xl"
+            style={{ background: 'rgba(111,233,255,0.12)' }}
+            transition={{ type: 'spring', stiffness: 420, damping: 36 }} aria-hidden="true" />
+        )}
+        <Icon className="relative z-10 w-5 h-5" aria-hidden="true" />
+        <span className="relative z-10 text-[10px] font-medium leading-none">{label}</span>
       </Link>
     </li>
   )

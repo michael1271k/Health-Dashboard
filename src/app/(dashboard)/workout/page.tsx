@@ -6,6 +6,8 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useExerciseMap, useExerciseMemory, useLatestSessionFlag } from '@/lib/hooks/useLogger'
 import { WeeklySummaryCard } from '@/components/command-center/WeeklySummaryCard'
+import { WidgetBoundary } from '@/components/fx/WidgetBoundary'
+import { SwapDayControl } from '@/components/day/SwapDayControl'
 import { peekSessionDraft, type SessionDraft } from '@/lib/sessions/draft'
 import {
   PROGRAMS, DEFAULT_PROGRAM_ID, getActiveProgramId, setActiveProgramId,
@@ -14,7 +16,7 @@ import {
 import { logicalTodayISO } from '@/lib/utils/day'
 import { displayWeight, weightUnit } from '@/lib/utils/units'
 import { useEraFilter } from '@/lib/era/eraFilter'
-import { Plus, TrendingUp, Moon, ArrowRight, Flag, ClipboardPaste, FileClock } from 'lucide-react'
+import { Plus, TrendingUp, Moon, ArrowRight, Flag, ClipboardPaste, FileClock, ChevronDown } from 'lucide-react'
 
 const StrengthTrends = dynamic(() => import('@/components/charts/StrengthTrends').then((m) => m.StrengthTrends), { ssr: false })
 
@@ -29,6 +31,7 @@ export default function WorkoutPage() {
   const { data: nextFlag } = useLatestSessionFlag()
   const { era } = useEraFilter()
   const [programId, setProgramId] = useState(DEFAULT_PROGRAM_ID)
+  const [openPlan, setOpenPlan] = useState<string | null>(null)
   const unit = weightUnit()
 
   // Surviving deck draft (autosaved on /session) — offer to resume it.
@@ -103,16 +106,15 @@ export default function WorkoutPage() {
         ) : (
           <div className="flex items-center gap-4">
             <span className="w-12 h-12 rounded-full flex items-center justify-center shrink-0"
-              style={{ background: `${REST_VIOLET}1c`, color: REST_VIOLET, boxShadow: `0 0 14px ${REST_VIOLET}30` }}>
+              style={{ background: `${REST_VIOLET}1c`, color: REST_VIOLET, boxShadow: `0 0 18px ${REST_VIOLET}55` }}>
               <Moon className="w-6 h-6" />
             </span>
             <div className="flex-1 min-w-0">
-              <h2 className="split-label font-bold text-fluid-2xl leading-tight" style={{ color: REST_VIOLET }}>Rest · Zone-2</h2>
-              <p className="text-fluid-sm text-muted">Recovery day — optional light Zone-2 cardio. No lifting scheduled.</p>
+              <h2 className="split-label font-bold text-fluid-2xl leading-tight" style={{ color: REST_VIOLET }}>Rest · Zone-2 Recovery</h2>
+              <p className="text-fluid-sm text-muted">Adaptation happens now — no lifting scheduled. Swap a day in if plans change.</p>
             </div>
-            <button onClick={() => openDeck()} className="btn-glass min-h-[40px] text-fluid-xs shrink-0">
-              <ClipboardPaste className="w-3.5 h-3.5" /> Paste
-            </button>
+            {/* No Log/Paste button on rest days — routine changes go through Swap. */}
+            <SwapDayControl date={today} className="shrink-0" />
           </div>
         )}
         {/* Coach's action item from the last committed session */}
@@ -160,57 +162,63 @@ export default function WorkoutPage() {
         })}
       </div>
 
-      {/* Week plan — every training day as its own card (today glows) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      {/* Week plan — a compact accordion (today expanded, others tap to open) */}
+      <div className="space-y-2">
         {program.days.map((day) => {
           const isToday = day.key === todayKey
+          const isOpen = (openPlan ?? todayKey) === day.key
+          const nonBulk = day.exercises.filter((e) => !e.bulkOnly)
+          const totalSets = nonBulk.reduce((n, e) => n + e.sets, 0)
           return (
-            <div key={day.key} className="glass-card p-3 flex flex-col"
+            <div key={day.key} className="glass-card overflow-hidden"
               style={{ borderColor: isToday ? day.color : `${day.color}33`, boxShadow: isToday ? `0 0 20px ${day.color}2e` : undefined }}>
-              <button onClick={() => openDeck(day.key)} className="flex items-center justify-between mb-2.5 group">
-                <span className="min-w-0">
-                  <span className="flex items-baseline gap-2">
-                    <span className="split-label font-bold text-lg truncate" style={{ color: day.color }}>{day.label}</span>
-                    <span className="text-[10px] text-muted uppercase shrink-0">{WD[day.weekday]}</span>
-                    {isToday && <span className="text-[9px] px-1 rounded font-bold shrink-0" style={{ color: day.color, background: `${day.color}22` }}>TODAY</span>}
-                    {day.cutSetDelta != null && (
-                      <span className="text-[9px] px-1 rounded bg-white/[0.05] text-muted shrink-0" title="Cut-mode set delta">{day.cutSetDelta} cut</span>
-                    )}
-                  </span>
-                  <span className="block text-[10px] text-muted leading-none mt-0.5">{day.sub}</span>
-                </span>
-                <span className="w-7 h-7 rounded-full flex items-center justify-center transition-transform group-hover:scale-110"
-                  style={{ background: `color-mix(in srgb, ${day.color} 18%, transparent)`, color: day.color }} aria-label={`Log ${day.label}`}>
-                  <Plus className="w-4 h-4" />
-                </span>
+              <button
+                onClick={() => setOpenPlan(isOpen ? '' : day.key)}
+                aria-expanded={isOpen}
+                className="w-full flex items-center gap-2 px-3 py-2.5 text-left"
+              >
+                <span className="split-label font-bold text-base truncate" style={{ color: day.color }}>{day.label}</span>
+                <span className="text-[10px] text-muted uppercase shrink-0">{WD[day.weekday]}</span>
+                {isToday && <span className="text-[9px] px-1 rounded font-bold shrink-0" style={{ color: day.color, background: `${day.color}22` }}>TODAY</span>}
+                <span className="ml-auto text-[10px] text-muted shrink-0">{nonBulk.length} ex · {totalSets} sets</span>
+                <ChevronDown className={`w-4 h-4 text-muted shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
               </button>
-              <div className="space-y-1 flex-1">
-                {day.exercises.map((ex) => {
-                  const id = exMap?.get(ex.name)
-                  const prev = id ? memory?.get(id) : undefined
-                  const target = displayWeight(ex.wk1Kg)
-                  return (
-                    <div key={ex.name} className={`rounded-lg px-2.5 py-1.5 bg-white/[0.02] border border-white/[0.05] ${ex.bulkOnly ? 'opacity-50' : ''}`}>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-medium text-text leading-tight truncate">{ex.name}{ex.bulkOnly && <span className="text-[9px] text-muted ml-1">bulk only</span>}</span>
-                        <span className="text-[10px] text-muted shrink-0">{ex.sets}×{ex.reps}</span>
+              {isOpen && (
+                <div className="px-3 pb-3 space-y-1">
+                  {day.sub && <p className="text-[10px] text-muted mb-1">{day.sub}</p>}
+                  {day.exercises.map((ex) => {
+                    const id = exMap?.get(ex.name)
+                    const prev = id ? memory?.get(id) : undefined
+                    const target = displayWeight(ex.wk1Kg)
+                    return (
+                      <div key={ex.name} className={`rounded-lg px-2.5 py-1.5 bg-white/[0.02] border border-white/[0.05] ${ex.bulkOnly ? 'opacity-50' : ''}`}>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-medium text-text leading-tight truncate">{ex.name}{ex.bulkOnly && <span className="text-[9px] text-muted ml-1">bulk only</span>}</span>
+                          <span className="text-[10px] text-muted shrink-0">{ex.sets}×{ex.reps}</span>
+                        </div>
+                        <div className="text-[10px] text-muted flex items-center gap-2 mt-0.5">
+                          {prev
+                            ? <span className="flex items-center gap-1 text-success"><TrendingUp className="w-2.5 h-2.5" />{displayWeight(prev.weightKg)}{unit} × {prev.reps}</span>
+                            : target != null && <span>Wk1 {target}{unit}</span>}
+                        </div>
                       </div>
-                      <div className="text-[10px] text-muted flex items-center gap-2 mt-0.5">
-                        {prev
-                          ? <span className="flex items-center gap-1 text-success"><TrendingUp className="w-2.5 h-2.5" />{displayWeight(prev.weightKg)}{unit} × {prev.reps}</span>
-                          : target != null && <span>Wk1 {target}{unit}</span>}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
+                    )
+                  })}
+                  <button onClick={() => openDeck(day.key)}
+                    className="btn-glass w-full justify-center min-h-[40px] text-fluid-xs mt-1" style={{ color: day.color }}>
+                    <Plus className="w-3.5 h-3.5" /> Log {day.label}
+                  </button>
+                </div>
+              )}
             </div>
           )
         })}
       </div>
 
       {/* Progression snapshot (heavy analytics live in the Charts tab) */}
-      <StrengthTrends era={era} />
+      <WidgetBoundary label="Strength trends" minHeight={200}>
+        <StrengthTrends era={era} />
+      </WidgetBoundary>
     </div>
   )
 }

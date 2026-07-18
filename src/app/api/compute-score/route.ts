@@ -20,13 +20,13 @@ function nextDay(d: string): string {
 }
 
 /** Compute + upsert the daily_scores row for a single date. */
-async function computeForDate(supabase: DB, userId: string, date: string, hoursAwake: number, isToday = false): Promise<void> {
+async function computeForDate(supabase: DB, userId: string, date: string, hoursAwake: number, isToday = false, force = false): Promise<void> {
   // FREEZE: a past day is sealed the first time it's computed after its own
   // midnight. Today accumulates live (recomputed every call); a past day whose
   // row is already `finalized` is immutable — re-ingesting old data never
-  // rewrites a snapshot. (A missing column just means the migration hasn't run
-  // yet — degrade to the old always-recompute behavior.)
-  if (!isToday) {
+  // rewrites a snapshot. `force` (an explicit edit/delete of that day's data)
+  // bypasses the freeze so Readiness recalculates immediately.
+  if (!isToday && !force) {
     const { data: existing, error } = await supabase
       .from('daily_scores').select('finalized').eq('user_id', userId).eq('date', date).maybeSingle()
     if (!error && (existing as { finalized?: boolean } | null)?.finalized) return
@@ -189,13 +189,17 @@ export async function POST(req: Request) {
   // The CLIENT knows the user's real timezone (device-local logical day + hours
   // awake) — the server cannot. Trust client-provided values when present and
   // fall back to the server clock only for cron/headless calls.
-  const body = await req.json().catch(() => ({})) as { backfillDays?: number; date?: string; hoursAwake?: number }
+  const body = await req.json().catch(() => ({})) as { backfillDays?: number; date?: string; hoursAwake?: number; force?: boolean; isToday?: boolean }
   const backfillDays = Math.max(0, Math.min(31, Number(body?.backfillDays) || 0))
   const today = body?.date && /^\d{4}-\d{2}-\d{2}$/.test(body.date) ? body.date : todayISO()
   const awake = Number.isFinite(body?.hoursAwake) ? Math.max(0, Math.min(18, Number(body?.hoursAwake))) : hoursAwakeToday()
+  // Edit/delete recompute: `force` bypasses the finalized freeze; the client
+  // says whether the target date is its logical today (live) or a past day.
+  const force = !!body?.force
+  const targetIsToday = typeof body?.isToday === 'boolean' ? body.isToday : (today === todayISO())
 
   for (const userId of userIds) {
-    await computeForDate(supabase, userId, today, awake, true)   // today: time-of-day aware
+    await computeForDate(supabase, userId, today, awake, targetIsToday, force)
     for (let i = 1; i <= backfillDays; i++) {
       const d = new Date(`${today}T12:00:00Z`); d.setUTCDate(d.getUTCDate() - i)
       await computeForDate(supabase, userId, d.toISOString().slice(0, 10), 16)  // past days: full day

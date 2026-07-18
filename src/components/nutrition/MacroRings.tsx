@@ -61,34 +61,34 @@ export const MacroRings = memo(function MacroRings({ today, logs, goals }: {
         <span className="text-fluid-xs text-muted">goal <span className="helix-num">{goals.calorie.toLocaleString()}</span> kcal</span>
       </div>
 
-      <div className="flex items-center justify-center gap-5 sm:gap-8">
-        {/* Hero calories ring */}
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-12 py-2">
+        {/* Hero calories ring — the focal point, large on desktop */}
         <div className="relative shrink-0">
-          <Ring value={kcal} goal={goals.calorie} color={MACRO_COLORS.calories} size={148} stroke={11} over={over} />
+          <Ring value={kcal} goal={goals.calorie} color={MACRO_COLORS.calories} size={208} stroke={14} over={over} />
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             {kcal != null
-              ? <KineticNumber value={kcal} className="helix-num text-fluid-2xl font-bold leading-none" duration={800} />
-              : <span className="helix-num text-fluid-2xl font-bold text-muted">—</span>}
-            <span className="text-[10px] text-muted uppercase tracking-widest mt-1">kcal</span>
+              ? <KineticNumber value={kcal} className="helix-num text-5xl font-bold leading-none" duration={800} />
+              : <span className="helix-num text-5xl font-bold text-muted">—</span>}
+            <span className="text-[11px] text-muted uppercase tracking-widest mt-1.5">kcal</span>
             {remaining != null && (
-              <span className="helix-num text-[11px] mt-0.5" style={{ color: over ? '#FF5470' : MACRO_COLORS.calories }}>
+              <span className="helix-num text-fluid-sm mt-1" style={{ color: over ? '#FF5470' : MACRO_COLORS.calories }}>
                 {remaining >= 0 ? `${remaining.toLocaleString()} left` : `+${Math.abs(remaining).toLocaleString()} over`}
               </span>
             )}
           </div>
         </div>
 
-        {/* P / C / F rings */}
-        <div className="flex flex-col gap-3">
+        {/* P / C / F rings — a row on mobile, a column beside the hero on desktop */}
+        <div className="flex flex-row sm:flex-col gap-5 sm:gap-4">
           {macros.map((m) => (
-            <div key={m.label} className="flex items-center gap-2.5">
+            <div key={m.label} className="flex flex-col sm:flex-row items-center gap-1.5 sm:gap-3">
               <div className="relative shrink-0">
-                <Ring value={m.value} goal={m.goal} color={m.color} size={46} stroke={5} />
-                <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold" style={{ color: m.color }}>{m.label[0]}</span>
+                <Ring value={m.value} goal={m.goal} color={m.color} size={62} stroke={7} />
+                <span className="absolute inset-0 flex items-center justify-center text-[11px] font-bold" style={{ color: m.color }}>{m.label[0]}</span>
               </div>
-              <div className="leading-tight">
-                <span className="helix-num text-fluid-sm font-bold text-text">{m.value != null ? Math.round(m.value) : '—'}</span>
-                <span className="text-[10px] text-muted"> / {m.goal ?? '—'}g</span>
+              <div className="leading-tight text-center sm:text-left">
+                <span className="helix-num text-fluid-base font-bold text-text">{m.value != null ? Math.round(m.value) : '—'}</span>
+                <span className="text-[11px] text-muted"> / {m.goal ?? '—'}g</span>
                 <span className="block text-[9px] uppercase tracking-wide" style={{ color: m.color }}>{m.label}</span>
               </div>
             </div>
