@@ -5,6 +5,8 @@
  * The Helix Cut 5.1 nutrition block (1935 kcal) opens 2026-07-15.
  * Sessions are classified purely by date via `eraForDate` (no DB column needed).
  */
+import { getScheduleOverride, REST_OVERRIDE } from '@/lib/schedule/overrides'
+
 export type Era = 'ppl' | 'axis'
 export const AXIS_ERA_START = '2026-07-19'
 
@@ -187,6 +189,9 @@ export function programDayFor(programId: string, weekday: number): ProgramDay | 
  * rest (so Jul 15, a Wednesday, reads as rest).
  */
 export function isTrainingDay(dateISO: string): boolean {
+  // A per-date swap wins over the weekday default (client cascade; empty on server).
+  const override = getScheduleOverride(dateISO)
+  if (override != null) return override !== REST_OVERRIDE
   const weekday = new Date(`${dateISO}T12:00:00Z`).getUTCDay()
   if (eraForDate(dateISO) === 'ppl') return weekday !== 5 && weekday !== 6 // legacy PPL: trained Sun–Thu
   return programDayFor(DEFAULT_PROGRAM_ID, weekday) !== 'rest'
@@ -211,6 +216,13 @@ export interface ScheduleDay { label: string; sub?: string; dayKey?: string }
  * show the active program's day. 'rest' on scheduled rest days.
  */
 export function scheduleDayFor(dateISO: string, programId = getActiveProgramId()): ScheduleDay | 'rest' {
+  // A per-date swap wins over the weekday default so the whole app cascades.
+  const override = getScheduleOverride(dateISO)
+  if (override != null) {
+    if (override === REST_OVERRIDE) return 'rest'
+    const od = (PROGRAMS[programId] ?? APEX51).days.find((d) => d.key === override)
+    if (od) return { label: od.label, sub: od.sub, dayKey: od.key }
+  }
   const weekday = new Date(`${dateISO}T12:00:00Z`).getUTCDay()
   if (eraForDate(dateISO) === 'ppl') {
     const label = PPL_WEEKDAY[weekday]

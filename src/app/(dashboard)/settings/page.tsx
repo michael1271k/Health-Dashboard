@@ -132,7 +132,7 @@ export default function SettingsPage() {
   if (loading) return <p className="text-muted text-sm">Loading…</p>
 
   return (
-    <div className="space-y-8 max-w-2xl">
+    <div className="max-w-5xl mx-auto space-y-6">
       <div>
         <h1 className="font-heading text-fluid-2xl font-bold text-text">Settings</h1>
         <p className="text-muted text-sm mt-0.5">Goals &amp; context for daily scoring</p>
@@ -146,6 +146,8 @@ export default function SettingsPage() {
         </p>
       )}
 
+      {/* Desktop: cards flow into two columns so the width isn't wasted. */}
+      <div className="grid gap-6 lg:grid-cols-2 items-start">
       {/* Context mode */}
       <section className="helix-card space-y-3">
         <h2 className="font-semibold text-text">Context Mode</h2>
@@ -307,6 +309,7 @@ export default function SettingsPage() {
       </section>
 
       <CrashRecorderRow />
+      </div>
 
       {status && (
         <p className={`text-sm ${status.type === 'success' ? 'text-success' : 'text-danger'}`}>

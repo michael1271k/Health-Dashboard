@@ -39,6 +39,8 @@ export interface GymReportRow {
   volumeKg: number | null
   setCount: number | null
   prCount: number | null
+  dayKey?: string | null
+  calories?: number | null
 }
 
 /** Gym session reports (workout_sessions that have an AI-generated report). */

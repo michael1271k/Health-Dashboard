@@ -12,6 +12,10 @@ import { isReentryWeek } from '@/lib/programs'
 
 type DB = SupabaseClient<Database>
 
+const nextDayISO = (d: string): string => {
+  const x = new Date(`${d}T00:00:00Z`); x.setUTCDate(x.getUTCDate() + 1); return x.toISOString().slice(0, 10)
+}
+
 export interface SessionMetrics {
   durationMin?: number | null
   avgBpm?: number | null
@@ -35,45 +39,55 @@ export async function saveSession(
   payload: SaveWorkoutPayload,
   metrics: SessionMetrics = {},
 ): Promise<SaveSessionResult> {
-  // IDEMPOTENCY: clientSessionId (coach session.id / synthetic Hevy id) is the
-  // dedupe key — a double-pasted report returns the existing session instead
-  // of duplicating.
-  if (payload.clientSessionId) {
-    const { data: dup, error: dupError } = await supabase
-      .from('workout_sessions')
-      .select('id, total_volume_kg, set_count, pr_count')
-      .eq('user_id', userId)
-      .eq('client_session_id', payload.clientSessionId)
-      .maybeSingle()
-    const existing = dup as { id: string; total_volume_kg: number | null; set_count: number | null; pr_count: number | null } | null
-    if (!dupError && existing) {
-      return {
-        sessionId: existing.id,
-        totalVolumeKg: existing.total_volume_kg ?? 0,
-        setCount: existing.set_count ?? 0,
-        prCount: existing.pr_count ?? 0,
-        newPRs: [],
-        duplicate: true,
-      }
-    }
-  }
-
   // Warmup sets are logged but never count toward volume, set count, or PRs
   // (Hevy semantics). A helper keeps the three call-sites consistent.
   const isWarmup = (s: (typeof payload.sets)[number]) => s.setType === 'warmup'
   const workingSets = payload.sets.filter((s) => !isWarmup(s))
   const totalVolumeKg = workingSets.reduce((sum, s) => sum + s.weightKg * s.reps, 0)
-
-  // Historical best est_1RM per exercise for PR detection
   const exerciseIds = [...new Set(payload.sets.map((s) => s.exerciseId))]
-  const { data: prHistoryRaw } = await supabase
-    .from('workout_sets')
-    .select('exercise_id, est_1rm_kg')
-    .in('exercise_id', exerciseIds)
-    .eq('user_id', userId)
-    .order('est_1rm_kg', { ascending: false })
 
-  const prHistory = (prHistoryRaw ?? []) as Array<{ exercise_id: string; est_1rm_kg: number | null }>
+  // ONE parallel round-trip for both the date's existing sessions (idempotency
+  // + one-session-per-date) and the PR-history baseline. Parallelizing here (not
+  // three sequential Netlify→Supabase hops) keeps the function well under its
+  // timeout — the root of the "Finish Session hangs" report.
+  const dateStr = payload.startedAt.slice(0, 10)
+  const dayEnd = nextDayISO(dateStr)
+  const [daySessionsRes, prHistoryRes] = await Promise.all([
+    supabase.from('workout_sessions')
+      .select('id, client_session_id, total_volume_kg, set_count, pr_count')
+      .eq('user_id', userId)
+      .gte('started_at', `${dateStr}T00:00:00Z`).lt('started_at', `${dayEnd}T00:00:00Z`),
+    supabase.from('workout_sets')
+      .select('exercise_id, est_1rm_kg')
+      .in('exercise_id', exerciseIds).eq('user_id', userId)
+      .order('est_1rm_kg', { ascending: false }),
+  ])
+
+  type DayRow = { id: string; client_session_id: string | null; total_volume_kg: number | null; set_count: number | null; pr_count: number | null }
+  const daySessions = (daySessionsRes.data ?? []) as DayRow[]
+  const asDup = (s: DayRow): SaveSessionResult => ({
+    sessionId: s.id, totalVolumeKg: s.total_volume_kg ?? 0, setCount: s.set_count ?? 0, prCount: s.pr_count ?? 0, newPRs: [], duplicate: true,
+  })
+  const mine = payload.clientSessionId ? daySessions.find((s) => s.client_session_id === payload.clientSessionId) : undefined
+  const others = daySessions.filter((s) => s.id !== mine?.id)
+
+  if (mine) {
+    // Retry of the SAME logical session. If the sets actually landed it's a
+    // true duplicate; if a prior attempt half-wrote (session row saved but the
+    // sets stalled — the "saved but hung" case), heal by deleting the partial
+    // and recreating it below so the session is never left incomplete.
+    const { count } = await supabase.from('workout_sets')
+      .select('id', { count: 'exact', head: true }).eq('session_id', mine.id)
+    if ((count ?? 0) >= payload.sets.length) return asDup(mine)
+    await supabase.from('workout_sets').delete().eq('session_id', mine.id)
+    await supabase.from('workout_sessions').delete().eq('id', mine.id)
+  } else if (others.length > 0) {
+    // Strictly one session per calendar date — a second distinct commit for a
+    // date that already has one returns the existing session, never a duplicate.
+    return asDup(others[0])
+  }
+
+  const prHistory = (prHistoryRes.data ?? []) as Array<{ exercise_id: string; est_1rm_kg: number | null }>
   const bestPrMap = new Map<string, number>()
   for (const row of prHistory) {
     if (row.est_1rm_kg !== null && !bestPrMap.has(row.exercise_id)) {

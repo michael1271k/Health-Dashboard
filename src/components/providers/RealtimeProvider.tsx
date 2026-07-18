@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { hydratePrefsFromDb } from '@/lib/utils/prefsSync'
+import { useScheduleOverrides } from '@/lib/hooks/useScheduleOverrides'
 
 /**
  * Pure client Supabase WebSocket → scoped React Query invalidation. A DB change
@@ -52,6 +53,8 @@ export interface SyncDetail {
 
 export function RealtimeProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient()
+  // Hydrate the day-swap cache app-wide so schedule shortcuts cascade everywhere.
+  useScheduleOverrides()
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | null = null

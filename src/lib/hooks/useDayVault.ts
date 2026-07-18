@@ -2,8 +2,15 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
+import { authedFetch } from '@/lib/utils/authedFetch'
+import { eraForDate, AXIS_ERA_START } from '@/lib/programs'
+import { hoursAwakeToday } from '@/lib/utils/day'
 import type { Phase } from '@/lib/nutrition/phase'
 import type { GymReportRow } from '@/lib/hooks/useWeekly'
+
+const addDayISO = (d: string, n: number): string => {
+  const x = new Date(`${d}T00:00:00Z`); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10)
+}
 
 /** The full master record for one logical day (the Daily Nexus). */
 export interface DayVaultData {
@@ -44,18 +51,18 @@ export function useDayVault(date: string) {
         supabase.from('nutrition_entries').select('calories, protein_g, carbs_g, fat_g, phase')
           .eq('date', date).eq('meal_type', 'daily').maybeSingle(),
         supabase.from('workout_sessions')
-          .select('id, started_at, split_day, report_md, duration_min, avg_bpm, total_volume_kg, set_count, pr_count')
+          .select('id, started_at, split_day, day_key, report_md, duration_min, avg_bpm, total_volume_kg, set_count, pr_count, calories_burned')
           .gte('started_at', `${date}T00:00:00Z`).lt('started_at', `${nextDay}T00:00:00Z`)
           .order('started_at', { ascending: true }),
       ])
       const sessions = ((sessionsRes.data ?? []) as Array<{
-        id: string; started_at: string; split_day: string; report_md: string | null
+        id: string; started_at: string; split_day: string; day_key: string | null; report_md: string | null
         duration_min: number | null; avg_bpm: number | null; total_volume_kg: number | null
-        set_count: number | null; pr_count: number | null
+        set_count: number | null; pr_count: number | null; calories_burned: number | null
       }>).map((r) => ({
-        id: r.id, date: r.started_at.slice(0, 10), split: r.split_day, reportMd: r.report_md ?? '',
+        id: r.id, date: r.started_at.slice(0, 10), split: r.split_day, dayKey: r.day_key, reportMd: r.report_md ?? '',
         durationMin: r.duration_min, avgBpm: r.avg_bpm, volumeKg: r.total_volume_kg,
-        setCount: r.set_count, prCount: r.pr_count,
+        setCount: r.set_count, prCount: r.pr_count, calories: r.calories_burned,
       }))
       return {
         log: (logRes.data ?? null) as DayVaultData['log'],
@@ -65,6 +72,77 @@ export function useDayVault(date: string) {
       }
     },
     staleTime: 60_000,
+  })
+}
+
+/** Dates (YYYY-MM-DD) that already have a logged session — for the date picker
+ *  to gray them out and enforce one session per date. */
+export function useLoggedSessionDates() {
+  return useQuery({
+    queryKey: ['workout_sessions', 'logged_dates'],
+    staleTime: 60_000,
+    queryFn: async (): Promise<Set<string>> => {
+      const { data, error } = await supabase.from('workout_sessions')
+        .select('started_at').order('started_at', { ascending: false }).limit(500)
+      if (error) return new Set<string>()
+      const set = new Set<string>()
+      for (const r of (data ?? []) as Array<{ started_at: string }>) set.add(r.started_at.slice(0, 10))
+      return set
+    },
+  })
+}
+
+/**
+ * ISOLATED workout delete: removes ONLY the session + its sets (RLS owner-scoped)
+ * — never nutrition, sleep, weight or scale rows, which live in separate tables
+ * (nutrition_entries, sleep_sessions, daily_logs, body_composition, water_intake).
+ * Then best-effort recomputes the day's score so workout_score reflects the removal.
+ */
+export function useDeleteSession(date: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (sessionId: string) => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not signed in')
+      // Child sets first (in case there's no ON DELETE CASCADE), then the session.
+      const { error: e1 } = await supabase.from('workout_sets').delete().eq('session_id', sessionId).eq('user_id', user.id)
+      if (e1) throw new Error(e1.message)
+      const { error: e2 } = await supabase.from('workout_sessions').delete().eq('id', sessionId).eq('user_id', user.id)
+      if (e2) throw new Error(e2.message)
+      try {
+        await authedFetch('/api/compute-score', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ date, backfillDays: 0, hoursAwake: hoursAwakeToday() }),
+        })
+      } catch { /* score recompute is best-effort */ }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['day_vault', date] })
+      qc.invalidateQueries({ queryKey: ['workout_sessions'] })
+      qc.invalidateQueries({ queryKey: ['workout_sets'] })
+      qc.invalidateQueries({ queryKey: ['continuum'] })
+      qc.invalidateQueries({ queryKey: ['daily_scores'] })
+    },
+  })
+}
+
+/** 1-based ordinal of this session among same-type sessions in the era ("#2"). */
+export function useSessionOrdinal(dayKey: string | null | undefined, splitDay: string, date: string) {
+  return useQuery({
+    queryKey: ['session_ordinal', dayKey ?? splitDay, date],
+    enabled: /^\d{4}-\d{2}-\d{2}$/.test(date),
+    staleTime: 60_000,
+    queryFn: async (): Promise<number> => {
+      const eraStart = eraForDate(date) === 'axis' ? AXIS_ERA_START : '2000-01-01'
+      const end = addDayISO(date, 1)
+      const { data, error } = await supabase.from('workout_sessions')
+        .select('day_key, split_day')
+        .gte('started_at', `${eraStart}T00:00:00Z`).lt('started_at', `${end}T00:00:00Z`)
+      if (error) return 1
+      const rows = (data ?? []) as Array<{ day_key: string | null; split_day: string }>
+      const match = rows.filter((r) => (dayKey ? r.day_key === dayKey : r.split_day === splitDay))
+      return Math.max(1, match.length)
+    },
   })
 }
 

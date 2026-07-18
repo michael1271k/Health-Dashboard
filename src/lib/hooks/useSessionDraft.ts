@@ -3,7 +3,34 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { authedFetch } from '@/lib/utils/authedFetch'
+import { supabase } from '@/lib/supabase/client'
 import { DRAFT_STORAGE_KEY, buildCommitPayload, cascadeSetEdit, peekSessionDraft, type SessionDraft, type DraftSet } from '@/lib/sessions/draft'
+
+const COMMIT_TIMEOUT_MS = 25_000
+
+/**
+ * A commit's POST may write the session server-side but stall before its
+ * response reaches the client (the "saved but stuck loading" hang). After a
+ * timeout/network error we check whether the session actually landed — keyed by
+ * the idempotency id, else the logged date — and proceed if it did.
+ */
+async function verifyCommitted(clientSessionId: string | undefined, dateISO: string): Promise<CommitResult | null> {
+  try {
+    let q = supabase.from('workout_sessions').select('id, total_volume_kg, set_count, pr_count')
+    if (clientSessionId) {
+      q = q.eq('client_session_id', clientSessionId)
+    } else {
+      const end = new Date(`${dateISO}T00:00:00Z`); end.setUTCDate(end.getUTCDate() + 1)
+      q = q.gte('started_at', `${dateISO}T00:00:00Z`).lt('started_at', `${end.toISOString().slice(0, 10)}T00:00:00Z`)
+    }
+    const { data } = await q.order('started_at', { ascending: false }).limit(1).maybeSingle()
+    const row = data as { id: string; total_volume_kg: number | null; set_count: number | null; pr_count: number | null } | null
+    if (!row) return null
+    return { sessionId: row.id, totalVolumeKg: row.total_volume_kg ?? 0, setCount: row.set_count ?? 0, prCount: row.pr_count ?? 0, newPRs: [], duplicate: true }
+  } catch {
+    return null
+  }
+}
 
 export interface CommitResult {
   sessionId: string
@@ -107,6 +134,18 @@ export function useSessionDraft() {
     setDraft((d) => d && ({ ...d, notes }))
   }, [])
 
+  /** Manually edit session metadata (duration / avg HR / calories) pre-commit. */
+  const setStats = useCallback((patch: Partial<NonNullable<SessionDraft['stats']>>) => {
+    setDraft((d) => {
+      if (!d) return d
+      const base = d.stats ?? {
+        duration_min: null, volume_kg: null, sets_completed: null, prs: null,
+        avg_hr_bpm: null, calories_kcal: null, volume_delta_pct_vs_prior: null,
+      }
+      return { ...d, stats: { ...base, ...patch } }
+    })
+  }, [])
+
   /** Per-exercise note (coach note stays editable in the deck). */
   const setExerciseNote = useCallback((localId: string, note: string) => {
     setDraft((d) => d && ({
@@ -128,18 +167,32 @@ export function useSessionDraft() {
       if (!draft) throw new Error('No draft to commit')
       const body = buildCommitPayload(draft)
       if (!body.sets.length) throw new Error('Nothing to commit')
-      const res = await authedFetch('/api/sessions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
-      const json = await res.json().catch(() => ({}))
-      if (res.status === 409) return { ...(json as CommitResult), duplicate: true }
-      if (!res.ok) {
-        const err = (json as { error?: unknown }).error
-        throw new Error(typeof err === 'string' ? err : 'Save failed')
+      // Hard timeout so a stalled serverless response can never hang the deck
+      // for minutes; on abort/network failure we verify the write landed.
+      const ctrl = new AbortController()
+      const timer = setTimeout(() => ctrl.abort(), COMMIT_TIMEOUT_MS)
+      try {
+        const res = await authedFetch('/api/sessions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+          signal: ctrl.signal,
+        })
+        const json = await res.json().catch(() => ({}))
+        if (res.status === 409) return { ...(json as CommitResult), duplicate: true }
+        if (!res.ok) {
+          const err = (json as { error?: unknown }).error
+          throw new Error(typeof err === 'string' ? err : 'Save failed')
+        }
+        return json as CommitResult
+      } catch (e) {
+        // The write may have committed even though the response stalled/aborted.
+        const recovered = await verifyCommitted(body.clientSessionId, draft.date)
+        if (recovered) return recovered
+        throw e instanceof Error ? e : new Error('Save failed')
+      } finally {
+        clearTimeout(timer)
       }
-      return json as CommitResult
     },
     onSuccess: (result) => {
       if (!result.duplicate) {
@@ -153,5 +206,5 @@ export function useSessionDraft() {
     },
   })
 
-  return { draft, hydrated, start, discard, updateSet, addSet, removeSet, removeExercise, reorder, setNotes, setExerciseNote, setDate, commit }
+  return { draft, hydrated, start, discard, updateSet, addSet, removeSet, removeExercise, reorder, setNotes, setExerciseNote, setStats, setDate, commit }
 }

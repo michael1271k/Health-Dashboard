@@ -1,35 +1,29 @@
 'use client'
 
-import { useRef } from 'react'
+import { useState } from 'react'
 import { CalendarDays, Flag, Sparkles } from 'lucide-react'
 import type { SessionDraft } from '@/lib/sessions/draft'
 import { draftTotals } from '@/lib/sessions/draft'
 import { logicalTodayISO } from '@/lib/utils/day'
+import { useLoggedSessionDates } from '@/lib/hooks/useDayVault'
+import { DatePickerPopover } from './DatePickerPopover'
+
+type StatPatch = Partial<NonNullable<SessionDraft['stats']>>
 
 /**
- * Deck header: session identity, the date picker (late logging), the stats
- * strip, the coach insight and the gold next-session flag. Volume/set counts
- * are LIVE — they re-derive from the edited draft, not the source numbers.
+ * Deck header: session identity, the custom date picker (late logging, blocks
+ * already-logged dates), the editable stats strip (Duration / Avg HR / Calories
+ * are tap-to-edit; Volume/Sets are live-derived), and coach insight/flag.
  */
-export function CoachHeaderCard({ draft, onSetDate }: {
+export function CoachHeaderCard({ draft, onSetDate, onSetStats }: {
   draft: SessionDraft
   onSetDate: (dateISO: string) => void
+  onSetStats: (patch: StatPatch) => void
 }) {
   const totals = draftTotals(draft)
   const s = draft.stats
-  const dateInputRef = useRef<HTMLInputElement>(null)
-
-  // Native <input type="date"> behind a styled chip: zero deps, native iOS
-  // wheel. showPicker() where supported; focus() opens it on older Safari.
-  const openPicker = () => {
-    const el = dateInputRef.current
-    if (!el) return
-    if (typeof el.showPicker === 'function') {
-      try { el.showPicker(); return } catch { /* fall through */ }
-    }
-    el.focus()
-    el.click()
-  }
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const { data: loggedDates } = useLoggedSessionDates()
 
   const dateLabel = new Date(draft.date + 'T12:00:00Z')
     .toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
@@ -46,39 +40,41 @@ export function CoachHeaderCard({ draft, onSetDate }: {
             {draft.phase && <span className="text-info font-semibold">{draft.phase === 'CUT' ? 'Cut' : draft.phase}</span>}
           </p>
         </div>
-        {/* Date chip — tap to back-date a late log; startedAt follows in lockstep */}
+        {/* Date chip — tap to open the custom calendar (grays logged/future dates) */}
         <div className="relative shrink-0">
           <button
             type="button"
-            onClick={openPicker}
+            onClick={() => setPickerOpen((v) => !v)}
             className="flex items-center gap-2 px-3.5 min-h-[44px] rounded-xl text-fluid-sm font-semibold text-text
                        bg-primary/10 border border-primary/30 hover:bg-primary/15 hover:border-primary/50 transition-colors"
             aria-label={`Session date: ${dateLabel}. Tap to change`}
+            aria-expanded={pickerOpen}
           >
             <CalendarDays className="w-4 h-4 text-primary" aria-hidden="true" />
             {dateLabel}
           </button>
-          <input
-            ref={dateInputRef}
-            type="date"
-            value={draft.date}
-            max={logicalTodayISO()}
-            onChange={(e) => { if (e.target.value) onSetDate(e.target.value) }}
-            className="absolute inset-0 opacity-0 pointer-events-none"
-            tabIndex={-1}
-            aria-hidden="true"
-          />
+          {pickerOpen && (
+            <DatePickerPopover
+              value={draft.date}
+              max={logicalTodayISO()}
+              disabledDates={loggedDates ?? new Set()}
+              onSelect={onSetDate}
+              onClose={() => setPickerOpen(false)}
+            />
+          )}
         </div>
       </div>
 
-      {/* Stats strip — live draft totals + reported context (colored badges,
-          — when unknown). 3×2 in the narrow deck rail on every breakpoint. */}
+      {/* Stats strip — Volume/Sets live-derived; Duration/Avg HR/Calories editable. */}
       <div className="grid grid-cols-3 gap-2">
         <Badge label="Volume" value={`${totals.volumeKg.toLocaleString()}`} unit="kg" color="#16F5C3" />
         <Badge label="Sets" value={String(totals.sets)} color="#3EE0FF" />
-        <Badge label="Duration" value={s?.duration_min != null ? `${s.duration_min}` : '—'} unit={s?.duration_min != null ? 'm' : undefined} color="#8B7CFF" />
-        <Badge label="Avg HR" value={s?.avg_hr_bpm != null ? `${s.avg_hr_bpm}` : '—'} unit={s?.avg_hr_bpm != null ? 'bpm' : undefined} color="#FF5470" />
-        <Badge label="Calories" value={s?.calories_kcal != null ? `${s.calories_kcal}` : '—'} unit={s?.calories_kcal != null ? 'kcal' : undefined} color="#FFB86B" />
+        <EditBadge label="Duration" value={s?.duration_min ?? null} unit="m" color="#8B7CFF"
+          onChange={(v) => onSetStats({ duration_min: v })} />
+        <EditBadge label="Avg HR" value={s?.avg_hr_bpm ?? null} unit="bpm" color="#FF5470"
+          onChange={(v) => onSetStats({ avg_hr_bpm: v })} />
+        <EditBadge label="Calories" value={s?.calories_kcal ?? null} unit="kcal" color="#FFB86B"
+          onChange={(v) => onSetStats({ calories_kcal: v })} />
         <Badge
           label="Δ vs prior"
           value={s?.volume_delta_pct_vs_prior != null ? `${s.volume_delta_pct_vs_prior > 0 ? '+' : ''}${s.volume_delta_pct_vs_prior}%` : '—'}
@@ -112,6 +108,37 @@ function Badge({ label, value, unit, color }: { label: string; value: string; un
         {value}{unit && <span className="text-[10px] font-normal ml-0.5 opacity-70">{unit}</span>}
       </div>
       <div className="text-[10px] text-muted mt-0.5">{label}</div>
+    </div>
+  )
+}
+
+/** Tap-to-edit numeric metadata badge (Duration / Avg HR / Calories). */
+function EditBadge({ label, value, unit, color, onChange }: {
+  label: string; value: number | null; unit: string; color: string; onChange: (v: number | null) => void
+}) {
+  const [editing, setEditing] = useState(false)
+  return (
+    <div className="rounded-xl px-2 py-2 text-center" style={{ background: `${color}14`, border: `1px solid ${color}33` }}>
+      {editing ? (
+        <input
+          autoFocus
+          type="number"
+          inputMode="numeric"
+          defaultValue={value ?? ''}
+          onBlur={(e) => { const n = e.target.value.trim(); onChange(n === '' ? null : Number(n)); setEditing(false) }}
+          onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
+          className="w-full bg-transparent text-center helix-num font-bold text-fluid-base tabular-nums outline-none"
+          style={{ color }}
+          aria-label={`Edit ${label}`}
+        />
+      ) : (
+        <button type="button" onClick={() => setEditing(true)} className="w-full" aria-label={`Edit ${label}`}>
+          <span className="helix-num font-bold text-fluid-base tabular-nums leading-tight" style={{ color }}>
+            {value != null ? value : '—'}{value != null && <span className="text-[10px] font-normal ml-0.5 opacity-70">{unit}</span>}
+          </span>
+        </button>
+      )}
+      <div className="text-[10px] text-muted mt-0.5">{label} ✎</div>
     </div>
   )
 }

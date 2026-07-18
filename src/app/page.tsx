@@ -212,14 +212,15 @@ export default function DashboardPage() {
               <StatTile label="Today" value={todayDay === 'rest' ? 'Zone-2 / Rest' : todayDay.label} sub={todayDay !== 'rest' ? todayDay.sub : undefined} accent={CYAN} />
               <StatTile label="Last Volume" value={n0(displayWeight(lastSession?.total_volume_kg ?? null))} unit={unit} />
             </div>
-            <button
-              onClick={() => {
-                setOpen(null)
-                router.push(todayDay !== 'rest' && todayDay.dayKey ? `/session?template=${todayDay.dayKey}` : '/session')
-              }}
-              className="btn-glass w-full justify-center">
-              <Plus className="w-4 h-4" /> Log {todayDay === 'rest' ? 'Session' : todayDay.label}
-            </button>
+            {todayDay !== 'rest' && todayDay.dayKey ? (
+              <button
+                onClick={() => { setOpen(null); router.push(`/session?template=${todayDay.dayKey}`) }}
+                className="btn-glass w-full justify-center">
+                <Plus className="w-4 h-4" /> Log {todayDay.label}
+              </button>
+            ) : (
+              <p className="text-fluid-xs text-muted text-center py-2">Rest day — Zone-2 recovery. No lifting scheduled.</p>
+            )}
           </div>
         )}
         {open === 'body' && (

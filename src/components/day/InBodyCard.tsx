@@ -24,8 +24,8 @@ const FIELDS: Array<{ key: keyof BodyMetricsPatch; label: string; unit: string }
  * exclusively in the Daily Nexus. Collapsed: a one-line reading. Expanded:
  * a minimalist 9-field grid, prefilled from the day, saving only what changed.
  */
-export function InBodyCard({ date, log }: { date: string; log: DayVaultData['log'] }) {
-  const [open, setOpen] = useState(false)
+export function InBodyCard({ date, log, defaultOpen = false }: { date: string; log: DayVaultData['log']; defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen)
   const [edits, setEdits] = useState<Record<string, string>>({})
   const [saved, setSaved] = useState(false)
   const save = useSaveBodyMetrics(date)

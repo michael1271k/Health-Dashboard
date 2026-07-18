@@ -22,7 +22,7 @@ export function SessionDeck({ store, onClose, onViewDay }: {
   onClose: () => void
   onViewDay?: (date: string) => void
 }) {
-  const { draft, updateSet, addSet, removeSet, removeExercise, reorder, setNotes, setExerciseNote, setDate, discard, commit } = store
+  const { draft, updateSet, addSet, removeSet, removeExercise, reorder, setNotes, setExerciseNote, setStats, setDate, discard, commit } = store
   const [result, setResult] = useState<CommitResult | null>(null)
   const [committedDate, setCommittedDate] = useState<string | null>(null)
 
@@ -83,9 +83,17 @@ export function SessionDeck({ store, onClose, onViewDay }: {
       busy={commit.isPending}
       error={commit.isError ? (commit.error instanceof Error ? commit.error.message : 'Save failed') : null}
       onCommit={() => {
-        setCommittedDate(draft.date)
+        const date = draft.date
+        setCommittedDate(date)
         commit.mutate(undefined, {
-          onSuccess: (r) => { if (!r.duplicate) void tapSuccess(); setResult(r) },
+          onSuccess: (r) => {
+            if (!r.duplicate) void tapSuccess()
+            // Expected flow: the save lands and the deck transitions straight
+            // into the Daily Nexus for that day (which shows the session, PRs and
+            // progression). Falls back to the in-deck result screen if no handler.
+            if (onViewDay) onViewDay(date)
+            else setResult(r)
+          },
         })
       }}
       onDiscard={() => { discard(); onClose() }}
@@ -96,7 +104,7 @@ export function SessionDeck({ store, onClose, onViewDay }: {
     <div className="lg:grid lg:grid-cols-[minmax(320px,380px)_1fr] lg:gap-5 lg:items-start">
       {/* ── Left rail (sticky on desktop): identity, insight, notes, commit ── */}
       <div className="space-y-3 lg:sticky lg:top-4">
-        <CoachHeaderCard draft={draft} onSetDate={setDate} />
+        <CoachHeaderCard draft={draft} onSetDate={setDate} onSetStats={setStats} />
         <SessionNotesCard notes={draft.notes} onChange={setNotes} />
         <div className="hidden lg:block">{commitBar}</div>
       </div>
