@@ -8,11 +8,11 @@ import { eraForDate } from '@/lib/programs'
 /** Canonicalize Hevy muscle tags into 6 display groups (v5.1 aliases included). */
 const MUSCLE_MAP: Record<string, string> = {
   chest: 'Chest', pecs: 'Chest',
-  back: 'Back', lats: 'Back', traps: 'Back', rhomboids: 'Back',
+  back: 'Back', lats: 'Back', traps: 'Back', rhomboids: 'Back', 'upper back': 'Back', 'lower back': 'Back',
   shoulders: 'Shoulders', delts: 'Shoulders', rear_delts: 'Shoulders',
   biceps: 'Arms', triceps: 'Arms', forearms: 'Arms', arms: 'Arms',
-  quads: 'Legs', quadriceps: 'Legs', hamstrings: 'Legs', glutes: 'Legs', calves: 'Legs', legs: 'Legs',
-  core: 'Core', abs: 'Core', obliques: 'Core',
+  quads: 'Legs', quadriceps: 'Legs', hamstrings: 'Legs', glutes: 'Legs', calves: 'Legs', abductors: 'Legs', legs: 'Legs',
+  core: 'Core', abs: 'Core', abdominals: 'Core', obliques: 'Core',
 }
 
 /** v5.1 exercise-name → muscle tags (parser aliases). Used by the catalog updater. */
@@ -27,7 +27,7 @@ export const V51_EXERCISE_ALIASES: Record<string, string[]> = {
 }
 export const MUSCLE_GROUPS = ['Chest', 'Back', 'Shoulders', 'Arms', 'Legs', 'Core'] as const
 export const GROUP_COLOR: Record<string, string> = {
-  Chest: '#38E1FF', Back: '#43F59B', Shoulders: '#4FC3FF', Arms: '#E8C57A', Legs: '#19E3B1', Core: '#7C8CFF',
+  Chest: '#22D3EE', Back: '#34D399', Shoulders: '#38BDF8', Arms: '#F5C15A', Legs: '#34D399', Core: '#7C8CFF',
 }
 
 export interface MuscleStat { group: string; sets: number; volume: number; daysSince: number | null }

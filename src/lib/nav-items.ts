@@ -5,6 +5,7 @@ import {
   BarChart3,
   CalendarCheck,
   Activity,
+  FileText,
   Settings,
 } from 'lucide-react'
 
@@ -16,6 +17,7 @@ export const navItems = [
   { href: '/workout',   icon: Dumbbell,        label: 'Workout'   },
   { href: '/weekly',    icon: CalendarCheck,   label: 'Journey'   },
   { href: '/insights',  icon: Activity,        label: 'Insights'  },
+  { href: '/reports',   icon: FileText,        label: 'Reports'   },
   { href: '/charts',    icon: BarChart3,       label: 'Charts'    },
   { href: '/settings',  icon: Settings,        label: 'Settings'  },
 ] as const
@@ -31,6 +33,7 @@ export const coreNavItems = [
 
 export const moreNavItems = [
   { href: '/insights', icon: Activity,   label: 'Weekly Insights' },
+  { href: '/reports',  icon: FileText,   label: 'Reports'         },
   { href: '/charts',   icon: BarChart3,  label: 'Charts'          },
   { href: '/settings', icon: Settings,   label: 'Settings'        },
 ] as const

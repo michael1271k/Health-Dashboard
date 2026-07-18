@@ -23,9 +23,9 @@ const isoAddDays = (d: string, n: number) => {
 export type EraFilter = 'all' | 'ppl' | 'axis'
 
 export const ERA_FILTER_META: Record<EraFilter, { label: string; color: string }> = {
-  axis: { label: 'Helix 5.1',  color: '#3EE0FF' },
+  axis: { label: 'Helix 5.1',  color: '#22D3EE' },
   ppl:  { label: 'PPL Legacy', color: '#8B97B2' },
-  all:  { label: 'All',        color: '#19E3B1' },
+  all:  { label: 'All',        color: '#34D399' },
 }
 
 /** Pill display order — "All" far-left; the default selection stays 'axis'. */
@@ -38,9 +38,9 @@ export type SubPhase = 'cut' | 'maintenance' | 'bulk'
 export type SubPhaseSel = 'auto' | SubPhase
 
 export const SUB_PHASE_META: Record<SubPhase, { label: string; color: string }> = {
-  cut:         { label: 'Cut',   color: '#38E1FF' },
-  maintenance: { label: 'Maint', color: '#43F59B' },
-  bulk:        { label: 'Bulk',  color: '#FFB020' },
+  cut:         { label: 'Cut',   color: '#22D3EE' },
+  maintenance: { label: 'Maint', color: '#34D399' },
+  bulk:        { label: 'Bulk',  color: '#FBBF24' },
 }
 export const SUB_PHASE_ORDER: SubPhase[] = ['cut', 'maintenance', 'bulk']
 

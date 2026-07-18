@@ -114,7 +114,7 @@ export function RpeCalendar({ days, era = 'all' }: { days: number; era?: 'all' |
   if (!grid) return null
 
   const cell = (t: number) => t <= 0 ? 'rgba(255,255,255,0.05)'
-    : t < 0.35 ? 'rgba(25,227,177,0.35)' : t < 0.7 ? 'rgba(25,227,177,0.65)' : '#19E3B1'
+    : t < 0.35 ? 'rgba(25,227,177,0.35)' : t < 0.7 ? 'rgba(25,227,177,0.65)' : '#34D399'
 
   return (
     <div className="helix-card">

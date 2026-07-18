@@ -41,16 +41,16 @@ describe('cascadeSetEdit — Hevy-style Set 1 cascade', () => {
   })
 })
 
-describe('warmup sets — excluded from volume/sets', () => {
-  it('draftTotals ignores warmup sets', () => {
+describe('warmup sets — counted in volume/sets (never a PR)', () => {
+  it('draftTotals INCLUDES warmup sets', () => {
     const draft = draftWith([
       { weightKg: 20, reps: 10, setType: 'warmup' },
       { weightKg: 40, reps: 10 },
       { weightKg: 40, reps: 10, setType: 'failure' },
     ])
     const { volumeKg, sets } = draftTotals(draft)
-    expect(sets).toBe(2)          // warmup not counted
-    expect(volumeKg).toBe(800)    // 40×10 + 40×10; failure still counts
+    expect(sets).toBe(3)           // warmup now counts
+    expect(volumeKg).toBe(1000)    // 20×10 + 40×10 + 40×10
   })
 
   it('buildCommitPayload carries setType through and validates', () => {

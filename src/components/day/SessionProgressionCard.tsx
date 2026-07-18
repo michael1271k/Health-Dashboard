@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Loader2, Pencil, Trash2, TrendingUp } from 'lucide-react'
 import type { GymReportRow } from '@/lib/hooks/useWeekly'
-import { useDeleteSession, useSessionOrdinal } from '@/lib/hooks/useDayVault'
+import { useDeleteSession, useGlobalSessionNumber } from '@/lib/hooks/useDayVault'
 import { useEditSession } from '@/lib/hooks/useEditSession'
 import { SessionIntelCard } from '@/components/reports/SessionIntelCard'
 import { PROGRAMS, DEFAULT_PROGRAM_ID, getActiveProgramId } from '@/lib/programs'
@@ -16,7 +16,7 @@ import { PROGRAMS, DEFAULT_PROGRAM_ID, getActiveProgramId } from '@/lib/programs
 export function SessionProgressionCard({ session, date }: { session: GymReportRow; date: string }) {
   const del = useDeleteSession(date)
   const edit = useEditSession()
-  const { data: ordinal } = useSessionOrdinal(session.dayKey, session.split, date)
+  const { data: globalNum } = useGlobalSessionNumber(date)
   const [confirm, setConfirm] = useState(false)
 
   const program = PROGRAMS[getActiveProgramId()] ?? PROGRAMS[DEFAULT_PROGRAM_ID]
@@ -24,13 +24,13 @@ export function SessionProgressionCard({ session, date }: { session: GymReportRo
     ?? (session.split[0]?.toUpperCase() + session.split.slice(1))
 
   return (
-    <section className="helix-card holo-sheen space-y-3" style={{ borderColor: '#16F5C328' }}>
+    <section className="helix-card holo-sheen space-y-3" style={{ borderColor: '#8B5CF628' }}>
       <div className="flex items-center gap-2">
-        <span className="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style={{ background: '#16F5C31a', color: '#16F5C3' }}>
+        <span className="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style={{ background: '#8B5CF61a', color: '#8B5CF6' }}>
           <TrendingUp className="w-4 h-4" aria-hidden="true" />
         </span>
         <h3 className="font-heading font-bold text-fluid-base text-text">
-          {label}{ordinal ? <span className="text-muted font-semibold"> · Session #{ordinal}</span> : null}
+          {label}{globalNum ? <span className="text-muted font-semibold"> · Session #{globalNum}</span> : null}
         </h3>
       </div>
 
@@ -46,7 +46,7 @@ export function SessionProgressionCard({ session, date }: { session: GymReportRo
               disabled={del.isPending}
               onClick={() => del.mutate(session.id)}
               className="min-h-[38px] px-3.5 rounded-lg text-fluid-xs font-bold inline-flex items-center gap-1.5 disabled:opacity-50"
-              style={{ color: '#fff', background: '#FF5470', boxShadow: '0 0 16px #FF547055' }}
+              style={{ color: '#fff', background: '#FB7185', boxShadow: '0 0 16px #FB718555' }}
             >
               {del.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" /> : <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />}
               Delete
@@ -55,13 +55,13 @@ export function SessionProgressionCard({ session, date }: { session: GymReportRo
         ) : (
           <div className="flex items-center gap-2">
             <button type="button" disabled={edit.loading} onClick={() => edit.load(session.id)}
-              className="btn-glass min-h-[38px] text-fluid-xs justify-center flex-1" style={{ color: '#3EE0FF' }}>
+              className="btn-glass min-h-[38px] text-fluid-xs justify-center flex-1" style={{ color: '#22D3EE' }}>
               {edit.loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" /> : <Pencil className="w-3.5 h-3.5" aria-hidden="true" />}
               Edit Workout
             </button>
             <button type="button" onClick={() => setConfirm(true)}
               className="min-h-[38px] px-3.5 rounded-lg text-fluid-xs font-bold inline-flex items-center gap-1.5 justify-center transition-colors"
-              style={{ color: '#FF5470', background: '#FF54701a', border: '1px solid #FF547055' }}>
+              style={{ color: '#FB7185', background: '#FB71851a', border: '1px solid #FB718555' }}>
               <Trash2 className="w-3.5 h-3.5" aria-hidden="true" /> Delete Workout
             </button>
           </div>

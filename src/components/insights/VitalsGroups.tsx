@@ -23,40 +23,40 @@ const pos = (v: number | null | undefined): number | null => (v != null && v > 0
 
 const GROUPS: Group[] = [
   {
-    title: 'Recovery', icon: HeartPulse, accent: '#3EE0FF',
+    title: 'Recovery', icon: HeartPulse, accent: '#22D3EE',
     blurb: 'Autonomic + overnight signals — the readiness backbone.',
     metrics: [
-      { key: 'hrv', label: 'HRV', color: '#3EE0FF', agg: 'avg', better: 'up', pick: (d) => pos(d.hrv_ms), fmt: (v) => `${Math.round(v)} ms` },
-      { key: 'rhr', label: 'Resting HR', color: '#FF5470', agg: 'avg', better: 'down', pick: (d) => pos(d.avg_rest_heart_rate), fmt: (v) => `${Math.round(v)} bpm` },
-      { key: 'hrr', label: 'HR Recovery', color: '#43F59B', agg: 'avg', better: 'up', pick: (d) => pos(d.heart_rate_recovery), fmt: (v) => `${Math.round(v)} bpm` },
-      { key: 'wrist', label: 'Wrist Temp', color: '#8B7CFF', agg: 'avg', better: 'neutral', pick: (d) => pos(d.wrist_temp_delta), fmt: (v) => `${v.toFixed(1)}°C`, deltaFmt: (v) => `${v.toFixed(2)}°C` },
+      { key: 'hrv', label: 'HRV', color: '#22D3EE', agg: 'avg', better: 'up', pick: (d) => pos(d.hrv_ms), fmt: (v) => `${Math.round(v)} ms` },
+      { key: 'rhr', label: 'Resting HR', color: '#FB7185', agg: 'avg', better: 'down', pick: (d) => pos(d.avg_rest_heart_rate), fmt: (v) => `${Math.round(v)} bpm` },
+      { key: 'hrr', label: 'HR Recovery', color: '#34D399', agg: 'avg', better: 'up', pick: (d) => pos(d.heart_rate_recovery), fmt: (v) => `${Math.round(v)} bpm` },
+      { key: 'wrist', label: 'Wrist Temp', color: '#EC4899', agg: 'avg', better: 'neutral', pick: (d) => pos(d.wrist_temp_delta), fmt: (v) => `${v.toFixed(1)}°C`, deltaFmt: (v) => `${v.toFixed(2)}°C` },
     ],
   },
   {
-    title: 'Respiratory', icon: Wind, accent: '#6FE9FF',
+    title: 'Respiratory', icon: Wind, accent: '#38BDF8',
     blurb: 'Overnight breathing — drift here often precedes illness.',
     metrics: [
-      { key: 'rr', label: 'Respiratory Rate', color: '#6FE9FF', agg: 'avg', better: 'neutral', pick: (d) => pos(d.respiratory_rate), fmt: (v) => `${v.toFixed(1)} br/min` },
-      { key: 'spo2', label: 'Blood O₂', color: '#4FC3FF', agg: 'avg', better: 'up', pick: (d) => pos(d.blood_oxygen), fmt: (v) => `${Math.round(v)}%`, deltaFmt: (v) => `${v.toFixed(1)}%` },
+      { key: 'rr', label: 'Respiratory Rate', color: '#38BDF8', agg: 'avg', better: 'neutral', pick: (d) => pos(d.respiratory_rate), fmt: (v) => `${v.toFixed(1)} br/min` },
+      { key: 'spo2', label: 'Blood O₂', color: '#38BDF8', agg: 'avg', better: 'up', pick: (d) => pos(d.blood_oxygen), fmt: (v) => `${Math.round(v)}%`, deltaFmt: (v) => `${v.toFixed(1)}%` },
     ],
   },
   {
-    title: 'Fitness Engine', icon: Flame, accent: '#16F5C3',
+    title: 'Fitness Engine', icon: Flame, accent: '#8B5CF6',
     blurb: 'Slow-moving capacity — weekly workload and aerobic ceiling.',
     metrics: [
-      { key: 'vo2', label: 'VO₂max', color: '#16F5C3', agg: 'avg', better: 'up', pick: (d) => pos(d.vo2max), fmt: (v) => v.toFixed(1), deltaFmt: (v) => v.toFixed(2) },
-      { key: 'train', label: 'Training', color: '#3EE0FF', agg: 'sum', better: 'up', pick: (d) => d.exercise_minutes ?? d.training_minutes, fmt: (v) => `${Math.round(v)} min` },
-      { key: 'energy', label: 'Active Energy', color: '#FFB86B', agg: 'sum', better: 'up', pick: (d) => d.active_energy, fmt: (v) => `${Math.round(v).toLocaleString()} kcal` },
+      { key: 'vo2', label: 'VO₂max', color: '#8B5CF6', agg: 'avg', better: 'up', pick: (d) => pos(d.vo2max), fmt: (v) => v.toFixed(1), deltaFmt: (v) => v.toFixed(2) },
+      { key: 'train', label: 'Training', color: '#22D3EE', agg: 'sum', better: 'up', pick: (d) => d.exercise_minutes ?? d.training_minutes, fmt: (v) => `${Math.round(v)} min` },
+      { key: 'energy', label: 'Active Energy', color: '#FBBF24', agg: 'sum', better: 'up', pick: (d) => d.active_energy, fmt: (v) => `${Math.round(v).toLocaleString()} kcal` },
     ],
   },
   {
-    title: 'Rhythm', icon: Sun, accent: '#E8C57A',
+    title: 'Rhythm', icon: Sun, accent: '#F5C15A',
     blurb: 'Lifestyle regularity — light, movement, upright time, sleep.',
     metrics: [
-      { key: 'daylight', label: 'Daylight', color: '#E8C57A', agg: 'sum', better: 'up', pick: (d) => d.time_in_daylight_min, fmt: (v) => `${(v / 60).toFixed(1)} h` },
-      { key: 'stand', label: 'Stand', color: '#43F59B', agg: 'avg', better: 'up', pick: (d) => d.stand_hours, fmt: (v) => `${v.toFixed(1)} h/d` },
-      { key: 'steps', label: 'Steps', color: '#4FC3FF', agg: 'sum', better: 'up', pick: (d) => d.steps, fmt: (v) => `${(v / 1000).toFixed(1)}k` },
-      { key: 'sleep', label: 'Sleep', color: '#8B7CFF', agg: 'avg', better: 'up', pick: (d) => d.sleep_minutes, fmt: (v) => formatSleep(Math.round(v)) },
+      { key: 'daylight', label: 'Daylight', color: '#F5C15A', agg: 'sum', better: 'up', pick: (d) => d.time_in_daylight_min, fmt: (v) => `${(v / 60).toFixed(1)} h` },
+      { key: 'stand', label: 'Stand', color: '#34D399', agg: 'avg', better: 'up', pick: (d) => d.stand_hours, fmt: (v) => `${v.toFixed(1)} h/d` },
+      { key: 'steps', label: 'Steps', color: '#38BDF8', agg: 'sum', better: 'up', pick: (d) => d.steps, fmt: (v) => `${(v / 1000).toFixed(1)}k` },
+      { key: 'sleep', label: 'Sleep', color: '#EC4899', agg: 'avg', better: 'up', pick: (d) => d.sleep_minutes, fmt: (v) => formatSleep(Math.round(v)) },
     ],
   },
 ]
@@ -92,7 +92,7 @@ function VitalRow({ def, days }: { def: MetricDef; days: VitalsDay[] }) {
   const series = vitalWeeklySeries(days, def.pick, def.agg)
   const deltaColor = win.delta == null || win.delta === 0 || def.better === 'neutral'
     ? '#8B97B2'
-    : (win.delta > 0) === (def.better === 'up') ? '#43F59B' : '#FF5470'
+    : (win.delta > 0) === (def.better === 'up') ? '#34D399' : '#FB7185'
 
   return (
     <div className="flex items-center gap-3 rounded-xl bg-white/[0.02] border border-white/[0.05] px-3 py-2.5">

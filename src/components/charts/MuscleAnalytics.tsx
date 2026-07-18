@@ -31,7 +31,7 @@ export function MuscleAnalyticsSection({ days, era = 'all' }: { days: number; er
             <RadarChart data={radarData} outerRadius="70%">
               <PolarGrid stroke="rgba(255,255,255,0.1)" />
               <PolarAngleAxis dataKey="group" tick={{ fill: '#8B97B2', fontSize: 11 }} />
-              <Radar dataKey="sets" stroke="#19E3B1" fill="#19E3B1" fillOpacity={0.35} isAnimationActive={false} />
+              <Radar dataKey="sets" stroke="#34D399" fill="#34D399" fillOpacity={0.35} isAnimationActive={false} />
             </RadarChart>
           </ResponsiveContainer>
         </div>
@@ -83,7 +83,7 @@ export function MuscleAnalyticsSection({ days, era = 'all' }: { days: number; er
           <h3 className="font-heading font-semibold text-base mb-3">Muscle Freshness</h3>
           <div className="space-y-2">
             {[...data.stats].sort((a, b) => (b.daysSince ?? -1) - (a.daysSince ?? -1)).map((s) => {
-              const c = s.daysSince == null ? '#5A6B85' : s.daysSince >= 4 ? '#43F59B' : s.daysSince >= 2 ? '#FFB020' : '#FF5470'
+              const c = s.daysSince == null ? '#5A6B85' : s.daysSince >= 4 ? '#34D399' : s.daysSince >= 2 ? '#FBBF24' : '#FB7185'
               return (
                 <div key={s.group} className="flex items-center gap-2.5">
                   <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: c, boxShadow: `0 0 8px ${c}88` }} />

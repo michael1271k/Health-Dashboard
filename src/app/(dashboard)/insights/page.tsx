@@ -11,7 +11,7 @@ import { displayWeight, weightUnit } from '@/lib/utils/units'
 import { MarkdownView } from '@/components/reports/MarkdownView'
 import { VitalsGroups } from '@/components/insights/VitalsGroups'
 
-const GOLD = '#E8C57A'
+const GOLD = '#F5C15A'
 const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 /** Weekly Insights — the merged Session Summary + Weekly Vitals tab. */
@@ -75,29 +75,29 @@ function InsightsInner() {
 
       {/* ── Session Summary ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <HeroStat icon={Dumbbell} color="#16F5C3" label="Total Volume"
+        <HeroStat icon={Dumbbell} color="#8B5CF6" label="Total Volume"
           value={`${focus.data?.totals.volumeKg.toLocaleString() ?? 0}`} unit="kg"
           delta={pctDelta(focus.data?.totals.volumeKg, baseline.data?.totals.volumeKg)} goodUp />
-        <HeroStat icon={Layers} color="#3EE0FF" label="Total Sets"
+        <HeroStat icon={Layers} color="#22D3EE" label="Total Sets"
           value={String(focus.data?.totals.sets ?? 0)}
           delta={pctDelta(focus.data?.totals.sets, baseline.data?.totals.sets)} goodUp />
         <HeroStat icon={Trophy} color={GOLD} label="Total PRs" highlight
           value={String(focus.data?.totals.prs ?? 0)} delta={null} />
-        <HeroStat icon={Flame} color="#FFB86B" label="Calories Burned"
+        <HeroStat icon={Flame} color="#FBBF24" label="Calories Burned"
           value={focus.data?.totals.calories ? focus.data.totals.calories.toLocaleString() : '—'} unit={focus.data?.totals.calories ? 'kcal' : undefined}
           delta={pctDelta(focus.data?.totals.calories, baseline.data?.totals.calories)} goodUp />
       </div>
 
       <section className="helix-card space-y-3">
         <div className="flex items-center gap-2">
-          <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: '#16F5C31a', color: '#16F5C3' }}>
+          <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: '#8B5CF61a', color: '#8B5CF6' }}>
             <Scale className="w-4 h-4" aria-hidden="true" />
           </span>
           <h2 className="font-heading font-semibold text-fluid-base text-text">Weight &amp; Fat Trajectory</h2>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <TrajTile label="Weight" color="#16F5C3" series={traj.weights} delta={traj.dWeight} unit={weightUnit()} goodDown fmt={(v) => v.toFixed(1)} />
-          <TrajTile label="Body Fat" color="#8B7CFF" series={traj.fats} delta={traj.dFat} unit="%" goodDown fmt={(v) => v.toFixed(1)} icon={Percent} />
+          <TrajTile label="Weight" color="#8B5CF6" series={traj.weights} delta={traj.dWeight} unit={weightUnit()} goodDown fmt={(v) => v.toFixed(1)} />
+          <TrajTile label="Body Fat" color="#EC4899" series={traj.fats} delta={traj.dFat} unit="%" goodDown fmt={(v) => v.toFixed(1)} icon={Percent} />
         </div>
       </section>
 
@@ -139,7 +139,7 @@ function HeroStat({ icon: Icon, color, label, value, unit, delta, goodUp, highli
         </span>
         {delta && (
           <span className="text-[11px] font-semibold tabular-nums px-1.5 py-0.5 rounded-md"
-            style={{ color: deltaGood ? '#43F59B' : '#FF5470', background: deltaGood ? '#43F59B14' : '#FF547014' }}>{delta}</span>
+            style={{ color: deltaGood ? '#34D399' : '#FB7185', background: deltaGood ? '#34D39914' : '#FB718514' }}>{delta}</span>
         )}
       </div>
       <div>
@@ -171,7 +171,7 @@ function TrajTile({ label, color, series, delta, unit, goodDown, fmt, icon: Icon
           {current != null ? fmt(current) : '—'}<span className="text-[10px] text-muted font-normal ml-0.5">{unit}</span>
         </span>
         {delta != null && delta !== 0 && (
-          <span className="text-[11px] font-semibold tabular-nums" style={{ color: deltaGood ? '#43F59B' : '#FF5470' }}>
+          <span className="text-[11px] font-semibold tabular-nums" style={{ color: deltaGood ? '#34D399' : '#FB7185' }}>
             {delta > 0 ? '+' : ''}{fmt(delta)} this wk
           </span>
         )}

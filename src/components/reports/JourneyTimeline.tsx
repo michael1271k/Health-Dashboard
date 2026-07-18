@@ -6,7 +6,7 @@ import type { ReportRow, GymReportRow } from '@/lib/hooks/useWeekly'
 import { enumerateWeeks, type ProgramWeek } from '@/lib/phases'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 
-const KIND_COLOR: Record<string, string> = { cut: '#3EE0FF', bulk: '#43F59B', maintenance: '#8B7CFF', peak: '#16F5C3' }
+const KIND_COLOR: Record<string, string> = { cut: '#22D3EE', bulk: '#34D399', maintenance: '#EC4899', peak: '#8B5CF6' }
 
 /**
  * The Helix Timeline Spine — Journey's navigation. A vertical double-strand
@@ -37,8 +37,8 @@ export const JourneyTimeline = memo(function JourneyTimeline({ reports, gymRepor
     <div className="relative">
       {/* The double-strand spine */}
       <svg className="absolute left-[18px] top-0 bottom-0 h-full w-4" preserveAspectRatio="none" viewBox="0 0 16 100" aria-hidden="true">
-        <path d="M5 0 C11 12, -1 22, 5 34 C11 46, -1 56, 5 68 C11 80, -1 90, 5 100" fill="none" stroke="#16F5C3" strokeOpacity="0.35" strokeWidth="1.6" vectorEffect="non-scaling-stroke" />
-        <path d="M11 0 C5 12, 17 22, 11 34 C5 46, 17 56, 11 68 C5 80, 17 90, 11 100" fill="none" stroke="#3EE0FF" strokeOpacity="0.35" strokeWidth="1.6" vectorEffect="non-scaling-stroke" />
+        <path d="M5 0 C11 12, -1 22, 5 34 C11 46, -1 56, 5 68 C11 80, -1 90, 5 100" fill="none" stroke="#8B5CF6" strokeOpacity="0.35" strokeWidth="1.6" vectorEffect="non-scaling-stroke" />
+        <path d="M11 0 C5 12, 17 22, 11 34 C5 46, 17 56, 11 68 C5 80, 17 90, 11 100" fill="none" stroke="#22D3EE" strokeOpacity="0.35" strokeWidth="1.6" vectorEffect="non-scaling-stroke" />
       </svg>
 
       <div className="space-y-3 pl-11">
@@ -46,7 +46,7 @@ export const JourneyTimeline = memo(function JourneyTimeline({ reports, gymRepor
           const helix = w.era === 'helix'
           const showBoundary = !helix && !boundaryDrawn && era === 'all'
           if (showBoundary) boundaryDrawn = true
-          const color = helix ? (KIND_COLOR[w.kind] ?? '#16F5C3') : '#8B97B2'
+          const color = helix ? (KIND_COLOR[w.kind] ?? '#8B5CF6') : '#8B97B2'
           const s = statsFor(w)
           const empty = s.sessions === 0 && s.files === 0
           return (

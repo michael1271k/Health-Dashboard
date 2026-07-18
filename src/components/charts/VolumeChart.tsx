@@ -16,11 +16,11 @@ const TEXT = '#8B97B2'
 // (both DB split_day='upper', Sun vs Thu), 'arms' (Delts & Arms, also DB 'upper',
 // Tue) and 'legs_a'/'legs_b' (Legs A/B, both DB split_day='legs', Mon vs Fri).
 type ChartSplit = SplitDay | 'upper_a' | 'upper_b' | 'arms' | 'legs_a' | 'legs_b'
-const UPPER_A_COLOR = '#38E1FF'  // Upper A cyan (programs C.cbA)
-const UPPER_B_COLOR = '#E8C57A'  // Upper B gold (programs C.cbB)
-const ARMS_COLOR = '#43F59B'     // Delts & Arms mint (programs C.arms)
-const LEGS_A_COLOR = '#4FC3FF'   // quad cyan
-const LEGS_B_COLOR = '#19E3B1'   // posterior teal
+const UPPER_A_COLOR = '#22D3EE'  // Upper A cyan (programs C.cbA)
+const UPPER_B_COLOR = '#F5C15A'  // Upper B gold (programs C.cbB)
+const ARMS_COLOR = '#34D399'     // Delts & Arms mint (programs C.arms)
+const LEGS_A_COLOR = '#38BDF8'   // quad cyan
+const LEGS_B_COLOR = '#34D399'   // posterior teal
 
 // The pill set is era-specific. PPL trains Push/Pull/Legs (no "Upper" — zero
 // records); HELIX-5 logs the five real splits. Legacy "lower" folds into legs.
@@ -44,7 +44,7 @@ function splitColor(s: ChartSplit): string {
   if (s === 'arms') return ARMS_COLOR
   if (s === 'legs_a') return LEGS_A_COLOR
   if (s === 'legs_b') return LEGS_B_COLOR
-  return PPL_SPLITS[s as SplitDay]?.color ?? '#19E3B1'
+  return PPL_SPLITS[s as SplitDay]?.color ?? '#34D399'
 }
 
 /**

@@ -7,7 +7,7 @@ import { useSessionIntel } from '@/lib/hooks/useSessionIntel'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 import { MarkdownView } from './MarkdownView'
 
-function Chip({ label, value, accent = '#16F5C3' }: { label: string; value: string; accent?: string }) {
+function Chip({ label, value, accent = '#8B5CF6' }: { label: string; value: string; accent?: string }) {
   return (
     <span className="inline-flex flex-col rounded-xl px-3 py-1.5 border" style={{ borderColor: `${accent}40`, background: `${accent}14` }}>
       <span className="text-[9px] uppercase tracking-wide text-muted leading-none">{label}</span>
@@ -46,8 +46,8 @@ export function SessionIntelCard({ session }: { session: GymReportRow }) {
       {/* Coach insight — 2 sentences, front and centre (numbers are charted below) */}
       {insight && (
         <div className="rounded-2xl border px-3.5 py-3 flex gap-2.5 items-start"
-          style={{ borderColor: '#16F5C333', background: '#16F5C30d', boxShadow: '0 0 18px #16F5C314' }}>
-          <Sparkles className="w-4 h-4 shrink-0 mt-0.5" style={{ color: '#16F5C3', filter: 'drop-shadow(0 0 4px #16F5C3)' }} aria-hidden="true" />
+          style={{ borderColor: '#8B5CF633', background: '#8B5CF60d', boxShadow: '0 0 18px #8B5CF614' }}>
+          <Sparkles className="w-4 h-4 shrink-0 mt-0.5" style={{ color: '#8B5CF6', filter: 'drop-shadow(0 0 4px #8B5CF6)' }} aria-hidden="true" />
           <p className="text-fluid-sm text-text/90 leading-relaxed">{insight}</p>
         </div>
       )}
@@ -56,15 +56,15 @@ export function SessionIntelCard({ session }: { session: GymReportRow }) {
       <div className="flex flex-wrap gap-2">
         {session.durationMin != null && <Chip label="Duration" value={`${session.durationMin}m`} />}
         {session.avgBpm != null && <Chip label="Avg BPM" value={`${session.avgBpm}`} accent="#FF9F7A" />}
-        <Chip label="Volume" value={`${Math.round(displayWeight(session.volumeKg ?? intel?.computedVolumeKg ?? 0) ?? 0).toLocaleString()} ${unit}`} accent="#3EE0FF" />
-        <Chip label="Sets" value={`${session.setCount ?? intel?.computedSets ?? '—'}`} accent="#8B7CFF" />
+        <Chip label="Volume" value={`${Math.round(displayWeight(session.volumeKg ?? intel?.computedVolumeKg ?? 0) ?? 0).toLocaleString()} ${unit}`} accent="#22D3EE" />
+        <Chip label="Sets" value={`${session.setCount ?? intel?.computedSets ?? '—'}`} accent="#EC4899" />
       </div>
 
       {/* Δ vs the previous session of this EXACT type (Upper A vs last Upper A) */}
       {intel?.volumeDeltaPct != null && (
         <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-3 py-2 flex items-center gap-2 text-fluid-xs">
           <span className="text-muted">vs last <span className="text-text font-medium">{intel.typeLabel}</span>:</span>
-          <span className="helix-num font-bold" style={{ color: intel.volumeDeltaPct >= 0 ? '#43F59B' : '#FF5470' }}>
+          <span className="helix-num font-bold" style={{ color: intel.volumeDeltaPct >= 0 ? '#34D399' : '#FB7185' }}>
             volume {intel.volumeDeltaPct >= 0 ? '+' : ''}{intel.volumeDeltaPct}%
           </span>
           {intel.setsDelta != null && (
@@ -75,12 +75,12 @@ export function SessionIntelCard({ session }: { session: GymReportRow }) {
 
       {/* PR spotlight */}
       {!!intel?.prs.length && (
-        <div className="rounded-2xl border px-3 py-2.5 space-y-1" style={{ borderColor: '#E8C57A55', background: '#E8C57A12', boxShadow: '0 0 18px #E8C57A22' }}>
+        <div className="rounded-2xl border px-3 py-2.5 space-y-1" style={{ borderColor: '#F5C15A55', background: '#F5C15A12', boxShadow: '0 0 18px #F5C15A22' }}>
           {intel.prs.map((pr) => (
             <div key={pr.name} className="flex items-center gap-2 text-fluid-sm">
-              <Star className="w-3.5 h-3.5 shrink-0" style={{ color: '#E8C57A', filter: 'drop-shadow(0 0 4px #E8C57A)' }} />
+              <Star className="w-3.5 h-3.5 shrink-0" style={{ color: '#F5C15A', filter: 'drop-shadow(0 0 4px #F5C15A)' }} />
               <span className="text-text font-medium truncate">{pr.name}</span>
-              <span className="helix-num ml-auto font-bold" style={{ color: '#E8C57A' }}>{displayWeight(pr.kg)}{unit} × {pr.reps}</span>
+              <span className="helix-num ml-auto font-bold" style={{ color: '#F5C15A' }}>{displayWeight(pr.kg)}{unit} × {pr.reps}</span>
             </div>
           ))}
         </div>
@@ -110,7 +110,7 @@ export function SessionIntelCard({ session }: { session: GymReportRow }) {
             <tbody>
               {intel.deltas.map((d) => (
                 <tr key={d.name} className="border-b border-white/[0.06] last:border-0">
-                  <td className="px-3 py-2.5 text-text/90 truncate max-w-[130px]">{d.name}{d.isPr && <Star className="inline w-3 h-3 ml-1 -mt-0.5" style={{ color: '#E8C57A' }} />}</td>
+                  <td className="px-3 py-2.5 text-text/90 truncate max-w-[130px]">{d.name}{d.isPr && <Star className="inline w-3 h-3 ml-1 -mt-0.5" style={{ color: '#F5C15A' }} />}</td>
                   <td className="px-2 py-2.5 text-right helix-num text-text">{displayWeight(d.topKg)}{unit} × {d.topReps}</td>
                   <td className="px-2 py-2.5 text-right helix-num text-muted">{d.prevKg != null ? `${displayWeight(d.prevKg)}${unit}` : '—'}</td>
                   <td className="px-3 py-2.5 text-right text-base leading-none" aria-label={d.delta == null ? 'new' : d.delta === 1 ? 'improved' : d.delta === -1 ? 'regressed' : 'matched'}>{deltaGlyph(d.delta)}</td>
@@ -132,8 +132,8 @@ export function SessionIntelCard({ session }: { session: GymReportRow }) {
                 <div key={v.date} className="flex-1 flex flex-col items-center gap-1">
                   <div className="w-full rounded-t-md" style={{
                     height: `${Math.max(8, (v.volumeKg / maxVol) * 44)}px`,
-                    background: isThis ? '#16F5C3' : 'rgba(255,255,255,0.12)',
-                    boxShadow: isThis ? '0 0 10px #16F5C366' : undefined,
+                    background: isThis ? '#8B5CF6' : 'rgba(255,255,255,0.12)',
+                    boxShadow: isThis ? '0 0 10px #8B5CF666' : undefined,
                   }} />
                   <span className="text-[8px] text-muted helix-num">{new Date(v.date + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
                 </div>

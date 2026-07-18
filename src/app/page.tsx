@@ -46,12 +46,12 @@ const TrendStrip = dynamic(
 )
 
 // Bioluminescence domain accents
-const VIOLET = '#8B7CFF' // Sleep / recovery
-const EMBER = '#FFB86B'  // Fuel
-const CYAN = '#3EE0FF'   // Train
-const TEAL = '#16F5C3'   // Body
-const AQUA = '#4FC3FF'   // Steps
-const GOLD = '#E8C57A'   // Stack
+const VIOLET = '#EC4899' // Sleep / recovery
+const EMBER = '#FBBF24'  // Fuel
+const CYAN = '#22D3EE'   // Train
+const TEAL = '#8B5CF6'   // Body
+const AQUA = '#38BDF8'   // Steps
+const GOLD = '#F5C15A'   // Stack
 
 const n0 = (v: number | null | undefined) => (v == null ? null : Math.round(v))
 const n1 = (v: number | null | undefined) => (v == null ? null : Math.round(v * 10) / 10)

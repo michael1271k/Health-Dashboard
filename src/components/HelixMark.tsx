@@ -21,10 +21,10 @@ export function HelixMark({ className = 'w-6 h-6' }: { className?: string }) {
     >
       <defs>
         <linearGradient id={`${g}a`} x1="6" y1="22" x2="10" y2="2" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#16F5C3" /><stop offset="100%" stopColor="#5BFF9D" />
+          <stop offset="0%" stopColor="#8B5CF6" /><stop offset="100%" stopColor="#5BFF9D" />
         </linearGradient>
         <linearGradient id={`${g}b`} x1="14" y1="2" x2="18" y2="22" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#3EE0FF" /><stop offset="100%" stopColor="#8B7CFF" />
+          <stop offset="0%" stopColor="#22D3EE" /><stop offset="100%" stopColor="#EC4899" />
         </linearGradient>
       </defs>
 

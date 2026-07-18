@@ -39,11 +39,10 @@ export async function saveSession(
   payload: SaveWorkoutPayload,
   metrics: SessionMetrics = {},
 ): Promise<SaveSessionResult> {
-  // Warmup sets are logged but never count toward volume, set count, or PRs
-  // (Hevy semantics). A helper keeps the three call-sites consistent.
+  // Warmups count toward volume + set count (they still never earn a PR).
   const isWarmup = (s: (typeof payload.sets)[number]) => s.setType === 'warmup'
-  const workingSets = payload.sets.filter((s) => !isWarmup(s))
-  const totalVolumeKg = workingSets.reduce((sum, s) => sum + s.weightKg * s.reps, 0)
+  const totalVolumeKg = payload.sets.reduce((sum, s) => sum + s.weightKg * s.reps, 0)
+  const setCount = payload.sets.length
   const exerciseIds = [...new Set(payload.sets.map((s) => s.exerciseId))]
 
   // EDIT flow: replace an existing session in place — delete it (+ its sets)
@@ -129,7 +128,7 @@ export async function saveSession(
     notes: payload.notes || null,
     total_volume_kg: totalVolumeKg,
     session_score: null,
-    set_count: workingSets.length,
+    set_count: setCount,
     pr_count: prCount,
     duration_min: durationMin,
     calories_burned: metrics.caloriesBurned ?? null,
@@ -181,7 +180,7 @@ export async function saveSession(
   return {
     sessionId: session.id,
     totalVolumeKg,
-    setCount: workingSets.length,
+    setCount,
     prCount,
     newPRs,
   }

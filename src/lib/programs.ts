@@ -27,7 +27,7 @@ export function eraForDate(dateISO: string): Era {
 
 export const ERA_META: Record<Era, { label: string; short: string; color: string }> = {
   ppl:  { label: 'PPL Legacy', short: 'PPL',     color: '#8B97B2' },
-  axis: { label: 'HELIX Era',  short: 'HELIX-5', color: '#3EE0FF' },
+  axis: { label: 'HELIX Era',  short: 'HELIX-5', color: '#22D3EE' },
 }
 
 /** RE-ENTRY weeks (2026-07-19 + 07-26): ~90% loads, RPE cap 7–8 — excluded from
@@ -71,7 +71,7 @@ export interface Program {
   days: ProgramDay[]
 }
 
-const C = { cbA: '#38E1FF', legsA: '#4FC3FF', arms: '#43F59B', cbB: '#E8C57A', legsB: '#19E3B1' }
+const C = { cbA: '#22D3EE', legsA: '#38BDF8', arms: '#34D399', cbB: '#F5C15A', legsB: '#34D399' }
 
 // ── HELIX-5 (ACTIVE) — Sun/Mon/Tue/Thu/Fri ─────────────────────────────────
 export const APEX51: Program = {

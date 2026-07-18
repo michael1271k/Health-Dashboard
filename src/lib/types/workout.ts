@@ -45,27 +45,27 @@ export const PPL_SPLITS: Record<SplitDay, { label: string; labelHe: string; colo
   push: {
     label: 'Push',
     labelHe: 'דחיפה',
-    color: '#38E1FF',   // primary blue
+    color: '#22D3EE',   // primary blue
   },
   pull: {
     label: 'Pull',
     labelHe: 'משיכה',
-    color: '#43F59B',   // energy violet
+    color: '#34D399',   // energy violet
   },
   legs: {
     label: 'Legs',
     labelHe: 'רגליים',
-    color: '#4FC3FF',   // info blue
+    color: '#38BDF8',   // info blue
   },
   upper: {
     label: 'Upper',
     labelHe: 'פלג גוף עליון',
-    color: '#19E3B1',   // success teal
+    color: '#34D399',   // success teal
   },
   lower: {
     label: 'Lower',     // legacy — maps to 'legs' in new sessions
     labelHe: 'פלג גוף תחתון',
-    color: '#E8C57A',   // warm
+    color: '#F5C15A',   // warm
   },
 }
 

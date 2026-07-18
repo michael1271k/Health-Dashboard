@@ -32,7 +32,19 @@ const METRIC_MAP: Array<{ hk: string; key: string; reduce: 'sum' | 'latest' | 'a
   { hk: 'HKQuantityTypeIdentifierVO2Max', key: 'vo2max', reduce: 'latest' },
   { hk: 'HKQuantityTypeIdentifierBodyMass', key: 'weight', reduce: 'latest' },
 ]
-const READ_TYPES = METRIC_MAP.map((m) => m.hk).concat('HKCategoryTypeIdentifierSleepAnalysis')
+// Full authorization set — every metric HELIX reads, so the app registers under
+// Apple Health → Apps and can pull the whole picture (body comp + newer signals).
+const EXTRA_READ_TYPES = [
+  'HKCategoryTypeIdentifierSleepAnalysis',
+  'HKQuantityTypeIdentifierBodyFatPercentage',
+  'HKQuantityTypeIdentifierLeanBodyMass',
+  'HKQuantityTypeIdentifierBodyMassIndex',
+  'HKQuantityTypeIdentifierHeartRateRecoveryOneMinute',
+  'HKQuantityTypeIdentifierAppleSleepingWristTemperature',
+  'HKQuantityTypeIdentifierTimeInDaylight',
+  'HKQuantityTypeIdentifierHeartRate',
+]
+const READ_TYPES = [...new Set(METRIC_MAP.map((m) => m.hk).concat(EXTRA_READ_TYPES))]
 
 function reduceSamples(samples: HealthSample[], how: 'sum' | 'latest' | 'avg'): number | undefined {
   if (!samples.length) return undefined

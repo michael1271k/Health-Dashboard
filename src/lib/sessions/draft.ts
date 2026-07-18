@@ -11,8 +11,8 @@ export interface DraftSet {
   weightKg: number
   reps: number
   rpe?: number
-  /** Hevy-style set modifier; absent = a normal working set. Warmups are
-   *  excluded from volume/PR (live and on commit). */
+  /** Hevy-style set modifier; absent = a normal working set. Warmups count
+   *  toward volume + set count but are never PR-eligible. */
   setType?: 'warmup' | 'failure'
 }
 
@@ -74,7 +74,7 @@ export function draftTotals(draft: SessionDraft): { volumeKg: number; sets: numb
   for (const ex of draft.exercises) {
     if (ex.kind === 'cardio') continue
     for (const s of ex.sets) {
-      if (s.setType === 'warmup') continue // warmups don't count toward volume/sets
+      // Warmups DO count toward volume + set count (they still can't be a PR).
       sets += 1
       volumeKg += s.weightKg * s.reps
     }

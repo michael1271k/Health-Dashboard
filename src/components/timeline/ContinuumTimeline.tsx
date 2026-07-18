@@ -8,15 +8,15 @@ import { eraForDate } from '@/lib/programs'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { displayWeight, useUnitSystem } from '@/lib/utils/units'
 
-const VIOLET = '#8B7CFF'
+const VIOLET = '#EC4899'
 const STEEL = '#8B97B2'
 
 function scoreColor(score: number | null): string {
   if (score == null) return 'rgba(255,255,255,0.12)'
-  if (score >= 80) return '#16F5C3'
-  if (score >= 60) return '#3EE0FF'
-  if (score >= 40) return '#FFB86B'
-  return '#FF5470'
+  if (score >= 80) return '#8B5CF6'
+  if (score >= 60) return '#22D3EE'
+  if (score >= 40) return '#FBBF24'
+  return '#FB7185'
 }
 
 /** Sunday week-start for a YYYY-MM-DD date. */
@@ -46,9 +46,9 @@ const DayCard = memo(function DayCard({ d, unit, active, onOpen }: {
       className="w-full flex items-center gap-2.5 rounded-xl px-3 min-h-[48px] text-left border transition-colors active:opacity-80"
       style={{
         contentVisibility: 'auto', containIntrinsicSize: 'auto 48px',
-        background: active ? '#16F5C314' : 'rgba(255,255,255,0.02)',
-        borderColor: active ? '#16F5C366' : 'rgba(255,255,255,0.06)',
-        boxShadow: active ? '0 0 14px #16F5C333' : undefined,
+        background: active ? '#8B5CF614' : 'rgba(255,255,255,0.02)',
+        borderColor: active ? '#8B5CF666' : 'rgba(255,255,255,0.06)',
+        boxShadow: active ? '0 0 14px #8B5CF633' : undefined,
       } as React.CSSProperties}>
       {/* Score dot — swells when active */}
       <span className="rounded-full shrink-0 transition-all"
@@ -56,7 +56,7 @@ const DayCard = memo(function DayCard({ d, unit, active, onOpen }: {
         aria-hidden="true" />
       {/* Date chip */}
       <span className="shrink-0 w-[72px] leading-tight">
-        <span className="block font-heading font-semibold text-[12px]" style={{ color: active ? '#16F5C3' : undefined }}>
+        <span className="block font-heading font-semibold text-[12px]" style={{ color: active ? '#8B5CF6' : undefined }}>
           {day.toLocaleDateString('en-GB', { weekday: 'short' })} {day.getDate()}
         </span>
         <span className="block text-[9px] text-muted uppercase">{day.toLocaleDateString('en-GB', { month: 'short' })}</span>
@@ -71,7 +71,7 @@ const DayCard = memo(function DayCard({ d, unit, active, onOpen }: {
       </span>
       {/* Session / recovery glyph + label */}
       <span className="flex items-center gap-1 min-w-0 flex-1 text-[11px] truncate"
-        style={{ color: d.session ? '#3EE0FF' : VIOLET }}>
+        style={{ color: d.session ? '#22D3EE' : VIOLET }}>
         {d.session ? <Dumbbell className="w-3 h-3 shrink-0" /> : <Moon className="w-3 h-3 shrink-0" />}
         <span className="truncate">
           {d.session
@@ -93,7 +93,7 @@ const WeekHeader = memo(function WeekHeader({ weekStart, phase, onOpenWeek }: {
   onOpenWeek: (weekStart: string) => void
 }) {
   const helix = phase?.era === 'helix'
-  const color = phase ? (helix ? '#3EE0FF' : STEEL) : STEEL
+  const color = phase ? (helix ? '#22D3EE' : STEEL) : STEEL
   const label = phase?.label ?? `Week of ${new Date(weekStart + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`
   return (
     <div className="flex items-center gap-2 pt-3 pb-1">

@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database, InsertRow } from '@/lib/supabase/types'
 import type { SplitDay } from '@/lib/types/workout'
 import { canonicalExerciseName } from '@/lib/exercises/aliases'
+import { muscleGroupsFor } from '@/lib/exercises/muscleMap'
 
 type DB = SupabaseClient<Database>
 
@@ -58,7 +59,8 @@ export async function resolveExercises(
       name: canonical.trim(),
       name_he: nameHe ?? null,
       split_day: splitDay,
-      muscle_groups: muscleGroups?.length ? muscleGroups : null,
+      // The Freshness dictionary is authoritative; fall back to any provided tags.
+      muscle_groups: muscleGroupsFor(canonical) ?? (muscleGroups?.length ? muscleGroups : null),
       is_compound: false,
     }
      

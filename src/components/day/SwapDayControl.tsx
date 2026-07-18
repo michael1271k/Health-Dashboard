@@ -6,7 +6,7 @@ import { PROGRAMS, DEFAULT_PROGRAM_ID, getActiveProgramId } from '@/lib/programs
 import { useSwapDay, useClearScheduleOverride } from '@/lib/hooks/useScheduleOverrides'
 import { getScheduleOverride, REST_OVERRIDE } from '@/lib/schedule/overrides'
 
-const REST_VIOLET = '#8B7CFF'
+const REST_VIOLET = '#EC4899'
 
 /**
  * "Swap Day" — place any program day's workout (or an explicit Rest Day) onto

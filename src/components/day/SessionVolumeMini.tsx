@@ -4,8 +4,8 @@ import { memo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 
-const TEAL = '#16F5C3'
-const ICE = '#6FE9FF'
+const TEAL = '#8B5CF6'
+const ICE = '#38BDF8'
 
 /**
  * Inline, hardware-light SVG of a session's volume STRUCTURE — one bar per set,

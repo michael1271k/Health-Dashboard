@@ -41,13 +41,13 @@ function scheduleAwareReadiness(
   if (ctx.dayLabel) {
     const name = ctx.dayLabel
     if (ctx.reentry) {
-      return { level: 'train_light', label: `${name} · Re-Entry`, color: '#4FC3FF', reason: 'Re-entry week: ~90% loads, RPE cap 7–8. No PRs — groove the movements.' }
+      return { level: 'train_light', label: `${name} · Re-Entry`, color: '#38BDF8', reason: 'Re-entry week: ~90% loads, RPE cap 7–8. No PRs — groove the movements.' }
     }
     if (!base || base.level === 'train_hard') {
-      return { level: 'train_hard', label: name, color: '#19E3B1', reason: `Scheduled ${name} — recovery looks strong, train hard.` }
+      return { level: 'train_hard', label: name, color: '#34D399', reason: `Scheduled ${name} — recovery looks strong, train hard.` }
     }
     if (base.level === 'rest') {
-      return { level: 'train_light', label: `${name} · Go Light`, color: '#FFB020', reason: `Scheduled ${name}, but recovery is low — keep it light and technical.` }
+      return { level: 'train_light', label: `${name} · Go Light`, color: '#FBBF24', reason: `Scheduled ${name}, but recovery is low — keep it light and technical.` }
     }
     return { ...base, label: name }
   }

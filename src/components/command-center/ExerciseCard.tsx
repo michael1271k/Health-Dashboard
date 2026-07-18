@@ -6,17 +6,18 @@ import { CSS } from '@dnd-kit/utilities'
 import { ChevronDown, Footprints, GripVertical, History, NotebookPen, Plus, Target, X } from 'lucide-react'
 import { SetEditorRow } from './SetEditorRow'
 import { cardioSummary, type DraftExercise, type DraftSet } from '@/lib/sessions/draft'
+import { isTimedExercise } from '@/lib/exercises/timed'
 import type { ExerciseHistory } from '@/lib/hooks/useExerciseSetHistory'
 
 const STATUS_META: Record<NonNullable<DraftExercise['status']>, { label: string; color: string }> = {
-  PR:       { label: 'PR',       color: '#E8C57A' },  // gold
-  PROGRESS: { label: 'PROG ▲',   color: '#43F59B' },
+  PR:       { label: 'PR',       color: '#F5C15A' },  // gold
+  PROGRESS: { label: 'PROG ▲',   color: '#34D399' },
   HOLD:     { label: 'HOLD',     color: '#8B97B2' },
-  REGRESS:  { label: 'REGR ▼',   color: '#FF5470' },
-  NEW:      { label: 'NEW',      color: '#3EE0FF' },
+  REGRESS:  { label: 'REGR ▼',   color: '#FB7185' },
+  NEW:      { label: 'NEW',      color: '#22D3EE' },
 }
 
-const CARDIO_VIOLET = '#8B7CFF'
+const CARDIO_VIOLET = '#EC4899'
 
 // Show the real load: 3.75 must never display as "3.8" (quarter-step plates).
 const fmtKg = (w: number) => (w % 1 === 0 ? w.toFixed(0) : (w * 10) % 1 === 0 ? w.toFixed(1) : w.toFixed(2))
@@ -138,7 +139,7 @@ export function ExerciseCard({ exercise, history, onUpdateSet, onAddSet, onRemov
             <span
               className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-md text-[11px] leading-snug tabular-nums"
               style={history
-                ? { color: '#3EE0FF', background: 'rgba(62,224,255,0.08)', border: '1px solid rgba(62,224,255,0.28)' }
+                ? { color: '#22D3EE', background: 'rgba(62,224,255,0.08)', border: '1px solid rgba(62,224,255,0.28)' }
                 : { color: '#8B97B2', background: 'rgba(139,151,178,0.07)', border: '1px solid rgba(139,151,178,0.2)' }}
             >
               <History className="w-3 h-3 shrink-0" aria-hidden="true" />
@@ -183,7 +184,7 @@ export function ExerciseCard({ exercise, history, onUpdateSet, onAddSet, onRemov
             </button>
           )}
           {exercise.targetNext && (
-            <p className="text-xs leading-snug flex items-center gap-1" style={{ color: '#E8C57A' }}>
+            <p className="text-xs leading-snug flex items-center gap-1" style={{ color: '#F5C15A' }}>
               <Target className="w-3 h-3 shrink-0" aria-hidden="true" /> Next: {exercise.targetNext}
             </p>
           )}
@@ -199,6 +200,7 @@ export function ExerciseCard({ exercise, history, onUpdateSet, onAddSet, onRemov
               index={i}
               set={s}
               active={activeSet === i}
+              timed={isTimedExercise(exercise.name)}
               onActivate={() => setActiveSet((cur) => (cur === i ? null : i))}
               onChange={(patch) => onUpdateSet(i, patch)}
               onRemove={() => { setActiveSet(null); onRemoveSet(i) }}

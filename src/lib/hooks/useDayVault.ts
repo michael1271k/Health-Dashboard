@@ -126,6 +126,22 @@ export function useDeleteSession(date: string) {
   })
 }
 
+/** GLOBAL all-time session number ("Session #55") — every session on/before this date. */
+export function useGlobalSessionNumber(date: string) {
+  return useQuery({
+    queryKey: ['session_global_number', date],
+    enabled: /^\d{4}-\d{2}-\d{2}$/.test(date),
+    staleTime: 60_000,
+    queryFn: async (): Promise<number> => {
+      const { count, error } = await supabase.from('workout_sessions')
+        .select('id', { count: 'exact', head: true })
+        .lt('started_at', `${addDayISO(date, 1)}T00:00:00Z`)
+      if (error) return 1
+      return Math.max(1, count ?? 1)
+    },
+  })
+}
+
 /** 1-based ordinal of this session among same-type sessions in the era ("#2"). */
 export function useSessionOrdinal(dayKey: string | null | undefined, splitDay: string, date: string) {
   return useQuery({

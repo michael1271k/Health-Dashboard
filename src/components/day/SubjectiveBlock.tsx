@@ -55,12 +55,12 @@ export function SubjectiveBlock({ date, effort, journal }: {
       <div>
         <div className="flex items-baseline justify-between mb-1.5">
           <span className="text-fluid-xs text-muted">Perceived effort</span>
-          <span className="helix-num text-fluid-sm font-bold" style={{ color: '#3EE0FF' }}>{e ?? '—'}<span className="text-muted font-normal">/10</span></span>
+          <span className="helix-num text-fluid-sm font-bold" style={{ color: '#22D3EE' }}>{e ?? '—'}<span className="text-muted font-normal">/10</span></span>
         </div>
         <input
           type="range" min={1} max={10} step={1} value={e ?? 5}
           onChange={(ev) => setE(Number(ev.target.value))}
-          className="w-full accent-[#3EE0FF] min-h-[28px]"
+          className="w-full accent-[#22D3EE] min-h-[28px]"
           aria-label="Perceived effort 1 to 10"
         />
       </div>

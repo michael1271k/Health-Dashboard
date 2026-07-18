@@ -55,8 +55,8 @@ export function NutritionLogList({ logs, goals, isLoading, emptyMessage, onDayCl
       {logs.map((l) => {
         const d = new Date(l.date + 'T00:00:00')
         const calColor = l.calories == null ? '#8B97B2'
-          : Math.abs(l.calories - goals.calorie) <= 150 ? '#43F59B'
-          : Math.abs(l.calories - goals.calorie) <= 350 ? '#FFB020' : '#FF5470'
+          : Math.abs(l.calories - goals.calorie) <= 150 ? '#34D399'
+          : Math.abs(l.calories - goals.calorie) <= 350 ? '#FBBF24' : '#FB7185'
         return (
           <div key={l.date} role={onDayClick ? 'button' : undefined} tabIndex={onDayClick ? 0 : undefined}
             onClick={onDayClick ? () => onDayClick(l.date) : undefined}

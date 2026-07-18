@@ -1,8 +1,12 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
+import { Capacitor } from '@capacitor/core'
 import { RefreshCw } from 'lucide-react'
+import { syncRollingWindow } from '@/lib/native/healthkit'
+import { tapLight } from '@/lib/native/haptics'
 
 const THRESHOLD = 72   // px pulled before a refresh fires
 const MAX_PULL = 110   // rubber-band ceiling
@@ -16,6 +20,7 @@ const MAX_PULL = 110   // rubber-band ceiling
  */
 export function PullToRefresh({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient()
+  const router = useRouter()
   const startY = useRef<number | null>(null)
   const [pull, setPull] = useState(0)
   const [refreshing, setRefreshing] = useState(false)
@@ -39,7 +44,11 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
     if (pull >= THRESHOLD && !refreshing) {
       setRefreshing(true)
       setPull(THRESHOLD)
+      void tapLight()
       try {
+        // Route Home, aggressively pull fresh Apple Health, then revalidate.
+        router.replace('/')
+        if (Capacitor.isNativePlatform()) await syncRollingWindow().catch(() => {})
         await queryClient.invalidateQueries()
       } finally {
         setRefreshing(false)
@@ -48,7 +57,7 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
     } else {
       setPull(0)
     }
-  }, [pull, refreshing, queryClient])
+  }, [pull, refreshing, queryClient, router])
 
   useEffect(() => {
     if (typeof window === 'undefined' || !window.matchMedia('(pointer: coarse)').matches) return
@@ -78,9 +87,9 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
         }}
       >
         <span className="flex h-9 w-9 items-center justify-center rounded-full"
-          style={{ background: 'rgba(8,13,24,0.85)', border: '1px solid #6FE9FF55', boxShadow: '0 4px 16px rgba(0,0,0,0.5)' }}>
+          style={{ background: 'rgba(8,13,24,0.85)', border: '1px solid #38BDF855', boxShadow: '0 4px 16px rgba(0,0,0,0.5)' }}>
           <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`}
-            style={{ color: '#6FE9FF', transform: refreshing ? undefined : `rotate(${progress * 270}deg)` }} />
+            style={{ color: '#38BDF8', transform: refreshing ? undefined : `rotate(${progress * 270}deg)` }} />
         </span>
       </div>
       <div

@@ -22,7 +22,7 @@ const StrengthTrends = dynamic(() => import('@/components/charts/StrengthTrends'
 
 const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const PROGRAM_ORDER = ['apex51', 'axis4_builder', 'axis4_defender']
-const REST_VIOLET = '#8B7CFF'
+const REST_VIOLET = '#EC4899'
 
 export default function WorkoutPage() {
   const router = useRouter()
@@ -120,7 +120,7 @@ export default function WorkoutPage() {
         {/* Coach's action item from the last committed session */}
         {nextFlag && (
           <p className="text-xs flex items-start gap-1.5 mt-3 pt-3 border-t border-white/[0.06]"
-            style={{ color: '#E8C57A' }} dir="auto">
+            style={{ color: '#F5C15A' }} dir="auto">
             <Flag className="w-3 h-3 shrink-0 mt-0.5" aria-hidden="true" /> {nextFlag}
           </p>
         )}
@@ -154,7 +154,7 @@ export default function WorkoutPage() {
             <button key={id} onClick={() => selectProgram(id)}
               className="px-3 py-1.5 rounded-xl text-fluid-xs font-semibold border transition-colors"
               style={active
-                ? { color: '#38E1FF', borderColor: '#38E1FF55', background: '#38E1FF1f', boxShadow: '0 0 10px #38E1FF33' }
+                ? { color: '#22D3EE', borderColor: '#22D3EE55', background: '#22D3EE1f', boxShadow: '0 0 10px #22D3EE33' }
                 : { color: '#8B97B2', borderColor: 'transparent' }}>
               {p.label}{p.drawer ? '' : ' ✦'}
             </button>

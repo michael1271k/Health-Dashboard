@@ -8,10 +8,10 @@ import { EcgPulse } from '@/components/fx/EcgPulse'
 
 function scoreColor(v: number | null): string {
   if (v == null) return '#5A6B85'
-  if (v >= 80) return '#16F5C3'
-  if (v >= 60) return '#3EE0FF'
-  if (v >= 40) return '#FFB86B'
-  return '#FF5470'
+  if (v >= 80) return '#8B5CF6'
+  if (v >= 60) return '#22D3EE'
+  if (v >= 40) return '#FBBF24'
+  return '#FB7185'
 }
 
 /**
@@ -26,7 +26,7 @@ export const ReadinessOrb = memo(function ReadinessOrb({ score, isLoading }: { s
   const composite = score?.score ?? null
   const battery = score?.battery_pct ?? null
   const color = scoreColor(total)
-  const batteryColor = battery == null ? '#5A6B85' : battery >= 60 ? '#3EE0FF' : battery >= 30 ? '#FFB86B' : '#FF5470'
+  const batteryColor = battery == null ? '#5A6B85' : battery >= 60 ? '#22D3EE' : battery >= 30 ? '#FBBF24' : '#FB7185'
   const R = 84
   const CIRC = 2 * Math.PI * R
 

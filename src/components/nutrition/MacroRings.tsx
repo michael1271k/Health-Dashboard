@@ -21,11 +21,11 @@ function Ring({ value, goal, color, size, stroke, over }: {
       {pct > 0 && (
         <circle
           cx={size / 2} cy={size / 2} r={r} fill="none"
-          stroke={over ? '#FF5470' : color} strokeWidth={stroke} strokeLinecap="round"
+          stroke={over ? '#FB7185' : color} strokeWidth={stroke} strokeLinecap="round"
           strokeDasharray={circ} strokeDashoffset={circ * (1 - pct)}
           style={{
             transition: 'stroke-dashoffset 0.9s cubic-bezier(0.4,0,0.2,1)',
-            filter: full || over ? `drop-shadow(0 0 5px ${over ? '#FF5470' : color})` : undefined,
+            filter: full || over ? `drop-shadow(0 0 5px ${over ? '#FB7185' : color})` : undefined,
           }}
         />
       )}
@@ -71,7 +71,7 @@ export const MacroRings = memo(function MacroRings({ today, logs, goals }: {
               : <span className="helix-num text-5xl font-bold text-muted">—</span>}
             <span className="text-[11px] text-muted uppercase tracking-widest mt-1.5">kcal</span>
             {remaining != null && (
-              <span className="helix-num text-fluid-sm mt-1" style={{ color: over ? '#FF5470' : MACRO_COLORS.calories }}>
+              <span className="helix-num text-fluid-sm mt-1" style={{ color: over ? '#FB7185' : MACRO_COLORS.calories }}>
                 {remaining >= 0 ? `${remaining.toLocaleString()} left` : `+${Math.abs(remaining).toLocaleString()} over`}
               </span>
             )}

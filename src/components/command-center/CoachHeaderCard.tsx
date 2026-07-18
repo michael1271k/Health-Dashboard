@@ -5,6 +5,7 @@ import { CalendarDays, Flag, Sparkles } from 'lucide-react'
 import type { SessionDraft } from '@/lib/sessions/draft'
 import { draftTotals } from '@/lib/sessions/draft'
 import { logicalTodayISO } from '@/lib/utils/day'
+import { parseDurationMin } from '@/lib/utils/duration'
 import { useLoggedSessionDates } from '@/lib/hooks/useDayVault'
 import { DatePickerPopover } from './DatePickerPopover'
 
@@ -67,24 +68,24 @@ export function CoachHeaderCard({ draft, onSetDate, onSetStats }: {
 
       {/* Stats strip — Volume/Sets live-derived; Duration/Avg HR/Calories editable. */}
       <div className="grid grid-cols-3 gap-2">
-        <Badge label="Volume" value={`${totals.volumeKg.toLocaleString()}`} unit="kg" color="#16F5C3" />
-        <Badge label="Sets" value={String(totals.sets)} color="#3EE0FF" />
-        <EditBadge label="Duration" value={s?.duration_min ?? null} unit="m" color="#8B7CFF"
-          onChange={(v) => onSetStats({ duration_min: v })} />
-        <EditBadge label="Avg HR" value={s?.avg_hr_bpm ?? null} unit="bpm" color="#FF5470"
+        <Badge label="Volume" value={`${totals.volumeKg.toLocaleString()}`} unit="kg" color="#8B5CF6" />
+        <Badge label="Sets" value={String(totals.sets)} color="#22D3EE" />
+        <EditBadge label="Duration" value={s?.duration_min ?? null} unit="m" color="#EC4899"
+          onChange={(v) => onSetStats({ duration_min: v })} parse={parseDurationMin} />
+        <EditBadge label="Avg HR" value={s?.avg_hr_bpm ?? null} unit="bpm" color="#FB7185"
           onChange={(v) => onSetStats({ avg_hr_bpm: v })} />
-        <EditBadge label="Calories" value={s?.calories_kcal ?? null} unit="kcal" color="#FFB86B"
+        <EditBadge label="Calories" value={s?.calories_kcal ?? null} unit="kcal" color="#FBBF24"
           onChange={(v) => onSetStats({ calories_kcal: v })} />
         <Badge
           label="Δ vs prior"
           value={s?.volume_delta_pct_vs_prior != null ? `${s.volume_delta_pct_vs_prior > 0 ? '+' : ''}${s.volume_delta_pct_vs_prior}%` : '—'}
-          color={s?.volume_delta_pct_vs_prior != null ? (s.volume_delta_pct_vs_prior >= 0 ? '#43F59B' : '#FF5470') : '#8B97B2'}
+          color={s?.volume_delta_pct_vs_prior != null ? (s.volume_delta_pct_vs_prior >= 0 ? '#34D399' : '#FB7185') : '#8B97B2'}
         />
       </div>
 
       {draft.coachInsight && (
         <div className="rounded-xl px-3 py-2.5 flex gap-2 items-start"
-          style={{ background: 'rgba(22,245,195,0.06)', border: '1px solid rgba(22,245,195,0.22)' }}>
+          style={{ background: 'rgba(139,92,246,0.06)', border: '1px solid rgba(139,92,246,0.22)' }}>
           <Sparkles className="w-3.5 h-3.5 shrink-0 mt-0.5 text-primary" aria-hidden="true" />
           <p className="text-sm text-text leading-relaxed" dir="auto">{draft.coachInsight}</p>
         </div>
@@ -93,8 +94,8 @@ export function CoachHeaderCard({ draft, onSetDate, onSetStats }: {
       {draft.nextSessionFlag && (
         <div className="rounded-xl px-3 py-2.5 flex gap-2 items-start"
           style={{ background: 'rgba(232,197,122,0.07)', border: '1px solid rgba(232,197,122,0.35)' }}>
-          <Flag className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: '#E8C57A' }} aria-hidden="true" />
-          <p className="text-sm leading-relaxed" style={{ color: '#E8C57A' }} dir="auto">{draft.nextSessionFlag}</p>
+          <Flag className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: '#F5C15A' }} aria-hidden="true" />
+          <p className="text-sm leading-relaxed" style={{ color: '#F5C15A' }} dir="auto">{draft.nextSessionFlag}</p>
         </div>
       )}
     </div>
@@ -113,19 +114,23 @@ function Badge({ label, value, unit, color }: { label: string; value: string; un
 }
 
 /** Tap-to-edit numeric metadata badge (Duration / Avg HR / Calories). */
-function EditBadge({ label, value, unit, color, onChange }: {
-  label: string; value: number | null; unit: string; color: string; onChange: (v: number | null) => void
+function EditBadge({ label, value, unit, color, onChange, parse }: {
+  label: string; value: number | null; unit: string; color: string
+  onChange: (v: number | null) => void
+  /** Custom string→number parser (e.g. Duration accepts "1:06"). */
+  parse?: (raw: string) => number | null
 }) {
   const [editing, setEditing] = useState(false)
+  const toNumber = parse ?? ((raw: string) => (raw.trim() === '' ? null : Number(raw)))
   return (
     <div className="rounded-xl px-2 py-2 text-center" style={{ background: `${color}14`, border: `1px solid ${color}33` }}>
       {editing ? (
         <input
           autoFocus
-          type="number"
+          type={parse ? 'text' : 'number'}
           inputMode="numeric"
           defaultValue={value ?? ''}
-          onBlur={(e) => { const n = e.target.value.trim(); onChange(n === '' ? null : Number(n)); setEditing(false) }}
+          onBlur={(e) => { onChange(toNumber(e.target.value)); setEditing(false) }}
           onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
           className="w-full bg-transparent text-center helix-num font-bold text-fluid-base tabular-nums outline-none"
           style={{ color }}

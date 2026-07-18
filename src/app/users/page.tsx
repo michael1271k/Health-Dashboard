@@ -6,10 +6,10 @@ import { displayWeight, useUnitSystem } from '@/lib/utils/units'
 
 function scoreColor(score: number | null): string {
   if (score == null) return '#8B97B2'
-  if (score >= 80) return '#16F5C3'
-  if (score >= 60) return '#3EE0FF'
-  if (score >= 40) return '#FFB86B'
-  return '#FF5470'
+  if (score >= 80) return '#8B5CF6'
+  if (score >= 60) return '#22D3EE'
+  if (score >= 40) return '#FBBF24'
+  return '#FB7185'
 }
 
 function Spark({ points }: { points: number[] }) {
@@ -19,7 +19,7 @@ function Spark({ points }: { points: number[] }) {
   const d = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${(i / (points.length - 1)) * 72} ${18 - norm(p) * 16}`).join(' ')
   return (
     <svg width="72" height="20" viewBox="0 0 72 20" aria-hidden="true">
-      <path d={d} fill="none" stroke="#16F5C3" strokeWidth="1.6" strokeLinecap="round" />
+      <path d={d} fill="none" stroke="#8B5CF6" strokeWidth="1.6" strokeLinecap="round" />
     </svg>
   )
 }
@@ -36,7 +36,7 @@ function MemberCard({ m, unit }: { m: ManagedUser; unit: string }) {
         </div>
         <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 rounded shrink-0"
           style={m.role === 'admin'
-            ? { color: '#16F5C3', background: '#16F5C31a', border: '1px solid #16F5C340' }
+            ? { color: '#8B5CF6', background: '#8B5CF61a', border: '1px solid #8B5CF640' }
             : { color: '#8B97B2', background: '#8B97B21a', border: '1px solid #8B97B240' }}>
           {m.role}
         </span>

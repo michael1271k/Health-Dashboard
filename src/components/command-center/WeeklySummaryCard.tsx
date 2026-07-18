@@ -5,7 +5,7 @@ import { CalendarRange, ChevronRight, Trophy } from 'lucide-react'
 import { useWeekSessions, weekStartOf, isoAddDays } from '@/lib/hooks/useWeekSessions'
 import { logicalTodayISO } from '@/lib/utils/day'
 
-const GOLD = '#E8C57A'
+const GOLD = '#F5C15A'
 
 /**
  * Weekly Session Summary entry points. The gold CTA appears on Fridays once the

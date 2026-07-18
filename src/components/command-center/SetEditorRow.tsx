@@ -7,8 +7,8 @@ import { tapLight } from '@/lib/native/haptics'
 import type { DraftSet } from '@/lib/sessions/draft'
 
 const WEIGHT_STEPS = [-2.5, -0.5, +0.5, +2.5] as const
-const VIOLET = '#8B7CFF' // warm-up
-const DANGER = '#FF5470' // failure
+const ORANGE = '#FF8A3D' // warm-up
+const DANGER = '#FB7185' // failure
 
 /** Stable slider ceiling for a load (multiple of 10, ≥ weight + 30 headroom). */
 const maxFor = (w: number) => Math.max(60, Math.ceil((w + 30) / 10) * 10)
@@ -18,10 +18,12 @@ const maxFor = (w: number) => Math.max(60, Math.ceil((w + 30) / 10) * 10)
  * haptic stepper chips, reps ±1, Warm-up/Failure toggles). Only the active row
  * mounts its slider, keeping long decks light.
  */
-export function SetEditorRow({ index, set, active, onActivate, onChange, onRemove }: {
+export function SetEditorRow({ index, set, active, timed = false, onActivate, onChange, onRemove }: {
   index: number
   set: DraftSet
   active: boolean
+  /** Time-based movement (plank/hold) — the reps field is seconds, not reps. */
+  timed?: boolean
   onActivate: () => void
   onChange: (patch: Partial<DraftSet>) => void
   onRemove: () => void
@@ -59,7 +61,7 @@ export function SetEditorRow({ index, set, active, onActivate, onChange, onRemov
     <div
       className={`rounded-lg border transition-colors ${
         active ? 'border-primary/30 bg-white/[0.03]'
-        : isWarm ? 'border-transparent bg-[#8B7CFF]/[0.05]' : 'border-transparent'}`}
+        : isWarm ? 'border-transparent bg-[#FF8A3D]/[0.06]' : 'border-transparent'}`}
     >
       {/* ── Summary line (always visible) ── */}
       <div className="flex items-center gap-2 px-2 py-1">
@@ -71,7 +73,7 @@ export function SetEditorRow({ index, set, active, onActivate, onChange, onRemov
         >
           <span
             className="w-6 shrink-0 text-[10px] font-bold uppercase tracking-wide tabular-nums"
-            style={{ color: isWarm ? VIOLET : isFail ? DANGER : 'var(--color-muted)' }}
+            style={{ color: isWarm ? ORANGE : isFail ? DANGER : 'var(--color-muted)' }}
           >
             {isWarm ? 'W' : `S${index + 1}`}
           </span>
@@ -80,7 +82,7 @@ export function SetEditorRow({ index, set, active, onActivate, onChange, onRemov
           </span>
           <span className="text-muted text-xs">×</span>
           <span className={`helix-num text-fluid-base font-bold tabular-nums ${isWarm ? 'text-muted' : 'text-text'}`}>
-            {set.reps}<span className="text-[10px] text-muted font-normal ml-0.5">reps</span>
+            {set.reps}<span className="text-[10px] text-muted font-normal ml-0.5">{timed ? 'sec' : 'reps'}</span>
           </span>
           {isFail && (
             <span className="text-[9px] font-bold uppercase px-1 py-px rounded"
@@ -117,7 +119,7 @@ export function SetEditorRow({ index, set, active, onActivate, onChange, onRemov
             <Slider.Thumb
               className="block w-5 h-5 rounded-full bg-primary outline-none
                          focus-visible:ring-2 focus-visible:ring-primary/60
-                         shadow-[0_0_12px_rgba(22,245,195,0.55)]"
+                         shadow-[0_0_12px_rgba(139,92,246,0.55)]"
             />
           </Slider.Root>
           <div className="flex items-center justify-between gap-1.5">
@@ -143,7 +145,7 @@ export function SetEditorRow({ index, set, active, onActivate, onChange, onRemov
           </div>
           {/* Set modifiers — Warm-up / Failure (Hevy parity) */}
           <div className="flex items-center gap-1.5">
-            <TypeChip active={isWarm} color={VIOLET} label="Warm-up" short="W" onClick={() => toggleType('warmup')} />
+            <TypeChip active={isWarm} color={ORANGE} label="Warm-up" short="W" onClick={() => toggleType('warmup')} />
             <TypeChip active={isFail} color={DANGER} label="Failure" short="F" onClick={() => toggleType('failure')} />
           </div>
         </div>

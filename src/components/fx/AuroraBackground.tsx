@@ -14,14 +14,14 @@ export function AuroraBackground() {
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
 
-  // AXIS-era band — deep indigo → cyan, gently shifting by time of day.
+  // Aurora Health band — violet → magenta → cyan, gently shifting by time of day.
   const hour = mounted ? new Date().getHours() : 12
-  const baseHue = 210 + Math.round(16 * Math.sin((hour / 24) * Math.PI * 2))
-  const sat = 80
-  const light = 27
-  const c1 = `hsl(${baseHue} ${sat}% ${light}%)`
-  const c2 = `hsl(${baseHue + 28} ${sat}% ${light + 2}%)`     // deep indigo
-  const c3 = `hsl(${baseHue - 34} ${sat - 8}% ${light - 2}%)` // cyan-teal
+  const baseHue = 262 + Math.round(14 * Math.sin((hour / 24) * Math.PI * 2))
+  const sat = 78
+  const light = 30
+  const c1 = `hsl(${baseHue} ${sat}% ${light}%)`              // violet
+  const c2 = `hsl(${baseHue + 55} ${sat - 4}% ${light}%)`    // magenta
+  const c3 = `hsl(${baseHue - 75} ${sat}% ${light - 3}%)`    // cyan
 
   return (
     <>

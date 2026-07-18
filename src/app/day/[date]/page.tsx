@@ -8,7 +8,7 @@ import { CompletenessArc } from '@/components/day/CompletenessArc'
 import { InBodyCard } from '@/components/day/InBodyCard'
 import { SubjectiveBlock } from '@/components/day/SubjectiveBlock'
 import { SleepDebtGauge } from '@/components/day/SleepDebtGauge'
-import { SessionVolumeMini } from '@/components/day/SessionVolumeMini'
+import { SessionExerciseList } from '@/components/day/SessionExerciseList'
 import { SessionProgressionCard } from '@/components/day/SessionProgressionCard'
 import { SwapDayControl } from '@/components/day/SwapDayControl'
 import { useDayVault, dayCompleteness, type DayVaultData } from '@/lib/hooks/useDayVault'
@@ -18,12 +18,12 @@ import { ERA_META, eraForDate, scheduleDayFor, PROGRAMS, DEFAULT_PROGRAM_ID, get
 import { displayWeight, validWeight, weightUnit } from '@/lib/utils/units'
 import { formatSleep, mlToL } from '@/lib/utils/format'
 
-const VIOLET = '#8B7CFF'
-const ICE = '#6FE9FF'
-const TEAL = '#16F5C3'
-const CYAN = '#3EE0FF'
-const EMBER = '#FFB86B'
-const ROSE = '#FF5470'
+const VIOLET = '#EC4899'
+const ICE = '#38BDF8'
+const TEAL = '#8B5CF6'
+const CYAN = '#22D3EE'
+const EMBER = '#FBBF24'
+const ROSE = '#FB7185'
 
 function scoreColor(score: number | null | undefined): string {
   if (score == null) return '#8B97B2'
@@ -205,10 +205,10 @@ export default function DailyNexusPage() {
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 text-center">
             {[
               { label: 'Weight', v: displayWeight(validWeight(log?.weight_kg)), u: unit, c: TEAL },
-              { label: 'Steps', v: log?.steps != null ? Math.round(log.steps / 100) / 10 + 'k' : null, u: '', c: '#4FC3FF' },
+              { label: 'Steps', v: log?.steps != null ? Math.round(log.steps / 100) / 10 + 'k' : null, u: '', c: '#38BDF8' },
               { label: 'Water', v: log?.water_ml != null ? mlToL(log.water_ml) : null, u: 'L', c: CYAN },
               { label: 'Active', v: log?.active_energy != null ? Math.round(log.active_energy) : null, u: '', c: EMBER },
-              { label: 'Stand', v: log?.stand_hours != null ? `${log.stand_hours}` : null, u: 'h', c: '#43F59B' },
+              { label: 'Stand', v: log?.stand_hours != null ? `${log.stand_hours}` : null, u: 'h', c: '#34D399' },
               { label: 'VO₂', v: log?.vo2max ?? null, u: '', c: ICE },
             ].map((s) => (
               <div key={s.label} className="rounded-lg bg-white/[0.02] border border-white/[0.05] px-1 py-1.5">
@@ -256,7 +256,7 @@ export default function DailyNexusPage() {
                 <MetaChip emoji="❤️" value={s.avgBpm != null ? `${s.avgBpm}` : '—'} label="bpm" color={ROSE} />
                 <MetaChip emoji="🔥" value={s.calories != null ? `${s.calories}` : '—'} label="kcal" color={EMBER} />
               </div>
-              <SessionVolumeMini sessionId={s.id} />
+              <SessionExerciseList sessionId={s.id} />
             </section>
           ))}
         </>

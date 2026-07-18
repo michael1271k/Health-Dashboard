@@ -47,11 +47,11 @@ export function BottomNav() {
               aria-expanded={moreOpen}
               className={`relative w-full flex flex-col items-center gap-0.5 py-1.5 px-1 rounded-xl
                           transition-colors duration-200 min-h-[44px] ${moreActive ? '' : 'text-muted'}`}
-              style={moreActive ? { color: '#6FE9FF' } : {}}
+              style={moreActive ? { color: '#38BDF8' } : {}}
             >
               {moreActive && (
                 <m.span layoutId="bottomnav-active" className="absolute inset-0 rounded-xl"
-                  style={{ background: 'rgba(111,233,255,0.12)' }}
+                  style={{ background: 'rgba(56,189,248,0.12)' }}
                   transition={{ type: 'spring', stiffness: 420, damping: 36 }} aria-hidden="true" />
               )}
               <MoreHorizontal className="relative z-10 w-5 h-5" aria-hidden="true" />
@@ -73,7 +73,7 @@ export function BottomNav() {
                   aria-current={active ? 'page' : undefined}
                   className="flex items-center gap-3 rounded-xl px-4 py-3.5 min-h-[56px] transition-colors
                              bg-white/[0.03] border border-white/[0.06] active:scale-[0.99]"
-                  style={active ? { background: 'rgba(111,233,255,0.10)', borderColor: 'rgba(111,233,255,0.30)' } : {}}
+                  style={active ? { background: 'rgba(56,189,248,0.10)', borderColor: 'rgba(56,189,248,0.30)' } : {}}
                 >
                   <Icon className={`w-5 h-5 ${active ? 'text-primary' : 'text-muted'}`} aria-hidden="true" />
                   <span className={`text-fluid-sm font-semibold ${active ? 'text-primary' : 'text-text'}`}>{label}</span>
@@ -96,11 +96,11 @@ function NavCell({ href, Icon, label, active }: { href: string; Icon: LucideIcon
         aria-current={active ? 'page' : undefined}
         className={`relative flex flex-col items-center gap-0.5 py-1.5 px-1 rounded-xl
                     transition-colors duration-200 min-h-[44px] ${active ? '' : 'text-muted'}`}
-        style={active ? { color: '#6FE9FF' } : {}}
+        style={active ? { color: '#38BDF8' } : {}}
       >
         {active && (
           <m.span layoutId="bottomnav-active" className="absolute inset-0 rounded-xl"
-            style={{ background: 'rgba(111,233,255,0.12)' }}
+            style={{ background: 'rgba(56,189,248,0.12)' }}
             transition={{ type: 'spring', stiffness: 420, damping: 36 }} aria-hidden="true" />
         )}
         <Icon className="relative z-10 w-5 h-5" aria-hidden="true" />

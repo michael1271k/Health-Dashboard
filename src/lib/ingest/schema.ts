@@ -61,6 +61,7 @@ const BaseSchema = z.object({
   carbs:               floatField(),                 // numeric(8,2)
   protein:             floatField(),
   fats:                floatField(),
+  calories:            intField(),                   // source-of-truth (MFP) — preferred over the macro estimate
   weight:              floatField(),                 // kg
   lean_mass:           floatField(),                 // kg
   bmi:                 floatField(),

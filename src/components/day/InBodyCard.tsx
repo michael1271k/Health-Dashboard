@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Check, ChevronDown, Loader2, Scale } from 'lucide-react'
 import { useSaveBodyMetrics, type BodyMetricsPatch, type DayVaultData } from '@/lib/hooks/useDayVault'
 
-const TEAL = '#16F5C3'
+const TEAL = '#8B5CF6'
 
 const FIELDS: Array<{ key: keyof BodyMetricsPatch; label: string; unit: string }> = [
   { key: 'weight_kg',      label: 'Weight',       unit: 'kg' },

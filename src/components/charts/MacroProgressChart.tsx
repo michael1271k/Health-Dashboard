@@ -74,7 +74,7 @@ export function MacroProgressChart({ data, goals, isLoading }: { data: Nutrition
             {usePct && <ReferenceLine y={100} stroke={metric.color} strokeDasharray="4 2" strokeWidth={1} label={{ value: 'Goal', position: 'insideRight', fill: '#8B97B2', fontSize: 10 }} />}
             <Bar dataKey="val" radius={[4, 4, 0, 0]} maxBarSize={28}>
               {chartData.map((entry, index) => (
-                <Cell key={index} fill={usePct ? (entry.val >= 100 ? metric.color : entry.val >= 75 ? '#FFB020' : '#FF5470') : metric.color} />
+                <Cell key={index} fill={usePct ? (entry.val >= 100 ? metric.color : entry.val >= 75 ? '#FBBF24' : '#FB7185') : metric.color} />
               ))}
             </Bar>
           </BarChart>

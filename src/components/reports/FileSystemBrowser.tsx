@@ -13,7 +13,7 @@ interface FileItem { key: string; name: string; sub?: string; icon: LucideIcon; 
 
 const fmt = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString('en-IL', { month: 'short', day: 'numeric' })
 const cap = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : 'Session')
-const SPLIT_COLOR: Record<string, string> = { push: '#38E1FF', pull: '#43F59B', legs: '#4FC3FF', upper: '#19E3B1', lower: '#E8C57A' }
+const SPLIT_COLOR: Record<string, string> = { push: '#22D3EE', pull: '#34D399', legs: '#38BDF8', upper: '#34D399', lower: '#F5C15A' }
 
 /**
  * Journey browser: the Helix Timeline Spine indexes every program week; opening
@@ -33,11 +33,11 @@ export function FileSystemBrowser({ reports, gymReports, focusWeek, era = 'all' 
   function filesFor(w: ProgramWeek): FileItem[] {
     const files: FileItem[] = []
     const report = reports.find((r) => r.period_start >= w.weekStart && r.period_start <= w.weekEnd)
-    if (report?.session_summary_md) files.push({ key: 'session', name: 'Gym Session Summary', icon: Dumbbell, accent: '#19E3B1', body: report.session_summary_md })
-    if (report?.weight_report_md) files.push({ key: 'weight', name: 'Weight Management Report', icon: Scale, accent: '#43F59B', body: report.weight_report_md })
-    if (report && !report.session_summary_md && !report.weight_report_md && report.content_md) files.push({ key: 'overview', name: 'Overview', icon: FileText, accent: '#38E1FF', body: report.content_md })
+    if (report?.session_summary_md) files.push({ key: 'session', name: 'Gym Session Summary', icon: Dumbbell, accent: '#34D399', body: report.session_summary_md })
+    if (report?.weight_report_md) files.push({ key: 'weight', name: 'Weight Management Report', icon: Scale, accent: '#34D399', body: report.weight_report_md })
+    if (report && !report.session_summary_md && !report.weight_report_md && report.content_md) files.push({ key: 'overview', name: 'Overview', icon: FileText, accent: '#22D3EE', body: report.content_md })
     for (const g of gymReports.filter((g) => g.date >= w.weekStart && g.date <= w.weekEnd)) {
-      files.push({ key: `gym-${g.id}`, name: `${cap(g.split)} session`, sub: fmt(g.date), icon: Dumbbell, accent: SPLIT_COLOR[g.split] ?? '#38E1FF', body: g.reportMd, meta: g })
+      files.push({ key: `gym-${g.id}`, name: `${cap(g.split)} session`, sub: fmt(g.date), icon: Dumbbell, accent: SPLIT_COLOR[g.split] ?? '#22D3EE', body: g.reportMd, meta: g })
     }
     return files
   }

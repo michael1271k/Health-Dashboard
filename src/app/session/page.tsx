@@ -49,8 +49,11 @@ function SessionPageInner() {
   const seedReady = !exMapQ.isPending && !memoryQ.isPending
   const { hydrated, draft, start, discard } = store
 
+  // Match on program-day identity only — NOT the date. Back-dating an active
+  // template deck (or editing an existing session) must never trip the
+  // "Draft in progress" chooser; an edit draft (replaceSessionId) always resumes.
   const draftMatchesTemplate = !!draft && !!templateDay
-    && draft.dayKey === templateDay.key && draft.date === targetDate
+    && (draft.dayKey === templateDay.key || !!draft.replaceSessionId)
 
   // At most ONE auto-seed per mount: without the ref, discarding a template
   // deck re-triggers this effect (draft just became null, ?template= is still

@@ -10,7 +10,7 @@ const SCORE_COMPONENTS = [
   { key: 'sleep_score',     label: 'Sleep',      weight: 25, color: '#38BDF8' },
   { key: 'nutrition_score', label: 'Nutrition',   weight: 30, color: '#00E5A0' },
   { key: 'activity_score',  label: 'Activity',    weight: 20, color: '#7C5CFF' },
-  { key: 'workout_score',   label: 'Workout',     weight: 15, color: '#FFB020' },
+  { key: 'workout_score',   label: 'Workout',     weight: 15, color: '#FBBF24' },
   { key: 'recovery_score',  label: 'Recovery',    weight: 10, color: '#94A3B8' },
 ] as const
 
@@ -107,7 +107,7 @@ export const ScoreCard = memo(function ScoreCard({ score, isLoading }: ScoreCard
                     className="score-ring-draw"
                     cx="35" cy="35" r="30" fill="none"
                     stroke="currentColor" strokeWidth="4" strokeLinecap="round"
-                    style={{ strokeDashoffset: 190 - 190 * (totalScore / 100), color: totalScore >= 80 ? '#19E3B1' : totalScore >= 60 ? '#38E1FF' : totalScore >= 40 ? '#FFB020' : '#FF5470' }}
+                    style={{ strokeDashoffset: 190 - 190 * (totalScore / 100), color: totalScore >= 80 ? '#34D399' : totalScore >= 60 ? '#22D3EE' : totalScore >= 40 ? '#FBBF24' : '#FB7185' }}
                   />
                 )}
               </svg>
@@ -120,7 +120,7 @@ export const ScoreCard = memo(function ScoreCard({ score, isLoading }: ScoreCard
               <span className="text-muted text-lg">{totalScore == null ? 'no data yet' : '/100'}</span>
             </div>
           </div>
-          <EcgPulse level={totalScore} color={totalScore == null ? '#5A6B85' : totalScore >= 60 ? '#19E3B1' : totalScore >= 40 ? '#FFB020' : '#FF5470'} />
+          <EcgPulse level={totalScore} color={totalScore == null ? '#5A6B85' : totalScore >= 60 ? '#34D399' : totalScore >= 40 ? '#FBBF24' : '#FB7185'} />
 
           {/* Component rings */}
           <div className="flex items-end justify-between gap-2" role="list" aria-label="Score components">

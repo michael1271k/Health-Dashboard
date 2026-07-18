@@ -161,7 +161,7 @@ export function WeeklyReviewCard() {
       </div>
       {(data?.newPRsCount ?? 0) > 0 && (
         <div className="mt-3 pt-3 border-t border-border text-center">
-          <span className="text-xs font-semibold text-[#FFB020]">
+          <span className="text-xs font-semibold text-[#FBBF24]">
             {data!.newPRsCount} new PR{data!.newPRsCount !== 1 ? 's' : ''} this week
           </span>
         </div>

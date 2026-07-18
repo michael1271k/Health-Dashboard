@@ -9,20 +9,21 @@
   /* HELIX Color Palette — "Bioluminescence"
      Abyssal-ocean base with living bioluminescent accents: living teal,
      plankton cyan, abyss violet for recovery, ember for fuel/caution. */
-  --color-bg: #030509;          /* abyssal near-black */
-  --color-surface: #080d18;     /* raised glass base */
-  --color-surface-2: #101728;   /* solid raised surfaces (sliders, inputs) */
-  --color-primary: #16F5C3;     /* living teal — the HELIX signature accent */
-  --color-energy: #8B7CFF;      /* abyss violet — recovery / battery accents */
-  --color-info: #3EE0FF;        /* plankton cyan — data */
-  --color-ice: #6FE9FF;         /* neon ice-blue — interactive/active accent */
-  --color-success: #43F59B;     /* mint green — positive deltas */
-  --color-warn: #FFB86B;        /* ember — fuel / caution */
-  --color-danger: #FF5470;      /* rose — negative */
-  --color-gold: #E8C57A;        /* warm gold — PRs / luxury highlight */
-  --color-text: #EAF2FF;
-  --color-muted: #8B97B2;
-  --color-border: #182238;      /* hairline (legacy solid contexts) */
+  /* Aurora Health palette — indigo-black base, violet→magenta→cyan spectrum. */
+  --color-bg: #0A0B1A;          /* indigo-black */
+  --color-surface: #0E1126;     /* raised glass base */
+  --color-surface-2: #171A33;   /* solid raised surfaces (sliders, inputs) */
+  --color-primary: #8B5CF6;     /* aurora violet — the HELIX signature accent */
+  --color-energy: #EC4899;      /* aurora magenta — recovery / battery accents */
+  --color-info: #22D3EE;        /* aurora cyan — data */
+  --color-ice: #38BDF8;         /* sky-blue — interactive/active accent */
+  --color-success: #34D399;     /* emerald — positive deltas */
+  --color-warn: #FBBF24;        /* amber — fuel / caution */
+  --color-danger: #FB7185;      /* coral — negative */
+  --color-gold: #F5C15A;        /* warm gold — PRs / luxury highlight */
+  --color-text: #ECEBFF;
+  --color-muted: #9AA3C4;
+  --color-border: #23264A;      /* hairline (legacy solid contexts) */
   /* Light mode (kept for completeness) */
   --color-light-bg: #F4F6FA;
   --color-light-surface: #FFFFFF;
@@ -389,12 +390,12 @@ html[data-theme='travel'] {
   /* Glowing HELIX wordmark — indigo→cyan→teal gradient + soft glow. */
   .helix-wordmark {
     /* Bioluminescent band: living teal → plankton cyan → abyss violet */
-    background: linear-gradient(90deg, #16F5C3 0%, #3EE0FF 55%, #8B7CFF 100%);
+    background: linear-gradient(90deg, #8B5CF6 0%, #22D3EE 55%, #EC4899 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
     -webkit-text-fill-color: transparent;
-    filter: drop-shadow(0 0 16px rgba(22,245,195,0.45));
+    filter: drop-shadow(0 0 16px rgba(139,92,246,0.45));
   }
 }
 
@@ -492,8 +493,8 @@ html[data-hidden='true'] .battery-bubble { animation-play-state: paused; }
 
 /* Readiness orb "breathing" — glow-only pulse (no transform near glass). */
 @keyframes orbBreathe {
-  0%, 100% { filter: drop-shadow(0 0 14px rgba(22,245,195,0.16)); }
-  50%      { filter: drop-shadow(0 0 30px rgba(22,245,195,0.34)); }
+  0%, 100% { filter: drop-shadow(0 0 14px rgba(139,92,246,0.16)); }
+  50%      { filter: drop-shadow(0 0 30px rgba(139,92,246,0.34)); }
 }
 .orb-breathe { animation: orbBreathe 5.5s ease-in-out infinite; }
 
@@ -567,11 +568,11 @@ html[data-reduce-motion='true'] [role='status'][aria-live='polite'] { animation:
              boltBloom 300ms ease 420ms forwards;
 }
 @keyframes boltDraw { to { stroke-dashoffset: 0; } }
-@keyframes boltBloom { to { fill: #16F5C3; } }
+@keyframes boltBloom { to { fill: #8B5CF6; } }
 
 /* One charge-line sweep across the capsule's bottom edge (compositor-only). */
 .charge-line {
-  background: linear-gradient(90deg, transparent, #16F5C3, transparent);
+  background: linear-gradient(90deg, transparent, #8B5CF6, transparent);
   transform: translate3d(-100%, 0, 0);
   animation: chargeSweep 700ms cubic-bezier(0.4, 0, 0.2, 1) 380ms 1 forwards;
 }

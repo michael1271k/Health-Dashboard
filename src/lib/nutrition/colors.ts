@@ -3,10 +3,10 @@
  * ring, bar, chart, tile, and tag in the app. Bioluminescent mapping:
  */
 export const MACRO_COLORS = {
-  calories: '#16F5C3', // living teal — the brand hero
-  protein:  '#3EE0FF', // plankton cyan
-  carbs:    '#8B7CFF', // abyss violet
-  fat:      '#FFB86B', // ember
+  calories: '#8B5CF6', // living teal — the brand hero
+  protein:  '#22D3EE', // plankton cyan
+  carbs:    '#EC4899', // abyss violet
+  fat:      '#FBBF24', // ember
 } as const
 
 export type MacroKey = keyof typeof MACRO_COLORS

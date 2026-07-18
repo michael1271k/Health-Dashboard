@@ -69,18 +69,18 @@ export function SyncPulse() {
           background: 'rgba(6, 14, 20, 0.72)',
           backdropFilter: 'blur(18px) saturate(160%)',   // static layer — never animated itself
           WebkitBackdropFilter: 'blur(18px) saturate(160%)',
-          borderColor: '#16F5C355',
-          boxShadow: '0 10px 32px rgba(0,0,0,0.55), 0 0 20px #16F5C326, inset 0 1px 0 rgba(255,255,255,0.07)',
+          borderColor: '#8B5CF655',
+          boxShadow: '0 10px 32px rgba(0,0,0,0.55), 0 0 20px #8B5CF626, inset 0 1px 0 rgba(255,255,255,0.07)',
         }}>
         {/* The bolt draws itself, then blooms */}
         <svg width="16" height="20" viewBox="0 0 12 16" fill="none" aria-hidden="true" className="shrink-0">
           <path d="M7 1 L2 9 H5.5 L4.5 15 L10 6.5 H6.5 Z"
-            stroke="#16F5C3" strokeWidth="1.4" strokeLinejoin="round"
+            stroke="#8B5CF6" strokeWidth="1.4" strokeLinejoin="round"
             className={reduceMotion ? undefined : 'charge-bolt-draw'}
-            style={{ filter: 'drop-shadow(0 0 5px #16F5C388)' }} />
+            style={{ filter: 'drop-shadow(0 0 5px #8B5CF688)' }} />
         </svg>
         <span className="text-fluid-xs font-medium text-text whitespace-nowrap">
-          <span className="helix-num" style={{ color: '#16F5C3' }}>{summary}</span>
+          <span className="helix-num" style={{ color: '#8B5CF6' }}>{summary}</span>
         </span>
         {/* One charge-line sweep along the bottom edge (translate3d only) */}
         {!reduceMotion && (

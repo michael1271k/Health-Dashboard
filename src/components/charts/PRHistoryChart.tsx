@@ -19,7 +19,7 @@ const EXERCISE_COLORS = [
   '#00E5A0', // primary
   '#7C5CFF', // energy
   '#38BDF8', // info
-  '#FFB020', // warn
+  '#FBBF24', // warn
   '#FF4D6D', // danger
 ]
 

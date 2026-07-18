@@ -27,9 +27,9 @@ function useTrendSeries() {
       const body = (bodyRes.data ?? []) as Array<{ weight_kg: number | null }>
       const sleep = (sleepRes.data ?? []) as Array<{ duration_min: number | null }>
       return [
-        { label: 'Score', icon: Gauge, color: '#19E3B1', points: scores.map((r) => r.score ?? 0).filter(Number.isFinite) },
-        { label: 'Weight', icon: Scale, color: '#43F59B', unit: 'kg', points: body.map((r) => r.weight_kg ?? 0).filter((n) => n > 0) },
-        { label: 'Sleep', icon: Moon, color: '#4FC3FF', unit: 'h', points: sleep.map((r) => Math.round(((r.duration_min ?? 0) / 60) * 10) / 10).filter((n) => n > 0) },
+        { label: 'Score', icon: Gauge, color: '#34D399', points: scores.map((r) => r.score ?? 0).filter(Number.isFinite) },
+        { label: 'Weight', icon: Scale, color: '#34D399', unit: 'kg', points: body.map((r) => r.weight_kg ?? 0).filter((n) => n > 0) },
+        { label: 'Sleep', icon: Moon, color: '#38BDF8', unit: 'h', points: sleep.map((r) => Math.round(((r.duration_min ?? 0) / 60) * 10) / 10).filter((n) => n > 0) },
       ]
     },
     staleTime: 5 * 60_000,

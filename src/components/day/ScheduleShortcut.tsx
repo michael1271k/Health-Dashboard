@@ -22,7 +22,7 @@ export function ScheduleShortcut() {
 
   const program = PROGRAMS[getActiveProgramId()] ?? PROGRAMS[DEFAULT_PROGRAM_ID]
   const day = program.days.find((d) => d.key === schedule.dayKey)
-  const color = day?.color ?? '#3EE0FF'
+  const color = day?.color ?? '#22D3EE'
 
   return (
     <Link

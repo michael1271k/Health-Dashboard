@@ -51,7 +51,7 @@ export function StrengthTrends({ days = 120, era = 'all' }: { days?: number; era
             <div className="w-20 h-8 shrink-0">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={s.pts} margin={{ top: 2, bottom: 2, left: 0, right: 0 }}>
-                  <Line dataKey="v" stroke={s.delta >= 0 ? '#43F59B' : '#FF5470'} strokeWidth={2} dot={false} isAnimationActive={false} />
+                  <Line dataKey="v" stroke={s.delta >= 0 ? '#34D399' : '#FB7185'} strokeWidth={2} dot={false} isAnimationActive={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
