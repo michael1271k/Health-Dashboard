@@ -4,7 +4,7 @@ import { Capacitor } from '@capacitor/core'
 import { syncRollingWindow, requestHealthAuthorization } from './healthkit'
 
 const WATERMARK_KEY = 'helix_hk_last_sync'
-const MIN_INTERVAL_MS = 30 * 60 * 1000 // don't re-pull HealthKit more than every 30 min on resume
+const MIN_INTERVAL_MS = 5 * 60 * 1000 // aggressive foreground sync: re-pull HealthKit at most every 5 min on resume
 
 /**
  * Native sync orchestrator. Foreground pulls run on app resume (throttled by a
@@ -52,5 +52,10 @@ export function initNativeSync(): () => void {
 
 /** Entry point for a background task (registered natively). */
 export async function backgroundSync(): Promise<void> {
+  await runSync(true)
+}
+
+/** Force an immediate HealthKit pull (ignores the throttle) — pull-to-refresh. */
+export async function forceHealthKitSync(): Promise<void> {
   await runSync(true)
 }

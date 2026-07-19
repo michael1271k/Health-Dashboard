@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Users } from 'lucide-react'
 import { NotionSync } from '@/components/settings/NotionSync'
+import { HealthSyncCard } from '@/components/settings/HealthSyncCard'
+import { BiometricCard } from '@/components/settings/BiometricCard'
 import { supabase } from '@/lib/supabase/client'
 import { derivePhase, phaseDisplay } from '@/lib/nutrition/phase'
 import { logicalTodayISO } from '@/lib/utils/day'
@@ -296,6 +298,10 @@ export default function SettingsPage() {
           ))}
         </div>
       </section>
+
+      <HealthSyncCard />
+
+      <BiometricCard />
 
       <NotionSync />
 

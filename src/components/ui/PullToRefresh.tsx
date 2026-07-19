@@ -1,54 +1,74 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import { Capacitor } from '@capacitor/core'
 import { RefreshCw } from 'lucide-react'
-import { syncRollingWindow } from '@/lib/native/healthkit'
+import { forceHealthKitSync } from '@/lib/native/sync'
 import { tapLight } from '@/lib/native/haptics'
 
 const THRESHOLD = 72   // px pulled before a refresh fires
 const MAX_PULL = 110   // rubber-band ceiling
+const SLOP = 14        // px of vertical travel before the pull is "claimed"
 
 /**
- * Native-feeling pull-to-refresh for touch devices. Only engages when the page
- * is scrolled to the top and the gesture is clearly vertical; the whole pull is
- * driven by translate3d on a single wrapper (compositor-only, no layout). On
- * release past the threshold it invalidates every query so the just-pushed data
- * loads. Pointer-coarse only — desktop is untouched.
+ * Global, native-feeling pull-to-refresh for touch devices — mounted once and
+ * active on every tab. It refreshes in place (no navigation): on release past
+ * the threshold it pulls fresh Apple Health (native) and revalidates all queries.
+ *
+ * Critically, it does NOT transform content or claim the gesture until travel is
+ * clearly a downward pull (`dy > SLOP && dy > |dx|·1.5`). Plain taps and
+ * horizontal swipes at the top of the screen are never intercepted — that was
+ * the "top-of-screen touches don't register" bug. Bails while an overlay is open,
+ * mid-scroll, or on the fullscreen /session deck. Pointer-coarse only.
  */
 export function PullToRefresh({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient()
-  const router = useRouter()
+  const pathname = usePathname()
   const startY = useRef<number | null>(null)
+  const startX = useRef(0)
+  const claimed = useRef(false)
   const [pull, setPull] = useState(0)
   const [refreshing, setRefreshing] = useState(false)
 
   const onTouchStart = useCallback((e: TouchEvent) => {
-    if (window.scrollY > 0 || refreshing) { startY.current = null; return }
+    claimed.current = false
+    startY.current = null
+    if (refreshing) return
+    if (window.scrollY > 0) return
+    if (document.body.classList.contains('helix-overlay-open')) return
+    if (pathname?.startsWith('/session')) return
     startY.current = e.touches[0].clientY
-  }, [refreshing])
+    startX.current = e.touches[0].clientX
+  }, [refreshing, pathname])
 
   const onTouchMove = useCallback((e: TouchEvent) => {
     if (startY.current == null) return
     const dy = e.touches[0].clientY - startY.current
-    if (dy <= 0) { setPull(0); return }
-    // Rubber-band resistance.
-    setPull(Math.min(MAX_PULL, dy * 0.5))
+    const dx = e.touches[0].clientX - startX.current
+    if (!claimed.current) {
+      // Abandon on upward travel or a horizontal-dominant gesture — leave taps,
+      // scrolls and side-swipes (e.g. chart panning) completely untouched.
+      if (dy <= 0 || (Math.abs(dx) > 10 && Math.abs(dx) > dy)) { startY.current = null; return }
+      if (dy > SLOP && dy > Math.abs(dx) * 1.5) claimed.current = true
+      else return
+    }
+    setPull(Math.min(MAX_PULL, (dy - SLOP) * 0.5))
   }, [])
 
   const onTouchEnd = useCallback(async () => {
-    if (startY.current == null) return
+    if (startY.current == null && !claimed.current) return
     startY.current = null
-    if (pull >= THRESHOLD && !refreshing) {
+    const wasClaimed = claimed.current
+    claimed.current = false
+    if (wasClaimed && pull >= THRESHOLD && !refreshing) {
       setRefreshing(true)
       setPull(THRESHOLD)
       void tapLight()
       try {
-        // Route Home, aggressively pull fresh Apple Health, then revalidate.
-        router.replace('/')
-        if (Capacitor.isNativePlatform()) await syncRollingWindow().catch(() => {})
+        // Refresh in place: pull fresh Apple Health (native), then revalidate.
+        if (Capacitor.isNativePlatform()) await forceHealthKitSync().catch(() => {})
         await queryClient.invalidateQueries()
       } finally {
         setRefreshing(false)
@@ -57,7 +77,7 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
     } else {
       setPull(0)
     }
-  }, [pull, refreshing, queryClient, router])
+  }, [pull, refreshing, queryClient])
 
   useEffect(() => {
     if (typeof window === 'undefined' || !window.matchMedia('(pointer: coarse)').matches) return
@@ -83,7 +103,7 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
           top: 'calc(env(safe-area-inset-top, 0px) + 4px)',
           transform: `translate3d(-50%, ${pull - 44}px, 0)`,
           opacity: progress,
-          transition: startY.current == null ? 'transform 0.24s ease, opacity 0.24s ease' : undefined,
+          transition: pull === 0 && !refreshing ? 'transform 0.24s ease, opacity 0.24s ease' : undefined,
         }}
       >
         <span className="flex h-9 w-9 items-center justify-center rounded-full"
@@ -95,7 +115,7 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
       <div
         style={{
           transform: `translate3d(0, ${pull}px, 0)`,
-          transition: startY.current == null ? 'transform 0.24s cubic-bezier(0.32,0.72,0,1)' : undefined,
+          transition: pull === 0 ? 'transform 0.24s cubic-bezier(0.32,0.72,0,1)' : undefined,
         }}
       >
         {children}

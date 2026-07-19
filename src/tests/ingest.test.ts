@@ -181,4 +181,55 @@ describe('ingest — sleep is an unconditional overwrite', () => {
     expect(result.results.sleep.action).toBe('upserted')  // not 'skipped'
     expect(result.inserted).toContain('sleep_minutes')
   })
+
+  it('writes real stage minutes + bed times when the native payload provides them', async () => {
+    let sleepRow: any = null
+    const db: any = {
+      from(table: string) {
+        if (table === 'daily_logs') return { upsert: () => Promise.resolve({ error: null }) }
+        if (table === 'sleep_sessions') {
+          const chain: any = {
+            eq: () => chain, gte: () => chain, lt: () => chain, delete: () => chain,
+            insert: (row: any) => { sleepRow = row; return Promise.resolve({ error: null }) },
+          }
+          return chain
+        }
+        return noopChain()
+      },
+    }
+    await ingestDailyLog(db, 'user-1', {
+      date: '2026-07-19', sleep_minutes: 462, deep_min: 68, rem_min: 96, core_min: 298, awake_min: 12,
+      bed_start: '2026-07-18T23:10:00.000Z', bed_end: '2026-07-19T06:52:00.000Z',
+    } as any)
+
+    expect(sleepRow.deep_min).toBe(68)
+    expect(sleepRow.rem_min).toBe(96)
+    expect(sleepRow.core_min).toBe(298)
+    expect(sleepRow.awake_min).toBe(12)
+    expect(sleepRow.start_time).toBe('2026-07-18T23:10:00.000Z')
+    expect(sleepRow.end_time).toBe('2026-07-19T06:52:00.000Z')
+  })
+
+  it('falls back to all-core + synthetic bedtime for a stage-less payload', async () => {
+    let sleepRow: any = null
+    const db: any = {
+      from(table: string) {
+        if (table === 'daily_logs') return { upsert: () => Promise.resolve({ error: null }) }
+        if (table === 'sleep_sessions') {
+          const chain: any = {
+            eq: () => chain, gte: () => chain, lt: () => chain, delete: () => chain,
+            insert: (row: any) => { sleepRow = row; return Promise.resolve({ error: null }) },
+          }
+          return chain
+        }
+        return noopChain()
+      },
+    }
+    await ingestDailyLog(db, 'user-1', { date: '2026-07-19', sleep_minutes: 462 } as any)
+
+    expect(sleepRow.core_min).toBe(462)
+    expect(sleepRow.deep_min).toBe(0)
+    expect(sleepRow.rem_min).toBe(0)
+    expect(sleepRow.start_time).toBe('2026-07-19T23:00:00Z')
+  })
 })

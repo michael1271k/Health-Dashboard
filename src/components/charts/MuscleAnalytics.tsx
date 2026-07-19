@@ -43,7 +43,7 @@ export function MuscleAnalyticsSection({ days, era = 'all' }: { days: number; er
           <ResponsiveContainer width="100%" height={230}>
             <BarChart data={data.weekly} margin={{ top: 4, right: 8, bottom: 0, left: -12 }}>
               <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
-              <XAxis dataKey="week" tick={{ fill: '#8B97B2', fontSize: 10, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="week" tick={{ fill: '#8B97B2', fontSize: 10, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={24} tickMargin={4} />
               <YAxis tick={{ fill: '#8B97B2', fontSize: 10, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} width={28} />
               <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
               {MUSCLE_GROUPS.map((g) => <Bar key={g} dataKey={g} stackId="s" fill={GROUP_COLOR[g]} maxBarSize={44} />)}

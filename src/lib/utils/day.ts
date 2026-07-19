@@ -56,6 +56,11 @@ export function logicalTodayISO(cutoff = getDayCutoffHour()): string {
   return base.toISOString().slice(0, 10)
 }
 
+/** Compact "12 Jul" label for a YYYY-MM-DD date (mobile chart axes / lists). */
+export function shortDate(dateISO: string): string {
+  return new Date(`${dateISO}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+}
+
 /** ISO date N logical-days ago. */
 export function logicalDaysAgoISO(n: number, cutoff = getDayCutoffHour()): string {
   const base = new Date(logicalTodayISO(cutoff) + 'T00:00:00Z')

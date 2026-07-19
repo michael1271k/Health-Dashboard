@@ -73,6 +73,42 @@ describe('IngestPayload flex() coercion', () => {
     expect(small.success && small.data.active_energy).toBe(520)
   })
 
+  it('treats a small sleep_minutes value as HOURS (native/Shortcut sends hours)', () => {
+    const r = IngestPayloadSchema.safeParse({ sleep_minutes: 7.5 })
+    expect(r.success).toBe(true)
+    if (r.success) expect(r.data.sleep_minutes).toBe(450) // 7.5h → 450 min
+  })
+
+  it('keeps a real minutes value as-is and drops implausible sleep (>18h)', () => {
+    const ok = IngestPayloadSchema.safeParse({ sleep_minutes: 462 })
+    const junk = IngestPayloadSchema.safeParse({ sleep_minutes: 5400 })
+    expect(ok.success && ok.data.sleep_minutes).toBe(462)
+    expect(junk.success && junk.data.sleep_minutes).toBeUndefined()
+  })
+
+  it('accepts native sleep-stage + bed-time fields', () => {
+    const r = IngestPayloadSchema.safeParse({
+      sleep_minutes: 462, deep_min: 68, rem_min: 96, core_min: 298, awake_min: 12,
+      bed_start: '2026-07-18T23:10:00.000Z', bed_end: '2026-07-19T06:52:00.000Z',
+    })
+    expect(r.success).toBe(true)
+    if (r.success) {
+      expect(r.data.deep_min).toBe(68)
+      expect(r.data.rem_min).toBe(96)
+      expect(r.data.bed_start).toBe('2026-07-18T23:10:00.000Z')
+      expect(r.data.bed_end).toBe('2026-07-19T06:52:00.000Z')
+    }
+  })
+
+  it('accepts native dietary macros (calories/protein/carbs/fats/water)', () => {
+    const r = IngestPayloadSchema.safeParse({ calories: 1934, protein: 170, carbs: 187, fats: 52, water: 2500 })
+    expect(r.success).toBe(true)
+    if (r.success) {
+      expect(r.data.calories).toBe(1934)
+      expect(r.data.protein).toBe(170)
+    }
+  })
+
   it('parses a full mixed payload with junk values without error', () => {
     const r = IngestPayloadSchema.safeParse({
       steps: 8200, water: 2500, sleep_minutes: false, carbs: 180, protein: 175,

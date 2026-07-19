@@ -13,6 +13,53 @@ import { getServerSupabaseClient } from '@/lib/supabase/server'
 import { denyIfUnauthorized } from '@/lib/auth/guard'
 import { requireUserId } from '@/lib/auth/identity'
 
+// Local Sunday-normalizer + program-week counter (mirrors src/lib/reports/weekNumber.ts
+// without importing that 'use client' chain into this server route).
+const WEEK0_START = '2026-07-12'
+function weekStartOf(dateISO: string): string {
+  const d = new Date(`${dateISO}T12:00:00Z`)
+  d.setUTCDate(d.getUTCDate() - d.getUTCDay())
+  return d.toISOString().slice(0, 10)
+}
+function weekNumberOf(weekStartISO: string): number {
+  const a = new Date(`${WEEK0_START}T00:00:00Z`).getTime()
+  const b = new Date(`${weekStartISO}T00:00:00Z`).getTime()
+  return Math.round((b - a) / (7 * 86_400_000))
+}
+
+/**
+ * Distil the aggregate stats into the deterministic ReportPayload shape so an
+ * AI-generated week renders identically to a manually-generated one in the
+ * Progression timeline / Journey (see src/lib/hooks/useReports.ts ReportPayload).
+ */
+function derivePayloadFromStats(stats: Awaited<ReturnType<typeof aggregateWeek>>) {
+  const cap = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : 'Session')
+  const sessions = stats.training.sessions
+  return {
+    volumeKg: Math.round(Number(stats.training.totalVolumeKg) || 0),
+    sets: sessions.reduce((n, s) => n + (s.sets ?? 0), 0),
+    prs: stats.training.totalPRs,
+    calories: Math.round(sessions.reduce((n, s) => n + (s.caloriesBurned ?? 0), 0)),
+    durationMin: sessions.reduce((n, s) => n + (s.durationMin ?? 0), 0),
+    sessions: stats.training.sessionCount,
+    weightDelta:
+      stats.body.latest?.weight_kg != null && stats.body.earliest?.weight_kg != null
+        ? Math.round((stats.body.latest.weight_kg - stats.body.earliest.weight_kg) * 10) / 10
+        : null,
+    fatDelta:
+      stats.body.latest?.body_fat_pct != null && stats.body.earliest?.body_fat_pct != null
+        ? Math.round((stats.body.latest.body_fat_pct - stats.body.earliest.body_fat_pct) * 10) / 10
+        : null,
+    days: sessions.map((s) => ({
+      date: s.date,
+      label: cap(s.split),
+      volumeKg: s.volumeKg,
+      prs: s.prs,
+      split: s.split,
+    })),
+  }
+}
+
 // ─── System prompt ─────────────────────────────────────────────────────────────
 const SYSTEM_PROMPT = `You are the coach for Helix Axis-5 — a personal recomposition system. Speak with specific knowledge of THIS athlete's program; never give generic advice.
 The user (Michael) is on the Helix Cut 5.1 block: strictly 1955 kcal / 170g protein / 195g carbs / 55g fat per day.
@@ -253,16 +300,20 @@ async function persistAndRespond(
   statsPayload: Awaited<ReturnType<typeof aggregateWeek>>,
   contentMd: string,
 ) {
+  // Normalise the window to its containing program week (Sunday-anchored) so the
+  // AI report shares one row with any manually-generated report for that week.
+  const weekStart = weekStartOf(statsPayload.period.from)
   const { data: reportRow, error: dbError } = await supabase
     .from('reports')
     .upsert({
-      user_id:      userId,
-      type:         'weekly',
-      period_start: statsPayload.period.from,
-      period_end:   statsPayload.period.to,
-      content_md:   contentMd,
-      metrics:      statsPayload as unknown as Record<string, unknown>,
-    } as unknown as never, { onConflict: 'user_id,period_start,period_end' })
+      user_id:     userId,
+      kind:        'weekly',
+      week_start:  weekStart,
+      week_number: weekNumberOf(weekStart),
+      content_md:  contentMd,
+      metrics:     statsPayload as unknown as Record<string, unknown>,
+      payload:     derivePayloadFromStats(statsPayload),
+    } as unknown as never, { onConflict: 'user_id,kind,week_start' })
     .select('id')
     .single()
 

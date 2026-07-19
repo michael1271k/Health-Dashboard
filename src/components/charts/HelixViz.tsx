@@ -72,7 +72,7 @@ export function VolumeStream({ days, era = 'all' }: { days: number; era?: 'all' 
       <p className="text-fluid-xs text-muted mb-2">Weekly working sets per muscle group — training-focus drift</p>
       <ResponsiveContainer width="100%" height={220}>
         <AreaChart data={data.weekly} margin={{ top: 4, right: 8, bottom: 0, left: -14 }}>
-          <XAxis dataKey="week" tick={{ fill: '#8B97B2', fontSize: 10, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} />
+          <XAxis dataKey="week" tick={{ fill: '#8B97B2', fontSize: 10, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={24} tickMargin={4} />
           <YAxis tick={{ fill: '#8B97B2', fontSize: 10, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} width={30} />
           <Tooltip content={<ChartTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.1)' }} />
           {MUSCLE_GROUPS.map((g) => (

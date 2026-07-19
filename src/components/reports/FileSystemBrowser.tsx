@@ -1,10 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { FileText, Dumbbell, Scale, ChevronRight, Home, ArrowLeft } from 'lucide-react'
+import { FileText, Dumbbell, ChevronRight, Home, ArrowLeft } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import type { ReportRow, GymReportRow } from '@/lib/hooks/useWeekly'
+import type { GymReportRow } from '@/lib/hooks/useWeekly'
+import type { ReportRow } from '@/lib/hooks/useReports'
 import { enumerateWeeks, type ProgramWeek } from '@/lib/phases'
+import { splitColor } from '@/lib/types/workout'
 import { MarkdownView } from './MarkdownView'
 import { SessionIntelCard } from './SessionIntelCard'
 import { JourneyTimeline } from './JourneyTimeline'
@@ -13,7 +15,6 @@ interface FileItem { key: string; name: string; sub?: string; icon: LucideIcon; 
 
 const fmt = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString('en-IL', { month: 'short', day: 'numeric' })
 const cap = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : 'Session')
-const SPLIT_COLOR: Record<string, string> = { push: '#22D3EE', pull: '#34D399', legs: '#38BDF8', upper: '#34D399', lower: '#F5C15A' }
 
 /**
  * Journey browser: the Helix Timeline Spine indexes every program week; opening
@@ -32,12 +33,10 @@ export function FileSystemBrowser({ reports, gymReports, focusWeek, era = 'all' 
 
   function filesFor(w: ProgramWeek): FileItem[] {
     const files: FileItem[] = []
-    const report = reports.find((r) => r.period_start >= w.weekStart && r.period_start <= w.weekEnd)
-    if (report?.session_summary_md) files.push({ key: 'session', name: 'Gym Session Summary', icon: Dumbbell, accent: '#34D399', body: report.session_summary_md })
-    if (report?.weight_report_md) files.push({ key: 'weight', name: 'Weight Management Report', icon: Scale, accent: '#34D399', body: report.weight_report_md })
-    if (report && !report.session_summary_md && !report.weight_report_md && report.content_md) files.push({ key: 'overview', name: 'Overview', icon: FileText, accent: '#22D3EE', body: report.content_md })
+    const report = reports.find((r) => r.week_start >= w.weekStart && r.week_start <= w.weekEnd)
+    if (report?.content_md) files.push({ key: 'overview', name: `Week ${report.week_number} Report`, icon: FileText, accent: '#22D3EE', body: report.content_md })
     for (const g of gymReports.filter((g) => g.date >= w.weekStart && g.date <= w.weekEnd)) {
-      files.push({ key: `gym-${g.id}`, name: `${cap(g.split)} session`, sub: fmt(g.date), icon: Dumbbell, accent: SPLIT_COLOR[g.split] ?? '#22D3EE', body: g.reportMd, meta: g })
+      files.push({ key: `gym-${g.id}`, name: `${cap(g.split)} session`, sub: fmt(g.date), icon: Dumbbell, accent: splitColor(g.split), body: g.reportMd, meta: g })
     }
     return files
   }

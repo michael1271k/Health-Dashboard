@@ -339,17 +339,29 @@ export interface Database {
         Row: {
           id: string
           user_id: string
-          type: 'weekly'
-          period_start: string
-          period_end: string
-          content_md: string
-          session_summary_md: string | null
-          weight_report_md: string | null
+          kind: string
+          week_start: string
+          week_number: number
+          payload: Record<string, unknown>
+          content_md: string | null
           metrics: Record<string, unknown> | null
           created_at: string
         }
-        Insert: Omit<Database['public']['Tables']['reports']['Row'], 'id' | 'created_at'>
+        Insert: { user_id: string; week_start: string; week_number: number } & Partial<
+          Omit<Database['public']['Tables']['reports']['Row'], 'id' | 'user_id' | 'week_start' | 'week_number' | 'created_at'>
+        >
         Update: Partial<Database['public']['Tables']['reports']['Insert']>
+      }
+      schedule_overrides: {
+        Row: {
+          id: string
+          user_id: string
+          date: string
+          day_key: string
+          created_at: string
+        }
+        Insert: { user_id: string; date: string; day_key: string }
+        Update: Partial<Database['public']['Tables']['schedule_overrides']['Insert']>
       }
       nutrition_phases: {
         Row: {
@@ -368,7 +380,12 @@ export interface Database {
       }
     }
     Views: Record<string, never>
-    Functions: Record<string, never>
+    Functions: {
+      exercise_history: {
+        Args: { p_exercise_id: string }
+        Returns: Json
+      }
+    }
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>
   }

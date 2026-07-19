@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { HelixMark } from '@/components/HelixMark'
+import Image from 'next/image'
 import { useLastUpdated } from '@/lib/hooks/useDashboard'
 
 /** Ticking clock (client-only to avoid hydration mismatch). */
@@ -47,7 +47,8 @@ export function BrandHeader() {
           px for true optical alignment with the wordmark's cap line. */}
       <div className="flex items-center gap-x-3 flex-wrap">
         <h1 className="flex items-center gap-2.5 text-fluid-3xl leading-none">
-          <HelixMark className="h-[0.84em] w-[0.84em] shrink-0 -translate-y-[0.05em]" />
+          <Image src="/icon-192.png" width={32} height={32} alt="" priority
+            className="h-[0.9em] w-[0.9em] shrink-0 rounded-[0.28em] -translate-y-[0.03em] ring-1 ring-white/10" />
           <span className="helix-wordmark font-heading font-extrabold tracking-tight leading-none">HELIX</span>
         </h1>
         <span

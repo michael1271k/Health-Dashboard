@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { m, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
+import { Portal, useOverlayBodyLock } from './overlay'
 
 interface LiquidModalProps {
   open: boolean
@@ -31,18 +32,10 @@ export function LiquidModal({ open, onClose, title, accent = '#8B5CF6', children
     setReduceMotion(document.documentElement.dataset.reduceMotion === 'true')
   }, [open])
 
-  useEffect(() => {
-    if (!open) return
-    document.body.style.overflow = 'hidden'
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', onKey)
-    return () => {
-      document.body.style.overflow = ''
-      window.removeEventListener('keydown', onKey)
-    }
-  }, [open, onClose])
+  useOverlayBodyLock(open, onClose)
 
   return (
+    <Portal>
     <AnimatePresence>
       {open && (
         <div className="fixed inset-0 z-[85] flex items-center justify-center p-4" role="dialog" aria-modal="true">
@@ -97,5 +90,6 @@ export function LiquidModal({ open, onClose, title, accent = '#8B5CF6', children
         </div>
       )}
     </AnimatePresence>
+    </Portal>
   )
 }

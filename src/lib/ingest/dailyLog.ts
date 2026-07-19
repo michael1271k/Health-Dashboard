@@ -283,16 +283,28 @@ export async function ingestDailyLog(
   }
 
   // ── 6. Fan-out: sleep_sessions — UNCONDITIONAL OVERWRITE for the night ──
-  // A daily push must always reflect the latest reading. Delete any existing
-  // session(s) for this night, then insert the fresh one (never conflict-skip).
+  // A daily push must always reflect the latest reading. The delete window spans
+  // the whole night (prev-day noon → this-day end) so a session stamped with its
+  // REAL bed_start (the previous evening) is replaced on re-sync instead of
+  // duplicated — while the prior night (bedtime two evenings ago) is untouched.
   if (payload.sleep_minutes !== undefined && payload.sleep_minutes > 0) {
+    const prev = new Date(`${date}T00:00:00Z`); prev.setUTCDate(prev.getUTCDate() - 1)
+    const prevDate = prev.toISOString().slice(0, 10)
     await db.from('sleep_sessions').delete()
-      .eq('user_id', userId).gte('start_time', `${date}T00:00:00Z`).lt('start_time', `${date}T23:59:59Z`)
+      .eq('user_id', userId).gte('start_time', `${prevDate}T12:00:00Z`).lt('start_time', `${date}T23:59:59Z`)
+
     const dur = Math.round(payload.sleep_minutes)
+    const deep = payload.deep_min ?? 0
+    const rem = payload.rem_min ?? 0
+    const awake = payload.awake_min ?? 0
+    // Real per-stage split when present; else all sleep counts as core (legacy).
+    const core = payload.core_min ?? Math.max(0, dur - deep - rem)
+    const startTime = payload.bed_start ?? `${date}T23:00:00Z`
+    const endTime = payload.bed_end ?? startTime
     const { error } = await db.from('sleep_sessions').insert({
       user_id: userId, hk_uuid: null,
-      start_time: `${date}T23:00:00Z`, end_time: `${date}T23:00:00Z`,
-      duration_min: dur, deep_min: 0, rem_min: 0, core_min: dur, awake_min: 0, sleep_score: null,
+      start_time: startTime, end_time: endTime,
+      duration_min: dur, deep_min: deep, rem_min: rem, core_min: core, awake_min: awake, sleep_score: null,
     } as any)
     result.results.sleep = error ? { ok: false, action: 'upserted', error: error.message } : { ok: true, action: 'upserted' }
     if (error) errors.push({ field: 'sleep_sessions', error: error.message })

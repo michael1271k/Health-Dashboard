@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase/client'
 import { eraForDate, programDayFor, PROGRAMS, DEFAULT_PROGRAM_ID } from '@/lib/programs'
 
 export interface ExerciseDelta {
+  exerciseId: string
   name: string
   topKg: number
   topReps: number
@@ -97,6 +98,7 @@ export function useSessionIntel(sessionId: string | null) {
       const deltas: ExerciseDelta[] = [...thisTop.entries()].map(([exId, t]) => {
         const p = prevTop.get(exId)
         return {
+          exerciseId: exId,
           name: t.name, topKg: t.kg, topReps: t.reps, prevKg: p?.kg ?? null,
           // null = first log of this exercise (no baseline). A PR also requires a
           // baseline to beat — never a gold star the first time.

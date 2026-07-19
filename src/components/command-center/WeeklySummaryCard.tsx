@@ -30,7 +30,7 @@ export function WeeklySummaryCard() {
   return (
     <>
       {weekComplete && (
-        <button onClick={() => router.push('/insights')}
+        <button onClick={() => router.push('/progression')}
           className="w-full glass-card px-4 py-3 flex items-center gap-3 text-left transition-transform active:scale-[0.99]"
           style={{ borderColor: `${GOLD}55`, boxShadow: `0 0 20px ${GOLD}1f` }}>
           <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
@@ -48,7 +48,7 @@ export function WeeklySummaryCard() {
       )}
 
       {!weekComplete && (priorWeek.data?.sessions.length ?? 0) > 0 && (
-        <button onClick={() => router.push('/insights?week=prior')}
+        <button onClick={() => router.push('/progression')}
           className="w-full flex items-center justify-center gap-1.5 text-fluid-xs text-muted hover:text-text min-h-[36px] transition-colors">
           <CalendarRange className="w-3.5 h-3.5" aria-hidden="true" /> Last week in review
         </button>

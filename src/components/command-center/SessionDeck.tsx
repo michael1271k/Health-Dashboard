@@ -128,8 +128,11 @@ export function SessionDeck({ store, onClose, onViewDay }: {
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
+  // Solid surface (no backdrop-filter): this success screen sits outside any
+  // overlay, so the helix-overlay-open guard can't reach it — an opaque tile is
+  // immune to the iOS composited-black glitch.
   return (
-    <div className="glass-card py-2.5">
+    <div className="rounded-2xl py-2.5" style={{ background: 'rgba(13,18,32,0.9)', border: '1px solid rgba(255,255,255,0.08)' }}>
       <div className="helix-num font-bold text-text">{value}</div>
       <div className="text-[11px] text-muted">{label}</div>
     </div>

@@ -49,6 +49,7 @@ export function useMuscleAnalytics(days = 30, era: 'all' | 'ppl' | 'axis' = 'all
         .from('workout_sets')
         .select('weight_kg, reps, exercises!inner(muscle_groups), workout_sessions!inner(started_at)')
         .gte('workout_sessions.started_at', from)
+        .limit(4000) // ceiling so a long history never scans unbounded
       if (error) throw error
 
       const rows = ((data ?? []) as unknown as Array<{

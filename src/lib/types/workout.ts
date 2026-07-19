@@ -69,6 +69,11 @@ export const PPL_SPLITS: Record<SplitDay, { label: string; labelHe: string; colo
   },
 }
 
+/** Canonical split accent for any split_day string (falls back to primary blue). */
+export function splitColor(split: string | null | undefined): string {
+  return (split && PPL_SPLITS[split as SplitDay]?.color) || '#22D3EE'
+}
+
 // ─── Nutrition modes / presets ───────────────────────────────────────────────
 export type NutritionMode = 'cut' | 'bulk' | 'maintenance'
 

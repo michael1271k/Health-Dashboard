@@ -267,7 +267,9 @@ html[data-theme='travel'] {
   /* ── TRUE glassmorphism ───────────────────────────────────────
      Highly transparent + intense blur so the Aurora background refracts. */
   .glass-card {
-    background: rgba(255,255,255,0.045);
+    background:
+      linear-gradient(rgba(255,255,255,0.045), rgba(255,255,255,0.045)),
+      rgba(10,14,26,0.14);
     backdrop-filter: blur(40px) saturate(190%);          /* Apple blur-3xl frost */
     -webkit-backdrop-filter: blur(40px) saturate(190%);
     border: 1px solid rgba(255,255,255,0.08);            /* glossy hairline */
@@ -298,7 +300,13 @@ html[data-theme='travel'] {
   /* Card base — true-glass values inlined (Tailwind v4 @apply can't reference
      custom @layer components classes) */
   .helix-card {
-    background: rgba(255,255,255,0.045);
+    /* Layered fill: a faint dark base UNDER the glass tint so if iOS drops the
+       backdrop-filter (a transformed/composited ancestor) the card degrades to a
+       dim surface instead of pure black — base alpha kept low so the aurora
+       still refracts through in the normal case. */
+    background:
+      linear-gradient(rgba(255,255,255,0.045), rgba(255,255,255,0.045)),
+      rgba(10,14,26,0.14);
     backdrop-filter: blur(40px) saturate(190%);
     -webkit-backdrop-filter: blur(40px) saturate(190%);
     border: 1px solid rgba(255,255,255,0.08);
@@ -312,6 +320,15 @@ html[data-theme='travel'] {
   }
   @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
     .helix-card { background: var(--color-surface); border-color: var(--color-border); }
+  }
+  /* While a portaled overlay is open, suspend the page glass so cards behind the
+     dim veil don't sample the compositor as solid black on iOS. Scoped to `main`
+     so the portaled modal/sheet panels (children of <body>) keep their glass. */
+  body.helix-overlay-open main .helix-card,
+  body.helix-overlay-open main .glass-card {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(13,18,32,0.92);
   }
   .helix-card:hover {
     border-color: rgba(255,255,255,0.14);

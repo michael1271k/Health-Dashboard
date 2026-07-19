@@ -7,7 +7,7 @@ import type { CapacitorConfig } from '@capacitor/cli'
  * install to generate the Xcode project. See docs/native-ios.md.
  */
 const config: CapacitorConfig = {
-  appId: 'app.helix.health',
+  appId: 'app.helix.health.michael',
   appName: 'HELIX',
   webDir: 'public', // only used for a bundled fallback; primary content is server.url
   server: {

@@ -11,6 +11,7 @@ import { ThemeProvider as ContextThemeProvider } from '@/components/providers/Th
 import { EraFilterProvider } from '@/lib/era/eraFilter'
 import { SerwistRegister } from '@/components/providers/SerwistRegister'
 import { AuthGate } from '@/components/providers/AuthGate'
+import { PullToRefresh } from '@/components/ui/PullToRefresh'
 import { SyncPulse } from '@/components/fx/SyncPulse'
 import { CrashRecorder } from '@/components/providers/CrashRecorder'
 import { NativeBoot } from '@/components/providers/NativeBoot'
@@ -109,9 +110,13 @@ export default function RootLayout({
                   id="main-content"
                   className="min-h-dvh pt-4 safe-pt pb-28 md:pl-64 xl:pl-72 md:pt-8 md:pb-8 safe-px"
                 >
-                  <div className="max-w-7xl mx-auto">
-                    <AuthGate>{children}</AuthGate>
-                  </div>
+                  {/* Global pull-to-refresh — active on every tab (native HealthKit
+                      sync + query revalidation), non-blocking of top-of-screen taps. */}
+                  <PullToRefresh>
+                    <div className="max-w-7xl mx-auto">
+                      <AuthGate>{children}</AuthGate>
+                    </div>
+                  </PullToRefresh>
                 </main>
                 <BottomNav />
                 <SyncPulse />

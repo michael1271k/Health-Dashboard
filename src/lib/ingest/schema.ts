@@ -53,11 +53,29 @@ const floatField = () => flex()
 // Apple active energy: cal → kcal when clearly cal (large magnitude).
 const energyField = () =>
   flex().transform((v) => (typeof v === 'number' && v > 5000 ? v / 1000 : v))
+// Sleep minutes with sanity guards: a value in (0,16] is almost certainly HOURS
+// (a night is never 16 minutes) → ×60; anything implausibly large (>18h) is
+// dropped as junk rather than corrupting the day.
+const sleepMinutesField = () =>
+  flex().transform((v) => {
+    if (typeof v !== 'number') return v
+    const m = Math.round(v > 0 && v <= 16 ? v * 60 : v)
+    return m > 1080 ? undefined : m
+  })
+// ISO datetime string (bed_start / bed_end); malformed → dropped.
+const isoField = () => z.string().datetime({ offset: true }).optional().catch(undefined)
 
 const BaseSchema = z.object({
   steps:               intField(),
   water:               floatField(),                 // mL (numeric)
-  sleep_minutes:       intField(),
+  sleep_minutes:       sleepMinutesField(),          // hours-vs-minutes safe, clamped
+  // ── Sleep stage breakdown (native HealthKit SleepAnalysis) — all optional ──
+  deep_min:            intField(),
+  rem_min:             intField(),
+  core_min:            intField(),
+  awake_min:           intField(),
+  bed_start:           isoField(),                   // actual bedtime (ISO)
+  bed_end:             isoField(),                   // actual wake time (ISO)
   carbs:               floatField(),                 // numeric(8,2)
   protein:             floatField(),
   fats:                floatField(),

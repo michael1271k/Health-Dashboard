@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect } from 'react'
 import { m, AnimatePresence, useDragControls } from 'framer-motion'
 import { X } from 'lucide-react'
+import { Portal, useOverlayBodyLock } from './overlay'
 
 interface SheetProps {
   open: boolean
@@ -27,18 +27,11 @@ interface SheetProps {
 export function Sheet({ open, onClose, title, maxHeight = '90dvh', size = 'default', children }: SheetProps) {
   const controls = useDragControls()
 
-  useEffect(() => {
-    if (!open) return
-    document.body.style.overflow = 'hidden'
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', onKey)
-    return () => {
-      document.body.style.overflow = ''
-      window.removeEventListener('keydown', onKey)
-    }
-  }, [open, onClose])
+  useOverlayBodyLock(open, onClose)
 
+  // z-ladder: nav 50 · PullToRefresh 70 · Sheet 80 · LiquidModal 85 · DatePicker 90
   return (
+    <Portal>
     <AnimatePresence>
       {open && (
         <div className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center" role="dialog" aria-modal="true">
@@ -107,5 +100,6 @@ export function Sheet({ open, onClose, title, maxHeight = '90dvh', size = 'defau
         </div>
       )}
     </AnimatePresence>
+    </Portal>
   )
 }

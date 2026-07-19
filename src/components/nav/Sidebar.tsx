@@ -1,9 +1,9 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { m } from 'framer-motion'
-import { HelixMark } from '@/components/HelixMark'
 import { navItems } from '@/lib/nav-items'
 
 export function Sidebar() {
@@ -22,7 +22,8 @@ export function Sidebar() {
     >
       {/* ── Logo + wordmark */}
       <div className="flex items-center gap-3 px-5 py-6 border-b border-white/[0.06]">
-        <HelixMark className="w-7 h-7 shrink-0" />
+        <Image src="/icon-192.png" width={32} height={32} alt="" priority
+          className="w-8 h-8 shrink-0 rounded-xl ring-1 ring-white/10" />
         <div className="leading-none">
           <span className="font-heading font-bold text-xl tracking-widest text-text">HELIX</span>
           <p className="text-[10px] text-muted tracking-wider mt-0.5 uppercase">

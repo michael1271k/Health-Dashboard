@@ -61,12 +61,12 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
       client={queryClient}
       // Bump the buster on any deploy that changes cached query/component
       // shapes so a device with an older persisted cache discards it instead
-      // of feeding stale-shaped data into new components. (v16: existing
-      // caches may hold Map-poisoned entries — discard them all once.)
+      // of feeding stale-shaped data into new components. (v17: unified reports
+      // schema — the ['reports','list'] rows changed shape.)
       persistOptions={{
         persister,
         maxAge: 24 * 60 * 60 * 1000,
-        buster: 'v16',
+        buster: 'v17',
         dehydrateOptions: {
           shouldDehydrateQuery: (q) => defaultShouldDehydrateQuery(q) && isJsonSafe(q.state.data),
         },

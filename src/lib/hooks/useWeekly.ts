@@ -3,31 +3,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 
-export interface ReportRow {
-  id: string
-  period_start: string
-  period_end: string
-  content_md: string
-  session_summary_md: string | null
-  weight_report_md: string | null
-  created_at: string
-}
-
-export function useReports() {
-  return useQuery({
-    queryKey: ['reports', 'list'],
-    queryFn: async (): Promise<ReportRow[]> => {
-      const { data, error } = await supabase
-        .from('reports')
-        .select('id, period_start, period_end, content_md, session_summary_md, weight_report_md, created_at')
-        .order('period_start', { ascending: false })
-        .limit(60)
-      if (error) throw error
-      return (data ?? []) as ReportRow[]
-    },
-    staleTime: 60_000,
-  })
-}
+// Weekly reports live in `@/lib/hooks/useReports` (unified week_start/payload
+// schema). This module keeps the session-level and calendar queries.
 
 export interface GymReportRow {
   id: string

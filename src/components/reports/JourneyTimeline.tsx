@@ -2,7 +2,8 @@
 
 import { memo } from 'react'
 import { Dumbbell, FileText } from 'lucide-react'
-import type { ReportRow, GymReportRow } from '@/lib/hooks/useWeekly'
+import type { GymReportRow } from '@/lib/hooks/useWeekly'
+import type { ReportRow } from '@/lib/hooks/useReports'
 import { enumerateWeeks, type ProgramWeek } from '@/lib/phases'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 
@@ -27,7 +28,7 @@ export const JourneyTimeline = memo(function JourneyTimeline({ reports, gymRepor
   const statsFor = (w: ProgramWeek) => {
     const sessions = gymReports.filter((g) => g.date >= w.weekStart && g.date <= w.weekEnd)
     const volume = sessions.reduce((s, g) => s + (g.volumeKg ?? 0), 0)
-    const files = reports.filter((r) => r.period_start >= w.weekStart && r.period_start <= w.weekEnd).length
+    const files = reports.filter((r) => r.week_start >= w.weekStart && r.week_start <= w.weekEnd).length
     return { sessions: sessions.length, volume, files }
   }
 
