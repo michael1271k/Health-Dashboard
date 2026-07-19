@@ -7,7 +7,19 @@ import Security
 /// secret storage, used for one-tap biometric sign-in. Same integration pattern
 /// as HelixHealth: add this file + HelixAuthRegistration.m to the App target.
 @objc(HelixAuthPlugin)
-public class HelixAuthPlugin: CAPPlugin {
+public class HelixAuthPlugin: CAPPlugin, CAPBridgedPlugin {
+  // CAPBridgedPlugin conformance in Swift — see HelixHealth.swift for why this
+  // is declared here rather than via the ObjC CAP_PLUGIN registration macro.
+  public let identifier = "HelixAuthPlugin"
+  public let jsName = "HelixAuth"
+  public let pluginMethods: [CAPPluginMethod] = [
+    CAPPluginMethod(name: "isAvailable", returnType: CAPPluginReturnPromise),
+    CAPPluginMethod(name: "authenticate", returnType: CAPPluginReturnPromise),
+    CAPPluginMethod(name: "setSecret", returnType: CAPPluginReturnPromise),
+    CAPPluginMethod(name: "getSecret", returnType: CAPPluginReturnPromise),
+    CAPPluginMethod(name: "removeSecret", returnType: CAPPluginReturnPromise),
+  ]
+
   private let service = "app.helix.health.michael"
 
   @objc func isAvailable(_ call: CAPPluginCall) {

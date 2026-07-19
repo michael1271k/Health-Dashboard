@@ -71,7 +71,17 @@ export async function requestHealthAuthorization(): Promise<boolean> {
   try {
     const { granted } = await HealthKit.requestAuthorization({ read: READ_TYPES })
     return granted
-  } catch { return false }
+  } catch (err) {
+    // Loud on device (Safari Web Inspector) so a missing native registration can
+    // never be a silent no-op again — this is exactly how the bridge broke.
+    console.error('[HELIX] HealthKit requestAuthorization failed — is the CapacitorHealthkit plugin registered?', err)
+    return false
+  }
+}
+
+/** True when the native HealthKit plugin is actually attached to the bridge. */
+export function isHealthKitAvailable(): boolean {
+  return Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('CapacitorHealthkit')
 }
 
 /** Device-local calendar day (YYYY-MM-DD) for a given instant. */

@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Activity, Check, Loader2, RefreshCw } from 'lucide-react'
 import { isNative } from '@/lib/native/platform'
-import { requestHealthAuthorization } from '@/lib/native/healthkit'
+import { requestHealthAuthorization, isHealthKitAvailable } from '@/lib/native/healthkit'
+import { isHelixAuthAvailable } from '@/lib/native/biometric'
 import { forceHealthKitSync } from '@/lib/native/sync'
 
 const WATERMARK_KEY = 'helix_hk_last_sync'
@@ -29,8 +30,14 @@ export function HealthSyncCard() {
   const [busy, setBusy] = useState(false)
   const [done, setDone] = useState(false)
   const [last, setLast] = useState<string | null>(null)
+  // Live bridge status — surfaces a missing native registration on-device
+  // instead of it being a silent no-op (both plugins failed exactly this way).
+  const [diag, setDiag] = useState<{ hk: boolean; auth: boolean } | null>(null)
 
-  useEffect(() => { setLast(lastSyncLabel()) }, [])
+  useEffect(() => {
+    setLast(lastSyncLabel())
+    setDiag({ hk: isHealthKitAvailable(), auth: isHelixAuthAvailable() })
+  }, [])
 
   const connect = useCallback(async () => {
     setBusy(true); setDone(false)
@@ -60,6 +67,12 @@ export function HealthSyncCard() {
         {busy ? 'Syncing…' : done ? 'Synced' : 'Connect & Sync Now'}
       </button>
       {last && <p className="text-[11px] text-muted text-center">Last sync: {last}</p>}
+      {diag && (
+        <div className="pt-1 border-t border-border/60 flex items-center justify-center gap-4 text-[11px] font-mono">
+          <span className={diag.hk ? 'text-success' : 'text-danger'}>{diag.hk ? '●' : '○'} HealthKit</span>
+          <span className={diag.auth ? 'text-success' : 'text-danger'}>{diag.auth ? '●' : '○'} Face ID</span>
+        </div>
+      )}
     </section>
   )
 }

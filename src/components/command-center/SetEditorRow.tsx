@@ -6,7 +6,7 @@ import { X } from 'lucide-react'
 import { tapLight } from '@/lib/native/haptics'
 import type { DraftSet } from '@/lib/sessions/draft'
 
-const WEIGHT_STEPS = [-2.5, -0.5, +0.5, +2.5] as const
+const WEIGHT_STEPS = [-2.5, -0.25, +0.25, +2.5] as const
 const ORANGE = '#FF8A3D' // warm-up
 const DANGER = '#FB7185' // failure
 
@@ -46,7 +46,8 @@ export function SetEditorRow({ index, set, active, timed = false, onActivate, on
 
   const nudgeWeight = (delta: number) => {
     void tapLight()
-    onChange({ weightKg: Math.max(0, Math.round((set.weightKg + delta) * 2) / 2) })
+    // Snap to the 0.25 kg grid (quarter-kg microloads), not the old 0.5 grid.
+    onChange({ weightKg: Math.max(0, Math.round((set.weightKg + delta) * 4) / 4) })
   }
   const nudgeReps = (delta: number) => {
     void tapLight()
@@ -107,7 +108,7 @@ export function SetEditorRow({ index, set, active, timed = false, onActivate, on
             className="relative flex items-center select-none touch-none w-full h-6"
             min={0}
             max={sliderMax}
-            step={0.5}
+            step={0.25}
             value={[set.weightKg]}
             onValueChange={([v]) => onChange({ weightKg: v })}
             onValueCommit={() => void tapLight()}

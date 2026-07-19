@@ -1,8 +1,8 @@
-#import <Foundation/Foundation.h>
-#import <Capacitor/Capacitor.h>
-
-CAP_PLUGIN(HealthkitPlugin, "CapacitorHealthkit",
-  CAP_PLUGIN_METHOD(requestAuthorization, CAPPluginReturnPromise);
-  CAP_PLUGIN_METHOD(queryQuantity, CAPPluginReturnPromise);
-  CAP_PLUGIN_METHOD(queryCategory, CAPPluginReturnPromise);
-)
+// Intentionally empty.
+//
+// Registration moved into Swift: HealthkitPlugin now conforms to
+// CAPBridgedPlugin directly (see HelixHealth.swift) and is registered
+// explicitly in HelixViewController.capacitorDidLoad(). Re-adding the
+// CAP_PLUGIN(...) macro here would double-declare identifier/jsName/
+// pluginMethods on the class. Kept as a file (rather than deleted) so the
+// existing Xcode target membership stays valid without a project edit.

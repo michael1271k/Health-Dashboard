@@ -5,7 +5,9 @@ import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useExerciseMap, useExerciseMemory, useLatestSessionFlag } from '@/lib/hooks/useLogger'
+import { useWeekSessions, weekStartOf } from '@/lib/hooks/useWeekSessions'
 import { WeeklySummaryCard } from '@/components/command-center/WeeklySummaryCard'
+import { PostWorkoutSummary } from '@/components/command-center/PostWorkoutSummary'
 import { WidgetBoundary } from '@/components/fx/WidgetBoundary'
 import { SwapDayControl } from '@/components/day/SwapDayControl'
 import { peekSessionDraft, type SessionDraft } from '@/lib/sessions/draft'
@@ -48,6 +50,12 @@ export default function WorkoutPage() {
 
   // Today, era-aware — drives the hero + the highlighted card in the week grid.
   const today = logicalTodayISO()
+  // Already-logged detection: today's sessions from the week query (shared with
+  // WeeklySummaryCard, so no extra fetch). When present, the hero becomes the
+  // Post-Workout Summary instead of a "Log X" button.
+  const week = useWeekSessions(weekStartOf(today))
+  const todaySessions = week.data?.sessions.filter((s) => s.date === today) ?? []
+  const loggedToday = todaySessions.length > 0
   const schedule = scheduleDayFor(today)
   const training = isTrainingDay(today)
   const reentry = isReentryWeek(today)
@@ -69,7 +77,10 @@ export default function WorkoutPage() {
         </Link>
       </div>
 
-      {/* ── Today / Next-session hero ── */}
+      {/* ── Today: Post-Workout Summary (if logged) or Log/Rest hero ── */}
+      {loggedToday ? (
+        <PostWorkoutSummary sessions={todaySessions} date={today} onLogAnother={() => openDeck()} />
+      ) : (
       <section className="helix-card holo-sheen"
         style={{
           borderColor: training && todayDay ? `${todayDay.color}44` : `${REST_VIOLET}33`,
@@ -125,6 +136,7 @@ export default function WorkoutPage() {
           </p>
         )}
       </section>
+      )}
 
       {/* Friday week-complete summary CTA / quiet last-week review */}
       <WeeklySummaryCard />

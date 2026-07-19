@@ -7,6 +7,7 @@ import type { GymReportRow } from '@/lib/hooks/useWeekly'
 import type { ReportRow } from '@/lib/hooks/useReports'
 import { enumerateWeeks, type ProgramWeek } from '@/lib/phases'
 import { splitColor } from '@/lib/types/workout'
+import { blurOnTap } from '@/lib/utils/blurOnTap'
 import { MarkdownView } from './MarkdownView'
 import { SessionIntelCard } from './SessionIntelCard'
 import { JourneyTimeline } from './JourneyTimeline'
@@ -83,7 +84,7 @@ export function FileSystemBrowser({ reports, gymReports, focusWeek, era = 'all' 
                 const Icon = f.icon
                 return (
                   <li key={f.key}>
-                    <button onClick={() => setFileKey(f.key)} className="w-full flex items-center gap-3 rounded-xl px-3 py-3 bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.14] text-left min-h-[52px]">
+                    <button onClick={() => setFileKey(f.key)} onPointerUp={blurOnTap} className="w-full flex items-center gap-3 rounded-xl px-3 py-3 bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.14] text-left min-h-[52px]">
                       <span className="flex h-9 w-9 items-center justify-center rounded-lg shrink-0" style={{ background: `${f.accent}1f`, color: f.accent }}><Icon className="w-4 h-4" /></span>
                       <span className="min-w-0"><span className="block text-fluid-sm font-medium text-text truncate">{f.name}</span>{f.sub && <span className="block text-fluid-xs text-muted">{f.sub}</span>}</span>
                     </button>

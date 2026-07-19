@@ -13,10 +13,15 @@ export function weightUnit(): string {
   return getUnitSystem()
 }
 
-/** Convert a kg value to the user's unit (1 dp). */
+/**
+ * Convert a kg value to the user's unit, preserving 0.25 kg increments.
+ * Rounds to 2 dp so quarter-kg microloads (3.75, 16.25 — real cable/dumbbell
+ * loads) survive; a value like 16.25 rendered directly no longer collapses to
+ * 16.3. Trailing zeros drop naturally since this returns a number (16.5, 78.4).
+ */
 export function displayWeight(kg: number | null | undefined): number | null {
   if (kg == null || !Number.isFinite(kg)) return null
-  return getUnitSystem() === 'lb' ? Math.round(kg * 2.20462 * 10) / 10 : Math.round(kg * 10) / 10
+  return getUnitSystem() === 'lb' ? Math.round(kg * 2.20462 * 100) / 100 : Math.round(kg * 100) / 100
 }
 
 /**

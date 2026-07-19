@@ -112,7 +112,7 @@ export function WeightTrendChart({ data, isLoading, showEraBoundary }: WeightTre
       </div>
       <div role="img" aria-label="Body composition breakdown chart">
         <ResponsiveContainer width="100%" height={280}>
-          <ComposedChart data={chartData} margin={{ top: 8, right: 18, bottom: 4, left: 0 }}>
+          <ComposedChart data={chartData} margin={{ top: 8, right: 26, bottom: 4, left: 0 }}>
             <ReferenceLine
               yAxisId="mass" y={firstWeight}
               stroke={COLORS.weight} strokeOpacity={0.4} strokeDasharray="2 4"
@@ -136,7 +136,7 @@ export function WeightTrendChart({ data, isLoading, showEraBoundary }: WeightTre
               </linearGradient>
             </defs>
             <CartesianGrid stroke={COLORS.grid} strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="date" tick={{ fill: COLORS.text, fontSize: 11 }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+            <XAxis dataKey="date" tick={{ fill: COLORS.text, fontSize: 10 }} tickMargin={8} minTickGap={20} axisLine={false} tickLine={false} interval="preserveStartEnd" />
             <YAxis yAxisId="mass" domain={[minMass, maxMass]} tick={{ fill: COLORS.text, fontSize: 11 }} axisLine={false} tickLine={false} width={42} tickFormatter={(v) => `${v}${unit}`} />
             <YAxis yAxisId="fat" orientation="right" domain={[0, 40]} tick={{ fill: COLORS.text, fontSize: 11 }} axisLine={false} tickLine={false} width={36} tickFormatter={(v) => `${v}%`} />
             <Tooltip content={<ChartTooltip />} cursor={{ stroke: COLORS.grid, strokeWidth: 1 }} />

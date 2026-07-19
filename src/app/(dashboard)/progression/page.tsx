@@ -2,11 +2,12 @@
 
 import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { GitBranch, LineChart } from 'lucide-react'
+import { GitBranch, LineChart, HeartPulse } from 'lucide-react'
 import { ProgressionTimeline } from '@/components/progression/ProgressionTimeline'
 import { AnalyticsPanel } from '@/components/progression/AnalyticsPanel'
+import { VitalsGroups } from '@/components/insights/VitalsGroups'
 
-type View = 'timeline' | 'analytics'
+type View = 'timeline' | 'analytics' | 'vitals'
 
 /**
  * Progression — the unified analytics tab. Absorbs the old Insights, Reports and
@@ -23,7 +24,10 @@ export default function ProgressionPage() {
 
 function ProgressionInner() {
   const params = useSearchParams()
-  const [view, setView] = useState<View>(params.get('view') === 'analytics' ? 'analytics' : 'timeline')
+  const initial = params.get('view')
+  const [view, setView] = useState<View>(
+    initial === 'analytics' ? 'analytics' : initial === 'vitals' ? 'vitals' : 'timeline',
+  )
 
   return (
     <div className="space-y-6">
@@ -33,7 +37,7 @@ function ProgressionInner() {
           <p className="text-muted text-fluid-sm mt-0.5">Your cut program, week by week · performance &amp; body analytics</p>
         </div>
         <div className="flex rounded-xl border border-white/[0.08] overflow-hidden shrink-0">
-          {([['timeline', 'Timeline', GitBranch], ['analytics', 'Analytics', LineChart]] as const).map(([v, t, Icon]) => (
+          {([['timeline', 'Timeline', GitBranch], ['analytics', 'Analytics', LineChart], ['vitals', 'Vitals', HeartPulse]] as const).map(([v, t, Icon]) => (
             <button key={v} onClick={() => setView(v)}
               className={`flex items-center gap-1.5 px-3.5 py-2 text-fluid-xs font-semibold ${view === v ? 'bg-primary/15 text-primary' : 'text-muted hover:text-text'}`}>
               <Icon className="w-3.5 h-3.5" aria-hidden="true" /> {t}
@@ -42,7 +46,7 @@ function ProgressionInner() {
         </div>
       </div>
 
-      {view === 'timeline' ? <ProgressionTimeline /> : <AnalyticsPanel />}
+      {view === 'timeline' ? <ProgressionTimeline /> : view === 'analytics' ? <AnalyticsPanel /> : <VitalsGroups />}
     </div>
   )
 }

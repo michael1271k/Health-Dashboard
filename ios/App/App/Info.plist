@@ -24,6 +24,12 @@
 	<string></string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSFaceIDUsageDescription</key>
+	<string>HELIX uses Face ID for quick login</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>HELIX reads Apple Health (steps, energy, heart rate, HRV, sleep, body composition) to compute your daily readiness and trends</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>HELIX does not write to Apple Health</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>
@@ -52,9 +58,5 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
-	<key>NSHealthShareUsageDescription</key>
-	<string>HELIX reads Apple Health (steps, energy, heart rate, HRV, sleep, body composition) to compute your daily readiness and trends.</string>
-	<key>NSHealthUpdateUsageDescription</key>
-	<string>HELIX does not write to Apple Health.</string>
 </dict>
 </plist>

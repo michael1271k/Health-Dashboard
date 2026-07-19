@@ -33,7 +33,15 @@ async function storeCurrentToken(): Promise<void> {
 
 export async function isBiometricAvailable(): Promise<boolean> {
   if (!Capacitor.isNativePlatform()) return false
-  try { return (await HelixAuth.isAvailable()).available } catch { return false }
+  try { return (await HelixAuth.isAvailable()).available } catch (err) {
+    console.error('[HELIX] HelixAuth isAvailable failed — is the HelixAuth plugin registered?', err)
+    return false
+  }
+}
+
+/** True when the native HelixAuth plugin is actually attached to the bridge. */
+export function isHelixAuthAvailable(): boolean {
+  return Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('HelixAuth')
 }
 
 export function isBiometricEnabled(): boolean {

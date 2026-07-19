@@ -61,9 +61,9 @@ export function MacroProgressChart({ data, goals, isLoading }: { data: Nutrition
       </div>
       <div role="img" aria-label={`${metric.label} vs goal chart`}>
         <ResponsiveContainer width="100%" height={200}>
-          <BarChart data={chartData} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
+          <BarChart data={chartData} margin={{ top: 4, right: 24, bottom: 0, left: 0 }}>
             <CartesianGrid stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="date" tick={{ fill: '#8B97B2', fontSize: 11, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+            <XAxis dataKey="date" tick={{ fill: '#8B97B2', fontSize: 10, fontFamily: 'var(--font-mono)' }} tickMargin={8} minTickGap={20} axisLine={false} tickLine={false} interval="preserveStartEnd" />
             <YAxis domain={usePct ? [0, 120] : [0, 'auto']} tick={{ fill: '#8B97B2', fontSize: 11, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} width={36} tickFormatter={(v) => (usePct ? `${v}%` : `${v}`)} />
             <Tooltip content={({ active, payload, label }) =>
               active && payload?.length ? (

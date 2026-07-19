@@ -109,6 +109,18 @@ describe('IngestPayload flex() coercion', () => {
     }
   })
 
+  it('maps the dietary_energy alias onto calories (Shortcut fallback key)', () => {
+    const r = IngestPayloadSchema.safeParse({ dietary_energy: 1934, protein: 170 })
+    expect(r.success).toBe(true)
+    if (r.success) expect(r.data.calories).toBe(1934)
+  })
+
+  it('keeps an explicit calories value over the dietary_energy alias', () => {
+    const r = IngestPayloadSchema.safeParse({ calories: 1934, dietary_energy: 2200 })
+    expect(r.success).toBe(true)
+    if (r.success) expect(r.data.calories).toBe(1934)
+  })
+
   it('parses a full mixed payload with junk values without error', () => {
     const r = IngestPayloadSchema.safeParse({
       steps: 8200, water: 2500, sleep_minutes: false, carbs: 180, protein: 175,

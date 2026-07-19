@@ -27,7 +27,8 @@ export const V51_EXERCISE_ALIASES: Record<string, string[]> = {
 }
 export const MUSCLE_GROUPS = ['Chest', 'Back', 'Shoulders', 'Arms', 'Legs', 'Core'] as const
 export const GROUP_COLOR: Record<string, string> = {
-  Chest: '#22D3EE', Back: '#34D399', Shoulders: '#38BDF8', Arms: '#F5C15A', Legs: '#34D399', Core: '#7C8CFF',
+  // Six distinct aurora hues — Legs was #34D399, identical to Back; now rose.
+  Chest: '#22D3EE', Back: '#34D399', Shoulders: '#38BDF8', Arms: '#F5C15A', Legs: '#F472B6', Core: '#7C8CFF',
 }
 
 export interface MuscleStat { group: string; sets: number; volume: number; daysSince: number | null }

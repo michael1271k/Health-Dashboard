@@ -1,39 +1,28 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { m, AnimatePresence } from 'framer-motion'
-import { Dumbbell, Trophy, Sparkles, Loader2, Trash2, ChevronRight, BatteryMedium, Moon } from 'lucide-react'
+import { Dumbbell, Trophy, Sparkles, Loader2, Trash2, ChevronRight, BatteryMedium, Moon, Camera } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
-import { useReports, useSaveReport, useDeleteReport, type ReportPayload } from '@/lib/hooks/useReports'
-import { useWeekSessions, weekStartOf, isoAddDays } from '@/lib/hooks/useWeekSessions'
-import { useWeightTrend } from '@/lib/hooks/useCharts'
-import { weekNumberOf } from '@/lib/reports/weekNumber'
-import { PROGRAMS, DEFAULT_PROGRAM_ID } from '@/lib/programs'
+import { useSaveReport, useDeleteReport } from '@/lib/hooks/useReports'
+import { useTimelineWeeks, type TimelineWeekNode } from '@/lib/hooks/useTimelineWeeks'
+import { weekStartOf, isoAddDays } from '@/lib/hooks/useWeekSessions'
 import { splitColor } from '@/lib/types/workout'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { displayWeight, weightUnit } from '@/lib/utils/units'
 import { authedFetch } from '@/lib/utils/authedFetch'
+import { blurOnTap } from '@/lib/utils/blurOnTap'
+import { useEraFilter } from '@/lib/era/eraFilter'
+import { EraFilterPills } from '@/components/era/EraFilterPills'
 import { MarkdownView } from '@/components/reports/MarkdownView'
 
 const GOLD = '#F5C15A'
 
-interface WeekNode {
-  weekStart: string
-  weekNumber: number
-  sessions: number
-  volumeKg: number
-  prs: number
-  weightDelta: number | null
-  fatDelta: number | null
-  days: ReportPayload['days']
-  contentMd: string | null
-  reportId?: string
-  isLive: boolean
-}
+type WeekNode = TimelineWeekNode
 
 /** Dominant split of a week (for the node glow) — most frequent day split. */
-function dominantSplit(days: ReportPayload['days']): string | undefined {
+function dominantSplit(days: TimelineWeekNode['days']): string | undefined {
   const counts = new Map<string, number>()
   for (const d of days) if (d.split) counts.set(d.split, (counts.get(d.split) ?? 0) + 1)
   let best: string | undefined, max = 0
@@ -50,87 +39,39 @@ const label = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-G
  * expand in place to a full week breakdown.
  */
 export function ProgressionTimeline() {
-  const { data: reports } = useReports()
-  const today = logicalTodayISO()
-  const liveWeekStart = weekStartOf(today)
-  const live = useWeekSessions(liveWeekStart)
-  const { data: weightRows } = useWeightTrend(180)
+  const { era } = useEraFilter()
+  const { nodes, isPending } = useTimelineWeeks(era)
+  const liveWeekStart = weekStartOf(logicalTodayISO())
   const [openWeek, setOpenWeek] = useState<string | null>(liveWeekStart)
 
-  const program = PROGRAMS[DEFAULT_PROGRAM_ID]
-
-  const weekDelta = (weekStart: string): { weightDelta: number | null; fatDelta: number | null } => {
-    const end = isoAddDays(weekStart, 7)
-    const rows = (weightRows ?? []).filter((r) => r.date >= weekStart && r.date < end).sort((a, b) => a.date.localeCompare(b.date))
-    const w = rows.map((r) => r.weight_kg).filter((v): v is number => v != null)
-    const f = rows.map((r) => r.body_fat_pct).filter((v): v is number => v != null)
-    const delta = (xs: number[]) => (xs.length >= 2 ? Math.round((xs[xs.length - 1] - xs[0]) * 10) / 10 : null)
-    return { weightDelta: delta(w), fatDelta: delta(f) }
-  }
-
-  const nodes = useMemo<WeekNode[]>(() => {
-    const out: WeekNode[] = []
-    // Live week first (unless already saved as a report — then the report wins).
-    const savedLive = (reports ?? []).some((r) => r.week_start === liveWeekStart)
-    if (!savedLive && live.data) {
-      out.push({
-        weekStart: liveWeekStart,
-        weekNumber: weekNumberOf(liveWeekStart),
-        sessions: live.data.sessions.length,
-        volumeKg: live.data.totals.volumeKg,
-        prs: live.data.totals.prs,
-        ...weekDelta(liveWeekStart),
-        days: live.data.sessions.map((s) => ({
-          date: s.date,
-          label: (s.dayKey && program.days.find((d) => d.key === s.dayKey)?.label) ?? (s.splitDay[0]?.toUpperCase() + s.splitDay.slice(1)),
-          volumeKg: s.volumeKg, prs: s.prCount, split: s.splitDay,
-        })),
-        contentMd: null,
-        isLive: true,
-      })
-    }
-    for (const r of reports ?? []) {
-      out.push({
-        weekStart: r.week_start,
-        weekNumber: r.week_number,
-        sessions: r.payload.sessions,
-        volumeKg: r.payload.volumeKg,
-        prs: r.payload.prs,
-        weightDelta: r.payload.weightDelta,
-        fatDelta: r.payload.fatDelta,
-        days: r.payload.days,
-        contentMd: r.content_md,
-        reportId: r.id,
-        isLive: false,
-      })
-    }
-    // Newest week first (live week is the newest by construction).
-    return out.sort((a, b) => b.weekStart.localeCompare(a.weekStart))
-  }, [reports, live.data, liveWeekStart]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  if (!reports && live.isPending) {
-    return <div className="helix-card h-40 animate-pulse" aria-hidden="true" />
-  }
-
   return (
-    <div className="relative pl-9">
-      {/* Vertical glass spine */}
-      <span aria-hidden="true" className="absolute left-[14px] top-1 bottom-1 w-px"
-        style={{ background: 'linear-gradient(to bottom, rgba(34,211,238,0.55), rgba(255,255,255,0.10) 60%, transparent)' }} />
+    <div className="space-y-4">
+      {/* Timeline is era-filterable too — default 'Helix 5.1', PPL legacy isolated. */}
+      <EraFilterPills />
 
-      <div className="space-y-3">
-        {nodes.map((n) => (
-          <TimelineNode
-            key={n.weekStart}
-            node={n}
-            open={openWeek === n.weekStart}
-            onToggle={() => setOpenWeek((w) => (w === n.weekStart ? null : n.weekStart))}
-          />
-        ))}
-        {nodes.length === 0 && (
-          <p className="text-fluid-sm text-muted py-8 text-center">No weeks yet — log a session, then snapshot the week.</p>
-        )}
-      </div>
+      {isPending ? (
+        <div className="helix-card h-40 animate-pulse" aria-hidden="true" />
+      ) : (
+        <div className="relative pl-9">
+          {/* Vertical glass spine */}
+          <span aria-hidden="true" className="absolute left-[14px] top-1 bottom-1 w-px"
+            style={{ background: 'linear-gradient(to bottom, rgba(34,211,238,0.55), rgba(255,255,255,0.10) 60%, transparent)' }} />
+
+          <div className="space-y-3">
+            {nodes.map((n) => (
+              <TimelineNode
+                key={n.weekStart}
+                node={n}
+                open={openWeek === n.weekStart}
+                onToggle={() => setOpenWeek((w) => (w === n.weekStart ? null : n.weekStart))}
+              />
+            ))}
+            {nodes.length === 0 && (
+              <p className="text-fluid-sm text-muted py-8 text-center">No weeks in this era yet — log a session, then snapshot the week.</p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -155,7 +96,7 @@ function TimelineNode({ node, open, onToggle }: { node: WeekNode; open: boolean;
           boxShadow: `0 0 14px ${(hasPRs ? GOLD : color)}88`,
         }} />
 
-      <button onClick={onToggle} className="helix-card w-full text-left px-4 py-3.5 active:opacity-90" style={{ borderColor: `${color}33` }}>
+      <button onClick={onToggle} onPointerUp={blurOnTap} className="helix-card w-full text-left px-4 py-3.5 active:opacity-90" style={{ borderColor: `${color}33` }}>
         <div className="flex items-center justify-between gap-2">
           <span className="font-heading font-semibold text-fluid-sm text-text truncate">
             Week {node.weekNumber} · {label(node.weekStart)}–{label(isoAddDays(node.weekStart, 6))}
@@ -291,7 +232,10 @@ function WeekActions({ node }: { node: WeekNode }) {
     save.mutate({
       kind: 'weekly', week_start: node.weekStart, week_number: node.weekNumber,
       payload: {
-        volumeKg: node.volumeKg, sets: 0, prs: node.prs, calories: 0, durationMin: 0,
+        // Real per-week stats now (the node carries aggregated sets/duration),
+        // not the old hardcoded zeros. calories stays 0 — nutrition isn't
+        // workout-derived; the AI report fills the richer picture.
+        volumeKg: node.volumeKg, sets: node.sets, prs: node.prs, calories: 0, durationMin: node.durationMin,
         sessions: node.sessions, weightDelta: node.weightDelta, fatDelta: node.fatDelta, days: node.days,
       },
     })
@@ -304,9 +248,10 @@ function WeekActions({ node }: { node: WeekNode }) {
           {aiBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
           {aiBusy ? 'Generating…' : 'Generate AI report'}
         </button>
-        {node.isLive && (
+        {/* Snapshot ANY week without a saved report — past weeks can be back-filled. */}
+        {!node.reportId && (
           <button onClick={snapshot} disabled={save.isPending} className="btn-glass min-h-[40px] text-fluid-xs">
-            {save.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null} Snapshot week
+            {save.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />} Snapshot week
           </button>
         )}
         {node.reportId && (

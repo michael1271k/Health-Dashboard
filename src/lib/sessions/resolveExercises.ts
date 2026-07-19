@@ -7,6 +7,25 @@ import { muscleGroupsFor } from '@/lib/exercises/muscleMap'
 type DB = SupabaseClient<Database>
 
 /**
+ * Compound = multi-joint movement. Drives the est-1RM / Strength Trends chart,
+ * which only plots compounds. Auto-created exercises used to default to
+ * isolation (is_compound=false) unconditionally, which is exactly why the Helix
+ * 5.1 lifts (chest press, lat pulldown, RDL, hack/smith squat, rows, presses)
+ * created fresh made the chart render empty. These patterns promote real
+ * compounds at creation time; existing rows are fixed by a one-off SQL update.
+ */
+const COMPOUND_PATTERNS: RegExp[] = [
+  /squat/, /deadlift/, /romanian/, /\brdl\b/,
+  /press/,            // bench / chest / shoulder / overhead / incline / leg press
+  /\brow\b/, /pulldown/, /pull-?up/, /chin-?up/, /\bdip\b/,
+  /lunge/, /hip thrust/,
+]
+export function isCompoundLift(name: string): boolean {
+  const n = name.toLowerCase()
+  return COMPOUND_PATTERNS.some((re) => re.test(n))
+}
+
+/**
  * Resolve free-text exercise names (from the AI parser) to real exercises.id
  * UUIDs for the user. Matches case-insensitively against the existing catalog;
  * creates a new exercise row (under the given split) for any unmatched name.
@@ -61,7 +80,7 @@ export async function resolveExercises(
       split_day: splitDay,
       // The Freshness dictionary is authoritative; fall back to any provided tags.
       muscle_groups: muscleGroupsFor(canonical) ?? (muscleGroups?.length ? muscleGroups : null),
-      is_compound: false,
+      is_compound: isCompoundLift(canonical),
     }
      
     const { data: createdRaw } = await supabase

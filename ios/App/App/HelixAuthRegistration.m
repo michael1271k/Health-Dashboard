@@ -1,10 +1,8 @@
-#import <Foundation/Foundation.h>
-#import <Capacitor/Capacitor.h>
-
-CAP_PLUGIN(HelixAuthPlugin, "HelixAuth",
-  CAP_PLUGIN_METHOD(isAvailable, CAPPluginReturnPromise);
-  CAP_PLUGIN_METHOD(authenticate, CAPPluginReturnPromise);
-  CAP_PLUGIN_METHOD(setSecret, CAPPluginReturnPromise);
-  CAP_PLUGIN_METHOD(getSecret, CAPPluginReturnPromise);
-  CAP_PLUGIN_METHOD(removeSecret, CAPPluginReturnPromise);
-)
+// Intentionally empty.
+//
+// Registration moved into Swift: HelixAuthPlugin now conforms to
+// CAPBridgedPlugin directly (see HelixAuth.swift) and is registered
+// explicitly in HelixViewController.capacitorDidLoad(). Re-adding the
+// CAP_PLUGIN(...) macro here would double-declare identifier/jsName/
+// pluginMethods on the class. Kept as a file (rather than deleted) so the
+// existing Xcode target membership stays valid without a project edit.

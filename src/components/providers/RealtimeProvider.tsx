@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { hydratePrefsFromDb } from '@/lib/utils/prefsSync'
 import { useScheduleOverrides } from '@/lib/hooks/useScheduleOverrides'
+import { WORKOUT_QUERY_KEYS } from '@/lib/query/workoutKeys'
 
 /**
  * Pure client Supabase WebSocket → scoped React Query invalidation. A DB change
@@ -23,7 +24,9 @@ const TABLE_KEYS: Record<string, string[][]> = {
   nutrition_entries: [['nutrition_entries'], ['daily_logs'], ['daily_scores'], ['coach'], ['continuum'], ['day_vault'], ['fuel_force_session']],
   body_composition: [['body_composition'], ['trends'], ['coach']],
   sleep_sessions: [['sleep_sessions'], ['daily_scores'], ['trends'], ['weekly_review'], ['sleep_debt']],
-  workout_sessions: [['workout_sessions'], ['gym_reports'], ['trends'], ['weekly_review'], ['coach'], ['continuum'], ['day_vault'], ['muscle_analytics'], ['fuel_force_session'], ['month_activity'], ['session_intel'], ['exercise_history']],
+  // Shares the canonical workout-derived key list with the commit/delete
+  // mutations so a session change from ANY device refreshes the same surfaces.
+  workout_sessions: WORKOUT_QUERY_KEYS,
   daily_scores: [['daily_scores'], ['weekly_review'], ['trends'], ['coach'], ['continuum'], ['day_vault'], ['month_activity'], ['week_recovery']],
   supplement_log: [['supplement_log'], ['day_vault']],
   water_intake: [['daily_scores'], ['day_vault']],

@@ -77,11 +77,13 @@ export function PRHistoryChart({ data, isLoading }: PRHistoryChartProps) {
       </h3>
       <div role="img" aria-label="Strength trend chart showing estimated 1 rep max over time">
         <ResponsiveContainer width="100%" height={240}>
-          <LineChart data={chartData} margin={{ top: 4, right: 16, bottom: 0, left: 0 }}>
+          <LineChart data={chartData} margin={{ top: 4, right: 26, bottom: 0, left: 0 }}>
             <CartesianGrid stroke="#243040" strokeDasharray="3 3" vertical={false} />
             <XAxis
               dataKey="date"
-              tick={{ fill: '#94A3B8', fontSize: 11 }}
+              tick={{ fill: '#94A3B8', fontSize: 10 }}
+              tickMargin={8}
+              minTickGap={20}
               axisLine={false}
               tickLine={false}
               interval="preserveStartEnd"

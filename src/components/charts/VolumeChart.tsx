@@ -19,8 +19,8 @@ type ChartSplit = SplitDay | 'upper_a' | 'upper_b' | 'arms' | 'legs_a' | 'legs_b
 const UPPER_A_COLOR = '#22D3EE'  // Upper A cyan (programs C.cbA)
 const UPPER_B_COLOR = '#F5C15A'  // Upper B gold (programs C.cbB)
 const ARMS_COLOR = '#34D399'     // Delts & Arms mint (programs C.arms)
-const LEGS_A_COLOR = '#38BDF8'   // quad cyan
-const LEGS_B_COLOR = '#34D399'   // posterior teal
+const LEGS_A_COLOR = '#38BDF8'   // quad sky
+const LEGS_B_COLOR = '#A78BFA'   // posterior violet (was #34D399 — collided with Arms mint)
 
 // The pill set is era-specific. PPL trains Push/Pull/Legs (no "Upper" — zero
 // records); HELIX-5 logs the five real splits. Legacy "lower" folds into legs.
@@ -105,7 +105,7 @@ export function VolumeChart({ data, isLoading, era = 'all' }: { data: VolumePoin
       ) : (
         <div role="img" aria-label={`${splitLabel(activeSplit)} volume over time`}>
           <ResponsiveContainer width="100%" height={240}>
-            <AreaChart data={chartData} margin={{ top: 4, right: 16, bottom: 0, left: 0 }}>
+            <AreaChart data={chartData} margin={{ top: 4, right: 26, bottom: 0, left: 0 }}>
               <defs>
                 <linearGradient id="volFill" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor={color} stopOpacity={0.4} />
@@ -113,7 +113,7 @@ export function VolumeChart({ data, isLoading, era = 'all' }: { data: VolumePoin
                 </linearGradient>
               </defs>
               <CartesianGrid stroke={GRID} strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="date" tick={{ fill: TEXT, fontSize: 11, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+              <XAxis dataKey="date" tick={{ fill: TEXT, fontSize: 10, fontFamily: 'var(--font-mono)' }} tickMargin={8} minTickGap={20} axisLine={false} tickLine={false} interval="preserveStartEnd" />
               <YAxis tick={{ fill: TEXT, fontSize: 11, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} width={48} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
               <Tooltip content={<ChartTooltip />} cursor={{ stroke: GRID, strokeWidth: 1 }} />
               <Area type="monotone" dataKey="volume" name={`Volume (${unit})`} stroke={color} fill="url(#volFill)" strokeWidth={2} dot={{ r: 2, fill: color }} activeDot={{ r: 4 }} />

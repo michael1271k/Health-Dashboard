@@ -88,7 +88,7 @@ export function VolumeStream({ days, era = 'all' }: { days: number; era?: 'all' 
 export function RpeCalendar({ days, era = 'all' }: { days: number; era?: 'all' | 'ppl' | 'axis' }) {
   const { data: raw, isLoading } = useVolumeTrend(days)
   const data = raw?.filter((s) => era === 'all' || eraForDate(s.date) === era)
-  const grid = useMemo(() => {
+  const model = useMemo(() => {
     if (!data?.length) return null
     const byDate = new Map<string, number>()
     for (const s of data) byDate.set(s.date, (byDate.get(s.date) ?? 0) + s.volume)
@@ -107,29 +107,62 @@ export function RpeCalendar({ days, era = 'all' }: { days: number; era?: 'all' |
       }
       weeks.push(col)
     }
-    return weeks
+    // Stats to fill the desktop dead space beside the (now wider) grid.
+    const entries = [...byDate.entries()]
+    const activeDays = entries.length
+    const hardest = entries.reduce((best, cur) => (cur[1] > best[1] ? cur : best), entries[0])
+    const avgLoad = entries.reduce((n, [, v]) => n + v, 0) / activeDays
+    // Longest run of consecutive active days in the window (training streak).
+    const sorted = entries.map(([d]) => d).sort()
+    let streak = 1, best = 1
+    for (let i = 1; i < sorted.length; i++) {
+      const prev = new Date(sorted[i - 1] + 'T00:00:00Z').getTime()
+      const cur = new Date(sorted[i] + 'T00:00:00Z').getTime()
+      streak = cur - prev === 86_400_000 ? streak + 1 : 1
+      if (streak > best) best = streak
+    }
+    return { weeks, stats: { activeDays, hardest, avgLoad, streak: best } }
   }, [data, days])
 
   if (isLoading) return <div className="helix-card h-40 animate-pulse" />
-  if (!grid) return null
+  if (!model) return null
+  const { weeks, stats } = model
 
   const cell = (t: number) => t <= 0 ? 'rgba(255,255,255,0.05)'
     : t < 0.35 ? 'rgba(25,227,177,0.35)' : t < 0.7 ? 'rgba(25,227,177,0.65)' : '#34D399'
+  const hardestLabel = new Date(stats.hardest[0] + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
 
   return (
     <div className="helix-card">
       <h3 className="font-heading font-semibold text-base">Intensity Calendar</h3>
       <p className="text-fluid-xs text-muted mb-3">Session load heat (volume-scaled) · streaks &amp; deloads at a glance</p>
-      <div className="flex gap-1 overflow-x-auto no-scrollbar">
-        {grid.map((col, i) => (
-          <div key={i} className="flex flex-col gap-1">
+      {/* Cells stretch to fill the card width (fixed 14px left a wide desktop
+          card mostly empty); a stat row fills the rest of the dead space. */}
+      <div className="flex gap-1 w-full">
+        {weeks.map((col, i) => (
+          <div key={i} className="flex-1 flex flex-col gap-1">
             {col.map((c) => (
               <span key={c.date} title={`${c.date}${c.t > 0 ? '' : ' · rest'}`}
-                className="w-3.5 h-3.5 rounded-[3px]" style={{ background: cell(c.t), boxShadow: c.t >= 0.7 ? '0 0 6px rgba(25,227,177,0.5)' : undefined }} />
+                className="w-full aspect-square rounded-[3px]" style={{ background: cell(c.t), boxShadow: c.t >= 0.7 ? '0 0 6px rgba(25,227,177,0.5)' : undefined }} />
             ))}
           </div>
         ))}
       </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
+        <CalStat label="Active days" value={`${stats.activeDays}`} />
+        <CalStat label="Best streak" value={`${stats.streak}d`} />
+        <CalStat label="Hardest" value={hardestLabel} />
+        <CalStat label="Avg load" value={`${((stats.avgLoad) / 1000).toFixed(1)}t`} />
+      </div>
+    </div>
+  )
+}
+
+function CalStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg bg-white/[0.03] px-2.5 py-1.5">
+      <div className="text-[9px] uppercase tracking-wide text-muted leading-none">{label}</div>
+      <div className="helix-num text-fluid-sm font-bold text-text mt-0.5 truncate">{value}</div>
     </div>
   )
 }

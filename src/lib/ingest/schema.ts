@@ -24,6 +24,7 @@ import { z } from 'zod'
  *  - respitory_rate (the app's spelling) → respiratory_rate
  *  - heart_rate_variability / hrv_ms      → hrv
  *  - vo2_max                              → vo2max
+ *  - dietary_energy                       → calories (explicit total, never derived)
  */
 
 /**
@@ -121,6 +122,9 @@ export const IngestPayloadSchema = z.preprocess((raw) => {
   if (o.wrist_temperature !== undefined && o.wrist_temp === undefined) o.wrist_temp = o.wrist_temperature
   if (o.daylight !== undefined && o.time_in_daylight === undefined) o.time_in_daylight = o.daylight
   if (o.hrr !== undefined && o.heart_rate_recovery === undefined) o.heart_rate_recovery = o.hrr
+  // Apple's "Dietary Energy" total → calories (canonical key). Lets the Shortcut
+  // send the human-facing metric name while storage stays `calories`.
+  if (o.dietary_energy !== undefined && o.calories === undefined) o.calories = o.dietary_energy
   return o
 }, BaseSchema)
 

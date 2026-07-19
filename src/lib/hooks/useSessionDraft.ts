@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { authedFetch } from '@/lib/utils/authedFetch'
 import { supabase } from '@/lib/supabase/client'
+import { invalidateWorkoutData } from '@/lib/query/workoutKeys'
 import { logicalTodayISO, hoursAwakeToday } from '@/lib/utils/day'
 import { DRAFT_STORAGE_KEY, buildCommitPayload, cascadeSetEdit, peekSessionDraft, type SessionDraft, type DraftSet } from '@/lib/sessions/draft'
 
@@ -198,10 +199,9 @@ export function useSessionDraft() {
     onSuccess: (result) => {
       const committedDate = draft?.date
       if (!result.duplicate) {
-        qc.invalidateQueries({ queryKey: ['workout_sessions'] })
-        qc.invalidateQueries({ queryKey: ['workout_sets'] })
-        qc.invalidateQueries({ queryKey: ['continuum'] })
-        qc.invalidateQueries({ queryKey: ['day_vault'] }) // the Nexus Train block
+        // One cascade: refresh EVERY workout-derived surface (charts, muscle map,
+        // PRs, projected weights, session #, timeline) — not just these four.
+        invalidateWorkoutData(qc)
         // Readiness/Daily-Score reflect the workout — recompute that day now
         // (force bypasses the finalized freeze for a back-dated log/edit).
         if (committedDate) {

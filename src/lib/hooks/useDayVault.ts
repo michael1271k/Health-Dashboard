@@ -3,7 +3,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { authedFetch } from '@/lib/utils/authedFetch'
-import { eraForDate, AXIS_ERA_START } from '@/lib/programs'
+import { invalidateWorkoutData } from '@/lib/query/workoutKeys'
+import { eraForDate, AXIS_ERA_START, HELIX_CUT_START } from '@/lib/programs'
 import { hoursAwakeToday, logicalTodayISO } from '@/lib/utils/day'
 import type { Phase } from '@/lib/nutrition/phase'
 import type { GymReportRow } from '@/lib/hooks/useWeekly'
@@ -117,24 +118,30 @@ export function useDeleteSession(date: string) {
       } catch { /* score recompute is best-effort */ }
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['day_vault', date] })
-      qc.invalidateQueries({ queryKey: ['workout_sessions'] })
-      qc.invalidateQueries({ queryKey: ['workout_sets'] })
-      qc.invalidateQueries({ queryKey: ['continuum'] })
-      qc.invalidateQueries({ queryKey: ['daily_scores'] })
+      // Same full cascade as commit — a delete must un-count everywhere too.
+      invalidateWorkoutData(qc)
     },
   })
 }
 
-/** GLOBAL all-time session number ("Session #55") — every session on/before this date. */
+/**
+ * Session number within the current training ERA ("Session #3"). The counter
+ * restarts at the era boundary (HELIX_CUT_START) so the Helix 5.1 program
+ * numbers from #1 — Upper B (Jul 16)=#1, Legs B (Jul 17)=#2, Upper A (Jul 19)=#3
+ * — instead of inheriting the PPL-era all-time total (#77/#78). Uses the same
+ * date→era boundary as `eraForDate`, NOT the Week-1 schedule anchor
+ * (AXIS_ERA_START), so the two pre-anchor Helix sessions still count.
+ */
 export function useGlobalSessionNumber(date: string) {
   return useQuery({
     queryKey: ['session_global_number', date],
     enabled: /^\d{4}-\d{2}-\d{2}$/.test(date),
     staleTime: 60_000,
     queryFn: async (): Promise<number> => {
+      const eraStart = eraForDate(date) === 'axis' ? HELIX_CUT_START : '2000-01-01'
       const { count, error } = await supabase.from('workout_sessions')
         .select('id', { count: 'exact', head: true })
+        .gte('started_at', `${eraStart}T00:00:00Z`)
         .lt('started_at', `${addDayISO(date, 1)}T00:00:00Z`)
       if (error) return 1
       return Math.max(1, count ?? 1)

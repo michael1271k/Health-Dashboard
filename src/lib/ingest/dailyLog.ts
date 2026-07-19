@@ -238,13 +238,16 @@ export async function ingestDailyLog(
     if (error) errors.push({ field: 'daily_metrics', error: error.message })
   }
 
-  // ── 3. Fan-out: nutrition_entries (compute calories from macros) ──
-  if (payload.carbs !== undefined || payload.protein !== undefined || payload.fats !== undefined) {
+  // ── 3. Fan-out: nutrition_entries (explicit dietary energy ONLY — never derived) ──
+  // We store the source's own calorie total (HealthKit Dietary Energy / MFP's
+  // Atwater+fiber value). We do NOT synthesize calories from 4·C + 4·P + 9·F —
+  // a fabricated number silently drifts from the app the user actually logged in.
+  // A macro-only payload leaves its macros in daily_logs (section 1) and skips
+  // this summary row rather than inventing a calorie value (and would violate the
+  // NOT-NULL calories column anyway).
+  if (payload.calories !== undefined) {
+    const calories = payload.calories
     const carbs = payload.carbs ?? 0, protein = payload.protein ?? 0, fats = payload.fats ?? 0
-    // Prefer the source's own calorie total (MFP's Atwater/fiber-adjusted value)
-    // when provided; the 4·C + 4·P + 9·F estimate is only a fallback so our
-    // number never silently drifts from what the app the user logged in shows.
-    const calories = payload.calories ?? Math.round(4 * carbs + 4 * protein + 9 * fats)
     await db.from('nutrition_entries').delete().eq('user_id', userId).eq('date', date).eq('meal_type', 'daily')
     const { error } = await db.from('nutrition_entries').insert({
       user_id: userId, hk_uuid: null, logged_at: `${date}T00:00:00Z`, date, meal_type: 'daily',

@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from 'react'
 import dynamic from 'next/dynamic'
-import { HeartPulse } from 'lucide-react'
 import { useWeightTrend, useMacroHistory, usePRHistory, useVolumeTrend } from '@/lib/hooks/useCharts'
 import { useUserGoals } from '@/lib/hooks/useDashboard'
 import { RangeSelector } from '@/components/charts/RangeSelector'
@@ -11,7 +10,6 @@ import { DeferredMount } from '@/components/fx/DeferredMount'
 import { WidgetBoundary } from '@/components/fx/WidgetBoundary'
 import { useEraFilter } from '@/lib/era/eraFilter'
 import { EraFilterPills } from '@/components/era/EraFilterPills'
-import { VitalsGroups } from '@/components/insights/VitalsGroups'
 
 // Recharts-heavy components load client-only so they don't inflate first-load JS.
 const chartFallback = () => (
@@ -84,14 +82,6 @@ export function AnalyticsPanel() {
             </WidgetBoundary>
           </DeferredMount>
 
-          <DeferredMount minHeight={320}>
-            <div className="flex items-center gap-2 pt-2">
-              <HeartPulse className="w-4 h-4 text-primary" aria-hidden="true" />
-              <h2 className="font-heading text-fluid-lg font-bold text-text">Weekly Vitals</h2>
-              <span className="text-fluid-xs text-muted">this week vs last · 8-week trend</span>
-            </div>
-            <VitalsGroups />
-          </DeferredMount>
         </div>
       </div>
     </div>

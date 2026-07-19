@@ -6,6 +6,7 @@ import type { GymReportRow } from '@/lib/hooks/useWeekly'
 import type { ReportRow } from '@/lib/hooks/useReports'
 import { enumerateWeeks, type ProgramWeek } from '@/lib/phases'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
+import { blurOnTap } from '@/lib/utils/blurOnTap'
 
 const KIND_COLOR: Record<string, string> = { cut: '#22D3EE', bulk: '#34D399', maintenance: '#EC4899', peak: '#8B5CF6' }
 
@@ -68,6 +69,7 @@ export const JourneyTimeline = memo(function JourneyTimeline({ reports, gymRepor
                 />
                 <button
                   onClick={() => onOpenWeek(w)}
+                  onPointerUp={blurOnTap}
                   disabled={empty}
                   className={`helix-card w-full text-left px-3.5 py-3 ${empty ? 'opacity-45 cursor-default' : 'active:opacity-80'}`}
                   style={{ borderColor: `${color}30` }}

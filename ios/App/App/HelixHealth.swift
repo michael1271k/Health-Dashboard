@@ -3,7 +3,20 @@ import Capacitor
 import HealthKit
 
 @objc(HealthkitPlugin)
-public class HealthkitPlugin: CAPPlugin {
+public class HealthkitPlugin: CAPPlugin, CAPBridgedPlugin {
+  // CAPBridgedPlugin conformance in Swift (not via the ObjC CAP_PLUGIN macro):
+  // an ObjC-category conformance can be dead-stripped by the linker when the
+  // category lives in a separate .m file nothing directly references, which is
+  // why explicit registration was still silently skipped. Declaring it here
+  // guarantees the conformance is present for bridge?.registerPluginInstance.
+  public let identifier = "HealthkitPlugin"
+  public let jsName = "CapacitorHealthkit"
+  public let pluginMethods: [CAPPluginMethod] = [
+    CAPPluginMethod(name: "requestAuthorization", returnType: CAPPluginReturnPromise),
+    CAPPluginMethod(name: "queryQuantity", returnType: CAPPluginReturnPromise),
+    CAPPluginMethod(name: "queryCategory", returnType: CAPPluginReturnPromise),
+  ]
+
   private let store = HKHealthStore()
 
   @objc func requestAuthorization(_ call: CAPPluginCall) {

@@ -171,6 +171,52 @@ describe('ingest — recovery keys: heart_rate_recovery / wrist_temp / time_in_d
   })
 })
 
+describe('ingest — nutrition uses explicit dietary energy, never derived', () => {
+  // db that captures nutrition_entries inserts; other tables are no-ops.
+  function nutritionDb(): { db: any; getRow: () => any; inserted: () => boolean } {
+    let row: any = null
+    let didInsert = false
+    const db: any = {
+      from(table: string) {
+        if (table === 'daily_logs') return { upsert: () => Promise.resolve({ error: null }) }
+        if (table === 'nutrition_entries') {
+          const chain: any = {
+            eq: () => chain, delete: () => chain,
+            insert: (r: any) => { row = r; didInsert = true; return Promise.resolve({ error: null }) },
+          }
+          return chain
+        }
+        return noopChain()
+      },
+    }
+    return { db, getRow: () => row, inserted: () => didInsert }
+  }
+
+  it('writes the explicit calories value (no 4/4/9 math) alongside macros', async () => {
+    const { db, getRow } = nutritionDb()
+    await ingestDailyLog(db, 'user-1', { date: '2026-07-19', calories: 1934, protein: 170, carbs: 187, fats: 52 } as any)
+    const row = getRow()
+    expect(row.calories).toBe(1934)                     // exactly as sent
+    expect(4 * 187 + 4 * 170 + 9 * 52).not.toBe(1934)   // proves it is NOT the derived estimate
+    expect(row.protein_g).toBe(170)
+    expect(row.carbs_g).toBe(187)
+  })
+
+  it('does NOT write a nutrition row (or fabricate calories) for a macro-only payload', async () => {
+    const { db, inserted } = nutritionDb()
+    const result = await ingestDailyLog(db, 'user-1', { date: '2026-07-19', protein: 170, carbs: 187, fats: 52 } as any)
+    expect(inserted()).toBe(false)                      // no calorie invention
+    expect(result.errors.some((e) => e.field === 'nutrition_entries')).toBe(false)
+  })
+
+  it('resolves the dietary_energy alias through the schema into the nutrition row', async () => {
+    const { db, getRow } = nutritionDb()
+    const parsed = IngestPayloadSchema.parse({ date: '2026-07-19', dietary_energy: 1934, protein: 170 })
+    await ingestDailyLog(db, 'user-1', parsed as any)
+    expect(getRow().calories).toBe(1934)
+  })
+})
+
 describe('ingest — sleep is an unconditional overwrite', () => {
   it('deletes the night and re-inserts (upserted), never conflict-skips', async () => {
     const ops: string[] = []
