@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 
-/** Merged into the unified Progression tab (Timeline view). */
+/** Merged into the unified Pathfinder tab (Timeline view). */
 export default function ReportsRedirect() {
-  redirect('/progression')
+  redirect('/pathfinder')
 }

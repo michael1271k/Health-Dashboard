@@ -125,9 +125,9 @@ target → **Signing & Capabilities** tab:
    tap **Turn On All** → Allow.
 
 **Verify the pipe:** open the app the next morning → Dashboard/`/vitals`
-should show HealthKit numbers without the Shortcut. (The web `/api/ingest`
-path your Shortcut uses keeps working in parallel — retire the Shortcut only
-once you've seen a few days of clean native syncs.)
+should show HealthKit numbers pulled by the native bridge. (The old iOS
+Shortcut push is gone — `/api/ingest` now authenticates with your Supabase
+JWT only, and the native app is the sole source of Apple Health data.)
 
 ## 7. Life with a free account
 

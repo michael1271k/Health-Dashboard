@@ -1,24 +1,24 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { m } from 'framer-motion'
-import { MoreHorizontal, type LucideIcon } from 'lucide-react'
-import { coreNavItems, moreNavItems } from '@/lib/nav-items'
-import { Sheet } from '@/components/ui/Sheet'
+import { type LucideIcon } from 'lucide-react'
+import { coreNavItems } from '@/lib/nav-items'
 
 export function BottomNav() {
   const pathname = usePathname()
-  const [moreOpen, setMoreOpen] = useState(false)
 
   // The session deck is a fullscreen takeover — its own CommitBar owns the
-  // bottom edge (and the safe area) there.
+  // bottom edge (and the safe area) there. The /session/[id] analysis page also
+  // starts with /session, so it's a clean fullscreen deep-dive with a back button.
   if (pathname.startsWith('/session')) return null
 
+  // Pathfinder owns the daily Nexus (/day/*) and the workout analysis deep-dive,
+  // both reached from within it.
   const isActive = (href: string) =>
-    pathname === href || (href === '/weekly' && pathname.startsWith('/day'))
-  const moreActive = moreNavItems.some((i) => pathname === i.href)
+    pathname === href ||
+    (href === '/pathfinder' && (pathname.startsWith('/day') || pathname.startsWith('/session')))
 
   const pillStyle = {
     background: 'rgba(255,255,255,0.04)',
@@ -29,61 +29,16 @@ export function BottomNav() {
   }
 
   return (
-    <>
-      <nav
-        aria-label="Mobile navigation"
-        className="fixed bottom-0 left-0 right-0 z-50 md:hidden px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-1"
-      >
-        <ul className="flex items-center justify-around rounded-2xl px-1.5 py-1.5" role="list" style={pillStyle}>
-          {coreNavItems.map(({ href, icon: Icon, label }) => (
-            <NavCell key={href} href={href} Icon={Icon} label={label} active={isActive(href)} />
-          ))}
-          <li className="flex-1">
-            <button
-              type="button"
-              onClick={() => setMoreOpen(true)}
-              aria-label="More"
-              aria-haspopup="dialog"
-              aria-expanded={moreOpen}
-              className={`relative w-full flex flex-col items-center gap-0.5 py-1.5 px-1 rounded-xl
-                          transition-colors duration-200 min-h-[44px] ${moreActive ? '' : 'text-muted'}`}
-              style={moreActive ? { color: '#38BDF8' } : {}}
-            >
-              {moreActive && (
-                <m.span layoutId="bottomnav-active" className="absolute inset-0 rounded-xl"
-                  style={{ background: 'rgba(56,189,248,0.12)' }}
-                  transition={{ type: 'spring', stiffness: 420, damping: 36 }} aria-hidden="true" />
-              )}
-              <MoreHorizontal className="relative z-10 w-5 h-5" aria-hidden="true" />
-              <span className="relative z-10 text-[10px] font-medium leading-none">More</span>
-            </button>
-          </li>
-        </ul>
-      </nav>
-
-      <Sheet open={moreOpen} onClose={() => setMoreOpen(false)} title="More">
-        <ul className="space-y-1.5" role="list">
-          {moreNavItems.map(({ href, icon: Icon, label }) => {
-            const active = pathname === href
-            return (
-              <li key={href}>
-                <Link
-                  href={href}
-                  onClick={() => setMoreOpen(false)}
-                  aria-current={active ? 'page' : undefined}
-                  className="flex items-center gap-3 rounded-xl px-4 py-3.5 min-h-[56px] transition-colors
-                             bg-white/[0.03] border border-white/[0.06] active:scale-[0.99]"
-                  style={active ? { background: 'rgba(56,189,248,0.10)', borderColor: 'rgba(56,189,248,0.30)' } : {}}
-                >
-                  <Icon className={`w-5 h-5 ${active ? 'text-primary' : 'text-muted'}`} aria-hidden="true" />
-                  <span className={`text-fluid-sm font-semibold ${active ? 'text-primary' : 'text-text'}`}>{label}</span>
-                </Link>
-              </li>
-            )
-          })}
-        </ul>
-      </Sheet>
-    </>
+    <nav
+      aria-label="Mobile navigation"
+      className="fixed bottom-0 left-0 right-0 z-50 md:hidden px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-1"
+    >
+      <ul className="flex items-center justify-around rounded-2xl px-1.5 py-1.5" role="list" style={pillStyle}>
+        {coreNavItems.map(({ href, icon: Icon, label }) => (
+          <NavCell key={href} href={href} Icon={Icon} label={label} active={isActive(href)} />
+        ))}
+      </ul>
+    </nav>
   )
 }
 

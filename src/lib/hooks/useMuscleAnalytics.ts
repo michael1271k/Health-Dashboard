@@ -6,7 +6,7 @@ import { logicalTodayISO } from '@/lib/utils/day'
 import { eraForDate } from '@/lib/programs'
 
 /** Canonicalize Hevy muscle tags into 6 display groups (v5.1 aliases included). */
-const MUSCLE_MAP: Record<string, string> = {
+export const MUSCLE_MAP: Record<string, string> = {
   chest: 'Chest', pecs: 'Chest',
   back: 'Back', lats: 'Back', traps: 'Back', rhomboids: 'Back', 'upper back': 'Back', 'lower back': 'Back',
   shoulders: 'Shoulders', delts: 'Shoulders', rear_delts: 'Shoulders',

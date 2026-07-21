@@ -1,10 +1,13 @@
 /**
  * POST /api/ingest
  *
- * The single ingestion channel: accepts a flat JSON health payload from the
- * native iOS app (HealthKit bridge) or any push source, and maps it to today's
- * daily_logs row (plus fan-out to the normalized tables used by scoring /
- * dashboard / charts). Auth: a Supabase JWT (Bearer) or a push secret.
+ * The native iOS app's HealthKit sync channel: accepts a flat JSON health
+ * payload from the app and maps it to today's daily_logs row (plus fan-out to
+ * the normalized tables used by scoring / dashboard / charts).
+ *
+ * Auth: a Supabase JWT (Authorization: Bearer) — the app carries the signed-in
+ * user's session. The legacy webhook-secret / iOS-Shortcut push path has been
+ * removed (100% native now).
  *
  * Example body:
  *   { "steps": 8200, "water": 2500, "sleep_minutes": 430, "carbs": 180,
@@ -18,44 +21,11 @@ import { NextResponse } from 'next/server'
 import { getServerSupabaseClient } from '@/lib/supabase/server'
 import { IngestPayloadSchema } from '@/lib/ingest/schema'
 import { ingestDailyLog } from '@/lib/ingest/dailyLog'
-import { defaultUserId, resolveCallerUserId } from '@/lib/auth/identity'
-
-const WEBHOOK_SECRET = process.env.INGEST_WEBHOOK_SECRET
-
-/**
- * Unified ingest identity. Three producers, one channel:
- *   1. The native iOS app — a signed-in Supabase JWT (Authorization: Bearer)
- *      resolves directly to that user (the primary path going forward).
- *   2. A per-user push key (ingest_keys) for automations.
- *   3. The legacy env secret → household admin (kept for a clean migration).
- */
-async function resolveIngestUser(request: Request, db: ReturnType<typeof getServerSupabaseClient>): Promise<string | null> {
-  // JWT first — the app carries the user's session.
-  const byJwt = await resolveCallerUserId(request, db)
-  if (byJwt) return byJwt
-
-  const provided = request.headers.get('X-Webhook-Secret')
-
-  // Per-user key lookup (table may not be migrated yet — degrade gracefully).
-  if (provided) {
-    try {
-      const { data, error } = await db.from('ingest_keys').select('user_id').eq('secret', provided).maybeSingle()
-      if (!error && data) return (data as { user_id: string }).user_id
-    } catch { /* not migrated — fall through to the env secret */ }
-  }
-
-  // Legacy env secret → household admin.
-  if (!WEBHOOK_SECRET) {
-    console.warn('[ingest] INGEST_WEBHOOK_SECRET not set — running without auth check')
-    return await defaultUserId(db)
-  }
-  if (provided === WEBHOOK_SECRET) return await defaultUserId(db)
-  return null
-}
+import { resolveCallerUserId } from '@/lib/auth/identity'
 
 export async function POST(request: Request) {
   const db = getServerSupabaseClient()
-  const userId = await resolveIngestUser(request, db)
+  const userId = await resolveCallerUserId(request, db)
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }

@@ -9,6 +9,14 @@
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
+# Serve the Apple App Site Association file (webcredentials → iOS Password
+# AutoFill "Save Password" prompt) as JSON. The file is extensionless, so its
+# content-type must be set explicitly.
+[[headers]]
+  for = "/.well-known/apple-app-site-association"
+  [headers.values]
+    Content-Type = "application/json"
+
 [dev]
   command = "npm run dev"
   targetPort = 3000

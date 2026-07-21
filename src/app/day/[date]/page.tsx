@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Dumbbell, Moon, Flame, Scale, Plus } from 'lucide-react'
+import { ArrowLeft, Dumbbell, Moon, Flame, Scale, Plus, ChevronRight } from 'lucide-react'
 import { CompletenessArc } from '@/components/day/CompletenessArc'
 import { InBodyCard } from '@/components/day/InBodyCard'
 import { SubjectiveBlock } from '@/components/day/SubjectiveBlock'
@@ -148,7 +148,7 @@ export default function DailyNexusPage() {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-fluid-xs text-muted uppercase tracking-wide">Readiness</span>
+            <span className="text-fluid-xs text-muted uppercase tracking-wide">Day Score</span>
             {n?.phase && <span className="text-[10px] font-bold uppercase" style={{ color: phaseDisplay(n.phase, date).color }}>{phaseDisplay(n.phase, date).label}</span>}
           </div>
           <div className="flex items-center gap-2 mt-1">
@@ -242,12 +242,16 @@ export default function DailyNexusPage() {
           <SectionTitle>The Workout</SectionTitle>
           {sessions.map((s) => (
             <section key={s.id} className="helix-card holo-sheen space-y-3" style={{ borderColor: `${CYAN}30`, boxShadow: `0 0 24px ${CYAN}18` }}>
-              <div className="flex items-center gap-2">
+              <Link href={`/session/${s.id}`} className="flex items-center gap-2 -m-1 p-1 rounded-lg active:opacity-80 hover:bg-white/[0.03]"
+                aria-label={`Open full analysis for ${sessionLabel(s.dayKey, s.split)}`}>
                 <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: `${CYAN}1a`, color: CYAN }}>
                   <Dumbbell className="w-4 h-4" aria-hidden="true" />
                 </span>
-                <h3 className="font-heading font-bold text-fluid-lg text-text">{sessionLabel(s.dayKey, s.split)}</h3>
-              </div>
+                <h3 className="font-heading font-bold text-fluid-lg text-text flex-1 min-w-0">{sessionLabel(s.dayKey, s.split)}</h3>
+                <span className="text-[10px] font-semibold uppercase tracking-wide shrink-0 flex items-center gap-0.5" style={{ color: CYAN }}>
+                  Analyze <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
+                </span>
+              </Link>
               {/* Hevy-style colored metadata header */}
               <div className="flex flex-wrap gap-2">
                 <MetaChip emoji="🏋️" value={`${Math.round(displayWeight(s.volumeKg) ?? 0).toLocaleString()}`} label={unit} color={TEAL} />

@@ -7,6 +7,7 @@ import { Capacitor } from '@capacitor/core'
 import { RefreshCw } from 'lucide-react'
 import { forceHealthKitSync } from '@/lib/native/sync'
 import { tapLight } from '@/lib/native/haptics'
+import { invalidateHealthData } from '@/lib/query/workoutKeys'
 
 const THRESHOLD = 72   // px pulled before a refresh fires
 const MAX_PULL = 110   // rubber-band ceiling
@@ -67,12 +68,14 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
       setPull(THRESHOLD)
       void tapLight()
       try {
-        // Refresh in place: pull fresh Apple Health (native), then revalidate.
+        // Refresh in place: pull fresh Apple Health (native).
         if (Capacitor.isNativePlatform()) await forceHealthKitSync().catch(() => {})
-        await queryClient.invalidateQueries()
       } finally {
         setRefreshing(false)
         setPull(0)
+        // Revalidate ONLY the health-derived surfaces (not the whole cache) — the
+        // spinner is already released, so refetches happen off the critical path.
+        invalidateHealthData(queryClient)
       }
     } else {
       setPull(0)

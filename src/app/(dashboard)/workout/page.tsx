@@ -72,7 +72,7 @@ export default function WorkoutPage() {
           <h1 className="font-heading text-fluid-2xl font-bold text-text">Command Center</h1>
           <p className="text-muted text-fluid-sm mt-0.5">Active program · progressive-overload memory · tap a day to log</p>
         </div>
-        <Link href="/weekly" className="btn-glass shrink-0 min-h-[40px] text-fluid-xs" aria-label="Open workout history in Journey">
+        <Link href="/pathfinder" className="btn-glass shrink-0 min-h-[40px] text-fluid-xs" aria-label="Open workout history in Pathfinder">
           History <ArrowRight className="w-3.5 h-3.5" />
         </Link>
       </div>

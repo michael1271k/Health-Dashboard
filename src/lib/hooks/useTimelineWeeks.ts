@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase/client'
 import { useReports, type ReportPayload } from '@/lib/hooks/useReports'
 import { useWeightTrend } from '@/lib/hooks/useCharts'
 import { weekStartOf, isoAddDays } from '@/lib/hooks/useWeekSessions'
-import { weekNumberOf } from '@/lib/reports/weekNumber'
+import { weekNumberOf, weekLabelOf } from '@/lib/reports/weekNumber'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { enumerateWeeks } from '@/lib/phases'
 import { PROGRAMS, DEFAULT_PROGRAM_ID, eraForDate } from '@/lib/programs'
@@ -16,6 +16,9 @@ import type { EraFilter } from '@/lib/era/eraFilter'
 export interface TimelineWeekNode {
   weekStart: string
   weekNumber: number
+  /** Phase-aware display label — "Week 3" for Helix weeks, "PPL Bulk · Week 4" /
+   *  "Thailand Vacation (Deload)" for pre-Week-0 weeks (never a negative number). */
+  weekLabel: string
   sessions: number
   volumeKg: number
   sets: number
@@ -124,7 +127,7 @@ export function useTimelineWeeks(era: EraFilter) {
       if (report) {
         // Saved report wins — its frozen payload is authoritative.
         out.push({
-          weekStart: ws, weekNumber: report.week_number,
+          weekStart: ws, weekNumber: report.week_number, weekLabel: weekLabelOf(ws),
           sessions: report.payload.sessions, volumeKg: report.payload.volumeKg,
           sets: report.payload.sets, durationMin: report.payload.durationMin, prs: report.payload.prs,
           weightDelta: report.payload.weightDelta, fatDelta: report.payload.fatDelta,
@@ -133,7 +136,7 @@ export function useTimelineWeeks(era: EraFilter) {
       } else {
         const a = byWeek.get(ws)!
         out.push({
-          weekStart: ws, weekNumber: weekNumberOf(ws),
+          weekStart: ws, weekNumber: weekNumberOf(ws), weekLabel: weekLabelOf(ws),
           sessions: a.sessions, volumeKg: Math.round(a.volumeKg), sets: a.sets, durationMin: a.durationMin, prs: a.prs,
           ...weekDelta(ws),
           days: a.days, contentMd: null, isLive, era: nodeEra,

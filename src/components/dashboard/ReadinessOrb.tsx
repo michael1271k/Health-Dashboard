@@ -15,12 +15,16 @@ function scoreColor(v: number | null): string {
 }
 
 /**
- * ReadinessOrb — the dashboard hero. A breathing glass orb: kinetic daily score
- * at the core, the battery as a liquid arc around the rim, ECG pulse beneath.
+ * ReadinessOrb — the dashboard hero. A breathing glass orb: the RECOVERY score
+ * at the core (physiological: sleep + HRV + resting-HR), the day BATTERY as a
+ * liquid arc around the rim, ECG pulse beneath. These measure different things:
+ * recovery reflects how restored your body is this morning and holds steady all
+ * day; the battery drains with hours-awake + activity. So a 99 recovery beside a
+ * 5% battery at night is expected, not a contradiction — the caption says so.
  * Opacity/glow animations only (the iOS backdrop-filter rule).
  */
 export const ReadinessOrb = memo(function ReadinessOrb({ score, isLoading }: { score: Tables<'daily_scores'> | null; isLoading?: boolean }) {
-  // Readiness = physiological recovery (sleep + HRV + resting-HR) — reads high
+  // Recovery = physiological recovery (sleep + HRV + resting-HR) — reads high
   // after good sleep. The blended adherence composite is the smaller "Daily Score".
   const total = score?.recovery_score ?? score?.score ?? null
   const composite = score?.score ?? null
@@ -59,21 +63,28 @@ export const ReadinessOrb = memo(function ReadinessOrb({ score, isLoading }: { s
             />
           )}
         </svg>
-        {/* Core: kinetic recovery-based readiness + the smaller Daily Score */}
+        {/* Core: kinetic recovery score + the smaller Daily Score composite */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <KineticNumber value={total} className="helix-num text-6xl font-bold leading-none" />
-          <span className="text-[11px] text-muted mt-1 uppercase tracking-widest">{total == null ? 'no data yet' : 'readiness'}</span>
+          <span className="text-[11px] text-muted mt-1 uppercase tracking-widest">{total == null ? 'no data yet' : 'recovery'}</span>
           {composite != null && (
             <span className="text-[10px] text-muted mt-1">Daily Score <span className="helix-num font-semibold text-text">{composite}</span></span>
           )}
           {battery != null && (
-            <span className="helix-num text-fluid-xs mt-0.5" style={{ color: batteryColor }}>{battery}% battery</span>
+            <span className="helix-num text-fluid-xs mt-0.5" style={{ color: batteryColor }}>{battery}% battery · energy spent</span>
           )}
         </div>
         {/* Specular highlight */}
         <div className="absolute left-9 top-8 w-16 h-8 rounded-full rotate-[-24deg] pointer-events-none" style={{ background: 'rgba(255,255,255,0.13)', filter: 'blur(2px)' }} />
       </div>
       <div className="w-52"><EcgPulse level={total} color={color} /></div>
+      {/* Defuse the "99 recovery vs 5% battery" clash: when the body is well
+          recovered but the day-battery has drained, say so explicitly. */}
+      {total != null && total >= 75 && battery != null && battery < 35 && (
+        <p className="text-[11px] text-muted text-center max-w-[15rem] leading-snug">
+          Fully recovered — the battery is just today&apos;s energy spent, not lost recovery.
+        </p>
+      )}
     </div>
   )
 })

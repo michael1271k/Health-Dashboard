@@ -1,16 +1,18 @@
 'use client'
 
 /**
- * Global training-era filter — ONE filter state shared by every table, chart,
- * and weight graph (Nutrition, Charts, Journey, Command Center trends).
+ * Global training-era filter — ONE filter state shared, WITHIN a tab, by every
+ * table, chart, and weight graph (Nutrition, Pathfinder, Command Center trends).
  *
- * Defaults to the CURRENT era (Helix Cut) for a clean-slate daily view;
- * the choice persists in localStorage across navigation and reloads. The
- * 'axis' token deliberately matches `eraForDate`'s return value so existing
- * era-aware hooks (useMuscleAnalytics, HelixViz) plug in without renames.
+ * Defaults to the CURRENT era (Helix Cut). It deliberately does NOT persist:
+ * switching to a different top-level tab resets it back to the current era
+ * (Auto), so a "PPL Legacy" selection made in Nutrition never bleeds into
+ * Workout or Pathfinder. The 'axis' token matches `eraForDate`'s return value so
+ * existing era-aware hooks (useMuscleAnalytics, HelixViz) plug in without renames.
  */
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import { usePathname } from 'next/navigation'
 import { HELIX_CUT_START } from '@/lib/programs'
 import { PHASES, getWeekPhase } from '@/lib/phases'
 import { logicalTodayISO } from '@/lib/utils/day'
@@ -31,8 +33,6 @@ export const ERA_FILTER_META: Record<EraFilter, { label: string; color: string }
 /** Pill display order — "All" far-left; the default selection stays 'axis'. */
 export const ERA_FILTER_ORDER: EraFilter[] = ['all', 'axis', 'ppl']
 
-const STORAGE_KEY = 'helix_era_filter'
-
 // ── Sub-phase (nested under the Helix 5.1 era): Cut / Maintenance / Bulk ──
 export type SubPhase = 'cut' | 'maintenance' | 'bulk'
 export type SubPhaseSel = 'auto' | SubPhase
@@ -43,8 +43,6 @@ export const SUB_PHASE_META: Record<SubPhase, { label: string; color: string }> 
   bulk:        { label: 'Bulk',  color: '#FBBF24' },
 }
 export const SUB_PHASE_ORDER: SubPhase[] = ['cut', 'maintenance', 'bulk']
-
-const SUB_STORAGE_KEY = 'helix_sub_phase'
 
 function weekStartSundayISO(dateISO: string): string {
   const d = new Date(`${dateISO}T12:00:00Z`)
@@ -85,36 +83,22 @@ interface EraCtx {
 const EraFilterContext = createContext<EraCtx | null>(null)
 
 export function EraFilterProvider({ children }: { children: ReactNode }) {
-  // Lazy initializer, NOT a hydrate-effect: an effect pair (read → write)
-  // briefly persists the default before the stored value lands, and a tree
-  // remount inside that window (React hydration recovery) permanently
-  // clobbers the user's choice. Reading at first client render makes every
-  // mount self-consistent. The pills never appear in SSR HTML (AuthGate
-  // renders a spinner server-side), so this cannot introduce a mismatch.
-  const [era, setEra] = useState<EraFilter>(() => {
-    if (typeof window === 'undefined') return 'axis'
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      if (stored === 'all' || stored === 'ppl' || stored === 'axis') return stored
-    } catch { /* ignore */ }
-    return 'axis'
-  })
+  const [era, setEra] = useState<EraFilter>('axis')
+  const [subPhase, setSubPhase] = useState<SubPhaseSel>('auto')
 
-  const [subPhase, setSubPhase] = useState<SubPhaseSel>(() => {
-    if (typeof window === 'undefined') return 'auto'
-    try {
-      const stored = localStorage.getItem(SUB_STORAGE_KEY)
-      if (stored === 'auto' || stored === 'cut' || stored === 'maintenance' || stored === 'bulk') return stored
-    } catch { /* ignore */ }
-    return 'auto'
-  })
-
+  // Reset to the current era (Auto) whenever the user switches top-level tab, so
+  // a filter chosen on one tab never carries into another. Ref-guarded on the
+  // top URL segment: the initial mount keeps the 'axis' default (no spurious
+  // reset), and same-tab navigation (e.g. ?view= changes) leaves the choice intact.
+  const pathname = usePathname()
+  const topSegment = (pathname ?? '/').split('/')[1] ?? ''
+  const prevSegment = useRef(topSegment)
   useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEY, era) } catch { /* ignore */ }
-  }, [era])
-  useEffect(() => {
-    try { localStorage.setItem(SUB_STORAGE_KEY, subPhase) } catch { /* ignore */ }
-  }, [subPhase])
+    if (prevSegment.current === topSegment) return
+    prevSegment.current = topSegment
+    setEra('axis')
+    setSubPhase('auto')
+  }, [topSegment])
 
   return (
     <EraFilterContext.Provider value={{ era, setEra, subPhase, setSubPhase, resolvedPhase: resolveSubPhase(subPhase) }}>

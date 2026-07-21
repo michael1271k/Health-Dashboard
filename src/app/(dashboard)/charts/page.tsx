@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 
-/** Merged into the unified Progression tab (Analytics view). */
+/** Merged into the unified Pathfinder tab (Analytics view). */
 export default function ChartsRedirect() {
-  redirect('/progression?view=analytics')
+  redirect('/pathfinder?view=analytics')
 }

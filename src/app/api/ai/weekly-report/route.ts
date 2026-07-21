@@ -12,20 +12,10 @@ import Anthropic from '@anthropic-ai/sdk'
 import { getServerSupabaseClient } from '@/lib/supabase/server'
 import { denyIfUnauthorized } from '@/lib/auth/guard'
 import { requireUserId } from '@/lib/auth/identity'
-
-// Local Sunday-normalizer + program-week counter (mirrors src/lib/reports/weekNumber.ts
-// without importing that 'use client' chain into this server route).
-const WEEK0_START = '2026-07-12'
-function weekStartOf(dateISO: string): string {
-  const d = new Date(`${dateISO}T12:00:00Z`)
-  d.setUTCDate(d.getUTCDate() - d.getUTCDay())
-  return d.toISOString().slice(0, 10)
-}
-function weekNumberOf(weekStartISO: string): number {
-  const a = new Date(`${WEEK0_START}T00:00:00Z`).getTime()
-  const b = new Date(`${weekStartISO}T00:00:00Z`).getTime()
-  return Math.round((b - a) / (7 * 86_400_000))
-}
+// Shared date math — weekNumber.ts is now server-safe (its date helpers live in
+// a pure leaf, not the 'use client' hooks chain).
+import { weekStartOf } from '@/lib/utils/week'
+import { weekNumberOf } from '@/lib/reports/weekNumber'
 
 /**
  * Distil the aggregate stats into the deterministic ReportPayload shape so an

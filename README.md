@@ -14,19 +14,20 @@ mirrored to Notion for a human-friendly training log.
 ## What it does
 
 ```
-Apple Health  ──►  Health Auto Export  ──►  /api/ingest (webhook)
-                                                  │
-                                                  ▼
-                                          Supabase (Postgres)
-                                                  │
-                          ┌───────────────────────┴───────────────────────┐
-                          ▼                                                ▼
-              Next.js PWA on Netlify                          Notion (gym-log mirror)
-        (dashboard · charts · workout logger)              best-effort per-session page
+Apple Health  ──►  Native iOS app (HealthKit bridge)  ──►  /api/ingest
+                                                                │
+                                                                ▼
+                                                        Supabase (Postgres)
+                                                                │
+                          ┌─────────────────────────────────────┴───────────────┐
+                          ▼                                                      ▼
+              Next.js PWA on Netlify                                Notion (gym-log mirror)
+        (dashboard · charts · workout logger)                    best-effort per-session page
 ```
 
-1. **Ingest** — The [Health Auto Export](https://www.healthexportapp.com/) iOS app
-   POSTs health metrics to `/api/ingest`, authenticated with a webhook secret.
+1. **Ingest** — The native iOS app reads Apple Health via a Capacitor HealthKit
+   bridge and POSTs the daily metrics to `/api/ingest`, authenticated with the
+   signed-in user's Supabase JWT.
 2. **Store** — Metrics and workouts are validated (Zod) and upserted into Supabase
    Postgres, the system of record for all high-volume, time-series data.
 3. **Score** — Daily Score, recovery Battery, and Readiness Coach engines derive
@@ -70,7 +71,6 @@ Copy `.env.example` to `.env.local` and fill in your values:
 | `SUPABASE_SERVICE_ROLE_KEY` | Server-side service-role key (never exposed to client) |
 | `NOTION_TOKEN` | Notion integration token for the gym-log mirror |
 | `NOTION_GYM_DB_ID` | Target Notion database ID for sessions |
-| `INGEST_WEBHOOK_SECRET` | Shared secret for the Health Auto Export webhook |
 | `NEXT_PUBLIC_APP_URL` | Public app URL (used for same-origin auth checks) |
 
 `.env.local` is gitignored and must never be committed. On Netlify, set the same

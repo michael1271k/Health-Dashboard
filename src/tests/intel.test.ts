@@ -7,9 +7,9 @@ import { logicalTodayISO, logicalDaysAgoISO } from '@/lib/utils/day'
 
 // ── Advanced-metric schema mapping ─────────────────────────────────────────
 describe('advanced ingest fields', () => {
-  it('accepts wrist_temp / time_in_daylight / heart_rate_recovery + aliases', () => {
+  it('accepts wrist_temp / time_in_daylight / heart_rate_recovery (native canonical keys)', () => {
     const r = IngestPayloadSchema.safeParse({
-      wrist_temperature: 0.4, daylight: '95', hrr: 31,
+      wrist_temp: 0.4, time_in_daylight: '95', heart_rate_recovery: 31,
     })
     expect(r.success).toBe(true)
     if (r.success) {

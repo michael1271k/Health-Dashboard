@@ -2,6 +2,10 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
+// Re-exported from a pure leaf so server routes can share the same date math
+// without pulling this 'use client' module into their bundle.
+export { weekStartOf, isoAddDays } from '@/lib/utils/week'
+import { isoAddDays } from '@/lib/utils/week'
 
 /**
  * Calendar-week session aggregation (Sun→Sat, matching program weeks) — the
@@ -31,19 +35,6 @@ export interface WeekSummary {
     avgBpm: number | null
     calories: number
   }
-}
-
-/** Sunday of the week containing dateISO. */
-export function weekStartOf(dateISO: string): string {
-  const d = new Date(`${dateISO}T12:00:00Z`)
-  d.setUTCDate(d.getUTCDate() - d.getUTCDay())
-  return d.toISOString().slice(0, 10)
-}
-
-export function isoAddDays(dateISO: string, n: number): string {
-  const d = new Date(`${dateISO}T12:00:00Z`)
-  d.setUTCDate(d.getUTCDate() + n)
-  return d.toISOString().slice(0, 10)
 }
 
 export function useWeekSessions(weekStart: string | null) {

@@ -102,7 +102,7 @@ describe('ingest — detailed inserted / omitted / errors response', () => {
   })
 })
 
-describe('ingest — Shortcut key → column mapping', () => {
+describe('ingest — native key → column mapping', () => {
   it('training_minutes feeds exercise_minutes AND legacy training_minutes', async () => {
     const rows: any[] = []
     const db = mockDb((row) => { rows.push(row); return { error: null } })
@@ -154,13 +154,6 @@ describe('ingest — recovery keys: heart_rate_recovery / wrist_temp / time_in_d
     expect(result.errors).toHaveLength(0)
   })
 
-  it('normalizes the alias forms (hrr / wrist_temperature / daylight) via the schema', async () => {
-    const parsed = IngestPayloadSchema.parse({ hrr: '30.5', wrist_temperature: 36.4, daylight: 62, steps: 100 })
-    expect(parsed.heart_rate_recovery).toBe(30.5)       // floatField — no rounding
-    expect(parsed.wrist_temp).toBe(36.4)
-    expect(parsed.time_in_daylight).toBe(62)
-  })
-
   it('silently drops unknown keys alongside the new ones (strict-accept, graceful-ignore)', async () => {
     const parsed = IngestPayloadSchema.parse({ wrist_temp: 36.1, some_future_metric: 999 })
     expect(parsed.wrist_temp).toBe(36.1)
@@ -207,13 +200,6 @@ describe('ingest — nutrition uses explicit dietary energy, never derived', () 
     const result = await ingestDailyLog(db, 'user-1', { date: '2026-07-19', protein: 170, carbs: 187, fats: 52 } as any)
     expect(inserted()).toBe(false)                      // no calorie invention
     expect(result.errors.some((e) => e.field === 'nutrition_entries')).toBe(false)
-  })
-
-  it('resolves the dietary_energy alias through the schema into the nutrition row', async () => {
-    const { db, getRow } = nutritionDb()
-    const parsed = IngestPayloadSchema.parse({ date: '2026-07-19', dietary_energy: 1934, protein: 170 })
-    await ingestDailyLog(db, 'user-1', parsed as any)
-    expect(getRow().calories).toBe(1934)
   })
 })
 

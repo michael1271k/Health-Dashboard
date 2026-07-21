@@ -30,6 +30,15 @@ public class HealthkitPlugin: CAPPlugin, CAPBridgedPlugin {
     store.requestAuthorization(toShare: nil, read: types) { ok, err in call.resolve(["granted": ok && err == nil]) }
   }
 
+  /// Query a HealthKit QUANTITY type and reduce it to ONE value Swift-side.
+  /// `reduce` selects the aggregation:
+  ///  - "sum"/"avg" → HKStatisticsQuery, which **deduplicates overlapping samples
+  ///    from multiple sources** (iPhone + Apple Watch) exactly like the Health app.
+  ///    Using a raw HKSampleQuery + manual JS sum double-counted steps/energy
+  ///    (10k shown vs 7k real). .cumulativeSum for totals, .discreteAverage for rates.
+  ///  - "latest" → most-recent single sample (statistics can't express "latest";
+  ///    used for point-in-time metrics like weight, RHR, VO₂max, body fat).
+  /// Resolves `{"samples": [{"value": x}]}` (single element) or `[]` when empty.
   @objc func queryQuantity(_ call: CAPPluginCall) {
     guard let id = call.getString("sampleType"),
           let qType = HKObjectType.quantityType(forIdentifier: HKQuantityTypeIdentifier(rawValue: id)) else {
@@ -39,14 +48,25 @@ public class HealthkitPlugin: CAPPlugin, CAPBridgedPlugin {
     let start = iso.date(from: call.getString("startDate") ?? "") ?? Date().addingTimeInterval(-86400)
     let end = iso.date(from: call.getString("endDate") ?? "") ?? Date()
     let pred = HKQuery.predicateForSamples(withStart: start, end: end, options: .strictStartDate)
-    let q = HKSampleQuery(sampleType: qType, predicate: pred, limit: HKObjectQueryNoLimit,
-      sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)]) { _, samples, _ in
-      let unit = self.unit(for: qType)
-      let out = (samples as? [HKQuantitySample])?.map {
-        ["value": $0.quantity.doubleValue(for: unit),
-         "startDate": iso.string(from: $0.startDate), "endDate": iso.string(from: $0.endDate)]
-      } ?? []
-      call.resolve(["samples": out])
+    let unit = self.unit(for: qType)
+    let reduce = call.getString("reduce") ?? "sum"
+
+    if reduce == "latest" {
+      let q = HKSampleQuery(sampleType: qType, predicate: pred, limit: 1,
+        sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)]) { _, samples, _ in
+        guard let s = (samples as? [HKQuantitySample])?.first else { call.resolve(["samples": []]); return }
+        call.resolve(["samples": [["value": s.quantity.doubleValue(for: unit)]]])
+      }
+      store.execute(q)
+      return
+    }
+
+    let opts: HKStatisticsOptions = reduce == "avg" ? .discreteAverage : .cumulativeSum
+    let q = HKStatisticsQuery(quantityType: qType, quantitySamplePredicate: pred, options: opts) { _, stats, _ in
+      guard let qty = (reduce == "avg" ? stats?.averageQuantity() : stats?.sumQuantity()) else {
+        call.resolve(["samples": []]); return
+      }
+      call.resolve(["samples": [["value": qty.doubleValue(for: unit)]]])
     }
     store.execute(q)
   }

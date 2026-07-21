@@ -1,27 +1,28 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { m, AnimatePresence } from 'framer-motion'
 import { Dumbbell, Trophy, Sparkles, Loader2, Trash2, ChevronRight, BatteryMedium, Moon, Camera } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { useSaveReport, useDeleteReport } from '@/lib/hooks/useReports'
 import { useTimelineWeeks, type TimelineWeekNode } from '@/lib/hooks/useTimelineWeeks'
-import { weekStartOf, isoAddDays } from '@/lib/hooks/useWeekSessions'
+import { useContinuum, type ContinuumDay } from '@/lib/hooks/useContinuum'
+import { weekStartOf, isoAddDays } from '@/lib/utils/week'
 import { splitColor } from '@/lib/types/workout'
 import { logicalTodayISO } from '@/lib/utils/day'
-import { displayWeight, weightUnit } from '@/lib/utils/units'
+import { displayWeight, weightUnit, useUnitSystem } from '@/lib/utils/units'
+import { eraForDate } from '@/lib/programs'
 import { authedFetch } from '@/lib/utils/authedFetch'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
 import { useEraFilter } from '@/lib/era/eraFilter'
-import { EraFilterPills } from '@/components/era/EraFilterPills'
 import { MarkdownView } from '@/components/reports/MarkdownView'
+import { DayCard } from '@/components/timeline/ContinuumTimeline'
 
 const GOLD = '#F5C15A'
+const label = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 
-type WeekNode = TimelineWeekNode
-
-/** Dominant split of a week (for the node glow) — most frequent day split. */
 function dominantSplit(days: TimelineWeekNode['days']): string | undefined {
   const counts = new Map<string, number>()
   for (const d of days) if (d.split) counts.set(d.split, (counts.get(d.split) ?? 0) + 1)
@@ -30,45 +31,64 @@ function dominantSplit(days: TimelineWeekNode['days']): string | undefined {
   return best
 }
 
-const label = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
-
 /**
- * The Cut-Program Timeline — a vertical glass spine where every saved weekly
- * report is a glowing node (plus a live node for the in-progress week). Nodes
- * reveal on scroll (opacity/translate only — no WebGL, iOS-60fps-safe) and
- * expand in place to a full week breakdown.
+ * Pathfinder timeline — the unified life-over-time spine merging the old Journey
+ * (daily) and Progress (weekly) tabs. Every program week is a rich capsule
+ * (sessions · volume · PRs · weight Δ, plus Snapshot / AI-report actions);
+ * expanding it reveals that week's individual day rows (score · macros ·
+ * session/rest · kcal), each tapping into its Daily Nexus. The current and prior
+ * week open by default; older weeks collapse to just the capsule.
  */
-export function ProgressionTimeline() {
+export function PathfinderTimeline() {
   const { era } = useEraFilter()
+  const router = useRouter()
+  const unit = useUnitSystem()
   const { nodes, isPending } = useTimelineWeeks(era)
+  const { data: continuumDays } = useContinuum(true)
   const liveWeekStart = weekStartOf(logicalTodayISO())
-  const [openWeek, setOpenWeek] = useState<string | null>(liveWeekStart)
+  const prevWeekStart = isoAddDays(liveWeekStart, -7)
+  const [overrides, setOverrides] = useState<Record<string, boolean>>({})
+
+  // Group every logged/tracked day under its Sunday week, filtered at the day
+  // level by the training-era boundary (so the boundary week doesn't leak PPL
+  // days into the Helix view).
+  const daysByWeek = useMemo(() => {
+    const map = new Map<string, ContinuumDay[]>()
+    for (const d of continuumDays ?? []) {
+      if (era !== 'all' && eraForDate(d.date) !== era) continue
+      const ws = weekStartOf(d.date)
+      const arr = map.get(ws) ?? []
+      arr.push(d)
+      map.set(ws, arr)
+    }
+    return map
+  }, [continuumDays, era])
+
+  const isOpen = (ws: string) => overrides[ws] ?? (ws === liveWeekStart || ws === prevWeekStart)
+  const toggle = (ws: string) => setOverrides((o) => ({ ...o, [ws]: !isOpen(ws) }))
 
   return (
     <div className="space-y-4">
-      {/* Timeline is era-filterable too — default 'Helix 5.1', PPL legacy isolated. */}
-      <EraFilterPills />
-
       {isPending ? (
         <div className="helix-card h-40 animate-pulse" aria-hidden="true" />
+      ) : nodes.length === 0 ? (
+        <p className="text-fluid-sm text-muted py-8 text-center">No weeks in this era yet — log a session, then snapshot the week.</p>
       ) : (
         <div className="relative pl-9">
-          {/* Vertical glass spine */}
           <span aria-hidden="true" className="absolute left-[14px] top-1 bottom-1 w-px"
             style={{ background: 'linear-gradient(to bottom, rgba(34,211,238,0.55), rgba(255,255,255,0.10) 60%, transparent)' }} />
-
           <div className="space-y-3">
             {nodes.map((n) => (
-              <TimelineNode
+              <WeekCapsule
                 key={n.weekStart}
                 node={n}
-                open={openWeek === n.weekStart}
-                onToggle={() => setOpenWeek((w) => (w === n.weekStart ? null : n.weekStart))}
+                days={daysByWeek.get(n.weekStart) ?? []}
+                unit={unit}
+                open={isOpen(n.weekStart)}
+                onToggle={() => toggle(n.weekStart)}
+                onOpenDay={(date) => router.push(`/day/${date}`)}
               />
             ))}
-            {nodes.length === 0 && (
-              <p className="text-fluid-sm text-muted py-8 text-center">No weeks in this era yet — log a session, then snapshot the week.</p>
-            )}
           </div>
         </div>
       )}
@@ -76,30 +96,28 @@ export function ProgressionTimeline() {
   )
 }
 
-function TimelineNode({ node, open, onToggle }: { node: WeekNode; open: boolean; onToggle: () => void }) {
+function WeekCapsule({ node, days, unit, open, onToggle, onOpenDay }: {
+  node: TimelineWeekNode
+  days: ContinuumDay[]
+  unit: string
+  open: boolean
+  onToggle: () => void
+  onOpenDay: (date: string) => void
+}) {
   const color = splitColor(dominantSplit(node.days))
   const hasPRs = node.prs > 0
 
   return (
-    <m.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-40px' }}
-      transition={{ type: 'spring', stiffness: 380, damping: 34 }}
-      className="relative"
-    >
-      {/* Glowing node on the spine */}
+    <m.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-40px' }} transition={{ type: 'spring', stiffness: 380, damping: 34 }}
+      className="relative">
       <span aria-hidden="true" className="absolute -left-[30px] top-4 h-3.5 w-3.5 rounded-full border-2"
-        style={{
-          borderColor: hasPRs ? GOLD : color,
-          background: `${color}40`,
-          boxShadow: `0 0 14px ${(hasPRs ? GOLD : color)}88`,
-        }} />
+        style={{ borderColor: hasPRs ? GOLD : color, background: `${color}40`, boxShadow: `0 0 14px ${(hasPRs ? GOLD : color)}88` }} />
 
       <button onClick={onToggle} onPointerUp={blurOnTap} className="helix-card w-full text-left px-4 py-3.5 active:opacity-90" style={{ borderColor: `${color}33` }}>
         <div className="flex items-center justify-between gap-2">
           <span className="font-heading font-semibold text-fluid-sm text-text truncate">
-            Week {node.weekNumber} · {label(node.weekStart)}–{label(isoAddDays(node.weekStart, 6))}
+            {node.weekLabel} · {label(node.weekStart)}–{label(isoAddDays(node.weekStart, 6))}
           </span>
           <span className="flex items-center gap-2 shrink-0">
             {node.isLive && <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded" style={{ color, background: `${color}1a`, border: `1px solid ${color}44` }}>Live</span>}
@@ -120,59 +138,38 @@ function TimelineNode({ node, open, onToggle }: { node: WeekNode; open: boolean;
 
       <AnimatePresence initial={false}>
         {open && (
-          <m.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.22 }}
-            className="overflow-hidden"
-          >
-            <WeekDetail node={node} />
+          <m.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.22 }} className="overflow-hidden">
+            <div className="mt-2 ml-1 space-y-3 pb-1">
+              {/* Individual day rows (the merged-in Journey continuum) */}
+              {days.length > 0 && (
+                <div className="space-y-1.5">
+                  {days.map((d) => <DayCard key={d.date} d={d} unit={unit} active={false} onOpen={onOpenDay} />)}
+                </div>
+              )}
+
+              {/* Body deltas */}
+              {(node.weightDelta != null || node.fatDelta != null) && (
+                <div className="flex gap-5 text-fluid-xs">
+                  {node.weightDelta != null && (
+                    <span className="text-muted">Weight Δ <span className="helix-num font-bold" style={{ color: node.weightDelta <= 0 ? '#34D399' : '#FB7185' }}>{node.weightDelta > 0 ? '+' : ''}{node.weightDelta} {weightUnit()}</span></span>
+                  )}
+                  {node.fatDelta != null && (
+                    <span className="text-muted">Body-fat Δ <span className="helix-num font-bold" style={{ color: node.fatDelta <= 0 ? '#34D399' : '#FB7185' }}>{node.fatDelta > 0 ? '+' : ''}{node.fatDelta}%</span></span>
+                  )}
+                </div>
+              )}
+
+              <WeekRecoveryStrip weekStart={node.weekStart} />
+
+              {node.contentMd
+                ? <div className="rounded-xl bg-black/20 border border-white/[0.06] p-4 max-h-[50vh] overflow-y-auto no-scrollbar"><MarkdownView md={node.contentMd} /></div>
+                : <WeekActions node={node} />}
+            </div>
           </m.div>
         )}
       </AnimatePresence>
     </m.div>
-  )
-}
-
-function WeekDetail({ node }: { node: WeekNode }) {
-  return (
-    <div className="mt-2 ml-1 space-y-3 pb-1">
-      {/* Split-colored session rows */}
-      {node.days.length > 0 && (
-        <div className="space-y-1.5">
-          {node.days.map((d) => {
-            const c = splitColor(d.split)
-            return (
-              <div key={d.date} className="flex items-center gap-3 rounded-lg bg-white/[0.02] px-3 py-2" style={{ borderLeft: `2px solid ${c}` }}>
-                <span className="flex-1 min-w-0 text-fluid-sm font-medium truncate" style={{ color: c }}>{d.label}</span>
-                {(d.prs ?? 0) > 0 && <span className="text-[10px] font-bold shrink-0" style={{ color: GOLD }}>{d.prs} PR</span>}
-                <span className="helix-num text-fluid-xs text-muted tabular-nums shrink-0">{d.volumeKg != null ? `${Math.round(d.volumeKg).toLocaleString()}kg` : '—'}</span>
-              </div>
-            )
-          })}
-        </div>
-      )}
-
-      {/* Body deltas */}
-      {(node.weightDelta != null || node.fatDelta != null) && (
-        <div className="flex gap-5 text-fluid-xs">
-          {node.weightDelta != null && (
-            <span className="text-muted">Weight Δ <span className="helix-num font-bold" style={{ color: node.weightDelta <= 0 ? '#34D399' : '#FB7185' }}>{node.weightDelta > 0 ? '+' : ''}{node.weightDelta} {weightUnit()}</span></span>
-          )}
-          {node.fatDelta != null && (
-            <span className="text-muted">Body-fat Δ <span className="helix-num font-bold" style={{ color: node.fatDelta <= 0 ? '#34D399' : '#FB7185' }}>{node.fatDelta > 0 ? '+' : ''}{node.fatDelta}%</span></span>
-          )}
-        </div>
-      )}
-
-      <WeekRecoveryStrip weekStart={node.weekStart} />
-
-      {/* AI narrative or generate action */}
-      {node.contentMd
-        ? <div className="rounded-xl bg-black/20 border border-white/[0.06] p-4 max-h-[50vh] overflow-y-auto no-scrollbar"><MarkdownView md={node.contentMd} /></div>
-        : <WeekActions node={node} />}
-    </div>
   )
 }
 
@@ -210,7 +207,7 @@ function WeekRecoveryStrip({ weekStart }: { weekStart: string }) {
   )
 }
 
-function WeekActions({ node }: { node: WeekNode }) {
+function WeekActions({ node }: { node: TimelineWeekNode }) {
   const save = useSaveReport()
   const del = useDeleteReport()
   const [aiBusy, setAiBusy] = useState(false)
@@ -232,9 +229,6 @@ function WeekActions({ node }: { node: WeekNode }) {
     save.mutate({
       kind: 'weekly', week_start: node.weekStart, week_number: node.weekNumber,
       payload: {
-        // Real per-week stats now (the node carries aggregated sets/duration),
-        // not the old hardcoded zeros. calories stays 0 — nutrition isn't
-        // workout-derived; the AI report fills the richer picture.
         volumeKg: node.volumeKg, sets: node.sets, prs: node.prs, calories: 0, durationMin: node.durationMin,
         sessions: node.sessions, weightDelta: node.weightDelta, fatDelta: node.fatDelta, days: node.days,
       },
@@ -248,7 +242,6 @@ function WeekActions({ node }: { node: WeekNode }) {
           {aiBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
           {aiBusy ? 'Generating…' : 'Generate AI report'}
         </button>
-        {/* Snapshot ANY week without a saved report — past weeks can be back-filled. */}
         {!node.reportId && (
           <button onClick={snapshot} disabled={save.isPending} className="btn-glass min-h-[40px] text-fluid-xs">
             {save.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />} Snapshot week

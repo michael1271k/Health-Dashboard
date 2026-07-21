@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 
-/** Merged into the unified Progression tab. */
+/** Merged into the unified Pathfinder tab (Vitals view). */
 export default function VitalsRedirect() {
-  redirect('/progression')
+  redirect('/pathfinder?view=vitals')
 }

@@ -7,6 +7,7 @@ import { getWeekPhase, type WeekPhase } from '@/lib/phases'
 import { eraForDate } from '@/lib/programs'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { displayWeight, useUnitSystem } from '@/lib/utils/units'
+import { blurOnTap } from '@/lib/utils/blurOnTap'
 
 const VIOLET = '#EC4899'
 const STEEL = '#8B97B2'
@@ -31,7 +32,7 @@ function weekStartOf(dateISO: string): string {
  * macro micro-bar · session/recovery glyph · kcal. The active (open) day locks
  * into a teal-glow state so the timeline never loses its place.
  */
-const DayCard = memo(function DayCard({ d, unit, active, onOpen }: {
+export const DayCard = memo(function DayCard({ d, unit, active, onOpen }: {
   d: ContinuumDay
   unit: string
   active: boolean
@@ -42,7 +43,7 @@ const DayCard = memo(function DayCard({ d, unit, active, onOpen }: {
   const sc = scoreColor(d.score)
   return (
     // content-visibility keeps offscreen history unrendered — the perf strategy.
-    <button onClick={() => onOpen(d.date)} aria-current={active ? 'date' : undefined}
+    <button onClick={() => onOpen(d.date)} onPointerUp={blurOnTap} aria-current={active ? 'date' : undefined}
       className="w-full flex items-center gap-2.5 rounded-xl px-3 min-h-[48px] text-left border transition-colors active:opacity-80"
       style={{
         contentVisibility: 'auto', containIntrinsicSize: 'auto 48px',
@@ -100,7 +101,7 @@ const WeekHeader = memo(function WeekHeader({ weekStart, phase, onOpenWeek }: {
       <span className="h-2 w-2 rounded-full border-2 shrink-0" style={{ borderColor: color, boxShadow: helix ? `0 0 8px ${color}66` : undefined }} aria-hidden="true" />
       <span className="text-[10px] font-bold uppercase tracking-[0.18em] truncate" style={{ color }}>{label}</span>
       <span className="h-px flex-1" style={{ background: `${color}30` }} />
-      <button onClick={() => onOpenWeek(weekStart)} className="p-1.5 rounded-lg hover:bg-white/[0.06] min-h-[32px]" style={{ color }}
+      <button onClick={() => onOpenWeek(weekStart)} onPointerUp={blurOnTap} className="p-1.5 rounded-lg hover:bg-white/[0.06] min-h-[32px]" style={{ color }}
         aria-label={`Open files for ${label}`}>
         <FolderOpen className="w-3.5 h-3.5" />
       </button>
@@ -163,7 +164,7 @@ export const ContinuumTimeline = memo(function ContinuumTimeline({ era, onOpenWe
         </div>
       ))}
       {!fullHistory && (
-        <button onClick={() => setFullHistory(true)}
+        <button onClick={() => setFullHistory(true)} onPointerUp={blurOnTap}
           className="btn-glass w-full justify-center min-h-[44px] mt-3">
           Load full history
         </button>

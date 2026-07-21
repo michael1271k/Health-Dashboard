@@ -32,6 +32,13 @@ export default function NutritionPage() {
   // tracked phase so the full Notion-imported history renders.
   const { data: logs, isLoading } = useDailyLogs(eraDateRange(era))
 
+  // The rings + Fuel→Force hero ALWAYS show TODAY's live macros, independent of
+  // the era/history filter — a 'PPL Legacy' selection (whose window ends before
+  // today) must never blank them out.
+  const todayISO = logicalTodayISO()
+  const { data: todayLogs } = useDailyLogs({ from: todayISO, to: todayISO })
+  const todayLog = (todayLogs ?? []).find((l) => l.date === todayISO) ?? null
+
   const [goals, setGoals] = useState<ActiveGoals>({ calorie: 1955, protein: 170, carbs: 195, fat: 55, mode: 'cut' })
   const [saving, setSaving] = useState(false)
   const [targetsOpen, setTargetsOpen] = useState(false)
@@ -89,8 +96,6 @@ export default function NutritionPage() {
   const inRange = last7.filter((l) => l.calories !== null && Math.abs(l.calories - goals.calorie) <= 100).length
   const adherence = last7.length ? Math.round((inRange / last7.length) * 100) : null
 
-  const todayLog = (logs ?? []).find((l) => l.date === logicalTodayISO()) ?? null
-
   return (
     <div className="space-y-6">
       <div>
@@ -106,7 +111,7 @@ export default function NutritionPage() {
       />
 
       {/* Fuel → Force: links today's fuel to today's session (renders only if trained) */}
-      <FuelForceBand date={logicalTodayISO()} proteinG={todayLog?.proteinG ?? null} proteinGoal={goals.protein} />
+      <FuelForceBand date={todayISO} proteinG={todayLog?.proteinG ?? null} proteinGoal={goals.protein} />
 
       {/* Training-day shortcut → the deck, pre-seeded (hidden once logged) */}
       <ScheduleShortcut />

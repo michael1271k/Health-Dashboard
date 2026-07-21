@@ -1,11 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { Loader2, Pencil, Trash2, TrendingUp } from 'lucide-react'
+import Link from 'next/link'
+import { Loader2, Pencil, Trash2, TrendingUp, ChevronRight } from 'lucide-react'
 import type { GymReportRow } from '@/lib/hooks/useWeekly'
 import { useDeleteSession, useGlobalSessionNumber } from '@/lib/hooks/useDayVault'
 import { useEditSession } from '@/lib/hooks/useEditSession'
 import { SessionIntelCard } from '@/components/reports/SessionIntelCard'
+import { blurOnTap } from '@/lib/utils/blurOnTap'
 import { PROGRAMS, DEFAULT_PROGRAM_ID, getActiveProgramId } from '@/lib/programs'
 
 /**
@@ -25,14 +27,19 @@ export function SessionProgressionCard({ session, date }: { session: GymReportRo
 
   return (
     <section className="helix-card holo-sheen space-y-3" style={{ borderColor: '#8B5CF628' }}>
-      <div className="flex items-center gap-2">
+      <Link href={`/session/${session.id}`} onPointerUp={blurOnTap}
+        className="flex items-center gap-2 -m-1 p-1 rounded-lg active:opacity-80 hover:bg-white/[0.03]"
+        aria-label={`Open full analysis for ${label}`}>
         <span className="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style={{ background: '#8B5CF61a', color: '#8B5CF6' }}>
           <TrendingUp className="w-4 h-4" aria-hidden="true" />
         </span>
-        <h3 className="font-heading font-bold text-fluid-base text-text">
+        <h3 className="font-heading font-bold text-fluid-base text-text flex-1 min-w-0">
           {label}{globalNum ? <span className="text-muted font-semibold"> · Session #{globalNum}</span> : null}
         </h3>
-      </div>
+        <span className="text-[10px] font-semibold uppercase tracking-wide shrink-0 flex items-center gap-0.5" style={{ color: '#22D3EE' }}>
+          Analyze <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
+        </span>
+      </Link>
 
       <SessionIntelCard session={session} />
 

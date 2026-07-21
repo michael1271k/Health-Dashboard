@@ -56,16 +56,6 @@ describe('IngestPayload flex() coercion', () => {
     }
   })
 
-  it('maps Shortcut aliases onto canonical keys (incl. the respitory_rate spelling)', () => {
-    const r = IngestPayloadSchema.safeParse({ respitory_rate: 14.5, heart_rate_variability: 62, vo2_max: 44.1 })
-    expect(r.success).toBe(true)
-    if (r.success) {
-      expect(r.data.respiratory_rate).toBe(14.5)
-      expect(r.data.hrv).toBe(62)
-      expect(r.data.vo2max).toBe(44.1)
-    }
-  })
-
   it('converts active_energy from cal to kcal only when clearly cal', () => {
     const big = IngestPayloadSchema.safeParse({ active_energy: 523000 })
     const small = IngestPayloadSchema.safeParse({ active_energy: 520 })
@@ -73,7 +63,7 @@ describe('IngestPayload flex() coercion', () => {
     expect(small.success && small.data.active_energy).toBe(520)
   })
 
-  it('treats a small sleep_minutes value as HOURS (native/Shortcut sends hours)', () => {
+  it('treats a small sleep_minutes value as HOURS (native sends hours)', () => {
     const r = IngestPayloadSchema.safeParse({ sleep_minutes: 7.5 })
     expect(r.success).toBe(true)
     if (r.success) expect(r.data.sleep_minutes).toBe(450) // 7.5h → 450 min
@@ -109,24 +99,12 @@ describe('IngestPayload flex() coercion', () => {
     }
   })
 
-  it('maps the dietary_energy alias onto calories (Shortcut fallback key)', () => {
-    const r = IngestPayloadSchema.safeParse({ dietary_energy: 1934, protein: 170 })
-    expect(r.success).toBe(true)
-    if (r.success) expect(r.data.calories).toBe(1934)
-  })
-
-  it('keeps an explicit calories value over the dietary_energy alias', () => {
-    const r = IngestPayloadSchema.safeParse({ calories: 1934, dietary_energy: 2200 })
-    expect(r.success).toBe(true)
-    if (r.success) expect(r.data.calories).toBe(1934)
-  })
-
   it('parses a full mixed payload with junk values without error', () => {
     const r = IngestPayloadSchema.safeParse({
       steps: 8200, water: 2500, sleep_minutes: false, carbs: 180, protein: 175,
       fats: 55, weight: 78.4, lean_mass: 61.2, bmi: 23.1, training_minutes: 70,
       active_energy: 520000, body_fat: 16.2, standing_minutes: '', avg_heart_rate: 78,
-      avg_rest_heart_rate: 51, respitory_rate: 14, blood_oxygen: 98,
+      avg_rest_heart_rate: 51, respiratory_rate: 14, blood_oxygen: 98,
     })
     expect(r.success).toBe(true)
     if (r.success) {
@@ -139,15 +117,10 @@ describe('IngestPayload flex() coercion', () => {
   })
 })
 
-// ── Back-compat alias + native payload shape ─────────────────────────────────
-import { IngestPayloadSchema as Canonical, ShortcutPayloadSchema as Legacy } from '@/lib/ingest/schema'
-
-describe('ingest schema rename', () => {
-  it('the legacy alias is the same schema as the canonical export', () => {
-    expect(Legacy).toBe(Canonical)
-  })
+// ── Native HealthKit payload shape ───────────────────────────────────────────
+describe('ingest schema — native payload', () => {
   it('accepts a native HealthKit-shaped payload (steps/hrv/active_energy)', () => {
-    const r = Canonical.safeParse({ steps: 8240, hrv: 62, active_energy: 512, avg_rest_heart_rate: 52 })
+    const r = IngestPayloadSchema.safeParse({ steps: 8240, hrv: 62, active_energy: 512, avg_rest_heart_rate: 52 })
     expect(r.success).toBe(true)
     if (r.success) {
       expect(r.data.steps).toBe(8240)

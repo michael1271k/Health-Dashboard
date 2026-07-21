@@ -13,15 +13,18 @@ import { supabase } from '@/lib/supabase/client'
  * `Capacitor.isNativePlatform()`, so the web bundle ships no native code.
  */
 export interface HealthSample { value: number; startDate: string; endDate: string }
+type Reduce = 'sum' | 'latest' | 'avg'
 interface HealthKitPlugin {
   requestAuthorization(opts: { read: string[] }): Promise<{ granted: boolean }>
-  queryQuantity(opts: { sampleType: string; startDate: string; endDate: string }): Promise<{ samples: HealthSample[] }>
+  // Reduced Swift-side: HKStatisticsQuery deduplicates overlapping iPhone+Watch
+  // sources, so the returned array is a single {value} (or empty). No manual JS sum.
+  queryQuantity(opts: { sampleType: string; startDate: string; endDate: string; reduce: Reduce }): Promise<{ samples: { value: number }[] }>
   queryCategory(opts: { sampleType: string; startDate: string; endDate: string }): Promise<{ samples: HealthSample[] }>
 }
 const HealthKit = registerPlugin<HealthKitPlugin>('CapacitorHealthkit')
 
 /** HealthKit sample identifiers → our ingest payload keys + how to reduce them. */
-const METRIC_MAP: Array<{ hk: string; key: string; reduce: 'sum' | 'latest' | 'avg' }> = [
+const METRIC_MAP: Array<{ hk: string; key: string; reduce: Reduce }> = [
   { hk: 'HKQuantityTypeIdentifierStepCount', key: 'steps', reduce: 'sum' },
   { hk: 'HKQuantityTypeIdentifierActiveEnergyBurned', key: 'active_energy', reduce: 'sum' },
   { hk: 'HKQuantityTypeIdentifierAppleExerciseTime', key: 'training_minutes', reduce: 'sum' },
@@ -58,11 +61,13 @@ const EXTRA_READ_TYPES = [
 ]
 const READ_TYPES = [...new Set(METRIC_MAP.map((m) => m.hk).concat(EXTRA_READ_TYPES))]
 
-function reduceSamples(samples: HealthSample[], how: 'sum' | 'latest' | 'avg'): number | undefined {
-  if (!samples.length) return undefined
-  if (how === 'sum') return Math.round(samples.reduce((s, x) => s + x.value, 0))
-  if (how === 'avg') return Math.round((samples.reduce((s, x) => s + x.value, 0) / samples.length) * 100) / 100
-  return samples[samples.length - 1].value // latest
+/** The plugin already reduced the metric Swift-side; just round to our precision. */
+function roundReduced(samples: { value: number }[], how: Reduce): number | undefined {
+  const v = samples[0]?.value
+  if (v === undefined) return undefined
+  if (how === 'sum') return Math.round(v)
+  if (how === 'avg') return Math.round(v * 100) / 100
+  return v // latest — keep full precision (weight, RHR, VO₂max…)
 }
 
 /** Request Health read permission once (native only). */
@@ -161,16 +166,21 @@ async function syncDay(dateISO: string, isToday: boolean): Promise<Record<string
   const start = new Date(`${dateISO}T00:00:00`)
   const end = isToday ? new Date() : new Date(`${dateISO}T23:59:59.999`)
   const payload: Record<string, number | string> = {}
-  for (const m of METRIC_MAP) {
-    try {
-      const { samples } = await HealthKit.queryQuantity({ sampleType: m.hk, startDate: start.toISOString(), endDate: end.toISOString() })
-      const v = reduceSamples(samples, m.reduce)
-      if (v !== undefined) payload[m.key] = v
-    } catch { /* skip a metric that isn't available */ }
-  }
+
+  // All 15 quantity metrics + the sleep category query fire in parallel — one
+  // batch of concurrent native round-trips instead of ~16 sequential awaits.
+  const [metricResults, sleep] = await Promise.all([
+    Promise.all(METRIC_MAP.map(async (m) => {
+      try {
+        const { samples } = await HealthKit.queryQuantity({ sampleType: m.hk, startDate: start.toISOString(), endDate: end.toISOString(), reduce: m.reduce })
+        return { key: m.key, value: roundReduced(samples, m.reduce) }
+      } catch { return { key: m.key, value: undefined } } // metric not available on this device
+    })),
+    fetchSleep(dateISO),
+  ])
+  for (const r of metricResults) if (r.value !== undefined) payload[r.key] = r.value
   // Sleep is a category type with its own night window — merge its stage minutes
   // + bed times into the same payload.
-  const sleep = await fetchSleep(dateISO)
   if (sleep) for (const [k, v] of Object.entries(sleep)) if (v !== undefined) payload[k] = v as number | string
 
   if (Object.keys(payload).length === 0) return null
@@ -200,7 +210,11 @@ export async function syncRollingWindow(): Promise<{ today: Record<string, numbe
   if (!Capacitor.isNativePlatform()) return { today: null, yesterday: null }
   const now = new Date()
   const yst = new Date(now); yst.setDate(yst.getDate() - 1)
-  const today = await syncDay(localDayISO(now), true)
-  const yesterday = await syncDay(localDayISO(yst), false)
+  // Both days in parallel — each writes to its own date and upserts last-write-
+  // wins, so there's no ordering dependency between them.
+  const [today, yesterday] = await Promise.all([
+    syncDay(localDayISO(now), true),
+    syncDay(localDayISO(yst), false),
+  ])
   return { today, yesterday }
 }

@@ -2,33 +2,23 @@ import {
   LayoutDashboard,
   Salad,
   Dumbbell,
-  CalendarCheck,
-  TrendingUp,
+  Compass,
   Settings,
 } from 'lucide-react'
 
-// Logging is unified into /session (opened from Workout/Nexus). Insights, Reports
-// and Charts are merged into the single Progression tab (Timeline + Analytics);
-// Vitals folds in too. /charts, /insights, /reports redirect to /progression.
+// Logging is unified into /session (opened from Workout/Nexus). The old Journey
+// (daily) and Progression (weekly + analytics + vitals) tabs are merged into the
+// single Pathfinder tab. Legacy routes redirect: /weekly, /progression, /charts,
+// /insights, /reports, /vitals → /pathfinder. Settings is promoted to a top-level
+// nav item (the "More" drawer is gone).
 export const navItems = [
-  { href: '/',            icon: LayoutDashboard, label: 'Dashboard'   },
-  { href: '/nutrition',   icon: Salad,           label: 'Nutrition'   },
-  { href: '/workout',     icon: Dumbbell,        label: 'Workout'     },
-  { href: '/weekly',      icon: CalendarCheck,   label: 'Journey'     },
-  { href: '/progression', icon: TrendingUp,      label: 'Progression' },
-  { href: '/settings',    icon: Settings,        label: 'Settings'    },
+  { href: '/',           icon: LayoutDashboard, label: 'Dashboard'  },
+  { href: '/nutrition',  icon: Salad,           label: 'Nutrition'  },
+  { href: '/workout',    icon: Dumbbell,        label: 'Workout'    },
+  { href: '/pathfinder', icon: Compass,         label: 'Pathfinder' },
+  { href: '/settings',   icon: Settings,        label: 'Settings'   },
 ] as const
 
-// Desktop sidebar shows the full flat list. Mobile shows five thumb-first core
-// tabs + a "More" drawer holding Settings.
-export const coreNavItems = [
-  { href: '/',            icon: LayoutDashboard, label: 'Dashboard'   },
-  { href: '/nutrition',   icon: Salad,           label: 'Nutrition'   },
-  { href: '/workout',     icon: Dumbbell,        label: 'Workout'     },
-  { href: '/weekly',      icon: CalendarCheck,   label: 'Journey'     },
-  { href: '/progression', icon: TrendingUp,      label: 'Progress'    },
-] as const
-
-export const moreNavItems = [
-  { href: '/settings', icon: Settings, label: 'Settings' },
-] as const
+// Both the desktop sidebar and the mobile bottom nav now share the same five
+// thumb-first tabs (Settings included) — no "More" drawer.
+export const coreNavItems = navItems

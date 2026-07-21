@@ -6,7 +6,6 @@
  *     the server's own Host header. This is robust and does NOT depend on
  *     NEXT_PUBLIC_APP_URL being set correctly (the prior cause of false
  *     "unauthorized" errors on the admin migrate-history button).
- *  2. External automations presenting the webhook secret (x-webhook-secret).
  *
  * Development is always allowed.
  */
@@ -25,11 +24,6 @@ function sameOrigin(req: Request): boolean {
 
 export function isAllowed(req: Request): boolean {
   if (process.env.NODE_ENV === 'development') return true
-
-  // Webhook secret (external callers)
-  const secret = process.env.INGEST_WEBHOOK_SECRET
-  const provided = req.headers.get('x-webhook-secret')
-  if (secret && provided === secret) return true
 
   // Same-origin UI calls
   if (sameOrigin(req)) return true

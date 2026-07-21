@@ -31,6 +31,10 @@ export const PHASES: PhaseDef[] = [
   { kind: 'bulk', name: 'Bulk',                    start: '2026-03-08', weeks: 9, numbered: true, era: 'ppl', eraTag: 'PPL Bulk' },
   { kind: 'cut',  name: 'Cut',                     start: '2026-05-10', weeks: 6, numbered: true, era: 'ppl', eraTag: 'PPL Cut' },
   { kind: 'peak', name: 'Peak Week (Maintenance)', start: '2026-06-21', weeks: 1, short: 'Peak',  era: 'ppl', eraTag: 'PPL Peak' },
+  // Thailand trip deload — the Jun 28–Jul 11 gap between Peak Week and the HELIX
+  // ramp. Real personal history; the only PPL-era 'maintenance' phase (its badge
+  // keys off that to render warm sand rather than the muted PPL gray).
+  { kind: 'maintenance', name: 'Thailand Vacation', start: '2026-06-28', weeks: 2, short: 'Thailand', era: 'ppl', eraTag: 'Thailand Vacation (Deload)' },
   // ── HELIX era ──
   // Week 0 = the transitional Axis-5 ramp (Wed/Thu/Fri 15–17 Jul) in the calendar
   // week starting 12 Jul; Helix Cut 5.1 (1935 kcal) opens 15 Jul. Cut W1–6 anchors
@@ -106,7 +110,12 @@ export function phaseBadgeStyle(kind: PhaseKind, selected: boolean, era: 'ppl' |
     bulk: '67,245,155',         // mint green
     maintenance: '139,124,255', // abyss violet
   }
-  const rgb = era === 'ppl' ? '139,151,178' : palette[kind]
+  // Legacy PPL era renders desaturated gray so the two Cut eras never confuse —
+  // EXCEPT the Thailand deload (the sole PPL 'maintenance' phase), which gets a
+  // warm sand tone so the vacation reads distinctly in the timeline.
+  const rgb = era === 'ppl'
+    ? (kind === 'maintenance' ? '230,198,140' : '139,151,178')
+    : palette[kind]
   return {
     background: `rgba(${rgb},0.12)`,
     border: `1px solid rgba(${rgb},0.40)`,

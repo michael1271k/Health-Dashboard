@@ -64,48 +64,77 @@ const GROUPS: Group[] = [
 /** The four weekly-vitals groups (this-week vs last, 8-week trend) — shared by /insights. */
 export function VitalsGroups() {
   const { data: days, isLoading } = useVitalsDays(56)
+  const rows = days ?? []
   return (
     <div className="space-y-4">
-      {GROUPS.map((g) => (
-        <section key={g.title} className="helix-card space-y-2.5" style={{ borderColor: `${g.accent}22` }}>
-          <div className="flex items-center gap-2">
-            <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: `${g.accent}1a`, color: g.accent }}>
-              <g.icon className="w-4 h-4" aria-hidden="true" />
-            </span>
-            <div className="min-w-0">
-              <h3 className="font-heading font-semibold text-fluid-base text-text leading-tight">{g.title}</h3>
-              <p className="text-[11px] text-muted leading-tight">{g.blurb}</p>
+      {GROUPS.map((g) => {
+        // Precompute each metric's window; a group whose EVERY tile has zero
+        // coverage collapses to one quiet "no data" row rather than a wall of "—".
+        const metrics = g.metrics.map((m) => ({ def: m, win: vitalWindow(rows, m.pick, m.agg) }))
+        const allEmpty = metrics.every(({ win }) => win.coverage === 0)
+        return (
+          <section key={g.title} className="helix-card space-y-2.5" style={{ borderColor: `${g.accent}22` }}>
+            <div className="flex items-center gap-2">
+              <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: `${g.accent}1a`, color: g.accent }}>
+                <g.icon className="w-4 h-4" aria-hidden="true" />
+              </span>
+              <div className="min-w-0">
+                <h3 className="font-heading font-semibold text-fluid-base text-text leading-tight">{g.title}</h3>
+                <p className="text-[11px] text-muted leading-tight">{g.blurb}</p>
+              </div>
             </div>
-          </div>
-          <div className="grid gap-2 sm:grid-cols-2">
-            {g.metrics.map((m) => <VitalRow key={m.key} def={m} days={days ?? []} />)}
-          </div>
-        </section>
-      ))}
+            {allEmpty ? (
+              <p className="text-fluid-xs text-muted/70 py-1">No data from Apple Health yet.</p>
+            ) : (
+              <div className="grid gap-2 sm:grid-cols-2">
+                {metrics.map(({ def, win }) => <VitalRow key={def.key} def={def} win={win} days={rows} />)}
+              </div>
+            )}
+          </section>
+        )
+      })}
       {isLoading && <div className="helix-card h-24 animate-pulse" aria-hidden="true" />}
     </div>
   )
 }
 
-function VitalRow({ def, days }: { def: MetricDef; days: VitalsDay[] }) {
-  const win = vitalWindow(days, def.pick, def.agg)
+function VitalRow({ def, win, days }: { def: MetricDef; win: ReturnType<typeof vitalWindow>; days: VitalsDay[] }) {
   const series = vitalWeeklySeries(days, def.pick, def.agg)
   const deltaColor = win.delta == null || win.delta === 0 || def.better === 'neutral'
     ? '#8B97B2'
     : (win.delta > 0) === (def.better === 'up') ? '#34D399' : '#FB7185'
+
+  // Tiered empty states: 0 days → "Not enough data" (dimmed, no fake value);
+  // 1–3 days → show the value but flag it's still collecting; ≥4 → full caption.
+  const empty = win.coverage === 0 || win.current == null
+  const collecting = !empty && win.coverage < 4
+
+  if (empty) {
+    return (
+      <div className="flex items-center gap-3 rounded-xl bg-white/[0.015] border border-white/[0.04] px-3 py-2.5 opacity-60">
+        <div className="flex-1 min-w-0">
+          <span className="block text-[10px] font-bold uppercase tracking-wide" style={{ color: def.color }}>{def.label}</span>
+          <span className="block text-fluid-sm font-medium text-muted leading-tight">Not enough data</span>
+          <span className="text-[10px] text-muted/70">Needs a few days of readings</span>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex items-center gap-3 rounded-xl bg-white/[0.02] border border-white/[0.05] px-3 py-2.5">
       <div className="flex-1 min-w-0">
         <span className="block text-[10px] font-bold uppercase tracking-wide" style={{ color: def.color }}>{def.label}</span>
         <span className="helix-num block text-fluid-lg font-bold text-text leading-tight tabular-nums">
-          {win.current != null ? def.fmt(win.current) : '—'}
+          {def.fmt(win.current!)}
         </span>
         <span className="text-[10px] text-muted">
-          7-day {def.agg === 'avg' ? 'avg' : 'total'}{win.coverage ? ` · ${win.coverage}/7 days` : ' · no data yet'}
+          {collecting
+            ? `Collecting · ${win.coverage}/7 days`
+            : `7-day ${def.agg === 'avg' ? 'avg' : 'total'} · ${win.coverage}/7 days`}
         </span>
       </div>
-      {win.delta != null && win.delta !== 0 && (
+      {!collecting && win.delta != null && win.delta !== 0 && (
         <span className="shrink-0 text-[11px] font-semibold tabular-nums px-1.5 py-0.5 rounded-md"
           style={{ color: deltaColor, background: `${deltaColor}14`, border: `1px solid ${deltaColor}33` }}
           aria-label="Change vs prior week">
