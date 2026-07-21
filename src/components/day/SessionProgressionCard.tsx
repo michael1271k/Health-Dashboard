@@ -37,7 +37,7 @@ export function SessionProgressionCard({ session, date }: { session: GymReportRo
           {label}{globalNum ? <span className="text-muted font-semibold"> · Session #{globalNum}</span> : null}
         </h3>
         <span className="text-[10px] font-semibold uppercase tracking-wide shrink-0 flex items-center gap-0.5" style={{ color: '#22D3EE' }}>
-          Analyze <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
+          Inspect <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
         </span>
       </Link>
 

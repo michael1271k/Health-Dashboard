@@ -180,9 +180,25 @@ export function computeDailyScore(inputs: ScoringInputs): ScoreComponents {
   // Composite = weighted mean over ONLY the components that have data (renormalized).
   const active = Object.keys(comps).filter((k) => comps[k] != null)
   const wSum = active.reduce((s, k) => s + baseW[k], 0)
-  const totalScore = active.length
+  let totalScore = active.length
     ? clamp(active.reduce((s, k) => s + (comps[k] as number) * (baseW[k] / wSum), 0))
     : null
+
+  // ─── SLEEP GATE ───────────────────────────────────────────────────────────
+  // Sleep is foundational to recovery: a short night HARD-CAPS the whole day
+  // regardless of how good the workout or macros were. A 3h night can never be
+  // an 80. Only applies when sleep data exists (>0). Context multiplier softens
+  // the cap for illness/travel/emergency (a rough night while sick is expected).
+  if (totalScore != null && inputs.sleepHours > 0 && inputs.sleepHours < 6) {
+    const s = inputs.sleepHours
+    const rawCap = s >= 5 ? 45 + (s - 5) * 25      // 5h → 45 … 6h → 70 (cap lifts)
+      : s >= 3 ? 25 + (s - 3) * 10                  // 3h → 25 … 5h → 45
+      : (s / 3) * 25                                 // 0h → 0 … 3h → 25 (severe)
+    // Relax the cap in non-normal contexts (emergency loosens most).
+    const relax = penaltyMult(inputs.contextMode)               // 1.0 normal … 0.35 emergency
+    const cap = clamp(rawCap + (1 - relax) * (100 - rawCap))    // normal: rawCap; emergency: near-100
+    totalScore = Math.min(totalScore, cap)
+  }
 
   const r = (v: number | null) => (v == null ? null : Math.round(v))
   return {

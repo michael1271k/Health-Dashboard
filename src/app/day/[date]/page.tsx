@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Dumbbell, Moon, Flame, Scale, Plus, ChevronRight, ChevronLeft } from 'lucide-react'
+import { ArrowLeft, Dumbbell, Moon, Flame, Scale, Plus, ChevronRight, ChevronLeft, ChevronDown } from 'lucide-react'
 import { CompletenessArc } from '@/components/day/CompletenessArc'
 import { InBodyCard } from '@/components/day/InBodyCard'
 import { SubjectiveBlock } from '@/components/day/SubjectiveBlock'
@@ -85,10 +85,57 @@ function hasScaleMetrics(log: DayVaultData['log']): boolean {
 }
 
 /**
- * The Daily Nexus — one logical day in three glowing sections:
+ * Unified per-session block (merges the old Workout + Progression sections):
+ * collapsed = header + Hevy-style metadata only; 1st tap expands the exercise
+ * list + progression card; 2nd tap opens the full deep-dive.
+ */
+function SessionBlock({ session: s, date, unit }: {
+  session: DayVaultData['sessions'][number]
+  date: string
+  unit: string
+}) {
+  const router = useRouter()
+  const [expanded, setExpanded] = useState(false)
+  const name = sessionLabel(s.dayKey, s.split)
+  return (
+    <section className="helix-card holo-sheen space-y-3" style={{ borderColor: `${CYAN}30`, boxShadow: `0 0 24px ${CYAN}18` }}>
+      <button type="button"
+        onClick={() => (expanded ? router.push(`/session/${s.id}`) : setExpanded(true))}
+        className="w-full flex items-center gap-2 text-left active:opacity-80"
+        aria-expanded={expanded}
+        aria-label={expanded ? `Open full analysis for ${name}` : `Expand ${name}`}>
+        <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: `${CYAN}1a`, color: CYAN }}>
+          <Dumbbell className="w-4 h-4" aria-hidden="true" />
+        </span>
+        <h3 className="font-heading font-bold text-fluid-base text-text flex-1 min-w-0 truncate">{name}</h3>
+        <span className="text-[10px] font-semibold uppercase tracking-wide shrink-0 flex items-center gap-0.5" style={{ color: CYAN }}>
+          {expanded
+            ? <>Inspect <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" /></>
+            : <>Expand <ChevronDown className="w-3.5 h-3.5" aria-hidden="true" /></>}
+        </span>
+      </button>
+      {/* Hevy-style metadata — always visible */}
+      <div className="flex flex-wrap gap-2">
+        <MetaChip emoji="🏋️" value={fmtVolume(displayWeight(s.volumeKg))} label={unit} color={TEAL} />
+        <MetaChip emoji="🔁" value={`${s.setCount ?? '—'}`} label="sets" color={CYAN} />
+        <MetaChip emoji="⏱️" value={s.durationMin != null ? `${s.durationMin}` : '—'} label="min" color={VIOLET} />
+        <MetaChip emoji="❤️" value={s.avgBpm != null ? `${s.avgBpm}` : '—'} label="bpm" color={ROSE} />
+        <MetaChip emoji="🔥" value={s.calories != null ? `${s.calories}` : '—'} label="kcal" color={EMBER} />
+      </div>
+      {expanded && (
+        <div className="space-y-3">
+          <SessionExerciseList sessionId={s.id} />
+          <SessionProgressionCard session={s} date={date} />
+        </div>
+      )}
+    </section>
+  )
+}
+
+/**
+ * The Daily Nexus — one logical day:
  *   1 · Vitals & Nutrition   readiness, fuel, sleep/recovery, vitals, scale
- *   2 · The Workout          Hevy-style metadata block (or a rest/swap block)
- *   3 · Progression & Insights   session #, vs-last comparison, PRs, delete
+ *   2 · Session Debrief      unified workout + progression (collapsible)
  */
 export default function DailyNexusPage() {
   const { date: raw } = useParams<{ date: string }>()
@@ -130,7 +177,7 @@ export default function DailyNexusPage() {
           <ArrowLeft className="w-4 h-4" />
         </button>
         <div className="min-w-0 flex-1">
-          <h1 className="font-heading text-fluid-lg font-bold text-text truncate">The Daily Nexus</h1>
+          <h1 className="font-heading text-fluid-base font-bold text-text truncate">Daily Nexus</h1>
           <span className="text-fluid-xs text-muted">{pretty}</span>
         </div>
         {/* Previous / Next day — discrete native-feeling chevrons */}
@@ -256,33 +303,11 @@ export default function DailyNexusPage() {
         </button>
       )}
 
-      {/* ══ SECTION 2 · The Workout ══ (hidden as an empty block on rest days) */}
+      {/* ══ SECTION 2 · Session Debrief ══ (workout + progression, unified) */}
       {trained ? (
         <>
-          <SectionTitle>The Workout</SectionTitle>
-          {sessions.map((s) => (
-            <section key={s.id} className="helix-card holo-sheen space-y-3" style={{ borderColor: `${CYAN}30`, boxShadow: `0 0 24px ${CYAN}18` }}>
-              <Link href={`/session/${s.id}`} className="flex items-center gap-2 -m-1 p-1 rounded-lg active:opacity-80 hover:bg-white/[0.03]"
-                aria-label={`Open full analysis for ${sessionLabel(s.dayKey, s.split)}`}>
-                <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: `${CYAN}1a`, color: CYAN }}>
-                  <Dumbbell className="w-4 h-4" aria-hidden="true" />
-                </span>
-                <h3 className="font-heading font-bold text-fluid-lg text-text flex-1 min-w-0">{sessionLabel(s.dayKey, s.split)}</h3>
-                <span className="text-[10px] font-semibold uppercase tracking-wide shrink-0 flex items-center gap-0.5" style={{ color: CYAN }}>
-                  Analyze <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
-                </span>
-              </Link>
-              {/* Hevy-style colored metadata header */}
-              <div className="flex flex-wrap gap-2">
-                <MetaChip emoji="🏋️" value={fmtVolume(displayWeight(s.volumeKg))} label={unit} color={TEAL} />
-                <MetaChip emoji="🔁" value={`${s.setCount ?? '—'}`} label="sets" color={CYAN} />
-                <MetaChip emoji="⏱️" value={s.durationMin != null ? `${s.durationMin}` : '—'} label="min" color={VIOLET} />
-                <MetaChip emoji="❤️" value={s.avgBpm != null ? `${s.avgBpm}` : '—'} label="bpm" color={ROSE} />
-                <MetaChip emoji="🔥" value={s.calories != null ? `${s.calories}` : '—'} label="kcal" color={EMBER} />
-              </div>
-              <SessionExerciseList sessionId={s.id} />
-            </section>
-          ))}
+          <SectionTitle>Session Debrief</SectionTitle>
+          {sessions.map((s) => <SessionBlock key={s.id} session={s} date={date} unit={unit} />)}
         </>
       ) : restDay ? (
         /* Rest day → a compact premium badge, NOT a big empty workout block */
@@ -317,13 +342,6 @@ export default function DailyNexusPage() {
         </>
       )}
 
-      {/* ══ SECTION 3 · Progression & Insights ══ */}
-      {trained && (
-        <>
-          <SectionTitle>Progression &amp; Insights</SectionTitle>
-          {sessions.map((s) => <SessionProgressionCard key={s.id} session={s} date={date} />)}
-        </>
-      )}
 
       {/* Journal (sleep debt now folded into the Sleep & Recovery block above) */}
       <SubjectiveBlock date={date} effort={log?.effort_rating ?? null} mood={log?.mood ?? null} journal={log?.journal_md ?? null} />

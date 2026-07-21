@@ -34,19 +34,14 @@ export function PostWorkoutSummary({ sessions, date, onLogAnother }: {
 }) {
   return (
     <section className="space-y-3">
-      <div className="helix-card holo-sheen flex items-center gap-3"
-        style={{ borderColor: '#34D39944', boxShadow: '0 0 24px #34D39914' }}>
-        <span className="w-11 h-11 rounded-full flex items-center justify-center shrink-0"
-          style={{ background: '#34D39920', color: '#34D399', boxShadow: '0 0 18px #34D39955' }}>
-          <CheckCircle2 className="w-6 h-6" aria-hidden="true" />
+      {/* Slim "logged" affirmation — a header line, NOT a second box. The session
+          breakdown below is the single unified, always-expanded workout block. */}
+      <div className="flex items-center gap-2 px-1">
+        <CheckCircle2 className="w-4 h-4 shrink-0" style={{ color: '#34D399' }} aria-hidden="true" />
+        <span className="text-fluid-sm font-semibold text-text">
+          {sessions.length > 1 ? `${sessions.length} sessions logged today` : 'Session logged today'} 💪
         </span>
-        <div className="flex-1 min-w-0">
-          <h2 className="font-heading font-bold text-fluid-lg text-text leading-tight">
-            {sessions.length > 1 ? `${sessions.length} sessions logged today` : 'Session logged'} 💪
-          </h2>
-          <p className="text-fluid-sm text-muted">Review the breakdown below, or edit any set.</p>
-        </div>
-        <Link href={`/day/${date}`} className="btn-glass shrink-0 min-h-[40px] text-fluid-xs" aria-label="Open the full day view">
+        <Link href={`/day/${date}`} className="ml-auto text-fluid-xs text-muted flex items-center gap-0.5 hover:text-text" aria-label="Open the full day view">
           Full day <ArrowRight className="w-3.5 h-3.5" />
         </Link>
       </div>

@@ -8,7 +8,7 @@ import { LiquidModal } from '@/components/ui/LiquidModal'
 import { ReadinessOrb } from '@/components/dashboard/ReadinessOrb'
 import { BioStrip, type BioStripProps } from '@/components/dashboard/BioStrip'
 import { ScoreCard } from '@/components/dashboard/ScoreCard'
-import { BatteryCard } from '@/components/dashboard/BatteryCard'
+import { RecoveryCard } from '@/components/dashboard/RecoveryCard'
 import { StatTile } from '@/components/dashboard/StatTile'
 import { SupplementChecklist } from '@/components/dashboard/SupplementChecklist'
 import { InsightCoach } from '@/components/dashboard/InsightCoach'
@@ -179,8 +179,8 @@ export default function DashboardPage() {
           </button>
         </AnimatedCard>
         <AnimatedCard index={1}>
-          <button onClick={() => setOpen('readiness')} className="w-full text-left" aria-label="Open battery details">
-            <BatteryCard battery={score?.battery_pct ?? null} isLoading={scoreLoading} />
+          <button onClick={() => setOpen('readiness')} className="w-full text-left" aria-label="Open recovery details">
+            <RecoveryCard recovery={score?.recovery_score ?? null} battery={score?.battery_pct ?? null} isLoading={scoreLoading} />
           </button>
         </AnimatedCard>
       </div>
@@ -208,7 +208,7 @@ export default function DashboardPage() {
         {open === 'readiness' && (
           <div className="space-y-4">
             <ScoreCard score={score ?? null} />
-            <BatteryCard battery={score?.battery_pct ?? null} />
+            <RecoveryCard recovery={score?.recovery_score ?? null} battery={score?.battery_pct ?? null} />
           </div>
         )}
         {open === 'sleep' && (

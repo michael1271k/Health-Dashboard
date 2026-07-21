@@ -98,7 +98,7 @@ function PathfinderInner() {
       {/* ── Header + sub-view switcher ── */}
       <div className="flex items-end justify-between gap-3 flex-wrap">
         <div className="min-w-0">
-          <h1 className="font-heading text-fluid-2xl font-bold text-text leading-tight">Pathfinder</h1>
+          <h1 className="font-heading text-fluid-2xl font-bold text-text leading-tight">Momentum</h1>
           <p className="text-muted text-fluid-sm mt-0.5">Your life over time · days, weeks, performance &amp; vitals</p>
         </div>
         <div className="flex rounded-xl border border-white/[0.08] overflow-hidden shrink-0">

@@ -18,7 +18,7 @@ export interface ContinuumDay {
   sleepOk: boolean
   waterOk: boolean
   foodOk: boolean
-  session: { split: string; volumeKg: number | null; prCount: number | null } | null
+  session: { split: string; dayKey: string | null; volumeKg: number | null; prCount: number | null } | null
 }
 
 const isoAddDays = (d: string, n: number) => {
@@ -48,17 +48,17 @@ export function useContinuum(fullHistory = false) {
           .gte('date', from).lte('date', to),
         supabase.from('nutrition_entries').select('date, calories, protein_g, carbs_g, fat_g, phase')
           .eq('meal_type', 'daily').gte('date', from).lte('date', to),
-        supabase.from('workout_sessions').select('started_at, split_day, total_volume_kg, pr_count')
+        supabase.from('workout_sessions').select('started_at, split_day, day_key, total_volume_kg, pr_count')
           .gte('started_at', `${from}T00:00:00Z`).lt('started_at', `${isoAddDays(to, 1)}T00:00:00Z`),
       ])
 
       const logs = new Map(((logsRes.data ?? []) as Array<{ date: string; sleep_minutes: number | null; water_ml: number | null }>).map((r) => [r.date, r]))
       const scores = new Map(((scoresRes.data ?? []) as Array<{ date: string; score: number | null }>).map((r) => [r.date, r.score]))
       const nutrition = new Map(((nutritionRes.data ?? []) as Array<{ date: string; calories: number; protein_g: number; carbs_g: number; fat_g: number; phase: string | null }>).map((r) => [r.date, r]))
-      const sessions = new Map<string, { split: string; volumeKg: number | null; prCount: number | null }>()
-      for (const s of (sessionsRes.data ?? []) as Array<{ started_at: string; split_day: string; total_volume_kg: number | null; pr_count: number | null }>) {
+      const sessions = new Map<string, { split: string; dayKey: string | null; volumeKg: number | null; prCount: number | null }>()
+      for (const s of (sessionsRes.data ?? []) as Array<{ started_at: string; split_day: string; day_key: string | null; total_volume_kg: number | null; pr_count: number | null }>) {
         const d = s.started_at.slice(0, 10)
-        if (!sessions.has(d)) sessions.set(d, { split: s.split_day, volumeKg: s.total_volume_kg, prCount: s.pr_count })
+        if (!sessions.has(d)) sessions.set(d, { split: s.split_day, dayKey: s.day_key, volumeKg: s.total_volume_kg, prCount: s.pr_count })
       }
 
       // Enumerate to → from (newest first); keep only days with REAL data so the

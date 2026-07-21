@@ -58,7 +58,10 @@ export function AnalyticsPanel() {
         </div>
         <div className="flex-1 min-w-0 space-y-6">
           <WidgetBoundary label="Charts" minHeight={280}>
-            <div className="grid gap-6 lg:grid-cols-2">
+            {/* [&>*]:min-w-0 lets each chart cell shrink below its Recharts
+                intrinsic width — without it the X-axis overflows the mobile
+                viewport (grid/flex children default to min-width:auto). */}
+            <div className="grid gap-6 lg:grid-cols-2 [&>*]:min-w-0">
               <WeightTrendChart data={wData} isLoading={weightLoading} showEraBoundary={era === 'all'} />
               <VolumeChart data={vData} isLoading={volumeLoading} era={era} />
               <MacroProgressChart data={mData} goals={goals ?? null} isLoading={macroLoading || goalsLoading} />
@@ -70,8 +73,8 @@ export function AnalyticsPanel() {
             <WidgetBoundary label="Muscle analytics" minHeight={280}>
               <div>
                 <h2 className="font-heading text-fluid-lg font-bold text-text mb-3">Muscle Analytics <span className="text-fluid-xs text-muted font-normal">Hevy-killer</span></h2>
-                <div className="space-y-4">
-                  <div className="grid lg:grid-cols-2 gap-4">
+                <div className="space-y-4 min-w-0">
+                  <div className="grid lg:grid-cols-2 gap-4 [&>*]:min-w-0">
                     <BodyHeatmap days={days} era={era} />
                     <RpeCalendar days={days} era={era} />
                   </div>

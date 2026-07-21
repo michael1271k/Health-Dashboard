@@ -161,37 +161,49 @@ export async function saveSession(
     throw new Error(`Failed to save session: ${sessionError?.message ?? 'unknown'}`)
   }
 
-  // Insert sets
-  const dbSets = setsToInsert.map(({ s, est1rm, isPr }) => ({
-    session_id: session.id,
-    exercise_id: s.exerciseId,
-    user_id: userId,
-    set_number: s.setNumber,
-    weight_kg: s.weightKg,
-    reps: s.reps,
-    rpe: s.rpe ?? null,
-    is_pr: isPr,
-    est_1rm_kg: est1rm,
-    exercise_order: s.exerciseOrder ?? null,
-    set_type: s.setType ?? 'normal',
-    // Unilateral (per-side) metadata — see the workout_sets side/pair_id migration.
-    side: s.side ?? null,
-    pair_id: s.pairId ?? null,
-  }))
+  // Insert sets. side/pair_id are ONLY sent when a set is actually unilateral —
+  // a normal (bilateral) session never references those columns, so committing/
+  // editing a normal session does NOT depend on the workout_sets side/pair_id
+  // migration having run. (Sending them unconditionally previously made EVERY
+  // commit fail the insert on an unmigrated table — the edit-doesn't-save bug.)
+  const hasUnilateral = setsToInsert.some(({ s }) => s.side === 'L' || s.side === 'R' || s.pairId)
+  const dbSets = setsToInsert.map(({ s, est1rm, isPr }) => {
+    const row: Record<string, unknown> = {
+      session_id: session.id,
+      exercise_id: s.exerciseId,
+      user_id: userId,
+      set_number: s.setNumber,
+      weight_kg: s.weightKg,
+      reps: s.reps,
+      rpe: s.rpe ?? null,
+      is_pr: isPr,
+      est_1rm_kg: est1rm,
+      exercise_order: s.exerciseOrder ?? null,
+      set_type: s.setType ?? 'normal',
+    }
+    if (hasUnilateral) { row.side = s.side ?? null; row.pair_id = s.pairId ?? null }
+    return row
+  })
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let { error: setsError } = await supabase.from('workout_sets').insert(dbSets as unknown as any)
-  // Self-heal: if the side/pair_id columns aren't migrated yet, retry without
-  // them so a commit is never blocked (unilateral metadata is simply dropped
-  // until the migration runs). Mirrors the daily_logs v5.1 column self-heal.
-  if (setsError && /side|pair_id/.test(setsError.message ?? '') && /column/i.test(setsError.message ?? '')) {
+  // Self-heal: unilateral used but the side/pair_id columns aren't migrated yet →
+  // retry without them so the session still saves (L/R metadata dropped until the
+  // migration runs). Mirrors the daily_logs v5.1 column self-heal.
+  if (setsError && hasUnilateral && /column|schema cache|PGRST204|side|pair_id/i.test(setsError.message ?? '')) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars -- destructure-to-omit the two unmigrated columns
-    const baseSets = dbSets.map(({ side, pair_id, ...rest }) => rest)
+    const baseSets = dbSets.map((r) => { const { side: _s, pair_id: _p, ...rest } = r; return rest })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;({ error: setsError } = await supabase.from('workout_sets').insert(baseSets as unknown as any))
   }
   if (setsError) {
-    console.error('[saveSession] sets insert error (non-fatal):', setsError)
+    // FATAL: an edit already deleted the old session above, so a swallowed sets
+    // failure would leave the session empty AND look like a success to the
+    // client. Roll back the just-inserted session row, then throw so the commit
+    // surfaces the error instead of no-op'ing.
+    console.error('[saveSession] sets insert failed:', setsError)
+    await supabase.from('workout_sessions').delete().eq('id', session.id)
+    throw new Error(`Failed to save sets: ${setsError.message}`)
   }
 
   const newPRs = setsToInsert

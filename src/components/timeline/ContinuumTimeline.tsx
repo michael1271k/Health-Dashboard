@@ -4,9 +4,9 @@ import { memo, useMemo, useState } from 'react'
 import { Dumbbell, FolderOpen, Moon } from 'lucide-react'
 import { useContinuum, type ContinuumDay } from '@/lib/hooks/useContinuum'
 import { getWeekPhase, type WeekPhase } from '@/lib/phases'
-import { eraForDate } from '@/lib/programs'
+import { eraForDate, programDayLabel } from '@/lib/programs'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
-import { displayWeight, useUnitSystem } from '@/lib/utils/units'
+import { displayWeight, useUnitSystem, fmtVolume } from '@/lib/utils/units'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
 
 const VIOLET = '#EC4899'
@@ -27,10 +27,28 @@ function weekStartOf(dateISO: string): string {
   return d.toISOString().slice(0, 10)
 }
 
+// Rough per-macro reference targets for the row's slider fills (this athlete's
+// cut) — glanceable adherence, not a precise goal read.
+const ROW_MACRO_TARGET = { protein: 170, carbs: 210, fat: 60 }
+
+/** One labelled macro slider inside a day row. */
+function MacroBar({ label, g, target, color }: { label: string; g: number | null; target: number; color: string }) {
+  const pct = g != null ? Math.min(1, g / target) : 0
+  return (
+    <span className="flex-1 min-w-0 flex items-center gap-1">
+      <span className="text-[9px] font-bold shrink-0" style={{ color }}>{label}</span>
+      <span className="flex-1 min-w-0 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+        <span className="block h-full rounded-full transition-[width] duration-500" style={{ width: `${pct * 100}%`, background: color }} />
+      </span>
+    </span>
+  )
+}
+
 /**
- * Filament row — one day as a single dense line (~48px): score dot · date ·
- * macro micro-bar · session/recovery glyph · kcal. The active (open) day locks
- * into a teal-glow state so the timeline never loses its place.
+ * Day row — Apple-clean: score dot · date · calories on the top line, three
+ * colored macro sliders, then the workout name + volume. The workout label
+ * resolves from day_key (so a Tuesday arms day reads "Delts & Arms", never
+ * "Upper"). content-visibility keeps offscreen history unrendered.
  */
 export const DayCard = memo(function DayCard({ d, unit, active, onOpen }: {
   d: ContinuumDay
@@ -38,52 +56,48 @@ export const DayCard = memo(function DayCard({ d, unit, active, onOpen }: {
   active: boolean
   onOpen: (date: string) => void
 }) {
-  const total = (d.proteinG ?? 0) + (d.carbsG ?? 0) + (d.fatG ?? 0)
   const day = new Date(d.date + 'T00:00:00')
   const sc = scoreColor(d.score)
+  const workoutLabel = d.session ? programDayLabel(d.session.dayKey, d.session.split) : null
+  const vol = d.session?.volumeKg != null ? fmtVolume(displayWeight(d.session.volumeKg)) : null
   return (
-    // content-visibility keeps offscreen history unrendered — the perf strategy.
     <button onClick={() => onOpen(d.date)} onPointerUp={blurOnTap} aria-current={active ? 'date' : undefined}
-      className="w-full flex items-center gap-2.5 rounded-xl px-3 min-h-[48px] text-left border transition-colors active:opacity-80"
+      className="w-full rounded-xl px-3 py-2.5 text-left border transition-colors active:opacity-80"
       style={{
-        contentVisibility: 'auto', containIntrinsicSize: 'auto 48px',
+        contentVisibility: 'auto', containIntrinsicSize: 'auto 88px',
         background: active ? '#8B5CF614' : 'rgba(255,255,255,0.02)',
         borderColor: active ? '#8B5CF666' : 'rgba(255,255,255,0.06)',
         boxShadow: active ? '0 0 14px #8B5CF633' : undefined,
       } as React.CSSProperties}>
-      {/* Score dot — swells when active */}
-      <span className="rounded-full shrink-0 transition-all"
-        style={{ width: active ? 12 : 8, height: active ? 12 : 8, background: sc, boxShadow: d.score != null ? `0 0 8px ${sc}66` : undefined }}
-        aria-hidden="true" />
-      {/* Date chip */}
-      <span className="shrink-0 w-[72px] leading-tight">
-        <span className="block font-heading font-semibold text-[12px]" style={{ color: active ? '#8B5CF6' : undefined }}>
+      {/* Top line — score dot · date · calories */}
+      <div className="flex items-center gap-2.5">
+        <span className="rounded-full shrink-0 transition-all"
+          style={{ width: active ? 11 : 8, height: active ? 11 : 8, background: sc, boxShadow: d.score != null ? `0 0 8px ${sc}66` : undefined }}
+          aria-hidden="true" />
+        <span className="shrink-0 font-heading font-semibold text-[13px]" style={{ color: active ? '#8B5CF6' : undefined }}>
           {day.toLocaleDateString('en-GB', { weekday: 'short' })} {day.getDate()}
+          <span className="text-[9px] text-muted uppercase ml-1">{day.toLocaleDateString('en-GB', { month: 'short' })}</span>
         </span>
-        <span className="block text-[9px] text-muted uppercase">{day.toLocaleDateString('en-GB', { month: 'short' })}</span>
-      </span>
-      {/* Macro micro-bar */}
-      <span className="flex h-1.5 w-12 shrink-0 rounded-full overflow-hidden bg-white/[0.05]" aria-hidden="true">
-        {total > 0 && <>
-          <span style={{ width: `${((d.proteinG ?? 0) / total) * 100}%`, background: MACRO_COLORS.protein }} />
-          <span style={{ width: `${((d.carbsG ?? 0) / total) * 100}%`, background: MACRO_COLORS.carbs }} />
-          <span style={{ width: `${((d.fatG ?? 0) / total) * 100}%`, background: MACRO_COLORS.fat }} />
-        </>}
-      </span>
-      {/* Session / recovery glyph + label */}
-      <span className="flex items-center gap-1 min-w-0 flex-1 text-[11px] truncate"
+        <span className="flex-1" />
+        <span className="helix-num text-fluid-sm font-bold text-text tabular-nums">{d.calories != null ? Math.round(d.calories).toLocaleString() : '—'}</span>
+        <span className="text-[9px] text-muted">kcal</span>
+      </div>
+      {/* Macro sliders */}
+      <div className="flex items-center gap-3 mt-2 pl-[18px]">
+        <MacroBar label="P" g={d.proteinG} target={ROW_MACRO_TARGET.protein} color={MACRO_COLORS.protein} />
+        <MacroBar label="C" g={d.carbsG} target={ROW_MACRO_TARGET.carbs} color={MACRO_COLORS.carbs} />
+        <MacroBar label="F" g={d.fatG} target={ROW_MACRO_TARGET.fat} color={MACRO_COLORS.fat} />
+      </div>
+      {/* Workout / rest line */}
+      <div className="flex items-center gap-1.5 mt-2 pl-[18px] text-[11px] min-w-0"
         style={{ color: d.session ? '#22D3EE' : VIOLET }}>
         {d.session ? <Dumbbell className="w-3 h-3 shrink-0" /> : <Moon className="w-3 h-3 shrink-0" />}
         <span className="truncate">
           {d.session
-            ? `${d.session.split[0]?.toUpperCase()}${d.session.split.slice(1)}${d.session.volumeKg != null ? ` ${((displayWeight(d.session.volumeKg) ?? 0) / 1000).toFixed(1)}${unit === 'lb' ? 'k' : 't'}` : ''}${(d.session.prCount ?? 0) > 0 ? ` · ${d.session.prCount}PR` : ''}`
-            : 'rest'}
+            ? `${workoutLabel}${vol ? ` · ${vol} ${unit}` : ''}${(d.session.prCount ?? 0) > 0 ? ` · ${d.session.prCount} PR` : ''}`
+            : 'Rest'}
         </span>
-      </span>
-      {/* kcal */}
-      <span className="helix-num text-[11px] text-muted shrink-0">
-        {d.calories != null ? `${Math.round(d.calories).toLocaleString()}` : '—'}
-      </span>
+      </div>
     </button>
   )
 })

@@ -250,3 +250,16 @@ export function getActiveProgramId(): string {
 export function setActiveProgramId(id: string): void {
   if (typeof window !== 'undefined') window.localStorage.setItem(ACTIVE_KEY, id)
 }
+
+/**
+ * Human label for a logged session. Prefers the program-day identity
+ * (`day_key` → "Delts & Arms"), which is precise across swaps; falls back to the
+ * capitalised split_day ("upper") only when no day_key was stored. This is why
+ * a Tuesday arms day must NOT render as "Upper" — split_day is 'upper' but the
+ * day_key is 'arms'.
+ */
+export function programDayLabel(dayKey: string | null | undefined, split: string): string {
+  const program = PROGRAMS[getActiveProgramId()] ?? PROGRAMS[DEFAULT_PROGRAM_ID]
+  const byKey = dayKey ? program.days.find((d) => d.key === dayKey)?.label : undefined
+  return byKey ?? (split ? split[0].toUpperCase() + split.slice(1) : 'Session')
+}
