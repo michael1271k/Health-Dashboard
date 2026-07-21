@@ -48,10 +48,11 @@ export const MacroRings = memo(function MacroRings({ today, logs, goals }: {
   const remaining = kcal != null ? goals.calorie - kcal : null
   const cells = [...logs].slice(0, 7).reverse()
 
+  // Order: Carbs · Fat · Protein (left → center → right).
   const macros = [
-    { label: 'Protein', value: today?.proteinG ?? null, goal: goals.protein, color: MACRO_COLORS.protein },
     { label: 'Carbs', value: today?.carbsG ?? null, goal: goals.carbs, color: MACRO_COLORS.carbs },
     { label: 'Fat', value: today?.fatG ?? null, goal: goals.fat, color: MACRO_COLORS.fat },
+    { label: 'Protein', value: today?.proteinG ?? null, goal: goals.protein, color: MACRO_COLORS.protein },
   ]
 
   return (

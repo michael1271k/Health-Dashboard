@@ -79,7 +79,7 @@ export default function WorkoutPage() {
 
       {/* ── Today: Post-Workout Summary (if logged) or Log/Rest hero ── */}
       {loggedToday ? (
-        <PostWorkoutSummary sessions={todaySessions} date={today} onLogAnother={() => openDeck()} />
+        <PostWorkoutSummary sessions={todaySessions} date={today} />
       ) : (
       <section className="helix-card holo-sheen"
         style={{

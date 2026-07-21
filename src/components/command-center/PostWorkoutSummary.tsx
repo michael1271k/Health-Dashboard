@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Plus, ArrowRight, CheckCircle2 } from 'lucide-react'
+import { ArrowRight, CheckCircle2 } from 'lucide-react'
 import { SessionProgressionCard } from '@/components/day/SessionProgressionCard'
 import type { WeekSessionRow } from '@/lib/hooks/useWeekSessions'
 import type { GymReportRow } from '@/lib/hooks/useWeekly'
@@ -27,10 +27,9 @@ function toReportRow(s: WeekSessionRow): GymReportRow {
  * cascade). First-time empty state ("baseline set") is handled inside
  * SessionIntelCard, so a debut Upper A degrades gracefully.
  */
-export function PostWorkoutSummary({ sessions, date, onLogAnother }: {
+export function PostWorkoutSummary({ sessions, date }: {
   sessions: WeekSessionRow[]
   date: string
-  onLogAnother: () => void
 }) {
   return (
     <section className="space-y-3">
@@ -47,10 +46,6 @@ export function PostWorkoutSummary({ sessions, date, onLogAnother }: {
       </div>
 
       {sessions.map((s) => <SessionProgressionCard key={s.id} session={toReportRow(s)} date={date} />)}
-
-      <button onClick={onLogAnother} className="btn-glass w-full justify-center min-h-[44px] text-fluid-xs">
-        <Plus className="w-3.5 h-3.5" /> Log another session
-      </button>
     </section>
   )
 }

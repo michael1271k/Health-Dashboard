@@ -6,7 +6,6 @@ import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Dumbbell, Moon, Flame, Scale, Plus, ChevronRight, ChevronLeft, ChevronDown } from 'lucide-react'
 import { CompletenessArc } from '@/components/day/CompletenessArc'
 import { InBodyCard } from '@/components/day/InBodyCard'
-import { SubjectiveBlock } from '@/components/day/SubjectiveBlock'
 import { SleepDebtGauge } from '@/components/day/SleepDebtGauge'
 import { SessionExerciseList } from '@/components/day/SessionExerciseList'
 import { SessionProgressionCard } from '@/components/day/SessionProgressionCard'
@@ -239,9 +238,9 @@ export default function DailyNexusPage() {
           </div>
           {n ? (
             <div className="flex items-center justify-around">
-              <MicroRing value={n.protein_g} goalHint={180} color={MACRO_COLORS.protein} label="P" />
               <MicroRing value={n.carbs_g} goalHint={200} color={MACRO_COLORS.carbs} label="C" />
               <MicroRing value={n.fat_g} goalHint={60} color={MACRO_COLORS.fat} label="F" />
+              <MicroRing value={n.protein_g} goalHint={180} color={MACRO_COLORS.protein} label="P" />
             </div>
           ) : <p className="text-fluid-xs text-muted py-2">No nutrition logged.</p>}
         </section>
@@ -272,7 +271,7 @@ export default function DailyNexusPage() {
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 text-center">
             {[
               { label: 'Weight', v: displayWeight(validWeight(log?.weight_kg)), u: unit, c: TEAL },
-              { label: 'Steps', v: log?.steps != null ? Math.round(log.steps / 100) / 10 + 'k' : null, u: '', c: '#38BDF8' },
+              { label: 'Steps', v: log?.steps != null ? Math.round(log.steps).toLocaleString() : null, u: '', c: '#38BDF8' },
               { label: 'Water', v: log?.water_ml != null ? mlToL(log.water_ml) : null, u: 'L', c: CYAN },
               { label: 'Active', v: log?.active_energy != null ? Math.round(log.active_energy) : null, u: '', c: EMBER },
               { label: 'Stand', v: log?.stand_hours != null ? `${log.stand_hours}` : null, u: 'h', c: '#34D399' },
@@ -341,10 +340,6 @@ export default function DailyNexusPage() {
           </section>
         </>
       )}
-
-
-      {/* Journal (sleep debt now folded into the Sleep & Recovery block above) */}
-      <SubjectiveBlock date={date} effort={log?.effort_rating ?? null} mood={log?.mood ?? null} journal={log?.journal_md ?? null} />
 
       {isLoading && <div className="helix-card h-20 animate-pulse" aria-hidden="true" />}
     </div>

@@ -68,3 +68,27 @@ describe('warmup sets — counted in volume/sets (never a PR)', () => {
     expect(body.sets[2].setType).toBe('failure')
   })
 })
+
+// REGRESSION — the edit-persist "boss fight" (attempt #4). An edit rebuilds its
+// draft from the DB's started_at, which PostgREST returns with a numeric offset
+// (`…+00:00`), NOT a `Z`. z.string().datetime() rejects offsets → the edit POST
+// 422'd → the client's stall-recovery found the still-present old session by the
+// reused client_session_id and reported a false "duplicate" success → the edit
+// silently no-op'd. Schema must accept offset datetimes so edits persist.
+describe('SaveWorkoutSchema — accepts DB round-trip (offset) datetimes [edit-persist]', () => {
+  const base = {
+    splitDay: 'upper',
+    sets: [{ exerciseName: 'Single-Arm Lateral Raise', setNumber: 1, weightKg: 10, reps: 12 }],
+  } as const
+
+  it('accepts a Supabase timestamptz string with +00:00 offset (the edit case)', () => {
+    const body = { ...base, startedAt: '2026-07-21T11:00:58.594+00:00', endedAt: '2026-07-21T12:00:58.594+00:00' }
+    const r = SaveWorkoutSchema.safeParse(body)
+    expect(r.success).toBe(true)
+  })
+
+  it('still accepts a fresh Z-suffixed instant (the normal-log case)', () => {
+    const body = { ...base, startedAt: '2026-07-21T11:00:58.594Z', endedAt: '2026-07-21T12:00:58.594Z' }
+    expect(SaveWorkoutSchema.safeParse(body).success).toBe(true)
+  })
+})

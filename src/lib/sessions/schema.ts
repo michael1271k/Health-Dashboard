@@ -24,8 +24,12 @@ export const WorkoutSetSchema = z.object({
 
 export const SaveWorkoutSchema = z.object({
   splitDay: z.enum(['push', 'pull', 'legs', 'upper', 'lower']),
-  startedAt: z.string().datetime(),
-  endedAt: z.string().datetime(),
+  // `{ offset: true }` is load-bearing: an EDIT rebuilds its draft from the DB's
+  // started_at, which PostgREST returns as `…+00:00` (numeric offset, not `Z`).
+  // Bare .datetime() rejects offsets → every edit 422'd → the client masked it
+  // as a false "duplicate" and silently dropped the edit. Accept both forms.
+  startedAt: z.string().datetime({ offset: true }),
+  endedAt: z.string().datetime({ offset: true }),
   sets: z.array(WorkoutSetSchema).min(1),
   notes: z.string().max(2000).default(''),
   // ── Command Center extensions (all optional — manual logger untouched) ──

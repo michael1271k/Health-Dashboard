@@ -23,7 +23,6 @@ export interface DayVaultData {
     stand_hours: number | null; vo2max: number | null; active_energy: number | null
     muscle_percent: number | null; water_percent: number | null; bone_mineral: number | null
     visceral_fat: number | null; bmr: number | null; bmi: number | null
-    effort_rating: number | null; mood: number | null; journal_md: string | null
   } | null
   score: { score: number | null; battery_pct: number | null } | null
   nutrition: { calories: number; protein_g: number; carbs_g: number; fat_g: number; phase: Phase | null } | null
@@ -46,7 +45,7 @@ export function useDayVault(date: string) {
     queryFn: async (): Promise<DayVaultData> => {
       const nextDay = (() => { const x = new Date(`${date}T00:00:00Z`); x.setUTCDate(x.getUTCDate() + 1); return x.toISOString().slice(0, 10) })()
       const [logRes, scoreRes, nutritionRes, sessionsRes] = await Promise.all([
-        supabase.from('daily_logs').select('steps, water_ml, sleep_minutes, weight_kg, lean_mass_kg, body_fat_pct, avg_rest_heart_rate, hrv_ms, respiratory_rate, blood_oxygen, training_minutes, exercise_minutes, stand_hours, vo2max, active_energy, muscle_percent, water_percent, bone_mineral, visceral_fat, bmr, bmi, effort_rating, mood, journal_md')
+        supabase.from('daily_logs').select('steps, water_ml, sleep_minutes, weight_kg, lean_mass_kg, body_fat_pct, avg_rest_heart_rate, hrv_ms, respiratory_rate, blood_oxygen, training_minutes, exercise_minutes, stand_hours, vo2max, active_energy, muscle_percent, water_percent, bone_mineral, visceral_fat, bmr, bmi')
           .eq('date', date).maybeSingle(),
         supabase.from('daily_scores').select('score, battery_pct').eq('date', date).maybeSingle(),
         supabase.from('nutrition_entries').select('calories, protein_g, carbs_g, fat_g, phase')
@@ -166,24 +165,6 @@ export function useSessionOrdinal(dayKey: string | null | undefined, splitDay: s
       const match = rows.filter((r) => (dayKey ? r.day_key === dayKey : r.split_day === splitDay))
       return Math.max(1, match.length)
     },
-  })
-}
-
-export interface SubjectivePatch { effort_rating?: number | null; mood?: number | null; journal_md?: string | null }
-
-/** Save the subjective block (effort / mood / journal) onto the day's daily_logs row. */
-export function useSaveSubjective(date: string) {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: async (patch: SubjectivePatch) => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Not signed in')
-      const { error } = await supabase.from('daily_logs')
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .upsert({ user_id: user.id, date, ...patch } as any, { onConflict: 'user_id,date' })
-      if (error) throw new Error(error.message)
-    },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['day_vault', date] }) },
   })
 }
 

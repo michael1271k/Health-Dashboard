@@ -28,7 +28,9 @@ async function verifyCommitted(clientSessionId: string | undefined, dateISO: str
     const { data } = await q.order('started_at', { ascending: false }).limit(1).maybeSingle()
     const row = data as { id: string; total_volume_kg: number | null; set_count: number | null; pr_count: number | null } | null
     if (!row) return null
-    return { sessionId: row.id, totalVolumeKg: row.total_volume_kg ?? 0, setCount: row.set_count ?? 0, prCount: row.pr_count ?? 0, newPRs: [], duplicate: true }
+    // duplicate:false so onSuccess re-invalidates — a recovered write is uncertain
+    // (may carry fresh edited totals); always refresh the UI rather than skip it.
+    return { sessionId: row.id, totalVolumeKg: row.total_volume_kg ?? 0, setCount: row.set_count ?? 0, prCount: row.pr_count ?? 0, newPRs: [], duplicate: false }
   } catch {
     return null
   }
@@ -249,11 +251,21 @@ export function useSessionDraft() {
         if (res.status === 409) return { ...(json as CommitResult), duplicate: true }
         if (!res.ok) {
           const err = (json as { error?: unknown }).error
-          throw new Error(typeof err === 'string' ? err : 'Save failed')
+          const rejection = new Error(typeof err === 'string' ? err : 'Save failed')
+          // Flag definitive server rejections (422 validation, 500, …) so the
+          // catch below does NOT run stall-recovery on them. A rejected edit
+          // leaves the old session in place; recovering it by the reused
+          // client_session_id reported a false "duplicate" and silently dropped
+          // the edit — the root of the edit-persist bug.
+          ;(rejection as { serverRejected?: boolean }).serverRejected = true
+          throw rejection
         }
         return json as CommitResult
       } catch (e) {
-        // The write may have committed even though the response stalled/aborted.
+        // A definitive server rejection must surface — never mask it as recovered.
+        if ((e as { serverRejected?: boolean } | null)?.serverRejected) throw e
+        // Genuine network stall/abort: the write may have landed. Verify, and if
+        // found treat it as a real (non-duplicate) result so onSuccess refreshes.
         const recovered = await verifyCommitted(body.clientSessionId, draft.date)
         if (recovered) return recovered
         throw e instanceof Error ? e : new Error('Save failed')

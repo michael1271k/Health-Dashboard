@@ -8,7 +8,6 @@ import { LiquidModal } from '@/components/ui/LiquidModal'
 import { ReadinessOrb } from '@/components/dashboard/ReadinessOrb'
 import { BioStrip, type BioStripProps } from '@/components/dashboard/BioStrip'
 import { ScoreCard } from '@/components/dashboard/ScoreCard'
-import { RecoveryCard } from '@/components/dashboard/RecoveryCard'
 import { StatTile } from '@/components/dashboard/StatTile'
 import { SupplementChecklist } from '@/components/dashboard/SupplementChecklist'
 import { InsightCoach } from '@/components/dashboard/InsightCoach'
@@ -166,24 +165,44 @@ export default function DashboardPage() {
     body: 'Body Composition', steps: 'Activity', stack: 'Supplement Protocol',
   }
 
+  // The drivers BEHIND the recovery number — the extra desktop width (2-col span)
+  // shows the "why" instead of dead space. Real HealthKit fields only.
+  const drivers: Array<{ label: string; value: string; color: string }> = [
+    { label: 'Sleep', value: log?.sleep_minutes != null ? formatSleep(log.sleep_minutes) : '—', color: VIOLET },
+    { label: 'Resting HR', value: log?.avg_rest_heart_rate != null ? `${log.avg_rest_heart_rate} bpm` : '—', color: '#FB7185' },
+    { label: 'HRV', value: log?.hrv_ms != null ? `${Math.round(log.hrv_ms)} ms` : '—', color: AQUA },
+    { label: 'Energy left', value: score?.battery_pct != null ? `${score.battery_pct}%` : '—', color: CYAN },
+  ]
+
   return (
     <div className="space-y-6">
       <BrandHeader />
 
-      {/* ── Hero: the two prominent daily widgets — Readiness (recovery) + Battery ── */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <AnimatedCard index={0}>
-          <button onClick={() => setOpen('readiness')}
-            className="helix-card holo-sheen w-full flex items-center justify-center min-h-[300px]" aria-label="Open readiness details">
-            <ReadinessOrb score={score ?? null} isLoading={scoreLoading} />
-          </button>
-        </AnimatedCard>
-        <AnimatedCard index={1}>
-          <button onClick={() => setOpen('readiness')} className="w-full text-left" aria-label="Open recovery details">
-            <RecoveryCard recovery={score?.recovery_score ?? null} battery={score?.battery_pct ?? null} isLoading={scoreLoading} />
-          </button>
-        </AnimatedCard>
-      </div>
+      {/* ── Hero: the master Recovery widget — the breathing pulse/ECG orb (recovery
+          + battery merged), spanning both columns on desktop with a driver panel. ── */}
+      <AnimatedCard index={0}>
+        <button onClick={() => setOpen('readiness')}
+          className="helix-card holo-sheen w-full text-left" aria-label="Open recovery details">
+          <div className="flex flex-col md:flex-row md:items-center gap-5">
+            <div className="flex-1 flex items-center justify-center min-h-[300px]">
+              <ReadinessOrb score={score ?? null} isLoading={scoreLoading} />
+            </div>
+            {/* Driver breakdown — fills the extra 2-col desktop width. */}
+            <div className="md:w-60 md:shrink-0 md:border-l md:border-white/[0.07] md:pl-6">
+              <span className="hidden md:block text-[10px] uppercase tracking-widest text-muted mb-3">What&apos;s driving it</span>
+              <div className="grid grid-cols-2 md:grid-cols-1 gap-2.5">
+                {drivers.map((d) => (
+                  <div key={d.label}
+                    className="flex flex-col md:flex-row md:items-center md:justify-between gap-0.5 rounded-lg md:rounded-none border md:border-0 border-white/[0.05] bg-white/[0.02] md:bg-transparent px-2.5 py-2 md:px-0 md:py-1.5">
+                    <span className="text-[10px] uppercase tracking-wide text-muted">{d.label}</span>
+                    <span className="helix-num text-fluid-sm font-bold" style={{ color: d.color }}>{d.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </button>
+      </AnimatedCard>
 
       {/* Daily domain strips */}
       <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
@@ -208,7 +227,11 @@ export default function DashboardPage() {
         {open === 'readiness' && (
           <div className="space-y-4">
             <ScoreCard score={score ?? null} />
-            <RecoveryCard recovery={score?.recovery_score ?? null} battery={score?.battery_pct ?? null} />
+            <div className="grid grid-cols-2 gap-2.5">
+              {drivers.map((d) => (
+                <StatTile key={d.label} label={d.label} value={d.value} accent={d.color} />
+              ))}
+            </div>
           </div>
         )}
         {open === 'sleep' && (

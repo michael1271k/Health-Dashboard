@@ -18,8 +18,12 @@ const maxFor = (w: number) => Math.max(60, Math.ceil((w + 30) / 10) * 10)
  * haptic stepper chips, reps ±1, Warm-up/Failure toggles). Only the active row
  * mounts its slider, keeping long decks light.
  */
-export function SetEditorRow({ index, set, active, timed = false, onActivate, onChange, onRemove, onSplit, onToggleLink, onMerge }: {
+export function SetEditorRow({ index, displayNum, subRow = false, set, active, timed = false, onActivate, onChange, onRemove, onSplit, onToggleLink, onMerge }: {
   index: number
+  /** Human set number (groups a unilateral pair as ONE set); falls back to index+1. */
+  displayNum?: number
+  /** True when rendered as a Left/Right sub-row nested inside a "Set N" pair card. */
+  subRow?: boolean
   set: DraftSet
   active: boolean
   /** Time-based movement (plank/hold) — the reps field is seconds, not reps. */
@@ -64,11 +68,15 @@ export function SetEditorRow({ index, set, active, timed = false, onActivate, on
     onChange({ setType: set.setType === t ? undefined : t })
   }
 
+  const sideColor = set.side === 'L' ? '#22D3EE' : set.side === 'R' ? '#8B5CF6' : null
+  const badge = set.side ?? (isWarm ? 'W' : `S${displayNum ?? index + 1}`)
+
   return (
     <div
       className={`rounded-lg border transition-colors ${
         active ? 'border-primary/30 bg-white/[0.03]'
         : isWarm ? 'border-transparent bg-[#FF8A3D]/[0.06]' : 'border-transparent'}`}
+      style={subRow && sideColor ? { borderLeft: `2px solid ${sideColor}`, borderTopLeftRadius: 2, borderBottomLeftRadius: 2 } : undefined}
     >
       {/* ── Summary line (always visible) ── */}
       <div className="flex items-center gap-2 px-2 py-1">
@@ -80,9 +88,9 @@ export function SetEditorRow({ index, set, active, timed = false, onActivate, on
         >
           <span
             className="w-6 shrink-0 text-[10px] font-bold uppercase tracking-wide tabular-nums"
-            style={{ color: set.side === 'L' ? '#22D3EE' : set.side === 'R' ? '#8B5CF6' : isWarm ? ORANGE : isFail ? DANGER : 'var(--color-muted)' }}
+            style={{ color: sideColor ?? (isWarm ? ORANGE : isFail ? DANGER : 'var(--color-muted)') }}
           >
-            {set.side ?? (isWarm ? 'W' : `S${index + 1}`)}
+            {badge}
           </span>
           <span className={`helix-num text-fluid-base font-bold tabular-nums ${isWarm ? 'text-muted' : 'text-text'}`}>
             {weightLabel}<span className="text-[10px] text-muted font-normal ml-0.5">kg</span>
@@ -93,7 +101,9 @@ export function SetEditorRow({ index, set, active, timed = false, onActivate, on
           </span>
           {isFail && (
             <span className="text-[9px] font-bold uppercase px-1 py-px rounded"
-              style={{ color: DANGER, background: `${DANGER}1f`, border: `1px solid ${DANGER}55` }}>F</span>
+              style={{ color: DANGER, background: `${DANGER}1f`, border: `1px solid ${DANGER}55` }}>
+              {set.side ? `F-${set.side}` : 'F'}
+            </span>
           )}
           {set.rpe != null && <span className="text-[10px] text-muted">RPE {set.rpe}</span>}
         </button>
@@ -179,8 +189,9 @@ export function SetEditorRow({ index, set, active, timed = false, onActivate, on
             <TypeChip active={isWarm} color={ORANGE} label="Warm-up" short="W" onClick={() => toggleType('warmup')} />
             <TypeChip active={isFail} color={DANGER} label="Failure" short="F" onClick={() => toggleType('failure')} />
           </div>
-          {/* Unilateral — split into Left/Right, link/unlink the pair, or merge back */}
-          {(onSplit || set.side) && (
+          {/* Unilateral — split into Left/Right (pair Link/Merge live on the parent
+              "Set N" card, so a nested sub-row shows only its own tuner). */}
+          {(onSplit || onToggleLink || onMerge) && (
             <div className="flex items-center gap-1.5 flex-wrap">
               {onSplit && (
                 <button type="button" onClick={onSplit}

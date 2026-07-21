@@ -30,7 +30,9 @@ function deltaGlyph(delta: -1 | 0 | 1 | null): string {
  */
 export function SessionIntelCard({ session }: { session: GymReportRow }) {
   const { data: intel, isLoading } = useSessionIntel(session.id)
-  const [notesOpen, setNotesOpen] = useState(false)
+  // Session Report starts EXPANDED (Command Center wants the full debrief open,
+  // not a tap-to-reveal). The chevron still collapses it if the user wants.
+  const [notesOpen, setNotesOpen] = useState(true)
   const unit = useUnitSystem()
 
   const maxVol = Math.max(...(intel?.volumes.map((v) => v.volumeKg) ?? [1]), 1)

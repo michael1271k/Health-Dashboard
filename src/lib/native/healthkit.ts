@@ -61,6 +61,34 @@ const EXTRA_READ_TYPES = [
   'HKQuantityTypeIdentifierAppleSleepingWristTemperature',
   'HKQuantityTypeIdentifierTimeInDaylight',
   'HKQuantityTypeIdentifierHeartRate',
+  // ── Activity / body signals (Micros page + richer readiness) ──
+  'HKQuantityTypeIdentifierFlightsClimbed',
+  'HKQuantityTypeIdentifierBasalEnergyBurned',       // resting energy
+  'HKQuantityTypeIdentifierAppleMoveTime',           // move minutes
+  'HKQuantityTypeIdentifierWalkingHeartRateAverage',
+  'HKQuantityTypeIdentifierHeight',
+  'HKQuantityTypeIdentifierUVExposure',
+  // ── Dietary micro-nutrients (the Nutrition & Micros surface) ──
+  'HKQuantityTypeIdentifierDietaryCholesterol',
+  'HKQuantityTypeIdentifierDietarySugar',
+  'HKQuantityTypeIdentifierDietaryFiber',
+  'HKQuantityTypeIdentifierDietaryFatMonounsaturated',
+  'HKQuantityTypeIdentifierDietaryFatPolyunsaturated',
+  'HKQuantityTypeIdentifierDietaryIodine',
+  'HKQuantityTypeIdentifierDietaryIron',
+  'HKQuantityTypeIdentifierDietaryPotassium',
+  'HKQuantityTypeIdentifierDietaryCalcium',
+  'HKQuantityTypeIdentifierDietaryMagnesium',
+  'HKQuantityTypeIdentifierDietarySodium',
+  'HKQuantityTypeIdentifierDietaryVitaminA',
+  'HKQuantityTypeIdentifierDietaryVitaminB6',
+  'HKQuantityTypeIdentifierDietaryVitaminB12',
+  'HKQuantityTypeIdentifierDietaryVitaminC',
+  'HKQuantityTypeIdentifierDietaryVitaminD',
+  'HKQuantityTypeIdentifierDietaryVitaminE',
+  'HKQuantityTypeIdentifierDietaryVitaminK',
+  'HKQuantityTypeIdentifierDietaryZinc',
+  'HKQuantityTypeIdentifierDietaryBiotin',
 ]
 const READ_TYPES = [...new Set(METRIC_MAP.map((m) => m.hk).concat(EXTRA_READ_TYPES))]
 

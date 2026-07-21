@@ -1,12 +1,13 @@
 /**
  * The global macro color system — ONE source of truth used by every
- * ring, bar, chart, tile, and tag in the app. Bioluminescent mapping:
+ * ring, bar, chart, tile, and tag in the app. Gym-neon mapping: molten fuel,
+ * power red, electric glycogen, amber — masculine + premium on the dark Aurora.
  */
 export const MACRO_COLORS = {
-  calories: '#8B5CF6', // living teal — the brand hero
-  protein:  '#22D3EE', // plankton cyan
-  carbs:    '#EC4899', // abyss violet
-  fat:      '#FBBF24', // ember
+  calories: '#FF6A3D', // molten fuel — the energetic hero (was a weak violet)
+  protein:  '#FF2D55', // power red — muscle
+  carbs:    '#22D3EE', // electric cyan — glycogen / energy
+  fat:      '#FFB020', // amber gold
 } as const
 
 export type MacroKey = keyof typeof MACRO_COLORS

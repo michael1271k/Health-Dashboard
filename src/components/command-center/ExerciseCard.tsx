@@ -19,6 +19,43 @@ const STATUS_META: Record<NonNullable<DraftExercise['status']>, { label: string;
 
 const CARDIO_VIOLET = '#EC4899'
 
+// A unilateral L/R pair reads as ONE numbered set that expands into Left/Right
+// sub-rows — NOT two sibling rows. groupSets folds the flat draft list into that
+// display shape while preserving each side's original index (for edit/remove).
+type SetGroup =
+  | { kind: 'single'; idx: number; set: DraftSet; num: number }
+  | { kind: 'pair'; pairId: string; num: number; left?: { idx: number; set: DraftSet }; right?: { idx: number; set: DraftSet } }
+
+function groupSets(sets: DraftSet[]): SetGroup[] {
+  const groups: SetGroup[] = []
+  const byPair = new Map<string, Extract<SetGroup, { kind: 'pair' }>>()
+  let num = 0
+  sets.forEach((set, idx) => {
+    if (set.pairId) {
+      let g = byPair.get(set.pairId)
+      if (!g) { num += 1; g = { kind: 'pair', pairId: set.pairId, num }; byPair.set(set.pairId, g); groups.push(g) }
+      if (set.side === 'R') g.right = { idx, set }
+      else g.left = { idx, set }
+    } else {
+      num += 1
+      groups.push({ kind: 'single', idx, set, num })
+    }
+  })
+  return groups
+}
+
+/** Weaker-side imbalance for a pair, by per-side volume (weight×reps). We count
+ *  the FULL real work of both sides (sum) — this badge just surfaces the gap. */
+function pairAsymmetry(l?: DraftSet, r?: DraftSet): { pct: number; weak: 'L' | 'R' } | null {
+  if (!l || !r) return null
+  const lv = l.weightKg * l.reps, rv = r.weightKg * r.reps
+  const hi = Math.max(lv, rv)
+  if (hi <= 0) return null
+  const pct = Math.round((1 - Math.min(lv, rv) / hi) * 100)
+  if (pct < 3) return null // ignore trivial (<3%) imbalance / rounding
+  return { pct, weak: lv < rv ? 'L' : 'R' }
+}
+
 // Show the real load: 3.75 must never display as "3.8" (quarter-step plates).
 const fmtKg = (w: number) => (w % 1 === 0 ? w.toFixed(0) : (w * 10) % 1 === 0 ? w.toFixed(1) : w.toFixed(2))
 const fmtDate = (d: string) =>
@@ -112,7 +149,9 @@ export function ExerciseCard({ exercise, history, collapsed = false, onUpdateSet
   }
 
   const status = exercise.status ? STATUS_META[exercise.status] : null
-  const summary = exercise.sets.map((s) => s.reps).join('/')
+  const groups = groupSets(exercise.sets)
+  // A pair contributes one "L|R" token so the header doesn't double-count sides.
+  const summary = groups.map((g) => g.kind === 'single' ? g.set.reps : `${g.left?.set.reps ?? '–'}|${g.right?.set.reps ?? '–'}`).join('/')
   const topWeight = Math.max(...exercise.sets.map((s) => s.weightKg), 0)
 
   return (
@@ -200,21 +239,77 @@ export function ExerciseCard({ exercise, history, collapsed = false, onUpdateSet
       {/* ── Set rows ── */}
       {showBody && (
         <div className="mt-2 border-t border-white/[0.06] pt-1.5 space-y-0.5">
-          {exercise.sets.map((s, i) => (
-            <SetEditorRow
-              key={i}
-              index={i}
-              set={s}
-              active={activeSet === i}
-              timed={isTimedExercise(exercise.name)}
-              onActivate={() => setActiveSet((cur) => (cur === i ? null : i))}
-              onChange={(patch) => onUpdateSet(i, patch)}
-              onRemove={() => { setActiveSet(null); onRemoveSet(i) }}
-              onSplit={s.pairId ? undefined : () => onSplitSet(i)}
-              onToggleLink={s.pairId ? () => onToggleLink(s.pairId!) : undefined}
-              onMerge={s.pairId ? () => onMergeSet(s.pairId!) : undefined}
-            />
-          ))}
+          {groups.map((g) => {
+            const timed = isTimedExercise(exercise.name)
+            if (g.kind === 'single') {
+              const i = g.idx
+              return (
+                <SetEditorRow
+                  key={`s${i}`}
+                  index={i}
+                  displayNum={g.num}
+                  set={g.set}
+                  active={activeSet === i}
+                  timed={timed}
+                  onActivate={() => setActiveSet((cur) => (cur === i ? null : i))}
+                  onChange={(patch) => onUpdateSet(i, patch)}
+                  onRemove={() => { setActiveSet(null); onRemoveSet(i) }}
+                  onSplit={() => onSplitSet(i)}
+                />
+              )
+            }
+            // Unilateral pair → ONE "Set N" card that expands into L/R sub-rows.
+            const asym = pairAsymmetry(g.left?.set, g.right?.set)
+            const linked = (g.left?.set.linked ?? g.right?.set.linked) !== false
+            return (
+              <div key={`p${g.pairId}`} className="rounded-lg border border-white/[0.07] bg-white/[0.02] p-1.5 space-y-1">
+                <div className="flex items-center gap-2 px-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-muted">Set {g.num}</span>
+                  <span className="text-[9px] font-bold uppercase tracking-wide px-1 py-px rounded"
+                    style={{ color: '#8B5CF6', background: '#8B5CF61f', border: '1px solid #8B5CF655' }}>L / R</span>
+                  {asym && (
+                    <span className="text-[9px] font-bold uppercase tracking-wide px-1 py-px rounded ml-auto"
+                      style={{ color: '#FB7185', background: '#FB71851f', border: '1px solid #FB718555' }}
+                      title={`${asym.weak === 'L' ? 'Left' : 'Right'} side ${asym.pct}% weaker (by volume)`}>
+                      −{asym.pct}% {asym.weak}
+                    </span>
+                  )}
+                </div>
+                {g.left && (
+                  <SetEditorRow
+                    key={`l${g.left.idx}`} index={g.left.idx} displayNum={g.num} subRow set={g.left.set}
+                    active={activeSet === g.left.idx} timed={timed}
+                    onActivate={() => setActiveSet((cur) => (cur === g.left!.idx ? null : g.left!.idx))}
+                    onChange={(patch) => onUpdateSet(g.left!.idx, patch)}
+                    onRemove={() => { setActiveSet(null); onRemoveSet(g.left!.idx) }}
+                  />
+                )}
+                {g.right && (
+                  <SetEditorRow
+                    key={`r${g.right.idx}`} index={g.right.idx} displayNum={g.num} subRow set={g.right.set}
+                    active={activeSet === g.right.idx} timed={timed}
+                    onActivate={() => setActiveSet((cur) => (cur === g.right!.idx ? null : g.right!.idx))}
+                    onChange={(patch) => onUpdateSet(g.right!.idx, patch)}
+                    onRemove={() => { setActiveSet(null); onRemoveSet(g.right!.idx) }}
+                  />
+                )}
+                {/* Pair-level controls — link mirrors weight+reps; merge collapses back. */}
+                <div className="flex items-center gap-1.5 px-1 pt-0.5">
+                  <button type="button" onClick={() => onToggleLink(g.pairId)} aria-pressed={linked}
+                    className="min-h-[30px] px-2.5 rounded-lg text-[10px] font-bold uppercase tracking-wide active:scale-95 transition-colors"
+                    style={linked
+                      ? { color: '#22D3EE', background: '#22D3EE1f', border: '1px solid #22D3EE66' }
+                      : { color: 'var(--color-muted)', background: 'transparent', border: '1px solid rgba(255,255,255,0.10)' }}>
+                    {linked ? 'Linked' : 'Unlinked'}
+                  </button>
+                  <button type="button" onClick={() => onMergeSet(g.pairId)}
+                    className="min-h-[30px] px-2.5 rounded-lg text-[10px] font-bold uppercase tracking-wide text-muted border border-white/10 hover:text-danger active:scale-95 transition-colors">
+                    Merge
+                  </button>
+                </div>
+              </div>
+            )
+          })}
           <button
             type="button"
             onClick={onAddSet}

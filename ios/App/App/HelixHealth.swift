@@ -164,6 +164,30 @@ public class HealthkitPlugin: CAPPlugin, CAPBridgedPlugin {
     case HKQuantityTypeIdentifier.dietaryProtein.rawValue, HKQuantityTypeIdentifier.dietaryCarbohydrates.rawValue,
          HKQuantityTypeIdentifier.dietaryFatTotal.rawValue: return .gram()
     case HKQuantityTypeIdentifier.dietaryWater.rawValue: return .literUnit(with: .milli)
+    // ── Activity / body signals ──
+    case HKQuantityTypeIdentifier.basalEnergyBurned.rawValue: return .kilocalorie()
+    case HKQuantityTypeIdentifier.flightsClimbed.rawValue: return .count()
+    case HKQuantityTypeIdentifier.appleMoveTime.rawValue: return .minute()
+    case HKQuantityTypeIdentifier.walkingHeartRateAverage.rawValue: return HKUnit.count().unitDivided(by: .minute())
+    case HKQuantityTypeIdentifier.height.rawValue: return .meterUnit(with: .centi)
+    case HKQuantityTypeIdentifier.uvExposure.rawValue: return .count()
+    case HKQuantityTypeIdentifier.appleSleepingWristTemperature.rawValue: return .degreeCelsius()
+    // ── Dietary macro/micro grams ──
+    case HKQuantityTypeIdentifier.dietarySugar.rawValue, HKQuantityTypeIdentifier.dietaryFiber.rawValue,
+         HKQuantityTypeIdentifier.dietaryFatMonounsaturated.rawValue,
+         HKQuantityTypeIdentifier.dietaryFatPolyunsaturated.rawValue: return .gram()
+    // ── Minerals + fat-soluble-in-mg / water-soluble vitamins (milligrams) ──
+    case HKQuantityTypeIdentifier.dietaryCholesterol.rawValue, HKQuantityTypeIdentifier.dietarySodium.rawValue,
+         HKQuantityTypeIdentifier.dietaryPotassium.rawValue, HKQuantityTypeIdentifier.dietaryCalcium.rawValue,
+         HKQuantityTypeIdentifier.dietaryIron.rawValue, HKQuantityTypeIdentifier.dietaryMagnesium.rawValue,
+         HKQuantityTypeIdentifier.dietaryZinc.rawValue, HKQuantityTypeIdentifier.dietaryVitaminC.rawValue,
+         HKQuantityTypeIdentifier.dietaryVitaminB6.rawValue, HKQuantityTypeIdentifier.dietaryVitaminE.rawValue:
+      return .gramUnit(with: .milli)
+    // ── Trace nutrients (micrograms) ──
+    case HKQuantityTypeIdentifier.dietaryIodine.rawValue, HKQuantityTypeIdentifier.dietaryBiotin.rawValue,
+         HKQuantityTypeIdentifier.dietaryVitaminA.rawValue, HKQuantityTypeIdentifier.dietaryVitaminB12.rawValue,
+         HKQuantityTypeIdentifier.dietaryVitaminD.rawValue, HKQuantityTypeIdentifier.dietaryVitaminK.rawValue:
+      return .gramUnit(with: .micro)
     default: return .count()
     }
   }

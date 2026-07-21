@@ -82,11 +82,11 @@ export const DayCard = memo(function DayCard({ d, unit, active, onOpen }: {
         <span className="helix-num text-fluid-sm font-bold text-text tabular-nums">{d.calories != null ? Math.round(d.calories).toLocaleString() : '—'}</span>
         <span className="text-[9px] text-muted">kcal</span>
       </div>
-      {/* Macro sliders */}
+      {/* Macro sliders — Carbs · Fat · Protein */}
       <div className="flex items-center gap-3 mt-2 pl-[18px]">
-        <MacroBar label="P" g={d.proteinG} target={ROW_MACRO_TARGET.protein} color={MACRO_COLORS.protein} />
         <MacroBar label="C" g={d.carbsG} target={ROW_MACRO_TARGET.carbs} color={MACRO_COLORS.carbs} />
         <MacroBar label="F" g={d.fatG} target={ROW_MACRO_TARGET.fat} color={MACRO_COLORS.fat} />
+        <MacroBar label="P" g={d.proteinG} target={ROW_MACRO_TARGET.protein} color={MACRO_COLORS.protein} />
       </div>
       {/* Workout / rest line */}
       <div className="flex items-center gap-1.5 mt-2 pl-[18px] text-[11px] min-w-0"

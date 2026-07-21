@@ -93,7 +93,9 @@ export function useEditSession() {
         date: s.started_at.slice(0, 10),
         title: dayLabel ?? (s.split_day[0].toUpperCase() + s.split_day.slice(1)),
         notes: s.notes ?? '',
-        startedAt: s.started_at,
+        // Normalize the DB timestamptz (`…+00:00`) to a `Z` instant so the commit
+        // payload validates and setDate's `slice(11)` keeps a clean offsetless time.
+        startedAt: new Date(s.started_at).toISOString(),
         stats: {
           duration_min: s.duration_min, volume_kg: s.total_volume_kg, sets_completed: null, prs: null,
           avg_hr_bpm: s.avg_bpm, calories_kcal: s.calories_burned, volume_delta_pct_vs_prior: null,
