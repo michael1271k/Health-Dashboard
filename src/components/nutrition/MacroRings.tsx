@@ -61,8 +61,8 @@ export const MacroRings = memo(function MacroRings({ today, logs, goals }: {
         <span className="text-fluid-xs text-muted">goal <span className="helix-num">{goals.calorie.toLocaleString()}</span> kcal</span>
       </div>
 
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-12 py-2">
-        {/* Hero calories ring — the focal point, large on desktop */}
+      <div className="flex flex-col items-center gap-8 py-2">
+        {/* Hero calories ring — the focal point */}
         <div className="relative shrink-0">
           <Ring value={kcal} goal={goals.calorie} color={MACRO_COLORS.calories} size={208} stroke={14} over={over} />
           <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -78,19 +78,19 @@ export const MacroRings = memo(function MacroRings({ today, logs, goals }: {
           </div>
         </div>
 
-        {/* P / C / F rings — a row on mobile, a column beside the hero on desktop */}
-        <div className="flex flex-row sm:flex-col gap-5 sm:gap-4">
+        {/* P / C / F — three large, equal, centred rings that fill the width.
+            Value sits inside each ring (Apple Activity style); label below. */}
+        <div className="grid grid-cols-3 gap-3 w-full max-w-md mx-auto">
           {macros.map((m) => (
-            <div key={m.label} className="flex flex-col sm:flex-row items-center gap-1.5 sm:gap-3">
+            <div key={m.label} className="flex flex-col items-center gap-2.5">
               <div className="relative shrink-0">
-                <Ring value={m.value} goal={m.goal} color={m.color} size={62} stroke={7} />
-                <span className="absolute inset-0 flex items-center justify-center text-[11px] font-bold" style={{ color: m.color }}>{m.label[0]}</span>
+                <Ring value={m.value} goal={m.goal} color={m.color} size={100} stroke={10} />
+                <div className="absolute inset-0 flex flex-col items-center justify-center leading-none">
+                  <span className="helix-num text-fluid-xl font-bold text-text">{m.value != null ? Math.round(m.value) : '—'}</span>
+                  <span className="text-[10px] text-muted mt-0.5">/ {m.goal ?? '—'}g</span>
+                </div>
               </div>
-              <div className="leading-tight text-center sm:text-left">
-                <span className="helix-num text-fluid-base font-bold text-text">{m.value != null ? Math.round(m.value) : '—'}</span>
-                <span className="text-[11px] text-muted"> / {m.goal ?? '—'}g</span>
-                <span className="block text-[9px] uppercase tracking-wide" style={{ color: m.color }}>{m.label}</span>
-              </div>
+              <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: m.color }}>{m.label}</span>
             </div>
           ))}
         </div>

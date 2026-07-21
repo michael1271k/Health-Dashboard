@@ -12,10 +12,8 @@ import Anthropic from '@anthropic-ai/sdk'
 import { getServerSupabaseClient } from '@/lib/supabase/server'
 import { denyIfUnauthorized } from '@/lib/auth/guard'
 import { requireUserId } from '@/lib/auth/identity'
-// Shared date math — weekNumber.ts is now server-safe (its date helpers live in
-// a pure leaf, not the 'use client' hooks chain).
-import { weekStartOf } from '@/lib/utils/week'
-import { weekNumberOf } from '@/lib/reports/weekNumber'
+// Shared date math — pure leaf, safe in this server route.
+import { weekStartOf, isoAddDays } from '@/lib/utils/week'
 
 /**
  * Distil the aggregate stats into the deterministic ReportPayload shape so an
@@ -53,7 +51,7 @@ function derivePayloadFromStats(stats: Awaited<ReturnType<typeof aggregateWeek>>
 // ─── System prompt ─────────────────────────────────────────────────────────────
 const SYSTEM_PROMPT = `You are the coach for Helix Axis-5 — a personal recomposition system. Speak with specific knowledge of THIS athlete's program; never give generic advice.
 The user (Michael) is on the Helix Cut 5.1 block: strictly 1955 kcal / 170g protein / 195g carbs / 55g fat per day.
-Training is the HELIX-5 split — Sun: Upper A · Mon: Legs A (Quad) · Tue: Delts & Arms · Thu: Upper B · Fri: Legs B (Posterior); Wed and Sat are Zone-2 rest days. Re-entry weeks (19 Jul – 1 Aug) run ~90% loads with an RPE cap, so muted PRs there are expected, not a regression.
+Training is the HELIX-5 split — Sun: Upper A · Mon: Legs & Core A (Quad) · Tue: Delts & Arms · Thu: Upper B · Fri: Legs & Core B (Posterior); Wed and Sat are Zone-2 rest days. Re-entry weeks (19 Jul – 1 Aug) run ~90% loads with an RPE cap, so muted PRs there are expected, not a regression.
 Goal: lose 0.3–0.4 kg/week while preserving muscle mass.
 
 Analyse the provided 7-day stats and produce a structured report in this EXACT format:
@@ -293,22 +291,29 @@ async function persistAndRespond(
   // Normalise the window to its containing program week (Sunday-anchored) so the
   // AI report shares one row with any manually-generated report for that week.
   const weekStart = weekStartOf(statsPayload.period.from)
-  const { data: reportRow, error: dbError } = await supabase
-    .from('reports')
-    .upsert({
-      user_id:     userId,
-      kind:        'weekly',
-      week_start:  weekStart,
-      week_number: weekNumberOf(weekStart),
-      content_md:  contentMd,
-      metrics:     statsPayload as unknown as Record<string, unknown>,
-      payload:     derivePayloadFromStats(statsPayload),
-    } as unknown as never, { onConflict: 'user_id,kind,week_start' })
-    .select('id')
-    .single()
+  const record = {
+    user_id:      userId,
+    type:         'weekly',
+    period_start: weekStart,
+    period_end:   isoAddDays(weekStart, 7),
+    content_md:   contentMd,
+    // Raw stats + the deterministic ReportPayload both live in the metrics jsonb
+    // (the live table has no dedicated payload column); useReports reads .payload.
+    metrics: {
+      stats:   statsPayload,
+      payload: derivePayloadFromStats(statsPayload),
+    },
+  }
+  // No (user_id,type,period_start) unique constraint on the live table, so upsert
+  // by hand: overwrite this week's row if present, else insert.
+  const { data: existing } = await supabase.from('reports')
+    .select('id').eq('user_id', userId).eq('type', 'weekly').eq('period_start', weekStart).maybeSingle()
+  const { data: reportRow, error: dbError } = (existing as unknown as { id: string } | null)?.id
+    ? await supabase.from('reports').update(record as unknown as never).eq('id', (existing as unknown as { id: string }).id).select('id').single()
+    : await supabase.from('reports').insert(record as unknown as never).select('id').single()
 
   if (dbError) {
-    console.error('[ai/weekly-report] DB upsert error:', dbError)
+    console.error('[ai/weekly-report] DB write error:', dbError)
   }
 
   const reportId = (reportRow as { id?: string } | null)?.id ?? null

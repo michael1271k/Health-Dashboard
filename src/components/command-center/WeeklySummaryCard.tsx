@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { CalendarRange, ChevronRight, Trophy } from 'lucide-react'
 import { useWeekSessions, weekStartOf, isoAddDays } from '@/lib/hooks/useWeekSessions'
 import { logicalTodayISO } from '@/lib/utils/day'
+import { fmtVolume } from '@/lib/utils/units'
 
 const GOLD = '#F5C15A'
 
@@ -40,7 +41,7 @@ export function WeeklySummaryCard() {
           <span className="flex-1 min-w-0">
             <span className="block text-sm font-semibold" style={{ color: GOLD }}>Week complete — Session Summary ready</span>
             <span className="block text-[11px] text-muted">
-              {thisWeek.data?.sessions.length ?? 0} sessions · {thisWeek.data?.totals.volumeKg.toLocaleString() ?? 0} kg · vs last week inside
+              {thisWeek.data?.sessions.length ?? 0} sessions · {fmtVolume(thisWeek.data?.totals.volumeKg)} kg · vs last week inside
             </span>
           </span>
           <ChevronRight className="w-4 h-4 shrink-0" style={{ color: GOLD }} aria-hidden="true" />

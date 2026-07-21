@@ -18,7 +18,10 @@ interface HealthKitPlugin {
   requestAuthorization(opts: { read: string[] }): Promise<{ granted: boolean }>
   // Reduced Swift-side: HKStatisticsQuery deduplicates overlapping iPhone+Watch
   // sources, so the returned array is a single {value} (or empty). No manual JS sum.
-  queryQuantity(opts: { sampleType: string; startDate: string; endDate: string; reduce: Reduce }): Promise<{ samples: { value: number }[] }>
+  // `dayStart` (YYYY-MM-DD) + `isToday` let Swift build the window at LOCAL
+  // midnight via Calendar.current (timezone-proof). startDate/endDate remain as
+  // an ISO fallback for older binaries / arbitrary windows.
+  queryQuantity(opts: { sampleType: string; dayStart?: string; isToday?: boolean; startDate: string; endDate: string; reduce: Reduce }): Promise<{ samples: { value: number }[] }>
   queryCategory(opts: { sampleType: string; startDate: string; endDate: string }): Promise<{ samples: HealthSample[] }>
 }
 const HealthKit = registerPlugin<HealthKitPlugin>('CapacitorHealthkit')
@@ -172,7 +175,7 @@ async function syncDay(dateISO: string, isToday: boolean): Promise<Record<string
   const [metricResults, sleep] = await Promise.all([
     Promise.all(METRIC_MAP.map(async (m) => {
       try {
-        const { samples } = await HealthKit.queryQuantity({ sampleType: m.hk, startDate: start.toISOString(), endDate: end.toISOString(), reduce: m.reduce })
+        const { samples } = await HealthKit.queryQuantity({ sampleType: m.hk, dayStart: dateISO, isToday, startDate: start.toISOString(), endDate: end.toISOString(), reduce: m.reduce })
         return { key: m.key, value: roundReduced(samples, m.reduce) }
       } catch { return { key: m.key, value: undefined } } // metric not available on this device
     })),

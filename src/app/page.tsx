@@ -18,7 +18,7 @@ import { WidgetBoundary } from '@/components/fx/WidgetBoundary'
 import { BrandHeader } from '@/components/dashboard/BrandHeader'
 import { DeferredMount } from '@/components/fx/DeferredMount'
 import { formatSleep, mlToL } from '@/lib/utils/format'
-import { displayWeight, weightUnit, validWeight } from '@/lib/utils/units'
+import { displayWeight, weightUnit, validWeight, fmtVolume } from '@/lib/utils/units'
 import { phaseDisplay } from '@/lib/nutrition/phase'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { logicalTodayISO } from '@/lib/utils/day'
@@ -100,6 +100,21 @@ export default function DashboardPage() {
     const half = Math.floor(w.length / 2)
     return Math.round((avg(w.slice(half)) - avg(w.slice(0, half))) * 100) / 100
   }, [bioSeries])
+  // "When was the last weigh-in" cue — bioSeries is ascending, so the newest
+  // valid weight is the current reading. Colour-code by recency so a stale
+  // number can never masquerade as today's (green today → amber ≤3d → dim older).
+  const lastWeighDate = useMemo(() => {
+    const withW = (bioSeries ?? []).filter((d) => validWeight(d.weightKg) != null)
+    return withW.length ? withW[withW.length - 1].date : null
+  }, [bioSeries])
+  const weigh = useMemo(() => {
+    if (!lastWeighDate) return null
+    const ageDays = Math.round((Date.parse(logicalTodayISO() + 'T00:00:00Z') - Date.parse(lastWeighDate + 'T00:00:00Z')) / 86400000)
+    return {
+      color: ageDays <= 0 ? '#34D399' : ageDays <= 3 ? '#FBBF24' : '#8B97B2',
+      label: ageDays <= 0 ? 'Weighed today' : ageDays === 1 ? 'Weighed yesterday' : `Weighed ${ageDays}d ago`,
+    }
+  }, [lastWeighDate])
 
   const strips: Array<BioStripProps & { key: Exclude<SheetKey, null> }> = [
     {
@@ -122,14 +137,14 @@ export default function DashboardPage() {
       status: todayDay !== 'rest' && todayDay.sub
         ? todayDay.sub
         : lastSession?.total_volume_kg != null
-          ? `last: ${lastSplit?.label ?? ''} · ${Math.round(displayWeight(lastSession.total_volume_kg) ?? 0).toLocaleString()} ${unit}`
+          ? `last: ${lastSplit?.label ?? ''} · ${fmtVolume(displayWeight(lastSession.total_volume_kg))} ${unit}`
           : todayEra === 'axis' ? 'no HELIX sessions yet — fresh slate' : 'no sessions yet',
     },
     {
       key: 'body', icon: Scale, label: 'Body', accent: TEAL,
       value: displayWeight(validWeight(log?.weight_kg)), unit,
-      status: weightWoW != null
-        ? <span className={weightWoW <= 0 ? 'text-success' : 'text-warn'}>{weightWoW > 0 ? '+' : ''}{weightWoW} {unit}/wk (7-day avg)</span>
+      status: weigh
+        ? <span style={{ color: weigh.color }}>{weigh.label}</span>
         : log?.body_fat_pct != null ? `${n1(log.body_fat_pct)}% body fat` : 'composition',
       series: (bioSeries ?? []).map((d) => displayWeight(d.weightKg)),
     },
@@ -216,7 +231,7 @@ export default function DashboardPage() {
           <div className="space-y-2.5">
             <div className="grid grid-cols-2 gap-2.5">
               <StatTile label="Today" value={todayDay === 'rest' ? 'Zone-2 / Rest' : todayDay.label} sub={todayDay !== 'rest' ? todayDay.sub : undefined} accent={CYAN} />
-              <StatTile label="Last Volume" value={n0(displayWeight(lastSession?.total_volume_kg ?? null))} unit={unit} />
+              <StatTile label="Last Volume" value={lastSession?.total_volume_kg != null ? fmtVolume(displayWeight(lastSession.total_volume_kg)) : n0(null)} unit={unit} />
             </div>
             {todayDay !== 'rest' && todayDay.dayKey ? (
               <button
@@ -230,13 +245,24 @@ export default function DashboardPage() {
           </div>
         )}
         {open === 'body' && (
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="space-y-2.5">
+            {weigh && (
+              <div className="flex items-center gap-2 text-fluid-xs">
+                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: weigh.color }} aria-hidden="true" />
+                <span style={{ color: weigh.color }} className="font-medium">{weigh.label}</span>
+                {weightWoW != null && (
+                  <span className="text-muted">· {weightWoW > 0 ? '+' : ''}{weightWoW} {unit}/wk (7-day avg)</span>
+                )}
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-2.5">
             <StatTile label="Weight" value={displayWeight(validWeight(log?.weight_kg))} unit={unit} accent={TEAL} isLoading={logLoading} />
             <StatTile label="BMI" value={n1(log?.bmi)} isLoading={logLoading} />
             <StatTile label="Lean Mass" value={displayWeight(log?.lean_mass_kg)} unit={unit} isLoading={logLoading} />
             <StatTile label="Body Fat" value={n1(log?.body_fat_pct)} unit="%" isLoading={logLoading} />
             {log?.muscle_percent != null && <StatTile label="Muscle" value={n1(log.muscle_percent)} unit="%" />}
             {log?.bmr != null && <StatTile label="BMR" value={n0(log.bmr)} unit="kcal" />}
+            </div>
           </div>
         )}
         {open === 'steps' && (

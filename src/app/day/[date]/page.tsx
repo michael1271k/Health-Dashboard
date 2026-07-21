@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Dumbbell, Moon, Flame, Scale, Plus, ChevronRight } from 'lucide-react'
+import { ArrowLeft, Dumbbell, Moon, Flame, Scale, Plus, ChevronRight, ChevronLeft } from 'lucide-react'
 import { CompletenessArc } from '@/components/day/CompletenessArc'
 import { InBodyCard } from '@/components/day/InBodyCard'
 import { SubjectiveBlock } from '@/components/day/SubjectiveBlock'
@@ -15,8 +15,9 @@ import { useDayVault, dayCompleteness, type DayVaultData } from '@/lib/hooks/use
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { phaseDisplay } from '@/lib/nutrition/phase'
 import { ERA_META, eraForDate, scheduleDayFor, PROGRAMS, DEFAULT_PROGRAM_ID, getActiveProgramId } from '@/lib/programs'
-import { displayWeight, validWeight, weightUnit } from '@/lib/utils/units'
+import { displayWeight, validWeight, weightUnit, fmtVolume } from '@/lib/utils/units'
 import { formatSleep, mlToL } from '@/lib/utils/format'
+import { logicalTodayISO } from '@/lib/utils/day'
 
 const VIOLET = '#EC4899'
 const ICE = '#38BDF8'
@@ -114,16 +115,35 @@ export default function DailyNexusPage() {
 
   const pretty = new Date(date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
 
+  const shiftDate = (d: string, delta: number) => {
+    const x = new Date(`${d}T12:00:00Z`); x.setUTCDate(x.getUTCDate() + delta); return x.toISOString().slice(0, 10)
+  }
+  const prevDate = shiftDate(date, -1)
+  const nextDate = shiftDate(date, +1)
+  const nextIsFuture = nextDate > logicalTodayISO() // no navigating past today
+
   return (
     <div className="space-y-3">
-      {/* ── Back + title ── */}
-      <header className="flex items-center gap-3">
+      {/* ── Back + title + day nav ── */}
+      <header className="flex items-center gap-2">
         <button onClick={() => router.back()} className="btn-glass shrink-0 min-h-[44px]" aria-label="Back">
           <ArrowLeft className="w-4 h-4" />
         </button>
         <div className="min-w-0 flex-1">
           <h1 className="font-heading text-fluid-lg font-bold text-text truncate">The Daily Nexus</h1>
           <span className="text-fluid-xs text-muted">{pretty}</span>
+        </div>
+        {/* Previous / Next day — discrete native-feeling chevrons */}
+        <div className="flex items-center gap-1 shrink-0">
+          <button onClick={() => router.push(`/day/${prevDate}`)}
+            className="btn-glass min-h-[44px] min-w-[40px] justify-center" aria-label="Previous day">
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <button onClick={() => router.push(`/day/${nextDate}`)} disabled={nextIsFuture}
+            className="btn-glass min-h-[44px] min-w-[40px] justify-center disabled:opacity-30 disabled:pointer-events-none"
+            aria-label="Next day">
+            <ChevronRight className="w-4 h-4" />
+          </button>
         </div>
         <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded shrink-0"
           style={{ color: eraMeta.color, background: `${eraMeta.color}1a`, border: `1px solid ${eraMeta.color}40` }}>
@@ -254,7 +274,7 @@ export default function DailyNexusPage() {
               </Link>
               {/* Hevy-style colored metadata header */}
               <div className="flex flex-wrap gap-2">
-                <MetaChip emoji="🏋️" value={`${Math.round(displayWeight(s.volumeKg) ?? 0).toLocaleString()}`} label={unit} color={TEAL} />
+                <MetaChip emoji="🏋️" value={fmtVolume(displayWeight(s.volumeKg))} label={unit} color={TEAL} />
                 <MetaChip emoji="🔁" value={`${s.setCount ?? '—'}`} label="sets" color={CYAN} />
                 <MetaChip emoji="⏱️" value={s.durationMin != null ? `${s.durationMin}` : '—'} label="min" color={VIOLET} />
                 <MetaChip emoji="❤️" value={s.avgBpm != null ? `${s.avgBpm}` : '—'} label="bpm" color={ROSE} />

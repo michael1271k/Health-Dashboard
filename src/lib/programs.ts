@@ -86,7 +86,7 @@ export const APEX51: Program = {
       { name: 'Straight-Arm Pulldown', sets: 2, wk1Kg: 15, reps: '12–15', muscles: ['back'] },
       { name: 'Face Pull', sets: 3, wk1Kg: 13.75, reps: '12–15', muscles: ['shoulders', 'back'] },
     ] },
-    { key: 'legs_a', label: 'Legs A', sub: 'Quad Focus', color: C.legsA, weekday: 1, cutSetDelta: -4, exercises: [
+    { key: 'legs_a', label: 'Legs & Core A', sub: 'Quad Focus', color: C.legsA, weekday: 1, cutSetDelta: -4, exercises: [
       { name: 'Leg Press', sets: 4, wk1Kg: 70, reps: '8–12', muscles: ['quads', 'glutes'], compound: true, note: '1 warm-up @40kg' },
       { name: 'Hack/Smith Squat', sets: 3, wk1Kg: null, reps: '10–12', muscles: ['quads', 'glutes'], compound: true },
       { name: 'Leg Extension', sets: 3, wk1Kg: 37.5, reps: '12–15', muscles: ['quads'] },
@@ -118,7 +118,7 @@ export const APEX51: Program = {
     ] },
     // Cold-start loads/reps mirror the user's real Legs B (memory overrides once
     // logged under these canonical names); bodyweight moves seed at 0 kg.
-    { key: 'legs_b', label: 'Legs B', sub: 'Posterior Focus', color: C.legsB, weekday: 5, cutSetDelta: -3, exercises: [
+    { key: 'legs_b', label: 'Legs & Core B', sub: 'Posterior Focus', color: C.legsB, weekday: 5, cutSetDelta: -3, exercises: [
       { name: 'Romanian Deadlift (Dumbbell)', sets: 4, wk1Kg: 30, reps: '12–15', muscles: ['hamstrings', 'glutes', 'back'], compound: true },
       { name: 'Hip Thrust (Machine)', sets: 3, wk1Kg: 25, reps: '14–16', muscles: ['glutes'], compound: true },
       { name: 'Leg Press Horizontal', sets: 3, wk1Kg: 70, reps: '12–15', muscles: ['quads', 'glutes'], compound: true },

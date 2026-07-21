@@ -33,8 +33,8 @@ const splitLabel = (s: ChartSplit) => {
   if (s === 'upper_a') return 'Upper A'
   if (s === 'upper_b') return 'Upper B'
   if (s === 'arms') return 'Delts & Arms'
-  if (s === 'legs_a') return 'Legs A'
-  if (s === 'legs_b') return 'Legs B'
+  if (s === 'legs_a') return 'Legs & Core A'
+  if (s === 'legs_b') return 'Legs & Core B'
   if (s === 'legs') return 'Legs'
   return s[0].toUpperCase() + s.slice(1)
 }

@@ -7,7 +7,7 @@ import { authedFetch } from '@/lib/utils/authedFetch'
 import type { Tables } from '@/lib/supabase/types'
 import { logicalTodayISO, hoursAwakeToday } from '@/lib/utils/day'
 
-// Today's LOGICAL date (rolls over at the 04:00 cutoff, not midnight)
+// Today's date — device-local calendar day, boundary hardcoded to midnight.
 function todayLocal(): string {
   return logicalTodayISO()
 }

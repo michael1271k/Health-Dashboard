@@ -12,8 +12,16 @@ export interface DraftSet {
   reps: number
   rpe?: number
   /** Hevy-style set modifier; absent = a normal working set. Warmups count
-   *  toward volume + set count but are never PR-eligible. */
+   *  toward volume + set count but are never PR-eligible. Failure is tracked
+   *  PER SIDE for unilateral sets. */
   setType?: 'warmup' | 'failure'
+  /** Unilateral (per-side) tracking. A split set = two DraftSets sharing
+   *  `pairId`, one `side` 'L' one 'R'. `linked` (default true) mirrors
+   *  weight+reps between the two sides on edit; unlink to log asymmetry.
+   *  `setType` (incl. failure) is never mirrored — it is per side. */
+  side?: 'L' | 'R'
+  pairId?: string
+  linked?: boolean
 }
 
 export interface DraftExercise {
@@ -68,7 +76,9 @@ export const DRAFT_STORAGE_KEY = 'helix_session_draft:v2'
 /** Pre-Command-Center-v2 drafts carried a live/review mode + per-set done flags. */
 const LEGACY_DRAFT_KEY = 'helix_session_draft:v1'
 
-/** Σ weight×reps over the committable (strength) sets. */
+/** Σ weight×reps over the committable (strength) sets. Kept to 1 dp — quarter-kg
+ *  microloads produce genuine half-kg volumes (e.g. 12102.5 kg) that must not be
+ *  rounded away to an integer. */
 export function draftTotals(draft: SessionDraft): { volumeKg: number; sets: number } {
   let volumeKg = 0; let sets = 0
   for (const ex of draft.exercises) {
@@ -79,7 +89,7 @@ export function draftTotals(draft: SessionDraft): { volumeKg: number; sets: numb
       volumeKg += s.weightKg * s.reps
     }
   }
-  return { volumeKg: Math.round(volumeKg), sets }
+  return { volumeKg: Math.round(volumeKg * 10) / 10, sets }
 }
 
 /**
@@ -143,6 +153,8 @@ export function buildCommitPayload(draft: SessionDraft): SaveWorkoutInput {
         rpe: s.rpe,
         setType: s.setType,
         exerciseOrder: order,
+        side: s.side,
+        pairId: s.pairId,
         muscleGroups: ex.status === 'NEW' ? ex.muscleGroups : undefined,
       })
     })
@@ -208,6 +220,8 @@ function sanitizeDraft(value: unknown): SessionDraft | null {
       const clean: DraftSet = { weightKg: s.weightKg, reps: s.reps }
       if (s.rpe != null) clean.rpe = s.rpe
       if (s.setType === 'warmup' || s.setType === 'failure') clean.setType = s.setType
+      // Preserve unilateral split state across reloads / v1→v2 migration.
+      if (s.side === 'L' || s.side === 'R') { clean.side = s.side; clean.pairId = s.pairId; clean.linked = s.linked ?? true }
       return clean
     }),
   }))

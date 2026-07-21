@@ -211,9 +211,11 @@ export interface Database {
           est_1rm_kg: number | null
           exercise_order: number | null
           set_type: string
+          side: string | null
+          pair_id: string | null
           created_at: string
         }
-        Insert: Omit<Database['public']['Tables']['workout_sets']['Row'], 'id' | 'created_at' | 'exercise_order' | 'set_type'> & { exercise_order?: number | null; set_type?: string }
+        Insert: Omit<Database['public']['Tables']['workout_sets']['Row'], 'id' | 'created_at' | 'exercise_order' | 'set_type' | 'side' | 'pair_id'> & { exercise_order?: number | null; set_type?: string; side?: string | null; pair_id?: string | null }
         Update: Partial<Database['public']['Tables']['workout_sets']['Insert']>
       }
       daily_scores: {
@@ -253,15 +255,6 @@ export interface Database {
         }
         Insert: { user_id: string; date: string; exported_at?: string; page_url?: string | null }
         Update: Partial<{ exported_at: string; page_url: string | null }>
-      }
-      ingest_keys: {
-        Row: {
-          user_id: string
-          secret: string
-          created_at: string
-        }
-        Insert: { user_id: string; secret: string }
-        Update: Partial<Database['public']['Tables']['ingest_keys']['Insert']>
       }
       user_goals: {
         Row: {
@@ -339,16 +332,18 @@ export interface Database {
         Row: {
           id: string
           user_id: string
-          kind: string
-          week_start: string
-          week_number: number
-          payload: Record<string, unknown>
+          type: string
+          period_start: string
+          period_end: string | null
           content_md: string | null
+          session_summary_md: string | null
+          weight_report_md: string | null
           metrics: Record<string, unknown> | null
+          notion_page_id: string | null
           created_at: string
         }
-        Insert: { user_id: string; week_start: string; week_number: number } & Partial<
-          Omit<Database['public']['Tables']['reports']['Row'], 'id' | 'user_id' | 'week_start' | 'week_number' | 'created_at'>
+        Insert: { user_id: string; type: string; period_start: string } & Partial<
+          Omit<Database['public']['Tables']['reports']['Row'], 'id' | 'user_id' | 'type' | 'period_start' | 'created_at'>
         >
         Update: Partial<Database['public']['Tables']['reports']['Insert']>
       }

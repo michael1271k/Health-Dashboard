@@ -13,7 +13,7 @@ import { logicalTodayISO, hoursAwakeToday } from '@/lib/utils/day'
 type DB = SupabaseClient<Database>
 
 function todayISO(): string {
-  return logicalTodayISO() // logical day (device-local, cutoff-aware)
+  return logicalTodayISO() // device-local calendar day, midnight boundary
 }
 function nextDay(d: string): string {
   const x = new Date(`${d}T00:00:00Z`); x.setUTCDate(x.getUTCDate() + 1); return x.toISOString().slice(0, 10)
@@ -202,7 +202,10 @@ export async function POST(req: Request) {
     await computeForDate(supabase, userId, today, awake, targetIsToday, force)
     for (let i = 1; i <= backfillDays; i++) {
       const d = new Date(`${today}T12:00:00Z`); d.setUTCDate(d.getUTCDate() - i)
-      await computeForDate(supabase, userId, d.toISOString().slice(0, 10), 16)  // past days: full day
+      // `force` propagates to the backfill range so an explicit recompute (e.g.
+      // after a manual data correction) rewrites even FINALIZED past days;
+      // without it the finalized-freeze silently skips them.
+      await computeForDate(supabase, userId, d.toISOString().slice(0, 10), 16, false, force)  // past days: full day
     }
   }
 

@@ -88,12 +88,77 @@ export function useSessionDraft() {
   }, [])
 
   // Editing Set 1's weight/reps cascades to later matching sets (Hevy-style);
-  // see cascadeSetEdit. Other rows and setType (W/F) edits stay local.
+  // see cascadeSetEdit. Other rows and setType (W/F) edits stay local. A
+  // unilateral pair bypasses the cascade: if LINKED, weight/reps mirror to the
+  // other side; setType (F) never mirrors — failure is per side.
   const updateSet = useCallback((localId: string, setIdx: number, patch: Partial<DraftSet>) => {
     setDraft((d) => d && ({
       ...d,
-      exercises: d.exercises.map((ex) =>
-        ex.localId !== localId ? ex : { ...ex, sets: cascadeSetEdit(ex.sets, setIdx, patch) }),
+      exercises: d.exercises.map((ex) => {
+        if (ex.localId !== localId) return ex
+        const target = ex.sets[setIdx]
+        if (target?.pairId) {
+          const mirror = target.linked !== false
+          const sets = ex.sets.map((s, i) => {
+            if (i === setIdx) return { ...s, ...patch }
+            if (mirror && s.pairId === target.pairId) {
+              const m: Partial<DraftSet> = {}
+              if (patch.weightKg != null) m.weightKg = patch.weightKg
+              if (patch.reps != null) m.reps = patch.reps
+              if (patch.rpe != null) m.rpe = patch.rpe
+              return Object.keys(m).length ? { ...s, ...m } : s
+            }
+            return s
+          })
+          return { ...ex, sets }
+        }
+        return { ...ex, sets: cascadeSetEdit(ex.sets, setIdx, patch) }
+      }),
+    }))
+  }, [])
+
+  /** Unilateral: split a normal set into linked Left + Right sub-rows. */
+  const splitSet = useCallback((localId: string, setIdx: number) => {
+    setDraft((d) => d && ({
+      ...d,
+      exercises: d.exercises.map((ex) => {
+        if (ex.localId !== localId) return ex
+        const base = ex.sets[setIdx]
+        if (!base || base.pairId) return ex // absent or already split
+        const pairId = `pair_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`
+        const mk = (side: 'L' | 'R'): DraftSet => ({ weightKg: base.weightKg, reps: base.reps, rpe: base.rpe, side, pairId, linked: true })
+        return { ...ex, sets: [...ex.sets.slice(0, setIdx), mk('L'), mk('R'), ...ex.sets.slice(setIdx + 1)] }
+      }),
+    }))
+  }, [])
+
+  /** Unilateral: collapse a L/R pair back into one bilateral set (keeps Left's numbers). */
+  const mergeSet = useCallback((localId: string, pairId: string) => {
+    setDraft((d) => d && ({
+      ...d,
+      exercises: d.exercises.map((ex) => {
+        if (ex.localId !== localId) return ex
+        let placed = false
+        const sets: DraftSet[] = []
+        for (const s of ex.sets) {
+          if (s.pairId === pairId) {
+            if (!placed) { sets.push({ weightKg: s.weightKg, reps: s.reps, rpe: s.rpe }); placed = true }
+          } else sets.push(s)
+        }
+        return { ...ex, sets }
+      }),
+    }))
+  }, [])
+
+  /** Unilateral: toggle whether a L/R pair's weight+reps stay mirrored. */
+  const toggleSetLink = useCallback((localId: string, pairId: string) => {
+    setDraft((d) => d && ({
+      ...d,
+      exercises: d.exercises.map((ex) => {
+        if (ex.localId !== localId) return ex
+        const nextLinked = !ex.sets.some((s) => s.pairId === pairId && s.linked !== false)
+        return { ...ex, sets: ex.sets.map((s) => (s.pairId === pairId ? { ...s, linked: nextLinked } : s)) }
+      }),
     }))
   }, [])
 
@@ -219,5 +284,5 @@ export function useSessionDraft() {
     },
   })
 
-  return { draft, hydrated, start, discard, updateSet, addSet, removeSet, removeExercise, reorder, setNotes, setExerciseNote, setStats, setDate, commit }
+  return { draft, hydrated, start, discard, updateSet, splitSet, mergeSet, toggleSetLink, addSet, removeSet, removeExercise, reorder, setNotes, setExerciseNote, setStats, setDate, commit }
 }

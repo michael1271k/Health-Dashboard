@@ -8,6 +8,7 @@ import { SessionNotesCard } from './SessionNotesCard'
 import { CommitBar } from './CommitBar'
 import { useExerciseSetHistory } from '@/lib/hooks/useExerciseSetHistory'
 import { eraForDate } from '@/lib/programs'
+import { fmtVolume } from '@/lib/utils/units'
 import { tapSuccess } from '@/lib/native/haptics'
 import type { useSessionDraft, CommitResult } from '@/lib/hooks/useSessionDraft'
 
@@ -22,7 +23,7 @@ export function SessionDeck({ store, onClose, onViewDay }: {
   onClose: () => void
   onViewDay?: (date: string) => void
 }) {
-  const { draft, updateSet, addSet, removeSet, removeExercise, reorder, setNotes, setExerciseNote, setStats, setDate, discard, commit } = store
+  const { draft, updateSet, splitSet, mergeSet, toggleSetLink, addSet, removeSet, removeExercise, reorder, setNotes, setExerciseNote, setStats, setDate, discard, commit } = store
   const [result, setResult] = useState<CommitResult | null>(null)
   const [committedDate, setCommittedDate] = useState<string | null>(null)
 
@@ -44,7 +45,7 @@ export function SessionDeck({ store, onClose, onViewDay }: {
         ) : (
           <>
             <div className="grid grid-cols-3 gap-2 text-center">
-              <Stat label="Volume" value={`${Math.round(result.totalVolumeKg).toLocaleString()}kg`} />
+              <Stat label="Volume" value={`${fmtVolume(result.totalVolumeKg)}kg`} />
               <Stat label="Sets" value={String(result.setCount)} />
               <Stat label="PRs" value={String(result.prCount)} />
             </div>
@@ -116,6 +117,9 @@ export function SessionDeck({ store, onClose, onViewDay }: {
           history={history}
           onReorder={reorder}
           onUpdateSet={updateSet}
+          onSplitSet={splitSet}
+          onMergeSet={mergeSet}
+          onToggleLink={toggleSetLink}
           onAddSet={addSet}
           onRemoveSet={removeSet}
           onRemoveExercise={removeExercise}

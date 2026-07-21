@@ -14,6 +14,10 @@ export interface WorkoutSet {
   rpe?: number
   setType?: 'normal' | 'warmup' | 'failure'  // Hevy-style modifier; warmups excluded from volume/PR
   exerciseOrder?: number        // deck position of the parent exercise
+  // Unilateral (per-side) tracking. A split set persists as TWO rows sharing
+  // `pairId`, one side 'L' one 'R'. Absent = a normal bilateral set.
+  side?: 'L' | 'R'
+  pairId?: string
 }
 
 // In-progress workout session (client-side, before saved to DB)

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { CalendarDays, Flag, Sparkles } from 'lucide-react'
 import type { SessionDraft } from '@/lib/sessions/draft'
 import { draftTotals } from '@/lib/sessions/draft'
+import { fmtVolume } from '@/lib/utils/units'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { parseDurationMin } from '@/lib/utils/duration'
 import { useLoggedSessionDates } from '@/lib/hooks/useDayVault'
@@ -68,7 +69,7 @@ export function CoachHeaderCard({ draft, onSetDate, onSetStats }: {
 
       {/* Stats strip — Volume/Sets live-derived; Duration/Avg HR/Calories editable. */}
       <div className="grid grid-cols-3 gap-2">
-        <Badge label="Volume" value={`${totals.volumeKg.toLocaleString()}`} unit="kg" color="#8B5CF6" />
+        <Badge label="Volume" value={fmtVolume(totals.volumeKg)} unit="kg" color="#8B5CF6" />
         <Badge label="Sets" value={String(totals.sets)} color="#22D3EE" />
         <EditBadge label="Duration" value={s?.duration_min ?? null} unit="m" color="#EC4899"
           onChange={(v) => onSetStats({ duration_min: v })} parse={parseDurationMin} />

@@ -42,11 +42,13 @@ public class HealthkitPlugin: CAPPlugin, CAPBridgedPlugin {
   @objc func queryQuantity(_ call: CAPPluginCall) {
     guard let id = call.getString("sampleType"),
           let qType = HKObjectType.quantityType(forIdentifier: HKQuantityTypeIdentifier(rawValue: id)) else {
-      call.resolve(["samples": []]); return
+      self.resolveOnMain(call, ["samples": []]); return
     }
-    let iso = ISO8601DateFormatter()
-    let start = iso.date(from: call.getString("startDate") ?? "") ?? Date().addingTimeInterval(-86400)
-    let end = iso.date(from: call.getString("endDate") ?? "") ?? Date()
+    guard let (start, end) = self.resolveWindow(call) else {
+      // Never silently fall back to a rolling 24h window — that is exactly what
+      // leaked the previous day's totals into today. No valid window ⇒ no data.
+      self.resolveOnMain(call, ["samples": []]); return
+    }
     let pred = HKQuery.predicateForSamples(withStart: start, end: end, options: .strictStartDate)
     let unit = self.unit(for: qType)
     let reduce = call.getString("reduce") ?? "sum"
@@ -54,8 +56,8 @@ public class HealthkitPlugin: CAPPlugin, CAPBridgedPlugin {
     if reduce == "latest" {
       let q = HKSampleQuery(sampleType: qType, predicate: pred, limit: 1,
         sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)]) { _, samples, _ in
-        guard let s = (samples as? [HKQuantitySample])?.first else { call.resolve(["samples": []]); return }
-        call.resolve(["samples": [["value": s.quantity.doubleValue(for: unit)]]])
+        guard let s = (samples as? [HKQuantitySample])?.first else { self.resolveOnMain(call, ["samples": []]); return }
+        self.resolveOnMain(call, ["samples": [["value": s.quantity.doubleValue(for: unit)]]])
       }
       store.execute(q)
       return
@@ -64,9 +66,9 @@ public class HealthkitPlugin: CAPPlugin, CAPBridgedPlugin {
     let opts: HKStatisticsOptions = reduce == "avg" ? .discreteAverage : .cumulativeSum
     let q = HKStatisticsQuery(quantityType: qType, quantitySamplePredicate: pred, options: opts) { _, stats, _ in
       guard let qty = (reduce == "avg" ? stats?.averageQuantity() : stats?.sumQuantity()) else {
-        call.resolve(["samples": []]); return
+        self.resolveOnMain(call, ["samples": []]); return
       }
-      call.resolve(["samples": [["value": qty.doubleValue(for: unit)]]])
+      self.resolveOnMain(call, ["samples": [["value": qty.doubleValue(for: unit)]]])
     }
     store.execute(q)
   }
@@ -78,21 +80,72 @@ public class HealthkitPlugin: CAPPlugin, CAPBridgedPlugin {
   @objc func queryCategory(_ call: CAPPluginCall) {
     guard let id = call.getString("sampleType"),
           let cType = HKObjectType.categoryType(forIdentifier: HKCategoryTypeIdentifier(rawValue: id)) else {
-      call.resolve(["samples": []]); return
+      self.resolveOnMain(call, ["samples": []]); return
     }
-    let iso = ISO8601DateFormatter()
-    let start = iso.date(from: call.getString("startDate") ?? "") ?? Date().addingTimeInterval(-86400)
-    let end = iso.date(from: call.getString("endDate") ?? "") ?? Date()
+    guard let (start, end) = self.resolveWindow(call) else { self.resolveOnMain(call, ["samples": []]); return }
     let pred = HKQuery.predicateForSamples(withStart: start, end: end, options: [])
+    let out = ISO8601DateFormatter() // for stamping sample bounds back to JS
     let q = HKSampleQuery(sampleType: cType, predicate: pred, limit: HKObjectQueryNoLimit,
       sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)]) { _, samples, _ in
-      let out = (samples as? [HKCategorySample])?.map {
+      let mapped = (samples as? [HKCategorySample])?.map {
         ["value": $0.value,
-         "startDate": iso.string(from: $0.startDate), "endDate": iso.string(from: $0.endDate)]
+         "startDate": out.string(from: $0.startDate), "endDate": out.string(from: $0.endDate)]
       } ?? []
-      call.resolve(["samples": out])
+      self.resolveOnMain(call, ["samples": mapped])
     }
     store.execute(q)
+  }
+
+  // MARK: - Query window + resolution helpers
+
+  /// Resolve the query window for a call. PREFERRED: a device-local calendar
+  /// day via `dayStart` (YYYY-MM-DD) + `isToday`, built with `Calendar.current`
+  /// so the boundary is ALWAYS local midnight (00:00) in the device timezone —
+  /// no UTC drift, no rolling window. FALLBACK: explicit ISO `startDate`/
+  /// `endDate` for arbitrary windows (the sleep night window), parsed with
+  /// fractional-seconds support — JS `Date.toISOString()` emits `…T00:00:00.000Z`,
+  /// which the DEFAULT `ISO8601DateFormatter` silently fails to parse (that
+  /// nil-parse was the day-rollover bug). Returns nil — never a rolling 24h
+  /// window — when nothing valid is supplied.
+  private func resolveWindow(_ call: CAPPluginCall) -> (Date, Date)? {
+    let cal = Calendar.current
+    if let day = call.getString("dayStart"), let d = self.parseLocalDay(day, cal: cal) {
+      let start = cal.startOfDay(for: d)
+      let isToday = call.getBool("isToday") ?? false
+      let end = isToday ? Date() : (cal.date(byAdding: .day, value: 1, to: start) ?? Date())
+      return (start, end)
+    }
+    if let s = self.parseISO(call.getString("startDate")),
+       let e = self.parseISO(call.getString("endDate")) {
+      return (s, e)
+    }
+    return nil
+  }
+
+  /// Parse a YYYY-MM-DD key as a date in the device timezone (anchored at noon,
+  /// so `startOfDay` re-derives 00:00 without DST edge surprises).
+  private func parseLocalDay(_ s: String, cal: Calendar) -> Date? {
+    let f = DateFormatter()
+    f.calendar = cal
+    f.timeZone = cal.timeZone
+    f.locale = Locale(identifier: "en_US_POSIX")
+    f.dateFormat = "yyyy-MM-dd"
+    guard let base = f.date(from: s) else { return nil }
+    return cal.date(bySettingHour: 12, minute: 0, second: 0, of: base) ?? base
+  }
+
+  /// ISO-8601 parse tolerant of BOTH fractional and non-fractional seconds.
+  private func parseISO(_ s: String?) -> Date? {
+    guard let s = s, !s.isEmpty else { return nil }
+    let frac = ISO8601DateFormatter(); frac.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    if let d = frac.date(from: s) { return d }
+    return ISO8601DateFormatter().date(from: s)
+  }
+
+  /// Hop back to main before resolving to the Capacitor bridge — a HealthKit
+  /// completion runs on an arbitrary background queue.
+  private func resolveOnMain(_ call: CAPPluginCall, _ data: [String: Any]) {
+    DispatchQueue.main.async { call.resolve(data) }
   }
 
   private func unit(for t: HKQuantityType) -> HKUnit {

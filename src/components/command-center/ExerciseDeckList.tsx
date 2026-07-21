@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors,
   type DragEndEvent,
@@ -18,11 +19,14 @@ import type { ExerciseHistory } from '@/lib/hooks/useExerciseSetHistory'
  * Stays a SINGLE column at every breakpoint — verticalListSortingStrategy +
  * restrictToVerticalAxis are only valid for a one-column list.
  */
-export function ExerciseDeckList({ draft, history, onReorder, onUpdateSet, onAddSet, onRemoveSet, onRemoveExercise, onSetNote }: {
+export function ExerciseDeckList({ draft, history, onReorder, onUpdateSet, onSplitSet, onMergeSet, onToggleLink, onAddSet, onRemoveSet, onRemoveExercise, onSetNote }: {
   draft: SessionDraft
   history: Map<string, ExerciseHistory> | undefined
   onReorder: (orderedIds: string[]) => void
   onUpdateSet: (localId: string, setIdx: number, patch: Partial<DraftSet>) => void
+  onSplitSet: (localId: string, setIdx: number) => void
+  onMergeSet: (localId: string, pairId: string) => void
+  onToggleLink: (localId: string, pairId: string) => void
   onAddSet: (localId: string) => void
   onRemoveSet: (localId: string, setIdx: number) => void
   onRemoveExercise: (localId: string) => void
@@ -33,9 +37,14 @@ export function ExerciseDeckList({ draft, history, onReorder, onUpdateSet, onAdd
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
 
+  // Hevy-style reorder clarity: the moment a drag lifts, collapse EVERY card to
+  // its header row so the whole session is visible at once; drop restores them.
+  const [reordering, setReordering] = useState(false)
+
   const ids = draft.exercises.map((ex) => ex.localId)
 
   function handleDragEnd(event: DragEndEvent) {
+    setReordering(false)
     const { active, over } = event
     if (!over || active.id === over.id) return
     const from = ids.indexOf(String(active.id))
@@ -50,6 +59,8 @@ export function ExerciseDeckList({ draft, history, onReorder, onUpdateSet, onAdd
       sensors={sensors}
       collisionDetection={closestCenter}
       modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+      onDragStart={() => { setReordering(true); void tapLight() }}
+      onDragCancel={() => setReordering(false)}
       onDragEnd={handleDragEnd}
     >
       <SortableContext items={ids} strategy={verticalListSortingStrategy}>
@@ -59,7 +70,11 @@ export function ExerciseDeckList({ draft, history, onReorder, onUpdateSet, onAdd
               key={ex.localId}
               exercise={ex}
               history={history?.get(ex.name) ?? null}
+              collapsed={reordering}
               onUpdateSet={(i, patch) => onUpdateSet(ex.localId, i, patch)}
+              onSplitSet={(i) => onSplitSet(ex.localId, i)}
+              onMergeSet={(pairId) => onMergeSet(ex.localId, pairId)}
+              onToggleLink={(pairId) => onToggleLink(ex.localId, pairId)}
               onAddSet={() => onAddSet(ex.localId)}
               onRemoveSet={(i) => onRemoveSet(ex.localId, i)}
               onRemoveExercise={() => onRemoveExercise(ex.localId)}

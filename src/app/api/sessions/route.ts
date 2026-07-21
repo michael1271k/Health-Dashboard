@@ -52,6 +52,8 @@ export async function POST(req: Request) {
       rpe: s.rpe,
       setType: s.setType,
       exerciseOrder: s.exerciseOrder,
+      side: s.side,
+      pairId: s.pairId,
     }))
     const missing = sets.filter((s) => !s.exerciseId).map((s) => s.exerciseName)
     if (missing.length) {

@@ -13,19 +13,18 @@ const HOME_TZ = 'Asia/Jerusalem'
 /**
  * The user's logical "today" — computed in THEIR timezone, never the server's.
  * Netlify functions run in UTC: a 09:25 local push used to be stamped with
- * yesterday's date (02:25 UTC − 04:00 cutoff) and become invisible in the UI.
+ * yesterday's date and become invisible in the UI. The day boundary is
+ * hardcoded to midnight (00:00 local); only the timezone is user-specific.
  * Timezone comes from user_goals.timezone; home fallback if unset/unmigrated.
  */
 export async function logicalTodayForUser(db: DB, userId: string): Promise<string> {
   let tz = HOME_TZ
-  let cutoff = 0 // midnight — the global standard
   try {
-    const { data, error } = await db.from('user_goals').select('timezone, day_cutoff_hour').eq('user_id', userId).maybeSingle()
-    const g = data as { timezone?: string | null; day_cutoff_hour?: number | null } | null
+    const { data, error } = await db.from('user_goals').select('timezone').eq('user_id', userId).maybeSingle()
+    const g = data as { timezone?: string | null } | null
     if (!error && g?.timezone) tz = g.timezone
-    if (!error && typeof g?.day_cutoff_hour === 'number') cutoff = g.day_cutoff_hour
-  } catch { /* columns not migrated yet — defaults stand */ }
-  return logicalTodayInTZ(tz, cutoff)
+  } catch { /* column not migrated yet — home fallback stands */ }
+  return logicalTodayInTZ(tz)
 }
 
 export interface SectionResult {

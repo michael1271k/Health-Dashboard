@@ -17,6 +17,9 @@ export const WorkoutSetSchema = z.object({
   exerciseOrder: z.number().int().nonnegative().optional(),
   // Seeds muscle data when the set's exercise is new to the catalog.
   muscleGroups: z.array(z.string()).optional(),
+  // Unilateral: a split set is two rows sharing `pairId`, one per `side`.
+  side: z.enum(['L', 'R']).optional(),
+  pairId: z.string().max(64).optional(),
 })
 
 export const SaveWorkoutSchema = z.object({

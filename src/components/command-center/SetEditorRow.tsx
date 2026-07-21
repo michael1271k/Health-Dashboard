@@ -18,7 +18,7 @@ const maxFor = (w: number) => Math.max(60, Math.ceil((w + 30) / 10) * 10)
  * haptic stepper chips, reps ±1, Warm-up/Failure toggles). Only the active row
  * mounts its slider, keeping long decks light.
  */
-export function SetEditorRow({ index, set, active, timed = false, onActivate, onChange, onRemove }: {
+export function SetEditorRow({ index, set, active, timed = false, onActivate, onChange, onRemove, onSplit, onToggleLink, onMerge }: {
   index: number
   set: DraftSet
   active: boolean
@@ -27,6 +27,12 @@ export function SetEditorRow({ index, set, active, timed = false, onActivate, on
   onActivate: () => void
   onChange: (patch: Partial<DraftSet>) => void
   onRemove: () => void
+  /** Unilateral: split a normal set into Left/Right (absent once already split). */
+  onSplit?: () => void
+  /** Unilateral: toggle whether this L/R pair mirrors weight+reps. */
+  onToggleLink?: () => void
+  /** Unilateral: collapse this L/R pair back into one bilateral set. */
+  onMerge?: () => void
 }) {
   // 3.75 must display as 3.75, not "3.8" — quarter-step plates are real loads.
   const weightLabel = set.weightKg % 1 === 0 ? set.weightKg.toFixed(0)
@@ -74,9 +80,9 @@ export function SetEditorRow({ index, set, active, timed = false, onActivate, on
         >
           <span
             className="w-6 shrink-0 text-[10px] font-bold uppercase tracking-wide tabular-nums"
-            style={{ color: isWarm ? ORANGE : isFail ? DANGER : 'var(--color-muted)' }}
+            style={{ color: set.side === 'L' ? '#22D3EE' : set.side === 'R' ? '#8B5CF6' : isWarm ? ORANGE : isFail ? DANGER : 'var(--color-muted)' }}
           >
-            {isWarm ? 'W' : `S${index + 1}`}
+            {set.side ?? (isWarm ? 'W' : `S${index + 1}`)}
           </span>
           <span className={`helix-num text-fluid-base font-bold tabular-nums ${isWarm ? 'text-muted' : 'text-text'}`}>
             {weightLabel}<span className="text-[10px] text-muted font-normal ml-0.5">kg</span>
@@ -104,6 +110,29 @@ export function SetEditorRow({ index, set, active, timed = false, onActivate, on
       {/* ── Tuner (active row only) ── */}
       {active && (
         <div className="px-2 pb-2 space-y-2">
+          {/* Direct keyboard entry — type weight/reps on desktop or mobile.
+              The slider + steppers below stay for tactile tuning. */}
+          <div className="flex items-center gap-2">
+            <label className="flex-1 flex items-center gap-1.5 rounded-lg border border-border bg-surface-2 px-2.5 min-h-[38px]">
+              <NumberField
+                value={set.weightKg}
+                inputMode="decimal"
+                ariaLabel={`Weight for set ${index + 1}`}
+                onCommit={(n) => onChange({ weightKg: Math.max(0, n) })}
+              />
+              <span className="text-[10px] uppercase tracking-wide text-muted shrink-0">kg</span>
+            </label>
+            <span className="text-muted text-xs shrink-0">×</span>
+            <label className="flex-1 flex items-center gap-1.5 rounded-lg border border-border bg-surface-2 px-2.5 min-h-[38px]">
+              <NumberField
+                value={set.reps}
+                inputMode="numeric"
+                ariaLabel={`${timed ? 'Seconds' : 'Reps'} for set ${index + 1}`}
+                onCommit={(n) => onChange({ reps: Math.max(1, Math.round(n)) })}
+              />
+              <span className="text-[10px] uppercase tracking-wide text-muted shrink-0">{timed ? 'sec' : 'reps'}</span>
+            </label>
+          </div>
           <Slider.Root
             className="relative flex items-center select-none touch-none w-full h-6"
             min={0}
@@ -144,14 +173,75 @@ export function SetEditorRow({ index, set, active, timed = false, onActivate, on
                 className="glass-card min-h-[34px] min-w-[34px] text-sm font-bold text-text active:scale-95 transition-transform">+</button>
             </div>
           </div>
-          {/* Set modifiers — Warm-up / Failure (Hevy parity) */}
+          {/* Set modifiers — Warm-up / Failure (Hevy parity). Failure is PER SIDE
+              for a split set (F on Right while Left holds). */}
           <div className="flex items-center gap-1.5">
             <TypeChip active={isWarm} color={ORANGE} label="Warm-up" short="W" onClick={() => toggleType('warmup')} />
             <TypeChip active={isFail} color={DANGER} label="Failure" short="F" onClick={() => toggleType('failure')} />
           </div>
+          {/* Unilateral — split into Left/Right, link/unlink the pair, or merge back */}
+          {(onSplit || set.side) && (
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {onSplit && (
+                <button type="button" onClick={onSplit}
+                  className="min-h-[32px] px-2.5 rounded-lg text-[11px] font-bold uppercase tracking-wide text-muted border border-white/10 hover:text-text active:scale-95 transition-colors">
+                  Split L / R
+                </button>
+              )}
+              {set.side && onToggleLink && (
+                <button type="button" onClick={onToggleLink} aria-pressed={set.linked !== false}
+                  className="min-h-[32px] px-2.5 rounded-lg text-[11px] font-bold uppercase tracking-wide active:scale-95 transition-colors"
+                  style={set.linked !== false
+                    ? { color: '#22D3EE', background: '#22D3EE1f', border: '1px solid #22D3EE66' }
+                    : { color: 'var(--color-muted)', background: 'transparent', border: '1px solid rgba(255,255,255,0.10)' }}>
+                  {set.linked !== false ? 'Linked' : 'Unlinked'}
+                </button>
+              )}
+              {set.side && onMerge && (
+                <button type="button" onClick={onMerge}
+                  className="min-h-[32px] px-2.5 rounded-lg text-[11px] font-bold uppercase tracking-wide text-muted border border-white/10 hover:text-danger active:scale-95 transition-colors">
+                  Merge
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
+  )
+}
+
+/**
+ * Typeable numeric field. Keeps a local text buffer while focused so partial
+ * entries ("16", "16.", "16.2") don't fight the parsed value; commits every
+ * valid parse up to the parent. Weight is NOT snapped to the 0.25 grid on typed
+ * input — the user gets the exact number they enter (the ± chips still snap).
+ */
+function NumberField({ value, onCommit, inputMode, ariaLabel }: {
+  value: number
+  onCommit: (n: number) => void
+  inputMode: 'decimal' | 'numeric'
+  ariaLabel: string
+}) {
+  const [text, setText] = useState(String(value))
+  const [editing, setEditing] = useState(false)
+  useEffect(() => { if (!editing) setText(String(value)) }, [value, editing])
+  return (
+    <input
+      type="text"
+      inputMode={inputMode}
+      value={editing ? text : String(value)}
+      aria-label={ariaLabel}
+      onFocus={(e) => { setEditing(true); setText(String(value)); e.currentTarget.select() }}
+      onChange={(e) => {
+        const t = e.target.value
+        setText(t)
+        const n = parseFloat(t)
+        if (Number.isFinite(n)) onCommit(n)
+      }}
+      onBlur={() => { const n = parseFloat(text); if (Number.isFinite(n)) onCommit(n); setEditing(false) }}
+      className="w-full min-w-0 bg-transparent text-fluid-base font-bold tabular-nums text-text outline-none"
+    />
   )
 }
 

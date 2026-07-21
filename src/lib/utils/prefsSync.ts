@@ -12,12 +12,11 @@ export async function hydratePrefsFromDb(): Promise<void> {
   try {
     const { data, error } = await supabase
       .from('user_goals')
-      .select('day_cutoff_hour, unit_system, reduce_motion, active_program')
+      .select('unit_system, reduce_motion, active_program')
       .maybeSingle()
     if (error || !data) return // columns not migrated yet / no row — device values stand
-    const g = data as { day_cutoff_hour: number | null; unit_system: string | null; reduce_motion: boolean | null; active_program: string | null }
+    const g = data as { unit_system: string | null; reduce_motion: boolean | null; active_program: string | null }
 
-    if (g.day_cutoff_hour != null) localStorage.setItem('helix_day_cutoff', String(g.day_cutoff_hour))
     if (g.unit_system) localStorage.setItem('helix_units', g.unit_system)
     if (g.reduce_motion != null) {
       localStorage.setItem('helix_reduce_motion', g.reduce_motion ? '1' : '0')

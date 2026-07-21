@@ -2,6 +2,7 @@
 
 import { Check, Loader2, Trash2 } from 'lucide-react'
 import { draftTotals, type SessionDraft } from '@/lib/sessions/draft'
+import { fmtVolume } from '@/lib/utils/units'
 
 /**
  * Sticky commit bar: live totals, discard, and the commit CTA. On /session the
@@ -39,7 +40,7 @@ export function CommitBar({ draft, busy, error, onCommit, onDiscard }: {
             ? <><Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> Committing…</>
             : <><Check className="w-4 h-4" aria-hidden="true" />
                 Finish Session
-                <span className="text-xs opacity-70 ml-1">{totals.sets} sets · {totals.volumeKg.toLocaleString()}kg</span></>}
+                <span className="text-xs opacity-70 ml-1">{totals.sets} sets · {fmtVolume(totals.volumeKg)}kg</span></>}
         </button>
       </div>
     </div>

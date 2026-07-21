@@ -36,7 +36,7 @@ describe('buildTemplateDraft — per-set seed + cardio + memory override', () =>
     expect(d.exercises[0]).toMatchObject({ name: 'Treadmill', kind: 'cardio', distanceKm: 0.37 })
   })
 
-  it('seeds Legs B bodyweight moves at 0 kg', () => {
+  it('seeds Legs & Core B bodyweight moves at 0 kg', () => {
     const d = buildTemplateDraft(legsB, '2026-07-16')
     const plank = d.exercises.find((e) => e.name === 'Side Plank')!
     expect(plank.sets).toEqual([{ weightKg: 0, reps: 55 }, { weightKg: 0, reps: 52 }])

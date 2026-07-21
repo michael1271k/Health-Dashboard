@@ -2,6 +2,8 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
+import { weekNumberOf } from '@/lib/reports/weekNumber'
+import { isoAddDays } from '@/lib/utils/week'
 
 export interface ReportPayload {
   volumeKg: number
@@ -16,14 +18,26 @@ export interface ReportPayload {
   verdict?: string
 }
 
-/** One saved report row — unified schema: (user_id, kind, week_start) is the key,
- * `payload` holds the deterministic stats and `content_md` the AI narrative. */
+/**
+ * One saved report row, as the app consumes it (a view model over the live
+ * `reports` table). The DB columns are `type / period_start / period_end /
+ * content_md / metrics (jsonb) / notion_page_id`; we map `period_start →
+ * week_start`, derive `week_number` from it, and read the deterministic stats
+ * out of `metrics.payload`. `content_md` is the AI narrative.
+ */
 export interface ReportRow {
   id: string
-  kind: string
   week_start: string
   week_number: number
   payload: ReportPayload
+  content_md: string | null
+  created_at: string
+}
+
+/** Raw shape of a live `reports` row (only the columns we read). */
+interface ReportDbRow {
+  id: string
+  period_start: string
   content_md: string | null
   metrics: Record<string, unknown> | null
   created_at: string
@@ -78,11 +92,19 @@ export function useReports() {
     staleTime: 60_000,
     queryFn: async (): Promise<ReportRow[]> => {
       const { data, error } = await supabase.from('reports')
-        .select('id, kind, week_start, week_number, payload, content_md, metrics, created_at')
-        .order('week_start', { ascending: false })
+        .select('id, period_start, content_md, metrics, created_at')
+        .order('period_start', { ascending: false })
       if (error) return []
-      return ((data ?? []) as Array<Omit<ReportRow, 'payload'> & { payload: unknown }>)
-        .map((r) => ({ ...r, payload: repairReportPayload(r.payload) }))
+      return ((data ?? []) as unknown as ReportDbRow[]).map((r) => ({
+        id: r.id,
+        week_start: r.period_start,
+        week_number: weekNumberOf(r.period_start),
+        // The deterministic stats live under `metrics.payload`; legacy/Notion
+        // rows without it repair to zeroed stats and still show content_md.
+        payload: repairReportPayload(r.metrics?.payload),
+        content_md: r.content_md,
+        created_at: r.created_at,
+      }))
     },
   })
 }
@@ -93,9 +115,21 @@ export function useSaveReport() {
     mutationFn: async (row: { kind: string; week_start: string; week_number: number; payload: ReportPayload }) => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not signed in')
-      // Upsert on (user, kind, week_start) so re-generating a week overwrites.
-      const { error } = await supabase.from('reports')
-        .upsert({ user_id: user.id, ...row } as unknown as never, { onConflict: 'user_id,kind,week_start' })
+      const type = row.kind || 'weekly'
+      const record = {
+        user_id: user.id,
+        type,
+        period_start: row.week_start,
+        period_end: isoAddDays(row.week_start, 7),
+        metrics: { payload: row.payload },
+      }
+      // The live table has no (user_id,type,period_start) unique constraint, so
+      // upsert by hand: overwrite the existing week's row, else insert.
+      const { data: existing } = await supabase.from('reports')
+        .select('id').eq('user_id', user.id).eq('type', type).eq('period_start', row.week_start).maybeSingle()
+      const { error } = (existing as unknown as { id: string } | null)?.id
+        ? await supabase.from('reports').update(record as unknown as never).eq('id', (existing as unknown as { id: string }).id)
+        : await supabase.from('reports').insert(record as unknown as never)
       if (error) throw new Error(error.message)
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['reports'] }),

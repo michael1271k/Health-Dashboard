@@ -36,18 +36,34 @@ async function runSync(force = false): Promise<void> {
 export function initNativeSync(): () => void {
   if (!Capacitor.isNativePlatform()) return () => {}
   let removeListener: (() => void) | undefined
+  let cancelled = false
 
-  void (async () => {
-    await requestHealthAuthorization()
-    await runSync(true) // first foreground: sync immediately
-    const { App } = await import('@capacitor/app')
-    const handle = await App.addListener('appStateChange', ({ isActive }) => {
-      if (isActive) void runSync(false)
-    })
-    removeListener = () => { void handle.remove() }
-  })()
+  // Defer the first auth + sync until AFTER the launch frame paints. Firing the
+  // HealthKit permission sheet + 16 parallel metric queries + the ingest POST
+  // synchronously on mount is the launch-time storm we want off the critical
+  // path. Each phase is isolated so a HealthKit/network failure can never brick
+  // boot — a throw here used to be able to take the whole shell down.
+  const kickoff = async () => {
+    if (cancelled) return
+    try { await requestHealthAuthorization() } catch { /* denied / plugin missing — continue */ }
+    if (cancelled) return
+    try { await runSync(true) } catch { /* first sync failed — resume listener retries */ }
+    if (cancelled) return
+    try {
+      const { App } = await import('@capacitor/app')
+      const handle = await App.addListener('appStateChange', ({ isActive }) => {
+        if (isActive) void runSync(false).catch(() => {})
+      })
+      removeListener = () => { void handle.remove() }
+    } catch { /* @capacitor/app unavailable — no resume syncing */ }
+  }
 
-  return () => { removeListener?.() }
+  // requestIdleCallback yields to first paint; setTimeout(0) is the fallback.
+  const ric = (globalThis as { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number }).requestIdleCallback
+  if (ric) ric(() => void kickoff(), { timeout: 3000 })
+  else setTimeout(() => void kickoff(), 0)
+
+  return () => { cancelled = true; removeListener?.() }
 }
 
 /** Entry point for a background task (registered natively). */

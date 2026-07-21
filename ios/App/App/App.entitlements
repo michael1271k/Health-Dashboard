@@ -2,9 +2,18 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>com.apple.developer.healthkit</key>
-	<true/>
-	<key>com.apple.developer.healthkit.background-delivery</key>
-	<true/>
+	<!--
+	  HealthKit entitlements TEMPORARILY REMOVED to launch on a FREE personal
+	  Apple team. A free team cannot provision `com.apple.developer.healthkit`
+	  (or its `.background-delivery` variant), so their presence made iOS kill
+	  the app at launch (~0.5s "icon flash then vanish"). With them gone the app
+	  launches, but native HealthKit reads return nothing on this device — data
+	  comes from web/manual ingest only.
+
+	  RESTORE when on the paid Apple Developer Program (then re-enable HealthKit
+	  + Background Delivery under Signing & Capabilities):
+	    <key>com.apple.developer.healthkit</key><true/>
+	    <key>com.apple.developer.healthkit.background-delivery</key><true/>
+	-->
 </dict>
 </plist>

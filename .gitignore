@@ -40,6 +40,9 @@ next-env.d.ts
 # superpowers scratch (don't commit these)
 .superpowers/
 
+# one-off SQL scripts (run once in Supabase, then delete)
+_inject-*.sql
+
 # IDE
 .idea/
 .vscode/

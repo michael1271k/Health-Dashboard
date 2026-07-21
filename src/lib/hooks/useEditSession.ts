@@ -15,6 +15,7 @@ interface SessRow {
 interface SetRow {
   exercise_id: string; set_number: number; weight_kg: number; reps: number
   rpe: number | null; set_type: string | null; exercise_order: number | null
+  side: string | null; pair_id: string | null
   exercises: { name: string }
 }
 
@@ -35,10 +36,24 @@ export function useEditSession() {
         .eq('id', sessionId).single()
       const s = sRaw as SessRow | null
       if (!s) return
-      const { data: setsRaw } = await supabase.from('workout_sets')
-        .select('exercise_id, set_number, weight_kg, reps, rpe, set_type, exercise_order, exercises!inner(name)')
-        .eq('session_id', sessionId)
-        .order('exercise_order', { ascending: true }).order('set_number', { ascending: true })
+      // side/pair_id may not exist pre-migration — select them defensively and
+      // fall back to the base column set if the query errors on unknown columns.
+      let setsRaw: unknown[] | null = null
+      {
+        const withSide = await supabase.from('workout_sets')
+          .select('exercise_id, set_number, weight_kg, reps, rpe, set_type, exercise_order, side, pair_id, exercises!inner(name)')
+          .eq('session_id', sessionId)
+          .order('exercise_order', { ascending: true }).order('set_number', { ascending: true })
+        if (withSide.error) {
+          const base = await supabase.from('workout_sets')
+            .select('exercise_id, set_number, weight_kg, reps, rpe, set_type, exercise_order, exercises!inner(name)')
+            .eq('session_id', sessionId)
+            .order('exercise_order', { ascending: true }).order('set_number', { ascending: true })
+          setsRaw = base.data ?? []
+        } else {
+          setsRaw = withSide.data ?? []
+        }
+      }
       const rows = (setsRaw ?? []) as unknown as SetRow[]
 
       let i = 0
@@ -52,7 +67,20 @@ export function useEditSession() {
         const set: DraftSet = { weightKg: r.weight_kg, reps: r.reps }
         if (r.rpe != null) set.rpe = r.rpe
         if (r.set_type === 'warmup' || r.set_type === 'failure') set.setType = r.set_type
+        if (r.side === 'L' || r.side === 'R') { set.side = r.side; set.pairId = r.pair_id ?? undefined }
         ex.sets.push(set)
+      }
+
+      // Restore each unilateral pair's link state: matching weight+reps on both
+      // sides ⇒ still linked; asymmetric ⇒ unlinked (so a later edit won't
+      // clobber the logged asymmetry by mirroring).
+      for (const ex of byEx.values()) {
+        const pairs = new Map<string, DraftSet[]>()
+        for (const s of ex.sets) if (s.pairId) { const g = pairs.get(s.pairId) ?? []; g.push(s); pairs.set(s.pairId, g) }
+        for (const g of pairs.values()) {
+          const linked = g.length === 2 && g[0].weightKg === g[1].weightKg && g[0].reps === g[1].reps
+          for (const s of g) s.linked = linked
+        }
       }
 
       const program = PROGRAMS[getActiveProgramId()] ?? PROGRAMS[DEFAULT_PROGRAM_ID]

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { useLastUpdated } from '@/lib/hooks/useDashboard'
+import { useMyProfile } from '@/lib/hooks/useMyProfile'
 
 /** Ticking clock (client-only to avoid hydration mismatch). */
 function useClock() {
@@ -15,6 +16,14 @@ function useClock() {
   return now
 }
 
+/** Time-of-day greeting from the device-local hour. */
+function greetingFor(now: Date): string {
+  const h = now.getHours()
+  if (h < 12) return 'Good morning'
+  if (h < 18) return 'Good afternoon'
+  return 'Good evening'
+}
+
 /**
  * HELIX header — one clean brand line (mark optically centered with the cap
  * height) + a live device-local date/clock line and a 24h "Updated" stamp.
@@ -23,7 +32,10 @@ function useClock() {
 export function BrandHeader() {
   const now = useClock()
   const { data: lastUpdated } = useLastUpdated()
+  const { data: profile } = useMyProfile()
 
+  const firstName = profile?.firstName ?? null
+  const greeting = now ? greetingFor(now) : ''
   const dateStr = now ? new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }).format(now) : ''
   const timeStr = now ? new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(now) : ''
   const lu = lastUpdated ? new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(lastUpdated)) : null
@@ -42,6 +54,14 @@ export function BrandHeader() {
           </span>
         )}
       </div>
+
+      {/* Dynamic time-of-day greeting (device-local). Name is the first token of
+          the signed-in user's profile display_name. */}
+      {greeting && firstName && (
+        <p className="text-fluid-sm text-muted">
+          {greeting}, <span className="text-text font-semibold">{firstName}</span>
+        </p>
+      )}
 
       {/* One clean brand line — mark sized to the cap height, nudged UP a few
           px for true optical alignment with the wordmark's cap line. */}

@@ -162,7 +162,7 @@ describe('resolveChartSplit', () => {
     expect(resolveChartSplit('2026-07-21', 'upper', 'axis')).toBe('arms')    // Tue
     expect(resolveChartSplit('2026-07-23', 'upper', 'axis')).toBe('upper_b') // Thu
   })
-  it('splits HELIX legs sessions into Legs A (Mon) and Legs B (Fri)', () => {
+  it('splits HELIX legs sessions into Legs & Core A (Mon) and Legs & Core B (Fri)', () => {
     expect(resolveChartSplit('2026-07-20', 'legs', 'axis')).toBe('legs_a') // Mon
     expect(resolveChartSplit('2026-07-24', 'legs', 'axis')).toBe('legs_b') // Fri
   })

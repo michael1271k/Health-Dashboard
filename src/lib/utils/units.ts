@@ -25,6 +25,18 @@ export function displayWeight(kg: number | null | undefined): number | null {
 }
 
 /**
+ * Session VOLUME → display string, ALWAYS to exactly one decimal place with
+ * thousands separators (e.g. "12,102.5"). Never rounds the half-kg away —
+ * quarter-kg microloads make genuine .5 volumes. Pure formatter: pass raw kg
+ * for the (kg-labelled) draft badges, or `displayWeight(kg)` for unit-aware
+ * committed-detail tiles. Callers append their own unit suffix.
+ */
+export function fmtVolume(value: number | null | undefined): string {
+  if (value == null || !Number.isFinite(value)) return '0.0'
+  return (Math.round(value * 10) / 10).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+}
+
+/**
  * Global body-weight validity rule: any reading under 50 kg is a
  * scale/ingest artifact (0kg vacation gaps, partial syncs) and must be ignored
  * by every chart, table, and algorithm.

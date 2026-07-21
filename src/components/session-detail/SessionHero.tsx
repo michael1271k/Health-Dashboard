@@ -9,7 +9,7 @@ import { useDeleteSession, useGlobalSessionNumber } from '@/lib/hooks/useDayVaul
 import { getWeekPhase, phaseBadgeStyle } from '@/lib/phases'
 import { weekStartOf } from '@/lib/utils/week'
 import { PROGRAMS, DEFAULT_PROGRAM_ID, getActiveProgramId } from '@/lib/programs'
-import { displayWeight, weightUnit } from '@/lib/utils/units'
+import { displayWeight, weightUnit, fmtVolume } from '@/lib/utils/units'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
 
 const CYAN = '#22D3EE', VIOLET = '#8B5CF6', ROSE = '#FB7185', GOLD = '#F5C15A', EMBER = '#FBBF24', TEAL = '#34D399'
@@ -65,7 +65,7 @@ export function SessionHero({ detail }: { detail: SessionDetail }) {
 
       <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
         <StatTile value={detail.durationMin != null ? `${detail.durationMin}m` : '—'} label="Duration" color={VIOLET} />
-        <StatTile value={`${Math.round(displayWeight(detail.volumeKg) ?? 0).toLocaleString()}`} label={`Vol ${unit}`} color={CYAN} />
+        <StatTile value={fmtVolume(displayWeight(detail.volumeKg))} label={`Vol ${unit}`} color={CYAN} />
         <StatTile value={`${detail.setCount}`} label="Sets" color={ROSE} />
         <StatTile value={`${detail.prCount}`} label="PRs" color={GOLD} />
         <StatTile value={detail.avgBpm != null ? `${detail.avgBpm}` : '—'} label="Avg BPM" color="#FF9F7A" />

@@ -75,23 +75,32 @@ export async function saveSession(
   const asDup = (s: DayRow): SaveSessionResult => ({
     sessionId: s.id, totalVolumeKg: s.total_volume_kg ?? 0, setCount: s.set_count ?? 0, prCount: s.pr_count ?? 0, newPRs: [], duplicate: true,
   })
-  const mine = payload.clientSessionId ? daySessions.find((s) => s.client_session_id === payload.clientSessionId) : undefined
-  const others = daySessions.filter((s) => s.id !== mine?.id)
 
-  if (mine) {
-    // Retry of the SAME logical session. If the sets actually landed it's a
-    // true duplicate; if a prior attempt half-wrote (session row saved but the
-    // sets stalled — the "saved but hung" case), heal by deleting the partial
-    // and recreating it below so the session is never left incomplete.
-    const { count } = await supabase.from('workout_sets')
-      .select('id', { count: 'exact', head: true }).eq('session_id', mine.id)
-    if ((count ?? 0) >= payload.sets.length) return asDup(mine)
-    await supabase.from('workout_sets').delete().eq('session_id', mine.id)
-    await supabase.from('workout_sessions').delete().eq('id', mine.id)
-  } else if (others.length > 0) {
-    // Strictly one session per calendar date — a second distinct commit for a
-    // date that already has one returns the existing session, never a duplicate.
-    return asDup(others[0])
+  // The idempotency / one-per-date DUPLICATE GUARD is for FRESH commits only.
+  // An EDIT (replaceSessionId) has already deleted its target above and MUST
+  // always re-insert — running the guard for an edit could match a `mine`
+  // (reused client_session_id) or an `others` row and wrongly return `asDup`
+  // (a 409), which the client shows as "Already logged" and never persists the
+  // edit. That silent no-op was the edit-doesn't-save bug.
+  if (!payload.replaceSessionId) {
+    const mine = payload.clientSessionId ? daySessions.find((s) => s.client_session_id === payload.clientSessionId) : undefined
+    const others = daySessions.filter((s) => s.id !== mine?.id)
+
+    if (mine) {
+      // Retry of the SAME logical session. If the sets actually landed it's a
+      // true duplicate; if a prior attempt half-wrote (session row saved but the
+      // sets stalled — the "saved but hung" case), heal by deleting the partial
+      // and recreating it below so the session is never left incomplete.
+      const { count } = await supabase.from('workout_sets')
+        .select('id', { count: 'exact', head: true }).eq('session_id', mine.id)
+      if ((count ?? 0) >= payload.sets.length) return asDup(mine)
+      await supabase.from('workout_sets').delete().eq('session_id', mine.id)
+      await supabase.from('workout_sessions').delete().eq('id', mine.id)
+    } else if (others.length > 0) {
+      // Strictly one session per calendar date — a second distinct commit for a
+      // date that already has one returns the existing session, never a duplicate.
+      return asDup(others[0])
+    }
   }
 
   const prHistory = (prHistoryRes.data ?? []) as Array<{ exercise_id: string; est_1rm_kg: number | null }>
@@ -165,10 +174,22 @@ export async function saveSession(
     est_1rm_kg: est1rm,
     exercise_order: s.exerciseOrder ?? null,
     set_type: s.setType ?? 'normal',
+    // Unilateral (per-side) metadata — see the workout_sets side/pair_id migration.
+    side: s.side ?? null,
+    pair_id: s.pairId ?? null,
   }))
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error: setsError } = await supabase.from('workout_sets').insert(dbSets as unknown as any)
+  let { error: setsError } = await supabase.from('workout_sets').insert(dbSets as unknown as any)
+  // Self-heal: if the side/pair_id columns aren't migrated yet, retry without
+  // them so a commit is never blocked (unilateral metadata is simply dropped
+  // until the migration runs). Mirrors the daily_logs v5.1 column self-heal.
+  if (setsError && /side|pair_id/.test(setsError.message ?? '') && /column/i.test(setsError.message ?? '')) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- destructure-to-omit the two unmigrated columns
+    const baseSets = dbSets.map(({ side, pair_id, ...rest }) => rest)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;({ error: setsError } = await supabase.from('workout_sets').insert(baseSets as unknown as any))
+  }
   if (setsError) {
     console.error('[saveSession] sets insert error (non-fatal):', setsError)
   }

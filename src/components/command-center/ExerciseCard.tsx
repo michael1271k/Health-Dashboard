@@ -30,16 +30,22 @@ const fmtDate = (d: string) =>
  * inputs, an editable note, and the per-set tuner rows. Cardio entries render
  * as a slim violet card (distance/duration, no set rows — excluded at commit).
  */
-export function ExerciseCard({ exercise, history, onUpdateSet, onAddSet, onRemoveSet, onRemoveExercise, onSetNote }: {
+export function ExerciseCard({ exercise, history, collapsed = false, onUpdateSet, onSplitSet, onMergeSet, onToggleLink, onAddSet, onRemoveSet, onRemoveExercise, onSetNote }: {
   exercise: DraftExercise
   history: ExerciseHistory | null
+  /** Force header-only (drag-reorder collapses the whole deck for visibility). */
+  collapsed?: boolean
   onUpdateSet: (setIdx: number, patch: Partial<DraftSet>) => void
+  onSplitSet: (setIdx: number) => void
+  onMergeSet: (pairId: string) => void
+  onToggleLink: (pairId: string) => void
   onAddSet: () => void
   onRemoveSet: (setIdx: number) => void
   onRemoveExercise: () => void
   onSetNote: (note: string) => void
 }) {
   const [open, setOpen] = useState(true)
+  const showBody = open && !collapsed
   const [activeSet, setActiveSet] = useState<number | null>(null)
   const [editingNote, setEditingNote] = useState(false)
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } =
@@ -158,7 +164,7 @@ export function ExerciseCard({ exercise, history, onUpdateSet, onAddSet, onRemov
       </div>
 
       {/* ── Note (editable) + next-target ── */}
-      {open && (
+      {showBody && (
         <div className="mt-2 ml-8 space-y-1.5">
           {editingNote ? (
             <textarea
@@ -192,7 +198,7 @@ export function ExerciseCard({ exercise, history, onUpdateSet, onAddSet, onRemov
       )}
 
       {/* ── Set rows ── */}
-      {open && (
+      {showBody && (
         <div className="mt-2 border-t border-white/[0.06] pt-1.5 space-y-0.5">
           {exercise.sets.map((s, i) => (
             <SetEditorRow
@@ -204,6 +210,9 @@ export function ExerciseCard({ exercise, history, onUpdateSet, onAddSet, onRemov
               onActivate={() => setActiveSet((cur) => (cur === i ? null : i))}
               onChange={(patch) => onUpdateSet(i, patch)}
               onRemove={() => { setActiveSet(null); onRemoveSet(i) }}
+              onSplit={s.pairId ? undefined : () => onSplitSet(i)}
+              onToggleLink={s.pairId ? () => onToggleLink(s.pairId!) : undefined}
+              onMerge={s.pairId ? () => onMergeSet(s.pairId!) : undefined}
             />
           ))}
           <button

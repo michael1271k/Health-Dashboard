@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { Users } from 'lucide-react'
 import { NotionSync } from '@/components/settings/NotionSync'
 import { HealthSyncCard } from '@/components/settings/HealthSyncCard'
-import { BiometricCard } from '@/components/settings/BiometricCard'
 import { supabase } from '@/lib/supabase/client'
 import { derivePhase, phaseDisplay } from '@/lib/nutrition/phase'
 import { logicalTodayISO } from '@/lib/utils/day'
@@ -24,7 +23,6 @@ interface Goals {
   water_goal_ml: number
   context_mode: ContextMode
   goal_preset: string | null
-  day_cutoff_hour: number
   unit_system: 'kg' | 'lb'
   reduce_motion: boolean
   auto_log_supplements: boolean
@@ -41,7 +39,6 @@ const DEFAULTS: Goals = {
   water_goal_ml: 3000,
   context_mode: 'normal',
   goal_preset: null,
-  day_cutoff_hour: 0,
   unit_system: 'kg',
   reduce_motion: false,
   auto_log_supplements: false,
@@ -54,10 +51,9 @@ const CONTEXT_LABELS: Record<ContextMode, { label: string; desc: string }> = {
   emergency: { label: 'Emergency', desc: 'All penalties strongly relaxed' },
 }
 
-/** Mirror device prefs to localStorage (read synchronously by the logical-day + units + motion utils). */
-function applyPrefsToDevice(cutoff: number, units: 'kg' | 'lb', motion: boolean) {
+/** Mirror device prefs to localStorage (read synchronously by the units + motion utils). */
+function applyPrefsToDevice(units: 'kg' | 'lb', motion: boolean) {
   if (typeof window === 'undefined') return
-  window.localStorage.setItem('helix_day_cutoff', String(cutoff))
   window.localStorage.setItem('helix_units', units)
   window.localStorage.setItem('helix_reduce_motion', motion ? '1' : '0')
   document.documentElement.dataset.reduceMotion = motion ? 'true' : 'false'
@@ -93,12 +89,11 @@ export default function SettingsPage() {
           water_goal_ml: data.water_goal_ml ?? DEFAULTS.water_goal_ml,
           context_mode: (data.context_mode ?? 'normal') as ContextMode,
           goal_preset: data.goal_preset ?? null,
-          day_cutoff_hour: data.day_cutoff_hour ?? 0,
           unit_system: (data.unit_system ?? 'kg') as 'kg' | 'lb',
           reduce_motion: data.reduce_motion ?? false,
           auto_log_supplements: data.auto_log_supplements ?? false,
         })
-        applyPrefsToDevice(data.day_cutoff_hour ?? 0, (data.unit_system ?? 'kg') as 'kg' | 'lb', data.reduce_motion ?? false)
+        applyPrefsToDevice((data.unit_system ?? 'kg') as 'kg' | 'lb', data.reduce_motion ?? false)
       }
       setLoading(false)
     }
@@ -218,26 +213,12 @@ export default function SettingsPage() {
 
         <div className="flex items-center justify-between gap-4">
           <div>
-            <div className="text-sm text-text font-medium">Day rolls over at</div>
-            <div className="text-xs text-muted">Late-night sessions still count as the previous day</div>
-          </div>
-          <select
-            value={goals.day_cutoff_hour}
-            onChange={(e) => { const h = Number(e.target.value); save({ day_cutoff_hour: h }); applyPrefsToDevice(h, goals.unit_system, goals.reduce_motion) }}
-            className={inputCls + ' w-28'}
-          >
-            {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((h) => <option key={h} value={h}>{String(h).padStart(2, '0')}:00</option>)}
-          </select>
-        </div>
-
-        <div className="flex items-center justify-between gap-4">
-          <div>
             <div className="text-sm text-text font-medium">Weight units</div>
             <div className="text-xs text-muted">Weight, volume &amp; body composition</div>
           </div>
           <div className="flex rounded-xl border border-border overflow-hidden shrink-0">
             {(['kg', 'lb'] as const).map((u) => (
-              <button key={u} onClick={() => { save({ unit_system: u }); applyPrefsToDevice(goals.day_cutoff_hour, u, goals.reduce_motion) }}
+              <button key={u} onClick={() => { save({ unit_system: u }); applyPrefsToDevice(u, goals.reduce_motion) }}
                 className={`px-4 py-2 text-sm font-semibold uppercase ${goals.unit_system === u ? 'bg-primary/15 text-primary' : 'text-muted'}`}>
                 {u}
               </button>
@@ -251,7 +232,7 @@ export default function SettingsPage() {
             <div className="text-xs text-muted">Disable liquid &amp; aurora animations (saves battery)</div>
           </div>
           <button
-            onClick={() => { const v = !goals.reduce_motion; save({ reduce_motion: v }); applyPrefsToDevice(goals.day_cutoff_hour, goals.unit_system, v) }}
+            onClick={() => { const v = !goals.reduce_motion; save({ reduce_motion: v }); applyPrefsToDevice(goals.unit_system, v) }}
             aria-pressed={goals.reduce_motion}
             className={`relative w-12 h-7 rounded-full transition-colors shrink-0 ${goals.reduce_motion ? 'bg-primary' : 'bg-surface-2 border border-border'}`}
           >
@@ -300,8 +281,6 @@ export default function SettingsPage() {
       </section>
 
       <HealthSyncCard />
-
-      <BiometricCard />
 
       <NotionSync />
 

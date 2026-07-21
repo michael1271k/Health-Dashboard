@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, FlaskConical, ChevronRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { useQueryClient } from '@tanstack/react-query'
 import { useDailyLogs } from '@/lib/hooks/useNutrition'
@@ -109,6 +110,18 @@ export default function NutritionPage() {
         logs={logs ?? []}
         goals={{ calorie: goals.calorie, protein: goals.protein, carbs: goals.carbs, fat: goals.fat }}
       />
+
+      {/* Deep-dive into micronutrients + advanced HealthKit signals */}
+      <Link href="/nutrition/micros" className="glass-card w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/[0.03] transition-colors">
+        <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: 'rgba(139,92,246,0.16)', color: '#8B5CF6' }}>
+          <FlaskConical className="w-4 h-4" aria-hidden="true" />
+        </span>
+        <span className="flex-1 min-w-0">
+          <span className="block text-sm font-semibold text-text">Nutrition &amp; Micros</span>
+          <span className="block text-[11px] text-muted">Fiber, iron, vitamins &amp; advanced signals — with your cut targets</span>
+        </span>
+        <ChevronRight className="w-4 h-4 text-muted shrink-0" aria-hidden="true" />
+      </Link>
 
       {/* Fuel → Force: links today's fuel to today's session (renders only if trained) */}
       <FuelForceBand date={todayISO} proteinG={todayLog?.proteinG ?? null} proteinGoal={goals.protein} />
