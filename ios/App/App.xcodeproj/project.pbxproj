@@ -9,11 +9,9 @@
 /* Begin PBXBuildFile section */
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
 		4CC46EC2300C030F00DFDFCE /* HelixHealth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CC46EC1300C030D00DFDFCE /* HelixHealth.swift */; };
-		4CC46ED0300C030F00DFDFCE /* HelixViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CC46ED1300C030D00DFDFCE /* HelixViewController.swift */; };
 		4CC46EC5300C034500DFDFCE /* HelixHealthRegistration.m in Sources */ = {isa = PBXBuildFile; fileRef = 4CC46EC4300C034300DFDFCE /* HelixHealthRegistration.m */; };
 		4CC46EC7300C03F600DFDFCE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504EC3071FED79650016851F /* AppDelegate.swift */; };
-		4CC46EC9300D038A00DFDFCE /* HelixAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CC46EC8300D038A00DFDFCE /* HelixAuth.swift */; };
-		4CC46ECB300D039700DFDFCE /* HelixAuthRegistration.m in Sources */ = {isa = PBXBuildFile; fileRef = 4CC46ECA300D039700DFDFCE /* HelixAuthRegistration.m */; };
+		4CC46ED0300C030F00DFDFCE /* HelixViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CC46ED1300C030D00DFDFCE /* HelixViewController.swift */; };
 		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
 		504EC30D1FED79650016851F /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30B1FED79650016851F /* Main.storyboard */; };
 		504EC30F1FED79650016851F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30E1FED79650016851F /* Assets.xcassets */; };
@@ -25,11 +23,9 @@
 /* Begin PBXFileReference section */
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
 		4CC46EC1300C030D00DFDFCE /* HelixHealth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelixHealth.swift; sourceTree = "<group>"; };
-		4CC46ED1300C030D00DFDFCE /* HelixViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelixViewController.swift; sourceTree = "<group>"; };
 		4CC46EC3300C031D00DFDFCE /* App-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "App-Bridging-Header.h"; sourceTree = "<group>"; };
 		4CC46EC4300C034300DFDFCE /* HelixHealthRegistration.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = HelixHealthRegistration.m; sourceTree = "<group>"; };
-		4CC46EC8300D038A00DFDFCE /* HelixAuth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelixAuth.swift; sourceTree = "<group>"; };
-		4CC46ECA300D039700DFDFCE /* HelixAuthRegistration.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = HelixAuthRegistration.m; sourceTree = "<group>"; };
+		4CC46ED1300C030D00DFDFCE /* HelixViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelixViewController.swift; sourceTree = "<group>"; };
 		4CDD20C0300B802400E3AA88 /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
 		50379B222058CBB4000EE86E /* capacitor.config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
 		504EC3041FED79650016851F /* App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = App.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -98,8 +94,6 @@
 				2FAD9762203C412B000D30F8 /* config.xml */,
 				50B271D01FEDC1A000F3C39B /* public */,
 				4CC46EC3300C031D00DFDFCE /* App-Bridging-Header.h */,
-				4CC46EC8300D038A00DFDFCE /* HelixAuth.swift */,
-				4CC46ECA300D039700DFDFCE /* HelixAuthRegistration.m */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -231,9 +225,7 @@
 				4CC46EC7300C03F600DFDFCE /* AppDelegate.swift in Sources */,
 				4CC46EC2300C030F00DFDFCE /* HelixHealth.swift in Sources */,
 				4CC46ED0300C030F00DFDFCE /* HelixViewController.swift in Sources */,
-				4CC46EC9300D038A00DFDFCE /* HelixAuth.swift in Sources */,
 				4CC46EC5300C034500DFDFCE /* HelixHealthRegistration.m in Sources */,
-				4CC46ECB300D039700DFDFCE /* HelixAuthRegistration.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -307,7 +299,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
@@ -358,7 +350,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
 				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
@@ -377,7 +369,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = W9UMPV973P;
 				INFOPLIST_FILE = App/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				MARKETING_VERSION = 1.0;
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";
@@ -402,7 +394,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = W9UMPV973P;
 				INFOPLIST_FILE = App/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = app.helix.health.michael;

@@ -15,6 +15,7 @@ export interface ContinuumDay {
   carbsG: number | null
   fatG: number | null
   phase: Phase | null
+  steps: number | null
   sleepOk: boolean
   waterOk: boolean
   foodOk: boolean
@@ -42,7 +43,7 @@ export function useContinuum(fullHistory = false) {
       const from = fullHistory ? PHASES[0].start : logicalDaysAgoISO(CONTINUUM_RECENT_DAYS)
       const to = logicalTodayISO()
       const [logsRes, scoresRes, nutritionRes, sessionsRes] = await Promise.all([
-        supabase.from('daily_logs').select('date, sleep_minutes, water_ml')
+        supabase.from('daily_logs').select('date, sleep_minutes, water_ml, steps')
           .gte('date', from).lte('date', to),
         supabase.from('daily_scores').select('date, score')
           .gte('date', from).lte('date', to),
@@ -52,7 +53,7 @@ export function useContinuum(fullHistory = false) {
           .gte('started_at', `${from}T00:00:00Z`).lt('started_at', `${isoAddDays(to, 1)}T00:00:00Z`),
       ])
 
-      const logs = new Map(((logsRes.data ?? []) as Array<{ date: string; sleep_minutes: number | null; water_ml: number | null }>).map((r) => [r.date, r]))
+      const logs = new Map(((logsRes.data ?? []) as Array<{ date: string; sleep_minutes: number | null; water_ml: number | null; steps: number | null }>).map((r) => [r.date, r]))
       const scores = new Map(((scoresRes.data ?? []) as Array<{ date: string; score: number | null }>).map((r) => [r.date, r.score]))
       const nutrition = new Map(((nutritionRes.data ?? []) as Array<{ date: string; calories: number; protein_g: number; carbs_g: number; fat_g: number; phase: string | null }>).map((r) => [r.date, r]))
       const sessions = new Map<string, { split: string; dayKey: string | null; volumeKg: number | null; prCount: number | null }>()
@@ -79,6 +80,7 @@ export function useContinuum(fullHistory = false) {
           carbsG: n?.carbs_g ?? null,
           fatG: n?.fat_g ?? null,
           phase: (n?.phase ?? null) as Phase | null,
+          steps: log?.steps ?? null,
           sleepOk: (log?.sleep_minutes ?? 0) > 0,
           waterOk: (log?.water_ml ?? 0) > 0,
           foodOk: n != null,

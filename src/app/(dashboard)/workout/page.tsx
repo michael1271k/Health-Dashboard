@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useExerciseMap, useExerciseMemory, useLatestSessionFlag } from '@/lib/hooks/useLogger'
 import { useWeekSessions, weekStartOf } from '@/lib/hooks/useWeekSessions'
@@ -13,7 +12,7 @@ import { SwapDayControl } from '@/components/day/SwapDayControl'
 import { peekSessionDraft, type SessionDraft } from '@/lib/sessions/draft'
 import {
   PROGRAMS, DEFAULT_PROGRAM_ID, getActiveProgramId, setActiveProgramId,
-  scheduleDayFor, isTrainingDay, isReentryWeek, eraForDate, ERA_META,
+  scheduleDayFor, isTrainingDay, eraForDate, ERA_META,
 } from '@/lib/programs'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { displayWeight, weightUnit } from '@/lib/utils/units'
@@ -58,7 +57,6 @@ export default function WorkoutPage() {
   const loggedToday = todaySessions.length > 0
   const schedule = scheduleDayFor(today)
   const training = isTrainingDay(today)
-  const reentry = isReentryWeek(today)
   const eraMeta = ERA_META[eraForDate(today)]
   const todayWD = WD[new Date(`${today}T12:00:00Z`).getUTCDay()]
   const todayKey = schedule !== 'rest' ? schedule.dayKey : undefined
@@ -72,9 +70,6 @@ export default function WorkoutPage() {
           <h1 className="font-heading text-fluid-2xl font-bold text-text">Command Center</h1>
           <p className="text-muted text-fluid-sm mt-0.5">Active program · progressive-overload memory · tap a day to log</p>
         </div>
-        <Link href="/pathfinder" className="btn-glass shrink-0 min-h-[40px] text-fluid-xs" aria-label="Open workout history in Pathfinder">
-          History <ArrowRight className="w-3.5 h-3.5" />
-        </Link>
       </div>
 
       {/* ── Today: Post-Workout Summary (if logged) or Log/Rest hero ── */}
@@ -89,7 +84,6 @@ export default function WorkoutPage() {
         <div className="flex items-center gap-2 mb-2">
           <span className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded"
             style={{ color: eraMeta.color, background: `${eraMeta.color}1a`, border: `1px solid ${eraMeta.color}40` }}>{eraMeta.short}</span>
-          {reentry && <span className="text-[10px] font-bold uppercase tracking-wide text-warn">Re-entry · ~90% loads</span>}
           <span className="text-fluid-xs text-muted ml-auto">{todayWD} · Today</span>
         </div>
         {training && todayDay ? (
@@ -178,7 +172,9 @@ export default function WorkoutPage() {
       <div className="space-y-2">
         {program.days.map((day) => {
           const isToday = day.key === todayKey
-          const isOpen = (openPlan ?? todayKey) === day.key
+          // Program week-plan defaults to MINIMIZED — every day collapsed until
+          // tapped (the today "Session block" hero above stays expanded).
+          const isOpen = openPlan === day.key
           const nonBulk = day.exercises.filter((e) => !e.bulkOnly)
           const totalSets = nonBulk.reduce((n, e) => n + e.sets, 0)
           return (

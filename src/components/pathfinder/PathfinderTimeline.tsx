@@ -46,7 +46,6 @@ export function PathfinderTimeline() {
   const { nodes, isPending } = useTimelineWeeks(era)
   const { data: continuumDays } = useContinuum(true)
   const liveWeekStart = weekStartOf(logicalTodayISO())
-  const prevWeekStart = isoAddDays(liveWeekStart, -7)
   const [overrides, setOverrides] = useState<Record<string, boolean>>({})
 
   // Group every logged/tracked day under its Sunday week, filtered at the day
@@ -64,7 +63,8 @@ export function PathfinderTimeline() {
     return map
   }, [continuumDays, era])
 
-  const isOpen = (ws: string) => overrides[ws] ?? (ws === liveWeekStart || ws === prevWeekStart)
+  // Only the current week is expanded by default; every past week auto-collapses.
+  const isOpen = (ws: string) => overrides[ws] ?? (ws === liveWeekStart)
   const toggle = (ws: string) => setOverrides((o) => ({ ...o, [ws]: !isOpen(ws) }))
 
   return (

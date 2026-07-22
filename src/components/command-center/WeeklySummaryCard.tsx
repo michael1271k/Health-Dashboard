@@ -1,8 +1,8 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { CalendarRange, ChevronRight, Trophy } from 'lucide-react'
-import { useWeekSessions, weekStartOf, isoAddDays } from '@/lib/hooks/useWeekSessions'
+import { ChevronRight, Trophy } from 'lucide-react'
+import { useWeekSessions, weekStartOf } from '@/lib/hooks/useWeekSessions'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { fmtVolume } from '@/lib/utils/units'
 
@@ -17,10 +17,8 @@ export function WeeklySummaryCard() {
   const router = useRouter()
   const today = logicalTodayISO()
   const thisWeekStart = weekStartOf(today)
-  const priorWeekStart = isoAddDays(thisWeekStart, -7)
 
   const thisWeek = useWeekSessions(thisWeekStart)
-  const priorWeek = useWeekSessions(priorWeekStart)
 
   const weekday = new Date(`${today}T12:00:00Z`).getUTCDay()
   const todaySessions = thisWeek.data?.sessions.filter((s) => s.date === today) ?? []
@@ -45,13 +43,6 @@ export function WeeklySummaryCard() {
             </span>
           </span>
           <ChevronRight className="w-4 h-4 shrink-0" style={{ color: GOLD }} aria-hidden="true" />
-        </button>
-      )}
-
-      {!weekComplete && (priorWeek.data?.sessions.length ?? 0) > 0 && (
-        <button onClick={() => router.push('/pathfinder')}
-          className="w-full flex items-center justify-center gap-1.5 text-fluid-xs text-muted hover:text-text min-h-[36px] transition-colors">
-          <CalendarRange className="w-3.5 h-3.5" aria-hidden="true" /> Last week in review
         </button>
       )}
     </>

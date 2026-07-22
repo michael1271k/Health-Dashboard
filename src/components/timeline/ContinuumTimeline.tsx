@@ -1,7 +1,7 @@
 'use client'
 
 import { memo, useMemo, useState } from 'react'
-import { Dumbbell, FolderOpen, Moon } from 'lucide-react'
+import { Dumbbell, FolderOpen, Footprints, Moon } from 'lucide-react'
 import { useContinuum, type ContinuumDay } from '@/lib/hooks/useContinuum'
 import { getWeekPhase, type WeekPhase } from '@/lib/phases'
 import { eraForDate, programDayLabel } from '@/lib/programs'
@@ -88,15 +88,22 @@ export const DayCard = memo(function DayCard({ d, unit, active, onOpen }: {
         <MacroBar label="F" g={d.fatG} target={ROW_MACRO_TARGET.fat} color={MACRO_COLORS.fat} />
         <MacroBar label="P" g={d.proteinG} target={ROW_MACRO_TARGET.protein} color={MACRO_COLORS.protein} />
       </div>
-      {/* Workout / rest line */}
-      <div className="flex items-center gap-1.5 mt-2 pl-[18px] text-[11px] min-w-0"
-        style={{ color: d.session ? '#22D3EE' : VIOLET }}>
-        {d.session ? <Dumbbell className="w-3 h-3 shrink-0" /> : <Moon className="w-3 h-3 shrink-0" />}
-        <span className="truncate">
-          {d.session
-            ? `${workoutLabel}${vol ? ` · ${vol} ${unit}` : ''}${(d.session.prCount ?? 0) > 0 ? ` · ${d.session.prCount} PR` : ''}`
-            : 'Rest'}
+      {/* Workout / rest line + steps */}
+      <div className="flex items-center gap-1.5 mt-2 pl-[18px] text-[11px] min-w-0">
+        <span className="flex items-center gap-1.5 min-w-0 flex-1" style={{ color: d.session ? '#22D3EE' : VIOLET }}>
+          {d.session ? <Dumbbell className="w-3 h-3 shrink-0" /> : <Moon className="w-3 h-3 shrink-0" />}
+          <span className="truncate">
+            {d.session
+              ? `${workoutLabel}${vol ? ` · ${vol} ${unit}` : ''}${(d.session.prCount ?? 0) > 0 ? ` · ${d.session.prCount} PR` : ''}`
+              : 'Rest'}
+          </span>
         </span>
+        {d.steps != null && (
+          <span className="flex items-center gap-1 shrink-0" style={{ color: '#818CF8' }}>
+            <Footprints className="w-3 h-3" aria-hidden="true" />
+            <span className="helix-num tabular-nums">{Math.round(d.steps).toLocaleString()}</span>
+          </span>
+        )}
       </div>
     </button>
   )

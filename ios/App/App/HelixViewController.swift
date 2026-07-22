@@ -14,6 +14,5 @@ import Capacitor
 class HelixViewController: CAPBridgeViewController {
   override func capacitorDidLoad() {
     bridge?.registerPluginInstance(HealthkitPlugin())
-    bridge?.registerPluginInstance(HelixAuthPlugin())
   }
 }

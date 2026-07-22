@@ -98,10 +98,10 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      {/* Spinner sits in the pulled-down gap */}
+      {/* Spinner + label sit in the pulled-down gap */}
       <div
         aria-hidden={pull === 0}
-        className="fixed left-1/2 z-[70] flex items-center justify-center pointer-events-none"
+        className="fixed left-1/2 z-[70] flex flex-col items-center justify-center gap-1.5 pointer-events-none"
         style={{
           top: 'calc(env(safe-area-inset-top, 0px) + 4px)',
           transform: `translate3d(-50%, ${pull - 44}px, 0)`,
@@ -114,6 +114,8 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
           <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`}
             style={{ color: '#38BDF8', transform: refreshing ? undefined : `rotate(${progress * 270}deg)` }} />
         </span>
+        <span className="text-[11px] font-semibold tracking-wide whitespace-nowrap"
+          style={{ color: '#38BDF8' }}>Syncing Data...</span>
       </div>
       <div
         style={{

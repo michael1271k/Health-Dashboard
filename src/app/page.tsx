@@ -45,11 +45,15 @@ const TrendStrip = dynamic(
 
 // Bioluminescence domain accents
 const VIOLET = '#EC4899' // Sleep / recovery
-const EMBER = '#FBBF24'  // Fuel
-const CYAN = '#22D3EE'   // Train
+const CYAN = '#22D3EE'   // data / drivers
 const TEAL = '#8B5CF6'   // Body
-const AQUA = '#38BDF8'   // Steps
+const AQUA = '#38BDF8'   // HRV / data
 const GOLD = '#F5C15A'   // Stack
+// Task-6 domain colours
+const TRAIN_GREEN = '#22C55E' // Training
+const WATER_BLUE = '#3B82F6'  // Water
+const ENERGY_RED = '#FB7185'  // Active Energy
+const STEPS_INDIGO = '#818CF8' // Steps (chosen — distinct from water-blue)
 
 const n0 = (v: number | null | undefined) => (v == null ? null : Math.round(v))
 const n1 = (v: number | null | undefined) => (v == null ? null : Math.round(v * 10) / 10)
@@ -87,6 +91,8 @@ export default function DashboardPage() {
   const suppCount = taken?.size ?? 0
   const suppTotal = supplementCountForDate(isTrainingDay(logicalTodayISO()))
   const unit = weightUnit()
+  // Already-logged-today: hide the "+ Log session" CTA once a workout exists.
+  const loggedToday = sessions?.some((s) => s.started_at.slice(0, 10) === logicalTodayISO()) ?? false
 
   // Sparkline series (ascending 7d)
   const kcalSeries = useMemo(() => {
@@ -123,7 +129,7 @@ export default function DashboardPage() {
       series: (bioSeries ?? []).map((d) => d.sleepMin),
     },
     {
-      key: 'fuel', icon: Flame, label: 'Fuel', accent: EMBER,
+      key: 'fuel', icon: Flame, label: 'Fuel', accent: MACRO_COLORS.calories,
       value: calToday, unit: 'kcal',
       status: phase
         ? <span style={{ color: phaseDisplay(phase, logicalTodayISO()).color }}>{phaseDisplay(phase, logicalTodayISO()).label} day{calGoal ? ` · goal ${calGoal.toLocaleString()}` : ''}</span>
@@ -131,7 +137,7 @@ export default function DashboardPage() {
       series: kcalSeries,
     },
     {
-      key: 'train', icon: Dumbbell, label: 'Train', accent: CYAN,
+      key: 'train', icon: Dumbbell, label: 'Train', accent: TRAIN_GREEN,
       value: todayDay === 'rest' ? 'Zone-2 / Rest' : todayDay.label,
       status: todayDay !== 'rest' && todayDay.sub
         ? todayDay.sub
@@ -148,7 +154,7 @@ export default function DashboardPage() {
       series: (bioSeries ?? []).map((d) => displayWeight(d.weightKg)),
     },
     {
-      key: 'steps', icon: Footprints, label: 'Steps', accent: AQUA,
+      key: 'steps', icon: Footprints, label: 'Steps', accent: STEPS_INDIGO,
       value: steps,
       status: log?.active_energy != null ? `${n0(log.active_energy)} active kcal` : 'movement',
       series: (bioSeries ?? []).map((d) => d.steps),
@@ -253,10 +259,12 @@ export default function DashboardPage() {
         {open === 'train' && (
           <div className="space-y-2.5">
             <div className="grid grid-cols-2 gap-2.5">
-              <StatTile label="Today" value={todayDay === 'rest' ? 'Zone-2 / Rest' : todayDay.label} sub={todayDay !== 'rest' ? todayDay.sub : undefined} accent={CYAN} />
+              <StatTile label="Today" value={todayDay === 'rest' ? 'Zone-2 / Rest' : todayDay.label} sub={todayDay !== 'rest' ? todayDay.sub : undefined} accent={TRAIN_GREEN} />
               <StatTile label="Last Volume" value={lastSession?.total_volume_kg != null ? fmtVolume(displayWeight(lastSession.total_volume_kg)) : n0(null)} unit={unit} />
             </div>
-            {todayDay !== 'rest' && todayDay.dayKey ? (
+            {loggedToday ? (
+              <p className="text-fluid-xs text-center py-2 font-medium" style={{ color: TRAIN_GREEN }}>Session logged today ✓</p>
+            ) : todayDay !== 'rest' && todayDay.dayKey ? (
               <button
                 onClick={() => { setOpen(null); router.push(`/session?template=${todayDay.dayKey}`) }}
                 className="btn-glass w-full justify-center">
@@ -290,10 +298,10 @@ export default function DashboardPage() {
         )}
         {open === 'steps' && (
           <div className="grid grid-cols-2 gap-2.5">
-            <StatTile label="Steps" value={steps?.toLocaleString() ?? null} accent={AQUA} />
-            <StatTile label="Active Energy" value={n0(log?.active_energy)} unit="kcal" isLoading={logLoading} />
-            <StatTile label="Water" value={log?.water_ml != null ? mlToL(log.water_ml) : null} unit="L" isLoading={logLoading} />
-            <StatTile label="Training" value={log?.training_minutes} unit="min" isLoading={logLoading} />
+            <StatTile label="Steps" value={steps?.toLocaleString() ?? null} accent={STEPS_INDIGO} />
+            <StatTile label="Active Energy" value={n0(log?.active_energy)} unit="kcal" accent={ENERGY_RED} isLoading={logLoading} />
+            <StatTile label="Water" value={log?.water_ml != null ? mlToL(log.water_ml) : null} unit="L" accent={WATER_BLUE} isLoading={logLoading} />
+            <StatTile label="Training" value={log?.training_minutes} unit="min" accent={TRAIN_GREEN} isLoading={logLoading} />
           </div>
         )}
         {open === 'stack' && <SupplementChecklist />}

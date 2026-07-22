@@ -3,12 +3,10 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Dumbbell, Moon, Flame, Scale, Plus, ChevronRight, ChevronLeft, ChevronDown } from 'lucide-react'
+import { ArrowLeft, Dumbbell, Moon, Flame, Scale, Plus, ChevronRight, ChevronLeft } from 'lucide-react'
 import { CompletenessArc } from '@/components/day/CompletenessArc'
 import { InBodyCard } from '@/components/day/InBodyCard'
 import { SleepDebtGauge } from '@/components/day/SleepDebtGauge'
-import { SessionExerciseList } from '@/components/day/SessionExerciseList'
-import { SessionProgressionCard } from '@/components/day/SessionProgressionCard'
 import { SwapDayControl } from '@/components/day/SwapDayControl'
 import { useDayVault, dayCompleteness, type DayVaultData } from '@/lib/hooks/useDayVault'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
@@ -84,36 +82,32 @@ function hasScaleMetrics(log: DayVaultData['log']): boolean {
 }
 
 /**
- * Unified per-session block (merges the old Workout + Progression sections):
- * collapsed = header + Hevy-style metadata only; 1st tap expands the exercise
- * list + progression card; 2nd tap opens the full deep-dive.
+ * Unified per-session block: header + Hevy-style metadata. Tapping anywhere on
+ * the block navigates straight to the full session deep-dive — no intermediate
+ * expand step.
  */
-function SessionBlock({ session: s, date, unit }: {
+function SessionBlock({ session: s, unit }: {
   session: DayVaultData['sessions'][number]
-  date: string
   unit: string
 }) {
   const router = useRouter()
-  const [expanded, setExpanded] = useState(false)
   const name = sessionLabel(s.dayKey, s.split)
   return (
-    <section className="helix-card holo-sheen space-y-3" style={{ borderColor: `${CYAN}30`, boxShadow: `0 0 24px ${CYAN}18` }}>
-      <button type="button"
-        onClick={() => (expanded ? router.push(`/session/${s.id}`) : setExpanded(true))}
-        className="w-full flex items-center gap-2 text-left active:opacity-80"
-        aria-expanded={expanded}
-        aria-label={expanded ? `Open full analysis for ${name}` : `Expand ${name}`}>
+    <button type="button"
+      onClick={() => router.push(`/session/${s.id}`)}
+      className="helix-card holo-sheen w-full text-left space-y-3 active:opacity-80"
+      style={{ borderColor: `${CYAN}30`, boxShadow: `0 0 24px ${CYAN}18` }}
+      aria-label={`Open full analysis for ${name}`}>
+      <div className="w-full flex items-center gap-2">
         <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: `${CYAN}1a`, color: CYAN }}>
           <Dumbbell className="w-4 h-4" aria-hidden="true" />
         </span>
         <h3 className="font-heading font-bold text-fluid-base text-text flex-1 min-w-0 truncate">{name}</h3>
         <span className="text-[10px] font-semibold uppercase tracking-wide shrink-0 flex items-center gap-0.5" style={{ color: CYAN }}>
-          {expanded
-            ? <>Inspect <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" /></>
-            : <>Expand <ChevronDown className="w-3.5 h-3.5" aria-hidden="true" /></>}
+          Inspect <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
         </span>
-      </button>
-      {/* Hevy-style metadata — always visible */}
+      </div>
+      {/* Hevy-style metadata */}
       <div className="flex flex-wrap gap-2">
         <MetaChip emoji="🏋️" value={fmtVolume(displayWeight(s.volumeKg))} label={unit} color={TEAL} />
         <MetaChip emoji="🔁" value={`${s.setCount ?? '—'}`} label="sets" color={CYAN} />
@@ -121,13 +115,7 @@ function SessionBlock({ session: s, date, unit }: {
         <MetaChip emoji="❤️" value={s.avgBpm != null ? `${s.avgBpm}` : '—'} label="bpm" color={ROSE} />
         <MetaChip emoji="🔥" value={s.calories != null ? `${s.calories}` : '—'} label="kcal" color={EMBER} />
       </div>
-      {expanded && (
-        <div className="space-y-3">
-          <SessionExerciseList sessionId={s.id} />
-          <SessionProgressionCard session={s} date={date} />
-        </div>
-      )}
-    </section>
+    </button>
   )
 }
 
@@ -271,10 +259,10 @@ export default function DailyNexusPage() {
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 text-center">
             {[
               { label: 'Weight', v: displayWeight(validWeight(log?.weight_kg)), u: unit, c: TEAL },
-              { label: 'Steps', v: log?.steps != null ? Math.round(log.steps).toLocaleString() : null, u: '', c: '#38BDF8' },
-              { label: 'Water', v: log?.water_ml != null ? mlToL(log.water_ml) : null, u: 'L', c: CYAN },
-              { label: 'Active', v: log?.active_energy != null ? Math.round(log.active_energy) : null, u: '', c: EMBER },
-              { label: 'Stand', v: log?.stand_hours != null ? `${log.stand_hours}` : null, u: 'h', c: '#34D399' },
+              { label: 'Steps', v: log?.steps != null ? Math.round(log.steps).toLocaleString() : null, u: '', c: '#818CF8' },
+              { label: 'Water', v: log?.water_ml != null ? mlToL(log.water_ml) : null, u: 'L', c: '#3B82F6' },
+              { label: 'Active', v: log?.active_energy != null ? Math.round(log.active_energy) : null, u: '', c: '#FB7185' },
+              { label: 'Stand', v: log?.stand_hours != null ? `${log.stand_hours}` : null, u: 'h', c: '#22C55E' },
               { label: 'VO₂', v: log?.vo2max ?? null, u: '', c: ICE },
             ].map((s) => (
               <div key={s.label} className="rounded-lg bg-white/[0.02] border border-white/[0.05] px-1 py-1.5">
@@ -306,7 +294,7 @@ export default function DailyNexusPage() {
       {trained ? (
         <>
           <SectionTitle>Session Debrief</SectionTitle>
-          {sessions.map((s) => <SessionBlock key={s.id} session={s} date={date} unit={unit} />)}
+          {sessions.map((s) => <SessionBlock key={s.id} session={s} unit={unit} />)}
         </>
       ) : restDay ? (
         /* Rest day → a compact premium badge, NOT a big empty workout block */

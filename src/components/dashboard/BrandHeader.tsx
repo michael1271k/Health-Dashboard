@@ -1,9 +1,17 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Image from 'next/image'
 import { useLastUpdated } from '@/lib/hooks/useDashboard'
 import { useMyProfile } from '@/lib/hooks/useMyProfile'
+import { HELIX_CUT_START } from '@/lib/programs'
+import { logicalTodayISO } from '@/lib/utils/day'
+
+/** Days elapsed since the program start (2026-07-15), inclusive — the streak. */
+function programStreak(): number {
+  const start = Date.parse(`${HELIX_CUT_START}T00:00:00Z`)
+  const today = Date.parse(`${logicalTodayISO()}T00:00:00Z`)
+  return Math.max(1, Math.floor((today - start) / 86_400_000) + 1)
+}
 
 /** Ticking clock (client-only to avoid hydration mismatch). */
 function useClock() {
@@ -63,19 +71,26 @@ export function BrandHeader() {
         </p>
       )}
 
-      {/* One clean brand line — mark sized to the cap height, nudged UP a few
-          px for true optical alignment with the wordmark's cap line. */}
-      <div className="flex items-center gap-x-3 flex-wrap">
-        <h1 className="flex items-center gap-2.5 text-fluid-3xl leading-none">
-          <Image src="/icon-192.png" width={32} height={32} alt="" priority
-            className="h-[0.9em] w-[0.9em] shrink-0 rounded-[0.28em] -translate-y-[0.03em] ring-1 ring-white/10" />
-          <span className="helix-wordmark font-heading font-extrabold tracking-tight leading-none">HELIX</span>
+      {/* Brand line — no icon; the wordmark is spaced out and left-aligned, with
+          the daily-streak counter pushed to the right. */}
+      <div className="flex items-center gap-x-3">
+        <h1 className="text-fluid-3xl leading-none">
+          <span className="helix-wordmark font-heading font-extrabold tracking-[0.22em] leading-none">HELIX</span>
         </h1>
         <span
           className="px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider self-center"
           style={{ color: '#22D3EE', background: '#22D3EE1f', border: '1px solid #22D3EE55', boxShadow: '0 0 10px #22D3EE44' }}
         >
           HELIX-5
+        </span>
+        <span
+          className="ml-auto flex items-center gap-1.5 px-2.5 py-1 rounded-full self-center shrink-0"
+          style={{ color: '#FB923C', background: '#FB923C1a', border: '1px solid #FB923C55', boxShadow: '0 0 12px #FB923C33' }}
+          aria-label={`Daily streak: ${programStreak()} days`}
+        >
+          <span aria-hidden="true" className="text-fluid-sm leading-none">🔥</span>
+          <span className="helix-num text-fluid-sm font-extrabold leading-none">{programStreak()}</span>
+          <span className="text-[10px] font-bold uppercase tracking-wide leading-none">Day Streak</span>
         </span>
       </div>
     </header>

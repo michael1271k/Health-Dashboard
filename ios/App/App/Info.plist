@@ -24,8 +24,6 @@
 	<string></string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<key>NSFaceIDUsageDescription</key>
-	<string>HELIX uses Face ID for quick login</string>
 	<key>NSHealthShareUsageDescription</key>
 	<string>HELIX reads Apple Health (steps, energy, heart rate, HRV, sleep, body composition) to compute your daily readiness and trends</string>
 	<key>NSHealthUpdateUsageDescription</key>
