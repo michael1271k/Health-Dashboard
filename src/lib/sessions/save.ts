@@ -7,6 +7,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database, InsertRow } from '@/lib/supabase/types'
 import type { SaveWorkoutPayload } from '@/lib/types/workout'
+import { countCommittedSets } from '@/lib/sessions/schema'
 import { epley1RM } from '@/lib/utils/epley'
 import { isReentryWeek } from '@/lib/programs'
 
@@ -42,7 +43,10 @@ export async function saveSession(
   // Warmups count toward volume + set count (they still never earn a PR).
   const isWarmup = (s: (typeof payload.sets)[number]) => s.setType === 'warmup'
   const totalVolumeKg = payload.sets.reduce((sum, s) => sum + s.weightKg * s.reps, 0)
-  const setCount = payload.sets.length
+  // Set count: a unilateral L/R split is ONE set tracked as two sub-sets sharing
+  // a `pairId` (see countCommittedSets). Volume still sums both sides (both are
+  // real work); only the count de-duplicates.
+  const setCount = countCommittedSets(payload.sets)
   const exerciseIds = [...new Set(payload.sets.map((s) => s.exerciseId))]
 
   // EDIT flow: replace an existing session in place — delete it (+ its sets)

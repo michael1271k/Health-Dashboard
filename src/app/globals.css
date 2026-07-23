@@ -6,24 +6,24 @@
    HELIX Design Tokens (Tailwind v4 @theme)
    ============================================ */
 @theme {
-  /* HELIX Color Palette — "Bioluminescence"
-     Abyssal-ocean base with living bioluminescent accents: living teal,
-     plankton cyan, abyss violet for recovery, ember for fuel/caution. */
-  /* Aurora Health palette — indigo-black base, violet→magenta→cyan spectrum. */
-  --color-bg: #0A0B1A;          /* indigo-black */
-  --color-surface: #0E1126;     /* raised glass base */
-  --color-surface-2: #171A33;   /* solid raised surfaces (sliders, inputs) */
-  --color-primary: #8B5CF6;     /* aurora violet — the HELIX signature accent */
-  --color-energy: #EC4899;      /* aurora magenta — recovery / battery accents */
-  --color-info: #22D3EE;        /* aurora cyan — data */
-  --color-ice: #38BDF8;         /* sky-blue — interactive/active accent */
-  --color-success: #34D399;     /* emerald — positive deltas */
-  --color-warn: #FBBF24;        /* amber — fuel / caution */
-  --color-danger: #FB7185;      /* coral — negative */
-  --color-gold: #F5C15A;        /* warm gold — PRs / luxury highlight */
-  --color-text: #ECEBFF;
-  --color-muted: #9AA3C4;
-  --color-border: #23264A;      /* hairline (legacy solid contexts) */
+  /* HELIX Color Palette — "Obsidian & Ember"
+     Disciplined, premium, serious: a near-black graphite base with ONE warm
+     molten-ember signature accent and brushed-platinum data tones. Semantic
+     green/red are reserved for deltas + alerts only. Glass aesthetic unchanged. */
+  --color-bg: #0A0B0E;          /* obsidian graphite */
+  --color-surface: #12141A;     /* cool graphite glass base */
+  --color-surface-2: #1B1E26;   /* solid raised surfaces (sliders, inputs) */
+  --color-primary: #E2683A;     /* molten ember — the signature accent */
+  --color-energy: #C9752F;      /* burnished copper — recovery / battery accents */
+  --color-info: #9AA6B8;        /* brushed platinum-steel — data */
+  --color-ice: #8AA0B8;         /* cool steel — interactive/active accent */
+  --color-success: #4FB477;     /* muted sage — positive deltas */
+  --color-warn: #C9A227;        /* restrained brass — caution */
+  --color-danger: #D5514E;      /* oxide red — negative */
+  --color-gold: #C9A227;        /* brass — PRs / luxury highlight */
+  --color-text: #ECEEF2;        /* titanium white */
+  --color-muted: #7C828F;       /* steel grey */
+  --color-border: #23252B;      /* graphite hairline (legacy solid contexts) */
   /* Light mode (kept for completeness) */
   --color-light-bg: #F4F6FA;
   --color-light-surface: #FFFFFF;
@@ -50,9 +50,9 @@
 
   /* HELIX Shadows */
   --shadow-card: 0 1px 2px rgba(0,0,0,0.4), 0 0 0 1px rgba(30,42,66,0.9);
-  --shadow-card-hover: 0 4px 16px rgba(0,0,0,0.5), 0 0 0 1px rgba(61,125,255,0.2);
-  --shadow-glow-primary: 0 0 20px rgba(61,125,255,0.3);
-  --shadow-glow-energy: 0 0 20px rgba(124,92,255,0.3);
+  --shadow-card-hover: 0 4px 16px rgba(0,0,0,0.5), 0 0 0 1px rgba(226,104,58,0.2);
+  --shadow-glow-primary: 0 0 20px rgba(226,104,58,0.3);
+  --shadow-glow-energy: 0 0 20px rgba(201,117,47,0.3);
 
   /* HELIX Animations */
   --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -223,12 +223,13 @@ html[data-theme='travel'] {
     /* Obsidian base — the animated Aurora layer (fixed, -z-10) refracts through glass.
        These fixed radial gradients add luxury depth on every screen incl. mobile. */
     background-color: var(--color-bg);
-    /* Cooler cyan / ocean-teal / deep-blue depth (toned-down green). No
-       background-attachment:fixed — iOS ignores it and it forces repaints. */
+    /* Obsidian graphite depth with a single restrained ember glow top-right — a
+       serious, premium wash (no neon). No background-attachment:fixed — iOS
+       ignores it and it forces repaints. */
     background-image:
-      radial-gradient(1100px 760px at 12% -12%, rgba(45,160,230,0.14), transparent 60%),
-      radial-gradient(980px 680px at 112% 8%, rgba(56,225,255,0.11), transparent 55%),
-      radial-gradient(900px 900px at 50% 122%, rgba(22,150,185,0.08), transparent 60%);
+      radial-gradient(1100px 760px at 108% -10%, rgba(226,104,58,0.10), transparent 58%),
+      radial-gradient(980px 680px at 8% 4%, rgba(120,130,150,0.06), transparent 55%),
+      radial-gradient(900px 900px at 50% 122%, rgba(30,32,40,0.55), transparent 62%);
   }
 
   html {
@@ -286,8 +287,8 @@ html[data-theme='travel'] {
   }
   /* Accent tinted variant — active/selected state */
   .glass-card--accent {
-    background: rgba(61,125,255,0.06);
-    border-color: rgba(61,125,255,0.22);
+    background: rgba(226,104,58,0.06);
+    border-color: rgba(226,104,58,0.22);
   }
   .glass-hover:hover {
     border-color: rgba(255,255,255,0.16);
@@ -404,15 +405,14 @@ html[data-theme='travel'] {
     letter-spacing: 0.005em;
   }
 
-  /* Glowing HELIX wordmark — indigo→cyan→teal gradient + soft glow. */
+  /* HELIX wordmark — brushed platinum → molten ember, restrained ember glow. */
   .helix-wordmark {
-    /* Bioluminescent band: living teal → plankton cyan → abyss violet */
-    background: linear-gradient(90deg, #8B5CF6 0%, #22D3EE 55%, #EC4899 100%);
+    background: linear-gradient(90deg, #ECEEF2 0%, #C9CDD6 45%, #E2683A 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
     -webkit-text-fill-color: transparent;
-    filter: drop-shadow(0 0 16px rgba(139,92,246,0.45));
+    filter: drop-shadow(0 0 14px rgba(226,104,58,0.35));
   }
 }
 
@@ -510,8 +510,8 @@ html[data-hidden='true'] .battery-bubble { animation-play-state: paused; }
 
 /* Readiness orb "breathing" — glow-only pulse (no transform near glass). */
 @keyframes orbBreathe {
-  0%, 100% { filter: drop-shadow(0 0 14px rgba(139,92,246,0.16)); }
-  50%      { filter: drop-shadow(0 0 30px rgba(139,92,246,0.34)); }
+  0%, 100% { filter: drop-shadow(0 0 14px rgba(226,104,58,0.16)); }
+  50%      { filter: drop-shadow(0 0 30px rgba(226,104,58,0.34)); }
 }
 .orb-breathe { animation: orbBreathe 5.5s ease-in-out infinite; }
 
@@ -559,12 +559,13 @@ html[data-reduce-motion='true'] .grain-overlay { display: none; }
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* Sync Pulse toast entrance — compositor-only (translate3d + opacity). */
-@keyframes syncPulseIn {
-  from { transform: translate3d(-50%, -140%, 0); opacity: 0; }
-  to   { transform: translate3d(-50%, 0, 0); opacity: 1; }
+/* Sync pill "breathing" while a foreground sync is in flight (scale-only, GPU). */
+@keyframes syncBreathe {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.05); }
 }
-html[data-reduce-motion='true'] [role='status'][aria-live='polite'] { animation: none !important; }
+.sync-breathe { animation: syncBreathe 1.4s ease-in-out infinite; }
+html[data-reduce-motion='true'] .sync-breathe { animation: none !important; }
 
 /* LiquidModal one-shot sheen — a translate3d-only diagonal light sweep. */
 .liquid-modal-sheen {
@@ -585,11 +586,11 @@ html[data-reduce-motion='true'] [role='status'][aria-live='polite'] { animation:
              boltBloom 300ms ease 420ms forwards;
 }
 @keyframes boltDraw { to { stroke-dashoffset: 0; } }
-@keyframes boltBloom { to { fill: #8B5CF6; } }
+@keyframes boltBloom { to { fill: #E2683A; } }
 
 /* One charge-line sweep across the capsule's bottom edge (compositor-only). */
 .charge-line {
-  background: linear-gradient(90deg, transparent, #8B5CF6, transparent);
+  background: linear-gradient(90deg, transparent, #E2683A, transparent);
   transform: translate3d(-100%, 0, 0);
   animation: chargeSweep 700ms cubic-bezier(0.4, 0, 0.2, 1) 380ms 1 forwards;
 }

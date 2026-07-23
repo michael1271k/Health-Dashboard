@@ -4,10 +4,12 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import { Capacitor } from '@capacitor/core'
-import { RefreshCw } from 'lucide-react'
+import { RefreshCw, Check } from 'lucide-react'
 import { forceHealthKitSync } from '@/lib/native/sync'
 import { tapLight } from '@/lib/native/haptics'
 import { invalidateHealthData } from '@/lib/query/workoutKeys'
+
+const ACCENT = '#E2683A' // ember — the new signature accent
 
 const THRESHOLD = 72   // px pulled before a refresh fires
 const MAX_PULL = 110   // rubber-band ceiling
@@ -32,6 +34,7 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
   const claimed = useRef(false)
   const [pull, setPull] = useState(0)
   const [refreshing, setRefreshing] = useState(false)
+  const [doneAt, setDoneAt] = useState<number | null>(null) // shows "Updated HH:MM" briefly
 
   const onTouchStart = useCallback((e: TouchEvent) => {
     claimed.current = false
@@ -68,14 +71,17 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
       setPull(THRESHOLD)
       void tapLight()
       try {
-        // Refresh in place: pull fresh Apple Health (native).
-        if (Capacitor.isNativePlatform()) await forceHealthKitSync().catch(() => {})
+        // Refresh in place: pull fresh Apple Health (native) + recompute score.
+        if (Capacitor.isNativePlatform()) await forceHealthKitSync(() => invalidateHealthData(queryClient)).catch(() => {})
       } finally {
         setRefreshing(false)
         setPull(0)
         // Revalidate ONLY the health-derived surfaces (not the whole cache) — the
         // spinner is already released, so refetches happen off the critical path.
         invalidateHealthData(queryClient)
+        // Flash an "Updated HH:MM" confirmation, then fade it.
+        setDoneAt(Date.now())
+        window.setTimeout(() => setDoneAt(null), 1800)
       }
     } else {
       setPull(0)
@@ -95,27 +101,45 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
   }, [onTouchStart, onTouchMove, onTouchEnd])
 
   const progress = Math.min(1, pull / THRESHOLD)
+  const done = doneAt != null
+  // The pill is visible while pulling, syncing, or briefly after completion.
+  const visible = pull > 0 || refreshing || done
+  const doneTime = done ? new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }).format(doneAt!) : ''
 
   return (
     <>
-      {/* Spinner + label sit in the pulled-down gap */}
+      {/* One premium sync capsule — breathes while syncing, confirms when done */}
       <div
-        aria-hidden={pull === 0}
-        className="fixed left-1/2 z-[70] flex flex-col items-center justify-center gap-1.5 pointer-events-none"
+        aria-hidden={!visible}
+        className="fixed left-1/2 z-[70] pointer-events-none"
         style={{
-          top: 'calc(env(safe-area-inset-top, 0px) + 4px)',
-          transform: `translate3d(-50%, ${pull - 44}px, 0)`,
-          opacity: progress,
-          transition: pull === 0 && !refreshing ? 'transform 0.24s ease, opacity 0.24s ease' : undefined,
+          top: 'calc(env(safe-area-inset-top, 0px) + 8px)',
+          transform: `translate3d(-50%, ${refreshing || done ? 0 : pull - 44}px, 0)`,
+          opacity: done ? 1 : refreshing ? 1 : progress,
+          transition: (pull === 0 && !refreshing) || done ? 'transform 0.28s cubic-bezier(0.32,0.72,0,1), opacity 0.3s ease' : undefined,
         }}
       >
-        <span className="flex h-9 w-9 items-center justify-center rounded-full"
-          style={{ background: 'rgba(8,13,24,0.85)', border: '1px solid #38BDF855', boxShadow: '0 4px 16px rgba(0,0,0,0.5)' }}>
-          <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`}
-            style={{ color: '#38BDF8', transform: refreshing ? undefined : `rotate(${progress * 270}deg)` }} />
+        <span
+          className={`flex items-center gap-2 rounded-full pl-2.5 pr-3.5 py-1.5 ${refreshing ? 'sync-breathe' : ''}`}
+          style={{
+            background: 'rgba(10,11,14,0.82)',
+            backdropFilter: 'blur(16px) saturate(160%)',
+            WebkitBackdropFilter: 'blur(16px) saturate(160%)',
+            border: `1px solid ${done ? '#4FB47755' : ACCENT + '55'}`,
+            boxShadow: `0 6px 20px rgba(0,0,0,0.5), 0 0 16px ${(done ? '#4FB477' : ACCENT)}22`,
+          }}
+        >
+          {done ? (
+            <Check className="w-3.5 h-3.5" style={{ color: '#4FB477' }} />
+          ) : (
+            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`}
+              style={{ color: ACCENT, transform: refreshing ? undefined : `rotate(${progress * 270}deg)` }} />
+          )}
+          <span className="text-[11px] font-semibold tracking-wide whitespace-nowrap"
+            style={{ color: done ? '#4FB477' : ACCENT }}>
+            {done ? `Updated ${doneTime}` : refreshing ? 'Syncing…' : 'Pull to sync'}
+          </span>
         </span>
-        <span className="text-[11px] font-semibold tracking-wide whitespace-nowrap"
-          style={{ color: '#38BDF8' }}>Syncing Data...</span>
       </div>
       <div
         style={{

@@ -3,7 +3,7 @@ import {
   cascadeSetEdit, draftTotals, buildCommitPayload,
   type SessionDraft, type DraftSet,
 } from '@/lib/sessions/draft'
-import { SaveWorkoutSchema } from '@/lib/sessions/schema'
+import { SaveWorkoutSchema, countCommittedSets } from '@/lib/sessions/schema'
 
 const draftWith = (sets: DraftSet[]): SessionDraft => ({
   splitDay: 'upper',
@@ -11,6 +11,25 @@ const draftWith = (sets: DraftSet[]): SessionDraft => ({
   notes: '',
   startedAt: '2026-07-16T12:00:00.000Z',
   exercises: [{ localId: 'x', name: 'Chest Press (Machine)', sets }],
+})
+
+describe('countCommittedSets — unilateral L/R sub-sets count once', () => {
+  it('an L/R split (shared pairId) is ONE set, not two', () => {
+    const sets = [
+      { pairId: 'p1' }, { pairId: 'p1' },   // one unilateral set (L + R)
+      {},                                    // one bilateral set
+    ]
+    expect(countCommittedSets(sets)).toBe(2)
+  })
+
+  it('counts a mix of bilateral rows and multiple L/R pairs correctly', () => {
+    const sets = [
+      {}, {},                                // 2 bilateral
+      { pairId: 'a' }, { pairId: 'a' },      // 1 unilateral
+      { pairId: 'b' }, { pairId: 'b' },      // 1 unilateral
+    ]
+    expect(countCommittedSets(sets)).toBe(4) // was 6 before the fix
+  })
 })
 
 describe('cascadeSetEdit — Hevy-style Set 1 cascade', () => {

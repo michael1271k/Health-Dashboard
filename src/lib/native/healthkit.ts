@@ -26,8 +26,13 @@ interface HealthKitPlugin {
 }
 const HealthKit = registerPlugin<HealthKitPlugin>('CapacitorHealthkit')
 
-/** HealthKit sample identifiers → our ingest payload keys + how to reduce them. */
-const METRIC_MAP: Array<{ hk: string; key: string; reduce: Reduce }> = [
+/**
+ * HealthKit sample identifiers → our ingest payload keys + how to reduce them.
+ * `scale` multiplies the reduced value before ingest — critical for
+ * OxygenSaturation, which HealthKit reports as a 0–1 FRACTION (0.982), not a
+ * percent. Without ×100 it stored 0.982 and rendered as "1%".
+ */
+const METRIC_MAP: Array<{ hk: string; key: string; reduce: Reduce; scale?: number }> = [
   { hk: 'HKQuantityTypeIdentifierStepCount', key: 'steps', reduce: 'sum' },
   { hk: 'HKQuantityTypeIdentifierActiveEnergyBurned', key: 'active_energy', reduce: 'sum' },
   { hk: 'HKQuantityTypeIdentifierAppleExerciseTime', key: 'training_minutes', reduce: 'sum' },
@@ -37,9 +42,15 @@ const METRIC_MAP: Array<{ hk: string; key: string; reduce: Reduce }> = [
   { hk: 'HKQuantityTypeIdentifierHeartRateVariabilitySDNN', key: 'hrv', reduce: 'avg' },
   { hk: 'HKQuantityTypeIdentifierRestingHeartRate', key: 'avg_rest_heart_rate', reduce: 'latest' },
   { hk: 'HKQuantityTypeIdentifierRespiratoryRate', key: 'respiratory_rate', reduce: 'avg' },
-  { hk: 'HKQuantityTypeIdentifierOxygenSaturation', key: 'blood_oxygen', reduce: 'latest' },
+  // OxygenSaturation is a 0–1 fraction → ×100 to store an actual percent.
+  { hk: 'HKQuantityTypeIdentifierOxygenSaturation', key: 'blood_oxygen', reduce: 'latest', scale: 100 },
   { hk: 'HKQuantityTypeIdentifierVO2Max', key: 'vo2max', reduce: 'latest' },
   { hk: 'HKQuantityTypeIdentifierBodyMass', key: 'weight', reduce: 'latest' },
+  // ── Advanced signals (Micros "Advanced" grid) — these were authorized but
+  // never actually QUERIED, so they always read 0. Now pulled every sync. ──
+  { hk: 'HKQuantityTypeIdentifierTimeInDaylight', key: 'time_in_daylight', reduce: 'sum' },
+  { hk: 'HKQuantityTypeIdentifierAppleSleepingWristTemperature', key: 'wrist_temp', reduce: 'avg' },
+  { hk: 'HKQuantityTypeIdentifierHeartRateRecoveryOneMinute', key: 'heart_rate_recovery', reduce: 'latest' },
   // Dietary — sum every logged food entry for the day so calories match MFP
   // exactly (fiber/rounding included), instead of deriving 4·C+4·P+9·F.
   { hk: 'HKQuantityTypeIdentifierDietaryEnergyConsumed', key: 'calories', reduce: 'sum' },
@@ -47,6 +58,19 @@ const METRIC_MAP: Array<{ hk: string; key: string; reduce: Reduce }> = [
   { hk: 'HKQuantityTypeIdentifierDietaryCarbohydrates', key: 'carbs', reduce: 'sum' },
   { hk: 'HKQuantityTypeIdentifierDietaryFatTotal', key: 'fats', reduce: 'sum' },
   { hk: 'HKQuantityTypeIdentifierDietaryWater', key: 'water', reduce: 'sum' },
+  // ── Dietary micro-nutrients (Micros "Daily Targets" grid) — also authorized
+  // but never queried. Keys match the micro-target keys so the payload maps
+  // straight into the nutrition micros bundle. ──
+  { hk: 'HKQuantityTypeIdentifierDietaryFiber', key: 'fiber', reduce: 'sum' },
+  { hk: 'HKQuantityTypeIdentifierDietarySugar', key: 'sugar', reduce: 'sum' },
+  { hk: 'HKQuantityTypeIdentifierDietarySodium', key: 'sodium', reduce: 'sum' },
+  { hk: 'HKQuantityTypeIdentifierDietaryPotassium', key: 'potassium', reduce: 'sum' },
+  { hk: 'HKQuantityTypeIdentifierDietaryCalcium', key: 'calcium', reduce: 'sum' },
+  { hk: 'HKQuantityTypeIdentifierDietaryIron', key: 'iron', reduce: 'sum' },
+  { hk: 'HKQuantityTypeIdentifierDietaryMagnesium', key: 'magnesium', reduce: 'sum' },
+  { hk: 'HKQuantityTypeIdentifierDietaryVitaminC', key: 'vitaminC', reduce: 'sum' },
+  { hk: 'HKQuantityTypeIdentifierDietaryVitaminD', key: 'vitaminD', reduce: 'sum' },
+  { hk: 'HKQuantityTypeIdentifierDietaryFatSaturated', key: 'satFat', reduce: 'sum' },
 ]
 
 const SLEEP_TYPE = 'HKCategoryTypeIdentifierSleepAnalysis'
@@ -92,13 +116,14 @@ const EXTRA_READ_TYPES = [
 ]
 const READ_TYPES = [...new Set(METRIC_MAP.map((m) => m.hk).concat(EXTRA_READ_TYPES))]
 
-/** The plugin already reduced the metric Swift-side; just round to our precision. */
-function roundReduced(samples: { value: number }[], how: Reduce): number | undefined {
-  const v = samples[0]?.value
-  if (v === undefined) return undefined
+/** The plugin already reduced the metric Swift-side; scale (unit-fix) then round. */
+function roundReduced(samples: { value: number }[], how: Reduce, scale = 1): number | undefined {
+  const raw = samples[0]?.value
+  if (raw === undefined) return undefined
+  const v = raw * scale
   if (how === 'sum') return Math.round(v)
   if (how === 'avg') return Math.round(v * 100) / 100
-  return v // latest — keep full precision (weight, RHR, VO₂max…)
+  return Math.round(v * 100) / 100 // latest — 2dp (weight, RHR, VO₂max, blood O₂…)
 }
 
 /** Request Health read permission once (native only). */
@@ -204,7 +229,7 @@ async function syncDay(dateISO: string, isToday: boolean): Promise<Record<string
     Promise.all(METRIC_MAP.map(async (m) => {
       try {
         const { samples } = await HealthKit.queryQuantity({ sampleType: m.hk, dayStart: dateISO, isToday, startDate: start.toISOString(), endDate: end.toISOString(), reduce: m.reduce })
-        return { key: m.key, value: roundReduced(samples, m.reduce) }
+        return { key: m.key, value: roundReduced(samples, m.reduce, m.scale) }
       } catch { return { key: m.key, value: undefined } } // metric not available on this device
     })),
     fetchSleep(dateISO),

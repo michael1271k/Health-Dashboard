@@ -3,7 +3,7 @@
 import { Target } from 'lucide-react'
 import type { SessionDetail } from '@/lib/hooks/useSessionDetail'
 import { GROUP_COLOR } from '@/lib/hooks/useMuscleAnalytics'
-import { landmarkFor, volumeZone, ZONE_META } from '@/lib/training/landmarks'
+import { landmarkFor, bandZone, ZONE_META } from '@/lib/training/landmarks'
 
 /**
  * Muscle focus for the session: a set-distribution bar per worked group, and —
@@ -42,7 +42,7 @@ export function MuscleFocus({ detail }: { detail: SessionDetail }) {
         {detail.muscleSets.map((m) => {
           const l = landmarkFor(m.group)
           if (!l) return null
-          const zone = volumeZone(m.sets, l)
+          const zone = bandZone(m.sets, l)
           const meta = ZONE_META[zone]
           const scaleMax = l.mrv * 1.15
           return (

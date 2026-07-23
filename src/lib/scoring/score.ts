@@ -124,6 +124,20 @@ export function computeWorkoutScore(inputs: Pick<ScoringInputs,
   return clamp(base + volumeBonus + prBonus)
 }
 
+// ─── Hydration Score ──────────────────────────────────────────────────────────
+/**
+ * Water intake vs goal, capped at 100. Returns null (excluded from the composite)
+ * when there is no water goal or nothing logged yet, so an unlogged morning is
+ * never penalized — hydration only counts once the user starts drinking.
+ */
+export function computeHydrationScore(inputs: Pick<ScoringInputs,
+  'waterMl' | 'waterGoalMl'>
+): number | null {
+  if (!inputs.waterGoalMl || inputs.waterGoalMl <= 0) return null
+  if (inputs.waterMl <= 0) return null   // nothing logged → unknown
+  return clamp((inputs.waterMl / inputs.waterGoalMl) * 100)
+}
+
 // ─── Recovery Score (physiological — NOT logging adherence) ────────────────────
 /**
  * Recovery reflects the body, not whether you logged water/supps:
@@ -172,9 +186,10 @@ export function computeDailyScore(inputs: ScoringInputs): ScoreComponents {
     activity:  computeActivityScore(inputs),
     workout:   computeWorkoutScore(inputs),
     recovery:  computeRecoveryScore(inputs),
+    hydration: computeHydrationScore(inputs),
   }
   const baseW: Record<string, number> = {
-    sleep: 0.25, nutrition: 0.30, activity: 0.20, workout: 0.15, recovery: 0.10,
+    sleep: 0.25, nutrition: 0.30, activity: 0.20, workout: 0.15, recovery: 0.10, hydration: 0.08,
   }
 
   // Composite = weighted mean over ONLY the components that have data (renormalized).
@@ -201,13 +216,18 @@ export function computeDailyScore(inputs: ScoringInputs): ScoreComponents {
   }
 
   const r = (v: number | null) => (v == null ? null : Math.round(v))
+  // Live current day with no sleep synced yet → the UI shows "Awaiting Sleep
+  // Data" rather than a composite built only from nutrition/activity.
+  const awaitingSleep = !!inputs.isCurrentDay && inputs.sleepHours <= 0
   return {
     sleepScore:     r(comps.sleep),
     nutritionScore: r(comps.nutrition),
     activityScore:  r(comps.activity),
     workoutScore:   r(comps.workout),
     recoveryScore:  r(comps.recovery),
+    hydrationScore: r(comps.hydration),
     totalScore:     totalScore == null ? null : Math.round(totalScore),
+    awaitingSleep,
   }
 }
 

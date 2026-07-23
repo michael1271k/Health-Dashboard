@@ -2,63 +2,89 @@
 
 import { Capacitor } from '@capacitor/core'
 import { syncRollingWindow, requestHealthAuthorization } from './healthkit'
+import { authedFetch } from '@/lib/utils/authedFetch'
+import { logicalTodayISO, hoursAwakeToday } from '@/lib/utils/day'
 
 const WATERMARK_KEY = 'helix_hk_last_sync'
-const MIN_INTERVAL_MS = 5 * 60 * 1000 // aggressive foreground sync: re-pull HealthKit at most every 5 min on resume
+// Small re-entrancy guard only — NOT a throttle. iOS can fire appStateChange
+// twice for a single foreground; this collapses those into one sync while still
+// letting every genuine app-open run a full sync.
+const REENTRANCY_MS = 10 * 1000
 
 /**
- * Native sync orchestrator. Foreground pulls run on app resume (throttled by a
- * watermark so rapid app-switching doesn't hammer HealthKit or the network).
- * Silent throttled background syncs are registered via HealthKit Background
- * Delivery / BGTaskScheduler in the iOS project (native config — see
- * docs/native-ios.md); this module is the JS entry point they call.
+ * Native sync orchestrator. A FULL data sync runs on every app-open / foreground
+ * (HealthKit pull → server score recompute → query revalidation). The only
+ * throttle is a 10s re-entrancy guard against duplicate resume events.
  *
  * Entirely inert on the web (guarded), so importing it never affects the
  * desktop build.
  */
-function dueForSync(): boolean {
+type OnSynced = () => void
+
+function withinReentrancyWindow(): boolean {
   try {
     const last = Number(localStorage.getItem(WATERMARK_KEY) ?? 0)
-    return Date.now() - last >= MIN_INTERVAL_MS
-  } catch { return true }
+    return Date.now() - last < REENTRANCY_MS
+  } catch { return false }
 }
 
-async function runSync(force = false): Promise<void> {
+/**
+ * One full sync pass: pull today+yesterday from HealthKit, recompute the day's
+ * score/battery on the server, then revalidate the health-derived surfaces so
+ * the open UI reflects the fresh data immediately.
+ */
+async function runSync(force: boolean, onSynced?: OnSynced): Promise<void> {
   if (!Capacitor.isNativePlatform()) return
-  if (!force && !dueForSync()) return
-  // Rolling today+yesterday window so yesterday's final total self-corrects the
-  // morning after (steps that accrued after the previous day's last sync).
+  if (!force && withinReentrancyWindow()) return
+  try { localStorage.setItem(WATERMARK_KEY, String(Date.now())) } catch { /* ignore */ }
+
+  // 1. Pull HealthKit → /api/ingest (writes today + yesterday to the DB).
   const { today, yesterday } = await syncRollingWindow()
-  if (today || yesterday) { try { localStorage.setItem(WATERMARK_KEY, String(Date.now())) } catch { /* ignore */ } }
+
+  // 2. Recompute today's score/battery from the freshly-ingested data.
+  try {
+    await authedFetch('/api/compute-score', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date: logicalTodayISO(), hoursAwake: hoursAwakeToday(), isToday: true, force: true }),
+    })
+  } catch { /* scoring failed — the next foreground retries */ }
+
+  // 3. Revalidate the UI (daily_scores + all health surfaces) off the critical path.
+  if (today || yesterday) onSynced?.()
+  else onSynced?.() // still refresh — the recompute may have changed the score
 }
 
-/** Wire app-resume syncing. Returns a cleanup fn. No-op on web. */
-export function initNativeSync(): () => void {
+/**
+ * Wire app-open + resume full-sync. `onSynced` revalidates React Query after each
+ * pass (the caller passes an invalidator bound to its QueryClient). Returns a
+ * cleanup fn. No-op on web.
+ */
+export function initNativeSync(onSynced?: OnSynced): () => void {
   if (!Capacitor.isNativePlatform()) return () => {}
   let removeListener: (() => void) | undefined
   let cancelled = false
 
-  // Defer the first auth + sync until AFTER the launch frame paints. Firing the
-  // HealthKit permission sheet + 16 parallel metric queries + the ingest POST
-  // synchronously on mount is the launch-time storm we want off the critical
-  // path. Each phase is isolated so a HealthKit/network failure can never brick
-  // boot — a throw here used to be able to take the whole shell down.
+  // Defer the first auth + sync until AFTER the launch frame paints — firing the
+  // permission sheet + parallel metric queries + ingest synchronously on mount is
+  // the launch-time storm we keep off the critical path. Each phase is isolated
+  // so a HealthKit/network failure can never brick boot.
   const kickoff = async () => {
     if (cancelled) return
     try { await requestHealthAuthorization() } catch { /* denied / plugin missing — continue */ }
     if (cancelled) return
-    try { await runSync(true) } catch { /* first sync failed — resume listener retries */ }
+    try { await runSync(true, onSynced) } catch { /* first sync failed — resume retries */ }
     if (cancelled) return
     try {
       const { App } = await import('@capacitor/app')
       const handle = await App.addListener('appStateChange', ({ isActive }) => {
-        if (isActive) void runSync(false).catch(() => {})
+        // Every genuine foreground triggers a full sync (10s re-entrancy guard only).
+        if (isActive) void runSync(false, onSynced).catch(() => {})
       })
       removeListener = () => { void handle.remove() }
     } catch { /* @capacitor/app unavailable — no resume syncing */ }
   }
 
-  // requestIdleCallback yields to first paint; setTimeout(0) is the fallback.
   const ric = (globalThis as { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number }).requestIdleCallback
   if (ric) ric(() => void kickoff(), { timeout: 3000 })
   else setTimeout(() => void kickoff(), 0)
@@ -71,7 +97,7 @@ export async function backgroundSync(): Promise<void> {
   await runSync(true)
 }
 
-/** Force an immediate HealthKit pull (ignores the throttle) — pull-to-refresh. */
-export async function forceHealthKitSync(): Promise<void> {
-  await runSync(true)
+/** Force an immediate full sync (ignores the re-entrancy guard) — pull-to-refresh. */
+export async function forceHealthKitSync(onSynced?: OnSynced): Promise<void> {
+  await runSync(true, onSynced)
 }

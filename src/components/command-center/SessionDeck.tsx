@@ -7,6 +7,7 @@ import { ExerciseDeckList } from './ExerciseDeckList'
 import { SessionNotesCard } from './SessionNotesCard'
 import { CommitBar } from './CommitBar'
 import { useExerciseSetHistory } from '@/lib/hooks/useExerciseSetHistory'
+import { useDeleteSession } from '@/lib/hooks/useDayVault'
 import { eraForDate } from '@/lib/programs'
 import { fmtVolume } from '@/lib/utils/units'
 import { tapSuccess } from '@/lib/native/haptics'
@@ -26,6 +27,8 @@ export function SessionDeck({ store, onClose, onViewDay }: {
   const { draft, updateSet, splitSet, mergeSet, toggleSetLink, addSet, removeSet, removeExercise, reorder, setNotes, setExerciseNote, setStats, setDate, discard, commit } = store
   const [result, setResult] = useState<CommitResult | null>(null)
   const [committedDate, setCommittedDate] = useState<string | null>(null)
+  // Delete the ACTUAL committed session (edit mode's trash), keyed to its date.
+  const del = useDeleteSession(draft?.date ?? '')
 
   // Era-aware previous-session memory for every exercise in the deck.
   const names = draft?.exercises.filter((ex) => ex.kind !== 'cardio').map((ex) => ex.name) ?? []
@@ -98,6 +101,20 @@ export function SessionDeck({ store, onClose, onViewDay }: {
         })
       }}
       onDiscard={() => { discard(); onClose() }}
+      onCancelEdit={() => { discard(); onClose() }}
+      deleting={del.isPending}
+      onDelete={() => {
+        // The trash in edit mode ALWAYS deletes the real committed session, then
+        // clears the edit draft and returns to the day.
+        if (!draft.replaceSessionId) { discard(); onClose(); return }
+        del.mutate(draft.replaceSessionId, {
+          onSuccess: () => {
+            discard()
+            if (onViewDay) onViewDay(draft.date)
+            else onClose()
+          },
+        })
+      }}
     />
   )
 

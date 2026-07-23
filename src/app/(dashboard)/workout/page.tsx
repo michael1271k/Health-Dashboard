@@ -20,6 +20,7 @@ import { useEraFilter } from '@/lib/era/eraFilter'
 import { Plus, TrendingUp, Moon, ArrowRight, Flag, ClipboardPaste, FileClock, ChevronDown } from 'lucide-react'
 
 const StrengthTrends = dynamic(() => import('@/components/charts/StrengthTrends').then((m) => m.StrengthTrends), { ssr: false })
+const WeeklyVolumeCard = dynamic(() => import('@/components/command-center/WeeklyVolumeCard').then((m) => m.WeeklyVolumeCard), { ssr: false })
 
 const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const PROGRAM_ORDER = ['apex51', 'axis4_builder', 'axis4_defender']
@@ -222,6 +223,11 @@ export default function WorkoutPage() {
           )
         })}
       </div>
+
+      {/* Weekly volume accumulator — sets/muscle vs the active program's targets */}
+      <WidgetBoundary label="Weekly volume" minHeight={200}>
+        <WeeklyVolumeCard />
+      </WidgetBoundary>
 
       {/* Progression snapshot (heavy analytics live in the Charts tab) */}
       <WidgetBoundary label="Strength trends" minHeight={200}>

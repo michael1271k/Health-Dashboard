@@ -55,6 +55,21 @@ describe('computeInsights', () => {
     expect(sv!.tone).toBe('caution')
   })
 
+  it('never invents a calorie-adherence comparison from a near-empty prior week', () => {
+    // Regression: the "-14 pts vs 100% the week before" hallucination. A full,
+    // on-target recent week but only 2 logged days in the prior week must NOT
+    // produce a calorie-adherence insight.
+    const days: DayPoint[] = []
+    // prior week: only 2 logged days
+    for (const d of ['2026-06-01', '2026-06-02']) days.push(day(d, { calories: 1955, calorieGoal: 1955 }))
+    // recent 7 days: all logged, all on-target
+    for (const d of ['2026-06-08','2026-06-09','2026-06-10','2026-06-11','2026-06-12','2026-06-13','2026-06-14']) {
+      days.push(day(d, { calories: 1955, calorieGoal: 1955 }))
+    }
+    const out = computeInsights({ days, sessions: [{ date: '2026-06-14', volumeKg: 4000 }], todayISO: '2026-06-14' })
+    expect(out.find((i) => i.id === 'calorie-adherence')).toBeUndefined()
+  })
+
   it('surfaces a rising resting-HR fatigue signal', () => {
     const days: DayPoint[] = [
       day('2026-06-01', { restHr: 54 }),

@@ -70,6 +70,10 @@ interface ScoreCardProps {
 
 export const ScoreCard = memo(function ScoreCard({ score, isLoading }: ScoreCardProps) {
   const totalScore = score?.score ?? null
+  // Empty sleep = no score: a scored TODAY with no sleep synced yet shows an
+  // honest "Awaiting Sleep Data" pending state instead of a misleading number
+  // built only from nutrition/activity.
+  const awaitingSleep = totalScore != null && (score?.sleep_score ?? null) == null
 
   const scoreColor =
     totalScore == null ? 'text-muted' :
@@ -96,31 +100,49 @@ export const ScoreCard = memo(function ScoreCard({ score, isLoading }: ScoreCard
         </div>
       ) : (
         <div className="flex-1 flex flex-col gap-5">
-          {/* Total score display + charge-up ring + ECG pulse */}
-          <div className="flex items-center gap-4">
-            <div className="relative w-[76px] h-[76px] shrink-0" aria-hidden="true">
-              <svg viewBox="0 0 70 70" className="absolute inset-0 -rotate-90 w-full h-full">
-                <circle cx="35" cy="35" r="30" fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="4" />
-                {totalScore != null && (
-                  <circle
-                    key={totalScore}
-                    className="score-ring-draw"
-                    cx="35" cy="35" r="30" fill="none"
-                    stroke="currentColor" strokeWidth="4" strokeLinecap="round"
-                    style={{ strokeDashoffset: 190 - 190 * (totalScore / 100), color: totalScore >= 80 ? '#34D399' : totalScore >= 60 ? '#22D3EE' : totalScore >= 40 ? '#FBBF24' : '#FB7185' }}
+          {awaitingSleep ? (
+            /* Empty-sleep pending state — honest, not a fabricated number */
+            <div className="flex items-center gap-4">
+              <div className="relative w-[76px] h-[76px] shrink-0 flex items-center justify-center" aria-hidden="true">
+                <svg viewBox="0 0 70 70" className="absolute inset-0 w-full h-full">
+                  <circle cx="35" cy="35" r="30" fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="4" strokeDasharray="3 5" />
+                </svg>
+                <span className="text-2xl" role="img" aria-label="moon">🌙</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="font-heading font-semibold text-fluid-lg text-text leading-tight">Awaiting Sleep Data</span>
+                <span className="text-fluid-xs text-muted mt-0.5">Sync your Watch to score today</span>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Total score display + charge-up ring + ECG pulse */}
+              <div className="flex items-center gap-4">
+                <div className="relative w-[76px] h-[76px] shrink-0" aria-hidden="true">
+                  <svg viewBox="0 0 70 70" className="absolute inset-0 -rotate-90 w-full h-full">
+                    <circle cx="35" cy="35" r="30" fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="4" />
+                    {totalScore != null && (
+                      <circle
+                        key={totalScore}
+                        className="score-ring-draw"
+                        cx="35" cy="35" r="30" fill="none"
+                        stroke="currentColor" strokeWidth="4" strokeLinecap="round"
+                        style={{ strokeDashoffset: 190 - 190 * (totalScore / 100), color: totalScore >= 80 ? '#34D399' : totalScore >= 60 ? '#22D3EE' : totalScore >= 40 ? '#FBBF24' : '#FB7185' }}
+                      />
+                    )}
+                  </svg>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <KineticNumber
+                    value={totalScore}
+                    className={`helix-num text-6xl font-bold leading-none ${scoreColor}`}
                   />
-                )}
-              </svg>
-            </div>
-            <div className="flex items-baseline gap-2">
-              <KineticNumber
-                value={totalScore}
-                className={`helix-num text-6xl font-bold leading-none ${scoreColor}`}
-              />
-              <span className="text-muted text-lg">{totalScore == null ? 'no data yet' : '/100'}</span>
-            </div>
-          </div>
-          <EcgPulse level={totalScore} color={totalScore == null ? '#5A6B85' : totalScore >= 60 ? '#34D399' : totalScore >= 40 ? '#FBBF24' : '#FB7185'} />
+                  <span className="text-muted text-lg">{totalScore == null ? 'no data yet' : '/100'}</span>
+                </div>
+              </div>
+              <EcgPulse level={totalScore} color={totalScore == null ? '#5A6B85' : totalScore >= 60 ? '#34D399' : totalScore >= 40 ? '#FBBF24' : '#FB7185'} />
+            </>
+          )}
 
           {/* Component rings */}
           <div className="flex items-end justify-between gap-2" role="list" aria-label="Score components">

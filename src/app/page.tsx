@@ -105,21 +105,27 @@ export default function DashboardPage() {
     const half = Math.floor(w.length / 2)
     return Math.round((avg(w.slice(half)) - avg(w.slice(0, half))) * 100) / 100
   }, [bioSeries])
-  // "When was the last weigh-in" cue — bioSeries is ascending, so the newest
-  // valid weight is the current reading. Colour-code by recency so a stale
-  // number can never masquerade as today's (green today → amber ≤3d → dim older).
-  const lastWeighDate = useMemo(() => {
+  // Last weigh-in — bioSeries is ascending, so the newest valid weight is the
+  // current reading. It CARRIES FORWARD: at 00:00 today's row is empty, so the
+  // Body tile must still show yesterday's actual weight (never `— — —`). The
+  // recency label + a drop/gain delta colour ride alongside it (green = weight
+  // dropped, red = gained).
+  const lastWeigh = useMemo(() => {
     const withW = (bioSeries ?? []).filter((d) => validWeight(d.weightKg) != null)
-    return withW.length ? withW[withW.length - 1].date : null
-  }, [bioSeries])
-  const weigh = useMemo(() => {
-    if (!lastWeighDate) return null
-    const ageDays = Math.round((Date.parse(logicalTodayISO() + 'T00:00:00Z') - Date.parse(lastWeighDate + 'T00:00:00Z')) / 86400000)
+    if (!withW.length) return null
+    const latestKg = validWeight(withW[withW.length - 1].weightKg)!
+    const prevKg = withW.length >= 2 ? validWeight(withW[withW.length - 2].weightKg) : null
+    const delta = prevKg != null ? Math.round((latestKg - prevKg) * 100) / 100 : 0
+    const ageDays = Math.round((Date.parse(logicalTodayISO() + 'T00:00:00Z') - Date.parse(withW[withW.length - 1].date + 'T00:00:00Z')) / 86400000)
     return {
-      color: ageDays <= 0 ? '#34D399' : ageDays <= 3 ? '#FBBF24' : '#8B97B2',
+      kg: latestKg,
+      delta,
+      // Green when the scale dropped, red when it rose (recomp direction).
+      deltaColor: delta < -0.005 ? '#4FB477' : delta > 0.005 ? '#D5514E' : null,
+      recencyColor: ageDays <= 0 ? '#4FB477' : ageDays <= 3 ? '#FBBF24' : '#8B97B2',
       label: ageDays <= 0 ? 'Weighed today' : ageDays === 1 ? 'Weighed yesterday' : `Weighed ${ageDays}d ago`,
     }
-  }, [lastWeighDate])
+  }, [bioSeries])
 
   const strips: Array<BioStripProps & { key: Exclude<SheetKey, null> }> = [
     {
@@ -146,10 +152,19 @@ export default function DashboardPage() {
           : todayEra === 'axis' ? 'no HELIX sessions yet — fresh slate' : 'no sessions yet',
     },
     {
-      key: 'body', icon: Scale, label: 'Body', accent: TEAL,
-      value: displayWeight(validWeight(log?.weight_kg)), unit,
-      status: weigh
-        ? <span style={{ color: weigh.color }}>{weigh.label}</span>
+      // Weight carries forward from the last valid reading (never `— — —` at
+      // midnight), never integer-rounded (64.9 stays 64.9), tinted by drop/gain.
+      key: 'body', icon: Scale, label: 'Body', accent: lastWeigh?.deltaColor ?? TEAL,
+      value: displayWeight(lastWeigh?.kg ?? validWeight(log?.weight_kg)), unit,
+      status: lastWeigh
+        ? <span style={{ color: lastWeigh.recencyColor }}>
+            {lastWeigh.label}
+            {lastWeigh.delta !== 0 && (
+              <span style={{ color: lastWeigh.deltaColor ?? undefined }}>
+                {' · '}{lastWeigh.delta < 0 ? '▼' : '▲'}{displayWeight(Math.abs(lastWeigh.delta))}{unit}
+              </span>
+            )}
+          </span>
         : log?.body_fat_pct != null ? `${n1(log.body_fat_pct)}% body fat` : 'composition',
       series: (bioSeries ?? []).map((d) => displayWeight(d.weightKg)),
     },
@@ -277,10 +292,10 @@ export default function DashboardPage() {
         )}
         {open === 'body' && (
           <div className="space-y-2.5">
-            {weigh && (
+            {lastWeigh && (
               <div className="flex items-center gap-2 text-fluid-xs">
-                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: weigh.color }} aria-hidden="true" />
-                <span style={{ color: weigh.color }} className="font-medium">{weigh.label}</span>
+                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: lastWeigh.recencyColor }} aria-hidden="true" />
+                <span style={{ color: lastWeigh.recencyColor }} className="font-medium">{lastWeigh.label}</span>
                 {weightWoW != null && (
                   <span className="text-muted">· {weightWoW > 0 ? '+' : ''}{weightWoW} {unit}/wk (7-day avg)</span>
                 )}

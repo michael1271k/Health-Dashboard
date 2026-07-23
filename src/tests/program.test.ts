@@ -94,7 +94,7 @@ describe('v5.1 phase engine', () => {
 })
 
 // ── [7] Battery calibration ──────────────────────────────────────────────────
-describe('v5.1 battery lift drain', () => {
+describe('v6 battery lift drain (drain-only)', () => {
   const base: ScoringInputs = {
     sleepHours: 8, deepMinutes: 90, remMinutes: 90, sleepGoalHours: 8,
     calories: 1950, proteinG: 0, carbsG: 195, fatG: 55,
@@ -105,16 +105,21 @@ describe('v5.1 battery lift drain', () => {
     waterMl: 0, waterGoalMl: 3000, supplementsTaken: 0, supplementsGoal: 3,
     contextMode: 'normal',
   }
-  it('a ~4,000 kg session drains ≈10–13%', () => {
+  it('a ~4,000 kg session drains ≈12–16%', () => {
     const rest = computeBattery({ ...base, sessionVolumeKg: 0 }, 10).currentPct
     const lift = computeBattery({ ...base, sessionVolumeKg: 4000 }, 10).currentPct
     const drain = rest - lift
-    expect(drain).toBeGreaterThanOrEqual(10)
-    expect(drain).toBeLessThanOrEqual(13)
+    expect(drain).toBeGreaterThanOrEqual(12)
+    expect(drain).toBeLessThanOrEqual(16)
   })
-  it('constants reflect the v5.1 calibration', () => {
-    expect(BATTERY.workoutFlat).toBe(6)
-    expect(BATTERY.workoutPerKg).toBe(0.0015)
+  it('a heavy leg day drains far more than the same-volume default split', () => {
+    const legs    = computeBattery({ ...base, sessionVolumeKg: 8000, splitDay: 'legs' }, 10).currentPct
+    const generic = computeBattery({ ...base, sessionVolumeKg: 8000 }, 10).currentPct
+    expect(legs).toBeLessThan(generic)
+  })
+  it('constants reflect the v6 calibration', () => {
+    expect(BATTERY.workoutFlat).toBe(5)
+    expect(BATTERY.workoutPerKg).toBe(0.0022)
   })
 })
 

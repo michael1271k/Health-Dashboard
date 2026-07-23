@@ -8,7 +8,8 @@ import {
   computeDailyScore,
   computeAlerts,
 } from '@/lib/scoring/score'
-import { computeMorningCharge, computeBattery, computeRecharge, computeSleepQuality, BATTERY } from '@/lib/scoring/battery'
+import { computeHydrationScore } from '@/lib/scoring/score'
+import { computeMorningCharge, computeBattery, computeSleepQuality, BATTERY } from '@/lib/scoring/battery'
 import { computeReadiness } from '@/lib/scoring/readiness'
 import type { ScoringInputs } from '@/lib/scoring/types'
 
@@ -238,6 +239,28 @@ describe('computeDailyScore', () => {
     expect(Number.isInteger(result.totalScore as number)).toBe(true)
     expect(Number.isInteger(result.sleepScore as number)).toBe(true)
   })
+
+  it('a 3h14m night HARD-CAPS the whole day (≤30) even with perfect everything else', () => {
+    // Regression: the "July 15" bug — 3h14m sleep must never total 81.
+    const result = computeDailyScore({ ...PERFECT, sleepHours: 3 + 14 / 60, deepMinutes: 20, remMinutes: 20 })
+    expect(result.totalScore).toBeLessThanOrEqual(30)
+  })
+
+  it('flags awaitingSleep on the live current day with no sleep synced', () => {
+    const result = computeDailyScore({ ...PERFECT, sleepHours: 0, deepMinutes: 0, remMinutes: 0, isCurrentDay: true })
+    expect(result.awaitingSleep).toBe(true)
+    expect(result.sleepScore).toBeNull()
+  })
+
+  it('does NOT flag awaitingSleep for a past day (only the live day pends)', () => {
+    const result = computeDailyScore({ ...PERFECT, sleepHours: 0, deepMinutes: 0, remMinutes: 0, isCurrentDay: false })
+    expect(result.awaitingSleep).toBe(false)
+  })
+
+  it('water contributes to the composite (hydration score present)', () => {
+    const result = computeDailyScore(PERFECT)
+    expect(result.hydrationScore).toBe(100)
+  })
 })
 
 // ─── Battery ──────────────────────────────────────────────────────────────────
@@ -251,21 +274,21 @@ describe('computeMorningCharge (sleep quality 0..1 → 55..100)', () => {
   })
 })
 
-describe('computeRecharge', () => {
-  it('returns 10 when both protein and water goals hit', () => {
-    expect(computeRecharge({ proteinG: 170, proteinGoalG: 170, waterMl: 3000, waterGoalMl: 3000 })).toBe(10)
+describe('computeHydrationScore', () => {
+  it('returns 100 when water hits goal', () => {
+    expect(computeHydrationScore({ waterMl: 3000, waterGoalMl: 3000 })).toBe(100)
   })
-
-  it('returns 6 for protein only', () => {
-    expect(computeRecharge({ proteinG: 170, proteinGoalG: 170, waterMl: 0, waterGoalMl: 3000 })).toBe(6)
+  it('caps at 100 when over goal', () => {
+    expect(computeHydrationScore({ waterMl: 4500, waterGoalMl: 3000 })).toBe(100)
   })
-
-  it('returns 4 for water only', () => {
-    expect(computeRecharge({ proteinG: 0, proteinGoalG: 170, waterMl: 3000, waterGoalMl: 3000 })).toBe(4)
+  it('scales below goal (1500/3000 → 50)', () => {
+    expect(computeHydrationScore({ waterMl: 1500, waterGoalMl: 3000 })).toBe(50)
   })
-
-  it('returns 0 when neither goal is hit', () => {
-    expect(computeRecharge({ proteinG: 0, proteinGoalG: 170, waterMl: 0, waterGoalMl: 3000 })).toBe(0)
+  it('returns null (excluded) when nothing logged yet', () => {
+    expect(computeHydrationScore({ waterMl: 0, waterGoalMl: 3000 })).toBeNull()
+  })
+  it('returns null when there is no water goal', () => {
+    expect(computeHydrationScore({ waterMl: 500, waterGoalMl: 0 })).toBeNull()
   })
 })
 
@@ -364,11 +387,28 @@ describe('computeAlerts', () => {
   })
 })
 
+describe('computeBattery — drain-only (v6)', () => {
+  it('a heavy leg day drains MUCH more than a light arm day', () => {
+    const base = { ...PERFECT, proteinG: 0, waterMl: 0 }  // recharge no longer exists
+    const legDay = computeBattery({ ...base, splitDay: 'legs', sessionVolumeKg: 9000 }, 12).currentPct
+    const armDay = computeBattery({ ...base, splitDay: 'pull', sessionVolumeKg: 3500 }, 12).currentPct
+    expect(legDay).toBeLessThan(armDay - 12)   // a clear, sensible spread
+    expect(legDay).toBeGreaterThan(BATTERY.floor)  // hard day, but not pinned at floor
+    expect(armDay).toBeGreaterThan(30)             // easy day stays comfortably up
+  })
+
+  it('eating does not raise the battery (no recharge term)', () => {
+    const hungry = computeBattery({ ...PERFECT, proteinG: 0, waterMl: 0, sessionVolumeKg: 0 }, 8).currentPct
+    const fed    = computeBattery({ ...PERFECT, proteinG: 170, waterMl: 3000, sessionVolumeKg: 0 }, 8).currentPct
+    expect(fed).toBe(hungry)   // protein/water make no difference to battery now
+  })
+})
+
 // ─── Battery constants ────────────────────────────────────────────────────────
 describe('BATTERY constants', () => {
   it('exposes a sane floor + chronological drain rate', () => {
     expect(BATTERY.floor).toBe(5)
-    expect(BATTERY.drainPerHour).toBe(3.0)
+    expect(BATTERY.drainPerHour).toBe(2.2)
     expect(BATTERY.maxAwake).toBe(18)
   })
 })

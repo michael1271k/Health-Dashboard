@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { epley1RM } from '@/lib/hooks/useCharts'
+import { epley1RM, collapseToSessionBest, type PRRawRow } from '@/lib/hooks/useCharts'
 
 describe('epley1RM', () => {
   it('returns weight as-is for 1 rep', () => {
@@ -45,5 +45,28 @@ describe('chart data transforms', () => {
   it('epley1RM at 30 reps doubles the weight', () => {
     // 100 × (1 + 30/30) = 100 × 2 = 200
     expect(epley1RM(100, 30)).toBe(200)
+  })
+})
+
+describe('collapseToSessionBest (strength-trend ghost-data fix)', () => {
+  const raw = (est: number, startedAt: string): PRRawRow => ({
+    exercise_id: 'hack-squat', exercise_name: 'Hack Squat',
+    startedAt, date: startedAt.slice(0, 10), est_1rm_kg: est, weight_kg: est, reps: 5,
+  })
+
+  it('a single session with a top set + back-off sets yields ONE point (no fake drop)', () => {
+    const rows = [raw(76, '2026-07-20T18:00:00Z'), raw(68, '2026-07-20T18:00:00Z'), raw(59, '2026-07-20T18:00:00Z')]
+    const out = collapseToSessionBest(rows)
+    expect(out).toHaveLength(1)
+    expect(out[0].est_1rm_kg).toBe(76) // the top set, not the back-off
+  })
+
+  it('keeps one point per session across multiple sessions, chronologically', () => {
+    const rows = [
+      raw(59, '2026-07-20T18:00:00Z'), raw(76, '2026-07-20T18:00:00Z'),
+      raw(80, '2026-07-27T18:00:00Z'), raw(70, '2026-07-27T18:00:00Z'),
+    ]
+    const out = collapseToSessionBest(rows)
+    expect(out.map((p) => p.est_1rm_kg)).toEqual([76, 80]) // real progression, sorted by date
   })
 })

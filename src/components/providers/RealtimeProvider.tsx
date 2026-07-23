@@ -36,24 +36,6 @@ const TABLE_KEYS: Record<string, string[][]> = {
 }
 const TABLES = Object.keys(TABLE_KEYS)
 
-/**
- * Only EXTERNAL data pushes deserve a toast. The app itself writes constantly
- * (compute-score upserts daily_scores on every open; supplement auto-log) —
- * those are real DB events but announcing them reads as a "ghost sync".
- */
-const ANNOUNCE_TABLES = new Set([
-  'daily_logs', 'nutrition_entries', 'daily_metrics',
-  'body_composition', 'sleep_sessions', 'water_intake',
-])
-
-/** Payload detail for the Sync Pulse toast — the freshest synced values. */
-export interface SyncDetail {
-  tables: string[]
-  steps?: number | null
-  sleepMinutes?: number | null
-  calories?: number | null
-}
-
 export function RealtimeProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient()
   // Hydrate the day-swap cache app-wide so schedule shortcuts cascade everywhere.
@@ -62,37 +44,24 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | null = null
     const pending = new Set<string>()
-    // Freshest row values captured from the change payloads (for Sync Pulse).
-    let latest: SyncDetail = { tables: [] }
 
-    // `announce` separates REAL database events (toast-worthy) from silent
-    // housekeeping refreshes (tab focus, reconnect) — the Sync Pulse must only
-    // ever fire for an actual INSERT/UPDATE payload, never a window focus.
-    const flush = (announce: boolean) => {
+    // Scoped React Query invalidation only — no user-facing toast. (The old
+    // "Sync Pulse" purple stats toast was removed; the pull-to-refresh pill is
+    // now the single sync indicator.)
+    const flush = () => {
       const keys = new Set<string>()
       for (const t of pending) for (const k of TABLE_KEYS[t] ?? []) keys.add(JSON.stringify(k))
-      const announceTables = [...pending].filter((t) => ANNOUNCE_TABLES.has(t))
-      const detail: SyncDetail = { ...latest, tables: announceTables }
       pending.clear()
-      latest = { tables: [] }
       for (const k of keys) queryClient.invalidateQueries({ queryKey: JSON.parse(k) as string[] })
-      if (announce && detail.tables.length) window.dispatchEvent(new CustomEvent('helix-sync', { detail }))
     }
-    const onChange = (table: string, row?: Record<string, unknown>) => {
+    const onChange = (table: string) => {
       pending.add(table)
       // A settings change on ANY device re-hydrates local preferences here live.
       if (table === 'user_goals') void hydratePrefsFromDb()
-      if (row) {
-        if (table === 'daily_logs') {
-          if (typeof row.steps === 'number') latest.steps = row.steps
-          if (typeof row.sleep_minutes === 'number') latest.sleepMinutes = row.sleep_minutes
-        }
-        if (table === 'nutrition_entries' && typeof row.calories === 'number') latest.calories = row.calories
-      }
       if (timer) clearTimeout(timer)
-      timer = setTimeout(() => flush(true), 400)
+      timer = setTimeout(() => flush(), 400)
     }
-    const refreshAll = () => { for (const t of TABLES) pending.add(t); flush(false) }
+    const refreshAll = () => { for (const t of TABLES) pending.add(t); flush() }
 
     let channel: ReturnType<typeof supabase.channel> | null = null
     const subscribe = () => {
@@ -103,7 +72,7 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           'postgres_changes' as any,
           { event: '*', schema: 'public', table },
-          (payload: { new?: Record<string, unknown> }) => onChange(table, payload?.new),
+          () => onChange(table),
         )
       }
       ch.subscribe()

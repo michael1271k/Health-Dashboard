@@ -8,37 +8,40 @@ export interface BatteryState {
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v))
 
 /**
- * Phone-like battery model. Calibration intent:
+ * Phone-like battery — a strict DRAIN-ONLY model (v6). Calibration intent:
  *   - Wake high (≈90–100% after good sleep, never below 55%).
- *   - Drain steadily with hours awake (chronological), plus activity + workout.
- *   - Floored so it never reads ~0% at breakfast (the old 16h-flat-drain bug).
+ *   - Only ever depletes through the day: chronological time + activity + the
+ *     workout. There is NO recharge term, so eating breakfast can never make the
+ *     battery "jump" (the old protein/water recharge bug).
+ *   - The workout drain is HARDNESS-aware: heavy sessions (legs, high volume)
+ *     drain far more than easy ones (arms, low volume). Base drains are lighter
+ *     than v5 so the workout is the differentiator instead of flooring every day.
  */
 export const BATTERY = {
   floor: 5,
   wakeMin: 55,         // worst-sleep wake charge
   wakeRange: 45,       // + up to 45 for perfect sleep → 100
-  drainPerHour: 3.0,   // chronological drain (1h→3, 16h→48)
-  activityCap: 15,
-  // v5.1 calibration: a 75–80min lift ≈ 350–450 kcal ≈ ~10–13% drain
-  // (flat 6 + 0.0015/kg → 4,000kg session = 12%). Zone-2 (Tue/Fri, 150–250 kcal)
-  // flows through activityDrain via active_energy.
-  workoutFlat: 6,
-  workoutPerKg: 0.0015,
+  drainPerHour: 2.2,   // chronological drain (1h→2.2, 16h→35.2) — lighter than v5
+  activityCap: 14,
+  // Workout drain = (flat + perKg·volume) · splitFactor. A heavy ~9,000kg leg day
+  // → (5 + 19.8)·1.5 ≈ 37; a light ~3,500kg arm day → (5 + 7.7)·1.0 ≈ 13.
+  workoutFlat: 5,
+  workoutPerKg: 0.0022,
   maxAwake: 18,
 } as const
+
+/**
+ * Split-hardness multiplier on the workout drain. Legs/lower are the most
+ * systemically taxing; upper a touch more than a single push/pull. Unknown or
+ * accessory splits fall back to 1.0 (the volume term still differentiates them).
+ */
+export const SPLIT_DRAIN: Record<NonNullable<ScoringInputs['splitDay']>, number> = {
+  legs: 1.5, lower: 1.4, upper: 1.1, push: 1.0, pull: 1.0,
+}
 
 /** Wake charge from sleep quality (0..1): 55 + 45·q, rounded. */
 export function computeMorningCharge(sleepQuality: number): number {
   return Math.round(BATTERY.wakeMin + BATTERY.wakeRange * clamp(sleepQuality, 0, 1))
-}
-
-/** Recharge: hitting protein goal adds 6%, hitting water goal adds 4%. */
-export function computeRecharge(inputs: Pick<ScoringInputs,
-  'proteinG' | 'proteinGoalG' | 'waterMl' | 'waterGoalMl'>
-): number {
-  const proteinBonus = inputs.proteinG >= inputs.proteinGoalG ? 6 : 0
-  const waterBonus = inputs.waterMl >= inputs.waterGoalMl ? 4 : 0
-  return proteinBonus + waterBonus
 }
 
 /**
@@ -57,11 +60,11 @@ export function computeSleepQuality(inputs: ScoringInputs): number {
 }
 
 /**
- * Current battery %.
- *   currentPct = clamp(wakeCharge − timeDrain − activityDrain − workoutDrain + recharge, floor, 100)
+ * Current battery % — strict drain-only.
+ *   currentPct = clamp(wakeCharge − timeDrain − activityDrain − workoutDrain, floor, 100)
  *   timeDrain     = drainPerHour × hoursAwake
  *   activityDrain = min(cap, 0.004×activeCal + 0.5×(steps/1000))
- *   workoutDrain  = sessionVolumeKg>0 ? flat + perKg×volume : 0
+ *   workoutDrain  = sessionVolumeKg>0 ? (flat + perKg×volume) × splitFactor : 0
  */
 export function computeBattery(inputs: ScoringInputs, hoursAwake?: number): BatteryState {
   const wakeCharge = computeMorningCharge(computeSleepQuality(inputs))
@@ -69,11 +72,11 @@ export function computeBattery(inputs: ScoringInputs, hoursAwake?: number): Batt
   const awake = clamp(hoursAwake ?? inputs.hoursAwake ?? 8, 0, BATTERY.maxAwake)
   const timeDrain = BATTERY.drainPerHour * awake
   const activityDrain = Math.min(BATTERY.activityCap, 0.004 * inputs.activeCal + 0.5 * (inputs.steps / 1000))
+  const splitFactor = inputs.splitDay ? SPLIT_DRAIN[inputs.splitDay] : 1.0
   const workoutDrain = inputs.sessionVolumeKg > 0
-    ? BATTERY.workoutFlat + BATTERY.workoutPerKg * inputs.sessionVolumeKg
+    ? (BATTERY.workoutFlat + BATTERY.workoutPerKg * inputs.sessionVolumeKg) * splitFactor
     : 0
-  const recharge = computeRecharge(inputs)
 
-  const currentPct = clamp(wakeCharge - timeDrain - activityDrain - workoutDrain + recharge, BATTERY.floor, 100)
+  const currentPct = clamp(wakeCharge - timeDrain - activityDrain - workoutDrain, BATTERY.floor, 100)
   return { morningCharge: wakeCharge, currentPct: Math.round(currentPct) }
 }

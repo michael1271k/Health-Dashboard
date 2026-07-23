@@ -247,12 +247,28 @@ export async function ingestDailyLog(
   if (payload.calories !== undefined) {
     const calories = payload.calories
     const carbs = payload.carbs ?? 0, protein = payload.protein ?? 0, fats = payload.fats ?? 0
-    await db.from('nutrition_entries').delete().eq('user_id', userId).eq('date', date).eq('meal_type', 'daily')
-    const { error } = await db.from('nutrition_entries').insert({
+    // Dietary micros → a jsonb bundle on the daily nutrition row (fiber keeps its
+    // own fiber_g column). VitaminD is reported by HealthKit in mcg; the UI target
+    // is IU, so convert (1 mcg = 40 IU).
+    const MICRO_KEYS = ['sugar', 'sodium', 'potassium', 'calcium', 'iron', 'magnesium', 'vitaminC', 'vitaminD', 'satFat'] as const
+    const micros: Record<string, number> = {}
+    for (const k of MICRO_KEYS) {
+      const v = payload[k]
+      if (v !== undefined) micros[k] = k === 'vitaminD' ? Math.round(v * 40) : v
+    }
+    const hasMicros = Object.keys(micros).length > 0
+    const baseRow = {
       user_id: userId, hk_uuid: null, logged_at: `${date}T00:00:00Z`, date, meal_type: 'daily',
-      calories, protein_g: protein, carbs_g: carbs, fat_g: fats, fiber_g: null,
+      calories, protein_g: protein, carbs_g: carbs, fat_g: fats,
+      fiber_g: payload.fiber ?? null,
       phase: derivePhase(calories),
-    } as any)
+    }
+    await db.from('nutrition_entries').delete().eq('user_id', userId).eq('date', date).eq('meal_type', 'daily')
+    let { error } = await db.from('nutrition_entries').insert({ ...baseRow, ...(hasMicros ? { micros } : {}) } as any)
+    // Self-heal: retry without the micros bundle if that column isn't migrated yet.
+    if (error && hasMicros && /micros|column|schema cache|PGRST204/i.test(error.message)) {
+      ({ error } = await db.from('nutrition_entries').insert(baseRow as any))
+    }
     result.results.nutrition = error ? { ok: false, action: 'inserted', error: error.message } : { ok: true, action: 'inserted' }
     if (error) errors.push({ field: 'nutrition_entries', error: error.message })
   }

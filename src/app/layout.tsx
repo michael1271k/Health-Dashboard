@@ -12,7 +12,6 @@ import { EraFilterProvider } from '@/lib/era/eraFilter'
 import { SerwistRegister } from '@/components/providers/SerwistRegister'
 import { AuthGate } from '@/components/providers/AuthGate'
 import { PullToRefresh } from '@/components/ui/PullToRefresh'
-import { SyncPulse } from '@/components/fx/SyncPulse'
 import { CrashRecorder } from '@/components/providers/CrashRecorder'
 import { NativeBoot } from '@/components/providers/NativeBoot'
 import { ReloadHome } from '@/components/providers/ReloadHome'
@@ -100,6 +99,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <QueryProvider>
+            {/* Native boot needs the QueryClient (foreground sync → invalidation),
+                so it lives INSIDE QueryProvider. */}
+            <NativeBoot />
             <RealtimeProvider>
               <EraFilterProvider>
               <MotionProvider>
@@ -119,7 +121,6 @@ export default function RootLayout({
                   </PullToRefresh>
                 </main>
                 <BottomNav />
-                <SyncPulse />
               </MotionProvider>
               </EraFilterProvider>
             </RealtimeProvider>
@@ -127,7 +128,6 @@ export default function RootLayout({
         </ThemeProvider>
         <SerwistRegister />
         <CrashRecorder />
-        <NativeBoot />
         <ReloadHome />
       </body>
     </html>

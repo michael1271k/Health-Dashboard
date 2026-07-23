@@ -183,22 +183,31 @@ function recoveryDrift(days: DayPoint[]): Insight | null {
   return null
 }
 
-/** Calorie-adherence trend: this week vs last. */
+/**
+ * Calorie-adherence trend: this week vs last. STRICT anti-hallucination rules —
+ * a week-over-week comparison only speaks when BOTH the recent-7 and the prior-7
+ * windows each hold ≥5 real logged days. Sparse onboarding data (a "week before"
+ * that barely exists) must never be compared, and the delta is phrased as an
+ * adherence observation, never a score penalty.
+ */
+const ADHERENCE_MIN_DAYS = 5
+
 function calorieAdherence(days: DayPoint[]): Insight | null {
-  const ok = days.filter((d) => d.calories != null && d.calorieGoal && d.calorieGoal > 0) as Array<DayPoint & { calories: number; calorieGoal: number }>
-  if (ok.length < 8) return null
-  const onTarget = (d: { calories: number; calorieGoal: number }) => Math.abs(d.calories - d.calorieGoal) / d.calorieGoal <= 0.1
+  const ok = days.filter((d) => d.calories != null && d.calories > 0 && d.calorieGoal && d.calorieGoal > 0) as Array<DayPoint & { calories: number; calorieGoal: number }>
   const recent = ok.slice(-7)
   const prior = ok.slice(-14, -7)
-  if (prior.length < 3) return null
+  // Require enough REAL logged days in BOTH windows — otherwise stay silent
+  // rather than invent a comparison against a near-empty prior week.
+  if (recent.length < ADHERENCE_MIN_DAYS || prior.length < ADHERENCE_MIN_DAYS) return null
+  const onTarget = (d: { calories: number; calorieGoal: number }) => Math.abs(d.calories - d.calorieGoal) / d.calorieGoal <= 0.1
   const rPct = round((recent.filter(onTarget).length / recent.length) * 100)
   const pPct = round((prior.filter(onTarget).length / prior.length) * 100)
   const delta = rPct - pPct
   if (Math.abs(delta) < 12) return null
   return {
     id: 'calorie-adherence',
-    headline: delta > 0 ? 'Nutrition discipline is climbing' : 'Calorie adherence slipped',
-    detail: `${rPct}% of the last 7 days landed within 10% of your calorie goal, vs ${pPct}% the week before (${delta > 0 ? '+' : ''}${delta} pts).`,
+    headline: delta > 0 ? 'Nutrition discipline is climbing' : 'Calorie adherence eased off',
+    detail: `${rPct}% of your last ${recent.length} logged days landed within 10% of your calorie goal, vs ${pPct}% over the prior ${prior.length} (${delta > 0 ? '+' : ''}${delta} percentage points of adherence — an observation, not a score change).`,
     tone: delta > 0 ? 'positive' : 'caution',
     confidence: Math.min(0.85, 0.4 + Math.abs(delta) / 100),
   }

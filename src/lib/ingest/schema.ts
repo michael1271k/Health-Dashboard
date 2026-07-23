@@ -93,6 +93,18 @@ export const IngestPayloadSchema = z.object({
   wrist_temp:          floatField(),                 // night's AVERAGE wrist temp, °C (stored in wrist_temp_delta)
   time_in_daylight:    intField(),                   // total minutes of daylight exposure
   heart_rate_recovery: floatField(),                 // 1-min post-exercise HRR, bpm — float
+  // ── Dietary micro-nutrients (Micros page) — fiber → nutrition_entries.fiber_g,
+  //    the rest → nutrition_entries.micros jsonb. Keys match the micro-target keys.
+  fiber:               floatField(),                 // g
+  sugar:               floatField(),                 // g
+  sodium:              floatField(),                 // mg
+  potassium:           floatField(),                 // mg
+  calcium:             floatField(),                 // mg
+  iron:                floatField(),                 // mg
+  magnesium:           floatField(),                 // mg
+  vitaminC:            floatField(),                 // mg
+  vitaminD:            floatField(),                 // IU (HealthKit reports mcg — 1 mcg = 40 IU; converted below)
+  satFat:              floatField(),                 // g
   // Optional explicit date override (YYYY-MM-DD); defaults to the logical day
   date:                z.string().optional(),
 }).strip()   // unknown keys are dropped, never a hard error

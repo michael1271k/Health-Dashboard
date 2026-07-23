@@ -71,6 +71,10 @@ export interface Database {
           carbs_g: number
           fat_g: number
           fiber_g: number | null
+          // Dietary micro-nutrients bundle (migration: `micros jsonb`) — sodium,
+          // potassium, calcium, iron, magnesium, vitaminC, vitaminD (IU), satFat,
+          // sugar. Optional so writers that predate the column keep compiling.
+          micros?: Record<string, number> | null
           phase: string | null
           created_at: string
         }

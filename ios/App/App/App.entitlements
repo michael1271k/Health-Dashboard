@@ -12,5 +12,17 @@
 	-->
 	<key>com.apple.developer.healthkit</key>
 	<true/>
+	<!--
+	  Associated Domains → iOS Password AutoFill. `webcredentials:` links this app
+	  to the Netlify domain the WKWebView loads, so on first manual sign-in iOS
+	  offers "Save Password?" to the iCloud Keychain and AutoFills it on a fresh
+	  install. Requires the matching apple-app-site-association webcredentials file
+	  (public/.well-known/, served as application/json via netlify.toml) AND the
+	  Associated Domains capability enabled on the Xcode target.
+	-->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>webcredentials:helix-health-fitness.netlify.app</string>
+	</array>
 </dict>
 </plist>

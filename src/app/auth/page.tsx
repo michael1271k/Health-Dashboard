@@ -33,7 +33,11 @@ export default function AuthPage() {
       setError(authError.message)
       setLoading(false)
     } else {
-      goHome()
+      // Let the successful form submission settle before navigating so iOS's
+      // Password AutoFill "Save Password?" heuristic (which fires on a
+      // password-form submit followed by navigation) has a window to trigger.
+      // The credential fields are intentionally left intact until we leave.
+      setTimeout(goHome, 250)
     }
   }
 

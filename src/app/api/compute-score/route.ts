@@ -43,7 +43,7 @@ async function computeForDate(supabase: DB, userId: string, date: string, hoursA
     supabase.from('water_intake').select('amount_ml').eq('user_id', userId).eq('date', date),
     supabase.from('supplements').select('id').eq('user_id', userId).eq('date', date),
     supabase.from('user_goals').select('*').eq('user_id', userId).maybeSingle(),
-    supabase.from('workout_sessions').select('total_volume_kg').eq('user_id', userId)
+    supabase.from('workout_sessions').select('total_volume_kg, split_day').eq('user_id', userId)
       .gte('started_at', `${date}T00:00:00Z`).lt('started_at', `${end}T00:00:00Z`),
   ])
 
@@ -53,7 +53,7 @@ async function computeForDate(supabase: DB, userId: string, date: string, hoursA
   const water = waterRes.data as Array<{ amount_ml: number }> | null
   const supplements = supplementsRes.data as Array<{ id: string }> | null
   const goals = goalsRes.data as Tables<'user_goals'> | null
-  const daySessions = sessionsRes.data as Array<{ total_volume_kg: number | null }> | null
+  const daySessions = sessionsRes.data as Array<{ total_volume_kg: number | null; split_day: ScoringInputs['splitDay'] }> | null
 
   const { data: trailingRaw } = await supabase
     .from('workout_sessions').select('total_volume_kg').eq('user_id', userId)
@@ -105,6 +105,10 @@ async function computeForDate(supabase: DB, userId: string, date: string, hoursA
   }
   const totalWaterMl = (water ?? []).reduce((s, r) => s + r.amount_ml, 0)
   const sessionVolumeKg = (daySessions ?? []).reduce((s, r) => s + (r.total_volume_kg ?? 0), 0)
+  // Battery hardness keys off the heaviest session of the day (legs ≫ arms).
+  const hardestSplit = (daySessions ?? [])
+    .slice()
+    .sort((a, b) => (b.total_volume_kg ?? 0) - (a.total_volume_kg ?? 0))[0]?.split_day ?? undefined
 
   const inputs: ScoringInputs = {
     sleepHours: sleep ? sleep.duration_min / 60 : 0,
@@ -127,6 +131,7 @@ async function computeForDate(supabase: DB, userId: string, date: string, hoursA
     isRestDay,
     newPRsToday: prCount ?? 0,
     sessionVolumeKg,
+    splitDay: hardestSplit,
     trailingAvgVolumeKg: trailingAvg,
     waterMl: totalWaterMl,
     waterGoalMl: g.water_goal_ml,

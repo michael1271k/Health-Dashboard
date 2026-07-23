@@ -27,6 +27,7 @@ export interface ScoringInputs {
   newPRsToday: number         // count of new PRs in today's session
   sessionVolumeKg: number     // total volume of today's session
   trailingAvgVolumeKg: number // avg volume over last 7 sessions (0 if <2 sessions)
+  splitDay?: 'push' | 'pull' | 'legs' | 'upper' | 'lower'  // hardest split drives battery drain
 
   // Recovery
   waterMl: number
@@ -60,7 +61,11 @@ export interface ScoreComponents {
   activityScore: number | null
   workoutScore: number | null   // null on rest days / travel / pending
   recoveryScore: number | null  // null when no sleep AND no HR data
+  hydrationScore: number | null // null when no water goal / nothing logged yet
   totalScore: number | null     // null only if every component is null
+  // True when it's the live current day and no sleep data has synced yet — the
+  // UI shows "Awaiting Sleep Data" instead of a misleading composite number.
+  awaitingSleep: boolean
 }
 
 export type ReadinessLevel = 'train_hard' | 'train_light' | 'rest'

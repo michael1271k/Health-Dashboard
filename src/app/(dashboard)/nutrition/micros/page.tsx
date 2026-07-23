@@ -16,10 +16,13 @@ export default function MicrosPage() {
   const { data: log } = useTodayDailyLog()
   const { data: nutrition } = useTodayNutrition()
 
-  // Only fiber + protein have an intake source today (nutrition_entries).
+  // Fiber + protein have dedicated columns; the rest of the dietary micros ride
+  // in the nutrition `micros` jsonb bundle (populated by the HealthKit sync).
+  const microsBundle = (nutrition as { micros?: Record<string, number> | null } | null)?.micros ?? {}
   const intake: Record<string, number | null | undefined> = {
     fiber: (nutrition as { fiber_g?: number | null } | null)?.fiber_g,
     protein: nutrition?.protein_g,
+    ...microsBundle,
   }
 
   const signalValue = (key: string): number | null => {
@@ -76,8 +79,8 @@ export default function MicrosPage() {
           })}
         </div>
         <p className="text-[10px] text-muted px-1 leading-snug">
-          Diet micros beyond protein/fiber populate once HealthKit is re-enabled (needs a paid Apple
-          Developer account — see the native notes). Targets stand as your reference until then.
+          Diet micros populate from your HealthKit food log on each sync. A micro shows “—” on days
+          the source didn’t record it; targets stand as your reference.
         </p>
       </section>
 

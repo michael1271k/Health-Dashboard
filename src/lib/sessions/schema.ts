@@ -47,3 +47,18 @@ export const SaveWorkoutSchema = z.object({
 })
 
 export type SaveWorkoutInput = z.infer<typeof SaveWorkoutSchema>
+
+/**
+ * Committed set count. A unilateral L/R split is ONE set logged as two sub-sets
+ * sharing a `pairId`, so each pairId counts once; every non-paired row counts
+ * once. (Volume still sums both sides elsewhere — only the COUNT de-duplicates.)
+ */
+export function countCommittedSets(sets: Array<{ pairId?: string }>): number {
+  const paired = new Set<string>()
+  let solo = 0
+  for (const s of sets) {
+    if (s.pairId) paired.add(s.pairId)
+    else solo++
+  }
+  return solo + paired.size
+}
