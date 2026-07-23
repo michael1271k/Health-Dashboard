@@ -1,12 +1,16 @@
 'use client'
 
-import { memo } from 'react'
+import { memo, useState } from 'react'
 import type { DailyLog } from '@/lib/hooks/useNutrition'
 import { PHASE_META } from '@/lib/nutrition/phase'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { KineticNumber } from '@/components/fx/KineticNumber'
+import { useDoubleTap } from '@/lib/utils/doubleTap'
+import { MacroOverrideSheet } from '@/components/nutrition/MacroOverrideSheet'
+import type { MacroValues } from '@/lib/hooks/useMacroOverride'
 
 interface Goals { calorie: number; protein: number | null; carbs: number | null; fat: number | null }
+type MacroField = keyof MacroValues
 
 function Ring({ value, goal, color, size, stroke, over }: {
   value: number | null; goal: number | null; color: string; size: number; stroke: number; over?: boolean
@@ -38,21 +42,30 @@ function Ring({ value, goal, color, size, stroke, over }: {
  * (turns rose past the 2,050 cut-band ceiling) flanked by P/C/F rings, all in
  * the global bioluminescent macro colors, with a 7-day phase-cell history.
  */
-export const MacroRings = memo(function MacroRings({ today, logs, goals }: {
+export const MacroRings = memo(function MacroRings({ today, logs, goals, date }: {
   today: { calories: number | null; proteinG: number | null; carbsG: number | null; fatG: number | null } | null
   logs: DailyLog[]           // recent days, newest first (fuel cells)
   goals: Goals
+  /** When set, double-tapping a macro opens the manual-override sheet for this day. */
+  date?: string
 }) {
   const kcal = today?.calories != null ? Math.round(today.calories) : null
   const over = kcal != null && kcal > 2050   // v5.1 cut-day ceiling
   const remaining = kcal != null ? goals.calorie - kcal : null
   const cells = [...logs].slice(0, 7).reverse()
 
+  // Double-tap → manual override sheet (one handler per macro; hooks stay unconditional).
+  const [editFocus, setEditFocus] = useState<MacroField | null>(null)
+  const tapCal = useDoubleTap(() => date && setEditFocus('calories'))
+  const tapPro = useDoubleTap(() => date && setEditFocus('protein_g'))
+  const tapCarb = useDoubleTap(() => date && setEditFocus('carbs_g'))
+  const tapFat = useDoubleTap(() => date && setEditFocus('fat_g'))
+
   // Order: Carbs · Fat · Protein (left → center → right).
   const macros = [
-    { label: 'Carbs', value: today?.carbsG ?? null, goal: goals.carbs, color: MACRO_COLORS.carbs },
-    { label: 'Fat', value: today?.fatG ?? null, goal: goals.fat, color: MACRO_COLORS.fat },
-    { label: 'Protein', value: today?.proteinG ?? null, goal: goals.protein, color: MACRO_COLORS.protein },
+    { label: 'Carbs', value: today?.carbsG ?? null, goal: goals.carbs, color: MACRO_COLORS.carbs, onTap: tapCarb },
+    { label: 'Fat', value: today?.fatG ?? null, goal: goals.fat, color: MACRO_COLORS.fat, onTap: tapFat },
+    { label: 'Protein', value: today?.proteinG ?? null, goal: goals.protein, color: MACRO_COLORS.protein, onTap: tapPro },
   ]
 
   return (
@@ -63,18 +76,20 @@ export const MacroRings = memo(function MacroRings({ today, logs, goals }: {
       </div>
 
       <div className="flex flex-col items-center gap-8 py-2">
-        {/* Hero calories ring — the focal point */}
-        <div className="relative shrink-0">
+        {/* Hero calories ring — the focal point (double-tap to override) */}
+        <div className="relative shrink-0" onClick={date ? tapCal : undefined} style={date ? { cursor: 'pointer' } : undefined} title={date ? 'Double-tap to edit' : undefined}>
           <Ring value={kcal} goal={goals.calorie} color={MACRO_COLORS.calories} size={208} stroke={14} over={over} />
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             {kcal != null
               ? <KineticNumber value={kcal} className="helix-num text-5xl font-bold leading-none" duration={800} />
               : <span className="helix-num text-5xl font-bold text-muted">—</span>}
             <span className="text-[11px] text-muted uppercase tracking-widest mt-1.5">kcal</span>
-            {remaining != null && (
-              <span className="helix-num text-fluid-sm mt-1" style={{ color: over ? '#FB7185' : MACRO_COLORS.calories }}>
+            {remaining != null ? (
+              <span className="helix-num text-fluid-sm mt-1" style={{ color: over ? '#D5514E' : MACRO_COLORS.calories }}>
                 {remaining >= 0 ? `${remaining.toLocaleString()} left` : `+${Math.abs(remaining).toLocaleString()} over`}
               </span>
+            ) : (
+              <span className="text-fluid-sm mt-1 text-muted">Breakfast is waiting 🍳</span>
             )}
           </div>
         </div>
@@ -84,7 +99,7 @@ export const MacroRings = memo(function MacroRings({ today, logs, goals }: {
         <div className="grid grid-cols-3 gap-3 w-full max-w-md mx-auto">
           {macros.map((m) => (
             <div key={m.label} className="flex flex-col items-center gap-2.5">
-              <div className="relative shrink-0">
+              <div className="relative shrink-0" onClick={date ? m.onTap : undefined} style={date ? { cursor: 'pointer' } : undefined} title={date ? 'Double-tap to edit' : undefined}>
                 <Ring value={m.value} goal={m.goal} color={m.color} size={100} stroke={10} />
                 <div className="absolute inset-0 flex flex-col items-center justify-center leading-none">
                   <span className="helix-num text-fluid-xl font-bold text-text">{m.value != null ? Math.round(m.value) : '—'}</span>
@@ -92,6 +107,12 @@ export const MacroRings = memo(function MacroRings({ today, logs, goals }: {
                 </div>
               </div>
               <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: m.color }}>{m.label}</span>
+              {/* Remaining vs goal — green under, red over */}
+              {m.value != null && m.goal != null && (
+                <span className="helix-num text-[10px] -mt-1" style={{ color: m.value <= m.goal ? '#4FB477' : '#D5514E' }}>
+                  {m.value <= m.goal ? `${Math.round(m.goal - m.value)}g left` : `${Math.round(m.value - m.goal)}g over`}
+                </span>
+              )}
             </div>
           ))}
         </div>
@@ -112,6 +133,21 @@ export const MacroRings = memo(function MacroRings({ today, logs, goals }: {
           )
         })}
       </div>
+
+      {date && (
+        <MacroOverrideSheet
+          open={editFocus !== null}
+          onClose={() => setEditFocus(null)}
+          date={date}
+          focus={editFocus ?? undefined}
+          initial={{
+            calories: today?.calories ?? 0,
+            protein_g: today?.proteinG ?? 0,
+            carbs_g: today?.carbsG ?? 0,
+            fat_g: today?.fatG ?? 0,
+          }}
+        />
+      )}
     </section>
   )
 })

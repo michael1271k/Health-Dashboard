@@ -4,8 +4,15 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { PROGRAMS, DEFAULT_PROGRAM_ID, getActiveProgramId } from '@/lib/programs'
 import { hydrateScheduleOverrides, setScheduleOverrideLocal, REST_OVERRIDE } from '@/lib/schedule/overrides'
+import { SUPPLEMENT_PROTOCOL, slotTimePassed } from '@/lib/supplements'
+import { logicalTodayISO } from '@/lib/utils/day'
 
 interface OverrideRow { date: string; day_key: string }
+
+// The training-only pre-workout stimulants (L-Citrulline + Caffeine) that a
+// Rest↔Train swap adds/removes from the pill tracker.
+const PRE_SLOT = SUPPLEMENT_PROTOCOL.find((s) => s.key === 'pre')
+const PRE_KEYS = (PRE_SLOT?.items ?? []).filter((i) => i.trainingOnly).map((i) => i.key)
 
 /** Sunday-anchored date for a weekday within the week containing dateISO. */
 function dateForWeekday(dateISO: string, weekday: number): string {
@@ -60,12 +67,35 @@ export function useSwapDay() {
         .upsert(rows as unknown as never, { onConflict: 'user_id,date' })
       if (error) throw new Error(error.message)
       for (const r of rows) setScheduleOverrideLocal(r.date, r.day_key) // optimistic cascade
+
+      // ── Supplement cascade ──────────────────────────────────────────────
+      // Rest→Train adds the pre-workout stimulants (auto-checked if it's today
+      // and past their 11:45 slot); Train→Rest removes them entirely. The
+      // checklist DISPLAY already follows the swap via isTrainingDay; this keeps
+      // supplement_log (score + history) consistent with it.
+      const today = logicalTodayISO()
+      for (const r of rows) {
+        const isTrain = r.day_key !== REST_OVERRIDE
+        if (isTrain) {
+          // Only auto-tick when it's today and the 11:45 slot has passed;
+          // otherwise the items simply show unchecked in the tracker.
+          if (r.date === today && PRE_SLOT && slotTimePassed(PRE_SLOT.time)) {
+            const nowIso = new Date().toISOString()
+            const supRows = PRE_KEYS.map((item_key) => ({ user_id: user.id, date: r.date, item_key, taken: true, taken_at: nowIso }))
+            await supabase.from('supplement_log').upsert(supRows as never, { onConflict: 'user_id,date,item_key' })
+          }
+        } else if (PRE_KEYS.length) {
+          // Train→Rest: strip the stimulant rows so they stop counting.
+          await supabase.from('supplement_log').delete().eq('user_id', user.id).eq('date', r.date).in('item_key', PRE_KEYS)
+        }
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['schedule_overrides'] })
       qc.invalidateQueries({ queryKey: ['day_vault'] })
       qc.invalidateQueries({ queryKey: ['daily_logs'] })
       qc.invalidateQueries({ queryKey: ['workout_sessions'] })
+      qc.invalidateQueries({ queryKey: ['supplement_log'] })
     },
   })
 }

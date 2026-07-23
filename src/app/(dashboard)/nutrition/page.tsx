@@ -109,6 +109,7 @@ export default function NutritionPage() {
         today={todayLog ? { calories: todayLog.calories, proteinG: todayLog.proteinG, carbsG: todayLog.carbsG, fatG: todayLog.fatG } : null}
         logs={logs ?? []}
         goals={{ calorie: goals.calorie, protein: goals.protein, carbs: goals.carbs, fat: goals.fat }}
+        date={todayISO}
       />
 
       {/* Deep-dive into micronutrients + advanced HealthKit signals */}

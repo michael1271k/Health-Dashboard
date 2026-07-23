@@ -41,7 +41,9 @@ async function computeForDate(supabase: DB, userId: string, date: string, hoursA
     supabase.from('nutrition_entries').select('*').eq('user_id', userId)
       .eq('date', date).eq('meal_type', 'daily').maybeSingle(),
     supabase.from('water_intake').select('amount_ml').eq('user_id', userId).eq('date', date),
-    supabase.from('supplements').select('id').eq('user_id', userId).eq('date', date),
+    // Supplements taken today live in supplement_log (the `supplements` table is
+    // empty/legacy) — count only the ones actually ticked off.
+    supabase.from('supplement_log').select('item_key').eq('user_id', userId).eq('date', date).eq('taken', true),
     supabase.from('user_goals').select('*').eq('user_id', userId).maybeSingle(),
     supabase.from('workout_sessions').select('total_volume_kg, split_day').eq('user_id', userId)
       .gte('started_at', `${date}T00:00:00Z`).lt('started_at', `${end}T00:00:00Z`),
@@ -51,7 +53,7 @@ async function computeForDate(supabase: DB, userId: string, date: string, hoursA
   const sleep = sleepRes.data as Tables<'sleep_sessions'> | null
   const nutrition = nutritionRes.data as Tables<'nutrition_entries'> | null
   const water = waterRes.data as Array<{ amount_ml: number }> | null
-  const supplements = supplementsRes.data as Array<{ id: string }> | null
+  const supplements = supplementsRes.data as Array<{ item_key: string }> | null
   const goals = goalsRes.data as Tables<'user_goals'> | null
   const daySessions = sessionsRes.data as Array<{ total_volume_kg: number | null; split_day: ScoringInputs['splitDay'] }> | null
 

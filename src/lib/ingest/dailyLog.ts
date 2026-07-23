@@ -257,20 +257,31 @@ export async function ingestDailyLog(
       if (v !== undefined) micros[k] = k === 'vitaminD' ? Math.round(v * 40) : v
     }
     const hasMicros = Object.keys(micros).length > 0
+    // A hand-entered day (hk_uuid='manual', set by the double-tap override) wins —
+    // never let a HealthKit re-sync overwrite the user's manual macro correction.
+    const { data: existingDaily } = await db.from('nutrition_entries')
+      .select('hk_uuid').eq('user_id', userId).eq('date', date).eq('meal_type', 'daily').maybeSingle()
+    if ((existingDaily as { hk_uuid?: string | null } | null)?.hk_uuid === 'manual') {
+      result.results.nutrition = { ok: true, action: 'ignored', error: 'manual override present — HealthKit macros skipped' }
+    } else {
     const baseRow = {
       user_id: userId, hk_uuid: null, logged_at: `${date}T00:00:00Z`, date, meal_type: 'daily',
       calories, protein_g: protein, carbs_g: carbs, fat_g: fats,
       fiber_g: payload.fiber ?? null,
       phase: derivePhase(calories),
     }
-    await db.from('nutrition_entries').delete().eq('user_id', userId).eq('date', date).eq('meal_type', 'daily')
-    let { error } = await db.from('nutrition_entries').insert({ ...baseRow, ...(hasMicros ? { micros } : {}) } as any)
+    // Atomic upsert on the (user_id,date,meal_type) unique constraint — replaces
+    // the old racy delete-then-insert. The DB trigger mirrors macros into
+    // daily_logs so every reader (scorer + Vitals) stays in sync from one write.
+    let { error } = await db.from('nutrition_entries')
+      .upsert({ ...baseRow, ...(hasMicros ? { micros } : {}) } as any, { onConflict: 'user_id,date,meal_type' })
     // Self-heal: retry without the micros bundle if that column isn't migrated yet.
     if (error && hasMicros && /micros|column|schema cache|PGRST204/i.test(error.message)) {
-      ({ error } = await db.from('nutrition_entries').insert(baseRow as any))
+      ({ error } = await db.from('nutrition_entries').upsert(baseRow as any, { onConflict: 'user_id,date,meal_type' }))
     }
     result.results.nutrition = error ? { ok: false, action: 'inserted', error: error.message } : { ok: true, action: 'inserted' }
     if (error) errors.push({ field: 'nutrition_entries', error: error.message })
+    }
   }
 
   // ── 4. Fan-out: body_composition (only with a VALID weight) ──

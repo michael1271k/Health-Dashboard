@@ -304,13 +304,11 @@ async function persistAndRespond(
       payload: derivePayloadFromStats(statsPayload),
     },
   }
-  // No (user_id,type,period_start) unique constraint on the live table, so upsert
-  // by hand: overwrite this week's row if present, else insert.
-  const { data: existing } = await supabase.from('reports')
-    .select('id').eq('user_id', userId).eq('type', 'weekly').eq('period_start', weekStart).maybeSingle()
-  const { data: reportRow, error: dbError } = (existing as unknown as { id: string } | null)?.id
-    ? await supabase.from('reports').update(record as unknown as never).eq('id', (existing as unknown as { id: string }).id).select('id').single()
-    : await supabase.from('reports').insert(record as unknown as never).select('id').single()
+  // Atomic upsert on the (user_id,type,period_start) unique constraint (added in
+  // the schema-hardening migration) — one round-trip, no read-then-write race.
+  const { data: reportRow, error: dbError } = await supabase.from('reports')
+    .upsert(record as unknown as never, { onConflict: 'user_id,type,period_start' })
+    .select('id').single()
 
   if (dbError) {
     console.error('[ai/weekly-report] DB write error:', dbError)

@@ -71,6 +71,7 @@ export interface Database {
           carbs_g: number
           fat_g: number
           fiber_g: number | null
+          target_kcal?: number | null   // live column; the day's calorie target snapshot
           // Dietary micro-nutrients bundle (migration: `micros jsonb`) — sodium,
           // potassium, calcium, iron, magnesium, vitaminC, vitaminD (IU), satFat,
           // sugar. Optional so writers that predate the column keep compiling.
@@ -176,6 +177,7 @@ export interface Database {
           day_key: string | null
           coach_report: unknown | null
           next_session_flag: string | null
+          notion_page_id?: string | null   // live column (Notion-migration provenance)
           created_at: string
           updated_at: string
         }
@@ -246,6 +248,7 @@ export interface Database {
           display_name: string | null
           role: 'admin' | 'member'
           created_at: string
+          updated_at?: string
         }
         Insert: { user_id: string } & Partial<Omit<Database['public']['Tables']['profiles']['Row'], 'user_id' | 'created_at'>>
         Update: Partial<Database['public']['Tables']['profiles']['Insert']>
@@ -352,30 +355,15 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['reports']['Insert']>
       }
       schedule_overrides: {
+        // Live PK is composite (user_id, date) — no surrogate id.
         Row: {
-          id: string
           user_id: string
           date: string
           day_key: string
-          created_at: string
+          updated_at: string
         }
         Insert: { user_id: string; date: string; day_key: string }
         Update: Partial<Database['public']['Tables']['schedule_overrides']['Insert']>
-      }
-      nutrition_phases: {
-        Row: {
-          id: string
-          user_id: string
-          mode: string
-          calorie_goal: number | null
-          protein_g: number | null
-          carbs_g: number | null
-          fat_g: number | null
-          effective_from: string
-          created_at: string
-        }
-        Insert: Omit<Database['public']['Tables']['nutrition_phases']['Row'], 'id' | 'created_at'>
-        Update: Partial<Database['public']['Tables']['nutrition_phases']['Insert']>
       }
     }
     Views: Record<string, never>

@@ -123,13 +123,11 @@ export function useSaveReport() {
         period_end: isoAddDays(row.week_start, 7),
         metrics: { payload: row.payload },
       }
-      // The live table has no (user_id,type,period_start) unique constraint, so
-      // upsert by hand: overwrite the existing week's row, else insert.
-      const { data: existing } = await supabase.from('reports')
-        .select('id').eq('user_id', user.id).eq('type', type).eq('period_start', row.week_start).maybeSingle()
-      const { error } = (existing as unknown as { id: string } | null)?.id
-        ? await supabase.from('reports').update(record as unknown as never).eq('id', (existing as unknown as { id: string }).id)
-        : await supabase.from('reports').insert(record as unknown as never)
+      // Atomic upsert on the (user_id,type,period_start) unique constraint
+      // (added in the schema-hardening migration). content_md is now nullable,
+      // so a stats-only weekly report row saves cleanly.
+      const { error } = await supabase.from('reports')
+        .upsert(record as unknown as never, { onConflict: 'user_id,type,period_start' })
       if (error) throw new Error(error.message)
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['reports'] }),

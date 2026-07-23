@@ -10,6 +10,8 @@ import { SleepDebtGauge } from '@/components/day/SleepDebtGauge'
 import { SwapDayControl } from '@/components/day/SwapDayControl'
 import { useDayVault, dayCompleteness, type DayVaultData } from '@/lib/hooks/useDayVault'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
+import { useDoubleTap } from '@/lib/utils/doubleTap'
+import { MacroOverrideSheet } from '@/components/nutrition/MacroOverrideSheet'
 import { phaseDisplay } from '@/lib/nutrition/phase'
 import { ERA_META, eraForDate, scheduleDayFor, PROGRAMS, DEFAULT_PROGRAM_ID, getActiveProgramId } from '@/lib/programs'
 import { displayWeight, validWeight, weightUnit, fmtVolume } from '@/lib/utils/units'
@@ -130,6 +132,8 @@ export default function DailyNexusPage() {
   const date = /^\d{4}-\d{2}-\d{2}$/.test(raw ?? '') ? raw : ''
   const { data, isLoading } = useDayVault(date)
   const [scaleOpen, setScaleOpen] = useState(false)
+  const [fuelEdit, setFuelEdit] = useState(false)
+  const tapFuel = useDoubleTap(() => setFuelEdit(true))
 
   if (!date) return <p className="text-muted p-6">Invalid date.</p>
 
@@ -218,8 +222,9 @@ export default function DailyNexusPage() {
       </section>
 
       <div className="grid grid-cols-2 gap-3">
-        {/* Fuel */}
-        <section className="helix-card col-span-2 sm:col-span-1 space-y-2" style={{ borderColor: `${EMBER}26` }}>
+        {/* Fuel — double-tap to manually override the day's macros */}
+        <section className="helix-card col-span-2 sm:col-span-1 space-y-2" style={{ borderColor: `${EMBER}26`, cursor: 'pointer' }}
+          onClick={tapFuel} title="Double-tap to edit macros">
           <div className="flex items-baseline justify-between">
             <h3 className="font-heading font-semibold text-fluid-sm text-text flex items-center gap-1.5"><Flame className="w-3.5 h-3.5" style={{ color: MACRO_COLORS.calories }} /> Fuel</h3>
             <span className="helix-num text-fluid-xs font-bold" style={{ color: MACRO_COLORS.calories }}>{n ? `${Math.round(n.calories).toLocaleString()}` : '—'}<span className="text-muted"> kcal</span></span>
@@ -230,8 +235,14 @@ export default function DailyNexusPage() {
               <MicroRing value={n.fat_g} goalHint={60} color={MACRO_COLORS.fat} label="F" />
               <MicroRing value={n.protein_g} goalHint={180} color={MACRO_COLORS.protein} label="P" />
             </div>
-          ) : <p className="text-fluid-xs text-muted py-2">No nutrition logged.</p>}
+          ) : <p className="text-fluid-xs text-muted py-2">No nutrition logged — double-tap to add.</p>}
         </section>
+        <MacroOverrideSheet
+          open={fuelEdit}
+          onClose={() => setFuelEdit(false)}
+          date={date}
+          initial={{ calories: n?.calories ?? 0, protein_g: n?.protein_g ?? 0, carbs_g: n?.carbs_g ?? 0, fat_g: n?.fat_g ?? 0 }}
+        />
 
         {/* Sleep & recovery */}
         <section className="helix-card col-span-2 sm:col-span-1 space-y-2" style={{ borderColor: `${VIOLET}26` }}>

@@ -13,7 +13,7 @@ import { IngestPayloadSchema } from '@/lib/ingest/schema'
 function noopChain(): any {
   const chain: any = {
     eq: () => chain, gte: () => chain, lt: () => chain, limit: () => Promise.resolve({ data: [] }),
-    select: () => chain, delete: () => chain,
+    select: () => chain, delete: () => chain, maybeSingle: () => Promise.resolve({ data: null }),
     insert: () => Promise.resolve({ error: null }),
     upsert: () => Promise.resolve({ error: null }),
   }
@@ -175,7 +175,10 @@ describe('ingest — nutrition uses explicit dietary energy, never derived', () 
         if (table === 'nutrition_entries') {
           const chain: any = {
             eq: () => chain, delete: () => chain,
+            // manual-override guard: no existing daily row → proceed
+            select: () => chain, maybeSingle: () => Promise.resolve({ data: null }),
             insert: (r: any) => { row = r; didInsert = true; return Promise.resolve({ error: null }) },
+            upsert: (r: any) => { row = r; didInsert = true; return Promise.resolve({ error: null }) },
           }
           return chain
         }
