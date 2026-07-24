@@ -29,7 +29,7 @@ export default function SessionPage() {
       <div
         aria-hidden="true"
         className="fixed inset-0 -z-[1]"
-        style={{ background: 'radial-gradient(ellipse at 50% 0%, #101528 0%, var(--color-bg) 60%)' }}
+        style={{ background: 'radial-gradient(ellipse at 50% 0%, #121418 0%, var(--color-bg) 60%)' }}
       />
       <Suspense fallback={<PageSpinner />}>
         <SessionPageInner />

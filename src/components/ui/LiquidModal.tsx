@@ -25,7 +25,7 @@ interface LiquidModalProps {
  *   values via framer), never resident — keeping the iOS glass rule intact.
  * - Reduce-motion collapses the pop to a plain fade.
  */
-export function LiquidModal({ open, onClose, title, accent = '#8B5CF6', children }: LiquidModalProps) {
+export function LiquidModal({ open, onClose, title, accent = '#E2683A', children }: LiquidModalProps) {
   const [reduceMotion, setReduceMotion] = useState(false)
 
   useEffect(() => {

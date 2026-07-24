@@ -5,34 +5,37 @@ import { memo } from 'react'
 import type { Tables } from '@/lib/supabase/types'
 import { KineticNumber } from '@/components/fx/KineticNumber'
 import { EcgPulse } from '@/components/fx/EcgPulse'
-
-function scoreColor(v: number | null): string {
-  if (v == null) return '#5A6B85'
-  if (v >= 80) return '#8B5CF6'
-  if (v >= 60) return '#22D3EE'
-  if (v >= 40) return '#FBBF24'
-  return '#FB7185'
-}
+import { hoursAwakeToday } from '@/lib/utils/day'
 
 /**
- * ReadinessOrb — the dashboard hero. A breathing glass orb: the RECOVERY score
- * at the core (physiological: sleep + HRV + resting-HR), the day BATTERY as a
- * liquid arc around the rim, ECG pulse beneath. These measure different things:
- * recovery reflects how restored your body is this morning and holds steady all
- * day; the battery drains with hours-awake + activity. So a 99 recovery beside a
- * 5% battery at night is expected, not a contradiction — the caption says so.
- * Opacity/glow animations only (the iOS backdrop-filter rule).
+ * BatteryOrb — the dashboard's SINGLE master metric.
+ *
+ * Previously this showed the recovery score in the core and the battery on the
+ * rim using two DIFFERENT colour scales, which produced nonsense like "98 inside
+ * a red wheel" at 23:00. There is now exactly one number and one scale: the
+ * drain-only day battery. It starts at the sleep-derived wake charge and only
+ * depletes (hours awake + activity + workout hardness), so it always reads the
+ * same direction. The composite Daily Score is demoted to a small chip below.
  */
+
+/** One scale, used by BOTH the ring and the number — they can never disagree. */
+function batteryColor(v: number | null): string {
+  if (v == null) return '#5A6472'
+  if (v >= 60) return '#E2683A'   // ember — plenty in the tank
+  if (v >= 30) return '#C9A227'   // brass — running down
+  return '#D5514E'                // oxide — depleted
+}
+
 export const ReadinessOrb = memo(function ReadinessOrb({ score, isLoading }: { score: Tables<'daily_scores'> | null; isLoading?: boolean }) {
-  // Recovery = physiological recovery (sleep + HRV + resting-HR) — reads high
-  // after good sleep. The blended adherence composite is the smaller "Daily Score".
-  const total = score?.recovery_score ?? score?.score ?? null
-  const composite = score?.score ?? null
   const battery = score?.battery_pct ?? null
-  const color = scoreColor(total)
-  const batteryColor = battery == null ? '#5A6B85' : battery >= 60 ? '#22D3EE' : battery >= 30 ? '#FBBF24' : '#FB7185'
+  const composite = score?.score ?? null
+  // Empty sleep = no score: a scored day with no sleep synced yet is PENDING,
+  // never a fabricated number built from nutrition/activity alone.
+  const awaitingSleep = composite != null && (score?.sleep_score ?? null) == null
+  const color = batteryColor(battery)
   const R = 84
   const CIRC = 2 * Math.PI * R
+  const awake = Math.round(hoursAwakeToday())
 
   if (isLoading) {
     return <div className="mx-auto w-56 h-56 rounded-full bg-surface-2/60 animate-pulse" />
@@ -43,47 +46,64 @@ export const ReadinessOrb = memo(function ReadinessOrb({ score, isLoading }: { s
       <div className="relative w-56 h-56 orb-breathe" data-testid="readiness-orb">
         {/* Glass sphere */}
         <div
-          className="absolute inset-3 rounded-full border border-white/12"
+          className="absolute inset-3 rounded-full border border-white/10"
           style={{
-            background: 'radial-gradient(circle at 36% 30%, rgba(22,62,72,0.55), rgba(5,10,20,0.75) 70%)',
-            boxShadow: `inset 0 1px 0 rgba(255,255,255,0.16), inset 0 -10px 30px rgba(0,0,0,0.45), 0 0 42px ${color}2e`,
+            background: 'radial-gradient(circle at 36% 30%, rgba(48,40,36,0.55), rgba(8,9,12,0.80) 70%)',
+            boxShadow: `inset 0 1px 0 rgba(255,255,255,0.14), inset 0 -10px 30px rgba(0,0,0,0.5), 0 0 42px ${color}2e`,
           }}
         />
-        {/* Battery liquid arc around the rim */}
+        {/* The single battery arc — same colour as the number */}
         <svg viewBox="0 0 200 200" className="absolute inset-0 -rotate-90 w-full h-full">
-          <circle cx="100" cy="100" r={R} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="7" />
-          {battery != null && (
+          <circle cx="100" cy="100" r={R} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="7" />
+          {battery != null && !awaitingSleep && (
             <circle
               key={battery}
               className="score-ring-draw"
               cx="100" cy="100" r={R} fill="none"
-              stroke={batteryColor} strokeWidth="7" strokeLinecap="round"
+              stroke={color} strokeWidth="7" strokeLinecap="round"
               strokeDasharray={CIRC}
-              style={{ strokeDashoffset: CIRC - CIRC * (battery / 100), color: batteryColor, filter: `drop-shadow(0 0 6px ${batteryColor}88)` }}
+              style={{ strokeDashoffset: CIRC - CIRC * (battery / 100), color, filter: `drop-shadow(0 0 6px ${color}88)` }}
             />
           )}
         </svg>
-        {/* Core: kinetic recovery score + the smaller Daily Score composite */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <KineticNumber value={total} className="helix-num text-6xl font-bold leading-none" />
-          <span className="text-[11px] text-muted mt-1 uppercase tracking-widest">{total == null ? 'no data yet' : 'recovery'}</span>
-          {composite != null && (
-            <span className="text-[10px] text-muted mt-1">Daily Score <span className="helix-num font-semibold text-text">{composite}</span></span>
-          )}
-          {battery != null && (
-            <span className="helix-num text-fluid-xs mt-0.5" style={{ color: batteryColor }}>{battery}% battery · energy spent</span>
+
+        <div className="absolute inset-0 flex flex-col items-center justify-center px-8 text-center">
+          {awaitingSleep ? (
+            <>
+              <span className="text-3xl" role="img" aria-label="moon">🌙</span>
+              <span className="font-heading font-semibold text-fluid-base text-text mt-2 leading-tight">Awaiting Sleep Data</span>
+              <span className="text-[11px] text-muted mt-1">Sync your Watch to score today</span>
+            </>
+          ) : (
+            <>
+              <span className="flex items-baseline">
+                <KineticNumber value={battery} className="helix-num text-6xl font-bold leading-none" />
+                {battery != null && <span className="helix-num text-2xl font-bold leading-none" style={{ color }}>%</span>}
+              </span>
+              <span className="text-[11px] text-muted mt-1 uppercase tracking-widest">
+                {battery == null ? 'no data yet' : 'battery'}
+              </span>
+              {battery != null && (
+                <span className="text-[10px] text-muted mt-1.5 leading-snug">
+                  {awake}h awake · drains with the day
+                </span>
+              )}
+            </>
           )}
         </div>
         {/* Specular highlight */}
-        <div className="absolute left-9 top-8 w-16 h-8 rounded-full rotate-[-24deg] pointer-events-none" style={{ background: 'rgba(255,255,255,0.13)', filter: 'blur(2px)' }} />
+        <div className="absolute left-9 top-8 w-16 h-8 rounded-full rotate-[-24deg] pointer-events-none" style={{ background: 'rgba(255,255,255,0.11)', filter: 'blur(2px)' }} />
       </div>
-      <div className="w-52"><EcgPulse level={total} color={color} /></div>
-      {/* Defuse the "99 recovery vs 5% battery" clash: when the body is well
-          recovered but the day-battery has drained, say so explicitly. */}
-      {total != null && total >= 75 && battery != null && battery < 35 && (
-        <p className="text-[11px] text-muted text-center max-w-[15rem] leading-snug">
-          Fully recovered — the battery is just today&apos;s energy spent, not lost recovery.
-        </p>
+
+      <div className="w-52"><EcgPulse level={battery} color={color} /></div>
+
+      {/* Daily Score demoted to a secondary chip — one hero metric, no rivalry. */}
+      {composite != null && !awaitingSleep && (
+        <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 border text-[11px]"
+          style={{ borderColor: '#23262B', background: 'rgba(255,255,255,0.03)' }}>
+          <span className="text-muted uppercase tracking-wide">Daily Score</span>
+          <span className="helix-num font-bold text-text">{composite}</span>
+        </span>
       )}
     </div>
   )

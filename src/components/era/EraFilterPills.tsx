@@ -9,7 +9,7 @@ import {
   type SubPhase, type SubPhaseSel,
 } from '@/lib/era/eraFilter'
 
-const GOLD = '#F5C15A'
+const GOLD = '#C9A227'
 
 /**
  * The global era pill row (Nutrition / Charts / Journey). Under the Helix 5.1
@@ -35,7 +35,7 @@ export function EraFilterPills({ label = 'Era:' }: { label?: string }) {
           return (
             <button key={k} onClick={() => setEra(k)} aria-pressed={active}
               className="px-3 py-1.5 rounded-xl text-fluid-xs font-semibold border transition-colors min-h-[36px]"
-              style={active ? { color, borderColor: `${color}55`, background: `${color}1f`, boxShadow: `0 0 10px ${color}33` } : { color: '#9AA3C4', borderColor: 'transparent' }}>
+              style={active ? { color, borderColor: `${color}55`, background: `${color}1f`, boxShadow: `0 0 10px ${color}33` } : { color: '#79808C', borderColor: 'transparent' }}>
               {text}
             </button>
           )
@@ -82,7 +82,7 @@ export function EraFilterPills({ label = 'Era:' }: { label?: string }) {
                     <button key={opt}
                       onClick={() => { setSubPhase(opt); setOpen(false) }}
                       className="px-3 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap transition-colors min-h-[30px]"
-                      style={active ? { color, background: `${color}26`, boxShadow: `0 0 8px ${color}44` } : { color: '#9AA3C4' }}>
+                      style={active ? { color, background: `${color}26`, boxShadow: `0 0 8px ${color}44` } : { color: '#79808C' }}>
                       {isAuto ? 'Auto' : meta.label}
                     </button>
                   )

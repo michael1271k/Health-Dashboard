@@ -44,16 +44,16 @@ const TrendStrip = dynamic(
 )
 
 // Bioluminescence domain accents
-const VIOLET = '#EC4899' // Sleep / recovery
-const CYAN = '#22D3EE'   // data / drivers
-const TEAL = '#8B5CF6'   // Body
-const AQUA = '#38BDF8'   // HRV / data
-const GOLD = '#F5C15A'   // Stack
+const VIOLET = '#B84F28' // Sleep / recovery
+const CYAN = '#9AA6B8'   // data / drivers
+const TEAL = '#E2683A'   // Body
+const AQUA = '#8AA0B8'   // HRV / data
+const GOLD = '#C9A227'   // Stack
 // Task-6 domain colours
-const TRAIN_GREEN = '#22C55E' // Training
-const WATER_BLUE = '#3B82F6'  // Water
-const ENERGY_RED = '#FB7185'  // Active Energy
-const STEPS_INDIGO = '#818CF8' // Steps (chosen — distinct from water-blue)
+const TRAIN_GREEN = '#4FB477' // Training
+const WATER_BLUE = '#8AA0B8'  // Water
+const ENERGY_RED = '#D5514E'  // Active Energy
+const STEPS_INDIGO = '#9AA6B8' // Steps (chosen — distinct from water-blue)
 
 const n0 = (v: number | null | undefined) => (v == null ? null : Math.round(v))
 const n1 = (v: number | null | undefined) => (v == null ? null : Math.round(v * 10) / 10)
@@ -122,7 +122,7 @@ export default function DashboardPage() {
       delta,
       // Green when the scale dropped, red when it rose (recomp direction).
       deltaColor: delta < -0.005 ? '#4FB477' : delta > 0.005 ? '#D5514E' : null,
-      recencyColor: ageDays <= 0 ? '#4FB477' : ageDays <= 3 ? '#FBBF24' : '#8B97B2',
+      recencyColor: ageDays <= 0 ? '#4FB477' : ageDays <= 3 ? '#C9A227' : '#79808C',
       label: ageDays <= 0 ? 'Weighed today' : ageDays === 1 ? 'Weighed yesterday' : `Weighed ${ageDays}d ago`,
     }
   }, [bioSeries])
@@ -155,7 +155,7 @@ export default function DashboardPage() {
       // Weight carries forward from the last valid reading (never `— — —` at
       // midnight), never integer-rounded (64.9 stays 64.9), tinted by drop/gain.
       key: 'body', icon: Scale, label: 'Body', accent: lastWeigh?.deltaColor ?? TEAL,
-      value: displayWeight(lastWeigh?.kg ?? validWeight(log?.weight_kg)), unit,
+      value: displayWeight(lastWeigh?.kg ?? validWeight(log?.weight_kg)), unit, decimals: 1,
       status: lastWeigh
         ? <span style={{ color: lastWeigh.recencyColor }}>
             {lastWeigh.label}
@@ -190,7 +190,7 @@ export default function DashboardPage() {
   // shows the "why" instead of dead space. Real HealthKit fields only.
   const drivers: Array<{ label: string; value: string; color: string }> = [
     { label: 'Sleep', value: log?.sleep_minutes != null ? formatSleep(log.sleep_minutes) : '—', color: VIOLET },
-    { label: 'Resting HR', value: log?.avg_rest_heart_rate != null ? `${log.avg_rest_heart_rate} bpm` : '—', color: '#FB7185' },
+    { label: 'Resting HR', value: log?.avg_rest_heart_rate != null ? `${log.avg_rest_heart_rate} bpm` : '—', color: '#D5514E' },
     { label: 'HRV', value: log?.hrv_ms != null ? `${Math.round(log.hrv_ms)} ms` : '—', color: AQUA },
     { label: 'Energy left', value: score?.battery_pct != null ? `${score.battery_pct}%` : '—', color: CYAN },
   ]

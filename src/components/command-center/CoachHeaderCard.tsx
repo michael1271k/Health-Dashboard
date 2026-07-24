@@ -69,18 +69,18 @@ export function CoachHeaderCard({ draft, onSetDate, onSetStats }: {
 
       {/* Stats strip — Volume/Sets live-derived; Duration/Avg HR/Calories editable. */}
       <div className="grid grid-cols-3 gap-2">
-        <Badge label="Volume" value={fmtVolume(totals.volumeKg)} unit="kg" color="#8B5CF6" />
-        <Badge label="Sets" value={String(totals.sets)} color="#22D3EE" />
-        <EditBadge label="Duration" value={s?.duration_min ?? null} unit="m" color="#EC4899"
+        <Badge label="Volume" value={fmtVolume(totals.volumeKg)} unit="kg" color="#E2683A" />
+        <Badge label="Sets" value={String(totals.sets)} color="#9AA6B8" />
+        <EditBadge label="Duration" value={s?.duration_min ?? null} unit="m" color="#B84F28"
           onChange={(v) => onSetStats({ duration_min: v })} parse={parseDurationMin} />
-        <EditBadge label="Avg HR" value={s?.avg_hr_bpm ?? null} unit="bpm" color="#FB7185"
+        <EditBadge label="Avg HR" value={s?.avg_hr_bpm ?? null} unit="bpm" color="#D5514E"
           onChange={(v) => onSetStats({ avg_hr_bpm: v })} />
-        <EditBadge label="Calories" value={s?.calories_kcal ?? null} unit="kcal" color="#FBBF24"
+        <EditBadge label="Calories" value={s?.calories_kcal ?? null} unit="kcal" color="#C9A227"
           onChange={(v) => onSetStats({ calories_kcal: v })} />
         <Badge
           label="Δ vs prior"
           value={s?.volume_delta_pct_vs_prior != null ? `${s.volume_delta_pct_vs_prior > 0 ? '+' : ''}${s.volume_delta_pct_vs_prior}%` : '—'}
-          color={s?.volume_delta_pct_vs_prior != null ? (s.volume_delta_pct_vs_prior >= 0 ? '#34D399' : '#FB7185') : '#8B97B2'}
+          color={s?.volume_delta_pct_vs_prior != null ? (s.volume_delta_pct_vs_prior >= 0 ? '#4FB477' : '#D5514E') : '#79808C'}
         />
       </div>
 
@@ -95,8 +95,8 @@ export function CoachHeaderCard({ draft, onSetDate, onSetStats }: {
       {draft.nextSessionFlag && (
         <div className="rounded-xl px-3 py-2.5 flex gap-2 items-start"
           style={{ background: 'rgba(232,197,122,0.07)', border: '1px solid rgba(232,197,122,0.35)' }}>
-          <Flag className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: '#F5C15A' }} aria-hidden="true" />
-          <p className="text-sm leading-relaxed" style={{ color: '#F5C15A' }} dir="auto">{draft.nextSessionFlag}</p>
+          <Flag className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: '#C9A227' }} aria-hidden="true" />
+          <p className="text-sm leading-relaxed" style={{ color: '#C9A227' }} dir="auto">{draft.nextSessionFlag}</p>
         </div>
       )}
     </div>

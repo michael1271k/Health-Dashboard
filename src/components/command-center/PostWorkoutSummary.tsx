@@ -36,7 +36,7 @@ export function PostWorkoutSummary({ sessions, date }: {
       {/* Slim "logged" affirmation — a header line, NOT a second box. The session
           breakdown below is the single unified, always-expanded workout block. */}
       <div className="flex items-center gap-2 px-1">
-        <CheckCircle2 className="w-4 h-4 shrink-0" style={{ color: '#34D399' }} aria-hidden="true" />
+        <CheckCircle2 className="w-4 h-4 shrink-0" style={{ color: '#4FB477' }} aria-hidden="true" />
         <span className="text-fluid-sm font-semibold text-text">
           {sessions.length > 1 ? `${sessions.length} sessions logged today` : 'Session logged today'} 💪
         </span>

@@ -19,11 +19,11 @@ describe('Database types', () => {
   })
 
   it('PPL_SPLITS has the Cyber Mint neon colors', () => {
-    expect(PPL_SPLITS.push.color).toBe('#22D3EE')    // cyan
-    expect(PPL_SPLITS.pull.color).toBe('#34D399')    // mint
-    expect(PPL_SPLITS.legs.color).toBe('#38BDF8')    // aqua
-    expect(PPL_SPLITS.upper.color).toBe('#34D399')   // teal
-    expect(PPL_SPLITS.lower.color).toBe('#F5C15A')   // gold
+    expect(PPL_SPLITS.push.color).toBe('#E2683A')   // ember
+    expect(PPL_SPLITS.pull.color).toBe('#6E8CA0')   // slate blue
+    expect(PPL_SPLITS.legs.color).toBe('#B0757A')   // dusty rose
+    expect(PPL_SPLITS.upper.color).toBe('#C9A227')  // brass
+    expect(PPL_SPLITS.lower.color).toBe('#5E9E8F')  // teal-grey
   })
 
   it('PPL_SPLITS legs label is Legs (canonical combined split)', () => {

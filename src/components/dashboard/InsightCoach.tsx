@@ -5,9 +5,9 @@ import { useInsights } from '@/lib/hooks/useInsights'
 import type { InsightTone } from '@/lib/coach/insights'
 
 const TONE: Record<InsightTone, { color: string; Icon: typeof TrendingUp }> = {
-  positive: { color: '#34D399', Icon: TrendingUp },
-  caution: { color: '#FBBF24', Icon: AlertTriangle },
-  neutral: { color: '#8B97B2', Icon: Minus },
+  positive: { color: '#4FB477', Icon: TrendingUp },
+  caution: { color: '#C9A227', Icon: AlertTriangle },
+  neutral: { color: '#79808C', Icon: Minus },
 }
 
 /**

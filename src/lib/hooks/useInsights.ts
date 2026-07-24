@@ -31,23 +31,23 @@ function scheduleAwareReadiness(
 ): ReadinessResult | null {
   if (ctx.contextMode === 'travel') {
     return {
-      level: 'train_light', label: 'Travel Mode 🌴', color: '#19E3D0',
+      level: 'train_light', label: 'Travel Mode 🌴', color: '#9AA6B8',
       reason: 'Vacation protocol — 2–3 short maintenance sessions this week is plenty. Prioritize rest, sun, and enjoying the trip.',
     }
   }
   if (!ctx.dayLabel && !ctx.workoutToday) {
-    return { level: 'rest', label: 'Zone-2 / Rest', color: '#8B97B2', reason: 'Scheduled rest in HELIX-5 — Zone-2 cardio (150–250 kcal) or full recovery.' }
+    return { level: 'rest', label: 'Zone-2 / Rest', color: '#79808C', reason: 'Scheduled rest in HELIX-5 — Zone-2 cardio (150–250 kcal) or full recovery.' }
   }
   if (ctx.dayLabel) {
     const name = ctx.dayLabel
     if (ctx.reentry) {
-      return { level: 'train_light', label: `${name} · Re-Entry`, color: '#38BDF8', reason: 'Re-entry week: ~90% loads, RPE cap 7–8. No PRs — groove the movements.' }
+      return { level: 'train_light', label: `${name} · Re-Entry`, color: '#8AA0B8', reason: 'Re-entry week: ~90% loads, RPE cap 7–8. No PRs — groove the movements.' }
     }
     if (!base || base.level === 'train_hard') {
-      return { level: 'train_hard', label: name, color: '#34D399', reason: `Scheduled ${name} — recovery looks strong, train hard.` }
+      return { level: 'train_hard', label: name, color: '#4FB477', reason: `Scheduled ${name} — recovery looks strong, train hard.` }
     }
     if (base.level === 'rest') {
-      return { level: 'train_light', label: `${name} · Go Light`, color: '#FBBF24', reason: `Scheduled ${name}, but recovery is low — keep it light and technical.` }
+      return { level: 'train_light', label: `${name} · Go Light`, color: '#C9A227', reason: `Scheduled ${name}, but recovery is low — keep it light and technical.` }
     }
     return { ...base, label: name }
   }

@@ -30,8 +30,8 @@ export function MuscleAnalyticsSection({ days, era = 'all' }: { days: number; er
           <ResponsiveContainer width="100%" height={250}>
             <RadarChart data={radarData} outerRadius="70%">
               <PolarGrid stroke="rgba(255,255,255,0.1)" />
-              <PolarAngleAxis dataKey="group" tick={{ fill: '#8B97B2', fontSize: 11 }} />
-              <Radar dataKey="sets" stroke="#34D399" fill="#34D399" fillOpacity={0.35} isAnimationActive={false} />
+              <PolarAngleAxis dataKey="group" tick={{ fill: '#79808C', fontSize: 11 }} />
+              <Radar dataKey="sets" stroke="#4FB477" fill="#4FB477" fillOpacity={0.35} isAnimationActive={false} />
             </RadarChart>
           </ResponsiveContainer>
         </div>
@@ -43,8 +43,8 @@ export function MuscleAnalyticsSection({ days, era = 'all' }: { days: number; er
           <ResponsiveContainer width="100%" height={230}>
             <BarChart data={data.weekly} margin={{ top: 4, right: 8, bottom: 0, left: -12 }}>
               <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
-              <XAxis dataKey="week" tick={{ fill: '#8B97B2', fontSize: 10, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={24} tickMargin={4} />
-              <YAxis tick={{ fill: '#8B97B2', fontSize: 10, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} width={28} />
+              <XAxis dataKey="week" tick={{ fill: '#79808C', fontSize: 10, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={24} tickMargin={4} />
+              <YAxis tick={{ fill: '#79808C', fontSize: 10, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} width={28} />
               <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
               {MUSCLE_GROUPS.map((g) => <Bar key={g} dataKey={g} stackId="s" fill={GROUP_COLOR[g]} maxBarSize={44} />)}
             </BarChart>
@@ -83,7 +83,7 @@ export function MuscleAnalyticsSection({ days, era = 'all' }: { days: number; er
           <h3 className="font-heading font-semibold text-base mb-3">Muscle Freshness</h3>
           <div className="space-y-2">
             {[...data.stats].sort((a, b) => (b.daysSince ?? -1) - (a.daysSince ?? -1)).map((s) => {
-              const c = s.daysSince == null ? '#5A6B85' : s.daysSince >= 4 ? '#34D399' : s.daysSince >= 2 ? '#FBBF24' : '#FB7185'
+              const c = s.daysSince == null ? '#5A6472' : s.daysSince >= 4 ? '#4FB477' : s.daysSince >= 2 ? '#C9A227' : '#D5514E'
               return (
                 <div key={s.group} className="flex items-center gap-2.5">
                   <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: c, boxShadow: `0 0 8px ${c}88` }} />

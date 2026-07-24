@@ -47,7 +47,7 @@ export function DatePickerPopover({ value, max, disabledDates, onSelect, onClose
       <button type="button" aria-label="Close" onClick={onClose}
         className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       <div className="relative w-[19rem] max-w-full rounded-2xl border p-4 shadow-2xl"
-        style={{ background: '#0B111B', borderColor: 'rgba(255,255,255,0.12)', boxShadow: '0 24px 64px rgba(0,0,0,0.7)' }}>
+        style={{ background: '#0F1115', borderColor: 'rgba(255,255,255,0.12)', boxShadow: '0 24px 64px rgba(0,0,0,0.7)' }}>
         <div className="flex items-center justify-between mb-3">
           <button type="button" onClick={prevMonth} aria-label="Previous month"
             className="min-h-[36px] min-w-[36px] rounded-lg flex items-center justify-center text-muted hover:text-text hover:bg-white/[0.06]">
@@ -83,14 +83,14 @@ export function DatePickerPopover({ value, max, disabledDates, onSelect, onClose
                 {d}
                 {isLogged && !isSelected && (
                   <span className="absolute left-1/2 -translate-x-1/2 bottom-1 w-1 h-1 rounded-full"
-                    style={{ background: '#8B5CF6' }} aria-hidden="true" />
+                    style={{ background: '#E2683A' }} aria-hidden="true" />
                 )}
               </button>
             )
           })}
         </div>
         <p className="text-[10px] text-muted mt-3 flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: '#8B5CF6' }} aria-hidden="true" />
+          <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: '#E2683A' }} aria-hidden="true" />
           Dot = already logged (can&apos;t double-log). Future dates disabled.
         </p>
       </div>

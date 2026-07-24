@@ -9,7 +9,7 @@ import { isTimedExercise } from '@/lib/exercises/timed'
 import { GROUP_COLOR } from '@/lib/hooks/useMuscleAnalytics'
 import { ExerciseHistorySheet } from '@/components/exercises/ExerciseHistorySheet'
 
-const GOLD = '#F5C15A', ROSE = '#FB7185', TEAL = '#34D399', ICE = '#38BDF8'
+const GOLD = '#C9A227', ROSE = '#D5514E', TEAL = '#4FB477', ICE = '#8AA0B8'
 
 function SetTypeBadge({ type }: { type: string }) {
   if (type === 'warmup') return <span className="text-[8px] font-bold uppercase px-1 py-px rounded" style={{ color: TEAL, background: `${TEAL}1f` }}>WU</span>
@@ -57,7 +57,7 @@ export function ExerciseBreakdown({ sessionId, exercises }: { sessionId: string;
                 <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                   {ex.muscleGroups.map((g) => (
                     <span key={g} className="text-[9px] font-semibold px-1.5 py-px rounded-full"
-                      style={{ color: GROUP_COLOR[g] ?? '#8B97B2', background: `${GROUP_COLOR[g] ?? '#8B97B2'}18` }}>{g}</span>
+                      style={{ color: GROUP_COLOR[g] ?? '#79808C', background: `${GROUP_COLOR[g] ?? '#79808C'}18` }}>{g}</span>
                   ))}
                   <span className="text-[9px] text-muted helix-num">
                     {ex.workingSets} set{ex.workingSets !== 1 ? 's' : ''} · {Math.round(displayWeight(ex.volumeKg) ?? 0).toLocaleString()}{unit}

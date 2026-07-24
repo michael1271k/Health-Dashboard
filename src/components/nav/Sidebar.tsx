@@ -53,8 +53,8 @@ export function Sidebar() {
                       layoutId="sidebar-active"
                       className="absolute inset-0 rounded-xl"
                       style={{
-                        background: 'color-mix(in srgb, #8B5CF6 12%, transparent)',
-                        border: '1px solid color-mix(in srgb, #8B5CF6 35%, transparent)',
+                        background: 'color-mix(in srgb, #E2683A 12%, transparent)',
+                        border: '1px solid color-mix(in srgb, #E2683A 35%, transparent)',
                         boxShadow: '0 0 16px rgba(139,92,246,0.14)',
                       }}
                       transition={{ type: 'spring', stiffness: 420, damping: 36 }}

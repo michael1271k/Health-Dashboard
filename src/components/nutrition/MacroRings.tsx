@@ -25,11 +25,11 @@ function Ring({ value, goal, color, size, stroke, over }: {
       {pct > 0 && (
         <circle
           cx={size / 2} cy={size / 2} r={r} fill="none"
-          stroke={over ? '#FB7185' : color} strokeWidth={stroke} strokeLinecap="round"
+          stroke={over ? '#D5514E' : color} strokeWidth={stroke} strokeLinecap="round"
           strokeDasharray={circ} strokeDashoffset={circ * (1 - pct)}
           style={{
             transition: 'stroke-dashoffset 0.9s cubic-bezier(0.4,0,0.2,1)',
-            filter: full || over ? `drop-shadow(0 0 5px ${over ? '#FB7185' : color})` : undefined,
+            filter: full || over ? `drop-shadow(0 0 5px ${over ? '#D5514E' : color})` : undefined,
           }}
         />
       )}
@@ -126,7 +126,7 @@ export const MacroRings = memo(function MacroRings({ today, logs, goals, date }:
             <div key={d.date} title={`${d.date}${d.calories != null ? ` · ${Math.round(d.calories)} kcal` : ''}`}
               className="w-7 h-9 rounded-md border flex items-end justify-center pb-0.5"
               style={{ borderColor: c ? `${c}55` : 'rgba(255,255,255,0.08)', background: c ? `${c}18` : 'rgba(255,255,255,0.02)', boxShadow: c ? `0 0 8px ${c}30` : undefined }}>
-              <span className="text-[8px] font-bold" style={{ color: c ?? '#5A6B85' }}>
+              <span className="text-[8px] font-bold" style={{ color: c ?? '#5A6472' }}>
                 {new Date(d.date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'narrow' })}
               </span>
             </div>

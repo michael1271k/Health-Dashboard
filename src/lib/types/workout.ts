@@ -49,33 +49,33 @@ export const PPL_SPLITS: Record<SplitDay, { label: string; labelHe: string; colo
   push: {
     label: 'Push',
     labelHe: 'דחיפה',
-    color: '#22D3EE',   // primary blue
+    color: '#E2683A',   // ember
   },
   pull: {
     label: 'Pull',
     labelHe: 'משיכה',
-    color: '#34D399',   // energy violet
+    color: '#6E8CA0',   // slate blue
   },
   legs: {
     label: 'Legs',
     labelHe: 'רגליים',
-    color: '#38BDF8',   // info blue
+    color: '#B0757A',   // dusty rose
   },
   upper: {
     label: 'Upper',
     labelHe: 'פלג גוף עליון',
-    color: '#34D399',   // success teal
+    color: '#C9A227',   // brass
   },
   lower: {
     label: 'Lower',     // legacy — maps to 'legs' in new sessions
     labelHe: 'פלג גוף תחתון',
-    color: '#F5C15A',   // warm
+    color: '#5E9E8F',   // teal-grey
   },
 }
 
 /** Canonical split accent for any split_day string (falls back to primary blue). */
 export function splitColor(split: string | null | undefined): string {
-  return (split && PPL_SPLITS[split as SplitDay]?.color) || '#22D3EE'
+  return (split && PPL_SPLITS[split as SplitDay]?.color) || '#9AA6B8'
 }
 
 // ─── Nutrition modes / presets ───────────────────────────────────────────────

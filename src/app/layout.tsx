@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Sora, Inter, IBM_Plex_Mono } from 'next/font/google'
+import { Space_Grotesk, Inter, IBM_Plex_Mono } from 'next/font/google'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Sidebar } from '@/components/nav/Sidebar'
 import { BottomNav } from '@/components/nav/BottomNav'
@@ -17,9 +17,12 @@ import { NativeBoot } from '@/components/providers/NativeBoot'
 import { ReloadHome } from '@/components/providers/ReloadHome'
 import './globals.css'
 
-// HELIX type system: Sora (headings/display) · Inter (body) · IBM Plex Mono (data).
-// Sora fills the legacy --font-outfit slot; IBM Plex Mono fills --font-jetbrains.
-const sora = Sora({
+// HELIX type system: Space Grotesk (headings/display) · Inter (body) ·
+// IBM Plex Mono (data). Space Grotesk is a mechanical grotesque — squarer
+// counters and tighter spacing than Sora's soft geometry, which is what makes
+// the UI read as engineered rather than friendly. It fills the legacy
+// --font-outfit slot; IBM Plex Mono fills --font-jetbrains.
+const sora = Space_Grotesk({
   subsets: ['latin'],
   variable: '--font-outfit',
   display: 'swap',
@@ -66,7 +69,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: 'cover',
-  themeColor: '#0A0B1A',
+  themeColor: '#0A0B0D',
 }
 
 export default function RootLayout({

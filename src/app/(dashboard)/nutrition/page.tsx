@@ -114,7 +114,7 @@ export default function NutritionPage() {
 
       {/* Deep-dive into micronutrients + advanced HealthKit signals */}
       <Link href="/nutrition/micros" className="glass-card w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/[0.03] transition-colors">
-        <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: 'rgba(139,92,246,0.16)', color: '#8B5CF6' }}>
+        <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: 'rgba(139,92,246,0.16)', color: '#E2683A' }}>
           <FlaskConical className="w-4 h-4" aria-hidden="true" />
         </span>
         <span className="flex-1 min-w-0">

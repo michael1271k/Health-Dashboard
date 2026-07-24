@@ -51,6 +51,18 @@ export function validWeight(kg: number | null | undefined): number | null {
  * Reactive unit preference — re-renders the calling component when the user flips
  * kg/lb in Settings (which dispatches `apex-units-change`) or another tab changes it.
  */
+/**
+ * Blood-oxygen unit coercion. `daily_logs.blood_oxygen` holds MIXED units:
+ * HealthKit's native bridge historically wrote the raw 0–1 fraction (0.982)
+ * while the legacy Shortcut wrote a real percent (97.79). Anything ≤1.5 is
+ * therefore a fraction and must be scaled to a percent before display —
+ * otherwise 0.982 renders as "1%". Idempotent: 97.79 passes through untouched.
+ */
+export function normalizeSpO2(v: number | null | undefined): number | null {
+  if (v == null || !Number.isFinite(v)) return null
+  return v <= 1.5 ? Math.round(v * 1000) / 10 : v
+}
+
 export function useUnitSystem(): 'kg' | 'lb' {
   const [unit, setUnit] = useState<'kg' | 'lb'>('kg')
   useEffect(() => {

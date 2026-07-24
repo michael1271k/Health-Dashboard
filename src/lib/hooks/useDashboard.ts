@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
+import { normalizeSpO2 } from '@/lib/utils/units'
 import { authedFetch } from '@/lib/utils/authedFetch'
 import type { Tables } from '@/lib/supabase/types'
 import { logicalTodayISO, hoursAwakeToday } from '@/lib/utils/day'
@@ -109,7 +110,10 @@ export function useTodayDailyLog() {
         .eq('date', todayLocal())
         .maybeSingle()
       if (error) throw error
-      return data as Tables<'daily_logs'> | null
+      const row = data as Tables<'daily_logs'> | null
+      // Coerce mixed-unit blood oxygen (0.982 fraction vs 97.79 percent) once,
+      // at the data layer, so no render site can show "1%".
+      return row ? { ...row, blood_oxygen: normalizeSpO2(row.blood_oxygen) } : null
     },
   })
 }

@@ -145,6 +145,19 @@ export function isHealthKitAvailable(): boolean {
   return Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('CapacitorHealthkit')
 }
 
+/**
+ * Run an async mapper over items in batches. Firing all ~28 metric queries at
+ * once the instant authorization resolves hammered the HealthKit store during
+ * app launch; batching keeps the native bridge responsive and the launch calm.
+ */
+async function inBatches<T, R>(items: T[], size: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const out: R[] = []
+  for (let i = 0; i < items.length; i += size) {
+    out.push(...(await Promise.all(items.slice(i, i + size).map(fn))))
+  }
+  return out
+}
+
 /** Device-local calendar day (YYYY-MM-DD) for a given instant. */
 function localDayISO(d: Date): string {
   const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0')
@@ -223,15 +236,15 @@ async function syncDay(dateISO: string, isToday: boolean): Promise<Record<string
   const end = isToday ? new Date() : new Date(`${dateISO}T23:59:59.999`)
   const payload: Record<string, number | string> = {}
 
-  // All 15 quantity metrics + the sleep category query fire in parallel — one
-  // batch of concurrent native round-trips instead of ~16 sequential awaits.
+  // Quantity metrics run in BATCHES (not one big parallel burst) alongside the
+  // sleep category query — see inBatches().
   const [metricResults, sleep] = await Promise.all([
-    Promise.all(METRIC_MAP.map(async (m) => {
+    inBatches(METRIC_MAP, 6, async (m) => {
       try {
         const { samples } = await HealthKit.queryQuantity({ sampleType: m.hk, dayStart: dateISO, isToday, startDate: start.toISOString(), endDate: end.toISOString(), reduce: m.reduce })
         return { key: m.key, value: roundReduced(samples, m.reduce, m.scale) }
       } catch { return { key: m.key, value: undefined } } // metric not available on this device
-    })),
+    }),
     fetchSleep(dateISO),
   ])
   for (const r of metricResults) if (r.value !== undefined) payload[r.key] = r.value

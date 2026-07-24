@@ -16,11 +16,11 @@ import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 import { eraForDate } from '@/lib/programs'
 
 const EXERCISE_COLORS = [
-  '#00E5A0', // primary
-  '#7C5CFF', // energy
-  '#38BDF8', // info
-  '#FBBF24', // warn
-  '#FF4D6D', // danger
+  '#4FB477', // primary
+  '#E2683A', // energy
+  '#8AA0B8', // info
+  '#C9A227', // warn
+  '#D5514E', // danger
 ]
 
 interface PRHistoryChartProps {
@@ -78,10 +78,10 @@ export function PRHistoryChart({ data, isLoading }: PRHistoryChartProps) {
       <div role="img" aria-label="Strength trend chart showing estimated 1 rep max over time">
         <ResponsiveContainer width="100%" height={240}>
           <LineChart data={chartData} margin={{ top: 4, right: 26, bottom: 0, left: 0 }}>
-            <CartesianGrid stroke="#243040" strokeDasharray="3 3" vertical={false} />
+            <CartesianGrid stroke="#23262B" strokeDasharray="3 3" vertical={false} />
             <XAxis
               dataKey="date"
-              tick={{ fill: '#94A3B8', fontSize: 10 }}
+              tick={{ fill: '#79808C', fontSize: 10 }}
               tickMargin={8}
               minTickGap={20}
               axisLine={false}
@@ -89,7 +89,7 @@ export function PRHistoryChart({ data, isLoading }: PRHistoryChartProps) {
               interval="preserveStartEnd"
             />
             <YAxis
-              tick={{ fill: '#94A3B8', fontSize: 11 }}
+              tick={{ fill: '#79808C', fontSize: 11 }}
               axisLine={false}
               tickLine={false}
               width={42}
@@ -97,10 +97,10 @@ export function PRHistoryChart({ data, isLoading }: PRHistoryChartProps) {
             />
             <Tooltip
               content={<ChartTooltip />}
-              cursor={{ stroke: '#243040', strokeWidth: 1 }}
+              cursor={{ stroke: '#23262B', strokeWidth: 1 }}
             />
             <Legend
-              wrapperStyle={{ fontSize: 11, color: '#94A3B8' }}
+              wrapperStyle={{ fontSize: 11, color: '#79808C' }}
               iconType="circle"
               iconSize={6}
             />

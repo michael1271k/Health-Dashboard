@@ -4,7 +4,7 @@ import { Star, TrendingUp } from 'lucide-react'
 import { useSessionIntel } from '@/lib/hooks/useSessionIntel'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 
-const GOLD = '#F5C15A', VIOLET = '#8B5CF6', TEAL = '#34D399', ROSE = '#FB7185'
+const GOLD = '#C9A227', VIOLET = '#E2683A', TEAL = '#4FB477', ROSE = '#D5514E'
 
 /**
  * Historical comparison for the session: volume Δ vs the previous SAME-TYPE

@@ -36,7 +36,7 @@ export function FileSystemBrowser({ reports, gymReports, focusWeek, era = 'all' 
   function filesFor(w: ProgramWeek): FileItem[] {
     const files: FileItem[] = []
     const report = reports.find((r) => r.week_start >= w.weekStart && r.week_start <= w.weekEnd)
-    if (report?.content_md) files.push({ key: 'overview', name: `${weekLabelOf(w.weekStart)} Report`, icon: FileText, accent: '#22D3EE', body: report.content_md })
+    if (report?.content_md) files.push({ key: 'overview', name: `${weekLabelOf(w.weekStart)} Report`, icon: FileText, accent: '#9AA6B8', body: report.content_md })
     for (const g of gymReports.filter((g) => g.date >= w.weekStart && g.date <= w.weekEnd)) {
       files.push({ key: `gym-${g.id}`, name: `${cap(g.split)} session`, sub: fmt(g.date), icon: Dumbbell, accent: splitColor(g.split), body: g.reportMd, meta: g })
     }

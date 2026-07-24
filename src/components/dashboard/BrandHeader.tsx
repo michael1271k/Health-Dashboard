@@ -79,13 +79,13 @@ export function BrandHeader() {
         </h1>
         <span
           className="px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider self-center"
-          style={{ color: '#22D3EE', background: '#22D3EE1f', border: '1px solid #22D3EE55', boxShadow: '0 0 10px #22D3EE44' }}
+          style={{ color: '#9AA6B8', background: '#9AA6B81f', border: '1px solid #9AA6B855', boxShadow: '0 0 10px #9AA6B844' }}
         >
           HELIX-5
         </span>
         <span
           className="ml-auto flex items-center gap-1.5 px-2.5 py-1 rounded-full self-center shrink-0"
-          style={{ color: '#FB923C', background: '#FB923C1a', border: '1px solid #FB923C55', boxShadow: '0 0 12px #FB923C33' }}
+          style={{ color: '#E2683A', background: '#E2683A1a', border: '1px solid #E2683A55', boxShadow: '0 0 12px #E2683A33' }}
           aria-label={`Daily streak: ${programStreak()} days`}
         >
           <span aria-hidden="true" className="text-fluid-sm leading-none">🔥</span>

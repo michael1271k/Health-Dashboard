@@ -10,20 +10,21 @@
      Disciplined, premium, serious: a near-black graphite base with ONE warm
      molten-ember signature accent and brushed-platinum data tones. Semantic
      green/red are reserved for deltas + alerts only. Glass aesthetic unchanged. */
-  --color-bg: #0A0B0E;          /* obsidian graphite */
-  --color-surface: #12141A;     /* cool graphite glass base */
-  --color-surface-2: #1B1E26;   /* solid raised surfaces (sliders, inputs) */
-  --color-primary: #E2683A;     /* molten ember — the signature accent */
-  --color-energy: #C9752F;      /* burnished copper — recovery / battery accents */
-  --color-info: #9AA6B8;        /* brushed platinum-steel — data */
+  --color-bg: #0A0B0D;          /* obsidian */
+  --color-surface: #121418;     /* graphite glass base */
+  --color-surface-2: #1A1D23;   /* solid raised surfaces (sliders, inputs) */
+  --color-primary: #E2683A;     /* molten ember — THE accent */
+  --color-primary-dim: #B84F28; /* banked ember */
+  --color-energy: #C9752F;      /* burnished copper — battery accents */
+  --color-info: #9AA6B8;        /* brushed steel — data */
   --color-ice: #8AA0B8;         /* cool steel — interactive/active accent */
-  --color-success: #4FB477;     /* muted sage — positive deltas */
+  --color-success: #4FB477;     /* muted sage — positive deltas ONLY */
   --color-warn: #C9A227;        /* restrained brass — caution */
-  --color-danger: #D5514E;      /* oxide red — negative */
-  --color-gold: #C9A227;        /* brass — PRs / luxury highlight */
-  --color-text: #ECEEF2;        /* titanium white */
-  --color-muted: #7C828F;       /* steel grey */
-  --color-border: #23252B;      /* graphite hairline (legacy solid contexts) */
+  --color-danger: #D5514E;      /* oxide red — negative ONLY */
+  --color-gold: #C9A227;        /* brass — PRs */
+  --color-text: #ECEEF2;        /* titanium */
+  --color-muted: #79808C;       /* steel grey */
+  --color-border: #23262B;      /* graphite hairline */
   /* Light mode (kept for completeness) */
   --color-light-bg: #F4F6FA;
   --color-light-surface: #FFFFFF;
@@ -278,7 +279,7 @@ html[data-theme='travel'] {
       inset 0 1px 0 rgba(255,255,255,0.18),              /* 1px specular highlight */
       inset 0 -1px 0 rgba(0,0,0,0.22),                   /* inner depth */
       0 24px 60px rgba(0,0,0,0.55);                       /* deep float */
-    border-radius: 1.5rem;                                /* rounded-3xl */
+    border-radius: 1rem;   /* sharper, more mechanical than rounded-3xl */
     transition: box-shadow 0.2s, border-color 0.2s, background 0.2s;
   }
   /* Fallback for browsers without backdrop-filter — solid obsidian surface */
@@ -315,7 +316,7 @@ html[data-theme='travel'] {
       inset 0 1px 0 rgba(255,255,255,0.18),
       inset 0 -1px 0 rgba(0,0,0,0.22),
       0 24px 60px rgba(0,0,0,0.55);
-    border-radius: 1.5rem;
+    border-radius: 1rem;
     transition: box-shadow 0.2s, border-color 0.2s, background 0.2s;
     @apply p-5;
   }
@@ -455,8 +456,8 @@ html[data-hidden='true'] .battery-bubble { animation-play-state: paused; }
 .axis-wireframe {
   position: fixed; inset: 0; z-index: -9; pointer-events: none; opacity: 0.05;
   background-image:
-    linear-gradient(rgba(120,200,255,0.5) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(120,200,255,0.5) 1px, transparent 1px);
+    linear-gradient(rgba(154,166,184,0.45) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(154,166,184,0.45) 1px, transparent 1px);
   background-size: 64px 64px;
   mask-image: radial-gradient(ellipse 80% 70% at 50% 30%, #000 30%, transparent 78%);
   -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 30%, #000 30%, transparent 78%);

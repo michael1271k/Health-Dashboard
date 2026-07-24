@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
+import { normalizeSpO2 } from '@/lib/utils/units'
 import { logicalTodayISO } from '@/lib/utils/day'
 
 /**
@@ -53,7 +54,9 @@ export function useVitalsDays(days = 56) {
         .lte('date', to)
         .order('date', { ascending: true })
       if (error) throw error
-      return (data ?? []) as unknown as VitalsDay[]
+      // Mixed-unit blood oxygen coerced at the data layer (see normalizeSpO2).
+      return ((data ?? []) as unknown as VitalsDay[])
+        .map((d) => ({ ...d, blood_oxygen: normalizeSpO2(d.blood_oxygen) }))
     },
     staleTime: 60_000,
   })

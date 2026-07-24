@@ -9,15 +9,15 @@ import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { displayWeight, useUnitSystem, fmtVolume } from '@/lib/utils/units'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
 
-const VIOLET = '#EC4899'
-const STEEL = '#8B97B2'
+const VIOLET = '#B84F28'
+const STEEL = '#79808C'
 
 function scoreColor(score: number | null): string {
   if (score == null) return 'rgba(255,255,255,0.12)'
-  if (score >= 80) return '#8B5CF6'
-  if (score >= 60) return '#22D3EE'
-  if (score >= 40) return '#FBBF24'
-  return '#FB7185'
+  if (score >= 80) return '#E2683A'
+  if (score >= 60) return '#9AA6B8'
+  if (score >= 40) return '#C9A227'
+  return '#D5514E'
 }
 
 /** Sunday week-start for a YYYY-MM-DD date. */
@@ -65,16 +65,16 @@ export const DayCard = memo(function DayCard({ d, unit, active, onOpen }: {
       className="w-full rounded-xl px-3 py-2.5 text-left border transition-colors active:opacity-80"
       style={{
         contentVisibility: 'auto', containIntrinsicSize: 'auto 88px',
-        background: active ? '#8B5CF614' : 'rgba(255,255,255,0.02)',
-        borderColor: active ? '#8B5CF666' : 'rgba(255,255,255,0.06)',
-        boxShadow: active ? '0 0 14px #8B5CF633' : undefined,
+        background: active ? '#E2683A14' : 'rgba(255,255,255,0.02)',
+        borderColor: active ? '#E2683A66' : 'rgba(255,255,255,0.06)',
+        boxShadow: active ? '0 0 14px #E2683A33' : undefined,
       } as React.CSSProperties}>
       {/* Top line — score dot · date · calories */}
       <div className="flex items-center gap-2.5">
         <span className="rounded-full shrink-0 transition-all"
           style={{ width: active ? 11 : 8, height: active ? 11 : 8, background: sc, boxShadow: d.score != null ? `0 0 8px ${sc}66` : undefined }}
           aria-hidden="true" />
-        <span className="shrink-0 font-heading font-semibold text-[13px]" style={{ color: active ? '#8B5CF6' : undefined }}>
+        <span className="shrink-0 font-heading font-semibold text-[13px]" style={{ color: active ? '#E2683A' : undefined }}>
           {day.toLocaleDateString('en-GB', { weekday: 'short' })} {day.getDate()}
           <span className="text-[9px] text-muted uppercase ml-1">{day.toLocaleDateString('en-GB', { month: 'short' })}</span>
         </span>
@@ -90,7 +90,7 @@ export const DayCard = memo(function DayCard({ d, unit, active, onOpen }: {
       </div>
       {/* Workout / rest line + steps */}
       <div className="flex items-center gap-1.5 mt-2 pl-[18px] text-[11px] min-w-0">
-        <span className="flex items-center gap-1.5 min-w-0 flex-1" style={{ color: d.session ? '#22D3EE' : VIOLET }}>
+        <span className="flex items-center gap-1.5 min-w-0 flex-1" style={{ color: d.session ? '#9AA6B8' : VIOLET }}>
           {d.session ? <Dumbbell className="w-3 h-3 shrink-0" /> : <Moon className="w-3 h-3 shrink-0" />}
           <span className="truncate">
             {d.session
@@ -99,7 +99,7 @@ export const DayCard = memo(function DayCard({ d, unit, active, onOpen }: {
           </span>
         </span>
         {d.steps != null && (
-          <span className="flex items-center gap-1 shrink-0" style={{ color: '#818CF8' }}>
+          <span className="flex items-center gap-1 shrink-0" style={{ color: '#9AA6B8' }}>
             <Footprints className="w-3 h-3" aria-hidden="true" />
             <span className="helix-num tabular-nums">{Math.round(d.steps).toLocaleString()}</span>
           </span>
@@ -115,7 +115,7 @@ const WeekHeader = memo(function WeekHeader({ weekStart, phase, onOpenWeek }: {
   onOpenWeek: (weekStart: string) => void
 }) {
   const helix = phase?.era === 'helix'
-  const color = phase ? (helix ? '#22D3EE' : STEEL) : STEEL
+  const color = phase ? (helix ? '#9AA6B8' : STEEL) : STEEL
   const label = phase?.label ?? `Week of ${new Date(weekStart + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`
   return (
     <div className="flex items-center gap-2 pt-3 pb-1">

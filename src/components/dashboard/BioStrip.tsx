@@ -15,6 +15,8 @@ export interface BioStripProps {
   status?: React.ReactNode
   /** 7-day series for the inline sparkline (nulls skipped). */
   series?: Array<number | null>
+  /** Decimal places for the hero number (weight passes 1 so 64.9 stays 64.9). */
+  decimals?: number
   onClick?: () => void
 }
 
@@ -40,7 +42,7 @@ function Sparkline({ series, accent }: { series: Array<number | null>; accent: s
  * BioStrip — a full-width live domain band: icon · label · hero number ·
  * sparkline · status glow. The building block of the Bio-Command dashboard.
  */
-export const BioStrip = memo(function BioStrip({ icon: Icon, label, accent, value, unit, status, series, onClick }: BioStripProps) {
+export const BioStrip = memo(function BioStrip({ icon: Icon, label, accent, value, unit, status, series, decimals = 0, onClick }: BioStripProps) {
   const numeric = typeof value === 'number'
   return (
     <button
@@ -55,8 +57,8 @@ export const BioStrip = memo(function BioStrip({ icon: Icon, label, accent, valu
         <span className="block text-[10px] font-bold uppercase tracking-[0.14em] text-muted leading-none">{label}</span>
         <span className="flex items-baseline gap-1 mt-0.5">
           {numeric
-            ? <KineticNumber value={value as number} className="helix-num text-fluid-xl font-bold leading-none" duration={700} />
-            : <span className="helix-num text-fluid-xl font-bold leading-none" style={value == null ? { color: '#5A6B85' } : undefined}>{value ?? '—'}</span>}
+            ? <KineticNumber value={value as number} className="helix-num text-fluid-xl font-bold leading-none" duration={700} decimals={decimals} />
+            : <span className="helix-num text-fluid-xl font-bold leading-none" style={value == null ? { color: '#5A6472' } : undefined}>{value ?? '—'}</span>}
           {unit && <span className="text-fluid-xs text-muted">{unit}</span>}
         </span>
         {status && <span className="block text-fluid-xs text-muted mt-0.5 truncate">{status}</span>}

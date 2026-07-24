@@ -1,54 +1,48 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-
 /**
- * AuroraBackground — a living gradient mesh fixed behind all content (-z-10) so
- * the glass panels refract depth, plus a subtle grain overlay (-z-9).
+ * ObsidianBackground — the global backdrop. Deep graphite with a SINGLE molten
+ * ember bloom, so the glass panels refract warm depth against a serious, matte
+ * base. Deliberately static: the old version drifted three saturated
+ * green/blue/magenta blobs, which read as toy-like AND cost a permanent
+ * compositor layer on iOS. Discipline here means restraint — one accent, one
+ * light source, everything else graphite.
  *
- * Green / Blue / Magenta band. The base layer is a stack of plain CSS
- * radial-gradients painted directly on the fixed container — these render on
- * EVERY engine (including iOS WKWebView), with no dependency on `filter: blur()`
- * on huge elements, which WebKit silently drops past its texture-size budget
- * (that was the "gradient doesn't show on the physical iPhone" bug). The blurred
- * drifting blobs sit on top as an enhancement for GPUs that can afford them.
+ * Plain CSS radial-gradients painted on a fixed container render on EVERY engine
+ * (including iOS WKWebView, which silently drops `filter: blur()` on huge
+ * elements past its texture budget — that was the "gradient doesn't show on the
+ * physical iPhone" bug). No blur, no animation, no hue rotation.
  */
 export function AuroraBackground() {
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
+  // One warm light source (upper-right) + a cool graphite counter-fill (lower-
+  // left) + a floor shadow. Alphas are intentionally low: this is atmosphere,
+  // not decoration.
+  const EMBER = '#E2683A'
+  const STEEL = '#7F8B9C'
 
-  // Gentle time-of-day drift of the whole band, kept subtle.
-  const hour = mounted ? new Date().getHours() : 12
-  const shift = Math.round(6 * Math.sin((hour / 24) * Math.PI * 2))
-
-  const GREEN = '#22C55E'
-  const BLUE = '#3B82F6'
-  const MAGENTA = '#EC4899'
-
-  // Guaranteed-render base: layered radial gradients (no blur filter).
-  const baseGradient = [
-    `radial-gradient(60vw 55vh at ${18 + shift}% 12%, ${GREEN}59 0%, ${GREEN}1f 34%, transparent 62%)`,
-    `radial-gradient(62vw 58vh at ${84 - shift}% 82%, ${MAGENTA}59 0%, ${MAGENTA}1f 34%, transparent 62%)`,
-    `radial-gradient(70vw 60vh at 55% ${46 + shift}%, ${BLUE}4d 0%, ${BLUE}1a 38%, transparent 66%)`,
+  const backdrop = [
+    // primary ember bloom — the single light source
+    `radial-gradient(78vw 62vh at 88% -6%, ${EMBER}26 0%, ${EMBER}0d 34%, transparent 66%)`,
+    // cool graphite counter-fill for depth on the opposite corner
+    `radial-gradient(70vw 58vh at 6% 92%, ${STEEL}14 0%, ${STEEL}08 38%, transparent 68%)`,
+    // faint warm rim high on the horizon so the top edge isn't dead flat
+    `radial-gradient(120vw 40vh at 50% -12%, ${EMBER}14 0%, transparent 60%)`,
+    // deep floor — sinks the bottom of the page into obsidian
+    `radial-gradient(100vw 70vh at 50% 118%, rgba(5,6,8,0.6) 0%, transparent 62%)`,
   ].join(', ')
 
   return (
     <>
       <div
         aria-hidden="true"
-        className="fixed inset-0 -z-10 overflow-hidden pointer-events-none"
-        style={{ backgroundColor: 'var(--color-bg)', backgroundImage: baseGradient }}
+        className="fixed inset-0 -z-10 pointer-events-none"
+        style={{ backgroundColor: 'var(--color-bg)', backgroundImage: backdrop }}
       >
-        {/* Enhancement layer — blurred drifting blobs (dropped by WebKit when it
-            can't afford them; the base gradient above always shows). */}
-        <div className="aurora-blob-1 absolute -top-1/4 -left-1/4 w-[70vw] h-[70vw] rounded-full"
-          style={{ background: `radial-gradient(circle, ${GREEN} 0%, transparent 65%)`, filter: 'blur(80px)', opacity: 0.5, animation: 'auroraDrift1 26s ease-in-out infinite' }} />
-        <div className="aurora-blob-2 absolute -bottom-1/4 -right-1/4 w-[65vw] h-[65vw] rounded-full"
-          style={{ background: `radial-gradient(circle, ${MAGENTA} 0%, transparent 65%)`, filter: 'blur(90px)', opacity: 0.45, animation: 'auroraDrift2 32s ease-in-out infinite' }} />
-        <div className="aurora-blob-3 absolute top-1/3 left-1/3 w-[55vw] h-[55vw] rounded-full"
-          style={{ background: `radial-gradient(circle, ${BLUE} 0%, transparent 70%)`, filter: 'blur(100px)', opacity: 0.4, animation: 'auroraDrift3 38s ease-in-out infinite' }} />
-        <div className="absolute inset-0"
-          style={{ background: 'radial-gradient(ellipse 120% 80% at 50% 0%, transparent 40%, rgba(0,0,0,0.55) 100%)' }} />
+        {/* Vignette — pulls focus to the centre column of content. */}
+        <div
+          className="absolute inset-0"
+          style={{ background: 'radial-gradient(ellipse 115% 85% at 50% 8%, transparent 42%, rgba(0,0,0,0.60) 100%)' }}
+        />
       </div>
       <div className="axis-wireframe" aria-hidden="true" />
       <div className="grain-overlay" aria-hidden="true" />

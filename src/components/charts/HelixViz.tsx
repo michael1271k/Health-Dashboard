@@ -72,8 +72,8 @@ export function VolumeStream({ days, era = 'all' }: { days: number; era?: 'all' 
       <p className="text-fluid-xs text-muted mb-2">Weekly working sets per muscle group — training-focus drift</p>
       <ResponsiveContainer width="100%" height={220}>
         <AreaChart data={data.weekly} margin={{ top: 4, right: 8, bottom: 0, left: -14 }}>
-          <XAxis dataKey="week" tick={{ fill: '#8B97B2', fontSize: 10, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={24} tickMargin={4} />
-          <YAxis tick={{ fill: '#8B97B2', fontSize: 10, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} width={30} />
+          <XAxis dataKey="week" tick={{ fill: '#79808C', fontSize: 10, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={24} tickMargin={4} />
+          <YAxis tick={{ fill: '#79808C', fontSize: 10, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} width={30} />
           <Tooltip content={<ChartTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.1)' }} />
           {MUSCLE_GROUPS.map((g) => (
             <Area key={g} type="basis" dataKey={g} stackId="s" stroke="none" fill={GROUP_COLOR[g]} fillOpacity={0.75} />
@@ -129,7 +129,7 @@ export function RpeCalendar({ days, era = 'all' }: { days: number; era?: 'all' |
   const { weeks, stats } = model
 
   const cell = (t: number) => t <= 0 ? 'rgba(255,255,255,0.05)'
-    : t < 0.35 ? 'rgba(25,227,177,0.35)' : t < 0.7 ? 'rgba(25,227,177,0.65)' : '#34D399'
+    : t < 0.35 ? 'rgba(25,227,177,0.35)' : t < 0.7 ? 'rgba(25,227,177,0.65)' : '#4FB477'
   const hardestLabel = new Date(stats.hardest[0] + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
 
   return (

@@ -34,10 +34,21 @@ export const PROGRAM_TARGETS: Record<Program, Record<LandmarkMuscle, number>> = 
   },
 }
 
+/** 13 distinguishable Obsidian & Ember tones — a warm→cool ramp, none neon. */
 export const MUSCLE_COLOR: Record<LandmarkMuscle, string> = {
-  Chest: '#22D3EE', Back: '#34D399', 'Side delts': '#38BDF8', 'Rear delts': '#60A5FA',
-  Biceps: '#F5C15A', Triceps: '#FBBF24', Forearms: '#FCD34D', Quads: '#F472B6',
-  Hamstrings: '#EC4899', Glutes: '#F9A8D4', Adductors: '#C084FC', Calves: '#A78BFA', 'Abs/core': '#7C8CFF',
+  Chest: '#E2683A',        // ember
+  Back: '#6E8CA0',         // slate blue
+  'Side delts': '#C9A227', // brass
+  'Rear delts': '#A08A6B', // taupe
+  Biceps: '#B0757A',       // dusty rose
+  Triceps: '#C9752F',      // copper
+  Forearms: '#8C7BA0',     // muted violet-grey
+  Quads: '#B84F28',        // banked ember
+  Hamstrings: '#5E9E8F',   // teal-grey
+  Glutes: '#8A9A5B',       // olive
+  Adductors: '#7F8B9C',    // cool slate
+  Calves: '#4FB477',       // sage
+  'Abs/core': '#9AA6B8',   // steel
 }
 
 /**
@@ -80,11 +91,11 @@ export function volumeZone(weeklySets: number, target: number): VolumeZone {
 }
 
 export const ZONE_META: Record<VolumeZone, { label: string; color: string }> = {
-  under:    { label: 'Under target', color: '#8B97B2' },
-  building: { label: 'Building',     color: '#38BDF8' },
-  optimal:  { label: 'On target',    color: '#34D399' },
-  over:     { label: 'Over',         color: '#FB7185' },
-  na:       { label: 'No target',    color: '#5A6B85' },
+  under:    { label: 'Under target', color: '#79808C' },
+  building: { label: 'Building',     color: '#8AA0B8' },
+  optimal:  { label: 'On target',    color: '#4FB477' },
+  over:     { label: 'Over',         color: '#D5514E' },
+  na:       { label: 'No target',    color: '#5A6472' },
 }
 
 export interface MuscleVolume {

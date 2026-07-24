@@ -8,7 +8,7 @@ import { useExerciseHistory } from '@/lib/hooks/useExerciseHistory'
 import { displayWeight, weightUnit } from '@/lib/utils/units'
 import { shortDate } from '@/lib/utils/day'
 
-const ICE = '#22D3EE'
+const ICE = '#9AA6B8'
 
 /**
  * Hevy-style per-exercise deep-dive as a chart-first bottom sheet: an est-1RM
@@ -51,8 +51,8 @@ export function ExerciseHistorySheet({ exerciseId, exerciseName, open, onClose }
                       <stop offset="100%" stopColor={ICE} stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <XAxis dataKey="date" tick={{ fill: '#8B97B2', fontSize: 10 }} axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={24} tickMargin={6} />
-                  <YAxis tick={{ fill: '#8B97B2', fontSize: 10 }} axisLine={false} tickLine={false} width={34} />
+                  <XAxis dataKey="date" tick={{ fill: '#79808C', fontSize: 10 }} axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={24} tickMargin={6} />
+                  <YAxis tick={{ fill: '#79808C', fontSize: 10 }} axisLine={false} tickLine={false} width={34} />
                   <Tooltip content={<ChartTooltip />} />
                   <Area type="monotone" dataKey="e1rm" name="est 1RM" unit={unit} stroke={ICE} strokeWidth={2} fill="url(#e1rmFill)" />
                 </AreaChart>
@@ -94,7 +94,7 @@ export function ExerciseHistorySheet({ exerciseId, exerciseName, open, onClose }
 function Record({ icon: Icon, label, value, unit, highlight, wide }: {
   icon: typeof Dumbbell; label: string; value: string; unit?: string; highlight?: boolean; wide?: boolean
 }) {
-  const color = highlight ? '#F5C15A' : ICE
+  const color = highlight ? '#C9A227' : ICE
   return (
     <div className={`rounded-xl px-3 py-2.5 ${wide ? '' : ''}`}
       style={{ background: `${color}${highlight ? '14' : '0d'}`, border: `1px solid ${color}${highlight ? '55' : '2e'}` }}>

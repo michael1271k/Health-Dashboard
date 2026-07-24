@@ -51,7 +51,7 @@ function NavCell({ href, Icon, label, active }: { href: string; Icon: LucideIcon
         aria-current={active ? 'page' : undefined}
         className={`relative flex flex-col items-center gap-0.5 py-1.5 px-1 rounded-xl
                     transition-colors duration-200 min-h-[44px] ${active ? '' : 'text-muted'}`}
-        style={active ? { color: '#38BDF8' } : {}}
+        style={active ? { color: '#8AA0B8' } : {}}
       >
         {active && (
           <m.span layoutId="bottomnav-active" className="absolute inset-0 rounded-xl"

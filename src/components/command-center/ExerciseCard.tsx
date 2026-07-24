@@ -10,14 +10,14 @@ import { isTimedExercise } from '@/lib/exercises/timed'
 import type { ExerciseHistory } from '@/lib/hooks/useExerciseSetHistory'
 
 const STATUS_META: Record<NonNullable<DraftExercise['status']>, { label: string; color: string }> = {
-  PR:       { label: 'PR',       color: '#F5C15A' },  // gold
-  PROGRESS: { label: 'PROG ▲',   color: '#34D399' },
-  HOLD:     { label: 'HOLD',     color: '#8B97B2' },
-  REGRESS:  { label: 'REGR ▼',   color: '#FB7185' },
-  NEW:      { label: 'NEW',      color: '#22D3EE' },
+  PR:       { label: 'PR',       color: '#C9A227' },  // gold
+  PROGRESS: { label: 'PROG ▲',   color: '#4FB477' },
+  HOLD:     { label: 'HOLD',     color: '#79808C' },
+  REGRESS:  { label: 'REGR ▼',   color: '#D5514E' },
+  NEW:      { label: 'NEW',      color: '#9AA6B8' },
 }
 
-const CARDIO_VIOLET = '#EC4899'
+const CARDIO_VIOLET = '#B84F28'
 
 // A unilateral L/R pair reads as ONE numbered set that expands into Left/Right
 // sub-rows — NOT two sibling rows. groupSets folds the flat draft list into that
@@ -184,8 +184,8 @@ export function ExerciseCard({ exercise, history, collapsed = false, onUpdateSet
             <span
               className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-md text-[11px] leading-snug tabular-nums"
               style={history
-                ? { color: '#22D3EE', background: 'rgba(62,224,255,0.08)', border: '1px solid rgba(62,224,255,0.28)' }
-                : { color: '#8B97B2', background: 'rgba(139,151,178,0.07)', border: '1px solid rgba(139,151,178,0.2)' }}
+                ? { color: '#9AA6B8', background: 'rgba(62,224,255,0.08)', border: '1px solid rgba(62,224,255,0.28)' }
+                : { color: '#79808C', background: 'rgba(139,151,178,0.07)', border: '1px solid rgba(139,151,178,0.2)' }}
             >
               <History className="w-3 h-3 shrink-0" aria-hidden="true" />
               {history
@@ -229,7 +229,7 @@ export function ExerciseCard({ exercise, history, collapsed = false, onUpdateSet
             </button>
           )}
           {exercise.targetNext && (
-            <p className="text-xs leading-snug flex items-center gap-1" style={{ color: '#F5C15A' }}>
+            <p className="text-xs leading-snug flex items-center gap-1" style={{ color: '#C9A227' }}>
               <Target className="w-3 h-3 shrink-0" aria-hidden="true" /> Next: {exercise.targetNext}
             </p>
           )}
@@ -266,10 +266,10 @@ export function ExerciseCard({ exercise, history, collapsed = false, onUpdateSet
                 <div className="flex items-center gap-2 px-1">
                   <span className="text-[10px] font-bold uppercase tracking-wide text-muted">Set {g.num}</span>
                   <span className="text-[9px] font-bold uppercase tracking-wide px-1 py-px rounded"
-                    style={{ color: '#8B5CF6', background: '#8B5CF61f', border: '1px solid #8B5CF655' }}>L / R</span>
+                    style={{ color: '#E2683A', background: '#E2683A1f', border: '1px solid #E2683A55' }}>L / R</span>
                   {asym && (
                     <span className="text-[9px] font-bold uppercase tracking-wide px-1 py-px rounded ml-auto"
-                      style={{ color: '#FB7185', background: '#FB71851f', border: '1px solid #FB718555' }}
+                      style={{ color: '#D5514E', background: '#D5514E1f', border: '1px solid #D5514E55' }}
                       title={`${asym.weak === 'L' ? 'Left' : 'Right'} side ${asym.pct}% weaker (by volume)`}>
                       −{asym.pct}% {asym.weak}
                     </span>
@@ -298,7 +298,7 @@ export function ExerciseCard({ exercise, history, collapsed = false, onUpdateSet
                   <button type="button" onClick={() => onToggleLink(g.pairId)} aria-pressed={linked}
                     className="min-h-[30px] px-2.5 rounded-lg text-[10px] font-bold uppercase tracking-wide active:scale-95 transition-colors"
                     style={linked
-                      ? { color: '#22D3EE', background: '#22D3EE1f', border: '1px solid #22D3EE66' }
+                      ? { color: '#9AA6B8', background: '#9AA6B81f', border: '1px solid #9AA6B866' }
                       : { color: 'var(--color-muted)', background: 'transparent', border: '1px solid rgba(255,255,255,0.10)' }}>
                     {linked ? 'Linked' : 'Unlinked'}
                   </button>

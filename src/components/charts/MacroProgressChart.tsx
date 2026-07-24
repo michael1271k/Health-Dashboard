@@ -49,7 +49,7 @@ export function MacroProgressChart({ data, goals, isLoading }: { data: Nutrition
             return (
               <button key={m.key} onClick={() => setMi(i)}
                 className="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors border"
-                style={active ? { color: m.color, borderColor: `${m.color}55`, background: `${m.color}1f` } : { color: '#8B97B2', borderColor: 'transparent' }}>
+                style={active ? { color: m.color, borderColor: `${m.color}55`, background: `${m.color}1f` } : { color: '#79808C', borderColor: 'transparent' }}>
                 {m.label}
               </button>
             )
@@ -63,18 +63,18 @@ export function MacroProgressChart({ data, goals, isLoading }: { data: Nutrition
         <ResponsiveContainer width="100%" height={200}>
           <BarChart data={chartData} margin={{ top: 4, right: 24, bottom: 0, left: 0 }}>
             <CartesianGrid stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="date" tick={{ fill: '#8B97B2', fontSize: 10, fontFamily: 'var(--font-mono)' }} tickMargin={8} minTickGap={20} axisLine={false} tickLine={false} interval="preserveStartEnd" />
-            <YAxis domain={usePct ? [0, 120] : [0, 'auto']} tick={{ fill: '#8B97B2', fontSize: 11, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} width={36} tickFormatter={(v) => (usePct ? `${v}%` : `${v}`)} />
+            <XAxis dataKey="date" tick={{ fill: '#79808C', fontSize: 10, fontFamily: 'var(--font-mono)' }} tickMargin={8} minTickGap={20} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+            <YAxis domain={usePct ? [0, 120] : [0, 'auto']} tick={{ fill: '#79808C', fontSize: 11, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} width={36} tickFormatter={(v) => (usePct ? `${v}%` : `${v}`)} />
             <Tooltip content={({ active, payload, label }) =>
               active && payload?.length ? (
                 <ChartTooltip active={active}
                   payload={[{ name: metric.label, value: (payload[0].payload as { raw: number })?.raw ?? 0, color: metric.color, unit: 'g' }]}
                   label={label != null ? String(label) : undefined} />
               ) : null} />
-            {usePct && <ReferenceLine y={100} stroke={metric.color} strokeDasharray="4 2" strokeWidth={1} label={{ value: 'Goal', position: 'insideRight', fill: '#8B97B2', fontSize: 10 }} />}
+            {usePct && <ReferenceLine y={100} stroke={metric.color} strokeDasharray="4 2" strokeWidth={1} label={{ value: 'Goal', position: 'insideRight', fill: '#79808C', fontSize: 10 }} />}
             <Bar dataKey="val" radius={[4, 4, 0, 0]} maxBarSize={28}>
               {chartData.map((entry, index) => (
-                <Cell key={index} fill={usePct ? (entry.val >= 100 ? metric.color : entry.val >= 75 ? '#FBBF24' : '#FB7185') : metric.color} />
+                <Cell key={index} fill={usePct ? (entry.val >= 100 ? metric.color : entry.val >= 75 ? '#C9A227' : '#D5514E') : metric.color} />
               ))}
             </Bar>
           </BarChart>

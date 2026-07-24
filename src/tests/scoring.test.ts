@@ -330,19 +330,19 @@ describe('computeReadiness', () => {
   it('returns train_hard when all scores are high (≥70)', () => {
     const result = computeReadiness({ sleepScore: 90, recoveryScore: 90 }, 90)
     expect(result.level).toBe('train_hard')
-    expect(result.color).toBe('#34D399')
+    expect(result.color).toBe('#4FB477')
   })
 
   it('returns rest when all scores are low (<45)', () => {
     const result = computeReadiness({ sleepScore: 20, recoveryScore: 20 }, 20)
     expect(result.level).toBe('rest')
-    expect(result.color).toBe('#FB7185')
+    expect(result.color).toBe('#D5514E')
   })
 
   it('returns train_light for moderate scores (45–69)', () => {
     const result = computeReadiness({ sleepScore: 55, recoveryScore: 55 }, 55)
     expect(result.level).toBe('train_light')
-    expect(result.color).toBe('#FBBF24')
+    expect(result.color).toBe('#C9A227')
   })
 
   it('returns strict-English labels for all levels', () => {

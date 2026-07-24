@@ -4,7 +4,7 @@
  * ECG pulse line — a neon electrocardiogram sweep under the Daily Score.
  * Beat speed maps to battery level (≥70% fast · ≤30% slow). Pure SVG/CSS.
  */
-export function EcgPulse({ level, color = '#34D399' }: { level: number | null; color?: string }) {
+export function EcgPulse({ level, color = '#4FB477' }: { level: number | null; color?: string }) {
   const pct = level ?? 50
   const duration = pct >= 70 ? 1.6 : pct >= 40 ? 2.4 : 3.6 // seconds per beat sweep
 

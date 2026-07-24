@@ -20,7 +20,7 @@ export function computeReadiness(
     return {
       level: 'train_hard',
       label: 'Train Hard',
-      color: '#34D399',
+      color: '#4FB477',
       reason: 'Sleep, battery, and recovery are all strong today.',
     }
   }
@@ -28,14 +28,14 @@ export function computeReadiness(
     return {
       level: 'train_light',
       label: 'Train Light',
-      color: '#FBBF24',
+      color: '#C9A227',
       reason: 'Moderate readiness — a lighter session will serve you well.',
     }
   }
   return {
     level: 'rest',
     label: 'Rest Today',
-    color: '#FB7185',
+    color: '#D5514E',
     reason: 'Recovery indicators are low — prioritize rest and nutrition.',
   }
 }

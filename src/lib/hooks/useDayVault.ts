@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
+import { normalizeSpO2 } from '@/lib/utils/units'
 import { authedFetch } from '@/lib/utils/authedFetch'
 import { invalidateWorkoutData } from '@/lib/query/workoutKeys'
 import { eraForDate, AXIS_ERA_START, HELIX_CUT_START } from '@/lib/programs'
@@ -64,8 +65,10 @@ export function useDayVault(date: string) {
         durationMin: r.duration_min, avgBpm: r.avg_bpm, volumeKg: r.total_volume_kg,
         setCount: r.set_count, prCount: r.pr_count, calories: r.calories_burned,
       }))
+      const rawLog = (logRes.data ?? null) as DayVaultData['log']
       return {
-        log: (logRes.data ?? null) as DayVaultData['log'],
+        // Mixed-unit blood oxygen coerced at the data layer (see normalizeSpO2).
+        log: rawLog ? { ...rawLog, blood_oxygen: normalizeSpO2(rawLog.blood_oxygen) } : null,
         score: (scoreRes.data ?? null) as DayVaultData['score'],
         nutrition: (nutritionRes.data ?? null) as DayVaultData['nutrition'],
         sessions,

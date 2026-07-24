@@ -18,15 +18,15 @@ import { displayWeight, validWeight, weightUnit, fmtVolume } from '@/lib/utils/u
 import { formatSleep, mlToL } from '@/lib/utils/format'
 import { logicalTodayISO } from '@/lib/utils/day'
 
-const VIOLET = '#EC4899'
-const ICE = '#38BDF8'
-const TEAL = '#8B5CF6'
-const CYAN = '#22D3EE'
-const EMBER = '#FBBF24'
-const ROSE = '#FB7185'
+const VIOLET = '#B84F28'
+const ICE = '#8AA0B8'
+const TEAL = '#E2683A'
+const CYAN = '#9AA6B8'
+const EMBER = '#C9A227'
+const ROSE = '#D5514E'
 
 function scoreColor(score: number | null | undefined): string {
-  if (score == null) return '#8B97B2'
+  if (score == null) return '#79808C'
   if (score >= 80) return TEAL
   if (score >= 60) return CYAN
   if (score >= 40) return EMBER
@@ -270,10 +270,10 @@ export default function DailyNexusPage() {
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 text-center">
             {[
               { label: 'Weight', v: displayWeight(validWeight(log?.weight_kg)), u: unit, c: TEAL },
-              { label: 'Steps', v: log?.steps != null ? Math.round(log.steps).toLocaleString() : null, u: '', c: '#818CF8' },
-              { label: 'Water', v: log?.water_ml != null ? mlToL(log.water_ml) : null, u: 'L', c: '#3B82F6' },
-              { label: 'Active', v: log?.active_energy != null ? Math.round(log.active_energy) : null, u: '', c: '#FB7185' },
-              { label: 'Stand', v: log?.stand_hours != null ? `${log.stand_hours}` : null, u: 'h', c: '#22C55E' },
+              { label: 'Steps', v: log?.steps != null ? Math.round(log.steps).toLocaleString() : null, u: '', c: '#9AA6B8' },
+              { label: 'Water', v: log?.water_ml != null ? mlToL(log.water_ml) : null, u: 'L', c: '#8AA0B8' },
+              { label: 'Active', v: log?.active_energy != null ? Math.round(log.active_energy) : null, u: '', c: '#D5514E' },
+              { label: 'Stand', v: log?.stand_hours != null ? `${log.stand_hours}` : null, u: 'h', c: '#4FB477' },
               { label: 'VO₂', v: log?.vo2max ?? null, u: '', c: ICE },
             ].map((s) => (
               <div key={s.label} className="rounded-lg bg-white/[0.02] border border-white/[0.05] px-1 py-1.5">

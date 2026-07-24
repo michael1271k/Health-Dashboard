@@ -21,6 +21,17 @@ const REENTRANCY_MS = 10 * 1000
  */
 type OnSynced = () => void
 
+/** Resolves once the document has finished loading (or immediately if it has). */
+function documentReady(): Promise<void> {
+  if (typeof document === 'undefined' || document.readyState === 'complete') return Promise.resolve()
+  return new Promise((resolve) => {
+    const done = () => { window.removeEventListener('load', done); resolve() }
+    window.addEventListener('load', done, { once: true })
+    // Safety net: never block the sync chain forever on a stalled load event.
+    setTimeout(done, 4000)
+  })
+}
+
 function withinReentrancyWindow(): boolean {
   try {
     const last = Number(localStorage.getItem(WATERMARK_KEY) ?? 0)
@@ -64,6 +75,7 @@ export function initNativeSync(onSynced?: OnSynced): () => void {
   if (!Capacitor.isNativePlatform()) return () => {}
   let removeListener: (() => void) | undefined
   let cancelled = false
+  let granted = false
 
   // Defer the first auth + sync until AFTER the launch frame paints — firing the
   // permission sheet + parallel metric queries + ingest synchronously on mount is
@@ -71,23 +83,40 @@ export function initNativeSync(onSynced?: OnSynced): () => void {
   // so a HealthKit/network failure can never brick boot.
   const kickoff = async () => {
     if (cancelled) return
-    try { await requestHealthAuthorization() } catch { /* denied / plugin missing — continue */ }
+    // The HealthKit permission sheet needs a presentable root view controller.
+    // On a cold start the WKWebView isn't attached yet, so requesting here used
+    // to silently no-op (which is why the popup only appeared on the SECOND
+    // launch). Wait for the document to finish loading, then yield a frame.
+    await documentReady()
+    await new Promise((r) => setTimeout(r, 300))
+    if (cancelled) return
+    try { granted = await requestHealthAuthorization() } catch { /* denied / plugin missing — continue */ }
+    if (cancelled) return
+    // Let the auth sheet fully dismiss before hitting the store (a sync started
+    // in the same tick as the grant is what surfaced the native crash).
+    await new Promise((r) => setTimeout(r, 400))
     if (cancelled) return
     try { await runSync(true, onSynced) } catch { /* first sync failed — resume retries */ }
     if (cancelled) return
     try {
       const { App } = await import('@capacitor/app')
       const handle = await App.addListener('appStateChange', ({ isActive }) => {
-        // Every genuine foreground triggers a full sync (10s re-entrancy guard only).
-        if (isActive) void runSync(false, onSynced).catch(() => {})
+        if (!isActive) return
+        void (async () => {
+          // If the sheet never got presented on a cold launch, retry it here —
+          // by now there is definitely a view controller to present from.
+          if (!granted) {
+            try { granted = await requestHealthAuthorization() } catch { /* still denied */ }
+          }
+          // Every genuine foreground triggers a full sync (10s re-entrancy guard only).
+          await runSync(false, onSynced).catch(() => {})
+        })()
       })
       removeListener = () => { void handle.remove() }
     } catch { /* @capacitor/app unavailable — no resume syncing */ }
   }
 
-  const ric = (globalThis as { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number }).requestIdleCallback
-  if (ric) ric(() => void kickoff(), { timeout: 3000 })
-  else setTimeout(() => void kickoff(), 0)
+  void kickoff()
 
   return () => { cancelled = true; removeListener?.() }
 }

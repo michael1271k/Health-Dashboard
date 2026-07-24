@@ -9,19 +9,19 @@ export interface Supplement {
 export interface SupplementSlot { key: string; time: string; label: string; accent: string; items: Supplement[] }
 
 export const SUPPLEMENT_PROTOCOL: SupplementSlot[] = [
-  { key: 'morning', time: '10:30', label: 'Morning', accent: '#34D399', items: [
+  { key: 'morning', time: '10:30', label: 'Morning', accent: '#4FB477', items: [
     { key: 'multivitamin', name: 'Two Per Day Multivitamin', dose: '1 tab' },
     { key: 'd3k2', name: 'Vitamin D3 + K2', dose: '1 cap' },
   ] },
-  { key: 'pre', time: '11:45', label: 'Pre-Workout', accent: '#22D3EE', items: [
+  { key: 'pre', time: '11:45', label: 'Pre-Workout', accent: '#9AA6B8', items: [
     { key: 'citrulline', name: 'L-Citrulline', dose: '6 g', trainingOnly: true },
     { key: 'caffeine', name: 'Nutricost Caffeine', dose: '200 mg', trainingOnly: true },
   ] },
-  { key: 'post', time: '15:00', label: 'Post-Workout', accent: '#38BDF8', items: [
+  { key: 'post', time: '15:00', label: 'Post-Workout', accent: '#8AA0B8', items: [
     { key: 'creatine', name: 'Creatine Monohydrate', dose: '5 g' },
     { key: 'omega3', name: 'Omega-3 Fish Oil', dose: '1 cap' },
   ] },
-  { key: 'night', time: '22:00', label: 'Night', accent: '#7C8CFF', items: [
+  { key: 'night', time: '22:00', label: 'Night', accent: '#9AA6B8', items: [
     { key: 'magnesium', name: 'Magnesium Glycinate', dose: '100 mg' },
     { key: 'glycine', name: 'Glycine', dose: '3 g' },
     { key: 'theanine', name: 'L-Theanine', dose: '200 mg' },

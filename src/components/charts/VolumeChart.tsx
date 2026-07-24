@@ -10,17 +10,17 @@ import { PPL_SPLITS, type SplitDay } from '@/lib/types/workout'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 
 const GRID = 'rgba(255,255,255,0.06)'
-const TEXT = '#8B97B2'
+const TEXT = '#79808C'
 
 // Chart buckets. HELIX-only pseudo-splits resolved by weekday: 'upper_a'/'upper_b'
 // (both DB split_day='upper', Sun vs Thu), 'arms' (Delts & Arms, also DB 'upper',
 // Tue) and 'legs_a'/'legs_b' (Legs A/B, both DB split_day='legs', Mon vs Fri).
 type ChartSplit = SplitDay | 'upper_a' | 'upper_b' | 'arms' | 'legs_a' | 'legs_b'
-const UPPER_A_COLOR = '#22D3EE'  // Upper A cyan (programs C.cbA)
-const UPPER_B_COLOR = '#F5C15A'  // Upper B gold (programs C.cbB)
-const ARMS_COLOR = '#34D399'     // Delts & Arms mint (programs C.arms)
-const LEGS_A_COLOR = '#38BDF8'   // quad sky
-const LEGS_B_COLOR = '#A78BFA'   // posterior violet (was #34D399 — collided with Arms mint)
+const UPPER_A_COLOR = '#9AA6B8'  // Upper A cyan (programs C.cbA)
+const UPPER_B_COLOR = '#C9A227'  // Upper B gold (programs C.cbB)
+const ARMS_COLOR = '#4FB477'     // Delts & Arms mint (programs C.arms)
+const LEGS_A_COLOR = '#8AA0B8'   // quad sky
+const LEGS_B_COLOR = '#9AA6B8'   // posterior violet (was #4FB477 — collided with Arms mint)
 
 // The pill set is era-specific. PPL trains Push/Pull/Legs (no "Upper" — zero
 // records); HELIX-5 logs the five real splits. Legacy "lower" folds into legs.
@@ -44,7 +44,7 @@ function splitColor(s: ChartSplit): string {
   if (s === 'arms') return ARMS_COLOR
   if (s === 'legs_a') return LEGS_A_COLOR
   if (s === 'legs_b') return LEGS_B_COLOR
-  return PPL_SPLITS[s as SplitDay]?.color ?? '#34D399'
+  return PPL_SPLITS[s as SplitDay]?.color ?? '#4FB477'
 }
 
 /**

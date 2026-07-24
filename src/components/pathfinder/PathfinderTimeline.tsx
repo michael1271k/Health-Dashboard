@@ -20,7 +20,7 @@ import { useEraFilter } from '@/lib/era/eraFilter'
 import { MarkdownView } from '@/components/reports/MarkdownView'
 import { DayCard } from '@/components/timeline/ContinuumTimeline'
 
-const GOLD = '#F5C15A'
+const GOLD = '#C9A227'
 const label = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 
 function dominantSplit(days: TimelineWeekNode['days']): string | undefined {
@@ -129,7 +129,7 @@ function WeekCapsule({ node, days, unit, open, onToggle, onOpenDay }: {
           {node.volumeKg > 0 && <span className="helix-num">{((displayWeight(node.volumeKg) ?? 0) / 1000).toFixed(1)}t</span>}
           {hasPRs && <span className="flex items-center gap-1" style={{ color: GOLD }}><Trophy className="w-3 h-3" />{node.prs}</span>}
           {node.weightDelta != null && (
-            <span className="helix-num" style={{ color: node.weightDelta <= 0 ? '#34D399' : '#FB7185' }}>
+            <span className="helix-num" style={{ color: node.weightDelta <= 0 ? '#4FB477' : '#D5514E' }}>
               {node.weightDelta > 0 ? '+' : ''}{node.weightDelta}{weightUnit()}
             </span>
           )}
@@ -152,10 +152,10 @@ function WeekCapsule({ node, days, unit, open, onToggle, onOpenDay }: {
               {(node.weightDelta != null || node.fatDelta != null) && (
                 <div className="flex gap-5 text-fluid-xs">
                   {node.weightDelta != null && (
-                    <span className="text-muted">Weight Δ <span className="helix-num font-bold" style={{ color: node.weightDelta <= 0 ? '#34D399' : '#FB7185' }}>{node.weightDelta > 0 ? '+' : ''}{node.weightDelta} {weightUnit()}</span></span>
+                    <span className="text-muted">Weight Δ <span className="helix-num font-bold" style={{ color: node.weightDelta <= 0 ? '#4FB477' : '#D5514E' }}>{node.weightDelta > 0 ? '+' : ''}{node.weightDelta} {weightUnit()}</span></span>
                   )}
                   {node.fatDelta != null && (
-                    <span className="text-muted">Body-fat Δ <span className="helix-num font-bold" style={{ color: node.fatDelta <= 0 ? '#34D399' : '#FB7185' }}>{node.fatDelta > 0 ? '+' : ''}{node.fatDelta}%</span></span>
+                    <span className="text-muted">Body-fat Δ <span className="helix-num font-bold" style={{ color: node.fatDelta <= 0 ? '#4FB477' : '#D5514E' }}>{node.fatDelta > 0 ? '+' : ''}{node.fatDelta}%</span></span>
                   )}
                 </div>
               )}

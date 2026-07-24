@@ -1,13 +1,14 @@
 /**
- * The global macro color system — ONE source of truth used by every
- * ring, bar, chart, tile, and tag in the app. Gym-neon mapping: molten fuel,
- * power red, electric glycogen, amber — masculine + premium on the dark Aurora.
+ * The global macro color system — ONE source of truth used by every ring, bar,
+ * chart, tile and tag. Obsidian & Ember: molten ember leads (calories are the
+ * hero), then brass / slate / olive — four clearly distinguishable tones that
+ * stay muted and premium. No neon.
  */
 export const MACRO_COLORS = {
-  calories: '#A3E635', // electric lime — sleek gym energy (not orange/purple)
-  protein:  '#FF2D95', // magenta / pink — muscle
-  carbs:    '#22D3EE', // electric cyan — glycogen / energy
-  fat:      '#FBBF24', // amber
+  calories: '#E2683A', // molten ember — the hero ring
+  protein:  '#C9A227', // brass — the muscle macro
+  carbs:    '#6E8CA0', // slate blue — glycogen
+  fat:      '#8A9A5B', // olive — fats
 } as const
 
 export type MacroKey = keyof typeof MACRO_COLORS

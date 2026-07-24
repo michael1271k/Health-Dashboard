@@ -21,10 +21,10 @@ export function HelixMark({ className = 'w-6 h-6' }: { className?: string }) {
     >
       <defs>
         <linearGradient id={`${g}a`} x1="6" y1="22" x2="10" y2="2" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#8B5CF6" /><stop offset="100%" stopColor="#5BFF9D" />
+          <stop offset="0%" stopColor="#E2683A" /><stop offset="100%" stopColor="#4FB477" />
         </linearGradient>
         <linearGradient id={`${g}b`} x1="14" y1="2" x2="18" y2="22" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#22D3EE" /><stop offset="100%" stopColor="#EC4899" />
+          <stop offset="0%" stopColor="#9AA6B8" /><stop offset="100%" stopColor="#B84F28" />
         </linearGradient>
       </defs>
 
@@ -39,7 +39,7 @@ export function HelixMark({ className = 'w-6 h-6' }: { className?: string }) {
       <path d="M7.4 12 L16.6 12" stroke="rgba(217,210,255,0.95)" strokeWidth="1.8" />
       <path d="M8.9 16.8 L15.1 16.8" stroke="rgba(185,175,255,0.85)" strokeWidth="1.5" />
       {/* Specular node */}
-      <circle cx="16" cy="3.4" r="1" fill="#EAFBFF" />
+      <circle cx="16" cy="3.4" r="1" fill="#ECEEF2" />
     </svg>
   )
 }

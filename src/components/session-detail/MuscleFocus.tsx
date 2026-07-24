@@ -17,13 +17,13 @@ export function MuscleFocus({ detail }: { detail: SessionDetail }) {
   return (
     <section className="helix-card space-y-3">
       <h2 className="font-heading text-fluid-base font-bold text-text flex items-center gap-2">
-        <Target className="w-4 h-4" style={{ color: '#F472B6' }} aria-hidden="true" /> Muscle Focus
+        <Target className="w-4 h-4" style={{ color: '#B84F28' }} aria-hidden="true" /> Muscle Focus
       </h2>
 
       {/* Set-distribution bars */}
       <div className="space-y-2">
         {detail.muscleSets.map((m) => {
-          const color = GROUP_COLOR[m.group] ?? '#8B97B2'
+          const color = GROUP_COLOR[m.group] ?? '#79808C'
           return (
             <div key={m.group} className="flex items-center gap-2.5">
               <span className="text-fluid-xs font-semibold w-16 shrink-0" style={{ color }}>{m.group}</span>

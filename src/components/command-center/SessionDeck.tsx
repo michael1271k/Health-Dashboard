@@ -56,7 +56,7 @@ export function SessionDeck({ store, onClose, onViewDay }: {
               <div className="rounded-xl px-3 py-2.5 space-y-1"
                 style={{ background: 'rgba(232,197,122,0.07)', border: '1px solid rgba(232,197,122,0.35)' }}>
                 {result.newPRs.map((pr) => (
-                  <p key={pr.exerciseName} className="text-sm flex items-center gap-1.5" style={{ color: '#F5C15A' }}>
+                  <p key={pr.exerciseName} className="text-sm flex items-center gap-1.5" style={{ color: '#C9A227' }}>
                     <Trophy className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                     {pr.exerciseName} — est. 1RM {Math.round(pr.est1rm)}kg
                   </p>

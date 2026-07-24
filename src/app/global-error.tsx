@@ -65,26 +65,26 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
 
   return (
     <html lang="en">
-      <body style={{ background: '#030509', color: '#EAF2FF', fontFamily: 'system-ui, sans-serif' }}>
+      <body style={{ background: '#050608', color: '#ECEEF2', fontFamily: 'system-ui, sans-serif' }}>
         <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: 24, textAlign: 'center' }}>
           {silent ? (
             /* Indistinguishable from a normal launch: brand pulse, no error text. */
             <>
               <style>{'@keyframes helixPulse { 0%,100% { opacity: 0.45 } 50% { opacity: 1 } }'}</style>
-              <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '0.3em', color: '#8B5CF6', animation: 'helixPulse 1.2s ease-in-out infinite' }}>
+              <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '0.3em', color: '#E2683A', animation: 'helixPulse 1.2s ease-in-out infinite' }}>
                 HELIX
               </div>
             </>
           ) : (
             <>
-              <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '0.08em', color: '#8B5CF6' }}>HELIX</div>
+              <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '0.08em', color: '#E2683A' }}>HELIX</div>
               <p style={{ fontSize: 16, opacity: 0.85, maxWidth: 320 }}>Something reproducible went wrong. Your data is safe — the details below are saved in Settings.</p>
               <p style={{ fontSize: 11, opacity: 0.45, maxWidth: 340, fontFamily: 'ui-monospace, monospace', wordBreak: 'break-word' }}>
                 {error?.message?.slice(0, 200) || 'unknown error'}{error?.digest ? ` · ${error.digest}` : ''}
               </p>
               <button
                 onClick={() => { try { window.location.reload() } catch { reset() } }}
-                style={{ padding: '10px 20px', borderRadius: 12, background: '#8B5CF61f', border: '1px solid #8B5CF655', color: '#8B5CF6', fontWeight: 600 }}
+                style={{ padding: '10px 20px', borderRadius: 12, background: '#E2683A1f', border: '1px solid #E2683A55', color: '#E2683A', fontWeight: 600 }}
               >
                 Reload HELIX
               </button>

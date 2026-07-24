@@ -24,7 +24,7 @@ const WeeklyVolumeCard = dynamic(() => import('@/components/command-center/Weekl
 
 const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const PROGRAM_ORDER = ['apex51', 'axis4_builder', 'axis4_defender']
-const REST_VIOLET = '#EC4899'
+const REST_VIOLET = '#B84F28'
 
 export default function WorkoutPage() {
   const router = useRouter()
@@ -126,7 +126,7 @@ export default function WorkoutPage() {
         {/* Coach's action item from the last committed session */}
         {nextFlag && (
           <p className="text-xs flex items-start gap-1.5 mt-3 pt-3 border-t border-white/[0.06]"
-            style={{ color: '#F5C15A' }} dir="auto">
+            style={{ color: '#C9A227' }} dir="auto">
             <Flag className="w-3 h-3 shrink-0 mt-0.5" aria-hidden="true" /> {nextFlag}
           </p>
         )}
@@ -161,8 +161,8 @@ export default function WorkoutPage() {
             <button key={id} onClick={() => selectProgram(id)}
               className="px-3 py-1.5 rounded-xl text-fluid-xs font-semibold border transition-colors"
               style={active
-                ? { color: '#22D3EE', borderColor: '#22D3EE55', background: '#22D3EE1f', boxShadow: '0 0 10px #22D3EE33' }
-                : { color: '#8B97B2', borderColor: 'transparent' }}>
+                ? { color: '#9AA6B8', borderColor: '#9AA6B855', background: '#9AA6B81f', boxShadow: '0 0 10px #9AA6B833' }
+                : { color: '#79808C', borderColor: 'transparent' }}>
               {p.label}{p.drawer ? '' : ' ✦'}
             </button>
           )

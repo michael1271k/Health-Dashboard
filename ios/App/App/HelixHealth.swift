@@ -20,14 +20,22 @@ public class HealthkitPlugin: CAPPlugin, CAPBridgedPlugin {
   private let store = HKHealthStore()
 
   @objc func requestAuthorization(_ call: CAPPluginCall) {
-    guard HKHealthStore.isHealthDataAvailable() else { call.resolve(["granted": false]); return }
+    guard HKHealthStore.isHealthDataAvailable() else { self.resolveOnMain(call, ["granted": false]); return }
     var types = Set<HKObjectType>()
     for id in (call.getArray("read", String.self) ?? []) {
       if id.hasPrefix("HKCategoryTypeIdentifier"),
          let t = HKObjectType.categoryType(forIdentifier: HKCategoryTypeIdentifier(rawValue: id)) { types.insert(t) }
       else if let t = HKObjectType.quantityType(forIdentifier: HKQuantityTypeIdentifier(rawValue: id)) { types.insert(t) }
     }
-    store.requestAuthorization(toShare: nil, read: types) { ok, err in call.resolve(["granted": ok && err == nil]) }
+    guard !types.isEmpty else { self.resolveOnMain(call, ["granted": false]); return }
+    // Present the sheet from the main queue; HealthKit's completion fires on an
+    // arbitrary background queue, so resolve back through resolveOnMain (every
+    // other method already does — this one didn't).
+    DispatchQueue.main.async {
+      self.store.requestAuthorization(toShare: nil, read: types) { ok, err in
+        self.resolveOnMain(call, ["granted": ok && err == nil])
+      }
+    }
   }
 
   /// Query a HealthKit QUANTITY type and reduce it to ONE value Swift-side.
@@ -50,7 +58,14 @@ public class HealthkitPlugin: CAPPlugin, CAPBridgedPlugin {
       self.resolveOnMain(call, ["samples": []]); return
     }
     let pred = HKQuery.predicateForSamples(withStart: start, end: end, options: .strictStartDate)
-    let unit = self.unit(for: qType)
+    // ── CRASH GUARD ───────────────────────────────────────────────────────────
+    // Reading a quantity with an INCOMPATIBLE unit raises an Objective-C
+    // NSException that Swift cannot catch → hard SIGABRT, killing the app on
+    // launch (this is exactly what a JS-side METRIC_MAP addition without a unit
+    // mapping here did). Any unmapped/mismatched metric must now fail SOFT.
+    guard let unit = self.unit(for: qType), qType.is(compatibleWith: unit) else {
+      self.resolveOnMain(call, ["samples": []]); return
+    }
     let reduce = call.getString("reduce") ?? "sum"
 
     if reduce == "latest" {
@@ -148,8 +163,16 @@ public class HealthkitPlugin: CAPPlugin, CAPBridgedPlugin {
     DispatchQueue.main.async { call.resolve(data) }
   }
 
-  private func unit(for t: HKQuantityType) -> HKUnit {
+  /// Canonical unit per quantity type. Returns nil for anything unmapped so the
+  /// caller can bail instead of guessing (a wrong guess = uncatchable NSException).
+  /// New identifiers are matched by RAW STRING, not the SDK symbol, so adding a
+  /// newer-iOS metric can never break the build on an older deployment target.
+  private func unit(for t: HKQuantityType) -> HKUnit? {
     switch t.identifier {
+    // ── Newer metrics matched by raw identifier (SDK-availability-proof) ──
+    case "HKQuantityTypeIdentifierTimeInDaylight":             return .minute()
+    case "HKQuantityTypeIdentifierHeartRateRecoveryOneMinute": return HKUnit.count().unitDivided(by: .minute())
+    case "HKQuantityTypeIdentifierDietaryFatSaturated":        return .gram()
     case HKQuantityTypeIdentifier.stepCount.rawValue: return .count()
     case HKQuantityTypeIdentifier.activeEnergyBurned.rawValue: return .kilocalorie()
     case HKQuantityTypeIdentifier.heartRateVariabilitySDNN.rawValue: return .secondUnit(with: .milli)
@@ -188,7 +211,9 @@ public class HealthkitPlugin: CAPPlugin, CAPBridgedPlugin {
          HKQuantityTypeIdentifier.dietaryVitaminA.rawValue, HKQuantityTypeIdentifier.dietaryVitaminB12.rawValue,
          HKQuantityTypeIdentifier.dietaryVitaminD.rawValue, HKQuantityTypeIdentifier.dietaryVitaminK.rawValue:
       return .gramUnit(with: .micro)
-    default: return .count()
+    // Unmapped → nil. The caller resolves an empty sample set rather than
+    // risking an incompatible-unit exception.
+    default: return nil
     }
   }
 }

@@ -53,7 +53,7 @@ export function NotionSync() {
 
       <button onClick={run} disabled={running || configured === false || pending === 0}
         className="btn-glass w-full justify-center min-h-[44px] disabled:opacity-50"
-        style={{ borderColor: '#38BDF844', color: '#38BDF8' }}>
+        style={{ borderColor: '#8AA0B844', color: '#8AA0B8' }}>
         {running ? 'Syncing…' : pending === 0 ? <><Check className="w-4 h-4" /> All logs synced</> : <><Send className="w-4 h-4" /> Sync Unexported Logs to Notion</>}
       </button>
 

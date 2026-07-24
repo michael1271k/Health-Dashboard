@@ -7,11 +7,11 @@ import { KineticNumber } from '@/components/fx/KineticNumber'
 import { EcgPulse } from '@/components/fx/EcgPulse'
 
 const SCORE_COMPONENTS = [
-  { key: 'sleep_score',     label: 'Sleep',      weight: 25, color: '#38BDF8' },
-  { key: 'nutrition_score', label: 'Nutrition',   weight: 30, color: '#00E5A0' },
-  { key: 'activity_score',  label: 'Activity',    weight: 20, color: '#7C5CFF' },
-  { key: 'workout_score',   label: 'Workout',     weight: 15, color: '#FBBF24' },
-  { key: 'recovery_score',  label: 'Recovery',    weight: 10, color: '#94A3B8' },
+  { key: 'sleep_score',     label: 'Sleep',      weight: 25, color: '#8AA0B8' },
+  { key: 'nutrition_score', label: 'Nutrition',   weight: 30, color: '#4FB477' },
+  { key: 'activity_score',  label: 'Activity',    weight: 20, color: '#E2683A' },
+  { key: 'workout_score',   label: 'Workout',     weight: 15, color: '#C9A227' },
+  { key: 'recovery_score',  label: 'Recovery',    weight: 10, color: '#79808C' },
 ] as const
 
 type ScoreKey = typeof SCORE_COMPONENTS[number]['key']
@@ -37,7 +37,7 @@ function RingSegment({
     <div className="flex flex-col items-center gap-1.5 group cursor-default" title={`${label}: ${isNull ? 'no data' : pct + '/100'}`}>
       <div className="relative w-10 h-10">
         <svg viewBox="0 0 40 40" className="-rotate-90 w-full h-full" aria-hidden="true">
-          <circle cx="20" cy="20" r={r} fill="none" stroke="#243040" strokeWidth="4" strokeDasharray={isNull ? '2 3' : undefined} />
+          <circle cx="20" cy="20" r={r} fill="none" stroke="#23262B" strokeWidth="4" strokeDasharray={isNull ? '2 3' : undefined} />
           {!isNull && (
             <circle
               cx="20" cy="20" r={r}
@@ -52,7 +52,7 @@ function RingSegment({
         </svg>
         <span
           className="absolute inset-0 flex items-center justify-center helix-num text-[10px] font-bold"
-          style={{ color: isNull ? '#5A6B85' : color }}
+          style={{ color: isNull ? '#5A6472' : color }}
         >
           {isNull ? '—' : pct}
         </span>
@@ -127,7 +127,7 @@ export const ScoreCard = memo(function ScoreCard({ score, isLoading }: ScoreCard
                         className="score-ring-draw"
                         cx="35" cy="35" r="30" fill="none"
                         stroke="currentColor" strokeWidth="4" strokeLinecap="round"
-                        style={{ strokeDashoffset: 190 - 190 * (totalScore / 100), color: totalScore >= 80 ? '#34D399' : totalScore >= 60 ? '#22D3EE' : totalScore >= 40 ? '#FBBF24' : '#FB7185' }}
+                        style={{ strokeDashoffset: 190 - 190 * (totalScore / 100), color: totalScore >= 80 ? '#4FB477' : totalScore >= 60 ? '#9AA6B8' : totalScore >= 40 ? '#C9A227' : '#D5514E' }}
                       />
                     )}
                   </svg>
@@ -140,7 +140,7 @@ export const ScoreCard = memo(function ScoreCard({ score, isLoading }: ScoreCard
                   <span className="text-muted text-lg">{totalScore == null ? 'no data yet' : '/100'}</span>
                 </div>
               </div>
-              <EcgPulse level={totalScore} color={totalScore == null ? '#5A6B85' : totalScore >= 60 ? '#34D399' : totalScore >= 40 ? '#FBBF24' : '#FB7185'} />
+              <EcgPulse level={totalScore} color={totalScore == null ? '#5A6472' : totalScore >= 60 ? '#4FB477' : totalScore >= 40 ? '#C9A227' : '#D5514E'} />
             </>
           )}
 
