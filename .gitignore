@@ -60,3 +60,6 @@ historical_seed.sql
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# iOS Widget/Watch secrets — the real xcconfig carries the snapshot token
+ios/App/Secrets.xcconfig
