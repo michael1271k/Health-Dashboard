@@ -40,6 +40,12 @@ export interface DraftExercise {
   targetNext?: string
   supersetGroup?: string
   muscleGroups?: string[]
+  /**
+   * Date of the session these numbers were seeded from. Absent = the program's
+   * cold start, i.e. these are TARGETS, not history — the deck says so, so a
+   * seeded load is never mistaken for something you actually lifted.
+   */
+  seededFrom?: string
   sets: DraftSet[]
 }
 

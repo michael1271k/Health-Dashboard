@@ -16,6 +16,9 @@ export const WORKOUT_QUERY_KEYS: string[][] = [
   ['continuum'],
   ['day_vault'],
   ['daily_scores'],
+  ['weekly_volume'],   // MEV/MAV accumulator — stale after every commit/edit
+  ['session_trends'],  // per-exercise progression + double-progression verdict
+  ['weekly_export'],   // the AI payload embeds sessions + volume
   ['muscle_analytics'],
   ['exercise_history'],
   ['session_intel'],
@@ -49,6 +52,7 @@ export const HEALTH_QUERY_KEYS: string[][] = [
   ['nutrition_entries'], // macro rings/history + dashboard
   ['sleep_sessions'],    // dashboard sleep tile
   ['body_composition'],  // weight trend + InBody
+  ['weigh_in'],          // last-genuine-weigh-in recency label
   ['daily_scores'],      // recovery / battery / day score
   ['continuum'],         // journey/pathfinder day rows
   ['trends'],            // command-center trend strips

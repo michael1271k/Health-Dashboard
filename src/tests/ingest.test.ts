@@ -2,6 +2,7 @@
 import { describe, it, expect } from 'vitest'
 import { ingestDailyLog } from '@/lib/ingest/dailyLog'
 import { IngestPayloadSchema } from '@/lib/ingest/schema'
+import { nightWindow } from '@/lib/sleep/nightWindow'
 
 /**
  * Ingest contract: partial pushes are bulletproof (missing keys never fail),
@@ -265,6 +266,12 @@ describe('ingest — sleep is an unconditional overwrite', () => {
     expect(sleepRow.core_min).toBe(462)
     expect(sleepRow.deep_min).toBe(0)
     expect(sleepRow.rem_min).toBe(0)
-    expect(sleepRow.start_time).toBe('2026-07-19T23:00:00Z')
+    // The synthetic bedtime is the PREVIOUS evening and must land inside the
+    // night window every reader queries. It used to be `${date}T23:00:00Z` —
+    // an hour PAST the window's end — so the row was written but invisible to
+    // compute-score and useTodaySleep, reading as "Awaiting Sleep Data".
+    expect(sleepRow.start_time).toBe('2026-07-18T23:00:00Z')
+    const w = nightWindow('2026-07-19')
+    expect(sleepRow.start_time >= w.from && sleepRow.start_time < w.to).toBe(true)
   })
 })

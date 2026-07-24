@@ -4,6 +4,7 @@ import type { Database } from '@/lib/supabase/types'
 import { derivePhase } from '@/lib/nutrition/phase'
 import { logicalTodayInTZ } from '@/lib/utils/day'
 import { MIN_VALID_WEIGHT_KG } from '@/lib/utils/units'
+import { nightWindow, fallbackBedTime } from '@/lib/sleep/nightWindow'
 import type { IngestPayload } from './schema'
 
 type DB = SupabaseClient<Database>
@@ -312,15 +313,19 @@ export async function ingestDailyLog(
   }
 
   // ── 6. Fan-out: sleep_sessions — UNCONDITIONAL OVERWRITE for the night ──
-  // A daily push must always reflect the latest reading. The delete window spans
-  // the whole night (prev-day noon → this-day end) so a session stamped with its
-  // REAL bed_start (the previous evening) is replaced on re-sync instead of
-  // duplicated — while the prior night (bedtime two evenings ago) is untouched.
+  // A daily push must always reflect the latest reading, so the night is deleted
+  // then re-inserted. The window comes from nightWindow() — the SAME half-open
+  // [prev 12:00Z, this 12:00Z) range every reader uses.
+  //
+  // The upper bound is load-bearing. It used to be `${date}T23:59:59Z`, which
+  // made consecutive nights' windows OVERLAP: the rolling sync pushes today and
+  // yesterday, and yesterday's DELETE covered tonight's bed_start. Whenever that
+  // delete landed after today's INSERT, tonight's row vanished and the scorer saw
+  // sleepHours = 0 → "Awaiting Sleep Data" straight after a pull-to-refresh.
   if (payload.sleep_minutes !== undefined && payload.sleep_minutes > 0) {
-    const prev = new Date(`${date}T00:00:00Z`); prev.setUTCDate(prev.getUTCDate() - 1)
-    const prevDate = prev.toISOString().slice(0, 10)
+    const night = nightWindow(date)
     await db.from('sleep_sessions').delete()
-      .eq('user_id', userId).gte('start_time', `${prevDate}T12:00:00Z`).lt('start_time', `${date}T23:59:59Z`)
+      .eq('user_id', userId).gte('start_time', night.from).lt('start_time', night.to)
 
     const dur = Math.round(payload.sleep_minutes)
     const deep = payload.deep_min ?? 0
@@ -328,7 +333,8 @@ export async function ingestDailyLog(
     const awake = payload.awake_min ?? 0
     // Real per-stage split when present; else all sleep counts as core (legacy).
     const core = payload.core_min ?? Math.max(0, dur - deep - rem)
-    const startTime = payload.bed_start ?? `${date}T23:00:00Z`
+    // No reported bedtime → stamp INSIDE the night window, never past its end.
+    const startTime = payload.bed_start ?? fallbackBedTime(date)
     const endTime = payload.bed_end ?? startTime
     const { error } = await db.from('sleep_sessions').insert({
       user_id: userId, hk_uuid: null,

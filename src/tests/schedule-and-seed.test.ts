@@ -42,12 +42,34 @@ describe('buildTemplateDraft — per-set seed + cardio + memory override', () =>
     expect(plank.sets).toEqual([{ weightKg: 0, reps: 55 }, { weightKg: 0, reps: 52 }])
   })
 
-  it('memory overrides the fallback numbers but keeps the seed set count', () => {
-    const exMap = new Map([['Chest Press (Machine)', 'id-chest']])
-    const memory = new Map([['id-chest', { weightKg: 40, reps: 10 }]])
-    const d = buildTemplateDraft(cbB, '2026-07-16', exMap, memory)
+  it('seeds each slot from the CORRESPONDING previous set, not one value fanned out', () => {
+    // The ghost-data bug: history was a single set replicated across every slot,
+    // so the deck showed three identical rows that were never actually lifted.
+    const history = new Map([['Chest Press (Machine)', {
+      date: '2026-07-17',
+      sets: [{ weightKg: 40, reps: 12 }, { weightKg: 40, reps: 11 }, { weightKg: 37.5, reps: 10 }],
+    }]])
+    const d = buildTemplateDraft(cbB, '2026-07-16', history)
     const chest = d.exercises.find((e) => e.name === 'Chest Press (Machine)')!
-    expect(chest.sets).toEqual([{ weightKg: 40, reps: 10 }, { weightKg: 40, reps: 10 }, { weightKg: 40, reps: 10 }])
+    expect(chest.sets).toEqual([
+      { weightKg: 40, reps: 12 }, { weightKg: 40, reps: 11 }, { weightKg: 37.5, reps: 10 },
+    ])
+    expect(chest.seededFrom).toBe('2026-07-17')
+  })
+
+  it('repeats the final set when the template asks for more sets than last time', () => {
+    const history = new Map([['Chest Press (Machine)', {
+      date: '2026-07-17', sets: [{ weightKg: 40, reps: 12 }],
+    }]])
+    const d = buildTemplateDraft(cbB, '2026-07-16', history)
+    const chest = d.exercises.find((e) => e.name === 'Chest Press (Machine)')!
+    expect(chest.sets).toHaveLength(3)
+    expect(chest.sets.every((s) => s.weightKg === 40 && s.reps === 12)).toBe(true)
+  })
+
+  it('marks cold-start exercises as unseeded so targets are never read as history', () => {
+    const d = buildTemplateDraft(cbB, '2026-07-16')
+    expect(d.exercises.every((e) => e.seededFrom === undefined)).toBe(true)
   })
 
   it('stamps a stable, template-scoped clientSessionId for idempotent commits', () => {

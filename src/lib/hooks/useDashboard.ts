@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { normalizeSpO2 } from '@/lib/utils/units'
+import { nightWindow } from '@/lib/sleep/nightWindow'
 import { authedFetch } from '@/lib/utils/authedFetch'
 import type { Tables } from '@/lib/supabase/types'
 import { logicalTodayISO, hoursAwakeToday } from '@/lib/utils/day'
@@ -73,8 +74,16 @@ export function useEnsureTodayScore(enabled = true) {
       authedFetch('/api/compute-score', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         // Send the DEVICE's logical date + hours awake — the server has no idea
-        // what timezone the user is in (Thailand ≠ server clock).
-        body: JSON.stringify({ backfillDays, date: logicalTodayISO(), hoursAwake: hoursAwakeToday() }),
+        // what timezone the user is in (local ≠ server clock).
+        //
+        // `isToday: true` is REQUIRED, not cosmetic. Without it the route falls
+        // back to `date === todayISO()` using its own UTC clock; between local
+        // midnight and UTC midnight the client's date is a day ahead, so today's
+        // row was written `finalized: true` and every later recompute that day
+        // was skipped by the freeze — the score stuck at its 00:00 value.
+        body: JSON.stringify({
+          backfillDays, date: logicalTodayISO(), hoursAwake: hoursAwakeToday(), isToday: true,
+        }),
       })
         .then((r) => (r.ok ? qc.invalidateQueries({ queryKey: ['daily_scores'] }).then(() => qc.invalidateQueries({ queryKey: ['weekly_review'] })) : null))
         .catch(() => {})
@@ -153,17 +162,15 @@ export function useTodaySleep() {
   return useQuery({
     queryKey: ['sleep_sessions', 'today'],
     queryFn: async () => {
-      const today = todayLocal()
-      const yesterday = new Date()
-      yesterday.setDate(yesterday.getDate() - 1)
-      const yesterdayStr = yesterday.toLocaleDateString('en-CA')
-
-      // Sleep can be keyed to yesterday's date (HealthKit convention)
+      // `start_time` is BEDTIME (the previous evening), so the night is a window,
+      // not a calendar day. Shared with the ingest writer and compute-score via
+      // nightWindow() so a reader can never drift from the writer again.
+      const night = nightWindow(todayLocal())
       const { data, error } = await supabase
         .from('sleep_sessions')
         .select('*')
-        .gte('start_time', `${yesterdayStr}T12:00:00Z`)
-        .lt('start_time', `${today}T12:00:00Z`)
+        .gte('start_time', night.from)
+        .lt('start_time', night.to)
         .order('duration_min', { ascending: false })
         .limit(1)
         .maybeSingle()

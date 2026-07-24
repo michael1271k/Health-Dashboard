@@ -309,18 +309,19 @@ export async function syncHealthKitToServer(): Promise<Record<string, number | s
  * live running total; yesterday self-corrects any steps/energy/etc. that Apple
  * recorded after the previous day's last sync (e.g. walking around before sleep
  * post a 21:00 sync). Each day writes to its own date and upserts
- * last-write-wins, so overlapping re-syncs never duplicate or drain the battery
- * beyond the caller's throttle.
+ * last-write-wins, so re-syncs never duplicate.
+ *
+ * ORDER MATTERS — these run SEQUENTIALLY, oldest first. `/api/ingest` deletes a
+ * day's sleep window before re-inserting it; running both days concurrently let
+ * yesterday's request interleave with today's and clobber the freshly written
+ * night. The delete windows are now disjoint (see nightWindow()), so this is
+ * belt-and-braces — and it also keeps the native bridge calmer under load.
  */
 export async function syncRollingWindow(): Promise<{ today: Record<string, number | string> | null; yesterday: Record<string, number | string> | null }> {
   if (!Capacitor.isNativePlatform()) return { today: null, yesterday: null }
   const now = new Date()
   const yst = new Date(now); yst.setDate(yst.getDate() - 1)
-  // Both days in parallel — each writes to its own date and upserts last-write-
-  // wins, so there's no ordering dependency between them.
-  const [today, yesterday] = await Promise.all([
-    syncDay(localDayISO(now), true),
-    syncDay(localDayISO(yst), false),
-  ])
+  const yesterday = await syncDay(localDayISO(yst), false)
+  const today = await syncDay(localDayISO(now), true)
   return { today, yesterday }
 }

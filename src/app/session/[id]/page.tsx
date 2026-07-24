@@ -44,7 +44,7 @@ export default function SessionAnalysisPage() {
     <div className="space-y-3 pb-8">
       <SessionHero detail={data} />
       <ProgressionTrail sessionId={data.id} />
-      <ExerciseBreakdown sessionId={data.id} exercises={data.exercises} date={data.date} />
+      <ExerciseBreakdown sessionId={data.id} exercises={data.exercises} date={data.date} dayKey={data.dayKey} />
       <MuscleFocus detail={data} />
     </div>
   )

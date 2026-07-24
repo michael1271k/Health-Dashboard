@@ -1,34 +1,56 @@
 /**
- * Program-day template → pre-seeded Command Center draft. When an explicit
- * per-set seed exists (seedTemplates.ts) it defines the structure (cardio +
- * per-set numbers); otherwise the program's wk1Kg targets are the cold start.
- * In BOTH cases real history wins: if useExerciseMemory has an exercise, its
- * last logged load overrides the seed numbers — the seed is only the fallback.
- * NOTE: useExerciseMemory is not era-aware — seeded weights can disagree with
- * the deck's era-scoped "Prev" chip (accepted).
+ * Program-day template → pre-seeded Command Center draft.
+ *
+ * Seeding priority, highest first:
+ *   1. The exercise's LAST REAL SESSION in the same era — set 1 seeds from set 1,
+ *      set 2 from set 2, and so on.
+ *   2. The explicit per-set seed (seedTemplates.ts), which also defines cardio
+ *      and the deck's structure.
+ *   3. The program's `wk1Kg` cold start (bodyweight/timed moves seed at 0 kg).
+ *
+ * This used to read `useExerciseMemory`, which returned ONE set — whichever row
+ * was newest by `created_at`, warm-ups included — and fanned that single value
+ * across every set slot, ignoring the training era entirely. A deck of three
+ * identical made-up rows is exactly the "arbitrary data" problem: the numbers
+ * looked plausible but were never what was actually lifted.
  */
 import { daySplitEnum, type ProgramDay } from '@/lib/programs'
-import type { SessionDraft, DraftExercise } from '@/lib/sessions/draft'
+import type { SessionDraft, DraftExercise, DraftSet } from '@/lib/sessions/draft'
 import { SEED_TEMPLATES, WARMUP_CARDIO } from '@/lib/sessions/seedTemplates'
 
 export const HELIX_DAY_KEYS = ['cb_a', 'legs_a', 'arms', 'cb_b', 'legs_b'] as const
 
-export interface ExerciseMemoryEntry { weightKg: number; reps: number }
+/** Last session per exercise NAME — the shape `useExerciseSetHistory` returns. */
+export interface ExerciseHistoryEntry {
+  date: string
+  sets: Array<{ weightKg: number; reps: number }>
+}
+
+/**
+ * Fill `count` slots from the previous session's set list. Slot i takes set i;
+ * if last time had fewer sets, the remaining slots repeat the final set (the
+ * honest read of "you're adding a set at the load you finished on").
+ */
+function seedFromHistory(prev: ExerciseHistoryEntry, count: number): DraftSet[] {
+  return Array.from({ length: count }, (_, i) => {
+    const s = prev.sets[i] ?? prev.sets[prev.sets.length - 1]
+    return { weightKg: s.weightKg, reps: s.reps }
+  })
+}
 
 export function buildTemplateDraft(
   day: ProgramDay,
   date: string,
-  exMap?: ReadonlyMap<string, string>,
-  memory?: ReadonlyMap<string, ExerciseMemoryEntry>,
+  history?: ReadonlyMap<string, ExerciseHistoryEntry>,
 ): SessionDraft {
   const dayKey = (HELIX_DAY_KEYS as readonly string[]).includes(day.key)
     ? (day.key as SessionDraft['dayKey']) : undefined
 
   let i = 0
   const localId = () => `tpl-${i++}-${Math.random().toString(36).slice(2, 8)}`
-  const memoryFor = (name: string): ExerciseMemoryEntry | undefined => {
-    const id = exMap?.get(name)
-    return id ? memory?.get(id) : undefined
+  const historyFor = (name: string): ExerciseHistoryEntry | undefined => {
+    const h = history?.get(name)
+    return h?.sets.length ? h : undefined
   }
 
   const seed = SEED_TEMPLATES[day.key]
@@ -43,23 +65,28 @@ export function buildTemplateDraft(
 
   if (seed) {
     for (const ex of seed.exercises) {
-      const prev = memoryFor(ex.name)
-      // Memory overrides the fallback numbers (keeping the seed's set count);
-      // no history → the exact per-set seed.
+      const prev = historyFor(ex.name)
       const sets = prev
-        ? ex.sets.map(() => ({ weightKg: prev.weightKg, reps: prev.reps }))
+        ? seedFromHistory(prev, ex.sets.length)
         : ex.sets.map((s) => ({ weightKg: s.weightKg, reps: s.reps }))
-      exercises.push({ localId: localId(), name: ex.name, muscleGroups: ex.muscles, sets })
+      exercises.push({
+        localId: localId(), name: ex.name, muscleGroups: ex.muscles, sets,
+        seededFrom: prev?.date,
+      })
     }
   } else {
     for (const ex of day.exercises.filter((e) => !e.bulkOnly)) {
-      const prev = memoryFor(ex.name)
-      // Bodyweight / timed moves (wk1Kg null) seed at 0 kg, not a phantom 20 kg.
-      const weightKg = prev?.weightKg ?? ex.wk1Kg ?? 0
-      const reps = prev?.reps ?? (parseInt(ex.reps, 10) || 10)
+      const prev = historyFor(ex.name)
+      const sets = prev
+        ? seedFromHistory(prev, ex.sets)
+        // Bodyweight / timed moves (wk1Kg null) seed at 0 kg, not a phantom 20 kg.
+        : Array.from({ length: ex.sets }, () => ({
+          weightKg: ex.wk1Kg ?? 0,
+          reps: parseInt(ex.reps, 10) || 10,
+        }))
       exercises.push({
-        localId: localId(), name: ex.name, muscleGroups: ex.muscles,
-        sets: Array.from({ length: ex.sets }, () => ({ weightKg, reps })),
+        localId: localId(), name: ex.name, muscleGroups: ex.muscles, sets,
+        seededFrom: prev?.date,
       })
     }
   }

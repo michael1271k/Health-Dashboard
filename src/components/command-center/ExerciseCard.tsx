@@ -8,6 +8,7 @@ import { SetEditorRow } from './SetEditorRow'
 import { cardioSummary, type DraftExercise, type DraftSet } from '@/lib/sessions/draft'
 import { isTimedExercise } from '@/lib/exercises/timed'
 import type { ExerciseHistory } from '@/lib/hooks/useExerciseSetHistory'
+import { SAPPHIRE, STEEL, MUTED, HAIRLINE } from '@/lib/theme/palette'
 
 const STATUS_META: Record<NonNullable<DraftExercise['status']>, { label: string; color: string }> = {
   PR:       { label: 'PR',       color: '#C9A227' },  // gold
@@ -180,18 +181,26 @@ export function ExerciseCard({ exercise, history, collapsed = false, onUpdateSet
                 </span>
               )}
             </div>
-            {/* Historical memory — the previous comparable session, as a clear reference widget */}
+            {/* Historical memory — the previous comparable session, as a clear
+                reference widget. It also states PROVENANCE: whether the inputs
+                below were seeded from that session or are program targets, so a
+                cold-start number is never mistaken for something you lifted. */}
             <span
               className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-md text-[11px] leading-snug tabular-nums"
               style={history
-                ? { color: '#9AA6B8', background: 'rgba(62,224,255,0.08)', border: '1px solid rgba(62,224,255,0.28)' }
-                : { color: '#79808C', background: 'rgba(139,151,178,0.07)', border: '1px solid rgba(139,151,178,0.2)' }}
+                ? { color: STEEL, background: `${SAPPHIRE}14`, border: `1px solid ${SAPPHIRE}47` }
+                : { color: MUTED, background: 'rgba(255,255,255,0.04)', border: `1px solid ${HAIRLINE}` }}
             >
               <History className="w-3 h-3 shrink-0" aria-hidden="true" />
               {history
                 ? <>Prev {fmtKg(Math.max(...history.sets.map((s) => s.weightKg)))}kg × {history.sets.map((s) => s.reps).join(', ')} · {fmtDate(history.date)}</>
-                : 'No history in this era yet'}
+                : 'No history in this era — showing program targets'}
             </span>
+            {exercise.seededFrom && (
+              <span className="ml-1.5 text-[10px]" style={{ color: MUTED }}>
+                seeded from {fmtDate(exercise.seededFrom)}
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <span className="helix-num text-xs text-muted tabular-nums">

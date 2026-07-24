@@ -24,17 +24,23 @@ export function useExerciseSetHistory(names: string[], era?: Era) {
     queryFn: async (): Promise<Map<string, ExerciseHistory>> => {
       const { data, error } = await supabase
         .from('workout_sets')
-        .select('weight_kg, reps, set_number, exercises!inner(name), workout_sessions!inner(started_at)')
+        .select('weight_kg, reps, set_number, set_type, exercises!inner(name), workout_sessions!inner(started_at)')
         .in('exercises.name', names)
         .order('created_at', { ascending: false })
-        .limit(600)
+        // 2000, not 600: this now SEEDS the logger, and a low cap silently
+        // dropped rarely-trained lifts out of the window — they then fell back
+        // to the program's cold-start numbers, which read as "arbitrary data".
+        .limit(2000)
       if (error) throw error
 
-      const rows = (data ?? []) as unknown as Array<{
-        weight_kg: number; reps: number; set_number: number
+      const rows = ((data ?? []) as unknown as Array<{
+        weight_kg: number; reps: number; set_number: number; set_type: string | null
         exercises: { name: string }
         workout_sessions: { started_at: string }
-      }>
+      }>)
+        // Warm-ups are not a working baseline — seeding from one under-loads
+        // the whole deck.
+        .filter((r) => r.set_type !== 'warmup')
 
       const out = new Map<string, ExerciseHistory>()
       for (const r of rows) {

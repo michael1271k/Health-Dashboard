@@ -27,7 +27,7 @@ import { logicalTodayISO } from '@/lib/utils/day'
 import { scheduleDayFor, eraForDate, isTrainingDay, type ScheduleDay } from '@/lib/programs'
 import { useSupplements } from '@/lib/hooks/useSupplements'
 import { supplementCountForDate } from '@/lib/supplements'
-import { useBioSeries } from '@/lib/hooks/useBioStrips'
+import { useBioSeries, useLastWeighIn, useLatestBodyMetrics, type BodyMetricField } from '@/lib/hooks/useBioStrips'
 import { useDailyLogs } from '@/lib/hooks/useNutrition'
 import {
   useTodayScore,
@@ -62,6 +62,21 @@ const n1 = (v: number | null | undefined) => (v == null ? null : Math.round(v * 
 
 type SheetKey = 'readiness' | 'sleep' | 'fuel' | 'train' | 'body' | 'steps' | 'stack' | null
 
+/** Body-sheet tiles, in display order. `unit: 'kg'` marks a weight to convert. */
+const BODY_TILES: Array<{
+  field: BodyMetricField; label: string; unit?: string; decimals?: 0 | 1; accent?: string
+}> = [
+  { field: 'weight_kg', label: 'Weight', unit: 'kg', decimals: 1, accent: EMBER },
+  { field: 'bmi', label: 'BMI', decimals: 1 },
+  { field: 'lean_mass_kg', label: 'Lean Mass', unit: 'kg', decimals: 1 },
+  { field: 'body_fat_pct', label: 'Body Fat', unit: '%', decimals: 1 },
+  { field: 'muscle_percent', label: 'Muscle', unit: '%', decimals: 1 },
+  { field: 'water_percent', label: 'Water', unit: '%', decimals: 1 },
+  { field: 'visceral_fat', label: 'Visceral Fat', decimals: 1 },
+  { field: 'bone_mineral', label: 'Bone Mineral', decimals: 1 },
+  { field: 'bmr', label: 'BMR', unit: 'kcal', decimals: 0 },
+]
+
 export default function DashboardPage() {
   const router = useRouter()
   useEnsureTodayScore()
@@ -73,6 +88,8 @@ export default function DashboardPage() {
   const { data: sessions } = useRecentSessions(3)
   const { data: taken } = useSupplements()
   const { data: bioSeries } = useBioSeries()
+  const { data: weighIn } = useLastWeighIn()
+  const { data: bodyMetrics } = useLatestBodyMetrics()
   const { data: fuelLogs } = useDailyLogs(8)
 
   const [open, setOpen] = useState<SheetKey>(null)
@@ -107,27 +124,24 @@ export default function DashboardPage() {
     const half = Math.floor(w.length / 2)
     return Math.round((avg(w.slice(half)) - avg(w.slice(0, half))) * 100) / 100
   }, [bioSeries])
-  // Last weigh-in — bioSeries is ascending, so the newest valid weight is the
-  // current reading. It CARRIES FORWARD: at 00:00 today's row is empty, so the
-  // Body tile must still show yesterday's actual weight (never `— — —`). The
-  // recency label + a drop/gain delta colour ride alongside it (green = weight
-  // dropped, red = gained).
+  // Last weigh-in. Sourced from the body_composition ledger (a row exists only
+  // when a weight was actually entered) and de-duplicated by VALUE, so a
+  // re-synced or carried-forward reading can't reset the clock to "today" — the
+  // old label read `daily_logs` and said "Weighed yesterday" two days after the
+  // real weigh-in. It still CARRIES FORWARD for display: at 00:00 today's row is
+  // empty, so the Body tile shows the last real reading rather than `— — —`.
   const lastWeigh = useMemo(() => {
-    const withW = (bioSeries ?? []).filter((d) => validWeight(d.weightKg) != null)
-    if (!withW.length) return null
-    const latestKg = validWeight(withW[withW.length - 1].weightKg)!
-    const prevKg = withW.length >= 2 ? validWeight(withW[withW.length - 2].weightKg) : null
-    const delta = prevKg != null ? Math.round((latestKg - prevKg) * 100) / 100 : 0
-    const ageDays = Math.round((Date.parse(logicalTodayISO() + 'T00:00:00Z') - Date.parse(withW[withW.length - 1].date + 'T00:00:00Z')) / 86400000)
+    if (!weighIn) return null
+    const { delta, ageDays } = weighIn
     return {
-      kg: latestKg,
+      kg: weighIn.kg,
       delta,
       // Green when the scale dropped, red when it rose (recomp direction).
       deltaColor: delta < -0.005 ? EMERALD : delta > 0.005 ? OXIDE : null,
       recencyColor: ageDays <= 0 ? EMERALD : ageDays <= 3 ? GOLD : MUTED,
       label: ageDays <= 0 ? 'Weighed today' : ageDays === 1 ? 'Weighed yesterday' : `Weighed ${ageDays}d ago`,
     }
-  }, [bioSeries])
+  }, [weighIn])
 
   const strips: Array<BioStripProps & { key: Exclude<SheetKey, null> }> = [
     {
@@ -302,14 +316,22 @@ export default function DashboardPage() {
                 )}
               </div>
             )}
-            <div className="grid grid-cols-2 gap-2.5">
-            <StatTile label="Weight" value={displayWeight(validWeight(log?.weight_kg))} unit={unit} accent={TEAL} isLoading={logLoading} />
-            <StatTile label="BMI" value={n1(log?.bmi)} isLoading={logLoading} />
-            <StatTile label="Lean Mass" value={displayWeight(log?.lean_mass_kg)} unit={unit} isLoading={logLoading} />
-            <StatTile label="Body Fat" value={n1(log?.body_fat_pct)} unit="%" isLoading={logLoading} />
-            {log?.muscle_percent != null && <StatTile label="Muscle" value={n1(log.muscle_percent)} unit="%" />}
-            {log?.bmr != null && <StatTile label="BMR" value={n0(log.bmr)} unit="kcal" />}
+            {/* Every metric carries forward from its OWN most recent reading.
+                Reading only today's daily_logs row meant anything entered in the
+                Nexus on another day rendered as "—", so the card looked like it
+                only knew the weight. Metrics with no reading are hidden, not
+                shown as an empty grid. */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+              {BODY_TILES.map(({ field, label, unit: u, decimals, accent }) => {
+                const m = bodyMetrics?.[field]
+                if (!m) return null
+                const v = u === unit ? displayWeight(m.value) : decimals === 0 ? n0(m.value) : n1(m.value)
+                return <StatTile key={field} label={label} value={v} unit={u} accent={accent} />
+              })}
             </div>
+            {bodyMetrics && Object.keys(bodyMetrics).length === 0 && (
+              <p className="text-fluid-xs text-muted">No body metrics logged yet — add them in the Daily Nexus.</p>
+            )}
           </div>
         )}
         {open === 'steps' && (

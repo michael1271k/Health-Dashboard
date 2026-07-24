@@ -6,9 +6,10 @@ import { ArrowLeft, FileClock, Loader2 } from 'lucide-react'
 import { SessionDeck } from '@/components/command-center/SessionDeck'
 import { PastePanel } from '@/components/command-center/PastePanel'
 import { useSessionDraft } from '@/lib/hooks/useSessionDraft'
-import { useExerciseMap, useExerciseMemory } from '@/lib/hooks/useLogger'
+import { useExerciseSetHistory } from '@/lib/hooks/useExerciseSetHistory'
 import { buildTemplateDraft } from '@/lib/sessions/templateDraft'
-import { PROGRAMS, DEFAULT_PROGRAM_ID, getActiveProgramId } from '@/lib/programs'
+import { SEED_TEMPLATES } from '@/lib/sessions/seedTemplates'
+import { PROGRAMS, DEFAULT_PROGRAM_ID, getActiveProgramId, eraForDate } from '@/lib/programs'
 import { logicalTodayISO } from '@/lib/utils/day'
 
 /**
@@ -42,8 +43,6 @@ function SessionPageInner() {
   const router = useRouter()
   const params = useSearchParams()
   const store = useSessionDraft()
-  const exMapQ = useExerciseMap()
-  const memoryQ = useExerciseMemory()
 
   const templateKey = params.get('template')
   const targetDate = params.get('date') ?? logicalTodayISO()
@@ -54,9 +53,23 @@ function SessionPageInner() {
     return program.days.find((d) => d.key === templateKey) ?? null
   }, [templateKey])
 
-  // Seeding waits for the exercise map + memory so previous loads land in the
-  // seeded weights (wk1 target stays the cold-start fallback on error).
-  const seedReady = !exMapQ.isPending && !memoryQ.isPending
+  // The exercises this deck will contain — the explicit per-set seed defines the
+  // structure when one exists, otherwise the program day does.
+  const seedNames = useMemo(() => {
+    if (!templateDay) return []
+    const seed = SEED_TEMPLATES[templateDay.key]
+    return seed
+      ? seed.exercises.map((e) => e.name)
+      : templateDay.exercises.filter((e) => !e.bulkOnly).map((e) => e.name)
+  }, [templateDay])
+
+  // Real per-set history for those exercises, scoped to the TARGET DATE's era so
+  // a HELIX deck is never seeded from PPL-legacy numbers.
+  const historyQ = useExerciseSetHistory(seedNames, eraForDate(targetDate))
+
+  // Seeding waits for history so the previous session's actual numbers land in
+  // the inputs (the program's wk1 target stays the cold-start fallback).
+  const seedReady = !historyQ.isPending
   const { hydrated, draft, start, discard } = store
 
   // Match on program-day identity only — NOT the date. Back-dating an active
@@ -73,8 +86,8 @@ function SessionPageInner() {
   useEffect(() => {
     if (seededRef.current || !hydrated || draft || !templateDay || !seedReady) return
     seededRef.current = true
-    start(buildTemplateDraft(templateDay, targetDate, exMapQ.data, memoryQ.data))
-  }, [hydrated, draft, templateDay, seedReady, targetDate, start, exMapQ.data, memoryQ.data])
+    start(buildTemplateDraft(templateDay, targetDate, historyQ.data))
+  }, [hydrated, draft, templateDay, seedReady, targetDate, start, historyQ.data])
 
   const header = (
     <header className="flex items-center gap-3 mb-4">
@@ -109,7 +122,7 @@ function SessionPageInner() {
               Resume draft
             </button>
             <button
-              onClick={() => { discard(); start(buildTemplateDraft(templateDay, targetDate, exMapQ.data, memoryQ.data)) }}
+              onClick={() => { discard(); start(buildTemplateDraft(templateDay, targetDate, historyQ.data)) }}
               className="btn-glass w-full justify-center min-h-[48px] text-danger"
             >
               Start {templateDay.label} fresh
