@@ -11,14 +11,14 @@ import type { ExerciseHistory } from '@/lib/hooks/useExerciseSetHistory'
 import { SAPPHIRE, STEEL, MUTED, HAIRLINE } from '@/lib/theme/palette'
 
 const STATUS_META: Record<NonNullable<DraftExercise['status']>, { label: string; color: string }> = {
-  PR:       { label: 'PR',       color: '#C9A227' },  // gold
-  PROGRESS: { label: 'PROG ▲',   color: '#4FB477' },
+  PR:       { label: 'PR',       color: '#D4AF37' },  // gold
+  PROGRESS: { label: 'PROG ▲',   color: '#3E9E7A' },
   HOLD:     { label: 'HOLD',     color: '#79808C' },
-  REGRESS:  { label: 'REGR ▼',   color: '#D5514E' },
-  NEW:      { label: 'NEW',      color: '#9AA6B8' },
+  REGRESS:  { label: 'REGR ▼',   color: '#C4514E' },
+  NEW:      { label: 'NEW',      color: '#8E9AAC' },
 }
 
-const CARDIO_VIOLET = '#B84F28'
+const CARDIO_VIOLET = '#B4522A'
 
 // A unilateral L/R pair reads as ONE numbered set that expands into Left/Right
 // sub-rows — NOT two sibling rows. groupSets folds the flat draft list into that
@@ -238,7 +238,7 @@ export function ExerciseCard({ exercise, history, collapsed = false, onUpdateSet
             </button>
           )}
           {exercise.targetNext && (
-            <p className="text-xs leading-snug flex items-center gap-1" style={{ color: '#C9A227' }}>
+            <p className="text-xs leading-snug flex items-center gap-1" style={{ color: '#D4AF37' }}>
               <Target className="w-3 h-3 shrink-0" aria-hidden="true" /> Next: {exercise.targetNext}
             </p>
           )}
@@ -275,10 +275,10 @@ export function ExerciseCard({ exercise, history, collapsed = false, onUpdateSet
                 <div className="flex items-center gap-2 px-1">
                   <span className="text-[10px] font-bold uppercase tracking-wide text-muted">Set {g.num}</span>
                   <span className="text-[9px] font-bold uppercase tracking-wide px-1 py-px rounded"
-                    style={{ color: '#E2683A', background: '#E2683A1f', border: '1px solid #E2683A55' }}>L / R</span>
+                    style={{ color: '#E0703C', background: '#E0703C1f', border: '1px solid #E0703C55' }}>L / R</span>
                   {asym && (
                     <span className="text-[9px] font-bold uppercase tracking-wide px-1 py-px rounded ml-auto"
-                      style={{ color: '#D5514E', background: '#D5514E1f', border: '1px solid #D5514E55' }}
+                      style={{ color: '#C4514E', background: '#C4514E1f', border: '1px solid #C4514E55' }}
                       title={`${asym.weak === 'L' ? 'Left' : 'Right'} side ${asym.pct}% weaker (by volume)`}>
                       −{asym.pct}% {asym.weak}
                     </span>
@@ -307,7 +307,7 @@ export function ExerciseCard({ exercise, history, collapsed = false, onUpdateSet
                   <button type="button" onClick={() => onToggleLink(g.pairId)} aria-pressed={linked}
                     className="min-h-[30px] px-2.5 rounded-lg text-[10px] font-bold uppercase tracking-wide active:scale-95 transition-colors"
                     style={linked
-                      ? { color: '#9AA6B8', background: '#9AA6B81f', border: '1px solid #9AA6B866' }
+                      ? { color: '#8E9AAC', background: '#8E9AAC1f', border: '1px solid #8E9AAC66' }
                       : { color: 'var(--color-muted)', background: 'transparent', border: '1px solid rgba(255,255,255,0.10)' }}>
                     {linked ? 'Linked' : 'Unlinked'}
                   </button>

@@ -18,7 +18,7 @@ import { WeeklyReviewCard } from '@/components/dashboard/WeeklyReviewCard'
 import { WidgetBoundary } from '@/components/fx/WidgetBoundary'
 import { BrandHeader } from '@/components/dashboard/BrandHeader'
 import { DeferredMount } from '@/components/fx/DeferredMount'
-import { formatSleep, mlToL } from '@/lib/utils/format'
+import { formatSleep } from '@/lib/utils/format'
 import { displayWeight, weightUnit, validWeight, fmtVolume } from '@/lib/utils/units'
 import { phaseDisplay } from '@/lib/nutrition/phase'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
@@ -28,6 +28,8 @@ import { scheduleDayFor, eraForDate, isTrainingDay, type ScheduleDay } from '@/l
 import { useSupplements } from '@/lib/hooks/useSupplements'
 import { supplementCountForDate } from '@/lib/supplements'
 import { useBioSeries, useLastWeighIn, useLatestBodyMetrics, type BodyMetricField } from '@/lib/hooks/useBioStrips'
+import { SleepStages } from '@/components/dashboard/SleepStages'
+import { StepsJourney } from '@/components/dashboard/StepsJourney'
 import { useDailyLogs } from '@/lib/hooks/useNutrition'
 import {
   useTodayScore,
@@ -35,6 +37,7 @@ import {
   useTodayDailyLog,
   useTodayMetrics,
   useTodayNutrition,
+  useTodaySleep,
   useUserGoals,
   useRecentSessions,
 } from '@/lib/hooks/useDashboard'
@@ -53,14 +56,18 @@ const TEAL = EMBER             // Body
 const AQUA = SAPPHIRE          // HRV / data
 const GOLD_ACCENT = GOLD       // Stack
 const TRAIN_GREEN = EMERALD    // Training
-const WATER_BLUE = SAPPHIRE    // Water
-const ENERGY_RED = OXIDE       // Active Energy
 const STEPS_INDIGO = PLATINUM  // Steps
 
 const n0 = (v: number | null | undefined) => (v == null ? null : Math.round(v))
 const n1 = (v: number | null | undefined) => (v == null ? null : Math.round(v * 10) / 10)
 
 type SheetKey = 'readiness' | 'sleep' | 'fuel' | 'train' | 'body' | 'steps' | 'stack' | null
+
+/** One accent per sheet — the glass picks up its own domain colour. */
+const SHEET_ACCENT: Record<Exclude<SheetKey, null>, string> = {
+  readiness: EMBER, sleep: AMETHYST, fuel: MACRO_COLORS.calories, train: EMERALD,
+  body: EMBER, steps: PLATINUM, stack: GOLD,
+}
 
 /** Body-sheet tiles, in display order. `unit: 'kg'` marks a weight to convert. */
 const BODY_TILES: Array<{
@@ -81,9 +88,10 @@ export default function DashboardPage() {
   const router = useRouter()
   useEnsureTodayScore()
   const { data: score, isLoading: scoreLoading } = useTodayScore()
-  const { data: log, isLoading: logLoading } = useTodayDailyLog()
+  const { data: log } = useTodayDailyLog()
   const { data: metrics } = useTodayMetrics()
   const { data: nutrition } = useTodayNutrition()
+  const { data: sleep } = useTodaySleep()
   const { data: goals } = useUserGoals()
   const { data: sessions } = useRecentSessions(3)
   const { data: taken } = useSupplements()
@@ -206,7 +214,7 @@ export default function DashboardPage() {
   // shows the "why" instead of dead space. Real HealthKit fields only.
   const drivers: Array<{ label: string; value: string; color: string }> = [
     { label: 'Sleep', value: log?.sleep_minutes != null ? formatSleep(log.sleep_minutes) : '—', color: VIOLET },
-    { label: 'Resting HR', value: log?.avg_rest_heart_rate != null ? `${log.avg_rest_heart_rate} bpm` : '—', color: '#D5514E' },
+    { label: 'Resting HR', value: log?.avg_rest_heart_rate != null ? `${log.avg_rest_heart_rate} bpm` : '—', color: '#C4514E' },
     { label: 'HRV', value: log?.hrv_ms != null ? `${Math.round(log.hrv_ms)} ms` : '—', color: AQUA },
     { label: 'Energy left', value: score?.battery_pct != null ? `${score.battery_pct}%` : '—', color: CYAN },
   ]
@@ -259,8 +267,13 @@ export default function DashboardPage() {
       <DeferredMount minHeight={140}><AnimatedCard index={9}><InsightCoach /></AnimatedCard></DeferredMount>
       <DeferredMount minHeight={120}><AnimatedCard index={10}><WeeklyReviewCard /></AnimatedCard></DeferredMount>
 
-      {/* ── Domain detail: liquid-glass popup ── */}
-      <LiquidModal open={!!open} onClose={() => setOpen(null)} title={open ? sheetTitle[open] : undefined}>
+      {/* ── Domain detail: liquid-glass popup, tinted by its own domain accent ── */}
+      <LiquidModal
+        open={!!open}
+        onClose={() => setOpen(null)}
+        title={open ? sheetTitle[open] : undefined}
+        accent={open ? SHEET_ACCENT[open] : undefined}
+      >
         {open === 'readiness' && (
           <div className="space-y-4">
             <ScoreCard score={score ?? null} />
@@ -272,12 +285,7 @@ export default function DashboardPage() {
           </div>
         )}
         {open === 'sleep' && (
-          <div className="grid grid-cols-2 gap-2.5">
-            <StatTile label="Sleep" value={log?.sleep_minutes != null ? formatSleep(log.sleep_minutes) : null} accent={VIOLET} isLoading={logLoading} />
-            <StatTile label="Resting HR" value={log?.avg_rest_heart_rate} unit="bpm" isLoading={logLoading} />
-            <StatTile label="Respiratory" value={n1(log?.respiratory_rate)} unit="br/min" isLoading={logLoading} />
-            <StatTile label="Blood O₂" value={n0(log?.blood_oxygen)} unit="%" isLoading={logLoading} />
-          </div>
+          <SleepStages sleep={sleep ?? null} log={log ?? null} goalHours={goals?.sleep_goal_hours ?? null} />
         )}
         {open === 'fuel' && (
           // The elegant hero-calories + 3-macro-ring UI (double-tap any ring to
@@ -335,12 +343,15 @@ export default function DashboardPage() {
           </div>
         )}
         {open === 'steps' && (
-          <div className="grid grid-cols-2 gap-2.5">
-            <StatTile label="Steps" value={steps?.toLocaleString() ?? null} accent={STEPS_INDIGO} />
-            <StatTile label="Active Energy" value={n0(log?.active_energy)} unit="kcal" accent={ENERGY_RED} isLoading={logLoading} />
-            <StatTile label="Water" value={log?.water_ml != null ? mlToL(log.water_ml) : null} unit="L" accent={WATER_BLUE} isLoading={logLoading} />
-            <StatTile label="Training" value={log?.training_minutes} unit="min" accent={TRAIN_GREEN} isLoading={logLoading} />
-          </div>
+          <StepsJourney
+            steps={steps}
+            goal={goals?.steps_goal ?? null}
+            distanceM={(log as { distance_m?: number | null } | null)?.distance_m ?? null}
+            activeKcal={log?.active_energy ?? null}
+            trainingMin={log?.training_minutes ?? null}
+            waterMl={log?.water_ml ?? null}
+            series={(bioSeries ?? []).map((d) => d.steps)}
+          />
         )}
         {open === 'stack' && <SupplementChecklist />}
       </LiquidModal>

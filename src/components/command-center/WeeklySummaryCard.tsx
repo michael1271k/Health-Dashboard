@@ -6,7 +6,7 @@ import { useWeekSessions, weekStartOf } from '@/lib/hooks/useWeekSessions'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { fmtVolume } from '@/lib/utils/units'
 
-const GOLD = '#C9A227'
+const GOLD = '#D4AF37'
 
 /**
  * Weekly Session Summary entry points. The gold CTA appears on Fridays once the

@@ -60,6 +60,7 @@ const isoField = () => z.string().datetime({ offset: true }).optional().catch(un
 
 export const IngestPayloadSchema = z.object({
   steps:               intField(),
+  distance_m:          floatField(),                 // walking+running metres (native HealthKit)
   water:               floatField(),                 // mL (numeric)
   sleep_minutes:       sleepMinutesField(),          // hours-vs-minutes safe, clamped
   // ── Sleep stage breakdown (native HealthKit SleepAnalysis) — all optional ──

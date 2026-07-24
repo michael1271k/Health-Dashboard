@@ -7,7 +7,7 @@ import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 import { isTimedExercise } from '@/lib/exercises/timed'
 import { ExerciseHistorySheet } from '@/components/exercises/ExerciseHistorySheet'
 
-const ICE = '#8AA0B8'
+const ICE = '#3D7AB8'
 
 /**
  * The Daily Nexus workout block's exercise list (replaces the abstract volume

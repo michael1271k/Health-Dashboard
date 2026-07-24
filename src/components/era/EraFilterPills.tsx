@@ -9,7 +9,7 @@ import {
   type SubPhase, type SubPhaseSel,
 } from '@/lib/era/eraFilter'
 
-const GOLD = '#C9A227'
+const GOLD = '#D4AF37'
 
 /**
  * The global era pill row (Nutrition / Charts / Journey). Under the Helix 5.1

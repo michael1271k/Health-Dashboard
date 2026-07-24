@@ -18,9 +18,9 @@ import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 import { HELIX_CUT_START } from '@/lib/programs'
 
 const COLORS = {
-  weight: '#E2683A',   // royal indigo (Midnight Luxe)
-  muscle: '#4FB477',   // neon teal
-  bodyFat: '#8AA0B8',  // ice cyan
+  weight: '#E0703C',   // royal indigo (Midnight Luxe)
+  muscle: '#3E9E7A',   // neon teal
+  bodyFat: '#3D7AB8',  // ice cyan
   grid: 'rgba(255,255,255,0.06)',
   text: '#79808C',
 }
@@ -121,8 +121,8 @@ export function WeightTrendChart({ data, isLoading, showEraBoundary }: WeightTre
             {eraBoundaryPoint && (
               <ReferenceLine
                 yAxisId="mass" x={formatDate(eraBoundaryPoint.date)}
-                stroke="#9AA6B8" strokeOpacity={0.7} strokeDasharray="4 3"
-                label={{ value: 'Helix 5.1', position: 'insideTopRight', fill: '#9AA6B8', fontSize: 10 }}
+                stroke="#8E9AAC" strokeOpacity={0.7} strokeDasharray="4 3"
+                label={{ value: 'Helix 5.1', position: 'insideTopRight', fill: '#8E9AAC', fontSize: 10 }}
               />
             )}
             <defs>

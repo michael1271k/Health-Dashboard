@@ -67,18 +67,22 @@ const KNOWN_KEYS = [
   'steps', 'water', 'sleep_minutes', 'carbs', 'protein', 'fats', 'weight', 'lean_mass',
   'bmi', 'training_minutes', 'active_energy', 'body_fat', 'standing_minutes', 'avg_heart_rate',
   'avg_rest_heart_rate', 'respiratory_rate', 'blood_oxygen', 'hrv', 'exercise_minutes',
-  'stand_hours', 'vo2max', 'wrist_temp', 'time_in_daylight', 'heart_rate_recovery',
+  'stand_hours', 'vo2max', 'wrist_temp', 'time_in_daylight', 'heart_rate_recovery', 'distance_m',
 ] as const
 
 /** Newer metric columns that may not exist yet if the latest migration wasn't run. */
 const V51_METRIC_KEYS = [
   'hrv_ms', 'exercise_minutes', 'stand_hours', 'vo2max',
   'wrist_temp_delta', 'time_in_daylight_min', 'heart_rate_recovery',
+  // distance_m ships ahead of its paste-SQL; without it here the whole daily
+  // push would fail on an un-migrated DB instead of self-healing.
+  'distance_m',
 ] as const
 /** Payload key → the corresponding daily_logs column (for error attribution). */
 const V51_PAYLOAD_TO_COLUMN: Record<string, string> = {
   hrv: 'hrv_ms', exercise_minutes: 'exercise_minutes', stand_hours: 'stand_hours', vo2max: 'vo2max',
   wrist_temp: 'wrist_temp_delta', time_in_daylight: 'time_in_daylight_min', heart_rate_recovery: 'heart_rate_recovery',
+  distance_m: 'distance_m',
 }
 
 /**
@@ -147,6 +151,7 @@ export async function ingestDailyLog(
   const row: Record<string, any> = { user_id: userId, date }
   const set = (k: string, v: number | undefined) => { if (v !== undefined) row[k] = v }
   set('steps', payload.steps)
+  set('distance_m', payload.distance_m)
   set('water_ml', payload.water)
   set('sleep_minutes', payload.sleep_minutes)
   set('carbs_g', payload.carbs)

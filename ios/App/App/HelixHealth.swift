@@ -174,6 +174,8 @@ public class HealthkitPlugin: CAPPlugin, CAPBridgedPlugin {
     case "HKQuantityTypeIdentifierHeartRateRecoveryOneMinute": return HKUnit.count().unitDivided(by: .minute())
     case "HKQuantityTypeIdentifierDietaryFatSaturated":        return .gram()
     case HKQuantityTypeIdentifier.stepCount.rawValue: return .count()
+    // Metres — the JS side stores distance_m and formats km for display.
+    case HKQuantityTypeIdentifier.distanceWalkingRunning.rawValue: return .meter()
     case HKQuantityTypeIdentifier.activeEnergyBurned.rawValue: return .kilocalorie()
     case HKQuantityTypeIdentifier.heartRateVariabilitySDNN.rawValue: return .secondUnit(with: .milli)
     case HKQuantityTypeIdentifier.restingHeartRate.rawValue, HKQuantityTypeIdentifier.heartRate.rawValue,

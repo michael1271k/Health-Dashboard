@@ -7,8 +7,8 @@ import { tapLight } from '@/lib/native/haptics'
 import type { DraftSet } from '@/lib/sessions/draft'
 
 const WEIGHT_STEPS = [-2.5, -0.25, +0.25, +2.5] as const
-const ORANGE = '#E2683A' // warm-up
-const DANGER = '#D5514E' // failure
+const ORANGE = '#E0703C' // warm-up
+const DANGER = '#C4514E' // failure
 
 /** Stable slider ceiling for a load (multiple of 10, ≥ weight + 30 headroom). */
 const maxFor = (w: number) => Math.max(60, Math.ceil((w + 30) / 10) * 10)
@@ -68,14 +68,14 @@ export function SetEditorRow({ index, displayNum, subRow = false, set, active, t
     onChange({ setType: set.setType === t ? undefined : t })
   }
 
-  const sideColor = set.side === 'L' ? '#9AA6B8' : set.side === 'R' ? '#E2683A' : null
+  const sideColor = set.side === 'L' ? '#8E9AAC' : set.side === 'R' ? '#E0703C' : null
   const badge = set.side ?? (isWarm ? 'W' : `S${displayNum ?? index + 1}`)
 
   return (
     <div
       className={`rounded-lg border transition-colors ${
         active ? 'border-primary/30 bg-white/[0.03]'
-        : isWarm ? 'border-transparent bg-[#E2683A]/[0.06]' : 'border-transparent'}`}
+        : isWarm ? 'border-transparent bg-[#E0703C]/[0.06]' : 'border-transparent'}`}
       style={subRow && sideColor ? { borderLeft: `2px solid ${sideColor}`, borderTopLeftRadius: 2, borderBottomLeftRadius: 2 } : undefined}
     >
       {/* ── Summary line (always visible) ── */}
@@ -159,7 +159,7 @@ export function SetEditorRow({ index, displayNum, subRow = false, set, active, t
             <Slider.Thumb
               className="block w-5 h-5 rounded-full bg-primary outline-none
                          focus-visible:ring-2 focus-visible:ring-primary/60
-                         shadow-[0_0_12px_rgba(139,92,246,0.55)]"
+                         shadow-[0_0_12px_rgba(224,112,60,0.55)]"
             />
           </Slider.Root>
           <div className="flex items-center justify-between gap-1.5">
@@ -203,7 +203,7 @@ export function SetEditorRow({ index, displayNum, subRow = false, set, active, t
                 <button type="button" onClick={onToggleLink} aria-pressed={set.linked !== false}
                   className="min-h-[32px] px-2.5 rounded-lg text-[11px] font-bold uppercase tracking-wide active:scale-95 transition-colors"
                   style={set.linked !== false
-                    ? { color: '#9AA6B8', background: '#9AA6B81f', border: '1px solid #9AA6B866' }
+                    ? { color: '#8E9AAC', background: '#8E9AAC1f', border: '1px solid #8E9AAC66' }
                     : { color: 'var(--color-muted)', background: 'transparent', border: '1px solid rgba(255,255,255,0.10)' }}>
                   {set.linked !== false ? 'Linked' : 'Unlinked'}
                 </button>

@@ -21,10 +21,10 @@ export function HelixMark({ className = 'w-6 h-6' }: { className?: string }) {
     >
       <defs>
         <linearGradient id={`${g}a`} x1="6" y1="22" x2="10" y2="2" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#E2683A" /><stop offset="100%" stopColor="#4FB477" />
+          <stop offset="0%" stopColor="#E0703C" /><stop offset="100%" stopColor="#3E9E7A" />
         </linearGradient>
         <linearGradient id={`${g}b`} x1="14" y1="2" x2="18" y2="22" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#9AA6B8" /><stop offset="100%" stopColor="#B84F28" />
+          <stop offset="0%" stopColor="#8E9AAC" /><stop offset="100%" stopColor="#B4522A" />
         </linearGradient>
       </defs>
 
@@ -35,9 +35,9 @@ export function HelixMark({ className = 'w-6 h-6' }: { className?: string }) {
       {/* Right strand (cyan) — mirrored */}
       <path d="M16 3 C14 7.8, 18 9.8, 16 14.6 C15 17, 15 18.6, 16 21" stroke={`url(#${g}b)`} strokeWidth="2.1" />
       {/* Base-pair rungs (the H crossbars) */}
-      <path d="M8.9 7.2 L15.1 7.2" stroke="rgba(185,175,255,0.85)" strokeWidth="1.5" />
-      <path d="M7.4 12 L16.6 12" stroke="rgba(217,210,255,0.95)" strokeWidth="1.8" />
-      <path d="M8.9 16.8 L15.1 16.8" stroke="rgba(185,175,255,0.85)" strokeWidth="1.5" />
+      <path d="M8.9 7.2 L15.1 7.2" stroke="rgba(201,205,214,0.85)" strokeWidth="1.5" />
+      <path d="M7.4 12 L16.6 12" stroke="rgba(236,238,242,0.95)" strokeWidth="1.8" />
+      <path d="M8.9 16.8 L15.1 16.8" stroke="rgba(201,205,214,0.85)" strokeWidth="1.5" />
       {/* Specular node */}
       <circle cx="16" cy="3.4" r="1" fill="#ECEEF2" />
     </svg>

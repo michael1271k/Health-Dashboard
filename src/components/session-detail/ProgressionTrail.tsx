@@ -3,8 +3,7 @@
 import { Star, TrendingUp } from 'lucide-react'
 import { useSessionIntel } from '@/lib/hooks/useSessionIntel'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
-
-const GOLD = '#C9A227', VIOLET = '#E2683A', TEAL = '#4FB477', ROSE = '#D5514E'
+import { GOLD, EMBER as VIOLET, EMERALD as TEAL, OXIDE as ROSE } from '@/lib/theme/palette'
 
 /**
  * Historical comparison for the session: volume Δ vs the previous SAME-TYPE
@@ -58,24 +57,81 @@ export function ProgressionTrail({ sessionId }: { sessionId: string }) {
       {!intel.isFirstOfType && intel.volumes.length >= 2 && (
         <div>
           <p className="text-[10px] uppercase tracking-wide text-muted mb-1.5">Volume vs previous {intel.volumes.length - 1} session{intel.volumes.length > 2 ? 's' : ''}</p>
-          <div className="flex items-end gap-2 h-16">
-            {intel.volumes.map((v, i) => {
-              const isThis = i === intel.volumes.length - 1
-              return (
-                <div key={v.date} className="flex-1 flex flex-col items-center gap-1">
-                  <span className="helix-num text-[8px] text-muted">{Math.round((displayWeight(v.volumeKg) ?? 0) / 1000 * 10) / 10}k</span>
-                  <div className="w-full rounded-t-md" style={{
-                    height: `${Math.max(8, (v.volumeKg / maxVol) * 44)}px`,
-                    background: isThis ? VIOLET : 'rgba(255,255,255,0.12)',
-                    boxShadow: isThis ? `0 0 10px ${VIOLET}66` : undefined,
-                  }} />
-                  <span className="text-[8px] text-muted helix-num">{new Date(v.date + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
-                </div>
-              )
-            })}
-          </div>
+          <VolumeCurve points={intel.volumes} max={maxVol} unit={unit} />
         </div>
       )}
     </section>
+  )
+}
+
+/**
+ * Volume trend as a smooth curve rather than a bar strip.
+ *
+ * Bars implied that each session is an independent quantity to compare; volume
+ * across sessions of one type is a continuous trajectory, so a curve reads the
+ * direction of travel at a glance. Hand-rolled SVG (no recharts) because it's a
+ * handful of points inside a card — pulling a chart library in here would cost
+ * more than it renders.
+ */
+function VolumeCurve({ points, max, unit }: {
+  points: Array<{ date: string; volumeKg: number }>
+  max: number
+  unit: string
+}) {
+  const W = 300, H = 68, PAD_X = 6, PAD_TOP = 8, PAD_BOTTOM = 10
+  const n = points.length - 1
+  const x = (i: number) => PAD_X + (i / n) * (W - PAD_X * 2)
+  const y = (v: number) => PAD_TOP + (1 - v / max) * (H - PAD_TOP - PAD_BOTTOM)
+
+  // Catmull-Rom → cubic Bézier: the curve passes THROUGH every real point.
+  // (A plain quadratic smoothing would round the peaks off, drawing volumes
+  // that were never lifted.) Endpoints clamp to themselves so the ends don't
+  // overshoot past the first/last session.
+  const at = (i: number) => {
+    const c = Math.min(n, Math.max(0, i))
+    return { x: x(c), y: y(points[c].volumeKg) }
+  }
+  let line = `M${at(0).x} ${at(0).y}`
+  for (let i = 0; i < n; i++) {
+    const p0 = at(i - 1), p1 = at(i), p2 = at(i + 1), p3 = at(i + 2)
+    line += ` C${p1.x + (p2.x - p0.x) / 6} ${p1.y + (p2.y - p0.y) / 6},`
+      + ` ${p2.x - (p3.x - p1.x) / 6} ${p2.y - (p3.y - p1.y) / 6},`
+      + ` ${p2.x} ${p2.y}`
+  }
+  const area = `${line} L${x(n)} ${H - PAD_BOTTOM} L${x(0)} ${H - PAD_BOTTOM} Z`
+  const fmt = (kg: number) => `${Math.round((displayWeight(kg) ?? 0) / 100) / 10}k`
+
+  return (
+    <div>
+      {/* Uniform scaling (default preserveAspectRatio) — stretching the viewBox
+          would turn the session dots into ellipses. */}
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full"
+        role="img" aria-label={`Volume trend across ${points.length} sessions`}>
+        <defs>
+          <linearGradient id="volTrail" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={VIOLET} stopOpacity="0.30" />
+            <stop offset="100%" stopColor={VIOLET} stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <path d={area} fill="url(#volTrail)" />
+        <path d={line} fill="none" stroke={VIOLET} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        {points.map((p, i) => {
+          const isThis = i === n
+          return (
+            <circle key={p.date} cx={x(i)} cy={y(p.volumeKg)} r={isThis ? 4 : 2.5}
+              fill={isThis ? VIOLET : 'rgba(255,255,255,0.35)'}
+              style={isThis ? { filter: `drop-shadow(0 0 5px ${VIOLET})` } : undefined}>
+              <title>{`${p.date} · ${fmt(p.volumeKg)}${unit}`}</title>
+            </circle>
+          )
+        })}
+      </svg>
+      <div className="flex justify-between text-[8px] text-muted helix-num -mt-1">
+        <span>{new Date(points[0].date + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
+        <span className="font-bold" style={{ color: VIOLET }}>
+          {fmt(points[n].volumeKg)}{unit} · {new Date(points[n].date + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+        </span>
+      </div>
+    </div>
   )
 }

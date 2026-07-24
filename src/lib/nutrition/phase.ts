@@ -19,9 +19,9 @@ export function derivePhase(calories: number | null | undefined): Phase | null {
 }
 
 export const PHASE_META: Record<Phase, { label: string; color: string }> = {
-  cut:         { label: 'Cut',   color: '#9AA6B8' }, // cyan — lean/cool
-  maintenance: { label: 'Maint', color: '#4FB477' }, // mint — balanced
-  bulk:        { label: 'Bulk',  color: '#C9A227' }, // amber — surplus
+  cut:         { label: 'Cut',   color: '#8E9AAC' }, // cyan — lean/cool
+  maintenance: { label: 'Maint', color: '#3E9E7A' }, // mint — balanced
+  bulk:        { label: 'Bulk',  color: '#D4AF37' }, // amber — surplus
 }
 
 /**

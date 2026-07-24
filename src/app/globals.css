@@ -94,12 +94,14 @@
   @keyframes meshBreatheD { 0%,100% { opacity: 1; }    50% { opacity: 0.6; } }
 }
 
-/* Travel Mode — tropical accent repaint (Thailand). Toggled by ThemeProvider. */
+/* Travel Mode — a cooler accent repaint. Toggled by ThemeProvider.
+   Retuned off the old neon (#20E08F/#5BFF9D) onto the jewel ramp: the mode
+   should read as a different METAL, not a different app. */
 html[data-theme='travel'] {
-  --color-primary: #20E08F;   /* tropical green */
-  --color-energy: #00C2B2;    /* ocean teal */
-  --color-info: #2BD9D9;      /* lagoon cyan */
-  --color-success: #5BFF9D;   /* bright lime */
+  --color-primary: #3E9E7A;   /* muted emerald leads instead of ember */
+  --color-energy: #2F7D63;    /* deep emerald */
+  --color-info: #3D7AB8;      /* sapphire */
+  --color-success: #D4AF37;   /* antique gold, so deltas stay distinct */
 }
 
 /* ============================================
@@ -312,19 +314,31 @@ html[data-theme='travel'] {
   /* Card base — true-glass values inlined (Tailwind v4 @apply can't reference
      custom @layer components classes) */
   .helix-card {
-    /* Layered fill: a faint dark base UNDER the glass tint so if iOS drops the
-       backdrop-filter (a transformed/composited ancestor) the card degrades to a
-       dim surface instead of pure black — base alpha kept low so the aurora
-       still refracts through in the normal case. */
+    /* Layered fill, top layer first:
+       1. a raking metallic sheen from the top-left, so an edge catches light
+          like brushed steel instead of reading as a flat black rectangle;
+       2. a warm ember reflection pooling in the lower-right — the signature
+          accent bleeding INTO the glass rather than sitting on top of it;
+       3. the neutral glass tint;
+       4. a faint dark base so if iOS drops the backdrop-filter (a transformed
+          or composited ancestor) the card degrades to a dim surface, not pure
+          black. Base alpha stays low so the mesh still refracts through.
+       Every layer is low-alpha on purpose: the brief is aged metal and
+       gemstone, so depth comes from light behaviour, not saturation. */
     background:
+      linear-gradient(152deg, rgba(201,205,214,0.055) 0%, rgba(201,205,214,0.012) 26%, transparent 46%),
+      radial-gradient(120% 90% at 108% 112%, rgba(224,112,60,0.055), transparent 58%),
       linear-gradient(rgba(255,255,255,0.045), rgba(255,255,255,0.045)),
-      rgba(10,14,26,0.14);
-    backdrop-filter: blur(40px) saturate(190%);
-    -webkit-backdrop-filter: blur(40px) saturate(190%);
+      rgba(10,11,14,0.16);
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
     border: 1px solid rgba(255,255,255,0.08);
     box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.18),
-      inset 0 -1px 0 rgba(0,0,0,0.22),
+      /* Brighter top hairline + a hint of ember along the bottom edge: the
+         card looks lit from above and warmed from below. */
+      inset 0 1px 0 rgba(226,229,236,0.20),
+      inset 0 -1px 0 rgba(0,0,0,0.24),
+      inset 0 -14px 26px -20px rgba(224,112,60,0.28),
       0 24px 60px rgba(0,0,0,0.55);
     border-radius: 1rem;
     transition: box-shadow 0.2s, border-color 0.2s, background 0.2s;
@@ -343,10 +357,11 @@ html[data-theme='travel'] {
     background: rgba(13,18,32,0.92);
   }
   .helix-card:hover {
-    border-color: rgba(255,255,255,0.14);
+    border-color: rgba(201,205,214,0.18);
     box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.14),
+      inset 0 1px 0 rgba(226,229,236,0.24),
       inset 0 -1px 0 rgba(0,0,0,0.22),
+      inset 0 -14px 26px -20px rgba(224,112,60,0.36),
       0 20px 48px rgba(0,0,0,0.55);
   }
 
@@ -418,7 +433,7 @@ html[data-theme='travel'] {
 
   /* HELIX wordmark — brushed platinum → molten ember, restrained ember glow. */
   .helix-wordmark {
-    background: linear-gradient(90deg, #ECEEF2 0%, #C9CDD6 45%, #E2683A 100%);
+    background: linear-gradient(90deg, #ECEEF2 0%, #C9CDD6 45%, #E0703C 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -448,7 +463,7 @@ html[data-theme='travel'] {
 .holo-sheen { position: relative; overflow: hidden; }
 .holo-sheen::before {
   content: ''; position: absolute; top: 0; left: 0; width: 55%; height: 100%;
-  background: linear-gradient(105deg, transparent, rgba(150,225,255,0.10), transparent);
+  background: linear-gradient(105deg, transparent, rgba(201,205,214,0.10), transparent);
   transform: translateX(-170%) skewX(-18deg);
   /* Two sweeps then rest — an infinite compositor layer per card was iOS jank. */
   animation: holoSheen 7.5s ease-in-out 2;
@@ -598,11 +613,11 @@ html[data-reduce-motion='true'] .sync-breathe { animation: none !important; }
              boltBloom 300ms ease 420ms forwards;
 }
 @keyframes boltDraw { to { stroke-dashoffset: 0; } }
-@keyframes boltBloom { to { fill: #E2683A; } }
+@keyframes boltBloom { to { fill: #E0703C; } }
 
 /* One charge-line sweep across the capsule's bottom edge (compositor-only). */
 .charge-line {
-  background: linear-gradient(90deg, transparent, #E2683A, transparent);
+  background: linear-gradient(90deg, transparent, #E0703C, transparent);
   transform: translate3d(-100%, 0, 0);
   animation: chargeSweep 700ms cubic-bezier(0.4, 0, 0.2, 1) 380ms 1 forwards;
 }

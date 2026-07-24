@@ -42,8 +42,8 @@ export const FuelForceBand = memo(function FuelForceBand({ date, proteinG, prote
   return (
     <Link href={`/day/${date}`} prefetch={false}
       className="helix-card flex items-center gap-3 px-3.5 py-3 active:opacity-80"
-      style={{ borderColor: '#9AA6B830' }}>
-      <span className="flex h-9 w-9 items-center justify-center rounded-lg shrink-0" style={{ background: '#9AA6B81f', color: '#9AA6B8' }}>
+      style={{ borderColor: '#8E9AAC30' }}>
+      <span className="flex h-9 w-9 items-center justify-center rounded-lg shrink-0" style={{ background: '#8E9AAC1f', color: '#8E9AAC' }}>
         <Dumbbell className="w-4 h-4" />
       </span>
       <div className="min-w-0 flex-1">
@@ -51,7 +51,7 @@ export const FuelForceBand = memo(function FuelForceBand({ date, proteinG, prote
           Fueled: {split}{vol ? ` · ${vol}` : ''}{(session.pr_count ?? 0) > 0 ? ` · ${session.pr_count} PR` : ''}
         </span>
         {known && (
-          <span className="flex items-center gap-1 text-fluid-xs mt-0.5" style={{ color: proteinOk ? '#E2683A' : '#C9A227' }}>
+          <span className="flex items-center gap-1 text-fluid-xs mt-0.5" style={{ color: proteinOk ? '#E0703C' : '#D4AF37' }}>
             {proteinOk ? <Check className="w-3 h-3" /> : <TriangleAlert className="w-3 h-3" />}
             {proteinOk ? 'protein target hit for this session' : 'protein below target on a training day'}
           </span>

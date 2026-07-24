@@ -142,26 +142,26 @@ export function WeeklyReviewCard() {
         />
         <StatRow
           icon={Moon}
-          iconColor="text-[#E2683A]"
+          iconColor="text-[#E0703C]"
           label="Avg Sleep"
           value={data?.avgSleepH != null ? `${data.avgSleepH}h` : '—'}
         />
         <StatRow
           icon={Dumbbell}
-          iconColor="text-[#8AA0B8]"
+          iconColor="text-[#3D7AB8]"
           label="Sessions"
           value={`${data?.sessionsLogged ?? 0}`}
         />
         <StatRow
           icon={Droplets}
-          iconColor="text-[#8AA0B8]"
+          iconColor="text-[#3D7AB8]"
           label="Avg Water"
           value={data?.avgWaterMl != null ? `${Math.round(data.avgWaterMl / 100) / 10}L` : '—'}
         />
       </div>
       {(data?.newPRsCount ?? 0) > 0 && (
         <div className="mt-3 pt-3 border-t border-border text-center">
-          <span className="text-xs font-semibold text-[#C9A227]">
+          <span className="text-xs font-semibold text-[#D4AF37]">
             {data!.newPRsCount} new PR{data!.newPRsCount !== 1 ? 's' : ''} this week
           </span>
         </div>

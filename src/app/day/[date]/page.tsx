@@ -19,12 +19,12 @@ import { displayWeight, weightUnit, fmtVolume } from '@/lib/utils/units'
 import { formatSleep, mlToL } from '@/lib/utils/format'
 import { logicalTodayISO } from '@/lib/utils/day'
 
-const VIOLET = '#B84F28'
-const ICE = '#8AA0B8'
-const TEAL = '#E2683A'
-const CYAN = '#9AA6B8'
-const EMBER = '#C9A227'
-const ROSE = '#D5514E'
+const VIOLET = '#B4522A'
+const ICE = '#3D7AB8'
+const TEAL = '#E0703C'
+const CYAN = '#8E9AAC'
+const EMBER = '#D4AF37'
+const ROSE = '#C4514E'
 
 function scoreColor(score: number | null | undefined): string {
   if (score == null) return '#79808C'
@@ -272,13 +272,13 @@ export default function DailyNexusPage() {
             {[
               // Weight intentionally NOT here — it owns the Body/InBody card;
               // duplicating it across both boxes was the redundancy.
-              { label: 'Steps', v: log?.steps != null ? Math.round(log.steps).toLocaleString() : null, u: '', c: '#9AA6B8' },
-              { label: 'Water', v: log?.water_ml != null ? mlToL(log.water_ml) : null, u: 'L', c: '#8AA0B8' },
-              { label: 'Active', v: log?.active_energy != null ? Math.round(log.active_energy) : null, u: '', c: '#D5514E' },
-              { label: 'Stand', v: log?.stand_hours != null ? `${log.stand_hours}` : null, u: 'h', c: '#4FB477' },
+              { label: 'Steps', v: log?.steps != null ? Math.round(log.steps).toLocaleString() : null, u: '', c: '#8E9AAC' },
+              { label: 'Water', v: log?.water_ml != null ? mlToL(log.water_ml) : null, u: 'L', c: '#3D7AB8' },
+              { label: 'Active', v: log?.active_energy != null ? Math.round(log.active_energy) : null, u: '', c: '#C4514E' },
+              { label: 'Stand', v: log?.stand_hours != null ? `${log.stand_hours}` : null, u: 'h', c: '#3E9E7A' },
               // VO₂max removed — HealthKit never populated it (always 0).
               { label: 'Resp', v: log?.respiratory_rate != null ? log.respiratory_rate.toFixed(1) : null, u: '/min', c: ICE },
-              { label: 'SpO₂', v: log?.blood_oxygen != null ? Math.round(log.blood_oxygen) : null, u: '%', c: '#4FB477' },
+              { label: 'SpO₂', v: log?.blood_oxygen != null ? Math.round(log.blood_oxygen) : null, u: '%', c: '#3E9E7A' },
             ].map((s) => (
               <div key={s.label} className="rounded-lg bg-white/[0.02] border border-white/[0.05] px-1 py-1.5">
                 <span className="helix-num block text-fluid-xs font-bold text-text leading-tight">{s.v ?? '—'}{s.v != null && s.u ? s.u : ''}</span>

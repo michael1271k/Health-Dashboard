@@ -62,7 +62,7 @@ export default function MicrosPage() {
                   </span>
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <span className="helix-num text-fluid-xl font-bold" style={{ color: overCeiling ? '#D5514E' : m.color }}>
+                  <span className="helix-num text-fluid-xl font-bold" style={{ color: overCeiling ? '#C4514E' : m.color }}>
                     {have != null ? Math.round(have) : '—'}
                   </span>
                   <span className="text-fluid-xs text-muted">/ {m.target} {m.unit}</span>
@@ -70,7 +70,7 @@ export default function MicrosPage() {
                 <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
                   <div className="h-full rounded-full" style={{
                     width: `${(pct ?? 0) * 100}%`,
-                    background: overCeiling ? '#D5514E' : m.color,
+                    background: overCeiling ? '#C4514E' : m.color,
                   }} />
                 </div>
                 <p className="text-[10px] leading-snug text-muted">{m.why}</p>

@@ -3,9 +3,9 @@
 import { memo } from 'react'
 
 const SEGMENT_META = [
-  { label: 'Sleep', color: '#B84F28' },
-  { label: 'Water', color: '#9AA6B8' },
-  { label: 'Food', color: '#E2683A' },
+  { label: 'Sleep', color: '#B4522A' },
+  { label: 'Water', color: '#8E9AAC' },
+  { label: 'Food', color: '#E0703C' },
 ] as const
 
 /**
@@ -44,7 +44,7 @@ export const CompletenessArc = memo(function CompletenessArc({ parts, size = 46 
         )
       })}
       <text x={c} y={c + 3.5} textAnchor="middle" fontSize={size * 0.24} fontWeight={700}
-        fill={done === 3 ? '#E2683A' : '#79808C'} fontFamily="var(--font-mono, monospace)">
+        fill={done === 3 ? '#E0703C' : '#79808C'} fontFamily="var(--font-mono, monospace)">
         {done}/3
       </text>
     </svg>

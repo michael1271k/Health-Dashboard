@@ -8,7 +8,7 @@ import { useExerciseHistory } from '@/lib/hooks/useExerciseHistory'
 import { displayWeight, weightUnit } from '@/lib/utils/units'
 import { shortDate } from '@/lib/utils/day'
 
-const ICE = '#9AA6B8'
+const ICE = '#8E9AAC'
 
 /**
  * Hevy-style per-exercise deep-dive as a chart-first bottom sheet: an est-1RM
@@ -94,7 +94,7 @@ export function ExerciseHistorySheet({ exerciseId, exerciseName, open, onClose }
 function Record({ icon: Icon, label, value, unit, highlight, wide }: {
   icon: typeof Dumbbell; label: string; value: string; unit?: string; highlight?: boolean; wide?: boolean
 }) {
-  const color = highlight ? '#C9A227' : ICE
+  const color = highlight ? '#D4AF37' : ICE
   return (
     <div className={`rounded-xl px-3 py-2.5 ${wide ? '' : ''}`}
       style={{ background: `${color}${highlight ? '14' : '0d'}`, border: `1px solid ${color}${highlight ? '55' : '2e'}` }}>

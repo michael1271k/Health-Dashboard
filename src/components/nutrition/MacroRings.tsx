@@ -25,11 +25,11 @@ function Ring({ value, goal, color, size, stroke, over }: {
       {pct > 0 && (
         <circle
           cx={size / 2} cy={size / 2} r={r} fill="none"
-          stroke={over ? '#D5514E' : color} strokeWidth={stroke} strokeLinecap="round"
+          stroke={over ? '#C4514E' : color} strokeWidth={stroke} strokeLinecap="round"
           strokeDasharray={circ} strokeDashoffset={circ * (1 - pct)}
           style={{
             transition: 'stroke-dashoffset 0.9s cubic-bezier(0.4,0,0.2,1)',
-            filter: full || over ? `drop-shadow(0 0 5px ${over ? '#D5514E' : color})` : undefined,
+            filter: full || over ? `drop-shadow(0 0 5px ${over ? '#C4514E' : color})` : undefined,
           }}
         />
       )}
@@ -85,7 +85,7 @@ export const MacroRings = memo(function MacroRings({ today, logs, goals, date }:
               : <span className="helix-num text-5xl font-bold text-muted">—</span>}
             <span className="text-[11px] text-muted uppercase tracking-widest mt-1.5">kcal</span>
             {remaining != null ? (
-              <span className="helix-num text-fluid-sm mt-1" style={{ color: over ? '#D5514E' : MACRO_COLORS.calories }}>
+              <span className="helix-num text-fluid-sm mt-1" style={{ color: over ? '#C4514E' : MACRO_COLORS.calories }}>
                 {remaining >= 0 ? `${remaining.toLocaleString()} left` : `+${Math.abs(remaining).toLocaleString()} over`}
               </span>
             ) : (
@@ -109,7 +109,7 @@ export const MacroRings = memo(function MacroRings({ today, logs, goals, date }:
               <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: m.color }}>{m.label}</span>
               {/* Remaining vs goal — green under, red over */}
               {m.value != null && m.goal != null && (
-                <span className="helix-num text-[10px] -mt-1" style={{ color: m.value <= m.goal ? '#4FB477' : '#D5514E' }}>
+                <span className="helix-num text-[10px] -mt-1" style={{ color: m.value <= m.goal ? '#3E9E7A' : '#C4514E' }}>
                   {m.value <= m.goal ? `${Math.round(m.goal - m.value)}g left` : `${Math.round(m.value - m.goal)}g over`}
                 </span>
               )}

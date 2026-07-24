@@ -51,7 +51,7 @@ export function Sheet({ open, onClose, title, maxHeight = '90dvh', size = 'defau
             className={`relative w-full ${size === 'wide' ? 'sm:max-w-2xl' : 'sm:max-w-lg'} flex flex-col overflow-hidden rounded-t-3xl sm:rounded-3xl safe-pb sm:pb-0`}
             style={{
               maxHeight,
-              background: 'rgba(11,15,28,0.97)',
+              background: 'rgba(12,13,17,0.96)',
               border: '1px solid rgba(255,255,255,0.08)',
               boxShadow: '0 -10px 48px rgba(0,0,0,0.6)',
               willChange: 'transform',

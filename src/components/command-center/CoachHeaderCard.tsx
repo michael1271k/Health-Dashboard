@@ -69,24 +69,24 @@ export function CoachHeaderCard({ draft, onSetDate, onSetStats }: {
 
       {/* Stats strip — Volume/Sets live-derived; Duration/Avg HR/Calories editable. */}
       <div className="grid grid-cols-3 gap-2">
-        <Badge label="Volume" value={fmtVolume(totals.volumeKg)} unit="kg" color="#E2683A" />
-        <Badge label="Sets" value={String(totals.sets)} color="#9AA6B8" />
-        <EditBadge label="Duration" value={s?.duration_min ?? null} unit="m" color="#B84F28"
+        <Badge label="Volume" value={fmtVolume(totals.volumeKg)} unit="kg" color="#E0703C" />
+        <Badge label="Sets" value={String(totals.sets)} color="#8E9AAC" />
+        <EditBadge label="Duration" value={s?.duration_min ?? null} unit="m" color="#B4522A"
           onChange={(v) => onSetStats({ duration_min: v })} parse={parseDurationMin} />
-        <EditBadge label="Avg HR" value={s?.avg_hr_bpm ?? null} unit="bpm" color="#D5514E"
+        <EditBadge label="Avg HR" value={s?.avg_hr_bpm ?? null} unit="bpm" color="#C4514E"
           onChange={(v) => onSetStats({ avg_hr_bpm: v })} />
-        <EditBadge label="Calories" value={s?.calories_kcal ?? null} unit="kcal" color="#C9A227"
+        <EditBadge label="Calories" value={s?.calories_kcal ?? null} unit="kcal" color="#D4AF37"
           onChange={(v) => onSetStats({ calories_kcal: v })} />
         <Badge
           label="Δ vs prior"
           value={s?.volume_delta_pct_vs_prior != null ? `${s.volume_delta_pct_vs_prior > 0 ? '+' : ''}${s.volume_delta_pct_vs_prior}%` : '—'}
-          color={s?.volume_delta_pct_vs_prior != null ? (s.volume_delta_pct_vs_prior >= 0 ? '#4FB477' : '#D5514E') : '#79808C'}
+          color={s?.volume_delta_pct_vs_prior != null ? (s.volume_delta_pct_vs_prior >= 0 ? '#3E9E7A' : '#C4514E') : '#79808C'}
         />
       </div>
 
       {draft.coachInsight && (
         <div className="rounded-xl px-3 py-2.5 flex gap-2 items-start"
-          style={{ background: 'rgba(139,92,246,0.06)', border: '1px solid rgba(139,92,246,0.22)' }}>
+          style={{ background: 'rgba(138,111,168,0.08)', border: '1px solid rgba(138,111,168,0.28)' }}>
           <Sparkles className="w-3.5 h-3.5 shrink-0 mt-0.5 text-primary" aria-hidden="true" />
           <p className="text-sm text-text leading-relaxed" dir="auto">{draft.coachInsight}</p>
         </div>
@@ -94,9 +94,9 @@ export function CoachHeaderCard({ draft, onSetDate, onSetStats }: {
 
       {draft.nextSessionFlag && (
         <div className="rounded-xl px-3 py-2.5 flex gap-2 items-start"
-          style={{ background: 'rgba(232,197,122,0.07)', border: '1px solid rgba(232,197,122,0.35)' }}>
-          <Flag className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: '#C9A227' }} aria-hidden="true" />
-          <p className="text-sm leading-relaxed" style={{ color: '#C9A227' }} dir="auto">{draft.nextSessionFlag}</p>
+          style={{ background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.38)' }}>
+          <Flag className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: '#D4AF37' }} aria-hidden="true" />
+          <p className="text-sm leading-relaxed" style={{ color: '#D4AF37' }} dir="auto">{draft.nextSessionFlag}</p>
         </div>
       )}
     </div>

@@ -8,7 +8,7 @@ import { enumerateWeeks, type ProgramWeek } from '@/lib/phases'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
 
-const KIND_COLOR: Record<string, string> = { cut: '#9AA6B8', bulk: '#4FB477', maintenance: '#B84F28', peak: '#E2683A' }
+const KIND_COLOR: Record<string, string> = { cut: '#8E9AAC', bulk: '#3E9E7A', maintenance: '#B4522A', peak: '#E0703C' }
 
 /**
  * The Helix Timeline Spine — Journey's navigation. A vertical double-strand
@@ -39,8 +39,8 @@ export const JourneyTimeline = memo(function JourneyTimeline({ reports, gymRepor
     <div className="relative">
       {/* The double-strand spine */}
       <svg className="absolute left-[18px] top-0 bottom-0 h-full w-4" preserveAspectRatio="none" viewBox="0 0 16 100" aria-hidden="true">
-        <path d="M5 0 C11 12, -1 22, 5 34 C11 46, -1 56, 5 68 C11 80, -1 90, 5 100" fill="none" stroke="#E2683A" strokeOpacity="0.35" strokeWidth="1.6" vectorEffect="non-scaling-stroke" />
-        <path d="M11 0 C5 12, 17 22, 11 34 C5 46, 17 56, 11 68 C5 80, 17 90, 11 100" fill="none" stroke="#9AA6B8" strokeOpacity="0.35" strokeWidth="1.6" vectorEffect="non-scaling-stroke" />
+        <path d="M5 0 C11 12, -1 22, 5 34 C11 46, -1 56, 5 68 C11 80, -1 90, 5 100" fill="none" stroke="#E0703C" strokeOpacity="0.35" strokeWidth="1.6" vectorEffect="non-scaling-stroke" />
+        <path d="M11 0 C5 12, 17 22, 11 34 C5 46, 17 56, 11 68 C5 80, 17 90, 11 100" fill="none" stroke="#8E9AAC" strokeOpacity="0.35" strokeWidth="1.6" vectorEffect="non-scaling-stroke" />
       </svg>
 
       <div className="space-y-3 pl-11">
@@ -48,7 +48,7 @@ export const JourneyTimeline = memo(function JourneyTimeline({ reports, gymRepor
           const helix = w.era === 'helix'
           const showBoundary = !helix && !boundaryDrawn && era === 'all'
           if (showBoundary) boundaryDrawn = true
-          const color = helix ? (KIND_COLOR[w.kind] ?? '#E2683A') : '#79808C'
+          const color = helix ? (KIND_COLOR[w.kind] ?? '#E0703C') : '#79808C'
           const s = statsFor(w)
           const empty = s.sessions === 0 && s.files === 0
           return (

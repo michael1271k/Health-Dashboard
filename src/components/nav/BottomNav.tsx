@@ -51,11 +51,11 @@ function NavCell({ href, Icon, label, active }: { href: string; Icon: LucideIcon
         aria-current={active ? 'page' : undefined}
         className={`relative flex flex-col items-center gap-0.5 py-1.5 px-1 rounded-xl
                     transition-colors duration-200 min-h-[44px] ${active ? '' : 'text-muted'}`}
-        style={active ? { color: '#8AA0B8' } : {}}
+        style={active ? { color: '#3D7AB8' } : {}}
       >
         {active && (
           <m.span layoutId="bottomnav-active" className="absolute inset-0 rounded-xl"
-            style={{ background: 'rgba(56,189,248,0.12)' }}
+            style={{ background: 'rgba(224,112,60,0.14)' }}
             transition={{ type: 'spring', stiffness: 420, damping: 36 }} aria-hidden="true" />
         )}
         <Icon className="relative z-10 w-5 h-5" aria-hidden="true" />

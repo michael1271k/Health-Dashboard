@@ -83,14 +83,14 @@ export function DatePickerPopover({ value, max, disabledDates, onSelect, onClose
                 {d}
                 {isLogged && !isSelected && (
                   <span className="absolute left-1/2 -translate-x-1/2 bottom-1 w-1 h-1 rounded-full"
-                    style={{ background: '#E2683A' }} aria-hidden="true" />
+                    style={{ background: '#E0703C' }} aria-hidden="true" />
                 )}
               </button>
             )
           })}
         </div>
         <p className="text-[10px] text-muted mt-3 flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: '#E2683A' }} aria-hidden="true" />
+          <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: '#E0703C' }} aria-hidden="true" />
           Dot = already logged (can&apos;t double-log). Future dates disabled.
         </p>
       </div>

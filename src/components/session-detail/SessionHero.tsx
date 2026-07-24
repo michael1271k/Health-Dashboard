@@ -12,7 +12,7 @@ import { PROGRAMS, DEFAULT_PROGRAM_ID, getActiveProgramId } from '@/lib/programs
 import { displayWeight, weightUnit, fmtVolume } from '@/lib/utils/units'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
 
-const CYAN = '#9AA6B8', VIOLET = '#E2683A', ROSE = '#D5514E', GOLD = '#C9A227', EMBER = '#C9A227', TEAL = '#4FB477'
+const CYAN = '#8E9AAC', VIOLET = '#E0703C', ROSE = '#C4514E', GOLD = '#D4AF37', EMBER = '#D4AF37', TEAL = '#3E9E7A'
 
 function StatTile({ value, label, color }: { value: string; label: string; color: string }) {
   return (
@@ -71,7 +71,7 @@ export function SessionHero({ detail }: { detail: SessionDetail }) {
         <StatTile value={fmtVolume(displayWeight(detail.volumeKg))} label={`Vol ${unit}`} color={CYAN} />
         <StatTile value={`${detail.setCount}`} label="Sets" color={ROSE} />
         <StatTile value={`${detail.prCount}`} label="PRs" color={GOLD} />
-        <StatTile value={detail.avgBpm != null ? `${detail.avgBpm}` : '—'} label="Avg BPM" color="#E2683A" />
+        <StatTile value={detail.avgBpm != null ? `${detail.avgBpm}` : '—'} label="Avg BPM" color="#E0703C" />
         <StatTile value={detail.calories != null ? `${detail.calories}` : '—'} label="kcal" color={EMBER} />
       </div>
 

@@ -16,11 +16,11 @@ import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 import { eraForDate } from '@/lib/programs'
 
 const EXERCISE_COLORS = [
-  '#4FB477', // primary
-  '#E2683A', // energy
-  '#8AA0B8', // info
-  '#C9A227', // warn
-  '#D5514E', // danger
+  '#3E9E7A', // primary
+  '#E0703C', // energy
+  '#3D7AB8', // info
+  '#D4AF37', // warn
+  '#C4514E', // danger
 ]
 
 interface PRHistoryChartProps {

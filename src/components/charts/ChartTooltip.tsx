@@ -14,7 +14,7 @@ export function ChartTooltip({ active, payload, label }: TooltipProps) {
       style={{
         // SOLID dark surface — a translucent glass tooltip absorbed the chart's
         // neon fill on mobile and made the text unreadable.
-        background: 'rgba(9,12,24,0.97)',
+        background: 'rgba(12,13,17,0.96)',
         border: '1px solid rgba(255,255,255,0.16)',
         boxShadow: '0 12px 32px rgba(0,0,0,0.6)',
       }}

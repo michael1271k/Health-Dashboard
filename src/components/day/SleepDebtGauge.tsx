@@ -4,12 +4,12 @@ import { memo } from 'react'
 import { BedDouble } from 'lucide-react'
 import { useSleepDebt } from '@/lib/hooks/useSleepDebt'
 
-const VIOLET = '#B84F28'
+const VIOLET = '#B4522A'
 
 function debtColor(h: number): string {
-  if (h <= 2) return '#E2683A'
-  if (h <= 5) return '#C9A227'
-  return '#D5514E'
+  if (h <= 2) return '#E0703C'
+  if (h <= 5) return '#D4AF37'
+  return '#C4514E'
 }
 
 /**

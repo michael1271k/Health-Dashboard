@@ -7,10 +7,10 @@ import { KineticNumber } from '@/components/fx/KineticNumber'
 import { EcgPulse } from '@/components/fx/EcgPulse'
 
 const SCORE_COMPONENTS = [
-  { key: 'sleep_score',     label: 'Sleep',      weight: 25, color: '#8AA0B8' },
-  { key: 'nutrition_score', label: 'Nutrition',   weight: 30, color: '#4FB477' },
-  { key: 'activity_score',  label: 'Activity',    weight: 20, color: '#E2683A' },
-  { key: 'workout_score',   label: 'Workout',     weight: 15, color: '#C9A227' },
+  { key: 'sleep_score',     label: 'Sleep',      weight: 25, color: '#3D7AB8' },
+  { key: 'nutrition_score', label: 'Nutrition',   weight: 30, color: '#3E9E7A' },
+  { key: 'activity_score',  label: 'Activity',    weight: 20, color: '#E0703C' },
+  { key: 'workout_score',   label: 'Workout',     weight: 15, color: '#D4AF37' },
   { key: 'recovery_score',  label: 'Recovery',    weight: 10, color: '#79808C' },
 ] as const
 
@@ -127,7 +127,7 @@ export const ScoreCard = memo(function ScoreCard({ score, isLoading }: ScoreCard
                         className="score-ring-draw"
                         cx="35" cy="35" r="30" fill="none"
                         stroke="currentColor" strokeWidth="4" strokeLinecap="round"
-                        style={{ strokeDashoffset: 190 - 190 * (totalScore / 100), color: totalScore >= 80 ? '#4FB477' : totalScore >= 60 ? '#9AA6B8' : totalScore >= 40 ? '#C9A227' : '#D5514E' }}
+                        style={{ strokeDashoffset: 190 - 190 * (totalScore / 100), color: totalScore >= 80 ? '#3E9E7A' : totalScore >= 60 ? '#8E9AAC' : totalScore >= 40 ? '#D4AF37' : '#C4514E' }}
                       />
                     )}
                   </svg>
@@ -140,7 +140,7 @@ export const ScoreCard = memo(function ScoreCard({ score, isLoading }: ScoreCard
                   <span className="text-muted text-lg">{totalScore == null ? 'no data yet' : '/100'}</span>
                 </div>
               </div>
-              <EcgPulse level={totalScore} color={totalScore == null ? '#5A6472' : totalScore >= 60 ? '#4FB477' : totalScore >= 40 ? '#C9A227' : '#D5514E'} />
+              <EcgPulse level={totalScore} color={totalScore == null ? '#5A6472' : totalScore >= 60 ? '#3E9E7A' : totalScore >= 40 ? '#D4AF37' : '#C4514E'} />
             </>
           )}
 

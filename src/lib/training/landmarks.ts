@@ -78,9 +78,9 @@ export function volumeZone(weeklySets: number, target: number): VolumeZone {
 
 export const ZONE_META: Record<VolumeZone, { label: string; color: string }> = {
   under:    { label: 'Under target', color: '#79808C' },
-  building: { label: 'Building',     color: '#8AA0B8' },
-  optimal:  { label: 'On target',    color: '#4FB477' },
-  over:     { label: 'Over',         color: '#D5514E' },
+  building: { label: 'Building',     color: '#3D7AB8' },
+  optimal:  { label: 'On target',    color: '#3E9E7A' },
+  over:     { label: 'Over',         color: '#C4514E' },
   na:       { label: 'No target',    color: '#5A6472' },
 }
 

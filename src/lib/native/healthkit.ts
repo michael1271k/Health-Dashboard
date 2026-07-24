@@ -34,6 +34,10 @@ const HealthKit = registerPlugin<HealthKitPlugin>('CapacitorHealthkit')
  */
 const METRIC_MAP: Array<{ hk: string; key: string; reduce: Reduce; scale?: number }> = [
   { hk: 'HKQuantityTypeIdentifierStepCount', key: 'steps', reduce: 'sum' },
+  // Real walking+running distance, in METRES — the Steps card shows ground
+  // covered, and estimating km from a stride guess would put a fabricated
+  // number next to measured ones.
+  { hk: 'HKQuantityTypeIdentifierDistanceWalkingRunning', key: 'distance_m', reduce: 'sum' },
   { hk: 'HKQuantityTypeIdentifierActiveEnergyBurned', key: 'active_energy', reduce: 'sum' },
   { hk: 'HKQuantityTypeIdentifierAppleExerciseTime', key: 'training_minutes', reduce: 'sum' },
   // AppleStandTime is the QUANTITY type (minutes); AppleStandHour is a category

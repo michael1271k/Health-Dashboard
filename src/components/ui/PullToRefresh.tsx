@@ -9,7 +9,7 @@ import { forceHealthKitSync } from '@/lib/native/sync'
 import { tapLight } from '@/lib/native/haptics'
 import { invalidateHealthData } from '@/lib/query/workoutKeys'
 
-const ACCENT = '#E2683A' // ember — the new signature accent
+const ACCENT = '#E0703C' // ember — the new signature accent
 
 const THRESHOLD = 72   // px pulled before a refresh fires
 const MAX_PULL = 110   // rubber-band ceiling
@@ -125,18 +125,18 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
             background: 'rgba(10,11,14,0.82)',
             backdropFilter: 'blur(16px) saturate(160%)',
             WebkitBackdropFilter: 'blur(16px) saturate(160%)',
-            border: `1px solid ${done ? '#4FB47755' : ACCENT + '55'}`,
-            boxShadow: `0 6px 20px rgba(0,0,0,0.5), 0 0 16px ${(done ? '#4FB477' : ACCENT)}22`,
+            border: `1px solid ${done ? '#3E9E7A55' : ACCENT + '55'}`,
+            boxShadow: `0 6px 20px rgba(0,0,0,0.5), 0 0 16px ${(done ? '#3E9E7A' : ACCENT)}22`,
           }}
         >
           {done ? (
-            <Check className="w-3.5 h-3.5" style={{ color: '#4FB477' }} />
+            <Check className="w-3.5 h-3.5" style={{ color: '#3E9E7A' }} />
           ) : (
             <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`}
               style={{ color: ACCENT, transform: refreshing ? undefined : `rotate(${progress * 270}deg)` }} />
           )}
           <span className="text-[11px] font-semibold tracking-wide whitespace-nowrap"
-            style={{ color: done ? '#4FB477' : ACCENT }}>
+            style={{ color: done ? '#3E9E7A' : ACCENT }}>
             {done ? `Updated ${doneTime}` : refreshing ? 'Syncing…' : 'Pull to sync'}
           </span>
         </span>
