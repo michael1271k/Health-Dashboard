@@ -1,4 +1,6 @@
 /** Hardcoded daily supplement protocol (Apple Health can't export meds/supps). */
+import { EMERALD, STEEL, SAPPHIRE, AMETHYST } from '@/lib/theme/palette'
+
 export interface Supplement {
   key: string
   name: string
@@ -8,22 +10,28 @@ export interface Supplement {
 }
 export interface SupplementSlot { key: string; time: string; label: string; accent: string; items: Supplement[] }
 
+/**
+ * The real stack, with the doses that actually get taken. Each item's
+ * micronutrient payload lives in `nutrition/supplementMicros.ts`, keyed by the
+ * SAME `key` — so ticking one off credits the day's micros immediately.
+ */
 export const SUPPLEMENT_PROTOCOL: SupplementSlot[] = [
-  { key: 'morning', time: '10:30', label: 'Morning', accent: '#3E9E7A', items: [
+  { key: 'morning', time: '10:30', label: 'Morning', accent: EMERALD, items: [
     { key: 'multivitamin', name: 'Two Per Day Multivitamin', dose: '1 tab' },
-    { key: 'd3k2', name: 'Vitamin D3 + K2', dose: '1 cap' },
+    { key: 'd3k2', name: 'Vitamin D3 + K2', dose: '125 mcg' },
   ] },
-  { key: 'pre', time: '11:45', label: 'Pre-Workout', accent: '#8E9AAC', items: [
-    { key: 'citrulline', name: 'L-Citrulline', dose: '6 g', trainingOnly: true },
+  { key: 'pre', time: '11:45', label: 'Pre-Workout', accent: STEEL, items: [
+    { key: 'citrulline', name: 'L-Citrulline', dose: '3 g', trainingOnly: true },
     { key: 'caffeine', name: 'Nutricost Caffeine', dose: '200 mg', trainingOnly: true },
   ] },
-  { key: 'post', time: '15:00', label: 'Post-Workout', accent: '#3D7AB8', items: [
+  { key: 'post', time: '15:00', label: 'Lunch / Post-Workout', accent: SAPPHIRE, items: [
     { key: 'creatine', name: 'Creatine Monohydrate', dose: '5 g' },
     { key: 'omega3', name: 'Omega-3 Fish Oil', dose: '1 cap' },
   ] },
-  { key: 'night', time: '22:00', label: 'Night', accent: '#8E9AAC', items: [
-    { key: 'magnesium', name: 'Magnesium Glycinate', dose: '100 mg' },
-    { key: 'glycine', name: 'Glycine', dose: '3 g' },
+  { key: 'night', time: '22:00', label: 'Before Bed', accent: AMETHYST, items: [
+    // 300 mg elemental across three tablets — one checkbox, the full dose.
+    { key: 'magnesium', name: 'Magnesium Glycinate', dose: '300 mg' },
+    { key: 'glycine', name: 'Glycine', dose: '5 g' },
     { key: 'theanine', name: 'L-Theanine', dose: '200 mg' },
   ] },
 ]

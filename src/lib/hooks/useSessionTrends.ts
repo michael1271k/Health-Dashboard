@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { epley1RM } from '@/lib/utils/epley'
-import { eraForDate } from '@/lib/programs'
+import { eraForDate, HELIX_CUT_START } from '@/lib/programs'
 import { repWindowFor, progressionVerdict, LOAD_STEP_KG, type ProgressionVerdict, type WorkingSet } from '@/lib/training/ceilings'
 
 export { LOAD_STEP_KG }
@@ -46,14 +46,21 @@ export function useSessionTrends(exerciseIds: string[], eraDate: string, dayKey?
     enabled: exerciseIds.length > 0,
     staleTime: 60_000,
     queryFn: async (): Promise<Record<string, ExerciseTrend>> => {
-      const { data, error } = await supabase
+      const era = eraForDate(eraDate)
+      // Bound the query to the era SERVER-side. It used to pull every set ever
+      // logged for these exercises (limit 4000, no date filter) and throw away
+      // the out-of-era rows in JS — the single heaviest request behind opening
+      // the Session Report.
+      let q = supabase
         .from('workout_sets')
         .select('exercise_id, weight_kg, reps, est_1rm_kg, set_type, exercises!inner(name), workout_sessions!inner(started_at)')
         .in('exercise_id', exerciseIds)
-        .limit(4000)
+      q = era === 'axis'
+        ? q.gte('workout_sessions.started_at', `${HELIX_CUT_START}T00:00:00Z`)
+        : q.lt('workout_sessions.started_at', `${HELIX_CUT_START}T00:00:00Z`)
+      const { data, error } = await q.limit(2000)
       if (error) throw error
 
-      const era = eraForDate(eraDate)
       const rows = ((data ?? []) as unknown as Array<{
         exercise_id: string; weight_kg: number; reps: number
         est_1rm_kg: number | null; set_type: string | null

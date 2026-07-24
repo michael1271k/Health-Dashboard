@@ -27,10 +27,17 @@ function programFromGoal(calorieGoal: number | null | undefined): Program {
  * `weekStart` defaults to the current week, so the card resets every Sunday.
  * Pass a Sunday to accumulate a past week — the Session Report needs the week
  * that contains the session, not today's.
+ *
+ * `upTo` (inclusive date) clamps the upper bound to the END of that day. The
+ * Session Report uses it so a session shows the week accumulated UP TO the day
+ * it happened, not totals that include work done after it.
  */
-export function useWeeklyVolume(weekStart: string = weekStartOf(logicalTodayISO())) {
+export function useWeeklyVolume(
+  weekStart: string = weekStartOf(logicalTodayISO()),
+  upTo?: string,
+) {
   return useQuery({
-    queryKey: ['weekly_volume', weekStart],
+    queryKey: ['weekly_volume', weekStart, upTo ?? null],
     staleTime: 60_000,
     queryFn: async (): Promise<WeeklyVolume> => {
       // STRICT Sunday-00:00 LOCAL bounds. `${weekStart}T00:00:00Z` is UTC
@@ -39,7 +46,10 @@ export function useWeeklyVolume(weekStart: string = weekStartOf(logicalTodayISO(
       // correct absolute instant. The upper bound matters for past weeks —
       // without it a historical week accumulated everything logged since.
       const weekStartInstant = new Date(`${weekStart}T00:00:00`).toISOString()
-      const weekEndInstant = new Date(`${isoAddDays(weekStart, 7)}T00:00:00`).toISOString()
+      const endExclusiveDate = upTo && upTo < isoAddDays(weekStart, 6)
+        ? isoAddDays(upTo, 1)
+        : isoAddDays(weekStart, 7)
+      const weekEndInstant = new Date(`${endExclusiveDate}T00:00:00`).toISOString()
       const [{ data: setsData, error }, { data: goals }] = await Promise.all([
         supabase
           .from('workout_sets')

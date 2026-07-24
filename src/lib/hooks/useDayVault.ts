@@ -184,12 +184,36 @@ export interface BodyMetricsPatch {
   bmi?: number | null
 }
 
+/** daily_logs column → its body_composition counterpart. */
+const BODY_MIRROR: Array<[keyof BodyMetricsPatch, string]> = [
+  ['weight_kg', 'weight_kg'],
+  ['body_fat_pct', 'body_fat_pct'],
+  ['lean_mass_kg', 'muscle_mass_kg'],
+  ['water_percent', 'water_pct'],
+  ['muscle_percent', 'muscle_pct'],
+  ['bone_mineral', 'bone_mineral_pct'],
+  ['visceral_fat', 'visceral_fat'],
+  ['bmr', 'bmr'],
+  ['bmi', 'bmi'],
+]
+
 /**
  * Save the InBody & Scale Metrics card: upsert onto the day's daily_logs row
- * (the home Body modal + Nexus read it), then mirror the overlapping fields
- * into body_composition (the weight-trend charts read that). Mirror semantics
- * follow the old /api/ai/complete-daily route this replaces: update-if-exists,
- * INSERT only when a weight is present — body_composition.weight_kg is NOT NULL.
+ * (the home Body modal + Nexus read it), then mirror into body_composition —
+ * the ledger the weight-trend charts and the Body card read.
+ *
+ * THE MIRROR REFLECTS THE WHOLE DAY, NOT THE PATCH. The InBody card submits only
+ * the fields you actually edited, and the old mirror copied only those fields —
+ * with an `else if (weight != null)` guard on the insert. So editing BMI alone on
+ * a day with no body_composition row yet wrote the value to daily_logs and threw
+ * the mirror away silently, and once a weight-only row existed nothing ever
+ * backfilled the rest. (Live data showed exactly that: 2026-07-23 carried
+ * weight 64.9 with bmi/lean/body-fat all null in body_composition while
+ * daily_logs held 22.50 / 53.30 / 17.80.)
+ *
+ * Re-reading the day's row after the upsert makes the mirror idempotent and
+ * self-healing: every save reconciles the ledger with the full current record,
+ * whatever order the fields were entered in.
  */
 export function useSaveBodyMetrics(date: string) {
   const qc = useQueryClient()
@@ -202,35 +226,43 @@ export function useSaveBodyMetrics(date: string) {
         .upsert({ user_id: user.id, date, ...patch } as any, { onConflict: 'user_id,date' })
       if (error) throw new Error(error.message)
 
-      const mirror: Record<string, number | null> = {}
-      if (patch.weight_kg !== undefined) mirror.weight_kg = patch.weight_kg
-      if (patch.body_fat_pct !== undefined) mirror.body_fat_pct = patch.body_fat_pct
-      if (patch.lean_mass_kg !== undefined) mirror.muscle_mass_kg = patch.lean_mass_kg
-      if (patch.water_percent !== undefined) mirror.water_pct = patch.water_percent
-      if (patch.muscle_percent !== undefined) mirror.muscle_pct = patch.muscle_percent
-      if (patch.bone_mineral !== undefined) mirror.bone_mineral_pct = patch.bone_mineral
-      if (patch.visceral_fat !== undefined) mirror.visceral_fat = patch.visceral_fat
-      if (patch.bmr !== undefined) mirror.bmr = patch.bmr
-      if (patch.bmi !== undefined) mirror.bmi = patch.bmi
-      if (Object.keys(mirror).length) {
-        const { data: existing } = await supabase.from('body_composition')
-          .select('id').eq('user_id', user.id).eq('date', date).limit(1).maybeSingle()
-        if (existing) {
-          const { error: e2 } = await supabase.from('body_composition')
-            .update(mirror as unknown as never).eq('id', (existing as { id: string }).id)
-          if (e2) throw new Error(e2.message)
-        } else if (mirror.weight_kg != null) {
-          const { error: e3 } = await supabase.from('body_composition')
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            .insert({ user_id: user.id, date, measured_at: `${date}T07:00:00Z`, hk_uuid: null, ...mirror } as any)
-          if (e3) throw new Error(e3.message)
-        }
+      // Read back the reconciled day rather than trusting the patch.
+      const { data: dayRow } = await supabase.from('daily_logs')
+        .select(BODY_MIRROR.map(([col]) => col).join(', '))
+        .eq('user_id', user.id).eq('date', date).maybeSingle()
+      const day = (dayRow ?? {}) as Record<string, number | null>
+
+      const mirror: Record<string, number> = {}
+      for (const [col, target] of BODY_MIRROR) {
+        const v = day[col]
+        if (typeof v === 'number' && Number.isFinite(v)) mirror[target] = v
+      }
+      if (!Object.keys(mirror).length) return
+
+      const { data: existing } = await supabase.from('body_composition')
+        .select('id').eq('user_id', user.id).eq('date', date).limit(1).maybeSingle()
+      if (existing) {
+        const { error: e2 } = await supabase.from('body_composition')
+          .update(mirror as unknown as never).eq('id', (existing as { id: string }).id)
+        if (e2) throw new Error(e2.message)
+      } else if (mirror.weight_kg != null) {
+        // body_composition.weight_kg is NOT NULL, so a weightless day genuinely
+        // cannot open a ledger row — it stays in daily_logs until a weight lands.
+        const { error: e3 } = await supabase.from('body_composition')
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .insert({ user_id: user.id, date, measured_at: `${date}T07:00:00Z`, hk_uuid: null, ...mirror } as any)
+        if (e3) throw new Error(e3.message)
       }
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['day_vault', date] })
-      qc.invalidateQueries({ queryKey: ['daily_logs'] })
-      qc.invalidateQueries({ queryKey: ['body_composition'] })
+      // Every reader of this data, not just the two obvious ones. The Analytics
+      // weight graph, the dashboard Body card, the Pathfinder week deltas and the
+      // Nexus all derive from these tables; missing one leaves a surface showing
+      // a number the DB no longer holds.
+      for (const key of [
+        ['day_vault', date], ['daily_logs'], ['body_composition'],
+        ['weigh_in'], ['continuum'],
+      ]) qc.invalidateQueries({ queryKey: key })
     },
   })
 }

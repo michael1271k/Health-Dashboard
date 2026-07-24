@@ -1,14 +1,17 @@
 'use client'
 
-import {
-  ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar,
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-} from 'recharts'
-import { useMuscleAnalytics, MUSCLE_GROUPS, GROUP_COLOR } from '@/lib/hooks/useMuscleAnalytics'
-import { ChartTooltip } from './ChartTooltip'
+import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar } from 'recharts'
+import { useMuscleAnalytics, GROUP_COLOR } from '@/lib/hooks/useMuscleAnalytics'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
+import { EMERALD, GOLD, OXIDE, DIM } from '@/lib/theme/palette'
 
-/** Hevy-killer muscle analytics — balance radar, sets/muscle/week, volume heatmap, freshness. */
+/**
+ * Muscle analytics — balance radar, volume by body part, freshness.
+ *
+ * The stacked "Sets / Muscle / Week" bar chart that used to sit here is gone: it
+ * plotted the exact series `VolumeStream` already renders as an area chart one
+ * card above, so the page drew the same data twice — once badly.
+ */
 export function MuscleAnalyticsSection({ days, era = 'all' }: { days: number; era?: 'all' | 'ppl' | 'axis' }) {
   const { data, isLoading } = useMuscleAnalytics(days, era)
   const unit = useUnitSystem()
@@ -30,36 +33,12 @@ export function MuscleAnalyticsSection({ days, era = 'all' }: { days: number; er
           <ResponsiveContainer width="100%" height={250}>
             <RadarChart data={radarData} outerRadius="70%">
               <PolarGrid stroke="rgba(255,255,255,0.1)" />
-              <PolarAngleAxis dataKey="group" tick={{ fill: '#79808C', fontSize: 11 }} />
-              <Radar dataKey="sets" stroke="#3E9E7A" fill="#3E9E7A" fillOpacity={0.35} isAnimationActive={false} />
+              <PolarAngleAxis dataKey="group" tick={{ fill: DIM, fontSize: 11 }} />
+              <Radar dataKey="sets" stroke={EMERALD} fill={EMERALD} fillOpacity={0.35} isAnimationActive={false} />
             </RadarChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Sets per muscle per week */}
-        <div className="helix-card">
-          <h3 className="font-heading font-semibold text-base">Sets / Muscle / Week</h3>
-          <p className="text-fluid-xs text-muted mb-2">Hypertrophy volume distribution</p>
-          <ResponsiveContainer width="100%" height={230}>
-            <BarChart data={data.weekly} margin={{ top: 4, right: 8, bottom: 0, left: -12 }}>
-              <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
-              <XAxis dataKey="week" tick={{ fill: '#79808C', fontSize: 10, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={24} tickMargin={4} />
-              <YAxis tick={{ fill: '#79808C', fontSize: 10, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} width={28} />
-              <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
-              {MUSCLE_GROUPS.map((g) => <Bar key={g} dataKey={g} stackId="s" fill={GROUP_COLOR[g]} maxBarSize={44} />)}
-            </BarChart>
-          </ResponsiveContainer>
-          <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
-            {MUSCLE_GROUPS.map((g) => (
-              <span key={g} className="flex items-center gap-1 text-[10px] text-muted">
-                <span className="w-2 h-2 rounded-full" style={{ background: GROUP_COLOR[g] }} />{g}
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="grid sm:grid-cols-2 gap-4">
         {/* Volume by body part */}
         <div className="helix-card">
           <h3 className="font-heading font-semibold text-base mb-3">Volume by Body Part</h3>
@@ -83,7 +62,7 @@ export function MuscleAnalyticsSection({ days, era = 'all' }: { days: number; er
           <h3 className="font-heading font-semibold text-base mb-3">Muscle Freshness</h3>
           <div className="space-y-2">
             {[...data.stats].sort((a, b) => (b.daysSince ?? -1) - (a.daysSince ?? -1)).map((s) => {
-              const c = s.daysSince == null ? '#5A6472' : s.daysSince >= 4 ? '#3E9E7A' : s.daysSince >= 2 ? '#D4AF37' : '#C4514E'
+              const c = s.daysSince == null ? DIM : s.daysSince >= 4 ? EMERALD : s.daysSince >= 2 ? GOLD : OXIDE
               return (
                 <div key={s.group} className="flex items-center gap-2.5">
                   <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: c, boxShadow: `0 0 8px ${c}88` }} />

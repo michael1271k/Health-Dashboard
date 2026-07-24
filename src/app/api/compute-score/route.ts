@@ -5,7 +5,7 @@ import { computeDailyScore } from '@/lib/scoring/score'
 import { computeBattery } from '@/lib/scoring/battery'
 import type { ScoringInputs } from '@/lib/scoring/types'
 import type { Database, Tables, InsertRow } from '@/lib/supabase/types'
-import { isRestDayFor } from '@/lib/programs'
+import { isRestDayFor, prescribedFor } from '@/lib/programs'
 import { denyIfUnauthorized } from '@/lib/auth/guard'
 import { resolveCallerUserId } from '@/lib/auth/identity'
 import { nightWindow } from '@/lib/sleep/nightWindow'
@@ -54,7 +54,7 @@ async function computeForDate(supabase: DB, userId: string, date: string, hoursA
     // empty/legacy) — count only the ones actually ticked off.
     supabase.from('supplement_log').select('item_key').eq('user_id', userId).eq('date', date).eq('taken', true),
     supabase.from('user_goals').select('*').eq('user_id', userId).maybeSingle(),
-    supabase.from('workout_sessions').select('total_volume_kg, split_day').eq('user_id', userId)
+    supabase.from('workout_sessions').select('id, total_volume_kg, split_day, day_key, set_count').eq('user_id', userId)
       .gte('started_at', `${date}T00:00:00Z`).lt('started_at', `${end}T00:00:00Z`),
   ])
 
@@ -64,13 +64,31 @@ async function computeForDate(supabase: DB, userId: string, date: string, hoursA
   const water = waterRes.data as Array<{ amount_ml: number }> | null
   const supplements = supplementsRes.data as Array<{ item_key: string }> | null
   const goals = goalsRes.data as Tables<'user_goals'> | null
-  const daySessions = sessionsRes.data as Array<{ total_volume_kg: number | null; split_day: ScoringInputs['splitDay'] }> | null
+  const daySessions = sessionsRes.data as Array<{
+    id: string; total_volume_kg: number | null; split_day: ScoringInputs['splitDay']
+    day_key: string | null; set_count: number | null
+  }> | null
 
-  const { data: trailingRaw } = await supabase
-    .from('workout_sessions').select('total_volume_kg').eq('user_id', userId)
-    .lt('started_at', `${date}T00:00:00Z`).order('started_at', { ascending: false }).limit(7)
-  const trailing = trailingRaw as Array<{ total_volume_kg: number | null }> | null
-  const trailingAvg = trailing?.length ? trailing.reduce((s, r) => s + (r.total_volume_kg ?? 0), 0) / trailing.length : 0
+  // Trailing volume baseline, scoped to the SAME SESSION TYPE.
+  //
+  // It used to average the last 7 sessions of ANY type. Under HELIX-5 that mixes
+  // a ~3.3 t arms day with a ~12 t leg day, so the mean (~7 t) marked every arms
+  // day as a shortfall and every leg day as a win regardless of how either was
+  // actually executed. Matching on day_key (exact program-day identity) with a
+  // split_day fallback for legacy rows compares like with like.
+  const dayKey = daySessions?.find((s) => s.day_key)?.day_key ?? null
+  const splitDayForBaseline = daySessions?.[0]?.split_day ?? null
+  let trailingAvg = 0
+  if (daySessions?.length) {
+    let tq = supabase
+      .from('workout_sessions').select('total_volume_kg, day_key, split_day').eq('user_id', userId)
+      .lt('started_at', `${date}T00:00:00Z`).order('started_at', { ascending: false }).limit(6)
+    tq = dayKey ? tq.eq('day_key', dayKey) : splitDayForBaseline ? tq.eq('split_day', splitDayForBaseline) : tq
+    const { data: trailingRaw } = await tq
+    const trailing = ((trailingRaw ?? []) as Array<{ total_volume_kg: number | null }>)
+      .map((r) => r.total_volume_kg).filter((v): v is number => v != null && v > 0)
+    trailingAvg = trailing.length ? trailing.reduce((s, v) => s + v, 0) / trailing.length : 0
+  }
 
   // HRV + resting-HR baselines (7-day trailing) from daily_logs.
   // Self-heal if the hrv_ms column isn't migrated yet: retry without it so the
@@ -99,10 +117,34 @@ async function computeForDate(supabase: DB, userId: string, date: string, hoursA
   if (!isToday && date !== todayISO() && !metrics && !sleep && !nutrition
       && !(water?.length) && !(supplements?.length) && !(daySessions?.length) && !todayDl) return
 
-  const { count: prCount } = await supabase
-    .from('workout_sets').select('id', { count: 'exact', head: true })
-    .eq('user_id', userId).eq('is_pr', true)
-    .gte('created_at', `${date}T00:00:00Z`).lt('created_at', `${end}T00:00:00Z`)
+  // The day's sets, scoped by the parent SESSION rather than workout_sets.created_at
+  // (a back-dated session is written today, so created_at would miss it). Supplies
+  // the PR count, the exercise coverage and the failure-set count in one read.
+  const sessionIds = (daySessions ?? []).map((s) => s.id)
+  let prCount = 0
+  let loggedExercises = 0
+  let sessionSets = 0
+  let failureSets = 0
+  if (sessionIds.length) {
+    const { data: setRows } = await supabase
+      .from('workout_sets').select('exercise_id, set_type, is_pr, pair_id, id')
+      .eq('user_id', userId).in('session_id', sessionIds)
+    const rows = (setRows ?? []) as Array<{
+      exercise_id: string; set_type: string | null; is_pr: boolean; pair_id: string | null; id: string
+    }>
+    const exercises = new Set<string>()
+    const working = new Set<string>()
+    for (const r of rows) {
+      if (r.is_pr) prCount += 1
+      if ((r.set_type ?? 'normal') === 'warmup') continue
+      exercises.add(r.exercise_id)
+      // Unilateral L/R sub-sets share a pair_id and are ONE set.
+      working.add(r.pair_id ?? r.id)
+      if (r.set_type === 'failure') failureSets += 1
+    }
+    loggedExercises = exercises.size
+    sessionSets = working.size
+  }
 
   const isRestDay = isRestDayFor(date)  // era-aware: HELIX-5 rests Tue/Fri; PPL legacy Fri/Sat
   // isToday comes from the caller (the client knows its own timezone); derive the
@@ -114,6 +156,12 @@ async function computeForDate(supabase: DB, userId: string, date: string, hoursA
     sleep_goal_hours: 8, calorie_goal: 1955, protein_goal_g: 170, carbs_goal_g: 195,
     fat_goal_g: 55, steps_goal: 10000, active_cal_goal: 500, water_goal_ml: 3000,
   }
+  // What the program prescribed for this day, cut-adjusted (bulkOnly lifts
+  // dropped, cutSetDelta applied). null when the day isn't a known program day —
+  // the scorer then drops the coverage component rather than inventing a plan.
+  const programMode: 'cut' | 'bulk' = (g.calorie_goal ?? 0) >= 2450 ? 'bulk' : 'cut'
+  const prescribed = dayKey ? prescribedFor(dayKey, programMode) : null
+
   const totalWaterMl = (water ?? []).reduce((s, r) => s + r.amount_ml, 0)
   const sessionVolumeKg = (daySessions ?? []).reduce((s, r) => s + (r.total_volume_kg ?? 0), 0)
   // Battery hardness keys off the heaviest session of the day (legs ≫ arms).
@@ -140,10 +188,15 @@ async function computeForDate(supabase: DB, userId: string, date: string, hoursA
     activeCalGoal: g.active_cal_goal,
     workoutLogged: (daySessions?.length ?? 0) > 0,
     isRestDay,
-    newPRsToday: prCount ?? 0,
+    newPRsToday: prCount,
     sessionVolumeKg,
     splitDay: hardestSplit,
     trailingAvgVolumeKg: trailingAvg,
+    plannedExercises: prescribed?.exercises,
+    plannedSets: prescribed?.sets,
+    loggedExercises,
+    sessionSets: sessionSets || (daySessions ?? []).reduce((s, r) => s + (r.set_count ?? 0), 0),
+    failureSets,
     waterMl: totalWaterMl,
     waterGoalMl: g.water_goal_ml,
     supplementsTaken: supplements?.length ?? 0,

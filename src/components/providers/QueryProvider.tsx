@@ -22,19 +22,25 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            // App-open paradigm: the app pushes fresh HealthKit data exactly
-            // when the app foregrounds, so we reconcile the UI on focus + reconnect.
-            // A short staleTime means a foreground refetch actually re-hits the DB
-            // right after the push, while tab-switches within the window still
-            // serve instantly from cache (no refetch storm).
-            staleTime: 15 * 1000,
+            // App-open paradigm: the app pushes fresh HealthKit data exactly when
+            // it foregrounds, and `invalidateHealthData` / `invalidateWorkoutData`
+            // explicitly revalidate after every sync and every write. Freshness
+            // therefore comes from those events, NOT from polling on mount.
+            //
+            // PERF: this used to be `refetchOnMount: 'always'` with a 15s
+            // staleTime. 'always' ignores staleTime by design, so EVERY mount
+            // refetched — and since each tab is a route that unmounts its
+            // predecessor, every single tab switch re-ran the whole page's query
+            // fan-out against Supabase before it would paint fresh. That is the
+            // sluggishness: not render cost, but a network round-trip per query
+            // per navigation. `true` keeps the same cold-open behaviour (a
+            // restored cache older than staleTime is stale, so it still
+            // revalidates) while making an in-session tab switch instant.
+            staleTime: 60 * 1000,
             gcTime: 30 * 60 * 1000,
             refetchOnWindowFocus: true,
             refetchOnReconnect: true,
-            // Every cold open repaints instantly from the persisted cache, then
-            // revalidates against Supabase — so data written out-of-band (a direct
-            // DB insert / native push while the app was closed) always reconciles.
-            refetchOnMount: 'always',
+            refetchOnMount: true,
             retry: 1,
           },
         },

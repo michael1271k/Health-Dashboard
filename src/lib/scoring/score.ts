@@ -100,16 +100,31 @@ export function computeActivityScore(inputs: Pick<ScoringInputs,
 
 // ─── Workout Score ────────────────────────────────────────────────────────────
 /**
- * Scientific & honest — never a fake full ring on a day off:
- *   Travel/vacation → null (no training expectation).
- *   Scheduled rest day → null (neutral, excluded from the composite).
- *   Training day, no session yet & early in the day → null ("Pending").
- *   Training day, no session & late/past → 0 (genuinely missed).
- *   Session logged → 60 base + up to 20 volume + up to 20 PR.
+ * Grades the SESSION YOU WERE ASKED TO DO, not your luck with records.
+ *
+ * The old model was `60 base + 20 if volume ≥ trailing avg + 10 per PR (max 20)`.
+ * On a calorie deficit running double progression, PRs are rare by design — the
+ * program's own rule adds load only after clearing the rep ceiling twice — so
+ * the top 20 points were effectively unreachable and a flawless session was
+ * permanently capped at 80. (Live data: 2026-07-24, Legs & Core B, 8 945 kg
+ * across 19 sets, every prescribed lift logged → workout_score 80.)
+ *
+ * The replacement is a weighted mean of what a session can actually control:
+ *
+ *   completion 55  · you trained the day the program scheduled
+ *   coverage   15  · share of the prescribed exercises actually logged
+ *   volume     18  · vs the trailing average FOR THIS SESSION TYPE
+ *   effort     12  · sets taken to failure + share of prescribed sets completed
+ *   + PRs      ≤10 · a bonus on top, capped at 100 — never a gate
+ *
+ * Components with no data are DROPPED and the rest renormalized (the same rule
+ * the composite uses), so an unknown plan or a first-of-its-type session is
+ * never silently penalized for something it couldn't have supplied.
  */
 export function computeWorkoutScore(inputs: Pick<ScoringInputs,
   'workoutLogged' | 'isRestDay' | 'newPRsToday' | 'sessionVolumeKg' | 'trailingAvgVolumeKg' |
-  'contextMode' | 'isCurrentDay' | 'localHour'>
+  'contextMode' | 'isCurrentDay' | 'localHour' |
+  'plannedExercises' | 'loggedExercises' | 'plannedSets' | 'sessionSets' | 'failureSets'>
 ): number | null {
   if (inputs.contextMode === 'travel') return null   // vacation — no training expectation
   if (inputs.isRestDay) return null                  // scheduled rest → neutral
@@ -117,11 +132,44 @@ export function computeWorkoutScore(inputs: Pick<ScoringInputs,
     const pending = inputs.isCurrentDay && (inputs.localHour ?? 24) < 21
     return pending ? null : 0                         // pending vs genuinely missed
   }
-  const base = 60
-  const volumeBonus = inputs.trailingAvgVolumeKg > 0 &&
-    inputs.sessionVolumeKg >= inputs.trailingAvgVolumeKg ? 20 : 0
-  const prBonus = clamp(inputs.newPRsToday * 10, 0, 20)
-  return clamp(base + volumeBonus + prBonus)
+
+  const parts: Array<{ v: number; w: number }> = [
+    { v: 100, w: 55 },   // completion — showing up and logging is most of the score
+  ]
+
+  // Coverage: did the session contain the work that was prescribed?
+  if ((inputs.plannedExercises ?? 0) > 0 && inputs.loggedExercises != null) {
+    const ratio = inputs.loggedExercises / (inputs.plannedExercises as number)
+    parts.push({ v: clamp(Math.min(1, ratio) * 100), w: 15 })
+  }
+
+  // Volume vs this session type's own baseline. Graded on a band, not a cliff:
+  // matching the average is full marks, and shortfalls scale down smoothly.
+  if (inputs.trailingAvgVolumeKg > 0) {
+    const ratio = inputs.sessionVolumeKg / inputs.trailingAvgVolumeKg
+    const v = ratio >= 1 ? 100
+      : ratio >= 0.9 ? 70 + (ratio - 0.9) * 300      // 0.90 → 70 … 1.00 → 100
+      : ratio >= 0.75 ? 35 + (ratio - 0.75) * (35 / 0.15)  // 0.75 → 35 … 0.90 → 70
+      : clamp((ratio / 0.75) * 35)                    // 0 → 0 … 0.75 → 35
+    parts.push({ v: clamp(v), w: 18 })
+  }
+
+  // Effort: half from taking sets to failure, half from completing the
+  // prescribed set count. Either half alone still earns real credit.
+  const effort: number[] = []
+  if (inputs.failureSets != null) effort.push(clamp(Math.min(1, inputs.failureSets / 2) * 100))
+  if ((inputs.plannedSets ?? 0) > 0 && inputs.sessionSets != null) {
+    effort.push(clamp(Math.min(1, inputs.sessionSets / (inputs.plannedSets as number)) * 100))
+  }
+  if (effort.length) {
+    parts.push({ v: effort.reduce((s, x) => s + x, 0) / effort.length, w: 12 })
+  }
+
+  const wSum = parts.reduce((s, p) => s + p.w, 0)
+  const earned = parts.reduce((s, p) => s + p.v * (p.w / wSum), 0)
+  // PRs sit ON TOP of a complete session rather than being the only route to it.
+  const prBonus = clamp(inputs.newPRsToday * 5, 0, 10)
+  return clamp(earned + prBonus)
 }
 
 // ─── Hydration Score ──────────────────────────────────────────────────────────

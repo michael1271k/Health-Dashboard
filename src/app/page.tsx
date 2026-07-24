@@ -109,7 +109,11 @@ export default function DashboardPage() {
   // STRICT ERA BOUNDARY: "last session" only looks inside the
   // CURRENT era — a fresh HELIX era starts from "None", never from PPL history.
   const todayEra = eraForDate(logicalTodayISO())
-  const lastSession = sessions?.find((s) => eraForDate(s.started_at.slice(0, 10)) === todayEra)
+  const eraSessions = sessions?.filter((s) => eraForDate(s.started_at.slice(0, 10)) === todayEra)
+  const todaySession = eraSessions?.find((s) => s.started_at.slice(0, 10) === logicalTodayISO()) ?? null
+  // The Train card's "last session" is the most recent PAST one (what to beat);
+  // once today is logged the card shows today's completed hero instead.
+  const lastSession = eraSessions?.find((s) => s.started_at.slice(0, 10) !== logicalTodayISO()) ?? null
   const lastSplit = lastSession ? PPL_SPLITS[lastSession.split_day as SplitDay] : null
   const steps = metrics?.steps ?? log?.steps ?? null
   const calToday = nutrition?.calories != null ? Math.round(nutrition.calories) : null
@@ -169,11 +173,15 @@ export default function DashboardPage() {
     {
       key: 'train', icon: Dumbbell, label: 'Train', accent: TRAIN_GREEN,
       value: todayDay === 'rest' ? 'Zone-2 / Rest' : todayDay.label,
-      status: todayDay !== 'rest' && todayDay.sub
-        ? todayDay.sub
-        : lastSession?.total_volume_kg != null
-          ? `last: ${lastSplit?.label ?? ''} · ${fmtVolume(displayWeight(lastSession.total_volume_kg))} ${unit}`
-          : todayEra === 'axis' ? 'no HELIX sessions yet — fresh slate' : 'no sessions yet',
+      // Once logged, the strip reflects the completed session rather than still
+      // prompting for it (the card behind it shows the full completed hero).
+      status: loggedToday && todaySession?.total_volume_kg != null
+        ? <span style={{ color: EMERALD }}>done ✓ · {fmtVolume(displayWeight(todaySession.total_volume_kg))} {unit}</span>
+        : todayDay !== 'rest' && todayDay.sub
+          ? todayDay.sub
+          : lastSession?.total_volume_kg != null
+            ? `last: ${lastSplit?.label ?? ''} · ${fmtVolume(displayWeight(lastSession.total_volume_kg))} ${unit}`
+            : todayEra === 'axis' ? 'no HELIX sessions yet — fresh slate' : 'no sessions yet',
     },
     {
       // Weight carries forward from the last valid reading (never `— — —` at
@@ -274,16 +282,10 @@ export default function DashboardPage() {
         title={open ? sheetTitle[open] : undefined}
         accent={open ? SHEET_ACCENT[open] : undefined}
       >
-        {open === 'readiness' && (
-          <div className="space-y-4">
-            <ScoreCard score={score ?? null} />
-            <div className="grid grid-cols-2 gap-2.5">
-              {drivers.map((d) => (
-                <StatTile key={d.label} label={d.label} value={d.value} accent={d.color} />
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Just the score widget. The sleep/energy driver tiles were a duplicate
+            of the hero's own "What's driving it" panel one tap behind it, and
+            pushed the actual breakdown below the fold. */}
+        {open === 'readiness' && <ScoreCard score={score ?? null} />}
         {open === 'sleep' && (
           <SleepStages sleep={sleep ?? null} log={log ?? null} goalHours={goals?.sleep_goal_hours ?? null} />
         )}
@@ -308,6 +310,7 @@ export default function DashboardPage() {
         {open === 'train' && (
           <TrainingCard
             today={todayDay}
+            todaySession={todaySession}
             lastSession={lastSession}
             loggedToday={loggedToday}
             onLog={(dayKey) => { setOpen(null); router.push(`/session?template=${dayKey}`) }}

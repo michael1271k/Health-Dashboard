@@ -14,13 +14,30 @@ export interface ExerciseDelta {
   delta: -1 | 0 | 1 | null
   isPr: boolean
 }
+/** One metric compared against the previous same-type session. */
+export interface IntelMetric {
+  key: 'volume' | 'sets' | 'duration' | 'calories' | 'avgBpm' | 'prs'
+  label: string
+  value: number | null
+  previous: number | null
+  /** Absolute change; null when either side is missing. */
+  delta: number | null
+  /** Whether a RISE in this metric is the good direction. */
+  higherIsBetter: boolean
+  unit?: string
+}
+
 export interface SessionIntel {
   deltas: ExerciseDelta[]
   prs: Array<{ name: string; kg: number; reps: number }>
   volumes: Array<{ date: string; volumeKg: number }>  // this + previous SAME-TYPE sessions (asc)
   typeLabel: string          // era-aware session-type name, e.g. "Upper B"
+  /** Date of the session being compared against (null when first of its type). */
+  previousDate: string | null
   volumeDeltaPct: number | null   // this vs previous same-type session
   setsDelta: number | null
+  /** Every headline metric, this session vs the last one of the same type. */
+  metrics: IntelMetric[]
   computedVolumeKg: number   // fallback when the session row lacks totals
   computedSets: number
   isFirstOfType: boolean     // no previous same-type session → hide progression
@@ -40,14 +57,23 @@ export function useSessionIntel(sessionId: string | null) {
     staleTime: 5 * 60_000,
     queryFn: async (): Promise<SessionIntel> => {
       // day_key is the exact program-day identity (null on legacy rows).
-      type SessRow = { id: string; started_at: string; split_day: string; total_volume_kg: number | null; day_key?: string | null }
+      type SessRow = {
+        id: string; started_at: string; split_day: string; total_volume_kg: number | null
+        day_key?: string | null; duration_min: number | null; calories_burned: number | null
+        avg_bpm: number | null; set_count: number | null; pr_count: number | null
+      }
+      const COLS = 'id, started_at, split_day, total_volume_kg, day_key, duration_min, calories_burned, avg_bpm, set_count, pr_count'
       const { data: sess } = await supabase
         .from('workout_sessions')
-        .select('id, started_at, split_day, total_volume_kg, day_key')
+        .select(COLS)
         .eq('id', sessionId as string)
         .single()
       const session = sess as SessRow | null
-      const empty: SessionIntel = { deltas: [], prs: [], volumes: [], typeLabel: '', volumeDeltaPct: null, setsDelta: null, computedVolumeKg: 0, computedSets: 0, isFirstOfType: true }
+      const empty: SessionIntel = {
+        deltas: [], prs: [], volumes: [], typeLabel: '', previousDate: null,
+        volumeDeltaPct: null, setsDelta: null, metrics: [],
+        computedVolumeKg: 0, computedSets: 0, isFirstOfType: true,
+      }
       if (!session) return empty
 
       // SAME-TYPE matching: split_day alone mixes Upper A and Upper B (both
@@ -62,7 +88,7 @@ export function useSessionIntel(sessionId: string | null) {
       const typeLabel = sessionTypeLabel(session.started_at.slice(0, 10), session.split_day, weekday, session.day_key ?? null)
       const prevQuery = await supabase
         .from('workout_sessions')
-        .select('id, started_at, total_volume_kg, day_key')
+        .select(COLS)
         .eq('split_day', session.split_day)
         .lt('started_at', session.started_at)
         .order('started_at', { ascending: false })
@@ -71,7 +97,7 @@ export function useSessionIntel(sessionId: string | null) {
         session.day_key && p.day_key
           ? p.day_key === session.day_key
           : new Date(p.started_at).getUTCDay() === weekday
-      const prev = ((prevQuery.data ?? []) as unknown as Array<{ id: string; started_at: string; total_volume_kg: number | null; day_key?: string | null }>)
+      const prev = ((prevQuery.data ?? []) as unknown as SessRow[])
         .filter(sameType)
         .filter((p) => eraForDate(p.started_at.slice(0, 10)) === sessionEra)
         .slice(0, 2)
@@ -118,17 +144,42 @@ export function useSessionIntel(sessionId: string | null) {
         .map((s) => ({ date: s.started_at.slice(0, 10), volumeKg: s.total_volume_kg as number }))
 
       // Header Δ vs the previous SAME-TYPE session
-      const prevVol = prev[0]?.total_volume_kg ?? null
+      const last = prev[0] ?? null
+      const prevVol = last?.total_volume_kg ?? null
       const volumeDeltaPct = prevVol && thisVolume ? Math.round(((thisVolume - prevVol) / prevVol) * 100) : null
-      const setsDelta = prev[0] ? computedSets - sets.filter((s) => s.session_id === prev[0].id).length : null
+      const prevSetCount = last ? sets.filter((s) => s.session_id === last.id).length : null
+      const setsDelta = prevSetCount != null ? computedSets - prevSetCount : null
+      const thisPrs = deltas.filter((d) => d.isPr)
+
+      // Every headline metric side by side, rather than one crammed sentence.
+      // `higherIsBetter` is per-metric on purpose: more volume is progress, more
+      // MINUTES for the same work is not, and average HR is context, not a score.
+      const metric = (
+        key: IntelMetric['key'], labelText: string, value: number | null,
+        previous: number | null, higherIsBetter: boolean, unit?: string,
+      ): IntelMetric => ({
+        key, label: labelText, value, previous,
+        delta: value != null && previous != null ? Math.round((value - previous) * 10) / 10 : null,
+        higherIsBetter, unit,
+      })
+      const metrics: IntelMetric[] = [
+        metric('volume', 'Volume', thisVolume, prevVol, true),
+        metric('sets', 'Sets', computedSets, prevSetCount, true),
+        metric('duration', 'Time', session.duration_min, last?.duration_min ?? null, false, 'min'),
+        metric('calories', 'Calories', session.calories_burned, last?.calories_burned ?? null, true, 'kcal'),
+        metric('avgBpm', 'Avg HR', session.avg_bpm, last?.avg_bpm ?? null, true, 'bpm'),
+        metric('prs', 'PRs', thisPrs.length, last?.pr_count ?? null, true),
+      ].filter((m) => m.value != null || m.previous != null)
 
       return {
         deltas,
-        prs: deltas.filter((d) => d.isPr).map((d) => ({ name: d.name, kg: d.topKg, reps: d.topReps })),
+        prs: thisPrs.map((d) => ({ name: d.name, kg: d.topKg, reps: d.topReps })),
         volumes,
         typeLabel,
+        previousDate: last?.started_at.slice(0, 10) ?? null,
         volumeDeltaPct,
         setsDelta,
+        metrics,
         computedVolumeKg,
         computedSets,
         isFirstOfType: prev.length === 0,

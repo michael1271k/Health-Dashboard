@@ -88,12 +88,22 @@ describe('buildWeeklyExport', () => {
     sessions: [
       {
         date: '2026-07-19', label: 'Upper A', volumeKg: 8240, setCount: 24,
-        durationMin: 68, avgBpm: 118,
+        failureSets: 1, durationMin: 68, avgBpm: 118, caloriesBurned: 512,
         exercises: [{
-          name: 'Chest Press', repWindow: '10–12', topKg: 60, bestE1rm: 72.5,
-          sets: [{ weightKg: 60, reps: 12 }, { weightKg: 60, reps: 11 }, { weightKg: 57.5, reps: 10 }],
+          name: 'Chest Press', repWindow: '10–12', topKg: 60,
+          sets: [
+            { weightKg: 60, reps: 12, side: null, failure: false, pairId: null },
+            { weightKg: 60, reps: 11, side: null, failure: false, pairId: null },
+            { weightKg: 57.5, reps: 10, side: null, failure: true, pairId: null },
+          ],
+        }, {
+          name: 'Single Arm Cable Crossover', repWindow: '12–15', topKg: 7.5,
+          sets: [
+            { weightKg: 7.5, reps: 15, side: 'L', failure: false, pairId: 'p1' },
+            { weightKg: 7.5, reps: 13, side: 'R', failure: true, pairId: 'p1' },
+          ],
         }],
-        prs: [{ name: 'Chest Press', e1rmKg: 72.5, weightKg: 60, reps: 12 }],
+        prs: [{ name: 'Chest Press', weightKg: 60, reps: 12 }],
       },
     ],
     volumeByMuscle: [
@@ -118,10 +128,17 @@ describe('buildWeeklyExport', () => {
     expect(out).not.toMatch(/\| Mon \|.*\| 0 \|/)    // never fabricates a 0
   })
 
-  it('includes the instruction header, aggregates, and volume targets', () => {
+  it('is DRY DATA — no coaching prompt or instruction header', () => {
     const out = buildWeeklyExport(input)
-    expect(out).toMatch(/elite physique coach/)
-    expect(out).toMatch(/Never invent data/)
+    expect(out).not.toMatch(/elite physique coach/)
+    expect(out).not.toMatch(/Never invent data/)
+    expect(out).not.toMatch(/highest-leverage/)
+    // Starts straight at the week heading.
+    expect(out.trimStart()).toMatch(/^# WEEK 2026-07-19/)
+  })
+
+  it('carries the program, sessions, and volume targets', () => {
+    const out = buildWeeklyExport(input)
     expect(out).toMatch(/Helix Cut/)
     expect(out).toMatch(/Upper A/)
     expect(out).toMatch(/\| Biceps \| 4 \| 8 \| UNDER \|/)  // under-target flagged
@@ -134,7 +151,23 @@ describe('buildWeeklyExport', () => {
     expect(out).toMatch(/target 10–12/)
   })
 
-  it('names the PRs rather than counting them', () => {
+  it('carries per-workout volume, failures, time and kcal burned', () => {
+    const out = buildWeeklyExport(input)
+    expect(out).toMatch(/8240 kg volume · 24 sets · 1 to failure · 68 min · 512 kcal/)
+  })
+
+  it('marks a set taken to failure and NEVER emits an estimated 1RM', () => {
+    const out = buildWeeklyExport(input)
+    expect(out).toMatch(/57\.5kg × 10 \(F\)/)   // failure flag
+    expect(out).not.toMatch(/e1RM/i)            // no derived 1RM anywhere
+  })
+
+  it('splits unilateral work per side (L/R weight · reps · failure)', () => {
+    const out = buildWeeklyExport(input)
+    expect(out).toMatch(/S1 L 7\.5kg×15 · R 7\.5kg×13\(F\)/)
+  })
+
+  it('names the PRs (raw lift, no 1RM) rather than counting them', () => {
     expect(buildWeeklyExport(input)).toMatch(/PRs: Chest Press 60kg × 12/)
   })
 

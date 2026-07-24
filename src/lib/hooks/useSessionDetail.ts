@@ -2,7 +2,9 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
-import { MUSCLE_MAP, MUSCLE_GROUPS } from '@/lib/hooks/useMuscleAnalytics'
+import { MUSCLE_MAP } from '@/lib/hooks/useMuscleAnalytics'
+import { lookupMuscles } from '@/lib/exercises/muscleMap'
+import { toLandmarkMuscle, LANDMARK_MUSCLES, type LandmarkMuscle } from '@/lib/training/landmarks'
 
 export interface DetailSet {
   setNumber: number
@@ -43,8 +45,18 @@ export interface SessionDetail {
   avgBpm: number | null
   calories: number | null
   exercises: DetailExercise[]
-  /** Working-set distribution across the six groups (0-filled, sorted desc). */
-  muscleSets: Array<{ group: string; sets: number }>
+  /**
+   * DIRECT working sets per landmark muscle for THIS session, sorted desc.
+   * Untrained muscles are absent, never zero-filled.
+   *
+   * Landmark muscles (Quads / Hamstrings / Side delts / …), NOT the six broad
+   * display groups: the weekly accumulator speaks that language, and the two
+   * taxonomies used to be crossed here — the Session Report fed 13-muscle rows
+   * into a 6-group landmark table, where only "Chest" and "Back" happen to exist
+   * in both. Everything actually trained fell through the lookup and vanished,
+   * so a Legs & Core day rendered Chest + Back at zero sets.
+   */
+  muscleSets: Array<{ muscle: LandmarkMuscle; sets: number }>
   failureSets: number
   warmupSets: number
 }
@@ -98,7 +110,9 @@ export function useSessionDetail(sessionId: string | null) {
 
       // Group sets by exercise, preserving exercise_order.
       const byEx = new Map<string, DetailExercise>()
-      const muscleAgg = new Map<string, number>()
+      /** landmark muscle → the dedupe keys credited to it (L/R pairs count once). */
+      const muscleAgg = new Map<LandmarkMuscle, Set<string>>()
+      const primaryOf = new Map<string, LandmarkMuscle[]>()
       let failureSets = 0
       let warmupSets = 0
 
@@ -110,9 +124,21 @@ export function useSessionDetail(sessionId: string | null) {
 
         let ex = byEx.get(r.exercise_id)
         if (!ex) {
-          const groups = [...new Set((r.exercises.muscle_groups ?? [])
-            .map((m) => MUSCLE_MAP[m.toLowerCase()])
-            .filter(Boolean))]
+          // Resolve muscles from the exercise NAME first. `exercises.muscle_groups`
+          // is a seeded column: rows imported before the dictionary existed, or
+          // seeded by a parser, carry stale or generic tags — which is how a
+          // Legs & Core session ended up presented as chest/back work.
+          const entry = lookupMuscles(r.exercises.name)
+          const tags = entry
+            ? [...entry.primary, ...entry.secondary]
+            : (r.exercises.muscle_groups ?? [])
+          const groups = [...new Set(tags.map((m) => MUSCLE_MAP[m.toLowerCase()]).filter(Boolean))]
+          // DIRECT movers only for volume accounting — crediting every secondary
+          // tag gave biceps a set for every row. Same rule as useWeeklyVolume.
+          const direct = (entry?.primary ?? (r.exercises.muscle_groups ?? []).slice(0, 1))
+            .map(toLandmarkMuscle)
+            .filter((m): m is LandmarkMuscle => m !== null)
+          primaryOf.set(r.exercise_id, [...new Set(direct)])
           ex = {
             exerciseId: r.exercise_id,
             name: r.exercises.name,
@@ -133,17 +159,23 @@ export function useSessionDetail(sessionId: string | null) {
           ex.volumeKg += (r.weight_kg || 0) * (r.reps || 0)
           if (r.weight_kg > ex.topKg) ex.topKg = r.weight_kg
           if (r.est_1rm_kg != null && (ex.bestEst1rm == null || r.est_1rm_kg > ex.bestEst1rm)) ex.bestEst1rm = r.est_1rm_kg
-          // Distribute one working set to each of the exercise's canonical groups.
-          for (const g of ex.muscleGroups) muscleAgg.set(g, (muscleAgg.get(g) ?? 0) + 1)
+          // One direct set per landmark mover. Unilateral L/R sub-sets share a
+          // pair_id and must count ONCE, matching the weekly accumulator.
+          const dedupeKey = r.pair_id ?? `${r.exercise_id}:${r.set_number}`
+          for (const mu of primaryOf.get(r.exercise_id) ?? []) {
+            const seen = muscleAgg.get(mu) ?? new Set<string>()
+            seen.add(dedupeKey)
+            muscleAgg.set(mu, seen)
+          }
         }
       }
 
       const exercises = [...byEx.values()].sort((a, b) => a.order - b.order)
       exercises.forEach((e) => { e.volumeKg = Math.round(e.volumeKg) })
 
-      const muscleSets = MUSCLE_GROUPS
-        .map((g) => ({ group: g as string, sets: muscleAgg.get(g) ?? 0 }))
-        .filter((m) => m.sets > 0)
+      const muscleSets = LANDMARK_MUSCLES
+        .map((muscle) => ({ muscle, sets: muscleAgg.get(muscle)?.size ?? 0 }))
+        .filter((m) => m.sets > 0)   // untrained muscles are hidden, not zero-filled
         .sort((a, b) => b.sets - a.sets)
 
       const computedVolume = Math.round(exercises.reduce((n, e) => n + e.volumeKg, 0))

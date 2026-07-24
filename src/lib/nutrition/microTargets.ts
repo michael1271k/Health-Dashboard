@@ -18,6 +18,12 @@ export interface MicroTarget {
   color: string
   why: string
   hkType?: string
+  /**
+   * True when this nutrient comes from the supplement stack rather than food.
+   * Split out in the UI because "you hit 470/90 mg vitamin C" means something
+   * different when a tablet supplied all of it.
+   */
+  fromStack?: boolean
 }
 
 export const MICRO_TARGETS: MicroTarget[] = [
@@ -54,6 +60,37 @@ export const MICRO_TARGETS: MicroTarget[] = [
   { key: 'sugar', label: 'Added Sugar', target: 40, unit: 'g', kind: 'ceiling', color: '#B4522A',
     why: '<10 % of kcal; lower is better on a cut. Ceiling, not a goal.',
     hkType: 'HKQuantityTypeIdentifierDietarySugar' },
+
+  // ── Delivered by the supplement stack ──────────────────────────────────────
+  // These light up the instant the matching item is ticked off in the Stack —
+  // see nutrition/supplementMicros.ts for each product's label dose.
+  { key: 'vitaminB12', label: 'Vitamin B12', target: 2.4, unit: 'mcg', kind: 'floor', color: '#3D7AB8',
+    why: 'RDA 2.4 mcg. The multivitamin supplies 300 mcg — far above the floor, which is normal for B12 (no toxicity ceiling).',
+    fromStack: true },
+  { key: 'folate', label: 'Folate', target: 400, unit: 'mcg', kind: 'floor', color: '#3E9E7A',
+    why: 'RDA 400 mcg DFE — red-cell turnover under training load. Multivitamin supplies 680 mcg.',
+    fromStack: true },
+  { key: 'epa', label: 'EPA', target: 500, unit: 'mg', kind: 'floor', color: '#8A6FA8',
+    why: 'Anti-inflammatory omega-3; ~500 mg/day is the practical floor alongside DHA on a deficit.',
+    fromStack: true },
+  { key: 'dha', label: 'DHA', target: 250, unit: 'mg', kind: 'floor', color: '#8A6FA8',
+    why: 'EFSA adequate intake 250 mg/day — neural + membrane support.',
+    fromStack: true },
+  { key: 'creatine', label: 'Creatine', target: 5000, unit: 'mg', kind: 'floor', color: '#E0703C',
+    why: '5 g/day maintenance — the single best-evidenced strength and lean-mass supplement, and it matters MORE in a deficit.',
+    fromStack: true },
+  { key: 'citrulline', label: 'L-Citrulline', target: 3000, unit: 'mg', kind: 'floor', color: '#3E9E7A',
+    why: 'Protocol dose, training days only. 3 g pre-workout for blood flow and rep endurance.',
+    fromStack: true },
+  { key: 'caffeine', label: 'Caffeine', target: 400, unit: 'mg', kind: 'ceiling', color: '#C4514E',
+    why: 'Protocol dose 200 mg pre-workout. Ceiling 400 mg/day — beyond that it starts costing the sleep this whole system is built on.',
+    fromStack: true },
+  { key: 'theanine', label: 'L-Theanine', target: 200, unit: 'mg', kind: 'floor', color: '#8A6FA8',
+    why: 'Protocol dose 200 mg before bed — sleep-onset latency without sedation.',
+    fromStack: true },
+  { key: 'glycine', label: 'Glycine', target: 3000, unit: 'mg', kind: 'floor', color: '#C9CDD6',
+    why: '3 g before bed lowers core temperature and improves sleep quality; the stack supplies 5 g.',
+    fromStack: true },
 ]
 
 /**

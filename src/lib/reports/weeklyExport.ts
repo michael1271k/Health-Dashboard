@@ -1,13 +1,16 @@
 /**
- * "Export Week" — a dense, structured markdown payload of one training week,
- * built to be pasted straight into an AI as a coaching prompt.
+ * "Export Week" — a dense, DRY-DATA payload of one training week (Sunday →
+ * Saturday). No prompt, no coaching instructions, no interpretation: just the
+ * numbers the app measured, laid out so a model (or a human) can read them.
  *
  * Design rules:
  *  · Deterministic and pure — same input, same string (unit-testable, no clock).
- *  · Explicitly marks MISSING data as "—" rather than omitting the row, so the
- *    model can't silently read a gap as a zero.
+ *  · Explicitly marks MISSING data as "—" rather than omitting the row, so a gap
+ *    can't be read as a zero. A day with no weigh-in shows a blank weight.
  *  · Every number is one the app actually measured. Nothing is derived, averaged
- *    into existence, or estimated to fill a column.
+ *    into existence, or estimated to fill a column. NO estimated 1RM — a derived
+ *    figure has no place in a raw-data export.
+ *  · Unilateral work is split per side (L/R weight · reps · failure).
  *  · Real markdown headings and tables so it renders wherever it's pasted.
  */
 
@@ -35,12 +38,20 @@ export interface ExportDay {
   batteryPct: number | null
 }
 
+/** One working set, in order. `side` is null on bilateral sets. */
+export interface ExportSet {
+  weightKg: number
+  reps: number
+  side: 'L' | 'R' | null
+  failure: boolean
+  /** Unilateral pairs share a pairId so L and R collapse into one numbered set. */
+  pairId: string | null
+}
+
 export interface ExportExercise {
   name: string
-  /** Every working set, in order. */
-  sets: Array<{ weightKg: number; reps: number }>
+  sets: ExportSet[]
   topKg: number | null
-  bestE1rm: number | null
   /** Programmed rep window, when the exercise is in the active program. */
   repWindow: string | null
 }
@@ -50,11 +61,14 @@ export interface ExportSession {
   label: string                // "Upper A"
   volumeKg: number | null
   setCount: number | null
+  /** Working sets taken to failure. */
+  failureSets: number | null
   durationMin: number | null
   avgBpm: number | null
+  caloriesBurned: number | null
   exercises: ExportExercise[]
-  /** Named PRs set in this session. */
-  prs: Array<{ name: string; e1rmKg: number | null; weightKg: number; reps: number }>
+  /** Named PRs set in this session (no est-1RM — raw lift only). */
+  prs: Array<{ name: string; weightKg: number; reps: number }>
 }
 
 export interface ExportDoms {
@@ -129,6 +143,51 @@ export function weekTotals(days: ExportDay[], sessions: ExportSession[]): WeekTo
   }
 }
 
+/**
+ * Render one exercise's working sets.
+ *
+ * Bilateral sets group by load — "60kg × 12,11,10" — the pattern that shows
+ * whether a load is being outgrown. A set taken to failure is marked with an F.
+ *
+ * Unilateral work (sets carrying a `side`/`pairId`) is split L vs R per numbered
+ * set — "S1 L 20kg×12 · R 20kg×11(F)" — because the two sides genuinely differ
+ * and collapsing them hides exactly the asymmetry the export exists to surface.
+ */
+export function setDetail(sets: ExportSet[]): string {
+  if (!sets.length) return '—'
+  const sided = sets.some((s) => s.side != null)
+
+  if (!sided) {
+    // Group consecutive same-load sets; append (F) to a group with any failure.
+    const groups: Array<{ w: number; reps: number[]; fail: boolean }> = []
+    for (const s of sets) {
+      const last = groups[groups.length - 1]
+      if (last && last.w === s.weightKg) { last.reps.push(s.reps); last.fail ||= s.failure }
+      else groups.push({ w: s.weightKg, reps: [s.reps], fail: s.failure })
+    }
+    return groups.map((g) => `${g.w}kg × ${g.reps.join(',')}${g.fail ? ' (F)' : ''}`).join(' · ')
+  }
+
+  // Unilateral: pair L/R by pairId, preserving first-seen order.
+  const order: string[] = []
+  const pairs = new Map<string, { L?: ExportSet; R?: ExportSet }>()
+  let solo = 0
+  for (const s of sets) {
+    const key = s.pairId ?? `solo-${solo++}`
+    if (!pairs.has(key)) { pairs.set(key, {}); order.push(key) }
+    const p = pairs.get(key)!
+    if (s.side === 'R') p.R = s
+    else p.L = s   // 'L' or an unsided straggler both read as the left column
+  }
+  const side = (s: ExportSet | undefined, tag: 'L' | 'R') =>
+    s ? `${tag} ${s.weightKg}kg×${s.reps}${s.failure ? '(F)' : ''}` : null
+  return order.map((key, i) => {
+    const p = pairs.get(key)!
+    const cols = [side(p.L, 'L'), side(p.R, 'R')].filter(Boolean).join(' · ')
+    return `S${i + 1} ${cols}`
+  }).join(' · ')
+}
+
 /** "1850 → 1910 (+60)" — or "—" when either side is missing. */
 function delta(cur: number | null, prev: number | null, digits = 0): string {
   if (cur == null || prev == null) return cur == null ? '—' : n(cur, digits)
@@ -146,15 +205,7 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
 
   const L: string[] = []
 
-  // ── Instruction header ──
-  L.push('You are an elite physique coach analysing one training week for a lifter in a body-recomposition block.')
-  L.push('')
-  L.push('Rules:')
-  L.push('- Be strictly quantitative and cite the numbers below. Never invent data — `—` means genuinely missing, NOT zero.')
-  L.push('- Judge the weight trend against calorie intake and sleep before calling it fat loss or water.')
-  L.push('- Compare training volume to the per-muscle targets given, not to a generic standard.')
-  L.push('- End with exactly ONE highest-leverage change for next week, and say what it should move.')
-  L.push('')
+  // Pure data — no instruction/prompt header. Starts straight at the week.
   L.push(`# WEEK ${input.weekStart} → ${input.weekEnd}${input.weekLabel ? ` · ${input.weekLabel}` : ''}`)
   L.push('')
   L.push(`**Program:** ${input.programLabel}`)
@@ -209,23 +260,17 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
   if (!sessions.length) L.push('_None logged this week._')
   for (const s of sessions) {
     L.push(`### ${s.date} · ${s.label}`)
-    L.push(`${n(s.volumeKg)} kg volume · ${n(s.setCount)} sets · ${n(s.durationMin)} min`
+    // Volume · sets · failures · time · kcal burned · avg HR — all metadata.
+    L.push(`${n(s.volumeKg)} kg volume · ${n(s.setCount)} sets · ${n(s.failureSets)} to failure`
+      + ` · ${n(s.durationMin)} min · ${n(s.caloriesBurned)} kcal`
       + `${s.avgBpm != null ? ` · avg HR ${n(s.avgBpm)}` : ''}`)
     L.push('')
     for (const e of s.exercises) {
-      // Per-set detail — "65kg × 15,15,14,13" — not just the top set. The set
-      // pattern is what shows whether a load is actually being outgrown.
-      const byLoad = new Map<number, number[]>()
-      for (const st of e.sets) byLoad.set(st.weightKg, [...(byLoad.get(st.weightKg) ?? []), st.reps])
-      const detail = [...byLoad.entries()]
-        .map(([w, reps]) => `${w}kg × ${reps.join(',')}`)
-        .join(' · ')
-      L.push(`- **${e.name}**${e.repWindow ? ` _(target ${e.repWindow})_` : ''}: ${detail || '—'}`
-        + `${e.bestE1rm != null ? ` — e1RM ${n(e.bestE1rm, 1)} kg` : ''}`)
+      L.push(`- **${e.name}**${e.repWindow ? ` _(target ${e.repWindow})_` : ''}: ${setDetail(e.sets)}`)
     }
     if (s.prs.length) {
-      L.push(`- 🏆 PRs: ${s.prs.map((p) => `${p.name} ${p.weightKg}kg × ${p.reps}`
-        + `${p.e1rmKg != null ? ` (e1RM ${n(p.e1rmKg, 1)})` : ''}`).join(' · ')}`)
+      // No est-1RM — the raw lift only.
+      L.push(`- PRs: ${s.prs.map((p) => `${p.name} ${p.weightKg}kg × ${p.reps}`).join(' · ')}`)
     }
     L.push('')
   }

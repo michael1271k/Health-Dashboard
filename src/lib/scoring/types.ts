@@ -26,8 +26,24 @@ export interface ScoringInputs {
   isRestDay: boolean          // true for Wed/Sat in the PPL+ schedule
   newPRsToday: number         // count of new PRs in today's session
   sessionVolumeKg: number     // total volume of today's session
-  trailingAvgVolumeKg: number // avg volume over last 7 sessions (0 if <2 sessions)
+  /**
+   * Average volume of the last sessions OF THE SAME TYPE (0 when there is no
+   * baseline yet). Same-type matters: an arms day is ~3 t and a leg day ~12 t,
+   * so an all-sessions average graded every arms day as a shortfall and every
+   * leg day as a win, no matter how either was actually executed.
+   */
+  trailingAvgVolumeKg: number
   splitDay?: 'push' | 'pull' | 'legs' | 'upper' | 'lower'  // hardest split drives battery drain
+  /** Exercises the program prescribes for the day (0/undefined = unknown). */
+  plannedExercises?: number
+  /** Distinct exercises actually logged. */
+  loggedExercises?: number
+  /** Working sets the program prescribes for the day. */
+  plannedSets?: number
+  /** Working sets actually logged. */
+  sessionSets?: number
+  /** Sets logged as taken to failure. */
+  failureSets?: number
 
   // Recovery
   waterMl: number

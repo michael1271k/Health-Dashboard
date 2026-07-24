@@ -165,27 +165,73 @@ describe('computeWorkoutScore', () => {
     })).toBe(0)
   })
 
-  it('returns 60 base for logging a session below trailing avg', () => {
+  /**
+   * The headline change: a session that does everything the program asked can
+   * reach 100 WITHOUT a PR. Under the old model (60 + 20 volume + 10/PR) it was
+   * capped at 80, which is what the live 2026-07-24 Legs & Core B row scored.
+   */
+  it('scores a fully-executed session 100 with zero PRs', () => {
     expect(computeWorkoutScore({
-      workoutLogged: true, isRestDay: false, newPRsToday: 0, sessionVolumeKg: 3000, trailingAvgVolumeKg: 4000,
-    })).toBe(60)
-  })
-
-  it('returns 80 for session at or above trailing avg', () => {
-    expect(computeWorkoutScore({
-      workoutLogged: true, isRestDay: false, newPRsToday: 0, sessionVolumeKg: 5000, trailingAvgVolumeKg: 4000,
-    })).toBe(80)
-  })
-
-  it('returns 100 for volume ≥ avg + 2 PRs', () => {
-    expect(computeWorkoutScore({
-      workoutLogged: true, isRestDay: false, newPRsToday: 2, sessionVolumeKg: 5000, trailingAvgVolumeKg: 4000,
+      workoutLogged: true, isRestDay: false, newPRsToday: 0,
+      sessionVolumeKg: 8945, trailingAvgVolumeKg: 8500,
+      plannedExercises: 7, loggedExercises: 7,
+      plannedSets: 19, sessionSets: 19, failureSets: 3,
     })).toBe(100)
   })
 
-  it('caps PR bonus at 20 (2 PRs = max)', () => {
+  it('reproduces the real Legs & Core B session (first of its type, no baseline)', () => {
+    // No previous legs_b session → the volume component is DROPPED and the rest
+    // renormalized, rather than the session being marked down for a baseline
+    // that does not exist yet.
     expect(computeWorkoutScore({
-      workoutLogged: true, isRestDay: false, newPRsToday: 10, sessionVolumeKg: 5000, trailingAvgVolumeKg: 4000,
+      workoutLogged: true, isRestDay: false, newPRsToday: 0,
+      sessionVolumeKg: 8945, trailingAvgVolumeKg: 0,
+      plannedExercises: 7, loggedExercises: 7,
+      plannedSets: 19, sessionSets: 19, failureSets: 3,
+    })).toBe(100)
+  })
+
+  it('marks down a session that skipped prescribed work', () => {
+    const s = computeWorkoutScore({
+      workoutLogged: true, isRestDay: false, newPRsToday: 0,
+      sessionVolumeKg: 4000, trailingAvgVolumeKg: 8500,
+      plannedExercises: 7, loggedExercises: 3,
+      plannedSets: 19, sessionSets: 8, failureSets: 0,
+    })
+    expect(s).toBeGreaterThan(50)   // you still trained
+    expect(s).toBeLessThan(75)      // but it was half a session
+  })
+
+  it('grades volume on a band, not a cliff', () => {
+    const base = {
+      workoutLogged: true as const, isRestDay: false as const, newPRsToday: 0,
+      plannedExercises: 7, loggedExercises: 7, plannedSets: 19, sessionSets: 19, failureSets: 2,
+    }
+    const at = (v: number) => computeWorkoutScore({ ...base, sessionVolumeKg: v, trailingAvgVolumeKg: 10000 })!
+    // 95% of the baseline must not score the same as 60% of it.
+    expect(at(9500)).toBeGreaterThan(at(6000))
+    expect(at(10000)).toBe(100)
+    expect(at(9500)).toBeLessThan(100)
+  })
+
+  it('keeps PRs a bonus on top, capped at 10', () => {
+    const withoutPr = computeWorkoutScore({
+      workoutLogged: true, isRestDay: false, newPRsToday: 0,
+      sessionVolumeKg: 6000, trailingAvgVolumeKg: 10000,
+      plannedExercises: 7, loggedExercises: 7, plannedSets: 19, sessionSets: 19, failureSets: 2,
+    })!
+    const withPrs = computeWorkoutScore({
+      workoutLogged: true, isRestDay: false, newPRsToday: 5,
+      sessionVolumeKg: 6000, trailingAvgVolumeKg: 10000,
+      plannedExercises: 7, loggedExercises: 7, plannedSets: 19, sessionSets: 19, failureSets: 2,
+    })!
+    expect(withPrs - withoutPr).toBe(10)
+  })
+
+  it('still works with no plan data at all (legacy sessions)', () => {
+    expect(computeWorkoutScore({
+      workoutLogged: true, isRestDay: false, newPRsToday: 0,
+      sessionVolumeKg: 5000, trailingAvgVolumeKg: 4000,
     })).toBe(100)
   })
 })

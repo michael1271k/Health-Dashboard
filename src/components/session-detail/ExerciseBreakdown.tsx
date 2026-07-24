@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { Trophy, Dumbbell, TrendingUp, ChevronRight } from 'lucide-react'
 import type { DetailExercise, DetailSet } from '@/lib/hooks/useSessionDetail'
 import { useSessionIntel } from '@/lib/hooks/useSessionIntel'
@@ -8,8 +9,16 @@ import { useSessionTrends, LOAD_STEP_KG } from '@/lib/hooks/useSessionTrends'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 import { isTimedExercise } from '@/lib/exercises/timed'
 import { GROUP_COLOR } from '@/lib/hooks/useMuscleAnalytics'
-import { ExerciseHistorySheet } from '@/components/exercises/ExerciseHistorySheet'
 import { GOLD, OXIDE, EMERALD, SAPPHIRE, EMBER, PLATINUM, MUTED } from '@/lib/theme/palette'
+
+// recharts lives ONLY in this sheet, which opens on tap. Loading it statically
+// pulled the whole chart library into the Session Report's first-load bundle
+// (~330 kB) even though it renders nothing until you tap an exercise. Deferring
+// it keeps recharts out of the critical path of opening the report.
+const ExerciseHistorySheet = dynamic(
+  () => import('@/components/exercises/ExerciseHistorySheet').then((m) => m.ExerciseHistorySheet),
+  { ssr: false },
+)
 
 function SetTypeBadge({ type }: { type: string }) {
   if (type === 'warmup') return <span className="text-[8px] font-bold uppercase px-1 py-px rounded" style={{ color: EMERALD, background: `${EMERALD}1f` }}>WU</span>

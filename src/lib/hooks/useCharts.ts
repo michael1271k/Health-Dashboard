@@ -13,19 +13,58 @@ function daysAgo(n: number): string {
   return d.toLocaleDateString('en-CA')
 }
 
+export type BodyTrendRow = Pick<Tables<'body_composition'>, 'date' | 'weight_kg' | 'body_fat_pct' | 'muscle_mass_kg'>
+
+/**
+ * Merge the two places a body reading can live, newest-wins per FIELD per date.
+ *
+ * `body_composition` is the ledger the charts were built on, but its
+ * `weight_kg` is NOT NULL — a Daily Nexus entry of BMI or body-fat on a day with
+ * no weight cannot open a row there, so it only ever reaches `daily_logs`. The
+ * graph read the ledger alone and was therefore blind to exactly the entries the
+ * user had just made by hand. Unioning the two makes the chart show everything
+ * that was actually recorded, from whichever table holds it.
+ *
+ * Pure + exported so the precedence rule is testable without a DB.
+ */
+export function mergeBodyTrend(ledger: BodyTrendRow[], logs: BodyTrendRow[]): BodyTrendRow[] {
+  const byDate = new Map<string, BodyTrendRow>()
+  // daily_logs first so the ledger (the deliberate weigh-in record) overwrites it.
+  for (const r of [...logs, ...ledger]) {
+    const cur = byDate.get(r.date)
+    byDate.set(r.date, {
+      date: r.date,
+      weight_kg: r.weight_kg ?? cur?.weight_kg ?? null,
+      body_fat_pct: r.body_fat_pct ?? cur?.body_fat_pct ?? null,
+      muscle_mass_kg: r.muscle_mass_kg ?? cur?.muscle_mass_kg ?? null,
+    })
+  }
+  // Global rule: sub-50kg readings are scale artifacts — drop the row entirely.
+  return [...byDate.values()]
+    .filter((r) => validWeight(r.weight_kg) != null)
+    .sort((a, b) => a.date.localeCompare(b.date))
+}
+
 export function useWeightTrend(days = 90) {
   return useQuery({
     queryKey: ['body_composition', 'trend', days],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('body_composition')
-        .select('date, weight_kg, body_fat_pct, muscle_mass_kg')
-        .gte('date', daysAgo(days))
-        .order('date', { ascending: true })
-      if (error) throw error
-      // Global rule: sub-50kg readings are artifacts — drop the row entirely.
-      return ((data ?? []) as Pick<Tables<'body_composition'>, 'date' | 'weight_kg' | 'body_fat_pct' | 'muscle_mass_kg'>[])
-        .filter((r) => validWeight(r.weight_kg) != null)
+    queryFn: async (): Promise<BodyTrendRow[]> => {
+      const since = daysAgo(days)
+      const [bc, dl] = await Promise.all([
+        supabase.from('body_composition')
+          .select('date, weight_kg, body_fat_pct, muscle_mass_kg').gte('date', since),
+        // lean_mass_kg is the daily_logs spelling of muscle_mass_kg.
+        supabase.from('daily_logs')
+          .select('date, weight_kg, body_fat_pct, lean_mass_kg').gte('date', since),
+      ])
+      if (bc.error) throw bc.error
+      const logs = ((dl.data ?? []) as Array<{
+        date: string; weight_kg: number | null; body_fat_pct: number | null; lean_mass_kg: number | null
+      }>).map((r) => ({
+        date: r.date, weight_kg: r.weight_kg,
+        body_fat_pct: r.body_fat_pct, muscle_mass_kg: r.lean_mass_kg,
+      })) as BodyTrendRow[]
+      return mergeBodyTrend((bc.data ?? []) as BodyTrendRow[], logs)
     },
   })
 }

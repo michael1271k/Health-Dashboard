@@ -20,7 +20,7 @@ const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 export const WEEKLY_AI_TYPE = 'weekly_ai'
 
 interface RawSet {
-  id: string; pair_id: string | null; weight_kg: number; reps: number
+  id: string; pair_id: string | null; side: string | null; weight_kg: number; reps: number
   est_1rm_kg: number | null; set_type: string | null; is_pr: boolean | null
   session_id: string
   exercises: { name: string; muscle_groups: string[] | null }
@@ -28,7 +28,7 @@ interface RawSet {
 interface RawSession {
   id: string; started_at: string; split_day: string; day_key: string | null
   total_volume_kg: number | null; set_count: number | null
-  duration_min: number | null; avg_bpm: number | null
+  duration_min: number | null; avg_bpm: number | null; calories_burned: number | null
 }
 
 /** Pull every table a week's export needs, for an arbitrary [start, end] range. */
@@ -44,13 +44,13 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     supabase.from('nutrition_entries').select('date, calories, protein_g, carbs_g, fat_g')
       .eq('meal_type', 'daily').gte('date', weekStart).lte('date', weekEnd),
     supabase.from('workout_sessions')
-      .select('id, started_at, split_day, day_key, total_volume_kg, set_count, duration_min, avg_bpm')
+      .select('id, started_at, split_day, day_key, total_volume_kg, set_count, duration_min, avg_bpm, calories_burned')
       .gte('started_at', startInstant).lt('started_at', endInstant).order('started_at', { ascending: true }),
     // Sets are scoped by their PARENT SESSION's started_at, not their own
     // created_at — a session logged days later (back-dated) has created_at
     // outside the week and used to vanish from its own export.
     supabase.from('workout_sets')
-      .select('id, pair_id, weight_kg, reps, est_1rm_kg, set_type, is_pr, session_id, exercises!inner(name, muscle_groups), workout_sessions!inner(started_at)')
+      .select('id, pair_id, side, weight_kg, reps, est_1rm_kg, set_type, is_pr, session_id, exercises!inner(name, muscle_groups), workout_sessions!inner(started_at)')
       .gte('workout_sessions.started_at', startInstant).lt('workout_sessions.started_at', endInstant)
       .limit(3000),
     supabase.from('water_intake').select('date, amount_ml').gte('date', weekStart).lte('date', weekEnd),
@@ -121,27 +121,33 @@ function toSessions(d: RangeData): ExportSession[] {
     const byName = new Map<string, ExportExercise>()
     for (const r of mine) {
       const e = byName.get(r.exercises.name) ?? {
-        name: r.exercises.name, sets: [], topKg: null, bestE1rm: null,
+        name: r.exercises.name, sets: [], topKg: null,
         repWindow: (() => {
           const w = repWindowFor(r.exercises.name, s.day_key)
           return w ? `${w.floor}–${w.ceiling}` : null
         })(),
       }
-      e.sets.push({ weightKg: r.weight_kg, reps: r.reps })
+      e.sets.push({
+        weightKg: r.weight_kg, reps: r.reps,
+        side: r.side === 'L' || r.side === 'R' ? r.side : null,
+        failure: r.set_type === 'failure',
+        pairId: r.pair_id,
+      })
       e.topKg = Math.max(e.topKg ?? 0, r.weight_kg) || null
-      e.bestE1rm = Math.max(e.bestE1rm ?? 0, r.est_1rm_kg ?? 0) || null
       byName.set(r.exercises.name, e)
     }
+    // A unilateral pair (shared pair_id) is ONE set to failure, not two.
+    const failurePairs = new Set(mine.filter((r) => r.set_type === 'failure').map((r) => r.pair_id ?? r.id))
     return {
       date: s.started_at.slice(0, 10),
       label: (s.day_key && program.days.find((x) => x.key === s.day_key)?.label) ?? s.split_day,
       volumeKg: s.total_volume_kg, setCount: s.set_count,
-      durationMin: s.duration_min, avgBpm: s.avg_bpm,
+      failureSets: failurePairs.size,
+      durationMin: s.duration_min, avgBpm: s.avg_bpm, caloriesBurned: s.calories_burned,
       exercises: [...byName.values()],
-      // Named PRs, not a bare count — the model can't say "you PR'd" usefully
-      // without knowing which lift moved.
+      // Named PRs, not a bare count. No est-1RM — the raw lift only.
       prs: mine.filter((r) => r.is_pr).map((r) => ({
-        name: r.exercises.name, e1rmKg: r.est_1rm_kg, weightKg: r.weight_kg, reps: r.reps,
+        name: r.exercises.name, weightKg: r.weight_kg, reps: r.reps,
       })),
     }
   })

@@ -182,6 +182,29 @@ export function programDayFor(programId: string, weekday: number): ProgramDay | 
   return p.days.find((d) => d.weekday === weekday) ?? 'rest'
 }
 
+/** Exact program day by its stored `day_key` (server-safe; searches all programs). */
+export function programDayByKey(dayKey: string): ProgramDay | null {
+  for (const p of Object.values(PROGRAMS)) {
+    const d = p.days.find((x) => x.key === dayKey)
+    if (d) return d
+  }
+  return null
+}
+
+/**
+ * What the program actually PRESCRIBES for a day, after cut adjustments:
+ * `bulkOnly` lifts are dropped while cutting and `cutSetDelta` trims the total
+ * set count. The scorer grades a session's coverage against this, so it has to
+ * reflect the plan the athlete is really running, not the bulk template.
+ */
+export function prescribedFor(dayKey: string, program: 'cut' | 'bulk'): { exercises: number; sets: number } | null {
+  const d = programDayByKey(dayKey)
+  if (!d) return null
+  const list = program === 'cut' ? d.exercises.filter((e) => !e.bulkOnly) : d.exercises
+  const sets = list.reduce((n, e) => n + e.sets, 0) + (program === 'cut' ? (d.cutSetDelta ?? 0) : 0)
+  return { exercises: list.length, sets: Math.max(1, sets) }
+}
+
 /**
  * Era-aware training-day check (server-safe, date-only). The single source of
  * truth for "is today a lifting day" — drives the Train strip, supplement
