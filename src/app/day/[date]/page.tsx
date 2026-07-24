@@ -14,7 +14,7 @@ import { useDoubleTap } from '@/lib/utils/doubleTap'
 import { MacroOverrideSheet } from '@/components/nutrition/MacroOverrideSheet'
 import { phaseDisplay } from '@/lib/nutrition/phase'
 import { ERA_META, eraForDate, scheduleDayFor, PROGRAMS, DEFAULT_PROGRAM_ID, getActiveProgramId } from '@/lib/programs'
-import { displayWeight, validWeight, weightUnit, fmtVolume } from '@/lib/utils/units'
+import { displayWeight, weightUnit, fmtVolume } from '@/lib/utils/units'
 import { formatSleep, mlToL } from '@/lib/utils/format'
 import { logicalTodayISO } from '@/lib/utils/day'
 
@@ -269,12 +269,15 @@ export default function DailyNexusPage() {
           <h3 className="font-heading font-semibold text-fluid-sm text-text">Vitals &amp; Body</h3>
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 text-center">
             {[
-              { label: 'Weight', v: displayWeight(validWeight(log?.weight_kg)), u: unit, c: TEAL },
+              // Weight intentionally NOT here — it owns the Body/InBody card;
+              // duplicating it across both boxes was the redundancy.
               { label: 'Steps', v: log?.steps != null ? Math.round(log.steps).toLocaleString() : null, u: '', c: '#9AA6B8' },
               { label: 'Water', v: log?.water_ml != null ? mlToL(log.water_ml) : null, u: 'L', c: '#8AA0B8' },
               { label: 'Active', v: log?.active_energy != null ? Math.round(log.active_energy) : null, u: '', c: '#D5514E' },
               { label: 'Stand', v: log?.stand_hours != null ? `${log.stand_hours}` : null, u: 'h', c: '#4FB477' },
-              { label: 'VO₂', v: log?.vo2max ?? null, u: '', c: ICE },
+              // VO₂max removed — HealthKit never populated it (always 0).
+              { label: 'Resp', v: log?.respiratory_rate != null ? log.respiratory_rate.toFixed(1) : null, u: '/min', c: ICE },
+              { label: 'SpO₂', v: log?.blood_oxygen != null ? Math.round(log.blood_oxygen) : null, u: '%', c: '#4FB477' },
             ].map((s) => (
               <div key={s.label} className="rounded-lg bg-white/[0.02] border border-white/[0.05] px-1 py-1.5">
                 <span className="helix-num block text-fluid-xs font-bold text-text leading-tight">{s.v ?? '—'}{s.v != null && s.u ? s.u : ''}</span>

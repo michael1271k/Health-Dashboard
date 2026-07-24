@@ -71,7 +71,6 @@ export interface MicroSignal {
 export const MICRO_SIGNALS: MicroSignal[] = [
   { key: 'wrist_temp_delta', label: 'Wrist Temp Δ', unit: '°C', reference: '±0.3 °C is normal; a spike can flag illness/overreaching', color: '#D5514E' },
   { key: 'time_in_daylight_min', label: 'Daylight', unit: 'min', reference: 'Aim ≥ 30 min — circadian + vitamin-D synthesis', color: '#C9A227' },
-  { key: 'vo2max', label: 'VO₂ Max', unit: '', reference: 'Cardiorespiratory fitness trend', color: '#9AA6B8' },
   { key: 'hrv_ms', label: 'HRV', unit: 'ms', reference: 'Higher vs your baseline = better recovery', color: '#8AA0B8' },
   { key: 'blood_oxygen', label: 'Blood O₂', unit: '%', reference: '95–100 % typical at rest', color: '#4FB477' },
   { key: 'respiratory_rate', label: 'Resp Rate', unit: '/min', reference: '12–20 /min at rest', color: '#E2683A' },

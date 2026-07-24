@@ -44,7 +44,6 @@ const METRIC_MAP: Array<{ hk: string; key: string; reduce: Reduce; scale?: numbe
   { hk: 'HKQuantityTypeIdentifierRespiratoryRate', key: 'respiratory_rate', reduce: 'avg' },
   // OxygenSaturation is a 0–1 fraction → ×100 to store an actual percent.
   { hk: 'HKQuantityTypeIdentifierOxygenSaturation', key: 'blood_oxygen', reduce: 'latest', scale: 100 },
-  { hk: 'HKQuantityTypeIdentifierVO2Max', key: 'vo2max', reduce: 'latest' },
   { hk: 'HKQuantityTypeIdentifierBodyMass', key: 'weight', reduce: 'latest' },
   // ── Advanced signals (Micros "Advanced" grid) — these were authorized but
   // never actually QUERIED, so they always read 0. Now pulled every sync. ──
@@ -164,6 +163,26 @@ function localDayISO(d: Date): string {
   return `${y}-${m}-${day}`
 }
 
+/**
+ * Total minutes covered by a set of [startMs, endMs] intervals, counting any
+ * overlap ONCE. HealthKit returns sleep samples from every source (iPhone +
+ * Watch), which overlap; naive summation inflated the night. Apple's Health app
+ * dedupes the same way.
+ */
+export function mergedMinutes(intervals: Array<[number, number]>): number {
+  if (!intervals.length) return 0
+  const sorted = [...intervals].sort((a, b) => a[0] - b[0])
+  let total = 0
+  let [curStart, curEnd] = sorted[0]
+  for (let i = 1; i < sorted.length; i++) {
+    const [s, e] = sorted[i]
+    if (s <= curEnd) curEnd = Math.max(curEnd, e)   // overlapping/adjacent → extend
+    else { total += curEnd - curStart; curStart = s; curEnd = e }
+  }
+  total += curEnd - curStart
+  return total / 60000
+}
+
 export interface SleepStages {
   sleep_minutes: number
   deep_min: number
@@ -192,21 +211,30 @@ async function fetchSleep(dateISO: string): Promise<SleepStages | null> {
   } catch { return null }
   if (!samples?.length) return null
 
-  let deep = 0, rem = 0, core = 0, awake = 0
+  // Bucket each stage's raw intervals, then UNION them. iPhone and Watch both
+  // write sleep, so overlapping samples double-counted minutes — that's why the
+  // app read 9h11m where Apple (which dedupes by source priority) showed 9h15m.
+  const stages: Record<'deep' | 'rem' | 'core' | 'awake', Array<[number, number]>> =
+    { deep: [], rem: [], core: [], awake: [] }
   let bedStart: string | undefined, bedEnd: string | undefined
   for (const s of samples) {
-    const mins = (new Date(s.endDate).getTime() - new Date(s.startDate).getTime()) / 60000
-    if (mins <= 0) continue
+    const from = new Date(s.startDate).getTime()
+    const to = new Date(s.endDate).getTime()
+    if (!(to > from)) continue
     if (!bedStart || s.startDate < bedStart) bedStart = s.startDate
     if (!bedEnd || s.endDate > bedEnd) bedEnd = s.endDate
     switch (s.value) {
-      case 4: deep += mins; break
-      case 5: rem += mins; break
-      case 1: case 3: core += mins; break   // asleepUnspecified + asleepCore → core
-      case 2: awake += mins; break
-      default: break                          // 0 inBed → informs the bed window only
+      case 4: stages.deep.push([from, to]); break
+      case 5: stages.rem.push([from, to]); break
+      case 1: case 3: stages.core.push([from, to]); break  // asleepUnspecified + asleepCore
+      case 2: stages.awake.push([from, to]); break
+      default: break                                        // 0 inBed → bed window only
     }
   }
+  const deep = mergedMinutes(stages.deep)
+  const rem = mergedMinutes(stages.rem)
+  const core = mergedMinutes(stages.core)
+  const awake = mergedMinutes(stages.awake)
   const sleep_minutes = Math.round(deep + rem + core)
   if (sleep_minutes <= 0) return null
   return {

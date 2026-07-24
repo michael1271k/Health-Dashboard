@@ -18,6 +18,9 @@ function todayISO(): string {
 function nextDay(d: string): string {
   const x = new Date(`${d}T00:00:00Z`); x.setUTCDate(x.getUTCDate() + 1); return x.toISOString().slice(0, 10)
 }
+function prevDay(d: string): string {
+  const x = new Date(`${d}T00:00:00Z`); x.setUTCDate(x.getUTCDate() - 1); return x.toISOString().slice(0, 10)
+}
 
 /** Compute + upsert the daily_scores row for a single date. */
 async function computeForDate(supabase: DB, userId: string, date: string, hoursAwake: number, isToday = false, force = false): Promise<void> {
@@ -35,9 +38,16 @@ async function computeForDate(supabase: DB, userId: string, date: string, hoursA
   const end = nextDay(date)
   const [metricsRes, sleepRes, nutritionRes, waterRes, supplementsRes, goalsRes, sessionsRes] = await Promise.all([
     supabase.from('daily_metrics').select('*').eq('user_id', userId).eq('date', date).maybeSingle(),
+    // NIGHT WINDOW, not calendar day. `start_time` is BEDTIME — the PREVIOUS
+    // EVENING (e.g. 2026-07-22T20:45 for the night of the 23rd). Querying
+    // `start_time >= date 00:00` therefore matched NOTHING, so the scorer saw
+    // sleepHours = 0 on every single day. That one bug produced "Awaiting Sleep
+    // Data" despite a synced night, a 55% wake battery (sleepQuality → 0), and
+    // the July-15 score of 81 (the short-sleep gate never fired). Same window as
+    // useTodaySleep: previous noon → this noon, longest session wins.
     supabase.from('sleep_sessions').select('*').eq('user_id', userId)
-      .gte('start_time', `${date}T00:00:00Z`).lt('start_time', `${end}T00:00:00Z`)
-      .order('start_time', { ascending: false }).limit(1).maybeSingle(),
+      .gte('start_time', `${prevDay(date)}T12:00:00Z`).lt('start_time', `${date}T12:00:00Z`)
+      .order('duration_min', { ascending: false }).limit(1).maybeSingle(),
     supabase.from('nutrition_entries').select('*').eq('user_id', userId)
       .eq('date', date).eq('meal_type', 'daily').maybeSingle(),
     supabase.from('water_intake').select('amount_ml').eq('user_id', userId).eq('date', date),

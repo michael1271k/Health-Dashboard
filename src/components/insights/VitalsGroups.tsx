@@ -44,7 +44,6 @@ const GROUPS: Group[] = [
     title: 'Fitness Engine', icon: Flame, accent: '#E2683A',
     blurb: 'Slow-moving capacity — weekly workload and aerobic ceiling.',
     metrics: [
-      { key: 'vo2', label: 'VO₂max', color: '#E2683A', agg: 'avg', better: 'up', pick: (d) => pos(d.vo2max), fmt: (v) => v.toFixed(1), deltaFmt: (v) => v.toFixed(2) },
       { key: 'train', label: 'Training', color: '#9AA6B8', agg: 'sum', better: 'up', pick: (d) => d.exercise_minutes ?? d.training_minutes, fmt: (v) => `${Math.round(v)} min` },
       { key: 'energy', label: 'Active Energy', color: '#C9A227', agg: 'sum', better: 'up', pick: (d) => d.active_energy, fmt: (v) => `${Math.round(v).toLocaleString()} kcal` },
     ],
