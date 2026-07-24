@@ -1,6 +1,6 @@
 'use client'
 
-import { memo } from 'react'
+import { memo, useEffect, useState } from 'react'
 
 import type { Tables } from '@/lib/supabase/types'
 import { KineticNumber } from '@/components/fx/KineticNumber'
@@ -35,7 +35,11 @@ export const ReadinessOrb = memo(function ReadinessOrb({ score, isLoading }: { s
   const color = batteryColor(battery)
   const R = 84
   const CIRC = 2 * Math.PI * R
-  const awake = Math.round(hoursAwakeToday())
+  // Hours-awake is TIME-dependent, so computing it during render made the
+  // build-time prerendered HTML disagree with the hydrated client → React #418
+  // hydration mismatch. Resolve it client-side only, after mount.
+  const [awake, setAwake] = useState<number | null>(null)
+  useEffect(() => { setAwake(Math.round(hoursAwakeToday())) }, [])
 
   if (isLoading) {
     return <div className="mx-auto w-56 h-56 rounded-full bg-surface-2/60 animate-pulse" />
@@ -84,8 +88,8 @@ export const ReadinessOrb = memo(function ReadinessOrb({ score, isLoading }: { s
                 {battery == null ? 'no data yet' : 'battery'}
               </span>
               {battery != null && (
-                <span className="text-[10px] text-muted mt-1.5 leading-snug">
-                  {awake}h awake · drains with the day
+                <span className="text-[10px] text-muted mt-1.5 leading-snug min-h-[13px]">
+                  {awake != null ? `${awake}h awake · drains with the day` : 'drains with the day'}
                 </span>
               )}
             </>

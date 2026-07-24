@@ -66,7 +66,11 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
       persistOptions={{
         persister,
         maxAge: 24 * 60 * 60 * 1000,
-        buster: 'v17',
+        // v18: the sleep-window fix rewrote every daily_scores row. Devices
+        // holding the pre-fix persisted cache kept painting the OLD row
+        // (sleep_score null → "Awaiting Sleep Data", battery 52%) even though
+        // the DB was already correct. Busting discards those stale blobs.
+        buster: 'v18',
         dehydrateOptions: {
           shouldDehydrateQuery: (q) => defaultShouldDehydrateQuery(q) && isJsonSafe(q.state.data),
         },

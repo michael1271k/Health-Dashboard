@@ -202,8 +202,11 @@ export interface SleepStages {
  */
 async function fetchSleep(dateISO: string): Promise<SleepStages | null> {
   if (!Capacitor.isNativePlatform()) return null
-  const start = new Date(`${dateISO}T00:00:00`); start.setHours(start.getHours() - 6) // prev 18:00 local
-  const end = new Date(`${dateISO}T12:00:00`)
+  // WIDE night window: previous 15:00 → this 14:00 (local). The old 18:00→12:00
+  // window clipped early bedtimes and late wake-ups, which is where the missing
+  // minutes vs Apple's total came from.
+  const start = new Date(`${dateISO}T00:00:00`); start.setHours(start.getHours() - 9) // prev 15:00 local
+  const end = new Date(`${dateISO}T14:00:00`)
   let samples: HealthSample[]
   try {
     const res = await HealthKit.queryCategory({ sampleType: SLEEP_TYPE, startDate: start.toISOString(), endDate: end.toISOString() })
@@ -235,7 +238,13 @@ async function fetchSleep(dateISO: string): Promise<SleepStages | null> {
   const rem = mergedMinutes(stages.rem)
   const core = mergedMinutes(stages.core)
   const awake = mergedMinutes(stages.awake)
-  const sleep_minutes = Math.round(deep + rem + core)
+  // TOTAL = union of ALL asleep stages together, not the sum of separately-merged
+  // stages. When two sources label the same minute differently (one Core, one
+  // REM) a per-stage sum counts it twice; the combined union counts it once.
+  // NOTE: HealthKit exposes no precomputed "Time Asleep" scalar — Apple's Health
+  // app derives its number from these same samples, so this is the closest
+  // faithful reconstruction rather than a value we can read directly.
+  const sleep_minutes = Math.round(mergedMinutes([...stages.deep, ...stages.rem, ...stages.core]))
   if (sleep_minutes <= 0) return null
   return {
     sleep_minutes,
