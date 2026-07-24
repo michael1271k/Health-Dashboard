@@ -12,6 +12,9 @@ export interface DetailSet {
   isPr: boolean
   est1rmKg: number | null
   setType: string // 'normal' | 'warmup' | 'failure'
+  /** Unilateral: 'L'/'R' sub-sets sharing a pairId are ONE set. */
+  side: string | null
+  pairId: string | null
 }
 
 export interface DetailExercise {
@@ -56,6 +59,8 @@ type RawSet = {
   est_1rm_kg: number | null
   exercise_order: number | null
   set_type: string | null
+  side: string | null
+  pair_id: string | null
   exercises: { name: string; muscle_groups: string[] | null; is_compound: boolean }
 }
 
@@ -85,7 +90,7 @@ export function useSessionDetail(sessionId: string | null) {
 
       const { data: setsRaw } = await supabase
         .from('workout_sets')
-        .select('exercise_id, set_number, weight_kg, reps, rpe, is_pr, est_1rm_kg, exercise_order, set_type, exercises!inner(name, muscle_groups, is_compound)')
+        .select('exercise_id, set_number, weight_kg, reps, rpe, is_pr, est_1rm_kg, exercise_order, set_type, side, pair_id, exercises!inner(name, muscle_groups, is_compound)')
         .eq('session_id', sessionId as string)
         .order('exercise_order', { ascending: true })
         .order('set_number', { ascending: true })
@@ -121,6 +126,7 @@ export function useSessionDetail(sessionId: string | null) {
         ex.sets.push({
           setNumber: r.set_number, weightKg: r.weight_kg, reps: r.reps,
           rpe: r.rpe, isPr: r.is_pr, est1rmKg: r.est_1rm_kg, setType,
+          side: r.side ?? null, pairId: r.pair_id ?? null,
         })
         if (!isWarmup) {
           ex.workingSets += 1

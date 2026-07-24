@@ -50,8 +50,11 @@ export function SessionHero({ detail }: { detail: SessionDetail }) {
           <ArrowLeft className="w-4 h-4" />
         </button>
         <div className="min-w-0 flex-1">
-          <h1 className="font-heading text-fluid-lg font-bold text-text leading-tight truncate">
-            {label}{globalNum ? <span className="text-muted font-semibold"> · Session #{globalNum}</span> : null}
+          <span className="block text-[10px] font-bold uppercase tracking-[0.18em] text-muted">
+            Session Report{globalNum ? ` · #${String(globalNum).padStart(2, '0')}` : ''}
+          </span>
+          <h1 className="font-heading text-fluid-lg font-bold text-text leading-tight truncate mt-0.5">
+            {label}
           </h1>
           <div className="flex items-center gap-2 mt-1 flex-wrap">
             <span className="text-fluid-xs text-muted">{pretty}</span>
