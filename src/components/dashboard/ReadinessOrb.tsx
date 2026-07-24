@@ -6,6 +6,8 @@ import type { Tables } from '@/lib/supabase/types'
 import { KineticNumber } from '@/components/fx/KineticNumber'
 import { EcgPulse } from '@/components/fx/EcgPulse'
 import { hoursAwakeToday } from '@/lib/utils/day'
+import { programStreak } from '@/components/dashboard/BrandHeader'
+import { EMBER, GOLD, OXIDE, DIM, HAIRLINE } from '@/lib/theme/palette'
 
 /**
  * BatteryOrb — the dashboard's SINGLE master metric.
@@ -20,10 +22,10 @@ import { hoursAwakeToday } from '@/lib/utils/day'
 
 /** One scale, used by BOTH the ring and the number — they can never disagree. */
 function batteryColor(v: number | null): string {
-  if (v == null) return '#5A6472'
-  if (v >= 60) return '#E2683A'   // ember — plenty in the tank
-  if (v >= 30) return '#C9A227'   // brass — running down
-  return '#D5514E'                // oxide — depleted
+  if (v == null) return DIM
+  if (v >= 60) return EMBER    // plenty in the tank
+  if (v >= 30) return GOLD     // running down
+  return OXIDE                 // depleted
 }
 
 export const ReadinessOrb = memo(function ReadinessOrb({ score, isLoading }: { score: Tables<'daily_scores'> | null; isLoading?: boolean }) {
@@ -33,6 +35,7 @@ export const ReadinessOrb = memo(function ReadinessOrb({ score, isLoading }: { s
   // never a fabricated number built from nutrition/activity alone.
   const awaitingSleep = composite != null && (score?.sleep_score ?? null) == null
   const color = batteryColor(battery)
+  const streak = programStreak()
   const R = 84
   const CIRC = 2 * Math.PI * R
   // Hours-awake is TIME-dependent, so computing it during render made the
@@ -99,12 +102,23 @@ export const ReadinessOrb = memo(function ReadinessOrb({ score, isLoading }: { s
         <div className="absolute left-9 top-8 w-16 h-8 rounded-full rotate-[-24deg] pointer-events-none" style={{ background: 'rgba(255,255,255,0.11)', filter: 'blur(2px)' }} />
       </div>
 
+      {/* Day-streak — relocated here from the header, which had no room. */}
+      <span
+        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full shrink-0 -mt-1"
+        style={{ color: EMBER, background: `${EMBER}14`, border: `1px solid ${EMBER}3d` }}
+        aria-label={`Day streak: ${streak} days`}
+      >
+        <span aria-hidden="true" className="text-fluid-sm leading-none">🔥</span>
+        <span className="helix-num text-fluid-sm font-extrabold leading-none">{streak}</span>
+        <span className="text-[10px] font-bold uppercase tracking-wide leading-none">Day Streak</span>
+      </span>
+
       <div className="w-52"><EcgPulse level={battery} color={color} /></div>
 
       {/* Daily Score demoted to a secondary chip — one hero metric, no rivalry. */}
       {composite != null && !awaitingSleep && (
         <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 border text-[11px]"
-          style={{ borderColor: '#23262B', background: 'rgba(255,255,255,0.03)' }}>
+          style={{ borderColor: HAIRLINE, background: 'rgba(255,255,255,0.03)' }}>
           <span className="text-muted uppercase tracking-wide">Daily Score</span>
           <span className="helix-num font-bold text-text">{composite}</span>
         </span>

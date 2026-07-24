@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { eraForDate } from '@/lib/programs'
+import { GROUP } from '@/lib/theme/palette'
 
 /** Canonicalize Hevy muscle tags into 6 display groups (v5.1 aliases included). */
 export const MUSCLE_MAP: Record<string, string> = {
@@ -26,11 +27,7 @@ export const V51_EXERCISE_ALIASES: Record<string, string[]> = {
   'Cross-Body Cable Extension': ['triceps'],
 }
 export const MUSCLE_GROUPS = ['Chest', 'Back', 'Shoulders', 'Arms', 'Legs', 'Core'] as const
-export const GROUP_COLOR: Record<string, string> = {
-  // Six distinguishable Obsidian & Ember tones (warm → cool), none neon.
-  Chest: '#E2683A', Back: '#6E8CA0', Shoulders: '#C9A227',
-  Arms: '#9AA6B8', Legs: '#B0757A', Core: '#5E9E8F',
-}
+export const GROUP_COLOR: Record<string, string> = GROUP
 
 export interface MuscleStat { group: string; sets: number; volume: number; daysSince: number | null }
 export interface MuscleAnalytics {

@@ -1,3 +1,4 @@
+import { MUSCLE } from '@/lib/theme/palette'
 /**
  * Weekly volume landmarks — GRANULAR, per fine muscle, mapped to the ACTIVE
  * PROGRAM (Helix Cut vs Helix Bulk). Renaissance-Periodisation-style set targets.
@@ -34,22 +35,7 @@ export const PROGRAM_TARGETS: Record<Program, Record<LandmarkMuscle, number>> = 
   },
 }
 
-/** 13 distinguishable Obsidian & Ember tones — a warm→cool ramp, none neon. */
-export const MUSCLE_COLOR: Record<LandmarkMuscle, string> = {
-  Chest: '#E2683A',        // ember
-  Back: '#6E8CA0',         // slate blue
-  'Side delts': '#C9A227', // brass
-  'Rear delts': '#A08A6B', // taupe
-  Biceps: '#B0757A',       // dusty rose
-  Triceps: '#C9752F',      // copper
-  Forearms: '#8C7BA0',     // muted violet-grey
-  Quads: '#B84F28',        // banked ember
-  Hamstrings: '#5E9E8F',   // teal-grey
-  Glutes: '#8A9A5B',       // olive
-  Adductors: '#7F8B9C',    // cool slate
-  Calves: '#4FB477',       // sage
-  'Abs/core': '#9AA6B8',   // steel
-}
+export const MUSCLE_COLOR: Record<LandmarkMuscle, string> = MUSCLE
 
 /**
  * Fold a raw muscle token (from `exercises.muscle_groups`, seeded by muscleMap)

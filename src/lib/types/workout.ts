@@ -1,3 +1,4 @@
+import { SPLIT, STEEL } from '@/lib/theme/palette'
 import type { Tables } from '@/lib/supabase/types'
 
 export type SplitDay = 'push' | 'pull' | 'legs' | 'upper' | 'lower'
@@ -49,33 +50,33 @@ export const PPL_SPLITS: Record<SplitDay, { label: string; labelHe: string; colo
   push: {
     label: 'Push',
     labelHe: 'דחיפה',
-    color: '#E2683A',   // ember
+    color: SPLIT.push,
   },
   pull: {
     label: 'Pull',
     labelHe: 'משיכה',
-    color: '#6E8CA0',   // slate blue
+    color: SPLIT.pull,
   },
   legs: {
     label: 'Legs',
     labelHe: 'רגליים',
-    color: '#B0757A',   // dusty rose
+    color: SPLIT.legs,
   },
   upper: {
     label: 'Upper',
     labelHe: 'פלג גוף עליון',
-    color: '#C9A227',   // brass
+    color: SPLIT.upper,
   },
   lower: {
     label: 'Lower',     // legacy — maps to 'legs' in new sessions
     labelHe: 'פלג גוף תחתון',
-    color: '#5E9E8F',   // teal-grey
+    color: SPLIT.lower,
   },
 }
 
 /** Canonical split accent for any split_day string (falls back to primary blue). */
 export function splitColor(split: string | null | undefined): string {
-  return (split && PPL_SPLITS[split as SplitDay]?.color) || '#9AA6B8'
+  return (split && PPL_SPLITS[split as SplitDay]?.color) || STEEL
 }
 
 // ─── Nutrition modes / presets ───────────────────────────────────────────────

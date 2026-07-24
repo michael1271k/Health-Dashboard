@@ -1,14 +1,9 @@
 /**
- * The global macro color system — ONE source of truth used by every ring, bar,
- * chart, tile and tag. Obsidian & Ember: molten ember leads (calories are the
- * hero), then brass / slate / olive — four clearly distinguishable tones that
- * stay muted and premium. No neon.
+ * Macro colours — re-exported from the single palette source of truth.
+ * Never hardcode a macro hex; import MACRO_COLORS (or `MACRO` from the palette).
  */
-export const MACRO_COLORS = {
-  calories: '#E2683A', // molten ember — the hero ring
-  protein:  '#C9A227', // brass — the muscle macro
-  carbs:    '#6E8CA0', // slate blue — glycogen
-  fat:      '#8A9A5B', // olive — fats
-} as const
+import { MACRO } from '@/lib/theme/palette'
+
+export const MACRO_COLORS = MACRO
 
 export type MacroKey = keyof typeof MACRO_COLORS

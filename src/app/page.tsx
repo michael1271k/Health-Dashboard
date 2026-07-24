@@ -3,11 +3,13 @@
 import { useMemo, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
-import { Moon, Flame, Dumbbell, Scale, Footprints, Pill, Plus } from 'lucide-react'
+import { Moon, Flame, Dumbbell, Scale, Footprints, Pill } from 'lucide-react'
 import { LiquidModal } from '@/components/ui/LiquidModal'
 import { ReadinessOrb } from '@/components/dashboard/ReadinessOrb'
 import { BioStrip, type BioStripProps } from '@/components/dashboard/BioStrip'
 import { ScoreCard } from '@/components/dashboard/ScoreCard'
+import { MacroRings } from '@/components/nutrition/MacroRings'
+import { TrainingCard } from '@/components/dashboard/TrainingCard'
 import { StatTile } from '@/components/dashboard/StatTile'
 import { SupplementChecklist } from '@/components/dashboard/SupplementChecklist'
 import { InsightCoach } from '@/components/dashboard/InsightCoach'
@@ -20,6 +22,7 @@ import { formatSleep, mlToL } from '@/lib/utils/format'
 import { displayWeight, weightUnit, validWeight, fmtVolume } from '@/lib/utils/units'
 import { phaseDisplay } from '@/lib/nutrition/phase'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
+import { EMBER, SAPPHIRE, EMERALD, GOLD, AMETHYST, PLATINUM, STEEL, OXIDE, MUTED } from '@/lib/theme/palette'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { scheduleDayFor, eraForDate, isTrainingDay, type ScheduleDay } from '@/lib/programs'
 import { useSupplements } from '@/lib/hooks/useSupplements'
@@ -43,17 +46,16 @@ const TrendStrip = dynamic(
   { ssr: false, loading: () => <div className="helix-card min-h-[280px] animate-pulse" /> },
 )
 
-// Bioluminescence domain accents
-const VIOLET = '#B84F28' // Sleep / recovery
-const CYAN = '#9AA6B8'   // data / drivers
-const TEAL = '#E2683A'   // Body
-const AQUA = '#8AA0B8'   // HRV / data
-const GOLD = '#C9A227'   // Stack
-// Task-6 domain colours
-const TRAIN_GREEN = '#4FB477' // Training
-const WATER_BLUE = '#8AA0B8'  // Water
-const ENERGY_RED = '#D5514E'  // Active Energy
-const STEPS_INDIGO = '#9AA6B8' // Steps (chosen — distinct from water-blue)
+// Domain accents — all from the single palette source of truth.
+const VIOLET = AMETHYST        // Sleep / recovery
+const CYAN = STEEL             // data / drivers
+const TEAL = EMBER             // Body
+const AQUA = SAPPHIRE          // HRV / data
+const GOLD_ACCENT = GOLD       // Stack
+const TRAIN_GREEN = EMERALD    // Training
+const WATER_BLUE = SAPPHIRE    // Water
+const ENERGY_RED = OXIDE       // Active Energy
+const STEPS_INDIGO = PLATINUM  // Steps
 
 const n0 = (v: number | null | undefined) => (v == null ? null : Math.round(v))
 const n1 = (v: number | null | undefined) => (v == null ? null : Math.round(v * 10) / 10)
@@ -66,7 +68,7 @@ export default function DashboardPage() {
   const { data: score, isLoading: scoreLoading } = useTodayScore()
   const { data: log, isLoading: logLoading } = useTodayDailyLog()
   const { data: metrics } = useTodayMetrics()
-  const { data: nutrition, isLoading: nutritionLoading } = useTodayNutrition()
+  const { data: nutrition } = useTodayNutrition()
   const { data: goals } = useUserGoals()
   const { data: sessions } = useRecentSessions(3)
   const { data: taken } = useSupplements()
@@ -121,8 +123,8 @@ export default function DashboardPage() {
       kg: latestKg,
       delta,
       // Green when the scale dropped, red when it rose (recomp direction).
-      deltaColor: delta < -0.005 ? '#4FB477' : delta > 0.005 ? '#D5514E' : null,
-      recencyColor: ageDays <= 0 ? '#4FB477' : ageDays <= 3 ? '#C9A227' : '#79808C',
+      deltaColor: delta < -0.005 ? EMERALD : delta > 0.005 ? OXIDE : null,
+      recencyColor: ageDays <= 0 ? EMERALD : ageDays <= 3 ? GOLD : MUTED,
       label: ageDays <= 0 ? 'Weighed today' : ageDays === 1 ? 'Weighed yesterday' : `Weighed ${ageDays}d ago`,
     }
   }, [bioSeries])
@@ -175,7 +177,7 @@ export default function DashboardPage() {
       series: (bioSeries ?? []).map((d) => d.steps),
     },
     {
-      key: 'stack', icon: Pill, label: 'Stack', accent: GOLD,
+      key: 'stack', icon: Pill, label: 'Stack', accent: GOLD_ACCENT,
       value: `${suppCount}/${suppTotal}`,
       status: suppCount >= suppTotal ? 'protocol complete ✓' : 'tap to check off',
     },
@@ -264,31 +266,30 @@ export default function DashboardPage() {
           </div>
         )}
         {open === 'fuel' && (
-          <div className="grid grid-cols-2 gap-2.5">
-            <StatTile label="Calories" value={calToday} unit="kcal" accent={MACRO_COLORS.calories} isLoading={nutritionLoading} />
-            <StatTile label="Protein" value={n0(nutrition?.protein_g)} unit="g" accent={MACRO_COLORS.protein} isLoading={nutritionLoading} />
-            <StatTile label="Carbs" value={n0(nutrition?.carbs_g)} unit="g" accent={MACRO_COLORS.carbs} isLoading={nutritionLoading} />
-            <StatTile label="Fats" value={n0(nutrition?.fat_g)} unit="g" accent={MACRO_COLORS.fat} isLoading={nutritionLoading} />
-          </div>
+          // The elegant hero-calories + 3-macro-ring UI (double-tap any ring to
+          // override the day) — replaces the four flat stat squares.
+          <MacroRings
+            today={nutrition ? {
+              calories: nutrition.calories, proteinG: nutrition.protein_g,
+              carbsG: nutrition.carbs_g, fatG: nutrition.fat_g,
+            } : null}
+            logs={fuelLogs ?? []}
+            goals={{
+              calorie: goals?.calorie_goal ?? 1955,
+              protein: goals?.protein_goal_g ?? null,
+              carbs: goals?.carbs_goal_g ?? null,
+              fat: goals?.fat_goal_g ?? null,
+            }}
+            date={logicalTodayISO()}
+          />
         )}
         {open === 'train' && (
-          <div className="space-y-2.5">
-            <div className="grid grid-cols-2 gap-2.5">
-              <StatTile label="Today" value={todayDay === 'rest' ? 'Zone-2 / Rest' : todayDay.label} sub={todayDay !== 'rest' ? todayDay.sub : undefined} accent={TRAIN_GREEN} />
-              <StatTile label="Last Volume" value={lastSession?.total_volume_kg != null ? fmtVolume(displayWeight(lastSession.total_volume_kg)) : n0(null)} unit={unit} />
-            </div>
-            {loggedToday ? (
-              <p className="text-fluid-xs text-center py-2 font-medium" style={{ color: TRAIN_GREEN }}>Session logged today ✓</p>
-            ) : todayDay !== 'rest' && todayDay.dayKey ? (
-              <button
-                onClick={() => { setOpen(null); router.push(`/session?template=${todayDay.dayKey}`) }}
-                className="btn-glass w-full justify-center">
-                <Plus className="w-4 h-4" /> Log {todayDay.label}
-              </button>
-            ) : (
-              <p className="text-fluid-xs text-muted text-center py-2">Rest day — Zone-2 recovery. No lifting scheduled.</p>
-            )}
-          </div>
+          <TrainingCard
+            today={todayDay}
+            lastSession={lastSession}
+            loggedToday={loggedToday}
+            onLog={(dayKey) => { setOpen(null); router.push(`/session?template=${dayKey}`) }}
+          />
         )}
         {open === 'body' && (
           <div className="space-y-2.5">

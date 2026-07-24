@@ -1,13 +1,14 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { STEEL } from '@/lib/theme/palette'
 import { useLastUpdated } from '@/lib/hooks/useDashboard'
 import { useMyProfile } from '@/lib/hooks/useMyProfile'
 import { HELIX_CUT_START } from '@/lib/programs'
 import { logicalTodayISO } from '@/lib/utils/day'
 
 /** Days elapsed since the program start (2026-07-15), inclusive — the streak. */
-function programStreak(): number {
+export function programStreak(): number {
   const start = Date.parse(`${HELIX_CUT_START}T00:00:00Z`)
   const today = Date.parse(`${logicalTodayISO()}T00:00:00Z`)
   return Math.max(1, Math.floor((today - start) / 86_400_000) + 1)
@@ -71,26 +72,17 @@ export function BrandHeader() {
         </p>
       )}
 
-      {/* Brand line — no icon; the wordmark is spaced out and left-aligned, with
-          the daily-streak counter pushed to the right. */}
-      <div className="flex items-center gap-x-3">
+      {/* Brand line — wordmark + a small program tag. The day-streak lives INSIDE
+          the master widget now; the top row had no room for a third chip. */}
+      <div className="flex items-baseline gap-x-2">
         <h1 className="text-fluid-3xl leading-none">
           <span className="helix-wordmark font-heading font-extrabold tracking-[0.22em] leading-none">HELIX</span>
         </h1>
         <span
-          className="px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider self-center"
-          style={{ color: '#9AA6B8', background: '#9AA6B81f', border: '1px solid #9AA6B855', boxShadow: '0 0 10px #9AA6B844' }}
+          className="px-1.5 py-px rounded text-[9px] font-bold uppercase tracking-wider shrink-0"
+          style={{ color: STEEL, background: `${STEEL}14`, border: `1px solid ${STEEL}33` }}
         >
-          HELIX-5
-        </span>
-        <span
-          className="ml-auto flex items-center gap-1.5 px-2.5 py-1 rounded-full self-center shrink-0"
-          style={{ color: '#E2683A', background: '#E2683A1a', border: '1px solid #E2683A55', boxShadow: '0 0 12px #E2683A33' }}
-          aria-label={`Daily streak: ${programStreak()} days`}
-        >
-          <span aria-hidden="true" className="text-fluid-sm leading-none">🔥</span>
-          <span className="helix-num text-fluid-sm font-extrabold leading-none">{programStreak()}</span>
-          <span className="text-[10px] font-bold uppercase tracking-wide leading-none">Day Streak</span>
+          H-5
         </span>
       </div>
     </header>

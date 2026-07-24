@@ -17,7 +17,7 @@ import {
 import { logicalTodayISO } from '@/lib/utils/day'
 import { displayWeight, weightUnit } from '@/lib/utils/units'
 import { useEraFilter } from '@/lib/era/eraFilter'
-import { Plus, TrendingUp, Moon, ArrowRight, Flag, ClipboardPaste, FileClock, ChevronDown } from 'lucide-react'
+import { Plus, TrendingUp, Moon, ArrowRight, Flag, FileClock, ChevronDown } from 'lucide-react'
 
 const StrengthTrends = dynamic(() => import('@/components/charts/StrengthTrends').then((m) => m.StrengthTrends), { ssr: false })
 const WeeklyVolumeCard = dynamic(() => import('@/components/command-center/WeeklyVolumeCard').then((m) => m.WeeklyVolumeCard), { ssr: false })
@@ -102,11 +102,6 @@ export default function WorkoutPage() {
                 style={{ background: todayDay.color, boxShadow: `0 0 18px ${todayDay.color}55` }}>
                 <Plus className="w-4 h-4" /> Log {todayDay.label}
               </button>
-              <button onClick={() => openDeck()}
-                className="btn-glass min-h-[40px] text-fluid-xs justify-center"
-                style={{ color: todayDay.color }}>
-                <ClipboardPaste className="w-3.5 h-3.5" /> Paste session
-              </button>
             </div>
           </div>
         ) : (
@@ -169,8 +164,8 @@ export default function WorkoutPage() {
         })}
       </div>
 
-      {/* Week plan — a compact accordion (today expanded, others tap to open) */}
-      <div className="space-y-2">
+      {/* Week plan — ultra-compact: one dense row per day inside a single card. */}
+      <div className="helix-card !p-1.5 divide-y divide-white/[0.05]">
         {program.days.map((day) => {
           const isToday = day.key === todayKey
           // Program week-plan defaults to MINIMIZED — every day collapsed until
@@ -179,21 +174,22 @@ export default function WorkoutPage() {
           const nonBulk = day.exercises.filter((e) => !e.bulkOnly)
           const totalSets = nonBulk.reduce((n, e) => n + e.sets, 0)
           return (
-            <div key={day.key} className="glass-card overflow-hidden"
-              style={{ borderColor: isToday ? day.color : `${day.color}33`, boxShadow: isToday ? `0 0 20px ${day.color}2e` : undefined }}>
+            <div key={day.key} className="overflow-hidden"
+              style={{ background: isToday ? `${day.color}0f` : undefined, borderRadius: 8 }}>
               <button
                 onClick={() => setOpenPlan(isOpen ? '' : day.key)}
                 aria-expanded={isOpen}
-                className="w-full flex items-center gap-2 px-3 py-2.5 text-left"
+                className="w-full flex items-center gap-2 px-2 py-1.5 text-left"
               >
-                <span className="split-label font-bold text-base truncate" style={{ color: day.color }}>{day.label}</span>
+                <span className="w-1 h-4 rounded-full shrink-0" style={{ background: day.color }} aria-hidden="true" />
+                <span className="split-label font-bold text-fluid-sm truncate" style={{ color: day.color }}>{day.label}</span>
                 <span className="text-[10px] text-muted uppercase shrink-0">{WD[day.weekday]}</span>
                 {isToday && <span className="text-[9px] px-1 rounded font-bold shrink-0" style={{ color: day.color, background: `${day.color}22` }}>TODAY</span>}
                 <span className="ml-auto text-[10px] text-muted shrink-0">{nonBulk.length} ex · {totalSets} sets</span>
-                <ChevronDown className={`w-4 h-4 text-muted shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
+                <ChevronDown className={`w-3.5 h-3.5 text-muted shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
               </button>
               {isOpen && (
-                <div className="px-3 pb-3 space-y-1">
+                <div className="px-2.5 pb-2 space-y-0.5">
                   {day.sub && <p className="text-[10px] text-muted mb-1">{day.sub}</p>}
                   {day.exercises.map((ex) => {
                     const id = exMap?.get(ex.name)

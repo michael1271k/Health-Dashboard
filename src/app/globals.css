@@ -10,21 +10,38 @@
      Disciplined, premium, serious: a near-black graphite base with ONE warm
      molten-ember signature accent and brushed-platinum data tones. Semantic
      green/red are reserved for deltas + alerts only. Glass aesthetic unchanged. */
+  /* Mirrors src/lib/theme/palette.ts — that file is the source of truth for JS;
+     these vars are for CSS-only surfaces. Keep the two in sync. */
   --color-bg: #0A0B0D;          /* obsidian */
   --color-surface: #121418;     /* graphite glass base */
   --color-surface-2: #1A1D23;   /* solid raised surfaces (sliders, inputs) */
-  --color-primary: #E2683A;     /* molten ember — THE accent */
-  --color-primary-dim: #B84F28; /* banked ember */
-  --color-energy: #C9752F;      /* burnished copper — battery accents */
-  --color-info: #9AA6B8;        /* brushed steel — data */
-  --color-ice: #8AA0B8;         /* cool steel — interactive/active accent */
-  --color-success: #4FB477;     /* muted sage — positive deltas ONLY */
-  --color-warn: #C9A227;        /* restrained brass — caution */
-  --color-danger: #D5514E;      /* oxide red — negative ONLY */
-  --color-gold: #C9A227;        /* brass — PRs */
+  --color-primary: #E0703C;     /* ember — THE signature accent */
+  --color-primary-dim: #B4522A; /* banked ember */
+  --color-energy: #C97A45;      /* copper — battery accents */
+  --color-sapphire: #3D7AB8;    /* deep sapphire */
+  --color-emerald: #3E9E7A;     /* muted emerald */
+  --color-amethyst: #8A6FA8;    /* muted amethyst */
+  --color-info: #8E9AAC;        /* steel — data */
+  --color-ice: #3D7AB8;         /* sapphire — interactive/active accent */
+  --color-success: #3E9E7A;     /* emerald — positive deltas ONLY */
+  --color-warn: #D4AF37;        /* antique gold — caution */
+  --color-danger: #C4514E;      /* oxide red — negative ONLY */
+  --color-gold: #D4AF37;        /* antique gold — PRs */
+  --color-platinum: #C9CDD6;
   --color-text: #ECEEF2;        /* titanium */
   --color-muted: #79808C;       /* steel grey */
   --color-border: #23262B;      /* graphite hairline */
+
+  /* Macro + split accents — never hardcode these in a component. */
+  --color-macro-calories: #E0703C;
+  --color-macro-protein:  #3E9E7A;
+  --color-macro-carbs:    #3D7AB8;
+  --color-macro-fat:      #D4AF37;
+  --color-split-push:  #E0703C;
+  --color-split-pull:  #3D7AB8;
+  --color-split-legs:  #8A6FA8;
+  --color-split-upper: #D4AF37;
+  --color-split-lower: #3E9E7A;
   /* Light mode (kept for completeness) */
   --color-light-bg: #F4F6FA;
   --color-light-surface: #FFFFFF;
@@ -69,19 +86,12 @@
     0% { opacity: 0; transform: translateY(8px); }
     100% { opacity: 1; transform: translateY(0); }
   }
-  /* Aurora blob drift — GPU-friendly transform/opacity only */
-  @keyframes auroraDrift1 {
-    0%, 100% { transform: translate3d(-8%, -6%, 0) scale(1); opacity: 0.55; }
-    50%      { transform: translate3d(10%, 8%, 0) scale(1.25); opacity: 0.8; }
-  }
-  @keyframes auroraDrift2 {
-    0%, 100% { transform: translate3d(6%, 10%, 0) scale(1.1); opacity: 0.45; }
-    50%      { transform: translate3d(-10%, -8%, 0) scale(1.3); opacity: 0.7; }
-  }
-  @keyframes auroraDrift3 {
-    0%, 100% { transform: translate3d(0%, 4%, 0) scale(0.95); opacity: 0.4; }
-    50%      { transform: translate3d(-6%, -10%, 0) scale(1.2); opacity: 0.65; }
-  }
+  /* Living mesh — opacity-only breathing on long, mutually out-of-phase cycles
+     so the wash never visibly repeats. One compositor layer, no blur/transform. */
+  @keyframes meshBreatheA { 0%,100% { opacity: 0.85; } 50% { opacity: 1; } }
+  @keyframes meshBreatheB { 0%,100% { opacity: 1; }    50% { opacity: 0.72; } }
+  @keyframes meshBreatheC { 0%,100% { opacity: 0.65; } 50% { opacity: 1; } }
+  @keyframes meshBreatheD { 0%,100% { opacity: 1; }    50% { opacity: 0.6; } }
 }
 
 /* Travel Mode — tropical accent repaint (Thailand). Toggled by ThemeProvider. */
@@ -446,6 +456,7 @@ html[data-theme='travel'] {
 }
 
 /* Pause every ambient animation while the tab is hidden (iOS battery + resume jank). */
+html[data-hidden='true'] .mesh-layer,
 html[data-hidden='true'] .ecg-sweep,
 html[data-hidden='true'] .orb-breathe,
 html[data-hidden='true'] .liquid-wave,
@@ -531,6 +542,7 @@ html[data-reduce-motion='true'] *::after {
   transition-duration: 0.001ms !important;
 }
 html[data-reduce-motion='true'] .grain-overlay { display: none; }
+html[data-reduce-motion='true'] .mesh-layer { animation: none !important; }
 
 /* Mobile blur budget — a 40px backdrop blur melts phone GPUs. Halve it.
    Also drop the axis-wireframe there: mask-image compositing is expensive on iOS. */
@@ -540,11 +552,10 @@ html[data-reduce-motion='true'] .grain-overlay { display: none; }
     -webkit-backdrop-filter: blur(18px) saturate(160%);
   }
   .axis-wireframe { display: none; }
-  .aurora-blob-3 { display: none; }
   /* Zero-latency: ambient loops off on phones — the aurora freezes
      into a static gradient wash, liquid/glint/bubble loops stop compositing.
      !important because the blob animations are inline styles. */
-  .aurora-blob-1, .aurora-blob-2 { animation: none !important; }
+  .mesh-layer { animation: none !important; }
   .liquid-wave { animation: none; }
   .battery-glint { animation: none; }
   .battery-bubble { display: none; }
