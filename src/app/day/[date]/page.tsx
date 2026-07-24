@@ -8,7 +8,7 @@ import { CompletenessArc } from '@/components/day/CompletenessArc'
 import { InBodyCard } from '@/components/day/InBodyCard'
 import { SleepDebtGauge } from '@/components/day/SleepDebtGauge'
 import { SwapDayControl } from '@/components/day/SwapDayControl'
-import { DomsTracker, MeasurementsCard } from '@/components/day/RecoveryTrackers'
+import { DomsTracker } from '@/components/day/RecoveryTrackers'
 import { useDayVault, dayCompleteness, type DayVaultData } from '@/lib/hooks/useDayVault'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { useDoubleTap } from '@/lib/utils/doubleTap'
@@ -308,7 +308,6 @@ export default function DailyNexusPage() {
       {/* Recovery inputs — soreness 24–48h post-session + tape measurements */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <DomsTracker date={date} />
-        <MeasurementsCard date={date} />
       </div>
 
       {/* ══ SECTION 2 · Session Debrief ══ (workout + progression, unified) */}

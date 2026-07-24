@@ -4,8 +4,17 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { logicalTodayISO } from '@/lib/utils/day'
 
-/** Muscles worth tracking soreness for (legs first — they drive the protocol). */
-export const DOMS_MUSCLES = ['Quads', 'Hamstrings', 'Calves', 'Glutes', 'Chest', 'Back', 'Shoulders', 'Arms'] as const
+/**
+ * DOMS tracking, scoped to the two muscles that actually steer the protocol.
+ *
+ * The eight-muscle grid was noise: upper-body soreness never changed a decision,
+ * and rating eight groups daily is a chore nobody sustains. Quads and hamstrings
+ * are the ones that gate whether the next leg day runs as programmed.
+ *
+ * Tape measurements (waist/arm/thigh) were removed entirely — see the migration
+ * that drops `body_measurements`.
+ */
+export const DOMS_MUSCLES = ['Quads', 'Hamstrings'] as const
 export type DomsMuscle = (typeof DOMS_MUSCLES)[number]
 
 export const DOMS_LEVELS = [
@@ -33,6 +42,11 @@ export function useDoms(date = logicalTodayISO()) {
   })
 }
 
+/**
+ * Rate (or re-rate) a muscle. Upserts on (user_id, date, muscle_group), so the
+ * rating stays editable all day — tapping a different level replaces it rather
+ * than stacking rows.
+ */
 export function useLogDoms(date = logicalTodayISO()) {
   const qc = useQueryClient()
   return useMutation({
@@ -57,48 +71,17 @@ export function useLogDoms(date = logicalTodayISO()) {
   })
 }
 
-export interface BodyMeasurement {
-  date: string
-  navelWaistCm: number | null
-  relaxedArmCm: number | null
-  thighCm: number | null
-}
-
-/**
- * Tape measurements — the APEX-5.1 answer to noisy BIA. Waist/arm/thigh move
- * slowly and honestly, so they beat scale body-fat% for judging recomposition.
- */
-export function useMeasurements(limit = 30) {
+/** DOMS across a date range — feeds the weekly AI export. */
+export function useDomsRange(from: string, to: string) {
   return useQuery({
-    queryKey: ['body_measurements', limit],
+    queryKey: ['doms_logs', 'range', from, to],
     staleTime: 60_000,
-    queryFn: async (): Promise<BodyMeasurement[]> => {
-      const { data, error } = await supabase.from('body_measurements')
-        .select('date, navel_waist_cm, relaxed_arm_cm, thigh_cm')
-        .order('date', { ascending: false }).limit(limit)
+    queryFn: async (): Promise<Array<{ date: string; muscle: string; severity: number }>> => {
+      const { data, error } = await supabase.from('doms_logs')
+        .select('date, muscle_group, severity').gte('date', from).lte('date', to)
       if (error) return []
-      return ((data ?? []) as Array<Record<string, string | number | null>>).map((r) => ({
-        date: r.date as string,
-        navelWaistCm: (r.navel_waist_cm as number) ?? null,
-        relaxedArmCm: (r.relaxed_arm_cm as number) ?? null,
-        thighCm: (r.thigh_cm as number) ?? null,
-      }))
+      return ((data ?? []) as Array<{ date: string; muscle_group: string; severity: number }>)
+        .map((r) => ({ date: r.date, muscle: r.muscle_group, severity: r.severity }))
     },
-  })
-}
-
-export function useSaveMeasurement() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: async (m: { date: string; navelWaistCm: number | null; relaxedArmCm: number | null; thighCm: number | null }) => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Not signed in')
-      const { error } = await supabase.from('body_measurements').upsert({
-        user_id: user.id, date: m.date,
-        navel_waist_cm: m.navelWaistCm, relaxed_arm_cm: m.relaxedArmCm, thigh_cm: m.thighCm,
-      } as never, { onConflict: 'user_id,date' })
-      if (error) throw new Error(error.message)
-    },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['body_measurements'] }) },
   })
 }

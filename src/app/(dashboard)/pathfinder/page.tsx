@@ -2,8 +2,7 @@
 
 import { Suspense, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useQueryClient } from '@tanstack/react-query'
-import { GitBranch, LineChart, HeartPulse, CalendarDays, ChevronLeft, ChevronRight, Loader2, Sparkles, FolderOpen, Scale } from 'lucide-react'
+import { GitBranch, LineChart, HeartPulse, CalendarDays, ChevronLeft, ChevronRight, FolderOpen, Scale } from 'lucide-react'
 import { useMonthActivity, useGymReports } from '@/lib/hooks/useWeekly'
 import { useReports } from '@/lib/hooks/useReports'
 import { useWeightTrend } from '@/lib/hooks/useCharts'
@@ -12,12 +11,10 @@ import { useEraFilter } from '@/lib/era/eraFilter'
 import { EraFilterPills } from '@/components/era/EraFilterPills'
 import { FileSystemBrowser } from '@/components/reports/FileSystemBrowser'
 import { PathfinderTimeline } from '@/components/pathfinder/PathfinderTimeline'
-import { WeeklyAiLoop } from '@/components/reports/WeeklyAiLoop'
 import { AnalyticsPanel } from '@/components/progression/AnalyticsPanel'
 import { VitalsGroups } from '@/components/insights/VitalsGroups'
 import { ScheduleShortcut } from '@/components/day/ScheduleShortcut'
 import { Sheet } from '@/components/ui/Sheet'
-import { authedFetch } from '@/lib/utils/authedFetch'
 import { displayWeight, weightUnit } from '@/lib/utils/units'
 
 type View = 'timeline' | 'analytics' | 'vitals'
@@ -48,16 +45,12 @@ function PathfinderInner() {
     initial === 'analytics' ? 'analytics' : initial === 'vitals' ? 'vitals' : 'timeline',
   )
 
-  const qc = useQueryClient()
   const router = useRouter()
   const { era } = useEraFilter()
   const today = new Date()
   const [month, setMonth] = useState({ y: today.getUTCFullYear(), m: today.getUTCMonth() })
   const [calOpen, setCalOpen] = useState(false)
   const [filesWeek, setFilesWeek] = useState<string | null>(null)
-  const [generating, setGenerating] = useState(false)
-  const [genWeek, setGenWeek] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
 
   const { data: reports } = useReports()
   const { data: gymReports } = useGymReports(60)
@@ -76,22 +69,6 @@ function PathfinderInner() {
   const openDay = (d: string) => {
     try { sessionStorage.setItem('helix_last_day', d) } catch { /* ignore */ }
     router.push(`/day/${d}`)
-  }
-
-  async function generate(weekStart: string) {
-    setGenWeek(weekStart); setGenerating(true); setError(null)
-    try {
-      const res = await authedFetch('/api/ai/weekly-report', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ weekStart }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error ?? `Error ${res.status}`)
-      await qc.invalidateQueries({ queryKey: ['reports'] })
-      setCalOpen(false)
-      setFilesWeek(weekStart)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unknown error')
-    } finally { setGenerating(false) }
   }
 
   return (
@@ -114,8 +91,9 @@ function PathfinderInner() {
 
       {view === 'timeline' ? (
         <>
-          {/* Weekly AI loop — Export Week → paste the summary back */}
-          <WeeklyAiLoop />
+          {/* The AI loop lives INSIDE each week capsule now — Export Week and
+              Paste AI Report act on the week you're looking at, and the timeline
+              is the first thing on screen rather than sitting below a card. */}
           {/* Era filter + jump-to-date + current-weight chip */}
           <div className="flex items-center gap-2 flex-wrap">
             <EraFilterPills label="" />
@@ -132,8 +110,6 @@ function PathfinderInner() {
           </div>
 
           <ScheduleShortcut />
-
-          {error && <div className="helix-card border-danger/40"><p className="text-danger text-fluid-sm">{error}</p></div>}
 
           <PathfinderTimeline />
 
@@ -160,12 +136,10 @@ function PathfinderInner() {
                     <div key={weekStart} className="space-y-1">
                       {phase && (
                         <div style={phaseBadgeStyle(phase.kind, filesWeek === weekStart, phase.era)} className="w-full flex items-center justify-between rounded-lg pl-2 pr-1 py-0.5">
+                          {/* The "Generate AI report" spark is gone — reports are
+                              pasted in from the week capsule, not generated here. */}
                           <button onClick={() => { setCalOpen(false); setFilesWeek(weekStart) }} className="flex items-center gap-1.5 text-[10px] font-bold leading-tight py-0.5" title={`Open ${phase.label} files`}>
                             <FolderOpen className="w-3 h-3" /> {phase.label}
-                          </button>
-                          <button onClick={() => generate(weekStart)} disabled={generating} aria-label={`Generate ${phase.label} report`}
-                            className="p-1 rounded hover:bg-white/10 opacity-80 hover:opacity-100">
-                            {generating && genWeek === weekStart ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
                           </button>
                         </div>
                       )}

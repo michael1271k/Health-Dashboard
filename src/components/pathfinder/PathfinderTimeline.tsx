@@ -1,26 +1,29 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { forwardRef, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { m, AnimatePresence } from 'framer-motion'
-import { Dumbbell, Trophy, Sparkles, Loader2, Trash2, ChevronRight, BatteryMedium, Moon, Camera } from 'lucide-react'
+import {
+  Dumbbell, Trophy, Sparkles, Loader2, ChevronRight, BatteryMedium, Moon,
+  ClipboardCopy, Check, BookOpen,
+} from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
-import { useSaveReport, useDeleteReport } from '@/lib/hooks/useReports'
 import { useTimelineWeeks, type TimelineWeekNode } from '@/lib/hooks/useTimelineWeeks'
 import { useContinuum, type ContinuumDay } from '@/lib/hooks/useContinuum'
+import { useWeeklyExport, useWeeklyAiSummaries, useSaveWeeklyAiSummary } from '@/lib/hooks/useWeeklyLoop'
 import { weekStartOf, isoAddDays } from '@/lib/utils/week'
 import { splitColor } from '@/lib/types/workout'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { displayWeight, weightUnit, useUnitSystem } from '@/lib/utils/units'
-import { eraForDate } from '@/lib/programs'
-import { authedFetch } from '@/lib/utils/authedFetch'
+import { eraForDate, isTrainingDay } from '@/lib/programs'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
 import { useEraFilter } from '@/lib/era/eraFilter'
 import { MarkdownView } from '@/components/reports/MarkdownView'
+import { Sheet } from '@/components/ui/Sheet'
 import { DayCard } from '@/components/timeline/ContinuumTimeline'
+import { GOLD, EMERALD, OXIDE, SAPPHIRE } from '@/lib/theme/palette'
 
-const GOLD = '#D4AF37'
 const label = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 
 function dominantSplit(days: TimelineWeekNode['days']): string | undefined {
@@ -29,6 +32,22 @@ function dominantSplit(days: TimelineWeekNode['days']): string | undefined {
   let best: string | undefined, max = 0
   for (const [k, v] of counts) if (v > max) { max = v; best = k }
   return best
+}
+
+/**
+ * A week is READY when every scheduled training day in it that has already
+ * passed carries a logged session — i.e. you did the work the program asked for.
+ * Ready weeks get the gold aura: the visual reward for a complete week, and the
+ * cue that it's worth exporting for review.
+ *
+ * `today` bounds it so the live week can be ready on its last training day
+ * rather than only after Saturday midnight.
+ */
+export function isWeekReady(weekStart: string, loggedDates: Set<string>, today: string): boolean {
+  const due = Array.from({ length: 7 }, (_, i) => isoAddDays(weekStart, i))
+    .filter((d) => d <= today && isTrainingDay(d))
+  if (!due.length) return false
+  return due.every((d) => loggedDates.has(d))
 }
 
 /**
@@ -67,23 +86,42 @@ export function PathfinderTimeline() {
   const isOpen = (ws: string) => overrides[ws] ?? (ws === liveWeekStart)
   const toggle = (ws: string) => setOverrides((o) => ({ ...o, [ws]: !isOpen(ws) }))
 
+  // Every date with a logged session — drives the ready-week aura.
+  const loggedDates = useMemo(
+    () => new Set((continuumDays ?? []).filter((d) => d.session).map((d) => d.date)),
+    [continuumDays],
+  )
+
+  // Land on the CURRENT week. It's expanded by default but sat below whatever
+  // was above it, so opening the tab showed the top of the list rather than
+  // where you actually are.
+  const liveRef = useRef<HTMLDivElement | null>(null)
+  const scrolled = useRef(false)
+  useEffect(() => {
+    if (scrolled.current || isPending || !liveRef.current) return
+    scrolled.current = true
+    liveRef.current.scrollIntoView({ block: 'start', behavior: 'smooth' })
+  }, [isPending, nodes.length])
+
   return (
     <div className="space-y-4">
       {isPending ? (
         <div className="helix-card h-40 animate-pulse" aria-hidden="true" />
       ) : nodes.length === 0 ? (
-        <p className="text-fluid-sm text-muted py-8 text-center">No weeks in this era yet — log a session, then snapshot the week.</p>
+        <p className="text-fluid-sm text-muted py-8 text-center">No weeks in this era yet — log a session to start the timeline.</p>
       ) : (
         <div className="relative pl-9">
           <span aria-hidden="true" className="absolute left-[14px] top-1 bottom-1 w-px"
-            style={{ background: 'linear-gradient(to bottom, rgba(34,211,238,0.55), rgba(255,255,255,0.10) 60%, transparent)' }} />
+            style={{ background: `linear-gradient(to bottom, ${SAPPHIRE}8c, rgba(255,255,255,0.10) 60%, transparent)` }} />
           <div className="space-y-3">
             {nodes.map((n) => (
               <WeekCapsule
                 key={n.weekStart}
+                ref={n.weekStart === liveWeekStart ? liveRef : undefined}
                 node={n}
                 days={daysByWeek.get(n.weekStart) ?? []}
                 unit={unit}
+                ready={isWeekReady(n.weekStart, loggedDates, logicalTodayISO())}
                 open={isOpen(n.weekStart)}
                 onToggle={() => toggle(n.weekStart)}
                 onOpenDay={(date) => router.push(`/day/${date}`)}
@@ -96,30 +134,42 @@ export function PathfinderTimeline() {
   )
 }
 
-function WeekCapsule({ node, days, unit, open, onToggle, onOpenDay }: {
+const WeekCapsule = forwardRef<HTMLDivElement, {
   node: TimelineWeekNode
   days: ContinuumDay[]
   unit: string
+  ready: boolean
   open: boolean
   onToggle: () => void
   onOpenDay: (date: string) => void
-}) {
+}>(function WeekCapsule({ node, days, unit, ready, open, onToggle, onOpenDay }, ref) {
   const color = splitColor(dominantSplit(node.days))
   const hasPRs = node.prs > 0
 
   return (
-    <m.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+    <m.div ref={ref} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-40px' }} transition={{ type: 'spring', stiffness: 380, damping: 34 }}
-      className="relative">
+      className="relative scroll-mt-24">
       <span aria-hidden="true" className="absolute -left-[30px] top-4 h-3.5 w-3.5 rounded-full border-2"
-        style={{ borderColor: hasPRs ? GOLD : color, background: `${color}40`, boxShadow: `0 0 14px ${(hasPRs ? GOLD : color)}88` }} />
+        style={{ borderColor: hasPRs || ready ? GOLD : color, background: `${color}40`, boxShadow: `0 0 14px ${(hasPRs || ready ? GOLD : color)}88` }} />
 
-      <button onClick={onToggle} onPointerUp={blurOnTap} className="helix-card w-full text-left px-4 py-3.5 active:opacity-90" style={{ borderColor: `${color}33` }}>
+      {/* READY WEEK: every scheduled training day done. A gold halo + a slow
+          breathe — opacity-only so it costs one compositor layer and respects
+          reduced motion via the global .aura-breathe guard. */}
+      <button onClick={onToggle} onPointerUp={blurOnTap}
+        className={`helix-card w-full text-left px-4 py-3.5 active:opacity-90 relative ${ready ? 'aura-breathe' : ''}`}
+        style={ready
+          ? { borderColor: `${GOLD}66`, boxShadow: `0 0 28px ${GOLD}33, inset 0 1px 0 ${GOLD}2e` }
+          : { borderColor: `${color}33` }}>
         <div className="flex items-center justify-between gap-2">
           <span className="font-heading font-semibold text-fluid-sm text-text truncate">
             {node.weekLabel} · {label(node.weekStart)}–{label(isoAddDays(node.weekStart, 6))}
           </span>
           <span className="flex items-center gap-2 shrink-0">
+            {ready && (
+              <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded"
+                style={{ color: GOLD, background: `${GOLD}1a`, border: `1px solid ${GOLD}55` }}>Complete</span>
+            )}
             {node.isLive && <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded" style={{ color, background: `${color}1a`, border: `1px solid ${color}44` }}>Live</span>}
             <ChevronRight className={`w-4 h-4 text-muted transition-transform ${open ? 'rotate-90' : ''}`} aria-hidden="true" />
           </span>
@@ -129,7 +179,7 @@ function WeekCapsule({ node, days, unit, open, onToggle, onOpenDay }: {
           {node.volumeKg > 0 && <span className="helix-num">{((displayWeight(node.volumeKg) ?? 0) / 1000).toFixed(1)}t</span>}
           {hasPRs && <span className="flex items-center gap-1" style={{ color: GOLD }}><Trophy className="w-3 h-3" />{node.prs}</span>}
           {node.weightDelta != null && (
-            <span className="helix-num" style={{ color: node.weightDelta <= 0 ? '#3E9E7A' : '#C4514E' }}>
+            <span className="helix-num" style={{ color: node.weightDelta <= 0 ? EMERALD : OXIDE }}>
               {node.weightDelta > 0 ? '+' : ''}{node.weightDelta}{weightUnit()}
             </span>
           )}
@@ -152,26 +202,33 @@ function WeekCapsule({ node, days, unit, open, onToggle, onOpenDay }: {
               {(node.weightDelta != null || node.fatDelta != null) && (
                 <div className="flex gap-5 text-fluid-xs">
                   {node.weightDelta != null && (
-                    <span className="text-muted">Weight Δ <span className="helix-num font-bold" style={{ color: node.weightDelta <= 0 ? '#3E9E7A' : '#C4514E' }}>{node.weightDelta > 0 ? '+' : ''}{node.weightDelta} {weightUnit()}</span></span>
+                    <span className="text-muted">Weight Δ <span className="helix-num font-bold" style={{ color: node.weightDelta <= 0 ? EMERALD : OXIDE }}>{node.weightDelta > 0 ? '+' : ''}{node.weightDelta} {weightUnit()}</span></span>
                   )}
                   {node.fatDelta != null && (
-                    <span className="text-muted">Body-fat Δ <span className="helix-num font-bold" style={{ color: node.fatDelta <= 0 ? '#3E9E7A' : '#C4514E' }}>{node.fatDelta > 0 ? '+' : ''}{node.fatDelta}%</span></span>
+                    <span className="text-muted">Body-fat Δ <span className="helix-num font-bold" style={{ color: node.fatDelta <= 0 ? EMERALD : OXIDE }}>{node.fatDelta > 0 ? '+' : ''}{node.fatDelta}%</span></span>
                   )}
                 </div>
               )}
 
               <WeekRecoveryStrip weekStart={node.weekStart} />
 
-              {node.contentMd
-                ? <div className="rounded-xl bg-black/20 border border-white/[0.06] p-4 max-h-[50vh] overflow-y-auto no-scrollbar"><MarkdownView md={node.contentMd} /></div>
-                : <WeekActions node={node} />}
+              {/* A legacy generated report (pre-paste-loop) still renders inline.
+                  The actions ALWAYS render now — WeekActions is the report
+                  surface, so hiding it behind contentMd made a week with an old
+                  report un-exportable. */}
+              {node.contentMd && (
+                <div className="rounded-xl bg-black/20 border border-white/[0.06] p-4 max-h-[50vh] overflow-y-auto no-scrollbar">
+                  <MarkdownView md={node.contentMd} />
+                </div>
+              )}
+              <WeekActions node={node} />
             </div>
           </m.div>
         )}
       </AnimatePresence>
     </m.div>
   )
-}
+})
 
 /** Compact weekly recovery: avg battery & sleep score across the week. */
 function WeekRecoveryStrip({ weekStart }: { weekStart: string }) {
@@ -207,54 +264,92 @@ function WeekRecoveryStrip({ weekStart }: { weekStart: string }) {
   )
 }
 
+/**
+ * The week's AI loop — exactly two actions, per the brief:
+ *   1. Export Week → a dense markdown payload on the clipboard.
+ *   2. Paste AI Report → stored against this week and reopened via "Open Report".
+ *
+ * The old "Generate AI report" (a server round-trip that spent tokens on its own
+ * prompt) and "Snapshot week" (a stats blob nobody read) are gone.
+ */
 function WeekActions({ node }: { node: TimelineWeekNode }) {
-  const save = useSaveReport()
-  const del = useDeleteReport()
-  const [aiBusy, setAiBusy] = useState(false)
-  const [err, setErr] = useState<string | null>(null)
+  const { data: payload, isLoading } = useWeeklyExport(node.weekStart)
+  const { data: summaries } = useWeeklyAiSummaries()
+  const save = useSaveWeeklyAiSummary()
+  const [copied, setCopied] = useState(false)
+  const [pasteOpen, setPasteOpen] = useState(false)
+  const [reportOpen, setReportOpen] = useState(false)
+  const [draft, setDraft] = useState('')
 
-  async function generateAI() {
-    setAiBusy(true); setErr(null)
+  const stored = summaries?.find((s) => s.weekStart === node.weekStart)
+
+  const copy = async () => {
+    if (!payload) return
     try {
-      const res = await authedFetch('/api/ai/weekly-report', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ weekStart: node.weekStart }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error ?? `Error ${res.status}`)
-    } catch (e) { setErr(e instanceof Error ? e.message : 'Failed') }
-    finally { setAiBusy(false) }
-  }
-
-  function snapshot() {
-    save.mutate({
-      kind: 'weekly', week_start: node.weekStart, week_number: node.weekNumber,
-      payload: {
-        volumeKg: node.volumeKg, sets: node.sets, prs: node.prs, calories: 0, durationMin: node.durationMin,
-        sessions: node.sessions, weightDelta: node.weightDelta, fatDelta: node.fatDelta, days: node.days,
-      },
-    })
+      await navigator.clipboard.writeText(payload)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2200)
+    } catch {
+      // Clipboard blocked (insecure context / permissions) — drop the payload
+      // into the textarea so it's never unreachable.
+      setDraft(payload)
+      setPasteOpen(true)
+    }
   }
 
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap gap-2">
-        <button onClick={generateAI} disabled={aiBusy} className="btn-primary min-h-[40px] text-fluid-xs">
-          {aiBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-          {aiBusy ? 'Generating…' : 'Generate AI report'}
+        <button onClick={copy} disabled={isLoading || !payload}
+          className="btn-primary min-h-[40px] text-fluid-xs disabled:opacity-50"
+          style={copied ? { background: EMERALD } : undefined}>
+          {isLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Building…</>
+            : copied ? <><Check className="w-4 h-4" /> Copied</>
+            : <><ClipboardCopy className="w-4 h-4" /> Export week</>}
         </button>
-        {!node.reportId && (
-          <button onClick={snapshot} disabled={save.isPending} className="btn-glass min-h-[40px] text-fluid-xs">
-            {save.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />} Snapshot week
+
+        {stored ? (
+          <button onClick={() => setReportOpen(true)} className="btn-glass min-h-[40px] text-fluid-xs"
+            style={{ borderColor: `${GOLD}55`, color: GOLD }}>
+            <BookOpen className="w-4 h-4" /> Open report
           </button>
-        )}
-        {node.reportId && (
-          <button onClick={() => del.mutate(node.reportId!)} aria-label="Delete report"
-            className="min-h-[40px] min-w-[40px] rounded-lg flex items-center justify-center text-muted hover:text-danger">
-            <Trash2 className="w-4 h-4" />
-          </button>
-        )}
+        ) : null}
+
+        <button onClick={() => { setDraft(stored?.content ?? ''); setPasteOpen(true) }}
+          className="btn-glass min-h-[40px] text-fluid-xs">
+          <Sparkles className="w-4 h-4" /> {stored ? 'Replace report' : 'Paste AI report'}
+        </button>
       </div>
-      {err && <p className="text-fluid-xs text-danger">{err}</p>}
+
+      {pasteOpen && (
+        <div className="space-y-2">
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            rows={8}
+            placeholder="Paste the AI's weekly summary here…"
+            className="w-full rounded-xl border px-3 py-2.5 text-fluid-xs text-text bg-surface-2 outline-none focus:ring-2 focus:ring-primary/60"
+            style={{ borderColor: 'rgba(255,255,255,0.10)' }}
+          />
+          <div className="flex gap-2">
+            <button onClick={() => setPasteOpen(false)} className="btn-glass flex-1 justify-center min-h-[40px] text-fluid-xs">Cancel</button>
+            <button
+              onClick={() => save.mutate({ weekStart: node.weekStart, content: draft }, {
+                onSuccess: () => { setPasteOpen(false); setReportOpen(true) },
+              })}
+              disabled={!draft.trim() || save.isPending}
+              className="btn-primary flex-1 justify-center min-h-[40px] text-fluid-xs disabled:opacity-50"
+            >
+              {save.isPending ? 'Saving…' : 'Save report'}
+            </button>
+          </div>
+          {save.isError && <p className="text-fluid-xs text-danger">{save.error instanceof Error ? save.error.message : 'Save failed'}</p>}
+        </div>
+      )}
+
+      <Sheet open={reportOpen} onClose={() => setReportOpen(false)} title={`${node.weekLabel} · AI report`}>
+        {stored && <MarkdownView md={stored.content} />}
+      </Sheet>
     </div>
   )
 }

@@ -542,6 +542,19 @@ html[data-hidden='true'] .battery-bubble { animation-play-state: paused; }
 }
 .orb-breathe { animation: orbBreathe 5.5s ease-in-out infinite; }
 
+/* Ready-week aura — a complete training week glows gold. Box-shadow only (no
+   transform, no filter on a glass ancestor), slow enough to read as "lit" rather
+   than "blinking". Honours reduced motion and the hidden-tab pause below. */
+@keyframes auraBreathe {
+  0%, 100% { box-shadow: 0 0 22px rgba(212,175,55,0.20), inset 0 1px 0 rgba(212,175,55,0.18); }
+  50%      { box-shadow: 0 0 40px rgba(212,175,55,0.40), inset 0 1px 0 rgba(212,175,55,0.30); }
+}
+.aura-breathe { animation: auraBreathe 6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .aura-breathe { animation: none; }
+}
+html[data-hidden='true'] .aura-breathe { animation-play-state: paused; }
+
 /* Score charge-up ring: draws once on mount (from empty to the inline level),
    then a soft flash. No `to` — the keyframe resolves to the inline offset. */
 @keyframes ringDraw { from { stroke-dashoffset: 190; } }
