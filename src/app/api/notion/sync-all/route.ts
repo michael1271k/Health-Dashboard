@@ -22,12 +22,22 @@ function envs() {
 }
 
 /** Dates with logged data minus dates already exported. */
-async function pendingDates(db: ReturnType<typeof getServerSupabaseClient>, userId: string): Promise<string[]> {
+/**
+ * Dates to push. Normally only days NOT yet in Notion; with `force` it returns
+ * EVERY logged day so the sync becomes a full UPSERT of all days + metrics
+ * (re-pushing a day replaces its page content).
+ */
+async function pendingDates(
+  db: ReturnType<typeof getServerSupabaseClient>,
+  userId: string,
+  force = false,
+): Promise<string[]> {
   const [logsRes, exportedRes] = await Promise.all([
     db.from('daily_logs').select('date').eq('user_id', userId).order('date', { ascending: true }),
-    db.from('notion_exports').select('date').eq('user_id', userId),
+    force ? Promise.resolve({ data: [] }) : db.from('notion_exports').select('date').eq('user_id', userId),
   ])
   const logged = ((logsRes.data ?? []) as Array<{ date: string }>).map((r) => r.date)
+  if (force) return logged
   const exported = new Set(((exportedRes.data ?? []) as Array<{ date: string }>).map((r) => r.date))
   return logged.filter((d) => !exported.has(d))
 }
@@ -65,9 +75,11 @@ export async function POST(req: Request) {
   const userId = await requireUserId(req, db)
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  // `force` → re-push every logged day (full upsert), not just the new ones.
+  const body = await req.json().catch(() => ({})) as { force?: boolean }
   let pending: string[]
   try {
-    pending = await pendingDates(db, userId)
+    pending = await pendingDates(db, userId, !!body.force)
   } catch {
     return NextResponse.json({ error: 'The notion_exports table is missing — run the paste-SQL first.' }, { status: 501 })
   }

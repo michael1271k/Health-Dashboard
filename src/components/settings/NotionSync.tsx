@@ -27,10 +27,13 @@ export function NotionSync() {
   }
   useEffect(() => { void loadPending() }, [])
 
-  const run = async () => {
+  const run = async (force = false) => {
     setRunning(true); setError(null)
     try {
-      const res = await authedFetch('/api/notion/sync-all', { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+      const res = await authedFetch('/api/notion/sync-all', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ force }),
+      })
       const data = await res.json() as Result & { error?: string }
       if (!res.ok) throw new Error(data.error ?? `Sync failed (${res.status})`)
       setResult(data)
@@ -51,10 +54,16 @@ export function NotionSync() {
         {pending != null && <> <span className="text-primary font-semibold">{pending}</span> day{pending === 1 ? '' : 's'} pending.</>}
       </p>
 
-      <button onClick={run} disabled={running || configured === false || pending === 0}
-        className="btn-glass w-full justify-center min-h-[44px] disabled:opacity-50"
-        style={{ borderColor: '#8AA0B844', color: '#8AA0B8' }}>
-        {running ? 'Syncing…' : pending === 0 ? <><Check className="w-4 h-4" /> All logs synced</> : <><Send className="w-4 h-4" /> Sync Unexported Logs to Notion</>}
+      {/* Primary: UPSERT every logged day + its metrics into the Daily Logs DB. */}
+      <button onClick={() => run(true)} disabled={running || configured === false}
+        className="btn-primary w-full justify-center min-h-[46px] disabled:opacity-50">
+        {running ? 'Syncing…' : <><Send className="w-4 h-4" /> Sync to Notion</>}
+      </button>
+
+      {/* Secondary: only the days that have never been pushed (cheaper). */}
+      <button onClick={() => run(false)} disabled={running || configured === false || pending === 0}
+        className="btn-glass w-full justify-center min-h-[40px] text-fluid-xs disabled:opacity-50">
+        {pending === 0 ? <><Check className="w-3.5 h-3.5" /> No new days</> : <>Sync new days only</>}
       </button>
 
       {result && (

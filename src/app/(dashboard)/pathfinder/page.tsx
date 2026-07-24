@@ -12,6 +12,7 @@ import { useEraFilter } from '@/lib/era/eraFilter'
 import { EraFilterPills } from '@/components/era/EraFilterPills'
 import { FileSystemBrowser } from '@/components/reports/FileSystemBrowser'
 import { PathfinderTimeline } from '@/components/pathfinder/PathfinderTimeline'
+import { WeeklyAiLoop } from '@/components/reports/WeeklyAiLoop'
 import { AnalyticsPanel } from '@/components/progression/AnalyticsPanel'
 import { VitalsGroups } from '@/components/insights/VitalsGroups'
 import { ScheduleShortcut } from '@/components/day/ScheduleShortcut'
@@ -113,6 +114,8 @@ function PathfinderInner() {
 
       {view === 'timeline' ? (
         <>
+          {/* Weekly AI loop — Export Week → paste the summary back */}
+          <WeeklyAiLoop />
           {/* Era filter + jump-to-date + current-weight chip */}
           <div className="flex items-center gap-2 flex-wrap">
             <EraFilterPills label="" />

@@ -13,6 +13,8 @@ export interface DayPoint {
   calories: number | null
   calorieGoal: number | null
   carbsG?: number | null
+  steps?: number | null
+  waterMl?: number | null
 }
 
 export interface SessionPoint { date: string; volumeKg: number }
@@ -348,6 +350,64 @@ export function fuelVsForce(days: DayPoint[], sessions: SessionPoint[]): Insight
       }
 }
 
+/** 7-day rolling average series from a raw weight series (oldest → newest). */
+export function rollingAverage(values: number[], window = 7): number[] {
+  const out: number[] = []
+  for (let i = window - 1; i < values.length; i++) out.push(mean(values.slice(i - window + 1, i + 1)))
+  return out
+}
+
+/**
+ * STALL PROTOCOL — the elite lever.
+ *
+ * Fires ONLY on a true stall: the 7-day ROLLING average flat-or-rising for 14
+ * consecutive days. Single-day scale noise and the 24–72h post-leg-day / bad-
+ * sleep water spikes carry zero authority here because the rolling average is
+ * the only series consulted, and a heavy session inside the final 72h suppresses
+ * the call entirely.
+ *
+ * When it does fire it recommends exactly ONE lever — never a list — chosen by
+ * whichever input is currently weakest:
+ *   · steps below 8k        → +1,500 steps/day (cheapest, no recovery cost)
+ *   · carbs still high      → −100 carb kcal (−25g)
+ *   · otherwise             → cut one set per muscle (reduce systemic fatigue)
+ */
+export function stallProtocol(days: DayPoint[], sessions: SessionPoint[]): Insight | null {
+  const w = days.filter((d) => d.weightKg != null) as Array<DayPoint & { weightKg: number }>
+  if (w.length < 21) return null
+
+  const rolling = rollingAverage(w.map((d) => d.weightKg))
+  const win = rolling.slice(-14)
+  if (win.length < 14) return null
+  // Flat or rising across the whole 14-day window (5g tolerance for noise).
+  if (win[13] < win[0] - 0.05) return null
+
+  // A heavy session in the last 72h means the scale is holding water — not a stall.
+  const last3 = new Set(w.slice(-3).map((d) => d.date))
+  if (sessions.some((s) => last3.has(s.date) && s.volumeKg > 0)) return null
+
+  const recent = w.slice(-7)
+  const avgSteps = mean(recent.map((d) => d.steps ?? 0).filter((n) => n > 0))
+  const avgCarbs = mean(recent.map((d) => d.carbsG ?? 0).filter((n) => n > 0))
+
+  let lever: string
+  if (avgSteps > 0 && avgSteps < 8000) {
+    lever = `Add 1,500 steps/day (you're averaging ${Math.round(avgSteps).toLocaleString()}). Cheapest lever — it costs no recovery.`
+  } else if (avgCarbs >= 150) {
+    lever = `Drop 100 kcal of carbs (−25 g, currently ~${Math.round(avgCarbs)} g/day). Keep protein and training identical.`
+  } else {
+    lever = 'Cut one set per muscle this week. Steps and carbs are already tight, so the limiter is systemic fatigue masking the loss.'
+  }
+
+  return {
+    id: 'stall-protocol',
+    tone: 'caution',
+    confidence: 0.88,
+    headline: 'True 14-day stall — pull ONE lever',
+    detail: `The 7-day rolling average has been flat or rising for 14 straight days (${round(win[0], 1)} → ${round(win[13], 1)} kg) with no heavy session in the last 72h, so this is not water. Change ONE thing only, then hold it 10–14 days before judging: ${lever}`,
+  }
+}
+
 export function computeInsights(input: InsightInput, limit = 3): Insight[] {
   // Gap-awareness gate: with a 7-day+ training gap (or no sessions at all) the
   // volume-comparison builders are OFF — recovery/nutrition insights still run.
@@ -355,11 +415,14 @@ export function computeInsights(input: InsightInput, limit = 3): Insight[] {
   const gap = daysSinceLastSession(input.sessions, todayISO)
   const gapped = gap == null || gap >= 7
 
+  // The Stall Protocol outranks the generic weight trend — when a true stall is
+  // detected the actionable lever replaces the descriptive "rate off target".
+  const stall = stallProtocol(input.days, input.sessions)
   const builders = [
     gapped ? trainingGap(input.sessions, todayISO) : sleepVsVolume(input.days, input.sessions),
     recoveryDrift(input.days),
     calorieAdherence(input.days),
-    weightTrend(input.days, input.sessions, input.contextMode),
+    stall ?? weightTrend(input.days, input.sessions, input.contextMode),
     gapped ? null : fuelVsForce(input.days, input.sessions),
   ]
   return builders
