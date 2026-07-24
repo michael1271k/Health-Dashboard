@@ -43,6 +43,9 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | null = null
+    let retryTimer: ReturnType<typeof setTimeout> | null = null
+    let retry = 0
+    let cancelled = false
     const pending = new Set<string>()
 
     // Scoped React Query invalidation only — no user-facing toast. (The old
@@ -75,7 +78,22 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
           () => onChange(table),
         )
       }
-      ch.subscribe()
+      // Surface the join result. A silently-dead socket is the difference
+      // between "cross-device sync works" and "the laptop never updates", so a
+      // failed/timed-out join retries with backoff instead of going quiet.
+      ch.subscribe((status: string) => {
+        if (status === 'SUBSCRIBED') {
+          retry = 0
+          // Catch up on anything that changed while we were disconnected.
+          refreshAll()
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          if (cancelled) return
+          const delay = Math.min(30_000, 1000 * 2 ** retry++)
+          console.warn(`[realtime] channel ${status} — retrying in ${delay}ms`)
+          if (retryTimer) clearTimeout(retryTimer)
+          retryTimer = setTimeout(() => { if (!cancelled) subscribe() }, delay)
+        }
+      })
       channel = ch
     }
     subscribe()
@@ -93,7 +111,9 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     window.addEventListener('online', onVisible)
 
     return () => {
+      cancelled = true
       if (timer) clearTimeout(timer)
+      if (retryTimer) clearTimeout(retryTimer)
       document.removeEventListener('visibilitychange', onVisible)
       window.removeEventListener('online', onVisible)
       if (channel) supabase.removeChannel(channel)
