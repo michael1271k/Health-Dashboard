@@ -24,6 +24,7 @@ import { phaseDisplay } from '@/lib/nutrition/phase'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { EMBER, SAPPHIRE, EMERALD, GOLD, AMETHYST, PLATINUM, STEEL, OXIDE, MUTED } from '@/lib/theme/palette'
 import { logicalTodayISO } from '@/lib/utils/day'
+import { useSingleOrDoubleTap } from '@/lib/utils/doubleTap'
 import { scheduleDayFor, eraForDate, isTrainingDay, type ScheduleDay } from '@/lib/programs'
 import { useSupplements } from '@/lib/hooks/useSupplements'
 import { supplementCountForDate } from '@/lib/supplements'
@@ -69,14 +70,20 @@ const SHEET_ACCENT: Record<Exclude<SheetKey, null>, string> = {
   body: EMBER, steps: PLATINUM, stack: GOLD,
 }
 
-/** Body-sheet tiles, in display order. `unit: 'kg'` marks a weight to convert. */
+/**
+ * Body-sheet tiles, in display order. `unit: 'kg'` marks a weight to convert.
+ * `synced` marks the four metrics Apple Health actually exports on a weigh-in
+ * (Weight, BMI, Body-Fat %, Lean Mass) — the dashboard popup shows ONLY those, so
+ * a fresh weigh-in never sits next to stale BMR/visceral/muscle%/water% rows that
+ * only refresh on a manual InBody entry. The manual metrics live in the Nexus.
+ */
 const BODY_TILES: Array<{
-  field: BodyMetricField; label: string; unit?: string; decimals?: 0 | 1; accent?: string
+  field: BodyMetricField; label: string; unit?: string; decimals?: 0 | 1; accent?: string; synced?: boolean
 }> = [
-  { field: 'weight_kg', label: 'Weight', unit: 'kg', decimals: 1, accent: EMBER },
-  { field: 'bmi', label: 'BMI', decimals: 1 },
-  { field: 'lean_mass_kg', label: 'Lean Mass', unit: 'kg', decimals: 1 },
-  { field: 'body_fat_pct', label: 'Body Fat', unit: '%', decimals: 1 },
+  { field: 'weight_kg', label: 'Weight', unit: 'kg', decimals: 1, accent: EMBER, synced: true },
+  { field: 'bmi', label: 'BMI', decimals: 1, synced: true },
+  { field: 'lean_mass_kg', label: 'Lean Mass', unit: 'kg', decimals: 1, synced: true },
+  { field: 'body_fat_pct', label: 'Body Fat', unit: '%', decimals: 1, synced: true },
   { field: 'muscle_percent', label: 'Muscle', unit: '%', decimals: 1 },
   { field: 'water_percent', label: 'Water', unit: '%', decimals: 1 },
   { field: 'visceral_fat', label: 'Visceral Fat', decimals: 1 },
@@ -101,6 +108,11 @@ export default function DashboardPage() {
   const { data: fuelLogs } = useDailyLogs(8)
 
   const [open, setOpen] = useState<SheetKey>(null)
+  // Body strip: single tap → composition popup · double tap → Nexus InBody entry.
+  const onBodyTap = useSingleOrDoubleTap(
+    () => setOpen('body'),
+    () => router.push(`/day/${logicalTodayISO()}?section=inbody`),
+  )
 
   // Today's scheduled training day — ERA-AWARE (PPL before Jul 19, HELIX-5 after),
   // shared with the Insight Coach so the whole app agrees.
@@ -257,11 +269,12 @@ export default function DashboardPage() {
         </button>
       </AnimatedCard>
 
-      {/* Daily domain strips */}
+      {/* Daily domain strips. The Body strip is dual-action: tap opens the
+          composition popup, double-tap jumps to today's Nexus InBody entry. */}
       <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
         {strips.map((s, i) => (
           <AnimatedCard key={s.key} index={i + 2}>
-            <BioStrip {...s} onClick={() => setOpen(s.key)} />
+            <BioStrip {...s} onClick={s.key === 'body' ? onBodyTap : () => setOpen(s.key)} />
           </AnimatedCard>
         ))}
       </div>
@@ -333,7 +346,7 @@ export default function DashboardPage() {
                 only knew the weight. Metrics with no reading are hidden, not
                 shown as an empty grid. */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
-              {BODY_TILES.map(({ field, label, unit: u, decimals, accent }) => {
+              {BODY_TILES.filter((t) => t.synced).map(({ field, label, unit: u, decimals, accent }) => {
                 const m = bodyMetrics?.[field]
                 if (!m) return null
                 const v = u === unit ? displayWeight(m.value) : decimals === 0 ? n0(m.value) : n1(m.value)
@@ -343,6 +356,14 @@ export default function DashboardPage() {
             {bodyMetrics && Object.keys(bodyMetrics).length === 0 && (
               <p className="text-fluid-xs text-muted">No body metrics logged yet — add them in the Daily Nexus.</p>
             )}
+            {/* Only the auto-synced four live here; BMR, visceral, muscle % and
+                water % are entered by hand in the Nexus InBody card. */}
+            <button
+              onClick={() => { setOpen(null); router.push(`/day/${logicalTodayISO()}?section=inbody`) }}
+              className="btn-glass w-full justify-between min-h-[40px] text-fluid-xs">
+              <span>InBody &amp; scale metrics →</span>
+              <span className="text-muted">manual entry</span>
+            </button>
           </div>
         )}
         {open === 'steps' && (

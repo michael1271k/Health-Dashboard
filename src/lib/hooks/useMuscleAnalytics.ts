@@ -10,7 +10,7 @@ import { GROUP } from '@/lib/theme/palette'
 export const MUSCLE_MAP: Record<string, string> = {
   chest: 'Chest', pecs: 'Chest',
   back: 'Back', lats: 'Back', traps: 'Back', rhomboids: 'Back', 'upper back': 'Back', 'lower back': 'Back',
-  shoulders: 'Shoulders', delts: 'Shoulders', rear_delts: 'Shoulders',
+  shoulders: 'Shoulders', delts: 'Shoulders', rear_delts: 'Shoulders', side_delts: 'Shoulders', front_delts: 'Shoulders',
   biceps: 'Arms', triceps: 'Arms', forearms: 'Arms', arms: 'Arms',
   quads: 'Legs', quadriceps: 'Legs', hamstrings: 'Legs', glutes: 'Legs', calves: 'Legs', abductors: 'Legs', legs: 'Legs',
   core: 'Core', abs: 'Core', abdominals: 'Core', obliques: 'Core',

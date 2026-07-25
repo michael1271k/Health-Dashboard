@@ -39,16 +39,23 @@ export const SUPPLEMENT_MICROS: Readonly<Record<string, MicroPayload>> = {
 }
 
 /**
- * How many UNITS of an item a dose string represents ("2 tabs" → 2).
+ * How many UNITS of an item a dose string represents ("2 caps" → 2).
  *
- * The multivitamin is the only item whose dose varies by weekday, and its
- * payload above is per-tab, so a 2-tab day genuinely delivers double. Anything
- * without a leading count is one unit — the magnesium payload is already the
- * combined total for its three tablets, so it must NOT be multiplied.
+ * The payloads in SUPPLEMENT_MICROS are PER PHYSICAL UNIT (one tab / cap / pill /
+ * scoop), so a dose that names a *count* of those units genuinely delivers that
+ * multiple — the multivitamin's 2-tab days AND the Omega-3's 2 caps both scale.
+ *
+ * A MASS dose ("300 mg", "3 g", "5 g") is NOT a unit count: the payload for those
+ * items is already the total delivered at that mass (magnesium 300 mg is the
+ * combined total across three tablets), so mass doses must stay ×1. We therefore
+ * multiply ONLY when the unit word is a countable form.
  */
-export function doseUnits(itemKey: string, dose: string | undefined): number {
-  if (itemKey !== 'multivitamin') return 1
-  const n = parseFloat(dose ?? '')
+const COUNT_UNIT = /^\s*(\d+(?:\.\d+)?)\s*(tabs?|caps?|capsules?|pills?|scoops?|softgels?|gummies|gummy)\b/i
+
+export function doseUnits(_itemKey: string, dose: string | undefined): number {
+  const m = COUNT_UNIT.exec(dose ?? '')
+  if (!m) return 1
+  const n = parseFloat(m[1])
   return Number.isFinite(n) && n > 0 ? n : 1
 }
 

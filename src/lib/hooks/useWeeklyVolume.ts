@@ -56,6 +56,13 @@ export function useWeeklyVolume(
           .select('id, pair_id, exercises!inner(name, muscle_groups), workout_sessions!inner(started_at)')
           .gte('workout_sessions.started_at', weekStartInstant)
           .lt('workout_sessions.started_at', weekEndInstant)
+          // WORKING sets only. Warm-ups aren't training volume — the per-session
+          // card already excludes them (useSessionDetail `if (!isWarmup)`); this
+          // accumulator used to count them, silently inflating every muscle.
+          // 'failure' stays (still a working set). NULL set_type is legacy
+          // 'normal' data, so it must survive — `neq` alone would drop it
+          // (SQL `NULL <> 'warmup'` is NULL, not true).
+          .or('set_type.is.null,set_type.neq.warmup')
           .limit(2000),
         supabase.from('user_goals').select('calorie_goal').maybeSingle(),
       ])

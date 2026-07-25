@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   parseRepWindow, repWindowFor, clearedCeiling, progressionVerdict, LOAD_STEP_KG,
+  holdTargetFor, timedProgressionVerdict,
 } from '@/lib/training/ceilings'
 
 /**
@@ -85,5 +86,37 @@ describe('progressionVerdict', () => {
   })
   it('an unprogrammed exercise never prompts', () => {
     expect(progressionVerdict([clean, clean], null).state).toBe('no')
+  })
+})
+
+/**
+ * Timed holds (Side Plank '55s') are scored on TIME. `reps` carries seconds,
+ * weight is 0, so the progression is "hold longer" — never a load bump.
+ */
+describe('holdTargetFor', () => {
+  it('reads the programmed hold in seconds', () => {
+    expect(holdTargetFor('Side Plank', 'legs_b', 'apex51')).toBe(55)
+  })
+  it('is null for a loaded lift', () => {
+    expect(holdTargetFor('Calf Press', 'legs_b', 'apex51')).toBeNull()
+  })
+})
+
+describe('timedProgressionVerdict', () => {
+  // reps == seconds; two sessions each holding past the 55s target.
+  const cleared = [{ weightKg: 0, reps: 60 }, { weightKg: 0, reps: 58 }]
+  const short = [{ weightKg: 0, reps: 40 }, { weightKg: 0, reps: 55 }]
+
+  it('never suggests load — a ready hold earns a longer hold', () => {
+    const v = timedProgressionVerdict([cleared, cleared], 55)
+    expect(v.state).toBe('ready')
+    expect(v.suggestKg).toBeNull()
+    expect(v.ceiling).toBe(55)
+  })
+  it('one cleared session says "one more"', () => {
+    expect(timedProgressionVerdict([short, cleared], 55).state).toBe('one-more')
+  })
+  it('a set under the target stays silent', () => {
+    expect(timedProgressionVerdict([short, short], 55).state).toBe('no')
   })
 })

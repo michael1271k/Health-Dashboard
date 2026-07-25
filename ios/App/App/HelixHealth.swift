@@ -183,6 +183,9 @@ public class HealthkitPlugin: CAPPlugin, CAPBridgedPlugin {
     case HKQuantityTypeIdentifier.oxygenSaturation.rawValue,
          HKQuantityTypeIdentifier.bodyFatPercentage.rawValue: return .percent()
     case HKQuantityTypeIdentifier.bodyMass.rawValue, HKQuantityTypeIdentifier.leanBodyMass.rawValue: return .gramUnit(with: .kilo)
+    // BMI is dimensionless in HealthKit (count). Without this case the read would
+    // degrade to empty and the Body card would never receive a synced BMI.
+    case HKQuantityTypeIdentifier.bodyMassIndex.rawValue: return .count()
     case HKQuantityTypeIdentifier.vo2Max.rawValue: return HKUnit(from: "ml/kg*min")
     case HKQuantityTypeIdentifier.appleExerciseTime.rawValue, HKQuantityTypeIdentifier.appleStandTime.rawValue: return .minute()
     case HKQuantityTypeIdentifier.dietaryEnergyConsumed.rawValue: return .kilocalorie()

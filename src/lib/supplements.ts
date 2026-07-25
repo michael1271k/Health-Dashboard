@@ -26,7 +26,9 @@ export const SUPPLEMENT_PROTOCOL: SupplementSlot[] = [
   ] },
   { key: 'post', time: '15:00', label: 'Lunch / Post-Workout', accent: SAPPHIRE, items: [
     { key: 'creatine', name: 'Creatine Monohydrate', dose: '5 g' },
-    { key: 'omega3', name: 'Omega-3 Fish Oil', dose: '1 cap' },
+    // Two caps — the SUPPLEMENT_MICROS payload (EPA 500 / DHA 250) is PER cap,
+    // and doseUnits multiplies count-units, so this delivers EPA 1000 / DHA 500.
+    { key: 'omega3', name: 'Omega-3 Fish Oil', dose: '2 caps' },
   ] },
   { key: 'night', time: '22:00', label: 'Before Bed', accent: AMETHYST, items: [
     // 300 mg elemental across three tablets — one checkbox, the full dose.

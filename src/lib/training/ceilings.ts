@@ -72,6 +72,36 @@ export function repWindowFor(
   return windows.reduce((best, w) => (w.ceiling > best.ceiling ? w : best))
 }
 
+/**
+ * The programmed HOLD target in seconds for a timed movement (`'55s'` → 55), or
+ * null when the exercise is rep-driven / not programmed. Same day-disambiguation
+ * as {@link repWindowFor}; when the day is unknown we take the LONGEST target so
+ * an ambiguous match can only under-trigger the "hold longer" cue.
+ */
+export function holdTargetFor(
+  exerciseName: string,
+  dayKey?: string | null,
+  programId: string = getActiveProgramId(),
+): number | null {
+  const program = PROGRAMS[programId] ?? PROGRAMS[DEFAULT_PROGRAM_ID]
+  const target = normalize(exerciseName)
+  const match = (ex: ProgramExercise) => normalize(ex.name) === target
+  const parseHold = (reps: string): number | null => {
+    const m = /(\d+)\s*s\b/i.exec(reps)
+    return m ? Number(m[1]) : null
+  }
+  if (dayKey) {
+    const onDay = program.days.find((d) => d.key === dayKey)?.exercises.find(match)
+    if (onDay) { const h = parseHold(onDay.reps); if (h != null) return h }
+  }
+  const holds = program.days
+    .flatMap((d) => d.exercises)
+    .filter(match)
+    .map((ex) => parseHold(ex.reps))
+    .filter((h): h is number => h != null)
+  return holds.length ? Math.max(...holds) : null
+}
+
 export interface WorkingSet { weightKg: number; reps: number }
 
 /**
@@ -119,4 +149,23 @@ export function progressionVerdict(
     ceiling,
     suggestKg: Math.round((latest[0].weightKg + LOAD_STEP_KG) * 10) / 10,
   }
+}
+
+/**
+ * Double progression for a TIMED hold, where `reps` carries SECONDS. Progression
+ * is "hold longer", never "add load", so a `ready` verdict suggests no kg. A
+ * session clears when every working set met the target hold; two consecutive →
+ * ready. `ceiling` echoes the target seconds for the UI to label the cue.
+ */
+export function timedProgressionVerdict(
+  sessions: WorkingSet[][],
+  targetSec: number | null,
+): ProgressionVerdict {
+  if (targetSec == null || !sessions.length) return { state: 'no', ceiling: targetSec, suggestKg: null }
+  const cleared = (sets: WorkingSet[]) => sets.length > 0 && sets.every((s) => s.reps >= targetSec)
+  const latest = sessions[sessions.length - 1]
+  const previous = sessions.length >= 2 ? sessions[sessions.length - 2] : null
+  if (!cleared(latest)) return { state: 'no', ceiling: targetSec, suggestKg: null }
+  if (!previous || !cleared(previous)) return { state: 'one-more', ceiling: targetSec, suggestKg: null }
+  return { state: 'ready', ceiling: targetSec, suggestKg: null }
 }

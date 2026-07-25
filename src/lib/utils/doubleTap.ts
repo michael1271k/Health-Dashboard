@@ -19,3 +19,26 @@ export function useDoubleTap(onDoubleTap: () => void, delay = 320) {
     }
   }, [onDoubleTap, delay])
 }
+
+/**
+ * A control that does DIFFERENT things on single vs double tap. The single-tap
+ * action is deferred by `delay` ms so a second tap can pre-empt it — used by the
+ * dashboard Body card (tap = open the composition popup, double-tap = jump to the
+ * Nexus InBody entry for today). Returns an onClick handler to spread onto the target.
+ */
+export function useSingleOrDoubleTap(onSingleTap: () => void, onDoubleTap: () => void, delay = 300) {
+  const last = useRef(0)
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  return useCallback(() => {
+    const now = Date.now()
+    if (last.current && now - last.current < delay) {
+      last.current = 0
+      if (timer.current) { clearTimeout(timer.current); timer.current = null }
+      onDoubleTap()
+    } else {
+      last.current = now
+      if (timer.current) clearTimeout(timer.current)
+      timer.current = setTimeout(() => { last.current = 0; timer.current = null; onSingleTap() }, delay)
+    }
+  }, [onSingleTap, onDoubleTap, delay])
+}

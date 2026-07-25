@@ -10,6 +10,7 @@ import type { SaveWorkoutPayload } from '@/lib/types/workout'
 import { countCommittedSets } from '@/lib/sessions/schema'
 import { epley1RM } from '@/lib/utils/epley'
 import { isReentryWeek } from '@/lib/programs'
+import { isTimedExercise } from '@/lib/exercises/timed'
 
 type DB = SupabaseClient<Database>
 
@@ -69,9 +70,10 @@ export async function saveSession(
       .eq('user_id', userId)
       .gte('started_at', `${dateStr}T00:00:00Z`).lt('started_at', `${dayEnd}T00:00:00Z`),
     supabase.from('workout_sets')
-      .select('exercise_id, est_1rm_kg')
-      .in('exercise_id', exerciseIds).eq('user_id', userId)
-      .order('est_1rm_kg', { ascending: false }),
+      // reps + weight carried too: a TIMED hold's PR is the best SECONDS (its
+      // `reps`), not an est-1RM (which is 0 at weight 0).
+      .select('exercise_id, est_1rm_kg, reps, weight_kg')
+      .in('exercise_id', exerciseIds).eq('user_id', userId),
   ])
 
   type DayRow = { id: string; client_session_id: string | null; total_volume_kg: number | null; set_count: number | null; pr_count: number | null }
@@ -107,24 +109,32 @@ export async function saveSession(
     }
   }
 
-  const prHistory = (prHistoryRes.data ?? []) as Array<{ exercise_id: string; est_1rm_kg: number | null }>
-  const bestPrMap = new Map<string, number>()
+  const prHistory = (prHistoryRes.data ?? []) as Array<{ exercise_id: string; est_1rm_kg: number | null; reps: number | null }>
+  // Two era-agnostic baselines per exercise: best est-1RM (loaded lifts) and
+  // best hold in seconds (timed movements). An exercise id maps to ONE exercise,
+  // so a timed lift only ever populates the seconds baseline meaningfully.
+  const bestEstMap = new Map<string, number>()
+  const bestSecMap = new Map<string, number>()
   for (const row of prHistory) {
-    if (row.est_1rm_kg !== null && !bestPrMap.has(row.exercise_id)) {
-      bestPrMap.set(row.exercise_id, row.est_1rm_kg)
-    }
+    if (row.est_1rm_kg != null) bestEstMap.set(row.exercise_id, Math.max(bestEstMap.get(row.exercise_id) ?? 0, row.est_1rm_kg))
+    if (row.reps != null) bestSecMap.set(row.exercise_id, Math.max(bestSecMap.get(row.exercise_id) ?? 0, row.reps))
   }
 
   // Pre-compute PR count for the session row. v5.1: RE-ENTRY weeks (Jul 19 + 26,
   // ~90% loads) are excluded from PR flagging entirely.
   const reentry = isReentryWeek(payload.startedAt.slice(0, 10))
   const setsToInsert = payload.sets.map((s) => {
-    const est1rm = epley1RM(s.weightKg, s.reps)
-    const prevBest = bestPrMap.get(s.exerciseId) ?? 0
-    // A PR requires beating an existing baseline — the FIRST time an exercise is
-    // ever logged is never a PR (no fake gold stars).
-    const hadBaseline = bestPrMap.has(s.exerciseId)
-    const isPr = !reentry && !isWarmup(s) && hadBaseline && est1rm > prevBest
+    const timed = isTimedExercise(s.exerciseName)
+    // est-1RM is undefined for a hold (weight 0 → Epley 0); persist null so the
+    // report never prints "e1RM 0kg" on a plank.
+    const est1rm = timed ? null : epley1RM(s.weightKg, s.reps)
+    // Record value + baseline pick the right axis: SECONDS for a hold, est-1RM
+    // for a loaded lift. A PR requires beating an existing baseline — the first
+    // time an exercise is ever logged is never a PR (no fake gold stars).
+    const record = timed ? s.reps : (est1rm ?? 0)
+    const baseMap = timed ? bestSecMap : bestEstMap
+    const hadBaseline = baseMap.has(s.exerciseId)
+    const isPr = !reentry && !isWarmup(s) && hadBaseline && record > (baseMap.get(s.exerciseId) ?? 0)
     return { s, est1rm, isPr }
   })
   const prCount = setsToInsert.filter((x) => x.isPr).length
@@ -212,7 +222,7 @@ export async function saveSession(
 
   const newPRs = setsToInsert
     .filter((x) => x.isPr)
-    .map((x) => ({ exerciseName: x.s.exerciseName, est1rm: x.est1rm }))
+    .map((x) => ({ exerciseName: x.s.exerciseName, est1rm: x.est1rm ?? 0 }))
 
   return {
     sessionId: session.id,

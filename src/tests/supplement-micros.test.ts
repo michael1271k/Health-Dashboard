@@ -22,19 +22,29 @@ describe('supplement micros engine', () => {
     expect(out.magnesium).toBe(300)
   })
 
-  it('doubles ONLY the multivitamin on a 2-tab day', () => {
-    const doses = new Map([['multivitamin', '2 tabs'], ['magnesium', '300 mg']])
-    const out = supplementMicros(['multivitamin', 'magnesium'], doses)
-    expect(out.vitaminC).toBe(940)
+  it('scales any COUNT-unit dose (tabs, caps) but never a mass dose', () => {
+    const doses = new Map([
+      ['multivitamin', '2 tabs'],
+      ['omega3', '2 caps'],
+      ['magnesium', '300 mg'],
+    ])
+    const out = supplementMicros(['multivitamin', 'omega3', 'magnesium'], doses)
+    expect(out.vitaminC).toBe(940)  // 470 × 2 tabs
+    expect(out.epa).toBe(1000)      // 500 × 2 caps
+    expect(out.dha).toBe(500)       // 250 × 2 caps
     // The magnesium payload is already the total across its three tablets —
-    // multiplying it by the dose string would triple a dose that wasn't tripled.
+    // "300 mg" is a mass, not a unit count, so it must stay ×1.
     expect(out.magnesium).toBe(300)
   })
 
-  it('treats an unparseable dose as one unit', () => {
+  it('parses the leading count of a count-unit dose, else one unit', () => {
     expect(doseUnits('multivitamin', undefined)).toBe(1)
     expect(doseUnits('multivitamin', '1 tab')).toBe(1)
-    expect(doseUnits('magnesium', '300 mg')).toBe(1)
+    expect(doseUnits('multivitamin', '2 tabs')).toBe(2)
+    expect(doseUnits('omega3', '2 caps')).toBe(2)
+    expect(doseUnits('creatine', '5 g')).toBe(1)     // mass, not a count
+    expect(doseUnits('magnesium', '300 mg')).toBe(1) // mass, not a count
+    expect(doseUnits('citrulline', '3 g')).toBe(1)   // mass, not a count
   })
 
   it('ignores keys with no payload rather than throwing', () => {

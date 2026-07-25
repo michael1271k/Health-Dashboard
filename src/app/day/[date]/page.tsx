@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft, Dumbbell, Moon, Flame, Scale, Plus, ChevronRight, ChevronLeft } from 'lucide-react'
 import { CompletenessArc } from '@/components/day/CompletenessArc'
 import { InBodyCard } from '@/components/day/InBodyCard'
@@ -135,6 +135,18 @@ export default function DailyNexusPage() {
   const [scaleOpen, setScaleOpen] = useState(false)
   const [fuelEdit, setFuelEdit] = useState(false)
   const tapFuel = useDoubleTap(() => setFuelEdit(true))
+
+  // Deep-link from the dashboard Body card (double-tap → …?section=inbody):
+  // open the InBody entry and scroll it into view for that specific day.
+  const searchParams = useSearchParams()
+  const focusInbody = searchParams.get('section') === 'inbody'
+  const inbodyRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!focusInbody) return
+    setScaleOpen(true)
+    const t = setTimeout(() => inbodyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 120)
+    return () => clearTimeout(t)
+  }, [focusInbody])
 
   if (!date) return <p className="text-muted p-6">Invalid date.</p>
 
@@ -290,20 +302,22 @@ export default function DailyNexusPage() {
       </div>
 
       {/* InBody & Scale — only when a measurement exists (or the user opts to add). */}
-      {hasScale ? (
-        <InBodyCard date={date} log={log ?? null} />
-      ) : scaleOpen ? (
-        <InBodyCard date={date} log={log ?? null} defaultOpen />
-      ) : (
-        <button onClick={() => setScaleOpen(true)}
-          className="w-full glass-card px-4 py-3 flex items-center gap-3 text-left text-muted hover:text-text transition-colors">
-          <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: `${TEAL}1a`, color: TEAL }}>
-            <Scale className="w-4 h-4" aria-hidden="true" />
-          </span>
-          <span className="flex-1 text-sm font-medium">Add scale metrics (InBody)</span>
-          <Plus className="w-4 h-4 shrink-0" aria-hidden="true" />
-        </button>
-      )}
+      <div ref={inbodyRef}>
+        {hasScale ? (
+          <InBodyCard date={date} log={log ?? null} defaultOpen={focusInbody || undefined} />
+        ) : scaleOpen ? (
+          <InBodyCard date={date} log={log ?? null} defaultOpen />
+        ) : (
+          <button onClick={() => setScaleOpen(true)}
+            className="w-full glass-card px-4 py-3 flex items-center gap-3 text-left text-muted hover:text-text transition-colors">
+            <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: `${TEAL}1a`, color: TEAL }}>
+              <Scale className="w-4 h-4" aria-hidden="true" />
+            </span>
+            <span className="flex-1 text-sm font-medium">Add scale metrics (InBody)</span>
+            <Plus className="w-4 h-4 shrink-0" aria-hidden="true" />
+          </button>
+        )}
+      </div>
 
       {/* Recovery inputs — soreness 24–48h post-session + tape measurements */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

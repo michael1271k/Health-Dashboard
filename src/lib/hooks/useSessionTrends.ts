@@ -4,27 +4,37 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { epley1RM } from '@/lib/utils/epley'
 import { eraForDate, HELIX_CUT_START } from '@/lib/programs'
-import { repWindowFor, progressionVerdict, LOAD_STEP_KG, type ProgressionVerdict, type WorkingSet } from '@/lib/training/ceilings'
+import { isTimedExercise } from '@/lib/exercises/timed'
+import {
+  repWindowFor, holdTargetFor, progressionVerdict, timedProgressionVerdict,
+  LOAD_STEP_KG, type ProgressionVerdict, type WorkingSet,
+} from '@/lib/training/ceilings'
 
 export { LOAD_STEP_KG }
 
 export interface ExerciseTrend {
-  /** Best est-1RM per session, oldest → newest (one point per session). */
+  /**
+   * Per-session headline, oldest → newest (one point per session). For a loaded
+   * lift this is the best est-1RM (kg); for a TIMED hold it is the best hold
+   * (seconds) — `timed` says which axis, so the graph never plots a plank as 0 kg.
+   */
   points: number[]
-  /** % change from the previous session's best est-1RM to this one. */
+  /** % change from the previous session's headline to this one. */
   pctChange: number | null
-  /** All-time best est-1RM within the era. */
+  /** All-time best within the era (kg for loaded, seconds for timed). */
   best: number
-  /** Total working volume (kg) of the most recent session. */
+  /** Latest session's total working volume (kg loaded · seconds under tension timed). */
   tonnage: number
-  /** Tonnage change vs the previous session, in kg. */
+  /** Tonnage change vs the previous session. */
   tonnageDelta: number | null
-  /** Best set of the latest session. */
+  /** Best set of the latest session (its `reps` is seconds for a timed hold). */
   topSet: WorkingSet | null
-  /** How many of the latest session's working sets reached the rep ceiling. */
+  /** How many of the latest session's working sets reached the ceiling / hold target. */
   setsAtCeiling: number
-  /** Double progression, judged against the PROGRAMMED rep window. */
+  /** Double progression, judged against the PROGRAMMED rep window or hold target. */
   progression: ProgressionVerdict
+  /** True when the movement is scored on time (seconds), not load. */
+  timed: boolean
 }
 
 /**
@@ -68,42 +78,53 @@ export function useSessionTrends(exerciseIds: string[], eraDate: string, dayKey?
         workout_sessions: { started_at: string }
       }>).filter((r) => eraForDate(r.workout_sessions.started_at.slice(0, 10)) === era)
 
-      // exercise → session instant → { best est-1RM, working sets, tonnage }
-      const byExercise = new Map<string, Map<string, { best: number; sets: WorkingSet[] }>>()
+      // exercise → session instant → working sets (est carried per set so a
+      // stored est-1RM wins over the Epley fallback for loaded lifts).
+      type SetRow = { weightKg: number; reps: number; est: number | null }
+      const byExercise = new Map<string, Map<string, SetRow[]>>()
       const nameOf = new Map<string, string>()
 
       for (const r of rows) {
         if (r.set_type === 'warmup') continue
         nameOf.set(r.exercise_id, r.exercises.name)
         const at = r.workout_sessions.started_at
-        const perEx = byExercise.get(r.exercise_id) ?? new Map<string, { best: number; sets: WorkingSet[] }>()
-        const bucket = perEx.get(at) ?? { best: 0, sets: [] }
-        bucket.best = Math.max(bucket.best, r.est_1rm_kg ?? epley1RM(r.weight_kg, r.reps))
-        bucket.sets.push({ weightKg: r.weight_kg, reps: r.reps })
+        const perEx = byExercise.get(r.exercise_id) ?? new Map<string, SetRow[]>()
+        const bucket = perEx.get(at) ?? []
+        bucket.push({ weightKg: r.weight_kg, reps: r.reps, est: r.est_1rm_kg })
         perEx.set(at, bucket)
         byExercise.set(r.exercise_id, perEx)
       }
-
-      const tonnageOf = (sets: WorkingSet[]) =>
-        Math.round(sets.reduce((s, x) => s + x.weightKg * x.reps, 0))
 
       const out: Record<string, ExerciseTrend> = {}
       for (const id of exerciseIds) {
         const perEx = byExercise.get(id)
         if (!perEx) continue
+        const name = nameOf.get(id) ?? ''
+        // Timed holds record SECONDS in `reps` (weight 0). Scoring them by
+        // weight collapses every session to est-1RM 0 — the plank graph must
+        // track the hold, and its PR is a longer hold, not a heavier one.
+        const timed = isTimedExercise(name)
+
+        // Per-set headline: seconds for a hold, best est-1RM for a loaded lift.
+        const headline = (s: SetRow) => (timed ? s.reps : (s.est ?? epley1RM(s.weightKg, s.reps)))
+        const bestOf = (sets: SetRow[]) => sets.reduce((m, s) => Math.max(m, headline(s)), 0)
+        const tonnageOf = (sets: SetRow[]) =>
+          Math.round(sets.reduce((s, x) => s + (timed ? x.reps : x.weightKg * x.reps), 0))
+
         const ordered = [...perEx.entries()].sort(([a], [b]) => a.localeCompare(b))
-        const points = ordered.map(([, v]) => Math.round(v.best * 10) / 10)
+        const points = ordered.map(([, sets]) => timed ? bestOf(sets) : Math.round(bestOf(sets) * 10) / 10)
         const cur = points[points.length - 1]
         const prev = points.length >= 2 ? points[points.length - 2] : null
 
-        const latestSets = ordered[ordered.length - 1][1].sets
-        const prevSets = ordered.length >= 2 ? ordered[ordered.length - 2][1].sets : null
-        const window = repWindowFor(nameOf.get(id) ?? '', dayKey)
-        const ceiling = window?.ceiling ?? null
+        const latestSets = ordered[ordered.length - 1][1]
+        const prevSets = ordered.length >= 2 ? ordered[ordered.length - 2][1] : null
+        const asWorking = (sets: SetRow[]): WorkingSet[] => sets.map((s) => ({ weightKg: s.weightKg, reps: s.reps }))
 
-        const topSet = latestSets.reduce<WorkingSet | null>(
-          (best, s) => (!best || epley1RM(s.weightKg, s.reps) > epley1RM(best.weightKg, best.reps) ? s : best),
-          null,
+        // Loaded → programmed rep ceiling; timed → programmed hold target.
+        const ceiling = timed ? holdTargetFor(name, dayKey) : (repWindowFor(name, dayKey)?.ceiling ?? null)
+
+        const topSet = latestSets.reduce<SetRow | null>(
+          (best, s) => (!best || headline(s) > headline(best) ? s : best), null,
         )
         const tonnage = tonnageOf(latestSets)
 
@@ -113,12 +134,13 @@ export function useSessionTrends(exerciseIds: string[], eraDate: string, dayKey?
           best: Math.max(...points),
           tonnage,
           tonnageDelta: prevSets ? tonnage - tonnageOf(prevSets) : null,
-          topSet,
+          topSet: topSet ? { weightKg: topSet.weightKg, reps: topSet.reps } : null,
           setsAtCeiling: ceiling == null ? 0 : latestSets.filter((s) => s.reps >= ceiling).length,
-          progression: progressionVerdict(
-            prevSets ? [prevSets, latestSets] : [latestSets],
+          progression: (timed ? timedProgressionVerdict : progressionVerdict)(
+            prevSets ? [asWorking(prevSets), asWorking(latestSets)] : [asWorking(latestSets)],
             ceiling,
           ),
+          timed,
         }
       }
       return out

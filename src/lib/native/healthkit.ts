@@ -49,6 +49,14 @@ const METRIC_MAP: Array<{ hk: string; key: string; reduce: Reduce; scale?: numbe
   // OxygenSaturation is a 0–1 fraction → ×100 to store an actual percent.
   { hk: 'HKQuantityTypeIdentifierOxygenSaturation', key: 'blood_oxygen', reduce: 'latest', scale: 100 },
   { hk: 'HKQuantityTypeIdentifierBodyMass', key: 'weight', reduce: 'latest' },
+  // Body composition. These were AUTHORIZED (EXTRA_READ_TYPES) but never actually
+  // QUERIED, so a weigh-in only ever refreshed weight — the Body card then showed
+  // last time's BMI / body-fat / lean mass. Keys match the ingest allow-list
+  // (dailyLog: bmi / body_fat / lean_mass) so they mirror into body_composition.
+  { hk: 'HKQuantityTypeIdentifierBodyMassIndex', key: 'bmi', reduce: 'latest' },
+  // BodyFatPercentage is a 0–1 fraction → ×100 to store an actual percent (as OxygenSaturation).
+  { hk: 'HKQuantityTypeIdentifierBodyFatPercentage', key: 'body_fat', reduce: 'latest', scale: 100 },
+  { hk: 'HKQuantityTypeIdentifierLeanBodyMass', key: 'lean_mass', reduce: 'latest' },
   // ── Advanced signals (Micros "Advanced" grid) — these were authorized but
   // never actually QUERIED, so they always read 0. Now pulled every sync. ──
   { hk: 'HKQuantityTypeIdentifierTimeInDaylight', key: 'time_in_daylight', reduce: 'sum' },

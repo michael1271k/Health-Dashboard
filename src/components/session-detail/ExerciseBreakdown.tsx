@@ -176,35 +176,47 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
             {t && (
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-muted">
                 <span className="helix-num">
-                  Tonnage <span className="font-bold text-text">{Math.round(displayWeight(t.tonnage) ?? 0).toLocaleString()}{unit}</span>
+                  {/* Timed holds carry SECONDS under tension, not kg. */}
+                  {timed ? 'Time' : 'Tonnage'}{' '}
+                  <span className="font-bold text-text">
+                    {timed ? `${t.tonnage}s` : `${Math.round(displayWeight(t.tonnage) ?? 0).toLocaleString()}${unit}`}
+                  </span>
                   {t.tonnageDelta != null && t.tonnageDelta !== 0 && (
                     <span className="ml-1 font-bold" style={{ color: t.tonnageDelta > 0 ? EMERALD : OXIDE }}>
-                      {t.tonnageDelta > 0 ? '+' : ''}{Math.round(displayWeight(t.tonnageDelta) ?? 0).toLocaleString()}
+                      {t.tonnageDelta > 0 ? '+' : ''}{timed ? `${t.tonnageDelta}s` : Math.round(displayWeight(t.tonnageDelta) ?? 0).toLocaleString()}
                     </span>
                   )}
                 </span>
-                {t.topSet && !timed && (
+                {t.topSet && (
                   <span className="helix-num">
-                    Top set <span className="font-bold text-text">{displayWeight(t.topSet.weightKg)}{unit} × {t.topSet.reps}</span>
+                    {timed ? 'Best hold' : 'Top set'}{' '}
+                    <span className="font-bold text-text">
+                      {timed ? `${t.topSet.reps}s` : <>{displayWeight(t.topSet.weightKg)}{unit} × {t.topSet.reps}</>}
+                    </span>
                   </span>
                 )}
                 {t.progression.ceiling != null && (
                   <span className="helix-num">
-                    Ceiling <span className="font-bold text-text">{t.setsAtCeiling}/{ex.workingSets}</span> sets @ {t.progression.ceiling} reps
+                    {timed ? 'Hold' : 'Ceiling'} <span className="font-bold text-text">{t.setsAtCeiling}/{ex.workingSets}</span> sets @ {t.progression.ceiling}{timed ? 's' : ' reps'}
                   </span>
                 )}
               </div>
             )}
 
             {/* Double progression — the program's own rule: ALL working sets at
-                the programmed ceiling, one load, TWO consecutive sessions. */}
+                the programmed ceiling/hold, TWO consecutive sessions. Loaded lifts
+                earn LOAD; timed holds earn a LONGER hold. */}
             {t?.progression.state === 'ready' && (
               <div className="flex items-center gap-1.5 rounded-lg px-2 py-1.5"
                 style={{ background: `${EMBER}14`, border: `1px solid ${EMBER}3d` }}>
                 <TrendingUp className="w-3.5 h-3.5 shrink-0" style={{ color: EMBER }} aria-hidden="true" />
                 <span className="text-[11px] font-semibold" style={{ color: EMBER }}>
-                  Ceiling cleared twice — add {LOAD_STEP_KG}{unit}
-                  {t.progression.suggestKg != null && <> → {displayWeight(t.progression.suggestKg)}{unit}</>}
+                  {timed ? (
+                    <>Hold cleared twice — extend the hold past {t.progression.ceiling}s</>
+                  ) : (
+                    <>Ceiling cleared twice — add {LOAD_STEP_KG}{unit}
+                      {t.progression.suggestKg != null && <> → {displayWeight(t.progression.suggestKg)}{unit}</>}</>
+                  )}
                 </span>
               </div>
             )}
@@ -213,7 +225,9 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
                 style={{ background: `${GOLD}0f`, border: `1px solid ${GOLD}2e` }}>
                 <TrendingUp className="w-3.5 h-3.5 shrink-0" style={{ color: GOLD }} aria-hidden="true" />
                 <span className="text-[11px] font-semibold" style={{ color: GOLD }}>
-                  Ceiling cleared — one more session at {t.progression.ceiling} reps to earn the load
+                  {timed
+                    ? <>Hold cleared — one more session at {t.progression.ceiling}s to progress</>
+                    : <>Ceiling cleared — one more session at {t.progression.ceiling} reps to earn the load</>}
                 </span>
               </div>
             )}

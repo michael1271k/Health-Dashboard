@@ -28,16 +28,23 @@ const DICT: Array<{ tokens: string[]; muscles: MuscleEntry }> = [
   { tokens: ['butterfly'], muscles: { primary: ['chest'], secondary: ['shoulders', 'triceps'] } },
   { tokens: ['pec', 'deck'], muscles: { primary: ['chest'], secondary: ['shoulders', 'triceps'] } },
   { tokens: ['straight', 'arm', 'pulldown'], muscles: { primary: ['lats'], secondary: ['triceps'] } },
-  { tokens: ['face', 'pull'], muscles: { primary: ['shoulders'], secondary: ['biceps'] } },
-  { tokens: ['shoulder', 'press', 'dumbbell'], muscles: { primary: ['shoulders'], secondary: ['triceps'] } },
-  { tokens: ['db', 'shoulder', 'press'], muscles: { primary: ['shoulders'], secondary: ['triceps'] } },
+  // Deltoid work is NOT interchangeable for volume accounting. A bare 'shoulders'
+  // primary folded everything (press + face pull + lateral raise) into Side delts
+  // via toLandmarkMuscle, so overhead press and rear-delt face pulls inflated the
+  // side-delt count. Route each head to its real primary instead.
+  { tokens: ['face', 'pull'], muscles: { primary: ['rear_delts'], secondary: ['upper back'] } },
+  { tokens: ['shoulder', 'press', 'dumbbell'], muscles: { primary: ['front_delts'], secondary: ['side_delts', 'triceps'] } },
+  { tokens: ['db', 'shoulder', 'press'], muscles: { primary: ['front_delts'], secondary: ['side_delts', 'triceps'] } },
   { tokens: ['incline', 'curl'], muscles: { primary: ['biceps'], secondary: [] } },
-  { tokens: ['lateral', 'raise'], muscles: { primary: ['shoulders'], secondary: [] } },
+  { tokens: ['lateral', 'raise'], muscles: { primary: ['side_delts'], secondary: [] } },
   { tokens: ['overhead', 'triceps'], muscles: { primary: ['triceps'], secondary: [] } },
   { tokens: ['triceps', 'pushdown'], muscles: { primary: ['triceps'], secondary: [] } },
   { tokens: ['triceps', 'extension'], muscles: { primary: ['triceps'], secondary: [] } },
   { tokens: ['hammer', 'curl'], muscles: { primary: ['biceps'], secondary: ['forearms'] } },
-  { tokens: ['reverse', 'curl'], muscles: { primary: ['biceps'], secondary: ['forearms'] } },
+  // Reverse (pronated) curl is a brachioradialis/forearm movement — the program
+  // itself tags it forearms-first. muscleMap said biceps, so 2 forearm sets/week
+  // were mis-credited to biceps.
+  { tokens: ['reverse', 'curl'], muscles: { primary: ['forearms'], secondary: ['biceps'] } },
   { tokens: ['single', 'arm', 'cable', 'crossover'], muscles: { primary: ['chest'], secondary: [] } },
   { tokens: ['cable', 'crossover'], muscles: { primary: ['chest'], secondary: [] } },
   { tokens: ['cable', 'fly'], muscles: { primary: ['chest'], secondary: [] } },
