@@ -35,8 +35,6 @@ export function SessionIntelCard({ session }: { session: GymReportRow }) {
   const [notesOpen, setNotesOpen] = useState(true)
   const unit = useUnitSystem()
 
-  const maxVol = Math.max(...(intel?.volumes.map((v) => v.volumeKg) ?? [1]), 1)
-
   // The coach output is now a brief 2-sentence insight, surfaced up top. Older
   // sessions may still carry a long markdown report — those stay collapsible.
   const md = session.reportMd?.trim() ?? ''
@@ -123,27 +121,9 @@ export function SessionIntelCard({ session }: { session: GymReportRow }) {
         </div>
       )}
 
-      {/* Volume trail vs last same-split sessions (hidden on the first of a type) */}
-      {!intel?.isFirstOfType && (intel?.volumes.length ?? 0) >= 2 && (
-        <div>
-          <p className="text-[10px] uppercase tracking-wide text-muted mb-1.5">Volume vs previous {intel!.volumes.length - 1} session{intel!.volumes.length > 2 ? 's' : ''}</p>
-          <div className="flex items-end gap-2 h-14">
-            {intel!.volumes.map((v, i) => {
-              const isThis = i === intel!.volumes.length - 1
-              return (
-                <div key={v.date} className="flex-1 flex flex-col items-center gap-1">
-                  <div className="w-full rounded-t-md" style={{
-                    height: `${Math.max(8, (v.volumeKg / maxVol) * 44)}px`,
-                    background: isThis ? '#E0703C' : 'rgba(255,255,255,0.12)',
-                    boxShadow: isThis ? '0 0 10px #E0703C66' : undefined,
-                  }} />
-                  <span className="text-[8px] text-muted helix-num">{new Date(v.date + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
+      {/* The orange "Volume vs previous session" bar strip was removed here — it
+          duplicated the tappable volume trajectory inside the Inspect deep-dive
+          (ProgressionTrail) and cluttered the pre-inspect summary. */}
 
       {/* Legacy long-form report — demoted + collapsible (new sessions use the insight banner) */}
       {longNotes && (

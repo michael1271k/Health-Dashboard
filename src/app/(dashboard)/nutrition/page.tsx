@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ChevronDown, FlaskConical, ChevronRight } from 'lucide-react'
+import { FlaskConical, ChevronRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { useQueryClient } from '@tanstack/react-query'
 import { useDailyLogs } from '@/lib/hooks/useNutrition'
@@ -41,8 +41,6 @@ export default function NutritionPage() {
   const todayLog = (todayLogs ?? []).find((l) => l.date === todayISO) ?? null
 
   const [goals, setGoals] = useState<ActiveGoals>({ calorie: 1955, protein: 170, carbs: 195, fat: 55, mode: 'cut' })
-  const [saving, setSaving] = useState(false)
-  const [targetsOpen, setTargetsOpen] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -72,21 +70,6 @@ export default function NutritionPage() {
     load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  async function applyMode(mode: NutritionMode) {
-    const preset = NUTRITION_PRESETS[mode]
-    setSaving(true)
-    setGoals({ calorie: preset.calorieGoal, protein: preset.proteinGoalG, carbs: preset.carbsGoalG, fat: preset.fatGoalG, mode })
-    const { data: { session } } = await supabase.auth.getSession()
-    if (session) {
-      await supabase.from('user_goals').upsert({
-        user_id: session.user.id, calorie_goal: preset.calorieGoal, protein_goal_g: preset.proteinGoalG,
-        carbs_goal_g: preset.carbsGoalG, fat_goal_g: preset.fatGoalG, goal_preset: mode,
-      } as unknown as never, { onConflict: 'user_id' })
-      qc.invalidateQueries({ queryKey: ['user_goals'] })
-    }
-    setSaving(false)
-  }
 
   // The nested sub-phase (Cut / Maint / Bulk under Helix 5.1) narrows the day
   // list by its DB-stored per-day phase. Only the Helix era carries the sub-
@@ -144,38 +127,19 @@ export default function NutritionPage() {
         />
       </div>
 
-      {/* Targets — demoted to a discreet collapsible at the bottom:
-          changing phase is a monthly event, not prime-screen real estate. */}
-      <section className="helix-card">
-        <button onClick={() => setTargetsOpen((v) => !v)} aria-expanded={targetsOpen}
-          className="w-full flex items-center justify-between gap-2 min-h-[44px] text-left">
-          <span className="font-semibold text-text">Targets</span>
-          <span className="flex items-center gap-2 text-xs text-muted">
-            {goals.mode && <span className="capitalize text-primary font-semibold">{NUTRITION_PRESETS[goals.mode].label}</span>}
-            <span className="helix-num">{goals.calorie.toLocaleString()} kcal</span>
-            {adherence !== null && <span>· 7d adherence <span className="text-primary font-semibold">{adherence}%</span></span>}
-            <ChevronDown className={`w-4 h-4 transition-transform ${targetsOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
-          </span>
-        </button>
-        {targetsOpen && (
-          <div className="grid grid-cols-3 gap-2 mt-3">
-            {(Object.keys(NUTRITION_PRESETS) as NutritionMode[]).map((mode) => {
-              const preset = NUTRITION_PRESETS[mode]
-              const active = goals.mode === mode
-              return (
-                <button key={mode} onClick={() => applyMode(mode)} disabled={saving} aria-pressed={active}
-                  className={`glass-card glass-hover py-3 px-2 text-center transition-all duration-200 ${active ? 'glass-card--accent text-primary' : 'text-muted'}`}>
-                  <div className="font-semibold text-sm">{preset.label}</div>
-                  <div className="text-xs opacity-70 mt-0.5 tabular-nums">{preset.calorieGoal.toLocaleString()} kcal</div>
-                  <div className="text-[10px] opacity-60 mt-0.5">
-                    {preset.proteinGoalG !== null ? `${preset.proteinGoalG}P / ${preset.carbsGoalG}C / ${preset.fatGoalG}F` : 'macros TBD'}
-                  </div>
-                </button>
-              )
-            })}
-          </div>
-        )}
-      </section>
+      {/* Phase targets (Cut / Maintenance / Lean Bulk) moved to Settings → Plan &
+          Phase, where selecting one also drives step goal + target weight + tags.
+          A discreet pointer keeps the adherence read here. */}
+      <Link href="/settings" className="glass-card w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-white/[0.03] transition-colors">
+        <span className="flex-1 min-w-0 text-sm">
+          <span className="font-semibold text-text">Plan &amp; targets</span>
+          <span className="text-muted"> · </span>
+          {goals.mode && <span className="capitalize text-primary font-semibold">{NUTRITION_PRESETS[goals.mode].label}</span>}
+          <span className="helix-num text-muted"> · {goals.calorie.toLocaleString()} kcal</span>
+          {adherence !== null && <span className="text-muted"> · 7d adherence <span className="text-primary font-semibold">{adherence}%</span></span>}
+        </span>
+        <ChevronRight className="w-4 h-4 text-muted shrink-0" aria-hidden="true" />
+      </Link>
     </div>
   )
 }

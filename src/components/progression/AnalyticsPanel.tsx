@@ -6,7 +6,6 @@ import { useWeightTrend, useMacroHistory, usePRHistory, useVolumeTrend } from '@
 import { useUserGoals } from '@/lib/hooks/useDashboard'
 import { RangeSelector } from '@/components/charts/RangeSelector'
 import { eraForDate } from '@/lib/programs'
-import { DeferredMount } from '@/components/fx/DeferredMount'
 import { WidgetBoundary } from '@/components/fx/WidgetBoundary'
 import { useEraFilter } from '@/lib/era/eraFilter'
 import { EraFilterPills } from '@/components/era/EraFilterPills'
@@ -21,13 +20,11 @@ const WeightTrendChart = dynamic(() => import('@/components/charts/WeightTrendCh
 const VolumeChart = dynamic(() => import('@/components/charts/VolumeChart').then((m) => m.VolumeChart), { ssr: false, loading: chartFallback })
 const MacroProgressChart = dynamic(() => import('@/components/charts/MacroProgressChart').then((m) => m.MacroProgressChart), { ssr: false, loading: chartFallback })
 const PRHistoryChart = dynamic(() => import('@/components/charts/PRHistoryChart').then((m) => m.PRHistoryChart), { ssr: false, loading: chartFallback })
-const MuscleAnalyticsSection = dynamic(() => import('@/components/charts/MuscleAnalytics').then((m) => m.MuscleAnalyticsSection), { ssr: false, loading: chartFallback })
-const BodyHeatmap = dynamic(() => import('@/components/charts/HelixViz').then((m) => m.BodyHeatmap), { ssr: false, loading: chartFallback })
-const VolumeStream = dynamic(() => import('@/components/charts/HelixViz').then((m) => m.VolumeStream), { ssr: false, loading: chartFallback })
-const RpeCalendar = dynamic(() => import('@/components/charts/HelixViz').then((m) => m.RpeCalendar), { ssr: false, loading: chartFallback })
 
-/** Analytics view of the Progression tab — every performance & body chart plus
- * the weekly vitals grid, filterable by range and training era. */
+/** Analytics view of the Momentum tab — the BODY & PERFORMANCE trend charts
+ * (weight, volume, macros, PRs) filterable by range and training era. The
+ * gym/muscle-progress graphs (Contour Map, Intensity Calendar, Volume Stream,
+ * Muscle Analytics) moved to the Workout Command Center. */
 export function AnalyticsPanel() {
   const [days, setDays] = useState(30)
   const { data: weightData, isLoading: weightLoading } = useWeightTrend(days)
@@ -68,23 +65,6 @@ export function AnalyticsPanel() {
               <PRHistoryChart data={pData} isLoading={prLoading} />
             </div>
           </WidgetBoundary>
-
-          <DeferredMount minHeight={480}>
-            <WidgetBoundary label="Muscle analytics" minHeight={280}>
-              <div>
-                <h2 className="font-heading text-fluid-lg font-bold text-text mb-3">Muscle Analytics <span className="text-fluid-xs text-muted font-normal">Hevy-killer</span></h2>
-                <div className="space-y-4 min-w-0">
-                  <div className="grid lg:grid-cols-2 gap-4 [&>*]:min-w-0">
-                    <BodyHeatmap days={days} era={era} />
-                    <RpeCalendar days={days} era={era} />
-                  </div>
-                  <VolumeStream days={days} era={era} />
-                  <MuscleAnalyticsSection days={days} era={era} />
-                </div>
-              </div>
-            </WidgetBoundary>
-          </DeferredMount>
-
         </div>
       </div>
     </div>

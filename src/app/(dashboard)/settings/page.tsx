@@ -7,7 +7,12 @@ import { NotionSync } from '@/components/settings/NotionSync'
 import { supabase } from '@/lib/supabase/client'
 import { derivePhase, phaseDisplay } from '@/lib/nutrition/phase'
 import { logicalTodayISO } from '@/lib/utils/day'
+import { NUTRITION_PRESETS, type NutritionMode } from '@/lib/types/workout'
+import { phaseBadgeStyle } from '@/lib/phases'
 import type { Tables } from '@/lib/supabase/types'
+
+/** Nutrition mode → the timeline phase kind, so the picker reuses the glow palette. */
+const MODE_TO_PHASE = { cut: 'cut', maintenance: 'maintenance', bulk: 'bulk' } as const
 
 type ContextMode = 'normal' | 'travel' | 'illness' | 'emergency'
 
@@ -64,6 +69,10 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [status, setStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null)
+  // Kept OUT of the always-spread `goals` object: target_weight_kg is a fresh
+  // column, so writing it self-heals (see saveTargetWeight) rather than failing
+  // the whole Settings save on a DB that hasn't run the paste-SQL yet.
+  const [targetWeight, setTargetWeight] = useState<number | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -93,6 +102,8 @@ export default function SettingsPage() {
           auto_log_supplements: data.auto_log_supplements ?? false,
         })
         applyPrefsToDevice((data.unit_system ?? 'kg') as 'kg' | 'lb', data.reduce_motion ?? false)
+        const tw = (data as { target_weight_kg?: number | null }).target_weight_kg
+        if (typeof tw === 'number') setTargetWeight(tw)
       }
       setLoading(false)
     }
@@ -121,6 +132,39 @@ export default function SettingsPage() {
     setSaving(false)
   }
 
+  /** Persist target weight on its own, self-healing if the column isn't migrated. */
+  async function saveTargetWeight(kg: number | null) {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return
+    const { error } = await supabase
+      .from('user_goals')
+      .upsert({ user_id: session.user.id, target_weight_kg: kg } as unknown as never, { onConflict: 'user_id' })
+    // Column not migrated yet → silently skip; the paste-SQL adds target_weight_kg.
+    if (error && !/column|target_weight|schema cache|PGRST204/i.test(error.message)) {
+      setStatus({ type: 'error', msg: error.message })
+    }
+  }
+
+  /**
+   * Selecting a phase pushes ITS numbers into the live goals — calories, macros,
+   * step goal, target weight, and the goal_preset tag. The app's cut/bulk landmark
+   * targets and the daily phase chip both key off calorie_goal, so re-tagging is
+   * automatic once the goal is written.
+   */
+  async function applyPhase(mode: NutritionMode) {
+    const p = NUTRITION_PRESETS[mode]
+    await save({
+      calorie_goal: p.calorieGoal,
+      protein_goal_g: p.proteinGoalG ?? goals.protein_goal_g,
+      carbs_goal_g: p.carbsGoalG ?? goals.carbs_goal_g,
+      fat_goal_g: p.fatGoalG ?? goals.fat_goal_g,
+      steps_goal: p.stepsGoal,
+      goal_preset: mode,
+    })
+    setTargetWeight(p.targetWeightKg)
+    await saveTargetWeight(p.targetWeightKg)
+  }
+
   const inputCls =
     'w-full rounded-xl border border-border bg-surface-2 px-3 py-2 text-text text-sm ' +
     'focus:outline-none focus:ring-2 focus:ring-primary/60 transition-[border-color] duration-200'
@@ -134,13 +178,65 @@ export default function SettingsPage() {
         <p className="text-muted text-sm mt-0.5">Goals &amp; context for daily scoring</p>
       </div>
 
-      {/* Nutrition modes moved to the Nutrition tab */}
-      {goals.goal_preset && (
-        <p className="text-xs text-muted">
-          Active nutrition mode: <span className="text-primary capitalize">{goals.goal_preset}</span>
-          <span className="opacity-70"> — change it in the Nutrition tab.</span>
-        </p>
-      )}
+      {/* ── Plan & Phase — the single place a training phase is chosen. Picking one
+             pushes its numbers into the live goals; landmark cut/bulk targets and
+             the daily phase chip re-tag automatically off calorie_goal. ── */}
+      <section className="helix-card space-y-4">
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <h2 className="font-semibold text-text">Plan &amp; Phase</h2>
+            <p className="text-xs text-muted mt-0.5">
+              Selecting a phase updates calories, macros, step goal, target weight, and the app&apos;s cut/bulk tags.
+            </p>
+          </div>
+          {(() => {
+            const p = derivePhase(goals.calorie_goal)
+            if (!p) return null
+            const m = phaseDisplay(p, logicalTodayISO())
+            return (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wide shrink-0"
+                style={{ color: m.color, background: `${m.color}1f`, border: `1px solid ${m.color}55`, boxShadow: `0 0 10px ${m.color}44` }}>
+                Active: {m.label}
+              </span>
+            )
+          })()}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          {(['cut', 'maintenance', 'bulk'] as NutritionMode[]).map((mode) => {
+            const p = NUTRITION_PRESETS[mode]
+            const active = goals.goal_preset === mode
+            const glow = phaseBadgeStyle(MODE_TO_PHASE[mode], active)
+            return (
+              <button key={mode} onClick={() => applyPhase(mode)} disabled={saving} aria-pressed={active}
+                className="rounded-2xl border p-3 text-left transition-all duration-200 disabled:opacity-60"
+                style={active ? glow : { borderColor: 'rgba(255,255,255,0.08)' }}>
+                <div className="font-heading font-bold text-sm text-text">{p.label}</div>
+                <div className="helix-num text-fluid-lg font-bold mt-0.5" style={{ color: active ? (glow.color as string) : '#E0703C' }}>
+                  {p.calorieGoal.toLocaleString()}<span className="text-[10px] text-muted"> kcal</span>
+                </div>
+                <div className="text-[10px] text-muted mt-0.5">{p.proteinGoalG}P · {p.carbsGoalG}C · {p.fatGoalG}F</div>
+                <div className="text-[10px] text-muted mt-0.5">{p.stepsGoal.toLocaleString()} steps · target {p.targetWeightKg} kg</div>
+              </button>
+            )
+          })}
+        </div>
+
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <div className="text-sm text-text font-medium">Target weight (kg)</div>
+            <div className="text-xs text-muted">The bodyweight this phase is steering toward</div>
+          </div>
+          <input
+            type="number"
+            step={0.1}
+            value={targetWeight ?? ''}
+            onChange={(e) => setTargetWeight(e.target.value === '' ? null : Number(e.target.value))}
+            onBlur={() => saveTargetWeight(targetWeight)}
+            className={`${inputCls} max-w-[120px]`}
+          />
+        </div>
+      </section>
 
       {/* Desktop: cards flow into two columns so the width isn't wasted. */}
       <div className="grid gap-6 lg:grid-cols-2 items-start">

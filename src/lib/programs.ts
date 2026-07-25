@@ -131,9 +131,10 @@ export const APEX51: Program = {
   ],
 }
 
-// ── AXIS-4 backup routines (drawer) ──────────────────────────────────────────
+// ── Helix 4 backup routine (drawer) — ONE 4-day base, phase-tagged Bulk vs Cut.
+// Same movements/structure; the Cut variant only tightens the rep prescriptions.
 export const AXIS4_BUILDER: Program = {
-  id: 'axis4_builder', label: 'AXIS-4 Builder (Bulk)', era: 'axis', drawer: true,
+  id: 'axis4_builder', label: 'Helix 4 · Bulk', era: 'axis', drawer: true,
   days: [
     { key: 'upper_a', label: 'Upper A', color: C.cbA, weekday: 1, exercises: [
       { name: 'Incline DB Press', sets: 3, wk1Kg: 32, reps: '6–10', muscles: ['chest', 'shoulders'], compound: true },
@@ -167,7 +168,7 @@ export const AXIS4_BUILDER: Program = {
   ],
 }
 export const AXIS4_DEFENDER: Program = {
-  ...AXIS4_BUILDER, id: 'axis4_defender', label: 'AXIS-4 Defender (Cut)',
+  ...AXIS4_BUILDER, id: 'axis4_defender', label: 'Helix 4 · Cut',
   days: AXIS4_BUILDER.days.map((d) => ({ ...d, exercises: d.exercises.map((e) => ({ ...e, reps: e.compound ? '8–12' : '15–20' })) })),
 }
 

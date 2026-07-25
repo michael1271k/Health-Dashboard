@@ -90,6 +90,14 @@ export interface NutritionPreset {
   carbsGoalG: number | null
   fatGoalG: number | null
   fiberGoalG: number | null
+  /** Daily step goal for the phase (a cut leans on NEAT more than a bulk). */
+  stepsGoal: number
+  /**
+   * A STARTING target bodyweight for the phase (kg). Selecting the phase in
+   * Settings seeds `user_goals.target_weight_kg` with this; the user can then
+   * fine-tune the exact number. Deliberately a suggestion, not a hard constant.
+   */
+  targetWeightKg: number
 }
 
 // Active nutrition targets. Helix Cut 5.1 opens 2026-07-15 — 1955 kcal split
@@ -103,6 +111,8 @@ export const NUTRITION_PRESETS: Record<NutritionMode, NutritionPreset> = {
     carbsGoalG: 195,
     fatGoalG: 55,
     fiberGoalG: 30,       // 28–35 g band
+    stepsGoal: 10000,
+    targetWeightKg: 62,   // cut-exit ballpark; adjust in Settings
   },
   bulk: {
     mode: 'bulk',
@@ -112,6 +122,8 @@ export const NUTRITION_PRESETS: Record<NutritionMode, NutritionPreset> = {
     carbsGoalG: 337,      // 330–345 g
     fatGoalG: 70,         // HARD CAP
     fiberGoalG: 35,       // 33–38 g
+    stepsGoal: 8000,
+    targetWeightKg: 70,
   },
   maintenance: {
     mode: 'maintenance',
@@ -121,5 +133,7 @@ export const NUTRITION_PRESETS: Record<NutritionMode, NutritionPreset> = {
     carbsGoalG: 270,
     fatGoalG: 75,
     fiberGoalG: 30,
+    stepsGoal: 9000,
+    targetWeightKg: 64,
   },
 }

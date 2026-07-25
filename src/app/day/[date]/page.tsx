@@ -34,25 +34,28 @@ function scoreColor(score: number | null | undefined): string {
   return ROSE
 }
 
-/** A micro macro ring (adherence = intake / goal-ish hint). */
+/**
+ * A macro ring (adherence = intake / goal-ish hint). Sized generously — the Fuel
+ * card rings used to be a tiny 44px lost in their container; they own the card now.
+ */
 function MicroRing({ value, goalHint, color, label }: { value: number | null | undefined; goalHint: number; color: string; label: string }) {
-  const size = 44, stroke = 4
+  const size = 72, stroke = 6
   const r = (size - stroke) / 2
   const circ = 2 * Math.PI * r
   const pct = value != null ? Math.min(1, value / goalHint) : 0
   return (
-    <div className="flex flex-col items-center gap-0.5">
-      <div className="relative">
+    <div className="flex flex-col items-center gap-1">
+      <div className="relative" style={{ width: size, height: size, filter: `drop-shadow(0 0 6px ${color}30)` }}>
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90" aria-hidden="true">
           <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth={stroke} />
           {pct > 0 && <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={stroke} strokeLinecap="round"
-            strokeDasharray={circ} strokeDashoffset={circ * (1 - pct)} />}
+            strokeDasharray={circ} strokeDashoffset={circ * (1 - pct)} style={{ transition: 'stroke-dashoffset 600ms cubic-bezier(0.22,1,0.36,1)' }} />}
         </svg>
-        <span className="absolute inset-0 flex items-center justify-center helix-num text-[11px] font-bold text-text">
+        <span className="absolute inset-0 flex items-center justify-center helix-num text-fluid-base font-bold text-text">
           {value != null ? Math.round(value) : '—'}
         </span>
       </div>
-      <span className="text-[9px] uppercase tracking-wide" style={{ color }}>{label}</span>
+      <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color }}>{label}</span>
     </div>
   )
 }

@@ -21,6 +21,9 @@ import { Plus, TrendingUp, Moon, ArrowRight, Flag, FileClock, ChevronDown } from
 
 const StrengthTrends = dynamic(() => import('@/components/charts/StrengthTrends').then((m) => m.StrengthTrends), { ssr: false })
 const WeeklyVolumeCard = dynamic(() => import('@/components/command-center/WeeklyVolumeCard').then((m) => m.WeeklyVolumeCard), { ssr: false })
+// Gym/muscle-progress graphs (Contour Map, Intensity Calendar, Volume Stream,
+// Muscle Analytics) — relocated here from the Momentum → Analytics tab.
+const MuscleAnalyticsPanel = dynamic(() => import('@/components/command-center/MuscleAnalyticsPanel').then((m) => m.MuscleAnalyticsPanel), { ssr: false })
 
 const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const PROGRAM_ORDER = ['apex51', 'axis4_builder', 'axis4_defender']
@@ -225,10 +228,14 @@ export default function WorkoutPage() {
         <WeeklyVolumeCard />
       </WidgetBoundary>
 
-      {/* Progression snapshot (heavy analytics live in the Charts tab) */}
+      {/* Progression snapshot */}
       <WidgetBoundary label="Strength trends" minHeight={200}>
         <StrengthTrends era={era} />
       </WidgetBoundary>
+
+      {/* Gym/muscle-progress graphs — Contour Map · Intensity Calendar ·
+          Volume Stream · Muscle Analytics (moved out of Momentum). */}
+      <MuscleAnalyticsPanel />
     </div>
   )
 }

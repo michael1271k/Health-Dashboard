@@ -57,7 +57,7 @@ export function LiquidModal({ open, onClose, title, accent = '#E0703C', children
               with a low-alpha accent wash so the glass picks up the domain
               colour instead of reading as a flat panel. */}
           <m.div
-            className="relative w-full max-w-md md:max-w-2xl lg:max-w-3xl max-h-[85dvh] md:max-h-[80dvh] flex flex-col overflow-hidden rounded-3xl"
+            className="relative w-full max-w-md md:max-w-2xl lg:max-w-3xl xl:max-w-4xl max-h-[88dvh] md:max-h-[86dvh] flex flex-col overflow-hidden rounded-3xl"
             style={{
               background:
                 `linear-gradient(158deg, ${accent}12 0%, transparent 42%),` +
