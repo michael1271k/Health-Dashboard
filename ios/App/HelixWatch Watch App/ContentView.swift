@@ -8,6 +8,7 @@
 //
 
 import SwiftUI
+import Combine  // ObservableObject / @Published live here; watchOS doesn't re-export via SwiftUI
 
 // MARK: - Palette (mirrors the web jewel tokens)
 

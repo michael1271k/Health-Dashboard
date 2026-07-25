@@ -63,3 +63,6 @@ historical_seed.sql
 
 # iOS Widget/Watch secrets — the real xcconfig carries the snapshot token
 ios/App/Secrets.xcconfig
+
+# iOS snapshot secrets (token) — never commit
+ios/App/App/Secrets.xcconfig

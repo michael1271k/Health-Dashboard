@@ -1,32 +1,3 @@
-//
-//  HelixWidgets.swift
-//  HelixWidgets — HELIX home-screen + lock-screen widgets.
-//
-//  DELIVERED, NOT YET IN THE PROJECT. The HelixWidgets target does not exist in
-//  the repo. To wire it up, follow the steps in the header block below, then add
-//  THIS file plus Shared/HelixSnapshot.swift to the target.
-//
-//  ── XCODE STEPS (free personal team) ─────────────────────────────────────────
-//  1. Open ios/App/App.xcworkspace (the WORKSPACE — CocoaPods).
-//  2. File ▸ New ▸ Target… ▸ iOS ▸ Widget Extension ▸ Next.
-//       Product Name: HelixWidgets
-//       UNCHECK "Include Live Activity" and "Include Configuration App Intent".
-//       Team: your personal team · Embed in Application: App · Finish.
-//  3. "Activate HelixWidgets scheme?" → Activate.
-//  4. Delete the auto-generated HelixWidgets.swift Xcode created; drag THIS file in.
-//  5. Select Shared/HelixSnapshot.swift ▸ File Inspector ▸ Target Membership ▸
-//       tick HelixWidgets (it should also already be ticked for HelixWatch).
-//  6. Target HelixWidgets ▸ General ▸ Minimum Deployments → iOS 17.0.
-//  7. Signing & Capabilities ▸ your team · Automatically manage signing.
-//       DO NOT add App Groups — a free team rejects it.
-//  8. Project ▸ Info ▸ Configurations → set Secrets.xcconfig as the config file for
-//       Debug AND Release on HelixWidgets. Then in HelixWidgets/Info.plist add
-//       HELIX_SNAPSHOT_URL = $(HELIX_SNAPSHOT_URL) and
-//       HELIX_SNAPSHOT_TOKEN = $(HELIX_SNAPSHOT_TOKEN).
-//  9. Build. After changing the snapshot shape, delete + re-add the widget (they
-//       don't hot-reload).
-//
-
 import WidgetKit
 import SwiftUI
 
