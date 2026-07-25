@@ -6,17 +6,46 @@ import { logicalTodayISO } from '@/lib/utils/day'
 import { programDayByKey } from '@/lib/programs'
 
 /**
- * DOMS tracking, scoped to the two muscles that actually steer the protocol.
- *
- * The eight-muscle grid was noise: upper-body soreness never changed a decision,
- * and rating eight groups daily is a chore nobody sustains. Quads and hamstrings
- * are the ones that gate whether the next leg day runs as programmed.
+ * DOMS tracking across the whole body. Each muscle's soreness is auto-attributed
+ * to the most recent session (within the 72h window) that actually TRAINED it —
+ * so "moderate quads" reads back against Legs & Core B while "sore chest" points
+ * at the last Upper day, filtered by the session's own muscle tags.
  *
  * Tape measurements (waist/arm/thigh) were removed entirely — see the migration
  * that drops `body_measurements`.
  */
-export const DOMS_MUSCLES = ['Quads', 'Hamstrings'] as const
+export const DOMS_MUSCLES = ['Quads', 'Hamstrings', 'Calves', 'Back', 'Chest', 'Arms', 'Shoulders'] as const
 export type DomsMuscle = (typeof DOMS_MUSCLES)[number]
+
+/** Fold a program muscle token into one of the tracked DOMS muscles (or null). */
+function domsMuscleOf(token: string): DomsMuscle | null {
+  switch (token.toLowerCase().replace(/[\s-]+/g, '_')) {
+    case 'quads': case 'quadriceps': return 'Quads'
+    case 'hamstrings': case 'glutes': return 'Hamstrings'
+    case 'calves': return 'Calves'
+    case 'back': case 'lats': case 'upper_back': case 'lower_back': case 'traps': return 'Back'
+    case 'chest': case 'pecs': return 'Chest'
+    case 'biceps': case 'triceps': case 'forearms': return 'Arms'
+    case 'shoulders': case 'delts': case 'side_delts': case 'rear_delts': case 'front_delts': return 'Shoulders'
+    default: return null   // core, etc. — not a tracked DOMS muscle
+  }
+}
+
+/** The DOMS muscles a session trained — from its program day, else a split guess. */
+function sessionDomsMuscles(dayKey: string | null, split: string): Set<DomsMuscle> {
+  const out = new Set<DomsMuscle>()
+  const day = dayKey ? programDayByKey(dayKey) : null
+  if (day) {
+    for (const ex of day.exercises) for (const t of ex.muscles) {
+      const m = domsMuscleOf(t); if (m) out.add(m)
+    }
+    return out
+  }
+  // Legacy rows (no day_key): a coarse split → muscle guess.
+  if (split === 'legs' || split === 'lower') { out.add('Quads'); out.add('Hamstrings'); out.add('Calves') }
+  else { out.add('Chest'); out.add('Back'); out.add('Shoulders'); out.add('Arms') }
+  return out
+}
 
 export const DOMS_LEVELS = [
   { v: 0, label: 'None' },
@@ -61,19 +90,18 @@ const dayDiff = (from: string, to: string): number =>
   Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000)
 
 /**
- * The leg session responsible for today's soreness — the most recent one within
- * the 72-hour window ending on `date`.
+ * Per-muscle DOMS attribution: each tracked muscle → the most recent session in
+ * the 72h window that actually trained it (filtered by the session's muscle tags).
  *
  * DOMS peaks at 24–48h and is usually gone by 72h, so a rating on Sunday is
- * reporting on Friday's session, not on Sunday. Without the attribution the log
- * was just "quads: moderate on the 26th", which can't be read back against the
- * session that caused it.
+ * reporting on Friday's session. Sore quads point at the last leg day; a sore
+ * chest points at the last Upper day — each muscle to the workout that caused it.
  */
-export function useDomsSource(date = logicalTodayISO()) {
+export function useDomsSources(date = logicalTodayISO()) {
   return useQuery({
-    queryKey: ['doms_source', date],
+    queryKey: ['doms_sources', date],
     staleTime: 60_000,
-    queryFn: async (): Promise<DomsSource | null> => {
+    queryFn: async (): Promise<Partial<Record<DomsMuscle, DomsSource>>> => {
       const from = new Date(`${date}T00:00:00Z`)
       from.setUTCDate(from.getUTCDate() - (DOMS_WINDOW_DAYS - 1))
       const end = new Date(`${date}T00:00:00Z`)
@@ -82,24 +110,27 @@ export function useDomsSource(date = logicalTodayISO()) {
         .select('id, started_at, split_day, day_key')
         .gte('started_at', from.toISOString())
         .lt('started_at', end.toISOString())
-        .order('started_at', { ascending: false })
-      if (error) return null
+        .order('started_at', { ascending: false })   // newest first → first match wins
+      if (error) return {}
       const rows = (data ?? []) as Array<{ id: string; started_at: string; split_day: string; day_key: string | null }>
-      // Quads/hamstrings soreness comes from leg days; an upper day isn't a
-      // plausible cause, so it must never be credited with the rating.
-      const legs = rows.find((r) => r.split_day === 'legs' || (r.day_key ?? '').startsWith('legs'))
-      if (!legs) return null
-      const sessionDate = legs.started_at.slice(0, 10)
-      const programDay = legs.day_key ? programDayByKey(legs.day_key) : null
-      return {
-        sessionId: legs.id,
-        dayKey: legs.day_key,
-        label: programDay
-          ? (programDay.sub ? `${programDay.label} · ${programDay.sub}` : programDay.label)
-          : legs.split_day[0].toUpperCase() + legs.split_day.slice(1),
-        date: sessionDate,
-        dayOffset: Math.max(0, dayDiff(sessionDate, date)),
+      const byMuscle: Partial<Record<DomsMuscle, DomsSource>> = {}
+      for (const r of rows) {
+        const sessionDate = r.started_at.slice(0, 10)
+        const programDay = r.day_key ? programDayByKey(r.day_key) : null
+        const src: DomsSource = {
+          sessionId: r.id,
+          dayKey: r.day_key,
+          label: programDay
+            ? (programDay.sub ? `${programDay.label} · ${programDay.sub}` : programDay.label)
+            : r.split_day[0].toUpperCase() + r.split_day.slice(1),
+          date: sessionDate,
+          dayOffset: Math.max(0, dayDiff(sessionDate, date)),
+        }
+        for (const m of sessionDomsMuscles(r.day_key, r.split_day)) {
+          if (!byMuscle[m]) byMuscle[m] = src   // newest-first, so first is most recent
+        }
       }
+      return byMuscle
     },
   })
 }

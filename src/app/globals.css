@@ -455,6 +455,13 @@ html[data-theme='travel'] {
 }
 .liquid-wave { animation: liquidWobble 3.6s ease-in-out infinite; }
 
+/* Hydration fluid-cell wave crests — drift one full wavelength (50% of the
+   2x-wide SVG) to loop seamlessly. */
+@keyframes waterDrift { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.water-wave { animation: waterDrift 3.4s linear infinite; }
+.water-wave--slow { animation: waterDrift 5.6s linear infinite reverse; }
+@media (prefers-reduced-motion: reduce) { .water-wave, .water-wave--slow { animation: none; } }
+
 /* Holographic sheen — a slow specular sweep across hero glass cards (AXIS aesthetic). */
 @keyframes holoSheen {
   0%, 100% { transform: translateX(-170%) skewX(-18deg); }

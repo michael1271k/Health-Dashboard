@@ -9,14 +9,16 @@ import { InBodyCard } from '@/components/day/InBodyCard'
 import { SleepDebtGauge } from '@/components/day/SleepDebtGauge'
 import { SwapDayControl } from '@/components/day/SwapDayControl'
 import { DomsTracker } from '@/components/day/RecoveryTrackers'
+import { WaterFluid } from '@/components/day/WaterFluid'
 import { useDayVault, dayCompleteness, type DayVaultData } from '@/lib/hooks/useDayVault'
+import { useUserGoals } from '@/lib/hooks/useDashboard'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { useDoubleTap } from '@/lib/utils/doubleTap'
 import { MacroOverrideSheet } from '@/components/nutrition/MacroOverrideSheet'
 import { phaseDisplay } from '@/lib/nutrition/phase'
 import { ERA_META, eraForDate, scheduleDayFor, PROGRAMS, DEFAULT_PROGRAM_ID, getActiveProgramId } from '@/lib/programs'
 import { displayWeight, weightUnit, fmtVolume } from '@/lib/utils/units'
-import { formatSleep, mlToL } from '@/lib/utils/format'
+import { formatSleep } from '@/lib/utils/format'
 import { logicalTodayISO } from '@/lib/utils/day'
 
 const VIOLET = '#B4522A'
@@ -135,6 +137,7 @@ export default function DailyNexusPage() {
   const router = useRouter()
   const date = /^\d{4}-\d{2}-\d{2}$/.test(raw ?? '') ? raw : ''
   const { data, isLoading } = useDayVault(date)
+  const { data: goals } = useUserGoals()
   const [scaleOpen, setScaleOpen] = useState(false)
   const [fuelEdit, setFuelEdit] = useState(false)
   const tapFuel = useDoubleTap(() => setFuelEdit(true))
@@ -280,20 +283,26 @@ export default function DailyNexusPage() {
           <SleepDebtGauge compact />
         </section>
 
+        {/* Hydration — rising fluid column (Nexus instrument cluster) */}
+        <div className="col-span-2 sm:col-span-1">
+          <WaterFluid ml={log?.water_ml ?? null} goalMl={goals?.water_goal_ml ?? 3000} />
+        </div>
+
         {/* Vitals & Body */}
-        <section className="helix-card col-span-2 space-y-2">
+        <section className="helix-card col-span-2 sm:col-span-1 space-y-2">
           <h3 className="font-heading font-semibold text-fluid-sm text-text">Vitals &amp; Body</h3>
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 text-center">
+          <div className="grid grid-cols-3 gap-2 text-center">
             {[
               // Weight intentionally NOT here — it owns the Body/InBody card;
-              // duplicating it across both boxes was the redundancy.
+              // duplicating it across both boxes was the redundancy. Water now owns
+              // its fluid cell to the left.
               { label: 'Steps', v: log?.steps != null ? Math.round(log.steps).toLocaleString() : null, u: '', c: '#8E9AAC' },
-              { label: 'Water', v: log?.water_ml != null ? mlToL(log.water_ml) : null, u: 'L', c: '#3D7AB8' },
               { label: 'Active', v: log?.active_energy != null ? Math.round(log.active_energy) : null, u: '', c: '#C4514E' },
               { label: 'Stand', v: log?.stand_hours != null ? `${log.stand_hours}` : null, u: 'h', c: '#3E9E7A' },
               // VO₂max removed — HealthKit never populated it (always 0).
               { label: 'Resp', v: log?.respiratory_rate != null ? log.respiratory_rate.toFixed(1) : null, u: '/min', c: ICE },
               { label: 'SpO₂', v: log?.blood_oxygen != null ? Math.round(log.blood_oxygen) : null, u: '%', c: '#3E9E7A' },
+              { label: 'HRV', v: log?.hrv_ms != null ? `${Math.round(log.hrv_ms)}` : null, u: '', c: ICE },
             ].map((s) => (
               <div key={s.label} className="rounded-lg bg-white/[0.02] border border-white/[0.05] px-1 py-1.5">
                 <span className="helix-num block text-fluid-xs font-bold text-text leading-tight">{s.v ?? '—'}{s.v != null && s.u ? s.u : ''}</span>
