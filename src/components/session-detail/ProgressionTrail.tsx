@@ -9,23 +9,22 @@ import { GOLD, EMBER as VIOLET, EMERALD as TEAL, OXIDE as ROSE, MUTED } from '@/
 const shortDate = (iso: string) =>
   new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 
-/** Compact number for a metric cell — volume converts, everything else is raw. */
-function metricValue(m: IntelMetric): string {
-  if (m.value == null) return '—'
-  if (m.key === 'volume') return `${((displayWeight(m.value) ?? 0) / 1000).toFixed(1)}t`
-  return `${Math.round(m.value).toLocaleString()}${m.unit ? ` ${m.unit}` : ''}`
+/** Format any number in a metric's unit — volume converts to tonnes, rest raw. */
+function fmtMetric(m: IntelMetric, n: number | null): string {
+  if (n == null) return '—'
+  if (m.key === 'volume') return `${((displayWeight(n) ?? 0) / 1000).toFixed(1)}t`
+  return `${Math.round(n).toLocaleString()}${m.unit ? ` ${m.unit}` : ''}`
 }
 
-function metricDelta(m: IntelMetric): { text: string; color: string } | null {
-  if (m.delta == null || m.delta === 0) return null
+/** Percentage delta badge vs the previous same-type session (arrow + %). */
+function metricBadge(m: IntelMetric): { text: string; color: string; arrow: string } | null {
+  if (m.previous == null) return null          // first of type → "new", no badge
+  if (m.delta == null || m.delta === 0 || m.previous === 0) return { text: '0%', color: MUTED, arrow: '' }
+  const pct = Math.round((m.delta / Math.abs(m.previous)) * 100)
   const good = m.higherIsBetter ? m.delta > 0 : m.delta < 0
-  const sign = m.delta > 0 ? '+' : ''
-  const shown = m.key === 'volume'
-    ? `${sign}${((displayWeight(m.delta) ?? 0) / 1000).toFixed(1)}t`
-    : `${sign}${Math.round(m.delta).toLocaleString()}`
-  // Average HR has no good direction — it's context for the volume, not a grade.
+  // Average HR has no good direction — context for the volume, not a grade.
   const color = m.key === 'avgBpm' ? MUTED : good ? TEAL : ROSE
-  return { text: shown, color }
+  return { text: `${pct > 0 ? '+' : ''}${pct}%`, color, arrow: m.delta > 0 ? '▲' : '▼' }
 }
 
 /**
@@ -67,17 +66,33 @@ export function ProgressionTrail({ sessionId }: { sessionId: string }) {
       ) : (
         <div className="grid grid-cols-3 gap-1.5">
           {intel.metrics.map((m) => {
-            const d = metricDelta(m)
+            const b = metricBadge(m)
+            const cur = m.value ?? 0
+            const prev = m.previous ?? 0
+            const max = Math.max(cur, prev, 1)
             return (
-              <div key={m.key} className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-2.5 py-2">
-                <span className="block text-[9px] uppercase tracking-wide text-muted leading-none">{m.label}</span>
-                <span className="helix-num block text-fluid-sm font-bold text-text mt-1 leading-tight truncate">
-                  {metricValue(m)}
+              <div key={m.key} className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-2.5 py-2.5">
+                <div className="flex items-center justify-between gap-1">
+                  <span className="text-[9px] uppercase tracking-wide text-muted leading-none">{m.label}</span>
+                  {b
+                    ? <span className="helix-num text-[9px] font-bold inline-flex items-center gap-0.5 leading-none" style={{ color: b.color }}>{b.arrow}{b.text}</span>
+                    : <span className="text-[9px] font-bold leading-none" style={{ color: GOLD }}>new</span>}
+                </div>
+                <span className="helix-num block text-fluid-base font-bold text-text mt-1 leading-none truncate">
+                  {fmtMetric(m, m.value)}
                 </span>
-                <span className="helix-num block text-[9px] font-bold mt-0.5 leading-none"
-                  style={{ color: d?.color ?? MUTED }}>
-                  {d ? d.text : m.previous == null ? 'new' : 'no change'}
-                </span>
+                {/* This-vs-last comparison: current accent bar over a muted prev bar. */}
+                {m.previous != null && (
+                  <div className="mt-2 space-y-1">
+                    <div className="h-1 rounded-full bg-white/[0.05] overflow-hidden" aria-hidden="true">
+                      <div className="h-full rounded-full" style={{ width: `${(cur / max) * 100}%`, background: b?.color ?? VIOLET }} />
+                    </div>
+                    <div className="h-1 rounded-full bg-white/[0.05] overflow-hidden" aria-hidden="true">
+                      <div className="h-full rounded-full bg-white/25" style={{ width: `${(prev / max) * 100}%` }} />
+                    </div>
+                    <span className="block text-[8px] text-muted helix-num leading-none">last {fmtMetric(m, m.previous)}</span>
+                  </div>
+                )}
               </div>
             )
           })}
