@@ -7,12 +7,22 @@ import { NotionSync } from '@/components/settings/NotionSync'
 import { supabase } from '@/lib/supabase/client'
 import { derivePhase, phaseDisplay } from '@/lib/nutrition/phase'
 import { logicalTodayISO } from '@/lib/utils/day'
-import { NUTRITION_PRESETS, type NutritionMode } from '@/lib/types/workout'
+import { NUTRITION_PRESETS, type NutritionMode, type NutritionPreset } from '@/lib/types/workout'
 import { phaseBadgeStyle } from '@/lib/phases'
 import { LiquidModal } from '@/components/ui/LiquidModal'
-import { HELIX_CUT_START, DEFAULT_PROGRAM_ID } from '@/lib/programs'
-import { AlertTriangle } from 'lucide-react'
+import {
+  HELIX_CUT_START, DEFAULT_PROGRAM_ID, PROGRAMS, getActiveProgramId,
+  setActiveProgramId, setActivePhase, type Program,
+} from '@/lib/programs'
+import { AlertTriangle, Dumbbell, Calendar, Target } from 'lucide-react'
 import type { Tables } from '@/lib/supabase/types'
+
+const WD_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+/** Live plans first, legacy (PPL) last — the order of the Settings plan cards. */
+function planList(): Program[] {
+  return Object.values(PROGRAMS).sort((a, b) => Number(a.legacy ?? false) - Number(b.legacy ?? false))
+}
 
 /** Nutrition mode → the timeline phase kind, so the picker reuses the glow palette. */
 const MODE_TO_PHASE = { cut: 'cut', maintenance: 'maintenance', bulk: 'bulk' } as const
@@ -80,6 +90,10 @@ export default function SettingsPage() {
   const [pendingPhase, setPendingPhase] = useState<NutritionMode | null>(null)
   // Week start: 0 = Sunday (default), 1 = Monday. Stored as week_end_day.
   const [weekStart, setWeekStart] = useState<0 | 1>(0)
+  // Active training PLAN + the Preview drawer / two-step switch confirm.
+  const [activePlanId, setActivePlanId] = useState<string>(DEFAULT_PROGRAM_ID)
+  const [previewPlan, setPreviewPlan] = useState<Program | null>(null)
+  const [confirmSwitch, setConfirmSwitch] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -116,6 +130,12 @@ export default function SettingsPage() {
         const ws: 0 | 1 = we === 0 ? 1 : 0
         setWeekStart(ws)
         try { localStorage.setItem('helix_week_start', String(ws)) } catch { /* ignore */ }
+        // Active plan + phase — mirror to the localStorage keys activeProgram() reads.
+        const ap = (data as { active_plan?: string | null }).active_plan
+        if (ap && PROGRAMS[ap]) { setActivePlanId(ap); setActiveProgramId(ap) }
+        else setActivePlanId(getActiveProgramId())
+        const phase = ((data as { active_phase?: string | null }).active_phase ?? data.goal_preset) as NutritionMode | null
+        if (phase === 'cut' || phase === 'bulk' || phase === 'maintenance') setActivePhase(phase)
       }
       setLoading(false)
     }
@@ -207,6 +227,7 @@ export default function SettingsPage() {
    */
   async function applyPhase(mode: NutritionMode) {
     const p = NUTRITION_PRESETS[mode]
+    setActivePhase(mode) // localStorage mirror — activeProgram() reads it synchronously
     await save({
       calorie_goal: p.calorieGoal,
       protein_goal_g: p.proteinGoalG ?? goals.protein_goal_g,
@@ -217,7 +238,45 @@ export default function SettingsPage() {
     })
     setTargetWeight(p.targetWeightKg)
     await saveTargetWeight(p.targetWeightKg)
+    await saveBodyTargets(p)
     await savePhaseMeta(mode)
+  }
+
+  /** Persist the phase's body-composition targets (BF % + muscle mass).
+   *  Self-heals if the columns aren't migrated. */
+  async function saveBodyTargets(p: NutritionPreset) {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return
+    const { error } = await supabase.from('user_goals').upsert(
+      { user_id: session.user.id, target_body_fat_pct: p.targetBodyFatPct ?? null, target_muscle_mass_kg: p.targetMuscleMassKg ?? null } as unknown as never,
+      { onConflict: 'user_id' },
+    )
+    if (error && !/column|target_|schema cache|PGRST204/i.test(error.message)) setStatus({ type: 'error', msg: error.message })
+  }
+
+  /**
+   * Switch the active training PLAN. Writes the localStorage mirror (activeProgram
+   * reads it), persists user_goals.active_plan, re-anchors the "[Plan] Era" to
+   * today, and points the plans row at the new program. All self-heal.
+   */
+  async function applyPlan(planId: string) {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return
+    setActivePlanId(planId)
+    setActiveProgramId(planId)
+    const { error } = await supabase.from('user_goals').upsert(
+      { user_id: session.user.id, active_plan: planId, phase_started_on: logicalTodayISO() } as unknown as never,
+      { onConflict: 'user_id' },
+    )
+    if (error && !/column|active_plan|phase_started|schema cache|PGRST204/i.test(error.message)) {
+      setStatus({ type: 'error', msg: error.message }); return
+    }
+    try {
+      await supabase.from('plans')
+        .update({ program_id: planId, started_on: logicalTodayISO() } as unknown as never)
+        .eq('user_id', session.user.id).eq('active', true)
+    } catch { /* plans table not migrated yet */ }
+    setStatus({ type: 'success', msg: `Switched to ${PROGRAMS[planId]?.label ?? 'plan'}.` })
   }
 
   const inputCls =
@@ -239,9 +298,10 @@ export default function SettingsPage() {
       <section className="helix-card space-y-4">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <h2 className="font-semibold text-text">Plan &amp; Phase</h2>
+            <h2 className="font-semibold text-text">Plans &amp; Phases</h2>
             <p className="text-xs text-muted mt-0.5">
-              Selecting a phase updates calories, macros, step goal, target weight, and the app&apos;s cut/bulk tags.
+              The single place to choose your training plan and phase. A phase updates calories, macros,
+              step goal and body-composition targets.
             </p>
           </div>
           {(() => {
@@ -257,6 +317,35 @@ export default function SettingsPage() {
           })()}
         </div>
 
+        {/* ── Training plan — tap a card to preview its schedule + goals, then a
+               two-step confirm to switch (impossible to switch by accident). ── */}
+        <div>
+          <div className="text-[10px] uppercase tracking-widest text-muted mb-2">Training plan</div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            {planList().map((plan) => {
+              const active = plan.id === activePlanId
+              return (
+                <button key={plan.id} onClick={() => { setConfirmSwitch(false); setPreviewPlan(plan) }}
+                  aria-pressed={active}
+                  className="rounded-2xl border p-3 text-left transition-all duration-200"
+                  style={active
+                    ? { borderColor: '#8E9AAC66', background: '#8E9AAC14', boxShadow: '0 0 16px #8E9AAC33' }
+                    : { borderColor: 'rgba(255,255,255,0.08)' }}>
+                  <div className="flex items-center gap-1.5">
+                    <Dumbbell className="w-3.5 h-3.5 shrink-0" style={{ color: active ? '#8E9AAC' : '#79808C' }} aria-hidden="true" />
+                    <span className="font-heading font-bold text-sm text-text">{plan.label}</span>
+                    {plan.legacy && <span className="text-[9px] uppercase tracking-wide text-muted ml-auto">legacy</span>}
+                    {active && !plan.legacy && <span className="text-[9px] uppercase tracking-wide ml-auto" style={{ color: '#8E9AAC' }}>active</span>}
+                  </div>
+                  <p className="text-[10px] text-muted mt-1 leading-snug line-clamp-2">{plan.blurb ?? `${plan.days.length}-day split`}</p>
+                  <span className="inline-flex items-center gap-1 text-[10px] mt-1.5" style={{ color: '#8E9AAC' }}>Preview &amp; switch →</span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        <div className="text-[10px] uppercase tracking-widest text-muted -mb-1.5">Phase</div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
           {(['cut', 'maintenance', 'bulk'] as NutritionMode[]).map((mode) => {
             const p = NUTRITION_PRESETS[mode]
@@ -458,6 +547,114 @@ export default function SettingsPage() {
 
       <CrashRecorderRow />
       </div>
+
+      {/* Plan preview drawer — schedule + phase goals + exercises, then a
+          two-step confirm to switch. */}
+      <LiquidModal open={!!previewPlan} onClose={() => { setPreviewPlan(null); setConfirmSwitch(false) }}
+        title={previewPlan ? previewPlan.label : undefined} accent="#8E9AAC">
+        {previewPlan && (() => {
+          const phaseMode = (goals.goal_preset as NutritionMode) || 'cut'
+          const pp = NUTRITION_PRESETS[phaseMode]
+          const isActive = previewPlan.id === activePlanId
+          const byWeekday = new Map(previewPlan.days.map((d) => [d.weekday, d]))
+          return (
+            <div className="space-y-4">
+              <p className="text-sm text-muted leading-relaxed">{previewPlan.blurb}</p>
+
+              {/* Weekly schedule */}
+              <div>
+                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-muted mb-2">
+                  <Calendar className="w-3 h-3" aria-hidden="true" /> Weekly schedule
+                </div>
+                <div className="grid grid-cols-7 gap-1">
+                  {WD_SHORT.map((wd, i) => {
+                    const d = byWeekday.get(i)
+                    return (
+                      <div key={i} className="rounded-lg px-1 py-1.5 text-center border"
+                        style={{ borderColor: d ? `${d.color}44` : 'rgba(255,255,255,0.06)', background: d ? `${d.color}12` : 'transparent' }}>
+                        <div className="text-[9px] text-muted">{wd}</div>
+                        <div className="text-[9px] font-bold mt-0.5 leading-tight" style={{ color: d ? d.color : '#79808C' }}>
+                          {d ? d.label.replace(/^(Upper|Lower|Legs & Core|Delts & Arms)\s*/, '').trim() || d.label : 'Rest'}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Phase goals — the targets this plan's {phase} is steering toward */}
+              <div>
+                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-muted mb-2">
+                  <Target className="w-3 h-3" aria-hidden="true" /> {pp.label} phase goals
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-fluid-xs">
+                  {[
+                    ['Calories', `${pp.calorieGoal.toLocaleString()} kcal`],
+                    ['Macros', `${pp.proteinGoalG}P · ${pp.carbsGoalG}C · ${pp.fatGoalG}F`],
+                    ['Steps', pp.stepsGoal.toLocaleString()],
+                    ['Target weight', `${pp.targetWeightKg} kg`],
+                    ['Target body fat', pp.targetBodyFatPct != null ? `${pp.targetBodyFatPct}%` : '—'],
+                    ['Target muscle', pp.targetMuscleMassKg != null ? `${pp.targetMuscleMassKg} kg` : '—'],
+                  ].map(([label, val]) => (
+                    <div key={label} className="rounded-lg bg-white/[0.02] border border-white/[0.05] px-2.5 py-1.5">
+                      <div className="text-[9px] uppercase tracking-wide text-muted">{label}</div>
+                      <div className="helix-num font-bold text-text mt-0.5">{val}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Exercises per day */}
+              <div>
+                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-muted mb-2">
+                  <Dumbbell className="w-3 h-3" aria-hidden="true" /> Exercises
+                </div>
+                <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                  {previewPlan.days.map((d) => (
+                    <div key={d.key}>
+                      <div className="text-[11px] font-bold" style={{ color: d.color }}>{d.label}{d.sub ? ` · ${d.sub}` : ''}</div>
+                      <div className="text-[10px] text-muted leading-relaxed">
+                        {d.exercises.filter((e) => !e.bulkOnly).map((e) => `${e.name} ${e.sets}×${e.reps}`).join(' · ')}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Switch — two-step (impossible to switch by accident) */}
+              <div className="pt-1 border-t border-white/[0.06]">
+                {isActive ? (
+                  <p className="text-fluid-xs text-muted text-center py-2">This is your active plan.</p>
+                ) : !confirmSwitch ? (
+                  <button onClick={() => setConfirmSwitch(true)}
+                    className="btn-primary w-full justify-center min-h-[46px]"
+                    style={{ background: '#8E9AAC', boxShadow: '0 0 16px #8E9AAC44' }}>
+                    Switch to {previewPlan.label}
+                  </button>
+                ) : (
+                  <div className="space-y-2.5">
+                    <div className="flex items-start gap-2.5">
+                      <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" style={{ color: '#E0703C' }} aria-hidden="true" />
+                      <p className="text-sm text-muted leading-relaxed">
+                        Switch to <span className="text-text font-semibold">{previewPlan.label}</span>? This changes your
+                        training schedule and re-anchors analytics from today. Your logged history is preserved.
+                      </p>
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                      <button onClick={() => setConfirmSwitch(false)} className="btn-glass min-h-[44px] px-4">Cancel</button>
+                      <button
+                        onClick={async () => { const id = previewPlan.id; setPreviewPlan(null); setConfirmSwitch(false); await applyPlan(id) }}
+                        className="btn-primary min-h-[44px] px-4">
+                        Confirm switch
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )
+        })()}
+      </LiquidModal>
 
       {/* Phase-switch confirmation — a phase change is a hard reset of the UI. */}
       <LiquidModal open={!!pendingPhase} onClose={() => setPendingPhase(null)} title="Switch phase" accent="#E0703C">

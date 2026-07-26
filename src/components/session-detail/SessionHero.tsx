@@ -8,7 +8,7 @@ import { useEditSession } from '@/lib/hooks/useEditSession'
 import { useDeleteSession, useGlobalSessionNumber } from '@/lib/hooks/useDayVault'
 import { getWeekPhase, phaseBadgeStyle } from '@/lib/phases'
 import { weekStartOf } from '@/lib/utils/week'
-import { PROGRAMS, DEFAULT_PROGRAM_ID, getActiveProgramId } from '@/lib/programs'
+import { activeProgram } from '@/lib/programs'
 import { displayWeight, weightUnit, fmtVolume } from '@/lib/utils/units'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
 
@@ -36,7 +36,7 @@ export function SessionHero({ detail }: { detail: SessionDetail }) {
   const { data: globalNum } = useGlobalSessionNumber(detail.date)
   const [confirm, setConfirm] = useState(false)
 
-  const program = PROGRAMS[getActiveProgramId()] ?? PROGRAMS[DEFAULT_PROGRAM_ID]
+  const program = activeProgram()
   const label = (detail.dayKey && program.days.find((d) => d.key === detail.dayKey)?.label)
     ?? (detail.splitDay[0].toUpperCase() + detail.splitDay.slice(1))
   const phase = getWeekPhase(weekStartOf(detail.date))

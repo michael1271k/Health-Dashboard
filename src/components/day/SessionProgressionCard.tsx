@@ -8,7 +8,7 @@ import { useDeleteSession, useGlobalSessionNumber } from '@/lib/hooks/useDayVaul
 import { useEditSession } from '@/lib/hooks/useEditSession'
 import { SessionIntelCard } from '@/components/reports/SessionIntelCard'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
-import { PROGRAMS, DEFAULT_PROGRAM_ID, getActiveProgramId } from '@/lib/programs'
+import { activeProgram } from '@/lib/programs'
 
 /**
  * Progression & Insights for one session: "Upper B · Session #N", the full
@@ -21,7 +21,7 @@ export function SessionProgressionCard({ session, date }: { session: GymReportRo
   const { data: globalNum } = useGlobalSessionNumber(date)
   const [confirm, setConfirm] = useState(false)
 
-  const program = PROGRAMS[getActiveProgramId()] ?? PROGRAMS[DEFAULT_PROGRAM_ID]
+  const program = activeProgram()
   const label = (session.dayKey && program.days.find((d) => d.key === session.dayKey)?.label)
     ?? (session.split[0]?.toUpperCase() + session.split.slice(1))
 

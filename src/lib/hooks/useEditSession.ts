@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 import { DRAFT_STORAGE_KEY, type SessionDraft, type DraftExercise, type DraftSet } from '@/lib/sessions/draft'
-import { PROGRAMS, DEFAULT_PROGRAM_ID, getActiveProgramId } from '@/lib/programs'
+import { activeProgram } from '@/lib/programs'
 import type { SplitDay } from '@/lib/types/workout'
 
 interface SessRow {
@@ -83,7 +83,7 @@ export function useEditSession() {
         }
       }
 
-      const program = PROGRAMS[getActiveProgramId()] ?? PROGRAMS[DEFAULT_PROGRAM_ID]
+      const program = activeProgram()
       const dayLabel = s.day_key ? program.days.find((d) => d.key === s.day_key)?.label : undefined
       const draft: SessionDraft = {
         clientSessionId: s.client_session_id ?? `edit-${sessionId}`,

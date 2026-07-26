@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { ArrowRight, Dumbbell } from 'lucide-react'
-import { PROGRAMS, DEFAULT_PROGRAM_ID, getActiveProgramId, scheduleDayFor } from '@/lib/programs'
+import { activeProgram, scheduleDayFor } from '@/lib/programs'
 import { useDayVault } from '@/lib/hooks/useDayVault'
 import { logicalTodayISO } from '@/lib/utils/day'
 
@@ -20,7 +20,7 @@ export function ScheduleShortcut() {
   if (schedule === 'rest' || !schedule.dayKey) return null
   if ((data?.sessions.length ?? 0) > 0) return null
 
-  const program = PROGRAMS[getActiveProgramId()] ?? PROGRAMS[DEFAULT_PROGRAM_ID]
+  const program = activeProgram()
   const day = program.days.find((d) => d.key === schedule.dayKey)
   const color = day?.color ?? '#8E9AAC'
 

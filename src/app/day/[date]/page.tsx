@@ -19,7 +19,7 @@ import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { useDoubleTap } from '@/lib/utils/doubleTap'
 import { MacroOverrideSheet } from '@/components/nutrition/MacroOverrideSheet'
 import { phaseDisplay } from '@/lib/nutrition/phase'
-import { ERA_META, eraForDate, scheduleDayFor, PROGRAMS, DEFAULT_PROGRAM_ID, getActiveProgramId } from '@/lib/programs'
+import { ERA_META, eraForDate, scheduleDayFor, activeProgram } from '@/lib/programs'
 import { displayWeight, weightUnit, fmtVolume } from '@/lib/utils/units'
 import { logicalTodayISO } from '@/lib/utils/day'
 
@@ -81,7 +81,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 /** Program-day label from day_key (→ "Upper B", robust on swaps), else split. */
 function sessionLabel(dayKey: string | null | undefined, split: string): string {
-  const program = PROGRAMS[getActiveProgramId()] ?? PROGRAMS[DEFAULT_PROGRAM_ID]
+  const program = activeProgram()
   return (dayKey && program.days.find((d) => d.key === dayKey)?.label) ?? (split[0]?.toUpperCase() + split.slice(1))
 }
 

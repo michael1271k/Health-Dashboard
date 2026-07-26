@@ -11,7 +11,7 @@
  *   "Increase load only when ALL work sets hit the ceiling at RPE ≤ 8.5 in TWO
  *    CONSECUTIVE sessions — smallest increment, reps reset to floor."
  */
-import { PROGRAMS, getActiveProgramId, DEFAULT_PROGRAM_ID, type ProgramExercise } from '@/lib/programs'
+import { activeProgram, getActiveProgramId, type ProgramExercise } from '@/lib/programs'
 import { canonicalExerciseName } from '@/lib/exercises/aliases'
 
 /** Recommended jump once the ceiling is cleared twice. */
@@ -53,7 +53,7 @@ export function repWindowFor(
   dayKey?: string | null,
   programId: string = getActiveProgramId(),
 ): RepWindow | null {
-  const program = PROGRAMS[programId] ?? PROGRAMS[DEFAULT_PROGRAM_ID]
+  const program = activeProgram(programId)
   const target = normalize(exerciseName)
   const match = (ex: ProgramExercise) => normalize(ex.name) === target
 
@@ -83,7 +83,7 @@ export function holdTargetFor(
   dayKey?: string | null,
   programId: string = getActiveProgramId(),
 ): number | null {
-  const program = PROGRAMS[programId] ?? PROGRAMS[DEFAULT_PROGRAM_ID]
+  const program = activeProgram(programId)
   const target = normalize(exerciseName)
   const match = (ex: ProgramExercise) => normalize(ex.name) === target
   const parseHold = (reps: string): number | null => {

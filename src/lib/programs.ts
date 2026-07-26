@@ -62,12 +62,24 @@ export interface ProgramDay {
   cutSetDelta?: number   // total sets removed in cut mode (v5.1 plan tables)
   exercises: ProgramExercise[]
 }
+/** A phase is a variation INSIDE a plan. Its nutrition/target numbers live in
+ *  NUTRITION_PRESETS (types/workout); a plan only needs to know how a phase bends
+ *  its training — `cutRepMode` tightens the rep windows on a cut. */
+export type ProgramPhase = 'cut' | 'maintenance' | 'bulk'
+
 export interface Program {
   id: string
   label: string
   era: Era
   active?: boolean
   drawer?: boolean
+  /** One-line description shown in the Settings plan preview. */
+  blurb?: string
+  /** Historical plan (e.g. PPL) — still selectable, shown apart from live plans. */
+  legacy?: boolean
+  /** On a cut this plan tightens its rep prescriptions (was the separate Helix-4
+   *  "Defender" variant). `activeProgram()` applies it when the active phase = cut. */
+  cutRepMode?: boolean
   days: ProgramDay[]
 }
 
@@ -75,7 +87,8 @@ const C = { cbA: '#8E9AAC', legsA: '#3D7AB8', arms: '#3E9E7A', cbB: '#D4AF37', l
 
 // ── HELIX-5 (ACTIVE) — Sun/Mon/Tue/Thu/Fri ─────────────────────────────────
 export const APEX51: Program = {
-  id: 'apex51', label: 'HELIX-5', era: 'axis', active: true,   // id kept for localStorage compat
+  id: 'apex51', label: 'Helix-5', era: 'axis', active: true,   // id kept for localStorage compat
+  blurb: '5-day upper/lower split — Sun/Mon/Tue/Thu/Fri, Wed & Sat Zone-2 rest.',
   days: [
     { key: 'cb_a', label: 'Upper A', sub: 'Chest + Back', color: C.cbA, weekday: 0, cutSetDelta: -3, exercises: [
       { name: 'Incline DB Press', sets: 3, wk1Kg: 32, reps: '8–12', muscles: ['chest', 'shoulders'], compound: true },
@@ -131,10 +144,13 @@ export const APEX51: Program = {
   ],
 }
 
-// ── Helix 4 backup routine (drawer) — ONE 4-day base, phase-tagged Bulk vs Cut.
-// Same movements/structure; the Cut variant only tightens the rep prescriptions.
-export const AXIS4_BUILDER: Program = {
-  id: 'axis4_builder', label: 'Helix 4 · Bulk', era: 'axis', drawer: true,
+// ── Helix-4 (drawer) — ONE 4-day plan. The former "Bulk"/"Cut" split is now a
+// PHASE, not two plans: same movements/structure, and `cutRepMode` tightens the
+// rep prescriptions on a cut (what the old "Defender" variant did) via
+// activeProgram(). Base days carry the bulk (wider) windows.
+export const HELIX4: Program = {
+  id: 'axis4', label: 'Helix-4', era: 'axis', drawer: true, cutRepMode: true,
+  blurb: '4-day upper/lower — Mon/Tue/Thu/Fri. Cut phase tightens the rep windows.',
   days: [
     { key: 'upper_a', label: 'Upper A', color: C.cbA, weekday: 1, exercises: [
       { name: 'Incline DB Press', sets: 3, wk1Kg: 32, reps: '6–10', muscles: ['chest', 'shoulders'], compound: true },
@@ -167,15 +183,35 @@ export const AXIS4_BUILDER: Program = {
     ] },
   ],
 }
-export const AXIS4_DEFENDER: Program = {
-  ...AXIS4_BUILDER, id: 'axis4_defender', label: 'Helix 4 · Cut',
-  days: AXIS4_BUILDER.days.map((d) => ({ ...d, exercises: d.exercises.map((e) => ({ ...e, reps: e.compound ? '8–12' : '15–20' })) })),
-}
 
 export const PROGRAMS: Record<string, Program> = {
-  [APEX51.id]: APEX51, [AXIS4_BUILDER.id]: AXIS4_BUILDER, [AXIS4_DEFENDER.id]: AXIS4_DEFENDER,
+  [APEX51.id]: APEX51, [HELIX4.id]: HELIX4,
 }
 export const DEFAULT_PROGRAM_ID = APEX51.id
+
+/** On a cut, this plan tightens its rep prescriptions — compounds to 8–12,
+ *  isolations to 15–20 (the old Helix-4 "Defender" transform). Pure. */
+function tightenCutReps(program: Program): Program {
+  return {
+    ...program,
+    days: program.days.map((d) => ({
+      ...d,
+      exercises: d.exercises.map((e) => ({ ...e, reps: e.compound ? '8–12' : '15–20' })),
+    })),
+  }
+}
+
+/**
+ * The runtime training program for the active PLAN + PHASE — the single source
+ * every logger/analytics/coach path should read. It resolves the active plan and,
+ * when the active phase is a cut and the plan opts in (`cutRepMode`), returns the
+ * cut-tightened rep windows. Server-safe (falls back to the default plan + bulk
+ * phase when there's no window / localStorage).
+ */
+export function activeProgram(programId: string = getActiveProgramId(), phase: ProgramPhase = activePhase()): Program {
+  const p = PROGRAMS[programId] ?? PROGRAMS[DEFAULT_PROGRAM_ID]
+  return p.cutRepMode && phase === 'cut' ? tightenCutReps(p) : p
+}
 
 /** Weekday → day for a program (or 'rest'). */
 export function programDayFor(programId: string, weekday: number): ProgramDay | 'rest' {
@@ -265,14 +301,34 @@ export function daySplitEnum(dayKey: string): 'push' | 'pull' | 'legs' | 'upper'
   return (DAY_SPLIT[dayKey] ?? 'upper') as 'push' | 'pull' | 'legs' | 'upper' | 'lower'
 }
 
-const ACTIVE_KEY = 'helix_active_program'
+const ACTIVE_KEY = 'helix_active_plan'
+const PHASE_KEY = 'helix_active_phase'
+// Legacy plan ids → the consolidated plan (the two Helix-4 variants are one plan
+// now; the old key names are migrated on read so a device never dead-ends).
+const LEGACY_PLAN_ID: Record<string, string> = { axis4_builder: 'axis4', axis4_defender: 'axis4' }
+
 export function getActiveProgramId(): string {
   if (typeof window === 'undefined') return DEFAULT_PROGRAM_ID
-  const stored = window.localStorage.getItem(ACTIVE_KEY) ?? window.localStorage.getItem('apex_active_program')
-  return stored && PROGRAMS[stored] ? stored : DEFAULT_PROGRAM_ID
+  const raw =
+    window.localStorage.getItem(ACTIVE_KEY) ??
+    window.localStorage.getItem('helix_active_program') ??   // pre-consolidation key
+    window.localStorage.getItem('apex_active_program')        // original key
+  const id = raw ? (LEGACY_PLAN_ID[raw] ?? raw) : null
+  return id && PROGRAMS[id] ? id : DEFAULT_PROGRAM_ID
 }
 export function setActiveProgramId(id: string): void {
   if (typeof window !== 'undefined') window.localStorage.setItem(ACTIVE_KEY, id)
+}
+
+/** The active PHASE — mirrors user_goals.active_phase / goal_preset into
+ *  localStorage so `activeProgram()` can read it synchronously. Defaults to cut. */
+export function activePhase(): ProgramPhase {
+  if (typeof window === 'undefined') return 'cut'
+  const v = window.localStorage.getItem(PHASE_KEY)
+  return v === 'bulk' || v === 'maintenance' ? v : 'cut'
+}
+export function setActivePhase(phase: ProgramPhase): void {
+  if (typeof window !== 'undefined') window.localStorage.setItem(PHASE_KEY, phase)
 }
 
 /**

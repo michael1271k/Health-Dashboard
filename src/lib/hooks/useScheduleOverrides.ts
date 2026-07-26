@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
-import { PROGRAMS, DEFAULT_PROGRAM_ID, getActiveProgramId } from '@/lib/programs'
+import { activeProgram } from '@/lib/programs'
 import { hydrateScheduleOverrides, setScheduleOverrideLocal, REST_OVERRIDE } from '@/lib/schedule/overrides'
 import { SUPPLEMENT_PROTOCOL, slotTimePassed } from '@/lib/supplements'
 import { logicalTodayISO } from '@/lib/utils/day'
@@ -56,7 +56,7 @@ export function useSwapDay() {
     mutationFn: async ({ date, dayKey }: { date: string; dayKey: string }) => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not signed in')
-      const program = PROGRAMS[getActiveProgramId()] ?? PROGRAMS[DEFAULT_PROGRAM_ID]
+      const program = activeProgram()
       const day = program.days.find((d) => d.key === dayKey)
       const rows: Array<{ user_id: string; date: string; day_key: string }> = [{ user_id: user.id, date, day_key: dayKey }]
       if (day) {

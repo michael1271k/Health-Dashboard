@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Moon, Repeat, RotateCcw } from 'lucide-react'
-import { PROGRAMS, DEFAULT_PROGRAM_ID, getActiveProgramId } from '@/lib/programs'
+import { activeProgram } from '@/lib/programs'
 import { useSwapDay, useClearScheduleOverride } from '@/lib/hooks/useScheduleOverrides'
 import { getScheduleOverride, REST_OVERRIDE } from '@/lib/schedule/overrides'
 
@@ -18,7 +18,7 @@ export function SwapDayControl({ date, className = '' }: { date: string; classNa
   const [open, setOpen] = useState(false)
   const swap = useSwapDay()
   const clear = useClearScheduleOverride()
-  const program = PROGRAMS[getActiveProgramId()] ?? PROGRAMS[DEFAULT_PROGRAM_ID]
+  const program = activeProgram()
   const overridden = getScheduleOverride(date) != null
   const busy = swap.isPending || clear.isPending
 

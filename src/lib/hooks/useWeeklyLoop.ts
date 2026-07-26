@@ -8,7 +8,7 @@ import {
   buildWeeklyExport, weekTotals,
   type ExportDay, type ExportSession, type ExportExercise, type ExportDoms, type ExportBodyComp,
 } from '@/lib/reports/weeklyExport'
-import { PROGRAMS, DEFAULT_PROGRAM_ID, getActiveProgramId, eraForDate, isTrainingDay } from '@/lib/programs'
+import { activeProgram, eraForDate, isTrainingDay } from '@/lib/programs'
 import { repWindowFor } from '@/lib/training/ceilings'
 import { lookupMuscles } from '@/lib/exercises/muscleMap'
 import { weeklyVolumeByMuscle, type Program } from '@/lib/training/landmarks'
@@ -121,7 +121,7 @@ function toDays(weekStart: string, d: RangeData): ExportDay[] {
 
 /** Shape a fetched range into the export's session rows (with every set). */
 function toSessions(d: RangeData): ExportSession[] {
-  const program = PROGRAMS[getActiveProgramId()] ?? PROGRAMS[DEFAULT_PROGRAM_ID]
+  const program = activeProgram()
   return d.sessions.map((s) => {
     const mine = d.sets.filter((r) => r.session_id === s.id && r.set_type !== 'warmup')
     const byName = new Map<string, ExportExercise>()

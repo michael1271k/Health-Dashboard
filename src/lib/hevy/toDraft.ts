@@ -8,7 +8,7 @@
 import type { HevyWorkout } from '@/lib/hevy/parse'
 import type { SessionDraft, DraftExercise } from '@/lib/sessions/draft'
 import { canonicalExerciseName } from '@/lib/exercises/aliases'
-import { PROGRAMS, DEFAULT_PROGRAM_ID, daySplitEnum, scheduleDayFor } from '@/lib/programs'
+import { DEFAULT_PROGRAM_ID, daySplitEnum, scheduleDayFor, programDayByKey } from '@/lib/programs'
 import { logicalTodayISO } from '@/lib/utils/day'
 
 type DayKey = NonNullable<SessionDraft['dayKey']>
@@ -38,7 +38,7 @@ export function hevyWorkoutToDraft(h: HevyWorkout, fallbackDate?: string): Sessi
   const scheduledKey = scheduled !== 'rest' && isHelixDayKey(scheduled.dayKey) ? scheduled.dayKey : undefined
   const dayKey = guessDayKey(headerText) ?? scheduledKey
 
-  const programDay = dayKey ? PROGRAMS[DEFAULT_PROGRAM_ID].days.find((d) => d.key === dayKey) : undefined
+  const programDay = dayKey ? programDayByKey(dayKey) : undefined
   const title = h.title
     ?? (programDay ? (programDay.sub ? `${programDay.label} · ${programDay.sub}` : programDay.label) : undefined)
 

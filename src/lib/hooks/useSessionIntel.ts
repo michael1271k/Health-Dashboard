@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
-import { eraForDate, programDayFor, PROGRAMS, DEFAULT_PROGRAM_ID } from '@/lib/programs'
+import { eraForDate, programDayFor, programDayByKey, DEFAULT_PROGRAM_ID } from '@/lib/programs'
 
 export interface ExerciseDelta {
   exerciseId: string
@@ -195,7 +195,7 @@ export function useSessionIntel(sessionId: string | null) {
  */
 function sessionTypeLabel(dateISO: string, splitDay: string, weekday: number, dayKey: string | null): string {
   if (eraForDate(dateISO) === 'axis') {
-    const byKey = dayKey ? PROGRAMS[DEFAULT_PROGRAM_ID]?.days.find((d) => d.key === dayKey) : undefined
+    const byKey = dayKey ? programDayByKey(dayKey) : undefined
     const byWeekday = programDayFor(DEFAULT_PROGRAM_ID, weekday)
     const d = byKey ?? (byWeekday === 'rest' ? undefined : byWeekday)
     if (d) return d.sub ? `${d.label} · ${d.sub}` : d.label

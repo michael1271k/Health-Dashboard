@@ -9,7 +9,7 @@ import { weekStartOf, isoAddDays } from '@/lib/hooks/useWeekSessions'
 import { weekNumberOf, weekLabelOf } from '@/lib/reports/weekNumber'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { enumerateWeeks } from '@/lib/phases'
-import { PROGRAMS, DEFAULT_PROGRAM_ID, eraForDate } from '@/lib/programs'
+import { programDayByKey, eraForDate } from '@/lib/programs'
 import { PHASES } from '@/lib/phases'
 import type { EraFilter } from '@/lib/era/eraFilter'
 
@@ -83,7 +83,6 @@ export function useTimelineWeeks(era: EraFilter) {
   })
 
   const nodes = useMemo<TimelineWeekNode[]>(() => {
-    const program = PROGRAMS[DEFAULT_PROGRAM_ID]
     const liveWeekStart = weekStartOf(logicalTodayISO())
 
     const weekDelta = (weekStart: string): { weightDelta: number | null; fatDelta: number | null } => {
@@ -109,7 +108,7 @@ export function useTimelineWeeks(era: EraFilter) {
       a.prs += s.pr_count ?? 0
       a.days.push({
         date,
-        label: (s.day_key && program.days.find((d) => d.key === s.day_key)?.label) ?? (s.split_day[0]?.toUpperCase() + s.split_day.slice(1)),
+        label: (s.day_key && programDayByKey(s.day_key)?.label) ?? (s.split_day[0]?.toUpperCase() + s.split_day.slice(1)),
         volumeKg: s.total_volume_kg, prs: s.pr_count, split: s.split_day,
       })
       byWeek.set(ws, a)

@@ -11,8 +11,7 @@ import { WidgetBoundary } from '@/components/fx/WidgetBoundary'
 import { SwapDayControl } from '@/components/day/SwapDayControl'
 import { peekSessionDraft, type SessionDraft } from '@/lib/sessions/draft'
 import {
-  PROGRAMS, DEFAULT_PROGRAM_ID, getActiveProgramId, setActiveProgramId,
-  scheduleDayFor, isTrainingDay, eraForDate, ERA_META,
+  activeProgram, scheduleDayFor, isTrainingDay, eraForDate, ERA_META, type Program,
 } from '@/lib/programs'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { displayWeight, weightUnit } from '@/lib/utils/units'
@@ -26,7 +25,6 @@ const WeeklyVolumeCard = dynamic(() => import('@/components/command-center/Weekl
 const MuscleAnalyticsPanel = dynamic(() => import('@/components/command-center/MuscleAnalyticsPanel').then((m) => m.MuscleAnalyticsPanel), { ssr: false })
 
 const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-const PROGRAM_ORDER = ['apex51', 'axis4_builder', 'axis4_defender']
 const REST_VIOLET = '#B4522A'
 
 export default function WorkoutPage() {
@@ -35,7 +33,10 @@ export default function WorkoutPage() {
   const { data: memory } = useExerciseMemory()
   const { data: nextFlag } = useLatestSessionFlag()
   const { era } = useEraFilter()
-  const [programId, setProgramId] = useState(DEFAULT_PROGRAM_ID)
+  // The active plan+phase is chosen in Settings → Plans & Phases (single source).
+  // Init to a deterministic default so SSR and first client render match; the
+  // effect then reads the real active plan (localStorage) after mount.
+  const [program, setProgram] = useState<Program>(() => activeProgram('apex51', 'bulk'))
   const [openPlan, setOpenPlan] = useState<string | null>(null)
   const unit = weightUnit()
 
@@ -43,9 +44,7 @@ export default function WorkoutPage() {
   const [resumeDraft, setResumeDraft] = useState<SessionDraft | null>(null)
   useEffect(() => { setResumeDraft(peekSessionDraft()) }, [])
 
-  useEffect(() => { setProgramId(getActiveProgramId()) }, [])
-  const program = PROGRAMS[programId] ?? PROGRAMS[DEFAULT_PROGRAM_ID]
-  function selectProgram(id: string) { setProgramId(id); setActiveProgramId(id) }
+  useEffect(() => { setProgram(activeProgram()) }, [])
 
   /** Every logging path is the fullscreen deck route. */
   const openDeck = (templateKey?: string) =>
@@ -149,23 +148,13 @@ export default function WorkoutPage() {
         </button>
       )}
 
-      {/* Program selector (active + drawer backups) */}
-      <div className="flex gap-1.5 flex-wrap">
-        {PROGRAM_ORDER.map((id) => {
-          const p = PROGRAMS[id]
-          if (!p) return null
-          const active = id === programId
-          return (
-            <button key={id} onClick={() => selectProgram(id)}
-              className="px-3 py-1.5 rounded-xl text-fluid-xs font-semibold border transition-colors"
-              style={active
-                ? { color: '#8E9AAC', borderColor: '#8E9AAC55', background: '#8E9AAC1f', boxShadow: '0 0 10px #8E9AAC33' }
-                : { color: '#79808C', borderColor: 'transparent' }}>
-              {p.label}{p.drawer ? '' : ' ✦'}
-            </button>
-          )
-        })}
-      </div>
+      {/* Active plan chip — selection lives in Settings → Plans & Phases now. */}
+      <button onClick={() => router.push('/settings')}
+        className="flex items-center gap-2 text-fluid-xs text-muted hover:text-text transition-colors">
+        <span className="px-2.5 py-1 rounded-xl font-semibold"
+          style={{ color: '#8E9AAC', background: '#8E9AAC14', border: '1px solid #8E9AAC33' }}>{program.label}</span>
+        <span>Change plan &amp; phase in Settings →</span>
+      </button>
 
       {/* Week plan — ultra-compact: one dense row per day inside a single card. */}
       <div className="helix-card !p-1.5 divide-y divide-white/[0.05]">

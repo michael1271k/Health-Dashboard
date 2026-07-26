@@ -9,7 +9,7 @@ import { useSessionDraft } from '@/lib/hooks/useSessionDraft'
 import { useExerciseSetHistory } from '@/lib/hooks/useExerciseSetHistory'
 import { buildTemplateDraft } from '@/lib/sessions/templateDraft'
 import { SEED_TEMPLATES } from '@/lib/sessions/seedTemplates'
-import { PROGRAMS, DEFAULT_PROGRAM_ID, getActiveProgramId, eraForDate } from '@/lib/programs'
+import { activeProgram, eraForDate } from '@/lib/programs'
 import { logicalTodayISO } from '@/lib/utils/day'
 
 /**
@@ -49,7 +49,7 @@ function SessionPageInner() {
 
   const templateDay = useMemo(() => {
     if (!templateKey) return null
-    const program = PROGRAMS[getActiveProgramId()] ?? PROGRAMS[DEFAULT_PROGRAM_ID]
+    const program = activeProgram()
     return program.days.find((d) => d.key === templateKey) ?? null
   }, [templateKey])
 
