@@ -29,31 +29,46 @@ const isNative = (): boolean => {
  * next `getItem` transparently restores it from Preferences (and re-mirrors), so
  * the worst case after an eviction is a single brief splash — never a logout.
  */
+const lsGet = (key: string): string | null => {
+  try { return window.localStorage.getItem(key) } catch { return null }
+}
+const lsSet = (key: string, value: string): void => {
+  try { window.localStorage.setItem(key, value) } catch { /* best-effort mirror */ }
+}
+const lsRemove = (key: string): void => {
+  try { window.localStorage.removeItem(key) } catch { /* ignore */ }
+}
+
 const nativeStorage = {
   async getItem(key: string): Promise<string | null> {
-    const { Preferences } = await import('@capacitor/preferences')
-    const { value } = await Preferences.get({ key })
-    if (value != null) {
-      try { window.localStorage.setItem(key, value) } catch { /* mirror best-effort */ }
-      return value
-    }
-    // First native launch after this ships: migrate a session that still lives in
-    // the WebView's localStorage into durable storage so nobody has to re-login.
+    // Every Preferences call is guarded: if the plugin isn't registered yet
+    // (e.g. `npx cap sync ios` not run), we degrade to the localStorage the app
+    // already used — never worse than before, never a hard failure on load.
     try {
-      const legacy = window.localStorage.getItem(key)
-      if (legacy != null) { await Preferences.set({ key, value: legacy }); return legacy }
-    } catch { /* ignore */ }
-    return null
+      const { Preferences } = await import('@capacitor/preferences')
+      const { value } = await Preferences.get({ key })
+      if (value != null) { lsSet(key, value); return value }
+      // First native launch after this ships: migrate an existing WebView session.
+      const legacy = lsGet(key)
+      if (legacy != null) { await Preferences.set({ key, value: legacy }) ; return legacy }
+      return null
+    } catch {
+      return lsGet(key)
+    }
   },
   async setItem(key: string, value: string): Promise<void> {
-    const { Preferences } = await import('@capacitor/preferences')
-    await Preferences.set({ key, value })
-    try { window.localStorage.setItem(key, value) } catch { /* mirror best-effort */ }
+    lsSet(key, value) // mirror first so it survives a Preferences failure
+    try {
+      const { Preferences } = await import('@capacitor/preferences')
+      await Preferences.set({ key, value })
+    } catch { /* Preferences unavailable — localStorage mirror stands */ }
   },
   async removeItem(key: string): Promise<void> {
-    const { Preferences } = await import('@capacitor/preferences')
-    await Preferences.remove({ key })
-    try { window.localStorage.removeItem(key) } catch { /* ignore */ }
+    lsRemove(key)
+    try {
+      const { Preferences } = await import('@capacitor/preferences')
+      await Preferences.remove({ key })
+    } catch { /* Preferences unavailable — nothing more to do */ }
   },
 }
 
