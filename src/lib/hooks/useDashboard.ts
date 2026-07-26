@@ -90,13 +90,21 @@ export function useEnsureTodayScore(enabled = true) {
     }
     // Backfill the week only ONCE per browser session (8 days of server compute
     // is too heavy to run on every dashboard mount — that was a big tab-lag source).
+    // Kick it off AFTER first paint via requestIdleCallback so the score/battery
+    // POST never competes with the launch render — the dashboard already paints
+    // from the persisted cache, so nothing waits on this.
+    const onIdle = (cb: () => void) => {
+      const ric = (window as unknown as { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => void }).requestIdleCallback
+      if (typeof ric === 'function') ric(cb, { timeout: 2000 })
+      else setTimeout(cb, 400)
+    }
     let backfilled = false
     try { backfilled = sessionStorage.getItem('helix_backfilled') === '1' } catch {}
     if (!backfilled) {
       try { sessionStorage.setItem('helix_backfilled', '1') } catch {}
-      recompute(7)
+      onIdle(() => recompute(7))
     } else {
-      recompute(0)
+      onIdle(() => recompute(0))
     }
     const onVisible = () => { try { if (document.visibilityState === 'visible') recompute(0) } catch { /* never crash on foreground */ } }
     const onOnline = () => recompute(0)

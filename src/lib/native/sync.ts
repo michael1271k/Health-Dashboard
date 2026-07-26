@@ -1,7 +1,7 @@
 'use client'
 
 import { Capacitor } from '@capacitor/core'
-import { syncRollingWindow, requestHealthAuthorization } from './healthkit'
+import { syncHealthKitToServer, syncYesterdayToServer, requestHealthAuthorization } from './healthkit'
 import { authedFetch } from '@/lib/utils/authedFetch'
 import { logicalTodayISO, hoursAwakeToday } from '@/lib/utils/day'
 
@@ -40,19 +40,25 @@ function withinReentrancyWindow(): boolean {
 }
 
 /**
- * One full sync pass: pull today+yesterday from HealthKit, recompute the day's
- * score/battery on the server, then revalidate the health-derived surfaces so
- * the open UI reflects the fresh data immediately.
+ * One full sync pass, in TWO PHASES so the visible day lands FAST:
+ *
+ *   Phase 1 — TODAY: pull today's HealthKit → /api/ingest → recompute the score →
+ *     revalidate the UI. This is everything the open dashboard shows, so the user
+ *     sees fresh numbers as soon as today's pull finishes.
+ *   Phase 2 — YESTERDAY: pull yesterday in the background to self-correct any
+ *     late-recorded data, then revalidate again.
+ *
+ * The old flow pulled yesterday FIRST and both days BEFORE any revalidation, so
+ * today's numbers didn't appear until ~2× the metric-fan-out had run — the
+ * "sync takes 7–10 s" the user felt. Today-first roughly halves time-to-fresh.
  */
 async function runSync(force: boolean, onSynced?: OnSynced): Promise<void> {
   if (!Capacitor.isNativePlatform()) return
   if (!force && withinReentrancyWindow()) return
   try { localStorage.setItem(WATERMARK_KEY, String(Date.now())) } catch { /* ignore */ }
 
-  // 1. Pull HealthKit → /api/ingest (writes today + yesterday to the DB).
-  const { today, yesterday } = await syncRollingWindow()
-
-  // 2. Recompute today's score/battery from the freshly-ingested data.
+  // ── Phase 1 — TODAY (the visible day) ──
+  try { await syncHealthKitToServer() } catch { /* HK pull failed — resume retries */ }
   try {
     await authedFetch('/api/compute-score', {
       method: 'POST',
@@ -60,10 +66,13 @@ async function runSync(force: boolean, onSynced?: OnSynced): Promise<void> {
       body: JSON.stringify({ date: logicalTodayISO(), hoursAwake: hoursAwakeToday(), isToday: true, force: true }),
     })
   } catch { /* scoring failed — the next foreground retries */ }
+  onSynced?.() // revalidate NOW — today's data + score are in
 
-  // 3. Revalidate the UI (daily_scores + all health surfaces) off the critical path.
-  if (today || yesterday) onSynced?.()
-  else onSynced?.() // still refresh — the recompute may have changed the score
+  // ── Phase 2 — YESTERDAY (background self-correction) ──
+  try {
+    const yesterday = await syncYesterdayToServer()
+    if (yesterday) onSynced?.()
+  } catch { /* yesterday's correction failed — next foreground retries */ }
 }
 
 /**

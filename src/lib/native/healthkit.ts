@@ -276,7 +276,7 @@ async function fetchSleep(dateISO: string): Promise<SleepStages | null> {
  * (a live running total); past days query the full midnight-to-midnight window.
  * Returns the payload sent, or null when not native / no session / nothing new.
  */
-async function syncDay(dateISO: string, isToday: boolean): Promise<Record<string, number | string> | null> {
+export async function syncDay(dateISO: string, isToday: boolean): Promise<Record<string, number | string> | null> {
   if (!Capacitor.isNativePlatform()) return null
   const { data: { session } } = await supabase.auth.getSession()
   if (!session?.access_token) return null
@@ -317,23 +317,18 @@ export async function syncHealthKitToServer(): Promise<Record<string, number | s
 }
 
 /**
- * Rolling window — re-pull TODAY and YESTERDAY on every sync. Today captures the
- * live running total; yesterday self-corrects any steps/energy/etc. that Apple
- * recorded after the previous day's last sync (e.g. walking around before sleep
- * post a 21:00 sync). Each day writes to its own date and upserts
+ * Pull YESTERDAY's finalized totals (full midnight-to-midnight window). This
+ * self-corrects any steps/energy/etc. Apple recorded after the previous day's
+ * last sync — e.g. a walk before bed after a 21:00 sync. Its own date, upserted
  * last-write-wins, so re-syncs never duplicate.
  *
- * ORDER MATTERS — these run SEQUENTIALLY, oldest first. `/api/ingest` deletes a
- * day's sleep window before re-inserting it; running both days concurrently let
- * yesterday's request interleave with today's and clobber the freshly written
- * night. The delete windows are now disjoint (see nightWindow()), so this is
- * belt-and-braces — and it also keeps the native bridge calmer under load.
+ * The orchestrator (sync.ts) runs today FIRST (the visible day → fast UI refresh)
+ * and this SECOND in the background. They stay sequential — `/api/ingest` deletes
+ * a day's sleep window before re-inserting, so concurrent day-writes could
+ * interleave; the night windows are disjoint now, so sequential is belt-and-braces
+ * and keeps the native bridge calm under load.
  */
-export async function syncRollingWindow(): Promise<{ today: Record<string, number | string> | null; yesterday: Record<string, number | string> | null }> {
-  if (!Capacitor.isNativePlatform()) return { today: null, yesterday: null }
-  const now = new Date()
-  const yst = new Date(now); yst.setDate(yst.getDate() - 1)
-  const yesterday = await syncDay(localDayISO(yst), false)
-  const today = await syncDay(localDayISO(now), true)
-  return { today, yesterday }
+export async function syncYesterdayToServer(): Promise<Record<string, number | string> | null> {
+  const yst = new Date(); yst.setDate(yst.getDate() - 1)
+  return syncDay(localDayISO(yst), false)
 }
