@@ -10,6 +10,7 @@ import { BodyMap } from '@/components/day/BodyMap'
 import { SleepDebtGauge } from '@/components/day/SleepDebtGauge'
 import { SwapDayControl } from '@/components/day/SwapDayControl'
 import { DomsTracker } from '@/components/day/RecoveryTrackers'
+import { CardioLogger } from '@/components/day/CardioLogger'
 import { WaterFluid } from '@/components/day/WaterFluid'
 import { useDayVault, dayCompleteness, type DayVaultData } from '@/lib/hooks/useDayVault'
 import { useUserGoals, useDaySleep } from '@/lib/hooks/useDashboard'
@@ -327,6 +328,9 @@ export default function DailyNexusPage() {
 
       {/* Recovery inputs — soreness 24–72h post-session (compact 2-column) */}
       <DomsTracker date={date} />
+
+      {/* Cardio (walk/run) — separate ledger; never double-counts Active Energy */}
+      <CardioLogger date={date} hkActiveEnergy={log?.active_energy ?? null} />
 
       {/* ══ SECTION 2 · Session Debrief ══ (workout + progression, unified) */}
       {trained ? (
