@@ -6,6 +6,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft, Dumbbell, Moon, Flame, Scale, Plus, ChevronRight, ChevronLeft } from 'lucide-react'
 import { CompletenessArc } from '@/components/day/CompletenessArc'
 import { InBodyCard } from '@/components/day/InBodyCard'
+import { BodyMap } from '@/components/day/BodyMap'
 import { SleepDebtGauge } from '@/components/day/SleepDebtGauge'
 import { SwapDayControl } from '@/components/day/SwapDayControl'
 import { DomsTracker } from '@/components/day/RecoveryTrackers'
@@ -330,6 +331,9 @@ export default function DailyNexusPage() {
           </button>
         )}
       </div>
+
+      {/* Segmented InBody figure — composition mapped onto the body + printout bars. */}
+      {hasScale && <BodyMap log={log ?? null} />}
 
       {/* Recovery inputs — soreness 24–48h post-session + tape measurements */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

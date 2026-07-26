@@ -173,6 +173,7 @@ export function useSessionOrdinal(dayKey: string | null | undefined, splitDay: s
 
 /** The InBody card's structured fields — all daily_logs columns. */
 export interface BodyMetricsPatch {
+  // ── Core columns (always present) ──
   weight_kg?: number | null
   body_fat_pct?: number | null
   muscle_percent?: number | null
@@ -182,7 +183,25 @@ export interface BodyMetricsPatch {
   visceral_fat?: number | null
   bmr?: number | null
   bmi?: number | null
+  // ── Extended InBody columns (self-heal until migrated) ──
+  protein_percent?: number | null
+  waist_cm?: number | null
+  hip_cm?: number | null
+  muscle_mass_kg?: number | null
+  water_mass_kg?: number | null
+  fat_mass_kg?: number | null
+  bone_mineral_kg?: number | null
+  protein_mass_kg?: number | null
+  fat_free_mass_kg?: number | null
+  waist_hip_ratio?: number | null
 }
+
+/** Columns added by the Phase-2 InBody engine — written separately so a DB that
+ *  hasn't run the paste-SQL still saves the core metrics. */
+const EXTENDED_BODY_KEYS = new Set<keyof BodyMetricsPatch>([
+  'protein_percent', 'waist_cm', 'hip_cm', 'muscle_mass_kg', 'water_mass_kg',
+  'fat_mass_kg', 'bone_mineral_kg', 'protein_mass_kg', 'fat_free_mass_kg', 'waist_hip_ratio',
+])
 
 /** daily_logs column → its body_composition counterpart. */
 const BODY_MIRROR: Array<[keyof BodyMetricsPatch, string]> = [
@@ -221,10 +240,27 @@ export function useSaveBodyMetrics(date: string) {
     mutationFn: async (patch: BodyMetricsPatch) => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not signed in')
-      const { error } = await supabase.from('daily_logs')
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .upsert({ user_id: user.id, date, ...patch } as any, { onConflict: 'user_id,date' })
-      if (error) throw new Error(error.message)
+
+      // Split so a not-yet-migrated extended column can never block the core save.
+      const core: Record<string, unknown> = {}
+      const extended: Record<string, unknown> = {}
+      for (const [k, v] of Object.entries(patch)) {
+        (EXTENDED_BODY_KEYS.has(k as keyof BodyMetricsPatch) ? extended : core)[k] = v
+      }
+
+      if (Object.keys(core).length) {
+        const { error } = await supabase.from('daily_logs')
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .upsert({ user_id: user.id, date, ...core } as any, { onConflict: 'user_id,date' })
+        if (error) throw new Error(error.message)
+      }
+      if (Object.keys(extended).length) {
+        const { error } = await supabase.from('daily_logs')
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .upsert({ user_id: user.id, date, ...extended } as any, { onConflict: 'user_id,date' })
+        // Column not migrated yet → swallow; the paste-SQL adds these columns.
+        if (error && !/column|schema cache|PGRST204/i.test(error.message)) throw new Error(error.message)
+      }
 
       // Read back the reconciled day rather than trusting the patch.
       const { data: dayRow } = await supabase.from('daily_logs')
