@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { Capacitor } from '@capacitor/core'
+import { Capacitor, registerPlugin } from '@capacitor/core'
 import type { Database } from './types'
 
 // Browser-side Supabase client (uses anon key, subject to RLS)
@@ -17,18 +17,34 @@ const isNative = (): boolean => {
 }
 
 /**
- * Native-durable auth storage. iOS WKWebView evicts `localStorage` under storage
- * pressure / ITP (~7 idle days) — that eviction is why the standalone app used to
- * silently sign the user out. Capacitor Preferences persists to the native store
- * (NSUserDefaults / Keychain-adjacent) which the WebView cannot evict, so a signed-
- * in session survives indefinitely and `autoRefreshToken` keeps the JWT alive off
- * the (non-expiring) refresh token.
+ * Native-durable auth storage — a 3-tier store, most-durable first:
  *
- * We also mirror into `localStorage`: it's the fast, synchronous source that lets
- * `AuthGate` paint optimistically on launch. If the mirror is ever evicted, the
- * next `getItem` transparently restores it from Preferences (and re-mirrors), so
- * the worst case after an eviction is a single brief splash — never a logout.
+ *   1. **Keychain** (`SecureStore` plugin). iOS does NOT clear the Keychain on app
+ *      uninstall, so the Supabase session survives a delete + reinstall on the same
+ *      device — "sign in once, ever". This is the tier that fixes re-login after an
+ *      Xcode rebuild. Only the token JSON Supabase already persists is stored; no
+ *      password is ever written. Async native-bridge call.
+ *   2. **Preferences** (UserDefaults). Survives WKWebView `localStorage` eviction
+ *      (ITP ~7 idle days) but is wiped on uninstall — a fast native mirror.
+ *   3. **localStorage**. The synchronous source that lets `AuthGate` paint
+ *      optimistically on launch; first to be evicted, so it's the fallback tier.
+ *
+ * `getItem` reads the most durable tier that has the value and heals the faster
+ * mirrors from it; `setItem` writes all three. Every native call is guarded: if a
+ * plugin isn't registered yet (e.g. `npx cap sync ios` not run), it degrades to the
+ * localStorage the app already used — never worse than before, never a hard failure.
  */
+interface SecureStorePlugin {
+  get(options: { key: string }): Promise<{ value: string | null }>
+  set(options: { key: string; value: string }): Promise<void>
+  remove(options: { key: string }): Promise<void>
+}
+const SecureStore = registerPlugin<SecureStorePlugin>('SecureStore')
+
+const keychainAvailable = (): boolean => {
+  try { return Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('SecureStore') } catch { return false }
+}
+
 const lsGet = (key: string): string | null => {
   try { return window.localStorage.getItem(key) } catch { return null }
 }
@@ -39,36 +55,51 @@ const lsRemove = (key: string): void => {
   try { window.localStorage.removeItem(key) } catch { /* ignore */ }
 }
 
+// Tier 1 — Keychain (guarded; null/no-op when the plugin isn't registered).
+const kcGet = async (key: string): Promise<string | null> => {
+  if (!keychainAvailable()) return null
+  try { const { value } = await SecureStore.get({ key }); return value ?? null } catch { return null }
+}
+const kcSet = async (key: string, value: string): Promise<void> => {
+  if (!keychainAvailable()) return
+  try { await SecureStore.set({ key, value }) } catch { /* keychain unavailable */ }
+}
+const kcRemove = async (key: string): Promise<void> => {
+  if (!keychainAvailable()) return
+  try { await SecureStore.remove({ key }) } catch { /* ignore */ }
+}
+
+// Tier 2 — Preferences (guarded dynamic import).
+const prefGet = async (key: string): Promise<string | null> => {
+  try { const { Preferences } = await import('@capacitor/preferences'); const { value } = await Preferences.get({ key }); return value ?? null } catch { return null }
+}
+const prefSet = async (key: string, value: string): Promise<void> => {
+  try { const { Preferences } = await import('@capacitor/preferences'); await Preferences.set({ key, value }) } catch { /* unavailable */ }
+}
+const prefRemove = async (key: string): Promise<void> => {
+  try { const { Preferences } = await import('@capacitor/preferences'); await Preferences.remove({ key }) } catch { /* unavailable */ }
+}
+
 const nativeStorage = {
   async getItem(key: string): Promise<string | null> {
-    // Every Preferences call is guarded: if the plugin isn't registered yet
-    // (e.g. `npx cap sync ios` not run), we degrade to the localStorage the app
-    // already used — never worse than before, never a hard failure on load.
-    try {
-      const { Preferences } = await import('@capacitor/preferences')
-      const { value } = await Preferences.get({ key })
-      if (value != null) { lsSet(key, value); return value }
-      // First native launch after this ships: migrate an existing WebView session.
-      const legacy = lsGet(key)
-      if (legacy != null) { await Preferences.set({ key, value: legacy }) ; return legacy }
-      return null
-    } catch {
-      return lsGet(key)
-    }
+    // Keychain first — the only tier that survives an uninstall; heal the mirrors.
+    const kc = await kcGet(key)
+    if (kc != null) { lsSet(key, kc); void prefSet(key, kc); return kc }
+    // Preferences next — survives WebView eviction; promote it into the Keychain.
+    const pref = await prefGet(key)
+    if (pref != null) { lsSet(key, pref); void kcSet(key, pref); return pref }
+    // localStorage last — migrate a pre-existing WebView session up into durability.
+    const legacy = lsGet(key)
+    if (legacy != null) { void prefSet(key, legacy); void kcSet(key, legacy); return legacy }
+    return null
   },
   async setItem(key: string, value: string): Promise<void> {
-    lsSet(key, value) // mirror first so it survives a Preferences failure
-    try {
-      const { Preferences } = await import('@capacitor/preferences')
-      await Preferences.set({ key, value })
-    } catch { /* Preferences unavailable — localStorage mirror stands */ }
+    lsSet(key, value) // sync mirror first so AuthGate can paint before the awaits
+    await Promise.allSettled([prefSet(key, value), kcSet(key, value)])
   },
   async removeItem(key: string): Promise<void> {
     lsRemove(key)
-    try {
-      const { Preferences } = await import('@capacitor/preferences')
-      await Preferences.remove({ key })
-    } catch { /* Preferences unavailable — nothing more to do */ }
+    await Promise.allSettled([prefRemove(key), kcRemove(key)])
   },
 }
 

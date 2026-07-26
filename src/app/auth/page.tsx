@@ -3,29 +3,26 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
-import { LogIn, Zap } from 'lucide-react'
+import { LogIn } from 'lucide-react'
 import { HelixMark } from '@/components/HelixMark'
 
 /**
- * Sign-in. NO app-lock: the app is not gated behind Face ID on launch. Instead
- * the form uses the standard iOS iCloud Keychain flow — `autocomplete`
- * username/current-password + a real <form> so iOS offers "Save Password?" on
- * first manual login and Face-ID-gated AutoFill on a fresh install.
+ * Sign-in. NO app-lock: the app is not gated behind Face ID on launch. The form
+ * uses the standard iOS iCloud Keychain flow — `autocomplete` username/current-
+ * password + a real <form> so iOS offers "Save Password?" on first manual login
+ * and Face-ID-gated AutoFill afterwards.
  *
- * Quick Login: a personal-device fast path. It reads dev credentials from the
- * environment (`NEXT_PUBLIC_DEV_EMAIL` / `NEXT_PUBLIC_DEV_PASSWORD`) and only
- * renders when BOTH are set — so no credential is ever hardcoded in source and
- * the button never appears in a build that wasn't given them.
+ * On native, the session is stored in the device Keychain (SecureStore), which
+ * survives an app delete + reinstall — so this password login is a once-ever step,
+ * not a recurring one. The old env-credential "Quick Login" button is retired: it
+ * never worked in the deployed bundle (NEXT_PUBLIC_* vars aren't set there) and
+ * Keychain persistence makes it unnecessary.
  */
-const QUICK_EMAIL = process.env.NEXT_PUBLIC_DEV_EMAIL
-const QUICK_PASSWORD = process.env.NEXT_PUBLIC_DEV_PASSWORD
-
 export default function AuthPage() {
   const router = useRouter()
-  const [email, setEmail] = useState(QUICK_EMAIL ?? '')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [quickLoading, setQuickLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [resetMsg, setResetMsg] = useState<string | null>(null)
 
@@ -50,14 +47,6 @@ export default function AuthPage() {
     setError(null)
     const ok = await signIn(email, password)
     if (!ok) setLoading(false)
-  }
-
-  async function handleQuickLogin() {
-    if (!QUICK_EMAIL || !QUICK_PASSWORD) return
-    setQuickLoading(true)
-    setError(null)
-    const ok = await signIn(QUICK_EMAIL, QUICK_PASSWORD)
-    if (!ok) setQuickLoading(false)
   }
 
   async function handleForgot() {
@@ -100,28 +89,6 @@ export default function AuthPage() {
         </div>
 
         <div className="rounded-2xl border border-white/[0.08] bg-white/[0.025] backdrop-blur-xl p-6 shadow-[0_24px_80px_rgba(0,0,0,0.55)] space-y-5">
-          {QUICK_EMAIL && QUICK_PASSWORD && (
-            <>
-              <button
-                type="button"
-                onClick={handleQuickLogin}
-                disabled={quickLoading || loading}
-                className="w-full min-h-[48px] rounded-xl font-bold text-sm flex items-center justify-center gap-2
-                           text-white transition-transform active:scale-[0.98] disabled:opacity-60
-                           shadow-[0_8px_28px_rgba(224,112,60,0.35)]"
-                style={{ background: 'linear-gradient(135deg, #E0703C 0%, #B4522A 100%)' }}
-              >
-                <Zap className="w-4 h-4" aria-hidden="true" fill="currentColor" />
-                {quickLoading ? 'Entering…' : 'Quick Login'}
-              </button>
-              <div className="flex items-center gap-3">
-                <div className="h-px flex-1 bg-white/[0.08]" />
-                <span className="text-[10px] uppercase tracking-widest text-muted/70">or sign in</span>
-                <div className="h-px flex-1 bg-white/[0.08]" />
-              </div>
-            </>
-          )}
-
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
               <label htmlFor="email" className="text-xs font-semibold uppercase tracking-wide text-muted">
@@ -178,7 +145,7 @@ export default function AuthPage() {
 
             <button
               type="submit"
-              disabled={loading || quickLoading}
+              disabled={loading}
               className="w-full min-h-[48px] rounded-xl font-bold text-sm flex items-center justify-center gap-2
                          border border-white/[0.14] bg-white/[0.05] text-text hover:bg-white/[0.08]
                          transition-colors active:scale-[0.98] disabled:opacity-60"
