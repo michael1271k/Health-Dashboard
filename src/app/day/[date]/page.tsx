@@ -12,14 +12,14 @@ import { SwapDayControl } from '@/components/day/SwapDayControl'
 import { DomsTracker } from '@/components/day/RecoveryTrackers'
 import { WaterFluid } from '@/components/day/WaterFluid'
 import { useDayVault, dayCompleteness, type DayVaultData } from '@/lib/hooks/useDayVault'
-import { useUserGoals } from '@/lib/hooks/useDashboard'
+import { useUserGoals, useDaySleep } from '@/lib/hooks/useDashboard'
+import { SleepStages } from '@/components/dashboard/SleepStages'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { useDoubleTap } from '@/lib/utils/doubleTap'
 import { MacroOverrideSheet } from '@/components/nutrition/MacroOverrideSheet'
 import { phaseDisplay } from '@/lib/nutrition/phase'
 import { ERA_META, eraForDate, scheduleDayFor, PROGRAMS, DEFAULT_PROGRAM_ID, getActiveProgramId } from '@/lib/programs'
 import { displayWeight, weightUnit, fmtVolume } from '@/lib/utils/units'
-import { formatSleep } from '@/lib/utils/format'
 import { logicalTodayISO } from '@/lib/utils/day'
 
 const VIOLET = '#B4522A'
@@ -42,19 +42,19 @@ function scoreColor(score: number | null | undefined): string {
  * card rings used to be a tiny 44px lost in their container; they own the card now.
  */
 function MicroRing({ value, goalHint, color, label }: { value: number | null | undefined; goalHint: number; color: string; label: string }) {
-  const size = 72, stroke = 6
+  const size = 88, stroke = 8
   const r = (size - stroke) / 2
   const circ = 2 * Math.PI * r
   const pct = value != null ? Math.min(1, value / goalHint) : 0
   return (
-    <div className="flex flex-col items-center gap-1">
-      <div className="relative" style={{ width: size, height: size, filter: `drop-shadow(0 0 6px ${color}30)` }}>
+    <div className="flex flex-col items-center gap-1.5">
+      <div className="relative" style={{ width: size, height: size, filter: `drop-shadow(0 0 8px ${color}40)` }}>
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90" aria-hidden="true">
           <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth={stroke} />
           {pct > 0 && <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={stroke} strokeLinecap="round"
             strokeDasharray={circ} strokeDashoffset={circ * (1 - pct)} style={{ transition: 'stroke-dashoffset 600ms cubic-bezier(0.22,1,0.36,1)' }} />}
         </svg>
-        <span className="absolute inset-0 flex items-center justify-center helix-num text-fluid-base font-bold text-text">
+        <span className="absolute inset-0 flex items-center justify-center helix-num text-fluid-xl font-bold text-text">
           {value != null ? Math.round(value) : '—'}
         </span>
       </div>
@@ -139,6 +139,7 @@ export default function DailyNexusPage() {
   const date = /^\d{4}-\d{2}-\d{2}$/.test(raw ?? '') ? raw : ''
   const { data, isLoading } = useDayVault(date)
   const { data: goals } = useUserGoals()
+  const { data: daySleep } = useDaySleep(date)
   const [scaleOpen, setScaleOpen] = useState(false)
   const [fuelEdit, setFuelEdit] = useState(false)
   const tapFuel = useDoubleTap(() => setFuelEdit(true))
@@ -247,10 +248,10 @@ export default function DailyNexusPage() {
           onClick={tapFuel} title="Double-tap to edit macros">
           <div className="flex items-baseline justify-between">
             <h3 className="font-heading font-semibold text-fluid-sm text-text flex items-center gap-1.5"><Flame className="w-3.5 h-3.5" style={{ color: MACRO_COLORS.calories }} /> Fuel</h3>
-            <span className="helix-num text-fluid-xs font-bold" style={{ color: MACRO_COLORS.calories }}>{n ? `${Math.round(n.calories).toLocaleString()}` : '—'}<span className="text-muted"> kcal</span></span>
+            <span className="helix-num text-fluid-2xl font-black leading-none" style={{ color: MACRO_COLORS.calories }}>{n ? `${Math.round(n.calories).toLocaleString()}` : '—'}<span className="text-fluid-xs text-muted font-bold"> kcal</span></span>
           </div>
           {n ? (
-            <div className="flex items-center justify-around">
+            <div className="flex items-center justify-around pt-4 pb-1">
               <MicroRing value={n.carbs_g} goalHint={200} color={MACRO_COLORS.carbs} label="C" />
               <MicroRing value={n.fat_g} goalHint={60} color={MACRO_COLORS.fat} label="F" />
               <MicroRing value={n.protein_g} goalHint={180} color={MACRO_COLORS.protein} label="P" />
@@ -264,22 +265,11 @@ export default function DailyNexusPage() {
           initial={{ calories: n?.calories ?? 0, protein_g: n?.protein_g ?? 0, carbs_g: n?.carbs_g ?? 0, fat_g: n?.fat_g ?? 0 }}
         />
 
-        {/* Sleep & recovery */}
-        <section className="helix-card col-span-2 sm:col-span-1 space-y-2" style={{ borderColor: `${VIOLET}26` }}>
+        {/* Sleep & recovery — the premium stage-ribbon visual (reused from the
+            dashboard), with the sleep-debt gauge folded in below. */}
+        <section className="helix-card col-span-2 sm:col-span-1 space-y-3" style={{ borderColor: `${VIOLET}26` }}>
           <h3 className="font-heading font-semibold text-fluid-sm text-text flex items-center gap-1.5"><Moon className="w-3.5 h-3.5" style={{ color: VIOLET }} /> Sleep &amp; Recovery</h3>
-          <div className="grid grid-cols-2 gap-2 text-center">
-            {[
-              { label: 'Sleep', v: log?.sleep_minutes != null ? formatSleep(log.sleep_minutes) : null, c: VIOLET },
-              { label: 'RHR', v: log?.avg_rest_heart_rate != null ? `${log.avg_rest_heart_rate}` : null, c: ROSE },
-              { label: 'HRV', v: log?.hrv_ms != null ? `${Math.round(log.hrv_ms)}` : null, c: ICE },
-              { label: 'Resp', v: log?.respiratory_rate != null ? log.respiratory_rate.toFixed(1) : null, c: CYAN },
-            ].map((s) => (
-              <div key={s.label} className="rounded-lg bg-white/[0.02] border border-white/[0.05] px-1 py-1.5">
-                <span className="helix-num block text-fluid-xs font-bold text-text leading-tight">{s.v ?? '—'}</span>
-                <span className="text-[8px] uppercase tracking-wide" style={{ color: s.c }}>{s.label}</span>
-              </div>
-            ))}
-          </div>
+          <SleepStages sleep={daySleep ?? null} log={log ?? null} goalHours={goals?.sleep_goal_hours ?? null} />
           {/* Sleep debt folded in — no longer a standalone oversized card */}
           <SleepDebtGauge compact />
         </section>
@@ -335,10 +325,8 @@ export default function DailyNexusPage() {
       {/* Segmented InBody figure — composition mapped onto the body + printout bars. */}
       {hasScale && <BodyMap log={log ?? null} />}
 
-      {/* Recovery inputs — soreness 24–48h post-session + tape measurements */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <DomsTracker date={date} />
-      </div>
+      {/* Recovery inputs — soreness 24–72h post-session (compact 2-column) */}
+      <DomsTracker date={date} />
 
       {/* ══ SECTION 2 · Session Debrief ══ (workout + progression, unified) */}
       {trained ? (

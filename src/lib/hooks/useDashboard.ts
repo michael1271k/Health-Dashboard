@@ -180,6 +180,28 @@ export function useTodaySleep() {
   })
 }
 
+/** The sleep session for an ARBITRARY logical day — powers the Nexus per-date
+ *  Sleep & Recovery card (useTodaySleep is fixed to today). */
+export function useDaySleep(dateISO: string) {
+  return useQuery({
+    queryKey: ['sleep_sessions', dateISO],
+    enabled: !!dateISO,
+    queryFn: async () => {
+      const night = nightWindow(dateISO)
+      const { data, error } = await supabase
+        .from('sleep_sessions')
+        .select('*')
+        .gte('start_time', night.from)
+        .lt('start_time', night.to)
+        .order('duration_min', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      if (error) throw error
+      return data as Tables<'sleep_sessions'> | null
+    },
+  })
+}
+
 export function useUserGoals() {
   return useQuery({
     queryKey: ['user_goals'],

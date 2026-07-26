@@ -28,14 +28,14 @@ export function DomsTracker({ date }: { date: string }) {
         Rate 24–72h after training — that&apos;s when soreness peaks. Each muscle links to the workout that caused it.
       </p>
 
-      <div className="space-y-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-2">
         {DOMS_MUSCLES.map((m) => {
           const cur = doms?.[m]
           const src = sources?.[m]
           return (
             <div key={m} className="space-y-0.5">
               <div className="flex items-center gap-2">
-                <span className="text-fluid-xs text-text w-16 shrink-0 truncate">{m}</span>
+                <span className="text-fluid-xs text-text w-14 shrink-0 truncate">{m}</span>
                 <div className="flex gap-1 flex-1">
                   {DOMS_LEVELS.map((lv) => {
                     const on = cur === lv.v
@@ -62,7 +62,7 @@ export function DomsTracker({ date }: { date: string }) {
               </div>
               {/* Attribution chip — the workout this muscle's soreness maps to. */}
               {src && cur != null && cur > 0 && (
-                <div className="flex items-center gap-1 pl-[4.5rem] text-[9px] text-muted">
+                <div className="flex items-center gap-1 pl-16 text-[9px] text-muted">
                   <Dumbbell className="w-2.5 h-2.5 shrink-0" style={{ color: EMBER }} aria-hidden="true" />
                   <span className="truncate">
                     <span className="font-semibold" style={{ color: EMBER }}>{src.label}</span>
