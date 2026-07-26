@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic'
 import { useWeightTrend, useMacroHistory, usePRHistory, useVolumeTrend } from '@/lib/hooks/useCharts'
 import { useUserGoals } from '@/lib/hooks/useDashboard'
 import { RangeSelector } from '@/components/charts/RangeSelector'
+import { PlanEraButton } from '@/components/charts/PlanEraButton'
 import { eraForDate } from '@/lib/programs'
 import { WidgetBoundary } from '@/components/fx/WidgetBoundary'
 import { useEraFilter } from '@/lib/era/eraFilter'
@@ -45,13 +46,15 @@ export function AnalyticsPanel() {
     <div className="space-y-6">
       <EraFilterPills />
 
-      <div className="lg:hidden">
+      <div className="lg:hidden flex items-center gap-2 flex-wrap">
         <RangeSelector value={days} onChange={setDays} />
+        <PlanEraButton value={days} onChange={setDays} />
       </div>
 
       <div className="flex gap-4 items-start">
-        <div className="hidden lg:block shrink-0 sticky top-6 self-start">
+        <div className="hidden lg:flex flex-col gap-2 shrink-0 sticky top-6 self-start">
           <RangeSelector value={days} onChange={setDays} orientation="vertical" />
+          <PlanEraButton value={days} onChange={setDays} />
         </div>
         <div className="flex-1 min-w-0 space-y-6">
           <WidgetBoundary label="Charts" minHeight={280}>

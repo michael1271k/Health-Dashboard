@@ -8,15 +8,18 @@ interface RangeSelectorProps {
   value: number
   onChange: (days: number) => void
   orientation?: 'horizontal' | 'vertical'
+  /** Hide presets shorter than this many days (e.g. 30 drops the 1W/2W pills). */
+  min?: number
 }
 
 /** Glass segmented range presets — horizontal pills or a vertical rail. */
-export function RangeSelector({ value, onChange, orientation = 'horizontal' }: RangeSelectorProps) {
+export function RangeSelector({ value, onChange, orientation = 'horizontal', min = 0 }: RangeSelectorProps) {
   const vertical = orientation === 'vertical'
+  const presets = PRESETS.filter(([, days]) => days >= min)
   return (
     <div className={`flex gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.06] no-scrollbar
       ${vertical ? 'flex-col w-fit' : 'w-full sm:w-fit overflow-x-auto'}`}>
-      {PRESETS.map(([label, days]) => {
+      {presets.map(([label, days]) => {
         const active = value === days
         return (
           <button

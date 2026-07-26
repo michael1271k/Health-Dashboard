@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import dynamic from 'next/dynamic'
 import { RangeSelector } from '@/components/charts/RangeSelector'
+import { PlanEraButton } from '@/components/charts/PlanEraButton'
 import { DeferredMount } from '@/components/fx/DeferredMount'
 import { WidgetBoundary } from '@/components/fx/WidgetBoundary'
 import { useEraFilter } from '@/lib/era/eraFilter'
@@ -37,7 +38,12 @@ export function MuscleAnalyticsPanel() {
             <h2 className="font-heading text-fluid-lg font-bold text-text">
               Muscle Analytics <span className="text-fluid-xs text-muted font-normal">Hevy-killer</span>
             </h2>
-            <RangeSelector value={days} onChange={setDays} />
+            {/* 30-day floor: the 1W/2W presets are gone — muscle trends need a month
+                minimum to read. The Era button spans the whole active plan. */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <RangeSelector value={days} onChange={setDays} min={30} />
+              <PlanEraButton value={days} onChange={setDays} />
+            </div>
           </div>
           <EraFilterPills />
           <div className="space-y-4 min-w-0">
