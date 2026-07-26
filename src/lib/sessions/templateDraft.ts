@@ -2,10 +2,11 @@
  * Program-day template → pre-seeded Command Center draft.
  *
  * Seeding priority, highest first:
- *   1. The exercise's LAST REAL SESSION in the same era — set 1 seeds from set 1,
- *      set 2 from set 2, and so on.
+ *   1. The exercise's LAST REAL SESSION in the same era — reproduced EXACTLY:
+ *      the same NUMBER of sets, each set's weight, reps, and failure tag. If last
+ *      time was 2 sets, the deck opens with 2 sets — never the template's 3.
  *   2. The explicit per-set seed (seedTemplates.ts), which also defines cardio
- *      and the deck's structure.
+ *      and the deck's structure (used only as a cold-start when there's no history).
  *   3. The program's `wk1Kg` cold start (bodyweight/timed moves seed at 0 kg).
  *
  * This used to read `useExerciseMemory`, which returned ONE set — whichever row
@@ -23,18 +24,19 @@ export const HELIX_DAY_KEYS = ['cb_a', 'legs_a', 'arms', 'cb_b', 'legs_b'] as co
 /** Last session per exercise NAME — the shape `useExerciseSetHistory` returns. */
 export interface ExerciseHistoryEntry {
   date: string
-  sets: Array<{ weightKg: number; reps: number }>
+  sets: Array<{ weightKg: number; reps: number; setType?: 'failure' }>
 }
 
 /**
- * Fill `count` slots from the previous session's set list. Slot i takes set i;
- * if last time had fewer sets, the remaining slots repeat the final set (the
- * honest read of "you're adding a set at the load you finished on").
+ * Reproduce the previous session EXACTLY: same number of sets, each with its
+ * own weight, reps, and failure tag. No padding to a template count, no
+ * fabricated extra sets — if last time was 2 sets, you get 2 sets.
  */
-function seedFromHistory(prev: ExerciseHistoryEntry, count: number): DraftSet[] {
-  return Array.from({ length: count }, (_, i) => {
-    const s = prev.sets[i] ?? prev.sets[prev.sets.length - 1]
-    return { weightKg: s.weightKg, reps: s.reps }
+function seedFromHistory(prev: ExerciseHistoryEntry): DraftSet[] {
+  return prev.sets.map((s) => {
+    const set: DraftSet = { weightKg: s.weightKg, reps: s.reps }
+    if (s.setType === 'failure') set.setType = 'failure'
+    return set
   })
 }
 
@@ -67,7 +69,7 @@ export function buildTemplateDraft(
     for (const ex of seed.exercises) {
       const prev = historyFor(ex.name)
       const sets = prev
-        ? seedFromHistory(prev, ex.sets.length)
+        ? seedFromHistory(prev)
         : ex.sets.map((s) => ({ weightKg: s.weightKg, reps: s.reps }))
       exercises.push({
         localId: localId(), name: ex.name, muscleGroups: ex.muscles, sets,
@@ -78,7 +80,7 @@ export function buildTemplateDraft(
     for (const ex of day.exercises.filter((e) => !e.bulkOnly)) {
       const prev = historyFor(ex.name)
       const sets = prev
-        ? seedFromHistory(prev, ex.sets)
+        ? seedFromHistory(prev)
         // Bodyweight / timed moves (wk1Kg null) seed at 0 kg, not a phantom 20 kg.
         : Array.from({ length: ex.sets }, () => ({
           weightKg: ex.wk1Kg ?? 0,

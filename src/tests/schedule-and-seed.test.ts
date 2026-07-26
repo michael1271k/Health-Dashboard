@@ -57,14 +57,26 @@ describe('buildTemplateDraft — per-set seed + cardio + memory override', () =>
     expect(chest.seededFrom).toBe('2026-07-17')
   })
 
-  it('repeats the final set when the template asks for more sets than last time', () => {
+  it('reproduces the EXACT set count from history — no padding to the template', () => {
+    // Did 2 sets last time → deck opens with 2 sets, never the template's 3.
     const history = new Map([['Chest Press (Machine)', {
-      date: '2026-07-17', sets: [{ weightKg: 40, reps: 12 }],
+      date: '2026-07-17', sets: [{ weightKg: 40, reps: 12 }, { weightKg: 40, reps: 11 }],
     }]])
     const d = buildTemplateDraft(cbB, '2026-07-16', history)
     const chest = d.exercises.find((e) => e.name === 'Chest Press (Machine)')!
-    expect(chest.sets).toHaveLength(3)
-    expect(chest.sets.every((s) => s.weightKg === 40 && s.reps === 12)).toBe(true)
+    expect(chest.sets).toEqual([{ weightKg: 40, reps: 12 }, { weightKg: 40, reps: 11 }])
+  })
+
+  it('carries the failure tag from history into the seeded set', () => {
+    const history = new Map([['Chest Press (Machine)', {
+      date: '2026-07-17',
+      sets: [{ weightKg: 40, reps: 12 }, { weightKg: 40, reps: 8, setType: 'failure' as const }],
+    }]])
+    const d = buildTemplateDraft(cbB, '2026-07-16', history)
+    const chest = d.exercises.find((e) => e.name === 'Chest Press (Machine)')!
+    expect(chest.sets).toEqual([
+      { weightKg: 40, reps: 12 }, { weightKg: 40, reps: 8, setType: 'failure' },
+    ])
   })
 
   it('marks cold-start exercises as unseeded so targets are never read as history', () => {

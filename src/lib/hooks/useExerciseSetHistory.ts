@@ -6,7 +6,10 @@ import { eraForDate, type Era } from '@/lib/programs'
 
 export interface ExerciseHistory {
   date: string                                    // most recent session date
-  sets: Array<{ weightKg: number; reps: number }> // that session's full set list, in order
+  /** That session's full working-set list, ordered by set_number (1..n).
+   *  `setType: 'failure'` is carried so seeding + the PREV chip reproduce the
+   *  exact failure tags from last time. */
+  sets: Array<{ weightKg: number; reps: number; setType?: 'failure' }>
 }
 
 /**
@@ -42,21 +45,35 @@ export function useExerciseSetHistory(names: string[], era?: Era) {
         // the whole deck.
         .filter((r) => r.set_type !== 'warmup')
 
-      const out = new Map<string, ExerciseHistory>()
+      // Rows arrive newest-first (created_at desc) to pick each exercise's most
+      // recent session. But WITHIN a session the working sets are batch-inserted
+      // and share a created_at, so their relative order here is undefined — the
+      // old code appended in that arbitrary order and then blindly `.reverse()`d,
+      // which flipped an already-correct list into `11, 12, 12`. Sort by
+      // set_number instead: deterministic 1..n regardless of insert timing.
+      type Row = { weightKg: number; reps: number; setNumber: number; setType?: 'failure' }
+      const acc = new Map<string, { date: string; rows: Row[] }>()
       for (const r of rows) {
         const date = r.workout_sessions.started_at.slice(0, 10)
         if (era && eraForDate(date) !== era) continue
         const name = r.exercises.name
-        const existing = out.get(name)
-        if (!existing) {
-          out.set(name, { date, sets: [{ weightKg: r.weight_kg, reps: r.reps }] })
-        } else if (existing.date === date) {
-          existing.sets.push({ weightKg: r.weight_kg, reps: r.reps })
+        const row: Row = {
+          weightKg: r.weight_kg, reps: r.reps, setNumber: r.set_number,
+          ...(r.set_type === 'failure' ? { setType: 'failure' as const } : {}),
         }
-        // rows are newest-first, so a different (older) date for a known name is skipped
+        const existing = acc.get(name)
+        if (!existing) acc.set(name, { date, rows: [row] })
+        else if (existing.date === date) existing.rows.push(row)
+        // a different (older) date for a known name is skipped
       }
-      // set order within the session: rows arrived newest-first — restore 1..n
-      for (const h of out.values()) h.sets.reverse()
+
+      const out = new Map<string, ExerciseHistory>()
+      for (const [name, { date, rows: setRows }] of acc) {
+        const sets = [...setRows]
+          .sort((a, b) => a.setNumber - b.setNumber)
+          .map(({ weightKg, reps, setType }) => (setType ? { weightKg, reps, setType } : { weightKg, reps }))
+        out.set(name, { date, sets })
+      }
       return out
     },
   })

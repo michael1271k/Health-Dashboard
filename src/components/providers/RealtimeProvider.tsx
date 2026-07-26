@@ -27,6 +27,10 @@ const TABLE_KEYS: Record<string, string[][]> = {
   // Shares the canonical workout-derived key list with the commit/delete
   // mutations so a session change from ANY device refreshes the same surfaces.
   workout_sessions: WORKOUT_QUERY_KEYS,
+  // Subscribe to the SETS table too: an in-place set edit can touch only
+  // workout_sets (the parent session row is untouched), so without this the
+  // desktop/other devices wouldn't see a live rep/weight change until reload.
+  workout_sets: WORKOUT_QUERY_KEYS,
   daily_scores: [['daily_scores'], ['weekly_review'], ['trends'], ['coach'], ['continuum'], ['day_vault'], ['month_activity'], ['week_recovery']],
   supplement_log: [['supplement_log'], ['day_vault']],
   water_intake: [['daily_scores'], ['day_vault']],

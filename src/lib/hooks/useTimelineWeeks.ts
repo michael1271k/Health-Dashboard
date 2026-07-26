@@ -117,6 +117,11 @@ export function useTimelineWeeks(era: EraFilter) {
 
     const reportByWeek = new Map((reports ?? []).map((r) => [r.week_start, r]))
     const weekStarts = new Set<string>([...byWeek.keys(), ...reportByWeek.keys()])
+    // The CURRENT week must open the instant it begins (00:00 Sunday), even
+    // before any workout is logged — otherwise the new week only pops into
+    // Momentum after the first set is committed. Seed the live week explicitly
+    // so an empty (0-session) live node is always synthesized.
+    weekStarts.add(liveWeekStart)
 
     const out: TimelineWeekNode[] = []
     for (const ws of weekStarts) {
@@ -134,7 +139,8 @@ export function useTimelineWeeks(era: EraFilter) {
           days: report.payload.days, contentMd: report.content_md, reportId: report.id, isLive, era: nodeEra,
         })
       } else {
-        const a = byWeek.get(ws)!
+        // Live week with no sessions yet → an empty node so "Week N" still opens.
+        const a = byWeek.get(ws) ?? { sessions: 0, volumeKg: 0, sets: 0, durationMin: 0, prs: 0, days: [] }
         out.push({
           weekStart: ws, weekNumber: weekNumberOf(ws), weekLabel: weekLabelOf(ws),
           sessions: a.sessions, volumeKg: Math.round(a.volumeKg), sets: a.sets, durationMin: a.durationMin, prs: a.prs,

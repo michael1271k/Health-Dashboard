@@ -203,9 +203,13 @@ export function ExerciseCard({ exercise, history, collapsed = false, onUpdateSet
             )}
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <span className="helix-num text-xs text-muted tabular-nums">
-              {fmtKg(topWeight)}kg × {summary}
-            </span>
+            {/* Current-input glance — only when the card is collapsed. Expanded,
+                the live set rows below say the same thing, so it's redundant. */}
+            {!showBody && (
+              <span className="helix-num text-xs text-muted tabular-nums">
+                {fmtKg(topWeight)}kg × {summary}
+              </span>
+            )}
             <ChevronDown className={`w-4 h-4 text-muted transition-transform duration-200 ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
           </div>
         </button>
