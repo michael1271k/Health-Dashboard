@@ -2,12 +2,11 @@
 
 import { useState } from 'react'
 import dynamic from 'next/dynamic'
-import { RangeSelector } from '@/components/charts/RangeSelector'
 import { PlanEraButton } from '@/components/charts/PlanEraButton'
 import { DeferredMount } from '@/components/fx/DeferredMount'
 import { WidgetBoundary } from '@/components/fx/WidgetBoundary'
 import { useEraFilter } from '@/lib/era/eraFilter'
-import { EraFilterPills } from '@/components/era/EraFilterPills'
+import { activeProgram } from '@/lib/programs'
 
 // Recharts-heavy — client-only so they never touch the Command Center's first load.
 const chartFallback = () => (
@@ -20,11 +19,13 @@ const VolumeStream = dynamic(() => import('@/components/charts/HelixViz').then((
 const RpeCalendar = dynamic(() => import('@/components/charts/HelixViz').then((m) => m.RpeCalendar), { ssr: false, loading: chartFallback })
 const MuscleAnalyticsSection = dynamic(() => import('@/components/charts/MuscleAnalytics').then((m) => m.MuscleAnalyticsSection), { ssr: false, loading: chartFallback })
 
+const STEEL = '#8E9AAC'
+
 /**
  * The gym/muscle-progress graphs — Muscle Contour Map, Intensity Calendar,
- * Volume Stream, and the Hevy-killer Muscle Analytics — live in the Command
- * Center, not the Momentum → Analytics tab (which now carries only body/vitals
- * trends). Defaults to a 30-day window with its own era filter.
+ * Volume Stream, and the Muscle Analytics detail — live in the Command Center,
+ * not the Momentum → Analytics tab (which now carries only body/vitals trends).
+ * The ONLY two windows are 30 Days (default) and the current-plan Era.
  */
 export function MuscleAnalyticsPanel() {
   const [days, setDays] = useState(30)
@@ -35,17 +36,22 @@ export function MuscleAnalyticsPanel() {
       <WidgetBoundary label="Muscle analytics" minHeight={280}>
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-3 flex-wrap">
-            <h2 className="font-heading text-fluid-lg font-bold text-text">
-              Muscle Analytics <span className="text-fluid-xs text-muted font-normal">Hevy-killer</span>
-            </h2>
-            {/* 30-day floor: the 1W/2W presets are gone — muscle trends need a month
-                minimum to read. The Era button spans the whole active plan. */}
+            <h2 className="font-heading text-fluid-lg font-bold text-text">Muscle Analytics</h2>
+            {/* Exactly two windows: 30 Days (default) and the active plan's Era. */}
             <div className="flex items-center gap-2 flex-wrap">
-              <RangeSelector value={days} onChange={setDays} min={30} />
-              <PlanEraButton value={days} onChange={setDays} />
+              <button
+                onClick={() => setDays(30)}
+                aria-pressed={days === 30}
+                className="inline-flex items-center px-3.5 py-1.5 rounded-xl text-fluid-xs font-semibold min-h-[40px] border transition-colors shrink-0"
+                style={days === 30
+                  ? { color: STEEL, borderColor: `${STEEL}55`, background: `${STEEL}1f`, boxShadow: `0 0 10px ${STEEL}33` }
+                  : { color: '#79808C', borderColor: 'transparent' }}
+              >
+                30 Days
+              </button>
+              <PlanEraButton value={days} onChange={setDays} label={`${activeProgram().label} Era`} />
             </div>
           </div>
-          <EraFilterPills />
           <div className="space-y-4 min-w-0">
             {/* [&>*]:min-w-0 lets each chart shrink below its Recharts intrinsic width. */}
             <div className="grid lg:grid-cols-2 gap-4 [&>*]:min-w-0">
