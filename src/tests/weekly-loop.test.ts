@@ -144,6 +144,19 @@ describe('buildWeeklyExport', () => {
     expect(out).toMatch(/\| Biceps \| 4 \| 8 \| UNDER \|/)  // under-target flagged
   })
 
+  it('appends a body-composition table only when readings are supplied', () => {
+    expect(buildWeeklyExport(input)).not.toMatch(/Body composition/)
+    const withBody = buildWeeklyExport({
+      ...input,
+      bodyComp: [{
+        date: '2026-07-19', weightKg: 65.3, bmi: 22.4, bodyFatPct: 13.2, musclePercent: 46.1,
+        waterPercent: 60.5, visceralFat: 6, bmr: 1620, boneMineral: 4.1, leanMassKg: 53.4, waistHipRatio: 0.82,
+      }],
+    })
+    expect(withBody).toMatch(/## Body composition \(InBody\)/)
+    expect(withBody).toMatch(/\| 2026-07-19 \| 65\.3 \| 22\.4 \| 13\.2 \| 46\.1 \| 60\.5 \| 6 \| 1620 \| 4\.1 \| 53\.4 \| 0\.82 \|/)
+  })
+
   it('lists EVERY working set, grouped by load — not just the top set', () => {
     const out = buildWeeklyExport(input)
     expect(out).toMatch(/60kg × 12,11/)

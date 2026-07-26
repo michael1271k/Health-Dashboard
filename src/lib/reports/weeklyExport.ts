@@ -77,6 +77,21 @@ export interface ExportDoms {
   severity: number
 }
 
+/** A day's full InBody / scale reading (only days with a measurement are passed). */
+export interface ExportBodyComp {
+  date: string
+  weightKg: number | null
+  bmi: number | null
+  bodyFatPct: number | null
+  musclePercent: number | null
+  waterPercent: number | null
+  visceralFat: number | null
+  bmr: number | null
+  boneMineral: number | null
+  leanMassKg: number | null
+  waistHipRatio: number | null
+}
+
 /** The same aggregate shape for this week and the one before it. */
 export interface WeekTotals {
   avgKcal: number | null
@@ -103,6 +118,8 @@ export interface WeeklyExportInput {
   sessions: ExportSession[]
   volumeByMuscle: Array<{ muscle: string; sets: number; target: number }>
   doms: ExportDoms[]
+  /** Full body-composition readings for the week's weigh-in days (optional). */
+  bodyComp?: ExportBodyComp[]
   /** Aggregates for the PREVIOUS week, for the week-over-week block. */
   previous: WeekTotals | null
 }
@@ -292,10 +309,27 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
   // ── Soreness ──
   if (doms.length) {
     const label = ['none', 'mild', 'moderate', 'severe']
-    L.push('## Leg soreness (DOMS, 0–3)')
+    L.push('## DOMS (soreness, 0–3)')
     L.push('')
     for (const d of doms) {
       L.push(`- ${d.date} · ${d.muscle}: ${d.severity} (${label[d.severity] ?? d.severity})`)
+    }
+    L.push('')
+  }
+
+  // ── Body composition (InBody) ──
+  const bodyComp = input.bodyComp ?? []
+  if (bodyComp.length) {
+    L.push('## Body composition (InBody)')
+    L.push('')
+    L.push('| Date | Weight | BMI | Fat % | Muscle % | Water % | Visceral | BMR | Bone % | Lean | W:H |')
+    L.push('|---|---|---|---|---|---|---|---|---|---|---|')
+    for (const b of bodyComp) {
+      L.push(
+        `| ${b.date} | ${n(b.weightKg, 1)} | ${n(b.bmi, 1)} | ${n(b.bodyFatPct, 1)} | ${n(b.musclePercent, 1)} | `
+        + `${n(b.waterPercent, 1)} | ${n(b.visceralFat)} | ${n(b.bmr)} | ${n(b.boneMineral, 1)} | ${n(b.leanMassKg, 1)} | `
+        + `${b.waistHipRatio == null ? '—' : b.waistHipRatio.toFixed(2)} |`,
+      )
     }
     L.push('')
   }

@@ -6,7 +6,7 @@ import { weekStartOf, isoAddDays } from '@/lib/utils/week'
 import { logicalTodayISO } from '@/lib/utils/day'
 import {
   buildWeeklyExport, weekTotals,
-  type ExportDay, type ExportSession, type ExportExercise, type ExportDoms,
+  type ExportDay, type ExportSession, type ExportExercise, type ExportDoms, type ExportBodyComp,
 } from '@/lib/reports/weeklyExport'
 import { PROGRAMS, DEFAULT_PROGRAM_ID, getActiveProgramId, eraForDate, isTrainingDay } from '@/lib/programs'
 import { repWindowFor } from '@/lib/training/ceilings'
@@ -36,7 +36,7 @@ async function fetchRange(weekStart: string, weekEnd: string) {
   const startInstant = new Date(`${weekStart}T00:00:00`).toISOString()
   const endInstant = new Date(`${isoAddDays(weekEnd, 1)}T00:00:00`).toISOString()
 
-  const [logs, scores, nutrition, sessions, sets, water, supps, doms] = await Promise.all([
+  const [logs, scores, nutrition, sessions, sets, water, supps, doms, bodyComp] = await Promise.all([
     supabase.from('daily_logs')
       .select('date, weight_kg, steps, distance_m, active_energy, training_minutes, sleep_minutes, water_ml, avg_rest_heart_rate, hrv_ms, blood_oxygen')
       .gte('date', weekStart).lte('date', weekEnd),
@@ -56,6 +56,11 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     supabase.from('water_intake').select('date, amount_ml').gte('date', weekStart).lte('date', weekEnd),
     supabase.from('supplement_log').select('date, item_key').eq('taken', true).gte('date', weekStart).lte('date', weekEnd),
     supabase.from('doms_logs').select('date, muscle_group, severity').gte('date', weekStart).lte('date', weekEnd),
+    // Body composition — its own query so an un-migrated column (waist_hip_ratio)
+    // can't take down the daily-logs fetch above; on error it's simply omitted.
+    supabase.from('daily_logs')
+      .select('date, weight_kg, bmi, body_fat_pct, muscle_percent, water_percent, bone_mineral, visceral_fat, bmr, lean_mass_kg, waist_hip_ratio')
+      .gte('date', weekStart).lte('date', weekEnd),
   ])
 
   return {
@@ -68,6 +73,7 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     supps: (supps.data ?? []) as Array<{ date: string; item_key: string }>,
     // doms_logs may not be migrated yet — an error just means no soreness rows.
     doms: (doms.error ? [] : (doms.data ?? [])) as Array<{ date: string; muscle_group: string; severity: number }>,
+    bodyComp: (bodyComp.error ? [] : (bodyComp.data ?? [])) as Array<Record<string, number | string | null>>,
   }
 }
 
@@ -153,10 +159,31 @@ function toSessions(d: RangeData): ExportSession[] {
   })
 }
 
+/** Days with a real scale reading → the export's body-composition rows. */
+function toBodyComp(d: RangeData): ExportBodyComp[] {
+  return d.bodyComp
+    .map((r) => ({
+      date: r.date as string,
+      weightKg: (r.weight_kg as number | null) ?? null,
+      bmi: (r.bmi as number | null) ?? null,
+      bodyFatPct: (r.body_fat_pct as number | null) ?? null,
+      musclePercent: (r.muscle_percent as number | null) ?? null,
+      waterPercent: (r.water_percent as number | null) ?? null,
+      visceralFat: (r.visceral_fat as number | null) ?? null,
+      bmr: (r.bmr as number | null) ?? null,
+      boneMineral: (r.bone_mineral as number | null) ?? null,
+      leanMassKg: (r.lean_mass_kg as number | null) ?? null,
+      waistHipRatio: (r.waist_hip_ratio as number | null) ?? null,
+    }))
+    // Only days with a metric beyond bare weight (the daily table already lists weight).
+    .filter((b) => [b.bmi, b.bodyFatPct, b.musclePercent, b.waterPercent, b.visceralFat, b.bmr, b.boneMineral, b.leanMassKg, b.waistHipRatio].some((v) => v != null))
+    .sort((a, b) => a.date.localeCompare(b.date))
+}
+
 /**
  * Assemble the full week payload (days · sessions with every set · direct-set
- * volume · soreness · the previous week for comparison) and render it as the AI
- * prompt string. One hook powers every "Export Week" button.
+ * volume · soreness · body composition · the previous week for comparison) and
+ * render it as the AI prompt string. One hook powers every "Export Week" button.
  */
 export function useWeeklyExport(weekStart = weekStartOf(logicalTodayISO())) {
   const weekEnd = isoAddDays(weekStart, 6)
@@ -199,6 +226,7 @@ export function useWeeklyExport(weekStart = weekStartOf(logicalTodayISO())) {
         stepsGoal: goals?.steps_goal ?? null,
         sleepGoalHours: goals?.sleep_goal_hours ?? null,
         days, sessions, volumeByMuscle, doms,
+        bodyComp: toBodyComp(cur),
         previous: weekTotals(toDays(prevStart, prev), toSessions(prev)),
       })
     },
