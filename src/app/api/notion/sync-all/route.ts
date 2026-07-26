@@ -17,7 +17,21 @@ import { buildDaySummaryLines, createNotionDayPage } from '@/lib/notion/export'
 
 const BATCH_CAP = 20 // pages per call — a second tap continues
 
-function envs() {
+/**
+ * Per-user Notion credentials (multi-tenant): each user saves their own
+ * integration secret + database id in Settings → notion_credentials (RLS-scoped).
+ * Falls back to the legacy single-tenant env token so an existing deploy keeps
+ * working until creds are saved.
+ */
+async function resolveCreds(
+  db: ReturnType<typeof getServerSupabaseClient>,
+  userId: string,
+): Promise<{ token?: string; dbId?: string }> {
+  try {
+    const { data } = await db.from('notion_credentials').select('token, db_id').eq('user_id', userId).maybeSingle()
+    const c = data as { token?: string; db_id?: string } | null
+    if (c?.token && c?.db_id) return { token: c.token, dbId: c.db_id }
+  } catch { /* notion_credentials not migrated yet — fall through to env */ }
   return { token: process.env.NOTION_TOKEN, dbId: process.env.NOTION_DAILY_LOG_DB_ID }
 }
 
@@ -45,11 +59,11 @@ async function pendingDates(
 export async function GET(req: Request) {
   const denied = denyIfUnauthorized(req)
   if (denied) return denied
-  const { token, dbId } = envs()
-  if (!token || !dbId) return NextResponse.json({ configured: false, pending: 0 })
   const db = getServerSupabaseClient()
   const userId = await requireUserId(req, db)
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { token, dbId } = await resolveCreds(db, userId)
+  if (!token || !dbId) return NextResponse.json({ configured: false, pending: 0 })
   try {
     const pending = await pendingDates(db, userId)
     return NextResponse.json({ configured: true, pending: pending.length })
@@ -63,17 +77,17 @@ export async function POST(req: Request) {
   const denied = denyIfUnauthorized(req)
   if (denied) return denied
 
-  const { token, dbId } = envs()
-  if (!token || !dbId) {
-    return NextResponse.json(
-      { error: 'Notion export is not configured — set NOTION_TOKEN and NOTION_DAILY_LOG_DB_ID.' },
-      { status: 501 },
-    )
-  }
-
   const db = getServerSupabaseClient()
   const userId = await requireUserId(req, db)
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { token, dbId } = await resolveCreds(db, userId)
+  if (!token || !dbId) {
+    return NextResponse.json(
+      { error: 'Notion is not connected — add your integration secret + database ID in Settings.' },
+      { status: 501 },
+    )
+  }
 
   // `force` → re-push every logged day (full upsert), not just the new ones.
   const body = await req.json().catch(() => ({})) as { force?: boolean }
