@@ -1,6 +1,6 @@
 'use client'
 
-import { EMBER, SAPPHIRE, EMERALD, GOLD } from '@/lib/theme/palette'
+import { EMBER, SAPPHIRE, EMERALD, GOLD, AMETHYST } from '@/lib/theme/palette'
 
 /**
  * ObsidianMesh — the global backdrop. A slow LIVING gradient mesh in jewel tones
@@ -25,6 +25,9 @@ export function AuroraBackground() {
     { c: EMERALD, pos: '96% 62%', size: '58vw 52vh', a: '1c', a2: '08', anim: 'meshBreatheC 58s' },
     // antique gold — a faint high rim so the top edge is never dead flat
     { c: GOLD, pos: '38% -14%', size: '92vw 38vh', a: '14', a2: '06', anim: 'meshBreatheD 41s' },
+    // amethyst — a cool violet counter-light upper-left, opposite the ember, for
+    // extra jewel-tone depth so the wash reads as a living aurora, not two poles
+    { c: AMETHYST, pos: '10% 14%', size: '52vw 46vh', a: '14', a2: '07', anim: 'meshBreatheC 52s' },
   ]
 
   return (

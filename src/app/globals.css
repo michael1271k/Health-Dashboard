@@ -335,12 +335,15 @@ html[data-theme='travel'] {
     border: 1px solid rgba(255,255,255,0.08);
     box-shadow:
       /* Brighter top hairline + a hint of ember along the bottom edge: the
-         card looks lit from above and warmed from below. */
+         card looks lit from above and warmed from below. A whisper-alpha cool
+         halo lets the edge bleed into the aurora so the panel reads as frameless
+         glass floating on the wash rather than a box sitting on top of it. */
       inset 0 1px 0 rgba(226,229,236,0.20),
       inset 0 -1px 0 rgba(0,0,0,0.24),
       inset 0 -14px 26px -20px rgba(224,112,60,0.28),
+      0 0 34px rgba(61,122,184,0.05),
       0 24px 60px rgba(0,0,0,0.55);
-    border-radius: 1rem;
+    border-radius: 1.15rem;
     transition: box-shadow 0.2s, border-color 0.2s, background 0.2s;
     @apply p-5;
   }
