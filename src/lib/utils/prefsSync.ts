@@ -26,4 +26,13 @@ export async function hydratePrefsFromDb(): Promise<void> {
     // Wake any mounted listeners (unit hooks re-read on this event).
     window.dispatchEvent(new Event('apex-units-change'))
   } catch { /* never block boot on preference sync */ }
+
+  // Week-start preference — kept in its OWN self-healing query so a not-yet-
+  // migrated `week_end_day` column can't take down units/motion hydration above.
+  // week_end_day 0 (Sunday) ⇒ week starts Monday (1); anything else ⇒ Sunday (0).
+  try {
+    const { data } = await supabase.from('user_goals').select('week_end_day').maybeSingle()
+    const end = (data as { week_end_day?: number | null } | null)?.week_end_day
+    if (end != null) localStorage.setItem('helix_week_start', end === 0 ? '1' : '0')
+  } catch { /* column not migrated — Sunday-start default stands */ }
 }

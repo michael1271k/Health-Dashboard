@@ -9,6 +9,9 @@ import { derivePhase, phaseDisplay } from '@/lib/nutrition/phase'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { NUTRITION_PRESETS, type NutritionMode } from '@/lib/types/workout'
 import { phaseBadgeStyle } from '@/lib/phases'
+import { LiquidModal } from '@/components/ui/LiquidModal'
+import { HELIX_CUT_START, DEFAULT_PROGRAM_ID } from '@/lib/programs'
+import { AlertTriangle } from 'lucide-react'
 import type { Tables } from '@/lib/supabase/types'
 
 /** Nutrition mode → the timeline phase kind, so the picker reuses the glow palette. */
@@ -73,11 +76,16 @@ export default function SettingsPage() {
   // column, so writing it self-heals (see saveTargetWeight) rather than failing
   // the whole Settings save on a DB that hasn't run the paste-SQL yet.
   const [targetWeight, setTargetWeight] = useState<number | null>(null)
+  // Phase switch is gated by a confirmation modal (hard reset of analytics/coach).
+  const [pendingPhase, setPendingPhase] = useState<NutritionMode | null>(null)
+  // Week start: 0 = Sunday (default), 1 = Monday. Stored as week_end_day.
+  const [weekStart, setWeekStart] = useState<0 | 1>(0)
 
   useEffect(() => {
     async function load() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return
+      void ensurePlan(session.user.id)
       // Supabase v2: hand-authored Omit<> types resolve to never — cast explicitly
       const { data: rawData } = await supabase
         .from('user_goals')
@@ -104,11 +112,57 @@ export default function SettingsPage() {
         applyPrefsToDevice((data.unit_system ?? 'kg') as 'kg' | 'lb', data.reduce_motion ?? false)
         const tw = (data as { target_weight_kg?: number | null }).target_weight_kg
         if (typeof tw === 'number') setTargetWeight(tw)
+        const we = (data as { week_end_day?: number | null }).week_end_day
+        const ws: 0 | 1 = we === 0 ? 1 : 0
+        setWeekStart(ws)
+        try { localStorage.setItem('helix_week_start', String(ws)) } catch { /* ignore */ }
       }
       setLoading(false)
     }
     load()
   }, [])
+
+  /** Ensure a stub Plan row exists (one active Helix plan per user) so future
+   *  multi-plan CRUD has an anchor. Self-heals if the table isn't migrated. */
+  async function ensurePlan(userId: string) {
+    try {
+      const { data, error } = await supabase.from('plans').select('id').eq('user_id', userId).limit(1)
+      if (error || (data && data.length)) return
+      await supabase.from('plans').insert(
+        { user_id: userId, name: 'Helix', program_id: DEFAULT_PROGRAM_ID, active: true, started_on: HELIX_CUT_START } as unknown as never,
+      )
+    } catch { /* plans table not migrated yet */ }
+  }
+
+  /** Record the active phase + the date it started (the "[Plan] Era" anchor that
+   *  Analytics ranges from). Self-heals if the columns aren't migrated. */
+  async function savePhaseMeta(mode: NutritionMode) {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return
+    const { error } = await supabase.from('user_goals').upsert(
+      { user_id: session.user.id, active_phase: mode, phase_started_on: logicalTodayISO() } as unknown as never,
+      { onConflict: 'user_id' },
+    )
+    if (error && !/column|active_phase|phase_started|schema cache|PGRST204/i.test(error.message)) {
+      setStatus({ type: 'error', msg: error.message })
+    }
+  }
+
+  /** Persist the week-start choice as week_end_day + mirror to localStorage so
+   *  weekStartOf reads it synchronously. Self-heals if the column isn't migrated. */
+  async function saveWeekStart(day: 0 | 1) {
+    setWeekStart(day)
+    try { localStorage.setItem('helix_week_start', String(day)) } catch { /* ignore */ }
+    const endDay = day === 1 ? 0 : 6 // Mon start → Sun end (0); Sun start → Sat end (6)
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return
+    const { error } = await supabase.from('user_goals').upsert(
+      { user_id: session.user.id, week_end_day: endDay } as unknown as never, { onConflict: 'user_id' },
+    )
+    if (error && !/column|week_end|schema cache|PGRST204/i.test(error.message)) {
+      setStatus({ type: 'error', msg: error.message })
+    }
+  }
 
   async function save(updates: Partial<Goals>) {
     setSaving(true)
@@ -163,6 +217,7 @@ export default function SettingsPage() {
     })
     setTargetWeight(p.targetWeightKg)
     await saveTargetWeight(p.targetWeightKg)
+    await savePhaseMeta(mode)
   }
 
   const inputCls =
@@ -208,7 +263,7 @@ export default function SettingsPage() {
             const active = goals.goal_preset === mode
             const glow = phaseBadgeStyle(MODE_TO_PHASE[mode], active)
             return (
-              <button key={mode} onClick={() => applyPhase(mode)} disabled={saving} aria-pressed={active}
+              <button key={mode} onClick={() => { if (!active) setPendingPhase(mode) }} disabled={saving} aria-pressed={active}
                 className="rounded-2xl border p-3 text-left transition-all duration-200 disabled:opacity-60"
                 style={active ? glow : { borderColor: 'rgba(255,255,255,0.08)' }}>
                 <div className="font-heading font-bold text-sm text-text">{p.label}</div>
@@ -323,6 +378,21 @@ export default function SettingsPage() {
 
         <div className="flex items-center justify-between gap-4">
           <div>
+            <div className="text-sm text-text font-medium">Week starts on</div>
+            <div className="text-xs text-muted">When weekly volume, charts &amp; the AI report reset</div>
+          </div>
+          <div className="flex rounded-xl border border-border overflow-hidden shrink-0">
+            {([[0, 'Sun'], [1, 'Mon']] as const).map(([day, label]) => (
+              <button key={day} onClick={() => saveWeekStart(day)}
+                className={`px-4 py-2 text-sm font-semibold ${weekStart === day ? 'bg-primary/15 text-primary' : 'text-muted'}`}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-4">
+          <div>
             <div className="text-sm text-text font-medium">Reduce motion</div>
             <div className="text-xs text-muted">Disable liquid &amp; aurora animations (saves battery)</div>
           </div>
@@ -388,6 +458,37 @@ export default function SettingsPage() {
 
       <CrashRecorderRow />
       </div>
+
+      {/* Phase-switch confirmation — a phase change is a hard reset of the UI. */}
+      <LiquidModal open={!!pendingPhase} onClose={() => setPendingPhase(null)} title="Switch phase" accent="#E0703C">
+        {pendingPhase && (
+          <div className="space-y-4">
+            <div className="flex items-start gap-3">
+              <span className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: 'rgba(224,112,60,0.15)', color: '#E0703C' }}>
+                <AlertTriangle className="w-5 h-5" aria-hidden="true" />
+              </span>
+              <div>
+                <p className="text-text font-semibold">Switch to {NUTRITION_PRESETS[pendingPhase].label}?</p>
+                <p className="text-sm text-muted mt-1 leading-relaxed">
+                  This re-anchors your analytics and coach logic to today. Calories, macros, step goal and
+                  target weight update to the {NUTRITION_PRESETS[pendingPhase].label} preset. Your logged
+                  history is preserved.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setPendingPhase(null)} className="btn-glass min-h-[44px] px-4">Cancel</button>
+              <button
+                onClick={async () => { const m = pendingPhase; setPendingPhase(null); await applyPhase(m) }}
+                disabled={saving}
+                className="btn-primary min-h-[44px] px-4 disabled:opacity-60"
+              >
+                Switch to {NUTRITION_PRESETS[pendingPhase].label}
+              </button>
+            </div>
+          </div>
+        )}
+      </LiquidModal>
 
       {status && (
         <p className={`text-sm ${status.type === 'success' ? 'text-success' : 'text-danger'}`}>
