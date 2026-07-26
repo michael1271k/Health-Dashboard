@@ -27,6 +27,7 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false)
   const [quickLoading, setQuickLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [resetMsg, setResetMsg] = useState<string | null>(null)
 
   function goHome() {
     router.push('/')
@@ -57,6 +58,18 @@ export default function AuthPage() {
     setError(null)
     const ok = await signIn(QUICK_EMAIL, QUICK_PASSWORD)
     if (!ok) setQuickLoading(false)
+  }
+
+  async function handleForgot() {
+    setError(null)
+    setResetMsg(null)
+    const mail = email.trim()
+    if (!mail) { setError('Enter your email above, then tap “Forgot password?”'); return }
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(mail, {
+      redirectTo: `${window.location.origin}/auth/update-password`,
+    })
+    if (resetError) { setError(resetError.message); return }
+    setResetMsg('Check your email for a reset link.')
   }
 
   const inputClass =
@@ -130,9 +143,15 @@ export default function AuthPage() {
             </div>
 
             <div className="space-y-1.5">
-              <label htmlFor="password" className="text-xs font-semibold uppercase tracking-wide text-muted">
-                Password
-              </label>
+              <div className="flex items-center justify-between">
+                <label htmlFor="password" className="text-xs font-semibold uppercase tracking-wide text-muted">
+                  Password
+                </label>
+                <button type="button" onClick={handleForgot}
+                  className="text-[11px] font-medium text-muted hover:text-[#E0703C] transition-colors">
+                  Forgot password?
+                </button>
+              </div>
               <input
                 id="password"
                 name="password"
@@ -149,6 +168,11 @@ export default function AuthPage() {
             {error && (
               <p className="text-danger text-sm" role="alert">
                 {error}
+              </p>
+            )}
+            {resetMsg && (
+              <p className="text-success text-sm" role="status">
+                {resetMsg}
               </p>
             )}
 

@@ -77,12 +77,14 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  // No session → the auth page is the only destination.
+  // No session → the auth page is the only destination. Every /auth/* route
+  // (sign-in AND the password-recovery flow) is public so a recovery link can
+  // establish its session before the gate resolves.
   useEffect(() => {
-    if (state === 'anon' && pathname !== '/auth') router.replace('/auth')
+    if (state === 'anon' && !pathname.startsWith('/auth')) router.replace('/auth')
   }, [state, pathname, router])
 
-  if (pathname === '/auth') return <>{children}</>
+  if (pathname.startsWith('/auth')) return <>{children}</>
   if (state === 'authed') return <>{children}</>
 
   // Resolving (≤ a few hundred ms from localStorage) or redirecting: branded splash.
