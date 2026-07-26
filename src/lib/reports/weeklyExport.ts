@@ -120,6 +120,8 @@ export interface WeeklyExportInput {
   doms: ExportDoms[]
   /** Full body-composition readings for the week's weigh-in days (optional). */
   bodyComp?: ExportBodyComp[]
+  /** Static protocol — what to take on training vs rest days (derived from the plan). */
+  supplementProtocol?: { training: string[]; rest: string[] }
   /** Aggregates for the PREVIOUS week, for the week-over-week block. */
   previous: WeekTotals | null
 }
@@ -129,8 +131,6 @@ const n = (v: number | null | undefined, digits = 0): string =>
 
 const sleep = (min: number | null | undefined): string =>
   min == null ? '—' : `${Math.floor(min / 60)}h${String(Math.round(min % 60)).padStart(2, '0')}`
-
-const km = (m: number | null): string => (m == null ? '—' : (m / 1000).toFixed(2))
 
 function mean(xs: number[]): number | null {
   return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null
@@ -230,18 +230,39 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
     + `${n(input.stepsGoal)} steps · ${n(input.sleepGoalHours, 1)} h sleep`)
   L.push('')
 
-  // ── Daily table ──
+  // Session labels per date — for the readable daily log below.
+  const labelsByDate = new Map<string, string[]>()
+  for (const s of sessions) {
+    const arr = labelsByDate.get(s.date) ?? []
+    arr.push(s.label)
+    labelsByDate.set(s.date, arr)
+  }
+
+  // ── Daily table (km / battery / score / supplement-count columns removed) ──
   L.push('## Daily')
   L.push('')
-  L.push('| Day | Date | Type | Weight | kcal | P/C/F | Steps | km | Active | Sleep | Deep/REM | RHR | HRV | Water | Supps | Score | Battery |')
-  L.push('|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|')
+  L.push('| Day | Date | Type | Weight | kcal | P/C/F | Steps | Active | Sleep | Deep/REM | RHR | HRV | Water |')
+  L.push('|---|---|---|---|---|---|---|---|---|---|---|---|---|')
   for (const d of days) {
     L.push(
       `| ${d.weekdayLabel} | ${d.date} | ${d.isTrainingDay ? 'Train' : 'Rest'} | ${n(d.weightKg, 1)} | `
-      + `${n(d.calories)} | ${n(d.proteinG)}/${n(d.carbsG)}/${n(d.fatG)} | ${n(d.steps)} | ${km(d.distanceM)} | `
+      + `${n(d.calories)} | ${n(d.proteinG)}/${n(d.carbsG)}/${n(d.fatG)} | ${n(d.steps)} | `
       + `${n(d.activeKcal)} | ${sleep(d.sleepMin)} | ${sleep(d.deepMin)}/${sleep(d.remMin)} | `
-      + `${n(d.restingHr)} | ${n(d.hrvMs)} | ${n(d.waterMl == null ? null : d.waterMl / 1000, 1)} | `
-      + `${n(d.supplementsTaken)} | ${n(d.score)} | ${n(d.batteryPct)} |`,
+      + `${n(d.restingHr)} | ${n(d.hrvMs)} | ${n(d.waterMl == null ? null : d.waterMl / 1000, 1)} |`,
+    )
+  }
+  L.push('')
+
+  // ── Readable per-day log (food · steps · workout) ──
+  L.push('## Daily log')
+  L.push('')
+  for (const d of days) {
+    const workout = labelsByDate.get(d.date)?.join(' + ') ?? (d.isTrainingDay ? 'not logged' : 'rest')
+    const macros = [d.proteinG, d.carbsG, d.fatG].some((v) => v != null)
+      ? ` (${n(d.proteinG)}P/${n(d.carbsG)}C/${n(d.fatG)}F)` : ''
+    L.push(
+      `- **${d.weekdayLabel} ${d.date}** · ${d.isTrainingDay ? 'Train' : 'Rest'} · `
+      + `${n(d.calories)} kcal${macros} · ${n(d.steps)} steps · ${workout}`,
     )
   }
   L.push('')
@@ -331,6 +352,21 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
         + `${b.waistHipRatio == null ? '—' : b.waistHipRatio.toFixed(2)} |`,
       )
     }
+    L.push('')
+  }
+
+  // ── Supplements protocol (static — training vs rest days) ──
+  const protocol = input.supplementProtocol
+  if (protocol && (protocol.training.length || protocol.rest.length)) {
+    L.push('## Supplements protocol')
+    L.push('')
+    L.push('**Training days**')
+    if (protocol.training.length) for (const s of protocol.training) L.push(`- ${s}`)
+    else L.push('- —')
+    L.push('')
+    L.push('**Rest days**')
+    if (protocol.rest.length) for (const s of protocol.rest) L.push(`- ${s}`)
+    else L.push('- —')
     L.push('')
   }
 

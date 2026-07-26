@@ -12,7 +12,13 @@ import { activeProgram, eraForDate, isTrainingDay } from '@/lib/programs'
 import { repWindowFor } from '@/lib/training/ceilings'
 import { lookupMuscles } from '@/lib/exercises/muscleMap'
 import { weeklyVolumeByMuscle, type Program } from '@/lib/training/landmarks'
+import { protocolForDate } from '@/lib/supplements'
 import { normalizeSpO2 } from '@/lib/utils/units'
+
+/** Flatten the supplement protocol into "time · Name — dose" lines. */
+function supplementProtocolLines(isTraining: boolean): string[] {
+  return protocolForDate(isTraining).flatMap((slot) => slot.items.map((i) => `${slot.time} · ${i.name} — ${i.dose}`))
+}
 
 const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
@@ -227,6 +233,7 @@ export function useWeeklyExport(weekStart = weekStartOf(logicalTodayISO())) {
         sleepGoalHours: goals?.sleep_goal_hours ?? null,
         days, sessions, volumeByMuscle, doms,
         bodyComp: toBodyComp(cur),
+        supplementProtocol: { training: supplementProtocolLines(true), rest: supplementProtocolLines(false) },
         previous: weekTotals(toDays(prevStart, prev), toSessions(prev)),
       })
     },

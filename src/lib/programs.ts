@@ -184,8 +184,56 @@ export const HELIX4: Program = {
   ],
 }
 
+// ── PPL Legacy (historical) — the pre-Helix Push/Pull/Legs block. Selectable so
+// its era + numbers can be reviewed; seeded from the last logged weights/sets.
+// Schedule: Sun Push · Mon Pull · Tue Legs · Wed Rest · Thu Push · Fri Pull · Sat Rest.
+const PPL_PUSH: ProgramExercise[] = [
+  { name: 'Incline DB Press', sets: 2, wk1Kg: 35, reps: '10–12', muscles: ['chest', 'shoulders'], compound: true },
+  { name: 'Chest Press Machine', sets: 2, wk1Kg: 37.5, reps: '10–12', muscles: ['chest', 'triceps'], compound: true },
+  { name: 'Butterfly Pec Deck', sets: 2, wk1Kg: 52.5, reps: '10–12', muscles: ['chest'] },
+  { name: 'DB Shoulder Press', sets: 3, wk1Kg: 30, reps: '8–12', muscles: ['shoulders', 'triceps'], compound: true, note: 'ramp: 25kg×12 → 30kg×9,8' },
+  { name: 'Lateral Raise DB', sets: 4, wk1Kg: 10, reps: '12–20', muscles: ['shoulders'] },
+  { name: 'Triceps Rope Pushdown', sets: 3, wk1Kg: 15, reps: '12–15', muscles: ['triceps'] },
+  { name: 'Overhead Triceps Extension', sets: 3, wk1Kg: 10, reps: '10–15', muscles: ['triceps'] },
+  { name: 'Side Plank', sets: 3, wk1Kg: null, reps: '55s', muscles: ['core'], note: 'per side' },
+  { name: 'Russian Twist', sets: 3, wk1Kg: 10, reps: '15–20', muscles: ['core'] },
+  { name: 'Lying Leg Raises', sets: 3, wk1Kg: null, reps: '12–15', muscles: ['core'] },
+]
+const PPL_PULL: ProgramExercise[] = [
+  { name: 'Lat Pulldown', sets: 2, wk1Kg: 49.5, reps: '10–12', muscles: ['back'], compound: true },
+  { name: 'Seated Cable Row', sets: 2, wk1Kg: 42.5, reps: '10–12', muscles: ['back'], compound: true },
+  { name: 'Face Pull', sets: 4, wk1Kg: 16.25, reps: '12–15', muscles: ['shoulders', 'back'] },
+  { name: 'Straight Arm Pulldown', sets: 3, wk1Kg: 17.5, reps: '10–15', muscles: ['back'] },
+  { name: 'Bicep Curl DB', sets: 3, wk1Kg: 18, reps: '10–12', muscles: ['biceps'] },
+  { name: 'Hammer Curl DB', sets: 3, wk1Kg: 18, reps: '10–12', muscles: ['biceps', 'forearms'] },
+  { name: 'Preacher Curl', sets: 3, wk1Kg: 16.25, reps: '8–12', muscles: ['biceps'] },
+  { name: 'Crunch Machine', sets: 3, wk1Kg: 57.5, reps: '12–15', muscles: ['core'] },
+]
+const PPL_LEGS: ProgramExercise[] = [
+  { name: 'Leg Press', sets: 2, wk1Kg: 80, reps: '8–12', muscles: ['quads', 'glutes'], compound: true, note: '1 warm-up @72.5kg' },
+  { name: 'RDL DB', sets: 3, wk1Kg: 30, reps: '10–15', muscles: ['hamstrings', 'glutes', 'back'], compound: true },
+  { name: 'Hip Thrust', sets: 3, wk1Kg: 27.5, reps: '10–15', muscles: ['glutes'], compound: true },
+  { name: 'Hip Adduction', sets: 3, wk1Kg: 55, reps: '12–15', muscles: ['glutes'] },
+  { name: 'Leg Extension', sets: 3, wk1Kg: 42.5, reps: '10–15', muscles: ['quads'] },
+  { name: 'Seated Leg Curl', sets: 2, wk1Kg: 45, reps: '10–15', muscles: ['hamstrings'] },
+  { name: 'Calf Press', sets: 3, wk1Kg: 72.5, reps: '10–15', muscles: ['calves'] },
+  { name: 'Reverse Crunch', sets: 3, wk1Kg: null, reps: '15–20', muscles: ['core'] },
+  { name: 'Hollow Rock', sets: 3, wk1Kg: null, reps: '38s', muscles: ['core'], note: 'seconds' },
+]
+export const PPL_LEGACY: Program = {
+  id: 'ppl', label: 'PPL Legacy', era: 'ppl', drawer: true, legacy: true,
+  blurb: 'Historical Push/Pull/Legs — Sun/Thu Push · Mon/Fri Pull · Tue Legs · Wed & Sat rest.',
+  days: [
+    { key: 'ppl_push_sun', label: 'Push', color: C.cbA, weekday: 0, exercises: PPL_PUSH },
+    { key: 'ppl_pull_mon', label: 'Pull', color: C.arms, weekday: 1, exercises: PPL_PULL },
+    { key: 'ppl_legs_tue', label: 'Legs', color: C.legsA, weekday: 2, exercises: PPL_LEGS },
+    { key: 'ppl_push_thu', label: 'Push', color: C.cbA, weekday: 4, exercises: PPL_PUSH },
+    { key: 'ppl_pull_fri', label: 'Pull', color: C.arms, weekday: 5, exercises: PPL_PULL },
+  ],
+}
+
 export const PROGRAMS: Record<string, Program> = {
-  [APEX51.id]: APEX51, [HELIX4.id]: HELIX4,
+  [APEX51.id]: APEX51, [HELIX4.id]: HELIX4, [PPL_LEGACY.id]: PPL_LEGACY,
 }
 export const DEFAULT_PROGRAM_ID = APEX51.id
 
@@ -296,6 +344,7 @@ export function scheduleDayFor(dateISO: string, programId = getActiveProgramId()
 const DAY_SPLIT: Record<string, string> = {
   cb_a: 'upper', legs_a: 'legs', arms: 'upper', cb_b: 'upper', legs_b: 'legs',
   upper_a: 'upper', lower_a: 'legs', upper_b: 'upper', lower_b: 'legs',
+  ppl_push_sun: 'push', ppl_pull_mon: 'pull', ppl_legs_tue: 'legs', ppl_push_thu: 'push', ppl_pull_fri: 'pull',
 }
 export function daySplitEnum(dayKey: string): 'push' | 'pull' | 'legs' | 'upper' | 'lower' {
   return (DAY_SPLIT[dayKey] ?? 'upper') as 'push' | 'pull' | 'legs' | 'upper' | 'lower'

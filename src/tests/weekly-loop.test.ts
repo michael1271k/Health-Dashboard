@@ -186,8 +186,32 @@ describe('buildWeeklyExport', () => {
 
   it('carries energy expenditure and recovery signals per day', () => {
     const out = buildWeeklyExport(input)
-    expect(out).toMatch(/\| 9200 \| 7\.10 \| 520 \|/)  // steps, km, active kcal
-    expect(out).toMatch(/\| 48 \| 62 \|/)               // RHR, HRV
+    expect(out).toMatch(/\| 9200 \| 520 \|/)   // steps, active kcal (km column removed)
+    expect(out).toMatch(/\| 48 \| 62 \|/)       // RHR, HRV
+  })
+
+  it('drops the km / battery / score / supplement-count columns from the daily table', () => {
+    const header = buildWeeklyExport(input).split('\n').find((l) => l.startsWith('| Day |'))!
+    expect(header).not.toMatch(/km|Battery|Score|Supps/)
+    expect(header).toMatch(/Steps \| Active \| Sleep/)
+  })
+
+  it('adds a readable per-day log (food · steps · workout)', () => {
+    const out = buildWeeklyExport(input)
+    expect(out).toMatch(/## Daily log/)
+    expect(out).toMatch(/\*\*Sun 2026-07-19\*\* · Train · 1940 kcal \(172P\/190C\/54F\) · 9200 steps · Upper A/)
+  })
+
+  it('renders a training-vs-rest supplements protocol only when supplied', () => {
+    expect(buildWeeklyExport(input)).not.toMatch(/## Supplements protocol/)
+    const withProtocol = buildWeeklyExport({
+      ...input,
+      supplementProtocol: { training: ['11:45 · L-Citrulline — 3 g'], rest: ['10:30 · Vitamin D3 + K2 — 125 mcg'] },
+    })
+    expect(withProtocol).toMatch(/## Supplements protocol/)
+    expect(withProtocol).toMatch(/\*\*Training days\*\*/)
+    expect(withProtocol).toMatch(/- 11:45 · L-Citrulline — 3 g/)
+    expect(withProtocol).toMatch(/\*\*Rest days\*\*/)
   })
 
   it('includes a week-over-week block and soreness', () => {

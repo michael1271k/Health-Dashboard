@@ -44,9 +44,11 @@ describe('HELIX-5 split', () => {
     const deltas = Object.fromEntries(APEX51.days.map((d) => [d.key, d.cutSetDelta]))
     expect(deltas).toEqual({ cb_a: -3, legs_a: -4, arms: -4, cb_b: -3, legs_b: -3 })
   })
-  it('removed movements are gone from every template', () => {
+  it('removed movements are gone from every LIVE template', () => {
+    // These were dropped when the Helix templates were refined; the PPL Legacy
+    // plan predates those removals and legitimately still carries them.
     const banned = ['Bulgarian Split Squat', 'Pallof Press', 'Cable Crunch', 'Russian Twist', 'Standing DB Curl', 'Lying Leg Raise']
-    for (const p of Object.values(PROGRAMS)) {
+    for (const p of Object.values(PROGRAMS).filter((p) => !p.legacy)) {
       for (const d of p.days) {
         for (const e of d.exercises) {
           for (const b of banned) expect(e.name).not.toContain(b)
