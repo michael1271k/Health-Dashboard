@@ -9,6 +9,7 @@ import { WeeklySummaryCard } from '@/components/command-center/WeeklySummaryCard
 import { PostWorkoutSummary } from '@/components/command-center/PostWorkoutSummary'
 import { WidgetBoundary } from '@/components/fx/WidgetBoundary'
 import { SwapDayControl } from '@/components/day/SwapDayControl'
+import { ProgressionAlerts } from '@/components/command-center/ProgressionAlerts'
 import { peekSessionDraft, type SessionDraft } from '@/lib/sessions/draft'
 import {
   activeProgram, scheduleDayFor, isTrainingDay, eraForDate, ERA_META, type Program,
@@ -129,6 +130,9 @@ export default function WorkoutPage() {
         )}
       </section>
       )}
+
+      {/* Smart Coach — lifts that cleared their ceiling twice, due a load bump. */}
+      <ProgressionAlerts />
 
       {/* Friday week-complete summary CTA / quiet last-week review */}
       <WeeklySummaryCard />

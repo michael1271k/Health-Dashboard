@@ -31,6 +31,7 @@ import { supplementCountForDate } from '@/lib/supplements'
 import { useBioSeries, useLastWeighIn, useLatestBodyMetrics, type BodyMetricField } from '@/lib/hooks/useBioStrips'
 import { SleepStages } from '@/components/dashboard/SleepStages'
 import { StepsJourney } from '@/components/dashboard/StepsJourney'
+import { ProgressionAlerts } from '@/components/command-center/ProgressionAlerts'
 import { useDailyLogs } from '@/lib/hooks/useNutrition'
 import {
   useTodayScore,
@@ -278,6 +279,9 @@ export default function DashboardPage() {
           </AnimatedCard>
         ))}
       </div>
+
+      {/* Smart Coach — lifts due a load bump next session (renders nothing when empty). */}
+      <ProgressionAlerts />
 
       {/* Compact 30-day trends (shrunk from the old tall sidecar) */}
       <div className="hidden md:block">

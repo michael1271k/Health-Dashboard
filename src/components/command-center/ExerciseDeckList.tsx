@@ -7,7 +7,7 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
 import { restrictToVerticalAxis, restrictToParentElement } from '@dnd-kit/modifiers'
-import { ExerciseCard } from './ExerciseCard'
+import { ExerciseCard, type ReadyCue } from './ExerciseCard'
 import { tapLight } from '@/lib/native/haptics'
 import type { SessionDraft, DraftSet } from '@/lib/sessions/draft'
 import type { ExerciseHistory } from '@/lib/hooks/useExerciseSetHistory'
@@ -19,9 +19,11 @@ import type { ExerciseHistory } from '@/lib/hooks/useExerciseSetHistory'
  * Stays a SINGLE column at every breakpoint — verticalListSortingStrategy +
  * restrictToVerticalAxis are only valid for a one-column list.
  */
-export function ExerciseDeckList({ draft, history, onReorder, onUpdateSet, onSplitSet, onMergeSet, onToggleLink, onAddSet, onRemoveSet, onRemoveExercise, onSetNote }: {
+export function ExerciseDeckList({ draft, history, readyByName, onReorder, onUpdateSet, onSplitSet, onMergeSet, onToggleLink, onAddSet, onRemoveSet, onRemoveExercise, onSetNote }: {
   draft: SessionDraft
   history: Map<string, ExerciseHistory> | undefined
+  /** Forward-carried progression cues, keyed by exercise name. */
+  readyByName?: Map<string, ReadyCue>
   onReorder: (orderedIds: string[]) => void
   onUpdateSet: (localId: string, setIdx: number, patch: Partial<DraftSet>) => void
   onSplitSet: (localId: string, setIdx: number) => void
@@ -70,6 +72,7 @@ export function ExerciseDeckList({ draft, history, onReorder, onUpdateSet, onSpl
               key={ex.localId}
               exercise={ex}
               history={history?.get(ex.name) ?? null}
+              ready={readyByName?.get(ex.name) ?? null}
               collapsed={reordering}
               onUpdateSet={(i, patch) => onUpdateSet(ex.localId, i, patch)}
               onSplitSet={(i) => onSplitSet(ex.localId, i)}

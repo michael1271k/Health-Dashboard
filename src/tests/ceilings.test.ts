@@ -87,6 +87,14 @@ describe('progressionVerdict', () => {
   it('an unprogrammed exercise never prompts', () => {
     expect(progressionVerdict([clean, clean], null).state).toBe('no')
   })
+  // The Smart-Coach queue relies on this for its "reset on load increase": once a
+  // ready lift is bumped, the heavier session usually falls short of the ceiling,
+  // so the very next grade drops out of `ready` — the alert clears itself with no
+  // stored strike counter.
+  it('resets after a load bump the athlete has not yet outgrown', () => {
+    const bumped = [{ weightKg: 67.5, reps: 12 }, { weightKg: 67.5, reps: 11 }] // under ceiling 15
+    expect(progressionVerdict([clean, bumped], 15).state).toBe('no')
+  })
 })
 
 /**

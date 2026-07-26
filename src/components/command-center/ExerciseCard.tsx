@@ -19,6 +19,10 @@ const STATUS_META: Record<NonNullable<DraftExercise['status']>, { label: string;
 }
 
 const CARDIO_VIOLET = '#B4522A'
+const READY_GOLD = '#D4AF37'
+
+/** Smart-Coach cue for this lift: it cleared its ceiling twice and is due a bump. */
+export interface ReadyCue { suggestKg: number | null; currentKg: number | null; timed: boolean }
 
 // A unilateral L/R pair reads as ONE numbered set that expands into Left/Right
 // sub-rows — NOT two sibling rows. groupSets folds the flat draft list into that
@@ -68,9 +72,11 @@ const fmtDate = (d: string) =>
  * inputs, an editable note, and the per-set tuner rows. Cardio entries render
  * as a slim violet card (distance/duration, no set rows — excluded at commit).
  */
-export function ExerciseCard({ exercise, history, collapsed = false, onUpdateSet, onSplitSet, onMergeSet, onToggleLink, onAddSet, onRemoveSet, onRemoveExercise, onSetNote }: {
+export function ExerciseCard({ exercise, history, ready, collapsed = false, onUpdateSet, onSplitSet, onMergeSet, onToggleLink, onAddSet, onRemoveSet, onRemoveExercise, onSetNote }: {
   exercise: DraftExercise
   history: ExerciseHistory | null
+  /** Forward-carried progression cue for this lift (cleared its ceiling twice). */
+  ready?: ReadyCue | null
   /** Force header-only (drag-reorder collapses the whole deck for visibility). */
   collapsed?: boolean
   onUpdateSet: (setIdx: number, patch: Partial<DraftSet>) => void
@@ -180,6 +186,15 @@ export function ExerciseCard({ exercise, history, collapsed = false, onUpdateSet
                   {status.label}
                 </span>
               )}
+              {ready && (
+                <span
+                  className="shrink-0 inline-flex items-center gap-0.5 px-1.5 py-px rounded-md text-[9px] font-bold uppercase tracking-wide"
+                  style={{ color: READY_GOLD, background: `${READY_GOLD}1f`, border: `1px solid ${READY_GOLD}66` }}
+                  title="Cleared the ceiling twice — add load this session"
+                >
+                  ▲ {ready.timed ? 'HOLD+' : ready.suggestKg != null ? `${fmtKg(ready.suggestKg)}kg` : '+2.5kg'}
+                </span>
+              )}
             </div>
             {/* Historical memory — the previous comparable session, as a clear
                 reference widget. It also states PROVENANCE: whether the inputs
@@ -244,6 +259,12 @@ export function ExerciseCard({ exercise, history, collapsed = false, onUpdateSet
           {exercise.targetNext && (
             <p className="text-xs leading-snug flex items-center gap-1" style={{ color: '#D4AF37' }}>
               <Target className="w-3 h-3 shrink-0" aria-hidden="true" /> Next: {exercise.targetNext}
+            </p>
+          )}
+          {ready && !ready.timed && ready.currentKg != null && ready.suggestKg != null && (
+            <p className="text-xs leading-snug flex items-center gap-1" style={{ color: READY_GOLD }}>
+              <Target className="w-3 h-3 shrink-0" aria-hidden="true" />
+              Ceiling cleared twice — add load: {fmtKg(ready.currentKg)} → {fmtKg(ready.suggestKg)}kg
             </p>
           )}
         </div>

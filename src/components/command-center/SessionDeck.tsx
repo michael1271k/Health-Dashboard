@@ -1,12 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Check, CopyCheck, Trophy } from 'lucide-react'
 import { CoachHeaderCard } from './CoachHeaderCard'
 import { ExerciseDeckList } from './ExerciseDeckList'
+import type { ReadyCue } from './ExerciseCard'
 import { SessionNotesCard } from './SessionNotesCard'
 import { CommitBar } from './CommitBar'
 import { useExerciseSetHistory } from '@/lib/hooks/useExerciseSetHistory'
+import { useProgressionQueue } from '@/lib/hooks/useProgressionQueue'
 import { useDeleteSession } from '@/lib/hooks/useDayVault'
 import { eraForDate } from '@/lib/programs'
 import { fmtVolume } from '@/lib/utils/units'
@@ -33,6 +35,14 @@ export function SessionDeck({ store, onClose, onViewDay }: {
   // Era-aware previous-session memory for every exercise in the deck.
   const names = draft?.exercises.filter((ex) => ex.kind !== 'cardio').map((ex) => ex.name) ?? []
   const { data: history } = useExerciseSetHistory(names, draft ? eraForDate(draft.date) : undefined)
+
+  // Forward-carried Smart-Coach cues — lifts due a load bump, keyed by name so a
+  // matching card in this session shows the "▲ add load" chip inline.
+  const { data: queue } = useProgressionQueue()
+  const readyByName = useMemo(
+    () => new Map<string, ReadyCue>((queue ?? []).map((a) => [a.name, { suggestKg: a.suggestKg, currentKg: a.currentKg, timed: a.timed }])),
+    [queue],
+  )
 
   if (result) {
     return (
@@ -132,6 +142,7 @@ export function SessionDeck({ store, onClose, onViewDay }: {
         <ExerciseDeckList
           draft={draft}
           history={history}
+          readyByName={readyByName}
           onReorder={reorder}
           onUpdateSet={updateSet}
           onSplitSet={splitSet}
