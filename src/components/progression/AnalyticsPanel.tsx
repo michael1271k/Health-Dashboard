@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import dynamic from 'next/dynamic'
-import { useWeightTrend, useMacroHistory, usePRHistory, useVolumeTrend } from '@/lib/hooks/useCharts'
+import { useWeightTrend, useMacroHistory, usePRHistory, useVolumeTrend, useBodyDetailTrend } from '@/lib/hooks/useCharts'
 import { useUserGoals } from '@/lib/hooks/useDashboard'
 import { RangeSelector } from '@/components/charts/RangeSelector'
 import { PlanEraButton } from '@/components/charts/PlanEraButton'
@@ -21,6 +21,7 @@ const WeightTrendChart = dynamic(() => import('@/components/charts/WeightTrendCh
 const VolumeChart = dynamic(() => import('@/components/charts/VolumeChart').then((m) => m.VolumeChart), { ssr: false, loading: chartFallback })
 const MacroProgressChart = dynamic(() => import('@/components/charts/MacroProgressChart').then((m) => m.MacroProgressChart), { ssr: false, loading: chartFallback })
 const PRHistoryChart = dynamic(() => import('@/components/charts/PRHistoryChart').then((m) => m.PRHistoryChart), { ssr: false, loading: chartFallback })
+const BodyDetailChart = dynamic(() => import('@/components/charts/BodyDetailChart').then((m) => m.BodyDetailChart), { ssr: false, loading: chartFallback })
 
 /** Analytics view of the Momentum tab — the BODY & PERFORMANCE trend charts
  * (weight, volume, macros, PRs) filterable by range and training era. The
@@ -32,6 +33,7 @@ export function AnalyticsPanel() {
   const { data: volumeData, isLoading: volumeLoading } = useVolumeTrend(days)
   const { data: macroData, isLoading: macroLoading } = useMacroHistory(days)
   const { data: prData, isLoading: prLoading } = usePRHistory(undefined, days)
+  const { data: bodyDetail, isLoading: bodyLoading } = useBodyDetailTrend(days)
   const { data: goals, isLoading: goalsLoading } = useUserGoals()
 
   const { era } = useEraFilter()
@@ -41,6 +43,7 @@ export function AnalyticsPanel() {
   const vData = useMemo(() => (volumeData ?? []).filter(inEra), [volumeData, era]) // eslint-disable-line react-hooks/exhaustive-deps
   const mData = useMemo(() => (macroData ?? []).filter(inEra), [macroData, era]) // eslint-disable-line react-hooks/exhaustive-deps
   const pData = useMemo(() => (prData ?? []).filter(inEra), [prData, era]) // eslint-disable-line react-hooks/exhaustive-deps
+  const bdData = useMemo(() => (bodyDetail ?? []).filter(inEra), [bodyDetail, era]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="space-y-6">
@@ -64,6 +67,10 @@ export function AnalyticsPanel() {
             <div className="grid gap-6 lg:grid-cols-2 [&>*]:min-w-0">
               <WeightTrendChart data={wData} isLoading={weightLoading} showEraBoundary={era === 'all'} />
               <VolumeChart data={vData} isLoading={volumeLoading} era={era} />
+              {/* Body-composition detail spans both columns as the section's primary. */}
+              <div className="lg:col-span-2 min-w-0">
+                <BodyDetailChart data={bdData} isLoading={bodyLoading} />
+              </div>
               <MacroProgressChart data={mData} goals={goals ?? null} isLoading={macroLoading || goalsLoading} />
               <PRHistoryChart data={pData} isLoading={prLoading} />
             </div>

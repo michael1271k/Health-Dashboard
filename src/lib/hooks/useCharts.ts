@@ -15,6 +15,34 @@ function daysAgo(n: number): string {
 
 export type BodyTrendRow = Pick<Tables<'body_composition'>, 'date' | 'weight_kg' | 'body_fat_pct' | 'muscle_mass_kg'>
 
+export interface BodyDetailRow {
+  date: string
+  water_percent: number | null
+  muscle_percent: number | null
+  visceral_fat: number | null
+  body_fat_pct: number | null
+}
+
+/** Trend of the InBody detail metrics (water %, muscle %, visceral, fat %) from
+ *  daily_logs — the numbers a smart scale reports beyond weight. */
+export function useBodyDetailTrend(days = 90) {
+  return useQuery({
+    queryKey: ['daily_logs', 'body_detail', days],
+    queryFn: async (): Promise<BodyDetailRow[]> => {
+      const since = daysAgo(days)
+      const { data, error } = await supabase
+        .from('daily_logs')
+        .select('date, water_percent, muscle_percent, visceral_fat, body_fat_pct')
+        .gte('date', since)
+        .order('date', { ascending: true })
+      if (error) throw error
+      return ((data ?? []) as BodyDetailRow[]).filter(
+        (r) => r.water_percent != null || r.muscle_percent != null || r.visceral_fat != null || r.body_fat_pct != null,
+      )
+    },
+  })
+}
+
 /**
  * Merge the two places a body reading can live, newest-wins per FIELD per date.
  *
