@@ -11,7 +11,7 @@ import { SleepDebtGauge } from '@/components/day/SleepDebtGauge'
 import { SwapDayControl } from '@/components/day/SwapDayControl'
 import { DomsTracker } from '@/components/day/RecoveryTrackers'
 import { CardioLogger } from '@/components/day/CardioLogger'
-import { WaterFluid } from '@/components/day/WaterFluid'
+import { WaterHelix } from '@/components/day/WaterHelix'
 import { useDayVault, dayCompleteness, type DayVaultData } from '@/lib/hooks/useDayVault'
 import { useUserGoals, useDaySleep } from '@/lib/hooks/useDashboard'
 import { SleepStages } from '@/components/dashboard/SleepStages'
@@ -275,9 +275,9 @@ export default function DailyNexusPage() {
           <SleepDebtGauge compact />
         </section>
 
-        {/* Hydration — rising fluid column (Nexus instrument cluster) */}
+        {/* Hydration — glowing DNA double-helix filling with intake */}
         <div className="col-span-2 sm:col-span-1">
-          <WaterFluid ml={log?.water_ml ?? null} goalMl={goals?.water_goal_ml ?? 3000} />
+          <WaterHelix ml={log?.water_ml ?? null} goalMl={goals?.water_goal_ml ?? 3000} />
         </div>
 
         {/* Vitals & Body */}

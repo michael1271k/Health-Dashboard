@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Check, Plus, Trash2, X } from 'lucide-react'
+import { Check, Plus, Trash2 } from 'lucide-react'
+import { LiquidModal } from '@/components/ui/LiquidModal'
 import { protocolForDate } from '@/lib/supplements'
 import { isTrainingDay } from '@/lib/programs'
 import { logicalTodayISO } from '@/lib/utils/day'
@@ -88,20 +89,21 @@ export function SupplementChecklist() {
 
       {/* Builder / manage controls */}
       <div className="pl-6 flex items-center gap-2">
-        <button onClick={() => { setAdding((v) => !v); setManage(false) }}
+        <button onClick={() => { setAdding(true); setManage(false) }}
           className="btn-glass min-h-[40px] text-fluid-xs">
-          {adding ? <><X className="w-3.5 h-3.5" /> Cancel</> : <><Plus className="w-3.5 h-3.5" /> Add supplement</>}
+          <Plus className="w-3.5 h-3.5" /> Add supplement
         </button>
-        {(customs?.length ?? 0) > 0 && !adding && (
+        {(customs?.length ?? 0) > 0 && (
           <button onClick={() => setManage((v) => !v)} className="btn-glass min-h-[40px] text-fluid-xs">
             {manage ? 'Done' : 'Manage'}
           </button>
         )}
       </div>
 
-      {adding && (
-        <div className="pl-6 space-y-2.5">
-          <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3 space-y-2.5">
+      {/* Add-supplement modal — a sleek popup, not an inline expansion. */}
+      <LiquidModal open={adding} onClose={() => setAdding(false)} title="Add supplement" accent="#8E9AAC">
+        <div className="space-y-2.5">
+          <div className="space-y-2.5">
             <div className="grid grid-cols-2 gap-2">
               <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="Name" className="rounded-lg bg-surface-2 border border-border px-3 py-2 text-sm text-text" />
               <input value={form.dose} onChange={(e) => setForm((f) => ({ ...f, dose: e.target.value }))} placeholder="Dose (e.g. 2 caps)" className="rounded-lg bg-surface-2 border border-border px-3 py-2 text-sm text-text" />
@@ -135,14 +137,18 @@ export function SupplementChecklist() {
               ))}
             </div>
 
-            <button onClick={submit} disabled={addCustom.isPending || !form.name.trim() || !form.dose.trim()}
-              className="btn-primary w-full justify-center min-h-[42px] disabled:opacity-50">
-              {addCustom.isPending ? 'Adding…' : 'Add to protocol'}
-            </button>
             {addCustom.isError && <p className="text-danger text-[11px]">{addCustom.error instanceof Error && /relation|does not exist|schema cache/i.test(addCustom.error.message) ? 'Run the custom_supplements paste-SQL first.' : 'Could not add.'}</p>}
+
+            <div className="flex gap-2 justify-end pt-1">
+              <button onClick={() => setAdding(false)} className="btn-glass min-h-[44px] px-4">Cancel</button>
+              <button onClick={submit} disabled={addCustom.isPending || !form.name.trim() || !form.dose.trim()}
+                className="btn-primary min-h-[44px] px-4 disabled:opacity-50">
+                {addCustom.isPending ? 'Adding…' : 'Add to protocol'}
+              </button>
+            </div>
           </div>
         </div>
-      )}
+      </LiquidModal>
     </div>
   )
 }

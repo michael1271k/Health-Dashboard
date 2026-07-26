@@ -14,7 +14,8 @@ import { programDayByKey } from '@/lib/programs'
  * Tape measurements (waist/arm/thigh) were removed entirely — see the migration
  * that drops `body_measurements`.
  */
-export const DOMS_MUSCLES = ['Quads', 'Hamstrings', 'Calves', 'Back', 'Chest', 'Arms', 'Shoulders'] as const
+// Standardized display order: upper (Chest → Shoulders) then lower (Quads → Calves).
+export const DOMS_MUSCLES = ['Chest', 'Back', 'Arms', 'Shoulders', 'Quads', 'Hamstrings', 'Calves'] as const
 export type DomsMuscle = (typeof DOMS_MUSCLES)[number]
 
 /** Fold a program muscle token into one of the tracked DOMS muscles (or null). */

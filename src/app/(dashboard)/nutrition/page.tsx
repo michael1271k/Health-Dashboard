@@ -11,6 +11,8 @@ import { NUTRITION_PRESETS, type NutritionMode } from '@/lib/types/workout'
 import { NutritionLogList } from '@/components/nutrition/NutritionLogList'
 import { MacroRings } from '@/components/nutrition/MacroRings'
 import { FuelForceBand } from '@/components/nutrition/FuelForceBand'
+import { WaterHelix } from '@/components/day/WaterHelix'
+import { useTodayDailyLog, useUserGoals } from '@/lib/hooks/useDashboard'
 import { ScheduleShortcut } from '@/components/day/ScheduleShortcut'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { useEraFilter, eraDateRange, SUB_PHASE_META } from '@/lib/era/eraFilter'
@@ -39,6 +41,9 @@ export default function NutritionPage() {
   const todayISO = logicalTodayISO()
   const { data: todayLogs } = useDailyLogs({ from: todayISO, to: todayISO })
   const todayLog = (todayLogs ?? []).find((l) => l.date === todayISO) ?? null
+  // Hydration — today's dietary water vs the goal (shared DNA-helix gauge).
+  const { data: dailyLog } = useTodayDailyLog()
+  const { data: userGoals } = useUserGoals()
 
   const [goals, setGoals] = useState<ActiveGoals>({ calorie: 1955, protein: 170, carbs: 195, fat: 55, mode: 'cut' })
 
@@ -106,6 +111,12 @@ export default function NutritionPage() {
         </span>
         <ChevronRight className="w-4 h-4 text-muted shrink-0" aria-hidden="true" />
       </Link>
+
+      {/* Water Intake — the same glowing DNA double-helix as the Nexus gauge */}
+      <div>
+        <div className="text-[10px] uppercase tracking-widest text-muted mb-2">Water intake</div>
+        <WaterHelix ml={dailyLog?.water_ml ?? null} goalMl={userGoals?.water_goal_ml ?? 3000} />
+      </div>
 
       {/* Fuel → Force: links today's fuel to today's session (renders only if trained) */}
       <FuelForceBand date={todayISO} proteinG={todayLog?.proteinG ?? null} proteinGoal={goals.protein} />
