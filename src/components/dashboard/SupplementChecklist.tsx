@@ -27,12 +27,12 @@ export function SupplementChecklist() {
   const today = logicalTodayISO()
   const weekday = new Date(`${today}T12:00:00`).getDay()
   const protocol = protocolForDate(isTrainingDay(today))
-  const custom = customSlotsForDate(customs ?? [], weekday)
+  const custom = customSlotsForDate(customs ?? [], weekday, isTrainingDay(today))
   const slots = [...protocol, ...custom]
 
   const [manage, setManage] = useState(false)
   const [adding, setAdding] = useState(false)
-  const [form, setForm] = useState({ name: '', dose: '', time: '09:00', color: COLORS[0], formType: FORMS[0], days: [0, 1, 2, 3, 4, 5, 6] })
+  const [form, setForm] = useState({ name: '', dose: '', trainingDose: '', restDose: '', time: '09:00', color: COLORS[0], formType: FORMS[0], days: [0, 1, 2, 3, 4, 5, 6] })
   const customIds = new Set((customs ?? []).map((c) => `custom:${c.id}`))
 
   const toggleDay = (d: number) =>
@@ -41,8 +41,11 @@ export function SupplementChecklist() {
   const submit = () => {
     if (!form.name.trim() || !form.dose.trim()) return
     addCustom.mutate(
-      { name: form.name.trim(), dose: form.dose.trim(), color: form.color, form: form.formType, time: form.time, days: form.days },
-      { onSuccess: () => { setForm((f) => ({ ...f, name: '', dose: '' })); setAdding(false) } },
+      {
+        name: form.name.trim(), dose: form.dose.trim(), color: form.color, form: form.formType, time: form.time, days: form.days,
+        trainingDose: form.trainingDose.trim() || undefined, restDose: form.restDose.trim() || undefined,
+      },
+      { onSuccess: () => { setForm((f) => ({ ...f, name: '', dose: '', trainingDose: '', restDose: '' })); setAdding(false) } },
     )
   }
 
@@ -111,6 +114,15 @@ export function SupplementChecklist() {
               <select value={form.formType} onChange={(e) => setForm((f) => ({ ...f, formType: e.target.value }))} className="rounded-lg bg-surface-2 border border-border px-3 py-2 text-sm text-text capitalize">
                 {FORMS.map((x) => <option key={x} value={x}>{x}</option>)}
               </select>
+            </div>
+
+            {/* Optional training/rest dose split (e.g. Multivitamin 2 tabs training / 1 rest).
+                Blank → the base dose is used on both. */}
+            <div className="grid grid-cols-2 gap-2">
+              <input value={form.trainingDose} onChange={(e) => setForm((f) => ({ ...f, trainingDose: e.target.value }))}
+                placeholder="Training-day dose (optional)" className="rounded-lg bg-surface-2 border border-border px-3 py-2 text-sm text-text" />
+              <input value={form.restDose} onChange={(e) => setForm((f) => ({ ...f, restDose: e.target.value }))}
+                placeholder="Rest-day dose (optional)" className="rounded-lg bg-surface-2 border border-border px-3 py-2 text-sm text-text" />
             </div>
 
             {/* Colour */}

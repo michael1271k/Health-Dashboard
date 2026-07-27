@@ -123,9 +123,9 @@ describe('buildWeeklyExport', () => {
 
   it('marks missing data as "—" instead of dropping the row or implying zero', () => {
     const out = buildWeeklyExport(input)
-    expect(out).toMatch(/\| Mon \| 2026-07-20 \|/)   // the empty day is still present
+    expect(out).toMatch(/\*\*Mon 2026-07-20\*\* · Rest · — kg · — kcal/)   // the empty day is still present
     expect(out).toMatch(/—/)
-    expect(out).not.toMatch(/\| Mon \|.*\| 0 \|/)    // never fabricates a 0
+    expect(out).not.toMatch(/\*\*Mon 2026-07-20\*\*.*0 kcal/)    // never fabricates a 0
   })
 
   it('is DRY DATA — no coaching prompt or instruction header', () => {
@@ -141,11 +141,11 @@ describe('buildWeeklyExport', () => {
     const out = buildWeeklyExport(input)
     expect(out).toMatch(/Helix Cut/)
     expect(out).toMatch(/Upper A/)
-    expect(out).toMatch(/\| Biceps \| 4 \| 8 \| UNDER \|/)  // under-target flagged
+    expect(out).toMatch(/- Biceps: 4 \/ 8 sets — UNDER/)  // under-target flagged
   })
 
-  it('appends a body-composition table only when readings are supplied', () => {
-    expect(buildWeeklyExport(input)).not.toMatch(/Body composition/)
+  it('nests body composition under the weigh-in day only when supplied', () => {
+    expect(buildWeeklyExport(input)).not.toMatch(/InBody/)
     const withBody = buildWeeklyExport({
       ...input,
       bodyComp: [{
@@ -153,8 +153,7 @@ describe('buildWeeklyExport', () => {
         waterPercent: 60.5, visceralFat: 6, bmr: 1620, boneMineral: 4.1, leanMassKg: 53.4, waistHipRatio: 0.82,
       }],
     })
-    expect(withBody).toMatch(/## Body composition \(InBody\)/)
-    expect(withBody).toMatch(/\| 2026-07-19 \| 65\.3 \| 22\.4 \| 13\.2 \| 46\.1 \| 60\.5 \| 6 \| 1620 \| 4\.1 \| 53\.4 \| 0\.82 \|/)
+    expect(withBody).toMatch(/InBody · 65\.3 kg · BMI 22\.4 · BF 13\.2% · muscle 46\.1% · water 60\.5% · visceral 6 · BMR 1620 · bone 4\.1% · lean 53\.4 kg · W:H 0\.82/)
   })
 
   it('lists EVERY working set, grouped by load — not just the top set', () => {
@@ -186,20 +185,21 @@ describe('buildWeeklyExport', () => {
 
   it('carries energy expenditure and recovery signals per day', () => {
     const out = buildWeeklyExport(input)
-    expect(out).toMatch(/\| 9200 \| 520 \|/)   // steps, active kcal (km column removed)
-    expect(out).toMatch(/\| 48 \| 62 \|/)       // RHR, HRV
+    expect(out).toMatch(/9200 steps · 520 active/)  // steps, active kcal
+    expect(out).toMatch(/RHR 48 · HRV 62/)           // RHR, HRV
   })
 
-  it('drops the km / battery / score / supplement-count columns from the daily table', () => {
-    const header = buildWeeklyExport(input).split('\n').find((l) => l.startsWith('| Day |'))!
-    expect(header).not.toMatch(/km|Battery|Score|Supps/)
-    expect(header).toMatch(/Steps \| Active \| Sleep/)
-  })
-
-  it('adds a readable per-day log (food · steps · workout)', () => {
+  it('renders line-by-line TEXT with NO markdown tables', () => {
     const out = buildWeeklyExport(input)
-    expect(out).toMatch(/## Daily log/)
-    expect(out).toMatch(/\*\*Sun 2026-07-19\*\* · Train · 1940 kcal \(172P\/190C\/54F\) · 9200 steps · Upper A/)
+    expect(out).not.toMatch(/^\| Day \|/m)   // no daily table header
+    expect(out).not.toMatch(/\|---/)         // no table separator rows anywhere
+    expect(out).not.toMatch(/km|Battery|Score|Supps/)
+  })
+
+  it('renders a readable per-day line with ALL the day’s data', () => {
+    const out = buildWeeklyExport(input)
+    expect(out).toMatch(/## Days/)
+    expect(out).toMatch(/\*\*Sun 2026-07-19\*\* · Train · 65\.3 kg · 1940 kcal \(172P\/190C\/54F\) · 9200 steps · 520 active · sleep 9h11 · RHR 48 · HRV 62 · water 3\.0 L · Upper A/)
   })
 
   it('renders a training-vs-rest supplements protocol only when supplied', () => {

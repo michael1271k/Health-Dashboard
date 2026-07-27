@@ -13,11 +13,23 @@ import { repWindowFor } from '@/lib/training/ceilings'
 import { lookupMuscles } from '@/lib/exercises/muscleMap'
 import { weeklyVolumeByMuscle, type Program } from '@/lib/training/landmarks'
 import { protocolForDate } from '@/lib/supplements'
+import { customDoseFor, type CustomSupplement } from '@/lib/hooks/useCustomSupplements'
 import { normalizeSpO2 } from '@/lib/utils/units'
 
-/** Flatten the supplement protocol into "time · Name — dose" lines. */
-function supplementProtocolLines(isTraining: boolean): string[] {
-  return protocolForDate(isTraining).flatMap((slot) => slot.items.map((i) => `${slot.time} · ${i.name} — ${i.dose}`))
+/**
+ * Flatten the supplement protocol into "time · Name — dose" lines, MERGING the
+ * built-in stack with the user's saved custom supplements. Custom split doses
+ * (trainingDose / restDose in the jsonb schedule) are honoured per column.
+ */
+function supplementProtocolLines(isTraining: boolean, customs: CustomSupplement[]): string[] {
+  const builtIn = protocolForDate(isTraining)
+    .flatMap((slot) => slot.items.map((i) => ({ time: slot.time, line: `${slot.time} · ${i.name} — ${i.dose}` })))
+  const custom = customs.map((c) => ({
+    time: c.time || '—',
+    line: `${c.time || '—'} · ${c.name} — ${customDoseFor(c, isTraining)}`,
+  }))
+  // Chronological across both sources.
+  return [...builtIn, ...custom].sort((a, b) => a.time.localeCompare(b.time)).map((x) => x.line)
 }
 
 const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -198,11 +210,13 @@ export function useWeeklyExport(weekStart = weekStartOf(logicalTodayISO())) {
     queryKey: ['weekly_export', weekStart],
     staleTime: 60_000,
     queryFn: async (): Promise<string> => {
-      const [cur, prev, goalsRes] = await Promise.all([
+      const [cur, prev, goalsRes, customsRes] = await Promise.all([
         fetchRange(weekStart, weekEnd),
         fetchRange(prevStart, isoAddDays(prevStart, 6)),
         supabase.from('user_goals').select('calorie_goal, protein_goal_g, steps_goal, sleep_goal_hours').maybeSingle(),
+        supabase.from('custom_supplements').select('id, name, dose, color, form, time, schedule'),
       ])
+      const customs = (customsRes.error ? [] : (customsRes.data ?? [])) as CustomSupplement[]
       const goals = goalsRes.data as {
         calorie_goal?: number; protein_goal_g?: number; steps_goal?: number; sleep_goal_hours?: number
       } | null
@@ -233,7 +247,7 @@ export function useWeeklyExport(weekStart = weekStartOf(logicalTodayISO())) {
         sleepGoalHours: goals?.sleep_goal_hours ?? null,
         days, sessions, volumeByMuscle, doms,
         bodyComp: toBodyComp(cur),
-        supplementProtocol: { training: supplementProtocolLines(true), rest: supplementProtocolLines(false) },
+        supplementProtocol: { training: supplementProtocolLines(true, customs), rest: supplementProtocolLines(false, customs) },
         previous: weekTotals(toDays(prevStart, prev), toSessions(prev)),
       })
     },

@@ -11,7 +11,8 @@
  *    into existence, or estimated to fill a column. NO estimated 1RM — a derived
  *    figure has no place in a raw-data export.
  *  · Unilateral work is split per side (L/R weight · reps · failure).
- *  · Real markdown headings and tables so it renders wherever it's pasted.
+ *  · Line-by-line TEXT only — no markdown tables. One line per day (all its
+ *    numbers), with the deep body-comp reading nested under its weigh-in day.
  */
 
 export interface ExportDay {
@@ -238,23 +239,13 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
     labelsByDate.set(s.date, arr)
   }
 
-  // ── Daily table (km / battery / score / supplement-count columns removed) ──
-  L.push('## Daily')
-  L.push('')
-  L.push('| Day | Date | Type | Weight | kcal | P/C/F | Steps | Active | Sleep | Deep/REM | RHR | HRV | Water |')
-  L.push('|---|---|---|---|---|---|---|---|---|---|---|---|---|')
-  for (const d of days) {
-    L.push(
-      `| ${d.weekdayLabel} | ${d.date} | ${d.isTrainingDay ? 'Train' : 'Rest'} | ${n(d.weightKg, 1)} | `
-      + `${n(d.calories)} | ${n(d.proteinG)}/${n(d.carbsG)}/${n(d.fatG)} | ${n(d.steps)} | `
-      + `${n(d.activeKcal)} | ${sleep(d.sleepMin)} | ${sleep(d.deepMin)}/${sleep(d.remMin)} | `
-      + `${n(d.restingHr)} | ${n(d.hrvMs)} | ${n(d.waterMl == null ? null : d.waterMl / 1000, 1)} |`,
-    )
-  }
-  L.push('')
+  // Full body-composition reading per weigh-in date (nested under its day below).
+  const bodyByDate = new Map<string, ExportBodyComp>()
+  for (const b of input.bodyComp ?? []) bodyByDate.set(b.date, b)
 
-  // ── Readable per-day log (food · steps · workout) ──
-  L.push('## Daily log')
+  // ── Readable per-day log (one line per day, all data · no tables) ──
+  // Deep body-comp nests directly under the day it was measured.
+  L.push('## Days')
   L.push('')
   for (const d of days) {
     const workout = labelsByDate.get(d.date)?.join(' + ') ?? (d.isTrainingDay ? 'not logged' : 'rest')
@@ -262,8 +253,19 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
       ? ` (${n(d.proteinG)}P/${n(d.carbsG)}C/${n(d.fatG)}F)` : ''
     L.push(
       `- **${d.weekdayLabel} ${d.date}** · ${d.isTrainingDay ? 'Train' : 'Rest'} · `
-      + `${n(d.calories)} kcal${macros} · ${n(d.steps)} steps · ${workout}`,
+      + `${n(d.weightKg, 1)} kg · ${n(d.calories)} kcal${macros} · ${n(d.steps)} steps · `
+      + `${n(d.activeKcal)} active · sleep ${sleep(d.sleepMin)} · RHR ${n(d.restingHr)} · `
+      + `HRV ${n(d.hrvMs)} · water ${n(d.waterMl == null ? null : d.waterMl / 1000, 1)} L · ${workout}`,
     )
+    const b = bodyByDate.get(d.date)
+    if (b) {
+      L.push(
+        `    InBody · ${n(b.weightKg, 1)} kg · BMI ${n(b.bmi, 1)} · BF ${n(b.bodyFatPct, 1)}% · `
+        + `muscle ${n(b.musclePercent, 1)}% · water ${n(b.waterPercent, 1)}% · visceral ${n(b.visceralFat)} · `
+        + `BMR ${n(b.bmr)} · bone ${n(b.boneMineral, 1)}% · lean ${n(b.leanMassKg, 1)} kg · `
+        + `W:H ${b.waistHipRatio == null ? '—' : b.waistHipRatio.toFixed(2)}`,
+      )
+    }
   }
   L.push('')
 
@@ -313,17 +315,15 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
     L.push('')
   }
 
-  // ── Volume vs target ──
+  // ── Volume vs target (line-by-line, no table) ──
   L.push('## Weekly volume vs target (direct sets)')
   L.push('')
-  L.push('| Muscle | Sets | Target | Status |')
-  L.push('|---|---|---|---|')
   for (const m of volumeByMuscle) {
     const status = m.target <= 0 ? '—'
       : m.sets < m.target ? 'UNDER'
       : m.sets > m.target * 1.3 ? 'OVER'
       : 'on target'
-    L.push(`| ${m.muscle} | ${m.sets} | ${m.target} | ${status} |`)
+    L.push(`- ${m.muscle}: ${m.sets} / ${m.target} sets — ${status}`)
   }
   L.push('')
 
@@ -338,24 +338,9 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
     L.push('')
   }
 
-  // ── Body composition (InBody) ──
-  const bodyComp = input.bodyComp ?? []
-  if (bodyComp.length) {
-    L.push('## Body composition (InBody)')
-    L.push('')
-    L.push('| Date | Weight | BMI | Fat % | Muscle % | Water % | Visceral | BMR | Bone % | Lean | W:H |')
-    L.push('|---|---|---|---|---|---|---|---|---|---|---|')
-    for (const b of bodyComp) {
-      L.push(
-        `| ${b.date} | ${n(b.weightKg, 1)} | ${n(b.bmi, 1)} | ${n(b.bodyFatPct, 1)} | ${n(b.musclePercent, 1)} | `
-        + `${n(b.waterPercent, 1)} | ${n(b.visceralFat)} | ${n(b.bmr)} | ${n(b.boneMineral, 1)} | ${n(b.leanMassKg, 1)} | `
-        + `${b.waistHipRatio == null ? '—' : b.waistHipRatio.toFixed(2)} |`,
-      )
-    }
-    L.push('')
-  }
+  // Body composition is nested under each weigh-in day in "## Days" (no table).
 
-  // ── Supplements protocol (static — training vs rest days) ──
+  // ── Supplements protocol (training vs rest days) ──
   const protocol = input.supplementProtocol
   if (protocol && (protocol.training.length || protocol.rest.length)) {
     L.push('## Supplements protocol')
