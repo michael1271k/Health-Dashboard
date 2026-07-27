@@ -134,7 +134,10 @@ export async function saveSession(
     const record = timed ? s.reps : (est1rm ?? 0)
     const baseMap = timed ? bestSecMap : bestEstMap
     const hadBaseline = baseMap.has(s.exerciseId)
-    const isPr = !reentry && !isWarmup(s) && hadBaseline && record > (baseMap.get(s.exerciseId) ?? 0)
+    // A drop set is a lighter back-off continuation — it counts for volume but is
+    // never a top-set PR (same rule as a warm-up).
+    const prIneligible = isWarmup(s) || s.setType === 'dropset'
+    const isPr = !reentry && !prIneligible && hadBaseline && record > (baseMap.get(s.exerciseId) ?? 0)
     return { s, est1rm, isPr }
   })
   const prCount = setsToInsert.filter((x) => x.isPr).length

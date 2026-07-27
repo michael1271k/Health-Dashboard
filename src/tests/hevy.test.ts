@@ -194,10 +194,48 @@ describe('hevyWorkoutToDraft — deck-ready draft', () => {
   })
 })
 
+describe('Hevy-style completion gate — only checked (green) sets are committed', () => {
+  const mkDraft = (sets: Array<{ weightKg: number; reps: number; done?: boolean }>) => ({
+    splitDay: 'upper' as const, date: '2026-07-19', notes: '',
+    startedAt: '2026-07-19T12:00:00.000Z',
+    exercises: [{ localId: 'a', name: 'Chest Press (Machine)', sets }],
+  })
+
+  it('commits only done!==false sets and renumbers them 1..n', () => {
+    const draft = mkDraft([
+      { weightKg: 40, reps: 12, done: true },
+      { weightKg: 40, reps: 11, done: false },  // unchecked — excluded
+      { weightKg: 37.5, reps: 10, done: true },
+    ])
+    const body = buildCommitPayload(draft)
+    expect(body.sets).toHaveLength(2)
+    expect(body.sets.map((s) => s.setNumber)).toEqual([1, 2])
+    expect(body.sets.map((s) => s.weightKg)).toEqual([40, 37.5])
+  })
+
+  it('draftTotals counts only completed sets', () => {
+    const draft = mkDraft([
+      { weightKg: 40, reps: 10, done: true },   // 400
+      { weightKg: 40, reps: 10, done: false },  // excluded
+    ])
+    expect(draftTotals(draft)).toEqual({ volumeKg: 400, sets: 1 })
+  })
+
+  it('drops an exercise whose every set is unchecked', () => {
+    const draft = mkDraft([{ weightKg: 40, reps: 10, done: false }])
+    expect(buildCommitPayload(draft).sets).toHaveLength(0)
+  })
+
+  it('treats sets with NO done flag (pasted/edited) as committed', () => {
+    const draft = mkDraft([{ weightKg: 40, reps: 10 }, { weightKg: 40, reps: 9 }])
+    expect(buildCommitPayload(draft).sets).toHaveLength(2)
+  })
+})
+
 describe('draft storage v1 → v2 migration', () => {
   beforeEach(() => localStorage.clear())
 
-  it('migrates a legacy live draft: mode/done dropped, all sets kept', () => {
+  it('migrates a legacy live draft: mode dropped, per-set done preserved', () => {
     localStorage.setItem('helix_session_draft:v1', JSON.stringify({
       mode: 'live',
       splitDay: 'upper',
@@ -211,7 +249,9 @@ describe('draft storage v1 → v2 migration', () => {
     const migrated = peekSessionDraft()
     expect(migrated).not.toBeNull()
     expect((migrated as unknown as Record<string, unknown>).mode).toBeUndefined()
-    expect(migrated!.exercises[0].sets).toEqual([{ weightKg: 35, reps: 12 }, { weightKg: 37.5, reps: 12 }])
+    // v2 re-introduced per-set completion: done:true normalizes to committed
+    // (no flag), done:false is preserved so the unchecked set stays excluded.
+    expect(migrated!.exercises[0].sets).toEqual([{ weightKg: 35, reps: 12 }, { weightKg: 37.5, reps: 12, done: false }])
     // Rewritten under the v2 key; v1 removed.
     expect(localStorage.getItem(DRAFT_STORAGE_KEY)).toBeTruthy()
     expect(localStorage.getItem('helix_session_draft:v1')).toBeNull()

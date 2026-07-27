@@ -21,12 +21,14 @@ import type { useSessionDraft, CommitResult } from '@/lib/hooks/useSessionDraft'
  * same draft store. Mobile: single column, sticky commit. Desktop (≥lg):
  * sticky left rail (identity/insight/notes/commit) + the sortable deck.
  */
-export function SessionDeck({ store, onClose, onViewDay }: {
+export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
   store: ReturnType<typeof useSessionDraft>
   onClose: () => void
   onViewDay?: (date: string) => void
+  /** Post-finish destination: the just-committed session's analysis page. */
+  onViewSession?: (sessionId: string) => void
 }) {
-  const { draft, updateSet, splitSet, mergeSet, toggleSetLink, addSet, removeSet, removeExercise, reorder, setNotes, setExerciseNote, setStats, setDate, discard, commit } = store
+  const { draft, updateSet, splitSet, mergeSet, toggleSetLink, addSet, removeSet, toggleSetDone, checkAllSets, removeExercise, reorder, setNotes, setExerciseNote, setStats, setDate, discard, commit } = store
   const [result, setResult] = useState<CommitResult | null>(null)
   const [committedDate, setCommittedDate] = useState<string | null>(null)
   // Delete the ACTUAL committed session (edit mode's trash), keyed to its date.
@@ -34,7 +36,7 @@ export function SessionDeck({ store, onClose, onViewDay }: {
 
   // Era-aware previous-session memory for every exercise in the deck.
   const names = draft?.exercises.filter((ex) => ex.kind !== 'cardio').map((ex) => ex.name) ?? []
-  const { data: history } = useExerciseSetHistory(names, draft ? eraForDate(draft.date) : undefined)
+  const { data: history } = useExerciseSetHistory(names, draft ? eraForDate(draft.date) : undefined, draft?.dayKey)
 
   // Forward-carried Smart-Coach cues — lifts due a load bump, keyed by name so a
   // matching card in this session shows the "▲ add load" chip inline.
@@ -102,10 +104,11 @@ export function SessionDeck({ store, onClose, onViewDay }: {
         commit.mutate(undefined, {
           onSuccess: (r) => {
             if (!r.duplicate) void tapSuccess()
-            // Expected flow: the save lands and the deck transitions straight
-            // into the Daily Nexus for that day (which shows the session, PRs and
-            // progression). Falls back to the in-deck result screen if no handler.
-            if (onViewDay) onViewDay(date)
+            // Finish → the just-logged session's analysis page (Workout Summary),
+            // not the day view. A duplicate (already logged) still has a sessionId
+            // to open. Falls back to the day view, then the in-deck result screen.
+            if (onViewSession && r.sessionId) onViewSession(r.sessionId)
+            else if (onViewDay) onViewDay(date)
             else setResult(r)
           },
         })
@@ -150,6 +153,8 @@ export function SessionDeck({ store, onClose, onViewDay }: {
           onToggleLink={toggleSetLink}
           onAddSet={addSet}
           onRemoveSet={removeSet}
+          onToggleDone={toggleSetDone}
+          onCheckAll={checkAllSets}
           onRemoveExercise={removeExercise}
           onSetNote={setExerciseNote}
         />

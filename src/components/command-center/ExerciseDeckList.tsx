@@ -19,7 +19,7 @@ import type { ExerciseHistory } from '@/lib/hooks/useExerciseSetHistory'
  * Stays a SINGLE column at every breakpoint — verticalListSortingStrategy +
  * restrictToVerticalAxis are only valid for a one-column list.
  */
-export function ExerciseDeckList({ draft, history, readyByName, onReorder, onUpdateSet, onSplitSet, onMergeSet, onToggleLink, onAddSet, onRemoveSet, onRemoveExercise, onSetNote }: {
+export function ExerciseDeckList({ draft, history, readyByName, onReorder, onUpdateSet, onSplitSet, onMergeSet, onToggleLink, onAddSet, onRemoveSet, onToggleDone, onCheckAll, onRemoveExercise, onSetNote }: {
   draft: SessionDraft
   history: Map<string, ExerciseHistory> | undefined
   /** Forward-carried progression cues, keyed by exercise name. */
@@ -31,6 +31,8 @@ export function ExerciseDeckList({ draft, history, readyByName, onReorder, onUpd
   onToggleLink: (localId: string, pairId: string) => void
   onAddSet: (localId: string) => void
   onRemoveSet: (localId: string, setIdx: number) => void
+  onToggleDone: (localId: string, setIdx: number) => void
+  onCheckAll: (localId: string) => void
   onRemoveExercise: (localId: string) => void
   onSetNote: (localId: string, note: string) => void
 }) {
@@ -80,6 +82,8 @@ export function ExerciseDeckList({ draft, history, readyByName, onReorder, onUpd
               onToggleLink={(pairId) => onToggleLink(ex.localId, pairId)}
               onAddSet={() => onAddSet(ex.localId)}
               onRemoveSet={(i) => onRemoveSet(ex.localId, i)}
+              onToggleDone={(i) => onToggleDone(ex.localId, i)}
+              onCheckAll={() => onCheckAll(ex.localId)}
               onRemoveExercise={() => onRemoveExercise(ex.localId)}
               onSetNote={(note) => onSetNote(ex.localId, note)}
             />

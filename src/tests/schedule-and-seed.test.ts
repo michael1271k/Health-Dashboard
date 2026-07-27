@@ -27,7 +27,7 @@ describe('buildTemplateDraft — per-set seed + cardio + memory override', () =>
     expect(d.exercises[0].note).toContain('Pace rising')
     expect(d.exercises[0].sets).toHaveLength(0)
     const chest = d.exercises.find((e) => e.name === 'Chest Press (Machine)')!
-    expect(chest.sets).toEqual([{ weightKg: 35, reps: 12 }, { weightKg: 37.5, reps: 12 }, { weightKg: 37.5, reps: 12 }])
+    expect(chest.sets).toEqual([{ weightKg: 35, reps: 12, done: false }, { weightKg: 37.5, reps: 12, done: false }, { weightKg: 37.5, reps: 12, done: false }])
   })
 
   it('prepends the Treadmill warm-up to non-seed days too (e.g. Upper A)', () => {
@@ -39,7 +39,7 @@ describe('buildTemplateDraft — per-set seed + cardio + memory override', () =>
   it('seeds Legs & Core B bodyweight moves at 0 kg', () => {
     const d = buildTemplateDraft(legsB, '2026-07-16')
     const plank = d.exercises.find((e) => e.name === 'Side Plank')!
-    expect(plank.sets).toEqual([{ weightKg: 0, reps: 55 }, { weightKg: 0, reps: 52 }])
+    expect(plank.sets).toEqual([{ weightKg: 0, reps: 55, done: false }, { weightKg: 0, reps: 52, done: false }])
   })
 
   it('seeds each slot from the CORRESPONDING previous set, not one value fanned out', () => {
@@ -52,7 +52,7 @@ describe('buildTemplateDraft — per-set seed + cardio + memory override', () =>
     const d = buildTemplateDraft(cbB, '2026-07-16', history)
     const chest = d.exercises.find((e) => e.name === 'Chest Press (Machine)')!
     expect(chest.sets).toEqual([
-      { weightKg: 40, reps: 12 }, { weightKg: 40, reps: 11 }, { weightKg: 37.5, reps: 10 },
+      { weightKg: 40, reps: 12, done: false }, { weightKg: 40, reps: 11, done: false }, { weightKg: 37.5, reps: 10, done: false },
     ])
     expect(chest.seededFrom).toBe('2026-07-17')
   })
@@ -64,7 +64,7 @@ describe('buildTemplateDraft — per-set seed + cardio + memory override', () =>
     }]])
     const d = buildTemplateDraft(cbB, '2026-07-16', history)
     const chest = d.exercises.find((e) => e.name === 'Chest Press (Machine)')!
-    expect(chest.sets).toEqual([{ weightKg: 40, reps: 12 }, { weightKg: 40, reps: 11 }])
+    expect(chest.sets).toEqual([{ weightKg: 40, reps: 12, done: false }, { weightKg: 40, reps: 11, done: false }])
   })
 
   it('carries the failure tag from history into the seeded set', () => {
@@ -75,7 +75,7 @@ describe('buildTemplateDraft — per-set seed + cardio + memory override', () =>
     const d = buildTemplateDraft(cbB, '2026-07-16', history)
     const chest = d.exercises.find((e) => e.name === 'Chest Press (Machine)')!
     expect(chest.sets).toEqual([
-      { weightKg: 40, reps: 12 }, { weightKg: 40, reps: 8, setType: 'failure' },
+      { weightKg: 40, reps: 12, done: false }, { weightKg: 40, reps: 8, setType: 'failure', done: false },
     ])
   })
 

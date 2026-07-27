@@ -2,13 +2,15 @@
 
 import { useEffect, useState } from 'react'
 import * as Slider from '@radix-ui/react-slider'
-import { X } from 'lucide-react'
+import { Check, X } from 'lucide-react'
 import { tapLight } from '@/lib/native/haptics'
-import type { DraftSet } from '@/lib/sessions/draft'
+import { isSetCommitted, type DraftSet } from '@/lib/sessions/draft'
 
 const WEIGHT_STEPS = [-2.5, -0.25, +0.25, +2.5] as const
 const ORANGE = '#E0703C' // warm-up
 const DANGER = '#C4514E' // failure
+const DROP = '#9A6DD7'   // drop set
+const GREEN = '#3E9E7A'  // completed (ticked green)
 
 /** Stable slider ceiling for a load (multiple of 10, ≥ weight + 30 headroom). */
 const maxFor = (w: number) => Math.max(60, Math.ceil((w + 30) / 10) * 10)
@@ -18,7 +20,7 @@ const maxFor = (w: number) => Math.max(60, Math.ceil((w + 30) / 10) * 10)
  * haptic stepper chips, reps ±1, Warm-up/Failure toggles). Only the active row
  * mounts its slider, keeping long decks light.
  */
-export function SetEditorRow({ index, displayNum, subRow = false, set, active, timed = false, onActivate, onChange, onRemove, onSplit, onToggleLink, onMerge }: {
+export function SetEditorRow({ index, displayNum, subRow = false, set, active, timed = false, onActivate, onChange, onRemove, onToggleDone, onSplit, onToggleLink, onMerge }: {
   index: number
   /** Human set number (groups a unilateral pair as ONE set); falls back to index+1. */
   displayNum?: number
@@ -31,6 +33,8 @@ export function SetEditorRow({ index, displayNum, subRow = false, set, active, t
   onActivate: () => void
   onChange: (patch: Partial<DraftSet>) => void
   onRemove: () => void
+  /** Tick the set complete (green) / uncomplete — only green sets are recorded. */
+  onToggleDone?: () => void
   /** Unilateral: split a normal set into Left/Right (absent once already split). */
   onSplit?: () => void
   /** Unilateral: toggle whether this L/R pair mirrors weight+reps. */
@@ -53,6 +57,10 @@ export function SetEditorRow({ index, displayNum, subRow = false, set, active, t
 
   const isWarm = set.setType === 'warmup'
   const isFail = set.setType === 'failure'
+  const isDrop = set.setType === 'dropset'
+  // Green = committable = will be recorded on finish. Template decks seed every
+  // set as NOT committed (done:false); pasted/edited sets are committed by default.
+  const done = isSetCommitted(set)
 
   const nudgeWeight = (delta: number) => {
     void tapLight()
@@ -63,18 +71,19 @@ export function SetEditorRow({ index, displayNum, subRow = false, set, active, t
     void tapLight()
     onChange({ reps: Math.max(1, set.reps + delta) })
   }
-  const toggleType = (t: 'warmup' | 'failure') => {
+  const toggleType = (t: 'warmup' | 'failure' | 'dropset') => {
     void tapLight()
     onChange({ setType: set.setType === t ? undefined : t })
   }
 
   const sideColor = set.side === 'L' ? '#8E9AAC' : set.side === 'R' ? '#E0703C' : null
-  const badge = set.side ?? (isWarm ? 'W' : `S${displayNum ?? index + 1}`)
+  const badge = set.side ?? (isWarm ? 'W' : isDrop ? 'D' : `S${displayNum ?? index + 1}`)
 
   return (
     <div
       className={`rounded-lg border transition-colors ${
         active ? 'border-primary/30 bg-white/[0.03]'
+        : done ? 'border-[#3E9E7A]/40 bg-[#3E9E7A]/[0.10]'
         : isWarm ? 'border-transparent bg-[#E0703C]/[0.06]' : 'border-transparent'}`}
       style={subRow && sideColor ? { borderLeft: `2px solid ${sideColor}`, borderTopLeftRadius: 2, borderBottomLeftRadius: 2 } : undefined}
     >
@@ -88,7 +97,7 @@ export function SetEditorRow({ index, displayNum, subRow = false, set, active, t
         >
           <span
             className="w-6 shrink-0 text-[10px] font-bold uppercase tracking-wide tabular-nums"
-            style={{ color: sideColor ?? (isWarm ? ORANGE : isFail ? DANGER : 'var(--color-muted)') }}
+            style={{ color: sideColor ?? (isWarm ? ORANGE : isFail ? DANGER : isDrop ? DROP : 'var(--color-muted)') }}
           >
             {badge}
           </span>
@@ -107,6 +116,20 @@ export function SetEditorRow({ index, displayNum, subRow = false, set, active, t
           )}
           {set.rpe != null && <span className="text-[10px] text-muted">RPE {set.rpe}</span>}
         </button>
+        {onToggleDone && (
+          <button
+            type="button"
+            onClick={() => { void tapLight(); onToggleDone() }}
+            aria-pressed={done}
+            aria-label={done ? `Mark set ${index + 1} not done` : `Mark set ${index + 1} done`}
+            className="min-h-[32px] min-w-[32px] rounded-lg flex items-center justify-center active:scale-95 transition-all"
+            style={done
+              ? { color: '#fff', background: GREEN, border: `1px solid ${GREEN}` }
+              : { color: 'var(--color-muted)', background: 'transparent', border: '1px solid rgba(255,255,255,0.14)' }}
+          >
+            <Check className="w-3.5 h-3.5" aria-hidden="true" />
+          </button>
+        )}
         <button
           type="button"
           onClick={onRemove}
@@ -183,11 +206,13 @@ export function SetEditorRow({ index, displayNum, subRow = false, set, active, t
                 className="glass-card min-h-[34px] min-w-[34px] text-sm font-bold text-text active:scale-95 transition-transform">+</button>
             </div>
           </div>
-          {/* Set modifiers — Warm-up / Failure (Hevy parity). Failure is PER SIDE
-              for a split set (F on Right while Left holds). */}
+          {/* Set type — Warm-up / Failure / Drop set (Hevy parity). "Normal" is the
+              absence of all three; "Remove" is the X on the summary line. Failure is
+              PER SIDE for a split set (F on Right while Left holds). */}
           <div className="flex items-center gap-1.5">
             <TypeChip active={isWarm} color={ORANGE} label="Warm-up" short="W" onClick={() => toggleType('warmup')} />
             <TypeChip active={isFail} color={DANGER} label="Failure" short="F" onClick={() => toggleType('failure')} />
+            <TypeChip active={isDrop} color={DROP} label="Drop set" short="D" onClick={() => toggleType('dropset')} />
           </div>
           {/* Unilateral — split into Left/Right (pair Link/Merge live on the parent
               "Set N" card, so a nested sub-row shows only its own tuner). */}

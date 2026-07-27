@@ -11,10 +11,17 @@ export interface DraftSet {
   weightKg: number
   reps: number
   rpe?: number
-  /** Hevy-style set modifier; absent = a normal working set. Warmups count
-   *  toward volume + set count but are never PR-eligible. Failure is tracked
+  /** Hevy-style set modifier; absent = a normal working set. Warmups + drop sets
+   *  count toward volume + set count but are never PR-eligible. Failure is tracked
    *  PER SIDE for unilateral sets. */
-  setType?: 'warmup' | 'failure'
+  setType?: 'warmup' | 'failure' | 'dropset'
+  /**
+   * Hevy-style completion flag. `false` = the row is NOT ticked green and is
+   * EXCLUDED from the commit (template decks seed every set `false`, so nothing
+   * is recorded until you check it off). `true` / absent = committed (a pasted
+   * or edited session's sets are pre-completed). See {@link isSetCommitted}.
+   */
+  done?: boolean
   /** Unilateral (per-side) tracking. A split set = two DraftSets sharing
    *  `pairId`, one `side` 'L' one 'R'. `linked` (default true) mirrors
    *  weight+reps between the two sides on edit; unlink to log asymmetry.
@@ -23,6 +30,11 @@ export interface DraftSet {
   pairId?: string
   linked?: boolean
 }
+
+/** A set is committed (green, saved) unless it was explicitly ticked off
+ *  (`done === false`). Only template-seeded live decks start `false`; pasted /
+ *  edited / legacy sets have no flag and stay committed. */
+export const isSetCommitted = (s: DraftSet): boolean => s.done !== false
 
 export interface DraftExercise {
   /** Stable client-side key for dnd-kit sortables. */
@@ -90,7 +102,9 @@ export function draftTotals(draft: SessionDraft): { volumeKg: number; sets: numb
   for (const ex of draft.exercises) {
     if (ex.kind === 'cardio') continue
     for (const s of ex.sets) {
-      // Warmups DO count toward volume + set count (they still can't be a PR).
+      // Only COMPLETED (green) sets count — an unchecked template set is not
+      // performed. Warmups/drop sets DO count toward volume + set count.
+      if (!isSetCommitted(s)) continue
       sets += 1
       volumeKg += s.weightKg * s.reps
     }
@@ -150,7 +164,11 @@ export function buildCommitPayload(draft: SessionDraft): SaveWorkoutInput {
       cardioLines.push(`Cardio — ${cardioSummary(ex)}`)
       continue
     }
-    ex.sets.forEach((s, i) => {
+    // ONLY completed (green) sets are recorded — an unchecked template set stays
+    // in the deck but is never logged. Set numbers renumber over the kept sets.
+    const committed = ex.sets.filter(isSetCommitted)
+    if (!committed.length) continue        // no green sets → the exercise didn't happen
+    committed.forEach((s, i) => {
       sets.push({
         exerciseName: ex.name,
         setNumber: i + 1,
@@ -225,7 +243,10 @@ function sanitizeDraft(value: unknown): SessionDraft | null {
     sets: (ex.sets ?? []).map((s) => {
       const clean: DraftSet = { weightKg: s.weightKg, reps: s.reps }
       if (s.rpe != null) clean.rpe = s.rpe
-      if (s.setType === 'warmup' || s.setType === 'failure') clean.setType = s.setType
+      if (s.setType === 'warmup' || s.setType === 'failure' || s.setType === 'dropset') clean.setType = s.setType
+      // Preserve the Hevy completion flag across reloads (only an explicit false
+      // is meaningful — everything else stays committed).
+      if (s.done === false) clean.done = false
       // Preserve unilateral split state across reloads / v1→v2 migration.
       if (s.side === 'L' || s.side === 'R') { clean.side = s.side; clean.pairId = s.pairId; clean.linked = s.linked ?? true }
       return clean

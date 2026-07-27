@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { eraForDate, type Era } from '@/lib/programs'
+import { getPreviousSource } from '@/lib/sessions/previousSource'
 
 export interface ExerciseHistory {
   date: string                                    // most recent session date
@@ -18,16 +19,20 @@ export interface ExerciseHistory {
  * so "Prev: 36 × 12/11/10 · Jul 12" renders beside today's inputs.
  * Era-aware: a HELIX draft never shows PPL-legacy numbers as its baseline.
  */
-export function useExerciseSetHistory(names: string[], era?: Era) {
+export function useExerciseSetHistory(names: string[], era?: Era, dayKey?: string) {
   const key = [...names].sort().join('|')
+  // 'same_routine' scopes "Previous" to the SAME day_key; only meaningful when a
+  // dayKey is known (a template/edit deck), otherwise it degrades to 'any'.
+  const source = getPreviousSource()
+  const scopeKey = source === 'same_routine' && dayKey ? dayKey : null
   return useQuery({
-    queryKey: ['workout_sets', 'deck_history', key, era ?? 'all'],
+    queryKey: ['workout_sets', 'deck_history', key, era ?? 'all', scopeKey ?? 'any'],
     enabled: names.length > 0,
     staleTime: 60_000,
     queryFn: async (): Promise<Map<string, ExerciseHistory>> => {
       const { data, error } = await supabase
         .from('workout_sets')
-        .select('weight_kg, reps, set_number, set_type, exercises!inner(name), workout_sessions!inner(started_at)')
+        .select('weight_kg, reps, set_number, set_type, exercises!inner(name), workout_sessions!inner(started_at, day_key)')
         .in('exercises.name', names)
         .order('created_at', { ascending: false })
         // 2000, not 600: this now SEEDS the logger, and a low cap silently
@@ -39,11 +44,13 @@ export function useExerciseSetHistory(names: string[], era?: Era) {
       const rows = ((data ?? []) as unknown as Array<{
         weight_kg: number; reps: number; set_number: number; set_type: string | null
         exercises: { name: string }
-        workout_sessions: { started_at: string }
+        workout_sessions: { started_at: string; day_key: string | null }
       }>)
         // Warm-ups are not a working baseline — seeding from one under-loads
         // the whole deck.
         .filter((r) => r.set_type !== 'warmup')
+        // 'same_routine': only pull from previous sessions of the SAME routine.
+        .filter((r) => !scopeKey || r.workout_sessions.day_key === scopeKey)
 
       // Rows arrive newest-first (created_at desc) to pick each exercise's most
       // recent session. But WITHIN a session the working sets are batch-inserted

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { ChevronDown, Footprints, GripVertical, History, NotebookPen, Plus, Target, X } from 'lucide-react'
+import { CheckCheck, ChevronDown, Footprints, GripVertical, History, NotebookPen, Plus, Target, X } from 'lucide-react'
 import { SetEditorRow } from './SetEditorRow'
 import { cardioSummary, type DraftExercise, type DraftSet } from '@/lib/sessions/draft'
 import { isTimedExercise } from '@/lib/exercises/timed'
@@ -72,7 +72,7 @@ const fmtDate = (d: string) =>
  * inputs, an editable note, and the per-set tuner rows. Cardio entries render
  * as a slim violet card (distance/duration, no set rows — excluded at commit).
  */
-export function ExerciseCard({ exercise, history, ready, collapsed = false, onUpdateSet, onSplitSet, onMergeSet, onToggleLink, onAddSet, onRemoveSet, onRemoveExercise, onSetNote }: {
+export function ExerciseCard({ exercise, history, ready, collapsed = false, onUpdateSet, onSplitSet, onMergeSet, onToggleLink, onAddSet, onRemoveSet, onToggleDone, onCheckAll, onRemoveExercise, onSetNote }: {
   exercise: DraftExercise
   history: ExerciseHistory | null
   /** Forward-carried progression cue for this lift (cleared its ceiling twice). */
@@ -85,6 +85,8 @@ export function ExerciseCard({ exercise, history, ready, collapsed = false, onUp
   onToggleLink: (pairId: string) => void
   onAddSet: () => void
   onRemoveSet: (setIdx: number) => void
+  onToggleDone: (setIdx: number) => void
+  onCheckAll: () => void
   onRemoveExercise: () => void
   onSetNote: (note: string) => void
 }) {
@@ -273,6 +275,15 @@ export function ExerciseCard({ exercise, history, ready, collapsed = false, onUp
       {/* ── Set rows ── */}
       {showBody && (
         <div className="mt-2 border-t border-white/[0.06] pt-1.5 space-y-0.5">
+          {/* Check-all — tick every set green in one tap (log a whole exercise after
+              the fact). Only green sets are recorded on finish. */}
+          <div className="flex justify-end">
+            <button type="button" onClick={onCheckAll}
+              className="min-h-[30px] px-2.5 rounded-lg text-[10px] font-bold uppercase tracking-wide flex items-center gap-1 active:scale-95 transition-colors"
+              style={{ color: '#3E9E7A', background: '#3E9E7A14', border: '1px solid #3E9E7A44' }}>
+              <CheckCheck className="w-3 h-3" aria-hidden="true" /> Check all
+            </button>
+          </div>
           {groups.map((g) => {
             const timed = isTimedExercise(exercise.name)
             if (g.kind === 'single') {
@@ -288,6 +299,7 @@ export function ExerciseCard({ exercise, history, ready, collapsed = false, onUp
                   onActivate={() => setActiveSet((cur) => (cur === i ? null : i))}
                   onChange={(patch) => onUpdateSet(i, patch)}
                   onRemove={() => { setActiveSet(null); onRemoveSet(i) }}
+                  onToggleDone={() => onToggleDone(i)}
                   onSplit={() => onSplitSet(i)}
                 />
               )
@@ -316,6 +328,7 @@ export function ExerciseCard({ exercise, history, ready, collapsed = false, onUp
                     onActivate={() => setActiveSet((cur) => (cur === g.left!.idx ? null : g.left!.idx))}
                     onChange={(patch) => onUpdateSet(g.left!.idx, patch)}
                     onRemove={() => { setActiveSet(null); onRemoveSet(g.left!.idx) }}
+                    onToggleDone={() => onToggleDone(g.left!.idx)}
                   />
                 )}
                 {g.right && (
@@ -325,6 +338,7 @@ export function ExerciseCard({ exercise, history, ready, collapsed = false, onUp
                     onActivate={() => setActiveSet((cur) => (cur === g.right!.idx ? null : g.right!.idx))}
                     onChange={(patch) => onUpdateSet(g.right!.idx, patch)}
                     onRemove={() => { setActiveSet(null); onRemoveSet(g.right!.idx) }}
+                    onToggleDone={() => onToggleDone(g.right!.idx)}
                   />
                 )}
                 {/* Pair-level controls — link mirrors weight+reps; merge collapses back. */}

@@ -11,8 +11,8 @@ export const WorkoutSetSchema = z.object({
   weightKg: z.number().nonnegative(),
   reps: z.number().int().positive(),
   rpe: z.number().min(1).max(10).optional(),
-  // Hevy-style set modifier. 'warmup' is excluded from volume/PR server-side.
-  setType: z.enum(['normal', 'warmup', 'failure']).optional(),
+  // Hevy-style set modifier. 'warmup' + 'dropset' are excluded from PR server-side.
+  setType: z.enum(['normal', 'warmup', 'failure', 'dropset']).optional(),
   // Deck position of the parent exercise (all its sets share the value).
   exerciseOrder: z.number().int().nonnegative().optional(),
   // Seeds muscle data when the set's exercise is new to the catalog.

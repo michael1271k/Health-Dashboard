@@ -65,12 +65,16 @@ export function buildTemplateDraft(
     note: WARMUP_CARDIO.note, sets: [],
   })
 
+  // A template deck is a PLAN, not a log: every set opens UNCHECKED (done:false)
+  // and only the ones you tick green are recorded on finish.
+  const unchecked = (sets: DraftSet[]): DraftSet[] => sets.map((s) => ({ ...s, done: false }))
+
   if (seed) {
     for (const ex of seed.exercises) {
       const prev = historyFor(ex.name)
-      const sets = prev
+      const sets = unchecked(prev
         ? seedFromHistory(prev)
-        : ex.sets.map((s) => ({ weightKg: s.weightKg, reps: s.reps }))
+        : ex.sets.map((s) => ({ weightKg: s.weightKg, reps: s.reps })))
       exercises.push({
         localId: localId(), name: ex.name, muscleGroups: ex.muscles, sets,
         seededFrom: prev?.date,
@@ -80,13 +84,13 @@ export function buildTemplateDraft(
     // `day` is phase-resolved (activeProgram) — cut-dropped lifts are already gone.
     for (const ex of day.exercises) {
       const prev = historyFor(ex.name)
-      const sets = prev
+      const sets = unchecked(prev
         ? seedFromHistory(prev)
         // Bodyweight / timed moves (wk1Kg null) seed at 0 kg, not a phantom 20 kg.
         : Array.from({ length: ex.sets }, () => ({
           weightKg: ex.wk1Kg ?? 0,
           reps: parseInt(ex.reps, 10) || 10,
-        }))
+        })))
       exercises.push({
         localId: localId(), name: ex.name, muscleGroups: ex.muscles, sets,
         seededFrom: prev?.date,

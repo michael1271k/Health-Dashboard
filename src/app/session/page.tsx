@@ -67,7 +67,7 @@ function SessionPageInner() {
 
   // Real per-set history for those exercises, scoped to the TARGET DATE's era so
   // a HELIX deck is never seeded from PPL-legacy numbers.
-  const historyQ = useExerciseSetHistory(seedNames, eraForDate(targetDate))
+  const historyQ = useExerciseSetHistory(seedNames, eraForDate(targetDate), templateDay?.key)
 
   // Seeding waits for history so the previous session's actual numbers land in
   // the inputs (the program's wk1 target stays the cold-start fallback).
@@ -143,6 +143,7 @@ function SessionPageInner() {
           store={store}
           onClose={() => router.back()}
           onViewDay={(date) => router.replace(`/day/${date}`)}
+          onViewSession={(id) => router.replace(`/session/${id}`)}
         />
       ) : templateDay ? (
         <PageSpinner />

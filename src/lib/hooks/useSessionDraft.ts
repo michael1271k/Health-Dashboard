@@ -6,7 +6,7 @@ import { authedFetch } from '@/lib/utils/authedFetch'
 import { supabase } from '@/lib/supabase/client'
 import { invalidateWorkoutData } from '@/lib/query/workoutKeys'
 import { logicalTodayISO, hoursAwakeToday } from '@/lib/utils/day'
-import { DRAFT_STORAGE_KEY, buildCommitPayload, cascadeSetEdit, peekSessionDraft, type SessionDraft, type DraftSet } from '@/lib/sessions/draft'
+import { DRAFT_STORAGE_KEY, buildCommitPayload, cascadeSetEdit, isSetCommitted, peekSessionDraft, type SessionDraft, type DraftSet } from '@/lib/sessions/draft'
 
 const COMMIT_TIMEOUT_MS = 25_000
 
@@ -128,7 +128,7 @@ export function useSessionDraft() {
         const base = ex.sets[setIdx]
         if (!base || base.pairId) return ex // absent or already split
         const pairId = `pair_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`
-        const mk = (side: 'L' | 'R'): DraftSet => ({ weightKg: base.weightKg, reps: base.reps, rpe: base.rpe, side, pairId, linked: true })
+        const mk = (side: 'L' | 'R'): DraftSet => ({ weightKg: base.weightKg, reps: base.reps, rpe: base.rpe, done: base.done, side, pairId, linked: true })
         return { ...ex, sets: [...ex.sets.slice(0, setIdx), mk('L'), mk('R'), ...ex.sets.slice(setIdx + 1)] }
       }),
     }))
@@ -144,7 +144,7 @@ export function useSessionDraft() {
         const sets: DraftSet[] = []
         for (const s of ex.sets) {
           if (s.pairId === pairId) {
-            if (!placed) { sets.push({ weightKg: s.weightKg, reps: s.reps, rpe: s.rpe }); placed = true }
+            if (!placed) { sets.push({ weightKg: s.weightKg, reps: s.reps, rpe: s.rpe, done: s.done }); placed = true }
           } else sets.push(s)
         }
         return { ...ex, sets }
@@ -170,8 +170,38 @@ export function useSessionDraft() {
       exercises: d.exercises.map((ex) => {
         if (ex.localId !== localId) return ex
         const last = ex.sets[ex.sets.length - 1] ?? { weightKg: 20, reps: 10 }
-        return { ...ex, sets: [...ex.sets, { weightKg: last.weightKg, reps: last.reps }] }
+        // A freshly added set is not yet performed → opens unchecked.
+        return { ...ex, sets: [...ex.sets, { weightKg: last.weightKg, reps: last.reps, done: false }] }
       }),
+    }))
+  }, [])
+
+  /** Tick a set complete (green) / uncomplete. Pair-aware: toggling one side of
+   *  a unilateral pair toggles both, so a pair is never half-committed. */
+  const toggleSetDone = useCallback((localId: string, setIdx: number) => {
+    setDraft((d) => d && ({
+      ...d,
+      exercises: d.exercises.map((ex) => {
+        if (ex.localId !== localId) return ex
+        const target = ex.sets[setIdx]
+        if (!target) return ex
+        const next = !isSetCommitted(target) // currently unchecked → check it
+        const sets = ex.sets.map((s, i) => {
+          if (i === setIdx) return { ...s, done: next }
+          if (target.pairId && s.pairId === target.pairId) return { ...s, done: next }
+          return s
+        })
+        return { ...ex, sets }
+      }),
+    }))
+  }, [])
+
+  /** "Check all" — mark every set in the exercise complete (green). */
+  const checkAllSets = useCallback((localId: string) => {
+    setDraft((d) => d && ({
+      ...d,
+      exercises: d.exercises.map((ex) =>
+        ex.localId === localId ? { ...ex, sets: ex.sets.map((s) => ({ ...s, done: true })) } : ex),
     }))
   }, [])
 
@@ -235,7 +265,8 @@ export function useSessionDraft() {
     mutationFn: async (): Promise<CommitResult> => {
       if (!draft) throw new Error('No draft to commit')
       const body = buildCommitPayload(draft)
-      if (!body.sets.length) throw new Error('Nothing to commit')
+      // Only checked (green) sets are recorded — zero checked means nothing happened.
+      if (!body.sets.length) throw new Error('Check at least one set to finish')
       // Hard timeout so a stalled serverless response can never hang the deck
       // for minutes; on abort/network failure we verify the write landed.
       const ctrl = new AbortController()
@@ -297,5 +328,5 @@ export function useSessionDraft() {
     },
   })
 
-  return { draft, hydrated, start, discard, updateSet, splitSet, mergeSet, toggleSetLink, addSet, removeSet, removeExercise, reorder, setNotes, setExerciseNote, setStats, setDate, commit }
+  return { draft, hydrated, start, discard, updateSet, splitSet, mergeSet, toggleSetLink, addSet, removeSet, toggleSetDone, checkAllSets, removeExercise, reorder, setNotes, setExerciseNote, setStats, setDate, commit }
 }
