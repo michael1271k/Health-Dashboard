@@ -267,15 +267,22 @@ export async function POST(req: Request) {
   const force = !!body?.force
   const targetIsToday = typeof body?.isToday === 'boolean' ? body.isToday : (today === todayISO())
 
+  // Past-day ISO strings to backfill (1..backfillDays ago).
+  const backfillDates = Array.from({ length: backfillDays }, (_, i) => {
+    const d = new Date(`${today}T12:00:00Z`); d.setUTCDate(d.getUTCDate() - (i + 1))
+    return d.toISOString().slice(0, 10)
+  })
+
   for (const userId of userIds) {
+    // Today first (fast — it's the visible day), then fan the backfill range out
+    // in PARALLEL. The old sequential loop ran up to 8 day-computations back to
+    // back on the first session of the day, which was a big chunk of the felt
+    // sync latency. `force` propagates so an explicit recompute (e.g. after a
+    // manual data correction) rewrites even FINALIZED past days.
     await computeForDate(supabase, userId, today, awake, targetIsToday, force)
-    for (let i = 1; i <= backfillDays; i++) {
-      const d = new Date(`${today}T12:00:00Z`); d.setUTCDate(d.getUTCDate() - i)
-      // `force` propagates to the backfill range so an explicit recompute (e.g.
-      // after a manual data correction) rewrites even FINALIZED past days;
-      // without it the finalized-freeze silently skips them.
-      await computeForDate(supabase, userId, d.toISOString().slice(0, 10), 16, false, force)  // past days: full day
-    }
+    await Promise.all(
+      backfillDates.map((d) => computeForDate(supabase, userId, d, 16, false, force)),
+    )
   }
 
   return NextResponse.json({ ok: true, today, backfilled: backfillDays, users: userIds.length })

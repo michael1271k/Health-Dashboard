@@ -8,6 +8,7 @@ import { nightWindow } from '@/lib/sleep/nightWindow'
 import { authedFetch } from '@/lib/utils/authedFetch'
 import type { Tables } from '@/lib/supabase/types'
 import { logicalTodayISO, hoursAwakeToday } from '@/lib/utils/day'
+import { fetchTodayBundle, todayBundleKey, type TodayBundle } from './useToday'
 
 // Today's date — device-local calendar day, boundary hardcoded to midnight.
 function todayLocal(): string {
@@ -40,19 +41,30 @@ export function useLastUpdated() {
   })
 }
 
-export function useTodayScore() {
+/**
+ * Every "today" widget reads from ONE bundled query (`GET /api/today`) via a
+ * shared key, so the dashboard makes a single round-trip instead of ~5 separate
+ * single-row selects. Each hook applies its own `select`; React Query dedupes
+ * them to one fetch. A warm cache paints instantly (90 s staleTime + persistence)
+ * and background-revalidates once. Invalidating `['today']` refreshes all of them
+ * (wired into HEALTH_QUERY_KEYS + the macro-override cascade).
+ */
+function useTodayBundle<T>(select: (b: TodayBundle) => T) {
   return useQuery({
-    queryKey: ['daily_scores', 'today'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('daily_scores')
-        .select('*')
-        .eq('date', todayLocal())
-        .maybeSingle()
-      if (error) throw error
-      return data as Tables<'daily_scores'> | null
-    },
+    queryKey: todayBundleKey(todayLocal()),
+    queryFn: () => fetchTodayBundle(todayLocal()),
+    select,
+    staleTime: 90_000,
   })
+}
+
+/** Prefetch/warm the whole today bundle (e.g. right after login). */
+export function useToday() {
+  return useTodayBundle((b) => b)
+}
+
+export function useTodayScore() {
+  return useTodayBundle((b) => b.score)
 }
 
 /**
@@ -85,7 +97,11 @@ export function useEnsureTodayScore(enabled = true) {
           backfillDays, date: logicalTodayISO(), hoursAwake: hoursAwakeToday(), isToday: true,
         }),
       })
-        .then((r) => (r.ok ? qc.invalidateQueries({ queryKey: ['daily_scores'] }).then(() => qc.invalidateQueries({ queryKey: ['weekly_review'] })) : null))
+        .then((r) => (r.ok
+          ? qc.invalidateQueries({ queryKey: ['today'] })
+              .then(() => qc.invalidateQueries({ queryKey: ['daily_scores'] }))
+              .then(() => qc.invalidateQueries({ queryKey: ['weekly_review'] }))
+          : null))
         .catch(() => {})
     }
     // Backfill the week only ONCE per browser session (8 days of server compute
@@ -118,74 +134,23 @@ export function useEnsureTodayScore(enabled = true) {
 }
 
 export function useTodayDailyLog() {
-  return useQuery({
-    queryKey: ['daily_logs', 'today'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('daily_logs')
-        .select('*')
-        .eq('date', todayLocal())
-        .maybeSingle()
-      if (error) throw error
-      const row = data as Tables<'daily_logs'> | null
-      // Coerce mixed-unit blood oxygen (0.982 fraction vs 97.79 percent) once,
-      // at the data layer, so no render site can show "1%".
-      return row ? { ...row, blood_oxygen: normalizeSpO2(row.blood_oxygen) } : null
-    },
-  })
+  // Coerce mixed-unit blood oxygen (0.982 fraction vs 97.79 percent) once, at the
+  // data layer, so no render site can show "1%".
+  return useTodayBundle((b) =>
+    b.dailyLog ? { ...b.dailyLog, blood_oxygen: normalizeSpO2(b.dailyLog.blood_oxygen) } : null,
+  )
 }
 
 export function useTodayMetrics() {
-  return useQuery({
-    queryKey: ['daily_metrics', 'today'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('daily_metrics')
-        .select('*')
-        .eq('date', todayLocal())
-        .maybeSingle()
-      if (error) throw error
-      return data as Tables<'daily_metrics'> | null
-    },
-  })
+  return useTodayBundle((b) => b.metrics)
 }
 
 export function useTodayNutrition() {
-  return useQuery({
-    queryKey: ['nutrition_entries', 'today'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('nutrition_entries')
-        .select('*')
-        .eq('date', todayLocal())
-        .eq('meal_type', 'daily')
-        .maybeSingle()
-      if (error) throw error
-      return data as Tables<'nutrition_entries'> | null
-    },
-  })
+  return useTodayBundle((b) => b.nutrition)
 }
 
 export function useTodaySleep() {
-  return useQuery({
-    queryKey: ['sleep_sessions', 'today'],
-    queryFn: async () => {
-      // `start_time` is BEDTIME (the previous evening), so the night is a window,
-      // not a calendar day. Shared with the ingest writer and compute-score via
-      // nightWindow() so a reader can never drift from the writer again.
-      const night = nightWindow(todayLocal())
-      const { data, error } = await supabase
-        .from('sleep_sessions')
-        .select('*')
-        .gte('start_time', night.from)
-        .lt('start_time', night.to)
-        .order('duration_min', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-      if (error) throw error
-      return data as Tables<'sleep_sessions'> | null
-    },
-  })
+  return useTodayBundle((b) => b.sleep)
 }
 
 /** The sleep session for an ARBITRARY logical day — powers the Nexus per-date

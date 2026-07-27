@@ -275,3 +275,45 @@ describe('ingest — sleep is an unconditional overwrite', () => {
     expect(sleepRow.start_time >= w.from && sleepRow.start_time < w.to).toBe(true)
   })
 })
+
+describe('ingest — manual macro override is never clobbered by a HealthKit sync', () => {
+  // A day the user hand-corrected (double-tap → nutrition_entries.hk_uuid='manual')
+  // must survive the continuous sync AND the one-time yesterday catch-up, both of
+  // which flow through this same ingest path (only the `date` differs).
+  function mockDbWithManualNutrition(existingHkUuid: string | null, onUpsert: () => void) {
+    return {
+      from(table: string) {
+        if (table === 'nutrition_entries') {
+          const chain: any = {
+            select: () => chain, eq: () => chain,
+            maybeSingle: () => Promise.resolve({ data: { hk_uuid: existingHkUuid } }),
+            upsert: () => { onUpsert(); return Promise.resolve({ error: null }) },
+          }
+          return chain
+        }
+        return noopChain()
+      },
+    } as any
+  }
+
+  it('skips the macro upsert and reports "ignored" when the day is manual', async () => {
+    let upserts = 0
+    const db = mockDbWithManualNutrition('manual', () => { upserts += 1 })
+    const result = await ingestDailyLog(db, 'user-1', {
+      date: '2026-07-20', calories: 2100, protein: 150, carbs: 220, fats: 60,
+    } as any)
+    expect(upserts).toBe(0)                                  // the hand-entered macros are untouched
+    expect(result.results.nutrition?.action).toBe('ignored')
+    expect(result.results.nutrition?.ok).toBe(true)
+  })
+
+  it('DOES write macros when the day is not manual (hk_uuid null)', async () => {
+    let upserts = 0
+    const db = mockDbWithManualNutrition(null, () => { upserts += 1 })
+    const result = await ingestDailyLog(db, 'user-1', {
+      date: '2026-07-20', calories: 2100, protein: 150, carbs: 220, fats: 60,
+    } as any)
+    expect(upserts).toBe(1)
+    expect(result.results.nutrition?.action).toBe('inserted')
+  })
+})

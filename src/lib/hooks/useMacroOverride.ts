@@ -15,7 +15,7 @@ export interface MacroValues {
 
 /** Surfaces that must refresh after a manual macro edit cascades. */
 const CASCADE_KEYS: string[][] = [
-  ['nutrition_entries'], ['daily_logs'], ['daily_scores'], ['coach'], ['trends'],
+  ['today'], ['nutrition_entries'], ['daily_logs'], ['daily_scores'], ['coach'], ['trends'],
   ['day_vault'], ['continuum'], ['weekly_review'], ['fuel_force_session'], ['muscle_analytics'],
 ]
 

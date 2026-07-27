@@ -6,10 +6,25 @@ import { authedFetch } from '@/lib/utils/authedFetch'
 import { logicalTodayISO, hoursAwakeToday } from '@/lib/utils/day'
 
 const WATERMARK_KEY = 'helix_hk_last_sync'
+// Records the yesterday-date whose HealthKit catch-up already ran. Yesterday only
+// needs syncing ONCE after the day rolls (to grab late-night activity logged
+// after the last foreground) — re-pulling it on every foreground was pure waste.
+const YESTERDAY_KEY = 'helix_yesterday_synced'
 // Small re-entrancy guard only — NOT a throttle. iOS can fire appStateChange
 // twice for a single foreground; this collapses those into one sync while still
 // letting every genuine app-open run a full sync.
 const REENTRANCY_MS = 10 * 1000
+
+/** Yesterday's logical ISO date (device-local, midnight boundary). */
+function yesterdayISO(): string {
+  const d = new Date(`${logicalTodayISO()}T12:00:00`)
+  d.setDate(d.getDate() - 1)
+  return d.toLocaleDateString('en-CA')
+}
+
+function yesterdayAlreadySynced(): boolean {
+  try { return localStorage.getItem(YESTERDAY_KEY) === yesterdayISO() } catch { return false }
+}
 
 /**
  * Native sync orchestrator. A FULL data sync runs on every app-open / foreground
@@ -68,11 +83,20 @@ async function runSync(force: boolean, onSynced?: OnSynced): Promise<void> {
   } catch { /* scoring failed — the next foreground retries */ }
   onSynced?.() // revalidate NOW — today's data + score are in
 
-  // ── Phase 2 — YESTERDAY (background self-correction) ──
-  try {
-    const yesterday = await syncYesterdayToServer()
-    if (yesterday) onSynced?.()
-  } catch { /* yesterday's correction failed — next foreground retries */ }
+  // ── Phase 2 — YESTERDAY (one-time background catch-up) ──
+  // Runs ONCE per rolled-over day: it exists only to grab activity recorded after
+  // last night's final foreground. A forced sync (pull-to-refresh) always re-runs
+  // it; a plain foreground skips it once done. Manual macro edits stay protected
+  // regardless — the ingest path drops HealthKit macros when hk_uuid='manual'.
+  if (force || !yesterdayAlreadySynced()) {
+    try {
+      const yesterday = await syncYesterdayToServer()
+      if (yesterday) {
+        try { localStorage.setItem(YESTERDAY_KEY, yesterdayISO()) } catch { /* ignore */ }
+        onSynced?.()
+      }
+    } catch { /* yesterday's correction failed — next foreground retries */ }
+  }
 }
 
 /**

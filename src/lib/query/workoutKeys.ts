@@ -47,6 +47,7 @@ export function invalidateWorkoutData(qc: QueryClient): void {
  * `['daily_logs']` covers `['daily_logs','vitals',…]`, `['daily_logs','today']`, etc.
  */
 export const HEALTH_QUERY_KEYS: string[][] = [
+  ['today'],             // bundled dashboard "today" view (score+log+metrics+nutrition+sleep)
   ['daily_logs'],        // vitals, nutrition history, dashboard today-log
   ['daily_metrics'],     // dashboard steps/active-cal/rest-hr
   ['nutrition_entries'], // macro rings/history + dashboard
