@@ -1,11 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { Footprints, Zap, Plus, Trash2, X, Info } from 'lucide-react'
-import { useCardioLogs, useAddCardio, useDeleteCardio } from '@/lib/hooks/useCardio'
+import { Footprints, Zap, Plus, Trash2, X, Info, HeartPulse } from 'lucide-react'
+import { useCardioLogs, useAddCardio, useDeleteCardio, useZone2Week, ZONE2_WEEKLY_TARGET } from '@/lib/hooks/useCardio'
 
 const EMERALD = '#3E9E7A'
 const EMBER = '#E0703C'
+const AZURE = '#3D7AB8'
 
 /**
  * Cardio (walk / run) logger — km · min · kcal. Stored in cardio_logs, a ledger
@@ -15,6 +16,7 @@ const EMBER = '#E0703C'
  */
 export function CardioLogger({ date, hkActiveEnergy }: { date: string; hkActiveEnergy?: number | null }) {
   const { data: logs } = useCardioLogs(date)
+  const { data: zone2 } = useZone2Week(date)
   const add = useAddCardio(date)
   const del = useDeleteCardio(date)
 
@@ -44,6 +46,23 @@ export function CardioLogger({ date, hkActiveEnergy }: { date: string; hkActiveE
         <button onClick={() => setOpen((v) => !v)} className="btn-glass min-h-[36px] text-fluid-xs px-2.5">
           {open ? <X className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
         </button>
+      </div>
+
+      {/* Zone-2 weekly goal: 2× 20–30 min steady sessions on rest days. Visual only. */}
+      <div className="flex items-center gap-2 rounded-lg px-2.5 py-1.5"
+        style={{ background: `${AZURE}12`, border: `1px solid ${AZURE}2e` }}>
+        <HeartPulse className="w-3.5 h-3.5 shrink-0" style={{ color: AZURE }} aria-hidden="true" />
+        <span className="text-[11px] font-semibold text-text">Zone 2</span>
+        <span className="text-[10px] text-muted">20–30 min · rest days</span>
+        <div className="ml-auto flex items-center gap-1.5">
+          {Array.from({ length: ZONE2_WEEKLY_TARGET }).map((_, i) => (
+            <span key={i} className="w-2.5 h-2.5 rounded-full"
+              style={{ background: (zone2 ?? 0) > i ? AZURE : 'transparent', border: `1.5px solid ${AZURE}${(zone2 ?? 0) > i ? '' : '66'}` }} />
+          ))}
+          <span className="helix-num text-[11px] font-bold tabular-nums ml-0.5" style={{ color: AZURE }}>
+            {Math.min(zone2 ?? 0, ZONE2_WEEKLY_TARGET)}/{ZONE2_WEEKLY_TARGET}
+          </span>
+        </div>
       </div>
 
       {entries.length > 0 ? (

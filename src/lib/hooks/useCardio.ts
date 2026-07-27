@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
+import { weekStartOf, isoAddDays } from '@/lib/utils/week'
 
 export interface CardioLog {
   id: string
@@ -63,5 +64,30 @@ export function useDeleteCardio(date: string) {
       if (error) throw error
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['cardio_logs', date] }),
+  })
+}
+
+/** Zone-2 target = 2 steady cardio sessions per week (the plan's rest-day work). */
+export const ZONE2_WEEKLY_TARGET = 2
+/** A session counts as Zone-2 when it's a steady ≥ 20 min effort (excludes the
+ *  5-min treadmill warm-up); anything shorter isn't a Zone-2 block. */
+const ZONE2_MIN_MINUTES = 20
+
+/** How many Zone-2 sessions have been logged in the week containing `date`. */
+export function useZone2Week(date: string) {
+  return useQuery({
+    queryKey: ['cardio_logs', 'zone2_week', weekStartOf(date)],
+    enabled: !!date,
+    staleTime: 30_000,
+    queryFn: async (): Promise<number> => {
+      const from = weekStartOf(date)
+      const to = isoAddDays(from, 7)
+      const { data, error } = await supabase
+        .from('cardio_logs')
+        .select('duration_min')
+        .gte('date', from).lt('date', to)
+      if (error) return 0 // table not migrated yet
+      return (data ?? []).filter((r) => ((r as { duration_min: number | null }).duration_min ?? 0) >= ZONE2_MIN_MINUTES).length
+    },
   })
 }

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { CheckCheck, ChevronDown, Footprints, GripVertical, History, NotebookPen, Plus, Target, X } from 'lucide-react'
+import { ArrowLeftRight, CheckCheck, ChevronDown, Footprints, GripVertical, History, NotebookPen, Plus, Target, X } from 'lucide-react'
 import { SetEditorRow } from './SetEditorRow'
 import { cardioSummary, type DraftExercise, type DraftSet } from '@/lib/sessions/draft'
 import { isTimedExercise } from '@/lib/exercises/timed'
@@ -158,6 +158,10 @@ export function ExerciseCard({ exercise, history, ready, collapsed = false, onUp
   }
 
   const status = exercise.status ? STATUS_META[exercise.status] : null
+  // Unilateral lifts (already split, or a single-arm/per-side movement) get the
+  // asymmetry rule: the STRONG side sets the rep count, the weak side matches it.
+  const unilateral = exercise.sets.some((s) => s.side || s.pairId)
+    || /single[- ]?arm|one[- ]?arm|single[- ]?leg|per (side|arm)/i.test(exercise.name)
   const groups = groupSets(exercise.sets)
   // A pair contributes one "L|R" token so the header doesn't double-count sides.
   const summary = groups.map((g) => g.kind === 'single' ? g.set.reps : `${g.left?.set.reps ?? '–'}|${g.right?.set.reps ?? '–'}`).join('/')
@@ -267,6 +271,12 @@ export function ExerciseCard({ exercise, history, ready, collapsed = false, onUp
             <p className="text-xs leading-snug flex items-center gap-1" style={{ color: READY_GOLD }}>
               <Target className="w-3 h-3 shrink-0" aria-hidden="true" />
               Ceiling cleared twice — add load: {fmtKg(ready.currentKg)} → {fmtKg(ready.suggestKg)}kg
+            </p>
+          )}
+          {unilateral && (
+            <p className="text-xs leading-snug flex items-center gap-1" style={{ color: STEEL }}>
+              <ArrowLeftRight className="w-3 h-3 shrink-0" aria-hidden="true" />
+              Strong side sets the rep count — the weak side matches, never exceeds.
             </p>
           )}
         </div>
