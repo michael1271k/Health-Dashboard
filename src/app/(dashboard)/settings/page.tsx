@@ -7,12 +7,12 @@ import { NotionSync } from '@/components/settings/NotionSync'
 import { supabase } from '@/lib/supabase/client'
 import { derivePhase, phaseDisplay } from '@/lib/nutrition/phase'
 import { logicalTodayISO } from '@/lib/utils/day'
-import { NUTRITION_PRESETS, phaseGoalsFor, type NutritionMode, type NutritionPreset } from '@/lib/types/workout'
+import { phaseGoalsFor, type NutritionMode, type NutritionPreset } from '@/lib/types/workout'
 import { phaseBadgeStyle } from '@/lib/phases'
 import { LiquidModal } from '@/components/ui/LiquidModal'
 import {
   HELIX_CUT_START, DEFAULT_PROGRAM_ID, PROGRAMS, getActiveProgramId,
-  setActiveProgramId, setActivePhase, isBulkOnly, type Program,
+  setActiveProgramId, setActivePhase, activeProgram, type Program,
 } from '@/lib/programs'
 import { AlertTriangle, Dumbbell, Calendar, Target } from 'lucide-react'
 import type { Tables } from '@/lib/supabase/types'
@@ -82,10 +82,10 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [status, setStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null)
-  // Kept OUT of the always-spread `goals` object: target_weight_kg is a fresh
-  // column, so writing it self-heals (see saveTargetWeight) rather than failing
-  // the whole Settings save on a DB that hasn't run the paste-SQL yet.
-  const [targetWeight, setTargetWeight] = useState<number | null>(null)
+  // target_weight_kg is a fresh column, so writing it self-heals (see
+  // saveTargetWeight) rather than failing the whole Settings save on a DB that
+  // hasn't run the paste-SQL yet. It's now driven by the selected phase (no
+  // standalone input) — applyPhase persists the phase's target.
   // Phase switch is gated by a confirmation modal (hard reset of analytics/coach).
   const [pendingPhase, setPendingPhase] = useState<NutritionMode | null>(null)
   // Week start: 0 = Sunday (default), 1 = Monday. Stored as week_end_day.
@@ -124,8 +124,6 @@ export default function SettingsPage() {
           auto_log_supplements: data.auto_log_supplements ?? false,
         })
         applyPrefsToDevice((data.unit_system ?? 'kg') as 'kg' | 'lb', data.reduce_motion ?? false)
-        const tw = (data as { target_weight_kg?: number | null }).target_weight_kg
-        if (typeof tw === 'number') setTargetWeight(tw)
         const we = (data as { week_end_day?: number | null }).week_end_day
         const ws: 0 | 1 = we === 0 ? 1 : 0
         setWeekStart(ws)
@@ -238,7 +236,6 @@ export default function SettingsPage() {
       steps_goal: p.stepsGoal,
       goal_preset: mode,
     })
-    setTargetWeight(p.targetWeightKg)
     await saveTargetWeight(p.targetWeightKg)
     await saveBodyTargets(p)
     await savePhaseMeta(mode)
@@ -350,7 +347,7 @@ export default function SettingsPage() {
         <div className="text-[10px] uppercase tracking-widest text-muted -mb-1.5">Phase</div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
           {(['cut', 'maintenance', 'bulk'] as NutritionMode[]).map((mode) => {
-            const p = NUTRITION_PRESETS[mode]
+            const p = phaseGoalsFor(activePlanId, mode)
             const active = goals.goal_preset === mode
             const glow = phaseBadgeStyle(MODE_TO_PHASE[mode], active)
             return (
@@ -368,20 +365,8 @@ export default function SettingsPage() {
           })}
         </div>
 
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <div className="text-sm text-text font-medium">Target weight (kg)</div>
-            <div className="text-xs text-muted">The bodyweight this phase is steering toward</div>
-          </div>
-          <input
-            type="number"
-            step={0.1}
-            value={targetWeight ?? ''}
-            onChange={(e) => setTargetWeight(e.target.value === '' ? null : Number(e.target.value))}
-            onBlur={() => saveTargetWeight(targetWeight)}
-            className={`${inputCls} max-w-[120px]`}
-          />
-        </div>
+        {/* Target weight is no longer a standalone field — it lives inside each
+            plan/phase's goals (shown in the plan preview + phase cards). */}
       </section>
 
       {/* Desktop: cards flow into two columns so the width isn't wasted. */}
@@ -556,9 +541,40 @@ export default function SettingsPage() {
         title={previewPlan ? previewPlan.label : undefined} accent="#8E9AAC">
         {previewPlan && (() => {
           const phaseMode = (goals.goal_preset as NutritionMode) || 'cut'
-          const pp = NUTRITION_PRESETS[phaseMode]
+          const pp = phaseGoalsFor(previewPlan.id, phaseMode)
           const isActive = previewPlan.id === activePlanId
-          const byWeekday = new Map(previewPlan.days.map((d) => [d.weekday, d]))
+          // Phase-resolved days: the CURRENT phase's set counts (cut trims volume,
+          // drops bulk-only lifts) — the same resolver the live logger runs.
+          const phaseDays = activeProgram(previewPlan.id, phaseMode).days
+          const byWeekday = new Map(phaseDays.map((d) => [d.weekday, d]))
+
+          // De-duplicate repeated routines: a Push that runs Sun AND Thu (or an
+          // identical A/B day) is listed ONCE with the weekdays it lands on.
+          const routineSig = (d: (typeof phaseDays)[number]) =>
+            d.exercises.map((e) => `${e.name}·${e.sets}×${e.reps}`).join('|')
+          const routines: Array<{ day: (typeof phaseDays)[number]; weekdays: number[] }> = []
+          const seenRoutine = new Map<string, { day: (typeof phaseDays)[number]; weekdays: number[] }>()
+          for (const d of phaseDays) {
+            const sig = routineSig(d)
+            const hit = seenRoutine.get(sig)
+            if (hit) hit.weekdays.push(d.weekday)
+            else { const entry = { day: d, weekdays: [d.weekday] }; seenRoutine.set(sig, entry); routines.push(entry) }
+          }
+
+          const sr = (n: number) => `${n > 0 ? '+' : ''}${n.toFixed(2)}`
+          const goalTiles: Array<[string, string]> = [
+            ['Calories', `${pp.calorieGoal.toLocaleString()} kcal`],
+            ['Macros', `${pp.proteinGoalG}P · ${pp.carbsGoalG}C · ${pp.fatGoalG}F`],
+            ['Fiber', pp.fiberMin != null && pp.fiberMax != null ? `${pp.fiberMin}–${pp.fiberMax} g` : pp.fiberGoalG != null ? `${pp.fiberGoalG} g` : '—'],
+            ['Steps', pp.stepsGoal.toLocaleString()],
+            ['Target weight', `${pp.targetWeightKg} kg`],
+            ['Weekly rate', pp.rateMinKgWk != null && pp.rateMaxKgWk != null ? `${sr(pp.rateMinKgWk)}…${sr(pp.rateMaxKgWk)} kg` : '—'],
+            ['Body fat', pp.targetBodyFatPct != null ? `≤ ${pp.targetBodyFatPct}%` : '—'],
+            ['Muscle mass', pp.targetMuscleMassKg != null ? `${pp.targetMuscleMassKg} kg` : '—'],
+          ]
+          if (pp.targetWaistCm != null) goalTiles.push(['Waist', `≤ ${pp.targetWaistCm} cm`])
+          if (pp.bodyFatCeilingPct != null) goalTiles.push(['BF ceiling', `${pp.bodyFatCeilingPct}%`])
+
           return (
             <div className="space-y-4">
               <p className="text-sm text-muted leading-relaxed">{previewPlan.blurb}</p>
@@ -576,7 +592,7 @@ export default function SettingsPage() {
                         style={{ borderColor: d ? `${d.color}44` : 'rgba(255,255,255,0.06)', background: d ? `${d.color}12` : 'transparent' }}>
                         <div className="text-[9px] text-muted">{wd}</div>
                         <div className="text-[9px] font-bold mt-0.5 leading-tight" style={{ color: d ? d.color : '#79808C' }}>
-                          {d ? d.label.replace(/^(Upper|Lower|Legs & Core|Delts & Arms)\s*/, '').trim() || d.label : 'Rest'}
+                          {d ? d.label : 'Rest'}
                         </div>
                       </div>
                     )
@@ -590,14 +606,7 @@ export default function SettingsPage() {
                   <Target className="w-3 h-3" aria-hidden="true" /> {pp.label} phase goals
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-fluid-xs">
-                  {[
-                    ['Calories', `${pp.calorieGoal.toLocaleString()} kcal`],
-                    ['Macros', `${pp.proteinGoalG}P · ${pp.carbsGoalG}C · ${pp.fatGoalG}F`],
-                    ['Steps', pp.stepsGoal.toLocaleString()],
-                    ['Target weight', `${pp.targetWeightKg} kg`],
-                    ['Target body fat', pp.targetBodyFatPct != null ? `${pp.targetBodyFatPct}%` : '—'],
-                    ['Target muscle', pp.targetMuscleMassKg != null ? `${pp.targetMuscleMassKg} kg` : '—'],
-                  ].map(([label, val]) => (
+                  {goalTiles.map(([label, val]) => (
                     <div key={label} className="rounded-lg bg-white/[0.02] border border-white/[0.05] px-2.5 py-1.5">
                       <div className="text-[9px] uppercase tracking-wide text-muted">{label}</div>
                       <div className="helix-num font-bold text-text mt-0.5">{val}</div>
@@ -606,17 +615,22 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              {/* Exercises per day */}
+              {/* Routines — de-duplicated (a Push run twice a week is listed once),
+                  weights hidden (they appear only in the live logger). */}
               <div>
                 <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-muted mb-2">
-                  <Dumbbell className="w-3 h-3" aria-hidden="true" /> Exercises
+                  <Dumbbell className="w-3 h-3" aria-hidden="true" /> Routines · {pp.label}
                 </div>
                 <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-                  {previewPlan.days.map((d) => (
+                  {routines.map(({ day: d, weekdays }) => (
                     <div key={d.key}>
-                      <div className="text-[11px] font-bold" style={{ color: d.color }}>{d.label}{d.sub ? ` · ${d.sub}` : ''}</div>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-[11px] font-bold" style={{ color: d.color }}>{d.label}</span>
+                        <span className="text-[9px] text-muted">{weekdays.map((w) => WD_SHORT[w]).join(' & ')}</span>
+                        {d.sub && <span className="text-[9px] text-muted">· {d.sub}</span>}
+                      </div>
                       <div className="text-[10px] text-muted leading-relaxed">
-                        {d.exercises.filter((e) => !isBulkOnly(e)).map((e) => `${e.name} ${e.sets}×${e.reps}`).join(' · ')}
+                        {d.exercises.map((e) => `${e.name} ${e.sets}×${e.reps}`).join(' · ')}
                       </div>
                     </div>
                   ))}
@@ -667,10 +681,10 @@ export default function SettingsPage() {
                 <AlertTriangle className="w-5 h-5" aria-hidden="true" />
               </span>
               <div>
-                <p className="text-text font-semibold">Switch to {NUTRITION_PRESETS[pendingPhase].label}?</p>
+                <p className="text-text font-semibold">Switch to {phaseGoalsFor(activePlanId, pendingPhase).label}?</p>
                 <p className="text-sm text-muted mt-1 leading-relaxed">
                   This re-anchors your analytics and coach logic to today. Calories, macros, step goal and
-                  target weight update to the {NUTRITION_PRESETS[pendingPhase].label} preset. Your logged
+                  target weight update to the {phaseGoalsFor(activePlanId, pendingPhase).label} goals. Your logged
                   history is preserved.
                 </p>
               </div>
@@ -682,7 +696,7 @@ export default function SettingsPage() {
                 disabled={saving}
                 className="btn-primary min-h-[44px] px-4 disabled:opacity-60"
               >
-                Switch to {NUTRITION_PRESETS[pendingPhase].label}
+                Switch to {phaseGoalsFor(activePlanId, pendingPhase).label}
               </button>
             </div>
           </div>
