@@ -83,9 +83,8 @@ export interface Program {
   days: ProgramDay[]
 }
 
-/** A lift dropped entirely on a cut (was `bulkOnly`) — `cutSets: 0`. */
-export const isBulkOnly = (e: ProgramExercise): boolean => e.cutSets === 0
-/** The working-set count for a phase (cut uses `cutSets`, else `sets`). */
+/** The working-set count for a phase (cut uses `cutSets`, else `sets`). A lift
+ *  with `cutSets: 0` is dropped entirely on a cut (the old `bulkOnly`). */
 export const setsForPhase = (e: ProgramExercise, phase: ProgramPhase): number =>
   phase === 'cut' ? (e.cutSets ?? e.sets) : e.sets
 

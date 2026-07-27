@@ -58,11 +58,6 @@ function useTodayBundle<T>(select: (b: TodayBundle) => T) {
   })
 }
 
-/** Prefetch/warm the whole today bundle (e.g. right after login). */
-export function useToday() {
-  return useTodayBundle((b) => b)
-}
-
 export function useTodayScore() {
   return useTodayBundle((b) => b.score)
 }
