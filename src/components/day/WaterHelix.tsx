@@ -6,9 +6,10 @@ import { Droplets } from 'lucide-react'
 const SAPPHIRE = '#3D7AB8'
 const AQUA = '#5FB8E8'
 
-// Geometry — a tall vertical viewport the double-helix winds down.
-const CX = 36, AMP = 16, TURNS = 3.5, SAMPLES = 72
-const Y_TOP = 12, Y_BOT = 188, SPAN = Y_BOT - Y_TOP
+// Geometry — a compact, WIDE double-helix (shorter + thicker than the old skinny
+// column). Wider amplitude, fewer turns, a near-square viewport it winds down.
+const CX = 60, AMP = 42, TURNS = 2.25, SAMPLES = 64
+const Y_TOP = 16, Y_BOT = 116, SPAN = Y_BOT - Y_TOP
 
 interface Node { y: number; xa: number; xb: number }
 
@@ -50,49 +51,51 @@ export function WaterHelix({ ml, goalMl }: { ml: number | null; goalMl: number }
     >
       {rungs.map((n, i) => (
         <line key={i} x1={n.xa} y1={n.y} x2={n.xb} y2={n.y}
-          stroke={bright ? AQUA : SAPPHIRE} strokeWidth={bright ? 1.6 : 1.2}
+          stroke={bright ? AQUA : SAPPHIRE} strokeWidth={bright ? 2 : 1.5}
           strokeOpacity={bright ? 0.75 : 0.18} />
       ))}
-      <path d={strandA} stroke={bright ? AQUA : SAPPHIRE} strokeWidth={bright ? 2.4 : 1.8} strokeOpacity={bright ? 0.95 : 0.22} />
-      <path d={strandB} stroke={bright ? SAPPHIRE : SAPPHIRE} strokeWidth={bright ? 2.4 : 1.8} strokeOpacity={bright ? 0.9 : 0.22} />
+      <path d={strandA} stroke={bright ? AQUA : SAPPHIRE} strokeWidth={bright ? 3.2 : 2.4} strokeOpacity={bright ? 0.95 : 0.22} />
+      <path d={strandB} stroke={SAPPHIRE} strokeWidth={bright ? 3.2 : 2.4} strokeOpacity={bright ? 0.9 : 0.22} />
       {/* Base-pair nodes on the bright layer only — the "living" glow points. */}
       {bright && nodes.filter((_, i) => i % 4 === 0).map((n, i) => (
-        <circle key={i} cx={n.xa} cy={n.y} r={1.5} fill={AQUA} fillOpacity={0.9} />
+        <circle key={i} cx={n.xa} cy={n.y} r={2} fill={AQUA} fillOpacity={0.9} />
       ))}
     </g>
   )
 
   return (
-    <section className="helix-card space-y-2 min-h-[140px]" style={{ borderColor: `${SAPPHIRE}30` }}>
+    <section className="helix-card space-y-2 min-h-[120px]" style={{ borderColor: `${SAPPHIRE}30` }}>
       <div className="flex items-center gap-1.5">
         <Droplets className="w-3.5 h-3.5" style={{ color: SAPPHIRE }} aria-hidden="true" />
         <span className="font-heading font-semibold text-fluid-sm text-text">Hydration</span>
         <span className="ml-auto text-[10px] font-bold" style={{ color: SAPPHIRE }}>{Math.round(pct * 100)}%</span>
       </div>
 
-      <div className="flex items-center justify-center gap-4">
-        {/* The double-helix — perfectly centred in the widget */}
-        <svg viewBox="0 0 72 200" width="72" height="168" aria-hidden="true" className="shrink-0">
-          <defs>
-            <filter id={glow} x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="1.6" result="b" />
-              <feMerge>
-                <feMergeNode in="b" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-          </defs>
+      <div className="flex items-center gap-3">
+        {/* The double-helix — centred in its own space; numbers sit to the side */}
+        <div className="flex-1 flex justify-center min-w-0">
+          <svg viewBox="0 0 120 132" width="132" height="116" aria-hidden="true" className="max-w-full">
+            <defs>
+              <filter id={glow} x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="1.8" result="b" />
+                <feMerge>
+                  <feMergeNode in="b" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
 
-          {/* Dim, empty strands — always fully visible */}
-          <Helix bright={false} />
-          {/* Bright, filled strands — revealed bottom-up by the intake fraction */}
-          <g style={{ clipPath: `inset(${((1 - pct) * 100).toFixed(1)}% 0 0 0)`, transition: 'clip-path 700ms cubic-bezier(0.22,1,0.36,1)' }}>
-            <Helix bright />
-          </g>
-        </svg>
+            {/* Dim, empty strands — always fully visible */}
+            <Helix bright={false} />
+            {/* Bright, filled strands — revealed bottom-up by the intake fraction */}
+            <g style={{ clipPath: `inset(${((1 - pct) * 100).toFixed(1)}% 0 0 0)`, transition: 'clip-path 700ms cubic-bezier(0.22,1,0.36,1)' }}>
+              <Helix bright />
+            </g>
+          </svg>
+        </div>
 
-        {/* Readout */}
-        <div className="flex flex-col">
+        {/* Readout — to the side */}
+        <div className="flex flex-col items-end shrink-0 text-right">
           <div className="flex items-baseline gap-1">
             <span className="helix-num text-fluid-2xl font-bold text-text">{(have / 1000).toFixed(1)}</span>
             <span className="text-fluid-xs text-muted">/ {(goalMl / 1000).toFixed(1)} L</span>
