@@ -4,18 +4,19 @@ import { NUTRITION_PRESETS } from '@/lib/types/workout'
 
 describe('Nutrition modes', () => {
   it('defines Cut / Bulk / Maintenance with correct calories', () => {
-    expect(NUTRITION_PRESETS.cut.calorieGoal).toBe(1955)     // Helix Cut 5.1
-    expect(NUTRITION_PRESETS.bulk.calorieGoal).toBe(2550)   // v5.1 start; titrate to 2,600–2,650
+    expect(NUTRITION_PRESETS.cut.calorieGoal).toBe(1950)     // Helix cut
+    expect(NUTRITION_PRESETS.bulk.calorieGoal).toBe(2600)   // Lean Bulk
     expect(NUTRITION_PRESETS.maintenance.calorieGoal).toBe(2375)
   })
 
   it('AXIS macro anchors carry full macro + fiber targets', () => {
-    expect(NUTRITION_PRESETS.cut.proteinGoalG).toBe(170)     // Helix Cut 5.1: 170P / 195C / 55F
+    expect(NUTRITION_PRESETS.cut.proteinGoalG).toBe(170)     // Helix cut: 170P / 195C / 55F
     expect(NUTRITION_PRESETS.cut.carbsGoalG).toBe(195)
     expect(NUTRITION_PRESETS.cut.fatGoalG).toBe(55)
     expect(NUTRITION_PRESETS.cut.fiberGoalG).toBe(30)
-    expect(NUTRITION_PRESETS.bulk.proteinGoalG).toBe(158)
-    expect(NUTRITION_PRESETS.bulk.carbsGoalG).toBe(337)
+    expect(NUTRITION_PRESETS.bulk.proteinGoalG).toBe(160)    // Lean Bulk: 160P / 330C / 70F
+    expect(NUTRITION_PRESETS.bulk.carbsGoalG).toBe(330)
+    expect(NUTRITION_PRESETS.bulk.fatGoalG).toBe(70)
     expect(NUTRITION_PRESETS.bulk.fiberGoalG).toBe(35)
   })
 })

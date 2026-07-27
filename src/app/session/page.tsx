@@ -60,7 +60,9 @@ function SessionPageInner() {
     const seed = SEED_TEMPLATES[templateDay.key]
     return seed
       ? seed.exercises.map((e) => e.name)
-      : templateDay.exercises.filter((e) => !e.bulkOnly).map((e) => e.name)
+      // templateDay is already phase-resolved (activeProgram) — cut-dropped lifts
+      // are gone, so no bulk-only filter is needed here.
+      : templateDay.exercises.map((e) => e.name)
   }, [templateDay])
 
   // Real per-set history for those exercises, scoped to the TARGET DATE's era so

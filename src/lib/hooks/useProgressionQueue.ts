@@ -45,8 +45,8 @@ export function useProgressionQueue() {
     const prog = activeProgram()
     const seen = new Map<string, { id: string; name: string; dayKey: string; dayLabel: string; color: string }>()
     for (const d of prog.days) {
+      // prog is phase-resolved — cut-dropped lifts are already absent.
       for (const e of d.exercises) {
-        if (e.bulkOnly) continue
         const id = exMap?.get(e.name)
         if (!id || seen.has(id)) continue
         seen.set(id, { id, name: e.name, dayKey: d.key, dayLabel: d.label, color: d.color })

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { derivePhase } from '@/lib/nutrition/phase'
-import { APEX51, PROGRAMS, DEFAULT_PROGRAM_ID, eraForDate, isReentryWeek, isRestDayFor, programDayFor } from '@/lib/programs'
+import { APEX51, PROGRAMS, DEFAULT_PROGRAM_ID, eraForDate, isReentryWeek, isRestDayFor, programDayFor, activeProgram } from '@/lib/programs'
+import { phaseGoalsFor } from '@/lib/types/workout'
 import { getWeekPhase, PHASES } from '@/lib/phases'
 import { computeBattery, BATTERY } from '@/lib/scoring/battery'
 import type { ScoringInputs } from '@/lib/scoring/types'
@@ -40,9 +41,28 @@ describe('HELIX-5 split', () => {
     expect(isRestDayFor('2026-06-05')).toBe(true)  // Fri, PPL era
     expect(isRestDayFor('2026-06-04')).toBe(false) // Thu, PPL era
   })
-  it('carries the cut-mode set deltas from the plan tables', () => {
-    const deltas = Object.fromEntries(APEX51.days.map((d) => [d.key, d.cutSetDelta]))
-    expect(deltas).toEqual({ cb_a: -3, legs_a: -4, arms: -4, cb_b: -3, legs_b: -3 })
+  it('derives per-phase set counts from the (bulk/cut) plan data', () => {
+    const totals = (phase: 'bulk' | 'cut') =>
+      Object.fromEntries(activeProgram('apex51', phase).days.map((d) => [d.key, d.exercises.reduce((n, e) => n + e.sets, 0)]))
+    expect(totals('bulk')).toEqual({ cb_a: 19, legs_a: 23, arms: 23, cb_b: 20, legs_b: 22 })
+    expect(totals('cut')).toEqual({ cb_a: 16, legs_a: 19, arms: 18, cb_b: 17, legs_b: 18 })
+    // The two bulk-only lifts (cutSets:0 — Wrist Curl, Hip Adduction) drop out on a cut.
+    const exCount = (phase: 'bulk' | 'cut', key: string) =>
+      activeProgram('apex51', phase).days.find((d) => d.key === key)!.exercises.length
+    expect(exCount('bulk', 'arms')).toBe(8)
+    expect(exCount('cut', 'arms')).toBe(7)
+    expect(exCount('bulk', 'legs_b')).toBe(8)
+    expect(exCount('cut', 'legs_b')).toBe(7)
+  })
+
+  it('phaseGoalsFor: Helix cut = 1950 kcal, PPL cut is leaner (1935, higher protein)', () => {
+    expect(phaseGoalsFor('apex51', 'cut').calorieGoal).toBe(1950)
+    expect(phaseGoalsFor('axis4', 'cut').calorieGoal).toBe(1950)   // Helix-4 shares the Helix cut
+    const ppl = phaseGoalsFor('ppl', 'cut')
+    expect(ppl.calorieGoal).toBe(1935)
+    expect(ppl.proteinGoalG).toBe(180)
+    expect(ppl.carbsGoalG).toBe(180)
+    expect(phaseGoalsFor('apex51', 'bulk').calorieGoal).toBe(2600) // Lean Bulk (fat hard cap 70)
   })
   it('removed movements are gone from every LIVE template', () => {
     // These were dropped when the Helix templates were refined; the PPL Legacy

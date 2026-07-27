@@ -96,7 +96,7 @@ export default function WorkoutPage() {
               <h2 className="split-label font-bold text-fluid-2xl leading-tight" style={{ color: todayDay.color }}>{todayDay.label}</h2>
               {todayDay.sub && <p className="text-fluid-sm text-muted">{todayDay.sub}</p>}
               <p className="text-[11px] text-muted mt-1">
-                {todayDay.exercises.filter((e) => !e.bulkOnly).length} exercises · {todayDay.exercises.reduce((n, e) => n + e.sets, 0)} sets
+                {todayDay.exercises.length} exercises · {todayDay.exercises.reduce((n, e) => n + e.sets, 0)} sets
               </p>
             </div>
             <div className="flex flex-col gap-1.5 shrink-0">
@@ -167,8 +167,8 @@ export default function WorkoutPage() {
           // Program week-plan defaults to MINIMIZED — every day collapsed until
           // tapped (the today "Session block" hero above stays expanded).
           const isOpen = openPlan === day.key
-          const nonBulk = day.exercises.filter((e) => !e.bulkOnly)
-          const totalSets = nonBulk.reduce((n, e) => n + e.sets, 0)
+          // day is phase-resolved — its exercises are already the current phase's.
+          const totalSets = day.exercises.reduce((n, e) => n + e.sets, 0)
           return (
             <div key={day.key} className="overflow-hidden"
               style={{ background: isToday ? `${day.color}0f` : undefined, borderRadius: 8 }}>
@@ -181,7 +181,7 @@ export default function WorkoutPage() {
                 <span className="split-label font-bold text-fluid-sm truncate" style={{ color: day.color }}>{day.label}</span>
                 <span className="text-[10px] text-muted uppercase shrink-0">{WD[day.weekday]}</span>
                 {isToday && <span className="text-[9px] px-1 rounded font-bold shrink-0" style={{ color: day.color, background: `${day.color}22` }}>TODAY</span>}
-                <span className="ml-auto text-[10px] text-muted shrink-0">{nonBulk.length} ex · {totalSets} sets</span>
+                <span className="ml-auto text-[10px] text-muted shrink-0">{day.exercises.length} ex · {totalSets} sets</span>
                 <ChevronDown className={`w-3.5 h-3.5 text-muted shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
               </button>
               {isOpen && (
@@ -192,9 +192,9 @@ export default function WorkoutPage() {
                     const prev = id ? memory?.get(id) : undefined
                     const target = displayWeight(ex.wk1Kg)
                     return (
-                      <div key={ex.name} className={`rounded-lg px-2.5 py-1.5 bg-white/[0.02] border border-white/[0.05] ${ex.bulkOnly ? 'opacity-50' : ''}`}>
+                      <div key={ex.name} className="rounded-lg px-2.5 py-1.5 bg-white/[0.02] border border-white/[0.05]">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="text-xs font-medium text-text leading-tight truncate">{ex.name}{ex.bulkOnly && <span className="text-[9px] text-muted ml-1">bulk only</span>}</span>
+                          <span className="text-xs font-medium text-text leading-tight truncate">{ex.name}</span>
                           <span className="text-[10px] text-muted shrink-0">{ex.sets}×{ex.reps}</span>
                         </div>
                         <div className="text-[10px] text-muted flex items-center gap-2 mt-0.5">

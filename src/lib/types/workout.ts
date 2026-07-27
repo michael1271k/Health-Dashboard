@@ -103,36 +103,52 @@ export interface NutritionPreset {
    *  optional so a preset can omit them. */
   targetBodyFatPct?: number | null
   targetMuscleMassKg?: number | null
+  /** Display-only phase goals shown in the Settings plan preview (not persisted —
+   *  no user_goals column). Waist target, the weekly bodyweight-rate band, a bulk
+   *  body-fat ceiling, and the fiber band the single fiberGoalG sits inside. */
+  targetWaistCm?: number | null
+  rateMinKgWk?: number | null   // signed: cut negative, bulk positive
+  rateMaxKgWk?: number | null
+  bodyFatCeilingPct?: number | null
+  fiberMin?: number | null
+  fiberMax?: number | null
 }
 
-// Active nutrition targets. Helix Cut 5.1 opens 2026-07-15 — 1955 kcal split
-// 170P / 195C / 55F (macros sum to exactly 1955 kcal).
+// The DEFAULT (Helix) nutrition targets per phase. A plan can override any of
+// these via PLAN_PHASES (PPL runs a leaner cut). Cut = 1950 kcal / 170P·195C·55F;
+// Lean Bulk = 2600 / 160P·330C·70F (fat is a hard cap).
 export const NUTRITION_PRESETS: Record<NutritionMode, NutritionPreset> = {
   cut: {
     mode: 'cut',
     label: 'Cut',
-    calorieGoal: 1955,
+    calorieGoal: 1950,
     proteinGoalG: 170,
     carbsGoalG: 195,
     fatGoalG: 55,
     fiberGoalG: 30,       // 28–35 g band
+    fiberMin: 28, fiberMax: 35,
     stepsGoal: 10000,
     targetWeightKg: 62,   // cut-exit ballpark; adjust in Settings
     targetBodyFatPct: 13.0,   // cut-exit gate (7-day avg BIA)
     targetMuscleMassKg: 33.0,
+    targetWaistCm: 74,        // navel waist ≤ 74 cm
+    rateMinKgWk: -0.50, rateMaxKgWk: -0.40,
   },
   bulk: {
     mode: 'bulk',
     label: 'Lean Bulk',
-    calorieGoal: 2550,    // start; titrate to 2,600–2,650
-    proteinGoalG: 158,    // 155–160 g
-    carbsGoalG: 337,      // 330–345 g
+    calorieGoal: 2600,
+    proteinGoalG: 160,
+    carbsGoalG: 330,
     fatGoalG: 70,         // HARD CAP
     fiberGoalG: 35,       // 33–38 g
+    fiberMin: 33, fiberMax: 38,
     stepsGoal: 8000,
     targetWeightKg: 70,
-    targetBodyFatPct: 15.0,   // stay under the 16.5% bulk-kill line
+    targetBodyFatPct: 15.0,
+    bodyFatCeilingPct: 16.0,  // 15–16% BIA ceiling
     targetMuscleMassKg: 37.0,
+    rateMinKgWk: 0.20, rateMaxKgWk: 0.25,
   },
   maintenance: {
     mode: 'maintenance',
@@ -142,9 +158,36 @@ export const NUTRITION_PRESETS: Record<NutritionMode, NutritionPreset> = {
     carbsGoalG: 270,
     fatGoalG: 75,
     fiberGoalG: 30,
+    fiberMin: 28, fiberMax: 35,
     stepsGoal: 9000,
     targetWeightKg: 64,
     targetBodyFatPct: 13.5,
     targetMuscleMassKg: 35.0,
   },
+}
+
+/**
+ * Per-PLAN phase overrides layered on top of NUTRITION_PRESETS. Helix-4 and
+ * Helix-5 share the defaults; PPL Legacy ran a leaner cut (1935 kcal, higher
+ * protein). Keyed by the plan's program id.
+ */
+export const PLAN_PHASES: Record<string, Partial<Record<NutritionMode, Partial<NutritionPreset>>>> = {
+  ppl: {
+    cut: {
+      label: 'PPL Cut',
+      calorieGoal: 1935,
+      proteinGoalG: 180,
+      carbsGoalG: 180,
+      fatGoalG: 55,
+    },
+  },
+}
+
+/** The resolved phase goals for a plan — the plan override merged over the Helix
+ *  default. Every macro/target consumer (Settings preview, applyPhase) reads this
+ *  so PPL's cut shows its own numbers, not Helix's. */
+export function phaseGoalsFor(planId: string, mode: NutritionMode): NutritionPreset {
+  const base = NUTRITION_PRESETS[mode]
+  const override = PLAN_PHASES[planId]?.[mode]
+  return override ? { ...base, ...override } : base
 }

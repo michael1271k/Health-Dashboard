@@ -7,12 +7,12 @@ import { NotionSync } from '@/components/settings/NotionSync'
 import { supabase } from '@/lib/supabase/client'
 import { derivePhase, phaseDisplay } from '@/lib/nutrition/phase'
 import { logicalTodayISO } from '@/lib/utils/day'
-import { NUTRITION_PRESETS, type NutritionMode, type NutritionPreset } from '@/lib/types/workout'
+import { NUTRITION_PRESETS, phaseGoalsFor, type NutritionMode, type NutritionPreset } from '@/lib/types/workout'
 import { phaseBadgeStyle } from '@/lib/phases'
 import { LiquidModal } from '@/components/ui/LiquidModal'
 import {
   HELIX_CUT_START, DEFAULT_PROGRAM_ID, PROGRAMS, getActiveProgramId,
-  setActiveProgramId, setActivePhase, type Program,
+  setActiveProgramId, setActivePhase, isBulkOnly, type Program,
 } from '@/lib/programs'
 import { AlertTriangle, Dumbbell, Calendar, Target } from 'lucide-react'
 import type { Tables } from '@/lib/supabase/types'
@@ -226,7 +226,9 @@ export default function SettingsPage() {
    * automatic once the goal is written.
    */
   async function applyPhase(mode: NutritionMode) {
-    const p = NUTRITION_PRESETS[mode]
+    // Per-PLAN phase goals — PPL's cut is leaner than Helix's, so source the
+    // numbers for the ACTIVE plan, not the global Helix default.
+    const p = phaseGoalsFor(activePlanId, mode)
     setActivePhase(mode) // localStorage mirror — activeProgram() reads it synchronously
     await save({
       calorie_goal: p.calorieGoal,
@@ -614,7 +616,7 @@ export default function SettingsPage() {
                     <div key={d.key}>
                       <div className="text-[11px] font-bold" style={{ color: d.color }}>{d.label}{d.sub ? ` · ${d.sub}` : ''}</div>
                       <div className="text-[10px] text-muted leading-relaxed">
-                        {d.exercises.filter((e) => !e.bulkOnly).map((e) => `${e.name} ${e.sets}×${e.reps}`).join(' · ')}
+                        {d.exercises.filter((e) => !isBulkOnly(e)).map((e) => `${e.name} ${e.sets}×${e.reps}`).join(' · ')}
                       </div>
                     </div>
                   ))}

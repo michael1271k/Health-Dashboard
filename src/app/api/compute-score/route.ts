@@ -156,9 +156,9 @@ async function computeForDate(supabase: DB, userId: string, date: string, hoursA
     sleep_goal_hours: 8, calorie_goal: 1955, protein_goal_g: 170, carbs_goal_g: 195,
     fat_goal_g: 55, steps_goal: 10000, active_cal_goal: 500, water_goal_ml: 3000,
   }
-  // What the program prescribed for this day, cut-adjusted (bulkOnly lifts
-  // dropped, cutSetDelta applied). null when the day isn't a known program day —
-  // the scorer then drops the coverage component rather than inventing a plan.
+  // What the program prescribed for this day, per phase (cut uses each lift's
+  // cutSets; bulk-only lifts drop out). null when the day isn't a known program
+  // day — the scorer then drops the coverage component rather than inventing a plan.
   const programMode: 'cut' | 'bulk' = (g.calorie_goal ?? 0) >= 2450 ? 'bulk' : 'cut'
   const prescribed = dayKey ? prescribedFor(dayKey, programMode) : null
 

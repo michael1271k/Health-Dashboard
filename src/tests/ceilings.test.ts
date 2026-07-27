@@ -29,12 +29,14 @@ describe('parseRepWindow', () => {
 
 describe('repWindowFor', () => {
   it('reads the window for the DAY actually logged', () => {
+    // Calf Press runs 10–15 on both leg days in the current plan; the dayKey path
+    // still resolves to that exact day's window.
     expect(repWindowFor('Calf Press', 'legs_a', 'apex51')).toEqual({ floor: 10, ceiling: 15 })
-    expect(repWindowFor('Calf Press', 'legs_b', 'apex51')).toEqual({ floor: 14, ceiling: 18 })
+    expect(repWindowFor('Calf Press', 'legs_b', 'apex51')).toEqual({ floor: 10, ceiling: 15 })
   })
   it('falls back to the STRICTEST window when the day is unknown', () => {
     // Ambiguity must under-trigger, never over-trigger, the badge.
-    expect(repWindowFor('Calf Press', null, 'apex51')?.ceiling).toBe(18)
+    expect(repWindowFor('Calf Press', null, 'apex51')?.ceiling).toBe(15)
   })
   it('is null for an exercise not in the program', () => {
     expect(repWindowFor('Zercher Squat', 'legs_a', 'apex51')).toBeNull()

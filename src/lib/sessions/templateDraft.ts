@@ -77,7 +77,8 @@ export function buildTemplateDraft(
       })
     }
   } else {
-    for (const ex of day.exercises.filter((e) => !e.bulkOnly)) {
+    // `day` is phase-resolved (activeProgram) — cut-dropped lifts are already gone.
+    for (const ex of day.exercises) {
       const prev = historyFor(ex.name)
       const sets = prev
         ? seedFromHistory(prev)
