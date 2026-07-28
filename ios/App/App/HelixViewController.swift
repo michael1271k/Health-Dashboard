@@ -14,8 +14,8 @@ import Capacitor
 class HelixViewController: CAPBridgeViewController {
   override func capacitorDidLoad() {
     bridge?.registerPluginInstance(HealthkitPlugin())
-    // SecureStore keeps the Supabase session in the Keychain so it survives an
-    // app delete + reinstall (UserDefaults/Preferences do not). See SecureStore.swift.
-    bridge?.registerPluginInstance(SecureStorePlugin())
+    // SecureStore (Keychain session persistence) was retired: the web app no longer
+    // calls it (auth is a one-tap re-login). SecureStore.swift can be removed from the
+    // App target in Xcode; leaving it compiled but unregistered is harmless meanwhile.
   }
 }

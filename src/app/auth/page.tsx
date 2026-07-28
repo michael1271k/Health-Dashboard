@@ -3,28 +3,35 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
-import { LogIn } from 'lucide-react'
+import { LogIn, Fingerprint } from 'lucide-react'
 import { HelixMark } from '@/components/HelixMark'
 
 /**
- * Sign-in. NO app-lock: the app is not gated behind Face ID on launch. The form
- * uses the standard iOS iCloud Keychain flow — `autocomplete` username/current-
- * password + a real <form> so iOS offers "Save Password?" on first manual login
- * and Face-ID-gated AutoFill afterwards.
+ * Sign-in. Single-user app: the primary path is a one-tap "Continue as Michael"
+ * button that signs in with baked-in credentials (NEXT_PUBLIC_BYPASS_*), so there
+ * is no password to type on a fresh install. Supabase persists the session in
+ * localStorage (+ native Preferences mirror), so the button is only needed once
+ * per install — restarts stay signed in.
  *
- * On native, the session is stored in the device Keychain (SecureStore), which
- * survives an app delete + reinstall — so this password login is a once-ever step,
- * not a recurring one. The old env-credential "Quick Login" button is retired: it
- * never worked in the deployed bundle (NEXT_PUBLIC_* vars aren't set there) and
- * Keychain persistence makes it unnecessary.
+ * There is NO unauthenticated server route that mints a session; this is a normal
+ * Supabase-validated password login, just pre-filled. The manual email/password
+ * form is kept (collapsed) as a fallback + to preserve iOS Keychain AutoFill.
+ *
+ * NOTE: the bypass password ships in the client bundle (NEXT_PUBLIC_*), so it is
+ * readable by anyone with the deploy URL — treat the URL as sensitive and use a
+ * strong, unique password.
  */
+const BYPASS_EMAIL = process.env.NEXT_PUBLIC_BYPASS_EMAIL ?? ''
+const BYPASS_PASSWORD = process.env.NEXT_PUBLIC_BYPASS_PASSWORD ?? ''
+const HAS_BYPASS = Boolean(BYPASS_EMAIL && BYPASS_PASSWORD)
+
 export default function AuthPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [manual, setManual] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [resetMsg, setResetMsg] = useState<string | null>(null)
 
   function goHome() {
     router.push('/')
@@ -41,24 +48,26 @@ export default function AuthPage() {
     return true
   }
 
+  async function handleContinue() {
+    // No baked credentials in this build → fall back to the manual form.
+    if (!HAS_BYPASS) {
+      setManual(true)
+      setError(null)
+      requestAnimationFrame(() => document.getElementById('email')?.focus())
+      return
+    }
+    setLoading(true)
+    setError(null)
+    const ok = await signIn(BYPASS_EMAIL, BYPASS_PASSWORD)
+    if (!ok) setLoading(false)
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError(null)
     const ok = await signIn(email, password)
     if (!ok) setLoading(false)
-  }
-
-  async function handleForgot() {
-    setError(null)
-    setResetMsg(null)
-    const mail = email.trim()
-    if (!mail) { setError('Enter your email above, then tap “Forgot password?”'); return }
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(mail, {
-      redirectTo: `${window.location.origin}/auth/update-password`,
-    })
-    if (resetError) { setError(resetError.message); return }
-    setResetMsg('Check your email for a reset link.')
   }
 
   const inputClass =
@@ -89,75 +98,88 @@ export default function AuthPage() {
         </div>
 
         <div className="rounded-2xl border border-white/[0.08] bg-white/[0.025] backdrop-blur-xl p-6 shadow-[0_24px_80px_rgba(0,0,0,0.55)] space-y-5">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-1.5">
-              <label htmlFor="email" className="text-xs font-semibold uppercase tracking-wide text-muted">
-                Email
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                required
-                autoComplete="username"
-                autoCapitalize="none"
-                autoCorrect="off"
-                className={inputClass}
-              />
-            </div>
+          {/* Primary: one-tap sign-in. */}
+          <button
+            type="button"
+            onClick={handleContinue}
+            disabled={loading}
+            className="w-full min-h-[52px] rounded-xl font-bold text-sm flex items-center justify-center gap-2
+                       text-white transition-transform active:scale-[0.98] disabled:opacity-60
+                       shadow-[0_10px_30px_rgba(224,112,60,0.35)]"
+            style={{ background: 'linear-gradient(135deg, #E0703C 0%, #C8542A 100%)' }}
+          >
+            <Fingerprint className="w-4 h-4" aria-hidden="true" />
+            {loading ? 'Signing in…' : 'Continue as Michael'}
+          </button>
 
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
+          {error && !manual && (
+            <p className="text-danger text-sm text-center" role="alert">{error}</p>
+          )}
+
+          {/* Manual fallback — collapsed by default; preserves iOS Keychain AutoFill. */}
+          {!manual ? (
+            <button type="button" onClick={() => setManual(true)}
+              className="w-full text-[11px] font-medium text-muted hover:text-[#E0703C] transition-colors">
+              Sign in manually
+            </button>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4 pt-1">
+              <div className="space-y-1.5">
+                <label htmlFor="email" className="text-xs font-semibold uppercase tracking-wide text-muted">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  required
+                  autoComplete="username"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  className={inputClass}
+                />
+              </div>
+
+              <div className="space-y-1.5">
                 <label htmlFor="password" className="text-xs font-semibold uppercase tracking-wide text-muted">
                   Password
                 </label>
-                <button type="button" onClick={handleForgot}
-                  className="text-[11px] font-medium text-muted hover:text-[#E0703C] transition-colors">
-                  Forgot password?
-                </button>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  autoComplete="current-password"
+                  className={inputClass}
+                />
               </div>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                autoComplete="current-password"
-                className={inputClass}
-              />
-            </div>
 
-            {error && (
-              <p className="text-danger text-sm" role="alert">
-                {error}
-              </p>
-            )}
-            {resetMsg && (
-              <p className="text-success text-sm" role="status">
-                {resetMsg}
-              </p>
-            )}
+              {error && (
+                <p className="text-danger text-sm" role="alert">{error}</p>
+              )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full min-h-[48px] rounded-xl font-bold text-sm flex items-center justify-center gap-2
-                         border border-white/[0.14] bg-white/[0.05] text-text hover:bg-white/[0.08]
-                         transition-colors active:scale-[0.98] disabled:opacity-60"
-            >
-              <LogIn className="w-4 h-4" aria-hidden="true" />
-              {loading ? 'Signing in…' : 'Sign in'}
-            </button>
-          </form>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full min-h-[48px] rounded-xl font-bold text-sm flex items-center justify-center gap-2
+                           border border-white/[0.14] bg-white/[0.05] text-text hover:bg-white/[0.08]
+                           transition-colors active:scale-[0.98] disabled:opacity-60"
+              >
+                <LogIn className="w-4 h-4" aria-hidden="true" />
+                {loading ? 'Signing in…' : 'Sign in'}
+              </button>
+            </form>
+          )}
 
           {/* Standalone-PWA reassurance: this container keeps its own session. */}
           <p className="text-[11px] text-muted/80 text-center leading-relaxed">
-            You stay signed in on this device — sign in once and HELIX remembers you here.
+            You stay signed in on this device — one tap and HELIX remembers you here.
           </p>
         </div>
       </div>

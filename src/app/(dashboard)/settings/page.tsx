@@ -1,8 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { Users } from 'lucide-react'
 import { NotionSync } from '@/components/settings/NotionSync'
 import { supabase } from '@/lib/supabase/client'
 import { derivePhase, phaseDisplay } from '@/lib/nutrition/phase'
@@ -558,15 +556,6 @@ export default function SettingsPage() {
       </section>
 
       <NotionSync />
-
-      {/* Administration */}
-      <section className="helix-card space-y-2">
-        <h2 className="font-semibold text-text">Administration</h2>
-        <Link href="/users" className="btn-glass w-full justify-between min-h-[44px]">
-          <span className="flex items-center gap-2"><Users className="w-4 h-4 text-primary" /> User Management</span>
-          <span className="text-fluid-xs text-muted">admin only →</span>
-        </Link>
-      </section>
 
       <CrashRecorderRow />
       </div>
