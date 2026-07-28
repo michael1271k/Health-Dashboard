@@ -15,6 +15,34 @@ const EMERALD = '#3E9E7A'   // protein = green
 const num = (v: unknown): number | undefined =>
   typeof v === 'number' && Number.isFinite(v) ? v : undefined
 
+// A connected, athletic male silhouette (viewBox 0 0 100 214). Points trace the
+// RIGHT half head-top → clockwise down the arm/torso/outer leg → up the inner leg
+// to the crotch apex; the left half is the mirror, reversed, so the whole figure is
+// ONE closed path — head joined to neck, arms flaring off the torso, legs split by a
+// real gap (no stick-figure limbs).
+const RIGHT: [number, number][] = [
+  [50, 4], [58, 5], [64, 11], [65, 19], [63, 27], [58, 32], [55, 35], [55, 40],
+  [63, 40], [74, 44], [83, 52], [86, 59], [87, 74], [84, 92], [81, 108], [79, 114],
+  [75, 113], [72, 97], [69, 79], [67, 63], [64, 57], [66, 73], [63, 91], [58, 106],
+  [56, 110], [61, 114], [63, 120], [62, 127], [60, 152], [58, 180], [56, 204],
+  [54, 209], [52, 206], [51, 180], [50.5, 150], [50, 124], [50, 116],
+]
+const SILHOUETTE = (() => {
+  const fmt = ([x, y]: [number, number]) => `${x} ${y}`
+  const right = RIGHT.map(fmt)
+  const left = [...RIGHT].reverse().map(([x, y]) => fmt([100 - x, y]))
+  return `M ${right[0]} ${right.slice(1).map((p) => `L ${p}`).join(' ')} ${left.map((p) => `L ${p}`).join(' ')} Z`
+})()
+
+// Low-opacity muscle contours (pecs, sternum + ab ticks, delt caps) layered inside
+// the silhouette to read as a real anatomical model rather than a flat cut-out.
+const CONTOURS = [
+  'M 34 50 Q 43 63 50 59', 'M 66 50 Q 57 63 50 59', // pecs
+  'M 50 58 L 50 104',                                 // sternum → linea alba
+  'M 44 72 L 56 72', 'M 44 83 L 56 83', 'M 44 94 L 56 94', // ab ticks
+  'M 18 53 Q 25 46 32 51', 'M 82 53 Q 75 46 68 51', // deltoid caps
+]
+
 /** Standard BIA reference bands (% of body weight) — light guidance, not a diagnosis. */
 const BARS = [
   { key: 'muscle', label: 'Skeletal Muscle', color: ROSE,     lo: 40, hi: 50 },
@@ -100,33 +128,25 @@ export function BodyMap({ log }: { log: DayVaultData['log'] }) {
           <svg viewBox="0 0 100 214" width="112" height="222" role="img" aria-label="Body composition figure">
             <defs>
               <clipPath id={clip}>
-                <circle cx="50" cy="21" r="17" />
-                <rect x="28" y="40" width="44" height="74" rx="16" />
-                <rect x="12" y="44" width="15" height="64" rx="7" />
-                <rect x="73" y="44" width="15" height="64" rx="7" />
-                <rect x="33" y="108" width="16" height="100" rx="7" />
-                <rect x="51" y="108" width="16" height="100" rx="7" />
+                <path d={SILHOUETTE} />
               </clipPath>
             </defs>
 
-            {/* base (residual / unaccounted) */}
+            {/* base (residual / unaccounted) + composition strata, clipped to the figure */}
             <g clipPath={`url(#${clip})`}>
               <rect x="0" y="0" width="100" height={H + 4} fill="rgba(255,255,255,0.04)" />
               {bands.map((b, i) => (
                 <rect key={i} x="0" y={b.y} width="100" height={b.h + 0.5} fill={b.color} fillOpacity="0.62" />
               ))}
+              {/* muscle contours — read the figure as an anatomical model */}
+              <g fill="none" stroke={ROSE} strokeOpacity="0.22" strokeWidth="1" strokeLinecap="round">
+                {CONTOURS.map((d, i) => <path key={i} d={d} />)}
+              </g>
             </g>
 
             {/* silhouette outline glow (muscle rose) */}
-            <g fill="none" stroke={ROSE} strokeOpacity="0.55" strokeWidth="1.5"
-               style={{ filter: `drop-shadow(0 0 5px ${ROSE}55)` }}>
-              <circle cx="50" cy="21" r="17" />
-              <rect x="28" y="40" width="44" height="74" rx="16" />
-              <rect x="12" y="44" width="15" height="64" rx="7" />
-              <rect x="73" y="44" width="15" height="64" rx="7" />
-              <rect x="33" y="108" width="16" height="100" rx="7" />
-              <rect x="51" y="108" width="16" height="100" rx="7" />
-            </g>
+            <path d={SILHOUETTE} fill="none" stroke={ROSE} strokeOpacity="0.6" strokeWidth="1.5"
+              strokeLinejoin="round" style={{ filter: `drop-shadow(0 0 5px ${ROSE}55)` }} />
           </svg>
         </div>
 

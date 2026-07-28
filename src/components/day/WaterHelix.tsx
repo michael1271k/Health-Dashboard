@@ -3,27 +3,38 @@
 import { useId, useMemo } from 'react'
 import { Droplets } from 'lucide-react'
 
-const SAPPHIRE = '#3D7AB8'
-const AQUA = '#5FB8E8'
+// Empty baseline = slate/grey; it fills with blue as intake rises. Filled strands
+// are a DEEP blue (darker outer edges) and the inner base-pair rungs a lighter AQUA
+// so they pop against the strands.
+const SLATE = '#3A4250'
+const SLATE_RUNG = '#4A5462'
+const DEEP = '#2E6AAE'
+const AQUA = '#6CC1EE'
+const ACCENT = '#3D7AB8' // header chrome (icon, percent, card border)
 
-// Geometry — a compact, WIDE double-helix (shorter + thicker than the old skinny
-// column). Wider amplitude, fewer turns, a near-square viewport it winds down.
-const CX = 60, AMP = 42, TURNS = 2.25, SAMPLES = 64
-const Y_TOP = 16, Y_BOT = 116, SPAN = Y_BOT - Y_TOP
+// Geometry — a thinner, elegant double-helix that closes into a single loop: both
+// strands converge to one vertex at top and bottom (TURNS is a half-integer, so
+// sin() = 0 at each end → xa = xb = CX). Narrower amplitude than before.
+const CX = 60, AMP = 34, TURNS = 2.5, SAMPLES = 64
+const Y_TOP = 14, Y_BOT = 118, SPAN = Y_BOT - Y_TOP
 
 interface Node { y: number; xa: number; xb: number }
 
-/** Sample the two counter-rotating strands once (deterministic, memoised). */
-function buildHelix(): { nodes: Node[]; strandA: string; strandB: string } {
+/**
+ * Sample the two counter-rotating strands once (deterministic, memoised). `closed`
+ * traces down strand A and back up strand B as ONE continuous path, so the shape is
+ * a true closed loop joined at the top + bottom vertices.
+ */
+function buildHelix(): { nodes: Node[]; closed: string } {
   const nodes: Node[] = []
   for (let i = 0; i <= SAMPLES; i++) {
     const f = i / SAMPLES
     const t = f * TURNS * Math.PI * 2
     nodes.push({ y: Y_TOP + f * SPAN, xa: CX + AMP * Math.sin(t), xb: CX - AMP * Math.sin(t) })
   }
-  const line = (pick: (n: Node) => number) =>
-    nodes.map((n, i) => `${i === 0 ? 'M' : 'L'} ${pick(n).toFixed(2)} ${n.y.toFixed(2)}`).join(' ')
-  return { nodes, strandA: line((n) => n.xa), strandB: line((n) => n.xb) }
+  const down = nodes.map((n, i) => `${i === 0 ? 'M' : 'L'} ${n.xa.toFixed(2)} ${n.y.toFixed(2)}`).join(' ')
+  const up = [...nodes].reverse().map((n) => `L ${n.xb.toFixed(2)} ${n.y.toFixed(2)}`).join(' ')
+  return { nodes, closed: `${down} ${up} Z` }
 }
 
 /**
@@ -36,7 +47,7 @@ function buildHelix(): { nodes: Node[]; strandA: string; strandB: string } {
 export function WaterHelix({ ml, goalMl }: { ml: number | null; goalMl: number }) {
   const uid = useId().replace(/[:]/g, '')
   const glow = `wh-glow-${uid}`
-  const { nodes, strandA, strandB } = useMemo(buildHelix, [])
+  const { nodes, closed } = useMemo(buildHelix, [])
   const have = ml ?? 0
   const pct = Math.max(0, Math.min(1, goalMl > 0 ? have / goalMl : 0))
 
@@ -49,26 +60,28 @@ export function WaterHelix({ ml, goalMl }: { ml: number | null; goalMl: number }
       strokeLinecap="round"
       style={bright ? { filter: `url(#${glow})` } : undefined}
     >
+      {/* Inner base-pair rungs — lighter aqua when filled so they pop off the strands. */}
       {rungs.map((n, i) => (
         <line key={i} x1={n.xa} y1={n.y} x2={n.xb} y2={n.y}
-          stroke={bright ? AQUA : SAPPHIRE} strokeWidth={bright ? 2 : 1.5}
-          strokeOpacity={bright ? 0.75 : 0.18} />
+          stroke={bright ? AQUA : SLATE_RUNG} strokeWidth={bright ? 1.6 : 1.1}
+          strokeOpacity={bright ? 0.85 : 0.4} />
       ))}
-      <path d={strandA} stroke={bright ? AQUA : SAPPHIRE} strokeWidth={bright ? 3.2 : 2.4} strokeOpacity={bright ? 0.95 : 0.22} />
-      <path d={strandB} stroke={SAPPHIRE} strokeWidth={bright ? 3.2 : 2.4} strokeOpacity={bright ? 0.9 : 0.22} />
-      {/* Base-pair nodes on the bright layer only — the "living" glow points. */}
+      {/* Outer strand loop — darker deep-blue edge when filled, slate when empty. */}
+      <path d={closed} stroke={bright ? DEEP : SLATE} strokeWidth={bright ? 2.2 : 1.4}
+        strokeOpacity={bright ? 0.98 : 0.55} strokeLinejoin="round" />
+      {/* Base-pair glow points on the bright layer only. */}
       {bright && nodes.filter((_, i) => i % 4 === 0).map((n, i) => (
-        <circle key={i} cx={n.xa} cy={n.y} r={2} fill={AQUA} fillOpacity={0.9} />
+        <circle key={i} cx={n.xa} cy={n.y} r={1.7} fill={AQUA} fillOpacity={0.9} />
       ))}
     </g>
   )
 
   return (
-    <section className="helix-card space-y-2 min-h-[120px]" style={{ borderColor: `${SAPPHIRE}30` }}>
+    <section className="helix-card space-y-2 min-h-[120px]" style={{ borderColor: `${ACCENT}30` }}>
       <div className="flex items-center gap-1.5">
-        <Droplets className="w-3.5 h-3.5" style={{ color: SAPPHIRE }} aria-hidden="true" />
+        <Droplets className="w-3.5 h-3.5" style={{ color: ACCENT }} aria-hidden="true" />
         <span className="font-heading font-semibold text-fluid-sm text-text">Hydration</span>
-        <span className="ml-auto text-[10px] font-bold" style={{ color: SAPPHIRE }}>{Math.round(pct * 100)}%</span>
+        <span className="ml-auto text-[10px] font-bold" style={{ color: ACCENT }}>{Math.round(pct * 100)}%</span>
       </div>
 
       <div className="flex items-center gap-3">
