@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
-  parseRepWindow, repWindowFor, clearedCeiling, progressionVerdict, LOAD_STEP_KG,
-  holdTargetFor, timedProgressionVerdict,
+  parseRepWindow, repWindowFor, clearedCeiling, ceilingHitOnDroppedWeight,
+  progressionVerdict, LOAD_STEP_KG, holdTargetFor, timedProgressionVerdict,
 } from '@/lib/training/ceilings'
 
 /**
@@ -66,6 +66,30 @@ describe('clearedCeiling', () => {
   it('rejects bodyweight-zero and empty sessions', () => {
     expect(clearedCeiling([{ weightKg: 0, reps: 20 }], ceiling)).toBe(false)
     expect(clearedCeiling([], ceiling)).toBe(false)
+  })
+})
+
+describe('ceilingHitOnDroppedWeight', () => {
+  const ceiling = 12
+  it('flags the reported 20×12, 20×10, 18×12 pattern is NOT a clean clear', () => {
+    // Only the sets that reached the ceiling matter for the drop-weight hint;
+    // the user hit 12 at 20kg then again at a lighter 18kg.
+    expect(ceilingHitOnDroppedWeight([
+      { weightKg: 20, reps: 12 }, { weightKg: 18, reps: 12 },
+    ], ceiling)).toBe(true)
+  })
+  it('does NOT flag when every ceiling-rep set is at one load (a real clear)', () => {
+    expect(ceilingHitOnDroppedWeight([
+      { weightKg: 20, reps: 12 }, { weightKg: 20, reps: 12 },
+    ], ceiling)).toBe(false)
+  })
+  it('does NOT flag when a set missed the ceiling reps', () => {
+    expect(ceilingHitOnDroppedWeight([
+      { weightKg: 20, reps: 12 }, { weightKg: 18, reps: 10 },
+    ], ceiling)).toBe(false)
+  })
+  it('needs at least two sets', () => {
+    expect(ceilingHitOnDroppedWeight([{ weightKg: 20, reps: 12 }], ceiling)).toBe(false)
   })
 })
 
