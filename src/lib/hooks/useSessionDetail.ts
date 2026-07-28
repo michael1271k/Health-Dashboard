@@ -112,6 +112,8 @@ export function useSessionDetail(sessionId: string | null) {
       const byEx = new Map<string, DetailExercise>()
       /** landmark muscle → the dedupe keys credited to it (L/R pairs count once). */
       const muscleAgg = new Map<LandmarkMuscle, Set<string>>()
+      /** per-exercise working-set dedupe keys — a unilateral L/R pair is ONE set. */
+      const workingSeen = new Map<string, Set<string>>()
       const primaryOf = new Map<string, LandmarkMuscle[]>()
       let failureSets = 0
       let warmupSets = 0
@@ -155,13 +157,16 @@ export function useSessionDetail(sessionId: string | null) {
           side: r.side ?? null, pairId: r.pair_id ?? null,
         })
         if (!isWarmup) {
-          ex.workingSets += 1
           ex.volumeKg += (r.weight_kg || 0) * (r.reps || 0)
           if (r.weight_kg > ex.topKg) ex.topKg = r.weight_kg
           if (r.est_1rm_kg != null && (ex.bestEst1rm == null || r.est_1rm_kg > ex.bestEst1rm)) ex.bestEst1rm = r.est_1rm_kg
           // One direct set per landmark mover. Unilateral L/R sub-sets share a
           // pair_id and must count ONCE, matching the weekly accumulator.
           const dedupeKey = r.pair_id ?? `${r.exercise_id}:${r.set_number}`
+          // Working-set COUNT dedupes the same way (volume still summed per side).
+          const wseen = workingSeen.get(r.exercise_id) ?? new Set<string>()
+          if (!wseen.has(dedupeKey)) { wseen.add(dedupeKey); ex.workingSets += 1 }
+          workingSeen.set(r.exercise_id, wseen)
           for (const mu of primaryOf.get(r.exercise_id) ?? []) {
             const seen = muscleAgg.get(mu) ?? new Set<string>()
             seen.add(dedupeKey)

@@ -5,8 +5,9 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { ArrowLeftRight, CheckCheck, ChevronDown, Footprints, GripVertical, History, NotebookPen, Plus, Target, X } from 'lucide-react'
 import { SetEditorRow } from './SetEditorRow'
-import { cardioSummary, type DraftExercise, type DraftSet } from '@/lib/sessions/draft'
+import { cardioSummary, isSetCommitted, type DraftExercise, type DraftSet } from '@/lib/sessions/draft'
 import { isTimedExercise } from '@/lib/exercises/timed'
+import { repWindowFor, holdTargetFor, ceilingHitOnDroppedWeight } from '@/lib/training/ceilings'
 import type { ExerciseHistory } from '@/lib/hooks/useExerciseSetHistory'
 import { SAPPHIRE, STEEL, MUTED, HAIRLINE } from '@/lib/theme/palette'
 
@@ -121,7 +122,7 @@ export function ExerciseCard({ exercise, history, ready, collapsed = false, onUp
   if (exercise.kind === 'cardio') {
     return (
       <div ref={setNodeRef} style={sortableStyle}
-        className={`helix-card !p-2.5 ${dragClass}`}
+        className={`helix-card !p-2.5 !rounded-2xl shadow-[0_4px_22px_rgba(0,0,0,0.26)] ${dragClass}`}
       >
         <div className="flex items-center gap-2">
           {grip}
@@ -167,9 +168,20 @@ export function ExerciseCard({ exercise, history, ready, collapsed = false, onUp
   const summary = groups.map((g) => g.kind === 'single' ? g.set.reps : `${g.left?.set.reps ?? '–'}|${g.right?.set.reps ?? '–'}`).join('/')
   const topWeight = Math.max(...exercise.sets.map((s) => s.weightKg), 0)
 
+  // Programmed target for this lift — floor–ceiling (loaded) or hold seconds (timed).
+  const timedEx = isTimedExercise(exercise.name)
+  const repWindow = timedEx ? null : repWindowFor(exercise.name)
+  const holdTarget = timedEx ? holdTargetFor(exercise.name) : null
+  // Strict-ceiling coach: committed working sets that ALL hit the ceiling reps but
+  // only by dropping load — the ceiling is not earned; rebuild reps at the top load.
+  const committedWork = exercise.sets
+    .filter((s) => isSetCommitted(s) && s.setType !== 'warmup')
+    .map((s) => ({ weightKg: s.weightKg, reps: s.reps }))
+  const droppedCeiling = repWindow ? ceilingHitOnDroppedWeight(committedWork, repWindow.ceiling) : false
+
   return (
     <div ref={setNodeRef} style={sortableStyle}
-      className={`helix-card !p-3 ${dragClass}`}
+      className={`helix-card !p-3 !rounded-2xl shadow-[0_4px_22px_rgba(0,0,0,0.26)] ${dragClass}`}
     >
       {/* ── Header: grip + name + status + collapse ── */}
       <div className="flex items-center gap-2">
@@ -199,6 +211,26 @@ export function ExerciseCard({ exercise, history, ready, collapsed = false, onUp
                   title="Cleared the ceiling twice — add load this session"
                 >
                   ▲ {ready.timed ? 'HOLD+' : ready.suggestKg != null ? `${fmtKg(ready.suggestKg)}kg` : '+2.5kg'}
+                </span>
+              )}
+              {/* Programmed target — floor–ceiling, ceiling highlighted gold. */}
+              {repWindow && (
+                <span
+                  className="shrink-0 inline-flex items-center px-1.5 py-px rounded-md text-[9px] font-bold uppercase tracking-wide tabular-nums"
+                  style={{ color: MUTED, background: 'rgba(255,255,255,0.04)', border: `1px solid ${HAIRLINE}` }}
+                  title="Target rep range · floor–ceiling"
+                >
+                  {repWindow.floor}<span className="opacity-40 mx-px">–</span>
+                  <span style={{ color: READY_GOLD }}>{repWindow.ceiling}</span>
+                </span>
+              )}
+              {timedEx && holdTarget != null && (
+                <span
+                  className="shrink-0 inline-flex items-center px-1.5 py-px rounded-md text-[9px] font-bold uppercase tracking-wide tabular-nums"
+                  style={{ color: MUTED, background: 'rgba(255,255,255,0.04)', border: `1px solid ${HAIRLINE}` }}
+                  title="Target hold"
+                >
+                  <span style={{ color: READY_GOLD }}>{holdTarget}s</span>
                 </span>
               )}
             </div>
@@ -271,6 +303,12 @@ export function ExerciseCard({ exercise, history, ready, collapsed = false, onUp
             <p className="text-xs leading-snug flex items-center gap-1" style={{ color: READY_GOLD }}>
               <Target className="w-3 h-3 shrink-0" aria-hidden="true" />
               Ceiling cleared twice — add load: {fmtKg(ready.currentKg)} → {fmtKg(ready.suggestKg)}kg
+            </p>
+          )}
+          {droppedCeiling && (
+            <p className="text-xs leading-snug flex items-center gap-1" style={{ color: READY_GOLD }}>
+              <Target className="w-3 h-3 shrink-0" aria-hidden="true" />
+              Ceiling reps hit on a lighter drop — stick to your top weight and aim for floor reps first.
             </p>
           )}
           {unilateral && (

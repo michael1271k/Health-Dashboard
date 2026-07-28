@@ -46,13 +46,13 @@ export function useMuscleAnalytics(days = 30, era: 'all' | 'ppl' | 'axis' = 'all
       const from = new Date(Date.now() - days * 86400000).toISOString()
       const { data, error } = await supabase
         .from('workout_sets')
-        .select('weight_kg, reps, exercises!inner(muscle_groups), workout_sessions!inner(started_at)')
+        .select('id, weight_kg, reps, pair_id, exercises!inner(muscle_groups), workout_sessions!inner(started_at)')
         .gte('workout_sessions.started_at', from)
         .limit(4000) // ceiling so a long history never scans unbounded
       if (error) throw error
 
       const rows = ((data ?? []) as unknown as Array<{
-        weight_kg: number; reps: number
+        id: string; weight_kg: number; reps: number; pair_id: string | null
         exercises: { muscle_groups: string[] | null }
         workout_sessions: { started_at: string }
       }>)
@@ -61,20 +61,29 @@ export function useMuscleAnalytics(days = 30, era: 'all' | 'ppl' | 'axis' = 'all
 
       const agg = new Map<string, { sets: number; volume: number; last: string | null }>()
       const weekMap = new Map<string, Record<string, number>>()
+      // A unilateral exercise logs L + R as two rows sharing a pair_id — that is ONE
+      // set for volume analytics, not two. Dedupe the SET tally by pair_id (falling
+      // back to the row id for solo sets); volume still sums both sides.
+      const countedSets = new Set<string>()      // `${group}|${dedupeKey}`
+      const countedWeekly = new Set<string>()     // `${week}|${group}|${dedupeKey}`
 
       for (const r of rows) {
         const groups = new Set((r.exercises.muscle_groups ?? []).map((m) => MUSCLE_MAP[m.toLowerCase()]).filter(Boolean))
         if (!groups.size) continue
         const date = r.workout_sessions.started_at.slice(0, 10)
         const week = isoWeekStart(r.workout_sessions.started_at)
+        const dedupeKey = r.pair_id ?? r.id
         const vol = (r.weight_kg || 0) * (r.reps || 0)
         for (const g of groups) {
           const a = agg.get(g) ?? { sets: 0, volume: 0, last: null }
-          a.sets += 1; a.volume += vol
+          a.volume += vol
           if (!a.last || date > a.last) a.last = date
+          const setKey = `${g}|${dedupeKey}`
+          if (!countedSets.has(setKey)) { countedSets.add(setKey); a.sets += 1 }
           agg.set(g, a)
           const w = weekMap.get(week) ?? {}
-          w[g] = (w[g] ?? 0) + 1
+          const weekKey = `${week}|${g}|${dedupeKey}`
+          if (!countedWeekly.has(weekKey)) { countedWeekly.add(weekKey); w[g] = (w[g] ?? 0) + 1 }
           weekMap.set(week, w)
         }
       }

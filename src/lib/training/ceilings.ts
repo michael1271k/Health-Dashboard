@@ -116,6 +116,18 @@ export function clearedCeiling(sets: WorkingSet[], ceiling: number): boolean {
   return sets[0].weightKg > 0
 }
 
+/**
+ * The user hit the ceiling REPS but only by dropping weight across sets — a false
+ * "cleared". The ceiling is NOT earned (clearedCeiling already refuses it); the
+ * coaching cue is to stick to the top load and rebuild reps from the floor.
+ * Returns true when every set reached the ceiling yet the loads are not identical.
+ */
+export function ceilingHitOnDroppedWeight(sets: WorkingSet[], ceiling: number): boolean {
+  if (sets.length < 2) return false
+  if (!sets.every((s) => s.reps >= ceiling)) return false
+  return new Set(sets.map((s) => s.weightKg)).size > 1 && sets.some((s) => s.weightKg > 0)
+}
+
 export type ProgressionState = 'ready' | 'one-more' | 'no'
 
 export interface ProgressionVerdict {

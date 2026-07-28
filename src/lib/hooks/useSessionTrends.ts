@@ -63,7 +63,7 @@ export function useSessionTrends(exerciseIds: string[], eraDate: string, dayKey?
       // the Session Report.
       let q = supabase
         .from('workout_sets')
-        .select('exercise_id, weight_kg, reps, est_1rm_kg, set_type, exercises!inner(name), workout_sessions!inner(started_at)')
+        .select('exercise_id, weight_kg, reps, est_1rm_kg, set_type, side, pair_id, exercises!inner(name), workout_sessions!inner(started_at)')
         .in('exercise_id', exerciseIds)
       q = era === 'axis'
         ? q.gte('workout_sessions.started_at', `${HELIX_CUT_START}T00:00:00Z`)
@@ -74,13 +74,14 @@ export function useSessionTrends(exerciseIds: string[], eraDate: string, dayKey?
       const rows = ((data ?? []) as unknown as Array<{
         exercise_id: string; weight_kg: number; reps: number
         est_1rm_kg: number | null; set_type: string | null
+        side: string | null; pair_id: string | null
         exercises: { name: string }
         workout_sessions: { started_at: string }
       }>).filter((r) => eraForDate(r.workout_sessions.started_at.slice(0, 10)) === era)
 
       // exercise → session instant → working sets (est carried per set so a
       // stored est-1RM wins over the Epley fallback for loaded lifts).
-      type SetRow = { weightKg: number; reps: number; est: number | null }
+      type SetRow = { weightKg: number; reps: number; est: number | null; side: string | null; pairId: string | null }
       const byExercise = new Map<string, Map<string, SetRow[]>>()
       const nameOf = new Map<string, string>()
 
@@ -90,9 +91,29 @@ export function useSessionTrends(exerciseIds: string[], eraDate: string, dayKey?
         const at = r.workout_sessions.started_at
         const perEx = byExercise.get(r.exercise_id) ?? new Map<string, SetRow[]>()
         const bucket = perEx.get(at) ?? []
-        bucket.push({ weightKg: r.weight_kg, reps: r.reps, est: r.est_1rm_kg })
+        bucket.push({ weightKg: r.weight_kg, reps: r.reps, est: r.est_1rm_kg, side: r.side ?? null, pairId: r.pair_id ?? null })
         perEx.set(at, bucket)
         byExercise.set(r.exercise_id, perEx)
+      }
+
+      // A unilateral exercise logs L + R as two rows sharing a pair_id. For
+      // progression they are ONE set: differing L/R loads would otherwise trip the
+      // "single top weight" gate and never clear. Collapse each pair to a single
+      // representative — the RIGHT side leads (it sets the rep count; left matches
+      // but never exceeds), falling back to the higher-rep side.
+      const collapsePairs = (sets: SetRow[]): SetRow[] => {
+        const pairs = new Map<string, SetRow[]>()
+        const out: SetRow[] = []
+        for (const s of sets) {
+          if (!s.pairId) { out.push(s); continue }
+          const g = pairs.get(s.pairId) ?? []
+          g.push(s); pairs.set(s.pairId, g)
+        }
+        for (const g of pairs.values()) {
+          const rep = g.find((s) => s.side === 'R') ?? g.reduce((m, s) => (s.reps > m.reps ? s : m), g[0])
+          out.push(rep)
+        }
+        return out
       }
 
       const out: Record<string, ExerciseTrend> = {}
@@ -118,7 +139,8 @@ export function useSessionTrends(exerciseIds: string[], eraDate: string, dayKey?
 
         const latestSets = ordered[ordered.length - 1][1]
         const prevSets = ordered.length >= 2 ? ordered[ordered.length - 2][1] : null
-        const asWorking = (sets: SetRow[]): WorkingSet[] => sets.map((s) => ({ weightKg: s.weightKg, reps: s.reps }))
+        const asWorking = (sets: SetRow[]): WorkingSet[] =>
+          collapsePairs(sets).map((s) => ({ weightKg: s.weightKg, reps: s.reps }))
 
         // Loaded → programmed rep ceiling; timed → programmed hold target.
         const ceiling = timed ? holdTargetFor(name, dayKey) : (repWindowFor(name, dayKey)?.ceiling ?? null)
@@ -135,7 +157,7 @@ export function useSessionTrends(exerciseIds: string[], eraDate: string, dayKey?
           tonnage,
           tonnageDelta: prevSets ? tonnage - tonnageOf(prevSets) : null,
           topSet: topSet ? { weightKg: topSet.weightKg, reps: topSet.reps } : null,
-          setsAtCeiling: ceiling == null ? 0 : latestSets.filter((s) => s.reps >= ceiling).length,
+          setsAtCeiling: ceiling == null ? 0 : collapsePairs(latestSets).filter((s) => s.reps >= ceiling).length,
           progression: (timed ? timedProgressionVerdict : progressionVerdict)(
             prevSets ? [asWorking(prevSets), asWorking(latestSets)] : [asWorking(latestSets)],
             ceiling,
