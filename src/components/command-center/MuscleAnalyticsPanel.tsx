@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import dynamic from 'next/dynamic'
 import { PlanEraButton } from '@/components/charts/PlanEraButton'
+import { WeekToDateTargets } from './WeekToDateTargets'
 import { DeferredMount } from '@/components/fx/DeferredMount'
 import { WidgetBoundary } from '@/components/fx/WidgetBoundary'
 import { useEraFilter } from '@/lib/era/eraFilter'
@@ -53,13 +54,15 @@ export function MuscleAnalyticsPanel() {
             </div>
           </div>
           <div className="space-y-4 min-w-0">
+            {/* Most actionable first: week-to-date sets vs target (what to train next). */}
+            <WeekToDateTargets />
+            <MuscleAnalyticsSection days={days} era={era} />
             {/* [&>*]:min-w-0 lets each chart shrink below its Recharts intrinsic width. */}
             <div className="grid lg:grid-cols-2 gap-4 [&>*]:min-w-0">
               <BodyHeatmap days={days} era={era} />
               <RpeCalendar days={days} era={era} />
             </div>
             <VolumeStream days={days} era={era} />
-            <MuscleAnalyticsSection days={days} era={era} />
           </div>
         </div>
       </WidgetBoundary>
