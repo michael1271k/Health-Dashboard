@@ -26,7 +26,7 @@ export type EraFilter = 'all' | 'ppl' | 'axis'
 
 export const ERA_FILTER_META: Record<EraFilter, { label: string; color: string }> = {
   axis: { label: 'Helix 5.1',  color: '#8E9AAC' },
-  ppl:  { label: 'PPL Legacy', color: '#79808C' },
+  ppl:  { label: 'Push/Pull/Legs', color: '#79808C' },
   all:  { label: 'All',        color: '#3E9E7A' },
 }
 

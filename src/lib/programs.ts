@@ -26,7 +26,7 @@ export function eraForDate(dateISO: string): Era {
 }
 
 export const ERA_META: Record<Era, { label: string; short: string; color: string }> = {
-  ppl:  { label: 'PPL Legacy', short: 'PPL',     color: '#79808C' },
+  ppl:  { label: 'Push/Pull/Legs', short: 'PPL', color: '#79808C' },
   axis: { label: 'HELIX Era',  short: 'HELIX-5', color: '#8E9AAC' },
 }
 
@@ -177,7 +177,7 @@ export const HELIX4: Program = {
     { key: 'upper_b', label: 'Upper B', color: C.cbB, weekday: 4, exercises: [
       { name: 'DB Shoulder Press', sets: 3, cutSets: 3, wk1Kg: 28, reps: '8–10', muscles: ['shoulders', 'triceps'], compound: true },
       { name: 'Cable Lateral Raise', sets: 4, cutSets: 4, wk1Kg: 5, reps: '12–20', muscles: ['shoulders'] },
-      { name: 'Pec Deck', sets: 2, cutSets: 2, wk1Kg: 47.5, reps: '12–15', muscles: ['chest'], note: 'cut: rotates with Chest Press Machine' },
+      { name: 'Pec Deck', sets: 2, cutSets: 1, wk1Kg: 47.5, reps: '12–15', muscles: ['chest'], note: 'cut: rotates with Chest Press Machine' },
       { name: 'Seated Cable Row - Bar Wide Grip', sets: 3, cutSets: 2, wk1Kg: 35, reps: '10–12', muscles: ['back'], compound: true },
       { name: 'DB Hammer Curl', sets: 3, cutSets: 2, wk1Kg: 16, reps: '10–12', muscles: ['biceps', 'forearms'] },
       { name: 'Single Arm Triceps Pushdown (Cable)', sets: 2, cutSets: 2, wk1Kg: 5, reps: '12–15', muscles: ['triceps'], note: 'per arm' },
@@ -233,7 +233,7 @@ const PPL_LEGS: ProgramExercise[] = [
   { name: 'Hollow Rock', sets: 3, wk1Kg: null, reps: '38s', muscles: ['core'], note: 'seconds' },
 ]
 export const PPL_LEGACY: Program = {
-  id: 'ppl', label: 'PPL Legacy', era: 'ppl', drawer: true, legacy: true,
+  id: 'ppl', label: 'Push/Pull/Legs', era: 'ppl', drawer: true, legacy: true,
   blurb: 'Historical Push/Pull/Legs — Sun/Thu Push · Mon/Fri Pull · Tue Legs · Wed & Sat rest.',
   days: [
     { key: 'ppl_push_sun', label: 'Push', color: C.cbA, weekday: 0, exercises: PPL_PUSH },

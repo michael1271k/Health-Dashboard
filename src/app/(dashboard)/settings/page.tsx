@@ -11,8 +11,10 @@ import { phaseBadgeStyle } from '@/lib/phases'
 import { LiquidModal } from '@/components/ui/LiquidModal'
 import {
   HELIX_CUT_START, DEFAULT_PROGRAM_ID, PROGRAMS, getActiveProgramId,
-  setActiveProgramId, setActivePhase, activeProgram, type Program,
+  setActiveProgramId, setActivePhase, activePhase, activeProgram, type Program,
 } from '@/lib/programs'
+import { usePlanPhaseGoals } from '@/lib/hooks/usePlanPhaseGoals'
+import { parseRepWindow } from '@/lib/training/ceilings'
 import { AlertTriangle, Dumbbell, Calendar, Target } from 'lucide-react'
 import type { Tables } from '@/lib/supabase/types'
 
@@ -95,6 +97,9 @@ export default function SettingsPage() {
   const [activePlanId, setActivePlanId] = useState<string>(DEFAULT_PROGRAM_ID)
   const [previewPlan, setPreviewPlan] = useState<Program | null>(null)
   const [confirmSwitch, setConfirmSwitch] = useState(false)
+  // User-edited per-plan+phase macro overrides (plan_phase_goals). `resolve` merges
+  // an override over the static phaseGoalsFor default.
+  const { resolve: resolvePhaseGoals, saveOverride } = usePlanPhaseGoals()
 
   useEffect(() => {
     async function load() {
@@ -244,8 +249,8 @@ export default function SettingsPage() {
    */
   async function applyPhase(mode: NutritionMode) {
     // Per-PLAN phase goals — PPL's cut is leaner than Helix's, so source the
-    // numbers for the ACTIVE plan, not the global Helix default.
-    const p = phaseGoalsFor(activePlanId, mode)
+    // numbers for the ACTIVE plan (and honour any hand-edited override).
+    const p = resolvePhaseGoals(activePlanId, mode)
     setActivePhase(mode) // localStorage mirror — activeProgram() reads it synchronously
     await save({
       calorie_goal: p.calorieGoal,
@@ -258,6 +263,26 @@ export default function SettingsPage() {
     await saveTargetWeight(p.targetWeightKg)
     await saveBodyTargets(p)
     await savePhaseMeta(mode)
+  }
+
+  /**
+   * A manual macro edit is saved BOTH to the live goals (today's targets) AND as a
+   * persistent override for the active plan+phase, so switching away and back
+   * reloads the hand-edited numbers instead of the static preset. The whole macro
+   * set is written each time so a single-field edit never nulls the others.
+   */
+  async function persistMacroEdit(key: 'calorie_goal' | 'protein_goal_g' | 'carbs_goal_g' | 'fat_goal_g', value: number) {
+    const phase = activePhase() as NutritionMode
+    await save({ [key]: value, goal_preset: phase })
+    await saveOverride({
+      planId: activePlanId, phase,
+      patch: {
+        calorieGoal: key === 'calorie_goal' ? value : goals.calorie_goal,
+        proteinGoalG: key === 'protein_goal_g' ? value : goals.protein_goal_g,
+        carbsGoalG: key === 'carbs_goal_g' ? value : goals.carbs_goal_g,
+        fatGoalG: key === 'fat_goal_g' ? value : goals.fat_goal_g,
+      },
+    })
   }
 
   /** Persist the phase's body-composition targets (BF % + muscle mass).
@@ -366,7 +391,7 @@ export default function SettingsPage() {
         <div className="text-[10px] uppercase tracking-widest text-muted -mb-1.5">Phase</div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
           {(['cut', 'maintenance', 'bulk'] as NutritionMode[]).map((mode) => {
-            const p = phaseGoalsFor(activePlanId, mode)
+            const p = resolvePhaseGoals(activePlanId, mode)
             const active = goals.goal_preset === mode
             const glow = phaseBadgeStyle(MODE_TO_PHASE[mode], active)
             return (
@@ -443,13 +468,17 @@ export default function SettingsPage() {
                 type="number"
                 step={step}
                 value={goals[key]}
-                onChange={(e) => setGoals((g) => ({ ...g, [key]: Number(e.target.value), goal_preset: null }))}
-                onBlur={() => save({ [key]: goals[key], goal_preset: null })}
+                onChange={(e) => setGoals((g) => ({ ...g, [key]: Number(e.target.value) }))}
+                onBlur={() => persistMacroEdit(key, goals[key])}
                 className={inputCls}
               />
             </div>
           ))}
         </div>
+        <p className="text-[11px] text-muted">
+          Edits save to the <span className="text-text/80 font-medium">{PROGRAMS[activePlanId]?.label ?? 'active plan'} · {activePhase()}</span> phase
+          and reload when you switch back to it.
+        </p>
       </section>
 
       {/* Preferences */}
@@ -565,8 +594,10 @@ export default function SettingsPage() {
       <LiquidModal open={!!previewPlan} onClose={() => { setPreviewPlan(null); setConfirmSwitch(false) }}
         title={previewPlan ? previewPlan.label : undefined} accent="#8E9AAC">
         {previewPlan && (() => {
-          const phaseMode = (goals.goal_preset as NutritionMode) || 'cut'
-          const pp = phaseGoalsFor(previewPlan.id, phaseMode)
+          // Honour the SELECTED phase (the phase card / active phase), not a hardcoded
+          // 'cut' — the goals + routines below reflect whichever phase is active.
+          const phaseMode = (goals.goal_preset as NutritionMode) || (activePhase() as NutritionMode)
+          const pp = resolvePhaseGoals(previewPlan.id, phaseMode)
           const isActive = previewPlan.id === activePlanId
           // Phase-resolved days: the CURRENT phase's set counts (cut trims volume,
           // drops bulk-only lifts) — the same resolver the live logger runs.
@@ -648,14 +679,29 @@ export default function SettingsPage() {
                 </div>
                 <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
                   {routines.map(({ day: d, weekdays }) => (
-                    <div key={d.key}>
-                      <div className="flex items-baseline gap-1.5">
+                    <div key={d.key} className="rounded-lg bg-white/[0.015] border border-white/[0.05] px-2.5 py-2">
+                      <div className="flex items-baseline gap-1.5 mb-1">
                         <span className="text-[11px] font-bold" style={{ color: d.color }}>{d.label}</span>
                         <span className="text-[9px] text-muted">{weekdays.map((w) => WD_SHORT[w]).join(' & ')}</span>
                         {d.sub && <span className="text-[9px] text-muted">· {d.sub}</span>}
                       </div>
-                      <div className="text-[10px] text-muted leading-relaxed">
-                        {d.exercises.map((e) => `${e.name} ${e.sets}×${e.reps}`).join(' · ')}
+                      {/* Clean vertical list — name + set×(floor–ceiling), ceiling gold.
+                          No weights (those live only in the live logger). */}
+                      <div className="space-y-0.5">
+                        {d.exercises.map((e) => {
+                          const w = parseRepWindow(e.reps)
+                          return (
+                            <div key={e.name} className="flex items-baseline justify-between gap-2 text-[11px] leading-snug">
+                              <span className="text-text/80 truncate">{e.name}</span>
+                              <span className="helix-num text-muted shrink-0 tabular-nums">
+                                {e.sets}×{' '}
+                                {w
+                                  ? <>{w.floor}<span className="opacity-40">–</span><span style={{ color: '#D4AF37' }}>{w.ceiling}</span></>
+                                  : e.reps}
+                              </span>
+                            </div>
+                          )
+                        })}
                       </div>
                     </div>
                   ))}
