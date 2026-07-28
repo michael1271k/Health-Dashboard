@@ -14,6 +14,9 @@ import { eraForDate } from '@/lib/programs'
 import { fmtVolume } from '@/lib/utils/units'
 import { tapSuccess } from '@/lib/native/haptics'
 import type { useSessionDraft, CommitResult } from '@/lib/hooks/useSessionDraft'
+import type { PrAxis } from '@/lib/sessions/save'
+
+const PR_AXIS_LABEL: Record<PrAxis, string> = { weight: 'WT', reps: 'REPS', volume: 'VOL', e1rm: '1RM' }
 
 /**
  * The Command Center deck — the ONE logging surface. Hosted fullscreen on
@@ -68,9 +71,15 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
               <div className="rounded-xl px-3 py-2.5 space-y-1"
                 style={{ background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.38)' }}>
                 {result.newPRs.map((pr) => (
-                  <p key={pr.exerciseName} className="text-sm flex items-center gap-1.5" style={{ color: '#D4AF37' }}>
+                  <p key={pr.exerciseName} className="text-sm flex items-center gap-1.5 flex-wrap" style={{ color: '#D4AF37' }}>
                     <Trophy className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                    {pr.exerciseName} — est. 1RM {Math.round(pr.est1rm)}kg
+                    <span>{pr.exerciseName}</span>
+                    {pr.axes.map((ax) => (
+                      <span key={ax} className="text-[9px] font-bold uppercase tracking-wide px-1 py-px rounded"
+                        style={{ background: 'rgba(212,175,55,0.16)', border: '1px solid rgba(212,175,55,0.5)' }}>
+                        {PR_AXIS_LABEL[ax]}
+                      </span>
+                    ))}
                   </p>
                 ))}
               </div>

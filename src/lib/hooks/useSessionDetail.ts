@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase/client'
 import { MUSCLE_MAP } from '@/lib/hooks/useMuscleAnalytics'
 import { lookupMuscles } from '@/lib/exercises/muscleMap'
 import { toLandmarkMuscle, LANDMARK_MUSCLES, type LandmarkMuscle } from '@/lib/training/landmarks'
+import type { PrAxis } from '@/lib/sessions/save'
 
 export interface DetailSet {
   setNumber: number
@@ -30,6 +31,8 @@ export interface DetailExercise {
   topKg: number
   volumeKg: number
   bestEst1rm: number | null
+  /** PR axes set on this exercise in THIS session (weight/reps/volume/e1rm). */
+  prAxes: PrAxis[]
 }
 
 export interface SessionDetail {
@@ -147,7 +150,7 @@ export function useSessionDetail(sessionId: string | null) {
             order: r.exercise_order ?? 999,
             muscleGroups: groups,
             isCompound: r.exercises.is_compound,
-            sets: [], workingSets: 0, topKg: 0, volumeKg: 0, bestEst1rm: null,
+            sets: [], workingSets: 0, topKg: 0, volumeKg: 0, bestEst1rm: null, prAxes: [],
           }
           byEx.set(r.exercise_id, ex)
         }
@@ -177,6 +180,20 @@ export function useSessionDetail(sessionId: string | null) {
 
       const exercises = [...byEx.values()].sort((a, b) => a.order - b.order)
       exercises.forEach((e) => { e.volumeKg = Math.round(e.volumeKg) })
+
+      // PR axes achieved in THIS session, from the ledger (self-healing: a missing
+      // personal_records table just yields no axis chips — is_pr trophies still show).
+      const prByName = new Map<string, PrAxis[]>()
+      const { data: prRows } = await supabase
+        .from('personal_records')
+        .select('exercise_key, axis')
+        .eq('session_id', s.id)
+      for (const row of (prRows ?? []) as Array<{ exercise_key: string; axis: PrAxis }>) {
+        const list = prByName.get(row.exercise_key) ?? []
+        if (!list.includes(row.axis)) list.push(row.axis)
+        prByName.set(row.exercise_key, list)
+      }
+      exercises.forEach((e) => { e.prAxes = prByName.get(e.name) ?? [] })
 
       const muscleSets = LANDMARK_MUSCLES
         .map((muscle) => ({ muscle, sets: muscleAgg.get(muscle)?.size ?? 0 }))

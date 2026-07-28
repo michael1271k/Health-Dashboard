@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase/client'
 import { invalidateWorkoutData } from '@/lib/query/workoutKeys'
 import { logicalTodayISO, hoursAwakeToday } from '@/lib/utils/day'
 import { DRAFT_STORAGE_KEY, buildCommitPayload, cascadeSetEdit, isSetCommitted, peekSessionDraft, type SessionDraft, type DraftSet } from '@/lib/sessions/draft'
+import type { PrAxis } from '@/lib/sessions/save'
 
 const COMMIT_TIMEOUT_MS = 25_000
 
@@ -41,7 +42,7 @@ export interface CommitResult {
   totalVolumeKg: number
   setCount: number
   prCount: number
-  newPRs: Array<{ exerciseName: string; est1rm: number }>
+  newPRs: Array<{ exerciseName: string; est1rm: number; axes: PrAxis[] }>
   duplicate?: boolean
 }
 
