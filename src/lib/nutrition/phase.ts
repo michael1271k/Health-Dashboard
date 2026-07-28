@@ -18,10 +18,19 @@ export function derivePhase(calories: number | null | undefined): Phase | null {
   return 'bulk'
 }
 
+// GLOBAL phase colours — standardized across dashboard, settings, day chips and
+// analytics, independent of the active plan: Cut is always red/orange, Bulk always
+// green, Maintenance steel. Import PHASE_COLORS anywhere a phase needs a colour.
+export const PHASE_COLORS: Record<Phase, string> = {
+  cut:         '#E0653C', // red/orange — deficit
+  maintenance: '#8E9AAC', // steel — balanced
+  bulk:        '#3E9E7A', // green — surplus
+}
+
 export const PHASE_META: Record<Phase, { label: string; color: string }> = {
-  cut:         { label: 'Cut',   color: '#8E9AAC' }, // cyan — lean/cool
-  maintenance: { label: 'Maint', color: '#3E9E7A' }, // mint — balanced
-  bulk:        { label: 'Bulk',  color: '#D4AF37' }, // amber — surplus
+  cut:         { label: 'Cut',   color: PHASE_COLORS.cut },
+  maintenance: { label: 'Maint', color: PHASE_COLORS.maintenance },
+  bulk:        { label: 'Bulk',  color: PHASE_COLORS.bulk },
 }
 
 /**

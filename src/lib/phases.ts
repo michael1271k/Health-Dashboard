@@ -104,11 +104,14 @@ export function getWeekPhase(weekStartISO: string): WeekPhase | null {
 export function phaseBadgeStyle(kind: PhaseKind, selected: boolean, era: 'ppl' | 'helix' = 'helix'): import('react').CSSProperties {
   // Bioluminescent spectrum; the legacy PPL era renders desaturated so the two
   // Cut eras can never be visually confused.
+  // Standardized globally: Cut = red/orange, Bulk = green, Maintenance = steel
+  // (peak keeps its bright teal — it's a distinct kind, not part of the cut/bulk/
+  // maint colour convention).
   const palette: Record<PhaseKind, string> = {
-    cut: '62,224,255',          // plankton cyan
+    cut: '224,101,60',          // red/orange (#E0653C)
     peak: '22,245,195',         // living teal
-    bulk: '67,245,155',         // mint green
-    maintenance: '139,124,255', // abyss violet
+    bulk: '62,158,122',         // green (#3E9E7A)
+    maintenance: '142,154,172', // steel (#8E9AAC)
   }
   // Legacy PPL era renders desaturated gray so the two Cut eras never confuse —
   // EXCEPT the Thailand deload (the sole PPL 'maintenance' phase), which gets a
