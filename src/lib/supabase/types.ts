@@ -105,7 +105,6 @@ export interface Database {
           bone_mineral_pct?: number | null
           skeletal_muscle_mass_kg?: number | null
           fat_free_mass_kg?: number | null
-          waist_hip_ratio?: number | null
           visceral_fat?: number | null
           bmr?: number | null
           created_at: string

@@ -184,23 +184,22 @@ export interface BodyMetricsPatch {
   bmr?: number | null
   bmi?: number | null
   // ── Extended InBody columns (self-heal until migrated) ──
+  // Circumference (waist_cm / hip_cm / waist_hip_ratio) is NOT tracked — the
+  // columns are dropped in the DB and must never be re-introduced here.
   protein_percent?: number | null
-  waist_cm?: number | null
-  hip_cm?: number | null
   muscle_mass_kg?: number | null
   water_mass_kg?: number | null
   fat_mass_kg?: number | null
   bone_mineral_kg?: number | null
   protein_mass_kg?: number | null
   fat_free_mass_kg?: number | null
-  waist_hip_ratio?: number | null
 }
 
 /** Columns added by the Phase-2 InBody engine — written separately so a DB that
  *  hasn't run the paste-SQL still saves the core metrics. */
 const EXTENDED_BODY_KEYS = new Set<keyof BodyMetricsPatch>([
-  'protein_percent', 'waist_cm', 'hip_cm', 'muscle_mass_kg', 'water_mass_kg',
-  'fat_mass_kg', 'bone_mineral_kg', 'protein_mass_kg', 'fat_free_mass_kg', 'waist_hip_ratio',
+  'protein_percent', 'muscle_mass_kg', 'water_mass_kg',
+  'fat_mass_kg', 'bone_mineral_kg', 'protein_mass_kg', 'fat_free_mass_kg',
 ])
 
 /** daily_logs column → its body_composition counterpart. */

@@ -20,8 +20,6 @@ export interface BodyCompInput {
   water_percent?: number | null
   bone_mineral?: number | null // percentage
   protein_percent?: number | null
-  waist_cm?: number | null
-  hip_cm?: number | null
 }
 
 export interface BodyCompDerived {
@@ -31,7 +29,6 @@ export interface BodyCompDerived {
   water_mass_kg?: number
   bone_mineral_kg?: number
   protein_mass_kg?: number
-  waist_hip_ratio?: number
 }
 
 const num = (v: number | null | undefined): number | undefined =>
@@ -55,8 +52,6 @@ export function deriveBodyComp(input: BodyCompInput): BodyCompDerived {
   const waterPct = num(input.water_percent)
   const bonePct = num(input.bone_mineral)
   const proteinPct = num(input.protein_percent)
-  const waist = num(input.waist_cm)
-  const hip = num(input.hip_cm)
 
   const out: BodyCompDerived = {}
 
@@ -82,8 +77,6 @@ export function deriveBodyComp(input: BodyCompInput): BodyCompDerived {
   } else if (ffm != null && waterMass != null && boneMass != null) {
     out.protein_mass_kg = r2(Math.max(0, ffm - waterMass - boneMass))
   }
-
-  if (waist != null && hip != null && hip > 0) out.waist_hip_ratio = Math.round((waist / hip) * 1000) / 1000
 
   return out
 }

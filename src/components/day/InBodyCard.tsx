@@ -7,8 +7,9 @@ import { deriveBodyComp, type BodyCompInput, type BodyCompDerived } from '@/lib/
 
 const TEAL = '#E0703C'
 
-/** Editable inputs — the scale readings + tape measures. Masses are NOT entered;
- *  they're derived from Weight × % (see the read-only Composition strip). */
+/** Editable inputs — the scale readings. Masses are NOT entered; they're derived
+ *  from Weight × % (see the read-only Composition strip). Circumference (waist /
+ *  hip) is deliberately absent: it isn't tracked. */
 const INPUTS: Array<{ key: keyof BodyMetricsPatch; label: string; unit: string }> = [
   { key: 'weight_kg',      label: 'Weight',   unit: 'kg' },
   { key: 'bmi',            label: 'BMI',      unit: '' },
@@ -19,8 +20,6 @@ const INPUTS: Array<{ key: keyof BodyMetricsPatch; label: string; unit: string }
   { key: 'bone_mineral',   label: 'Bone Min', unit: '%' },
   { key: 'visceral_fat',   label: 'Visceral', unit: 'lvl' },
   { key: 'bmr',            label: 'BMR',      unit: 'kcal' },
-  { key: 'waist_cm',       label: 'Waist',    unit: 'cm' },
-  { key: 'hip_cm',         label: 'Hip',      unit: 'cm' },
 ]
 
 /** Read-only masses computed live from the entries above. */
@@ -30,7 +29,6 @@ const DERIVED: Array<{ key: keyof BodyCompDerived; label: string; unit: string }
   { key: 'water_mass_kg',    label: 'Water',    unit: 'kg' },
   { key: 'protein_mass_kg',  label: 'Protein',  unit: 'kg' },
   { key: 'fat_free_mass_kg', label: 'Fat-Free', unit: 'kg' },
-  { key: 'waist_hip_ratio',  label: 'W : H',    unit: '' },
 ]
 
 /**
@@ -63,7 +61,6 @@ export function InBodyCard({ date, log, defaultOpen = false }: { date: string; l
     return {
       weight_kg: g('weight_kg'), body_fat_pct: g('body_fat_pct'), muscle_percent: g('muscle_percent'),
       water_percent: g('water_percent'), bone_mineral: g('bone_mineral'), protein_percent: g('protein_percent'),
-      waist_cm: g('waist_cm'), hip_cm: g('hip_cm'),
     }
   }
   const derived = deriveBodyComp(currentRecord())

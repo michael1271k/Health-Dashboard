@@ -28,19 +28,20 @@ describe('deriveBodyComp — Weight × % → mass', () => {
     expect(d.protein_mass_kg).toBe(16)    // 80 × 0.20
   })
 
-  it('computes waist-to-hip ratio', () => {
-    const d = deriveBodyComp({ waist_cm: 80, hip_cm: 100 })
-    expect(d.waist_hip_ratio).toBe(0.8)
-  })
-
   it('returns only the fields whose inputs are present', () => {
     const d = deriveBodyComp({ muscle_percent: 45 }) // no weight → nothing derivable
     expect(d).toEqual({})
   })
 
   it('ignores non-finite / null inputs', () => {
-    const d = deriveBodyComp({ weight_kg: 80, body_fat_pct: null, hip_cm: 0, waist_cm: 80 })
+    const d = deriveBodyComp({ weight_kg: 80, body_fat_pct: null })
     expect(d.fat_mass_kg).toBeUndefined()
-    expect(d.waist_hip_ratio).toBeUndefined() // hip 0 guarded
+  })
+
+  // Circumference is NOT tracked: waist_cm / hip_cm / waist_hip_ratio were
+  // purged from the engine, the UI and the DB. This guards the removal.
+  it('never derives a waist-to-hip ratio', () => {
+    const d = deriveBodyComp({ weight_kg: 80, body_fat_pct: 18 } as Parameters<typeof deriveBodyComp>[0])
+    expect('waist_hip_ratio' in d).toBe(false)
   })
 })
