@@ -6,6 +6,7 @@
  */
 import type { SplitDay } from '@/lib/types/workout'
 import type { SaveWorkoutInput } from '@/lib/sessions/schema'
+import { sessionVolumeKg } from '@/lib/sessions/volume'
 
 export interface DraftSet {
   weightKg: number
@@ -98,18 +99,19 @@ const LEGACY_DRAFT_KEY = 'helix_session_draft:v1'
  *  microloads produce genuine half-kg volumes (e.g. 12102.5 kg) that must not be
  *  rounded away to an integer. */
 export function draftTotals(draft: SessionDraft): { volumeKg: number; sets: number } {
-  let volumeKg = 0; let sets = 0
+  const committed: DraftSet[] = []
   for (const ex of draft.exercises) {
     if (ex.kind === 'cardio') continue
     for (const s of ex.sets) {
       // Only COMPLETED (green) sets count — an unchecked template set is not
       // performed. Warmups/drop sets DO count toward volume + set count.
       if (!isSetCommitted(s)) continue
-      sets += 1
-      volumeKg += s.weightKg * s.reps
+      committed.push(s)
     }
   }
-  return { volumeKg: Math.round(volumeKg * 10) / 10, sets }
+  // Unilateral L/R pairs are scored at the weaker side (see sessionVolumeKg), so
+  // the live deck's running total matches what the commit will store.
+  return { volumeKg: sessionVolumeKg(committed), sets: committed.length }
 }
 
 /**

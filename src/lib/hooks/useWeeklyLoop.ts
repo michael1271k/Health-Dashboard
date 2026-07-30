@@ -7,7 +7,9 @@ import { logicalTodayISO } from '@/lib/utils/day'
 import {
   buildWeeklyExport, weekTotals,
   type ExportDay, type ExportSession, type ExportExercise, type ExportDoms, type ExportBodyComp,
+  type ExportCardio,
 } from '@/lib/reports/weeklyExport'
+import { sessionVolumeKg } from '@/lib/sessions/volume'
 import { activeProgram, eraForDate, isTrainingDay } from '@/lib/programs'
 import { repWindowFor } from '@/lib/training/ceilings'
 import { lookupMuscles } from '@/lib/exercises/muscleMap'
@@ -54,11 +56,12 @@ async function fetchRange(weekStart: string, weekEnd: string) {
   const startInstant = new Date(`${weekStart}T00:00:00`).toISOString()
   const endInstant = new Date(`${isoAddDays(weekEnd, 1)}T00:00:00`).toISOString()
 
-  const [logs, scores, nutrition, sessions, sets, water, supps, doms, bodyComp] = await Promise.all([
+  // Active Energy, Day Score and Battery are deliberately NOT fetched — none of
+  // the three appears in the export any more (see weeklyExport.ts).
+  const [logs, nutrition, sessions, sets, water, supps, doms, bodyComp, cardio] = await Promise.all([
     supabase.from('daily_logs')
-      .select('date, weight_kg, steps, distance_m, active_energy, training_minutes, sleep_minutes, water_ml, avg_rest_heart_rate, hrv_ms, blood_oxygen')
+      .select('date, weight_kg, steps, distance_m, training_minutes, sleep_minutes, water_ml, avg_rest_heart_rate, hrv_ms, blood_oxygen')
       .gte('date', weekStart).lte('date', weekEnd),
-    supabase.from('daily_scores').select('date, score, battery_pct').gte('date', weekStart).lte('date', weekEnd),
     supabase.from('nutrition_entries').select('date, calories, protein_g, carbs_g, fat_g')
       .eq('meal_type', 'daily').gte('date', weekStart).lte('date', weekEnd),
     supabase.from('workout_sessions')
@@ -74,16 +77,18 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     supabase.from('water_intake').select('date, amount_ml').gte('date', weekStart).lte('date', weekEnd),
     supabase.from('supplement_log').select('date, item_key').eq('taken', true).gte('date', weekStart).lte('date', weekEnd),
     supabase.from('doms_logs').select('date, muscle_group, severity').gte('date', weekStart).lte('date', weekEnd),
-    // Body composition — its own query so an un-migrated column (waist_hip_ratio)
-    // can't take down the daily-logs fetch above; on error it's simply omitted.
+    // Body composition — its own query so an un-migrated column can't take down
+    // the daily-logs fetch above; on error it's simply omitted.
     supabase.from('daily_logs')
-      .select('date, weight_kg, bmi, body_fat_pct, muscle_percent, water_percent, bone_mineral, visceral_fat, bmr, lean_mass_kg, waist_hip_ratio')
+      .select('date, weight_kg, bmi, body_fat_pct, muscle_percent, water_percent, bone_mineral, visceral_fat, bmr, lean_mass_kg')
       .gte('date', weekStart).lte('date', weekEnd),
+    // Walks / runs — a separate ledger; exported flagged as already counted.
+    supabase.from('cardio_logs').select('date, kind, distance_m, duration_min, kcal')
+      .gte('date', weekStart).lte('date', weekEnd).order('date', { ascending: true }),
   ])
 
   return {
     logs: (logs.data ?? []) as Array<Record<string, number | string | null>>,
-    scores: (scores.data ?? []) as Array<Record<string, number | string | null>>,
     nutrition: (nutrition.data ?? []) as Array<Record<string, number | string | null>>,
     sessions: (sessions.data ?? []) as unknown as RawSession[],
     sets: (sets.data ?? []) as unknown as RawSet[],
@@ -92,6 +97,10 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     // doms_logs may not be migrated yet — an error just means no soreness rows.
     doms: (doms.error ? [] : (doms.data ?? [])) as Array<{ date: string; muscle_group: string; severity: number }>,
     bodyComp: (bodyComp.error ? [] : (bodyComp.data ?? [])) as Array<Record<string, number | string | null>>,
+    // cardio_logs may not be migrated yet — an error just means no walks.
+    cardio: (cardio.error ? [] : (cardio.data ?? [])) as Array<{
+      date: string; kind: string; distance_m: number | null; duration_min: number | null; kcal: number | null
+    }>,
   }
 }
 
@@ -101,7 +110,7 @@ type RangeData = Awaited<ReturnType<typeof fetchRange>>
 function toDays(weekStart: string, d: RangeData): ExportDay[] {
   const byDate = <T extends { date?: unknown }>(rows: T[]) =>
     new Map(rows.map((r) => [r.date as string, r]))
-  const logs = byDate(d.logs), scores = byDate(d.scores), nutri = byDate(d.nutrition)
+  const logs = byDate(d.logs), nutri = byDate(d.nutrition)
 
   const waterByDate = new Map<string, number>()
   for (const w of d.water) waterByDate.set(w.date, (waterByDate.get(w.date) ?? 0) + w.amount_ml)
@@ -112,7 +121,6 @@ function toDays(weekStart: string, d: RangeData): ExportDay[] {
     const date = isoAddDays(weekStart, i)
     const l = logs.get(date) as Record<string, number | null> | undefined
     const nt = nutri.get(date) as Record<string, number | null> | undefined
-    const sc = scores.get(date) as Record<string, number | null> | undefined
     return {
       date, weekdayLabel: WD[i], isTrainingDay: isTrainingDay(date),
       weightKg: l?.weight_kg ?? null,
@@ -122,7 +130,6 @@ function toDays(weekStart: string, d: RangeData): ExportDay[] {
       fatG: nt?.fat_g ?? null,
       steps: l?.steps ?? null,
       distanceM: l?.distance_m ?? null,
-      activeKcal: l?.active_energy ?? null,
       trainingMin: l?.training_minutes ?? null,
       sleepMin: l?.sleep_minutes ?? null,
       deepMin: null,   // stage split lives in sleep_sessions; totals suffice here
@@ -131,8 +138,6 @@ function toDays(weekStart: string, d: RangeData): ExportDay[] {
       hrvMs: l?.hrv_ms ?? null,
       waterMl: waterByDate.get(date) ?? l?.water_ml ?? null,
       supplementsTaken: suppsByDate.get(date) ?? null,
-      score: sc?.score ?? null,
-      batteryPct: sc?.battery_pct ?? null,
     }
   })
 }
@@ -162,10 +167,22 @@ function toSessions(d: RangeData): ExportSession[] {
     }
     // A unilateral pair (shared pair_id) is ONE set to failure, not two.
     const failurePairs = new Set(mine.filter((r) => r.set_type === 'failure').map((r) => r.pair_id ?? r.id))
+    // Volume is RECOMPUTED from the set rows rather than read from
+    // `total_volume_kg`, so historical sessions written before the asymmetry
+    // rule existed still export a non-inflated number (an L/R pair scores at the
+    // weaker side — see sessionVolumeKg). Includes warmups, same as the app.
+    const allSets = d.sets.filter((r) => r.session_id === s.id)
+    const volumeKg = allSets.length
+      ? sessionVolumeKg(allSets.map((r) => ({
+          weightKg: r.weight_kg, reps: r.reps,
+          side: r.side === 'L' || r.side === 'R' ? r.side : null,
+          pairId: r.pair_id,
+        })))
+      : s.total_volume_kg
     return {
       date: s.started_at.slice(0, 10),
       label: (s.day_key && program.days.find((x) => x.key === s.day_key)?.label) ?? s.split_day,
-      volumeKg: s.total_volume_kg, setCount: s.set_count,
+      volumeKg, setCount: s.set_count,
       failureSets: failurePairs.size,
       durationMin: s.duration_min, avgBpm: s.avg_bpm, caloriesBurned: s.calories_burned,
       exercises: [...byName.values()],
@@ -191,11 +208,18 @@ function toBodyComp(d: RangeData): ExportBodyComp[] {
       bmr: (r.bmr as number | null) ?? null,
       boneMineral: (r.bone_mineral as number | null) ?? null,
       leanMassKg: (r.lean_mass_kg as number | null) ?? null,
-      waistHipRatio: (r.waist_hip_ratio as number | null) ?? null,
     }))
     // Only days with a metric beyond bare weight (the daily table already lists weight).
-    .filter((b) => [b.bmi, b.bodyFatPct, b.musclePercent, b.waterPercent, b.visceralFat, b.bmr, b.boneMineral, b.leanMassKg, b.waistHipRatio].some((v) => v != null))
+    .filter((b) => [b.bmi, b.bodyFatPct, b.musclePercent, b.waterPercent, b.visceralFat, b.bmr, b.boneMineral, b.leanMassKg].some((v) => v != null))
     .sort((a, b) => a.date.localeCompare(b.date))
+}
+
+/** Cardio ledger rows → the export's nested walk/run lines. */
+function toCardio(d: RangeData): ExportCardio[] {
+  return d.cardio.map((c) => ({
+    date: c.date, kind: c.kind,
+    distanceM: c.distance_m, durationMin: c.duration_min, kcal: c.kcal,
+  }))
 }
 
 /**
@@ -247,6 +271,7 @@ export function useWeeklyExport(weekStart = weekStartOf(logicalTodayISO())) {
         sleepGoalHours: goals?.sleep_goal_hours ?? null,
         days, sessions, volumeByMuscle, doms,
         bodyComp: toBodyComp(cur),
+        cardio: toCardio(cur),
         supplementProtocol: { training: supplementProtocolLines(true, customs), rest: supplementProtocolLines(false, customs) },
         previous: weekTotals(toDays(prevStart, prev), toSessions(prev)),
       })

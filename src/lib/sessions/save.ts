@@ -8,6 +8,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database, InsertRow } from '@/lib/supabase/types'
 import type { SaveWorkoutPayload } from '@/lib/types/workout'
 import { countCommittedSets } from '@/lib/sessions/schema'
+import { sessionVolumeKg } from '@/lib/sessions/volume'
 import { epley1RM } from '@/lib/utils/epley'
 import { isReentryWeek } from '@/lib/programs'
 import { isTimedExercise } from '@/lib/exercises/timed'
@@ -46,10 +47,11 @@ export async function saveSession(
 ): Promise<SaveSessionResult> {
   // Warmups count toward volume + set count (they still never earn a PR).
   const isWarmup = (s: (typeof payload.sets)[number]) => s.setType === 'warmup'
-  const totalVolumeKg = payload.sets.reduce((sum, s) => sum + s.weightKg * s.reps, 0)
+  const totalVolumeKg = sessionVolumeKg(payload.sets)
   // Set count: a unilateral L/R split is ONE set tracked as two sub-sets sharing
-  // a `pairId` (see countCommittedSets). Volume still sums both sides (both are
-  // real work); only the count de-duplicates.
+  // a `pairId` (see countCommittedSets). Volume counts both sides — but at the
+  // WEAKER side's numbers, so asymmetry can't inflate the total (see
+  // sessionVolumeKg); only the count de-duplicates.
   const setCount = countCommittedSets(payload.sets)
   const exerciseIds = [...new Set(payload.sets.map((s) => s.exerciseId))]
 

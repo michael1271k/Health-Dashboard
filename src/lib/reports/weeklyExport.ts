@@ -10,9 +10,15 @@
  *  · Every number is one the app actually measured. Nothing is derived, averaged
  *    into existence, or estimated to fill a column. NO estimated 1RM — a derived
  *    figure has no place in a raw-data export.
- *  · Unilateral work is split per side (L/R weight · reps · failure).
- *  · Line-by-line TEXT only — no markdown tables. One line per day (all its
- *    numbers), with the deep body-comp reading nested under its weigh-in day.
+ *  · Unilateral work is split per side, L and R on ONE line per numbered set.
+ *  · Line-by-line TEXT only — no markdown tables. One line per day, in a FIXED
+ *    order — sleep → intake → water → steps — with the deep body-comp reading
+ *    and the day's walks/cardio nested under it.
+ *
+ * DELIBERATE OMISSIONS. Active Energy is not exported: HealthKit inflates it
+ * (700+ kcal days that never happened) and a wrong number is worse than none.
+ * Day Score and Battery are not exported either — both are HELIX's own derived
+ * opinions, not measurements, and this file is raw data only.
  */
 
 export interface ExportDay {
@@ -26,7 +32,6 @@ export interface ExportDay {
   fatG: number | null
   steps: number | null
   distanceM: number | null
-  activeKcal: number | null
   trainingMin: number | null
   sleepMin: number | null
   deepMin: number | null
@@ -35,8 +40,19 @@ export interface ExportDay {
   hrvMs: number | null
   waterMl: number | null
   supplementsTaken: number | null
-  score: number | null
-  batteryPct: number | null
+}
+
+/**
+ * A walk / run from the cardio ledger. Exported for completeness but explicitly
+ * flagged: its steps and calories are ALREADY inside the day's step count and
+ * energy, so a reader must not add it on top.
+ */
+export interface ExportCardio {
+  date: string
+  kind: string                 // walk | run
+  distanceM: number | null
+  durationMin: number | null
+  kcal: number | null
 }
 
 /** One working set, in order. `side` is null on bilateral sets. */
@@ -90,7 +106,6 @@ export interface ExportBodyComp {
   bmr: number | null
   boneMineral: number | null
   leanMassKg: number | null
-  waistHipRatio: number | null
 }
 
 /** The same aggregate shape for this week and the one before it. */
@@ -121,6 +136,8 @@ export interface WeeklyExportInput {
   doms: ExportDoms[]
   /** Full body-composition readings for the week's weigh-in days (optional). */
   bodyComp?: ExportBodyComp[]
+  /** Walks / runs from the cardio ledger, nested under their day. */
+  cardio?: ExportCardio[]
   /** Static protocol — what to take on training vs rest days (derived from the plan). */
   supplementProtocol?: { training: string[]; rest: string[] }
   /** Aggregates for the PREVIOUS week, for the week-over-week block. */
@@ -243,8 +260,17 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
   const bodyByDate = new Map<string, ExportBodyComp>()
   for (const b of input.bodyComp ?? []) bodyByDate.set(b.date, b)
 
+  // Walks / runs per date (nested under their day, flagged as already counted).
+  const cardioByDate = new Map<string, ExportCardio[]>()
+  for (const c of input.cardio ?? []) {
+    const arr = cardioByDate.get(c.date) ?? []
+    arr.push(c)
+    cardioByDate.set(c.date, arr)
+  }
+
   // ── Readable per-day log (one line per day, all data · no tables) ──
-  // Deep body-comp nests directly under the day it was measured.
+  // FIXED ORDER: sleep → intake (food) → water → steps, then the vitals and the
+  // day's workout. The deep InBody reading and any walks nest under the day.
   L.push('## Days')
   L.push('')
   for (const d of days) {
@@ -253,18 +279,25 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
       ? ` (${n(d.proteinG)}P/${n(d.carbsG)}C/${n(d.fatG)}F)` : ''
     L.push(
       `- **${d.weekdayLabel} ${d.date}** · ${d.isTrainingDay ? 'Train' : 'Rest'} · `
-      + `${n(d.weightKg, 1)} kg · ${n(d.calories)} kcal${macros} · ${n(d.steps)} steps · `
-      + `${n(d.activeKcal)} active · sleep ${sleep(d.sleepMin)} · RHR ${n(d.restingHr)} · `
-      + `HRV ${n(d.hrvMs)} · water ${n(d.waterMl == null ? null : d.waterMl / 1000, 1)} L · ${workout}`,
+      + `sleep ${sleep(d.sleepMin)} · intake ${n(d.calories)} kcal${macros} · `
+      + `water ${n(d.waterMl == null ? null : d.waterMl / 1000, 1)} L · ${n(d.steps)} steps · `
+      + `RHR ${n(d.restingHr)} · HRV ${n(d.hrvMs)} · ${workout}`,
     )
     const b = bodyByDate.get(d.date)
     if (b) {
       L.push(
-        `    InBody · ${n(b.weightKg, 1)} kg · BMI ${n(b.bmi, 1)} · BF ${n(b.bodyFatPct, 1)}% · `
+        `    InBody · weight ${n(b.weightKg, 1)} kg · BMI ${n(b.bmi, 1)} · BF ${n(b.bodyFatPct, 1)}% · `
         + `muscle ${n(b.musclePercent, 1)}% · water ${n(b.waterPercent, 1)}% · visceral ${n(b.visceralFat)} · `
-        + `BMR ${n(b.bmr)} · bone ${n(b.boneMineral, 1)}% · lean ${n(b.leanMassKg, 1)} kg · `
-        + `W:H ${b.waistHipRatio == null ? '—' : b.waistHipRatio.toFixed(2)}`,
+        + `BMR ${n(b.bmr)} · bone ${n(b.boneMineral, 1)}% · lean mass ${n(b.leanMassKg, 1)} kg`,
       )
+    }
+    for (const c of cardioByDate.get(d.date) ?? []) {
+      const bits = [
+        c.durationMin != null ? `${n(c.durationMin)} min` : null,
+        c.distanceM != null ? `${n(c.distanceM / 1000, 2)} km` : null,
+        c.kcal != null ? `${n(c.kcal)} kcal` : null,
+      ].filter(Boolean).join(' · ')
+      L.push(`    ${c.kind}${bits ? ` · ${bits}` : ''} (Already accounted for in daily steps and calories)`)
     }
   }
   L.push('')
