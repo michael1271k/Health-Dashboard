@@ -12,6 +12,7 @@ import { useEraFilter } from '@/lib/era/eraFilter'
 import { EraFilterPills } from '@/components/era/EraFilterPills'
 import { FileSystemBrowser } from '@/components/reports/FileSystemBrowser'
 import { PathfinderTimeline } from '@/components/pathfinder/PathfinderTimeline'
+import { WidgetBoundary } from '@/components/fx/WidgetBoundary'
 import { AnalyticsPanel } from '@/components/progression/AnalyticsPanel'
 import { VitalsGroups } from '@/components/insights/VitalsGroups'
 import { ScheduleShortcut } from '@/components/day/ScheduleShortcut'
@@ -48,8 +49,12 @@ function PathfinderInner() {
 
   const router = useRouter()
   const { era } = useEraFilter()
-  const today = new Date()
-  const [month, setMonth] = useState({ y: today.getUTCFullYear(), m: today.getUTCMonth() })
+  // Lazy initialiser: `new Date()` must not run on every render (it made the
+  // month state a fresh object each pass and re-keyed the activity query).
+  const [month, setMonth] = useState(() => {
+    const now = new Date()
+    return { y: now.getUTCFullYear(), m: now.getUTCMonth() }
+  })
   const [calOpen, setCalOpen] = useState(false)
   const [filesWeek, setFilesWeek] = useState<string | null>(null)
 
@@ -64,7 +69,10 @@ function PathfinderInner() {
     return Array.from({ length: 6 }, (_, w) => Array.from({ length: 7 }, (_, d) => addDays(gridStart, w * 7 + d)))
   }, [month])
 
-  const { data: activity } = useMonthActivity(iso(weeks[0][0]), iso(weeks[5][6]))
+  // Calendar-only data: gated on the sheet actually being open. It used to fire
+  // on mount, so opening Momentum straight after launch stacked this on top of
+  // the timeline + continuum + weekly-export fetches in one cold burst.
+  const { data: activity } = useMonthActivity(iso(weeks[0][0]), iso(weeks[5][6]), calOpen)
   const monthLabel = new Date(Date.UTC(month.y, month.m, 1)).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
 
   const openDay = (d: string) => {
@@ -115,7 +123,14 @@ function PathfinderInner() {
 
           <ScheduleShortcut />
 
-          <PathfinderTimeline />
+          {/* Blast radius: the timeline mounts the heaviest subtree in the app
+              (week capsules → continuum days → per-week export builder). Without
+              a boundary a single throw in there escaped to global-error, which
+              nukes the service worker and hard-reloads — the "Momentum crashes
+              the app" report. Now it degrades to a retry card. */}
+          <WidgetBoundary label="Timeline" minHeight={200}>
+            <PathfinderTimeline />
+          </WidgetBoundary>
 
           {/* ── Calendar-jump sheet ── */}
           <Sheet open={calOpen} onClose={() => setCalOpen(false)} title={monthLabel}>
@@ -187,9 +202,9 @@ function PathfinderInner() {
           </Sheet>
         </>
       ) : view === 'analytics' ? (
-        <AnalyticsPanel />
+        <WidgetBoundary label="Analytics" minHeight={200}><AnalyticsPanel /></WidgetBoundary>
       ) : (
-        <VitalsGroups />
+        <WidgetBoundary label="Vitals" minHeight={200}><VitalsGroups /></WidgetBoundary>
       )}
     </div>
   )

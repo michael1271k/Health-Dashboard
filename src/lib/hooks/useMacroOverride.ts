@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase/client'
 import { authedFetch } from '@/lib/utils/authedFetch'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { derivePhase } from '@/lib/nutrition/phase'
+import { manualHkUuid } from '@/lib/nutrition/manualEntry'
 
 export interface MacroValues {
   calories: number
@@ -22,9 +23,15 @@ const CASCADE_KEYS: string[][] = [
 /**
  * Manual macro override for one day. Writes the canonical daily nutrition row
  * (the DB trigger mirrors macros into daily_logs, so Vitals stays correct),
- * marks it `hk_uuid='manual'` so a later HealthKit re-sync won't clobber the
- * hand-entered numbers, then force-recomputes that day's score and revalidates
- * every dependent surface (score, weekly trends, coach).
+ * marks it with the per-day manual sentinel so a later HealthKit re-sync won't
+ * clobber the hand-entered numbers, then force-recomputes that day's score and
+ * revalidates every dependent surface (score, weekly trends, coach).
+ *
+ * The sentinel MUST be per-day: `hk_uuid` is UNIQUE, so the old shared literal
+ * `'manual'` made the second manual day (and a double-tapped save) fail with
+ * `duplicate key value violates unique constraint "nutrition_entries_hk_uuid_key"`.
+ * See {@link manualHkUuid}. `mutationFn` is also guarded against a concurrent
+ * second click by React Query — but the write is idempotent either way now.
  */
 export function useMacroOverride(date: string) {
   const qc = useQueryClient()
@@ -37,7 +44,7 @@ export function useMacroOverride(date: string) {
         user_id: user.id,
         date,
         meal_type: 'daily',
-        hk_uuid: 'manual', // sentinel: HealthKit ingest skips a manual-override day
+        hk_uuid: manualHkUuid(date), // per-day sentinel: HealthKit ingest skips it
         logged_at: `${date}T12:00:00Z`,
         calories,
         protein_g: Math.max(0, vals.protein_g),

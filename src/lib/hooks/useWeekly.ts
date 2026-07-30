@@ -70,10 +70,15 @@ export interface MonthActivity {
   dataDates: Set<string>
 }
 
-/** Dates (YYYY-MM-DD) in [from,to] that have a workout / any logged score. */
-export function useMonthActivity(from: string, to: string) {
+/**
+ * Dates (YYYY-MM-DD) in [from,to] that have a workout / any logged score.
+ * `enabled` lets a caller hold the query until the calendar is actually opened,
+ * so a screen that only *contains* a calendar doesn't pay for it on mount.
+ */
+export function useMonthActivity(from: string, to: string, enabled = true) {
   return useQuery({
     queryKey: ['month_activity', from, to],
+    enabled,
     queryFn: async (): Promise<MonthActivity> => {
       const [{ data: sessions }, { data: scores }] = await Promise.all([
         supabase.from('workout_sessions').select('started_at')

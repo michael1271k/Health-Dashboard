@@ -2,6 +2,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/lib/supabase/types'
 import { derivePhase } from '@/lib/nutrition/phase'
+import { isManualHkUuid } from '@/lib/nutrition/manualEntry'
 import { logicalTodayInTZ } from '@/lib/utils/day'
 import { MIN_VALID_WEIGHT_KG } from '@/lib/utils/units'
 import { nightWindow, fallbackBedTime } from '@/lib/sleep/nightWindow'
@@ -263,11 +264,14 @@ export async function ingestDailyLog(
       if (v !== undefined) micros[k] = k === 'vitaminD' ? Math.round(v * 40) : v
     }
     const hasMicros = Object.keys(micros).length > 0
-    // A hand-entered day (hk_uuid='manual', set by the double-tap override) wins —
-    // never let a HealthKit re-sync overwrite the user's manual macro correction.
+    // A hand-entered day (hk_uuid 'manual-<date>', set by the double-tap override)
+    // wins — never let a HealthKit re-sync overwrite the user's manual macro
+    // correction. The legacy bare 'manual' sentinel is still honoured; it was
+    // replaced by a per-day value because `nutrition_entries.hk_uuid` carries a
+    // UNIQUE index, so one shared literal could only ever exist on ONE day.
     const { data: existingDaily } = await db.from('nutrition_entries')
       .select('hk_uuid').eq('user_id', userId).eq('date', date).eq('meal_type', 'daily').maybeSingle()
-    if ((existingDaily as { hk_uuid?: string | null } | null)?.hk_uuid === 'manual') {
+    if (isManualHkUuid((existingDaily as { hk_uuid?: string | null } | null)?.hk_uuid)) {
       result.results.nutrition = { ok: true, action: 'ignored', error: 'manual override present — HealthKit macros skipped' }
     } else {
     const baseRow = {

@@ -16,15 +16,22 @@ const MAX_PULL = 110   // rubber-band ceiling
 const SLOP = 14        // px of vertical travel before the pull is "claimed"
 
 /**
- * Global, native-feeling pull-to-refresh for touch devices — mounted once and
- * active on every tab. It refreshes in place (no navigation): on release past
- * the threshold it pulls fresh Apple Health (native) and revalidates all queries.
+ * Global refresh — mounted once, active on every tab, two entry points:
  *
- * Critically, it does NOT transform content or claim the gesture until travel is
- * clearly a downward pull (`dy > SLOP && dy > |dx|·1.5`). Plain taps and
- * horizontal swipes at the top of the screen are never intercepted — that was
- * the "top-of-screen touches don't register" bug. Bails while an overlay is open,
- * mid-scroll, or on the fullscreen /session deck. Pointer-coarse only.
+ *  · TOUCH: a native-feeling pull-to-refresh. It does NOT transform content or
+ *    claim the gesture until travel is clearly a downward pull
+ *    (`dy > SLOP && dy > |dx|·1.5`), so plain taps and horizontal swipes at the
+ *    top of the screen are never intercepted — that was the "top-of-screen
+ *    touches don't register" bug. Bails while an overlay is open, mid-scroll, or
+ *    on the fullscreen /session deck.
+ *
+ *  · WEB / POINTER-FINE: there is no pull gesture with a mouse, so the same
+ *    refresh is reachable from a fixed button (and ⌘/Ctrl-R is a full page
+ *    reload, which is not the same thing — it drops in-memory state and re-runs
+ *    the whole bundle rather than revalidating the DB).
+ *
+ * Both paths run the identical routine: pull fresh Apple Health on native, then
+ * revalidate the health-derived queries and flash "Updated HH:MM".
  */
 export function PullToRefresh({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient()
@@ -35,6 +42,30 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
   const [pull, setPull] = useState(0)
   const [refreshing, setRefreshing] = useState(false)
   const [doneAt, setDoneAt] = useState<number | null>(null) // shows "Updated HH:MM" briefly
+  // Coarse pointer = touch device. Resolved after mount so SSR and the first
+  // client paint agree (a media query has no server-side answer).
+  const [coarse, setCoarse] = useState(false)
+  useEffect(() => {
+    try { setCoarse(window.matchMedia('(pointer: coarse)').matches) } catch { /* non-fatal */ }
+  }, [])
+
+  /** The one refresh routine, shared by the pull gesture and the web button. */
+  const runRefresh = useCallback(async () => {
+    if (refreshing) return
+    setRefreshing(true)
+    void tapLight()
+    try {
+      if (Capacitor.isNativePlatform()) await forceHealthKitSync(() => invalidateHealthData(queryClient)).catch(() => {})
+    } finally {
+      setRefreshing(false)
+      setPull(0)
+      // Revalidate ONLY the health-derived surfaces (not the whole cache) — the
+      // spinner is already released, so refetches happen off the critical path.
+      invalidateHealthData(queryClient)
+      setDoneAt(Date.now())
+      window.setTimeout(() => setDoneAt(null), 1800)
+    }
+  }, [refreshing, queryClient])
 
   const onTouchStart = useCallback((e: TouchEvent) => {
     claimed.current = false
@@ -67,29 +98,15 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
     const wasClaimed = claimed.current
     claimed.current = false
     if (wasClaimed && pull >= THRESHOLD && !refreshing) {
-      setRefreshing(true)
       setPull(THRESHOLD)
-      void tapLight()
-      try {
-        // Refresh in place: pull fresh Apple Health (native) + recompute score.
-        if (Capacitor.isNativePlatform()) await forceHealthKitSync(() => invalidateHealthData(queryClient)).catch(() => {})
-      } finally {
-        setRefreshing(false)
-        setPull(0)
-        // Revalidate ONLY the health-derived surfaces (not the whole cache) — the
-        // spinner is already released, so refetches happen off the critical path.
-        invalidateHealthData(queryClient)
-        // Flash an "Updated HH:MM" confirmation, then fade it.
-        setDoneAt(Date.now())
-        window.setTimeout(() => setDoneAt(null), 1800)
-      }
+      await runRefresh()
     } else {
       setPull(0)
     }
-  }, [pull, refreshing, queryClient])
+  }, [pull, refreshing, runRefresh])
 
   useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia('(pointer: coarse)').matches) return
+    if (!coarse) return
     document.addEventListener('touchstart', onTouchStart, { passive: true })
     document.addEventListener('touchmove', onTouchMove, { passive: true })
     document.addEventListener('touchend', onTouchEnd)
@@ -98,7 +115,7 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
       document.removeEventListener('touchmove', onTouchMove)
       document.removeEventListener('touchend', onTouchEnd)
     }
-  }, [onTouchStart, onTouchMove, onTouchEnd])
+  }, [coarse, onTouchStart, onTouchMove, onTouchEnd])
 
   const progress = Math.min(1, pull / THRESHOLD)
   const done = doneAt != null
@@ -141,6 +158,29 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
           </span>
         </span>
       </div>
+      {/* Web refresh — a mouse has no pull gesture, so the same routine gets a
+          fixed affordance. Touch devices never see it (they pull instead). */}
+      {!coarse && (
+        <button
+          type="button"
+          onClick={() => { void runRefresh() }}
+          disabled={refreshing}
+          aria-label="Refresh data"
+          title="Refresh data from the database"
+          className="fixed z-[70] bottom-6 right-6 flex items-center justify-center rounded-full
+                     w-11 h-11 transition-transform active:scale-95 disabled:opacity-60"
+          style={{
+            background: 'rgba(10,11,14,0.82)',
+            backdropFilter: 'blur(16px) saturate(160%)',
+            WebkitBackdropFilter: 'blur(16px) saturate(160%)',
+            border: `1px solid ${ACCENT}55`,
+            boxShadow: `0 6px 20px rgba(0,0,0,0.5), 0 0 16px ${ACCENT}22`,
+          }}
+        >
+          <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} style={{ color: ACCENT }} />
+        </button>
+      )}
+
       <div
         style={{
           transform: `translate3d(0, ${pull}px, 0)`,
