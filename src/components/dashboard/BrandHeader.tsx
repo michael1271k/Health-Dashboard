@@ -88,28 +88,35 @@ export function BrandHeader() {
         </p>
       )}
 
-      {/* Brand line — plan + phase tags on the LEFT (data-driven), then the HELIX
-          wordmark. Cut/Bulk/Maint colours are standardized globally (PHASE_COLORS). */}
-      <div className="flex items-center gap-x-2">
-        {tags && (
-          <span
-            className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider shrink-0"
-            style={{ color: tags.planColor, background: `${tags.planColor}1f`, border: `1px solid ${tags.planColor}55` }}
-          >
-            {tags.planLabel}
-          </span>
-        )}
-        {tags && (
-          <span
-            className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider shrink-0"
-            style={{ color: PHASE_COLORS[tags.phase], background: `${PHASE_COLORS[tags.phase]}1f`, border: `1px solid ${PHASE_COLORS[tags.phase]}55` }}
-          >
-            {PHASE_META[tags.phase].label}
-          </span>
-        )}
-        <h1 className="text-fluid-3xl leading-none ml-1">
+      {/* Brand line — the HELIX wordmark anchors the FAR LEFT; the data-driven
+          plan + phase tags sit flush against the FAR RIGHT, so the eye reads
+          identity → context across the full width instead of a left-huddled
+          cluster. Cut/Bulk/Maint colours are standardized globally (PHASE_COLORS).
+          `items-baseline` hangs the chips off the wordmark's baseline; the tags
+          get a hairline top rule on desktop so they read as a considered
+          right-hand block rather than floating pills. */}
+      <div className="flex items-baseline justify-between gap-3">
+        <h1 className="text-fluid-3xl leading-none shrink-0">
           <span className="helix-wordmark font-heading font-extrabold tracking-[0.22em] leading-none">HELIX</span>
         </h1>
+        <div className="flex items-center gap-x-1.5 shrink-0">
+          {tags && (
+            <span
+              className="px-2 py-1 rounded-md text-[9px] font-bold uppercase tracking-wider shrink-0"
+              style={{ color: tags.planColor, background: `${tags.planColor}1f`, border: `1px solid ${tags.planColor}55` }}
+            >
+              {tags.planLabel}
+            </span>
+          )}
+          {tags && (
+            <span
+              className="px-2 py-1 rounded-md text-[9px] font-bold uppercase tracking-wider shrink-0"
+              style={{ color: PHASE_COLORS[tags.phase], background: `${PHASE_COLORS[tags.phase]}1f`, border: `1px solid ${PHASE_COLORS[tags.phase]}55` }}
+            >
+              {PHASE_META[tags.phase].label}
+            </span>
+          )}
+        </div>
       </div>
     </header>
   )

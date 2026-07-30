@@ -243,7 +243,18 @@ export default function DailyNexusPage() {
         <CompletenessArc parts={parts} />
       </section>
 
+      {/* Nexus widget order is fixed: Daily Score (the readiness band above) →
+          Sleep → Fuel → everything else. */}
       <div className="grid grid-cols-2 gap-3">
+        {/* Sleep & recovery — the premium stage-ribbon visual (reused from the
+            dashboard), with the sleep-debt gauge folded in below. */}
+        <section className="helix-card col-span-2 sm:col-span-1 space-y-3" style={{ borderColor: `${VIOLET}26` }}>
+          <h3 className="font-heading font-semibold text-fluid-sm text-text flex items-center gap-1.5"><Moon className="w-3.5 h-3.5" style={{ color: VIOLET }} /> Sleep &amp; Recovery</h3>
+          <SleepStages sleep={daySleep ?? null} log={log ?? null} goalHours={goals?.sleep_goal_hours ?? null} />
+          {/* Sleep debt folded in — no longer a standalone oversized card */}
+          <SleepDebtGauge compact />
+        </section>
+
         {/* Fuel — double-tap to manually override the day's macros */}
         <section className="helix-card col-span-2 sm:col-span-1 space-y-2" style={{ borderColor: `${EMBER}26`, cursor: 'pointer' }}
           onClick={tapFuel} title="Double-tap to edit macros">
@@ -265,15 +276,6 @@ export default function DailyNexusPage() {
           date={date}
           initial={{ calories: n?.calories ?? 0, protein_g: n?.protein_g ?? 0, carbs_g: n?.carbs_g ?? 0, fat_g: n?.fat_g ?? 0 }}
         />
-
-        {/* Sleep & recovery — the premium stage-ribbon visual (reused from the
-            dashboard), with the sleep-debt gauge folded in below. */}
-        <section className="helix-card col-span-2 sm:col-span-1 space-y-3" style={{ borderColor: `${VIOLET}26` }}>
-          <h3 className="font-heading font-semibold text-fluid-sm text-text flex items-center gap-1.5"><Moon className="w-3.5 h-3.5" style={{ color: VIOLET }} /> Sleep &amp; Recovery</h3>
-          <SleepStages sleep={daySleep ?? null} log={log ?? null} goalHours={goals?.sleep_goal_hours ?? null} />
-          {/* Sleep debt folded in — no longer a standalone oversized card */}
-          <SleepDebtGauge compact />
-        </section>
 
         {/* Hydration — glowing DNA double-helix filling with intake */}
         <div className="col-span-2 sm:col-span-1">

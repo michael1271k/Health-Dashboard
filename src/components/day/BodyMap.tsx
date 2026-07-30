@@ -21,11 +21,28 @@ const num = (v: unknown): number | undefined =>
 // ONE closed path — head joined to neck, arms flaring off the torso, legs split by a
 // real gap (no stick-figure limbs).
 const RIGHT: [number, number][] = [
+  // head → neck
   [50, 4], [58, 5], [64, 11], [65, 19], [63, 27], [58, 32], [55, 35], [55, 40],
-  [63, 40], [74, 44], [83, 52], [86, 59], [87, 74], [84, 92], [81, 108], [79, 114],
-  [75, 113], [72, 97], [69, 79], [67, 63], [64, 57], [66, 73], [63, 91], [58, 106],
-  [56, 110], [61, 114], [63, 120], [62, 127], [60, 152], [58, 180], [56, 204],
-  [54, 209], [52, 206], [51, 180], [50.5, 150], [50, 124], [50, 116],
+  // trapezius → deltoid cap. The delt/upper-arm junction is pulled IN (80–82 vs
+  // the old 83–87): the arm used to flare wider than the shoulder it hangs from,
+  // which read as a cartoon rather than an anatomical model.
+  [63, 40], [72, 44], [80, 52], [82, 60],
+  // outer arm → hand
+  [82, 74], [79.5, 92], [77, 108], [75, 114],
+  // back up the inner arm to the armpit
+  [71.5, 113], [69, 97], [67.5, 79], [66.5, 62], [64, 57],
+  // lat flare → waist → abdomen/pelvis, widened to carry the leg mass below
+  // (a narrow pelvis under heavy quads reads as a wasp waist, not a lifter).
+  [67, 73], [64.5, 90], [61.5, 102], [61, 110],
+  // outer leg — glute tie-in, quad sweep, knee, calf belly, ankle taper.
+  // He doesn't skip leg day: thigh half-width goes 11.5 → 18, calf 7 → 12.
+  [65, 116], [68, 124], [68.5, 133], [66, 145], [62.5, 153],
+  [64.5, 163], [64, 173], [60, 189], [57.5, 203],
+  // foot
+  [55, 209], [52.5, 206],
+  // inner leg back up to the crotch apex. The gap opens with the legs — a
+  // hairline seam under heavy quads reads as one slab, not two limbs.
+  [54, 185], [54.5, 158], [54, 133], [50, 116],
 ]
 const SILHOUETTE = (() => {
   const fmt = ([x, y]: [number, number]) => `${x} ${y}`
@@ -39,8 +56,14 @@ const SILHOUETTE = (() => {
 const CONTOURS = [
   'M 34 50 Q 43 63 50 59', 'M 66 50 Q 57 63 50 59', // pecs
   'M 50 58 L 50 104',                                 // sternum → linea alba
-  'M 44 72 L 56 72', 'M 44 83 L 56 83', 'M 44 94 L 56 94', // ab ticks
-  'M 18 53 Q 25 46 32 51', 'M 82 53 Q 75 46 68 51', // deltoid caps
+  'M 43 72 L 57 72', 'M 43 83 L 57 83', 'M 43 94 L 57 94', // ab ticks (wider abdomen)
+  'M 21 53 Q 27 46 32 51', 'M 79 53 Q 73 46 68 51', // deltoid caps (narrowed)
+  'M 39 104 L 35 113', 'M 61 104 L 65 113',         // oblique → hip tie-in
+  // Leg detail — without these the widened legs render as a slab. Quad sweep
+  // (vastus lateralis), adductor line, then the calf belly.
+  'M 56 122 Q 63 138 61 152', 'M 44 122 Q 37 138 39 152',
+  'M 51.5 124 Q 54 138 55 150', 'M 48.5 124 Q 46 138 45 150',
+  'M 57 162 Q 62 172 58.5 185', 'M 43 162 Q 38 172 41.5 185',
 ]
 
 /** Standard BIA reference bands (% of body weight) — light guidance, not a diagnosis. */
