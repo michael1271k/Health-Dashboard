@@ -11,10 +11,27 @@ import { useState } from 'react'
  * object without .get()/.has(), crashing the first render (the "*.get is not
  * a function" refresh-crash family). Those queries (useExerciseMap,
  * useExerciseMemory, useExerciseSetHistory, useSupplements) are cheap to
- * refetch — just never persist them. Top-level check is sufficient: all our
- * Map/Set payloads are the query data itself.
+ * refetch — just never persist them.
+ *
+ * THE CHECK USED TO BE TOP-LEVEL ONLY, on the assumption that "all our Map/Set
+ * payloads are the query data itself". `useMonthActivity` broke that assumption:
+ * its data was `{ workoutDates: Set, dataDates: Set }`, an object CONTAINING
+ * Sets, so the guard passed it, both Sets persisted as `{}`, and the Momentum
+ * calendar died on cold open with `workoutDates.has is not a function`.
+ *
+ * It now walks nested values too, so the next hook that hides a Map/Set one
+ * level down silently skips persistence instead of shipping a launch crash.
+ * (`useMonthActivity` itself returns plain arrays now — this is the net.)
+ *
+ * Depth is capped: query payloads here are shallow view models, and an
+ * unbounded walk would scan large row arrays on every dehydrate.
  */
-const isJsonSafe = (data: unknown) => !(data instanceof Map) && !(data instanceof Set)
+function isJsonSafe(data: unknown, depth = 3): boolean {
+  if (data instanceof Map || data instanceof Set) return false
+  if (depth <= 0 || data === null || typeof data !== 'object') return true
+  if (Array.isArray(data)) return data.every((v) => isJsonSafe(v, depth - 1))
+  return Object.values(data as Record<string, unknown>).every((v) => isJsonSafe(v, depth - 1))
+}
 
 export function QueryProvider({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -72,11 +89,12 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
       persistOptions={{
         persister,
         maxAge: 24 * 60 * 60 * 1000,
-        // v18: the sleep-window fix rewrote every daily_scores row. Devices
-        // holding the pre-fix persisted cache kept painting the OLD row
-        // (sleep_score null → "Awaiting Sleep Data", battery 52%) even though
-        // the DB was already correct. Busting discards those stale blobs.
-        buster: 'v18',
+        // v19: MUST bump. Devices are holding a `month_activity` entry whose
+        // workoutDates/dataDates persisted as `{}` (serialized Sets). Those
+        // fields are arrays now, and restoring the old blob into the new shape
+        // is precisely the launch the fix has to survive. Busting guarantees a
+        // clean slate rather than relying on the runtime guard alone.
+        buster: 'v19',
         dehydrateOptions: {
           shouldDehydrateQuery: (q) => defaultShouldDehydrateQuery(q) && isJsonSafe(q.state.data),
         },

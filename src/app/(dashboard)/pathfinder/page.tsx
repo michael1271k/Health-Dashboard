@@ -3,7 +3,7 @@
 import { Suspense, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { GitBranch, LineChart, HeartPulse, CalendarDays, ChevronLeft, ChevronRight, FolderOpen, Scale } from 'lucide-react'
-import { useMonthActivity, useGymReports } from '@/lib/hooks/useWeekly'
+import { useMonthActivity, monthActivitySets, useGymReports } from '@/lib/hooks/useWeekly'
 import { useReports } from '@/lib/hooks/useReports'
 import { useWeightTrend } from '@/lib/hooks/useCharts'
 import { getWeekPhase, phaseBadgeStyle } from '@/lib/phases'
@@ -73,6 +73,9 @@ function PathfinderInner() {
   // on mount, so opening Momentum straight after launch stacked this on top of
   // the timeline + continuum + weekly-export fetches in one cold burst.
   const { data: activity } = useMonthActivity(iso(weeks[0][0]), iso(weeks[5][6]), calOpen)
+  // The hook returns JSON-safe arrays (a persisted Set rehydrates as a plain
+  // object with no .has — the cold-open calendar crash); Sets are rebuilt here.
+  const activitySets = useMemo(() => monthActivitySets(activity), [activity])
   const monthLabel = new Date(Date.UTC(month.y, month.m, 1)).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
 
   const openDay = (d: string) => {
@@ -166,8 +169,8 @@ function PathfinderInner() {
                         {row.map((day) => {
                           const ds = iso(day)
                           const inMonth = day.getUTCMonth() === month.m
-                          const hasWorkout = activity?.workoutDates.has(ds)
-                          const hasScore = activity?.dataDates.has(ds)
+                          const hasWorkout = activitySets.workouts.has(ds)
+                          const hasScore = activitySets.data.has(ds)
                           return (
                             <button key={ds} onClick={() => { setCalOpen(false); openDay(ds) }}
                               title={`Open ${ds}`}

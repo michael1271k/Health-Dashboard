@@ -65,9 +65,21 @@ export function useProgramStart() {
   })
 }
 
+/**
+ * ARRAYS, NOT SETS — deliberately.
+ *
+ * This payload is persisted to localStorage by the query persister, and JSON has
+ * no Set: a `Set` dehydrates to `{}` and rehydrates as a plain object with no
+ * `.has()`. That is exactly what crashed the Momentum calendar on cold open —
+ * `T.workoutDates.has is not a function`. QueryProvider's `isJsonSafe` guard only
+ * looked at the TOP-level value, so an object *containing* Sets sailed through it.
+ *
+ * Callers build their own `Set` from these arrays (see `monthActivitySets`), which
+ * keeps the cached blob honest AND keeps lookups O(1).
+ */
 export interface MonthActivity {
-  workoutDates: Set<string>
-  dataDates: Set<string>
+  workoutDates: string[]
+  dataDates: string[]
 }
 
 /**
@@ -85,14 +97,24 @@ export function useMonthActivity(from: string, to: string, enabled = true) {
           .gte('started_at', `${from}T00:00:00Z`).lt('started_at', `${to}T23:59:59Z`),
         supabase.from('daily_scores').select('date').gte('date', from).lte('date', to),
       ])
-      const workoutDates = new Set<string>(
-        ((sessions ?? []) as Array<{ started_at: string }>).map((s) => s.started_at.slice(0, 10)),
-      )
-      const dataDates = new Set<string>(
-        ((scores ?? []) as Array<{ date: string }>).map((s) => s.date),
-      )
-      return { workoutDates, dataDates }
+      return {
+        workoutDates: [...new Set(((sessions ?? []) as Array<{ started_at: string }>).map((s) => s.started_at.slice(0, 10)))],
+        dataDates: [...new Set(((scores ?? []) as Array<{ date: string }>).map((s) => s.date))],
+      }
     },
     staleTime: 60_000,
   })
+}
+
+/**
+ * Lookup sets for a MonthActivity payload. `Array.isArray` guards a cache blob
+ * written by an older build, where these fields were serialized Sets (`{}`) —
+ * `new Set({})` would throw "object is not iterable" and re-crash the calendar
+ * on the one launch that matters, the first one after the update.
+ */
+export function monthActivitySets(a: MonthActivity | undefined): { workouts: Set<string>; data: Set<string> } {
+  return {
+    workouts: new Set(Array.isArray(a?.workoutDates) ? a.workoutDates : []),
+    data: new Set(Array.isArray(a?.dataDates) ? a.dataDates : []),
+  }
 }
