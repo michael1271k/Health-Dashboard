@@ -71,6 +71,7 @@ export async function POST(req: Request) {
       dayKey: input.dayKey,
       coachReport: input.coachReport,
       nextSessionFlag: input.nextSessionFlag,
+      sessionRpe: input.sessionRpe,
     }
     const result = await saveSession(supabase, userId, payload, {
       durationMin: input.metrics?.durationMin,

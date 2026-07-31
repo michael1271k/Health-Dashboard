@@ -246,6 +246,11 @@ export function useSessionDraft() {
     })
   }, [])
 
+  /** Borg CR10 session effort, set on the commit bar. Null clears the rating. */
+  const setSessionRpe = useCallback((v: number | null) => {
+    setDraft((d) => (d ? { ...d, sessionRpe: v ?? undefined } : d))
+  }, [])
+
   /** Per-exercise note (coach note stays editable in the deck). */
   const setExerciseNote = useCallback((localId: string, note: string) => {
     setDraft((d) => d && ({
@@ -329,5 +334,5 @@ export function useSessionDraft() {
     },
   })
 
-  return { draft, hydrated, start, discard, updateSet, splitSet, mergeSet, toggleSetLink, addSet, removeSet, toggleSetDone, checkAllSets, removeExercise, reorder, setNotes, setExerciseNote, setStats, setDate, commit }
+  return { draft, hydrated, start, discard, updateSet, splitSet, mergeSet, toggleSetLink, addSet, removeSet, toggleSetDone, checkAllSets, removeExercise, reorder, setNotes, setExerciseNote, setStats, setSessionRpe, setDate, commit }
 }

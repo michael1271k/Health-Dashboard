@@ -12,6 +12,7 @@ import { sessionVolumeKg } from '@/lib/sessions/volume'
 import { epley1RM } from '@/lib/utils/epley'
 import { isReentryWeek } from '@/lib/programs'
 import { isTimedExercise } from '@/lib/exercises/timed'
+import { normalizeCr10 } from '@/lib/training/effort'
 
 type DB = SupabaseClient<Database>
 
@@ -194,7 +195,9 @@ export async function saveSession(
     Math.max(0, Math.round((new Date(payload.endedAt).getTime() - new Date(payload.startedAt).getTime()) / 60000)) || null
   const durationMin = metrics.durationMin ?? computedDuration
 
-  const sessionInsert: InsertRow<'workout_sessions'> = {
+  // `session_rpe` isn't in the generated types yet (Supabase is schema-of-record
+  // and types.ts lags), hence the intersection rather than a bare InsertRow.
+  const sessionInsert: InsertRow<'workout_sessions'> & { session_rpe: number | null } = {
     user_id: userId,
     started_at: payload.startedAt,
     ended_at: payload.endedAt,
@@ -212,14 +215,23 @@ export async function saveSession(
     day_key: payload.dayKey ?? null,
     coach_report: payload.coachReport ?? null,
     next_session_flag: payload.nextSessionFlag ?? null,
+    // Self-heals: a pre-migration DB simply drops the key (see the retry below).
+    session_rpe: normalizeCr10(payload.sessionRpe),
   }
 
-  const { data: sessionRaw, error: sessionError } = await supabase
-    .from('workout_sessions')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .insert(sessionInsert as unknown as any)
-    .select('id')
-    .single()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const insertSession = (row: any) =>
+    supabase.from('workout_sessions').insert(row).select('id').single()
+
+  let { data: sessionRaw, error: sessionError } = await insertSession(sessionInsert as unknown)
+  // `session_rpe` is a newer column. Losing an entire workout because an
+  // optional effort rating has nowhere to land is never the right trade — drop
+  // the field and re-insert. The same pattern guards side/pair_id below.
+  if (sessionError && /session_rpe|schema cache|PGRST204/i.test(sessionError.message)) {
+    const { session_rpe: _dropped, ...withoutRpe } = sessionInsert as Record<string, unknown>
+    void _dropped
+    ;({ data: sessionRaw, error: sessionError } = await insertSession(withoutRpe))
+  }
 
   const session = sessionRaw as { id: string } | null
   if (sessionError || !session) {

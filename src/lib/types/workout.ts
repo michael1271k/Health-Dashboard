@@ -42,6 +42,7 @@ export interface SaveWorkoutPayload {
   dayKey?: string               // HELIX-5 program-day identity (cb_a … legs_b)
   coachReport?: unknown         // full validated coach JSON, archived as JSONB
   nextSessionFlag?: string
+  sessionRpe?: number           // Borg CR10 session effort (1–10, 0.5 steps)
 }
 
 // Full 5-entry map — kept for history rendering (all historical split_day values)

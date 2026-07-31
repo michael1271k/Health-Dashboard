@@ -3,6 +3,9 @@
 import { useState } from 'react'
 import { Footprints, Zap, Plus, Trash2, X, Info, HeartPulse } from 'lucide-react'
 import { useCardioLogs, useAddCardio, useDeleteCardio, useZone2Week, ZONE2_WEEKLY_TARGET } from '@/lib/hooks/useCardio'
+import { paceMinPerKm, formatPace, activeKcalOf } from '@/lib/cardio/metrics'
+import { normalizeCr10, cr10Color } from '@/lib/training/effort'
+import { EffortScale } from '@/components/ui/EffortScale'
 
 const EMERALD = '#3E9E7A'
 const EMBER = '#E0703C'
@@ -24,19 +27,41 @@ export function CardioLogger({ date, hkActiveEnergy }: { date: string; hkActiveE
   const [kind, setKind] = useState<'walk' | 'run'>('walk')
   const [km, setKm] = useState('')
   const [min, setMin] = useState('')
-  const [kcal, setKcal] = useState('')
+  const [activeKcal, setActiveKcal] = useState('')
+  const [totalKcal, setTotalKcal] = useState('')
+  const [avgHr, setAvgHr] = useState('')
+  const [effort, setEffort] = useState<number | null>(null)
 
   const num = (s: string): number | null => { const n = parseFloat(s); return s.trim() !== '' && Number.isFinite(n) ? n : null }
+
+  // Live pace preview — derived from what's typed, never stored.
+  const draftPace = formatPace(paceMinPerKm(
+    num(km) != null ? Math.round((num(km) as number) * 1000) : null,
+    num(min),
+  ))
+
+  const reset = () => {
+    setKm(''); setMin(''); setActiveKcal(''); setTotalKcal(''); setAvgHr(''); setEffort(null)
+  }
 
   const submit = () => {
     const distance = num(km)
     add.mutate(
-      { kind, distance_m: distance != null ? Math.round(distance * 1000) : null, duration_min: num(min), kcal: num(kcal) },
-      { onSuccess: () => { setKm(''); setMin(''); setKcal(''); setOpen(false) } },
+      {
+        kind,
+        distance_m: distance != null ? Math.round(distance * 1000) : null,
+        duration_min: num(min),
+        active_kcal: num(activeKcal),
+        total_kcal: num(totalKcal),
+        avg_hr: num(avgHr),
+        effort: normalizeCr10(effort),
+      },
+      { onSuccess: () => { reset(); setOpen(false) } },
     )
   }
 
   const entries = logs ?? []
+  const anyInput = !!(km || min || activeKcal || totalKcal || avgHr) || effort != null
 
   return (
     <section className="helix-card space-y-2.5" style={{ borderColor: `${EMERALD}26` }}>
@@ -74,10 +99,14 @@ export function CardioLogger({ date, hkActiveEnergy }: { date: string; hkActiveE
                 {c.kind === 'run' ? <Zap className="w-3 h-3" /> : <Footprints className="w-3 h-3" />}
               </span>
               <span className="text-fluid-xs font-medium text-text capitalize w-10 shrink-0">{c.kind}</span>
-              <span className="helix-num text-fluid-xs text-muted flex-1">
+              <span className="helix-num text-[11px] text-muted flex-1 leading-snug">
                 {c.distance_m != null && <>{(c.distance_m / 1000).toFixed(2)} km</>}
                 {c.duration_min != null && <> · {c.duration_min} min</>}
-                {c.kcal != null && <> · {Math.round(c.kcal)} kcal</>}
+                {(() => { const p = paceMinPerKm(c.distance_m, c.duration_min); return p != null ? <> · {formatPace(p)}</> : null })()}
+                {activeKcalOf(c) != null && <> · {Math.round(activeKcalOf(c) as number)} active</>}
+                {c.total_kcal != null && <> · {Math.round(c.total_kcal)} total</>}
+                {c.avg_hr != null && <> · {Math.round(c.avg_hr)} bpm</>}
+                {c.effort != null && <> · <span style={{ color: cr10Color(c.effort) }}>RPE {c.effort}</span></>}
               </span>
               <button onClick={() => del.mutate(c.id)} className="p-1 text-muted hover:text-danger shrink-0" aria-label="Delete">
                 <Trash2 className="w-3.5 h-3.5" />
@@ -101,16 +130,31 @@ export function CardioLogger({ date, hkActiveEnergy }: { date: string; hkActiveE
             ))}
           </div>
           <div className="grid grid-cols-3 gap-2">
-            {[['km', km, setKm], ['min', min, setMin], ['kcal', kcal, setKcal]].map(([label, val, set]) => (
-              <label key={label as string} className="block">
-                <span className="block text-[9px] uppercase tracking-wide text-muted mb-1">{label as string}</span>
-                <input type="text" inputMode="decimal" value={val as string}
-                  onChange={(e) => (set as (s: string) => void)(e.target.value)} placeholder="—"
+            {([
+              ['min', 'Duration', min, setMin],
+              ['km', 'Distance', km, setKm],
+              ['bpm', 'Avg HR', avgHr, setAvgHr],
+              ['kcal', 'Active', activeKcal, setActiveKcal],
+              ['kcal', 'Total', totalKcal, setTotalKcal],
+            ] as const).map(([unit, label, val, set]) => (
+              <label key={label} className="block">
+                <span className="block text-[9px] uppercase tracking-wide text-muted mb-1">{label} <span className="opacity-60">{unit}</span></span>
+                <input type="text" inputMode="decimal" value={val}
+                  onChange={(e) => set(e.target.value)} placeholder="—"
                   className="w-full rounded-lg bg-white/[0.03] border border-white/[0.08] px-2 py-2 min-h-[40px] helix-num text-fluid-sm text-text text-center outline-none focus:border-primary/40" />
               </label>
             ))}
+            {/* Pace is DERIVED from distance ÷ duration — a stored pace drifts
+                the moment either is corrected, so it is read-only by design. */}
+            <div className="block">
+              <span className="block text-[9px] uppercase tracking-wide text-muted mb-1">Pace <span className="opacity-60">auto</span></span>
+              <div className="w-full rounded-lg bg-white/[0.015] border border-dashed border-white/[0.08] px-2 py-2 min-h-[40px] helix-num text-fluid-sm text-muted text-center flex items-center justify-center">
+                {draftPace}
+              </div>
+            </div>
           </div>
-          <button onClick={submit} disabled={add.isPending || (!km && !min && !kcal)}
+          <EffortScale value={effort} onChange={setEffort} label="Effort" compact />
+          <button onClick={submit} disabled={add.isPending || !anyInput}
             className="btn-primary w-full justify-center min-h-[42px] disabled:opacity-50">
             {add.isPending ? 'Logging…' : 'Log cardio'}
           </button>

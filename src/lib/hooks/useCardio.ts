@@ -9,7 +9,13 @@ export interface CardioLog {
   kind: string          // walk | run
   distance_m: number | null
   duration_min: number | null
+  /** LEGACY single-energy column. Every row logged before the full field set
+   *  has only this; read it through `activeKcalOf()`, never directly. */
   kcal: number | null
+  active_kcal: number | null
+  total_kcal: number | null
+  avg_hr: number | null
+  effort: number | null           // Borg CR10
   from_healthkit: boolean
 }
 
@@ -17,8 +23,17 @@ export interface NewCardio {
   kind: 'walk' | 'run'
   distance_m: number | null
   duration_min: number | null
-  kcal: number | null
+  active_kcal: number | null
+  total_kcal: number | null
+  avg_hr: number | null
+  effort: number | null
 }
+
+/** The columns added after the table shipped. Dropped on a PGRST204 retry so an
+ *  unmigrated DB still records the walk rather than losing it. */
+const EXTRA_COLS = ['active_kcal', 'total_kcal', 'avg_hr', 'effort'] as const
+const SELECT_FULL = 'id, kind, distance_m, duration_min, kcal, active_kcal, total_kcal, avg_hr, effort, from_healthkit'
+const SELECT_BASE = 'id, kind, distance_m, duration_min, kcal, from_healthkit'
 
 /** Manual cardio (walk/run) logged for a day. A SEPARATE ledger from Active
  *  Energy — deliberately never summed into it, so nothing double-counts. */
@@ -27,13 +42,20 @@ export function useCardioLogs(date: string) {
     queryKey: ['cardio_logs', date],
     enabled: !!date,
     queryFn: async (): Promise<CardioLog[]> => {
-      const { data, error } = await supabase
-        .from('cardio_logs')
-        .select('id, kind, distance_m, duration_min, kcal, from_healthkit')
-        .eq('date', date)
-        .order('created_at', { ascending: true })
-      if (error) return [] // table not migrated yet
-      return (data ?? []) as CardioLog[]
+      const q = (cols: string) => supabase.from('cardio_logs').select(cols)
+        .eq('date', date).order('created_at', { ascending: true })
+      let { data, error } = await q(SELECT_FULL)
+      // Pre-migration DB: fall back to the original column set rather than
+      // rendering an empty day.
+      if (error) ({ data, error } = await q(SELECT_BASE))
+      if (error) return [] // table not migrated at all
+      return ((data ?? []) as unknown as Array<Partial<CardioLog>>).map((r) => ({
+        id: r.id!, kind: r.kind!, distance_m: r.distance_m ?? null,
+        duration_min: r.duration_min ?? null, kcal: r.kcal ?? null,
+        active_kcal: r.active_kcal ?? null, total_kcal: r.total_kcal ?? null,
+        avg_hr: r.avg_hr ?? null, effort: r.effort ?? null,
+        from_healthkit: r.from_healthkit ?? false,
+      }))
     },
     staleTime: 30_000,
   })
@@ -45,11 +67,21 @@ export function useAddCardio(date: string) {
     mutationFn: async (c: NewCardio) => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('Not signed in')
-      const { error } = await supabase.from('cardio_logs').insert({
+      const row: Record<string, unknown> = {
         user_id: session.user.id, date, kind: c.kind,
-        distance_m: c.distance_m, duration_min: c.duration_min, kcal: c.kcal,
+        distance_m: c.distance_m, duration_min: c.duration_min,
+        // `kcal` stays written so historical readers (and the weekly export's
+        // pre-migration fallback) keep seeing the active figure.
+        kcal: c.active_kcal,
+        active_kcal: c.active_kcal, total_kcal: c.total_kcal,
+        avg_hr: c.avg_hr, effort: c.effort,
         from_healthkit: false,
-      } as unknown as never)
+      }
+      let { error } = await supabase.from('cardio_logs').insert(row as unknown as never)
+      if (error && /schema cache|PGRST204|column/i.test(error.message)) {
+        for (const k of EXTRA_COLS) delete row[k]
+        ;({ error } = await supabase.from('cardio_logs').insert(row as unknown as never))
+      }
       if (error) throw error
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['cardio_logs', date] }),

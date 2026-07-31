@@ -20,6 +20,10 @@
  * Day Score and Battery are not exported either — both are HELIX's own derived
  * opinions, not measurements, and this file is raw data only.
  */
+// Pace is the one derived value allowed here: it is arithmetic over two exported
+// facts (distance, duration), not an opinion, and it is the unit a run is
+// actually read in.
+import { paceMinPerKm, formatPace } from '@/lib/cardio/metrics'
 
 export interface ExportDay {
   date: string                 // YYYY-MM-DD
@@ -52,7 +56,11 @@ export interface ExportCardio {
   kind: string                 // walk | run
   distanceM: number | null
   durationMin: number | null
+  /** Active energy. Pace is derived at render time from distance ÷ duration. */
   kcal: number | null
+  totalKcal: number | null
+  avgHr: number | null
+  effort: number | null        // Borg CR10
 }
 
 /** One working set, in order. `side` is null on bilateral sets. */
@@ -83,6 +91,8 @@ export interface ExportSession {
   durationMin: number | null
   avgBpm: number | null
   caloriesBurned: number | null
+  /** Borg CR10 session effort, when rated. */
+  sessionRpe: number | null
   exercises: ExportExercise[]
   /** Named PRs set in this session (no est-1RM — raw lift only). */
   prs: Array<{ name: string; weightKg: number; reps: number }>
@@ -292,10 +302,15 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
       )
     }
     for (const c of cardioByDate.get(d.date) ?? []) {
+      const pace = paceMinPerKm(c.distanceM, c.durationMin)
       const bits = [
         c.durationMin != null ? `${n(c.durationMin)} min` : null,
         c.distanceM != null ? `${n(c.distanceM / 1000, 2)} km` : null,
-        c.kcal != null ? `${n(c.kcal)} kcal` : null,
+        pace != null ? formatPace(pace) : null,
+        c.kcal != null ? `${n(c.kcal)} active kcal` : null,
+        c.totalKcal != null ? `${n(c.totalKcal)} total kcal` : null,
+        c.avgHr != null ? `avg HR ${n(c.avgHr)}` : null,
+        c.effort != null ? `effort ${n(c.effort, 1)}/10` : null,
       ].filter(Boolean).join(' · ')
       L.push(`    ${c.kind}${bits ? ` · ${bits}` : ''} (Already accounted for in daily steps and calories)`)
     }
@@ -336,7 +351,9 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
     // Volume · sets · failures · time · kcal burned · avg HR — all metadata.
     L.push(`${n(s.volumeKg)} kg volume · ${n(s.setCount)} sets · ${n(s.failureSets)} to failure`
       + ` · ${n(s.durationMin)} min · ${n(s.caloriesBurned)} kcal`
-      + `${s.avgBpm != null ? ` · avg HR ${n(s.avgBpm)}` : ''}`)
+      + `${s.avgBpm != null ? ` · avg HR ${n(s.avgBpm)}` : ''}`
+      // Borg CR10 — the subjective cost of the session, next to its objective cost.
+      + `${s.sessionRpe != null ? ` · effort ${n(s.sessionRpe, 1)}/10 CR10` : ''}`)
     L.push('')
     for (const e of s.exercises) {
       L.push(`- **${e.name}**${e.repWindow ? ` _(target ${e.repWindow})_` : ''}: ${setDetail(e.sets)}`)

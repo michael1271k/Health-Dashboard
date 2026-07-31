@@ -38,6 +38,9 @@ export const SaveWorkoutSchema = z.object({
   dayKey: z.enum(['cb_a', 'legs_a', 'arms', 'cb_b', 'legs_b']).optional(),
   coachReport: z.unknown().optional(),                    // validated client-side; archived as JSONB
   nextSessionFlag: z.string().max(300).optional(),
+  // Borg CR10 session effort. Half-steps are meaningful on a ratio scale, so
+  // this is not an int.
+  sessionRpe: z.number().min(1).max(10).optional(),
   reportMd: z.string().max(2000).optional(),              // coach_insight (no LLM call on JSON ingests)
   metrics: z.object({
     durationMin: z.number().nullable().optional(),

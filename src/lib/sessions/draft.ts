@@ -75,6 +75,9 @@ export interface SessionDraft {
   phase?: string
   coachInsight?: string
   nextSessionFlag?: string
+  /** Borg CR10 session effort (1–10, 0.5 steps) — how hard the WHOLE session
+   *  was. Distinct from per-set `DraftSet.rpe`, which is proximity to failure. */
+  sessionRpe?: number
   stats?: {
     duration_min: number | null
     volume_kg: number | null
@@ -204,6 +207,7 @@ export function buildCommitPayload(draft: SessionDraft): SaveWorkoutInput {
     dayKey: draft.dayKey,
     coachReport: draft.coachReport,
     nextSessionFlag: draft.nextSessionFlag,
+    sessionRpe: draft.sessionRpe,
     reportMd: draft.coachInsight,
     metrics: draft.stats ? {
       durationMin: draft.stats.duration_min,

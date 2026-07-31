@@ -31,7 +31,7 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
   /** Post-finish destination: the just-committed session's analysis page. */
   onViewSession?: (sessionId: string) => void
 }) {
-  const { draft, updateSet, splitSet, mergeSet, toggleSetLink, addSet, removeSet, toggleSetDone, checkAllSets, removeExercise, reorder, setNotes, setExerciseNote, setStats, setDate, discard, commit } = store
+  const { draft, updateSet, splitSet, mergeSet, toggleSetLink, addSet, removeSet, toggleSetDone, checkAllSets, removeExercise, reorder, setNotes, setExerciseNote, setStats, setSessionRpe, setDate, discard, commit } = store
   const [result, setResult] = useState<CommitResult | null>(null)
   const [committedDate, setCommittedDate] = useState<string | null>(null)
   // Delete the ACTUAL committed session (edit mode's trash), keyed to its date.
@@ -122,6 +122,7 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
           },
         })
       }}
+      onSessionRpe={setSessionRpe}
       onDiscard={() => { discard(); onClose() }}
       onCancelEdit={() => { discard(); onClose() }}
       deleting={del.isPending}

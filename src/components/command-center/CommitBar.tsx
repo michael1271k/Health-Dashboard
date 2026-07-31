@@ -3,6 +3,7 @@
 import { Check, Loader2, Trash2, X } from 'lucide-react'
 import { draftTotals, type SessionDraft } from '@/lib/sessions/draft'
 import { fmtVolume } from '@/lib/utils/units'
+import { EffortScale } from '@/components/ui/EffortScale'
 
 /**
  * Sticky commit bar: live totals, discard/cancel, delete, and the commit CTA.
@@ -13,7 +14,7 @@ import { fmtVolume } from '@/lib/utils/units'
  *   · Trash              — ALWAYS deletes the actual committed session.
  * A brand-new draft keeps the single trash = discard-draft behaviour.
  */
-export function CommitBar({ draft, busy, error, deleting, onCommit, onDiscard, onCancelEdit, onDelete }: {
+export function CommitBar({ draft, busy, error, deleting, onCommit, onDiscard, onCancelEdit, onDelete, onSessionRpe }: {
   draft: SessionDraft
   busy: boolean
   error: string | null
@@ -22,6 +23,7 @@ export function CommitBar({ draft, busy, error, deleting, onCommit, onDiscard, o
   onDiscard: () => void
   onCancelEdit?: () => void
   onDelete?: () => void
+  onSessionRpe?: (v: number | null) => void
 }) {
   const totals = draftTotals(draft)
   const isEdit = !!draft.replaceSessionId
@@ -30,6 +32,15 @@ export function CommitBar({ draft, busy, error, deleting, onCommit, onDiscard, o
     <div className="sticky bottom-0 z-10 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] keyboard-safe space-y-2
                     bg-gradient-to-t from-[var(--color-bg)] via-[var(--color-bg)]/90 to-transparent">
       {error && <p className="text-danger text-fluid-sm" dir="auto">{error}</p>}
+      {/* Rate the session BEFORE committing — asked at the one moment the
+          answer is still fresh. Optional: an unrated session commits fine, it
+          just contributes nothing to the weekly load picture. Hidden until
+          there's something to rate. */}
+      {onSessionRpe && totals.sets > 0 && (
+        <div className="px-0.5">
+          <EffortScale value={draft.sessionRpe} onChange={onSessionRpe} compact />
+        </div>
+      )}
       <div className="flex items-center gap-2">
         {isEdit ? (
           <>

@@ -17,6 +17,7 @@ import { weeklyVolumeByMuscle, type Program } from '@/lib/training/landmarks'
 import { protocolForDate } from '@/lib/supplements'
 import { customDoseFor, type CustomSupplement } from '@/lib/hooks/useCustomSupplements'
 import { normalizeSpO2 } from '@/lib/utils/units'
+import { activeKcalOf } from '@/lib/cardio/metrics'
 
 /**
  * Flatten the supplement protocol into "time · Name — dose" lines, MERGING the
@@ -58,7 +59,7 @@ async function fetchRange(weekStart: string, weekEnd: string) {
 
   // Active Energy, Day Score and Battery are deliberately NOT fetched — none of
   // the three appears in the export any more (see weeklyExport.ts).
-  const [logs, nutrition, sessions, sets, water, supps, doms, bodyComp, cardio] = await Promise.all([
+  const [logs, nutrition, sessions, sets, water, supps, doms, bodyComp, cardio, rpe] = await Promise.all([
     supabase.from('daily_logs')
       .select('date, weight_kg, steps, distance_m, training_minutes, sleep_minutes, water_ml, avg_rest_heart_rate, hrv_ms, blood_oxygen')
       .gte('date', weekStart).lte('date', weekEnd),
@@ -83,8 +84,13 @@ async function fetchRange(weekStart: string, weekEnd: string) {
       .select('date, weight_kg, bmi, body_fat_pct, muscle_percent, water_percent, bone_mineral, visceral_fat, bmr, lean_mass_kg')
       .gte('date', weekStart).lte('date', weekEnd),
     // Walks / runs — a separate ledger; exported flagged as already counted.
-    supabase.from('cardio_logs').select('date, kind, distance_m, duration_min, kcal')
+    supabase.from('cardio_logs').select('date, kind, distance_m, duration_min, kcal, active_kcal, total_kcal, avg_hr, effort')
       .gte('date', weekStart).lte('date', weekEnd).order('date', { ascending: true }),
+    // Session effort (Borg CR10) — its OWN query. Folding session_rpe into the
+    // sessions select above would make a pre-migration DB drop every session
+    // from the export, not just the effort rating.
+    supabase.from('workout_sessions').select('id, session_rpe')
+      .gte('started_at', startInstant).lt('started_at', endInstant),
   ])
 
   return {
@@ -99,8 +105,12 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     bodyComp: (bodyComp.error ? [] : (bodyComp.data ?? [])) as Array<Record<string, number | string | null>>,
     // cardio_logs may not be migrated yet — an error just means no walks.
     cardio: (cardio.error ? [] : (cardio.data ?? [])) as Array<{
-      date: string; kind: string; distance_m: number | null; duration_min: number | null; kcal: number | null
+      date: string; kind: string; distance_m: number | null; duration_min: number | null
+      kcal: number | null; active_kcal?: number | null; total_kcal?: number | null
+      avg_hr?: number | null; effort?: number | null
     }>,
+    // session_rpe may not be migrated yet — an error just means nothing rated.
+    rpe: (rpe.error ? [] : (rpe.data ?? [])) as unknown as Array<{ id: string; session_rpe: number | null }>,
   }
 }
 
@@ -145,6 +155,7 @@ function toDays(weekStart: string, d: RangeData): ExportDay[] {
 /** Shape a fetched range into the export's session rows (with every set). */
 function toSessions(d: RangeData): ExportSession[] {
   const program = activeProgram()
+  const rpeById = new Map(d.rpe.map((r) => [r.id, r.session_rpe]))
   return d.sessions.map((s) => {
     const mine = d.sets.filter((r) => r.session_id === s.id && r.set_type !== 'warmup')
     const byName = new Map<string, ExportExercise>()
@@ -185,6 +196,7 @@ function toSessions(d: RangeData): ExportSession[] {
       volumeKg, setCount: s.set_count,
       failureSets: failurePairs.size,
       durationMin: s.duration_min, avgBpm: s.avg_bpm, caloriesBurned: s.calories_burned,
+      sessionRpe: rpeById.get(s.id) ?? null,
       exercises: [...byName.values()],
       // Named PRs, not a bare count. No est-1RM — the raw lift only.
       prs: mine.filter((r) => r.is_pr).map((r) => ({
@@ -218,7 +230,12 @@ function toBodyComp(d: RangeData): ExportBodyComp[] {
 function toCardio(d: RangeData): ExportCardio[] {
   return d.cardio.map((c) => ({
     date: c.date, kind: c.kind,
-    distanceM: c.distance_m, durationMin: c.duration_min, kcal: c.kcal,
+    distanceM: c.distance_m, durationMin: c.duration_min,
+    // Pre-migration rows only have `kcal`; it always held the ACTIVE figure.
+    kcal: activeKcalOf(c),
+    totalKcal: c.total_kcal ?? null,
+    avgHr: c.avg_hr ?? null,
+    effort: c.effort ?? null,
   }))
 }
 

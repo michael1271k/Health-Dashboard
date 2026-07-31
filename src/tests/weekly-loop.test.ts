@@ -88,7 +88,7 @@ describe('buildWeeklyExport', () => {
     sessions: [
       {
         date: '2026-07-19', label: 'Upper A', volumeKg: 8240, setCount: 24,
-        failureSets: 1, durationMin: 68, avgBpm: 118, caloriesBurned: 512,
+        failureSets: 1, durationMin: 68, avgBpm: 118, caloriesBurned: 512, sessionRpe: 8,
         exercises: [{
           name: 'Chest Press', repWindow: '10–12', topKg: 60,
           sets: [
@@ -163,9 +163,28 @@ describe('buildWeeklyExport', () => {
     expect(buildWeeklyExport(input)).not.toMatch(/Already accounted for/)
     const withCardio = buildWeeklyExport({
       ...input,
-      cardio: [{ date: '2026-07-19', kind: 'walk', distanceM: 4200, durationMin: 45, kcal: 210 }],
+      cardio: [{
+        date: '2026-07-19', kind: 'walk', distanceM: 4200, durationMin: 45,
+        kcal: 210, totalKcal: 265, avgHr: 112, effort: 4,
+      }],
     })
-    expect(withCardio).toMatch(/walk · 45 min · 4\.20 km · 210 kcal \(Already accounted for in daily steps and calories\)/)
+    // Pace is DERIVED (45 min ÷ 4.2 km = 10:43 /km), never a stored column.
+    expect(withCardio).toMatch(
+      /walk · 45 min · 4\.20 km · 10:43 \/km · 210 active kcal · 265 total kcal · avg HR 112 · effort 4\.0\/10 \(Already accounted for in daily steps and calories\)/,
+    )
+  })
+
+  it('omits cardio fields that were never entered, rather than printing zeros', () => {
+    const sparse = buildWeeklyExport({
+      ...input,
+      cardio: [{ date: '2026-07-19', kind: 'run', distanceM: null, durationMin: 30, kcal: null, totalKcal: null, avgHr: null, effort: null }],
+    })
+    expect(sparse).toMatch(/run · 30 min \(Already accounted for in daily steps and calories\)/)
+    expect(sparse).not.toMatch(/\/km/)
+  })
+
+  it('carries the Borg CR10 session effort onto the session line', () => {
+    expect(buildWeeklyExport(input)).toMatch(/effort 8\.0\/10 CR10/)
   })
 
   it('lists EVERY working set, grouped by load — not just the top set', () => {
