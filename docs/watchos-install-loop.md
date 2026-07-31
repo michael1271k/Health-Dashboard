@@ -52,9 +52,51 @@ and the pairing keys line up:
 | `TARGETED_DEVICE_FAMILY` (watch) | `4` | 4 = Apple Watch ✓ |
 | `WATCHOS_DEPLOYMENT_TARGET` | `10.0` | ≤ your watchOS ✓ |
 
-**So the project is not the problem.** That is genuinely good news: it means
-every remaining cause is on the *devices* — trust, pairing state, Developer Mode,
-or the install transport. Which is what the rest of this document fixes.
+**So the committed project is not the problem.** That is genuinely good news: it
+means every remaining cause is on the *devices* — trust, pairing state, Developer
+Mode, or the install transport — which is what the rest of this document fixes.
+
+But check your **working tree** against the committed file first: an in-Xcode
+edit can silently break a configuration that is correct in git. See the
+`buildActionMask` box immediately below.
+
+### ⚠️ Check this before anything else: `buildActionMask`
+
+If you have been editing the phase in Xcode, check what it did to
+`buildActionMask` on **Embed Watch Content**:
+
+```bash
+git diff ios/App/App.xcodeproj/project.pbxproj
+```
+
+```diff
+  4C90F04C3013EFF60096E03F /* Embed Watch Content */ = {
+      isa = PBXCopyFilesBuildPhase;
+-     buildActionMask = 2147483647;    ← Xcode's default: run for EVERY action
++     buildActionMask = 12;            ← restricted to a subset of actions
+```
+
+`2147483647` (`0x7FFFFFFF`) is "run this phase for every build action".
+A smaller mask means someone unticked boxes under the phase's
+**Build for:** row — *Running, Testing, Profiling, Archiving, Installing,
+Analyzing*.
+
+**If Running is unticked, the watch app is never embedded when you press Run.**
+Xcode reports a successful build, the phone app installs, and the Watch then
+spins forever waiting for a bundle that was never inside it. That is an install
+loop with no error anywhere, because nothing failed — the work simply wasn't
+scheduled.
+
+**Fix:** App target → **Build Phases** → expand **Embed Watch Content** → tick
+**every** box on the **Build for:** row. Confirm the file goes back to
+`buildActionMask = 2147483647`, then Clean Build Folder and reinstall.
+
+While you're there, check the phase ORDER too. **Embed Watch Content** should
+run *after* `[CP] Embed Pods Frameworks`, not before — CocoaPods' script stages
+frameworks into the app bundle, and embedding the watch app first can have it
+copied into a bundle the pods phase then rewrites.
+
+---
 
 > If you ever *do* need to recreate the phase: select the **App** target →
 > **Build Phases** → **+** → **New Copy Files Phase** → set **Destination** to
