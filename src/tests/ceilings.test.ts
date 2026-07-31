@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  parseRepWindow, repWindowFor, clearedCeiling, ceilingHitOnDroppedWeight,
+  parseRepWindow, repWindowFor, clearedCeiling, ladderVerdict, loadLadder,
   progressionVerdict, LOAD_STEP_KG, holdTargetFor, timedProgressionVerdict,
 } from '@/lib/training/ceilings'
 
@@ -69,27 +69,85 @@ describe('clearedCeiling', () => {
   })
 })
 
-describe('ceilingHitOnDroppedWeight', () => {
+/**
+ * The load ladder. Superseded `ceilingHitOnDroppedWeight`, which only answered
+ * "was this a false clear?" — it could not say WHICH load was blocking, and it
+ * refused every mixed-load session including the ones that had legitimately
+ * outgrown the lighter weight.
+ */
+describe('ladderVerdict — the binding rung is the lowest load', () => {
   const ceiling = 12
-  it('flags the reported 20×12, 20×10, 18×12 pattern is NOT a clean clear', () => {
-    // Only the sets that reached the ceiling matter for the drop-weight hint;
-    // the user hit 12 at 20kg then again at a lighter 18kg.
-    expect(ceilingHitOnDroppedWeight([
-      { weightKg: 20, reps: 12 }, { weightKg: 18, reps: 12 },
-    ], ceiling)).toBe(true)
+
+  it('is ORDER-INDEPENDENT: heavy-to-light and light-to-heavy agree', () => {
+    const heavyFirst = [{ weightKg: 20, reps: 12 }, { weightKg: 18, reps: 10 }]
+    const lightFirst = [{ weightKg: 18, reps: 10 }, { weightKg: 20, reps: 12 }]
+    expect(ladderVerdict(heavyFirst, ceiling)).toEqual(ladderVerdict(lightFirst, ceiling))
   })
-  it('does NOT flag when every ceiling-rep set is at one load (a real clear)', () => {
-    expect(ceilingHitOnDroppedWeight([
-      { weightKg: 20, reps: 12 }, { weightKg: 20, reps: 12 },
-    ], ceiling)).toBe(false)
+
+  it('BLOCKS while the lighter load is short, naming it and the reps still owed', () => {
+    // Scenario A: 20kg × 12, then dropped to 18kg × 10.
+    const v = ladderVerdict([{ weightKg: 20, reps: 12 }, { weightKg: 18, reps: 10 }], ceiling)
+    expect(v.state).toBe('blocked')
+    expect(v.bindingLoadKg).toBe(18)
+    expect(v.topLoadKg).toBe(20)
+    expect(v.repsOwed).toBe(2)
   })
-  it('does NOT flag when a set missed the ceiling reps', () => {
-    expect(ceilingHitOnDroppedWeight([
-      { weightKg: 20, reps: 12 }, { weightKg: 18, reps: 10 },
-    ], ceiling)).toBe(false)
+
+  it('collapses upward once the binding load clears — the lower weight retires', () => {
+    // Scenario B: started at 18kg and cleared it, then moved to 20kg.
+    const v = ladderVerdict([{ weightKg: 18, reps: 12 }, { weightKg: 20, reps: 8 }], ceiling)
+    expect(v.state).toBe('collapse-ready')
+    expect(v.bindingLoadKg).toBe(18)
+    expect(v.topLoadKg).toBe(20)
+    expect(v.repsOwed).toBe(0)
   })
-  it('needs at least two sets', () => {
-    expect(ceilingHitOnDroppedWeight([{ weightKg: 20, reps: 12 }], ceiling)).toBe(false)
+
+  it('never says "cleared" on a mixed-load session, however good the reps look', () => {
+    // The premature-clear bug: ceiling reps at BOTH loads is still not one load.
+    const v = ladderVerdict([{ weightKg: 20, reps: 12 }, { weightKg: 18, reps: 12 }], ceiling)
+    expect(v.state).toBe('collapse-ready')
+    expect(v.state).not.toBe('cleared')
+  })
+
+  it('clears only a single-load session where every set reached the ceiling', () => {
+    expect(ladderVerdict([{ weightKg: 20, reps: 12 }, { weightKg: 20, reps: 12 }], ceiling).state).toBe('cleared')
+    expect(ladderVerdict([{ weightKg: 20, reps: 12 }, { weightKg: 20, reps: 11 }], ceiling).state).toBe('incomplete')
+  })
+
+  it('binds on the LOWEST rung of a three-load ladder', () => {
+    const v = ladderVerdict([
+      { weightKg: 22.5, reps: 12 }, { weightKg: 20, reps: 12 }, { weightKg: 18, reps: 9 },
+    ], ceiling)
+    expect(v.state).toBe('blocked')
+    expect(v.bindingLoadKg).toBe(18)
+    expect(v.topLoadKg).toBe(22.5)
+    expect(v.repsOwed).toBe(3)
+  })
+
+  it('ignores bodyweight (0 kg) sets — they can never collapse a ladder', () => {
+    const v = ladderVerdict([{ weightKg: 0, reps: 20 }], ceiling)
+    expect(v.state).toBe('incomplete')
+    expect(v.bindingLoadKg).toBeNull()
+  })
+
+  it('takes the WORST set at the binding load, not the best', () => {
+    const v = ladderVerdict([
+      { weightKg: 18, reps: 12 }, { weightKg: 18, reps: 8 }, { weightKg: 20, reps: 12 },
+    ], ceiling)
+    expect(v.state).toBe('blocked')
+    expect(v.repsOwed).toBe(4)
+  })
+})
+
+describe('loadLadder', () => {
+  it('groups by load, lightest first, marking which rungs cleared', () => {
+    const rungs = loadLadder([
+      { weightKg: 20, reps: 12 }, { weightKg: 18, reps: 12 }, { weightKg: 20, reps: 10 },
+    ], 12)
+    expect(rungs.map((r) => r.weightKg)).toEqual([18, 20])
+    expect(rungs[0].cleared).toBe(true)
+    expect(rungs[1].cleared).toBe(false)   // the 20×10 set drags the rung down
+    expect(rungs[1].sets).toHaveLength(2)
   })
 })
 
@@ -152,5 +210,34 @@ describe('timedProgressionVerdict', () => {
   })
   it('a set under the target stays silent', () => {
     expect(timedProgressionVerdict([short, short], 55).state).toBe('no')
+  })
+})
+
+describe('progressionVerdict — a ladder collapse must not break the chain', () => {
+  const ceiling = 12
+  const cleanAt = (kg: number) => [{ weightKg: kg, reps: 12 }, { weightKg: kg, reps: 12 }]
+
+  it('counts a collapse-ready session as cleared for chaining purposes', () => {
+    // Week 1: clean at 18. Week 2: cleared 18 then moved up to 20 mid-session.
+    // Penalising that would punish the lifter for progressing.
+    const v = progressionVerdict([cleanAt(18), [{ weightKg: 18, reps: 12 }, { weightKg: 20, reps: 9 }]], ceiling)
+    expect(v.state).toBe('ready')
+  })
+
+  it('suggests the step up from the SETTLED (top) load, not the load dropped from', () => {
+    const v = progressionVerdict([cleanAt(18), [{ weightKg: 18, reps: 12 }, { weightKg: 20, reps: 9 }]], ceiling)
+    expect(v.suggestKg).toBe(20 + LOAD_STEP_KG)
+  })
+
+  it('still refuses when the binding rung was short', () => {
+    const v = progressionVerdict([cleanAt(20), [{ weightKg: 20, reps: 12 }, { weightKg: 18, reps: 10 }]], ceiling)
+    expect(v.state).toBe('no')
+  })
+
+  it('leaves the clean single-load path exactly as it was', () => {
+    expect(progressionVerdict([cleanAt(20), cleanAt(20)], ceiling)).toEqual({
+      state: 'ready', ceiling, suggestKg: 20 + LOAD_STEP_KG,
+    })
+    expect(progressionVerdict([cleanAt(20)], ceiling).state).toBe('one-more')
   })
 })

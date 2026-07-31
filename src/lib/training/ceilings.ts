@@ -116,16 +116,90 @@ export function clearedCeiling(sets: WorkingSet[], ceiling: number): boolean {
   return sets[0].weightKg > 0
 }
 
+/** One load used within an exercise, with the sets performed at it. */
+export interface LoadRung {
+  weightKg: number
+  sets: WorkingSet[]
+  /** Every set at THIS load reached the ceiling. */
+  cleared: boolean
+}
+
+/** Sets grouped by load, lightest first. */
+export function loadLadder(sets: WorkingSet[], ceiling: number): LoadRung[] {
+  const byLoad = new Map<number, WorkingSet[]>()
+  for (const s of sets) {
+    const bucket = byLoad.get(s.weightKg) ?? []
+    bucket.push(s)
+    byLoad.set(s.weightKg, bucket)
+  }
+  return [...byLoad.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([weightKg, rung]) => ({
+      weightKg,
+      sets: rung,
+      cleared: rung.length > 0 && rung.every((s) => s.reps >= ceiling),
+    }))
+}
+
+export type LadderState =
+  /** One load, every set at the ceiling — the clean double-progression case. */
+  | 'cleared'
+  /** Mixed loads, but the LOWEST load cleared: it retires, the top load is the
+   *  new baseline. */
+  | 'collapse-ready'
+  /** Mixed loads and the lowest load is short — the lighter weight must be
+   *  earned before the heavier one can replace it. */
+  | 'blocked'
+  /** Nothing conclusive yet (no sets, or reps still under the ceiling). */
+  | 'incomplete'
+
+export interface LadderVerdict {
+  state: LadderState
+  /** The load that must clear first — always the LOWEST used. */
+  bindingLoadKg: number | null
+  /** The heaviest load used; what the exercise progresses toward. */
+  topLoadKg: number | null
+  ceiling: number
+  /** Reps still owed at the binding load (0 when it has cleared). */
+  repsOwed: number
+}
+
 /**
- * The user hit the ceiling REPS but only by dropping weight across sets — a false
- * "cleared". The ceiling is NOT earned (clearedCeiling already refuses it); the
- * coaching cue is to stick to the top load and rebuild reps from the floor.
- * Returns true when every set reached the ceiling yet the loads are not identical.
+ * Ceiling verdict for an exercise whose sets may span SEVERAL loads.
+ *
+ * THE INVARIANT IS ORDER-INDEPENDENT. "20kg × 12 then drop to 18kg" and "start
+ * at 18kg then go to 20kg" are the same situation described from two ends, and
+ * they must produce the same verdict — otherwise the coach's advice depends on
+ * the order you happened to touch the machine in, which is noise.
+ *
+ * So the rule is about the BINDING RUNG, not about direction:
+ *
+ *   Among the working sets, the LOWEST load used is binding. The ladder only
+ *   collapses upward — retiring the lower load and promoting the higher one to
+ *   baseline — when EVERY set at that binding load reached the ceiling.
+ *
+ * That is what stops a premature "Ceiling Cleared": hitting ceiling reps on a
+ * lighter drop set proves nothing about the load you are actually chasing.
  */
-export function ceilingHitOnDroppedWeight(sets: WorkingSet[], ceiling: number): boolean {
-  if (sets.length < 2) return false
-  if (!sets.every((s) => s.reps >= ceiling)) return false
-  return new Set(sets.map((s) => s.weightKg)).size > 1 && sets.some((s) => s.weightKg > 0)
+export function ladderVerdict(sets: WorkingSet[], ceiling: number): LadderVerdict {
+  const working = sets.filter((s) => s.weightKg > 0)
+  if (!working.length) {
+    return { state: 'incomplete', bindingLoadKg: null, topLoadKg: null, ceiling, repsOwed: 0 }
+  }
+
+  const rungs = loadLadder(working, ceiling)
+  const binding = rungs[0]
+  const top = rungs[rungs.length - 1]
+  // Worst set at the binding load — that's what's still owed.
+  const worst = Math.min(...binding.sets.map((s) => s.reps))
+  const repsOwed = Math.max(0, ceiling - worst)
+
+  const base = { bindingLoadKg: binding.weightKg, topLoadKg: top.weightKg, ceiling, repsOwed }
+
+  if (rungs.length === 1) {
+    return { ...base, state: binding.cleared ? 'cleared' : 'incomplete' }
+  }
+  return { ...base, state: binding.cleared ? 'collapse-ready' : 'blocked' }
 }
 
 export type ProgressionState = 'ready' | 'one-more' | 'no'
@@ -150,16 +224,33 @@ export function progressionVerdict(
   ceiling: number | null,
 ): ProgressionVerdict {
   if (ceiling == null || !sessions.length) return { state: 'no', ceiling, suggestKg: null }
+
+  /**
+   * A session counts as cleared when it is a clean single-load clear OR a
+   * legitimate ladder collapse (the binding rung cleared, so the lower load has
+   * been outgrown). Without the second case a genuine mid-session load increase
+   * broke the two-session chain and the lifter was penalised for progressing.
+   */
+  const cleared = (sets: WorkingSet[]): boolean => {
+    if (clearedCeiling(sets, ceiling)) return true
+    return ladderVerdict(sets, ceiling).state === 'collapse-ready'
+  }
+  /** The load the session actually settles at — the TOP rung after a collapse. */
+  const settledLoad = (sets: WorkingSet[]): number => {
+    const v = ladderVerdict(sets, ceiling)
+    return v.topLoadKg ?? sets[0]?.weightKg ?? 0
+  }
+
   const latest = sessions[sessions.length - 1]
   const previous = sessions.length >= 2 ? sessions[sessions.length - 2] : null
-  if (!clearedCeiling(latest, ceiling)) return { state: 'no', ceiling, suggestKg: null }
-  if (!previous || !clearedCeiling(previous, ceiling)) {
+  if (!cleared(latest)) return { state: 'no', ceiling, suggestKg: null }
+  if (!previous || !cleared(previous)) {
     return { state: 'one-more', ceiling, suggestKg: null }
   }
   return {
     state: 'ready',
     ceiling,
-    suggestKg: Math.round((latest[0].weightKg + LOAD_STEP_KG) * 10) / 10,
+    suggestKg: Math.round((settledLoad(latest) + LOAD_STEP_KG) * 10) / 10,
   }
 }
 

@@ -7,7 +7,7 @@ import { ArrowLeftRight, CheckCheck, ChevronDown, Footprints, GripVertical, Hist
 import { SetEditorRow } from './SetEditorRow'
 import { cardioSummary, isSetCommitted, type DraftExercise, type DraftSet } from '@/lib/sessions/draft'
 import { isTimedExercise } from '@/lib/exercises/timed'
-import { repWindowFor, holdTargetFor, ceilingHitOnDroppedWeight } from '@/lib/training/ceilings'
+import { repWindowFor, holdTargetFor, ladderVerdict } from '@/lib/training/ceilings'
 import { workingSets, type ExerciseHistory } from '@/lib/hooks/useExerciseSetHistory'
 import type { PrAxis } from '@/lib/training/prEngine'
 import { livePrKey } from '@/lib/sessions/livePrs'
@@ -182,12 +182,13 @@ export function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collap
   const timedEx = isTimedExercise(exercise.name)
   const repWindow = timedEx ? null : repWindowFor(exercise.name, dayKey)
   const holdTarget = timedEx ? holdTargetFor(exercise.name, dayKey) : null
-  // Strict-ceiling coach: committed working sets that ALL hit the ceiling reps but
-  // only by dropping load — the ceiling is not earned; rebuild reps at the top load.
+  // Strict-ceiling coach over the LOAD LADDER. Mixed loads within one exercise
+  // are judged by the lowest ("binding") load — see ladderVerdict. This is the
+  // same verdict whether you went heavy-to-light or light-to-heavy.
   const committedWork = exercise.sets
     .filter((s) => isSetCommitted(s) && s.setType !== 'warmup')
     .map((s) => ({ weightKg: s.weightKg, reps: s.reps }))
-  const droppedCeiling = repWindow ? ceilingHitOnDroppedWeight(committedWork, repWindow.ceiling) : false
+  const ladder = repWindow ? ladderVerdict(committedWork, repWindow.ceiling) : null
 
   return (
     <div ref={setNodeRef} style={sortableStyle}
@@ -312,16 +313,23 @@ export function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collap
               <Target className="w-3 h-3 shrink-0" aria-hidden="true" /> Next: {exercise.targetNext}
             </p>
           )}
+          {ladder?.state === 'collapse-ready' && (
+            <p className="text-xs leading-snug flex items-center gap-1" style={{ color: READY_GOLD }}>
+              <Target className="w-3 h-3 shrink-0" aria-hidden="true" />
+              {fmtKg(ladder.bindingLoadKg ?? 0)}kg cleared — {fmtKg(ladder.topLoadKg ?? 0)}kg is your new baseline.
+            </p>
+          )}
           {ready && !ready.timed && ready.currentKg != null && ready.suggestKg != null && (
             <p className="text-xs leading-snug flex items-center gap-1" style={{ color: READY_GOLD }}>
               <Target className="w-3 h-3 shrink-0" aria-hidden="true" />
               Ceiling cleared twice — add load: {fmtKg(ready.currentKg)} → {fmtKg(ready.suggestKg)}kg
             </p>
           )}
-          {droppedCeiling && (
+          {ladder?.state === 'blocked' && (
             <p className="text-xs leading-snug flex items-center gap-1" style={{ color: READY_GOLD }}>
               <Target className="w-3 h-3 shrink-0" aria-hidden="true" />
-              Ceiling reps hit on a lighter drop — stick to your top weight and aim for floor reps first.
+              Clear {fmtKg(ladder.bindingLoadKg ?? 0)}kg first — {ladder.repsOwed} more rep{ladder.repsOwed === 1 ? '' : 's'} to
+              reach {ladder.ceiling} on every set before {fmtKg(ladder.topLoadKg ?? 0)}kg replaces it.
             </p>
           )}
           {unilateral && (
