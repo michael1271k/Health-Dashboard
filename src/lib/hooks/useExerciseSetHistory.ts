@@ -3,28 +3,46 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { eraForDate, type Era } from '@/lib/programs'
-import { getPreviousSource } from '@/lib/sessions/previousSource'
+
+/** The set tags that round-trip through seeding. Mirrors `DraftSet['setType']`. */
+export type HistorySetType = 'warmup' | 'failure' | 'dropset'
 
 export interface ExerciseHistory {
   date: string                                    // most recent session date
-  /** That session's full working-set list, ordered by set_number (1..n).
-   *  `setType: 'failure'` is carried so seeding + the PREV chip reproduce the
-   *  exact failure tags from last time. */
-  sets: Array<{ weightKg: number; reps: number; setType?: 'failure' }>
+  /** That session's FULL set list, ordered by set_number (1..n) — warm-ups
+   *  included. The tag is carried so seeding reproduces last time exactly;
+   *  callers that need a working-set baseline use `workingSets()`. */
+  sets: Array<{ weightKg: number; reps: number; setType?: HistorySetType }>
+}
+
+/**
+ * The working sets of a history entry — warm-ups removed.
+ *
+ * Seeding wants the WHOLE list (a warm-up you did last time is a warm-up you'll
+ * do again, and its tag must survive the round-trip). Everything that reasons
+ * about performance — the PREV chip, the ceiling check, progression — must not
+ * see warm-ups, or a light first set drags the baseline down. One helper so the
+ * three call sites can't drift apart.
+ */
+export function workingSets(h: ExerciseHistory | undefined): ExerciseHistory['sets'] {
+  if (!h || !Array.isArray(h.sets)) return []
+  return h.sets.filter((s) => s.setType !== 'warmup')
 }
 
 /**
  * Previous-session memory for the Command Center deck: the most recent FULL
- * set list per exercise name — richer than useExerciseMemory's single top set,
- * so "Prev: 36 × 12/11/10 · Jul 12" renders beside today's inputs.
- * Era-aware: a HELIX draft never shows PPL-legacy numbers as its baseline.
+ * set list per exercise name — richer than a single top set, so
+ * "Prev: 36 × 12/11/10 · Jul 12" renders beside today's inputs.
+ *
+ * ROUTINE-SCOPED BY DEFAULT. When `dayKey` is known (any template or edit deck)
+ * only prior sessions of that SAME routine count. Doing Seated Leg Curl on both
+ * Legs A and Legs B used to blend the two into one "previous", so a 3-set day
+ * seeded from a 2-set day and the coach paced you against the wrong session.
+ * Unscoped lookup survives only for a free-form paste deck, which has no routine.
  */
 export function useExerciseSetHistory(names: string[], era?: Era, dayKey?: string) {
   const key = [...names].sort().join('|')
-  // 'same_routine' scopes "Previous" to the SAME day_key; only meaningful when a
-  // dayKey is known (a template/edit deck), otherwise it degrades to 'any'.
-  const source = getPreviousSource()
-  const scopeKey = source === 'same_routine' && dayKey ? dayKey : null
+  const scopeKey = dayKey ?? null
   return useQuery({
     queryKey: ['workout_sets', 'deck_history', key, era ?? 'all', scopeKey ?? 'any'],
     enabled: names.length > 0,
@@ -46,10 +64,7 @@ export function useExerciseSetHistory(names: string[], era?: Era, dayKey?: strin
         exercises: { name: string }
         workout_sessions: { started_at: string; day_key: string | null }
       }>)
-        // Warm-ups are not a working baseline — seeding from one under-loads
-        // the whole deck.
-        .filter((r) => r.set_type !== 'warmup')
-        // 'same_routine': only pull from previous sessions of the SAME routine.
+        // Only previous sessions of the SAME routine.
         .filter((r) => !scopeKey || r.workout_sessions.day_key === scopeKey)
 
       // Rows arrive newest-first (created_at desc) to pick each exercise's most
@@ -58,7 +73,8 @@ export function useExerciseSetHistory(names: string[], era?: Era, dayKey?: strin
       // old code appended in that arbitrary order and then blindly `.reverse()`d,
       // which flipped an already-correct list into `11, 12, 12`. Sort by
       // set_number instead: deterministic 1..n regardless of insert timing.
-      type Row = { weightKg: number; reps: number; setNumber: number; setType?: 'failure' }
+      type Row = { weightKg: number; reps: number; setNumber: number; setType?: HistorySetType }
+      const TAGS: readonly string[] = ['warmup', 'failure', 'dropset']
       const acc = new Map<string, { date: string; rows: Row[] }>()
       for (const r of rows) {
         const date = r.workout_sessions.started_at.slice(0, 10)
@@ -66,7 +82,7 @@ export function useExerciseSetHistory(names: string[], era?: Era, dayKey?: strin
         const name = r.exercises.name
         const row: Row = {
           weightKg: r.weight_kg, reps: r.reps, setNumber: r.set_number,
-          ...(r.set_type === 'failure' ? { setType: 'failure' as const } : {}),
+          ...(r.set_type && TAGS.includes(r.set_type) ? { setType: r.set_type as HistorySetType } : {}),
         }
         const existing = acc.get(name)
         if (!existing) acc.set(name, { date, rows: [row] })

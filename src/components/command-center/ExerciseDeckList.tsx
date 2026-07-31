@@ -74,6 +74,7 @@ export function ExerciseDeckList({ draft, history, readyByName, onReorder, onUpd
               key={ex.localId}
               exercise={ex}
               history={history?.get(ex.name) ?? null}
+              dayKey={draft.dayKey}
               ready={readyByName?.get(ex.name) ?? null}
               collapsed={reordering}
               onUpdateSet={(i, patch) => onUpdateSet(ex.localId, i, patch)}

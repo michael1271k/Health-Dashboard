@@ -24,18 +24,23 @@ export const HELIX_DAY_KEYS = ['cb_a', 'legs_a', 'arms', 'cb_b', 'legs_b'] as co
 /** Last session per exercise NAME — the shape `useExerciseSetHistory` returns. */
 export interface ExerciseHistoryEntry {
   date: string
-  sets: Array<{ weightKg: number; reps: number; setType?: 'failure' }>
+  sets: Array<{ weightKg: number; reps: number; setType?: 'warmup' | 'failure' | 'dropset' }>
 }
 
 /**
  * Reproduce the previous session EXACTLY: same number of sets, each with its
- * own weight, reps, and failure tag. No padding to a template count, no
- * fabricated extra sets — if last time was 2 sets, you get 2 sets.
+ * own weight, reps, and tag. No padding to a template count, no fabricated
+ * extra sets — if last time was 2 sets, you get 2 sets.
+ *
+ * ALL THREE tags round-trip (warm-up, failure, drop set), not just failure. The
+ * point of routine-scoped memory is to see the exact shape of the last time you
+ * ran THIS day — including which set you warmed up on and where you failed — so
+ * you can pace against it.
  */
 function seedFromHistory(prev: ExerciseHistoryEntry): DraftSet[] {
   return prev.sets.map((s) => {
     const set: DraftSet = { weightKg: s.weightKg, reps: s.reps }
-    if (s.setType === 'failure') set.setType = 'failure'
+    if (s.setType) set.setType = s.setType
     return set
   })
 }

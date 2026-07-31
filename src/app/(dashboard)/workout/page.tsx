@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
-import { useExerciseMap, useExerciseMemory, useLatestSessionFlag } from '@/lib/hooks/useLogger'
+import { useExerciseMap, useRoutineMemory, routineMemoryMap, useLatestSessionFlag } from '@/lib/hooks/useLogger'
 import { useWeekSessions, weekStartOf } from '@/lib/hooks/useWeekSessions'
 import { WeeklySummaryCard } from '@/components/command-center/WeeklySummaryCard'
 import { PostWorkoutSummary } from '@/components/command-center/PostWorkoutSummary'
@@ -31,15 +31,20 @@ const REST_VIOLET = '#B4522A'
 export default function WorkoutPage() {
   const router = useRouter()
   const { data: exMap } = useExerciseMap()
-  const { data: memory } = useExerciseMemory()
   const { data: nextFlag } = useLatestSessionFlag()
   const { era } = useEraFilter()
-  // The active plan+phase is chosen in Settings → Plans & Phases (single source).
+  // The active plan+phase is chosen in Settings → Plans (single source).
   // Init to a deterministic default so SSR and first client render match; the
   // effect then reads the real active plan (localStorage) after mount.
   const [program, setProgram] = useState<Program>(() => activeProgram('apex51', 'bulk'))
   const [openPlan, setOpenPlan] = useState<string | null>(null)
   const unit = weightUnit()
+
+  // Memory is per ROUTINE: the same lift on two different days keeps two
+  // separate "previous" values. Tuples in, Map out (JSON can't carry a Map).
+  const dayKeys = useMemo(() => program.days.map((d) => d.key), [program])
+  const { data: memoryRows } = useRoutineMemory(dayKeys)
+  const memory = useMemo(() => routineMemoryMap(memoryRows), [memoryRows])
 
   // Surviving deck draft (autosaved on /session) — offer to resume it.
   const [resumeDraft, setResumeDraft] = useState<SessionDraft | null>(null)
@@ -189,7 +194,7 @@ export default function WorkoutPage() {
                   {day.sub && <p className="text-[10px] text-muted mb-1">{day.sub}</p>}
                   {day.exercises.map((ex) => {
                     const id = exMap?.get(ex.name)
-                    const prev = id ? memory?.get(id) : undefined
+                    const prev = id ? memory.get(`${day.key}|${id}`) : undefined
                     const target = displayWeight(ex.wk1Kg)
                     return (
                       <div key={ex.name} className="rounded-lg px-2.5 py-1.5 bg-white/[0.02] border border-white/[0.05]">

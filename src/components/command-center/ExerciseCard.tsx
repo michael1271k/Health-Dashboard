@@ -8,7 +8,7 @@ import { SetEditorRow } from './SetEditorRow'
 import { cardioSummary, isSetCommitted, type DraftExercise, type DraftSet } from '@/lib/sessions/draft'
 import { isTimedExercise } from '@/lib/exercises/timed'
 import { repWindowFor, holdTargetFor, ceilingHitOnDroppedWeight } from '@/lib/training/ceilings'
-import type { ExerciseHistory } from '@/lib/hooks/useExerciseSetHistory'
+import { workingSets, type ExerciseHistory } from '@/lib/hooks/useExerciseSetHistory'
 import { SAPPHIRE, STEEL, MUTED, HAIRLINE } from '@/lib/theme/palette'
 
 const STATUS_META: Record<NonNullable<DraftExercise['status']>, { label: string; color: string }> = {
@@ -73,9 +73,13 @@ const fmtDate = (d: string) =>
  * inputs, an editable note, and the per-set tuner rows. Cardio entries render
  * as a slim violet card (distance/duration, no set rows — excluded at commit).
  */
-export function ExerciseCard({ exercise, history, ready, collapsed = false, onUpdateSet, onSplitSet, onMergeSet, onToggleLink, onAddSet, onRemoveSet, onToggleDone, onCheckAll, onRemoveExercise, onSetNote }: {
+export function ExerciseCard({ exercise, history, dayKey, ready, collapsed = false, onUpdateSet, onSplitSet, onMergeSet, onToggleLink, onAddSet, onRemoveSet, onToggleDone, onCheckAll, onRemoveExercise, onSetNote }: {
   exercise: DraftExercise
   history: ExerciseHistory | null
+  /** The routine being logged. Rep windows are per DAY — Calf Press on Legs B
+   *  has a different ceiling than on Legs A — so this must be threaded through
+   *  or the card silently falls back to the strictest window in the program. */
+  dayKey?: string | null
   /** Forward-carried progression cue for this lift (cleared its ceiling twice). */
   ready?: ReadyCue | null
   /** Force header-only (drag-reorder collapses the whole deck for visibility). */
@@ -169,9 +173,10 @@ export function ExerciseCard({ exercise, history, ready, collapsed = false, onUp
   const topWeight = Math.max(...exercise.sets.map((s) => s.weightKg), 0)
 
   // Programmed target for this lift — floor–ceiling (loaded) or hold seconds (timed).
+  const prevWork = workingSets(history ?? undefined)
   const timedEx = isTimedExercise(exercise.name)
-  const repWindow = timedEx ? null : repWindowFor(exercise.name)
-  const holdTarget = timedEx ? holdTargetFor(exercise.name) : null
+  const repWindow = timedEx ? null : repWindowFor(exercise.name, dayKey)
+  const holdTarget = timedEx ? holdTargetFor(exercise.name, dayKey) : null
   // Strict-ceiling coach: committed working sets that ALL hit the ceiling reps but
   // only by dropping load — the ceiling is not earned; rebuild reps at the top load.
   const committedWork = exercise.sets
@@ -245,8 +250,11 @@ export function ExerciseCard({ exercise, history, ready, collapsed = false, onUp
                 : { color: MUTED, background: 'rgba(255,255,255,0.04)', border: `1px solid ${HAIRLINE}` }}
             >
               <History className="w-3 h-3 shrink-0" aria-hidden="true" />
-              {history
-                ? <>Prev {fmtKg(Math.max(...history.sets.map((s) => s.weightKg)))}kg × {history.sets.map((s) => s.reps).join(', ')} · {fmtDate(history.date)}</>
+              {/* Working sets only. The history payload now carries warm-ups so
+                  seeding can reproduce them, but a warm-up in the PREV chip
+                  understates the top load and misreads as a regression. */}
+              {history && prevWork.length
+                ? <>Prev {fmtKg(Math.max(...prevWork.map((s) => s.weightKg)))}kg × {prevWork.map((s) => s.reps).join(', ')} · {fmtDate(history.date)}</>
                 : 'No history in this era — showing program targets'}
             </span>
             {exercise.seededFrom && (

@@ -3,9 +3,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 
-// Map from exercise_id (UUID) → { weightKg, reps } from the most recent session
-export type LastSetsMap = Map<string, { weightKg: number; reps: number }>
-
 /** exercise NAME → id, so program templates (programs.ts) can resolve DB exercise rows. */
 export function useExerciseMap() {
   return useQuery({
@@ -21,26 +18,59 @@ export function useExerciseMap() {
   })
 }
 
-/** Most recent set per exercise across all sessions — powers the "Previous: Xkg × Y" memory. */
-export function useExerciseMemory() {
+export interface RoutineMemoryEntry { weightKg: number; reps: number }
+
+/**
+ * Top working set per (routine, exercise) — powers the "Previous: Xkg × Y" chip
+ * in the week plan.
+ *
+ * ROUTINE-SCOPED. This replaced `useExerciseMemory`, which keyed on exercise_id
+ * ALONE: Seated Leg Curl on Legs A and Legs B collapsed into one memory, so the
+ * chip showed whichever day you happened to train last and the two routines
+ * appeared to contaminate each other. Warm-ups are excluded — a light opener is
+ * not a baseline.
+ *
+ * Returns TUPLES, not a Map. JSON has no Map: it dehydrates to `{}` and
+ * rehydrates without `.get()`, which is the crash family documented in
+ * QueryProvider. Callers rebuild the Map in a `useMemo` (see `routineMemoryMap`).
+ */
+export function useRoutineMemory(dayKeys: string[]) {
+  const keys = [...dayKeys].sort()
   return useQuery({
-    queryKey: ['workout_sets', 'memory'],
-    queryFn: async (): Promise<LastSetsMap> => {
+    queryKey: ['workout_sets', 'routine_memory', keys.join('|')],
+    enabled: keys.length > 0,
+    staleTime: 60_000,
+    queryFn: async (): Promise<Array<[string, RoutineMemoryEntry]>> => {
       const { data, error } = await supabase
         .from('workout_sets')
-        .select('exercise_id, weight_kg, reps, created_at')
+        .select('exercise_id, weight_kg, reps, set_type, workout_sessions!inner(day_key)')
+        .in('workout_sessions.day_key', keys)
         .order('created_at', { ascending: false })
-        .limit(800)
+        .limit(2000)
       if (error) throw error
-      const rows = (data ?? []) as Array<{ exercise_id: string; weight_kg: number; reps: number }>
-      const map: LastSetsMap = new Map()
+      const rows = (data ?? []) as unknown as Array<{
+        exercise_id: string; weight_kg: number; reps: number; set_type: string | null
+        workout_sessions: { day_key: string | null }
+      }>
+      // Newest-first, so the first hit per key IS the most recent.
+      const seen = new Map<string, RoutineMemoryEntry>()
       for (const r of rows) {
-        if (!map.has(r.exercise_id)) map.set(r.exercise_id, { weightKg: r.weight_kg, reps: r.reps })
+        if (r.set_type === 'warmup') continue
+        const dk = r.workout_sessions.day_key
+        if (!dk) continue
+        const k = `${dk}|${r.exercise_id}`
+        if (!seen.has(k)) seen.set(k, { weightKg: r.weight_kg, reps: r.reps })
       }
-      return map
+      return [...seen]
     },
-    staleTime: 60_000,
   })
+}
+
+/** Lookup map for `useRoutineMemory`, keyed `${dayKey}|${exerciseId}`. */
+export function routineMemoryMap(
+  rows: Array<[string, RoutineMemoryEntry]> | undefined,
+): Map<string, RoutineMemoryEntry> {
+  return new Map(Array.isArray(rows) ? rows : [])
 }
 
 /** The most recent session's coach flag — the hero's "next session" action item. */

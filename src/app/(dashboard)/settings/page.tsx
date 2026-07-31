@@ -6,7 +6,6 @@ import { supabase } from '@/lib/supabase/client'
 import { derivePhase, phaseDisplay } from '@/lib/nutrition/phase'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { phaseGoalsFor, type NutritionMode, type NutritionPreset } from '@/lib/types/workout'
-import { getPreviousSource, setPreviousSource, type PreviousSource } from '@/lib/sessions/previousSource'
 import { phaseBadgeStyle } from '@/lib/phases'
 import { LiquidModal } from '@/components/ui/LiquidModal'
 import {
@@ -91,8 +90,6 @@ export default function SettingsPage() {
   const [pendingPhase, setPendingPhase] = useState<NutritionMode | null>(null)
   // Week start: 0 = Sunday (default), 1 = Monday. Stored as week_end_day.
   const [weekStart, setWeekStart] = useState<0 | 1>(0)
-  // "Previous" column data source for the logger (any workout vs same routine).
-  const [prevSource, setPrevSource] = useState<PreviousSource>('any')
   // Active training PLAN + the Preview drawer / two-step switch confirm.
   const [activePlanId, setActivePlanId] = useState<string>(DEFAULT_PROGRAM_ID)
   const [previewPlan, setPreviewPlan] = useState<Program | null>(null)
@@ -140,10 +137,6 @@ export default function SettingsPage() {
         else setActivePlanId(getActiveProgramId())
         const phase = ((data as { active_phase?: string | null }).active_phase ?? data.goal_preset) as NutritionMode | null
         if (phase === 'cut' || phase === 'bulk' || phase === 'maintenance') setActivePhase(phase)
-        // "Previous" source — DB wins, else the localStorage mirror.
-        const ps = (data as { previous_source?: string | null }).previous_source
-        const src: PreviousSource = ps === 'same_routine' ? 'same_routine' : ps === 'any' ? 'any' : getPreviousSource()
-        setPrevSource(src); setPreviousSource(src)
       }
       setLoading(false)
     }
@@ -188,20 +181,6 @@ export default function SettingsPage() {
       { user_id: session.user.id, week_end_day: endDay } as unknown as never, { onConflict: 'user_id' },
     )
     if (error && !/column|week_end|schema cache|PGRST204/i.test(error.message)) {
-      setStatus({ type: 'error', msg: error.message })
-    }
-  }
-
-  /** Persist the logger's "Previous" data source + mirror to localStorage (the
-   *  history hook reads it synchronously). Self-heals if the column is unmigrated. */
-  async function savePreviousSource(v: PreviousSource) {
-    setPrevSource(v); setPreviousSource(v)
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) return
-    const { error } = await supabase.from('user_goals').upsert(
-      { user_id: session.user.id, previous_source: v } as unknown as never, { onConflict: 'user_id' },
-    )
-    if (error && !/column|previous_source|schema cache|PGRST204/i.test(error.message)) {
       setStatus({ type: 'error', msg: error.message })
     }
   }
@@ -515,20 +494,9 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <div className="text-sm text-text font-medium">&ldquo;Previous&rdquo; column</div>
-            <div className="text-xs text-muted">Where the logger pulls last-time weights from</div>
-          </div>
-          <div className="flex rounded-xl border border-border overflow-hidden shrink-0">
-            {([['any', 'Any workout'], ['same_routine', 'Same routine']] as const).map(([v, label]) => (
-              <button key={v} onClick={() => savePreviousSource(v)}
-                className={`px-3 py-2 text-sm font-semibold ${prevSource === v ? 'bg-primary/15 text-primary' : 'text-muted'}`}>
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* The "Previous" source toggle is gone: exercise memory is ALWAYS
+            scoped to the routine you're logging. Blending Legs A and Legs B
+            into one memory was never a preference worth having. */}
 
         <div className="flex items-center justify-between gap-4">
           <div>
