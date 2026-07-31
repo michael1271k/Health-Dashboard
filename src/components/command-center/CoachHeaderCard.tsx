@@ -17,8 +17,10 @@ type StatPatch = Partial<NonNullable<SessionDraft['stats']>>
  * already-logged dates), the editable stats strip (Duration / Avg HR / Calories
  * are tap-to-edit; Volume/Sets are live-derived), and coach insight/flag.
  */
-export function CoachHeaderCard({ draft, onSetDate, onSetStats }: {
+export function CoachHeaderCard({ draft, recordCount = 0, onSetDate, onSetStats }: {
   draft: SessionDraft
+  /** Distinct axis-records claimed so far this session (live, from `prEngine`). */
+  recordCount?: number
   onSetDate: (dateISO: string) => void
   onSetStats: (patch: StatPatch) => void
 }) {
@@ -77,10 +79,14 @@ export function CoachHeaderCard({ draft, onSetDate, onSetStats }: {
           onChange={(v) => onSetStats({ avg_hr_bpm: v })} />
         <EditBadge label="Calories" value={s?.calories_kcal ?? null} unit="kcal" color="#D4AF37"
           onChange={(v) => onSetStats({ calories_kcal: v })} />
+        {/* Replaced "Δ vs prior", which was un-editable AND uncomputed — nothing
+            in the app ever filled volume_delta_pct_vs_prior; it only arrived
+            from a pasted coach JSON, so in a normal session it read "—" forever.
+            This counts up live as you tick sets. */}
         <Badge
-          label="Δ vs prior"
-          value={s?.volume_delta_pct_vs_prior != null ? `${s.volume_delta_pct_vs_prior > 0 ? '+' : ''}${s.volume_delta_pct_vs_prior}%` : '—'}
-          color={s?.volume_delta_pct_vs_prior != null ? (s.volume_delta_pct_vs_prior >= 0 ? '#3E9E7A' : '#C4514E') : '#79808C'}
+          label="Records"
+          value={recordCount > 0 ? String(recordCount) : '—'}
+          color={recordCount > 0 ? '#C9A227' : '#79808C'}
         />
       </div>
 

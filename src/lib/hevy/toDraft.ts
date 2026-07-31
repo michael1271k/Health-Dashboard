@@ -86,7 +86,6 @@ export function hevyWorkoutToDraft(h: HevyWorkout, fallbackDate?: string): Sessi
       prs: h.stats.records ?? null,
       avg_hr_bpm: h.stats.avgBpm ?? null,
       calories_kcal: h.stats.calories ?? null,
-      volume_delta_pct_vs_prior: null,
     } : undefined,
     notes: h.notes ?? '',
     startedAt: `${date}T${h.timeHHMM ?? '17:00'}:00.000Z`,

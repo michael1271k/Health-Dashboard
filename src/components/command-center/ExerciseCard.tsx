@@ -9,6 +9,8 @@ import { cardioSummary, isSetCommitted, type DraftExercise, type DraftSet } from
 import { isTimedExercise } from '@/lib/exercises/timed'
 import { repWindowFor, holdTargetFor, ceilingHitOnDroppedWeight } from '@/lib/training/ceilings'
 import { workingSets, type ExerciseHistory } from '@/lib/hooks/useExerciseSetHistory'
+import type { PrAxis } from '@/lib/training/prEngine'
+import { livePrKey } from '@/lib/sessions/livePrs'
 import { SAPPHIRE, STEEL, MUTED, HAIRLINE } from '@/lib/theme/palette'
 
 const STATUS_META: Record<NonNullable<DraftExercise['status']>, { label: string; color: string }> = {
@@ -73,9 +75,12 @@ const fmtDate = (d: string) =>
  * inputs, an editable note, and the per-set tuner rows. Cardio entries render
  * as a slim violet card (distance/duration, no set rows — excluded at commit).
  */
-export function ExerciseCard({ exercise, history, dayKey, ready, collapsed = false, onUpdateSet, onSplitSet, onMergeSet, onToggleLink, onAddSet, onRemoveSet, onToggleDone, onCheckAll, onRemoveExercise, onSetNote }: {
+export function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collapsed = false, onUpdateSet, onSplitSet, onMergeSet, onToggleLink, onAddSet, onRemoveSet, onToggleDone, onCheckAll, onRemoveExercise, onSetNote }: {
   exercise: DraftExercise
   history: ExerciseHistory | null
+  /** Live records keyed `${localId}|${setIdx}` — computed once for the whole
+   *  deck so a set is judged against the ones ticked before it. */
+  livePrs?: Map<string, PrAxis[]>
   /** The routine being logged. Rep windows are per DAY — Calf Press on Legs B
    *  has a different ceiling than on Legs A — so this must be threaded through
    *  or the card silently falls back to the strictest window in the program. */
@@ -352,6 +357,7 @@ export function ExerciseCard({ exercise, history, dayKey, ready, collapsed = fal
                   set={g.set}
                   active={activeSet === i}
                   timed={timed}
+                  prAxes={livePrs?.get(livePrKey(exercise.localId, i))}
                   onActivate={() => setActiveSet((cur) => (cur === i ? null : i))}
                   onChange={(patch) => onUpdateSet(i, patch)}
                   onRemove={() => { setActiveSet(null); onRemoveSet(i) }}
@@ -381,6 +387,7 @@ export function ExerciseCard({ exercise, history, dayKey, ready, collapsed = fal
                   <SetEditorRow
                     key={`l${g.left.idx}`} index={g.left.idx} displayNum={g.num} subRow set={g.left.set}
                     active={activeSet === g.left.idx} timed={timed}
+                    prAxes={livePrs?.get(livePrKey(exercise.localId, g.left.idx))}
                     onActivate={() => setActiveSet((cur) => (cur === g.left!.idx ? null : g.left!.idx))}
                     onChange={(patch) => onUpdateSet(g.left!.idx, patch)}
                     onRemove={() => { setActiveSet(null); onRemoveSet(g.left!.idx) }}
@@ -391,6 +398,7 @@ export function ExerciseCard({ exercise, history, dayKey, ready, collapsed = fal
                   <SetEditorRow
                     key={`r${g.right.idx}`} index={g.right.idx} displayNum={g.num} subRow set={g.right.set}
                     active={activeSet === g.right.idx} timed={timed}
+                    prAxes={livePrs?.get(livePrKey(exercise.localId, g.right.idx))}
                     onActivate={() => setActiveSet((cur) => (cur === g.right!.idx ? null : g.right!.idx))}
                     onChange={(patch) => onUpdateSet(g.right!.idx, patch)}
                     onRemove={() => { setActiveSet(null); onRemoveSet(g.right!.idx) }}

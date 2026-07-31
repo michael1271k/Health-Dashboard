@@ -11,6 +11,7 @@ import { ExerciseCard, type ReadyCue } from './ExerciseCard'
 import { tapLight } from '@/lib/native/haptics'
 import type { SessionDraft, DraftSet } from '@/lib/sessions/draft'
 import type { ExerciseHistory } from '@/lib/hooks/useExerciseSetHistory'
+import type { PrAxis } from '@/lib/training/prEngine'
 
 /**
  * The sortable exercise deck. Long-press (250 ms) lifts a card on touch so
@@ -19,9 +20,11 @@ import type { ExerciseHistory } from '@/lib/hooks/useExerciseSetHistory'
  * Stays a SINGLE column at every breakpoint — verticalListSortingStrategy +
  * restrictToVerticalAxis are only valid for a one-column list.
  */
-export function ExerciseDeckList({ draft, history, readyByName, onReorder, onUpdateSet, onSplitSet, onMergeSet, onToggleLink, onAddSet, onRemoveSet, onToggleDone, onCheckAll, onRemoveExercise, onSetNote }: {
+export function ExerciseDeckList({ draft, history, livePrs, readyByName, onReorder, onUpdateSet, onSplitSet, onMergeSet, onToggleLink, onAddSet, onRemoveSet, onToggleDone, onCheckAll, onRemoveExercise, onSetNote }: {
   draft: SessionDraft
   history: Map<string, ExerciseHistory> | undefined
+  /** Live records keyed `${localId}|${setIdx}` — see `computeLivePrs`. */
+  livePrs?: Map<string, PrAxis[]>
   /** Forward-carried progression cues, keyed by exercise name. */
   readyByName?: Map<string, ReadyCue>
   onReorder: (orderedIds: string[]) => void
@@ -74,6 +77,7 @@ export function ExerciseDeckList({ draft, history, readyByName, onReorder, onUpd
               key={ex.localId}
               exercise={ex}
               history={history?.get(ex.name) ?? null}
+              livePrs={livePrs}
               dayKey={draft.dayKey}
               ready={readyByName?.get(ex.name) ?? null}
               collapsed={reordering}

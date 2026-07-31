@@ -9,9 +9,8 @@ import type { Database, InsertRow } from '@/lib/supabase/types'
 import type { SaveWorkoutPayload } from '@/lib/types/workout'
 import { countCommittedSets } from '@/lib/sessions/schema'
 import { sessionVolumeKg } from '@/lib/sessions/volume'
-import { epley1RM } from '@/lib/utils/epley'
-import { isReentryWeek } from '@/lib/programs'
 import { isTimedExercise } from '@/lib/exercises/timed'
+import { buildBaselines, detectSessionPrs, recordSets, type PrAxis } from '@/lib/training/prEngine'
 import { normalizeCr10 } from '@/lib/training/effort'
 
 type DB = SupabaseClient<Database>
@@ -27,7 +26,9 @@ export interface SessionMetrics {
   reportMd?: string | null
 }
 
-export type PrAxis = 'weight' | 'reps' | 'volume' | 'e1rm'
+// Re-exported so existing importers (`useSessionDetail`, the deck components)
+// keep working — the type's home is now the engine.
+export type { PrAxis }
 
 export interface SaveSessionResult {
   sessionId: string
@@ -47,7 +48,6 @@ export async function saveSession(
   metrics: SessionMetrics = {},
 ): Promise<SaveSessionResult> {
   // Warmups count toward volume + set count (they still never earn a PR).
-  const isWarmup = (s: (typeof payload.sets)[number]) => s.setType === 'warmup'
   const totalVolumeKg = sessionVolumeKg(payload.sets)
   // Set count: a unilateral L/R split is ONE set tracked as two sub-sets sharing
   // a `pairId` (see countCommittedSets). Volume counts both sides — but at the
@@ -117,79 +117,35 @@ export async function saveSession(
   }
 
   const prHistory = (prHistoryRes.data ?? []) as Array<{ exercise_id: string; est_1rm_kg: number | null; reps: number | null; weight_kg: number | null; session_id: string | null }>
-  // FOUR era-agnostic baselines per exercise (all-time, pre-this-session):
-  //   · bestEst  — best est-1RM (loaded)      · bestSec — best hold seconds (timed)
-  //   · bestWeight — heaviest single set       · bestRepsAtWeight — most reps at a load
-  //   · bestVolume — heaviest single-session volume for the exercise.
-  const bestEstMap = new Map<string, number>()
-  const bestSecMap = new Map<string, number>()
-  const bestWeightMap = new Map<string, number>()
-  const bestRepsAtWeight = new Map<string, number>()   // key `${exerciseId}|${weight}`
-  const sessVol = new Map<string, number>()            // key `${exerciseId}|${sessionId}`
-  for (const row of prHistory) {
-    const ex = row.exercise_id
-    if (row.est_1rm_kg != null) bestEstMap.set(ex, Math.max(bestEstMap.get(ex) ?? 0, row.est_1rm_kg))
-    if (row.reps != null) bestSecMap.set(ex, Math.max(bestSecMap.get(ex) ?? 0, row.reps))
-    if (row.weight_kg != null) bestWeightMap.set(ex, Math.max(bestWeightMap.get(ex) ?? 0, row.weight_kg))
-    if (row.weight_kg != null && row.reps != null) {
-      const k = `${ex}|${row.weight_kg}`
-      bestRepsAtWeight.set(k, Math.max(bestRepsAtWeight.get(k) ?? 0, row.reps))
-    }
-    if (row.session_id && row.weight_kg != null && row.reps != null) {
-      const vk = `${ex}|${row.session_id}`
-      sessVol.set(vk, (sessVol.get(vk) ?? 0) + row.weight_kg * row.reps)
-    }
-  }
-  const bestVolumeMap = new Map<string, number>()
-  for (const [vk, vol] of sessVol) {
-    const ex = vk.slice(0, vk.lastIndexOf('|'))
-    bestVolumeMap.set(ex, Math.max(bestVolumeMap.get(ex) ?? 0, vol))
-  }
 
-  // v5.1: RE-ENTRY weeks (~90% loads) are excluded from PR flagging entirely.
-  const reentry = isReentryWeek(payload.startedAt.slice(0, 10))
-  const prAxesByEx = new Map<string, Set<PrAxis>>()
+  // Every PR rule lives in `prEngine` — the live deck runs the SAME code against
+  // the same baselines, so a badge shown on the green tick is a badge that gets
+  // recorded. (This block used to be ~60 lines of inline map-juggling that the
+  // client had no way to reuse.)
   const nameByEx = new Map<string, string>()
-  const addAxis = (ex: string, axis: PrAxis) => {
-    const set = prAxesByEx.get(ex) ?? new Set<PrAxis>()
-    set.add(axis); prAxesByEx.set(ex, set)
-  }
+  for (const s of payload.sets) nameByEx.set(s.exerciseId, s.exerciseName)
 
-  const setsToInsert = payload.sets.map((s) => {
-    nameByEx.set(s.exerciseId, s.exerciseName)
-    const timed = isTimedExercise(s.exerciseName)
-    // est-1RM is undefined for a hold (weight 0 → Epley 0); persist null so the
-    // report never prints "e1RM 0kg" on a plank.
-    const est1rm = timed ? null : epley1RM(s.weightKg, s.reps)
-    // A drop set / warm-up counts for volume but is never a top-set PR.
-    const prIneligible = isWarmup(s) || s.setType === 'dropset'
-    // A PR requires beating an EXISTING baseline — the first time an exercise is
-    // ever logged (or at a new load, for reps@weight) is never a PR.
-    let isPr = false
-    if (!reentry && !prIneligible) {
-      if (timed) {
-        if (bestSecMap.has(s.exerciseId) && s.reps > (bestSecMap.get(s.exerciseId) ?? 0)) { isPr = true; addAxis(s.exerciseId, 'reps') }
-      } else {
-        if (bestWeightMap.has(s.exerciseId) && s.weightKg > (bestWeightMap.get(s.exerciseId) ?? 0)) { isPr = true; addAxis(s.exerciseId, 'weight') }
-        const rk = `${s.exerciseId}|${s.weightKg}`
-        if (bestRepsAtWeight.has(rk) && s.reps > (bestRepsAtWeight.get(rk) ?? 0)) { isPr = true; addAxis(s.exerciseId, 'reps') }
-        if (est1rm != null && bestEstMap.has(s.exerciseId) && est1rm > (bestEstMap.get(s.exerciseId) ?? 0)) { isPr = true; addAxis(s.exerciseId, 'e1rm') }
-      }
-    }
-    return { s, est1rm, isPr }
-  })
+  const baselines = buildBaselines(
+    prHistory.map((r) => ({
+      key: r.exercise_id, weightKg: r.weight_kg, reps: r.reps,
+      est1rm: r.est_1rm_kg, sessionId: r.session_id,
+    })),
+    (key) => isTimedExercise(nameByEx.get(key) ?? ''),
+  )
 
-  // Volume PR is a SESSION-level axis: this session's total exercise volume beats
-  // the exercise's best prior single-session volume.
-  const sessionVolByEx = new Map<string, number>()
-  for (const s of payload.sets) sessionVolByEx.set(s.exerciseId, (sessionVolByEx.get(s.exerciseId) ?? 0) + s.weightKg * s.reps)
-  if (!reentry) {
-    for (const [ex, vol] of sessionVolByEx) {
-      if (bestVolumeMap.has(ex) && vol > (bestVolumeMap.get(ex) ?? 0)) addAxis(ex, 'volume')
-    }
-  }
-  // pr_count = total distinct axis-PRs across exercises (weight/reps/volume/e1rm).
-  const prCount = [...prAxesByEx.values()].reduce((n, set) => n + set.size, 0)
+  const candidates = payload.sets.map((s) => ({
+    key: s.exerciseId, weightKg: s.weightKg, reps: s.reps,
+    setType: s.setType ?? null, timed: isTimedExercise(s.exerciseName),
+  }))
+  const prResult = detectSessionPrs(candidates, baselines)
+  const prAxesByEx = prResult.axesByKey
+  const prCount = prResult.prCount
+
+  const setsToInsert = payload.sets.map((s, i) => ({
+    s,
+    est1rm: prResult.perSet[i].est1rm,
+    isPr: prResult.perSet[i].axes.length > 0,
+  }))
 
   const computedDuration =
     Math.max(0, Math.round((new Date(payload.endedAt).getTime() - new Date(payload.startedAt).getTime()) / 60000)) || null
@@ -283,32 +239,25 @@ export async function saveSession(
     throw new Error(`Failed to save sets: ${setsError.message}`)
   }
 
-  // Per-exercise session bests (eligible sets) — the values recorded to the ledger.
-  const agg = new Map<string, { maxW: number; maxReps: number; maxRepsW: number; maxE: number }>()
-  for (const { s, est1rm } of setsToInsert) {
-    if (isWarmup(s) || s.setType === 'dropset') continue
-    const a = agg.get(s.exerciseId) ?? { maxW: 0, maxReps: 0, maxRepsW: 0, maxE: 0 }
-    if (s.weightKg > a.maxW) a.maxW = s.weightKg
-    if (s.reps > a.maxReps) { a.maxReps = s.reps; a.maxRepsW = s.weightKg }
-    if ((est1rm ?? 0) > a.maxE) a.maxE = est1rm ?? 0
-    agg.set(s.exerciseId, a)
-  }
+  // The ledger records the set that WON each axis, not the session's maximum
+  // per field — see `recordSets`.
+  const records = recordSets(candidates, prResult)
 
   const prRows: Array<Record<string, unknown>> = []
   const newPRs: Array<{ exerciseName: string; est1rm: number; axes: PrAxis[] }> = []
   for (const [ex, axes] of prAxesByEx) {
     const name = nameByEx.get(ex) ?? ex
-    const a = agg.get(ex)
-    newPRs.push({ exerciseName: name, est1rm: a?.maxE ?? 0, axes: [...axes] })
+    const byAxis = records.get(ex)
+    newPRs.push({ exerciseName: name, est1rm: byAxis?.get('e1rm')?.value ?? 0, axes: [...axes] })
     for (const axis of axes) {
-      const val = axis === 'weight' ? (a?.maxW ?? 0)
-        : axis === 'reps' ? (a?.maxReps ?? 0)
-        : axis === 'volume' ? (sessionVolByEx.get(ex) ?? 0)
-        : (a?.maxE ?? 0) // e1rm
+      const rec = byAxis?.get(axis)
       prRows.push({
-        user_id: userId, exercise_key: name, axis, value: Math.round(val * 100) / 100,
-        reps: axis === 'reps' ? (a?.maxReps ?? null) : null,
-        weight_kg: axis === 'weight' ? (a?.maxW ?? null) : axis === 'reps' ? (a?.maxRepsW ?? null) : null,
+        user_id: userId, exercise_key: name, axis,
+        value: Math.round((rec?.value ?? 0) * 100) / 100,
+        // Only the reps axis carries a rep count; only weight/reps carry a load
+        // (volume and e1RM are derived over the whole exercise, not one set).
+        reps: axis === 'reps' ? (rec?.reps ?? null) : null,
+        weight_kg: axis === 'weight' || axis === 'reps' ? (rec?.weightKg ?? null) : null,
         session_id: session.id, achieved_on: dateStr,
       })
     }

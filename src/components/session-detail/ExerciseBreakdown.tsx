@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { Trophy, Dumbbell, TrendingUp, ChevronRight } from 'lucide-react'
 import type { DetailExercise, DetailSet } from '@/lib/hooks/useSessionDetail'
-import type { PrAxis } from '@/lib/sessions/save'
+import { prAxisLabel } from '@/lib/training/prEngine'
 import { useSessionIntel } from '@/lib/hooks/useSessionIntel'
 import { useSessionTrends, LOAD_STEP_KG } from '@/lib/hooks/useSessionTrends'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
@@ -21,7 +21,8 @@ const ExerciseHistorySheet = dynamic(
   { ssr: false },
 )
 
-const PR_AXIS_LABEL: Record<PrAxis, string> = { weight: 'WT', reps: 'REPS', volume: 'VOL', e1rm: '1RM' }
+// Label lives in the engine — a timed hold's `reps` axis reads DUR, not REPS.
+
 
 function SetTypeBadge({ type }: { type: string }) {
   if (type === 'warmup') return <span className="text-[8px] font-bold uppercase px-1 py-px rounded" style={{ color: EMERALD, background: `${EMERALD}1f` }}>WU</span>
@@ -149,7 +150,7 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
                     ex.prAxes.map((ax, i) => (
                       <span key={ax} className="text-[8px] font-bold uppercase px-1 py-px rounded shrink-0 inline-flex items-center gap-0.5"
                         style={{ color: GOLD, background: `${GOLD}1f`, border: `1px solid ${GOLD}4d` }}>
-                        {i === 0 && <Trophy className="w-2.5 h-2.5" aria-hidden="true" />} PR {PR_AXIS_LABEL[ax]}
+                        {i === 0 && <Trophy className="w-2.5 h-2.5" aria-hidden="true" />} PR {prAxisLabel(ax, isTimedExercise(ex.name))}
                       </span>
                     ))
                   ) : hasPr && (

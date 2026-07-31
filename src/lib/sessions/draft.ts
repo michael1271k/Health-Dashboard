@@ -85,7 +85,6 @@ export interface SessionDraft {
     prs: number | null
     avg_hr_bpm: number | null
     calories_kcal: number | null
-    volume_delta_pct_vs_prior: number | null
   }
   notes: string
   startedAt: string             // ISO

@@ -8,15 +8,16 @@ import type { ReadyCue } from './ExerciseCard'
 import { SessionNotesCard } from './SessionNotesCard'
 import { CommitBar } from './CommitBar'
 import { useExerciseSetHistory } from '@/lib/hooks/useExerciseSetHistory'
+import { useExerciseBaselines } from '@/lib/hooks/useExerciseBaselines'
+import { computeLivePrs } from '@/lib/sessions/livePrs'
 import { useProgressionQueue } from '@/lib/hooks/useProgressionQueue'
 import { useDeleteSession } from '@/lib/hooks/useDayVault'
 import { eraForDate } from '@/lib/programs'
 import { fmtVolume } from '@/lib/utils/units'
 import { tapSuccess } from '@/lib/native/haptics'
 import type { useSessionDraft, CommitResult } from '@/lib/hooks/useSessionDraft'
-import type { PrAxis } from '@/lib/sessions/save'
-
-const PR_AXIS_LABEL: Record<PrAxis, string> = { weight: 'WT', reps: 'REPS', volume: 'VOL', e1rm: '1RM' }
+import { prAxisLabel } from '@/lib/training/prEngine'
+import { isTimedExercise } from '@/lib/exercises/timed'
 
 /**
  * The Command Center deck — the ONE logging surface. Hosted fullscreen on
@@ -40,6 +41,12 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
   // Era-aware previous-session memory for every exercise in the deck.
   const names = draft?.exercises.filter((ex) => ex.kind !== 'cardio').map((ex) => ex.name) ?? []
   const { data: history } = useExerciseSetHistory(names, draft ? eraForDate(draft.date) : undefined, draft?.dayKey)
+
+  // Live PR detection. All-time baselines strictly BEFORE this session's date,
+  // run through the same engine `saveSession` uses — so a badge that appears on
+  // the green tick is a badge that gets written to personal_records.
+  const { data: baselines } = useExerciseBaselines(names, draft?.date)
+  const livePrs = useMemo(() => computeLivePrs(draft, baselines), [draft, baselines])
 
   // Forward-carried Smart-Coach cues — lifts due a load bump, keyed by name so a
   // matching card in this session shows the "▲ add load" chip inline.
@@ -77,7 +84,7 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
                     {pr.axes.map((ax) => (
                       <span key={ax} className="text-[9px] font-bold uppercase tracking-wide px-1 py-px rounded"
                         style={{ background: 'rgba(212,175,55,0.16)', border: '1px solid rgba(212,175,55,0.5)' }}>
-                        {PR_AXIS_LABEL[ax]}
+                        {prAxisLabel(ax, isTimedExercise(pr.exerciseName))}
                       </span>
                     ))}
                   </p>
@@ -145,7 +152,7 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
     <div className="lg:grid lg:grid-cols-[minmax(320px,380px)_1fr] lg:gap-5 lg:items-start">
       {/* ── Left rail (sticky on desktop): identity, insight, notes, commit ── */}
       <div className="space-y-3 lg:sticky lg:top-4">
-        <CoachHeaderCard draft={draft} onSetDate={setDate} onSetStats={setStats} />
+        <CoachHeaderCard draft={draft} recordCount={livePrs.count} onSetDate={setDate} onSetStats={setStats} />
         <SessionNotesCard notes={draft.notes} onChange={setNotes} />
         <div className="hidden lg:block">{commitBar}</div>
       </div>
@@ -155,6 +162,7 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
         <ExerciseDeckList
           draft={draft}
           history={history}
+          livePrs={livePrs.bySet}
           readyByName={readyByName}
           onReorder={reorder}
           onUpdateSet={updateSet}

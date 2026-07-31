@@ -2,15 +2,17 @@
 
 import { useEffect, useState } from 'react'
 import * as Slider from '@radix-ui/react-slider'
-import { Check, X } from 'lucide-react'
+import { Check, X, Trophy } from 'lucide-react'
 import { tapLight } from '@/lib/native/haptics'
 import { isSetCommitted, type DraftSet } from '@/lib/sessions/draft'
+import { prAxisLabel, type PrAxis } from '@/lib/training/prEngine'
 
 const WEIGHT_STEPS = [-2.5, -0.25, +0.25, +2.5] as const
 const ORANGE = '#E0703C' // warm-up
 const DANGER = '#C4514E' // failure
 const DROP = '#9A6DD7'   // drop set
 const GREEN = '#3E9E7A'  // completed (ticked green)
+const GOLD = '#C9A227'   // personal record
 
 /** Stable slider ceiling for a load (multiple of 10, ≥ weight + 30 headroom). */
 const maxFor = (w: number) => Math.max(60, Math.ceil((w + 30) / 10) * 10)
@@ -20,8 +22,10 @@ const maxFor = (w: number) => Math.max(60, Math.ceil((w + 30) / 10) * 10)
  * haptic stepper chips, reps ±1, Warm-up/Failure toggles). Only the active row
  * mounts its slider, keeping long decks light.
  */
-export function SetEditorRow({ index, displayNum, subRow = false, set, active, timed = false, onActivate, onChange, onRemove, onToggleDone, onSplit, onToggleLink, onMerge }: {
+export function SetEditorRow({ index, displayNum, subRow = false, set, active, timed = false, prAxes = [], onActivate, onChange, onRemove, onToggleDone, onSplit, onToggleLink, onMerge }: {
   index: number
+  /** Records this set just set, computed live by the parent from `prEngine`. */
+  prAxes?: PrAxis[]
   /** Human set number (groups a unilateral pair as ONE set); falls back to index+1. */
   displayNum?: number
   /** True when rendered as a Left/Right sub-row nested inside a "Set N" pair card. */
@@ -114,6 +118,16 @@ export function SetEditorRow({ index, displayNum, subRow = false, set, active, t
               {set.side ? `F-${set.side}` : 'F'}
             </span>
           )}
+          {/* Live records. Appears the instant the set is ticked green, from the
+              SAME engine that writes personal_records at commit — a badge shown
+              here is a badge that gets recorded. */}
+          {prAxes.map((axis) => (
+            <span key={axis} className="text-[9px] font-bold uppercase px-1 py-px rounded inline-flex items-center gap-0.5"
+              style={{ color: GOLD, background: `${GOLD}1f`, border: `1px solid ${GOLD}66` }}
+              title={`Personal record — ${prAxisLabel(axis, timed)}`}>
+              <Trophy className="w-2.5 h-2.5" aria-hidden="true" />{prAxisLabel(axis, timed)}
+            </span>
+          ))}
           {set.rpe != null && <span className="text-[10px] text-muted">RPE {set.rpe}</span>}
         </button>
         {onToggleDone && (

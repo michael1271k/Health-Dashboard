@@ -240,7 +240,7 @@ export function useSessionDraft() {
       if (!d) return d
       const base = d.stats ?? {
         duration_min: null, volume_kg: null, sets_completed: null, prs: null,
-        avg_hr_bpm: null, calories_kcal: null, volume_delta_pct_vs_prior: null,
+        avg_hr_bpm: null, calories_kcal: null,
       }
       return { ...d, stats: { ...base, ...patch } }
     })

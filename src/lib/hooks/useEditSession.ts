@@ -98,7 +98,7 @@ export function useEditSession() {
         startedAt: new Date(s.started_at).toISOString(),
         stats: {
           duration_min: s.duration_min, volume_kg: s.total_volume_kg, sets_completed: null, prs: null,
-          avg_hr_bpm: s.avg_bpm, calories_kcal: s.calories_burned, volume_delta_pct_vs_prior: null,
+          avg_hr_bpm: s.avg_bpm, calories_kcal: s.calories_burned,
         },
         exercises: [...byEx.values()],
       }
