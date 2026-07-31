@@ -1,17 +1,19 @@
 'use client'
 
 import { forwardRef, useEffect, useMemo, useRef, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { m, AnimatePresence } from 'framer-motion'
 import {
   Dumbbell, Trophy, Sparkles, Loader2, ChevronRight, BatteryMedium, Moon,
-  ClipboardCopy, Check, BookOpen,
+  ClipboardCopy, Check, BookOpen, Radar,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { useTimelineWeeks, type TimelineWeekNode } from '@/lib/hooks/useTimelineWeeks'
 import { useContinuum, type ContinuumDay } from '@/lib/hooks/useContinuum'
 import { useWeeklyExport, useWeeklyAiSummaries, useSaveWeeklyAiSummary } from '@/lib/hooks/useWeeklyLoop'
+import { useSentinelExport, useSentinelReports, useSaveSentinelReport } from '@/lib/hooks/useSentinelExport'
 import { weekStartOf, isoAddDays } from '@/lib/utils/week'
 import { splitColor } from '@/lib/types/workout'
 import { logicalTodayISO } from '@/lib/utils/day'
@@ -265,34 +267,56 @@ function WeekRecoveryStrip({ weekStart }: { weekStart: string }) {
 }
 
 /**
- * The week's AI loop — exactly two actions, per the brief:
- *   1. Export Week → a dense markdown payload on the clipboard.
- *   2. Paste AI Report → stored against this week and reopened via "Open Report".
+ * The week's AI loop — export a payload, paste the report back.
  *
- * The old "Generate AI report" (a server round-trip that spent tokens on its own
- * prompt) and "Snapshot week" (a stats blob nobody read) are gone.
+ * TWO payloads, because they answer different questions. RAW is the week's
+ * measurements, nothing else. SENTINEL-7 is the full telemetry audit brief: the
+ * same data plus every derived figure (TDEE decomposition, T4WM, completeness,
+ * volume compliance) pre-computed in TypeScript, plus the §0–§7 report contract.
+ * Anything an LLM would otherwise have to calculate is handed to it, because a
+ * model's arithmetic is unverifiable and unstable across runs.
+ *
+ * There is still no server round-trip — no tokens are spent by the app itself.
  */
+type ExportKind = 'raw' | 'sentinel'
+
+/**
+ * Is this pasted text a Sentinel audit rather than a free-form summary?
+ *
+ * Keyed on the §-numbered headings the contract mandates, not on a marker the
+ * model could drop: a report that lost its §-sections isn't a Sentinel report
+ * in any useful sense, so mis-classifying it as prose is the right failure.
+ */
+function isSentinelReport(md: string): boolean {
+  return /^##\s*§\d/m.test(md) && /SENTINEL-7/i.test(md)
+}
+
 function WeekActions({ node }: { node: TimelineWeekNode }) {
   const { data: payload, isLoading } = useWeeklyExport(node.weekStart)
+  const { data: sentinelPayload, isLoading: sentinelLoading } = useSentinelExport(node.weekStart)
   const { data: summaries } = useWeeklyAiSummaries()
+  const { data: sentinelReports } = useSentinelReports()
   const save = useSaveWeeklyAiSummary()
-  const [copied, setCopied] = useState(false)
+  const saveSentinel = useSaveSentinelReport()
+  const [copied, setCopied] = useState<ExportKind | null>(null)
   const [pasteOpen, setPasteOpen] = useState(false)
   const [reportOpen, setReportOpen] = useState(false)
   const [draft, setDraft] = useState('')
 
   const stored = summaries?.find((s) => s.weekStart === node.weekStart)
+  const storedSentinel = sentinelReports?.find((s) => s.weekStart === node.weekStart)
 
-  const copy = async () => {
-    if (!payload) return
+  const copy = async (kind: ExportKind) => {
+    const text = kind === 'sentinel' ? sentinelPayload : payload
+    if (!text) return
     try {
-      await navigator.clipboard.writeText(payload)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2200)
+      await navigator.clipboard.writeText(text)
+      setCopied(kind)
+      setTimeout(() => setCopied(null), 2200)
     } catch {
       // Clipboard blocked (insecure context / permissions) — drop the payload
       // into the textarea so it's never unreachable.
-      setDraft(payload)
+      setDraft(text)
       setPasteOpen(true)
     }
   }
@@ -300,13 +324,28 @@ function WeekActions({ node }: { node: TimelineWeekNode }) {
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap gap-2">
-        <button onClick={copy} disabled={isLoading || !payload}
+        <button onClick={() => copy('sentinel')} disabled={sentinelLoading || !sentinelPayload}
           className="btn-primary min-h-[40px] text-fluid-xs disabled:opacity-50"
-          style={copied ? { background: EMERALD } : undefined}>
-          {isLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Building…</>
-            : copied ? <><Check className="w-4 h-4" /> Copied</>
-            : <><ClipboardCopy className="w-4 h-4" /> Export week</>}
+          style={copied === 'sentinel' ? { background: EMERALD } : undefined}>
+          {sentinelLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Building…</>
+            : copied === 'sentinel' ? <><Check className="w-4 h-4" /> Copied</>
+            : <><Radar className="w-4 h-4" /> Sentinel-7 audit</>}
         </button>
+
+        <button onClick={() => copy('raw')} disabled={isLoading || !payload}
+          className="btn-glass min-h-[40px] text-fluid-xs disabled:opacity-50"
+          style={copied === 'raw' ? { borderColor: `${EMERALD}66`, color: EMERALD } : undefined}>
+          {isLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Building…</>
+            : copied === 'raw' ? <><Check className="w-4 h-4" /> Copied</>
+            : <><ClipboardCopy className="w-4 h-4" /> Raw data</>}
+        </button>
+
+        {storedSentinel ? (
+          <Link href={`/report/${storedSentinel.id}`} className="btn-glass min-h-[40px] text-fluid-xs"
+            style={{ borderColor: `${GOLD}55`, color: GOLD }}>
+            <BookOpen className="w-4 h-4" /> Open audit
+          </Link>
+        ) : null}
 
         {stored ? (
           <button onClick={() => setReportOpen(true)} className="btn-glass min-h-[40px] text-fluid-xs"
@@ -315,9 +354,9 @@ function WeekActions({ node }: { node: TimelineWeekNode }) {
           </button>
         ) : null}
 
-        <button onClick={() => { setDraft(stored?.content ?? ''); setPasteOpen(true) }}
+        <button onClick={() => { setDraft(storedSentinel?.content ?? stored?.content ?? ''); setPasteOpen(true) }}
           className="btn-glass min-h-[40px] text-fluid-xs">
-          <Sparkles className="w-4 h-4" /> {stored ? 'Replace report' : 'Paste AI report'}
+          <Sparkles className="w-4 h-4" /> {storedSentinel || stored ? 'Replace report' : 'Paste report'}
         </button>
       </div>
 
@@ -334,16 +373,32 @@ function WeekActions({ node }: { node: TimelineWeekNode }) {
           <div className="flex gap-2">
             <button onClick={() => setPasteOpen(false)} className="btn-glass flex-1 justify-center min-h-[40px] text-fluid-xs">Cancel</button>
             <button
-              onClick={() => save.mutate({ weekStart: node.weekStart, content: draft }, {
-                onSuccess: () => { setPasteOpen(false); setReportOpen(true) },
-              })}
-              disabled={!draft.trim() || save.isPending}
+              onClick={() => {
+                // A Sentinel audit is stored under its own report type so it
+                // gets a real page (and doesn't blank the capsule's stats — see
+                // useTimelineWeeks). Detected from the §-headings it must carry.
+                if (isSentinelReport(draft)) {
+                  saveSentinel.mutate({ weekStart: node.weekStart, contentMd: draft }, {
+                    onSuccess: () => setPasteOpen(false),
+                  })
+                } else {
+                  save.mutate({ weekStart: node.weekStart, content: draft }, {
+                    onSuccess: () => { setPasteOpen(false); setReportOpen(true) },
+                  })
+                }
+              }}
+              disabled={!draft.trim() || save.isPending || saveSentinel.isPending}
               className="btn-primary flex-1 justify-center min-h-[40px] text-fluid-xs disabled:opacity-50"
             >
-              {save.isPending ? 'Saving…' : 'Save report'}
+              {save.isPending || saveSentinel.isPending ? 'Saving…' : 'Save report'}
             </button>
           </div>
-          {save.isError && <p className="text-fluid-xs text-danger">{save.error instanceof Error ? save.error.message : 'Save failed'}</p>}
+          {(save.isError || saveSentinel.isError) && (
+            <p className="text-fluid-xs text-danger">
+              {(save.error ?? saveSentinel.error) instanceof Error
+                ? ((save.error ?? saveSentinel.error) as Error).message : 'Save failed'}
+            </p>
+          )}
         </div>
       )}
 

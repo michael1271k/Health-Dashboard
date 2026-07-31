@@ -1,8 +1,9 @@
 'use client'
 
 import { Suspense, useMemo, useState } from 'react'
+import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { GitBranch, LineChart, HeartPulse, CalendarDays, ChevronLeft, ChevronRight, FolderOpen, Scale } from 'lucide-react'
+import { GitBranch, LineChart, HeartPulse, CalendarDays, ChevronLeft, ChevronRight, FolderOpen, Scale, Radar } from 'lucide-react'
 import { useMonthActivity, monthActivitySets, useGymReports } from '@/lib/hooks/useWeekly'
 import { useReports } from '@/lib/hooks/useReports'
 import { useWeightTrend } from '@/lib/hooks/useCharts'
@@ -119,6 +120,9 @@ function PathfinderInner() {
                 <Scale className="w-3.5 h-3.5" /> <span className="helix-num">{displayWeight(latestWeight)}{weightUnit()}</span>
               </button>
             )}
+            <Link href="/reports" className="btn-glass shrink-0 min-h-[40px] text-fluid-xs" aria-label="All weekly reports">
+              <Radar className="w-3.5 h-3.5" /> Reports
+            </Link>
             <button onClick={() => setCalOpen(true)} className="btn-glass shrink-0 min-h-[40px] text-fluid-xs" aria-label="Jump to a date">
               <CalendarDays className="w-3.5 h-3.5" /> Jump
             </button>

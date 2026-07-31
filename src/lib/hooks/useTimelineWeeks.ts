@@ -130,14 +130,31 @@ export function useTimelineWeeks(era: EraFilter) {
       if (!inEraFilter(nodeEra, era)) continue
       const report = reportByWeek.get(ws)
       const isLive = ws === liveWeekStart
-      if (report) {
-        // Saved report wins — its frozen payload is authoritative.
+      // A saved report's frozen payload wins ONLY when it actually holds stats.
+      // A pasted narrative (weekly_ai, sentinel7) carries no `metrics.payload`,
+      // so `repairReportPayload` hands back a zeroed one — and treating THAT as
+      // authoritative blanked the capsule: paste a report about a 4-session week
+      // and the capsule immediately read "0 sessions · 0 kg · 0 PRs".
+      const hasStats = !!report && (
+        report.payload.sessions > 0 || report.payload.volumeKg > 0
+        || report.payload.sets > 0 || report.payload.days.length > 0
+      )
+      if (report && hasStats) {
         out.push({
           weekStart: ws, weekNumber: report.week_number, weekLabel: weekLabelOf(ws),
           sessions: report.payload.sessions, volumeKg: report.payload.volumeKg,
           sets: report.payload.sets, durationMin: report.payload.durationMin, prs: report.payload.prs,
           weightDelta: report.payload.weightDelta, fatDelta: report.payload.fatDelta,
           days: report.payload.days, contentMd: report.content_md, reportId: report.id, isLive, era: nodeEra,
+        })
+      } else if (report) {
+        // Prose-only report: keep the narrative, aggregate the numbers live.
+        const a = byWeek.get(ws) ?? { sessions: 0, volumeKg: 0, sets: 0, durationMin: 0, prs: 0, days: [] }
+        out.push({
+          weekStart: ws, weekNumber: weekNumberOf(ws), weekLabel: weekLabelOf(ws),
+          sessions: a.sessions, volumeKg: Math.round(a.volumeKg), sets: a.sets, durationMin: a.durationMin, prs: a.prs,
+          ...weekDelta(ws),
+          days: a.days, contentMd: report.content_md, reportId: report.id, isLive, era: nodeEra,
         })
       } else {
         // Live week with no sessions yet → an empty node so "Week N" still opens.

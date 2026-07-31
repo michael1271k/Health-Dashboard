@@ -645,3 +645,57 @@ html[data-reduce-motion='true'] .sync-breathe { animation: none !important; }
   animation: chargeSweep 700ms cubic-bezier(0.4, 0, 0.2, 1) 380ms 1 forwards;
 }
 @keyframes chargeSweep { to { transform: translate3d(100%, 0, 0); } }
+
+/* ─── Report rendering ────────────────────────────────────────────────────────
+   Sentinel-7 puts its header box, bar charts and TDEE ledger inside fenced code
+   blocks. Those are aligned by CHARACTER COUNT, so they need a true monospace
+   stack and must never wrap — a wrapped ASCII table is unreadable, and on a
+   phone every one of them is wider than the viewport. Scroll instead. */
+.report-pre,
+.report-pre code {
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  font-variant-ligatures: none;   /* ─ and ═ must not fuse into a single glyph */
+  white-space: pre;
+  tab-size: 2;
+}
+
+/* ─── Save as PDF (the browser's own print pipeline) ──────────────────────────
+   No jsPDF, no html2canvas: print-to-PDF renders real text, so the report stays
+   selectable and searchable and the ASCII tables keep their alignment instead of
+   being rasterised. */
+@media print {
+  /* App chrome is navigation, not content. */
+  nav, header nav, .print-hide,
+  [data-print-hide], button, [role='tablist'] { display: none !important; }
+
+  /* Ink on white regardless of the app theme — printing the dark theme wastes
+     an entire cartridge and reads worse. */
+  :root, html, body {
+    background: #fff !important;
+    color: #111 !important;
+  }
+  .report-print, .report-print * {
+    color: #111 !important;
+    background: transparent !important;
+    border-color: #ccc !important;
+    box-shadow: none !important;
+  }
+  .report-print .report-pre {
+    background: #f6f6f6 !important;
+    border: 1px solid #ddd !important;
+    /* A code block that scrolls on screen has nowhere to scroll on paper. */
+    white-space: pre-wrap !important;
+    word-break: break-word !important;
+    font-size: 8.5pt !important;
+  }
+  .report-print a { text-decoration: underline; }
+  .report-print a[href^='http']::after { content: ' (' attr(href) ')'; font-size: 8pt; color: #555; }
+
+  /* Never split a table row, a chart or a heading across a page break. */
+  .report-print table, .report-print pre, .report-print blockquote { break-inside: avoid; }
+  .report-print tr, .report-print li { break-inside: avoid; }
+  .report-print h1, .report-print h2, .report-print h3 { break-after: avoid; }
+
+  .report-print { max-width: none !important; padding: 0 !important; }
+  @page { margin: 14mm; }
+}
