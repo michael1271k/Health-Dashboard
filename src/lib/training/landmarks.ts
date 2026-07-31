@@ -12,7 +12,10 @@ import { MUSCLE } from '@/lib/theme/palette'
  * toward). One target line per program, per muscle.
  */
 
-export type Program = 'cut' | 'bulk'
+/** Legacy alias: this module used to know only cut/bulk. Kept so existing
+ *  importers compile while the codebase converges on `ProgramPhase`. */
+export type Program = ProgramPhase
+export type ProgramPhase = 'cut' | 'maintenance' | 'bulk'
 
 /** The 13 tracked muscles (display order). */
 export const LANDMARK_MUSCLES = [
@@ -21,12 +24,25 @@ export const LANDMARK_MUSCLES = [
 ] as const
 export type LandmarkMuscle = (typeof LANDMARK_MUSCLES)[number]
 
-/** Weekly set targets per muscle, per program (user-supplied). */
-export const PROGRAM_TARGETS: Record<Program, Record<LandmarkMuscle, number>> = {
+/**
+ * Weekly set targets per muscle, per PHASE (user-supplied defaults).
+ *
+ * `maintenance` used to be missing entirely, and the phase was inferred from
+ * `calorie_goal >= 2450` — so a maintenance block silently trained to CUT
+ * volume. The phase is now read from the active plan+phase, and these are the
+ * defaults each (plan, phase) pair starts from before user overrides.
+ */
+export const PROGRAM_TARGETS: Record<ProgramPhase, Record<LandmarkMuscle, number>> = {
   // Helix Cut — MEV+ (defend muscle in the deficit)
   cut: {
     Chest: 11, Back: 11, 'Side delts': 7, 'Rear delts': 2, Biceps: 8, Triceps: 6,
     Forearms: 4, Quads: 10, Hamstrings: 8, Glutes: 6, Adductors: 0, Calves: 6, 'Abs/core': 10,
+  },
+  // Maintenance — between MEV+ and MAV: enough to keep progressing without the
+  // recovery cost of a full bulk block.
+  maintenance: {
+    Chest: 12, Back: 12, 'Side delts': 8, 'Rear delts': 3, Biceps: 8, Triceps: 7,
+    Forearms: 5, Quads: 11, Hamstrings: 8, Glutes: 6, Adductors: 1, Calves: 7, 'Abs/core': 10,
   },
   // Helix Bulk — MAV (productive ceiling)
   bulk: {
@@ -36,6 +52,11 @@ export const PROGRAM_TARGETS: Record<Program, Record<LandmarkMuscle, number>> = 
 }
 
 export const MUSCLE_COLOR: Record<LandmarkMuscle, string> = MUSCLE
+
+/** Default targets for a phase. Unknown phases fall back to cut (the safe floor). */
+export function programTargets(phase: ProgramPhase): Record<LandmarkMuscle, number> {
+  return PROGRAM_TARGETS[phase] ?? PROGRAM_TARGETS.cut
+}
 
 /**
  * Fold a raw muscle token (from `exercises.muscle_groups`, seeded by muscleMap)
@@ -101,9 +122,11 @@ export interface MuscleVolume {
  */
 export function weeklyVolumeByMuscle(
   rows: Array<{ muscleTokens: string[]; dedupeKey: string }>,
-  program: Program,
+  phase: ProgramPhase,
+  /** Per-plan+phase user overrides (see usePlanPhaseGoals.resolveVolume). */
+  overrides?: Partial<Record<LandmarkMuscle, number>>,
 ): MuscleVolume[] {
-  const targets = PROGRAM_TARGETS[program]
+  const targets = { ...programTargets(phase), ...(overrides ?? {}) }
   const counted = new Map<LandmarkMuscle, Set<string>>()
   for (const row of rows) {
     const muscles = new Set(

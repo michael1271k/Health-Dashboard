@@ -5,14 +5,15 @@ import { NotionSync } from '@/components/settings/NotionSync'
 import { supabase } from '@/lib/supabase/client'
 import { derivePhase, phaseDisplay } from '@/lib/nutrition/phase'
 import { logicalTodayISO } from '@/lib/utils/day'
-import { phaseGoalsFor, type NutritionMode, type NutritionPreset } from '@/lib/types/workout'
+import type { NutritionMode, NutritionPreset } from '@/lib/types/workout'
 import { phaseBadgeStyle } from '@/lib/phases'
 import { LiquidModal } from '@/components/ui/LiquidModal'
 import {
   HELIX_CUT_START, DEFAULT_PROGRAM_ID, PROGRAMS, getActiveProgramId,
   setActiveProgramId, setActivePhase, activePhase, activeProgram, type Program,
 } from '@/lib/programs'
-import { usePlanPhaseGoals } from '@/lib/hooks/usePlanPhaseGoals'
+import { usePlanPhaseGoals, type PlanPhaseOverride } from '@/lib/hooks/usePlanPhaseGoals'
+import { LANDMARK_MUSCLES } from '@/lib/training/landmarks'
 import { parseRepWindow } from '@/lib/training/ceilings'
 import { AlertTriangle, Dumbbell, Calendar, Target } from 'lucide-react'
 import type { Tables } from '@/lib/supabase/types'
@@ -26,6 +27,23 @@ function planList(): Program[] {
 
 /** Nutrition mode → the timeline phase kind, so the picker reuses the glow palette. */
 const MODE_TO_PHASE = { cut: 'cut', maintenance: 'maintenance', bulk: 'bulk' } as const
+
+/**
+ * The resolved preset as an override patch.
+ *
+ * Every field is written on each edit, deliberately: `saveOverride` upserts the
+ * whole row, so sending only the edited field would null every other override
+ * the user had already made.
+ */
+function planPhasePatch(p: NutritionPreset): PlanPhaseOverride {
+  return {
+    calorieGoal: p.calorieGoal, proteinGoalG: p.proteinGoalG, carbsGoalG: p.carbsGoalG,
+    fatGoalG: p.fatGoalG, fiberMin: p.fiberMin ?? null, fiberMax: p.fiberMax ?? null,
+    stepsGoal: p.stepsGoal, targetWeightKg: p.targetWeightKg,
+    targetBodyFatPct: p.targetBodyFatPct ?? null, targetMuscleMassKg: p.targetMuscleMassKg ?? null,
+    rateMinKgWk: p.rateMinKgWk ?? null, rateMaxKgWk: p.rateMaxKgWk ?? null,
+  }
+}
 
 type ContextMode = 'normal' | 'travel' | 'illness' | 'emergency'
 
@@ -86,8 +104,9 @@ export default function SettingsPage() {
   // saveTargetWeight) rather than failing the whole Settings save on a DB that
   // hasn't run the paste-SQL yet. It's now driven by the selected phase (no
   // standalone input) — applyPhase persists the phase's target.
-  // Phase switch is gated by a confirmation modal (hard reset of analytics/coach).
-  const [pendingPhase, setPendingPhase] = useState<NutritionMode | null>(null)
+  // The phase being viewed INSIDE the open plan drawer. Not a global setting —
+  // it only becomes active when the drawer's "Make active" is confirmed.
+  const [drawerPhase, setDrawerPhase] = useState<NutritionMode>('cut')
   // Week start: 0 = Sunday (default), 1 = Monday. Stored as week_end_day.
   const [weekStart, setWeekStart] = useState<0 | 1>(0)
   // Active training PLAN + the Preview drawer / two-step switch confirm.
@@ -96,7 +115,10 @@ export default function SettingsPage() {
   const [confirmSwitch, setConfirmSwitch] = useState(false)
   // User-edited per-plan+phase macro overrides (plan_phase_goals). `resolve` merges
   // an override over the static phaseGoalsFor default.
-  const { resolve: resolvePhaseGoals, saveOverride } = usePlanPhaseGoals()
+  const { resolve: resolvePhaseGoals, resolveVolume, saveOverride, saveVolumeTarget } = usePlanPhaseGoals()
+  // The phase actually in force. goal_preset is the persisted tag; activePhase()
+  // is the synchronous localStorage mirror the rest of the app reads.
+  const livePhase = ((goals.goal_preset as NutritionMode) || (activePhase() as NutritionMode)) as NutritionMode
 
   useEffect(() => {
     async function load() {
@@ -155,20 +177,6 @@ export default function SettingsPage() {
     } catch { /* plans table not migrated yet */ }
   }
 
-  /** Record the active phase + the date it started (the "[Plan] Era" anchor that
-   *  Analytics ranges from). Self-heals if the columns aren't migrated. */
-  async function savePhaseMeta(mode: NutritionMode) {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) return
-    const { error } = await supabase.from('user_goals').upsert(
-      { user_id: session.user.id, active_phase: mode, phase_started_on: logicalTodayISO() } as unknown as never,
-      { onConflict: 'user_id' },
-    )
-    if (error && !/column|active_phase|phase_started|schema cache|PGRST204/i.test(error.message)) {
-      setStatus({ type: 'error', msg: error.message })
-    }
-  }
-
   /** Persist the week-start choice as week_end_day + mirror to localStorage so
    *  weekStartOf reads it synchronously. Self-heals if the column isn't migrated. */
   async function saveWeekStart(day: 0 | 1) {
@@ -221,16 +229,28 @@ export default function SettingsPage() {
   }
 
   /**
-   * Selecting a phase pushes ITS numbers into the live goals — calories, macros,
-   * step goal, target weight, and the goal_preset tag. The app's cut/bulk landmark
-   * targets and the daily phase chip both key off calorie_goal, so re-tagging is
-   * automatic once the goal is written.
+   * Switch the active PLAN and PHASE together, atomically.
+   *
+   * These used to be two independent controls with two confirm modals, so the
+   * app could sit in a state no plan actually defines — PPL's macros running
+   * under Helix-5's split, or vice versa. A phase is not a global mood; it's the
+   * set of numbers a specific plan runs on, so it is only ever chosen inside one.
+   *
+   * Both localStorage mirrors are written BEFORE the awaits: activeProgram() and
+   * activePhase() are synchronous and are read during the very next render, so
+   * persisting first would leave the UI a round-trip behind itself.
    */
-  async function applyPhase(mode: NutritionMode) {
+  async function applyPlanPhase(planId: string, mode: NutritionMode) {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return
+
+    setActivePlanId(planId)
+    setActiveProgramId(planId)
+    setActivePhase(mode)
+
     // Per-PLAN phase goals — PPL's cut is leaner than Helix's, so source the
-    // numbers for the ACTIVE plan (and honour any hand-edited override).
-    const p = resolvePhaseGoals(activePlanId, mode)
-    setActivePhase(mode) // localStorage mirror — activeProgram() reads it synchronously
+    // numbers for the CHOSEN plan (and honour any hand-edited override).
+    const p = resolvePhaseGoals(planId, mode)
     await save({
       calorie_goal: p.calorieGoal,
       protein_goal_g: p.proteinGoalG ?? goals.protein_goal_g,
@@ -241,7 +261,28 @@ export default function SettingsPage() {
     })
     await saveTargetWeight(p.targetWeightKg)
     await saveBodyTargets(p)
-    await savePhaseMeta(mode)
+
+    // One upsert for plan + phase + the era anchor: a partial write here would
+    // leave the plan switched but the phase stale.
+    const { error } = await supabase.from('user_goals').upsert(
+      {
+        user_id: session.user.id,
+        active_plan: planId,
+        active_phase: mode,
+        phase_started_on: logicalTodayISO(),
+      } as unknown as never,
+      { onConflict: 'user_id' },
+    )
+    if (error && !/column|active_plan|active_phase|phase_started|schema cache|PGRST204/i.test(error.message)) {
+      setStatus({ type: 'error', msg: error.message }); return
+    }
+    try {
+      await supabase.from('plans')
+        .update({ program_id: planId, started_on: logicalTodayISO() } as unknown as never)
+        .eq('user_id', session.user.id).eq('active', true)
+    } catch { /* plans table not migrated yet */ }
+
+    setStatus({ type: 'success', msg: `${PROGRAMS[planId]?.label ?? 'Plan'} · ${mode} is now active.` })
   }
 
   /**
@@ -276,31 +317,6 @@ export default function SettingsPage() {
     if (error && !/column|target_|schema cache|PGRST204/i.test(error.message)) setStatus({ type: 'error', msg: error.message })
   }
 
-  /**
-   * Switch the active training PLAN. Writes the localStorage mirror (activeProgram
-   * reads it), persists user_goals.active_plan, re-anchors the "[Plan] Era" to
-   * today, and points the plans row at the new program. All self-heal.
-   */
-  async function applyPlan(planId: string) {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) return
-    setActivePlanId(planId)
-    setActiveProgramId(planId)
-    const { error } = await supabase.from('user_goals').upsert(
-      { user_id: session.user.id, active_plan: planId, phase_started_on: logicalTodayISO() } as unknown as never,
-      { onConflict: 'user_id' },
-    )
-    if (error && !/column|active_plan|phase_started|schema cache|PGRST204/i.test(error.message)) {
-      setStatus({ type: 'error', msg: error.message }); return
-    }
-    try {
-      await supabase.from('plans')
-        .update({ program_id: planId, started_on: logicalTodayISO() } as unknown as never)
-        .eq('user_id', session.user.id).eq('active', true)
-    } catch { /* plans table not migrated yet */ }
-    setStatus({ type: 'success', msg: `Switched to ${PROGRAMS[planId]?.label ?? 'plan'}.` })
-  }
-
   const inputCls =
     'w-full rounded-xl border border-border bg-surface-2 px-3 py-2 text-text text-sm ' +
     'focus:outline-none focus:ring-2 focus:ring-primary/60 transition-[border-color] duration-200'
@@ -314,9 +330,10 @@ export default function SettingsPage() {
         <p className="text-muted text-sm mt-0.5">Goals &amp; context for daily scoring</p>
       </div>
 
-      {/* ── Plan & Phase — the single place a training phase is chosen. Picking one
-             pushes its numbers into the live goals; landmark cut/bulk targets and
-             the daily phase chip re-tag automatically off calorie_goal. ── */}
+      {/* ── Plans. A PHASE is not a separate setting — it is configuration that
+             belongs to a plan, so it is chosen (and its macros, goals and set
+             volumes edited) INSIDE the plan's drawer. There is no standalone
+             Phases section any more. ── */}
       <section className="helix-card space-y-4">
         <div className="flex items-start justify-between gap-2">
           <div>
@@ -339,15 +356,15 @@ export default function SettingsPage() {
           })()}
         </div>
 
-        {/* ── Training plan — tap a card to preview its schedule + goals, then a
-               two-step confirm to switch (impossible to switch by accident). ── */}
+        {/* ── Tap a plan to open it: schedule, phase selector, and every number
+               that phase dictates. A two-step confirm still guards the switch. ── */}
         <div>
           <div className="text-[10px] uppercase tracking-widest text-muted mb-2">Training plan</div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
             {planList().map((plan) => {
               const active = plan.id === activePlanId
               return (
-                <button key={plan.id} onClick={() => { setConfirmSwitch(false); setPreviewPlan(plan) }}
+                <button key={plan.id} onClick={() => { setConfirmSwitch(false); setDrawerPhase(plan.id === activePlanId ? livePhase : 'cut'); setPreviewPlan(plan) }}
                   aria-pressed={active}
                   className="rounded-2xl border p-3 text-left transition-all duration-200"
                   style={active
@@ -360,32 +377,19 @@ export default function SettingsPage() {
                     {active && !plan.legacy && <span className="text-[9px] uppercase tracking-wide ml-auto" style={{ color: '#8E9AAC' }}>active</span>}
                   </div>
                   <p className="text-[10px] text-muted mt-1 leading-snug line-clamp-2">{plan.blurb ?? `${plan.days.length}-day split`}</p>
-                  <span className="inline-flex items-center gap-1 text-[10px] mt-1.5" style={{ color: '#8E9AAC' }}>Preview &amp; switch →</span>
+                  {active && (
+                    <span className="inline-flex items-center px-1.5 py-px rounded text-[9px] font-bold uppercase tracking-wide mt-1.5"
+                      style={phaseBadgeStyle(MODE_TO_PHASE[livePhase], true)}>
+                      {livePhase}
+                    </span>
+                  )}
+                  <span className="inline-flex items-center gap-1 text-[10px] mt-1.5" style={{ color: '#8E9AAC' }}>
+                    {active ? 'Open' : 'Preview'} &amp; configure →
+                  </span>
                 </button>
               )
             })}
           </div>
-        </div>
-
-        <div className="text-[10px] uppercase tracking-widest text-muted -mb-1.5">Phase</div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-          {(['cut', 'maintenance', 'bulk'] as NutritionMode[]).map((mode) => {
-            const p = resolvePhaseGoals(activePlanId, mode)
-            const active = goals.goal_preset === mode
-            const glow = phaseBadgeStyle(MODE_TO_PHASE[mode], active)
-            return (
-              <button key={mode} onClick={() => { if (!active) setPendingPhase(mode) }} disabled={saving} aria-pressed={active}
-                className="rounded-2xl border p-3 text-left transition-all duration-200 disabled:opacity-60"
-                style={active ? glow : { borderColor: 'rgba(255,255,255,0.08)' }}>
-                <div className="font-heading font-bold text-sm text-text">{p.label}</div>
-                <div className="helix-num text-fluid-lg font-bold mt-0.5" style={{ color: active ? (glow.color as string) : '#E0703C' }}>
-                  {p.calorieGoal.toLocaleString()}<span className="text-[10px] text-muted"> kcal</span>
-                </div>
-                <div className="text-[10px] text-muted mt-0.5">{p.proteinGoalG}P · {p.carbsGoalG}C · {p.fatGoalG}F</div>
-                <div className="text-[10px] text-muted mt-0.5">{p.stepsGoal.toLocaleString()} steps · target {p.targetWeightKg} kg</div>
-              </button>
-            )
-          })}
         </div>
 
         {/* Target weight is no longer a standalone field — it lives inside each
@@ -562,11 +566,14 @@ export default function SettingsPage() {
       <LiquidModal open={!!previewPlan} onClose={() => { setPreviewPlan(null); setConfirmSwitch(false) }}
         title={previewPlan ? previewPlan.label : undefined} accent="#8E9AAC">
         {previewPlan && (() => {
-          // Honour the SELECTED phase (the phase card / active phase), not a hardcoded
-          // 'cut' — the goals + routines below reflect whichever phase is active.
-          const phaseMode = (goals.goal_preset as NutritionMode) || (activePhase() as NutritionMode)
+          // The phase is chosen HERE, inside the plan. Everything below —
+          // macros, goals, set volumes, even the routines' set counts — is a
+          // function of (plan, phase), which is exactly why the two can no
+          // longer be configured apart.
+          const phaseMode = drawerPhase
           const pp = resolvePhaseGoals(previewPlan.id, phaseMode)
-          const isActive = previewPlan.id === activePlanId
+          const volTargets = resolveVolume(previewPlan.id, phaseMode)
+          const isActive = previewPlan.id === activePlanId && livePhase === phaseMode
           // Phase-resolved days: the CURRENT phase's set counts (cut trims volume,
           // drops bulk-only lifts) — the same resolver the live logger runs.
           const phaseDays = activeProgram(previewPlan.id, phaseMode).days
@@ -602,6 +609,97 @@ export default function SettingsPage() {
           return (
             <div className="space-y-4">
               <p className="text-sm text-muted leading-relaxed">{previewPlan.blurb}</p>
+
+              {/* ── Phase — nested INSIDE the plan, and the switch for everything below ── */}
+              <div>
+                <div className="text-[10px] uppercase tracking-widest text-muted mb-2">Phase</div>
+                <div className="flex rounded-xl border border-white/[0.08] overflow-hidden">
+                  {(['cut', 'maintenance', 'bulk'] as NutritionMode[]).map((m) => {
+                    const on = drawerPhase === m
+                    const glow = phaseBadgeStyle(MODE_TO_PHASE[m], on)
+                    return (
+                      <button key={m} onClick={() => setDrawerPhase(m)} aria-pressed={on}
+                        className="flex-1 py-2 text-fluid-xs font-semibold capitalize min-h-[44px]"
+                        style={on ? glow : { color: 'var(--color-muted)' }}>
+                        {m}
+                        {previewPlan.id === activePlanId && livePhase === m && (
+                          <span className="block text-[8px] uppercase tracking-wide opacity-70">active</span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* ── Everything this phase dictates, editable in place ── */}
+              <div>
+                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-muted mb-2">
+                  <Target className="w-3 h-3" aria-hidden="true" /> {pp.label} goals
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {([
+                    ['Calories', 'kcal', pp.calorieGoal, 'calorieGoal'],
+                    ['Protein', 'g', pp.proteinGoalG, 'proteinGoalG'],
+                    ['Carbs', 'g', pp.carbsGoalG, 'carbsGoalG'],
+                    ['Fat', 'g', pp.fatGoalG, 'fatGoalG'],
+                    ['Steps', '', pp.stepsGoal, 'stepsGoal'],
+                    ['Target weight', 'kg', pp.targetWeightKg, 'targetWeightKg'],
+                    ['Body fat', '%', pp.targetBodyFatPct, 'targetBodyFatPct'],
+                    ['Muscle mass', 'kg', pp.targetMuscleMassKg, 'targetMuscleMassKg'],
+                  ] as const).map(([label, unit, value, field]) => (
+                    <label key={label} className="block rounded-lg bg-white/[0.015] border border-white/[0.05] px-2.5 py-1.5">
+                      <span className="block text-[9px] uppercase tracking-wide text-muted">{label}{unit ? ` (${unit})` : ''}</span>
+                      <input
+                        type="text" inputMode="decimal"
+                        // Re-key on (plan, phase) so switching phase re-seeds the
+                        // uncontrolled input instead of stranding the old value.
+                        key={`${previewPlan.id}|${phaseMode}|${field}`}
+                        defaultValue={value ?? ''}
+                        // onBlur, not onChange: writing an override per keystroke
+                        // would fire a mutation for every digit typed.
+                        onBlur={(e) => {
+                          const raw = e.target.value.trim()
+                          const n = raw === '' ? null : parseFloat(raw)
+                          if (n != null && !Number.isFinite(n)) return
+                          void saveOverride({
+                            planId: previewPlan.id, phase: phaseMode,
+                            patch: { ...planPhasePatch(pp), [field]: n },
+                          })
+                        }}
+                        className="w-full bg-transparent helix-num text-fluid-sm font-bold text-text outline-none tabular-nums"
+                      />
+                    </label>
+                  ))}
+                </div>
+                <p className="text-[10px] text-muted mt-1.5 leading-snug">
+                  Saved against {previewPlan.label} · {phaseMode}. Clear a field to restore the plan default.
+                </p>
+              </div>
+
+              {/* ── Weekly set volume — this phase's MEV/MAV targets, editable ── */}
+              <div>
+                <div className="text-[10px] uppercase tracking-widest text-muted mb-2">
+                  Weekly set volume · {phaseMode === 'cut' ? 'MEV+' : phaseMode === 'bulk' ? 'MAV' : 'MEV+→MAV'}
+                </div>
+                <div className="grid grid-cols-2 gap-1.5 max-h-52 overflow-y-auto pr-1">
+                  {LANDMARK_MUSCLES.map((m) => (
+                    <label key={m} className="flex items-center justify-between gap-2 rounded-lg bg-white/[0.015] border border-white/[0.05] px-2 py-1">
+                      <span className="text-[11px] text-text/80 truncate">{m}</span>
+                      <input
+                        type="text" inputMode="numeric"
+                        key={`${previewPlan.id}|${phaseMode}|${m}`}
+                        defaultValue={volTargets[m]}
+                        onBlur={(e) => {
+                          const n = parseInt(e.target.value, 10)
+                          if (!Number.isFinite(n) || n < 0 || n === volTargets[m]) return
+                          void saveVolumeTarget({ planId: previewPlan.id, phase: phaseMode, muscle: m, targetSets: n })
+                        }}
+                        className="w-10 bg-transparent helix-num text-fluid-sm font-bold text-text text-right outline-none tabular-nums"
+                      />
+                    </label>
+                  ))}
+                </div>
+              </div>
 
               {/* Weekly schedule */}
               <div>
@@ -676,31 +774,42 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              {/* Switch — two-step (impossible to switch by accident) */}
+              {/* One button sets plan AND phase together. Two separate switches
+                  could leave the app in a state no plan defines — PPL macros
+                  under a Helix-5 split. */}
               <div className="pt-1 border-t border-white/[0.06]">
                 {isActive ? (
-                  <p className="text-fluid-xs text-muted text-center py-2">This is your active plan.</p>
+                  <p className="text-fluid-xs text-muted text-center py-2">
+                    {previewPlan.label} · {phaseMode} is active.
+                  </p>
                 ) : !confirmSwitch ? (
-                  <button onClick={() => setConfirmSwitch(true)}
-                    className="btn-primary w-full justify-center min-h-[46px]"
+                  <button onClick={() => setConfirmSwitch(true)} disabled={saving}
+                    className="btn-primary w-full justify-center min-h-[46px] disabled:opacity-60"
                     style={{ background: '#8E9AAC', boxShadow: '0 0 16px #8E9AAC44' }}>
-                    Switch to {previewPlan.label}
+                    Make {previewPlan.label} · {phaseMode} active
                   </button>
                 ) : (
                   <div className="space-y-2.5">
                     <div className="flex items-start gap-2.5">
                       <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" style={{ color: '#E0703C' }} aria-hidden="true" />
                       <p className="text-sm text-muted leading-relaxed">
-                        Switch to <span className="text-text font-semibold">{previewPlan.label}</span>? This changes your
-                        training schedule and re-anchors analytics from today. Your logged history is preserved.
+                        Run <span className="text-text font-semibold">{previewPlan.label}</span> on its{' '}
+                        <span className="text-text font-semibold">{phaseMode}</span> phase? Calories, macros, step goal,
+                        body targets and weekly set volume all move to this phase&apos;s numbers, the training schedule
+                        changes, and analytics re-anchor from today. Your logged history is preserved.
                       </p>
                     </div>
                     <div className="flex gap-2 justify-end">
                       <button onClick={() => setConfirmSwitch(false)} className="btn-glass min-h-[44px] px-4">Cancel</button>
                       <button
-                        onClick={async () => { const id = previewPlan.id; setPreviewPlan(null); setConfirmSwitch(false); await applyPlan(id) }}
-                        className="btn-primary min-h-[44px] px-4">
-                        Confirm switch
+                        onClick={async () => {
+                          const id = previewPlan.id, m = phaseMode
+                          setPreviewPlan(null); setConfirmSwitch(false)
+                          await applyPlanPhase(id, m)
+                        }}
+                        disabled={saving}
+                        className="btn-primary min-h-[44px] px-4 disabled:opacity-60">
+                        Confirm
                       </button>
                     </div>
                   </div>
@@ -711,36 +820,6 @@ export default function SettingsPage() {
         })()}
       </LiquidModal>
 
-      {/* Phase-switch confirmation — a phase change is a hard reset of the UI. */}
-      <LiquidModal open={!!pendingPhase} onClose={() => setPendingPhase(null)} title="Switch phase" accent="#E0703C">
-        {pendingPhase && (
-          <div className="space-y-4">
-            <div className="flex items-start gap-3">
-              <span className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: 'rgba(224,112,60,0.15)', color: '#E0703C' }}>
-                <AlertTriangle className="w-5 h-5" aria-hidden="true" />
-              </span>
-              <div>
-                <p className="text-text font-semibold">Switch to {phaseGoalsFor(activePlanId, pendingPhase).label}?</p>
-                <p className="text-sm text-muted mt-1 leading-relaxed">
-                  This re-anchors your analytics and coach logic to today. Calories, macros, step goal and
-                  target weight update to the {phaseGoalsFor(activePlanId, pendingPhase).label} goals. Your logged
-                  history is preserved.
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-2 justify-end">
-              <button onClick={() => setPendingPhase(null)} className="btn-glass min-h-[44px] px-4">Cancel</button>
-              <button
-                onClick={async () => { const m = pendingPhase; setPendingPhase(null); await applyPhase(m) }}
-                disabled={saving}
-                className="btn-primary min-h-[44px] px-4 disabled:opacity-60"
-              >
-                Switch to {phaseGoalsFor(activePlanId, pendingPhase).label}
-              </button>
-            </div>
-          </div>
-        )}
-      </LiquidModal>
 
       {status && (
         <p className={`text-sm ${status.type === 'success' ? 'text-success' : 'text-danger'}`}>

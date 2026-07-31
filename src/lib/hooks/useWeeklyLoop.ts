@@ -10,10 +10,10 @@ import {
   type ExportCardio,
 } from '@/lib/reports/weeklyExport'
 import { sessionVolumeKg } from '@/lib/sessions/volume'
-import { activeProgram, eraForDate, isTrainingDay } from '@/lib/programs'
+import { activeProgram, activePhase, eraForDate, isTrainingDay } from '@/lib/programs'
 import { repWindowFor } from '@/lib/training/ceilings'
 import { lookupMuscles } from '@/lib/exercises/muscleMap'
-import { weeklyVolumeByMuscle, type Program } from '@/lib/training/landmarks'
+import { weeklyVolumeByMuscle, type ProgramPhase } from '@/lib/training/landmarks'
 import { protocolForDate } from '@/lib/supplements'
 import { customDoseFor, type CustomSupplement } from '@/lib/hooks/useCustomSupplements'
 import { normalizeSpO2 } from '@/lib/utils/units'
@@ -266,7 +266,8 @@ export function useWeeklyExport(weekStart = weekStartOf(logicalTodayISO())) {
       const sessions = toSessions(cur)
 
       // DIRECT-set weekly volume, same rule as the Weekly Volume card.
-      const prog: Program = (goals?.calorie_goal ?? 0) >= 2450 ? 'bulk' : 'cut'
+      // The ACTIVE phase, not a calorie guess — maintenance used to collapse to cut.
+      const prog: ProgramPhase = activePhase() as ProgramPhase
       const volumeByMuscle = weeklyVolumeByMuscle(
         cur.sets.filter((r) => r.set_type !== 'warmup').map((r) => ({
           muscleTokens: lookupMuscles(r.exercises.name)?.primary ?? (r.exercises.muscle_groups ?? []).slice(0, 1),

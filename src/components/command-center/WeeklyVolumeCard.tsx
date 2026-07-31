@@ -19,7 +19,9 @@ export function WeeklyVolumeCard() {
   const total = data.muscles.reduce((n, m) => n + m.sets, 0)
   if (total === 0) return null // nothing logged yet this week
 
-  const targetKind = data.program === 'cut' ? 'MEV+' : 'MAV'
+  // Maintenance sits between the two, so it needs its own label — it used to be
+  // impossible to reach at all (the phase was inferred from calories).
+  const targetKind = data.program === 'cut' ? 'MEV+' : data.program === 'bulk' ? 'MAV' : 'MEV+→MAV'
 
   return (
     <div className="helix-card space-y-3">
@@ -28,7 +30,7 @@ export function WeeklyVolumeCard() {
           <Layers className="w-4 h-4 text-primary" /> Weekly Volume
         </h2>
         <span className="text-fluid-xs text-muted">
-          {data.program === 'cut' ? 'Helix Cut' : 'Helix Bulk'} · {targetKind} targets
+          {data.program === 'cut' ? 'Cut' : data.program === 'bulk' ? 'Bulk' : 'Maintenance'} · {targetKind} targets
         </span>
       </div>
 

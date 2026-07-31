@@ -4,19 +4,16 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { weekStartOf, isoAddDays } from '@/lib/utils/week'
-import { eraForDate } from '@/lib/programs'
+import { eraForDate, activePhase, getActiveProgramId } from '@/lib/programs'
 import { lookupMuscles } from '@/lib/exercises/muscleMap'
-import { weeklyVolumeByMuscle, type MuscleVolume, type Program } from '@/lib/training/landmarks'
+import { weeklyVolumeByMuscle, type MuscleVolume, type ProgramPhase } from '@/lib/training/landmarks'
+import { usePlanPhaseGoals } from '@/lib/hooks/usePlanPhaseGoals'
 
 export interface WeeklyVolume {
   weekStart: string
-  program: Program
+  /** The ACTIVE phase, read from the plan — not inferred from calories. */
+  program: ProgramPhase
   muscles: MuscleVolume[]
-}
-
-/** Program tag from the active calorie goal (cut ≤2050 · bulk ≥2450 · else cut floor). */
-function programFromGoal(calorieGoal: number | null | undefined): Program {
-  return calorieGoal != null && calorieGoal >= 2450 ? 'bulk' : 'cut'
 }
 
 /**
@@ -36,8 +33,16 @@ export function useWeeklyVolume(
   weekStart: string = weekStartOf(logicalTodayISO()),
   upTo?: string,
 ) {
+  // The phase comes from the ACTIVE PLAN. It used to be sniffed from
+  // calorie_goal (>= 2450 meant bulk), which had no way to express maintenance —
+  // a maintenance block silently trained to cut volume.
+  const { resolveVolume } = usePlanPhaseGoals()
+  const phase = activePhase() as ProgramPhase
+  const planId = getActiveProgramId()
+  const volumeTargets = resolveVolume(planId, phase)
+
   return useQuery({
-    queryKey: ['weekly_volume', weekStart, upTo ?? null],
+    queryKey: ['weekly_volume', weekStart, upTo ?? null, planId, phase],
     staleTime: 60_000,
     queryFn: async (): Promise<WeeklyVolume> => {
       // STRICT Sunday-00:00 LOCAL bounds. `${weekStart}T00:00:00Z` is UTC
@@ -50,7 +55,7 @@ export function useWeeklyVolume(
         ? isoAddDays(upTo, 1)
         : isoAddDays(weekStart, 7)
       const weekEndInstant = new Date(`${endExclusiveDate}T00:00:00`).toISOString()
-      const [{ data: setsData, error }, { data: goals }] = await Promise.all([
+      const [{ data: setsData, error }] = await Promise.all([
         supabase
           .from('workout_sets')
           .select('id, pair_id, exercises!inner(name, muscle_groups), workout_sessions!inner(started_at)')
@@ -64,10 +69,8 @@ export function useWeeklyVolume(
           // (SQL `NULL <> 'warmup'` is NULL, not true).
           .or('set_type.is.null,set_type.neq.warmup')
           .limit(2000),
-        supabase.from('user_goals').select('calorie_goal').maybeSingle(),
       ])
       if (error) throw error
-      const program = programFromGoal((goals as { calorie_goal?: number } | null)?.calorie_goal)
 
       const rows = ((setsData ?? []) as unknown as Array<{
         id: string
@@ -88,7 +91,7 @@ export function useWeeklyVolume(
           dedupeKey: r.pair_id ?? r.id, // L/R sub-sets (shared pair_id) count once
         }))
 
-      return { weekStart, program, muscles: weeklyVolumeByMuscle(rows, program) }
+      return { weekStart, program: phase, muscles: weeklyVolumeByMuscle(rows, phase, volumeTargets) }
     },
   })
 }
