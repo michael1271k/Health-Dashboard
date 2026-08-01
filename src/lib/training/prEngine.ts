@@ -362,8 +362,15 @@ export function recordSets(
   return out
 }
 
-/** Display label per axis. Timed holds show DUR — their `reps` are seconds. */
+/**
+ * Display label per axis. Timed holds show Duration — their `reps` are seconds.
+ *
+ * Whole words, not WT/VOL/REPS: the abbreviations saved a few pixels and cost
+ * the meaning, and the badge already carries a trophy to say "record". The
+ * label never carries a "PR " prefix either — the report used to add one while
+ * the logger did not, so the same record read differently in two places.
+ */
 export function prAxisLabel(axis: PrAxis, timed = false): string {
-  if (axis === 'reps') return timed ? 'DUR' : 'REPS'
-  return axis === 'weight' ? 'WT' : axis === 'volume' ? 'VOL' : '1RM'
+  if (axis === 'reps') return timed ? 'Duration' : 'Reps'
+  return axis === 'weight' ? 'Weight' : axis === 'volume' ? 'Volume' : '1RM'
 }

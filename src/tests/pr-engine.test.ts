@@ -101,7 +101,7 @@ describe('the July 31 session — the records that went missing', () => {
   it('flags the 58 s Side Plank as a duration record, and not the 55 s set', () => {
     expect(r.perSet[3].axes).toEqual(['reps'])
     expect(r.perSet[4].axes).toEqual([])
-    expect(prAxisLabel('reps', true)).toBe('DUR')
+    expect(prAxisLabel('reps', true)).toBe('Duration')
   })
 
   it('reports pr_count = 4 — three Hip Thrust axes plus the plank', () => {
@@ -159,11 +159,13 @@ describe('eligibility rules', () => {
 })
 
 describe('prAxisLabel', () => {
-  it('labels the four axes, with DUR standing in for reps on a timed hold', () => {
-    expect(prAxisLabel('weight')).toBe('WT')
-    expect(prAxisLabel('reps')).toBe('REPS')
-    expect(prAxisLabel('reps', true)).toBe('DUR')
-    expect(prAxisLabel('volume')).toBe('VOL')
+  // Whole words. The abbreviations saved a few pixels and cost the meaning,
+  // and the badge already carries a trophy to say "record".
+  it('labels the four axes, with Duration standing in for reps on a timed hold', () => {
+    expect(prAxisLabel('weight')).toBe('Weight')
+    expect(prAxisLabel('reps')).toBe('Reps')
+    expect(prAxisLabel('reps', true)).toBe('Duration')
+    expect(prAxisLabel('volume')).toBe('Volume')
     expect(prAxisLabel('e1rm')).toBe('1RM')
   })
 })

@@ -71,7 +71,7 @@ export function ExerciseDeckList({ draft, history, livePrs, readyByName, onReord
       onDragEnd={handleDragEnd}
     >
       <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-        <div className="space-y-2.5">
+        <div className="space-y-2">
           {draft.exercises.map((ex) => (
             <ExerciseCard
               key={ex.localId}

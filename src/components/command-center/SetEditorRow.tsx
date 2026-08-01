@@ -92,11 +92,11 @@ export function SetEditorRow({ index, displayNum, subRow = false, set, active, t
       style={subRow && sideColor ? { borderLeft: `2px solid ${sideColor}`, borderTopLeftRadius: 2, borderBottomLeftRadius: 2 } : undefined}
     >
       {/* ── Summary line (always visible) ── */}
-      <div className="flex items-center gap-2 px-2 py-1">
+      <div className="flex items-center gap-2 px-2 py-0.5">
         <button
           type="button"
           onClick={onActivate}
-          className="flex-1 min-w-0 flex items-center gap-2.5 text-left min-h-[36px]"
+          className="flex-1 min-w-0 flex items-center gap-2.5 text-left min-h-[32px]"
           aria-expanded={active}
         >
           <span

@@ -129,13 +129,13 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
         return (
           <section
             key={ex.exerciseId}
-            className="rounded-2xl space-y-2.5 p-4"
+            className="rounded-2xl space-y-2 p-3"
             style={{
               background: 'transparent',
               backdropFilter: 'blur(18px) saturate(150%)',
               WebkitBackdropFilter: 'blur(18px) saturate(150%)',
-              border: `1px solid ${isStrongest ? `${GOLD}4d` : 'rgba(255,255,255,0.09)'}`,
-              boxShadow: isStrongest ? `0 0 22px ${GOLD}1f` : undefined,
+              border: `1px solid ${isStrongest ? `${SAPPHIRE}4d` : 'rgba(255,255,255,0.09)'}`,
+              boxShadow: isStrongest ? `0 0 22px ${SAPPHIRE}1f` : undefined,
             }}
           >
             {/* Header */}
@@ -144,13 +144,13 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
               <span className="w-1 h-9 rounded-full shrink-0" style={{ background: accent }} aria-hidden="true" />
               <span className="min-w-0 flex-1">
                 <span className="flex items-center gap-1.5 flex-wrap">
-                  <span className="font-heading font-bold text-fluid-sm text-text truncate">{ex.name}</span>
+                  <span className="font-heading font-bold text-fluid-xs text-text truncate">{ex.name}</span>
                   {glyph && <span className="text-[11px] shrink-0" aria-hidden="true">{glyph}</span>}
                   {ex.prAxes.length > 0 ? (
                     ex.prAxes.map((ax, i) => (
                       <span key={ax} className="text-[8px] font-bold uppercase px-1 py-px rounded shrink-0 inline-flex items-center gap-0.5"
                         style={{ color: GOLD, background: `${GOLD}1f`, border: `1px solid ${GOLD}4d` }}>
-                        {i === 0 && <Trophy className="w-2.5 h-2.5" aria-hidden="true" />} PR {prAxisLabel(ax, isTimedExercise(ex.name))}
+                        {i === 0 && <Trophy className="w-2.5 h-2.5" aria-hidden="true" />}{prAxisLabel(ax, isTimedExercise(ex.name))}
                       </span>
                     ))
                   ) : hasPr && (
@@ -158,10 +158,6 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
                       style={{ color: GOLD, background: `${GOLD}1f`, border: `1px solid ${GOLD}4d` }}>
                       <Trophy className="w-2.5 h-2.5" aria-hidden="true" /> PR
                     </span>
-                  )}
-                  {isStrongest && (
-                    <span className="text-[8px] font-bold uppercase px-1 py-px rounded shrink-0"
-                      style={{ color: GOLD, background: `${GOLD}14` }}>Strongest</span>
                   )}
                 </span>
                 <span className="flex items-center gap-1.5 mt-1 flex-wrap">
@@ -185,9 +181,19 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
 
             {/* Progression metrics — tonnage, top set, and where the reps sit
                 inside the exercise's PROGRAMMED window. */}
-            {t && (
+            {(t || isStrongest) && (
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-muted">
-                <span className="helix-num">
+                {/* SAPPHIRE, not gold, and out of the title row. "Strongest" is
+                    a ranking within this session, not a record — sharing the
+                    trophy's colour and chip shape made two different things
+                    look identical sitting side by side. */}
+                {isStrongest && (
+                  <span className="text-[8px] font-bold uppercase px-1.5 py-px rounded shrink-0"
+                    style={{ color: SAPPHIRE, background: `${SAPPHIRE}1f`, border: `1px solid ${SAPPHIRE}4d` }}>
+                    Strongest lift
+                  </span>
+                )}
+                {t && <span className="helix-num">
                   {/* Timed holds carry SECONDS under tension, not kg. */}
                   {timed ? 'Time' : 'Tonnage'}{' '}
                   <span className="font-bold text-text">
@@ -198,8 +204,8 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
                       {t.tonnageDelta > 0 ? '+' : ''}{timed ? `${t.tonnageDelta}s` : Math.round(displayWeight(t.tonnageDelta) ?? 0).toLocaleString()}
                     </span>
                   )}
-                </span>
-                {t.topSet && (
+                </span>}
+                {t?.topSet && (
                   <span className="helix-num">
                     {timed ? 'Best hold' : 'Top set'}{' '}
                     <span className="font-bold text-text">
@@ -207,7 +213,7 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
                     </span>
                   </span>
                 )}
-                {t.progression.ceiling != null && (
+                {t?.progression.ceiling != null && (
                   <span className="helix-num">
                     {timed ? 'Hold' : 'Ceiling'} <span className="font-bold text-text">{t.setsAtCeiling}/{ex.workingSets}</span> sets @ {t.progression.ceiling}{timed ? 's' : ' reps'}
                   </span>

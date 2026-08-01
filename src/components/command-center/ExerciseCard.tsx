@@ -161,6 +161,43 @@ export function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collap
     [repWindow, committedWork],
   )
 
+  // Unilateral lifts (already split, or a single-arm/per-side movement) get the
+  // asymmetry rule: the STRONG side sets the rep count, the weak side matches it.
+  const unilateral = exercise.sets.some((s) => s.side || s.pairId)
+    || /single[- ]?arm|one[- ]?arm|single[- ]?leg|per (side|arm)/i.test(exercise.name)
+
+  // Highest-priority coach line only. Order = how actionable it is in THIS set:
+  // an unmet obligation beats an earned reward, which beats a status note,
+  // which beats a standing technique reminder.
+  const coachCue = useMemo((): { text: string; color: string; icon: typeof Target } | null => {
+    if (ladder?.state === 'blocked') {
+      return {
+        color: READY_GOLD, icon: Target,
+        text: `Clear ${fmtKg(ladder.bindingLoadKg ?? 0)}kg first — ${ladder.repsOwed} more rep${ladder.repsOwed === 1 ? '' : 's'} to reach ${ladder.ceiling} on every set before ${fmtKg(ladder.topLoadKg ?? 0)}kg replaces it.`,
+      }
+    }
+    if (ready && !ready.timed && ready.currentKg != null && ready.suggestKg != null) {
+      return {
+        color: READY_GOLD, icon: Target,
+        text: `Ceiling cleared twice — add load: ${fmtKg(ready.currentKg)} → ${fmtKg(ready.suggestKg)}kg`,
+      }
+    }
+    if (ladder?.state === 'collapse-ready') {
+      return {
+        color: READY_GOLD, icon: Target,
+        text: `${fmtKg(ladder.bindingLoadKg ?? 0)}kg cleared — ${fmtKg(ladder.topLoadKg ?? 0)}kg is your new baseline.`,
+      }
+    }
+    if (exercise.targetNext) return { color: READY_GOLD, icon: Target, text: `Next: ${exercise.targetNext}` }
+    if (unilateral) {
+      return {
+        color: STEEL, icon: ArrowLeftRight,
+        text: 'Strong side sets the rep count — the weak side matches, never exceeds.',
+      }
+    }
+    return null
+  }, [ladder, ready, exercise.targetNext, unilateral])
+
   // ── Cardio variant: slim card, distance/duration chips, no set rows ──
   if (exercise.kind === 'cardio') {
     return (
@@ -174,7 +211,7 @@ export function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collap
             <Footprints className="w-4 h-4" aria-hidden="true" />
           </span>
           <div className="flex-1 min-w-0">
-            <span className="font-semibold text-fluid-base text-text leading-snug truncate block">{exercise.name}</span>
+            <span className="font-semibold text-fluid-sm text-text leading-snug truncate block">{exercise.name}</span>
             <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: CARDIO_VIOLET }}>Cardio · warm-up</span>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
@@ -202,10 +239,6 @@ export function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collap
   }
 
   const status = exercise.status ? STATUS_META[exercise.status] : null
-  // Unilateral lifts (already split, or a single-arm/per-side movement) get the
-  // asymmetry rule: the STRONG side sets the rep count, the weak side matches it.
-  const unilateral = exercise.sets.some((s) => s.side || s.pairId)
-    || /single[- ]?arm|one[- ]?arm|single[- ]?leg|per (side|arm)/i.test(exercise.name)
   const groups = groupSets(exercise.sets)
   // A pair contributes one "L|R" token so the header doesn't double-count sides.
   const summary = groups.map((g) => g.kind === 'single' ? g.set.reps : `${g.left?.set.reps ?? '–'}|${g.right?.set.reps ?? '–'}`).join('/')
@@ -223,11 +256,15 @@ export function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collap
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
-          className="flex-1 min-w-0 flex items-center justify-between gap-2 text-left min-h-[44px]"
+          className="flex-1 min-w-0 flex items-center justify-between gap-2 text-left min-h-[38px]"
         >
           <div className="min-w-0">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="font-semibold text-fluid-base text-text leading-snug truncate">{exercise.name}</span>
+            {/* `flex-wrap`, and one size down. Long names ("Leg Press Horizontal
+                (Machine)") were fighting 2–3 status chips for one non-wrapping
+                line, so the NAME lost — truncated to an ellipsis while the chips
+                kept their width. Now the chips drop to a second line instead. */}
+            <div className="flex items-center gap-x-2 gap-y-1 min-w-0 flex-wrap">
+              <span className="font-semibold text-fluid-sm text-text leading-snug truncate">{exercise.name}</span>
               {status && (
                 <span
                   className="shrink-0 inline-flex items-center px-1.5 py-px rounded-md text-[9px] font-bold uppercase tracking-wide"
@@ -329,34 +366,15 @@ export function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collap
               <span className="text-xs leading-snug" dir="auto">{exercise.note || 'Add note'}</span>
             </button>
           )}
-          {exercise.targetNext && (
-            <p className="text-xs leading-snug flex items-center gap-1" style={{ color: '#D4AF37' }}>
-              <Target className="w-3 h-3 shrink-0" aria-hidden="true" /> Next: {exercise.targetNext}
-            </p>
-          )}
-          {ladder?.state === 'collapse-ready' && (
-            <p className="text-xs leading-snug flex items-center gap-1" style={{ color: READY_GOLD }}>
-              <Target className="w-3 h-3 shrink-0" aria-hidden="true" />
-              {fmtKg(ladder.bindingLoadKg ?? 0)}kg cleared — {fmtKg(ladder.topLoadKg ?? 0)}kg is your new baseline.
-            </p>
-          )}
-          {ready && !ready.timed && ready.currentKg != null && ready.suggestKg != null && (
-            <p className="text-xs leading-snug flex items-center gap-1" style={{ color: READY_GOLD }}>
-              <Target className="w-3 h-3 shrink-0" aria-hidden="true" />
-              Ceiling cleared twice — add load: {fmtKg(ready.currentKg)} → {fmtKg(ready.suggestKg)}kg
-            </p>
-          )}
-          {ladder?.state === 'blocked' && (
-            <p className="text-xs leading-snug flex items-center gap-1" style={{ color: READY_GOLD }}>
-              <Target className="w-3 h-3 shrink-0" aria-hidden="true" />
-              Clear {fmtKg(ladder.bindingLoadKg ?? 0)}kg first — {ladder.repsOwed} more rep{ladder.repsOwed === 1 ? '' : 's'} to
-              reach {ladder.ceiling} on every set before {fmtKg(ladder.topLoadKg ?? 0)}kg replaces it.
-            </p>
-          )}
-          {unilateral && (
-            <p className="text-xs leading-snug flex items-center gap-1" style={{ color: STEEL }}>
-              <ArrowLeftRight className="w-3 h-3 shrink-0" aria-hidden="true" />
-              Strong side sets the rep count — the weak side matches, never exceeds.
+          {/* ONE cue, not a stack. Four of these could render at once — a target,
+              a ladder verdict, a ready-to-progress nudge and a unilateral hint —
+              turning the top of a card into a paragraph you stop reading. They
+              are ranked by how actionable they are RIGHT NOW and only the winner
+              shows. */}
+          {coachCue && (
+            <p className="text-xs leading-snug flex items-center gap-1" style={{ color: coachCue.color }}>
+              <coachCue.icon className="w-3 h-3 shrink-0" aria-hidden="true" />
+              {coachCue.text}
             </p>
           )}
         </div>
@@ -365,11 +383,12 @@ export function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collap
       {/* ── Set rows ── */}
       {showBody && (
         <div className="mt-2 border-t border-white/[0.06] pt-1.5 space-y-0.5">
-          {/* Check-all — tick every set green in one tap (log a whole exercise after
-              the fact). Only green sets are recorded on finish. */}
-          <div className="flex justify-end">
+          {/* Check-all — tick every set green in one tap (log a whole exercise
+              after the fact). Only green sets are recorded on finish. Sits on
+              the divider rather than owning a full row of its own. */}
+          <div className="flex justify-end -mt-4 mb-0.5">
             <button type="button" onClick={onCheckAll}
-              className="min-h-[30px] px-2.5 rounded-lg text-[10px] font-bold uppercase tracking-wide flex items-center gap-1 active:scale-95 transition-colors"
+              className="min-h-[26px] px-2 rounded-lg text-[10px] font-bold uppercase tracking-wide flex items-center gap-1 active:scale-95 transition-colors"
               style={{ color: '#3E9E7A', background: '#3E9E7A14', border: '1px solid #3E9E7A44' }}>
               <CheckCheck className="w-3 h-3" aria-hidden="true" /> Check all
             </button>
