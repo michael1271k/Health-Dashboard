@@ -6,7 +6,10 @@ import { useMuscleAnalytics, MUSCLE_GROUPS, GROUP_COLOR } from '@/lib/hooks/useM
 import { useVolumeTrend } from '@/lib/hooks/useCharts'
 import { eraForDate } from '@/lib/programs'
 import { ChartTooltip } from './ChartTooltip'
-import { EMBER, SAPPHIRE, EMERALD, STEEL, MUTED } from '@/lib/theme/palette'
+import { EMERALD, MUTED } from '@/lib/theme/palette'
+import { regionalLoad, regionOpacity, ZONE_COLOR, type RegionalLoad } from '@/lib/charts/muscleLoad'
+import { buildIntensityCalendar, type CalendarCell } from '@/lib/charts/intensityCalendar'
+import { logicalTodayISO } from '@/lib/utils/day'
 
 /* ── 1. Muscle contour body-map ──────────────────────────────────────────────
    A stylized front silhouette whose regions glow by share of training volume. */
@@ -21,19 +24,23 @@ const REGIONS: Array<{ group: string; d: string }> = [
 
 export function BodyHeatmap({ days, era = 'all' }: { days: number; era?: 'all' | 'ppl' | 'axis' }) {
   const { data, isLoading } = useMuscleAnalytics(days, era)
-  if (isLoading) return <div className="helix-card h-72 animate-pulse" />
-  if (!data || data.stats.every((s) => s.volume === 0)) return null
+  const loads = useMemo(() => regionalLoad(data?.stats ?? [], days), [data, days])
+  const byGroup = useMemo(() => new Map(loads.map((r) => [r.group, r])), [loads])
 
-  const maxVol = Math.max(...data.stats.map((s) => s.volume), 1)
-  const heat = new Map(data.stats.map((s) => [s.group, s.volume / maxVol]))
-  // Jewel heat ramp: cool steel → sapphire → ember at the hardest-worked region.
-  const color = (t: number) => t <= 0 ? 'rgba(255,255,255,0.04)'
-    : t < 0.35 ? `${STEEL}${alpha(0.35 + t)}` : t < 0.7 ? `${SAPPHIRE}${alpha(0.45 + t * 0.4)}` : `${EMBER}${alpha(0.55 + t * 0.4)}`
+  if (isLoading) return <div className="helix-card h-72 animate-pulse" />
+  if (!data || data.stats.every((s) => s.sets === 0)) return null
+
+  const fill = (r?: RegionalLoad) => {
+    if (!r || r.zone === 'na') return ZONE_COLOR.na
+    return `${ZONE_COLOR[r.zone]}${alpha(regionOpacity(r))}`
+  }
 
   return (
     <div className="helix-card">
       <h3 className="font-heading font-semibold text-base">Muscle Contour Map</h3>
-      <p className="text-fluid-xs text-muted mb-2">Regional training-volume heat · {days}d</p>
+      <p className="text-fluid-xs text-muted mb-2">
+        Weekly sets vs MAV (productive ceiling) · {days}d window
+      </p>
       {/* Silhouette left, legend right on desktop — the old centred flex row
           left a wide card mostly empty and the SVG dictated the card height. */}
       <div className="flex flex-col sm:flex-row items-center sm:items-start justify-center gap-5">
@@ -41,21 +48,25 @@ export function BodyHeatmap({ days, era = 'all' }: { days: number; era?: 'all' |
           {/* Head */}
           <circle cx="50" cy="14" r="9" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.12)" />
           {REGIONS.map((r) => {
-            const t = heat.get(r.group) ?? 0
+            const load = byGroup.get(r.group)
+            const c = fill(load)
             return (
-              <path key={r.group} d={r.d} fill={color(t)} stroke="rgba(255,255,255,0.14)" strokeWidth="0.8"
-                style={t > 0.15 ? { filter: `drop-shadow(0 0 ${3 + t * 5}px ${color(t)})` } : undefined}>
-                <title>{r.group}</title>
+              <path key={r.group} d={r.d} fill={c} stroke="rgba(255,255,255,0.14)" strokeWidth="0.8"
+                style={load && load.ratio > 0.3 ? { filter: `drop-shadow(0 0 ${3 + Math.min(1, load.ratio) * 5}px ${c})` } : undefined}>
+                <title>{`${r.group} — ${load ? load.setsPerWeek.toFixed(1) : 0} sets/wk of ${load?.mav ?? 0} MAV`}</title>
               </path>
             )
           })}
         </svg>
-        <div className="grid grid-cols-2 sm:grid-cols-1 gap-x-4 gap-y-1.5 flex-1 min-w-0 sm:max-w-[190px]">
-          {[...data.stats].sort((a, b) => b.volume - a.volume).map((s) => (
-            <div key={s.group} className="flex items-center gap-2 text-fluid-xs">
-              <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: color((heat.get(s.group) ?? 0)) }} />
-              <span className="text-text flex-1 truncate">{s.group}</span>
-              <span className="helix-num text-muted">{Math.round((heat.get(s.group) ?? 0) * 100)}%</span>
+        <div className="grid grid-cols-2 sm:grid-cols-1 gap-x-4 gap-y-1.5 flex-1 min-w-0 sm:max-w-[210px]">
+          {[...loads].sort((a, b) => b.ratio - a.ratio).map((r) => (
+            <div key={r.group} className="flex items-center gap-2 text-fluid-xs">
+              <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: fill(r) }} />
+              <span className="text-text flex-1 truncate">{r.group}</span>
+              {/* Sets, not a share of the biggest number on the chart. */}
+              <span className="helix-num text-muted shrink-0">
+                {r.setsPerWeek.toFixed(1)}<span className="opacity-60">/{r.mav}</span>
+              </span>
             </div>
           ))}
         </div>
@@ -97,49 +108,24 @@ export function VolumeStream({ days, era = 'all' }: { days: number; era?: 'all' 
 export function RpeCalendar({ days, era = 'all' }: { days: number; era?: 'all' | 'ppl' | 'axis' }) {
   const { data: raw, isLoading } = useVolumeTrend(days)
   const data = raw?.filter((s) => era === 'all' || eraForDate(s.date) === era)
+  const today = logicalTodayISO()
   const model = useMemo(() => {
     if (!data?.length) return null
     const byDate = new Map<string, number>()
     for (const s of data) byDate.set(s.date, (byDate.get(s.date) ?? 0) + s.volume)
-    const max = Math.max(...byDate.values(), 1)
-    // Build week columns (Sun-start), newest right
-    const end = new Date(); end.setHours(0, 0, 0, 0)
-    const weeks: Array<Array<{ date: string; t: number }>> = []
-    const cursor = new Date(end); cursor.setDate(cursor.getDate() - cursor.getDay()) // this week's Sunday
-    const nWeeks = Math.min(16, Math.ceil(days / 7))
-    for (let w = nWeeks - 1; w >= 0; w--) {
-      const col: Array<{ date: string; t: number }> = []
-      for (let d = 0; d < 7; d++) {
-        const day = new Date(cursor); day.setDate(day.getDate() - w * 7 + d)
-        const iso = day.toLocaleDateString('en-CA')
-        col.push({ date: iso, t: (byDate.get(iso) ?? 0) / max })
-      }
-      weeks.push(col)
-    }
-    // Stats to fill the desktop dead space beside the (now wider) grid.
-    const entries = [...byDate.entries()]
-    const activeDays = entries.length
-    const hardest = entries.reduce((best, cur) => (cur[1] > best[1] ? cur : best), entries[0])
-    const avgLoad = entries.reduce((n, [, v]) => n + v, 0) / activeDays
-    // Longest run of consecutive active days in the window (training streak).
-    const sorted = entries.map(([d]) => d).sort()
-    let streak = 1, best = 1
-    for (let i = 1; i < sorted.length; i++) {
-      const prev = new Date(sorted[i - 1] + 'T00:00:00Z').getTime()
-      const cur = new Date(sorted[i] + 'T00:00:00Z').getTime()
-      streak = cur - prev === 86_400_000 ? streak + 1 : 1
-      if (streak > best) best = streak
-    }
-    return { weeks, stats: { activeDays, hardest, avgLoad, streak: best } }
-  }, [data, days])
+    return buildIntensityCalendar(byDate, days, today)
+  }, [data, days, today])
 
   if (isLoading) return <div className="helix-card h-40 animate-pulse" />
   if (!model) return null
   const { weeks, stats } = model
 
-  const cell = (t: number) => t <= 0 ? 'rgba(255,255,255,0.05)'
-    : t < 0.35 ? `${EMERALD}59` : t < 0.7 ? `${EMERALD}a6` : EMERALD
-  const hardestLabel = new Date(stats.hardest[0] + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
+  const cell = (c: CalendarCell) => !c.elapsed ? 'transparent'
+    : c.t <= 0 ? 'rgba(255,255,255,0.05)'
+    : c.t < 0.35 ? `${EMERALD}59` : c.t < 0.7 ? `${EMERALD}a6` : EMERALD
+  const hardestLabel = stats.hardest
+    ? new Date(stats.hardest.date + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
+    : '—'
 
   return (
     <div className="helix-card">
@@ -154,9 +140,9 @@ export function RpeCalendar({ days, era = 'all' }: { days: number; era?: 'all' |
           {weeks.map((col, i) => (
             <div key={i} className="flex flex-col gap-1">
               {col.map((c) => (
-                <span key={c.date} title={`${c.date}${c.t > 0 ? '' : ' · rest'}`}
+                <span key={c.date} title={!c.elapsed ? c.date : `${c.date}${c.t > 0 ? '' : ' · rest'}`}
                   className="w-3.5 h-3.5 md:w-[18px] md:h-[18px] rounded-[3px]"
-                  style={{ background: cell(c.t), boxShadow: c.t >= 0.7 ? `0 0 6px ${EMERALD}80` : undefined }} />
+                  style={{ background: cell(c), boxShadow: c.elapsed && c.t >= 0.7 ? `0 0 6px ${EMERALD}80` : undefined }} />
               ))}
             </div>
           ))}

@@ -5,16 +5,14 @@ import { supabase } from '@/lib/supabase/client'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { eraForDate } from '@/lib/programs'
 import { GROUP } from '@/lib/theme/palette'
+import {
+  aggregateMuscleSets, MUSCLE_MAP, MUSCLE_GROUPS, type MuscleStat, type MuscleAggregate,
+} from '@/lib/charts/muscleAggregate'
 
-/** Canonicalize Hevy muscle tags into 6 display groups (v5.1 aliases included). */
-export const MUSCLE_MAP: Record<string, string> = {
-  chest: 'Chest', pecs: 'Chest',
-  back: 'Back', lats: 'Back', traps: 'Back', rhomboids: 'Back', 'upper back': 'Back', 'lower back': 'Back',
-  shoulders: 'Shoulders', delts: 'Shoulders', rear_delts: 'Shoulders', side_delts: 'Shoulders', front_delts: 'Shoulders',
-  biceps: 'Arms', triceps: 'Arms', forearms: 'Arms', arms: 'Arms',
-  quads: 'Legs', quadriceps: 'Legs', hamstrings: 'Legs', glutes: 'Legs', calves: 'Legs', abductors: 'Legs', legs: 'Legs',
-  core: 'Core', abs: 'Core', abdominals: 'Core', obliques: 'Core',
-}
+// Re-exported so every existing importer keeps working; the definitions and the
+// aggregation itself moved to a PURE module so the maths can be unit-tested.
+export { MUSCLE_MAP, MUSCLE_GROUPS }
+export type { MuscleStat }
 
 /** v5.1 exercise-name → muscle tags (parser aliases). Used by the catalog updater. */
 export const V51_EXERCISE_ALIASES: Record<string, string[]> = {
@@ -25,14 +23,9 @@ export const V51_EXERCISE_ALIASES: Record<string, string[]> = {
   'Hanging Knee Raise': ['abs'],
   'Cross-Body Cable Extension': ['triceps'],
 }
-export const MUSCLE_GROUPS = ['Chest', 'Back', 'Shoulders', 'Arms', 'Legs', 'Core'] as const
 export const GROUP_COLOR: Record<string, string> = GROUP
 
-export interface MuscleStat { group: string; sets: number; volume: number; daysSince: number | null }
-export interface MuscleAnalytics {
-  stats: MuscleStat[]
-  weekly: Array<Record<string, number | string>> // { week, Chest, Back, ... } sets per group per week
-}
+export type MuscleAnalytics = MuscleAggregate
 
 export function useMuscleAnalytics(days = 30, era: 'all' | 'ppl' | 'axis' = 'all') {
   // logicalTodayISO in the key: freshness (daysSince) must DECAY at the 04:00
@@ -58,54 +51,17 @@ export function useMuscleAnalytics(days = 30, era: 'all' | 'ppl' | 'axis' = 'all
         // STRICT ERA BOUNDARY: workouts never mix eras in analytics.
         .filter((r) => era === 'all' || eraForDate(r.workout_sessions.started_at.slice(0, 10)) === era)
 
-      const agg = new Map<string, { sets: number; volume: number; last: string | null }>()
-      const weekMap = new Map<string, Record<string, number>>()
-      // A unilateral exercise logs L + R as two rows sharing a pair_id — that is ONE
-      // set for volume analytics, not two. Dedupe the SET tally by pair_id (falling
-      // back to the row id for solo sets); volume still sums both sides.
-      const countedSets = new Set<string>()      // `${group}|${dedupeKey}`
-      const countedWeekly = new Set<string>()     // `${week}|${group}|${dedupeKey}`
-
-      for (const r of rows) {
-        const groups = new Set((r.exercises.muscle_groups ?? []).map((m) => MUSCLE_MAP[m.toLowerCase()]).filter(Boolean))
-        if (!groups.size) continue
-        const date = r.workout_sessions.started_at.slice(0, 10)
-        const week = isoWeekStart(r.workout_sessions.started_at)
-        const dedupeKey = r.pair_id ?? r.id
-        const vol = (r.weight_kg || 0) * (r.reps || 0)
-        for (const g of groups) {
-          const a = agg.get(g) ?? { sets: 0, volume: 0, last: null }
-          a.volume += vol
-          if (!a.last || date > a.last) a.last = date
-          const setKey = `${g}|${dedupeKey}`
-          if (!countedSets.has(setKey)) { countedSets.add(setKey); a.sets += 1 }
-          agg.set(g, a)
-          const w = weekMap.get(week) ?? {}
-          const weekKey = `${week}|${g}|${dedupeKey}`
-          if (!countedWeekly.has(weekKey)) { countedWeekly.add(weekKey); w[g] = (w[g] ?? 0) + 1 }
-          weekMap.set(week, w)
-        }
-      }
-
-      const todayMs = new Date(today + 'T00:00:00Z').getTime()
-      const stats: MuscleStat[] = MUSCLE_GROUPS.map((g) => {
-        const a = agg.get(g)
-        const daysSince = a?.last ? Math.round((todayMs - new Date(a.last + 'T00:00:00Z').getTime()) / 86400000) : null
-        return { group: g, sets: a?.sets ?? 0, volume: Math.round(a?.volume ?? 0), daysSince }
-      })
-
-      const weekly = [...weekMap.entries()]
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([week, groups]) => ({ week: week.slice(5), ...Object.fromEntries(MUSCLE_GROUPS.map((g) => [g, groups[g] ?? 0])) }))
-
-      return { stats, weekly }
+      return aggregateMuscleSets(
+        rows.map((r) => ({
+          id: r.id,
+          weightKg: r.weight_kg,
+          reps: r.reps,
+          pairId: r.pair_id,
+          groups: [...new Set((r.exercises.muscle_groups ?? []).map((m) => MUSCLE_MAP[m.toLowerCase()]).filter(Boolean))],
+          date: r.workout_sessions.started_at.slice(0, 10),
+        })),
+        today,
+      )
     },
   })
-}
-
-function isoWeekStart(iso: string): string {
-  const d = new Date(iso)
-  d.setUTCHours(0, 0, 0, 0)
-  d.setUTCDate(d.getUTCDate() - d.getUTCDay()) // back to Sunday
-  return d.toISOString().slice(0, 10)
 }
