@@ -95,12 +95,11 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
       persistOptions={{
         persister,
         maxAge: 24 * 60 * 60 * 1000,
-        // v19: MUST bump. Devices are holding a `month_activity` entry whose
-        // workoutDates/dataDates persisted as `{}` (serialized Sets). Those
-        // fields are arrays now, and restoring the old blob into the new shape
-        // is precisely the launch the fix has to survive. Busting guarantees a
-        // clean slate rather than relying on the runtime guard alone.
-        buster: 'v19',
+        // v20: MUST bump. `session-detail` sets gained `prAxes`; a cache written
+        // before it existed rehydrated sets without the field and the report
+        // crashed on `prAxes.length`. The components now read it defensively,
+        // but busting is what stops the stale blob being served at all.
+        buster: 'v20',
         dehydrateOptions: {
           shouldDehydrateQuery: (q) => defaultShouldDehydrateQuery(q) && isJsonSafe(q.state.data),
         },

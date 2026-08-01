@@ -88,13 +88,17 @@ export function toRows(sets: DetailSet[]): Row[] {
 /** Trophy + axis labels, on the set row that earned them. */
 function SetPrBadges({ set, timed, compact = false }: { set: DetailSet; timed: boolean; compact?: boolean }) {
   if (!set.isPr) return null
-  if (compact || !set.prAxes.length) {
+  // `prAxes` is read defensively: the query cache persists to localStorage, so a
+  // device that opens a session it viewed BEFORE this field existed rehydrates
+  // sets without it. The trophy alone is the correct degraded state.
+  const axes = set.prAxes ?? []
+  if (compact || !axes.length) {
     return <Trophy className={compact ? 'w-2.5 h-2.5 shrink-0' : 'w-3 h-3 shrink-0'} style={{ color: GOLD }} aria-hidden="true" />
   }
   return (
     <span className="inline-flex items-center gap-1 shrink-0">
       <Trophy className="w-3 h-3 shrink-0" style={{ color: GOLD }} aria-hidden="true" />
-      {set.prAxes.map((ax) => (
+      {axes.map((ax) => (
         <span key={ax} className="text-[8px] font-bold uppercase px-1 py-px rounded"
           style={{ color: GOLD, background: `${GOLD}1f`, border: `1px solid ${GOLD}4d` }}>
           {prAxisLabel(ax, timed)}

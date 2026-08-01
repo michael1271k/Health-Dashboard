@@ -29,8 +29,11 @@ export function highlightsOf(exercises: readonly DetailExercise[], toDisplay: (k
     if (!won.length) continue
     // Collapse to ONE line per exercise: the set that carries the most axes,
     // then the heaviest. Two trophy rows for one movement reads as two records.
-    const lead = [...won].sort((a, b) => b.prAxes.length - a.prAxes.length || b.weightKg - a.weightKg)[0]
-    const axes = (lead.prAxes.length ? lead.prAxes : ex.prAxes).map((a) => prAxisLabel(a, timed))
+    // `prAxes` is read defensively throughout: a localStorage-persisted session
+    // detail written before the field existed rehydrates without it, and a bare
+    // `.length` here took the whole report down with an error boundary.
+    const lead = [...won].sort((a, b) => (b.prAxes?.length ?? 0) - (a.prAxes?.length ?? 0) || b.weightKg - a.weightKg)[0]
+    const axes = (lead.prAxes?.length ? lead.prAxes : ex.prAxes ?? []).map((a) => prAxisLabel(a, timed))
     out.push({
       name: ex.name,
       axes: [...new Set(axes)],

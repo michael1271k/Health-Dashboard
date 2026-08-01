@@ -112,6 +112,17 @@ describe('highlightsOf — one line per record, at the top of the report', () =>
       .toEqual([])
   })
 
+  it('survives a set restored from a cache written before prAxes existed', () => {
+    // The persisted localStorage query cache is JSON of an OLDER DetailSet
+    // shape. `undefined is not an object (evaluating 'r.prAxes.length')` took
+    // down the whole report via the error boundary. The trophy still renders;
+    // only the axis chips are unavailable.
+    const stale = { setNumber: 1, weightKg: 40, reps: 10, rpe: null, isPr: true, est1rmKg: 53.3, setType: 'normal', side: null, pairId: null } as unknown as DetailSet
+    const e = { ...ex({ name: 'Lat Pulldown', sets: [stale] }), prAxes: undefined } as unknown as DetailExercise
+    expect(() => highlightsOf([e], kg, 'kg')).not.toThrow()
+    expect(highlightsOf([e], kg, 'kg')[0]).toEqual({ name: 'Lat Pulldown', axes: [], detail: '40kg × 10' })
+  })
+
   it('picks the strongest lift by est-1RM, ignoring zero-weight holds', () => {
     expect(strongestOf(july31)?.name).toBe('Leg Press')
     expect(strongestOf([ex({ name: 'Side Plank', sets: [], bestEst1rm: 0 })])).toBeNull()
