@@ -14,12 +14,19 @@ import { blurOnTap } from '@/lib/utils/blurOnTap'
 
 const CYAN = '#8E9AAC', VIOLET = '#E0703C', ROSE = '#C4514E', GOLD = '#D4AF37', EMBER = '#D4AF37', TEAL = '#3E9E7A'
 
-function StatTile({ value, label, color }: { value: string; label: string; color: string }) {
+/**
+ * One metric in the header strip.
+ *
+ * Was a bordered tile in a `grid-cols-3 sm:grid-cols-6` — two full rows of
+ * boxes on a phone for six short numbers, before any training data appeared.
+ * Now an inline value + unit on a single scrollable line.
+ */
+function Stat({ value, label, color }: { value: string; label: string; color: string }) {
   return (
-    <div className="rounded-xl bg-white/[0.02] border border-white/[0.06] px-1.5 py-2 text-center">
-      <span className="helix-num block text-fluid-sm font-bold text-text leading-tight tabular-nums">{value}</span>
-      <span className="text-[8px] uppercase tracking-wide" style={{ color }}>{label}</span>
-    </div>
+    <span className="inline-flex items-baseline gap-1 shrink-0">
+      <span className="helix-num text-fluid-sm font-bold text-text tabular-nums leading-none">{value}</span>
+      <span className="text-[9px] uppercase tracking-wide" style={{ color }}>{label}</span>
+    </span>
   )
 }
 
@@ -66,13 +73,18 @@ export function SessionHero({ detail }: { detail: SessionDetail }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-        <StatTile value={detail.durationMin != null ? `${detail.durationMin}m` : '—'} label="Duration" color={VIOLET} />
-        <StatTile value={fmtVolume(displayWeight(detail.volumeKg))} label={`Vol ${unit}`} color={CYAN} />
-        <StatTile value={`${detail.setCount}`} label="Sets" color={ROSE} />
-        <StatTile value={`${detail.prCount}`} label="PRs" color={GOLD} />
-        <StatTile value={detail.avgBpm != null ? `${detail.avgBpm}` : '—'} label="Avg BPM" color="#E0703C" />
-        <StatTile value={detail.calories != null ? `${detail.calories}` : '—'} label="kcal" color={EMBER} />
+      {/* ONE row. Horizontally scrollable rather than wrapping, so it can never
+          become the two-row block of boxes it was. */}
+      <div className="flex items-baseline gap-3.5 overflow-x-auto no-scrollbar rounded-xl bg-white/[0.02] border border-white/[0.06] px-3 py-2">
+        <Stat value={detail.durationMin != null ? `${detail.durationMin}` : '—'} label="min" color={VIOLET} />
+        <Stat value={fmtVolume(displayWeight(detail.volumeKg))} label={unit} color={CYAN} />
+        <Stat value={`${detail.setCount}`} label="sets" color={ROSE} />
+        <Stat value={`${detail.prCount}`} label={detail.prCount === 1 ? 'record' : 'records'} color={GOLD} />
+        {detail.avgBpm != null && <Stat value={`${detail.avgBpm}`} label="bpm" color="#E0703C" />}
+        {detail.calories != null && <Stat value={`${detail.calories}`} label="kcal" color={EMBER} />}
+        {/* Set-type counts join the strip instead of owning a row below it. */}
+        {detail.failureSets > 0 && <Stat value={`${detail.failureSets}`} label="to failure" color={ROSE} />}
+        {detail.warmupSets > 0 && <Stat value={`${detail.warmupSets}`} label="warm-up" color={TEAL} />}
       </div>
 
       {confirm ? (
@@ -99,13 +111,6 @@ export function SessionHero({ detail }: { detail: SessionDetail }) {
             style={{ color: ROSE, background: `${ROSE}1a`, border: `1px solid ${ROSE}55` }}>
             <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
-        </div>
-      )}
-
-      {(detail.failureSets > 0 || detail.warmupSets > 0) && (
-        <div className="flex items-center gap-3 text-[10px] text-muted pt-0.5">
-          {detail.failureSets > 0 && <span className="inline-flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full" style={{ background: ROSE }} />{detail.failureSets} to failure</span>}
-          {detail.warmupSets > 0 && <span className="inline-flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full" style={{ background: TEAL }} />{detail.warmupSets} warm-up</span>}
         </div>
       )}
     </section>

@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react'
 import { useSessionDetail } from '@/lib/hooks/useSessionDetail'
 import { SessionHero } from '@/components/session-detail/SessionHero'
 import { ExerciseBreakdown } from '@/components/session-detail/ExerciseBreakdown'
+import { SessionHighlights } from '@/components/session-detail/SessionHighlights'
 import { MuscleFocus } from '@/components/session-detail/MuscleFocus'
 import { ProgressionTrail } from '@/components/session-detail/ProgressionTrail'
 
@@ -43,6 +44,10 @@ export default function SessionAnalysisPage() {
   return (
     <div className="space-y-3 pb-8">
       <SessionHero detail={data} />
+      {/* Records and the strongest lift, above everything. They used to be a
+          gold chip somewhere inside one exercise and a coloured border on
+          another — both a full scroll away. */}
+      <SessionHighlights exercises={data.exercises} />
       <ProgressionTrail sessionId={data.id} />
       <ExerciseBreakdown sessionId={data.id} exercises={data.exercises} date={data.date} dayKey={data.dayKey} />
       <MuscleFocus detail={data} />

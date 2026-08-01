@@ -160,8 +160,8 @@
     "semantic_hash": "6244657175fd749de647871bd554b5b1"
   },
   "public/sw.js": {
-    "mtime": 1785593545.9547095,
-    "ast_hash": "c4fa9cdc6c16b97d0115c67f58a3c632",
+    "mtime": 1785594556.9586682,
+    "ast_hash": "0b8aaee4c3dcf580c292733c8d969290",
     "semantic_hash": ""
   },
   "scripts/generate-icons.mjs": {
@@ -270,9 +270,9 @@
     "semantic_hash": ""
   },
   "src/app/session/[id]/page.tsx": {
-    "mtime": 1784897420.2090163,
-    "ast_hash": "5f87c888017fd1d1f7fd6f0b9f616711",
-    "semantic_hash": "5f87c888017fd1d1f7fd6f0b9f616711"
+    "mtime": 1785594483.8094077,
+    "ast_hash": "98611b6d7272f00fda610d2659012fbf",
+    "semantic_hash": ""
   },
   "src/app/session/page.tsx": {
     "mtime": 1785176435.3164003,
@@ -675,8 +675,8 @@
     "semantic_hash": "b798dd804a4abe3981d3bbc1dae76239"
   },
   "src/components/session-detail/ExerciseBreakdown.tsx": {
-    "mtime": 1785592967.376511,
-    "ast_hash": "7d71d58689f22f91c1aec612b561f5fb",
+    "mtime": 1785594425.4356637,
+    "ast_hash": "e14747bfe4ef1c8144da6986e5f69571",
     "semantic_hash": ""
   },
   "src/components/session-detail/MuscleFocus.tsx": {
@@ -685,14 +685,14 @@
     "semantic_hash": "0e7218493e108ec252c3430604053683"
   },
   "src/components/session-detail/ProgressionTrail.tsx": {
-    "mtime": 1785592865.2589803,
-    "ast_hash": "9a94df541ea763b4ca921179aabefca9",
+    "mtime": 1785594501.603873,
+    "ast_hash": "6df1b061197f26378a0c80779e41f202",
     "semantic_hash": ""
   },
   "src/components/session-detail/SessionHero.tsx": {
-    "mtime": 1785091685.8176062,
-    "ast_hash": "d83d244c19cadfd7ebcb5a636eacc97e",
-    "semantic_hash": "d83d244c19cadfd7ebcb5a636eacc97e"
+    "mtime": 1785594468.9582267,
+    "ast_hash": "98e04d6c423288cab0e58283f4e045e0",
+    "semantic_hash": ""
   },
   "src/components/settings/NotionSync.tsx": {
     "mtime": 1785077302.755249,
@@ -760,8 +760,8 @@
     "semantic_hash": ""
   },
   "src/lib/exercises/aliases.ts": {
-    "mtime": 1785573438.3990984,
-    "ast_hash": "2570e16cd2bbb7e68054c58eb1b271b4",
+    "mtime": 1785594137.6213582,
+    "ast_hash": "db098d3cd8d7d81877ac7415987aca58",
     "semantic_hash": ""
   },
   "src/lib/exercises/muscleMap.ts": {
@@ -1020,8 +1020,8 @@
     "semantic_hash": "f45f579e511179e4bd8afd27ef016ccc"
   },
   "src/lib/programs.ts": {
-    "mtime": 1785573438.3988404,
-    "ast_hash": "3047a0299cc80012dc1edb25067f2f21",
+    "mtime": 1785594120.895644,
+    "ast_hash": "d263b29e842dad71966efe12e2ba1549",
     "semantic_hash": ""
   },
   "src/lib/query/workoutKeys.ts": {
@@ -1085,9 +1085,9 @@
     "semantic_hash": ""
   },
   "src/lib/sessions/seedTemplates.ts": {
-    "mtime": 1784897420.240483,
-    "ast_hash": "6966638bd0c7d3df20a06d5490421296",
-    "semantic_hash": "6966638bd0c7d3df20a06d5490421296"
+    "mtime": 1785594120.8959885,
+    "ast_hash": "4be5ea10d1fb0a52f39432ab4ae6cebb",
+    "semantic_hash": ""
   },
   "src/lib/sessions/templateDraft.ts": {
     "mtime": 1785503094.4232652,
@@ -1540,8 +1540,8 @@
     "semantic_hash": ""
   },
   "src/tests/exercise-memory.test.ts": {
-    "mtime": 1785503348.5972798,
-    "ast_hash": "8127eab288a99098771db01eb5104c85",
+    "mtime": 1785594245.3282237,
+    "ast_hash": "4507cce9d9537b2557abe93261081d5c",
     "semantic_hash": ""
   },
   "src/tests/plan-phase.test.ts": {
@@ -1627,6 +1627,16 @@
   "src/tests/muscle-load.test.ts": {
     "mtime": 1785593323.2227635,
     "ast_hash": "9822e9c9f59a2f9d929edb1b6aa49ab2",
+    "semantic_hash": ""
+  },
+  "src/components/session-detail/SessionHighlights.tsx": {
+    "mtime": 1785594311.866417,
+    "ast_hash": "211657f140de4cf9cd7dc3a91f65fcf6",
+    "semantic_hash": ""
+  },
+  "src/tests/session-report.test.ts": {
+    "mtime": 1785594533.3101678,
+    "ast_hash": "89f7c3a97b164fd280d6599adc10f3c5",
     "semantic_hash": ""
   }
 }
