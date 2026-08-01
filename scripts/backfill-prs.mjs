@@ -50,11 +50,12 @@ const jiti = createJiti(import.meta.url, {
 })
 const { buildBaselines, detectSessionPrs, recordSets } = await jiti.import('../src/lib/training/prEngine.ts')
 const { isTimedExercise } = await jiti.import('../src/lib/exercises/timed.ts')
+const { repWindowFor } = await jiti.import('../src/lib/training/ceilings.ts')
 
 // ── load everything, once ────────────────────────────────────────────────────
 const { data: sessions, error: sErr } = await db
   .from('workout_sessions')
-  .select('id, user_id, started_at, pr_count')
+  .select('id, user_id, started_at, day_key, pr_count')
   .order('started_at', { ascending: true })
 if (sErr) throw sErr
 
@@ -89,16 +90,24 @@ for (const s of sessions) {
   if (!rows.length) continue
 
   const baselines = buildBaselines(seen, isTimedExercise)
-  const candidates = rows.map((r) => ({
-    key: r.exercises?.name ?? r.exercise_id,
-    weightKg: r.weight_kg ?? 0,
-    reps: r.reps ?? 0,
-    setType: r.set_type ?? null,
-    timed: isTimedExercise(r.exercises?.name ?? ''),
-  }))
-  const result = detectSessionPrs(candidates, baselines)
-
   const dateStr = s.started_at.slice(0, 10)
+  const candidates = rows.map((r) => {
+    const name = r.exercises?.name ?? r.exercise_id
+    // Same window the app resolves, so the e1RM axis is gated identically.
+    const win = repWindowFor(name, s.day_key ?? undefined)
+    return {
+      key: name,
+      weightKg: r.weight_kg ?? 0,
+      reps: r.reps ?? 0,
+      setType: r.set_type ?? null,
+      timed: isTimedExercise(name),
+      repFloor: win?.floor ?? null,
+      date: dateStr,
+      exerciseName: name,
+      setNumber: r.set_number ?? null,
+    }
+  })
+  const result = detectSessionPrs(candidates, baselines)
   const changed = []
   result.perSet.forEach((d, i) => {
     const want = d.axes.length > 0
@@ -133,10 +142,12 @@ for (const s of sessions) {
     for (const c of changed) console.log(`    ${c}`)
   }
 
-  for (const r of rows) {
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i]
     seen.push({
-      key: r.exercises?.name ?? r.exercise_id,
+      key: candidates[i].key,
       weightKg: r.weight_kg, reps: r.reps, sessionId: r.session_id,
+      repFloor: candidates[i].repFloor,
     })
   }
 }

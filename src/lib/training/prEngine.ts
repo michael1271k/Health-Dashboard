@@ -20,6 +20,7 @@
  * not on the record itself.
  */
 import { epley1RM } from '@/lib/utils/epley'
+import { historicalAxesFor } from './historicalPrs'
 
 export type PrAxis = 'weight' | 'reps' | 'volume' | 'e1rm'
 
@@ -30,6 +31,8 @@ export interface BaselineSetRow {
   reps: number | null
   est1rm?: number | null
   sessionId?: string | null
+  /** Floor of the programmed rep window — gates whether this row sets the e1RM bar. */
+  repFloor?: number | null
 }
 
 /**
@@ -87,8 +90,10 @@ export function buildBaselines(
     if (w != null) bump(bestWeight, r.key, w)
     if (w != null && reps != null) {
       bump(bestRepsAtWeight, `${r.key}|${w}`, reps)
-      const e = r.est1rm ?? epley1RM(w, reps)
-      if (e != null) bump(bestE1rm, r.key, e)
+      if (e1rmEligible(reps, r.repFloor)) {
+        const e = r.est1rm ?? epley1RM(w, reps)
+        if (e != null) bump(bestE1rm, r.key, e)
+      }
       if (r.sessionId) {
         const vk = `${r.key}|${r.sessionId}`
         sessVol.set(vk, (sessVol.get(vk) ?? 0) + w * reps)
@@ -128,6 +133,37 @@ export interface PrCandidateSet {
   reps: number
   setType?: string | null
   timed: boolean
+  /** Floor of the programmed rep window, when there is one. Gates the e1RM axis. */
+  repFloor?: number | null
+  /** Identity for the historical-override lookup — see `historicalPrs.ts`. */
+  date?: string | null
+  exerciseName?: string | null
+  setNumber?: number | null
+}
+
+/**
+ * Is this set's rep count a fair basis for an estimated 1RM?
+ *
+ * Epley tracks the NSCA rep table within ~1.5% and is, if anything, slightly
+ * CONSERVATIVE above 10 reps. The formula is not the problem. The problem is
+ * that the axis compares e1RM across rep ranges, and a one-off heavy low-rep
+ * set produces a number no working set can beat: Hack Squat's 60kg × 8 — below
+ * its programmed 10–12 window — scores 76.0 and permanently gated the far
+ * harder 55kg × 11 at 75.2.
+ *
+ * The guard is therefore ONE-SIDED, on the floor only. Going BELOW the window
+ * means leaving the programmed stimulus for a strength test, and Epley
+ * extrapolates hardest exactly there. Going ABOVE the ceiling is the opposite:
+ * it is the rep-progression working as designed, Epley under-reports there,
+ * and gating it would delete real records (Leg Press Horizontal 72.5kg × 13,
+ * one past its ceiling, holds a genuine e1RM best).
+ *
+ * A sub-floor set still counts for the `weight` axis, where it belongs.
+ */
+export function e1rmEligible(reps: number, floor?: number | null): boolean {
+  if (floor != null) return reps >= floor
+  // Unprogrammed: only exclude the very low reps where extrapolation dominates.
+  return reps >= 5
 }
 
 /** Warm-ups and drop sets count toward volume but are never a top-set record. */
@@ -160,9 +196,11 @@ export function detectSetPrs(set: PrCandidateSet, idx: PrIndex): PrAxis[] {
   const br = idx.bestRepsAtWeight.get(rk)
   if (br != null && set.reps > br) axes.push('reps')
 
-  const e1rm = epley1RM(set.weightKg, set.reps)
-  const be = idx.bestE1rm.get(set.key)
-  if (e1rm != null && be != null && e1rm > be) axes.push('e1rm')
+  if (e1rmEligible(set.reps, set.repFloor)) {
+    const e1rm = epley1RM(set.weightKg, set.reps)
+    const be = idx.bestE1rm.get(set.key)
+    if (e1rm != null && be != null && e1rm > be) axes.push('e1rm')
+  }
 
   return axes
 }
@@ -182,8 +220,12 @@ export function absorbSet(set: PrCandidateSet, idx: PrIndex): void {
   if (set.timed) { bump(idx.bestSeconds, set.key, set.reps); return }
   bump(idx.bestWeight, set.key, set.weightKg)
   bump(idx.bestRepsAtWeight, `${set.key}|${set.weightKg}`, set.reps)
-  const e = epley1RM(set.weightKg, set.reps)
-  if (e != null) bump(idx.bestE1rm, set.key, e)
+  // Symmetric with detection: a set that cannot WIN the e1RM axis must not be
+  // allowed to raise the bar for it either.
+  if (e1rmEligible(set.reps, set.repFloor)) {
+    const e = epley1RM(set.weightKg, set.reps)
+    if (e != null) bump(idx.bestE1rm, set.key, e)
+  }
 }
 
 export interface DetectedSet { axes: PrAxis[]; est1rm: number | null }
@@ -216,6 +258,11 @@ export function detectSessionPrs(sets: readonly PrCandidateSet[], baselines: PrB
 
   const perSet: DetectedSet[] = sets.map((s) => {
     const axes = detectSetPrs(s, idx)
+    // Records carried over from Hevy that the engine has no way to derive.
+    // Unioned in, never replacing — a set can earn axes both ways.
+    for (const a of historicalAxesFor(s.date, s.exerciseName ?? s.key, s.setNumber, s.weightKg, s.reps)) {
+      if (!axes.includes(a)) axes.push(a)
+    }
     for (const a of axes) add(s.key, a)
     absorbSet(s, idx)
     // A hold has no meaningful est-1RM (weight 0 → Epley 0); null keeps the
@@ -233,7 +280,20 @@ export function detectSessionPrs(sets: readonly PrCandidateSet[], baselines: PrB
   }
   for (const [key, vol] of volumeByKey) {
     const best = idx.bestSessionVolume.get(key)
-    if (best != null && vol > best) add(key, 'volume')
+    if (best != null && vol > best) {
+      add(key, 'volume')
+      // Give the axis somewhere to LIVE. `is_pr` is a per-set column, so a
+      // volume-only record used to flag no row at all: it existed in
+      // `personal_records` and in `pr_count`, and was invisible everywhere a
+      // human looks. Attribute it to the exercise's last eligible set — the
+      // one that completed the total.
+      for (let i = sets.length - 1; i >= 0; i--) {
+        const s = sets[i]
+        if (s.key !== key || isPrIneligible(s.setType) || s.timed) continue
+        if (!perSet[i].axes.includes('volume')) perSet[i].axes.push('volume')
+        break
+      }
+    }
   }
 
   const prCount = [...axesByKey.values()].reduce((n, s) => n + s.size, 0)
@@ -263,16 +323,30 @@ export function recordSets(
   const out = new Map<string, Map<PrAxis, RecordSet>>()
   const put = (key: string, axis: PrAxis, rec: RecordSet) => {
     const m = out.get(key) ?? new Map<PrAxis, RecordSet>()
-    // First writer wins: sets are in performance order and a later set that
-    // beats an earlier one re-claims the axis anyway (the earlier one then
-    // never held it), so the first claimant IS the record.
-    if (!m.has(axis)) m.set(axis, rec)
+    const held = m.get(axis)
+    // TWO sets in one session can each legitimately win the same axis, because
+    // the engine absorbs as it goes: Hack Squat on 2026-07-27 ran 50×12 (e1RM
+    // 70.0, a record) then 55×11 (75.2, also a record). Keeping the first
+    // claimant filed 70.0 as the standing e1RM — beaten, in the very session
+    // that set it.
+    //
+    // `reps` keeps the LAST claimant instead of the largest: it is a per-LOAD
+    // record, so "most reps" across different loads is meaningless, and taking
+    // the max would refile a light-weight rep count as the record (the
+    // "14 @ 25kg" mistake). Loads ascend, so the last claimant is the top set.
+    const better = held == null
+      || (axis === 'reps' ? true : rec.value > held.value)
+    if (better) m.set(axis, rec)
     out.set(key, m)
   }
 
   result.perSet.forEach((d, i) => {
     const s = sets[i]
     for (const axis of d.axes) {
+      // `volume` also rides on a set now (so it can show a trophy), but its
+      // VALUE is the exercise's session total, filled in by the loop below —
+      // taking it from this set would record an e1RM as a volume.
+      if (axis === 'volume') continue
       const value = axis === 'weight' ? s.weightKg
         : axis === 'reps' ? s.reps
         : (d.est1rm ?? 0)                       // e1rm

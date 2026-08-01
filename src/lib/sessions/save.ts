@@ -11,6 +11,7 @@ import { countCommittedSets } from '@/lib/sessions/schema'
 import { sessionVolumeKg } from '@/lib/sessions/volume'
 import { isTimedExercise } from '@/lib/exercises/timed'
 import { buildBaselines, detectSessionPrs, recordSets, type PrAxis } from '@/lib/training/prEngine'
+import { repWindowFor } from '@/lib/training/ceilings'
 import { normalizeCr10 } from '@/lib/training/effort'
 
 type DB = SupabaseClient<Database>
@@ -125,17 +126,31 @@ export async function saveSession(
   const nameByEx = new Map<string, string>()
   for (const s of payload.sets) nameByEx.set(s.exerciseId, s.exerciseName)
 
+  // Rep windows gate the e1RM axis (see `e1rmEligible`). Resolved once per
+  // exercise, and by NAME because that is what the program is keyed on.
+  const windowByEx = new Map<string, { floor: number; ceiling: number } | null>()
+  const windowFor = (exerciseId: string) => {
+    if (!windowByEx.has(exerciseId)) {
+      windowByEx.set(exerciseId, repWindowFor(nameByEx.get(exerciseId) ?? '', payload.dayKey ?? undefined))
+    }
+    return windowByEx.get(exerciseId) ?? null
+  }
+
   const baselines = buildBaselines(
     prHistory.map((r) => ({
       key: r.exercise_id, weightKg: r.weight_kg, reps: r.reps,
       est1rm: r.est_1rm_kg, sessionId: r.session_id,
+      repFloor: windowFor(r.exercise_id)?.floor ?? null,
     })),
     (key) => isTimedExercise(nameByEx.get(key) ?? ''),
   )
 
-  const candidates = payload.sets.map((s) => ({
+  const sessionDate = payload.startedAt.slice(0, 10)
+  const candidates = payload.sets.map((s, i) => ({
     key: s.exerciseId, weightKg: s.weightKg, reps: s.reps,
     setType: s.setType ?? null, timed: isTimedExercise(s.exerciseName),
+    repFloor: windowFor(s.exerciseId)?.floor ?? null,
+    date: sessionDate, exerciseName: s.exerciseName, setNumber: s.setNumber ?? i + 1,
   }))
   const prResult = detectSessionPrs(candidates, baselines)
   const prAxesByEx = prResult.axesByKey
