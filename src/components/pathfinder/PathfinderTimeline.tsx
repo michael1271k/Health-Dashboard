@@ -276,7 +276,10 @@ function WeekRecoveryStrip({ weekStart }: { weekStart: string }) {
  * Anything an LLM would otherwise have to calculate is handed to it, because a
  * model's arithmetic is unverifiable and unstable across runs.
  *
- * There is still no server round-trip — no tokens are spent by the app itself.
+ * BOTH buttons only COPY. This app has no model integration of any kind — no API
+ * route, no SDK, no key. You run the brief through whatever model you like and
+ * paste the result back. The verbs are deliberately "Copy …" so nothing here
+ * ever reads as generation.
  */
 type ExportKind = 'raw' | 'sentinel'
 
@@ -329,7 +332,7 @@ function WeekActions({ node }: { node: TimelineWeekNode }) {
           style={copied === 'sentinel' ? { background: EMERALD } : undefined}>
           {sentinelLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Building…</>
             : copied === 'sentinel' ? <><Check className="w-4 h-4" /> Copied</>
-            : <><Radar className="w-4 h-4" /> Sentinel-7 audit</>}
+            : <><Radar className="w-4 h-4" /> Copy audit brief</>}
         </button>
 
         <button onClick={() => copy('raw')} disabled={isLoading || !payload}
@@ -337,7 +340,7 @@ function WeekActions({ node }: { node: TimelineWeekNode }) {
           style={copied === 'raw' ? { borderColor: `${EMERALD}66`, color: EMERALD } : undefined}>
           {isLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Building…</>
             : copied === 'raw' ? <><Check className="w-4 h-4" /> Copied</>
-            : <><ClipboardCopy className="w-4 h-4" /> Raw data</>}
+            : <><ClipboardCopy className="w-4 h-4" /> Copy raw data</>}
         </button>
 
         {storedSentinel ? (
@@ -366,10 +369,13 @@ function WeekActions({ node }: { node: TimelineWeekNode }) {
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             rows={8}
-            placeholder="Paste the AI's weekly summary here…"
+            placeholder="Paste the finished report here…"
             className="w-full rounded-xl border px-3 py-2.5 text-fluid-xs text-text bg-surface-2 outline-none focus:ring-2 focus:ring-primary/60"
             style={{ borderColor: 'rgba(255,255,255,0.10)' }}
           />
+          <p className="text-[11px] text-muted leading-snug">
+            Offline by design — Helix never calls a model. Copy a brief, run it wherever you like, paste the result back.
+          </p>
           <div className="flex gap-2">
             <button onClick={() => setPasteOpen(false)} className="btn-glass flex-1 justify-center min-h-[40px] text-fluid-xs">Cancel</button>
             <button
