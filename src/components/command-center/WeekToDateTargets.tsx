@@ -13,13 +13,21 @@ import { EMBER } from '@/lib/theme/palette'
  * Muscle Analytics tab. Moved here from the per-session summary (it was a weekly
  * aggregate crammed onto a session page). Muscles with no sets this week are
  * omitted, never zero-filled.
+ *
+ * This is now the ONLY MEV/MAV card. `WeeklyVolumeCard` rendered the same hook's
+ * data ten lines away on the same page — two cards, two `workout_sets` scans,
+ * and they disagreed about zero-target muscles (that one printed a literal
+ * "3/0").
  */
 export function WeekToDateTargets() {
   const today = logicalTodayISO()
   const weekStart = weekStartOf(today)
   const { data: week } = useWeeklyVolume(weekStart, today)
 
-  const rows = (week?.muscles ?? []).filter((m) => m.sets > 0)
+  // A zero TARGET means the phase does not program that muscle at all —
+  // Adductors on a cut, for instance. Rendering it as a bar with no target is
+  // noise at best and reads as a failed goal at worst.
+  const rows = (week?.muscles ?? []).filter((m) => m.sets > 0 && m.target > 0)
   if (!rows.length) return null
 
   return (

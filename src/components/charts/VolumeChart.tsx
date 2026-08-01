@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
 } from 'recharts'
@@ -8,6 +8,7 @@ import { ChartTooltip } from './ChartTooltip'
 import type { VolumePoint } from '@/lib/hooks/useCharts'
 import { PPL_SPLITS, type SplitDay } from '@/lib/types/workout'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
+import { niceDomain, compactKg } from '@/lib/charts/scale'
 
 const GRID = 'rgba(255,255,255,0.06)'
 const TEXT = '#79808C'
@@ -71,15 +72,29 @@ export function VolumeChart({ data, isLoading, era = 'all' }: { data: VolumePoin
   const [split, setSplit] = useState<ChartSplit>('legs')
   const unit = useUnitSystem()
 
+  // The selected split must exist in the active era's pill set.
+  const pills = SPLITS_FOR_ERA[era]
+  const activeSplit = pills.includes(split) ? split : pills[0]
+
+  // Hooks run before the loading early-return — their order must not depend on
+  // whether data has arrived.
+  const chartData = useMemo(
+    () => data
+      .filter((d) => resolveChartSplit(d.date, d.split, era) === activeSplit)
+      .map((d) => ({ date: formatDate(d.date), volume: displayWeight(d.volume) })),
+    [data, era, activeSplit],
+  )
+  // hardMin 0: volume is a non-negative quantity, so padding must never push
+  // the axis below the origin even when the series is tightly clustered.
+  const volumeDomain = useMemo(
+    () => niceDomain(chartData.map((d) => d.volume), { hardMin: 0 }),
+    [chartData],
+  )
+
   if (isLoading) {
     return <div className="helix-card h-64 flex items-center justify-center"><div className="w-full h-40 bg-surface-2 rounded-xl animate-pulse" /></div>
   }
 
-  // The selected split must exist in the active era's pill set.
-  const pills = SPLITS_FOR_ERA[era]
-  const activeSplit = pills.includes(split) ? split : pills[0]
-  const filtered = data.filter((d) => resolveChartSplit(d.date, d.split, era) === activeSplit)
-  const chartData = filtered.map((d) => ({ date: formatDate(d.date), volume: displayWeight(d.volume) }))
   const color = splitColor(activeSplit)
 
   return (
@@ -114,7 +129,11 @@ export function VolumeChart({ data, isLoading, era = 'all' }: { data: VolumePoin
               </defs>
               <CartesianGrid stroke={GRID} strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="date" tick={{ fill: TEXT, fontSize: 10, fontFamily: 'var(--font-mono)' }} tickMargin={8} minTickGap={20} axisLine={false} tickLine={false} interval="preserveStartEnd" />
-              <YAxis tick={{ fill: TEXT, fontSize: 11, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} width={48} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+              {/* Fitted to the data, not to zero. Weekly volume sits in a narrow
+                  band a long way above the origin, so a zero-based axis squashed
+                  every real change into a few pixels. */}
+              <YAxis tick={{ fill: TEXT, fontSize: 11, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} width={48}
+                domain={volumeDomain} allowDataOverflow={false} tickFormatter={compactKg} />
               <Tooltip content={<ChartTooltip />} cursor={{ stroke: GRID, strokeWidth: 1 }} />
               <Area type="monotone" dataKey="volume" name={`Volume (${unit})`} stroke={color} fill="url(#volFill)" strokeWidth={2} dot={{ r: 2, fill: color }} activeDot={{ r: 4 }} />
             </AreaChart>

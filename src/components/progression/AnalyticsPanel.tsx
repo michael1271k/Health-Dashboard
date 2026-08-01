@@ -6,6 +6,7 @@ import { useWeightTrend, useMacroHistory, usePRHistory, useVolumeTrend, useBodyD
 import { useUserGoals } from '@/lib/hooks/useDashboard'
 import { RangeSelector } from '@/components/charts/RangeSelector'
 import { PlanEraButton } from '@/components/charts/PlanEraButton'
+import { CurrentWeekButton } from '@/components/charts/CurrentWeekButton'
 import { eraForDate } from '@/lib/programs'
 import { WidgetBoundary } from '@/components/fx/WidgetBoundary'
 import { useEraFilter } from '@/lib/era/eraFilter'
@@ -17,11 +18,10 @@ const chartFallback = () => (
     <div className="w-full h-40 bg-surface-2 rounded-xl animate-pulse" />
   </div>
 )
-const WeightTrendChart = dynamic(() => import('@/components/charts/WeightTrendChart').then((m) => m.WeightTrendChart), { ssr: false, loading: chartFallback })
+const BodyCompositionChart = dynamic(() => import('@/components/charts/BodyCompositionChart').then((m) => m.BodyCompositionChart), { ssr: false, loading: chartFallback })
 const VolumeChart = dynamic(() => import('@/components/charts/VolumeChart').then((m) => m.VolumeChart), { ssr: false, loading: chartFallback })
 const MacroProgressChart = dynamic(() => import('@/components/charts/MacroProgressChart').then((m) => m.MacroProgressChart), { ssr: false, loading: chartFallback })
 const PRHistoryChart = dynamic(() => import('@/components/charts/PRHistoryChart').then((m) => m.PRHistoryChart), { ssr: false, loading: chartFallback })
-const BodyDetailChart = dynamic(() => import('@/components/charts/BodyDetailChart').then((m) => m.BodyDetailChart), { ssr: false, loading: chartFallback })
 
 /** Analytics view of the Momentum tab — the BODY & PERFORMANCE trend charts
  * (weight, volume, macros, PRs) filterable by range and training era. The
@@ -50,12 +50,14 @@ export function AnalyticsPanel() {
       <EraFilterPills />
 
       <div className="lg:hidden flex items-center gap-2 flex-wrap">
+        <CurrentWeekButton value={days} onChange={setDays} />
         <RangeSelector value={days} onChange={setDays} />
         <PlanEraButton value={days} onChange={setDays} />
       </div>
 
       <div className="flex gap-4 items-start">
         <div className="hidden lg:flex flex-col gap-2 shrink-0 sticky top-6 self-start">
+          <CurrentWeekButton value={days} onChange={setDays} />
           <RangeSelector value={days} onChange={setDays} orientation="vertical" />
           <PlanEraButton value={days} onChange={setDays} />
         </div>
@@ -65,12 +67,13 @@ export function AnalyticsPanel() {
                 intrinsic width — without it the X-axis overflows the mobile
                 viewport (grid/flex children default to min-width:auto). */}
             <div className="grid gap-6 lg:grid-cols-2 [&>*]:min-w-0">
-              <WeightTrendChart data={wData} isLoading={weightLoading} showEraBoundary={era === 'all'} />
-              <VolumeChart data={vData} isLoading={volumeLoading} era={era} />
-              {/* Body-composition detail spans both columns as the section's primary. */}
+              {/* ONE body-composition chart. There used to be two, both titled
+                  "Body Composition", reading different tables side by side. */}
               <div className="lg:col-span-2 min-w-0">
-                <BodyDetailChart data={bdData} isLoading={bodyLoading} />
+                <BodyCompositionChart trend={wData} detail={bdData}
+                  isLoading={weightLoading || bodyLoading} showEraBoundary={era === 'all'} />
               </div>
+              <VolumeChart data={vData} isLoading={volumeLoading} era={era} />
               <MacroProgressChart data={mData} goals={goals ?? null} isLoading={macroLoading || goalsLoading} />
               <PRHistoryChart data={pData} isLoading={prLoading} />
             </div>

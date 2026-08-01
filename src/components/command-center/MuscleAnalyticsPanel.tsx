@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import dynamic from 'next/dynamic'
 import { PlanEraButton } from '@/components/charts/PlanEraButton'
+import { CurrentWeekButton } from '@/components/charts/CurrentWeekButton'
 import { WeekToDateTargets } from './WeekToDateTargets'
 import { DeferredMount } from '@/components/fx/DeferredMount'
 import { WidgetBoundary } from '@/components/fx/WidgetBoundary'
@@ -38,8 +39,9 @@ export function MuscleAnalyticsPanel() {
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <h2 className="font-heading text-fluid-lg font-bold text-text">Muscle Analytics</h2>
-            {/* Exactly two windows: 30 Days (default) and the active plan's Era. */}
+            {/* Current week · 30 Days (default) · the active plan's Era. */}
             <div className="flex items-center gap-2 flex-wrap">
+              <CurrentWeekButton value={days} onChange={setDays} />
               <button
                 onClick={() => setDays(30)}
                 aria-pressed={days === 30}
