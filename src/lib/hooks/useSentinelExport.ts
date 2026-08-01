@@ -67,6 +67,9 @@ export function useSentinelExport(weekStart: string, enabled = true) {
           supabase.from('workout_sets')
             .select('id, pair_id, side, weight_kg, reps, set_type, is_pr, session_id, exercise_order, set_number, exercises!inner(name, muscle_groups), workout_sessions!inner(started_at)')
             .gte('workout_sessions.started_at', startInstant).lt('workout_sessions.started_at', endInstant)
+            // Selected these columns but never ordered by them — same
+            // nondeterministic set order as the raw export had.
+            .order('exercise_order', { ascending: true }).order('set_number', { ascending: true })
             .limit(3000),
           supabase.from('cardio_logs')
             .select('date, kind, distance_m, duration_min, kcal, active_kcal, total_kcal, avg_hr, effort')

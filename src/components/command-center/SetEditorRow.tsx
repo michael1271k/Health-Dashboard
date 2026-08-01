@@ -81,7 +81,9 @@ export function SetEditorRow({ index, displayNum, subRow = false, set, active, t
   }
 
   const sideColor = set.side === 'L' ? '#8E9AAC' : set.side === 'R' ? '#E0703C' : null
-  const badge = set.side ?? (isWarm ? 'W' : isDrop ? 'D' : `S${displayNum ?? index + 1}`)
+  // Spelled out. A single letter beside a load reads as a unit or a grade, and
+  // "W" next to "20kg" is genuinely ambiguous.
+  const badge = set.side ?? (isWarm ? 'Warmup' : isDrop ? 'Dropset' : `S${displayNum ?? index + 1}`)
 
   return (
     <div

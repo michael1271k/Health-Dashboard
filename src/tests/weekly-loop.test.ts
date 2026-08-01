@@ -111,10 +111,6 @@ describe('buildWeeklyExport', () => {
       { muscle: 'Biceps', sets: 4, target: 8 },
     ],
     doms: [{ date: '2026-07-20', muscle: 'Quads', severity: 2 }],
-    previous: {
-      avgKcal: 2010, avgProtein: 160, avgSteps: 8000, avgSleepMin: 500,
-      sessions: 4, volumeKg: 30000, sets: 90, weightStart: 66.0, weightEnd: 65.6,
-    },
   }
 
   it('is deterministic (same input → identical string)', () => {
@@ -201,13 +197,13 @@ describe('buildWeeklyExport', () => {
 
   it('marks a set taken to failure and NEVER emits an estimated 1RM', () => {
     const out = buildWeeklyExport(input)
-    expect(out).toMatch(/57\.5kg × 10 \(F\)/)   // failure flag
+    expect(out).toMatch(/57\.5kg × 10 \(Failure\)/)   // spelled out, not (F)
     expect(out).not.toMatch(/e1RM/i)            // no derived 1RM anywhere
   })
 
   it('splits unilateral work per side (L/R weight · reps · failure)', () => {
     const out = buildWeeklyExport(input)
-    expect(out).toMatch(/S1 L 7\.5kg×15 · R 7\.5kg×13\(F\)/)
+    expect(out).toMatch(/S1 L 7\.5kg×15 · R 7\.5kg×13 \(Failure\)/)
   })
 
   it('names the PRs (raw lift, no 1RM) rather than counting them', () => {
@@ -255,15 +251,44 @@ describe('buildWeeklyExport', () => {
     expect(withProtocol).toMatch(/\*\*Rest days\*\*/)
   })
 
-  it('includes a week-over-week block and soreness', () => {
-    const out = buildWeeklyExport(input)
-    expect(out).toMatch(/vs previous week/)
-    expect(out).toMatch(/kcal\/day: 1940 \(-70 vs prev\)/)
-    expect(out).toMatch(/Quads: 2 \(moderate\)/)
+  // Warm-ups used to be filtered out upstream, so the export read as if every
+  // session started at its top load.
+  it('emits warm-up sets, tagged, without merging them into the working group', () => {
+    const out = buildWeeklyExport({
+      ...input,
+      sessions: [{
+        ...input.sessions[0],
+        exercises: [{
+          name: 'Leg Press', topKg: 70, repWindow: '8-12',
+          sets: [
+            { weightKg: 40, reps: 10, side: null, failure: false, warmup: true, pairId: null },
+            { weightKg: 70, reps: 12, side: null, failure: false, pairId: null },
+          ],
+        }],
+      }],
+    })
+    expect(out).toMatch(/40kg × 10 \(Warmup\)/)
+    expect(out).toMatch(/70kg × 12/)
   })
 
-  it('omits the comparison block entirely when there is no previous week', () => {
-    const out = buildWeeklyExport({ ...input, previous: null })
-    expect(out).not.toMatch(/vs previous week/)
+  it('states a missing session effort rather than omitting the segment', () => {
+    const out = buildWeeklyExport({
+      ...input,
+      sessions: [{ ...input.sessions[0], sessionRpe: null }],
+    })
+    expect(out).toMatch(/effort Not reported/)
+  })
+
+  it('includes soreness', () => {
+    expect(buildWeeklyExport(input)).toMatch(/Quads: 2 \(moderate\)/)
+  })
+
+  // Both derived blocks are gone: every figure in them was a sum or a
+  // difference of the daily rows printed above, and a pre-chewed summary
+  // invites trusting it over the source.
+  it('emits no derived aggregate blocks', () => {
+    const out = buildWeeklyExport(input)
+    expect(out).not.toMatch(/vs previous week/i)
+    expect(out).not.toMatch(/week aggregates/i)
   })
 })

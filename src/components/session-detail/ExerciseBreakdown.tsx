@@ -21,13 +21,12 @@ const ExerciseHistorySheet = dynamic(
   { ssr: false },
 )
 
-// Label lives in the engine — a timed hold's `reps` axis reads DUR, not REPS.
-
+// Labels live in the engine — a timed hold's `reps` axis reads Duration.
 
 function SetTypeBadge({ type }: { type: string }) {
-  if (type === 'warmup') return <span className="text-[8px] font-bold uppercase px-1 py-px rounded" style={{ color: EMERALD, background: `${EMERALD}1f` }}>WU</span>
-  if (type === 'failure') return <span className="text-[8px] font-bold uppercase px-1 py-px rounded" style={{ color: OXIDE, background: `${OXIDE}1f` }}>Fail</span>
-  if (type === 'dropset') return <span className="text-[8px] font-bold uppercase px-1 py-px rounded" style={{ color: '#9A6DD7', background: '#9A6DD71f' }}>Drop</span>
+  if (type === 'warmup') return <span className="text-[8px] font-bold uppercase px-1 py-px rounded" style={{ color: EMERALD, background: `${EMERALD}1f` }}>Warmup</span>
+  if (type === 'failure') return <span className="text-[8px] font-bold uppercase px-1 py-px rounded" style={{ color: OXIDE, background: `${OXIDE}1f` }}>Failure</span>
+  if (type === 'dropset') return <span className="text-[8px] font-bold uppercase px-1 py-px rounded" style={{ color: '#9A6DD7', background: '#9A6DD71f' }}>Dropset</span>
   return null
 }
 

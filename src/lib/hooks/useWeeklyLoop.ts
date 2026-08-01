@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase/client'
 import { weekStartOf, isoAddDays } from '@/lib/utils/week'
 import { logicalTodayISO } from '@/lib/utils/day'
 import {
-  buildWeeklyExport, weekTotals,
+  buildWeeklyExport,
   type ExportDay, type ExportSession, type ExportExercise, type ExportDoms, type ExportBodyComp,
   type ExportCardio,
 } from '@/lib/reports/weeklyExport'
@@ -44,6 +44,8 @@ interface RawSet {
   id: string; pair_id: string | null; side: string | null; weight_kg: number; reps: number
   est_1rm_kg: number | null; set_type: string | null; is_pr: boolean | null
   session_id: string
+  /** Performance order within the session — the export sorts on these. */
+  exercise_order: number | null; set_number: number | null
   exercises: { name: string; muscle_groups: string[] | null }
 }
 interface RawSession {
@@ -71,9 +73,14 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     // Sets are scoped by their PARENT SESSION's started_at, not their own
     // created_at — a session logged days later (back-dated) has created_at
     // outside the week and used to vanish from its own export.
+    // exercise_order + set_number are SELECTED and ORDERED here. Without them the
+    // export took whatever order Postgres handed back — nondeterministic, which
+    // is why sets sometimes read bottom-to-top. `useSessionDetail` has always
+    // ordered this way, so the UI and the export were built on different rules.
     supabase.from('workout_sets')
-      .select('id, pair_id, side, weight_kg, reps, est_1rm_kg, set_type, is_pr, session_id, exercises!inner(name, muscle_groups), workout_sessions!inner(started_at)')
+      .select('id, pair_id, side, weight_kg, reps, est_1rm_kg, set_type, is_pr, session_id, exercise_order, set_number, exercises!inner(name, muscle_groups), workout_sessions!inner(started_at)')
       .gte('workout_sessions.started_at', startInstant).lt('workout_sessions.started_at', endInstant)
+      .order('exercise_order', { ascending: true }).order('set_number', { ascending: true })
       .limit(3000),
     supabase.from('water_intake').select('date, amount_ml').gte('date', weekStart).lte('date', weekEnd),
     supabase.from('supplement_log').select('date, item_key').eq('taken', true).gte('date', weekStart).lte('date', weekEnd),
@@ -157,7 +164,13 @@ function toSessions(d: RangeData): ExportSession[] {
   const program = activeProgram()
   const rpeById = new Map(d.rpe.map((r) => [r.id, r.session_rpe]))
   return d.sessions.map((s) => {
-    const mine = d.sets.filter((r) => r.session_id === s.id && r.set_type !== 'warmup')
+    // Warm-ups are KEPT and tagged. They were dropped here, so the export
+    // silently hid the ramp-up: a session read as starting at its top load.
+    // Sorted defensively so the builder never depends on transport order.
+    const mine = d.sets
+      .filter((r) => r.session_id === s.id)
+      .slice()
+      .sort((a, b) => (a.exercise_order ?? 0) - (b.exercise_order ?? 0) || (a.set_number ?? 0) - (b.set_number ?? 0))
     const byName = new Map<string, ExportExercise>()
     for (const r of mine) {
       const e = byName.get(r.exercises.name) ?? {
@@ -171,9 +184,11 @@ function toSessions(d: RangeData): ExportSession[] {
         weightKg: r.weight_kg, reps: r.reps,
         side: r.side === 'L' || r.side === 'R' ? r.side : null,
         failure: r.set_type === 'failure',
+        warmup: r.set_type === 'warmup',
         pairId: r.pair_id,
       })
-      e.topKg = Math.max(e.topKg ?? 0, r.weight_kg) || null
+      // Warm-ups must not define the top load.
+      if (r.set_type !== 'warmup') e.topKg = Math.max(e.topKg ?? 0, r.weight_kg) || null
       byName.set(r.exercises.name, e)
     }
     // A unilateral pair (shared pair_id) is ONE set to failure, not two.
@@ -241,12 +256,11 @@ function toCardio(d: RangeData): ExportCardio[] {
 
 /**
  * Assemble the full week payload (days · sessions with every set · direct-set
- * volume · soreness · body composition · the previous week for comparison) and
+ * volume · soreness · body composition) and
  * render it as the AI prompt string. One hook powers every "Export Week" button.
  */
 export function useWeeklyExport(weekStart = weekStartOf(logicalTodayISO()), enabled = true) {
   const weekEnd = isoAddDays(weekStart, 6)
-  const prevStart = isoAddDays(weekStart, -7)
   return useQuery({
     queryKey: ['weekly_export', weekStart],
     // ~12 round-trips. Off until someone actually asks for the payload — it
@@ -256,9 +270,11 @@ export function useWeeklyExport(weekStart = weekStartOf(logicalTodayISO()), enab
     enabled,
     staleTime: 60_000,
     queryFn: async (): Promise<string> => {
-      const [cur, prev, goalsRes, customsRes] = await Promise.all([
+      // The prior week used to be fetched here purely to build the "vs previous
+      // week" block. That block is gone, and with it a second full week of
+      // every table -- roughly half this hook's round-trips.
+      const [cur, goalsRes, customsRes] = await Promise.all([
         fetchRange(weekStart, weekEnd),
-        fetchRange(prevStart, isoAddDays(prevStart, 6)),
         supabase.from('user_goals').select('calorie_goal, protein_goal_g, steps_goal, sleep_goal_hours').maybeSingle(),
         supabase.from('custom_supplements').select('id, name, dose, color, form, time, schedule'),
       ])
@@ -296,7 +312,6 @@ export function useWeeklyExport(weekStart = weekStartOf(logicalTodayISO()), enab
         bodyComp: toBodyComp(cur),
         cardio: toCardio(cur),
         supplementProtocol: { training: supplementProtocolLines(true, customs), rest: supplementProtocolLines(false, customs) },
-        previous: weekTotals(toDays(prevStart, prev), toSessions(prev)),
       })
     },
   })

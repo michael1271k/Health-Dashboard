@@ -69,6 +69,8 @@ export interface ExportSet {
   reps: number
   side: 'L' | 'R' | null
   failure: boolean
+  /** Ramp-up set. Exported and tagged, never silently dropped. */
+  warmup?: boolean
   /** Unilateral pairs share a pairId so L and R collapse into one numbered set. */
   pairId: string | null
 }
@@ -151,7 +153,6 @@ export interface WeeklyExportInput {
   /** Static protocol — what to take on training vs rest days (derived from the plan). */
   supplementProtocol?: { training: string[]; rest: string[] }
   /** Aggregates for the PREVIOUS week, for the week-over-week block. */
-  previous: WeekTotals | null
 }
 
 const n = (v: number | null | undefined, digits = 0): string =>
@@ -192,7 +193,9 @@ export function weekTotals(days: ExportDay[], sessions: ExportSession[]): WeekTo
  * Render one exercise's working sets.
  *
  * Bilateral sets group by load — "60kg × 12,11,10" — the pattern that shows
- * whether a load is being outgrown. A set taken to failure is marked with an F.
+ * whether a load is being outgrown. Sets carry a spelled-out (Failure) or
+ * (Warmup) tag: "(F)" and "(W)" are cheap for us to write and ambiguous for
+ * whoever (or whatever) reads the export back.
  *
  * Unilateral work (sets carrying a `side`/`pairId`) is split L vs R per numbered
  * set — "S1 L 20kg×12 · R 20kg×11(F)" — because the two sides genuinely differ
@@ -204,13 +207,19 @@ export function setDetail(sets: ExportSet[]): string {
 
   if (!sided) {
     // Group consecutive same-load sets; append (F) to a group with any failure.
-    const groups: Array<{ w: number; reps: number[]; fail: boolean }> = []
+    const groups: Array<{ w: number; reps: number[]; fail: boolean; warm: boolean }> = []
     for (const s of sets) {
       const last = groups[groups.length - 1]
-      if (last && last.w === s.weightKg) { last.reps.push(s.reps); last.fail ||= s.failure }
-      else groups.push({ w: s.weightKg, reps: [s.reps], fail: s.failure })
+      const warm = s.warmup === true
+      // A warm-up never merges into a working group at the same load — that
+      // would read as an extra work set.
+      if (last && last.w === s.weightKg && last.warm === warm) { last.reps.push(s.reps); last.fail ||= s.failure }
+      else groups.push({ w: s.weightKg, reps: [s.reps], fail: s.failure, warm })
     }
-    return groups.map((g) => `${g.w}kg × ${g.reps.join(',')}${g.fail ? ' (F)' : ''}`).join(' · ')
+    return groups.map((g) => {
+      const tag = g.warm ? ' (Warmup)' : g.fail ? ' (Failure)' : ''
+      return `${g.w}kg × ${g.reps.join(',')}${tag}`
+    }).join(' · ')
   }
 
   // Unilateral: pair L/R by pairId, preserving first-seen order.
@@ -225,7 +234,7 @@ export function setDetail(sets: ExportSet[]): string {
     else p.L = s   // 'L' or an unsided straggler both read as the left column
   }
   const side = (s: ExportSet | undefined, tag: 'L' | 'R') =>
-    s ? `${tag} ${s.weightKg}kg×${s.reps}${s.failure ? '(F)' : ''}` : null
+    s ? `${tag} ${s.weightKg}kg×${s.reps}${s.warmup ? ' (Warmup)' : s.failure ? ' (Failure)' : ''}` : null
   return order.map((key, i) => {
     const p = pairs.get(key)!
     const cols = [side(p.L, 'L'), side(p.R, 'R')].filter(Boolean).join(' · ')
@@ -233,20 +242,9 @@ export function setDetail(sets: ExportSet[]): string {
   }).join(' · ')
 }
 
-/** "1850 → 1910 (+60)" — or "—" when either side is missing. */
-function delta(cur: number | null, prev: number | null, digits = 0): string {
-  if (cur == null || prev == null) return cur == null ? '—' : n(cur, digits)
-  const d = cur - prev
-  const sign = d > 0 ? '+' : ''
-  return `${n(cur, digits)} (${sign}${d.toFixed(digits)} vs prev)`
-}
 
 export function buildWeeklyExport(input: WeeklyExportInput): string {
-  const { days, sessions, volumeByMuscle, doms, previous } = input
-  const cur = weekTotals(days, sessions)
-  const weightDelta = cur.weightStart != null && cur.weightEnd != null
-    ? cur.weightEnd - cur.weightStart : null
-  const allPRs = sessions.flatMap((s) => s.prs.map((p) => ({ ...p, date: s.date })))
+  const { days, sessions, volumeByMuscle, doms } = input
 
   const L: string[] = []
 
@@ -317,30 +315,10 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
   }
   L.push('')
 
-  // ── Aggregates ──
-  L.push('## Week aggregates')
-  L.push('')
-  L.push(`- Avg intake: **${n(cur.avgKcal)} kcal** · **${n(cur.avgProtein)} g protein**`)
-  L.push(`- Avg steps: **${n(cur.avgSteps)}** · avg sleep: **${sleep(cur.avgSleepMin)}**`)
-  L.push(`- Weight: **${n(cur.weightStart, 1)} → ${n(cur.weightEnd, 1)} kg** `
-    + `(${weightDelta == null ? '—' : (weightDelta > 0 ? '+' : '') + weightDelta.toFixed(2)} kg)`)
-  L.push(`- Training: **${cur.sessions} sessions** · **${n(cur.volumeKg)} kg** total volume · **${n(cur.sets)} sets** · **${allPRs.length} PRs**`)
-  L.push('')
-
-  // ── Week over week ──
-  if (previous) {
-    L.push('## vs previous week')
-    L.push('')
-    L.push(`- kcal/day: ${delta(cur.avgKcal, previous.avgKcal)}`)
-    L.push(`- protein/day: ${delta(cur.avgProtein, previous.avgProtein)} g`)
-    L.push(`- steps/day: ${delta(cur.avgSteps, previous.avgSteps)}`)
-    L.push(`- sleep/night: ${sleep(cur.avgSleepMin)} (prev ${sleep(previous.avgSleepMin)})`)
-    L.push(`- sessions: ${cur.sessions} (prev ${previous.sessions})`)
-    L.push(`- volume: ${delta(cur.volumeKg, previous.volumeKg)} kg`)
-    L.push(`- sets: ${delta(cur.sets, previous.sets)}`)
-    L.push(`- weight end: ${delta(cur.weightEnd, previous.weightEnd, 1)} kg`)
-    L.push('')
-  }
+  // "Week aggregates" and "vs previous week" USED to sit here. Both were
+  // derived: every number in them is a sum or a difference of the daily rows
+  // already printed above. Pre-chewing the data invites the reader to trust the
+  // summary over the source, and a stale aggregate is worse than none.
 
   // ── Sessions, with every set ──
   L.push('## Sessions')
@@ -353,7 +331,9 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
       + ` · ${n(s.durationMin)} min · ${n(s.caloriesBurned)} kcal`
       + `${s.avgBpm != null ? ` · avg HR ${n(s.avgBpm)}` : ''}`
       // Borg CR10 — the subjective cost of the session, next to its objective cost.
-      + `${s.sessionRpe != null ? ` · effort ${n(s.sessionRpe, 1)}/10 CR10` : ''}`)
+      // Always printed. A missing segment is indistinguishable from a session
+      // logged at effort 0, so the absence is stated rather than implied.
+      + ` · effort ${s.sessionRpe != null ? `${n(s.sessionRpe, 1)}/10 CR10` : 'Not reported'}`)
     L.push('')
     for (const e of s.exercises) {
       L.push(`- **${e.name}**${e.repWindow ? ` _(target ${e.repWindow})_` : ''}: ${setDetail(e.sets)}`)
