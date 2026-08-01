@@ -241,9 +241,36 @@ describe('progressionVerdict — the gate is the TOP load, not any load', () => 
     expect(progressionVerdict([oneGoodSet, oneGoodSet], ceiling).state).toBe('no')
   })
 
-  it('does NOT require every set — a trailing fatigue set must not block forever', () => {
+  it('DOES require every set at the top load — a trailing fatigue set is the evidence', () => {
+    // This is the Leg Press / Lat Pulldown false positive, in miniature. A
+    // relaxed "two sets at the ceiling" rule read both of these as ready:
+    //   Leg Press    72.5×12, 72.5×12, 72.5×11 (to failure)
+    //   Lat Pulldown   47×12,   47×12,   47×9  (to failure)
+    // Ending unable to hold the ceiling at that load is exactly what "not
+    // consolidated" looks like, and the program's own wording is "ALL work
+    // sets".
     const twoPlusFade = [{ weightKg: 20, reps: 12 }, { weightKg: 20, reps: 12 }, { weightKg: 20, reps: 8 }]
-    expect(progressionVerdict([twoPlusFade, twoPlusFade], ceiling).state).toBe('ready')
+    expect(progressionVerdict([twoPlusFade, twoPlusFade], ceiling).state).toBe('no')
+  })
+
+  it('the real Leg Press log does not read as ready', () => {
+    // legs_a window 8–12. Jul 20 fades to 11, Jul 27 is clean — so the chain
+    // has exactly one clean session and owes one more.
+    const jul20 = [{ weightKg: 72.5, reps: 12 }, { weightKg: 72.5, reps: 12 }, { weightKg: 72.5, reps: 11 }]
+    const jul27 = [{ weightKg: 72.5, reps: 13 }, { weightKg: 72.5, reps: 12 }, { weightKg: 72.5, reps: 12 }]
+    expect(progressionVerdict([jul20, jul27], 12).state).toBe('one-more')
+  })
+
+  it('the real Lat Pulldown log does not read as ready either', () => {
+    // cb_a window 8–12. Both sessions fade below the ceiling on the last set.
+    const jul19 = [{ weightKg: 47, reps: 12 }, { weightKg: 47, reps: 12 }, { weightKg: 47, reps: 9 }]
+    const jul26 = [{ weightKg: 47, reps: 12 }, { weightKg: 47, reps: 12 }, { weightKg: 47, reps: 10 }]
+    expect(progressionVerdict([jul19, jul26], 12).state).toBe('no')
+  })
+
+  it('one lone top-load set is not a capability', () => {
+    const single = [{ weightKg: 18, reps: 12 }, { weightKg: 20, reps: 12 }]
+    expect(topLoadCleared(single, 12)).toBe(false)
   })
 
   it('still refuses when the binding rung was short', () => {

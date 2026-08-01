@@ -205,24 +205,35 @@ export function ladderVerdict(sets: WorkingSet[], ceiling: number): LadderVerdic
 /**
  * Did the session's TOP load earn a progression?
  *
- * The rule: **at least two sets at ceiling reps, on the heaviest load used.**
+ * The rule: **at least two sets at the top load, and EVERY set at that load
+ * reached the ceiling.**
  *
- * Two sets, not every set. Requiring all of them (as `clearedCeiling` does)
- * means one fatigued last set of an otherwise perfect session blocks
- * progression indefinitely — real training does not look like that. Two sets at
- * the ceiling on the top load is a repeatable capability, not a fluke.
+ * This was briefly "at least two sets at the ceiling", on the reasoning that one
+ * fatigued closing set shouldn't block progression forever. It produced exactly
+ * the false positives it was meant to avoid:
  *
- * And on the TOP load specifically, because the alternative is worse: hitting
- * ceiling reps on a lighter drop set says nothing about the load you are
- * actually chasing. That was the false-positive source on SA Cable Crossover
- * and Hack Squat — mixed loads where a light rung cleared and the app read the
- * whole session as cleared.
+ *   Leg Press  2026-07-20  72.5×12, 72.5×12, 72.5×11 (to failure) → "cleared"
+ *   Lat Pulldown 2026-07-19  47×12, 47×12, 47×9 (to failure)      → "cleared"
+ *
+ * Both sessions ENDED with the lifter unable to hold the ceiling at that load —
+ * which is the plainest possible evidence the load is not consolidated. Two
+ * sessions of that in a row read as "ready to progress", and they were not. The
+ * program's own wording is unambiguous ("increase load only when ALL work sets
+ * hit the ceiling"), so that is the rule again.
+ *
+ * Two things it still does NOT require, deliberately:
+ *  · Sets at a LIGHTER load are ignored. Hitting ceiling reps on a back-off set
+ *    says nothing about the load you are chasing — that was the SA Cable
+ *    Crossover / Hack Squat false-positive source. Warm-ups are filtered out
+ *    upstream, and sit below the top load anyway.
+ *  · A single top-load set never clears. One set is not a capability.
  */
 export function topLoadCleared(sets: WorkingSet[], ceiling: number): boolean {
   const working = sets.filter((s) => s.weightKg > 0)
   if (!working.length) return false
   const top = Math.max(...working.map((s) => s.weightKg))
-  return working.filter((s) => s.weightKg === top && s.reps >= ceiling).length >= 2
+  const atTop = working.filter((s) => s.weightKg === top)
+  return atTop.length >= 2 && atTop.every((s) => s.reps >= ceiling)
 }
 
 /**
