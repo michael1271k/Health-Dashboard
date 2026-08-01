@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Star, TrendingUp } from 'lucide-react'
+import { Trophy, TrendingUp } from 'lucide-react'
 import { useSessionIntel, type IntelMetric } from '@/lib/hooks/useSessionIntel'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 import { GOLD, EMBER as VIOLET, EMERALD as TEAL, OXIDE as ROSE, MUTED } from '@/lib/theme/palette'
@@ -104,7 +104,10 @@ export function ProgressionTrail({ sessionId }: { sessionId: string }) {
           style={{ borderColor: `${GOLD}55`, background: `${GOLD}12`, boxShadow: `0 0 18px ${GOLD}22` }}>
           {intel.prs.map((pr) => (
             <div key={pr.name} className="flex items-center gap-2 text-fluid-sm">
-              <Star className="w-3.5 h-3.5 shrink-0" style={{ color: GOLD, filter: `drop-shadow(0 0 4px ${GOLD})` }} />
+              {/* Trophy, not a star. A star reads as "favourite"; the gold
+                  badge on the set rows below is a trophy, and the same event
+                  must not wear two different glyphs in one report. */}
+              <Trophy className="w-3.5 h-3.5 shrink-0" style={{ color: GOLD, filter: `drop-shadow(0 0 4px ${GOLD})` }} />
               <span className="text-text font-medium truncate">{pr.name}</span>
               <span className="helix-num ml-auto font-bold" style={{ color: GOLD }}>
                 {displayWeight(pr.kg)}{unit} × {pr.reps}

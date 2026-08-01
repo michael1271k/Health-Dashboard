@@ -7,7 +7,6 @@ import { useExerciseMap, useRoutineMemory, routineMemoryMap, useLatestSessionFla
 import { useWeekSessions, weekStartOf } from '@/lib/hooks/useWeekSessions'
 import { WeeklySummaryCard } from '@/components/command-center/WeeklySummaryCard'
 import { PostWorkoutSummary } from '@/components/command-center/PostWorkoutSummary'
-import { WidgetBoundary } from '@/components/fx/WidgetBoundary'
 import { SwapDayControl } from '@/components/day/SwapDayControl'
 import { ProgressionAlerts } from '@/components/command-center/ProgressionAlerts'
 import { peekSessionDraft, type SessionDraft } from '@/lib/sessions/draft'
@@ -16,10 +15,8 @@ import {
 } from '@/lib/programs'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { displayWeight, weightUnit } from '@/lib/utils/units'
-import { useEraFilter } from '@/lib/era/eraFilter'
 import { Plus, TrendingUp, Moon, ArrowRight, Flag, FileClock, ChevronDown } from 'lucide-react'
 
-const StrengthTrends = dynamic(() => import('@/components/charts/StrengthTrends').then((m) => m.StrengthTrends), { ssr: false })
 // Gym/muscle-progress graphs (Contour Map, Intensity Calendar, Volume Stream,
 // Muscle Analytics) — relocated here from the Momentum → Analytics tab.
 const MuscleAnalyticsPanel = dynamic(() => import('@/components/command-center/MuscleAnalyticsPanel').then((m) => m.MuscleAnalyticsPanel), { ssr: false })
@@ -31,7 +28,6 @@ export default function WorkoutPage() {
   const router = useRouter()
   const { data: exMap } = useExerciseMap()
   const { data: nextFlag } = useLatestSessionFlag()
-  const { era } = useEraFilter()
   // The active plan+phase is chosen in Settings → Plans (single source).
   // Init to a deterministic default so SSR and first client render match; the
   // effect then reads the real active plan (localStorage) after mount.
@@ -232,9 +228,6 @@ export default function WorkoutPage() {
       {/* Weekly volume vs target now lives inside MuscleAnalyticsPanel below —
           it was rendered twice on this page, from the same hook. */}
       {/* Progression snapshot */}
-      <WidgetBoundary label="Strength trends" minHeight={200}>
-        <StrengthTrends era={era} />
-      </WidgetBoundary>
 
       {/* Gym/muscle-progress graphs — Contour Map · Intensity Calendar ·
           Volume Stream · Muscle Analytics (moved out of Momentum). */}

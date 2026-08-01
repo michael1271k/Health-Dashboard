@@ -1,22 +1,21 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { ResponsiveContainer, LineChart, Line } from 'recharts'
 import { TrendingUp } from 'lucide-react'
 import { usePRHistory } from '@/lib/hooks/useCharts'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
-import { PlanEraButton } from '@/components/charts/PlanEraButton'
-import { CurrentWeekButton } from '@/components/charts/CurrentWeekButton'
 
 /**
  * Per-exercise est-1RM strength trends (progressive overload). Groups recent
  * compound-lift sets by exercise and sparklines the estimated 1RM, with the
  * current value, all-time best, and Δ since the first point in range.
  */
-export function StrengthTrends({ days: initialDays = 120, era = 'all' }: { days?: number; era?: 'all' | 'ppl' | 'axis' }) {
-  // Was hardwired to whatever the call site passed (120), with no way to change
-  // it — the only chart in the app with no timeframe control.
-  const [days, setDays] = useState(initialDays)
+export function StrengthTrends({ days = 120, era = 'all' }: { days?: number; era?: 'all' | 'ppl' | 'axis' }) {
+  // No local timeframe control. It used to own a Week / 30 Days / Era trio of
+  // its own, sitting a few pixels from Muscle Analytics' near-identical trio —
+  // two toggles that looked the same, moved different charts, and disagreed by
+  // default. The window is now the section's, passed in.
   const { data, isLoading } = usePRHistory(undefined, days, era)
   const unit = useUnitSystem()
 
@@ -42,21 +41,10 @@ export function StrengthTrends({ days: initialDays = 120, era = 'all' }: { days?
 
   return (
     <div className="helix-card space-y-3">
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <h2 className="font-heading font-semibold text-fluid-base text-text flex items-center gap-2">
-          <TrendingUp className="w-4 h-4 text-primary" /> Strength Trends
-          <span className="text-fluid-xs text-muted font-normal">est. 1RM</span>
-        </h2>
-        <div className="flex items-center gap-1 flex-wrap">
-          <CurrentWeekButton value={days} onChange={setDays} />
-          <button onClick={() => setDays(30)} aria-pressed={days === 30}
-            className={`px-3 py-1.5 rounded-xl text-fluid-xs font-semibold min-h-[40px] border transition-colors
-              ${days === 30 ? 'bg-primary/15 text-primary border-primary/30' : 'text-muted hover:text-text border-transparent'}`}>
-            30 Days
-          </button>
-          <PlanEraButton value={days} onChange={setDays} />
-        </div>
-      </div>
+      <h2 className="font-heading font-semibold text-fluid-base text-text flex items-center gap-2">
+        <TrendingUp className="w-4 h-4 text-primary" /> Strength Trends
+        <span className="text-fluid-xs text-muted font-normal">est. 1RM</span>
+      </h2>
       <div className="space-y-2.5">
         {series.map((s) => (
           <div key={s.name} className="flex items-center gap-3">

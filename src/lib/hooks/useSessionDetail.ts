@@ -18,6 +18,15 @@ export interface DetailSet {
   /** Unilateral: 'L'/'R' sub-sets sharing a pairId are ONE set. */
   side: string | null
   pairId: string | null
+  /**
+   * The PR axes THIS set earned, resolved from the ledger by matching load+reps.
+   *
+   * Trophies and axis labels belong on the row where the record happened. They
+   * used to render on the exercise HEADER, which said "this exercise had a
+   * record somewhere" and left you scanning three set rows to find which — while
+   * also crowding the title until long names wrapped.
+   */
+  prAxes: PrAxis[]
 }
 
 export interface DetailExercise {
@@ -157,7 +166,7 @@ export function useSessionDetail(sessionId: string | null) {
         ex.sets.push({
           setNumber: r.set_number, weightKg: r.weight_kg, reps: r.reps,
           rpe: r.rpe, isPr: r.is_pr, est1rmKg: r.est_1rm_kg, setType,
-          side: r.side ?? null, pairId: r.pair_id ?? null,
+          side: r.side ?? null, pairId: r.pair_id ?? null, prAxes: [],
         })
         if (!isWarmup) {
           ex.volumeKg += (r.weight_kg || 0) * (r.reps || 0)
@@ -183,17 +192,32 @@ export function useSessionDetail(sessionId: string | null) {
 
       // PR axes achieved in THIS session, from the ledger (self-healing: a missing
       // personal_records table just yields no axis chips — is_pr trophies still show).
-      const prByName = new Map<string, PrAxis[]>()
+      const prByName = new Map<string, Array<{ axis: PrAxis; weightKg: number | null; reps: number | null }>>()
       const { data: prRows } = await supabase
         .from('personal_records')
-        .select('exercise_key, axis')
+        .select('exercise_key, axis, weight_kg, reps')
         .eq('session_id', s.id)
-      for (const row of (prRows ?? []) as Array<{ exercise_key: string; axis: PrAxis }>) {
+      for (const row of (prRows ?? []) as Array<{ exercise_key: string; axis: PrAxis; weight_kg: number | null; reps: number | null }>) {
         const list = prByName.get(row.exercise_key) ?? []
-        if (!list.includes(row.axis)) list.push(row.axis)
+        list.push({ axis: row.axis, weightKg: row.weight_kg, reps: row.reps })
         prByName.set(row.exercise_key, list)
       }
-      exercises.forEach((e) => { e.prAxes = prByName.get(e.name) ?? [] })
+      for (const e of exercises) {
+        const records = prByName.get(e.name) ?? []
+        e.prAxes = [...new Set(records.map((r) => r.axis))]
+        // Attribute each ledger row to the SET that earned it. A record carries
+        // the winning load+reps, so the match is exact; `volume` is a session
+        // total with no load of its own and lands on the flagged set the engine
+        // already chose (the exercise's last eligible set).
+        const flagged = e.sets.filter((x) => x.isPr)
+        for (const rec of records) {
+          const target = rec.weightKg != null && rec.reps != null
+            ? [...flagged].reverse().find((x) => x.weightKg === rec.weightKg && x.reps === rec.reps)
+            : flagged[flagged.length - 1]
+          const row = target ?? flagged[flagged.length - 1]
+          if (row && !row.prAxes.includes(rec.axis)) row.prAxes.push(rec.axis)
+        }
+      }
 
       const muscleSets = LANDMARK_MUSCLES
         .map((muscle) => ({ muscle, sets: muscleAgg.get(muscle)?.size ?? 0 }))

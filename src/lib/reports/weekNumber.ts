@@ -29,3 +29,24 @@ export function weekLabelOf(weekStartISO: string): string {
   if (n >= 0) return `Week ${n}`
   return getWeekPhase(weekStartISO)?.label ?? `Week ${n}`
 }
+
+/**
+ * Week number WITHIN THE ACTIVE PLAN — 1-based, resetting when the plan changes.
+ *
+ * The analytics header used to read "Week 31", which is the ISO CALENDAR week.
+ * It is a true number about the year and a useless one about training: nothing
+ * in the app is on its 31st week, and picking a new plan in Settings left it
+ * unchanged. This counts from the Sunday of the week the plan started
+ * (`user_goals.phase_started_on`), so choosing a plan puts you in Week 1 the
+ * moment it is saved.
+ *
+ * Clamped at 1: a plan whose start date is in the future (or a missing column)
+ * reads as Week 1 rather than Week 0 or a negative.
+ */
+export function planWeekNumber(planStartISO: string | null | undefined, todayISO: string): number {
+  if (!planStartISO) return 1
+  const a = Date.parse(`${weekStartOf(planStartISO)}T00:00:00Z`)
+  const b = Date.parse(`${weekStartOf(todayISO)}T00:00:00Z`)
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return 1
+  return Math.max(1, Math.round((b - a) / (7 * 86_400_000)) + 1)
+}

@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
+		4C06EAE1301BD0D30027C5BA /* HelixWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 4C90F0413013EFF50096E03F /* HelixWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		4C8EA4153014D04D007CEF26 /* HelixSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C8EA4133014D04D007CEF26 /* HelixSnapshot.swift */; };
 		4C8EA4163014D04D007CEF26 /* HelixSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C8EA4133014D04D007CEF26 /* HelixSnapshot.swift */; };
 		4C8EA41D3014D149007CEF26 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C8EA41C3014D149007CEF26 /* WidgetKit.framework */; };
@@ -15,7 +16,6 @@
 		4C8EA42A3014D14A007CEF26 /* HelixWidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 4C8EA41B3014D149007CEF26 /* HelixWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		4C8EA4303014D24C007CEF26 /* HelixSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C8EA4133014D04D007CEF26 /* HelixSnapshot.swift */; };
 		4C8EA4323014DDDE007CEF26 /* Secrets.xcconfig in Sources */ = {isa = PBXBuildFile; fileRef = 4C8EA4313014DDD1007CEF26 /* Secrets.xcconfig */; };
-		4C90F04B3013EFF60096E03F /* HelixWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 4C90F0413013EFF50096E03F /* HelixWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		4CA0FA6A3018E01F00141641 /* SecureStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CA0FA693018E01F00141641 /* SecureStore.swift */; };
 		4CC46EC2300C030F00DFDFCE /* HelixHealth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CC46EC1300C030D00DFDFCE /* HelixHealth.swift */; };
 		4CC46EC5300C034500DFDFCE /* HelixHealthRegistration.m in Sources */ = {isa = PBXBuildFile; fileRef = 4CC46EC4300C034300DFDFCE /* HelixHealthRegistration.m */; };
@@ -60,11 +60,11 @@
 		};
 		4C90F04C3013EFF60096E03F /* Embed Watch Content */ = {
 			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
+			buildActionMask = 12;
 			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
 			dstSubfolderSpec = 16;
 			files = (
-				4C90F04B3013EFF60096E03F /* HelixWatch Watch App.app in Embed Watch Content */,
+				4C06EAE1301BD0D30027C5BA /* HelixWatch Watch App.app in Embed Watch Content */,
 			);
 			name = "Embed Watch Content";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -268,8 +268,8 @@
 				504EC3001FED79650016851F /* Sources */,
 				504EC3011FED79650016851F /* Frameworks */,
 				504EC3021FED79650016851F /* Resources */,
-				9592DBEFFC6D2A0C8D5DEB22 /* [CP] Embed Pods Frameworks */,
 				4C90F04C3013EFF60096E03F /* Embed Watch Content */,
+				9592DBEFFC6D2A0C8D5DEB22 /* [CP] Embed Pods Frameworks */,
 				4C8EA42F3014D14A007CEF26 /* Embed Foundation Extensions */,
 			);
 			buildRules = (

@@ -3,16 +3,8 @@
 import { CalendarRange } from 'lucide-react'
 import { weekStartOf } from '@/lib/utils/week'
 import { logicalTodayISO } from '@/lib/utils/day'
-
-/** ISO week number, so the label names the week you are actually in. */
-export function isoWeekNumber(dateISO: string): number {
-  const d = new Date(`${dateISO}T00:00:00Z`)
-  // Shift to the Thursday of this ISO week — the year that Thursday falls in is
-  // the ISO week-year, which is what makes the count correct across new year.
-  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7))
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
-  return Math.ceil(((d.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7)
-}
+import { planWeekNumber } from '@/lib/reports/weekNumber'
+import { useUserGoals } from '@/lib/hooks/useDashboard'
 
 /** Days from the start of the current (Sunday-anchored) week through today. */
 export function currentWeekDays(today = logicalTodayISO()): number {
@@ -25,27 +17,33 @@ export function currentWeekDays(today = logicalTodayISO()): number {
  * "Current week" as a day-count preset.
  *
  * Every chart range in the app is a single `days: number`, so this needs no new
- * plumbing — it just computes how many days have elapsed since Sunday. The
- * label carries the ISO week number because "W31" is a thing you can compare
- * notes against; "Current week" alone is not.
+ * plumbing — it just computes how many days have elapsed since Sunday.
+ *
+ * The label carries the PROGRAM week, not the ISO calendar week. It used to
+ * read "W31", which is a fact about the year: it never reset when a new plan
+ * was chosen in Settings and matched nothing else on screen. Now it counts from
+ * the active plan's start (`user_goals.phase_started_on`), so a fresh plan
+ * reads W1 immediately.
  */
 export function CurrentWeekButton({ value, onChange }: {
   value: number
   onChange: (days: number) => void
 }) {
+  const { data: goals } = useUserGoals()
   const today = logicalTodayISO()
   const days = currentWeekDays(today)
+  const week = planWeekNumber((goals as { phase_started_on?: string | null } | null)?.phase_started_on, today)
   const active = value === days
   return (
     <button
       onClick={() => onChange(days)}
       aria-pressed={active}
-      title={`Sunday → today (${days} day${days === 1 ? '' : 's'})`}
+      title={`Plan week ${week} · Sunday → today (${days} day${days === 1 ? '' : 's'})`}
       className={`min-w-fit px-3 py-1.5 rounded-xl text-fluid-xs font-semibold min-h-[40px] inline-flex items-center gap-1.5 transition-colors border
         ${active ? 'bg-primary/15 text-primary border-primary/30' : 'text-muted hover:text-text border-transparent'}`}
     >
       <CalendarRange className="w-3.5 h-3.5" aria-hidden="true" />
-      W{isoWeekNumber(today)}
+      Week {week}
     </button>
   )
 }

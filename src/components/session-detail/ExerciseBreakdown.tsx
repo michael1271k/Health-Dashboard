@@ -30,6 +30,36 @@ function SetTypeBadge({ type }: { type: string }) {
   return null
 }
 
+/**
+ * The trophy + its axis labels, on the SET ROW that earned them.
+ *
+ * Every PR marker in the report lives here now. The exercise header used to
+ * carry a gold chip per axis, which said "something happened in this exercise"
+ * and made you scan the rows to find out where — and, being in the title row,
+ * squeezed long names until the weight/reps wrapped.
+ *
+ * `compact` drops the labels for the L/R sub-chips of a unilateral pair, where
+ * there is no room for words.
+ */
+function SetPrBadges({ set, timed, compact = false }: { set: DetailSet; timed: boolean; compact?: boolean }) {
+  if (!set.isPr) return null
+  const axes = set.prAxes
+  if (compact || !axes.length) {
+    return <Trophy className={compact ? 'w-2.5 h-2.5 shrink-0' : 'w-3 h-3 shrink-0'} style={{ color: GOLD }} aria-hidden="true" />
+  }
+  return (
+    <span className="inline-flex items-center gap-1 shrink-0">
+      <Trophy className="w-3 h-3 shrink-0" style={{ color: GOLD }} aria-hidden="true" />
+      {axes.map((ax) => (
+        <span key={ax} className="text-[8px] font-bold uppercase px-1 py-px rounded"
+          style={{ color: GOLD, background: `${GOLD}1f`, border: `1px solid ${GOLD}4d` }}>
+          {prAxisLabel(ax, timed)}
+        </span>
+      ))}
+    </span>
+  )
+}
+
 /** vs-last-same-type glyph: ⬆️ improved · ✅ matched · ⬇️ regressed · 🆕 baseline. */
 function deltaGlyph(delta: -1 | 0 | 1 | null | undefined): string | null {
   if (delta === undefined) return null
@@ -121,7 +151,6 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
         const glyph = deltaGlyph(deltaFor.get(ex.exerciseId))
         const t = trends?.[ex.exerciseId]
         const rows = toRows(ex.sets)
-        const hasPr = ex.sets.some((s) => s.isPr)
         const isStrongest = ex.exerciseId === strongestId
         const accent = GROUP_COLOR[ex.muscleGroups[0]] ?? PLATINUM
 
@@ -142,22 +171,13 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
               className="w-full flex items-center gap-2.5 text-left active:opacity-80" aria-label={`${ex.name} history`}>
               <span className="w-1 h-9 rounded-full shrink-0" style={{ background: accent }} aria-hidden="true" />
               <span className="min-w-0 flex-1">
-                <span className="flex items-center gap-1.5 flex-wrap">
-                  <span className="font-heading font-bold text-fluid-xs text-text truncate">{ex.name}</span>
+                {/* Title row carries the NAME and nothing that can push it. The
+                    trophy and its axis labels live on the set row that earned
+                    them (below) — here they crowded "Leg Press Horizontal
+                    (Machine)" until the weight/reps wrapped to a second line. */}
+                <span className="flex items-baseline gap-1.5 min-w-0">
+                  <span className="font-heading font-bold leading-tight text-text truncate" style={{ fontSize: 'var(--text-exercise-title)' }}>{ex.name}</span>
                   {glyph && <span className="text-[11px] shrink-0" aria-hidden="true">{glyph}</span>}
-                  {ex.prAxes.length > 0 ? (
-                    ex.prAxes.map((ax, i) => (
-                      <span key={ax} className="text-[8px] font-bold uppercase px-1 py-px rounded shrink-0 inline-flex items-center gap-0.5"
-                        style={{ color: GOLD, background: `${GOLD}1f`, border: `1px solid ${GOLD}4d` }}>
-                        {i === 0 && <Trophy className="w-2.5 h-2.5" aria-hidden="true" />}{prAxisLabel(ax, isTimedExercise(ex.name))}
-                      </span>
-                    ))
-                  ) : hasPr && (
-                    <span className="text-[8px] font-bold uppercase px-1 py-px rounded shrink-0 inline-flex items-center gap-0.5"
-                      style={{ color: GOLD, background: `${GOLD}1f`, border: `1px solid ${GOLD}4d` }}>
-                      <Trophy className="w-2.5 h-2.5" aria-hidden="true" /> PR
-                    </span>
-                  )}
                 </span>
                 <span className="flex items-center gap-1.5 mt-1 flex-wrap">
                   {ex.muscleGroups.map((g) => (
@@ -260,7 +280,7 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
                         {timed ? `${row.set.reps}s` : <>{displayWeight(row.set.weightKg)}{unit} × {row.set.reps}</>}
                       </span>
                       <SetTypeBadge type={row.set.setType} />
-                      {row.set.isPr && <Trophy className="w-3 h-3 shrink-0" style={{ color: GOLD }} aria-hidden="true" />}
+                      <SetPrBadges set={row.set} timed={timed} />
                       {row.set.rpe != null && <span className="text-[10px] text-muted">RPE {row.set.rpe}</span>}
                       {row.set.est1rmKg != null && (
                         <span className="ml-auto helix-num text-[10px] text-muted shrink-0">1RM {displayWeight(row.set.est1rmKg)}{unit}</span>
@@ -279,7 +299,7 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
                             <span className="helix-num font-semibold text-text text-[11px] tabular-nums">
                               {timed ? `${s.reps}s` : <>{displayWeight(s.weightKg)}{unit} × {s.reps}</>}
                             </span>
-                            {s.isPr && <Trophy className="w-2.5 h-2.5" style={{ color: GOLD }} aria-hidden="true" />}
+                            <SetPrBadges set={s} timed={timed} compact />
                           </span>
                         )
                       })}

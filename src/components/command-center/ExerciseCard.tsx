@@ -233,7 +233,7 @@ export function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collap
             <Footprints className="w-4 h-4" aria-hidden="true" />
           </span>
           <div className="flex-1 min-w-0">
-            <span className="font-semibold text-fluid-sm text-text leading-snug truncate block">{exercise.name}</span>
+            <span className="font-semibold text-text leading-snug truncate block" style={{ fontSize: 'var(--text-exercise-title)' }}>{exercise.name}</span>
             <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: CARDIO_VIOLET }}>Cardio · warm-up</span>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
@@ -286,7 +286,7 @@ export function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collap
                 line, so the NAME lost — truncated to an ellipsis while the chips
                 kept their width. Now the chips drop to a second line instead. */}
             <div className="flex items-center gap-x-2 gap-y-1 min-w-0 flex-wrap">
-              <span className="font-semibold text-fluid-sm text-text leading-snug truncate">{exercise.name}</span>
+              <span className="font-semibold text-text leading-snug truncate" style={{ fontSize: 'var(--text-exercise-title)' }}>{exercise.name}</span>
               {status && (
                 <span
                   className="shrink-0 inline-flex items-center px-1.5 py-px rounded-md text-[9px] font-bold uppercase tracking-wide"

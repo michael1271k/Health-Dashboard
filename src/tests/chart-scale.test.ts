@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { niceDomain, compactKg } from '@/lib/charts/scale'
-import { isoWeekNumber, currentWeekDays } from '@/components/charts/CurrentWeekButton'
+import { currentWeekDays } from '@/components/charts/CurrentWeekButton'
+import { planWeekNumber } from '@/lib/reports/weekNumber'
 
 describe('niceDomain', () => {
   it('fits the DATA, not zero — the flat-volume-chart bug', () => {
@@ -63,10 +64,25 @@ describe('compactKg', () => {
 })
 
 describe('current-week timeframe', () => {
-  it('numbers the ISO week', () => {
-    // 2026-01-01 is a Thursday, so it belongs to week 1 of 2026.
-    expect(isoWeekNumber('2026-01-01')).toBe(1)
-    expect(isoWeekNumber('2026-07-31')).toBe(31)
+  it('numbers the PLAN week, not the calendar week', () => {
+    // The header used to read "Week 31" — the ISO calendar week, a true fact
+    // about the year and a useless one about training.
+    // 2026-07-19 is a Sunday; 07-31 falls in the week starting 07-26.
+    expect(planWeekNumber('2026-07-19', '2026-07-31')).toBe(2)
+    expect(planWeekNumber('2026-07-19', '2026-07-19')).toBe(1)
+    expect(planWeekNumber('2026-07-19', '2026-08-02')).toBe(3)
+  })
+
+  it('starts a freshly chosen plan at Week 1', () => {
+    // Picking a plan in Settings sets phase_started_on to that day.
+    expect(planWeekNumber('2026-08-01', '2026-08-01')).toBe(1)
+    // …and mid-week, still Week 1 (both dates fall in the same Sunday week).
+    expect(planWeekNumber('2026-07-28', '2026-08-01')).toBe(1)
+  })
+
+  it('never goes below 1, whatever the column holds', () => {
+    expect(planWeekNumber(null, '2026-08-01')).toBe(1)
+    expect(planWeekNumber('2027-01-01', '2026-08-01')).toBe(1)
   })
 
   it('counts Sunday through today inclusive', () => {

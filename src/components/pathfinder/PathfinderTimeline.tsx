@@ -8,13 +8,13 @@ import { useQuery } from '@tanstack/react-query'
 import { m, AnimatePresence } from 'framer-motion'
 import {
   Dumbbell, Trophy, Sparkles, Loader2, ChevronRight, BatteryMedium, Moon,
-  ClipboardCopy, Check, BookOpen, Radar,
+  ClipboardCopy, Check, BookOpen,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { useTimelineWeeks, type TimelineWeekNode } from '@/lib/hooks/useTimelineWeeks'
 import { useContinuum, type ContinuumDay } from '@/lib/hooks/useContinuum'
-import { useWeeklyExport, useWeeklyAiSummaries, useSaveWeeklyAiSummary } from '@/lib/hooks/useWeeklyLoop'
-import { useSentinelExport, useSentinelReports, useSaveSentinelReport } from '@/lib/hooks/useSentinelExport'
+import { useWeeklyExport, useWeeklyAiSummaries } from '@/lib/hooks/useWeeklyLoop'
+import { useSentinelReports, useSaveSentinelReport } from '@/lib/hooks/useSentinelExport'
 import { weekStartOf, isoAddDays } from '@/lib/utils/week'
 import { splitColor } from '@/lib/types/workout'
 import { logicalTodayISO } from '@/lib/utils/day'
@@ -316,45 +316,30 @@ function WeekRecoveryStrip({ weekStart }: { weekStart: string }) {
 }
 
 /**
- * The week's AI loop — export a payload, paste the report back.
+ * The week's report loop — copy the raw data out, paste the finished report back.
  *
- * TWO payloads, because they answer different questions. RAW is the week's
- * measurements, nothing else. SENTINEL-7 is the full telemetry audit brief: the
- * same data plus every derived figure (TDEE decomposition, T4WM, completeness,
- * volume compliance) pre-computed in TypeScript, plus the §0–§7 report contract.
- * Anything an LLM would otherwise have to calculate is handed to it, because a
- * model's arithmetic is unverifiable and unstable across runs.
+ * There is exactly ONE payload and it is the week's MEASUREMENTS. The second
+ * button used to copy a "SENTINEL-7 audit brief": the same data plus every
+ * derived figure pre-computed, wrapped in a hardcoded §0–§7 report contract. A
+ * report format compiled into the app is a format that needs a release to
+ * change, which defeats the point of the paste loop — so the template and its
+ * five supporting modules were deleted. Whatever structure you want, you ask
+ * for outside the app.
  *
- * BOTH buttons only COPY. This app has no model integration of any kind — no API
- * route, no SDK, no key. You run the brief through whatever model you like and
- * paste the result back. The verbs are deliberately "Copy …" so nothing here
+ * The button only COPIES. This app has no model integration of any kind — no
+ * API route, no SDK, no key. The verb is deliberately "Copy" so nothing here
  * ever reads as generation.
  */
-type ExportKind = 'raw' | 'sentinel'
-
-/**
- * Is this pasted text a Sentinel audit rather than a free-form summary?
- *
- * Keyed on the §-numbered headings the contract mandates, not on a marker the
- * model could drop: a report that lost its §-sections isn't a Sentinel report
- * in any useful sense, so mis-classifying it as prose is the right failure.
- */
-function isSentinelReport(md: string): boolean {
-  return /^##\s*§\d/m.test(md) && /SENTINEL-7/i.test(md)
-}
-
 function WeekActions({ node }: { node: TimelineWeekNode }) {
-  // Both payload hooks are DISABLED and driven by an explicit refetch on click.
-  // Expanding a week capsule used to fire ~21 Supabase round-trips building two
-  // export strings nobody had asked for; on Momentum, with the live week open by
-  // default, that was most of the page's cold-start cost.
+  // DISABLED, driven by an explicit refetch on click. Expanding a week capsule
+  // used to fire ~21 Supabase round-trips building export strings nobody had
+  // asked for; on Momentum, with the live week open by default, that was most
+  // of the page's cold-start cost.
   const raw = useWeeklyExport(node.weekStart, false)
-  const sentinel = useSentinelExport(node.weekStart, false)
   const { data: summaries } = useWeeklyAiSummaries()
   const { data: sentinelReports } = useSentinelReports()
-  const save = useSaveWeeklyAiSummary()
   const saveSentinel = useSaveSentinelReport()
-  const [copied, setCopied] = useState<ExportKind | null>(null)
+  const [copied, setCopied] = useState(false)
   const [pasteOpen, setPasteOpen] = useState(false)
   const [reportOpen, setReportOpen] = useState(false)
   const [draft, setDraft] = useState('')
@@ -362,18 +347,17 @@ function WeekActions({ node }: { node: TimelineWeekNode }) {
   const stored = summaries?.find((s) => s.weekStart === node.weekStart)
   const storedSentinel = sentinelReports?.find((s) => s.weekStart === node.weekStart)
 
-  const copy = async (kind: ExportKind) => {
-    const q = kind === 'sentinel' ? sentinel : raw
+  const copy = async () => {
     // Cached from a previous click → the write stays inside the user gesture.
     // First click has to build the payload first, which on Safari can cost the
     // gesture; the catch below is what makes that survivable.
-    let text = q.data
-    if (!text) text = (await q.refetch()).data
+    let text = raw.data
+    if (!text) text = (await raw.refetch()).data
     if (!text) return
     try {
       await navigator.clipboard.writeText(text)
-      setCopied(kind)
-      setTimeout(() => setCopied(null), 2200)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2200)
     } catch {
       // Clipboard blocked (insecure context / permissions / lost gesture) —
       // drop the payload into the textarea so it's never unreachable.
@@ -385,19 +369,11 @@ function WeekActions({ node }: { node: TimelineWeekNode }) {
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap gap-2">
-        <button onClick={() => copy('sentinel')} disabled={sentinel.isFetching}
+        <button onClick={copy} disabled={raw.isFetching}
           className="btn-primary min-h-[40px] text-fluid-xs disabled:opacity-50"
-          style={copied === 'sentinel' ? { background: EMERALD } : undefined}>
-          {sentinel.isFetching ? <><Loader2 className="w-4 h-4 animate-spin" /> Building…</>
-            : copied === 'sentinel' ? <><Check className="w-4 h-4" /> Copied</>
-            : <><Radar className="w-4 h-4" /> Copy audit brief</>}
-        </button>
-
-        <button onClick={() => copy('raw')} disabled={raw.isFetching}
-          className="btn-glass min-h-[40px] text-fluid-xs disabled:opacity-50"
-          style={copied === 'raw' ? { borderColor: `${EMERALD}66`, color: EMERALD } : undefined}>
+          style={copied ? { background: EMERALD } : undefined}>
           {raw.isFetching ? <><Loader2 className="w-4 h-4 animate-spin" /> Building…</>
-            : copied === 'raw' ? <><Check className="w-4 h-4" /> Copied</>
+            : copied ? <><Check className="w-4 h-4" /> Copied</>
             : <><ClipboardCopy className="w-4 h-4" /> Copy raw data</>}
         </button>
 
@@ -432,35 +408,29 @@ function WeekActions({ node }: { node: TimelineWeekNode }) {
             style={{ borderColor: 'rgba(255,255,255,0.10)' }}
           />
           <p className="text-[11px] text-muted leading-snug">
-            Offline by design — Helix never calls a model. Copy a brief, run it wherever you like, paste the result back.
+            Offline by design — Helix never calls a model, and defines no report format. Copy the raw data, analyse it wherever you like, paste the result back in any shape you want.
           </p>
           <div className="flex gap-2">
             <button onClick={() => setPasteOpen(false)} className="btn-glass flex-1 justify-center min-h-[40px] text-fluid-xs">Cancel</button>
             <button
               onClick={() => {
-                // A Sentinel audit is stored under its own report type so it
-                // gets a real page (and doesn't blank the capsule's stats — see
-                // useTimelineWeeks). Detected from the §-headings it must carry.
-                if (isSentinelReport(draft)) {
-                  saveSentinel.mutate({ weekStart: node.weekStart, contentMd: draft }, {
-                    onSuccess: () => setPasteOpen(false),
-                  })
-                } else {
-                  save.mutate({ weekStart: node.weekStart, content: draft }, {
-                    onSuccess: () => { setPasteOpen(false); setReportOpen(true) },
-                  })
-                }
+                // Every pasted report saves under the same type, which gets it
+                // a real page at /report/[id]. The old sniff routed §-numbered
+                // text one way and prose another — a classifier for a format
+                // the app no longer defines, so it could only ever be wrong.
+                saveSentinel.mutate({ weekStart: node.weekStart, contentMd: draft }, {
+                  onSuccess: () => setPasteOpen(false),
+                })
               }}
-              disabled={!draft.trim() || save.isPending || saveSentinel.isPending}
+              disabled={!draft.trim() || saveSentinel.isPending}
               className="btn-primary flex-1 justify-center min-h-[40px] text-fluid-xs disabled:opacity-50"
             >
-              {save.isPending || saveSentinel.isPending ? 'Saving…' : 'Save report'}
+              {saveSentinel.isPending ? 'Saving…' : 'Save report'}
             </button>
           </div>
-          {(save.isError || saveSentinel.isError) && (
+          {saveSentinel.isError && (
             <p className="text-fluid-xs text-danger">
-              {(save.error ?? saveSentinel.error) instanceof Error
-                ? ((save.error ?? saveSentinel.error) as Error).message : 'Save failed'}
+              {saveSentinel.error instanceof Error ? saveSentinel.error.message : 'Save failed'}
             </p>
           )}
         </div>

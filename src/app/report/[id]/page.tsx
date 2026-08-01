@@ -9,7 +9,7 @@ import { MarkdownView } from '@/components/reports/MarkdownView'
 import { WidgetBoundary } from '@/components/fx/WidgetBoundary'
 import { getWeekPhase, phaseBadgeStyle } from '@/lib/phases'
 import { weekLabelOf } from '@/lib/reports/weekNumber'
-import { SENTINEL_TYPE } from '@/lib/reports/sentinel'
+import { SENTINEL_TYPE } from '@/lib/hooks/useSentinelExport'
 
 interface ReportDoc { id: string; type: string; weekStart: string; content: string }
 
