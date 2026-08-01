@@ -175,4 +175,24 @@ for (const row of ledger) {
   if (error) throw error
 }
 
+// PRUNE. The upsert above can only add or overwrite, so a rule change that
+// STOPS emitting an axis leaves the old row standing forever — and the Session
+// Report reads the ledger by session_id, so a superseded `e1rm` kept rendering
+// a gold chip for a record `pr_count` no longer counted. Anything the replay
+// did not produce is, by definition, not a current record.
+const keep = new Set(ledger.map((r) => `${r.exercise_key}|${r.axis}`))
+const { data: existing, error: readErr } = await db
+  .from('personal_records')
+  .select('exercise_key, axis')
+if (readErr) throw readErr
+let pruned = 0
+for (const row of existing ?? []) {
+  if (keep.has(`${row.exercise_key}|${row.axis}`)) continue
+  const { error } = await db.from('personal_records')
+    .delete().eq('exercise_key', row.exercise_key).eq('axis', row.axis)
+  if (error) throw error
+  pruned += 1
+}
+if (pruned) console.log(`${pruned} superseded ledger rows pruned`)
+
 console.log('Done.')

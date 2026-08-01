@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import {
   buildBaselines, baselineIndex, detectSetPrs, detectSessionPrs, isPrIneligible,
-  prAxisLabel, recordSets, e1rmEligible, EMPTY_BASELINES, type BaselineSetRow, type PrCandidateSet,
+  prAxisLabel, recordSets, e1rmEligible, subsumeSetAxes, volumeIsIndependent,
+  EMPTY_BASELINES, type BaselineSetRow, type PrCandidateSet,
 } from '@/lib/training/prEngine'
 
 const HIP = 'Hip Thrust (Machine)'
@@ -78,24 +79,28 @@ describe('the July 31 session — the records that went missing', () => {
   ]
   const r = detectSessionPrs(july31, baselines)
 
-  it('flags Hip Thrust set 2 on reps AND e1rm', () => {
-    expect(r.perSet[1].axes.sort()).toEqual(['e1rm', 'reps'])   // 13 > 12 @27.5 ; 39.4 > 38.5
+  it('flags Hip Thrust set 2 on reps ONLY — the e1RM is the same fact restated', () => {
+    // 13 > 12 at 27.5 kg is the record. Epley then reads 39.4 > 38.5, which it
+    // cannot fail to do: e1RM is weight × (1 + reps/30), a pure function of the
+    // two numbers `reps` already measured. Counting both put this one set in
+    // the headline twice.
+    expect(r.perSet[1].axes.sort()).toEqual(['reps'])
   })
 
-  it('does NOT award set 3 a per-set axis — it only tied set 2', () => {
-    // It does carry the session's `volume` axis: it is the last eligible set of
-    // the exercise, and a volume record has to live on SOME row to be visible.
-    // What it must not claim is weight/reps/e1rm, which it did not beat.
-    expect(r.perSet[2].axes.filter((a) => a !== 'volume')).toEqual([])
+  it('does NOT award set 3 anything — it only tied set 2', () => {
+    expect(r.perSet[2].axes).toEqual([])
   })
 
   it('does not flag the 25 kg opener — 14 reps only matched the old best', () => {
     expect(r.perSet[0].axes).toEqual([])
   })
 
-  it('awards the session volume axis: 1065 kg beats the prior best of 985', () => {
+  it('computes the session volume but does not COUNT it — reps already did', () => {
+    // 1065 beats the prior best of 985. It beats it *because* set 2 added a rep
+    // at 27.5 kg, which `reps` has already recorded. A third badge for the same
+    // rep is inflation, not information.
     expect(r.volumeByKey.get(HIP)).toBe(1065)
-    expect([...(r.axesByKey.get(HIP) ?? [])].sort()).toEqual(['e1rm', 'reps', 'volume'])
+    expect([...(r.axesByKey.get(HIP) ?? [])].sort()).toEqual(['reps'])
   })
 
   it('flags the 58 s Side Plank as a duration record, and not the 55 s set', () => {
@@ -104,8 +109,10 @@ describe('the July 31 session — the records that went missing', () => {
     expect(prAxisLabel('reps', true)).toBe('Duration')
   })
 
-  it('reports pr_count = 4 — three Hip Thrust axes plus the plank', () => {
-    expect(r.prCount).toBe(4)
+  it('reports pr_count = 2 — one Hip Thrust record and one plank record', () => {
+    // Was 4 (reps + e1rm + volume + duration) for two things that happened.
+    // The live 2026-07-31 session read 7 against 3.
+    expect(r.prCount).toBe(2)
   })
 
   it('nulls est-1RM for a hold so no report prints "e1RM 0kg" on a plank', () => {
@@ -188,14 +195,9 @@ describe('recordSets — the ledger attributes each axis to the set that won it'
     expect(rec.get(HIP)!.get('reps')).toEqual({ weightKg: 27.5, reps: 13, value: 13 })
   })
 
-  it('credits e1rm to the same set and carries its computed value', () => {
-    const e = rec.get(HIP)!.get('e1rm')!
-    expect(e.weightKg).toBe(27.5)
-    expect(e.value).toBeCloseTo(39.4, 1)
-  })
-
-  it('gives the session-level volume axis the exercise total and no single set', () => {
-    expect(rec.get(HIP)!.get('volume')).toEqual({ weightKg: 0, reps: 0, value: 1065 })
+  it('does not file a redundant e1rm or volume row for the same rep', () => {
+    expect(rec.get(HIP)!.has('e1rm')).toBe(false)
+    expect(rec.get(HIP)!.has('volume')).toBe(false)
   })
 
   it('records a hold on seconds', () => {
@@ -235,9 +237,13 @@ describe('e1rm rep-window gate', () => {
       { key: HACK, weightKg: 50, reps: 12, timed: false, setType: null, ...win },
       { key: HACK, weightKg: 55, reps: 11, timed: false, setType: null, ...win },
     ], baselines)
-    expect(res.perSet[1].axes).toContain('e1rm')
-    // Volume too: 1205 beats Jul 20's 1040.
-    expect(res.axesByKey.get(HACK)?.has('volume')).toBe(true)
+    // Nothing else on this set changed — 55 kg is under the 60 kg top load and
+    // 11 reps at 55 kg is a first — so e1RM is the ONLY claim, and it stands.
+    expect(res.perSet[1].axes).toEqual(['e1rm'])
+    // Session volume (1205) also beats Jul 20's 1040, but it beats it because
+    // of the same two sets, so it is not counted a second time.
+    expect(res.volumeByKey.get(HACK)).toBe(1205)
+    expect(res.axesByKey.get(HACK)?.has('volume')).toBe(false)
   })
 
   it('does NOT gate above the ceiling — beating it is the point', () => {
@@ -247,10 +253,11 @@ describe('e1rm rep-window gate', () => {
     const baselines = buildBaselines(
       [{ key: LP, weightKg: 72.5, reps: 12, sessionId: 'prev', ...w }], () => false,
     )
-    const res = detectSessionPrs(
-      [{ key: LP, weightKg: 72.5, reps: 13, timed: false, setType: null, ...w }], baselines,
-    )
-    expect(res.perSet[0].axes).toContain('e1rm')
+    // Asserted on the raw detector: the axis IS won. Whether it survives into
+    // the headline is `subsumeSetAxes`' business, tested separately.
+    const idx = baselineIndex(baselines)
+    expect(detectSetPrs({ key: LP, weightKg: 72.5, reps: 13, timed: false, setType: null, ...w }, idx))
+      .toContain('e1rm')
   })
 
   it('with no programmed window, only very low reps are excluded', () => {
@@ -301,7 +308,10 @@ describe('historical (pre-Helix) overrides', () => {
       key: HAMMER, weightKg: 20, reps: 12, timed: false, setType: null,
       date: '2026-07-21', exerciseName: HAMMER, setNumber: 1,
     }], EMPTY_BASELINES)
-    expect(res.perSet[0].axes.sort()).toEqual(['e1rm', 'volume', 'weight'])
+    // The list asserts weight + volume + e1rm; `subsumeSetAxes` then drops the
+    // e1rm, which is the same 20 kg × 12 counted a second time. Overrides are
+    // asserted data, not an exemption from the counting rules.
+    expect(res.perSet[0].axes.sort()).toEqual(['volume', 'weight'])
   })
 
   it('stops matching when the set is edited — no misattributed record', () => {
@@ -328,20 +338,76 @@ describe('recordSets when two sets win the same axis', () => {
     { key: HACK, weightKg: 50, reps: 12, timed: false, setType: null, ...win },
     { key: HACK, weightKg: 55, reps: 11, timed: false, setType: null, ...win },
   ]
-  const baselines = buildBaselines(
-    [{ key: HACK, weightKg: 40, reps: 14, sessionId: 'prev', ...win }], () => false,
-  )
-  const res = detectSessionPrs(sets, baselines)
-  const rec = recordSets(sets, res).get(HACK)
 
   it('files the BEST e1RM, not the first one claimed', () => {
-    // 50×12 = 70.0 is a record, then 55×11 = 75.2 beats it in the same session.
-    expect(res.perSet[0].axes).toContain('e1rm')
-    expect(res.perSet[1].axes).toContain('e1rm')
-    expect(rec?.get('e1rm')?.value).toBeCloseTo(75.2, 1)
+    // A 70 kg × 4 in the history puts the weight bar out of reach (so neither
+    // set can claim `weight`) while being sub-floor, so it never set the e1RM
+    // bar. 45×10 = 60.0 does. Then 50×12 = 70.0 is a record, and 55×11 = 75.2
+    // beats it inside the same session — the engine absorbs as it goes, so both
+    // legitimately win, and keeping the FIRST claimant filed a value that was
+    // already beaten.
+    const baselines = buildBaselines([
+      { key: HACK, weightKg: 70, reps: 4, sessionId: 'prev', ...win },
+      { key: HACK, weightKg: 45, reps: 10, sessionId: 'prev', ...win },
+    ], () => false)
+    const res = detectSessionPrs(sets, baselines)
+    expect(res.perSet[0].axes).toEqual(['e1rm'])
+    expect(res.perSet[1].axes).toEqual(['e1rm'])
+    expect(recordSets(sets, res).get(HACK)?.get('e1rm')?.value).toBeCloseTo(75.2, 1)
   })
 
   it('files the heaviest load for the weight axis', () => {
-    expect(rec?.get('weight')?.value).toBe(55)
+    const baselines = buildBaselines(
+      [{ key: HACK, weightKg: 40, reps: 14, sessionId: 'prev', ...win }], () => false,
+    )
+    const res = detectSessionPrs(sets, baselines)
+    expect(recordSets(sets, res).get(HACK)?.get('weight')?.value).toBe(55)
+  })
+})
+
+/**
+ * The over-count itself, isolated. `pr_count` reported ~40 a week and 7 for a
+ * session with 3 achievements in it.
+ */
+describe('axis subsumption — one achievement, one record', () => {
+  it('drops e1rm when the same set already won reps at its load', () => {
+    expect(subsumeSetAxes(['reps', 'e1rm'])).toEqual(['reps'])
+  })
+
+  it('drops e1rm when the same set already won the weight axis', () => {
+    expect(subsumeSetAxes(['weight', 'e1rm'])).toEqual(['weight'])
+  })
+
+  it('KEEPS a lone e1rm — a better load/rep trade is a separate fact', () => {
+    // 55 kg × 11 beating 60 kg × 8 is not visible on any other axis.
+    expect(subsumeSetAxes(['e1rm'])).toEqual(['e1rm'])
+  })
+
+  it('leaves weight + reps alone — a heavier load AND more reps on it is two things', () => {
+    expect(subsumeSetAxes(['weight', 'reps'])).toEqual(['weight', 'reps'])
+  })
+
+  it('counts session volume only when no set won anything', () => {
+    expect(volumeIsIndependent(false)).toBe(true)
+    expect(volumeIsIndependent(true)).toBe(false)
+  })
+
+  it('an added set with no set-level record still earns volume', () => {
+    // Romanian Deadlift, 2026-07-31: 35 kg × 12 three times. No set beat
+    // anything; the session total did, because there were more sets.
+    const RDL = 'Romanian Deadlift (DB)'
+    const baselines = buildBaselines([
+      { key: RDL, weightKg: 35, reps: 12, sessionId: 'prev' },
+      { key: RDL, weightKg: 35, reps: 12, sessionId: 'prev' },
+    ], () => false)
+    const sets: PrCandidateSet[] = [
+      { key: RDL, weightKg: 35, reps: 12, timed: false, setType: null },
+      { key: RDL, weightKg: 35, reps: 12, timed: false, setType: null },
+      { key: RDL, weightKg: 35, reps: 12, timed: false, setType: null },
+    ]
+    const res = detectSessionPrs(sets, baselines)
+    expect(res.volumeByKey.get(RDL)).toBe(1260)
+    expect([...(res.axesByKey.get(RDL) ?? [])]).toEqual(['volume'])
+    expect(res.prCount).toBe(1)
   })
 })
