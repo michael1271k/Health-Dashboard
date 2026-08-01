@@ -7,11 +7,8 @@ import { Moon, Flame, Dumbbell, Scale, Footprints, Pill } from 'lucide-react'
 import { LiquidModal } from '@/components/ui/LiquidModal'
 import { ReadinessOrb } from '@/components/dashboard/ReadinessOrb'
 import { BioStrip, type BioStripProps } from '@/components/dashboard/BioStrip'
-import { ScoreCard } from '@/components/dashboard/ScoreCard'
 import { MacroRings } from '@/components/nutrition/MacroRings'
-import { TrainingCard } from '@/components/dashboard/TrainingCard'
 import { StatTile } from '@/components/dashboard/StatTile'
-import { SupplementChecklist } from '@/components/dashboard/SupplementChecklist'
 import { InsightCoach } from '@/components/dashboard/InsightCoach'
 import { AnimatedCard } from '@/components/dashboard/AnimatedBento'
 import { WeeklyReviewCard } from '@/components/dashboard/WeeklyReviewCard'
@@ -30,6 +27,12 @@ import { useSupplements } from '@/lib/hooks/useSupplements'
 import { supplementCountForDate } from '@/lib/supplements'
 import { useBioSeries, useLastWeighIn, useLatestBodyMetrics, type BodyMetricField } from '@/lib/hooks/useBioStrips'
 import { SleepStages } from '@/components/dashboard/SleepStages'
+
+// Modal-only bodies (522 lines between them) that were in the dashboard's
+// first-load bundle even though they render only once a LiquidModal opens.
+const ScoreCard = dynamic(() => import('@/components/dashboard/ScoreCard').then((m) => m.ScoreCard), { ssr: false })
+const TrainingCard = dynamic(() => import('@/components/dashboard/TrainingCard').then((m) => m.TrainingCard), { ssr: false })
+const SupplementChecklist = dynamic(() => import('@/components/dashboard/SupplementChecklist').then((m) => m.SupplementChecklist), { ssr: false })
 import { StepsJourney } from '@/components/dashboard/StepsJourney'
 import { ProgressionAlerts } from '@/components/command-center/ProgressionAlerts'
 import { useDailyLogs } from '@/lib/hooks/useNutrition'

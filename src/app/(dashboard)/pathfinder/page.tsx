@@ -1,6 +1,7 @@
 'use client'
 
 import { Suspense, useMemo, useState } from 'react'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { GitBranch, LineChart, HeartPulse, CalendarDays, ChevronLeft, ChevronRight, FolderOpen, Scale, Radar } from 'lucide-react'
@@ -14,8 +15,11 @@ import { EraFilterPills } from '@/components/era/EraFilterPills'
 import { FileSystemBrowser } from '@/components/reports/FileSystemBrowser'
 import { PathfinderTimeline } from '@/components/pathfinder/PathfinderTimeline'
 import { WidgetBoundary } from '@/components/fx/WidgetBoundary'
-import { AnalyticsPanel } from '@/components/progression/AnalyticsPanel'
-import { VitalsGroups } from '@/components/insights/VitalsGroups'
+// Both render only for their own sub-view, but were imported eagerly — so the
+// Timeline (the default view) paid for a recharts-backed analytics panel and a
+// 56-day vitals grid it never showed.
+const AnalyticsPanel = dynamic(() => import('@/components/progression/AnalyticsPanel').then((m) => m.AnalyticsPanel), { ssr: false })
+const VitalsGroups = dynamic(() => import('@/components/insights/VitalsGroups').then((m) => m.VitalsGroups), { ssr: false })
 import { ScheduleShortcut } from '@/components/day/ScheduleShortcut'
 import { Sheet } from '@/components/ui/Sheet'
 import { displayWeight, weightUnit } from '@/lib/utils/units'
@@ -61,7 +65,10 @@ function PathfinderInner() {
 
   const { data: reports } = useReports()
   const { data: gymReports } = useGymReports(60)
-  const { data: weightRows } = useWeightTrend(120)
+  // 400, not 120, to share `useTimelineWeeks`'s cache entry — the two windows
+  // were separate query keys fetching overlapping data on the same mount, and
+  // all this needs is the newest row.
+  const { data: weightRows } = useWeightTrend(400)
   const latestWeight = weightRows?.length ? weightRows[weightRows.length - 1].weight_kg : null
 
   const weeks = useMemo(() => {

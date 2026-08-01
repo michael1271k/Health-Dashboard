@@ -7,6 +7,14 @@ import { epley1RM } from '@/lib/utils/epley'
 import { validWeight } from '@/lib/utils/units'
 import { eraForDate } from '@/lib/programs'
 
+/**
+ * Charts are the most expensive queries in the app (multi-hundred-row scans over
+ * `workout_sets` / `daily_logs`) and the least time-sensitive — a trend line does
+ * not change meaningfully within a session. They used to inherit the global 60s
+ * default, so every navigation back to Analytics re-ran the lot.
+ */
+const CHART_STALE_MS = 5 * 60 * 1000
+
 function daysAgo(n: number): string {
   const d = new Date()
   d.setDate(d.getDate() - n)
@@ -28,6 +36,7 @@ export interface BodyDetailRow {
 export function useBodyDetailTrend(days = 90) {
   return useQuery({
     queryKey: ['daily_logs', 'body_detail', days],
+    staleTime: CHART_STALE_MS,
     queryFn: async (): Promise<BodyDetailRow[]> => {
       const since = daysAgo(days)
       const { data, error } = await supabase
@@ -76,6 +85,7 @@ export function mergeBodyTrend(ledger: BodyTrendRow[], logs: BodyTrendRow[]): Bo
 export function useWeightTrend(days = 90) {
   return useQuery({
     queryKey: ['body_composition', 'trend', days],
+    staleTime: CHART_STALE_MS,
     queryFn: async (): Promise<BodyTrendRow[]> => {
       const since = daysAgo(days)
       const [bc, dl] = await Promise.all([
@@ -102,6 +112,7 @@ export type VolumePoint = { date: string; volume: number; split: string }
 export function useVolumeTrend(days = 90) {
   return useQuery({
     queryKey: ['workout_sessions', 'volume_trend', days],
+    staleTime: CHART_STALE_MS,
     queryFn: async (): Promise<VolumePoint[]> => {
       const { data, error } = await supabase
         .from('workout_sessions')
@@ -119,6 +130,7 @@ export function useVolumeTrend(days = 90) {
 export function useMacroHistory(days = 14) {
   return useQuery({
     queryKey: ['nutrition_entries', 'history', days],
+    staleTime: CHART_STALE_MS,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('nutrition_entries')
@@ -166,6 +178,7 @@ export function collapseToSessionBest(rows: PRRawRow[]): PRRow[] {
 export function usePRHistory(exerciseId?: string, days = 180, era: 'all' | 'ppl' | 'axis' = 'all') {
   return useQuery({
     queryKey: ['workout_sets', 'pr_history', exerciseId, days, era],
+    staleTime: CHART_STALE_MS,
     queryFn: async () => {
       let query = supabase
         .from('workout_sets')
@@ -183,6 +196,10 @@ export function usePRHistory(exerciseId?: string, days = 180, era: 'all' | 'ppl'
         // this whole query 400 and left PR history silently empty. Rows are
         // sorted client-side by date below.
         .gte('workout_sessions.started_at', new Date(Date.now() - days * 86400000).toISOString())
+        // Was unbounded, so a "Plan Era" range silently rode PostgREST's 1000-row
+        // default with no way to know it had truncated. An explicit cap makes the
+        // ceiling visible and matches the other set-scanning hooks.
+        .limit(4000)
 
       if (exerciseId) {
         query = query.eq('exercise_id', exerciseId)

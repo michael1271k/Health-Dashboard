@@ -62,14 +62,23 @@ export default function WorkoutPage() {
   // WeeklySummaryCard, so no extra fetch). When present, the hero becomes the
   // Post-Workout Summary instead of a "Log X" button.
   const week = useWeekSessions(weekStartOf(today))
-  const todaySessions = week.data?.sessions.filter((s) => s.date === today) ?? []
+  const todaySessions = useMemo(
+    () => week.data?.sessions.filter((s) => s.date === today) ?? [],
+    [week.data, today],
+  )
   const loggedToday = todaySessions.length > 0
   const schedule = scheduleDayFor(today)
   const training = isTrainingDay(today)
   const eraMeta = ERA_META[eraForDate(today)]
-  const todayWD = WD[new Date(`${today}T12:00:00Z`).getUTCDay()]
+  // `new Date(...)` in the render body re-parsed on every keystroke anywhere on
+  // the page; the day-of-week of "today" is not going to change while you look
+  // at it.
+  const todayWD = useMemo(() => WD[new Date(`${today}T12:00:00Z`).getUTCDay()], [today])
   const todayKey = schedule !== 'rest' ? schedule.dayKey : undefined
-  const todayDay = todayKey ? program.days.find((d) => d.key === todayKey) : undefined
+  const todayDay = useMemo(
+    () => (todayKey ? program.days.find((d) => d.key === todayKey) : undefined),
+    [todayKey, program],
+  )
 
   return (
     <div className="space-y-6">

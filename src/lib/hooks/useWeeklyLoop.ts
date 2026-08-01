@@ -244,11 +244,16 @@ function toCardio(d: RangeData): ExportCardio[] {
  * volume · soreness · body composition · the previous week for comparison) and
  * render it as the AI prompt string. One hook powers every "Export Week" button.
  */
-export function useWeeklyExport(weekStart = weekStartOf(logicalTodayISO())) {
+export function useWeeklyExport(weekStart = weekStartOf(logicalTodayISO()), enabled = true) {
   const weekEnd = isoAddDays(weekStart, 6)
   const prevStart = isoAddDays(weekStart, -7)
   return useQuery({
     queryKey: ['weekly_export', weekStart],
+    // ~12 round-trips. Off until someone actually asks for the payload — it
+    // used to run the moment a week capsule expanded, which meant opening
+    // Momentum fetched two full weeks of every table before you touched
+    // anything. See `useSentinelExport` for the other half of that bill.
+    enabled,
     staleTime: 60_000,
     queryFn: async (): Promise<string> => {
       const [cur, prev, goalsRes, customsRes] = await Promise.all([

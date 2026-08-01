@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { memo, useEffect, useState } from 'react'
 import { STEEL } from '@/lib/theme/palette'
 import { useLastUpdated } from '@/lib/hooks/useDashboard'
 import { useMyProfile } from '@/lib/hooks/useMyProfile'
@@ -22,16 +22,47 @@ export function programStreak(): number {
   return Math.max(1, Math.floor((today - start) / 86_400_000) + 1)
 }
 
-/** Ticking clock (client-only to avoid hydration mismatch). */
-function useClock() {
+/**
+ * Ticking clock (client-only to avoid hydration mismatch).
+ *
+ * Pauses while the tab is hidden — a backgrounded PWA has no reason to keep
+ * scheduling work, and it resyncs immediately on return.
+ */
+function useClock(intervalMs: number) {
   const [now, setNow] = useState<Date | null>(null)
   useEffect(() => {
-    setNow(new Date())
-    const id = setInterval(() => setNow(new Date()), 1000)
-    return () => clearInterval(id)
-  }, [])
+    let id: ReturnType<typeof setInterval> | null = null
+    const stop = () => { if (id) { clearInterval(id); id = null } }
+    const start = () => {
+      stop()
+      setNow(new Date())
+      id = setInterval(() => setNow(new Date()), intervalMs)
+    }
+    const onVisibility = () => (document.visibilityState === 'visible' ? start() : stop())
+    start()
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => { stop(); document.removeEventListener('visibilitychange', onVisibility) }
+  }, [intervalMs])
   return now
 }
+
+/**
+ * The seconds hand, isolated.
+ *
+ * This used to live in `BrandHeader`, which meant the whole header — profile
+ * query, plan/phase tags, greeting, brand line — re-rendered once per second
+ * for as long as the dashboard was open. Only this span changes that often, so
+ * only this span subscribes to a 1Hz tick.
+ */
+const LiveTime = memo(function LiveTime() {
+  const now = useClock(1000)
+  if (!now) return null
+  return (
+    <> · <span className="helix-num text-text/80">
+      {new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(now)}
+    </span></>
+  )
+})
 
 /** Time-of-day greeting from the device-local hour. */
 function greetingFor(now: Date): string {
@@ -47,7 +78,8 @@ function greetingFor(now: Date): string {
  * No hardcoded timezone: everything renders in the user's actual local time.
  */
 export function BrandHeader() {
-  const now = useClock()
+  // Minute resolution: everything here derives from the DATE and the HOUR.
+  const now = useClock(60_000)
   const { data: lastUpdated } = useLastUpdated()
   const { data: profile } = useMyProfile()
 
@@ -62,7 +94,6 @@ export function BrandHeader() {
   const firstName = profile?.firstName ?? null
   const greeting = now ? greetingFor(now) : ''
   const dateStr = now ? new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }).format(now) : ''
-  const timeStr = now ? new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(now) : ''
   const lu = lastUpdated ? new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(lastUpdated)) : null
 
   return (
@@ -70,7 +101,7 @@ export function BrandHeader() {
       {/* Dedicated device-local date + live clock line */}
       <div className="flex items-center justify-between gap-3 text-fluid-xs min-h-[16px]">
         <span className="text-muted tracking-wide">
-          {dateStr}{timeStr && <> · <span className="helix-num text-text/80">{timeStr}</span></>}
+          {dateStr}<LiveTime />
         </span>
         {lu && (
           <span className="text-muted/70 flex items-center gap-1 shrink-0">

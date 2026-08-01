@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { ArrowLeftRight, CheckCheck, ChevronDown, Footprints, GripVertical, History, NotebookPen, Plus, Target, X } from 'lucide-react'
@@ -127,6 +127,40 @@ export function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collap
     </button>
   )
 
+  // Programmed target for this lift — floor–ceiling (loaded) or hold seconds (timed).
+  //
+  // Memoized on (name, dayKey) because these are not cheap lookups: each one
+  // canonicalises the name, then scans every day of the active program parsing
+  // rep-window strings. They ran on EVERY render of this card — i.e. on every
+  // keystroke of every weight field in it — despite depending on nothing that
+  // changes while you log.
+  //
+  // Declared ABOVE the cardio early-return: hooks must run in the same order on
+  // every render, and a cardio card returns before this point.
+  const prevWork = useMemo(() => workingSets(history ?? undefined), [history])
+  const timedEx = useMemo(() => isTimedExercise(exercise.name), [exercise.name])
+  const repWindow = useMemo(
+    () => (timedEx ? null : repWindowFor(exercise.name, dayKey)),
+    [timedEx, exercise.name, dayKey],
+  )
+  const holdTarget = useMemo(
+    () => (timedEx ? holdTargetFor(exercise.name, dayKey) : null),
+    [timedEx, exercise.name, dayKey],
+  )
+  // Strict-ceiling coach over the LOAD LADDER. Mixed loads within one exercise
+  // are judged by the lowest ("binding") load — see ladderVerdict. This is the
+  // same verdict whether you went heavy-to-light or light-to-heavy.
+  const committedWork = useMemo(
+    () => exercise.sets
+      .filter((s) => isSetCommitted(s) && s.setType !== 'warmup')
+      .map((s) => ({ weightKg: s.weightKg, reps: s.reps })),
+    [exercise.sets],
+  )
+  const ladder = useMemo(
+    () => (repWindow ? ladderVerdict(committedWork, repWindow.ceiling) : null),
+    [repWindow, committedWork],
+  )
+
   // ── Cardio variant: slim card, distance/duration chips, no set rows ──
   if (exercise.kind === 'cardio') {
     return (
@@ -176,19 +210,6 @@ export function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collap
   // A pair contributes one "L|R" token so the header doesn't double-count sides.
   const summary = groups.map((g) => g.kind === 'single' ? g.set.reps : `${g.left?.set.reps ?? '–'}|${g.right?.set.reps ?? '–'}`).join('/')
   const topWeight = Math.max(...exercise.sets.map((s) => s.weightKg), 0)
-
-  // Programmed target for this lift — floor–ceiling (loaded) or hold seconds (timed).
-  const prevWork = workingSets(history ?? undefined)
-  const timedEx = isTimedExercise(exercise.name)
-  const repWindow = timedEx ? null : repWindowFor(exercise.name, dayKey)
-  const holdTarget = timedEx ? holdTargetFor(exercise.name, dayKey) : null
-  // Strict-ceiling coach over the LOAD LADDER. Mixed loads within one exercise
-  // are judged by the lowest ("binding") load — see ladderVerdict. This is the
-  // same verdict whether you went heavy-to-light or light-to-heavy.
-  const committedWork = exercise.sets
-    .filter((s) => isSetCommitted(s) && s.setType !== 'warmup')
-    .map((s) => ({ weightKg: s.weightKg, reps: s.reps }))
-  const ladder = repWindow ? ladderVerdict(committedWork, repWindow.ceiling) : null
 
   return (
     <div ref={setNodeRef} style={sortableStyle}

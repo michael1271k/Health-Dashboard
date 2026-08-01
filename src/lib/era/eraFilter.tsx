@@ -11,7 +11,7 @@
  * existing era-aware hooks (useMuscleAnalytics, HelixViz) plug in without renames.
  */
 
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { usePathname } from 'next/navigation'
 import { HELIX_CUT_START } from '@/lib/programs'
 import { PHASES, getWeekPhase } from '@/lib/phases'
@@ -100,11 +100,17 @@ export function EraFilterProvider({ children }: { children: ReactNode }) {
     setSubPhase('auto')
   }, [topSegment])
 
-  return (
-    <EraFilterContext.Provider value={{ era, setEra, subPhase, setSubPhase, resolvedPhase: resolveSubPhase(subPhase) }}>
-      {children}
-    </EraFilterContext.Provider>
+  // `resolveSubPhase` walks the phase calendar and builds a Date. It used to run
+  // in the render body, and the context value was a fresh object literal — so
+  // every render of this provider (which wraps the ENTIRE app) invalidated all
+  // seven consumers, including the Momentum timeline and both analytics panels.
+  const resolvedPhase = useMemo(() => resolveSubPhase(subPhase), [subPhase])
+  const value = useMemo<EraCtx>(
+    () => ({ era, setEra, subPhase, setSubPhase, resolvedPhase }),
+    [era, subPhase, resolvedPhase],
   )
+
+  return <EraFilterContext.Provider value={value}>{children}</EraFilterContext.Provider>
 }
 
 export function useEraFilter(): EraCtx {

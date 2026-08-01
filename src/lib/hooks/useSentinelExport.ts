@@ -28,14 +28,15 @@ const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
  * cardio field set. Every added query degrades to empty on error rather than
  * taking the report down.
  */
-export function useSentinelExport(weekStart: string) {
+export function useSentinelExport(weekStart: string, enabled = true) {
   const { resolve, resolveVolume } = usePlanPhaseGoals()
   const planId = getActiveProgramId()
   const phase = activePhase() as ProgramPhase
 
   return useQuery({
     queryKey: ['sentinel_export', weekStart, planId, phase],
-    enabled: !!weekStart,
+    // 8 parallel queries, only worth paying for on demand — see `useWeeklyExport`.
+    enabled: !!weekStart && enabled,
     staleTime: 60_000,
     queryFn: async (): Promise<string> => {
       const weekEnd = isoAddDays(weekStart, 6)

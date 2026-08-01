@@ -15,8 +15,15 @@ import { WORKOUT_QUERY_KEYS } from '@/lib/query/workoutKeys'
  *
  * iOS resilience: a backgrounded PWA's socket is suspended and may never
  * silently rejoin — on return-to-visible we check the channel state and
- * resubscribe from scratch when it isn't joined, then refresh everything once
- * to cover events missed while suspended.
+ * resubscribe from scratch when it isn't joined.
+ *
+ * The catch-up refresh is deliberately narrow. It used to run on EVERY
+ * return-to-visible and on the first join, invalidating all 13 tables' key
+ * lists — a full-app refetch on every foreground, regardless of staleTime,
+ * which is what made the app feel like it was permanently syncing. Events can
+ * only be missed while the socket is DOWN, so the catch-up now runs exactly
+ * when the socket comes back up after having been lost, and never on the
+ * initial join (those queries are already fetching on mount).
  */
 const TABLE_KEYS: Record<string, string[][]> = {
   daily_logs: [['daily_logs'], ['daily_scores'], ['coach'], ['trends'], ['continuum'], ['day_vault'], ['sleep_debt']],
@@ -70,6 +77,13 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     }
     const refreshAll = () => { for (const t of TABLES) pending.add(t); flush() }
 
+    // The socket has been up and healthy since the last catch-up, so no events
+    // were missed and there is nothing to catch up ON. Flipped to false the
+    // moment the channel drops.
+    let socketHealthy = false
+    // Distinguishes the first join (nothing to catch up on) from a re-join.
+    let joinedOnce = false
+
     let channel: ReturnType<typeof supabase.channel> | null = null
     const subscribe = () => {
       if (channel) supabase.removeChannel(channel)
@@ -88,9 +102,16 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
       ch.subscribe((status: string) => {
         if (status === 'SUBSCRIBED') {
           retry = 0
-          // Catch up on anything that changed while we were disconnected.
-          refreshAll()
+          // Catch up ONLY when re-joining after a drop. On the very first join
+          // every mounted query is already in flight, so refreshing here would
+          // just duplicate the entire cold-start fetch.
+          if (!socketHealthy) {
+            if (joinedOnce) refreshAll()
+            joinedOnce = true
+            socketHealthy = true
+          }
         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          socketHealthy = false
           if (cancelled) return
           const delay = Math.min(30_000, 1000 * 2 ** retry++)
           console.warn(`[realtime] channel ${status} — retrying in ${delay}ms`)
@@ -102,13 +123,14 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     }
     subscribe()
 
-    // Return-to-visible: rejoin a suspended socket, then refresh once for
-    // anything missed while backgrounded.
+    // Return-to-visible: rejoin a suspended socket. The rejoin's SUBSCRIBED
+    // handler does the catch-up refresh. A socket that is STILL joined never
+    // missed an event, so foregrounding it costs nothing — which is the whole
+    // point: coming back to the app must not re-fetch the world.
     const onVisible = () => {
       try {
         if (document.visibilityState !== 'visible') return
-        if (channel?.state !== 'joined') subscribe()
-        refreshAll()
+        if (channel?.state !== 'joined') { socketHealthy = false; subscribe() }
       } catch { /* never crash on foreground */ }
     }
     document.addEventListener('visibilitychange', onVisible)

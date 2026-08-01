@@ -1,6 +1,7 @@
 'use client'
 
-import { forwardRef, useEffect, useMemo, useRef, useState } from 'react'
+import { forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
@@ -21,7 +22,9 @@ import { displayWeight, weightUnit, useUnitSystem } from '@/lib/utils/units'
 import { eraForDate, isTrainingDay } from '@/lib/programs'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
 import { useEraFilter } from '@/lib/era/eraFilter'
-import { MarkdownView } from '@/components/reports/MarkdownView'
+// react-markdown + remark-gfm is a full parser. It was static here, so every
+// Momentum visit downloaded it to render report bodies that are usually absent.
+const MarkdownView = dynamic(() => import('@/components/reports/MarkdownView').then((m2) => m2.MarkdownView), { ssr: false })
 import { Sheet } from '@/components/ui/Sheet'
 import { DayCard } from '@/components/timeline/ContinuumTimeline'
 import { GOLD, EMERALD, OXIDE, SAPPHIRE } from '@/lib/theme/palette'
@@ -51,6 +54,22 @@ export function isWeekReady(weekStart: string, loggedDates: Set<string>, today: 
   if (!due.length) return false
   return due.every((d) => loggedDates.has(d))
 }
+
+/**
+ * A week is COMPLETE when it is over — strictly after its final day.
+ *
+ * Distinct from `isWeekReady`, which is about having done the work and is
+ * deliberately allowed to fire mid-week (it drives the gold aura, the "you're
+ * on top of it" signal). "Complete" is a statement about the calendar, so
+ * labelling the live week complete on its last training day was simply wrong:
+ * the week hadn't finished, and more could still be logged into it.
+ */
+export function isWeekComplete(weekStart: string, today: string): boolean {
+  return today > isoAddDays(weekStart, 6)
+}
+
+/** Stable empty ref — a fresh `[]` per render defeats the capsule's memo. */
+const NO_DAYS: ContinuumDay[] = []
 
 /**
  * Pathfinder timeline — the unified life-over-time spine merging the old Journey
@@ -86,12 +105,30 @@ export function PathfinderTimeline() {
 
   // Only the current week is expanded by default; every past week auto-collapses.
   const isOpen = (ws: string) => overrides[ws] ?? (ws === liveWeekStart)
-  const toggle = (ws: string) => setOverrides((o) => ({ ...o, [ws]: !isOpen(ws) }))
+  // Stable identity so a memoized capsule isn't invalidated by its own handlers.
+  // The default has to be recomputed inside the updater rather than captured,
+  // because `isOpen` closes over the pre-update `overrides`.
+  const toggle = useCallback((ws: string) => {
+    setOverrides((o) => ({ ...o, [ws]: !(o[ws] ?? (ws === liveWeekStart)) }))
+  }, [liveWeekStart])
+  const openDay = useCallback((date: string) => router.push(`/day/${date}`), [router])
 
   // Every date with a logged session — drives the ready-week aura.
   const loggedDates = useMemo(
     () => new Set((continuumDays ?? []).filter((d) => d.session).map((d) => d.date)),
     [continuumDays],
+  )
+
+  // Readiness ran per capsule, per render — each call built a 7-element array
+  // and filtered it. Computed once per data change instead.
+  const today = logicalTodayISO()
+  const readyWeeks = useMemo(
+    () => new Set(nodes.filter((n) => isWeekReady(n.weekStart, loggedDates, today)).map((n) => n.weekStart)),
+    [nodes, loggedDates, today],
+  )
+  const completeWeeks = useMemo(
+    () => new Set(nodes.filter((n) => isWeekComplete(n.weekStart, today)).map((n) => n.weekStart)),
+    [nodes, today],
   )
 
   // Land on the CURRENT week. It's expanded by default but sat below whatever
@@ -121,12 +158,13 @@ export function PathfinderTimeline() {
                 key={n.weekStart}
                 ref={n.weekStart === liveWeekStart ? liveRef : undefined}
                 node={n}
-                days={daysByWeek.get(n.weekStart) ?? []}
+                days={daysByWeek.get(n.weekStart) ?? NO_DAYS}
                 unit={unit}
-                ready={isWeekReady(n.weekStart, loggedDates, logicalTodayISO())}
+                ready={readyWeeks.has(n.weekStart)}
+                complete={completeWeeks.has(n.weekStart)}
                 open={isOpen(n.weekStart)}
-                onToggle={() => toggle(n.weekStart)}
-                onOpenDay={(date) => router.push(`/day/${date}`)}
+                onToggle={toggle}
+                onOpenDay={openDay}
               />
             ))}
           </div>
@@ -136,17 +174,26 @@ export function PathfinderTimeline() {
   )
 }
 
-const WeekCapsule = forwardRef<HTMLDivElement, {
+/**
+ * One week. `memo`'d because the timeline renders every week you have ever
+ * trained: without it, expanding a single capsule re-rendered all of them, each
+ * one recomputing its dominant split and its readiness. Handlers take the week
+ * start rather than closing over it so the parent can hand down ONE stable
+ * function instead of a fresh arrow per node.
+ */
+const WeekCapsule = memo(forwardRef<HTMLDivElement, {
   node: TimelineWeekNode
   days: ContinuumDay[]
   unit: string
   ready: boolean
+  complete: boolean
   open: boolean
-  onToggle: () => void
+  onToggle: (weekStart: string) => void
   onOpenDay: (date: string) => void
-}>(function WeekCapsule({ node, days, unit, ready, open, onToggle, onOpenDay }, ref) {
-  const color = splitColor(dominantSplit(node.days))
+}>(function WeekCapsule({ node, days, unit, ready, complete, open, onToggle, onOpenDay }, ref) {
+  const color = useMemo(() => splitColor(dominantSplit(node.days)), [node.days])
   const hasPRs = node.prs > 0
+  const handleToggle = useCallback(() => onToggle(node.weekStart), [onToggle, node.weekStart])
 
   return (
     <m.div ref={ref} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
@@ -158,7 +205,7 @@ const WeekCapsule = forwardRef<HTMLDivElement, {
       {/* READY WEEK: every scheduled training day done. A gold halo + a slow
           breathe — opacity-only so it costs one compositor layer and respects
           reduced motion via the global .aura-breathe guard. */}
-      <button onClick={onToggle} onPointerUp={blurOnTap}
+      <button onClick={handleToggle} onPointerUp={blurOnTap}
         className={`helix-card w-full text-left px-4 py-3.5 active:opacity-90 relative ${ready ? 'aura-breathe' : ''}`}
         style={ready
           ? { borderColor: `${GOLD}66`, boxShadow: `0 0 28px ${GOLD}33, inset 0 1px 0 ${GOLD}2e` }
@@ -168,7 +215,9 @@ const WeekCapsule = forwardRef<HTMLDivElement, {
             {node.weekLabel} · {label(node.weekStart)}–{label(isoAddDays(node.weekStart, 6))}
           </span>
           <span className="flex items-center gap-2 shrink-0">
-            {ready && (
+            {/* COMPLETE means the week is OVER, not that you finished its work
+                early — this was gated on `ready` and so appeared mid-week. */}
+            {complete && (
               <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded"
                 style={{ color: GOLD, background: `${GOLD}1a`, border: `1px solid ${GOLD}55` }}>Complete</span>
             )}
@@ -230,7 +279,7 @@ const WeekCapsule = forwardRef<HTMLDivElement, {
       </AnimatePresence>
     </m.div>
   )
-})
+}))
 
 /** Compact weekly recovery: avg battery & sleep score across the week. */
 function WeekRecoveryStrip({ weekStart }: { weekStart: string }) {
@@ -295,8 +344,12 @@ function isSentinelReport(md: string): boolean {
 }
 
 function WeekActions({ node }: { node: TimelineWeekNode }) {
-  const { data: payload, isLoading } = useWeeklyExport(node.weekStart)
-  const { data: sentinelPayload, isLoading: sentinelLoading } = useSentinelExport(node.weekStart)
+  // Both payload hooks are DISABLED and driven by an explicit refetch on click.
+  // Expanding a week capsule used to fire ~21 Supabase round-trips building two
+  // export strings nobody had asked for; on Momentum, with the live week open by
+  // default, that was most of the page's cold-start cost.
+  const raw = useWeeklyExport(node.weekStart, false)
+  const sentinel = useSentinelExport(node.weekStart, false)
   const { data: summaries } = useWeeklyAiSummaries()
   const { data: sentinelReports } = useSentinelReports()
   const save = useSaveWeeklyAiSummary()
@@ -310,15 +363,20 @@ function WeekActions({ node }: { node: TimelineWeekNode }) {
   const storedSentinel = sentinelReports?.find((s) => s.weekStart === node.weekStart)
 
   const copy = async (kind: ExportKind) => {
-    const text = kind === 'sentinel' ? sentinelPayload : payload
+    const q = kind === 'sentinel' ? sentinel : raw
+    // Cached from a previous click → the write stays inside the user gesture.
+    // First click has to build the payload first, which on Safari can cost the
+    // gesture; the catch below is what makes that survivable.
+    let text = q.data
+    if (!text) text = (await q.refetch()).data
     if (!text) return
     try {
       await navigator.clipboard.writeText(text)
       setCopied(kind)
       setTimeout(() => setCopied(null), 2200)
     } catch {
-      // Clipboard blocked (insecure context / permissions) — drop the payload
-      // into the textarea so it's never unreachable.
+      // Clipboard blocked (insecure context / permissions / lost gesture) —
+      // drop the payload into the textarea so it's never unreachable.
       setDraft(text)
       setPasteOpen(true)
     }
@@ -327,18 +385,18 @@ function WeekActions({ node }: { node: TimelineWeekNode }) {
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap gap-2">
-        <button onClick={() => copy('sentinel')} disabled={sentinelLoading || !sentinelPayload}
+        <button onClick={() => copy('sentinel')} disabled={sentinel.isFetching}
           className="btn-primary min-h-[40px] text-fluid-xs disabled:opacity-50"
           style={copied === 'sentinel' ? { background: EMERALD } : undefined}>
-          {sentinelLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Building…</>
+          {sentinel.isFetching ? <><Loader2 className="w-4 h-4 animate-spin" /> Building…</>
             : copied === 'sentinel' ? <><Check className="w-4 h-4" /> Copied</>
             : <><Radar className="w-4 h-4" /> Copy audit brief</>}
         </button>
 
-        <button onClick={() => copy('raw')} disabled={isLoading || !payload}
+        <button onClick={() => copy('raw')} disabled={raw.isFetching}
           className="btn-glass min-h-[40px] text-fluid-xs disabled:opacity-50"
           style={copied === 'raw' ? { borderColor: `${EMERALD}66`, color: EMERALD } : undefined}>
-          {isLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Building…</>
+          {raw.isFetching ? <><Loader2 className="w-4 h-4 animate-spin" /> Building…</>
             : copied === 'raw' ? <><Check className="w-4 h-4" /> Copied</>
             : <><ClipboardCopy className="w-4 h-4" /> Copy raw data</>}
         </button>

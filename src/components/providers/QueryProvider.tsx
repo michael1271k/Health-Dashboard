@@ -55,7 +55,13 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
             // revalidates) while making an in-session tab switch instant.
             staleTime: 60 * 1000,
             gcTime: 30 * 60 * 1000,
-            refetchOnWindowFocus: true,
+            // OFF deliberately. A live Supabase WebSocket already invalidates
+            // the exact keys a changed table feeds (RealtimeProvider), so
+            // refetching every mounted query on focus is pure duplicate work —
+            // and on iOS, tapping between the app and anything else fired it
+            // constantly. Freshness comes from realtime events and from the
+            // reconnect path below, not from the window regaining focus.
+            refetchOnWindowFocus: false,
             refetchOnReconnect: true,
             refetchOnMount: true,
             retry: 1,

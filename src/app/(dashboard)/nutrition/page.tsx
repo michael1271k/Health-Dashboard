@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { FlaskConical, ChevronRight } from 'lucide-react'
@@ -17,7 +17,6 @@ import { ScheduleShortcut } from '@/components/day/ScheduleShortcut'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { useEraFilter, eraDateRange, SUB_PHASE_META } from '@/lib/era/eraFilter'
 import { EraFilterPills } from '@/components/era/EraFilterPills'
-import type { Tables } from '@/lib/supabase/types'
 
 interface ActiveGoals {
   calorie: number
@@ -47,12 +46,13 @@ export default function NutritionPage() {
 
   const [goals, setGoals] = useState<ActiveGoals>({ calorie: 1955, protein: 170, carbs: 195, fat: 55, mode: 'cut' })
 
+  // Reads the row `useUserGoals()` already has in cache instead of issuing its
+  // own getSession + select — that pair was a second, uncached fetch of exactly
+  // the same row on every Nutrition mount. The auto-heal write below is the
+  // only reason this effect still exists.
   useEffect(() => {
     async function load() {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return
-      const { data: raw } = await supabase.from('user_goals').select('*').eq('user_id', session.user.id).single()
-      const g = raw as Tables<'user_goals'> | null
+      const g = userGoals ?? null
       if (!g) return
       const mode = (g.goal_preset as NutritionMode | null) ?? null
       const preset = mode ? NUTRITION_PRESETS[mode] : null
@@ -64,7 +64,7 @@ export default function NutritionPage() {
         || g.carbs_goal_g !== preset.carbsGoalG || g.fat_goal_g !== preset.fatGoalG)) {
         setGoals({ calorie: preset.calorieGoal, protein: preset.proteinGoalG, carbs: preset.carbsGoalG, fat: preset.fatGoalG, mode })
         await supabase.from('user_goals').upsert({
-          user_id: session.user.id, calorie_goal: preset.calorieGoal, protein_goal_g: preset.proteinGoalG,
+          user_id: g.user_id, calorie_goal: preset.calorieGoal, protein_goal_g: preset.proteinGoalG,
           carbs_goal_g: preset.carbsGoalG, fat_goal_g: preset.fatGoalG, goal_preset: mode,
         } as unknown as never, { onConflict: 'user_id' })
         qc.invalidateQueries({ queryKey: ['user_goals'] })
@@ -74,16 +74,24 @@ export default function NutritionPage() {
     }
     load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [userGoals])
 
   // The nested sub-phase (Cut / Maint / Bulk under Helix 5.1) narrows the day
   // list by its DB-stored per-day phase. Only the Helix era carries the sub-
   // phase row; 'all' / 'ppl' show every day in the era window.
-  const filteredLogs = era === 'axis' ? (logs ?? []).filter((l) => l.phase === resolvedPhase) : (logs ?? [])
+  const filteredLogs = useMemo(
+    () => (era === 'axis' ? (logs ?? []).filter((l) => l.phase === resolvedPhase) : (logs ?? [])),
+    [logs, era, resolvedPhase],
+  )
 
-  const last7 = (logs ?? []).slice(0, 7)
-  const inRange = last7.filter((l) => l.calories !== null && Math.abs(l.calories - goals.calorie) <= 100).length
-  const adherence = last7.length ? Math.round((inRange / last7.length) * 100) : null
+  // Whole-history scans that ran on every render, including every keystroke in
+  // any child input.
+  const adherence = useMemo(() => {
+    const last7 = (logs ?? []).slice(0, 7)
+    if (!last7.length) return null
+    const inRange = last7.filter((l) => l.calories !== null && Math.abs(l.calories - goals.calorie) <= 100).length
+    return Math.round((inRange / last7.length) * 100)
+  }, [logs, goals.calorie])
 
   return (
     <div className="space-y-6">
