@@ -28,7 +28,6 @@ const GROUPS: Group[] = [
     metrics: [
       { key: 'hrv', label: 'HRV', color: '#8E9AAC', agg: 'avg', better: 'up', pick: (d) => pos(d.hrv_ms), fmt: (v) => `${Math.round(v)} ms` },
       { key: 'rhr', label: 'Resting HR', color: '#C4514E', agg: 'avg', better: 'down', pick: (d) => pos(d.avg_rest_heart_rate), fmt: (v) => `${Math.round(v)} bpm` },
-      { key: 'hrr', label: 'HR Recovery', color: '#3E9E7A', agg: 'avg', better: 'up', pick: (d) => pos(d.heart_rate_recovery), fmt: (v) => `${Math.round(v)} bpm` },
       { key: 'wrist', label: 'Wrist Temp', color: '#B4522A', agg: 'avg', better: 'neutral', pick: (d) => pos(d.wrist_temp_delta), fmt: (v) => `${v.toFixed(1)}°C`, deltaFmt: (v) => `${v.toFixed(2)}°C` },
     ],
   },

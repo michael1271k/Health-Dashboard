@@ -140,18 +140,17 @@ describe('ingest — native key → column mapping', () => {
   })
 })
 
-describe('ingest — recovery keys: heart_rate_recovery / wrist_temp / time_in_daylight', () => {
+describe('ingest — recovery keys: wrist_temp / time_in_daylight', () => {
   it('accepts all three and stores them in their daily_logs columns', async () => {
     const rows: any[] = []
     const db = mockDb((row) => { rows.push(row); return { error: null } })
     const result = await ingestDailyLog(db, 'user-1', {
-      date: '2026-07-17', heart_rate_recovery: 31.5, wrist_temp: 36.2, time_in_daylight: 45,
+      date: '2026-07-17', wrist_temp: 36.2, time_in_daylight: 45,
     } as any)
 
-    expect(rows[0].heart_rate_recovery).toBe(31.5)      // float accepted, precision kept
     expect(rows[0].wrist_temp_delta).toBe(36.2)         // column stores the night's avg °C as sent
     expect(rows[0].time_in_daylight_min).toBe(45)
-    expect(result.inserted).toEqual(expect.arrayContaining(['heart_rate_recovery', 'wrist_temp', 'time_in_daylight']))
+    expect(result.inserted).toEqual(expect.arrayContaining(['wrist_temp', 'time_in_daylight']))
     expect(result.errors).toHaveLength(0)
   })
 

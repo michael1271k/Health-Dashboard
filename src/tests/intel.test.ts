@@ -7,25 +7,23 @@ import { logicalTodayISO, logicalDaysAgoISO } from '@/lib/utils/day'
 
 // ── Advanced-metric schema mapping ─────────────────────────────────────────
 describe('advanced ingest fields', () => {
-  it('accepts wrist_temp / time_in_daylight / heart_rate_recovery (native canonical keys)', () => {
+  it('accepts wrist_temp / time_in_daylight (native canonical keys)', () => {
     const r = IngestPayloadSchema.safeParse({
-      wrist_temp: 0.4, time_in_daylight: '95', heart_rate_recovery: 31,
+      wrist_temp: 0.4, time_in_daylight: '95',
     })
     expect(r.success).toBe(true)
     if (r.success) {
       expect(r.data.wrist_temp).toBe(0.4)
       expect(r.data.time_in_daylight).toBe(95)
-      expect(r.data.heart_rate_recovery).toBe(31)
     }
   })
 
   it('treats junk values for the new fields as absent (never throws)', () => {
-    const r = IngestPayloadSchema.safeParse({ wrist_temp: 'null', time_in_daylight: false, heart_rate_recovery: '' })
+    const r = IngestPayloadSchema.safeParse({ wrist_temp: 'null', time_in_daylight: false })
     expect(r.success).toBe(true)
     if (r.success) {
       expect(r.data.wrist_temp).toBeUndefined()
       expect(r.data.time_in_daylight).toBeUndefined()
-      expect(r.data.heart_rate_recovery).toBeUndefined()
     }
   })
 })

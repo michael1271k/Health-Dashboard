@@ -8,14 +8,13 @@ import { logicalTodayISO } from '@/lib/utils/day'
 /**
  * Weekly Vitals data layer — one query over daily_logs powering the
  * Apple-Health-style /vitals page. This is the DEBUT surface for
- * heart_rate_recovery, wrist_temp_delta and time_in_daylight_min (stored by
- * the ingest pipeline since v5.1 but never rendered anywhere before).
+ * wrist_temp_delta and time_in_daylight_min (stored by the ingest pipeline
+ * since v5.1 but never rendered anywhere before).
  */
 export interface VitalsDay {
   date: string
   hrv_ms: number | null
   avg_rest_heart_rate: number | null
-  heart_rate_recovery: number | null
   /** Since 2026-07 the Shortcut sends the night's AVERAGE wrist temp in °C. */
   wrist_temp_delta: number | null
   respiratory_rate: number | null
@@ -31,7 +30,7 @@ export interface VitalsDay {
 }
 
 const VITALS_COLS =
-  'date, hrv_ms, avg_rest_heart_rate, heart_rate_recovery, wrist_temp_delta, respiratory_rate, ' +
+  'date, hrv_ms, avg_rest_heart_rate, wrist_temp_delta, respiratory_rate, ' +
   'blood_oxygen, vo2max, time_in_daylight_min, stand_hours, steps, sleep_minutes, ' +
   'exercise_minutes, training_minutes, active_energy'
 

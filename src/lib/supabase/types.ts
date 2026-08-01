@@ -322,7 +322,6 @@ export interface Database {
           vo2max: number | null
           wrist_temp_delta: number | null
           time_in_daylight_min: number | null
-          heart_rate_recovery: number | null
           effort_rating: number | null
           mood: number | null
           journal_md: string | null

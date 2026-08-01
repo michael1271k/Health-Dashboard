@@ -61,7 +61,6 @@ const METRIC_MAP: Array<{ hk: string; key: string; reduce: Reduce; scale?: numbe
   // never actually QUERIED, so they always read 0. Now pulled every sync. ──
   { hk: 'HKQuantityTypeIdentifierTimeInDaylight', key: 'time_in_daylight', reduce: 'sum' },
   { hk: 'HKQuantityTypeIdentifierAppleSleepingWristTemperature', key: 'wrist_temp', reduce: 'avg' },
-  { hk: 'HKQuantityTypeIdentifierHeartRateRecoveryOneMinute', key: 'heart_rate_recovery', reduce: 'latest' },
   // Dietary — sum every logged food entry for the day so calories match MFP
   // exactly (fiber/rounding included), instead of deriving 4·C+4·P+9·F.
   { hk: 'HKQuantityTypeIdentifierDietaryEnergyConsumed', key: 'calories', reduce: 'sum' },
@@ -92,7 +91,6 @@ const EXTRA_READ_TYPES = [
   'HKQuantityTypeIdentifierBodyFatPercentage',
   'HKQuantityTypeIdentifierLeanBodyMass',
   'HKQuantityTypeIdentifierBodyMassIndex',
-  'HKQuantityTypeIdentifierHeartRateRecoveryOneMinute',
   'HKQuantityTypeIdentifierAppleSleepingWristTemperature',
   'HKQuantityTypeIdentifierTimeInDaylight',
   'HKQuantityTypeIdentifierHeartRate',

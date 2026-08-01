@@ -111,5 +111,4 @@ export const MICRO_SIGNALS: MicroSignal[] = [
   { key: 'hrv_ms', label: 'HRV', unit: 'ms', reference: 'Higher vs your baseline = better recovery', color: '#3D7AB8' },
   { key: 'blood_oxygen', label: 'Blood O₂', unit: '%', reference: '95–100 % typical at rest', color: '#3E9E7A' },
   { key: 'respiratory_rate', label: 'Resp Rate', unit: '/min', reference: '12–20 /min at rest', color: '#E0703C' },
-  { key: 'heart_rate_recovery', label: 'HR Recovery', unit: 'bpm', reference: '1-min drop; higher = fitter', color: '#8E9AAC' },
 ]

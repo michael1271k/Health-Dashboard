@@ -171,7 +171,6 @@ public class HealthkitPlugin: CAPPlugin, CAPBridgedPlugin {
     switch t.identifier {
     // ── Newer metrics matched by raw identifier (SDK-availability-proof) ──
     case "HKQuantityTypeIdentifierTimeInDaylight":             return .minute()
-    case "HKQuantityTypeIdentifierHeartRateRecoveryOneMinute": return HKUnit.count().unitDivided(by: .minute())
     case "HKQuantityTypeIdentifierDietaryFatSaturated":        return .gram()
     case HKQuantityTypeIdentifier.stepCount.rawValue: return .count()
     // Metres — the JS side stores distance_m and formats km for display.
