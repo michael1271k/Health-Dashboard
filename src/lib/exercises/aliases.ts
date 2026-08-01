@@ -20,6 +20,23 @@ export const EXERCISE_ALIASES: Record<string, string> = {
   // creating a duplicate `exercises` row.
   'hack/smith squat': 'Hack Squat',
   'smith squat': 'Hack Squat',
+
+  // ── One machine, one row (merged 2026-08-01) ──
+  // The day templates named the same three stations differently on their A and
+  // B days, so each had TWO `exercises` rows and therefore two separate PR
+  // baselines. The effect was silent and wrong: Leg Press ran 72.5 kg × 13 on
+  // 07-27 as `Leg Press`, then the identical 72.5 kg × 13 on 07-31 as
+  // `Leg Press Horizontal (Machine)` counted as a fresh record because that
+  // row had never seen it. Grip is a CUE (now a program `note`), not an
+  // exercise identity.
+  'chest press machine': 'Chest Press (Machine)',
+  'machine chest press': 'Chest Press (Machine)',
+  'leg press horizontal': 'Leg Press',
+  'leg press horizontal (machine)': 'Leg Press',
+  'seated cable row (v-grip)': 'Seated Cable Row',
+  'seated cable row (v grip)': 'Seated Cable Row',
+  'seated cable row - bar wide grip': 'Seated Cable Row',
+  'wide-grip cable row': 'Seated Cable Row',
 }
 
 export function canonicalExerciseName(raw: string): string {

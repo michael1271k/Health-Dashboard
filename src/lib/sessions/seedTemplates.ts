@@ -22,7 +22,7 @@ export const SEED_TEMPLATES: Record<string, SeedTemplate> = {
     exercises: [
       { name: 'Chest Press (Machine)', muscles: ['chest', 'triceps'], sets: [{ weightKg: 35, reps: 12 }, { weightKg: 37.5, reps: 12 }, { weightKg: 37.5, reps: 12 }] },
       { name: 'Neutral-Grip Lat Pulldown', muscles: ['back'], sets: [{ weightKg: 45, reps: 12 }, { weightKg: 45, reps: 12 }] },
-      { name: 'Seated Cable Row - Bar Wide Grip', muscles: ['back'], sets: [{ weightKg: 35, reps: 12 }, { weightKg: 35, reps: 12 }] },
+      { name: 'Seated Cable Row', muscles: ['back'], sets: [{ weightKg: 35, reps: 12 }, { weightKg: 35, reps: 12 }] },
       { name: 'Single Arm Cable Crossover', muscles: ['chest'], sets: [{ weightKg: 7.5, reps: 12 }, { weightKg: 7.5, reps: 15 }] },
       { name: 'Single Arm Lateral Raise (Cable)', muscles: ['shoulders'], sets: [{ weightKg: 3.75, reps: 16 }, { weightKg: 3.75, reps: 15 }, { weightKg: 2.5, reps: 20 }] },
       { name: 'Single Arm Triceps Pushdown (Cable)', muscles: ['triceps'], sets: [{ weightKg: 5, reps: 15 }, { weightKg: 6.25, reps: 14 }] },
@@ -33,7 +33,7 @@ export const SEED_TEMPLATES: Record<string, SeedTemplate> = {
     exercises: [
       { name: 'Romanian Deadlift (Dumbbell)', muscles: ['hamstrings', 'glutes', 'back'], sets: [{ weightKg: 30, reps: 12 }, { weightKg: 30, reps: 12 }, { weightKg: 30, reps: 12 }] },
       { name: 'Hip Thrust (Machine)', muscles: ['glutes'], sets: [{ weightKg: 25, reps: 14 }, { weightKg: 25, reps: 13 }, { weightKg: 25, reps: 12 }] },
-      { name: 'Leg Press Horizontal', muscles: ['quads', 'glutes'], sets: [{ weightKg: 57.5, reps: 15 }, { weightKg: 70, reps: 12 }, { weightKg: 70, reps: 12 }] },
+      { name: 'Leg Press', muscles: ['quads', 'glutes'], sets: [{ weightKg: 57.5, reps: 15 }, { weightKg: 70, reps: 12 }, { weightKg: 70, reps: 12 }] },
       { name: 'Seated Leg Curl', muscles: ['hamstrings'], sets: [{ weightKg: 45, reps: 15 }, { weightKg: 45, reps: 13 }] },
       { name: 'Calf Press', muscles: ['calves'], sets: [{ weightKg: 65, reps: 15 }, { weightKg: 67.5, reps: 14 }, { weightKg: 67.5, reps: 13 }] },
       // Bodyweight / timed moves seed at 0 kg (reps = the count / seconds held).

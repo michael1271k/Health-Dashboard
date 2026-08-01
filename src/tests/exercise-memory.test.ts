@@ -44,7 +44,7 @@ describe('workingSets — warm-ups seed but never form a baseline', () => {
 describe('seedFromHistory reproduces ALL tags, not just failure', () => {
   it('round-trips warmup / failure / dropset into the draft', () => {
     const history = new Map<string, ExerciseHistoryEntry>([
-      ['Leg Press Horizontal', {
+      ['Leg Press', {
         date: '2026-07-31',
         sets: [
           { weightKg: 60, reps: 15, setType: 'warmup' },
@@ -54,7 +54,7 @@ describe('seedFromHistory reproduces ALL tags, not just failure', () => {
       }],
     ])
     const d = buildTemplateDraft(legsB, '2026-08-07', history)
-    const press = d.exercises.find((e) => e.name === 'Leg Press Horizontal')!
+    const press = d.exercises.find((e) => e.name === 'Leg Press')!
     expect(press.sets).toEqual([
       { weightKg: 60, reps: 15, setType: 'warmup', done: false },
       { weightKg: 72.5, reps: 13, done: false },
