@@ -106,7 +106,7 @@ export const APEX51: Program = {
     ] },
     { key: 'legs_a', label: 'Legs & Core A', sub: 'Quad Focus', color: C.legsA, weekday: 1, exercises: [
       { name: 'Leg Press', sets: 4, cutSets: 3, wk1Kg: 70, reps: '8–12', muscles: ['quads', 'glutes'], compound: true, note: '1 warm-up @40kg' },
-      { name: 'Hack/Smith Squat', sets: 3, cutSets: 2, wk1Kg: null, reps: '10–12', muscles: ['quads', 'glutes'], compound: true },
+      { name: 'Hack Squat', sets: 3, cutSets: 2, wk1Kg: null, reps: '10–12', muscles: ['quads', 'glutes'], compound: true },
       { name: 'Leg Extension', sets: 3, cutSets: 3, wk1Kg: 37.5, reps: '12–15', muscles: ['quads'] },
       { name: 'Seated Leg Curl', sets: 3, cutSets: 3, wk1Kg: 40, reps: '10–15', muscles: ['hamstrings'] },
       { name: 'Calf Press', sets: 4, cutSets: 3, wk1Kg: 65, reps: '10–15', muscles: ['calves'] },
@@ -167,7 +167,7 @@ export const HELIX4: Program = {
     ] },
     { key: 'lower_a', label: 'Lower A', color: C.legsA, weekday: 2, exercises: [
       { name: 'Leg Press', sets: 3, cutSets: 3, wk1Kg: 70, reps: '8–12', muscles: ['quads', 'glutes'], compound: true },
-      { name: 'Hack/Smith Squat', sets: 2, cutSets: 0, wk1Kg: null, reps: '10–12', muscles: ['quads', 'glutes'], compound: true },
+      { name: 'Hack Squat', sets: 2, cutSets: 0, wk1Kg: null, reps: '10–12', muscles: ['quads', 'glutes'], compound: true },
       { name: 'Leg Extension', sets: 2, cutSets: 3, wk1Kg: 37.5, reps: '12–15', muscles: ['quads'] },
       { name: 'Seated Leg Curl', sets: 3, cutSets: 3, wk1Kg: 40, reps: '10–15', muscles: ['hamstrings'] },
       { name: 'Calf Press', sets: 4, cutSets: 3, wk1Kg: 65, reps: '10–15', muscles: ['calves'] },

@@ -7,7 +7,7 @@ import { ArrowLeftRight, CheckCheck, ChevronDown, Footprints, GripVertical, Hist
 import { SetEditorRow } from './SetEditorRow'
 import { cardioSummary, isSetCommitted, type DraftExercise, type DraftSet } from '@/lib/sessions/draft'
 import { isTimedExercise } from '@/lib/exercises/timed'
-import { repWindowFor, holdTargetFor, ladderVerdict } from '@/lib/training/ceilings'
+import { repWindowFor, holdTargetFor, ladderVerdict, levelUpCue } from '@/lib/training/ceilings'
 import { workingSets, type ExerciseHistory } from '@/lib/hooks/useExerciseSetHistory'
 import type { PrAxis } from '@/lib/training/prEngine'
 import { livePrKey } from '@/lib/sessions/livePrs'
@@ -23,9 +23,16 @@ const STATUS_META: Record<NonNullable<DraftExercise['status']>, { label: string;
 
 const CARDIO_VIOLET = '#B4522A'
 const READY_GOLD = '#D4AF37'
+const AMBER = '#E0A03C'   // one-more-session: earned, not yet due
 
-/** Smart-Coach cue for this lift: it cleared its ceiling twice and is due a bump. */
-export interface ReadyCue { suggestKg: number | null; currentKg: number | null; timed: boolean }
+/** Smart-Coach cue for this lift. `ready` = earned the bump (two clean sessions
+ *  at the top load); `one-more` = cleared once and needs it repeated. */
+export interface ReadyCue {
+  suggestKg: number | null
+  currentKg: number | null
+  timed: boolean
+  state: 'ready' | 'one-more'
+}
 
 // A unilateral L/R pair reads as ONE numbered set that expands into Left/Right
 // sub-rows — NOT two sibling rows. groupSets folds the flat draft list into that
@@ -160,6 +167,11 @@ export function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collap
     () => (repWindow ? ladderVerdict(committedWork, repWindow.ceiling) : null),
     [repWindow, committedWork],
   )
+  // Mixed loads with the top rung handled: level the light sets up, don't add.
+  const levelUp = useMemo(
+    () => (repWindow ? levelUpCue(committedWork, repWindow) : null),
+    [repWindow, committedWork],
+  )
 
   // Unilateral lifts (already split, or a single-arm/per-side movement) get the
   // asymmetry rule: the STRONG side sets the rep count, the weak side matches it.
@@ -170,22 +182,32 @@ export function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collap
   // an unmet obligation beats an earned reward, which beats a status note,
   // which beats a standing technique reminder.
   const coachCue = useMemo((): { text: string; color: string; icon: typeof Target } | null => {
+    // MIXED LOADS: never "add weight". The correct move is to bring the light
+    // sets up to the load already being handled, earned at the window FLOOR.
+    if (levelUp) {
+      return {
+        color: READY_GOLD, icon: Target,
+        text: `Raise ${fmtKg(levelUp.fromKg)}kg → ${fmtKg(levelUp.toKg)}kg, target ${levelUp.atReps} reps`,
+      }
+    }
     if (ladder?.state === 'blocked') {
       return {
         color: READY_GOLD, icon: Target,
         text: `Clear ${fmtKg(ladder.bindingLoadKg ?? 0)}kg first — ${ladder.repsOwed} more rep${ladder.repsOwed === 1 ? '' : 's'} to reach ${ladder.ceiling} on every set before ${fmtKg(ladder.topLoadKg ?? 0)}kg replaces it.`,
       }
     }
-    if (ready && !ready.timed && ready.currentKg != null && ready.suggestKg != null) {
+    if (ready?.state === 'ready' && !ready.timed && ready.currentKg != null && ready.suggestKg != null) {
       return {
         color: READY_GOLD, icon: Target,
         text: `Ceiling cleared twice — add load: ${fmtKg(ready.currentKg)} → ${fmtKg(ready.suggestKg)}kg`,
       }
     }
-    if (ladder?.state === 'collapse-ready') {
+    if (ready?.state === 'one-more') {
       return {
-        color: READY_GOLD, icon: Target,
-        text: `${fmtKg(ladder.bindingLoadKg ?? 0)}kg cleared — ${fmtKg(ladder.topLoadKg ?? 0)}kg is your new baseline.`,
+        color: AMBER, icon: Target,
+        text: ready.timed
+          ? 'Hold cleared — one more session like it to earn a longer hold'
+          : 'Top load cleared — one more session like it to earn the next load',
       }
     }
     if (exercise.targetNext) return { color: READY_GOLD, icon: Target, text: `Next: ${exercise.targetNext}` }
@@ -196,7 +218,7 @@ export function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collap
       }
     }
     return null
-  }, [ladder, ready, exercise.targetNext, unilateral])
+  }, [ladder, levelUp, ready, exercise.targetNext, unilateral])
 
   // ── Cardio variant: slim card, distance/duration chips, no set rows ──
   if (exercise.kind === 'cardio') {

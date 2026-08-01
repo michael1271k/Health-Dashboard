@@ -52,7 +52,7 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
   // matching card in this session shows the "▲ add load" chip inline.
   const { data: queue } = useProgressionQueue()
   const readyByName = useMemo(
-    () => new Map<string, ReadyCue>((queue ?? []).map((a) => [a.name, { suggestKg: a.suggestKg, currentKg: a.currentKg, timed: a.timed }])),
+    () => new Map<string, ReadyCue>((queue ?? []).map((a) => [a.name, { suggestKg: a.suggestKg, currentKg: a.currentKg, timed: a.timed, state: a.state }])),
     [queue],
   )
 

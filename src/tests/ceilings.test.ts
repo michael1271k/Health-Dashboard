@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest'
 import {
   parseRepWindow, repWindowFor, clearedCeiling, ladderVerdict, loadLadder,
   progressionVerdict, LOAD_STEP_KG, holdTargetFor, timedProgressionVerdict,
+  levelUpCue,
+  topLoadCleared,
 } from '@/lib/training/ceilings'
 
 /**
@@ -213,20 +215,35 @@ describe('timedProgressionVerdict', () => {
   })
 })
 
-describe('progressionVerdict — a ladder collapse must not break the chain', () => {
+describe('progressionVerdict — the gate is the TOP load, not any load', () => {
   const ceiling = 12
   const cleanAt = (kg: number) => [{ weightKg: kg, reps: 12 }, { weightKg: kg, reps: 12 }]
 
-  it('counts a collapse-ready session as cleared for chaining purposes', () => {
-    // Week 1: clean at 18. Week 2: cleared 18 then moved up to 20 mid-session.
-    // Penalising that would punish the lifter for progressing.
+  // REVERSED DELIBERATELY. A ladder collapse used to count as "cleared", so any
+  // session that touched a lighter load could satisfy the gate — the source of
+  // "Ready to progress" appearing on lifts nowhere near ready (SA Cable
+  // Crossover, Hack Squat). Clearing a light rung says nothing about the load
+  // being chased.
+  it('refuses when the TOP load was not cleared, however clean the light rung', () => {
+    // Week 2: 18kg cleared, then one set at 20kg for 9 — three reps short.
     const v = progressionVerdict([cleanAt(18), [{ weightKg: 18, reps: 12 }, { weightKg: 20, reps: 9 }]], ceiling)
-    expect(v.state).toBe('ready')
+    expect(v.state).toBe('no')
+    expect(v.suggestKg).toBeNull()
   })
 
-  it('suggests the step up from the SETTLED (top) load, not the load dropped from', () => {
-    const v = progressionVerdict([cleanAt(18), [{ weightKg: 18, reps: 12 }, { weightKg: 20, reps: 9 }]], ceiling)
+  it('suggests the step up from the TOP load once that load is genuinely cleared', () => {
+    const v = progressionVerdict([cleanAt(20), cleanAt(20)], ceiling)
     expect(v.suggestKg).toBe(20 + LOAD_STEP_KG)
+  })
+
+  it('needs TWO sets at the ceiling on the top load — one is a fluke', () => {
+    const oneGoodSet = [{ weightKg: 20, reps: 12 }, { weightKg: 20, reps: 9 }]
+    expect(progressionVerdict([oneGoodSet, oneGoodSet], ceiling).state).toBe('no')
+  })
+
+  it('does NOT require every set — a trailing fatigue set must not block forever', () => {
+    const twoPlusFade = [{ weightKg: 20, reps: 12 }, { weightKg: 20, reps: 12 }, { weightKg: 20, reps: 8 }]
+    expect(progressionVerdict([twoPlusFade, twoPlusFade], ceiling).state).toBe('ready')
   })
 
   it('still refuses when the binding rung was short', () => {
@@ -239,5 +256,49 @@ describe('progressionVerdict — a ladder collapse must not break the chain', ()
       state: 'ready', ceiling, suggestKg: 20 + LOAD_STEP_KG,
     })
     expect(progressionVerdict([cleanAt(20)], ceiling).state).toBe('one-more')
+  })
+})
+
+describe('levelUpCue — mixed loads never mean "add weight"', () => {
+  const window = { floor: 8, ceiling: 12 }
+
+  it('says raise the LIGHT load to the heavy one, at the window floor', () => {
+    // Two sets at 20 hit the ceiling; a third at 18 did too. The next move is
+    // to bring the 18 up to 20, not to put 22.5 on the machine.
+    const cue = levelUpCue(
+      [{ weightKg: 20, reps: 12 }, { weightKg: 20, reps: 12 }, { weightKg: 18, reps: 12 }],
+      window,
+    )
+    expect(cue).toEqual({ fromKg: 18, toKg: 20, atReps: 8 })
+  })
+
+  it('is order-independent — light-first gives the identical cue', () => {
+    const cue = levelUpCue(
+      [{ weightKg: 18, reps: 12 }, { weightKg: 20, reps: 12 }, { weightKg: 20, reps: 12 }],
+      window,
+    )
+    expect(cue).toEqual({ fromKg: 18, toKg: 20, atReps: 8 })
+  })
+
+  it('stays silent on a single load — there is nothing to level up', () => {
+    expect(levelUpCue([{ weightKg: 20, reps: 12 }, { weightKg: 20, reps: 12 }], window)).toBeNull()
+  })
+
+  it('stays silent while the top load is still being earned', () => {
+    // 20kg only managed 9 — telling the 18 to move up would be premature.
+    expect(levelUpCue([{ weightKg: 18, reps: 12 }, { weightKg: 20, reps: 9 }], window)).toBeNull()
+  })
+})
+
+describe('topLoadCleared', () => {
+  it('ignores bodyweight-only sets', () => {
+    expect(topLoadCleared([{ weightKg: 0, reps: 30 }, { weightKg: 0, reps: 30 }], 12)).toBe(false)
+  })
+
+  it('counts only sets AT the top load', () => {
+    // Three sets at ceiling, but only one of them on the heaviest load.
+    expect(topLoadCleared(
+      [{ weightKg: 18, reps: 12 }, { weightKg: 18, reps: 12 }, { weightKg: 20, reps: 12 }], 12,
+    )).toBe(false)
   })
 })

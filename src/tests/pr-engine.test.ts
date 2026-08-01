@@ -212,7 +212,7 @@ describe('recordSets — the ledger attributes each axis to the set that won it'
  * ceiling. Real numbers: Hack Squat is programmed 10–12.
  */
 describe('e1rm rep-window gate', () => {
-  const HACK = 'Hack/Smith Squat'
+  const HACK = 'Hack Squat'
   const win = { repFloor: 10, repCeiling: 12 }
 
   // 2026-07-20: 60kg × 8 is BELOW the floor — a strength test, not the
@@ -322,7 +322,7 @@ describe('historical (pre-Helix) overrides', () => {
 })
 
 describe('recordSets when two sets win the same axis', () => {
-  const HACK = 'Hack/Smith Squat'
+  const HACK = 'Hack Squat'
   const win = { repFloor: 10, repCeiling: 12 }
   const sets: PrCandidateSet[] = [
     { key: HACK, weightKg: 50, reps: 12, timed: false, setType: null, ...win },

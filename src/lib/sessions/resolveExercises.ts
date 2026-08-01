@@ -10,7 +10,7 @@ type DB = SupabaseClient<Database>
  * Compound = multi-joint movement. Drives the est-1RM / Strength Trends chart,
  * which only plots compounds. Auto-created exercises used to default to
  * isolation (is_compound=false) unconditionally, which is exactly why the Helix
- * 5.1 lifts (chest press, lat pulldown, RDL, hack/smith squat, rows, presses)
+ * 5.1 lifts (chest press, lat pulldown, RDL, hack squat, rows, presses)
  * created fresh made the chart render empty. These patterns promote real
  * compounds at creation time; existing rows are fixed by a one-off SQL update.
  */

@@ -25,6 +25,8 @@ export interface ProgressionAlert {
   currentKg: number | null
   timed: boolean
   ceiling: number | null
+  /** 'ready' = earned the bump. 'one-more' = cleared once, needs a repeat. */
+  state: 'ready' | 'one-more'
 }
 
 /**
@@ -43,13 +45,18 @@ export function useProgressionQueue() {
   // (for the "log this day" deep-link). Deduped by exercise id.
   const targets = useMemo(() => {
     const prog = activeProgram()
+    // Keyed by (exercise, DAY). Deduping by exercise alone kept whichever day
+    // came first, so Calf Press — which appears on Legs A and Legs B with
+    // different rep windows — was graded against the wrong day's ceiling.
     const seen = new Map<string, { id: string; name: string; dayKey: string; dayLabel: string; color: string }>()
     for (const d of prog.days) {
       // prog is phase-resolved — cut-dropped lifts are already absent.
       for (const e of d.exercises) {
         const id = exMap?.get(e.name)
-        if (!id || seen.has(id)) continue
-        seen.set(id, { id, name: e.name, dayKey: d.key, dayLabel: d.label, color: d.color })
+        if (!id) continue
+        const k = `${id}|${d.key}`
+        if (seen.has(k)) continue
+        seen.set(k, { id, name: e.name, dayKey: d.key, dayLabel: d.label, color: d.color })
       }
     }
     return [...seen.values()]
@@ -104,10 +111,17 @@ export function useProgressionQueue() {
         const verdict = (timed ? timedProgressionVerdict : progressionVerdict)(
           previous ? [previous, latest] : [latest], ceiling,
         )
-        if (verdict.state !== 'ready') continue
+        // 'one-more' is surfaced too: seeing the trigger approach is more use
+        // than silence followed by a sudden instruction.
+        if (verdict.state !== 'ready' && verdict.state !== 'one-more') continue
+        const working = latest.filter((s2) => s2.weightKg > 0)
         alerts.push({
           exerciseId: t.id, name: t.name, dayKey: t.dayKey, dayLabel: t.dayLabel, dayColor: t.color,
-          suggestKg: verdict.suggestKg, currentKg: latest[0]?.weightKg ?? null, timed, ceiling,
+          suggestKg: verdict.suggestKg,
+          // The TOP load, not the first set logged — that is the load the
+          // verdict is actually about.
+          currentKg: working.length ? Math.max(...working.map((s2) => s2.weightKg)) : null,
+          timed, ceiling, state: verdict.state,
         })
       }
       return alerts.sort((a, b) => (a.dayLabel ?? '').localeCompare(b.dayLabel ?? '') || a.name.localeCompare(b.name))

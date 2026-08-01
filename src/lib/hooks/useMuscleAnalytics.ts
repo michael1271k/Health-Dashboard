@@ -19,7 +19,6 @@ export const MUSCLE_MAP: Record<string, string> = {
 /** v5.1 exercise-name → muscle tags (parser aliases). Used by the catalog updater. */
 export const V51_EXERCISE_ALIASES: Record<string, string[]> = {
   'Calf Press': ['calves'],
-  'Hack/Smith Squat': ['quads', 'glutes'],
   'Hack Squat': ['quads', 'glutes'],
   'Smith Squat': ['quads', 'glutes'],
   'Reverse EZ-Bar Curl': ['forearms', 'biceps'],

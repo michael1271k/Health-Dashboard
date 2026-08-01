@@ -202,6 +202,56 @@ export function ladderVerdict(sets: WorkingSet[], ceiling: number): LadderVerdic
   return { ...base, state: binding.cleared ? 'collapse-ready' : 'blocked' }
 }
 
+/**
+ * Did the session's TOP load earn a progression?
+ *
+ * The rule: **at least two sets at ceiling reps, on the heaviest load used.**
+ *
+ * Two sets, not every set. Requiring all of them (as `clearedCeiling` does)
+ * means one fatigued last set of an otherwise perfect session blocks
+ * progression indefinitely — real training does not look like that. Two sets at
+ * the ceiling on the top load is a repeatable capability, not a fluke.
+ *
+ * And on the TOP load specifically, because the alternative is worse: hitting
+ * ceiling reps on a lighter drop set says nothing about the load you are
+ * actually chasing. That was the false-positive source on SA Cable Crossover
+ * and Hack Squat — mixed loads where a light rung cleared and the app read the
+ * whole session as cleared.
+ */
+export function topLoadCleared(sets: WorkingSet[], ceiling: number): boolean {
+  const working = sets.filter((s) => s.weightKg > 0)
+  if (!working.length) return false
+  const top = Math.max(...working.map((s) => s.weightKg))
+  return working.filter((s) => s.weightKg === top && s.reps >= ceiling).length >= 2
+}
+
+/**
+ * Mixed loads where the top rung is doing the work but a lighter rung is not.
+ *
+ * The correct next move here is NOT to add weight — it is to bring the light
+ * sets up to the load you are already handling, at the bottom of the rep window
+ * (the floor is what a new load should be earned at). Returns null when there
+ * is only one load, or when the light load has already caught up.
+ */
+export interface LevelUpCue {
+  fromKg: number
+  toKg: number
+  /** Rep target at the new load — the window FLOOR. */
+  atReps: number
+}
+
+export function levelUpCue(sets: WorkingSet[], window: RepWindow): LevelUpCue | null {
+  const working = sets.filter((s) => s.weightKg > 0)
+  if (!working.length) return null
+  const loads = [...new Set(working.map((s) => s.weightKg))].sort((a, b) => a - b)
+  if (loads.length < 2) return null
+  const lightest = loads[0]
+  const top = loads[loads.length - 1]
+  // Only worth saying once the top load is actually being handled well.
+  if (!topLoadCleared(working, window.ceiling)) return null
+  return { fromKg: lightest, toKg: top, atReps: window.floor }
+}
+
 export type ProgressionState = 'ready' | 'one-more' | 'no'
 
 export interface ProgressionVerdict {
@@ -218,6 +268,16 @@ export interface ProgressionVerdict {
  *  · both cleared → `ready`   (add load)
  *  · newest cleared, previous did not → `one-more` (one more clean session)
  *  · otherwise → `no`
+ *
+ * "Cleared" is `topLoadCleared`: two sets at the ceiling on the heaviest load.
+ *
+ * A ladder COLLAPSE no longer counts as cleared. It used to, on the reasoning
+ * that a mid-session load increase shouldn't break the chain — but the effect
+ * was that any session touching a lighter load could satisfy the gate, which is
+ * exactly how "Ready to progress" kept appearing on lifts that were nowhere
+ * near ready. Mixed loads get `levelUpCue` instead: bring the light sets up to
+ * the load you are already handling. Adding weight on top of a load you have
+ * not consolidated is the wrong move regardless of what the lighter sets did.
  */
 export function progressionVerdict(
   sessions: WorkingSet[][],
@@ -225,20 +285,11 @@ export function progressionVerdict(
 ): ProgressionVerdict {
   if (ceiling == null || !sessions.length) return { state: 'no', ceiling, suggestKg: null }
 
-  /**
-   * A session counts as cleared when it is a clean single-load clear OR a
-   * legitimate ladder collapse (the binding rung cleared, so the lower load has
-   * been outgrown). Without the second case a genuine mid-session load increase
-   * broke the two-session chain and the lifter was penalised for progressing.
-   */
-  const cleared = (sets: WorkingSet[]): boolean => {
-    if (clearedCeiling(sets, ceiling)) return true
-    return ladderVerdict(sets, ceiling).state === 'collapse-ready'
-  }
-  /** The load the session actually settles at — the TOP rung after a collapse. */
-  const settledLoad = (sets: WorkingSet[]): number => {
-    const v = ladderVerdict(sets, ceiling)
-    return v.topLoadKg ?? sets[0]?.weightKg ?? 0
+  const cleared = (sets: WorkingSet[]): boolean => topLoadCleared(sets, ceiling)
+  /** Progression is measured from the load actually being handled. */
+  const topLoad = (sets: WorkingSet[]): number => {
+    const working = sets.filter((s) => s.weightKg > 0)
+    return working.length ? Math.max(...working.map((s) => s.weightKg)) : 0
   }
 
   const latest = sessions[sessions.length - 1]
@@ -250,7 +301,7 @@ export function progressionVerdict(
   return {
     state: 'ready',
     ceiling,
-    suggestKg: Math.round((settledLoad(latest) + LOAD_STEP_KG) * 10) / 10,
+    suggestKg: Math.round((topLoad(latest) + LOAD_STEP_KG) * 10) / 10,
   }
 }
 

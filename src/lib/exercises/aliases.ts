@@ -15,6 +15,11 @@ export const EXERCISE_ALIASES: Record<string, string> = {
   'lat pulldown - close grip (cable)': 'Neutral-Grip Lat Pulldown',
   'lat pulldown close grip (cable)': 'Neutral-Grip Lat Pulldown',
   'close grip lat pulldown (cable)': 'Neutral-Grip Lat Pulldown',
+  // Renamed 2026-08-01. Kept so historical rows, exports and any device still
+  // holding a cached draft resolve to the new canonical name instead of
+  // creating a duplicate `exercises` row.
+  'hack/smith squat': 'Hack Squat',
+  'smith squat': 'Hack Squat',
 }
 
 export function canonicalExerciseName(raw: string): string {
