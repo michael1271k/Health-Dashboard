@@ -20,7 +20,7 @@
  * not on the record itself.
  */
 import { epley1RM } from '@/lib/utils/epley'
-import { historicalAxesFor } from './historicalPrs'
+import { seededAxesFor, isSeededEra } from './prSeed'
 
 export type PrAxis = 'weight' | 'reps' | 'volume' | 'e1rm'
 
@@ -135,7 +135,7 @@ export interface PrCandidateSet {
   timed: boolean
   /** Floor of the programmed rep window, when there is one. Gates the e1RM axis. */
   repFloor?: number | null
-  /** Identity for the historical-override lookup — see `historicalPrs.ts`. */
+  /** Identity for the asserted record-book lookup — see `prSeed.ts`. */
   date?: string | null
   exerciseName?: string | null
   setNumber?: number | null
@@ -251,17 +251,21 @@ export interface SessionPrResult {
 export function detectSessionPrs(sets: readonly PrCandidateSet[], baselines: PrBaselines): SessionPrResult {
   const idx = baselineIndex(baselines)
 
+  // On or before SEED_CUTOFF the asserted record book is the ONLY source of
+  // axes — detection is suppressed rather than unioned with. Which lifts count
+  // as records over that era is a judgement the engine could not make, so it
+  // stops guessing. See prSeed.ts.
+  const seeded = isSeededEra(sets.find((s) => s.date)?.date)
+
   const perSet: DetectedSet[] = sets.map((s) => {
-    const axes = detectSetPrs(s, idx)
-    // Records carried over from Hevy that the engine has no way to derive.
-    // Unioned in, never replacing — a set can earn axes both ways.
-    for (const a of historicalAxesFor(s.date, s.exerciseName ?? s.key, s.setNumber, s.weightKg, s.reps)) {
-      if (!axes.includes(a)) axes.push(a)
-    }
+    const asserted = seededAxesFor(s.date, s.exerciseName ?? s.key, s.setNumber, s.weightKg, s.reps)
+    const axes = seeded ? [...asserted] : detectSetPrs(s, idx)
+    // The index still advances through a seeded session so its baselines stay
+    // correct for everything that comes after it.
     absorbSet(s, idx)
     // A hold has no meaningful est-1RM (weight 0 → Epley 0); null keeps the
     // report from printing "e1RM 0kg" on a plank.
-    return { axes: subsumeSetAxes(axes), est1rm: s.timed ? null : epley1RM(s.weightKg, s.reps) }
+    return { axes, est1rm: s.timed ? null : epley1RM(s.weightKg, s.reps) }
   })
 
   // Volume is a SESSION-level axis: this session's total for the exercise beats
@@ -273,15 +277,11 @@ export function detectSessionPrs(sets: readonly PrCandidateSet[], baselines: PrB
     volumeByKey.set(s.key, (volumeByKey.get(s.key) ?? 0) + s.weightKg * s.reps)
   }
 
-  // Which exercises already earned a SET-level record this session — the test
-  // `subsumeVolume` needs.
-  const setLevelKeys = new Set<string>()
-  perSet.forEach((d, i) => { if (d.axes.length) setLevelKeys.add(sets[i].key) })
-
-  for (const [key, vol] of volumeByKey) {
+  // The totals above still feed the ledger's volume VALUES in a seeded session;
+  // only the decision about which volume axes exist comes from the seed.
+  for (const [key, vol] of seeded ? [] : volumeByKey) {
     const best = idx.bestSessionVolume.get(key)
     if (best == null || vol <= best) continue
-    if (!volumeIsIndependent(setLevelKeys.has(key))) continue
     // Give the axis somewhere to LIVE. `is_pr` is a per-set column, so a
     // volume-only record used to flag no row at all: it existed in
     // `personal_records` and in `pr_count`, and was invisible everywhere a
@@ -310,46 +310,20 @@ export function detectSessionPrs(sets: readonly PrCandidateSet[], baselines: PrB
 }
 
 /**
- * Collapse axes that are ARITHMETIC RESTATEMENTS of each other on one set.
+ * AXIS SUBSUMPTION WAS REMOVED (2026-08-02, deliberate).
  *
- * `pr_count` reported 7 for 2026-07-31 against 3 things that actually happened:
- * Hip Thrust filed reps + 1RM + volume, Leg Press filed reps + 1RM, Side Plank
- * filed duration. e1RM is `weight × (1 + reps/30)` — a pure function of the two
- * numbers the other axes already measure — so a set that beats its previous
- * best reps AT THE SAME LOAD *cannot* fail to beat its previous e1RM. Counting
- * both is counting one event twice, and it inflates every headline in the app.
+ * A previous pass dropped `e1rm` when the same set also won `weight` or `reps`,
+ * and counted session `volume` only when no set had won anything — on the
+ * grounds that e1RM is `weight × (1 + reps/30)` and therefore a restatement.
+ * That reasoning is sound arithmetically, but the record book it produced did
+ * not match the one the user keeps: their July list files Weight + Vol + 1RM
+ * against a single set on purpose.
  *
- * So `e1rm` survives only when it is the set's ONLY claim: a load/rep
- * combination that outranks everything before it without setting a new top
- * weight or a new rep count at its own load. That is a real, separate fact —
- * it is how 55 kg × 11 beats 60 kg × 8 — and it stays.
- *
- * The ledger loses nothing it needs: `bestE1rm` baselines are rebuilt from
- * `workout_sets`, never from `personal_records`.
+ * So every axis a set wins is now counted, and the July era is governed by an
+ * asserted list instead (see prSeed.ts) rather than by tuning these rules until
+ * the numbers agree. Weekly counts run higher as a direct result. Do not
+ * reintroduce subsumption without re-deriving the seed alongside it.
  */
-export function subsumeSetAxes(axes: readonly PrAxis[]): PrAxis[] {
-  if (!axes.includes('e1rm')) return [...axes]
-  if (!axes.includes('weight') && !axes.includes('reps')) return [...axes]
-  return axes.filter((a) => a !== 'e1rm')
-}
-
-/**
- * Does the session-level `volume` axis say anything the set-level axes didn't?
- *
- * Session volume is `Σ weight × reps`. Beat your best reps at a load, or move a
- * heavier load, and the total goes up as a matter of arithmetic — the volume
- * "record" is the same event wearing a second badge. It counted a third time on
- * Hip Thrust (reps + 1RM + volume for one 27.5 kg × 13).
- *
- * A volume record IS independent when no set won anything: you added a set, or
- * spread the same work differently, and out-worked the previous session without
- * out-lifting it. Romanian Deadlift on 2026-07-31 — 35 kg × 12 three times, no
- * set-level record, 1 260 kg against a smaller previous best — is exactly that,
- * and it survives.
- */
-export function volumeIsIndependent(exerciseWonASetAxis: boolean): boolean {
-  return !exerciseWonASetAxis
-}
 
 export interface RecordSet { weightKg: number; reps: number; value: number }
 
