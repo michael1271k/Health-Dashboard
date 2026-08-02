@@ -14,15 +14,19 @@ import { programDayByKey } from '@/lib/programs'
  * Tape measurements (waist/arm/thigh) were removed entirely — see the migration
  * that drops `body_measurements`.
  */
-// Standardized display order: upper (Chest → Shoulders) then lower (Quads → Calves).
-export const DOMS_MUSCLES = ['Chest', 'Back', 'Arms', 'Shoulders', 'Quads', 'Hamstrings', 'Calves'] as const
+// Standardized display order: upper (Chest → Shoulders) then lower (Glutes → Calves).
+export const DOMS_MUSCLES = ['Chest', 'Back', 'Arms', 'Shoulders', 'Glutes', 'Quads', 'Hamstrings', 'Calves'] as const
 export type DomsMuscle = (typeof DOMS_MUSCLES)[number]
 
 /** Fold a program muscle token into one of the tracked DOMS muscles (or null). */
-function domsMuscleOf(token: string): DomsMuscle | null {
+export function domsMuscleOf(token: string): DomsMuscle | null {
   switch (token.toLowerCase().replace(/[\s-]+/g, '_')) {
     case 'quads': case 'quadriceps': return 'Quads'
-    case 'hamstrings': case 'glutes': return 'Hamstrings'
+    // Glutes were folded into Hamstrings until 2026-08-02. Hip thrusts and RDLs
+    // are the two biggest lifts on Legs B and they get sore independently, so
+    // one rating for both could not describe an actual leg day.
+    case 'glutes': case 'glute': case 'hips': return 'Glutes'
+    case 'hamstrings': return 'Hamstrings'
     case 'calves': return 'Calves'
     case 'back': case 'lats': case 'upper_back': case 'lower_back': case 'traps': return 'Back'
     case 'chest': case 'pecs': return 'Chest'
@@ -43,7 +47,7 @@ function sessionDomsMuscles(dayKey: string | null, split: string): Set<DomsMuscl
     return out
   }
   // Legacy rows (no day_key): a coarse split → muscle guess.
-  if (split === 'legs' || split === 'lower') { out.add('Quads'); out.add('Hamstrings'); out.add('Calves') }
+  if (split === 'legs' || split === 'lower') { out.add('Glutes'); out.add('Quads'); out.add('Hamstrings'); out.add('Calves') }
   else { out.add('Chest'); out.add('Back'); out.add('Shoulders'); out.add('Arms') }
   return out
 }
