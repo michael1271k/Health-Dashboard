@@ -180,16 +180,24 @@ for (const row of ledger) {
 // Report reads the ledger by session_id, so a superseded `e1rm` kept rendering
 // a gold chip for a record `pr_count` no longer counted. Anything the replay
 // did not produce is, by definition, not a current record.
-const keep = new Set(ledger.map((r) => `${r.exercise_key}|${r.axis}`))
+//
+// Scoped by user_id on BOTH the read and the delete. The natural key is
+// (user_id, exercise_key, axis), so deleting on exercise_key + axis alone would
+// take out every user who shares an exercise name — harmless on a single-user
+// database and catastrophic the moment it isn't.
+const keep = new Set(ledger.map((r) => `${r.user_id}|${r.exercise_key}|${r.axis}`))
+const userIds = [...new Set(ledger.map((r) => r.user_id))]
 const { data: existing, error: readErr } = await db
   .from('personal_records')
-  .select('exercise_key, axis')
+  .select('user_id, exercise_key, axis')
+  .in('user_id', userIds)
 if (readErr) throw readErr
 let pruned = 0
 for (const row of existing ?? []) {
-  if (keep.has(`${row.exercise_key}|${row.axis}`)) continue
+  if (keep.has(`${row.user_id}|${row.exercise_key}|${row.axis}`)) continue
   const { error } = await db.from('personal_records')
-    .delete().eq('exercise_key', row.exercise_key).eq('axis', row.axis)
+    .delete()
+    .eq('user_id', row.user_id).eq('exercise_key', row.exercise_key).eq('axis', row.axis)
   if (error) throw error
   pruned += 1
 }
