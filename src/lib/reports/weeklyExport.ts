@@ -117,7 +117,14 @@ export interface ExportBodyComp {
   visceralFat: number | null
   bmr: number | null
   boneMineral: number | null
-  leanMassKg: number | null
+  /**
+   * TWO masses, never one "lean mass". Muscle mass is weight × muscle%;
+   * fat-free mass is weight − fat and includes bone, water and organs. They are
+   * ~2.6 kg apart, and emitting one field that silently meant either is what
+   * made the same week's report contradict itself.
+   */
+  muscleMassKg: number | null
+  fatFreeMassKg: number | null
 }
 
 /** The same aggregate shape for this week and the one before it. */
@@ -296,7 +303,8 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
       L.push(
         `    InBody · weight ${n(b.weightKg, 1)} kg · BMI ${n(b.bmi, 1)} · BF ${n(b.bodyFatPct, 1)}% · `
         + `muscle ${n(b.musclePercent, 1)}% · water ${n(b.waterPercent, 1)}% · visceral ${n(b.visceralFat)} · `
-        + `BMR ${n(b.bmr)} · bone ${n(b.boneMineral, 1)}% · lean mass ${n(b.leanMassKg, 1)} kg`,
+        + `BMR ${n(b.bmr)} · bone ${n(b.boneMineral, 1)}% · `
+        + `muscle mass ${n(b.muscleMassKg, 1)} kg · fat-free mass ${n(b.fatFreeMassKg, 1)} kg`,
       )
     }
     for (const c of cardioByDate.get(d.date) ?? []) {

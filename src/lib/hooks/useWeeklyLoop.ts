@@ -88,7 +88,7 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     // Body composition — its own query so an un-migrated column can't take down
     // the daily-logs fetch above; on error it's simply omitted.
     supabase.from('daily_logs')
-      .select('date, weight_kg, bmi, body_fat_pct, muscle_percent, water_percent, bone_mineral, visceral_fat, bmr, lean_mass_kg')
+      .select('date, weight_kg, bmi, body_fat_pct, muscle_percent, water_percent, bone_mineral, visceral_fat, bmr, muscle_mass_kg, fat_free_mass_kg')
       .gte('date', weekStart).lte('date', weekEnd),
     // Walks / runs — a separate ledger; exported flagged as already counted.
     supabase.from('cardio_logs').select('date, kind, distance_m, duration_min, kcal, active_kcal, total_kcal, avg_hr, effort')
@@ -234,10 +234,12 @@ function toBodyComp(d: RangeData): ExportBodyComp[] {
       visceralFat: (r.visceral_fat as number | null) ?? null,
       bmr: (r.bmr as number | null) ?? null,
       boneMineral: (r.bone_mineral as number | null) ?? null,
-      leanMassKg: (r.lean_mass_kg as number | null) ?? null,
+      // Both masses, each under its own name — see ExportBodyComp.
+      muscleMassKg: (r.muscle_mass_kg as number | null) ?? null,
+      fatFreeMassKg: (r.fat_free_mass_kg as number | null) ?? null,
     }))
     // Only days with a metric beyond bare weight (the daily table already lists weight).
-    .filter((b) => [b.bmi, b.bodyFatPct, b.musclePercent, b.waterPercent, b.visceralFat, b.bmr, b.boneMineral, b.leanMassKg].some((v) => v != null))
+    .filter((b) => [b.bmi, b.bodyFatPct, b.musclePercent, b.waterPercent, b.visceralFat, b.bmr, b.boneMineral, b.muscleMassKg, b.fatFreeMassKg].some((v) => v != null))
     .sort((a, b) => a.date.localeCompare(b.date))
 }
 

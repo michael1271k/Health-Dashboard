@@ -75,11 +75,27 @@ export const IngestPayloadSchema = z.object({
   fats:                floatField(),
   calories:            intField(),                   // source-of-truth (MFP) — preferred over the macro estimate
   weight:              floatField(),                 // kg
-  lean_mass:           floatField(),                 // kg
+  // FAT-FREE MASS, not muscle mass. HealthKit's `LeanBodyMass` is weight − fat
+  // by Apple's definition, and it used to land in a column called lean_mass_kg
+  // that manual InBody entries filled with weight × muscle% instead — two
+  // different quantities, ~2.6 kg apart, in one series. `fat_free_mass` is the
+  // honest name; `lean_mass` stays as a back-compat alias so the pinned
+  // Shortcut keeps working. Muscle mass is DERIVED from muscle_percent.
+  fat_free_mass:       floatField(),                 // kg
+  lean_mass:           floatField(),                 // kg — deprecated alias of fat_free_mass
   bmi:                 floatField(),
   training_minutes:    intField(),
   active_energy:       energyField(),
   body_fat:            floatField(),                 // %
+  // ── Smart-scale percentages. Previously un-ingestable, which is why HealthKit
+  //    days carry a fat-free mass but no muscle mass: muscle_percent is the only
+  //    input from which true muscle mass can be derived. ──
+  muscle_percent:      floatField(),                 // %
+  water_percent:       floatField(),                 // %
+  bone_mineral:        floatField(),                 // %
+  protein_percent:     floatField(),                 // %
+  visceral_fat:        floatField(),                 // index
+  bmr:                 intField(),                   // kcal
   standing_minutes:    intField(),
   avg_heart_rate:      intField(),                   // bpm
   avg_rest_heart_rate: intField(),                   // bpm (resting)

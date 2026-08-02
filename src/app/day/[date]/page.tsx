@@ -88,7 +88,8 @@ function sessionLabel(dayKey: string | null | undefined, split: string): string 
 function hasScaleMetrics(log: DayVaultData['log']): boolean {
   if (!log) return false
   return [log.weight_kg, log.body_fat_pct, log.muscle_percent, log.water_percent,
-    log.lean_mass_kg, log.bone_mineral, log.visceral_fat, log.bmr, log.bmi].some((v) => v != null)
+    log.muscle_mass_kg, log.fat_free_mass_kg, log.bone_mineral, log.visceral_fat,
+    log.bmr, log.bmi].some((v) => v != null)
 }
 
 /**

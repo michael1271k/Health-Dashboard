@@ -24,6 +24,13 @@ export interface DayVaultData {
     stand_hours: number | null; vo2max: number | null; active_energy: number | null
     muscle_percent: number | null; water_percent: number | null; bone_mineral: number | null
     visceral_fat: number | null; bmr: number | null; bmi: number | null
+    // Derived masses. `muscle_mass_kg` (weight × muscle%) and `fat_free_mass_kg`
+    // (weight − fat) are DIFFERENT quantities and both are carried; the older
+    // `lean_mass_kg` above held whichever of the two wrote last and is no longer
+    // read by anything.
+    protein_percent: number | null; muscle_mass_kg: number | null; water_mass_kg: number | null
+    fat_mass_kg: number | null; bone_mineral_kg: number | null; protein_mass_kg: number | null
+    fat_free_mass_kg: number | null
   } | null
   score: { score: number | null; battery_pct: number | null } | null
   nutrition: { calories: number; protein_g: number; carbs_g: number; fat_g: number; phase: Phase | null } | null
@@ -46,7 +53,11 @@ export function useDayVault(date: string) {
     queryFn: async (): Promise<DayVaultData> => {
       const nextDay = (() => { const x = new Date(`${date}T00:00:00Z`); x.setUTCDate(x.getUTCDate() + 1); return x.toISOString().slice(0, 10) })()
       const [logRes, scoreRes, nutritionRes, sessionsRes] = await Promise.all([
-        supabase.from('daily_logs').select('steps, water_ml, sleep_minutes, weight_kg, lean_mass_kg, body_fat_pct, avg_rest_heart_rate, hrv_ms, respiratory_rate, blood_oxygen, training_minutes, exercise_minutes, stand_hours, vo2max, active_energy, muscle_percent, water_percent, bone_mineral, visceral_fat, bmr, bmi')
+        // The derived mass columns MUST be selected. BodyMap reads
+        // `log.muscle_mass_kg` / `fat_mass_kg` / … and falls back to re-deriving
+        // when they are absent — and because they were never in this select,
+        // the fallback was the only path that ever ran.
+        supabase.from('daily_logs').select('steps, water_ml, sleep_minutes, weight_kg, lean_mass_kg, body_fat_pct, avg_rest_heart_rate, hrv_ms, respiratory_rate, blood_oxygen, training_minutes, exercise_minutes, stand_hours, vo2max, active_energy, muscle_percent, water_percent, bone_mineral, visceral_fat, bmr, bmi, protein_percent, muscle_mass_kg, water_mass_kg, fat_mass_kg, bone_mineral_kg, protein_mass_kg, fat_free_mass_kg')
           .eq('date', date).maybeSingle(),
         supabase.from('daily_scores').select('score, battery_pct').eq('date', date).maybeSingle(),
         supabase.from('nutrition_entries').select('calories, protein_g, carbs_g, fat_g, phase')
@@ -178,7 +189,6 @@ export interface BodyMetricsPatch {
   body_fat_pct?: number | null
   muscle_percent?: number | null
   water_percent?: number | null
-  lean_mass_kg?: number | null
   bone_mineral?: number | null
   visceral_fat?: number | null
   bmr?: number | null
@@ -202,11 +212,20 @@ const EXTENDED_BODY_KEYS = new Set<keyof BodyMetricsPatch>([
   'fat_mass_kg', 'bone_mineral_kg', 'protein_mass_kg', 'fat_free_mass_kg',
 ])
 
-/** daily_logs column → its body_composition counterpart. */
+/**
+ * daily_logs column → its body_composition counterpart.
+ *
+ * `muscle_mass_kg` maps to `muscle_mass_kg` and nothing else. It used to be fed
+ * from `lean_mass_kg` — the column HealthKit fills with FAT-FREE mass — so the
+ * ledger's "muscle mass" was whichever quantity happened to touch that date
+ * last, ~2.6 kg apart. The two masses are now mirrored under their own names.
+ */
 const BODY_MIRROR: Array<[keyof BodyMetricsPatch, string]> = [
   ['weight_kg', 'weight_kg'],
   ['body_fat_pct', 'body_fat_pct'],
-  ['lean_mass_kg', 'muscle_mass_kg'],
+  ['muscle_mass_kg', 'muscle_mass_kg'],
+  ['fat_free_mass_kg', 'fat_free_mass_kg'],
+  ['fat_mass_kg', 'fat_mass_kg'],
   ['water_percent', 'water_pct'],
   ['muscle_percent', 'muscle_pct'],
   ['bone_mineral', 'bone_mineral_pct'],

@@ -21,7 +21,14 @@ function daysAgo(n: number): string {
   return d.toLocaleDateString('en-CA')
 }
 
-export type BodyTrendRow = Pick<Tables<'body_composition'>, 'date' | 'weight_kg' | 'body_fat_pct' | 'muscle_mass_kg'>
+/**
+ * `muscle_mass_kg` and `fat_free_mass_kg` are DIFFERENT quantities — weight ×
+ * muscle% and weight − fat respectively, about 2.6 kg apart — and both are
+ * carried so the chart never has to choose one and call it "lean".
+ */
+export type BodyTrendRow =
+  Pick<Tables<'body_composition'>, 'date' | 'weight_kg' | 'body_fat_pct' | 'muscle_mass_kg'>
+  & { fat_free_mass_kg?: number | null }
 
 export interface BodyDetailRow {
   date: string
@@ -74,6 +81,7 @@ export function mergeBodyTrend(ledger: BodyTrendRow[], logs: BodyTrendRow[]): Bo
       weight_kg: r.weight_kg ?? cur?.weight_kg ?? null,
       body_fat_pct: r.body_fat_pct ?? cur?.body_fat_pct ?? null,
       muscle_mass_kg: r.muscle_mass_kg ?? cur?.muscle_mass_kg ?? null,
+      fat_free_mass_kg: r.fat_free_mass_kg ?? cur?.fat_free_mass_kg ?? null,
     })
   }
   // Global rule: sub-50kg readings are scale artifacts — drop the row entirely.
@@ -90,17 +98,20 @@ export function useWeightTrend(days = 90) {
       const since = daysAgo(days)
       const [bc, dl] = await Promise.all([
         supabase.from('body_composition')
-          .select('date, weight_kg, body_fat_pct, muscle_mass_kg').gte('date', since),
-        // lean_mass_kg is the daily_logs spelling of muscle_mass_kg.
+          .select('date, weight_kg, body_fat_pct, muscle_mass_kg, fat_free_mass_kg').gte('date', since),
+        // Both masses by their own names. `lean_mass_kg` used to be aliased to
+        // muscle_mass_kg here, which is what carried the FFM/muscle ambiguity
+        // all the way into the chart.
         supabase.from('daily_logs')
-          .select('date, weight_kg, body_fat_pct, lean_mass_kg').gte('date', since),
+          .select('date, weight_kg, body_fat_pct, muscle_mass_kg, fat_free_mass_kg').gte('date', since),
       ])
       if (bc.error) throw bc.error
       const logs = ((dl.data ?? []) as Array<{
-        date: string; weight_kg: number | null; body_fat_pct: number | null; lean_mass_kg: number | null
+        date: string; weight_kg: number | null; body_fat_pct: number | null
+        muscle_mass_kg: number | null; fat_free_mass_kg: number | null
       }>).map((r) => ({
-        date: r.date, weight_kg: r.weight_kg,
-        body_fat_pct: r.body_fat_pct, muscle_mass_kg: r.lean_mass_kg,
+        date: r.date, weight_kg: r.weight_kg, body_fat_pct: r.body_fat_pct,
+        muscle_mass_kg: r.muscle_mass_kg, fat_free_mass_kg: r.fat_free_mass_kg,
       })) as BodyTrendRow[]
       return mergeBodyTrend((bc.data ?? []) as BodyTrendRow[], logs)
     },

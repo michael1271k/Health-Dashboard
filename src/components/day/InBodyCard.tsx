@@ -99,7 +99,7 @@ export function InBodyCard({ date, log, defaultOpen = false }: { date: string; l
         </span>
         <span className="flex-1 min-w-0">
           <span className="block font-heading font-semibold text-fluid-sm text-text">InBody &amp; Scale Metrics</span>
-          <span className="block text-[11px] text-muted truncate">{open ? 'Editing — masses auto-calculate' : 'Weight · BMI · BF% · Lean — tap for more'}</span>
+          <span className="block text-[11px] text-muted truncate">{open ? 'Editing — masses auto-calculate' : 'Weight · BF% · Muscle · Fat-Free — tap for more'}</span>
         </span>
         <ChevronDown className={`w-4 h-4 text-muted shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
       </button>
@@ -107,11 +107,15 @@ export function InBodyCard({ date, log, defaultOpen = false }: { date: string; l
       {/* Collapsed: the top-4 headline readings. */}
       {!open && (
         <div className="grid grid-cols-4 gap-2">
+          {/* "Lean" used to sit here reading `lean_mass_kg` — a column this very
+              card fills with weight × muscle% while HealthKit fills it with
+              weight − fat. The headline now names the two masses the expanded
+              strip already computed separately. */}
           {([
             { label: 'Weight', v: readLog?.weight_kg, u: 'kg' },
-            { label: 'BMI', v: readLog?.bmi, u: '' },
             { label: 'Body Fat', v: readLog?.body_fat_pct, u: '%' },
-            { label: 'Lean', v: readLog?.lean_mass_kg, u: 'kg' },
+            { label: 'Muscle', v: readLog?.muscle_mass_kg ?? derived.muscle_mass_kg, u: 'kg' },
+            { label: 'Fat-Free', v: readLog?.fat_free_mass_kg ?? derived.fat_free_mass_kg, u: 'kg' },
           ]).map((s) => (
             <div key={s.label} className="rounded-lg bg-white/[0.02] border border-white/[0.05] px-1 py-1.5 text-center">
               <span className="helix-num block text-fluid-sm font-bold text-text leading-tight">

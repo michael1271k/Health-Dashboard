@@ -6,6 +6,7 @@ import { isManualHkUuid } from '@/lib/nutrition/manualEntry'
 import { logicalTodayInTZ } from '@/lib/utils/day'
 import { MIN_VALID_WEIGHT_KG } from '@/lib/utils/units'
 import { nightWindow, fallbackBedTime } from '@/lib/sleep/nightWindow'
+import { deriveBodyComp } from '@/lib/body/composition'
 import type { IngestPayload } from './schema'
 
 type DB = SupabaseClient<Database>
@@ -65,10 +66,12 @@ const skipped = (): SectionResult => ({ ok: true, action: 'skipped' })
 
 /** Every metric key a push source can send (canonical names, post-normalization). */
 const KNOWN_KEYS = [
-  'steps', 'water', 'sleep_minutes', 'carbs', 'protein', 'fats', 'weight', 'lean_mass',
+  'steps', 'water', 'sleep_minutes', 'carbs', 'protein', 'fats', 'weight',
+  'fat_free_mass', 'lean_mass',
   'bmi', 'training_minutes', 'active_energy', 'body_fat', 'standing_minutes', 'avg_heart_rate',
   'avg_rest_heart_rate', 'respiratory_rate', 'blood_oxygen', 'hrv', 'exercise_minutes',
   'stand_hours', 'vo2max', 'wrist_temp', 'time_in_daylight', 'distance_m',
+  'muscle_percent', 'water_percent', 'bone_mineral', 'protein_percent', 'visceral_fat', 'bmr',
 ] as const
 
 /** Newer metric columns that may not exist yet if the latest migration wasn't run. */
@@ -78,6 +81,15 @@ const V51_METRIC_KEYS = [
   // distance_m ships ahead of its paste-SQL; without it here the whole daily
   // push would fail on an un-migrated DB instead of self-healing.
   'distance_m',
+] as const
+/**
+ * Derived body-mass columns. Same self-heal contract as the v5.1 metrics: they
+ * are confirmed live, but an un-migrated DB must degrade to storing the weight
+ * and the percentages rather than rejecting the entire push.
+ */
+const BODY_MASS_KEYS = [
+  'fat_mass_kg', 'fat_free_mass_kg', 'muscle_mass_kg',
+  'water_mass_kg', 'bone_mineral_kg', 'protein_mass_kg', 'protein_percent',
 ] as const
 /** Payload key → the corresponding daily_logs column (for error attribution). */
 const V51_PAYLOAD_TO_COLUMN: Record<string, string> = {
@@ -120,10 +132,11 @@ function isMissingColumnError(msg: string): boolean {
  */
 async function upsertDailyLog(db: DB, row: Record<string, any>): Promise<{ error: { message: string } | null; strippedV51: boolean }> {
   const first = await db.from('daily_logs').upsert(row as any, { onConflict: 'user_id,date' })
-  const hasV51 = V51_METRIC_KEYS.some((k) => k in row)
-  if (first.error && hasV51 && isMissingColumnError(first.error.message)) {
+  const optional = [...V51_METRIC_KEYS, ...BODY_MASS_KEYS]
+  const hasOptional = optional.some((k) => k in row)
+  if (first.error && hasOptional && isMissingColumnError(first.error.message)) {
     const stripped = { ...row }
-    for (const k of V51_METRIC_KEYS) delete stripped[k]
+    for (const k of optional) delete stripped[k]
     const retry = await db.from('daily_logs').upsert(stripped as any, { onConflict: 'user_id,date' })
     return { error: retry.error, strippedV51: true }
   }
@@ -159,7 +172,6 @@ export async function ingestDailyLog(
   set('protein_g', payload.protein)
   set('fats_g', payload.fats)
   set('weight_kg', weight)
-  set('lean_mass_kg', payload.lean_mass)
   set('bmi', payload.bmi)
   set('training_minutes', payload.training_minutes)
   set('active_energy', payload.active_energy)
@@ -183,6 +195,30 @@ export async function ingestDailyLog(
   // would risk the pinned Shortcut ingest path); the Vitals UI labels it °C.
   set('wrist_temp_delta', payload.wrist_temp)
   set('time_in_daylight_min', payload.time_in_daylight)
+
+  // ── Body composition. Percentages land raw; every MASS is derived. ──
+  //
+  // The masses used to be taken on trust from a single `lean_mass` field whose
+  // meaning depended on who sent it: HealthKit's LeanBodyMass is fat-free mass
+  // (weight − fat), while the manual InBody card writes weight × muscle%. Both
+  // reached one column, ~2.6 kg apart, and the chart picked between them per
+  // day. Deriving from first principles removes the ambiguity at the source —
+  // `deriveBodyComp` has always kept the two separate (composition.ts:61-65).
+  set('muscle_percent', payload.muscle_percent)
+  set('water_percent', payload.water_percent)
+  set('bone_mineral', payload.bone_mineral)
+  set('protein_percent', payload.protein_percent)
+  set('visceral_fat', payload.visceral_fat)
+  set('bmr', payload.bmr)
+  for (const [col, v] of Object.entries(deriveBodyComp({
+    weight_kg: weight, body_fat_pct: payload.body_fat,
+    muscle_percent: payload.muscle_percent, water_percent: payload.water_percent,
+    bone_mineral: payload.bone_mineral, protein_percent: payload.protein_percent,
+  }))) set(col, v)
+  // An explicit fat-free reading beats the weight − fat estimate. `lean_mass` is
+  // the deprecated spelling the pinned Shortcut still sends.
+  const ffm = payload.fat_free_mass ?? payload.lean_mass
+  set('fat_free_mass_kg', ffm)
 
   // Present = keys the source actually sent (canonical, post-normalization).
   // Omitted = everything it didn't — EXCEPT targets satisfied through a mapped
@@ -294,16 +330,24 @@ export async function ingestDailyLog(
   }
 
   // ── 4. Fan-out: body_composition (only with a VALID weight) ──
-  if (weight !== undefined || payload.lean_mass !== undefined || payload.body_fat !== undefined) {
+  if (weight !== undefined || ffm !== undefined || payload.body_fat !== undefined) {
     if (weight === undefined) {
       result.results.body = { ok: true, action: 'ignored', error: 'no valid weight — body_composition row requires ≥50kg' }
     } else {
       await db.from('body_composition').delete().eq('user_id', userId).eq('date', date)
+      // `muscle_mass_kg` carries MUSCLE mass only. It used to be handed
+      // `payload.lean_mass` — HealthKit's fat-free mass, renamed on the way in
+      // with no conversion, which is how the ledger and the log came to
+      // disagree by ~2.6 kg on the same date.
       const { error } = await db.from('body_composition').insert({
         user_id: userId, hk_uuid: null, measured_at: `${date}T00:00:00Z`, date,
         weight_kg: weight, body_fat_pct: payload.body_fat ?? null,
-        muscle_mass_kg: payload.lean_mass ?? null, water_pct: null,
-        bone_mass_kg: null, bmi: payload.bmi ?? null,
+        muscle_mass_kg: row.muscle_mass_kg ?? null,
+        fat_free_mass_kg: row.fat_free_mass_kg ?? null,
+        muscle_pct: payload.muscle_percent ?? null,
+        water_pct: payload.water_percent ?? null,
+        bone_mass_kg: row.bone_mineral_kg ?? null, bmi: payload.bmi ?? null,
+        visceral_fat: payload.visceral_fat ?? null, bmr: payload.bmr ?? null,
       } as any)
       result.results.body = error ? { ok: false, action: 'inserted', error: error.message } : { ok: true, action: 'inserted' }
       if (error) errors.push({ field: 'body_composition', error: error.message })

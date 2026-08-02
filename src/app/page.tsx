@@ -77,7 +77,7 @@ const SHEET_ACCENT: Record<Exclude<SheetKey, null>, string> = {
 /**
  * Body-sheet tiles, in display order. `unit: 'kg'` marks a weight to convert.
  * `synced` marks the four metrics Apple Health actually exports on a weigh-in
- * (Weight, BMI, Body-Fat %, Lean Mass) — the dashboard popup shows ONLY those, so
+ * (Weight, BMI, Body-Fat %, Fat-Free Mass) — the dashboard popup shows ONLY those, so
  * a fresh weigh-in never sits next to stale BMR/visceral/muscle%/water% rows that
  * only refresh on a manual InBody entry. The manual metrics live in the Nexus.
  */
@@ -86,8 +86,9 @@ const BODY_TILES: Array<{
 }> = [
   { field: 'weight_kg', label: 'Weight', unit: 'kg', decimals: 1, accent: EMBER, synced: true },
   { field: 'bmi', label: 'BMI', decimals: 1, synced: true },
-  { field: 'lean_mass_kg', label: 'Lean Mass', unit: 'kg', decimals: 1, synced: true },
+  { field: 'fat_free_mass_kg', label: 'Fat-Free Mass', unit: 'kg', decimals: 1, synced: true },
   { field: 'body_fat_pct', label: 'Body Fat', unit: '%', decimals: 1, synced: true },
+  { field: 'muscle_mass_kg', label: 'Muscle Mass', unit: 'kg', decimals: 1 },
   { field: 'muscle_percent', label: 'Muscle', unit: '%', decimals: 1 },
   { field: 'water_percent', label: 'Water', unit: '%', decimals: 1 },
   { field: 'visceral_fat', label: 'Visceral Fat', decimals: 1 },

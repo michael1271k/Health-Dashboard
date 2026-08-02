@@ -44,7 +44,10 @@ const fmtDate = (d: string) =>
 export interface BodyCompositionPoint {
   date: string
   weight: number | null
-  lean: number | null
+  /** Weight × muscle% — skeletal muscle only. Null when muscle% wasn't measured. */
+  muscleMass: number | null
+  /** Weight − fat mass. Includes bone, water and organs, so it always runs higher. */
+  fatFreeMass: number | null
   fatMass: number | null
   fatPct: number | null
   water: number | null
@@ -67,23 +70,30 @@ export function mergeBodyComposition(
 ): BodyCompositionPoint[] {
   const byDate = new Map<string, BodyCompositionPoint>()
   const blank = (date: string): BodyCompositionPoint => ({
-    date, weight: null, lean: null, fatMass: null, fatPct: null, water: null, musclePct: null, visceral: null,
+    date, weight: null, muscleMass: null, fatFreeMass: null, fatMass: null,
+    fatPct: null, water: null, musclePct: null, visceral: null,
   })
 
   for (const r of trend) {
     const p = byDate.get(r.date) ?? blank(r.date)
     p.weight = toDisplay(r.weight_kg)
     p.fatPct = r.body_fat_pct ?? p.fatPct
-    // Fat mass and lean mass are the same weigh-in expressed usefully: at a
-    // fixed weight they move in opposite directions, which is the entire point
-    // of a recomposition block and is invisible from weight alone.
+    // TWO series, never one.
+    //
+    // There used to be a single `lean` that meant weight − fat when body-fat %
+    // was recorded and muscle mass otherwise. Those are ~2.6 kg apart, so the
+    // line stepped up 2.6 kg on 2026-07-23 — the date HealthKit started filling
+    // the column — and read as lean-mass gain during a cut. Each series is now
+    // drawn only from its own definition, and stays null where its inputs are
+    // missing rather than borrowing the other one's value.
     if (r.weight_kg != null && r.body_fat_pct != null) {
       const fatKg = (r.weight_kg * r.body_fat_pct) / 100
       p.fatMass = toDisplay(fatKg)
-      p.lean = toDisplay(r.weight_kg - fatKg)
-    } else if (r.muscle_mass_kg != null) {
-      p.lean = toDisplay(r.muscle_mass_kg)
+      p.fatFreeMass = toDisplay(r.weight_kg - fatKg)
+    } else if (r.fat_free_mass_kg != null) {
+      p.fatFreeMass = toDisplay(r.fat_free_mass_kg)
     }
+    if (r.muscle_mass_kg != null) p.muscleMass = toDisplay(r.muscle_mass_kg)
     byDate.set(r.date, p)
   }
 
@@ -125,7 +135,7 @@ export function BodyCompositionChart({ trend, detail, isLoading, showEraBoundary
   const available = useMemo(() => {
     const has = (pick: (p: BodyCompositionPoint) => number | null) => points.some((p) => pick(p) != null)
     const out: Family[] = []
-    if (has((p) => p.weight) || has((p) => p.lean)) out.push('mass')
+    if (has((p) => p.weight) || has((p) => p.muscleMass) || has((p) => p.fatFreeMass)) out.push('mass')
     if (has((p) => p.fatPct) || has((p) => p.water) || has((p) => p.musclePct)) out.push('percent')
     if (has((p) => p.visceral)) out.push('visceral')
     return out
@@ -135,7 +145,7 @@ export function BodyCompositionChart({ trend, detail, isLoading, showEraBoundary
 
   const domain = useMemo((): [number, number] => {
     if (active === 'mass') {
-      return niceDomain(chartData.flatMap((p) => [p.weight, p.lean, p.fatMass]), { padPct: 0.08, hardMin: 0 })
+      return niceDomain(chartData.flatMap((p) => [p.weight, p.muscleMass, p.fatFreeMass, p.fatMass]), { padPct: 0.08, hardMin: 0 })
     }
     if (active === 'percent') {
       return niceDomain(chartData.flatMap((p) => [p.fatPct, p.water, p.musclePct]), { padPct: 0.15, hardMin: 0 })
@@ -221,7 +231,9 @@ export function BodyCompositionChart({ trend, detail, isLoading, showEraBoundary
               <>
                 <Area type="monotone" dataKey="weight" name={`Weight (${unit})`} stroke={COLORS.weight}
                   fill="url(#bodyFill)" strokeWidth={2} dot={false} connectNulls />
-                <Line type="monotone" dataKey="lean" name={`Lean (${unit})`} stroke={COLORS.lean}
+                <Line type="monotone" dataKey="fatFreeMass" name={`Fat-Free (${unit})`} stroke={COLORS.lean}
+                  strokeWidth={2} dot={false} connectNulls />
+                <Line type="monotone" dataKey="muscleMass" name={`Muscle (${unit})`} stroke={COLORS.musclePct}
                   strokeWidth={2} dot={false} connectNulls />
                 <Line type="monotone" dataKey="fatMass" name={`Fat (${unit})`} stroke={COLORS.fatMass}
                   strokeWidth={1.8} strokeDasharray="4 3" dot={false} connectNulls />

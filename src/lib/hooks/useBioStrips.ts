@@ -119,7 +119,10 @@ export function useLastWeighIn(days = 120) {
 
 /** Body-composition fields the dashboard's Body card surfaces. */
 export const BODY_METRIC_FIELDS = [
-  'weight_kg', 'bmi', 'lean_mass_kg', 'body_fat_pct',
+  // `lean_mass_kg` is deliberately absent: HealthKit filled it with fat-free
+  // mass and the InBody card with muscle mass, so the tile showed whichever
+  // source wrote last. Both masses are surfaced under their own names instead.
+  'weight_kg', 'bmi', 'muscle_mass_kg', 'fat_free_mass_kg', 'body_fat_pct',
   'muscle_percent', 'water_percent', 'bone_mineral', 'visceral_fat', 'bmr',
 ] as const
 export type BodyMetricField = (typeof BODY_METRIC_FIELDS)[number]

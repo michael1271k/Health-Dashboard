@@ -146,12 +146,14 @@ describe('buildWeeklyExport', () => {
       ...input,
       bodyComp: [{
         date: '2026-07-19', weightKg: 65.3, bmi: 22.4, bodyFatPct: 13.2, musclePercent: 46.1,
-        waterPercent: 60.5, visceralFat: 6, bmr: 1620, boneMineral: 4.1, leanMassKg: 53.4,
+        waterPercent: 60.5, visceralFat: 6, bmr: 1620, boneMineral: 4.1,
+        muscleMassKg: 30.1, fatFreeMassKg: 56.7,
       }],
     })
     // Full InBody row, BMI included, in the mandated order — and no W:H, which
-    // is not tracked any more.
-    expect(withBody).toMatch(/InBody · weight 65\.3 kg · BMI 22\.4 · BF 13\.2% · muscle 46\.1% · water 60\.5% · visceral 6 · BMR 1620 · bone 4\.1% · lean mass 53\.4 kg/)
+    // is not tracked any more. Muscle mass and fat-free mass are SEPARATE
+    // fields: one "lean mass" number used to mean either, depending on the day.
+    expect(withBody).toMatch(/InBody · weight 65\.3 kg · BMI 22\.4 · BF 13\.2% · muscle 46\.1% · water 60\.5% · visceral 6 · BMR 1620 · bone 4\.1% · muscle mass 30\.1 kg · fat-free mass 56\.7 kg/)
     expect(withBody).not.toMatch(/W:H/)
   })
 
