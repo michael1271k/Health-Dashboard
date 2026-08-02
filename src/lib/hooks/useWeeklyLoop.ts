@@ -61,7 +61,7 @@ async function fetchRange(weekStart: string, weekEnd: string) {
 
   // Active Energy, Day Score and Battery are deliberately NOT fetched — none of
   // the three appears in the export any more (see weeklyExport.ts).
-  const [logs, nutrition, sessions, sets, water, supps, doms, bodyComp, cardio, rpe] = await Promise.all([
+  const [logs, nutrition, sessions, sets, water, supps, doms, bodyComp, cardio, rpe, bodyLedger] = await Promise.all([
     supabase.from('daily_logs')
       .select('date, weight_kg, steps, distance_m, training_minutes, sleep_minutes, water_ml, avg_rest_heart_rate, hrv_ms, blood_oxygen')
       .gte('date', weekStart).lte('date', weekEnd),
@@ -98,6 +98,12 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     // from the export, not just the effort rating.
     supabase.from('workout_sessions').select('id, session_rpe')
       .gte('started_at', startInstant).lt('started_at', endInstant),
+    // The body_composition LEDGER too. Reading daily_logs alone meant any date
+    // that exists only in the ledger — a HealthKit weigh-in with no manual
+    // entry — was silently absent from the export's InBody lines.
+    supabase.from('body_composition')
+      .select('date, weight_kg, bmi, body_fat_pct, muscle_pct, water_pct, bone_mineral_pct, visceral_fat, bmr, muscle_mass_kg, fat_free_mass_kg')
+      .gte('date', weekStart).lte('date', weekEnd),
   ])
 
   return {
@@ -110,6 +116,7 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     // doms_logs may not be migrated yet — an error just means no soreness rows.
     doms: (doms.error ? [] : (doms.data ?? [])) as Array<{ date: string; muscle_group: string; severity: number }>,
     bodyComp: (bodyComp.error ? [] : (bodyComp.data ?? [])) as Array<Record<string, number | string | null>>,
+    bodyLedger: (bodyLedger.error ? [] : (bodyLedger.data ?? [])) as Array<Record<string, number | string | null>>,
     // cardio_logs may not be migrated yet — an error just means no walks.
     cardio: (cardio.error ? [] : (cardio.data ?? [])) as Array<{
       date: string; kind: string; distance_m: number | null; duration_min: number | null
@@ -223,7 +230,27 @@ function toSessions(d: RangeData): ExportSession[] {
 
 /** Days with a real scale reading → the export's body-composition rows. */
 function toBodyComp(d: RangeData): ExportBodyComp[] {
-  return d.bodyComp
+  // Union of the two tables, daily_logs winning per FIELD — it holds the manual
+  // InBody entry, which is richer than a HealthKit sync. The ledger's own
+  // column names differ (muscle_pct / bone_mineral_pct / water_pct), so they
+  // are folded onto the daily_logs spellings before merging.
+  const merged = new Map<string, Record<string, number | string | null>>()
+  for (const r of d.bodyLedger) {
+    merged.set(r.date as string, {
+      date: r.date, weight_kg: r.weight_kg, bmi: r.bmi, body_fat_pct: r.body_fat_pct,
+      muscle_percent: r.muscle_pct, water_percent: r.water_pct, bone_mineral: r.bone_mineral_pct,
+      visceral_fat: r.visceral_fat, bmr: r.bmr,
+      muscle_mass_kg: r.muscle_mass_kg, fat_free_mass_kg: r.fat_free_mass_kg,
+    })
+  }
+  for (const r of d.bodyComp) {
+    const cur = merged.get(r.date as string) ?? {}
+    const out: Record<string, number | string | null> = { ...cur }
+    for (const [k, v] of Object.entries(r)) if (v != null) out[k] = v
+    merged.set(r.date as string, out)
+  }
+
+  return [...merged.values()]
     .map((r) => ({
       date: r.date as string,
       weightKg: (r.weight_kg as number | null) ?? null,

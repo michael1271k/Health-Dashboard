@@ -198,7 +198,6 @@ export function usePRHistory(exerciseId?: string, days = 180, era: 'all' | 'ppl'
           weight_kg,
           reps,
           est_1rm_kg,
-          is_pr,
           exercises!inner(name),
           workout_sessions!inner(started_at)
         `)
@@ -227,7 +226,6 @@ export function usePRHistory(exerciseId?: string, days = 180, era: 'all' | 'ppl'
         weight_kg: number
         reps: number
         est_1rm_kg: number | null
-        is_pr: boolean
         exercises: { name: string }
         workout_sessions: { started_at: string }
       }>).map((row) => ({

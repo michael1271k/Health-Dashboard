@@ -13,6 +13,7 @@ import { isTimedExercise } from '@/lib/exercises/timed'
 import { buildBaselines, detectSessionPrs, recordSets, type PrAxis } from '@/lib/training/prEngine'
 import { repWindowFor } from '@/lib/training/ceilings'
 import { normalizeCr10 } from '@/lib/training/effort'
+import { canonicalExerciseName } from '@/lib/exercises/aliases'
 
 type DB = SupabaseClient<Database>
 
@@ -123,8 +124,13 @@ export async function saveSession(
   // the same baselines, so a badge shown on the green tick is a badge that gets
   // recorded. (This block used to be ~60 lines of inline map-juggling that the
   // client had no way to reuse.)
+  // CANONICALISED. `personal_records.exercise_key` is a display NAME, and
+  // `useSessionDetail` looks ledger rows up by `exercises.name` — which
+  // `resolveExercises` canonicalises on the way in. Writing the raw payload
+  // name here meant a set logged under an alias filed its record under a key
+  // nothing would ever match, so the trophy rendered with no axis chips.
   const nameByEx = new Map<string, string>()
-  for (const s of payload.sets) nameByEx.set(s.exerciseId, s.exerciseName)
+  for (const s of payload.sets) nameByEx.set(s.exerciseId, canonicalExerciseName(s.exerciseName))
 
   // Rep windows gate the e1RM axis (see `e1rmEligible`). Resolved once per
   // exercise, and by NAME because that is what the program is keyed on.
@@ -283,8 +289,16 @@ export async function saveSession(
   if (prRows.length) {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await supabase.from('personal_records').upsert(prRows as any, { onConflict: 'user_id,exercise_key,axis' })
-    } catch { /* ledger not migrated yet */ }
+      const { error } = await supabase.from('personal_records').upsert(prRows as any, { onConflict: 'user_id,exercise_key,axis' })
+      // A bare catch swallowed every failure equally, so a real write error
+      // looked exactly like an un-migrated table and a record could vanish with
+      // no signal anywhere. Only the missing-table case is silent now.
+      if (error && !/relation|does not exist|schema cache|PGRST20[0-9]/i.test(error.message)) {
+        console.error('[save] personal_records upsert failed:', error.message)
+      }
+    } catch (e) {
+      console.error('[save] personal_records upsert threw:', e)
+    }
   }
 
   return {

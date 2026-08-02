@@ -45,6 +45,13 @@ const METRIC_MAP: Array<{ hk: string; key: string; reduce: Reduce; scale?: numbe
   { hk: 'HKQuantityTypeIdentifierAppleStandTime', key: 'standing_minutes', reduce: 'sum' },
   { hk: 'HKQuantityTypeIdentifierHeartRateVariabilitySDNN', key: 'hrv', reduce: 'avg' },
   { hk: 'HKQuantityTypeIdentifierRestingHeartRate', key: 'avg_rest_heart_rate', reduce: 'latest' },
+  // HeartRate was AUTHORIZED (EXTRA_READ_TYPES) but never queried, so
+  // daily_logs.avg_heart_rate only ever arrived via the Shortcut push and was
+  // null on a native-only sync. Same latent bug the body-comp types had.
+  { hk: 'HKQuantityTypeIdentifierHeartRate', key: 'avg_heart_rate', reduce: 'avg' },
+  // VO₂max updates roughly weekly, so `latest` (not avg) is the honest reducer;
+  // it read 0 forever because nothing pulled it.
+  { hk: 'HKQuantityTypeIdentifierVO2Max', key: 'vo2max', reduce: 'latest' },
   { hk: 'HKQuantityTypeIdentifierRespiratoryRate', key: 'respiratory_rate', reduce: 'avg' },
   // OxygenSaturation is a 0–1 fraction → ×100 to store an actual percent.
   { hk: 'HKQuantityTypeIdentifierOxygenSaturation', key: 'blood_oxygen', reduce: 'latest', scale: 100 },
@@ -98,6 +105,7 @@ const EXTRA_READ_TYPES = [
   'HKQuantityTypeIdentifierAppleSleepingWristTemperature',
   'HKQuantityTypeIdentifierTimeInDaylight',
   'HKQuantityTypeIdentifierHeartRate',
+  'HKQuantityTypeIdentifierVO2Max',
   // ── Activity / body signals (Micros page + richer readiness) ──
   'HKQuantityTypeIdentifierFlightsClimbed',
   'HKQuantityTypeIdentifierBasalEnergyBurned',       // resting energy
