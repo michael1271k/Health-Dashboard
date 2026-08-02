@@ -115,7 +115,7 @@ export const APEX51: Program = {
     ] },
     { key: 'arms', label: 'Delts & Arms', color: C.arms, weekday: 2, exercises: [
       { name: 'DB Shoulder Press', sets: 3, cutSets: 3, wk1Kg: 28, reps: '8–10', muscles: ['shoulders', 'triceps'], compound: true },
-      { name: 'Cable Lateral Raise', sets: 5, cutSets: 4, wk1Kg: 5, reps: '12–20', muscles: ['shoulders'], note: 'per side' },
+      { name: 'Single Arm Lateral Raise (Cable)', sets: 5, cutSets: 4, wk1Kg: 5, reps: '12–20', muscles: ['shoulders'], note: 'per side' },
       { name: 'Seated Incline DB Curl', sets: 3, cutSets: 3, wk1Kg: 14, reps: '8–12', muscles: ['biceps'] },
       { name: 'Cable Overhead Extension', sets: 3, cutSets: 2, wk1Kg: 9, reps: '10–15', muscles: ['triceps'] },
       { name: 'DB Hammer Curl', sets: 3, cutSets: 2, wk1Kg: 16, reps: '10–12', muscles: ['biceps', 'forearms'] },
@@ -176,7 +176,7 @@ export const HELIX4: Program = {
     ] },
     { key: 'upper_b', label: 'Upper B', color: C.cbB, weekday: 4, exercises: [
       { name: 'DB Shoulder Press', sets: 3, cutSets: 3, wk1Kg: 28, reps: '8–10', muscles: ['shoulders', 'triceps'], compound: true },
-      { name: 'Cable Lateral Raise', sets: 4, cutSets: 4, wk1Kg: 5, reps: '12–20', muscles: ['shoulders'] },
+      { name: 'Single Arm Lateral Raise (Cable)', sets: 4, cutSets: 4, wk1Kg: 5, reps: '12–20', muscles: ['shoulders'], note: 'per side' },
       { name: 'Pec Deck', sets: 2, cutSets: 1, wk1Kg: 47.5, reps: '12–15', muscles: ['chest'], note: 'cut: rotates with Chest Press (Machine)' },
       { name: 'Seated Cable Row', sets: 3, cutSets: 2, wk1Kg: 35, reps: '10–12', muscles: ['back'], compound: true, note: 'wide bar' },
       { name: 'DB Hammer Curl', sets: 3, cutSets: 2, wk1Kg: 16, reps: '10–12', muscles: ['biceps', 'forearms'] },

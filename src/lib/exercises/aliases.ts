@@ -37,6 +37,16 @@ export const EXERCISE_ALIASES: Record<string, string> = {
   'seated cable row (v grip)': 'Seated Cable Row',
   'seated cable row - bar wide grip': 'Seated Cable Row',
   'wide-grip cable row': 'Seated Cable Row',
+
+  // ── Same station, two names (merged 2026-08-02) ──
+  // `Cable Lateral Raise` (Delts & Arms) and `Single Arm Lateral Raise (Cable)`
+  // (Upper B) were the same single-arm cable movement under two catalog rows,
+  // so the 5 kg × 15 on 07-28 was judged against a baseline that had never seen
+  // the 5 kg × 13 on 07-23. Identical failure mode to the machine merges above.
+  'cable lateral raise': 'Single Arm Lateral Raise (Cable)',
+  'single arm cable lateral raise': 'Single Arm Lateral Raise (Cable)',
+  'sa lateral raise (cable)': 'Single Arm Lateral Raise (Cable)',
+  'sa lateral raise': 'Single Arm Lateral Raise (Cable)',
 }
 
 export function canonicalExerciseName(raw: string): string {
