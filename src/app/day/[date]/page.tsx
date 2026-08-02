@@ -22,44 +22,55 @@ import { phaseDisplay } from '@/lib/nutrition/phase'
 import { ERA_META, eraForDate, scheduleDayFor, activeProgram } from '@/lib/programs'
 import { displayWeight, weightUnit, fmtVolume } from '@/lib/utils/units'
 import { logicalTodayISO } from '@/lib/utils/day'
+import { Zone, ZoneRow, StatStrip } from '@/components/ui/Zone'
+import { SnapPager } from '@/components/ui/SnapPager'
+import { EMBER, EMBER_DEEP, SAPPHIRE, STEEL, GOLD, OXIDE, EMERALD, MUTED } from '@/lib/theme/palette'
 
-const VIOLET = '#B4522A'
-const ICE = '#3D7AB8'
-const TEAL = '#E0703C'
-const CYAN = '#8E9AAC'
-const EMBER = '#D4AF37'
-const ROSE = '#C4514E'
+// Local aliases over the real palette. These were six hardcoded hexes whose
+// NAMES disagreed with their values — `TEAL` held ember orange, `EMBER` held
+// gold — so a colour changed in palette.ts never reached this page.
+const VIOLET = EMBER_DEEP
+const ICE = SAPPHIRE
+const TEAL = EMBER
+const CYAN = STEEL
+const AMBER = GOLD
+const ROSE = OXIDE
 
 function scoreColor(score: number | null | undefined): string {
-  if (score == null) return '#79808C'
+  if (score == null) return MUTED
   if (score >= 80) return TEAL
   if (score >= 60) return CYAN
-  if (score >= 40) return EMBER
+  if (score >= 40) return AMBER
   return ROSE
 }
 
 /**
- * A macro ring (adherence = intake / goal-ish hint). Sized generously — the Fuel
- * card rings used to be a tiny 44px lost in their container; they own the card now.
+ * A macro ring (adherence = intake / goal-ish hint).
+ *
+ * 88px in a `pt-4 pb-1` block used to cost ~200px of page for three two-digit
+ * numbers. At 56px the ring is still the dominant thing in its row and the row
+ * is a third of the height.
  */
-function MicroRing({ value, goalHint, color, label }: { value: number | null | undefined; goalHint: number; color: string; label: string }) {
-  const size = 88, stroke = 8
+function MicroRing({ value, goalHint, color, label, size = 56 }: {
+  value: number | null | undefined; goalHint: number; color: string; label: string; size?: number
+}) {
+  const stroke = Math.max(5, Math.round(size / 11))
   const r = (size - stroke) / 2
   const circ = 2 * Math.PI * r
   const pct = value != null ? Math.min(1, value / goalHint) : 0
   return (
-    <div className="flex flex-col items-center gap-1.5">
+    <div className="flex flex-col items-center gap-1">
       <div className="relative" style={{ width: size, height: size, filter: `drop-shadow(0 0 8px ${color}40)` }}>
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90" aria-hidden="true">
           <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth={stroke} />
           {pct > 0 && <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={stroke} strokeLinecap="round"
             strokeDasharray={circ} strokeDashoffset={circ * (1 - pct)} style={{ transition: 'stroke-dashoffset 600ms cubic-bezier(0.22,1,0.36,1)' }} />}
         </svg>
-        <span className="absolute inset-0 flex items-center justify-center helix-num text-fluid-xl font-bold text-text">
+        <span className="absolute inset-0 flex items-center justify-center helix-num text-fluid-sm font-bold text-text">
           {value != null ? Math.round(value) : '—'}
         </span>
       </div>
-      <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color }}>{label}</span>
+      <span className="text-[9px] font-semibold uppercase tracking-wide" style={{ color }}>{label}</span>
     </div>
   )
 }
@@ -212,101 +223,129 @@ export default function DailyNexusPage() {
         </span>
       </header>
 
-      {/* ══ SECTION 1 · Vitals & Nutrition ══ */}
-      <SectionTitle>Vitals &amp; Nutrition</SectionTitle>
+      {/* ══ SECTION 1 · Vitals & Nutrition ══
+          Three zones and a pager, in place of seven stacked glass cards. Every
+          widget survives; what was removed is ~400px of repeated padding and
+          ~280px of per-card headings. See components/ui/Zone.tsx. */}
 
-      {/* Readiness hero band */}
-      <section className="helix-card holo-sheen flex items-center gap-4 py-4"
-        style={{ borderColor: `${scoreColor(score)}30`, boxShadow: score != null ? `0 0 22px ${scoreColor(score)}1f` : undefined }}>
-        <div className="relative shrink-0 flex items-center justify-center" style={{ width: 64, height: 64 }}>
-          <svg width="64" height="64" viewBox="0 0 64 64" className="-rotate-90" aria-hidden="true">
-            <circle cx="32" cy="32" r="28" fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="5" />
-            {score != null && <circle cx="32" cy="32" r="28" fill="none" stroke={scoreColor(score)} strokeWidth="5" strokeLinecap="round"
-              strokeDasharray={2 * Math.PI * 28} strokeDashoffset={2 * Math.PI * 28 * (1 - score / 100)}
-              style={{ filter: `drop-shadow(0 0 5px ${scoreColor(score)}88)` }} />}
-          </svg>
-          <span className="absolute helix-num text-fluid-lg font-bold" style={{ color: scoreColor(score) }}>{score ?? '—'}</span>
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-fluid-xs text-muted uppercase tracking-wide">Day Score</span>
-            {n?.phase && <span className="text-[10px] font-bold uppercase" style={{ color: phaseDisplay(n.phase, date).color }}>{phaseDisplay(n.phase, date).label}</span>}
+      {/* ── TODAY · readiness, battery, what's scheduled ── */}
+      <Zone label="Today" accent={scoreColor(score)}>
+        <ZoneRow divide={false} className="flex items-center gap-3">
+          <div className="relative shrink-0 flex items-center justify-center" style={{ width: 52, height: 52 }}>
+            <svg width="52" height="52" viewBox="0 0 52 52" className="-rotate-90" aria-hidden="true">
+              <circle cx="26" cy="26" r="22" fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="4" />
+              {score != null && <circle cx="26" cy="26" r="22" fill="none" stroke={scoreColor(score)} strokeWidth="4" strokeLinecap="round"
+                strokeDasharray={2 * Math.PI * 22} strokeDashoffset={2 * Math.PI * 22 * (1 - score / 100)}
+                style={{ filter: `drop-shadow(0 0 5px ${scoreColor(score)}88)` }} />}
+            </svg>
+            <span className="absolute helix-num text-fluid-sm font-bold" style={{ color: scoreColor(score) }}>{score ?? '—'}</span>
           </div>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-fluid-xs text-muted">Battery</span>
-            <span className="flex-1 h-2 rounded-full bg-white/[0.06] overflow-hidden">
-              <span className="block h-full rounded-full" style={{ width: `${battery ?? 0}%`, background: ICE, boxShadow: `0 0 8px ${ICE}66` }} />
-            </span>
-            <span className="helix-num text-fluid-xs font-bold" style={{ color: ICE }}>{battery != null ? `${battery}%` : '—'}</span>
-          </div>
-          <span className="text-[11px] text-muted mt-1 block truncate">{schedule === 'rest' ? 'Zone-2 / Rest' : schedule.label}</span>
-        </div>
-        <CompletenessArc parts={parts} />
-      </section>
-
-      {/* Nexus widget order is fixed: Daily Score (the readiness band above) →
-          Sleep → Fuel → everything else. */}
-      <div className="grid grid-cols-2 gap-3">
-        {/* Sleep & recovery — the premium stage-ribbon visual (reused from the
-            dashboard), with the sleep-debt gauge folded in below. */}
-        <section className="helix-card col-span-2 sm:col-span-1 space-y-3" style={{ borderColor: `${VIOLET}26` }}>
-          <h3 className="font-heading font-semibold text-fluid-sm text-text flex items-center gap-1.5"><Moon className="w-3.5 h-3.5" style={{ color: VIOLET }} /> Sleep &amp; Recovery</h3>
-          <SleepStages sleep={daySleep ?? null} log={log ?? null} goalHours={goals?.sleep_goal_hours ?? null} />
-          {/* Sleep debt folded in — no longer a standalone oversized card */}
-          <SleepDebtGauge compact />
-        </section>
-
-        {/* Fuel — double-tap to manually override the day's macros */}
-        <section className="helix-card col-span-2 sm:col-span-1 space-y-2" style={{ borderColor: `${EMBER}26`, cursor: 'pointer' }}
-          onClick={tapFuel} title="Double-tap to edit macros">
-          <div className="flex items-baseline justify-between">
-            <h3 className="font-heading font-semibold text-fluid-sm text-text flex items-center gap-1.5"><Flame className="w-3.5 h-3.5" style={{ color: MACRO_COLORS.calories }} /> Fuel</h3>
-            <span className="helix-num text-fluid-2xl font-black leading-none" style={{ color: MACRO_COLORS.calories }}>{n ? `${Math.round(n.calories).toLocaleString()}` : '—'}<span className="text-fluid-xs text-muted font-bold"> kcal</span></span>
-          </div>
-          {n ? (
-            <div className="flex items-center justify-around pt-4 pb-1">
-              <MicroRing value={n.carbs_g} goalHint={200} color={MACRO_COLORS.carbs} label="C" />
-              <MicroRing value={n.fat_g} goalHint={60} color={MACRO_COLORS.fat} label="F" />
-              <MicroRing value={n.protein_g} goalHint={180} color={MACRO_COLORS.protein} label="P" />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[11px] text-muted truncate">{schedule === 'rest' ? 'Zone-2 / Rest' : schedule.label}</span>
+              {n?.phase && <span className="text-[10px] font-bold uppercase" style={{ color: phaseDisplay(n.phase, date).color }}>{phaseDisplay(n.phase, date).label}</span>}
             </div>
-          ) : <p className="text-fluid-xs text-muted py-2">No nutrition logged — double-tap to add.</p>}
-        </section>
-        <MacroOverrideSheet
-          open={fuelEdit}
-          onClose={() => setFuelEdit(false)}
-          date={date}
-          initial={{ calories: n?.calories ?? 0, protein_g: n?.protein_g ?? 0, carbs_g: n?.carbs_g ?? 0, fat_g: n?.fat_g ?? 0 }}
-        />
-
-        {/* Hydration — glowing DNA double-helix filling with intake */}
-        <div className="col-span-2 sm:col-span-1">
-          <WaterHelix ml={log?.water_ml ?? null} goalMl={goals?.water_goal_ml ?? 3000} />
-        </div>
-
-        {/* Vitals & Body */}
-        <section className="helix-card col-span-2 sm:col-span-1 space-y-2">
-          <h3 className="font-heading font-semibold text-fluid-sm text-text">Vitals &amp; Body</h3>
-          <div className="grid grid-cols-3 gap-2 text-center">
-            {[
-              // Weight intentionally NOT here — it owns the Body/InBody card;
-              // duplicating it across both boxes was the redundancy. Water now owns
-              // its fluid cell to the left.
-              { label: 'Steps', v: log?.steps != null ? Math.round(log.steps).toLocaleString() : null, u: '', c: '#8E9AAC' },
-              { label: 'Active', v: log?.active_energy != null ? Math.round(log.active_energy) : null, u: '', c: '#C4514E' },
-              { label: 'Stand', v: log?.stand_hours != null ? `${log.stand_hours}` : null, u: 'h', c: '#3E9E7A' },
-              // VO₂max removed — HealthKit never populated it (always 0).
-              { label: 'Resp', v: log?.respiratory_rate != null ? log.respiratory_rate.toFixed(1) : null, u: '/min', c: ICE },
-              { label: 'SpO₂', v: log?.blood_oxygen != null ? Math.round(log.blood_oxygen) : null, u: '%', c: '#3E9E7A' },
-              { label: 'HRV', v: log?.hrv_ms != null ? `${Math.round(log.hrv_ms)}` : null, u: '', c: ICE },
-            ].map((s) => (
-              <div key={s.label} className="rounded-lg bg-white/[0.02] border border-white/[0.05] px-1 py-1.5">
-                <span className="helix-num block text-fluid-xs font-bold text-text leading-tight">{s.v ?? '—'}{s.v != null && s.u ? s.u : ''}</span>
-                <span className="text-[8px] uppercase tracking-wide" style={{ color: s.c }}>{s.label}</span>
-              </div>
-            ))}
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-[10px] text-muted shrink-0">Battery</span>
+              <span className="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                <span className="block h-full rounded-full" style={{ width: `${battery ?? 0}%`, background: ICE, boxShadow: `0 0 8px ${ICE}66` }} />
+              </span>
+              <span className="helix-num text-[11px] font-bold shrink-0" style={{ color: ICE }}>{battery != null ? `${battery}%` : '—'}</span>
+            </div>
           </div>
-        </section>
-      </div>
+          <CompletenessArc parts={parts} size={38} />
+        </ZoneRow>
+      </Zone>
+
+      {/* ── FUEL & FLUIDS · macros and hydration share one container ── */}
+      <Zone label="Fuel &amp; Fluids" accent={MACRO_COLORS.calories}>
+        <ZoneRow divide={false} className="cursor-pointer" onClick={tapFuel} title="Double-tap to edit macros">
+          <div className="flex items-center gap-3">
+            <span className="flex items-baseline gap-1 shrink-0">
+              <Flame className="w-3.5 h-3.5 self-center" style={{ color: MACRO_COLORS.calories }} aria-hidden="true" />
+              <span className="helix-num text-fluid-lg font-black leading-none" style={{ color: MACRO_COLORS.calories }}>
+                {n ? Math.round(n.calories).toLocaleString() : '—'}
+              </span>
+              <span className="text-[10px] text-muted font-bold">kcal</span>
+            </span>
+            {n ? (
+              <div className="flex items-center gap-3 ml-auto">
+                <MicroRing value={n.carbs_g} goalHint={200} color={MACRO_COLORS.carbs} label="C" />
+                <MicroRing value={n.fat_g} goalHint={60} color={MACRO_COLORS.fat} label="F" />
+                <MicroRing value={n.protein_g} goalHint={180} color={MACRO_COLORS.protein} label="P" />
+              </div>
+            ) : <span className="text-[11px] text-muted ml-auto">Double-tap to add</span>}
+          </div>
+        </ZoneRow>
+        {/* Water as a one-line readout; the double-helix visual is in the pager. */}
+        <ZoneRow className="flex items-center gap-2">
+          <span className="text-[10px] text-muted shrink-0">Water</span>
+          <span className="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+            <span className="block h-full rounded-full"
+              style={{
+                width: `${Math.min(100, ((log?.water_ml ?? 0) / (goals?.water_goal_ml ?? 3000)) * 100)}%`,
+                background: ICE, boxShadow: `0 0 8px ${ICE}66`,
+              }} />
+          </span>
+          <span className="helix-num text-[11px] font-bold shrink-0" style={{ color: ICE }}>
+            {((log?.water_ml ?? 0) / 1000).toFixed(1)} / {((goals?.water_goal_ml ?? 3000) / 1000).toFixed(1)} L
+          </span>
+        </ZoneRow>
+      </Zone>
+
+      <MacroOverrideSheet
+        open={fuelEdit}
+        onClose={() => setFuelEdit(false)}
+        date={date}
+        initial={{ calories: n?.calories ?? 0, protein_g: n?.protein_g ?? 0, carbs_g: n?.carbs_g ?? 0, fat_g: n?.fat_g ?? 0 }}
+      />
+
+      {/* ── VITALS · one scrollable line, not a 3×2 grid of bordered boxes ── */}
+      <Zone label="Vitals" accent={CYAN}>
+        <ZoneRow divide={false}>
+          <StatStrip stats={[
+            // Weight intentionally NOT here — it owns the Body/InBody card.
+            { label: 'Steps', value: log?.steps != null ? Math.round(log.steps).toLocaleString() : null, color: STEEL },
+            { label: 'Active', value: log?.active_energy != null ? `${Math.round(log.active_energy)}` : null, color: OXIDE },
+            { label: 'Stand', value: log?.stand_hours != null ? `${log.stand_hours}` : null, unit: 'h', color: EMERALD },
+            // VO₂max removed — HealthKit never populated it (always 0).
+            { label: 'Resp', value: log?.respiratory_rate != null ? log.respiratory_rate.toFixed(1) : null, unit: '/min', color: ICE },
+            { label: 'SpO₂', value: log?.blood_oxygen != null ? `${Math.round(log.blood_oxygen)}` : null, unit: '%', color: EMERALD },
+            { label: 'HRV', value: log?.hrv_ms != null ? `${Math.round(log.hrv_ms)}` : null, color: ICE },
+          ]} />
+        </ZoneRow>
+      </Zone>
+
+      {/* ── The three tall visuals, paged rather than stacked ──
+          Sleep ribbon (~320px) + hydration helix (~180px) + body figure (~280px)
+          is 780px of a ~2,000px page, and each is something you look at on
+          purpose rather than scan past. Sharing one slot gives every one of them
+          MORE room than it had at a third of the cost. */}
+      <SnapPager pages={[
+        {
+          key: 'sleep',
+          label: 'Sleep',
+          content: (
+            <section className="helix-card space-y-3" style={{ borderColor: `${VIOLET}26` }}>
+              <h3 className="font-heading font-semibold text-fluid-sm text-text flex items-center gap-1.5">
+                <Moon className="w-3.5 h-3.5" style={{ color: VIOLET }} /> Sleep &amp; Recovery
+              </h3>
+              <SleepStages sleep={daySleep ?? null} log={log ?? null} goalHours={goals?.sleep_goal_hours ?? null} />
+              <SleepDebtGauge compact />
+            </section>
+          ),
+        },
+        {
+          key: 'water',
+          label: 'Hydration',
+          content: <WaterHelix ml={log?.water_ml ?? null} goalMl={goals?.water_goal_ml ?? 3000} />,
+        },
+        {
+          key: 'body',
+          label: 'Body',
+          content: <BodyMap log={log ?? null} />,
+        },
+      ]} />
 
       {/* InBody & Scale — only when a measurement exists (or the user opts to add). */}
       <div ref={inbodyRef}>
@@ -326,8 +365,8 @@ export default function DailyNexusPage() {
         )}
       </div>
 
-      {/* Segmented InBody figure — composition mapped onto the body + printout bars. */}
-      {hasScale && <BodyMap log={log ?? null} />}
+      {/* BodyMap moved into the pager above — it was a 280px card that only ever
+          renders on a weigh-in day. */}
 
       {/* Recovery inputs — soreness 24–72h post-session (compact 2-column) */}
       <DomsTracker date={date} />

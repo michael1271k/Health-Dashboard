@@ -1,0 +1,87 @@
+'use client'
+
+import { useCallback, useRef, useState } from 'react'
+
+/**
+ * A swipeable pager built on CSS scroll-snap — no library, no JS animation.
+ *
+ * WHY
+ * Three visuals on the Daily Nexus are genuinely tall and genuinely wanted:
+ * the sleep stage ribbon (~320px), the hydration double-helix (~180px) and the
+ * body-composition figure (~280px). Stacked, they are 780px — over a third of
+ * the page — and each is a thing you look at deliberately, not something you
+ * scan past on the way to something else.
+ *
+ * Paged, they share one slot and each gets MORE room than it had, at a third of
+ * the cost. Nothing is hidden behind a menu: the rail names all three and the
+ * pages are one swipe apart.
+ *
+ * Scroll position is the single source of truth — the rail buttons scroll, and
+ * the active index is read back from the scroll offset. Nothing to keep in sync,
+ * and a native swipe and a rail tap cannot disagree.
+ */
+export function SnapPager({ pages, className = '' }: {
+  pages: Array<{ key: string; label: string; content: React.ReactNode }>
+  className?: string
+}) {
+  const scroller = useRef<HTMLDivElement>(null)
+  const [active, setActive] = useState(0)
+
+  const onScroll = useCallback(() => {
+    const el = scroller.current
+    if (!el) return
+    const i = Math.round(el.scrollLeft / Math.max(1, el.clientWidth))
+    setActive(Math.min(pages.length - 1, Math.max(0, i)))
+  }, [pages.length])
+
+  const go = (i: number) => {
+    const el = scroller.current
+    if (!el) return
+    el.scrollTo({ left: i * el.clientWidth, behavior: 'smooth' })
+  }
+
+  return (
+    <div className={className}>
+      {/* Rail — the same glass-pill pattern as RangeSelector. */}
+      <div className="flex gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.06] mb-2" role="tablist">
+        {pages.map((p, i) => {
+          const on = i === active
+          return (
+            <button
+              key={p.key}
+              type="button"
+              role="tab"
+              aria-selected={on}
+              aria-controls={`pager-${p.key}`}
+              onClick={() => go(i)}
+              className={`flex-1 min-h-[34px] rounded-xl text-[11px] font-semibold transition-colors border ${
+                on ? 'bg-primary/15 text-primary border-primary/30' : 'text-muted border-transparent'
+              }`}
+            >
+              {p.label}
+            </button>
+          )
+        })}
+      </div>
+
+      <div
+        ref={scroller}
+        onScroll={onScroll}
+        className="flex overflow-x-auto no-scrollbar snap-x snap-mandatory"
+        style={{ scrollBehavior: 'smooth' }}
+      >
+        {pages.map((p) => (
+          <div
+            key={p.key}
+            id={`pager-${p.key}`}
+            role="tabpanel"
+            aria-label={p.label}
+            className="w-full shrink-0 snap-center"
+          >
+            {p.content}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
