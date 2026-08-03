@@ -5,8 +5,9 @@ import { weekStartOf } from '@/lib/utils/week'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { planWeekNumber } from '@/lib/reports/weekNumber'
 import { useUserGoals } from '@/lib/hooks/useDashboard'
+import { useLogicalDate } from '@/lib/hooks/useLogicalDate'
 
-/** Days from the start of the current (Sunday-anchored) week through today. */
+/** Days from the start of the current (configured) week through today. */
 export function currentWeekDays(today = logicalTodayISO()): number {
   const start = weekStartOf(today)
   const ms = Date.parse(`${today}T00:00:00Z`) - Date.parse(`${start}T00:00:00Z`)
@@ -30,7 +31,7 @@ export function CurrentWeekButton({ value, onChange }: {
   onChange: (days: number) => void
 }) {
   const { data: goals } = useUserGoals()
-  const today = logicalTodayISO()
+  const today = useLogicalDate()
   const days = currentWeekDays(today)
   const week = planWeekNumber((goals as { phase_started_on?: string | null } | null)?.phase_started_on, today)
   const active = value === days
@@ -38,7 +39,7 @@ export function CurrentWeekButton({ value, onChange }: {
     <button
       onClick={() => onChange(days)}
       aria-pressed={active}
-      title={`Plan week ${week} · Sunday → today (${days} day${days === 1 ? '' : 's'})`}
+      title={`Plan week ${week} · week start → today (${days} day${days === 1 ? '' : 's'})`}
       className={`min-w-fit px-3 py-1.5 rounded-xl text-fluid-xs font-semibold min-h-[40px] inline-flex items-center gap-1.5 transition-colors border
         ${active ? 'bg-primary/15 text-primary border-primary/30' : 'text-muted hover:text-text border-transparent'}`}
     >

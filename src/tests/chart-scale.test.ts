@@ -80,9 +80,19 @@ describe('current-week timeframe', () => {
     expect(planWeekNumber('2026-07-28', '2026-08-01')).toBe(1)
   })
 
+  it('falls back to the block start when no plan was ever stamped', () => {
+    // `phase_started_on` is only written when a plan is picked in Settings, and
+    // it is still NULL on this account. Returning 1 there made the badge read
+    // "Wk 1" for three weeks running — a real number and a wrong one. The block
+    // opened 2026-07-15 (HELIX_CUT_START), whose Sunday week begins 07-12.
+    expect(planWeekNumber(null, '2026-07-15')).toBe(1)
+    expect(planWeekNumber(null, '2026-08-01')).toBe(3)
+    expect(planWeekNumber(undefined, '2026-08-03')).toBe(4)
+  })
+
   it('never goes below 1, whatever the column holds', () => {
-    expect(planWeekNumber(null, '2026-08-01')).toBe(1)
     expect(planWeekNumber('2027-01-01', '2026-08-01')).toBe(1)
+    expect(planWeekNumber('2026-08-01', 'not-a-date')).toBe(1)
   })
 
   it('counts Sunday through today inclusive', () => {

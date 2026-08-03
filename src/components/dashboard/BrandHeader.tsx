@@ -8,6 +8,7 @@ import { HELIX_CUT_START, activeProgram, activePhase } from '@/lib/programs'
 import { PHASE_COLORS, PHASE_META, type Phase } from '@/lib/nutrition/phase'
 import { planWeekNumber } from '@/lib/reports/weekNumber'
 import { logicalTodayISO } from '@/lib/utils/day'
+import { useLogicalDate } from '@/lib/hooks/useLogicalDate'
 
 /** Per-plan chip colour — Helix-5 gets a premium iridescent violet of its own. */
 const PLAN_CHIP_COLOR: Record<string, string> = {
@@ -95,10 +96,16 @@ export function BrandHeader() {
 
   // Weeks INTO the active plan, counted from `user_goals.phase_started_on` — the
   // same source the analytics header uses, so "Week 3" means one thing app-wide.
-  // Picking a plan in Settings stamps that column, which puts you in Week 1.
+  // Picking a plan in Settings stamps that column, which puts you in Week 1;
+  // until then it counts from the block start (see `planWeekNumber`).
+  //
+  // `useLogicalDate` rather than a bare `logicalTodayISO()` call: the badge has
+  // to advance the instant the configured week boundary passes, and a value read
+  // during render only updates when something else happens to re-render.
+  const today = useLogicalDate()
   const planWeek = planWeekNumber(
     (goals as { phase_started_on?: string | null } | null)?.phase_started_on,
-    logicalTodayISO(),
+    today,
   )
 
   const firstName = profile?.firstName ?? null

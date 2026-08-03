@@ -15,9 +15,18 @@ export function deviceWeekStartDay(): number {
   try { return window.localStorage.getItem('helix_week_start') === '1' ? 1 : 0 } catch { return 0 }
 }
 
-/** First day (per `startDay`) of the week containing dateISO (YYYY-MM-DD). */
+/**
+ * First day (per `startDay`) of the week containing dateISO (YYYY-MM-DD).
+ *
+ * TOTAL by design. A malformed date used to reach `toISOString()` and throw
+ * `RangeError: Invalid time value`, which in a render path takes the whole page
+ * down rather than the one badge that asked. Callers already have to handle a
+ * non-date coming back (`planWeekNumber` checks `Number.isFinite`), so the
+ * unparseable input is echoed and the decision stays with them.
+ */
 export function weekStartOf(dateISO: string, startDay: number = deviceWeekStartDay()): string {
   const d = new Date(`${dateISO}T12:00:00Z`)
+  if (Number.isNaN(d.getTime())) return dateISO
   const offset = (d.getUTCDay() - startDay + 7) % 7
   d.setUTCDate(d.getUTCDate() - offset)
   return d.toISOString().slice(0, 10)
