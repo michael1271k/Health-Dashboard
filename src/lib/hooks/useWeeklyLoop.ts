@@ -166,6 +166,24 @@ function toDays(weekStart: string, d: RangeData): ExportDay[] {
   })
 }
 
+/**
+ * One line per MOVEMENT, keeping the set that earned the record.
+ *
+ * Mirrors `highlightsOf` in the session report, deliberately: the export and
+ * the report must not disagree about how many records a session held.
+ */
+function dedupePrs(rows: Array<{ name: string; weightKg: number; reps: number }>) {
+  const best = new Map<string, { name: string; weightKg: number; reps: number }>()
+  for (const r of rows) {
+    const cur = best.get(r.name)
+    const better = !cur
+      || r.weightKg * r.reps > cur.weightKg * cur.reps
+      || (r.weightKg * r.reps === cur.weightKg * cur.reps && r.weightKg > cur.weightKg)
+    if (better) best.set(r.name, r)
+  }
+  return [...best.values()]
+}
+
 /** Shape a fetched range into the export's session rows (with every set). */
 function toSessions(d: RangeData): ExportSession[] {
   const program = activeProgram()
@@ -221,9 +239,16 @@ function toSessions(d: RangeData): ExportSession[] {
       sessionRpe: rpeById.get(s.id) ?? null,
       exercises: [...byName.values()],
       // Named PRs, not a bare count. No est-1RM — the raw lift only.
-      prs: mine.filter((r) => r.is_pr).map((r) => ({
+      //
+      // DEDUPLICATED PER EXERCISE. `is_pr` is a per-SET flag, so an exercise
+      // that set records on two sets — or a unilateral movement whose L and R
+      // rows both cleared — printed the same achievement twice, and a reader
+      // counting lines got a PR total that matched neither the badge on the
+      // report nor `pr_count`. One movement, one line, carrying the set that
+      // won it (heaviest tonnage, ties to the heavier load).
+      prs: dedupePrs(mine.filter((r) => r.is_pr).map((r) => ({
         name: r.exercises.name, weightKg: r.weight_kg, reps: r.reps,
-      })),
+      }))),
     }
   })
 }
@@ -387,6 +412,15 @@ export function useSaveWeeklyAiSummary() {
       // it Postgres raises 42P10. Surface that as an actionable message rather
       // than a raw code, since the fix is a one-line migration.
       if (error) {
+        // 23514 on `type` is `reports_type_check`, which allows only 'weekly'
+        // (verified live 2026-08-03) — a Notion-era leftover that silently
+        // blocked every pasted report. One ALTER TABLE, not a code change.
+        if (error.code === '23514' && /type/i.test(error.message)) {
+          throw new Error(
+            `The database still refuses report type "${WEEKLY_AI_TYPE}" — `
+            + 'reports_type_check predates the paste loop. Run the reports_type_check paste-SQL.',
+          )
+        }
         throw new Error(/42P10|no unique|exclusion constraint/i.test(error.message)
           ? 'Missing unique index on reports(user_id, type, period_start) — run the migration.'
           : error.message)

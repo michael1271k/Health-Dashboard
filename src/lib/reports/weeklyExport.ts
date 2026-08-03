@@ -24,6 +24,8 @@
 // facts (distance, duration), not an opinion, and it is the unit a run is
 // actually read in.
 import { paceMinPerKm, formatPace } from '@/lib/cardio/metrics'
+import { isTimedExercise } from '@/lib/exercises/timed'
+import { formatSet, isUnloadedSet } from '@/lib/utils/setFormat'
 
 export interface ExportDay {
   date: string                 // YYYY-MM-DD
@@ -207,10 +209,23 @@ export function weekTotals(days: ExportDay[], sessions: ExportSession[]): WeekTo
  * Unilateral work (sets carrying a `side`/`pairId`) is split L vs R per numbered
  * set — "S1 L 20kg×12 · R 20kg×11(F)" — because the two sides genuinely differ
  * and collapsing them hides exactly the asymmetry the export exists to surface.
+ *
+ * UNLOADED WORK IS NOT WRITTEN AS A LOAD. "0kg × 17" states a weight that does
+ * not exist and buries the only number the set has; a hold gets seconds and
+ * bodyweight work gets reps. `exerciseName` is what tells the two apart — the
+ * weight is 0 either way.
  */
-export function setDetail(sets: ExportSet[]): string {
+export function setDetail(sets: ExportSet[], exerciseName?: string): string {
   if (!sets.length) return '—'
   const sided = sets.some((s) => s.side != null)
+  const timed = isTimedExercise(exerciseName)
+  // `tight` keeps the L/R columns as narrow as they have always been — that line
+  // already carries two sets, and the spacing is the only thing holding it on
+  // one row.
+  const fmt = (w: number, reps: number | string, tight = false) =>
+    timed ? `${reps} sec`
+      : isUnloadedSet(w) ? `${reps} reps`
+      : tight ? `${w}kg×${reps}` : `${w}kg × ${reps}`
 
   if (!sided) {
     // Group consecutive same-load sets; append (F) to a group with any failure.
@@ -225,7 +240,7 @@ export function setDetail(sets: ExportSet[]): string {
     }
     return groups.map((g) => {
       const tag = g.warm ? ' (Warmup)' : g.fail ? ' (Failure)' : ''
-      return `${g.w}kg × ${g.reps.join(',')}${tag}`
+      return `${fmt(g.w, g.reps.join(','))}${tag}`
     }).join(' · ')
   }
 
@@ -241,7 +256,7 @@ export function setDetail(sets: ExportSet[]): string {
     else p.L = s   // 'L' or an unsided straggler both read as the left column
   }
   const side = (s: ExportSet | undefined, tag: 'L' | 'R') =>
-    s ? `${tag} ${s.weightKg}kg×${s.reps}${s.warmup ? ' (Warmup)' : s.failure ? ' (Failure)' : ''}` : null
+    s ? `${tag} ${fmt(s.weightKg, s.reps, true)}${s.warmup ? ' (Warmup)' : s.failure ? ' (Failure)' : ''}` : null
   return order.map((key, i) => {
     const p = pairs.get(key)!
     const cols = [side(p.L, 'L'), side(p.R, 'R')].filter(Boolean).join(' · ')
@@ -344,11 +359,11 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
       + ` · effort ${s.sessionRpe != null ? `${n(s.sessionRpe, 1)}/10 CR10` : 'Not reported'}`)
     L.push('')
     for (const e of s.exercises) {
-      L.push(`- **${e.name}**${e.repWindow ? ` _(target ${e.repWindow})_` : ''}: ${setDetail(e.sets)}`)
+      L.push(`- **${e.name}**${e.repWindow ? ` _(target ${e.repWindow})_` : ''}: ${setDetail(e.sets, e.name)}`)
     }
     if (s.prs.length) {
       // No est-1RM — the raw lift only.
-      L.push(`- PRs: ${s.prs.map((p) => `${p.name} ${p.weightKg}kg × ${p.reps}`).join(' · ')}`)
+      L.push(`- PRs: ${s.prs.map((p) => `${p.name} ${formatSet(p.weightKg, p.reps, { timed: isTimedExercise(p.name) })}`).join(' · ')}`)
     }
     L.push('')
   }

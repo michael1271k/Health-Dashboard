@@ -5,6 +5,7 @@ import { Trophy, Flame } from 'lucide-react'
 import type { DetailExercise } from '@/lib/hooks/useSessionDetail'
 import { prAxisLabel } from '@/lib/training/prEngine'
 import { isTimedExercise } from '@/lib/exercises/timed'
+import { formatSet } from '@/lib/utils/setFormat'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 import { GOLD, SAPPHIRE } from '@/lib/theme/palette'
 
@@ -37,7 +38,7 @@ export function highlightsOf(exercises: readonly DetailExercise[], toDisplay: (k
     out.push({
       name: ex.name,
       axes: [...new Set(axes)],
-      detail: timed ? `${lead.reps}s` : `${toDisplay(lead.weightKg)}${unit} × ${lead.reps}`,
+      detail: formatSet(lead.weightKg, lead.reps, { timed, unit, toDisplay }),
     })
   }
   return out

@@ -265,6 +265,14 @@ export function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collap
   // A pair contributes one "L|R" token so the header doesn't double-count sides.
   const summary = groups.map((g) => g.kind === 'single' ? g.set.reps : `${g.left?.set.reps ?? '–'}|${g.right?.set.reps ?? '–'}`).join('/')
   const topWeight = Math.max(...exercise.sets.map((s) => s.weightKg), 0)
+  // "Prev 0kg × 15, 16" is a load that does not exist in front of the only
+  // numbers a bodyweight movement has. Reps (or seconds) lead instead.
+  const prevChip = (() => {
+    const reps = prevWork.map((s) => s.reps).join(', ')
+    if (timedEx) return `${reps} sec`
+    const top = Math.max(...prevWork.map((s) => s.weightKg), 0)
+    return top > 0 ? `${fmtKg(top)}kg × ${reps}` : `${reps} reps`
+  })()
 
   return (
     <div ref={setNodeRef} style={sortableStyle}
@@ -340,7 +348,7 @@ export function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collap
                   seeding can reproduce them, but a warm-up in the PREV chip
                   understates the top load and misreads as a regression. */}
               {history && prevWork.length
-                ? <>Prev {fmtKg(Math.max(...prevWork.map((s) => s.weightKg)))}kg × {prevWork.map((s) => s.reps).join(', ')} · {fmtDate(history.date)}</>
+                ? <>Prev {prevChip} · {fmtDate(history.date)}</>
                 : 'No history in this era — showing program targets'}
             </span>
             {exercise.seededFrom && (
@@ -354,7 +362,9 @@ export function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collap
                 the live set rows below say the same thing, so it's redundant. */}
             {!showBody && (
               <span className="helix-num text-xs text-muted tabular-nums">
-                {fmtKg(topWeight)}kg × {summary}
+                {timedEx ? `${summary} sec`
+                  : topWeight > 0 ? `${fmtKg(topWeight)}kg × ${summary}`
+                  : `${summary} reps`}
               </span>
             )}
             <ChevronDown className={`w-4 h-4 text-muted transition-transform duration-200 ${open ? 'rotate-180' : ''}`} aria-hidden="true" />

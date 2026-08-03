@@ -104,7 +104,7 @@ describe('highlightsOf — one line per record, at the top of the report', () =>
       sets: [set({ setNumber: 1, weightKg: 0, reps: 58, isPr: true, prAxes: ['reps'] })],
     })
     const h = highlightsOf([plank], kg, 'kg')
-    expect(h[0]).toEqual({ name: 'Side Plank', axes: ['Duration'], detail: '58s' })
+    expect(h[0]).toEqual({ name: 'Side Plank', axes: ['Duration'], detail: '58 sec' })
   })
 
   it('is empty when nothing was set — the panel renders nothing', () => {

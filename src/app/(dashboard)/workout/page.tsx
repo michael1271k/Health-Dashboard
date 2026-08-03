@@ -15,6 +15,8 @@ import {
 } from '@/lib/programs'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { displayWeight, weightUnit } from '@/lib/utils/units'
+import { formatSet } from '@/lib/utils/setFormat'
+import { isTimedExercise } from '@/lib/exercises/timed'
 import { Plus, TrendingUp, Moon, ArrowRight, Flag, FileClock, ChevronDown } from 'lucide-react'
 
 // Gym/muscle-progress graphs (Contour Map, Intensity Calendar, Volume Stream,
@@ -208,7 +210,7 @@ export default function WorkoutPage() {
                         </div>
                         <div className="text-[10px] text-muted flex items-center gap-2 mt-0.5">
                           {prev
-                            ? <span className="flex items-center gap-1 text-success"><TrendingUp className="w-2.5 h-2.5" />{displayWeight(prev.weightKg)}{unit} × {prev.reps}</span>
+                            ? <span className="flex items-center gap-1 text-success"><TrendingUp className="w-2.5 h-2.5" />{formatSet(prev.weightKg, prev.reps, { timed: isTimedExercise(ex.name), unit, toDisplay: displayWeight })}</span>
                             : target != null && <span>Wk1 {target}{unit}</span>}
                         </div>
                       </div>
