@@ -93,44 +93,59 @@ export function SetEditorRow({ index, displayNum, subRow = false, set, active, t
         : isWarm ? 'border-transparent bg-[#E0703C]/[0.06]' : 'border-transparent'}`}
       style={subRow && sideColor ? { borderLeft: `2px solid ${sideColor}`, borderTopLeftRadius: 2, borderBottomLeftRadius: 2 } : undefined}
     >
-      {/* ── Summary line (always visible) ── */}
-      <div className="flex items-center gap-2 px-2 py-0.5">
+      {/* ── Summary block (always visible) ──
+          Two lines, Hevy-style. The numbers own the first line; records hang
+          UNDER them on a second. They used to sit inline after the reps, which
+          on a three-axis set (Weight + Volume + 1RM) pushed the row past the
+          viewport and slid under the green tick — the one control that must
+          always be hittable. A sub-line cannot collide with it by construction,
+          however many axes a set wins. */}
+      <div className="flex items-center gap-2 px-2 py-1">
         <button
           type="button"
           onClick={onActivate}
-          className="flex-1 min-w-0 flex items-center gap-2.5 text-left min-h-[32px]"
+          className="flex-1 min-w-0 flex flex-col gap-1 text-left min-h-[34px] justify-center"
           aria-expanded={active}
         >
-          <span
-            className="w-6 shrink-0 text-[10px] font-bold uppercase tracking-wide tabular-nums"
-            style={{ color: sideColor ?? (isWarm ? ORANGE : isFail ? DANGER : isDrop ? DROP : 'var(--color-muted)') }}
-          >
-            {badge}
-          </span>
-          <span className={`helix-num text-fluid-base font-bold tabular-nums ${isWarm ? 'text-muted' : 'text-text'}`}>
-            {weightLabel}<span className="text-[10px] text-muted font-normal ml-0.5">kg</span>
-          </span>
-          <span className="text-muted text-xs">×</span>
-          <span className={`helix-num text-fluid-base font-bold tabular-nums ${isWarm ? 'text-muted' : 'text-text'}`}>
-            {set.reps}<span className="text-[10px] text-muted font-normal ml-0.5">{timed ? 'sec' : 'reps'}</span>
-          </span>
-          {isFail && (
-            <span className="text-[9px] font-bold uppercase px-1 py-px rounded"
-              style={{ color: DANGER, background: `${DANGER}1f`, border: `1px solid ${DANGER}55` }}>
-              {set.side ? `F-${set.side}` : 'F'}
+          <span className="flex items-center gap-2.5 min-w-0">
+            <span
+              className="w-6 shrink-0 text-[10px] font-bold uppercase tracking-wide tabular-nums"
+              style={{ color: sideColor ?? (isWarm ? ORANGE : isFail ? DANGER : isDrop ? DROP : 'var(--color-muted)') }}
+            >
+              {badge}
             </span>
-          )}
+            <span className={`helix-num text-fluid-base font-bold tabular-nums ${isWarm ? 'text-muted' : 'text-text'}`}>
+              {weightLabel}<span className="text-[10px] text-muted font-normal ml-0.5">kg</span>
+            </span>
+            <span className="text-muted text-xs">×</span>
+            <span className={`helix-num text-fluid-base font-bold tabular-nums ${isWarm ? 'text-muted' : 'text-text'}`}>
+              {set.reps}<span className="text-[10px] text-muted font-normal ml-0.5">{timed ? 'sec' : 'reps'}</span>
+            </span>
+            {isFail && (
+              <span className="text-[9px] font-bold uppercase px-1 py-px rounded shrink-0"
+                style={{ color: DANGER, background: `${DANGER}1f`, border: `1px solid ${DANGER}55` }}>
+                {set.side ? `F-${set.side}` : 'F'}
+              </span>
+            )}
+            {set.rpe != null && <span className="text-[10px] text-muted shrink-0">RPE {set.rpe}</span>}
+          </span>
           {/* Live records. Appears the instant the set is ticked green, from the
               SAME engine that writes personal_records at commit — a badge shown
-              here is a badge that gets recorded. */}
-          {prAxes.map((axis) => (
-            <span key={axis} className="text-[9px] font-bold uppercase px-1 py-px rounded inline-flex items-center gap-0.5"
-              style={{ color: GOLD, background: `${GOLD}1f`, border: `1px solid ${GOLD}66` }}
-              title={`Personal record — ${prAxisLabel(axis, timed)}`}>
-              <Trophy className="w-2.5 h-2.5" aria-hidden="true" />{prAxisLabel(axis, timed)}
+              here is a badge that gets recorded. Indented to the load column so
+              it reads as belonging to these numbers, and one trophy leads the
+              run rather than repeating per axis. */}
+          {prAxes.length > 0 && (
+            <span className="flex items-center gap-1 flex-wrap pl-[34px]">
+              <Trophy className="w-2.5 h-2.5 shrink-0" style={{ color: GOLD }} aria-hidden="true" />
+              {prAxes.map((axis) => (
+                <span key={axis} className="text-[8px] font-bold uppercase tracking-wide leading-none px-1 py-0.5 rounded"
+                  style={{ color: GOLD, background: `${GOLD}1a`, border: `1px solid ${GOLD}55` }}
+                  title={`Personal record — ${prAxisLabel(axis, timed)}`}>
+                  {prAxisLabel(axis, timed)}
+                </span>
+              ))}
             </span>
-          ))}
-          {set.rpe != null && <span className="text-[10px] text-muted">RPE {set.rpe}</span>}
+          )}
         </button>
         {onToggleDone && (
           <button
