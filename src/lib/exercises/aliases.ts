@@ -47,6 +47,16 @@ export const EXERCISE_ALIASES: Record<string, string> = {
   'single arm cable lateral raise': 'Single Arm Lateral Raise (Cable)',
   'sa lateral raise (cable)': 'Single Arm Lateral Raise (Cable)',
   'sa lateral raise': 'Single Arm Lateral Raise (Cable)',
+
+  // ── Empty duplicate, deleted 2026-08-03 ──
+  // `Incline DB Bench Press` existed as a second catalog row holding ZERO sets
+  // while all 9 real sets sat under `Incline DB Press`. Nothing was wrong yet,
+  // which is the point: the first session logged under the longer name would
+  // have been judged against a baseline that had never seen a single rep, and
+  // every set of it would have counted as a record.
+  'incline db bench press': 'Incline DB Press',
+  'incline dumbbell bench press': 'Incline DB Press',
+  'incline dumbbell press': 'Incline DB Press',
 }
 
 export function canonicalExerciseName(raw: string): string {
