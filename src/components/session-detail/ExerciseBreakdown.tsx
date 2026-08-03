@@ -21,10 +21,16 @@ const ExerciseHistorySheet = dynamic(
   { ssr: false },
 )
 
-const TAG: Record<string, { label: string; color: string }> = {
-  warmup: { label: 'Warmup', color: EMERALD },
-  failure: { label: 'Failure', color: OXIDE },
-  dropset: { label: 'Dropset', color: '#9A6DD7' },
+// "Warmup" is eight characters on the one row that has no spare width: set
+// number, load × reps, tag, trophy + axis chips, RPE and the 1RM column all
+// share it, and the tag pushed the numbers into a wrap on a phone. "W" reads
+// unambiguously in context (it is the only single-letter tag on a warm-up row)
+// and the full word survives where there IS room — the weekly export writes
+// "(Warmup)" verbatim (weeklyExport.ts), which is what a coach reads.
+const TAG: Record<string, { label: string; full: string; color: string }> = {
+  warmup: { label: 'W', full: 'Warmup', color: EMERALD },
+  failure: { label: 'Failure', full: 'Failure', color: OXIDE },
+  dropset: { label: 'Dropset', full: 'Dropset', color: '#9A6DD7' },
 }
 
 /** vs-last-same-type glyph: ⬆️ improved · ✅ matched · ⬇️ regressed · 🆕 baseline. */
@@ -206,7 +212,8 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
                         </span>
                         {tag && (
                           <span className="text-[8px] font-bold uppercase px-1 py-px rounded shrink-0"
-                            style={{ color: tag.color, background: `${tag.color}1f` }}>{tag.label}</span>
+                            style={{ color: tag.color, background: `${tag.color}1f` }}
+                            title={tag.full} aria-label={tag.full}>{tag.label}</span>
                         )}
                         <SetPrBadges set={row.set} timed={timed} />
                         {row.set.rpe != null && <span className="text-[10px] text-muted shrink-0">RPE {row.set.rpe}</span>}
