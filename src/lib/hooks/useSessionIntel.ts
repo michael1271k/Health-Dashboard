@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { eraForDate, programDayFor, programDayByKey, DEFAULT_PROGRAM_ID } from '@/lib/programs'
+import { epley1RM } from '@/lib/utils/epley'
 
 export interface ExerciseDelta {
   exerciseId: string
@@ -10,9 +11,20 @@ export interface ExerciseDelta {
   topKg: number
   topReps: number
   prevKg: number | null
+  prevReps: number | null
+  /** This exercise's tonnage in each session — the volume half of the trend. */
+  volumeKg: number
+  prevVolumeKg: number | null
   /** null = first time this exercise is logged (no baseline to compare). */
   delta: -1 | 0 | 1 | null
+  /**
+   * Percent change in the comparison basis: estimated 1RM for a loaded lift,
+   * reps (or seconds) for unloaded work. Null with no baseline.
+   */
+  deltaPct: number | null
   isPr: boolean
+  /** True when this movement carries no load, so reps ARE the progression. */
+  unloaded: boolean
 }
 /** One metric compared against the previous same-type session. */
 export interface IntelMetric {
@@ -29,7 +41,7 @@ export interface IntelMetric {
 
 export interface SessionIntel {
   deltas: ExerciseDelta[]
-  prs: Array<{ name: string; kg: number; reps: number }>
+  prs: Array<{ name: string; kg: number; reps: number; unloaded: boolean }>
   volumes: Array<{ date: string; volumeKg: number }>  // this + previous SAME-TYPE sessions (asc)
   typeLabel: string          // era-aware session-type name, e.g. "Upper B"
   /** Date of the session being compared against (null when first of its type). */
@@ -109,27 +121,67 @@ export function useSessionIntel(sessionId: string | null) {
         .in('session_id', ids)
       const sets = (setsRaw ?? []) as unknown as Array<SetRow & { session_id: string }>
 
+      type Top = { name: string; kg: number; reps: number; isPr: boolean; volumeKg: number; unloaded: boolean }
+
+      /**
+       * The exercise's BEST set of a session, plus its tonnage.
+       *
+       * "Best" used to mean heaviest, full stop — which picks an arbitrary set on
+       * any movement that carries no load: every Reverse Crunch set weighs 0, so
+       * the card showed set 1 rather than the best of the day. Ranking on
+       * (weight, then reps) is correct for both and identical for loaded work.
+       */
       const top = (rows: Array<SetRow & { session_id: string }>, sid: string) => {
-        const m = new Map<string, { name: string; kg: number; reps: number; isPr: boolean }>()
+        const m = new Map<string, Top>()
         for (const s of rows.filter((r) => r.session_id === sid)) {
           const cur = m.get(s.exercise_id)
-          if (!cur || s.weight_kg > cur.kg) m.set(s.exercise_id, { name: s.exercises.name, kg: s.weight_kg, reps: s.reps, isPr: cur?.isPr || s.is_pr })
-          else if (s.is_pr) cur.isPr = true
+          const better = !cur || s.weight_kg > cur.kg || (s.weight_kg === cur.kg && s.reps > cur.reps)
+          if (better) {
+            m.set(s.exercise_id, {
+              name: s.exercises.name, kg: s.weight_kg, reps: s.reps,
+              isPr: cur?.isPr || s.is_pr,
+              volumeKg: (cur?.volumeKg ?? 0) + s.weight_kg * s.reps,
+              unloaded: (cur?.unloaded ?? true) && !(s.weight_kg > 0),
+            })
+          } else {
+            cur.isPr ||= s.is_pr
+            cur.volumeKg += s.weight_kg * s.reps
+            cur.unloaded &&= !(s.weight_kg > 0)
+          }
         }
         return m
       }
       const thisTop = top(sets, session.id)
-      const prevTop = prev[0] ? top(sets, prev[0].id) : new Map<string, { name: string; kg: number; reps: number; isPr: boolean }>()
+      const prevTop = prev[0] ? top(sets, prev[0].id) : new Map<string, Top>()
+
+      /**
+       * The number the two sessions are compared ON.
+       *
+       * Top LOAD alone was the old basis, and on a double-progression program it
+       * is silent exactly where progress happens: hold the load, add reps until
+       * the ceiling, then add load. Every rep-progression week read "matched" —
+       * the wall of green checkmarks — and bodyweight work, whose load is 0
+       * forever, could never read anything else. Estimated 1RM moves with both
+       * weight and reps; unloaded work is compared on reps, the axis it has.
+       */
+      const basis = (t: Top): number => (t.unloaded ? t.reps : (epley1RM(t.kg, t.reps) ?? t.kg))
 
       const deltas: ExerciseDelta[] = [...thisTop.entries()].map(([exId, t]) => {
         const p = prevTop.get(exId)
+        const a = basis(t)
+        const b = p ? basis(p) : null
         return {
           exerciseId: exId,
-          name: t.name, topKg: t.kg, topReps: t.reps, prevKg: p?.kg ?? null,
+          name: t.name, topKg: t.kg, topReps: t.reps,
+          prevKg: p?.kg ?? null, prevReps: p?.reps ?? null,
+          volumeKg: Math.round(t.volumeKg * 10) / 10,
+          prevVolumeKg: p ? Math.round(p.volumeKg * 10) / 10 : null,
           // null = first log of this exercise (no baseline). A PR also requires a
           // baseline to beat — never a gold star the first time.
-          delta: p == null ? null : t.kg > p.kg ? 1 : t.kg < p.kg ? -1 : 0,
+          delta: b == null ? null : a > b ? 1 : a < b ? -1 : 0,
+          deltaPct: b == null || b === 0 ? null : Math.round(((a - b) / b) * 1000) / 10,
           isPr: t.isPr && p != null,
+          unloaded: t.unloaded,
         }
       })
 
@@ -173,7 +225,7 @@ export function useSessionIntel(sessionId: string | null) {
 
       return {
         deltas,
-        prs: thisPrs.map((d) => ({ name: d.name, kg: d.topKg, reps: d.topReps })),
+        prs: thisPrs.map((d) => ({ name: d.name, kg: d.topKg, reps: d.topReps, unloaded: d.unloaded })),
         volumes,
         typeLabel,
         previousDate: last?.started_at.slice(0, 10) ?? null,

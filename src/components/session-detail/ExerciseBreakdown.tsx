@@ -9,6 +9,7 @@ import { useSessionIntel } from '@/lib/hooks/useSessionIntel'
 import { useSessionTrends, LOAD_STEP_KG } from '@/lib/hooks/useSessionTrends'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 import { isTimedExercise } from '@/lib/exercises/timed'
+import { formatSet } from '@/lib/utils/setFormat'
 import { GROUP_COLOR } from '@/lib/hooks/useMuscleAnalytics'
 import { GOLD, OXIDE, EMERALD, SAPPHIRE, EMBER, PLATINUM } from '@/lib/theme/palette'
 
@@ -33,11 +34,18 @@ const TAG: Record<string, { label: string; full: string; color: string }> = {
   dropset: { label: 'Dropset', full: 'Dropset', color: '#9A6DD7' },
 }
 
-/** vs-last-same-type glyph: ⬆️ improved · ✅ matched · ⬇️ regressed · 🆕 baseline. */
+/**
+ * vs-last-same-type glyph: 📈 improved · ═ held · 📉 regressed · 🆕 baseline.
+ *
+ * ✅ used to mean "matched", off top LOAD alone — which on a double-progression
+ * program is most weeks, because the load is deliberately held while reps climb.
+ * The basis is estimated 1RM now (see `useSessionIntel`), so the arrow moves when
+ * the training does; a tick that never changes is not feedback.
+ */
 function deltaGlyph(delta: -1 | 0 | 1 | null | undefined): string | null {
   if (delta === undefined) return null
   if (delta == null) return '🆕'
-  return delta === 1 ? '⬆️' : delta === -1 ? '⬇️' : '✅'
+  return delta === 1 ? '📈' : delta === -1 ? '📉' : '═'
 }
 
 /** Continuous est-1RM trend — one point per session. */
@@ -176,7 +184,10 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
                 <span className="flex items-center gap-1.5 text-[10px] text-muted helix-num">
                   <span>{ex.workingSets}×</span>
                   <span aria-hidden="true">·</span>
-                  <span>{timed ? `${t?.tonnage ?? 0}s` : `${Math.round(displayWeight(ex.volumeKg) ?? 0).toLocaleString()}${unit}`}</span>
+                  {/* Tonnage is kg only when the movement is loaded; for a hold
+                      or bodyweight work `tonnage` counts seconds / reps. */}
+                  <span>{t?.byReps ? `${t.tonnage} ${t.timed ? 'sec' : 'reps'}`
+                    : `${Math.round(displayWeight(ex.volumeKg) ?? 0).toLocaleString()}${unit}`}</span>
                   {t?.pctChange != null && t.pctChange !== 0 && (
                     <span className="font-bold" style={{ color: t.pctChange > 0 ? EMERALD : OXIDE }}>
                       {t.pctChange > 0 ? '+' : ''}{t.pctChange}%
@@ -198,8 +209,15 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
             <div className="pb-1.5">
               {rows.map((row, ri) => {
                 const tag = row.kind === 'single' ? TAG[row.set.setType] : undefined
+                // A record should be visible while scanning the ledger, not only
+                // once your eye reaches the trophy: the row that set it lifts
+                // into gold and carries a left rule, which survives printing.
+                const rowIsPr = row.kind === 'single'
+                  ? !!row.set.isPr
+                  : !!(row.left?.isPr || row.right?.isPr)
                 return (
                   <div key={`${row.kind}-${ri}`}
+                    style={rowIsPr ? { background: `${GOLD}12`, boxShadow: `inset 3px 0 0 ${GOLD}` } : undefined}
                     className="flex items-center gap-2 pl-[22px] pr-3 py-[3px] text-fluid-xs">
                     <span className="helix-num w-4 shrink-0 text-[10px] text-muted/70 text-right tabular-nums">
                       {row.num ?? '·'}
@@ -208,7 +226,7 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
                       <>
                         <span className="helix-num font-semibold text-text tabular-nums shrink-0"
                           style={{ minWidth: '5.5rem' }}>
-                          {timed ? `${row.set.reps}s` : <>{displayWeight(row.set.weightKg)}{unit} × {row.set.reps}</>}
+                          {formatSet(row.set.weightKg, row.set.reps, { timed, unit, toDisplay: displayWeight })}
                         </span>
                         {tag && (
                           <span className="text-[8px] font-bold uppercase px-1 py-px rounded shrink-0"
@@ -217,7 +235,10 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
                         )}
                         <SetPrBadges set={row.set} timed={timed} />
                         {row.set.rpe != null && <span className="text-[10px] text-muted shrink-0">RPE {row.set.rpe}</span>}
-                        {row.set.est1rmKg != null && !timed && (
+                        {/* `> 0`, not `!= null`: bodyweight rows written before
+                            Epley returned null hold a stored 0, which rendered
+                            as "1RM 0" on every Reverse Crunch. */}
+                        {row.set.est1rmKg != null && row.set.est1rmKg > 0 && !timed && (
                           <span className="ml-auto helix-num text-[10px] text-muted/70 shrink-0 tabular-nums">
                             1RM {displayWeight(row.set.est1rmKg)}
                           </span>
@@ -234,7 +255,7 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
                               style={{ background: `${c}14`, border: `1px solid ${c}33` }}>
                               <span className="text-[9px] font-bold" style={{ color: c }}>{k === 'left' ? 'L' : 'R'}</span>
                               <span className="helix-num font-semibold text-text text-[11px] tabular-nums">
-                                {timed ? `${s.reps}s` : <>{displayWeight(s.weightKg)}{unit} × {s.reps}</>}
+                                {formatSet(s.weightKg, s.reps, { timed, unit, toDisplay: displayWeight })}
                               </span>
                               <SetPrBadges set={s} timed={timed} compact />
                             </span>
@@ -257,7 +278,10 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
                     {t.progression.state === 'ready'
                       ? (timed
                         ? <>Cleared twice — extend past {t.progression.ceiling}s</>
-                        : <>Cleared twice — add {LOAD_STEP_KG}{unit}{t.progression.suggestKg != null && <> → {displayWeight(t.progression.suggestKg)}{unit}</>}</>)
+                        // No load to add on bodyweight work; the cue is reps.
+                        : t.progression.suggestKg == null
+                        ? <>Cleared twice — extend past {t.progression.ceiling} reps</>
+                        : <>Cleared twice — add {LOAD_STEP_KG}{unit} → {displayWeight(t.progression.suggestKg)}{unit}</>)
                       : (timed
                         ? <>One more session at {t.progression.ceiling}s</>
                         : <>One more clean session at {t.progression.ceiling} reps</>)}

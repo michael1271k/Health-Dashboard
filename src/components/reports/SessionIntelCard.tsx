@@ -5,6 +5,7 @@ import { Star, ChevronDown, Sparkles } from 'lucide-react'
 import type { GymReportRow } from '@/lib/hooks/useWeekly'
 import { useSessionIntel } from '@/lib/hooks/useSessionIntel'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
+import { formatSet } from '@/lib/utils/setFormat'
 import { MarkdownView } from './MarkdownView'
 
 function Chip({ label, value, accent = '#E0703C' }: { label: string; value: string; accent?: string }) {
@@ -16,11 +17,32 @@ function Chip({ label, value, accent = '#E0703C' }: { label: string; value: stri
   )
 }
 
-/** Strict progression glyphs: ⬆️ improved · ✅ matched/defended · ⬇️ regressed;
- *  🆕 = first time this exercise is logged (no baseline). */
-function deltaGlyph(delta: -1 | 0 | 1 | null): string {
-  if (delta == null) return '🆕'
-  return delta === 1 ? '⬆️' : delta === -1 ? '⬇️' : '✅'
+const GOLD = '#D4AF37'
+const UP = '#3E9E7A'
+const DOWN = '#C4514E'
+
+/**
+ * Direction of travel for one exercise, this session vs the last of its type.
+ *
+ * The column used to be ⬆️ / ✅ / ⬇️ off TOP LOAD ALONE, and on a
+ * double-progression program that made it a wall of green ticks: you hold the
+ * load and add reps for weeks, so the load is unchanged and "matched" was
+ * reported for every week where progress was actually happening. Bodyweight work
+ * could never read anything else at all. The basis is now estimated 1RM (reps
+ * and load both move it) — or reps for unloaded work — and the glyph carries the
+ * size of the move, not just its sign.
+ *
+ * A PR outranks the trend: a record is the fact worth reading in that cell.
+ */
+function trend(d: { delta: -1 | 0 | 1 | null; deltaPct: number | null; isPr: boolean }):
+  { glyph: string; label: string; color: string; pct: string | null } {
+  if (d.isPr) return { glyph: '🏆', label: 'personal record', color: GOLD, pct: null }
+  if (d.delta == null) return { glyph: '🆕', label: 'first time logged', color: '#8E9AAC', pct: null }
+  const pct = d.deltaPct != null && d.deltaPct !== 0
+    ? `${d.deltaPct > 0 ? '+' : ''}${d.deltaPct}%` : null
+  if (d.delta === 1) return { glyph: '📈', label: 'improved', color: UP, pct }
+  if (d.delta === -1) return { glyph: '📉', label: 'regressed', color: DOWN, pct }
+  return { glyph: '═', label: 'held', color: '#8E9AAC', pct: null }
 }
 
 /**
@@ -80,7 +102,9 @@ export function SessionIntelCard({ session }: { session: GymReportRow }) {
             <div key={pr.name} className="flex items-center gap-2 text-fluid-sm">
               <Star className="w-3.5 h-3.5 shrink-0" style={{ color: '#D4AF37', filter: 'drop-shadow(0 0 4px #D4AF37)' }} />
               <span className="text-text font-medium truncate">{pr.name}</span>
-              <span className="helix-num ml-auto font-bold" style={{ color: '#D4AF37' }}>{displayWeight(pr.kg)}{unit} × {pr.reps}</span>
+              <span className="helix-num ml-auto font-bold" style={{ color: GOLD }}>
+                {formatSet(pr.kg, pr.reps, { unit, toDisplay: displayWeight })}
+              </span>
             </div>
           ))}
         </div>
@@ -108,14 +132,38 @@ export function SessionIntelCard({ session }: { session: GymReportRow }) {
               </tr>
             </thead>
             <tbody>
-              {intel.deltas.map((d) => (
-                <tr key={d.name} className="border-b border-white/[0.06] last:border-0">
-                  <td className="px-3 py-2.5 text-text/90 truncate max-w-[130px]">{d.name}{d.isPr && <Star className="inline w-3 h-3 ml-1 -mt-0.5" style={{ color: '#D4AF37' }} />}</td>
-                  <td className="px-2 py-2.5 text-right helix-num text-text">{displayWeight(d.topKg)}{unit} × {d.topReps}</td>
-                  <td className="px-2 py-2.5 text-right helix-num text-muted">{d.prevKg != null ? `${displayWeight(d.prevKg)}${unit}` : '—'}</td>
-                  <td className="px-3 py-2.5 text-right text-base leading-none" aria-label={d.delta == null ? 'new' : d.delta === 1 ? 'improved' : d.delta === -1 ? 'regressed' : 'matched'}>{deltaGlyph(d.delta)}</td>
-                </tr>
-              ))}
+              {intel.deltas.map((d) => {
+                const t = trend(d)
+                return (
+                  <tr key={d.name}
+                    className="border-b border-white/[0.06] last:border-0"
+                    // A record is worth seeing from across the row, not just in
+                    // the last cell: the whole row lifts into gold, with a left
+                    // rule so it still reads on a monochrome / printed page.
+                    style={d.isPr
+                      ? { background: `${GOLD}14`, boxShadow: `inset 3px 0 0 ${GOLD}` }
+                      : undefined}>
+                    <td className="px-3 py-2.5 text-text/90 truncate max-w-[130px]">
+                      {d.name}
+                      {d.isPr && <Star className="inline w-3 h-3 ml-1 -mt-0.5" style={{ color: GOLD }} aria-hidden="true" />}
+                    </td>
+                    <td className="px-2 py-2.5 text-right helix-num text-text">
+                      {formatSet(d.topKg, d.topReps, { unit, toDisplay: displayWeight })}
+                    </td>
+                    <td className="px-2 py-2.5 text-right helix-num text-muted">
+                      {d.prevKg == null ? '—'
+                        : d.unloaded ? formatSet(0, d.prevReps, {})
+                        : `${displayWeight(d.prevKg)}${unit}`}
+                    </td>
+                    <td className="px-3 py-2.5 text-right leading-none whitespace-nowrap" aria-label={t.label}>
+                      <span className="text-base align-middle" aria-hidden="true">{t.glyph}</span>
+                      {t.pct && (
+                        <span className="helix-num text-[10px] font-bold align-middle ml-1" style={{ color: t.color }}>{t.pct}</span>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
