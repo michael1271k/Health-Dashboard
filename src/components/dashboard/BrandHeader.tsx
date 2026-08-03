@@ -2,10 +2,11 @@
 
 import { memo, useEffect, useState } from 'react'
 import { STEEL } from '@/lib/theme/palette'
-import { useLastUpdated } from '@/lib/hooks/useDashboard'
+import { useLastUpdated, useUserGoals } from '@/lib/hooks/useDashboard'
 import { useMyProfile } from '@/lib/hooks/useMyProfile'
 import { HELIX_CUT_START, activeProgram, activePhase } from '@/lib/programs'
 import { PHASE_COLORS, PHASE_META, type Phase } from '@/lib/nutrition/phase'
+import { planWeekNumber } from '@/lib/reports/weekNumber'
 import { logicalTodayISO } from '@/lib/utils/day'
 
 /** Per-plan chip colour — Helix-5 gets a premium iridescent violet of its own. */
@@ -82,6 +83,7 @@ export function BrandHeader() {
   const now = useClock(60_000)
   const { data: lastUpdated } = useLastUpdated()
   const { data: profile } = useMyProfile()
+  const { data: goals } = useUserGoals()
 
   // Plan + phase tags read localStorage (activeProgram/activePhase), so resolve
   // them AFTER mount to avoid an SSR/client hydration mismatch.
@@ -90,6 +92,14 @@ export function BrandHeader() {
     const p = activeProgram()
     setTags({ planLabel: p.label, planColor: PLAN_CHIP_COLOR[p.id] ?? STEEL, phase: activePhase() as Phase })
   }, [])
+
+  // Weeks INTO the active plan, counted from `user_goals.phase_started_on` — the
+  // same source the analytics header uses, so "Week 3" means one thing app-wide.
+  // Picking a plan in Settings stamps that column, which puts you in Week 1.
+  const planWeek = planWeekNumber(
+    (goals as { phase_started_on?: string | null } | null)?.phase_started_on,
+    logicalTodayISO(),
+  )
 
   const firstName = profile?.firstName ?? null
   const greeting = now ? greetingFor(now) : ''
@@ -139,12 +149,19 @@ export function BrandHeader() {
               {tags.planLabel}
             </span>
           )}
+          {/* Phase AND week, one badge. "Cut" alone says what the block is but
+              not where you are inside it; the week number is the part that
+              changes, and it was only ever visible on the analytics page. The
+              divider keeps it one object rather than two chips that could drift
+              apart. */}
           {tags && (
             <span
-              className="px-2 py-1 rounded-md text-[9px] font-bold uppercase tracking-wider shrink-0"
+              className="px-2 py-1 rounded-md text-[9px] font-bold uppercase tracking-wider shrink-0 inline-flex items-center gap-1.5"
               style={{ color: PHASE_COLORS[tags.phase], background: `${PHASE_COLORS[tags.phase]}1f`, border: `1px solid ${PHASE_COLORS[tags.phase]}55` }}
             >
               {PHASE_META[tags.phase].label}
+              <span className="w-px h-2.5 opacity-40" style={{ background: 'currentColor' }} aria-hidden="true" />
+              <span className="helix-num tabular-nums">Wk {planWeek}</span>
             </span>
           )}
         </div>
