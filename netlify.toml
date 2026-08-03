@@ -4,7 +4,9 @@
 
 [build.environment]
   NEXT_TELEMETRY_DISABLED = "1"
-  NODE_VERSION = "20"
+  # 20 tripped `npm warn EBADENGINE ... required: { node: '>=22.0.0' }` on every
+  # build — a dependency now requires 22. Kept in step with `.nvmrc`.
+  NODE_VERSION = "22"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
