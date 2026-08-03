@@ -6,11 +6,28 @@ import { epley1RM } from '@/lib/utils/epley'
 import { eraForDate, HELIX_CUT_START } from '@/lib/programs'
 import { isTimedExercise } from '@/lib/exercises/timed'
 import {
-  repWindowFor, holdTargetFor, progressionVerdict, timedProgressionVerdict,
+  repWindowFor, holdTargetFor, progressionVerdict, timedProgressionVerdict, workLoads,
   LOAD_STEP_KG, type ProgressionVerdict, type WorkingSet,
 } from '@/lib/training/ceilings'
 
 export { LOAD_STEP_KG }
+
+/**
+ * How many sets AT THE TOP LOAD reached the ceiling — the "2/3 @ 12" chip.
+ *
+ * It used to count every set whose reps met the number, which credits back-off
+ * and drop sets — deliberately lighter work — as if they were at the load being
+ * chased. A session could read "3/3 @ 12" beside a progression verdict that
+ * (correctly, via `topLoadCleared`) said the load had not cleared. Two answers
+ * to one question, on the same line.
+ */
+export function setsAtCeilingOf(sets: WorkingSet[], ceiling: number | null): number {
+  if (ceiling == null) return 0
+  const work = workLoads(sets)
+  if (!work.length) return 0
+  const top = Math.max(...work.map((s) => s.weightKg))
+  return work.filter((s) => s.weightKg === top && s.reps >= ceiling).length
+}
 
 export interface ExerciseTrend {
   /**
@@ -35,6 +52,12 @@ export interface ExerciseTrend {
   progression: ProgressionVerdict
   /** True when the movement is scored on time (seconds), not load. */
   timed: boolean
+  /**
+   * True when `points`/`tonnage` are REPS OR SECONDS rather than kg — a timed
+   * hold, or any exercise that has never carried load. Callers must not append
+   * a weight unit to those numbers.
+   */
+  byReps: boolean
 }
 
 /**
@@ -126,14 +149,28 @@ export function useSessionTrends(exerciseIds: string[], eraDate: string, dayKey?
         // track the hold, and its PR is a longer hold, not a heavier one.
         const timed = isTimedExercise(name)
 
-        // Per-set headline: seconds for a hold, best est-1RM for a loaded lift.
-        const headline = (s: SetRow) => (timed ? s.reps : (s.est ?? epley1RM(s.weightKg, s.reps)))
+        // The same trap catches UNLOADED work that isn't a hold. Reverse Crunch
+        // and Hanging Knee Raise carry no load, so their est-1RM is 0 in every
+        // session ever logged: the sparkline was a dead flat line at zero, the
+        // percentage change was permanently null, and a genuine 15 → 17 rep
+        // progression rendered as nothing happening. Score them on reps, the
+        // axis they actually progress on — the same `weight 0` test the PR
+        // engine uses for its reps axis (`repsAxisEligible`). Checked across the
+        // WHOLE history so an exercise that later gets loaded (weighted dips)
+        // switches to est-1RM rather than plotting two units on one axis.
+        const unloaded = !timed
+          && [...perEx.values()].every((sets) => sets.every((s) => !(s.weightKg > 0)))
+        const byReps = timed || unloaded
+
+        // Per-set headline: reps/seconds for unloaded work, best est-1RM loaded.
+        const headline = (s: SetRow) => (byReps ? s.reps : (s.est || epley1RM(s.weightKg, s.reps) || 0))
         const bestOf = (sets: SetRow[]) => sets.reduce((m, s) => Math.max(m, headline(s)), 0)
         const tonnageOf = (sets: SetRow[]) =>
-          Math.round(sets.reduce((s, x) => s + (timed ? x.reps : x.weightKg * x.reps), 0))
+          Math.round(sets.reduce((s, x) => s + (byReps ? x.reps : x.weightKg * x.reps), 0))
 
         const ordered = [...perEx.entries()].sort(([a], [b]) => a.localeCompare(b))
-        const points = ordered.map(([, sets]) => timed ? bestOf(sets) : Math.round(bestOf(sets) * 10) / 10)
+        // Reps and seconds are whole; est-1RM keeps a decimal.
+        const points = ordered.map(([, sets]) => byReps ? bestOf(sets) : Math.round(bestOf(sets) * 10) / 10)
         const cur = points[points.length - 1]
         const prev = points.length >= 2 ? points[points.length - 2] : null
 
@@ -157,12 +194,13 @@ export function useSessionTrends(exerciseIds: string[], eraDate: string, dayKey?
           tonnage,
           tonnageDelta: prevSets ? tonnage - tonnageOf(prevSets) : null,
           topSet: topSet ? { weightKg: topSet.weightKg, reps: topSet.reps } : null,
-          setsAtCeiling: ceiling == null ? 0 : collapsePairs(latestSets).filter((s) => s.reps >= ceiling).length,
+          setsAtCeiling: setsAtCeilingOf(asWorking(latestSets), ceiling),
           progression: (timed ? timedProgressionVerdict : progressionVerdict)(
             prevSets ? [asWorking(prevSets), asWorking(latestSets)] : [asWorking(latestSets)],
             ceiling,
           ),
           timed,
+          byReps,
         }
       }
       return out

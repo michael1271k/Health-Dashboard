@@ -181,8 +181,27 @@ export interface LadderVerdict {
  * That is what stops a premature "Ceiling Cleared": hitting ceiling reps on a
  * lighter drop set proves nothing about the load you are actually chasing.
  */
+/**
+ * The sets that count as WORK for a ceiling verdict.
+ *
+ * The `weightKg > 0` filter exists to drop rows carrying no load on an exercise
+ * that HAS one (unfilled placeholders, a machine logged empty). Applied
+ * unconditionally it also deleted every set of every exercise that is unloaded
+ * by nature — Reverse Crunch, Hanging Knee Raise — so `working` came back empty
+ * and double progression silently never fired on core work at all. Nothing was
+ * wrong on screen; the cue simply never appeared.
+ *
+ * So the filter is conditional: strip the zero rows only when some set in the
+ * exercise actually carried load. For loaded lifts this is byte-identical to the
+ * old behaviour; for bodyweight work every set is a working set at one load (0),
+ * which is exactly the single-rung case the ladder already handles.
+ */
+export function workLoads(sets: WorkingSet[]): WorkingSet[] {
+  return sets.some((s) => s.weightKg > 0) ? sets.filter((s) => s.weightKg > 0) : sets
+}
+
 export function ladderVerdict(sets: WorkingSet[], ceiling: number): LadderVerdict {
-  const working = sets.filter((s) => s.weightKg > 0)
+  const working = workLoads(sets)
   if (!working.length) {
     return { state: 'incomplete', bindingLoadKg: null, topLoadKg: null, ceiling, repsOwed: 0 }
   }
@@ -229,7 +248,7 @@ export function ladderVerdict(sets: WorkingSet[], ceiling: number): LadderVerdic
  *  · A single top-load set never clears. One set is not a capability.
  */
 export function topLoadCleared(sets: WorkingSet[], ceiling: number): boolean {
-  const working = sets.filter((s) => s.weightKg > 0)
+  const working = workLoads(sets)
   if (!working.length) return false
   const top = Math.max(...working.map((s) => s.weightKg))
   const atTop = working.filter((s) => s.weightKg === top)
@@ -309,10 +328,14 @@ export function progressionVerdict(
   if (!previous || !cleared(previous)) {
     return { state: 'one-more', ceiling, suggestKg: null }
   }
+  // A bodyweight movement has no load to add — a `ready` verdict there means
+  // "extend past the rep ceiling", and suggesting 2.5 kg (0 + one step) would be
+  // an instruction you cannot follow on a Hanging Knee Raise.
+  const top = topLoad(latest)
   return {
     state: 'ready',
     ceiling,
-    suggestKg: Math.round((topLoad(latest) + LOAD_STEP_KG) * 10) / 10,
+    suggestKg: top > 0 ? Math.round((top + LOAD_STEP_KG) * 10) / 10 : null,
   }
 }
 

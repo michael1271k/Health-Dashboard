@@ -36,7 +36,12 @@ export function computeLivePrs(draft: SessionDraft | null, baselines: PrBaseline
     const timed = isTimedExercise(ex.name)
     ex.sets.forEach((s, i) => {
       if (!isSetCommitted(s)) return
-      candidates.push({ key: ex.name, weightKg: s.weightKg, reps: s.reps, setType: s.setType ?? null, timed })
+      candidates.push({
+        key: ex.name, weightKg: s.weightKg, reps: s.reps, setType: s.setType ?? null, timed,
+        // Carried so the live volume axis collapses a unilateral pair exactly as
+        // `saveSession` does — a badge shown on the tick must be the one written.
+        side: s.side ?? null, pairId: s.pairId ?? null,
+      })
       origin.push({ localId: ex.localId, setIdx: i })
     })
   }

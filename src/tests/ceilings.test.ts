@@ -126,10 +126,26 @@ describe('ladderVerdict — the binding rung is the lowest load', () => {
     expect(v.repsOwed).toBe(3)
   })
 
-  it('ignores bodyweight (0 kg) sets — they can never collapse a ladder', () => {
+  /**
+   * CHANGED 2026-08-03, deliberately. The `weightKg > 0` filter was there to
+   * drop unfilled rows on a LOADED exercise; applied unconditionally it deleted
+   * every set of exercises that are unloaded by nature. Reverse Crunch (window
+   * 12–15) and Hanging Knee Raise (10–15) are programmed movements with real
+   * ceilings, and double progression could never fire on either — not a wrong
+   * verdict on screen, just permanent silence.
+   */
+  it('treats an all-bodyweight exercise as one rung at load 0', () => {
     const v = ladderVerdict([{ weightKg: 0, reps: 20 }], ceiling)
-    expect(v.state).toBe('incomplete')
-    expect(v.bindingLoadKg).toBeNull()
+    expect(v.state).toBe('cleared')
+    expect(v.bindingLoadKg).toBe(0)
+    expect(v.repsOwed).toBe(0)
+  })
+
+  it('still drops the 0 kg rows when the exercise DOES carry load', () => {
+    // An unfilled row next to real work must not become the binding rung.
+    const v = ladderVerdict([{ weightKg: 0, reps: 5 }, { weightKg: 20, reps: 12 }], ceiling)
+    expect(v.state).toBe('cleared')
+    expect(v.bindingLoadKg).toBe(20)
   })
 
   it('takes the WORST set at the binding load, not the best', () => {
@@ -318,8 +334,20 @@ describe('levelUpCue — mixed loads never mean "add weight"', () => {
 })
 
 describe('topLoadCleared', () => {
-  it('ignores bodyweight-only sets', () => {
-    expect(topLoadCleared([{ weightKg: 0, reps: 30 }, { weightKg: 0, reps: 30 }], 12)).toBe(false)
+  it('lets bodyweight-only work clear on reps — it has no other axis', () => {
+    expect(topLoadCleared([{ weightKg: 0, reps: 30 }, { weightKg: 0, reps: 30 }], 12)).toBe(true)
+    // The two-set rule still applies: one set is not a capability.
+    expect(topLoadCleared([{ weightKg: 0, reps: 30 }], 12)).toBe(false)
+    // And every set still has to reach the ceiling.
+    expect(topLoadCleared([{ weightKg: 0, reps: 30 }, { weightKg: 0, reps: 9 }], 12)).toBe(false)
+  })
+
+  it('offers no load to add on bodyweight work', () => {
+    const bw = [{ weightKg: 0, reps: 16 }, { weightKg: 0, reps: 16 }]
+    const v = progressionVerdict([bw, bw], 15)
+    expect(v.state).toBe('ready')
+    // 0 + 2.5 kg is an instruction you cannot follow on a Hanging Knee Raise.
+    expect(v.suggestKg).toBeNull()
   })
 
   it('counts only sets AT the top load', () => {

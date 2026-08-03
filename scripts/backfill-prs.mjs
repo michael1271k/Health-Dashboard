@@ -61,7 +61,7 @@ if (sErr) throw sErr
 
 const { data: sets, error: setErr } = await db
   .from('workout_sets')
-  .select('id, session_id, user_id, exercise_id, set_number, exercise_order, weight_kg, reps, set_type, is_pr, exercises(name)')
+  .select('id, session_id, user_id, exercise_id, set_number, exercise_order, weight_kg, reps, set_type, side, pair_id, is_pr, exercises(name)')
   .order('session_id')
 if (setErr) throw setErr
 
@@ -102,6 +102,9 @@ for (const s of sessions) {
       setType: r.set_type ?? null,
       timed: isTimedExercise(name),
       repFloor: win?.floor ?? null,
+      // Unilateral pairs collapse to one tonnage for the volume axis.
+      side: r.side ?? null,
+      pairId: r.pair_id ?? null,
       date: dateStr,
       exerciseName: name,
       setNumber: r.set_number ?? null,
@@ -147,6 +150,7 @@ for (const s of sessions) {
     seen.push({
       key: candidates[i].key,
       weightKg: r.weight_kg, reps: r.reps, setType: r.set_type ?? null,
+      side: r.side ?? null, pairId: r.pair_id ?? null,
       repFloor: candidates[i].repFloor,
     })
   }

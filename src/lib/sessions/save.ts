@@ -81,8 +81,10 @@ export async function saveSession(
       // reps + weight + set_type carried: the 4-axis PR engine needs max weight,
       // max reps@load, best est-1RM, and best single-set tonnage. `set_type` is
       // load-bearing — a warm-up must not raise a bar it can never win. A TIMED
-      // hold's PR is the best SECONDS (its `reps`), not an est-1RM (0 at 0 kg).
-      .select('exercise_id, est_1rm_kg, reps, weight_kg, set_type')
+      // hold's PR is the best SECONDS (its `reps`), not an est-1RM (none at
+      // 0 kg). `side`/`pair_id` collapse a unilateral pair to the ONE set it
+      // physically is, so the volume bar matches `sessionVolumeKg`.
+      .select('exercise_id, est_1rm_kg, reps, weight_kg, set_type, side, pair_id')
       .in('exercise_id', exerciseIds).eq('user_id', userId),
   ])
 
@@ -119,7 +121,7 @@ export async function saveSession(
     }
   }
 
-  const prHistory = (prHistoryRes.data ?? []) as Array<{ exercise_id: string; est_1rm_kg: number | null; reps: number | null; weight_kg: number | null; set_type: string | null }>
+  const prHistory = (prHistoryRes.data ?? []) as Array<{ exercise_id: string; est_1rm_kg: number | null; reps: number | null; weight_kg: number | null; set_type: string | null; side: string | null; pair_id: string | null }>
 
   // Every PR rule lives in `prEngine` — the live deck runs the SAME code against
   // the same baselines, so a badge shown on the green tick is a badge that gets
@@ -147,6 +149,7 @@ export async function saveSession(
     prHistory.map((r) => ({
       key: r.exercise_id, weightKg: r.weight_kg, reps: r.reps,
       est1rm: r.est_1rm_kg, setType: r.set_type,
+      side: r.side, pairId: r.pair_id,
       repFloor: windowFor(r.exercise_id)?.floor ?? null,
     })),
     (key) => isTimedExercise(nameByEx.get(key) ?? ''),
@@ -157,6 +160,7 @@ export async function saveSession(
     key: s.exerciseId, weightKg: s.weightKg, reps: s.reps,
     setType: s.setType ?? null, timed: isTimedExercise(s.exerciseName),
     repFloor: windowFor(s.exerciseId)?.floor ?? null,
+    side: s.side ?? null, pairId: s.pairId ?? null,
     date: sessionDate, exerciseName: s.exerciseName, setNumber: s.setNumber ?? i + 1,
   }))
   const prResult = detectSessionPrs(candidates, baselines)

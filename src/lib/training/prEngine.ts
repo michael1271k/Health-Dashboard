@@ -42,6 +42,53 @@ export interface BaselineSetRow {
   setType?: string | null
   /** Floor of the programmed rep window — gates whether this row sets the e1RM bar. */
   repFloor?: number | null
+  /** Unilateral pairing: L and R of ONE physical set share a `pairId`. */
+  pairId?: string | null
+  side?: string | null
+}
+
+/**
+ * Per-row tonnage for the VOLUME axis, with unilateral pairs collapsed.
+ *
+ * `sessionVolumeKg` has scored a unilateral set at the WEAKER side counted twice
+ * (2 × min weight × min reps) since the asymmetry rule landed — summing both
+ * sides literally credits the strong side's extra reps as if the weak side had
+ * done them. The volume AXIS did not know that: it read each row as its own set,
+ * so "L 5 kg × 10, R 5 kg × 14" put the bar at the strong side's 70 kg, and both
+ * rows could carry a volume trophy for one physical set. Two definitions of
+ * volume in one app is one too many.
+ *
+ * Returns `null` for the row that must NOT carry the axis — the earlier side of
+ * a complete pair — so the record lands on exactly one row. A lone side (only L
+ * logged) is real work with no partner and scores on its own, matching
+ * `sessionVolumeKg`.
+ */
+export function volumeCredits(
+  rows: ReadonlyArray<{ weightKg: number | null; reps: number | null; pairId?: string | null; side?: string | null }>,
+): Array<number | null> {
+  const out: Array<number | null> = rows.map((r) => (r.weightKg ?? 0) * (r.reps ?? 0))
+
+  const groups = new Map<string, number[]>()
+  rows.forEach((r, i) => {
+    if (!r.pairId || (r.side !== 'L' && r.side !== 'R')) return
+    const g = groups.get(r.pairId) ?? []
+    g.push(i)
+    groups.set(r.pairId, g)
+  })
+
+  for (const idxs of groups.values()) {
+    const l = idxs.find((i) => rows[i].side === 'L')
+    const r = idxs.find((i) => rows[i].side === 'R')
+    // Anything that isn't exactly one L and one R is malformed; score as logged.
+    if (idxs.length !== 2 || l == null || r == null) continue
+    const w = Math.min(rows[l].weightKg ?? 0, rows[r].weightKg ?? 0)
+    const reps = Math.min(rows[l].reps ?? 0, rows[r].reps ?? 0)
+    const last = Math.max(l, r)
+    for (const i of idxs) out[i] = null
+    out[last] = 2 * w * reps
+  }
+
+  return out
 }
 
 /**
@@ -88,28 +135,35 @@ export function buildBaselines(
 
   const bump = (m: Map<string, number>, k: string, v: number) => m.set(k, Math.max(m.get(k) ?? 0, v))
 
-  for (const r of rows) {
+  // The volume bar has to be built under the SAME unilateral rule detection
+  // scores candidates by, or a pair is judged against a per-side history.
+  const credits = volumeCredits(rows)
+
+  rows.forEach((r, i) => {
     // Symmetric with `absorbSet`: a row that cannot WIN an axis must not raise
     // the bar for it either.
-    if (isPrIneligible(r.setType)) continue
+    if (isPrIneligible(r.setType)) return
     const w = r.weightKg
     const reps = r.reps
     if (isTimed(r.key)) {
       // A hold's only record is duration. Its weight is 0, so every loaded axis
-      // would be meaningless (and Epley would report a 0 kg e1RM).
+      // would be meaningless (and Epley reports no e1RM at all at 0 kg).
       if (reps != null) bump(bestSeconds, r.key, reps)
-      continue
+      return
     }
     if (w != null) bump(bestWeight, r.key, w)
     if (w != null && reps != null) {
       bump(bestRepsAtWeight, `${r.key}|${w}`, reps)
-      bump(bestSetVolume, r.key, w * reps)
+      const vol = credits[i]
+      if (vol != null) bump(bestSetVolume, r.key, vol)
       if (e1rmEligible(reps, r.repFloor)) {
-        const e = r.est1rm ?? epley1RM(w, reps)
+        // `||`, not `??`: rows written before Epley returned null for unloaded
+        // work hold a stored est_1rm_kg of exactly 0, which is not an estimate.
+        const e = r.est1rm || epley1RM(w, reps)
         if (e != null) bump(bestE1rm, r.key, e)
       }
     }
-  }
+  })
 
   return {
     bestWeight: [...bestWeight],
@@ -140,6 +194,9 @@ export interface PrCandidateSet {
   timed: boolean
   /** Floor of the programmed rep window, when there is one. Gates the e1RM axis. */
   repFloor?: number | null
+  /** Unilateral pairing: L and R of ONE physical set share a `pairId`. */
+  pairId?: string | null
+  side?: string | null
   /** Identity for the asserted record-book lookup — see `prSeed.ts`. */
   date?: string | null
   exerciseName?: string | null
@@ -212,8 +269,13 @@ export function repsAxisEligible(weightKg: number): boolean {
  * Hack Squat's badge landed on 55 kg × 11 while 55 kg × 12 stood next to it.
  * Tonnage of one set against the heaviest single set ever is a thing that
  * happened, and the badge lands on the set that did it by construction.
+ *
+ * `volumeKg` overrides that tonnage for unilateral work: pass the pair's own
+ * figure on the row that completes it and `null` on the other side, so one
+ * physical set cannot carry two volume trophies (see `volumeCredits`). Omit it
+ * and the set scores as a plain bilateral `weight × reps`.
  */
-export function detectSetPrs(set: PrCandidateSet, idx: PrIndex): PrAxis[] {
+export function detectSetPrs(set: PrCandidateSet, idx: PrIndex, volumeKg?: number | null): PrAxis[] {
   if (isPrIneligible(set.setType)) return []
   const axes: PrAxis[] = []
 
@@ -231,9 +293,11 @@ export function detectSetPrs(set: PrCandidateSet, idx: PrIndex): PrAxis[] {
     if (br != null && set.reps > br) axes.push('reps')
   }
 
-  const vol = set.weightKg * set.reps
-  const bv = idx.bestSetVolume.get(set.key)
-  if (bv != null && vol > bv) axes.push('volume')
+  const vol = volumeKg === undefined ? set.weightKg * set.reps : volumeKg
+  if (vol != null) {
+    const bv = idx.bestSetVolume.get(set.key)
+    if (bv != null && vol > bv) axes.push('volume')
+  }
 
   if (e1rmEligible(set.reps, set.repFloor)) {
     const e1rm = epley1RM(set.weightKg, set.reps)
@@ -253,13 +317,14 @@ export function detectSetPrs(set: PrCandidateSet, idx: PrIndex): PrAxis[] {
  * flag marks the set that actually set the record. Both callers absorb, so live
  * and save-time detection stay identical.
  */
-export function absorbSet(set: PrCandidateSet, idx: PrIndex): void {
+export function absorbSet(set: PrCandidateSet, idx: PrIndex, volumeKg?: number | null): void {
   if (isPrIneligible(set.setType)) return
   const bump = (m: Map<string, number>, k: string, v: number) => m.set(k, Math.max(m.get(k) ?? 0, v))
   if (set.timed) { bump(idx.bestSeconds, set.key, set.reps); return }
   bump(idx.bestWeight, set.key, set.weightKg)
   bump(idx.bestRepsAtWeight, `${set.key}|${set.weightKg}`, set.reps)
-  bump(idx.bestSetVolume, set.key, set.weightKg * set.reps)
+  const vol = volumeKg === undefined ? set.weightKg * set.reps : volumeKg
+  if (vol != null) bump(idx.bestSetVolume, set.key, vol)
   // Symmetric with detection: a set that cannot WIN the e1RM axis must not be
   // allowed to raise the bar for it either.
   if (e1rmEligible(set.reps, set.repFloor)) {
@@ -295,14 +360,18 @@ export function detectSessionPrs(sets: readonly PrCandidateSet[], baselines: PrB
   // a judgement the engine could not make, so it stops guessing. See prSeed.ts.
   const seeded = isAssertedSession(sets.find((s) => s.date)?.date)
 
-  const perSet: DetectedSet[] = sets.map((s) => {
+  // Unilateral pairs collapse to one tonnage on one row — the same rule
+  // `sessionVolumeKg` scores the session by (see `volumeCredits`).
+  const credits = volumeCredits(sets)
+
+  const perSet: DetectedSet[] = sets.map((s, i) => {
     const asserted = seededAxesFor(s.date, s.exerciseName ?? s.key, s.setNumber, s.weightKg, s.reps)
-    const axes = seeded ? [...asserted] : detectSetPrs(s, idx)
+    const axes = seeded ? [...asserted] : detectSetPrs(s, idx, credits[i])
     // The index still advances through a seeded session so its baselines stay
     // correct for everything that comes after it.
-    absorbSet(s, idx)
-    // A hold has no meaningful est-1RM (weight 0 → Epley 0); null keeps the
-    // report from printing "e1RM 0kg" on a plank.
+    absorbSet(s, idx, credits[i])
+    // No load, no one-rep max to estimate — `epley1RM` returns null at 0 kg, so
+    // neither a hold nor a Reverse Crunch prints "1RM 0".
     return { axes, est1rm: s.timed ? null : epley1RM(s.weightKg, s.reps) }
   })
 
@@ -378,12 +447,16 @@ export function recordSets(
     out.set(key, m)
   }
 
+  // Same collapse as detection, so the ledger stores the tonnage the axis was
+  // actually judged on rather than one side of a unilateral pair.
+  const credits = volumeCredits(sets)
+
   result.perSet.forEach((d, i) => {
     const s = sets[i]
     for (const axis of d.axes) {
       const value = axis === 'weight' ? s.weightKg
         : axis === 'reps' ? s.reps
-        : axis === 'volume' ? s.weightKg * s.reps
+        : axis === 'volume' ? (credits[i] ?? s.weightKg * s.reps)
         : (d.est1rm ?? 0)                       // e1rm
       put(s.key, axis, { weightKg: s.weightKg, reps: s.reps, value })
     }

@@ -511,3 +511,93 @@ describe('raw axis counting — every axis beaten is counted', () => {
     expect(res.perSet[0].axes).toEqual(['e1rm'])
   })
 })
+
+/**
+ * UNILATERAL VOLUME (2026-08-03). `sessionVolumeKg` has scored a two-sided set
+ * at the WEAKER side counted twice since the asymmetry rule landed; the volume
+ * AXIS still read each side as its own set. Two definitions of volume in one
+ * app, and the axis had the wrong one — the strong side alone set the bar, and
+ * both rows of one physical set could carry a trophy.
+ */
+describe('the volume axis obeys the unilateral rule', () => {
+  const SA = 'Single Arm Lateral Raise (Cable)'
+  const pair = (n: string, side: 'L' | 'R', w: number, reps: number): PrCandidateSet =>
+    ({ key: SA, weightKg: w, reps, timed: false, setType: null, side, pairId: n })
+
+  it('scores a pair at 2 × the weaker side, not at the strong one', () => {
+    // History: a clean 5 × 12 pair = 2 × 5 × 12 = 120 kg.
+    const baselines = buildBaselines([
+      { key: SA, weightKg: 5, reps: 12, side: 'L', pairId: 'h1' },
+      { key: SA, weightKg: 5, reps: 12, side: 'R', pairId: 'h1' },
+    ], () => false)
+    expect(baselineIndex(baselines).bestSetVolume.get(SA)).toBe(120)
+
+    // Today: L 5 × 10, R 5 × 14. Summed per side the right arm shows 70 kg and
+    // "beats" nothing; as a pair it is 2 × 5 × 10 = 100 kg — LESS than 120, so
+    // an asymmetric session is correctly not a record.
+    const res = detectSessionPrs([pair('t1', 'L', 5, 10), pair('t1', 'R', 5, 14)], baselines)
+    expect(res.perSet[0].axes).not.toContain('volume')
+    expect(res.perSet[1].axes).not.toContain('volume')
+  })
+
+  it('files the record ONCE, on the row that completes the pair', () => {
+    const baselines = buildBaselines([
+      { key: SA, weightKg: 5, reps: 10, side: 'L', pairId: 'h1' },
+      { key: SA, weightKg: 5, reps: 10, side: 'R', pairId: 'h1' },
+    ], () => false)   // bar = 100 kg
+    // 2 × 5 × 12 = 120 > 100. One physical set, one trophy.
+    const res = detectSessionPrs([pair('t1', 'L', 5, 12), pair('t1', 'R', 5, 12)], baselines)
+    expect(res.perSet[0].axes).not.toContain('volume')
+    expect(res.perSet[1].axes).toContain('volume')
+    expect(res.axesByKey.get(SA)?.has('volume')).toBe(true)
+
+    // …and the ledger stores the PAIR's tonnage, not one arm's.
+    expect(recordSets([pair('t1', 'L', 5, 12), pair('t1', 'R', 5, 12)], res).get(SA)?.get('volume')?.value).toBe(120)
+  })
+
+  it('scores a lone side on its own — real work, just not a pair', () => {
+    const baselines = buildBaselines([{ key: SA, weightKg: 5, reps: 10 }], () => false)  // 50
+    const res = detectSessionPrs(
+      [{ key: SA, weightKg: 5, reps: 12, timed: false, setType: null, side: 'L', pairId: 'solo' }],
+      baselines,
+    )
+    expect(res.perSet[0].axes).toContain('volume')   // 60 > 50
+  })
+
+  it('leaves bilateral sets exactly as they were', () => {
+    const baselines = buildBaselines([{ key: HIP, weightKg: 25, reps: 12 }], isTimed)
+    const res = detectSessionPrs([set(HIP, 25, 14)], baselines)
+    expect(res.perSet[0].axes).toContain('volume')   // 350 > 300
+  })
+})
+
+/**
+ * EPLEY ON UNLOADED WORK. `weight × (1 + reps/30)` is 0 at 0 kg, and the app
+ * printed that 0: "1RM 0" on a Reverse Crunch row, a flat zero PR-history
+ * series, a permanently null trend. There is no one-rep max to estimate.
+ */
+describe('bodyweight sets carry no estimated 1RM', () => {
+  const CRUNCH = 'Reverse Crunch'
+
+  it('returns null rather than 0 for an unloaded set', () => {
+    const res = detectSessionPrs(
+      [{ key: CRUNCH, weightKg: 0, reps: 17, timed: false, setType: null }],
+      buildBaselines([{ key: CRUNCH, weightKg: 0, reps: 15 }], () => false),
+    )
+    expect(res.perSet[0].est1rm).toBeNull()
+    // The reps axis is the one that applies, and it still fires.
+    expect(res.perSet[0].axes).toEqual(['reps'])
+  })
+
+  it('never lets a 0 kg set set or win the e1RM bar', () => {
+    const idx = baselineIndex(buildBaselines([
+      { key: CRUNCH, weightKg: 0, reps: 15 },
+      // A stored est_1rm_kg of 0 from before the fix must not become a bar either.
+      { key: CRUNCH, weightKg: 0, reps: 12, est1rm: 0 },
+    ], () => false))
+    expect(idx.bestE1rm.has(CRUNCH)).toBe(false)
+    expect(detectSetPrs(
+      { key: CRUNCH, weightKg: 0, reps: 40, timed: false, setType: null }, idx,
+    )).not.toContain('e1rm')
+  })
+})

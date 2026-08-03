@@ -233,10 +233,15 @@ export function usePRHistory(exerciseId?: string, days = 180, era: 'all' | 'ppl'
         exercise_name: row.exercises.name,
         startedAt: row.workout_sessions.started_at,
         date: row.workout_sessions.started_at.slice(0, 10),
-        est_1rm_kg: row.est_1rm_kg ?? epley1RM(row.weight_kg, row.reps),
+        // `||`, not `??`: rows logged before `epley1RM` learned to return null
+        // hold a stored est_1rm_kg of exactly 0 for every bodyweight set, and 0
+        // is not an estimate — it plotted core work as a flat zero series.
+        est_1rm_kg: row.est_1rm_kg || epley1RM(row.weight_kg, row.reps),
         weight_kg: row.weight_kg,
         reps: row.reps,
       }))
+        // A movement with no 1RM to estimate has no place on a 1RM chart.
+        .filter((row): row is typeof row & { est_1rm_kg: number } => row.est_1rm_kg != null)
         .filter((row) => era === 'all' || eraForDate(row.date) === era)
 
       // GHOST-DATA FIX: one point per (exercise, session) — the TOP set's est-1RM.
