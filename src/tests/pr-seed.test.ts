@@ -133,13 +133,13 @@ describe('isAssertedSession — the boundary', () => {
 })
 
 /**
- * 2026-08-02 end to end, through the real engine with the REAL baselines —
- * including the corrupt 63.75 kg Incline DB Press row from 07-26.
+ * 2026-08-02 end to end, through the real engine with the REAL baselines.
  *
- * This is the case the assertion exists for: derived detection produced 8 axes
- * and missed both records the user actually set. The test pins the corrected
- * output AND documents the bad baseline, so if that row is ever repaired the
- * fixture below stops matching and this has to be revisited deliberately.
+ * Two histories, because the session outlived its own bug. `HISTORY` is the
+ * repaired `workout_sets` (07-26 Incline DB Press corrected from 63.75 kg to its
+ * true 35 kg on 2026-08-03); `POISONED` is what the engine actually saw on the
+ * day. Both are kept: one pins today's behaviour, the other pins the failure
+ * mode so a re-introduced bad load cannot pass silently.
  */
 describe('2026-08-02 — an asserted session inside live detection', () => {
   const D = '2026-08-02'
@@ -156,12 +156,9 @@ describe('2026-08-02 — an asserted session inside live detection', () => {
     cand('Face Pull', 1, 16.25, 15), cand('Face Pull', 2, 15, 16), cand('Face Pull', 3, 15, 15),
   ]
 
-  // Every prior logged set for these seven lifts, from workout_sets.
-  const HISTORY: BaselineSetRow[] = [
-    ...[[35, 11], [35, 12], [35, 12]].map(([w, r]) => ({ key: 'Incline DB Press', weightKg: w, reps: r, sessionId: 'a' })),
-    // The mis-entry: 63.75 kg between 35 kg and 40 kg. It is the reason the two
-    // real records below could not be derived.
-    ...[[63.75, 12], [63.75, 12], [63.75, 12]].map(([w, r]) => ({ key: 'Incline DB Press', weightKg: w, reps: r, sessionId: 'b' })),
+  // Every prior logged set for the six lifts that are NOT Incline DB Press —
+  // identical under both histories.
+  const REST: BaselineSetRow[] = [
     ...[[37.5, 12], [37.5, 12], [35, 12]].map(([w, r]) => ({ key: 'Chest Press (Machine)', weightKg: w, reps: r, sessionId: 'a' })),
     ...[[42.5, 12], [42.5, 12]].map(([w, r]) => ({ key: 'Seated Cable Row', weightKg: w, reps: r, sessionId: 'b' })),
     ...[[50, 15], [52.5, 9]].map(([w, r]) => ({ key: 'Pec Deck', weightKg: w, reps: r, sessionId: 'a' })),
@@ -169,7 +166,19 @@ describe('2026-08-02 — an asserted session inside live detection', () => {
     ...[[15, 14], [16.25, 15], [15, 15]].map(([w, r]) => ({ key: 'Face Pull', weightKg: w, reps: r, sessionId: 'b' })),
     ...[[47, 12], [47, 12], [47, 10]].map(([w, r]) => ({ key: 'Lat Pulldown', weightKg: w, reps: r, sessionId: 'b' })),
   ]
+  const incline = (rows: number[][], sessionId: string): BaselineSetRow[] =>
+    rows.map(([w, r]) => ({ key: 'Incline DB Press', weightKg: w, reps: r, sessionId }))
+
+  const JUL_19 = incline([[35, 11], [35, 12], [35, 12]], 'a')
+
+  /** Live `workout_sets` as of 2026-08-03, 07-26 repaired to its true load. */
+  const HISTORY: BaselineSetRow[] = [...JUL_19, ...incline([[35, 12], [35, 12], [35, 12]], 'b'), ...REST]
+
+  /** What the engine saw on the day: 63.75 kg wedged between 35 kg and 40 kg. */
+  const POISONED: BaselineSetRow[] = [...JUL_19, ...incline([[63.75, 12], [63.75, 12], [63.75, 12]], 'b'), ...REST]
+
   const baselines = buildBaselines(HISTORY, () => false)
+  const poisoned = buildBaselines(POISONED, () => false)
 
   it('awards exactly the three asserted records', () => {
     const r = detectSessionPrs(SETS, baselines)
@@ -188,12 +197,33 @@ describe('2026-08-02 — an asserted session inside live detection', () => {
     expect(flagged).toEqual(['Incline DB Press S2', 'Chest Press (Machine) S2'])
   })
 
-  it('is what derived detection would NOT have produced', () => {
-    // Same sets, same baselines, assertion bypassed: 8 axes across 5 exercises,
-    // and neither Incline DB Press record among them. This is the bug, pinned.
+  it('holds the same three records against the poisoned history', () => {
+    // The assertion is an AUTHORITY, not a correction applied on top of
+    // detection: what the baselines happen to contain must not move it.
+    const r = detectSessionPrs(SETS, poisoned)
+    expect(r.prCount).toBe(3)
+  })
+
+  it('pins the bad baseline that made the assertion necessary', () => {
+    // Assertion bypassed, 63.75 kg still in history: 8 axes across 5 exercises,
+    // and NEITHER Incline DB Press record among them — a load never lifted was
+    // the bar every later set had to clear. This is the original bug.
     const bare = SETS.map((s) => ({ ...s, date: null }))
-    const r = detectSessionPrs(bare, baselines)
+    const r = detectSessionPrs(bare, poisoned)
     expect(r.prCount).toBe(8)
     expect(r.axesByKey.has('Incline DB Press')).toBe(false)
+  })
+
+  it('derives both Incline records now that the load is repaired', () => {
+    // The correction is load-bearing: against the true 35 kg history, detection
+    // finds exactly the two axes seeded for this session, unaided.
+    const bare = SETS.map((s) => ({ ...s, date: null }))
+    const r = detectSessionPrs(bare, baselines)
+    expect([...(r.axesByKey.get('Incline DB Press') ?? [])].sort()).toEqual(['e1rm', 'weight'])
+
+    // The assertion still earns its place: raw axis counting (the deliberate
+    // subsumption reversal) inflates the session to 10, because one improved set
+    // carries reps + e1rm + volume with it.
+    expect(r.prCount).toBe(10)
   })
 })

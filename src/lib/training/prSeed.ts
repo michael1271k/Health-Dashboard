@@ -46,17 +46,21 @@ export const SEED_CUTOFF = '2026-07-31'
  * 2026-08-02 (Upper A) — detection awarded 8 axes across 5 exercises; the real
  * count is 3. Two independent causes, both of which outlive this session:
  *
- *   1. A corrupt baseline. `Incline DB Press` holds 63.75 kg × 12 on 2026-07-26,
- *      between 35 kg on 07-19 and 40 kg on 08-02. That row is almost certainly a
- *      mis-entry, and while it stands nothing under 63.75 kg can ever win the
- *      weight or e1RM axis — which is exactly why the two records the user DID
- *      earn (40 kg × 10 · weight + 1RM) went unflagged.
+ *   1. A corrupt baseline. `Incline DB Press` held 63.75 kg × 12 on 2026-07-26,
+ *      between 35 kg on 07-19 and 40 kg on 08-02 — a mis-entry, and while it
+ *      stood nothing under 63.75 kg could win the weight or e1RM axis, which is
+ *      exactly why the two records the athlete DID earn (40 kg × 10 · weight +
+ *      1RM) went unflagged. FIXED 2026-08-03: the row is now 35 kg × 12, its
+ *      true load (`scripts/correct-logged-sets.mjs`).
  *   2. Raw axis counting (the 2026-08-02 subsumption reversal, deliberate) means
  *      one improved set can carry `reps` + `e1rm` + a session `volume` axis with
  *      it. Seated Cable Row 42.5 × 13 alone produced three.
  *
- * Asserting the session fixes what is displayed. It does NOT fix the 63.75 kg
- * row, which is data, not logic — see the note in the sprint report.
+ * Cause 1 is gone: against the repaired baseline, derived detection now finds
+ * BOTH Incline DB Press records on its own, exactly the two axes seeded below.
+ * Cause 2 is by design and permanent, so the assertion stays — derived detection
+ * against the corrected history reports 10, not 3, the extra 7 all coming from
+ * one improved set carrying reps + e1rm + volume together.
  */
 export const ASSERTED_DATES: readonly string[] = ['2026-08-02']
 
