@@ -20,7 +20,7 @@
  * not on the record itself.
  */
 import { epley1RM } from '@/lib/utils/epley'
-import { seededAxesFor, isSeededEra } from './prSeed'
+import { seededAxesFor, isAssertedSession } from './prSeed'
 
 export type PrAxis = 'weight' | 'reps' | 'volume' | 'e1rm'
 
@@ -251,11 +251,11 @@ export interface SessionPrResult {
 export function detectSessionPrs(sets: readonly PrCandidateSet[], baselines: PrBaselines): SessionPrResult {
   const idx = baselineIndex(baselines)
 
-  // On or before SEED_CUTOFF the asserted record book is the ONLY source of
-  // axes — detection is suppressed rather than unioned with. Which lifts count
-  // as records over that era is a judgement the engine could not make, so it
-  // stops guessing. See prSeed.ts.
-  const seeded = isSeededEra(sets.find((s) => s.date)?.date)
+  // For an ASSERTED session — the whole seeded era, plus any individually
+  // corrected date — the record book is the ONLY source of axes; detection is
+  // suppressed rather than unioned with. Which lifts count as records there is
+  // a judgement the engine could not make, so it stops guessing. See prSeed.ts.
+  const seeded = isAssertedSession(sets.find((s) => s.date)?.date)
 
   const perSet: DetectedSet[] = sets.map((s) => {
     const asserted = seededAxesFor(s.date, s.exerciseName ?? s.key, s.setNumber, s.weightKg, s.reps)

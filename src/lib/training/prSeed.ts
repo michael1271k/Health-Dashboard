@@ -19,6 +19,12 @@
  * making the seed the sole baseline would leave the other ~20 with no bar at
  * all and turn the first August session into a PR for nearly every set.
  *
+ * INDIVIDUAL SESSIONS AFTER THE CUTOFF CAN ALSO BE ASSERTED, via
+ * `ASSERTED_DATES`. The cutoff governs a contiguous era; a single corrected
+ * session is a different thing and must not require dragging the era forward
+ * over the days in between. Adding a date there suppresses detection for that
+ * session ALONE — every other post-cutoff session still derives normally.
+ *
  * The match is deliberately strict — date, exercise, set number, load AND reps
  * must all agree. Editing one of these sets makes it stop matching, which shows
  * up as a missing trophy rather than as a record silently attributed to a
@@ -31,8 +37,30 @@
 import type { PrAxis } from './prEngine'
 import { canonicalExerciseName } from '@/lib/exercises/aliases'
 
-/** Last session date governed by the seed. After this, detection is live. */
+/** Last session date governed by the seed ERA. After this, detection is live. */
 export const SEED_CUTOFF = '2026-07-31'
+
+/**
+ * Post-cutoff sessions whose record set is asserted rather than derived.
+ *
+ * 2026-08-02 (Upper A) — detection awarded 8 axes across 5 exercises; the real
+ * count is 3. Two independent causes, both of which outlive this session:
+ *
+ *   1. A corrupt baseline. `Incline DB Press` holds 63.75 kg × 12 on 2026-07-26,
+ *      between 35 kg on 07-19 and 40 kg on 08-02. That row is almost certainly a
+ *      mis-entry, and while it stands nothing under 63.75 kg can ever win the
+ *      weight or e1RM axis — which is exactly why the two records the user DID
+ *      earn (40 kg × 10 · weight + 1RM) went unflagged.
+ *   2. Raw axis counting (the 2026-08-02 subsumption reversal, deliberate) means
+ *      one improved set can carry `reps` + `e1rm` + a session `volume` axis with
+ *      it. Seated Cable Row 42.5 × 13 alone produced three.
+ *
+ * Asserting the session fixes what is displayed. It does NOT fix the 63.75 kg
+ * row, which is data, not logic — see the note in the sprint report.
+ */
+export const ASSERTED_DATES: readonly string[] = ['2026-08-02']
+
+const ASSERTED = new Set(ASSERTED_DATES)
 
 export interface SeededPr {
   /** Session date, ISO `YYYY-MM-DD`. */
@@ -48,7 +76,7 @@ export interface SeededPr {
 }
 
 /**
- * 21 records across 11 sessions. Every entry was checked against the live
+ * 23 records across 12 sessions. Every entry was checked against the live
  * `workout_sets` rows: each exists at the stated set number, load and reps.
  *
  * `volume` is a session-level axis — its ledger VALUE is the exercise's total
@@ -89,6 +117,9 @@ export const SEEDED_PRS: readonly SeededPr[] = [
   // ── Jul 31 · Legs & Core B ──
   { date: '2026-07-31', exercise: 'Hip Thrust (Machine)', setNumber: 2, weightKg: 27.5, reps: 13, axes: ['volume', 'e1rm'] },
   { date: '2026-07-31', exercise: 'Side Plank', setNumber: 1, weightKg: 0, reps: 58, axes: ['reps'] },
+  // ── Aug 2 · Upper A — asserted, not derived (see ASSERTED_DATES) ──
+  { date: '2026-08-02', exercise: 'Incline DB Press', setNumber: 2, weightKg: 40, reps: 10, axes: ['weight', 'e1rm'] },
+  { date: '2026-08-02', exercise: 'Chest Press (Machine)', setNumber: 2, weightKg: 40, reps: 8, axes: ['weight'] },
 ]
 
 /** Index built once — `${date}|${canonical name}|${setNumber}`. */
@@ -98,9 +129,15 @@ const INDEX = new Map<string, SeededPr>(
 
 const near = (a: number, b: number) => Math.abs(a - b) < 0.001
 
-/** Is this session date governed by the asserted record book? */
-export function isSeededEra(date: string | null | undefined): boolean {
-  return date != null && date <= SEED_CUTOFF
+/**
+ * Is this session's record set asserted rather than derived?
+ *
+ * True for the whole seeded era (≤ SEED_CUTOFF) and for any individually
+ * corrected session listed in `ASSERTED_DATES`.
+ */
+export function isAssertedSession(date: string | null | undefined): boolean {
+  if (date == null) return false
+  return date <= SEED_CUTOFF || ASSERTED.has(date)
 }
 
 /**

@@ -56,7 +56,7 @@ const jiti = createJiti(import.meta.url, {
 })
 const { detectSessionPrs, recordSets, EMPTY_BASELINES } = await jiti.import('../src/lib/training/prEngine.ts')
 const { isTimedExercise } = await jiti.import('../src/lib/exercises/timed.ts')
-const { SEEDED_PRS, SEED_CUTOFF } = await jiti.import('../src/lib/training/prSeed.ts')
+const { SEEDED_PRS, SEED_CUTOFF, ASSERTED_DATES, isAssertedSession } = await jiti.import('../src/lib/training/prSeed.ts')
 
 // ── load ─────────────────────────────────────────────────────────────────────
 const { data: sessions, error: sErr } = await db.from('workout_sessions')
@@ -79,7 +79,20 @@ for (const r of sets) {
 }
 
 console.log(`${sessions.length} sessions · ${sets.length} sets`)
-console.log(`Seed: ${SEEDED_PRS.length} records, cutoff ${SEED_CUTOFF}\n`)
+console.log(`Seed: ${SEEDED_PRS.length} records · era ≤ ${SEED_CUTOFF} · asserted ${ASSERTED_DATES.join(', ') || '—'}\n`)
+
+// This script replays with EMPTY_BASELINES, which is only sound while EVERY
+// session is asserted — an asserted session ignores baselines entirely. The
+// moment a derived session exists, replaying it against nothing would mark
+// almost every set a record. Refuse rather than corrupt.
+const derived = sessions.filter((s) => !isAssertedSession(String(s.started_at).slice(0, 10)))
+if (derived.length) {
+  console.error(`REFUSING: ${derived.length} session(s) are not asserted and would be replayed against empty baselines:`)
+  for (const s of derived) console.error(`  ${String(s.started_at).slice(0, 10)}  ${s.day_key ?? '—'}`)
+  console.error('\nEither add the date to ASSERTED_DATES in src/lib/training/prSeed.ts,')
+  console.error('or use scripts/backfill-prs.mjs, which derives baselines from workout_sets.')
+  process.exit(1)
+}
 
 // ── plan ─────────────────────────────────────────────────────────────────────
 const flagOn = []          // set ids that must end up is_pr = true
@@ -108,9 +121,9 @@ for (const s of sessions) {
     }
   })
 
-  // EMPTY_BASELINES is correct here and only here: inside the seeded era the
-  // engine ignores baselines entirely, and every session in this database is
-  // inside it. Live saves keep using history-derived baselines as always.
+  // EMPTY_BASELINES is correct here and only here: an asserted session ignores
+  // baselines entirely, and the guard above proved every session is asserted.
+  // Live saves keep using history-derived baselines as always.
   const result = detectSessionPrs(candidates, EMPTY_BASELINES)
   counts.set(s.id, result.prCount)
   result.perSet.forEach((d, i) => { if (d.axes.length) flagOn.push(rows[i].id) })

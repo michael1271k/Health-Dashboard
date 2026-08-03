@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { SEEDED_PRS, SEED_CUTOFF, seededAxesFor, isSeededEra } from '@/lib/training/prSeed'
+import { SEEDED_PRS, SEED_CUTOFF, ASSERTED_DATES, seededAxesFor, isAssertedSession } from '@/lib/training/prSeed'
 import { canonicalExerciseName } from '@/lib/exercises/aliases'
-import type { PrAxis } from '@/lib/training/prEngine'
+import { buildBaselines, detectSessionPrs, type BaselineSetRow, type PrAxis } from '@/lib/training/prEngine'
 
 /**
  * The record book is asserted, so its SHAPE is the thing worth pinning: how
@@ -10,12 +10,12 @@ import type { PrAxis } from '@/lib/training/prEngine'
  * numbers move, and they should — but never silently.
  */
 describe('the seeded record book', () => {
-  it('holds 21 records across 11 sessions', () => {
-    expect(SEEDED_PRS).toHaveLength(21)
-    expect(new Set(SEEDED_PRS.map((p) => p.date)).size).toBe(11)
+  it('holds 23 records across 12 sessions', () => {
+    expect(SEEDED_PRS).toHaveLength(23)
+    expect(new Set(SEEDED_PRS.map((p) => p.date)).size).toBe(12)
   })
 
-  it('collapses to 30 standing ledger rows', () => {
+  it('collapses to 33 standing ledger rows', () => {
     // `personal_records` is keyed (user_id, exercise_key, axis) — ONE row per
     // exercise per axis. Hip Thrust wins volume on 07-17, 07-24 and 07-31 and
     // keeps a single row holding the latest.
@@ -23,10 +23,10 @@ describe('the seeded record book', () => {
     for (const p of SEEDED_PRS) {
       for (const a of p.axes) keys.add(`${canonicalExerciseName(p.exercise)}|${a}`)
     }
-    expect(keys.size).toBe(30)
+    expect(keys.size).toBe(33)
   })
 
-  it('totals 38 axis-achievements, distributed per session as specified', () => {
+  it('totals 41 axis-achievements, distributed per session as specified', () => {
     // pr_count counts DISTINCT axes per exercise within one session.
     const perSession = new Map<string, number>()
     for (const p of SEEDED_PRS) {
@@ -41,9 +41,9 @@ describe('the seeded record book', () => {
     expect(Object.fromEntries([...perSession].sort())).toEqual({
       '2026-07-16': 2, '2026-07-17': 1, '2026-07-19': 2, '2026-07-20': 2,
       '2026-07-21': 9, '2026-07-23': 5, '2026-07-24': 5, '2026-07-27': 2,
-      '2026-07-28': 4, '2026-07-30': 3, '2026-07-31': 3,
+      '2026-07-28': 4, '2026-07-30': 3, '2026-07-31': 3, '2026-08-02': 3,
     })
-    expect([...perSession.values()].reduce((a, b) => a + b, 0)).toBe(38)
+    expect([...perSession.values()].reduce((a, b) => a + b, 0)).toBe(41)
   })
 
   it('omits 2026-07-26 entirely — that session sets no records', () => {
@@ -96,21 +96,104 @@ describe('seededAxesFor — strict matching', () => {
   })
 })
 
-describe('isSeededEra — the boundary', () => {
+describe('isAssertedSession — the boundary', () => {
   it('covers everything up to and including the cutoff', () => {
     expect(SEED_CUTOFF).toBe('2026-07-31')
-    expect(isSeededEra('2026-05-20')).toBe(true)   // the Hevy-era imports
-    expect(isSeededEra('2026-07-31')).toBe(true)
+    expect(isAssertedSession('2026-05-20')).toBe(true)   // the Hevy-era imports
+    expect(isAssertedSession('2026-07-31')).toBe(true)
   })
 
   it('hands control to live detection the next day', () => {
-    expect(isSeededEra('2026-08-01')).toBe(false)
+    expect(isAssertedSession('2026-08-01')).toBe(false)
   })
 
-  it('treats a dateless session as live, never as seeded', () => {
+  it('asserts individually listed post-cutoff sessions only', () => {
+    // 2026-08-02 is corrected by hand; 08-03 and everything after it must still
+    // derive, or adding one correction would freeze the engine indefinitely.
+    expect(ASSERTED_DATES).toContain('2026-08-02')
+    expect(isAssertedSession('2026-08-02')).toBe(true)
+    expect(isAssertedSession('2026-08-03')).toBe(false)
+    expect(isAssertedSession('2026-08-09')).toBe(false)
+  })
+
+  it('has an entry in SEEDED_PRS for every asserted date', () => {
+    // An asserted date with no records suppresses detection and awards nothing —
+    // legitimate for a genuinely record-free session, but never by accident.
+    for (const d of ASSERTED_DATES) {
+      expect(SEEDED_PRS.some((p) => p.date === d)).toBe(true)
+    }
+  })
+
+  it('treats a dateless session as live, never as asserted', () => {
     // The live deck builds candidates without a date; defaulting those into the
     // seeded era would silently disable PR detection while logging.
-    expect(isSeededEra(null)).toBe(false)
-    expect(isSeededEra(undefined)).toBe(false)
+    expect(isAssertedSession(null)).toBe(false)
+    expect(isAssertedSession(undefined)).toBe(false)
+  })
+})
+
+/**
+ * 2026-08-02 end to end, through the real engine with the REAL baselines —
+ * including the corrupt 63.75 kg Incline DB Press row from 07-26.
+ *
+ * This is the case the assertion exists for: derived detection produced 8 axes
+ * and missed both records the user actually set. The test pins the corrected
+ * output AND documents the bad baseline, so if that row is ever repaired the
+ * fixture below stops matching and this has to be revisited deliberately.
+ */
+describe('2026-08-02 — an asserted session inside live detection', () => {
+  const D = '2026-08-02'
+  const cand = (name: string, setNumber: number, weightKg: number, reps: number, setType: string | null = null) =>
+    ({ key: name, exerciseName: name, setNumber, weightKg, reps, setType, timed: false, date: D })
+
+  const SETS = [
+    cand('Incline DB Press', 1, 35, 12), cand('Incline DB Press', 2, 40, 10), cand('Incline DB Press', 3, 40, 8),
+    cand('Lat Pulldown', 1, 47, 12), cand('Lat Pulldown', 2, 47, 12), cand('Lat Pulldown', 3, 47, 10),
+    cand('Chest Press (Machine)', 1, 37.5, 12), cand('Chest Press (Machine)', 2, 40, 8, 'failure'),
+    cand('Seated Cable Row', 1, 42.5, 12), cand('Seated Cable Row', 2, 42.5, 13),
+    cand('Pec Deck', 1, 50, 15), cand('Pec Deck', 2, 50, 11),
+    cand('Straight-Arm Pulldown', 1, 16.25, 15), cand('Straight-Arm Pulldown', 2, 16.25, 12), cand('Straight-Arm Pulldown', 3, 15, 11),
+    cand('Face Pull', 1, 16.25, 15), cand('Face Pull', 2, 15, 16), cand('Face Pull', 3, 15, 15),
+  ]
+
+  // Every prior logged set for these seven lifts, from workout_sets.
+  const HISTORY: BaselineSetRow[] = [
+    ...[[35, 11], [35, 12], [35, 12]].map(([w, r]) => ({ key: 'Incline DB Press', weightKg: w, reps: r, sessionId: 'a' })),
+    // The mis-entry: 63.75 kg between 35 kg and 40 kg. It is the reason the two
+    // real records below could not be derived.
+    ...[[63.75, 12], [63.75, 12], [63.75, 12]].map(([w, r]) => ({ key: 'Incline DB Press', weightKg: w, reps: r, sessionId: 'b' })),
+    ...[[37.5, 12], [37.5, 12], [35, 12]].map(([w, r]) => ({ key: 'Chest Press (Machine)', weightKg: w, reps: r, sessionId: 'a' })),
+    ...[[42.5, 12], [42.5, 12]].map(([w, r]) => ({ key: 'Seated Cable Row', weightKg: w, reps: r, sessionId: 'b' })),
+    ...[[50, 15], [52.5, 9]].map(([w, r]) => ({ key: 'Pec Deck', weightKg: w, reps: r, sessionId: 'a' })),
+    ...[[16.25, 15], [16.25, 11], [15, 11]].map(([w, r]) => ({ key: 'Straight-Arm Pulldown', weightKg: w, reps: r, sessionId: 'b' })),
+    ...[[15, 14], [16.25, 15], [15, 15]].map(([w, r]) => ({ key: 'Face Pull', weightKg: w, reps: r, sessionId: 'b' })),
+    ...[[47, 12], [47, 12], [47, 10]].map(([w, r]) => ({ key: 'Lat Pulldown', weightKg: w, reps: r, sessionId: 'b' })),
+  ]
+  const baselines = buildBaselines(HISTORY, () => false)
+
+  it('awards exactly the three asserted records', () => {
+    const r = detectSessionPrs(SETS, baselines)
+    expect(r.prCount).toBe(3)
+    expect(Object.fromEntries([...r.axesByKey].map(([k, v]) => [k, [...v].sort()]))).toEqual({
+      'Incline DB Press': ['e1rm', 'weight'],
+      'Chest Press (Machine)': ['weight'],
+    })
+  })
+
+  it('flags the two sets that earned them, and no others', () => {
+    const r = detectSessionPrs(SETS, baselines)
+    const flagged = r.perSet
+      .map((d, i) => (d.axes.length ? `${SETS[i].key} S${SETS[i].setNumber}` : null))
+      .filter(Boolean)
+    expect(flagged).toEqual(['Incline DB Press S2', 'Chest Press (Machine) S2'])
+  })
+
+  it('is what derived detection would NOT have produced', () => {
+    // Same sets, same baselines, assertion bypassed: 8 axes across 5 exercises,
+    // and neither Incline DB Press record among them. This is the bug, pinned.
+    const bare = SETS.map((s) => ({ ...s, date: null }))
+    const r = detectSessionPrs(bare, baselines)
+    expect(r.prCount).toBe(8)
+    expect(r.axesByKey.has('Incline DB Press')).toBe(false)
   })
 })
