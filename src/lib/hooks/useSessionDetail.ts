@@ -56,6 +56,14 @@ export interface SessionDetail {
   durationMin: number | null
   avgBpm: number | null
   calories: number | null
+  /**
+   * Session difficulty, 1–10, as logged on the commit bar.
+   *
+   * `workout_sessions.session_rpe` was written but never selected, so the one
+   * number describing how the session FELT was absent from the report that
+   * describes the session.
+   */
+  sessionRpe: number | null
   exercises: DetailExercise[]
   /**
    * DIRECT working sets per landmark muscle for THIS session, sorted desc.
@@ -102,13 +110,14 @@ export function useSessionDetail(sessionId: string | null) {
     queryFn: async (): Promise<SessionDetail | null> => {
       const { data: sRaw } = await supabase
         .from('workout_sessions')
-        .select('id, started_at, split_day, day_key, total_volume_kg, set_count, pr_count, duration_min, avg_bpm, calories_burned')
+        .select('id, started_at, split_day, day_key, total_volume_kg, set_count, pr_count, duration_min, avg_bpm, calories_burned, session_rpe')
         .eq('id', sessionId as string)
         .single()
       const s = sRaw as {
         id: string; started_at: string; split_day: string; day_key: string | null
         total_volume_kg: number | null; set_count: number | null; pr_count: number | null
         duration_min: number | null; avg_bpm: number | null; calories_burned: number | null
+        session_rpe: number | null
       } | null
       if (!s) return null
 
@@ -239,6 +248,7 @@ export function useSessionDetail(sessionId: string | null) {
         durationMin: s.duration_min,
         avgBpm: s.avg_bpm,
         calories: s.calories_burned,
+        sessionRpe: s.session_rpe,
         exercises,
         muscleSets,
         failureSets,

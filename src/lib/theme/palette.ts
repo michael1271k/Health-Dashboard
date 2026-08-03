@@ -66,6 +66,48 @@ export const SPLIT = {
   lower: EMERALD,
 } as const
 
+/**
+ * Workout-day identity — ONE colour per program day key, globally.
+ *
+ * This is the plan's own `ProgramDay.color` (programs.ts reads it from here, so
+ * there is a single definition). It was a local `C` map inside programs.ts where
+ * `arms` and `legs_b` were BOTH emerald: a Delts & Arms report and a Legs & Core
+ * B report were the same colour, which is precisely the distinction the colour
+ * exists to make. Within one plan every day is now distinguishable; a key
+ * repeats across plans only where the day means the same thing (Helix-5 `cb_a`
+ * and Helix-4 `upper_a` are the same session under two names).
+ */
+export const DAY_COLOR: Record<string, string> = {
+  // Helix-5 (active)
+  cb_a: STEEL,        // Upper A · Chest + Back
+  legs_a: SAPPHIRE,   // Legs & Core A · Quad focus
+  arms: AMETHYST,     // Delts & Arms
+  cb_b: GOLD,         // Upper B · Chest + Back
+  legs_b: EMERALD,    // Legs & Core B · Posterior focus
+  // Helix-4 (drawer) — mirrors its Helix-5 counterpart
+  upper_a: STEEL,
+  lower_a: SAPPHIRE,
+  upper_b: GOLD,
+  lower_b: EMERALD,
+  // PPL legacy — the split colours, since the day IS the split
+  ppl_push_sun: EMBER,
+  ppl_push_thu: EMBER,
+  ppl_pull_mon: SAPPHIRE,
+  ppl_pull_fri: SAPPHIRE,
+  ppl_legs_tue: AMETHYST,
+}
+
+/**
+ * The colour for a logged session: its `day_key` first, then `split_day` as a
+ * fallback for rows imported before day keys existed, then steel.
+ */
+export function dayColor(dayKey?: string | null, splitDay?: string | null): string {
+  if (dayKey && DAY_COLOR[dayKey]) return DAY_COLOR[dayKey]
+  const s = splitDay?.toLowerCase()
+  if (s && s in SPLIT) return SPLIT[s as keyof typeof SPLIT]
+  return STEEL
+}
+
 /** Broad muscle display groups. */
 export const GROUP = {
   Chest: EMBER,

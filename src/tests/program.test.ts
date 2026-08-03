@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { derivePhase } from '@/lib/nutrition/phase'
+import { DAY_COLOR, SPLIT, STEEL, dayColor } from '@/lib/theme/palette'
 import { APEX51, PROGRAMS, DEFAULT_PROGRAM_ID, eraForDate, isReentryWeek, isRestDayFor, programDayFor, activeProgram } from '@/lib/programs'
 import { phaseGoalsFor } from '@/lib/types/workout'
 import { getWeekPhase, PHASES } from '@/lib/phases'
@@ -195,5 +196,43 @@ describe('resolveChartSplit', () => {
   })
   it('leaves PPL upper untouched (no arms bucket outside HELIX)', () => {
     expect(resolveChartSplit('2026-06-23', 'upper', 'ppl')).toBe('upper')  // Tue but PPL
+  })
+})
+
+// ── Workout-day colours ───────────────────────────────────────────────────────
+/**
+ * The colour is the workout's identity in the session report and on the
+ * dashboard, so two days a user actually alternates between must never share
+ * one. `arms` and `legs_b` were both emerald until 2026-08-03: a Delts & Arms
+ * report and a Legs & Core B report looked identical.
+ */
+describe('DAY_COLOR — one tone per workout day', () => {
+  it('gives every program day in every plan a colour', () => {
+    for (const p of Object.values(PROGRAMS)) {
+      for (const d of p.days) {
+        expect(DAY_COLOR[d.key], `${p.id}/${d.key}`).toBeTruthy()
+        expect(d.color).toBe(DAY_COLOR[d.key])
+      }
+    }
+  })
+
+  it('never repeats a colour between two DIFFERENT days of one plan', () => {
+    for (const p of Object.values(PROGRAMS)) {
+      // PPL runs Push twice a week and Pull twice a week — the same session on
+      // two weekdays, which SHOULD share a colour. Collapse by label first.
+      const byLabel = new Map<string, string>()
+      for (const d of p.days) byLabel.set(d.label, d.color)
+      expect(new Set(byLabel.values()).size, p.id).toBe(byLabel.size)
+    }
+  })
+
+  it('resolves a logged session by day_key, then split_day, then steel', () => {
+    expect(dayColor('legs_b', 'legs')).toBe(DAY_COLOR.legs_b)
+    // Pre-day-key imports carry only split_day.
+    expect(dayColor(null, 'push')).toBe(SPLIT.push)
+    expect(dayColor(undefined, 'LEGS')).toBe(SPLIT.legs)
+    // An unknown key must fall through to split_day, not return undefined.
+    expect(dayColor('not_a_day', 'pull')).toBe(SPLIT.pull)
+    expect(dayColor(null, null)).toBe(STEEL)
   })
 })

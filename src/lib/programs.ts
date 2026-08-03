@@ -6,6 +6,7 @@
  * Sessions are classified purely by date via `eraForDate` (no DB column needed).
  */
 import { getScheduleOverride, REST_OVERRIDE } from '@/lib/schedule/overrides'
+import { DAY_COLOR } from '@/lib/theme/palette'
 
 export type Era = 'ppl' | 'axis'
 export const AXIS_ERA_START = '2026-07-19'
@@ -88,14 +89,17 @@ export interface Program {
 export const setsForPhase = (e: ProgramExercise, phase: ProgramPhase): number =>
   phase === 'cut' ? (e.cutSets ?? e.sets) : e.sets
 
-const C = { cbA: '#8E9AAC', legsA: '#3D7AB8', arms: '#3E9E7A', cbB: '#D4AF37', legsB: '#3E9E7A' }
+// Day colours live in the palette (DAY_COLOR) so the session report, the
+// dashboard and the plan template can never disagree about what "Upper B" looks
+// like. This alias just keeps the day definitions below readable.
+const C = DAY_COLOR
 
 // ── HELIX-5 (ACTIVE) — Sun/Mon/Tue/Thu/Fri ─────────────────────────────────
 export const APEX51: Program = {
   id: 'apex51', label: 'Helix-5', era: 'axis', active: true,   // id kept for localStorage compat
   blurb: '5-day antagonist hybrid — Sun/Mon/Tue/Thu/Fri, Wed & Sat Zone-2 rest.',
   days: [
-    { key: 'cb_a', label: 'Upper A', sub: 'Chest + Back', color: C.cbA, weekday: 0, exercises: [
+    { key: 'cb_a', label: 'Upper A', sub: 'Chest + Back', color: C.cb_a, weekday: 0, exercises: [
       { name: 'Incline DB Press', sets: 3, cutSets: 3, wk1Kg: 32, reps: '8–12', muscles: ['chest', 'shoulders'], compound: true },
       { name: 'Lat Pulldown', sets: 3, cutSets: 3, wk1Kg: 45, reps: '8–12', muscles: ['back'], compound: true },
       { name: 'Chest Press (Machine)', sets: 3, cutSets: 2, wk1Kg: 34, reps: '10–12', muscles: ['chest', 'triceps'], compound: true },
@@ -104,7 +108,7 @@ export const APEX51: Program = {
       { name: 'Straight-Arm Pulldown', sets: 2, cutSets: 2, wk1Kg: 15, reps: '12–15', muscles: ['back'] },
       { name: 'Face Pull', sets: 3, cutSets: 2, wk1Kg: 13.75, reps: '12–15', muscles: ['shoulders', 'back'] },
     ] },
-    { key: 'legs_a', label: 'Legs & Core A', sub: 'Quad Focus', color: C.legsA, weekday: 1, exercises: [
+    { key: 'legs_a', label: 'Legs & Core A', sub: 'Quad Focus', color: C.legs_a, weekday: 1, exercises: [
       { name: 'Leg Press', sets: 4, cutSets: 3, wk1Kg: 70, reps: '8–12', muscles: ['quads', 'glutes'], compound: true, note: '1 warm-up @40kg' },
       { name: 'Hack Squat', sets: 3, cutSets: 2, wk1Kg: null, reps: '10–12', muscles: ['quads', 'glutes'], compound: true },
       { name: 'Leg Extension', sets: 3, cutSets: 3, wk1Kg: 37.5, reps: '12–15', muscles: ['quads'] },
@@ -125,7 +129,7 @@ export const APEX51: Program = {
     ] },
     // Names match the canonical (alias-resolved) catalog rows the sessions commit
     // under, so useExerciseMemory pre-loads the last logged numbers per exercise.
-    { key: 'cb_b', label: 'Upper B', sub: 'Chest + Back', color: C.cbB, weekday: 4, exercises: [
+    { key: 'cb_b', label: 'Upper B', sub: 'Chest + Back', color: C.cb_b, weekday: 4, exercises: [
       { name: 'Chest Press (Machine)', sets: 3, cutSets: 3, wk1Kg: 35, reps: '10–12', muscles: ['chest', 'triceps'], compound: true },
       { name: 'Neutral-Grip Lat Pulldown', sets: 3, cutSets: 2, wk1Kg: 45, reps: '10–12', muscles: ['back'], compound: true },
       { name: 'Single Arm Cable Crossover', sets: 2, cutSets: 2, wk1Kg: 7.5, reps: '12–15', muscles: ['chest'], note: 'per arm' },
@@ -136,7 +140,7 @@ export const APEX51: Program = {
     ] },
     // Cold-start loads/reps mirror the user's real Legs B (memory overrides once
     // logged under these canonical names); bodyweight moves seed at 0 kg.
-    { key: 'legs_b', label: 'Legs & Core B', sub: 'Posterior Focus', color: C.legsB, weekday: 5, exercises: [
+    { key: 'legs_b', label: 'Legs & Core B', sub: 'Posterior Focus', color: C.legs_b, weekday: 5, exercises: [
       { name: 'Romanian Deadlift (Dumbbell)', sets: 4, cutSets: 3, wk1Kg: 30, reps: '8–12', muscles: ['hamstrings', 'glutes', 'back'], compound: true },
       { name: 'Hip Thrust (Machine)', sets: 3, cutSets: 3, wk1Kg: 25, reps: '8–15', muscles: ['glutes'], compound: true },
       { name: 'Leg Press', sets: 2, cutSets: 2, wk1Kg: 70, reps: '12–15', muscles: ['quads', 'glutes'], compound: true, note: 'horizontal sled' },
@@ -156,7 +160,7 @@ export const HELIX4: Program = {
   id: 'axis4', label: 'Helix-4', era: 'axis', drawer: true,
   blurb: '4-day upper/lower backup — Mon/Tue/Thu/Fri. Bulk adds volume; cut trims it.',
   days: [
-    { key: 'upper_a', label: 'Upper A', color: C.cbA, weekday: 1, exercises: [
+    { key: 'upper_a', label: 'Upper A', color: C.cb_a, weekday: 1, exercises: [
       { name: 'Incline DB Press', sets: 3, cutSets: 3, wk1Kg: 32, reps: '8–12', muscles: ['chest', 'shoulders'], compound: true },
       { name: 'Lat Pulldown', sets: 3, cutSets: 3, wk1Kg: 45, reps: '8–12', muscles: ['back'], compound: true },
       { name: 'Chest Press (Machine)', sets: 2, cutSets: 0, wk1Kg: 34, reps: '10–12', muscles: ['chest', 'triceps'], compound: true },
@@ -165,7 +169,7 @@ export const HELIX4: Program = {
       { name: 'Rope Triceps Pushdown', sets: 3, cutSets: 2, wk1Kg: 13.5, reps: '12–15', muscles: ['triceps'] },
       { name: 'Face Pull', sets: 2, cutSets: 2, wk1Kg: 13.75, reps: '12–15', muscles: ['shoulders', 'back'] },
     ] },
-    { key: 'lower_a', label: 'Lower A', color: C.legsA, weekday: 2, exercises: [
+    { key: 'lower_a', label: 'Lower A', color: C.legs_a, weekday: 2, exercises: [
       { name: 'Leg Press', sets: 3, cutSets: 3, wk1Kg: 70, reps: '8–12', muscles: ['quads', 'glutes'], compound: true },
       { name: 'Hack Squat', sets: 2, cutSets: 0, wk1Kg: null, reps: '10–12', muscles: ['quads', 'glutes'], compound: true },
       { name: 'Leg Extension', sets: 2, cutSets: 3, wk1Kg: 37.5, reps: '12–15', muscles: ['quads'] },
@@ -174,7 +178,7 @@ export const HELIX4: Program = {
       { name: 'Crunch Machine', sets: 3, cutSets: 3, wk1Kg: 52.5, reps: '10–12', muscles: ['core'] },
       { name: 'Reverse Crunch', sets: 2, cutSets: 2, wk1Kg: null, reps: '12–15', muscles: ['core'] },
     ] },
-    { key: 'upper_b', label: 'Upper B', color: C.cbB, weekday: 4, exercises: [
+    { key: 'upper_b', label: 'Upper B', color: C.cb_b, weekday: 4, exercises: [
       { name: 'DB Shoulder Press', sets: 3, cutSets: 3, wk1Kg: 28, reps: '8–10', muscles: ['shoulders', 'triceps'], compound: true },
       { name: 'Single Arm Lateral Raise (Cable)', sets: 4, cutSets: 4, wk1Kg: 5, reps: '12–20', muscles: ['shoulders'], note: 'per side' },
       { name: 'Pec Deck', sets: 2, cutSets: 1, wk1Kg: 47.5, reps: '12–15', muscles: ['chest'], note: 'cut: rotates with Chest Press (Machine)' },
@@ -184,7 +188,7 @@ export const HELIX4: Program = {
       { name: 'Reverse EZ-Bar Curl', sets: 2, cutSets: 2, wk1Kg: 15, reps: '12–15', muscles: ['forearms', 'biceps'] },
       { name: 'Seated DB Wrist Curl', sets: 2, cutSets: 0, wk1Kg: 16, reps: '15–20', muscles: ['forearms'] },
     ] },
-    { key: 'lower_b', label: 'Lower B', color: C.legsB, weekday: 5, exercises: [
+    { key: 'lower_b', label: 'Lower B', color: C.legs_b, weekday: 5, exercises: [
       { name: 'DB RDL', sets: 3, cutSets: 3, wk1Kg: 26, reps: '8–12', muscles: ['hamstrings', 'glutes', 'back'], compound: true },
       { name: 'Machine Hip Thrust', sets: 3, cutSets: 3, wk1Kg: 23.5, reps: '8–15', muscles: ['glutes'], compound: true },
       { name: 'Leg Press', sets: 2, cutSets: 2, wk1Kg: 70, reps: '12–15', muscles: ['quads', 'glutes'], compound: true, note: 'horizontal sled' },
@@ -236,11 +240,11 @@ export const PPL_LEGACY: Program = {
   id: 'ppl', label: 'Push/Pull/Legs', era: 'ppl', drawer: true, legacy: true,
   blurb: 'Historical Push/Pull/Legs — Sun/Thu Push · Mon/Fri Pull · Tue Legs · Wed & Sat rest.',
   days: [
-    { key: 'ppl_push_sun', label: 'Push', color: C.cbA, weekday: 0, exercises: PPL_PUSH },
-    { key: 'ppl_pull_mon', label: 'Pull', color: C.arms, weekday: 1, exercises: PPL_PULL },
-    { key: 'ppl_legs_tue', label: 'Legs', color: C.legsA, weekday: 2, exercises: PPL_LEGS },
-    { key: 'ppl_push_thu', label: 'Push', color: C.cbA, weekday: 4, exercises: PPL_PUSH },
-    { key: 'ppl_pull_fri', label: 'Pull', color: C.arms, weekday: 5, exercises: PPL_PULL },
+    { key: 'ppl_push_sun', label: 'Push', color: C.ppl_push_sun, weekday: 0, exercises: PPL_PUSH },
+    { key: 'ppl_pull_mon', label: 'Pull', color: C.ppl_pull_mon, weekday: 1, exercises: PPL_PULL },
+    { key: 'ppl_legs_tue', label: 'Legs', color: C.ppl_legs_tue, weekday: 2, exercises: PPL_LEGS },
+    { key: 'ppl_push_thu', label: 'Push', color: C.ppl_push_thu, weekday: 4, exercises: PPL_PUSH },
+    { key: 'ppl_pull_fri', label: 'Pull', color: C.ppl_pull_fri, weekday: 5, exercises: PPL_PULL },
   ],
 }
 
