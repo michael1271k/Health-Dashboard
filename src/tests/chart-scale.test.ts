@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { niceDomain, compactKg } from '@/lib/charts/scale'
 import { currentWeekDays } from '@/components/charts/CurrentWeekButton'
-import { planWeekNumber } from '@/lib/reports/weekNumber'
+import { programWeekNumber, weekNumberOf } from '@/lib/reports/weekNumber'
+import { weekStartOf } from '@/lib/utils/week'
 
 describe('niceDomain', () => {
   it('fits the DATA, not zero — the flat-volume-chart bug', () => {
@@ -64,35 +65,42 @@ describe('compactKg', () => {
 })
 
 describe('current-week timeframe', () => {
-  it('numbers the PLAN week, not the calendar week', () => {
+  it('numbers the PROGRAM week, not the calendar week', () => {
     // The header used to read "Week 31" — the ISO calendar week, a true fact
     // about the year and a useless one about training.
-    // 2026-07-19 is a Sunday; 07-31 falls in the week starting 07-26.
-    expect(planWeekNumber('2026-07-19', '2026-07-31')).toBe(2)
-    expect(planWeekNumber('2026-07-19', '2026-07-19')).toBe(1)
-    expect(planWeekNumber('2026-07-19', '2026-08-02')).toBe(3)
+    expect(programWeekNumber('2026-07-31')).toBe(2)
+    expect(programWeekNumber('2026-08-02')).toBe(3)
   })
 
-  it('starts a freshly chosen plan at Week 1', () => {
-    // Picking a plan in Settings sets phase_started_on to that day.
-    expect(planWeekNumber('2026-08-01', '2026-08-01')).toBe(1)
-    // …and mid-week, still Week 1 (both dates fall in the same Sunday week).
-    expect(planWeekNumber('2026-07-28', '2026-08-01')).toBe(1)
+  it('agrees with the Momentum timeline EXACTLY, week 0 included', () => {
+    // The bug: a second 1-based counter read Wk 4 on 2026-08-03 while Momentum's
+    // capsule for the same week read "Week 3". Both are now one function, so the
+    // two can no longer drift — this asserts the identity, not two constants.
+    for (const d of ['2026-07-15', '2026-07-19', '2026-07-26', '2026-08-01', '2026-08-03']) {
+      expect(programWeekNumber(d)).toBe(weekNumberOf(weekStartOf(d)))
+    }
   })
 
-  it('falls back to the block start when no plan was ever stamped', () => {
-    // `phase_started_on` is only written when a plan is picked in Settings, and
-    // it is still NULL on this account. Returning 1 there made the badge read
-    // "Wk 1" for three weeks running — a real number and a wrong one. The block
-    // opened 2026-07-15 (HELIX_CUT_START), whose Sunday week begins 07-12.
-    expect(planWeekNumber(null, '2026-07-15')).toBe(1)
-    expect(planWeekNumber(null, '2026-08-01')).toBe(3)
-    expect(planWeekNumber(undefined, '2026-08-03')).toBe(4)
+  it('calls the opening half week Week 0, because it IS a half week', () => {
+    // Training began Wed 2026-07-15. Four days is not a week and is not counted
+    // as one; the 1-based counter called it Week 1 and ran one ahead forever.
+    expect(programWeekNumber('2026-07-15')).toBe(0)
+    expect(programWeekNumber('2026-07-18')).toBe(0)
+    // First FULL week.
+    expect(programWeekNumber('2026-07-19')).toBe(1)
   })
 
-  it('never goes below 1, whatever the column holds', () => {
-    expect(planWeekNumber('2027-01-01', '2026-08-01')).toBe(1)
-    expect(planWeekNumber('2026-08-01', 'not-a-date')).toBe(1)
+  it('rolls over exactly at the week boundary and nowhere else', () => {
+    // 2026-08-01 is a Saturday, 08-02 the Sunday that opens the next week.
+    expect(programWeekNumber('2026-07-27')).toBe(2)
+    expect(programWeekNumber('2026-08-01')).toBe(2)
+    expect(programWeekNumber('2026-08-02')).toBe(3)
+  })
+
+  it('yields a number, never NaN, on a malformed date', () => {
+    // `weekStartOf` echoes input it cannot parse, so the bad value reaches the
+    // arithmetic intact; "Week NaN" in a badge is worse than a wrong week.
+    expect(Number.isFinite(programWeekNumber('not-a-date'))).toBe(true)
   })
 
   it('counts Sunday through today inclusive', () => {

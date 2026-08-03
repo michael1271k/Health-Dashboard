@@ -2,11 +2,11 @@
 
 import { memo, useEffect, useState } from 'react'
 import { STEEL } from '@/lib/theme/palette'
-import { useLastUpdated, useUserGoals } from '@/lib/hooks/useDashboard'
+import { useLastUpdated } from '@/lib/hooks/useDashboard'
 import { useMyProfile } from '@/lib/hooks/useMyProfile'
 import { HELIX_CUT_START, activeProgram, activePhase } from '@/lib/programs'
 import { PHASE_COLORS, PHASE_META, type Phase } from '@/lib/nutrition/phase'
-import { planWeekNumber } from '@/lib/reports/weekNumber'
+import { programWeekNumber } from '@/lib/reports/weekNumber'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { useLogicalDate } from '@/lib/hooks/useLogicalDate'
 
@@ -84,7 +84,6 @@ export function BrandHeader() {
   const now = useClock(60_000)
   const { data: lastUpdated } = useLastUpdated()
   const { data: profile } = useMyProfile()
-  const { data: goals } = useUserGoals()
 
   // Plan + phase tags read localStorage (activeProgram/activePhase), so resolve
   // them AFTER mount to avoid an SSR/client hydration mismatch.
@@ -94,19 +93,16 @@ export function BrandHeader() {
     setTags({ planLabel: p.label, planColor: PLAN_CHIP_COLOR[p.id] ?? STEEL, phase: activePhase() as Phase })
   }, [])
 
-  // Weeks INTO the active plan, counted from `user_goals.phase_started_on` — the
-  // same source the analytics header uses, so "Week 3" means one thing app-wide.
-  // Picking a plan in Settings stamps that column, which puts you in Week 1;
-  // until then it counts from the block start (see `planWeekNumber`).
+  // THE program week — the same counter Momentum labels its capsules with, not a
+  // second one derived here. See `programWeekNumber`: the block opened mid-week,
+  // so Week 0 is a real half week and any 1-based count of its own runs one
+  // ahead of the timeline forever.
   //
   // `useLogicalDate` rather than a bare `logicalTodayISO()` call: the badge has
   // to advance the instant the configured week boundary passes, and a value read
   // during render only updates when something else happens to re-render.
   const today = useLogicalDate()
-  const planWeek = planWeekNumber(
-    (goals as { phase_started_on?: string | null } | null)?.phase_started_on,
-    today,
-  )
+  const planWeek = programWeekNumber(today)
 
   const firstName = profile?.firstName ?? null
   const greeting = now ? greetingFor(now) : ''

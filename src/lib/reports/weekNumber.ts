@@ -1,14 +1,27 @@
 import { weekStartOf } from '@/lib/utils/week'
 import { getWeekPhase } from '@/lib/phases'
-import { HELIX_CUT_START } from '@/lib/programs'
 
-/** Week 0 = the week containing Jul 15–18 2026 (Sunday-anchored start 2026-07-12). */
+/**
+ * Week 0 = the week containing Jul 15–18 2026 (Sunday-anchored start 2026-07-12).
+ *
+ * Week 0 is not an off-by-one — it is a real, PARTIAL week. The block opened on
+ * a Wednesday, so its first four days are not a week of training and are not
+ * counted as one. Everything downstream of this constant inherits that, which is
+ * the whole reason there is exactly one counter (see `programWeekNumber`).
+ */
 export const WEEK0_START = '2026-07-12'
 
-/** Program week number for a Sunday week-start (Week 0 = 2026-07-12, then +1/week). */
+/**
+ * Program week number for a week-start (Week 0 = 2026-07-12, then +1/week).
+ *
+ * TOTAL: an unparseable date yields 0 rather than NaN. `weekStartOf` echoes
+ * input it cannot parse, so a bad date reaches here intact, and NaN rendered
+ * into a badge reads as "Week NaN" on a page that otherwise still works.
+ */
 export function weekNumberOf(weekStartISO: string): number {
-  const a = new Date(`${WEEK0_START}T00:00:00Z`).getTime()
-  const b = new Date(`${weekStartISO}T00:00:00Z`).getTime()
+  const a = Date.parse(`${WEEK0_START}T00:00:00Z`)
+  const b = Date.parse(`${weekStartISO}T00:00:00Z`)
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return 0
   return Math.round((b - a) / (7 * 86_400_000))
 }
 
@@ -32,36 +45,29 @@ export function weekLabelOf(weekStartISO: string): string {
 }
 
 /**
- * Week number WITHIN THE ACTIVE PLAN — 1-based, resetting when the plan changes.
+ * THE program week for a date — the ONE counter, shared by the dashboard badge,
+ * the analytics header and the Momentum timeline.
  *
- * The analytics header used to read "Week 31", which is the ISO CALENDAR week.
- * It is a true number about the year and a useless one about training: nothing
- * in the app is on its 31st week, and picking a new plan in Settings left it
- * unchanged. This counts from the first day of the week the plan started
- * (`user_goals.phase_started_on`), so choosing a plan puts you in Week 1 the
- * moment it is saved.
+ * There used to be a second, independent `planWeekNumber` that counted 1-based
+ * from `user_goals.phase_started_on` (falling back to HELIX_CUT_START). It
+ * disagreed with Momentum by exactly one and always would have, for a reason no
+ * fallback could fix: **the block opened mid-week.** Training began Wed
+ * 2026-07-15, so the first week is a half week — Momentum calls it Week 0 and
+ * counts full weeks after it, while a 1-based count from the same Sunday calls
+ * that half week "Week 1" and every week since is off by one. On 2026-08-03 the
+ * dashboard read Wk 4 against Momentum's Week 3.
  *
- * A NULL START FALLS BACK TO THE PROGRAM ERA, not to 1. `phase_started_on` is
- * only stamped when a plan is picked in Settings; an account that has simply
- * been training since the block opened has never written it, and the old
- * `return 1` made the badge read "Wk 1" forever — indistinguishable from a real
- * first week and the reason the dashboard looked hardcoded. HELIX_CUT_START is
- * when this block actually began, which is the honest answer to "which week am
- * I in" when nothing more specific was recorded.
+ * Two counters for one concept is one counter too many, so the plan-relative one
+ * is gone. `phase_started_on` is deliberately NOT consulted: a number that
+ * silently rebases when a plan is picked in Settings cannot also be the number
+ * the timeline is labelled with, and the timeline is the one the athlete reads.
  *
- * BOUNDARIES ARE THE USER'S. Both dates are collapsed to their week start via
- * `weekStartOf`, which reads the configured first day of the week (Settings →
- * "Week starts on", mirrored from `user_goals.week_end_day`). The number is
- * therefore a pure function of two calendar dates: it changes at 00:00 on the
+ * BOUNDARIES ARE THE USER'S. `weekStartOf` reads the configured first day of the
+ * week (Settings → "Week starts on", mirrored from `user_goals.week_end_day`),
+ * so the result is a pure function of the calendar: it changes at 00:00 on the
  * chosen first day and at no other instant. Callers pass the CURRENT logical
- * date; `useLogicalDate` re-renders them exactly at local midnight.
- *
- * Clamped at 1: a plan whose start date is in the future reads as Week 1 rather
- * than Week 0 or a negative.
+ * date and `useLogicalDate` re-renders them exactly at local midnight.
  */
-export function planWeekNumber(planStartISO: string | null | undefined, todayISO: string): number {
-  const a = Date.parse(`${weekStartOf(planStartISO || HELIX_CUT_START)}T00:00:00Z`)
-  const b = Date.parse(`${weekStartOf(todayISO)}T00:00:00Z`)
-  if (!Number.isFinite(a) || !Number.isFinite(b)) return 1
-  return Math.max(1, Math.round((b - a) / (7 * 86_400_000)) + 1)
+export function programWeekNumber(todayISO: string): number {
+  return weekNumberForDate(todayISO)
 }
