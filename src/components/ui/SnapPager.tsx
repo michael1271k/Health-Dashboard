@@ -1,6 +1,12 @@
 'use client'
 
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useImperativeHandle, useRef, useState } from 'react'
+
+/** Imperative handle — lets a summary row elsewhere on the page jump the pager. */
+export interface SnapPagerHandle {
+  /** Scroll to the page with this `key`. Unknown keys are ignored. */
+  goTo: (key: string) => void
+}
 
 /**
  * A swipeable pager built on CSS scroll-snap — no library, no JS animation.
@@ -20,9 +26,10 @@ import { useCallback, useRef, useState } from 'react'
  * the active index is read back from the scroll offset. Nothing to keep in sync,
  * and a native swipe and a rail tap cannot disagree.
  */
-export function SnapPager({ pages, className = '' }: {
+export function SnapPager({ pages, className = '', ref }: {
   pages: Array<{ key: string; label: string; content: React.ReactNode }>
   className?: string
+  ref?: React.Ref<SnapPagerHandle>
 }) {
   const scroller = useRef<HTMLDivElement>(null)
   const [active, setActive] = useState(0)
@@ -34,11 +41,20 @@ export function SnapPager({ pages, className = '' }: {
     setActive(Math.min(pages.length - 1, Math.max(0, i)))
   }, [pages.length])
 
-  const go = (i: number) => {
+  const go = useCallback((i: number) => {
     const el = scroller.current
     if (!el) return
     el.scrollTo({ left: i * el.clientWidth, behavior: 'smooth' })
-  }
+  }, [])
+
+  // Same path as a rail tap, so an external jump and a swipe cannot disagree
+  // about the active page — scroll position stays the single source of truth.
+  useImperativeHandle(ref, () => ({
+    goTo: (key: string) => {
+      const i = pages.findIndex((p) => p.key === key)
+      if (i >= 0) go(i)
+    },
+  }), [pages, go])
 
   return (
     <div className={className}>

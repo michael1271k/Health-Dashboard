@@ -45,21 +45,34 @@ export function Zone({ label, accent, children, className = '' }: {
  * One block inside a zone. `divide` draws the hairline above it — the first row
  * in a zone should omit it so the label doesn't sit on a line.
  */
-export function ZoneRow({ children, divide = true, className = '', onClick, title }: {
+export function ZoneRow({ children, divide = true, className = '', onClick, title, asButton = false }: {
   children: React.ReactNode
   divide?: boolean
   className?: string
   /** Rows can be interactive — the Fuel row keeps its double-tap-to-edit. */
   onClick?: () => void
   title?: string
+  /**
+   * Render a real `<button>` rather than a clickable div.
+   *
+   * Set this whenever the row NAVIGATES (the water row jumps the pager to
+   * Hydration): a div with an onClick is invisible to the keyboard and to a
+   * screen reader. The Fuel row deliberately stays a div — its handler is a
+   * double-tap gesture, not a single activation, so button semantics would
+   * promise something it doesn't do.
+   */
+  asButton?: boolean
 }) {
+  const style = divide ? { borderTop: '1px solid rgba(255,255,255,0.06)' } : undefined
+  if (asButton) {
+    return (
+      <button type="button" className={`px-3 py-2 ${className}`} style={style} onClick={onClick} title={title}>
+        {children}
+      </button>
+    )
+  }
   return (
-    <div
-      className={`px-3 py-2 ${className}`}
-      style={divide ? { borderTop: '1px solid rgba(255,255,255,0.06)' } : undefined}
-      onClick={onClick}
-      title={title}
-    >
+    <div className={`px-3 py-2 ${className}`} style={style} onClick={onClick} title={title}>
       {children}
     </div>
   )

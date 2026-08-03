@@ -3,16 +3,16 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
-import { ArrowLeft, Dumbbell, Moon, Flame, Scale, Plus, ChevronRight, ChevronLeft } from 'lucide-react'
+import { ArrowLeft, Dumbbell, Moon, Flame, ChevronRight, ChevronLeft } from 'lucide-react'
 import { CompletenessArc } from '@/components/day/CompletenessArc'
-import { InBodyCard } from '@/components/day/InBodyCard'
-import { BodyMap } from '@/components/day/BodyMap'
+import { BodyPanel } from '@/components/day/BodyPanel'
 import { SleepDebtGauge } from '@/components/day/SleepDebtGauge'
 import { SwapDayControl } from '@/components/day/SwapDayControl'
 import { DomsTracker } from '@/components/day/RecoveryTrackers'
 import { CardioLogger } from '@/components/day/CardioLogger'
 import { WaterHelix } from '@/components/day/WaterHelix'
 import { useDayVault, dayCompleteness, type DayVaultData } from '@/lib/hooks/useDayVault'
+import type { SnapPagerHandle } from '@/components/ui/SnapPager'
 import { useUserGoals, useDaySleep } from '@/lib/hooks/useDashboard'
 import { SleepStages } from '@/components/dashboard/SleepStages'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
@@ -96,13 +96,6 @@ function sessionLabel(dayKey: string | null | undefined, split: string): string 
   return (dayKey && program.days.find((d) => d.key === dayKey)?.label) ?? (split[0]?.toUpperCase() + split.slice(1))
 }
 
-function hasScaleMetrics(log: DayVaultData['log']): boolean {
-  if (!log) return false
-  return [log.weight_kg, log.body_fat_pct, log.muscle_percent, log.water_percent,
-    log.muscle_mass_kg, log.fat_free_mass_kg, log.bone_mineral, log.visceral_fat,
-    log.bmr, log.bmi].some((v) => v != null)
-}
-
 /**
  * Unified per-session block: header + Hevy-style metadata. Tapping anywhere on
  * the block navigates straight to the full session deep-dive — no intermediate
@@ -153,21 +146,25 @@ export default function DailyNexusPage() {
   const { data, isLoading } = useDayVault(date)
   const { data: goals } = useUserGoals()
   const { data: daySleep } = useDaySleep(date)
-  const [scaleOpen, setScaleOpen] = useState(false)
   const [fuelEdit, setFuelEdit] = useState(false)
   const tapFuel = useDoubleTap(() => setFuelEdit(true))
+  const pager = useRef<SnapPagerHandle>(null)
 
-  // Deep-link from the dashboard Body card (double-tap → …?section=inbody):
-  // open the InBody entry and scroll it into view for that specific day.
+  // Deep-link from the dashboard Body card (double-tap → …?section=inbody).
+  // The InBody entry now lives INSIDE the pager's Body page, so the link swipes
+  // the pager there, scrolls it into view, and BodyPanel opens the editor.
   const searchParams = useSearchParams()
   const focusInbody = searchParams.get('section') === 'inbody'
-  const inbodyRef = useRef<HTMLDivElement>(null)
+  const [inbodyHandled, setInbodyHandled] = useState(false)
+  const pagerRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    if (!focusInbody) return
-    setScaleOpen(true)
-    const t = setTimeout(() => inbodyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 120)
+    if (!focusInbody || inbodyHandled) return
+    const t = setTimeout(() => {
+      pager.current?.goTo('body')
+      pagerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 120)
     return () => clearTimeout(t)
-  }, [focusInbody])
+  }, [focusInbody, inbodyHandled])
 
   if (!date) return <p className="text-muted p-6">Invalid date.</p>
 
@@ -183,7 +180,6 @@ export default function DailyNexusPage() {
   const n = data?.nutrition
   const score = data?.score?.score ?? null
   const battery = data?.score?.battery_pct ?? null
-  const hasScale = hasScaleMetrics(log ?? null)
 
   const pretty = new Date(date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
 
@@ -277,8 +273,18 @@ export default function DailyNexusPage() {
             ) : <span className="text-[11px] text-muted ml-auto">Double-tap to add</span>}
           </div>
         </ZoneRow>
-        {/* Water as a one-line readout; the double-helix visual is in the pager. */}
-        <ZoneRow className="flex items-center gap-2">
+        {/* Water — the at-a-glance readout AND the way to the full helix.
+            This bar and WaterHelix print the identical number and neither takes
+            input (hydration arrives from HealthKit dietary water), so one of
+            them was pure duplication. Making the bar navigate turns the
+            duplication into a route: the glance stays here, the visual stays in
+            the pager, and there is exactly one place to go for more. */}
+        <ZoneRow
+          asButton
+          className="flex items-center gap-2 w-full text-left min-h-[36px] active:opacity-70 transition-opacity"
+          onClick={() => pager.current?.goTo('water')}
+          title="Open the hydration helix"
+        >
           <span className="text-[10px] text-muted shrink-0">Water</span>
           <span className="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
             <span className="block h-full rounded-full"
@@ -290,6 +296,7 @@ export default function DailyNexusPage() {
           <span className="helix-num text-[11px] font-bold shrink-0" style={{ color: ICE }}>
             {((log?.water_ml ?? 0) / 1000).toFixed(1)} / {((goals?.water_goal_ml ?? 3000) / 1000).toFixed(1)} L
           </span>
+          <ChevronRight className="w-3.5 h-3.5 shrink-0 text-muted" aria-hidden="true" />
         </ZoneRow>
       </Zone>
 
@@ -321,52 +328,43 @@ export default function DailyNexusPage() {
           is 780px of a ~2,000px page, and each is something you look at on
           purpose rather than scan past. Sharing one slot gives every one of them
           MORE room than it had at a third of the cost. */}
-      <SnapPager pages={[
-        {
-          key: 'sleep',
-          label: 'Sleep',
-          content: (
-            <section className="helix-card space-y-3" style={{ borderColor: `${VIOLET}26` }}>
-              <h3 className="font-heading font-semibold text-fluid-sm text-text flex items-center gap-1.5">
-                <Moon className="w-3.5 h-3.5" style={{ color: VIOLET }} /> Sleep &amp; Recovery
-              </h3>
-              <SleepStages sleep={daySleep ?? null} log={log ?? null} goalHours={goals?.sleep_goal_hours ?? null} />
-              <SleepDebtGauge compact />
-            </section>
-          ),
-        },
-        {
-          key: 'water',
-          label: 'Hydration',
-          content: <WaterHelix ml={log?.water_ml ?? null} goalMl={goals?.water_goal_ml ?? 3000} />,
-        },
-        {
-          key: 'body',
-          label: 'Body',
-          content: <BodyMap log={log ?? null} />,
-        },
-      ]} />
-
-      {/* InBody & Scale — only when a measurement exists (or the user opts to add). */}
-      <div ref={inbodyRef}>
-        {hasScale ? (
-          <InBodyCard date={date} log={log ?? null} defaultOpen={focusInbody || undefined} />
-        ) : scaleOpen ? (
-          <InBodyCard date={date} log={log ?? null} defaultOpen />
-        ) : (
-          <button onClick={() => setScaleOpen(true)}
-            className="w-full glass-card px-4 py-3 flex items-center gap-3 text-left text-muted hover:text-text transition-colors">
-            <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: `${TEAL}1a`, color: TEAL }}>
-              <Scale className="w-4 h-4" aria-hidden="true" />
-            </span>
-            <span className="flex-1 text-sm font-medium">Add scale metrics (InBody)</span>
-            <Plus className="w-4 h-4 shrink-0" aria-hidden="true" />
-          </button>
-        )}
+      <div ref={pagerRef}>
+        <SnapPager ref={pager} pages={[
+          {
+            key: 'sleep',
+            label: 'Sleep',
+            content: (
+              <section className="helix-card space-y-3" style={{ borderColor: `${VIOLET}26` }}>
+                <h3 className="font-heading font-semibold text-fluid-sm text-text flex items-center gap-1.5">
+                  <Moon className="w-3.5 h-3.5" style={{ color: VIOLET }} /> Sleep &amp; Recovery
+                </h3>
+                <SleepStages sleep={daySleep ?? null} log={log ?? null} goalHours={goals?.sleep_goal_hours ?? null} />
+                <SleepDebtGauge compact />
+              </section>
+            ),
+          },
+          {
+            key: 'water',
+            label: 'Hydration',
+            content: <WaterHelix ml={log?.water_ml ?? null} goalMl={goals?.water_goal_ml ?? 3000} />,
+          },
+          {
+            // Silhouette + headline numbers + the entry form, one domain. The
+            // standalone InBody card below the pager is gone — it was the same
+            // subject ~400px from the page that visualises it.
+            key: 'body',
+            label: 'Body',
+            content: (
+              <BodyPanel
+                date={date}
+                log={log ?? null}
+                openEditor={focusInbody && !inbodyHandled}
+                onEditorClosed={() => setInbodyHandled(true)}
+              />
+            ),
+          },
+        ]} />
       </div>
-
-      {/* BodyMap moved into the pager above — it was a 280px card that only ever
-          renders on a weigh-in day. */}
 
       {/* Recovery inputs — soreness 24–72h post-session (compact 2-column) */}
       <DomsTracker date={date} />
