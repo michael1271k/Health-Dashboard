@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Scale, Plus, Pencil } from 'lucide-react'
 import { BodyMap } from '@/components/day/BodyMap'
-import { InBodyForm, InBodyHeadline, hasScaleMetrics } from '@/components/day/InBodyCard'
+import { InBodyForm, InBodyHeadline, hasScaleMetrics } from '@/components/day/InBody'
 import { Sheet } from '@/components/ui/Sheet'
 import type { DayVaultData } from '@/lib/hooks/useDayVault'
 
@@ -16,9 +16,9 @@ const TEAL = '#E0703C'
  * WHAT THIS REPLACES
  * The pager's Body page rendered `BodyMap`, which early-returns a one-sentence
  * stub on any day without a weigh-in — so a named tab led to a dead end most
- * days. The form that would fill it (`InBodyCard`) sat ~400px further down the
- * page, below all three tabs, so the fix for the empty page was somewhere you
- * had to scroll past the empty page to find.
+ * days. The form that would fill it (the old `InBodyCard`) sat ~400px further
+ * down the page, below all three tabs, so the fix for the empty page was
+ * somewhere you had to scroll past the empty page to find.
  *
  * Now the page is self-sufficient: no reading → it IS the entry prompt; a
  * reading → the silhouette, the four headline numbers, and an Edit row. Either

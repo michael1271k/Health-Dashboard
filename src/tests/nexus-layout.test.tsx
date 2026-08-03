@@ -3,7 +3,7 @@ import { render, screen, act } from '@testing-library/react'
 import { createRef } from 'react'
 import { Zone, ZoneRow, StatStrip } from '@/components/ui/Zone'
 import { SnapPager, type SnapPagerHandle } from '@/components/ui/SnapPager'
-import { hasScaleMetrics } from '@/components/day/InBodyCard'
+import { hasScaleMetrics } from '@/components/day/InBody'
 
 /**
  * The compaction's binding constraint was "DO NOT remove any data". Height is
