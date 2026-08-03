@@ -58,9 +58,11 @@ export const SEED_CUTOFF = '2026-07-31'
  *
  * Cause 1 is gone: against the repaired baseline, derived detection now finds
  * BOTH Incline DB Press records on its own, exactly the two axes seeded below.
- * Cause 2 is by design and permanent, so the assertion stays — derived detection
- * against the corrected history reports 10, not 3, the extra 7 all coming from
- * one improved set carrying reps + e1rm + volume together.
+ * Cause 2 has shrunk but not vanished. The 2026-08-03 axis rules — `reps` only
+ * on unweighted work, `volume` a single-set record rather than a session total
+ * — cut derived detection on this session from 10 axes to 5 against the asserted
+ * 3, so the assertion stays. It is now a small correction rather than a rewrite,
+ * and a future session should not need one.
  */
 export const ASSERTED_DATES: readonly string[] = ['2026-08-02']
 
@@ -83,9 +85,13 @@ export interface SeededPr {
  * 23 records across 12 sessions. Every entry was checked against the live
  * `workout_sets` rows: each exists at the stated set number, load and reps.
  *
- * `volume` is a session-level axis — its ledger VALUE is the exercise's total
- * for that day, not the flagged set's own tonnage. `reps` on a timed hold is
- * seconds and displays as "Duration".
+ * `volume` was a session-level axis when this list was curated, so its entries
+ * name the set that COMPLETED the exercise's best session total. Since
+ * 2026-08-03 the axis is per-set (best single-set tonnage), which changes the
+ * ledger VALUE a replay writes for these rows — the set, and therefore the
+ * trophy, is unchanged. The list is asserted, so the axes themselves stand
+ * whatever the derivation rules say. `reps` on a timed hold is seconds and
+ * displays as "Duration".
  */
 export const SEEDED_PRS: readonly SeededPr[] = [
   // ── Jul 16 · Upper B ──

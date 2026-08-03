@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   buildBaselines, baselineIndex, detectSetPrs, detectSessionPrs, isPrIneligible,
-  prAxisLabel, recordSets, e1rmEligible,
+  prAxisLabel, recordSets, e1rmEligible, repsAxisEligible,
   EMPTY_BASELINES, type BaselineSetRow, type PrCandidateSet,
 } from '@/lib/training/prEngine'
 
@@ -20,17 +20,17 @@ const set = (key: string, weightKg: number, reps: number, extra: Partial<PrCandi
  */
 const HISTORY: BaselineSetRow[] = [
   // 2026-07-17
-  { key: HIP, weightKg: 25, reps: 14, sessionId: 's1' },
-  { key: HIP, weightKg: 25, reps: 13, sessionId: 's1' },
-  { key: HIP, weightKg: 25, reps: 12, sessionId: 's1' },
-  { key: PLANK, weightKg: 0, reps: 55, sessionId: 's1' },
-  { key: PLANK, weightKg: 0, reps: 52, sessionId: 's1' },
+  { key: HIP, weightKg: 25, reps: 14 },
+  { key: HIP, weightKg: 25, reps: 13 },
+  { key: HIP, weightKg: 25, reps: 12 },
+  { key: PLANK, weightKg: 0, reps: 55 },
+  { key: PLANK, weightKg: 0, reps: 52 },
   // 2026-07-24
-  { key: HIP, weightKg: 25, reps: 13, sessionId: 's2' },
-  { key: HIP, weightKg: 27.5, reps: 12, sessionId: 's2' },
-  { key: HIP, weightKg: 27.5, reps: 12, sessionId: 's2' },
-  { key: PLANK, weightKg: 0, reps: 57, sessionId: 's2' },
-  { key: PLANK, weightKg: 0, reps: 54, sessionId: 's2' },
+  { key: HIP, weightKg: 25, reps: 13 },
+  { key: HIP, weightKg: 27.5, reps: 12 },
+  { key: HIP, weightKg: 27.5, reps: 12 },
+  { key: PLANK, weightKg: 0, reps: 57 },
+  { key: PLANK, weightKg: 0, reps: 54 },
 ]
 
 describe('buildBaselines', () => {
@@ -50,9 +50,27 @@ describe('buildBaselines', () => {
     expect(idx.bestE1rm.has(PLANK)).toBe(false)
   })
 
-  it('rolls per-session volume, keeping the best single session', () => {
-    // s1 = 25×(14+13+12) = 975 ; s2 = 25×13 + 27.5×12 + 27.5×12 = 985
-    expect(idx.bestSessionVolume.get(HIP)).toBe(985)
+  it('keeps the heaviest SINGLE SET as the volume bar', () => {
+    // 25×14 = 350 is the biggest one set ever done; 27.5×12 = 330 is not.
+    expect(idx.bestSetVolume.get(HIP)).toBe(350)
+  })
+
+  /**
+   * REGRESSION. The baseline used to sum every row, warm-ups included, while
+   * the candidate session summed only eligible ones — so Leg Press's bar stood
+   * at a number no working session could reach and its real record vanished
+   * silently. A suppressed PR leaves no trace anywhere, which is why this is
+   * pinned rather than left to the volume test above.
+   */
+  it('lets no warm-up or drop set raise ANY bar', () => {
+    const i = baselineIndex(buildBaselines([
+      { key: HIP, weightKg: 25, reps: 12 },
+      { key: HIP, weightKg: 60, reps: 30, setType: 'warmup' },
+      { key: HIP, weightKg: 55, reps: 30, setType: 'dropset' },
+    ], isTimed))
+    expect(i.bestWeight.get(HIP)).toBe(25)
+    expect(i.bestSetVolume.get(HIP)).toBe(300)
+    expect(i.bestE1rm.get(HIP)).toBeCloseTo(35, 1)
   })
 
   it('is JSON-safe — tuples survive the persisted-cache round-trip', () => {
@@ -80,26 +98,25 @@ describe('the July 31 session — the records that went missing', () => {
   const r = detectSessionPrs(july31, baselines)
 
   it('flags Hip Thrust set 2 on every axis it beat', () => {
-    // 13 > 12 at 27.5 kg, and Epley then reads 39.4 > 38.5 — which it cannot
-    // fail to do, since e1RM is weight × (1 + reps/30). Subsumption used to
-    // drop the e1RM for exactly that reason; it was removed on 2026-08-02
-    // because the user's own record book files both. See prEngine.
-    expect(r.perSet[1].axes.sort()).toEqual(['e1rm', 'reps'])
+    // 27.5 × 13 = 357.5 kg is the heaviest single set ever done here (350), and
+    // Epley then reads 39.4 > 38.5. `reps` is NOT among them: 13 > 12 at 27.5 kg
+    // is rep progression on a loaded lift, which stopped being an axis on
+    // 2026-08-03. See `repsAxisEligible`.
+    expect(r.perSet[1].axes.sort()).toEqual(['e1rm', 'volume'])
   })
 
-  it('gives set 3 only the session-volume badge — it tied set 2 on every set axis', () => {
-    // The volume axis is session-level, so it lands on the exercise's LAST
-    // eligible set purely to have somewhere a trophy can render.
-    expect(r.perSet[2].axes).toEqual(['volume'])
+  it('gives set 3 nothing — it tied set 2 on every axis', () => {
+    // The engine absorbs as it goes, so the second 27.5 × 13 is judged against
+    // the first and matches it. A tie is not a record.
+    expect(r.perSet[2].axes).toEqual([])
   })
 
   it('does not flag the 25 kg opener — 14 reps only matched the old best', () => {
     expect(r.perSet[0].axes).toEqual([])
   })
 
-  it('counts the session volume too — 1065 beats the prior best of 985', () => {
-    expect(r.volumeByKey.get(HIP)).toBe(1065)
-    expect([...(r.axesByKey.get(HIP) ?? [])].sort()).toEqual(['e1rm', 'reps', 'volume'])
+  it('attributes both hip-thrust axes to one exercise', () => {
+    expect([...(r.axesByKey.get(HIP) ?? [])].sort()).toEqual(['e1rm', 'volume'])
   })
 
   it('flags the 58 s Side Plank as a duration record, and not the 55 s set', () => {
@@ -108,16 +125,60 @@ describe('the July 31 session — the records that went missing', () => {
     expect(prAxisLabel('reps', true)).toBe('Duration')
   })
 
-  it('reports pr_count = 4 — reps + e1rm + volume on the hip thrust, duration on the plank', () => {
+  it('reports pr_count = 3 — volume + e1rm on the hip thrust, duration on the plank', () => {
     // This fixture is date-less, so it runs through live detection. The REAL
-    // 2026-07-31 session is inside the seeded era and is governed by prSeed
-    // instead, where it reads 3.
-    expect(r.prCount).toBe(4)
+    // 2026-07-31 session is inside the seeded era and is governed by prSeed.
+    expect(r.prCount).toBe(3)
   })
 
   it('nulls est-1RM for a hold so no report prints "e1RM 0kg" on a plank', () => {
     expect(r.perSet[3].est1rm).toBeNull()
     expect(r.perSet[1].est1rm).toBeCloseTo(39.4, 1)
+  })
+})
+
+/**
+ * The REPS axis is for unweighted work only (2026-08-03).
+ *
+ * On a loaded lift the load is the achievement and reps are the dial between
+ * load jumps; the axis also triple-filed, since one extra rep at the same load
+ * drags e1RM and tonnage along with it.
+ */
+describe('the reps axis applies to bodyweight work only', () => {
+  const CRUNCH = 'Reverse Crunch'
+
+  it('is decided purely by the absence of load', () => {
+    expect(repsAxisEligible(0)).toBe(true)
+    expect(repsAxisEligible(2.5)).toBe(false)
+  })
+
+  it('awards reps on a bodyweight set that beats its count', () => {
+    const baselines = buildBaselines(
+      [{ key: CRUNCH, weightKg: 0, reps: 15 }, { key: CRUNCH, weightKg: 0, reps: 15 }], () => false,
+    )
+    const res = detectSessionPrs([
+      set(CRUNCH, 0, 17), set(CRUNCH, 0, 16), set(CRUNCH, 0, 15),
+    ], baselines)
+    expect(res.perSet[0].axes).toEqual(['reps'])
+    // 16 beats the history but not the 17 logged moments earlier.
+    expect(res.perSet[1].axes).toEqual([])
+    expect(res.prCount).toBe(1)
+  })
+
+  it('withholds it from a loaded lift that added a rep at the same load', () => {
+    // Hack Squat 2026-08-03: 55 × 12 after 55 × 11. It still wins the axes that
+    // mean something — tonnage and e1RM — but "12 reps at 55 kg" is not a
+    // fourth trophy.
+    const HACK = 'Hack Squat'
+    const win = { repFloor: 10, repCeiling: 12 }
+    const baselines = buildBaselines([
+      { key: HACK, weightKg: 55, reps: 11, ...win },
+      { key: HACK, weightKg: 50, reps: 12, ...win },
+    ], () => false)
+    const res = detectSessionPrs([
+      { key: HACK, weightKg: 55, reps: 12, timed: false, setType: null, ...win },
+    ], baselines)
+    expect(res.perSet[0].axes.sort()).toEqual(['e1rm', 'volume'])
   })
 })
 
@@ -145,11 +206,12 @@ describe('eligibility rules', () => {
     expect(r.prCount).toBe(0)
   })
 
-  it('keeps ineligible sets out of the volume operand too', () => {
-    // 30 padding warm-up sets must not manufacture a volume record.
+  it('cannot manufacture a volume record by padding a session', () => {
+    // 30 padding warm-up sets. Under the old session-total axis this was the
+    // failure mode worth guarding; under a per-set axis it cannot arise at all,
+    // and the guard stays pinned either way.
     const pad = Array.from({ length: 30 }, () => set(HIP, 25, 12, { setType: 'warmup' }))
     const r = detectSessionPrs(pad, baselines)
-    expect(r.volumeByKey.get(HIP)).toBeUndefined()
     expect(r.axesByKey.has(HIP)).toBe(false)
   })
 
@@ -188,19 +250,11 @@ describe('recordSets — the ledger attributes each axis to the set that won it'
   const r = detectSessionPrs(july31, baselines)
   const rec = recordSets(july31, r)
 
-  // Regression: the ledger used to store the session MAXIMUM per field, so the
-  // reps record read "14 @ 25kg" — a number already hit on 07-17, and not the
-  // set that earned the axis (13 @ 27.5kg beat the 12 previously done there).
-  it('credits the reps axis to 27.5kg × 13, not the higher-rep 25kg × 14 set', () => {
-    expect(rec.get(HIP)!.get('reps')).toEqual({ weightKg: 27.5, reps: 13, value: 13 })
-  })
-
-  it('files the e1rm against the set that won it, and volume as a session total', () => {
-    // Raw counting keeps both. The e1rm must still be credited to 27.5 x 13
-    // rather than to the higher-rep opener, and volume carries no load of its
-    // own because no single set earned it.
+  // Regression: the ledger used to store the session MAXIMUM per field, so a
+  // record could be filed against a set that never earned it.
+  it('files both axes against 27.5 kg × 13, the set that won them', () => {
     expect(rec.get(HIP)!.get('e1rm')).toMatchObject({ weightKg: 27.5, reps: 13 })
-    expect(rec.get(HIP)!.get('volume')).toMatchObject({ weightKg: 0, reps: 0 })
+    expect(rec.get(HIP)!.get('volume')).toEqual({ weightKg: 27.5, reps: 13, value: 357.5 })
   })
 
   it('records a hold on seconds', () => {
@@ -209,6 +263,7 @@ describe('recordSets — the ledger attributes each axis to the set that won it'
 
   it('omits axes that were never won', () => {
     expect(rec.get(HIP)!.has('weight')).toBe(false)
+    expect(rec.get(HIP)!.has('reps')).toBe(false)
   })
 })
 
@@ -224,14 +279,17 @@ describe('e1rm rep-window gate', () => {
   // programmed stimulus. Epley scores it 76.0.
   // 2026-07-27: 55kg × 11 is IN the window and far harder work, at 75.2.
   const history: BaselineSetRow[] = [
-    { key: HACK, weightKg: 60, reps: 8, sessionId: 'jul20', ...win },
-    { key: HACK, weightKg: 40, reps: 14, sessionId: 'jul20', ...win },
+    { key: HACK, weightKg: 60, reps: 8, ...win },
+    { key: HACK, weightKg: 40, reps: 14, ...win },
   ]
 
   it('a sub-floor set does not raise the e1RM bar', () => {
     const idx = baselineIndex(buildBaselines(history, () => false))
     // 40×14 = 58.7 sets the bar; the 76.0 from 60×8 is excluded.
     expect(idx.bestE1rm.get(HACK)).toBeCloseTo(58.7, 1)
+    // It still counts for weight and tonnage, where it is not extrapolated.
+    expect(idx.bestWeight.get(HACK)).toBe(60)
+    expect(idx.bestSetVolume.get(HACK)).toBe(560)
   })
 
   it('lets the in-window working set win the axis it deserves', () => {
@@ -240,24 +298,19 @@ describe('e1rm rep-window gate', () => {
       { key: HACK, weightKg: 50, reps: 12, timed: false, setType: null, ...win },
       { key: HACK, weightKg: 55, reps: 11, timed: false, setType: null, ...win },
     ], baselines)
-    // 55 kg is under the 60 kg top load and 11 reps at 55 kg is a first, so
-    // neither weight nor reps fires; e1RM does, alongside the session volume.
-    expect(res.perSet[1].axes).toEqual(['e1rm', 'volume'])
-    // Session volume 1205 also beats Jul 20's 1040 and is counted in its own
-    // right under raw-axis counting.
-    expect(res.volumeByKey.get(HACK)).toBe(1205)
-    expect(res.axesByKey.get(HACK)?.has('volume')).toBe(true)
+    // 55 kg is under the 60 kg top load so `weight` never fires; e1RM does, and
+    // each set out-tonnages the one before it (560 → 600 → 605).
+    expect(res.perSet[0].axes).toEqual(['volume', 'e1rm'])
+    expect(res.perSet[1].axes).toEqual(['volume', 'e1rm'])
+    expect([...(res.axesByKey.get(HACK) ?? [])].sort()).toEqual(['e1rm', 'volume'])
+    expect(res.prCount).toBe(2)
   })
 
   it('does NOT gate above the ceiling — beating it is the point', () => {
     // Leg Press Horizontal, window 8–12, logged at 13 reps: a real record.
     const LP = 'Leg Press Horizontal (Machine)'
     const w = { repFloor: 8, repCeiling: 12 }
-    const baselines = buildBaselines(
-      [{ key: LP, weightKg: 72.5, reps: 12, sessionId: 'prev', ...w }], () => false,
-    )
-    // Asserted on the raw detector: the axis IS won. Whether it survives into
-    // the headline is `subsumeSetAxes`' business, tested separately.
+    const baselines = buildBaselines([{ key: LP, weightKg: 72.5, reps: 12, ...w }], () => false)
     const idx = baselineIndex(baselines)
     expect(detectSetPrs({ key: LP, weightKg: 72.5, reps: 13, timed: false, setType: null, ...w }, idx))
       .toContain('e1rm')
@@ -270,35 +323,65 @@ describe('e1rm rep-window gate', () => {
   })
 })
 
-describe('volume PRs are visible', () => {
+/**
+ * VOLUME IS PER-SET (2026-08-03). It was the exercise's session total, pinned
+ * to whichever set happened to be last — so on 2026-08-03 Hack Squat's badge
+ * sat on 55 kg × 11 while 55 kg × 12 stood beside it unmarked, and Leg
+ * Extension's sat on the 12-rep set below its own two 13s.
+ */
+describe('the volume axis lands on the set that lifted it', () => {
   const EX = 'Leg Extension'
-  const baselines = buildBaselines(
-    [{ key: EX, weightKg: 30, reps: 10, sessionId: 'prev' }], () => false,
-  )
+  // 60 kg × 5 = 300 kg in one set, with an e1RM (70.0) high enough that nothing
+  // below can win that axis — so `volume` is observed in isolation.
+  const baselines = buildBaselines([{ key: EX, weightKg: 60, reps: 5 }], () => false)
+  const sets: PrCandidateSet[] = [
+    { key: EX, weightKg: 30, reps: 12, timed: false, setType: null },   // 360
+    { key: EX, weightKg: 30, reps: 11, timed: false, setType: null },   // 330
+  ]
+  const res = detectSessionPrs(sets, baselines)
 
-  // 30×12 + 30×12 = 720 beats the 300 baseline, but no individual set beats
-  // any per-set axis (same load, and 12 > 10 so reps@30 IS a PR — use a load
-  // never seen before at lower reps to isolate volume).
-  const res = detectSessionPrs([
-    { key: EX, weightKg: 30, reps: 5, timed: false, setType: null },
-    { key: EX, weightKg: 30, reps: 5, timed: false, setType: null },
-    { key: EX, weightKg: 30, reps: 5, timed: false, setType: null },
-  ], baselines)
-
-  it('flags a set so the trophy has somewhere to live', () => {
-    expect(res.axesByKey.get(EX)?.has('volume')).toBe(true)
-    // The LAST eligible set completed the total, so it carries the axis.
-    expect(res.perSet[2].axes).toContain('volume')
-    expect(res.perSet[0].axes).not.toContain('volume')
+  it('flags the HEAVIEST set, not the last one', () => {
+    expect(res.perSet[0].axes).toEqual(['volume'])
+    expect(res.perSet[1].axes).toEqual([])
   })
 
-  it('records the SESSION TOTAL as the volume value, not the set e1RM', () => {
-    const rec = recordSets([
-      { key: EX, weightKg: 30, reps: 5, timed: false, setType: null },
-      { key: EX, weightKg: 30, reps: 5, timed: false, setType: null },
-      { key: EX, weightKg: 30, reps: 5, timed: false, setType: null },
-    ], res).get(EX)?.get('volume')
-    expect(rec?.value).toBe(450)
+  it('files the winning set’s own tonnage as the value', () => {
+    expect(recordSets(sets, res).get(EX)?.get('volume')).toEqual({ weightKg: 30, reps: 12, value: 360 })
+  })
+
+  it('a third identical set is no longer a record on its own', () => {
+    // The old session-total axis turned "same work, one more set" into a PR,
+    // which is how a routine session produced five volume trophies.
+    const RDL = 'Romanian Deadlift (DB)'
+    const prior = buildBaselines([
+      { key: RDL, weightKg: 35, reps: 12 },
+      { key: RDL, weightKg: 35, reps: 12 },
+    ], () => false)
+    const three: PrCandidateSet[] = [1, 2, 3].map(() =>
+      ({ key: RDL, weightKg: 35, reps: 12, timed: false, setType: null }))
+    expect(detectSessionPrs(three, prior).prCount).toBe(0)
+  })
+
+  it('nor is one extra rep on one set of three', () => {
+    // Leg Extension 2026-08-03: 37.5 × 13, 13, 12 against 37.5 × 13, 12, 12.
+    // The session total rose 1387.5 → 1425 and used to award a PR; no single
+    // set beat the 525 kg (35 × 15) already on the board.
+    const prior = buildBaselines([
+      // Jul 20
+      { key: EX, weightKg: 37.5, reps: 12 },
+      { key: EX, weightKg: 35, reps: 15 },
+      { key: EX, weightKg: 37.5, reps: 11, setType: 'failure' },
+      // Jul 27
+      { key: EX, weightKg: 37.5, reps: 13 },
+      { key: EX, weightKg: 37.5, reps: 12, setType: 'failure' },
+      { key: EX, weightKg: 37.5, reps: 12 },
+    ], () => false)
+    const aug3: PrCandidateSet[] = [
+      { key: EX, weightKg: 37.5, reps: 13, timed: false, setType: null },
+      { key: EX, weightKg: 37.5, reps: 13, timed: false, setType: null },
+      { key: EX, weightKg: 37.5, reps: 12, timed: false, setType: 'failure' },
+    ]
+    expect(detectSessionPrs(aug3, prior).axesByKey.has(EX)).toBe(false)
   })
 })
 
@@ -319,9 +402,7 @@ describe('the seeded era is AUTHORITATIVE, not additive', () => {
     // The load beats the baseline outright — before the seed this was a weight
     // PR. Inside the seeded era, a set that is not on the list earns nothing:
     // the list is the record book, not a supplement to one.
-    const baselines = buildBaselines(
-      [{ key: HAMMER, weightKg: 16, reps: 10, sessionId: 'prev' }], () => false,
-    )
+    const baselines = buildBaselines([{ key: HAMMER, weightKg: 16, reps: 10 }], () => false)
     const res = detectSessionPrs([{
       key: HAMMER, weightKg: 22.5, reps: 12, timed: false, setType: null,
       date: '2026-07-21', exerciseName: HAMMER, setNumber: 3,
@@ -339,9 +420,7 @@ describe('the seeded era is AUTHORITATIVE, not additive', () => {
   })
 
   it('hands control back to live detection after the cutoff', () => {
-    const baselines = buildBaselines(
-      [{ key: HAMMER, weightKg: 16, reps: 10, sessionId: 'prev' }], () => false,
-    )
+    const baselines = buildBaselines([{ key: HAMMER, weightKg: 16, reps: 10 }], () => false)
     const res = detectSessionPrs([{
       key: HAMMER, weightKg: 22.5, reps: 12, timed: false, setType: null,
       date: '2026-08-04', exerciseName: HAMMER, setNumber: 1,
@@ -374,84 +453,61 @@ describe('recordSets when two sets win the same axis', () => {
     // legitimately win, and keeping the FIRST claimant filed a value that was
     // already beaten.
     const baselines = buildBaselines([
-      { key: HACK, weightKg: 70, reps: 4, sessionId: 'prev', ...win },
-      { key: HACK, weightKg: 45, reps: 10, sessionId: 'prev', ...win },
+      { key: HACK, weightKg: 70, reps: 4, ...win },
+      { key: HACK, weightKg: 45, reps: 10, ...win },
     ], () => false)
     const res = detectSessionPrs(sets, baselines)
-    expect(res.perSet[0].axes).toEqual(['e1rm'])
-    expect(res.perSet[1].axes).toEqual(['e1rm', 'volume'])
+    expect(res.perSet[0].axes).toEqual(['volume', 'e1rm'])
+    expect(res.perSet[1].axes).toEqual(['volume', 'e1rm'])
     expect(recordSets(sets, res).get(HACK)?.get('e1rm')?.value).toBeCloseTo(75.2, 1)
   })
 
-  it('files the heaviest load for the weight axis', () => {
-    const baselines = buildBaselines(
-      [{ key: HACK, weightKg: 40, reps: 14, sessionId: 'prev', ...win }], () => false,
-    )
+  it('files the heaviest load for the weight axis, and its tonnage with it', () => {
+    const baselines = buildBaselines([{ key: HACK, weightKg: 40, reps: 14, ...win }], () => false)
     const res = detectSessionPrs(sets, baselines)
-    expect(recordSets(sets, res).get(HACK)?.get('weight')?.value).toBe(55)
+    const rec = recordSets(sets, res).get(HACK)
+    expect(rec?.get('weight')?.value).toBe(55)
+    expect(rec?.get('volume')?.value).toBe(605)
   })
 })
 
 /**
  * RAW AXES (2026-08-02). Subsumption was removed, so every axis a set beats is
- * counted — including an e1RM that is arithmetically implied by the reps record
- * beside it. These pin the behaviour so it cannot drift back silently.
+ * counted — including an e1RM that is arithmetically implied by the tonnage
+ * record beside it. These pin the behaviour so it cannot drift back silently.
  */
 describe('raw axis counting — every axis beaten is counted', () => {
   const EX = 'Chest Press (Machine)'
 
-  /** A 3-set prior session, so its volume total is out of reach of one set. */
-  const priorSession = (weightKg: number, reps: number): BaselineSetRow[] =>
-    [1, 2, 3].map(() => ({ key: EX, weightKg, reps, sessionId: 'prev' }))
-
-  it('counts the implied e1rm alongside the reps record that produced it', () => {
-    // This is the pair subsumption used to collapse: 12 > 10 at 37.5 kg is the
-    // event, and Epley cannot fail to follow it. Both are counted now.
+  it('counts the implied e1rm alongside the tonnage record that produced it', () => {
+    // 12 > 10 at 37.5 kg drags both tonnage (450 > 375) and Epley with it.
+    // Neither is suppressed; `reps` is absent because the lift is loaded.
     const res = detectSessionPrs(
       [{ key: EX, weightKg: 37.5, reps: 12, timed: false, setType: null }],
-      buildBaselines(priorSession(37.5, 10), () => false),
+      buildBaselines([{ key: EX, weightKg: 37.5, reps: 10 }], () => false),
     )
-    expect(res.perSet[0].axes.sort()).toEqual(['e1rm', 'reps'])
+    expect(res.perSet[0].axes.sort()).toEqual(['e1rm', 'volume'])
   })
 
-  it('counts the implied e1rm alongside a heavier load', () => {
+  it('counts all three when a heavier load also out-tonnages the old best', () => {
     const res = detectSessionPrs(
       [{ key: EX, weightKg: 37.5, reps: 12, timed: false, setType: null }],
-      buildBaselines(priorSession(35, 12), () => false),
+      buildBaselines([{ key: EX, weightKg: 35, reps: 12 }], () => false),
     )
-    expect(res.perSet[0].axes.sort()).toEqual(['e1rm', 'weight'])
+    expect(res.perSet[0].axes.sort()).toEqual(['e1rm', 'volume', 'weight'])
   })
 
   it('still awards a lone e1rm for a better load/rep trade', () => {
-    // 55 × 12 = 77.0 beats the 76.0 of 60 × 8 while being lighter, and 55 kg
-    // has no rep baseline of its own — so e1RM fires with nothing beside it.
+    // 55 × 8 is heavier per rep than 45 × 10 — e1RM 69.7 beats 60.0 — but it is
+    // 440 kg against 450, so tonnage does not follow, and the 100 kg triple in
+    // the history keeps the weight axis out of reach.
     const baselines = buildBaselines([
-      { key: EX, weightKg: 60, reps: 8, sessionId: 'prev' },
-      { key: EX, weightKg: 60, reps: 8, sessionId: 'prev' },
-      { key: EX, weightKg: 60, reps: 8, sessionId: 'prev' },
+      { key: EX, weightKg: 100, reps: 3 },
+      { key: EX, weightKg: 45, reps: 10 },
     ], () => false)
     const res = detectSessionPrs(
-      [{ key: EX, weightKg: 55, reps: 12, timed: false, setType: null }], baselines,
+      [{ key: EX, weightKg: 55, reps: 8, timed: false, setType: null }], baselines,
     )
     expect(res.perSet[0].axes).toEqual(['e1rm'])
-  })
-
-  it('an added set with no set-level record still earns volume', () => {
-    // Romanian Deadlift, 2026-07-31: 35 kg × 12 three times. No set beat
-    // anything; the session total did, because there were more sets.
-    const RDL = 'Romanian Deadlift (DB)'
-    const baselines = buildBaselines([
-      { key: RDL, weightKg: 35, reps: 12, sessionId: 'prev' },
-      { key: RDL, weightKg: 35, reps: 12, sessionId: 'prev' },
-    ], () => false)
-    const sets: PrCandidateSet[] = [
-      { key: RDL, weightKg: 35, reps: 12, timed: false, setType: null },
-      { key: RDL, weightKg: 35, reps: 12, timed: false, setType: null },
-      { key: RDL, weightKg: 35, reps: 12, timed: false, setType: null },
-    ]
-    const res = detectSessionPrs(sets, baselines)
-    expect(res.volumeByKey.get(RDL)).toBe(1260)
-    expect([...(res.axesByKey.get(RDL) ?? [])]).toEqual(['volume'])
-    expect(res.prCount).toBe(1)
   })
 })

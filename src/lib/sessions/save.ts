@@ -78,10 +78,11 @@ export async function saveSession(
       .eq('user_id', userId)
       .gte('started_at', `${dateStr}T00:00:00Z`).lt('started_at', `${dayEnd}T00:00:00Z`),
     supabase.from('workout_sets')
-      // reps + weight + session carried: the 4-axis PR engine needs max weight,
-      // max reps@load, best est-1RM, and per-session volume. A TIMED hold's PR is
-      // the best SECONDS (its `reps`), not an est-1RM (0 at weight 0).
-      .select('exercise_id, est_1rm_kg, reps, weight_kg, session_id')
+      // reps + weight + set_type carried: the 4-axis PR engine needs max weight,
+      // max reps@load, best est-1RM, and best single-set tonnage. `set_type` is
+      // load-bearing — a warm-up must not raise a bar it can never win. A TIMED
+      // hold's PR is the best SECONDS (its `reps`), not an est-1RM (0 at 0 kg).
+      .select('exercise_id, est_1rm_kg, reps, weight_kg, set_type')
       .in('exercise_id', exerciseIds).eq('user_id', userId),
   ])
 
@@ -118,7 +119,7 @@ export async function saveSession(
     }
   }
 
-  const prHistory = (prHistoryRes.data ?? []) as Array<{ exercise_id: string; est_1rm_kg: number | null; reps: number | null; weight_kg: number | null; session_id: string | null }>
+  const prHistory = (prHistoryRes.data ?? []) as Array<{ exercise_id: string; est_1rm_kg: number | null; reps: number | null; weight_kg: number | null; set_type: string | null }>
 
   // Every PR rule lives in `prEngine` — the live deck runs the SAME code against
   // the same baselines, so a badge shown on the green tick is a badge that gets
@@ -145,7 +146,7 @@ export async function saveSession(
   const baselines = buildBaselines(
     prHistory.map((r) => ({
       key: r.exercise_id, weightKg: r.weight_kg, reps: r.reps,
-      est1rm: r.est_1rm_kg, sessionId: r.session_id,
+      est1rm: r.est_1rm_kg, setType: r.set_type,
       repFloor: windowFor(r.exercise_id)?.floor ?? null,
     })),
     (key) => isTimedExercise(nameByEx.get(key) ?? ''),

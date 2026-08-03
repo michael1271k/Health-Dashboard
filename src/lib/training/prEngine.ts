@@ -30,7 +30,16 @@ export interface BaselineSetRow {
   weightKg: number | null
   reps: number | null
   est1rm?: number | null
-  sessionId?: string | null
+  /**
+   * Warm-ups and drop sets set no bar, exactly as they win no record.
+   *
+   * Omitting this used to break the volume axis in the one direction that is
+   * invisible: the baseline summed EVERY row while the candidate session summed
+   * only eligible ones, so Leg Press's 2026-07-27 bar stood at 3582.5 kg (a
+   * 900 kg warm-up included) against a 2755 kg candidate that was in truth the
+   * best working volume ever logged. A suppressed record leaves no trace.
+   */
+  setType?: string | null
   /** Floor of the programmed rep window — gates whether this row sets the e1RM bar. */
   repFloor?: number | null
 }
@@ -50,7 +59,8 @@ export interface PrBaselines {
   bestE1rm: Array<[string, number]>
   /** Timed holds: best SECONDS (carried in `reps`). */
   bestSeconds: Array<[string, number]>
-  bestSessionVolume: Array<[string, number]>
+  /** Heaviest SINGLE-SET tonnage (weight × reps) ever logged for the exercise. */
+  bestSetVolume: Array<[string, number]>
 }
 
 export interface PrIndex {
@@ -58,11 +68,11 @@ export interface PrIndex {
   bestRepsAtWeight: Map<string, number>
   bestE1rm: Map<string, number>
   bestSeconds: Map<string, number>
-  bestSessionVolume: Map<string, number>
+  bestSetVolume: Map<string, number>
 }
 
 export const EMPTY_BASELINES: PrBaselines = {
-  bestWeight: [], bestRepsAtWeight: [], bestE1rm: [], bestSeconds: [], bestSessionVolume: [],
+  bestWeight: [], bestRepsAtWeight: [], bestE1rm: [], bestSeconds: [], bestSetVolume: [],
 }
 
 /** Fold historical rows into per-axis bests. `isTimed` decides which axes apply. */
@@ -74,11 +84,14 @@ export function buildBaselines(
   const bestRepsAtWeight = new Map<string, number>()
   const bestE1rm = new Map<string, number>()
   const bestSeconds = new Map<string, number>()
-  const sessVol = new Map<string, number>()          // `${key}|${sessionId}`
+  const bestSetVolume = new Map<string, number>()
 
   const bump = (m: Map<string, number>, k: string, v: number) => m.set(k, Math.max(m.get(k) ?? 0, v))
 
   for (const r of rows) {
+    // Symmetric with `absorbSet`: a row that cannot WIN an axis must not raise
+    // the bar for it either.
+    if (isPrIneligible(r.setType)) continue
     const w = r.weightKg
     const reps = r.reps
     if (isTimed(r.key)) {
@@ -90,20 +103,12 @@ export function buildBaselines(
     if (w != null) bump(bestWeight, r.key, w)
     if (w != null && reps != null) {
       bump(bestRepsAtWeight, `${r.key}|${w}`, reps)
+      bump(bestSetVolume, r.key, w * reps)
       if (e1rmEligible(reps, r.repFloor)) {
         const e = r.est1rm ?? epley1RM(w, reps)
         if (e != null) bump(bestE1rm, r.key, e)
       }
-      if (r.sessionId) {
-        const vk = `${r.key}|${r.sessionId}`
-        sessVol.set(vk, (sessVol.get(vk) ?? 0) + w * reps)
-      }
     }
-  }
-
-  const bestSessionVolume = new Map<string, number>()
-  for (const [vk, vol] of sessVol) {
-    bump(bestSessionVolume, vk.slice(0, vk.lastIndexOf('|')), vol)
   }
 
   return {
@@ -111,7 +116,7 @@ export function buildBaselines(
     bestRepsAtWeight: [...bestRepsAtWeight],
     bestE1rm: [...bestE1rm],
     bestSeconds: [...bestSeconds],
-    bestSessionVolume: [...bestSessionVolume],
+    bestSetVolume: [...bestSetVolume],
   }
 }
 
@@ -123,7 +128,7 @@ export function baselineIndex(b: PrBaselines | undefined): PrIndex {
     bestRepsAtWeight: m(b?.bestRepsAtWeight),
     bestE1rm: m(b?.bestE1rm),
     bestSeconds: m(b?.bestSeconds),
-    bestSessionVolume: m(b?.bestSessionVolume),
+    bestSetVolume: m(b?.bestSetVolume),
   }
 }
 
@@ -172,12 +177,41 @@ export function isPrIneligible(setType: string | null | undefined): boolean {
 }
 
 /**
+ * Does the REPS axis apply to this set? Only when it carries no external load.
+ *
+ * On a loaded lift "most reps at this load" is not the achievement — the load is
+ * the achievement, and the rep count is the dial you turn between load jumps. It
+ * also double-files: Hack Squat 55 kg × 12 beat 55 kg × 11 on reps, on e1RM and
+ * on tonnage, three trophies for one set, and the reps one was the least
+ * informative of the three. Double progression already reports rep progress
+ * ("2/3 sets at ceiling"), which is where it belongs.
+ *
+ * Bodyweight and core work has no load to progress, so reps ARE the record
+ * there — Reverse Crunch 17, Hanging Knee Raise, a 58 s Side Plank. Weight 0 is
+ * the exact test for that, and it catches timed holds for free (their duration
+ * rides in `reps` and their weight is 0).
+ */
+export function repsAxisEligible(weightKg: number): boolean {
+  return weightKg === 0
+}
+
+/**
  * Which axes this set just set a record on.
  *
  * A record requires beating an EXISTING baseline — `.has()` before `>`. The
  * first time an exercise is ever logged (or the first time at a given load, for
  * reps@weight) is a new data point, not a PR; flagging it would make every
  * novel movement a trophy and make the badge meaningless.
+ *
+ * VOLUME IS A PER-SET AXIS (changed 2026-08-03). It used to be a session total
+ * for the exercise, which failed twice over. It fired on almost everything —
+ * one extra rep anywhere in a 3-set block beats the previous total by ~2 %, so
+ * Leg Extension, Seated Leg Curl, Calf Press and Crunch Machine all "set volume
+ * records" on 2026-08-03 for +1 rep each — and having no set of its own to live
+ * on, it was pinned to the exercise's LAST set, which is usually its weakest:
+ * Hack Squat's badge landed on 55 kg × 11 while 55 kg × 12 stood next to it.
+ * Tonnage of one set against the heaviest single set ever is a thing that
+ * happened, and the badge lands on the set that did it by construction.
  */
 export function detectSetPrs(set: PrCandidateSet, idx: PrIndex): PrAxis[] {
   if (isPrIneligible(set.setType)) return []
@@ -192,9 +226,14 @@ export function detectSetPrs(set: PrCandidateSet, idx: PrIndex): PrAxis[] {
   const bw = idx.bestWeight.get(set.key)
   if (bw != null && set.weightKg > bw) axes.push('weight')
 
-  const rk = `${set.key}|${set.weightKg}`
-  const br = idx.bestRepsAtWeight.get(rk)
-  if (br != null && set.reps > br) axes.push('reps')
+  if (repsAxisEligible(set.weightKg)) {
+    const br = idx.bestRepsAtWeight.get(`${set.key}|${set.weightKg}`)
+    if (br != null && set.reps > br) axes.push('reps')
+  }
+
+  const vol = set.weightKg * set.reps
+  const bv = idx.bestSetVolume.get(set.key)
+  if (bv != null && vol > bv) axes.push('volume')
 
   if (e1rmEligible(set.reps, set.repFloor)) {
     const e1rm = epley1RM(set.weightKg, set.reps)
@@ -220,6 +259,7 @@ export function absorbSet(set: PrCandidateSet, idx: PrIndex): void {
   if (set.timed) { bump(idx.bestSeconds, set.key, set.reps); return }
   bump(idx.bestWeight, set.key, set.weightKg)
   bump(idx.bestRepsAtWeight, `${set.key}|${set.weightKg}`, set.reps)
+  bump(idx.bestSetVolume, set.key, set.weightKg * set.reps)
   // Symmetric with detection: a set that cannot WIN the e1RM axis must not be
   // allowed to raise the bar for it either.
   if (e1rmEligible(set.reps, set.repFloor)) {
@@ -233,10 +273,8 @@ export interface DetectedSet { axes: PrAxis[]; est1rm: number | null }
 export interface SessionPrResult {
   /** Parallel to the input array — `sets[i]` ↔ `perSet[i]`. */
   perSet: DetectedSet[]
-  /** Distinct axes per exercise key, including the session-level volume axis. */
+  /** Distinct axes per exercise key. */
   axesByKey: Map<string, Set<PrAxis>>
-  /** Σ weight×reps per key over PR-ELIGIBLE sets — the volume-axis operand. */
-  volumeByKey: Map<string, number>
   /** Total distinct axis-PRs across exercises. Matches `workout_sessions.pr_count`. */
   prCount: number
 }
@@ -268,35 +306,9 @@ export function detectSessionPrs(sets: readonly PrCandidateSet[], baselines: PrB
     return { axes, est1rm: s.timed ? null : epley1RM(s.weightKg, s.reps) }
   })
 
-  // Volume is a SESSION-level axis: this session's total for the exercise beats
-  // its best prior single-session total. Warm-ups and drop sets are excluded so
-  // padding a session with light work can't manufacture a volume record.
-  const volumeByKey = new Map<string, number>()
-  for (const s of sets) {
-    if (isPrIneligible(s.setType) || s.timed) continue
-    volumeByKey.set(s.key, (volumeByKey.get(s.key) ?? 0) + s.weightKg * s.reps)
-  }
-
-  // The totals above still feed the ledger's volume VALUES in a seeded session;
-  // only the decision about which volume axes exist comes from the seed.
-  for (const [key, vol] of seeded ? [] : volumeByKey) {
-    const best = idx.bestSessionVolume.get(key)
-    if (best == null || vol <= best) continue
-    // Give the axis somewhere to LIVE. `is_pr` is a per-set column, so a
-    // volume-only record used to flag no row at all: it existed in
-    // `personal_records` and in `pr_count`, and was invisible everywhere a
-    // human looks. Attribute it to the exercise's last eligible set — the
-    // one that completed the total.
-    for (let i = sets.length - 1; i >= 0; i--) {
-      const s = sets[i]
-      if (s.key !== key || isPrIneligible(s.setType) || s.timed) continue
-      if (!perSet[i].axes.includes('volume')) perSet[i].axes.push('volume')
-      break
-    }
-  }
-
-  // Rebuilt from the PRUNED per-set axes so `pr_count`, `is_pr` and the ledger
-  // can never disagree about what counted.
+  // Rebuilt from the per-set axes so `pr_count`, `is_pr` and the ledger can
+  // never disagree about what counted. Every axis now lives on a set, so there
+  // is no session-level pass to fold in afterwards.
   const axesByKey = new Map<string, Set<PrAxis>>()
   perSet.forEach((d, i) => {
     if (!d.axes.length) return
@@ -306,7 +318,7 @@ export function detectSessionPrs(sets: readonly PrCandidateSet[], baselines: PrB
   })
 
   const prCount = [...axesByKey.values()].reduce((n, s) => n + s.size, 0)
-  return { perSet, axesByKey, volumeByKey, prCount }
+  return { perSet, axesByKey, prCount }
 }
 
 /**
@@ -338,8 +350,9 @@ export interface RecordSet { weightKg: number; reps: number; value: number }
  * was no record at all. Attributing the axis to the set that won it keeps the
  * ledger readable as history.
  *
- * The session-level `volume` axis has no single set, so its value is the
- * exercise's session total and its weight/reps are zero.
+ * `volume` files the winning set's own tonnage (weight × reps), matching the
+ * per-set axis it became on 2026-08-03. It used to file the exercise's session
+ * total against a set that had not lifted it.
  */
 export function recordSets(
   sets: readonly PrCandidateSet[],
@@ -368,21 +381,13 @@ export function recordSets(
   result.perSet.forEach((d, i) => {
     const s = sets[i]
     for (const axis of d.axes) {
-      // `volume` also rides on a set now (so it can show a trophy), but its
-      // VALUE is the exercise's session total, filled in by the loop below —
-      // taking it from this set would record an e1RM as a volume.
-      if (axis === 'volume') continue
       const value = axis === 'weight' ? s.weightKg
         : axis === 'reps' ? s.reps
+        : axis === 'volume' ? s.weightKg * s.reps
         : (d.est1rm ?? 0)                       // e1rm
       put(s.key, axis, { weightKg: s.weightKg, reps: s.reps, value })
     }
   })
-
-  for (const [key, axes] of result.axesByKey) {
-    if (!axes.has('volume')) continue
-    put(key, 'volume', { weightKg: 0, reps: 0, value: result.volumeByKey.get(key) ?? 0 })
-  }
 
   return out
 }

@@ -159,23 +159,23 @@ describe('2026-08-02 — an asserted session inside live detection', () => {
   // Every prior logged set for the six lifts that are NOT Incline DB Press —
   // identical under both histories.
   const REST: BaselineSetRow[] = [
-    ...[[37.5, 12], [37.5, 12], [35, 12]].map(([w, r]) => ({ key: 'Chest Press (Machine)', weightKg: w, reps: r, sessionId: 'a' })),
-    ...[[42.5, 12], [42.5, 12]].map(([w, r]) => ({ key: 'Seated Cable Row', weightKg: w, reps: r, sessionId: 'b' })),
-    ...[[50, 15], [52.5, 9]].map(([w, r]) => ({ key: 'Pec Deck', weightKg: w, reps: r, sessionId: 'a' })),
-    ...[[16.25, 15], [16.25, 11], [15, 11]].map(([w, r]) => ({ key: 'Straight-Arm Pulldown', weightKg: w, reps: r, sessionId: 'b' })),
-    ...[[15, 14], [16.25, 15], [15, 15]].map(([w, r]) => ({ key: 'Face Pull', weightKg: w, reps: r, sessionId: 'b' })),
-    ...[[47, 12], [47, 12], [47, 10]].map(([w, r]) => ({ key: 'Lat Pulldown', weightKg: w, reps: r, sessionId: 'b' })),
+    ...[[37.5, 12], [37.5, 12], [35, 12]].map(([w, r]) => ({ key: 'Chest Press (Machine)', weightKg: w, reps: r })),
+    ...[[42.5, 12], [42.5, 12]].map(([w, r]) => ({ key: 'Seated Cable Row', weightKg: w, reps: r })),
+    ...[[50, 15], [52.5, 9]].map(([w, r]) => ({ key: 'Pec Deck', weightKg: w, reps: r })),
+    ...[[16.25, 15], [16.25, 11], [15, 11]].map(([w, r]) => ({ key: 'Straight-Arm Pulldown', weightKg: w, reps: r })),
+    ...[[15, 14], [16.25, 15], [15, 15]].map(([w, r]) => ({ key: 'Face Pull', weightKg: w, reps: r })),
+    ...[[47, 12], [47, 12], [47, 10]].map(([w, r]) => ({ key: 'Lat Pulldown', weightKg: w, reps: r })),
   ]
-  const incline = (rows: number[][], sessionId: string): BaselineSetRow[] =>
-    rows.map(([w, r]) => ({ key: 'Incline DB Press', weightKg: w, reps: r, sessionId }))
+  const incline = (rows: number[][]): BaselineSetRow[] =>
+    rows.map(([w, r]) => ({ key: 'Incline DB Press', weightKg: w, reps: r }))
 
-  const JUL_19 = incline([[35, 11], [35, 12], [35, 12]], 'a')
+  const JUL_19 = incline([[35, 11], [35, 12], [35, 12]])
 
   /** Live `workout_sets` as of 2026-08-03, 07-26 repaired to its true load. */
-  const HISTORY: BaselineSetRow[] = [...JUL_19, ...incline([[35, 12], [35, 12], [35, 12]], 'b'), ...REST]
+  const HISTORY: BaselineSetRow[] = [...JUL_19, ...incline([[35, 12], [35, 12], [35, 12]]), ...REST]
 
   /** What the engine saw on the day: 63.75 kg wedged between 35 kg and 40 kg. */
-  const POISONED: BaselineSetRow[] = [...JUL_19, ...incline([[63.75, 12], [63.75, 12], [63.75, 12]], 'b'), ...REST]
+  const POISONED: BaselineSetRow[] = [...JUL_19, ...incline([[63.75, 12], [63.75, 12], [63.75, 12]]), ...REST]
 
   const baselines = buildBaselines(HISTORY, () => false)
   const poisoned = buildBaselines(POISONED, () => false)
@@ -205,13 +205,15 @@ describe('2026-08-02 — an asserted session inside live detection', () => {
   })
 
   it('pins the bad baseline that made the assertion necessary', () => {
-    // Assertion bypassed, 63.75 kg still in history: 8 axes across 5 exercises,
-    // and NEITHER Incline DB Press record among them — a load never lifted was
-    // the bar every later set had to clear. This is the original bug.
+    // Assertion bypassed, 63.75 kg still in history: NEITHER Incline DB Press
+    // record is found, because a load never lifted was the bar every later set
+    // had to clear. This is the original bug, and it is invisible in the count
+    // alone — 3 axes, the same total the assertion produces, from a different
+    // and wrong set of exercises.
     const bare = SETS.map((s) => ({ ...s, date: null }))
     const r = detectSessionPrs(bare, poisoned)
-    expect(r.prCount).toBe(8)
     expect(r.axesByKey.has('Incline DB Press')).toBe(false)
+    expect(r.prCount).toBe(3)
   })
 
   it('derives both Incline records now that the load is repaired', () => {
@@ -221,9 +223,10 @@ describe('2026-08-02 — an asserted session inside live detection', () => {
     const r = detectSessionPrs(bare, baselines)
     expect([...(r.axesByKey.get('Incline DB Press') ?? [])].sort()).toEqual(['e1rm', 'weight'])
 
-    // The assertion still earns its place: raw axis counting (the deliberate
-    // subsumption reversal) inflates the session to 10, because one improved set
-    // carries reps + e1rm + volume with it.
-    expect(r.prCount).toBe(10)
+    // The assertion still earns its place, but only just: derived detection now
+    // reports 5 against the asserted 3. It read 10 before the 2026-08-03 axis
+    // rules — dropping `reps` on loaded lifts and making `volume` a single-set
+    // record removed the pile-on where one improved set carried three trophies.
+    expect(r.prCount).toBe(5)
   })
 })

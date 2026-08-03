@@ -146,7 +146,7 @@ for (const s of sessions) {
     const r = rows[i]
     seen.push({
       key: candidates[i].key,
-      weightKg: r.weight_kg, reps: r.reps, sessionId: r.session_id,
+      weightKg: r.weight_kg, reps: r.reps, setType: r.set_type ?? null,
       repFloor: candidates[i].repFloor,
     })
   }

@@ -26,7 +26,7 @@ export function useExerciseBaselines(names: string[], beforeDate: string | undef
     queryFn: async (): Promise<PrBaselines> => {
       const { data, error } = await supabase
         .from('workout_sets')
-        .select('weight_kg, reps, est_1rm_kg, session_id, exercises!inner(name), workout_sessions!inner(started_at)')
+        .select('weight_kg, reps, est_1rm_kg, set_type, exercises!inner(name), workout_sessions!inner(started_at)')
         .in('exercises.name', names)
         .lt('workout_sessions.started_at', `${beforeDate}T00:00:00Z`)
         .limit(4000)
@@ -34,13 +34,13 @@ export function useExerciseBaselines(names: string[], beforeDate: string | undef
 
       const rows = ((data ?? []) as unknown as Array<{
         weight_kg: number | null; reps: number | null; est_1rm_kg: number | null
-        session_id: string | null; exercises: { name: string }
+        set_type: string | null; exercises: { name: string }
       }>).map((r) => ({
         key: r.exercises.name,
         weightKg: r.weight_kg,
         reps: r.reps,
         est1rm: r.est_1rm_kg,
-        sessionId: r.session_id,
+        setType: r.set_type,
       }))
 
       // Deliberately era-agnostic and NOT routine-scoped: a personal record is
