@@ -61,6 +61,18 @@ export function useSaveSentinelReport() {
       if (error) {
         // 42P10 = no unique constraint matching the ON CONFLICT target.
         if (error.code === '42P10') throw new Error('Run the reports unique-index paste-SQL first.')
+        // 23514 = a CHECK constraint refused the row. Verified live 2026-08-03:
+        // `reports_type_check` allows ONLY 'weekly', a leftover from the Notion
+        // era, so every pasted report this app has ever tried to save was
+        // rejected by the database and the raw Postgres text ("violates check
+        // constraint") gave no clue which column was at fault. The fix is one
+        // ALTER TABLE, not a code change — say so.
+        if (error.code === '23514' && /type/i.test(error.message)) {
+          throw new Error(
+            `The database still refuses report type "${SENTINEL_TYPE}" — `
+            + 'reports_type_check predates the paste loop. Run the reports_type_check paste-SQL.',
+          )
+        }
         throw error
       }
     },

@@ -6,6 +6,8 @@ import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, Printer, Radar } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { MarkdownView } from '@/components/reports/MarkdownView'
+import { FmtV2Report } from '@/components/reports/FmtV2Report'
+import { isFmtV2 } from '@/lib/reports/fmtV2'
 import { WidgetBoundary } from '@/components/fx/WidgetBoundary'
 import { getWeekPhase, phaseBadgeStyle } from '@/lib/phases'
 import { weekLabelOf } from '@/lib/reports/weekNumber'
@@ -98,7 +100,13 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
         // table shouldn't take the page down with it.
         <WidgetBoundary label="Report" minHeight={200}>
           <article className="helix-card !p-4 sm:!p-6">
-            <MarkdownView md={data.content} />
+            {/* FMT v2 carries a TDEE ladder, a body-comp table and an asymmetry
+                block that read badly as monospace text on a phone; those become
+                charts. Any other paste — including a v2 report whose sections
+                the reader doesn't recognise — renders as written. */}
+            {isFmtV2(data.content)
+              ? <FmtV2Report md={data.content} />
+              : <MarkdownView md={data.content} />}
           </article>
         </WidgetBoundary>
       )}
