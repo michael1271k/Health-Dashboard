@@ -23,6 +23,7 @@ import { phaseDisplay } from '@/lib/nutrition/phase'
 import { ERA_META, eraForDate, scheduleDayFor, activeProgram } from '@/lib/programs'
 import { displayWeight, weightUnit, fmtVolume } from '@/lib/utils/units'
 import { logicalTodayISO } from '@/lib/utils/day'
+import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { Zone, ZoneRow, StatStrip } from '@/components/ui/Zone'
 import { SnapPager } from '@/components/ui/SnapPager'
 import { EMBER, EMBER_DEEP, SAPPHIRE, STEEL, GOLD, OXIDE, EMERALD, MUTED } from '@/lib/theme/palette'
@@ -147,6 +148,10 @@ export default function DailyNexusPage() {
   const { data, isLoading } = useDayVault(date)
   const { data: goals } = useUserGoals()
   const { data: daySleep } = useDaySleep(date)
+  // scheduleDayFor (below the early return) reads a module-level cache React
+  // can't observe. Subscribing here is what makes a swap from another device
+  // repaint this page instead of waiting for an unrelated re-render.
+  useScheduleVersion()
   const [fuelEdit, setFuelEdit] = useState(false)
   const tapFuel = useDoubleTap(() => setFuelEdit(true))
   const pager = useRef<SnapPagerHandle>(null)
@@ -171,7 +176,7 @@ export default function DailyNexusPage() {
 
   const era = eraForDate(date)
   const eraMeta = ERA_META[era]
-  const schedule = scheduleDayFor(date) // swap-aware
+  const schedule = scheduleDayFor(date) // swap-aware (subscribed via useScheduleVersion above)
   const sessions = data?.sessions ?? []
   const trained = sessions.length > 0
   const restDay = !trained && schedule === 'rest'

@@ -6,6 +6,7 @@ import { LiquidModal } from '@/components/ui/LiquidModal'
 import { protocolForDate } from '@/lib/supplements'
 import { isTrainingDay } from '@/lib/programs'
 import { logicalTodayISO } from '@/lib/utils/day'
+import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { useSupplements, useToggleSupplement } from '@/lib/hooks/useSupplements'
 import {
   useCustomSupplements, useAddCustomSupplement, useDeleteCustomSupplement, customSlotsForDate,
@@ -25,6 +26,9 @@ export function SupplementChecklist() {
   const delCustom = useDeleteCustomSupplement()
 
   const today = logicalTodayISO()
+  // A Train↔Rest swap adds or removes the pre-workout stimulants, so this list
+  // has to follow the schedule store, not just its own query.
+  useScheduleVersion()
   const weekday = new Date(`${today}T12:00:00`).getDay()
   const protocol = protocolForDate(isTrainingDay(today))
   const custom = customSlotsForDate(customs ?? [], weekday, isTrainingDay(today))

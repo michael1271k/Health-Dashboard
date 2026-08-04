@@ -15,6 +15,7 @@ import {
   activeProgram, scheduleDayFor, isTrainingDay, eraForDate, ERA_META, type Program,
 } from '@/lib/programs'
 import { logicalTodayISO } from '@/lib/utils/day'
+import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { displayWeight, weightUnit } from '@/lib/utils/units'
 import { formatSet } from '@/lib/utils/setFormat'
 import { isTimedExercise } from '@/lib/exercises/timed'
@@ -65,6 +66,9 @@ export default function WorkoutPage() {
     [week.data, today],
   )
   const loggedToday = todaySessions.length > 0
+  // The schedule store is an external store; without this subscription the hero
+  // keeps whatever day it drew at mount, even after the DB says otherwise.
+  useScheduleVersion()
   const schedule = scheduleDayFor(today)
   const training = isTrainingDay(today)
   const eraMeta = ERA_META[eraForDate(today)]

@@ -5,6 +5,7 @@ import { Moon, Repeat, RotateCcw, Undo2 } from 'lucide-react'
 import { activeProgram, scheduleDayFor } from '@/lib/programs'
 import { useSwapDay, useClearScheduleOverride } from '@/lib/hooks/useScheduleOverrides'
 import { getScheduleOverride, REST_OVERRIDE } from '@/lib/schedule/overrides'
+import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { planRestDay, describeRestPlan, shortDayLabel, type RestDayPlan } from '@/lib/schedule/swap'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
 
@@ -134,6 +135,7 @@ export function SwapDayControl({ date, className = '', bare = false }: {
   const swap = useSwapDay()
   const clear = useClearScheduleOverride()
   const program = activeProgram()
+  useScheduleVersion()   // "Reset to default" must appear/disappear on a remote swap too
   const overridden = getScheduleOverride(date) != null
   const { takeRest, undo, note, busy: restBusy } = useRestSwap(date)
   const busy = swap.isPending || clear.isPending || restBusy

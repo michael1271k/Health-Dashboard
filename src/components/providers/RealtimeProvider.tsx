@@ -44,6 +44,13 @@ const TABLE_KEYS: Record<string, string[][]> = {
   reports: [['reports'], ['weekly_review']],
   // Settings live-sync across devices: a change on desktop invalidates the phone.
   user_goals: [['user_goals']],
+  // Day swaps. This table was MISSING from the map, which is half of why a
+  // rest-day swap made on the phone never reached the desktop: nothing told the
+  // other device the schedule had moved. (The other half was the override cache
+  // being invisible to React — see src/lib/schedule/overrides.ts.) The swap
+  // cascades into supplements and the day's plan, so its invalidation list
+  // matches what useSwapDay itself invalidates after a write.
+  schedule_overrides: [['schedule_overrides'], ['day_vault'], ['daily_logs'], ['workout_sessions'], ['supplement_log']],
 }
 const TABLES = Object.keys(TABLE_KEYS)
 

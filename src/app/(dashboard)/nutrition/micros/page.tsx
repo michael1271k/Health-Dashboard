@@ -7,6 +7,7 @@ import { useTodayDailyLog, useTodayNutrition } from '@/lib/hooks/useDashboard'
 import { useSupplements } from '@/lib/hooks/useSupplements'
 import { protocolForDate } from '@/lib/supplements'
 import { isTrainingDay } from '@/lib/programs'
+import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { supplementMicros, mergeMicros } from '@/lib/nutrition/supplementMicros'
 import { MICRO_TARGETS, MICRO_SIGNALS } from '@/lib/nutrition/microTargets'
@@ -28,12 +29,14 @@ export default function MicrosPage() {
   // exactly like a logged food. The Stack tile used to count adherence and
   // nothing else, so 470 mg of vitamin C and 5 000 IU of D3 taken every single
   // morning never reached the targets they exist to hit.
+  // A Train↔Rest swap changes which stack is in force, and so which doses count.
+  const scheduleVersion = useScheduleVersion()
   const fromStack = useMemo(() => {
     const doses = new Map(
       protocolForDate(isTrainingDay(date)).flatMap((s) => s.items.map((i) => [i.key, i.dose] as const)),
     )
     return supplementMicros(taken ?? [], doses)
-  }, [taken, date])
+  }, [taken, date, scheduleVersion])
 
   // Fiber + protein have dedicated columns; the rest of the dietary micros ride
   // in the nutrition `micros` jsonb bundle (populated by the HealthKit sync).

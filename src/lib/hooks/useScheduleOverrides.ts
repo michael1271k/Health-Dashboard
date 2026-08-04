@@ -31,7 +31,17 @@ export type SwapOutcome =
 export function useScheduleOverrides() {
   return useQuery({
     queryKey: ['schedule_overrides'],
-    staleTime: 5 * 60 * 1000,
+    // ── Deliberately the app's ONE focus-refetching query ─────────────────────
+    // The global default is `refetchOnWindowFocus: false`, because refetching
+    // every mounted query each time iOS foregrounds the PWA was the old
+    // "permanently syncing" problem. This table is the exception and earns it:
+    // it is a handful of rows, and it is the one piece of state most likely to
+    // have been changed on a DIFFERENT device since this tab last looked —
+    // swapping a day on the phone and then opening the laptop is the normal
+    // way to use it. A stale schedule doesn't just look wrong, it tells you to
+    // do the wrong workout.
+    staleTime: 30 * 1000,
+    refetchOnWindowFocus: true,
     queryFn: async (): Promise<OverrideRow[]> => {
       try {
         const { data, error } = await supabase.from('schedule_overrides').select('date, day_key')

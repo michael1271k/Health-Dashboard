@@ -23,6 +23,7 @@ import { EMBER, SAPPHIRE, EMERALD, GOLD, AMETHYST, PLATINUM, STEEL, OXIDE, MUTED
 import { logicalTodayISO } from '@/lib/utils/day'
 import { useSingleOrDoubleTap } from '@/lib/utils/doubleTap'
 import { scheduleDayFor, eraForDate, isTrainingDay, type ScheduleDay } from '@/lib/programs'
+import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { useSupplements } from '@/lib/hooks/useSupplements'
 import { supplementCountForDate } from '@/lib/supplements'
 import { useBioSeries, useLastWeighIn, useLatestBodyMetrics, type BodyMetricField } from '@/lib/hooks/useBioStrips'
@@ -121,7 +122,16 @@ export default function DashboardPage() {
 
   // Today's scheduled training day — ERA-AWARE (PPL before Jul 19, HELIX-5 after),
   // shared with the Insight Coach so the whole app agrees.
-  const todayDay: ScheduleDay | 'rest' = useMemo(() => scheduleDayFor(logicalTodayISO()), [])
+  //
+  // `scheduleVersion` is a real dependency, not decoration: scheduleDayFor reads
+  // a synchronous cache that the DB fetch replaces AFTER first paint. With `[]`
+  // this memo froze whatever the cache held at mount, so a swap made on another
+  // device never appeared here.
+  const scheduleVersion = useScheduleVersion()
+  const todayDay: ScheduleDay | 'rest' = useMemo(
+    () => scheduleDayFor(logicalTodayISO()),
+    [scheduleVersion],
+  )
 
   // STRICT ERA BOUNDARY: "last session" only looks inside the
   // CURRENT era — a fresh HELIX era starts from "None", never from PPL history.

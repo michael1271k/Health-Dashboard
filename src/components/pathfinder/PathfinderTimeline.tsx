@@ -20,6 +20,7 @@ import { splitColor } from '@/lib/types/workout'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { displayWeight, weightUnit, useUnitSystem } from '@/lib/utils/units'
 import { eraForDate, isTrainingDay } from '@/lib/programs'
+import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
 import { useEraFilter } from '@/lib/era/eraFilter'
 // react-markdown + remark-gfm is a full parser. It was static here, so every
@@ -126,9 +127,12 @@ export function PathfinderTimeline() {
   // Readiness ran per capsule, per render — each call built a 7-element array
   // and filtered it. Computed once per data change instead.
   const today = logicalTodayISO()
+  // isWeekReady asks isTrainingDay which day was DUE, so a swap changes the
+  // answer — and a swap can arrive from another device at any moment.
+  const scheduleVersion = useScheduleVersion()
   const readyWeeks = useMemo(
     () => new Set(nodes.filter((n) => isWeekReady(n.weekStart, loggedDates, today)).map((n) => n.weekStart)),
-    [nodes, loggedDates, today],
+    [nodes, loggedDates, today, scheduleVersion],
   )
   const completeWeeks = useMemo(
     () => new Set(nodes.filter((n) => isWeekComplete(n.weekStart, today)).map((n) => n.weekStart)),

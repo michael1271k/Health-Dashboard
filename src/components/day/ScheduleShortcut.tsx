@@ -5,6 +5,7 @@ import { ArrowRight, Dumbbell } from 'lucide-react'
 import { activeProgram, scheduleDayFor } from '@/lib/programs'
 import { useDayVault } from '@/lib/hooks/useDayVault'
 import { logicalTodayISO } from '@/lib/utils/day'
+import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 
 /**
  * Training-day shortcut ("Today's schedule: Upper B — log it") shown on the
@@ -14,6 +15,7 @@ import { logicalTodayISO } from '@/lib/utils/day'
  */
 export function ScheduleShortcut() {
   const today = logicalTodayISO()
+  useScheduleVersion()   // re-render when a swap lands from any device
   const schedule = scheduleDayFor(today)
   const { data } = useDayVault(today)
 
