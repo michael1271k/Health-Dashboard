@@ -121,6 +121,10 @@ export function BodyCompositionChart({ trend, detail, isLoading, showEraBoundary
 }) {
   const unit = useUnitSystem()
   const [family, setFamily] = useState<Family>('mass')
+  // The isolated series, by dataKey. null = show them all.
+  const [focus, setFocus] = useState<string | null>(null)
+  /** Non-focused curves fade back rather than disappear — the shape still reads. */
+  const dim = (key: string) => (focus && focus !== key ? 0.16 : 1)
 
   const points = useMemo(
     () => mergeBodyComposition(trend, detail, displayWeight),
@@ -188,7 +192,9 @@ export function BodyCompositionChart({ trend, detail, isLoading, showEraBoundary
           {available.map((f) => {
             const on = active === f
             return (
-              <button key={f} onClick={() => setFamily(f)}
+              // Switching family drops the focus: a key from the old family
+              // matches nothing in the new one, which would blank the tooltip.
+              <button key={f} onClick={() => { setFamily(f); setFocus(null) }}
                 className="px-2.5 py-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-colors border"
                 style={on
                   ? { color: COLORS.weight, borderColor: `${COLORS.weight}55`, background: `${COLORS.weight}1f` }
@@ -210,6 +216,18 @@ export function BodyCompositionChart({ trend, detail, isLoading, showEraBoundary
         </p>
       )}
 
+      {/* The affordance for the legend-tap. Hidden until it matters, and its own
+          escape hatch — a focused chart with no way back out is a trap. */}
+      {focus && (
+        <button
+          type="button"
+          onClick={() => setFocus(null)}
+          className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] text-muted min-h-[28px]"
+        >
+          Showing one series · <span className="text-text font-semibold">show all</span>
+        </button>
+      )}
+
       <div role="img" aria-label={`Body composition — ${FAMILY_META[active].label}`}>
         <ResponsiveContainer width="100%" height={240}>
           <ComposedChart data={chartData} margin={{ top: 6, right: 10, left: -8, bottom: 0 }}>
@@ -224,26 +242,38 @@ export function BodyCompositionChart({ trend, detail, isLoading, showEraBoundary
               minTickGap={24} axisLine={false} tickLine={false} interval="preserveStartEnd" />
             <YAxis tick={{ fill: COLORS.text, fontSize: 10, fontFamily: 'var(--font-mono)' }}
               width={38} axisLine={false} tickLine={false} domain={domain} />
-            <Tooltip content={<ChartTooltip />} />
-            <Legend wrapperStyle={{ fontSize: 10 }} />
+            <Tooltip content={<ChartTooltip focus={focus} />} />
+            {/* Tapping a legend entry isolates that curve; tapping it again (or
+                the focused one) clears. This is the tooltip fix: with six series
+                on screen a shared tooltip is a wall of numbers, and Recharts'
+                `shared={false}` cannot help because every line is `dot={false}`
+                and has nothing to hit-test. */}
+            <Legend
+              wrapperStyle={{ fontSize: 10, cursor: 'pointer' }}
+              onClick={(e) => {
+                const key = (e as { dataKey?: string }).dataKey
+                if (key) setFocus((f) => (f === key ? null : key))
+              }}
+            />
 
             {active === 'mass' && (
               <>
                 <Area type="monotone" dataKey="weight" name={`Weight (${unit})`} stroke={COLORS.weight}
-                  fill="url(#bodyFill)" strokeWidth={2} dot={false} connectNulls />
+                  fill="url(#bodyFill)" strokeWidth={2} dot={false} connectNulls
+                  strokeOpacity={dim('weight')} fillOpacity={focus && focus !== 'weight' ? 0.06 : 1} />
                 <Line type="monotone" dataKey="fatFreeMass" name={`Fat-Free (${unit})`} stroke={COLORS.lean}
-                  strokeWidth={2} dot={false} connectNulls />
+                  strokeWidth={2} dot={false} connectNulls strokeOpacity={dim('fatFreeMass')} />
                 <Line type="monotone" dataKey="muscleMass" name={`Muscle (${unit})`} stroke={COLORS.musclePct}
-                  strokeWidth={2} dot={false} connectNulls />
+                  strokeWidth={2} dot={false} connectNulls strokeOpacity={dim('muscleMass')} />
                 <Line type="monotone" dataKey="fatMass" name={`Fat (${unit})`} stroke={COLORS.fatMass}
-                  strokeWidth={1.8} strokeDasharray="4 3" dot={false} connectNulls />
+                  strokeWidth={1.8} strokeDasharray="4 3" dot={false} connectNulls strokeOpacity={dim('fatMass')} />
               </>
             )}
             {active === 'percent' && (
               <>
-                <Line type="monotone" dataKey="fatPct" name="Fat %" stroke={COLORS.fatPct} strokeWidth={2} dot={false} connectNulls />
-                <Line type="monotone" dataKey="musclePct" name="Muscle %" stroke={COLORS.musclePct} strokeWidth={2} dot={false} connectNulls />
-                <Line type="monotone" dataKey="water" name="Water %" stroke={COLORS.water} strokeWidth={2} dot={false} connectNulls />
+                <Line type="monotone" dataKey="fatPct" name="Fat %" stroke={COLORS.fatPct} strokeWidth={2} dot={false} connectNulls strokeOpacity={dim('fatPct')} />
+                <Line type="monotone" dataKey="musclePct" name="Muscle %" stroke={COLORS.musclePct} strokeWidth={2} dot={false} connectNulls strokeOpacity={dim('musclePct')} />
+                <Line type="monotone" dataKey="water" name="Water %" stroke={COLORS.water} strokeWidth={2} dot={false} connectNulls strokeOpacity={dim('water')} />
               </>
             )}
             {active === 'visceral' && (

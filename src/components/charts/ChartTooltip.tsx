@@ -1,11 +1,26 @@
 interface TooltipProps {
   active?: boolean
-  payload?: Array<{ name: string; value: number; color: string; unit?: string }>
+  payload?: Array<{ name: string; value: number; color: string; unit?: string; dataKey?: string }>
   label?: string
+  /**
+   * Show ONLY this series (matched on `dataKey`, falling back to `name`).
+   *
+   * Recharts' own `shared={false}` is the documented way to do this and it does
+   * not work here: item-level tooltips are driven by per-point mouse handlers,
+   * and every line in these charts renders `dot={false}` for density, so there
+   * is nothing to hit-test and the tooltip simply stops appearing. Focus is
+   * therefore chosen explicitly — by tapping a legend entry — which behaves the
+   * same under a finger as under a cursor.
+   */
+  focus?: string | null
 }
 
-export function ChartTooltip({ active, payload, label }: TooltipProps) {
+export function ChartTooltip({ active, payload, label, focus }: TooltipProps) {
   if (!active || !payload?.length) return null
+  const rows = focus
+    ? payload.filter((e) => (e.dataKey ?? e.name) === focus || e.name === focus)
+    : payload
+  if (!rows.length) return null
 
   return (
     <div
@@ -23,7 +38,7 @@ export function ChartTooltip({ active, payload, label }: TooltipProps) {
         <p className="text-muted text-xs mb-1.5 font-medium">{label}</p>
       )}
       <div className="space-y-1">
-        {payload.map((entry) => (
+        {rows.map((entry) => (
           <div key={entry.name} className="flex items-center gap-2">
             <span
               className="inline-block w-2 h-2 rounded-full flex-shrink-0"
