@@ -5,6 +5,7 @@ import {
   computeActivityScore,
   computeWorkoutScore,
   computeRecoveryScore,
+  sleepRecoveryMultiplier,
   computeDailyScore,
   computeAlerts,
 } from '@/lib/scoring/score'
@@ -250,6 +251,99 @@ describe('computeRecoveryScore (physiological — sleep + resting HR)', () => {
     const normal   = computeRecoveryScore({ sleepHours: 8, deepMinutes: 90, sleepGoalHours: 8, restingHR: 60, baselineHR: 58 })
     const elevated = computeRecoveryScore({ sleepHours: 8, deepMinutes: 90, sleepGoalHours: 8, restingHR: 75, baselineHR: 58 })
     expect(elevated!).toBeLessThan(normal!)
+  })
+})
+
+// ─── Sleep gates recovery ──────────────────────────────────────────────────────
+describe('sleepRecoveryMultiplier', () => {
+  it('is unpenalised at or above the goal-minus-one threshold', () => {
+    expect(sleepRecoveryMultiplier(8, 8, 'normal')).toBe(1)
+    expect(sleepRecoveryMultiplier(7, 8, 'normal')).toBe(1)
+    expect(sleepRecoveryMultiplier(9.5, 8, 'normal')).toBe(1)
+  })
+
+  it('treats MISSING sleep as unknown, never as a penalty', () => {
+    expect(sleepRecoveryMultiplier(0, 8, 'normal')).toBe(1)
+  })
+
+  it('tanks below 6h and keeps tanking', () => {
+    const m6 = sleepRecoveryMultiplier(6, 8, 'normal')
+    const m5 = sleepRecoveryMultiplier(5, 8, 'normal')
+    const m4 = sleepRecoveryMultiplier(4, 8, 'normal')
+    const m3 = sleepRecoveryMultiplier(3, 8, 'normal')
+    expect(m6).toBeCloseTo(0.85, 2)
+    expect(m5).toBeCloseTo(0.66, 2)
+    expect(m4).toBeCloseTo(0.48, 2)
+    expect(m3).toBeCloseTo(0.34, 2)
+    expect(m6 > m5 && m5 > m4 && m4 > m3).toBe(true)
+  })
+
+  it('never reaches zero — the HR reading still means something', () => {
+    expect(sleepRecoveryMultiplier(0.5, 8, 'normal')).toBeGreaterThan(0.05)
+    expect(sleepRecoveryMultiplier(0.5, 8, 'normal')).toBeLessThan(0.2)
+  })
+
+  it('follows the personal goal rather than a fixed 7h demand', () => {
+    // A 6h sleeper hitting 6h is not under-slept.
+    expect(sleepRecoveryMultiplier(6, 6, 'normal')).toBe(1)
+    // …but the same 6h against an 8h goal is.
+    expect(sleepRecoveryMultiplier(6, 8, 'normal')).toBeLessThan(1)
+  })
+
+  it('relaxes toward 1 in non-normal contexts', () => {
+    const normal = sleepRecoveryMultiplier(3, 8, 'normal')
+    const ill = sleepRecoveryMultiplier(3, 8, 'illness')
+    const emergency = sleepRecoveryMultiplier(3, 8, 'emergency')
+    expect(ill).toBeGreaterThan(normal)
+    expect(emergency).toBeGreaterThan(ill)
+    expect(emergency).toBeLessThanOrEqual(1)
+  })
+})
+
+describe('computeRecoveryScore — a short night vetoes good autonomic data', () => {
+  // The exact live row that prompted the rewrite: 2026-08-04 logged 238 min of
+  // sleep with an ABOVE-baseline HRV and a BELOW-baseline resting HR. Both
+  // cardiac terms score 100 and carry 55% of the weight, so the old weighted
+  // mean stored recovery_score = 81 on four hours' sleep.
+  const REAL_BAD_NIGHT = {
+    sleepHours: 238 / 60, deepMinutes: 68, sleepGoalHours: 8,
+    restingHR: 59, baselineHR: 65, hrvMs: 63.39, hrvBaseline: 58.6,
+    contextMode: 'normal' as const,
+  }
+
+  it('no longer reads as a recovered day', () => {
+    const score = computeRecoveryScore(REAL_BAD_NIGHT)!
+    expect(score).toBeLessThan(45)
+    expect(score).toBeGreaterThan(20)  // still a score, not a zero
+  })
+
+  it('perfect HRV and resting HR cannot rescue three hours of sleep', () => {
+    const score = computeRecoveryScore({
+      sleepHours: 3, deepMinutes: 75, sleepGoalHours: 8,
+      restingHR: 50, baselineHR: 65, hrvMs: 120, hrvBaseline: 58,
+      contextMode: 'normal',
+    })!
+    // Even a flawless base (100) is multiplied by 0.34.
+    expect(score).toBeLessThanOrEqual(35)
+  })
+
+  it('leaves a full night completely untouched', () => {
+    const full = {
+      sleepHours: 8, deepMinutes: 90, sleepGoalHours: 8,
+      restingHR: 58, baselineHR: 62, hrvMs: 60, hrvBaseline: 58,
+      contextMode: 'normal' as const,
+    }
+    expect(computeRecoveryScore(full)).toBe(100)
+  })
+
+  it('is monotonic in sleep with every other input held fixed', () => {
+    const at = (h: number) => computeRecoveryScore({
+      sleepHours: h, deepMinutes: 70, sleepGoalHours: 8,
+      restingHR: 60, baselineHR: 62, hrvMs: 60, hrvBaseline: 58,
+      contextMode: 'normal',
+    })!
+    const series = [3, 4, 5, 6, 7, 8].map(at)
+    for (let i = 1; i < series.length; i += 1) expect(series[i]).toBeGreaterThan(series[i - 1])
   })
 })
 

@@ -186,13 +186,81 @@ export function computeHydrationScore(inputs: Pick<ScoringInputs,
   return clamp((inputs.waterMl / inputs.waterGoalMl) * 100)
 }
 
+// ─── Sleep as a recovery MULTIPLIER, not one term among three ─────────────────
+/**
+ * Sleep is the only input that GATES recovery rather than contributing to it.
+ * You cannot recover from a night you did not have, however good the autonomic
+ * readings look — a short night with a high HRV is reserve being spent, not
+ * recovery banked.
+ *
+ * THE BUG THIS REPLACES (live, 2026-08-04): 3h58 of sleep, HRV 63.4 against a
+ * ~58 baseline and RHR 59 against a ~65 baseline. Both cardiac terms scored a
+ * flat 100 and carried 55% of the weight between them, so the sleep term could
+ * not drag the total below 55 no matter how bad the night was. The stored
+ * `recovery_score` was **81** on four hours' sleep.
+ *
+ * A weighted mean cannot express "this one input vetoes the others", so the
+ * weighted mean stays (it is the right shape for HR vs HRV) and sleep is lifted
+ * out of it into a multiplier applied to the result.
+ *
+ * Anchors are on the DEFICIT below a full-credit threshold rather than on raw
+ * hours, so a 6h sleeper isn't permanently penalised for hitting their own goal.
+ * The threshold is `goal − 1h`, bounded to 5…7h: a tolerance band, not a
+ * second goal, and never a demand for more than 7h.
+ */
+const SLEEP_DEFICIT_ANCHORS: ReadonlyArray<readonly [number, number]> = [
+  [0, 1.00],  // at/above threshold — full credit
+  [1, 0.85],  // 6h on an 8h goal — a short night, not a broken one
+  [2, 0.66],  // 5h — the point the user named as "must tank"
+  [3, 0.48],  // 4h
+  [4, 0.34],  // 3h
+  [5, 0.22],  // 2h
+  [7, 0.10],  // ≤1h — a floor, not a zero: the HR data is still worth something
+]
+
+export function sleepRecoveryMultiplier(
+  sleepHours: number,
+  sleepGoalHours: number | undefined,
+  contextMode: ScoringInputs['contextMode'],
+): number {
+  // No sleep data is UNKNOWN, not zero. Penalising a missing night would make
+  // every un-synced morning look like a crisis.
+  if (sleepHours <= 0) return 1
+
+  const threshold = Math.min(7, Math.max(5, (sleepGoalHours || 8) - 1))
+  const deficit = threshold - sleepHours
+  if (deficit <= 0) return 1
+
+  // Piecewise-linear through the anchors; flat at the floor beyond the last one.
+  let mult = SLEEP_DEFICIT_ANCHORS[SLEEP_DEFICIT_ANCHORS.length - 1][1]
+  for (let i = 1; i < SLEEP_DEFICIT_ANCHORS.length; i += 1) {
+    const [d0, m0] = SLEEP_DEFICIT_ANCHORS[i - 1]
+    const [d1, m1] = SLEEP_DEFICIT_ANCHORS[i]
+    if (deficit <= d1) {
+      mult = m0 + ((deficit - d0) / (d1 - d0)) * (m1 - m0)
+      break
+    }
+  }
+
+  // Illness / travel / emergency relax the gate toward 1, exactly as the
+  // composite sleep cap does — a rough night while sick is expected, not a
+  // failure to recover.
+  const relax = penaltyMult(contextMode)
+  return mult + (1 - relax) * (1 - mult)
+}
+
 // ─── Recovery Score (physiological — NOT logging adherence) ────────────────────
 /**
- * Recovery reflects the body, not whether you logged water/supps:
- *   45% sleep quality (duration + deep) + 30% resting-HR vs baseline +
- *   25% HRV vs 7-day baseline (the gold-standard recovery signal).
- * Each component is dropped if its data is missing and the rest renormalized.
- * Returns null when there is NO physiological data at all (unknown ≠ 0).
+ * Recovery reflects the body, not whether you logged water/supps.
+ *
+ *   base = 45% sleep quality (duration + deep) + 30% resting-HR vs baseline +
+ *          25% HRV vs 7-day baseline (the gold-standard autonomic signal)
+ *   score = base × sleepRecoveryMultiplier(...)
+ *
+ * Each base component is dropped if its data is missing and the rest
+ * renormalized. Returns null when there is NO physiological data at all
+ * (unknown ≠ 0). The multiplier is what makes a short night unsurvivable:
+ * four hours caps the result at 48 even with a perfect base.
  */
 export function computeRecoveryScore(inputs: Pick<ScoringInputs,
   'sleepHours' | 'deepMinutes' | 'sleepGoalHours' | 'restingHR' | 'baselineHR' | 'hrvMs' | 'hrvBaseline' | 'contextMode'>
@@ -217,7 +285,8 @@ export function computeRecoveryScore(inputs: Pick<ScoringInputs,
 
   if (!parts.length) return null   // no physiological signal → unknown
   const wSum = parts.reduce((s, p) => s + p.w, 0)
-  return clamp(parts.reduce((s, p) => s + p.v * p.w, 0) / wSum)
+  const base = parts.reduce((s, p) => s + p.v * p.w, 0) / wSum
+  return clamp(base * sleepRecoveryMultiplier(inputs.sleepHours, inputs.sleepGoalHours, inputs.contextMode))
 }
 
 // ─── Composite Score (smart, context-aware, adaptive re-weighting) ────────────
