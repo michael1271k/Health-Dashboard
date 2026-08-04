@@ -32,6 +32,7 @@ export default function MicrosPage() {
   // A Train↔Rest swap changes which stack is in force, and so which doses count.
   const scheduleVersion = useScheduleVersion()
   const fromStack = useMemo(() => {
+    void scheduleVersion   // isTrainingDay reads the store; this is the read
     const doses = new Map(
       protocolForDate(isTrainingDay(date)).flatMap((s) => s.items.map((i) => [i.key, i.dose] as const)),
     )

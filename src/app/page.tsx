@@ -128,10 +128,10 @@ export default function DashboardPage() {
   // this memo froze whatever the cache held at mount, so a swap made on another
   // device never appeared here.
   const scheduleVersion = useScheduleVersion()
-  const todayDay: ScheduleDay | 'rest' = useMemo(
-    () => scheduleDayFor(logicalTodayISO()),
-    [scheduleVersion],
-  )
+  const todayDay: ScheduleDay | 'rest' = useMemo(() => {
+    void scheduleVersion   // scheduleDayFor reads the store; this is the read
+    return scheduleDayFor(logicalTodayISO())
+  }, [scheduleVersion])
 
   // STRICT ERA BOUNDARY: "last session" only looks inside the
   // CURRENT era — a fresh HELIX era starts from "None", never from PPL history.
