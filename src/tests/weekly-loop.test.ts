@@ -166,19 +166,31 @@ describe('buildWeeklyExport', () => {
         kcal: 210, totalKcal: 265, avgHr: 112, effort: 4,
       }],
     })
-    // Pace is DERIVED (45 min ÷ 4.2 km = 10:43 /km), never a stored column.
+    // Every requested metric, named, in a fixed order. Pace is DERIVED
+    // (45 min ÷ 4.2 km = 10:43 /km), never a stored column.
     expect(withCardio).toMatch(
-      /walk · 45 min · 4\.20 km · 10:43 \/km · 210 active kcal · 265 total kcal · avg HR 112 · effort 4\.0\/10 \(Already accounted for in daily steps and calories\)/,
+      /Walk · time 45 min · distance 4\.20 km · pace 10:43 \/km · active 210 kcal · total 265 kcal · avg HR 112 · effort 4\.0\/10 \(Already accounted for in daily steps and calories\)/,
     )
   })
 
-  it('omits cardio fields that were never entered, rather than printing zeros', () => {
+  it('names every cardio metric even when it was never entered — and never invents a zero', () => {
     const sparse = buildWeeklyExport({
       ...input,
       cardio: [{ date: '2026-07-19', kind: 'run', distanceM: null, durationMin: 30, kcal: null, totalKcal: null, avgHr: null, effort: null }],
     })
-    expect(sparse).toMatch(/run · 30 min \(Already accounted for in daily steps and calories\)/)
-    expect(sparse).not.toMatch(/\/km/)
+    // Dropping absent fields made two walks incomparable: one showed "avg HR
+    // 112" and one showed nothing, with no way to tell missing data from a
+    // missing export. Each field is present and explicitly unknown.
+    expect(sparse).toMatch(
+      /Run · time 30 min · distance — · pace — · active — · total — · avg HR — · effort —/,
+    )
+    // The invariant that mattered in the original test: no fabricated zeros.
+    // Scoped to the cardio line — the day rows legitimately carry numbers
+    // ending in 0 (calorie targets, step counts).
+    const cardioLine = sparse.split('\n').find((l) => l.includes('Run · time'))!
+    expect(cardioLine).not.toMatch(/\b0 kcal\b/)
+    expect(cardioLine).not.toMatch(/avg HR 0\b/)
+    expect(cardioLine).not.toMatch(/effort 0/)
   })
 
   it('carries the Borg CR10 session effort onto the session line', () => {

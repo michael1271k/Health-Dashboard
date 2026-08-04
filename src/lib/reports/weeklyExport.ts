@@ -167,6 +167,13 @@ export interface WeeklyExportInput {
 const n = (v: number | null | undefined, digits = 0): string =>
   v == null || !Number.isFinite(v) ? '—' : v.toFixed(digits)
 
+/** "Not recorded". Distinct from 0, which would be a claim. */
+const DASH = '—'
+
+/** `walk` → `Walk`, `run` → `Run`; anything else passes through capitalised. */
+const cardioLabel = (kind: string): string =>
+  kind ? kind.charAt(0).toUpperCase() + kind.slice(1) : 'Cardio'
+
 const sleep = (min: number | null | undefined): string =>
   min == null ? '—' : `${Math.floor(min / 60)}h${String(Math.round(min % 60)).padStart(2, '0')}`
 
@@ -323,17 +330,23 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
       )
     }
     for (const c of cardioByDate.get(d.date) ?? []) {
+      // EVERY metric is named, EVERY time. This used to drop absent fields from
+      // the line, which reads fine until you compare two walks: one showing
+      // "avg HR 112" and one not, with no way to tell whether the second had no
+      // heart-rate reading or whether the exporter simply didn't carry it. An
+      // em-dash says "not recorded" — which is information — while a 0 would be
+      // a lie, and printing zeros is still forbidden.
       const pace = paceMinPerKm(c.distanceM, c.durationMin)
       const bits = [
-        c.durationMin != null ? `${n(c.durationMin)} min` : null,
-        c.distanceM != null ? `${n(c.distanceM / 1000, 2)} km` : null,
-        pace != null ? formatPace(pace) : null,
-        c.kcal != null ? `${n(c.kcal)} active kcal` : null,
-        c.totalKcal != null ? `${n(c.totalKcal)} total kcal` : null,
-        c.avgHr != null ? `avg HR ${n(c.avgHr)}` : null,
-        c.effort != null ? `effort ${n(c.effort, 1)}/10` : null,
-      ].filter(Boolean).join(' · ')
-      L.push(`    ${c.kind}${bits ? ` · ${bits}` : ''} (Already accounted for in daily steps and calories)`)
+        `time ${c.durationMin != null ? `${n(c.durationMin)} min` : DASH}`,
+        `distance ${c.distanceM != null ? `${n(c.distanceM / 1000, 2)} km` : DASH}`,
+        `pace ${pace != null ? formatPace(pace) : DASH}`,
+        `active ${c.kcal != null ? `${n(c.kcal)} kcal` : DASH}`,
+        `total ${c.totalKcal != null ? `${n(c.totalKcal)} kcal` : DASH}`,
+        `avg HR ${c.avgHr != null ? n(c.avgHr) : DASH}`,
+        `effort ${c.effort != null ? `${n(c.effort, 1)}/10` : DASH}`,
+      ].join(' · ')
+      L.push(`    ${cardioLabel(c.kind)} · ${bits} (Already accounted for in daily steps and calories)`)
     }
   }
   L.push('')
