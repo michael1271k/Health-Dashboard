@@ -116,7 +116,15 @@ export function useTimelineWeeks(era: EraFilter) {
       byWeek.set(ws, a)
     }
 
-    const reportByWeek = new Map((reports ?? []).map((r) => [r.week_start, r]))
+    // One report per week, and the one with a NARRATIVE wins. `useReports`
+    // fetches every type, so a week can hold both a Notion-era stats-only
+    // 'weekly' row and the pasted 'sentinel7' report — and a plain Map keeps
+    // whichever arrived last, which silently hid the report you actually wrote.
+    const reportByWeek = new Map<string, NonNullable<typeof reports>[number]>()
+    for (const r of reports ?? []) {
+      const prev = reportByWeek.get(r.week_start)
+      if (!prev || (!prev.content_md && r.content_md)) reportByWeek.set(r.week_start, r)
+    }
     const weekStarts = new Set<string>([...byWeek.keys(), ...reportByWeek.keys()])
     // The CURRENT week must open the instant it begins (00:00 Sunday), even
     // before any workout is logged — otherwise the new week only pops into

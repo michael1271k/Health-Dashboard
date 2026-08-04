@@ -27,6 +27,7 @@ import { useEraFilter } from '@/lib/era/eraFilter'
 const MarkdownView = dynamic(() => import('@/components/reports/MarkdownView').then((m2) => m2.MarkdownView), { ssr: false })
 import { Sheet } from '@/components/ui/Sheet'
 import { DayCard } from '@/components/timeline/ContinuumTimeline'
+import { SwapDayControl, RestTodayButton } from '@/components/day/SwapDayControl'
 import { GOLD, EMERALD, OXIDE, SAPPHIRE } from '@/lib/theme/palette'
 
 const label = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
@@ -87,6 +88,9 @@ export function PathfinderTimeline() {
   const { data: continuumDays } = useContinuum(true)
   const liveWeekStart = weekStartOf(logicalTodayISO())
   const [overrides, setOverrides] = useState<Record<string, boolean>>({})
+  // Rescheduling from the timeline: hold a day row (or tap its ⇄) to move it.
+  const [swapDate, setSwapDate] = useState<string | null>(null)
+  const openSwap = useCallback((date: string) => setSwapDate(date), [])
 
   // Group every logged/tracked day under its Sunday week, filtered at the day
   // level by the training-era boundary (so the boundary week doesn't leak PPL
@@ -165,11 +169,24 @@ export function PathfinderTimeline() {
                 open={isOpen(n.weekStart)}
                 onToggle={toggle}
                 onOpenDay={openDay}
+                onSwapDay={openSwap}
               />
             ))}
           </div>
         </div>
       )}
+
+      {/* Reschedule sheet — reached by holding a day row or tapping its ⇄.
+          Retroactive as well as forward: the timeline is where you notice that
+          a week went sideways, so it is where fixing it belongs. */}
+      <Sheet open={swapDate != null} onClose={() => setSwapDate(null)} title={swapDate ? `Reschedule ${swapDate}` : ''}>
+        {swapDate && (
+          <div className="space-y-3">
+            <RestTodayButton date={swapDate} label="Make it a rest day" />
+            <SwapDayControl date={swapDate} bare />
+          </div>
+        )}
+      </Sheet>
     </div>
   )
 }
@@ -190,10 +207,15 @@ const WeekCapsule = memo(forwardRef<HTMLDivElement, {
   open: boolean
   onToggle: (weekStart: string) => void
   onOpenDay: (date: string) => void
-}>(function WeekCapsule({ node, days, unit, ready, complete, open, onToggle, onOpenDay }, ref) {
+  onSwapDay: (date: string) => void
+}>(function WeekCapsule({ node, days, unit, ready, complete, open, onToggle, onOpenDay, onSwapDay }, ref) {
   const color = useMemo(() => splitColor(dominantSplit(node.days)), [node.days])
   const hasPRs = node.prs > 0
   const handleToggle = useCallback(() => onToggle(node.weekStart), [onToggle, node.weekStart])
+  // A week that HAS a report gets a direct link on the capsule itself. It used
+  // to live inside WeekActions, below the day rows, the recovery strip and the
+  // inline body — three scrolls and an expand away from a thing you return to.
+  const reportHref = node.reportId && node.contentMd ? `/report/${node.reportId}` : null
 
   return (
     <m.div ref={ref} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
@@ -204,38 +226,51 @@ const WeekCapsule = memo(forwardRef<HTMLDivElement, {
 
       {/* READY WEEK: every scheduled training day done. A gold halo + a slow
           breathe — opacity-only so it costs one compositor layer and respects
-          reduced motion via the global .aura-breathe guard. */}
-      <button onClick={handleToggle} onPointerUp={blurOnTap}
-        className={`helix-card w-full text-left px-4 py-3.5 active:opacity-90 relative ${ready ? 'aura-breathe' : ''}`}
+          reduced motion via the global .aura-breathe guard.
+          The card is a ROW, not a button: the report link has to be a sibling of
+          the toggle, since a link inside a button is neither valid nor tappable. */}
+      <div className={`helix-card w-full !px-0 !py-0 flex items-stretch relative overflow-hidden ${ready ? 'aura-breathe' : ''}`}
         style={ready
           ? { borderColor: `${GOLD}66`, boxShadow: `0 0 28px ${GOLD}33, inset 0 1px 0 ${GOLD}2e` }
           : { borderColor: `${color}33` }}>
-        <div className="flex items-center justify-between gap-2">
-          <span className="font-heading font-semibold text-fluid-sm text-text truncate">
-            {node.weekLabel} · {label(node.weekStart)}–{label(isoAddDays(node.weekStart, 6))}
-          </span>
-          <span className="flex items-center gap-2 shrink-0">
-            {/* COMPLETE means the week is OVER, not that you finished its work
-                early — this was gated on `ready` and so appeared mid-week. */}
-            {complete && (
-              <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded"
-                style={{ color: GOLD, background: `${GOLD}1a`, border: `1px solid ${GOLD}55` }}>Complete</span>
-            )}
-            {node.isLive && <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded" style={{ color, background: `${color}1a`, border: `1px solid ${color}44` }}>Live</span>}
-            <ChevronRight className={`w-4 h-4 text-muted transition-transform ${open ? 'rotate-90' : ''}`} aria-hidden="true" />
-          </span>
-        </div>
-        <div className="flex items-center gap-3 mt-1.5 text-fluid-xs text-muted">
-          <span className="flex items-center gap-1"><Dumbbell className="w-3 h-3" />{node.sessions}</span>
-          {node.volumeKg > 0 && <span className="helix-num">{((displayWeight(node.volumeKg) ?? 0) / 1000).toFixed(1)}t</span>}
-          {hasPRs && <span className="flex items-center gap-1" style={{ color: GOLD }}><Trophy className="w-3 h-3" />{node.prs}</span>}
-          {node.weightDelta != null && (
-            <span className="helix-num" style={{ color: node.weightDelta <= 0 ? EMERALD : OXIDE }}>
-              {node.weightDelta > 0 ? '+' : ''}{node.weightDelta}{weightUnit()}
+        <button onClick={handleToggle} onPointerUp={blurOnTap}
+          className="flex-1 min-w-0 text-left px-4 py-3.5 active:opacity-90">
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-heading font-semibold text-fluid-sm text-text truncate">
+              {node.weekLabel} · {label(node.weekStart)}–{label(isoAddDays(node.weekStart, 6))}
             </span>
-          )}
-        </div>
-      </button>
+            <span className="flex items-center gap-2 shrink-0">
+              {/* COMPLETE means the week is OVER, not that you finished its work
+                  early — this was gated on `ready` and so appeared mid-week. */}
+              {complete && (
+                <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded"
+                  style={{ color: GOLD, background: `${GOLD}1a`, border: `1px solid ${GOLD}55` }}>Complete</span>
+              )}
+              {node.isLive && <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded" style={{ color, background: `${color}1a`, border: `1px solid ${color}44` }}>Live</span>}
+              <ChevronRight className={`w-4 h-4 text-muted transition-transform ${open ? 'rotate-90' : ''}`} aria-hidden="true" />
+            </span>
+          </div>
+          <div className="flex items-center gap-3 mt-1.5 text-fluid-xs text-muted">
+            <span className="flex items-center gap-1"><Dumbbell className="w-3 h-3" />{node.sessions}</span>
+            {node.volumeKg > 0 && <span className="helix-num">{((displayWeight(node.volumeKg) ?? 0) / 1000).toFixed(1)}t</span>}
+            {hasPRs && <span className="flex items-center gap-1" style={{ color: GOLD }}><Trophy className="w-3 h-3" />{node.prs}</span>}
+            {node.weightDelta != null && (
+              <span className="helix-num" style={{ color: node.weightDelta <= 0 ? EMERALD : OXIDE }}>
+                {node.weightDelta > 0 ? '+' : ''}{node.weightDelta}{weightUnit()}
+              </span>
+            )}
+          </div>
+        </button>
+
+        {reportHref && (
+          <Link href={reportHref} onPointerUp={blurOnTap} aria-label={`Open the ${node.weekLabel} report`}
+            className="shrink-0 self-stretch w-14 flex flex-col items-center justify-center gap-0.5 border-l active:opacity-80 transition-colors"
+            style={{ borderColor: `${GOLD}2e`, background: `${GOLD}12`, color: GOLD }}>
+            <BookOpen className="w-4 h-4" aria-hidden="true" />
+            <span className="text-[8px] font-bold uppercase tracking-wide">Report</span>
+          </Link>
+        )}
+      </div>
 
       <AnimatePresence initial={false}>
         {open && (
@@ -245,7 +280,9 @@ const WeekCapsule = memo(forwardRef<HTMLDivElement, {
               {/* Individual day rows (the merged-in Journey continuum) */}
               {days.length > 0 && (
                 <div className="space-y-1.5">
-                  {days.map((d) => <DayCard key={d.date} d={d} unit={unit} active={false} onOpen={onOpenDay} />)}
+                  {days.map((d) => (
+                    <DayCard key={d.date} d={d} unit={unit} active={false} onOpen={onOpenDay} onSwap={onSwapDay} />
+                  ))}
                 </div>
               )}
 
@@ -341,7 +378,6 @@ function WeekActions({ node }: { node: TimelineWeekNode }) {
   const saveSentinel = useSaveSentinelReport()
   const [copied, setCopied] = useState(false)
   const [pasteOpen, setPasteOpen] = useState(false)
-  const [reportOpen, setReportOpen] = useState(false)
   const [draft, setDraft] = useState('')
 
   const stored = summaries?.find((s) => s.weekStart === node.weekStart)
@@ -377,20 +413,10 @@ function WeekActions({ node }: { node: TimelineWeekNode }) {
             : <><ClipboardCopy className="w-4 h-4" /> Copy raw data</>}
         </button>
 
-        {storedSentinel ? (
-          <Link href={`/report/${storedSentinel.id}`} className="btn-glass min-h-[40px] text-fluid-xs"
-            style={{ borderColor: `${GOLD}55`, color: GOLD }}>
-            <BookOpen className="w-4 h-4" /> Open audit
-          </Link>
-        ) : null}
-
-        {stored ? (
-          <button onClick={() => setReportOpen(true)} className="btn-glass min-h-[40px] text-fluid-xs"
-            style={{ borderColor: `${GOLD}55`, color: GOLD }}>
-            <BookOpen className="w-4 h-4" /> Open report
-          </button>
-        ) : null}
-
+        {/* No "Open report" button here any more — the capsule header carries a
+            direct link to /report/[id], which is the full document surface
+            (charts, print, a URL you can keep). Two ways in, one of them worse,
+            was the "digging through menus" this replaced. */}
         <button onClick={() => { setDraft(storedSentinel?.content ?? stored?.content ?? ''); setPasteOpen(true) }}
           className="btn-glass min-h-[40px] text-fluid-xs">
           <Sparkles className="w-4 h-4" /> {storedSentinel || stored ? 'Replace report' : 'Paste report'}
@@ -435,10 +461,6 @@ function WeekActions({ node }: { node: TimelineWeekNode }) {
           )}
         </div>
       )}
-
-      <Sheet open={reportOpen} onClose={() => setReportOpen(false)} title={`${node.weekLabel} · AI report`}>
-        {stored && <MarkdownView md={stored.content} />}
-      </Sheet>
     </div>
   )
 }
