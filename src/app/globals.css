@@ -428,33 +428,6 @@ html[data-theme='travel'] {
   /* Sticky input bars sit above the keyboard + home indicator. */
   .keyboard-safe { padding-bottom: max(0.5rem, env(safe-area-inset-bottom)); }
 
-  /* ── Full-bleed routes ──────────────────────────────────────────
-     A route that wants the whole screen — the report reader, which is a
-     document rather than a dashboard panel — marks its root
-     `data-fullbleed` and the app shell gives up its gutters.
-
-     Done in CSS via :has() rather than by branching the layout, because
-     the padding lives on <main> in the ROOT layout, above every route
-     group, and a nested layout cannot reach up to remove it.
-
-     Reclaimed: the top padding and the horizontal gutters, plus the 7xl
-     measure. NOT reclaimed: `pb-28`, which is the bottom-nav clearance —
-     a document that scrolls under the tab bar is not immersive, it is
-     broken. The desktop sidebar offset is restored at md/xl for the same
-     reason: full-bleed means edge of the CONTENT AREA, not under the nav. */
-  [data-fullbleed] { width: 100%; }
-  body:has([data-fullbleed]) main#main-content {
-    padding-top: 0;
-    padding-left: 0;
-    padding-right: 0;
-  }
-  body:has([data-fullbleed]) .app-shell-container { max-width: none; }
-  @media (min-width: 768px) {
-    body:has([data-fullbleed]) main#main-content { padding-left: 16rem; }
-  }
-  @media (min-width: 1280px) {
-    body:has([data-fullbleed]) main#main-content { padding-left: 18rem; }
-  }
 
   /* Hidden scrollbar for swipe decks / horizontal snap rows. */
   .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
@@ -734,4 +707,39 @@ html[data-reduce-motion='true'] .sync-breathe { animation: none !important; }
 
   .report-print { max-width: none !important; padding: 0 !important; }
   @page { margin: 14mm; }
+}
+
+/* ── Full-bleed routes ────────────────────────────────────────────────────────
+   A route that wants the whole screen — the report reader, which is a document
+   rather than a dashboard panel — marks its root `data-fullbleed` and the app
+   shell gives up its gutters.
+
+   Done with :has() rather than by branching the layout, because the padding
+   lives on <main> in the ROOT layout, above every route group, and a nested
+   layout cannot reach up to remove it.
+
+   DELIBERATELY UNLAYERED. Written inside `@layer components` first, and two of
+   the four declarations silently lost: `padding-top` to `pt-4`/`md:pt-8` and
+   `max-width` to `.max-w-7xl`. Not a specificity problem — cascade LAYER ORDER
+   is decided before specificity, and Tailwind's utilities layer comes after
+   components, so a utility class beats any component-layer rule however
+   specific. Unlayered styles outrank every layer, which is the correct tool for
+   an intentional override of a utility.
+
+   Reclaimed: top padding, horizontal gutters, the 7xl measure. NOT reclaimed:
+   `pb-28`, which is bottom-nav clearance — a document scrolling under the tab
+   bar is not immersive, it is broken. The desktop sidebar offset is restored at
+   md/xl for the same reason: full-bleed means the edge of the CONTENT AREA. */
+[data-fullbleed] { width: 100%; }
+body:has([data-fullbleed]) main#main-content {
+  padding-top: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
+body:has([data-fullbleed]) .app-shell-container { max-width: none; }
+@media (min-width: 768px) {
+  body:has([data-fullbleed]) main#main-content { padding-left: 16rem; }
+}
+@media (min-width: 1280px) {
+  body:has([data-fullbleed]) main#main-content { padding-left: 18rem; }
 }

@@ -147,9 +147,12 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
       */}
       <header
         data-print-hide
-        className="sticky top-0 z-30 safe-pt backdrop-blur-xl border-b"
+        className="sticky top-0 z-30 safe-pt backdrop-blur-2xl border-b"
         style={{
-          background: 'color-mix(in srgb, var(--color-bg, #0A0B0D) 82%, transparent)',
+          // 82% let the table underneath read straight THROUGH the bar — a
+          // blurred header is meant to suggest depth, not compete with the
+          // document. Blur alone can't fix that; the fill has to carry it.
+          background: 'color-mix(in srgb, var(--color-bg, #0A0B0D) 95%, transparent)',
           borderColor: rgb ? `rgba(${rgb},0.22)` : 'rgba(255,255,255,0.08)',
         }}
       >
