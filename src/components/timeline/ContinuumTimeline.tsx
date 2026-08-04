@@ -1,7 +1,7 @@
 'use client'
 
-import { memo, useMemo, useState } from 'react'
-import { Dumbbell, FolderOpen, Footprints, Moon } from 'lucide-react'
+import { memo, useCallback, useMemo, useRef, useState } from 'react'
+import { Dumbbell, FolderOpen, Footprints, Moon, Repeat } from 'lucide-react'
 import { useContinuum, type ContinuumDay } from '@/lib/hooks/useContinuum'
 import { getWeekPhase, type WeekPhase } from '@/lib/phases'
 import { eraForDate, programDayLabel } from '@/lib/programs'
@@ -44,27 +44,56 @@ function MacroBar({ label, g, target, color }: { label: string; g: number | null
   )
 }
 
+/** How long a press has to last before it means "swap", not "open". */
+const HOLD_MS = 480
+
 /**
  * Day row — Apple-clean: score dot · date · calories on the top line, three
  * colored macro sliders, then the workout name + volume. The workout label
  * resolves from day_key (so a Tuesday arms day reads "Delts & Arms", never
  * "Upper"). content-visibility keeps offscreen history unrendered.
+ *
+ * `onSwap` opts the row into rescheduling: press and hold, or tap the ⇄ affordance.
+ * Both are wired, because a long-press nobody can see is a feature nobody finds,
+ * and a visible button is the only one that works with a keyboard.
  */
-export const DayCard = memo(function DayCard({ d, unit, active, onOpen }: {
+export const DayCard = memo(function DayCard({ d, unit, active, onOpen, onSwap }: {
   d: ContinuumDay
   unit: string
   active: boolean
   onOpen: (date: string) => void
+  onSwap?: (date: string) => void
 }) {
   const day = new Date(d.date + 'T00:00:00')
   const sc = scoreColor(d.score)
   const workoutLabel = d.session ? programDayLabel(d.session.dayKey, d.session.split) : null
   const vol = d.session?.volumeKg != null ? fmtVolume(displayWeight(d.session.volumeKg)) : null
-  return (
-    <button onClick={() => onOpen(d.date)} onPointerUp={blurOnTap} aria-current={active ? 'date' : undefined}
-      className="w-full rounded-xl px-3 py-2.5 text-left border transition-colors active:opacity-80"
+
+  // A hold that fired must swallow the click it is about to produce, or the row
+  // opens the Nexus underneath the sheet it just launched.
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const held = useRef(false)
+  const endHold = useCallback(() => {
+    if (timer.current) clearTimeout(timer.current)
+    timer.current = null
+  }, [])
+  const startHold = useCallback(() => {
+    if (!onSwap) return
+    held.current = false
+    timer.current = setTimeout(() => { held.current = true; onSwap(d.date) }, HOLD_MS)
+  }, [onSwap, d.date])
+
+  const card = (
+    <button
+      onClick={() => { if (held.current) { held.current = false; return } onOpen(d.date) }}
+      onPointerDown={startHold} onPointerUp={(e) => { endHold(); blurOnTap(e) }}
+      onPointerLeave={endHold} onPointerCancel={endHold}
+      onContextMenu={(e) => { if (onSwap) e.preventDefault() }}
+      aria-current={active ? 'date' : undefined}
+      className={`w-full rounded-xl py-2.5 pl-3 text-left border transition-colors active:opacity-80 ${onSwap ? 'pr-10' : 'pr-3'}`}
       style={{
         contentVisibility: 'auto', containIntrinsicSize: 'auto 88px',
+        WebkitTouchCallout: 'none',
         background: active ? '#E0703C14' : 'rgba(255,255,255,0.02)',
         borderColor: active ? '#E0703C66' : 'rgba(255,255,255,0.06)',
         boxShadow: active ? '0 0 14px #E0703C33' : undefined,
@@ -106,6 +135,18 @@ export const DayCard = memo(function DayCard({ d, unit, active, onOpen }: {
         )}
       </div>
     </button>
+  )
+
+  if (!onSwap) return card
+  return (
+    <div className="relative">
+      {card}
+      <button type="button" onClick={() => onSwap(d.date)} onPointerUp={blurOnTap}
+        aria-label={`Reschedule ${d.date}`}
+        className="absolute right-0.5 top-1/2 -translate-y-1/2 h-9 w-9 rounded-lg flex items-center justify-center text-muted hover:text-text hover:bg-white/[0.06] transition-colors">
+        <Repeat className="w-3.5 h-3.5" aria-hidden="true" />
+      </button>
+    </div>
   )
 })
 

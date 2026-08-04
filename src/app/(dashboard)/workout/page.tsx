@@ -7,7 +7,8 @@ import { useExerciseMap, useRoutineMemory, routineMemoryMap, useLatestSessionFla
 import { useWeekSessions, weekStartOf } from '@/lib/hooks/useWeekSessions'
 import { WeeklySummaryCard } from '@/components/command-center/WeeklySummaryCard'
 import { PostWorkoutSummary } from '@/components/command-center/PostWorkoutSummary'
-import { SwapDayControl } from '@/components/day/SwapDayControl'
+import { SwapDayControl, RestTodayButton } from '@/components/day/SwapDayControl'
+import { RestSuggestion } from '@/components/day/RestSuggestion'
 import { ProgressionAlerts } from '@/components/command-center/ProgressionAlerts'
 import { peekSessionDraft, type SessionDraft } from '@/lib/sessions/draft'
 import {
@@ -102,22 +103,30 @@ export default function WorkoutPage() {
           <span className="text-fluid-xs text-muted ml-auto">{todayWD} · Today</span>
         </div>
         {training && todayDay ? (
-          <div className="flex items-end justify-between gap-4">
-            <div className="min-w-0">
-              <h2 className="split-label font-bold text-fluid-2xl leading-tight" style={{ color: todayDay.color }}>{todayDay.label}</h2>
-              {todayDay.sub && <p className="text-fluid-sm text-muted">{todayDay.sub}</p>}
-              <p className="text-[11px] text-muted mt-1">
-                {todayDay.exercises.length} exercises · {todayDay.exercises.reduce((n, e) => n + e.sets, 0)} sets
-              </p>
+          <>
+            {/* Under-recovered? Offer the swap before the session, not after. */}
+            <RestSuggestion date={today} dayLabel={todayDay.label} />
+            <div className="flex items-end justify-between gap-4">
+              <div className="min-w-0">
+                <h2 className="split-label font-bold text-fluid-2xl leading-tight" style={{ color: todayDay.color }}>{todayDay.label}</h2>
+                {todayDay.sub && <p className="text-fluid-sm text-muted">{todayDay.sub}</p>}
+                <p className="text-[11px] text-muted mt-1">
+                  {todayDay.exercises.length} exercises · {todayDay.exercises.reduce((n, e) => n + e.sets, 0)} sets
+                </p>
+              </div>
+              {/* A training day used to offer Log and nothing else — the one
+                  branch with no way to say "not today", which is precisely the
+                  branch you're standing in when you slept four hours. */}
+              <div className="flex flex-col gap-1.5 shrink-0 items-stretch">
+                <button onClick={() => openDeck(todayDay.key)}
+                  className="btn-primary min-h-[48px]"
+                  style={{ background: todayDay.color, boxShadow: `0 0 18px ${todayDay.color}55` }}>
+                  <Plus className="w-4 h-4" /> Log {todayDay.label}
+                </button>
+                <RestTodayButton date={today} />
+              </div>
             </div>
-            <div className="flex flex-col gap-1.5 shrink-0">
-              <button onClick={() => openDeck(todayDay.key)}
-                className="btn-primary min-h-[48px]"
-                style={{ background: todayDay.color, boxShadow: `0 0 18px ${todayDay.color}55` }}>
-                <Plus className="w-4 h-4" /> Log {todayDay.label}
-              </button>
-            </div>
-          </div>
+          </>
         ) : (
           <div className="flex items-center gap-4">
             <span className="w-12 h-12 rounded-full flex items-center justify-center shrink-0"

@@ -7,7 +7,8 @@ import { ArrowLeft, Dumbbell, Moon, Flame, ChevronRight, ChevronLeft } from 'luc
 import { CompletenessArc } from '@/components/day/CompletenessArc'
 import { BodyPanel } from '@/components/day/BodyPanel'
 import { SleepDebtGauge } from '@/components/day/SleepDebtGauge'
-import { SwapDayControl } from '@/components/day/SwapDayControl'
+import { SwapDayControl, RestTodayButton } from '@/components/day/SwapDayControl'
+import { RestSuggestion } from '@/components/day/RestSuggestion'
 import { DomsTracker } from '@/components/day/RecoveryTrackers'
 import { CardioLogger } from '@/components/day/CardioLogger'
 import { WaterHelix } from '@/components/day/WaterHelix'
@@ -397,6 +398,11 @@ export default function DailyNexusPage() {
         <>
           <SectionTitle>The Workout</SectionTitle>
           <section className="helix-card space-y-3" style={{ borderColor: `${CYAN}26` }}>
+            {/* Only for the day you're actually living — a low battery three
+                weeks ago is history, not a decision. */}
+            {date === logicalTodayISO() && schedule !== 'rest' && (
+              <RestSuggestion date={date} dayLabel={schedule.label} />
+            )}
             <p className="text-fluid-sm text-text font-medium">
               No session logged for {schedule !== 'rest' ? schedule.label : 'today'} yet.
             </p>
@@ -406,6 +412,7 @@ export default function DailyNexusPage() {
                 <Dumbbell className="w-4 h-4" aria-hidden="true" /> Log {schedule.label}
               </Link>
             )}
+            <RestTodayButton date={date} label="Rest day" />
             <SwapDayControl date={date} />
           </section>
         </>
