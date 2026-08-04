@@ -12,6 +12,76 @@ export interface WeekPhase {
   short: string         // compact label for the calendar cell, e.g. "Cut W3" / "Peak"
   eraTag: string        // era-distinct badge text: "PPL Cut" vs "Helix Cut"
   era: 'ppl' | 'helix'
+  /** The phase on its own — "Cut", "Lean Bulk", "Maintenance Week". */
+  name: string
+  /** Week number within the phase, or null on an unnumbered phase. */
+  n: number | null
+}
+
+// ─── THE global phase palette ────────────────────────────────────────────────
+/**
+ * One source for "what colour is a Cut". These used to live inside
+ * `phaseBadgeStyle` as bare RGB triples, which meant every surface that wanted
+ * a phase colour without a badge — the timeline week headers, most obviously —
+ * either hardcoded a hex or fell back to steel. The Momentum week headers were
+ * grey regardless of phase for exactly that reason.
+ *
+ * Cut is fiery, bulk is growth-green, maintenance is sleek steel, and peak
+ * keeps its bright teal (it is a distinct kind, not part of the cut/bulk/maint
+ * convention).
+ */
+export const PHASE_RGB: Record<PhaseKind, string> = {
+  cut: '224,101,60',          // #E0653C — fiery orange/red
+  peak: '22,245,195',         // #16F5C3 — living teal
+  bulk: '62,158,122',         // #3E9E7A — deep green
+  maintenance: '142,154,172', // #8E9AAC — sleek steel
+}
+
+/** The desaturated PPL-legacy variants, so two Cut eras can never be confused. */
+const PPL_RGB = { default: '139,151,178', maintenance: '230,198,140' } as const
+
+/** Phase colour as an `rgb()` triple, era-aware. */
+export function phaseRgb(kind: PhaseKind, era: 'ppl' | 'helix' = 'helix'): string {
+  if (era !== 'ppl') return PHASE_RGB[kind]
+  // The Thailand deload is the sole PPL 'maintenance' phase and gets a warm
+  // sand tone so the vacation reads distinctly in the timeline.
+  return kind === 'maintenance' ? PPL_RGB.maintenance : PPL_RGB.default
+}
+
+/** Phase colour as a hex-equivalent `rgb(...)` string, for `color`/`background`. */
+export function phaseColor(kind: PhaseKind, era: 'ppl' | 'helix' = 'helix'): string {
+  return `rgb(${phaseRgb(kind, era)})`
+}
+
+export interface WeekChip {
+  /** "Helix-5" / "Push/Pull/Legs" — supplied by the caller, which knows the plan. */
+  plan: string
+  /** "Cut" / "Lean Bulk" / "Maintenance Week" */
+  phase: string
+  /** "Wk 3", or null on an unnumbered phase. */
+  week: string | null
+  rgb: string
+  color: string
+}
+
+/**
+ * The compact week identity: `[Plan] · [Phase] · [Wk N]`.
+ *
+ * Replaces `WeekPhase.label` ("Helix Cut · Week 3") on glanceable surfaces,
+ * which crammed the plan and the phase into one run-on tag and told you nothing
+ * about which programme you were running. The plan label is a parameter rather
+ * than an import so this module stays free of a programs.ts dependency.
+ */
+export function weekChip(weekStartISO: string, planLabel: string): WeekChip | null {
+  const phase = getWeekPhase(weekStartISO)
+  if (!phase) return null
+  return {
+    plan: planLabel,
+    phase: phase.name,
+    week: phase.n != null ? `Wk ${phase.n}` : null,
+    rgb: phaseRgb(phase.kind, phase.era),
+    color: phaseColor(phase.kind, phase.era),
+  }
 }
 
 interface PhaseDef {
@@ -91,9 +161,9 @@ export function getWeekPhase(weekStartISO: string): WeekPhase | null {
         const eraTag = p.eraTag ?? p.name
         if (p.numbered) {
           const n = i + (p.firstWeek ?? 1)
-          return { kind: p.kind, label: `${eraTag} · Week ${n}`, short: `${p.short ?? p.name} W${n}`, eraTag, era }
+          return { kind: p.kind, label: `${eraTag} · Week ${n}`, short: `${p.short ?? p.name} W${n}`, eraTag, era, name: p.name, n }
         }
-        return { kind: p.kind, label: eraTag, short: p.short ?? p.name, eraTag, era }
+        return { kind: p.kind, label: eraTag, short: p.short ?? p.name, eraTag, era, name: p.name, n: null }
       }
     }
   }
@@ -102,23 +172,7 @@ export function getWeekPhase(weekStartISO: string): WeekPhase | null {
 
 /** Glow / color styling per phase kind for the calendar badge (PPL era = muted gray). */
 export function phaseBadgeStyle(kind: PhaseKind, selected: boolean, era: 'ppl' | 'helix' = 'helix'): import('react').CSSProperties {
-  // Bioluminescent spectrum; the legacy PPL era renders desaturated so the two
-  // Cut eras can never be visually confused.
-  // Standardized globally: Cut = red/orange, Bulk = green, Maintenance = steel
-  // (peak keeps its bright teal — it's a distinct kind, not part of the cut/bulk/
-  // maint colour convention).
-  const palette: Record<PhaseKind, string> = {
-    cut: '224,101,60',          // red/orange (#E0653C)
-    peak: '22,245,195',         // living teal
-    bulk: '62,158,122',         // green (#3E9E7A)
-    maintenance: '142,154,172', // steel (#8E9AAC)
-  }
-  // Legacy PPL era renders desaturated gray so the two Cut eras never confuse —
-  // EXCEPT the Thailand deload (the sole PPL 'maintenance' phase), which gets a
-  // warm sand tone so the vacation reads distinctly in the timeline.
-  const rgb = era === 'ppl'
-    ? (kind === 'maintenance' ? '230,198,140' : '139,151,178')
-    : palette[kind]
+  const rgb = phaseRgb(kind, era)
   return {
     background: `rgba(${rgb},0.12)`,
     border: `1px solid rgba(${rgb},0.40)`,

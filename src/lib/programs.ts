@@ -283,6 +283,19 @@ export function activeProgram(programId: string = getActiveProgramId(), phase: P
   return forPhase(p, phase)
 }
 
+/**
+ * The plan that was in force on a DATE, not the one selected today.
+ *
+ * The timeline shows years of history: labelling a June week with the plan
+ * you're running in August rewrites what actually happened. Era is the boundary
+ * that already exists for exactly this (eraForDate), so PPL-era dates resolve to
+ * the legacy plan and Helix-era dates to the active one.
+ */
+export function programForDate(dateISO: string): Program {
+  if (eraForDate(dateISO) === 'ppl') return PROGRAMS.ppl ?? PROGRAMS[DEFAULT_PROGRAM_ID]
+  return activeProgram()
+}
+
 /** Weekday → day for a program (or 'rest'). */
 export function programDayFor(programId: string, weekday: number): ProgramDay | 'rest' {
   const p = PROGRAMS[programId] ?? APEX51

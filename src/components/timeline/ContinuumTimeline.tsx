@@ -3,7 +3,8 @@
 import { memo, useCallback, useMemo, useRef, useState } from 'react'
 import { Dumbbell, FolderOpen, Footprints, Moon, Repeat } from 'lucide-react'
 import { useContinuum, type ContinuumDay } from '@/lib/hooks/useContinuum'
-import { getWeekPhase, type WeekPhase } from '@/lib/phases'
+import { getWeekPhase, phaseRgb, type WeekPhase } from '@/lib/phases'
+import { WeekChipLabel } from '@/components/timeline/WeekChip'
 import { eraForDate, programDayLabel } from '@/lib/programs'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { displayWeight, useUnitSystem, fmtVolume } from '@/lib/utils/units'
@@ -155,14 +156,17 @@ const WeekHeader = memo(function WeekHeader({ weekStart, phase, onOpenWeek }: {
   phase: WeekPhase | null
   onOpenWeek: (weekStart: string) => void
 }) {
-  const helix = phase?.era === 'helix'
-  const color = phase ? (helix ? '#8E9AAC' : STEEL) : STEEL
+  // The header used to colour itself by ERA — grey for Helix, grey for PPL — so
+  // a Cut week and a Bulk week were visually identical. It reads the phase now.
+  const rgb = phase ? phaseRgb(phase.kind, phase.era) : null
+  const color = rgb ? `rgb(${rgb})` : STEEL
   const label = phase?.label ?? `Week of ${new Date(weekStart + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`
   return (
     <div className="flex items-center gap-2 pt-3 pb-1">
-      <span className="h-2 w-2 rounded-full border-2 shrink-0" style={{ borderColor: color, boxShadow: helix ? `0 0 8px ${color}66` : undefined }} aria-hidden="true" />
-      <span className="text-[10px] font-bold uppercase tracking-[0.18em] truncate" style={{ color }}>{label}</span>
-      <span className="h-px flex-1" style={{ background: `${color}30` }} />
+      <span className="h-2 w-2 rounded-full border-2 shrink-0"
+        style={{ borderColor: color, boxShadow: rgb ? `0 0 8px rgba(${rgb},0.45)` : undefined }} aria-hidden="true" />
+      <WeekChipLabel weekStart={weekStart} className="min-w-0" />
+      <span className="h-px flex-1" style={{ background: rgb ? `rgba(${rgb},0.22)` : `${STEEL}30` }} />
       <button onClick={() => onOpenWeek(weekStart)} onPointerUp={blurOnTap} className="p-1.5 rounded-lg hover:bg-white/[0.06] min-h-[32px]" style={{ color }}
         aria-label={`Open files for ${label}`}>
         <FolderOpen className="w-3.5 h-3.5" />

@@ -21,6 +21,7 @@ import { logicalTodayISO } from '@/lib/utils/day'
 import { displayWeight, weightUnit, useUnitSystem } from '@/lib/utils/units'
 import { eraForDate, isTrainingDay } from '@/lib/programs'
 import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
+import { WeekChipLabel } from '@/components/timeline/WeekChip'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
 import { useEraFilter } from '@/lib/era/eraFilter'
 // react-markdown + remark-gfm is a full parser. It was static here, so every
@@ -130,10 +131,10 @@ export function PathfinderTimeline() {
   // isWeekReady asks isTrainingDay which day was DUE, so a swap changes the
   // answer — and a swap can arrive from another device at any moment.
   const scheduleVersion = useScheduleVersion()
-  const readyWeeks = useMemo(
-    () => new Set(nodes.filter((n) => isWeekReady(n.weekStart, loggedDates, today)).map((n) => n.weekStart)),
-    [nodes, loggedDates, today, scheduleVersion],
-  )
+  const readyWeeks = useMemo(() => {
+    void scheduleVersion   // isTrainingDay reads the store; this is the read
+    return new Set(nodes.filter((n) => isWeekReady(n.weekStart, loggedDates, today)).map((n) => n.weekStart))
+  }, [nodes, loggedDates, today, scheduleVersion])
   const completeWeeks = useMemo(
     () => new Set(nodes.filter((n) => isWeekComplete(n.weekStart, today)).map((n) => n.weekStart)),
     [nodes, today],
@@ -240,8 +241,14 @@ const WeekCapsule = memo(forwardRef<HTMLDivElement, {
         <button onClick={handleToggle} onPointerUp={blurOnTap}
           className="flex-1 min-w-0 text-left px-4 py-3.5 active:opacity-90">
           <div className="flex items-center justify-between gap-2">
-            <span className="font-heading font-semibold text-fluid-sm text-text truncate">
-              {node.weekLabel} · {label(node.weekStart)}–{label(isoAddDays(node.weekStart, 6))}
+            {/* Was `{node.weekLabel} · 19 Jul–25 Jul` — one grey run-on string.
+                The date range is the stable part and stays as the heading; the
+                plan/phase/week identity sits above it as a coloured chip. */}
+            <span className="min-w-0 flex flex-col gap-0.5">
+              <WeekChipLabel weekStart={node.weekStart} />
+              <span className="font-heading font-semibold text-fluid-sm text-text truncate">
+                {label(node.weekStart)}–{label(isoAddDays(node.weekStart, 6))}
+              </span>
             </span>
             <span className="flex items-center gap-2 shrink-0">
               {/* COMPLETE means the week is OVER, not that you finished its work
