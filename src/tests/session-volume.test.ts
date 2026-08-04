@@ -53,8 +53,17 @@ describe('sessionVolumeKg', () => {
     ])).toBe(600 + 100 + 120)
   })
 
-  it('keeps quarter-kg microload volumes at 1 dp', () => {
-    expect(sessionVolumeKg([{ weightKg: 22.25, reps: 9 }])).toBe(200.3)
+  // A quarter-kg plate can only ever land on a quarter, so 2 dp is exact rather
+  // than generous. 1 dp used to report this set as 200.3 — a tenth of a kg the
+  // lifter never moved, and the reason the export and the Session Report
+  // disagreed about the same session's tonnage.
+  it('keeps quarter-kg microload volumes exact, not rounded to a tenth', () => {
+    expect(sessionVolumeKg([{ weightKg: 22.25, reps: 9 }])).toBe(200.25)
+  })
+
+  it('still snaps float representation error away', () => {
+    // 0.1 × 3 is 0.30000000000000004 in binary floating point.
+    expect(sessionVolumeKg([{ weightKg: 0.1, reps: 3 }])).toBe(0.3)
   })
 
   it('treats a pairId with no side as an ordinary set', () => {

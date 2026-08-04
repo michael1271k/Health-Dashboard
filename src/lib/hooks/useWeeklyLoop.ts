@@ -18,6 +18,7 @@ import { protocolForDate } from '@/lib/supplements'
 import { customDoseFor, type CustomSupplement } from '@/lib/hooks/useCustomSupplements'
 import { normalizeSpO2 } from '@/lib/utils/units'
 import { activeKcalOf } from '@/lib/cardio/metrics'
+import type { PrAxis } from '@/lib/training/prEngine'
 
 /**
  * Flatten the supplement protocol into "time · Name — dose" lines, MERGING the
@@ -61,7 +62,7 @@ async function fetchRange(weekStart: string, weekEnd: string) {
 
   // Active Energy, Day Score and Battery are deliberately NOT fetched — none of
   // the three appears in the export any more (see weeklyExport.ts).
-  const [logs, nutrition, sessions, sets, water, supps, doms, bodyComp, cardio, rpe, bodyLedger] = await Promise.all([
+  const [logs, nutrition, sessions, sets, water, supps, doms, bodyComp, cardio, rpe, bodyLedger, skips, prAxes] = await Promise.all([
     supabase.from('daily_logs')
       .select('date, weight_kg, steps, distance_m, training_minutes, sleep_minutes, water_ml, avg_rest_heart_rate, hrv_ms, blood_oxygen')
       .gte('date', weekStart).lte('date', weekEnd),
@@ -104,6 +105,19 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     supabase.from('body_composition')
       .select('date, weight_kg, bmi, body_fat_pct, muscle_pct, water_pct, bone_mineral_pct, visceral_fat, bmr, muscle_mass_kg, fat_free_mass_kg')
       .gte('date', weekStart).lte('date', weekEnd),
+    // Why a weigh-in was skipped. Its OWN query, and deliberately so: the column
+    // is newer than the rest of daily_logs, and folding it into the select above
+    // would make one un-migrated column empty every day of the export rather
+    // than just this field. On error the reason is simply unknown.
+    supabase.from('daily_logs').select('date, weighin_skip_reason')
+      .gte('date', weekStart).lte('date', weekEnd),
+    // WHICH axis each record was set on. Scoped by achieved_on and matched by
+    // session_id, exactly as `useSessionDetail` does it, so the export and the
+    // Session Report can never name a different set of records for one session.
+    // `personal_records` holds one STANDING row per (exercise, axis), so a
+    // record later beaten is absent from both surfaces alike.
+    supabase.from('personal_records').select('session_id, exercise_key, axis')
+      .gte('achieved_on', weekStart).lte('achieved_on', weekEnd),
   ])
 
   return {
@@ -125,6 +139,11 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     }>,
     // session_rpe may not be migrated yet — an error just means nothing rated.
     rpe: (rpe.error ? [] : (rpe.data ?? [])) as unknown as Array<{ id: string; session_rpe: number | null }>,
+    // weighin_skip_reason may not be migrated yet — an error just means no
+    // stated reasons, and the export still says the weigh-in was skipped.
+    skips: (skips.error ? [] : (skips.data ?? [])) as unknown as Array<{ date: string; weighin_skip_reason: string | null }>,
+    // personal_records may be absent — the PRs still list, without their axes.
+    prAxes: (prAxes.error ? [] : (prAxes.data ?? [])) as unknown as Array<{ session_id: string | null; exercise_key: string; axis: PrAxis }>,
   }
 }
 
@@ -140,6 +159,8 @@ function toDays(weekStart: string, d: RangeData): ExportDay[] {
   for (const w of d.water) waterByDate.set(w.date, (waterByDate.get(w.date) ?? 0) + w.amount_ml)
   const suppsByDate = new Map<string, number>()
   for (const s of d.supps) suppsByDate.set(s.date, (suppsByDate.get(s.date) ?? 0) + 1)
+  const skipByDate = new Map<string, string>()
+  for (const s of d.skips) if (s.weighin_skip_reason) skipByDate.set(s.date, s.weighin_skip_reason)
 
   return Array.from({ length: 7 }, (_, i) => {
     const date = isoAddDays(weekStart, i)
@@ -162,6 +183,7 @@ function toDays(weekStart: string, d: RangeData): ExportDay[] {
       hrvMs: l?.hrv_ms ?? null,
       waterMl: waterByDate.get(date) ?? l?.water_ml ?? null,
       supplementsTaken: suppsByDate.get(date) ?? null,
+      weighInSkipReason: skipByDate.get(date) ?? null,
     }
   })
 }
@@ -184,10 +206,36 @@ function dedupePrs(rows: Array<{ name: string; weightKg: number; reps: number }>
   return [...best.values()]
 }
 
+/**
+ * The axes each movement set a record on, in this session.
+ *
+ * Ordered `weight → reps → volume → e1rm` rather than however Postgres returned
+ * them, so the same session exports the same string twice — the export's first
+ * design rule. De-duplicated because a unilateral movement writes one ledger row
+ * per side and both name the same axis.
+ */
+const AXIS_ORDER: PrAxis[] = ['weight', 'reps', 'volume', 'e1rm']
+
+function axesBySession(rows: RangeData['prAxes']) {
+  const byKey = new Map<string, Set<PrAxis>>()
+  for (const r of rows) {
+    if (!r.session_id) continue
+    const key = `${r.session_id}::${r.exercise_key}`
+    const set = byKey.get(key) ?? new Set<PrAxis>()
+    set.add(r.axis)
+    byKey.set(key, set)
+  }
+  return (sessionId: string, name: string): PrAxis[] => {
+    const set = byKey.get(`${sessionId}::${name}`)
+    return set ? AXIS_ORDER.filter((a) => set.has(a)) : []
+  }
+}
+
 /** Shape a fetched range into the export's session rows (with every set). */
 function toSessions(d: RangeData): ExportSession[] {
   const program = activeProgram()
   const rpeById = new Map(d.rpe.map((r) => [r.id, r.session_rpe]))
+  const axesFor = axesBySession(d.prAxes)
   return d.sessions.map((s) => {
     // Warm-ups are KEPT and tagged. They were dropped here, so the export
     // silently hid the ramp-up: a session read as starting at its top load.
@@ -248,7 +296,7 @@ function toSessions(d: RangeData): ExportSession[] {
       // won it (heaviest tonnage, ties to the heavier load).
       prs: dedupePrs(mine.filter((r) => r.is_pr).map((r) => ({
         name: r.exercises.name, weightKg: r.weight_kg, reps: r.reps,
-      }))),
+      }))).map((p) => ({ ...p, axes: axesFor(s.id, p.name) })),
     }
   })
 }

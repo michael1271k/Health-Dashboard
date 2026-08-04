@@ -26,6 +26,7 @@
 import { paceMinPerKm, formatPace } from '@/lib/cardio/metrics'
 import { isTimedExercise } from '@/lib/exercises/timed'
 import { formatSet, isUnloadedSet } from '@/lib/utils/setFormat'
+import { prAxisLabel, type PrAxis } from '@/lib/training/prEngine'
 
 export interface ExportDay {
   date: string                 // YYYY-MM-DD
@@ -46,6 +47,17 @@ export interface ExportDay {
   hrvMs: number | null
   waterMl: number | null
   supplementsTaken: number | null
+  /**
+   * WHY there is no weigh-in, when the day was deliberately skipped.
+   *
+   * A blank weight is ambiguous: it can mean "not weighed", "weighed and the
+   * sync dropped it", or "skipped on purpose because the protocol wasn't met"
+   * (no bowel movement, ate late, travelling). Those are different data points
+   * and only the last one is safe to drop from a trend — so the reason is
+   * exported rather than left to be guessed. Null on days that were weighed,
+   * and on skipped days with no reason recorded.
+   */
+  weighInSkipReason: string | null
 }
 
 /**
@@ -98,8 +110,16 @@ export interface ExportSession {
   /** Borg CR10 session effort, when rated. */
   sessionRpe: number | null
   exercises: ExportExercise[]
-  /** Named PRs set in this session (no est-1RM — raw lift only). */
-  prs: Array<{ name: string; weightKg: number; reps: number }>
+  /**
+   * Named PRs set in this session (no est-1RM VALUE — raw lift only).
+   *
+   * `axes` names WHICH record each lift set — Weight, Reps, Volume, 1RM. "PR on
+   * Hack Squat" is four different claims wearing one word: a heavier top load, a
+   * longer set at the same load, more total tonnage, or a better estimated max.
+   * The axis is the whole meaning, and without it the reader can only guess
+   * which number moved. Empty when the ledger holds no row for the movement.
+   */
+  prs: Array<{ name: string; weightKg: number; reps: number; axes: PrAxis[] }>
 }
 
 export interface ExportDoms {
@@ -169,6 +189,35 @@ const n = (v: number | null | undefined, digits = 0): string =>
 
 /** "Not recorded". Distinct from 0, which would be a claim. */
 const DASH = '—'
+
+/**
+ * A number at FULL precision — no fixed decimal count, no rounding to a
+ * friendlier figure.
+ *
+ * Session volume is the reason this exists. `n()` printed it at 0 dp, so
+ * 8329.25 kg — the exact tonnage the Session Report shows — exported as "8329"
+ * and the two surfaces disagreed about the same session. Volume is a sum of
+ * quarter-kilogram microloads, so its decimals are real work, not noise.
+ *
+ * The 1e-6 snap is a float-representation guard, not a rounding rule: it turns
+ * 8329.249999999999 back into 8329.25 and changes nothing else. `String()`
+ * then drops trailing zeros on its own, so a whole number stays whole.
+ */
+const exact = (v: number | null | undefined): string =>
+  v == null || !Number.isFinite(v) ? DASH : String(Math.round(v * 1e6) / 1e6)
+
+/**
+ * The weigh-in cell: the reading, or the stated reason there isn't one.
+ *
+ * "Skipped, and here is why" and "no data" are different facts. Saying so in
+ * plain English keeps a protocol skip from being read as a missed measurement —
+ * or, worse, as a plateau.
+ */
+const weighIn = (kg: number | null, skipReason: string | null): string => {
+  if (kg != null && Number.isFinite(kg)) return `weight ${n(kg, 1)} kg`
+  const why = skipReason?.trim()
+  return `weight ${DASH} [Skip: ${why || 'no reason recorded'}]`
+}
 
 /** `walk` → `Walk`, `run` → `Run`; anything else passes through capitalised. */
 const cardioLabel = (kind: string): string =>
@@ -318,7 +367,11 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
       `- **${d.weekdayLabel} ${d.date}** · ${d.isTrainingDay ? 'Train' : 'Rest'} · `
       + `sleep ${sleep(d.sleepMin)} · intake ${n(d.calories)} kcal${macros} · `
       + `water ${n(d.waterMl == null ? null : d.waterMl / 1000, 1)} L · ${n(d.steps)} steps · `
-      + `RHR ${n(d.restingHr)} · HRV ${n(d.hrvMs)} · ${workout}`,
+      // The daily weigh-in belongs on the daily line. It used to appear ONLY in
+      // the nested InBody row, which is emitted for full scale readings — so a
+      // weight-only morning exported no weight at all, and a skipped one was
+      // indistinguishable from a day that was never opened.
+      + `RHR ${n(d.restingHr)} · HRV ${n(d.hrvMs)} · ${weighIn(d.weightKg, d.weighInSkipReason)} · ${workout}`,
     )
     const b = bodyByDate.get(d.date)
     if (b) {
@@ -363,7 +416,7 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
   for (const s of sessions) {
     L.push(`### ${s.date} · ${s.label}`)
     // Volume · sets · failures · time · kcal burned · avg HR — all metadata.
-    L.push(`${n(s.volumeKg)} kg volume · ${n(s.setCount)} sets · ${n(s.failureSets)} to failure`
+    L.push(`${exact(s.volumeKg)} kg volume · ${n(s.setCount)} sets · ${n(s.failureSets)} to failure`
       + ` · ${n(s.durationMin)} min · ${n(s.caloriesBurned)} kcal`
       + `${s.avgBpm != null ? ` · avg HR ${n(s.avgBpm)}` : ''}`
       // Borg CR10 — the subjective cost of the session, next to its objective cost.
@@ -375,8 +428,19 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
       L.push(`- **${e.name}**${e.repWindow ? ` _(target ${e.repWindow})_` : ''}: ${setDetail(e.sets, e.name)}`)
     }
     if (s.prs.length) {
-      // No est-1RM — the raw lift only.
-      L.push(`- PRs: ${s.prs.map((p) => `${p.name} ${formatSet(p.weightKg, p.reps, { timed: isTimedExercise(p.name) })}`).join(' · ')}`)
+      // No est-1RM VALUE — the raw lift only. The 1RM AXIS is named, because
+      // "which record" is not the same claim as "what the estimate was".
+      //
+      // One line per movement, so a session's records read as a list rather
+      // than a run-on: "Hack Squat 55kg × 11 — Volume, 1RM".
+      L.push('- PRs:')
+      for (const p of s.prs) {
+        const timed = isTimedExercise(p.name)
+        const axes = p.axes.length
+          ? ` — ${p.axes.map((a) => prAxisLabel(a, timed)).join(', ')}`
+          : ''
+        L.push(`    - **${p.name}** ${formatSet(p.weightKg, p.reps, { timed })}${axes}`)
+      }
     }
     L.push('')
   }

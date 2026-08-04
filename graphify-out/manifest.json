@@ -160,8 +160,8 @@
     "semantic_hash": "6244657175fd749de647871bd554b5b1"
   },
   "public/sw.js": {
-    "mtime": 1785870136.4214358,
-    "ast_hash": "99ccc0c6d1c357db49cd5a7ada9f6d87",
+    "mtime": 1785873690.7072766,
+    "ast_hash": "69ff4b9e9948aa405641efc929a3fd0b",
     "semantic_hash": ""
   },
   "scripts/generate-icons.mjs": {
@@ -945,8 +945,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useWeeklyLoop.ts": {
-    "mtime": 1785787460.6160917,
-    "ast_hash": "fbe6c6b5b6f0f605b3b00fba680d7663",
+    "mtime": 1785873554.1197581,
+    "ast_hash": "6e7da012a5f440bdf2b44786f06ce40f",
     "semantic_hash": ""
   },
   "src/lib/hooks/useWeeklyVolume.ts": {
@@ -1030,8 +1030,8 @@
     "semantic_hash": ""
   },
   "src/lib/reports/weeklyExport.ts": {
-    "mtime": 1785869366.4357271,
-    "ast_hash": "eb2942786317357ce4f03db5495b2ab4",
+    "mtime": 1785873413.0326183,
+    "ast_hash": "dbfe432d97ba6d5a1621136abe75e58b",
     "semantic_hash": ""
   },
   "src/lib/schedule/overrides.ts": {
@@ -1325,8 +1325,8 @@
     "semantic_hash": "5dcb592b6e235d90eaffe401278184bd"
   },
   "src/tests/weekly-loop.test.ts": {
-    "mtime": 1785869444.7892447,
-    "ast_hash": "caa17948abf88ab8b9d72c1e4ff35ee5",
+    "mtime": 1785873617.3982658,
+    "ast_hash": "b277462fc947808bd8cb26fc24168827",
     "semantic_hash": ""
   },
   "src/tests/weigh-in.test.ts": {
@@ -1515,8 +1515,8 @@
     "semantic_hash": ""
   },
   "src/lib/sessions/volume.ts": {
-    "mtime": 1785435136.647162,
-    "ast_hash": "ad17ba5b1c6d100c78225a25f85d9279",
+    "mtime": 1785873427.8081765,
+    "ast_hash": "3091517fed8d7b1a34905501b7f75de3",
     "semantic_hash": ""
   },
   "src/lib/training/effort.ts": {
@@ -1555,8 +1555,8 @@
     "semantic_hash": ""
   },
   "src/tests/session-volume.test.ts": {
-    "mtime": 1785435618.9173112,
-    "ast_hash": "7d6ffb985241ad0e228535f3ca7cb853",
+    "mtime": 1785873667.2413237,
+    "ast_hash": "ecaf792c4f1b596ae1781fa5d7efaa2c",
     "semantic_hash": ""
   },
   "CLAUDE.md": {

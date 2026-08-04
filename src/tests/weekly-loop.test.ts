@@ -69,7 +69,7 @@ describe('buildWeeklyExport', () => {
     weightKg: null, calories: null, proteinG: null, carbsG: null, fatG: null,
     steps: null, distanceM: null, trainingMin: null,
     sleepMin: null, deepMin: null, remMin: null, restingHr: null, hrvMs: null,
-    waterMl: null, supplementsTaken: null,
+    waterMl: null, supplementsTaken: null, weighInSkipReason: null,
   })
 
   const input: WeeklyExportInput = {
@@ -103,7 +103,7 @@ describe('buildWeeklyExport', () => {
             { weightKg: 7.5, reps: 13, side: 'R', failure: true, pairId: 'p1' },
           ],
         }],
-        prs: [{ name: 'Chest Press', weightKg: 60, reps: 12 }],
+        prs: [{ name: 'Chest Press', weightKg: 60, reps: 12, axes: ['weight', 'e1rm'] }],
       },
     ],
     volumeByMuscle: [
@@ -220,8 +220,10 @@ describe('buildWeeklyExport', () => {
     expect(out).toMatch(/S1 L 7\.5kg×15 · R 7\.5kg×13 \(Failure\)/)
   })
 
-  it('names the PRs (raw lift, no 1RM) rather than counting them', () => {
-    expect(buildWeeklyExport(input)).toMatch(/PRs: Chest Press 60kg × 12/)
+  it('names the PRs (raw lift, no 1RM VALUE) rather than counting them', () => {
+    const out = buildWeeklyExport(input)
+    expect(out).toMatch(/- PRs:/)
+    expect(out).toMatch(/\*\*Chest Press\*\* 60kg × 12/)
   })
 
   it('carries steps and recovery signals per day', () => {
@@ -250,7 +252,50 @@ describe('buildWeeklyExport', () => {
   it('renders a readable per-day line in the fixed order', () => {
     const out = buildWeeklyExport(input)
     expect(out).toMatch(/## Days/)
-    expect(out).toMatch(/\*\*Sun 2026-07-19\*\* · Train · sleep 9h11 · intake 1940 kcal \(172P\/190C\/54F\) · water 3\.0 L · 9200 steps · RHR 48 · HRV 62 · Upper A/)
+    expect(out).toMatch(/\*\*Sun 2026-07-19\*\* · Train · sleep 9h11 · intake 1940 kcal \(172P\/190C\/54F\) · water 3\.0 L · 9200 steps · RHR 48 · HRV 62 · weight 65\.3 kg · Upper A/)
+  })
+
+  // A blank weight can mean "not weighed", "the sync dropped it", or "skipped on
+  // purpose" — and only the last is safe to leave out of a trend.
+  it('states WHY a weigh-in is missing, and says so even when no reason was given', () => {
+    const out = buildWeeklyExport(input)
+    expect(out).toMatch(/\*\*Mon 2026-07-20\*\*.*weight — \[Skip: no reason recorded\]/)
+
+    const withReason = buildWeeklyExport({
+      ...input,
+      days: input.days.map((d) => (d.date === '2026-07-20' ? { ...d, weighInSkipReason: 'No BM' } : d)),
+    })
+    expect(withReason).toMatch(/\*\*Mon 2026-07-20\*\*.*weight — \[Skip: No BM\]/)
+    // A day that WAS weighed never carries a skip marker.
+    expect(withReason).not.toMatch(/\*\*Sun 2026-07-19\*\*.*Skip:/)
+  })
+
+  it('names WHICH axis each PR was set on, in a fixed order', () => {
+    const out = buildWeeklyExport(input)
+    expect(out).toMatch(/- \*\*Chest Press\*\* 60kg × 12 — Weight, 1RM/)
+
+    // A movement with no ledger row still lists — without inventing an axis.
+    const noAxes = buildWeeklyExport({
+      ...input,
+      sessions: input.sessions.map((s) => ({ ...s, prs: s.prs.map((p) => ({ ...p, axes: [] })) })),
+    })
+    expect(noAxes).toMatch(/- \*\*Chest Press\*\* 60kg × 12$/m)
+  })
+
+  // Volume is a sum of quarter-kg microloads; 0 dp made the export disagree with
+  // the Session Report about the same session.
+  it('prints session volume at full precision, never rounded to a whole kg', () => {
+    const precise = buildWeeklyExport({
+      ...input,
+      sessions: input.sessions.map((s) => ({ ...s, volumeKg: 8329.25 })),
+    })
+    expect(precise).toMatch(/8329\.25 kg volume/)
+    // A whole number stays whole — no cosmetic ".00".
+    const whole = buildWeeklyExport({
+      ...input,
+      sessions: input.sessions.map((s) => ({ ...s, volumeKg: 8240 })),
+    })
+    expect(whole).toMatch(/8240 kg volume/)
   })
 
   it('renders a training-vs-rest supplements protocol only when supplied', () => {

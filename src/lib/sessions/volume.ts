@@ -54,6 +54,9 @@ export function sessionVolumeKg(sets: readonly VolumeSet[]): number {
     }
   }
 
-  // Quarter-kg microloads produce genuine half-kg volumes; keep 1 dp.
-  return Math.round(total * 10) / 10
+  // Quarter-kg microloads produce genuine QUARTER-kg volumes — 11.25 kg × 9 is
+  // 101.25, and 1 dp turned that into 101.3. Two decimals is the smallest place
+  // a real plate can reach, so this rounds float representation error away and
+  // nothing else. The export prints whatever survives.
+  return Math.round(total * 100) / 100
 }
