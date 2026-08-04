@@ -1,17 +1,18 @@
 'use client'
 
-import { use } from 'react'
+import { use, useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft, Printer, Radar } from 'lucide-react'
+import { ArrowLeft, Check, Copy, Loader2, Printer, Radar } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { MarkdownView } from '@/components/reports/MarkdownView'
 import { FmtV2Report } from '@/components/reports/FmtV2Report'
 import { isFmtV2 } from '@/lib/reports/fmtV2'
 import { WidgetBoundary } from '@/components/fx/WidgetBoundary'
-import { getWeekPhase, phaseBadgeStyle } from '@/lib/phases'
+import { getWeekPhase, phaseBadgeStyle, phaseRgb } from '@/lib/phases'
 import { weekLabelOf } from '@/lib/reports/weekNumber'
 import { SENTINEL_TYPE } from '@/lib/hooks/useSentinelExport'
+import { WeekChipLabel } from '@/components/timeline/WeekChip'
 
 interface ReportDoc { id: string; type: string; weekStart: string; content: string }
 
@@ -33,21 +34,102 @@ function useReportDoc(id: string) {
   })
 }
 
+type PrintState = 'idle' | 'working' | 'done' | 'unavailable' | 'copied'
+
+/**
+ * "Save as PDF" is the browser's own print pipeline (see the @media print block
+ * in globals.css) — real selectable text with its tables intact, not a
+ * screenshot. Two things were wrong with the old one-line `onClick`:
+ *
+ * 1. NO FEEDBACK. On desktop the print dialog takes a beat to appear and the
+ *    button gave no sign it had been pressed, so it read as dead.
+ * 2. IT GENUINELY DOES NOTHING IN A STANDALONE PWA. Installed to the iOS home
+ *    screen, `window.print()` returns without opening anything — the most
+ *    likely reading of "the button does nothing". There is no way to force it,
+ *    so the honest move is to detect the silence and offer the thing that DOES
+ *    work: the report's own markdown, on the clipboard.
+ *
+ * Detection uses `beforeprint`: if the dialog never announced itself, printing
+ * isn't available here. Desktop blocks inside print() until the dialog closes,
+ * so the timer is only ever read after the fact.
+ */
+function usePrintToPdf(markdown: string) {
+  const [state, setState] = useState<PrintState>('idle')
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current) }, [])
+
+  const reset = useCallback((ms = 2600) => {
+    if (timer.current) clearTimeout(timer.current)
+    timer.current = setTimeout(() => setState('idle'), ms)
+  }, [])
+
+  const copyInstead = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(markdown)
+      setState('copied')
+    } catch {
+      setState('unavailable')
+    }
+    reset(3200)
+  }, [markdown, reset])
+
+  const save = useCallback(() => {
+    if (!markdown) return
+    if (typeof window.print !== 'function') { setState('unavailable'); reset(4000); return }
+
+    let opened = false
+    const onBefore = () => { opened = true }
+    const onAfter = () => { setState('done'); reset() }
+    window.addEventListener('beforeprint', onBefore, { once: true })
+    window.addEventListener('afterprint', onAfter, { once: true })
+    setState('working')
+
+    try {
+      window.print()
+    } catch {
+      window.removeEventListener('beforeprint', onBefore)
+      window.removeEventListener('afterprint', onAfter)
+      setState('unavailable'); reset(4000)
+      return
+    }
+
+    // A standalone PWA returns from print() having done nothing and never fires
+    // either event. Give it a beat, then say so rather than leaving a spinner.
+    if (timer.current) clearTimeout(timer.current)
+    timer.current = setTimeout(() => {
+      window.removeEventListener('beforeprint', onBefore)
+      window.removeEventListener('afterprint', onAfter)
+      setState((s) => (s === 'working' ? (opened ? 'done' : 'unavailable') : s))
+      reset(4000)
+    }, 1500)
+  }, [markdown, reset])
+
+  return { state, save, copyInstead }
+}
+
 /**
  * A single report, as a document.
  *
  * Its own route rather than a modal, for three reasons that all come from the
  * same place — a report is a thing you return to: it needs a URL you can keep,
- * a full-width reading measure, and a print surface. "Save as PDF" is the
- * browser's own print pipeline (see the @media print block in globals.css), so
- * the output is real selectable text with its ASCII tables intact, not a
- * screenshot.
+ * a full reading measure, and a print surface.
+ *
+ * LAYOUT: full-bleed. This page used to sit inside `max-w-3xl` INSIDE the app
+ * shell's `max-w-7xl` INSIDE <main>'s gutters, then inside a `helix-card` with
+ * its own padding — four nested boxes, so a 16 kB report read through a slot.
+ * `data-fullbleed` hands the route the whole content area (see globals.css) and
+ * the reading measure is applied once, here, where it can be tuned: edge-to-edge
+ * on a phone, a generous 80ch on a desktop. The card is gone; a document does
+ * not need a frame around it.
  */
 export default function ReportPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const { data, isPending } = useReportDoc(id)
+  const { state: printState, save, copyInstead } = usePrintToPdf(data?.content ?? '')
 
   const phase = data ? getWeekPhase(data.weekStart) : null
+  const rgb = phase ? phaseRgb(phase.kind, phase.era) : null
   const isSentinel = data?.type === SENTINEL_TYPE
   const title = data
     ? (weekLabelOf(data.weekStart) ?? new Date(`${data.weekStart}T12:00:00Z`)
@@ -55,61 +137,124 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
     : 'Report'
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-5 space-y-4 report-print">
-      {/* Chrome — hidden when printing (data-print-hide). */}
-      <div className="flex items-center gap-2 flex-wrap" data-print-hide>
-        <Link href="/reports" className="btn-glass min-h-[40px] text-fluid-xs">
-          <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" /> Reports
-        </Link>
-        <div className="flex-1" />
-        <button
-          type="button"
-          onClick={() => window.print()}
-          disabled={!data?.content}
-          className="btn-glass min-h-[40px] text-fluid-xs disabled:opacity-50"
-        >
-          <Printer className="w-3.5 h-3.5" aria-hidden="true" /> Save as PDF
-        </button>
-      </div>
+    <div data-fullbleed className="report-print min-h-dvh">
+      {/*
+        Sticky command bar — the iOS full-screen-modal convention: the way out
+        is pinned, always, because a long document that you have to scroll back
+        up to escape is a trap. Blurred rather than opaque so the report reads
+        as continuous underneath, and hairlined at the bottom so it detaches
+        from the text as you scroll.
+      */}
+      <header
+        data-print-hide
+        className="sticky top-0 z-30 safe-pt backdrop-blur-xl border-b"
+        style={{
+          background: 'color-mix(in srgb, var(--color-bg, #0A0B0D) 82%, transparent)',
+          borderColor: rgb ? `rgba(${rgb},0.22)` : 'rgba(255,255,255,0.08)',
+        }}
+      >
+        {/* The phase colour bleeds along the top edge — the one piece of chrome
+            that says which block of training this belongs to. */}
+        {rgb && (
+          <span aria-hidden="true" className="absolute inset-x-0 top-0 h-px"
+            style={{ background: `linear-gradient(90deg, transparent, rgba(${rgb},0.7), transparent)` }} />
+        )}
+        <div className="mx-auto w-full max-w-[80ch] px-3 sm:px-5 py-2.5 flex items-center gap-2">
+          <Link
+            href="/reports"
+            className="shrink-0 inline-flex items-center gap-1.5 rounded-xl px-2.5 min-h-[40px] text-fluid-xs font-semibold text-text hover:bg-white/[0.06] active:opacity-80 transition-colors"
+            aria-label="Back to reports"
+          >
+            <ArrowLeft className="w-4 h-4" aria-hidden="true" />
+            <span className="hidden min-[380px]:inline">Reports</span>
+          </Link>
 
-      <header className="space-y-1">
-        <div className="flex items-center gap-2 flex-wrap">
-          {isSentinel && <Radar className="w-4 h-4 text-primary shrink-0" aria-hidden="true" />}
-          <h1 className="font-heading text-fluid-xl font-bold text-text">
-            {isSentinel ? 'Sentinel-7 · ' : ''}{title}
-          </h1>
-          {phase && (
-            <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-px rounded"
-              style={phaseBadgeStyle(phase.kind, true, phase.era)}>
-              {phase.short}
+          <span className="flex-1 min-w-0 flex flex-col leading-tight">
+            <span className="flex items-center gap-1.5 min-w-0">
+              {isSentinel && <Radar className="w-3.5 h-3.5 text-primary shrink-0" aria-hidden="true" />}
+              <span className="font-heading text-fluid-sm font-bold text-text truncate">{title}</span>
             </span>
-          )}
+            {data && <WeekChipLabel weekStart={data.weekStart} />}
+          </span>
+
+          <button
+            type="button"
+            onClick={printState === 'unavailable' ? copyInstead : save}
+            disabled={!data?.content || printState === 'working'}
+            className="shrink-0 inline-flex items-center gap-1.5 rounded-xl px-3 min-h-[40px] text-fluid-xs font-semibold border transition-colors disabled:opacity-45"
+            style={{
+              color: rgb ? `rgb(${rgb})` : undefined,
+              borderColor: rgb ? `rgba(${rgb},0.4)` : 'rgba(255,255,255,0.14)',
+              background: rgb ? `rgba(${rgb},0.10)` : 'rgba(255,255,255,0.04)',
+            }}
+          >
+            {printState === 'working' && <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />}
+            {(printState === 'done' || printState === 'copied') && <Check className="w-3.5 h-3.5" aria-hidden="true" />}
+            {printState === 'unavailable' && <Copy className="w-3.5 h-3.5" aria-hidden="true" />}
+            {printState === 'idle' && <Printer className="w-3.5 h-3.5" aria-hidden="true" />}
+            <span className="hidden sm:inline">
+              {printState === 'working' ? 'Preparing…'
+                : printState === 'done' ? 'Sent to print'
+                : printState === 'copied' ? 'Copied'
+                : printState === 'unavailable' ? 'Copy text'
+                : 'Save as PDF'}
+            </span>
+          </button>
         </div>
-        {data && <p className="text-muted text-fluid-xs">Cycle beginning {data.weekStart}</p>}
+
+        {/* Said once, plainly, only when it is true. */}
+        {printState === 'unavailable' && (
+          <p className="px-3 sm:px-5 pb-2 text-[11px] text-muted mx-auto w-full max-w-[80ch]">
+            Printing isn&rsquo;t available in the installed app. Open this page in Safari or Chrome to save a PDF —
+            or tap again to copy the report text.
+          </p>
+        )}
       </header>
 
-      {isPending && <div className="helix-card h-64 animate-pulse" aria-hidden="true" />}
-      {!isPending && !data && (
-        <div className="helix-card text-center py-8">
-          <p className="text-fluid-sm text-text">That report no longer exists.</p>
-          <Link href="/reports" className="text-primary text-fluid-xs underline underline-offset-2">Back to reports</Link>
-        </div>
-      )}
-      {data?.content && (
-        // Pasted markdown is arbitrary text from an external model; a malformed
-        // table shouldn't take the page down with it.
-        <WidgetBoundary label="Report" minHeight={200}>
-          <article className="helix-card !p-4 sm:!p-6">
-            {/* FMT v2 carries a TDEE ladder, a body-comp table and an asymmetry
-                block that read badly as monospace text on a phone; those become
-                charts. Any other paste — including a v2 report whose sections
-                the reader doesn't recognise — renders as written. */}
-            {isFmtV2(data.content)
-              ? <FmtV2Report md={data.content} />
-              : <MarkdownView md={data.content} />}
-          </article>
-        </WidgetBoundary>
-      )}
+      {/* One reading measure, applied once. 80ch is wide enough for the FMT v2
+          tables and still a comfortable line length for prose. */}
+      <div className="mx-auto w-full max-w-[80ch] px-4 sm:px-6 pt-5 pb-10 space-y-5">
+        {data && (
+          <header className="space-y-1.5">
+            <h1 className="font-heading text-fluid-2xl font-bold text-text leading-tight">
+              {isSentinel ? 'Sentinel-7 · ' : ''}{title}
+            </h1>
+            <div className="flex items-center gap-2 flex-wrap">
+              {phase && (
+                <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-px rounded"
+                  style={phaseBadgeStyle(phase.kind, true, phase.era)}>
+                  {phase.short}
+                </span>
+              )}
+              <p className="text-muted text-fluid-xs">Cycle beginning {data.weekStart}</p>
+            </div>
+          </header>
+        )}
+
+        {isPending && <div className="helix-card h-64 animate-pulse" aria-hidden="true" />}
+        {!isPending && !data && (
+          <div className="helix-card text-center py-8">
+            <p className="text-fluid-sm text-text">That report no longer exists.</p>
+            <Link href="/reports" className="text-primary text-fluid-xs underline underline-offset-2">Back to reports</Link>
+          </div>
+        )}
+        {data?.content && (
+          // Pasted markdown is arbitrary text from an external model; a malformed
+          // table shouldn't take the page down with it.
+          <WidgetBoundary label="Report" minHeight={200}>
+            {/* No card. The document IS the page — a frame inside a frame inside
+                the shell is exactly what made this feel like reading through a
+                letterbox. FMT v2 carries a TDEE ladder, a body-comp table and an
+                asymmetry block that read badly as monospace on a phone; those
+                become charts. Any other paste renders as written. */}
+            <article className="report-body">
+              {isFmtV2(data.content)
+                ? <FmtV2Report md={data.content} />
+                : <MarkdownView md={data.content} />}
+            </article>
+          </WidgetBoundary>
+        )}
+      </div>
     </div>
   )
 }

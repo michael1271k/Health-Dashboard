@@ -118,7 +118,9 @@ export default function RootLayout({
                   {/* Global pull-to-refresh — active on every tab (native HealthKit
                       sync + query revalidation), non-blocking of top-of-screen taps. */}
                   <PullToRefresh>
-                    <div className="max-w-7xl mx-auto">
+                    {/* Named so a full-bleed route can widen it — see
+                        `[data-fullbleed]` in globals.css. */}
+                    <div className="app-shell-container max-w-7xl mx-auto">
                       <AuthGate>{children}</AuthGate>
                     </div>
                   </PullToRefresh>
