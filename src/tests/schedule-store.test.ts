@@ -3,6 +3,10 @@ import {
   getScheduleOverride, setScheduleOverrideLocal, hydrateScheduleOverrides,
   subscribeScheduleOverrides, scheduleOverridesVersion, REST_OVERRIDE,
 } from '@/lib/schedule/overrides'
+import {
+  normalizePlanId, setActiveProgramId, setActivePhase, activePhase,
+  getActiveProgramId, subscribePlanPrefs,
+} from '@/lib/programs'
 
 /**
  * The override cache is an EXTERNAL STORE, not a plain module variable.
@@ -82,5 +86,63 @@ describe('schedule override store', () => {
     hydrateScheduleOverrides([{ date: '2026-08-04', day_key: REST_OVERRIDE }])
     expect(() => hydrateScheduleOverrides([])).not.toThrow()
     expect(getScheduleOverride('2026-08-04')).toBeUndefined()
+  })
+})
+
+/**
+ * The plan/phase preferences are the OTHER half of "what is today's workout",
+ * and they had the same defect plus two of their own: the hydrator read a
+ * pre-consolidation column (`active_program`, which still holds the dead id
+ * "axis5_hybrid") and wrote a fallback localStorage key, so a device that had
+ * ever used the plan picker ignored the database entirely — and the phase was
+ * never carried across devices at all.
+ */
+describe('plan preference store', () => {
+  beforeEach(() => { window.localStorage.clear() })
+
+  it('rejects a plan id that no longer exists', () => {
+    expect(normalizePlanId('axis5_hybrid')).toBeNull()
+    expect(normalizePlanId(null)).toBeNull()
+    expect(normalizePlanId('')).toBeNull()
+  })
+
+  it('migrates a legacy id to the plan that replaced it', () => {
+    expect(normalizePlanId('axis4_builder')).toBe('axis4')
+    expect(normalizePlanId('axis4_defender')).toBe('axis4')
+  })
+
+  it('accepts a live plan id unchanged', () => {
+    expect(normalizePlanId('apex51')).toBe('apex51')
+    expect(normalizePlanId('ppl')).toBe('ppl')
+  })
+
+  it('notifies subscribers when the plan or the phase changes', () => {
+    const seen = vi.fn()
+    const off = subscribePlanPrefs(seen)
+    setActiveProgramId('ppl')
+    expect(seen).toHaveBeenCalledTimes(1)
+    setActivePhase('bulk')
+    expect(seen).toHaveBeenCalledTimes(2)
+    expect(activePhase()).toBe('bulk')
+    off()
+  })
+
+  it('stays silent when the value is already what it is being set to', () => {
+    setActiveProgramId('ppl')
+    setActivePhase('bulk')
+    const seen = vi.fn()
+    const off = subscribePlanPrefs(seen)
+    setActiveProgramId('ppl')
+    setActivePhase('bulk')
+    expect(seen).not.toHaveBeenCalled()
+    off()
+  })
+
+  it('writes the key getActiveProgramId actually reads first', () => {
+    setActiveProgramId('ppl')
+    expect(window.localStorage.getItem('helix_active_plan')).toBe('ppl')
+    // The old hydrator wrote this one instead, which is only a fallback.
+    window.localStorage.setItem('helix_active_program', 'apex51')
+    expect(getActiveProgramId()).toBe('ppl')
   })
 })

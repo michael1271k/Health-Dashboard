@@ -391,17 +391,57 @@ const PHASE_KEY = 'helix_active_phase'
 // now; the old key names are migrated on read so a device never dead-ends).
 const LEGACY_PLAN_ID: Record<string, string> = { axis4_builder: 'axis4', axis4_defender: 'axis4' }
 
+// ── Plan/phase preference store ──────────────────────────────────────────────
+// Same problem the schedule cache had: these are read SYNCHRONOUSLY during
+// render out of localStorage, so a change arriving from the DB (another device)
+// updated the value and re-rendered nothing. The version counter is what
+// useScheduleVersion subscribes to — see src/lib/hooks/useScheduleVersion.ts.
+let planVersion = 0
+const planListeners = new Set<() => void>()
+
+function bumpPlan(): void {
+  planVersion += 1
+  for (const l of planListeners) l()
+}
+
+export function subscribePlanPrefs(listener: () => void): () => void {
+  planListeners.add(listener)
+  return () => { planListeners.delete(listener) }
+}
+
+export function planPrefsVersion(): number {
+  return planVersion
+}
+
+if (typeof window !== 'undefined') {
+  // Another tab switched plan or phase.
+  window.addEventListener('storage', (e) => {
+    if (e.key === ACTIVE_KEY || e.key === PHASE_KEY) bumpPlan()
+  })
+  // hydratePrefsFromDb fires this after pulling the row (cross-DEVICE path).
+  window.addEventListener('helix-plan-change', bumpPlan)
+}
+
+/** Valid, known plan id or null. Guards against a stale id from an old row. */
+export function normalizePlanId(raw: string | null | undefined): string | null {
+  if (!raw) return null
+  const id = LEGACY_PLAN_ID[raw] ?? raw
+  return PROGRAMS[id] ? id : null
+}
+
 export function getActiveProgramId(): string {
   if (typeof window === 'undefined') return DEFAULT_PROGRAM_ID
   const raw =
     window.localStorage.getItem(ACTIVE_KEY) ??
     window.localStorage.getItem('helix_active_program') ??   // pre-consolidation key
     window.localStorage.getItem('apex_active_program')        // original key
-  const id = raw ? (LEGACY_PLAN_ID[raw] ?? raw) : null
-  return id && PROGRAMS[id] ? id : DEFAULT_PROGRAM_ID
+  return normalizePlanId(raw) ?? DEFAULT_PROGRAM_ID
 }
 export function setActiveProgramId(id: string): void {
-  if (typeof window !== 'undefined') window.localStorage.setItem(ACTIVE_KEY, id)
+  if (typeof window === 'undefined') return
+  if (window.localStorage.getItem(ACTIVE_KEY) === id) return
+  window.localStorage.setItem(ACTIVE_KEY, id)
+  bumpPlan()
 }
 
 /** The active PHASE — mirrors user_goals.active_phase / goal_preset into
@@ -412,7 +452,10 @@ export function activePhase(): ProgramPhase {
   return v === 'bulk' || v === 'maintenance' ? v : 'cut'
 }
 export function setActivePhase(phase: ProgramPhase): void {
-  if (typeof window !== 'undefined') window.localStorage.setItem(PHASE_KEY, phase)
+  if (typeof window === 'undefined') return
+  if (window.localStorage.getItem(PHASE_KEY) === phase) return
+  window.localStorage.setItem(PHASE_KEY, phase)
+  bumpPlan()
 }
 
 /**
