@@ -78,8 +78,12 @@ export function MuscleAnalyticsPanel() {
             <div className="space-y-4 min-w-0">
               <MuscleAnalyticsSection days={days} era={era} />
               <StrengthTrends days={days} era={era} />
-              {/* [&>*]:min-w-0 lets each chart shrink below its Recharts intrinsic width. */}
-              <div className="grid lg:grid-cols-2 gap-4 [&>*]:min-w-0">
+              {/* [&>*]:min-w-0 lets each chart shrink below its Recharts intrinsic
+                  width; [&>*]:h-full makes the pair the SAME height on desktop.
+                  Grid items stretch by default, but the cards inside them size to
+                  their content, so the shorter one (the RPE calendar) used to
+                  float against a taller neighbour with a ragged gap below it. */}
+              <div className="grid lg:grid-cols-2 gap-4 items-stretch [&>*]:min-w-0 [&>*]:h-full">
                 <BodyHeatmap days={days} era={era} />
                 <RpeCalendar days={days} era={era} />
               </div>

@@ -87,7 +87,21 @@ export function WaterHelix({ ml, goalMl }: { ml: number | null; goalMl: number }
       <div className="flex items-center gap-3">
         {/* The double-helix — centred in its own space; numbers sit to the side */}
         <div className="flex-1 flex justify-center min-w-0">
-          <svg viewBox="0 0 120 132" width="132" height="116" aria-hidden="true" className="max-w-full">
+          {/*
+            The viewBox is 120×132 (taller than wide). The element used to be
+            sized `width={132} height={116}` — WIDER than tall — so the two
+            aspect ratios disagreed by 29%. On a phone the column is narrow
+            enough that `max-w-full` shrank the box back into roughly the right
+            shape; on a desktop nothing constrained it, `preserveAspectRatio`
+            letterboxed the drawing into the short box, and the strands got
+            squeezed against the bottom edge. THE FIX IS TO STOP DECLARING TWO
+            SHAPES: one intrinsic size that matches the viewBox, `h-auto` so
+            height follows width, and a max-height so a wide desktop card can't
+            inflate it into a tower.
+          */}
+          <svg viewBox="0 0 120 132" width="120" height="132" aria-hidden="true"
+            className="w-[120px] max-w-full h-auto max-h-[132px]"
+            style={{ aspectRatio: '120 / 132' }}>
             <defs>
               <filter id={glow} x="-50%" y="-50%" width="200%" height="200%">
                 <feGaussianBlur stdDeviation="1.8" result="b" />
