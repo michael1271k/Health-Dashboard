@@ -177,3 +177,97 @@ describe('tolerance — the format is not a contract', () => {
     expect(r.bodyComp).toBeNull()
   })
 })
+
+/**
+ * The document that shipped. Every part and section in a real Sentinel-7 paste
+ * is a MARKDOWN HEADING, not a bare line — which the first version of this
+ * parser did not accept, so the live report parsed as one 246-line preamble and
+ * every chart it exists to draw stayed dark.
+ */
+describe('parseFmtV2 — markdown headings (the real layout)', () => {
+  const DOC = [
+    '# ⬢ HELIX OS · WEEKLY TELEMETRY & PERFORMANCE AUDIT',
+    '',
+    '```',
+    '╔══════════════════════════════════════════╗',
+    '║ W01 · 2026-07-19 → 07-25 · CUT · FMT v2  ║',
+    '╚══════════════════════════════════════════╝',
+    '```',
+    '',
+    '# ▓ PART 1 — WEIGHT & METABOLIC VERIFICATION',
+    '',
+    '## 🟢 QUICK VERDICT',
+    'The cut is working.',
+    '',
+    '## 🧮 THE MATH & TDEE CHECK',
+    'ANCHOR A · DIARY (blueprint primary)     2,400   ← ADOPTED',
+    'ANCHOR B · HISTORICAL CUT @1,925         2,430   (−0.46 kg/wk @ 65.6 kg)',
+    'ANCHOR C · BOTTOM-UP THIS WEEK           2,290   (range 2,163–2,420)',
+    '',
+    '# ▓ PART 2 — GYM PERFORMANCE & HYPERTROPHY',
+    '',
+    '## ⚑ DB LADDER VALIDATOR',
+    'Steps are 11–25% relative.',
+    '',
+    '## Adherence notes',
+    'not a section heading — it does not shout',
+  ].join('\n')
+
+  it('reads `# ▓ PART n` as a part', () => {
+    const r = parseFmtV2(DOC)!
+    expect(r.parts.map((p) => p.title)).toEqual([
+      'WEIGHT & METABOLIC VERIFICATION', 'GYM PERFORMANCE & HYPERTROPHY',
+    ])
+  })
+
+  it('reads `## 🟢 TITLE` as a section and lifts the emoji out', () => {
+    const r = parseFmtV2(DOC)!
+    expect(r.parts[0].sections.map((s) => [s.emoji, s.title])).toEqual([
+      ['🟢', 'QUICK VERDICT'], ['🧮', 'THE MATH & TDEE CHECK'],
+    ])
+  })
+
+  it('accepts a glyph that is not Extended_Pictographic (⚑, ◆)', () => {
+    const r = parseFmtV2(DOC)!
+    expect(r.parts[1].sections[0]).toMatchObject({ emoji: '⚑', title: 'DB LADDER VALIDATOR' })
+  })
+
+  it('does not promote an ordinary sentence-case heading to a section', () => {
+    const r = parseFmtV2(DOC)!
+    const titles = r.parts[1].sections.map((s) => s.title)
+    expect(titles).not.toContain('Adherence notes')
+    // It survives as body text under the section above it — never dropped.
+    expect(r.parts[1].sections.some((s) => s.lines.some((l) => /Adherence notes/.test(l)))).toBe(true)
+  })
+
+  it('leaves the banner in the preamble, not in a part', () => {
+    const r = parseFmtV2(DOC)!
+    expect(r.preamble.join('\n')).toContain('W01')
+    expect(r.preamble.join('\n')).toContain('HELIX OS')
+  })
+
+  it('classifies the TDEE section and reads all three anchors', () => {
+    const r = parseFmtV2(DOC)!
+    expect(r.parts[0].sections[1].kind).toBe('tdee')
+    expect(r.tdee).toEqual([
+      { key: 'A', label: 'DIARY (blueprint primary)', value: 2400, adopted: true },
+      { key: 'B', label: 'HISTORICAL CUT @1,925', value: 2430, adopted: false },
+      { key: 'C', label: 'BOTTOM-UP THIS WEEK', value: 2290, adopted: false },
+    ])
+  })
+})
+
+describe('parseTdeeAnchors — trailing parentheticals', () => {
+  it('ignores an annotation that carries its own numbers', () => {
+    // Without this the ladder read 65.6 and 2,420 — a 65-kcal rung on a daily
+    // energy chart, drawn to scale next to a bar it invented.
+    expect(parseTdeeAnchors(['ANCHOR B · HISTORICAL CUT @1,925   2,430   (−0.46 kg/wk @ 65.6 kg)']))
+      .toEqual([{ key: 'B', label: 'HISTORICAL CUT @1,925', value: 2430, adopted: false }])
+    expect(parseTdeeAnchors(['ANCHOR C · BOTTOM-UP   2,290   (range 2,163–2,420)'])[0].value).toBe(2290)
+  })
+
+  it('still takes the last number when there is no parenthetical', () => {
+    expect(parseTdeeAnchors(['ANCHOR D · TDEE ×1.15   2,760'])[0])
+      .toMatchObject({ label: 'TDEE ×1.15', value: 2760 })
+  })
+})

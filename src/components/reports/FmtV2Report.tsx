@@ -7,6 +7,7 @@ import {
   type TdeeAnchor, type AsymmetryRow,
 } from '@/lib/reports/fmtV2'
 import { MarkdownView } from './MarkdownView'
+import { splitSmartBlocks } from '@/lib/reports/smartBlocks'
 import { GOLD, EMERALD, OXIDE, SAPPHIRE, EMBER, PLATINUM, MUTED } from '@/lib/theme/palette'
 
 /**
@@ -21,13 +22,22 @@ import { GOLD, EMERALD, OXIDE, SAPPHIRE, EMBER, PLATINUM, MUTED } from '@/lib/th
  */
 export function FmtV2Report({ md }: { md: string }) {
   const report = useMemo(() => parseFmtV2(md), [md])
+  // The preamble is the title line and the banner box, and the box carries more
+  // than the four fields `parseHeader` lifts out of it — a real one also states
+  // the week's tonnage, its integrity flags and its verdict. Those were being
+  // parsed and then thrown away. MarkdownView draws the box as a hero card with
+  // every field intact, so it renders the preamble and `Banner` is the fallback
+  // for a report whose header never made it into a box.
+  const preamble = useMemo(() => (report?.preamble ?? []).join('\n').trim(), [report])
+  const hasHero = useMemo(() => splitSmartBlocks(preamble).some((b) => b.kind === 'hero'), [preamble])
+
   if (!report) return null
   // Nothing structural was found — this is prose that merely mentions "FMT v2".
   if (!report.parts.length) return <MarkdownView md={md} />
 
   return (
     <div className="space-y-5">
-      <Banner report={report} />
+      {hasHero ? <MarkdownView md={preamble} /> : <Banner report={report} />}
       {report.parts.map((part, i) => (
         <section key={`${part.title}-${i}`} className="space-y-3">
           <h2 className="font-heading text-fluid-lg font-bold text-text pb-1 border-b border-white/[0.08]">
@@ -108,16 +118,10 @@ function proseLines(s: FmtV2Section): string[] {
 function Prose({ lines }: { lines: string[] }) {
   const text = lines.join('\n').trim()
   if (!text) return null
-  // Anything holding box-drawing or column alignment is fixed-width by
-  // construction; markdown would collapse the runs of spaces that ARE the chart.
-  const preformatted = /[╔╗╚╝║═┌┐└┘│─▓█▒░]/.test(text) || /\S {3,}\S/.test(text)
-  if (preformatted) {
-    return (
-      <pre className="report-pre overflow-x-auto rounded-lg bg-black/25 border border-white/[0.07] p-3 text-[11px] leading-[1.45]">
-        {text}
-      </pre>
-    )
-  }
+  // MarkdownView reads the text before rendering it, so the decision of what is
+  // fixed-width happens per LINE. This used to be a whole-section test — one
+  // ASCII bar anywhere in a block dumped its three sentences of rationale into
+  // a monospace box alongside it.
   return <MarkdownView md={text} />
 }
 

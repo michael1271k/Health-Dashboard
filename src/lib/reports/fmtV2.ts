@@ -104,8 +104,22 @@ export interface FmtV2Report {
 /** Box-drawing and rule characters that carry no content of their own. */
 const BOX = /^[\s╔╗╚╝║═╠╣╦╩╬┌┐└┘│─├┤┬┴┼▁▔_=~-]+$/
 
-const PART = /^\s*▓+\s*(.+?)\s*$/
-const EMOJI_HEAD = /^\s*(\p{Extended_Pictographic}(?:️)?)\s+(\S.*)$/u
+/**
+ * Parts and sections are written as MARKDOWN HEADINGS, not as bare lines:
+ * `# ▓ PART 1 — …` and `## 🟢 QUICK VERDICT`. Anchoring on `▓`/emoji alone made
+ * every real report parse as one 246-line preamble, so `parts` came back empty
+ * and the TDEE, body-comp and asymmetry charts never drew a single pixel — the
+ * reader silently degraded to plain text on the exact document it was written
+ * for. The `#{0,6}` prefix is what makes it fire.
+ */
+const PART = /^\s*#{0,6}\s*▓+\s*(.+?)\s*$/
+const ATX = /^\s*#{1,6}\s+(\S.*?)\s*$/
+/**
+ * A heading's leading glyph. Extended_Pictographic covers 🟢🧮📉⏱🎯, but NOT the
+ * geometric marks the same report uses for its other sections (⚑ DB LADDER,
+ * ◆ WEEK 2 PROJECTION), so those are named explicitly.
+ */
+const EMOJI_LEAD = /^(\p{Extended_Pictographic}️?|[◆◇■□▶◀▸●○★☆⚑⚐✦✧⬢⬡])\s+(\S.*)$/u
 
 /** A heading is SHOUTED — that is what separates it from a sentence. */
 function isShouted(text: string): boolean {
@@ -168,6 +182,15 @@ export function parseTable(lines: string[]): ParsedTable | null {
  * (it is column-aligned ASCII), so the number is taken as the LAST numeric token
  * on the line and everything before it is the label. That survives a label
  * containing its own digits ("ANCHOR C · TDEE ×1.15").
+ *
+ * A TRAILING PARENTHETICAL IS DROPPED FIRST, and it has to be — real anchors
+ * annotate their own working:
+ *
+ *   ANCHOR B · HISTORICAL CUT @1,925   2,430   (−0.46 kg/wk @ 65.6 kg)
+ *   ANCHOR C · BOTTOM-UP THIS WEEK     2,290   (range 2,163–2,420)
+ *
+ * and "last numeric token" reads those as 65.6 and 2,420 — a daily-energy ladder
+ * with a 65-kcal rung in it, drawn to scale, next to a bar it invented.
  */
 export function parseTdeeAnchors(lines: string[]): TdeeAnchor[] {
   const out: TdeeAnchor[] = []
@@ -176,7 +199,9 @@ export function parseTdeeAnchors(lines: string[]): TdeeAnchor[] {
     if (!m) continue
     const rest = m[2]
     const adopted = /←\s*ADOPTED|\bADOPTED\b/i.test(rest)
-    const body = rest.replace(/←\s*ADOPTED/i, '').replace(/\bADOPTED\b/i, '')
+    const body = rest
+      .replace(/←\s*ADOPTED/i, '').replace(/\bADOPTED\b/i, '')
+      .replace(/\s*[([][^)\]]*[)\]]\s*$/, '')
     const nums = [...body.matchAll(/(\d[\d,]*(?:\.\d+)?)/g)]
     if (!nums.length) continue
     const last = nums[nums.length - 1]
@@ -250,6 +275,22 @@ function parseHeader(preamble: string[], md: string): FmtV2Header {
 }
 
 /**
+ * A section heading, or null.
+ *
+ * Two shapes, because reports are written both ways: a markdown heading
+ * (`## 🟢 QUICK VERDICT`), and a bare emoji-led line for pastes that use no
+ * markdown at all. The leading glyph is lifted out either way so the renderer
+ * can show it beside the title instead of inside it.
+ */
+export function headingOf(line: string): { emoji: string | null; title: string } | null {
+  const atx = ATX.exec(line)
+  const text = atx ? atx[1] : line.trim()
+  const em = EMOJI_LEAD.exec(text)
+  if (em) return { emoji: em[1], title: em[2].trim() }
+  return atx ? { emoji: null, title: text } : null
+}
+
+/**
  * Split a pasted report into parts and sections.
  *
  * Returns null only when the text is empty — an unrecognised layout still comes
@@ -286,10 +327,10 @@ export function parseFmtV2(md: string | null | undefined): FmtV2Report | null {
       continue
     }
 
-    const em = EMOJI_HEAD.exec(line)
-    if (em && part && isShouted(em[2])) {
+    const head = headingOf(line)
+    if (head && part && isShouted(head.title)) {
       pushSection()
-      section = { emoji: em[1], title: em[2].trim(), lines: [], table: null, kind: null }
+      section = { emoji: head.emoji, title: head.title, lines: [], table: null, kind: null }
       continue
     }
 
