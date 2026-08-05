@@ -61,6 +61,46 @@ export function useCardioLogs(date: string) {
   })
 }
 
+/**
+ * Every cardio row, for grading records and for prefill.
+ *
+ * One query rather than one per axis: `cardio_logs` is a handful of rows a week,
+ * and the record engine is pure and read-time (see lib/cardio/cardioPrs.ts) —
+ * there is no stored PR to keep in sync, so the whole ledger IS the record book.
+ */
+export function useCardioHistory() {
+  return useQuery({
+    queryKey: ['cardio_logs', 'history'],
+    staleTime: 60_000,
+    queryFn: async (): Promise<Array<CardioLog & { date: string }>> => {
+      const q = (cols: string) => supabase.from('cardio_logs').select(cols)
+        .order('date', { ascending: false }).limit(500)
+      let { data, error } = await q(`date, ${SELECT_FULL}`)
+      if (error) ({ data, error } = await q(`date, ${SELECT_BASE}`))
+      if (error) return []
+      return ((data ?? []) as unknown as Array<Partial<CardioLog> & { date: string }>).map((r) => ({
+        id: r.id!, kind: r.kind!, date: r.date, distance_m: r.distance_m ?? null,
+        duration_min: r.duration_min ?? null, kcal: r.kcal ?? null,
+        active_kcal: r.active_kcal ?? null, total_kcal: r.total_kcal ?? null,
+        avg_hr: r.avg_hr ?? null, effort: r.effort ?? null,
+        from_healthkit: r.from_healthkit ?? false,
+      }))
+    },
+  })
+}
+
+/**
+ * The most recent walk / run, to seed the next one.
+ *
+ * Same route as the body panel's carry-forward: it is offered, not applied.
+ * Repeating yesterday's loop is the common case and re-typing 3.2 km every time
+ * is the friction; writing it for you would be inventing a session.
+ */
+export function useLastCardio(kind: 'walk' | 'run') {
+  const { data } = useCardioHistory()
+  return (data ?? []).find((r) => r.kind === kind) ?? null
+}
+
 export function useAddCardio(date: string) {
   const qc = useQueryClient()
   return useMutation({
@@ -84,18 +124,26 @@ export function useAddCardio(date: string) {
       }
       if (error) throw error
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['cardio_logs', date] }),
+    onSuccess: () => {
+      // The day's list AND the history the records + prefill derive from.
+      qc.invalidateQueries({ queryKey: ['cardio_logs'] })
+    },
   })
 }
 
-export function useDeleteCardio(date: string) {
+/** Delete is date-free: the row id is enough, and every cardio query is
+ *  invalidated afterwards because a deletion can move a record. */
+export function useDeleteCardio() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from('cardio_logs').delete().eq('id', id)
       if (error) throw error
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['cardio_logs', date] }),
+    onSuccess: () => {
+      // The day's list AND the history the records + prefill derive from.
+      qc.invalidateQueries({ queryKey: ['cardio_logs'] })
+    },
   })
 }
 
