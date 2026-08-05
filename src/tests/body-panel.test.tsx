@@ -45,7 +45,10 @@ describe('BodyPanel — a self-sufficient Body page', () => {
     // The two are ~23 kg apart; the tile must never show them under one name.
     renderPanel({ weight_kg: 64.2, body_fat_pct: 17.3, muscle_percent: 78.3, skeletal_muscle_mass_kg: 26.8 })
     expect(screen.getAllByText('Skeletal').length).toBeGreaterThan(0)
-    expect(screen.getByText('26.8')).toBeInTheDocument()
+    // Twice over: the headline tile and the composition bar, which now plots it
+    // against the 40–50% band that always belonged to it.
+    expect(screen.getAllByText('26.8').length).toBeGreaterThan(0)
+    expect(screen.getByText('Skeletal Muscle')).toBeInTheDocument()
     expect(screen.queryByText('Lean Soft')).toBeNull()
   })
 

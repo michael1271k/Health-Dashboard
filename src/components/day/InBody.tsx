@@ -5,12 +5,17 @@ import { Check, History, Loader2 } from 'lucide-react'
 import { useSaveBodyMetrics, type BodyMetricsPatch, type DayVaultData } from '@/lib/hooks/useDayVault'
 import { useLatestBodyReading, type CarryField } from '@/lib/hooks/useLatestBodyReading'
 import { deriveBodyComp, whrBand, type BodyCompInput, type BodyCompDerived, type WhrBand } from '@/lib/body/composition'
-import { EMERALD, GOLD, OXIDE } from '@/lib/theme/palette'
+import { deltaVerdict, type Metric, type Verdict } from '@/lib/body/deltaVerdict'
+import { activePhase } from '@/lib/programs'
+import { EMERALD, GOLD, OXIDE, MUTED } from '@/lib/theme/palette'
 
 const TEAL = '#E0703C'
 
 /** WHO abdominal-obesity bands, in the app's own semantic colours. */
 const WHR_COLOR: Record<WhrBand, string> = { low: EMERALD, moderate: GOLD, high: OXIDE }
+
+/** A change is green, red, or grey — the phase decides which. See deltaVerdict. */
+const VERDICT_COLOR: Record<Verdict, string> = { good: EMERALD, bad: OXIDE, neutral: MUTED }
 
 /**
  * Editable inputs — the readings you take. Masses derive from Weight × % (see
@@ -80,32 +85,52 @@ export function hasScaleMetrics(log: DayVaultData['log']): boolean {
  * its own label, so the tile never shows two different quantities under one
  * name. Nothing is estimated: a day without either holds a dash.
  */
-export function InBodyHeadline({ log }: { log: DayVaultData['log'] }) {
+export function InBodyHeadline({ log, date }: { log: DayVaultData['log']; date: string }) {
   const r = log as Record<string, number | null> | null
+  const { data: last } = useLatestBodyReading(date)
+  const phase = activePhase()
+
   const d = deriveBodyComp({
     weight_kg: r?.weight_kg ?? undefined, body_fat_pct: r?.body_fat_pct ?? undefined,
     muscle_percent: r?.muscle_percent ?? undefined, water_percent: r?.water_percent ?? undefined,
     bone_mineral: r?.bone_mineral ?? undefined, protein_percent: r?.protein_percent ?? undefined,
   })
+  // The previous reading run through the SAME derivation, so a delta compares
+  // like with like rather than a stored mass against a freshly computed one.
+  const p = deriveBodyComp(last?.values ?? {})
+
   const smm = r?.skeletal_muscle_mass_kg
-  const tiles = [
-    { label: 'Weight', v: r?.weight_kg, u: 'kg' },
-    { label: 'Body Fat', v: r?.body_fat_pct, u: '%' },
+  const tiles: Array<{ label: string; v: number | null | undefined; u: string; prev?: number; metric: Metric }> = [
+    { label: 'Weight', v: r?.weight_kg, u: 'kg', prev: last?.values.weight_kg, metric: 'weight' },
+    { label: 'Body Fat', v: r?.body_fat_pct, u: '%', prev: last?.values.body_fat_pct, metric: 'fat' },
     smm != null
-      ? { label: 'Skeletal', v: smm, u: 'kg' }
-      : { label: 'Lean Soft', v: r?.muscle_mass_kg ?? d.muscle_mass_kg, u: 'kg' },
-    { label: 'Fat-Free', v: r?.fat_free_mass_kg ?? d.fat_free_mass_kg, u: 'kg' },
+      // No previous skeletal reading to compare against yet — carrying one
+      // forward from lean soft tissue would subtract two different quantities.
+      ? { label: 'Skeletal', v: smm, u: 'kg', metric: 'muscle' }
+      : { label: 'Lean Soft', v: r?.muscle_mass_kg ?? d.muscle_mass_kg, u: 'kg', prev: p.muscle_mass_kg, metric: 'muscle' },
+    { label: 'Fat-Free', v: r?.fat_free_mass_kg ?? d.fat_free_mass_kg, u: 'kg', prev: p.fat_free_mass_kg, metric: 'muscle' },
   ]
+
   return (
     <div className="grid grid-cols-4 gap-2">
-      {tiles.map((s) => (
-        <div key={s.label} className="rounded-lg bg-white/[0.02] border border-white/[0.05] px-1 py-1.5 text-center">
-          <span className="helix-num block text-fluid-sm font-bold text-text leading-tight">
-            {s.v != null ? s.v : '—'}{s.v != null && s.u ? <span className="text-[9px] text-muted font-normal ml-0.5">{s.u}</span> : null}
-          </span>
-          <span className="text-[8px] uppercase tracking-wide" style={{ color: TEAL }}>{s.label}</span>
-        </div>
-      ))}
+      {tiles.map((s) => {
+        // Only a real before AND after is a delta. One reading is a reading.
+        const delta = s.v != null && s.prev != null ? Math.round((s.v - s.prev) * 100) / 100 : null
+        const verdict = delta != null ? deltaVerdict(s.metric, delta, phase) : null
+        return (
+          <div key={s.label} className="rounded-lg bg-white/[0.02] border border-white/[0.05] px-1 py-1.5 text-center">
+            <span className="helix-num block text-fluid-sm font-bold text-text leading-tight">
+              {s.v != null ? s.v : '—'}{s.v != null && s.u ? <span className="text-[9px] text-muted font-normal ml-0.5">{s.u}</span> : null}
+            </span>
+            <span className="text-[8px] uppercase tracking-wide" style={{ color: TEAL }}>{s.label}</span>
+            {delta != null && verdict != null && (
+              <span className="helix-num block text-[9px] font-semibold leading-tight" style={{ color: VERDICT_COLOR[verdict] }}>
+                {delta > 0 ? '+' : ''}{delta}
+              </span>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }

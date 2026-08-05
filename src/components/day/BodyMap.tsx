@@ -66,13 +66,26 @@ const CONTOURS = [
   'M 57 162 Q 62 172 58.5 185', 'M 43 162 Q 38 172 41.5 185',
 ]
 
-/** Standard BIA reference bands (% of body weight) — light guidance, not a diagnosis. */
+/**
+ * Standard BIA reference bands (% of body weight) — light guidance, not a
+ * diagnosis.
+ *
+ * The first row said "Skeletal Muscle" against a 40–50 % band while the value it
+ * drew was `muscle_mass_kg` — weight × muscle %, which is lean SOFT TISSUE and
+ * sits near 78 %. So the label named one quantity, the bar plotted another, and
+ * the reference band belonged to the first: the bar pinned at full width every
+ * single day and looked like a spectacular result.
+ *
+ * Both rows exist now, each against its own band, and the skeletal row only
+ * renders when the scale reading was actually taken.
+ */
 const BARS = [
-  { key: 'muscle', label: 'Skeletal Muscle', color: ROSE,     lo: 40, hi: 50 },
-  { key: 'water',  label: 'Body Water',      color: SAPPHIRE, lo: 50, hi: 65 },
-  { key: 'protein',label: 'Protein',         color: EMERALD,  lo: 16, hi: 20 },
-  { key: 'mineral',label: 'Bone Mineral',    color: BONE,     lo: 3.5, hi: 6 },
-  { key: 'fat',    label: 'Body Fat',        color: GOLD,     lo: 10, hi: 20 },
+  { key: 'skeletal', label: 'Skeletal Muscle',  color: ROSE,     lo: 40, hi: 50 },
+  { key: 'muscle',   label: 'Lean Soft Tissue', color: ROSE,     lo: 70, hi: 85 },
+  { key: 'water',    label: 'Body Water',       color: SAPPHIRE, lo: 50, hi: 65 },
+  { key: 'protein',  label: 'Protein',          color: EMERALD,  lo: 16, hi: 20 },
+  { key: 'mineral',  label: 'Bone Mineral',     color: BONE,     lo: 3.5, hi: 6 },
+  { key: 'fat',      label: 'Body Fat',         color: GOLD,     lo: 10, hi: 20 },
 ] as const
 
 /**
@@ -98,6 +111,9 @@ export function BodyMap({ log }: { log: DayVaultData['log'] }) {
     bone_mineral: num(r?.bone_mineral), protein_percent: num(r?.protein_percent),
   })
   const mass = {
+    // Entered, never derived — see lib/body/composition.ts. Absent on any day
+    // the reading wasn't taken, and its row disappears rather than guessing.
+    skeletal: num(r?.skeletal_muscle_mass_kg),
     muscle: num(r?.muscle_mass_kg) ?? d.muscle_mass_kg,
     water: num(r?.water_mass_kg) ?? d.water_mass_kg,
     protein: num(r?.protein_mass_kg) ?? d.protein_mass_kg,
@@ -115,6 +131,9 @@ export function BodyMap({ log }: { log: DayVaultData['log'] }) {
   }
 
   const pct = (m?: number) => (m != null && weight ? (m / weight) * 100 : 0)
+  // Prefer the skeletal share when it was measured: "78% muscle" is true of lean
+  // soft tissue and reads as a superhuman claim next to a 40–50% norm.
+  const skeletalPct = mass.skeletal != null ? pct(mass.skeletal) : null
   const musclePct = num(r?.muscle_percent) ?? pct(mass.muscle)
   const bodyFatPct = num(r?.body_fat_pct) ?? pct(mass.fat)
   // Bottom-up strata: water, protein, mineral, fat, then neutral residual.
@@ -138,7 +157,10 @@ export function BodyMap({ log }: { log: DayVaultData['log'] }) {
       <div className="flex items-baseline justify-between gap-2">
         <h3 className="font-heading font-semibold text-fluid-sm text-text">Body Composition</h3>
         <div className="flex items-baseline gap-2.5 helix-num text-[11px]">
-          <span style={{ color: ROSE }}>{musclePct.toFixed(1)}%<span className="text-muted text-[9px]"> muscle</span></span>
+          <span style={{ color: ROSE }}>
+            {(skeletalPct ?? musclePct).toFixed(1)}%
+            <span className="text-muted text-[9px]">{skeletalPct != null ? ' skeletal' : ' lean soft'}</span>
+          </span>
           <span style={{ color: GOLD }}>{bodyFatPct.toFixed(1)}%<span className="text-muted text-[9px]"> fat</span></span>
           <span className="text-muted">{weight.toFixed(1)} kg</span>
         </div>
@@ -177,8 +199,11 @@ export function BodyMap({ log }: { log: DayVaultData['log'] }) {
         <div className="space-y-2">
           {BARS.map((b) => {
             const m = mass[b.key as keyof typeof mass]
+            // Skeletal muscle is the one row with nothing to fall back on, so it
+            // is omitted entirely rather than drawn as a dash.
+            if (b.key === 'skeletal' && m == null) return null
             const p = pct(m)
-            const scaleMax = 70 // % of weight — full bar width
+            const scaleMax = 90 // % of weight — full bar width
             const clampPct = (x: number) => `${Math.max(0, Math.min(100, (x / scaleMax) * 100))}%`
             return (
               <div key={b.key}>

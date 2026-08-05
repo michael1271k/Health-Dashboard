@@ -140,7 +140,7 @@ export function BodyPanel({ date, log, openEditor = false, onEditorClosed }: {
         {has ? (
           <>
             <BodyMap log={log} />
-            <InBodyHeadline log={log} />
+            <InBodyHeadline log={log} date={date} />
             <button
               type="button"
               onClick={() => setEditing(true)}
