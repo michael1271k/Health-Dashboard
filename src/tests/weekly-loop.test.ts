@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildWeeklyExport, type WeeklyExportInput, type ExportDay } from '@/lib/reports/weeklyExport'
+import { buildWeeklyExport, weeklySummary, type WeeklyExportInput, type ExportDay } from '@/lib/reports/weeklyExport'
 import { stallProtocol, rollingAverage, type DayPoint, type SessionPoint } from '@/lib/coach/insights'
 
 const day = (date: string, p: Partial<DayPoint>): DayPoint => ({
@@ -148,12 +148,17 @@ describe('buildWeeklyExport', () => {
         date: '2026-07-19', weightKg: 65.3, bmi: 22.4, bodyFatPct: 13.2, musclePercent: 46.1,
         waterPercent: 60.5, visceralFat: 6, bmr: 1620, boneMineral: 4.1,
         muscleMassKg: 30.1, fatFreeMassKg: 56.7,
+        fatMassKg: 8.6, proteinMassKg: 12.9, boneMineralKg: 2.81, waterMassKg: 39.5,
+        skeletalMuscleMassKg: 27.0, estimatedWaistToHipRatio: 0.8,
       }],
     })
-    // Full InBody row, BMI included, in the mandated order — and no W:H, which
-    // is not tracked any more. Muscle mass and fat-free mass are SEPARATE
-    // fields: one "lean mass" number used to mean either, depending on the day.
-    expect(withBody).toMatch(/InBody · weight 65\.3 kg · BMI 22\.4 · BF 13\.2% · muscle 46\.1% · water 60\.5% · visceral 6 · BMR 1620 · bone 4\.1% · muscle mass 30\.1 kg · fat-free mass 56\.7 kg/)
+    // TWO lines now: the percentages the scale shows, then every compartment in
+    // absolute kg. A percentage of a falling bodyweight can rise while the
+    // tissue shrinks, so the masses are what a week-over-week read needs.
+    expect(withBody).toMatch(/InBody · weight 65\.3 kg · BMI 22\.4 · BF 13\.2% · muscle 46\.1% · water 60\.5% · visceral 6 · BMR 1620 · bone 4\.1%/)
+    expect(withBody).toMatch(/Mass · lean mass 30\.1 kg · skeletal muscle 27\.0 kg · fat mass 8\.6 kg · protein 12\.9 kg · bone mineral 2\.81 kg · body water 39\.5 kg · fat-free mass 56\.7 kg · est\. waist:hip 0\.80/)
+    // Skeletal muscle and lean mass are ~23 kg apart and never share a label.
+    expect(withBody).not.toMatch(/lean soft/i)
     expect(withBody).not.toMatch(/W:H/)
   })
 
@@ -236,7 +241,11 @@ describe('buildWeeklyExport', () => {
   // opinions — none of the three belongs in a raw-data export.
   it('never emits Active Energy, Day Score or Battery', () => {
     const out = buildWeeklyExport(input)
-    expect(out).not.toMatch(/active/i)
+    // The banned metric is Apple's ACTIVE ENERGY, not the word "active": the
+    // cardio ledger's own active kcal is a measured figure and has always been
+    // printed on every walk line. A bare /active/i only passed because this
+    // fixture logs no cardio, and would have failed the moment one did.
+    expect(out).not.toMatch(/active energy/i)
     expect(out).not.toMatch(/battery/i)
     expect(out).not.toMatch(/\bscore\b/i)
   })
@@ -298,16 +307,46 @@ describe('buildWeeklyExport', () => {
     expect(whole).toMatch(/8240 kg volume/)
   })
 
-  it('renders a training-vs-rest supplements protocol only when supplied', () => {
+  it('renders ONE consolidated supplements list, only when supplied', () => {
     expect(buildWeeklyExport(input)).not.toMatch(/## Supplements protocol/)
     const withProtocol = buildWeeklyExport({
       ...input,
       supplementProtocol: { training: ['11:45 · L-Citrulline — 3 g'], rest: ['10:30 · Vitamin D3 + K2 — 125 mcg'] },
     })
     expect(withProtocol).toMatch(/## Supplements protocol/)
-    expect(withProtocol).toMatch(/\*\*Training days\*\*/)
+    // The stack is the same on both kinds of day; only the multivitamin dose
+    // moves. Two headed lists duplicated a dozen identical lines to say so.
+    expect(withProtocol).not.toMatch(/\*\*Training days\*\*/)
+    expect(withProtocol).not.toMatch(/\*\*Rest days\*\*/)
     expect(withProtocol).toMatch(/- 11:45 · L-Citrulline — 3 g/)
-    expect(withProtocol).toMatch(/\*\*Rest days\*\*/)
+    expect(withProtocol).toMatch(/- 10:30 · Vitamin D3 \+ K2 — 125 mcg/)
+    // Chronological across both former columns.
+    expect(withProtocol.indexOf('Vitamin D3')).toBeLessThan(withProtocol.indexOf('L-Citrulline'))
+  })
+
+  it('states the multivitamin’s variable dose in one asserted line', () => {
+    const out = buildWeeklyExport({
+      ...input,
+      supplementProtocol: {
+        training: ['09:00 · Two Per Day Multivitamin — 2 tablets'],
+        rest: ['09:00 · Two Per Day Multivitamin — 1 tablet'],
+      },
+    })
+    expect(out).toMatch(/- Two Per Day Multivitamin — 1 tablet \/ 2 on Monday & Friday \(Leg Days\)/)
+    // Once, not twice — the whole point of the consolidation.
+    expect(out.match(/Multivitamin/g)).toHaveLength(1)
+  })
+
+  it('consolidates by SUPPLEMENT, so a differing dose collapses instead of duplicating', () => {
+    const out = buildWeeklyExport({
+      ...input,
+      supplementProtocol: {
+        training: ['08:00 · Creatine — 5 g', '11:45 · L-Citrulline — 3 g'],
+        rest: ['08:00 · Creatine — 5 g'],
+      },
+    })
+    expect(out.match(/Creatine/g)).toHaveLength(1)
+    expect(out).toMatch(/- 11:45 · L-Citrulline — 3 g/)
   })
 
   // Warm-ups used to be filtered out upstream, so the export read as if every
@@ -349,5 +388,95 @@ describe('buildWeeklyExport', () => {
     const out = buildWeeklyExport(input)
     expect(out).not.toMatch(/vs previous week/i)
     expect(out).not.toMatch(/week aggregates/i)
+  })
+})
+
+/**
+ * The four week-level facts that are NOT a sum of the daily lines. The export
+ * refuses derived aggregates on principle; these earn their place because
+ * reconstructing them by hand costs the reader real work.
+ */
+describe('weeklySummary', () => {
+  const sumDay = (o: Partial<ExportDay>): ExportDay => ({
+    date: '2026-07-19', weekdayLabel: 'Sun', isTrainingDay: false, weightKg: null,
+    calories: null, proteinG: null, carbsG: null, fatG: null, steps: null, distanceM: null,
+    trainingMin: null, sleepMin: null, deepMin: null, remMin: null, restingHr: null,
+    hrvMs: null, waterMl: null, supplementsTaken: null, weighInSkipReason: null, ...o,
+  })
+  const base = (o: Partial<WeeklyExportInput> = {}): WeeklyExportInput => ({
+    weekStart: '2026-07-19', weekEnd: '2026-07-25', programLabel: 'Helix Cut',
+    calorieGoal: 1955, proteinGoalG: 170, stepsGoal: 10000, sleepGoalHours: 8,
+    days: [], sessions: [], volumeByMuscle: [], doms: [], cardio: [], ...o,
+  })
+  const day = sumDay
+
+  it('averages only the days that HAVE a reading', () => {
+    // Four nights of sleep is a 7.2h average over four nights, not 4.1h over
+    // seven. Counting a missing night as zero is the classic version of this bug.
+    const s = weeklySummary(base({
+      days: [day({ sleepMin: 420 }), day({ sleepMin: 480 }), day({ sleepMin: null })],
+    }))
+    expect(s.avgSleepMin).toBe(450)
+  })
+
+  it('returns null, never 0, when nothing was recorded', () => {
+    const s = weeklySummary(base({ days: [day({}), day({})] }))
+    expect(s.avgSleepMin).toBeNull()
+    expect(s.avgRestingHr).toBeNull()
+    expect(s.avgHrvMs).toBeNull()
+    expect(s.cardioMinutes).toBeNull()
+  })
+
+  it('totals cardio duration and active calories across the week', () => {
+    const s = weeklySummary(base({
+      cardio: [
+        { date: '2026-07-19', kind: 'walk', distanceM: 3000, durationMin: 30, kcal: 150, totalKcal: null, avgHr: null, effort: null },
+        { date: '2026-07-21', kind: 'run', distanceM: 5000, durationMin: 25, kcal: 320, totalKcal: null, avgHr: null, effort: null },
+      ],
+    }))
+    expect(s.cardioMinutes).toBe(55)
+    expect(s.cardioActiveKcal).toBe(470)
+    expect(s.cardioSessions).toBe(2)
+  })
+
+  it('reports the single worst DOMS reading of the week', () => {
+    const s = weeklySummary(base({
+      doms: [
+        { date: '2026-07-19', muscle: 'Chest', severity: 1 },
+        { date: '2026-07-21', muscle: 'Quads', severity: 3 },
+        { date: '2026-07-22', muscle: 'Glutes', severity: 2 },
+      ],
+    }))
+    expect(s.peakDoms).toEqual({ muscle: 'Quads', severity: 3, date: '2026-07-21' })
+  })
+
+  it('keeps the FIRST day a peak was reached when two tie', () => {
+    const s = weeklySummary(base({
+      doms: [
+        { date: '2026-07-21', muscle: 'Quads', severity: 3 },
+        { date: '2026-07-22', muscle: 'Calves', severity: 3 },
+      ],
+    }))
+    expect(s.peakDoms?.date).toBe('2026-07-21')
+  })
+
+  it('ignores severity-0 rows — "rated, not sore" is not soreness', () => {
+    const s = weeklySummary(base({ doms: [{ date: '2026-07-19', muscle: 'Chest', severity: 0 }] }))
+    expect(s.peakDoms).toBeNull()
+  })
+
+  it('prints the summary above the daily log, and says so when nothing is sore', () => {
+    const out = buildWeeklyExport(base({ days: [day({ sleepMin: 450 })] }))
+    expect(out).toMatch(/## Weekly summary/)
+    expect(out.indexOf('## Weekly summary')).toBeLessThan(out.indexOf('## Days'))
+    expect(out).toMatch(/- Highest DOMS: none reported/)
+  })
+
+  it('names the worst muscle in the printed line', () => {
+    const out = buildWeeklyExport(base({
+      days: [day({})],
+      doms: [{ date: '2026-07-21', muscle: 'Quads', severity: 3 }],
+    }))
+    expect(out).toMatch(/- Highest DOMS: Quads — severe \(2026-07-21\)/)
   })
 })

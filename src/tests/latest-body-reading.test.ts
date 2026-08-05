@@ -55,9 +55,14 @@ describe('reduceLatest — carry-forward, field by field', () => {
 
   it('carries every field the form can enter', () => {
     // Guards against a field being added to the form and silently not carried.
+    // `estimated_waist_to_hip_ratio` is deliberately ABSENT until its paste-SQL
+    // runs: this is one select, and PostgREST 400s all of it on one unknown
+    // column, which would kill the carry-forward for every other field too.
+    expect(CARRY_FIELDS).not.toContain('estimated_waist_to_hip_ratio')
     expect(CARRY_FIELDS).toEqual([
       'weight_kg', 'bmi', 'body_fat_pct', 'muscle_percent', 'water_percent',
       'protein_percent', 'bone_mineral', 'visceral_fat', 'bmr',
+      'skeletal_muscle_mass_kg',
     ])
   })
 })

@@ -107,7 +107,8 @@ export interface NutritionPreset {
   /** Display-only phase goals shown in the Settings plan preview (not persisted —
    *  no user_goals column). Waist target, the weekly bodyweight-rate band, a bulk
    *  body-fat ceiling, and the fiber band the single fiberGoalG sits inside. */
-  targetWaistCm?: number | null
+  // NO targetWaistCm. Helix does not track tape measurements — see the note in
+  // lib/body/composition.ts. A goal you cannot measure is not a goal.
   rateMinKgWk?: number | null   // signed: cut negative, bulk positive
   rateMaxKgWk?: number | null
   bodyFatCeilingPct?: number | null
@@ -132,7 +133,6 @@ export const NUTRITION_PRESETS: Record<NutritionMode, NutritionPreset> = {
     targetWeightKg: 62,   // cut-exit ballpark; adjust in Settings
     targetBodyFatPct: 13.0,   // cut-exit gate (7-day avg BIA)
     targetMuscleMassKg: 33.0,
-    targetWaistCm: 74,        // navel waist ≤ 74 cm
     rateMinKgWk: -0.50, rateMaxKgWk: -0.40,
   },
   bulk: {

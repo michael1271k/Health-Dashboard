@@ -603,7 +603,6 @@ export default function SettingsPage() {
             ['Body fat', pp.targetBodyFatPct != null ? `≤ ${pp.targetBodyFatPct}%` : '—'],
             ['Muscle mass', pp.targetMuscleMassKg != null ? `${pp.targetMuscleMassKg} kg` : '—'],
           ]
-          if (pp.targetWaistCm != null) goalTiles.push(['Waist', `≤ ${pp.targetWaistCm} cm`])
           if (pp.bodyFatCeilingPct != null) goalTiles.push(['BF ceiling', `${pp.bodyFatCeilingPct}%`])
 
           return (

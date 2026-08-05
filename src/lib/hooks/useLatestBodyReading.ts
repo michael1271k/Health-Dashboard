@@ -27,6 +27,10 @@ import { supabase } from '@/lib/supabase/client'
 export const CARRY_FIELDS = [
   'weight_kg', 'bmi', 'body_fat_pct', 'muscle_percent', 'water_percent',
   'protein_percent', 'bone_mineral', 'visceral_fat', 'bmr',
+  'skeletal_muscle_mass_kg',
+  // NOT `estimated_waist_to_hip_ratio`: this select is one statement, and
+  // PostgREST 400s all of it on one unknown column. It joins the list once the
+  // paste-SQL has run — until then the ratio simply doesn't carry forward.
 ] as const
 
 export type CarryField = (typeof CARRY_FIELDS)[number]

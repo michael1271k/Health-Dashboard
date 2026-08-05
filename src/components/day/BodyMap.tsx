@@ -71,7 +71,7 @@ const CONTOURS = [
  * diagnosis.
  *
  * The first row said "Skeletal Muscle" against a 40–50 % band while the value it
- * drew was `muscle_mass_kg` — weight × muscle %, which is lean SOFT TISSUE and
+ * drew was `muscle_mass_kg` — weight × muscle %, which is LEAN MASS and
  * sits near 78 %. So the label named one quantity, the bar plotted another, and
  * the reference band belonged to the first: the bar pinned at full width every
  * single day and looked like a spectacular result.
@@ -81,7 +81,7 @@ const CONTOURS = [
  */
 const BARS = [
   { key: 'skeletal', label: 'Skeletal Muscle',  color: ROSE,     lo: 40, hi: 50 },
-  { key: 'muscle',   label: 'Lean Soft Tissue', color: ROSE,     lo: 70, hi: 85 },
+  { key: 'muscle',   label: 'Lean Mass', color: ROSE,     lo: 70, hi: 85 },
   { key: 'water',    label: 'Body Water',       color: SAPPHIRE, lo: 50, hi: 65 },
   { key: 'protein',  label: 'Protein',          color: EMERALD,  lo: 16, hi: 20 },
   { key: 'mineral',  label: 'Bone Mineral',     color: BONE,     lo: 3.5, hi: 6 },
@@ -132,7 +132,7 @@ export function BodyMap({ log }: { log: DayVaultData['log'] }) {
 
   const pct = (m?: number) => (m != null && weight ? (m / weight) * 100 : 0)
   // Prefer the skeletal share when it was measured: "78% muscle" is true of lean
-  // soft tissue and reads as a superhuman claim next to a 40–50% norm.
+  // MASS and reads as a superhuman claim next to a 40–50% norm.
   const skeletalPct = mass.skeletal != null ? pct(mass.skeletal) : null
   const musclePct = num(r?.muscle_percent) ?? pct(mass.muscle)
   const bodyFatPct = num(r?.body_fat_pct) ?? pct(mass.fat)
@@ -159,7 +159,7 @@ export function BodyMap({ log }: { log: DayVaultData['log'] }) {
         <div className="flex items-baseline gap-2.5 helix-num text-[11px]">
           <span style={{ color: ROSE }}>
             {(skeletalPct ?? musclePct).toFixed(1)}%
-            <span className="text-muted text-[9px]">{skeletalPct != null ? ' skeletal' : ' lean soft'}</span>
+            <span className="text-muted text-[9px]">{skeletalPct != null ? ' skeletal' : ' lean mass'}</span>
           </span>
           <span style={{ color: GOLD }}>{bodyFatPct.toFixed(1)}%<span className="text-muted text-[9px]"> fat</span></span>
           <span className="text-muted">{weight.toFixed(1)} kg</span>

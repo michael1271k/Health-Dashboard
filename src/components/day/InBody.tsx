@@ -18,13 +18,14 @@ const WHR_COLOR: Record<WhrBand, string> = { low: EMERALD, moderate: GOLD, high:
 const VERDICT_COLOR: Record<Verdict, string> = { good: EMERALD, bad: OXIDE, neutral: MUTED }
 
 /**
- * Editable inputs — the readings you take. Masses derive from Weight × % (see
- * the read-only Composition strip) with ONE exception: skeletal muscle mass,
- * which no percentage can produce and the scale reports on its own.
+ * Editable inputs — every one of them a number the SCALE reports.
  *
- * Circumference is back. It was dropped once because nothing measured it; waist
- * ÷ hip cannot be inferred from weight or body fat, so a tape is the only way
- * and these are it.
+ * Masses derive from Weight × % (see the read-only Composition strip) with two
+ * exceptions the scale computes itself and no percentage can reproduce:
+ * skeletal muscle mass, and the estimated waist-to-hip ratio.
+ *
+ * NO TAPE MEASUREMENTS. `waist_cm` / `hip_cm` are gone and are not coming back
+ * — see the note in lib/body/composition.ts.
  */
 const INPUTS: Array<{ key: keyof BodyMetricsPatch; label: string; unit: string }> = [
   { key: 'weight_kg',      label: 'Weight',   unit: 'kg' },
@@ -37,25 +38,22 @@ const INPUTS: Array<{ key: keyof BodyMetricsPatch; label: string; unit: string }
   { key: 'visceral_fat',   label: 'Visceral', unit: 'lvl' },
   { key: 'bmr',            label: 'BMR',      unit: 'kcal' },
   { key: 'skeletal_muscle_mass_kg', label: 'Skeletal', unit: 'kg' },
-  { key: 'waist_cm',       label: 'Waist',    unit: 'cm' },
-  { key: 'hip_cm',         label: 'Hip',      unit: 'cm' },
+  { key: 'estimated_waist_to_hip_ratio', label: 'W:H Ratio', unit: '' },
 ]
 
 /**
  * Read-only values computed live from the entries above.
  *
- * "Muscle" is now "Lean Soft Tissue", which is what weight × muscle% actually
- * measures: skeletal muscle plus smooth and cardiac muscle, organ mass and
- * intracellular water. Calling it Muscle put ~50 kg beside a scale reporting
- * ~27 kg of skeletal muscle and made a correct number look like a bug.
+ * `muscle_mass_kg` (weight × muscle%) is labelled "Lean Mass" everywhere in the
+ * UI. It is not the same quantity as the scale's Skeletal Muscle reading, which
+ * has its own field — the two are ~23 kg apart and never share a label.
  */
 const DERIVED: Array<{ key: keyof BodyCompDerived; label: string; unit: string }> = [
-  { key: 'muscle_mass_kg',   label: 'Lean Soft', unit: 'kg' },
+  { key: 'muscle_mass_kg',   label: 'Lean Mass', unit: 'kg' },
   { key: 'fat_mass_kg',      label: 'Fat',      unit: 'kg' },
   { key: 'water_mass_kg',    label: 'Water',    unit: 'kg' },
   { key: 'protein_mass_kg',  label: 'Protein',  unit: 'kg' },
   { key: 'fat_free_mass_kg', label: 'Fat-Free', unit: 'kg' },
-  { key: 'waist_hip_ratio',  label: 'W:H',      unit: '' },
 ]
 
 /**
@@ -69,7 +67,7 @@ export function hasScaleMetrics(log: DayVaultData['log']): boolean {
   const r = log as Record<string, number | null>
   return ['weight_kg', 'body_fat_pct', 'muscle_percent', 'water_percent', 'muscle_mass_kg',
     'fat_free_mass_kg', 'bone_mineral', 'visceral_fat', 'bmr', 'bmi',
-    'skeletal_muscle_mass_kg', 'waist_cm', 'hip_cm'].some((k) => r[k] != null)
+    'skeletal_muscle_mass_kg', 'estimated_waist_to_hip_ratio'].some((k) => r[k] != null)
 }
 
 /**
@@ -80,10 +78,10 @@ export function hasScaleMetrics(log: DayVaultData['log']): boolean {
  * names the two masses separately now.
  *
  * The muscle tile prefers SKELETAL muscle mass, the number the scale reports and
- * the one that means "the tissue I train". Lean soft tissue (weight × muscle%,
- * ~23 kg higher) stands in only when the skeletal reading wasn't taken — with
- * its own label, so the tile never shows two different quantities under one
- * name. Nothing is estimated: a day without either holds a dash.
+ * the one that means "the tissue I train". Lean mass (weight × muscle%, ~23 kg
+ * higher) stands in only when the skeletal reading wasn't taken — with its own
+ * label, so the tile never shows two different quantities under one name.
+ * Nothing is estimated: a day without either holds a dash.
  */
 export function InBodyHeadline({ log, date }: { log: DayVaultData['log']; date: string }) {
   const r = log as Record<string, number | null> | null
@@ -104,10 +102,10 @@ export function InBodyHeadline({ log, date }: { log: DayVaultData['log']; date: 
     { label: 'Weight', v: r?.weight_kg, u: 'kg', prev: last?.values.weight_kg, metric: 'weight' },
     { label: 'Body Fat', v: r?.body_fat_pct, u: '%', prev: last?.values.body_fat_pct, metric: 'fat' },
     smm != null
-      // No previous skeletal reading to compare against yet — carrying one
-      // forward from lean soft tissue would subtract two different quantities.
-      ? { label: 'Skeletal', v: smm, u: 'kg', metric: 'muscle' }
-      : { label: 'Lean Soft', v: r?.muscle_mass_kg ?? d.muscle_mass_kg, u: 'kg', prev: p.muscle_mass_kg, metric: 'muscle' },
+      // Compared against the last SKELETAL reading only — never against lean
+      // mass, which is a different quantity ~23 kg away.
+      ? { label: 'Skeletal', v: smm, u: 'kg', prev: last?.values.skeletal_muscle_mass_kg, metric: 'muscle' }
+      : { label: 'Lean Mass', v: r?.muscle_mass_kg ?? d.muscle_mass_kg, u: 'kg', prev: p.muscle_mass_kg, metric: 'muscle' },
     { label: 'Fat-Free', v: r?.fat_free_mass_kg ?? d.fat_free_mass_kg, u: 'kg', prev: p.fat_free_mass_kg, metric: 'muscle' },
   ]
 
@@ -202,7 +200,6 @@ export function InBodyForm({ date, log, onSaved }: {
     return {
       weight_kg: g('weight_kg'), body_fat_pct: g('body_fat_pct'), muscle_percent: g('muscle_percent'),
       water_percent: g('water_percent'), bone_mineral: g('bone_mineral'), protein_percent: g('protein_percent'),
-      waist_cm: g('waist_cm'), hip_cm: g('hip_cm'),
     }
   }
   const derived = deriveBodyComp(currentRecord())
@@ -220,13 +217,8 @@ export function InBodyForm({ date, log, onSaved }: {
     }
     if (!Object.keys(numeric).length) return
     const patch: BodyMetricsPatch = numeric
-    // Fold the derived MASSES in so they're persisted alongside the raw entries.
-    // `waist_hip_ratio` is pulled back out: it is displayed, never stored — a
-    // saved ratio goes stale the moment either circumference is corrected, and
-    // there is no column for it to go stale in.
-    const masses = deriveBodyComp(currentRecord())
-    delete masses.waist_hip_ratio
-    Object.assign(patch, masses)
+    // Fold the derived masses in so they're persisted alongside the raw entries.
+    Object.assign(patch, deriveBodyComp(currentRecord()))
     save.mutate(patch, {
       onSuccess: () => {
         setEdits({})
@@ -293,22 +285,27 @@ export function InBodyForm({ date, log, onSaved }: {
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
             {DERIVED.map((d) => {
               const v = derived[d.key]
-              // W:H is the one derived value that carries a verdict, so it wears
-              // its WHO risk band rather than the flat accent.
-              const color = v == null ? undefined
-                : d.key === 'waist_hip_ratio' ? WHR_COLOR[whrBand(v)]
-                : TEAL
               return (
                 <div key={d.key} className="text-center">
-                  <span className="helix-num block text-fluid-sm font-bold leading-tight" style={{ color }}>
+                  <span className="helix-num block text-fluid-sm font-bold leading-tight" style={{ color: v != null ? TEAL : undefined }}>
                     {v != null ? v : '—'}{v != null && d.unit ? <span className="text-[8px] text-muted font-normal ml-0.5">{d.unit}</span> : null}
                   </span>
-                  <span className="text-[8px] uppercase tracking-wide text-muted">
-                    {d.key === 'waist_hip_ratio' && v != null ? whrBand(v) : d.label}
-                  </span>
+                  <span className="text-[8px] uppercase tracking-wide text-muted">{d.label}</span>
                 </div>
               )
             })}
+            {/* The scale's own ratio — entered, not derived, but it belongs in
+                the read-out beside the masses. Wears its WHO band. */}
+            {(() => {
+              const whr = (() => { const s = shown('estimated_waist_to_hip_ratio'); const n = parseFloat(s); return s.trim() !== '' && Number.isFinite(n) ? n : null })()
+              if (whr == null) return null
+              return (
+                <div className="text-center">
+                  <span className="helix-num block text-fluid-sm font-bold leading-tight" style={{ color: WHR_COLOR[whrBand(whr)] }}>{whr}</span>
+                  <span className="text-[8px] uppercase tracking-wide text-muted">{whrBand(whr)} W:H</span>
+                </div>
+              )
+            })()}
           </div>
         </div>
       )}

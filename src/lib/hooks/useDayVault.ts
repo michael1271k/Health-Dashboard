@@ -33,10 +33,10 @@ export interface DayVaultData {
     fat_free_mass_kg: number | null
     /** Why a weightless day is weightless. Free text; null on weighed days. */
     weighin_skip_reason: string | null
-    /** Read in an isolated query — absent (not zero) until the paste-SQL runs. */
+    /** Entered from the scale, never derived. Live column. */
     skeletal_muscle_mass_kg?: number | null
-    waist_cm?: number | null
-    hip_cm?: number | null
+    /** Read in an isolated query — absent (not zero) until the paste-SQL runs. */
+    estimated_waist_to_hip_ratio?: number | null
   } | null
   score: { score: number | null; battery_pct: number | null } | null
   nutrition: { calories: number; protein_g: number; carbs_g: number; fat_g: number; phase: Phase | null } | null
@@ -63,7 +63,7 @@ export function useDayVault(date: string) {
         // `log.muscle_mass_kg` / `fat_mass_kg` / … and falls back to re-deriving
         // when they are absent — and because they were never in this select,
         // the fallback was the only path that ever ran.
-        supabase.from('daily_logs').select('steps, water_ml, sleep_minutes, weight_kg, lean_mass_kg, body_fat_pct, avg_rest_heart_rate, hrv_ms, respiratory_rate, blood_oxygen, training_minutes, exercise_minutes, stand_hours, vo2max, active_energy, muscle_percent, water_percent, bone_mineral, visceral_fat, bmr, bmi, protein_percent, muscle_mass_kg, water_mass_kg, fat_mass_kg, bone_mineral_kg, protein_mass_kg, fat_free_mass_kg, weighin_skip_reason')
+        supabase.from('daily_logs').select('steps, water_ml, sleep_minutes, weight_kg, lean_mass_kg, body_fat_pct, avg_rest_heart_rate, hrv_ms, respiratory_rate, blood_oxygen, training_minutes, exercise_minutes, stand_hours, vo2max, active_energy, muscle_percent, water_percent, bone_mineral, visceral_fat, bmr, bmi, protein_percent, muscle_mass_kg, water_mass_kg, fat_mass_kg, bone_mineral_kg, protein_mass_kg, fat_free_mass_kg, weighin_skip_reason, skeletal_muscle_mass_kg')
           .eq('date', date).maybeSingle(),
         supabase.from('daily_scores').select('score, battery_pct').eq('date', date).maybeSingle(),
         supabase.from('nutrition_entries').select('calories, protein_g, carbs_g, fat_g, phase')
@@ -72,12 +72,12 @@ export function useDayVault(date: string) {
           .select('id, started_at, split_day, day_key, report_md, duration_min, avg_bpm, total_volume_kg, set_count, pr_count, calories_burned')
           .gte('started_at', `${date}T00:00:00Z`).lt('started_at', `${nextDay}T00:00:00Z`)
           .order('started_at', { ascending: true }),
-        // ISOLATED on purpose. These three columns arrive with a paste-SQL that
-        // may not have been run yet, and PostgREST 400s the WHOLE select on one
-        // unknown column — folding them into the row above would empty every
-        // field of every day until the DDL landed. In their own slot they fail
-        // alone and the rest of the Nexus never notices.
-        supabase.from('daily_logs').select('skeletal_muscle_mass_kg, waist_cm, hip_cm')
+        // ISOLATED on purpose, and now down to ONE column. PostgREST 400s the
+        // WHOLE select on a single unknown column, so a field awaiting paste-SQL
+        // must never share a statement with a field that exists —
+        // `skeletal_muscle_mass_kg` has landed and moved up into the row above;
+        // this one is still pending and fails alone until it does.
+        supabase.from('daily_logs').select('estimated_waist_to_hip_ratio')
           .eq('date', date).maybeSingle(),
       ])
       const sessions = ((sessionsRes.data ?? []) as Array<{
@@ -226,19 +226,20 @@ export interface BodyMetricsPatch {
   weighin_skip_reason?: string | null
   // ── Extended InBody columns (self-heal until migrated) ──
   /**
-   * Skeletal muscle mass — ENTERED, never derived. `muscle_mass_kg` is lean soft
+   * Skeletal muscle mass — ENTERED, never derived. `muscle_mass_kg` is lean mass
    * tissue (weight × muscle%, ~50 kg); this is the contractile tissue the scale
    * reports separately (~27 kg). See the header of lib/body/composition.ts.
    */
   skeletal_muscle_mass_kg?: number | null
   /**
-   * Circumference. These were dropped once, on the grounds that nothing measured
-   * them — that is no longer true, and waist ÷ hip cannot be inferred from any
-   * other field, so they are back as tape measurements. The RATIO is not stored:
-   * it derives, so correcting either circumference can't leave it stale.
+   * The Xiaomi scale's own estimated waist-to-hip ratio — ONE float it computes
+   * and reports, entered as-is.
+   *
+   * NOT derived from circumferences, because Helix does not track them:
+   * `waist_cm` / `hip_cm` were removed for good (see lib/body/composition.ts).
+   * Nothing in this app is measured by hand.
    */
-  waist_cm?: number | null
-  hip_cm?: number | null
+  estimated_waist_to_hip_ratio?: number | null
   protein_percent?: number | null
   muscle_mass_kg?: number | null
   water_mass_kg?: number | null
@@ -253,7 +254,7 @@ export interface BodyMetricsPatch {
 const EXTENDED_BODY_KEYS = new Set<keyof BodyMetricsPatch>([
   'protein_percent', 'muscle_mass_kg', 'water_mass_kg',
   'fat_mass_kg', 'bone_mineral_kg', 'protein_mass_kg', 'fat_free_mass_kg',
-  'skeletal_muscle_mass_kg', 'waist_cm', 'hip_cm',
+  'skeletal_muscle_mass_kg', 'estimated_waist_to_hip_ratio',
 ])
 
 /**

@@ -62,7 +62,7 @@ async function fetchRange(weekStart: string, weekEnd: string) {
 
   // Active Energy, Day Score and Battery are deliberately NOT fetched — none of
   // the three appears in the export any more (see weeklyExport.ts).
-  const [logs, nutrition, sessions, sets, water, supps, doms, bodyComp, cardio, rpe, bodyLedger, skips, prAxes] = await Promise.all([
+  const [logs, nutrition, sessions, sets, water, supps, doms, bodyComp, cardio, rpe, bodyLedger, skips, prAxes, whr] = await Promise.all([
     supabase.from('daily_logs')
       .select('date, weight_kg, steps, distance_m, training_minutes, sleep_minutes, water_ml, avg_rest_heart_rate, hrv_ms, blood_oxygen')
       .gte('date', weekStart).lte('date', weekEnd),
@@ -89,7 +89,7 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     // Body composition — its own query so an un-migrated column can't take down
     // the daily-logs fetch above; on error it's simply omitted.
     supabase.from('daily_logs')
-      .select('date, weight_kg, bmi, body_fat_pct, muscle_percent, water_percent, bone_mineral, visceral_fat, bmr, muscle_mass_kg, fat_free_mass_kg')
+      .select('date, weight_kg, bmi, body_fat_pct, muscle_percent, water_percent, bone_mineral, visceral_fat, bmr, muscle_mass_kg, fat_free_mass_kg, fat_mass_kg, protein_mass_kg, bone_mineral_kg, water_mass_kg, skeletal_muscle_mass_kg')
       .gte('date', weekStart).lte('date', weekEnd),
     // Walks / runs — a separate ledger; exported flagged as already counted.
     supabase.from('cardio_logs').select('date, kind, distance_m, duration_min, kcal, active_kcal, total_kcal, avg_hr, effort')
@@ -103,7 +103,7 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     // that exists only in the ledger — a HealthKit weigh-in with no manual
     // entry — was silently absent from the export's InBody lines.
     supabase.from('body_composition')
-      .select('date, weight_kg, bmi, body_fat_pct, muscle_pct, water_pct, bone_mineral_pct, visceral_fat, bmr, muscle_mass_kg, fat_free_mass_kg')
+      .select('date, weight_kg, bmi, body_fat_pct, muscle_pct, water_pct, bone_mineral_pct, visceral_fat, bmr, muscle_mass_kg, fat_free_mass_kg, fat_mass_kg, protein_mass_kg, bone_mass_kg, body_water_mass_kg, skeletal_muscle_mass_kg')
       .gte('date', weekStart).lte('date', weekEnd),
     // Why a weigh-in was skipped. Its OWN query, and deliberately so: the column
     // is newer than the rest of daily_logs, and folding it into the select above
@@ -118,6 +118,11 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     // record later beaten is absent from both surfaces alike.
     supabase.from('personal_records').select('session_id, exercise_key, axis')
       .gte('achieved_on', weekStart).lte('achieved_on', weekEnd),
+    // The scale's estimated waist-to-hip ratio, ALONE in its own query because
+    // its paste-SQL may not have run — sharing a select with columns that exist
+    // would 400 the whole statement and cost the export every body metric.
+    supabase.from('daily_logs').select('date, estimated_waist_to_hip_ratio')
+      .gte('date', weekStart).lte('date', weekEnd),
   ])
 
   return {
@@ -144,6 +149,9 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     skips: (skips.error ? [] : (skips.data ?? [])) as unknown as Array<{ date: string; weighin_skip_reason: string | null }>,
     // personal_records may be absent — the PRs still list, without their axes.
     prAxes: (prAxes.error ? [] : (prAxes.data ?? [])) as unknown as Array<{ session_id: string | null; exercise_key: string; axis: PrAxis }>,
+    // estimated_waist_to_hip_ratio may not be migrated yet — an error just means
+    // the ratio is absent, and every other body metric still prints.
+    whr: (whr.error ? [] : (whr.data ?? [])) as unknown as Array<{ date: string; estimated_waist_to_hip_ratio: number | null }>,
   }
 }
 
@@ -314,6 +322,10 @@ function toBodyComp(d: RangeData): ExportBodyComp[] {
       muscle_percent: r.muscle_pct, water_percent: r.water_pct, bone_mineral: r.bone_mineral_pct,
       visceral_fat: r.visceral_fat, bmr: r.bmr,
       muscle_mass_kg: r.muscle_mass_kg, fat_free_mass_kg: r.fat_free_mass_kg,
+      // The ledger spells three of these differently again.
+      fat_mass_kg: r.fat_mass_kg, protein_mass_kg: r.protein_mass_kg,
+      bone_mineral_kg: r.bone_mass_kg, water_mass_kg: r.body_water_mass_kg,
+      skeletal_muscle_mass_kg: r.skeletal_muscle_mass_kg,
     })
   }
   for (const r of d.bodyComp) {
@@ -321,6 +333,12 @@ function toBodyComp(d: RangeData): ExportBodyComp[] {
     const out: Record<string, number | string | null> = { ...cur }
     for (const [k, v] of Object.entries(r)) if (v != null) out[k] = v
     merged.set(r.date as string, out)
+  }
+  // The ratio rides in from its own isolated query.
+  for (const r of d.whr) {
+    if (r.estimated_waist_to_hip_ratio == null) continue
+    const cur = merged.get(r.date) ?? { date: r.date }
+    merged.set(r.date, { ...cur, estimated_waist_to_hip_ratio: r.estimated_waist_to_hip_ratio })
   }
 
   return [...merged.values()]
@@ -334,12 +352,20 @@ function toBodyComp(d: RangeData): ExportBodyComp[] {
       visceralFat: (r.visceral_fat as number | null) ?? null,
       bmr: (r.bmr as number | null) ?? null,
       boneMineral: (r.bone_mineral as number | null) ?? null,
-      // Both masses, each under its own name — see ExportBodyComp.
+      // Every mass under its own name — see ExportBodyComp.
       muscleMassKg: (r.muscle_mass_kg as number | null) ?? null,
       fatFreeMassKg: (r.fat_free_mass_kg as number | null) ?? null,
+      fatMassKg: (r.fat_mass_kg as number | null) ?? null,
+      proteinMassKg: (r.protein_mass_kg as number | null) ?? null,
+      boneMineralKg: (r.bone_mineral_kg as number | null) ?? null,
+      waterMassKg: (r.water_mass_kg as number | null) ?? null,
+      skeletalMuscleMassKg: (r.skeletal_muscle_mass_kg as number | null) ?? null,
+      estimatedWaistToHipRatio: (r.estimated_waist_to_hip_ratio as number | null) ?? null,
     }))
     // Only days with a metric beyond bare weight (the daily table already lists weight).
-    .filter((b) => [b.bmi, b.bodyFatPct, b.musclePercent, b.waterPercent, b.visceralFat, b.bmr, b.boneMineral, b.muscleMassKg, b.fatFreeMassKg].some((v) => v != null))
+    .filter((b) => [b.bmi, b.bodyFatPct, b.musclePercent, b.waterPercent, b.visceralFat, b.bmr,
+      b.boneMineral, b.muscleMassKg, b.fatFreeMassKg, b.skeletalMuscleMassKg,
+      b.estimatedWaistToHipRatio].some((v) => v != null))
     .sort((a, b) => a.date.localeCompare(b.date))
 }
 

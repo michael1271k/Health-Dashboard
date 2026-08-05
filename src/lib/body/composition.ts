@@ -20,8 +20,6 @@ export interface BodyCompInput {
   water_percent?: number | null
   bone_mineral?: number | null // percentage
   protein_percent?: number | null
-  waist_cm?: number | null
-  hip_cm?: number | null
 }
 
 export interface BodyCompDerived {
@@ -31,10 +29,22 @@ export interface BodyCompDerived {
   water_mass_kg?: number
   bone_mineral_kg?: number
   protein_mass_kg?: number
-  /** Waist ÷ hip. Derived because a stored ratio drifts the moment either
-   *  circumference is corrected — the same rule as cardio pace. */
-  waist_hip_ratio?: number
 }
+
+/**
+ * NO TAPE MEASUREMENTS. EVER.
+ *
+ * `waist_cm` / `hip_cm` / a derived `waist_hip_ratio` have been removed twice
+ * now and must not come back. Nothing in Helix is measured by hand — every
+ * body number arrives from the scale or from HealthKit, and a field that
+ * depends on remembering to hold a tape the same way each week is a field that
+ * silently fills with noise.
+ *
+ * The waist-to-hip ratio Helix DOES track is
+ * `estimated_waist_to_hip_ratio`: a single float the Xiaomi scale computes and
+ * reports on its own. It is entered as one number, exactly like
+ * `skeletal_muscle_mass_kg`, and is NOT derived here.
+ */
 
 /**
  * SKELETAL MUSCLE MASS IS NOT DERIVED, AND CANNOT BE.
@@ -51,7 +61,7 @@ export interface BodyCompDerived {
  * than a plausible-looking guess.
  */
 
-/** WHO abdominal-obesity risk bands for waist ÷ hip. */
+/** WHO abdominal-obesity risk bands, applied to the SCALE'S reported ratio. */
 export type WhrBand = 'low' | 'moderate' | 'high'
 
 export function whrBand(ratio: number, sex: 'male' | 'female' = 'male'): WhrBand {
@@ -81,13 +91,8 @@ export function deriveBodyComp(input: BodyCompInput): BodyCompDerived {
   const waterPct = num(input.water_percent)
   const bonePct = num(input.bone_mineral)
   const proteinPct = num(input.protein_percent)
-  const waist = num(input.waist_cm)
-  const hip = num(input.hip_cm)
 
   const out: BodyCompDerived = {}
-
-  // Two decimals: WHR moves in hundredths and the risk bands are set there.
-  if (waist != null && hip != null && hip > 0) out.waist_hip_ratio = r2(waist / hip)
 
   const fatMass = massFromPct(weight, bf)
   if (fatMass != null) out.fat_mass_kg = fatMass

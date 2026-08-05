@@ -147,6 +147,22 @@ export interface ExportBodyComp {
    */
   muscleMassKg: number | null
   fatFreeMassKg: number | null
+  /**
+   * The rest of the compartments, in ABSOLUTE kg.
+   *
+   * The report used to print percentages for these and masses for only two, so a
+   * reader comparing weeks had to multiply by a bodyweight that was itself
+   * moving. A percentage of a falling weight can rise while the tissue shrinks;
+   * kilograms cannot lie that way.
+   */
+  fatMassKg: number | null
+  proteinMassKg: number | null
+  boneMineralKg: number | null
+  waterMassKg: number | null
+  /** Entered from the scale — NOT weight × muscle%. See lib/body/composition.ts. */
+  skeletalMuscleMassKg: number | null
+  /** The scale's own estimate. Helix tracks no tape measurements. */
+  estimatedWaistToHipRatio: number | null
 }
 
 /** The same aggregate shape for this week and the one before it. */
@@ -321,6 +337,62 @@ export function setDetail(sets: ExportSet[], exerciseName?: string): string {
 }
 
 
+/** Mean of the values that exist. Null when none do — never 0. */
+/** Mean of the values that EXIST, nulls skipped. Null when none do — never 0.
+ *  Distinct from `mean` above, which takes an already-filtered array. */
+const meanOf = (xs: Array<number | null | undefined>): number | null => {
+  const v = xs.filter((x): x is number => x != null && Number.isFinite(x))
+  return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null
+}
+
+/** Sum of the values that exist. Null when none do — 0 would be a claim. */
+const sum = (xs: Array<number | null | undefined>): number | null => {
+  const v = xs.filter((x): x is number => x != null && Number.isFinite(x))
+  return v.length ? v.reduce((a, b) => a + b, 0) : null
+}
+
+export interface WeeklySummary {
+  avgSleepMin: number | null
+  avgRestingHr: number | null
+  avgHrvMs: number | null
+  cardioMinutes: number | null
+  cardioActiveKcal: number | null
+  cardioSessions: number
+  peakDoms: { muscle: string; severity: number; date: string } | null
+}
+
+/**
+ * The handful of week-level facts that are NOT a sum of the daily lines.
+ *
+ * The export deliberately refuses to pre-chew derived aggregates — every daily
+ * number is already printed and a stale summary is worse than none. These four
+ * earn their place because reconstructing them costs the reader real work:
+ * three means across seven rows, a total across a nested list, and a max across
+ * a table sorted by date rather than by severity.
+ *
+ * Averages ignore missing days rather than counting them as zero: four nights of
+ * sleep in a week is a 7.2 h average over four nights, not a 4.1 h average over
+ * seven.
+ */
+export function weeklySummary(input: WeeklyExportInput): WeeklySummary {
+  const cardio = input.cardio ?? []
+  let peak: WeeklySummary['peakDoms'] = null
+  for (const d of input.doms) {
+    if (d.severity <= 0) continue
+    // Strictly greater, so the FIRST day a peak was reached keeps it.
+    if (!peak || d.severity > peak.severity) peak = { muscle: d.muscle, severity: d.severity, date: d.date }
+  }
+  return {
+    avgSleepMin: meanOf(input.days.map((d) => d.sleepMin)),
+    avgRestingHr: meanOf(input.days.map((d) => d.restingHr)),
+    avgHrvMs: meanOf(input.days.map((d) => d.hrvMs)),
+    cardioMinutes: sum(cardio.map((c) => c.durationMin)),
+    cardioActiveKcal: sum(cardio.map((c) => c.kcal)),
+    cardioSessions: cardio.length,
+    peakDoms: peak,
+  }
+}
+
 export function buildWeeklyExport(input: WeeklyExportInput): string {
   const { days, sessions, volumeByMuscle, doms } = input
 
@@ -354,6 +426,26 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
     cardioByDate.set(c.date, arr)
   }
 
+  // ── Weekly summary ──
+  // Sits ABOVE the daily log on purpose: it is the orientation, and the seven
+  // rows underneath are the evidence. Everything here is a mean, a total or a
+  // max the reader would otherwise compute by hand.
+  {
+    const w = weeklySummary(input)
+    const dLabel = ['none', 'mild', 'moderate', 'severe']
+    L.push('## Weekly summary')
+    L.push('')
+    L.push(`- Sleep (avg): ${sleep(w.avgSleepMin)}`)
+    L.push(`- Resting HR (avg): ${n(w.avgRestingHr, 1)}${w.avgRestingHr != null ? ' bpm' : ''}`)
+    L.push(`- HRV (avg): ${n(w.avgHrvMs, 1)}${w.avgHrvMs != null ? ' ms' : ''}`)
+    L.push(`- Cardio: ${n(w.cardioMinutes)} min across ${w.cardioSessions} session${w.cardioSessions === 1 ? '' : 's'}`
+      + ` · ${n(w.cardioActiveKcal)} active kcal`)
+    L.push(`- Highest DOMS: ${w.peakDoms
+      ? `${w.peakDoms.muscle} — ${dLabel[w.peakDoms.severity] ?? w.peakDoms.severity} (${w.peakDoms.date})`
+      : 'none reported'}`)
+    L.push('')
+  }
+
   // ── Readable per-day log (one line per day, all data · no tables) ──
   // FIXED ORDER: sleep → intake (food) → water → steps, then the vitals and the
   // day's workout. The deep InBody reading and any walks nest under the day.
@@ -375,11 +467,19 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
     )
     const b = bodyByDate.get(d.date)
     if (b) {
+      // Percentages first (what the scale shows), then every compartment in
+      // absolute kg (what actually moved). Both, every day, named every time —
+      // an omitted field is indistinguishable from a zero to whoever reads this.
       L.push(
         `    InBody · weight ${n(b.weightKg, 1)} kg · BMI ${n(b.bmi, 1)} · BF ${n(b.bodyFatPct, 1)}% · `
         + `muscle ${n(b.musclePercent, 1)}% · water ${n(b.waterPercent, 1)}% · visceral ${n(b.visceralFat)} · `
-        + `BMR ${n(b.bmr)} · bone ${n(b.boneMineral, 1)}% · `
-        + `muscle mass ${n(b.muscleMassKg, 1)} kg · fat-free mass ${n(b.fatFreeMassKg, 1)} kg`,
+        + `BMR ${n(b.bmr)} · bone ${n(b.boneMineral, 1)}%`,
+      )
+      L.push(
+        `    Mass · lean mass ${n(b.muscleMassKg, 1)} kg · skeletal muscle ${n(b.skeletalMuscleMassKg, 1)} kg · `
+        + `fat mass ${n(b.fatMassKg, 1)} kg · protein ${n(b.proteinMassKg, 1)} kg · `
+        + `bone mineral ${n(b.boneMineralKg, 2)} kg · body water ${n(b.waterMassKg, 1)} kg · `
+        + `fat-free mass ${n(b.fatFreeMassKg, 1)} kg · est. waist:hip ${n(b.estimatedWaistToHipRatio, 2)}`,
       )
     }
     for (const c of cardioByDate.get(d.date) ?? []) {
@@ -470,20 +570,59 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
 
   // Body composition is nested under each weigh-in day in "## Days" (no table).
 
-  // ── Supplements protocol (training vs rest days) ──
+  // ── Supplements protocol (ONE list) ──
   const protocol = input.supplementProtocol
   if (protocol && (protocol.training.length || protocol.rest.length)) {
     L.push('## Supplements protocol')
     L.push('')
-    L.push('**Training days**')
-    if (protocol.training.length) for (const s of protocol.training) L.push(`- ${s}`)
-    else L.push('- —')
-    L.push('')
-    L.push('**Rest days**')
-    if (protocol.rest.length) for (const s of protocol.rest) L.push(`- ${s}`)
-    else L.push('- —')
+    for (const s of consolidateSupplements(protocol)) L.push(`- ${s}`)
     L.push('')
   }
 
   return L.join('\n')
+}
+
+/** The one supplement whose dose genuinely varies, stated in a single line. */
+export const MULTIVITAMIN_LINE =
+  'Two Per Day Multivitamin — 1 tablet / 2 on Monday & Friday (Leg Days)'
+
+const isMultivitamin = (line: string): boolean => /multivitamin|two per day/i.test(line)
+
+/**
+ * Fold the training-day and rest-day protocols into ONE list.
+ *
+ * WHY
+ * The stack is identical on both kinds of day except the multivitamin, which is
+ * doubled on leg days. Printing two headed lists to express one differing dose
+ * duplicated a dozen identical lines and invited the reader to believe the whole
+ * protocol changes with the schedule — it does not. The variable dose is stated
+ * once, inside the line it belongs to.
+ *
+ * Deduped by SUPPLEMENT, not by whole line: a supplement whose dose differs
+ * between the two columns would otherwise appear twice with no way to tell which
+ * applied when.
+ */
+export function consolidateSupplements(protocol: { training: string[]; rest: string[] }): string[] {
+  // Keyed by name so a dose difference collapses rather than duplicating; the
+  // first-seen line (training, then rest) wins, and the time drives the sort.
+  const byName = new Map<string, { time: string; line: string }>()
+  for (const raw of [...protocol.training, ...protocol.rest]) {
+    const line = raw.trim()
+    if (!line) continue
+    // "HH:MM · Name — dose" → time, name.
+    const [timePart, rest] = line.includes(' · ') ? [line.slice(0, line.indexOf(' · ')), line.slice(line.indexOf(' · ') + 3)] : ['—', line]
+    const name = (rest.split('—')[0] ?? rest).trim().toLowerCase()
+    const key = isMultivitamin(line) ? 'multivitamin' : name
+    if (byName.has(key)) continue
+    byName.set(key, {
+      time: timePart,
+      // The multivitamin's line is asserted verbatim: it is the one entry whose
+      // dose is a rule rather than a number, and the rule reads better than a
+      // pair of lists.
+      line: isMultivitamin(line) ? MULTIVITAMIN_LINE : line,
+    })
+  }
+  return [...byName.values()]
+    .sort((a, b) => a.time.localeCompare(b.time))
+    .map((x) => x.line)
 }

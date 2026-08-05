@@ -134,29 +134,32 @@ describe('mergeBodyComposition — one series per definition', () => {
 })
 
 /**
- * Waist ÷ hip. Derived, never stored — a saved ratio goes stale the moment
- * either circumference is corrected, exactly like cardio pace.
+ * TAPE MEASUREMENTS ARE PURGED. Nothing in Helix is measured by hand — every
+ * body number comes off the scale or out of HealthKit. These guard the removal
+ * so `waist_cm` / `hip_cm` cannot creep back a third time.
  */
-describe('waist-to-hip ratio', () => {
-  it('derives from the two circumferences, to 2 dp', () => {
-    expect(deriveBodyComp({ waist_cm: 80, hip_cm: 95 }).waist_hip_ratio).toBe(0.84)
-  })
-
-  it('needs both — one measurement is not a ratio', () => {
-    expect(deriveBodyComp({ waist_cm: 80 }).waist_hip_ratio).toBeUndefined()
-    expect(deriveBodyComp({ hip_cm: 95 }).waist_hip_ratio).toBeUndefined()
-  })
-
-  it('refuses to divide by a zero hip', () => {
-    expect(deriveBodyComp({ waist_cm: 80, hip_cm: 0 }).waist_hip_ratio).toBeUndefined()
-  })
-
-  it('does not disturb the mass derivations', () => {
-    const d = deriveBodyComp({ weight_kg: 64.2, body_fat_pct: 17.3, waist_cm: 80, hip_cm: 95 })
+describe('no tape measurements', () => {
+  it('ignores circumference inputs entirely, and derives no ratio from them', () => {
+    const d = deriveBodyComp({ weight_kg: 64.2, body_fat_pct: 17.3, waist_cm: 80, hip_cm: 95 } as Parameters<typeof deriveBodyComp>[0])
+    expect('waist_hip_ratio' in d).toBe(false)
+    expect('waist_cm' in d).toBe(false)
+    expect('hip_cm' in d).toBe(false)
+    // …and the masses are unaffected by their presence.
     expect(d.fat_mass_kg).toBe(11.11)
-    expect(d.waist_hip_ratio).toBe(0.84)
   })
 
+  it('derives no ratio field of any name', () => {
+    const d = deriveBodyComp({ weight_kg: 64.2, body_fat_pct: 17.3, muscle_percent: 78.3 })
+    expect(Object.keys(d).some((k) => k.includes('ratio'))).toBe(false)
+  })
+})
+
+/**
+ * The ratio Helix DOES track is `estimated_waist_to_hip_ratio` — one float the
+ * Xiaomi scale computes and reports. Entered, never derived; only the RISK BAND
+ * is computed here.
+ */
+describe('the scale’s waist-to-hip ratio', () => {
   it('bands on the WHO male thresholds: <0.90 low, <1.00 moderate, else high', () => {
     expect(whrBand(0.84)).toBe('low')
     expect(whrBand(0.899)).toBe('low')

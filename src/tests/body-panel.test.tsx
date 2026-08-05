@@ -35,7 +35,7 @@ describe('BodyPanel — a self-sufficient Body page', () => {
     // The four headline readings, with the two masses named separately — `lean`
     // used to be one ambiguous tile here. Weight × muscle% is LEAN SOFT tissue,
     // and says so: calling it "Muscle" put ~50 kg beside a scale reporting ~27.
-    for (const label of ['Weight', 'Body Fat', 'Lean Soft', 'Fat-Free']) {
+    for (const label of ['Weight', 'Body Fat', 'Lean Mass', 'Fat-Free']) {
       expect(screen.getAllByText(label).length).toBeGreaterThan(0)
     }
     expect(screen.getByText('64.2')).toBeInTheDocument()
