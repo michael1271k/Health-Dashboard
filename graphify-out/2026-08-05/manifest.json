@@ -160,8 +160,8 @@
     "semantic_hash": "6244657175fd749de647871bd554b5b1"
   },
   "public/sw.js": {
-    "mtime": 1785915347.1628494,
-    "ast_hash": "e7b0711d41affe255f988c0d56e50bb5",
+    "mtime": 1785873690.7072766,
+    "ast_hash": "69ff4b9e9948aa405641efc929a3fd0b",
     "semantic_hash": ""
   },
   "scripts/generate-icons.mjs": {
@@ -245,8 +245,8 @@
     "semantic_hash": ""
   },
   "src/app/day/[date]/page.tsx": {
-    "mtime": 1785915321.6308706,
-    "ast_hash": "ece0b39b4a223871d52bf8dd54c4a9ad",
+    "mtime": 1785868515.2187982,
+    "ast_hash": "51ef698572a631eac070aeff8f956776",
     "semantic_hash": ""
   },
   "src/app/global-error.tsx": {
@@ -380,8 +380,8 @@
     "semantic_hash": "38ad924440a16477bfb4c82c0053f770"
   },
   "src/components/command-center/ProgressionAlerts.tsx": {
-    "mtime": 1785913625.0243208,
-    "ast_hash": "dac3d813ec2e05eb89395a85aae83b9c",
+    "mtime": 1785573369.5289657,
+    "ast_hash": "d8e9d4af919db022fc5b8fe88dc67807",
     "semantic_hash": ""
   },
   "src/components/command-center/SessionDeck.tsx": {
@@ -480,13 +480,13 @@
     "semantic_hash": "ac81f72d03bee763c6c19b3c4120b1d3"
   },
   "src/components/day/BodyMap.tsx": {
-    "mtime": 1785914262.5699213,
-    "ast_hash": "e9dc73b95c05af259795b4a0b622f44f",
+    "mtime": 1785435829.284988,
+    "ast_hash": "0a6f2d1c2e93b188195dda9fbfa7d45e",
     "semantic_hash": ""
   },
   "src/components/day/CardioLogger.tsx": {
-    "mtime": 1785914623.964119,
-    "ast_hash": "0dc5d626bf8253a3732cb788a33b1070",
+    "mtime": 1785503668.7630613,
+    "ast_hash": "fb6ab67ab1a5c4918bf55f8acc0bfbca",
     "semantic_hash": ""
   },
   "src/components/day/CompletenessArc.tsx": {
@@ -495,8 +495,8 @@
     "semantic_hash": "b9c83460809c2c7f5aa4f4da9fbc2b31"
   },
   "src/components/day/RecoveryTrackers.tsx": {
-    "mtime": 1785915159.4005165,
-    "ast_hash": "b70af2d6b31f71199162136ee6af9cf3",
+    "mtime": 1785658334.016511,
+    "ast_hash": "74022a8d5828ce1ff32026173799ba3d",
     "semantic_hash": ""
   },
   "src/components/day/ScheduleShortcut.tsx": {
@@ -735,8 +735,8 @@
     "semantic_hash": "46ee76d6bf421306176e7c8469bacea1"
   },
   "src/lib/body/composition.ts": {
-    "mtime": 1785913730.3977847,
-    "ast_hash": "f0fe9c2f6fc9682dfae674ae16262b2e",
+    "mtime": 1785435066.6680784,
+    "ast_hash": "a151372bbbb87b416632298c3016f4e4",
     "semantic_hash": ""
   },
   "src/lib/coach/insights.ts": {
@@ -785,8 +785,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useCardio.ts": {
-    "mtime": 1785914496.3020706,
-    "ast_hash": "0531833b7f1593a5e02e19986e848464",
+    "mtime": 1785503612.079241,
+    "ast_hash": "8356527706eee78249671287dc5b0886",
     "semantic_hash": ""
   },
   "src/lib/hooks/useCharts.ts": {
@@ -810,8 +810,8 @@
     "semantic_hash": "411e93dbc23e179fb7f915536afed0e0"
   },
   "src/lib/hooks/useDayVault.ts": {
-    "mtime": 1785913788.3696954,
-    "ast_hash": "8d79343ca563dd386405eb52ad7fa82c",
+    "mtime": 1785657313.6111436,
+    "ast_hash": "a17010ded73e5c0151d6cc00dd38ed48",
     "semantic_hash": ""
   },
   "src/lib/hooks/useEditSession.ts": {
@@ -870,8 +870,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useRecovery.ts": {
-    "mtime": 1785912929.1237688,
-    "ast_hash": "cdc3a72afdff215ae4a804b7866baba2",
+    "mtime": 1785658287.0360103,
+    "ast_hash": "c5a566dcf692ce8afa5887e5b0c3bb0c",
     "semantic_hash": ""
   },
   "src/lib/hooks/useReports.ts": {
@@ -1195,8 +1195,8 @@
     "semantic_hash": "bbb351aa3ccd0dbb99ae19d1ffcc47ad"
   },
   "src/tests/body-composition.test.ts": {
-    "mtime": 1785913934.194794,
-    "ast_hash": "95a40e53d398a4d237e6bdc0e46822a8",
+    "mtime": 1785657540.6380603,
+    "ast_hash": "56d6f59dae33a7022e43c4e741e9cb1e",
     "semantic_hash": ""
   },
   "src/tests/ceilings.test.ts": {
@@ -1645,13 +1645,13 @@
     "semantic_hash": ""
   },
   "src/components/ui/SnapPager.tsx": {
-    "mtime": 1785915128.2687042,
-    "ast_hash": "c74dee44fd5c2780df6f6bc78ee53d85",
+    "mtime": 1785758782.737507,
+    "ast_hash": "8437b71acf344153ae97d630064e342d",
     "semantic_hash": ""
   },
   "src/components/ui/Zone.tsx": {
-    "mtime": 1785914576.0350356,
-    "ast_hash": "49a259fb565151e8481ebcaa50a1ca97",
+    "mtime": 1785758904.0217361,
+    "ast_hash": "36caf88ac70f5224bdc52cf6df359f2c",
     "semantic_hash": ""
   },
   "src/lib/training/prSeed.ts": {
@@ -1660,13 +1660,13 @@
     "semantic_hash": ""
   },
   "src/tests/doms.test.ts": {
-    "mtime": 1785913083.6081398,
-    "ast_hash": "6fc56d0b6bc3d44305498758c584310a",
+    "mtime": 1785658362.5525267,
+    "ast_hash": "36cbb2cea8fdbb5a1bd08a7b1d3150f1",
     "semantic_hash": ""
   },
   "src/tests/nexus-layout.test.tsx": {
-    "mtime": 1785914763.3038487,
-    "ast_hash": "bd7499a9a9cb2653991e474355669c8f",
+    "mtime": 1785759047.2311444,
+    "ast_hash": "e8a072cb169aea84398b93fbd965d62c",
     "semantic_hash": ""
   },
   "src/tests/pr-seed.test.ts": {
@@ -1680,18 +1680,18 @@
     "semantic_hash": ""
   },
   "src/components/day/BodyPanel.tsx": {
-    "mtime": 1785914212.820121,
-    "ast_hash": "0898088538981a05478f3cf446b531ad",
+    "mtime": 1785759065.5693448,
+    "ast_hash": "706894683e41e51dfa124398e66855cb",
     "semantic_hash": ""
   },
   "src/components/day/InBody.tsx": {
-    "mtime": 1785914207.7807705,
-    "ast_hash": "49cb8f465245fab5bf1731fc68adbbf4",
+    "mtime": 1785753254.982976,
+    "ast_hash": "33480d7bd5deac44819e04ddde7b40e1",
     "semantic_hash": ""
   },
   "src/tests/body-panel.test.tsx": {
-    "mtime": 1785914286.8509696,
-    "ast_hash": "99659a257c45184200dad588bbc0ccfb",
+    "mtime": 1785758989.133937,
+    "ast_hash": "a22982ffc00bb8ec69cc0f79b5f17b95",
     "semantic_hash": ""
   },
   "src/lib/hooks/useLogicalDate.ts": {
@@ -1787,51 +1787,6 @@
   "src/tests/week-chip.test.ts": {
     "mtime": 1785869085.4014564,
     "ast_hash": "5c76ee7cf4aee1c9045bb1cef4da361f",
-    "semantic_hash": ""
-  },
-  "src/components/day/SorenessMap.tsx": {
-    "mtime": 1785913185.3077464,
-    "ast_hash": "b7106c4f41d285519f08e68ffd1c5fbb",
-    "semantic_hash": ""
-  },
-  "src/components/day/severity.ts": {
-    "mtime": 1785912987.63619,
-    "ast_hash": "33a27769561f82107f784d5f36af8c34",
-    "semantic_hash": ""
-  },
-  "src/lib/body/deltaVerdict.ts": {
-    "mtime": 1785914139.4671152,
-    "ast_hash": "c53e6c333532624b4b656203d017cd37",
-    "semantic_hash": ""
-  },
-  "src/lib/cardio/cardioPrs.ts": {
-    "mtime": 1785914348.3125076,
-    "ast_hash": "491a2186d1a56815ff248c20d2b9c04a",
-    "semantic_hash": ""
-  },
-  "src/lib/hooks/useLatestBodyReading.ts": {
-    "mtime": 1785913488.1509635,
-    "ast_hash": "48b0d92568d2d5d9ff46aa655fba2dd3",
-    "semantic_hash": ""
-  },
-  "src/tests/cardio-prs.test.ts": {
-    "mtime": 1785914371.341619,
-    "ast_hash": "8f3269de829e4b04a911098a9ba73e79",
-    "semantic_hash": ""
-  },
-  "src/tests/delta-verdict.test.ts": {
-    "mtime": 1785914156.7795115,
-    "ast_hash": "297147d24c2bcf7eccd63cffcff99706",
-    "semantic_hash": ""
-  },
-  "src/tests/latest-body-reading.test.ts": {
-    "mtime": 1785913502.7972095,
-    "ast_hash": "461abb091e0c4eab97b6eadc75979c41",
-    "semantic_hash": ""
-  },
-  "src/tests/progression-scope.test.ts": {
-    "mtime": 1785913643.0090754,
-    "ast_hash": "6373fd6dfd89037b521c683fe079afd7",
     "semantic_hash": ""
   }
 }
