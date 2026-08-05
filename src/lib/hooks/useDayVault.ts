@@ -31,6 +31,8 @@ export interface DayVaultData {
     protein_percent: number | null; muscle_mass_kg: number | null; water_mass_kg: number | null
     fat_mass_kg: number | null; bone_mineral_kg: number | null; protein_mass_kg: number | null
     fat_free_mass_kg: number | null
+    /** Why a weightless day is weightless. Free text; null on weighed days. */
+    weighin_skip_reason: string | null
   } | null
   score: { score: number | null; battery_pct: number | null } | null
   nutrition: { calories: number; protein_g: number; carbs_g: number; fat_g: number; phase: Phase | null } | null
@@ -57,7 +59,7 @@ export function useDayVault(date: string) {
         // `log.muscle_mass_kg` / `fat_mass_kg` / … and falls back to re-deriving
         // when they are absent — and because they were never in this select,
         // the fallback was the only path that ever ran.
-        supabase.from('daily_logs').select('steps, water_ml, sleep_minutes, weight_kg, lean_mass_kg, body_fat_pct, avg_rest_heart_rate, hrv_ms, respiratory_rate, blood_oxygen, training_minutes, exercise_minutes, stand_hours, vo2max, active_energy, muscle_percent, water_percent, bone_mineral, visceral_fat, bmr, bmi, protein_percent, muscle_mass_kg, water_mass_kg, fat_mass_kg, bone_mineral_kg, protein_mass_kg, fat_free_mass_kg')
+        supabase.from('daily_logs').select('steps, water_ml, sleep_minutes, weight_kg, lean_mass_kg, body_fat_pct, avg_rest_heart_rate, hrv_ms, respiratory_rate, blood_oxygen, training_minutes, exercise_minutes, stand_hours, vo2max, active_energy, muscle_percent, water_percent, bone_mineral, visceral_fat, bmr, bmi, protein_percent, muscle_mass_kg, water_mass_kg, fat_mass_kg, bone_mineral_kg, protein_mass_kg, fat_free_mass_kg, weighin_skip_reason')
           .eq('date', date).maybeSingle(),
         supabase.from('daily_scores').select('score, battery_pct').eq('date', date).maybeSingle(),
         supabase.from('nutrition_entries').select('calories, protein_g, carbs_g, fat_g, phase')
@@ -86,6 +88,13 @@ export function useDayVault(date: string) {
       }
     },
     staleTime: 60_000,
+    // TODAY is the one day whose row is still being written while you look at
+    // it — the native HealthKit sync deliberately defers behind documentReady +
+    // the auth sheet, so entering /day/<today> directly resolves this query well
+    // before the morning's weigh-in has landed. A cached row from earlier in the
+    // day would then sit there looking like the whole truth. Past days are
+    // finished and keep the plain staleTime.
+    refetchOnMount: date === logicalTodayISO() ? 'always' : true,
   })
 }
 
@@ -193,6 +202,13 @@ export interface BodyMetricsPatch {
   visceral_fat?: number | null
   bmr?: number | null
   bmi?: number | null
+  /**
+   * WHY the day carries no weight, when the weigh-in was deliberately skipped.
+   * Free text (the vocabulary can grow without DDL) and the ONE non-numeric
+   * field here — the body_composition mirror below ignores it for exactly that
+   * reason, and it must never be mistaken for a measurement.
+   */
+  weighin_skip_reason?: string | null
   // ── Extended InBody columns (self-heal until migrated) ──
   // Circumference (waist_cm / hip_cm / waist_hip_ratio) is NOT tracked — the
   // columns are dropped in the DB and must never be re-introduced here.
@@ -316,6 +332,8 @@ export function useSaveBodyMetrics(date: string) {
       for (const key of [
         ['day_vault', date], ['daily_logs'], ['body_composition'],
         ['weigh_in'], ['continuum'],
+        // Today's entry is tomorrow's carry-forward.
+        ['latest_body_reading'],
       ]) qc.invalidateQueries({ queryKey: key })
     },
   })

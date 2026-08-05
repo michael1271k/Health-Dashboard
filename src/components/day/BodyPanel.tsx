@@ -1,13 +1,103 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Scale, Plus, Pencil } from 'lucide-react'
+import { Scale, Plus, Pencil, Check } from 'lucide-react'
 import { BodyMap } from '@/components/day/BodyMap'
 import { InBodyForm, InBodyHeadline, hasScaleMetrics } from '@/components/day/InBody'
 import { Sheet } from '@/components/ui/Sheet'
-import type { DayVaultData } from '@/lib/hooks/useDayVault'
+import { useSaveBodyMetrics, type DayVaultData } from '@/lib/hooks/useDayVault'
 
 const TEAL = '#E0703C'
+
+/** The reasons a weigh-in actually gets skipped, in rough order of frequency. */
+const SKIP_REASONS = ['No BM', 'Travel', 'Forgot', 'Fasted', 'Sick'] as const
+
+/**
+ * Why there is no weight today.
+ *
+ * A missing weigh-in and a deliberately skipped one look identical in the data,
+ * and the weekly export has been printing `[Skip: no reason recorded]` on every
+ * weightless day since the reader shipped — the column exists, nothing writes
+ * it. This is the writer.
+ *
+ * Chips rather than a dropdown: five options is a row, not a menu. Tapping the
+ * active chip clears it, because "actually I did weigh in" needs a way back.
+ * Recording a reason must NEVER look like a weigh-in — this writes one text
+ * column and touches nothing `hasScaleMetrics` reads, so a skipped day still
+ * reads as skipped on every other surface.
+ */
+function WeighInSkip({ date, current }: { date: string; current: string | null }) {
+  const save = useSaveBodyMetrics(date)
+  const [other, setOther] = useState('')
+  const [showOther, setShowOther] = useState(false)
+  const isPreset = current != null && (SKIP_REASONS as readonly string[]).includes(current)
+
+  const set = (reason: string | null) => save.mutate({ weighin_skip_reason: reason })
+
+  return (
+    <div className="w-full space-y-2">
+      <p className="text-[10px] uppercase tracking-wide text-muted text-center">Why?</p>
+      <div className="flex flex-wrap justify-center gap-1.5">
+        {SKIP_REASONS.map((r) => {
+          const on = current === r
+          return (
+            <button
+              key={r}
+              type="button"
+              onClick={() => set(on ? null : r)}
+              aria-pressed={on}
+              className="rounded-full px-3 min-h-[36px] text-[11px] font-semibold transition-colors"
+              style={{
+                color: on ? TEAL : undefined,
+                background: on ? `${TEAL}1f` : 'rgba(255,255,255,0.03)',
+                border: `1px solid ${on ? `${TEAL}66` : 'rgba(255,255,255,0.08)'}`,
+              }}
+            >
+              {r}
+            </button>
+          )
+        })}
+        <button
+          type="button"
+          onClick={() => { setShowOther((v) => !v); if (!isPreset && current) setOther(current) }}
+          aria-pressed={current != null && !isPreset}
+          className="rounded-full px-3 min-h-[36px] text-[11px] font-semibold transition-colors"
+          style={{
+            color: current != null && !isPreset ? TEAL : undefined,
+            background: current != null && !isPreset ? `${TEAL}1f` : 'rgba(255,255,255,0.03)',
+            border: `1px solid ${current != null && !isPreset ? `${TEAL}66` : 'rgba(255,255,255,0.08)'}`,
+          }}
+        >
+          {current != null && !isPreset ? current : 'Other…'}
+        </button>
+      </div>
+
+      {showOther && (
+        <div className="flex items-center gap-1.5">
+          <input
+            type="text"
+            value={other}
+            onChange={(e) => setOther(e.target.value)}
+            placeholder="Reason"
+            maxLength={60}
+            className="flex-1 min-w-0 rounded-lg bg-white/[0.03] border border-white/[0.08] px-2.5 min-h-[36px]
+                       text-[11px] text-text placeholder:text-muted/40 outline-none focus:border-primary/40"
+            aria-label="Other skip reason"
+          />
+          <button
+            type="button"
+            onClick={() => { const v = other.trim(); if (v) { set(v); setShowOther(false) } }}
+            disabled={!other.trim()}
+            className="btn-glass min-h-[36px] px-2.5 disabled:opacity-40"
+            aria-label="Save reason"
+          >
+            <Check className="w-3.5 h-3.5" aria-hidden="true" />
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
 
 /**
  * The Body page of the Nexus pager — the whole body-composition domain in one
@@ -34,6 +124,9 @@ export function BodyPanel({ date, log, openEditor = false, onEditorClosed }: {
 }) {
   const [editing, setEditing] = useState(openEditor)
   const has = hasScaleMetrics(log)
+  // A day is "unweighed" on the WEIGHT, not on whether some other field was
+  // filled — entering a BMI alone doesn't mean you stood on the scale.
+  const unweighed = log?.weight_kg == null
 
   // The deep-link arrives after the query resolves, so honour it whenever it
   // flips true rather than only at first render.
@@ -59,6 +152,7 @@ export function BodyPanel({ date, log, openEditor = false, onEditorClosed }: {
               </span>
               <span className="flex-1 text-fluid-xs font-medium">Edit measurements</span>
             </button>
+            {unweighed && <WeighInSkip date={date} current={log?.weighin_skip_reason ?? null} />}
           </>
         ) : (
           /* No weigh-in. The page is the prompt — not a stub telling you to go
@@ -82,6 +176,7 @@ export function BodyPanel({ date, log, openEditor = false, onEditorClosed }: {
             >
               <Plus className="w-4 h-4" aria-hidden="true" /> Add scale metrics
             </button>
+            <WeighInSkip date={date} current={log?.weighin_skip_reason ?? null} />
           </div>
         )}
       </section>
