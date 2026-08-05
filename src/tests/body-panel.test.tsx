@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, cleanup } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BodyPanel } from '@/components/day/BodyPanel'
 
@@ -33,17 +33,33 @@ describe('BodyPanel — a self-sufficient Body page', () => {
     expect(screen.queryByText('No weigh-in today')).toBeNull()
     expect(screen.getByRole('button', { name: /edit measurements/i })).toBeInTheDocument()
     // The four headline readings, with the two masses named separately — `lean`
-    // used to be one ambiguous tile here. `getAllBy`: the silhouette above
-    // labels its own strata, so "Muscle" legitimately appears twice.
-    for (const label of ['Weight', 'Body Fat', 'Muscle', 'Fat-Free']) {
+    // used to be one ambiguous tile here. Weight × muscle% is LEAN SOFT tissue,
+    // and says so: calling it "Muscle" put ~50 kg beside a scale reporting ~27.
+    for (const label of ['Weight', 'Body Fat', 'Lean Soft', 'Fat-Free']) {
       expect(screen.getAllByText(label).length).toBeGreaterThan(0)
     }
     expect(screen.getByText('64.2')).toBeInTheDocument()
   })
 
-  it('keeps the nine-field form out of the page until asked', () => {
+  it('prefers the SKELETAL reading over lean soft tissue when it was taken', () => {
+    // The two are ~23 kg apart; the tile must never show them under one name.
+    renderPanel({ weight_kg: 64.2, body_fat_pct: 17.3, muscle_percent: 78.3, skeletal_muscle_mass_kg: 26.8 })
+    expect(screen.getAllByText('Skeletal').length).toBeGreaterThan(0)
+    expect(screen.getByText('26.8')).toBeInTheDocument()
+    expect(screen.queryByText('Lean Soft')).toBeNull()
+  })
+
+  it('offers the skip-reason chips only while the day carries no weight', () => {
+    renderPanel(null)
+    expect(screen.getByRole('button', { name: 'No BM' })).toBeInTheDocument()
+    cleanup()
+    renderPanel({ weight_kg: 64.2 })
+    expect(screen.queryByRole('button', { name: 'No BM' })).toBeNull()
+  })
+
+  it('keeps the entry form out of the page until asked', () => {
     // Pager pages share a height: rendering the form inline would make the
-    // Sleep and Hydration pages as tall as nine inputs.
+    // Sleep and Hydration pages as tall as a dozen inputs.
     renderPanel({ weight_kg: 64.2, body_fat_pct: 17.3 })
     expect(screen.queryByLabelText('Weight in kg')).toBeNull()
     expect(screen.queryByRole('button', { name: /save metrics/i })).toBeNull()

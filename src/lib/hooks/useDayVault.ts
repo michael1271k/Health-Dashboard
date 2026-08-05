@@ -33,6 +33,10 @@ export interface DayVaultData {
     fat_free_mass_kg: number | null
     /** Why a weightless day is weightless. Free text; null on weighed days. */
     weighin_skip_reason: string | null
+    /** Read in an isolated query — absent (not zero) until the paste-SQL runs. */
+    skeletal_muscle_mass_kg?: number | null
+    waist_cm?: number | null
+    hip_cm?: number | null
   } | null
   score: { score: number | null; battery_pct: number | null } | null
   nutrition: { calories: number; protein_g: number; carbs_g: number; fat_g: number; phase: Phase | null } | null
@@ -54,7 +58,7 @@ export function useDayVault(date: string) {
     enabled: /^\d{4}-\d{2}-\d{2}$/.test(date),
     queryFn: async (): Promise<DayVaultData> => {
       const nextDay = (() => { const x = new Date(`${date}T00:00:00Z`); x.setUTCDate(x.getUTCDate() + 1); return x.toISOString().slice(0, 10) })()
-      const [logRes, scoreRes, nutritionRes, sessionsRes] = await Promise.all([
+      const [logRes, scoreRes, nutritionRes, sessionsRes, extrasRes] = await Promise.all([
         // The derived mass columns MUST be selected. BodyMap reads
         // `log.muscle_mass_kg` / `fat_mass_kg` / … and falls back to re-deriving
         // when they are absent — and because they were never in this select,
@@ -68,6 +72,13 @@ export function useDayVault(date: string) {
           .select('id, started_at, split_day, day_key, report_md, duration_min, avg_bpm, total_volume_kg, set_count, pr_count, calories_burned')
           .gte('started_at', `${date}T00:00:00Z`).lt('started_at', `${nextDay}T00:00:00Z`)
           .order('started_at', { ascending: true }),
+        // ISOLATED on purpose. These three columns arrive with a paste-SQL that
+        // may not have been run yet, and PostgREST 400s the WHOLE select on one
+        // unknown column — folding them into the row above would empty every
+        // field of every day until the DDL landed. In their own slot they fail
+        // alone and the rest of the Nexus never notices.
+        supabase.from('daily_logs').select('skeletal_muscle_mass_kg, waist_cm, hip_cm')
+          .eq('date', date).maybeSingle(),
       ])
       const sessions = ((sessionsRes.data ?? []) as Array<{
         id: string; started_at: string; split_day: string; day_key: string | null; report_md: string | null
@@ -79,9 +90,13 @@ export function useDayVault(date: string) {
         setCount: r.set_count, prCount: r.pr_count, calories: r.calories_burned,
       }))
       const rawLog = (logRes.data ?? null) as DayVaultData['log']
+      const extras = (extrasRes.error ? null : extrasRes.data) as Partial<DayVaultData['log']> | null
+      // A day can have extras and no core row (a waist measured on an unweighed
+      // morning), so the merge starts from whichever exists.
+      const merged = rawLog || extras ? { ...(rawLog ?? {}), ...(extras ?? {}) } as NonNullable<DayVaultData['log']> : null
       return {
         // Mixed-unit blood oxygen coerced at the data layer (see normalizeSpO2).
-        log: rawLog ? { ...rawLog, blood_oxygen: normalizeSpO2(rawLog.blood_oxygen) } : null,
+        log: merged ? { ...merged, blood_oxygen: normalizeSpO2(merged.blood_oxygen) } : null,
         score: (scoreRes.data ?? null) as DayVaultData['score'],
         nutrition: (nutritionRes.data ?? null) as DayVaultData['nutrition'],
         sessions,
@@ -210,8 +225,20 @@ export interface BodyMetricsPatch {
    */
   weighin_skip_reason?: string | null
   // ── Extended InBody columns (self-heal until migrated) ──
-  // Circumference (waist_cm / hip_cm / waist_hip_ratio) is NOT tracked — the
-  // columns are dropped in the DB and must never be re-introduced here.
+  /**
+   * Skeletal muscle mass — ENTERED, never derived. `muscle_mass_kg` is lean soft
+   * tissue (weight × muscle%, ~50 kg); this is the contractile tissue the scale
+   * reports separately (~27 kg). See the header of lib/body/composition.ts.
+   */
+  skeletal_muscle_mass_kg?: number | null
+  /**
+   * Circumference. These were dropped once, on the grounds that nothing measured
+   * them — that is no longer true, and waist ÷ hip cannot be inferred from any
+   * other field, so they are back as tape measurements. The RATIO is not stored:
+   * it derives, so correcting either circumference can't leave it stale.
+   */
+  waist_cm?: number | null
+  hip_cm?: number | null
   protein_percent?: number | null
   muscle_mass_kg?: number | null
   water_mass_kg?: number | null
@@ -226,6 +253,7 @@ export interface BodyMetricsPatch {
 const EXTENDED_BODY_KEYS = new Set<keyof BodyMetricsPatch>([
   'protein_percent', 'muscle_mass_kg', 'water_mass_kg',
   'fat_mass_kg', 'bone_mineral_kg', 'protein_mass_kg', 'fat_free_mass_kg',
+  'skeletal_muscle_mass_kg', 'waist_cm', 'hip_cm',
 ])
 
 /**

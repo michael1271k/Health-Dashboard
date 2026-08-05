@@ -20,6 +20,8 @@ export interface BodyCompInput {
   water_percent?: number | null
   bone_mineral?: number | null // percentage
   protein_percent?: number | null
+  waist_cm?: number | null
+  hip_cm?: number | null
 }
 
 export interface BodyCompDerived {
@@ -29,6 +31,33 @@ export interface BodyCompDerived {
   water_mass_kg?: number
   bone_mineral_kg?: number
   protein_mass_kg?: number
+  /** Waist ÷ hip. Derived because a stored ratio drifts the moment either
+   *  circumference is corrected — the same rule as cardio pace. */
+  waist_hip_ratio?: number
+}
+
+/**
+ * SKELETAL MUSCLE MASS IS NOT DERIVED, AND CANNOT BE.
+ *
+ * `muscle_mass_kg = weight × muscle%` is lean SOFT TISSUE — skeletal muscle plus
+ * smooth and cardiac muscle, organ mass and intracellular water. At 64.2 kg and
+ * 78.3 % that is 50.27 kg, and it is arithmetically correct. Skeletal muscle
+ * mass, the contractile tissue you actually train, is ~26.8 kg for the same
+ * body: roughly 53 % of the first number, and a separate reading on the scale.
+ *
+ * Recovering it from percentages would need segmental impedance, which is
+ * exactly why the scale reports it as its own metric. So `skeletal_muscle_mass_kg`
+ * is entered, never computed, and a day without the reading holds null rather
+ * than a plausible-looking guess.
+ */
+
+/** WHO abdominal-obesity risk bands for waist ÷ hip. */
+export type WhrBand = 'low' | 'moderate' | 'high'
+
+export function whrBand(ratio: number, sex: 'male' | 'female' = 'male'): WhrBand {
+  const [lo, hi] = sex === 'male' ? [0.90, 1.00] : [0.80, 0.85]
+  if (ratio < lo) return 'low'
+  return ratio < hi ? 'moderate' : 'high'
 }
 
 const num = (v: number | null | undefined): number | undefined =>
@@ -52,8 +81,13 @@ export function deriveBodyComp(input: BodyCompInput): BodyCompDerived {
   const waterPct = num(input.water_percent)
   const bonePct = num(input.bone_mineral)
   const proteinPct = num(input.protein_percent)
+  const waist = num(input.waist_cm)
+  const hip = num(input.hip_cm)
 
   const out: BodyCompDerived = {}
+
+  // Two decimals: WHR moves in hundredths and the risk bands are set there.
+  if (waist != null && hip != null && hip > 0) out.waist_hip_ratio = r2(waist / hip)
 
   const fatMass = massFromPct(weight, bf)
   if (fatMass != null) out.fat_mass_kg = fatMass

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { deriveBodyComp } from '@/lib/body/composition'
+import { deriveBodyComp, whrBand } from '@/lib/body/composition'
 import { mergeBodyTrend, type BodyTrendRow } from '@/lib/hooks/useCharts'
 import { mergeBodyComposition } from '@/components/charts/BodyCompositionChart'
 
@@ -130,5 +130,64 @@ describe('mergeBodyComposition — one series per definition', () => {
     )
     expect(pts[0].musclePct).toBe(77.8)
     expect(pts[0].muscleMass).toBe(50.49)   // the MASS, not the percent
+  })
+})
+
+/**
+ * Waist ÷ hip. Derived, never stored — a saved ratio goes stale the moment
+ * either circumference is corrected, exactly like cardio pace.
+ */
+describe('waist-to-hip ratio', () => {
+  it('derives from the two circumferences, to 2 dp', () => {
+    expect(deriveBodyComp({ waist_cm: 80, hip_cm: 95 }).waist_hip_ratio).toBe(0.84)
+  })
+
+  it('needs both — one measurement is not a ratio', () => {
+    expect(deriveBodyComp({ waist_cm: 80 }).waist_hip_ratio).toBeUndefined()
+    expect(deriveBodyComp({ hip_cm: 95 }).waist_hip_ratio).toBeUndefined()
+  })
+
+  it('refuses to divide by a zero hip', () => {
+    expect(deriveBodyComp({ waist_cm: 80, hip_cm: 0 }).waist_hip_ratio).toBeUndefined()
+  })
+
+  it('does not disturb the mass derivations', () => {
+    const d = deriveBodyComp({ weight_kg: 64.2, body_fat_pct: 17.3, waist_cm: 80, hip_cm: 95 })
+    expect(d.fat_mass_kg).toBe(11.11)
+    expect(d.waist_hip_ratio).toBe(0.84)
+  })
+
+  it('bands on the WHO male thresholds: <0.90 low, <1.00 moderate, else high', () => {
+    expect(whrBand(0.84)).toBe('low')
+    expect(whrBand(0.899)).toBe('low')
+    expect(whrBand(0.90)).toBe('moderate')
+    expect(whrBand(0.99)).toBe('moderate')
+    expect(whrBand(1.00)).toBe('high')
+  })
+
+  it('uses the female thresholds when asked', () => {
+    expect(whrBand(0.79, 'female')).toBe('low')
+    expect(whrBand(0.82, 'female')).toBe('moderate')
+    expect(whrBand(0.86, 'female')).toBe('high')
+  })
+})
+
+/**
+ * Skeletal muscle mass is ENTERED. `muscle_mass_kg` (weight × muscle%) is lean
+ * SOFT TISSUE — ~50 kg where the scale reports ~27 kg of skeletal muscle — and
+ * no percentage in this input can produce the second number.
+ */
+describe('skeletal muscle mass', () => {
+  it('is never derived, however complete the entry', () => {
+    const d = deriveBodyComp({
+      weight_kg: 64.2, body_fat_pct: 17.3, muscle_percent: 78.3,
+      water_percent: 57.4, bone_mineral: 4.4, protein_percent: 20.1,
+    })
+    expect('skeletal_muscle_mass_kg' in d).toBe(false)
+  })
+
+  it('still reports lean soft tissue correctly — the number that looked wrong', () => {
+    // 64.2 × 78.3% = 50.27. Arithmetically right; it was only ever mislabelled.
+    expect(deriveBodyComp({ weight_kg: 64.2, muscle_percent: 78.3 }).muscle_mass_kg).toBe(50.27)
   })
 })
