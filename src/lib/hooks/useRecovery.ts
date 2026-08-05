@@ -14,8 +14,9 @@ import { programDayByKey } from '@/lib/programs'
  * Tape measurements (waist/arm/thigh) were removed entirely — see the migration
  * that drops `body_measurements`.
  */
-// Standardized display order: upper (Chest → Shoulders) then lower (Glutes → Calves).
-export const DOMS_MUSCLES = ['Chest', 'Back', 'Arms', 'Shoulders', 'Glutes', 'Quads', 'Hamstrings', 'Calves'] as const
+// Standardized display order: upper (Chest → Shoulders), trunk (Abs), then lower
+// (Glutes → Calves).
+export const DOMS_MUSCLES = ['Chest', 'Back', 'Arms', 'Shoulders', 'Abs', 'Glutes', 'Quads', 'Hamstrings', 'Calves'] as const
 export type DomsMuscle = (typeof DOMS_MUSCLES)[number]
 
 /** Fold a program muscle token into one of the tracked DOMS muscles (or null). */
@@ -32,7 +33,11 @@ export function domsMuscleOf(token: string): DomsMuscle | null {
     case 'chest': case 'pecs': return 'Chest'
     case 'biceps': case 'triceps': case 'forearms': return 'Arms'
     case 'shoulders': case 'delts': case 'side_delts': case 'rear_delts': case 'front_delts': return 'Shoulders'
-    default: return null   // core, etc. — not a tracked DOMS muscle
+    // The trunk was the one trained region with nowhere to report. Every Legs &
+    // Core day tags `core`, planks and hanging raises get sore like anything
+    // else, and the rating had no muscle to land on.
+    case 'core': case 'abs': case 'abdominals': case 'obliques': return 'Abs'
+    default: return null   // untracked tag
   }
 }
 
@@ -47,7 +52,7 @@ function sessionDomsMuscles(dayKey: string | null, split: string): Set<DomsMuscl
     return out
   }
   // Legacy rows (no day_key): a coarse split → muscle guess.
-  if (split === 'legs' || split === 'lower') { out.add('Glutes'); out.add('Quads'); out.add('Hamstrings'); out.add('Calves') }
+  if (split === 'legs' || split === 'lower') { out.add('Glutes'); out.add('Quads'); out.add('Hamstrings'); out.add('Calves'); out.add('Abs') }
   else { out.add('Chest'); out.add('Back'); out.add('Shoulders'); out.add('Arms') }
   return out
 }
