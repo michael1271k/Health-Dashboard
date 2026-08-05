@@ -135,15 +135,17 @@ export function DomsTracker({ date }: { date: string }) {
   const { sore, clear, peak } = sorenessSummary(doms)
 
   return (
-    <section className="helix-card space-y-2.5">
+    // No card chrome: this is the content of a Nexus band, and the band's label
+    // already says Soreness. A heading here would say it twice.
+    <div className="px-3 py-2 space-y-2.5">
       <div className="flex items-center gap-1.5 min-h-[32px]">
-        <Activity className="w-3.5 h-3.5 shrink-0" style={{ color: EMBER }} aria-hidden="true" />
-        <h3 className="font-heading font-bold text-fluid-sm text-text">Soreness</h3>
-        {sore.length > 0 && (
-          <span className="flex items-center gap-1 text-[10px] font-semibold ml-1.5" style={{ color: SEVERITY_COLOR[peak] }}>
-            <span className="w-1.5 h-1.5 rounded-full" style={{ background: SEVERITY_COLOR[peak] }} aria-hidden="true" />
+        {sore.length > 0 ? (
+          <span className="flex items-center gap-1 text-[10px] font-semibold" style={{ color: SEVERITY_COLOR[peak] }}>
+            <Activity className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
             {sore.length} sore · {SEVERITY_WORD[peak]}
           </span>
+        ) : (
+          <span className="text-[10px] text-muted">Tap a muscle to rate</span>
         )}
         {/* Front / back — a segmented pill, the RangeSelector pattern. */}
         <div className="ml-auto flex rounded-lg overflow-hidden border border-white/[0.08] shrink-0">
@@ -164,9 +166,9 @@ export function DomsTracker({ date }: { date: string }) {
         </div>
       </div>
 
-      <div className="flex items-start gap-3">
+      <div className="flex items-center gap-3">
         {/* The map. Fixed aspect so the two views can't jump height on flip. */}
-        <div className="shrink-0 w-[92px] sm:w-[110px]" style={{ aspectRatio: '120 / 260' }}>
+        <div className="shrink-0 w-[86px] sm:w-[104px]" style={{ aspectRatio: '120 / 260' }}>
           <SorenessMap side={side} doms={doms} onPick={setPicking} />
         </div>
 
@@ -191,7 +193,7 @@ export function DomsTracker({ date }: { date: string }) {
           })}
           {clear.length > 0 && (
             <p className="text-[10px] text-muted leading-snug pt-0.5">
-              {sore.length === 0 ? 'Tap a muscle to rate · ' : 'Clear · '}
+              <span className="uppercase tracking-wide opacity-70">Clear</span>{' · '}
               {clear.join('  ')}
             </p>
           )}
@@ -220,6 +222,6 @@ export function DomsTracker({ date }: { date: string }) {
           ))}
         </div>
       </LiquidModal>
-    </section>
+    </div>
   )
 }

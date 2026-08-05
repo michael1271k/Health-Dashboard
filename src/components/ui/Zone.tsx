@@ -15,25 +15,45 @@
  * container, hairline dividers, an inline 10px label per block rather than a
  * heading per card.
  */
-export function Zone({ label, accent, children, className = '' }: {
+export function Zone({ label, accent, children, className = '', bleed = false, action }: {
   label: string
   /** Hex used for the label and a 2px rule down the left edge. */
   accent: string
   children: React.ReactNode
   className?: string
+  /**
+   * Edge-to-edge band rather than a floating card.
+   *
+   * A rounded rectangle with dead margin either side of it reads as a dashboard
+   * panel. Bands butted against each other, separated by one hairline, read as
+   * one instrument surface — which is what a day IS. The accent rule moves to
+   * the screen edge and becomes the page's spine, and the CONTENT (not the
+   * band) takes the reading measure, so a phone gets true edge-to-edge while a
+   * desktop still gets a centred column instead of a 1400px-wide stat strip.
+   *
+   * Requires the route to carry `data-fullbleed` — see globals.css.
+   */
+  bleed?: boolean
+  /** Rendered on the label line, right-aligned: a toggle, a count, a chip. */
+  action?: React.ReactNode
 }) {
   return (
     <section
-      className={`rounded-2xl border overflow-hidden bg-white/[0.02] ${className}`}
-      style={{ borderColor: `${accent}26` }}
+      className={bleed
+        ? `border-b bg-white/[0.02] ${className}`
+        : `rounded-2xl border overflow-hidden bg-white/[0.02] ${className}`}
+      style={{ borderColor: bleed ? 'rgba(255,255,255,0.07)' : `${accent}26` }}
       aria-label={label}
     >
       <div className="flex items-stretch">
-        <span className="w-[2px] shrink-0" style={{ background: `${accent}59` }} aria-hidden="true" />
-        <div className="min-w-0 flex-1">
-          <span className="block px-3 pt-2 text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: accent }}>
-            {label}
-          </span>
+        <span className={bleed ? 'w-[3px] shrink-0' : 'w-[2px] shrink-0'} style={{ background: `${accent}59` }} aria-hidden="true" />
+        <div className={bleed ? 'min-w-0 flex-1 mx-auto w-full max-w-[68ch]' : 'min-w-0 flex-1'}>
+          <div className="flex items-center gap-2 px-3 pt-2">
+            <span className="block text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: accent }}>
+              {label}
+            </span>
+            {action && <span className="ml-auto shrink-0">{action}</span>}
+          </div>
           {children}
         </div>
       </div>

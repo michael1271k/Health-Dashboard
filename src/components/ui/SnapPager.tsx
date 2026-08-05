@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useImperativeHandle, useRef, useState } from 'react'
+import { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react'
 
 /** Imperative handle — lets a summary row elsewhere on the page jump the pager. */
 export interface SnapPagerHandle {
@@ -32,7 +32,18 @@ export function SnapPager({ pages, className = '', ref }: {
   ref?: React.Ref<SnapPagerHandle>
 }) {
   const scroller = useRef<HTMLDivElement>(null)
+  const panels = useRef<Array<HTMLDivElement | null>>([])
   const [active, setActive] = useState(0)
+  /**
+   * The pager takes the ACTIVE page's height, not the tallest page's.
+   *
+   * Flex rows size to their tallest child, so a 700px Body page left ~400px of
+   * dead black under the Sleep page — the pager's whole argument is that three
+   * visuals cost one slot, and a slot sized for the worst case gives that back.
+   * `null` until measured so the first paint falls back to auto rather than
+   * collapsing to zero (and so jsdom, which has no layout, is unaffected).
+   */
+  const [height, setHeight] = useState<number | null>(null)
 
   const onScroll = useCallback(() => {
     const el = scroller.current
@@ -55,6 +66,23 @@ export function SnapPager({ pages, className = '', ref }: {
       if (i >= 0) go(i)
     },
   }), [pages, go])
+
+  // Measure on activation, and again whenever the active page's own content
+  // changes size (opening a disclosure inside a page must not clip it).
+  const measure = useCallback(() => {
+    const el = panels.current[active]
+    if (el && el.offsetHeight > 0) setHeight(el.offsetHeight)
+  }, [active])
+
+  useLayoutEffect(measure, [measure, pages])
+
+  useEffect(() => {
+    const el = panels.current[active]
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [active, measure])
 
   return (
     <div className={className}>
@@ -83,13 +111,20 @@ export function SnapPager({ pages, className = '', ref }: {
       <div
         ref={scroller}
         onScroll={onScroll}
-        className="flex overflow-x-auto no-scrollbar snap-x snap-mandatory"
-        style={{ scrollBehavior: 'smooth' }}
+        // `items-start` stops a short page being stretched to the tall one's
+        // height; the explicit height is what actually shrinks the slot.
+        className="flex items-start overflow-x-auto overflow-y-hidden no-scrollbar snap-x snap-mandatory"
+        style={{
+          scrollBehavior: 'smooth',
+          height: height ?? undefined,
+          transition: 'height 240ms cubic-bezier(0.22,1,0.36,1)',
+        }}
       >
-        {pages.map((p) => (
+        {pages.map((p, i) => (
           <div
             key={p.key}
             id={`pager-${p.key}`}
+            ref={(el) => { panels.current[i] = el }}
             role="tabpanel"
             aria-label={p.label}
             className="w-full shrink-0 snap-center"

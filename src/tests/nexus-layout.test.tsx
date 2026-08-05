@@ -36,6 +36,41 @@ describe('Zone — one container, hairline rows', () => {
   })
 })
 
+describe('Zone — the full-bleed band', () => {
+  it('drops the radius and the side borders so bands can butt together', () => {
+    const { container } = render(<Zone bleed label="Today" accent="#fff"><ZoneRow divide={false}>a</ZoneRow></Zone>)
+    const band = container.firstElementChild as HTMLElement
+    expect(band.className).not.toContain('rounded')
+    expect(band.className).toContain('border-b')
+  })
+
+  it('constrains the CONTENT, not the band — edge-to-edge on a phone', () => {
+    // The band must reach both screen edges; only the text inside takes a
+    // reading measure, or a desktop gets a 1400px-wide stat strip.
+    const { container } = render(<Zone bleed label="Today" accent="#fff"><ZoneRow divide={false}>a</ZoneRow></Zone>)
+    const band = container.firstElementChild as HTMLElement
+    expect(band.className).not.toContain('max-w')
+    expect(container.querySelector('.max-w-\\[68ch\\]')).not.toBeNull()
+  })
+
+  it('keeps the floating card shape when not bleeding', () => {
+    const { container } = render(<Zone label="Today" accent="#fff"><ZoneRow divide={false}>a</ZoneRow></Zone>)
+    const band = container.firstElementChild as HTMLElement
+    expect(band.className).toContain('rounded-2xl')
+    expect(container.querySelector('.max-w-\\[68ch\\]')).toBeNull()
+  })
+
+  it('renders an action beside the label without displacing it', () => {
+    render(
+      <Zone bleed label="Soreness" accent="#fff" action={<button type="button">front</button>}>
+        <ZoneRow divide={false}>a</ZoneRow>
+      </Zone>,
+    )
+    expect(screen.getByText('Soreness')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'front' })).toBeInTheDocument()
+  })
+})
+
 describe('StatStrip — six vitals on one line', () => {
   const stats = [
     { label: 'Steps', value: '8,412', color: '#8E9AAC' },

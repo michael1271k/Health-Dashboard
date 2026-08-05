@@ -99,10 +99,12 @@ export function CardioLogger({ date, hkActiveEnergy }: { date: string; hkActiveE
   const lastKm = last?.distance_m != null ? Math.round((last.distance_m / 1000) * 100) / 100 : null
 
   return (
-    <section className="helix-card space-y-2.5" style={{ borderColor: `${EMERALD}26` }}>
+    // No card chrome: this is the content of a Nexus band whose label already
+    // says Cardio.
+    <div className="px-3 py-2 space-y-2.5">
       <div className="flex items-center gap-2">
         <Footprints className="w-3.5 h-3.5" style={{ color: EMERALD }} aria-hidden="true" />
-        <h3 className="font-heading font-bold text-fluid-sm text-text flex-1">Cardio</h3>
+        <span className="text-[11px] text-muted flex-1">Walk or run — logged apart from Active Energy</span>
         <button onClick={() => setOpen((v) => !v)} className="btn-glass min-h-[36px] text-fluid-xs px-2.5"
           aria-label={open ? 'Close cardio form' : 'Log cardio'}>
           {open ? <X className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
@@ -271,6 +273,6 @@ export function CardioLogger({ date, hkActiveEnergy }: { date: string; hkActiveE
           Apple Active Energy ({Math.round(hkActiveEnergy)} kcal) already includes this — logged here for detail, never added on top.
         </p>
       )}
-    </section>
+    </div>
   )
 }

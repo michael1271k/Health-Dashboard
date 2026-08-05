@@ -197,32 +197,52 @@ export default function DailyNexusPage() {
   const nextIsFuture = nextDate > logicalTodayISO() // no navigating past today
 
   return (
-    <div className="space-y-3">
-      {/* ── Back + title + day nav ── */}
-      <header className="flex items-center gap-2">
-        <button onClick={() => router.back()} className="btn-glass shrink-0 min-h-[44px]" aria-label="Back">
-          <ArrowLeft className="w-4 h-4" />
-        </button>
-        <div className="min-w-0 flex-1">
-          <h1 className="font-heading text-fluid-base font-bold text-text truncate">Daily Nexus</h1>
-          <span className="text-fluid-xs text-muted">{pretty}</span>
-        </div>
-        {/* Previous / Next day — discrete native-feeling chevrons */}
-        <div className="flex items-center gap-1 shrink-0">
-          <button onClick={() => router.push(`/day/${prevDate}`)}
-            className="btn-glass min-h-[44px] min-w-[40px] justify-center" aria-label="Previous day">
-            <ChevronLeft className="w-4 h-4" />
+    <div data-fullbleed className="min-h-dvh">
+      {/*
+        Sticky command bar — the same convention the report reader uses. A page
+        this long that you have to scroll back up to escape is a trap, so the way
+        out is pinned. Blurred rather than opaque so the bands read as continuous
+        underneath it, and hairlined at the bottom so it detaches as you scroll.
+      */}
+      <header
+        className="sticky top-0 z-30 safe-pt backdrop-blur-2xl border-b"
+        style={{
+          background: 'color-mix(in srgb, var(--color-bg, #0A0B0D) 95%, transparent)',
+          borderColor: `${eraMeta.color}30`,
+        }}
+      >
+        {/* The era colour bleeds along the top edge — one piece of chrome saying
+            which block of training this day belongs to. */}
+        <span aria-hidden="true" className="absolute inset-x-0 top-0 h-px"
+          style={{ background: `linear-gradient(90deg, transparent, ${eraMeta.color}b3, transparent)` }} />
+        <div className="mx-auto w-full max-w-[68ch] px-2 py-1.5 flex items-center gap-1.5">
+          <button onClick={() => router.back()} className="btn-glass shrink-0 min-h-[44px]" aria-label="Back">
+            <ArrowLeft className="w-4 h-4" />
           </button>
-          <button onClick={() => router.push(`/day/${nextDate}`)} disabled={nextIsFuture}
-            className="btn-glass min-h-[44px] min-w-[40px] justify-center disabled:opacity-30 disabled:pointer-events-none"
-            aria-label="Next day">
-            <ChevronRight className="w-4 h-4" />
-          </button>
+          <div className="min-w-0 flex-1">
+            <h1 className="font-heading text-fluid-sm font-bold text-text truncate leading-tight">{pretty}</h1>
+            <span className="text-[10px] text-muted">
+              {schedule === 'rest' ? 'Rest' : schedule.label}
+              {n?.phase ? ` · ${phaseDisplay(n.phase, date).label}` : ''}
+            </span>
+          </div>
+          {/* Previous / Next day — discrete native-feeling chevrons */}
+          <div className="flex items-center gap-0.5 shrink-0">
+            <button onClick={() => router.push(`/day/${prevDate}`)}
+              className="btn-glass min-h-[44px] min-w-[38px] justify-center" aria-label="Previous day">
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button onClick={() => router.push(`/day/${nextDate}`)} disabled={nextIsFuture}
+              className="btn-glass min-h-[44px] min-w-[38px] justify-center disabled:opacity-30 disabled:pointer-events-none"
+              aria-label="Next day">
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+          <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded shrink-0"
+            style={{ color: eraMeta.color, background: `${eraMeta.color}1a`, border: `1px solid ${eraMeta.color}40` }}>
+            {eraMeta.short}
+          </span>
         </div>
-        <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded shrink-0"
-          style={{ color: eraMeta.color, background: `${eraMeta.color}1a`, border: `1px solid ${eraMeta.color}40` }}>
-          {eraMeta.short}
-        </span>
       </header>
 
       {/* ══ SECTION 1 · Vitals & Nutrition ══
@@ -231,7 +251,7 @@ export default function DailyNexusPage() {
           ~280px of per-card headings. See components/ui/Zone.tsx. */}
 
       {/* ── TODAY · readiness, battery, what's scheduled ── */}
-      <Zone label="Today" accent={scoreColor(score)}>
+      <Zone bleed label="Today" accent={scoreColor(score)}>
         <ZoneRow divide={false} className="flex items-center gap-3">
           <div className="relative shrink-0 flex items-center justify-center" style={{ width: 52, height: 52 }}>
             <svg width="52" height="52" viewBox="0 0 52 52" className="-rotate-90" aria-hidden="true">
@@ -242,11 +262,10 @@ export default function DailyNexusPage() {
             </svg>
             <span className="absolute helix-num text-fluid-sm font-bold" style={{ color: scoreColor(score) }}>{score ?? '—'}</span>
           </div>
+          {/* The day's identity and phase moved to the sticky bar, where they
+              stay visible for the whole scroll instead of once at the top. */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[11px] text-muted truncate">{schedule === 'rest' ? 'Zone-2 / Rest' : schedule.label}</span>
-              {n?.phase && <span className="text-[10px] font-bold uppercase" style={{ color: phaseDisplay(n.phase, date).color }}>{phaseDisplay(n.phase, date).label}</span>}
-            </div>
+            <span className="text-[10px] uppercase tracking-wide text-muted">Readiness</span>
             <div className="flex items-center gap-2 mt-1">
               <span className="text-[10px] text-muted shrink-0">Battery</span>
               <span className="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
@@ -260,7 +279,7 @@ export default function DailyNexusPage() {
       </Zone>
 
       {/* ── FUEL & FLUIDS · macros and hydration share one container ── */}
-      <Zone label="Fuel &amp; Fluids" accent={MACRO_COLORS.calories}>
+      <Zone bleed label="Fuel &amp; Fluids" accent={MACRO_COLORS.calories}>
         <ZoneRow divide={false} className="cursor-pointer" onClick={tapFuel} title="Double-tap to edit macros">
           <div className="flex items-center gap-3">
             <span className="flex items-baseline gap-1 shrink-0">
@@ -306,6 +325,7 @@ export default function DailyNexusPage() {
         </ZoneRow>
       </Zone>
 
+      {/* Portalled, so its position in the band stack doesn't matter. */}
       <MacroOverrideSheet
         open={fuelEdit}
         onClose={() => setFuelEdit(false)}
@@ -314,7 +334,7 @@ export default function DailyNexusPage() {
       />
 
       {/* ── VITALS · one scrollable line, not a 3×2 grid of bordered boxes ── */}
-      <Zone label="Vitals" accent={CYAN}>
+      <Zone bleed label="Vitals" accent={CYAN}>
         <ZoneRow divide={false}>
           <StatStrip stats={[
             // Weight intentionally NOT here — it owns the Body/InBody card.
@@ -334,7 +354,8 @@ export default function DailyNexusPage() {
           is 780px of a ~2,000px page, and each is something you look at on
           purpose rather than scan past. Sharing one slot gives every one of them
           MORE room than it had at a third of the cost. */}
-      <div ref={pagerRef}>
+      <div ref={pagerRef} className="border-b" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+        <div className="mx-auto w-full max-w-[68ch] px-2 py-2">
         <SnapPager ref={pager} pages={[
           {
             key: 'sleep',
@@ -370,15 +391,23 @@ export default function DailyNexusPage() {
             ),
           },
         ]} />
+        </div>
       </div>
 
-      {/* Recovery inputs — soreness 24–72h post-session (compact 2-column) */}
-      <DomsTracker date={date} />
+      {/* Recovery inputs — soreness 24–72h post-session, on the body map */}
+      <Zone bleed label="Soreness" accent={EMBER}>
+        <DomsTracker date={date} />
+      </Zone>
 
       {/* Cardio (walk/run) — separate ledger; never double-counts Active Energy */}
-      <CardioLogger date={date} hkActiveEnergy={log?.active_energy ?? null} />
+      <Zone bleed label="Cardio" accent={EMERALD}>
+        <CardioLogger date={date} hkActiveEnergy={log?.active_energy ?? null} />
+      </Zone>
 
-      {/* ══ SECTION 2 · Session Debrief ══ (workout + progression, unified) */}
+      {/* ══ SECTION 2 · Session Debrief ══ (workout + progression, unified)
+          The last band is the only one that keeps card chrome inside it: a
+          session block is a TARGET, and a tappable thing needs an edge. */}
+      <div className="mx-auto w-full max-w-[68ch] px-3 py-3 space-y-3">
       {trained ? (
         <>
           <SectionTitle>Session Debrief</SectionTitle>
@@ -424,6 +453,7 @@ export default function DailyNexusPage() {
       )}
 
       {isLoading && <div className="helix-card h-20 animate-pulse" aria-hidden="true" />}
+      </div>
     </div>
   )
 }
