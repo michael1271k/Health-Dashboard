@@ -6,11 +6,9 @@ import { BodyMap } from '@/components/day/BodyMap'
 import { InBodyForm, InBodyHeadline, hasScaleMetrics } from '@/components/day/InBody'
 import { Sheet } from '@/components/ui/Sheet'
 import { useSaveBodyMetrics, type DayVaultData } from '@/lib/hooks/useDayVault'
+import { WEIGH_IN_SKIP_REASONS, DEFAULT_WEIGH_IN_SKIP_REASON, weighInSkipReason } from '@/lib/body/weighIn'
 
 const TEAL = '#E0703C'
-
-/** The reasons a weigh-in actually gets skipped, in rough order of frequency. */
-const SKIP_REASONS = ['No BM', 'Travel', 'Forgot', 'Fasted', 'Sick'] as const
 
 /**
  * Why there is no weight today.
@@ -20,17 +18,26 @@ const SKIP_REASONS = ['No BM', 'Travel', 'Forgot', 'Fasted', 'Sick'] as const
  * weightless day since the reader shipped — the column exists, nothing writes
  * it. This is the writer.
  *
- * Chips rather than a dropdown: five options is a row, not a menu. Tapping the
- * active chip clears it, because "actually I did weigh in" needs a way back.
- * Recording a reason must NEVER look like a weigh-in — this writes one text
- * column and touches nothing `hasScaleMetrics` reads, so a skipped day still
- * reads as skipped on every other surface.
+ * "AS PLANNED" IS THE DEFAULT, AND IT IS NOT STORED. Skipping the scale before a
+ * bowel movement is the protocol, not a lapse, so an unrecorded day resolves to
+ * it — on every past and future day alike, with no backfill and no write. The
+ * chip therefore shows as SELECTED whenever nothing else is, and tapping it
+ * clears the column back to null rather than writing the default text: storing
+ * the default would make the day indistinguishable from one deliberately marked,
+ * and would freeze today's wording into old rows if it ever changed.
+ *
+ * Chips rather than a dropdown: six options is a row, not a menu. Recording a
+ * reason must NEVER look like a weigh-in — this writes one text column and
+ * touches nothing `hasScaleMetrics` reads, so a skipped day still reads as
+ * skipped on every other surface.
  */
 function WeighInSkip({ date, current }: { date: string; current: string | null }) {
   const save = useSaveBodyMetrics(date)
   const [other, setOther] = useState('')
   const [showOther, setShowOther] = useState(false)
-  const isPreset = current != null && (SKIP_REASONS as readonly string[]).includes(current)
+  // What the day MEANS right now — the stored reason, or the default.
+  const effective = weighInSkipReason(current)
+  const isPreset = (WEIGH_IN_SKIP_REASONS as readonly string[]).includes(effective)
 
   const set = (reason: string | null) => save.mutate({ weighin_skip_reason: reason })
 
@@ -38,13 +45,16 @@ function WeighInSkip({ date, current }: { date: string; current: string | null }
     <div className="w-full space-y-2">
       <p className="text-[10px] uppercase tracking-wide text-muted text-center">Why?</p>
       <div className="flex flex-wrap justify-center gap-1.5">
-        {SKIP_REASONS.map((r) => {
-          const on = current === r
+        {WEIGH_IN_SKIP_REASONS.map((r) => {
+          const on = effective === r
           return (
             <button
               key={r}
               type="button"
-              onClick={() => set(on ? null : r)}
+              // Tapping any chip while it is already on returns the day to the
+              // default, which is `null` — including the default's own chip,
+              // where the tap is simply a no-op write of null.
+              onClick={() => set(on || r === DEFAULT_WEIGH_IN_SKIP_REASON ? null : r)}
               aria-pressed={on}
               className="rounded-full px-3 min-h-[36px] text-[11px] font-semibold transition-colors"
               style={{
@@ -59,16 +69,16 @@ function WeighInSkip({ date, current }: { date: string; current: string | null }
         })}
         <button
           type="button"
-          onClick={() => { setShowOther((v) => !v); if (!isPreset && current) setOther(current) }}
-          aria-pressed={current != null && !isPreset}
+          onClick={() => { setShowOther((v) => !v); if (!isPreset) setOther(effective) }}
+          aria-pressed={!isPreset}
           className="rounded-full px-3 min-h-[36px] text-[11px] font-semibold transition-colors"
           style={{
-            color: current != null && !isPreset ? TEAL : undefined,
-            background: current != null && !isPreset ? `${TEAL}1f` : 'rgba(255,255,255,0.03)',
-            border: `1px solid ${current != null && !isPreset ? `${TEAL}66` : 'rgba(255,255,255,0.08)'}`,
+            color: !isPreset ? TEAL : undefined,
+            background: !isPreset ? `${TEAL}1f` : 'rgba(255,255,255,0.03)',
+            border: `1px solid ${!isPreset ? `${TEAL}66` : 'rgba(255,255,255,0.08)'}`,
           }}
         >
-          {current != null && !isPreset ? current : 'Other…'}
+          {!isPreset ? effective : 'Other…'}
         </button>
       </div>
 

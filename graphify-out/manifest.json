@@ -160,8 +160,8 @@
     "semantic_hash": "6244657175fd749de647871bd554b5b1"
   },
   "public/sw.js": {
-    "mtime": 1785919195.0782588,
-    "ast_hash": "6734cded384e3e0afeec8fc38825cb51",
+    "mtime": 1785936749.6126301,
+    "ast_hash": "30808ed7094956f26f0edfd599f80d9d",
     "semantic_hash": ""
   },
   "scripts/generate-icons.mjs": {
@@ -270,8 +270,8 @@
     "semantic_hash": ""
   },
   "src/app/session/[id]/page.tsx": {
-    "mtime": 1785594483.8094077,
-    "ast_hash": "98611b6d7272f00fda610d2659012fbf",
+    "mtime": 1785936669.0373178,
+    "ast_hash": "bed8caa2d05bfc62fc7676fe69d20b05",
     "semantic_hash": ""
   },
   "src/app/session/page.tsx": {
@@ -665,8 +665,8 @@
     "semantic_hash": ""
   },
   "src/components/reports/SessionIntelCard.tsx": {
-    "mtime": 1785786663.7015333,
-    "ast_hash": "587ef1cfc81dd741ccebf061346e7cd4",
+    "mtime": 1785936348.500444,
+    "ast_hash": "aa3b892cd0cd53a88600cc3683dc8748",
     "semantic_hash": ""
   },
   "src/components/session-detail/ExerciseBreakdown.tsx": {
@@ -685,8 +685,8 @@
     "semantic_hash": ""
   },
   "src/components/session-detail/SessionHero.tsx": {
-    "mtime": 1785748933.5486479,
-    "ast_hash": "8a1a8684b872c0963875f44a224f592c",
+    "mtime": 1785936576.4949918,
+    "ast_hash": "b4368813a833a87d3120e261a9281827",
     "semantic_hash": ""
   },
   "src/components/settings/NotionSync.tsx": {
@@ -945,8 +945,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useWeeklyLoop.ts": {
-    "mtime": 1785918955.7961862,
-    "ast_hash": "2f7679be79de15ffeef4d2211274f1e1",
+    "mtime": 1785936286.475358,
+    "ast_hash": "852c8c8025071ae33f46df1226161e0f",
     "semantic_hash": ""
   },
   "src/lib/hooks/useWeeklyVolume.ts": {
@@ -1030,8 +1030,8 @@
     "semantic_hash": ""
   },
   "src/lib/reports/weeklyExport.ts": {
-    "mtime": 1785919012.187425,
-    "ast_hash": "fc51429dac5c4f21278dcb92158a275c",
+    "mtime": 1785935927.3725078,
+    "ast_hash": "dd6ff7644d60a6d25d8cc953c6b114ef",
     "semantic_hash": ""
   },
   "src/lib/schedule/overrides.ts": {
@@ -1325,8 +1325,8 @@
     "semantic_hash": "5dcb592b6e235d90eaffe401278184bd"
   },
   "src/tests/weekly-loop.test.ts": {
-    "mtime": 1785919168.3902156,
-    "ast_hash": "e36725a94f1a6c534a01ed5cfbe7952f",
+    "mtime": 1785936455.080076,
+    "ast_hash": "c99ec2a1a5793360a6fecd1c493a9946",
     "semantic_hash": ""
   },
   "src/tests/weigh-in.test.ts": {
@@ -1525,8 +1525,8 @@
     "semantic_hash": ""
   },
   "src/lib/training/prEngine.ts": {
-    "mtime": 1785786236.5919755,
-    "ast_hash": "165170b46c98c3f54deb57015ad24324",
+    "mtime": 1785936078.3671708,
+    "ast_hash": "f5682a3b10c66665a5de8d55d1f45915",
     "semantic_hash": ""
   },
   "src/tests/cardio-metrics.test.ts": {
@@ -1545,8 +1545,8 @@
     "semantic_hash": ""
   },
   "src/tests/pr-engine.test.ts": {
-    "mtime": 1785786372.2809217,
-    "ast_hash": "95989f4ae52797db5bba82ca20784875",
+    "mtime": 1785936153.3947527,
+    "ast_hash": "de48dccb0a92684e683c7657da0ef81d",
     "semantic_hash": ""
   },
   "src/tests/query-persistence.test.ts": {
@@ -1665,8 +1665,8 @@
     "semantic_hash": ""
   },
   "src/tests/nexus-layout.test.tsx": {
-    "mtime": 1785914763.3038487,
-    "ast_hash": "bd7499a9a9cb2653991e474355669c8f",
+    "mtime": 1785936637.5557122,
+    "ast_hash": "8d56d99b992e9c35924426e8bc4107d0",
     "semantic_hash": ""
   },
   "src/tests/pr-seed.test.ts": {
@@ -1680,8 +1680,8 @@
     "semantic_hash": ""
   },
   "src/components/day/BodyPanel.tsx": {
-    "mtime": 1785914212.820121,
-    "ast_hash": "0898088538981a05478f3cf446b531ad",
+    "mtime": 1785936035.117991,
+    "ast_hash": "7f97dc26ca3edf20ae9fe34a4b772959",
     "semantic_hash": ""
   },
   "src/components/day/InBody.tsx": {
@@ -1690,8 +1690,8 @@
     "semantic_hash": ""
   },
   "src/tests/body-panel.test.tsx": {
-    "mtime": 1785918632.9841352,
-    "ast_hash": "897ea1f6b7689ce9c6ed3f4d6b449095",
+    "mtime": 1785936543.4899354,
+    "ast_hash": "a374591cb01f019b24793ed2f93a21d0",
     "semantic_hash": ""
   },
   "src/lib/hooks/useLogicalDate.ts": {
@@ -1837,6 +1837,16 @@
   "scripts/backfill-scale-metrics.mjs": {
     "mtime": 1785918690.551903,
     "ast_hash": "5258fad37a70672025b48c389a81d921",
+    "semantic_hash": ""
+  },
+  "src/lib/body/weighIn.ts": {
+    "mtime": 1785935792.7467465,
+    "ast_hash": "49e9324e35843be8e0a720901d0ee491",
+    "semantic_hash": ""
+  },
+  "src/tests/weigh-in-skip.test.ts": {
+    "mtime": 1785936514.406147,
+    "ast_hash": "d808246eddf078e5cd076ba6a2eaed61",
     "semantic_hash": ""
   }
 }

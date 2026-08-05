@@ -2,13 +2,10 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Pencil, Trash2, Loader2 } from 'lucide-react'
+import { Pencil, Trash2, Loader2 } from 'lucide-react'
 import type { SessionDetail } from '@/lib/hooks/useSessionDetail'
 import { useEditSession } from '@/lib/hooks/useEditSession'
 import { useDeleteSession, useGlobalSessionNumber } from '@/lib/hooks/useDayVault'
-import { getWeekPhase, phaseBadgeStyle } from '@/lib/phases'
-import { weekStartOf } from '@/lib/utils/week'
-import { activeProgram } from '@/lib/programs'
 import { dayColor } from '@/lib/theme/palette'
 import { displayWeight, weightUnit, fmtVolume } from '@/lib/utils/units'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
@@ -60,38 +57,25 @@ export function SessionHero({ detail }: { detail: SessionDetail }) {
   const { data: globalNum } = useGlobalSessionNumber(detail.date)
   const [confirm, setConfirm] = useState(false)
 
-  const program = activeProgram()
-  const label = (detail.dayKey && program.days.find((d) => d.key === detail.dayKey)?.label)
-    ?? (detail.splitDay[0].toUpperCase() + detail.splitDay.slice(1))
-  const phase = getWeekPhase(weekStartOf(detail.date))
+  // The day label and the phase badge moved to the page's sticky command bar;
+  // only the ACCENT is still read here, to tint the card's border and glow.
   const accent = dayColor(detail.dayKey, detail.splitDay)
   const unit = weightUnit()
   const pretty = new Date(detail.date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'long' })
 
   return (
     <section className="helix-card holo-sheen space-y-3" style={{ borderColor: `${accent}33`, boxShadow: `0 0 24px ${accent}14` }}>
-      <div className="flex items-start gap-3">
-        <button onClick={() => router.back()} onPointerUp={blurOnTap} className="btn-glass shrink-0 min-h-[40px]" aria-label="Back">
-          <ArrowLeft className="w-4 h-4" />
-        </button>
-        <div className="min-w-0 flex-1">
-          <span className="block text-[10px] font-bold uppercase tracking-[0.18em] text-muted">
-            Session Report{globalNum ? ` · #${String(globalNum).padStart(2, '0')}` : ''}
-          </span>
-          {/* The workout's own colour, globally assigned per day key (DAY_COLOR).
-              Upper A is always steel, Legs & Core B always emerald — so the
-              report identifies itself before the title is read. */}
-          <h1 className="font-heading text-fluid-lg font-bold leading-tight truncate mt-0.5" style={{ color: accent }}>
-            {label}
-          </h1>
-          <div className="flex items-center gap-2 mt-1 flex-wrap">
-            <span className="text-fluid-xs text-muted">{pretty}</span>
-            {phase && (
-              <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded"
-                style={phaseBadgeStyle(phase.kind, false, phase.era)}>{phase.eraTag}</span>
-            )}
-          </div>
-        </div>
+      {/* IDENTITY LIVES IN THE STICKY COMMAND BAR, not here.
+          The page went full-bleed and grew a pinned header carrying the back
+          button, the day label in its own colour, the date and the phase badge.
+          Repeating all four inside a card 60 px below it read as a rendering
+          bug, so the hero keeps only what the bar has no room for: which
+          session this is in the global count. */}
+      <div className="flex items-baseline gap-2">
+        <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted">
+          Session Report{globalNum ? ` · #${String(globalNum).padStart(2, '0')}` : ''}
+        </span>
+        <span className="text-fluid-xs text-muted ml-auto truncate">{pretty}</span>
       </div>
 
       {/* TWO tiers, not one flat strip.

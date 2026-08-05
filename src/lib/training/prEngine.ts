@@ -50,18 +50,30 @@ export interface BaselineSetRow {
 /**
  * Per-row tonnage for the VOLUME axis, with unilateral pairs collapsed.
  *
- * `sessionVolumeKg` has scored a unilateral set at the WEAKER side counted twice
- * (2 × min weight × min reps) since the asymmetry rule landed — summing both
- * sides literally credits the strong side's extra reps as if the weak side had
- * done them. The volume AXIS did not know that: it read each row as its own set,
- * so "L 5 kg × 10, R 5 kg × 14" put the bar at the strong side's 70 kg, and both
- * rows could carry a volume trophy for one physical set. Two definitions of
- * volume in one app is one too many.
+ * The volume axis used to read each row as its own set, so "L 5 kg × 10,
+ * R 5 kg × 14" put the bar at the strong side's 70 kg and both rows could carry
+ * a volume trophy for one physical set. Collapsing fixes both: the pair scores
+ * once, at the WEAKER side (min weight × min reps), on the row that completes
+ * it. Returns `null` for the earlier side so the record lands on exactly one
+ * row. A lone side (only L logged) is real work with no partner and scores on
+ * its own.
  *
- * Returns `null` for the row that must NOT carry the axis — the earlier side of
- * a complete pair — so the record lands on exactly one row. A lone side (only L
- * logged) is real work with no partner and scores on its own, matching
- * `sessionVolumeKg`.
+ * ONE SIDE, NOT TWO — and this is where it diverged (fixed 2026-08-05).
+ *
+ * The collapse used to credit `2 × min w × min reps`, mirroring
+ * `sessionVolumeKg`, which is correct for a SESSION TOTAL: both arms did the
+ * work and the week's tonnage must count both. It is wrong for a per-set
+ * RECORD, because the same exercise gets logged both ways. Single Arm Lateral
+ * Raise (Cable) carries paired rows on 2026-07-23 (L 5×13 / R 5×15 → a doubled
+ * 130 kg) and bare unsided rows before and after it (5 × 15 → 75 kg). Those two
+ * conventions describe the same physical set, so a single paired session set a
+ * bar no unsided set could ever clear: 2026-08-05's 5 kg × 17 — 85 kg, a real
+ * best against every comparable row — was judged against 130 and silently lost
+ * the axis while winning 1RM on the same set.
+ *
+ * Per-set volume is therefore "the tonnage of ONE working set as logged",
+ * identical under either convention. The session total keeps its ×2 in
+ * `sessionVolumeKg`, where the question really is how much was lifted.
  */
 export function volumeCredits(
   rows: ReadonlyArray<{ weightKg: number | null; reps: number | null; pairId?: string | null; side?: string | null }>,
@@ -85,7 +97,7 @@ export function volumeCredits(
     const reps = Math.min(rows[l].reps ?? 0, rows[r].reps ?? 0)
     const last = Math.max(l, r)
     for (const i of idxs) out[i] = null
-    out[last] = 2 * w * reps
+    out[last] = w * reps
   }
 
   return out

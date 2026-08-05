@@ -12,7 +12,7 @@ import { BodyPanel } from '@/components/day/BodyPanel'
  * These pin the two faces: the page is never empty, and the entry point is
  * always ON the page that needs it.
  */
-function renderPanel(log: Record<string, number | null> | null) {
+function renderPanel(log: Record<string, number | string | null> | null) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={qc}>
@@ -58,6 +58,30 @@ describe('BodyPanel — a self-sufficient Body page', () => {
     cleanup()
     renderPanel({ weight_kg: 64.2 })
     expect(screen.queryByRole('button', { name: 'No BM' })).toBeNull()
+  })
+
+  /**
+   * "As Planned" is the DEFAULT, not just another chip. Skipping the scale
+   * before a bowel movement is the protocol, so an unrecorded weightless day
+   * already means something — and the chip row has to show that it does, or the
+   * default is invisible and reads as "nothing chosen".
+   */
+  it('pre-selects "As Planned" on any weightless day with nothing recorded', () => {
+    renderPanel(null)
+    expect(screen.getByRole('button', { name: 'As Planned' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'No BM' })).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  it('yields the default the moment a real reason is recorded', () => {
+    renderPanel({ weighin_skip_reason: 'Travel' })
+    expect(screen.getByRole('button', { name: 'Travel' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'As Planned' })).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  it('shows a free-text reason on its own chip rather than falling back', () => {
+    renderPanel({ weighin_skip_reason: 'Weird scale reading' })
+    expect(screen.getByRole('button', { name: 'Weird scale reading' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'As Planned' })).toHaveAttribute('aria-pressed', 'false')
   })
 
   it('keeps the entry form out of the page until asked', () => {

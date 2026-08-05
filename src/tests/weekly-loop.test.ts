@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { buildWeeklyExport, weeklySummary, type WeeklyExportInput, type ExportDay } from '@/lib/reports/weeklyExport'
+import {
+  buildWeeklyExport, weeklySummary, trendTotals,
+  type WeeklyExportInput, type ExportDay, type ExportSession, type ExportCardio,
+} from '@/lib/reports/weeklyExport'
 import { stallProtocol, rollingAverage, type DayPoint, type SessionPoint } from '@/lib/coach/insights'
 
 const day = (date: string, p: Partial<DayPoint>): DayPoint => ({
@@ -266,15 +269,20 @@ describe('buildWeeklyExport', () => {
 
   // A blank weight can mean "not weighed", "the sync dropped it", or "skipped on
   // purpose" — and only the last is safe to leave out of a trend.
-  it('states WHY a weigh-in is missing, and says so even when no reason was given', () => {
+  it('states WHY a weigh-in is missing, defaulting to the protocol reason', () => {
+    // No reason stored → "As Planned", not "no reason recorded". Skipping the
+    // scale before a bowel movement IS the protocol, and reporting it as a
+    // logging gap reads a deliberate week as a sloppy one.
     const out = buildWeeklyExport(input)
-    expect(out).toMatch(/\*\*Mon 2026-07-20\*\*.*weight — \[Skip: no reason recorded\]/)
+    expect(out).toMatch(/\*\*Mon 2026-07-20\*\*.*weight — \[Skip: As Planned\]/)
 
     const withReason = buildWeeklyExport({
       ...input,
-      days: input.days.map((d) => (d.date === '2026-07-20' ? { ...d, weighInSkipReason: 'No BM' } : d)),
+      days: input.days.map((d) => (d.date === '2026-07-20' ? { ...d, weighInSkipReason: 'Travel' } : d)),
     })
-    expect(withReason).toMatch(/\*\*Mon 2026-07-20\*\*.*weight — \[Skip: No BM\]/)
+    // Read DYNAMICALLY off the day — change the reason and the export follows.
+    expect(withReason).toMatch(/\*\*Mon 2026-07-20\*\*.*weight — \[Skip: Travel\]/)
+    expect(withReason).not.toMatch(/As Planned/)
     // A day that WAS weighed never carries a skip marker.
     expect(withReason).not.toMatch(/\*\*Sun 2026-07-19\*\*.*Skip:/)
   })
@@ -335,6 +343,24 @@ describe('buildWeeklyExport', () => {
     expect(out).toMatch(/- Two Per Day Multivitamin — 1 tablet \/ 2 on Monday & Friday \(Leg Days\)/)
     // Once, not twice — the whole point of the consolidation.
     expect(out.match(/Multivitamin/g)).toHaveLength(1)
+  })
+
+  // Folding two lists into one loses the one thing the headings carried: the
+  // pre-workout stimulants are training-day-only, and a flat list makes them
+  // look daily. The condition rides on the line so it survives the fold.
+  it('tags the pre-workout-only stimulants, and nothing else', () => {
+    const out = buildWeeklyExport({
+      ...input,
+      supplementProtocol: {
+        training: ['11:45 · L-Citrulline — 3 g', '11:45 · Nutricost Caffeine — 200 mg', '15:00 · Creatine Monohydrate — 5 g'],
+        rest: ['15:00 · Creatine Monohydrate — 5 g'],
+      },
+    })
+    expect(out).toMatch(/- 11:45 · L-Citrulline — 3 g \(Pre-workout only\)/)
+    expect(out).toMatch(/- 11:45 · Nutricost Caffeine — 200 mg \(Pre-workout only\)/)
+    // Creatine is taken every day; tagging it would state a rule that isn't one.
+    expect(out).toMatch(/- 15:00 · Creatine Monohydrate — 5 g$/m)
+    expect(out.match(/Pre-workout only/g)).toHaveLength(2)
   })
 
   it('consolidates by SUPPLEMENT, so a differing dose collapses instead of duplicating', () => {
@@ -478,5 +504,152 @@ describe('weeklySummary', () => {
       doms: [{ date: '2026-07-21', muscle: 'Quads', severity: 3 }],
     }))
     expect(out).toMatch(/- Highest DOMS: Quads — severe \(2026-07-21\)/)
+  })
+})
+
+/**
+ * The closing week-over-week block. Deliberately the ONE table in a file whose
+ * whole design rule is "no tables": this is two aligned columns of the same six
+ * measures, which is exactly what a table is for.
+ */
+describe('week-over-week trends', () => {
+  const day = (o: Partial<ExportDay>): ExportDay => ({
+    date: '2026-07-19', weekdayLabel: 'Sun', isTrainingDay: false, weightKg: null,
+    calories: null, proteinG: null, carbsG: null, fatG: null, steps: null, distanceM: null,
+    trainingMin: null, sleepMin: null, deepMin: null, remMin: null, restingHr: null,
+    hrvMs: null, waterMl: null, supplementsTaken: null, weighInSkipReason: null, ...o,
+  })
+  const session = (volumeKg: number | null): ExportSession => ({
+    date: '2026-07-20', label: 'Upper A', volumeKg, setCount: null, failureSets: null,
+    durationMin: null, avgBpm: null, caloriesBurned: null, sessionRpe: null,
+    exercises: [], prs: [],
+  })
+  const walk = (durationMin: number | null): ExportCardio => ({
+    date: '2026-07-19', kind: 'walk', distanceM: null, durationMin,
+    kcal: null, totalKcal: null, avgHr: null, effort: null,
+  })
+  const base = (o: Partial<WeeklyExportInput> = {}): WeeklyExportInput => ({
+    weekStart: '2026-08-02', weekEnd: '2026-08-08', weekLabel: 'Week 3',
+    programLabel: 'Helix Cut',
+    calorieGoal: 1955, proteinGoalG: 170, stepsGoal: 10000, sleepGoalHours: 8,
+    days: [], sessions: [], volumeByMuscle: [], doms: [], cardio: [], ...o,
+  })
+
+  describe('trendTotals', () => {
+    it('averages only the days that HAVE a reading, and totals the work', () => {
+      const t = trendTotals(
+        [day({ calories: 1800, steps: 9000, weightKg: 64.2, waterMl: 3000 }),
+          day({ calories: 2000, steps: null, weightKg: null, waterMl: 2000 }),
+          day({})],
+        [session(8000), session(4000)],
+        [walk(30), walk(20)],
+      )
+      // Two logged intakes → their mean. The third day is unknown, not 0 kcal.
+      expect(t.avgKcal).toBe(1900)
+      expect(t.avgSteps).toBe(9000)
+      expect(t.avgWeightKg).toBe(64.2)
+      expect(t.avgWaterMl).toBe(2500)
+      // Volume and cardio minutes are work that happened — honest sums.
+      expect(t.totalVolumeKg).toBe(12000)
+      expect(t.cardioMinutes).toBe(50)
+    })
+
+    it('returns null rather than 0 when a measure was never recorded', () => {
+      const t = trendTotals([day({}), day({})], [], [])
+      expect(t.avgKcal).toBeNull()
+      expect(t.avgWeightKg).toBeNull()
+      expect(t.totalVolumeKg).toBeNull()
+      expect(t.cardioMinutes).toBeNull()
+    })
+  })
+
+  it('is skipped entirely when there is no previous week to compare against', () => {
+    expect(buildWeeklyExport(base({ days: [day({ calories: 1800 })] })))
+      .not.toMatch(/Week-over-Week/)
+  })
+
+  it('heads the block with the program and the app’s own week number', () => {
+    const out = buildWeeklyExport(base({
+      days: [day({ calories: 1800 })],
+      previous: trendTotals([day({ calories: 1900 })], [], []),
+    }))
+    expect(out).toMatch(/## Week-over-Week Trends \(Helix Cut · Week 3\)/)
+    // …and the comparison column is labelled with the week it actually is.
+    expect(out).toMatch(/\| +Week 2 \|/)
+  })
+
+  it('closes the export — the evidence is read before the verdict', () => {
+    const out = buildWeeklyExport(base({
+      days: [day({ calories: 1800 })],
+      sessions: [session(8000)],
+      previous: trendTotals([day({ calories: 1900 })], [session(7000)], []),
+    }))
+    expect(out.indexOf('## Days')).toBeLessThan(out.indexOf('## Week-over-Week'))
+    expect(out.indexOf('## Sessions')).toBeLessThan(out.indexOf('## Week-over-Week'))
+  })
+
+  it('prints all six metrics with a signed delta and a percentage', () => {
+    const out = buildWeeklyExport(base({
+      days: [day({ calories: 1800, steps: 9000, weightKg: 64.0, waterMl: 3000 })],
+      sessions: [session(8000)],
+      cardio: [walk(30)],
+      previous: trendTotals(
+        [day({ calories: 2000, steps: 8000, weightKg: 65.0, waterMl: 2000 })],
+        [session(10000)], [walk(20)]),
+    }))
+    for (const m of ['Calories (avg/day)', 'Training volume (total)', 'Steps (avg/day)',
+      'Cardio (total)', 'Water (avg/day)', 'Body weight (avg)']) {
+      expect(out).toContain(m)
+    }
+    // −200 kcal on 2000 is −10.0%; a true minus sign, not a hyphen.
+    expect(out).toMatch(/−200 kcal \(−10\.0%\)/)
+    expect(out).toMatch(/\+1000 \(\+12\.5%\)/)          // steps
+    expect(out).toMatch(/−1\.0 kg \(−1\.5%\)/)          // body weight
+    expect(out).toMatch(/\+10 min \(\+50\.0%\)/)        // cardio
+  })
+
+  it('says "no change" rather than printing a rounding artefact', () => {
+    const out = buildWeeklyExport(base({
+      days: [day({ calories: 1800 })],
+      previous: trendTotals([day({ calories: 1800 })], [], []),
+    }))
+    expect(out).toMatch(/no change/)
+    expect(out).not.toMatch(/\+0 kcal/)
+  })
+
+  it('leaves the delta blank when either side has no reading — never 0', () => {
+    const out = buildWeeklyExport(base({
+      days: [day({ calories: 1800 })],
+      previous: trendTotals([day({})], [], []),
+    }))
+    // The row still prints; its previous cell and delta are em-dashes.
+    expect(out).toMatch(/\| Calories \(avg\/day\) +\| +1800 kcal \| +— \| +— \| — \|/)
+  })
+
+  /**
+   * DIRECTION, NOT VERDICT. Whether falling calories are progress or a problem
+   * depends on the phase; this file exports raw data and lets the reader judge.
+   */
+  it('uses neutral arrows and never labels a move good or bad', () => {
+    const out = buildWeeklyExport(base({
+      days: [day({ calories: 1800, weightKg: 64 })],
+      previous: trendTotals([day({ calories: 2000, weightKg: 65 })], [], []),
+    }))
+    expect(out).toMatch(/↓/)
+    expect(out).not.toMatch(/\b(good|bad|on track|great)\b/i)
+  })
+
+  it('lays the table out so the RAW markdown lines up too', () => {
+    const out = buildWeeklyExport(base({
+      days: [day({ calories: 1800 })],
+      previous: trendTotals([day({ calories: 1900 })], [], []),
+    }))
+    const rows = out.split('\n').filter((l) => l.startsWith('|'))
+    // Header, alignment rule, six metrics.
+    expect(rows).toHaveLength(8)
+    // Every row is the same width — the padding's whole job.
+    expect(new Set(rows.map((r) => [...r].length)).size).toBe(1)
+    // Numbers right-aligned, the metric name left — the alignment row says so.
+    expect(rows[1]).toMatch(/^\|:-+-\|-+:\|/)
   })
 })

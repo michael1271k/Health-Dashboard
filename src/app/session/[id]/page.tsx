@@ -8,49 +8,110 @@ import { ExerciseBreakdown } from '@/components/session-detail/ExerciseBreakdown
 import { SessionHighlights } from '@/components/session-detail/SessionHighlights'
 import { MuscleFocus } from '@/components/session-detail/MuscleFocus'
 import { ProgressionTrail } from '@/components/session-detail/ProgressionTrail'
+import { getWeekPhase, phaseBadgeStyle } from '@/lib/phases'
+import { weekStartOf } from '@/lib/utils/week'
+import { activeProgram } from '@/lib/programs'
+import { dayColor } from '@/lib/theme/palette'
+import { blurOnTap } from '@/lib/utils/blurOnTap'
 
 /**
  * Workout Analysis — the dedicated deep-dive for one session (reached by tapping
  * any completed workout, from the timeline, Daily Nexus, Post-Workout Summary or
  * the dashboard). Not a bottom-nav tab: a fullscreen analysis page with a back
  * button (the bottom nav already hides on /session*).
+ *
+ * FULL-BLEED, like the report reader and the Daily Nexus. This page was the last
+ * of the three long documents still sitting inside the app shell's wide dashboard
+ * column with gutters either side, so on a phone every card floated in dead
+ * margin — a dashboard panel rather than an analysis surface. `data-fullbleed`
+ * surrenders the shell's padding and measure (see globals.css), the sticky
+ * command bar owns the way out, and ONE reading measure is applied once to the
+ * content so a desktop still gets a centred column instead of a 1440 px line.
  */
 export default function SessionAnalysisPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const { data, isLoading } = useSessionDetail(id ?? null)
 
-  if (isLoading) {
-    return (
-      <div className="space-y-3">
-        <div className="helix-card h-40 animate-pulse" />
-        <div className="helix-card h-56 animate-pulse" />
-        <div className="helix-card h-40 animate-pulse" />
-      </div>
-    )
-  }
-
-  if (!data) {
-    return (
-      <div className="space-y-4 py-10 text-center">
-        <p className="text-muted">This session couldn&apos;t be found.</p>
-        <button onClick={() => router.back()} className="btn-glass mx-auto min-h-[44px]">
-          <ArrowLeft className="w-4 h-4" /> Back
-        </button>
-      </div>
-    )
-  }
+  const phase = data ? getWeekPhase(weekStartOf(data.date)) : null
+  const accent = data ? dayColor(data.dayKey, data.splitDay) : '#8E9AAC'
+  const label = data
+    ? ((data.dayKey && activeProgram().days.find((d) => d.key === data.dayKey)?.label)
+      ?? (data.splitDay[0].toUpperCase() + data.splitDay.slice(1)))
+    : 'Session'
+  const pretty = data
+    ? new Date(`${data.date}T00:00:00`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'long' })
+    : ''
 
   return (
-    <div className="space-y-3 pb-8">
-      <SessionHero detail={data} />
-      {/* Records and the strongest lift, above everything. They used to be a
-          gold chip somewhere inside one exercise and a coloured border on
-          another — both a full scroll away. */}
-      <SessionHighlights exercises={data.exercises} />
-      <ProgressionTrail sessionId={data.id} />
-      <ExerciseBreakdown sessionId={data.id} exercises={data.exercises} date={data.date} dayKey={data.dayKey} />
-      <MuscleFocus detail={data} />
+    <div data-fullbleed className="min-h-dvh">
+      {/*
+        Sticky command bar — the same convention the report reader and the Nexus
+        use. A document this long that you have to scroll back up to escape is a
+        trap, so the way out is pinned. Blurred rather than opaque so the content
+        reads as continuous underneath, hairlined at the bottom so it detaches
+        as you scroll.
+      */}
+      <header
+        className="sticky top-0 z-30 safe-pt backdrop-blur-2xl border-b"
+        style={{
+          background: 'color-mix(in srgb, var(--color-bg, #0A0B0D) 95%, transparent)',
+          borderColor: `${accent}30`,
+        }}
+      >
+        {/* The workout's own colour bleeds along the top edge — Upper A is always
+            steel, Legs & Core B always emerald, so the report identifies itself
+            before the title is read. */}
+        <span aria-hidden="true" className="absolute inset-x-0 top-0 h-px"
+          style={{ background: `linear-gradient(90deg, transparent, ${accent}b3, transparent)` }} />
+        <div className="mx-auto w-full max-w-[68ch] px-2 py-1.5 flex items-center gap-1.5">
+          <button onClick={() => router.back()} onPointerUp={blurOnTap}
+            className="btn-glass shrink-0 min-h-[44px]" aria-label="Back">
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <div className="min-w-0 flex-1">
+            <h1 className="font-heading text-fluid-sm font-bold truncate leading-tight" style={{ color: accent }}>
+              {label}
+            </h1>
+            <span className="text-[10px] text-muted">{pretty || 'Session Report'}</span>
+          </div>
+          {phase && (
+            <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded shrink-0"
+              style={phaseBadgeStyle(phase.kind, false, phase.era)}>{phase.eraTag}</span>
+          )}
+        </div>
+      </header>
+
+      {/* ONE reading measure, applied once — edge-to-edge on a phone, a centred
+          column on a desktop. Every section below inherits it rather than
+          setting its own. */}
+      <div className="mx-auto w-full max-w-[68ch] px-2 py-2 space-y-3 pb-8">
+        {isLoading ? (
+          <>
+            <div className="helix-card h-40 animate-pulse" />
+            <div className="helix-card h-56 animate-pulse" />
+            <div className="helix-card h-40 animate-pulse" />
+          </>
+        ) : !data ? (
+          <div className="space-y-4 py-10 text-center">
+            <p className="text-muted">This session couldn&apos;t be found.</p>
+            <button onClick={() => router.back()} className="btn-glass mx-auto min-h-[44px]">
+              <ArrowLeft className="w-4 h-4" /> Back
+            </button>
+          </div>
+        ) : (
+          <>
+            <SessionHero detail={data} />
+            {/* Records and the strongest lift, above everything. They used to be a
+                gold chip somewhere inside one exercise and a coloured border on
+                another — both a full scroll away. */}
+            <SessionHighlights exercises={data.exercises} />
+            <ProgressionTrail sessionId={data.id} />
+            <ExerciseBreakdown sessionId={data.id} exercises={data.exercises} date={data.date} dayKey={data.dayKey} />
+            <MuscleFocus detail={data} />
+          </>
+        )}
+      </div>
     </div>
   )
 }

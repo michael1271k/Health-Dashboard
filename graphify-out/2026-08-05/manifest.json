@@ -160,8 +160,8 @@
     "semantic_hash": "6244657175fd749de647871bd554b5b1"
   },
   "public/sw.js": {
-    "mtime": 1785915347.1628494,
-    "ast_hash": "e7b0711d41affe255f988c0d56e50bb5",
+    "mtime": 1785919195.0782588,
+    "ast_hash": "6734cded384e3e0afeec8fc38825cb51",
     "semantic_hash": ""
   },
   "scripts/generate-icons.mjs": {
@@ -195,8 +195,8 @@
     "semantic_hash": ""
   },
   "src/app/(dashboard)/settings/page.tsx": {
-    "mtime": 1785505180.263085,
-    "ast_hash": "1d0d3dff1f9d0fd60f727253ef5e3e7e",
+    "mtime": 1785918560.6355996,
+    "ast_hash": "0ad1e9b87a0ca45c653ea5169058ab05",
     "semantic_hash": ""
   },
   "src/app/(dashboard)/workout/page.tsx": {
@@ -480,8 +480,8 @@
     "semantic_hash": "ac81f72d03bee763c6c19b3c4120b1d3"
   },
   "src/components/day/BodyMap.tsx": {
-    "mtime": 1785914262.5699213,
-    "ast_hash": "e9dc73b95c05af259795b4a0b622f44f",
+    "mtime": 1785918543.5275376,
+    "ast_hash": "d1e41f35f8c2fdb5bb58a7791b210177",
     "semantic_hash": ""
   },
   "src/components/day/CardioLogger.tsx": {
@@ -735,8 +735,8 @@
     "semantic_hash": "46ee76d6bf421306176e7c8469bacea1"
   },
   "src/lib/body/composition.ts": {
-    "mtime": 1785913730.3977847,
-    "ast_hash": "f0fe9c2f6fc9682dfae674ae16262b2e",
+    "mtime": 1785918354.281593,
+    "ast_hash": "d21dbbc050580696d4b5b590adb633f8",
     "semantic_hash": ""
   },
   "src/lib/coach/insights.ts": {
@@ -810,8 +810,8 @@
     "semantic_hash": "411e93dbc23e179fb7f915536afed0e0"
   },
   "src/lib/hooks/useDayVault.ts": {
-    "mtime": 1785913788.3696954,
-    "ast_hash": "8d79343ca563dd386405eb52ad7fa82c",
+    "mtime": 1785918533.200722,
+    "ast_hash": "84c40f355f795c69c83337dc9413fc19",
     "semantic_hash": ""
   },
   "src/lib/hooks/useEditSession.ts": {
@@ -945,8 +945,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useWeeklyLoop.ts": {
-    "mtime": 1785873554.1197581,
-    "ast_hash": "6e7da012a5f440bdf2b44786f06ce40f",
+    "mtime": 1785918955.7961862,
+    "ast_hash": "2f7679be79de15ffeef4d2211274f1e1",
     "semantic_hash": ""
   },
   "src/lib/hooks/useWeeklyVolume.ts": {
@@ -1030,8 +1030,8 @@
     "semantic_hash": ""
   },
   "src/lib/reports/weeklyExport.ts": {
-    "mtime": 1785873413.0326183,
-    "ast_hash": "dbfe432d97ba6d5a1621136abe75e58b",
+    "mtime": 1785919012.187425,
+    "ast_hash": "fc51429dac5c4f21278dcb92158a275c",
     "semantic_hash": ""
   },
   "src/lib/schedule/overrides.ts": {
@@ -1130,8 +1130,8 @@
     "semantic_hash": ""
   },
   "src/lib/types/workout.ts": {
-    "mtime": 1785503450.8786745,
-    "ast_hash": "e9fedb610aa19465af7ae0f61382758f",
+    "mtime": 1785918560.6294227,
+    "ast_hash": "212048234fcc05b8ad68bd2bd6208845",
     "semantic_hash": ""
   },
   "src/lib/utils/authedFetch.ts": {
@@ -1195,8 +1195,8 @@
     "semantic_hash": "bbb351aa3ccd0dbb99ae19d1ffcc47ad"
   },
   "src/tests/body-composition.test.ts": {
-    "mtime": 1785913934.194794,
-    "ast_hash": "95a40e53d398a4d237e6bdc0e46822a8",
+    "mtime": 1785918587.076232,
+    "ast_hash": "ab5310f118297ae5ecd2466913a47ba0",
     "semantic_hash": ""
   },
   "src/tests/ceilings.test.ts": {
@@ -1325,8 +1325,8 @@
     "semantic_hash": "5dcb592b6e235d90eaffe401278184bd"
   },
   "src/tests/weekly-loop.test.ts": {
-    "mtime": 1785873617.3982658,
-    "ast_hash": "b277462fc947808bd8cb26fc24168827",
+    "mtime": 1785919168.3902156,
+    "ast_hash": "e36725a94f1a6c534a01ed5cfbe7952f",
     "semantic_hash": ""
   },
   "src/tests/weigh-in.test.ts": {
@@ -1685,13 +1685,13 @@
     "semantic_hash": ""
   },
   "src/components/day/InBody.tsx": {
-    "mtime": 1785914207.7807705,
-    "ast_hash": "49cb8f465245fab5bf1731fc68adbbf4",
+    "mtime": 1785918533.2045863,
+    "ast_hash": "9a61cfeeff2f5e4fab42c02a65998fe2",
     "semantic_hash": ""
   },
   "src/tests/body-panel.test.tsx": {
-    "mtime": 1785914286.8509696,
-    "ast_hash": "99659a257c45184200dad588bbc0ccfb",
+    "mtime": 1785918632.9841352,
+    "ast_hash": "897ea1f6b7689ce9c6ed3f4d6b449095",
     "semantic_hash": ""
   },
   "src/lib/hooks/useLogicalDate.ts": {
@@ -1810,8 +1810,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useLatestBodyReading.ts": {
-    "mtime": 1785913488.1509635,
-    "ast_hash": "48b0d92568d2d5d9ff46aa655fba2dd3",
+    "mtime": 1785918428.463561,
+    "ast_hash": "bcef30846eb5eee603763c8d09c1d368",
     "semantic_hash": ""
   },
   "src/tests/cardio-prs.test.ts": {
@@ -1825,13 +1825,18 @@
     "semantic_hash": ""
   },
   "src/tests/latest-body-reading.test.ts": {
-    "mtime": 1785913502.7972095,
-    "ast_hash": "461abb091e0c4eab97b6eadc75979c41",
+    "mtime": 1785918627.943096,
+    "ast_hash": "9a414e64e8a1728d6db2f271eeb24da6",
     "semantic_hash": ""
   },
   "src/tests/progression-scope.test.ts": {
     "mtime": 1785913643.0090754,
     "ast_hash": "6373fd6dfd89037b521c683fe079afd7",
+    "semantic_hash": ""
+  },
+  "scripts/backfill-scale-metrics.mjs": {
+    "mtime": 1785918690.551903,
+    "ast_hash": "5258fad37a70672025b48c389a81d921",
     "semantic_hash": ""
   }
 }

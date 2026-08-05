@@ -524,17 +524,19 @@ describe('the volume axis obeys the unilateral rule', () => {
   const pair = (n: string, side: 'L' | 'R', w: number, reps: number): PrCandidateSet =>
     ({ key: SA, weightKg: w, reps, timed: false, setType: null, side, pairId: n })
 
-  it('scores a pair at 2 × the weaker side, not at the strong one', () => {
-    // History: a clean 5 × 12 pair = 2 × 5 × 12 = 120 kg.
+  it('scores a pair at the WEAKER side, once — not at the strong one, not doubled', () => {
+    // History: a clean 5 × 12 pair. ONE side's tonnage — 60 kg — because the
+    // axis measures a working set, and the same set logged as a single unsided
+    // row would also read 60.
     const baselines = buildBaselines([
       { key: SA, weightKg: 5, reps: 12, side: 'L', pairId: 'h1' },
       { key: SA, weightKg: 5, reps: 12, side: 'R', pairId: 'h1' },
     ], () => false)
-    expect(baselineIndex(baselines).bestSetVolume.get(SA)).toBe(120)
+    expect(baselineIndex(baselines).bestSetVolume.get(SA)).toBe(60)
 
-    // Today: L 5 × 10, R 5 × 14. Summed per side the right arm shows 70 kg and
-    // "beats" nothing; as a pair it is 2 × 5 × 10 = 100 kg — LESS than 120, so
-    // an asymmetric session is correctly not a record.
+    // Today: L 5 × 10, R 5 × 14. Per side the right arm shows 70 kg and would
+    // "beat" 60; as a pair it is the weaker 5 × 10 = 50 — LESS than 60, so an
+    // asymmetric session is correctly not a record.
     const res = detectSessionPrs([pair('t1', 'L', 5, 10), pair('t1', 'R', 5, 14)], baselines)
     expect(res.perSet[0].axes).not.toContain('volume')
     expect(res.perSet[1].axes).not.toContain('volume')
@@ -544,15 +546,43 @@ describe('the volume axis obeys the unilateral rule', () => {
     const baselines = buildBaselines([
       { key: SA, weightKg: 5, reps: 10, side: 'L', pairId: 'h1' },
       { key: SA, weightKg: 5, reps: 10, side: 'R', pairId: 'h1' },
-    ], () => false)   // bar = 100 kg
-    // 2 × 5 × 12 = 120 > 100. One physical set, one trophy.
+    ], () => false)   // bar = 50 kg
+    // 5 × 12 = 60 > 50. One physical set, one trophy.
     const res = detectSessionPrs([pair('t1', 'L', 5, 12), pair('t1', 'R', 5, 12)], baselines)
     expect(res.perSet[0].axes).not.toContain('volume')
     expect(res.perSet[1].axes).toContain('volume')
     expect(res.axesByKey.get(SA)?.has('volume')).toBe(true)
 
-    // …and the ledger stores the PAIR's tonnage, not one arm's.
-    expect(recordSets([pair('t1', 'L', 5, 12), pair('t1', 'R', 5, 12)], res).get(SA)?.get('volume')?.value).toBe(120)
+    // …and the ledger stores the pair's collapsed tonnage, one side's worth.
+    expect(recordSets([pair('t1', 'L', 5, 12), pair('t1', 'R', 5, 12)], res).get(SA)?.get('volume')?.value).toBe(60)
+  })
+
+  /**
+   * THE 2026-08-05 BUG, as a test.
+   *
+   * Single Arm Lateral Raise (Cable) is logged both ways — paired L/R rows on
+   * 2026-07-23, bare unsided rows on every other date. While the pair was
+   * credited at 2 × the weaker side it set a 130 kg bar that no unsided row
+   * could ever clear, so 5 kg × 17 (85 kg, a genuine best against every
+   * comparable set) won the 1RM axis and silently lost volume in the same set.
+   */
+  it('compares paired and unsided logging of the same movement on one scale', () => {
+    const baselines = buildBaselines([
+      // 2026-07-23, logged as a pair: L 5 × 13, R 5 × 15 → the weaker side, 65.
+      { key: SA, weightKg: 5, reps: 13, side: 'L', pairId: 'jul23' },
+      { key: SA, weightKg: 5, reps: 15, side: 'R', pairId: 'jul23' },
+      // 2026-07-28 / 07-30, logged unsided: 5 × 15 → 75.
+      { key: SA, weightKg: 5, reps: 15 },
+    ], () => false)
+    expect(baselineIndex(baselines).bestSetVolume.get(SA)).toBe(75)
+
+    // 2026-08-05: 5 kg × 17 = 85. Both axes, on one set.
+    const res = detectSessionPrs(
+      [{ key: SA, weightKg: 5, reps: 17, timed: false, setType: null }],
+      baselines,
+    )
+    expect(res.perSet[0].axes).toContain('volume')
+    expect(res.perSet[0].axes).toContain('e1rm')
   })
 
   it('scores a lone side on its own — real work, just not a pair', () => {

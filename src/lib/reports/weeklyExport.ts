@@ -11,9 +11,11 @@
  *    into existence, or estimated to fill a column. NO estimated 1RM — a derived
  *    figure has no place in a raw-data export.
  *  · Unilateral work is split per side, L and R on ONE line per numbered set.
- *  · Line-by-line TEXT only — no markdown tables. One line per day, in a FIXED
- *    order — sleep → intake → water → steps — with the deep body-comp reading
- *    and the day's walks/cardio nested under it.
+ *  · Line-by-line TEXT only for the RAW data — no markdown tables. One line per
+ *    day, in a FIXED order — sleep → intake → water → steps — with the deep
+ *    body-comp reading and the day's walks/cardio nested under it. The one
+ *    exception is the closing week-over-week block, which is a comparison of two
+ *    aligned columns and is genuinely a table; see `trendTable`.
  *
  * DELIBERATE OMISSIONS. Active Energy is not exported: HealthKit inflates it
  * (700+ kcal days that never happened) and a wrong number is worse than none.
@@ -27,6 +29,7 @@ import { paceMinPerKm, formatPace } from '@/lib/cardio/metrics'
 import { isTimedExercise } from '@/lib/exercises/timed'
 import { formatSet, isUnloadedSet } from '@/lib/utils/setFormat'
 import { prAxisLabel, type PrAxis } from '@/lib/training/prEngine'
+import { weighInSkipReason } from '@/lib/body/weighIn'
 
 export interface ExportDay {
   date: string                 // YYYY-MM-DD
@@ -55,7 +58,9 @@ export interface ExportDay {
    * (no bowel movement, ate late, travelling). Those are different data points
    * and only the last one is safe to drop from a trend — so the reason is
    * exported rather than left to be guessed. Null on days that were weighed,
-   * and on skipped days with no reason recorded.
+   * and on skipped days with no reason recorded — where null does NOT mean
+   * "unknown": it resolves to the protocol default, "As Planned". See
+   * `lib/body/weighIn.ts`.
    */
   weighInSkipReason: string | null
 }
@@ -197,7 +202,16 @@ export interface WeeklyExportInput {
   cardio?: ExportCardio[]
   /** Static protocol — what to take on training vs rest days (derived from the plan). */
   supplementProtocol?: { training: string[]; rest: string[] }
-  /** Aggregates for the PREVIOUS week, for the week-over-week block. */
+  /**
+   * The PREVIOUS week's aggregates, for the closing week-over-week block.
+   *
+   * Passed pre-aggregated rather than as another week of raw days: the trends
+   * table needs six numbers, and re-fetching every table for a week that will
+   * never be printed line-by-line is what got the old "vs previous week" block
+   * deleted. Omit it and the section is skipped entirely — an empty comparison
+   * is worse than none.
+   */
+  previous?: TrendTotals
 }
 
 const n = (v: number | null | undefined, digits = 0): string =>
@@ -228,11 +242,16 @@ const exact = (v: number | null | undefined): string =>
  * "Skipped, and here is why" and "no data" are different facts. Saying so in
  * plain English keeps a protocol skip from being read as a missed measurement —
  * or, worse, as a plateau.
+ *
+ * The reason is read DYNAMICALLY from the day's stored value, never hardcoded
+ * here: change a day to "Travel" in the Nexus and this line says Travel. An
+ * unstated reason resolves to the protocol default rather than to "no reason
+ * recorded", because skipping the scale before a bowel movement IS the protocol
+ * and reporting it as a logging gap misreads a deliberate week as a sloppy one.
  */
 const weighIn = (kg: number | null, skipReason: string | null): string => {
   if (kg != null && Number.isFinite(kg)) return `weight ${n(kg, 1)} kg`
-  const why = skipReason?.trim()
-  return `weight ${DASH} [Skip: ${why || 'no reason recorded'}]`
+  return `weight ${DASH} [Skip: ${weighInSkipReason(skipReason)}]`
 }
 
 /** `walk` → `Walk`, `run` → `Run`; anything else passes through capitalised. */
@@ -391,6 +410,144 @@ export function weeklySummary(input: WeeklyExportInput): WeeklySummary {
     cardioSessions: cardio.length,
     peakDoms: peak,
   }
+}
+
+/**
+ * The six figures the week-over-week block compares. One shape, computed by ONE
+ * function for both weeks, so "this week" and "last week" can never be measured
+ * differently — the failure mode that makes a trend table worse than no table.
+ */
+export interface TrendTotals {
+  /** Mean intake across the days that logged food. */
+  avgKcal: number | null
+  /** TOTAL tonnage lifted — a sum, not a mean: a week with four sessions did more work. */
+  totalVolumeKg: number | null
+  avgSteps: number | null
+  /** TOTAL cardio minutes across every walk and run. */
+  cardioMinutes: number | null
+  /** Mean intake per day that logged any water. */
+  avgWaterMl: number | null
+  /** Mean of the week's weigh-ins — the trend figure, immune to one bad morning. */
+  avgWeightKg: number | null
+}
+
+/**
+ * Aggregate a week into the trend shape.
+ *
+ * MEANS SKIP MISSING DAYS RATHER THAN COUNTING THEM AS ZERO. Three weigh-ins in
+ * a week average the three; treating the other four as 0 kg would report a
+ * 27 kg bodyweight and a catastrophic "trend". The same rule governs calories,
+ * steps and water — a day that was never logged is unknown, not empty.
+ *
+ * The two TOTALS are honest sums for the opposite reason: volume and cardio
+ * minutes are work that either happened or did not, and a rest day really is a
+ * zero.
+ */
+export function trendTotals(
+  days: readonly ExportDay[],
+  sessions: readonly ExportSession[],
+  cardio: readonly ExportCardio[] = [],
+): TrendTotals {
+  return {
+    avgKcal: meanOf(days.map((d) => d.calories)),
+    totalVolumeKg: sum(sessions.map((s) => s.volumeKg)),
+    avgSteps: meanOf(days.map((d) => d.steps)),
+    cardioMinutes: sum(cardio.map((c) => c.durationMin)),
+    avgWaterMl: meanOf(days.map((d) => d.waterMl)),
+    avgWeightKg: meanOf(days.map((d) => d.weightKg)),
+  }
+}
+
+interface TrendRow {
+  label: string
+  /** Rendered value for a week, or DASH. Keeps unit formatting in one place. */
+  fmt: (v: number | null) => string
+  cur: number | null
+  prev: number | null
+}
+
+/** Signed delta at the row's own precision, with the percentage in brackets. */
+function deltaCell(row: TrendRow): string {
+  const { cur, prev } = row
+  if (cur == null || prev == null) return DASH
+  const d = cur - prev
+  // A sub-epsilon move is "no change", not "+0.0" — the latter reads as a
+  // measurement when it is a rounding artefact.
+  if (Math.abs(d) < 1e-9) return 'no change'
+  const signed = `${d > 0 ? '+' : '−'}${row.fmt(Math.abs(d))}`
+  if (prev === 0) return signed
+  const pct = (d / Math.abs(prev)) * 100
+  return `${signed} (${pct > 0 ? '+' : '−'}${Math.abs(pct).toFixed(1)}%)`
+}
+
+/**
+ * ↑ / ↓ / → — DIRECTION ONLY, never a verdict.
+ *
+ * No green, no "good", no arrow that means "well done". Whether falling calories
+ * are progress or a problem depends on the phase, and this file exports raw data
+ * and lets the reader judge. The glyph says which way the number moved and
+ * nothing else.
+ */
+function trendGlyph(row: TrendRow): string {
+  if (row.cur == null || row.prev == null) return DASH
+  const d = row.cur - row.prev
+  return Math.abs(d) < 1e-9 ? '→' : d > 0 ? '↑' : '↓'
+}
+
+/**
+ * The closing week-over-week table.
+ *
+ * A TABLE, deliberately — the one in this file. Everything above is a line per
+ * day because a day is a record; this is two aligned columns of the same six
+ * measures, which is exactly what a table is for, and reading it as prose would
+ * mean holding six pairs of numbers in your head.
+ *
+ * Cells are PADDED to a common width so the raw markdown lines up in a plain
+ * text editor as well as it does rendered. The export gets pasted into both.
+ */
+export function trendTable(
+  cur: TrendTotals,
+  prev: TrendTotals,
+  labels: { current: string; previous: string },
+): string[] {
+  const kcal = (v: number | null) => (v == null ? DASH : `${n(v)} kcal`)
+  const kg = (v: number | null) => (v == null ? DASH : `${n(v, 1)} kg`)
+  const steps = (v: number | null) => (v == null ? DASH : n(v))
+  const mins = (v: number | null) => (v == null ? DASH : `${n(v)} min`)
+  const litres = (v: number | null) => (v == null ? DASH : `${n(v / 1000, 2)} L`)
+
+  const rows: TrendRow[] = [
+    { label: 'Calories (avg/day)', fmt: kcal, cur: cur.avgKcal, prev: prev.avgKcal },
+    { label: 'Training volume (total)', fmt: kg, cur: cur.totalVolumeKg, prev: prev.totalVolumeKg },
+    { label: 'Steps (avg/day)', fmt: steps, cur: cur.avgSteps, prev: prev.avgSteps },
+    { label: 'Cardio (total)', fmt: mins, cur: cur.cardioMinutes, prev: prev.cardioMinutes },
+    { label: 'Water (avg/day)', fmt: litres, cur: cur.avgWaterMl, prev: prev.avgWaterMl },
+    { label: 'Body weight (avg)', fmt: kg, cur: cur.avgWeightKg, prev: prev.avgWeightKg },
+  ]
+
+  const header = ['Metric', labels.current, labels.previous, 'Δ', '']
+  const body = rows.map((r) => [r.label, r.fmt(r.cur), r.fmt(r.prev), deltaCell(r), trendGlyph(r)])
+  const all = [header, ...body]
+  const width = header.map((_, c) => Math.max(...all.map((r) => [...r[c]].length)))
+
+  // Left-align the metric name, right-align every number, centre the glyph —
+  // the alignment row markdown renderers honour, and the one the padding below
+  // imitates for readers seeing the raw text.
+  const align = ['left', 'right', 'right', 'right', 'center'] as const
+  const pad = (s: string, c: number) => {
+    const gap = width[c] - [...s].length
+    if (align[c] === 'left') return s + ' '.repeat(gap)
+    if (align[c] === 'right') return ' '.repeat(gap) + s
+    const left = Math.floor(gap / 2)
+    return ' '.repeat(left) + s + ' '.repeat(gap - left)
+  }
+  const line = (cells: string[]) => `| ${cells.map(pad).join(' | ')} |`
+  const rule = `|${width.map((w, c) =>
+    align[c] === 'left' ? `:${'-'.repeat(w)}-`
+      : align[c] === 'right' ? `-${'-'.repeat(w)}:`
+      : `:${'-'.repeat(w)}:`).join('|')}|`
+
+  return [line(header), rule, ...body.map(line)]
 }
 
 export function buildWeeklyExport(input: WeeklyExportInput): string {
@@ -579,6 +736,30 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
     L.push('')
   }
 
+  // ── Week-over-week trends (LAST, on purpose) ──
+  // The raw week comes first and the comparison closes it: a reader who starts
+  // with the deltas anchors on them and reads the evidence to confirm. Sitting
+  // at the bottom, this is context for everything already read rather than a
+  // verdict announced ahead of it.
+  if (input.previous) {
+    const cur = trendTotals(days, sessions, input.cardio ?? [])
+    const label = input.weekLabel?.trim()
+    // "Week 3" → "Week 2". Anything else keeps a plain relative label rather
+    // than inventing a week number the rest of the app doesn't use.
+    const m = label?.match(/^Week (\d+)$/)
+    L.push(`## Week-over-Week Trends (${input.programLabel}${label ? ` · ${label}` : ''})`)
+    L.push('')
+    L.push(...trendTable(cur, input.previous, {
+      current: label ?? 'This week',
+      previous: m ? `Week ${Number(m[1]) - 1}` : 'Last week',
+    }))
+    L.push('')
+    L.push('_Δ compares like with like: averages skip days with no entry rather than'
+      + ' counting them as zero, and totals are honest sums. Arrows show direction only —'
+      + ' whether a move is progress depends on the phase._')
+    L.push('')
+  }
+
   return L.join('\n')
 }
 
@@ -587,6 +768,27 @@ export const MULTIVITAMIN_LINE =
   'Two Per Day Multivitamin — 1 tablet / 2 on Monday & Friday (Leg Days)'
 
 const isMultivitamin = (line: string): boolean => /multivitamin|two per day/i.test(line)
+
+/**
+ * The stimulants that only ever get taken before a lift.
+ *
+ * Folding the two protocols into one list is right — the stack genuinely does
+ * not change with the schedule — but it loses the one thing the headings did
+ * carry: L-Citrulline and caffeine are training-day-only, and a flat list makes
+ * them look like a daily dose. The condition rides on the line instead, so it
+ * survives the fold.
+ *
+ * Matched on NAME, not on the `trainingOnly` flag, because this module is a pure
+ * leaf that receives rendered strings and never sees the protocol objects.
+ */
+const PRE_WORKOUT_ONLY = /citrulline|caffeine/i
+const PRE_WORKOUT_SUFFIX = '(Pre-workout only)'
+
+/** Tag a line as pre-workout-only, idempotently. */
+const withPreWorkoutTag = (line: string): string =>
+  PRE_WORKOUT_ONLY.test(line) && !line.includes(PRE_WORKOUT_SUFFIX)
+    ? `${line} ${PRE_WORKOUT_SUFFIX}`
+    : line
 
 /**
  * Fold the training-day and rest-day protocols into ONE list.
@@ -618,8 +820,9 @@ export function consolidateSupplements(protocol: { training: string[]; rest: str
       time: timePart,
       // The multivitamin's line is asserted verbatim: it is the one entry whose
       // dose is a rule rather than a number, and the rule reads better than a
-      // pair of lists.
-      line: isMultivitamin(line) ? MULTIVITAMIN_LINE : line,
+      // pair of lists. Everything else keeps its rendered line, plus the
+      // pre-workout condition where it applies.
+      line: isMultivitamin(line) ? MULTIVITAMIN_LINE : withPreWorkoutTag(line),
     })
   }
   return [...byName.values()]

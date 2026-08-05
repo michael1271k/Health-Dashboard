@@ -122,13 +122,22 @@ export function SessionIntelCard({ session }: { session: GymReportRow }) {
         <div className="h-32 rounded-2xl bg-surface-2/60 animate-pulse" />
       ) : (!intel?.isFirstOfType && !!intel?.deltas.length) && (
         <div className="rounded-2xl border border-white/[0.07] overflow-hidden">
-          <table className="w-full text-fluid-xs">
+          {/* SCROLLS SIDEWAYS RATHER THAN CLIPPING.
+              Four columns of numbers do not fit a 360 px phone, and the outer
+              `overflow-hidden` — there for the rounded corners — turned that
+              into a silent truncation: the Δ column's glyph was sliced at the
+              right edge with no scrollbar and no way to reach it. The radius
+              stays on the shell and the scroller sits inside it, so the corners
+              survive and the table stays reachable. `min-w` stops the columns
+              collapsing into unreadable slivers before the scroll kicks in. */}
+          <div className="overflow-x-auto overscroll-x-contain">
+          <table className="w-full min-w-[360px] text-fluid-xs">
             <thead>
               <tr className="border-b border-white/[0.08] text-muted">
-                <th className="px-3 py-2 text-left font-semibold">Exercise</th>
-                <th className="px-2 py-2 text-right font-semibold">Top set</th>
-                <th className="px-2 py-2 text-right font-semibold">Prev</th>
-                <th className="px-3 py-2 text-right font-semibold">Δ</th>
+                <th className="px-3 py-2 text-left font-semibold whitespace-nowrap">Exercise</th>
+                <th className="px-2 py-2 text-right font-semibold whitespace-nowrap">Top set</th>
+                <th className="px-2 py-2 text-right font-semibold whitespace-nowrap">Prev</th>
+                <th className="px-3 py-2 text-right font-semibold whitespace-nowrap">Δ</th>
               </tr>
             </thead>
             <tbody>
@@ -143,14 +152,19 @@ export function SessionIntelCard({ session }: { session: GymReportRow }) {
                     style={d.isPr
                       ? { background: `${GOLD}14`, boxShadow: `inset 3px 0 0 ${GOLD}` }
                       : undefined}>
-                    <td className="px-3 py-2.5 text-text/90 truncate max-w-[130px]">
+                    {/* The name is the one cell allowed to ellipsis — it is the
+                        only variable-length column, and truncating "Single Arm
+                        Lateral Raise (Cable)" costs nothing that the row's own
+                        numbers don't already identify. `title` keeps the full
+                        name reachable. */}
+                    <td className="px-3 py-2.5 text-text/90 truncate max-w-[150px]" title={d.name}>
                       {d.name}
                       {d.isPr && <Star className="inline w-3 h-3 ml-1 -mt-0.5" style={{ color: GOLD }} aria-hidden="true" />}
                     </td>
-                    <td className="px-2 py-2.5 text-right helix-num text-text">
+                    <td className="px-2 py-2.5 text-right helix-num text-text whitespace-nowrap">
                       {formatSet(d.topKg, d.topReps, { unit, toDisplay: displayWeight })}
                     </td>
-                    <td className="px-2 py-2.5 text-right helix-num text-muted">
+                    <td className="px-2 py-2.5 text-right helix-num text-muted whitespace-nowrap">
                       {d.prevKg == null ? '—'
                         : d.unloaded ? formatSet(0, d.prevReps, {})
                         : `${displayWeight(d.prevKg)}${unit}`}
@@ -166,6 +180,7 @@ export function SessionIntelCard({ session }: { session: GymReportRow }) {
               })}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 

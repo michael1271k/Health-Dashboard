@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { readFileSync } from 'node:fs'
 import { render, screen, act } from '@testing-library/react'
 import { createRef } from 'react'
 import { Zone, ZoneRow, StatStrip } from '@/components/ui/Zone'
@@ -217,5 +218,61 @@ describe('hasScaleMetrics — which face the Body page wears', () => {
     expect(hasScaleMetrics({ weight_kg: 64.2 } as never)).toBe(true)
     expect(hasScaleMetrics({ body_fat_pct: 17.3 } as never)).toBe(true)
     expect(hasScaleMetrics({ bmr: 1520 } as never)).toBe(true)
+  })
+})
+
+/**
+ * The SESSION REPORT was the last of the three long documents still boxed in
+ * the app shell's `max-w-7xl` column with a gutter either side, so on a phone
+ * every card floated in dead margin. Source-level guards, because jsdom has no
+ * layout: the shape is carried by `data-fullbleed` (which surrenders the shell's
+ * padding, see globals.css) plus ONE reading measure applied once.
+ */
+describe('the Session Report is full-bleed', () => {
+  const src = readFileSync('src/app/session/[id]/page.tsx', 'utf8')
+
+  it('marks its root so the app shell gives up its gutters', () => {
+    expect(src).toMatch(/<div data-fullbleed/)
+  })
+
+  it('pins the way out — a long document you must scroll up to escape is a trap', () => {
+    expect(src).toMatch(/sticky top-0/)
+    expect(src).toMatch(/aria-label="Back"/)
+  })
+
+  it('takes its reading measure ONCE, on the content and not on the page', () => {
+    // A desktop gets a centred column; a phone gets true edge-to-edge. Two
+    // measures would reintroduce the gutter the bleed just removed.
+    expect(src.match(/max-w-\[68ch\]/g)).toHaveLength(2)   // command bar + content
+    expect(src).not.toMatch(/max-w-7xl/)
+  })
+})
+
+/**
+ * The pre-inspect quick-view table clipped its Δ column on a phone: four columns
+ * of numbers do not fit 360 px, and the rounded shell's `overflow-hidden` turned
+ * that into a silent truncation with no scrollbar and no way to reach the cell.
+ */
+describe('the quick-view session table survives a phone', () => {
+  const src = readFileSync('src/components/reports/SessionIntelCard.tsx', 'utf8')
+
+  it('scrolls sideways instead of cutting the last column off', () => {
+    expect(src).toMatch(/overflow-x-auto/)
+  })
+
+  it('keeps the radius on the shell and the scroller inside it', () => {
+    // Clipping and scrolling on the SAME element is the bug: `overflow-hidden`
+    // wins and the columns past the fold become unreachable.
+    expect(src).toMatch(/rounded-2xl border border-white\/\[0\.07\] overflow-hidden">\s*\{\/\*[\s\S]*?\*\/\}\s*<div className="overflow-x-auto/)
+  })
+
+  it('floors the table width so columns cannot collapse into slivers', () => {
+    expect(src).toMatch(/min-w-\[360px\]/)
+  })
+
+  it('keeps every numeric cell on one line', () => {
+    // Only the exercise name — the one variable-length column — may ellipsis.
+    expect(src.match(/whitespace-nowrap/g)?.length ?? 0).toBeGreaterThanOrEqual(6)
+    expect(src).toMatch(/truncate max-w-\[150px\]" title=\{d\.name\}/)
   })
 })
