@@ -17,10 +17,16 @@
  *    exception is the closing week-over-week block, which is a comparison of two
  *    aligned columns and is genuinely a table; see `trendTable`.
  *
- * DELIBERATE OMISSIONS. Active Energy is not exported: HealthKit inflates it
- * (700+ kcal days that never happened) and a wrong number is worse than none.
- * Day Score and Battery are not exported either — both are HELIX's own derived
- * opinions, not measurements, and this file is raw data only.
+ * DELIBERATE OMISSIONS. Day Score and Battery are not exported: both are HELIX's
+ * own derived opinions, not measurements, and this file is raw data only.
+ *
+ * ACTIVE ENERGY still has no daily line — HealthKit inflates it (700+ kcal days
+ * that never happened) and a wrong number sitting beside measured ones gets read
+ * as measured. It IS used, once, as an input to the weekly energy-balance
+ * ESTIMATE, where it is named as an estimate, its inputs are spelled out, and
+ * the closing Apple Watch note covers the accuracy of the whole class. An
+ * estimate the reader can audit is a different object from a number pretending
+ * to be a fact.
  */
 // Pace is the one derived value allowed here: it is arithmetic over two exported
 // facts (distance, duration), not an opinion, and it is the unit a run is
@@ -50,6 +56,21 @@ export interface ExportDay {
   hrvMs: number | null
   waterMl: number | null
   supplementsTaken: number | null
+  /**
+   * Apple Watch active energy. NOT printed on the daily line — see the file
+   * header. Carried solely so the weekly energy-balance estimate has an
+   * expenditure side, and named `activeKcal` rather than `calories` so the two
+   * halves of the balance can never be confused for each other.
+   */
+  activeKcal: number | null
+  /**
+   * Basal metabolic rate as the SCALE reported it — a measurement, not a
+   * Mifflin-St Jeor guess, which is why it is only present on weigh-in days.
+   * `energyBalance` fills the gaps by carrying the nearest reading across; BMR
+   * moves a couple of kcal a week, so that is interpolation of a flat line
+   * rather than invention.
+   */
+  bmrKcal: number | null
   /**
    * WHY there is no weigh-in, when the day was deliberately skipped.
    *
@@ -195,6 +216,12 @@ export interface WeeklyExportInput {
   days: ExportDay[]
   sessions: ExportSession[]
   volumeByMuscle: Array<{ muscle: string; sets: number; target: number }>
+  /**
+   * Weekly TONNAGE per muscle, pre-aggregated (see `weeklyTonnageByMuscle`).
+   * Optional: omit it and the aggregate line is skipped rather than printed
+   * empty.
+   */
+  tonnageByMuscle?: Array<{ muscle: string; volumeKg: number }>
   doms: ExportDoms[]
   /** Full body-composition readings for the week's weigh-in days (optional). */
   bodyComp?: ExportBodyComp[]
@@ -212,6 +239,17 @@ export interface WeeklyExportInput {
    * is worse than none.
    */
   previous?: TrendTotals
+  /**
+   * The PREVIOUS week's complete export, appended verbatim at the bottom under
+   * its own heading.
+   *
+   * One clipboard payload carrying two weeks: a model handed a single week can
+   * only describe it, while two weeks let it see a direction. Passed as a
+   * finished string rather than as another `WeeklyExportInput` so the recursion
+   * is structurally impossible — week X-1's payload is built by a caller that
+   * leaves this field unset, so X-2 can never be dragged in behind it.
+   */
+  previousWeekMarkdown?: string
 }
 
 const n = (v: number | null | undefined, digits = 0): string =>
@@ -458,6 +496,77 @@ export function trendTotals(
   }
 }
 
+/**
+ * The week's energy balance — an ESTIMATE, and labelled as one everywhere it
+ * appears.
+ *
+ * expenditure = BMR + Apple Watch active energy. Both sides are per-day and only
+ * days holding an intake AND an expenditure are counted, so a half-logged day
+ * cannot masquerade as a 1900 kcal deficit. `balanceKcal` is intake − burn:
+ * NEGATIVE is a deficit, positive a surplus, and the sign is stated in words at
+ * the render site because a bare "−3400" is exactly the number people read
+ * backwards.
+ *
+ * BMR IS CARRIED ACROSS GAPS. It comes off the scale, so it exists only on
+ * weigh-in days — three or four in a typical week. Dropping the other days would
+ * discard most of the week; treating a missing BMR as zero would report a
+ * fictional surplus. Basal rate moves single-digit kcal over a week (1515 → 1517
+ * across the live cut), so the nearest reading is the honest fill: forwards
+ * first, then backwards for days before the week's first weigh-in.
+ */
+export interface EnergyBalance {
+  /** Days with BOTH an intake and an expenditure — the estimate's real width. */
+  daysCounted: number
+  intakeKcal: number | null
+  expenditureKcal: number | null
+  /** intake − expenditure. Negative = deficit. */
+  balanceKcal: number | null
+  avgBalanceKcal: number | null
+  /** Mean BMR actually used, after the carry. */
+  avgBmrKcal: number | null
+  avgActiveKcal: number | null
+  /** True when at least one day's BMR was inherited rather than measured. */
+  bmrCarried: boolean
+}
+
+export function energyBalance(days: readonly ExportDay[]): EnergyBalance {
+  const empty: EnergyBalance = {
+    daysCounted: 0, intakeKcal: null, expenditureKcal: null, balanceKcal: null,
+    avgBalanceKcal: null, avgBmrKcal: null, avgActiveKcal: null, bmrCarried: false,
+  }
+  const measured = days.map((d) => (d.bmrKcal != null && Number.isFinite(d.bmrKcal) ? d.bmrKcal : null))
+  // Forward fill, then backward fill — the nearest reading in either direction.
+  const filled = [...measured]
+  for (let i = 1; i < filled.length; i++) filled[i] ??= filled[i - 1]
+  for (let i = filled.length - 2; i >= 0; i--) filled[i] ??= filled[i + 1]
+
+  let intake = 0, burn = 0, bmrSum = 0, activeSum = 0, counted = 0, carried = false
+  days.forEach((d, i) => {
+    const bmr = filled[i]
+    const active = d.activeKcal != null && Number.isFinite(d.activeKcal) ? d.activeKcal : null
+    const kcal = d.calories != null && Number.isFinite(d.calories) ? d.calories : null
+    // Both sides or neither. An intake with no expenditure is not a balance.
+    if (kcal == null || bmr == null || active == null) return
+    if (measured[i] == null) carried = true
+    intake += kcal
+    burn += bmr + active
+    bmrSum += bmr
+    activeSum += active
+    counted += 1
+  })
+  if (!counted) return empty
+  return {
+    daysCounted: counted,
+    intakeKcal: Math.round(intake),
+    expenditureKcal: Math.round(burn),
+    balanceKcal: Math.round(intake - burn),
+    avgBalanceKcal: Math.round((intake - burn) / counted),
+    avgBmrKcal: Math.round(bmrSum / counted),
+    avgActiveKcal: Math.round(activeSum / counted),
+    bmrCarried: carried,
+  }
+}
+
 interface TrendRow {
   label: string
   /** Rendered value for a week, or DASH. Keeps unit formatting in one place. */
@@ -609,11 +718,20 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
   L.push('## Days')
   L.push('')
   for (const d of days) {
-    const workout = labelsByDate.get(d.date)?.join(' + ') ?? (d.isTrainingDay ? 'not logged' : 'rest')
+    // WHAT WAS DONE OUTRANKS WHAT WAS PLANNED. A logged session makes the day a
+    // training day whatever the template says, because a swap moves a workout
+    // onto a day the static plan calls rest — and calling that day "Rest · Legs
+    // & Core B" is the same misattribution that put a Wednesday Delts & Arms
+    // session into the Upper A curve. `isTrainingDay` only decides the label
+    // when nothing was logged, where the plan is the only evidence there is.
+    const performed = labelsByDate.get(d.date)
+    const offPlan = performed != null && !d.isTrainingDay
+    const workout = performed?.join(' + ') ?? (d.isTrainingDay ? 'not logged' : 'rest')
     const macros = [d.proteinG, d.carbsG, d.fatG].some((v) => v != null)
       ? ` (${n(d.proteinG)}P/${n(d.carbsG)}C/${n(d.fatG)}F)` : ''
     L.push(
-      `- **${d.weekdayLabel} ${d.date}** · ${d.isTrainingDay ? 'Train' : 'Rest'} · `
+      `- **${d.weekdayLabel} ${d.date}** · ${performed || d.isTrainingDay ? 'Train' : 'Rest'}`
+      + `${offPlan ? ' (off-plan / swapped)' : ''} · `
       + `sleep ${sleep(d.sleepMin)} · intake ${n(d.calories)} kcal${macros} · `
       + `water ${n(d.waterMl == null ? null : d.waterMl / 1000, 1)} L · ${n(d.steps)} steps · `
       // The daily weigh-in belongs on the daily line. It used to appear ONLY in
@@ -760,8 +878,108 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
     L.push('')
   }
 
+  // ── Weekly aggregates ──
+  // Directly under the trends, and for the same reason: these are the figures a
+  // reader would otherwise recompute from the daily rows above, and doing that
+  // by hand across seven days and five sessions is where transcription errors
+  // enter. Every number here is stated with the rule that produced it.
+  {
+    const tonnage = input.tonnageByMuscle ?? []
+    const energy = energyBalance(days)
+    const totalVolume = sum(sessions.map((s) => s.volumeKg))
+    const stepDays = days.filter((d) => d.steps != null && Number.isFinite(d.steps))
+    const avgSteps = meanOf(days.map((d) => d.steps))
+
+    L.push('## Weekly aggregates')
+    L.push('')
+
+    // ── Tonnage per muscle ──
+    if (tonnage.length) {
+      L.push(`- **Total volume:** ${exact(totalVolume)} kg across ${sessions.length}`
+        + ` session${sessions.length === 1 ? '' : 's'}`)
+      L.push('- **Volume by muscle group (kg):**')
+      for (const t of tonnage) L.push(`    - ${t.muscle}: ${exact(t.volumeKg)} kg`)
+      // Said out loud because the arithmetic invites the opposite assumption.
+      L.push('    - _A compound credits every muscle it trains in full, so these'
+        + ' rows deliberately sum to MORE than the total volume above. Unilateral'
+        + ' pairs are scored at the weaker side (×2), identical to the Session'
+        + ' Report._')
+    } else if (totalVolume != null) {
+      L.push(`- **Total volume:** ${exact(totalVolume)} kg across ${sessions.length}`
+        + ` session${sessions.length === 1 ? '' : 's'}`)
+    }
+
+    // ── Energy balance ──
+    if (energy.balanceKcal != null) {
+      const deficit = energy.balanceKcal < 0
+      const mag = Math.abs(energy.balanceKcal)
+      L.push(`- **Energy balance (estimated):** ${n(mag)} kcal ${deficit ? 'DEFICIT' : 'SURPLUS'}`
+        + ` over ${energy.daysCounted} day${energy.daysCounted === 1 ? '' : 's'}`
+        + ` · ${n(Math.abs(energy.avgBalanceKcal ?? 0))} kcal/day`
+        + ` ${deficit ? 'under' : 'over'} maintenance`)
+      L.push(`    - Intake ${n(energy.intakeKcal)} kcal vs expenditure ${n(energy.expenditureKcal)} kcal`
+        + ` (BMR ${n(energy.avgBmrKcal)} + active ${n(energy.avgActiveKcal)} kcal/day, averaged)`)
+      L.push('    - _ESTIMATE, not a measurement. Only days holding both an intake'
+        + ' and an expenditure are counted.'
+        + (energy.bmrCarried
+          ? ' BMR is a scale reading and exists only on weigh-in days; days without'
+            + ' one inherit the nearest reading (it moves ~2 kcal a week).'
+          : '')
+        + '_')
+    }
+
+    // ── Steps ──
+    // Spelled out because the question was asked directly: the average is over
+    // every day that logged a step count. It is read from the day's own step
+    // total and has never had anything to do with whether a walk was logged in
+    // the cardio ledger — a cardio entry is a subset of the day's steps, not a
+    // gate on them.
+    L.push(`- **Steps (avg/day):** ${n(avgSteps)} across ${stepDays.length}`
+      + ` day${stepDays.length === 1 ? '' : 's'} with a logged count`
+      + ` (every such day counts, cardio session or not)`)
+    L.push('')
+  }
+
+  // ── Previous week, verbatim ──
+  // LAST of the current week's own content, so nothing above it is displaced.
+  // A horizontal rule and an unmistakable heading, because the failure mode of
+  // pasting two weeks into one payload is a reader that averages them together.
+  if (input.previousWeekMarkdown?.trim()) {
+    L.push('---')
+    L.push('')
+    L.push('# PREVIOUS WEEK REFERENCE (For AI Context)')
+    L.push('')
+    L.push('_The complete export for the week before this one, unmodified. It is'
+      + ' CONTEXT for the week above, not part of it — do not merge the two when'
+      + ' computing this week\'s numbers._')
+    L.push('')
+    L.push(input.previousWeekMarkdown.trim())
+    L.push('')
+  }
+
+  // ── Provenance ──
+  // The absolute last line, after everything including the previous week, so it
+  // governs both. Verbatim and hardcoded on purpose: it is a standing statement
+  // about the measuring instrument, not data.
+  L.push('---')
+  L.push('')
+  L.push(APPLE_WATCH_DISCLAIMER)
+
   return L.join('\n')
 }
+
+/**
+ * The standing caveat about instrument accuracy, printed at the very bottom of
+ * every export.
+ *
+ * Heart rate, calories and steps all come off the watch, and a model reading
+ * this data has no other way to know that a 900 kcal active-energy day is a
+ * device estimate rather than a measured burn. Stating it once, last, is what
+ * lets the numbers above be printed plainly.
+ */
+export const APPLE_WATCH_DISCLAIMER =
+  '*Note: Heart rate, calories, and steps data are sourced from the Apple Watch'
+  + ' and may not be entirely accurate.*'
 
 /** The one supplement whose dose genuinely varies, stated in a single line. */
 export const MULTIVITAMIN_LINE =

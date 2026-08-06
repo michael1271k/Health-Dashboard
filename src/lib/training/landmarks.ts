@@ -145,6 +145,56 @@ export function weeklyVolumeByMuscle(
   })
 }
 
+export interface MuscleTonnage {
+  muscle: LandmarkMuscle
+  volumeKg: number
+  color: string
+}
+
+/**
+ * Weekly TONNAGE per landmark muscle — kilograms, not set counts.
+ *
+ * The companion to `weeklyVolumeByMuscle` and deliberately built on the same
+ * attribution rule: a lift credits every DISTINCT landmark muscle its primary
+ * tags name. A hack squat's tonnage therefore lands on quads AND glutes in full,
+ * exactly as its sets do, so the two breakdowns can never tell different stories
+ * about the same movement.
+ *
+ * THE CONSEQUENCE, stated because it is otherwise a trap: the column does NOT
+ * sum to the week's total volume. Compound work is counted once per muscle it
+ * trains, which is the only way a per-muscle figure is comparable across
+ * movements — but it means adding the rows up over-counts. The week's true total
+ * is Σ session volume and is printed separately.
+ *
+ * Rows arrive PRE-COLLAPSED: `volumeKg` must already be the tonnage of that
+ * movement under `sessionVolumeKg`'s rules (a unilateral L/R pair scored at the
+ * weaker side, counted twice), so this figure and the Session Report's are the
+ * same arithmetic. Muscles with no work are omitted rather than printed as 0.
+ */
+export function weeklyTonnageByMuscle(
+  rows: Array<{ muscleTokens: string[]; volumeKg: number }>,
+): MuscleTonnage[] {
+  const agg = new Map<LandmarkMuscle, number>()
+  for (const row of rows) {
+    if (!Number.isFinite(row.volumeKg) || row.volumeKg <= 0) continue
+    const muscles = new Set(
+      row.muscleTokens.map(toLandmarkMuscle).filter((m): m is LandmarkMuscle => m !== null),
+    )
+    for (const m of muscles) agg.set(m, (agg.get(m) ?? 0) + row.volumeKg)
+  }
+  return LANDMARK_MUSCLES
+    .filter((m) => (agg.get(m) ?? 0) > 0)
+    // Heaviest first — the reader wants the week's emphasis, not the enum order.
+    .map((muscle) => ({
+      muscle,
+      // Quarter-kg microloads are real; two decimals is the smallest place a
+      // plate reaches, and it kills float drift without inventing precision.
+      volumeKg: Math.round((agg.get(muscle) as number) * 100) / 100,
+      color: MUSCLE_COLOR[muscle],
+    }))
+    .sort((a, b) => b.volumeKg - a.volumeKg)
+}
+
 // ─── Legacy 6-group MEV/MAV/MRV bands ─────────────────────────────────────────
 // Retained for the per-session Muscle Focus card, which grades that session's
 // sets against a broad-group band (the six aggregate display groups). The

@@ -72,7 +72,7 @@ describe('buildWeeklyExport', () => {
     weightKg: null, calories: null, proteinG: null, carbsG: null, fatG: null,
     steps: null, distanceM: null, trainingMin: null,
     sleepMin: null, deepMin: null, remMin: null, restingHr: null, hrvMs: null,
-    waterMl: null, supplementsTaken: null, weighInSkipReason: null,
+    waterMl: null, supplementsTaken: null, activeKcal: null, bmrKcal: null, weighInSkipReason: null,
   })
 
   const input: WeeklyExportInput = {
@@ -407,13 +407,11 @@ describe('buildWeeklyExport', () => {
     expect(buildWeeklyExport(input)).toMatch(/Quads: 2 \(moderate\)/)
   })
 
-  // Both derived blocks are gone: every figure in them was a sum or a
-  // difference of the daily rows printed above, and a pre-chewed summary
-  // invites trusting it over the source.
-  it('emits no derived aggregate blocks', () => {
-    const out = buildWeeklyExport(input)
-    expect(out).not.toMatch(/vs previous week/i)
-    expect(out).not.toMatch(/week aggregates/i)
+  // The old free-floating "vs previous week" prose block stays gone — the
+  // comparison now lives in ONE place, the closing trends table, and a second
+  // rendering of the same six numbers is how two surfaces start disagreeing.
+  it('emits no loose "vs previous week" block', () => {
+    expect(buildWeeklyExport(input)).not.toMatch(/vs previous week/i)
   })
 })
 
@@ -427,7 +425,8 @@ describe('weeklySummary', () => {
     date: '2026-07-19', weekdayLabel: 'Sun', isTrainingDay: false, weightKg: null,
     calories: null, proteinG: null, carbsG: null, fatG: null, steps: null, distanceM: null,
     trainingMin: null, sleepMin: null, deepMin: null, remMin: null, restingHr: null,
-    hrvMs: null, waterMl: null, supplementsTaken: null, weighInSkipReason: null, ...o,
+    hrvMs: null, waterMl: null, supplementsTaken: null, activeKcal: null, bmrKcal: null,
+    weighInSkipReason: null, ...o,
   })
   const base = (o: Partial<WeeklyExportInput> = {}): WeeklyExportInput => ({
     weekStart: '2026-07-19', weekEnd: '2026-07-25', programLabel: 'Helix Cut',
@@ -517,7 +516,8 @@ describe('week-over-week trends', () => {
     date: '2026-07-19', weekdayLabel: 'Sun', isTrainingDay: false, weightKg: null,
     calories: null, proteinG: null, carbsG: null, fatG: null, steps: null, distanceM: null,
     trainingMin: null, sleepMin: null, deepMin: null, remMin: null, restingHr: null,
-    hrvMs: null, waterMl: null, supplementsTaken: null, weighInSkipReason: null, ...o,
+    hrvMs: null, waterMl: null, supplementsTaken: null, activeKcal: null, bmrKcal: null,
+    weighInSkipReason: null, ...o,
   })
   const session = (volumeKg: number | null): ExportSession => ({
     date: '2026-07-20', label: 'Upper A', volumeKg, setCount: null, failureSets: null,
@@ -651,5 +651,196 @@ describe('week-over-week trends', () => {
     expect(new Set(rows.map((r) => [...r].length)).size).toBe(1)
     // Numbers right-aligned, the metric name left — the alignment row says so.
     expect(rows[1]).toMatch(/^\|:-+-\|-+:\|/)
+  })
+})
+
+/**
+ * The weekly aggregates, the appended previous week and the provenance note —
+ * the three things added so a model reading the payload does not have to
+ * recompute the week or guess how good the instrument was.
+ */
+describe('weekly aggregates · previous-week reference · disclaimer', () => {
+  const day = (o: Partial<ExportDay>): ExportDay => ({
+    date: '2026-07-19', weekdayLabel: 'Sun', isTrainingDay: false, weightKg: null,
+    calories: null, proteinG: null, carbsG: null, fatG: null, steps: null, distanceM: null,
+    trainingMin: null, sleepMin: null, deepMin: null, remMin: null, restingHr: null,
+    hrvMs: null, waterMl: null, supplementsTaken: null, activeKcal: null, bmrKcal: null,
+    weighInSkipReason: null, ...o,
+  })
+  const session = (o: Partial<ExportSession> = {}): ExportSession => ({
+    date: '2026-07-20', label: 'Upper A', volumeKg: 1000, setCount: null, failureSets: null,
+    durationMin: null, avgBpm: null, caloriesBurned: null, sessionRpe: null,
+    exercises: [], prs: [], ...o,
+  })
+  const base = (o: Partial<WeeklyExportInput> = {}): WeeklyExportInput => ({
+    weekStart: '2026-07-19', weekEnd: '2026-07-25', programLabel: 'Helix Cut',
+    calorieGoal: 1955, proteinGoalG: 170, stepsGoal: 10000, sleepGoalHours: 8,
+    days: [], sessions: [], volumeByMuscle: [], doms: [], cardio: [], ...o,
+  })
+
+  // ── Tonnage per muscle ──
+  it('breaks the week down by muscle group in kilograms', () => {
+    const out = buildWeeklyExport(base({
+      sessions: [session({ volumeKg: 3571.25 })],
+      tonnageByMuscle: [{ muscle: 'Quads', volumeKg: 22000 }, { muscle: 'Chest', volumeKg: 15000 }],
+    }))
+    expect(out).toMatch(/## Weekly aggregates/)
+    expect(out).toMatch(/- Quads: 22000 kg/)
+    expect(out).toMatch(/- Chest: 15000 kg/)
+  })
+
+  it('prints the week total at full precision, matching the Session Report', () => {
+    // 3571.25 is the Aug 5 session exactly. `n()` would have rounded it to 3571
+    // and the export would disagree with the screen about the same workout.
+    const out = buildWeeklyExport(base({ sessions: [session({ volumeKg: 3571.25 })] }))
+    expect(out).toMatch(/\*\*Total volume:\*\* 3571\.25 kg across 1 session/)
+  })
+
+  it('warns that per-muscle rows deliberately over-sum', () => {
+    const out = buildWeeklyExport(base({
+      sessions: [session()],
+      tonnageByMuscle: [{ muscle: 'Quads', volumeKg: 900 }, { muscle: 'Glutes', volumeKg: 900 }],
+    }))
+    expect(out).toMatch(/sum to MORE than the total volume/)
+  })
+
+  // ── Energy balance ──
+  it('estimates the weekly deficit from BMR + active vs intake', () => {
+    // 1900 in, 1500 + 600 out → 200 under, twice.
+    const days = [
+      day({ date: '2026-07-19', calories: 1900, bmrKcal: 1500, activeKcal: 600 }),
+      day({ date: '2026-07-20', calories: 1900, bmrKcal: 1500, activeKcal: 600 }),
+    ]
+    const out = buildWeeklyExport(base({ days }))
+    expect(out).toMatch(/\*\*Energy balance \(estimated\):\*\* 400 kcal DEFICIT over 2 days/)
+    expect(out).toMatch(/200 kcal\/day under maintenance/)
+    expect(out).toMatch(/Intake 3800 kcal vs expenditure 4200 kcal/)
+  })
+
+  it('names a surplus a surplus', () => {
+    const out = buildWeeklyExport(base({
+      days: [day({ calories: 3000, bmrKcal: 1500, activeKcal: 500 })],
+    }))
+    expect(out).toMatch(/1000 kcal SURPLUS/)
+    expect(out).toMatch(/1000 kcal\/day over maintenance/)
+  })
+
+  it('carries BMR across the days the scale was skipped, and says so', () => {
+    // BMR is a scale reading — three weigh-ins in a week is normal. Dropping the
+    // other four would discard the week; zeroing them would invent a surplus.
+    const out = buildWeeklyExport(base({
+      days: [
+        day({ date: '2026-07-19', calories: 1900, bmrKcal: null, activeKcal: 600 }),
+        day({ date: '2026-07-20', calories: 1900, bmrKcal: 1500, activeKcal: 600 }),
+      ],
+    }))
+    expect(out).toMatch(/over 2 days/)      // the un-weighed day still counts
+    expect(out).toMatch(/inherit the nearest reading/)
+  })
+
+  it('counts only days holding BOTH an intake and an expenditure', () => {
+    const out = buildWeeklyExport(base({
+      days: [
+        day({ date: '2026-07-19', calories: 1900, bmrKcal: 1500, activeKcal: 600 }),
+        day({ date: '2026-07-20', calories: 1900, bmrKcal: null, activeKcal: null }),
+        day({ date: '2026-07-21', calories: null, bmrKcal: 1500, activeKcal: 600 }),
+      ],
+    }))
+    // Day 2 inherits a BMR but has no active energy; day 3 logged no food.
+    expect(out).toMatch(/over 1 day\b/)
+  })
+
+  it('skips the balance entirely rather than reporting half a week as zero', () => {
+    const out = buildWeeklyExport(base({ days: [day({ calories: 1900 })] }))
+    expect(out).not.toMatch(/Energy balance/)
+  })
+
+  it('flags the balance as an estimate wherever it appears', () => {
+    const out = buildWeeklyExport(base({
+      days: [day({ calories: 1900, bmrKcal: 1500, activeKcal: 600 })],
+    }))
+    expect(out).toMatch(/\(estimated\)/)
+    expect(out).toMatch(/ESTIMATE, not a measurement/)
+  })
+
+  // ── Steps ──
+  it('averages steps over every day that logged a count, cardio or not', () => {
+    const out = buildWeeklyExport(base({
+      days: [
+        day({ date: '2026-07-19', steps: 10000 }),
+        day({ date: '2026-07-20', steps: 12000 }),
+        day({ date: '2026-07-21', steps: null }),
+      ],
+      // No cardio logged all week — it must not gate the step average.
+      cardio: [],
+    }))
+    expect(out).toMatch(/\*\*Steps \(avg\/day\):\*\* 11000 across 2 days with a logged count/)
+    expect(out).toMatch(/cardio session or not/)
+  })
+
+  // ── Previous week ──
+  it('appends the previous week under an unmistakable heading', () => {
+    const out = buildWeeklyExport(base({ previousWeekMarkdown: '# WEEK 2026-07-12 → 2026-07-18\n\nprior data' }))
+    expect(out).toMatch(/# PREVIOUS WEEK REFERENCE \(For AI Context\)/)
+    expect(out).toMatch(/prior data/)
+    // Separated by a rule, and told not to merge the two.
+    expect(out).toMatch(/---\n\n# PREVIOUS WEEK REFERENCE/)
+    expect(out).toMatch(/do not merge the two/)
+  })
+
+  it('omits the reference entirely when there is no prior week', () => {
+    expect(buildWeeklyExport(base())).not.toMatch(/PREVIOUS WEEK REFERENCE/)
+  })
+
+  it('places the reference AFTER the current week, never inside it', () => {
+    const out = buildWeeklyExport(base({
+      sessions: [session()],
+      previousWeekMarkdown: 'prior data',
+    }))
+    expect(out.indexOf('## Sessions')).toBeLessThan(out.indexOf('PREVIOUS WEEK REFERENCE'))
+    expect(out.indexOf('## Weekly aggregates')).toBeLessThan(out.indexOf('PREVIOUS WEEK REFERENCE'))
+  })
+
+  // ── Disclaimer ──
+  it('closes with the Apple Watch note, verbatim and absolutely last', () => {
+    const out = buildWeeklyExport(base({ previousWeekMarkdown: 'prior data' }))
+    expect(out.trimEnd().endsWith(
+      '*Note: Heart rate, calories, and steps data are sourced from the Apple Watch'
+      + ' and may not be entirely accurate.*',
+    )).toBe(true)
+    // After the previous week, so it governs both.
+    expect(out.indexOf('PREVIOUS WEEK REFERENCE')).toBeLessThan(out.indexOf('*Note: Heart rate'))
+  })
+
+  it('still closes with the note when there is no previous week', () => {
+    expect(buildWeeklyExport(base()).trimEnd().endsWith('may not be entirely accurate.*')).toBe(true)
+  })
+
+  // ── Swap-day attribution in the daily log ──
+  it('calls a day with a logged session a training day, whatever the template says', () => {
+    const out = buildWeeklyExport(base({
+      // Wednesday: a scheduled rest day that received the swapped workout.
+      days: [day({ date: '2026-08-05', weekdayLabel: 'Wed', isTrainingDay: false })],
+      sessions: [session({ date: '2026-08-05', label: 'Delts & Arms' })],
+    }))
+    expect(out).toMatch(/\*\*Wed 2026-08-05\*\* · Train \(off-plan \/ swapped\)/)
+    expect(out).toMatch(/Delts & Arms/)
+    expect(out).not.toMatch(/\*\*Wed 2026-08-05\*\* · Rest/)
+  })
+
+  it('leaves an ordinary training day unmarked', () => {
+    const out = buildWeeklyExport(base({
+      days: [day({ date: '2026-07-20', weekdayLabel: 'Mon', isTrainingDay: true })],
+      sessions: [session({ date: '2026-07-20', label: 'Legs & Core A' })],
+    }))
+    expect(out).toMatch(/\*\*Mon 2026-07-20\*\* · Train · /)
+    expect(out).not.toMatch(/off-plan/)
+  })
+
+  it('keeps calling an unworked rest day a rest day', () => {
+    const out = buildWeeklyExport(base({
+      days: [day({ date: '2026-08-04', weekdayLabel: 'Tue', isTrainingDay: false })],
+    }))
+    expect(out).toMatch(/\*\*Tue 2026-08-04\*\* · Rest · /)
   })
 })

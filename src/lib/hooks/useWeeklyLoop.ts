@@ -7,14 +7,14 @@ import { logicalTodayISO } from '@/lib/utils/day'
 import {
   buildWeeklyExport, trendTotals,
   type ExportDay, type ExportSession, type ExportExercise, type ExportDoms, type ExportBodyComp,
-  type ExportCardio, type TrendTotals,
+  type ExportCardio, type WeeklyExportInput,
 } from '@/lib/reports/weeklyExport'
 import { weekLabelOf } from '@/lib/reports/weekNumber'
 import { sessionVolumeKg } from '@/lib/sessions/volume'
 import { activeProgram, activePhase, eraForDate, isTrainingDay } from '@/lib/programs'
 import { repWindowFor } from '@/lib/training/ceilings'
 import { lookupMuscles } from '@/lib/exercises/muscleMap'
-import { weeklyVolumeByMuscle, type ProgramPhase } from '@/lib/training/landmarks'
+import { weeklyVolumeByMuscle, weeklyTonnageByMuscle, type ProgramPhase } from '@/lib/training/landmarks'
 import { protocolForDate } from '@/lib/supplements'
 import { customDoseFor, type CustomSupplement } from '@/lib/hooks/useCustomSupplements'
 import { normalizeSpO2 } from '@/lib/utils/units'
@@ -64,8 +64,13 @@ async function fetchRange(weekStart: string, weekEnd: string) {
   // Active Energy, Day Score and Battery are deliberately NOT fetched — none of
   // the three appears in the export any more (see weeklyExport.ts).
   const [logs, nutrition, sessions, sets, water, supps, doms, bodyComp, cardio, rpe, bodyLedger, skips, prAxes, whr] = await Promise.all([
+    // `active_energy` and `bmr` join the main select rather than getting their
+    // own isolated slot: both are long-standing columns (verified live), and the
+    // isolation convention exists for columns whose paste-SQL may not have run.
+    // Neither is printed on a daily line — they are the two sides of the weekly
+    // energy-balance estimate. See weeklyExport's header.
     supabase.from('daily_logs')
-      .select('date, weight_kg, steps, distance_m, training_minutes, sleep_minutes, water_ml, avg_rest_heart_rate, hrv_ms, blood_oxygen')
+      .select('date, weight_kg, steps, distance_m, training_minutes, sleep_minutes, water_ml, avg_rest_heart_rate, hrv_ms, blood_oxygen, active_energy, bmr')
       .gte('date', weekStart).lte('date', weekEnd),
     supabase.from('nutrition_entries').select('date, calories, protein_g, carbs_g, fat_g')
       .eq('meal_type', 'daily').gte('date', weekStart).lte('date', weekEnd),
@@ -156,70 +161,6 @@ async function fetchRange(weekStart: string, weekEnd: string) {
   }
 }
 
-/**
- * The PREVIOUS week, at the width the trends table actually needs.
- *
- * Deliberately NOT `fetchRange`. The old "vs previous week" block pulled a
- * second full week of every table — sets, DOMS, body composition, PR axes — to
- * print six numbers, and that cost is why it was deleted. Five small selects
- * cover calories, volume, steps, cardio minutes, water and body weight; nothing
- * else appears in the comparison, so nothing else is fetched.
- */
-async function fetchTrendRange(weekStart: string, weekEnd: string): Promise<TrendTotals> {
-  const startInstant = new Date(`${weekStart}T00:00:00`).toISOString()
-  const endInstant = new Date(`${isoAddDays(weekEnd, 1)}T00:00:00`).toISOString()
-
-  const [logs, nutrition, sessions, water, cardio] = await Promise.all([
-    supabase.from('daily_logs').select('date, weight_kg, steps, water_ml')
-      .gte('date', weekStart).lte('date', weekEnd),
-    supabase.from('nutrition_entries').select('date, calories')
-      .eq('meal_type', 'daily').gte('date', weekStart).lte('date', weekEnd),
-    supabase.from('workout_sessions').select('total_volume_kg')
-      .gte('started_at', startInstant).lt('started_at', endInstant),
-    supabase.from('water_intake').select('date, amount_ml')
-      .gte('date', weekStart).lte('date', weekEnd),
-    supabase.from('cardio_logs').select('date, duration_min')
-      .gte('date', weekStart).lte('date', weekEnd),
-  ])
-
-  // Reshaped into the SAME ExportDay/ExportSession/ExportCardio types the
-  // current week is built from, then run through the SAME `trendTotals`. Two
-  // aggregation paths for one comparison is how a trend table starts lying.
-  // Cast through the same `Record` shape `fetchRange` uses — the generated
-  // Supabase types narrow a partial select to `never` here.
-  const row = (rows: unknown) => (rows ?? []) as Array<{ date: string } & Record<string, number | null>>
-  const l = new Map(row(logs.data).map((r) => [r.date, r]))
-  const nt = new Map(row(nutrition.data).map((r) => [r.date, r]))
-  const waterByDate = new Map<string, number>()
-  for (const w of (water.data ?? []) as Array<{ date: string; amount_ml: number }>) {
-    waterByDate.set(w.date, (waterByDate.get(w.date) ?? 0) + w.amount_ml)
-  }
-
-  const days = Array.from({ length: 7 }, (_, i) => {
-    const date = isoAddDays(weekStart, i)
-    return {
-      date, weekdayLabel: WD[i], isTrainingDay: isTrainingDay(date),
-      weightKg: l.get(date)?.weight_kg ?? null,
-      calories: nt.get(date)?.calories ?? null,
-      proteinG: null, carbsG: null, fatG: null,
-      steps: l.get(date)?.steps ?? null,
-      distanceM: null, trainingMin: null, sleepMin: null, deepMin: null, remMin: null,
-      restingHr: null, hrvMs: null,
-      waterMl: waterByDate.get(date) ?? l.get(date)?.water_ml ?? null,
-      supplementsTaken: null, weighInSkipReason: null,
-    } satisfies ExportDay
-  })
-
-  return trendTotals(
-    days,
-    ((sessions.data ?? []) as Array<{ total_volume_kg: number | null }>)
-      .map((s) => ({ volumeKg: s.total_volume_kg } as ExportSession)),
-    // cardio_logs may not be migrated — an error just means no walks that week.
-    (cardio.error ? [] : (cardio.data ?? []) as Array<{ duration_min: number | null }>)
-      .map((c) => ({ durationMin: c.duration_min } as ExportCardio)),
-  )
-}
-
 type RangeData = Awaited<ReturnType<typeof fetchRange>>
 
 /** Shape a fetched range into the export's day rows. */
@@ -256,6 +197,9 @@ function toDays(weekStart: string, d: RangeData): ExportDay[] {
       hrvMs: l?.hrv_ms ?? null,
       waterMl: waterByDate.get(date) ?? l?.water_ml ?? null,
       supplementsTaken: suppsByDate.get(date) ?? null,
+      // Estimate inputs only — neither reaches a daily line.
+      activeKcal: l?.active_energy ?? null,
+      bmrKcal: l?.bmr ?? null,
       weighInSkipReason: skipByDate.get(date) ?? null,
     }
   })
@@ -448,28 +392,112 @@ function toCardio(d: RangeData): ExportCardio[] {
 }
 
 /**
+ * WEEKLY TONNAGE per muscle, aggregated per EXERCISE so the collapse rule can
+ * run before attribution.
+ *
+ * `sessionVolumeKg` is applied to each (session, exercise) group rather than to
+ * individual rows, because a unilateral pair is only recognisable as a pair when
+ * both of its rows are in the same bucket — score them separately and the L/R
+ * asymmetry rule never fires, which is exactly how a per-muscle figure ends up
+ * disagreeing with the Session Report about the same lift.
+ *
+ * WARM-UPS ARE INCLUDED, matching `sessionVolumeKg` and the Session Report. The
+ * sets-vs-target section above excludes them on purpose — a ramp-up is not a
+ * working set — but this is tonnage, and a warm-up is real weight moved.
+ */
+function tonnageRows(sets: RangeData['sets']): Array<{ muscleTokens: string[]; volumeKg: number }> {
+  const byExercise = new Map<string, { name: string; sets: RangeData['sets'] }>()
+  for (const r of sets) {
+    const key = `${r.session_id}::${r.exercises.name}`
+    const cur = byExercise.get(key) ?? { name: r.exercises.name, sets: [] }
+    cur.sets.push(r)
+    byExercise.set(key, cur)
+  }
+  return [...byExercise.values()].map((g) => ({
+    muscleTokens: lookupMuscles(g.name)?.primary
+      ?? (g.sets[0].exercises.muscle_groups ?? []).slice(0, 1),
+    volumeKg: sessionVolumeKg(g.sets.map((r) => ({
+      weightKg: r.weight_kg, reps: r.reps,
+      side: r.side === 'L' || r.side === 'R' ? r.side : null,
+      pairId: r.pair_id,
+    }))),
+  }))
+}
+
+/**
+ * One fetched week → the finished `WeeklyExportInput`.
+ *
+ * Extracted so the current week and the appended previous week are assembled by
+ * the SAME code. Two builders for one payload is how the reference week starts
+ * quietly disagreeing with the week it is meant to give context to.
+ */
+function weekPayload(
+  weekStart: string,
+  range: RangeData,
+  goals: { calorie_goal?: number; protein_goal_g?: number; steps_goal?: number; sleep_goal_hours?: number } | null,
+  customs: CustomSupplement[],
+  phase: ProgramPhase,
+): WeeklyExportInput {
+  const days = toDays(weekStart, range)
+  const sessions = toSessions(range)
+
+  // DIRECT-set weekly volume, same rule as the Weekly Volume card.
+  const volumeByMuscle = weeklyVolumeByMuscle(
+    range.sets.filter((r) => r.set_type !== 'warmup').map((r) => ({
+      muscleTokens: lookupMuscles(r.exercises.name)?.primary ?? (r.exercises.muscle_groups ?? []).slice(0, 1),
+      dedupeKey: r.pair_id ?? r.id,
+    })),
+    phase,
+  ).map((m) => ({ muscle: m.muscle, sets: m.sets, target: m.target }))
+
+  const doms: ExportDoms[] = range.doms
+    .map((r) => ({ date: r.date, muscle: r.muscle_group, severity: r.severity }))
+    .sort((a, b) => a.date.localeCompare(b.date) || a.muscle.localeCompare(b.muscle))
+
+  return {
+    weekStart, weekEnd: isoAddDays(weekStart, 6),
+    // The SAME counter the dashboard badge and the Momentum timeline use —
+    // "Week 3" here has to mean the week the app calls Week 3.
+    weekLabel: weekLabelOf(weekStart),
+    programLabel: eraForDate(weekStart) === 'axis' ? `Helix ${phase === 'cut' ? 'Cut' : 'Bulk'}` : 'PPL (legacy)',
+    calorieGoal: goals?.calorie_goal ?? null,
+    proteinGoalG: goals?.protein_goal_g ?? null,
+    stepsGoal: goals?.steps_goal ?? null,
+    sleepGoalHours: goals?.sleep_goal_hours ?? null,
+    days, sessions, volumeByMuscle, doms,
+    tonnageByMuscle: weeklyTonnageByMuscle(tonnageRows(range.sets))
+      .map((t) => ({ muscle: t.muscle, volumeKg: t.volumeKg })),
+    bodyComp: toBodyComp(range),
+    cardio: toCardio(range),
+    supplementProtocol: {
+      training: supplementProtocolLines(true, customs),
+      rest: supplementProtocolLines(false, customs),
+    },
+  }
+}
+
+/**
  * Assemble the full week payload (days · sessions with every set · direct-set
- * volume · soreness · body composition) and
- * render it as the AI prompt string. One hook powers every "Export Week" button.
+ * volume · soreness · body composition) and render it as the AI prompt string.
+ * One hook powers every "Export Week" button.
  */
 export function useWeeklyExport(weekStart = weekStartOf(logicalTodayISO()), enabled = true) {
   const weekEnd = isoAddDays(weekStart, 6)
   return useQuery({
     queryKey: ['weekly_export', weekStart],
-    // ~12 round-trips. Off until someone actually asks for the payload — it
-    // used to run the moment a week capsule expanded, which meant opening
-    // Momentum fetched two full weeks of every table before you touched
-    // anything. See `useSentinelExport` for the other half of that bill.
+    // ~28 round-trips: TWO full weeks, because the payload now carries the
+    // previous week's complete export as AI context. That is the deliberate
+    // trade — a model given one week can only describe it — and it is why this
+    // stays off until someone actually asks for the payload. It used to run the
+    // moment a week capsule expanded. See `useSentinelExport` for the other
+    // half of that bill.
     enabled,
     staleTime: 60_000,
     queryFn: async (): Promise<string> => {
-      // The prior week is back, but as `fetchTrendRange` — five narrow selects
-      // for the six figures the closing trends table prints, not the full
-      // second week of every table that got the old block deleted.
       const prevStart = isoAddDays(weekStart, -7)
-      const [cur, prev, goalsRes, customsRes] = await Promise.all([
+      const [cur, prevRange, goalsRes, customsRes] = await Promise.all([
         fetchRange(weekStart, weekEnd),
-        fetchTrendRange(prevStart, isoAddDays(prevStart, 6)),
+        fetchRange(prevStart, isoAddDays(prevStart, 6)),
         supabase.from('user_goals').select('calorie_goal, protein_goal_g, steps_goal, sleep_goal_hours').maybeSingle(),
         supabase.from('custom_supplements').select('id, name, dose, color, form, time, schedule'),
       ])
@@ -477,40 +505,22 @@ export function useWeeklyExport(weekStart = weekStartOf(logicalTodayISO()), enab
       const goals = goalsRes.data as {
         calorie_goal?: number; protein_goal_g?: number; steps_goal?: number; sleep_goal_hours?: number
       } | null
-
-      const days = toDays(weekStart, cur)
-      const sessions = toSessions(cur)
-
-      // DIRECT-set weekly volume, same rule as the Weekly Volume card.
       // The ACTIVE phase, not a calorie guess — maintenance used to collapse to cut.
-      const prog: ProgramPhase = activePhase() as ProgramPhase
-      const volumeByMuscle = weeklyVolumeByMuscle(
-        cur.sets.filter((r) => r.set_type !== 'warmup').map((r) => ({
-          muscleTokens: lookupMuscles(r.exercises.name)?.primary ?? (r.exercises.muscle_groups ?? []).slice(0, 1),
-          dedupeKey: r.pair_id ?? r.id,
-        })),
-        prog,
-      ).map((m) => ({ muscle: m.muscle, sets: m.sets, target: m.target }))
+      const phase: ProgramPhase = activePhase() as ProgramPhase
 
-      const doms: ExportDoms[] = cur.doms
-        .map((r) => ({ date: r.date, muscle: r.muscle_group, severity: r.severity }))
-        .sort((a, b) => a.date.localeCompare(b.date) || a.muscle.localeCompare(b.muscle))
+      const prev = weekPayload(prevStart, prevRange, goals, customs, phase)
+      // No `previous` and no `previousWeekMarkdown` on the reference week: it is
+      // context, not a report, so it carries neither its own trend table nor a
+      // third week behind it.
+      const previousWeekMarkdown = buildWeeklyExport(prev)
 
       return buildWeeklyExport({
-        weekStart, weekEnd,
-        // The SAME counter the dashboard badge and the Momentum timeline use —
-        // "Week 3" here has to mean the week the app calls Week 3.
-        weekLabel: weekLabelOf(weekStart),
-        programLabel: eraForDate(weekStart) === 'axis' ? `Helix ${prog === 'cut' ? 'Cut' : 'Bulk'}` : 'PPL (legacy)',
-        calorieGoal: goals?.calorie_goal ?? null,
-        proteinGoalG: goals?.protein_goal_g ?? null,
-        stepsGoal: goals?.steps_goal ?? null,
-        sleepGoalHours: goals?.sleep_goal_hours ?? null,
-        days, sessions, volumeByMuscle, doms,
-        bodyComp: toBodyComp(cur),
-        cardio: toCardio(cur),
-        supplementProtocol: { training: supplementProtocolLines(true, customs), rest: supplementProtocolLines(false, customs) },
-        previous: prev,
+        ...weekPayload(weekStart, cur, goals, customs, phase),
+        // Both sides of the comparison run through the SAME `trendTotals` over
+        // the SAME shaped week. Two aggregation paths for one table is how a
+        // trend starts lying.
+        previous: trendTotals(prev.days, prev.sessions, prev.cardio ?? []),
+        previousWeekMarkdown,
       })
     },
   })

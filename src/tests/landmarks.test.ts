@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   PROGRAM_TARGETS, toLandmarkMuscle, volumeZone, weeklyVolumeByMuscle,
-  landmarkFor, bandZone,
+  weeklyTonnageByMuscle, landmarkFor, bandZone,
 } from '@/lib/training/landmarks'
 
 describe('PROGRAM_TARGETS — user-supplied per-program targets', () => {
@@ -76,5 +76,53 @@ describe('legacy 6-group bands (Muscle Focus card)', () => {
     expect(bandZone(14, { mev: 10, mav: 16, mrv: 22 })).toBe('building')
     expect(bandZone(20, { mev: 10, mav: 16, mrv: 22 })).toBe('optimal')
     expect(bandZone(30, { mev: 10, mav: 16, mrv: 22 })).toBe('over')
+  })
+})
+
+/**
+ * Weekly TONNAGE per muscle — the kilogram companion to the set counts above.
+ * Rows arrive pre-collapsed (see `weeklyTonnageByMuscle`), so what is under test
+ * here is attribution and ordering, not the unilateral rule.
+ */
+describe('weeklyTonnageByMuscle', () => {
+  it('sums tonnage per landmark muscle, heaviest first', () => {
+    const out = weeklyTonnageByMuscle([
+      { muscleTokens: ['chest'], volumeKg: 1000 },
+      { muscleTokens: ['quads'], volumeKg: 4000 },
+      { muscleTokens: ['chest'], volumeKg: 500 },
+    ])
+    expect(out.map((t) => [t.muscle, t.volumeKg])).toEqual([['Quads', 4000], ['Chest', 1500]])
+  })
+
+  it('credits a compound to EVERY muscle it trains, in full', () => {
+    // The same rule the set counts use, so the two breakdowns cannot disagree
+    // about one movement. The column over-sums by design; the export says so.
+    const out = weeklyTonnageByMuscle([{ muscleTokens: ['quads', 'glutes'], volumeKg: 900 }])
+    expect(out).toHaveLength(2)
+    expect(out.every((t) => t.volumeKg === 900)).toBe(true)
+  })
+
+  it('counts a repeated muscle token once per row', () => {
+    const out = weeklyTonnageByMuscle([{ muscleTokens: ['quads', 'quadriceps'], volumeKg: 900 }])
+    expect(out).toEqual([expect.objectContaining({ muscle: 'Quads', volumeKg: 900 })])
+  })
+
+  it('omits muscles with no work rather than printing a zero row', () => {
+    const out = weeklyTonnageByMuscle([{ muscleTokens: ['chest'], volumeKg: 100 }])
+    expect(out.map((t) => t.muscle)).toEqual(['Chest'])
+  })
+
+  it('ignores rows with no recognised muscle, and zero-tonnage rows', () => {
+    expect(weeklyTonnageByMuscle([{ muscleTokens: ['not_a_muscle'], volumeKg: 500 }])).toEqual([])
+    expect(weeklyTonnageByMuscle([{ muscleTokens: ['chest'], volumeKg: 0 }])).toEqual([])
+  })
+
+  it('keeps quarter-kilogram microloads and kills float drift', () => {
+    const out = weeklyTonnageByMuscle([
+      { muscleTokens: ['chest'], volumeKg: 101.25 },
+      { muscleTokens: ['chest'], volumeKg: 0.1 },
+      { muscleTokens: ['chest'], volumeKg: 0.2 },
+    ])
+    expect(out[0].volumeKg).toBe(101.55)
   })
 })

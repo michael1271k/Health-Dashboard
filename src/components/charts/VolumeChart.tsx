@@ -49,12 +49,50 @@ function splitColor(s: ChartSplit): string {
 }
 
 /**
- * Map a session (date + DB split_day) to its chart bucket by weekday. HELIX logs
- * all upper days as DB split_day='upper': Sun→Upper A, Tue→Delts & Arms, Thu→
- * Upper B. Both Legs days log as 'legs': Mon→Legs A, Fri→Legs B. The weekday
- * disambiguates the five real Helix splits.
+ * The program day a session RECORDED for itself → its chart bucket.
+ *
+ * `day_key` is the workout's own identity, written at commit time from whatever
+ * the schedule actually said that morning — swaps included. Both Helix plans and
+ * the PPL legacy plan are covered so a keyed session never falls through to the
+ * weekday guess.
  */
-export function resolveChartSplit(dateISO: string, split: string, era: 'all' | 'ppl' | 'axis'): ChartSplit {
+const DAY_KEY_SPLIT: Record<string, ChartSplit> = {
+  // Helix-5 (active)
+  cb_a: 'upper_a', cb_b: 'upper_b', arms: 'arms', legs_a: 'legs_a', legs_b: 'legs_b',
+  // Helix-4
+  upper_a: 'upper_a', upper_b: 'upper_b', lower_a: 'legs_a', lower_b: 'legs_b',
+  // PPL (legacy)
+  ppl_push_sun: 'push', ppl_push_thu: 'push',
+  ppl_pull_mon: 'pull', ppl_pull_fri: 'pull', ppl_legs_tue: 'legs',
+}
+
+/**
+ * Map a session to its chart bucket — by what was PERFORMED, never by what the
+ * template says that weekday should have been.
+ *
+ * THE SWAP BUG (fixed 2026-08-06). HELIX logs every upper day as DB
+ * split_day='upper', so the bucket used to be recovered from the weekday alone:
+ * Sun→Upper A, Tue→Delts & Arms, Thu→Upper B. That is a restatement of the
+ * static plan, and a swapped week violates it. Tuesday 2026-08-04 was swapped to
+ * a rest day, which pushed Delts & Arms onto Wednesday; the Wednesday session
+ * (day_key 'arms', 3571.25 kg) matched neither weekday 2 nor 4 and landed on the
+ * final `upper_a` fallback, dropping a Delts & Arms workout into the Upper A
+ * curve. The two series were then both wrong — one inflated by work it never
+ * saw, the other missing its own session.
+ *
+ * `day_key` is the fix and the whole fix: the session states its own identity,
+ * so nothing has to be inferred. The weekday heuristic survives ONLY as the
+ * fallback for the 75 legacy rows written before the column existed (verified
+ * live) — those are all pre-swap-feature, so the inference is safe there.
+ */
+export function resolveChartSplit(
+  dateISO: string,
+  split: string,
+  era: 'all' | 'ppl' | 'axis',
+  dayKey?: string | null,
+): ChartSplit {
+  const byKey = dayKey ? DAY_KEY_SPLIT[dayKey] : undefined
+  if (byKey) return byKey
   if (split === 'lower') return 'legs'
   if (era === 'axis') {
     const weekday = new Date(dateISO + 'T12:00:00Z').getUTCDay()
@@ -80,7 +118,7 @@ export function VolumeChart({ data, isLoading, era = 'all' }: { data: VolumePoin
   // whether data has arrived.
   const chartData = useMemo(
     () => data
-      .filter((d) => resolveChartSplit(d.date, d.split, era) === activeSplit)
+      .filter((d) => resolveChartSplit(d.date, d.split, era, d.dayKey) === activeSplit)
       .map((d) => ({ date: formatDate(d.date), volume: displayWeight(d.volume) })),
     [data, era, activeSplit],
   )

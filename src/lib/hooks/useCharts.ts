@@ -118,7 +118,14 @@ export function useWeightTrend(days = 90) {
   })
 }
 
-export type VolumePoint = { date: string; volume: number; split: string }
+/**
+ * `dayKey` is what the session says it WAS — the program day committed with it,
+ * swap-aware by construction. Carried alongside `split` because `split_day`
+ * alone cannot tell Upper A from Delts & Arms (both 'upper'), and the weekday
+ * that used to break the tie is a restatement of the static plan. Null on the
+ * legacy rows written before the column existed.
+ */
+export type VolumePoint = { date: string; volume: number; split: string; dayKey: string | null }
 
 export function useVolumeTrend(days = 90) {
   return useQuery({
@@ -127,13 +134,19 @@ export function useVolumeTrend(days = 90) {
     queryFn: async (): Promise<VolumePoint[]> => {
       const { data, error } = await supabase
         .from('workout_sessions')
-        .select('started_at, total_volume_kg, split_day, notes')
+        .select('started_at, total_volume_kg, split_day, day_key, notes')
         .gte('started_at', new Date(Date.now() - days * 86400000).toISOString())
         .order('started_at', { ascending: true })
       if (error) throw error
-      return ((data ?? []) as Array<{ started_at: string; total_volume_kg: number | null; split_day: string; notes: string | null }>)
+      return ((data ?? []) as Array<{
+        started_at: string; total_volume_kg: number | null
+        split_day: string; day_key: string | null; notes: string | null
+      }>)
         .filter((r) => r.total_volume_kg != null && !r.notes?.startsWith('__seed_'))
-        .map((r) => ({ date: r.started_at.slice(0, 10), volume: Math.round(r.total_volume_kg as number), split: r.split_day }))
+        .map((r) => ({
+          date: r.started_at.slice(0, 10), volume: Math.round(r.total_volume_kg as number),
+          split: r.split_day, dayKey: r.day_key,
+        }))
     },
   })
 }

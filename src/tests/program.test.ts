@@ -197,6 +197,43 @@ describe('resolveChartSplit', () => {
   it('leaves PPL upper untouched (no arms bucket outside HELIX)', () => {
     expect(resolveChartSplit('2026-06-23', 'upper', 'ppl')).toBe('upper')  // Tue but PPL
   })
+
+  /**
+   * THE SWAP BUG. Everything above describes the STATIC plan, which is exactly
+   * what a swap breaks: the weekday no longer identifies the workout, and
+   * inferring the bucket from it drops a session into another split's curve.
+   */
+  describe('day_key outranks the weekday (swap-day attribution)', () => {
+    it('keeps a swapped Delts & Arms out of the Upper A curve', () => {
+      // 2026-08-04 (Tue) was swapped to rest, moving Delts & Arms to Wed 08-05.
+      // Weekday 3 matches neither the Tue nor the Thu rule, so the old code fell
+      // through to `upper_a` and credited Upper A with 3571.25 kg it never did.
+      expect(resolveChartSplit('2026-08-05', 'upper', 'axis')).toBe('upper_a')
+      expect(resolveChartSplit('2026-08-05', 'upper', 'axis', 'arms')).toBe('arms')
+    })
+
+    it('maps every Helix-5 day key to its own bucket', () => {
+      expect(resolveChartSplit('2026-08-05', 'upper', 'axis', 'cb_a')).toBe('upper_a')
+      expect(resolveChartSplit('2026-08-05', 'upper', 'axis', 'cb_b')).toBe('upper_b')
+      expect(resolveChartSplit('2026-08-05', 'legs', 'axis', 'legs_a')).toBe('legs_a')
+      expect(resolveChartSplit('2026-08-05', 'legs', 'axis', 'legs_b')).toBe('legs_b')
+    })
+
+    it('attributes a legs day performed on an upper weekday to legs', () => {
+      // Sunday is Upper A in the template. Doing Legs B on it must not tint the
+      // Upper curve — "if I do legs on a rest day, it logs as legs".
+      expect(resolveChartSplit('2026-07-19', 'legs', 'axis', 'legs_b')).toBe('legs_b')
+    })
+
+    it('still resolves the 75 legacy rows that carry no day_key', () => {
+      expect(resolveChartSplit('2026-07-23', 'upper', 'axis', null)).toBe('upper_b')
+      expect(resolveChartSplit('2026-07-20', 'legs', 'axis', undefined)).toBe('legs_a')
+    })
+
+    it('ignores a day key it does not know rather than guessing', () => {
+      expect(resolveChartSplit('2026-07-21', 'upper', 'axis', 'not_a_day')).toBe('arms')
+    })
+  })
 })
 
 // ── Workout-day colours ───────────────────────────────────────────────────────
