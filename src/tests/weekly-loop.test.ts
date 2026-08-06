@@ -319,64 +319,90 @@ describe('buildWeeklyExport', () => {
     expect(whole).toMatch(/8240 kg volume/)
   })
 
-  it('renders ONE consolidated supplements list, only when supplied', () => {
+  it('renders ONE chronological supplements list, only when supplied', () => {
     expect(buildWeeklyExport(input)).not.toMatch(/## Supplements protocol/)
     const withProtocol = buildWeeklyExport({
       ...input,
-      supplementProtocol: { training: ['11:45 · L-Citrulline — 3 g'], rest: ['10:30 · Vitamin D3 + K2 — 125 mcg'] },
+      supplementProtocol: [
+        { time: '11:45', name: 'L-Citrulline', dose: '3 g' },
+        { time: '10:30', name: 'Vitamin D3 + K2', dose: '125 mcg' },
+      ],
     })
     expect(withProtocol).toMatch(/## Supplements protocol/)
-    // The stack is the same on both kinds of day; only the multivitamin dose
-    // moves. Two headed lists duplicated a dozen identical lines to say so.
+    // The stack is nearly identical on both kinds of day. Two headed lists
+    // duplicated a dozen identical lines to express one differing dose.
     expect(withProtocol).not.toMatch(/\*\*Training days\*\*/)
     expect(withProtocol).not.toMatch(/\*\*Rest days\*\*/)
     expect(withProtocol).toMatch(/- 11:45 · L-Citrulline — 3 g/)
-    expect(withProtocol).toMatch(/- 10:30 · Vitamin D3 \+ K2 — 125 mcg/)
-    // Chronological across both former columns.
     expect(withProtocol.indexOf('Vitamin D3')).toBeLessThan(withProtocol.indexOf('L-Citrulline'))
   })
 
-  it('states the multivitamin’s variable dose in one asserted line', () => {
+  it('prints the dose it is GIVEN, with nothing memorised about any supplement', () => {
+    // The regression this whole change exists for: the renderer used to hold a
+    // verbatim multivitamin line and a /citrulline|caffeine/i regex, so a dose
+    // corrected in the app still exported as the constant in this file.
     const out = buildWeeklyExport({
       ...input,
-      supplementProtocol: {
-        training: ['09:00 · Two Per Day Multivitamin — 2 tablets'],
-        rest: ['09:00 · Two Per Day Multivitamin — 1 tablet'],
-      },
+      supplementProtocol: [
+        { time: '11:45', name: 'L-Citrulline', dose: '6 g', trainingOnly: true },
+        { time: '10:30', name: 'Two Per Day Multivitamin', dose: '1 tab' },
+      ],
     })
-    expect(out).toMatch(/- Two Per Day Multivitamin — 1 tablet \/ 2 on Monday & Friday \(Leg Days\)/)
-    // Once, not twice — the whole point of the consolidation.
+    expect(out).toMatch(/- 11:45 · L-Citrulline — 6 g \(training days only\)/)
+    expect(out).not.toMatch(/3 g/)
+    // No asserted multivitamin sentence any more — the rule comes from the row.
+    expect(out).toMatch(/- 10:30 · Two Per Day Multivitamin — 1 tab$/m)
+  })
+
+  it('carries a rule from the row’s notes, verbatim', () => {
+    const out = buildWeeklyExport({
+      ...input,
+      supplementProtocol: [
+        { time: '09:00', name: 'Two Per Day Multivitamin', dose: '1 tab', notes: '2 tabs on Monday & Friday (Leg Days)' },
+        { time: '15:00', name: 'Creatine Monohydrate', dose: '5 g' },
+      ],
+    })
+    expect(out).toMatch(/- 09:00 · Two Per Day Multivitamin — 1 tab · 2 tabs on Monday & Friday \(Leg Days\)/)
+    // A supplement with no rule gets no invented one.
+    expect(out).toMatch(/- 15:00 · Creatine Monohydrate — 5 g$/m)
+  })
+
+  it('states a split dose as the rule it is, rather than picking a column', () => {
+    const out = buildWeeklyExport({
+      ...input,
+      supplementProtocol: [
+        { time: '09:00', name: 'Multivitamin', dose: '1 tab', trainingDose: '2 tabs', restDose: '1 tab' },
+      ],
+    })
+    expect(out).toMatch(/- 09:00 · Multivitamin — 2 tabs on training days \/ 1 tab on rest days/)
     expect(out.match(/Multivitamin/g)).toHaveLength(1)
   })
 
-  // Folding two lists into one loses the one thing the headings carried: the
-  // pre-workout stimulants are training-day-only, and a flat list makes them
-  // look daily. The condition rides on the line so it survives the fold.
-  it('tags the pre-workout-only stimulants, and nothing else', () => {
+  it('marks a training-only item as one, and nothing else', () => {
     const out = buildWeeklyExport({
       ...input,
-      supplementProtocol: {
-        training: ['11:45 · L-Citrulline — 3 g', '11:45 · Nutricost Caffeine — 200 mg', '15:00 · Creatine Monohydrate — 5 g'],
-        rest: ['15:00 · Creatine Monohydrate — 5 g'],
-      },
+      supplementProtocol: [
+        { time: '11:45', name: 'L-Citrulline', dose: '6 g', trainingOnly: true },
+        { time: '11:45', name: 'Nutricost Caffeine', dose: '200 mg', trainingOnly: true },
+        { time: '15:00', name: 'Creatine Monohydrate', dose: '5 g' },
+      ],
     })
-    expect(out).toMatch(/- 11:45 · L-Citrulline — 3 g \(Pre-workout only\)/)
-    expect(out).toMatch(/- 11:45 · Nutricost Caffeine — 200 mg \(Pre-workout only\)/)
     // Creatine is taken every day; tagging it would state a rule that isn't one.
     expect(out).toMatch(/- 15:00 · Creatine Monohydrate — 5 g$/m)
-    expect(out.match(/Pre-workout only/g)).toHaveLength(2)
+    expect(out.match(/\(training days only\)/g)).toHaveLength(2)
   })
 
-  it('consolidates by SUPPLEMENT, so a differing dose collapses instead of duplicating', () => {
+  it('deduplicates by supplement, so one row can never print twice', () => {
     const out = buildWeeklyExport({
       ...input,
-      supplementProtocol: {
-        training: ['08:00 · Creatine — 5 g', '11:45 · L-Citrulline — 3 g'],
-        rest: ['08:00 · Creatine — 5 g'],
-      },
+      supplementProtocol: [
+        { time: '08:00', name: 'Creatine', dose: '5 g' },
+        { time: '08:00', name: 'creatine', dose: '5 g' },
+        { time: '11:45', name: 'L-Citrulline', dose: '6 g' },
+      ],
     })
-    expect(out.match(/Creatine/g)).toHaveLength(1)
-    expect(out).toMatch(/- 11:45 · L-Citrulline — 3 g/)
+    expect(out.match(/reatine/g)).toHaveLength(1)
+    expect(out).toMatch(/- 11:45 · L-Citrulline — 6 g/)
   })
 
   // Warm-ups used to be filtered out upstream, so the export read as if every

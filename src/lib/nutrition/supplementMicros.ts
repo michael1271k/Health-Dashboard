@@ -68,10 +68,20 @@ export function doseUnits(_itemKey: string, dose: string | undefined): number {
 export function supplementMicros(
   taken: Iterable<string>,
   doses?: ReadonlyMap<string, string>,
+  /**
+   * Per-supplement payloads, overriding the built-in table.
+   *
+   * The stack lives in `custom_supplements` now, and each row carries its own
+   * `micros` jsonb. Without this, correcting a dose in the app would move the
+   * checklist and the export while the micro totals kept crediting the label
+   * this file was written against — the one place a stale number would be
+   * completely invisible.
+   */
+  payloads: Readonly<Record<string, MicroPayload>> = SUPPLEMENT_MICROS,
 ): Record<string, number> {
   const out: Record<string, number> = {}
   for (const key of taken) {
-    const payload = SUPPLEMENT_MICROS[key]
+    const payload = payloads[key] ?? SUPPLEMENT_MICROS[key]
     if (!payload) continue
     const units = doseUnits(key, doses?.get(key))
     for (const [micro, amount] of Object.entries(payload)) {

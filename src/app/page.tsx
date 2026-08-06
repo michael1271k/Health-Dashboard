@@ -27,6 +27,7 @@ import { scheduleDayFor, eraForDate, isTrainingDay, type ScheduleDay } from '@/l
 import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { useSupplements } from '@/lib/hooks/useSupplements'
 import { supplementCountForDate } from '@/lib/supplements'
+import { useCustomSupplements, customSlotsForDate } from '@/lib/hooks/useCustomSupplements'
 import { useBioSeries, useLastWeighIn, useLatestBodyMetrics, type BodyMetricField } from '@/lib/hooks/useBioStrips'
 import { SleepStages } from '@/components/dashboard/SleepStages'
 
@@ -109,6 +110,7 @@ export default function DashboardPage() {
   const { data: goals } = useUserGoals()
   const { data: sessions } = useRecentSessions(3)
   const { data: taken } = useSupplements()
+  const { data: customSupps } = useCustomSupplements()
   const { data: bioSeries } = useBioSeries()
   const { data: weighIn } = useLastWeighIn()
   const { data: bodyMetrics } = useLatestBodyMetrics()
@@ -150,7 +152,16 @@ export default function DashboardPage() {
   const tdeeToday = tdeeKcal(log?.bmr, log?.active_energy, nutrition?.calories)
   const phase = fuelLogs?.[0]?.date === logicalTodayISO() ? fuelLogs[0].phase : null
   const suppCount = taken?.size ?? 0
-  const suppTotal = supplementCountForDate(isTrainingDay(logicalTodayISO()))
+  // The denominator has to be the USER's stack, not the seed constant, or the
+  // tile reads 9/11 forever the moment two supplements are added.
+  const suppTotal = supplementCountForDate(
+    isTrainingDay(logicalTodayISO()),
+    customSlotsForDate(
+      customSupps ?? [],
+      new Date(`${logicalTodayISO()}T12:00:00`).getDay(),
+      isTrainingDay(logicalTodayISO()),
+    ),
+  )
   const unit = weightUnit()
   // Already-logged-today: hide the "+ Log session" CTA once a workout exists.
   const loggedToday = sessions?.some((s) => s.started_at.slice(0, 10) === logicalTodayISO()) ?? false

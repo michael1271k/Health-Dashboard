@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import { ArrowLeft, FlaskConical, Pill } from 'lucide-react'
 import { useTodayDailyLog, useTodayNutrition } from '@/lib/hooks/useDashboard'
 import { useSupplements } from '@/lib/hooks/useSupplements'
-import { protocolForDate } from '@/lib/supplements'
+import { stackForDate } from '@/lib/supplements'
+import { useCustomSupplements, customSlotsForDate, microPayloads } from '@/lib/hooks/useCustomSupplements'
 import { isTrainingDay } from '@/lib/programs'
 import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { logicalTodayISO } from '@/lib/utils/day'
@@ -23,6 +24,7 @@ export default function MicrosPage() {
   const { data: log } = useTodayDailyLog()
   const { data: nutrition } = useTodayNutrition()
   const { data: taken } = useSupplements()
+  const { data: customs } = useCustomSupplements()
   const date = logicalTodayISO()
 
   // Every supplement ticked off contributes its label dose to today's micros,
@@ -33,11 +35,15 @@ export default function MicrosPage() {
   const scheduleVersion = useScheduleVersion()
   const fromStack = useMemo(() => {
     void scheduleVersion   // isTrainingDay reads the store; this is the read
-    const doses = new Map(
-      protocolForDate(isTrainingDay(date)).flatMap((s) => s.items.map((i) => [i.key, i.dose] as const)),
-    )
-    return supplementMicros(taken ?? [], doses)
-  }, [taken, date, scheduleVersion])
+    const training = isTrainingDay(date)
+    const weekday = new Date(`${date}T12:00:00`).getDay()
+    // The DOSES and the PAYLOADS both come from the user's own rows, so an edit
+    // in the app moves the micro totals with everything else. Falls back to the
+    // seed protocol when the table is empty.
+    const slots = stackForDate(customSlotsForDate(customs ?? [], weekday, training), training, weekday)
+    const doses = new Map(slots.flatMap((s) => s.items.map((i) => [i.key, i.dose] as const)))
+    return supplementMicros(taken ?? [], doses, microPayloads(customs ?? []))
+  }, [taken, date, scheduleVersion, customs])
 
   // Fiber + protein have dedicated columns; the rest of the dietary micros ride
   // in the nutrition `micros` jsonb bundle (populated by the HealthKit sync).

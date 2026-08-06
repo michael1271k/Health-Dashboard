@@ -3,7 +3,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { logicalTodayISO } from '@/lib/utils/day'
-import { protocolForDate, slotTimePassed } from '@/lib/supplements'
+import { stackForDate, slotTimePassed } from '@/lib/supplements'
+import { customSlotsForDate, type CustomSupplement } from '@/lib/hooks/useCustomSupplements'
 import { isTrainingDay } from '@/lib/programs'
 
 /** Set of supplement item_keys taken for the current logical day (auto-log aware). */
@@ -12,9 +13,14 @@ export function useSupplements() {
   return useQuery({
     queryKey: ['supplement_log', date],
     queryFn: async (): Promise<Set<string>> => {
-      const [logRes, goalsRes] = await Promise.all([
+      const [logRes, goalsRes, stackRes] = await Promise.all([
         supabase.from('supplement_log').select('item_key, taken').eq('date', date),
         supabase.from('user_goals').select('auto_log_supplements').maybeSingle(),
+        // Auto-log must tick the USER's stack, not the seed constant. Read in
+        // this queryFn rather than lifted to a hook argument so the two can
+        // never be a render apart — auto-log WRITES rows, and writing a tick for
+        // a supplement that was deleted yesterday is not a display glitch.
+        supabase.from('custom_supplements').select('id, name, dose, color, form, time, schedule, micros'),
       ])
       if (logRes.error) throw logRes.error
       const rows = (logRes.data ?? []) as Array<{ item_key: string; taken: boolean }>
@@ -29,8 +35,14 @@ export function useSupplements() {
         // previously this only simulated ticks client-side and persisted nothing.
         const logged = new Set(rows.map((r) => r.item_key))
         const due: Array<{ key: string; time: string }> = []
+        const training = isTrainingDay(date)
+        const weekday = new Date(`${date}T12:00:00`).getDay()
         // Rest days exclude the training-only stimulants from auto-logging.
-        for (const slot of protocolForDate(isTrainingDay(date))) {
+        const stack = stackForDate(
+          customSlotsForDate((stackRes.data ?? []) as CustomSupplement[], weekday, training),
+          training, weekday,
+        )
+        for (const slot of stack) {
           if (!slotTimePassed(slot.time)) continue
           for (const it of slot.items) if (!logged.has(it.key)) due.push({ key: it.key, time: slot.time })
         }

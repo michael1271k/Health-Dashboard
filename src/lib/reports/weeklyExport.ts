@@ -44,6 +44,23 @@ const ZONE_WORD: Record<VolumeZone, string> = {
   under: 'UNDER', building: 'building', optimal: 'on target', over: 'OVER', na: '—',
 }
 
+/**
+ * One supplement as the export needs it — every field a value the user can
+ * change in the app, none of it known to this module.
+ */
+export interface ExportSupplement {
+  /** "HH:MM", or blank for an unscheduled item. */
+  time: string | null
+  name: string
+  dose: string
+  /** Present only where the dose genuinely differs by day. */
+  trainingDose?: string
+  restDose?: string
+  trainingOnly?: boolean
+  /** A rule the dose can't state: "2 on Monday & Friday", "empty stomach". */
+  notes?: string
+}
+
 export interface ExportDay {
   date: string                 // YYYY-MM-DD
   weekdayLabel: string         // "Mon"
@@ -243,7 +260,11 @@ export interface WeeklyExportInput {
   /** Walks / runs from the cardio ledger, nested under their day. */
   cardio?: ExportCardio[]
   /** Static protocol — what to take on training vs rest days (derived from the plan). */
-  supplementProtocol?: { training: string[]; rest: string[] }
+  /**
+   * The user's supplement stack, straight from `custom_supplements`. Optional:
+   * omit it and the section is skipped rather than printed from a constant.
+   */
+  supplementProtocol?: ExportSupplement[]
   /**
    * EVERY week of the programme, oldest first, for the closing ledger.
    *
@@ -961,7 +982,7 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
 
   // ── Supplements protocol (ONE list) ──
   const protocol = input.supplementProtocol
-  if (protocol && (protocol.training.length || protocol.rest.length)) {
+  if (protocol?.length) {
     L.push('## Supplements protocol')
     L.push('')
     for (const s of consolidateSupplements(protocol)) L.push(`- ${s}`)
@@ -1125,67 +1146,42 @@ export const APPLE_WATCH_DISCLAIMER =
   '*Note: Heart rate, calories, and steps data are sourced from the Apple Watch'
   + ' and may not be entirely accurate.*'
 
-/** The one supplement whose dose genuinely varies, stated in a single line. */
-export const MULTIVITAMIN_LINE =
-  'Two Per Day Multivitamin — 1 tablet / 2 on Monday & Friday (Leg Days)'
-
-const isMultivitamin = (line: string): boolean => /multivitamin|two per day/i.test(line)
-
 /**
- * The stimulants that only ever get taken before a lift.
+ * Render the stack as one chronological list.
  *
- * Folding the two protocols into one list is right — the stack genuinely does
- * not change with the schedule — but it loses the one thing the headings did
- * carry: L-Citrulline and caffeine are training-day-only, and a flat list makes
- * them look like a daily dose. The condition rides on the line instead, so it
- * survives the fold.
+ * NOTHING ABOUT ANY PARTICULAR SUPPLEMENT IS KNOWN HERE. This function used to
+ * carry a verbatim multivitamin line and a `/citrulline|caffeine/i` regex, so
+ * the export stated two doses and one schedule rule that existed nowhere but in
+ * its own source: correcting L-Citrulline in the app changed the checklist and
+ * left the export claiming 3 g, and a supplement added later got neither its
+ * rule nor its condition because its name did not match the regex. Every field
+ * below now arrives from `custom_supplements`.
  *
- * Matched on NAME, not on the `trainingOnly` flag, because this module is a pure
- * leaf that receives rendered strings and never sees the protocol objects.
+ * ONE list, not a training column and a rest column. The stack barely changes
+ * with the schedule; printing it twice duplicated a dozen identical lines and
+ * invited the reader to believe the whole protocol swaps over. The differences
+ * ride INSIDE the line they belong to — a split dose, or a training-day-only
+ * condition — which is both shorter and more precise than two headed lists.
  */
-const PRE_WORKOUT_ONLY = /citrulline|caffeine/i
-const PRE_WORKOUT_SUFFIX = '(Pre-workout only)'
-
-/** Tag a line as pre-workout-only, idempotently. */
-const withPreWorkoutTag = (line: string): string =>
-  PRE_WORKOUT_ONLY.test(line) && !line.includes(PRE_WORKOUT_SUFFIX)
-    ? `${line} ${PRE_WORKOUT_SUFFIX}`
-    : line
-
-/**
- * Fold the training-day and rest-day protocols into ONE list.
- *
- * WHY
- * The stack is identical on both kinds of day except the multivitamin, which is
- * doubled on leg days. Printing two headed lists to express one differing dose
- * duplicated a dozen identical lines and invited the reader to believe the whole
- * protocol changes with the schedule — it does not. The variable dose is stated
- * once, inside the line it belongs to.
- *
- * Deduped by SUPPLEMENT, not by whole line: a supplement whose dose differs
- * between the two columns would otherwise appear twice with no way to tell which
- * applied when.
- */
-export function consolidateSupplements(protocol: { training: string[]; rest: string[] }): string[] {
-  // Keyed by name so a dose difference collapses rather than duplicating; the
-  // first-seen line (training, then rest) wins, and the time drives the sort.
+export function consolidateSupplements(protocol: readonly ExportSupplement[]): string[] {
+  // Deduped by NAME, so a row that somehow appears twice collapses instead of
+  // printing two lines with no way to tell which applied when.
   const byName = new Map<string, { time: string; line: string }>()
-  for (const raw of [...protocol.training, ...protocol.rest]) {
-    const line = raw.trim()
-    if (!line) continue
-    // "HH:MM · Name — dose" → time, name.
-    const [timePart, rest] = line.includes(' · ') ? [line.slice(0, line.indexOf(' · ')), line.slice(line.indexOf(' · ') + 3)] : ['—', line]
-    const name = (rest.split('—')[0] ?? rest).trim().toLowerCase()
-    const key = isMultivitamin(line) ? 'multivitamin' : name
+  for (const s of protocol) {
+    const name = s.name.trim()
+    if (!name) continue
+    const key = name.toLowerCase()
     if (byName.has(key)) continue
-    byName.set(key, {
-      time: timePart,
-      // The multivitamin's line is asserted verbatim: it is the one entry whose
-      // dose is a rule rather than a number, and the rule reads better than a
-      // pair of lists. Everything else keeps its rendered line, plus the
-      // pre-workout condition where it applies.
-      line: isMultivitamin(line) ? MULTIVITAMIN_LINE : withPreWorkoutTag(line),
-    })
+    const time = s.time?.trim() || '—'
+    // A dose that differs by day is stated as the rule it is, rather than
+    // arbitrarily picking one of the two columns.
+    const dose = s.trainingDose && s.restDose && s.trainingDose !== s.restDose
+      ? `${s.trainingDose} on training days / ${s.restDose} on rest days`
+      : s.dose.trim()
+    const parts = [`${time} · ${name} — ${dose}`]
+    if (s.trainingOnly) parts.push('(training days only)')
+    if (s.notes?.trim()) parts.push(`· ${s.notes.trim()}`)
+    byName.set(key, { time, line: parts.join(' ') })
   }
   return [...byName.values()]
     .sort((a, b) => a.time.localeCompare(b.time))

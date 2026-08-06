@@ -1,15 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import { Check, Plus, Trash2 } from 'lucide-react'
+import { Check, Plus, Trash2, Pencil } from 'lucide-react'
 import { LiquidModal } from '@/components/ui/LiquidModal'
-import { protocolForDate } from '@/lib/supplements'
+import { stackForDate } from '@/lib/supplements'
 import { isTrainingDay } from '@/lib/programs'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { useSupplements, useToggleSupplement } from '@/lib/hooks/useSupplements'
 import {
-  useCustomSupplements, useAddCustomSupplement, useDeleteCustomSupplement, customSlotsForDate,
+  useCustomSupplements, useAddCustomSupplement, useDeleteCustomSupplement,
+  useUpdateCustomSupplement, customSlotsForDate,
 } from '@/lib/hooks/useCustomSupplements'
 
 const WD = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
@@ -24,20 +25,24 @@ export function SupplementChecklist() {
   const { data: customs } = useCustomSupplements()
   const addCustom = useAddCustomSupplement()
   const delCustom = useDeleteCustomSupplement()
+  const updCustom = useUpdateCustomSupplement()
 
   const today = logicalTodayISO()
   // A Train↔Rest swap adds or removes the pre-workout stimulants, so this list
   // has to follow the schedule store, not just its own query.
   useScheduleVersion()
   const weekday = new Date(`${today}T12:00:00`).getDay()
-  const protocol = protocolForDate(isTrainingDay(today))
-  const custom = customSlotsForDate(customs ?? [], weekday, isTrainingDay(today))
-  const slots = [...protocol, ...custom]
+  // ONE stack. The nine former built-ins are rows in `custom_supplements` like
+  // everything else, so they are editable; the hardcoded protocol survives only
+  // as the fallback for an unseeded database.
+  const training = isTrainingDay(today)
+  const slots = stackForDate(customSlotsForDate(customs ?? [], weekday, training), training, weekday)
 
   const [manage, setManage] = useState(false)
   const [adding, setAdding] = useState(false)
-  const [form, setForm] = useState({ name: '', dose: '', trainingDose: '', restDose: '', time: '09:00', color: COLORS[0], formType: FORMS[0], days: [0, 1, 2, 3, 4, 5, 6] })
-  const customIds = new Set((customs ?? []).map((c) => `custom:${c.id}`))
+  const [form, setForm] = useState({ name: '', dose: '', trainingDose: '', restDose: '', notes: '', time: '09:00', color: COLORS[0], formType: FORMS[0], days: [0, 1, 2, 3, 4, 5, 6] })
+  /** The row being dose-edited, and the draft. `null` = nothing open. */
+  const [editing, setEditing] = useState<{ id: string; name: string; dose: string } | null>(null)
 
   const toggleDay = (d: number) =>
     setForm((f) => ({ ...f, days: f.days.includes(d) ? f.days.filter((x) => x !== d) : [...f.days, d].sort() }))
@@ -48,8 +53,9 @@ export function SupplementChecklist() {
       {
         name: form.name.trim(), dose: form.dose.trim(), color: form.color, form: form.formType, time: form.time, days: form.days,
         trainingDose: form.trainingDose.trim() || undefined, restDose: form.restDose.trim() || undefined,
+        notes: form.notes.trim() || undefined,
       },
-      { onSuccess: () => { setForm((f) => ({ ...f, name: '', dose: '', trainingDose: '', restDose: '' })); setAdding(false) } },
+      { onSuccess: () => { setForm((f) => ({ ...f, name: '', dose: '', trainingDose: '', restDose: '', notes: '' })); setAdding(false) } },
     )
   }
 
@@ -66,7 +72,10 @@ export function SupplementChecklist() {
           <div className="space-y-1.5">
             {slot.items.map((item) => {
               const on = taken?.has(item.key) ?? false
-              const isCustom = customIds.has(item.key)
+              // Anything with a row id is editable — which, once seeded, is
+              // everything. Before, only user-added items could be touched and
+              // the nine that mattered were frozen in a constant.
+              const rowId = item.customId
               return (
                 <div key={item.key} className="flex items-center gap-1.5">
                   <button
@@ -78,14 +87,25 @@ export function SupplementChecklist() {
                     <span className="flex h-5 w-5 items-center justify-center rounded-md border-2 shrink-0" style={{ borderColor: on ? slot.accent : 'rgba(255,255,255,0.25)', background: on ? slot.accent : 'transparent' }}>
                       {on && <Check className="h-3 w-3 text-bg" strokeWidth={3} />}
                     </span>
-                    <span className="min-w-0 flex-1 text-fluid-sm font-medium text-text">{item.name}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-fluid-sm font-medium text-text truncate">{item.name}</span>
+                      {/* The rule, where there is one. It lives in the row, so
+                          editing it in the app changes the export too. */}
+                      {item.notes && <span className="block text-[10px] text-muted truncate">{item.notes}</span>}
+                    </span>
                     <span className="helix-num text-fluid-xs text-muted shrink-0">{item.dose}</span>
                   </button>
-                  {manage && isCustom && (
-                    <button onClick={() => delCustom.mutate(item.key.slice('custom:'.length))}
-                      className="p-2 rounded-lg text-muted hover:text-danger shrink-0" aria-label={`Delete ${item.name}`}>
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                  {manage && rowId && (
+                    <>
+                      <button onClick={() => setEditing({ id: rowId, name: item.name, dose: item.dose })}
+                        className="p-2 rounded-lg text-muted hover:text-text shrink-0" aria-label={`Edit ${item.name}`}>
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => delCustom.mutate(rowId)}
+                        className="p-2 rounded-lg text-muted hover:text-danger shrink-0" aria-label={`Delete ${item.name}`}>
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </>
                   )}
                 </div>
               )
@@ -106,6 +126,38 @@ export function SupplementChecklist() {
           </button>
         )}
       </div>
+
+      {/* Edit dose — the verb that was missing. L-Citrulline sat at 3 g in every
+          surface while 6 g was being taken, and there was no way to correct it
+          short of a deploy. */}
+      <LiquidModal open={editing != null} onClose={() => setEditing(null)} title={editing?.name ?? 'Edit'} accent="#8E9AAC">
+        <div className="space-y-3">
+          <label className="block">
+            <span className="text-[10px] uppercase tracking-wide text-muted">Dose</span>
+            <input
+              value={editing?.dose ?? ''}
+              onChange={(e) => setEditing((s) => (s ? { ...s, dose: e.target.value } : s))}
+              placeholder="e.g. 6 g"
+              className="mt-1 w-full rounded-lg bg-surface-2 border border-border px-3 py-2 text-sm text-text"
+            />
+          </label>
+          <div className="flex gap-2 justify-end">
+            <button onClick={() => setEditing(null)} className="btn-glass min-h-[44px] px-4">Cancel</button>
+            <button
+              disabled={updCustom.isPending || !editing?.dose.trim()}
+              onClick={() => {
+                if (!editing?.dose.trim()) return
+                updCustom.mutate(
+                  { id: editing.id, patch: { dose: editing.dose.trim() } },
+                  { onSuccess: () => setEditing(null) },
+                )
+              }}
+              className="btn-primary min-h-[44px] px-4 disabled:opacity-50">
+              {updCustom.isPending ? 'Saving…' : 'Save'}
+            </button>
+          </div>
+        </div>
+      </LiquidModal>
 
       {/* Add-supplement modal — a sleek popup, not an inline expansion. */}
       <LiquidModal open={adding} onClose={() => setAdding(false)} title="Add supplement" accent="#8E9AAC">
@@ -128,6 +180,13 @@ export function SupplementChecklist() {
               <input value={form.restDose} onChange={(e) => setForm((f) => ({ ...f, restDose: e.target.value }))}
                 placeholder="Rest-day dose (optional)" className="rounded-lg bg-surface-2 border border-border px-3 py-2 text-sm text-text" />
             </div>
+
+            {/* A rule the dose can't state on its own. Stored on the row and
+                printed verbatim in the weekly export, which is why it is free
+                text rather than a fixed vocabulary. */}
+            <input value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+              placeholder='Note / rule (optional) — e.g. "empty stomach"'
+              className="w-full rounded-lg bg-surface-2 border border-border px-3 py-2 text-sm text-text" />
 
             {/* Colour */}
             <div className="flex items-center gap-2">

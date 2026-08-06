@@ -7,7 +7,7 @@ import { logicalTodayISO } from '@/lib/utils/day'
 import {
   buildWeeklyExport, trendTotals,
   type ExportDay, type ExportSession, type ExportExercise, type ExportDoms, type ExportBodyComp,
-  type ExportCardio, type WeeklyExportInput, type LedgerWeek,
+  type ExportCardio, type WeeklyExportInput, type LedgerWeek, type ExportSupplement,
 } from '@/lib/reports/weeklyExport'
 import { weekLabelOf, WEEK0_START } from '@/lib/reports/weekNumber'
 import { sessionVolumeKg } from '@/lib/sessions/volume'
@@ -15,26 +15,39 @@ import { activeProgram, activePhase, eraForDate, isTrainingDay } from '@/lib/pro
 import { repWindowFor } from '@/lib/training/ceilings'
 import { resolveMovers } from '@/lib/exercises/muscleMap'
 import { weeklyVolumeByMuscle, weeklyTonnageByMuscle, type MoverTokens, type ProgramPhase } from '@/lib/training/landmarks'
-import { protocolForDate } from '@/lib/supplements'
-import { customDoseFor, type CustomSupplement } from '@/lib/hooks/useCustomSupplements'
+import { SUPPLEMENT_PROTOCOL } from '@/lib/supplements'
+import { type CustomSupplement } from '@/lib/hooks/useCustomSupplements'
 import { normalizeSpO2 } from '@/lib/utils/units'
 import { activeKcalOf } from '@/lib/cardio/metrics'
 import type { PrAxis } from '@/lib/training/prEngine'
 
 /**
- * Flatten the supplement protocol into "time · Name — dose" lines, MERGING the
- * built-in stack with the user's saved custom supplements. Custom split doses
- * (trainingDose / restDose in the jsonb schedule) are honoured per column.
+ * The user's stack, as rows, for the export to render.
+ *
+ * NO MERGE, and no "built-in" half any more: `custom_supplements` holds the
+ * whole protocol, so this is a projection of the table and nothing else. The old
+ * version rendered the hardcoded list and appended the user's additions to it,
+ * which is why a dose edited in the app never reached the markdown.
  */
-function supplementProtocolLines(isTraining: boolean, customs: CustomSupplement[]): string[] {
-  const builtIn = protocolForDate(isTraining)
-    .flatMap((slot) => slot.items.map((i) => ({ time: slot.time, line: `${slot.time} · ${i.name} — ${i.dose}` })))
-  const custom = customs.map((c) => ({
-    time: c.time || '—',
-    line: `${c.time || '—'} · ${c.name} — ${customDoseFor(c, isTraining)}`,
+function supplementStack(customs: CustomSupplement[]): ExportSupplement[] {
+  // The DATABASE, verbatim — dose, time, condition and rule all as the user last
+  // saved them. When the table is unseeded the constant is the only stack there
+  // is, so it renders instead; it is a fallback, never a merge partner.
+  if (!customs.length) {
+    return SUPPLEMENT_PROTOCOL.flatMap((slot) => slot.items.map((i) => ({
+      time: slot.time, name: i.name, dose: i.dose,
+      trainingOnly: i.trainingOnly, notes: i.notes,
+    })))
+  }
+  return customs.map((c) => ({
+    time: c.time,
+    name: c.name,
+    dose: c.dose,
+    trainingDose: c.schedule?.trainingDose,
+    restDose: c.schedule?.restDose,
+    trainingOnly: c.schedule?.trainingOnly,
+    notes: c.schedule?.notes,
   }))
-  // Chronological across both sources.
-  return [...builtIn, ...custom].sort((a, b) => a.time.localeCompare(b.time)).map((x) => x.line)
 }
 
 const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -549,10 +562,7 @@ function weekPayload(
       .map((t) => ({ muscle: t.muscle, volumeKg: t.volumeKg })),
     bodyComp: toBodyComp(range),
     cardio: toCardio(range),
-    supplementProtocol: {
-      training: supplementProtocolLines(true, customs),
-      rest: supplementProtocolLines(false, customs),
-    },
+    supplementProtocol: supplementStack(customs),
   }
 }
 
@@ -581,7 +591,7 @@ export function useWeeklyExport(weekStart = weekStartOf(logicalTodayISO()), enab
         // Week 0 to the exported week — the whole programme, five selects.
         fetchTrendLedger(weekStartOf(WEEK0_START), weekStart),
         supabase.from('user_goals').select('calorie_goal, protein_goal_g, steps_goal, sleep_goal_hours').maybeSingle(),
-        supabase.from('custom_supplements').select('id, name, dose, color, form, time, schedule'),
+        supabase.from('custom_supplements').select('id, name, dose, color, form, time, schedule, micros'),
       ])
       const customs = (customsRes.error ? [] : (customsRes.data ?? [])) as CustomSupplement[]
       const goals = goalsRes.data as {
