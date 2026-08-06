@@ -15,7 +15,7 @@
  *    day, in a FIXED order — sleep → intake → water → steps — with the deep
  *    body-comp reading and the day's walks/cardio nested under it. The one
  *    exception is the closing week-over-week block, which is a comparison of two
- *    aligned columns and is genuinely a table; see `trendTable`.
+ *    aligned columns and is genuinely a table; see `trendLedger`.
  *
  * DELIBERATE OMISSIONS. Day Score and Battery are not exported: both are HELIX's
  * own derived opinions, not measurements, and this file is raw data only.
@@ -230,15 +230,18 @@ export interface WeeklyExportInput {
   /** Static protocol — what to take on training vs rest days (derived from the plan). */
   supplementProtocol?: { training: string[]; rest: string[] }
   /**
-   * The PREVIOUS week's aggregates, for the closing week-over-week block.
+   * EVERY week of the programme, oldest first, for the closing ledger.
    *
-   * Passed pre-aggregated rather than as another week of raw days: the trends
-   * table needs six numbers, and re-fetching every table for a week that will
-   * never be printed line-by-line is what got the old "vs previous week" block
-   * deleted. Omit it and the section is skipped entirely — an empty comparison
-   * is worse than none.
+   * Passed pre-aggregated rather than as weeks of raw days: the ledger needs six
+   * numbers per week, and re-fetching every table for weeks that will never be
+   * printed line-by-line is what got the original "vs previous week" block
+   * deleted. One narrow query set covers the whole programme regardless of how
+   * many weeks it has run — see `fetchTrendLedger`.
+   *
+   * Omit it and the section is skipped entirely; an empty trend is worse than
+   * none.
    */
-  previous?: TrendTotals
+  ledger?: LedgerWeek[]
   /**
    * The PREVIOUS week's complete export, appended verbatim at the bottom under
    * its own heading.
@@ -416,6 +419,16 @@ export interface WeeklySummary {
   cardioActiveKcal: number | null
   cardioSessions: number
   peakDoms: { muscle: string; severity: number; date: string } | null
+  /**
+   * Mean Borg CR10 session effort across the sessions that were RATED.
+   *
+   * Unrated sessions are skipped, not scored 0 — an effort of zero is a claim
+   * about how hard a workout was, and "not rated" is a claim about the log. The
+   * count of rated sessions rides alongside so a 9.0 from one session out of
+   * five cannot read as the week's character.
+   */
+  avgSessionRpe: number | null
+  ratedSessions: number
 }
 
 /**
@@ -439,6 +452,7 @@ export function weeklySummary(input: WeeklyExportInput): WeeklySummary {
     // Strictly greater, so the FIRST day a peak was reached keeps it.
     if (!peak || d.severity > peak.severity) peak = { muscle: d.muscle, severity: d.severity, date: d.date }
   }
+  const rated = input.sessions.filter((s) => s.sessionRpe != null && Number.isFinite(s.sessionRpe))
   return {
     avgSleepMin: meanOf(input.days.map((d) => d.sleepMin)),
     avgRestingHr: meanOf(input.days.map((d) => d.restingHr)),
@@ -447,7 +461,39 @@ export function weeklySummary(input: WeeklyExportInput): WeeklySummary {
     cardioActiveKcal: sum(cardio.map((c) => c.kcal)),
     cardioSessions: cardio.length,
     peakDoms: peak,
+    avgSessionRpe: meanOf(rated.map((s) => s.sessionRpe)),
+    ratedSessions: rated.length,
   }
+}
+
+/**
+ * An eight-level ASCII sparkline over a week's daily values.
+ *
+ * A column of seven numbers states the total; its SHAPE states whether the week
+ * was even or carried by one day, and a reader has to hold all seven to see it.
+ * The glyph does that in seven characters, next to the mean it summarises.
+ *
+ * SCALED FROM ZERO, not from the minimum. A floating baseline turns a flat week
+ * (11.2k, 11.4k, 11.7k steps) into a dramatic staircase, which is the classic
+ * way a sparkline lies. From zero, flat looks flat.
+ *
+ * A missing day is `·`, never `▁`. The lowest bar is a real, small value; a day
+ * that was never logged is not a small value, and the two must not share a
+ * glyph. Returns an empty string when nothing was logged at all.
+ */
+const SPARK_BARS = ['▁', '▂', '▃', '▄', '▅', '▆', '▇', '█'] as const
+const SPARK_GAP = '·'
+
+export function sparkline(values: ReadonlyArray<number | null | undefined>): string {
+  const present = values.filter((v): v is number => v != null && Number.isFinite(v))
+  if (!present.length) return ''
+  const max = Math.max(...present, 0)
+  return values.map((v) => {
+    if (v == null || !Number.isFinite(v)) return SPARK_GAP
+    if (max <= 0) return SPARK_BARS[0]
+    const i = Math.round((v / max) * (SPARK_BARS.length - 1))
+    return SPARK_BARS[Math.max(0, Math.min(SPARK_BARS.length - 1, i))]
+  }).join('')
 }
 
 /**
@@ -567,26 +613,44 @@ export function energyBalance(days: readonly ExportDay[]): EnergyBalance {
   }
 }
 
-interface TrendRow {
-  label: string
-  /** Rendered value for a week, or DASH. Keeps unit formatting in one place. */
-  fmt: (v: number | null) => string
-  cur: number | null
-  prev: number | null
+/**
+ * A padded markdown table.
+ *
+ * Cells are padded to a common column width so the RAW markdown lines up in a
+ * plain text editor as well as it does rendered — the export gets pasted into
+ * both, and a ragged pipe-table is unreadable in the first.
+ *
+ * Widths count CODE POINTS, not UTF-16 units, so the ↑ / ↓ / → glyphs and the
+ * sparkline bars align like any other character.
+ */
+export function markdownTable(
+  header: readonly string[],
+  body: ReadonlyArray<readonly string[]>,
+  align: ReadonlyArray<'left' | 'right' | 'center'>,
+): string[] {
+  const all = [header, ...body]
+  const width = header.map((_, c) => Math.max(...all.map((r) => [...(r[c] ?? '')].length)))
+  const pad = (s: string, c: number) => {
+    const gap = width[c] - [...s].length
+    if (align[c] === 'left') return s + ' '.repeat(gap)
+    if (align[c] === 'right') return ' '.repeat(gap) + s
+    const left = Math.floor(gap / 2)
+    return ' '.repeat(left) + s + ' '.repeat(gap - left)
+  }
+  const line = (cells: readonly string[]) => `| ${cells.map((c, i) => pad(c ?? '', i)).join(' | ')} |`
+  const rule = `|${width.map((w, c) =>
+    align[c] === 'left' ? `:${'-'.repeat(w)}-`
+      : align[c] === 'right' ? `-${'-'.repeat(w)}:`
+      : `:${'-'.repeat(w)}:`).join('|')}|`
+  return [line(header), rule, ...body.map(line)]
 }
 
-/** Signed delta at the row's own precision, with the percentage in brackets. */
-function deltaCell(row: TrendRow): string {
-  const { cur, prev } = row
-  if (cur == null || prev == null) return DASH
-  const d = cur - prev
-  // A sub-epsilon move is "no change", not "+0.0" — the latter reads as a
-  // measurement when it is a rounding artefact.
-  if (Math.abs(d) < 1e-9) return 'no change'
-  const signed = `${d > 0 ? '+' : '−'}${row.fmt(Math.abs(d))}`
-  if (prev === 0) return signed
-  const pct = (d / Math.abs(prev)) * 100
-  return `${signed} (${pct > 0 ? '+' : '−'}${Math.abs(pct).toFixed(1)}%)`
+/** One week in the cumulative ledger: its label and its aggregates. */
+export interface LedgerWeek {
+  /** "Week 3". Whatever the rest of the app calls it — see `weekLabelOf`. */
+  label: string
+  weekStart: string
+  totals: TrendTotals
 }
 
 /**
@@ -597,66 +661,62 @@ function deltaCell(row: TrendRow): string {
  * and lets the reader judge. The glyph says which way the number moved and
  * nothing else.
  */
-function trendGlyph(row: TrendRow): string {
-  if (row.cur == null || row.prev == null) return DASH
-  const d = row.cur - row.prev
+function directionGlyph(cur: number | null, prev: number | null): string {
+  if (cur == null || prev == null) return DASH
+  const d = cur - prev
   return Math.abs(d) < 1e-9 ? '→' : d > 0 ? '↑' : '↓'
 }
 
 /**
- * The closing week-over-week table.
+ * THE CUMULATIVE LEDGER — one row per week, oldest at the top.
  *
- * A TABLE, deliberately — the one in this file. Everything above is a line per
- * day because a day is a record; this is two aligned columns of the same six
- * measures, which is exactly what a table is for, and reading it as prose would
- * mean holding six pairs of numbers in your head.
+ * PIVOTED from the old two-column layout (2026-08-06). Metric-per-row against
+ * this-week/last-week answers "what changed since Sunday", which is the smallest
+ * question the data can answer. A programme is a trajectory: whether a 500 kcal
+ * deficit is holding, whether volume has been climbing for a month or stalled
+ * three weeks ago, whether bodyweight is falling at a rate the training can
+ * survive. None of that is visible in two columns, and all of it is visible in a
+ * column read downwards.
  *
- * Cells are PADDED to a common width so the raw markdown lines up in a plain
- * text editor as well as it does rendered. The export gets pasted into both.
+ * ONE Δ COLUMN, on bodyweight only. A delta beside every metric turns twelve
+ * numbers into twenty-four and buries the series in its own first differences —
+ * the trajectory IS the table now, and the reader can see it. Bodyweight keeps
+ * one because week-to-week weight change is the single number a cut is steered
+ * by, and it is a subtraction nobody should have to do in their head.
  */
-export function trendTable(
-  cur: TrendTotals,
-  prev: TrendTotals,
-  labels: { current: string; previous: string },
-): string[] {
-  const kcal = (v: number | null) => (v == null ? DASH : `${n(v)} kcal`)
-  const kg = (v: number | null) => (v == null ? DASH : `${n(v, 1)} kg`)
+export function trendLedger(weeks: readonly LedgerWeek[]): string[] {
+  const kcal = (v: number | null) => (v == null ? DASH : `${n(v)}`)
+  const kg = (v: number | null) => (v == null ? DASH : `${n(v, 1)}`)
+  const kgExact = (v: number | null) => (v == null ? DASH : exact(Math.round((v ?? 0) * 100) / 100))
   const steps = (v: number | null) => (v == null ? DASH : n(v))
-  const mins = (v: number | null) => (v == null ? DASH : `${n(v)} min`)
-  const litres = (v: number | null) => (v == null ? DASH : `${n(v / 1000, 2)} L`)
+  const mins = (v: number | null) => (v == null ? DASH : n(v))
+  const litres = (v: number | null) => (v == null ? DASH : n((v ?? 0) / 1000, 2))
 
-  const rows: TrendRow[] = [
-    { label: 'Calories (avg/day)', fmt: kcal, cur: cur.avgKcal, prev: prev.avgKcal },
-    { label: 'Training volume (total)', fmt: kg, cur: cur.totalVolumeKg, prev: prev.totalVolumeKg },
-    { label: 'Steps (avg/day)', fmt: steps, cur: cur.avgSteps, prev: prev.avgSteps },
-    { label: 'Cardio (total)', fmt: mins, cur: cur.cardioMinutes, prev: prev.cardioMinutes },
-    { label: 'Water (avg/day)', fmt: litres, cur: cur.avgWaterMl, prev: prev.avgWaterMl },
-    { label: 'Body weight (avg)', fmt: kg, cur: cur.avgWeightKg, prev: prev.avgWeightKg },
-  ]
+  const header = ['Week', 'Kcal/day', 'Volume kg', 'Steps/day', 'Cardio min', 'Water L/day', 'Weight kg', 'Δ kg', '']
+  const align = ['left', 'right', 'right', 'right', 'right', 'right', 'right', 'right', 'center'] as const
 
-  const header = ['Metric', labels.current, labels.previous, 'Δ', '']
-  const body = rows.map((r) => [r.label, r.fmt(r.cur), r.fmt(r.prev), deltaCell(r), trendGlyph(r)])
-  const all = [header, ...body]
-  const width = header.map((_, c) => Math.max(...all.map((r) => [...r[c]].length)))
+  const body = weeks.map((w, i) => {
+    const prev = weeks[i - 1]?.totals.avgWeightKg ?? null
+    const cur = w.totals.avgWeightKg
+    // Weight moves in tenths, so the delta is quoted to two places: a 0.15 kg
+    // week rounded to 0.1 or 0.2 is a 33% error on the only number a cut steers by.
+    const delta = cur == null || prev == null ? DASH
+      : Math.abs(cur - prev) < 1e-9 ? '0.00'
+      : `${cur > prev ? '+' : '−'}${Math.abs(cur - prev).toFixed(2)}`
+    return [
+      w.label,
+      kcal(w.totals.avgKcal),
+      kgExact(w.totals.totalVolumeKg),
+      steps(w.totals.avgSteps),
+      mins(w.totals.cardioMinutes),
+      litres(w.totals.avgWaterMl),
+      kg(cur),
+      delta,
+      directionGlyph(cur, prev),
+    ]
+  })
 
-  // Left-align the metric name, right-align every number, centre the glyph —
-  // the alignment row markdown renderers honour, and the one the padding below
-  // imitates for readers seeing the raw text.
-  const align = ['left', 'right', 'right', 'right', 'center'] as const
-  const pad = (s: string, c: number) => {
-    const gap = width[c] - [...s].length
-    if (align[c] === 'left') return s + ' '.repeat(gap)
-    if (align[c] === 'right') return ' '.repeat(gap) + s
-    const left = Math.floor(gap / 2)
-    return ' '.repeat(left) + s + ' '.repeat(gap - left)
-  }
-  const line = (cells: string[]) => `| ${cells.map(pad).join(' | ')} |`
-  const rule = `|${width.map((w, c) =>
-    align[c] === 'left' ? `:${'-'.repeat(w)}-`
-      : align[c] === 'right' ? `-${'-'.repeat(w)}:`
-      : `:${'-'.repeat(w)}:`).join('|')}|`
-
-  return [line(header), rule, ...body.map(line)]
+  return markdownTable(header, body, align)
 }
 
 export function buildWeeklyExport(input: WeeklyExportInput): string {
@@ -706,6 +766,11 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
     L.push(`- HRV (avg): ${n(w.avgHrvMs, 1)}${w.avgHrvMs != null ? ' ms' : ''}`)
     L.push(`- Cardio: ${n(w.cardioMinutes)} min across ${w.cardioSessions} session${w.cardioSessions === 1 ? '' : 's'}`
       + ` · ${n(w.cardioActiveKcal)} active kcal`)
+    // Borg CR10, averaged over the sessions that were RATED — the count is
+    // stated so one 9/10 out of five sessions can't read as the week's tone.
+    L.push(`- Average workout effort: ${w.avgSessionRpe != null
+      ? `${n(w.avgSessionRpe, 1)}/10 CR10 across ${w.ratedSessions} rated session${w.ratedSessions === 1 ? '' : 's'}`
+      : 'not rated'}`)
     L.push(`- Highest DOMS: ${w.peakDoms
       ? `${w.peakDoms.muscle} — ${dLabel[w.peakDoms.severity] ?? w.peakDoms.severity} (${w.peakDoms.date})`
       : 'none reported'}`)
@@ -740,8 +805,15 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
       // indistinguishable from a day that was never opened.
       + `RHR ${n(d.restingHr)} · HRV ${n(d.hrvMs)} · ${weighIn(d.weightKg, d.weighInSkipReason)} · ${workout}`,
     )
+    // NO WEIGHT, NO READING. A scale reading is anchored on a bodyweight —
+    // every mass below is derived from one — so a row that has lost its weight
+    // is not a partial measurement, it is a fragment. 2026-08-02 carries a
+    // skeletal-muscle figure and a waist:hip ratio and nothing else, which
+    // printed two lines of twenty em-dashes: visually a catastrophic weigh-in,
+    // actually a sync that dropped the weight. The day line above already says
+    // `weight — [Skip: …]`, which is the whole truth about that day.
     const b = bodyByDate.get(d.date)
-    if (b) {
+    if (b && b.weightKg != null && Number.isFinite(b.weightKg)) {
       // Percentages first (what the scale shows), then every compartment in
       // absolute kg (what actually moved). Both, every day, named every time —
       // an omitted field is indistinguishable from a zero to whoever reads this.
@@ -854,26 +926,21 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
     L.push('')
   }
 
-  // ── Week-over-week trends (LAST, on purpose) ──
-  // The raw week comes first and the comparison closes it: a reader who starts
-  // with the deltas anchors on them and reads the evidence to confirm. Sitting
-  // at the bottom, this is context for everything already read rather than a
+  // ── The cumulative ledger (LAST, on purpose) ──
+  // The raw week comes first and the trajectory closes it: a reader who starts
+  // with the trend anchors on it and reads the evidence to confirm. Sitting at
+  // the bottom, this is context for everything already read rather than a
   // verdict announced ahead of it.
-  if (input.previous) {
-    const cur = trendTotals(days, sessions, input.cardio ?? [])
+  if (input.ledger?.length) {
     const label = input.weekLabel?.trim()
-    // "Week 3" → "Week 2". Anything else keeps a plain relative label rather
-    // than inventing a week number the rest of the app doesn't use.
-    const m = label?.match(/^Week (\d+)$/)
     L.push(`## Week-over-Week Trends (${input.programLabel}${label ? ` · ${label}` : ''})`)
     L.push('')
-    L.push(...trendTable(cur, input.previous, {
-      current: label ?? 'This week',
-      previous: m ? `Week ${Number(m[1]) - 1}` : 'Last week',
-    }))
+    L.push(...trendLedger(input.ledger))
     L.push('')
-    L.push('_Δ compares like with like: averages skip days with no entry rather than'
-      + ' counting them as zero, and totals are honest sums. Arrows show direction only —'
+    L.push('_Every week of the programme, oldest first. Averages skip days with no'
+      + ' entry rather than counting them as zero; volume and cardio are totals, so'
+      + ' a short week is genuinely a smaller number. Δ is the change in average'
+      + ' bodyweight from the row above, and the arrow shows direction only —'
       + ' whether a move is progress depends on the phase._')
     L.push('')
   }
@@ -937,6 +1004,32 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
     L.push(`- **Steps (avg/day):** ${n(avgSteps)} across ${stepDays.length}`
       + ` day${stepDays.length === 1 ? '' : 's'} with a logged count`
       + ` (every such day counts, cardio session or not)`)
+
+    // ── Daily shape ──
+    // The numbers above are the week's totals; these are its SHAPE. 22 000 kg
+    // spread evenly and 22 000 kg carried by one enormous Monday are different
+    // weeks that summarise identically, and seven glyphs say which it was
+    // without the reader reconstructing seven values from the daily log.
+    {
+      // Volume is per DAY, not per session, so a double-session day reads as
+      // the load it actually was and the bar count matches the step row exactly.
+      const volByDate = new Map<string, number>()
+      for (const s of sessions) {
+        if (s.volumeKg == null || !Number.isFinite(s.volumeKg)) continue
+        volByDate.set(s.date, (volByDate.get(s.date) ?? 0) + s.volumeKg)
+      }
+      // A rest day is a REAL zero here, not a gap — no training happened, which
+      // is a measurement. Missing STEPS is a gap, because the day may well have
+      // been walked and never synced.
+      const volSpark = sparkline(days.map((d) => volByDate.get(d.date) ?? 0))
+      const stepSpark = sparkline(days.map((d) => d.steps))
+      const dayLetters = days.map((d) => d.weekdayLabel[0] ?? '?').join('')
+      if (volSpark || stepSpark) {
+        L.push(`- **Daily shape** (${dayLetters}, scaled from zero · \`${SPARK_GAP}\` = not logged):`)
+        if (volSpark) L.push(`    - Volume: \`${volSpark}\``)
+        if (stepSpark) L.push(`    - Steps:  \`${stepSpark}\``)
+      }
+    }
     L.push('')
   }
 

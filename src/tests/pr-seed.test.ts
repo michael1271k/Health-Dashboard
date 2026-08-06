@@ -150,7 +150,7 @@ describe('2026-08-02 — an asserted session inside live detection', () => {
     cand('Incline DB Press', 1, 35, 12), cand('Incline DB Press', 2, 40, 10), cand('Incline DB Press', 3, 40, 8),
     cand('Lat Pulldown', 1, 47, 12), cand('Lat Pulldown', 2, 47, 12), cand('Lat Pulldown', 3, 47, 10),
     cand('Chest Press (Machine)', 1, 37.5, 12), cand('Chest Press (Machine)', 2, 40, 8, 'failure'),
-    cand('Seated Cable Row', 1, 42.5, 12), cand('Seated Cable Row', 2, 42.5, 13),
+    cand('Seated Cable Row (V-Grip)', 1, 42.5, 12), cand('Seated Cable Row (V-Grip)', 2, 42.5, 13),
     cand('Pec Deck', 1, 50, 15), cand('Pec Deck', 2, 50, 11),
     cand('Straight-Arm Pulldown', 1, 16.25, 15), cand('Straight-Arm Pulldown', 2, 16.25, 12), cand('Straight-Arm Pulldown', 3, 15, 11),
     cand('Face Pull', 1, 16.25, 15), cand('Face Pull', 2, 15, 16), cand('Face Pull', 3, 15, 15),
@@ -160,7 +160,7 @@ describe('2026-08-02 — an asserted session inside live detection', () => {
   // identical under both histories.
   const REST: BaselineSetRow[] = [
     ...[[37.5, 12], [37.5, 12], [35, 12]].map(([w, r]) => ({ key: 'Chest Press (Machine)', weightKg: w, reps: r })),
-    ...[[42.5, 12], [42.5, 12]].map(([w, r]) => ({ key: 'Seated Cable Row', weightKg: w, reps: r })),
+    ...[[42.5, 12], [42.5, 12]].map(([w, r]) => ({ key: 'Seated Cable Row (V-Grip)', weightKg: w, reps: r })),
     ...[[50, 15], [52.5, 9]].map(([w, r]) => ({ key: 'Pec Deck', weightKg: w, reps: r })),
     ...[[16.25, 15], [16.25, 11], [15, 11]].map(([w, r]) => ({ key: 'Straight-Arm Pulldown', weightKg: w, reps: r })),
     ...[[15, 14], [16.25, 15], [15, 15]].map(([w, r]) => ({ key: 'Face Pull', weightKg: w, reps: r })),

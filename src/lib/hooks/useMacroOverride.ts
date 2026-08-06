@@ -18,6 +18,13 @@ export interface MacroValues {
 const CASCADE_KEYS: string[][] = [
   ['today'], ['nutrition_entries'], ['daily_logs'], ['daily_scores'], ['coach'], ['trends'],
   ['day_vault'], ['continuum'], ['weekly_review'], ['fuel_force_session'], ['muscle_analytics'],
+  // The weekly export reads `nutrition_entries` for every calorie and macro it
+  // prints, and caches the rendered markdown for 60 s. Without this key, editing
+  // a day's intake and immediately tapping "Export Week" produced a payload
+  // built from the numbers the edit had just replaced — the one failure mode a
+  // manual override exists to prevent, and invisible because the string looks
+  // perfectly well-formed.
+  ['weekly_export'],
 ]
 
 /**

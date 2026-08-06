@@ -160,8 +160,8 @@
     "semantic_hash": "6244657175fd749de647871bd554b5b1"
   },
   "public/sw.js": {
-    "mtime": 1785936749.6126301,
-    "ast_hash": "30808ed7094956f26f0edfd599f80d9d",
+    "mtime": 1786005425.504674,
+    "ast_hash": "5ed59b12ab590ec76e80bcd0366a63ce",
     "semantic_hash": ""
   },
   "scripts/generate-icons.mjs": {
@@ -335,8 +335,8 @@
     "semantic_hash": ""
   },
   "src/components/charts/VolumeChart.tsx": {
-    "mtime": 1785573891.4227183,
-    "ast_hash": "4829255f1ab5aeb540bf0c50741d3025",
+    "mtime": 1786004921.7530928,
+    "ast_hash": "773cfa57dcfcfe8444d2038de95b8a96",
     "semantic_hash": ""
   },
   "src/components/command-center/CoachHeaderCard.tsx": {
@@ -790,8 +790,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useCharts.ts": {
-    "mtime": 1785786049.8493648,
-    "ast_hash": "52d6158db2f4778280fb729eea3159a4",
+    "mtime": 1786004930.7786715,
+    "ast_hash": "8f6c8e4d9d6e13aac8390eed4b72b4e5",
     "semantic_hash": ""
   },
   "src/lib/hooks/useContinuum.ts": {
@@ -945,8 +945,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useWeeklyLoop.ts": {
-    "mtime": 1785936286.475358,
-    "ast_hash": "852c8c8025071ae33f46df1226161e0f",
+    "mtime": 1786005214.8134217,
+    "ast_hash": "87a51a9ad0ab8c9b8a0217070b735c76",
     "semantic_hash": ""
   },
   "src/lib/hooks/useWeeklyVolume.ts": {
@@ -1030,8 +1030,8 @@
     "semantic_hash": ""
   },
   "src/lib/reports/weeklyExport.ts": {
-    "mtime": 1785935927.3725078,
-    "ast_hash": "dd6ff7644d60a6d25d8cc953c6b114ef",
+    "mtime": 1786005095.7315009,
+    "ast_hash": "26d849d9bcb77ecb6f9e0e7653cbaa80",
     "semantic_hash": ""
   },
   "src/lib/schedule/overrides.ts": {
@@ -1125,8 +1125,8 @@
     "semantic_hash": ""
   },
   "src/lib/training/landmarks.ts": {
-    "mtime": 1785504934.5804064,
-    "ast_hash": "dda49f96e510be832fd428a5193efc0c",
+    "mtime": 1786004962.9523532,
+    "ast_hash": "e6412735223f2c2cfb6c02c1a7a1a8de",
     "semantic_hash": ""
   },
   "src/lib/types/workout.ts": {
@@ -1245,9 +1245,9 @@
     "semantic_hash": ""
   },
   "src/tests/landmarks.test.ts": {
-    "mtime": 1784897420.1986516,
-    "ast_hash": "5856b1727253fe2e0c3dfa8672c4e5d3",
-    "semantic_hash": "5856b1727253fe2e0c3dfa8672c4e5d3"
+    "mtime": 1786005369.2529814,
+    "ast_hash": "6f1d68d754a25ab0b1238452d405abf5",
+    "semantic_hash": ""
   },
   "src/tests/logger.test.ts": {
     "mtime": 1784897420.2003949,
@@ -1270,8 +1270,8 @@
     "semantic_hash": "e4b26b0d5d7e6aee8d151a8e169c63ab"
   },
   "src/tests/program.test.ts": {
-    "mtime": 1785749025.2459471,
-    "ast_hash": "99ff5ff8617350ab64036e67daa69355",
+    "mtime": 1786005296.3831725,
+    "ast_hash": "a1c2a613212464b2164264ddade485c7",
     "semantic_hash": ""
   },
   "src/tests/reports-schema.test.ts": {
@@ -1325,8 +1325,8 @@
     "semantic_hash": "5dcb592b6e235d90eaffe401278184bd"
   },
   "src/tests/weekly-loop.test.ts": {
-    "mtime": 1785936455.080076,
-    "ast_hash": "c99ec2a1a5793360a6fecd1c493a9946",
+    "mtime": 1786005342.9544742,
+    "ast_hash": "331a5e86e537a5a1fd8214596c7c8887",
     "semantic_hash": ""
   },
   "src/tests/weigh-in.test.ts": {

@@ -123,7 +123,10 @@ export const SEEDED_PRS: readonly SeededPr[] = [
   { date: '2026-07-28', exercise: 'Single Arm Lateral Raise (Cable)', setNumber: 1, weightKg: 5, reps: 15, axes: ['volume', 'e1rm'] },
   { date: '2026-07-28', exercise: 'Cable Overhead Extension', setNumber: 1, weightKg: 11.25, reps: 15, axes: ['volume', 'e1rm'] },
   // ── Jul 30 · Upper B ──
-  { date: '2026-07-30', exercise: 'Seated Cable Row', setNumber: 2, weightKg: 42.5, reps: 10, axes: ['weight', 'volume', 'e1rm'] },
+  // 07-30 is Upper B — the WIDE-BAR row. Renamed with the split (2026-08-06);
+  // the match is strict on name, so leaving it bare would drop three asserted
+  // records on the floor.
+  { date: '2026-07-30', exercise: 'Seated Cable Row (Wide Grip)', setNumber: 2, weightKg: 42.5, reps: 10, axes: ['weight', 'volume', 'e1rm'] },
   // ── Jul 31 · Legs & Core B ──
   { date: '2026-07-31', exercise: 'Hip Thrust (Machine)', setNumber: 2, weightKg: 27.5, reps: 13, axes: ['volume', 'e1rm'] },
   { date: '2026-07-31', exercise: 'Side Plank', setNumber: 1, weightKg: 0, reps: 58, axes: ['reps'] },

@@ -33,10 +33,28 @@ export const EXERCISE_ALIASES: Record<string, string> = {
   'machine chest press': 'Chest Press (Machine)',
   'leg press horizontal': 'Leg Press',
   'leg press horizontal (machine)': 'Leg Press',
-  'seated cable row (v-grip)': 'Seated Cable Row',
-  'seated cable row (v grip)': 'Seated Cable Row',
-  'seated cable row - bar wide grip': 'Seated Cable Row',
-  'wide-grip cable row': 'Seated Cable Row',
+  // ── SEATED CABLE ROW IS THE ONE EXCEPTION, carved back out 2026-08-06 ──
+  // The machine merges above stand: on a chest press or a leg press the grip is
+  // a cue and the movement is identical. The cable row is not that case, and
+  // folding it in with them cost a real record.
+  //
+  // The two grips are programmed as different lifts on different days — V-grip
+  // on Upper A (Sunday, wk1 38.5 kg, a close neutral pull), wide bar on Upper B
+  // (Thursday, wk1 35 kg, an upper-back pull) — and the logs show two clean,
+  // non-overlapping load ladders: Upper A sat at 42.5 kg from its first session,
+  // Upper B climbed 35 → 42.5. Sharing one row meant the Sunday ladder set the
+  // bar for the Thursday one, so 2026-08-06's 42.5 × 11 (467.5 kg, 58.1 e1RM —
+  // a best against every wide-bar set ever logged) was judged against Sunday's
+  // 42.5 × 13 and lost both axes.
+  //
+  // These aliases now RESOLVE THE VARIANT rather than erasing it. The bare name
+  // stays a valid third identity for the PPL legacy plan, which never logged it.
+  'seated cable row (v grip)': 'Seated Cable Row (V-Grip)',
+  'seated cable row v-grip': 'Seated Cable Row (V-Grip)',
+  'seated cable row - v-bar': 'Seated Cable Row (V-Grip)',
+  'seated cable row - bar wide grip': 'Seated Cable Row (Wide Grip)',
+  'seated cable row (wide bar)': 'Seated Cable Row (Wide Grip)',
+  'wide-grip cable row': 'Seated Cable Row (Wide Grip)',
 
   // ── Same station, two names (merged 2026-08-02) ──
   // `Cable Lateral Raise` (Delts & Arms) and `Single Arm Lateral Raise (Cable)`

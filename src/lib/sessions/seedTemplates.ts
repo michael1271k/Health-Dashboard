@@ -22,7 +22,7 @@ export const SEED_TEMPLATES: Record<string, SeedTemplate> = {
     exercises: [
       { name: 'Chest Press (Machine)', muscles: ['chest', 'triceps'], sets: [{ weightKg: 35, reps: 12 }, { weightKg: 37.5, reps: 12 }, { weightKg: 37.5, reps: 12 }] },
       { name: 'Neutral-Grip Lat Pulldown', muscles: ['back'], sets: [{ weightKg: 45, reps: 12 }, { weightKg: 45, reps: 12 }] },
-      { name: 'Seated Cable Row', muscles: ['back'], sets: [{ weightKg: 35, reps: 12 }, { weightKg: 35, reps: 12 }] },
+      { name: 'Seated Cable Row (Wide Grip)', muscles: ['back'], sets: [{ weightKg: 35, reps: 12 }, { weightKg: 35, reps: 12 }] },
       { name: 'Single Arm Cable Crossover', muscles: ['chest'], sets: [{ weightKg: 7.5, reps: 12 }, { weightKg: 7.5, reps: 15 }] },
       { name: 'Single Arm Lateral Raise (Cable)', muscles: ['shoulders'], sets: [{ weightKg: 3.75, reps: 16 }, { weightKg: 3.75, reps: 15 }, { weightKg: 2.5, reps: 20 }] },
       { name: 'Single Arm Triceps Pushdown (Cable)', muscles: ['triceps'], sets: [{ weightKg: 5, reps: 15 }, { weightKg: 6.25, reps: 14 }] },

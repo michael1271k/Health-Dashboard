@@ -7,9 +7,9 @@ import { logicalTodayISO } from '@/lib/utils/day'
 import {
   buildWeeklyExport, trendTotals,
   type ExportDay, type ExportSession, type ExportExercise, type ExportDoms, type ExportBodyComp,
-  type ExportCardio, type WeeklyExportInput,
+  type ExportCardio, type WeeklyExportInput, type LedgerWeek,
 } from '@/lib/reports/weeklyExport'
-import { weekLabelOf } from '@/lib/reports/weekNumber'
+import { weekLabelOf, WEEK0_START } from '@/lib/reports/weekNumber'
 import { sessionVolumeKg } from '@/lib/sessions/volume'
 import { activeProgram, activePhase, eraForDate, isTrainingDay } from '@/lib/programs'
 import { repWindowFor } from '@/lib/training/ceilings'
@@ -159,6 +159,83 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     // the ratio is absent, and every other body metric still prints.
     whr: (whr.error ? [] : (whr.data ?? [])) as unknown as Array<{ date: string; estimated_waist_to_hip_ratio: number | null }>,
   }
+}
+
+/**
+ * EVERY week of the programme, aggregated for the closing ledger.
+ *
+ * Five narrow selects over the whole span, bucketed by week in memory — so the
+ * cost is FLAT in the number of weeks. A per-week fetch would be five round
+ * trips × however long the programme has run, and that arithmetic is precisely
+ * why the original "vs previous week" block was deleted rather than extended.
+ *
+ * Every week runs through the SAME `trendTotals` as the current week's own
+ * figures. Two aggregation paths for one table is how a trend starts lying.
+ */
+async function fetchTrendLedger(firstWeekStart: string, lastWeekStart: string): Promise<LedgerWeek[]> {
+  const lastEnd = isoAddDays(lastWeekStart, 6)
+  const startInstant = new Date(`${firstWeekStart}T00:00:00`).toISOString()
+  const endInstant = new Date(`${isoAddDays(lastEnd, 1)}T00:00:00`).toISOString()
+
+  const [logs, nutrition, sessions, water, cardio] = await Promise.all([
+    supabase.from('daily_logs').select('date, weight_kg, steps, water_ml')
+      .gte('date', firstWeekStart).lte('date', lastEnd),
+    supabase.from('nutrition_entries').select('date, calories')
+      .eq('meal_type', 'daily').gte('date', firstWeekStart).lte('date', lastEnd),
+    supabase.from('workout_sessions').select('started_at, total_volume_kg, notes')
+      .gte('started_at', startInstant).lt('started_at', endInstant),
+    supabase.from('water_intake').select('date, amount_ml')
+      .gte('date', firstWeekStart).lte('date', lastEnd),
+    supabase.from('cardio_logs').select('date, duration_min')
+      .gte('date', firstWeekStart).lte('date', lastEnd),
+  ])
+
+  // The generated Supabase types narrow a partial select to `never`, so rows are
+  // cast through the same `Record` shape `fetchRange` uses.
+  const rows = (data: unknown) => (data ?? []) as Array<{ date: string } & Record<string, number | null>>
+  const logByDate = new Map(rows(logs.data).map((r) => [r.date, r]))
+  const kcalByDate = new Map(rows(nutrition.data).map((r) => [r.date, r]))
+  const waterByDate = new Map<string, number>()
+  for (const w of (water.data ?? []) as Array<{ date: string; amount_ml: number }>) {
+    waterByDate.set(w.date, (waterByDate.get(w.date) ?? 0) + w.amount_ml)
+  }
+  const cardioByDate = new Map<string, number[]>()
+  for (const c of (cardio.error ? [] : (cardio.data ?? [])) as Array<{ date: string; duration_min: number | null }>) {
+    const a = cardioByDate.get(c.date) ?? []
+    if (c.duration_min != null) a.push(c.duration_min)
+    cardioByDate.set(c.date, a)
+  }
+  const volByDate = new Map<string, number[]>()
+  for (const s of (sessions.data ?? []) as Array<{ started_at: string; total_volume_kg: number | null; notes: string | null }>) {
+    // Seed rows are scaffolding, not training — the same filter the charts use.
+    if (s.notes?.startsWith('__seed_') || s.total_volume_kg == null) continue
+    const date = s.started_at.slice(0, 10)
+    const a = volByDate.get(date) ?? []
+    a.push(s.total_volume_kg)
+    volByDate.set(date, a)
+  }
+
+  const out: LedgerWeek[] = []
+  for (let ws = firstWeekStart; ws <= lastWeekStart; ws = isoAddDays(ws, 7)) {
+    const dates = Array.from({ length: 7 }, (_, i) => isoAddDays(ws, i))
+    const days = dates.map((date, i) => ({
+      date, weekdayLabel: WD[i], isTrainingDay: isTrainingDay(date),
+      weightKg: logByDate.get(date)?.weight_kg ?? null,
+      calories: kcalByDate.get(date)?.calories ?? null,
+      proteinG: null, carbsG: null, fatG: null,
+      steps: logByDate.get(date)?.steps ?? null,
+      distanceM: null, trainingMin: null, sleepMin: null, deepMin: null, remMin: null,
+      restingHr: null, hrvMs: null,
+      waterMl: waterByDate.get(date) ?? logByDate.get(date)?.water_ml ?? null,
+      supplementsTaken: null, activeKcal: null, bmrKcal: null, weighInSkipReason: null,
+    } satisfies ExportDay))
+    const weekSessions = dates.flatMap((d) =>
+      (volByDate.get(d) ?? []).map((v) => ({ volumeKg: v } as ExportSession)))
+    const weekCardio = dates.flatMap((d) =>
+      (cardioByDate.get(d) ?? []).map((m) => ({ durationMin: m } as ExportCardio)))
+    out.push({ label: weekLabelOf(ws), weekStart: ws, totals: trendTotals(days, weekSessions, weekCardio) })
+  }
+  return out
 }
 
 type RangeData = Awaited<ReturnType<typeof fetchRange>>
@@ -495,9 +572,11 @@ export function useWeeklyExport(weekStart = weekStartOf(logicalTodayISO()), enab
     staleTime: 60_000,
     queryFn: async (): Promise<string> => {
       const prevStart = isoAddDays(weekStart, -7)
-      const [cur, prevRange, goalsRes, customsRes] = await Promise.all([
+      const [cur, prevRange, ledger, goalsRes, customsRes] = await Promise.all([
         fetchRange(weekStart, weekEnd),
         fetchRange(prevStart, isoAddDays(prevStart, 6)),
+        // Week 0 to the exported week — the whole programme, five selects.
+        fetchTrendLedger(weekStartOf(WEEK0_START), weekStart),
         supabase.from('user_goals').select('calorie_goal, protein_goal_g, steps_goal, sleep_goal_hours').maybeSingle(),
         supabase.from('custom_supplements').select('id, name, dose, color, form, time, schedule'),
       ])
@@ -516,10 +595,7 @@ export function useWeeklyExport(weekStart = weekStartOf(logicalTodayISO()), enab
 
       return buildWeeklyExport({
         ...weekPayload(weekStart, cur, goals, customs, phase),
-        // Both sides of the comparison run through the SAME `trendTotals` over
-        // the SAME shaped week. Two aggregation paths for one table is how a
-        // trend starts lying.
-        previous: trendTotals(prev.days, prev.sessions, prev.cardio ?? []),
+        ledger,
         previousWeekMarkdown,
       })
     },

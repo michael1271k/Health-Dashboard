@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   buildWeeklyExport, weeklySummary, trendTotals,
   type WeeklyExportInput, type ExportDay, type ExportSession, type ExportCardio,
+  type LedgerWeek, type ExportBodyComp, sparkline,
 } from '@/lib/reports/weeklyExport'
 import { stallProtocol, rollingAverage, type DayPoint, type SessionPoint } from '@/lib/coach/insights'
 
@@ -507,11 +508,11 @@ describe('weeklySummary', () => {
 })
 
 /**
- * The closing week-over-week block. Deliberately the ONE table in a file whose
- * whole design rule is "no tables": this is two aligned columns of the same six
- * measures, which is exactly what a table is for.
+ * The closing CUMULATIVE LEDGER — one row per week, oldest first. Deliberately
+ * the ONE table in a file whose whole design rule is "no tables": a programme's
+ * trajectory is a column read downwards, which is exactly what a table is for.
  */
-describe('week-over-week trends', () => {
+describe('week-over-week ledger', () => {
   const day = (o: Partial<ExportDay>): ExportDay => ({
     date: '2026-07-19', weekdayLabel: 'Sun', isTrainingDay: false, weightKg: null,
     calories: null, proteinG: null, carbsG: null, fatG: null, steps: null, distanceM: null,
@@ -534,6 +535,11 @@ describe('week-over-week trends', () => {
     calorieGoal: 1955, proteinGoalG: 170, stepsGoal: 10000, sleepGoalHours: 8,
     days: [], sessions: [], volumeByMuscle: [], doms: [], cardio: [], ...o,
   })
+  /** A ledger row from one week's worth of days/sessions/cardio. */
+  const week = (
+    label: string, weekStart: string,
+    days: ExportDay[] = [], sessions: ExportSession[] = [], cardio: ExportCardio[] = [],
+  ): LedgerWeek => ({ label, weekStart, totals: trendTotals(days, sessions, cardio) })
 
   describe('trendTotals', () => {
     it('averages only the days that HAVE a reading, and totals the work', () => {
@@ -563,77 +569,110 @@ describe('week-over-week trends', () => {
     })
   })
 
-  it('is skipped entirely when there is no previous week to compare against', () => {
+  it('is skipped entirely when there is no ledger to print', () => {
     expect(buildWeeklyExport(base({ days: [day({ calories: 1800 })] })))
       .not.toMatch(/Week-over-Week/)
   })
 
   it('heads the block with the program and the app’s own week number', () => {
     const out = buildWeeklyExport(base({
-      days: [day({ calories: 1800 })],
-      previous: trendTotals([day({ calories: 1900 })], [], []),
+      ledger: [week('Week 2', '2026-07-26'), week('Week 3', '2026-08-02')],
     }))
     expect(out).toMatch(/## Week-over-Week Trends \(Helix Cut · Week 3\)/)
-    // …and the comparison column is labelled with the week it actually is.
-    expect(out).toMatch(/\| +Week 2 \|/)
   })
 
-  it('closes the export — the evidence is read before the verdict', () => {
+  /**
+   * THE POINT OF THE PIVOT. Two columns answer "what changed since Sunday";
+   * a programme is a trajectory, and every week has to be on it.
+   */
+  it('gives EVERY week its own row, oldest first', () => {
     const out = buildWeeklyExport(base({
-      days: [day({ calories: 1800 })],
+      ledger: [
+        week('Week 0', '2026-07-12', [day({ calories: 2100 })]),
+        week('Week 1', '2026-07-19', [day({ calories: 2000 })]),
+        week('Week 2', '2026-07-26', [day({ calories: 1900 })]),
+        week('Week 3', '2026-08-02', [day({ calories: 1800 })]),
+      ],
+    }))
+    const rows = out.split('\n').filter((l) => l.startsWith('|'))
+    // Header, alignment rule, four weeks.
+    expect(rows).toHaveLength(6)
+    expect(rows[2]).toMatch(/^\| Week 0 /)
+    expect(rows[5]).toMatch(/^\| Week 3 /)
+    // Chronological, not reverse — the trend is read downwards.
+    expect(out.indexOf('| Week 0')).toBeLessThan(out.indexOf('| Week 3'))
+  })
+
+  it('closes the export — the evidence is read before the trend', () => {
+    const out = buildWeeklyExport(base({
       sessions: [session(8000)],
-      previous: trendTotals([day({ calories: 1900 })], [session(7000)], []),
+      ledger: [week('Week 3', '2026-08-02')],
     }))
     expect(out.indexOf('## Days')).toBeLessThan(out.indexOf('## Week-over-Week'))
     expect(out.indexOf('## Sessions')).toBeLessThan(out.indexOf('## Week-over-Week'))
   })
 
-  it('prints all six metrics with a signed delta and a percentage', () => {
+  it('carries one column per metric', () => {
     const out = buildWeeklyExport(base({
-      days: [day({ calories: 1800, steps: 9000, weightKg: 64.0, waterMl: 3000 })],
-      sessions: [session(8000)],
-      cardio: [walk(30)],
-      previous: trendTotals(
-        [day({ calories: 2000, steps: 8000, weightKg: 65.0, waterMl: 2000 })],
-        [session(10000)], [walk(20)]),
+      ledger: [week('Week 3', '2026-08-02',
+        [day({ calories: 1800, steps: 9000, weightKg: 64.0, waterMl: 3000 })],
+        [session(8000)], [walk(30)])],
     }))
-    for (const m of ['Calories (avg/day)', 'Training volume (total)', 'Steps (avg/day)',
-      'Cardio (total)', 'Water (avg/day)', 'Body weight (avg)']) {
-      expect(out).toContain(m)
+    for (const c of ['Week', 'Kcal/day', 'Volume kg', 'Steps/day', 'Cardio min', 'Water L/day', 'Weight kg']) {
+      expect(out).toContain(c)
     }
-    // −200 kcal on 2000 is −10.0%; a true minus sign, not a hyphen.
-    expect(out).toMatch(/−200 kcal \(−10\.0%\)/)
-    expect(out).toMatch(/\+1000 \(\+12\.5%\)/)          // steps
-    expect(out).toMatch(/−1\.0 kg \(−1\.5%\)/)          // body weight
-    expect(out).toMatch(/\+10 min \(\+50\.0%\)/)        // cardio
-  })
-
-  it('says "no change" rather than printing a rounding artefact', () => {
-    const out = buildWeeklyExport(base({
-      days: [day({ calories: 1800 })],
-      previous: trendTotals([day({ calories: 1800 })], [], []),
-    }))
-    expect(out).toMatch(/no change/)
-    expect(out).not.toMatch(/\+0 kcal/)
-  })
-
-  it('leaves the delta blank when either side has no reading — never 0', () => {
-    const out = buildWeeklyExport(base({
-      days: [day({ calories: 1800 })],
-      previous: trendTotals([day({})], [], []),
-    }))
-    // The row still prints; its previous cell and delta are em-dashes.
-    expect(out).toMatch(/\| Calories \(avg\/day\) +\| +1800 kcal \| +— \| +— \| — \|/)
+    expect(out).toMatch(/\| +1800 \| +8000 \| +9000 \| +30 \| +3\.00 \| +64\.0 \|/)
   })
 
   /**
-   * DIRECTION, NOT VERDICT. Whether falling calories are progress or a problem
+   * ONE delta column, on bodyweight. A delta beside every metric doubles the
+   * table and buries the series in its own first differences — the trajectory
+   * IS the table now.
+   */
+  it('quotes the bodyweight delta against the row above, to two places', () => {
+    const out = buildWeeklyExport(base({
+      ledger: [
+        week('Week 2', '2026-07-26', [day({ weightKg: 65.0 })]),
+        week('Week 3', '2026-08-02', [day({ weightKg: 64.55 })]),
+      ],
+    }))
+    // A true minus sign, not a hyphen. 0.45 must not round to 0.5 — a third of
+    // the week's whole loss.
+    expect(out).toMatch(/−0\.45/)
+    // The first row has nothing above it, so it has no delta. (`| Week ` alone
+    // would also catch the header, whose own first cell is the word "Week".)
+    const rows = out.split('\n').filter((l) => /^\| Week \d/.test(l))
+    expect(rows[0]).toMatch(/\| +— \| — \|$/)
+  })
+
+  it('prints a flat week as 0.00, never as a blank', () => {
+    const out = buildWeeklyExport(base({
+      ledger: [
+        week('Week 2', '2026-07-26', [day({ weightKg: 64.2 })]),
+        week('Week 3', '2026-08-02', [day({ weightKg: 64.2 })]),
+      ],
+    }))
+    expect(out).toMatch(/0\.00/)
+    expect(out).toMatch(/→/)
+  })
+
+  it('leaves a cell blank when the measure was never recorded — never 0', () => {
+    const out = buildWeeklyExport(base({ ledger: [week('Week 3', '2026-08-02', [day({})])] }))
+    const row = out.split('\n').find((l) => l.startsWith('| Week 3'))!
+    expect(row).not.toMatch(/\b0\b/)
+    expect(row).toMatch(/—/)
+  })
+
+  /**
+   * DIRECTION, NOT VERDICT. Whether falling weight is progress or a problem
    * depends on the phase; this file exports raw data and lets the reader judge.
    */
   it('uses neutral arrows and never labels a move good or bad', () => {
     const out = buildWeeklyExport(base({
-      days: [day({ calories: 1800, weightKg: 64 })],
-      previous: trendTotals([day({ calories: 2000, weightKg: 65 })], [], []),
+      ledger: [
+        week('Week 2', '2026-07-26', [day({ weightKg: 65 })]),
+        week('Week 3', '2026-08-02', [day({ weightKg: 64 })]),
+      ],
     }))
     expect(out).toMatch(/↓/)
     expect(out).not.toMatch(/\b(good|bad|on track|great)\b/i)
@@ -641,15 +680,16 @@ describe('week-over-week trends', () => {
 
   it('lays the table out so the RAW markdown lines up too', () => {
     const out = buildWeeklyExport(base({
-      days: [day({ calories: 1800 })],
-      previous: trendTotals([day({ calories: 1900 })], [], []),
+      ledger: [
+        week('Week 2', '2026-07-26', [day({ calories: 1900, weightKg: 65 })]),
+        week('Week 3', '2026-08-02', [day({ calories: 1800, weightKg: 64 })]),
+      ],
     }))
     const rows = out.split('\n').filter((l) => l.startsWith('|'))
-    // Header, alignment rule, six metrics.
-    expect(rows).toHaveLength(8)
-    // Every row is the same width — the padding's whole job.
+    // Every row is the same width — the padding's whole job. Arrows and minus
+    // signs are single code points, so they must not skew it.
     expect(new Set(rows.map((r) => [...r].length)).size).toBe(1)
-    // Numbers right-aligned, the metric name left — the alignment row says so.
+    // The week name left, numbers right — the alignment row says so.
     expect(rows[1]).toMatch(/^\|:-+-\|-+:\|/)
   })
 })
@@ -842,5 +882,161 @@ describe('weekly aggregates · previous-week reference · disclaimer', () => {
       days: [day({ date: '2026-08-04', weekdayLabel: 'Tue', isTrainingDay: false })],
     }))
     expect(out).toMatch(/\*\*Tue 2026-08-04\*\* · Rest · /)
+  })
+})
+
+/**
+ * The InBody / Mass suppression, the effort line and the daily-shape
+ * sparklines — everything added 2026-08-06 so the export neither prints a
+ * fragment as a reading nor makes the reader rebuild a week's shape by hand.
+ */
+describe('body rows, effort and sparklines', () => {
+  const day = (o: Partial<ExportDay>): ExportDay => ({
+    date: '2026-07-19', weekdayLabel: 'Sun', isTrainingDay: false, weightKg: null,
+    calories: null, proteinG: null, carbsG: null, fatG: null, steps: null, distanceM: null,
+    trainingMin: null, sleepMin: null, deepMin: null, remMin: null, restingHr: null,
+    hrvMs: null, waterMl: null, supplementsTaken: null, activeKcal: null, bmrKcal: null,
+    weighInSkipReason: null, ...o,
+  })
+  const session = (o: Partial<ExportSession> = {}): ExportSession => ({
+    date: '2026-07-20', label: 'Upper A', volumeKg: 1000, setCount: null, failureSets: null,
+    durationMin: null, avgBpm: null, caloriesBurned: null, sessionRpe: null,
+    exercises: [], prs: [], ...o,
+  })
+  const body = (o: Partial<ExportBodyComp>): ExportBodyComp => ({
+    date: '2026-07-19', weightKg: null, bmi: null, bodyFatPct: null, musclePercent: null,
+    waterPercent: null, visceralFat: null, bmr: null, boneMineral: null,
+    muscleMassKg: null, fatFreeMassKg: null, fatMassKg: null, proteinMassKg: null,
+    boneMineralKg: null, waterMassKg: null, skeletalMuscleMassKg: null,
+    estimatedWaistToHipRatio: null, ...o,
+  })
+  const base = (o: Partial<WeeklyExportInput> = {}): WeeklyExportInput => ({
+    weekStart: '2026-08-02', weekEnd: '2026-08-08', weekLabel: 'Week 3',
+    programLabel: 'Helix Cut',
+    calorieGoal: 1955, proteinGoalG: 170, stepsGoal: 10000, sleepGoalHours: 8,
+    days: [], sessions: [], volumeByMuscle: [], doms: [], cardio: [], ...o,
+  })
+
+  // ── §1 · no weight, no reading ──
+  it('suppresses InBody/Mass for a body row that has lost its weight', () => {
+    // 2026-08-02 live: a skeletal-muscle figure and a waist:hip ratio, no
+    // weight. Every mass is derived from a bodyweight, so this is a fragment,
+    // and it used to print two lines of twenty em-dashes.
+    const out = buildWeeklyExport(base({
+      days: [day({ date: '2026-08-02', weekdayLabel: 'Sun' })],
+      bodyComp: [body({ date: '2026-08-02', skeletalMuscleMassKg: 26.8, estimatedWaistToHipRatio: 0.8 })],
+    }))
+    expect(out).not.toMatch(/InBody/)
+    expect(out).not.toMatch(/^ +Mass · /m)
+    // The day line still tells the whole truth about the day.
+    expect(out).toMatch(/weight — \[Skip: As Planned\]/)
+  })
+
+  it('still prints both rows the moment a weight is present', () => {
+    const out = buildWeeklyExport(base({
+      days: [day({ date: '2026-08-02', weekdayLabel: 'Sun', weightKg: 64.2 })],
+      bodyComp: [body({ date: '2026-08-02', weightKg: 64.2, bodyFatPct: 17.3, skeletalMuscleMassKg: 26.8 })],
+    }))
+    expect(out).toMatch(/InBody · weight 64\.2 kg/)
+    expect(out).toMatch(/Mass · lean mass — kg · skeletal muscle 26\.8 kg/)
+  })
+
+  it('does not suppress a genuine reading just because some fields are absent', () => {
+    // 2026-07-27 after the manual re-entry: weighed, so it prints — the missing
+    // fields inside it are em-dashes, which is what an em-dash is for.
+    const out = buildWeeklyExport(base({
+      days: [day({ date: '2026-07-27', weekdayLabel: 'Mon', weightKg: 64.5 })],
+      bodyComp: [body({
+        date: '2026-07-27', weightKg: 64.5, bmi: 22.3, bodyFatPct: 17.6, musclePercent: 78,
+        muscleMassKg: 50.31, fatFreeMassKg: 53.15, skeletalMuscleMassKg: 26.6,
+      })],
+    }))
+    expect(out).toMatch(/InBody · weight 64\.5 kg · BMI 22\.3 · BF 17\.6% · muscle 78\.0%/)
+  })
+
+  // ── §5b · effort ──
+  it('averages session effort over the RATED sessions and says how many', () => {
+    const out = buildWeeklyExport(base({
+      sessions: [session({ sessionRpe: 8 }), session({ sessionRpe: 9 }), session({ sessionRpe: null })],
+    }))
+    expect(out).toMatch(/- Average workout effort: 8\.5\/10 CR10 across 2 rated sessions/)
+  })
+
+  it('says "not rated" rather than scoring an unrated week 0', () => {
+    const out = buildWeeklyExport(base({ sessions: [session({ sessionRpe: null })] }))
+    expect(out).toMatch(/- Average workout effort: not rated/)
+  })
+
+  it('does not let an unrated session drag the mean down', () => {
+    const out = buildWeeklyExport(base({
+      sessions: [session({ sessionRpe: 9 }), session({ sessionRpe: null })],
+    }))
+    expect(out).toMatch(/9\.0\/10 CR10 across 1 rated session\b/)
+  })
+
+  // ── §5a · sparklines ──
+  describe('sparkline', () => {
+    it('scales from ZERO so a flat week looks flat', () => {
+      // 11.2k/11.4k/11.7k steps is a flat week. Scaled from the minimum it
+      // would read ▁▄█ — the classic way a sparkline lies.
+      const s = sparkline([11200, 11400, 11700])
+      expect(new Set(s).size).toBe(1)
+      expect(s).toBe('███')
+    })
+
+    it('renders a real range across the full eight levels', () => {
+      expect(sparkline([0, 100])).toBe('▁█')
+    })
+
+    it('marks a missing day distinctly from a small one', () => {
+      const s = sparkline([1000, null, 0])
+      expect(s[1]).toBe('·')
+      expect(s[2]).toBe('▁')
+      expect(s[1]).not.toBe(s[2])
+    })
+
+    it('is empty when nothing was logged at all', () => {
+      expect(sparkline([null, null])).toBe('')
+    })
+
+    it('survives an all-zero week without dividing by zero', () => {
+      expect(sparkline([0, 0, 0])).toBe('▁▁▁')
+    })
+
+    it('emits exactly one glyph per input day', () => {
+      expect([...sparkline([1, null, 3, 4, null, 6, 7])]).toHaveLength(7)
+    })
+  })
+
+  it('draws the week’s shape beside the totals it summarises', () => {
+    const out = buildWeeklyExport(base({
+      days: [
+        day({ date: '2026-08-02', weekdayLabel: 'Sun', steps: 12000 }),
+        day({ date: '2026-08-03', weekdayLabel: 'Mon', steps: 6000 }),
+        day({ date: '2026-08-04', weekdayLabel: 'Tue', steps: null }),
+      ],
+      sessions: [session({ date: '2026-08-02', volumeKg: 4000 })],
+    }))
+    expect(out).toMatch(/- \*\*Daily shape\*\* \(SMT, scaled from zero/)
+    // A rest day is a REAL zero for volume — no training happened.
+    expect(out).toMatch(/- Volume: `█▁▁`/)
+    // A missing step count is a GAP: the day may well have been walked.
+    expect(out).toMatch(/- Steps:  `█▅·`/)
+  })
+
+  it('sums a double-session day into ONE volume bar', () => {
+    const out = buildWeeklyExport(base({
+      days: [
+        day({ date: '2026-08-02', weekdayLabel: 'Sun' }),
+        day({ date: '2026-08-03', weekdayLabel: 'Mon' }),
+      ],
+      sessions: [
+        session({ date: '2026-08-02', volumeKg: 1000 }),
+        session({ date: '2026-08-02', volumeKg: 1000 }),
+        session({ date: '2026-08-03', volumeKg: 2000 }),
+      ],
+    }))
+    // Both days did 2000 kg — the bars must match, or the shape is a lie.
+    expect(out).toMatch(/- Volume: `██`/)
   })
 })
