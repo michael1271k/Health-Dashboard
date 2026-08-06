@@ -20,6 +20,7 @@ import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { useDoubleTap } from '@/lib/utils/doubleTap'
 import { MacroOverrideSheet } from '@/components/nutrition/MacroOverrideSheet'
 import { phaseDisplay } from '@/lib/nutrition/phase'
+import { tdeeKcal, tefKcal, tdeeBreakdown } from '@/lib/nutrition/energy'
 import { ERA_META, eraForDate, scheduleDayFor, activeProgram } from '@/lib/programs'
 import { displayWeight, weightUnit, fmtVolume } from '@/lib/utils/units'
 import { logicalTodayISO } from '@/lib/utils/day'
@@ -186,6 +187,8 @@ export default function DailyNexusPage() {
   const n = data?.nutrition
   const score = data?.score?.score ?? null
   const battery = data?.score?.battery_pct ?? null
+  // BMR + active + TEF. Null unless all three exist — see nutrition/energy.ts.
+  const tdee = tdeeKcal(log?.bmr, log?.active_energy, n?.calories)
 
   const pretty = new Date(date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
 
@@ -298,6 +301,26 @@ export default function DailyNexusPage() {
             ) : <span className="text-[11px] text-muted ml-auto">Double-tap to add</span>}
           </div>
         </ZoneRow>
+        {/* Energy balance — intake against the day's REAL cost.
+            TDEE = BMR + active + TEF. The thermic effect of food used to be
+            missing everywhere, which understated the deficit by ~200 kcal every
+            single day — a bias that never averages out because it always leans
+            the same way. The breakdown is printed rather than hidden behind a
+            tooltip precisely so the TEF term is visible as expenditure.
+            Renders only when all three components exist; a missing one would
+            otherwise be silently read as zero. */}
+        {tdee != null && n != null && (
+          <ZoneRow className="flex items-center gap-2">
+            <span className="text-[10px] text-muted shrink-0">Balance</span>
+            <span className="helix-num text-[11px] font-bold shrink-0"
+              style={{ color: n.calories - tdee < 0 ? EMERALD : OXIDE }}>
+              {n.calories - tdee < 0 ? '−' : '+'}{Math.abs(Math.round(n.calories - tdee)).toLocaleString()} kcal
+            </span>
+            <span className="text-[10px] text-muted ml-auto truncate text-right">
+              TDEE {Math.round(tdee).toLocaleString()} · {tdeeBreakdown(log?.bmr ?? 0, log?.active_energy ?? 0, tefKcal(n.calories) ?? 0)}
+            </span>
+          </ZoneRow>
+        )}
         {/* Water — the at-a-glance readout AND the way to the full helix.
             This bar and WaterHelix print the identical number and neither takes
             input (hydration arrives from HealthKit dietary water), so one of

@@ -63,7 +63,12 @@ export function WeekToDateTargets() {
                 )}
               </div>
               {m.target > 0 && m.sets < m.target && (
-                <p className="text-[9px] text-muted">{m.target - m.sets} to target</p>
+                // Rounded: assisting muscles pay half sets, and 11 − 10.7 is
+                // 0.2999999999999998 in float, not 0.3.
+                <p className="text-[9px] text-muted">
+                  {Math.round((m.target - m.sets) * 10) / 10} to target
+                  {m.indirectSets > 0 ? ` · ${m.indirectSets} indirect` : ''}
+                </p>
               )}
             </div>
           )

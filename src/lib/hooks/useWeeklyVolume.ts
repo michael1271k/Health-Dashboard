@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase/client'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { weekStartOf, isoAddDays } from '@/lib/utils/week'
 import { eraForDate, activePhase, getActiveProgramId } from '@/lib/programs'
-import { lookupMuscles } from '@/lib/exercises/muscleMap'
+import { resolveMovers } from '@/lib/exercises/muscleMap'
 import { weeklyVolumeByMuscle, type MuscleVolume, type ProgramPhase } from '@/lib/training/landmarks'
 import { usePlanPhaseGoals } from '@/lib/hooks/usePlanPhaseGoals'
 
@@ -82,12 +82,12 @@ export function useWeeklyVolume(
         // week would otherwise mix PPL-legacy sets into a HELIX total).
         .filter((r) => eraForDate(r.workout_sessions.started_at.slice(0, 10)) === eraForDate(weekStart))
         .map((r) => ({
-          // DIRECT SETS ONLY. `muscle_groups` is [...primary, ...secondary], so
-          // counting all of it credited biceps for every back row (Biceps 22/8).
-          // Resolve the PRIMARY mover from the exercise name; fall back to the
-          // first tag, which is primary by construction of muscleGroupsFor().
-          muscleTokens: lookupMuscles(r.exercises.name)?.primary
-            ?? (r.exercises.muscle_groups ?? []).slice(0, 1),
+          // Primary AND secondary movers, kept apart so the accumulator can pay
+          // them differently — a full set to the muscle the movement trains, a
+          // half set to the ones that assist. Counting the flat `muscle_groups`
+          // array put Biceps at 22 against a target of 8; counting only the
+          // primary hid every glute the RDLs trained. See SECONDARY_SET_CREDIT.
+          ...resolveMovers(r.exercises.name, r.exercises.muscle_groups),
           dedupeKey: r.pair_id ?? r.id, // L/R sub-sets (shared pair_id) count once
         }))
 

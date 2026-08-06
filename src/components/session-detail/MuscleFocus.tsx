@@ -13,6 +13,9 @@ import { EMBER, MUTED } from '@/lib/theme/palette'
  * Analytics tab (it's a weekly view, not a per-session one, and took too much
  * room on the summary). See `WeekToDateTargets`.
  */
+/** Half sets are the smallest real unit; anything finer is float noise. */
+const round1 = (v: number): number => Math.round(v * 10) / 10
+
 export function MuscleFocus({ detail }: { detail: SessionDetail }) {
   if (!detail.muscleSets.length) return null
   const maxSets = Math.max(...detail.muscleSets.map((m) => m.sets), 1)
@@ -24,11 +27,14 @@ export function MuscleFocus({ detail }: { detail: SessionDetail }) {
           <Target className="w-4 h-4" style={{ color: EMBER }} aria-hidden="true" /> Muscle Focus
         </h2>
         <span className="text-[10px] uppercase tracking-wide text-muted shrink-0">
-          {detail.muscleSets.reduce((n, m) => n + m.sets, 0)} direct sets
+          {/* Not "direct sets" any more — assisting muscles earn half a set each
+              (SECONDARY_SET_CREDIT), so the total is a weighted count and can
+              land on a half. Summed floats need the round; 11 − 10.7 is not 0.3. */}
+          {round1(detail.muscleSets.reduce((n, m) => n + m.sets, 0))} weighted sets
         </span>
       </div>
 
-      {/* This session's direct-set distribution */}
+      {/* This session's weighted set distribution */}
       <div className="space-y-2">
         {detail.muscleSets.map((m) => {
           const color = MUSCLE_COLOR[m.muscle] ?? MUTED

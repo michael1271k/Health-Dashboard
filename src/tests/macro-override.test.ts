@@ -109,8 +109,9 @@ describe('manual intake override reaches the export', () => {
     const out = buildWeeklyExport(base({
       days: [day({ calories: 1891, bmrKcal: 1517, activeKcal: 911 })],
     }))
-    expect(out).toMatch(/Intake 1891 kcal vs expenditure 2428 kcal/)
-    expect(out).toMatch(/537 kcal DEFICIT/)
+    // 1517 BMR + 911 active + 198.6 TEF = 2626.6.
+    expect(out).toMatch(/Intake 1891 kcal vs expenditure 2627 kcal/)
+    expect(out).toMatch(/736 kcal DEFICIT/)
   })
 
   it('prints a zero-calorie correction as 0, not as "not recorded"', () => {

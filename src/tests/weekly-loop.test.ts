@@ -141,7 +141,10 @@ describe('buildWeeklyExport', () => {
     const out = buildWeeklyExport(input)
     expect(out).toMatch(/Helix Cut/)
     expect(out).toMatch(/Upper A/)
-    expect(out).toMatch(/- Biceps: 4 \/ 8 sets — UNDER/)  // under-target flagged
+    // The export now grades with the app's own `volumeZone` instead of its own
+    // three-way comparison, so it says "building" where the Command Center says
+    // building. 4 of 8 is half the target: short, but not the bottom band.
+    expect(out).toMatch(/- Biceps: 4 \/ 8 sets — building/)
   })
 
   it('nests body composition under the weigh-in day only when supplied', () => {
@@ -745,24 +748,49 @@ describe('weekly aggregates · previous-week reference · disclaimer', () => {
   })
 
   // ── Energy balance ──
-  it('estimates the weekly deficit from BMR + active vs intake', () => {
-    // 1900 in, 1500 + 600 out → 200 under, twice.
+  it('estimates the weekly deficit from BMR + active + TEF vs intake', () => {
+    // 1900 in; out = 1500 BMR + 600 active + 199.5 TEF = 2299.5. Twice.
     const days = [
       day({ date: '2026-07-19', calories: 1900, bmrKcal: 1500, activeKcal: 600 }),
       day({ date: '2026-07-20', calories: 1900, bmrKcal: 1500, activeKcal: 600 }),
     ]
     const out = buildWeeklyExport(base({ days }))
-    expect(out).toMatch(/\*\*Energy balance \(estimated\):\*\* 400 kcal DEFICIT over 2 days/)
-    expect(out).toMatch(/200 kcal\/day under maintenance/)
-    expect(out).toMatch(/Intake 3800 kcal vs expenditure 4200 kcal/)
+    expect(out).toMatch(/\*\*Energy balance \(estimated\):\*\* 799 kcal DEFICIT over 2 days/)
+    expect(out).toMatch(/399 kcal\/day under maintenance/)
+    expect(out).toMatch(/Intake 3800 kcal vs expenditure 4599 kcal/)
+  })
+
+  it('names TEF in the breakdown, and states the rate it used', () => {
+    // The whole point of the term is that it is visible. A TDEE that silently
+    // grew by 200 kcal/day would look like a data error, not a correction.
+    const out = buildWeeklyExport(base({
+      days: [day({ calories: 2000, bmrKcal: 1500, activeKcal: 600 })],
+    }))
+    expect(out).toMatch(/\(BMR 1500 \+ active 600 \+ TEF 210 kcal\/day, averaged\)/)
+    expect(out).toMatch(/TEF is the thermic effect of food, 10\.5% of intake/)
+  })
+
+  it('counts no TEF on a day with no intake — that day is not counted at all', () => {
+    // TEF rides on the intake, so it can never be carried across a gap the way
+    // BMR is. A day with no food logged has no thermic effect to add, and is
+    // already excluded for having no intake side.
+    const out = buildWeeklyExport(base({
+      days: [
+        day({ date: '2026-07-19', calories: 2000, bmrKcal: 1500, activeKcal: 600 }),
+        day({ date: '2026-07-20', calories: null, bmrKcal: 1500, activeKcal: 600 }),
+      ],
+    }))
+    expect(out).toMatch(/over 1 day/)
+    expect(out).toMatch(/expenditure 2310 kcal/)
   })
 
   it('names a surplus a surplus', () => {
+    // 3000 in; out = 1500 + 500 + 315 TEF = 2315.
     const out = buildWeeklyExport(base({
       days: [day({ calories: 3000, bmrKcal: 1500, activeKcal: 500 })],
     }))
-    expect(out).toMatch(/1000 kcal SURPLUS/)
-    expect(out).toMatch(/1000 kcal\/day over maintenance/)
+    expect(out).toMatch(/685 kcal SURPLUS/)
+    expect(out).toMatch(/685 kcal\/day over maintenance/)
   })
 
   it('carries BMR across the days the scale was skipped, and says so', () => {

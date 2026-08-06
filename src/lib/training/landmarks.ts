@@ -77,7 +77,11 @@ export function toLandmarkMuscle(token: string): LandmarkMuscle | null {
     case 'quads': case 'quadriceps': return 'Quads'
     case 'hamstrings': return 'Hamstrings'
     case 'glutes': return 'Glutes'
-    case 'adductors': return 'Adductors'
+    // `inner_thigh` is what the Hip Adduction machine row was tagged with. It
+    // resolved to null, so the Adductors target sat permanently at 0/N with the
+    // work being done and logged — the only muscle in the list that could never
+    // be satisfied.
+    case 'adductors': case 'inner_thigh': case 'adductor': return 'Adductors'
     case 'abductors': return null // hip abductors aren't a tracked target
     case 'calves': return 'Calves'
     case 'abs': case 'abdominals': case 'core': case 'obliques': return 'Abs/core'
@@ -87,14 +91,36 @@ export function toLandmarkMuscle(token: string): LandmarkMuscle | null {
 
 export type VolumeZone = 'under' | 'building' | 'optimal' | 'over' | 'na'
 
-/** Where this week's set count sits relative to a muscle's program target. */
-export function volumeZone(weeklySets: number, target: number): VolumeZone {
+/**
+ * Where this week's set count sits relative to a muscle's program target.
+ *
+ * TWO NUMBERS, DELIBERATELY. `weeklySets` is the weighted total (direct plus
+ * half-credited assistance); `directSets` is the direct work alone. The verdict
+ * is not a straight grading of either, and the asymmetry is the entire point:
+ *
+ *   · A muscle is UNDER only if even its TOTAL work falls short. Grading direct
+ *     work alone against these targets is what reported the glutes as untrained
+ *     in a week of RDLs — the work happened, the counter could not see it.
+ *
+ *   · A muscle is OVER only if its DIRECT work alone overshoots. PROGRAM_TARGETS
+ *     are Renaissance-Periodisation direct-set landmarks, written on the
+ *     assumption that compounds supply indirect stimulus on top; grading the
+ *     assisted total against them flags the triceps OVER at 14 in a week
+ *     containing 7 direct triceps sets against a target of 6. OVER means "back
+ *     off", and telling someone to cut arm work because they pressed is worse
+ *     advice than the UNDER it replaced.
+ *
+ * So the assistance can lift a muscle out of UNDER but can never push it into
+ * OVER. Both errors were live; this rule is the one that removes both.
+ */
+export function volumeZone(weeklySets: number, target: number, directSets = weeklySets): VolumeZone {
   if (target <= 0) return 'na'                 // e.g. Adductors on a cut → no target
+  // Only direct work can earn an OVER.
+  if (directSets / target > 1.3) return 'over'
   const ratio = weeklySets / target
   if (ratio < 0.5) return 'under'              // well short of the target
   if (ratio < 1.0) return 'building'           // ramping toward it
-  if (ratio <= 1.3) return 'optimal'           // at/just above the target — the sweet spot
-  return 'over'                                // well beyond — recovery risk
+  return 'optimal'                             // at or beyond it, assistance included
 }
 
 export const ZONE_META: Record<VolumeZone, { label: string; color: string }> = {
@@ -105,49 +131,121 @@ export const ZONE_META: Record<VolumeZone, { label: string; color: string }> = {
   na:       { label: 'No target',    color: '#5A6472' },
 }
 
+/**
+ * What one set of an exercise is worth to a SECONDARY mover.
+ *
+ * A set is not a unit of "the muscle was involved", it is a unit of growth
+ * stimulus, and the two are not the same thing. The triceps in a chest press
+ * work through a shorter range, at a worse leverage and against a load chosen
+ * for the pecs; the biceps in a row never reach the tension a curl puts on them.
+ * Both contribute, neither contributes what a direct set does.
+ *
+ * WHY NOT 1.0. The obvious reading of "credit the secondary movers" is to give
+ * them a whole set, and this codebase already tried it: counting the full
+ * `muscle_groups` array put Biceps at 22 sets against a target of 8, because
+ * every back row and every pulldown paid them in full. That does not fix the
+ * false UNDERs, it converts them into false OVERs — and an OVER reads as
+ * "recovery risk, cut volume", which is worse advice than the under it replaced.
+ *
+ * WHY NOT 0.0. That is where this file was before today, and it is the bug the
+ * audit was opened for: `DB RDL` credited hamstrings and nothing to the glutes,
+ * `Hammer Curl` nothing to the forearms, so a week of real work reported muscles
+ * as under-trained that had been trained all along.
+ *
+ * 0.5 IS THE CONVENTION THE TARGETS WERE WRITTEN IN. PROGRAM_TARGETS are
+ * Renaissance-Periodisation-style MEV/MAV landmarks, and RP counts indirect work
+ * as a half set against exactly these numbers. Crediting indirect work in full
+ * would be a units mismatch with the targets it is compared against; the fix
+ * would then be to re-derive all 13 targets upward, which invents numbers rather
+ * than measuring them.
+ *
+ * A muscle that is BOTH primary and secondary for one movement (a pulldown's
+ * `lats` and `upper back` both fold to Back) takes the primary credit once, not
+ * one and a half — see the `Math.max` in the accumulator.
+ */
+export const SECONDARY_SET_CREDIT = 0.5
+
+/** An exercise's movers, already split. Both lists are raw muscle tokens. */
+export interface MoverTokens {
+  primary: readonly string[]
+  secondary: readonly string[]
+}
+
 export interface MuscleVolume {
   muscle: LandmarkMuscle
+  /** Direct + indirect, the figure graded against the target. May be fractional. */
   sets: number
+  /** Sets where this muscle was the primary mover. */
+  directSets: number
+  /** Sets where it was a secondary mover, ALREADY weighted by the credit above. */
+  indirectSets: number
   target: number
   zone: VolumeZone
   color: string
 }
 
+/** Round to 1dp — half sets are the smallest unit this system produces. */
+const half = (v: number): number => Math.round(v * 10) / 10
+
 /**
  * Accumulate committed sets per landmark muscle for a set of workout rows, then
- * grade each against the active program's target. Each row contributes ONE set
- * to every DISTINCT landmark muscle it hits (a row tagged quads+glutes adds a set
- * to both). `dedupeKey` collapses unilateral L/R sub-sets: rows sharing a key
- * count once (pass the pair id, or a unique id for bilateral rows).
+ * grade each against the active program's target.
+ *
+ * Each row contributes ONE set to every DISTINCT landmark muscle its PRIMARY
+ * tags name, and {@link SECONDARY_SET_CREDIT} of a set to every distinct muscle
+ * its SECONDARY tags name. A row tagged quads+glutes primary adds a full set to
+ * both; a row tagged hamstrings primary / glutes secondary adds 1.0 and 0.5.
+ *
+ * `dedupeKey` collapses unilateral L/R sub-sets: rows sharing a key count once
+ * (pass the pair id, or a unique id for bilateral rows).
  */
 export function weeklyVolumeByMuscle(
-  rows: Array<{ muscleTokens: string[]; dedupeKey: string }>,
+  rows: Array<MoverTokens & { dedupeKey: string }>,
   phase: ProgramPhase,
   /** Per-plan+phase user overrides (see usePlanPhaseGoals.resolveVolume). */
   overrides?: Partial<Record<LandmarkMuscle, number>>,
 ): MuscleVolume[] {
   const targets = { ...programTargets(phase), ...(overrides ?? {}) }
-  const counted = new Map<LandmarkMuscle, Set<string>>()
-  for (const row of rows) {
+  // muscle → dedupeKey → the credit that key earned it. Keyed twice so a
+  // unilateral pair still counts once, and so a muscle named by both the primary
+  // and the secondary list takes the larger of the two rather than their sum.
+  const counted = new Map<LandmarkMuscle, Map<string, number>>()
+  const credit = (row: MoverTokens & { dedupeKey: string }, tokens: readonly string[], weight: number) => {
     const muscles = new Set(
-      row.muscleTokens.map(toLandmarkMuscle).filter((m): m is LandmarkMuscle => m !== null),
+      tokens.map(toLandmarkMuscle).filter((m): m is LandmarkMuscle => m !== null),
     )
     for (const m of muscles) {
-      const seen = counted.get(m) ?? new Set<string>()
-      seen.add(row.dedupeKey)
+      const seen = counted.get(m) ?? new Map<string, number>()
+      seen.set(row.dedupeKey, Math.max(seen.get(row.dedupeKey) ?? 0, weight))
       counted.set(m, seen)
     }
   }
+  for (const row of rows) {
+    // Secondary first, so the primary's Math.max always wins the overlap.
+    credit(row, row.secondary, SECONDARY_SET_CREDIT)
+    credit(row, row.primary, 1)
+  }
   return LANDMARK_MUSCLES.map((muscle) => {
-    const sets = counted.get(muscle)?.size ?? 0
+    const seen = counted.get(muscle)
+    let direct = 0, indirect = 0
+    for (const weight of seen?.values() ?? []) {
+      if (weight >= 1) direct += 1
+      else indirect += weight
+    }
+    const sets = half(direct + indirect)
     const target = targets[muscle]
-    return { muscle, sets, target, zone: volumeZone(sets, target), color: MUSCLE_COLOR[muscle] }
+    return {
+      muscle, sets, directSets: direct, indirectSets: half(indirect),
+      target, zone: volumeZone(sets, target, direct), color: MUSCLE_COLOR[muscle],
+    }
   })
 }
 
 export interface MuscleTonnage {
   muscle: LandmarkMuscle
   volumeKg: number
+  /** The share of `volumeKg` earned as a primary mover. */
+  directKg: number
   color: string
 }
 
@@ -155,10 +253,11 @@ export interface MuscleTonnage {
  * Weekly TONNAGE per landmark muscle — kilograms, not set counts.
  *
  * The companion to `weeklyVolumeByMuscle` and deliberately built on the same
- * attribution rule: a lift credits every DISTINCT landmark muscle its primary
- * tags name. A hack squat's tonnage therefore lands on quads AND glutes in full,
- * exactly as its sets do, so the two breakdowns can never tell different stories
- * about the same movement.
+ * attribution rule: a lift credits every DISTINCT landmark muscle its PRIMARY
+ * tags name in full, and every muscle its SECONDARY tags name at
+ * {@link SECONDARY_SET_CREDIT}. A hack squat's tonnage therefore lands on quads
+ * in full and glutes at half, exactly as its sets do, so the two breakdowns can
+ * never tell different stories about the same movement.
  *
  * THE CONSEQUENCE, stated because it is otherwise a trap: the column does NOT
  * sum to the week's total volume. Compound work is counted once per muscle it
@@ -172,24 +271,37 @@ export interface MuscleTonnage {
  * same arithmetic. Muscles with no work are omitted rather than printed as 0.
  */
 export function weeklyTonnageByMuscle(
-  rows: Array<{ muscleTokens: string[]; volumeKg: number }>,
+  rows: Array<MoverTokens & { volumeKg: number }>,
 ): MuscleTonnage[] {
-  const agg = new Map<LandmarkMuscle, number>()
+  const total = new Map<LandmarkMuscle, number>()
+  const direct = new Map<LandmarkMuscle, number>()
   for (const row of rows) {
     if (!Number.isFinite(row.volumeKg) || row.volumeKg <= 0) continue
-    const muscles = new Set(
-      row.muscleTokens.map(toLandmarkMuscle).filter((m): m is LandmarkMuscle => m !== null),
+    const landmarks = (tokens: readonly string[]) => new Set(
+      tokens.map(toLandmarkMuscle).filter((m): m is LandmarkMuscle => m !== null),
     )
-    for (const m of muscles) agg.set(m, (agg.get(m) ?? 0) + row.volumeKg)
+    const primary = landmarks(row.primary)
+    // A muscle named by both lists (a pulldown's lats + upper back both fold to
+    // Back) takes the primary's full share once, never full plus a half.
+    for (const m of landmarks(row.secondary)) {
+      if (primary.has(m)) continue
+      total.set(m, (total.get(m) ?? 0) + row.volumeKg * SECONDARY_SET_CREDIT)
+    }
+    for (const m of primary) {
+      total.set(m, (total.get(m) ?? 0) + row.volumeKg)
+      direct.set(m, (direct.get(m) ?? 0) + row.volumeKg)
+    }
   }
+  // Quarter-kg microloads are real; two decimals is the smallest place a plate
+  // reaches, and it kills float drift without inventing precision.
+  const round2 = (v: number) => Math.round(v * 100) / 100
   return LANDMARK_MUSCLES
-    .filter((m) => (agg.get(m) ?? 0) > 0)
+    .filter((m) => (total.get(m) ?? 0) > 0)
     // Heaviest first — the reader wants the week's emphasis, not the enum order.
     .map((muscle) => ({
       muscle,
-      // Quarter-kg microloads are real; two decimals is the smallest place a
-      // plate reaches, and it kills float drift without inventing precision.
-      volumeKg: Math.round((agg.get(muscle) as number) * 100) / 100,
+      volumeKg: round2(total.get(muscle) as number),
+      directKg: round2(direct.get(muscle) ?? 0),
       color: MUSCLE_COLOR[muscle],
     }))
     .sort((a, b) => b.volumeKg - a.volumeKg)

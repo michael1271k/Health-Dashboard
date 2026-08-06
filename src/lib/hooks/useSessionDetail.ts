@@ -3,8 +3,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { MUSCLE_MAP } from '@/lib/hooks/useMuscleAnalytics'
-import { lookupMuscles } from '@/lib/exercises/muscleMap'
-import { toLandmarkMuscle, LANDMARK_MUSCLES, type LandmarkMuscle } from '@/lib/training/landmarks'
+import { resolveMovers } from '@/lib/exercises/muscleMap'
+import { toLandmarkMuscle, LANDMARK_MUSCLES, SECONDARY_SET_CREDIT, type LandmarkMuscle } from '@/lib/training/landmarks'
 import type { PrAxis } from '@/lib/sessions/save'
 
 export interface DetailSet {
@@ -131,11 +131,12 @@ export function useSessionDetail(sessionId: string | null) {
 
       // Group sets by exercise, preserving exercise_order.
       const byEx = new Map<string, DetailExercise>()
-      /** landmark muscle → the dedupe keys credited to it (L/R pairs count once). */
-      const muscleAgg = new Map<LandmarkMuscle, Set<string>>()
+      /** landmark muscle → dedupe key → set credit (L/R pairs count once). */
+      const muscleAgg = new Map<LandmarkMuscle, Map<string, number>>()
       /** per-exercise working-set dedupe keys — a unilateral L/R pair is ONE set. */
       const workingSeen = new Map<string, Set<string>>()
-      const primaryOf = new Map<string, LandmarkMuscle[]>()
+      /** exercise → each landmark mover it trains, and what one set is worth to it. */
+      const moversOf = new Map<string, Map<LandmarkMuscle, number>>()
       let failureSets = 0
       let warmupSets = 0
 
@@ -151,17 +152,22 @@ export function useSessionDetail(sessionId: string | null) {
           // is a seeded column: rows imported before the dictionary existed, or
           // seeded by a parser, carry stale or generic tags — which is how a
           // Legs & Core session ended up presented as chest/back work.
-          const entry = lookupMuscles(r.exercises.name)
-          const tags = entry
-            ? [...entry.primary, ...entry.secondary]
-            : (r.exercises.muscle_groups ?? [])
+          const entry = resolveMovers(r.exercises.name, r.exercises.muscle_groups)
+          const tags = [...entry.primary, ...entry.secondary]
           const groups = [...new Set(tags.map((m) => MUSCLE_MAP[m.toLowerCase()]).filter(Boolean))]
-          // DIRECT movers only for volume accounting — crediting every secondary
-          // tag gave biceps a set for every row. Same rule as useWeeklyVolume.
-          const direct = (entry?.primary ?? (r.exercises.muscle_groups ?? []).slice(0, 1))
-            .map(toLandmarkMuscle)
-            .filter((m): m is LandmarkMuscle => m !== null)
-          primaryOf.set(r.exercise_id, [...new Set(direct)])
+          // A full set to the primary movers, SECONDARY_SET_CREDIT to the
+          // assistants — the same rule as the weekly accumulator, so a session's
+          // per-muscle counts always roll up into the week's.
+          const movers = new Map<LandmarkMuscle, number>()
+          const add = (tokens: readonly string[], weight: number) => {
+            for (const m of new Set(tokens.map(toLandmarkMuscle))) {
+              if (m === null) continue
+              movers.set(m, Math.max(movers.get(m) ?? 0, weight))
+            }
+          }
+          add(entry.secondary, SECONDARY_SET_CREDIT)
+          add(entry.primary, 1)   // last, so an overlap keeps the FULL credit
+          moversOf.set(r.exercise_id, movers)
           ex = {
             exerciseId: r.exercise_id,
             name: r.exercises.name,
@@ -188,9 +194,9 @@ export function useSessionDetail(sessionId: string | null) {
           const wseen = workingSeen.get(r.exercise_id) ?? new Set<string>()
           if (!wseen.has(dedupeKey)) { wseen.add(dedupeKey); ex.workingSets += 1 }
           workingSeen.set(r.exercise_id, wseen)
-          for (const mu of primaryOf.get(r.exercise_id) ?? []) {
-            const seen = muscleAgg.get(mu) ?? new Set<string>()
-            seen.add(dedupeKey)
+          for (const [mu, weight] of moversOf.get(r.exercise_id) ?? []) {
+            const seen = muscleAgg.get(mu) ?? new Map<string, number>()
+            seen.set(dedupeKey, Math.max(seen.get(dedupeKey) ?? 0, weight))
             muscleAgg.set(mu, seen)
           }
         }
@@ -229,7 +235,13 @@ export function useSessionDetail(sessionId: string | null) {
       }
 
       const muscleSets = LANDMARK_MUSCLES
-        .map((muscle) => ({ muscle, sets: muscleAgg.get(muscle)?.size ?? 0 }))
+        .map((muscle) => ({
+          muscle,
+          // Half sets are real here, so the total is rounded to 1dp rather than
+          // to an integer — 4.5 is the honest count, 4 and 5 are both fiction.
+          sets: Math.round([...(muscleAgg.get(muscle)?.values() ?? [])]
+            .reduce((a, b) => a + b, 0) * 10) / 10,
+        }))
         .filter((m) => m.sets > 0)   // untrained muscles are hidden, not zero-filled
         .sort((a, b) => b.sets - a.sets)
 

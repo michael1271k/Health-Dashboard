@@ -59,8 +59,8 @@ describe('set-volume targets are phase-keyed, and maintenance finally exists', (
 
 describe('weeklyVolumeByMuscle honours per-plan+phase overrides', () => {
   const rows = [
-    { muscleTokens: ['chest'], dedupeKey: 'a' },
-    { muscleTokens: ['chest'], dedupeKey: 'b' },
+    { primary: ['chest'], secondary: [], dedupeKey: 'a' },
+    { primary: ['chest'], secondary: [], dedupeKey: 'b' },
   ]
 
   it('grades against the phase default when no override exists', () => {
@@ -84,8 +84,8 @@ describe('weeklyVolumeByMuscle honours per-plan+phase overrides', () => {
 
   it('still de-duplicates unilateral L/R sub-sets sharing a key', () => {
     const paired = [
-      { muscleTokens: ['chest'], dedupeKey: 'pair1' },
-      { muscleTokens: ['chest'], dedupeKey: 'pair1' },
+      { primary: ['chest'], secondary: [], dedupeKey: 'pair1' },
+      { primary: ['chest'], secondary: [], dedupeKey: 'pair1' },
     ]
     expect(weeklyVolumeByMuscle(paired, 'cut').find((m) => m.muscle === 'Chest')!.sets).toBe(1)
   })

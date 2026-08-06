@@ -13,8 +13,8 @@ import { weekLabelOf, WEEK0_START } from '@/lib/reports/weekNumber'
 import { sessionVolumeKg } from '@/lib/sessions/volume'
 import { activeProgram, activePhase, eraForDate, isTrainingDay } from '@/lib/programs'
 import { repWindowFor } from '@/lib/training/ceilings'
-import { lookupMuscles } from '@/lib/exercises/muscleMap'
-import { weeklyVolumeByMuscle, weeklyTonnageByMuscle, type ProgramPhase } from '@/lib/training/landmarks'
+import { resolveMovers } from '@/lib/exercises/muscleMap'
+import { weeklyVolumeByMuscle, weeklyTonnageByMuscle, type MoverTokens, type ProgramPhase } from '@/lib/training/landmarks'
 import { protocolForDate } from '@/lib/supplements'
 import { customDoseFor, type CustomSupplement } from '@/lib/hooks/useCustomSupplements'
 import { normalizeSpO2 } from '@/lib/utils/units'
@@ -482,7 +482,7 @@ function toCardio(d: RangeData): ExportCardio[] {
  * sets-vs-target section above excludes them on purpose — a ramp-up is not a
  * working set — but this is tonnage, and a warm-up is real weight moved.
  */
-function tonnageRows(sets: RangeData['sets']): Array<{ muscleTokens: string[]; volumeKg: number }> {
+function tonnageRows(sets: RangeData['sets']): Array<MoverTokens & { volumeKg: number }> {
   const byExercise = new Map<string, { name: string; sets: RangeData['sets'] }>()
   for (const r of sets) {
     const key = `${r.session_id}::${r.exercises.name}`
@@ -491,8 +491,7 @@ function tonnageRows(sets: RangeData['sets']): Array<{ muscleTokens: string[]; v
     byExercise.set(key, cur)
   }
   return [...byExercise.values()].map((g) => ({
-    muscleTokens: lookupMuscles(g.name)?.primary
-      ?? (g.sets[0].exercises.muscle_groups ?? []).slice(0, 1),
+    ...resolveMovers(g.name, g.sets[0].exercises.muscle_groups),
     volumeKg: sessionVolumeKg(g.sets.map((r) => ({
       weightKg: r.weight_kg, reps: r.reps,
       side: r.side === 'L' || r.side === 'R' ? r.side : null,
@@ -518,14 +517,18 @@ function weekPayload(
   const days = toDays(weekStart, range)
   const sessions = toSessions(range)
 
-  // DIRECT-set weekly volume, same rule as the Weekly Volume card.
+  // Weekly volume, same rule as the Weekly Volume card: a full set to the
+  // primary movers, SECONDARY_SET_CREDIT to the assistants.
   const volumeByMuscle = weeklyVolumeByMuscle(
     range.sets.filter((r) => r.set_type !== 'warmup').map((r) => ({
-      muscleTokens: lookupMuscles(r.exercises.name)?.primary ?? (r.exercises.muscle_groups ?? []).slice(0, 1),
+      ...resolveMovers(r.exercises.name, r.exercises.muscle_groups),
       dedupeKey: r.pair_id ?? r.id,
     })),
     phase,
-  ).map((m) => ({ muscle: m.muscle, sets: m.sets, target: m.target }))
+  ).map((m) => ({
+    muscle: m.muscle, sets: m.sets, target: m.target,
+    directSets: m.directSets, indirectSets: m.indirectSets,
+  }))
 
   const doms: ExportDoms[] = range.doms
     .map((r) => ({ date: r.date, muscle: r.muscle_group, severity: r.severity }))

@@ -36,6 +36,13 @@ import { isTimedExercise } from '@/lib/exercises/timed'
 import { formatSet, isUnloadedSet } from '@/lib/utils/setFormat'
 import { prAxisLabel, type PrAxis } from '@/lib/training/prEngine'
 import { weighInSkipReason } from '@/lib/body/weighIn'
+import { TEF_FACTOR, tefKcal, tdeeBreakdown } from '@/lib/nutrition/energy'
+import { volumeZone, type VolumeZone } from '@/lib/training/landmarks'
+
+/** The export's wording for each zone. `na` never reaches here (target 0 → "—"). */
+const ZONE_WORD: Record<VolumeZone, string> = {
+  under: 'UNDER', building: 'building', optimal: 'on target', over: 'OVER', na: '—',
+}
 
 export interface ExportDay {
   date: string                 // YYYY-MM-DD
@@ -215,13 +222,21 @@ export interface WeeklyExportInput {
   sleepGoalHours: number | null
   days: ExportDay[]
   sessions: ExportSession[]
-  volumeByMuscle: Array<{ muscle: string; sets: number; target: number }>
+  /**
+   * Sets per muscle against the week's target. `sets` is direct + indirect and
+   * is the graded figure; the split is carried alongside so the reader can see
+   * how much of a muscle's week was assistance work. See SECONDARY_SET_CREDIT.
+   */
+  volumeByMuscle: Array<{
+    muscle: string; sets: number; target: number
+    directSets?: number; indirectSets?: number
+  }>
   /**
    * Weekly TONNAGE per muscle, pre-aggregated (see `weeklyTonnageByMuscle`).
    * Optional: omit it and the aggregate line is skipped rather than printed
    * empty.
    */
-  tonnageByMuscle?: Array<{ muscle: string; volumeKg: number }>
+  tonnageByMuscle?: Array<{ muscle: string; volumeKg: number; directKg?: number }>
   doms: ExportDoms[]
   /** Full body-composition readings for the week's weigh-in days (optional). */
   bodyComp?: ExportBodyComp[]
@@ -546,9 +561,13 @@ export function trendTotals(
  * The week's energy balance — an ESTIMATE, and labelled as one everywhere it
  * appears.
  *
- * expenditure = BMR + Apple Watch active energy. Both sides are per-day and only
- * days holding an intake AND an expenditure are counted, so a half-logged day
- * cannot masquerade as a 1900 kcal deficit. `balanceKcal` is intake − burn:
+ * expenditure = BMR + Apple Watch active energy + TEF (see nutrition/energy.ts).
+ * Both sides are per-day and only days holding an intake AND an expenditure are
+ * counted, so a half-logged day cannot masquerade as a 1900 kcal deficit.
+ *
+ * TEF RIDES ON THE INTAKE, which is why it can never be carried across a gap the
+ * way BMR is: a day with no logged food has no thermic effect to count, and the
+ * day is already excluded for having no intake. `balanceKcal` is intake − burn:
  * NEGATIVE is a deficit, positive a surplus, and the sign is stated in words at
  * the render site because a bare "−3400" is exactly the number people read
  * backwards.
@@ -571,6 +590,8 @@ export interface EnergyBalance {
   /** Mean BMR actually used, after the carry. */
   avgBmrKcal: number | null
   avgActiveKcal: number | null
+  /** Mean thermic effect of food — intake × TEF_FACTOR, per counted day. */
+  avgTefKcal: number | null
   /** True when at least one day's BMR was inherited rather than measured. */
   bmrCarried: boolean
 }
@@ -578,7 +599,8 @@ export interface EnergyBalance {
 export function energyBalance(days: readonly ExportDay[]): EnergyBalance {
   const empty: EnergyBalance = {
     daysCounted: 0, intakeKcal: null, expenditureKcal: null, balanceKcal: null,
-    avgBalanceKcal: null, avgBmrKcal: null, avgActiveKcal: null, bmrCarried: false,
+    avgBalanceKcal: null, avgBmrKcal: null, avgActiveKcal: null, avgTefKcal: null,
+    bmrCarried: false,
   }
   const measured = days.map((d) => (d.bmrKcal != null && Number.isFinite(d.bmrKcal) ? d.bmrKcal : null))
   // Forward fill, then backward fill — the nearest reading in either direction.
@@ -586,7 +608,7 @@ export function energyBalance(days: readonly ExportDay[]): EnergyBalance {
   for (let i = 1; i < filled.length; i++) filled[i] ??= filled[i - 1]
   for (let i = filled.length - 2; i >= 0; i--) filled[i] ??= filled[i + 1]
 
-  let intake = 0, burn = 0, bmrSum = 0, activeSum = 0, counted = 0, carried = false
+  let intake = 0, burn = 0, bmrSum = 0, activeSum = 0, tefSum = 0, counted = 0, carried = false
   days.forEach((d, i) => {
     const bmr = filled[i]
     const active = d.activeKcal != null && Number.isFinite(d.activeKcal) ? d.activeKcal : null
@@ -594,10 +616,15 @@ export function energyBalance(days: readonly ExportDay[]): EnergyBalance {
     // Both sides or neither. An intake with no expenditure is not a balance.
     if (kcal == null || bmr == null || active == null) return
     if (measured[i] == null) carried = true
+    // TEF is a function of THIS day's intake, so it is summed per day rather
+    // than derived from the week's total at the end — identical arithmetic for a
+    // plain sum, but it stays correct if the counted-day rule ever changes.
+    const tef = tefKcal(kcal) as number
     intake += kcal
-    burn += bmr + active
+    burn += bmr + active + tef
     bmrSum += bmr
     activeSum += active
+    tefSum += tef
     counted += 1
   })
   if (!counted) return empty
@@ -609,6 +636,7 @@ export function energyBalance(days: readonly ExportDay[]): EnergyBalance {
     avgBalanceKcal: Math.round((intake - burn) / counted),
     avgBmrKcal: Math.round(bmrSum / counted),
     avgActiveKcal: Math.round(activeSum / counted),
+    avgTefKcal: Math.round(tefSum / counted),
     bmrCarried: carried,
   }
 }
@@ -893,15 +921,29 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
   }
 
   // ── Volume vs target (line-by-line, no table) ──
-  L.push('## Weekly volume vs target (direct sets)')
+  L.push('## Weekly volume vs target')
   L.push('')
   for (const m of volumeByMuscle) {
+    // ONE grading rule, shared with the app (see landmarks.volumeZone): only the
+    // TOTAL can clear an UNDER, only the DIRECT work can earn an OVER. Rendering
+    // its own comparison here is how the export and the Command Center start
+    // disagreeing about the same week.
     const status = m.target <= 0 ? '—'
-      : m.sets < m.target ? 'UNDER'
-      : m.sets > m.target * 1.3 ? 'OVER'
-      : 'on target'
-    L.push(`- ${m.muscle}: ${m.sets} / ${m.target} sets — ${status}`)
+      : ZONE_WORD[volumeZone(m.sets, m.target, m.directSets ?? m.sets)]
+    // The split is only printed where there IS indirect work, so an isolation
+    // muscle's line stays a plain count.
+    const split = m.indirectSets != null && m.indirectSets > 0 && m.directSets != null
+      ? ` (${m.directSets} direct + ${m.indirectSets} indirect)`
+      : ''
+    L.push(`- ${m.muscle}: ${m.sets} / ${m.target} sets${split} — ${status}`)
   }
+  L.push('')
+  L.push('_A set counts 1.0 for a muscle the movement is chosen to train and 0.5'
+    + ' for one that assists, so an RDL pays hamstrings in full and glutes at'
+    + ' half, and a row pays the back in full and the biceps at half. Half sets'
+    + ' are real and are not rounded away. The targets are DIRECT-set landmarks,'
+    + ' so the verdict is asymmetric on purpose: assistance can lift a muscle out'
+    + ' of UNDER, but only direct work can put one OVER._')
   L.push('')
 
   // ── Soreness ──
@@ -965,12 +1007,18 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
       L.push(`- **Total volume:** ${exact(totalVolume)} kg across ${sessions.length}`
         + ` session${sessions.length === 1 ? '' : 's'}`)
       L.push('- **Volume by muscle group (kg):**')
-      for (const t of tonnage) L.push(`    - ${t.muscle}: ${exact(t.volumeKg)} kg`)
+      for (const t of tonnage) {
+        const assisted = t.directKg != null && t.directKg < t.volumeKg
+          ? ` (${exact(t.directKg)} direct)`
+          : ''
+        L.push(`    - ${t.muscle}: ${exact(t.volumeKg)} kg${assisted}`)
+      }
       // Said out loud because the arithmetic invites the opposite assumption.
-      L.push('    - _A compound credits every muscle it trains in full, so these'
-        + ' rows deliberately sum to MORE than the total volume above. Unilateral'
-        + ' pairs are scored at the weaker side (×2), identical to the Session'
-        + ' Report._')
+      L.push('    - _Tonnage follows the same rule as the set counts: a movement'
+        + ' credits its primary muscles in full and its assisting muscles at half.'
+        + ' These rows therefore sum to MORE than the total volume above.'
+        + ' Unilateral pairs are scored at the weaker side (×2), identical to the'
+        + ' Session Report._')
     } else if (totalVolume != null) {
       L.push(`- **Total volume:** ${exact(totalVolume)} kg across ${sessions.length}`
         + ` session${sessions.length === 1 ? '' : 's'}`)
@@ -985,9 +1033,12 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
         + ` · ${n(Math.abs(energy.avgBalanceKcal ?? 0))} kcal/day`
         + ` ${deficit ? 'under' : 'over'} maintenance`)
       L.push(`    - Intake ${n(energy.intakeKcal)} kcal vs expenditure ${n(energy.expenditureKcal)} kcal`
-        + ` (BMR ${n(energy.avgBmrKcal)} + active ${n(energy.avgActiveKcal)} kcal/day, averaged)`)
+        + ` (${tdeeBreakdown(energy.avgBmrKcal ?? 0, energy.avgActiveKcal ?? 0, energy.avgTefKcal ?? 0)}`
+        + ' kcal/day, averaged)')
       L.push('    - _ESTIMATE, not a measurement. Only days holding both an intake'
         + ' and an expenditure are counted.'
+        + ` TEF is the thermic effect of food, ${Math.round(TEF_FACTOR * 1000) / 10}% of intake —`
+        + ' the energy spent digesting it, which is expenditure like any other.'
         + (energy.bmrCarried
           ? ' BMR is a scale reading and exists only on weigh-in days; days without'
             + ' one inherit the nearest reading (it moves ~2 kcal a week).'

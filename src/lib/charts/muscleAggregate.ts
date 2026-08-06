@@ -14,7 +14,11 @@ export const MUSCLE_MAP: Record<string, string> = {
   back: 'Back', lats: 'Back', traps: 'Back', rhomboids: 'Back', 'upper back': 'Back', 'lower back': 'Back',
   shoulders: 'Shoulders', delts: 'Shoulders', rear_delts: 'Shoulders', side_delts: 'Shoulders', front_delts: 'Shoulders',
   biceps: 'Arms', triceps: 'Arms', forearms: 'Arms', arms: 'Arms',
-  quads: 'Legs', quadriceps: 'Legs', hamstrings: 'Legs', glutes: 'Legs', calves: 'Legs', abductors: 'Legs', legs: 'Legs',
+  // `adductors` / `inner_thigh` were both absent, so the hip-adduction machine
+  // credited no display group at all and the Freshness map showed the legs as
+  // fresher than they were.
+  quads: 'Legs', quadriceps: 'Legs', hamstrings: 'Legs', glutes: 'Legs', calves: 'Legs',
+  abductors: 'Legs', adductors: 'Legs', inner_thigh: 'Legs', legs: 'Legs',
   core: 'Core', abs: 'Core', abdominals: 'Core', obliques: 'Core',
 }
 

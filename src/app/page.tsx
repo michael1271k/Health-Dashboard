@@ -19,6 +19,7 @@ import { formatSleep } from '@/lib/utils/format'
 import { displayWeight, weightUnit, validWeight, fmtVolume } from '@/lib/utils/units'
 import { phaseDisplay } from '@/lib/nutrition/phase'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
+import { tdeeKcal } from '@/lib/nutrition/energy'
 import { EMBER, SAPPHIRE, EMERALD, GOLD, AMETHYST, PLATINUM, STEEL, OXIDE, MUTED } from '@/lib/theme/palette'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { useSingleOrDoubleTap } from '@/lib/utils/doubleTap'
@@ -145,6 +146,8 @@ export default function DashboardPage() {
   const steps = metrics?.steps ?? log?.steps ?? null
   const calToday = nutrition?.calories != null ? Math.round(nutrition.calories) : null
   const calGoal = goals?.calorie_goal ?? null
+  // BMR + active + TEF — one shared formula, see nutrition/energy.ts.
+  const tdeeToday = tdeeKcal(log?.bmr, log?.active_energy, nutrition?.calories)
   const phase = fuelLogs?.[0]?.date === logicalTodayISO() ? fuelLogs[0].phase : null
   const suppCount = taken?.size ?? 0
   const suppTotal = supplementCountForDate(isTrainingDay(logicalTodayISO()))
@@ -230,7 +233,14 @@ export default function DashboardPage() {
     {
       key: 'steps', icon: Footprints, label: 'Steps', accent: STEPS_INDIGO,
       value: steps,
-      status: log?.active_energy != null ? `${n0(log.active_energy)} active kcal` : 'movement',
+      // TDEE, not just the watch's active burn. `active kcal` alone is the half
+      // of expenditure the watch happens to measure; the day's real cost is
+      // BMR + active + TEF, and showing only the active term is what made the
+      // deficit read ~200 kcal small every day. Falls back to the active figure
+      // when BMR or intake is missing, because a partial TDEE is not a TDEE.
+      status: tdeeToday != null
+        ? `${n0(tdeeToday)} kcal TDEE · BMR + active + TEF`
+        : log?.active_energy != null ? `${n0(log.active_energy)} active kcal` : 'movement',
       series: (bioSeries ?? []).map((d) => d.steps),
     },
     {
