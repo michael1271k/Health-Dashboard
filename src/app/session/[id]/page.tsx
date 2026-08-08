@@ -13,6 +13,7 @@ import { weekStartOf } from '@/lib/utils/week'
 import { activeProgram } from '@/lib/programs'
 import { dayColor } from '@/lib/theme/palette'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
+import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 
 /**
  * Workout Analysis — the dedicated deep-dive for one session (reached by tapping
@@ -32,6 +33,9 @@ export default function SessionAnalysisPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const { data, isLoading } = useSessionDetail(id ?? null)
+  // This page is usually deep-linked, so it renders before the plan preference
+  // lands from `user_goals` and would name the wrong split for the whole visit.
+  void useScheduleVersion()
 
   const phase = data ? getWeekPhase(weekStartOf(data.date)) : null
   const accent = data ? dayColor(data.dayKey, data.splitDay) : '#8E9AAC'

@@ -43,7 +43,14 @@ const TABLE_KEYS: Record<string, string[][]> = {
   water_intake: [['daily_scores'], ['day_vault']],
   reports: [['reports'], ['weekly_review']],
   // Settings live-sync across devices: a change on desktop invalidates the phone.
-  user_goals: [['user_goals']],
+  //
+  // NOT just `['user_goals']`. The calorie/protein/step targets this row holds
+  // are baked into the `['today', date]` bundle and every surface that grades
+  // against them, so switching phase on the desktop left the phone's macro
+  // rings drawing the previous target for a full staleTime — and longer after a
+  // cold open, since that key is restored from localStorage. Same fan-out the
+  // manual macro override already performs (useMacroOverride CASCADE_KEYS).
+  user_goals: [['user_goals'], ['today'], ['daily_scores'], ['coach'], ['day_vault'], ['nutrition_entries']],
   // Day swaps. This table was MISSING from the map, which is half of why a
   // rest-day swap made on the phone never reached the desktop: nothing told the
   // other device the schedule had moved. (The other half was the override cache

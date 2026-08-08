@@ -8,6 +8,7 @@ import { deriveBodyComp, whrBand, type BodyCompInput, type BodyCompDerived, type
 import { deltaVerdict, type Metric, type Verdict } from '@/lib/body/deltaVerdict'
 import { activePhase } from '@/lib/programs'
 import { EMERALD, GOLD, OXIDE, MUTED } from '@/lib/theme/palette'
+import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 
 const TEAL = '#E0703C'
 
@@ -86,6 +87,9 @@ export function hasScaleMetrics(log: DayVaultData['log']): boolean {
 export function InBodyHeadline({ log, date }: { log: DayVaultData['log']; date: string }) {
   const r = log as Record<string, number | null> | null
   const { data: last } = useLatestBodyReading(date)
+  // Subscribed: `activePhase()` decides whether a weight change grades green
+  // or red, and it arrives from the DB after mount.
+  void useScheduleVersion()
   const phase = activePhase()
 
   const d = deriveBodyComp({

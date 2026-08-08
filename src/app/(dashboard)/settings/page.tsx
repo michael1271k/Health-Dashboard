@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { NotionSync } from '@/components/settings/NotionSync'
 import { supabase } from '@/lib/supabase/client'
 import { derivePhase, phaseDisplay } from '@/lib/nutrition/phase'
@@ -19,6 +20,15 @@ import { AlertTriangle, Dumbbell, Calendar, Target } from 'lucide-react'
 import type { Tables } from '@/lib/supabase/types'
 
 const WD_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+/**
+ * Every cached surface that grades against the calorie/protein/step targets a
+ * plan+phase switch rewrites. Mirrors `RealtimeProvider`'s `user_goals` fan-out,
+ * which handles the OTHER devices.
+ */
+const PLAN_PHASE_CASCADE_KEYS: string[][] = [
+  ['user_goals'], ['today'], ['daily_scores'], ['coach'], ['day_vault'], ['nutrition_entries'],
+]
 
 /** Live plans first, legacy (PPL) last — the order of the Settings plan cards. */
 function planList(): Program[] {
@@ -96,6 +106,7 @@ function applyPrefsToDevice(units: 'kg' | 'lb', motion: boolean) {
 }
 
 export default function SettingsPage() {
+  const queryClient = useQueryClient()
   const [goals, setGoals] = useState<Goals>(DEFAULTS)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -281,6 +292,15 @@ export default function SettingsPage() {
         .update({ program_id: planId, started_on: logicalTodayISO() } as unknown as never)
         .eq('user_id', session.user.id).eq('active', true)
     } catch { /* plans table not migrated yet */ }
+
+    // The new targets are baked into every cached surface that grades against
+    // them. Without this, tapping "Helix · bulk" and walking straight to the
+    // dashboard showed the CUT rings — the write had landed, but `['today']`
+    // was inside staleTime and is also restored from localStorage on the next
+    // cold open, so the wrong numbers outlived the session. Realtime covers
+    // OTHER devices (RealtimeProvider TABLE_KEYS.user_goals); this covers the
+    // one that made the change.
+    for (const key of PLAN_PHASE_CASCADE_KEYS) queryClient.invalidateQueries({ queryKey: key })
 
     setStatus({ type: 'success', msg: `${PROGRAMS[planId]?.label ?? 'Plan'} · ${mode} is now active.` })
   }

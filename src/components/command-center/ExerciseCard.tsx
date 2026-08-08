@@ -7,6 +7,8 @@ import { ArrowLeftRight, CheckCheck, ChevronDown, Footprints, GripVertical, Hist
 import { SetEditorRow } from './SetEditorRow'
 import { cardioSummary, isSetCommitted, type DraftExercise, type DraftSet } from '@/lib/sessions/draft'
 import { isTimedExercise } from '@/lib/exercises/timed'
+import { isBodyweightExercise } from '@/lib/exercises/bodyweight'
+import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { repWindowFor, holdTargetFor, ladderVerdict, levelUpCue } from '@/lib/training/ceilings'
 import { workingSets, type ExerciseHistory } from '@/lib/hooks/useExerciseSetHistory'
 import type { PrAxis } from '@/lib/training/prEngine'
@@ -139,20 +141,28 @@ export function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collap
   // Memoized on (name, dayKey) because these are not cheap lookups: each one
   // canonicalises the name, then scans every day of the active program parsing
   // rep-window strings. They ran on EVERY render of this card — i.e. on every
-  // keystroke of every weight field in it — despite depending on nothing that
-  // changes while you log.
+  // keystroke of every weight field in it.
   //
   // Declared ABOVE the cardio early-return: hooks must run in the same order on
   // every render, and a cardio card returns before this point.
   const prevWork = useMemo(() => workingSets(history ?? undefined), [history])
   const timedEx = useMemo(() => isTimedExercise(exercise.name), [exercise.name])
+  // No load to progress → the deck shows no load controls (see SetEditorRow).
+  const bodyweightEx = useMemo(() => isBodyweightExercise(exercise.name), [exercise.name])
+  // Both of these resolve through `activeProgram()`, so they DO depend on
+  // something that can change while you log: the plan/phase preference lands
+  // from `user_goals` after first render, and the phase decides the prescribed
+  // window. Frozen, the double-progression coach told you to add load against
+  // the previous phase's ceiling. (The memos are still worth keeping — they
+  // otherwise re-scan every program day on every keystroke.)
+  const planVersion = useScheduleVersion()
   const repWindow = useMemo(
-    () => (timedEx ? null : repWindowFor(exercise.name, dayKey)),
-    [timedEx, exercise.name, dayKey],
+    () => { void planVersion; return timedEx ? null : repWindowFor(exercise.name, dayKey) },
+    [timedEx, exercise.name, dayKey, planVersion],
   )
   const holdTarget = useMemo(
-    () => (timedEx ? holdTargetFor(exercise.name, dayKey) : null),
-    [timedEx, exercise.name, dayKey],
+    () => { void planVersion; return timedEx ? holdTargetFor(exercise.name, dayKey) : null },
+    [timedEx, exercise.name, dayKey, planVersion],
   )
   // Strict-ceiling coach over the LOAD LADDER. Mixed loads within one exercise
   // are judged by the lowest ("binding") load — see ladderVerdict. This is the
@@ -426,7 +436,7 @@ export function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collap
             </button>
           </div>
           {groups.map((g) => {
-            const timed = isTimedExercise(exercise.name)
+            const timed = timedEx
             if (g.kind === 'single') {
               const i = g.idx
               return (
@@ -437,6 +447,7 @@ export function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collap
                   set={g.set}
                   active={activeSet === i}
                   timed={timed}
+                  bodyweight={bodyweightEx}
                   prAxes={livePrs?.get(livePrKey(exercise.localId, i))}
                   onActivate={() => setActiveSet((cur) => (cur === i ? null : i))}
                   onChange={(patch) => onUpdateSet(i, patch)}
@@ -466,7 +477,7 @@ export function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collap
                 {g.left && (
                   <SetEditorRow
                     key={`l${g.left.idx}`} index={g.left.idx} displayNum={g.num} subRow set={g.left.set}
-                    active={activeSet === g.left.idx} timed={timed}
+                    active={activeSet === g.left.idx} timed={timed} bodyweight={bodyweightEx}
                     prAxes={livePrs?.get(livePrKey(exercise.localId, g.left.idx))}
                     onActivate={() => setActiveSet((cur) => (cur === g.left!.idx ? null : g.left!.idx))}
                     onChange={(patch) => onUpdateSet(g.left!.idx, patch)}
@@ -477,7 +488,7 @@ export function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collap
                 {g.right && (
                   <SetEditorRow
                     key={`r${g.right.idx}`} index={g.right.idx} displayNum={g.num} subRow set={g.right.set}
-                    active={activeSet === g.right.idx} timed={timed}
+                    active={activeSet === g.right.idx} timed={timed} bodyweight={bodyweightEx}
                     prAxes={livePrs?.get(livePrKey(exercise.localId, g.right.idx))}
                     onActivate={() => setActiveSet((cur) => (cur === g.right!.idx ? null : g.right!.idx))}
                     onChange={(patch) => onUpdateSet(g.right!.idx, patch)}

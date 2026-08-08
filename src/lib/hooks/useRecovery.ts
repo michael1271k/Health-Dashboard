@@ -187,7 +187,14 @@ export function useLogDoms(date = logicalTodayISO()) {
       return { prev }
     },
     onError: (_e, _v, ctx) => { if (ctx?.prev) qc.setQueryData(['doms_logs', date], ctx.prev) },
-    onSettled: () => { qc.invalidateQueries({ queryKey: ['doms_logs', date] }) },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ['doms_logs', date] })
+      // The weekly export reads `doms_logs` directly and caches the rendered
+      // markdown for 60 s, so rating soreness and immediately tapping "Export
+      // Week" pasted the severities the edit had just replaced. Same failure
+      // mode `useMacroOverride` documents for nutrition.
+      qc.invalidateQueries({ queryKey: ['weekly_export'] })
+    },
   })
 }
 

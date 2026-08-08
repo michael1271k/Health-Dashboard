@@ -5,6 +5,7 @@ import { getWeekPhase, phaseBadgeStyle, type PhaseKind } from '@/lib/phases'
 import { weekStartOf } from '@/lib/utils/week'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { activeProgram, activePhase } from '@/lib/programs'
+import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 
 /**
  * ActivePlanBadge — a glanceable, always-visible chip announcing the plan +
@@ -29,10 +30,14 @@ export function ActivePlanBadge({ className = '' }: { className?: string }) {
   // phase in Settings changed the header chip and the nutrition goals but left
   // this one announcing the old block. Read post-mount: activeProgram() reads
   // localStorage, which the server render has no access to.
+  // The version is in the deps, not just `[]`: an empty array reads once and
+  // then permanently unsubscribes, so the chip kept announcing the old plan
+  // after a switch made anywhere else until a full reload.
+  const planVersion = useScheduleVersion()
   const [active, setActive] = useState<{ label: string; phase: PhaseKind } | null>(null)
   useEffect(() => {
     setActive({ label: activeProgram().label, phase: activePhase() as PhaseKind })
-  }, [])
+  }, [planVersion])
 
   if (!phase) return null
 

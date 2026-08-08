@@ -9,6 +9,7 @@ import { useEditSession } from '@/lib/hooks/useEditSession'
 import { SessionIntelCard } from '@/components/reports/SessionIntelCard'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
 import { activeProgram } from '@/lib/programs'
+import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 
 /**
  * Progression & Insights for one session: "Upper B · Session #N", the full
@@ -21,6 +22,10 @@ export function SessionProgressionCard({ session, date }: { session: GymReportRo
   const { data: globalNum } = useGlobalSessionNumber(date)
   const [confirm, setConfirm] = useState(false)
 
+  // `activeProgram()` is a module-cache read React cannot observe, and the
+  // plan hydrates from `user_goals` after first paint — without a subscription
+  // this card prints the default plan's label for the day_key all visit.
+  void useScheduleVersion()
   const program = activeProgram()
   const label = (session.dayKey && program.days.find((d) => d.key === session.dayKey)?.label)
     ?? (session.split[0]?.toUpperCase() + session.split.slice(1))

@@ -9,6 +9,7 @@ import { DeferredMount } from '@/components/fx/DeferredMount'
 import { WidgetBoundary } from '@/components/fx/WidgetBoundary'
 import { useEraFilter } from '@/lib/era/eraFilter'
 import { activeProgram } from '@/lib/programs'
+import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 
 // Recharts-heavy — client-only so they never touch the Command Center's first load.
 const chartFallback = () => (
@@ -42,6 +43,8 @@ const STEEL = '#8E9AAC'
  * either alone.
  */
 export function MuscleAnalyticsPanel() {
+  // The era filter button prints `activeProgram().label` straight into JSX.
+  void useScheduleVersion()
   const [days, setDays] = useState(30)
   const { era } = useEraFilter()
 

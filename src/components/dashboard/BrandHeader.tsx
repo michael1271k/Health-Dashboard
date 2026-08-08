@@ -9,6 +9,7 @@ import { PHASE_COLORS, PHASE_META, type Phase } from '@/lib/nutrition/phase'
 import { programWeekNumber } from '@/lib/reports/weekNumber'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { useLogicalDate } from '@/lib/hooks/useLogicalDate'
+import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 
 /** Per-plan chip colour — Helix-5 gets a premium iridescent violet of its own. */
 const PLAN_CHIP_COLOR: Record<string, string> = {
@@ -87,11 +88,15 @@ export function BrandHeader() {
 
   // Plan + phase tags read localStorage (activeProgram/activePhase), so resolve
   // them AFTER mount to avoid an SSR/client hydration mismatch.
+  // Version in the deps, not `[]`: reading once post-mount fixes the hydration
+  // mismatch but unsubscribes forever, so the chip froze on the plan that
+  // happened to be in localStorage at mount.
+  const planVersion = useScheduleVersion()
   const [tags, setTags] = useState<{ planLabel: string; planColor: string; phase: Phase } | null>(null)
   useEffect(() => {
     const p = activeProgram()
     setTags({ planLabel: p.label, planColor: PLAN_CHIP_COLOR[p.id] ?? STEEL, phase: activePhase() as Phase })
-  }, [])
+  }, [planVersion])
 
   // THE program week — the same counter Momentum labels its capsules with, not a
   // second one derived here. See `programWeekNumber`: the block opened mid-week,

@@ -70,21 +70,30 @@ async function applyWrites(userId: string, writes: ScheduleWrite[]): Promise<voi
   // past their 11:45 slot); Train→Rest removes them entirely. The checklist
   // DISPLAY already follows the swap via isTrainingDay; this keeps
   // supplement_log (score + history) consistent with it.
-  const today = logicalTodayISO()
-  for (const w of writes) {
-    if (w.dayKey !== REST_OVERRIDE) {
-      // Only auto-tick when it's today and the 11:45 slot has passed;
-      // otherwise the items simply show unchecked in the tracker.
-      if (w.date === today && PRE_SLOT && slotTimePassed(PRE_SLOT.time)) {
-        const nowIso = new Date().toISOString()
-        const supRows = PRE_KEYS.map((item_key) => ({ user_id: userId, date: w.date, item_key, taken: true, taken_at: nowIso }))
-        await supabase.from('supplement_log').upsert(supRows as never, { onConflict: 'user_id,date,item_key' })
-      }
-    } else if (PRE_KEYS.length) {
-      // Train→Rest: strip the stimulant rows so they stop counting.
-      await supabase.from('supplement_log').delete().eq('user_id', userId).eq('date', w.date).in('item_key', PRE_KEYS)
-    }
+  for (const w of writes) await syncPreWorkoutSupps(userId, w.date, w.dayKey !== REST_OVERRIDE)
+}
+
+/**
+ * Bring `supplement_log` into line with whether `date` is a training day.
+ *
+ * Shared by the swap and the UNDO, which is the point: the checklist DISPLAY is
+ * driven by `isTrainingDay`, so undoing a Train→Rest swap redrew the
+ * L-Citrulline and Caffeine pills while their rows stayed deleted — the day
+ * then scored as if the user had skipped two supplements they were never asked
+ * about. One writer, both directions.
+ */
+async function syncPreWorkoutSupps(userId: string, date: string, training: boolean): Promise<void> {
+  if (!PRE_KEYS.length) return
+  if (!training) {
+    await supabase.from('supplement_log').delete().eq('user_id', userId).eq('date', date).in('item_key', PRE_KEYS)
+    return
   }
+  // Only auto-tick when it's today and the 11:45 slot has passed; otherwise the
+  // items simply show unchecked in the tracker.
+  if (date !== logicalTodayISO() || !PRE_SLOT || !slotTimePassed(PRE_SLOT.time)) return
+  const nowIso = new Date().toISOString()
+  const supRows = PRE_KEYS.map((item_key) => ({ user_id: userId, date, item_key, taken: true, taken_at: nowIso }))
+  await supabase.from('supplement_log').upsert(supRows as never, { onConflict: 'user_id,date,item_key' })
 }
 
 /**
@@ -144,12 +153,22 @@ export function useClearScheduleOverride() {
       if (!user) throw new Error('Not signed in')
       const { error } = await supabase.from('schedule_overrides').delete().eq('user_id', user.id).in('date', dates)
       if (error) throw new Error(error.message)
+      // Clear the local cache FIRST so `scheduleDayFor` answers with the
+      // restored default weekday, then re-run the supplement cascade against
+      // it — otherwise undo left the pills drawn but their rows deleted.
       for (const d of dates) setScheduleOverrideLocal(d, null)
+      for (const d of dates) {
+        await syncPreWorkoutSupps(user.id, d, scheduleDayFor(d) !== REST_OVERRIDE)
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['schedule_overrides'] })
       qc.invalidateQueries({ queryKey: ['day_vault'] })
       qc.invalidateQueries({ queryKey: ['daily_logs'] })
+      // Undo is a schedule write like any other — same fan-out as useSwapDay,
+      // or the checklist and the score disagree with the day it just restored.
+      qc.invalidateQueries({ queryKey: ['supplement_log'] })
+      qc.invalidateQueries({ queryKey: ['workout_sessions'] })
     },
   })
 }

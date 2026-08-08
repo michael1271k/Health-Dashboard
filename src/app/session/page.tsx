@@ -10,6 +10,7 @@ import { useExerciseSetHistory } from '@/lib/hooks/useExerciseSetHistory'
 import { buildTemplateDraft } from '@/lib/sessions/templateDraft'
 import { SEED_TEMPLATES } from '@/lib/sessions/seedTemplates'
 import { activeProgram, eraForDate } from '@/lib/programs'
+import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { logicalTodayISO } from '@/lib/utils/day'
 
 /**
@@ -47,11 +48,19 @@ function SessionPageInner() {
   const templateKey = params.get('template')
   const targetDate = params.get('date') ?? logicalTodayISO()
 
+  // `activeProgram()` is a synchronous read of a module cache React cannot see,
+  // and the plan/phase preference arrives from `user_goals` AFTER first render
+  // (AuthGate → hydratePrefsFromDb). Without the version in the deps this memo
+  // froze the plan that happened to be cached at mount and the auto-seed below
+  // committed the WRONG plan's exercise list to workout_sets. This is the one
+  // stale read that reaches the database.
+  const planVersion = useScheduleVersion()
   const templateDay = useMemo(() => {
     if (!templateKey) return null
+    void planVersion   // subscription, not an input — see useScheduleVersion
     const program = activeProgram()
     return program.days.find((d) => d.key === templateKey) ?? null
-  }, [templateKey])
+  }, [templateKey, planVersion])
 
   // The exercises this deck will contain — the explicit per-set seed defines the
   // structure when one exists, otherwise the program day does.
