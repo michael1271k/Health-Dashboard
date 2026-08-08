@@ -15,7 +15,6 @@
 		4C8EA41F3014D149007CEF26 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C8EA41E3014D149007CEF26 /* SwiftUI.framework */; };
 		4C8EA42A3014D14A007CEF26 /* HelixWidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 4C8EA41B3014D149007CEF26 /* HelixWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		4C8EA4303014D24C007CEF26 /* HelixSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C8EA4133014D04D007CEF26 /* HelixSnapshot.swift */; };
-		4C8EA4323014DDDE007CEF26 /* Secrets.xcconfig in Sources */ = {isa = PBXBuildFile; fileRef = 4C8EA4313014DDD1007CEF26 /* Secrets.xcconfig */; };
 		4CA0FA6A3018E01F00141641 /* SecureStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CA0FA693018E01F00141641 /* SecureStore.swift */; };
 		4CC46EC2300C030F00DFDFCE /* HelixHealth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CC46EC1300C030D00DFDFCE /* HelixHealth.swift */; };
 		4CC46EC5300C034500DFDFCE /* HelixHealthRegistration.m in Sources */ = {isa = PBXBuildFile; fileRef = 4CC46EC4300C034300DFDFCE /* HelixHealthRegistration.m */; };
@@ -60,7 +59,7 @@
 		};
 		4C90F04C3013EFF60096E03F /* Embed Watch Content */ = {
 			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 12;
+			buildActionMask = 2147483647;
 			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
 			dstSubfolderSpec = 16;
 			files = (
@@ -106,11 +105,18 @@
 			);
 			target = 4C8EA41A3014D149007CEF26 /* HelixWidgetsExtension */;
 		};
+		4C90F0533013EFF60096E03F /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 4C90F0403013EFF50096E03F /* HelixWatch Watch App */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		4C8EA4203014D149007CEF26 /* HelixWidgets */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (4C8EA42B3014D14A007CEF26 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = HelixWidgets; sourceTree = "<group>"; };
-		4C90F0423013EFF50096E03F /* HelixWatch Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "HelixWatch Watch App"; sourceTree = "<group>"; };
+		4C90F0423013EFF50096E03F /* HelixWatch Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (4C90F0533013EFF60096E03F /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = "HelixWatch Watch App"; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -406,7 +412,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4C8EA4323014DDDE007CEF26 /* Secrets.xcconfig in Sources */,
 				4C8EA4153014D04D007CEF26 /* HelixSnapshot.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -461,6 +466,7 @@
 /* Begin XCBuildConfiguration section */
 		4C8EA42D3014D14A007CEF26 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 4C8EA4313014DDD1007CEF26 /* Secrets.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -505,6 +511,7 @@
 		};
 		4C8EA42E3014D14A007CEF26 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 4C8EA4313014DDD1007CEF26 /* Secrets.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -547,6 +554,7 @@
 		};
 		4C90F04D3013EFF60096E03F /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 4C8EA4313014DDD1007CEF26 /* Secrets.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -563,6 +571,7 @@
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "HelixWatch Watch App/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = HelixWatch;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = app.helix.health.michael;
@@ -592,6 +601,7 @@
 		};
 		4C90F04E3013EFF60096E03F /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 4C8EA4313014DDD1007CEF26 /* Secrets.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -608,6 +618,7 @@
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "HelixWatch Watch App/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = HelixWatch;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = app.helix.health.michael;
