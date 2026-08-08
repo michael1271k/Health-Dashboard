@@ -22,10 +22,16 @@ const maxFor = (w: number) => Math.max(60, Math.ceil((w + 30) / 10) * 10)
  * haptic stepper chips, reps ±1, Warm-up/Failure toggles). Only the active row
  * mounts its slider, keeping long decks light.
  */
-export function SetEditorRow({ index, displayNum, subRow = false, set, active, timed = false, prAxes = [], onActivate, onChange, onRemove, onToggleDone, onSplit, onToggleLink, onMerge }: {
+export function SetEditorRow({ index, displayNum, subRow = false, set, active, timed = false, bodyweight = false, prAxes = [], onActivate, onChange, onRemove, onToggleDone, onSplit, onToggleLink, onMerge }: {
   index: number
   /** Records this set just set, computed live by the parent from `prEngine`. */
   prAxes?: PrAxis[]
+  /**
+   * Movement with no load to progress (Hanging Knee Raise, Reverse Crunch, a
+   * hold). Its load controls stay hidden while the set is at 0 kg — see
+   * `isBodyweightExercise`.
+   */
+  bodyweight?: boolean
   /** Human set number (groups a unilateral pair as ONE set); falls back to index+1. */
   displayNum?: number
   /** True when rendered as a Left/Right sub-row nested inside a "Set N" pair card. */
@@ -49,6 +55,42 @@ export function SetEditorRow({ index, displayNum, subRow = false, set, active, t
   // 3.75 must display as 3.75, not "3.8" — quarter-step plates are real loads.
   const weightLabel = set.weightKg % 1 === 0 ? set.weightKg.toFixed(0)
     : (set.weightKg * 10) % 1 === 0 ? set.weightKg.toFixed(1) : set.weightKg.toFixed(2)
+
+  /**
+   * Show the load half at all? "0kg × 15 reps" on a Hanging Knee Raise states a
+   * weight that does not exist and buries the only number the set has. A
+   * bodyweight movement carrying actual load (weighted pull-up) renders as any
+   * other loaded set — the test is the movement AND the value, never one alone.
+   */
+  const unloadedMovement = bodyweight || timed
+  const showLoad = !unloadedMovement || set.weightKg > 0
+
+  /**
+   * The tuner's load controls are LATCHED open, not derived from the value.
+   *
+   * `NumberField` commits on every keystroke, so typing "0.5" commits 0 on the
+   * first character. Deriving the controls from `weightKg > 0` therefore
+   * unmounted the input mid-word: focus lost, keyboard dismissed, row back to
+   * bodyweight. Any sub-1 kg load — a 0.5 kg magnet on a dip belt — was
+   * untypeable on exactly the movements this feature is for. Once revealed the
+   * controls stay for the whole edit; the latch clears when the row closes
+   * still at 0, so it collapses back next time it is opened.
+   */
+  const [loadOpen, setLoadOpen] = useState(set.weightKg > 0)
+  useEffect(() => {
+    if (set.weightKg > 0) setLoadOpen(true)
+    else if (!active) setLoadOpen(false)
+  }, [set.weightKg, active])
+  const showLoadControls = showLoad || loadOpen
+
+  /**
+   * A HOLD gets no load affordance at all. Weight is invisible to the PR engine
+   * on a timed set (`detectSetPrs` returns after the seconds axis) but NOT to
+   * `sessionVolumeKg`, which has no timed concept and multiplies weight by
+   * `reps` — i.e. by SECONDS. One tap plus a 60 s plank would inject 150 kg of
+   * phantom tonnage into the week. Reachable before, but never invited.
+   */
+  const canAddLoad = bodyweight && !timed
 
   // The Radix max must NOT be derived from the live value: a shrinking max
   // rescales the track mid-drag and snaps the value (the 35→25 jump). Keep it
@@ -114,10 +156,14 @@ export function SetEditorRow({ index, displayNum, subRow = false, set, active, t
             >
               {badge}
             </span>
-            <span className={`helix-num text-fluid-base font-bold tabular-nums ${isWarm ? 'text-muted' : 'text-text'}`}>
-              {weightLabel}<span className="text-[10px] text-muted font-normal ml-0.5">kg</span>
-            </span>
-            <span className="text-muted text-xs">×</span>
+            {showLoad && (
+              <>
+                <span className={`helix-num text-fluid-base font-bold tabular-nums ${isWarm ? 'text-muted' : 'text-text'}`}>
+                  {weightLabel}<span className="text-[10px] text-muted font-normal ml-0.5">kg</span>
+                </span>
+                <span className="text-muted text-xs">×</span>
+              </>
+            )}
             <span className={`helix-num text-fluid-base font-bold tabular-nums ${isWarm ? 'text-muted' : 'text-text'}`}>
               {set.reps}<span className="text-[10px] text-muted font-normal ml-0.5">{timed ? 'sec' : 'reps'}</span>
             </span>
@@ -177,16 +223,20 @@ export function SetEditorRow({ index, displayNum, subRow = false, set, active, t
           {/* Direct keyboard entry — type weight/reps on desktop or mobile.
               The slider + steppers below stay for tactile tuning. */}
           <div className="flex items-center gap-2">
-            <label className="flex-1 flex items-center gap-1.5 rounded-lg border border-border bg-surface-2 px-2.5 min-h-[38px]">
-              <NumberField
-                value={set.weightKg}
-                inputMode="decimal"
-                ariaLabel={`Weight for set ${index + 1}`}
-                onCommit={(n) => onChange({ weightKg: Math.max(0, n) })}
-              />
-              <span className="text-[10px] uppercase tracking-wide text-muted shrink-0">kg</span>
-            </label>
-            <span className="text-muted text-xs shrink-0">×</span>
+            {showLoadControls && (
+              <>
+                <label className="flex-1 flex items-center gap-1.5 rounded-lg border border-border bg-surface-2 px-2.5 min-h-[38px]">
+                  <NumberField
+                    value={set.weightKg}
+                    inputMode="decimal"
+                    ariaLabel={`Weight for set ${index + 1}`}
+                    onCommit={(n) => onChange({ weightKg: Math.max(0, n) })}
+                  />
+                  <span className="text-[10px] uppercase tracking-wide text-muted shrink-0">kg</span>
+                </label>
+                <span className="text-muted text-xs shrink-0">×</span>
+              </>
+            )}
             <label className="flex-1 flex items-center gap-1.5 rounded-lg border border-border bg-surface-2 px-2.5 min-h-[38px]">
               <NumberField
                 value={set.reps}
@@ -197,6 +247,7 @@ export function SetEditorRow({ index, displayNum, subRow = false, set, active, t
               <span className="text-[10px] uppercase tracking-wide text-muted shrink-0">{timed ? 'sec' : 'reps'}</span>
             </label>
           </div>
+          {showLoadControls && (
           <Slider.Root
             className="relative flex items-center select-none touch-none w-full h-6"
             min={0}
@@ -216,9 +267,10 @@ export function SetEditorRow({ index, displayNum, subRow = false, set, active, t
                          shadow-[0_0_12px_rgba(224,112,60,0.55)]"
             />
           </Slider.Root>
+          )}
           <div className="flex items-center justify-between gap-1.5">
             <div className="flex items-center gap-1">
-              {WEIGHT_STEPS.map((d) => (
+              {showLoadControls ? WEIGHT_STEPS.map((d) => (
                 <button
                   key={d}
                   type="button"
@@ -227,7 +279,20 @@ export function SetEditorRow({ index, displayNum, subRow = false, set, active, t
                 >
                   {d > 0 ? `+${d}` : d}
                 </button>
-              ))}
+              )) : canAddLoad ? (
+                // Weighted variants stay one tap away — a belt on a dip, a plate
+                // held on a knee raise. Revealing the controls is enough; the
+                // load itself stays 0 until the user sets one, so a stray tap
+                // cannot invent tonnage or cost the set its reps axis.
+                <button
+                  type="button"
+                  onClick={() => { void tapLight(); setLoadOpen(true) }}
+                  aria-label={`Add load to set ${displayNum ?? index + 1}`}
+                  className="glass-card px-2.5 min-h-[34px] text-[11px] font-semibold text-muted active:scale-95 transition-transform"
+                >
+                  + Add load
+                </button>
+              ) : null}
             </div>
             <div className="flex items-center gap-1">
               <button type="button" onClick={() => nudgeReps(-1)} aria-label="One rep less"

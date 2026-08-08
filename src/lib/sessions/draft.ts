@@ -129,7 +129,13 @@ export function cascadeSetEdit(sets: DraftSet[], setIdx: number, patch: Partial<
   if (setIdx === 0) {
     for (let i = 1; i < next.length; i++) {
       const upd: Partial<DraftSet> = {}
-      if (patch.weightKg != null && next[i].weightKg === prev.weightKg) upd.weightKg = patch.weightKg
+      // A 0 → n weight edit is a change of KIND, not a load progression, and it
+      // must not cascade. On a bodyweight movement every later set also reads 0,
+      // so putting a belt on set 1 loaded sets 2 and 3 that had not been
+      // performed yet — and `repsAxisEligible` requires weight 0, so the cascade
+      // silently stripped the reps axis (the only axis those lifts have) from
+      // every set it touched.
+      if (patch.weightKg != null && prev.weightKg > 0 && next[i].weightKg === prev.weightKg) upd.weightKg = patch.weightKg
       if (patch.reps != null && next[i].reps === prev.reps) upd.reps = patch.reps
       if (Object.keys(upd).length) next[i] = { ...next[i], ...upd }
     }
