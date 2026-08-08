@@ -3249,8 +3249,8 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "package_devdependencies_capacitor_cli",
-      "community": 50,
-      "community_name": "devDependencies",
+      "community": 90,
+      "community_name": "@capacitor/cli",
       "norm_label": "@capacitor/cli"
     },
     {
@@ -3260,8 +3260,8 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "capacitor_cli",
-      "community": 50,
-      "community_name": "devDependencies",
+      "community": 90,
+      "community_name": "@capacitor/cli",
       "norm_label": "@capacitor/cli"
     },
     {
@@ -3315,8 +3315,8 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "package_devdependencies_playwright_test",
-      "community": 185,
-      "community_name": "@playwright/test",
+      "community": 50,
+      "community_name": "devDependencies",
       "norm_label": "@playwright/test"
     },
     {
@@ -3326,8 +3326,8 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "playwright_test",
-      "community": 185,
-      "community_name": "@playwright/test",
+      "community": 50,
+      "community_name": "devDependencies",
       "norm_label": "@playwright/test"
     },
     {
@@ -3909,7 +3909,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_l",
-      "community": 90,
+      "community": 191,
       "community_name": "delete",
       "norm_label": "l()"
     },
@@ -3920,7 +3920,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_h",
-      "community": 90,
+      "community": 191,
       "community_name": "delete",
       "norm_label": "h()"
     },
@@ -3932,7 +3932,7 @@
       "_origin": "ast",
       "id": "public_sw_get",
       "community": 96,
-      "community_name": "getDb",
+      "community_name": "get",
       "norm_label": "get()"
     },
     {
@@ -3943,7 +3943,7 @@
       "_origin": "ast",
       "id": "public_sw_b",
       "community": 96,
-      "community_name": "getDb",
+      "community_name": "get",
       "norm_label": "b()"
     },
     {
@@ -3954,7 +3954,7 @@
       "_origin": "ast",
       "id": "public_sw_r",
       "community": 96,
-      "community_name": "getDb",
+      "community_name": "get",
       "norm_label": "r()"
     },
     {
@@ -3997,8 +3997,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_addentry",
-      "community": 96,
-      "community_name": "getDb",
+      "community": 7,
+      "community_name": "sw.js",
       "norm_label": "addentry()"
     },
     {
@@ -4008,8 +4008,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_getfirstentryid",
-      "community": 96,
-      "community_name": "getDb",
+      "community": 7,
+      "community_name": "sw.js",
       "norm_label": "getfirstentryid()"
     },
     {
@@ -4019,8 +4019,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_getallentriesbyqueuename",
-      "community": 96,
-      "community_name": "getDb",
+      "community": 7,
+      "community_name": "sw.js",
       "norm_label": "getallentriesbyqueuename()"
     },
     {
@@ -4030,8 +4030,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_getentrycountbyqueuename",
-      "community": 96,
-      "community_name": "getDb",
+      "community": 7,
+      "community_name": "sw.js",
       "norm_label": "getentrycountbyqueuename()"
     },
     {
@@ -4041,8 +4041,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_deleteentry",
-      "community": 90,
-      "community_name": "delete",
+      "community": 7,
+      "community_name": "sw.js",
       "norm_label": "deleteentry()"
     },
     {
@@ -4085,8 +4085,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_getdb",
-      "community": 96,
-      "community_name": "getDb",
+      "community": 7,
+      "community_name": "sw.js",
       "norm_label": "getdb()"
     },
     {
@@ -4097,7 +4097,7 @@
       "_origin": "ast",
       "id": "public_sw_upgradedb",
       "community": 96,
-      "community_name": "getDb",
+      "community_name": "get",
       "norm_label": "_upgradedb()"
     },
     {
@@ -4129,8 +4129,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_popentry",
-      "community": 90,
-      "community_name": "delete",
+      "community": 7,
+      "community_name": "sw.js",
       "norm_label": "popentry()"
     },
     {
@@ -4140,8 +4140,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_shiftentry",
-      "community": 90,
-      "community_name": "delete",
+      "community": 7,
+      "community_name": "sw.js",
       "norm_label": "shiftentry()"
     },
     {
@@ -4173,8 +4173,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_removeentry",
-      "community": 90,
-      "community_name": "delete",
+      "community": 7,
+      "community_name": "sw.js",
       "norm_label": "_removeentry()"
     },
     {
@@ -4316,8 +4316,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_registersync",
-      "community": 54,
-      "community_name": "constructor",
+      "community": 63,
+      "community_name": "clone",
       "norm_label": "registersync()"
     },
     {
@@ -4327,8 +4327,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_addsynclistener",
-      "community": 54,
-      "community_name": "constructor",
+      "community": 63,
+      "community_name": "clone",
       "norm_label": "_addsynclistener()"
     },
     {
@@ -4635,8 +4635,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_getid",
-      "community": 96,
-      "community_name": "getDb",
+      "community": 7,
+      "community_name": "sw.js",
       "norm_label": "_getid()"
     },
     {
@@ -4647,7 +4647,7 @@
       "_origin": "ast",
       "id": "public_sw_upgradedbanddeleteolddbs",
       "community": 96,
-      "community_name": "getDb",
+      "community_name": "get",
       "norm_label": "_upgradedbanddeleteolddbs()"
     },
     {
@@ -4657,8 +4657,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_settimestamp",
-      "community": 96,
-      "community_name": "getDb",
+      "community": 7,
+      "community_name": "sw.js",
       "norm_label": "settimestamp()"
     },
     {
@@ -4668,8 +4668,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_gettimestamp",
-      "community": 96,
-      "community_name": "getDb",
+      "community": 7,
+      "community_name": "sw.js",
       "norm_label": "gettimestamp()"
     },
     {
@@ -4680,7 +4680,7 @@
       "_origin": "ast",
       "id": "public_sw_expireentries",
       "community": 191,
-      "community_name": "cachedResponseWillBeUsed",
+      "community_name": "delete",
       "norm_label": "expireentries()"
     },
     {
@@ -4691,7 +4691,7 @@
       "_origin": "ast",
       "id": "public_sw_updatetimestamp",
       "community": 191,
-      "community_name": "cachedResponseWillBeUsed",
+      "community_name": "delete",
       "norm_label": "updatetimestamp()"
     },
     {
@@ -4712,7 +4712,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_delete",
-      "community": 90,
+      "community": 191,
       "community_name": "delete",
       "norm_label": "delete()"
     },
@@ -4724,7 +4724,7 @@
       "_origin": "ast",
       "id": "public_sw_getcacheexpiration",
       "community": 191,
-      "community_name": "cachedResponseWillBeUsed",
+      "community_name": "delete",
       "norm_label": "_getcacheexpiration()"
     },
     {
@@ -4735,7 +4735,7 @@
       "_origin": "ast",
       "id": "public_sw_cachedresponsewillbeused",
       "community": 191,
-      "community_name": "cachedResponseWillBeUsed",
+      "community_name": "delete",
       "norm_label": "cachedresponsewillbeused()"
     },
     {
@@ -4745,8 +4745,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_isresponsedatefresh",
-      "community": 191,
-      "community_name": "cachedResponseWillBeUsed",
+      "community": 96,
+      "community_name": "get",
       "norm_label": "_isresponsedatefresh()"
     },
     {
@@ -4756,8 +4756,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_getdateheadertimestamp",
-      "community": 191,
-      "community_name": "cachedResponseWillBeUsed",
+      "community": 96,
+      "community_name": "get",
       "norm_label": "_getdateheadertimestamp()"
     },
     {
@@ -4768,7 +4768,7 @@
       "_origin": "ast",
       "id": "public_sw_cachedidupdate",
       "community": 191,
-      "community_name": "cachedResponseWillBeUsed",
+      "community_name": "delete",
       "norm_label": "cachedidupdate()"
     },
     {
@@ -4778,8 +4778,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_deletecacheandmetadata",
-      "community": 90,
-      "community_name": "delete",
+      "community": 54,
+      "community_name": "constructor",
       "norm_label": "deletecacheandmetadata()"
     },
     {
@@ -4855,7 +4855,7 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "public_sw_handleactivate",
-      "community": 90,
+      "community": 191,
       "community_name": "delete",
       "norm_label": "handleactivate()"
     },
@@ -6318,7 +6318,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_app_dashboard_nutrition_page_activegoals",
-      "community": 181,
+      "community": 166,
       "community_name": "workout.ts",
       "norm_label": "activegoals"
     },
@@ -6472,8 +6472,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_dashboard_settings_page",
-      "community": 65,
-      "community_name": "settings/page.tsx",
+      "community": 51,
+      "community_name": "programs.ts",
       "norm_label": "settings/page.tsx"
     },
     {
@@ -6483,8 +6483,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_app_dashboard_settings_page_wd_short",
-      "community": 65,
-      "community_name": "settings/page.tsx",
+      "community": 51,
+      "community_name": "programs.ts",
       "norm_label": "wd_short"
     },
     {
@@ -6494,8 +6494,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_app_dashboard_settings_page_plan_phase_cascade_keys",
-      "community": 65,
-      "community_name": "settings/page.tsx",
+      "community": 51,
+      "community_name": "programs.ts",
       "norm_label": "plan_phase_cascade_keys"
     },
     {
@@ -6505,8 +6505,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "src_app_dashboard_settings_page_planlist",
-      "community": 65,
-      "community_name": "settings/page.tsx",
+      "community": 51,
+      "community_name": "programs.ts",
       "norm_label": "planlist()"
     },
     {
@@ -6516,8 +6516,8 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "src_app_dashboard_settings_page_mode_to_phase",
-      "community": 65,
-      "community_name": "settings/page.tsx",
+      "community": 51,
+      "community_name": "programs.ts",
       "norm_label": "mode_to_phase"
     },
     {
@@ -6527,8 +6527,8 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "src_app_dashboard_settings_page_planphasepatch",
-      "community": 65,
-      "community_name": "settings/page.tsx",
+      "community": 51,
+      "community_name": "programs.ts",
       "norm_label": "planphasepatch()"
     },
     {
@@ -6538,8 +6538,8 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "src_app_dashboard_settings_page_contextmode",
-      "community": 65,
-      "community_name": "settings/page.tsx",
+      "community": 51,
+      "community_name": "programs.ts",
       "norm_label": "contextmode"
     },
     {
@@ -6549,8 +6549,8 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "src_app_dashboard_settings_page_goals",
-      "community": 65,
-      "community_name": "settings/page.tsx",
+      "community": 51,
+      "community_name": "programs.ts",
       "norm_label": "goals"
     },
     {
@@ -6560,8 +6560,8 @@
       "source_location": "L76",
       "_origin": "ast",
       "id": "src_app_dashboard_settings_page_defaults",
-      "community": 65,
-      "community_name": "settings/page.tsx",
+      "community": 51,
+      "community_name": "programs.ts",
       "norm_label": "defaults"
     },
     {
@@ -6571,8 +6571,8 @@
       "source_location": "L92",
       "_origin": "ast",
       "id": "src_app_dashboard_settings_page_context_labels",
-      "community": 65,
-      "community_name": "settings/page.tsx",
+      "community": 51,
+      "community_name": "programs.ts",
       "norm_label": "context_labels"
     },
     {
@@ -6582,8 +6582,8 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "src_app_dashboard_settings_page_applyprefstodevice",
-      "community": 65,
-      "community_name": "settings/page.tsx",
+      "community": 51,
+      "community_name": "programs.ts",
       "norm_label": "applyprefstodevice()"
     },
     {
@@ -6593,8 +6593,8 @@
       "source_location": "L108",
       "_origin": "ast",
       "id": "src_app_dashboard_settings_page_settingspage",
-      "community": 65,
-      "community_name": "settings/page.tsx",
+      "community": 51,
+      "community_name": "programs.ts",
       "norm_label": "settingspage()"
     },
     {
@@ -6604,8 +6604,8 @@
       "source_location": "L855",
       "_origin": "ast",
       "id": "src_app_dashboard_settings_page_crashrecorderrow",
-      "community": 65,
-      "community_name": "settings/page.tsx",
+      "community": 51,
+      "community_name": "programs.ts",
       "norm_label": "crashrecorderrow()"
     },
     {
@@ -6923,8 +6923,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_auth_page",
-      "community": 48,
-      "community_name": "RealtimeProvider.tsx",
+      "community": 24,
+      "community_name": "VitalsGroups.tsx",
       "norm_label": "auth/page.tsx"
     },
     {
@@ -6934,8 +6934,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_app_auth_page_has_auto",
-      "community": 48,
-      "community_name": "RealtimeProvider.tsx",
+      "community": 24,
+      "community_name": "VitalsGroups.tsx",
       "norm_label": "has_auto"
     },
     {
@@ -6945,8 +6945,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "src_app_auth_page_authpage",
-      "community": 48,
-      "community_name": "RealtimeProvider.tsx",
+      "community": 24,
+      "community_name": "VitalsGroups.tsx",
       "norm_label": "authpage()"
     },
     {
@@ -6956,8 +6956,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "src_app_auth_page_rationale_23",
-      "community": 48,
-      "community_name": "RealtimeProvider.tsx",
+      "community": 24,
+      "community_name": "VitalsGroups.tsx",
       "norm_label": "note: the password ships in the client bundle (next_public_*), so it is readable"
     },
     {
@@ -7022,8 +7022,8 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "src_app_day_date_page_sessionlabel",
-      "community": 64,
-      "community_name": "[date]/page.tsx",
+      "community": 180,
+      "community_name": "useDayVault.ts",
       "norm_label": "sessionlabel()"
     },
     {
@@ -7033,8 +7033,8 @@
       "source_location": "L107",
       "_origin": "ast",
       "id": "src_app_day_date_page_sessionblock",
-      "community": 64,
-      "community_name": "[date]/page.tsx",
+      "community": 168,
+      "community_name": "units.ts",
       "norm_label": "sessionblock()"
     },
     {
@@ -7341,8 +7341,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_report_id_page",
-      "community": 14,
-      "community_name": "phases.ts",
+      "community": 58,
+      "community_name": "report/[id]/page.tsx",
       "norm_label": "report/[id]/page.tsx"
     },
     {
@@ -7352,8 +7352,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_app_report_id_page_reportdoc",
-      "community": 14,
-      "community_name": "phases.ts",
+      "community": 58,
+      "community_name": "report/[id]/page.tsx",
       "norm_label": "reportdoc"
     },
     {
@@ -7363,8 +7363,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_app_report_id_page_usereportdoc",
-      "community": 14,
-      "community_name": "phases.ts",
+      "community": 58,
+      "community_name": "report/[id]/page.tsx",
       "norm_label": "usereportdoc()"
     },
     {
@@ -7374,8 +7374,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "src_app_report_id_page_printstate",
-      "community": 14,
-      "community_name": "phases.ts",
+      "community": 58,
+      "community_name": "report/[id]/page.tsx",
       "norm_label": "printstate"
     },
     {
@@ -7385,8 +7385,8 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "src_app_report_id_page_useprinttopdf",
-      "community": 14,
-      "community_name": "phases.ts",
+      "community": 58,
+      "community_name": "report/[id]/page.tsx",
       "norm_label": "useprinttopdf()"
     },
     {
@@ -7396,8 +7396,8 @@
       "source_location": "L126",
       "_origin": "ast",
       "id": "src_app_report_id_page_reportpage",
-      "community": 14,
-      "community_name": "phases.ts",
+      "community": 58,
+      "community_name": "report/[id]/page.tsx",
       "norm_label": "reportpage()"
     },
     {
@@ -7408,7 +7408,7 @@
       "_origin": "ast",
       "id": "src_app_session_id_page",
       "community": 180,
-      "community_name": "palette.ts",
+      "community_name": "useDayVault.ts",
       "norm_label": "session/[id]/page.tsx"
     },
     {
@@ -7419,7 +7419,7 @@
       "_origin": "ast",
       "id": "src_app_session_id_page_sessionanalysispage",
       "community": 180,
-      "community_name": "palette.ts",
+      "community_name": "useDayVault.ts",
       "norm_label": "sessionanalysispage()"
     },
     {
@@ -7528,8 +7528,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_helixmark",
-      "community": 48,
-      "community_name": "RealtimeProvider.tsx",
+      "community": 24,
+      "community_name": "VitalsGroups.tsx",
       "norm_label": "helixmark.tsx"
     },
     {
@@ -7539,8 +7539,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_components_helixmark_helixmark",
-      "community": 48,
-      "community_name": "RealtimeProvider.tsx",
+      "community": 24,
+      "community_name": "VitalsGroups.tsx",
       "norm_label": "helixmark()"
     },
     {
@@ -7550,8 +7550,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_charts_bodycompositionchart",
-      "community": 18,
-      "community_name": "VolumeChart.tsx",
+      "community": 16,
+      "community_name": "useCharts.ts",
       "norm_label": "bodycompositionchart.tsx"
     },
     {
@@ -7561,8 +7561,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_components_charts_bodycompositionchart_colors",
-      "community": 18,
-      "community_name": "VolumeChart.tsx",
+      "community": 16,
+      "community_name": "useCharts.ts",
       "norm_label": "colors"
     },
     {
@@ -7572,8 +7572,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_components_charts_bodycompositionchart_family",
-      "community": 18,
-      "community_name": "VolumeChart.tsx",
+      "community": 16,
+      "community_name": "useCharts.ts",
       "norm_label": "family"
     },
     {
@@ -7583,8 +7583,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "src_components_charts_bodycompositionchart_family_meta",
-      "community": 18,
-      "community_name": "VolumeChart.tsx",
+      "community": 16,
+      "community_name": "useCharts.ts",
       "norm_label": "family_meta"
     },
     {
@@ -7594,8 +7594,8 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "src_components_charts_bodycompositionchart_fmtdate",
-      "community": 18,
-      "community_name": "VolumeChart.tsx",
+      "community": 16,
+      "community_name": "useCharts.ts",
       "norm_label": "fmtdate()"
     },
     {
@@ -7605,8 +7605,8 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "src_components_charts_bodycompositionchart_bodycompositionpoint",
-      "community": 18,
-      "community_name": "VolumeChart.tsx",
+      "community": 16,
+      "community_name": "useCharts.ts",
       "norm_label": "bodycompositionpoint"
     },
     {
@@ -7616,8 +7616,8 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "src_components_charts_bodycompositionchart_mergebodycomposition",
-      "community": 18,
-      "community_name": "VolumeChart.tsx",
+      "community": 16,
+      "community_name": "useCharts.ts",
       "norm_label": "mergebodycomposition()"
     },
     {
@@ -7627,8 +7627,8 @@
       "source_location": "L116",
       "_origin": "ast",
       "id": "src_components_charts_bodycompositionchart_bodycompositionchart",
-      "community": 18,
-      "community_name": "VolumeChart.tsx",
+      "community": 16,
+      "community_name": "useCharts.ts",
       "norm_label": "bodycompositionchart()"
     },
     {
@@ -7638,8 +7638,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_charts_charttooltip",
-      "community": 18,
-      "community_name": "VolumeChart.tsx",
+      "community": 16,
+      "community_name": "useCharts.ts",
       "norm_label": "charttooltip.tsx"
     },
     {
@@ -7649,8 +7649,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_charts_charttooltip_tooltipprops",
-      "community": 18,
-      "community_name": "VolumeChart.tsx",
+      "community": 16,
+      "community_name": "useCharts.ts",
       "norm_label": "tooltipprops"
     },
     {
@@ -7660,8 +7660,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_components_charts_charttooltip_charttooltip",
-      "community": 18,
-      "community_name": "VolumeChart.tsx",
+      "community": 16,
+      "community_name": "useCharts.ts",
       "norm_label": "charttooltip()"
     },
     {
@@ -7671,8 +7671,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_charts_currentweekbutton",
-      "community": 182,
-      "community_name": "weekStartOf",
+      "community": 121,
+      "community_name": "BrandHeader.tsx",
       "norm_label": "currentweekbutton.tsx"
     },
     {
@@ -7682,8 +7682,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_components_charts_currentweekbutton_currentweekdays",
-      "community": 182,
-      "community_name": "weekStartOf",
+      "community": 121,
+      "community_name": "BrandHeader.tsx",
       "norm_label": "currentweekdays()"
     },
     {
@@ -7693,8 +7693,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_components_charts_currentweekbutton_currentweekbutton",
-      "community": 182,
-      "community_name": "weekStartOf",
+      "community": 121,
+      "community_name": "BrandHeader.tsx",
       "norm_label": "currentweekbutton()"
     },
     {
@@ -7913,8 +7913,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_charts_planerabutton",
-      "community": 27,
-      "community_name": "app/page.tsx",
+      "community": 18,
+      "community_name": "supabase",
       "norm_label": "planerabutton.tsx"
     },
     {
@@ -7924,8 +7924,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_components_charts_planerabutton_daysbetween",
-      "community": 27,
-      "community_name": "app/page.tsx",
+      "community": 18,
+      "community_name": "supabase",
       "norm_label": "daysbetween()"
     },
     {
@@ -7935,8 +7935,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_components_charts_planerabutton_planerabutton",
-      "community": 27,
-      "community_name": "app/page.tsx",
+      "community": 18,
+      "community_name": "supabase",
       "norm_label": "planerabutton()"
     },
     {
@@ -8012,8 +8012,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_charts_volumechart",
-      "community": 18,
-      "community_name": "VolumeChart.tsx",
+      "community": 16,
+      "community_name": "useCharts.ts",
       "norm_label": "volumechart.tsx"
     },
     {
@@ -8023,8 +8023,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_components_charts_volumechart_chartsplit",
-      "community": 18,
-      "community_name": "VolumeChart.tsx",
+      "community": 16,
+      "community_name": "useCharts.ts",
       "norm_label": "chartsplit"
     },
     {
@@ -8034,8 +8034,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_components_charts_volumechart_splits_for_era",
-      "community": 18,
-      "community_name": "VolumeChart.tsx",
+      "community": 16,
+      "community_name": "useCharts.ts",
       "norm_label": "splits_for_era"
     },
     {
@@ -8045,8 +8045,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_components_charts_volumechart_splitlabel",
-      "community": 18,
-      "community_name": "VolumeChart.tsx",
+      "community": 16,
+      "community_name": "useCharts.ts",
       "norm_label": "splitlabel()"
     },
     {
@@ -8056,8 +8056,8 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "src_components_charts_volumechart_splitcolor",
-      "community": 18,
-      "community_name": "VolumeChart.tsx",
+      "community": 16,
+      "community_name": "useCharts.ts",
       "norm_label": "splitcolor()"
     },
     {
@@ -8067,8 +8067,8 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "src_components_charts_volumechart_day_key_split",
-      "community": 18,
-      "community_name": "VolumeChart.tsx",
+      "community": 16,
+      "community_name": "useCharts.ts",
       "norm_label": "day_key_split"
     },
     {
@@ -8078,8 +8078,8 @@
       "source_location": "L88",
       "_origin": "ast",
       "id": "src_components_charts_volumechart_resolvechartsplit",
-      "community": 18,
-      "community_name": "VolumeChart.tsx",
+      "community": 16,
+      "community_name": "useCharts.ts",
       "norm_label": "resolvechartsplit()"
     },
     {
@@ -8089,8 +8089,8 @@
       "source_location": "L105",
       "_origin": "ast",
       "id": "src_components_charts_volumechart_formatdate",
-      "community": 18,
-      "community_name": "VolumeChart.tsx",
+      "community": 16,
+      "community_name": "useCharts.ts",
       "norm_label": "formatdate()"
     },
     {
@@ -8100,8 +8100,8 @@
       "source_location": "L109",
       "_origin": "ast",
       "id": "src_components_charts_volumechart_volumechart",
-      "community": 18,
-      "community_name": "VolumeChart.tsx",
+      "community": 16,
+      "community_name": "useCharts.ts",
       "norm_label": "volumechart()"
     },
     {
@@ -8353,8 +8353,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_command_center_muscleanalyticspanel",
-      "community": 58,
-      "community_name": "useScheduleVersion",
+      "community": 40,
+      "community_name": "nutrition/page.tsx",
       "norm_label": "muscleanalyticspanel.tsx"
     },
     {
@@ -8364,8 +8364,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_components_command_center_muscleanalyticspanel_chartfallback",
-      "community": 58,
-      "community_name": "useScheduleVersion",
+      "community": 40,
+      "community_name": "nutrition/page.tsx",
       "norm_label": "chartfallback()"
     },
     {
@@ -8375,8 +8375,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_components_command_center_muscleanalyticspanel_bodyheatmap",
-      "community": 58,
-      "community_name": "useScheduleVersion",
+      "community": 40,
+      "community_name": "nutrition/page.tsx",
       "norm_label": "bodyheatmap"
     },
     {
@@ -8386,8 +8386,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_components_command_center_muscleanalyticspanel_volumestream",
-      "community": 58,
-      "community_name": "useScheduleVersion",
+      "community": 40,
+      "community_name": "nutrition/page.tsx",
       "norm_label": "volumestream"
     },
     {
@@ -8397,8 +8397,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_components_command_center_muscleanalyticspanel_rpecalendar",
-      "community": 58,
-      "community_name": "useScheduleVersion",
+      "community": 40,
+      "community_name": "nutrition/page.tsx",
       "norm_label": "rpecalendar"
     },
     {
@@ -8408,8 +8408,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "src_components_command_center_muscleanalyticspanel_muscleanalyticssection",
-      "community": 58,
-      "community_name": "useScheduleVersion",
+      "community": 40,
+      "community_name": "nutrition/page.tsx",
       "norm_label": "muscleanalyticssection"
     },
     {
@@ -8419,8 +8419,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_components_command_center_muscleanalyticspanel_strengthtrends",
-      "community": 58,
-      "community_name": "useScheduleVersion",
+      "community": 40,
+      "community_name": "nutrition/page.tsx",
       "norm_label": "strengthtrends"
     },
     {
@@ -8430,8 +8430,8 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "src_components_command_center_muscleanalyticspanel_muscleanalyticspanel",
-      "community": 58,
-      "community_name": "useScheduleVersion",
+      "community": 40,
+      "community_name": "nutrition/page.tsx",
       "norm_label": "muscleanalyticspanel()"
     },
     {
@@ -8650,8 +8650,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_command_center_weektodatetargets",
-      "community": 184,
-      "community_name": "useWeeklyVolume.ts",
+      "community": 88,
+      "community_name": "landmarks.ts",
       "norm_label": "weektodatetargets.tsx"
     },
     {
@@ -8661,8 +8661,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_components_command_center_weektodatetargets_weektodatetargets",
-      "community": 184,
-      "community_name": "useWeeklyVolume.ts",
+      "community": 88,
+      "community_name": "landmarks.ts",
       "norm_label": "weektodatetargets()"
     },
     {
@@ -9750,8 +9750,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_day_scheduleshortcut",
-      "community": 58,
-      "community_name": "useScheduleVersion",
+      "community": 180,
+      "community_name": "useDayVault.ts",
       "norm_label": "scheduleshortcut.tsx"
     },
     {
@@ -9761,8 +9761,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_components_day_scheduleshortcut_scheduleshortcut",
-      "community": 58,
-      "community_name": "useScheduleVersion",
+      "community": 180,
+      "community_name": "useDayVault.ts",
       "norm_label": "scheduleshortcut()"
     },
     {
@@ -9773,7 +9773,7 @@
       "_origin": "ast",
       "id": "src_components_day_sessionprogressioncard",
       "community": 180,
-      "community_name": "palette.ts",
+      "community_name": "useDayVault.ts",
       "norm_label": "sessionprogressioncard.tsx"
     },
     {
@@ -9784,7 +9784,7 @@
       "_origin": "ast",
       "id": "src_components_day_sessionprogressioncard_sessionprogressioncard",
       "community": 180,
-      "community_name": "palette.ts",
+      "community_name": "useDayVault.ts",
       "norm_label": "sessionprogressioncard()"
     },
     {
@@ -9794,8 +9794,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_day_sleepdebtgauge",
-      "community": 64,
-      "community_name": "[date]/page.tsx",
+      "community": 89,
+      "community_name": "logicalTodayISO",
       "norm_label": "sleepdebtgauge.tsx"
     },
     {
@@ -9805,8 +9805,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_components_day_sleepdebtgauge_debtcolor",
-      "community": 64,
-      "community_name": "[date]/page.tsx",
+      "community": 89,
+      "community_name": "logicalTodayISO",
       "norm_label": "debtcolor()"
     },
     {
@@ -9816,8 +9816,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_components_day_sleepdebtgauge_sleepdebtgauge",
-      "community": 64,
-      "community_name": "[date]/page.tsx",
+      "community": 89,
+      "community_name": "logicalTodayISO",
       "norm_label": "sleepdebtgauge"
     },
     {
@@ -9992,8 +9992,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_day_waterhelix",
-      "community": 64,
-      "community_name": "[date]/page.tsx",
+      "community": 40,
+      "community_name": "nutrition/page.tsx",
       "norm_label": "waterhelix.tsx"
     },
     {
@@ -10003,8 +10003,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_components_day_waterhelix_node",
-      "community": 64,
-      "community_name": "[date]/page.tsx",
+      "community": 40,
+      "community_name": "nutrition/page.tsx",
       "norm_label": "node"
     },
     {
@@ -10014,8 +10014,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_components_day_waterhelix_buildhelix",
-      "community": 64,
-      "community_name": "[date]/page.tsx",
+      "community": 40,
+      "community_name": "nutrition/page.tsx",
       "norm_label": "buildhelix()"
     },
     {
@@ -10025,8 +10025,8 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "src_components_day_waterhelix_waterhelix",
-      "community": 64,
-      "community_name": "[date]/page.tsx",
+      "community": 40,
+      "community_name": "nutrition/page.tsx",
       "norm_label": "waterhelix()"
     },
     {
@@ -10146,8 +10146,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_fx_deferredmount",
-      "community": 27,
-      "community_name": "app/page.tsx",
+      "community": 40,
+      "community_name": "nutrition/page.tsx",
       "norm_label": "deferredmount.tsx"
     },
     {
@@ -10157,8 +10157,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_components_fx_deferredmount_deferredmount",
-      "community": 27,
-      "community_name": "app/page.tsx",
+      "community": 40,
+      "community_name": "nutrition/page.tsx",
       "norm_label": "deferredmount()"
     },
     {
@@ -10212,8 +10212,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_fx_widgetboundary",
-      "community": 86,
-      "community_name": "pathfinder/page.tsx",
+      "community": 58,
+      "community_name": "report/[id]/page.tsx",
       "norm_label": "widgetboundary.tsx"
     },
     {
@@ -10223,8 +10223,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_components_fx_widgetboundary_widgetboundary",
-      "community": 86,
-      "community_name": "pathfinder/page.tsx",
+      "community": 58,
+      "community_name": "report/[id]/page.tsx",
       "norm_label": "widgetboundary"
     },
     {
@@ -10234,8 +10234,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_components_fx_widgetboundary_widgetboundary_getderivedstatefromerror",
-      "community": 86,
-      "community_name": "pathfinder/page.tsx",
+      "community": 58,
+      "community_name": "report/[id]/page.tsx",
       "norm_label": ".getderivedstatefromerror()"
     },
     {
@@ -10245,8 +10245,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_components_fx_widgetboundary_widgetboundary_componentdidcatch",
-      "community": 86,
-      "community_name": "pathfinder/page.tsx",
+      "community": 58,
+      "community_name": "report/[id]/page.tsx",
       "norm_label": ".componentdidcatch()"
     },
     {
@@ -10256,8 +10256,8 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "src_components_fx_widgetboundary_widgetboundary_render",
-      "community": 86,
-      "community_name": "pathfinder/page.tsx",
+      "community": 58,
+      "community_name": "report/[id]/page.tsx",
       "norm_label": ".render()"
     },
     {
@@ -10806,8 +10806,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_providers_authgate",
-      "community": 48,
-      "community_name": "RealtimeProvider.tsx",
+      "community": 51,
+      "community_name": "programs.ts",
       "norm_label": "authgate.tsx"
     },
     {
@@ -10817,8 +10817,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_components_providers_authgate_authstate",
-      "community": 48,
-      "community_name": "RealtimeProvider.tsx",
+      "community": 51,
+      "community_name": "programs.ts",
       "norm_label": "authstate"
     },
     {
@@ -10828,8 +10828,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_components_providers_authgate_haspersistedsession",
-      "community": 48,
-      "community_name": "RealtimeProvider.tsx",
+      "community": 51,
+      "community_name": "programs.ts",
       "norm_label": "haspersistedsession()"
     },
     {
@@ -10839,8 +10839,8 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "src_components_providers_authgate_authgate",
-      "community": 48,
-      "community_name": "RealtimeProvider.tsx",
+      "community": 51,
+      "community_name": "programs.ts",
       "norm_label": "authgate()"
     },
     {
@@ -10949,8 +10949,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_providers_realtimeprovider",
-      "community": 48,
-      "community_name": "RealtimeProvider.tsx",
+      "community": 51,
+      "community_name": "programs.ts",
       "norm_label": "realtimeprovider.tsx"
     },
     {
@@ -10960,8 +10960,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_components_providers_realtimeprovider_table_keys",
-      "community": 48,
-      "community_name": "RealtimeProvider.tsx",
+      "community": 51,
+      "community_name": "programs.ts",
       "norm_label": "table_keys"
     },
     {
@@ -10971,8 +10971,8 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "src_components_providers_realtimeprovider_tables",
-      "community": 48,
-      "community_name": "RealtimeProvider.tsx",
+      "community": 51,
+      "community_name": "programs.ts",
       "norm_label": "tables"
     },
     {
@@ -10982,8 +10982,8 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "src_components_providers_realtimeprovider_realtimeprovider",
-      "community": 48,
-      "community_name": "RealtimeProvider.tsx",
+      "community": 51,
+      "community_name": "programs.ts",
       "norm_label": "realtimeprovider()"
     },
     {
@@ -11048,8 +11048,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_providers_themeprovider",
-      "community": 27,
-      "community_name": "app/page.tsx",
+      "community": 18,
+      "community_name": "supabase",
       "norm_label": "themeprovider.tsx"
     },
     {
@@ -11059,8 +11059,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_components_providers_themeprovider_themeprovider",
-      "community": 27,
-      "community_name": "app/page.tsx",
+      "community": 18,
+      "community_name": "supabase",
       "norm_label": "themeprovider()"
     },
     {
@@ -11543,7 +11543,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_session_detail_musclefocus",
-      "community": 180,
+      "community": 48,
       "community_name": "palette.ts",
       "norm_label": "musclefocus.tsx"
     },
@@ -11554,7 +11554,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_components_session_detail_musclefocus_round1",
-      "community": 180,
+      "community": 48,
       "community_name": "palette.ts",
       "norm_label": "round1()"
     },
@@ -11565,7 +11565,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_components_session_detail_musclefocus_musclefocus",
-      "community": 180,
+      "community": 48,
       "community_name": "palette.ts",
       "norm_label": "musclefocus()"
     },
@@ -11643,7 +11643,7 @@
       "_origin": "ast",
       "id": "src_components_session_detail_sessionhero",
       "community": 180,
-      "community_name": "palette.ts",
+      "community_name": "useDayVault.ts",
       "norm_label": "sessionhero.tsx"
     },
     {
@@ -11654,7 +11654,7 @@
       "_origin": "ast",
       "id": "src_components_session_detail_sessionhero_headline",
       "community": 180,
-      "community_name": "palette.ts",
+      "community_name": "useDayVault.ts",
       "norm_label": "headline()"
     },
     {
@@ -11665,7 +11665,7 @@
       "_origin": "ast",
       "id": "src_components_session_detail_sessionhero_stat",
       "community": 180,
-      "community_name": "palette.ts",
+      "community_name": "useDayVault.ts",
       "norm_label": "stat()"
     },
     {
@@ -11676,7 +11676,7 @@
       "_origin": "ast",
       "id": "src_components_session_detail_sessionhero_sessionhero",
       "community": 180,
-      "community_name": "palette.ts",
+      "community_name": "useDayVault.ts",
       "norm_label": "sessionhero()"
     },
     {
@@ -11741,8 +11741,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_settings_notionsync",
-      "community": 17,
-      "community_name": "client.ts",
+      "community": 18,
+      "community_name": "supabase",
       "norm_label": "notionsync.tsx"
     },
     {
@@ -11752,8 +11752,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_components_settings_notionsync_result",
-      "community": 17,
-      "community_name": "client.ts",
+      "community": 18,
+      "community_name": "supabase",
       "norm_label": "result"
     },
     {
@@ -11763,8 +11763,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_components_settings_notionsync_notionsync",
-      "community": 17,
-      "community_name": "client.ts",
+      "community": 18,
+      "community_name": "supabase",
       "norm_label": "notionsync()"
     },
     {
@@ -11884,8 +11884,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_timeline_weekchip",
-      "community": 14,
-      "community_name": "phases.ts",
+      "community": 195,
+      "community_name": "ContinuumTimeline.tsx",
       "norm_label": "weekchip.tsx"
     },
     {
@@ -11895,8 +11895,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_components_timeline_weekchip_weekchiplabel",
-      "community": 14,
-      "community_name": "phases.ts",
+      "community": 195,
+      "community_name": "ContinuumTimeline.tsx",
       "norm_label": "weekchiplabel()"
     },
     {
@@ -11906,8 +11906,8 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "src_components_timeline_weekchip_dot",
-      "community": 14,
-      "community_name": "phases.ts",
+      "community": 195,
+      "community_name": "ContinuumTimeline.tsx",
       "norm_label": "dot()"
     },
     {
@@ -12610,8 +12610,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_charts_intensitycalendar",
-      "community": 41,
-      "community_name": "HelixViz.tsx",
+      "community": 87,
+      "community_name": "intensityCalendar.ts",
       "norm_label": "intensitycalendar.ts"
     },
     {
@@ -12621,8 +12621,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_lib_charts_intensitycalendar_calendarcell",
-      "community": 41,
-      "community_name": "HelixViz.tsx",
+      "community": 87,
+      "community_name": "intensityCalendar.ts",
       "norm_label": "calendarcell"
     },
     {
@@ -12632,8 +12632,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_lib_charts_intensitycalendar_calendarstats",
-      "community": 41,
-      "community_name": "HelixViz.tsx",
+      "community": 87,
+      "community_name": "intensityCalendar.ts",
       "norm_label": "calendarstats"
     },
     {
@@ -12643,8 +12643,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "src_lib_charts_intensitycalendar_calendarmodel",
-      "community": 41,
-      "community_name": "HelixViz.tsx",
+      "community": 87,
+      "community_name": "intensityCalendar.ts",
       "norm_label": "calendarmodel"
     },
     {
@@ -12654,8 +12654,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "src_lib_charts_intensitycalendar_iso",
-      "community": 41,
-      "community_name": "HelixViz.tsx",
+      "community": 87,
+      "community_name": "intensityCalendar.ts",
       "norm_label": "iso()"
     },
     {
@@ -12665,8 +12665,8 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "src_lib_charts_intensitycalendar_sundayof",
-      "community": 41,
-      "community_name": "HelixViz.tsx",
+      "community": 87,
+      "community_name": "intensityCalendar.ts",
       "norm_label": "sundayof()"
     },
     {
@@ -12676,8 +12676,8 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "src_lib_charts_intensitycalendar_buildintensitycalendar",
-      "community": 41,
-      "community_name": "HelixViz.tsx",
+      "community": 87,
+      "community_name": "intensityCalendar.ts",
       "norm_label": "buildintensitycalendar()"
     },
     {
@@ -12687,8 +12687,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_charts_muscleaggregate",
-      "community": 41,
-      "community_name": "HelixViz.tsx",
+      "community": 65,
+      "community_name": "useMuscleAnalytics.ts",
       "norm_label": "muscleaggregate.ts"
     },
     {
@@ -12698,8 +12698,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_lib_charts_muscleaggregate_muscle_map",
-      "community": 41,
-      "community_name": "HelixViz.tsx",
+      "community": 65,
+      "community_name": "useMuscleAnalytics.ts",
       "norm_label": "muscle_map"
     },
     {
@@ -12709,8 +12709,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_lib_charts_muscleaggregate_muscle_groups",
-      "community": 41,
-      "community_name": "HelixViz.tsx",
+      "community": 65,
+      "community_name": "useMuscleAnalytics.ts",
       "norm_label": "muscle_groups"
     },
     {
@@ -12720,8 +12720,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_lib_charts_muscleaggregate_musclesetrow",
-      "community": 41,
-      "community_name": "HelixViz.tsx",
+      "community": 65,
+      "community_name": "useMuscleAnalytics.ts",
       "norm_label": "musclesetrow"
     },
     {
@@ -12731,8 +12731,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "src_lib_charts_muscleaggregate_musclestat",
-      "community": 41,
-      "community_name": "HelixViz.tsx",
+      "community": 65,
+      "community_name": "useMuscleAnalytics.ts",
       "norm_label": "musclestat"
     },
     {
@@ -12742,8 +12742,8 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "src_lib_charts_muscleaggregate_muscleaggregate",
-      "community": 41,
-      "community_name": "HelixViz.tsx",
+      "community": 65,
+      "community_name": "useMuscleAnalytics.ts",
       "norm_label": "muscleaggregate"
     },
     {
@@ -12753,8 +12753,8 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "src_lib_charts_muscleaggregate_weekstartutc",
-      "community": 41,
-      "community_name": "HelixViz.tsx",
+      "community": 65,
+      "community_name": "useMuscleAnalytics.ts",
       "norm_label": "weekstartutc()"
     },
     {
@@ -12764,8 +12764,8 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "src_lib_charts_muscleaggregate_aggregatemusclesets",
-      "community": 41,
-      "community_name": "HelixViz.tsx",
+      "community": 65,
+      "community_name": "useMuscleAnalytics.ts",
       "norm_label": "aggregatemusclesets()"
     },
     {
@@ -12830,8 +12830,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_charts_scale",
-      "community": 18,
-      "community_name": "VolumeChart.tsx",
+      "community": 16,
+      "community_name": "useCharts.ts",
       "norm_label": "scale.ts"
     },
     {
@@ -12841,8 +12841,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_lib_charts_scale_nicestep",
-      "community": 18,
-      "community_name": "VolumeChart.tsx",
+      "community": 16,
+      "community_name": "useCharts.ts",
       "norm_label": "nicestep()"
     },
     {
@@ -12852,8 +12852,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_lib_charts_scale_nicedomainoptions",
-      "community": 18,
-      "community_name": "VolumeChart.tsx",
+      "community": 16,
+      "community_name": "useCharts.ts",
       "norm_label": "nicedomainoptions"
     },
     {
@@ -12863,8 +12863,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "src_lib_charts_scale_nicedomain",
-      "community": 18,
-      "community_name": "VolumeChart.tsx",
+      "community": 16,
+      "community_name": "useCharts.ts",
       "norm_label": "nicedomain()"
     },
     {
@@ -12874,8 +12874,8 @@
       "source_location": "L72",
       "_origin": "ast",
       "id": "src_lib_charts_scale_round",
-      "community": 18,
-      "community_name": "VolumeChart.tsx",
+      "community": 16,
+      "community_name": "useCharts.ts",
       "norm_label": "round()"
     },
     {
@@ -12885,8 +12885,8 @@
       "source_location": "L82",
       "_origin": "ast",
       "id": "src_lib_charts_scale_compactkg",
-      "community": 18,
-      "community_name": "VolumeChart.tsx",
+      "community": 16,
+      "community_name": "useCharts.ts",
       "norm_label": "compactkg()"
     },
     {
@@ -13930,8 +13930,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_hooks_usebiostrips",
-      "community": 87,
-      "community_name": "useBioStrips.ts",
+      "community": 27,
+      "community_name": "app/page.tsx",
       "norm_label": "usebiostrips.ts"
     },
     {
@@ -13941,8 +13941,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_lib_hooks_usebiostrips_bioday",
-      "community": 87,
-      "community_name": "useBioStrips.ts",
+      "community": 27,
+      "community_name": "app/page.tsx",
       "norm_label": "bioday"
     },
     {
@@ -13952,8 +13952,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_lib_hooks_usebiostrips_usebioseries",
-      "community": 87,
-      "community_name": "useBioStrips.ts",
+      "community": 27,
+      "community_name": "app/page.tsx",
       "norm_label": "usebioseries()"
     },
     {
@@ -13963,8 +13963,8 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "src_lib_hooks_usebiostrips_weighin",
-      "community": 87,
-      "community_name": "useBioStrips.ts",
+      "community": 27,
+      "community_name": "app/page.tsx",
       "norm_label": "weighin"
     },
     {
@@ -13974,8 +13974,8 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "src_lib_hooks_usebiostrips_weightrow",
-      "community": 87,
-      "community_name": "useBioStrips.ts",
+      "community": 27,
+      "community_name": "app/page.tsx",
       "norm_label": "weightrow"
     },
     {
@@ -13985,8 +13985,8 @@
       "source_location": "L68",
       "_origin": "ast",
       "id": "src_lib_hooks_usebiostrips_latestweighin",
-      "community": 87,
-      "community_name": "useBioStrips.ts",
+      "community": 27,
+      "community_name": "app/page.tsx",
       "norm_label": "latestweighin()"
     },
     {
@@ -13996,8 +13996,8 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "src_lib_hooks_usebiostrips_uselastweighin",
-      "community": 87,
-      "community_name": "useBioStrips.ts",
+      "community": 27,
+      "community_name": "app/page.tsx",
       "norm_label": "uselastweighin()"
     },
     {
@@ -14007,8 +14007,8 @@
       "source_location": "L121",
       "_origin": "ast",
       "id": "src_lib_hooks_usebiostrips_body_metric_fields",
-      "community": 87,
-      "community_name": "useBioStrips.ts",
+      "community": 27,
+      "community_name": "app/page.tsx",
       "norm_label": "body_metric_fields"
     },
     {
@@ -14018,8 +14018,8 @@
       "source_location": "L128",
       "_origin": "ast",
       "id": "src_lib_hooks_usebiostrips_bodymetricfield",
-      "community": 87,
-      "community_name": "useBioStrips.ts",
+      "community": 27,
+      "community_name": "app/page.tsx",
       "norm_label": "bodymetricfield"
     },
     {
@@ -14029,8 +14029,8 @@
       "source_location": "L131",
       "_origin": "ast",
       "id": "src_lib_hooks_usebiostrips_latestbodymetrics",
-      "community": 87,
-      "community_name": "useBioStrips.ts",
+      "community": 27,
+      "community_name": "app/page.tsx",
       "norm_label": "latestbodymetrics"
     },
     {
@@ -14040,8 +14040,8 @@
       "source_location": "L142",
       "_origin": "ast",
       "id": "src_lib_hooks_usebiostrips_picklatestbodymetrics",
-      "community": 87,
-      "community_name": "useBioStrips.ts",
+      "community": 27,
+      "community_name": "app/page.tsx",
       "norm_label": "picklatestbodymetrics()"
     },
     {
@@ -14051,8 +14051,8 @@
       "source_location": "L162",
       "_origin": "ast",
       "id": "src_lib_hooks_usebiostrips_uselatestbodymetrics",
-      "community": 87,
-      "community_name": "useBioStrips.ts",
+      "community": 27,
+      "community_name": "app/page.tsx",
       "norm_label": "uselatestbodymetrics()"
     },
     {
@@ -14194,8 +14194,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_lib_hooks_usecharts_bodytrendrow",
-      "community": 18,
-      "community_name": "VolumeChart.tsx",
+      "community": 16,
+      "community_name": "useCharts.ts",
       "norm_label": "bodytrendrow"
     },
     {
@@ -14249,8 +14249,8 @@
       "source_location": "L128",
       "_origin": "ast",
       "id": "src_lib_hooks_usecharts_volumepoint",
-      "community": 18,
-      "community_name": "VolumeChart.tsx",
+      "community": 16,
+      "community_name": "useCharts.ts",
       "norm_label": "volumepoint"
     },
     {
@@ -14348,8 +14348,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_lib_hooks_usecontinuum_continuumday",
-      "community": 195,
-      "community_name": "ContinuumTimeline.tsx",
+      "community": 1,
+      "community_name": "MacroRings.tsx",
       "norm_label": "continuumday"
     },
     {
@@ -14535,8 +14535,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_hooks_usedashboard",
-      "community": 27,
-      "community_name": "app/page.tsx",
+      "community": 18,
+      "community_name": "supabase",
       "norm_label": "usedashboard.ts"
     },
     {
@@ -14546,8 +14546,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_lib_hooks_usedashboard_todaylocal",
-      "community": 27,
-      "community_name": "app/page.tsx",
+      "community": 18,
+      "community_name": "supabase",
       "norm_label": "todaylocal()"
     },
     {
@@ -14557,8 +14557,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_lib_hooks_usedashboard_last30days",
-      "community": 27,
-      "community_name": "app/page.tsx",
+      "community": 18,
+      "community_name": "supabase",
       "norm_label": "last30days()"
     },
     {
@@ -14667,8 +14667,8 @@
       "source_location": "L173",
       "_origin": "ast",
       "id": "src_lib_hooks_usedashboard_useusergoals",
-      "community": 27,
-      "community_name": "app/page.tsx",
+      "community": 18,
+      "community_name": "supabase",
       "norm_label": "useusergoals()"
     },
     {
@@ -14690,7 +14690,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_usedayvault",
       "community": 180,
-      "community_name": "palette.ts",
+      "community_name": "useDayVault.ts",
       "norm_label": "usedayvault.ts"
     },
     {
@@ -14701,7 +14701,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_usedayvault_adddayiso",
       "community": 180,
-      "community_name": "palette.ts",
+      "community_name": "useDayVault.ts",
       "norm_label": "adddayiso()"
     },
     {
@@ -14711,8 +14711,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_lib_hooks_usedayvault_dayvaultdata",
-      "community": 6,
-      "community_name": "FileSystemBrowser.tsx",
+      "community": 1,
+      "community_name": "MacroRings.tsx",
       "norm_label": "dayvaultdata"
     },
     {
@@ -14733,8 +14733,8 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "src_lib_hooks_usedayvault_usedayvault",
-      "community": 58,
-      "community_name": "useScheduleVersion",
+      "community": 180,
+      "community_name": "useDayVault.ts",
       "norm_label": "usedayvault()"
     },
     {
@@ -14756,7 +14756,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_usedayvault_usedeletesession",
       "community": 180,
-      "community_name": "palette.ts",
+      "community_name": "useDayVault.ts",
       "norm_label": "usedeletesession()"
     },
     {
@@ -14767,7 +14767,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_usedayvault_useglobalsessionnumber",
       "community": 180,
-      "community_name": "palette.ts",
+      "community_name": "useDayVault.ts",
       "norm_label": "useglobalsessionnumber()"
     },
     {
@@ -14778,7 +14778,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_usedayvault_usesessionordinal",
       "community": 180,
-      "community_name": "palette.ts",
+      "community_name": "useDayVault.ts",
       "norm_label": "usesessionordinal()"
     },
     {
@@ -14811,7 +14811,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_usedayvault_body_mirror",
       "community": 180,
-      "community_name": "palette.ts",
+      "community_name": "useDayVault.ts",
       "norm_label": "body_mirror"
     },
     {
@@ -14833,7 +14833,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_useeditsession",
       "community": 180,
-      "community_name": "palette.ts",
+      "community_name": "useDayVault.ts",
       "norm_label": "useeditsession.ts"
     },
     {
@@ -14844,7 +14844,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_useeditsession_sessrow",
       "community": 180,
-      "community_name": "palette.ts",
+      "community_name": "useDayVault.ts",
       "norm_label": "sessrow"
     },
     {
@@ -14855,7 +14855,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_useeditsession_setrow",
       "community": 180,
-      "community_name": "palette.ts",
+      "community_name": "useDayVault.ts",
       "norm_label": "setrow"
     },
     {
@@ -14866,7 +14866,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_useeditsession_useeditsession",
       "community": 180,
-      "community_name": "palette.ts",
+      "community_name": "useDayVault.ts",
       "norm_label": "useeditsession()"
     },
     {
@@ -15228,8 +15228,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_hooks_uselogicaldate",
-      "community": 182,
-      "community_name": "weekStartOf",
+      "community": 121,
+      "community_name": "BrandHeader.tsx",
       "norm_label": "uselogicaldate.ts"
     },
     {
@@ -15239,8 +15239,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_lib_hooks_uselogicaldate_msuntillocalmidnight",
-      "community": 182,
-      "community_name": "weekStartOf",
+      "community": 121,
+      "community_name": "BrandHeader.tsx",
       "norm_label": "msuntillocalmidnight()"
     },
     {
@@ -15250,8 +15250,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_lib_hooks_uselogicaldate_uselogicaldate",
-      "community": 182,
-      "community_name": "weekStartOf",
+      "community": 121,
+      "community_name": "BrandHeader.tsx",
       "norm_label": "uselogicaldate()"
     },
     {
@@ -15261,8 +15261,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_hooks_usemacrooverride",
-      "community": 17,
-      "community_name": "client.ts",
+      "community": 1,
+      "community_name": "MacroRings.tsx",
       "norm_label": "usemacrooverride.ts"
     },
     {
@@ -15283,8 +15283,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_lib_hooks_usemacrooverride_cascade_keys",
-      "community": 17,
-      "community_name": "client.ts",
+      "community": 1,
+      "community_name": "MacroRings.tsx",
       "norm_label": "cascade_keys"
     },
     {
@@ -15305,8 +15305,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_hooks_usemuscleanalytics",
-      "community": 41,
-      "community_name": "HelixViz.tsx",
+      "community": 65,
+      "community_name": "useMuscleAnalytics.ts",
       "norm_label": "usemuscleanalytics.ts"
     },
     {
@@ -15316,8 +15316,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_lib_hooks_usemuscleanalytics_v51_exercise_aliases",
-      "community": 41,
-      "community_name": "HelixViz.tsx",
+      "community": 65,
+      "community_name": "useMuscleAnalytics.ts",
       "norm_label": "v51_exercise_aliases"
     },
     {
@@ -15327,8 +15327,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_lib_hooks_usemuscleanalytics_muscleanalytics",
-      "community": 41,
-      "community_name": "HelixViz.tsx",
+      "community": 65,
+      "community_name": "useMuscleAnalytics.ts",
       "norm_label": "muscleanalytics"
     },
     {
@@ -15371,8 +15371,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_hooks_usenutrition",
-      "community": 89,
-      "community_name": "logicalTodayISO",
+      "community": 1,
+      "community_name": "MacroRings.tsx",
       "norm_label": "usenutrition.ts"
     },
     {
@@ -15382,8 +15382,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_lib_hooks_usenutrition_dailylog",
-      "community": 195,
-      "community_name": "ContinuumTimeline.tsx",
+      "community": 1,
+      "community_name": "MacroRings.tsx",
       "norm_label": "dailylog"
     },
     {
@@ -15393,8 +15393,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_lib_hooks_usenutrition_todayiso",
-      "community": 89,
-      "community_name": "logicalTodayISO",
+      "community": 1,
+      "community_name": "MacroRings.tsx",
       "norm_label": "todayiso()"
     },
     {
@@ -15404,8 +15404,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_lib_hooks_usenutrition_daysagoiso",
-      "community": 89,
-      "community_name": "logicalTodayISO",
+      "community": 1,
+      "community_name": "MacroRings.tsx",
       "norm_label": "daysagoiso()"
     },
     {
@@ -15415,8 +15415,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_lib_hooks_usenutrition_usedailylogs",
-      "community": 89,
-      "community_name": "logicalTodayISO",
+      "community": 1,
+      "community_name": "MacroRings.tsx",
       "norm_label": "usedailylogs()"
     },
     {
@@ -15427,7 +15427,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_useplanphasegoals",
       "community": 166,
-      "community_name": "usePlanPhaseGoals.ts",
+      "community_name": "workout.ts",
       "norm_label": "useplanphasegoals.ts"
     },
     {
@@ -15438,7 +15438,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_useplanphasegoals_planphaseoverride",
       "community": 166,
-      "community_name": "usePlanPhaseGoals.ts",
+      "community_name": "workout.ts",
       "norm_label": "planphaseoverride"
     },
     {
@@ -15449,7 +15449,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_useplanphasegoals_planphasekey",
       "community": 166,
-      "community_name": "usePlanPhaseGoals.ts",
+      "community_name": "workout.ts",
       "norm_label": "planphasekey()"
     },
     {
@@ -15460,7 +15460,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_useplanphasegoals_row",
       "community": 166,
-      "community_name": "usePlanPhaseGoals.ts",
+      "community_name": "workout.ts",
       "norm_label": "row"
     },
     {
@@ -15471,7 +15471,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_useplanphasegoals_volumerow",
       "community": 166,
-      "community_name": "usePlanPhaseGoals.ts",
+      "community_name": "workout.ts",
       "norm_label": "volumerow"
     },
     {
@@ -15482,7 +15482,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_useplanphasegoals_rowtooverride",
       "community": 166,
-      "community_name": "usePlanPhaseGoals.ts",
+      "community_name": "workout.ts",
       "norm_label": "rowtooverride()"
     },
     {
@@ -15493,7 +15493,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_useplanphasegoals_extra_cols",
       "community": 166,
-      "community_name": "usePlanPhaseGoals.ts",
+      "community_name": "workout.ts",
       "norm_label": "extra_cols"
     },
     {
@@ -15504,7 +15504,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_useplanphasegoals_planphasedata",
       "community": 166,
-      "community_name": "usePlanPhaseGoals.ts",
+      "community_name": "workout.ts",
       "norm_label": "planphasedata"
     },
     {
@@ -15515,7 +15515,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_useplanphasegoals_empty",
       "community": 166,
-      "community_name": "usePlanPhaseGoals.ts",
+      "community_name": "workout.ts",
       "norm_label": "empty"
     },
     {
@@ -15526,7 +15526,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_useplanphasegoals_useplanphasegoals",
       "community": 166,
-      "community_name": "usePlanPhaseGoals.ts",
+      "community_name": "workout.ts",
       "norm_label": "useplanphasegoals()"
     },
     {
@@ -15701,8 +15701,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_hooks_usereports",
-      "community": 56,
-      "community_name": "useTimelineWeeks.ts",
+      "community": 6,
+      "community_name": "FileSystemBrowser.tsx",
       "norm_label": "usereports.ts"
     },
     {
@@ -15734,8 +15734,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "src_lib_hooks_usereports_reportdbrow",
-      "community": 56,
-      "community_name": "useTimelineWeeks.ts",
+      "community": 6,
+      "community_name": "FileSystemBrowser.tsx",
       "norm_label": "reportdbrow"
     },
     {
@@ -15745,8 +15745,8 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "src_lib_hooks_usereports_empty_payload",
-      "community": 56,
-      "community_name": "useTimelineWeeks.ts",
+      "community": 6,
+      "community_name": "FileSystemBrowser.tsx",
       "norm_label": "empty_payload"
     },
     {
@@ -15756,8 +15756,8 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "src_lib_hooks_usereports_num",
-      "community": 56,
-      "community_name": "useTimelineWeeks.ts",
+      "community": 6,
+      "community_name": "FileSystemBrowser.tsx",
       "norm_label": "num()"
     },
     {
@@ -15767,8 +15767,8 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "src_lib_hooks_usereports_numornull",
-      "community": 56,
-      "community_name": "useTimelineWeeks.ts",
+      "community": 6,
+      "community_name": "FileSystemBrowser.tsx",
       "norm_label": "numornull()"
     },
     {
@@ -15778,8 +15778,8 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "src_lib_hooks_usereports_str",
-      "community": 56,
-      "community_name": "useTimelineWeeks.ts",
+      "community": 6,
+      "community_name": "FileSystemBrowser.tsx",
       "norm_label": "str()"
     },
     {
@@ -15789,8 +15789,8 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "src_lib_hooks_usereports_repairreportpayload",
-      "community": 56,
-      "community_name": "useTimelineWeeks.ts",
+      "community": 6,
+      "community_name": "FileSystemBrowser.tsx",
       "norm_label": "repairreportpayload()"
     },
     {
@@ -15822,8 +15822,8 @@
       "source_location": "L137",
       "_origin": "ast",
       "id": "src_lib_hooks_usereports_usedeletereport",
-      "community": 56,
-      "community_name": "useTimelineWeeks.ts",
+      "community": 6,
+      "community_name": "FileSystemBrowser.tsx",
       "norm_label": "usedeletereport()"
     },
     {
@@ -15888,8 +15888,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_lib_hooks_usescheduleoverrides_usescheduleoverrides",
-      "community": 48,
-      "community_name": "RealtimeProvider.tsx",
+      "community": 51,
+      "community_name": "programs.ts",
       "norm_label": "usescheduleoverrides()"
     },
     {
@@ -15943,7 +15943,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_hooks_usescheduleversion",
-      "community": 58,
+      "community": 20,
       "community_name": "useScheduleVersion",
       "norm_label": "usescheduleversion.ts"
     },
@@ -15954,7 +15954,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_lib_hooks_usescheduleversion_usescheduleversion",
-      "community": 58,
+      "community": 20,
       "community_name": "useScheduleVersion",
       "norm_label": "usescheduleversion()"
     },
@@ -16042,8 +16042,8 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "src_lib_hooks_usesessiondetail_sessiondetail",
-      "community": 180,
-      "community_name": "palette.ts",
+      "community": 84,
+      "community_name": "ExerciseBreakdown.tsx",
       "norm_label": "sessiondetail"
     },
     {
@@ -16065,7 +16065,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_usesessiondetail_usesessiondetail",
       "community": 180,
-      "community_name": "palette.ts",
+      "community_name": "useDayVault.ts",
       "norm_label": "usesessiondetail()"
     },
     {
@@ -16394,8 +16394,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_hooks_usetoday",
-      "community": 27,
-      "community_name": "app/page.tsx",
+      "community": 18,
+      "community_name": "supabase",
       "norm_label": "usetoday.ts"
     },
     {
@@ -16405,8 +16405,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_lib_hooks_usetoday_todaybundle",
-      "community": 27,
-      "community_name": "app/page.tsx",
+      "community": 18,
+      "community_name": "supabase",
       "norm_label": "todaybundle"
     },
     {
@@ -16416,8 +16416,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_lib_hooks_usetoday_todaybundlekey",
-      "community": 27,
-      "community_name": "app/page.tsx",
+      "community": 18,
+      "community_name": "supabase",
       "norm_label": "todaybundlekey()"
     },
     {
@@ -16427,8 +16427,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_lib_hooks_usetoday_empty",
-      "community": 27,
-      "community_name": "app/page.tsx",
+      "community": 18,
+      "community_name": "supabase",
       "norm_label": "empty"
     },
     {
@@ -16438,8 +16438,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_lib_hooks_usetoday_fetchtodaybundle",
-      "community": 27,
-      "community_name": "app/page.tsx",
+      "community": 18,
+      "community_name": "supabase",
       "norm_label": "fetchtodaybundle()"
     },
     {
@@ -16988,8 +16988,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_hooks_useweeklyvolume",
-      "community": 184,
-      "community_name": "useWeeklyVolume.ts",
+      "community": 88,
+      "community_name": "landmarks.ts",
       "norm_label": "useweeklyvolume.ts"
     },
     {
@@ -16999,8 +16999,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_lib_hooks_useweeklyvolume_weeklyvolume",
-      "community": 184,
-      "community_name": "useWeeklyVolume.ts",
+      "community": 88,
+      "community_name": "landmarks.ts",
       "norm_label": "weeklyvolume"
     },
     {
@@ -17010,8 +17010,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_lib_hooks_useweeklyvolume_useweeklyvolume",
-      "community": 184,
-      "community_name": "useWeeklyVolume.ts",
+      "community": 88,
+      "community_name": "landmarks.ts",
       "norm_label": "useweeklyvolume()"
     },
     {
@@ -17461,8 +17461,8 @@
       "source_location": "L151",
       "_origin": "ast",
       "id": "src_lib_native_healthkit_requesthealthauthorization",
-      "community": 21,
-      "community_name": "sync.ts",
+      "community": 34,
+      "community_name": "healthkit.ts",
       "norm_label": "requesthealthauthorization()"
     },
     {
@@ -17494,8 +17494,8 @@
       "source_location": "L183",
       "_origin": "ast",
       "id": "src_lib_native_healthkit_localdayiso",
-      "community": 34,
-      "community_name": "healthkit.ts",
+      "community": 21,
+      "community_name": "sync.ts",
       "norm_label": "localdayiso()"
     },
     {
@@ -17549,8 +17549,8 @@
       "source_location": "L325",
       "_origin": "ast",
       "id": "src_lib_native_healthkit_synchealthkittoserver",
-      "community": 34,
-      "community_name": "healthkit.ts",
+      "community": 21,
+      "community_name": "sync.ts",
       "norm_label": "synchealthkittoserver()"
     },
     {
@@ -17626,8 +17626,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "src_lib_native_sync_documentready",
-      "community": 21,
-      "community_name": "sync.ts",
+      "community": 120,
+      "community_name": "NativeBoot.tsx",
       "norm_label": "documentready()"
     },
     {
@@ -17659,8 +17659,8 @@
       "source_location": "L107",
       "_origin": "ast",
       "id": "src_lib_native_sync_initnativesync",
-      "community": 21,
-      "community_name": "sync.ts",
+      "community": 120,
+      "community_name": "NativeBoot.tsx",
       "norm_label": "initnativesync()"
     },
     {
@@ -17835,8 +17835,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_nutrition_manualentry",
-      "community": 17,
-      "community_name": "client.ts",
+      "community": 1,
+      "community_name": "MacroRings.tsx",
       "norm_label": "manualentry.ts"
     },
     {
@@ -17846,8 +17846,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_lib_nutrition_manualentry_manualhkuuid",
-      "community": 17,
-      "community_name": "client.ts",
+      "community": 1,
+      "community_name": "MacroRings.tsx",
       "norm_label": "manualhkuuid()"
     },
     {
@@ -17857,8 +17857,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_lib_nutrition_manualentry_ismanualhkuuid",
-      "community": 17,
-      "community_name": "client.ts",
+      "community": 1,
+      "community_name": "MacroRings.tsx",
       "norm_label": "ismanualhkuuid()"
     },
     {
@@ -17923,8 +17923,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_nutrition_phase",
-      "community": 121,
-      "community_name": "BrandHeader.tsx",
+      "community": 1,
+      "community_name": "MacroRings.tsx",
       "norm_label": "phase.ts"
     },
     {
@@ -17934,8 +17934,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_lib_nutrition_phase_phase",
-      "community": 195,
-      "community_name": "ContinuumTimeline.tsx",
+      "community": 1,
+      "community_name": "MacroRings.tsx",
       "norm_label": "phase"
     },
     {
@@ -17945,8 +17945,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_lib_nutrition_phase_derivephase",
-      "community": 89,
-      "community_name": "logicalTodayISO",
+      "community": 1,
+      "community_name": "MacroRings.tsx",
       "norm_label": "derivephase()"
     },
     {
@@ -18264,8 +18264,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_lib_programs_era_meta",
-      "community": 64,
-      "community_name": "[date]/page.tsx",
+      "community": 51,
+      "community_name": "programs.ts",
       "norm_label": "era_meta"
     },
     {
@@ -18330,8 +18330,8 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "src_lib_programs_program",
-      "community": 65,
-      "community_name": "settings/page.tsx",
+      "community": 51,
+      "community_name": "programs.ts",
       "norm_label": "program"
     },
     {
@@ -18418,8 +18418,8 @@
       "source_location": "L251",
       "_origin": "ast",
       "id": "src_lib_programs_programs",
-      "community": 65,
-      "community_name": "settings/page.tsx",
+      "community": 51,
+      "community_name": "programs.ts",
       "norm_label": "programs"
     },
     {
@@ -18441,7 +18441,7 @@
       "_origin": "ast",
       "id": "src_lib_programs_activeprogram",
       "community": 180,
-      "community_name": "palette.ts",
+      "community_name": "useDayVault.ts",
       "norm_label": "activeprogram()"
     },
     {
@@ -18451,8 +18451,8 @@
       "source_location": "L294",
       "_origin": "ast",
       "id": "src_lib_programs_programfordate",
-      "community": 14,
-      "community_name": "phases.ts",
+      "community": 195,
+      "community_name": "ContinuumTimeline.tsx",
       "norm_label": "programfordate()"
     },
     {
@@ -18594,8 +18594,8 @@
       "source_location": "L402",
       "_origin": "ast",
       "id": "src_lib_programs_bumpplan",
-      "community": 48,
-      "community_name": "RealtimeProvider.tsx",
+      "community": 51,
+      "community_name": "programs.ts",
       "norm_label": "bumpplan()"
     },
     {
@@ -18605,7 +18605,7 @@
       "source_location": "L407",
       "_origin": "ast",
       "id": "src_lib_programs_subscribeplanprefs",
-      "community": 58,
+      "community": 20,
       "community_name": "useScheduleVersion",
       "norm_label": "subscribeplanprefs()"
     },
@@ -18616,7 +18616,7 @@
       "source_location": "L412",
       "_origin": "ast",
       "id": "src_lib_programs_planprefsversion",
-      "community": 58,
+      "community": 20,
       "community_name": "useScheduleVersion",
       "norm_label": "planprefsversion()"
     },
@@ -18627,8 +18627,8 @@
       "source_location": "L426",
       "_origin": "ast",
       "id": "src_lib_programs_normalizeplanid",
-      "community": 48,
-      "community_name": "RealtimeProvider.tsx",
+      "community": 51,
+      "community_name": "programs.ts",
       "norm_label": "normalizeplanid()"
     },
     {
@@ -18649,8 +18649,8 @@
       "source_location": "L440",
       "_origin": "ast",
       "id": "src_lib_programs_setactiveprogramid",
-      "community": 48,
-      "community_name": "RealtimeProvider.tsx",
+      "community": 51,
+      "community_name": "programs.ts",
       "norm_label": "setactiveprogramid()"
     },
     {
@@ -18671,8 +18671,8 @@
       "source_location": "L454",
       "_origin": "ast",
       "id": "src_lib_programs_setactivephase",
-      "community": 48,
-      "community_name": "RealtimeProvider.tsx",
+      "community": 51,
+      "community_name": "programs.ts",
       "norm_label": "setactivephase()"
     },
     {
@@ -18704,8 +18704,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_lib_query_workoutkeys_workout_query_keys",
-      "community": 48,
-      "community_name": "RealtimeProvider.tsx",
+      "community": 51,
+      "community_name": "programs.ts",
       "norm_label": "workout_query_keys"
     },
     {
@@ -18869,8 +18869,8 @@
       "source_location": "L147",
       "_origin": "ast",
       "id": "src_lib_reports_fmtv2_isfmtv2",
-      "community": 14,
-      "community_name": "phases.ts",
+      "community": 58,
+      "community_name": "report/[id]/page.tsx",
       "norm_label": "isfmtv2()"
     },
     {
@@ -19232,8 +19232,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_lib_reports_weeknumber_weeknumberfordate",
-      "community": 182,
-      "community_name": "weekStartOf",
+      "community": 121,
+      "community_name": "BrandHeader.tsx",
       "norm_label": "weeknumberfordate()"
     },
     {
@@ -19254,8 +19254,8 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "src_lib_reports_weeknumber_programweeknumber",
-      "community": 182,
-      "community_name": "weekStartOf",
+      "community": 121,
+      "community_name": "BrandHeader.tsx",
       "norm_label": "programweeknumber()"
     },
     {
@@ -19640,7 +19640,7 @@
       "_origin": "ast",
       "id": "src_lib_schedule_overrides",
       "community": 20,
-      "community_name": "overrides.ts",
+      "community_name": "useScheduleVersion",
       "norm_label": "overrides.ts"
     },
     {
@@ -19651,7 +19651,7 @@
       "_origin": "ast",
       "id": "src_lib_schedule_overrides_overridevalue",
       "community": 20,
-      "community_name": "overrides.ts",
+      "community_name": "useScheduleVersion",
       "norm_label": "overridevalue"
     },
     {
@@ -19662,7 +19662,7 @@
       "_origin": "ast",
       "id": "src_lib_schedule_overrides_listeners",
       "community": 20,
-      "community_name": "overrides.ts",
+      "community_name": "useScheduleVersion",
       "norm_label": "listeners"
     },
     {
@@ -19673,7 +19673,7 @@
       "_origin": "ast",
       "id": "src_lib_schedule_overrides_emit",
       "community": 20,
-      "community_name": "overrides.ts",
+      "community_name": "useScheduleVersion",
       "norm_label": "emit()"
     },
     {
@@ -19683,7 +19683,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "src_lib_schedule_overrides_subscribescheduleoverrides",
-      "community": 58,
+      "community": 20,
       "community_name": "useScheduleVersion",
       "norm_label": "subscribescheduleoverrides()"
     },
@@ -19694,7 +19694,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "src_lib_schedule_overrides_scheduleoverridesversion",
-      "community": 58,
+      "community": 20,
       "community_name": "useScheduleVersion",
       "norm_label": "scheduleoverridesversion()"
     },
@@ -19706,7 +19706,7 @@
       "_origin": "ast",
       "id": "src_lib_schedule_overrides_load",
       "community": 20,
-      "community_name": "overrides.ts",
+      "community_name": "useScheduleVersion",
       "norm_label": "load()"
     },
     {
@@ -19717,7 +19717,7 @@
       "_origin": "ast",
       "id": "src_lib_schedule_overrides_persist",
       "community": 20,
-      "community_name": "overrides.ts",
+      "community_name": "useScheduleVersion",
       "norm_label": "persist()"
     },
     {
@@ -19728,7 +19728,7 @@
       "_origin": "ast",
       "id": "src_lib_schedule_overrides_getscheduleoverride",
       "community": 20,
-      "community_name": "overrides.ts",
+      "community_name": "useScheduleVersion",
       "norm_label": "getscheduleoverride()"
     },
     {
@@ -19739,7 +19739,7 @@
       "_origin": "ast",
       "id": "src_lib_schedule_overrides_getallscheduleoverrides",
       "community": 20,
-      "community_name": "overrides.ts",
+      "community_name": "useScheduleVersion",
       "norm_label": "getallscheduleoverrides()"
     },
     {
@@ -19750,7 +19750,7 @@
       "_origin": "ast",
       "id": "src_lib_schedule_overrides_setscheduleoverridelocal",
       "community": 20,
-      "community_name": "overrides.ts",
+      "community_name": "useScheduleVersion",
       "norm_label": "setscheduleoverridelocal()"
     },
     {
@@ -19761,7 +19761,7 @@
       "_origin": "ast",
       "id": "src_lib_schedule_overrides_hydratescheduleoverrides",
       "community": 20,
-      "community_name": "overrides.ts",
+      "community_name": "useScheduleVersion",
       "norm_label": "hydratescheduleoverrides()"
     },
     {
@@ -20937,8 +20937,8 @@
       "source_location": "L103",
       "_origin": "ast",
       "id": "src_lib_supabase_client_supabase",
-      "community": 17,
-      "community_name": "client.ts",
+      "community": 18,
+      "community_name": "supabase",
       "norm_label": "supabase"
     },
     {
@@ -21014,8 +21014,8 @@
       "source_location": "L379",
       "_origin": "ast",
       "id": "src_lib_supabase_types_tables",
-      "community": 27,
-      "community_name": "app/page.tsx",
+      "community": 18,
+      "community_name": "supabase",
       "norm_label": "tables"
     },
     {
@@ -21146,7 +21146,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_theme_palette",
-      "community": 180,
+      "community": 48,
       "community_name": "palette.ts",
       "norm_label": "palette.ts"
     },
@@ -21168,7 +21168,7 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "src_lib_theme_palette_split",
-      "community": 180,
+      "community": 48,
       "community_name": "palette.ts",
       "norm_label": "split"
     },
@@ -21179,7 +21179,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "src_lib_theme_palette_day_color",
-      "community": 180,
+      "community": 48,
       "community_name": "palette.ts",
       "norm_label": "day_color"
     },
@@ -21191,7 +21191,7 @@
       "_origin": "ast",
       "id": "src_lib_theme_palette_daycolor",
       "community": 180,
-      "community_name": "palette.ts",
+      "community_name": "useDayVault.ts",
       "norm_label": "daycolor()"
     },
     {
@@ -21201,8 +21201,8 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "src_lib_theme_palette_group",
-      "community": 41,
-      "community_name": "HelixViz.tsx",
+      "community": 48,
+      "community_name": "palette.ts",
       "norm_label": "group"
     },
     {
@@ -21212,7 +21212,7 @@
       "source_location": "L122",
       "_origin": "ast",
       "id": "src_lib_theme_palette_muscle",
-      "community": 180,
+      "community": 48,
       "community_name": "palette.ts",
       "norm_label": "muscle"
     },
@@ -21223,7 +21223,7 @@
       "source_location": "L139",
       "_origin": "ast",
       "id": "src_lib_theme_palette_series",
-      "community": 180,
+      "community": 48,
       "community_name": "palette.ts",
       "norm_label": "series"
     },
@@ -21509,8 +21509,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_lib_training_landmarks_programphase",
-      "community": 184,
-      "community_name": "useWeeklyVolume.ts",
+      "community": 88,
+      "community_name": "landmarks.ts",
       "norm_label": "programphase"
     },
     {
@@ -21520,8 +21520,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_lib_training_landmarks_landmark_muscles",
-      "community": 88,
-      "community_name": "landmarks.ts",
+      "community": 166,
+      "community_name": "workout.ts",
       "norm_label": "landmark_muscles"
     },
     {
@@ -21531,8 +21531,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_lib_training_landmarks_landmarkmuscle",
-      "community": 180,
-      "community_name": "palette.ts",
+      "community": 84,
+      "community_name": "ExerciseBreakdown.tsx",
       "norm_label": "landmarkmuscle"
     },
     {
@@ -21586,8 +21586,8 @@
       "source_location": "L126",
       "_origin": "ast",
       "id": "src_lib_training_landmarks_zone_meta",
-      "community": 184,
-      "community_name": "useWeeklyVolume.ts",
+      "community": 88,
+      "community_name": "landmarks.ts",
       "norm_label": "zone_meta"
     },
     {
@@ -21608,8 +21608,8 @@
       "source_location": "L174",
       "_origin": "ast",
       "id": "src_lib_training_landmarks_musclevolume",
-      "community": 184,
-      "community_name": "useWeeklyVolume.ts",
+      "community": 88,
+      "community_name": "landmarks.ts",
       "norm_label": "musclevolume"
     },
     {
@@ -22059,7 +22059,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_types_workout",
-      "community": 181,
+      "community": 166,
       "community_name": "workout.ts",
       "norm_label": "workout.ts"
     },
@@ -22081,7 +22081,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_lib_types_workout_exercise",
-      "community": 181,
+      "community": 166,
       "community_name": "workout.ts",
       "norm_label": "exercise"
     },
@@ -22103,7 +22103,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_lib_types_workout_activeworkoutsession",
-      "community": 181,
+      "community": 166,
       "community_name": "workout.ts",
       "norm_label": "activeworkoutsession"
     },
@@ -22114,7 +22114,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_lib_types_workout_saveworkoutpayload",
-      "community": 181,
+      "community": 166,
       "community_name": "workout.ts",
       "norm_label": "saveworkoutpayload"
     },
@@ -22125,8 +22125,8 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "src_lib_types_workout_ppl_splits",
-      "community": 18,
-      "community_name": "VolumeChart.tsx",
+      "community": 16,
+      "community_name": "useCharts.ts",
       "norm_label": "ppl_splits"
     },
     {
@@ -22136,7 +22136,7 @@
       "source_location": "L79",
       "_origin": "ast",
       "id": "src_lib_types_workout_splitcolor",
-      "community": 181,
+      "community": 166,
       "community_name": "workout.ts",
       "norm_label": "splitcolor()"
     },
@@ -22147,7 +22147,7 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "src_lib_types_workout_nutritionmode",
-      "community": 181,
+      "community": 166,
       "community_name": "workout.ts",
       "norm_label": "nutritionmode"
     },
@@ -22158,7 +22158,7 @@
       "source_location": "L86",
       "_origin": "ast",
       "id": "src_lib_types_workout_nutritionpreset",
-      "community": 181,
+      "community": 166,
       "community_name": "workout.ts",
       "norm_label": "nutritionpreset"
     },
@@ -22169,8 +22169,8 @@
       "source_location": "L122",
       "_origin": "ast",
       "id": "src_lib_types_workout_nutrition_presets",
-      "community": 199,
-      "community_name": "CoachHeaderCard.tsx",
+      "community": 166,
+      "community_name": "workout.ts",
       "norm_label": "nutrition_presets"
     },
     {
@@ -22180,8 +22180,8 @@
       "source_location": "L175",
       "_origin": "ast",
       "id": "src_lib_types_workout_plan_phases",
-      "community": 88,
-      "community_name": "landmarks.ts",
+      "community": 166,
+      "community_name": "workout.ts",
       "norm_label": "plan_phases"
     },
     {
@@ -22192,7 +22192,7 @@
       "_origin": "ast",
       "id": "src_lib_types_workout_phasegoalsfor",
       "community": 166,
-      "community_name": "usePlanPhaseGoals.ts",
+      "community_name": "workout.ts",
       "norm_label": "phasegoalsfor()"
     },
     {
@@ -22202,8 +22202,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_utils_authedfetch",
-      "community": 17,
-      "community_name": "client.ts",
+      "community": 18,
+      "community_name": "supabase",
       "norm_label": "authedfetch.ts"
     },
     {
@@ -22213,8 +22213,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_lib_utils_authedfetch_authedfetch",
-      "community": 17,
-      "community_name": "client.ts",
+      "community": 18,
+      "community_name": "supabase",
       "norm_label": "authedfetch()"
     },
     {
@@ -22455,8 +22455,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_utils_prefssync",
-      "community": 48,
-      "community_name": "RealtimeProvider.tsx",
+      "community": 51,
+      "community_name": "programs.ts",
       "norm_label": "prefssync.ts"
     },
     {
@@ -22466,8 +22466,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_lib_utils_prefssync_hydrateprefsfromdb",
-      "community": 48,
-      "community_name": "RealtimeProvider.tsx",
+      "community": 51,
+      "community_name": "programs.ts",
       "norm_label": "hydrateprefsfromdb()"
     },
     {
@@ -22510,8 +22510,8 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "src_lib_utils_setformat_formatset",
-      "community": 23,
-      "community_name": "useSessionIntel.ts",
+      "community": 84,
+      "community_name": "ExerciseBreakdown.tsx",
       "norm_label": "formatset()"
     },
     {
@@ -22598,8 +22598,8 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "src_lib_utils_units_validweight",
-      "community": 87,
-      "community_name": "useBioStrips.ts",
+      "community": 27,
+      "community_name": "app/page.tsx",
       "norm_label": "validweight()"
     },
     {
@@ -22620,8 +22620,8 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "src_lib_utils_units_useunitsystem",
-      "community": 16,
-      "community_name": "useCharts.ts",
+      "community": 84,
+      "community_name": "ExerciseBreakdown.tsx",
       "norm_label": "useunitsystem()"
     },
     {
@@ -22653,8 +22653,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_lib_utils_week_weekstartof",
-      "community": 182,
-      "community_name": "weekStartOf",
+      "community": 179,
+      "community_name": "workout/page.tsx",
       "norm_label": "weekstartof()"
     },
     {
@@ -22741,8 +22741,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_tests_body_composition_test",
-      "community": 18,
-      "community_name": "VolumeChart.tsx",
+      "community": 16,
+      "community_name": "useCharts.ts",
       "norm_label": "body-composition.test.ts"
     },
     {
@@ -22829,8 +22829,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_tests_chart_scale_test",
-      "community": 182,
-      "community_name": "weekStartOf",
+      "community": 16,
+      "community_name": "useCharts.ts",
       "norm_label": "chart-scale.test.ts"
     },
     {
@@ -22851,8 +22851,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_tests_charts_test_e",
-      "community": 90,
-      "community_name": "delete",
+      "community": 54,
+      "community_name": "constructor",
       "norm_label": "e()"
     },
     {
@@ -23071,8 +23071,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_tests_intensity_calendar_test",
-      "community": 41,
-      "community_name": "HelixViz.tsx",
+      "community": 87,
+      "community_name": "intensityCalendar.ts",
       "norm_label": "intensity-calendar.test.ts"
     },
     {
@@ -23082,8 +23082,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_tests_intensity_calendar_test_vols",
-      "community": 41,
-      "community_name": "HelixViz.tsx",
+      "community": 87,
+      "community_name": "intensityCalendar.ts",
       "norm_label": "vols()"
     },
     {
@@ -23126,7 +23126,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_tests_logger_test",
-      "community": 181,
+      "community": 166,
       "community_name": "workout.ts",
       "norm_label": "logger.test.ts"
     },
@@ -23137,7 +23137,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_tests_logger_test_mockpayload",
-      "community": 181,
+      "community": 166,
       "community_name": "workout.ts",
       "norm_label": "mockpayload"
     },
@@ -23148,8 +23148,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_tests_macro_override_test",
-      "community": 17,
-      "community_name": "client.ts",
+      "community": 1,
+      "community_name": "MacroRings.tsx",
       "norm_label": "macro-override.test.ts"
     },
     {
@@ -23170,8 +23170,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_tests_muscle_aggregate_test",
-      "community": 41,
-      "community_name": "HelixViz.tsx",
+      "community": 65,
+      "community_name": "useMuscleAnalytics.ts",
       "norm_label": "muscle-aggregate.test.ts"
     },
     {
@@ -23181,8 +23181,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_tests_muscle_aggregate_test_row",
-      "community": 41,
-      "community_name": "HelixViz.tsx",
+      "community": 65,
+      "community_name": "useMuscleAnalytics.ts",
       "norm_label": "row()"
     },
     {
@@ -23258,8 +23258,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_tests_plan_phase_test",
-      "community": 88,
-      "community_name": "landmarks.ts",
+      "community": 166,
+      "community_name": "workout.ts",
       "norm_label": "plan-phase.test.ts"
     },
     {
@@ -23379,8 +23379,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_tests_reports_schema_test",
-      "community": 56,
-      "community_name": "useTimelineWeeks.ts",
+      "community": 6,
+      "community_name": "FileSystemBrowser.tsx",
       "norm_label": "reports-schema.test.ts"
     },
     {
@@ -23402,7 +23402,7 @@
       "_origin": "ast",
       "id": "src_tests_schedule_store_test",
       "community": 20,
-      "community_name": "overrides.ts",
+      "community_name": "useScheduleVersion",
       "norm_label": "schedule-store.test.ts"
     },
     {
@@ -23742,8 +23742,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_tests_weigh_in_test",
-      "community": 87,
-      "community_name": "useBioStrips.ts",
+      "community": 27,
+      "community_name": "app/page.tsx",
       "norm_label": "weigh-in.test.ts"
     },
     {
@@ -24358,7 +24358,7 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "src_lib_training_landmarks_muscle_color",
-      "community": 180,
+      "community": 48,
       "community_name": "palette.ts",
       "norm_label": "muscle_color"
     },
@@ -72268,18 +72268,6 @@
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
-      "source_file": "src/lib/hooks/useScheduleOverrides.ts",
-      "source_location": "L161",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_lib_hooks_usescheduleoverrides_useclearscheduleoverride",
-      "target": "src_lib_hooks_usescheduleoverrides_syncpreworkoutsupps",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/lib/hooks/useScheduleOverrides.ts",
       "source_location": "L123",
@@ -72342,19 +72330,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/lib/hooks/useScheduleOverrides.ts",
-      "source_location": "L161",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_lib_hooks_usescheduleoverrides_useclearscheduleoverride",
-      "target": "src_lib_programs_scheduledayfor"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/lib/hooks/useScheduleOverrides.ts",
-      "source_location": "L159",
+      "source_location": "L156",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_usescheduleoverrides_useclearscheduleoverride",
