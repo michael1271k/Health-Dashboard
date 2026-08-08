@@ -347,6 +347,73 @@ export function absorbSet(set: PrCandidateSet, idx: PrIndex, volumeKg?: number |
 
 export interface DetectedSet { axes: PrAxis[]; est1rm: number | null }
 
+/**
+ * What a set scored on an axis — the number the record IS.
+ *
+ * Only meaningful for a set that actually won the axis; `supersedeWithinSession`
+ * calls it nowhere else.
+ */
+function axisValue(axis: PrAxis, set: PrCandidateSet, volumeKg: number | null | undefined, est1rm: number | null): number {
+  if (axis === 'weight') return set.weightKg
+  if (axis === 'reps') return set.reps
+  if (axis === 'volume') return volumeKg ?? set.weightKg * set.reps
+  return est1rm ?? 0
+}
+
+/**
+ * ONE ULTIMATE RECORD PER AXIS PER EXERCISE, PER SESSION.
+ *
+ * `absorbSet` makes detection strictly chronological: each set is judged against
+ * everything before it, so a session that climbs hands the same axis to every
+ * set on the way up. Hip Thrust on 2026-08-07 ran 25 kg × 15 (375 kg, a volume
+ * best at the time) then 27.5 kg × 14 (385 kg, a bigger one) — and BOTH sets
+ * kept a Volume trophy, one of which had already been beaten by the set sitting
+ * directly beneath it. "Was a record for four minutes" is not a record.
+ *
+ * The ledger never had this problem: `recordSets` already collapses to the
+ * winning set per axis. It was the PER-SET flags (`is_pr`, the deck's live
+ * badges, the session ledger's gold rows) that disagreed with it. This pass
+ * makes them agree by construction — the axis survives only on the GROUP
+ * holding the session's best value for it. "Group", not "set", because of the
+ * pair rule below: a unilateral pair whose two halves each beat the bar keeps
+ * the axis on both rows while the ledger files one, so the weaker half can
+ * still show a trophy the ledger has no row for.
+ *
+ * A UNILATERAL PAIR IS ONE PHYSICAL SET, not two competitors. L and R rows
+ * sharing a `pairId` win or lose the axis together; stripping the weaker side
+ * would delete exactly the asymmetry the L/R split exists to show. Ties keep
+ * the LATER set, matching `recordSets`' reps rule (loads ascend, so the last
+ * claimant is the top set).
+ */
+export function supersedeWithinSession(
+  sets: readonly PrCandidateSet[],
+  perSet: DetectedSet[],
+  credits: ReadonlyArray<number | null>,
+): void {
+  // (exercise key, axis) → the group holding the best value so far.
+  const best = new Map<string, { group: string; value: number }>()
+  const groupOf = (i: number) => sets[i].pairId ?? `#${i}`
+
+  perSet.forEach((d, i) => {
+    for (const axis of d.axes) {
+      const k = `${sets[i].key}|${axis}`
+      const v = axisValue(axis, sets[i], credits[i], d.est1rm)
+      const held = best.get(k)
+      // `>=` rather than `>`, but the tie can only ever arise BETWEEN ROWS OF
+      // ONE GROUP: `absorbSet` folds each winner back in before the next set is
+      // judged, so a later group has to beat the standing value strictly to
+      // hold the axis at all. Two L/R halves at equal value therefore agree
+      // rather than fight, and no cross-group tie reaches here.
+      if (held == null || v >= held.value) best.set(k, { group: groupOf(i), value: v })
+    }
+  })
+
+  perSet.forEach((d, i) => {
+    if (!d.axes.length) return
+    d.axes = d.axes.filter((axis) => best.get(`${sets[i].key}|${axis}`)?.group === groupOf(i))
+  })
+}
+
 export interface SessionPrResult {
   /** Parallel to the input array — `sets[i]` ↔ `perSet[i]`. */
   perSet: DetectedSet[]
@@ -386,6 +453,11 @@ export function detectSessionPrs(sets: readonly PrCandidateSet[], baselines: PrB
     // neither a hold nor a Reverse Crunch prints "1RM 0".
     return { axes, est1rm: s.timed ? null : epley1RM(s.weightKg, s.reps) }
   })
+
+  // A climbing session hands the same axis to every set on the way up; only the
+  // set holding the session's best keeps it. Skipped for an asserted session,
+  // where the record book — not the arithmetic — decides what counted.
+  if (!seeded) supersedeWithinSession(sets, perSet, credits)
 
   // Rebuilt from the per-set axes so `pr_count`, `is_pr` and the ledger can
   // never disagree about what counted. Every axis now lives on a set, so there

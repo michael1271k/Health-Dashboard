@@ -220,10 +220,12 @@ export function useSessionDetail(sessionId: string | null) {
       for (const e of exercises) {
         const records = prByName.get(e.name) ?? []
         e.prAxes = [...new Set(records.map((r) => r.axis))]
-        // Attribute each ledger row to the SET that earned it. A record carries
-        // the winning load+reps, so the match is exact; `volume` is a session
-        // total with no load of its own and lands on the flagged set the engine
-        // already chose (the exercise's last eligible set).
+        // Attribute each ledger row to the SET that earned it. Every axis now
+        // stores the winning set's load and reps, so the match is exact on all
+        // four. The `flagged[last]` fallback below is for LEGACY rows only:
+        // volume and e1RM were written with null load+reps until 2026-08-08
+        // (they were exercise-level totals when the table was designed), and
+        // those rows can still only be placed by guessing.
         const flagged = e.sets.filter((x) => x.isPr)
         for (const rec of records) {
           const target = rec.weightKg != null && rec.reps != null

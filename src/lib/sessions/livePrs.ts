@@ -41,6 +41,12 @@ export function computeLivePrs(draft: SessionDraft | null, baselines: PrBaseline
         // Carried so the live volume axis collapses a unilateral pair exactly as
         // `saveSession` does — a badge shown on the tick must be the one written.
         side: s.side ?? null, pairId: s.pairId ?? null,
+        // IDENTITY, for the same reason. `saveSession` passes the session date,
+        // so an ASSERTED date takes the record-book branch there (see prSeed).
+        // Omitting it here meant the deck ran live detection on a date the
+        // engine had been told not to guess about, and the two disagreed about
+        // the very session being edited.
+        date: draft.date, exerciseName: ex.name, setNumber: i + 1,
       })
       origin.push({ localId: ex.localId, setIdx: i })
     })

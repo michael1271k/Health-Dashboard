@@ -133,8 +133,13 @@ for (const s of sessions) {
       ledger.push({
         user_id: s.user_id, exercise_key: name, axis,
         value: Math.round((rec?.value ?? 0) * 100) / 100,
-        reps: axis === 'reps' ? (rec?.reps ?? null) : null,
-        weight_kg: axis === 'weight' || axis === 'reps' ? (rec?.weightKg ?? null) : null,
+        // EVERY axis carries the winning set's load and reps, matching
+        // `saveSession`. Volume and e1RM used to store null for both; the
+        // session ledger matches a record to the set that earned it by
+        // (weight, reps), so a null pair hung the chip on whichever set came
+        // last. A backfill that disagrees with the app is worse than none.
+        reps: rec?.reps ?? null,
+        weight_kg: rec?.weightKg ?? null,
         session_id: s.id, achieved_on: dateStr,
       })
     }

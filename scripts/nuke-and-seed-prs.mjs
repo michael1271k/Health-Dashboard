@@ -136,8 +136,14 @@ for (const s of sessions) {
       ledger.push({
         user_id: s.user_id, exercise_key: name, axis,
         value: Math.round((rec?.value ?? 0) * 100) / 100,
-        reps: axis === 'reps' ? (rec?.reps ?? null) : null,
-        weight_kg: axis === 'weight' || axis === 'reps' ? (rec?.weightKg ?? null) : null,
+        // Load + reps on EVERY axis, matching `saveSession` and
+        // `backfill-prs.mjs`. This script DELETES the whole ledger first, so
+        // leaving the old null-for-volume/e1rm shape here would silently revert
+        // the fix for the entire seeded record book on the next reseed — and
+        // the session ledger would go back to hanging a Volume chip on whatever
+        // set happened to come last.
+        reps: rec?.reps ?? null,
+        weight_kg: rec?.weightKg ?? null,
         session_id: s.id, achieved_on: dateStr,
       })
     }

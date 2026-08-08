@@ -299,8 +299,11 @@ describe('e1rm rep-window gate', () => {
       { key: HACK, weightKg: 55, reps: 11, timed: false, setType: null, ...win },
     ], baselines)
     // 55 kg is under the 60 kg top load so `weight` never fires; e1RM does, and
-    // each set out-tonnages the one before it (560 → 600 → 605).
-    expect(res.perSet[0].axes).toEqual(['volume', 'e1rm'])
+    // each set out-tonnages the one before it (560 → 600 → 605). Only the
+    // SECOND set keeps either axis: 55×11 beats 50×12 on both inside the
+    // session, and a record that was beaten four minutes later is not a record
+    // (see `supersedeWithinSession`).
+    expect(res.perSet[0].axes).toEqual([])
     expect(res.perSet[1].axes).toEqual(['volume', 'e1rm'])
     expect([...(res.axesByKey.get(HACK) ?? [])].sort()).toEqual(['e1rm', 'volume'])
     expect(res.prCount).toBe(2)
@@ -449,15 +452,16 @@ describe('recordSets when two sets win the same axis', () => {
     // A 70 kg × 4 in the history puts the weight bar out of reach (so neither
     // set can claim `weight`) while being sub-floor, so it never set the e1RM
     // bar. 45×10 = 60.0 does. Then 50×12 = 70.0 is a record, and 55×11 = 75.2
-    // beats it inside the same session — the engine absorbs as it goes, so both
-    // legitimately win, and keeping the FIRST claimant filed a value that was
-    // already beaten.
+    // beats it inside the same session. The engine absorbs as it goes, so the
+    // first set really did beat the standing bar — but supersession then hands
+    // the axis to the set holding the session's best, and the ledger must file
+    // that same 75.2 rather than the 70.0 it had already surpassed.
     const baselines = buildBaselines([
       { key: HACK, weightKg: 70, reps: 4, ...win },
       { key: HACK, weightKg: 45, reps: 10, ...win },
     ], () => false)
     const res = detectSessionPrs(sets, baselines)
-    expect(res.perSet[0].axes).toEqual(['volume', 'e1rm'])
+    expect(res.perSet[0].axes).toEqual([])
     expect(res.perSet[1].axes).toEqual(['volume', 'e1rm'])
     expect(recordSets(sets, res).get(HACK)?.get('e1rm')?.value).toBeCloseTo(75.2, 1)
   })
@@ -629,5 +633,99 @@ describe('bodyweight sets carry no estimated 1RM', () => {
     expect(detectSetPrs(
       { key: CRUNCH, weightKg: 0, reps: 40, timed: false, setType: null }, idx,
     )).not.toContain('e1rm')
+  })
+})
+
+/**
+ * SAME-SESSION SUPERSESSION (2026-08-08).
+ *
+ * Detection is chronological — every set is judged against the ones before it —
+ * so a session that climbs handed the same axis to every rung of the ladder.
+ * Hip Thrust on 2026-08-07 ran 25 kg × 15 (375 kg) then 27.5 kg × 14 (385 kg)
+ * and BOTH sets kept a Volume trophy, one of them already beaten by the set
+ * directly beneath it. One session yields ONE ultimate record per axis.
+ */
+describe('supersedeWithinSession', () => {
+  const win = { repFloor: 8, repCeiling: 15 }
+
+  it('strips the volume axis from a set the next set out-tonnages', () => {
+    // The real 2026-08-07 Hip Thrust block. History tops out at 27.5 × 13
+    // (357.5 kg, e1RM 39.4), so set 1 genuinely beats the standing bar.
+    const baselines = buildBaselines([
+      { key: HIP, weightKg: 25, reps: 14, ...win },
+      { key: HIP, weightKg: 27.5, reps: 13, ...win },
+    ], isTimed)
+    const sets: PrCandidateSet[] = [
+      set(HIP, 25, 15, win),      // 375 kg — a record when it happened
+      set(HIP, 27.5, 14, win),    // 385 kg — and a bigger one, four minutes later
+      set(HIP, 27.5, 13, win),
+    ]
+    const res = detectSessionPrs(sets, baselines)
+    expect(res.perSet[0].axes).toEqual([])
+    // 27.5 kg was already the standing top load, so `weight` never fires.
+    expect(res.perSet[1].axes).toEqual(['volume', 'e1rm'])
+    expect(res.perSet[2].axes).toEqual([])
+    // The exercise still counts both axes — supersession MOVES a record, it
+    // never deletes one, so `pr_count` is untouched.
+    expect([...(res.axesByKey.get(HIP) ?? [])].sort()).toEqual(['e1rm', 'volume'])
+    expect(res.prCount).toBe(2)
+  })
+
+  it('leaves the ledger filing the same set the flags now point at', () => {
+    const baselines = buildBaselines([{ key: HIP, weightKg: 25, reps: 14, ...win }], isTimed)
+    const sets = [set(HIP, 25, 15, win), set(HIP, 27.5, 14, win)]
+    const res = detectSessionPrs(sets, baselines)
+    const rec = recordSets(sets, res).get(HIP)
+    expect(rec?.get('volume')).toEqual({ weightKg: 27.5, reps: 14, value: 385 })
+    // One set carries the flag `is_pr` is written from (one GROUP, in
+    // general — a unilateral pair keeps both halves; see the pair test).
+    expect(res.perSet.filter((d) => d.axes.length).length).toBe(1)
+  })
+
+  it('never lets a tying set take the axis from the set it tied', () => {
+    const baselines = buildBaselines([{ key: HIP, weightKg: 25, reps: 12, ...win }], isTimed)
+    const sets = [set(HIP, 25, 14, win), set(HIP, 25, 14, win)]
+    const res = detectSessionPrs(sets, baselines)
+    // The second only TIES, so `absorbSet` already denied it the axis; the
+    // first keeps what it won. Supersession must not then take it away for a
+    // value nothing actually beat.
+    expect(res.perSet[0].axes.sort()).toEqual(['e1rm', 'volume'])
+    expect(res.perSet[1].axes).toEqual([])
+  })
+
+  it('treats a unilateral pair as ONE set, not two competitors', () => {
+    const LAT = 'Single Arm Lateral Raise (Cable)'
+    const baselines = buildBaselines([
+      { key: LAT, weightKg: 4, reps: 12 },
+      { key: LAT, weightKg: 4, reps: 10 },
+    ], () => false)
+    const pair = { pairId: 'p1', repFloor: 12, repCeiling: 20 }
+    const sets: PrCandidateSet[] = [
+      { key: LAT, weightKg: 5, reps: 13, timed: false, setType: null, side: 'L', ...pair },
+      { key: LAT, weightKg: 5, reps: 15, timed: false, setType: null, side: 'R', ...pair },
+    ]
+    const res = detectSessionPrs(sets, baselines)
+    // L clears the 4 kg weight bar; R is judged after L absorbed it and only
+    // ties, so the axis was already single-claimant. What matters here is that
+    // supersession does not then hand `weight` to R's row just because it is
+    // the later half of the SAME physical set — the pair shares one group.
+    expect(res.perSet[0].axes).toContain('weight')
+    expect(res.perSet[1].axes).not.toContain('weight')
+    // Volume still collapses onto the completing row alone.
+    expect(res.perSet[0].axes).not.toContain('volume')
+    expect(res.perSet[1].axes).toContain('volume')
+  })
+
+  it('supersedes each axis independently', () => {
+    // Set 1 is the heaviest (weight); set 2 is the biggest tonnage (volume).
+    // Neither may take the other's axis away.
+    const baselines = buildBaselines([
+      { key: HIP, weightKg: 25, reps: 12, ...win },
+    ], isTimed)
+    const sets = [set(HIP, 30, 10, win), set(HIP, 25, 15, win)]
+    const res = detectSessionPrs(sets, baselines)
+    expect(res.perSet[0].axes).toContain('weight')
+    expect(res.perSet[1].axes).toContain('volume')
+    expect(res.perSet[1].axes).not.toContain('weight')
   })
 })

@@ -280,10 +280,15 @@ export async function saveSession(
       prRows.push({
         user_id: userId, exercise_key: name, axis,
         value: Math.round((rec?.value ?? 0) * 100) / 100,
-        // Only the reps axis carries a rep count; only weight/reps carry a load
-        // (volume and e1RM are derived over the whole exercise, not one set).
-        reps: axis === 'reps' ? (rec?.reps ?? null) : null,
-        weight_kg: axis === 'weight' || axis === 'reps' ? (rec?.weightKg ?? null) : null,
+        // EVERY axis carries the winning set's load and reps. Volume and e1RM
+        // used to store null for both, on the (then true) grounds that they were
+        // exercise-level totals with no set of their own. Both became per-SET
+        // axes on 2026-08-03, and the nulls outlived the reason: the session
+        // ledger matches a record to the set that earned it by (weight, reps),
+        // so a null pair fell back to "the exercise's last flagged set" and hung
+        // a Volume chip on whichever set happened to come last.
+        reps: rec?.reps ?? null,
+        weight_kg: rec?.weightKg ?? null,
         session_id: session.id, achieved_on: dateStr,
       })
     }
