@@ -8,6 +8,7 @@
  * source of truth), with this function as a client-side fallback for old rows.
  */
 import { HELIX_CUT_START } from '@/lib/programs'
+import { EMBER, STEEL, EMERALD } from '@/lib/theme/palette'
 
 export type Phase = 'cut' | 'maintenance' | 'bulk'
 
@@ -22,9 +23,9 @@ export function derivePhase(calories: number | null | undefined): Phase | null {
 // analytics, independent of the active plan: Cut is always red/orange, Bulk always
 // green, Maintenance steel. Import PHASE_COLORS anywhere a phase needs a colour.
 export const PHASE_COLORS: Record<Phase, string> = {
-  cut:         '#E0653C', // red/orange — deficit
-  maintenance: '#8E9AAC', // steel — balanced
-  bulk:        '#3E9E7A', // green — surplus
+  cut:         EMBER,   // deficit — the signature. Was a hand-typed #E0653C:
+  maintenance: STEEL,   //   a fourth near-copy of ember, eleven units of green
+  bulk:        EMERALD, //   off the real one, in a file nobody thought to check.
 }
 
 export const PHASE_META: Record<Phase, { label: string; color: string }> = {

@@ -75,10 +75,14 @@ export const PPL_SPLITS: Record<SplitDay, { label: string; labelHe: string; colo
   },
 }
 
-/** Canonical split accent for any split_day string (falls back to primary blue). */
-export function splitColor(split: string | null | undefined): string {
-  return (split && PPL_SPLITS[split as SplitDay]?.color) || STEEL
-}
+/**
+ * Canonical split accent for any split_day string.
+ *
+ * Re-exported from the palette, which is now the only implementation — this
+ * module had one, and VolumeChart had a private third. Kept here so existing
+ * importers do not move in the same commit that unified the values.
+ */
+export { splitColor } from '@/lib/theme/palette'
 
 // ─── Nutrition modes / presets ───────────────────────────────────────────────
 export type NutritionMode = 'cut' | 'bulk' | 'maintenance'

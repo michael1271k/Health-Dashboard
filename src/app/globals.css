@@ -16,37 +16,14 @@
   --color-surface: #121418;     /* graphite glass base */
   --color-surface-2: #1A1D23;   /* solid raised surfaces (sliders, inputs) */
   --color-primary: #E0703C;     /* ember — THE signature accent */
-  --color-primary-dim: #B4522A; /* banked ember */
-  --color-energy: #C97A45;      /* copper — battery accents */
-  --color-sapphire: #3D7AB8;    /* deep sapphire */
-  --color-emerald: #3E9E7A;     /* muted emerald */
-  --color-amethyst: #8A6FA8;    /* muted amethyst */
   --color-info: #8E9AAC;        /* steel — data */
-  --color-ice: #3D7AB8;         /* sapphire — interactive/active accent */
   --color-success: #3E9E7A;     /* emerald — positive deltas ONLY */
   --color-warn: #D4AF37;        /* antique gold — caution */
   --color-danger: #C4514E;      /* oxide red — negative ONLY */
-  --color-gold: #D4AF37;        /* antique gold — PRs */
-  --color-platinum: #C9CDD6;
   --color-text: #ECEEF2;        /* titanium */
   --color-muted: #79808C;       /* steel grey */
   --color-border: #23262B;      /* graphite hairline */
 
-  /* Macro + split accents — never hardcode these in a component. */
-  --color-macro-calories: #E0703C;
-  --color-macro-protein:  #3E9E7A;
-  --color-macro-carbs:    #3D7AB8;
-  --color-macro-fat:      #D4AF37;
-  --color-split-push:  #E0703C;
-  --color-split-pull:  #3D7AB8;
-  --color-split-legs:  #8A6FA8;
-  --color-split-upper: #D4AF37;
-  --color-split-lower: #3E9E7A;
-  /* Light mode (kept for completeness) */
-  --color-light-bg: #F4F6FA;
-  --color-light-surface: #FFFFFF;
-  --color-light-text: #0F172A;
-  --color-light-muted: #475569;
 
   /* HELIX Fonts */
   --font-heading: var(--font-outfit), sans-serif;
@@ -128,7 +105,6 @@
    should read as a different METAL, not a different app. */
 html[data-theme='travel'] {
   --color-primary: #3E9E7A;   /* muted emerald leads instead of ember */
-  --color-energy: #2F7D63;    /* deep emerald */
   --color-info: #3D7AB8;      /* sapphire */
   --color-success: #D4AF37;   /* antique gold, so deltas stay distinct */
 }
@@ -227,10 +203,6 @@ html[data-theme='travel'] {
   /* Honour iOS/Android notches & home indicator. max() keeps a sane min pad. */
   .safe-pb { padding-bottom: max(0.75rem, env(safe-area-inset-bottom)); }
   .safe-pt { padding-top: max(0.5rem, env(safe-area-inset-top)); }
-  .safe-px {
-    padding-left: max(1rem, env(safe-area-inset-left));
-    padding-right: max(1rem, env(safe-area-inset-right));
-  }
   /* Sticky input bars sit above the keyboard + home indicator. */
   .keyboard-safe { padding-bottom: max(0.5rem, env(safe-area-inset-bottom)); }
 
@@ -256,7 +228,7 @@ html[data-theme='travel'] {
     background-clip: text;
     color: transparent;
     -webkit-text-fill-color: transparent;
-    filter: drop-shadow(0 0 14px rgba(226,104,58,0.35));
+    filter: drop-shadow(0 0 14px rgba(224,112,60,0.35));
   }
 }
 
@@ -298,7 +270,7 @@ html[data-hidden='true'] .aura-breathe::after { animation-play-state: paused; }
   content: '';
   position: absolute; inset: -6%; z-index: -1;
   border-radius: 9999px;
-  background: radial-gradient(circle, rgba(226,104,58,0.30), transparent 68%);
+  background: radial-gradient(circle, rgba(224,112,60,0.30), transparent 68%);
   animation: glowBreathe 5.5s ease-in-out infinite;
   pointer-events: none;
 }
@@ -312,7 +284,10 @@ html[data-hidden='true'] .aura-breathe::after { animation-play-state: paused; }
   content: '';
   position: absolute; inset: 0;
   border-radius: inherit;
-  box-shadow: inset 0 0 24px rgba(212,175,55,0.30), inset 0 1px 0 rgba(212,175,55,0.34);
+  /* --aura is set by the caller, so the glow's colour carries its meaning.
+     Defaults to gold only so an un-parameterised use still renders. */
+  box-shadow: inset 0 0 24px rgba(var(--aura, 212,175,55), 0.30),
+              inset 0 1px 0 rgba(var(--aura, 212,175,55), 0.34);
   animation: glowBreathe 6s ease-in-out infinite;
   pointer-events: none;
 }

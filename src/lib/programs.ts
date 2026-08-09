@@ -6,7 +6,7 @@
  * Sessions are classified purely by date via `eraForDate` (no DB column needed).
  */
 import { getScheduleOverride, REST_OVERRIDE } from '@/lib/schedule/overrides'
-import { DAY_COLOR } from '@/lib/theme/palette'
+import { DAY_COLOR, DIM, PLATINUM } from '@/lib/theme/palette'
 
 export type Era = 'ppl' | 'axis'
 export const AXIS_ERA_START = '2026-07-19'
@@ -26,9 +26,14 @@ export function eraForDate(dateISO: string): Era {
   return dateISO >= HELIX_CUT_START ? 'axis' : 'ppl'
 }
 
+/**
+ * The two eras were #79808C and #8E9AAC — fifteen units apart on the same grey,
+ * which is to say indistinguishable, which is to say the colour was carrying no
+ * information. The past era now recedes and the current one reads as current.
+ */
 export const ERA_META: Record<Era, { label: string; short: string; color: string }> = {
-  ppl:  { label: 'Push/Pull/Legs', short: 'PPL', color: '#79808C' },
-  axis: { label: 'HELIX Era',  short: 'HELIX-5', color: '#8E9AAC' },
+  ppl:  { label: 'Push/Pull/Legs', short: 'PPL', color: DIM },
+  axis: { label: 'HELIX Era',  short: 'HELIX-5', color: PLATINUM },
 }
 
 /** RE-ENTRY weeks (2026-07-19 + 07-26): ~90% loads, RPE cap 7–8 — excluded from

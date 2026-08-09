@@ -26,19 +26,31 @@ export interface WeekPhase {
  * either hardcoded a hex or fell back to steel. The Momentum week headers were
  * grey regardless of phase for exactly that reason.
  *
- * Cut is fiery, bulk is growth-green, maintenance is sleek steel, and peak
- * keeps its bright teal (it is a distinct kind, not part of the cut/bulk/maint
- * convention).
+ * Cut is the signature ember, bulk is growth-green, maintenance is sleek steel,
+ * and peak is platinum — the refined state rather than a direction of travel.
+ *
+ * Triples rather than hexes because every consumer wraps them in
+ * `rgba(${rgb},0.12)`. They must stay in lockstep with the palette hexes named
+ * in each comment; two of them had drifted:
+ *   · cut was 224,101,60 (#E0653C) — eleven units of green off EMBER, a phantom
+ *     second orange nobody chose;
+ *   · peak was 22,245,195 (#16F5C3) — the neon the app deleted two redesigns
+ *     ago, and the single most out-of-system colour left in the codebase.
+ *     Peak is not a direction like cut/bulk, it is the polished end state, so
+ *     it takes the brightest metal. Gold stays reserved for records.
  */
 export const PHASE_RGB: Record<PhaseKind, string> = {
-  cut: '224,101,60',          // #E0653C — fiery orange/red
-  peak: '22,245,195',         // #16F5C3 — living teal
-  bulk: '62,158,122',         // #3E9E7A — deep green
-  maintenance: '142,154,172', // #8E9AAC — sleek steel
+  cut: '224,112,60',          // EMBER    #E0703C
+  peak: '201,205,214',        // PLATINUM #C9CDD6
+  bulk: '62,158,122',         // EMERALD  #3E9E7A
+  maintenance: '142,154,172', // STEEL    #8E9AAC
 }
 
 /** The desaturated PPL-legacy variants, so two Cut eras can never be confused. */
-const PPL_RGB = { default: '139,151,178', maintenance: '230,198,140' } as const
+const PPL_RGB = {
+  default: '121,128,140',     // MUTED #79808C — was a fourth grey nobody named
+  maintenance: '230,198,140', // SAND  #E6C68C — now a named palette export
+} as const
 
 /** Phase colour as an `rgb()` triple, era-aware. */
 export function phaseRgb(kind: PhaseKind, era: 'ppl' | 'helix' = 'helix'): string {

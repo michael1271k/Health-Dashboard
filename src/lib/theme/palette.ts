@@ -1,10 +1,19 @@
 /**
  * HELIX palette — "Obsidian & Ember, Refined".
  *
- * ONE source of truth for every colour in the app. Nothing should hardcode a hex
- * outside this file; components import these constants (hex strings, so the
- * `${color}1a` alpha-suffix pattern keeps working) and CSS reads the mirrored
- * custom properties declared in globals.css.
+ * ONE source of truth for every colour in the app.
+ *
+ * ── THE RULE ────────────────────────────────────────────────────────────────
+ *   Runtime values come from HERE.
+ *   CSS-only surfaces use `--color-*` in globals.css.
+ *   A `--color-*` token exists only if something consumes it.
+ *
+ * That split is not stylistic, it is forced: the `${EMBER}1a` alpha-suffix
+ * idiom needs a real hex string, and `var(--color-primary)` cannot be suffixed.
+ * So anything interpolated into `style={{}}`, passed as a prop, or handed to
+ * recharts imports from this file; Tailwind utilities and rules inside
+ * globals.css use the token. Prefer `alpha()` below over string concatenation
+ * in new code.
  *
  * The brief: premium and serious, but NOT flat black-and-orange. Real jewel
  * tones — deep sapphire, muted emerald, antique gold, platinum — over obsidian,
@@ -36,6 +45,14 @@ export const PLUM = '#6B4E7D'
 export const PLATINUM = '#C9CDD6'
 export const STEEL = '#8E9AAC'
 export const OXIDE = '#C4514E'
+/** Wine — skeletal muscle. Promoted from BodyMap's local `ROSE #E0567A`, which
+ *  was a candy pink with no place on the jewel ramp and sat too close to OXIDE. */
+export const GARNET = '#B4526B'
+/** Bone / mineral. Promoted from BodyMap's local orphan, value unchanged. */
+export const BONE = '#E6EAF0'
+/** The travel/deload tone. Promoted from `PPL_RGB.maintenance`, which was a
+ *  nameless triple in phases.ts. It is a deliberate "away" colour, not a mistake. */
+export const SAND = '#E6C68C'
 
 // ── Semantic ─────────────────────────────────────────────────────────────────
 export const TEXT = '#ECEEF2'
@@ -44,6 +61,18 @@ export const DIM = '#5A6472'
 export const SUCCESS = EMERALD
 export const DANGER = OXIDE
 export const WARN = GOLD
+
+/**
+ * Apply an alpha to a palette hex.
+ *
+ * The codebase is full of `${EMBER}1a` — correct, but it makes you do hex in
+ * your head and it silently produces garbage if the base ever gains an alpha of
+ * its own. Prefer this in new code; existing suffixes are fine where they are.
+ */
+export function alpha(hex: string, a: number): string {
+  const clamped = Math.max(0, Math.min(1, a))
+  return `${hex}${Math.round(clamped * 255).toString(16).padStart(2, '0')}`
+}
 
 /**
  * Macros — four distinct jewel tones so the rings read instantly apart.
@@ -108,6 +137,19 @@ export function dayColor(dayKey?: string | null, splitDay?: string | null): stri
   return STEEL
 }
 
+/**
+ * Split accent for a `split_day` string, with no day key available.
+ *
+ * The same lookup `dayColor` falls back to. It lived in types/workout.ts and
+ * VolumeChart had a private THIRD copy over five local hexes where Upper A and
+ * Legs B were both steel — a visible collision in a chart whose entire job is
+ * telling those two apart. One implementation now; workout.ts re-exports this
+ * so its call sites do not have to move in the same commit that changes values.
+ */
+export function splitColor(split?: string | null): string {
+  return dayColor(null, split)
+}
+
 /** Broad muscle display groups. */
 export const GROUP = {
   Chest: EMBER,
@@ -137,3 +179,73 @@ export const MUSCLE = {
 
 /** Ordered series for charts with N arbitrary categories. */
 export const SERIES = [EMBER, SAPPHIRE, GOLD, EMERALD, AMETHYST, COPPER, PLATINUM, PLUM] as const
+
+/**
+ * Body composition — ONE HUE PER SUBSTANCE.
+ *
+ * Percent and mass of the same substance deliberately share a hue: muscle mass
+ * and muscle % are the same thing measured two ways, and colouring them apart
+ * would imply they are not. What must differ is substances that CO-OCCUR:
+ *
+ *   mass family    weight · lean · muscle · fat        → 4 distinct ✓
+ *   percent family fat% · muscle% · water%             → 3 distinct ✓
+ *   BodyMap strata water · protein · mineral · fat     → 4 distinct ✓
+ *
+ * This replaces four unreconciled schemes: BodyCompositionChart's local COLORS
+ * (where lean/musclePct were BOTH emerald and fatMass/fatPct BOTH gold — two
+ * real collisions), BodyMap's five local hexes, InBody's verdict tones, and the
+ * dashboard's BODY_TILES where nine of ten metrics had no colour at all.
+ */
+export const BODY = {
+  /** The total that everything else partitions. */
+  weight: PLATINUM,
+  /** Fat-free mass. */
+  lean: EMERALD,
+  /** Skeletal muscle — mass AND percent. */
+  muscle: GARNET,
+  /** Fat mass AND body-fat percent. */
+  fat: GOLD,
+  water: SAPPHIRE,
+  protein: EMERALD_DEEP,
+  mineral: BONE,
+  /** An index, not a tissue — so it takes the neutral data tone. */
+  bmi: STEEL,
+  bmr: COPPER,
+} as const
+
+/**
+ * Visceral fat is deliberately NOT in BODY.
+ *
+ * It is the only body metric where high is bad, and it is a 1–20 rating rather
+ * than a tissue you can weigh — so it is coloured by verdict, reusing the
+ * convention InBody already uses for its good/bad/neutral tiles. Keeping OXIDE
+ * out of the body domain is also what keeps GARNET (wine) legible beside it
+ * (brick): the two never appear together.
+ */
+export function visceralColor(v: number | null | undefined): string {
+  if (v == null) return MUTED
+  return v <= 9 ? EMERALD : v <= 14 ? GOLD : OXIDE
+}
+
+/**
+ * Timeline week states — one channel per meaning.
+ *
+ * Gold used to signal three different things on the same capsule at the same
+ * time: a ready week, a week containing PRs, and a calendar-complete week —
+ * plus the report link. Three meanings in one colour is no signal at all.
+ *
+ * Now each has its own channel as well as its own colour: `ready` is the aura,
+ * `pr` is the trophy chip, `complete` is a flat chip with no glow. The spine dot
+ * is not in this map on purpose — it carries the week's own split colour,
+ * because a dot on a timeline is IDENTITY, never status.
+ */
+export const WEEK_STATE = {
+  /** Every scheduled session done. Can fire mid-week. */
+  ready: EMERALD,
+  /** A record was set. Gold means this and nothing else, app-wide. */
+  pr: GOLD,
+  /** The calendar week is over. A statement about time, not merit — so it recedes. */
+  complete: STEEL,
+  /** A document to read, not an award. */
+  report: SAPPHIRE,
+} as const
