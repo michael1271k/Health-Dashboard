@@ -8,7 +8,8 @@ import { derivePhase, phaseDisplay } from '@/lib/nutrition/phase'
 import { logicalTodayISO } from '@/lib/utils/day'
 import type { NutritionMode, NutritionPreset } from '@/lib/types/workout'
 import { phaseBadgeStyle } from '@/lib/phases'
-import { LiquidModal } from '@/components/ui/LiquidModal'
+import { Sheet } from '@/components/ui/Sheet'
+import { EMBER, STEEL } from '@/lib/theme/palette'
 import {
   HELIX_CUT_START, DEFAULT_PROGRAM_ID, PROGRAMS, getActiveProgramId,
   setActiveProgramId, setActivePhase, activePhase, activeProgram, type Program,
@@ -586,7 +587,16 @@ export default function SettingsPage() {
 
       {/* Plan preview drawer — schedule + phase goals + exercises, then a
           two-step confirm to switch. */}
-      <LiquidModal open={!!previewPlan} onClose={() => { setPreviewPlan(null); setConfirmSwitch(false) }}
+      {/* The plan preview is ~2000px of reading, so it takes `size="wide"` and
+          almost the whole viewport. It is the first consumer of either prop.
+
+          HONEST NOTE: the two inner `max-h-*` scrollers below survive this
+          change. They exist because the panel is height-capped, and the real
+          fix is for this to be a route (/settings/plans/[id]) where they become
+          plain page sections. That is a bigger move than swapping a container
+          and is deliberately not bundled here. */}
+      <Sheet size="wide" maxHeight="92dvh"
+        open={!!previewPlan} onClose={() => { setPreviewPlan(null); setConfirmSwitch(false) }}
         title={previewPlan ? previewPlan.label : undefined} accent="#8E9AAC">
         {previewPlan && (() => {
           // The phase is chosen HERE, inside the plan. Everything below —
@@ -804,43 +814,60 @@ export default function SettingsPage() {
                   <p className="text-fluid-xs text-muted text-center py-2">
                     {previewPlan.label} · {phaseMode} is active.
                   </p>
-                ) : !confirmSwitch ? (
+                ) : (
                   <button onClick={() => setConfirmSwitch(true)} disabled={saving}
                     className="btn-primary w-full justify-center min-h-[46px] disabled:opacity-60"
-                    style={{ background: '#8E9AAC', boxShadow: '0 0 16px #8E9AAC44' }}>
+                    style={{ background: STEEL, boxShadow: `0 0 16px ${STEEL}44` }}>
                     Make {previewPlan.label} · {phaseMode} active
                   </button>
-                ) : (
-                  <div className="space-y-2.5">
-                    <div className="flex items-start gap-2.5">
-                      <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" style={{ color: '#E0703C' }} aria-hidden="true" />
-                      <p className="text-sm text-muted leading-relaxed">
-                        Run <span className="text-text font-semibold">{previewPlan.label}</span> on its{' '}
-                        <span className="text-text font-semibold">{phaseMode}</span> phase? Calories, macros, step goal,
-                        body targets and weekly set volume all move to this phase&apos;s numbers, the training schedule
-                        changes, and analytics re-anchor from today. Your logged history is preserved.
-                      </p>
-                    </div>
-                    <div className="flex gap-2 justify-end">
-                      <button onClick={() => setConfirmSwitch(false)} className="btn-glass min-h-[44px] px-4">Cancel</button>
-                      <button
-                        onClick={async () => {
-                          const id = previewPlan.id, m = phaseMode
-                          setPreviewPlan(null); setConfirmSwitch(false)
-                          await applyPlanPhase(id, m)
-                        }}
-                        disabled={saving}
-                        className="btn-primary min-h-[44px] px-4 disabled:opacity-60">
-                        Confirm
-                      </button>
-                    </div>
-                  </div>
                 )}
               </div>
             </div>
           )
         })()}
-      </LiquidModal>
+      </Sheet>
+
+      {/* The only destructive action in the app.
+          It used to be a state swap at the BOTTOM of a ~2000px scroll, which
+          meant the warning could be off-screen while its Confirm button was
+          not. A confirmation rising from the bottom edge over the thing it is
+          about is the platform idiom for exactly this, and it cannot be reached
+          without the prose arriving with it. The two-step semantics are
+          unchanged — this is step two, relocated. */}
+      <Sheet
+        open={confirmSwitch && !!previewPlan}
+        onClose={() => setConfirmSwitch(false)}
+        title="Switch plan?"
+        accent={EMBER}
+        layer="stacked"
+      >
+        {previewPlan && (
+          <div className="space-y-4 pb-2">
+            <div className="flex items-start gap-2.5">
+              <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" style={{ color: EMBER }} aria-hidden="true" />
+              <p className="text-sm text-muted leading-relaxed">
+                Run <span className="text-text font-semibold">{previewPlan.label}</span> on its{' '}
+                <span className="text-text font-semibold">{drawerPhase}</span> phase? Calories, macros, step goal,
+                body targets and weekly set volume all move to this phase&apos;s numbers, the training schedule
+                changes, and analytics re-anchor from today. Your logged history is preserved.
+              </p>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setConfirmSwitch(false)} className="btn-glass min-h-[44px] px-4">Cancel</button>
+              <button
+                onClick={async () => {
+                  const id = previewPlan.id, m = drawerPhase
+                  setPreviewPlan(null); setConfirmSwitch(false)
+                  await applyPlanPhase(id, m)
+                }}
+                disabled={saving}
+                className="btn-primary min-h-[44px] px-4 disabled:opacity-60">
+                Confirm
+              </button>
+            </div>
+          </div>
+        )}
+      </Sheet>
 
 
       {status && (
