@@ -19,8 +19,9 @@ import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { displayWeight, weightUnit } from '@/lib/utils/units'
 import { formatSet } from '@/lib/utils/setFormat'
 import { isTimedExercise } from '@/lib/exercises/timed'
-import { Plus, TrendingUp, Moon, ArrowRight, Flag, FileClock, ChevronDown } from 'lucide-react'
+import { Plus, TrendingUp, Moon, ArrowRight, Flag, FileClock, ChevronDown, ChevronRight, BookOpen } from 'lucide-react'
 import { Surface } from '@/components/ui/Zone'
+import { STEEL } from '@/lib/theme/palette'
 
 // Gym/muscle-progress graphs (Contour Map, Intensity Calendar, Volume Stream,
 // Muscle Analytics) — relocated here from the Momentum → Analytics tab.
@@ -184,6 +185,21 @@ export default function WorkoutPage() {
           style={{ color: '#8E9AAC', background: '#8E9AAC14', border: '1px solid #8E9AAC33' }}>{program.label}</span>
         <span>Change plan &amp; phase in Settings →</span>
       </button>
+
+      {/* Every lift with history, grouped by what it trains. A sub-route rather
+          than a sixth tab — nav-items.ts argues against a sixth, and this is
+          somewhere you go FROM training, not a peer of it. */}
+      <Surface as="button" href="/workout/exercises" measure="grid" pad="snug"
+        label="Open the exercise library">
+        <span className="flex items-center gap-2.5">
+          <BookOpen className="w-4 h-4 shrink-0" style={{ color: STEEL }} aria-hidden="true" />
+          <span className="min-w-0 flex-1">
+            <span className="block text-fluid-sm text-text">Exercise library</span>
+            <span className="block text-[10px] text-muted">Records and trends for every lift you have logged</span>
+          </span>
+          <ChevronRight className="w-4 h-4 text-muted shrink-0" aria-hidden="true" />
+        </span>
+      </Surface>
 
       {/* Week plan — ultra-compact: one dense row per day inside a single card. */}
       <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-1.5 divide-y divide-white/[0.05]">

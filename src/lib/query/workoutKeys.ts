@@ -13,6 +13,7 @@ import type { QueryClient } from '@tanstack/react-query'
 export const WORKOUT_QUERY_KEYS: string[][] = [
   ['workout_sessions'],
   ['workout_sets'],
+  ['exercises'],       // the catalog: a commit can CREATE a row (resolveExercises)
   ['continuum'],
   ['day_vault'],
   ['daily_scores'],

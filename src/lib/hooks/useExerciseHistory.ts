@@ -33,10 +33,14 @@ const EMPTY: ExerciseHistoryData = {
  * `exercise_history` Postgres RPC (RLS-scoped via auth.uid()), so all the
  * aggregation happens in one indexed query.
  */
-export function useExerciseHistory(exerciseId: string | null) {
-  return useQuery({
-    queryKey: ['exercise_history', exerciseId],
-    enabled: !!exerciseId,
+/**
+ * The query options, extracted so the hook and the library's prefetch cannot
+ * drift apart. A prefetch that writes a different key from the hook that reads
+ * it is a cache miss that looks like a slow network.
+ */
+export function exerciseHistoryQuery(exerciseId: string | null) {
+  return {
+    queryKey: ['exercise_history', exerciseId] as const,
     staleTime: 5 * 60_000,
     queryFn: async (): Promise<ExerciseHistoryData> => {
       // Args cast: the hand-authored Functions type makes rpc's Args generic fall
@@ -49,5 +53,9 @@ export function useExerciseHistory(exerciseId: string | null) {
         timeline: Array.isArray(d.timeline) ? d.timeline : [],
       }
     },
-  })
+  }
+}
+
+export function useExerciseHistory(exerciseId: string | null) {
+  return useQuery({ ...exerciseHistoryQuery(exerciseId), enabled: !!exerciseId })
 }
