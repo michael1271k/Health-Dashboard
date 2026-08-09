@@ -13,7 +13,10 @@ import Combine  // ObservableObject / @Published live here; watchOS doesn't re-e
 // MARK: - Palette (mirrors the web jewel tokens)
 
 private enum Helix {
-    static let obsidian = Color(red: 0.047, green: 0.051, blue: 0.067)
+    /// TRUE black, not near-black. On an OLED watch a #0C0D11 fill is a
+    /// visible grey rectangle inside the bezel; #000000 is the bezel. The web
+    /// app's obsidian exists to sit under glass — there is no glass here.
+    static let obsidian = Color.black
     static let ember    = Color(red: 0.878, green: 0.439, blue: 0.235)  // action / now
     static let sapphire = Color(red: 0.239, green: 0.478, blue: 0.722)  // data / physiology
     static let emerald  = Color(red: 0.243, green: 0.620, blue: 0.478)  // good delta
@@ -69,7 +72,7 @@ struct ContentView: View {
                 RetryView { Task { await store.refresh() } }
             }
         }
-        .containerBackground(Helix.obsidian.gradient, for: .tabView)
+        .containerBackground(Helix.obsidian, for: .tabView)
         .task { await store.refresh() }
         .refreshable { await store.refresh() }
     }
@@ -84,7 +87,7 @@ private struct SleepScreen: View {
     var body: some View {
         ScreenScaffold(title: "SLEEP", accent: Helix.amethyst) {
             Text(HelixSnapshot.formatSleep(sleep.minutes))
-                .font(.system(size: 34, weight: .bold, design: .rounded))
+                .font(.system(size: 34, weight: .bold))
                 .foregroundStyle(.white)
             StageRibbon(deep: sleep.deepMin, rem: sleep.remMin, total: sleep.minutes)
                 .frame(height: 8)
@@ -110,13 +113,13 @@ private struct WeightScreen: View {
         ScreenScaffold(title: "WEIGHT", accent: Helix.ember) {
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 Text(weight.kg.map { String(format: "%.1f", $0) } ?? "—")
-                    .font(.system(size: 40, weight: .bold, design: .rounded))
+                    .font(.system(size: 40, weight: .bold))
                     .foregroundStyle(.white)
                 Text("kg").font(.footnote).foregroundStyle(Helix.muted)
             }
             if let d = weight.deltaKg, d != 0 {
                 Text(String(format: "%@%.1f kg", d < 0 ? "▼" : "▲", abs(d)))
-                    .font(.system(.footnote, design: .rounded).weight(.bold))
+                    .font(.system(.footnote).weight(.bold))
                     .foregroundStyle(deltaColor)
             }
             if let on = weight.measuredOn {
@@ -134,7 +137,7 @@ private struct WorkoutScreen: View {
     var body: some View {
         ScreenScaffold(title: "TODAY", accent: workout.isRestDay ? Helix.amethyst : Helix.ember) {
             Text(workout.isRestDay ? "Rest · Zone-2" : workout.label)
-                .font(.system(size: 22, weight: .bold, design: .rounded))
+                .font(.system(size: 22, weight: .bold))
                 .foregroundStyle(.white)
                 .minimumScaleFactor(0.6)
                 .lineLimit(2)
@@ -165,7 +168,7 @@ private struct MacrosScreen: View {
         ScreenScaffold(title: "FUEL", accent: Helix.ember) {
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 Text(remaining.map { "\($0)" } ?? "—")
-                    .font(.system(size: 34, weight: .bold, design: .rounded))
+                    .font(.system(size: 34, weight: .bold))
                     .foregroundStyle(.white)
                 Text("kcal left").font(.caption2).foregroundStyle(Helix.muted)
             }
@@ -187,7 +190,7 @@ private struct WaterScreen: View {
         ScreenScaffold(title: "WATER", accent: Helix.sapphire) {
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 Text(water.ml.map { String(format: "%.1f", $0 / 1000) } ?? "—")
-                    .font(.system(size: 38, weight: .bold, design: .rounded))
+                    .font(.system(size: 38, weight: .bold))
                     .foregroundStyle(.white)
                 Text("L").font(.footnote).foregroundStyle(Helix.muted)
             }
@@ -210,7 +213,7 @@ private struct ScreenScaffold<Content: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
-                .font(.system(.caption2, design: .rounded).weight(.heavy))
+                .font(.system(.caption2).weight(.heavy))
                 .tracking(2)
                 .foregroundStyle(accent)
             content()
@@ -218,6 +221,7 @@ private struct ScreenScaffold<Content: View>: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.top, 4)
+        .padding(.horizontal, 6)
     }
 }
 
@@ -227,7 +231,7 @@ private struct Stat: View {
     let color: Color
     var body: some View {
         VStack(alignment: .leading, spacing: 1) {
-            Text(value).font(.system(.body, design: .rounded).weight(.bold)).foregroundStyle(.white)
+            Text(value).font(.system(.body).weight(.bold)).foregroundStyle(.white)
             Text(label).font(.system(size: 9, weight: .bold)).tracking(1).foregroundStyle(color)
         }
     }

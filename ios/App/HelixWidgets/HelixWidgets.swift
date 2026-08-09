@@ -4,7 +4,7 @@ import SwiftUI
 // MARK: - Palette
 
 private enum Helix {
-    static let obsidian = Color(red: 0.047, green: 0.051, blue: 0.067)
+    static let obsidian = Color.black
     static let ember    = Color(red: 0.878, green: 0.439, blue: 0.235)
     static let sapphire = Color(red: 0.239, green: 0.478, blue: 0.722)
     static let emerald  = Color(red: 0.243, green: 0.620, blue: 0.478)
@@ -59,14 +59,14 @@ struct HelixSmallView: View {
                 .font(.system(size: 10, weight: .heavy)).tracking(1.5)
                 .foregroundStyle(Helix.ember)
             Text(kcalLeft.map { "\($0)" } ?? "—")
-                .font(.system(size: 30, weight: .bold, design: .rounded))
+                .font(.system(size: 30, weight: .bold))
                 .foregroundStyle(.white)
                 .minimumScaleFactor(0.6)
             Spacer(minLength: 0)
             HStack(spacing: 4) {
                 Image(systemName: "drop.fill").font(.system(size: 10)).foregroundStyle(Helix.sapphire)
                 Text(entry.snapshot?.water.ml.map { String(format: "%.1f L", $0 / 1000) } ?? "—")
-                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.white)
             }
             GeometryReader { geo in
@@ -77,7 +77,7 @@ struct HelixSmallView: View {
                 }
             }.frame(height: 4)
         }
-        .containerBackground(Helix.obsidian.gradient, for: .widget)
+        .containerBackground(Helix.obsidian, for: .widget)
     }
 }
 
@@ -99,12 +99,12 @@ struct HelixMediumView: View {
             Spacer()
             batteryRing
         }
-        .containerBackground(Helix.obsidian.gradient, for: .widget)
+        .containerBackground(Helix.obsidian, for: .widget)
     }
 
     private func metric(_ value: String, _ label: String, _ color: Color) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 5) {
-            Text(value).font(.system(.title3, design: .rounded).weight(.bold)).foregroundStyle(color)
+            Text(value).font(.system(.title3).weight(.bold)).foregroundStyle(color)
             Text(label).font(.caption2).foregroundStyle(Helix.muted)
         }
     }
@@ -119,7 +119,7 @@ struct HelixMediumView: View {
                 .shadow(color: Helix.emerald.opacity(0.5), radius: 4)
             VStack(spacing: 0) {
                 Text(entry.snapshot?.battery.map { "\($0)" } ?? "—")
-                    .font(.system(.title3, design: .rounded).weight(.bold)).foregroundStyle(.white)
+                    .font(.system(.title3).weight(.bold)).foregroundStyle(.white)
                 Text("BATT").font(.system(size: 8, weight: .bold)).foregroundStyle(Helix.muted)
             }
         }.frame(width: 74, height: 74)
