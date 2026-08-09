@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { Moon, Flame, Dumbbell, Scale, Footprints, Pill } from 'lucide-react'
-import { LiquidModal } from '@/components/ui/LiquidModal'
+import { Sheet } from '@/components/ui/Sheet'
 import { ReadinessOrb } from '@/components/dashboard/ReadinessOrb'
 import { BioStrip, type BioStripProps } from '@/components/dashboard/BioStrip'
 import { MacroRings } from '@/components/nutrition/MacroRings'
@@ -32,7 +32,7 @@ import { useBioSeries, useLastWeighIn, useLatestBodyMetrics, type BodyMetricFiel
 import { SleepStages } from '@/components/dashboard/SleepStages'
 
 // Modal-only bodies (522 lines between them) that were in the dashboard's
-// first-load bundle even though they render only once a LiquidModal opens.
+// first-load bundle even though they render only once the domain sheet opens.
 const ScoreCard = dynamic(() => import('@/components/dashboard/ScoreCard').then((m) => m.ScoreCard), { ssr: false })
 const TrainingCard = dynamic(() => import('@/components/dashboard/TrainingCard').then((m) => m.TrainingCard), { ssr: false })
 const SupplementChecklist = dynamic(() => import('@/components/dashboard/SupplementChecklist').then((m) => m.SupplementChecklist), { ssr: false })
@@ -347,7 +347,15 @@ export default function DashboardPage() {
       <DeferredMount minHeight={120}><AnimatedCard index={10}><WeeklyReviewCard /></AnimatedCard></DeferredMount>
 
       {/* ── Domain detail: liquid-glass popup, tinted by its own domain accent ── */}
-      <LiquidModal
+      {/* ONE drawer, seven contents. Every domain strip and the readiness hero
+          open into it, so a tap always produces the same object arriving the
+          same way from the same edge — and every one of them can be thrown
+          away with a flick instead of aimed at an X.
+
+          No per-key maxHeight: these range from a ~220px body summary to the
+          full supplement stack, and a sheet that hugs its content is the
+          better default at both ends. */}
+      <Sheet
         open={!!open}
         onClose={() => setOpen(null)}
         title={open ? sheetTitle[open] : undefined}
@@ -439,7 +447,7 @@ export default function DashboardPage() {
           />
         )}
         {open === 'stack' && <SupplementChecklist />}
-      </LiquidModal>
+      </Sheet>
     </div>
   )
 }
