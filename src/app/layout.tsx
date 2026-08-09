@@ -65,8 +65,10 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  // No maximumScale / userScalable lock. It was there to stop iOS zooming when
+  // a sub-16px input took focus; the `@media (pointer: coarse)` rule in
+  // globals.css removes that trigger at the source, so pinch-zoom — which is
+  // an accessibility feature, not a bug — comes back.
   viewportFit: 'cover',
   themeColor: '#0A0B0D',
 }

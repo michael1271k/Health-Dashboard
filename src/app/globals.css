@@ -54,17 +54,57 @@
   --font-mono: var(--font-jetbrains), monospace;
   --font-display: var(--font-outfit), sans-serif; /* Sora fills the display slot (HELIX) */
 
-  /* ── Fluid typography — same fonts, viewport-aware sizing ──
+  /* ── Fluid typography, with optical sizing ────────────────────────────────
      Used as Tailwind utilities: text-fluid-sm … text-fluid-3xl. Each clamp
      scales between a mobile floor and a desktop ceiling so type feels native
-     on a 6" phone and premium on a 27" monitor without per-breakpoint classes. */
+     on a 6" phone and premium on a 27" monitor without per-breakpoint classes.
+
+     Tracking is SIZE-SPECIFIC. Letterforms read further apart as they grow, so
+     display text needs negative tracking to hold together, and small text needs
+     a little positive to stay legible. One fixed letter-spacing across a scale
+     is therefore wrong at both ends — and the app had no tracking at all, plus
+     three different hand-spelled values for the same 10px label.
+
+     Leading runs the other way: tight on large text, looser on body.
+
+     These are Tailwind v4 companion tokens, so `text-fluid-2xl` now emits its
+     size, its leading AND its tracking with no new classes and no call-site
+     churn. */
   --text-fluid-xs:   clamp(0.72rem, 0.69rem + 0.15vw, 0.80rem);
+  --text-fluid-xs--line-height:    1.45;
+  --text-fluid-xs--letter-spacing: 0.010em;
+
   --text-fluid-sm:   clamp(0.82rem, 0.78rem + 0.22vw, 0.95rem);
+  --text-fluid-sm--line-height:    1.45;
+  --text-fluid-sm--letter-spacing: 0.005em;
+
   --text-fluid-base: clamp(0.92rem, 0.86rem + 0.35vw, 1.05rem);
+  --text-fluid-base--line-height:    1.55;
+  --text-fluid-base--letter-spacing: 0em;      /* body sits at zero */
+
   --text-fluid-lg:   clamp(1.05rem, 0.95rem + 0.60vw, 1.30rem);
+  --text-fluid-lg--line-height:    1.35;
+  --text-fluid-lg--letter-spacing: -0.006em;
+
   --text-fluid-xl:   clamp(1.25rem, 1.05rem + 1.0vw,  1.70rem);
+  --text-fluid-xl--line-height:    1.22;
+  --text-fluid-xl--letter-spacing: -0.011em;
+
   --text-fluid-2xl:  clamp(1.65rem, 1.30rem + 1.9vw, 2.55rem);
+  --text-fluid-2xl--line-height:    1.12;
+  --text-fluid-2xl--letter-spacing: -0.016em;
+
   --text-fluid-3xl:  clamp(2.10rem, 1.55rem + 3.0vw, 3.50rem);
+  --text-fluid-3xl--line-height:    1.04;
+  --text-fluid-3xl--letter-spacing: -0.022em;
+
+  /* The micro-label — 10px uppercase, the most repeated type in the app and
+     previously spelled three ways (tracking-[0.16em], -widest, -wide).
+     Uppercase at this size is exactly the case for POSITIVE tracking. */
+  --text-label: 0.625rem;
+  --text-label--line-height:    1;
+  --text-label--letter-spacing: 0.16em;
+  --text-label--font-weight:    700;
 
   /* Exercise TITLES specifically. One token so the logger deck and the session
      report can never drift apart, and so "make exercise names smaller" is one
@@ -73,6 +113,8 @@
      beside its weight/reps at 390px — at fluid-sm it pushed them to a second
      row. */
   --text-exercise-title: clamp(0.76rem, 0.72rem + 0.18vw, 0.86rem);
+  --text-exercise-title--line-height:    1.25;
+  --text-exercise-title--letter-spacing: 0.004em;
 
   /* The only surviving shadow token — btn-primary's hover glow. The card
      shadows went with the cards; they were still quoting the pre-palette
@@ -108,6 +150,17 @@ html[data-theme='travel'] {
 
   html {
     @apply font-sans;
+    /* Let the face pick its optical size where it has one, and stop iOS
+       inflating text on rotation. */
+    font-optical-sizing: auto;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* iOS zooms the whole page when a focused input is under 16px, which is the
+     real reason the viewport had to lock userScalable. Fix the cause and
+     pinch-zoom can come back. */
+  @media (pointer: coarse) {
+    input, select, textarea { font-size: 16px; }
   }
 
   /* Scrollbar */
@@ -136,6 +189,7 @@ html[data-theme='travel'] {
   /* Number display */
   .helix-num {
     @apply font-mono tabular-nums;
+    letter-spacing: -0.010em;
   }
 
   /* Primary button */
