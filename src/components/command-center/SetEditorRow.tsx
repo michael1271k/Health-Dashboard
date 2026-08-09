@@ -196,10 +196,16 @@ export function SetEditorRow({ index, displayNum, subRow = false, set, active, t
         {onToggleDone && (
           <button
             type="button"
-            onClick={() => { void tapLight(); onToggleDone() }}
+            // Haptic on pointer-DOWN, commit on click. The press highlight
+            // (active:scale-95) already fires on touch-down, so firing the
+            // haptic on release put the two senses on different frames — the
+            // one thing that reliably breaks the illusion. Committing still
+            // happens on click, so dragging off the button still cancels.
+            onPointerDown={() => { void tapLight() }}
+            onClick={() => { onToggleDone() }}
             aria-pressed={done}
             aria-label={done ? `Mark set ${index + 1} not done` : `Mark set ${index + 1} done`}
-            className="min-h-[32px] min-w-[32px] rounded-lg flex items-center justify-center active:scale-95 transition-all"
+            className="min-h-[32px] min-w-[32px] rounded-lg flex items-center justify-center active:scale-95 transition-[color,background-color,border-color,transform] duration-150"
             style={done
               ? { color: '#fff', background: GREEN, border: `1px solid ${GREEN}` }
               : { color: 'var(--color-muted)', background: 'transparent', border: '1px solid rgba(255,255,255,0.14)' }}

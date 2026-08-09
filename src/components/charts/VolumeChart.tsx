@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useId, useMemo, useState } from 'react'
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
 } from 'recharts'
@@ -109,6 +109,10 @@ function formatDate(dateStr: string): string {
 export function VolumeChart({ data, isLoading, era = 'all' }: { data: VolumePoint[]; isLoading?: boolean; era?: 'all' | 'ppl' | 'axis' }) {
   const [split, setSplit] = useState<ChartSplit>('legs')
   const unit = useUnitSystem()
+  // Scoped, not hardcoded. An SVG id is global to the document, so two of these
+  // on one page both defined `volFill` and the second silently repainted the
+  // first with its own gradient.
+  const volFill = `volFill-${useId().replace(/:/g, '')}`
 
   // The selected split must exist in the active era's pill set.
   const pills = SPLITS_FOR_ERA[era]
@@ -160,7 +164,7 @@ export function VolumeChart({ data, isLoading, era = 'all' }: { data: VolumePoin
           <ResponsiveContainer width="100%" height={240}>
             <AreaChart data={chartData} margin={{ top: 4, right: 26, bottom: 0, left: 0 }}>
               <defs>
-                <linearGradient id="volFill" x1="0" y1="0" x2="0" y2="1">
+                <linearGradient id={volFill} x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor={color} stopOpacity={0.4} />
                   <stop offset="100%" stopColor={color} stopOpacity={0} />
                 </linearGradient>
@@ -173,7 +177,7 @@ export function VolumeChart({ data, isLoading, era = 'all' }: { data: VolumePoin
               <YAxis tick={{ fill: TEXT, fontSize: 11, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} width={48}
                 domain={volumeDomain} allowDataOverflow={false} tickFormatter={compactKg} />
               <Tooltip content={<ChartTooltip />} cursor={{ stroke: GRID, strokeWidth: 1 }} />
-              <Area type="monotone" dataKey="volume" name={`Volume (${unit})`} stroke={color} fill="url(#volFill)" strokeWidth={2} dot={{ r: 2, fill: color }} activeDot={{ r: 4 }} />
+              <Area isAnimationActive={false} type="monotone" dataKey="volume" name={`Volume (${unit})`} stroke={color} fill={`url(#${volFill})`} strokeWidth={2} dot={{ r: 2, fill: color }} activeDot={{ r: 4 }} />
             </AreaChart>
           </ResponsiveContainer>
         </div>

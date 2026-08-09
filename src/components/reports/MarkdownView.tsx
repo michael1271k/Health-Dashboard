@@ -117,9 +117,9 @@ function BarSet({ bars }: { bars: TextBar[] }) {
               </span>
             </div>
             <div className="h-1.5 rounded-full bg-white/[0.05] overflow-hidden" aria-hidden="true">
-              <div className="h-full rounded-full transition-[width]"
+              <div className="h-full w-full origin-left rounded-full transition-transform"
                 style={{
-                  width: `${Math.min(100, Math.max(0, b.ratio * 100))}%`,
+                  transform: `scaleX(${Math.min(1, Math.max(0, b.ratio))})`,
                   background: color,
                   boxShadow: `0 0 8px ${color}66`,
                 }} />

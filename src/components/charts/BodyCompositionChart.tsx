@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useId, useMemo, useState } from 'react'
 import {
   ResponsiveContainer, ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceDot,
 } from 'recharts'
@@ -120,6 +120,9 @@ export function BodyCompositionChart({ trend, detail, isLoading, showEraBoundary
   showEraBoundary?: boolean
 }) {
   const unit = useUnitSystem()
+  // Scoped — an SVG id is document-global, so a hardcoded one collides with any
+  // second instance on the page.
+  const bodyFill = `bodyFill-${useId().replace(/:/g, '')}`
   const [family, setFamily] = useState<Family>('mass')
   // The isolated series, by dataKey. null = show them all.
   const [focus, setFocus] = useState<string | null>(null)
@@ -232,7 +235,7 @@ export function BodyCompositionChart({ trend, detail, isLoading, showEraBoundary
         <ResponsiveContainer width="100%" height={240}>
           <ComposedChart data={chartData} margin={{ top: 6, right: 10, left: -8, bottom: 0 }}>
             <defs>
-              <linearGradient id="bodyFill" x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id={bodyFill} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={COLORS.weight} stopOpacity={0.28} />
                 <stop offset="100%" stopColor={COLORS.weight} stopOpacity={0} />
               </linearGradient>
@@ -258,26 +261,26 @@ export function BodyCompositionChart({ trend, detail, isLoading, showEraBoundary
 
             {active === 'mass' && (
               <>
-                <Area type="monotone" dataKey="weight" name={`Weight (${unit})`} stroke={COLORS.weight}
-                  fill="url(#bodyFill)" strokeWidth={2} dot={false} connectNulls
+                <Area isAnimationActive={false} type="monotone" dataKey="weight" name={`Weight (${unit})`} stroke={COLORS.weight}
+                  fill={`url(#${bodyFill})`} strokeWidth={2} dot={false} connectNulls
                   strokeOpacity={dim('weight')} fillOpacity={focus && focus !== 'weight' ? 0.06 : 1} />
-                <Line type="monotone" dataKey="fatFreeMass" name={`Fat-Free (${unit})`} stroke={COLORS.lean}
+                <Line isAnimationActive={false} type="monotone" dataKey="fatFreeMass" name={`Fat-Free (${unit})`} stroke={COLORS.lean}
                   strokeWidth={2} dot={false} connectNulls strokeOpacity={dim('fatFreeMass')} />
-                <Line type="monotone" dataKey="muscleMass" name={`Muscle (${unit})`} stroke={COLORS.musclePct}
+                <Line isAnimationActive={false} type="monotone" dataKey="muscleMass" name={`Muscle (${unit})`} stroke={COLORS.musclePct}
                   strokeWidth={2} dot={false} connectNulls strokeOpacity={dim('muscleMass')} />
-                <Line type="monotone" dataKey="fatMass" name={`Fat (${unit})`} stroke={COLORS.fatMass}
+                <Line isAnimationActive={false} type="monotone" dataKey="fatMass" name={`Fat (${unit})`} stroke={COLORS.fatMass}
                   strokeWidth={1.8} strokeDasharray="4 3" dot={false} connectNulls strokeOpacity={dim('fatMass')} />
               </>
             )}
             {active === 'percent' && (
               <>
-                <Line type="monotone" dataKey="fatPct" name="Fat %" stroke={COLORS.fatPct} strokeWidth={2} dot={false} connectNulls strokeOpacity={dim('fatPct')} />
-                <Line type="monotone" dataKey="musclePct" name="Muscle %" stroke={COLORS.musclePct} strokeWidth={2} dot={false} connectNulls strokeOpacity={dim('musclePct')} />
-                <Line type="monotone" dataKey="water" name="Water %" stroke={COLORS.water} strokeWidth={2} dot={false} connectNulls strokeOpacity={dim('water')} />
+                <Line isAnimationActive={false} type="monotone" dataKey="fatPct" name="Fat %" stroke={COLORS.fatPct} strokeWidth={2} dot={false} connectNulls strokeOpacity={dim('fatPct')} />
+                <Line isAnimationActive={false} type="monotone" dataKey="musclePct" name="Muscle %" stroke={COLORS.musclePct} strokeWidth={2} dot={false} connectNulls strokeOpacity={dim('musclePct')} />
+                <Line isAnimationActive={false} type="monotone" dataKey="water" name="Water %" stroke={COLORS.water} strokeWidth={2} dot={false} connectNulls strokeOpacity={dim('water')} />
               </>
             )}
             {active === 'visceral' && (
-              <Line type="monotone" dataKey="visceral" name="Visceral" stroke={COLORS.visceral}
+              <Line isAnimationActive={false} type="monotone" dataKey="visceral" name="Visceral" stroke={COLORS.visceral}
                 strokeWidth={2} dot={{ r: 2, fill: COLORS.visceral }} connectNulls />
             )}
 

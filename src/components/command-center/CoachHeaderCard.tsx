@@ -33,7 +33,7 @@ export function CoachHeaderCard({ draft, recordCount = 0, onSetDate, onSetStats 
     .toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
 
   return (
-    <div className="helix-card holo-sheen !p-4 space-y-3">
+    <div className="helix-card !p-4 space-y-3">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <h3 className="font-heading font-bold text-fluid-xl text-text leading-tight truncate">

@@ -386,7 +386,7 @@ export default function SettingsPage() {
               return (
                 <button key={plan.id} onClick={() => { setConfirmSwitch(false); setDrawerPhase(plan.id === activePlanId ? livePhase : 'cut'); setPreviewPlan(plan) }}
                   aria-pressed={active}
-                  className="rounded-2xl border p-3 text-left transition-all duration-200"
+                  className="rounded-2xl border p-3 text-left transition-[border-color,background-color,box-shadow] duration-200"
                   style={active
                     ? { borderColor: '#8E9AAC66', background: '#8E9AAC14', boxShadow: '0 0 16px #8E9AAC33' }
                     : { borderColor: 'rgba(255,255,255,0.08)' }}>
@@ -532,7 +532,9 @@ export default function SettingsPage() {
             aria-pressed={goals.reduce_motion}
             className={`relative w-12 h-7 rounded-full transition-colors shrink-0 ${goals.reduce_motion ? 'bg-primary' : 'bg-surface-2 border border-border'}`}
           >
-            <span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-all ${goals.reduce_motion ? 'left-6' : 'left-1'}`} />
+            {/* translate, not `left`: `left` is a layout property, so the knob
+                was reflowing the button on every toggle. */}
+            <span className={`absolute top-1 left-1 h-5 w-5 rounded-full bg-white transition-transform duration-200 ${goals.reduce_motion ? 'translate-x-5' : 'translate-x-0'}`} />
           </button>
         </div>
 
@@ -546,7 +548,7 @@ export default function SettingsPage() {
             aria-pressed={goals.auto_log_supplements}
             className={`relative w-12 h-7 rounded-full transition-colors shrink-0 ${goals.auto_log_supplements ? 'bg-primary' : 'bg-surface-2 border border-border'}`}
           >
-            <span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-all ${goals.auto_log_supplements ? 'left-6' : 'left-1'}`} />
+            <span className={`absolute top-1 left-1 h-5 w-5 rounded-full bg-white transition-transform duration-200 ${goals.auto_log_supplements ? 'translate-x-5' : 'translate-x-0'}`} />
           </button>
         </div>
       </section>

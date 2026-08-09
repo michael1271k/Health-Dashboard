@@ -96,7 +96,7 @@ export function VolumeStream({ days, era = 'all' }: { days: number; era?: 'all' 
           <YAxis tick={{ fill: MUTED, fontSize: 10, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} width={30} />
           <Tooltip content={<ChartTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.1)' }} />
           {MUSCLE_GROUPS.map((g) => (
-            <Area key={g} type="basis" dataKey={g} stackId="s" stroke="none" fill={GROUP_COLOR[g]} fillOpacity={0.75} />
+            <Area isAnimationActive={false} key={g} type="basis" dataKey={g} stackId="s" stroke="none" fill={GROUP_COLOR[g]} fillOpacity={0.75} />
           ))}
         </AreaChart>
       </ResponsiveContainer>

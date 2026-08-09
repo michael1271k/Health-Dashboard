@@ -19,7 +19,13 @@ describe('MarkdownView', () => {
   it('draws text bars natively and keeps the author\'s own number', () => {
     const { container } = render(<MarkdownView md={'Protein ████████████░░░░ 81%'} />)
     expect(screen.getByText('81%')).toBeTruthy()
-    expect(container.querySelectorAll('div[style*="width"]').length).toBeGreaterThan(0)
+    // The bar is a real element, and it is sized with scaleX rather than
+    // width — width is a layout property, so transitioning it reflowed the
+    // whole report. The scale also has to match the ratio the author wrote:
+    // 12 filled of 16 cells = 0.75, independent of the "81%" label beside it.
+    const bars = container.querySelectorAll('div[style*="scaleX"]')
+    expect(bars.length).toBeGreaterThan(0)
+    expect(bars[0].getAttribute('style')).toContain('scaleX(0.75)')
   })
 
   it('renders a bare pipe table as a real table', () => {

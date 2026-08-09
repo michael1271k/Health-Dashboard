@@ -1,6 +1,6 @@
 'use client'
 
-import { useId, useMemo } from 'react'
+import { useMemo } from 'react'
 import { Droplets } from 'lucide-react'
 
 // Empty baseline = slate/grey; it fills with blue as intake rises. Filled strands
@@ -45,8 +45,6 @@ function buildHelix(): { nodes: Node[]; closed: string } {
  * reduce-motion (only a clip-path state change animates — no infinite loop).
  */
 export function WaterHelix({ ml, goalMl }: { ml: number | null; goalMl: number }) {
-  const uid = useId().replace(/[:]/g, '')
-  const glow = `wh-glow-${uid}`
   const { nodes, closed } = useMemo(buildHelix, [])
   const have = ml ?? 0
   const pct = Math.max(0, Math.min(1, goalMl > 0 ? have / goalMl : 0))
@@ -55,11 +53,16 @@ export function WaterHelix({ ml, goalMl }: { ml: number | null; goalMl: number }
   const rungs = nodes.filter((_, i) => i % 4 === 2 && Math.abs(nodes[i].xa - nodes[i].xb) > 6)
 
   const Helix = ({ bright }: { bright: boolean }) => (
-    <g
-      fill="none"
-      strokeLinecap="round"
-      style={bright ? { filter: `url(#${glow})` } : undefined}
-    >
+    <g fill="none" strokeLinecap="round">
+      {/* Halo — a wide, translucent pass beneath the crisp strand.
+          This replaces an feGaussianBlur filter that lived on this same group.
+          The group's clip-path transitions for 700ms on every intake change, and
+          a filter inside an animating clip is re-rasterised EVERY frame, over a
+          region deliberately inflated to 200%. One extra stroke, painted once,
+          reads the same at this size. */}
+      {bright && (
+        <path d={closed} stroke={AQUA} strokeWidth={6} strokeOpacity={0.16} strokeLinejoin="round" />
+      )}
       {/* Inner base-pair rungs — lighter aqua when filled so they pop off the strands. */}
       {rungs.map((n, i) => (
         <line key={i} x1={n.xa} y1={n.y} x2={n.xb} y2={n.y}
@@ -102,16 +105,6 @@ export function WaterHelix({ ml, goalMl }: { ml: number | null; goalMl: number }
           <svg viewBox="0 0 120 132" width="120" height="132" aria-hidden="true"
             className="w-[120px] max-w-full h-auto max-h-[132px]"
             style={{ aspectRatio: '120 / 132' }}>
-            <defs>
-              <filter id={glow} x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="1.8" result="b" />
-                <feMerge>
-                  <feMergeNode in="b" />
-                  <feMergeNode in="SourceGraphic" />
-                </feMerge>
-              </filter>
-            </defs>
-
             {/* Dim, empty strands — always fully visible */}
             <Helix bright={false} />
             {/* Bright, filled strands — revealed bottom-up by the intake fraction */}

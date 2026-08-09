@@ -109,6 +109,7 @@ export function PRHistoryChart({ data, isLoading }: PRHistoryChartProps) {
               return [
                 hasGhost && (
                   <Line
+                    isAnimationActive={false}
                     key={`${name}-ppl`}
                     type="monotone"
                     dataKey={`${name} · PPL`}
@@ -123,6 +124,7 @@ export function PRHistoryChart({ data, isLoading }: PRHistoryChartProps) {
                   />
                 ),
                 <Line
+                  isAnimationActive={false}
                   key={name}
                   type="monotone"
                   dataKey={name}

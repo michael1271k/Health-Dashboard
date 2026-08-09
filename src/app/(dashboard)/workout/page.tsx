@@ -96,7 +96,7 @@ export default function WorkoutPage() {
       {loggedToday ? (
         <PostWorkoutSummary sessions={todaySessions} date={today} />
       ) : (
-      <section className="helix-card holo-sheen"
+      <section className="helix-card"
         style={{
           borderColor: training && todayDay ? `${todayDay.color}44` : `${REST_VIOLET}33`,
           boxShadow: training && todayDay ? `0 0 26px ${todayDay.color}1f` : undefined,

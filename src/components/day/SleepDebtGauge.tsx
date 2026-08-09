@@ -36,8 +36,10 @@ export const SleepDebtGauge = memo(function SleepDebtGauge({ compact = false }: 
         </div>
         <div className="h-1.5 rounded-full bg-white/[0.05] overflow-hidden" role="img"
           aria-label={`Sleep debt ${data.debtHours} hours over ${data.nights} nights`}>
-          <div className="h-full rounded-full transition-[width] duration-700"
-            style={{ width: `${Math.max(2, pct * 100)}%`, background: color, boxShadow: `0 0 8px ${color}66` }} />
+          {/* scaleX, not width: width is a layout property, so the old
+              transition reflowed this subtree every frame for 700ms. */}
+          <div className="h-full w-full origin-left rounded-full transition-transform duration-700"
+            style={{ transform: `scaleX(${Math.max(0.02, pct)})`, background: color, boxShadow: `0 0 8px ${color}66` }} />
         </div>
       </div>
     )
@@ -55,8 +57,8 @@ export const SleepDebtGauge = memo(function SleepDebtGauge({ compact = false }: 
       </div>
       <div className="h-2 rounded-full bg-white/[0.05] overflow-hidden" role="img"
         aria-label={`Sleep debt ${data.debtHours} hours over the last ${data.nights} nights`}>
-        <div className="h-full rounded-full transition-[width] duration-700"
-          style={{ width: `${Math.max(2, pct * 100)}%`, background: color, boxShadow: `0 0 8px ${color}66` }} />
+        <div className="h-full w-full origin-left rounded-full transition-transform duration-700"
+          style={{ transform: `scaleX(${Math.max(0.02, pct)})`, background: color, boxShadow: `0 0 8px ${color}66` }} />
       </div>
       <p className="text-fluid-xs text-muted">
         14-night rolling vs {data.goalHours}h goal · surplus nights repay · last week decays ×0.75

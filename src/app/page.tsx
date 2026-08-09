@@ -283,7 +283,7 @@ export default function DashboardPage() {
           + battery merged), spanning both columns on desktop with a driver panel. ── */}
       <AnimatedCard index={0}>
         <button onClick={() => setOpen('readiness')}
-          className="helix-card holo-sheen w-full text-left" aria-label="Open recovery details">
+          className="helix-card w-full text-left" aria-label="Open recovery details">
           <div className="flex flex-col md:flex-row md:items-center gap-5">
             <div className="flex-1 flex items-center justify-center min-h-[300px]">
               <ReadinessOrb score={score ?? null} isLoading={scoreLoading} />

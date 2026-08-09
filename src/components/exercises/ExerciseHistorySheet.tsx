@@ -1,5 +1,6 @@
 'use client'
 
+import { useId } from 'react'
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts'
 import { Dumbbell, TrendingUp, Layers, Activity, Repeat } from 'lucide-react'
 import { Sheet } from '@/components/ui/Sheet'
@@ -23,6 +24,8 @@ export function ExerciseHistorySheet({ exerciseId, exerciseName, open, onClose }
 }) {
   const { data, isPending } = useExerciseHistory(open ? exerciseId : null)
   const unit = weightUnit()
+  // Scoped — an SVG id is document-global.
+  const e1rmFill = `e1rmFill-${useId().replace(/:/g, '')}`
 
   const chartData = (data?.timeline ?? [])
     .filter((p) => p.best_1rm != null)
@@ -46,7 +49,7 @@ export function ExerciseHistorySheet({ exerciseId, exerciseName, open, onClose }
               <ResponsiveContainer width="100%" height={170}>
                 <AreaChart data={chartData} margin={{ top: 4, right: 8, left: -18, bottom: 0 }}>
                   <defs>
-                    <linearGradient id="e1rmFill" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient id={e1rmFill} x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor={ICE} stopOpacity={0.35} />
                       <stop offset="100%" stopColor={ICE} stopOpacity={0} />
                     </linearGradient>
@@ -54,7 +57,7 @@ export function ExerciseHistorySheet({ exerciseId, exerciseName, open, onClose }
                   <XAxis dataKey="date" tick={{ fill: '#79808C', fontSize: 10 }} axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={24} tickMargin={6} />
                   <YAxis tick={{ fill: '#79808C', fontSize: 10 }} axisLine={false} tickLine={false} width={34} />
                   <Tooltip content={<ChartTooltip />} />
-                  <Area type="monotone" dataKey="e1rm" name="est 1RM" unit={unit} stroke={ICE} strokeWidth={2} fill="url(#e1rmFill)" />
+                  <Area isAnimationActive={false} type="monotone" dataKey="e1rm" name="est 1RM" unit={unit} stroke={ICE} strokeWidth={2} fill={`url(#${e1rmFill})`} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>

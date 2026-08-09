@@ -113,7 +113,7 @@ function SessionBlock({ session: s, unit }: {
   return (
     <button type="button"
       onClick={() => router.push(`/session/${s.id}`)}
-      className="helix-card holo-sheen w-full text-left space-y-3 active:opacity-80"
+      className="helix-card w-full text-left space-y-3 active:opacity-80"
       style={{ borderColor: `${CYAN}30`, boxShadow: `0 0 24px ${CYAN}18` }}
       aria-label={`Open full analysis for ${name}`}>
       <div className="w-full flex items-center gap-2">
@@ -438,7 +438,7 @@ export default function DailyNexusPage() {
         </>
       ) : restDay ? (
         /* Rest day → a compact premium badge, NOT a big empty workout block */
-        <section className="helix-card holo-sheen flex items-center gap-3 py-4"
+        <section className="helix-card flex items-center gap-3 py-4"
           style={{ borderColor: `${VIOLET}30`, boxShadow: `0 0 24px ${VIOLET}1f` }}>
           <span className="w-11 h-11 rounded-full flex items-center justify-center shrink-0"
             style={{ background: `${VIOLET}1c`, color: VIOLET, boxShadow: `0 0 18px ${VIOLET}55` }}>

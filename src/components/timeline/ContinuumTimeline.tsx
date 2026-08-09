@@ -39,7 +39,7 @@ function MacroBar({ label, g, target, color }: { label: string; g: number | null
     <span className="flex-1 min-w-0 flex items-center gap-1">
       <span className="text-[9px] font-bold shrink-0" style={{ color }}>{label}</span>
       <span className="flex-1 min-w-0 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-        <span className="block h-full rounded-full transition-[width] duration-500" style={{ width: `${pct * 100}%`, background: color }} />
+        <span className="block h-full w-full origin-left rounded-full transition-transform duration-500" style={{ transform: `scaleX(${pct})`, background: color }} />
       </span>
     </span>
   )
@@ -101,8 +101,10 @@ export const DayCard = memo(function DayCard({ d, unit, active, onOpen, onSwap }
       } as React.CSSProperties}>
       {/* Top line — score dot · date · calories */}
       <div className="flex items-center gap-2.5">
-        <span className="rounded-full shrink-0 transition-all"
-          style={{ width: active ? 11 : 8, height: active ? 11 : 8, background: sc, boxShadow: d.score != null ? `0 0 8px ${sc}66` : undefined }}
+        {/* Fixed box, scaled — animating width AND height re-laid out the whole
+            timeline row on every selection change. */}
+        <span className="rounded-full shrink-0 transition-transform duration-200"
+          style={{ width: 11, height: 11, transform: `scale(${active ? 1 : 8 / 11})`, background: sc, boxShadow: d.score != null ? `0 0 8px ${sc}66` : undefined }}
           aria-hidden="true" />
         <span className="shrink-0 font-heading font-semibold text-[13px]" style={{ color: active ? '#E0703C' : undefined }}>
           {day.toLocaleDateString('en-GB', { weekday: 'short' })} {day.getDate()}

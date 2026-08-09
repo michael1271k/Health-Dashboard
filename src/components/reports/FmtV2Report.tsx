@@ -166,9 +166,9 @@ function TdeeLadder({ anchors }: { anchors: TdeeAnchor[] }) {
             )}
           </div>
           <div className="h-1.5 rounded-full bg-white/[0.05] overflow-hidden" aria-hidden="true">
-            <div className="h-full rounded-full transition-[width]"
+            <div className="h-full w-full origin-left rounded-full transition-transform"
               style={{
-                width: `${width(a.value)}%`,
+                transform: `scaleX(${width(a.value) / 100})`,
                 background: a.adopted ? GOLD : 'rgba(255,255,255,0.28)',
                 boxShadow: a.adopted ? `0 0 10px ${GOLD}66` : undefined,
               }} />

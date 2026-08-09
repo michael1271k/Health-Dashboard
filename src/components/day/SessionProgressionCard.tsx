@@ -31,7 +31,7 @@ export function SessionProgressionCard({ session, date }: { session: GymReportRo
     ?? (session.split[0]?.toUpperCase() + session.split.slice(1))
 
   return (
-    <section className="helix-card holo-sheen space-y-3" style={{ borderColor: '#E0703C28' }}>
+    <section className="helix-card space-y-3" style={{ borderColor: '#E0703C28' }}>
       <Link href={`/session/${session.id}`} onPointerUp={blurOnTap}
         className="flex items-center gap-2 -m-1 p-1 rounded-lg active:opacity-80 hover:bg-white/[0.03]"
         aria-label={`Open full analysis for ${label}`}>

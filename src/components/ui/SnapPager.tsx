@@ -45,11 +45,34 @@ export function SnapPager({ pages, className = '', ref }: {
    */
   const [height, setHeight] = useState<number | null>(null)
 
-  const onScroll = useCallback(() => {
+  /**
+   * Scroll is read through a native passive listener, not React's onScroll.
+   *
+   * A JSX onScroll handler can never be passive, and this one did two layout
+   * reads (scrollLeft + clientWidth) plus a setState on every single scroll
+   * tick of a swipe. Both reads are now inside one rAF, so at most one runs per
+   * frame, and setActive bails when the index has not actually changed —
+   * without that, every tick invalidated `measure`, which re-subscribed the
+   * ResizeObserver below.
+   */
+  useEffect(() => {
     const el = scroller.current
     if (!el) return
-    const i = Math.round(el.scrollLeft / Math.max(1, el.clientWidth))
-    setActive(Math.min(pages.length - 1, Math.max(0, i)))
+    let frame = 0
+    const onScroll = () => {
+      if (frame) return
+      frame = requestAnimationFrame(() => {
+        frame = 0
+        const i = Math.round(el.scrollLeft / Math.max(1, el.clientWidth))
+        const next = Math.min(pages.length - 1, Math.max(0, i))
+        setActive((prev) => (prev === next ? prev : next))
+      })
+    }
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      el.removeEventListener('scroll', onScroll)
+      if (frame) cancelAnimationFrame(frame)
+    }
   }, [pages.length])
 
   const go = useCallback((i: number) => {
@@ -71,7 +94,13 @@ export function SnapPager({ pages, className = '', ref }: {
   // changes size (opening a disclosure inside a page must not clip it).
   const measure = useCallback(() => {
     const el = panels.current[active]
-    if (el && el.offsetHeight > 0) setHeight(el.offsetHeight)
+    if (!el) return
+    const measured = el.offsetHeight
+    // Bail when nothing moved. This is a read (offsetHeight) that writes a
+    // style (height) that the ResizeObserver below is watching — exactly the
+    // shape of a feedback loop. Returning the previous value makes React skip
+    // the render, which terminates it whatever triggered the resize.
+    if (measured > 0) setHeight((prev) => (prev === measured ? prev : measured))
   }, [active])
 
   useLayoutEffect(measure, [measure, pages])
@@ -110,7 +139,6 @@ export function SnapPager({ pages, className = '', ref }: {
 
       <div
         ref={scroller}
-        onScroll={onScroll}
         // `items-start` stops a short page being stretched to the tall one's
         // height; the explicit height is what actually shrinks the slot.
         className="flex items-start overflow-x-auto overflow-y-hidden no-scrollbar snap-x snap-mandatory"

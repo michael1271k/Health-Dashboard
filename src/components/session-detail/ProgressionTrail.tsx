@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { TrendingUp } from 'lucide-react'
 import { useSessionIntel, type IntelMetric } from '@/lib/hooks/useSessionIntel'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
@@ -134,6 +134,9 @@ function VolumeCurve({ points, max, unit }: {
 }) {
   const n = points.length - 1
   const [selected, setSelected] = useState<number>(n)
+  // Scoped — an SVG id is document-global, so a hardcoded one collides with any
+  // second instance on the page.
+  const volTrail = `volTrail-${useId().replace(/:/g, '')}`
   const W = 300, H = 68, PAD_X = 6, PAD_TOP = 8, PAD_BOTTOM = 10
   const x = (i: number) => PAD_X + (i / n) * (W - PAD_X * 2)
   const y = (v: number) => PAD_TOP + (1 - v / max) * (H - PAD_TOP - PAD_BOTTOM)
@@ -169,12 +172,12 @@ function VolumeCurve({ points, max, unit }: {
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full overflow-visible"
         role="img" aria-label={`Volume trend across ${points.length} sessions`}>
         <defs>
-          <linearGradient id="volTrail" x1="0" y1="0" x2="0" y2="1">
+          <linearGradient id={volTrail} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor={VIOLET} stopOpacity="0.30" />
             <stop offset="100%" stopColor={VIOLET} stopOpacity="0" />
           </linearGradient>
         </defs>
-        <path d={area} fill="url(#volTrail)" />
+        <path d={area} fill={"url(#" + volTrail + ")"} />
         <path d={line} fill="none" stroke={VIOLET} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         {points.map((p, i) => {
           const isSelected = i === selected

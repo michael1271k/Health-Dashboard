@@ -51,7 +51,7 @@ export function PastePanel({ onDraft }: { onDraft: (d: SessionDraft) => void }) 
 
   return (
     <div className="max-w-xl mx-auto space-y-3">
-      <div className="helix-card holo-sheen !p-4 space-y-3">
+      <div className="helix-card !p-4 space-y-3">
         <div className="flex items-center gap-2">
           <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 bg-primary/15 text-primary">
             <Zap className="w-4.5 h-4.5" aria-hidden="true" />
