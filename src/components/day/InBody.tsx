@@ -7,10 +7,12 @@ import { useLatestBodyReading, type CarryField } from '@/lib/hooks/useLatestBody
 import { deriveBodyComp, whrBand, type BodyCompInput, type BodyCompDerived, type WhrBand } from '@/lib/body/composition'
 import { deltaVerdict, type Metric, type Verdict } from '@/lib/body/deltaVerdict'
 import { activePhase } from '@/lib/programs'
-import { EMERALD, GOLD, OXIDE, MUTED } from '@/lib/theme/palette'
+import { EMBER, EMERALD, GOLD, OXIDE, MUTED } from '@/lib/theme/palette'
 import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 
-const TEAL = '#E0703C'
+// Was `const ACCENT = '#E0703C'` — a name that lied about its value in two
+// separate files. The Body domain's accent is the signature ember.
+const ACCENT = EMBER
 
 /** WHO abdominal-obesity bands, in the app's own semantic colours. */
 const WHR_COLOR: Record<WhrBand, string> = { low: EMERALD, moderate: GOLD, high: OXIDE }
@@ -124,7 +126,7 @@ export function InBodyHeadline({ log, date }: { log: DayVaultData['log']; date: 
             <span className="helix-num block text-fluid-sm font-bold text-text leading-tight">
               {s.v != null ? s.v : '—'}{s.v != null && s.u ? <span className="text-[9px] text-muted font-normal ml-0.5">{s.u}</span> : null}
             </span>
-            <span className="text-[8px] uppercase tracking-wide" style={{ color: TEAL }}>{s.label}</span>
+            <span className="text-[8px] uppercase tracking-wide" style={{ color: ACCENT }}>{s.label}</span>
             {delta != null && verdict != null && (
               <span className="helix-num block text-[9px] font-semibold leading-tight" style={{ color: VERDICT_COLOR[verdict] }}>
                 {delta > 0 ? '+' : ''}{delta}
@@ -243,12 +245,12 @@ export function InBodyForm({ date, log, onSaved }: {
           type="button"
           onClick={fillFromLast}
           className="w-full flex items-center gap-2 rounded-xl border border-dashed px-3 min-h-[40px] text-left transition-colors"
-          style={{ borderColor: `${TEAL}40`, background: `${TEAL}0d` }}
+          style={{ borderColor: `${ACCENT}40`, background: `${ACCENT}0d` }}
         >
-          <History className="w-3.5 h-3.5 shrink-0" style={{ color: TEAL }} aria-hidden="true" />
+          <History className="w-3.5 h-3.5 shrink-0" style={{ color: ACCENT }} aria-hidden="true" />
           <span className="text-[11px] text-muted flex-1">
             Fill {fillable.length} empty {fillable.length === 1 ? 'field' : 'fields'} from{' '}
-            <span className="font-semibold" style={{ color: TEAL }}>
+            <span className="font-semibold" style={{ color: ACCENT }}>
               {new Date(`${last.latestDate}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
             </span>
           </span>
@@ -291,7 +293,7 @@ export function InBodyForm({ date, log, onSaved }: {
               const v = derived[d.key]
               return (
                 <div key={d.key} className="text-center">
-                  <span className="helix-num block text-fluid-sm font-bold leading-tight" style={{ color: v != null ? TEAL : undefined }}>
+                  <span className="helix-num block text-fluid-sm font-bold leading-tight" style={{ color: v != null ? ACCENT : undefined }}>
                     {v != null ? v : '—'}{v != null && d.unit ? <span className="text-[8px] text-muted font-normal ml-0.5">{d.unit}</span> : null}
                   </span>
                   <span className="text-[8px] uppercase tracking-wide text-muted">{d.label}</span>

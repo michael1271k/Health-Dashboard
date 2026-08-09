@@ -1,4 +1,4 @@
-import { SPLIT, STEEL } from '@/lib/theme/palette'
+import { SPLIT } from '@/lib/theme/palette'
 import type { Tables } from '@/lib/supabase/types'
 
 export type SplitDay = 'push' | 'pull' | 'legs' | 'upper' | 'lower'

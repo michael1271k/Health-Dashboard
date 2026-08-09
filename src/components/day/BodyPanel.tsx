@@ -7,8 +7,11 @@ import { InBodyForm, InBodyHeadline, hasScaleMetrics } from '@/components/day/In
 import { Sheet } from '@/components/ui/Sheet'
 import { useSaveBodyMetrics, type DayVaultData } from '@/lib/hooks/useDayVault'
 import { WEIGH_IN_SKIP_REASONS, DEFAULT_WEIGH_IN_SKIP_REASON, weighInSkipReason } from '@/lib/body/weighIn'
+import { EMBER } from '@/lib/theme/palette'
 
-const TEAL = '#E0703C'
+// Was `const ACCENT = '#E0703C'` — a name that lied about its value in two
+// separate files. The Body domain's accent is the signature ember.
+const ACCENT = EMBER
 
 /**
  * Why there is no weight today.
@@ -58,9 +61,9 @@ function WeighInSkip({ date, current }: { date: string; current: string | null }
               aria-pressed={on}
               className="rounded-full px-3 min-h-[36px] text-[11px] font-semibold transition-colors"
               style={{
-                color: on ? TEAL : undefined,
-                background: on ? `${TEAL}1f` : 'rgba(255,255,255,0.03)',
-                border: `1px solid ${on ? `${TEAL}66` : 'rgba(255,255,255,0.08)'}`,
+                color: on ? ACCENT : undefined,
+                background: on ? `${ACCENT}1f` : 'rgba(255,255,255,0.03)',
+                border: `1px solid ${on ? `${ACCENT}66` : 'rgba(255,255,255,0.08)'}`,
               }}
             >
               {r}
@@ -73,9 +76,9 @@ function WeighInSkip({ date, current }: { date: string; current: string | null }
           aria-pressed={!isPreset}
           className="rounded-full px-3 min-h-[36px] text-[11px] font-semibold transition-colors"
           style={{
-            color: !isPreset ? TEAL : undefined,
-            background: !isPreset ? `${TEAL}1f` : 'rgba(255,255,255,0.03)',
-            border: `1px solid ${!isPreset ? `${TEAL}66` : 'rgba(255,255,255,0.08)'}`,
+            color: !isPreset ? ACCENT : undefined,
+            background: !isPreset ? `${ACCENT}1f` : 'rgba(255,255,255,0.03)',
+            border: `1px solid ${!isPreset ? `${ACCENT}66` : 'rgba(255,255,255,0.08)'}`,
           }}
         >
           {!isPreset ? effective : 'Other…'}
@@ -146,7 +149,7 @@ export function BodyPanel({ date, log, openEditor = false, onEditorClosed }: {
 
   return (
     <>
-      <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-3" style={{ borderColor: `${TEAL}26` }}>
+      <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-3" style={{ borderColor: `${ACCENT}26` }}>
         {has ? (
           <>
             <BodyMap log={log} />
@@ -157,7 +160,7 @@ export function BodyPanel({ date, log, openEditor = false, onEditorClosed }: {
               className="w-full flex items-center gap-2.5 min-h-[44px] text-left text-muted hover:text-text transition-colors"
             >
               <span className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
-                style={{ background: `${TEAL}1a`, color: TEAL }}>
+                style={{ background: `${ACCENT}1a`, color: ACCENT }}>
                 <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
               </span>
               <span className="flex-1 text-fluid-xs font-medium">Edit measurements</span>
@@ -169,7 +172,7 @@ export function BodyPanel({ date, log, openEditor = false, onEditorClosed }: {
              and find a card elsewhere. */
           <div className="flex flex-col items-center justify-center text-center gap-3 py-8">
             <span className="w-12 h-12 rounded-full flex items-center justify-center"
-              style={{ background: `${TEAL}1a`, color: TEAL, boxShadow: `0 0 18px ${TEAL}33` }}>
+              style={{ background: `${ACCENT}1a`, color: ACCENT, boxShadow: `0 0 18px ${ACCENT}33` }}>
               <Scale className="w-5 h-5" aria-hidden="true" />
             </span>
             <div>
@@ -182,7 +185,7 @@ export function BodyPanel({ date, log, openEditor = false, onEditorClosed }: {
               type="button"
               onClick={() => setEditing(true)}
               className="btn-primary min-h-[44px] px-4 justify-center"
-              style={{ background: TEAL, boxShadow: `0 0 18px ${TEAL}55` }}
+              style={{ background: ACCENT, boxShadow: `0 0 18px ${ACCENT}55` }}
             >
               <Plus className="w-4 h-4" aria-hidden="true" /> Add scale metrics
             </button>

@@ -20,7 +20,7 @@ import { displayWeight, weightUnit, validWeight, fmtVolume } from '@/lib/utils/u
 import { phaseDisplay } from '@/lib/nutrition/phase'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { tdeeKcal } from '@/lib/nutrition/energy'
-import { EMBER, SAPPHIRE, EMERALD, GOLD, AMETHYST, PLATINUM, STEEL, OXIDE, MUTED } from '@/lib/theme/palette'
+import { BODY, visceralColor, EMBER, SAPPHIRE, EMERALD, GOLD, AMETHYST, PLATINUM, STEEL, OXIDE, MUTED } from '@/lib/theme/palette'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { useSingleOrDoubleTap } from '@/lib/utils/doubleTap'
 import { scheduleDayFor, eraForDate, isTrainingDay, type ScheduleDay } from '@/lib/programs'
@@ -87,16 +87,21 @@ const SHEET_ACCENT: Record<Exclude<SheetKey, null>, string> = {
 const BODY_TILES: Array<{
   field: BodyMetricField; label: string; unit?: string; decimals?: 0 | 1; accent?: string; synced?: boolean
 }> = [
-  { field: 'weight_kg', label: 'Weight', unit: 'kg', decimals: 1, accent: EMBER, synced: true },
-  { field: 'bmi', label: 'BMI', decimals: 1, synced: true },
-  { field: 'fat_free_mass_kg', label: 'Fat-Free Mass', unit: 'kg', decimals: 1, synced: true },
-  { field: 'body_fat_pct', label: 'Body Fat', unit: '%', decimals: 1, synced: true },
-  { field: 'muscle_mass_kg', label: 'Muscle Mass', unit: 'kg', decimals: 1 },
-  { field: 'muscle_percent', label: 'Muscle', unit: '%', decimals: 1 },
-  { field: 'water_percent', label: 'Water', unit: '%', decimals: 1 },
+  // Every tile carries its substance's colour. Nine of these ten had NO accent
+  // at all — a grid of identical grey numbers where the chart two taps away
+  // colour-codes the same quantities. Same hues here as there, so a reading
+  // means the same thing wherever you meet it.
+  { field: 'weight_kg', label: 'Weight', unit: 'kg', decimals: 1, accent: BODY.weight, synced: true },
+  { field: 'bmi', label: 'BMI', decimals: 1, accent: BODY.bmi, synced: true },
+  { field: 'fat_free_mass_kg', label: 'Fat-Free Mass', unit: 'kg', decimals: 1, accent: BODY.lean, synced: true },
+  { field: 'body_fat_pct', label: 'Body Fat', unit: '%', decimals: 1, accent: BODY.fat, synced: true },
+  { field: 'muscle_mass_kg', label: 'Muscle Mass', unit: 'kg', decimals: 1, accent: BODY.muscle },
+  { field: 'muscle_percent', label: 'Muscle', unit: '%', decimals: 1, accent: BODY.muscle },
+  { field: 'water_percent', label: 'Water', unit: '%', decimals: 1, accent: BODY.water },
+  // Visceral fat is graded, not identified — see visceralColor().
   { field: 'visceral_fat', label: 'Visceral Fat', decimals: 1 },
-  { field: 'bone_mineral', label: 'Bone Mineral', decimals: 1 },
-  { field: 'bmr', label: 'BMR', unit: 'kcal', decimals: 0 },
+  { field: 'bone_mineral', label: 'Bone Mineral', decimals: 1, accent: BODY.mineral },
+  { field: 'bmr', label: 'BMR', unit: 'kcal', decimals: 0, accent: BODY.bmr },
 ]
 
 export default function DashboardPage() {
@@ -403,7 +408,10 @@ export default function DashboardPage() {
                 const m = bodyMetrics?.[field]
                 if (!m) return null
                 const v = u === unit ? displayWeight(m.value) : decimals === 0 ? n0(m.value) : n1(m.value)
-                return <Tile key={field} label={label} value={v} unit={u} accent={accent} />
+                // Visceral fat has no identity colour — it is graded, because it is the
+                // one body metric where a higher number is worse.
+                const tone = field === 'visceral_fat' ? visceralColor(m.value) : accent
+                return <Tile key={field} label={label} value={v} unit={u} accent={tone} />
               })}
             </div>
             {bodyMetrics && Object.keys(bodyMetrics).length === 0 && (

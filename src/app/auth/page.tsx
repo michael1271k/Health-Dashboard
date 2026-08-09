@@ -66,7 +66,7 @@ export default function AuthPage() {
       {/* Ambient jewel glow — ember from below, sapphire from above. */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
         <div className="absolute -top-1/4 left-1/2 -translate-x-1/2 w-[120vw] h-[60vh] rounded-full blur-[120px] opacity-[0.18]"
-          style={{ background: 'radial-gradient(circle, #3D7ABC 0%, transparent 65%)' }} />
+          style={{ background: 'radial-gradient(circle, #3D7AB8 0%, transparent 65%)' }} />
         <div className="absolute -bottom-1/3 left-1/2 -translate-x-1/2 w-[110vw] h-[55vh] rounded-full blur-[120px] opacity-[0.22]"
           style={{ background: 'radial-gradient(circle, #E0703C 0%, transparent 65%)' }} />
       </div>

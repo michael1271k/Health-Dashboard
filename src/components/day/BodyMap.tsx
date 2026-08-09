@@ -2,15 +2,14 @@
 
 import { useId } from 'react'
 import { deriveBodyComp } from '@/lib/body/composition'
+import { BODY } from '@/lib/theme/palette'
 import type { DayVaultData } from '@/lib/hooks/useDayVault'
 
-// Composition colour code (per the physiology): water = blue, muscle = red/pink,
-// bone/mineral = white, fat = yellow. Protein keeps a green accent.
-const SAPPHIRE = '#3D7AB8'  // water = blue
-const ROSE = '#E0567A'      // muscle = red/pink
-const BONE = '#E6EAF0'      // bone/mineral = white
-const GOLD = '#D4AF37'      // fat = yellow
-const EMERALD = '#3E9E7A'   // protein = green
+// Composition colour comes from the shared BODY map — one hue per substance,
+// app-wide. These were five local hexes, two of which (a candy-pink `MUSCLE` for
+// muscle and a `MINERAL` white) existed nowhere else in the palette, so this
+// figure and the composition CHART disagreed about what muscle looks like.
+const { water: WATER, protein: PROTEIN, mineral: MINERAL, fat: FAT, muscle: MUSCLE } = BODY
 
 const num = (v: unknown): number | undefined =>
   typeof v === 'number' && Number.isFinite(v) ? v : undefined
@@ -80,12 +79,12 @@ const CONTOURS = [
  * renders when the scale reading was actually taken.
  */
 const BARS = [
-  { key: 'skeletal', label: 'Skeletal Muscle',  color: ROSE,     lo: 40, hi: 50 },
-  { key: 'muscle',   label: 'Lean Mass', color: ROSE,     lo: 70, hi: 85 },
-  { key: 'water',    label: 'Body Water',       color: SAPPHIRE, lo: 50, hi: 65 },
-  { key: 'protein',  label: 'Protein',          color: EMERALD,  lo: 16, hi: 20 },
-  { key: 'mineral',  label: 'Bone Mineral',     color: BONE,     lo: 3.5, hi: 6 },
-  { key: 'fat',      label: 'Body Fat',         color: GOLD,     lo: 10, hi: 20 },
+  { key: 'skeletal', label: 'Skeletal Muscle',  color: MUSCLE,     lo: 40, hi: 50 },
+  { key: 'muscle',   label: 'Lean Mass', color: MUSCLE,     lo: 70, hi: 85 },
+  { key: 'water',    label: 'Body Water',       color: WATER, lo: 50, hi: 65 },
+  { key: 'protein',  label: 'Protein',          color: PROTEIN,  lo: 16, hi: 20 },
+  { key: 'mineral',  label: 'Bone Mineral',     color: MINERAL,     lo: 3.5, hi: 6 },
+  { key: 'fat',      label: 'Body Fat',         color: FAT,     lo: 10, hi: 20 },
 ] as const
 
 /**
@@ -139,10 +138,10 @@ export function BodyMap({ log }: { log: DayVaultData['log'] }) {
   // Bottom-up strata: water, protein, mineral, fat, then neutral residual.
   const H = 210
   const strata = [
-    { color: SAPPHIRE, f: pct(mass.water) / 100 },
-    { color: EMERALD, f: pct(mass.protein) / 100 },
-    { color: BONE, f: pct(mass.mineral) / 100 },
-    { color: GOLD, f: pct(mass.fat) / 100 },
+    { color: WATER, f: pct(mass.water) / 100 },
+    { color: PROTEIN, f: pct(mass.protein) / 100 },
+    { color: MINERAL, f: pct(mass.mineral) / 100 },
+    { color: FAT, f: pct(mass.fat) / 100 },
   ]
   let acc = 0
   const bands = strata.map((s) => {
@@ -153,15 +152,15 @@ export function BodyMap({ log }: { log: DayVaultData['log'] }) {
   })
 
   return (
-    <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-3" style={{ borderColor: `${ROSE}26` }}>
+    <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-3" style={{ borderColor: `${MUSCLE}26` }}>
       <div className="flex items-baseline justify-between gap-2">
         <h3 className="font-heading font-semibold text-fluid-sm text-text">Body Composition</h3>
         <div className="flex items-baseline gap-2.5 helix-num text-[11px]">
-          <span style={{ color: ROSE }}>
+          <span style={{ color: MUSCLE }}>
             {(skeletalPct ?? musclePct).toFixed(1)}%
             <span className="text-muted text-[9px]">{skeletalPct != null ? ' skeletal' : ' lean mass'}</span>
           </span>
-          <span style={{ color: GOLD }}>{bodyFatPct.toFixed(1)}%<span className="text-muted text-[9px]"> fat</span></span>
+          <span style={{ color: FAT }}>{bodyFatPct.toFixed(1)}%<span className="text-muted text-[9px]"> fat</span></span>
           <span className="text-muted">{weight.toFixed(1)} kg</span>
         </div>
       </div>
@@ -184,14 +183,14 @@ export function BodyMap({ log }: { log: DayVaultData['log'] }) {
                 <rect key={i} x="0" y={b.y} width="100" height={b.h + 0.5} fill={b.color} fillOpacity="0.62" />
               ))}
               {/* muscle contours — read the figure as an anatomical model */}
-              <g fill="none" stroke={ROSE} strokeOpacity="0.22" strokeWidth="1" strokeLinecap="round">
+              <g fill="none" stroke={MUSCLE} strokeOpacity="0.22" strokeWidth="1" strokeLinecap="round">
                 {CONTOURS.map((d, i) => <path key={i} d={d} />)}
               </g>
             </g>
 
             {/* silhouette outline glow (muscle rose) */}
-            <path d={SILHOUETTE} fill="none" stroke={ROSE} strokeOpacity="0.6" strokeWidth="1.5"
-              strokeLinejoin="round" style={{ filter: `drop-shadow(0 0 5px ${ROSE}55)` }} />
+            <path d={SILHOUETTE} fill="none" stroke={MUSCLE} strokeOpacity="0.6" strokeWidth="1.5"
+              strokeLinejoin="round" style={{ filter: `drop-shadow(0 0 5px ${MUSCLE}55)` }} />
           </svg>
         </div>
 

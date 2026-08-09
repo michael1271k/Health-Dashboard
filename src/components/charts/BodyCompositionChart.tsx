@@ -9,17 +9,30 @@ import type { BodyTrendRow, BodyDetailRow } from '@/lib/hooks/useCharts'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 import { HELIX_CUT_START } from '@/lib/programs'
 import { niceDomain } from '@/lib/charts/scale'
+import { BODY, MUTED, OXIDE } from '@/lib/theme/palette'
 
+/**
+ * From the shared BODY map — one hue per substance.
+ *
+ * This object used to hold eight hand-typed hexes with TWO collisions:
+ * `lean` and `musclePct` were both #3E9E7A, and `fatMass` and `fatPct` were
+ * both #D4AF37. So Lean Mass and Muscle %, which appear on the same chart,
+ * were the same green — the one distinction the colour exists to make.
+ *
+ * Mass and percent of the same substance still share a hue on purpose: they
+ * are one substance measured two ways, and they never appear in the same
+ * family. Muscle is GARNET now, which is what breaks the tie with lean.
+ */
 const COLORS = {
-  weight: '#8E9AAC',
-  lean: '#3E9E7A',
-  fatMass: '#D4AF37',
-  fatPct: '#D4AF37',
-  water: '#3D7AB8',
-  musclePct: '#3E9E7A',
-  visceral: '#E0703C',
+  weight: BODY.weight,
+  lean: BODY.lean,
+  fatMass: BODY.fat,
+  fatPct: BODY.fat,
+  water: BODY.water,
+  musclePct: BODY.muscle,
+  visceral: OXIDE,   // the one metric where high is bad — see visceralColor()
   grid: 'rgba(255,255,255,0.06)',
-  text: '#79808C',
+  text: MUTED,
 }
 
 /**

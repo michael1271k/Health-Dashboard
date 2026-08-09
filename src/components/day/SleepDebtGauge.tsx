@@ -3,13 +3,16 @@
 import { memo } from 'react'
 import { BedDouble } from 'lucide-react'
 import { useSleepDebt } from '@/lib/hooks/useSleepDebt'
+import { EMBER, EMBER_DEEP, GOLD, OXIDE } from '@/lib/theme/palette'
 
-const VIOLET = '#B4522A'
+// Was `ACCENT` holding #B4522A, which is EMBER_DEEP. Sleep debt is a debt:
+// it belongs on the ember ramp, and the name should say so.
+const ACCENT = EMBER_DEEP
 
 function debtColor(h: number): string {
-  if (h <= 2) return '#E0703C'
-  if (h <= 5) return '#D4AF37'
-  return '#C4514E'
+  if (h <= 2) return EMBER
+  if (h <= 5) return GOLD
+  return OXIDE
 }
 
 /**
@@ -46,10 +49,10 @@ export const SleepDebtGauge = memo(function SleepDebtGauge({ compact = false }: 
   }
 
   return (
-    <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-2.5" style={{ borderColor: `${VIOLET}30` }}>
+    <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-2.5" style={{ borderColor: `${ACCENT}30` }}>
       <div className="flex items-baseline justify-between">
         <h2 className="font-heading font-semibold text-text flex items-center gap-1.5">
-          <BedDouble className="w-4 h-4" style={{ color: VIOLET }} /> Sleep Debt Bank
+          <BedDouble className="w-4 h-4" style={{ color: ACCENT }} /> Sleep Debt Bank
         </h2>
         <span className="helix-num text-fluid-sm font-bold" style={{ color }}>
           {data.debtHours <= 0.1 ? 'settled ✓' : `−${data.debtHours}h`}
