@@ -43,11 +43,61 @@ const RIGHT: [number, number][] = [
   // hairline seam under heavy quads reads as one slab, not two limbs.
   [54, 185], [54.5, 158], [54, 133], [50, 116],
 ]
+type Pt = [number, number]
+
+/**
+ * Centripetal Catmull-Rom through the points, emitted as cubic Béziers.
+ *
+ * The outline was a POLYLINE — 44 points joined by `L` commands — and that one
+ * fact is why the figure read as machined rather than grown. A human silhouette
+ * has no straight edges, and 44 segments across a 100-unit viewBox facet
+ * visibly at the deltoid cap, the lat flare and the calf belly.
+ *
+ * Every point is kept, so the anatomy the comments above name (trapezius,
+ * vastus lateralis, glute tie-in) is unchanged and still reviewable. Only the
+ * interpolation between them changes.
+ *
+ * Centripetal (the sqrt of the chord length), not uniform: uniform
+ * Catmull-Rom cusps and self-intersects wherever consecutive points bunch up,
+ * which here is exactly the wrist and the ankle.
+ */
+function spline(points: Pt[], closed = true): string {
+  const n = points.length
+  const at = (i: number): Pt => points[closed ? (i + n) % n : Math.min(n - 1, Math.max(0, i))]
+  const out: string[] = [`M ${at(0)[0].toFixed(2)} ${at(0)[1].toFixed(2)}`]
+
+  const last = closed ? n : n - 1
+  for (let i = 0; i < last; i++) {
+    const p0 = at(i - 1), p1 = at(i), p2 = at(i + 1), p3 = at(i + 2)
+    // Chord lengths raised to alpha=0.5 — the centripetal parameterisation.
+    const d = (a: Pt, b: Pt) => Math.sqrt(Math.hypot(b[0] - a[0], b[1] - a[1])) || 1e-6
+    const d01 = d(p0, p1), d12 = d(p1, p2), d23 = d(p2, p3)
+    const c1: Pt = [
+      p1[0] + ((p2[0] - p0[0]) * d12) / (3 * (d01 + d12)),
+      p1[1] + ((p2[1] - p0[1]) * d12) / (3 * (d01 + d12)),
+    ]
+    const c2: Pt = [
+      p2[0] - ((p3[0] - p1[0]) * d12) / (3 * (d12 + d23)),
+      p2[1] - ((p3[1] - p1[1]) * d12) / (3 * (d12 + d23)),
+    ]
+    out.push(`C ${c1[0].toFixed(2)} ${c1[1].toFixed(2)}, ${c2[0].toFixed(2)} ${c2[1].toFixed(2)}, ${p2[0].toFixed(2)} ${p2[1].toFixed(2)}`)
+  }
+  return `${out.join(' ')} Z`
+}
+
+/**
+ * The left half is NOT an exact mirror.
+ *
+ * A perfectly bilateral figure reads as a pictogram — the eye recognises the
+ * symmetry before it recognises the body. Pulling the left side's deviation
+ * from centre in by 1.5% is far below the threshold anyone consciously notices
+ * and is most of what separates "a person" from "an icon".
+ */
+const ASYMMETRY = 0.985
+
 const SILHOUETTE = (() => {
-  const fmt = ([x, y]: [number, number]) => `${x} ${y}`
-  const right = RIGHT.map(fmt)
-  const left = [...RIGHT].reverse().map(([x, y]) => fmt([100 - x, y]))
-  return `M ${right[0]} ${right.slice(1).map((p) => `L ${p}`).join(' ')} ${left.map((p) => `L ${p}`).join(' ')} Z`
+  const left: Pt[] = [...RIGHT].reverse().map(([x, y]) => [50 - (x - 50) * ASYMMETRY, y])
+  return spline([...RIGHT, ...left])
 })()
 
 // Low-opacity muscle contours (pecs, sternum + ab ticks, delt caps) layered inside
@@ -55,9 +105,12 @@ const SILHOUETTE = (() => {
 const CONTOURS = [
   'M 34 50 Q 43 63 50 59', 'M 66 50 Q 57 63 50 59', // pecs
   'M 50 58 L 50 104',                                 // sternum → linea alba
-  'M 43 72 L 57 72', 'M 43 83 L 57 83', 'M 43 94 L 57 94', // ab ticks (wider abdomen)
+  // Ab separations as shallow arcs, not rules. Three straight horizontals
+  // across a torso were the least human marks on the whole figure; the real
+  // ones follow the abdominal curve and flatten as they descend.
+  'M 43 71 Q 50 74.5 57 71', 'M 43.5 82 Q 50 85 56.5 82', 'M 44 93 Q 50 95.5 56 93',
   'M 21 53 Q 27 46 32 51', 'M 79 53 Q 73 46 68 51', // deltoid caps (narrowed)
-  'M 39 104 L 35 113', 'M 61 104 L 65 113',         // oblique → hip tie-in
+  'M 39 104 Q 36.5 108 35 113', 'M 61 104 Q 63.5 108 65 113', // oblique → hip tie-in
   // Leg detail — without these the widened legs render as a slab. Quad sweep
   // (vastus lateralis), adductor line, then the calf belly.
   'M 56 122 Q 63 138 61 152', 'M 44 122 Q 37 138 39 152',
