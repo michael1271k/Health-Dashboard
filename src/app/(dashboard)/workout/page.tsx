@@ -20,6 +20,7 @@ import { displayWeight, weightUnit } from '@/lib/utils/units'
 import { formatSet } from '@/lib/utils/setFormat'
 import { isTimedExercise } from '@/lib/exercises/timed'
 import { Plus, TrendingUp, Moon, ArrowRight, Flag, FileClock, ChevronDown } from 'lucide-react'
+import { Surface } from '@/components/ui/Zone'
 
 // Gym/muscle-progress graphs (Contour Map, Intensity Calendar, Volume Stream,
 // Muscle Analytics) — relocated here from the Momentum → Analytics tab.
@@ -96,7 +97,7 @@ export default function WorkoutPage() {
       {loggedToday ? (
         <PostWorkoutSummary sessions={todaySessions} date={today} />
       ) : (
-      <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5"
+      <Surface variant="band" measure="grid" pad="snug"
         style={{
           borderColor: training && todayDay ? `${todayDay.color}44` : `${REST_VIOLET}33`,
           boxShadow: training && todayDay ? `0 0 26px ${todayDay.color}1f` : undefined,
@@ -152,7 +153,7 @@ export default function WorkoutPage() {
             <Flag className="w-3 h-3 shrink-0 mt-0.5" aria-hidden="true" /> {nextFlag}
           </p>
         )}
-      </section>
+      </Surface>
       )}
 
       {/* Smart Coach — lifts that cleared their ceiling twice, due a load bump. */}

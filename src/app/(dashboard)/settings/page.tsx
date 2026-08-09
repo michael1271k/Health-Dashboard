@@ -18,6 +18,7 @@ import { LANDMARK_MUSCLES } from '@/lib/training/landmarks'
 import { parseRepWindow } from '@/lib/training/ceilings'
 import { AlertTriangle, Dumbbell, Calendar, Target } from 'lucide-react'
 import type { Tables } from '@/lib/supabase/types'
+import { Surface } from '@/components/ui/Zone'
 
 const WD_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
@@ -354,7 +355,7 @@ export default function SettingsPage() {
              belongs to a plan, so it is chosen (and its macros, goals and set
              volumes edited) INSIDE the plan's drawer. There is no standalone
              Phases section any more. ── */}
-      <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-4">
+      <Surface variant="band" measure="grid" pad="snug" className="space-y-4">
         <div className="flex items-start justify-between gap-2">
           <div>
             <h2 className="font-semibold text-text">Plans &amp; Phases</h2>
@@ -414,12 +415,12 @@ export default function SettingsPage() {
 
         {/* Target weight is no longer a standalone field — it lives inside each
             plan/phase's goals (shown in the plan preview + phase cards). */}
-      </section>
+      </Surface>
 
       {/* Desktop: cards flow into two columns so the width isn't wasted. */}
       <div className="grid gap-6 lg:grid-cols-2 items-start">
       {/* Context mode */}
-      <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-3">
+      <Surface variant="band" measure="grid" pad="snug" className="space-y-3">
         <h2 className="font-semibold text-text">Context Mode</h2>
         <p className="text-xs text-muted">
           Adjusts scoring penalties for exceptional circumstances.
@@ -440,10 +441,10 @@ export default function SettingsPage() {
             </button>
           ))}
         </div>
-      </section>
+      </Surface>
 
       {/* Nutrition goals */}
-      <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-4">
+      <Surface variant="band" measure="grid" pad="snug" className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-text">Nutrition Goals</h2>
           {(() => {
@@ -482,10 +483,10 @@ export default function SettingsPage() {
           Edits save to the <span className="text-text/80 font-medium">{PROGRAMS[activePlanId]?.label ?? 'active plan'} · {activePhase()}</span> phase
           and reload when you switch back to it.
         </p>
-      </section>
+      </Surface>
 
       {/* Preferences */}
-      <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-4">
+      <Surface variant="band" measure="grid" pad="snug" className="space-y-4">
         <h2 className="font-semibold text-text">Preferences</h2>
 
         <div className="flex items-center justify-between gap-4">
@@ -551,10 +552,10 @@ export default function SettingsPage() {
             <span className={`absolute top-1 left-1 h-5 w-5 rounded-full bg-white transition-transform duration-200 ${goals.auto_log_supplements ? 'translate-x-5' : 'translate-x-0'}`} />
           </button>
         </div>
-      </section>
+      </Surface>
 
       {/* Activity + sleep + water */}
-      <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-4">
+      <Surface variant="band" measure="grid" pad="snug" className="space-y-4">
         <h2 className="font-semibold text-text">Activity &amp; Recovery Goals</h2>
         <div className="grid grid-cols-2 gap-4">
           {([
@@ -576,7 +577,7 @@ export default function SettingsPage() {
             </div>
           ))}
         </div>
-      </section>
+      </Surface>
 
       <NotionSync />
 
