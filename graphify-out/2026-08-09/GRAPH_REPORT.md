@@ -1,11 +1,11 @@
 # Graph Report - Helix  (2026-08-09)
 
 ## Corpus Check
-- 366 files · ~834,914 words
+- 366 files · ~834,869 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2315 nodes · 5737 edges · 196 communities (118 shown, 78 thin omitted)
+- 2315 nodes · 5737 edges · 194 communities (116 shown, 78 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 64 edges (avg confidence: 0.76)
 - Token cost: 0 input · 0 output
 
@@ -70,7 +70,7 @@
 - HelixEntry
 - scripts
 - constructor
-- delete
+- @capacitor/app
 - FileSystemBrowser.tsx
 - SleepStages.tsx
 - useMuscleAnalytics.ts
@@ -185,10 +185,8 @@
 - macro-override.test.ts
 - @dnd-kit/modifiers
 - workout/page.tsx
-- auth/page.tsx
+- @capacitor/cli
 - vitest
-- @capacitor/core
-- eslint-config-next
 - shadcn
 - @dnd-kit/sortable
 - @dnd-kit/utilities
@@ -231,7 +229,7 @@
 - **Native Bridge Implementation Files** — docs_native_ios_healthkit_ts, docs_native_ios_sync_ts, docs_native_ios_platform_ts, docs_native_ios_haptics_ts [EXTRACTED 1.00]
 - **Smart Background Sync System** — docs_native_ios_initnativesync, docs_native_ios_background_sync, docs_native_ios_bgtaskscheduler, docs_native_ios_backgroundsync_func [INFERRED 0.85]
 
-## Communities (196 total, 78 thin omitted)
+## Communities (194 total, 78 thin omitted)
 
 ### Community 0 - "HealthkitPlugin"
 Cohesion: 0.06
@@ -262,8 +260,8 @@ Cohesion: 0.14
 Nodes (16): daysAgoISO(), Series, TrendStrip(), useTrendSeries(), Measure, Surface(), SURFACE_PAD, SurfaceVariant (+8 more)
 
 ### Community 7 - "sw.js"
-Cohesion: 0.09
-Nodes (9): createHandlerBoundToUrl(), getEndEntryFromIndex(), getFirstEntryByQueueName(), getLastEntryByQueueName(), getPrecacheKeyForUrl(), matchPrecache(), popRequest(), _removeRequest() (+1 more)
+Cohesion: 0.08
+Nodes (13): createHandlerBoundToUrl(), deleteEntry(), getEndEntryFromIndex(), getFirstEntryByQueueName(), getLastEntryByQueueName(), getPrecacheKeyForUrl(), matchPrecache(), popEntry() (+5 more)
 
 ### Community 8 - "Next.js PWA Dashboard (Netlify)"
 Cohesion: 0.06
@@ -286,8 +284,8 @@ Cohesion: 0.12
 Nodes (30): CommitBar(), CardioLogger(), KINDS, EffortScale(), axesHeldBy(), axisValue(), CARDIO_AXES, CARDIO_AXIS_LABEL (+22 more)
 
 ### Community 13 - "RealtimeProvider.tsx"
-Cohesion: 0.21
-Nodes (13): AuthGate(), AuthState, hasPersistedSession(), RealtimeProvider(), TABLE_KEYS, TABLES, useScheduleOverrides(), bumpPlan() (+5 more)
+Cohesion: 0.14
+Nodes (16): HAS_AUTO, NOTE: the password ships in the client bundle (NEXT_PUBLIC_*), so it is readable, HelixMark(), AuthGate(), AuthState, hasPersistedSession(), RealtimeProvider(), TABLE_KEYS (+8 more)
 
 ### Community 14 - "phases.ts"
 Cohesion: 0.12
@@ -435,7 +433,7 @@ Nodes (4): byName, db, DRY, env
 
 ### Community 50 - "devDependencies"
 Cohesion: 0.15
-Nodes (13): @capacitor/cli, eslint, devDependencies, @capacitor/cli, eslint, postcss, @resvg/resvg-js, @types/react (+5 more)
+Nodes (13): eslint, eslint-config-next, devDependencies, eslint, eslint-config-next, postcss, @resvg/resvg-js, @types/react (+5 more)
 
 ### Community 51 - "muscleMap.ts"
 Cohesion: 0.23
@@ -450,12 +448,8 @@ Cohesion: 0.17
 Nodes (12): scripts, build, check, dev, e2e, e2e:ui, lint, start (+4 more)
 
 ### Community 54 - "constructor"
-Cohesion: 0.25
-Nodes (9): _addSyncListener(), addToPrecacheList(), constructor(), getIntegrityForPrecacheKey(), getUrlsToPrecacheKeys(), _match(), registerCapture(), registerRoute() (+1 more)
-
-### Community 55 - "delete"
-Cohesion: 0.20
-Nodes (10): delete(), deleteCacheAndMetadata(), deleteEntry(), h(), handleActivate(), l(), popEntry(), _removeEntry() (+2 more)
+Cohesion: 0.18
+Nodes (13): addToPrecacheList(), constructor(), delete(), deleteCacheAndMetadata(), getIntegrityForPrecacheKey(), getUrlsToPrecacheKeys(), h(), handleActivate() (+5 more)
 
 ### Community 56 - "FileSystemBrowser.tsx"
 Cohesion: 0.15
@@ -479,15 +473,15 @@ Nodes (6): CoachHeaderCard(), StatPatch, DatePickerPopover(), iso(), WD, useLogg
 
 ### Community 61 - "dependencies"
 Cohesion: 0.22
-Nodes (9): @capacitor/app, next, dependencies, @capacitor/app, next, @radix-ui/react-slider, react-dom, @radix-ui/react-slider (+1 more)
+Nodes (9): @capacitor/core, next, dependencies, @capacitor/core, next, @radix-ui/react-slider, react-dom, @radix-ui/react-slider (+1 more)
 
 ### Community 62 - "MacrosScreen"
 Cohesion: 0.24
 Nodes (8): CGFloat, MacrosScreen, .body, .remaining, StageRibbon, .body, Int, .waterProgress
 
 ### Community 63 - "clone"
-Cohesion: 0.38
-Nodes (7): _addRequest(), clone(), fromRequest(), pushRequest(), replayRequests(), toObject(), unshiftRequest()
+Cohesion: 0.28
+Nodes (9): _addRequest(), _addSyncListener(), clone(), fromRequest(), pushRequest(), registerSync(), replayRequests(), toObject() (+1 more)
 
 ### Community 64 - "RestSuggestion.tsx"
 Cohesion: 0.57
@@ -640,10 +634,6 @@ Nodes (4): isManualHkUuid(), manualHkUuid(), ExportDay, WeeklyExportInput
 ### Community 182 - "workout/page.tsx"
 Cohesion: 0.38
 Nodes (8): MuscleAnalyticsPanel, WD, WorkoutPage(), RoutineMemoryEntry, routineMemoryMap(), useExerciseMap(), useLatestSessionFlag(), useRoutineMemory()
-
-### Community 183 - "auth/page.tsx"
-Cohesion: 0.40
-Nodes (3): HAS_AUTO, NOTE: the password ships in the client bundle (NEXT_PUBLIC_*), so it is readable, HelixMark()
 
 ### Community 191 - "cachedResponseWillBeUsed"
 Cohesion: 0.38

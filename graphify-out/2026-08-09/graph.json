@@ -2600,8 +2600,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "package_dependencies_capacitor_app",
-      "community": 61,
-      "community_name": "dependencies",
+      "community": 55,
+      "community_name": "@capacitor/app",
       "norm_label": "@capacitor/app"
     },
     {
@@ -2611,8 +2611,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "capacitor_app",
-      "community": 61,
-      "community_name": "dependencies",
+      "community": 55,
+      "community_name": "@capacitor/app",
       "norm_label": "@capacitor/app"
     },
     {
@@ -2622,8 +2622,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "package_dependencies_capacitor_core",
-      "community": 185,
-      "community_name": "@capacitor/core",
+      "community": 61,
+      "community_name": "dependencies",
       "norm_label": "@capacitor/core"
     },
     {
@@ -2633,8 +2633,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "capacitor_core",
-      "community": 185,
-      "community_name": "@capacitor/core",
+      "community": 61,
+      "community_name": "dependencies",
       "norm_label": "@capacitor/core"
     },
     {
@@ -3249,8 +3249,8 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "package_devdependencies_capacitor_cli",
-      "community": 50,
-      "community_name": "devDependencies",
+      "community": 183,
+      "community_name": "@capacitor/cli",
       "norm_label": "@capacitor/cli"
     },
     {
@@ -3260,8 +3260,8 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "capacitor_cli",
-      "community": 50,
-      "community_name": "devDependencies",
+      "community": 183,
+      "community_name": "@capacitor/cli",
       "norm_label": "@capacitor/cli"
     },
     {
@@ -3579,8 +3579,8 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "package_devdependencies_eslint_config_next",
-      "community": 186,
-      "community_name": "eslint-config-next",
+      "community": 50,
+      "community_name": "devDependencies",
       "norm_label": "eslint-config-next"
     },
     {
@@ -3590,8 +3590,8 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "eslint_config_next",
-      "community": 186,
-      "community_name": "eslint-config-next",
+      "community": 50,
+      "community_name": "devDependencies",
       "norm_label": "eslint-config-next"
     },
     {
@@ -3909,8 +3909,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_l",
-      "community": 55,
-      "community_name": "delete",
+      "community": 54,
+      "community_name": "constructor",
       "norm_label": "l()"
     },
     {
@@ -3920,8 +3920,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_h",
-      "community": 55,
-      "community_name": "delete",
+      "community": 54,
+      "community_name": "constructor",
       "norm_label": "h()"
     },
     {
@@ -4041,8 +4041,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_deleteentry",
-      "community": 55,
-      "community_name": "delete",
+      "community": 7,
+      "community_name": "sw.js",
       "norm_label": "deleteentry()"
     },
     {
@@ -4129,8 +4129,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_popentry",
-      "community": 55,
-      "community_name": "delete",
+      "community": 7,
+      "community_name": "sw.js",
       "norm_label": "popentry()"
     },
     {
@@ -4140,8 +4140,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_shiftentry",
-      "community": 55,
-      "community_name": "delete",
+      "community": 7,
+      "community_name": "sw.js",
       "norm_label": "shiftentry()"
     },
     {
@@ -4173,8 +4173,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_removeentry",
-      "community": 55,
-      "community_name": "delete",
+      "community": 7,
+      "community_name": "sw.js",
       "norm_label": "_removeentry()"
     },
     {
@@ -4316,8 +4316,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_registersync",
-      "community": 54,
-      "community_name": "constructor",
+      "community": 63,
+      "community_name": "clone",
       "norm_label": "registersync()"
     },
     {
@@ -4327,8 +4327,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_addsynclistener",
-      "community": 54,
-      "community_name": "constructor",
+      "community": 63,
+      "community_name": "clone",
       "norm_label": "_addsynclistener()"
     },
     {
@@ -4712,8 +4712,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_delete",
-      "community": 55,
-      "community_name": "delete",
+      "community": 54,
+      "community_name": "constructor",
       "norm_label": "delete()"
     },
     {
@@ -4778,8 +4778,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_deletecacheandmetadata",
-      "community": 55,
-      "community_name": "delete",
+      "community": 54,
+      "community_name": "constructor",
       "norm_label": "deletecacheandmetadata()"
     },
     {
@@ -4855,8 +4855,8 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "public_sw_handleactivate",
-      "community": 55,
-      "community_name": "delete",
+      "community": 54,
+      "community_name": "constructor",
       "norm_label": "handleactivate()"
     },
     {
@@ -6923,8 +6923,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_auth_page",
-      "community": 183,
-      "community_name": "auth/page.tsx",
+      "community": 13,
+      "community_name": "RealtimeProvider.tsx",
       "norm_label": "auth/page.tsx"
     },
     {
@@ -6934,8 +6934,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_app_auth_page_has_auto",
-      "community": 183,
-      "community_name": "auth/page.tsx",
+      "community": 13,
+      "community_name": "RealtimeProvider.tsx",
       "norm_label": "has_auto"
     },
     {
@@ -6945,8 +6945,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "src_app_auth_page_authpage",
-      "community": 183,
-      "community_name": "auth/page.tsx",
+      "community": 13,
+      "community_name": "RealtimeProvider.tsx",
       "norm_label": "authpage()"
     },
     {
@@ -6956,8 +6956,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "src_app_auth_page_rationale_23",
-      "community": 183,
-      "community_name": "auth/page.tsx",
+      "community": 13,
+      "community_name": "RealtimeProvider.tsx",
       "norm_label": "note: the password ships in the client bundle (next_public_*), so it is readable"
     },
     {
@@ -7173,7 +7173,7 @@
       "label": "RootLayout()",
       "file_type": "code",
       "source_file": "src/app/layout.tsx",
-      "source_location": "L76",
+      "source_location": "L74",
       "_origin": "ast",
       "id": "src_app_layout_rootlayout",
       "community": 15,
@@ -7528,8 +7528,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_helixmark",
-      "community": 183,
-      "community_name": "auth/page.tsx",
+      "community": 13,
+      "community_name": "RealtimeProvider.tsx",
       "norm_label": "helixmark.tsx"
     },
     {
@@ -7539,8 +7539,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_components_helixmark_helixmark",
-      "community": 183,
-      "community_name": "auth/page.tsx",
+      "community": 13,
+      "community_name": "RealtimeProvider.tsx",
       "norm_label": "helixmark()"
     },
     {
@@ -23060,8 +23060,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_tests_charts_test_e",
-      "community": 55,
-      "community_name": "delete",
+      "community": 54,
+      "community_name": "constructor",
       "norm_label": "e()"
     },
     {
@@ -41408,7 +41408,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/app/layout.tsx",
-      "source_location": "L76",
+      "source_location": "L74",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_layout",

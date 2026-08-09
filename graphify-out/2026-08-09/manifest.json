@@ -160,8 +160,8 @@
     "semantic_hash": "6244657175fd749de647871bd554b5b1"
   },
   "public/sw.js": {
-    "mtime": 1786289775.0333767,
-    "ast_hash": "02f444541732089d41586401c605f917",
+    "mtime": 1786289129.652768,
+    "ast_hash": "c6c8db30f0c9680fd3f38b6ac216266e",
     "semantic_hash": ""
   },
   "scripts/generate-icons.mjs": {
@@ -255,8 +255,8 @@
     "semantic_hash": "49ffda254df86db73f74cd513be13dd6"
   },
   "src/app/layout.tsx": {
-    "mtime": 1786289421.489745,
-    "ast_hash": "6cfa89b914b890c97e255ca215000fa0",
+    "mtime": 1786288976.3881955,
+    "ast_hash": "eb61c19a5918540af69c3dc5587434c3",
     "semantic_hash": ""
   },
   "src/app/loading.tsx": {
