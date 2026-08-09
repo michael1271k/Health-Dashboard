@@ -6,9 +6,10 @@ import {
 } from 'recharts'
 import { ChartTooltip } from './ChartTooltip'
 import type { VolumePoint } from '@/lib/hooks/useCharts'
-import { PPL_SPLITS, type SplitDay } from '@/lib/types/workout'
+import type { SplitDay } from '@/lib/types/workout'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 import { niceDomain, compactKg } from '@/lib/charts/scale'
+import { dayColor } from '@/lib/theme/palette'
 
 const GRID = 'rgba(255,255,255,0.06)'
 const TEXT = '#79808C'
@@ -17,11 +18,6 @@ const TEXT = '#79808C'
 // (both DB split_day='upper', Sun vs Thu), 'arms' (Delts & Arms, also DB 'upper',
 // Tue) and 'legs_a'/'legs_b' (Legs A/B, both DB split_day='legs', Mon vs Fri).
 type ChartSplit = SplitDay | 'upper_a' | 'upper_b' | 'arms' | 'legs_a' | 'legs_b'
-const UPPER_A_COLOR = '#8E9AAC'  // Upper A cyan (programs C.cbA)
-const UPPER_B_COLOR = '#D4AF37'  // Upper B gold (programs C.cbB)
-const ARMS_COLOR = '#3E9E7A'     // Delts & Arms mint (programs C.arms)
-const LEGS_A_COLOR = '#3D7AB8'   // quad sky
-const LEGS_B_COLOR = '#8E9AAC'   // posterior violet (was #3E9E7A — collided with Arms mint)
 
 // The pill set is era-specific. PPL trains Push/Pull/Legs (no "Upper" — zero
 // records); HELIX-5 logs the five real splits. Legacy "lower" folds into legs.
@@ -39,14 +35,20 @@ const splitLabel = (s: ChartSplit) => {
   if (s === 'legs') return 'Legs'
   return s[0].toUpperCase() + s.slice(1)
 }
-function splitColor(s: ChartSplit): string {
-  if (s === 'upper_a') return UPPER_A_COLOR
-  if (s === 'upper_b') return UPPER_B_COLOR
-  if (s === 'arms') return ARMS_COLOR
-  if (s === 'legs_a') return LEGS_A_COLOR
-  if (s === 'legs_b') return LEGS_B_COLOR
-  return PPL_SPLITS[s as SplitDay]?.color ?? '#3E9E7A'
-}
+/**
+ * One implementation, shared with the rest of the app.
+ *
+ * This file carried a private third copy over five local hexes in which
+ * UPPER_A_COLOR and LEGS_B_COLOR were BOTH #8E9AAC — the two series this chart
+ * exists to tell apart, drawn in the same grey — and `arms` was emerald here
+ * while DAY_COLOR says amethyst. The comment on LEGS_B_COLOR even recorded a
+ * previous collision fix that reintroduced one.
+ *
+ * `dayColor(s, s)` resolves a program day key first (upper_a, legs_b, arms…)
+ * and falls back to the split name (push/pull/legs), which is exactly the two
+ * kinds of value ChartSplit holds.
+ */
+const splitColor = (s: ChartSplit): string => dayColor(s, s)
 
 /**
  * The program day a session RECORDED for itself → its chart bucket.

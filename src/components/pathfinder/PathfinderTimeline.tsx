@@ -30,7 +30,7 @@ const MarkdownView = dynamic(() => import('@/components/reports/MarkdownView').t
 import { Sheet } from '@/components/ui/Sheet'
 import { DayCard } from '@/components/timeline/ContinuumTimeline'
 import { SwapDayControl, RestTodayButton } from '@/components/day/SwapDayControl'
-import { GOLD, EMERALD, OXIDE, SAPPHIRE } from '@/lib/theme/palette'
+import { EMERALD, OXIDE, SAPPHIRE, WEEK_STATE } from '@/lib/theme/palette'
 
 const label = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 
@@ -226,17 +226,28 @@ const WeekCapsule = memo(forwardRef<HTMLDivElement, {
     <m.div ref={ref} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-40px' }} transition={{ type: 'spring', stiffness: 380, damping: 34 }}
       className="relative scroll-mt-24">
+      {/* The spine dot carries the week's own split colour, always. It used to
+          go gold for `hasPRs || ready` — two different meanings collapsed into
+          one boolean and one colour, on the one mark whose job is to say WHICH
+          week this is. Status lives in the aura and the chips now. */}
       <span aria-hidden="true" className="absolute -left-[30px] top-4 h-3.5 w-3.5 rounded-full border-2"
-        style={{ borderColor: hasPRs || ready ? GOLD : color, background: `${color}40`, boxShadow: `0 0 14px ${(hasPRs || ready ? GOLD : color)}88` }} />
+        style={{ borderColor: color, background: `${color}40`, boxShadow: `0 0 14px ${color}88` }} />
 
-      {/* READY WEEK: every scheduled training day done. A gold halo + a slow
-          breathe — opacity-only so it costs one compositor layer and respects
-          reduced motion via the global .aura-breathe guard.
+      {/* READY WEEK: every scheduled training day done. An EMERALD halo and a
+          slow breathe — opacity-only, so it costs one compositor layer and
+          respects reduced motion via the global .aura-breathe guard.
+          Emerald, not gold: doing the work you planned is not the same
+          achievement as setting a record, and they used to look identical.
+          `--aura` feeds the keyframe, so the glow's colour says what it means.
           The card is a ROW, not a button: the report link has to be a sibling of
           the toggle, since a link inside a button is neither valid nor tappable. */}
       <div className={`rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 w-full !px-0 !py-0 flex items-stretch relative overflow-hidden ${ready ? 'aura-breathe' : ''}`}
         style={ready
-          ? { borderColor: `${GOLD}66`, boxShadow: `0 0 28px ${GOLD}33, inset 0 1px 0 ${GOLD}2e` }
+          ? {
+              borderColor: `${WEEK_STATE.ready}66`,
+              boxShadow: `0 0 28px ${WEEK_STATE.ready}33, inset 0 1px 0 ${WEEK_STATE.ready}2e`,
+              ['--aura' as string]: '62,158,122',
+            }
           : { borderColor: `${color}33` }}>
         <button onClick={handleToggle} onPointerUp={blurOnTap}
           className="flex-1 min-w-0 text-left px-4 py-3.5 active:opacity-90">
@@ -255,7 +266,7 @@ const WeekCapsule = memo(forwardRef<HTMLDivElement, {
                   early — this was gated on `ready` and so appeared mid-week. */}
               {complete && (
                 <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded"
-                  style={{ color: GOLD, background: `${GOLD}1a`, border: `1px solid ${GOLD}55` }}>Complete</span>
+                  style={{ color: WEEK_STATE.complete, background: `${WEEK_STATE.complete}1a`, border: `1px solid ${WEEK_STATE.complete}44` }}>Complete</span>
               )}
               {node.isLive && <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded" style={{ color, background: `${color}1a`, border: `1px solid ${color}44` }}>Live</span>}
               <ChevronRight className={`w-4 h-4 text-muted transition-transform ${open ? 'rotate-90' : ''}`} aria-hidden="true" />
@@ -264,7 +275,8 @@ const WeekCapsule = memo(forwardRef<HTMLDivElement, {
           <div className="flex items-center gap-3 mt-1.5 text-fluid-xs text-muted">
             <span className="flex items-center gap-1"><Dumbbell className="w-3 h-3" />{node.sessions}</span>
             {node.volumeKg > 0 && <span className="helix-num">{((displayWeight(node.volumeKg) ?? 0) / 1000).toFixed(1)}t</span>}
-            {hasPRs && <span className="flex items-center gap-1" style={{ color: GOLD }}><Trophy className="w-3 h-3" />{node.prs}</span>}
+            {/* The only gold left on this capsule, which is the point. */}
+            {hasPRs && <span className="flex items-center gap-1" style={{ color: WEEK_STATE.pr }}><Trophy className="w-3 h-3" />{node.prs}</span>}
             {node.weightDelta != null && (
               <span className="helix-num" style={{ color: node.weightDelta <= 0 ? EMERALD : OXIDE }}>
                 {node.weightDelta > 0 ? '+' : ''}{node.weightDelta}{weightUnit()}
@@ -276,7 +288,7 @@ const WeekCapsule = memo(forwardRef<HTMLDivElement, {
         {reportHref && (
           <Link href={reportHref} onPointerUp={blurOnTap} aria-label={`Open the ${node.weekLabel} report`}
             className="shrink-0 self-stretch w-14 flex flex-col items-center justify-center gap-0.5 border-l active:opacity-80 transition-colors"
-            style={{ borderColor: `${GOLD}2e`, background: `${GOLD}12`, color: GOLD }}>
+            style={{ borderColor: `${WEEK_STATE.report}2e`, background: `${WEEK_STATE.report}12`, color: WEEK_STATE.report }}>
             <BookOpen className="w-4 h-4" aria-hidden="true" />
             <span className="text-[8px] font-bold uppercase tracking-wide">Report</span>
           </Link>
