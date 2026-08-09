@@ -232,7 +232,7 @@ function Markdown({ md }: { md: string }) {
           </div>
         ),
         thead: ({ children }) => (
-          <thead className="text-muted sticky top-0 backdrop-blur-sm" style={{ background: 'rgba(12,14,18,0.86)' }}>{children}</thead>
+          <thead className="text-muted sticky" style={{ top: 'var(--chrome-top)', background: 'var(--color-bg)' }}>{children}</thead>
         ),
         th: ({ children }) => (
           <th className="px-3 py-2 text-left font-semibold uppercase tracking-wide text-[10px] border-b border-white/[0.10] whitespace-nowrap">{children}</th>

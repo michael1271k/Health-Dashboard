@@ -74,18 +74,11 @@
      row. */
   --text-exercise-title: clamp(0.76rem, 0.72rem + 0.18vw, 0.86rem);
 
-  /* HELIX Shadows */
-  --shadow-card: 0 1px 2px rgba(0,0,0,0.4), 0 0 0 1px rgba(30,42,66,0.9);
-  --shadow-card-hover: 0 4px 16px rgba(0,0,0,0.5), 0 0 0 1px rgba(226,104,58,0.2);
-  --shadow-glow-primary: 0 0 20px rgba(226,104,58,0.3);
-  --shadow-glow-energy: 0 0 20px rgba(201,117,47,0.3);
+  /* The only surviving shadow token — btn-primary's hover glow. The card
+     shadows went with the cards; they were still quoting the pre-palette
+     rgb(226,104,58) the tokens moved off long ago. */
+  --shadow-glow-primary: 0 0 20px rgba(224,112,60,0.3);
 
-  /* Living mesh — opacity-only breathing on long, mutually out-of-phase cycles
-     so the wash never visibly repeats. One compositor layer, no blur/transform. */
-  @keyframes meshBreatheA { 0%,100% { opacity: 0.85; } 50% { opacity: 1; } }
-  @keyframes meshBreatheB { 0%,100% { opacity: 1; }    50% { opacity: 0.72; } }
-  @keyframes meshBreatheC { 0%,100% { opacity: 0.65; } 50% { opacity: 1; } }
-  @keyframes meshBreatheD { 0%,100% { opacity: 1; }    50% { opacity: 0.6; } }
 }
 
 /* Travel Mode — a cooler accent repaint. Toggled by ThemeProvider.
@@ -98,124 +91,6 @@ html[data-theme='travel'] {
   --color-success: #D4AF37;   /* antique gold, so deltas stay distinct */
 }
 
-/* ============================================
-   shadcn/ui CSS Variables (light + dark)
-   ============================================ */
-@layer base {
-  :root {
-    /* Font variable placeholders */
-    --font-outfit: '';
-    --font-inter: '';
-    --font-jetbrains: '';
-
-    /* shadcn base colors (light mode) */
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary-shadcn: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted-shadcn: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
-  }
-
-  .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary-shadcn: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted-shadcn: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
-  }
-}
-
-/* Map shadcn CSS variables to Tailwind v4 design tokens */
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary-shadcn: var(--primary-shadcn);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted-shadcn: var(--muted-shadcn);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: var(--radius);
-  --radius-lg: calc(var(--radius) + 4px);
-  --radius-xl: calc(var(--radius) + 8px);
-}
-
 @layer base {
   * {
     @apply border-border;
@@ -223,20 +98,12 @@ html[data-theme='travel'] {
 
   body {
     font-size: 1rem;
-    line-height: 1.6;
+    /* Tighter than 1.6: this is a dense, information-heavy UI, not an article. */
+    line-height: 1.55;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    @apply bg-background text-foreground;
-    /* Obsidian base — the animated Aurora layer (fixed, -z-10) refracts through glass.
-       These fixed radial gradients add luxury depth on every screen incl. mobile. */
     background-color: var(--color-bg);
-    /* Obsidian graphite depth with a single restrained ember glow top-right — a
-       serious, premium wash (no neon). No background-attachment:fixed — iOS
-       ignores it and it forces repaints. */
-    background-image:
-      radial-gradient(1100px 760px at 108% -10%, rgba(226,104,58,0.10), transparent 58%),
-      radial-gradient(980px 680px at 8% 4%, rgba(120,130,150,0.06), transparent 55%),
-      radial-gradient(900px 900px at 50% 122%, rgba(30,32,40,0.55), transparent 62%);
+    color: var(--color-text);
   }
 
   html {
@@ -266,96 +133,6 @@ html[data-theme='travel'] {
 }
 
 @layer components {
-  /* ── TRUE glassmorphism ───────────────────────────────────────
-     Highly transparent + intense blur so the Aurora background refracts. */
-  .glass-card {
-    background:
-      linear-gradient(rgba(255,255,255,0.045), rgba(255,255,255,0.045)),
-      rgba(10,14,26,0.14);
-    backdrop-filter: blur(40px) saturate(190%);          /* Apple blur-3xl frost */
-    -webkit-backdrop-filter: blur(40px) saturate(190%);
-    border: 1px solid rgba(255,255,255,0.08);            /* glossy hairline */
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.18),              /* 1px specular highlight */
-      inset 0 -1px 0 rgba(0,0,0,0.22),                   /* inner depth */
-      0 24px 60px rgba(0,0,0,0.55);                       /* deep float */
-    border-radius: 1rem;   /* sharper, more mechanical than rounded-3xl */
-    transition: box-shadow 0.2s, border-color 0.2s, background 0.2s;
-  }
-  /* Fallback for browsers without backdrop-filter — solid obsidian surface */
-  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-    .glass-card { background: var(--color-surface); border-color: var(--color-border); }
-  }
-  /* Accent tinted variant — active/selected state */
-  .glass-card--accent {
-    background: rgba(226,104,58,0.06);
-    border-color: rgba(226,104,58,0.22);
-  }
-  .glass-hover:hover {
-    border-color: rgba(255,255,255,0.16);
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.14),
-      inset 0 -1px 0 rgba(0,0,0,0.22),
-      0 20px 48px rgba(0,0,0,0.55);
-  }
-
-  /* Card base — true-glass values inlined (Tailwind v4 @apply can't reference
-     custom @layer components classes) */
-  .helix-card {
-    /* Layered fill, top layer first:
-       1. a raking metallic sheen from the top-left, so an edge catches light
-          like brushed steel instead of reading as a flat black rectangle;
-       2. a warm ember reflection pooling in the lower-right — the signature
-          accent bleeding INTO the glass rather than sitting on top of it;
-       3. the neutral glass tint;
-       4. a faint dark base so if iOS drops the backdrop-filter (a transformed
-          or composited ancestor) the card degrades to a dim surface, not pure
-          black. Base alpha stays low so the mesh still refracts through.
-       Every layer is low-alpha on purpose: the brief is aged metal and
-       gemstone, so depth comes from light behaviour, not saturation. */
-    background:
-      linear-gradient(152deg, rgba(201,205,214,0.055) 0%, rgba(201,205,214,0.012) 26%, transparent 46%),
-      radial-gradient(120% 90% at 108% 112%, rgba(224,112,60,0.055), transparent 58%),
-      linear-gradient(rgba(255,255,255,0.045), rgba(255,255,255,0.045)),
-      rgba(10,11,14,0.16);
-    backdrop-filter: blur(40px) saturate(180%);
-    -webkit-backdrop-filter: blur(40px) saturate(180%);
-    border: 1px solid rgba(255,255,255,0.08);
-    box-shadow:
-      /* Brighter top hairline + a hint of ember along the bottom edge: the
-         card looks lit from above and warmed from below. A whisper-alpha cool
-         halo lets the edge bleed into the aurora so the panel reads as frameless
-         glass floating on the wash rather than a box sitting on top of it. */
-      inset 0 1px 0 rgba(226,229,236,0.20),
-      inset 0 -1px 0 rgba(0,0,0,0.24),
-      inset 0 -14px 26px -20px rgba(224,112,60,0.28),
-      0 0 34px rgba(61,122,184,0.05),
-      0 24px 60px rgba(0,0,0,0.55);
-    border-radius: 1.15rem;
-    transition: box-shadow 0.2s, border-color 0.2s, background 0.2s;
-    @apply p-5;
-  }
-  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-    .helix-card { background: var(--color-surface); border-color: var(--color-border); }
-  }
-  /* While a portaled overlay is open, suspend the page glass so cards behind the
-     dim veil don't sample the compositor as solid black on iOS. Scoped to `main`
-     so the portaled modal/sheet panels (children of <body>) keep their glass. */
-  body.helix-overlay-open main .helix-card,
-  body.helix-overlay-open main .glass-card {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    background: rgba(13,18,32,0.92);
-  }
-  .helix-card:hover {
-    border-color: rgba(201,205,214,0.18);
-    box-shadow:
-      inset 0 1px 0 rgba(226,229,236,0.24),
-      inset 0 -1px 0 rgba(0,0,0,0.22),
-      inset 0 -14px 26px -20px rgba(224,112,60,0.36),
-      0 20px 48px rgba(0,0,0,0.55);
-  }
-
   /* Number display */
   .helix-num {
     @apply font-mono tabular-nums;
@@ -381,8 +158,6 @@ html[data-theme='travel'] {
   /* Frosted glass button — luxury block with a subtle gradient hairline */
   .btn-glass {
     background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
-    backdrop-filter: blur(16px) saturate(160%);
-    -webkit-backdrop-filter: blur(16px) saturate(160%);
     border: 1px solid rgba(255,255,255,0.10);
     box-shadow:
       inset 0 1px 0 rgba(255,255,255,0.14),
@@ -392,9 +167,6 @@ html[data-theme='travel'] {
            cursor-pointer transition-[transform,border-color,box-shadow] duration-150
            hover:border-primary/45 active:scale-[0.98]
            focus-visible:ring-2 focus-visible:ring-primary/60;
-  }
-  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-    .btn-glass { background: var(--color-surface-2); }
   }
 
   /* ── Mobile / safe-area utilities ───────────────────────────── */
@@ -435,21 +207,9 @@ html[data-theme='travel'] {
 }
 
 /* Pause every ambient animation while the tab is hidden (iOS battery + resume jank). */
-html[data-hidden='true'] .mesh-layer,
 html[data-hidden='true'] .ecg-sweep,
 html[data-hidden='true'] .orb-breathe::after,
 html[data-hidden='true'] .aura-breathe::after { animation-play-state: paused; }
-
-/* Faint biomechanical axis-grid motif behind content (AXIS wireframe). */
-.axis-wireframe {
-  position: fixed; inset: 0; z-index: -9; pointer-events: none; opacity: 0.05;
-  background-image:
-    linear-gradient(rgba(154,166,184,0.45) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(154,166,184,0.45) 1px, transparent 1px);
-  background-size: 64px 64px;
-  mask-image: radial-gradient(ellipse 80% 70% at 50% 30%, #000 30%, transparent 78%);
-  -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 30%, #000 30%, transparent 78%);
-}
 
 /* ── HELIX animation suite ─────────────────────────────────────── */
 /* ECG sweep under the Daily Score */
@@ -519,32 +279,6 @@ html[data-reduce-motion='true'] *::after {
   animation-duration: 0.001ms !important;
   animation-iteration-count: 1 !important;
   transition-duration: 0.001ms !important;
-}
-html[data-reduce-motion='true'] .grain-overlay { display: none; }
-html[data-reduce-motion='true'] .mesh-layer { animation: none !important; }
-
-/* Mobile blur budget — a 40px backdrop blur melts phone GPUs. Halve it.
-   Also drop the axis-wireframe there: mask-image compositing is expensive on iOS. */
-@media (max-width: 768px) {
-  .helix-card, .glass-card, .btn-glass {
-    backdrop-filter: blur(18px) saturate(160%);
-    -webkit-backdrop-filter: blur(18px) saturate(160%);
-  }
-  .axis-wireframe { display: none; }
-  /* Zero-latency: ambient loops off on phones — the aurora freezes into a
-     static gradient wash. !important because the blob animations are inline
-     styles. */
-  .mesh-layer { animation: none !important; }
-}
-
-/* Premium grain/noise overlay — fixed, just above the aurora (-z-9). */
-.grain-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: -9;
-  pointer-events: none;
-  opacity: 0.05;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 /* Sync pill "breathing" while a foreground sync is in flight (scale-only, GPU). */

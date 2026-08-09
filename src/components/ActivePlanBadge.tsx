@@ -49,7 +49,7 @@ export function ActivePlanBadge({ className = '' }: { className?: string }) {
 
   return (
     <div
-      className={`inline-flex items-center gap-2 rounded-full pl-2.5 pr-3 py-1 backdrop-blur-md ${className}`}
+      className={`inline-flex items-center gap-2 rounded-full pl-2.5 pr-3 py-1 bg-white/[0.05] ${className}`}
       style={phaseBadgeStyle(kind, true, phase.era)}
       title={phase.label}
     >

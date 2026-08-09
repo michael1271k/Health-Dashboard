@@ -66,10 +66,7 @@ export function EraFilterPills({ label = 'Era:' }: { label?: string }) {
                 transition={{ type: 'spring', stiffness: 420, damping: 34 }}
                 className="flex items-center gap-1 rounded-full p-1 origin-left"
                 style={{
-                  background: 'rgba(255,255,255,0.05)',
-                  backdropFilter: 'blur(16px) saturate(160%)',
-                  WebkitBackdropFilter: 'blur(16px) saturate(160%)',
-                  border: '1px solid rgba(255,255,255,0.12)',
+                  background: 'rgba(255,255,255,0.05)',                  border: '1px solid rgba(255,255,255,0.12)',
                   boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.10), 0 8px 24px rgba(0,0,0,0.5)',
                 }}
               >

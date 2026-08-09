@@ -3,7 +3,6 @@ import { Space_Grotesk, Inter, IBM_Plex_Mono } from 'next/font/google'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Sidebar } from '@/components/nav/Sidebar'
 import { BottomNav } from '@/components/nav/BottomNav'
-import { AuroraBackground } from '@/components/fx/AuroraBackground'
 import { QueryProvider } from '@/components/providers/QueryProvider'
 import { RealtimeProvider } from '@/components/providers/RealtimeProvider'
 import { MotionProvider } from '@/components/providers/MotionProvider'
@@ -109,7 +108,6 @@ export default function RootLayout({
               <EraFilterProvider>
               <MotionProvider>
                 <ContextThemeProvider />
-                <AuroraBackground />
                 <Sidebar />
                 {/* No padding utilities. Every gutter and every clearance now
                     lives in the unlayered `main#main-content` rule in

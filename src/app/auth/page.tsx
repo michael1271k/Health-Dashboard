@@ -83,7 +83,7 @@ export default function AuthPage() {
           <p className="text-xs text-muted mt-1.5 tracking-wide">Engineer Your Ascent.</p>
         </div>
 
-        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.025] backdrop-blur-xl p-6 shadow-[0_24px_80px_rgba(0,0,0,0.55)] space-y-5">
+        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.04] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.55)] space-y-5">
           <button
             type="button"
             onClick={handleContinue}

@@ -280,6 +280,21 @@ describe('the app shell keeps its own gutters', () => {
     expect(layout).not.toMatch(/app-shell-container max-w/)
   })
 
+  it('has no card classes left to bring the blur back', () => {
+    const css = readFileSync('src/app/globals.css', 'utf8')
+    expect(css).not.toMatch(/\.helix-card|\.glass-card/)
+    // Translucency is chrome-only. Every rule that blurs must be a .app-chrome
+    // rule — a blur on content, over a flat canvas, samples a solid colour at
+    // full price.
+    const blurring = css
+      .split('}')
+      .filter((rule) => /backdrop-filter:\s*blur/.test(rule))
+    expect(blurring.length).toBeGreaterThan(0)   // the chrome still frosts
+    for (const rule of blurring) {
+      expect(rule).toMatch(/app-chrome/)
+    }
+  })
+
   it('never promotes the element the app bar lives inside', () => {
     // A transformed / filtered ancestor makes a descendant backdrop-filter
     // sample the wrong buffer on iOS and paint solid black. The app bar is
