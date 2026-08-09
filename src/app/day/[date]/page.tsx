@@ -254,7 +254,7 @@ export default function DailyNexusPage() {
           ~280px of per-card headings. See components/ui/Zone.tsx. */}
 
       {/* ── TODAY · readiness, battery, what's scheduled ── */}
-      <Zone bleed label="Today" accent={scoreColor(score)}>
+      <Zone label="Today" accent={scoreColor(score)}>
         <ZoneRow divide={false} className="flex items-center gap-3">
           <div className="relative shrink-0 flex items-center justify-center" style={{ width: 52, height: 52 }}>
             <svg width="52" height="52" viewBox="0 0 52 52" className="-rotate-90" aria-hidden="true">
@@ -282,7 +282,7 @@ export default function DailyNexusPage() {
       </Zone>
 
       {/* ── FUEL & FLUIDS · macros and hydration share one container ── */}
-      <Zone bleed label="Fuel &amp; Fluids" accent={MACRO_COLORS.calories}>
+      <Zone label="Fuel &amp; Fluids" accent={MACRO_COLORS.calories}>
         <ZoneRow divide={false} className="cursor-pointer" onClick={tapFuel} title="Double-tap to edit macros">
           <div className="flex items-center gap-3">
             <span className="flex items-baseline gap-1 shrink-0">
@@ -357,7 +357,7 @@ export default function DailyNexusPage() {
       />
 
       {/* ── VITALS · one scrollable line, not a 3×2 grid of bordered boxes ── */}
-      <Zone bleed label="Vitals" accent={CYAN}>
+      <Zone label="Vitals" accent={CYAN}>
         <ZoneRow divide={false}>
           <StatStrip stats={[
             // Weight intentionally NOT here — it owns the Body/InBody card.
@@ -418,12 +418,12 @@ export default function DailyNexusPage() {
       </div>
 
       {/* Recovery inputs — soreness 24–72h post-session, on the body map */}
-      <Zone bleed label="Soreness" accent={EMBER}>
+      <Zone label="Soreness" accent={EMBER}>
         <DomsTracker date={date} />
       </Zone>
 
       {/* Cardio (walk/run) — separate ledger; never double-counts Active Energy */}
-      <Zone bleed label="Cardio" accent={EMERALD}>
+      <Zone label="Cardio" accent={EMERALD}>
         <CardioLogger date={date} hkActiveEnergy={log?.active_energy ?? null} />
       </Zone>
 

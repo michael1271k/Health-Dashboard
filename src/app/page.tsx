@@ -8,7 +8,7 @@ import { LiquidModal } from '@/components/ui/LiquidModal'
 import { ReadinessOrb } from '@/components/dashboard/ReadinessOrb'
 import { BioStrip, type BioStripProps } from '@/components/dashboard/BioStrip'
 import { MacroRings } from '@/components/nutrition/MacroRings'
-import { StatTile } from '@/components/dashboard/StatTile'
+import { Tile } from '@/components/ui/Zone'
 import { InsightCoach } from '@/components/dashboard/InsightCoach'
 import { AnimatedCard } from '@/components/dashboard/AnimatedBento'
 import { WeeklyReviewCard } from '@/components/dashboard/WeeklyReviewCard'
@@ -389,7 +389,7 @@ export default function DashboardPage() {
                 const m = bodyMetrics?.[field]
                 if (!m) return null
                 const v = u === unit ? displayWeight(m.value) : decimals === 0 ? n0(m.value) : n1(m.value)
-                return <StatTile key={field} label={label} value={v} unit={u} accent={accent} />
+                return <Tile key={field} label={label} value={v} unit={u} accent={accent} />
               })}
             </div>
             {bodyMetrics && Object.keys(bodyMetrics).length === 0 && (

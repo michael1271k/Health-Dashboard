@@ -38,8 +38,11 @@ describe('Zone — one container, hairline rows', () => {
 })
 
 describe('Zone — the full-bleed band', () => {
+  // `bleed` became `variant`, and the DEFAULT inverted: a band is now what you
+  // get unless you ask for a box. Every page is edge-to-edge, so the boxed
+  // shape is the exception and should be the one that has to be named.
   it('drops the radius and the side borders so bands can butt together', () => {
-    const { container } = render(<Zone bleed label="Today" accent="#fff"><ZoneRow divide={false}>a</ZoneRow></Zone>)
+    const { container } = render(<Zone label="Today" accent="#fff"><ZoneRow divide={false}>a</ZoneRow></Zone>)
     const band = container.firstElementChild as HTMLElement
     expect(band.className).not.toContain('rounded')
     expect(band.className).toContain('border-b')
@@ -48,22 +51,29 @@ describe('Zone — the full-bleed band', () => {
   it('constrains the CONTENT, not the band — edge-to-edge on a phone', () => {
     // The band must reach both screen edges; only the text inside takes a
     // reading measure, or a desktop gets a 1400px-wide stat strip.
-    const { container } = render(<Zone bleed label="Today" accent="#fff"><ZoneRow divide={false}>a</ZoneRow></Zone>)
+    const { container } = render(<Zone label="Today" accent="#fff"><ZoneRow divide={false}>a</ZoneRow></Zone>)
     const band = container.firstElementChild as HTMLElement
     expect(band.className).not.toContain('max-w')
     expect(container.querySelector('.max-w-\\[68ch\\]')).not.toBeNull()
   })
 
-  it('keeps the floating card shape when not bleeding', () => {
-    const { container } = render(<Zone label="Today" accent="#fff"><ZoneRow divide={false}>a</ZoneRow></Zone>)
+  it('takes the floating card shape only when asked', () => {
+    const { container } = render(<Zone variant="inset" label="Today" accent="#fff"><ZoneRow divide={false}>a</ZoneRow></Zone>)
     const band = container.firstElementChild as HTMLElement
     expect(band.className).toContain('rounded-2xl')
+  })
+
+  it('widens the measure for content a reading column would strangle', () => {
+    // 68ch is ~512px. A chart at that width on a desktop is a postage stamp,
+    // and the dashboard bento collapses to one column.
+    const { container } = render(<Zone measure="data" label="Volume" accent="#fff"><ZoneRow divide={false}>a</ZoneRow></Zone>)
+    expect(container.querySelector('.max-w-\\[96ch\\]')).not.toBeNull()
     expect(container.querySelector('.max-w-\\[68ch\\]')).toBeNull()
   })
 
   it('renders an action beside the label without displacing it', () => {
     render(
-      <Zone bleed label="Soreness" accent="#fff" action={<button type="button">front</button>}>
+      <Zone label="Soreness" accent="#fff" action={<button type="button">front</button>}>
         <ZoneRow divide={false}>a</ZoneRow>
       </Zone>,
     )
