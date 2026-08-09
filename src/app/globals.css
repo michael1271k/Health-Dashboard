@@ -318,16 +318,6 @@ html[data-reduce-motion='true'] *::after {
 .sync-breathe { animation: syncBreathe 1.4s ease-in-out infinite; }
 html[data-reduce-motion='true'] .sync-breathe { animation: none !important; }
 
-/* LiquidModal one-shot sheen — a translate3d-only diagonal light sweep. */
-.liquid-modal-sheen {
-  background: linear-gradient(115deg, transparent 42%, rgba(255,255,255,0.09) 50%, transparent 58%);
-  transform: translate3d(-120%, 0, 0);
-  animation: liquidSheen 900ms cubic-bezier(0.4, 0, 0.2, 1) 120ms 1 forwards;
-}
-@keyframes liquidSheen {
-  to { transform: translate3d(120%, 0, 0); }
-}
-
 /* ─── Report rendering ────────────────────────────────────────────────────────
    Sentinel-7 puts its header box, bar charts and TDEE ledger inside fenced code
    blocks. Those are aligned by CHARACTER COUNT, so they need a true monospace

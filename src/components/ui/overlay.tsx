@@ -15,7 +15,7 @@ export function Portal({ children }: { children: React.ReactNode }) {
   return createPortal(children, document.body)
 }
 
-// Ref-counted so stacked overlays (a Sheet under a LiquidModal) don't have the
+// Ref-counted so stacked overlays (a Sheet under a stacked Sheet) don't have the
 // inner one's cleanup strip the body state while the outer is still open.
 let overlayCount = 0
 function acquireOverlay() {
