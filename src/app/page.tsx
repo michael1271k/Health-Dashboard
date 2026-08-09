@@ -276,7 +276,7 @@ export default function DashboardPage() {
   ]
 
   return (
-    <div className="space-y-6">
+    <div data-boxed className="space-y-6">
       <BrandHeader />
 
       {/* ── Hero: the master Recovery widget — the breathing pulse/ECG orb (recovery

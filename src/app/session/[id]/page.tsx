@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { useSessionDetail } from '@/lib/hooks/useSessionDetail'
 import { SessionHero } from '@/components/session-detail/SessionHero'
+import { AppBar } from '@/components/nav/AppBar'
 import { ExerciseBreakdown } from '@/components/session-detail/ExerciseBreakdown'
 import { SessionHighlights } from '@/components/session-detail/SessionHighlights'
 import { MuscleFocus } from '@/components/session-detail/MuscleFocus'
@@ -49,26 +50,11 @@ export default function SessionAnalysisPage() {
 
   return (
     <div data-fullbleed className="min-h-dvh">
-      {/*
-        Sticky command bar — the same convention the report reader and the Nexus
-        use. A document this long that you have to scroll back up to escape is a
-        trap, so the way out is pinned. Blurred rather than opaque so the content
-        reads as continuous underneath, hairlined at the bottom so it detaches
-        as you scroll.
-      */}
-      <header
-        className="sticky top-0 z-30 safe-pt backdrop-blur-2xl border-b"
-        style={{
-          background: 'color-mix(in srgb, var(--color-bg, #0A0B0D) 95%, transparent)',
-          borderColor: `${accent}30`,
-        }}
-      >
-        {/* The workout's own colour bleeds along the top edge — Upper A is always
-            steel, Legs & Core B always emerald, so the report identifies itself
-            before the title is read. */}
-        <span aria-hidden="true" className="absolute inset-x-0 top-0 h-px"
-          style={{ background: `linear-gradient(90deg, transparent, ${accent}b3, transparent)` }} />
-        <div className="mx-auto w-full max-w-[68ch] px-2 py-1.5 flex items-center gap-1.5">
+      {/* The way out is pinned — a document this long that you have to scroll
+          back up to escape is a trap. The workout's own colour bleeds along the
+          top edge: Upper A is always steel, Legs & Core B always emerald, so
+          the report identifies itself before the title is read. */}
+      <AppBar accent={accent}>
           <button onClick={() => router.back()} onPointerUp={blurOnTap}
             className="btn-glass shrink-0 min-h-[44px]" aria-label="Back">
             <ArrowLeft className="w-4 h-4" />
@@ -83,8 +69,7 @@ export default function SessionAnalysisPage() {
             <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded shrink-0"
               style={phaseBadgeStyle(phase.kind, false, phase.era)}>{phase.eraTag}</span>
           )}
-        </div>
-      </header>
+      </AppBar>
 
       {/* ONE reading measure, applied once — edge-to-edge on a phone, a centred
           column on a desktop. Every section below inherits it rather than

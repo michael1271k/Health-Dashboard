@@ -83,7 +83,7 @@ export default function WorkoutPage() {
   )
 
   return (
-    <div className="space-y-6">
+    <div data-boxed className="space-y-6">
       {/* Header */}
       <div className="flex items-end justify-between gap-3">
         <div>

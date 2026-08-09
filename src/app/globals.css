@@ -619,37 +619,147 @@ html[data-reduce-motion='true'] .sync-breathe { animation: none !important; }
   @page { margin: 14mm; }
 }
 
-/* ── Full-bleed routes ────────────────────────────────────────────────────────
-   A route that wants the whole screen — the report reader, which is a document
-   rather than a dashboard panel — marks its root `data-fullbleed` and the app
-   shell gives up its gutters.
+/* ── The shell ────────────────────────────────────────────────────────────────
+   Full bleed is the DEFAULT now, and the `body:has([data-fullbleed])` machinery
+   that used to grant it is gone.
 
-   Done with :has() rather than by branching the layout, because the padding
-   lives on <main> in the ROOT layout, above every route group, and a nested
-   layout cannot reach up to remove it.
+   That selector only ever existed because <main>'s padding lives in the ROOT
+   layout, above every route group, so a nested layout could not reach up and
+   remove it. Take the padding off <main> and there is nothing to reach for.
+   Worth deleting on its own terms too: Portal renders into <body>, so a marker
+   inside a modal would have matched and re-toggled the entire shell.
 
-   DELIBERATELY UNLAYERED. Written inside `@layer components` first, and two of
-   the four declarations silently lost: `padding-top` to `pt-4`/`md:pt-8` and
-   `max-width` to `.max-w-7xl`. Not a specificity problem — cascade LAYER ORDER
-   is decided before specificity, and Tailwind's utilities layer comes after
-   components, so a utility class beats any component-layer rule however
-   specific. Unlayered styles outrank every layer, which is the correct tool for
-   an intentional override of a utility.
+   Content now scrolls UNDER the chrome rather than being boxed between two bars
+   — which is the point of a translucent bar, and the reason these are the only
+   two paddings <main> keeps. */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
 
-   Reclaimed: top padding, horizontal gutters, the 7xl measure. NOT reclaimed:
-   `pb-28`, which is bottom-nav clearance — a document scrolling under the tab
-   bar is not immersive, it is broken. The desktop sidebar offset is restored at
-   md/xl for the same reason: full-bleed means the edge of the CONTENT AREA. */
-[data-fullbleed] { width: 100%; }
-body:has([data-fullbleed]) main#main-content {
-  padding-top: 0;
-  padding-left: 0;
-  padding-right: 0;
+  --appbar-height: 3rem;
+  --nav-height: 3.5rem;
+  --chrome-top: calc(var(--appbar-height) + var(--safe-top));
+  --chrome-bottom: calc(var(--nav-height) + var(--safe-bottom));
+
+  /* Content measures. The SURFACE bleeds; only what is inside it is capped. */
+  --measure-read: 68ch;
+  --measure-data: 96ch;
+  --measure-grid: 80rem;
 }
-body:has([data-fullbleed]) .app-shell-container { max-width: none; }
+/* The session deck hides the tab bar and owns its own bottom edge (CommitBar),
+   so clearance there is zero — otherwise the deck grows ~90px of dead space. */
+html[data-bottom-nav='false'] { --nav-height: 0rem; }
+/* Desktop navigates from the sidebar; there is no bottom bar to clear. */
 @media (min-width: 768px) {
-  body:has([data-fullbleed]) main#main-content { padding-left: 16rem; }
+  :root { --nav-height: 0rem; --chrome-bottom: 2rem; }
+}
+
+/* DELIBERATELY UNLAYERED, for the reason the old block documented: cascade
+   LAYER ORDER is resolved before specificity, so a rule inside @layer
+   components can never beat a Tailwind utility however specific it is. There
+   are no competing utilities left on <main>; keeping this unlayered is what
+   guarantees that stays true. */
+main#main-content {
+  padding-top: 0;                       /* content passes under the app bar */
+  padding-bottom: var(--chrome-bottom); /* …and under the tab bar */
+  padding-left: var(--safe-left);
+  padding-right: var(--safe-right);
+}
+@media (min-width: 768px) {
+  main#main-content { padding-left: calc(16rem + var(--safe-left)); }
 }
 @media (min-width: 1280px) {
-  body:has([data-fullbleed]) main#main-content { padding-left: 18rem; }
+  main#main-content { padding-left: calc(18rem + var(--safe-left)); }
+}
+/* Focus and scrollIntoView must not park a field behind the chrome. */
+html {
+  scroll-padding-top: var(--chrome-top);
+  scroll-padding-bottom: var(--chrome-bottom);
+}
+
+/* Opt-IN boxed measure. The dashboard bento genuinely wants the old 7xl, and
+   routes not yet migrated to bands keep their gutters until they are. No
+   :has(), no reaching up: the measure lives on the page root itself. */
+[data-boxed] {
+  width: 100%;
+  max-width: var(--measure-grid);
+  margin-inline: auto;
+  padding-inline: max(1rem, var(--safe-left));
+  padding-top: 1rem;
+}
+@media (min-width: 768px) { [data-boxed] { padding-top: 2rem; } }
+
+/* Retained as a semantic no-op: the three document routes still declare what
+   they are, and the source-shape test still finds it. */
+[data-fullbleed] { width: 100%; }
+
+/* ── Chrome ───────────────────────────────────────────────────────────────────
+   Every translucent structural surface — sidebar, tab bar, app bar — carries
+   `.app-chrome`. Content surfaces do NOT: with a flat canvas there is nothing
+   behind them to refract, so a blur there pays full cost to sample a solid
+   colour. */
+.app-chrome {
+  background: color-mix(in srgb, var(--color-bg) 72%, transparent);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .app-chrome { background: var(--color-bg); }
+}
+/* While a portalled overlay is open, the chrome goes solid.
+   Same reason the old rule existed for cards: on iOS a translucent surface
+   sampling a dim veil composites as solid black. The quirk belongs to the
+   OVERLAY, not to the card, so the rule survives the card and follows it here. */
+body.helix-overlay-open .app-chrome {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: var(--color-bg);
+}
+
+/* Scroll edge, not a divider.
+   A permanent 1px line under a sticky bar draws itself even when there is
+   nothing beneath it to separate. This fades in only once content is actually
+   passing underneath — driven by an IntersectionObserver on a 1px sentinel, so
+   there is no scroll listener anywhere in the shell. */
+.app-chrome--top::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  inset-inline: 0;
+  height: 14px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 160ms linear;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--color-bg) 80%, transparent),
+    transparent
+  );
+}
+.app-chrome--top[data-edge='on']::after { opacity: 1; }
+
+/* Vibrancy — text read over a blurred, moving backdrop needs a little more
+   weight and air than the same text on a solid panel. */
+.app-chrome :where(a, button, h1, span) { letter-spacing: 0.005em; }
+
+/* ── Reduced transparency / contrast ──────────────────────────────────────────
+   Reduced transparency does not mean "remove the layer"; it means make the
+   material frostier so the hierarchy survives without the see-through. */
+@media (prefers-reduced-transparency: reduce) {
+  .app-chrome {
+    background: var(--color-bg);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+@media (prefers-contrast: more) {
+  .app-chrome {
+    background: var(--color-bg);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-color: var(--color-text);
+  }
+  .app-chrome--top::after { display: none; }
 }

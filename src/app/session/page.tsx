@@ -117,7 +117,7 @@ function SessionPageInner() {
   // A surviving draft + a DIFFERENT template request → the user decides.
   if (draft && templateDay && !draftMatchesTemplate) {
     return (
-      <div>
+      <div data-boxed>
         {header}
         <div className="max-w-md mx-auto helix-card !p-4 space-y-3 mt-6">
           <div className="flex items-center gap-2">
@@ -145,7 +145,7 @@ function SessionPageInner() {
   }
 
   return (
-    <div>
+    <div data-boxed>
       {header}
       {draft ? (
         <SessionDeck

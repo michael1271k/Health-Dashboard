@@ -92,7 +92,7 @@ function PathfinderInner() {
   }
 
   return (
-    <div className="space-y-5">
+    <div data-boxed className="space-y-5">
       {/* ── Header + sub-view switcher ── */}
       <div className="flex items-end justify-between gap-3 flex-wrap">
         <div className="min-w-0">

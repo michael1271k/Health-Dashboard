@@ -5,20 +5,19 @@ import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { m } from 'framer-motion'
 import { navItems } from '@/lib/nav-items'
+import { SNAPPY } from '@/lib/motion'
 
 export function Sidebar() {
   const pathname = usePathname()
 
   return (
     <aside
-      className="fixed left-0 top-0 bottom-0 z-50 hidden md:flex flex-col w-64 xl:w-72
-                 border-r border-white/[0.06]"
-      style={{
-        background: 'rgba(255,255,255,0.025)',
-        backdropFilter: 'blur(28px) saturate(160%)',
-        WebkitBackdropFilter: 'blur(28px) saturate(160%)',
-        boxShadow: '4px 0 40px rgba(0,0,0,0.35), inset -1px 0 0 rgba(255,255,255,0.05)',
-      }}
+      // Safe-area padding it has never had: in landscape on a notched device
+      // the logo block sat under the inset.
+      className="app-chrome fixed left-0 top-0 bottom-0 z-50 hidden md:flex flex-col w-64 xl:w-72
+                 border-r border-white/[0.06]
+                 pt-[var(--safe-top)] pb-[var(--safe-bottom)] pl-[var(--safe-left)]"
+      style={{ boxShadow: '4px 0 40px rgba(0,0,0,0.35), inset -1px 0 0 rgba(255,255,255,0.05)' }}
     >
       {/* ── Logo + wordmark */}
       <div className="flex items-center gap-3 px-5 py-6 border-b border-white/[0.06]">
@@ -47,17 +46,16 @@ export function Sidebar() {
                               transition-colors duration-200 cursor-pointer
                               ${active ? 'text-primary' : 'text-muted hover:text-text hover:bg-white/[0.04]'}`}
                 >
-                  {/* Sliding active indicator — glides between tabs */}
+                  {/* Sliding active indicator — glides between tabs.
+                      Reads the accent from the token rather than hardcoding
+                      #E0703C, so Travel mode repaints it like everything else.
+                      The stray amethyst glow it used to carry belonged to no
+                      palette at all. */}
                   {active && (
                     <m.span
                       layoutId="sidebar-active"
-                      className="absolute inset-0 rounded-xl"
-                      style={{
-                        background: 'color-mix(in srgb, #E0703C 12%, transparent)',
-                        border: '1px solid color-mix(in srgb, #E0703C 35%, transparent)',
-                        boxShadow: '0 0 16px rgba(138,111,168,0.18)',
-                      }}
-                      transition={{ type: 'spring', stiffness: 420, damping: 36 }}
+                      className="absolute inset-0 rounded-xl bg-primary/12 border border-primary/35"
+                      transition={SNAPPY}
                       aria-hidden="true"
                     />
                   )}

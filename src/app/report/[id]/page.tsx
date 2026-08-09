@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, Check, Copy, Loader2, Printer, Radar } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { MarkdownView } from '@/components/reports/MarkdownView'
+import { AppBar } from '@/components/nav/AppBar'
 import { FmtV2Report } from '@/components/reports/FmtV2Report'
 import { isFmtV2 } from '@/lib/reports/fmtV2'
 import { WidgetBoundary } from '@/components/fx/WidgetBoundary'
@@ -138,31 +139,22 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
 
   return (
     <div data-fullbleed className="report-print min-h-dvh">
-      {/*
-        Sticky command bar — the iOS full-screen-modal convention: the way out
-        is pinned, always, because a long document that you have to scroll back
-        up to escape is a trap. Blurred rather than opaque so the report reads
-        as continuous underneath, and hairlined at the bottom so it detaches
-        from the text as you scroll.
-      */}
-      <header
-        data-print-hide
-        className="sticky top-0 z-30 safe-pt backdrop-blur-2xl border-b"
-        style={{
-          // 82% let the table underneath read straight THROUGH the bar — a
-          // blurred header is meant to suggest depth, not compete with the
-          // document. Blur alone can't fix that; the fill has to carry it.
-          background: 'color-mix(in srgb, var(--color-bg, #0A0B0D) 95%, transparent)',
-          borderColor: rgb ? `rgba(${rgb},0.22)` : 'rgba(255,255,255,0.08)',
-        }}
+      {/* The way out is pinned, always — a long document you have to scroll
+          back up to escape is a trap. The phase colour bleeds along the top
+          edge, saying which block of training this belongs to. */}
+      <AppBar
+        accent={rgb ? `rgb(${rgb})` : undefined}
+        measure="doc"
+        pad="roomy"
+        printHidden
+        below={printState === 'unavailable' ? (
+          /* Said once, plainly, only when it is true. */
+          <p className="px-3 sm:px-5 pb-2 text-[11px] text-muted mx-auto w-full max-w-[80ch]">
+            Printing isn&rsquo;t available in the installed app. Open this page in Safari or Chrome to save a PDF —
+            or tap again to copy the report text.
+          </p>
+        ) : undefined}
       >
-        {/* The phase colour bleeds along the top edge — the one piece of chrome
-            that says which block of training this belongs to. */}
-        {rgb && (
-          <span aria-hidden="true" className="absolute inset-x-0 top-0 h-px"
-            style={{ background: `linear-gradient(90deg, transparent, rgba(${rgb},0.7), transparent)` }} />
-        )}
-        <div className="mx-auto w-full max-w-[80ch] px-3 sm:px-5 py-2.5 flex items-center gap-2">
           <Link
             href="/reports"
             className="shrink-0 inline-flex items-center gap-1.5 rounded-xl px-2.5 min-h-[40px] text-fluid-xs font-semibold text-text hover:bg-white/[0.06] active:opacity-80 transition-colors"
@@ -203,16 +195,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
                 : 'Save as PDF'}
             </span>
           </button>
-        </div>
-
-        {/* Said once, plainly, only when it is true. */}
-        {printState === 'unavailable' && (
-          <p className="px-3 sm:px-5 pb-2 text-[11px] text-muted mx-auto w-full max-w-[80ch]">
-            Printing isn&rsquo;t available in the installed app. Open this page in Safari or Chrome to save a PDF —
-            or tap again to copy the report text.
-          </p>
-        )}
-      </header>
+      </AppBar>
 
       {/* One reading measure, applied once. 80ch is wide enough for the FMT v2
           tables and still a comfortable line length for prose. */}

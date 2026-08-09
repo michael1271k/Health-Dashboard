@@ -26,6 +26,7 @@ import { displayWeight, weightUnit, fmtVolume } from '@/lib/utils/units'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { Zone, ZoneRow, StatStrip } from '@/components/ui/Zone'
+import { AppBar } from '@/components/nav/AppBar'
 import { SnapPager } from '@/components/ui/SnapPager'
 import { EMBER, EMBER_DEEP, SAPPHIRE, STEEL, GOLD, OXIDE, EMERALD, MUTED } from '@/lib/theme/palette'
 
@@ -201,24 +202,10 @@ export default function DailyNexusPage() {
 
   return (
     <div data-fullbleed className="min-h-dvh">
-      {/*
-        Sticky command bar — the same convention the report reader uses. A page
-        this long that you have to scroll back up to escape is a trap, so the way
-        out is pinned. Blurred rather than opaque so the bands read as continuous
-        underneath it, and hairlined at the bottom so it detaches as you scroll.
-      */}
-      <header
-        className="sticky top-0 z-30 safe-pt backdrop-blur-2xl border-b"
-        style={{
-          background: 'color-mix(in srgb, var(--color-bg, #0A0B0D) 95%, transparent)',
-          borderColor: `${eraMeta.color}30`,
-        }}
-      >
-        {/* The era colour bleeds along the top edge — one piece of chrome saying
-            which block of training this day belongs to. */}
-        <span aria-hidden="true" className="absolute inset-x-0 top-0 h-px"
-          style={{ background: `linear-gradient(90deg, transparent, ${eraMeta.color}b3, transparent)` }} />
-        <div className="mx-auto w-full max-w-[68ch] px-2 py-1.5 flex items-center gap-1.5">
+      {/* The way out is pinned — a page this long that you have to scroll back
+          up to escape is a trap. The era colour bleeds along the top edge, so
+          one piece of chrome says which block of training this day belongs to. */}
+      <AppBar accent={eraMeta.color}>
           <button onClick={() => router.back()} className="btn-glass shrink-0 min-h-[44px]" aria-label="Back">
             <ArrowLeft className="w-4 h-4" />
           </button>
@@ -245,8 +232,7 @@ export default function DailyNexusPage() {
             style={{ color: eraMeta.color, background: `${eraMeta.color}1a`, border: `1px solid ${eraMeta.color}40` }}>
             {eraMeta.short}
           </span>
-        </div>
-      </header>
+      </AppBar>
 
       {/* ══ SECTION 1 · Vitals & Nutrition ══
           Three zones and a pager, in place of seven stacked glass cards. Every

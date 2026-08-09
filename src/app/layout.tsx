@@ -78,7 +78,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="he" dir="ltr" suppressHydrationWarning>
+    <html lang="en" dir="ltr" suppressHydrationWarning>
       <head>
         {/* One-time apex_* → helix_* pref migration + reduce-motion before paint +
             a data-hidden flag that pauses all ambient animations while backgrounded. */}
@@ -111,16 +111,25 @@ export default function RootLayout({
                 <ContextThemeProvider />
                 <AuroraBackground />
                 <Sidebar />
-                <main
-                  id="main-content"
-                  className="min-h-dvh pt-4 safe-pt pb-28 md:pl-64 xl:pl-72 md:pt-8 md:pb-8 safe-px"
-                >
+                {/* No padding utilities. Every gutter and every clearance now
+                    lives in the unlayered `main#main-content` rule in
+                    globals.css, driven by --chrome-top/--chrome-bottom, so
+                    content scrolls UNDER the bars instead of being boxed
+                    between them.
+
+                    Nothing on this element or above it may ever carry
+                    transform / filter / perspective / will-change /
+                    contain:paint — the app bar inside it uses backdrop-filter,
+                    and on iOS a transformed ancestor makes that sample the
+                    wrong buffer and paint solid black. */}
+                <main id="main-content" className="min-h-dvh">
                   {/* Global pull-to-refresh — active on every tab (native HealthKit
                       sync + query revalidation), non-blocking of top-of-screen taps. */}
                   <PullToRefresh>
-                    {/* Named so a full-bleed route can widen it — see
-                        `[data-fullbleed]` in globals.css. */}
-                    <div className="app-shell-container max-w-7xl mx-auto">
+                    {/* Carries no measure. A page that wants one declares it:
+                        `data-boxed` for the bento, or a Zone/Surface `measure`
+                        for a band. */}
+                    <div className="app-shell-container">
                       <AuthGate>{children}</AuthGate>
                     </div>
                   </PullToRefresh>

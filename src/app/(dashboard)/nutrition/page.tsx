@@ -94,7 +94,7 @@ export default function NutritionPage() {
   }, [logs, goals.calorie])
 
   return (
-    <div className="space-y-6">
+    <div data-boxed className="space-y-6">
       <div>
         <h1 className="font-heading text-fluid-2xl font-bold text-text">Nutrition</h1>
         <p className="text-muted text-fluid-sm mt-0.5">Macro rings · daily fuel cells · auto-tagged phase</p>

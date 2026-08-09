@@ -1,6 +1,6 @@
 export default function DashboardLoading() {
   return (
-    <div className="space-y-6" aria-busy="true" aria-label="Loading dashboard">
+    <div data-boxed className="space-y-6" aria-busy="true" aria-label="Loading dashboard">
       <div className="space-y-2">
         <div className="h-8 w-40 bg-surface rounded-xl animate-pulse" />
         <div className="h-4 w-24 bg-surface rounded animate-pulse" />

@@ -235,26 +235,57 @@ describe('hasScaleMetrics — which face the Body page wears', () => {
  * The SESSION REPORT was the last of the three long documents still boxed in
  * the app shell's `max-w-7xl` column with a gutter either side, so on a phone
  * every card floated in dead margin. Source-level guards, because jsdom has no
- * layout: the shape is carried by `data-fullbleed` (which surrenders the shell's
- * padding, see globals.css) plus ONE reading measure applied once.
+ * layout: the shape is `data-fullbleed` plus ONE reading measure applied once.
+ *
+ * The pinned command bar itself moved to <AppBar/> — it was the third
+ * byte-identical copy of one sticky header — so the assertions follow it there.
+ * `data-fullbleed` survives as a semantic marker (it is a no-op width rule now
+ * that full bleed is the shell default) because the three document routes
+ * should still say what they are.
  */
 describe('the Session Report is full-bleed', () => {
   const src = readFileSync('src/app/session/[id]/page.tsx', 'utf8')
 
-  it('marks its root so the app shell gives up its gutters', () => {
+  it('marks its root so it reads as a document, not a dashboard panel', () => {
     expect(src).toMatch(/<div data-fullbleed/)
   })
 
   it('pins the way out — a long document you must scroll up to escape is a trap', () => {
-    expect(src).toMatch(/sticky top-0/)
+    expect(src).toMatch(/<AppBar/)
     expect(src).toMatch(/aria-label="Back"/)
   })
 
   it('takes its reading measure ONCE, on the content and not on the page', () => {
     // A desktop gets a centred column; a phone gets true edge-to-edge. Two
-    // measures would reintroduce the gutter the bleed just removed.
-    expect(src.match(/max-w-\[68ch\]/g)).toHaveLength(2)   // command bar + content
+    // measures would reintroduce the gutter the bleed just removed. The bar's
+    // own measure now lives inside AppBar, so exactly one remains here.
+    expect(src.match(/max-w-\[68ch\]/g)).toHaveLength(1)
     expect(src).not.toMatch(/max-w-7xl/)
+  })
+})
+
+/**
+ * The shell owns every gutter and every clearance now, so a page cannot quietly
+ * reintroduce one. These are the two ways it used to happen.
+ */
+describe('the app shell keeps its own gutters', () => {
+  const layout = readFileSync('src/app/layout.tsx', 'utf8')
+
+  it('puts no padding or measure utilities on <main>', () => {
+    const main = layout.match(/<main[^>]*>/)?.[0] ?? ''
+    expect(main).toMatch(/min-h-dvh/)
+    // pt-4 / pb-28 / safe-px / md:pl-64 all moved into the unlayered
+    // main#main-content rule, driven by --chrome-top and --chrome-bottom.
+    expect(main).not.toMatch(/p[tbxy]?-\d|safe-p|pl-\d/)
+    expect(layout).not.toMatch(/app-shell-container max-w/)
+  })
+
+  it('never promotes the element the app bar lives inside', () => {
+    // A transformed / filtered ancestor makes a descendant backdrop-filter
+    // sample the wrong buffer on iOS and paint solid black. The app bar is
+    // inside <main>, so this is load-bearing, not hygiene.
+    const main = layout.match(/<main[^>]*>/)?.[0] ?? ''
+    expect(main).not.toMatch(/transform|filter|perspective|will-change|contain/)
   })
 })
 

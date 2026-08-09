@@ -344,7 +344,7 @@ export default function SettingsPage() {
   if (loading) return <p className="text-muted text-sm">Loading…</p>
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div data-boxed className="space-y-6">
       <div>
         <h1 className="font-heading text-fluid-2xl font-bold text-text">Settings</h1>
         <p className="text-muted text-sm mt-0.5">Goals &amp; context for daily scoring</p>

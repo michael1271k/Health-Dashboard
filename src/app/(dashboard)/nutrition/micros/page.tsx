@@ -62,7 +62,7 @@ export default function MicrosPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-4">
+    <div data-boxed className="space-y-4">
       <header className="flex items-center gap-3">
         <button onClick={() => router.back()} className="btn-glass shrink-0 min-h-[44px]" aria-label="Back">
           <ArrowLeft className="w-4 h-4" />

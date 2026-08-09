@@ -24,7 +24,7 @@ export default function ReportsPage() {
   const legacyWithProse = (legacy ?? []).filter((r) => r.content_md)
 
   return (
-    <div className="space-y-5 max-w-3xl">
+    <div data-boxed className="space-y-5">
       <div>
         <div className="flex items-center gap-2">
           <Radar className="w-5 h-5 text-primary" aria-hidden="true" />
