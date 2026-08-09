@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { Check, Plus, Trash2, Pencil } from 'lucide-react'
-import { LiquidModal } from '@/components/ui/LiquidModal'
+import { Sheet } from '@/components/ui/Sheet'
+import { STEEL } from '@/lib/theme/palette'
 import { stackForDate } from '@/lib/supplements'
 import { isTrainingDay } from '@/lib/programs'
 import { logicalTodayISO } from '@/lib/utils/day'
@@ -130,7 +131,11 @@ export function SupplementChecklist() {
       {/* Edit dose — the verb that was missing. L-Citrulline sat at 3 g in every
           surface while 6 g was being taken, and there was no way to correct it
           short of a deploy. */}
-      <LiquidModal open={editing != null} onClose={() => setEditing(null)} title={editing?.name ?? 'Edit'} accent="#8E9AAC">
+      {/* layer="stacked": this checklist is itself rendered inside the
+          dashboard's Stack sheet, so its own drawers have to paint ABOVE their
+          parent. The body-scroll lock is ref-counted, so the nesting was always
+          safe — only the z-index was missing. */}
+      <Sheet open={editing != null} onClose={() => setEditing(null)} title={editing?.name ?? 'Edit'} accent={STEEL} layer="stacked">
         <div className="space-y-3">
           <label className="block">
             <span className="text-[10px] uppercase tracking-wide text-muted">Dose</span>
@@ -157,10 +162,10 @@ export function SupplementChecklist() {
             </button>
           </div>
         </div>
-      </LiquidModal>
+      </Sheet>
 
-      {/* Add-supplement modal — a sleek popup, not an inline expansion. */}
-      <LiquidModal open={adding} onClose={() => setAdding(false)} title="Add supplement" accent="#8E9AAC">
+      {/* Add supplement — a drawer, not an inline expansion. */}
+      <Sheet open={adding} onClose={() => setAdding(false)} title="Add supplement" accent={STEEL} layer="stacked">
         <div className="space-y-2.5">
           <div className="space-y-2.5">
             <div className="grid grid-cols-2 gap-2">
@@ -223,7 +228,7 @@ export function SupplementChecklist() {
             </div>
           </div>
         </div>
-      </LiquidModal>
+      </Sheet>
     </div>
   )
 }
