@@ -63,7 +63,7 @@ export default function SessionAnalysisPage() {
             <h1 className="font-heading text-fluid-sm font-bold truncate leading-tight" style={{ color: accent }}>
               {label}
             </h1>
-            <span className="text-[10px] text-muted">{pretty || 'Session Report'}</span>
+            <span className="text-[10px] text-muted">{pretty || 'Session'}</span>
           </div>
           {phase && (
             <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded shrink-0"

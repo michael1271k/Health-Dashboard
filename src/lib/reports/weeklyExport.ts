@@ -1039,7 +1039,7 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
         + ' credits its primary muscles in full and its assisting muscles at half.'
         + ' These rows therefore sum to MORE than the total volume above.'
         + ' Unilateral pairs are scored at the weaker side (×2), identical to the'
-        + ' Session Report._')
+        + ' Session._')
     } else if (totalVolume != null) {
       L.push(`- **Total volume:** ${exact(totalVolume)} kg across ${sessions.length}`
         + ` session${sessions.length === 1 ? '' : 's'}`)

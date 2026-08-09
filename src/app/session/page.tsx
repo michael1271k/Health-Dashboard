@@ -106,7 +106,7 @@ function SessionPageInner() {
         <ArrowLeft className="w-4 h-4" aria-hidden="true" />
       </button>
       <div className="min-w-0 flex-1">
-        <h1 className="font-heading text-fluid-xl font-bold text-text leading-tight truncate">Session Deck</h1>
+        <h1 className="font-heading text-fluid-xl font-bold text-text leading-tight truncate">Log</h1>
         <p className="text-[11px] text-muted">Autosaves as you edit — back never discards</p>
       </div>
     </header>

@@ -243,7 +243,7 @@ describe('hasScaleMetrics — which face the Body page wears', () => {
  * that full bleed is the shell default) because the three document routes
  * should still say what they are.
  */
-describe('the Session Report is full-bleed', () => {
+describe('the Session page is full-bleed', () => {
   const src = readFileSync('src/app/session/[id]/page.tsx', 'utf8')
 
   it('marks its root so it reads as a document, not a dashboard panel', () => {

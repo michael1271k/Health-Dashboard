@@ -88,7 +88,7 @@ export default function WorkoutPage() {
       {/* Header */}
       <div className="flex items-end justify-between gap-3">
         <div>
-          <h1 className="font-heading text-fluid-2xl font-bold text-text">Command Center</h1>
+          <h1 className="font-heading text-fluid-2xl font-bold text-text">Training</h1>
           <p className="text-muted text-fluid-sm mt-0.5">Active program · progressive-overload memory · tap a day to log</p>
         </div>
       </div>

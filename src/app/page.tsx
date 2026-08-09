@@ -415,7 +415,7 @@ export default function DashboardPage() {
               })}
             </div>
             {bodyMetrics && Object.keys(bodyMetrics).length === 0 && (
-              <p className="text-fluid-xs text-muted">No body metrics logged yet — add them in the Daily Nexus.</p>
+              <p className="text-fluid-xs text-muted">No body metrics logged yet — add them under Today.</p>
             )}
             {/* Only the auto-synced four live here; BMR, visceral, muscle % and
                 water % are entered by hand in the Nexus InBody card. */}

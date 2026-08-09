@@ -96,7 +96,7 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
         <div className="flex flex-col gap-2">
           {onViewDay && committedDate && (
             <button onClick={() => onViewDay(committedDate)} className="btn-primary w-full justify-center min-h-[48px]">
-              View day in the Nexus
+              View the day
             </button>
           )}
           <button onClick={onClose} className={`${onViewDay && committedDate ? 'btn-glass' : 'btn-primary'} w-full justify-center min-h-[48px]`}>

@@ -72,7 +72,7 @@ describe('current-week timeframe', () => {
     expect(programWeekNumber('2026-08-02')).toBe(3)
   })
 
-  it('agrees with the Momentum timeline EXACTLY, week 0 included', () => {
+  it('agrees with the Progress timeline EXACTLY, week 0 included', () => {
     // The bug: a second 1-based counter read Wk 4 on 2026-08-03 while Momentum's
     // capsule for the same week read "Week 3". Both are now one function, so the
     // two can no longer drift — this asserts the identity, not two constants.

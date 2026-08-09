@@ -18,7 +18,7 @@ export const navItems = [
   { href: '/',           icon: LayoutDashboard, label: 'Dashboard'  },
   { href: '/nutrition',  icon: Salad,           label: 'Nutrition'  },
   { href: '/workout',    icon: Dumbbell,        label: 'Workout'    },
-  { href: '/pathfinder', icon: Compass,         label: 'Momentum'   },
+  { href: '/pathfinder', icon: Compass,         label: 'Progress'   },
   { href: '/settings',   icon: Settings,        label: 'Settings'   },
 ] as const
 

@@ -38,7 +38,7 @@ export default function ReportsPage() {
           <FileText className="w-6 h-6 mx-auto text-muted" aria-hidden="true" />
           <p className="text-fluid-sm text-text">No reports yet.</p>
           <p className="text-fluid-xs text-muted">
-            Open a week in Momentum, export the Sentinel-7 payload, then paste the audit back.
+            Open a week in Progress, export the Sentinel-7 payload, then paste the audit back.
           </p>
         </div>
       )}

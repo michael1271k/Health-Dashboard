@@ -758,7 +758,7 @@ describe('weekly aggregates · previous-week reference · disclaimer', () => {
     expect(out).toMatch(/- Chest: 15000 kg/)
   })
 
-  it('prints the week total at full precision, matching the Session Report', () => {
+  it('prints the week total at full precision, matching the Session page', () => {
     // 3571.25 is the Aug 5 session exactly. `n()` would have rounded it to 3571
     // and the export would disagree with the screen about the same workout.
     const out = buildWeeklyExport(base({ sessions: [session({ volumeKg: 3571.25 })] }))

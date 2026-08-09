@@ -73,7 +73,7 @@ export function SessionHero({ detail }: { detail: SessionDetail }) {
           session this is in the global count. */}
       <div className="flex items-baseline gap-2">
         <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted">
-          Session Report{globalNum ? ` · #${String(globalNum).padStart(2, '0')}` : ''}
+          Session{globalNum ? ` · #${String(globalNum).padStart(2, '0')}` : ''}
         </span>
         <span className="text-fluid-xs text-muted ml-auto truncate">{pretty}</span>
       </div>
