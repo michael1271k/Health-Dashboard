@@ -66,3 +66,6 @@ ios/App/Secrets.xcconfig
 
 # iOS snapshot secrets (token) — never commit
 ios/App/App/Secrets.xcconfig
+
+# graphify code-graph output (regenerated; ios/ copy is never wanted)
+ios/App/graphify-out/

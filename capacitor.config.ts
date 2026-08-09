@@ -16,7 +16,7 @@ const config: CapacitorConfig = {
   },
   ios: {
     contentInset: 'always',
-    backgroundColor: '#030509',
+    backgroundColor: '#0A0B0D',
   },
 }
 
