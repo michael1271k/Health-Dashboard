@@ -1,20 +1,21 @@
 'use client'
 
-import { m, useReducedMotion } from 'framer-motion'
+import { m } from 'framer-motion'
 
 /**
  * Route transition wrapper — App Router remounts this on every navigation, so
  * each tab change gets a smooth fade + rise (transform/opacity only, 60fps).
- * Honors the OS reduce-motion setting.
+ *
+ * No transition prop and no reduce-motion branch: MotionConfig in
+ * MotionProvider supplies the STANDARD spring, and its `reducedMotion` setting
+ * strips the `y` on its own while keeping the opacity fade. A spring also beats
+ * the old fixed 240ms tween here — navigate twice quickly and the second
+ * transition starts from wherever the first one had reached, instead of
+ * snapping back to y:8 and replaying.
  */
 export default function Template({ children }: { children: React.ReactNode }) {
-  const reduce = useReducedMotion()
   return (
-    <m.div
-      initial={reduce ? false : { opacity: 0, y: 8 }}
-      animate={reduce ? undefined : { opacity: 1, y: 0 }}
-      transition={{ duration: 0.24, ease: [0.4, 0, 0.2, 1] }}
-    >
+    <m.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
       {children}
     </m.div>
   )
