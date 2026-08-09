@@ -15,9 +15,9 @@ import { EMERALD, GOLD, OXIDE, DIM } from '@/lib/theme/palette'
 export function MuscleAnalyticsSection({ days, era = 'all' }: { days: number; era?: 'all' | 'ppl' | 'axis' }) {
   const { data, isLoading } = useMuscleAnalytics(days, era)
   const unit = useUnitSystem()
-  if (isLoading) return <div className="helix-card h-64 animate-pulse" />
+  if (isLoading) return <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 h-64 animate-pulse" />
   if (!data || data.stats.every((s) => s.sets === 0)) {
-    return <div className="helix-card p-8 text-center text-muted text-fluid-sm">No workout sets in this range yet.</div>
+    return <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 p-8 text-center text-muted text-fluid-sm">No workout sets in this range yet.</div>
   }
 
   const radarData = data.stats.map((s) => ({ group: s.group, sets: s.sets }))
@@ -36,7 +36,7 @@ export function MuscleAnalyticsSection({ days, era = 'all' }: { days: number; er
       */}
       <div className="grid lg:grid-cols-2 gap-4 items-stretch [&>*]:min-w-0">
         {/* Balance radar — owns the left column */}
-        <div className="helix-card flex flex-col">
+        <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 flex flex-col">
           <h3 className="font-heading font-semibold text-base">Muscle Balance</h3>
           <p className="text-fluid-xs text-muted mb-2">Working sets per group · {days}d</p>
           <div className="flex-1 min-h-[250px]">
@@ -53,7 +53,7 @@ export function MuscleAnalyticsSection({ days, era = 'all' }: { days: number; er
         {/* Right column — the two lists, stacked */}
         <div className="flex flex-col gap-4 min-w-0">
           {/* Volume by body part */}
-          <div className="helix-card flex-1">
+          <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 flex-1">
             <h3 className="font-heading font-semibold text-base mb-3">Volume by Body Part</h3>
             <div className="space-y-2.5">
               {[...data.stats].sort((a, b) => b.volume - a.volume).map((s) => (
@@ -71,7 +71,7 @@ export function MuscleAnalyticsSection({ days, era = 'all' }: { days: number; er
           </div>
 
           {/* Freshness */}
-          <div className="helix-card flex-1">
+          <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 flex-1">
             <h3 className="font-heading font-semibold text-base mb-3">Muscle Freshness</h3>
             <div className="space-y-2">
               {[...data.stats].sort((a, b) => (b.daysSince ?? -1) - (a.daysSince ?? -1)).map((s) => {

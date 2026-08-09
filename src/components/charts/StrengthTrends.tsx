@@ -36,11 +36,11 @@ export function StrengthTrends({ days = 120, era = 'all' }: { days?: number; era
       .slice(0, 6)
   }, [data])
 
-  if (isLoading) return <div className="helix-card h-40 animate-pulse" />
+  if (isLoading) return <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 h-40 animate-pulse" />
   if (!series.length) return null
 
   return (
-    <div className="helix-card space-y-3">
+    <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-3">
       <h2 className="font-heading font-semibold text-fluid-base text-text flex items-center gap-2">
         <TrendingUp className="w-4 h-4 text-primary" /> Strength Trends
         <span className="text-fluid-xs text-muted font-normal">est. 1RM</span>

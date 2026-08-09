@@ -281,7 +281,7 @@ export function SetEditorRow({ index, displayNum, subRow = false, set, active, t
                   key={d}
                   type="button"
                   onClick={() => nudgeWeight(d)}
-                  className="glass-card px-2 min-h-[34px] text-[11px] font-semibold text-text tabular-nums active:scale-95 transition-transform"
+                  className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-2 min-h-[34px] text-[11px] font-semibold text-text tabular-nums active:scale-95 transition-transform"
                 >
                   {d > 0 ? `+${d}` : d}
                 </button>
@@ -294,7 +294,7 @@ export function SetEditorRow({ index, displayNum, subRow = false, set, active, t
                   type="button"
                   onClick={() => { void tapLight(); setLoadOpen(true) }}
                   aria-label={`Add load to set ${displayNum ?? index + 1}`}
-                  className="glass-card px-2.5 min-h-[34px] text-[11px] font-semibold text-muted active:scale-95 transition-transform"
+                  className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-2.5 min-h-[34px] text-[11px] font-semibold text-muted active:scale-95 transition-transform"
                 >
                   + Add load
                 </button>
@@ -302,10 +302,10 @@ export function SetEditorRow({ index, displayNum, subRow = false, set, active, t
             </div>
             <div className="flex items-center gap-1">
               <button type="button" onClick={() => nudgeReps(-1)} aria-label="One rep less"
-                className="glass-card min-h-[34px] min-w-[34px] text-sm font-bold text-text active:scale-95 transition-transform">−</button>
+                className="rounded-xl border border-white/[0.08] bg-white/[0.04] min-h-[34px] min-w-[34px] text-sm font-bold text-text active:scale-95 transition-transform">−</button>
               <span className="helix-num text-fluid-sm font-bold text-text w-7 text-center tabular-nums">{set.reps}</span>
               <button type="button" onClick={() => nudgeReps(+1)} aria-label="One rep more"
-                className="glass-card min-h-[34px] min-w-[34px] text-sm font-bold text-text active:scale-95 transition-transform">+</button>
+                className="rounded-xl border border-white/[0.08] bg-white/[0.04] min-h-[34px] min-w-[34px] text-sm font-bold text-text active:scale-95 transition-transform">+</button>
             </div>
           </div>
           {/* Set type — Warm-up / Failure / Drop set (Hevy parity). "Normal" is the

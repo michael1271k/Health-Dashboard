@@ -13,7 +13,7 @@ import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 
 // Recharts-heavy — client-only so they never touch the Command Center's first load.
 const chartFallback = () => (
-  <div className="helix-card h-64 flex items-center justify-center">
+  <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 h-64 flex items-center justify-center">
     <div className="w-full h-40 bg-surface-2 rounded-xl animate-pulse" />
   </div>
 )

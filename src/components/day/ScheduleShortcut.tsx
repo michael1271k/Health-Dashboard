@@ -29,7 +29,7 @@ export function ScheduleShortcut() {
   return (
     <Link
       href={`/session?template=${schedule.dayKey}`}
-      className="w-full glass-card px-4 py-3 flex items-center gap-3 transition-transform active:scale-[0.99]"
+      className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-3 flex items-center gap-3 transition-transform active:scale-[0.99]"
       style={{ borderColor: `${color}44`, boxShadow: `0 0 18px ${color}14` }}
     >
       <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"

@@ -38,7 +38,7 @@ export default function PageError({ error, reset }: { error: Error & { digest?: 
   }, [error])
 
   return (
-    <div className="helix-card flex flex-col items-center justify-center gap-3 text-center py-10" role="alert">
+    <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 flex flex-col items-center justify-center gap-3 text-center py-10" role="alert">
       <AlertTriangle className="w-6 h-6 text-warn" aria-hidden="true" />
       <p className="font-heading font-semibold text-fluid-base text-text">This tab couldn&apos;t load.</p>
       <p className="text-fluid-xs text-muted max-w-xs">

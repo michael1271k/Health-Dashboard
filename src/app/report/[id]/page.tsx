@@ -217,9 +217,9 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
           </header>
         )}
 
-        {isPending && <div className="helix-card h-64 animate-pulse" aria-hidden="true" />}
+        {isPending && <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 h-64 animate-pulse" aria-hidden="true" />}
         {!isPending && !data && (
-          <div className="helix-card text-center py-8">
+          <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 text-center py-8">
             <p className="text-fluid-sm text-text">That report no longer exists.</p>
             <Link href="/reports" className="text-primary text-fluid-xs underline underline-offset-2">Back to reports</Link>
           </div>

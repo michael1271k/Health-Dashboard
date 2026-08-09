@@ -146,7 +146,7 @@ export function BodyPanel({ date, log, openEditor = false, onEditorClosed }: {
 
   return (
     <>
-      <section className="helix-card space-y-3" style={{ borderColor: `${TEAL}26` }}>
+      <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-3" style={{ borderColor: `${TEAL}26` }}>
         {has ? (
           <>
             <BodyMap log={log} />

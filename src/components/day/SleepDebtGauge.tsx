@@ -18,7 +18,7 @@ function debtColor(h: number): string {
  */
 export const SleepDebtGauge = memo(function SleepDebtGauge({ compact = false }: { compact?: boolean }) {
   const { data, isLoading } = useSleepDebt()
-  if (isLoading) return compact ? null : <div className="helix-card h-[72px] animate-pulse" aria-hidden="true" />
+  if (isLoading) return compact ? null : <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 h-[72px] animate-pulse" aria-hidden="true" />
   if (!data || data.nights < 3) return null   // not enough history to be honest about debt
 
   const color = debtColor(data.debtHours)
@@ -46,7 +46,7 @@ export const SleepDebtGauge = memo(function SleepDebtGauge({ compact = false }: 
   }
 
   return (
-    <section className="helix-card space-y-2.5" style={{ borderColor: `${VIOLET}30` }}>
+    <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-2.5" style={{ borderColor: `${VIOLET}30` }}>
       <div className="flex items-baseline justify-between">
         <h2 className="font-heading font-semibold text-text flex items-center gap-1.5">
           <BedDouble className="w-4 h-4" style={{ color: VIOLET }} /> Sleep Debt Bank

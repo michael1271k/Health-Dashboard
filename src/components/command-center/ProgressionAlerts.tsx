@@ -70,7 +70,7 @@ export function ProgressionAlerts({ date = logicalTodayISO() }: { date?: string 
   if (!ready.length && !oneMore.length) return null
 
   return (
-    <section className="helix-card space-y-2.5" style={{ borderColor: `${GOLD}40` }}>
+    <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-2.5" style={{ borderColor: `${GOLD}40` }}>
       <div className="flex items-center gap-2">
         <span className="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style={{ background: `${GOLD}1a`, color: GOLD }}>
           <TrendingUp className="w-4 h-4" aria-hidden="true" />

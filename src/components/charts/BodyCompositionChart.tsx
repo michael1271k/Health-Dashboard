@@ -177,18 +177,18 @@ export function BodyCompositionChart({ trend, detail, isLoading, showEraBoundary
     : undefined
 
   if (isLoading) {
-    return <div className="helix-card h-64 flex items-center justify-center"><div className="w-full h-40 bg-surface-2 rounded-xl animate-pulse" /></div>
+    return <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 h-64 flex items-center justify-center"><div className="w-full h-40 bg-surface-2 rounded-xl animate-pulse" /></div>
   }
   if (!available.length) {
     return (
-      <div className="helix-card h-64 flex items-center justify-center">
+      <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 h-64 flex items-center justify-center">
         <p className="text-muted text-sm text-center px-6">No body-composition readings in this range — log an InBody entry to build the trend.</p>
       </div>
     )
   }
 
   return (
-    <div className="helix-card">
+    <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5">
       <div className="flex items-baseline justify-between gap-2 mb-3 flex-wrap">
         <h3 className="font-heading font-semibold text-base">Body Composition</h3>
         <div className="flex gap-1">

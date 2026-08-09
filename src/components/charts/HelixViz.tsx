@@ -27,7 +27,7 @@ export function BodyHeatmap({ days, era = 'all' }: { days: number; era?: 'all' |
   const loads = useMemo(() => regionalLoad(data?.stats ?? [], days), [data, days])
   const byGroup = useMemo(() => new Map(loads.map((r) => [r.group, r])), [loads])
 
-  if (isLoading) return <div className="helix-card h-72 animate-pulse" />
+  if (isLoading) return <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 h-72 animate-pulse" />
   if (!data || data.stats.every((s) => s.sets === 0)) return null
 
   const fill = (r?: RegionalLoad) => {
@@ -36,7 +36,7 @@ export function BodyHeatmap({ days, era = 'all' }: { days: number; era?: 'all' |
   }
 
   return (
-    <div className="helix-card">
+    <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5">
       <h3 className="font-heading font-semibold text-base">Muscle Contour Map</h3>
       <p className="text-fluid-xs text-muted mb-2">
         Weekly sets vs MAV (productive ceiling) · {days}d window
@@ -83,11 +83,11 @@ function alpha(t: number): string {
 /* ── 2. Volume stream flow — stacked river of weekly sets per muscle group ── */
 export function VolumeStream({ days, era = 'all' }: { days: number; era?: 'all' | 'ppl' | 'axis' }) {
   const { data, isLoading } = useMuscleAnalytics(days, era)
-  if (isLoading) return <div className="helix-card h-64 animate-pulse" />
+  if (isLoading) return <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 h-64 animate-pulse" />
   if (!data || data.weekly.length < 2) return null
 
   return (
-    <div className="helix-card">
+    <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5">
       <h3 className="font-heading font-semibold text-base">Volume Stream</h3>
       <p className="text-fluid-xs text-muted mb-2">Weekly working sets per muscle group — training-focus drift</p>
       <ResponsiveContainer width="100%" height={220}>
@@ -116,7 +116,7 @@ export function RpeCalendar({ days, era = 'all' }: { days: number; era?: 'all' |
     return buildIntensityCalendar(byDate, days, today)
   }, [data, days, today])
 
-  if (isLoading) return <div className="helix-card h-40 animate-pulse" />
+  if (isLoading) return <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 h-40 animate-pulse" />
   if (!model) return null
   const { weeks, stats } = model
 
@@ -128,7 +128,7 @@ export function RpeCalendar({ days, era = 'all' }: { days: number; era?: 'all' |
     : '—'
 
   return (
-    <div className="helix-card">
+    <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5">
       <h3 className="font-heading font-semibold text-base">Intensity Calendar</h3>
       <p className="text-fluid-xs text-muted mb-3">Session load heat (volume-scaled) · streaks &amp; deloads at a glance</p>
       {/* Cells are FIXED-SIZE, not flex-1. Stretching them to fill the card

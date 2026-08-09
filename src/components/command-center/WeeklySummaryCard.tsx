@@ -30,7 +30,7 @@ export function WeeklySummaryCard() {
     <>
       {weekComplete && (
         <button onClick={() => router.push('/pathfinder')}
-          className="w-full glass-card px-4 py-3 flex items-center gap-3 text-left transition-transform active:scale-[0.99]"
+          className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-3 flex items-center gap-3 text-left transition-transform active:scale-[0.99]"
           style={{ borderColor: `${GOLD}55`, boxShadow: `0 0 20px ${GOLD}1f` }}>
           <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
             style={{ background: `${GOLD}1c`, color: GOLD }}>

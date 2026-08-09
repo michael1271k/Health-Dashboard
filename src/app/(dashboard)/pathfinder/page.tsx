@@ -39,7 +39,7 @@ const addDays = (d: Date, n: number) => { const x = new Date(d); x.setUTCDate(x.
  */
 export default function PathfinderPage() {
   return (
-    <Suspense fallback={<div className="helix-card h-64 animate-pulse" aria-hidden="true" />}>
+    <Suspense fallback={<div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 h-64 animate-pulse" aria-hidden="true" />}>
       <PathfinderInner />
     </Suspense>
   )

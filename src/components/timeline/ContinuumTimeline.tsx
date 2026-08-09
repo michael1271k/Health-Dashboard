@@ -213,7 +213,7 @@ export const ContinuumTimeline = memo(function ContinuumTimeline({ era, onOpenWe
   if (isLoading) {
     return (
       <div className="space-y-2.5">
-        {[0, 1, 2, 3].map((i) => <div key={i} className="helix-card h-[74px] animate-pulse" />)}
+        {[0, 1, 2, 3].map((i) => <div key={i} className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 h-[74px] animate-pulse" />)}
       </div>
     )
   }

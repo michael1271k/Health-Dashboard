@@ -134,13 +134,13 @@ export function VolumeChart({ data, isLoading, era = 'all' }: { data: VolumePoin
   )
 
   if (isLoading) {
-    return <div className="helix-card h-64 flex items-center justify-center"><div className="w-full h-40 bg-surface-2 rounded-xl animate-pulse" /></div>
+    return <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 h-64 flex items-center justify-center"><div className="w-full h-40 bg-surface-2 rounded-xl animate-pulse" /></div>
   }
 
   const color = splitColor(activeSplit)
 
   return (
-    <div className="helix-card">
+    <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5">
       <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
         <h3 className="font-heading font-semibold text-base">Workout Volume</h3>
         <div className="flex gap-1 overflow-x-auto no-scrollbar">

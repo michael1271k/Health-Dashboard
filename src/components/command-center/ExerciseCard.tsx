@@ -234,7 +234,7 @@ export function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collap
   if (exercise.kind === 'cardio') {
     return (
       <div ref={setNodeRef} style={sortableStyle}
-        className={`helix-card !p-2.5 !rounded-2xl shadow-[0_4px_22px_rgba(0,0,0,0.26)] ${dragClass}`}
+        className={`rounded-2xl border border-white/[0.07] bg-white/[0.03] p-2.5 !rounded-2xl shadow-[0_4px_22px_rgba(0,0,0,0.26)] ${dragClass}`}
       >
         <div className="flex items-center gap-2">
           {grip}
@@ -286,7 +286,7 @@ export function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collap
 
   return (
     <div ref={setNodeRef} style={sortableStyle}
-      className={`helix-card !p-3 !rounded-2xl shadow-[0_4px_22px_rgba(0,0,0,0.26)] ${dragClass}`}
+      className={`rounded-2xl border border-white/[0.07] bg-white/[0.03] p-3 !rounded-2xl shadow-[0_4px_22px_rgba(0,0,0,0.26)] ${dragClass}`}
     >
       {/* ── Header: grip + name + status + collapse ── */}
       <div className="flex items-center gap-2">

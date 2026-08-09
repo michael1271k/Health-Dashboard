@@ -32,7 +32,7 @@ export function PRHistoryChart({ data, isLoading }: PRHistoryChartProps) {
   const unit = useUnitSystem()
   if (isLoading) {
     return (
-      <div className="helix-card h-64 flex items-center justify-center">
+      <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 h-64 flex items-center justify-center">
         <div className="w-full h-40 bg-surface-2 rounded-xl animate-pulse" />
       </div>
     )
@@ -40,7 +40,7 @@ export function PRHistoryChart({ data, isLoading }: PRHistoryChartProps) {
 
   if (!data.length) {
     return (
-      <div className="helix-card h-64 flex items-center justify-center">
+      <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 h-64 flex items-center justify-center">
         <p className="text-muted text-sm">Log workouts to see strength trends.</p>
       </div>
     )
@@ -71,7 +71,7 @@ export function PRHistoryChart({ data, isLoading }: PRHistoryChartProps) {
   }))
 
   return (
-    <div className="helix-card">
+    <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5">
       <h3 className="font-heading font-semibold text-base mb-4">
         Estimated 1RM Trends
       </h3>

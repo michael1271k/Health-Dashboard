@@ -71,7 +71,7 @@ export function VitalsGroups() {
         const metrics = g.metrics.map((m) => ({ def: m, win: vitalWindow(rows, m.pick, m.agg) }))
         const allEmpty = metrics.every(({ win }) => win.coverage === 0)
         return (
-          <section key={g.title} className="helix-card space-y-2.5" style={{ borderColor: `${g.accent}22` }}>
+          <section key={g.title} className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-2.5" style={{ borderColor: `${g.accent}22` }}>
             <div className="flex items-center gap-2">
               <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: `${g.accent}1a`, color: g.accent }}>
                 <g.icon className="w-4 h-4" aria-hidden="true" />
@@ -91,7 +91,7 @@ export function VitalsGroups() {
           </section>
         )
       })}
-      {isLoading && <div className="helix-card h-24 animate-pulse" aria-hidden="true" />}
+      {isLoading && <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 h-24 animate-pulse" aria-hidden="true" />}
     </div>
   )
 }

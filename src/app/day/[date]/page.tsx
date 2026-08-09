@@ -114,7 +114,7 @@ function SessionBlock({ session: s, unit }: {
   return (
     <button type="button"
       onClick={() => router.push(`/session/${s.id}`)}
-      className="helix-card w-full text-left space-y-3 active:opacity-80"
+      className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 w-full text-left space-y-3 active:opacity-80"
       style={{ borderColor: `${CYAN}30`, boxShadow: `0 0 24px ${CYAN}18` }}
       aria-label={`Open full analysis for ${name}`}>
       <div className="w-full flex items-center gap-2">
@@ -370,7 +370,7 @@ export default function DailyNexusPage() {
             key: 'sleep',
             label: 'Sleep',
             content: (
-              <section className="helix-card space-y-3" style={{ borderColor: `${VIOLET}26` }}>
+              <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-3" style={{ borderColor: `${VIOLET}26` }}>
                 <h3 className="font-heading font-semibold text-fluid-sm text-text flex items-center gap-1.5">
                   <Moon className="w-3.5 h-3.5" style={{ color: VIOLET }} /> Sleep &amp; Recovery
                 </h3>
@@ -424,7 +424,7 @@ export default function DailyNexusPage() {
         </>
       ) : restDay ? (
         /* Rest day → a compact premium badge, NOT a big empty workout block */
-        <section className="helix-card flex items-center gap-3 py-4"
+        <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 flex items-center gap-3 py-4"
           style={{ borderColor: `${VIOLET}30`, boxShadow: `0 0 24px ${VIOLET}1f` }}>
           <span className="w-11 h-11 rounded-full flex items-center justify-center shrink-0"
             style={{ background: `${VIOLET}1c`, color: VIOLET, boxShadow: `0 0 18px ${VIOLET}55` }}>
@@ -440,7 +440,7 @@ export default function DailyNexusPage() {
         /* A training day with no session yet → the log CTA + swap */
         <>
           <SectionTitle>The Workout</SectionTitle>
-          <section className="helix-card space-y-3" style={{ borderColor: `${CYAN}26` }}>
+          <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-3" style={{ borderColor: `${CYAN}26` }}>
             {/* Only for the day you're actually living — a low battery three
                 weeks ago is history, not a decision. */}
             {date === logicalTodayISO() && schedule !== 'rest' && (
@@ -461,7 +461,7 @@ export default function DailyNexusPage() {
         </>
       )}
 
-      {isLoading && <div className="helix-card h-20 animate-pulse" aria-hidden="true" />}
+      {isLoading && <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 h-20 animate-pulse" aria-hidden="true" />}
       </div>
     </div>
   )

@@ -21,7 +21,7 @@ export function MuscleFocus({ detail }: { detail: SessionDetail }) {
   const maxSets = Math.max(...detail.muscleSets.map((m) => m.sets), 1)
 
   return (
-    <section className="helix-card space-y-3.5">
+    <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-3.5">
       <div className="flex items-baseline justify-between gap-2">
         <h2 className="font-heading text-fluid-base font-bold text-text flex items-center gap-2">
           <Target className="w-4 h-4" style={{ color: EMBER }} aria-hidden="true" /> Muscle Focus

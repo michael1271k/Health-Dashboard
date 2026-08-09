@@ -47,7 +47,7 @@ export function NutritionLogList({ logs, goals, isLoading, emptyMessage, onDayCl
     return <div className="space-y-2">{[...Array(6)].map((_, i) => <div key={i} className="h-16 rounded-xl bg-surface-2/60 animate-pulse" />)}</div>
   }
   if (!logs.length) {
-    return <div className="glass-card p-8 text-center text-muted text-fluid-sm">{emptyMessage}</div>
+    return <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-8 text-center text-muted text-fluid-sm">{emptyMessage}</div>
   }
 
   return (
@@ -61,7 +61,7 @@ export function NutritionLogList({ logs, goals, isLoading, emptyMessage, onDayCl
           <div key={l.date} role={onDayClick ? 'button' : undefined} tabIndex={onDayClick ? 0 : undefined}
             onClick={onDayClick ? () => onDayClick(l.date) : undefined}
             onKeyDown={onDayClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onDayClick(l.date) } } : undefined}
-            className={`glass-card px-3 py-2.5 flex items-center gap-3 ${onDayClick ? 'cursor-pointer active:opacity-80' : ''}`}
+            className={`rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2.5 flex items-center gap-3 ${onDayClick ? 'cursor-pointer active:opacity-80' : ''}`}
             style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 70px' } as React.CSSProperties}>
             <div className="w-12 shrink-0 space-y-0.5">
               <div className="text-fluid-xs font-semibold text-text leading-none">{d.toLocaleDateString('en-IL', { day: 'numeric', month: 'short' })}</div>

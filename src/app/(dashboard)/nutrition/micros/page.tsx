@@ -85,7 +85,7 @@ export default function MicrosPage() {
             const overCeiling = m.kind === 'ceiling' && have != null && have > m.target
             const stackShare = fromStack[m.key] ?? 0
             return (
-              <div key={m.key} className="helix-card !p-3 space-y-2" style={{ borderColor: `${m.color}26` }}>
+              <div key={m.key} className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-3 space-y-2" style={{ borderColor: `${m.color}26` }}>
                 <div className="flex items-baseline justify-between gap-2">
                   <span className="font-semibold text-fluid-sm text-text flex items-center gap-1 min-w-0">
                     <span className="truncate">{m.label}</span>
@@ -136,7 +136,7 @@ export default function MicrosPage() {
           {MICRO_SIGNALS.map((s) => {
             const v = signalValue(s.key)
             return (
-              <div key={s.key} className="helix-card !p-3 space-y-1" style={{ borderColor: `${s.color}22` }}>
+              <div key={s.key} className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-3 space-y-1" style={{ borderColor: `${s.color}22` }}>
                 <div className="flex items-baseline gap-1">
                   <span className="helix-num text-fluid-lg font-bold text-text">
                     {v != null ? (Math.abs(v) < 10 ? Math.round(v * 10) / 10 : Math.round(v)) : '—'}

@@ -80,7 +80,7 @@ export function WaterHelix({ ml, goalMl }: { ml: number | null; goalMl: number }
   )
 
   return (
-    <section className="helix-card space-y-2 min-h-[120px]" style={{ borderColor: `${ACCENT}30` }}>
+    <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-2 min-h-[120px]" style={{ borderColor: `${ACCENT}30` }}>
       <div className="flex items-center gap-1.5">
         <Droplets className="w-3.5 h-3.5" style={{ color: ACCENT }} aria-hidden="true" />
         <span className="font-heading font-semibold text-fluid-sm text-text">Hydration</span>

@@ -96,7 +96,7 @@ export default function WorkoutPage() {
       {loggedToday ? (
         <PostWorkoutSummary sessions={todaySessions} date={today} />
       ) : (
-      <section className="helix-card"
+      <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5"
         style={{
           borderColor: training && todayDay ? `${todayDay.color}44` : `${REST_VIOLET}33`,
           boxShadow: training && todayDay ? `0 0 26px ${todayDay.color}1f` : undefined,
@@ -164,7 +164,7 @@ export default function WorkoutPage() {
       {/* Surviving draft (autosaved) — resume where the session left off */}
       {resumeDraft && (
         <button onClick={() => router.push('/session')}
-          className="w-full glass-card glass-card--accent px-4 py-3 flex items-center gap-3 text-left">
+          className="w-full rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 flex items-center gap-3 text-left">
           <FileClock className="w-4 h-4 text-primary shrink-0" aria-hidden="true" />
           <span className="flex-1 min-w-0">
             <span className="block text-sm font-semibold text-text truncate">
@@ -185,7 +185,7 @@ export default function WorkoutPage() {
       </button>
 
       {/* Week plan — ultra-compact: one dense row per day inside a single card. */}
-      <div className="helix-card !p-1.5 divide-y divide-white/[0.05]">
+      <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-1.5 divide-y divide-white/[0.05]">
         {program.days.map((day) => {
           const isToday = day.key === todayKey
           // Program week-plan defaults to MINIMIZED — every day collapsed until

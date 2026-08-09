@@ -119,7 +119,7 @@ function SessionPageInner() {
     return (
       <div data-boxed>
         {header}
-        <div className="max-w-md mx-auto helix-card !p-4 space-y-3 mt-6">
+        <div className="max-w-md mx-auto rounded-2xl border border-white/[0.07] bg-white/[0.03] p-4 space-y-3 mt-6">
           <div className="flex items-center gap-2">
             <FileClock className="w-4 h-4 text-primary shrink-0" aria-hidden="true" />
             <h2 className="font-heading font-bold text-fluid-base text-text">Draft in progress</h2>

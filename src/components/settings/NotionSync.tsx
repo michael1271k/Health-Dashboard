@@ -75,7 +75,7 @@ export function NotionSync() {
     'focus:outline-none focus:ring-2 focus:ring-primary/60 transition-[border-color]'
 
   return (
-    <section className="helix-card space-y-3">
+    <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-3">
       <div className="flex items-center justify-between">
         <h2 className="font-semibold text-text">Integrations · Notion</h2>
         <span className={`text-[11px] font-semibold ${configured ? 'text-success' : 'text-warn'}`}>

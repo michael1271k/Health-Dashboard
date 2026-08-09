@@ -141,7 +141,7 @@ export function SwapDayControl({ date, className = '', bare = false }: {
   const busy = swap.isPending || clear.isPending || restBusy
 
   const panel = (
-    <div className={`${bare ? '' : 'mt-2 helix-card !p-3'} space-y-2 w-full`}>
+    <div className={`${bare ? '' : 'mt-2 rounded-2xl border border-white/[0.07] bg-white/[0.03] p-3'} space-y-2 w-full`}>
       <p className="text-[11px] text-muted">Place a day onto {date}:</p>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
         {program.days.map((d) => (

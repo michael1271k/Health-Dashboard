@@ -354,7 +354,7 @@ export default function SettingsPage() {
              belongs to a plan, so it is chosen (and its macros, goals and set
              volumes edited) INSIDE the plan's drawer. There is no standalone
              Phases section any more. ── */}
-      <section className="helix-card space-y-4">
+      <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-4">
         <div className="flex items-start justify-between gap-2">
           <div>
             <h2 className="font-semibold text-text">Plans &amp; Phases</h2>
@@ -419,7 +419,7 @@ export default function SettingsPage() {
       {/* Desktop: cards flow into two columns so the width isn't wasted. */}
       <div className="grid gap-6 lg:grid-cols-2 items-start">
       {/* Context mode */}
-      <section className="helix-card space-y-3">
+      <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-3">
         <h2 className="font-semibold text-text">Context Mode</h2>
         <p className="text-xs text-muted">
           Adjusts scoring penalties for exceptional circumstances.
@@ -443,7 +443,7 @@ export default function SettingsPage() {
       </section>
 
       {/* Nutrition goals */}
-      <section className="helix-card space-y-4">
+      <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-text">Nutrition Goals</h2>
           {(() => {
@@ -485,7 +485,7 @@ export default function SettingsPage() {
       </section>
 
       {/* Preferences */}
-      <section className="helix-card space-y-4">
+      <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-4">
         <h2 className="font-semibold text-text">Preferences</h2>
 
         <div className="flex items-center justify-between gap-4">
@@ -554,7 +554,7 @@ export default function SettingsPage() {
       </section>
 
       {/* Activity + sleep + water */}
-      <section className="helix-card space-y-4">
+      <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-4">
         <h2 className="font-semibold text-text">Activity &amp; Recovery Goals</h2>
         <div className="grid grid-cols-2 gap-4">
           {([
@@ -864,7 +864,7 @@ function CrashRecorderRow() {
   }, [])
   if (!crash) return null
   return (
-    <section className="helix-card space-y-2">
+    <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-2">
       <div className="flex items-center justify-between">
         <h2 className="font-semibold text-text">Last recorded crash</h2>
         <button onClick={() => { try { localStorage.removeItem('helix_last_crash') } catch { /* ignore */ } setCrash(null) }}

@@ -54,7 +54,7 @@ export function FileSystemBrowser({ reports, gymReports, focusWeek, era = 'all' 
   const file = files.find((f) => f.key === fileKey) ?? null
 
   return (
-    <section className="helix-card space-y-4">
+    <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-4">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-1.5 text-fluid-sm flex-wrap" aria-label="Breadcrumb">
         <button onClick={() => { setWeek(null); setFileKey(null) }} className="flex items-center gap-1 text-muted hover:text-primary"><Home className="w-3.5 h-3.5" /> journey</button>

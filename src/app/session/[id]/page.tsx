@@ -77,9 +77,9 @@ export default function SessionAnalysisPage() {
       <div className="mx-auto w-full max-w-[68ch] px-2 py-2 space-y-3 pb-8">
         {isLoading ? (
           <>
-            <div className="helix-card h-40 animate-pulse" />
-            <div className="helix-card h-56 animate-pulse" />
-            <div className="helix-card h-40 animate-pulse" />
+            <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 h-40 animate-pulse" />
+            <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 h-56 animate-pulse" />
+            <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 h-40 animate-pulse" />
           </>
         ) : !data ? (
           <div className="space-y-4 py-10 text-center">

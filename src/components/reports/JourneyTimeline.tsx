@@ -71,7 +71,7 @@ export const JourneyTimeline = memo(function JourneyTimeline({ reports, gymRepor
                   onClick={() => onOpenWeek(w)}
                   onPointerUp={blurOnTap}
                   disabled={empty}
-                  className={`helix-card w-full text-left px-3.5 py-3 ${empty ? 'opacity-45 cursor-default' : 'active:opacity-80'}`}
+                  className={`rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 w-full text-left px-3.5 py-3 ${empty ? 'opacity-45 cursor-default' : 'active:opacity-80'}`}
                   style={{ borderColor: `${color}30` }}
                 >
                   <div className="flex items-baseline justify-between gap-2">

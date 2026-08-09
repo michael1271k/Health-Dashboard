@@ -41,7 +41,7 @@ export const FuelForceBand = memo(function FuelForceBand({ date, proteinG, prote
 
   return (
     <Link href={`/day/${date}`} prefetch={false}
-      className="helix-card flex items-center gap-3 px-3.5 py-3 active:opacity-80"
+      className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 flex items-center gap-3 px-3.5 py-3 active:opacity-80"
       style={{ borderColor: '#8E9AAC30' }}>
       <span className="flex h-9 w-9 items-center justify-center rounded-lg shrink-0" style={{ background: '#8E9AAC1f', color: '#8E9AAC' }}>
         <Dumbbell className="w-4 h-4" />

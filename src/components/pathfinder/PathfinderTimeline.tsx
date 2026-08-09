@@ -154,7 +154,7 @@ export function PathfinderTimeline() {
   return (
     <div className="space-y-4">
       {isPending ? (
-        <div className="helix-card h-40 animate-pulse" aria-hidden="true" />
+        <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 h-40 animate-pulse" aria-hidden="true" />
       ) : nodes.length === 0 ? (
         <p className="text-fluid-sm text-muted py-8 text-center">No weeks in this era yet — log a session to start the timeline.</p>
       ) : (
@@ -234,7 +234,7 @@ const WeekCapsule = memo(forwardRef<HTMLDivElement, {
           reduced motion via the global .aura-breathe guard.
           The card is a ROW, not a button: the report link has to be a sibling of
           the toggle, since a link inside a button is neither valid nor tappable. */}
-      <div className={`helix-card w-full !px-0 !py-0 flex items-stretch relative overflow-hidden ${ready ? 'aura-breathe' : ''}`}
+      <div className={`rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 w-full !px-0 !py-0 flex items-stretch relative overflow-hidden ${ready ? 'aura-breathe' : ''}`}
         style={ready
           ? { borderColor: `${GOLD}66`, boxShadow: `0 0 28px ${GOLD}33, inset 0 1px 0 ${GOLD}2e` }
           : { borderColor: `${color}33` }}>

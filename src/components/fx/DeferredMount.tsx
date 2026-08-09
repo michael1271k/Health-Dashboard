@@ -19,6 +19,6 @@ export function DeferredMount({ children, minHeight = 120 }: { children: React.R
     const t = setTimeout(() => setReady(true), 200) // Safari: no rIC
     return () => clearTimeout(t)
   }, [])
-  if (!ready) return <div className="helix-card animate-pulse" style={{ minHeight }} aria-hidden="true" />
+  if (!ready) return <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 animate-pulse" style={{ minHeight }} aria-hidden="true" />
   return <>{children}</>
 }

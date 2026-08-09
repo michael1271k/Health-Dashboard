@@ -41,13 +41,13 @@ export function ProgressionTrail({ sessionId }: { sessionId: string }) {
   const { data: intel, isLoading } = useSessionIntel(sessionId)
   const unit = useUnitSystem()
 
-  if (isLoading) return <div className="helix-card h-40 animate-pulse" aria-hidden="true" />
+  if (isLoading) return <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 h-40 animate-pulse" aria-hidden="true" />
   if (!intel) return null
 
   const maxVol = Math.max(...(intel.volumes.map((v) => v.volumeKg) ?? [1]), 1)
 
   return (
-    <section className="helix-card space-y-3" style={{ borderColor: `${VIOLET}28` }}>
+    <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-3" style={{ borderColor: `${VIOLET}28` }}>
       <div className="flex items-baseline justify-between gap-2 flex-wrap">
         <h2 className="font-heading text-fluid-base font-bold text-text flex items-center gap-2">
           <TrendingUp className="w-4 h-4" style={{ color: VIOLET }} aria-hidden="true" /> Progression

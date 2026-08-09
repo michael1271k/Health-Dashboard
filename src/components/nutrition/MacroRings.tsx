@@ -69,7 +69,7 @@ export const MacroRings = memo(function MacroRings({ today, logs, goals, date }:
   ]
 
   return (
-    <section className="helix-card">
+    <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5">
       <div className="flex items-baseline justify-between mb-4">
         <h2 className="font-heading font-semibold text-text">Fuel</h2>
         <span className="text-fluid-xs text-muted">goal <span className="helix-num">{goals.calorie.toLocaleString()}</span> kcal</span>

@@ -34,7 +34,7 @@ export default function ReportsPage() {
       </div>
 
       {!sentinel?.length && !legacyWithProse.length && (
-        <div className="helix-card text-center py-8 space-y-1.5">
+        <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 text-center py-8 space-y-1.5">
           <FileText className="w-6 h-6 mx-auto text-muted" aria-hidden="true" />
           <p className="text-fluid-sm text-text">No reports yet.</p>
           <p className="text-fluid-xs text-muted">
@@ -50,7 +50,7 @@ export default function ReportsPage() {
             const phase = getWeekPhase(r.weekStart)
             return (
               <Link key={r.id} href={`/report/${r.id}`}
-                className="helix-card !py-3 flex items-center gap-3 hover:border-primary/30 transition-colors">
+                className="rounded-2xl border border-white/[0.07] bg-white/[0.03] px-5 py-3 flex items-center gap-3 hover:border-primary/30 transition-colors">
                 <span className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
                   style={{ background: 'rgba(138,111,168,0.12)', color: 'var(--color-primary)' }}>
                   <Radar className="w-4 h-4" aria-hidden="true" />
@@ -81,7 +81,7 @@ export default function ReportsPage() {
           <h2 className="text-[10px] uppercase tracking-widest text-muted">Earlier weekly summaries</h2>
           {legacyWithProse.map((r) => (
             <Link key={r.id} href={`/report/${r.id}`}
-              className="helix-card !py-2.5 flex items-center gap-3 hover:border-primary/30 transition-colors">
+              className="rounded-2xl border border-white/[0.07] bg-white/[0.03] px-5 py-2.5 flex items-center gap-3 hover:border-primary/30 transition-colors">
               <FileText className="w-4 h-4 text-muted shrink-0" aria-hidden="true" />
               <div className="min-w-0 flex-1">
                 <span className="font-heading font-semibold text-fluid-sm text-text">Week {r.week_number}</span>

@@ -123,7 +123,7 @@ export function BodyMap({ log }: { log: DayVaultData['log'] }) {
 
   if (!weight || Object.values(mass).every((v) => v == null)) {
     return (
-      <section className="helix-card">
+      <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5">
         <h3 className="font-heading font-semibold text-fluid-sm text-text">Body Composition</h3>
         <p className="text-[11px] text-muted mt-1">Log weight + body-fat / muscle % in the InBody card to map your composition.</p>
       </section>
@@ -153,7 +153,7 @@ export function BodyMap({ log }: { log: DayVaultData['log'] }) {
   })
 
   return (
-    <section className="helix-card space-y-3" style={{ borderColor: `${ROSE}26` }}>
+    <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-3" style={{ borderColor: `${ROSE}26` }}>
       <div className="flex items-baseline justify-between gap-2">
         <h3 className="font-heading font-semibold text-fluid-sm text-text">Body Composition</h3>
         <div className="flex items-baseline gap-2.5 helix-num text-[11px]">

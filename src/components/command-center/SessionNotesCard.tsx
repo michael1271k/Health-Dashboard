@@ -5,7 +5,7 @@ import { NotebookPen } from 'lucide-react'
 /** Session-level notes — highly visible, edit any time (also post-paste). */
 export function SessionNotesCard({ notes, onChange }: { notes: string; onChange: (v: string) => void }) {
   return (
-    <div className="helix-card !p-4 space-y-2">
+    <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-4 space-y-2">
       <div className="flex items-center gap-1.5 text-muted">
         <NotebookPen className="w-3.5 h-3.5" aria-hidden="true" />
         <span className="text-[11px] font-bold uppercase tracking-wide">Session Notes</span>

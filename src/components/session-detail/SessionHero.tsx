@@ -64,7 +64,7 @@ export function SessionHero({ detail }: { detail: SessionDetail }) {
   const pretty = new Date(detail.date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'long' })
 
   return (
-    <section className="helix-card space-y-3" style={{ borderColor: `${accent}33`, boxShadow: `0 0 24px ${accent}14` }}>
+    <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-3" style={{ borderColor: `${accent}33`, boxShadow: `0 0 24px ${accent}14` }}>
       {/* IDENTITY LIVES IN THE STICKY COMMAND BAR, not here.
           The page went full-bleed and grew a pinned header carrying the back
           button, the day label in its own colour, the date and the phase badge.
