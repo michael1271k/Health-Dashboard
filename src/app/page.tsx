@@ -8,7 +8,7 @@ import { LiquidModal } from '@/components/ui/LiquidModal'
 import { ReadinessOrb } from '@/components/dashboard/ReadinessOrb'
 import { BioStrip, type BioStripProps } from '@/components/dashboard/BioStrip'
 import { MacroRings } from '@/components/nutrition/MacroRings'
-import { Tile } from '@/components/ui/Zone'
+import { Surface, Tile } from '@/components/ui/Zone'
 import { InsightCoach } from '@/components/dashboard/InsightCoach'
 import { AnimatedCard } from '@/components/dashboard/AnimatedBento'
 import { WeeklyReviewCard } from '@/components/dashboard/WeeklyReviewCard'
@@ -54,7 +54,7 @@ import type { SplitDay } from '@/lib/types/workout'
 
 const TrendStrip = dynamic(
   () => import('@/components/dashboard/TrendStrip').then((m) => ({ default: m.TrendStrip })),
-  { ssr: false, loading: () => <div className="helix-card min-h-[280px] animate-pulse" /> },
+  { ssr: false, loading: () => <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 min-h-[280px] animate-pulse" /> },
 )
 
 // Domain accents — all from the single palette source of truth.
@@ -276,14 +276,26 @@ export default function DashboardPage() {
   ]
 
   return (
-    <div data-boxed className="space-y-6">
-      <BrandHeader />
+    /* Bands, not a bento of floating cards. The SURFACE reaches both screen
+       edges — true edge-to-edge on a phone — while `measure="grid"` keeps the
+       CONTENT on the same 80rem column the old `max-w-7xl` gave a desktop. */
+    <div className="pb-4">
+      <Surface measure="grid" pad="snug" variant="band">
+        <BrandHeader />
+      </Surface>
 
       {/* ── Hero: the master Recovery widget — the breathing pulse/ECG orb (recovery
           + battery merged), spanning both columns on desktop with a driver panel. ── */}
       <AnimatedCard index={0}>
-        <button onClick={() => setOpen('readiness')}
-          className="helix-card w-full text-left" aria-label="Open recovery details">
+        <Surface
+          variant="hero"
+          measure="grid"
+          pad="card"
+          accent={EMBER}
+          as="button"
+          onPress={() => setOpen('readiness')}
+          label="Open recovery details"
+        >
           <div className="flex flex-col md:flex-row md:items-center gap-5">
             <div className="flex-1 flex items-center justify-center min-h-[300px]">
               <ReadinessOrb score={score ?? null} isLoading={scoreLoading} />
@@ -302,18 +314,20 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
-        </button>
+        </Surface>
       </AnimatedCard>
 
       {/* Daily domain strips. The Body strip is dual-action: tap opens the
           composition popup, double-tap jumps to today's Nexus InBody entry. */}
-      <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
-        {strips.map((s, i) => (
-          <AnimatedCard key={s.key} index={i + 2}>
-            <BioStrip {...s} onClick={s.key === 'body' ? onBodyTap : () => setOpen(s.key)} />
-          </AnimatedCard>
-        ))}
-      </div>
+      <Surface measure="grid" pad="snug" variant="band">
+        <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+          {strips.map((s, i) => (
+            <AnimatedCard key={s.key} index={i + 2}>
+              <BioStrip {...s} onClick={s.key === 'body' ? onBodyTap : () => setOpen(s.key)} />
+            </AnimatedCard>
+          ))}
+        </div>
+      </Surface>
 
       {/* Smart Coach — lifts due a load bump next session (renders nothing when empty). */}
       <ProgressionAlerts />

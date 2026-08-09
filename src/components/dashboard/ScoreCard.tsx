@@ -83,7 +83,7 @@ export const ScoreCard = memo(function ScoreCard({ score, isLoading }: ScoreCard
     'text-danger'
 
   return (
-    <div className="helix-card flex flex-col h-full">
+    <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 flex flex-col h-full">
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-heading font-semibold text-lg">Daily Score</h2>
         <span className="text-xs text-muted uppercase tracking-wider">Today</span>

@@ -47,7 +47,7 @@ export const BioStrip = memo(function BioStrip({ icon: Icon, label, accent, valu
   return (
     <button
       onClick={onClick}
-      className="helix-card w-full flex items-center gap-3 px-4 py-3 text-left active:opacity-80 transition-opacity"
+      className="rounded-xl border border-white/[0.07] bg-white/[0.03] w-full flex items-center gap-3 px-4 py-3 text-left active:opacity-80 transition-opacity"
       style={{ borderColor: `${accent}2e` }}
     >
       <span className="flex h-9 w-9 items-center justify-center rounded-xl shrink-0" style={{ background: `${accent}1c`, color: accent, boxShadow: `0 0 12px ${accent}30` }}>

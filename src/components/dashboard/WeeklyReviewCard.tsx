@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { TrendingUp, Moon, Dumbbell, Droplets } from 'lucide-react'
 import { logicalTodayISO } from '@/lib/utils/day'
+import { Surface } from '@/components/ui/Zone'
 
 /** Most recent Sunday (this logical week's start), so the review resets weekly. */
 function startOfWeekISO(): string {
@@ -118,7 +119,7 @@ export function WeeklyReviewCard() {
 
   if (isLoading) {
     return (
-      <div className="helix-card h-48 animate-pulse">
+      <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 h-48 animate-pulse">
         <div className="h-5 w-32 bg-surface-2 rounded mb-4" />
         {[...Array(4)].map((_, i) => (
           <div key={i} className="h-8 w-full bg-surface-2 rounded mb-2" />
@@ -128,7 +129,7 @@ export function WeeklyReviewCard() {
   }
 
   return (
-    <div className="helix-card">
+    <Surface variant="band" measure="grid" pad="snug">
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-heading font-semibold text-base text-text">Weekly Review</h3>
         <span className="text-xs text-muted">This week</span>
@@ -166,6 +167,6 @@ export function WeeklyReviewCard() {
           </span>
         </div>
       )}
-    </div>
+    </Surface>
   )
 }

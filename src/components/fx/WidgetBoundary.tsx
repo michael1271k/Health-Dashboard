@@ -26,7 +26,7 @@ export class WidgetBoundary extends Component<
   render(): ReactNode {
     if (this.state.failed) {
       return (
-        <div className="helix-card flex flex-col items-center justify-center gap-2 text-center"
+        <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 flex flex-col items-center justify-center gap-2 text-center"
           style={{ minHeight: this.props.minHeight ?? 160 }}>
           <AlertTriangle className="w-5 h-5 text-warn" aria-hidden="true" />
           <p className="text-fluid-xs text-muted">{this.props.label ?? 'This widget'} couldn&apos;t load.</p>

@@ -3,6 +3,7 @@
 import { Brain, TrendingUp, AlertTriangle, Minus } from 'lucide-react'
 import { useInsights } from '@/lib/hooks/useInsights'
 import type { InsightTone } from '@/lib/coach/insights'
+import { Surface } from '@/components/ui/Zone'
 
 const TONE: Record<InsightTone, { color: string; Icon: typeof TrendingUp }> = {
   positive: { color: '#3E9E7A', Icon: TrendingUp },
@@ -22,7 +23,7 @@ export function InsightCoach() {
   const insights = data?.insights ?? []
 
   return (
-    <div className="helix-card">
+    <Surface variant="band" measure="grid" pad="snug" className="gap-2">
       <div className="flex items-center gap-2 mb-3">
         <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15 text-primary">
           <Brain className="w-4 h-4" aria-hidden="true" />
@@ -71,6 +72,6 @@ export function InsightCoach() {
           )}
         </div>
       )}
-    </div>
+    </Surface>
   )
 }

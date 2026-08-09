@@ -56,16 +56,30 @@ export type SurfaceVariant = 'band' | 'inset' | 'hero' | 'raised'
 
 const VARIANT: Record<SurfaceVariant, string> = {
   band: 'border-b bg-white/[0.02]',
-  inset: 'rounded-2xl border overflow-hidden bg-white/[0.02]',
+  inset: 'rounded-2xl border bg-white/[0.02]',
   hero: 'border-b',
-  raised: 'rounded-2xl border overflow-hidden bg-white/[0.03] shadow-[0_8px_24px_rgba(0,0,0,0.4)]',
+  raised: 'rounded-2xl border bg-white/[0.03] shadow-[0_8px_24px_rgba(0,0,0,0.4)]',
 }
+
+/**
+ * Inner padding.
+ *
+ * `none` is right for a band whose children are ZoneRows (they pad themselves).
+ * `card` is the old `.helix-card` p-5, for a self-contained panel that is not
+ * a row list — a chart frame, a settings group, a hero.
+ */
+const SURFACE_PAD = {
+  none: '',
+  card: 'p-5',
+  snug: 'p-4',
+} as const
 
 export function Surface({
   children,
   variant = 'band',
   accent,
   measure = 'read',
+  pad = 'none',
   as = 'section',
   href,
   onPress,
@@ -78,6 +92,7 @@ export function Surface({
   /** Hex. Drives the left rule, the border tint, and the hero wash. */
   accent?: string
   measure?: Measure
+  pad?: keyof typeof SURFACE_PAD
   /** `button` renders a real button with press feedback. Ignored when `href` is set. */
   as?: 'section' | 'div' | 'button'
   href?: string
@@ -100,7 +115,7 @@ export function Surface({
           aria-hidden="true"
         />
       )}
-      <div className={`min-w-0 flex-1 ${MEASURE[measure]}`}>{children}</div>
+      <div className={`min-w-0 flex-1 ${MEASURE[measure]} ${SURFACE_PAD[pad]}`}>{children}</div>
     </div>
   )
 

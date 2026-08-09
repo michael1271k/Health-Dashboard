@@ -5,6 +5,7 @@ import { ResponsiveContainer, AreaChart, Area } from 'recharts'
 import { Gauge, Scale, Moon } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
+import { Surface } from '@/components/ui/Zone'
 
 function daysAgoISO(n: number): string {
   return new Date(Date.now() - n * 86400000).toLocaleDateString('en-CA')
@@ -84,7 +85,7 @@ function Spark({ s }: { s: Series }) {
 export function TrendStrip() {
   const { data, isLoading } = useTrendSeries()
   return (
-    <div className="helix-card gap-2">
+    <Surface variant="band" measure="grid" pad="snug" className="gap-2">
       <div className="flex items-center justify-between mb-2">
         <h2 className="font-heading font-semibold text-fluid-base">30-Day Trends</h2>
         <span className="text-fluid-xs text-muted uppercase tracking-wider">score · weight · sleep</span>
@@ -98,6 +99,6 @@ export function TrendStrip() {
           {(data ?? []).map((s) => <Spark key={s.label} s={s} />)}
         </div>
       )}
-    </div>
+    </Surface>
   )
 }
