@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { m, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
 import { Portal, useOverlayBodyLock } from './overlay'
+import { CROSSFADE, MATERIAL, useHelixReducedMotion } from '@/lib/motion'
 
 interface LiquidModalProps {
   open: boolean
@@ -26,11 +26,11 @@ interface LiquidModalProps {
  * - Reduce-motion collapses the pop to a plain fade.
  */
 export function LiquidModal({ open, onClose, title, accent = '#E0703C', children }: LiquidModalProps) {
-  const [reduceMotion, setReduceMotion] = useState(false)
-
-  useEffect(() => {
-    setReduceMotion(document.documentElement.dataset.reduceMotion === 'true')
-  }, [open])
+  // Read at render, not in an effect keyed on `open`. The old version resolved
+  // one frame LATE, so the first modal of every session animated in full even
+  // with reduce-motion on — and it only ever saw the in-app toggle, never the
+  // OS setting. One hook now answers for both.
+  const reduceMotion = useHelixReducedMotion()
 
   useOverlayBodyLock(open, onClose)
 
@@ -45,7 +45,7 @@ export function LiquidModal({ open, onClose, title, accent = '#E0703C', children
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.16 }}
+            transition={CROSSFADE}
             onClick={onClose}
             aria-hidden="true"
           />
@@ -62,15 +62,13 @@ export function LiquidModal({ open, onClose, title, accent = '#E0703C', children
               background:
                 `linear-gradient(158deg, ${accent}12 0%, transparent 42%),` +
                 'linear-gradient(rgba(12,13,17,0.90), rgba(12,13,17,0.90))',
-              backdropFilter: 'blur(26px) saturate(150%)',
-              WebkitBackdropFilter: 'blur(26px) saturate(150%)',
               border: `1px solid ${accent}30`,
               boxShadow: `0 24px 64px rgba(0,0,0,0.62), 0 0 32px ${accent}1f, inset 0 1px 0 rgba(255,255,255,0.07)`,
             }}
-            initial={reduceMotion ? { opacity: 0 } : { opacity: 0, transform: 'translate3d(0, 14px, 0) scale(0.95)' }}
-            animate={reduceMotion ? { opacity: 1 } : { opacity: 1, transform: 'translate3d(0, 0, 0) scale(1)' }}
+            initial={reduceMotion ? { opacity: 0 } : { opacity: 0, backdropFilter: 'blur(0px) saturate(100%)', transform: 'translate3d(0, 14px, 0) scale(0.95)' }}
+            animate={reduceMotion ? { opacity: 1 } : { opacity: 1, backdropFilter: 'blur(26px) saturate(150%)', transform: 'translate3d(0, 0, 0) scale(1)' }}
             exit={reduceMotion ? { opacity: 0 } : { opacity: 0, transform: 'translate3d(0, 10px, 0) scale(0.97)' }}
-            transition={reduceMotion ? { duration: 0.12 } : { type: 'spring', stiffness: 420, damping: 32, mass: 0.75 }}
+            transition={reduceMotion ? CROSSFADE : MATERIAL}
           >
             {/* One-shot sheen sweep across the glass on open */}
             {!reduceMotion && (
