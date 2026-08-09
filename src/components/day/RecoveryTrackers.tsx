@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Activity, Dumbbell } from 'lucide-react'
 import { useDoms, useLogDoms, useDomsSources, DOMS_MUSCLES, DOMS_LEVELS, type DomsMuscle } from '@/lib/hooks/useRecovery'
 import { EMBER, MUTED, HAIRLINE } from '@/lib/theme/palette'
-import { LiquidModal } from '@/components/ui/LiquidModal'
+import { Sheet } from '@/components/ui/Sheet'
 import { SorenessMap, GROUP_MUSCLES, GROUP_LABEL, type SorenessGroup } from '@/components/day/SorenessMap'
 import { SEVERITY_COLOR, SEVERITY_WORD } from '@/components/day/severity'
 
@@ -200,8 +200,11 @@ export function DomsTracker({ date }: { date: string }) {
         </div>
       </div>
 
-      {/* One popup per broad area — the whole group rated in one place. */}
-      <LiquidModal
+      {/* One drawer per broad area — the whole group rated in one place.
+          A rating pass is a handful of taps you want to leave quickly, which is
+          exactly what swipe-to-dismiss is for; the centred glass box it replaces
+          could only be closed by aiming at an X. */}
+      <Sheet
         open={picking != null}
         onClose={() => setPicking(null)}
         title={picking ? GROUP_LABEL[picking] : undefined}
@@ -221,7 +224,7 @@ export function DomsTracker({ date }: { date: string }) {
             />
           ))}
         </div>
-      </LiquidModal>
+      </Sheet>
     </div>
   )
 }

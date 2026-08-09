@@ -15,8 +15,24 @@ interface SheetProps {
   onClose: () => void
   title?: string
   maxHeight?: string
-  /** 'wide' widens the ≥sm dialog for dense content (the Command Center deck). */
+  /** 'wide' widens the ≥sm dialog for dense content. */
   size?: 'default' | 'wide'
+  /**
+   * Hex. Draws a 2px hairline inside the panel's top edge, so a sheet can carry
+   * its domain's colour the way the app bar does. This is the one thing the old
+   * centred LiquidModal did that the Sheet could not, and the reason its call
+   * sites could not simply move across.
+   */
+  accent?: string
+  /**
+   * Paint order. `stacked` sits above a sheet that is already open.
+   *
+   * The body-scroll lock is ref-counted already (see overlay.tsx), so stacking
+   * has always been SAFE — what was missing was a z-index that made the inner
+   * surface land on top. The dashboard's supplement sheet opens two of its own,
+   * and at one z-index the child painted behind its parent.
+   */
+  layer?: 'base' | 'stacked'
   children: React.ReactNode
 }
 
@@ -48,7 +64,9 @@ interface SheetProps {
  * instead of jumping. There is deliberately no `isAnimating` state, nothing
  * disabled during a transition, and no `pointer-events: none`.
  */
-export function Sheet({ open, onClose, title, maxHeight = '90dvh', size = 'default', children }: SheetProps) {
+export function Sheet({
+  open, onClose, title, maxHeight = '90dvh', size = 'default', accent, layer = 'base', children,
+}: SheetProps) {
   const controls = useDragControls()
   const panel = useRef<HTMLDivElement>(null)
   const running = useRef<AnimationPlaybackControls | null>(null)
@@ -77,12 +95,15 @@ export function Sheet({ open, onClose, title, maxHeight = '90dvh', size = 'defau
     void running.current.finished.then(onClose).catch(() => {})
   }, [seize, reduce, y, height, onClose])
 
-  // z-ladder: nav 50 · PullToRefresh 70 · Sheet 80 · LiquidModal 85 · DatePicker 90
+  // z-ladder: nav 50 · PullToRefresh 70 · Sheet 80 · stacked Sheet 88 · DatePicker 90
   return (
     <Portal>
     <AnimatePresence onExitComplete={() => y.set(0)}>
       {open && (
-        <div className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center" role="dialog" aria-modal="true">
+        <div
+          className={`fixed inset-0 flex items-end justify-center sm:items-center ${layer === 'stacked' ? 'z-[88]' : 'z-[80]'}`}
+          role="dialog" aria-modal="true"
+        >
           {/* Backdrop — plain (no blur) so only a cheap opacity fade animates */}
           <m.div
             className="absolute inset-0 bg-black/65"
@@ -149,6 +170,14 @@ export function Sheet({ open, onClose, title, maxHeight = '90dvh', size = 'defau
               }
             }}
           >
+            {accent && (
+              <span
+                aria-hidden="true"
+                className="absolute inset-x-0 top-0 h-0.5 rounded-t-3xl"
+                style={{ background: `linear-gradient(90deg, transparent, ${accent}, transparent)` }}
+              />
+            )}
+
             {/* Header / drag affordance — drag starts here only */}
             <div
               className="shrink-0 px-5 pt-2"
