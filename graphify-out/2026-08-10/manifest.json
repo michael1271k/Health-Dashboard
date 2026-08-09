@@ -160,8 +160,8 @@
     "semantic_hash": ""
   },
   "public/sw.js": {
-    "mtime": 1786310142.8376372,
-    "ast_hash": "c8da0486aacf996234cfc3af25b88dbf",
+    "mtime": 1786309815.806852,
+    "ast_hash": "8f46157b4bfa72775b1271150f1e6ed4",
     "semantic_hash": ""
   },
   "scripts/generate-icons.mjs": {
@@ -470,8 +470,8 @@
     "semantic_hash": ""
   },
   "src/components/day/BodyMap.tsx": {
-    "mtime": 1786310074.0593283,
-    "ast_hash": "111a8e746c2eeb1e1753bc761220f070",
+    "mtime": 1786308569.708351,
+    "ast_hash": "9f97961745537851552860766b5f8b8b",
     "semantic_hash": ""
   },
   "src/components/day/CardioLogger.tsx": {
