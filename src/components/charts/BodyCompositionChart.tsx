@@ -2,9 +2,9 @@
 
 import { useId, useMemo, useState } from 'react'
 import {
-  ResponsiveContainer, ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceDot,
+  ResponsiveContainer, ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceDot,
 } from 'recharts'
-import { ChartTooltip } from './ChartTooltip'
+import { ChartScrubber, SmartLegend, useScrub, lastValues, SCRUB_TOUCH } from './SmartLegend'
 import type { BodyTrendRow, BodyDetailRow } from '@/lib/hooks/useCharts'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 import { HELIX_CUT_START } from '@/lib/programs'
@@ -49,6 +49,24 @@ const FAMILY_META: Record<Family, { label: string; unit: string }> = {
   mass:     { label: 'Mass',        unit: '' },       // filled in with the user's unit
   percent:  { label: 'Composition', unit: '%' },
   visceral: { label: 'Visceral',    unit: '' },
+}
+
+/** Which series the legend lists, per family. Mirrors the <Line>/<Area> set below. */
+const FAMILY_SERIES: Record<Family, Array<{ key: string; name: string; color: string }>> = {
+  mass: [
+    { key: 'weight', name: 'Weight', color: COLORS.weight },
+    { key: 'fatFreeMass', name: 'Fat-Free', color: COLORS.lean },
+    { key: 'muscleMass', name: 'Muscle', color: COLORS.musclePct },
+    { key: 'fatMass', name: 'Fat', color: COLORS.fatMass },
+  ],
+  percent: [
+    { key: 'fatPct', name: 'Fat %', color: COLORS.fatPct },
+    { key: 'musclePct', name: 'Muscle %', color: COLORS.musclePct },
+    { key: 'water', name: 'Water %', color: COLORS.water },
+  ],
+  visceral: [
+    { key: 'visceral', name: 'Visceral', color: COLORS.visceral },
+  ],
 }
 
 const fmtDate = (d: string) =>
@@ -136,6 +154,7 @@ export function BodyCompositionChart({ trend, detail, isLoading, showEraBoundary
   // Scoped — an SVG id is document-global, so a hardcoded one collides with any
   // second instance on the page.
   const bodyFill = `bodyFill-${useId().replace(/:/g, '')}`
+  const scrub = useScrub()
   const [family, setFamily] = useState<Family>('mass')
   // The isolated series, by dataKey. null = show them all.
   const [focus, setFocus] = useState<string | null>(null)
@@ -244,7 +263,7 @@ export function BodyCompositionChart({ trend, detail, isLoading, showEraBoundary
         </button>
       )}
 
-      <div role="img" aria-label={`Body composition — ${FAMILY_META[active].label}`}>
+      <div role="img" aria-label={`Body composition — ${FAMILY_META[active].label}`} style={SCRUB_TOUCH}>
         <ResponsiveContainer width="100%" height={240}>
           <ComposedChart data={chartData} margin={{ top: 6, right: 10, left: -8, bottom: 0 }}>
             <defs>
@@ -258,19 +277,8 @@ export function BodyCompositionChart({ trend, detail, isLoading, showEraBoundary
               minTickGap={24} axisLine={false} tickLine={false} interval="preserveStartEnd" />
             <YAxis tick={{ fill: COLORS.text, fontSize: 10, fontFamily: 'var(--font-mono)' }}
               width={38} axisLine={false} tickLine={false} domain={domain} />
-            <Tooltip content={<ChartTooltip focus={focus} />} />
-            {/* Tapping a legend entry isolates that curve; tapping it again (or
-                the focused one) clears. This is the tooltip fix: with six series
-                on screen a shared tooltip is a wall of numbers, and Recharts'
-                `shared={false}` cannot help because every line is `dot={false}`
-                and has nothing to hit-test. */}
-            <Legend
-              wrapperStyle={{ fontSize: 10, cursor: 'pointer' }}
-              onClick={(e) => {
-                const key = (e as { dataKey?: string }).dataKey
-                if (key) setFocus((f) => (f === key ? null : key))
-              }}
-            />
+            {/* The legend below is the readout now, so the tooltip only reports. */}
+            <Tooltip content={<ChartScrubber scrub={scrub} />} />
 
             {active === 'mass' && (
               <>
@@ -304,6 +312,14 @@ export function BodyCompositionChart({ trend, detail, isLoading, showEraBoundary
           </ComposedChart>
         </ResponsiveContainer>
       </div>
+
+      <SmartLegend
+        series={FAMILY_SERIES[active].map((x) => ({ ...x, unit: active === 'mass' ? unit : active === 'percent' ? '%' : '' }))}
+        scrub={scrub}
+        fallback={lastValues(chartData, FAMILY_SERIES[active].map((x) => x.key))}
+        focus={focus}
+        onFocus={setFocus}
+      />
     </div>
   )
 }

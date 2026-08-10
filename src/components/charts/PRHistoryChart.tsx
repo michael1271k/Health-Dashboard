@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import {
   ResponsiveContainer,
   LineChart,
@@ -8,9 +9,8 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
 } from 'recharts'
-import { ChartTooltip } from './ChartTooltip'
+import { ChartScrubber, SmartLegend, useScrub, lastValues, SCRUB_TOUCH, type LegendSeries } from './SmartLegend'
 import type { PRRow } from '@/lib/hooks/useCharts'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 import { eraForDate } from '@/lib/programs'
@@ -30,6 +30,9 @@ interface PRHistoryChartProps {
 
 export function PRHistoryChart({ data, isLoading }: PRHistoryChartProps) {
   const unit = useUnitSystem()
+  // Declared before the early returns — hook order cannot depend on data.
+  const scrub = useScrub()
+  const [focus, setFocus] = useState<string | null>(null)
   if (isLoading) {
     return (
       <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 h-64 flex items-center justify-center">
@@ -70,12 +73,21 @@ export function PRHistoryChart({ data, isLoading }: PRHistoryChartProps) {
     ...byDate.get(date),
   }))
 
+  // The legend covers the five real series. The dashed PPL ghosts carry
+  // legendType="none" on the chart and stay out of the readout too — a ghost is
+  // context for the line above it, not a sixth thing to compare.
+  const shown = exercises.slice(0, 5)
+  const legendSeries: LegendSeries[] = shown.map((name, i) => ({
+    key: name, name, color: EXERCISE_COLORS[i % EXERCISE_COLORS.length], unit,
+  }))
+  const fallback = lastValues(chartData, shown)
+
   return (
     <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5">
       <h3 className="font-heading font-semibold text-base mb-4">
         Estimated 1RM Trends
       </h3>
-      <div role="img" aria-label="Strength trend chart showing estimated 1 rep max over time">
+      <div role="img" aria-label="Strength trend chart showing estimated 1 rep max over time" style={SCRUB_TOUCH}>
         <ResponsiveContainer width="100%" height={240}>
           <LineChart data={chartData} margin={{ top: 4, right: 26, bottom: 0, left: 0 }}>
             <CartesianGrid stroke="#23262B" strokeDasharray="3 3" vertical={false} />
@@ -95,14 +107,13 @@ export function PRHistoryChart({ data, isLoading }: PRHistoryChartProps) {
               width={42}
               tickFormatter={(v) => `${v}${unit}`}
             />
+            {/* The tooltip IS the scrub event source: it draws nothing and
+                forwards recharts' own throttled payload to a MotionValue that
+                the legend below subscribes to. No extra listener, and no React
+                render while a finger is moving. */}
             <Tooltip
-              content={<ChartTooltip />}
+              content={<ChartScrubber scrub={scrub} />}
               cursor={{ stroke: '#23262B', strokeWidth: 1 }}
-            />
-            <Legend
-              wrapperStyle={{ fontSize: 11, color: '#79808C' }}
-              iconType="circle"
-              iconSize={6}
             />
             {exercises.slice(0, 5).map((name, i) => {
               const color = EXERCISE_COLORS[i % EXERCISE_COLORS.length]
@@ -131,6 +142,7 @@ export function PRHistoryChart({ data, isLoading }: PRHistoryChartProps) {
                   name={name}
                   stroke={color}
                   strokeWidth={2}
+                  strokeOpacity={focus && focus !== name ? 0.16 : 1}
                   dot={false}
                   activeDot={{ r: 4 }}
                   connectNulls
@@ -140,6 +152,21 @@ export function PRHistoryChart({ data, isLoading }: PRHistoryChartProps) {
           </LineChart>
         </ResponsiveContainer>
       </div>
+
+      <SmartLegend
+        series={legendSeries}
+        scrub={scrub}
+        fallback={fallback}
+        focus={focus}
+        onFocus={setFocus}
+      />
+      {focus && (
+        /* A focused chart with no way back out is a trap. */
+        <button type="button" onClick={() => setFocus(null)}
+          className="mt-1 text-[10px] text-muted underline underline-offset-2">
+          Showing one series · show all
+        </button>
+      )}
       {exercises.length > 5 && (
         <p className="text-xs text-muted mt-2 text-center">
           Showing top 5 exercises. Filter by exercise in the logger.
