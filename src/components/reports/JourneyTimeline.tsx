@@ -4,11 +4,18 @@ import { memo } from 'react'
 import { Dumbbell, FileText } from 'lucide-react'
 import type { GymReportRow } from '@/lib/hooks/useWeekly'
 import type { ReportRow } from '@/lib/hooks/useReports'
-import { enumerateWeeks, type ProgramWeek } from '@/lib/phases'
+import { enumerateWeeks, phaseHex, type ProgramWeek } from '@/lib/phases'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
 
-const KIND_COLOR: Record<string, string> = { cut: '#8E9AAC', bulk: '#3E9E7A', maintenance: '#B4522A', peak: '#E0703C' }
+/**
+ * There was a local `KIND_COLOR` here and three of its four entries disagreed
+ * with the canonical `PHASE_HEX`: cut was drawn in STEEL (maintenance's colour),
+ * maintenance in EMBER_DEEP, and peak in EMBER — so the timeline said "cut"
+ * in the hue every other surface uses for "maintenance". `phaseHex` is
+ * era-aware and already reproduces the PPL fallback this file hardcoded as
+ * `#79808C`, plus it gains SAND for the Thailand deload.
+ */
 
 /**
  * The Helix Timeline Spine — Journey's navigation. A vertical double-strand
@@ -48,7 +55,7 @@ export const JourneyTimeline = memo(function JourneyTimeline({ reports, gymRepor
           const helix = w.era === 'helix'
           const showBoundary = !helix && !boundaryDrawn && era === 'all'
           if (showBoundary) boundaryDrawn = true
-          const color = helix ? (KIND_COLOR[w.kind] ?? '#E0703C') : '#79808C'
+          const color = phaseHex(w.kind, w.era)
           const s = statsFor(w)
           const empty = s.sessions === 0 && s.files === 0
           return (

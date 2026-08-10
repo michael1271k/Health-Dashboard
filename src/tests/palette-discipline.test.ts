@@ -75,7 +75,10 @@ const ALLOWED_ORPHANS: Record<string, string> = {
  * Today's count. This number may only ever be lowered.
  * If a change legitimately adds colour, convert something else first.
  */
-const HEX_CEILING = 297
+// 297 → 268: the phase table stopped hand-transcribing four hexes into decimal
+// triples, and SessionHero / ProgressionTrail / JourneyTimeline stopped keeping
+// nine local copies under names that did not match their values.
+const HEX_CEILING = 268
 
 function scan() {
   const files = sourceFiles('src').filter(

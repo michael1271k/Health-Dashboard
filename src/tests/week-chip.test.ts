@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { weekChip, phaseRgb, phaseBadgeStyle, getWeekPhase, PHASE_RGB } from '@/lib/phases'
+import { readdirSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { weekChip, phaseRgb, phaseHex, phaseBadgeStyle, getWeekPhase, PHASE_RGB, PHASE_HEX } from '@/lib/phases'
+import { EMBER, PLATINUM, SAND, MUTED, rgbTriple } from '@/lib/theme/palette'
 
 /**
  * The week header identity: `[Plan] · [Phase] · [Wk N]`, coloured by phase.
@@ -51,6 +54,43 @@ describe('phase palette is one source', () => {
   it('phaseBadgeStyle draws from the same table it always did', () => {
     const style = phaseBadgeStyle('cut', false, 'helix')
     expect(style.color).toBe(`rgb(${PHASE_RGB.cut})`)
+  })
+
+  /**
+   * The triples used to be hand-typed decimals with the palette hex in a
+   * trailing comment, and two had silently drifted from the comment beside
+   * them — cut was `224,101,60` (#E0653C, eleven units of green off EMBER) and
+   * peak was the neon deleted two redesigns earlier. Deriving removes the
+   * possibility rather than re-checking for it.
+   */
+  it('derives every triple from the hex, so the two can never disagree', () => {
+    for (const kind of ['cut', 'peak', 'bulk', 'maintenance'] as const) {
+      expect(PHASE_RGB[kind]).toBe(rgbTriple(PHASE_HEX[kind]))
+    }
+    expect(PHASE_HEX.cut).toBe(EMBER)
+    expect(PHASE_HEX.peak).toBe(PLATINUM)   // not the neon, and not gold
+  })
+
+  it('gives a hex to consumers that append an alpha rather than wrap in rgba()', () => {
+    // JourneyTimeline builds `${color}30`; an rgb() triple there is garbage.
+    expect(phaseHex('cut', 'helix')).toMatch(/^#[0-9A-Fa-f]{6}$/)
+    expect(phaseHex('maintenance', 'ppl')).toBe(SAND)
+    expect(phaseHex('cut', 'ppl')).toBe(MUTED)
+  })
+
+  /**
+   * JourneyTimeline kept its own KIND_COLOR and three of four entries disagreed
+   * with this table: cut drew in STEEL (maintenance's colour), maintenance in
+   * EMBER_DEEP, peak in EMBER. One phase, one colour.
+   */
+  it('is the only phase colour table in the app', () => {
+    const files = readdirSync('src/components', { recursive: true })
+      .filter((f): f is string => typeof f === 'string' && /\.tsx$/.test(f))
+    const offenders = files.filter((f) => {
+      const src = readFileSync(join('src/components', f), 'utf8')
+      return /(?:cut|bulk|maintenance|peak)\s*:\s*['"]#[0-9A-Fa-f]{6}['"]/.test(src)
+    })
+    expect(offenders).toEqual([])
   })
 })
 

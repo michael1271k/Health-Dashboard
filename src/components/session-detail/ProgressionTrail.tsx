@@ -4,7 +4,10 @@ import { useId, useState } from 'react'
 import { TrendingUp } from 'lucide-react'
 import { useSessionIntel, type IntelMetric } from '@/lib/hooks/useSessionIntel'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
-import { GOLD, EMBER as VIOLET, EMERALD as TEAL, OXIDE as ROSE, MUTED } from '@/lib/theme/palette'
+// Imported under their real names. EMBER/EMERALD/OXIDE were aliased on import
+// to VIOLET/TEAL/ROSE — three colour names the design system does not contain
+// and none of which describes the value being renamed.
+import { GOLD, EMBER, EMERALD, OXIDE, MUTED } from '@/lib/theme/palette'
 
 const shortDate = (iso: string) =>
   new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
@@ -23,7 +26,7 @@ function metricBadge(m: IntelMetric): { text: string; color: string; arrow: stri
   const pct = Math.round((m.delta / Math.abs(m.previous)) * 100)
   const good = m.higherIsBetter ? m.delta > 0 : m.delta < 0
   // Average HR has no good direction — context for the volume, not a grade.
-  const color = m.key === 'avgBpm' ? MUTED : good ? TEAL : ROSE
+  const color = m.key === 'avgBpm' ? MUTED : good ? EMERALD : OXIDE
   return { text: `${pct > 0 ? '+' : ''}${pct}%`, color, arrow: m.delta > 0 ? '▲' : '▼' }
 }
 
@@ -47,10 +50,10 @@ export function ProgressionTrail({ sessionId }: { sessionId: string }) {
   const maxVol = Math.max(...(intel.volumes.map((v) => v.volumeKg) ?? [1]), 1)
 
   return (
-    <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-3" style={{ borderColor: `${VIOLET}28` }}>
+    <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-3" style={{ borderColor: `${EMBER}28` }}>
       <div className="flex items-baseline justify-between gap-2 flex-wrap">
         <h2 className="font-heading text-fluid-base font-bold text-text flex items-center gap-2">
-          <TrendingUp className="w-4 h-4" style={{ color: VIOLET }} aria-hidden="true" /> Progression
+          <TrendingUp className="w-4 h-4" style={{ color: EMBER }} aria-hidden="true" /> Progression
         </h2>
         {intel.previousDate && (
           <span className="text-[10px] text-muted">
@@ -85,7 +88,7 @@ export function ProgressionTrail({ sessionId }: { sessionId: string }) {
                 {m.previous != null && (
                   <div className="mt-2 space-y-1">
                     <div className="h-1 rounded-full bg-white/[0.05] overflow-hidden" aria-hidden="true">
-                      <div className="h-full rounded-full" style={{ width: `${(cur / max) * 100}%`, background: b?.color ?? VIOLET }} />
+                      <div className="h-full rounded-full" style={{ width: `${(cur / max) * 100}%`, background: b?.color ?? EMBER }} />
                     </div>
                     <div className="h-1 rounded-full bg-white/[0.05] overflow-hidden" aria-hidden="true">
                       <div className="h-full rounded-full bg-white/25" style={{ width: `${(prev / max) * 100}%` }} />
@@ -173,20 +176,20 @@ function VolumeCurve({ points, max, unit }: {
         role="img" aria-label={`Volume trend across ${points.length} sessions`}>
         <defs>
           <linearGradient id={volTrail} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={VIOLET} stopOpacity="0.30" />
-            <stop offset="100%" stopColor={VIOLET} stopOpacity="0" />
+            <stop offset="0%" stopColor={EMBER} stopOpacity="0.30" />
+            <stop offset="100%" stopColor={EMBER} stopOpacity="0" />
           </linearGradient>
         </defs>
         <path d={area} fill={"url(#" + volTrail + ")"} />
-        <path d={line} fill="none" stroke={VIOLET} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <path d={line} fill="none" stroke={EMBER} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         {points.map((p, i) => {
           const isSelected = i === selected
           const isLatest = i === n
           return (
             <g key={p.date}>
               <circle cx={x(i)} cy={y(p.volumeKg)} r={isSelected ? 4.5 : isLatest ? 3.5 : 2.5}
-                fill={isSelected || isLatest ? VIOLET : 'rgba(255,255,255,0.35)'}
-                style={isSelected ? { filter: `drop-shadow(0 0 6px ${VIOLET})` } : undefined} />
+                fill={isSelected || isLatest ? EMBER : 'rgba(255,255,255,0.35)'}
+                style={isSelected ? { filter: `drop-shadow(0 0 6px ${EMBER})` } : undefined} />
               {/* A generous invisible hit target — a 4px dot is untappable on
                   a touch screen. */}
               <circle cx={x(i)} cy={y(p.volumeKg)} r="14" fill="transparent"
@@ -204,7 +207,7 @@ function VolumeCurve({ points, max, unit }: {
           <span className="font-bold text-text">{exact}{unit}</span>
           <span className="text-muted"> · {shortDate(active.date)}</span>
           {changePct != null && changePct !== 0 && (
-            <span className="font-bold ml-1" style={{ color: changePct > 0 ? TEAL : ROSE }}>
+            <span className="font-bold ml-1" style={{ color: changePct > 0 ? EMERALD : OXIDE }}>
               {changePct > 0 ? '+' : ''}{changePct}%
             </span>
           )}

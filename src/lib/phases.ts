@@ -4,6 +4,8 @@
  * align with the calendar's Sunday-start weeks).
  */
 
+import { EMBER, PLATINUM, EMERALD, STEEL, MUTED, SAND, rgbTriple } from '@/lib/theme/palette'
+
 export type PhaseKind = 'cut' | 'peak' | 'bulk' | 'maintenance'
 
 export interface WeekPhase {
@@ -29,35 +31,51 @@ export interface WeekPhase {
  * Cut is the signature ember, bulk is growth-green, maintenance is sleek steel,
  * and peak is platinum — the refined state rather than a direction of travel.
  *
- * Triples rather than hexes because every consumer wraps them in
- * `rgba(${rgb},0.12)`. They must stay in lockstep with the palette hexes named
- * in each comment; two of them had drifted:
- *   · cut was 224,101,60 (#E0653C) — eleven units of green off EMBER, a phantom
- *     second orange nobody chose;
- *   · peak was 22,245,195 (#16F5C3) — the neon the app deleted two redesigns
- *     ago, and the single most out-of-system colour left in the codebase.
- *     Peak is not a direction like cut/bulk, it is the polished end state, so
- *     it takes the brightest metal. Gold stays reserved for records.
+ * Peak is not a direction like cut/bulk, it is the polished end state, so it
+ * takes the brightest metal. Gold stays reserved for records.
+ *
+ * ── HEXES ARE THE SOURCE; TRIPLES ARE DERIVED ────────────────────────────────
+ * Most consumers want `rgba(${rgb},0.12)`, so this table used to be written as
+ * hand-typed decimal triples with the palette hex in a trailing comment. Two
+ * had already drifted from the comment beside them — cut was `224,101,60`
+ * (#E0653C), eleven units of green off EMBER, and peak was `22,245,195`, the
+ * neon deleted two redesigns earlier. A transcription that has to be kept in
+ * lockstep by hand will not be. `rgbTriple()` derives it instead.
  */
+export const PHASE_HEX: Record<PhaseKind, string> = {
+  cut: EMBER,
+  peak: PLATINUM,
+  bulk: EMERALD,
+  maintenance: STEEL,
+}
+
 export const PHASE_RGB: Record<PhaseKind, string> = {
-  cut: '224,112,60',          // EMBER    #E0703C
-  peak: '201,205,214',        // PLATINUM #C9CDD6
-  bulk: '62,158,122',         // EMERALD  #3E9E7A
-  maintenance: '142,154,172', // STEEL    #8E9AAC
+  cut: rgbTriple(PHASE_HEX.cut),
+  peak: rgbTriple(PHASE_HEX.peak),
+  bulk: rgbTriple(PHASE_HEX.bulk),
+  maintenance: rgbTriple(PHASE_HEX.maintenance),
 }
 
 /** The desaturated PPL-legacy variants, so two Cut eras can never be confused. */
-const PPL_RGB = {
-  default: '121,128,140',     // MUTED #79808C — was a fourth grey nobody named
-  maintenance: '230,198,140', // SAND  #E6C68C — now a named palette export
+const PPL_HEX = {
+  default: MUTED,      // was a fourth grey nobody named
+  maintenance: SAND,   // the Thailand deload reads as a vacation, not a phase
 } as const
+
+/**
+ * Phase colour as a hex, era-aware. The hex form matters wherever a consumer
+ * appends an alpha (`${color}30`) rather than wrapping in `rgba()`.
+ */
+export function phaseHex(kind: PhaseKind, era: 'ppl' | 'helix' = 'helix'): string {
+  if (era !== 'ppl') return PHASE_HEX[kind]
+  // The Thailand deload is the sole PPL 'maintenance' phase and gets a warm
+  // sand tone so the vacation reads distinctly in the timeline.
+  return kind === 'maintenance' ? PPL_HEX.maintenance : PPL_HEX.default
+}
 
 /** Phase colour as an `rgb()` triple, era-aware. */
 export function phaseRgb(kind: PhaseKind, era: 'ppl' | 'helix' = 'helix'): string {
-  if (era !== 'ppl') return PHASE_RGB[kind]
-  // The Thailand deload is the sole PPL 'maintenance' phase and gets a warm
-  // sand tone so the vacation reads distinctly in the timeline.
-  return kind === 'maintenance' ? PPL_RGB.maintenance : PPL_RGB.default
+  return rgbTriple(phaseHex(kind, era))
 }
 
 /** Phase colour as a hex-equivalent `rgb(...)` string, for `color`/`background`. */

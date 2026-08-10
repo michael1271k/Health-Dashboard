@@ -75,6 +75,18 @@ export function alpha(hex: string, a: number): string {
 }
 
 /**
+ * `#E0703C` → `'224,112,60'`, for the `rgba(${triple}, 0.12)` idiom.
+ *
+ * Hand-transcribing a hex into decimals is how `PHASE_RGB.cut` came to be
+ * `224,101,60` — eleven units of green off EMBER, a phantom second orange that
+ * nobody chose and no eye would catch. Derive the triple; never type it.
+ */
+export function rgbTriple(hex: string): string {
+  const n = parseInt(hex.slice(1, 7), 16)
+  return `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`
+}
+
+/**
  * Macros — four distinct jewel tones so the rings read instantly apart.
  * Calories lead with the signature ember; protein is emerald (growth), carbs
  * sapphire (glycogen/fuel), fat antique gold.
