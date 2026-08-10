@@ -155,5 +155,10 @@ struct HelixWidgetsBundle: WidgetBundle {
     var body: some Widget {
         HelixCaloriesWidget()
         HelixWeekWidget()
+        // The running session, on the lock screen and in the Dynamic Island.
+        // A Live Activity's UI must live in a widget extension even though the
+        // app is what starts it, so it is declared here alongside the
+        // home-screen widgets rather than anywhere near the session code.
+        if #available(iOS 16.1, *) { HelixSessionLiveActivity() }
     }
 }

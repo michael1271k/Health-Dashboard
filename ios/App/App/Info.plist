@@ -61,5 +61,9 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<!-- Required for ActivityKit. Without it Activity.request throws at
+	     runtime with no build-time signal at all. -->
+	<key>NSSupportsLiveActivities</key>
+	<true/>
 </dict>
 </plist>
