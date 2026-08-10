@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft, Dumbbell, Moon, Flame, ChevronRight, ChevronLeft } from 'lucide-react'
@@ -13,9 +13,10 @@ import { DomsTracker } from '@/components/day/RecoveryTrackers'
 import { CardioLogger } from '@/components/day/CardioLogger'
 import { WaterHelix } from '@/components/day/WaterHelix'
 import { useDayVault, dayCompleteness, type DayVaultData } from '@/lib/hooks/useDayVault'
-import type { SnapPagerHandle } from '@/components/ui/SnapPager'
 import { useUserGoals, useDaySleep } from '@/lib/hooks/useDashboard'
+import { useBioSeries } from '@/lib/hooks/useBioStrips'
 import { SleepStages } from '@/components/dashboard/SleepStages'
+import { InBodyForm } from '@/components/day/InBody'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { useDoubleTap } from '@/lib/utils/doubleTap'
 import { MacroOverrideSheet } from '@/components/nutrition/MacroOverrideSheet'
@@ -26,9 +27,18 @@ import { displayWeight, weightUnit, fmtVolume } from '@/lib/utils/units'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { Zone, ZoneRow, StatStrip } from '@/components/ui/Zone'
+import { Sheet } from '@/components/ui/Sheet'
+import { SleepBand, BodyBand } from '@/components/day/SummaryBands'
+
+/**
+ * Which drawer is open. One value, so two can never be.
+ *
+ * `inbody` REPLACES `body` rather than stacking on it — a form is a push, not
+ * a second drawer over the first — and closing it returns to `body`.
+ */
+type DaySheet = 'sleep' | 'body' | 'inbody' | 'water' | 'macros' | null
 import { AppBar } from '@/components/nav/AppBar'
-import { SnapPager } from '@/components/ui/SnapPager'
-import { EMBER, EMBER_DEEP, SAPPHIRE, STEEL, GOLD, OXIDE, EMERALD, MUTED } from '@/lib/theme/palette'
+import { EMBER, EMBER_DEEP, SAPPHIRE, STEEL, GOLD, OXIDE, EMERALD, MUTED, BODY } from '@/lib/theme/palette'
 
 // Local aliases over the real palette. These were six hardcoded hexes whose
 // NAMES disagreed with their values — `TEAL` held ember orange, `EMBER` held
@@ -150,29 +160,30 @@ export default function DailyNexusPage() {
   const { data, isLoading } = useDayVault(date)
   const { data: goals } = useUserGoals()
   const { data: daySleep } = useDaySleep(date)
+  // Already fetched for the dashboard strip and never shown on this page —
+  // one night in isolation cannot tell you if it was a bad night or a bad week.
+  const { data: bioSeries } = useBioSeries()
   // scheduleDayFor (below the early return) reads a module-level cache React
   // can't observe. Subscribing here is what makes a swap from another device
   // repaint this page instead of waiting for an unrelated re-render.
   useScheduleVersion()
-  const [fuelEdit, setFuelEdit] = useState(false)
-  const tapFuel = useDoubleTap(() => setFuelEdit(true))
-  const pager = useRef<SnapPagerHandle>(null)
+  /**
+   * ONE drawer at a time, named by what is in it.
+   *
+   * This replaces a pager ref, a separate `fuelEdit` boolean, an
+   * `inbodyHandled` latch, a 120ms setTimeout racing a query, and a
+   * scrollIntoView. Every detail on this page is now the same kind of object
+   * arriving the same way, and "which one is open" is a single value.
+   */
+  const [sheet, setSheet] = useState<DaySheet>(null)
+  const tapFuel = useDoubleTap(() => setSheet('macros'))
 
   // Deep-link from the dashboard Body card (double-tap → …?section=inbody).
-  // The InBody entry now lives INSIDE the pager's Body page, so the link swipes
-  // the pager there, scrolls it into view, and BodyPanel opens the editor.
+  // Opening a drawer needs no timing: there is no pager to swipe and nothing to
+  // scroll to, so the link just names the drawer.
   const searchParams = useSearchParams()
   const focusInbody = searchParams.get('section') === 'inbody'
-  const [inbodyHandled, setInbodyHandled] = useState(false)
-  const pagerRef = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    if (!focusInbody || inbodyHandled) return
-    const t = setTimeout(() => {
-      pager.current?.goTo('body')
-      pagerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    }, 120)
-    return () => clearTimeout(t)
-  }, [focusInbody, inbodyHandled])
+  useEffect(() => { if (focusInbody) setSheet('inbody') }, [focusInbody])
 
   if (!date) return <p className="text-muted p-6">Invalid date.</p>
 
@@ -316,7 +327,7 @@ export default function DailyNexusPage() {
         <ZoneRow
           asButton
           className="flex items-center gap-2 w-full text-left min-h-[36px] active:opacity-70 transition-opacity"
-          onClick={() => pager.current?.goTo('water')}
+          onClick={() => setSheet('water')}
           title="Open the hydration helix"
         >
           <span className="text-[10px] text-muted shrink-0">Water</span>
@@ -336,8 +347,8 @@ export default function DailyNexusPage() {
 
       {/* Portalled, so its position in the band stack doesn't matter. */}
       <MacroOverrideSheet
-        open={fuelEdit}
-        onClose={() => setFuelEdit(false)}
+        open={sheet === 'macros'}
+        onClose={() => setSheet(null)}
         date={date}
         initial={{ calories: n?.calories ?? 0, protein_g: n?.protein_g ?? 0, carbs_g: n?.carbs_g ?? 0, fat_g: n?.fat_g ?? 0 }}
       />
@@ -358,50 +369,20 @@ export default function DailyNexusPage() {
         </ZoneRow>
       </Zone>
 
-      {/* ── The three tall visuals, paged rather than stacked ──
-          Sleep ribbon (~320px) + hydration helix (~180px) + body figure (~280px)
-          is 780px of a ~2,000px page, and each is something you look at on
-          purpose rather than scan past. Sharing one slot gives every one of them
-          MORE room than it had at a third of the cost. */}
-      <div ref={pagerRef} className="border-b" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
-        <div className="mx-auto w-full max-w-[68ch] px-2 py-2">
-        <SnapPager ref={pager} pages={[
-          {
-            key: 'sleep',
-            label: 'Sleep',
-            content: (
-              <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-3" style={{ borderColor: `${VIOLET}26` }}>
-                <h3 className="font-heading font-semibold text-fluid-sm text-text flex items-center gap-1.5">
-                  <Moon className="w-3.5 h-3.5" style={{ color: VIOLET }} /> Sleep &amp; Recovery
-                </h3>
-                <SleepStages sleep={daySleep ?? null} log={log ?? null} goalHours={goals?.sleep_goal_hours ?? null} />
-                <SleepDebtGauge compact />
-              </section>
-            ),
-          },
-          {
-            key: 'water',
-            label: 'Hydration',
-            content: <WaterHelix ml={log?.water_ml ?? null} goalMl={goals?.water_goal_ml ?? 3000} />,
-          },
-          {
-            // Silhouette + headline numbers + the entry form, one domain. The
-            // standalone InBody card below the pager is gone — it was the same
-            // subject ~400px from the page that visualises it.
-            key: 'body',
-            label: 'Body',
-            content: (
-              <BodyPanel
-                date={date}
-                log={log ?? null}
-                openEditor={focusInbody && !inbodyHandled}
-                onEditorClosed={() => setInbodyHandled(true)}
-              />
-            ),
-          },
-        ]} />
-        </div>
-      </div>
+      {/* ── SLEEP · a glance, with the detail one tap away ── */}
+      <Zone label="Sleep" accent={VIOLET}>
+        <SleepBand
+          sleep={daySleep ?? null}
+          sleepMinutes={log?.sleep_minutes ?? null}
+          goalHours={goals?.sleep_goal_hours ?? null}
+          onOpen={() => setSheet('sleep')}
+        />
+      </Zone>
+
+      {/* ── BODY · same shape whether or not you weighed in today ── */}
+      <Zone label="Body" accent={BODY.weight}>
+        <BodyBand log={log ?? null} onOpen={() => setSheet('body')} />
+      </Zone>
 
       {/* Recovery inputs — soreness 24–72h post-session, on the body map */}
       <Zone label="Soreness" accent={EMBER}>
@@ -412,6 +393,40 @@ export default function DailyNexusPage() {
       <Zone label="Cardio" accent={EMERALD}>
         <CardioLogger date={date} hkActiveEnergy={log?.active_energy ?? null} />
       </Zone>
+
+      {/* ══ The drawers ══
+          One at a time, by construction — `sheet` is a single value. Each is
+          the same Sheet the whole app uses: swipe to dismiss, thrown away with
+          a flick, catchable mid-flight. */}
+      <Sheet open={sheet === 'sleep'} onClose={() => setSheet(null)} title="Sleep" accent={VIOLET}>
+        <SleepStages
+          sleep={daySleep ?? null}
+          log={log ?? null}
+          goalHours={goals?.sleep_goal_hours ?? null}
+          nightly={(bioSeries ?? []).slice(-7).map((b) => ({ date: b.date, minutes: b.sleepMin }))}
+          variant="full"
+        />
+        <div className="mt-3"><SleepDebtGauge /></div>
+      </Sheet>
+
+      <Sheet open={sheet === 'water'} onClose={() => setSheet(null)} title="Hydration" accent={ICE}>
+        <div className="flex justify-center py-2">
+          <WaterHelix ml={log?.water_ml ?? null} goalMl={goals?.water_goal_ml ?? 3000} />
+        </div>
+      </Sheet>
+
+      <Sheet open={sheet === 'body'} onClose={() => setSheet(null)} title="Body composition" accent={BODY.weight}>
+        <BodyPanel date={date} log={log ?? null} onEdit={() => setSheet('inbody')} />
+      </Sheet>
+
+      {/* Replaces the Body drawer rather than stacking on it — a form is a push,
+          not a second drawer — and closing returns to where you were. */}
+      <Sheet open={sheet === 'inbody'} onClose={() => setSheet('body')} title="InBody &amp; Scale Metrics" accent={BODY.weight}>
+        <p className="text-[11px] text-muted mb-3">
+          Enter weight and a percentage — the masses derive and save themselves.
+        </p>
+        <InBodyForm date={date} log={log ?? null} onSaved={() => setSheet('body')} />
+      </Sheet>
 
       {/* ══ SECTION 2 · Session Debrief ══ (workout + progression, unified)
           The last band is the only one that keeps card chrome inside it: a

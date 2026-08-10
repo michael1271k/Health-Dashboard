@@ -1,5 +1,6 @@
 'use client'
 
+import { useId } from 'react'
 import { Moon } from 'lucide-react'
 import type { Tables } from '@/lib/supabase/types'
 import { formatSleep } from '@/lib/utils/format'
@@ -32,10 +33,14 @@ function clock(iso: string | null | undefined): string | null {
     : d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
 }
 
-export function SleepStages({ sleep, log, goalHours }: {
+export function SleepStages({ sleep, log, goalHours, nightly, variant = 'full' }: {
   sleep: Tables<'sleep_sessions'> | null
   log: { avg_rest_heart_rate: number | null; blood_oxygen: number | null; respiratory_rate: number | null; sleep_minutes: number | null } | null
   goalHours: number | null
+  /** Recent nightly totals in MINUTES, oldest first, for the histogram. */
+  nightly?: Array<{ date: string; minutes: number | null }>
+  /** `full` is the drawer. `compact` drops the arc and the histogram. */
+  variant?: 'full' | 'compact'
 }) {
   // The sleep_sessions row is the detailed record; daily_logs.sleep_minutes is
   // the fallback when only a total was ever pushed (legacy Shortcut days).
@@ -84,20 +89,25 @@ export function SleepStages({ sleep, log, goalHours }: {
         </div>
       )}
 
-      {/* Stage split — proportional widths, one segment per stage present */}
+      {/* Stage split. In the drawer this is an ARC with a gradient stroke; in
+          the compact view it stays a flat bar. */}
       {ribbonTotal > 0 && (
         <>
-          <div className="flex h-4 w-full rounded-full overflow-hidden" role="img"
-            aria-label={parts.map((p) => `${p.label} ${formatSleep(p.min)}`).join(', ')}>
-            {parts.map((p) => (
-              <span key={p.key} className="h-full first:rounded-l-full last:rounded-r-full"
-                style={{
-                  width: `${(p.min / ribbonTotal) * 100}%`,
-                  background: `linear-gradient(180deg, ${p.color}, ${p.color}b8)`,
-                  boxShadow: `inset 0 1px 0 rgba(255,255,255,0.14)`,
-                }} />
-            ))}
-          </div>
+          {variant === 'full' ? (
+            <SleepArc parts={parts} total={ribbonTotal} totalMin={totalMin} goalMin={goalMin} bed={bed} wake={wake} />
+          ) : (
+            <div className="flex h-4 w-full rounded-full overflow-hidden" role="img"
+              aria-label={parts.map((p) => `${p.label} ${formatSleep(p.min)}`).join(', ')}>
+              {parts.map((p) => (
+                <span key={p.key} className="h-full first:rounded-l-full last:rounded-r-full"
+                  style={{
+                    width: `${(p.min / ribbonTotal) * 100}%`,
+                    background: `linear-gradient(180deg, ${p.color}, ${p.color}b8)`,
+                    boxShadow: `inset 0 1px 0 rgba(255,255,255,0.14)`,
+                  }} />
+              ))}
+            </div>
+          )}
           <div className="flex flex-wrap gap-x-4 gap-y-1">
             {parts.map((p) => (
               <span key={p.key} className="flex items-center gap-1.5 text-[11px]">
@@ -112,6 +122,10 @@ export function SleepStages({ sleep, log, goalHours }: {
             Stage split by duration — Apple reports totals, not a stage timeline, so segment order is nominal.
           </p>
         </>
+      )}
+
+      {variant === 'full' && nightly && nightly.length > 1 && (
+        <NightlyHistogram nights={nightly} goalMin={goalMin} />
       )}
 
       {/* Overnight vitals, one thin row */}
@@ -129,6 +143,129 @@ export function SleepStages({ sleep, log, goalHours }: {
             </div>
           </div>
         ))}
+      </div>
+    </div>
+  )
+}
+
+
+/**
+ * The night as an arc, drawn with a gradient rather than segments.
+ *
+ * ── WHY A GRADIENT, AND WHY THIS IS THE HONEST SHAPE ─────────────────────────
+ * Only stage TOTALS are persisted — never a timeline (see the note at the top
+ * of this file). A segmented bar therefore states something the data does not
+ * contain: that deep came before REM, that the awake block sat there. It reads
+ * as a hypnogram to anyone who has seen one, and it is not.
+ *
+ * A gradient has no boundaries. Each stop sits at its cumulative proportion and
+ * is duplicated a hair either side of the transition, so no hard edge appears
+ * anywhere on the stroke. The shares are exactly right; the ORDER is visibly
+ * not being claimed. That makes the visual honest by construction rather than
+ * by the disclaimer underneath it — which stays anyway.
+ *
+ * The arc form does the other half: a semicircle from bed to wake reads as a
+ * passage of time, which is what a night is, where a bar reads as a quantity.
+ *
+ * All static SVG — one path, one gradient, no animation, no filter.
+ */
+function SleepArc({ parts, total, totalMin, goalMin, bed, wake }: {
+  parts: Array<{ key: string; label: string; color: string; min: number }>
+  total: number
+  totalMin: number
+  goalMin: number | null
+  bed: string | null
+  wake: string | null
+}) {
+  const uid = useId().replace(/:/g, '')
+  const W = 260, H = 132, R = 104, CX = W / 2, CY = 120
+
+  // Cumulative stops, each duplicated ±1.2% so transitions dissolve.
+  const stops: Array<{ offset: number; color: string }> = []
+  let acc = 0
+  parts.forEach((p, i) => {
+    const from = acc / total
+    acc += p.min
+    const to = acc / total
+    stops.push({ offset: i === 0 ? 0 : Math.min(1, from + 0.012), color: p.color })
+    stops.push({ offset: i === parts.length - 1 ? 1 : Math.max(0, to - 0.012), color: p.color })
+  })
+
+  const arc = `M ${CX - R} ${CY} A ${R} ${R} 0 0 1 ${CX + R} ${CY}`
+  const LEN = Math.PI * R
+
+  // How much of the goal the night actually covered. The shortfall is drawn
+  // as the UNFILLED remainder of the same path, so the gap is read as a
+  // distance along the arc rather than as a second mark to compare against.
+  const goalFrac = goalMin && goalMin > 0 ? Math.min(1, totalMin / goalMin) : null
+
+  return (
+    <div className="flex justify-center">
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ maxWidth: W }} role="img"
+        aria-label={parts.map((p) => `${p.label} ${formatSleep(p.min)}`).join(', ')}>
+        <defs>
+          <linearGradient id={`sleepArc-${uid}`} x1="0" y1="0" x2="1" y2="0">
+            {stops.map((st, i) => (
+              <stop key={i} offset={`${(st.offset * 100).toFixed(2)}%`} stopColor={st.color} />
+            ))}
+          </linearGradient>
+        </defs>
+
+        {/* The night that did not happen — the shortfall against goal, drawn as
+            the unfilled remainder of the same path. */}
+        {goalFrac != null && goalFrac < 1 && (
+          <path d={arc} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={14} strokeLinecap="round" />
+        )}
+
+        <path
+          d={arc}
+          fill="none"
+          stroke={`url(#sleepArc-${uid})`}
+          strokeWidth={14}
+          strokeLinecap="round"
+          strokeDasharray={goalFrac != null ? `${LEN * goalFrac} ${LEN}` : undefined}
+        />
+
+        {bed && <text x={CX - R} y={CY + 16} fill={MUTED} fontSize="9" textAnchor="middle">{bed}</text>}
+        {wake && <text x={CX + R} y={CY + 16} fill={MUTED} fontSize="9" textAnchor="middle">{wake}</text>}
+      </svg>
+    </div>
+  )
+}
+
+/**
+ * The last few nights as bars, tonight highlighted.
+ *
+ * The series is already fetched for the dashboard strip and was shown nowhere
+ * on this screen — one night in isolation cannot tell you whether it was a bad
+ * night or a bad week.
+ */
+function NightlyHistogram({ nights, goalMin }: {
+  nights: Array<{ date: string; minutes: number | null }>
+  goalMin: number | null
+}) {
+  const max = Math.max(goalMin ?? 0, ...nights.map((n) => n.minutes ?? 0), 1)
+  return (
+    <div className="pt-1">
+      <p className="text-[10px] uppercase tracking-wide text-muted mb-1.5">Last {nights.length} nights</p>
+      <div className="flex items-end gap-1.5 h-14 relative">
+        {goalMin != null && (
+          <span aria-hidden="true" className="absolute inset-x-0 border-t border-dashed"
+            style={{ bottom: `${(goalMin / max) * 100}%`, borderColor: 'rgba(255,255,255,0.14)' }} />
+        )}
+        {nights.map((n, i) => {
+          const last = i === nights.length - 1
+          const h = n.minutes ? (n.minutes / max) * 100 : 0
+          const short = goalMin != null && (n.minutes ?? 0) < goalMin
+          return (
+            <span key={n.date} className="flex-1 rounded-t-sm"
+              title={`${n.date} · ${n.minutes ? formatSleep(n.minutes) : 'no data'}`}
+              style={{
+                height: `${Math.max(2, h)}%`,
+                background: n.minutes == null ? 'rgba(255,255,255,0.05)' : short ? `${GOLD}${last ? 'ee' : '55'}` : `${AMETHYST}${last ? 'ee' : '55'}`,
+              }} />
+          )
+        })}
       </div>
     </div>
   )

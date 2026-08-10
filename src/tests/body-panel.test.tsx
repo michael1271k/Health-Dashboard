@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BodyPanel } from '@/components/day/BodyPanel'
 
@@ -12,11 +13,11 @@ import { BodyPanel } from '@/components/day/BodyPanel'
  * These pin the two faces: the page is never empty, and the entry point is
  * always ON the page that needs it.
  */
-function renderPanel(log: Record<string, number | string | null> | null) {
+function renderPanel(log: Record<string, number | string | null> | null, onEdit = () => {}) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={qc}>
-      <BodyPanel date="2026-08-03" log={log as never} />
+      <BodyPanel date="2026-08-03" log={log as never} onEdit={onEdit} />
     </QueryClientProvider>,
   )
 }
@@ -92,14 +93,21 @@ describe('BodyPanel — a self-sufficient Body page', () => {
     expect(screen.queryByRole('button', { name: /save metrics/i })).toBeNull()
   })
 
-  it('opens the editor straight away for the ?section=inbody deep link', () => {
-    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-    render(
-      <QueryClientProvider client={qc}>
-        <BodyPanel date="2026-08-03" log={null as never} openEditor />
-      </QueryClientProvider>,
-    )
-    expect(screen.getByLabelText('Weight in kg')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /save metrics/i })).toBeInTheDocument()
+  // BodyPanel no longer OWNS the editor. It is itself the body of a drawer, and
+  // the form is a sibling drawer the page swaps to — a form is a push, not a
+  // second drawer stacked on the first. So what this component must guarantee
+  // is that it asks, from both of its two faces.
+  it('asks the page to open the editor when there is no weigh-in', async () => {
+    const onEdit = vi.fn()
+    renderPanel(null, onEdit)
+    await userEvent.click(screen.getByRole('button', { name: /add scale metrics/i }))
+    expect(onEdit).toHaveBeenCalledOnce()
+  })
+
+  it('asks the page to open the editor when a reading already exists', async () => {
+    const onEdit = vi.fn()
+    renderPanel({ weight_kg: 64.2, body_fat_pct: 17.3, muscle_percent: 78.3 }, onEdit)
+    await userEvent.click(screen.getByRole('button', { name: /edit measurements/i }))
+    expect(onEdit).toHaveBeenCalledOnce()
   })
 })

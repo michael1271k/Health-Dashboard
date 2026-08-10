@@ -1,10 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Scale, Plus, Pencil, Check } from 'lucide-react'
 import { BodyMap } from '@/components/day/BodyMap'
-import { InBodyForm, InBodyHeadline, hasScaleMetrics } from '@/components/day/InBody'
-import { Sheet } from '@/components/ui/Sheet'
+import { InBodyHeadline, hasScaleMetrics } from '@/components/day/InBody'
 import { useSaveBodyMetrics, type DayVaultData } from '@/lib/hooks/useDayVault'
 import { WEIGH_IN_SKIP_REASONS, DEFAULT_WEIGH_IN_SKIP_REASON, weighInSkipReason } from '@/lib/body/weighIn'
 import { EMBER } from '@/lib/theme/palette'
@@ -125,27 +124,28 @@ function WeighInSkip({ date, current }: { date: string; current: string | null }
  *
  * Now the page is self-sufficient: no reading → it IS the entry prompt; a
  * reading → the silhouette, the four headline numbers, and an Edit row. Either
- * way the form opens in a Sheet rather than inline, because pager pages share a
- * height and nine inputs would make the Sleep and Hydration pages that tall too.
+ * way the form opens in its own drawer rather than inline: nine inputs inside a
+ * summary would make the band as tall as the thing it summarises.
  */
-export function BodyPanel({ date, log, openEditor = false, onEditorClosed }: {
+export function BodyPanel({ date, log, onEdit }: {
   date: string
   log: DayVaultData['log']
-  /** Deep-link (`?section=inbody`) opens the editor on mount. */
-  openEditor?: boolean
-  onEditorClosed?: () => void
+  /**
+   * Open the scale-metrics form.
+   *
+   * BodyPanel used to own that form and render it in its own <Sheet>. It is now
+   * itself the body of a sheet, and a sheet inside a sheet for a FORM is the
+   * wrong shape — a form is a push, not a second drawer over the first. The
+   * page owns one drawer enum, so `inbody` REPLACES `body` and closing it
+   * returns there. That also deleted the `?section=inbody` deep link's 120ms
+   * setTimeout, which was racing a query resolution.
+   */
+  onEdit: () => void
 }) {
-  const [editing, setEditing] = useState(openEditor)
   const has = hasScaleMetrics(log)
   // A day is "unweighed" on the WEIGHT, not on whether some other field was
   // filled — entering a BMI alone doesn't mean you stood on the scale.
   const unweighed = log?.weight_kg == null
-
-  // The deep-link arrives after the query resolves, so honour it whenever it
-  // flips true rather than only at first render.
-  useEffect(() => { if (openEditor) setEditing(true) }, [openEditor])
-
-  const close = () => { setEditing(false); onEditorClosed?.() }
 
   return (
     <>
@@ -156,7 +156,7 @@ export function BodyPanel({ date, log, openEditor = false, onEditorClosed }: {
             <InBodyHeadline log={log} date={date} />
             <button
               type="button"
-              onClick={() => setEditing(true)}
+              onClick={onEdit}
               className="w-full flex items-center gap-2.5 min-h-[44px] text-left text-muted hover:text-text transition-colors"
             >
               <span className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
@@ -183,7 +183,7 @@ export function BodyPanel({ date, log, openEditor = false, onEditorClosed }: {
             </div>
             <button
               type="button"
-              onClick={() => setEditing(true)}
+              onClick={onEdit}
               className="btn-primary min-h-[44px] px-4 justify-center"
               style={{ background: ACCENT, boxShadow: `0 0 18px ${ACCENT}55` }}
             >
@@ -194,12 +194,6 @@ export function BodyPanel({ date, log, openEditor = false, onEditorClosed }: {
         )}
       </section>
 
-      <Sheet open={editing} onClose={close} title="InBody &amp; Scale Metrics">
-        <p className="text-[11px] text-muted mb-3">
-          Enter weight and a percentage — the masses derive and save themselves.
-        </p>
-        <InBodyForm date={date} log={log} onSaved={close} />
-      </Sheet>
     </>
   )
 }

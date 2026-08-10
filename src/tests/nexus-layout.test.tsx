@@ -1,9 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
-import { render, screen, act } from '@testing-library/react'
-import { createRef } from 'react'
+import { render, screen } from '@testing-library/react'
 import { Zone, ZoneRow, StatStrip } from '@/components/ui/Zone'
-import { SnapPager, type SnapPagerHandle } from '@/components/ui/SnapPager'
 import { hasScaleMetrics } from '@/components/day/InBody'
 
 /**
@@ -110,93 +108,6 @@ describe('StatStrip — six vitals on one line', () => {
     render(<StatStrip stats={[{ label: 'HRV', value: null, unit: 'ms', color: '#fff' }]} />)
     expect(screen.getByText('—')).toBeInTheDocument()
     expect(screen.queryByText('—ms')).toBeNull()
-  })
-})
-
-describe('SnapPager — paged, never hidden', () => {
-  const pages = [
-    { key: 'sleep', label: 'Sleep', content: <p>stage ribbon</p> },
-    { key: 'water', label: 'Hydration', content: <p>double helix</p> },
-    { key: 'body', label: 'Body', content: <p>body figure</p> },
-  ]
-
-  it('keeps EVERY page mounted — swiping must not unmount the other two', () => {
-    // A tab control that renders only the active panel would quietly drop two
-    // of the three widgets the user asked to keep.
-    render(<SnapPager pages={pages} />)
-    expect(screen.getByText('stage ribbon')).toBeInTheDocument()
-    expect(screen.getByText('double helix')).toBeInTheDocument()
-    expect(screen.getByText('body figure')).toBeInTheDocument()
-  })
-
-  it('exposes a tab per page, with the first selected', () => {
-    render(<SnapPager pages={pages} />)
-    const tabs = screen.getAllByRole('tab')
-    expect(tabs.map((t) => t.textContent)).toEqual(['Sleep', 'Hydration', 'Body'])
-    expect(tabs[0]).toHaveAttribute('aria-selected', 'true')
-    expect(tabs[1]).toHaveAttribute('aria-selected', 'false')
-  })
-
-  it('gives every tab a panel to control', () => {
-    render(<SnapPager pages={pages} />)
-    for (const tab of screen.getAllByRole('tab')) {
-      const id = tab.getAttribute('aria-controls')!
-      expect(document.getElementById(id)).not.toBeNull()
-    }
-  })
-
-  it('snaps horizontally without letting the page itself scroll sideways', () => {
-    const { container } = render(<SnapPager pages={pages} />)
-    const scroller = container.querySelector('.snap-x') as HTMLElement
-    expect(scroller.className).toContain('overflow-x-auto')
-    expect(scroller.className).toContain('snap-mandatory')
-    // Pages are exactly one viewport wide, so a swipe lands on a page boundary.
-    for (const panel of screen.getAllByRole('tabpanel')) {
-      expect(panel.className).toContain('w-full')
-      expect(panel.className).toContain('shrink-0')
-    }
-  })
-
-  it('keeps its tap targets at 34px', () => {
-    render(<SnapPager pages={pages} />)
-    for (const tab of screen.getAllByRole('tab')) {
-      expect(tab.className).toContain('min-h-[34px]')
-    }
-  })
-})
-
-describe('SnapPager — external jump', () => {
-  const pages = [
-    { key: 'sleep', label: 'Sleep', content: <p>stage ribbon</p> },
-    { key: 'water', label: 'Hydration', content: <p>double helix</p> },
-    { key: 'body', label: 'Body', content: <p>body figure</p> },
-  ]
-
-  /** jsdom has no layout and no Element.scrollTo — stand one in and record it. */
-  function withScrollSpy() {
-    const calls: Array<{ left: number }> = []
-    Element.prototype.scrollTo = function (opts?: ScrollToOptions | number) {
-      if (typeof opts === 'object' && opts) calls.push({ left: opts.left ?? 0 })
-    } as Element['scrollTo']
-    return calls
-  }
-
-  it('exposes goTo so a summary row elsewhere can drive the pager', () => {
-    // The Fuel zone's water bar and the Hydration page print the same number;
-    // the bar navigates instead of duplicating, which needs this handle.
-    const calls = withScrollSpy()
-    const ref = createRef<SnapPagerHandle>()
-    render(<SnapPager ref={ref} pages={pages} />)
-    expect(ref.current).not.toBeNull()
-    act(() => ref.current!.goTo('water'))
-    expect(calls).toHaveLength(1)
-  })
-
-  it('ignores an unknown key rather than throwing', () => {
-    withScrollSpy()
-    const ref = createRef<SnapPagerHandle>()
-    render(<SnapPager ref={ref} pages={pages} />)
-    expect(() => act(() => ref.current!.goTo('nope'))).not.toThrow()
   })
 })
 
