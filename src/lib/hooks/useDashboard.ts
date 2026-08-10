@@ -94,7 +94,7 @@ export function useEnsureTodayScore(enabled = true) {
       })
         .then((r) => (r.ok
           ? qc.invalidateQueries({ queryKey: ['today'] })
-              .then(() => qc.invalidateQueries({ queryKey: ['daily_scores'] }))
+              .then(() => qc.invalidateQueries({ queryKey: ['readiness_today'] }))
               .then(() => qc.invalidateQueries({ queryKey: ['weekly_review'] }))
           : null))
         .catch(() => {})

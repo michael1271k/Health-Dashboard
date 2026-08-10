@@ -25,12 +25,33 @@ import { WORKOUT_QUERY_KEYS } from '@/lib/query/workoutKeys'
  * when the socket comes back up after having been lost, and never on the
  * initial join (those queries are already fetching on mount).
  */
+/**
+ * ── WHY `['today']` IS ON FIVE OF THESE AND `['daily_scores']` IS ON NONE ─────
+ * `['daily_scores']` used to sit in seven of these lists. It matches nothing:
+ * no `useQuery` is keyed on it. Every read of that table happens inside another
+ * query — and the big one is the bundled `['today', date]` (useDashboard.ts:52),
+ * which fetches score + daily_log + metrics + nutrition + sleep in ONE request.
+ *
+ * So the five tables feeding that bundle each have to invalidate `['today']`,
+ * and until now only `user_goals` did. A sleep sync or a macro edit on the
+ * desktop left the phone's dashboard painting the previous values for the full
+ * 90 s staleTime — longer from a cold open, since that key is persisted. The
+ * dead key looked like it covered this, which is precisely why nobody noticed.
+ *
+ * `['readiness_today']` gets the same treatment: it reads battery + sleep score
+ * and nothing invalidated it at all.
+ */
 const TABLE_KEYS: Record<string, string[][]> = {
-  daily_logs: [['daily_logs'], ['daily_scores'], ['coach'], ['trends'], ['continuum'], ['day_vault'], ['sleep_debt']],
-  daily_metrics: [['daily_metrics'], ['daily_scores'], ['day_vault']],
-  nutrition_entries: [['nutrition_entries'], ['daily_logs'], ['daily_scores'], ['coach'], ['continuum'], ['day_vault'], ['fuel_force_session']],
+  daily_logs: [['daily_logs'], ['today'], ['readiness_today'], ['coach'], ['trends'], ['continuum'], ['day_vault'], ['sleep_debt']],
+  // Steps and active-cal have no key of their own: `useDailyLogs` joins this
+  // table into `['daily_logs', …]`, and the dashboard reads it from `['today']`.
+  daily_metrics: [['daily_logs'], ['today'], ['readiness_today'], ['day_vault']],
+  // Intake moves the day score, not readiness — battery drains on activity and
+  // volume, never on calories.
+  nutrition_entries: [['nutrition_entries'], ['daily_logs'], ['today'], ['coach'], ['continuum'], ['day_vault'], ['fuel_force_session']],
   body_composition: [['body_composition'], ['trends'], ['coach']],
-  sleep_sessions: [['sleep_sessions'], ['daily_scores'], ['trends'], ['weekly_review'], ['sleep_debt']],
+  // Sleep is 40% of readiness directly, plus the wake-charge term in battery.
+  sleep_sessions: [['sleep_sessions'], ['today'], ['readiness_today'], ['trends'], ['weekly_review'], ['sleep_debt']],
   // Shares the canonical workout-derived key list with the commit/delete
   // mutations so a session change from ANY device refreshes the same surfaces.
   workout_sessions: WORKOUT_QUERY_KEYS,
@@ -38,9 +59,9 @@ const TABLE_KEYS: Record<string, string[][]> = {
   // workout_sets (the parent session row is untouched), so without this the
   // desktop/other devices wouldn't see a live rep/weight change until reload.
   workout_sets: WORKOUT_QUERY_KEYS,
-  daily_scores: [['daily_scores'], ['weekly_review'], ['trends'], ['coach'], ['continuum'], ['day_vault'], ['month_activity'], ['week_recovery']],
+  daily_scores: [['today'], ['readiness_today'], ['daily_logs'], ['weekly_review'], ['trends'], ['coach'], ['continuum'], ['day_vault'], ['month_activity'], ['week_recovery']],
   supplement_log: [['supplement_log'], ['day_vault']],
-  water_intake: [['daily_scores'], ['day_vault']],
+  water_intake: [['today'], ['day_vault']],
   reports: [['reports'], ['weekly_review']],
   // Settings live-sync across devices: a change on desktop invalidates the phone.
   //
@@ -50,7 +71,7 @@ const TABLE_KEYS: Record<string, string[][]> = {
   // rings drawing the previous target for a full staleTime — and longer after a
   // cold open, since that key is restored from localStorage. Same fan-out the
   // manual macro override already performs (useMacroOverride CASCADE_KEYS).
-  user_goals: [['user_goals'], ['today'], ['daily_scores'], ['coach'], ['day_vault'], ['nutrition_entries']],
+  user_goals: [['user_goals'], ['today'], ['readiness_today'], ['coach'], ['day_vault'], ['nutrition_entries']],
   // Day swaps. This table was MISSING from the map, which is half of why a
   // rest-day swap made on the phone never reached the desktop: nothing told the
   // other device the schedule had moved. (The other half was the override cache

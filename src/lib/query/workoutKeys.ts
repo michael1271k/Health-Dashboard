@@ -9,6 +9,19 @@ import type { QueryClient } from '@tanstack/react-query'
  *
  * Leaf module (no React/provider imports) so both the mutation hooks and
  * RealtimeProvider can import it without a cycle.
+ *
+ * ── EVERY PREFIX HERE MUST MATCH A REGISTERED `queryKey` ─────────────────────
+ * An invalidation that matches nothing is not a no-op you can leave lying about
+ * — it reads like coverage. `['daily_scores']` sat in both lists (and in seven
+ * RealtimeProvider entries) for exactly that reason: the table is real, so the
+ * key looked right. But no `useQuery` is ever *keyed* on it — every read of that
+ * table lives inside `['today']`, `['day_vault']`, `['continuum']`, `['trends']`
+ * or `['readiness_today']`. Four of those were already listed, which is why the
+ * gap stayed invisible; `['readiness_today']` was not, so the readiness orb kept
+ * a stale battery for its full 5-minute staleTime after any recompute.
+ *
+ * `src/tests/query-key-coverage.test.ts` now fails on any prefix with no
+ * registered consumer.
  */
 export const WORKOUT_QUERY_KEYS: string[][] = [
   ['workout_sessions'],
@@ -16,7 +29,7 @@ export const WORKOUT_QUERY_KEYS: string[][] = [
   ['exercises'],       // the catalog: a commit can CREATE a row (resolveExercises)
   ['continuum'],
   ['day_vault'],
-  ['daily_scores'],
+  ['readiness_today'], // battery drains on session volume (SPLIT_DRAIN × volumeKg)
   ['weekly_volume'],   // MEV/MAV accumulator — stale after every commit/edit
   ['session_trends'],  // per-exercise progression + double-progression verdict
   ['weekly_export'],   // the AI payload embeds sessions + volume
@@ -50,12 +63,14 @@ export function invalidateWorkoutData(qc: QueryClient): void {
 export const HEALTH_QUERY_KEYS: string[][] = [
   ['today'],             // bundled dashboard "today" view (score+log+metrics+nutrition+sleep)
   ['daily_logs'],        // vitals, nutrition history, dashboard today-log
-  ['daily_metrics'],     // dashboard steps/active-cal/rest-hr
+                         // (also the steps/active-cal read — useDailyLogs joins
+                         //  daily_metrics under this key, so there is no
+                         //  ['daily_metrics'] consumer to invalidate)
   ['nutrition_entries'], // macro rings/history + dashboard
   ['sleep_sessions'],    // dashboard sleep tile
   ['body_composition'],  // weight trend + InBody
   ['weigh_in'],          // last-genuine-weigh-in recency label
-  ['daily_scores'],      // recovery / battery / day score
+  ['readiness_today'],   // battery + sleep score behind the orb
   ['continuum'],         // journey/pathfinder day rows
   ['trends'],            // command-center trend strips
   ['weekly_review'],

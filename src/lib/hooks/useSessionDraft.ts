@@ -324,7 +324,7 @@ export function useSessionDraft() {
             body: JSON.stringify({ date: committedDate, force: true, isToday: committedDate === logicalTodayISO(), backfillDays: 0, hoursAwake: hoursAwakeToday() }),
           }).then(() => {
             qc.invalidateQueries({ queryKey: ['today'] })
-            qc.invalidateQueries({ queryKey: ['daily_scores'] })
+            qc.invalidateQueries({ queryKey: ['readiness_today'] })
             qc.invalidateQueries({ queryKey: ['day_vault', committedDate] })
           }).catch(() => {})
         }

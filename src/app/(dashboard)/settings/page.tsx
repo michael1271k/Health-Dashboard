@@ -29,7 +29,7 @@ const WD_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
  * which handles the OTHER devices.
  */
 const PLAN_PHASE_CASCADE_KEYS: string[][] = [
-  ['user_goals'], ['today'], ['daily_scores'], ['coach'], ['day_vault'], ['nutrition_entries'],
+  ['user_goals'], ['today'], ['readiness_today'], ['coach'], ['day_vault'], ['nutrition_entries'],
 ]
 
 /** Live plans first, legacy (PPL) last — the order of the Settings plan cards. */

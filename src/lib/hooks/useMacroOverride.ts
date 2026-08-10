@@ -16,7 +16,9 @@ export interface MacroValues {
 
 /** Surfaces that must refresh after a manual macro edit cascades. */
 const CASCADE_KEYS: string[][] = [
-  ['today'], ['nutrition_entries'], ['daily_logs'], ['daily_scores'], ['coach'], ['trends'],
+  // No ['daily_scores'] — nothing is keyed on it; the recomputed score arrives
+  // with ['today'] (see workoutKeys.ts). Intake never moves readiness.
+  ['today'], ['nutrition_entries'], ['daily_logs'], ['coach'], ['trends'],
   ['day_vault'], ['continuum'], ['weekly_review'], ['fuel_force_session'], ['muscle_analytics'],
   // The weekly export reads `nutrition_entries` for every calorie and macro it
   // prints, and caches the rendered markdown for 60 s. Without this key, editing
