@@ -25,6 +25,40 @@ export const livePrKey = (localId: string, setIdx: number) => `${localId}|${setI
  * because `saveSession` runs the same function over the same order, what you see
  * on the tick is what gets written.
  */
+/**
+ * Everything the record answer depends on, as a string.
+ *
+ * ── WHY THIS EXISTS, AND WHY IT IS NOT ABOUT ENGINE COST ─────────────────────
+ * `detectSessionPrs` measures at 0.0126 ms against a 24-set deck, flat whatever
+ * the history size — `PrBaselines` arrives pre-reduced, so the index is ~138
+ * keys whether you have logged 200 sets or 4000. That is 0.08% of a frame. The
+ * engine was never the problem, and deferring it would have bought nothing.
+ *
+ * What matters is that `computeLivePrs` returns a NEW Map every call. That Map
+ * is a prop on all six ExerciseCards, so a fresh one on every keystroke broke
+ * `memo` for the entire deck — 2.664 ms of reconciliation per character, 211×
+ * the engine's cost. Holding the Map's identity steady is worth ~84% of that.
+ *
+ * ONLY COMMITTED SETS APPEAR HERE, because only they can change the answer. A
+ * template-seeded live deck starts every set `done: false`, so during normal
+ * logging this digest never changes while you type and the engine does not run
+ * at all — the result would have been identical each time. Tick a set and the
+ * digest moves, exactly once, which is when the answer genuinely changes.
+ */
+export function livePrDigest(draft: SessionDraft | null): string {
+  if (!draft) return ''
+  let out = draft.date
+  for (const ex of draft.exercises) {
+    if (ex.kind === 'cardio') continue
+    for (let i = 0; i < ex.sets.length; i++) {
+      const s = ex.sets[i]
+      if (!isSetCommitted(s)) continue
+      out += `|${ex.localId}:${i}:${ex.name}:${s.weightKg}:${s.reps}:${s.setType ?? ''}:${s.side ?? ''}:${s.pairId ?? ''}`
+    }
+  }
+  return out
+}
+
 export function computeLivePrs(draft: SessionDraft | null, baselines: PrBaselines | undefined): LivePrs {
   if (!draft || !baselines) return EMPTY_LIVE_PRS
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { memo, useCallback, useMemo, useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { ArrowLeftRight, CheckCheck, ChevronDown, Footprints, GripVertical, History, NotebookPen, Plus, Target, X } from 'lucide-react'
@@ -83,8 +83,30 @@ const fmtDate = (d: string) =>
  * coach status chip, the era-scoped "PREV" reference chip beside today's
  * inputs, an editable note, and the per-set tuner rows. Cardio entries render
  * as a slim violet card (distance/duration, no set rows — excluded at commit).
+ *
+ * ── MEMOIZED, AND WHY THE memo ALONE DOES NOT SAVE MUCH ──────────────────────
+ * A keystroke reconciled all six cards and all twenty-four rows: 2.664 ms per
+ * keystroke on a 6×4 deck, 16% of a frame in jsdom before a browser adds style,
+ * layout or paint. The PR engine everyone suspected was 0.0126 ms of that —
+ * 0.5%, and flat whatever the history size.
+ *
+ * Three things had to change before `memo` could hold at all: the ten inline
+ * closures the deck list bound per card, the fresh `livePrs` Map each render,
+ * and `SortableContext items={…}` being a new array every time. All fixed.
+ *
+ * `memo` still does not stop this component re-executing, and cannot: it calls
+ * `useSortable`, and a context change re-renders every consumer regardless of
+ * props. Probed directly — 60 row renders across 10 keystrokes with memo in
+ * place, versus 10 without the hook. What the memo boundary does buy is that
+ * the SUBTREE bails: `SetEditorRow` subscribes to nothing, so the 24 rows and
+ * their 96 effects drop out.
+ *
+ * Measured end to end: 2.664 ms → 2.019 ms, 24% off. The remaining cost is six
+ * card bodies re-executing because of that context subscription. Removing it
+ * means lifting `useSortable` into a shell component and moving the grip out of
+ * this header — a real refactor, deliberately not done here.
  */
-export function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collapsed = false, onUpdateSet, onSplitSet, onMergeSet, onToggleLink, onAddSet, onRemoveSet, onToggleDone, onCheckAll, onRemoveExercise, onSetNote }: {
+export const ExerciseCard = memo(function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collapsed = false, onUpdateSet, onSplitSet, onMergeSet, onToggleLink, onAddSet, onRemoveSet, onToggleDone, onCheckAll, onRemoveExercise, onSetNote }: {
   exercise: DraftExercise
   history: ExerciseHistory | null
   /** Live records keyed `${localId}|${setIdx}` — computed once for the whole
@@ -98,21 +120,50 @@ export function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collap
   ready?: ReadyCue | null
   /** Force header-only (drag-reorder collapses the whole deck for visibility). */
   collapsed?: boolean
-  onUpdateSet: (setIdx: number, patch: Partial<DraftSet>) => void
-  onSplitSet: (setIdx: number) => void
-  onMergeSet: (pairId: string) => void
-  onToggleLink: (pairId: string) => void
-  onAddSet: () => void
-  onRemoveSet: (setIdx: number) => void
-  onToggleDone: (setIdx: number) => void
-  onCheckAll: () => void
-  onRemoveExercise: () => void
-  onSetNote: (note: string) => void
+  /*
+   * ── EVERY HANDLER TAKES `localId` ────────────────────────────────────────
+   * These used to be pre-bound: the card received `(setIdx, patch)` and the
+   * deck list supplied `onUpdateSet={(i, p) => onUpdateSet(ex.localId, i, p)}`.
+   * Ten arrow functions per card, rebuilt on every parent render, which meant
+   * all ten props changed identity on every keystroke and `memo` could never
+   * hit — one character typed reconciled all six cards and all twenty-four
+   * rows when only one card's data had changed.
+   *
+   * Taking `localId` here lets the deck list pass the store's own `useCallback`
+   * handlers straight through, unwrapped and stable for the session's lifetime.
+   * The card already knows its own id; binding it was never the parent's job.
+   */
+  onUpdateSet: (localId: string, setIdx: number, patch: Partial<DraftSet>) => void
+  onSplitSet: (localId: string, setIdx: number) => void
+  onMergeSet: (localId: string, pairId: string) => void
+  onToggleLink: (localId: string, pairId: string) => void
+  onAddSet: (localId: string) => void
+  onRemoveSet: (localId: string, setIdx: number) => void
+  onToggleDone: (localId: string, setIdx: number) => void
+  onCheckAll: (localId: string) => void
+  onRemoveExercise: (localId: string) => void
+  onSetNote: (localId: string, note: string) => void
 }) {
+  const localId = exercise.localId
+
   const [open, setOpen] = useState(true)
   const showBody = open && !collapsed
   const [activeSet, setActiveSet] = useState<number | null>(null)
   const [editingNote, setEditingNote] = useState(false)
+
+  /*
+   * Bound ONCE per card, not once per row per render. These are what let
+   * `memo(SetEditorRow)` hold: previously each of the twenty-four rows received
+   * five fresh arrow closures on every card render, so every row re-rendered
+   * on every keystroke anywhere in the deck. The row supplies its own index.
+   */
+  const handleActivate = useCallback((i: number) => setActiveSet((cur) => (cur === i ? null : i)), [])
+  const handleChange = useCallback((i: number, patch: Partial<DraftSet>) => onUpdateSet(localId, i, patch), [onUpdateSet, localId])
+  const handleRemove = useCallback((i: number) => { setActiveSet(null); onRemoveSet(localId, i) }, [onRemoveSet, localId])
+  const handleToggleDone = useCallback((i: number) => onToggleDone(localId, i), [onToggleDone, localId])
+  const handleSplit = useCallback((i: number) => onSplitSet(localId, i), [onSplitSet, localId])
+  const handleToggleLink = useCallback((pairId: string) => onToggleLink(localId, pairId), [onToggleLink, localId])
+  const handleMerge = useCallback((pairId: string) => onMergeSet(localId, pairId), [onMergeSet, localId])
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } =
     useSortable({ id: exercise.localId })
 
@@ -259,7 +310,7 @@ export function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collap
                 {Math.round(exercise.durationSec / 60)}<span className="text-[10px] font-normal ml-0.5">min</span>
               </span>
             )}
-            <button type="button" onClick={onRemoveExercise}
+            <button type="button" onClick={() => onRemoveExercise(localId)}
               className="min-h-[32px] min-w-[32px] rounded-lg flex items-center justify-center text-muted hover:text-danger"
               aria-label={`Remove ${cardioSummary(exercise)}`}>
               <X className="w-3.5 h-3.5" aria-hidden="true" />
@@ -390,7 +441,7 @@ export function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collap
               autoFocus
               rows={2}
               defaultValue={exercise.note ?? ''}
-              onBlur={(e) => { onSetNote(e.target.value.trim()); setEditingNote(false) }}
+              onBlur={(e) => { onSetNote(localId, e.target.value.trim()); setEditingNote(false) }}
               dir="auto"
               placeholder="Note for this exercise…"
               className="w-full rounded-lg bg-white/[0.04] border border-white/[0.12] px-2.5 py-1.5 text-xs text-text
@@ -429,7 +480,7 @@ export function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collap
               after the fact). Only green sets are recorded on finish. Sits on
               the divider rather than owning a full row of its own. */}
           <div className="flex justify-end -mt-4 mb-0.5">
-            <button type="button" onClick={onCheckAll}
+            <button type="button" onClick={() => onCheckAll(localId)}
               className="min-h-[26px] px-2 rounded-lg text-[10px] font-bold uppercase tracking-wide flex items-center gap-1 active:scale-95 transition-colors"
               style={{ color: '#3E9E7A', background: '#3E9E7A14', border: '1px solid #3E9E7A44' }}>
               <CheckCheck className="w-3 h-3" aria-hidden="true" /> Check all
@@ -449,11 +500,11 @@ export function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collap
                   timed={timed}
                   bodyweight={bodyweightEx}
                   prAxes={livePrs?.get(livePrKey(exercise.localId, i))}
-                  onActivate={() => setActiveSet((cur) => (cur === i ? null : i))}
-                  onChange={(patch) => onUpdateSet(i, patch)}
-                  onRemove={() => { setActiveSet(null); onRemoveSet(i) }}
-                  onToggleDone={() => onToggleDone(i)}
-                  onSplit={() => onSplitSet(i)}
+                  onActivate={handleActivate}
+                  onChange={handleChange}
+                  onRemove={handleRemove}
+                  onToggleDone={handleToggleDone}
+                  onSplit={handleSplit}
                 />
               )
             }
@@ -479,10 +530,10 @@ export function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collap
                     key={`l${g.left.idx}`} index={g.left.idx} displayNum={g.num} subRow set={g.left.set}
                     active={activeSet === g.left.idx} timed={timed} bodyweight={bodyweightEx}
                     prAxes={livePrs?.get(livePrKey(exercise.localId, g.left.idx))}
-                    onActivate={() => setActiveSet((cur) => (cur === g.left!.idx ? null : g.left!.idx))}
-                    onChange={(patch) => onUpdateSet(g.left!.idx, patch)}
-                    onRemove={() => { setActiveSet(null); onRemoveSet(g.left!.idx) }}
-                    onToggleDone={() => onToggleDone(g.left!.idx)}
+                    onActivate={handleActivate}
+                    onChange={handleChange}
+                    onRemove={handleRemove}
+                    onToggleDone={handleToggleDone}
                   />
                 )}
                 {g.right && (
@@ -490,22 +541,22 @@ export function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collap
                     key={`r${g.right.idx}`} index={g.right.idx} displayNum={g.num} subRow set={g.right.set}
                     active={activeSet === g.right.idx} timed={timed} bodyweight={bodyweightEx}
                     prAxes={livePrs?.get(livePrKey(exercise.localId, g.right.idx))}
-                    onActivate={() => setActiveSet((cur) => (cur === g.right!.idx ? null : g.right!.idx))}
-                    onChange={(patch) => onUpdateSet(g.right!.idx, patch)}
-                    onRemove={() => { setActiveSet(null); onRemoveSet(g.right!.idx) }}
-                    onToggleDone={() => onToggleDone(g.right!.idx)}
+                    onActivate={handleActivate}
+                    onChange={handleChange}
+                    onRemove={handleRemove}
+                    onToggleDone={handleToggleDone}
                   />
                 )}
                 {/* Pair-level controls — link mirrors weight+reps; merge collapses back. */}
                 <div className="flex items-center gap-1.5 px-1 pt-0.5">
-                  <button type="button" onClick={() => onToggleLink(g.pairId)} aria-pressed={linked}
+                  <button type="button" onClick={() => handleToggleLink(g.pairId)} aria-pressed={linked}
                     className="min-h-[30px] px-2.5 rounded-lg text-[10px] font-bold uppercase tracking-wide active:scale-95 transition-colors"
                     style={linked
                       ? { color: '#8E9AAC', background: '#8E9AAC1f', border: '1px solid #8E9AAC66' }
                       : { color: 'var(--color-muted)', background: 'transparent', border: '1px solid rgba(255,255,255,0.10)' }}>
                     {linked ? 'Linked' : 'Unlinked'}
                   </button>
-                  <button type="button" onClick={() => onMergeSet(g.pairId)}
+                  <button type="button" onClick={() => handleMerge(g.pairId)}
                     className="min-h-[30px] px-2.5 rounded-lg text-[10px] font-bold uppercase tracking-wide text-muted border border-white/10 hover:text-danger active:scale-95 transition-colors">
                     Merge
                   </button>
@@ -515,7 +566,7 @@ export function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collap
           })}
           <button
             type="button"
-            onClick={onAddSet}
+            onClick={() => onAddSet(localId)}
             className="w-full min-h-[36px] rounded-xl border border-dashed border-white/[0.12] text-muted
                        hover:text-text hover:border-white/[0.25] text-xs font-medium flex items-center justify-center gap-1 transition-colors"
           >
@@ -525,4 +576,4 @@ export function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collap
       )}
     </div>
   )
-}
+})

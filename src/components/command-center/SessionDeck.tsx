@@ -9,7 +9,7 @@ import { SessionNotesCard } from './SessionNotesCard'
 import { CommitBar } from './CommitBar'
 import { useExerciseSetHistory } from '@/lib/hooks/useExerciseSetHistory'
 import { useExerciseBaselines } from '@/lib/hooks/useExerciseBaselines'
-import { computeLivePrs } from '@/lib/sessions/livePrs'
+import { computeLivePrs, livePrDigest } from '@/lib/sessions/livePrs'
 import { useProgressionQueue } from '@/lib/hooks/useProgressionQueue'
 import { useDeleteSession } from '@/lib/hooks/useDayVault'
 import { eraForDate } from '@/lib/programs'
@@ -45,8 +45,17 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
   // Live PR detection. All-time baselines strictly BEFORE this session's date,
   // run through the same engine `saveSession` uses — so a badge that appears on
   // the green tick is a badge that gets written to personal_records.
+  //
+  // Keyed on a DIGEST OF THE COMMITTED SETS, not on `draft`. `draft` is a new
+  // object on every keystroke, so this used to hand every ExerciseCard a fresh
+  // `livePrs` Map and break memo across the whole deck. The engine itself is
+  // 0.0126 ms — never the cost; the identity churn was. See livePrDigest.
   const { data: baselines } = useExerciseBaselines(names, draft?.date)
-  const livePrs = useMemo(() => computeLivePrs(draft, baselines), [draft, baselines])
+  const prKey = livePrDigest(draft)
+  // `draft` is deliberately not a dependency: `prKey` already covers every
+  // field the result can depend on, and including it defeats the whole point.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const livePrs = useMemo(() => computeLivePrs(draft, baselines), [prKey, baselines])
 
   // Forward-carried Smart-Coach cues — lifts due a load bump, keyed by name so a
   // matching card in this session shows the "▲ add load" chip inline.

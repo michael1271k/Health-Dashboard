@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { memo, useEffect, useState } from 'react'
 import * as Slider from '@radix-ui/react-slider'
 import { Check, X, Trophy } from 'lucide-react'
 import { tapLight } from '@/lib/native/haptics'
@@ -21,8 +21,21 @@ const maxFor = (w: number) => Math.max(60, Math.ceil((w + 30) / 10) * 10)
  * One set row of the deck: tap to activate the tuner (Radix weight slider +
  * haptic stepper chips, reps ±1, Warm-up/Failure toggles). Only the active row
  * mounts its slider, keeping long decks light.
+ *
+ * ── MEMOIZED — THIS IS THE ONE THAT ACTUALLY PAYS ────────────────────────────
+ * A keystroke re-rendered all six cards and all twenty-four rows: 2.664 ms,
+ * 16% of a frame in jsdom before any paint. Memoizing the CARD turned out not
+ * to be enough on its own — `ExerciseCard` calls `useSortable`, and a context
+ * change re-renders every consumer no matter how stable its props are (probed:
+ * 60 renders across 10 keystrokes with memo in place, versus 10 without the
+ * hook). dnd-kit republishes that context on every parent render.
+ *
+ * The rows subscribe to nothing. They are 24 of the ~30 components in the deck
+ * and they carry four effects each, so this boundary is where the work stops.
+ * The card shells above still re-execute; they are cheap once their subtree
+ * bails out.
  */
-export function SetEditorRow({ index, displayNum, subRow = false, set, active, timed = false, bodyweight = false, prAxes = [], onActivate, onChange, onRemove, onToggleDone, onSplit, onToggleLink, onMerge }: {
+export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subRow = false, set, active, timed = false, bodyweight = false, prAxes = [], onActivate, onChange, onRemove, onToggleDone, onSplit, onToggleLink, onMerge }: {
   index: number
   /** Records this set just set, computed live by the parent from `prEngine`. */
   prAxes?: PrAxis[]
@@ -40,17 +53,24 @@ export function SetEditorRow({ index, displayNum, subRow = false, set, active, t
   active: boolean
   /** Time-based movement (plank/hold) — the reps field is seconds, not reps. */
   timed?: boolean
-  onActivate: () => void
-  onChange: (patch: Partial<DraftSet>) => void
-  onRemove: () => void
+  /*
+   * ── EVERY HANDLER TAKES `index` ───────────────────────────────────────────
+   * Same reason ExerciseCard's take `localId`: these were pre-bound closures
+   * (`onChange={(patch) => onUpdateSet(localId, i, patch)}`), rebuilt on every
+   * card render, so all six props changed identity and `memo` never held. The
+   * row already receives its own `index`; binding it was not the card's job.
+   */
+  onActivate: (index: number) => void
+  onChange: (index: number, patch: Partial<DraftSet>) => void
+  onRemove: (index: number) => void
   /** Tick the set complete (green) / uncomplete — only green sets are recorded. */
-  onToggleDone?: () => void
+  onToggleDone?: (index: number) => void
   /** Unilateral: split a normal set into Left/Right (absent once already split). */
-  onSplit?: () => void
+  onSplit?: (index: number) => void
   /** Unilateral: toggle whether this L/R pair mirrors weight+reps. */
-  onToggleLink?: () => void
+  onToggleLink?: (pairId: string) => void
   /** Unilateral: collapse this L/R pair back into one bilateral set. */
-  onMerge?: () => void
+  onMerge?: (pairId: string) => void
 }) {
   // 3.75 must display as 3.75, not "3.8" — quarter-step plates are real loads.
   const weightLabel = set.weightKg % 1 === 0 ? set.weightKg.toFixed(0)
@@ -111,15 +131,15 @@ export function SetEditorRow({ index, displayNum, subRow = false, set, active, t
   const nudgeWeight = (delta: number) => {
     void tapLight()
     // Snap to the 0.25 kg grid (quarter-kg microloads), not the old 0.5 grid.
-    onChange({ weightKg: Math.max(0, Math.round((set.weightKg + delta) * 4) / 4) })
+    onChange(index, { weightKg: Math.max(0, Math.round((set.weightKg + delta) * 4) / 4) })
   }
   const nudgeReps = (delta: number) => {
     void tapLight()
-    onChange({ reps: Math.max(1, set.reps + delta) })
+    onChange(index, { reps: Math.max(1, set.reps + delta) })
   }
   const toggleType = (t: 'warmup' | 'failure' | 'dropset') => {
     void tapLight()
-    onChange({ setType: set.setType === t ? undefined : t })
+    onChange(index, { setType: set.setType === t ? undefined : t })
   }
 
   const sideColor = set.side === 'L' ? '#8E9AAC' : set.side === 'R' ? '#E0703C' : null
@@ -145,7 +165,7 @@ export function SetEditorRow({ index, displayNum, subRow = false, set, active, t
       <div className="flex items-center gap-2 px-2 py-1">
         <button
           type="button"
-          onClick={onActivate}
+          onClick={() => onActivate(index)}
           className="flex-1 min-w-0 flex flex-col gap-1 text-left min-h-[34px] justify-center"
           aria-expanded={active}
         >
@@ -202,7 +222,7 @@ export function SetEditorRow({ index, displayNum, subRow = false, set, active, t
             // one thing that reliably breaks the illusion. Committing still
             // happens on click, so dragging off the button still cancels.
             onPointerDown={() => { void tapLight() }}
-            onClick={() => { onToggleDone() }}
+            onClick={() => { onToggleDone(index) }}
             aria-pressed={done}
             aria-label={done ? `Mark set ${index + 1} not done` : `Mark set ${index + 1} done`}
             className="min-h-[32px] min-w-[32px] rounded-lg flex items-center justify-center active:scale-95 transition-[color,background-color,border-color,transform] duration-150"
@@ -215,7 +235,7 @@ export function SetEditorRow({ index, displayNum, subRow = false, set, active, t
         )}
         <button
           type="button"
-          onClick={onRemove}
+          onClick={() => onRemove(index)}
           className="min-h-[32px] min-w-[32px] rounded-lg flex items-center justify-center text-muted hover:text-danger active:scale-95 transition-transform"
           aria-label={`Remove set ${index + 1}`}
         >
@@ -236,7 +256,7 @@ export function SetEditorRow({ index, displayNum, subRow = false, set, active, t
                     value={set.weightKg}
                     inputMode="decimal"
                     ariaLabel={`Weight for set ${index + 1}`}
-                    onCommit={(n) => onChange({ weightKg: Math.max(0, n) })}
+                    onCommit={(n) => onChange(index, { weightKg: Math.max(0, n) })}
                   />
                   <span className="text-[10px] uppercase tracking-wide text-muted shrink-0">kg</span>
                 </label>
@@ -248,7 +268,7 @@ export function SetEditorRow({ index, displayNum, subRow = false, set, active, t
                 value={set.reps}
                 inputMode="numeric"
                 ariaLabel={`${timed ? 'Seconds' : 'Reps'} for set ${index + 1}`}
-                onCommit={(n) => onChange({ reps: Math.max(1, Math.round(n)) })}
+                onCommit={(n) => onChange(index, { reps: Math.max(1, Math.round(n)) })}
               />
               <span className="text-[10px] uppercase tracking-wide text-muted shrink-0">{timed ? 'sec' : 'reps'}</span>
             </label>
@@ -260,7 +280,7 @@ export function SetEditorRow({ index, displayNum, subRow = false, set, active, t
             max={sliderMax}
             step={0.25}
             value={[set.weightKg]}
-            onValueChange={([v]) => onChange({ weightKg: v })}
+            onValueChange={([v]) => onChange(index, { weightKg: v })}
             onValueCommit={() => void tapLight()}
             aria-label={`Weight for set ${index + 1}`}
           >
@@ -321,13 +341,13 @@ export function SetEditorRow({ index, displayNum, subRow = false, set, active, t
           {(onSplit || onToggleLink || onMerge) && (
             <div className="flex items-center gap-1.5 flex-wrap">
               {onSplit && (
-                <button type="button" onClick={onSplit}
+                <button type="button" onClick={() => onSplit(index)}
                   className="min-h-[32px] px-2.5 rounded-lg text-[11px] font-bold uppercase tracking-wide text-muted border border-white/10 hover:text-text active:scale-95 transition-colors">
                   Split L / R
                 </button>
               )}
               {set.side && onToggleLink && (
-                <button type="button" onClick={onToggleLink} aria-pressed={set.linked !== false}
+                <button type="button" onClick={() => onToggleLink(set.pairId!)} aria-pressed={set.linked !== false}
                   className="min-h-[32px] px-2.5 rounded-lg text-[11px] font-bold uppercase tracking-wide active:scale-95 transition-colors"
                   style={set.linked !== false
                     ? { color: '#8E9AAC', background: '#8E9AAC1f', border: '1px solid #8E9AAC66' }
@@ -336,7 +356,7 @@ export function SetEditorRow({ index, displayNum, subRow = false, set, active, t
                 </button>
               )}
               {set.side && onMerge && (
-                <button type="button" onClick={onMerge}
+                <button type="button" onClick={() => onMerge(set.pairId!)}
                   className="min-h-[32px] px-2.5 rounded-lg text-[11px] font-bold uppercase tracking-wide text-muted border border-white/10 hover:text-danger active:scale-95 transition-colors">
                   Merge
                 </button>
@@ -347,7 +367,7 @@ export function SetEditorRow({ index, displayNum, subRow = false, set, active, t
       )}
     </div>
   )
-}
+})
 
 /**
  * Typeable numeric field. Keeps a local text buffer while focused so partial
