@@ -54,7 +54,10 @@ export interface ScoringInputs {
   // HR (optional)
   restingHR?: number          // today's resting HR in bpm
   baselineHR?: number         // 7-day trailing average resting HR
-  respiratoryRate?: number    // breaths/min (recovery signal)
+  // No `respiratoryRate`. It sat here as an optional input labelled "recovery
+  // signal" and no scorer ever read it — nothing even constructed it. The
+  // column is ingested and rendered in Vitals; it just is not part of the
+  // score, and the type should not imply otherwise.
   hrvMs?: number              // today's HRV (SDNN ms)
   hrvBaseline?: number        // 7-day trailing average HRV
 
