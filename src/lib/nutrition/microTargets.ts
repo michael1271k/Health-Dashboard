@@ -106,7 +106,14 @@ export interface MicroSignal {
 }
 
 export const MICRO_SIGNALS: MicroSignal[] = [
-  { key: 'wrist_temp_delta', label: 'Wrist Temp Δ', unit: '°C', reference: '±0.3 °C is normal; a spike can flag illness/overreaching', color: '#C4514E' },
+  // The column is named `wrist_temp_delta` but holds the night's ABSOLUTE
+  // average in °C — ingest writes HealthKit's AppleSleepingWristTemperature
+  // straight through (see lib/ingest/dailyLog.ts:192). The label and the
+  // reference both took the column name at its word, so the deep-dive rendered
+  // "36.2 °C" beside "±0.3 °C is normal" and every ordinary night read as an
+  // anomaly. Renaming the column is paste-SQL against a live table for no
+  // functional gain; describing it correctly costs nothing.
+  { key: 'wrist_temp_delta', label: 'Wrist Temp', unit: '°C', reference: 'Absolute sleeping temp — the shift vs your own baseline is the signal', color: '#C4514E' },
   { key: 'time_in_daylight_min', label: 'Daylight', unit: 'min', reference: 'Aim ≥ 30 min — circadian + vitamin-D synthesis', color: '#D4AF37' },
   { key: 'hrv_ms', label: 'HRV', unit: 'ms', reference: 'Higher vs your baseline = better recovery', color: '#3D7AB8' },
   { key: 'blood_oxygen', label: 'Blood O₂', unit: '%', reference: '95–100 % typical at rest', color: '#3E9E7A' },

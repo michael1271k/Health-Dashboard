@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { FlaskConical, ChevronRight } from 'lucide-react'
@@ -46,6 +46,29 @@ export default function NutritionPage() {
 
   const [goals, setGoals] = useState<ActiveGoals>({ calorie: 1955, protein: 170, carbs: 195, fat: 55, mode: 'cut' })
 
+  /**
+   * The auto-heal runs AT MOST ONCE per mount, and that latch is the only thing
+   * standing between this effect and a write loop.
+   *
+   * The shape is inherently circular: it is keyed on `userGoals`, and its body
+   * invalidates `['user_goals']` — the very query that produces `userGoals`. It
+   * terminated only because the refetch was assumed to come back matching the
+   * preset, which makes the drift check fail on the second pass. That assumption
+   * holds exactly as long as the upsert succeeds, and the upsert's error was
+   * never inspected. Offline, behind an RLS hiccup, or against a column the
+   * schema cache has not caught up with, supabase-js RETURNS the error rather
+   * than throwing: the write silently does nothing, the refetch returns the same
+   * drifted row, the check fires again — and the page hammers the database for
+   * as long as it stays open.
+   *
+   * A ref latch makes termination structural instead of conditional on a
+   * successful round-trip, and the invalidation now happens only when the write
+   * actually landed. If the heal fails it is simply retried on the next mount,
+   * which is the right cadence for repairing a row that has already been wrong
+   * for some time.
+   */
+  const healed = useRef(false)
+
   // Reads the row `useUserGoals()` already has in cache instead of issuing its
   // own getSession + select — that pair was a second, uncached fetch of exactly
   // the same row on every Nutrition mount. The auto-heal write below is the
@@ -60,14 +83,26 @@ export default function NutritionPage() {
       // (e.g. maintenance saved at 2,300 while the preset says 2,375), the
       // preset is the source of truth — re-sync the row so selector, rings,
       // and goal text can never disagree again.
-      if (preset && (g.calorie_goal !== preset.calorieGoal || g.protein_goal_g !== preset.proteinGoalG
-        || g.carbs_goal_g !== preset.carbsGoalG || g.fat_goal_g !== preset.fatGoalG)) {
+      const drifted = preset != null && (
+        g.calorie_goal !== preset.calorieGoal || g.protein_goal_g !== preset.proteinGoalG
+        || g.carbs_goal_g !== preset.carbsGoalG || g.fat_goal_g !== preset.fatGoalG
+      )
+      if (preset && drifted && !healed.current) {
+        healed.current = true
         setGoals({ calorie: preset.calorieGoal, protein: preset.proteinGoalG, carbs: preset.carbsGoalG, fat: preset.fatGoalG, mode })
-        await supabase.from('user_goals').upsert({
+        const { error } = await supabase.from('user_goals').upsert({
           user_id: g.user_id, calorie_goal: preset.calorieGoal, protein_goal_g: preset.proteinGoalG,
           carbs_goal_g: preset.carbsGoalG, fat_goal_g: preset.fatGoalG, goal_preset: mode,
         } as unknown as never, { onConflict: 'user_id' })
-        qc.invalidateQueries({ queryKey: ['user_goals'] })
+        // Only re-read if there is something new to read. Invalidating after a
+        // failed write is what closed the loop.
+        if (!error) qc.invalidateQueries({ queryKey: ['user_goals'] })
+        return
+      }
+      // Drifted but already attempted this mount: show the preset (what the row
+      // is supposed to say) rather than the value the write failed to correct.
+      if (preset && drifted) {
+        setGoals({ calorie: preset.calorieGoal, protein: preset.proteinGoalG, carbs: preset.carbsGoalG, fat: preset.fatGoalG, mode })
         return
       }
       setGoals({ calorie: g.calorie_goal, protein: g.protein_goal_g, carbs: g.carbs_goal_g, fat: g.fat_goal_g, mode })
