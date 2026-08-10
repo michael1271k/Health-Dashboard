@@ -24,10 +24,19 @@ const nextConfig: NextConfig = {
     // Tree-shake heavy barrel imports → smaller bundles + faster compile
     optimizePackageImports: ['lucide-react', 'recharts', 'framer-motion'],
   },
-  // Skip lint/TS during Netlify builds — correctness is enforced locally via `npm run check`.
-  // This prevents failed deploys from noise that is already green locally.
-  eslint:     { ignoreDuringBuilds: true },
-  typescript: { ignoreBuildErrors: true },
+  // Lint is skipped on Netlify on purpose: it is style, it is already green
+  // locally, and a failed deploy over an unused import costs build minutes that
+  // are genuinely scarce here.
+  eslint: { ignoreDuringBuilds: true },
+
+  // TYPES ARE NOT IN THAT CATEGORY. This was `ignoreBuildErrors: true`, with a
+  // comment promising that `npm run check` covers it locally — a promise, not a
+  // gate. Nothing enforced it, so the deployable artifact was allowed to be one
+  // a typecheck would reject, and the only way to find out was in the browser.
+  //
+  // A type error is never noise. Turning this off means a broken deploy fails
+  // at build instead of at runtime, which is the cheaper of the two places.
+  typescript: { ignoreBuildErrors: false },
 }
 
 export default withSerwist(nextConfig)
