@@ -28,10 +28,18 @@ const ExerciseHistorySheet = dynamic(
 // unambiguously in context (it is the only single-letter tag on a warm-up row)
 // and the full word survives where there IS room — the weekly export writes
 // "(Warmup)" verbatim (weeklyExport.ts), which is what a coach reads.
+// "Dropset" and "Failure" are seven characters each — the same overflow the
+// warm-up tag was already shortened for. All three are single letters now, with
+// the full word in the tooltip, and the LOGGER uses exactly the same three tags
+// (SetEditorRow) so a set reads identically while you type it and after.
+//
+// Warm-up is EMBER, not emerald. Ember is the documented set-type colour, and
+// emerald already means "committed" in the logger — a green warm-up chip on a
+// green-ticked row says two things at once.
 const TAG: Record<string, { label: string; full: string; color: string }> = {
-  warmup: { label: 'W', full: 'Warmup', color: EMERALD },
-  failure: { label: 'Failure', full: 'Failure', color: OXIDE },
-  dropset: { label: 'Dropset', full: 'Dropset', color: '#9A6DD7' },
+  warmup: { label: 'W', full: 'Warm-up', color: EMBER },
+  failure: { label: 'F', full: 'Taken to failure', color: OXIDE },
+  dropset: { label: 'D', full: 'Drop set', color: '#9A6DD7' },
 }
 
 /**

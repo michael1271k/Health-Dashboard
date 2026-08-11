@@ -143,9 +143,21 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
   }
 
   const sideColor = set.side === 'L' ? '#8E9AAC' : set.side === 'R' ? '#E0703C' : null
-  // Spelled out. A single letter beside a load reads as a unit or a grade, and
-  // "W" next to "20kg" is genuinely ambiguous.
-  const badge = set.side ?? (isWarm ? 'Warmup' : isDrop ? 'Dropset' : `S${displayNum ?? index + 1}`)
+  // The badge box is 24px (`w-6 shrink-0`). "Warmup" and "Dropset" are six and
+  // seven uppercase characters, and `shrink-0` stops them even trying to fit —
+  // they spilled into the load column 10px away. So the box now holds only what
+  // is guaranteed to fit (S1 / L / R) and the grid stays aligned however the set
+  // is typed; the TYPE moves to a chip beside the numbers, where `F` already
+  // lived. The earlier objection to a bare letter — that "W" next to "20kg"
+  // reads as a unit — is answered by the chip's border and tint, which read as a
+  // tag rather than a suffix, plus the full word in `title`/`aria-label`. This
+  // is the treatment the read-only ledger already shipped (ExerciseBreakdown).
+  const badge = set.side ?? `S${displayNum ?? index + 1}`
+  // setType is single-valued (see `toggleType`), so at most one tag ever shows.
+  const typeTag = isWarm ? { label: 'W', full: 'Warm-up', color: ORANGE }
+    : isDrop ? { label: 'D', full: 'Drop set', color: DROP }
+    : isFail ? { label: set.side ? `F-${set.side}` : 'F', full: 'Taken to failure', color: DANGER }
+    : null
 
   return (
     <div
@@ -172,7 +184,7 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
           <span className="flex items-center gap-2.5 min-w-0">
             <span
               className="w-6 shrink-0 text-[10px] font-bold uppercase tracking-wide tabular-nums"
-              style={{ color: sideColor ?? (isWarm ? ORANGE : isFail ? DANGER : isDrop ? DROP : 'var(--color-muted)') }}
+              style={{ color: sideColor ?? 'var(--color-muted)' }}
             >
               {badge}
             </span>
@@ -187,10 +199,11 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
             <span className={`helix-num text-fluid-base font-bold tabular-nums ${isWarm ? 'text-muted' : 'text-text'}`}>
               {set.reps}<span className="text-[10px] text-muted font-normal ml-0.5">{timed ? 'sec' : 'reps'}</span>
             </span>
-            {isFail && (
+            {typeTag && (
               <span className="text-[9px] font-bold uppercase px-1 py-px rounded shrink-0"
-                style={{ color: DANGER, background: `${DANGER}1f`, border: `1px solid ${DANGER}55` }}>
-                {set.side ? `F-${set.side}` : 'F'}
+                style={{ color: typeTag.color, background: `${typeTag.color}1f`, border: `1px solid ${typeTag.color}55` }}
+                title={typeTag.full} aria-label={typeTag.full}>
+                {typeTag.label}
               </span>
             )}
             {set.rpe != null && <span className="text-[10px] text-muted shrink-0">RPE {set.rpe}</span>}
