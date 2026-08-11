@@ -3,6 +3,7 @@ import type { ComponentProps } from 'react'
 import { render, cleanup, act } from '@testing-library/react'
 import { ExerciseDeckList } from '@/components/command-center/ExerciseDeckList'
 import { livePrDigest, computeLivePrs } from '@/lib/sessions/livePrs'
+import { EMPTY_BASELINES } from '@/lib/training/prEngine'
 import type { SessionDraft, DraftSet } from '@/lib/sessions/draft'
 
 /**
@@ -172,7 +173,7 @@ describe('the livePrs digest', () => {
 
   it('a live deck of untouched sets produces no candidates at all', () => {
     // Which is why typing in one costs nothing: the engine early-returns.
-    const empty = computeLivePrs(deck(), { bestWeight: [], bestRepsAtWeight: [], bestE1rm: [], bestSeconds: [], bestSetVolume: [] })
+    const empty = computeLivePrs(deck(), EMPTY_BASELINES)
     expect(empty.count).toBe(0)
     expect(empty.bySet.size).toBe(0)
   })

@@ -95,11 +95,15 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
       persistOptions={{
         persister,
         maxAge: 24 * 60 * 60 * 1000,
-        // v20: MUST bump. `session-detail` sets gained `prAxes`; a cache written
-        // before it existed rehydrated sets without the field and the report
-        // crashed on `prAxes.length`. The components now read it defensively,
-        // but busting is what stops the stale blob being served at all.
-        buster: 'v20',
+        // v21: MUST bump. `PrBaselines` gained `bestSessionVolume` (the fifth PR
+        // axis) and its values now carry the asserted all-time floor from
+        // prTruth.ts. A cache written before either rehydrates a baseline set
+        // that is BOTH missing a field and too low, which would flag records
+        // that are not records — the exact bug the floor exists to end.
+        //
+        // v20 was the previous bump: `session-detail` sets gained `prAxes`, and
+        // a cache written before it crashed the report on `prAxes.length`.
+        buster: 'v21',
         dehydrateOptions: {
           shouldDehydrateQuery: (q) => defaultShouldDehydrateQuery(q) && isJsonSafe(q.state.data),
         },
