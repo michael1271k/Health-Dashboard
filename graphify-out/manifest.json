@@ -195,8 +195,8 @@
     "semantic_hash": ""
   },
   "src/app/(dashboard)/settings/page.tsx": {
-    "mtime": 1786354432.6668234,
-    "ast_hash": "8dfd99fa3cee8331d7a79ff1faf9725e",
+    "mtime": 1786460013.0739326,
+    "ast_hash": "1781c179b209d8db4bf4d3f6dbd1b122",
     "semantic_hash": ""
   },
   "src/app/(dashboard)/workout/page.tsx": {
@@ -355,8 +355,8 @@
     "semantic_hash": "9970e5d083445c796ff396158480de11"
   },
   "src/components/command-center/ExerciseCard.tsx": {
-    "mtime": 1786390639.59393,
-    "ast_hash": "37d8374644647d878e59c19b42ad1a75",
+    "mtime": 1786460130.561974,
+    "ast_hash": "06cc674eccbc96421e5cc18e21c8674d",
     "semantic_hash": ""
   },
   "src/components/command-center/ExerciseDeckList.tsx": {
@@ -1150,8 +1150,8 @@
     "semantic_hash": "b4e23dc51b7516f2fca9bc91cf4f0be7"
   },
   "src/lib/utils/prefsSync.ts": {
-    "mtime": 1785869615.9593277,
-    "ast_hash": "5477b740ad0dcee915658858bfdd1c7b",
+    "mtime": 1786459987.4182103,
+    "ast_hash": "5b5ddadc90438f6f08044c472a812481",
     "semantic_hash": ""
   },
   "src/lib/utils/units.ts": {
@@ -2015,13 +2015,23 @@
     "semantic_hash": ""
   },
   "src/tests/pr-truth.test.ts": {
-    "mtime": 1786459266.1409626,
-    "ast_hash": "e5a29d15e5df8241aa7f907e8f933a90",
+    "mtime": 1786459420.986803,
+    "ast_hash": "48a7992fdfa48f5b19b05037fa406304",
     "semantic_hash": ""
   },
   "scripts/sync-pr-truth.mjs": {
     "mtime": 1786459313.8772511,
     "ast_hash": "7e8ec80766d39c6f6be9debbe1f10835",
+    "semantic_hash": ""
+  },
+  "src/lib/hooks/useTrackRpe.ts": {
+    "mtime": 1786459901.6378863,
+    "ast_hash": "9631ce4764b04e0dc99b37acdc4973e2",
+    "semantic_hash": ""
+  },
+  "src/components/command-center/EffortChips.tsx": {
+    "mtime": 1786460206.4406097,
+    "ast_hash": "97a915f7c33ec3e56475656702c880a7",
     "semantic_hash": ""
   }
 }

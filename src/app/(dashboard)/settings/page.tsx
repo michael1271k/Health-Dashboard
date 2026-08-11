@@ -15,6 +15,7 @@ import {
   setActiveProgramId, setActivePhase, activePhase, activeProgram, type Program,
 } from '@/lib/programs'
 import { usePlanPhaseGoals, type PlanPhaseOverride } from '@/lib/hooks/usePlanPhaseGoals'
+import { setTrackRpeMirror } from '@/lib/hooks/useTrackRpe'
 import { LANDMARK_MUSCLES } from '@/lib/training/landmarks'
 import { parseRepWindow } from '@/lib/training/ceilings'
 import { AlertTriangle, Dumbbell, Calendar, Target } from 'lucide-react'
@@ -122,6 +123,11 @@ export default function SettingsPage() {
   const [drawerPhase, setDrawerPhase] = useState<NutritionMode>('cut')
   // Week start: 0 = Sunday (default), 1 = Monday. Stored as week_end_day.
   const [weekStart, setWeekStart] = useState<0 | 1>(0)
+  // Per-exercise effort logging. Deliberately NOT on `Goals`: `save()` spreads
+  // the whole object into one upsert, so a column that has not been migrated
+  // yet would fail EVERY settings save, not just this one. Own state, own
+  // self-healing writer — the same shape week-start uses.
+  const [trackRpe, setTrackRpe] = useState(false)
   // Active training PLAN + the Preview drawer / two-step switch confirm.
   const [activePlanId, setActivePlanId] = useState<string>(DEFAULT_PROGRAM_ID)
   const [previewPlan, setPreviewPlan] = useState<Program | null>(null)
@@ -166,6 +172,9 @@ export default function SettingsPage() {
         const ws: 0 | 1 = we === 0 ? 1 : 0
         setWeekStart(ws)
         try { localStorage.setItem('helix_week_start', String(ws)) } catch { /* ignore */ }
+        const tr = (data as { track_rpe?: boolean | null }).track_rpe ?? false
+        setTrackRpe(tr)
+        setTrackRpeMirror(tr)
         // Active plan + phase — mirror to the localStorage keys activeProgram() reads.
         const ap = (data as { active_plan?: string | null }).active_plan
         if (ap && PROGRAMS[ap]) { setActivePlanId(ap); setActiveProgramId(ap) }
@@ -202,6 +211,22 @@ export default function SettingsPage() {
       { user_id: session.user.id, week_end_day: endDay } as unknown as never, { onConflict: 'user_id' },
     )
     if (error && !/column|week_end|schema cache|PGRST204/i.test(error.message)) {
+      setStatus({ type: 'error', msg: error.message })
+    }
+  }
+
+  /** Persist the effort-logging toggle on its own, self-healing if unmigrated. */
+  async function saveTrackRpe(on: boolean) {
+    setTrackRpe(on)
+    // Mirror FIRST: the deck reads localStorage synchronously during render, so
+    // the chips must appear on the next paint, not after a round trip.
+    setTrackRpeMirror(on)
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return
+    const { error } = await supabase.from('user_goals').upsert(
+      { user_id: session.user.id, track_rpe: on } as unknown as never, { onConflict: 'user_id' },
+    )
+    if (error && !/column|track_rpe|schema cache|PGRST204/i.test(error.message)) {
       setStatus({ type: 'error', msg: error.message })
     }
   }
@@ -551,6 +576,23 @@ export default function SettingsPage() {
             className={`relative w-12 h-7 rounded-full transition-colors shrink-0 ${goals.auto_log_supplements ? 'bg-primary' : 'bg-surface-2 border border-border'}`}
           >
             <span className={`absolute top-1 left-1 h-5 w-5 rounded-full bg-white transition-transform duration-200 ${goals.auto_log_supplements ? 'translate-x-5' : 'translate-x-0'}`} />
+          </button>
+        </div>
+
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <div className="text-sm text-text font-medium">Track effort (RPE)</div>
+            <div className="text-xs text-muted">
+              Rate each exercise Easy / Hard / Failure when you log a session. Off by default —
+              Hevy&rsquo;s export carries no RPE, so it is typed from memory.
+            </div>
+          </div>
+          <button
+            onClick={() => saveTrackRpe(!trackRpe)}
+            aria-pressed={trackRpe}
+            className={`relative w-12 h-7 rounded-full transition-colors shrink-0 ${trackRpe ? 'bg-primary' : 'bg-surface-2 border border-border'}`}
+          >
+            <span className={`absolute top-1 left-1 h-5 w-5 rounded-full bg-white transition-transform duration-200 ${trackRpe ? 'translate-x-5' : 'translate-x-0'}`} />
           </button>
         </div>
       </Surface>

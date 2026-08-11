@@ -195,8 +195,8 @@
     "semantic_hash": ""
   },
   "src/app/(dashboard)/settings/page.tsx": {
-    "mtime": 1786354432.6668234,
-    "ast_hash": "8dfd99fa3cee8331d7a79ff1faf9725e",
+    "mtime": 1786460013.0739326,
+    "ast_hash": "1781c179b209d8db4bf4d3f6dbd1b122",
     "semantic_hash": ""
   },
   "src/app/(dashboard)/workout/page.tsx": {
@@ -355,8 +355,8 @@
     "semantic_hash": "9970e5d083445c796ff396158480de11"
   },
   "src/components/command-center/ExerciseCard.tsx": {
-    "mtime": 1786390639.59393,
-    "ast_hash": "37d8374644647d878e59c19b42ad1a75",
+    "mtime": 1786460130.561974,
+    "ast_hash": "06cc674eccbc96421e5cc18e21c8674d",
     "semantic_hash": ""
   },
   "src/components/command-center/ExerciseDeckList.tsx": {
@@ -925,8 +925,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useWeeklyLoop.ts": {
-    "mtime": 1786458789.6398966,
-    "ast_hash": "1b701bcfa22a52ebe264ef3105d6dde3",
+    "mtime": 1786459243.1450589,
+    "ast_hash": "521b5c83d8ad36d9f4ee2439355b8d01",
     "semantic_hash": ""
   },
   "src/lib/hooks/useWeeklyVolume.ts": {
@@ -1050,8 +1050,8 @@
     "semantic_hash": ""
   },
   "src/lib/sessions/save.ts": {
-    "mtime": 1786457392.3441799,
-    "ast_hash": "cda9353fd58d55b4e57f1b1edd9fc229",
+    "mtime": 1786459243.1452062,
+    "ast_hash": "37b0c6f57392abc0778941e404c21e52",
     "semantic_hash": ""
   },
   "src/lib/sessions/schema.ts": {
@@ -1150,8 +1150,8 @@
     "semantic_hash": "b4e23dc51b7516f2fca9bc91cf4f0be7"
   },
   "src/lib/utils/prefsSync.ts": {
-    "mtime": 1785869615.9593277,
-    "ast_hash": "5477b740ad0dcee915658858bfdd1c7b",
+    "mtime": 1786459987.4182103,
+    "ast_hash": "5b5ddadc90438f6f08044c472a812481",
     "semantic_hash": ""
   },
   "src/lib/utils/units.ts": {
@@ -1430,8 +1430,8 @@
     "semantic_hash": ""
   },
   "scripts/backfill-prs.mjs": {
-    "mtime": 1786457392.351961,
-    "ast_hash": "f6bea129b2911b663425fcca699811df",
+    "mtime": 1786459359.5965831,
+    "ast_hash": "737b1f7663257577f3bafbaa69b589d5",
     "semantic_hash": ""
   },
   "scripts/fix-nutrition-day.mjs": {
@@ -1465,8 +1465,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useExerciseBaselines.ts": {
-    "mtime": 1786457392.3482373,
-    "ast_hash": "21206908af157076e5c3539d3a9524fc",
+    "mtime": 1786459243.1453264,
+    "ast_hash": "56f0cd69fa35430c48b45b3eb8d6b3d6",
     "semantic_hash": ""
   },
   "src/lib/hooks/useSentinelExport.ts": {
@@ -1495,8 +1495,8 @@
     "semantic_hash": ""
   },
   "src/lib/training/prEngine.ts": {
-    "mtime": 1786458766.386934,
-    "ast_hash": "25c3241317a6e3be89a863fbb0e46989",
+    "mtime": 1786459213.8611774,
+    "ast_hash": "30985ccfedeed590ed2b12cfca909044",
     "semantic_hash": ""
   },
   "src/tests/cardio-metrics.test.ts": {
@@ -1515,8 +1515,8 @@
     "semantic_hash": ""
   },
   "src/tests/pr-engine.test.ts": {
-    "mtime": 1786458838.6061802,
-    "ast_hash": "43a5195a6ac924c78257a969a7ca5b10",
+    "mtime": 1786459266.1406553,
+    "ast_hash": "997837ba2cf392d1d67bae74f901017e",
     "semantic_hash": ""
   },
   "src/tests/query-persistence.test.ts": {
@@ -2010,18 +2010,28 @@
     "semantic_hash": ""
   },
   "src/lib/training/prTruth.ts": {
-    "mtime": 1786458725.906025,
-    "ast_hash": "9c2a27ce0a1b0ab1e74bc6a5f4948dde",
+    "mtime": 1786459243.1448317,
+    "ast_hash": "564f81ea63b9b3803f286d3b1a0708b1",
     "semantic_hash": ""
   },
   "src/tests/pr-truth.test.ts": {
-    "mtime": 1786458924.6609068,
-    "ast_hash": "c1ce56f8d8958698b6fa3fb7242bb7b7",
+    "mtime": 1786459420.986803,
+    "ast_hash": "48a7992fdfa48f5b19b05037fa406304",
     "semantic_hash": ""
   },
   "scripts/sync-pr-truth.mjs": {
-    "mtime": 1786457620.7564836,
-    "ast_hash": "c0d77d0f2b1795fe711238cc0222001a",
+    "mtime": 1786459313.8772511,
+    "ast_hash": "7e8ec80766d39c6f6be9debbe1f10835",
+    "semantic_hash": ""
+  },
+  "src/lib/hooks/useTrackRpe.ts": {
+    "mtime": 1786459901.6378863,
+    "ast_hash": "9631ce4764b04e0dc99b37acdc4973e2",
+    "semantic_hash": ""
+  },
+  "src/components/command-center/EffortChips.tsx": {
+    "mtime": 1786460188.0912397,
+    "ast_hash": "099e5288a235f359099e3f18464b5270",
     "semantic_hash": ""
   }
 }

@@ -2,6 +2,7 @@
 
 import { supabase } from '@/lib/supabase/client'
 import { normalizePlanId, setActiveProgramId, setActivePhase } from '@/lib/programs'
+import { setTrackRpeMirror } from '@/lib/hooks/useTrackRpe'
 
 /**
  * Boot-time preference hydration: the database row (user_goals) is the source
@@ -33,13 +34,14 @@ export async function hydratePrefsFromDb(): Promise<void> {
   try {
     const { data, error } = await supabase
       .from('user_goals')
-      .select('unit_system, reduce_motion, active_program, active_plan, active_phase, goal_preset')
+      .select('unit_system, reduce_motion, active_program, active_plan, active_phase, goal_preset, track_rpe')
       .maybeSingle()
     if (error || !data) return // columns not migrated yet / no row — device values stand
     const g = data as {
       unit_system: string | null; reduce_motion: boolean | null
       active_program: string | null; active_plan: string | null
       active_phase: string | null; goal_preset: string | null
+      track_rpe: boolean | null
     }
 
     if (g.unit_system) localStorage.setItem('helix_units', g.unit_system)
@@ -57,6 +59,9 @@ export async function hydratePrefsFromDb(): Promise<void> {
     // macro presets still write, and is a correct fallback for the same value.
     const phase = g.active_phase ?? g.goal_preset
     if (phase === 'cut' || phase === 'bulk' || phase === 'maintenance') setActivePhase(phase)
+
+    // Effort logging — the deck reads the mirror synchronously during render.
+    if (g.track_rpe != null) setTrackRpeMirror(g.track_rpe)
 
     // Wake any mounted listeners (unit hooks re-read on this event).
     window.dispatchEvent(new Event('apex-units-change'))

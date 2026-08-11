@@ -5,6 +5,8 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { ArrowLeftRight, CheckCheck, ChevronDown, Footprints, GripVertical, History, NotebookPen, Plus, Target, X } from 'lucide-react'
 import { SetEditorRow } from './SetEditorRow'
+import { EffortChips } from './EffortChips'
+import { useTrackRpe } from '@/lib/hooks/useTrackRpe'
 import { cardioSummary, isSetCommitted, type DraftExercise, type DraftSet } from '@/lib/sessions/draft'
 import { isTimedExercise } from '@/lib/exercises/timed'
 import { isBodyweightExercise } from '@/lib/exercises/bodyweight'
@@ -157,6 +159,18 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, live
    * five fresh arrow closures on every card render, so every row re-rendered
    * on every keystroke anywhere in the deck. The row supplies its own index.
    */
+  // The set the effort rating is written to: the LAST working set, which is the
+  // one the question "how did that feel?" is actually about. `null` when the
+  // exercise is all warm-ups, or empty — then the control does not render.
+  const trackRpe = useTrackRpe()
+  const effortIdx = useMemo(() => {
+    for (let i = exercise.sets.length - 1; i >= 0; i--) {
+      const t = exercise.sets[i].setType
+      if (t !== 'warmup' && t !== 'dropset') return i
+    }
+    return null
+  }, [exercise.sets])
+
   const handleActivate = useCallback((i: number) => setActiveSet((cur) => (cur === i ? null : i)), [])
   const handleChange = useCallback((i: number, patch: Partial<DraftSet>) => onUpdateSet(localId, i, patch), [onUpdateSet, localId])
   const handleRemove = useCallback((i: number) => { setActiveSet(null); onRemoveSet(localId, i) }, [onRemoveSet, localId])
@@ -572,6 +586,22 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, live
           >
             <Plus className="w-3.5 h-3.5" aria-hidden="true" /> Add set
           </button>
+          {/* Effort — only when the setting is on, and only when there is a
+              working set to hang it on. Warm-ups and drop sets are skipped for
+              the same reason they win no record: they are not the effort the
+              question is about. */}
+          {trackRpe && effortIdx != null && (
+            <EffortChips
+              value={exercise.sets[effortIdx].rpe}
+              onPick={(choice) => handleChange(effortIdx, {
+                rpe: choice?.rpe,
+                // Only ever ADDS the failure type; clearing the rating leaves
+                // an explicitly-set W/F/D chip alone, since the user set that
+                // separately and this control does not own it.
+                ...(choice?.failure ? { setType: 'failure' as const } : {}),
+              })}
+            />
+          )}
         </div>
       )}
     </div>
