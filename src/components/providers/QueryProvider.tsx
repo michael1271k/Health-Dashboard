@@ -33,6 +33,27 @@ function isJsonSafe(data: unknown, depth = 3): boolean {
   return Object.values(data as Record<string, unknown>).every((v) => isJsonSafe(v, depth - 1))
 }
 
+/**
+ * Per-query size cap on what gets persisted.
+ *
+ * The restore is a SYNCHRONOUS `JSON.parse` of the whole blob, on the main
+ * thread, before children render — so the persisted cache is paid for on every
+ * cold start whether or not the route that wrote it is the one being opened.
+ * That trade is worth it for a view model and not worth it for a thousand rows:
+ * `useContinuum(true)` pulls the entire history, and the timeline hooks hold
+ * hundreds of days. Those refetch in under a second anyway.
+ *
+ * A cap rather than a key allowlist, because an allowlist goes stale silently —
+ * the next big query simply is not on it and nobody notices. This bounds the
+ * cost by the thing that actually costs, whatever it is called. The stringify
+ * runs on dehydrate, which is throttled to 2s and off the critical path.
+ */
+const MAX_PERSISTED_BYTES = 96 * 1024
+
+function isSmallEnough(data: unknown): boolean {
+  try { return JSON.stringify(data).length <= MAX_PERSISTED_BYTES } catch { return false }
+}
+
 export function QueryProvider({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
     () =>
@@ -105,7 +126,8 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
         // a cache written before it crashed the report on `prAxes.length`.
         buster: 'v21',
         dehydrateOptions: {
-          shouldDehydrateQuery: (q) => defaultShouldDehydrateQuery(q) && isJsonSafe(q.state.data),
+          shouldDehydrateQuery: (q) =>
+            defaultShouldDehydrateQuery(q) && isJsonSafe(q.state.data) && isSmallEnough(q.state.data),
         },
       }}
     >

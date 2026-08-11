@@ -53,10 +53,22 @@ export function SerwistRegister() {
       } catch { /* offline — the SW keeps serving the consistent cached pair */ }
       finally { checking = false }
     }
-    void check()
+    // DEFERRED TO IDLE. This fires on every boot and, on a mismatch, deletes
+    // every cache and reloads — so the unlucky cold start pays for two. Running
+    // it before first paint put a network round trip in front of the first
+    // pixel of the ~99% of boots where the build has not changed. Idle keeps
+    // the guard (a stale bundle is still caught within a second or two of
+    // launch, before the user has done anything) and takes it off the path.
+    const ric = typeof window.requestIdleCallback === 'function'
+      ? window.requestIdleCallback(() => void check(), { timeout: 3000 })
+      : window.setTimeout(() => void check(), 1200)
     const onVisible = () => { if (document.visibilityState === 'visible') void check() }
     document.addEventListener('visibilitychange', onVisible)
-    return () => document.removeEventListener('visibilitychange', onVisible)
+    return () => {
+      if (typeof window.cancelIdleCallback === 'function') window.cancelIdleCallback(ric as number)
+      else window.clearTimeout(ric as number)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
   }, [])
 
   // SW registration + controller-change reload policy.

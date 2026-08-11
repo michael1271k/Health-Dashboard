@@ -160,8 +160,8 @@
     "semantic_hash": ""
   },
   "public/sw.js": {
-    "mtime": 1786439864.4975386,
-    "ast_hash": "aead6d4a5d811245cd2d86ebb945441c",
+    "mtime": 1786460279.3013432,
+    "ast_hash": "d0ee91d369ddfb14256c63b8d460bd0a",
     "semantic_hash": ""
   },
   "scripts/generate-icons.mjs": {
@@ -255,8 +255,8 @@
     "semantic_hash": "49ffda254df86db73f74cd513be13dd6"
   },
   "src/app/layout.tsx": {
-    "mtime": 1786289421.489745,
-    "ast_hash": "6cfa89b914b890c97e255ca215000fa0",
+    "mtime": 1786460335.305624,
+    "ast_hash": "bfd6c251e733155658172d32784ca7df",
     "semantic_hash": ""
   },
   "src/app/loading.tsx": {
@@ -265,8 +265,8 @@
     "semantic_hash": ""
   },
   "src/app/page.tsx": {
-    "mtime": 1786309271.3788261,
-    "ast_hash": "d2299b3152826c9227bd15ac7785fccf",
+    "mtime": 1786460453.5863855,
+    "ast_hash": "b1ea827edadfd6a304a855aaa8287722",
     "semantic_hash": ""
   },
   "src/app/session/[id]/page.tsx": {
@@ -610,13 +610,13 @@
     "semantic_hash": ""
   },
   "src/components/providers/QueryProvider.tsx": {
-    "mtime": 1786456585.7119966,
-    "ast_hash": "62846ec431170ef806dd1db0399a7501",
+    "mtime": 1786460512.3385506,
+    "ast_hash": "81b07378405ac18cf4f1ae59d0a2c95c",
     "semantic_hash": ""
   },
   "src/components/providers/RealtimeProvider.tsx": {
-    "mtime": 1786354594.294924,
-    "ast_hash": "d2239e1830263f3abd5fb269e4ac15bb",
+    "mtime": 1786460705.2969797,
+    "ast_hash": "140988e32b5c7655b6473511314e3b9a",
     "semantic_hash": ""
   },
   "src/components/providers/ReloadHome.tsx": {
@@ -625,9 +625,9 @@
     "semantic_hash": "67cecfdd670cf1861bfff97d24d30be0"
   },
   "src/components/providers/SerwistRegister.tsx": {
-    "mtime": 1784897420.2168403,
-    "ast_hash": "b0ee1813b267b79c2b06dfbfd3a2e9ab",
-    "semantic_hash": "b0ee1813b267b79c2b06dfbfd3a2e9ab"
+    "mtime": 1786460542.389408,
+    "ast_hash": "b1e1b2f4ab57969be08a5f18d0b1abba",
+    "semantic_hash": ""
   },
   "src/components/providers/ThemeProvider.tsx": {
     "mtime": 1784897420.2180765,
@@ -1170,8 +1170,8 @@
     "semantic_hash": "860e578058a2ed6e95fdbb99f5b4b535"
   },
   "src/sw.ts": {
-    "mtime": 1786218005.11114,
-    "ast_hash": "5101b5e00ac7a212cc117cabd41d0604",
+    "mtime": 1786460644.0785787,
+    "ast_hash": "594e392b3ae1c7fab804c078c6fb6536",
     "semantic_hash": ""
   },
   "src/tests/body-composition.test.ts": {
@@ -1925,8 +1925,8 @@
     "semantic_hash": ""
   },
   "src/app/(dashboard)/workout/exercises/[id]/page.tsx": {
-    "mtime": 1786309724.0279183,
-    "ast_hash": "b97156c966ee91e40baa4bc353697e79",
+    "mtime": 1786460381.812227,
+    "ast_hash": "b19d7d4a57dabd06b2195f0f823557e5",
     "semantic_hash": ""
   },
   "src/tests/exercise-history-body.test.tsx": {
@@ -2032,6 +2032,11 @@
   "src/components/command-center/EffortChips.tsx": {
     "mtime": 1786460206.4406097,
     "ast_hash": "97a915f7c33ec3e56475656702c880a7",
+    "semantic_hash": ""
+  },
+  "src/lib/hooks/useBreakpoint.ts": {
+    "mtime": 1786460424.4563835,
+    "ast_hash": "cb9f214d87cf0f6dde44a58ba191ff00",
     "semantic_hash": ""
   }
 }

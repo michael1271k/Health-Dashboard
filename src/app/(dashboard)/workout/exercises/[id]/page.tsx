@@ -5,13 +5,24 @@ import { useParams, useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
 import { AppBar } from '@/components/nav/AppBar'
-import { ExerciseHistoryBody } from '@/components/exercises/ExerciseHistoryBody'
+import dynamic from 'next/dynamic'
 import { useExerciseCatalog } from '@/lib/hooks/useExerciseCatalog'
 import { exerciseHistoryQuery } from '@/lib/hooks/useExerciseHistory'
 import { GROUP, MUTED } from '@/lib/theme/palette'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
 
 const groupColor = (g: string) => (GROUP as Record<string, string>)[g] ?? MUTED
+
+/*
+ * recharts is ~120 kB and this was the ONE route importing it statically —
+ * every other chart in the app is already `next/dynamic`. The header, the
+ * prev/next walk and the record tiles all render without it, so paying for the
+ * chart library before the first paint bought nothing but a slower push.
+ */
+const ExerciseHistoryBody = dynamic(
+  () => import('@/components/exercises/ExerciseHistoryBody').then((m) => m.ExerciseHistoryBody),
+  { ssr: false, loading: () => <div className="h-64 rounded-xl bg-surface-2/60 animate-pulse" /> },
+)
 
 /**
  * One exercise, everything it has ever done.

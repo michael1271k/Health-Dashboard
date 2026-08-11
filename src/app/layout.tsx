@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from 'next'
-import { Space_Grotesk, Inter, IBM_Plex_Mono } from 'next/font/google'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Sidebar } from '@/components/nav/Sidebar'
 import { BottomNav } from '@/components/nav/BottomNav'
@@ -16,29 +15,24 @@ import { NativeBoot } from '@/components/providers/NativeBoot'
 import { ReloadHome } from '@/components/providers/ReloadHome'
 import './globals.css'
 
-// HELIX type system: Space Grotesk (headings/display) · Inter (body) ·
-// IBM Plex Mono (data). Space Grotesk is a mechanical grotesque — squarer
-// counters and tighter spacing than Sora's soft geometry, which is what makes
-// the UI read as engineered rather than friendly. It fills the legacy
-// --font-outfit slot; IBM Plex Mono fills --font-jetbrains.
-const sora = Space_Grotesk({
-  subsets: ['latin'],
-  variable: '--font-outfit',
-  display: 'swap',
-})
-
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-  display: 'swap',
-})
-
-const plexMono = IBM_Plex_Mono({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-jetbrains',
-  display: 'swap',
-})
+/*
+ * NO WEBFONTS. The type system is the platform's.
+ *
+ * Three `next/font/google` families and six weight files were being fetched
+ * before first paint on a device where `-apple-system` already resolves to SF
+ * Pro — the same superfamily, in every weight this app uses (bold 219 uses,
+ * semibold 135, medium 30, black 5, extrabold 3, all present). On iOS, which is
+ * what this app is, the bytes bought nothing and the render-blocking cost was
+ * paid on every cold start.
+ *
+ * What it also buys: `font-optical-sizing: auto` in globals.css stops being a
+ * no-op (neither loaded font had an `opsz` axis; SF crosses Text -> Display at
+ * 20pt), real tracking tables, Dynamic Type, and no FOUT.
+ *
+ * What it costs: off-Apple — the Netlify PWA in desktop Chrome, or Android —
+ * falls back to Roboto/Segoe, and Space Grotesk's display character is gone.
+ * Accepted: this is an iOS-first app and the type SCALE carries the hierarchy.
+ */
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://helix-health-fitness.netlify.app'),
@@ -86,7 +80,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: "try{['units','reduce_motion','active_program'].forEach(function(k){var o=localStorage.getItem('apex_'+k);if(o!==null&&localStorage.getItem('helix_'+k)===null)localStorage.setItem('helix_'+k,o)});document.documentElement.dataset.reduceMotion=localStorage.getItem('helix_reduce_motion')==='1'?'true':'false';var syncHidden=function(){document.documentElement.dataset.hidden=document.hidden?'true':'false'};document.addEventListener('visibilitychange',syncHidden);syncHidden()}catch(e){}" }} />
       </head>
       <body
-        className={`${sora.variable} ${inter.variable} ${plexMono.variable} bg-bg text-text font-sans antialiased`}
+        className="bg-bg text-text font-sans antialiased"
       >
         <a
           href="#main-content"

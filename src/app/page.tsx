@@ -49,6 +49,7 @@ import {
   useUserGoals,
   useRecentSessions,
 } from '@/lib/hooks/useDashboard'
+import { useIsDesktop } from '@/lib/hooks/useBreakpoint'
 import { PPL_SPLITS } from '@/lib/types/workout'
 import type { SplitDay } from '@/lib/types/workout'
 
@@ -107,6 +108,7 @@ const BODY_TILES: Array<{
 export default function DashboardPage() {
   const router = useRouter()
   useEnsureTodayScore()
+  const isDesktop = useIsDesktop()
   const { data: score, isLoading: scoreLoading } = useTodayScore()
   const { data: log } = useTodayDailyLog()
   const { data: metrics } = useTodayMetrics()
@@ -337,10 +339,13 @@ export default function DashboardPage() {
       {/* Smart Coach — lifts due a load bump next session (renders nothing when empty). */}
       <ProgressionAlerts />
 
-      {/* Compact 30-day trends (shrunk from the old tall sidecar) */}
-      <div className="hidden md:block">
+      {/* Compact 30-day trends (shrunk from the old tall sidecar).
+          GATED ON A REAL BREAKPOINT, not `hidden md:block`. That class hid the
+          strip on a phone but still mounted it, so the primary device paid for
+          three Supabase selects on every cold start to render display:none. */}
+      {isDesktop && (
         <AnimatedCard index={8}><WidgetBoundary label="30-day trends" minHeight={120}><TrendStrip /></WidgetBoundary></AnimatedCard>
-      </div>
+      )}
 
       {/* Below-the-fold: mount after idle so the hero owns first paint */}
       <DeferredMount minHeight={140}><AnimatedCard index={9}><InsightCoach /></AnimatedCard></DeferredMount>

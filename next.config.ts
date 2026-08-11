@@ -1,5 +1,12 @@
 import type { NextConfig } from 'next'
 import withSerwistInit from '@serwist/next'
+import withBundleAnalyzer from '@next/bundle-analyzer'
+
+// `npm run analyze` opens a treemap per bundle. Off unless ANALYZE=true, so it
+// costs a normal build nothing. Added because there was no way to answer "what
+// is actually in the first load?" other than reading imports by hand — which is
+// how a static recharts import sat in a route's critical path unnoticed.
+const withAnalyzer = withBundleAnalyzer({ enabled: process.env.ANALYZE === 'true' })
 
 const withSerwist = withSerwistInit({
   swSrc: 'src/sw.ts',
@@ -39,4 +46,4 @@ const nextConfig: NextConfig = {
   typescript: { ignoreBuildErrors: false },
 }
 
-export default withSerwist(nextConfig)
+export default withAnalyzer(withSerwist(nextConfig))

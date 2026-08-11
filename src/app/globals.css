@@ -25,11 +25,16 @@
   --color-border: #23262B;      /* graphite hairline */
 
 
-  /* HELIX Fonts */
-  --font-heading: var(--font-outfit), sans-serif;
-  --font-sans: var(--font-inter), sans-serif;
-  --font-mono: var(--font-jetbrains), monospace;
-  --font-display: var(--font-outfit), sans-serif; /* Sora fills the display slot (HELIX) */
+  /* HELIX Fonts — the SYSTEM stack. See the note in layout.tsx: three webfont
+     families were being fetched before first paint on a device where
+     -apple-system already IS SF Pro. `--font-outfit` / `--font-inter` /
+     `--font-jetbrains` are gone; they were named after fonts that had not been
+     loaded for two redesigns anyway. `.report-pre` already declared this exact
+     mono stack, so the ledger/FMT case was system before this change. */
+  --font-heading: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  --font-display: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 
   /* ── Fluid typography, with optical sizing ────────────────────────────────
      Used as Tailwind utilities: text-fluid-sm … text-fluid-3xl. Each clamp

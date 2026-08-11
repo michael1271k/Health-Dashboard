@@ -156,7 +156,20 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
       })
       channel = ch
     }
-    subscribe()
+    // DEFERRED TO IDLE. Opening a WebSocket and registering fifteen
+    // `postgres_changes` handlers is real main-thread and network work, and it
+    // was happening before the first pixel — to deliver events about data the
+    // user cannot see yet. Nothing on a cold start depends on the socket being
+    // up: the initial render comes from the persisted cache and the route's own
+    // queries. A second's delay in cross-device sync is not observable; a
+    // second's delay in first paint is the whole complaint.
+    //
+    // `cancelled` is already checked by the retry path, so an unmount before
+    // the callback fires cannot leave a channel behind.
+    const startSocket = () => { if (!cancelled) subscribe() }
+    const ric = typeof window.requestIdleCallback === 'function'
+      ? window.requestIdleCallback(startSocket, { timeout: 2000 })
+      : window.setTimeout(startSocket, 600)
 
     // Return-to-visible: rejoin a suspended socket. The rejoin's SUBSCRIBED
     // handler does the catch-up refresh. A socket that is STILL joined never
@@ -173,6 +186,8 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       cancelled = true
+      if (typeof window.cancelIdleCallback === 'function') window.cancelIdleCallback(ric as number)
+      else window.clearTimeout(ric as number)
       if (timer) clearTimeout(timer)
       if (retryTimer) clearTimeout(retryTimer)
       document.removeEventListener('visibilitychange', onVisible)
