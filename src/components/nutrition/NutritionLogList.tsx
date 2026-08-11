@@ -3,6 +3,8 @@
 import type { DailyLog } from '@/lib/hooks/useNutrition'
 import { phaseDisplay } from '@/lib/nutrition/phase'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
+import { isExceptionDay } from '@/lib/nutrition/exceptionDay'
+import { SAND } from '@/lib/theme/palette'
 
 interface Goals { calorie: number; protein: number | null; carbs: number | null; fat: number | null }
 
@@ -54,7 +56,13 @@ export function NutritionLogList({ logs, goals, isLoading, emptyMessage, onDayCl
     <div className="space-y-2">
       {logs.map((l) => {
         const d = new Date(l.date + 'T00:00:00')
-        const calColor = l.calories == null ? '#79808C'
+        // A declared exception is neither hit nor miss, so it takes neither
+        // colour. Left on the distance ramp a planned dinner reads OXIDE — the
+        // danger colour, the same one an unravelled week gets — which is
+        // precisely the verdict the flag exists to withdraw.
+        const flagged = isExceptionDay(l.exception)
+        const calColor = flagged ? SAND
+          : l.calories == null ? '#79808C'
           : Math.abs(l.calories - goals.calorie) <= 150 ? '#3E9E7A'
           : Math.abs(l.calories - goals.calorie) <= 350 ? '#D4AF37' : '#C4514E'
         return (
@@ -73,6 +81,11 @@ export function NutritionLogList({ logs, goals, isLoading, emptyMessage, onDayCl
               <div className="flex items-baseline gap-1">
                 <span className="helix-num text-fluid-lg font-bold leading-none" style={{ color: calColor }}>{l.calories != null ? Math.round(l.calories).toLocaleString() : '—'}</span>
                 <span className="text-[10px] text-muted">kcal</span>
+                {flagged && (
+                  <span className="text-[9px] font-bold uppercase tracking-wide" style={{ color: SAND }}>
+                    · {l.exception}
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-2 mt-1.5">
                 <MacroBar label="P" value={l.proteinG} goal={goals.protein} />

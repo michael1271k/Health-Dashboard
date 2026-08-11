@@ -16,6 +16,9 @@ export interface DailyLog {
   score:     number | null
   batteryPct: number | null
   phase:     Phase | null
+  /** Declared nutrition exception, or null for an ordinary day. The day was
+   *  ALLOWED to miss its calorie target — see `lib/nutrition/exceptionDay.ts`. */
+  exception: string | null
 }
 
 function todayISO() {
@@ -37,7 +40,7 @@ export function useDailyLogs(daysOrRange: number | { from: string; to: string } 
       const from = typeof daysOrRange === 'number' ? daysAgoISO(daysOrRange) : daysOrRange.from
       const to   = typeof daysOrRange === 'number' ? todayISO() : daysOrRange.to
 
-      const [nutritionRes, metricsRes, scoresRes] = await Promise.all([
+      const [nutritionRes, metricsRes, scoresRes, exceptionsRes] = await Promise.all([
         supabase
           .from('nutrition_entries')
           .select('date, calories, protein_g, carbs_g, fat_g, phase')
@@ -57,6 +60,14 @@ export function useDailyLogs(daysOrRange: number | { from: string; to: string } 
           .select('date, score, battery_pct')
           .gte('date', from)
           .lte('date', to),
+
+        // Declared exceptions. Its own read because the flag lives on
+        // `daily_logs` while every macro here comes from `nutrition_entries`.
+        supabase
+          .from('daily_logs')
+          .select('date, nutrition_exception')
+          .gte('date', from)
+          .lte('date', to),
       ])
 
       const nutrition = (nutritionRes.data ?? []) as Array<{
@@ -68,8 +79,17 @@ export function useDailyLogs(daysOrRange: number | { from: string; to: string } 
       const scores = (scoresRes.data ?? []) as Array<{
         date: string; score: number | null; battery_pct: number | null
       }>
+      // `.error` rather than `.data ?? []`: PostgREST 400s the whole select when
+      // `nutrition_exception` is not migrated yet, and an unflagged history is
+      // the correct reading of that — never a thrown query.
+      const exceptions = (exceptionsRes.error ? [] : (exceptionsRes.data ?? [])) as Array<{
+        date: string; nutrition_exception: string | null
+      }>
 
-      // Build date → row map, keyed by date string
+      // Build date → row map, keyed by date string.
+      // Exception dates are deliberately NOT unioned in: flagging tonight before
+      // eating would otherwise mint an all-null row in the history list. The flag
+      // decorates a day that exists; it does not conjure one.
       const dateSet = new Set([
         ...nutrition.map(r => r.date),
         ...metrics.map(r => r.date),
@@ -79,6 +99,7 @@ export function useDailyLogs(daysOrRange: number | { from: string; to: string } 
       const metMap   = new Map(metrics.map(r => [r.date, r]))
       const scoreMap = new Map(scores.map(r => [r.date, r]))
       const nutMap   = new Map(nutrition.map(r => [r.date, r]))
+      const excMap   = new Map(exceptions.map(r => [r.date, r.nutrition_exception]))
 
       return [...dateSet]
         .sort((a, b) => b.localeCompare(a))   // newest first
@@ -97,6 +118,7 @@ export function useDailyLogs(daysOrRange: number | { from: string; to: string } 
             score:      s?.score      ?? null,
             batteryPct: s?.battery_pct ?? null,
             phase:      (n?.phase as Phase | null) ?? derivePhase(n?.calories ?? null),
+            exception:  excMap.get(date) ?? null,
           }
         })
     },

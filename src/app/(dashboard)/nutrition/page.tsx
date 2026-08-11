@@ -17,6 +17,8 @@ import { ScheduleShortcut } from '@/components/day/ScheduleShortcut'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { useEraFilter, eraDateRange, SUB_PHASE_META } from '@/lib/era/eraFilter'
 import { EraFilterPills } from '@/components/era/EraFilterPills'
+import { ExceptionDayBanner } from '@/components/nutrition/ExceptionDayBanner'
+import { isExceptionDay } from '@/lib/nutrition/exceptionDay'
 
 interface ActiveGoals {
   calorie: number
@@ -121,8 +123,11 @@ export default function NutritionPage() {
 
   // Whole-history scans that ran on every render, including every keystroke in
   // any child input.
+  // Declared exceptions leave BOTH sides of the fraction — they are not misses,
+  // and counting them as hits would be worse still. A week with one planned
+  // dinner reads "83% (6 days)", not 71% and not a fictional 86%.
   const adherence = useMemo(() => {
-    const last7 = (logs ?? []).slice(0, 7)
+    const last7 = (logs ?? []).slice(0, 7).filter((l) => !isExceptionDay(l.exception))
     if (!last7.length) return null
     const inRange = last7.filter((l) => l.calories !== null && Math.abs(l.calories - goals.calorie) <= 100).length
     return Math.round((inRange / last7.length) * 100)
@@ -141,6 +146,14 @@ export default function NutritionPage() {
         logs={logs ?? []}
         goals={{ calorie: goals.calorie, protein: goals.protein, carbs: goals.carbs, fat: goals.fat }}
         date={todayISO}
+      />
+
+      {/* A day allowed to miss its target — declared, never inferred. Sits under
+          the rings because it is a statement ABOUT today's numbers, and it has
+          to be reachable before the evening it describes. */}
+      <ExceptionDayBanner
+        date={todayISO}
+        stored={(dailyLog as { nutrition_exception?: string | null } | null)?.nutrition_exception ?? null}
       />
 
       {/* Deep-dive into micronutrients + advanced HealthKit signals */}
