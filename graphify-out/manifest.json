@@ -135,13 +135,13 @@
     "semantic_hash": "aff96663b84242f0bc25b8c374329773"
   },
   "next.config.ts": {
-    "mtime": 1786385394.7569492,
-    "ast_hash": "201a98afb43e4a3ba09ed1650415f3bf",
+    "mtime": 1786460753.0696337,
+    "ast_hash": "4e21f45715efe0ada528ac7d34afee39",
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1786307924.3065057,
-    "ast_hash": "223efc8506d452318e6e24c5776c8670",
+    "mtime": 1786460753.0699663,
+    "ast_hash": "1bc9b0f00604abe1e585668cce48757e",
     "semantic_hash": ""
   },
   "playwright.config.ts": {
@@ -160,8 +160,8 @@
     "semantic_hash": ""
   },
   "public/sw.js": {
-    "mtime": 1786460279.3013432,
-    "ast_hash": "d0ee91d369ddfb14256c63b8d460bd0a",
+    "mtime": 1786460770.115231,
+    "ast_hash": "1e035ff957beb660fa16c3d37f942a52",
     "semantic_hash": ""
   },
   "scripts/generate-icons.mjs": {
@@ -205,8 +205,8 @@
     "semantic_hash": ""
   },
   "src/app/api/compute-score/route.ts": {
-    "mtime": 1786455869.791513,
-    "ast_hash": "ea52c782f2591684f57bcac66bddbfb5",
+    "mtime": 1786461013.757719,
+    "ast_hash": "1488645a5275053373e49f1eba89d017",
     "semantic_hash": ""
   },
   "src/app/api/ingest/route.ts": {

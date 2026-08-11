@@ -610,13 +610,13 @@
     "semantic_hash": ""
   },
   "src/components/providers/QueryProvider.tsx": {
-    "mtime": 1786460492.8599904,
-    "ast_hash": "79651139bf388518485326155476b393",
+    "mtime": 1786460512.3385506,
+    "ast_hash": "81b07378405ac18cf4f1ae59d0a2c95c",
     "semantic_hash": ""
   },
   "src/components/providers/RealtimeProvider.tsx": {
-    "mtime": 1786354594.294924,
-    "ast_hash": "d2239e1830263f3abd5fb269e4ac15bb",
+    "mtime": 1786460705.2969797,
+    "ast_hash": "140988e32b5c7655b6473511314e3b9a",
     "semantic_hash": ""
   },
   "src/components/providers/ReloadHome.tsx": {
@@ -625,9 +625,9 @@
     "semantic_hash": "67cecfdd670cf1861bfff97d24d30be0"
   },
   "src/components/providers/SerwistRegister.tsx": {
-    "mtime": 1784897420.2168403,
-    "ast_hash": "b0ee1813b267b79c2b06dfbfd3a2e9ab",
-    "semantic_hash": "b0ee1813b267b79c2b06dfbfd3a2e9ab"
+    "mtime": 1786460542.389408,
+    "ast_hash": "b1e1b2f4ab57969be08a5f18d0b1abba",
+    "semantic_hash": ""
   },
   "src/components/providers/ThemeProvider.tsx": {
     "mtime": 1784897420.2180765,
@@ -1170,8 +1170,8 @@
     "semantic_hash": "860e578058a2ed6e95fdbb99f5b4b535"
   },
   "src/sw.ts": {
-    "mtime": 1786218005.11114,
-    "ast_hash": "5101b5e00ac7a212cc117cabd41d0604",
+    "mtime": 1786460644.0785787,
+    "ast_hash": "594e392b3ae1c7fab804c078c6fb6536",
     "semantic_hash": ""
   },
   "src/tests/body-composition.test.ts": {

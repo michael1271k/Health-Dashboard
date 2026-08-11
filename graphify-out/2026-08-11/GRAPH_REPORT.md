@@ -1,11 +1,11 @@
 # Graph Report - Helix  (2026-08-11)
 
 ## Corpus Check
-- 389 files · ~669,421 words
+- 389 files · ~669,423 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2458 nodes · 6106 edges · 196 communities (117 shown, 79 thin omitted)
+- 2458 nodes · 6107 edges · 198 communities (117 shown, 81 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 70 edges (avg confidence: 0.75)
 - Token cost: 0 input · 0 output
 
@@ -25,11 +25,11 @@
 - sw.js
 - Next.js PWA Dashboard (Netlify)
 - CardioLogger.tsx
-- program.test.ts
-- exercises/[id]/page.tsx
+- CoachHeaderCard.tsx
+- exercises/page.tsx
 - draft.ts
-- ReadinessOrb.tsx
-- useExerciseCatalog.ts
+- MacroRings.tsx
+- useScheduleVersion
 - app/layout.tsx
 - VitalsGroups.tsx
 - logicalTodayISO
@@ -40,12 +40,12 @@
 - parse.ts
 - Sheet.tsx
 - FmtV2Report.tsx
-- activeProgram
+- eraForDate
 - settings/page.tsx
 - HelixViz.tsx
 - components.json
 - handle
-- useSessionIntel.ts
+- displayWeight
 - correct-logged-sets.mjs
 - ExerciseBreakdown.tsx
 - programs.ts
@@ -54,36 +54,36 @@
 - SleepStages.tsx
 - HelixWidgets.swift
 - muscleMap.ts
-- VolumeChart.tsx
+- useDayVault.ts
 - PathfinderTimeline.tsx
 - typescript
 - landmarks.ts
 - Zone.tsx
 - HelixSnapshot
-- MacroRings.tsx
+- macro-override.test.ts
 - .fetchWithFallback
 - Breaking the watchOS install loop
-- BrandHeader.tsx
+- weekStartOf
 - repair-bodyweight-e1rm.mjs
 - devDependencies
 - canonicalExerciseName
 - HelixEntry
 - scripts
 - constructor
-- PullToRefresh.tsx
+- workoutKeys.ts
 - dailyLog.ts
 - @tanstack/react-query-persist-client
-- useTimelineWeeks.ts
+- useReports.ts
 - manifest.json
-- useDashboard.ts
+- supabase
 - dependencies
-- templateDraft.ts
+- ContinuumTimeline.tsx
 - clone
 - pathfinder/page.tsx
 - nuke-and-seed-prs.mjs
 - recharts
 - _awaitComplete
-- livePrs.ts
+- report/[id]/page.tsx
 - @supabase/supabase-js
 - ContentView
 - Smart Background Sync
@@ -104,10 +104,10 @@
 - lucide-react
 - weeklyExport.ts
 - app/page.tsx
-- MacroProgressChart.tsx
+- ExerciseHistoryBody.tsx
 - workout/page.tsx
 - palette.ts
-- useInsights.ts
+- program.test.ts
 - ExerciseCard.tsx
 - Free Apple ID / Personal Team signing
 - useScheduleOverrides.ts
@@ -122,13 +122,13 @@
 - intensityCalendar.ts
 - .mcp.json
 - @dnd-kit/modifiers
-- RealtimeProvider.tsx
+- sync.ts
 - repair-body-composition.mjs
-- supabase
+- useBioStrips.ts
 - merge-exercise.mjs
 - serwist
 - @serwist/next
-- ExerciseHistoryBody.tsx
+- BodyMap.tsx
 - tailwind-merge
 - @tanstack/query-sync-storage-persister
 - @tanstack/react-query
@@ -140,7 +140,7 @@
 - InBody.tsx
 - phases.ts
 - @testing-library/jest-dom
-- delete
+- FileSystemBrowser.tsx
 - @testing-library/user-event
 - jsdom
 - @types/react-dom
@@ -163,12 +163,14 @@
 - favicon-32.png (32x32 site favicon: stylized bold 'X' crossing mark in orange and dark charcoal/black, diagonal crossed-bar design)
 - PWA icon (192x192): two intertwined DNA-helix-like ribbons forming an 'H' silhouette on a dark rounded-square background, left ribbon rendered in brushed silver/chrome, right ribbon rendered in glowing orange/fire, evoking the 'Helix' app name
 - icon-512.png (PWA app icon — dual DNA double-helix, silver and orange strands forming an H shape on dark rounded-square background)
+- useTimelineWeeks.ts
 - split-exercise-by-day.mjs
 - HELIX Data Pipeline (Apple Health → Ingest → Supabase → PWA/Notion)
 - Helix app master icon (dual DNA helix, silver + molten orange, dark rounded-square background)
 - DANGER
 - SUCCESS
 - WARN
+- exercise-history-body.test.tsx
 - palette-tokens.test.ts
 - @capacitor/core
 - CLAUDE.md
@@ -179,7 +181,7 @@
 - react
 - @eslint/eslintrc
 - TrendStrip.tsx
-- displayWeight
+- weightUnit
 - @playwright/test
 - @capacitor/preferences
 - vitest
@@ -232,23 +234,23 @@
 - **Native Bridge Implementation Files** — docs_native_ios_healthkit_ts, docs_native_ios_sync_ts, docs_native_ios_platform_ts, docs_native_ios_haptics_ts [EXTRACTED 1.00]
 - **Smart Background Sync System** — docs_native_ios_initnativesync, docs_native_ios_background_sync, docs_native_ios_bgtaskscheduler, docs_native_ios_backgroundsync_func [INFERRED 0.85]
 
-## Communities (196 total, 79 thin omitted)
+## Communities (198 total, 81 thin omitted)
 
 ### Community 0 - "HealthkitPlugin"
 Cohesion: 0.06
 Nodes (33): Calendar, Capacitor, CAPBridgedPlugin, CAPBridgeViewController, CAPPlugin, HealthKit, HKQuantityType, HKUnit (+25 more)
 
 ### Community 1 - "prEngine.ts"
-Cohesion: 0.09
-Nodes (42): useExerciseBaselines(), DB, nextDayISO(), saveSession(), SaveSessionResult, SessionMetrics, absorbSet(), axisValue() (+34 more)
+Cohesion: 0.14
+Nodes (29): DB, nextDayISO(), saveSession(), SessionMetrics, countCommittedSets(), absorbSet(), axisValue(), baselineIndex() (+21 more)
 
 ### Community 2 - "[date]/page.tsx"
-Cohesion: 0.11
-Nodes (18): DailyNexusPage(), DaySheet, scoreColor(), CompletenessArc, SEGMENT_META, SleepDebtGauge, BodyBand(), clock() (+10 more)
+Cohesion: 0.13
+Nodes (16): DailyNexusPage(), DaySheet, scoreColor(), SessionBlock(), sessionLabel(), CompletenessArc, SEGMENT_META, SleepDebtGauge (+8 more)
 
 ### Community 3 - "nutrition/page.tsx"
 Cohesion: 0.14
-Nodes (23): ActiveGoals, NutritionPage(), buildHelix(), Node, WaterHelix(), EraFilterPills(), FuelForceBand, currentAutoPhase() (+15 more)
+Nodes (24): ActiveGoals, NutritionPage(), buildHelix(), Node, WaterHelix(), EraFilterPills(), FuelForceBand, currentAutoPhase() (+16 more)
 
 ### Community 4 - "phase.ts"
 Cohesion: 0.18
@@ -259,12 +261,12 @@ Cohesion: 0.11
 Nodes (34): Combine, Content, .body, Helix, MacrosScreen, .body, .remaining, NotConfiguredView (+26 more)
 
 ### Community 6 - "useMuscleAnalytics.ts"
-Cohesion: 0.27
-Nodes (9): aggregateMuscleSets(), MUSCLE_GROUPS, MUSCLE_MAP, MuscleAggregate, MuscleSetRow, MuscleStat, weekStartUTC(), MuscleAnalytics (+1 more)
+Cohesion: 0.16
+Nodes (15): aggregateMuscleSets(), MUSCLE_GROUPS, MUSCLE_MAP, MuscleAggregate, MuscleSetRow, MuscleStat, weekStartUTC(), CatalogExercise (+7 more)
 
 ### Community 7 - "sw.js"
 Cohesion: 0.08
-Nodes (10): createHandlerBoundToUrl(), getAll(), getEndEntryFromIndex(), getFirstEntryByQueueName(), getLastEntryByQueueName(), getPrecacheKeyForUrl(), matchPrecache(), popRequest() (+2 more)
+Nodes (14): createHandlerBoundToUrl(), deleteEntry(), getAll(), getEndEntryFromIndex(), getFirstEntryByQueueName(), getLastEntryByQueueName(), getPrecacheKeyForUrl(), matchPrecache() (+6 more)
 
 ### Community 8 - "Next.js PWA Dashboard (Netlify)"
 Cohesion: 0.06
@@ -274,41 +276,41 @@ Nodes (38): /api/ingest endpoint, Bundle Identifier (app.helix.health.*), Capaci
 Cohesion: 0.13
 Nodes (29): CardioLogger(), KINDS, EffortScale(), axesHeldBy(), axisValue(), CARDIO_AXES, CARDIO_AXIS_LABEL, CardioAxis (+21 more)
 
-### Community 10 - "program.test.ts"
-Cohesion: 0.09
-Nodes (40): CoachHeaderCard(), StatPatch, DatePickerPopover(), iso(), WD, useLoggedSessionDates(), APEX51, BATTERY (+32 more)
+### Community 10 - "CoachHeaderCard.tsx"
+Cohesion: 0.20
+Nodes (8): CoachHeaderCard(), StatPatch, DatePickerPopover(), iso(), WD, useLoggedSessionDates(), NUTRITION_PRESETS, parseDurationMin()
 
-### Community 11 - "exercises/[id]/page.tsx"
-Cohesion: 0.13
-Nodes (14): ExerciseDetailPage(), ExerciseHistoryBody, groupColor(), AppBar(), MEASURE, PAD, EMPTY, ExerciseHistoryData (+6 more)
+### Community 11 - "exercises/page.tsx"
+Cohesion: 0.18
+Nodes (14): ExerciseDetailPage(), ExerciseHistoryBody, groupColor(), ExerciseLibraryPage(), groupColor(), AppBar(), MEASURE, PAD (+6 more)
 
 ### Community 12 - "draft.ts"
-Cohesion: 0.13
-Nodes (27): CommitBar(), HevyWorkout, DAY_KEY_GUESSES, DayKey, guessDayKey(), hevyWorkoutToDraft(), isHelixDayKey(), SessRow (+19 more)
+Cohesion: 0.16
+Nodes (21): CommitBar(), SessRow, SetRow, useSessionDraft(), verifyCommitted(), invalidateWorkoutData(), buildCommitPayload(), cardioSummary() (+13 more)
 
-### Community 13 - "ReadinessOrb.tsx"
-Cohesion: 0.15
-Nodes (10): BioStrip, BioStripProps, programStreak(), ReadinessOrb, SCORE_COMPONENTS, ScoreCard, ScoreCardProps, ScoreKey (+2 more)
+### Community 13 - "MacroRings.tsx"
+Cohesion: 0.09
+Nodes (18): BioStrip, BioStripProps, programStreak(), ReadinessOrb, SCORE_COMPONENTS, ScoreCard, ScoreCardProps, ScoreKey (+10 more)
 
-### Community 14 - "useExerciseCatalog.ts"
-Cohesion: 0.33
-Nodes (6): CatalogExercise, EMPTY, ExerciseCatalog, groupOf(), MuscleGroup, useExerciseCatalog()
+### Community 14 - "useScheduleVersion"
+Cohesion: 0.20
+Nodes (14): SessionAnalysisPage(), ActivePlanBadge(), PHASE_WORD, BodyHeatmap, MuscleAnalyticsPanel(), MuscleAnalyticsSection, RpeCalendar, StrengthTrends (+6 more)
 
 ### Community 15 - "app/layout.tsx"
-Cohesion: 0.11
-Nodes (14): metadata, viewport, BottomNav(), NavCell(), Sidebar(), CrashRecorder(), isJsonSafe(), QueryProvider() (+6 more)
+Cohesion: 0.12
+Nodes (15): metadata, viewport, BottomNav(), NavCell(), Sidebar(), CrashRecorder(), isJsonSafe(), isSmallEnough() (+7 more)
 
 ### Community 16 - "VitalsGroups.tsx"
 Cohesion: 0.20
 Nodes (15): Better, Group, GROUPS, MetricDef, VitalRow(), VitalsGroups(), isoAddDays(), roll() (+7 more)
 
 ### Community 17 - "logicalTodayISO"
-Cohesion: 0.10
-Nodes (33): SessionPageInner(), RpeCalendar(), daysBetween(), PlanEraButton(), BodyHeatmap, MuscleAnalyticsPanel(), MuscleAnalyticsSection, RpeCalendar (+25 more)
+Cohesion: 0.20
+Nodes (13): RpeCalendar(), daysBetween(), PlanEraButton(), ProgressionAlerts(), scopeToDay(), WeekToDateTargets(), ScheduleShortcut(), PathfinderTimeline() (+5 more)
 
 ### Community 18 - "reportSchema.ts"
-Cohesion: 0.20
-Nodes (13): PastePanel(), COACH_SPLIT_TO_DAY_KEY, CoachExerciseSchema, CoachExerciseStatus, CoachReport, CoachReportSchema, coachReportToDraft(), CoachSplit (+5 more)
+Cohesion: 0.14
+Nodes (20): PastePanel(), COACH_SPLIT_TO_DAY_KEY, CoachExerciseSchema, CoachExerciseStatus, CoachReport, CoachReportSchema, coachReportToDraft(), CoachSplit (+12 more)
 
 ### Community 19 - "compilerOptions"
 Cohesion: 0.07
@@ -334,9 +336,9 @@ Nodes (10): acquireOverlay(), Portal(), releaseOverlay(), useOverlayBodyLock(), 
 Cohesion: 0.06
 Nodes (52): anchorsOf(), asymmetryOf(), BodyCompTrajectory(), FmtV2Report(), proseLines(), SectionView(), HeroCard(), leadOf() (+44 more)
 
-### Community 25 - "activeProgram"
+### Community 25 - "eraForDate"
 Cohesion: 0.17
-Nodes (25): isTimedExercise(), ProgressionAlert, useProgressionQueue(), ExerciseTrend, setsAtCeilingOf(), useSessionTrends(), activeProgram(), clearedCeiling() (+17 more)
+Nodes (26): SessionDeck(), isTimedExercise(), ProgressionAlert, useProgressionQueue(), ExerciseTrend, setsAtCeilingOf(), useSessionTrends(), eraForDate() (+18 more)
 
 ### Community 26 - "settings/page.tsx"
 Cohesion: 0.10
@@ -354,9 +356,9 @@ Nodes (21): aliases, components, hooks, lib, ui, utils, iconLibrary, menuAccent 
 Cohesion: 0.18
 Nodes (23): cacheMatch(), cachePut(), _ensureResponseSafeToCache(), fetch(), fetchAndCachePut(), findMatchingRoute(), getCacheKey(), _getNetworkPromise() (+15 more)
 
-### Community 30 - "useSessionIntel.ts"
-Cohesion: 0.19
-Nodes (14): SessionIntelCard(), trend(), fmtMetric(), metricBadge(), ProgressionTrail(), shortDate(), VolumeCurve(), ExerciseDelta (+6 more)
+### Community 30 - "displayWeight"
+Cohesion: 0.17
+Nodes (19): MuscleAnalyticsSection(), StrengthTrends(), SessionIntelCard(), trend(), fmtMetric(), metricBadge(), ProgressionTrail(), shortDate() (+11 more)
 
 ### Community 31 - "correct-logged-sets.mjs"
 Cohesion: 0.14
@@ -367,8 +369,8 @@ Cohesion: 0.17
 Nodes (15): deltaGlyph(), ExerciseBreakdown(), ExerciseHistorySheet, Row, SetPrBadges(), TAG, toRows(), Highlight (+7 more)
 
 ### Community 33 - "programs.ts"
-Cohesion: 0.14
-Nodes (14): DAY_SPLIT, forPhase(), HELIX4, LEGACY_PLAN_ID, planListeners, PPL_LEGACY, PPL_LEGS, PPL_PULL (+6 more)
+Cohesion: 0.08
+Nodes (32): SessionPageInner(), ExerciseHistory, HistorySetType, useExerciseSetHistory(), workingSets(), DAY_SPLIT, Era, forPhase() (+24 more)
 
 ### Community 34 - "RecoveryTrackers.tsx"
 Cohesion: 0.15
@@ -390,29 +392,25 @@ Nodes (15): Helix, HelixCaloriesWidget, HelixMediumView, .batteryRing, .body, He
 Cohesion: 0.23
 Nodes (10): DRY, env, rows, sb, DICT, lookupMuscles(), MuscleEntry, muscleGroupsFor() (+2 more)
 
-### Community 39 - "VolumeChart.tsx"
-Cohesion: 0.31
-Nodes (9): ChartSplit, DAY_KEY_SPLIT, formatDate(), resolveChartSplit(), splitColor(), splitLabel(), SPLITS_FOR_ERA, VolumeChart() (+1 more)
+### Community 39 - "useDayVault.ts"
+Cohesion: 0.25
+Nodes (11): SessionProgressionCard(), FileItem, SessionHero(), addDayISO(), BODY_MIRROR, DayVaultData, useDeleteSession(), useGlobalSessionNumber() (+3 more)
 
 ### Community 40 - "PathfinderTimeline.tsx"
-Cohesion: 0.13
-Nodes (18): fmt(), ReportsPage(), isWeekComplete(), isWeekReady(), MarkdownView, NO_DAYS, PathfinderTimeline(), WeekActions() (+10 more)
+Cohesion: 0.16
+Nodes (12): isWeekComplete(), isWeekReady(), MarkdownView, NO_DAYS, WeekActions(), WeekCapsule, WeekRecoveryStrip(), SentinelReport (+4 more)
 
 ### Community 42 - "landmarks.ts"
 Cohesion: 0.14
 Nodes (22): MuscleFocus(), round1(), RawSet, SessionDetail, useSessionDetail(), MUSCLE, bandZone(), half() (+14 more)
 
 ### Community 43 - "Zone.tsx"
-Cohesion: 0.17
-Nodes (15): ExerciseLibraryPage(), groupColor(), Measure, StatStrip(), Surface(), SURFACE_PAD, SurfaceVariant, Tile() (+7 more)
+Cohesion: 0.20
+Nodes (12): Measure, StatStrip(), SURFACE_PAD, SurfaceVariant, Tile(), VARIANT, Zone(), ZoneEmpty() (+4 more)
 
 ### Community 44 - "HelixSnapshot"
 Cohesion: 0.34
 Nodes (13): Codable, HelixSnapshot, .caloriesRemaining, Macros, Sleep, Steps, Double, Int (+5 more)
-
-### Community 45 - "MacroRings.tsx"
-Cohesion: 0.17
-Nodes (12): Field, FIELDS, MacroOverrideSheet(), Goals, MacroField, MacroRings, CASCADE_KEYS, MacroValues (+4 more)
 
 ### Community 46 - ".fetchWithFallback"
 Cohesion: 0.18
@@ -422,9 +420,9 @@ Nodes (10): Error, Foundation, HelixSnapshotClient, .isConfigured, HelixSnapshot
 Cohesion: 0.13
 Nodes (14): And: your Embed phase already exists and is correct, Breaking the watchOS install loop, ⚠️ Check this before anything else: `buildActionMask`, Quick reference, Read this first: "Code Sign On Copy" is *supposed* to be greyed out, Step 0 — Confirm what you're actually looking at (30 seconds), Step 1 — Developer Mode on **both** devices, Step 2 — Trust the developer certificate on the Watch (+6 more)
 
-### Community 48 - "BrandHeader.tsx"
-Cohesion: 0.29
-Nodes (9): BrandHeader(), greetingFor(), LiveTime, PLAN_CHIP_COLOR, useClock(), useLastUpdated(), msUntilLocalMidnight(), useLogicalDate() (+1 more)
+### Community 48 - "weekStartOf"
+Cohesion: 0.20
+Nodes (15): CurrentWeekButton(), currentWeekDays(), BrandHeader(), greetingFor(), LiveTime, PLAN_CHIP_COLOR, useClock(), useLastUpdated() (+7 more)
 
 ### Community 49 - "repair-bodyweight-e1rm.mjs"
 Cohesion: 0.40
@@ -435,8 +433,8 @@ Cohesion: 0.15
 Nodes (13): @capacitor/cli, eslint, devDependencies, @capacitor/cli, eslint, @resvg/resvg-js, tailwindcss, @testing-library/react (+5 more)
 
 ### Community 51 - "canonicalExerciseName"
-Cohesion: 0.21
-Nodes (14): canonicalExerciseName(), EXERCISE_ALIASES, CommitResult, ExportSession, LivePrs, PrAxis, ASSERTED, ASSERTED_DATES (+6 more)
+Cohesion: 0.12
+Nodes (23): canonicalExerciseName(), EXERCISE_ALIASES, useExerciseBaselines(), PrBaselines, ASSERTED, ASSERTED_DATES, INDEX, isAssertedSession() (+15 more)
 
 ### Community 52 - "HelixEntry"
 Cohesion: 0.16
@@ -447,44 +445,44 @@ Cohesion: 0.15
 Nodes (13): scripts, build, check, dev, e2e, e2e:ui, icons, lint (+5 more)
 
 ### Community 54 - "constructor"
-Cohesion: 0.25
-Nodes (9): _addSyncListener(), addToPrecacheList(), constructor(), getIntegrityForPrecacheKey(), getUrlsToPrecacheKeys(), _match(), registerCapture(), registerRoute() (+1 more)
+Cohesion: 0.20
+Nodes (12): addToPrecacheList(), constructor(), delete(), deleteCacheAndMetadata(), getIntegrityForPrecacheKey(), getUrlsToPrecacheKeys(), h(), handleActivate() (+4 more)
 
-### Community 55 - "PullToRefresh.tsx"
-Cohesion: 0.18
-Nodes (9): Phase, PullToRefresh(), forceHealthKitSync(), HEALTH_QUERY_KEYS, invalidateHealthData(), WORKOUT_QUERY_KEYS, declaredList(), REGISTERED (+1 more)
+### Community 55 - "workoutKeys.ts"
+Cohesion: 0.31
+Nodes (5): HEALTH_QUERY_KEYS, WORKOUT_QUERY_KEYS, declaredList(), REGISTERED, SOURCES
 
 ### Community 56 - "dailyLog.ts"
 Cohesion: 0.05
 Nodes (71): computeForDate(), DB, nextDay(), POST(), todayISO(), POST(), GET(), pendingDates() (+63 more)
 
-### Community 58 - "useTimelineWeeks.ts"
-Cohesion: 0.14
-Nodes (21): CurrentWeekButton(), currentWeekDays(), EraFilter, EMPTY_PAYLOAD, num(), numOrNull(), repairReportPayload(), ReportDbRow (+13 more)
+### Community 58 - "useReports.ts"
+Cohesion: 0.21
+Nodes (10): fmt(), ReportsPage(), EMPTY_PAYLOAD, num(), numOrNull(), repairReportPayload(), ReportDbRow, useReports() (+2 more)
 
 ### Community 59 - "manifest.json"
 Cohesion: 0.20
 Nodes (9): background_color, description, display, icons, name, orientation, short_name, start_url (+1 more)
 
-### Community 60 - "useDashboard.ts"
+### Community 60 - "supabase"
 Cohesion: 0.19
-Nodes (18): NotionSync(), Result, todayLocal(), useEnsureTodayScore(), useTodayBundle(), useTodayDailyLog(), useTodayMetrics(), useTodayNutrition() (+10 more)
+Nodes (16): NotionSync(), Result, todayLocal(), useTodayBundle(), useTodayMetrics(), useTodayNutrition(), useTodayScore(), useTodaySleep() (+8 more)
 
 ### Community 61 - "dependencies"
 Cohesion: 0.22
 Nodes (9): @capacitor/app, next, dependencies, @capacitor/app, next, @radix-ui/react-slider, react-dom, @radix-ui/react-slider (+1 more)
 
-### Community 62 - "templateDraft.ts"
-Cohesion: 0.21
-Nodes (11): daySplitEnum(), ProgramDay, SEED_TEMPLATES, SeedCardio, SeedExercise, SeedSet, SeedTemplate, WARMUP_CARDIO (+3 more)
+### Community 62 - "ContinuumTimeline.tsx"
+Cohesion: 0.16
+Nodes (9): ContinuumTimeline, DayCard, ROW_MACRO_TARGET, WeekHeader, isoAddDays(), useContinuum(), PHASES, WeekPhase (+1 more)
 
 ### Community 63 - "clone"
-Cohesion: 0.38
-Nodes (7): _addRequest(), clone(), fromRequest(), pushRequest(), replayRequests(), toObject(), unshiftRequest()
+Cohesion: 0.28
+Nodes (9): _addRequest(), _addSyncListener(), clone(), fromRequest(), pushRequest(), registerSync(), replayRequests(), toObject() (+1 more)
 
 ### Community 64 - "pathfinder/page.tsx"
-Cohesion: 0.10
-Nodes (21): addDays(), AnalyticsPanel, iso(), PathfinderInner(), VitalsGroups, WEEKDAYS, WidgetBoundary, cap() (+13 more)
+Cohesion: 0.21
+Nodes (10): addDays(), AnalyticsPanel, iso(), PathfinderInner(), VitalsGroups, WEEKDAYS, MonthActivity, monthActivitySets() (+2 more)
 
 ### Community 65 - "nuke-and-seed-prs.mjs"
 Cohesion: 0.14
@@ -494,9 +492,9 @@ Nodes (13): byId, bySession, counts, db, derived, DRY, env, flagOn (+5 more)
 Cohesion: 0.50
 Nodes (4): _awaitComplete(), destroy(), doneWaiting(), handleAll()
 
-### Community 68 - "livePrs.ts"
-Cohesion: 0.18
-Nodes (11): computeLivePrs(), EMPTY_LIVE_PRS, livePrDigest(), livePrKey(), PrBaselines, committedCalls, countRowRendersPerKeystroke(), deck() (+3 more)
+### Community 68 - "report/[id]/page.tsx"
+Cohesion: 0.23
+Nodes (7): PrintState, ReportDoc, ReportPage(), usePrintToPdf(), useReportDoc(), WidgetBoundary, isFmtV2()
 
 ### Community 70 - "ContentView"
 Cohesion: 0.20
@@ -511,8 +509,8 @@ Cohesion: 0.40
 Nodes (4): compat, __dirname, eslintConfig, __filename
 
 ### Community 73 - "healthkit.ts"
-Cohesion: 0.13
-Nodes (25): EXTRA_READ_TYPES, fetchSleep(), HealthKit, HealthSample, inBatches(), localDayISO(), mergedMinutes(), METRIC_MAP (+17 more)
+Cohesion: 0.17
+Nodes (17): EXTRA_READ_TYPES, fetchSleep(), HealthKit, HealthSample, inBatches(), localDayISO(), mergedMinutes(), METRIC_MAP (+9 more)
 
 ### Community 74 - "backfill-prs.mjs"
 Cohesion: 0.11
@@ -535,80 +533,80 @@ Cohesion: 0.11
 Nodes (34): buildWeeklyExport(), cardioLabel(), consolidateSupplements(), directionGlyph(), exact(), ExportBodyComp, ExportCardio, ExportDay (+26 more)
 
 ### Community 88 - "app/page.tsx"
-Cohesion: 0.12
-Nodes (21): avg(), BODY_TILES, DashboardPage(), n0(), n1(), ScoreCard, SHEET_ACCENT, SheetKey (+13 more)
+Cohesion: 0.11
+Nodes (23): avg(), BODY_TILES, DashboardPage(), n0(), n1(), ScoreCard, SHEET_ACCENT, SheetKey (+15 more)
 
-### Community 89 - "MacroProgressChart.tsx"
-Cohesion: 0.19
-Nodes (10): ChartTooltip(), TooltipProps, formatDate(), GoalsRow, MacroProgressChart(), METRICS, NutritionRow, MACRO_COLORS (+2 more)
+### Community 89 - "ExerciseHistoryBody.tsx"
+Cohesion: 0.16
+Nodes (13): ChartTooltip(), TooltipProps, formatDate(), GoalsRow, MacroProgressChart(), METRICS, NutritionRow, ExerciseHistoryBody() (+5 more)
 
 ### Community 90 - "workout/page.tsx"
 Cohesion: 0.21
 Nodes (14): MuscleAnalyticsPanel, WD, WorkoutPage(), PostWorkoutSummary(), toReportRow(), WeeklySummaryCard(), RoutineMemoryEntry, routineMemoryMap() (+6 more)
 
 ### Community 91 - "palette.ts"
-Cohesion: 0.17
-Nodes (10): dayColor(), SERIES, SPLIT, splitColor(), ActiveWorkoutSession, Exercise, PLAN_PHASES, PPL_SPLITS (+2 more)
+Cohesion: 0.10
+Nodes (21): ChartSplit, DAY_KEY_SPLIT, formatDate(), resolveChartSplit(), splitColor(), splitLabel(), SPLITS_FOR_ERA, VolumeChart() (+13 more)
 
-### Community 92 - "useInsights.ts"
-Cohesion: 0.08
-Nodes (43): InsightCoach(), TONE, calorieAdherence(), computeInsights(), DayPoint, daysSinceLastSession(), fuelVsForce(), Insight (+35 more)
+### Community 92 - "program.test.ts"
+Cohesion: 0.06
+Nodes (65): InsightCoach(), TONE, calorieAdherence(), computeInsights(), DayPoint, daysSinceLastSession(), fuelVsForce(), Insight (+57 more)
 
 ### Community 93 - "ExerciseCard.tsx"
-Cohesion: 0.09
-Nodes (20): CHIPS, EffortChips(), EffortChoice, ExerciseCard, ReadyCue, SetGroup, STATUS_META, DRAG_MODIFIERS (+12 more)
+Cohesion: 0.07
+Nodes (30): CHIPS, EffortChips(), EffortChoice, ExerciseCard, ReadyCue, SetGroup, STATUS_META, DRAG_MODIFIERS (+22 more)
 
 ### Community 95 - "useScheduleOverrides.ts"
-Cohesion: 0.09
-Nodes (42): RestSuggestion(), RestTodayButton(), SwapDayControl(), SwapNote, useRestSwap(), applyWrites(), OverrideRow, PRE_KEYS (+34 more)
+Cohesion: 0.06
+Nodes (61): HAS_AUTO, NOTE: the password ships in the client bundle (NEXT_PUBLIC_*), so it is readable, RestSuggestion(), RestTodayButton(), SwapDayControl(), SwapNote, useRestSwap(), HelixMark() (+53 more)
 
 ### Community 96 - "getDb"
 Cohesion: 0.18
 Nodes (13): addEntry(), b(), get(), getAllEntriesByQueueName(), getDb(), getEntryCountByQueueName(), getFirstEntryId(), _getId() (+5 more)
 
 ### Community 103 - "ExceptionDayBanner.tsx"
-Cohesion: 0.38
-Nodes (8): ExceptionDayBanner(), ReasonChips(), exceptionReason(), exceptionTag(), isExceptionDay(), NUTRITION_EXCEPTION_REASONS, NutritionExceptionReason, alpha()
+Cohesion: 0.35
+Nodes (9): ExceptionDayBanner(), ReasonChips(), useSetNutritionException(), exceptionReason(), exceptionTag(), isExceptionDay(), NUTRITION_EXCEPTION_REASONS, NutritionExceptionReason (+1 more)
 
 ### Community 104 - "intensityCalendar.ts"
 Cohesion: 0.31
 Nodes (6): buildIntensityCalendar(), CalendarCell, CalendarModel, CalendarStats, iso(), sundayOf()
 
-### Community 107 - "RealtimeProvider.tsx"
-Cohesion: 0.20
-Nodes (14): NativeBoot(), RealtimeProvider(), TABLE_KEYS, TABLES, useScheduleOverrides(), getTrackRpe(), setTrackRpeMirror(), subscribe() (+6 more)
+### Community 107 - "sync.ts"
+Cohesion: 0.22
+Nodes (13): NativeBoot(), Phase, PullToRefresh(), backgroundSync(), documentReady(), forceHealthKitSync(), initNativeSync(), OnSynced (+5 more)
 
 ### Community 108 - "repair-body-composition.mjs"
 Cohesion: 0.20
 Nodes (7): db, DRY, env, jiti, ledgerUpdates, logUpdates, MASS_COLS
 
-### Community 109 - "supabase"
-Cohesion: 0.25
-Nodes (7): HAS_AUTO, NOTE: the password ships in the client bundle (NEXT_PUBLIC_*), so it is readable, HelixMark(), AuthGate(), AuthState, hasPersistedSession(), supabase
+### Community 109 - "useBioStrips.ts"
+Cohesion: 0.24
+Nodes (10): BioDay, BODY_METRIC_FIELDS, BodyMetricField, LatestBodyMetrics, latestWeighIn(), pickLatestBodyMetrics(), useLastWeighIn(), useLatestBodyMetrics() (+2 more)
 
 ### Community 110 - "merge-exercise.mjs"
 Cohesion: 0.29
 Nodes (6): args, db, DRY, env, from, to
 
-### Community 113 - "ExerciseHistoryBody.tsx"
-Cohesion: 0.42
-Nodes (5): ExerciseHistoryBody(), BODYWEIGHT_PATTERNS, isBodyweightExercise(), isUnloadedExercise(), shortDate()
+### Community 113 - "BodyMap.tsx"
+Cohesion: 0.20
+Nodes (9): BARS, BodyMap(), CONTOURS, num(), Pt, NOTE: a smart scale reports WHOLE-BODY composition, not per-limb — the, RIGHT, SILHOUETTE (+1 more)
 
 ### Community 117 - "WeeklyReviewCard.tsx"
 Cohesion: 0.36
 Nodes (6): startOfWeekISO(), StatRowProps, todayISO(), useWeekStats(), WeeklyReviewCard(), WeekStats
 
 ### Community 122 - "InBody.tsx"
-Cohesion: 0.06
-Nodes (42): BARS, BodyMap(), CONTOURS, num(), Pt, NOTE: a smart scale reports WHOLE-BODY composition, not per-limb — the, RIGHT, SILHOUETTE (+34 more)
+Cohesion: 0.08
+Nodes (33): BodyPanel(), WeighInSkip(), DERIVED, hasScaleMetrics(), InBodyForm(), InBodyHeadline(), INPUTS, VERDICT_COLOR (+25 more)
 
 ### Community 123 - "phases.ts"
-Cohesion: 0.10
-Nodes (31): PrintState, ReportDoc, ReportPage(), usePrintToPdf(), useReportDoc(), SessionAnalysisPage(), ActivePlanBadge(), PHASE_WORD (+23 more)
+Cohesion: 0.20
+Nodes (14): WeekChipLabel(), isoUTC(), PHASE_HEX, PHASE_RGB, PHASE_RULES, phaseColor(), PhaseDef, phaseHex() (+6 more)
 
-### Community 125 - "delete"
-Cohesion: 0.22
-Nodes (9): delete(), deleteCacheAndMetadata(), deleteEntry(), h(), handleActivate(), l(), popEntry(), _removeEntry() (+1 more)
+### Community 125 - "FileSystemBrowser.tsx"
+Cohesion: 0.35
+Nodes (7): cap(), FileSystemBrowser(), JourneyTimeline, ReportRow, enumerateWeeks(), ProgramWeek, blurOnTap()
 
 ### Community 131 - "micros/page.tsx"
 Cohesion: 0.08
@@ -617,6 +615,10 @@ Nodes (47): c(), k(), DRY, env, rows, sb, seen, MicrosPage() (+39 more)
 ### Community 135 - "generate-icons.mjs"
 Cohesion: 0.40
 Nodes (5): main(), render(), SOURCE, TARGETS, WIDGET_CONTENTS
+
+### Community 156 - "useTimelineWeeks.ts"
+Cohesion: 0.33
+Nodes (8): EraFilter, ReportPayload, inEraFilter(), RawSession, TimelineWeekNode, useTimelineWeeks(), WEEK_ERA, weekEra()
 
 ### Community 157 - "split-exercise-by-day.mjs"
 Cohesion: 0.25
@@ -635,12 +637,12 @@ Cohesion: 0.43
 Nodes (6): ALLOWED_ORPHANS, PALETTE_SRC, PALETTE_VALUES, scan(), sourceFiles(), stripComments()
 
 ### Community 179 - "TrendStrip.tsx"
-Cohesion: 0.47
-Nodes (4): daysAgoISO(), Series, TrendStrip(), useTrendSeries()
+Cohesion: 0.38
+Nodes (5): daysAgoISO(), Series, TrendStrip(), useTrendSeries(), Surface()
 
-### Community 180 - "displayWeight"
-Cohesion: 0.22
-Nodes (12): SessionBlock(), sessionLabel(), MuscleAnalyticsSection(), StrengthTrends(), CompletedHero(), Session, TrainingCard(), displayWeight() (+4 more)
+### Community 180 - "weightUnit"
+Cohesion: 0.23
+Nodes (9): CompletedHero(), Session, TrainingCard(), BodyBand(), clock(), SleepBand(), STAGES, fmtVolume() (+1 more)
 
 ### Community 191 - "cachedResponseWillBeUsed"
 Cohesion: 0.38
@@ -657,14 +659,14 @@ Nodes (6): columnExists(), db, DRY, env, main(), READINGS
 ## Knowledge Gaps
 - **641 isolated node(s):** `pycharm`, `config`, `$schema`, `style`, `rsc` (+636 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **79 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **81 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `View` connect `ContentView.swift` to `pathfinder/page.tsx`, `StageRibbon`, `HelixWidgets.swift`, `ContentView`, `HelixEntry`?**
   _High betweenness centrality (0.109) - this node is a cross-community bridge._
-- **Why does `logicalTodayISO()` connect `logicalTodayISO` to `[date]/page.tsx`, `nutrition/page.tsx`, `micros/page.tsx`, `phase.ts`, `useMuscleAnalytics.ts`, `program.test.ts`, `draft.ts`, `ReadinessOrb.tsx`, `VitalsGroups.tsx`, `useWeeklyLoop.ts`, `activeProgram`, `settings/page.tsx`, `HelixViz.tsx`, `RecoveryTrackers.tsx`, `PathfinderTimeline.tsx`, `MacroRings.tsx`, `BrandHeader.tsx`, `dailyLog.ts`, `useTimelineWeeks.ts`, `useDashboard.ts`, `healthkit.ts`, `app/page.tsx`, `workout/page.tsx`, `useInsights.ts`, `useScheduleOverrides.ts`, `WeeklyReviewCard.tsx`, `phases.ts`?**
+- **Why does `logicalTodayISO()` connect `logicalTodayISO` to `[date]/page.tsx`, `nutrition/page.tsx`, `micros/page.tsx`, `phase.ts`, `useMuscleAnalytics.ts`, `CoachHeaderCard.tsx`, `draft.ts`, `MacroRings.tsx`, `useScheduleVersion`, `VitalsGroups.tsx`, `reportSchema.ts`, `useWeeklyLoop.ts`, `eraForDate`, `settings/page.tsx`, `HelixViz.tsx`, `useTimelineWeeks.ts`, `programs.ts`, `RecoveryTrackers.tsx`, `useDayVault.ts`, `PathfinderTimeline.tsx`, `weekStartOf`, `dailyLog.ts`, `supabase`, `ContinuumTimeline.tsx`, `app/page.tsx`, `workout/page.tsx`, `program.test.ts`, `useScheduleOverrides.ts`, `ExceptionDayBanner.tsx`, `sync.ts`, `useBioStrips.ts`, `WeeklyReviewCard.tsx`?**
   _High betweenness centrality (0.070) - this node is a cross-community bridge._
 - **Why does `HelixSnapshot` connect `HelixSnapshot` to `.fetchWithFallback`, `HelixEntry`, `ContentView.swift`, `ContentView`?**
   _High betweenness centrality (0.045) - this node is a cross-community bridge._
@@ -675,4 +677,4 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `HealthkitPlugin` be split into smaller, more focused modules?**
   _Cohesion score 0.05519480519480519 - nodes in this community are weakly interconnected._
 - **Should `prEngine.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.09019607843137255 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.13825757575757575 - nodes in this community are weakly interconnected._

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getServerSupabaseClient } from '@/lib/supabase/server'
 import { computeDailyScore } from '@/lib/scoring/score'
-import { computeBattery } from '@/lib/scoring/battery'
+import { computeBattery, BATTERY } from '@/lib/scoring/battery'
 import type { ScoringInputs } from '@/lib/scoring/types'
 import type { Database, Tables, InsertRow } from '@/lib/supabase/types'
 import { isRestDayFor, prescribedFor } from '@/lib/programs'
@@ -301,9 +301,19 @@ export async function POST(req: Request) {
     // back on the first session of the day, which was a big chunk of the felt
     // sync latency. `force` propagates so an explicit recompute (e.g. after a
     // manual data correction) rewrites even FINALIZED past days.
-    await computeForDate(supabase, userId, today, awake, targetIsToday, force)
+    // A FINISHED DAY IS SCORED AS A FINISHED DAY. `awake` describes how far
+    // through the day the CALLER is, which is only meaningful for today. A past
+    // date used to inherit it — so `recompute-scores.mjs`, which posts a date
+    // and no hoursAwake, scored every historical day as though it were whatever
+    // o'clock the script happened to run at. Re-running it in the evening gave
+    // different numbers from the morning, for days that ended weeks ago.
+    //
+    // Pinning completed days to a full waking day makes a recompute idempotent
+    // with respect to the wall clock, which is the only way its output can be
+    // compared across runs.
+    await computeForDate(supabase, userId, today, targetIsToday ? awake : BATTERY.maxAwake, targetIsToday, force)
     await Promise.all(
-      backfillDates.map((d) => computeForDate(supabase, userId, d, 16, false, force)),
+      backfillDates.map((d) => computeForDate(supabase, userId, d, BATTERY.maxAwake, false, force)),
     )
   }
 
