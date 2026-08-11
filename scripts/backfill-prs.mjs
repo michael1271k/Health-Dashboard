@@ -51,6 +51,8 @@ const jiti = createJiti(import.meta.url, {
 const { buildBaselines, detectSessionPrs, recordSets } = await jiti.import('../src/lib/training/prEngine.ts')
 const { isTimedExercise } = await jiti.import('../src/lib/exercises/timed.ts')
 const { repWindowFor } = await jiti.import('../src/lib/training/ceilings.ts')
+const { prFloorFor, truthFloor, truthAxisValue } = await jiti.import('../src/lib/training/prTruth.ts')
+const { canonicalExerciseName } = await jiti.import('../src/lib/exercises/aliases.ts')
 
 // ── load everything, once ────────────────────────────────────────────────────
 const { data: sessions, error: sErr } = await db
@@ -89,7 +91,10 @@ for (const s of sessions) {
   )
   if (!rows.length) continue
 
-  const baselines = buildBaselines(seen, isTimedExercise)
+  // The asserted floor, same as the app. Without it the replay reproduces the
+  // very false positives it is meant to clear: sets only exist from 2026-07-16,
+  // so a return to a pre-July load looks like a first-ever best. See prTruth.ts.
+  const baselines = buildBaselines(seen, isTimedExercise, (k) => prFloorFor(canonicalExerciseName(k)))
   const dateStr = s.started_at.slice(0, 10)
   const candidates = rows.map((r) => {
     const name = r.exercises?.name ?? r.exercise_id
@@ -156,6 +161,9 @@ for (const s of sessions) {
       key: candidates[i].key,
       weightKg: r.weight_kg, reps: r.reps, setType: r.set_type ?? null,
       side: r.side ?? null, pairId: r.pair_id ?? null,
+      // Groups rows into sessions for the sessionVolume axis. Without it that
+      // axis has no bar and can never fire.
+      sessionId: s.id,
       repFloor: candidates[i].repFloor,
     })
   }
@@ -179,10 +187,23 @@ for (const u of sessionUpdates) {
 
 // The ledger holds the CURRENT record per (user, exercise, axis). Replaying in
 // order means later sessions overwrite earlier ones, leaving the standing best.
+//
+// A row is NOT written when the asserted book holds a higher value for that
+// axis. Detection already respects the floor, but the SEEDED era does not go
+// through detection at all — `detectSessionPrs` takes its axes straight from
+// prSeed for any session on or before 2026-07-31 — so a seeded win can carry a
+// value below the all-time best and would overwrite it. Hip Thrust is the live
+// example: the seed files a 27.5 × 13 volume win (357.5) against an asserted
+// best of 27.5 × 14 (385). Skipping keeps the standing row correct and makes
+// this script and sync-pr-truth.mjs converge whichever order they run in.
+let deferred = 0
 for (const row of ledger) {
+  const assertedValue = truthAxisValue(truthFloor(canonicalExerciseName(row.exercise_key)), row.axis)
+  if (assertedValue != null && assertedValue > row.value) { deferred += 1; continue }
   const { error } = await db.from('personal_records').upsert(row, { onConflict: 'user_id,exercise_key,axis' })
   if (error) throw error
 }
+if (deferred) console.log(`${deferred} ledger rows deferred to the asserted book (a seeded win below the all-time best)`)
 
 // PRUNE. The upsert above can only add or overwrite, so a rule change that
 // STOPS emitting an axis leaves the old row standing forever — and the Session
@@ -194,15 +215,24 @@ for (const row of ledger) {
 // (user_id, exercise_key, axis), so deleting on exercise_key + axis alone would
 // take out every user who shares an exercise name — harmless on a single-user
 // database and catastrophic the moment it isn't.
+//
+// ASSERTED ROWS SURVIVE. A row with a null session_id was not derived from any
+// session — it was written by sync-pr-truth.mjs from the all-time book, and it
+// exists precisely BECAUSE no session in the database can produce it (the four
+// months that could are set-less). Pruning "anything the replay did not emit"
+// would therefore delete the entire vault on the first run after seeding it,
+// silently, and the false positives would come straight back.
 const keep = new Set(ledger.map((r) => `${r.user_id}|${r.exercise_key}|${r.axis}`))
 const userIds = [...new Set(ledger.map((r) => r.user_id))]
 const { data: existing, error: readErr } = await db
   .from('personal_records')
-  .select('user_id, exercise_key, axis')
+  .select('user_id, exercise_key, axis, session_id')
   .in('user_id', userIds)
 if (readErr) throw readErr
 let pruned = 0
+let asserted = 0
 for (const row of existing ?? []) {
+  if (row.session_id == null) { asserted += 1; continue }
   if (keep.has(`${row.user_id}|${row.exercise_key}|${row.axis}`)) continue
   const { error } = await db.from('personal_records')
     .delete()
@@ -211,5 +241,6 @@ for (const row of existing ?? []) {
   pruned += 1
 }
 if (pruned) console.log(`${pruned} superseded ledger rows pruned`)
+if (asserted) console.log(`${asserted} asserted rows kept (session_id null — see sync-pr-truth.mjs)`)
 
 console.log('Done.')

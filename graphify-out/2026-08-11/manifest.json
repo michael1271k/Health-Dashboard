@@ -1050,8 +1050,8 @@
     "semantic_hash": ""
   },
   "src/lib/sessions/save.ts": {
-    "mtime": 1786456491.0593817,
-    "ast_hash": "246ccd7813af44ffbeacec95c355e079",
+    "mtime": 1786457392.3441799,
+    "ast_hash": "cda9353fd58d55b4e57f1b1edd9fc229",
     "semantic_hash": ""
   },
   "src/lib/sessions/schema.ts": {
@@ -1430,8 +1430,8 @@
     "semantic_hash": ""
   },
   "scripts/backfill-prs.mjs": {
-    "mtime": 1786217195.562125,
-    "ast_hash": "136f3a776077386d6a01ae04386d5cac",
+    "mtime": 1786457392.351961,
+    "ast_hash": "f6bea129b2911b663425fcca699811df",
     "semantic_hash": ""
   },
   "scripts/fix-nutrition-day.mjs": {
@@ -1465,8 +1465,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useExerciseBaselines.ts": {
-    "mtime": 1786456541.709596,
-    "ast_hash": "59a811828c2ddebb71785c76caaef31c",
+    "mtime": 1786457392.3482373,
+    "ast_hash": "21206908af157076e5c3539d3a9524fc",
     "semantic_hash": ""
   },
   "src/lib/hooks/useSentinelExport.ts": {
@@ -1495,8 +1495,8 @@
     "semantic_hash": ""
   },
   "src/lib/training/prEngine.ts": {
-    "mtime": 1786456390.4044178,
-    "ast_hash": "c160272b5299b79515518618ab176ea6",
+    "mtime": 1786458766.386934,
+    "ast_hash": "25c3241317a6e3be89a863fbb0e46989",
     "semantic_hash": ""
   },
   "src/tests/cardio-metrics.test.ts": {
@@ -2010,8 +2010,18 @@
     "semantic_hash": ""
   },
   "src/lib/training/prTruth.ts": {
-    "mtime": 1786456058.8750935,
-    "ast_hash": "413e4c851b413ad8e75fb3cda584b8c2",
+    "mtime": 1786458725.906025,
+    "ast_hash": "9c2a27ce0a1b0ab1e74bc6a5f4948dde",
+    "semantic_hash": ""
+  },
+  "src/tests/pr-truth.test.ts": {
+    "mtime": 1786457551.529883,
+    "ast_hash": "3c4b1e58986e39837d1085439dd6cfb7",
+    "semantic_hash": ""
+  },
+  "scripts/sync-pr-truth.mjs": {
+    "mtime": 1786457620.7564836,
+    "ast_hash": "c0d77d0f2b1795fe711238cc0222001a",
     "semantic_hash": ""
   }
 }

@@ -21,7 +21,7 @@
  */
 import { epley1RM } from '@/lib/utils/epley'
 import { seededAxesFor, isAssertedSession } from './prSeed'
-import type { TruthRecord } from './prTruth'
+import type { PrFloor } from './prTruth'
 
 /**
  * `sessionVolume` is the one SESSION-level axis: the exercise's whole tonnage
@@ -155,12 +155,16 @@ export const EMPTY_BASELINES: PrBaselines = {
 /**
  * Fold historical rows into per-axis bests. `isTimed` decides which axes apply.
  *
- * `floorFor` supplies the ASSERTED all-time record for a key, which is folded in
- * as just another contender — `bump` is a max, so the bar ends up at
+ * `floorFor` supplies a bar the logged rows cannot account for, folded in as
+ * just another contender — `bump` is a max, so a key ends at
  * `max(logged, asserted)`. It exists because `workout_sets` is not a complete
  * history: four months of sessions carry no sets at all, so without a floor the
  * engine treats "the heaviest thing Helix has seen" as "the heaviest thing ever
- * lifted" and flags a return to an old load as a new record. See `prTruth.ts`.
+ * lifted" and flags a return to an old load as a new record.
+ *
+ * It must be handed `prFloorFor`, NOT the raw record book — the book is dated
+ * after the sets Helix does have, so feeding it directly erases the very
+ * sessions that set the records in it. `prTruth.ts` explains at length.
  *
  * It is a RESOLVER rather than a name lookup because the key is not the same
  * thing on both sides of the app: `save.ts` keys baselines by `exercise_id`
@@ -170,7 +174,7 @@ export const EMPTY_BASELINES: PrBaselines = {
 export function buildBaselines(
   rows: readonly BaselineSetRow[],
   isTimed: (key: string) => boolean,
-  floorFor?: (key: string) => TruthRecord | undefined,
+  floorFor?: (key: string) => PrFloor | undefined,
 ): PrBaselines {
   const bestWeight = new Map<string, number>()
   const bestRepsAtWeight = new Map<string, number>()
@@ -226,10 +230,11 @@ export function buildBaselines(
   for (const { key, total } of perSession.values()) bump(bestSessionVolume, key, total)
 
   // The asserted floor, folded in last. `bump` is a max, so a key ends at
-  // max(logged, asserted) and neither source can lower the other. This is what
-  // stops a return to a pre-July load reading as a new record — and it also
-  // quietly settles the unilateral session-volume disagreement, where Hevy
-  // counts one side and Helix sums both (see prTruth.ts).
+  // max(logged, asserted) and neither source can lower the other.
+  //
+  // Only keys already present are visited, which is sufficient: a first-ever
+  // set is never a PR (detection needs an EXISTING bar), so by the time a key
+  // could win anything it is in `rows` and the floor applies.
   if (floorFor) {
     for (const key of new Set([
       ...bestWeight.keys(), ...bestSeconds.keys(), ...bestSetVolume.keys(),
@@ -239,7 +244,7 @@ export function buildBaselines(
       if (!t) continue
       if (t.weight != null) bump(bestWeight, key, t.weight)
       if (t.e1rm != null) bump(bestE1rm, key, t.e1rm)
-      if (t.setVolume != null) bump(bestSetVolume, key, t.setVolume.kg * t.setVolume.reps)
+      if (t.volume != null) bump(bestSetVolume, key, t.volume)
       if (t.sessionVolume != null) bump(bestSessionVolume, key, t.sessionVolume)
       if (t.seconds != null) bump(bestSeconds, key, t.seconds)
       // Unloaded rep records are per-LOAD, and the only load they have is zero.
@@ -512,14 +517,25 @@ export interface SessionPrResult {
 function sessionVolumes(
   sets: readonly PrCandidateSet[],
   credits: ReadonlyArray<number | null>,
-): Map<string, { total: number; lastIndex: number }> {
-  const out = new Map<string, { total: number; lastIndex: number }>()
+): Map<string, { total: number; bestIndex: number }> {
+  const out = new Map<string, { total: number; bestIndex: number; bestVol: number }>()
   sets.forEach((s, i) => {
     if (isPrIneligible(s.setType) || s.timed) return
     const vol = credits[i]
     if (vol == null) return
     const held = out.get(s.key)
-    out.set(s.key, { total: (held?.total ?? 0) + vol, lastIndex: i })
+    // The BIGGEST contributing set, not the last. Pinning a session-level axis
+    // to whichever set happened to come last is the second failure mode that
+    // killed the old session-total volume axis (see the note above
+    // `detectSetPrs`): Hack Squat's badge landed on 55 kg × 11 while 55 kg × 12
+    // sat directly above it, unmarked. `>=` so a later equal set wins, matching
+    // `recordSets` — loads ascend, so the last claimant is the top set.
+    const better = held == null || vol >= held.bestVol
+    out.set(s.key, {
+      total: (held?.total ?? 0) + vol,
+      bestIndex: better ? i : held.bestIndex,
+      bestVol: better ? vol : held.bestVol,
+    })
   })
   return out
 }
@@ -570,11 +586,11 @@ export function detectSessionPrs(sets: readonly PrCandidateSet[], baselines: PrB
   // there, the record book decides what counted, not the arithmetic.
   const volumes = sessionVolumes(sets, credits)
   const sessionVolumeByKey = new Map<string, number>()
-  for (const [key, { total, lastIndex }] of volumes) {
+  for (const [key, { total, bestIndex }] of volumes) {
     sessionVolumeByKey.set(key, total)
     if (seeded) continue
     const best = idx.bestSessionVolume.get(key)
-    if (best != null && total > best) perSet[lastIndex].axes.push('sessionVolume')
+    if (best != null && total > best) perSet[bestIndex].axes.push('sessionVolume')
     idx.bestSessionVolume.set(key, Math.max(best ?? 0, total))
   }
 

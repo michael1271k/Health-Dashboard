@@ -336,7 +336,10 @@ function dedupePrs(rows: Array<{ name: string; weightKg: number; reps: number }>
  * design rule. De-duplicated because a unilateral movement writes one ledger row
  * per side and both name the same axis.
  */
-const AXIS_ORDER: PrAxis[] = ['weight', 'reps', 'volume', 'e1rm']
+// Every axis must be listed. `filter` DROPS anything missing here, so an
+// unlisted axis renders a PR line with no reason beside a pr_count that still
+// includes it — the export and the header disagreeing about the same session.
+const AXIS_ORDER: PrAxis[] = ['weight', 'reps', 'volume', 'e1rm', 'sessionVolume']
 
 function axesBySession(rows: RangeData['prAxes']) {
   const byKey = new Map<string, Set<PrAxis>>()

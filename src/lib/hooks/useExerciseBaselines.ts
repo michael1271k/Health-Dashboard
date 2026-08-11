@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { isTimedExercise } from '@/lib/exercises/timed'
 import { buildBaselines, EMPTY_BASELINES, type PrBaselines } from '@/lib/training/prEngine'
-import { truthFloor } from '@/lib/training/prTruth'
+import { prFloorFor } from '@/lib/training/prTruth'
 import { canonicalExerciseName } from '@/lib/exercises/aliases'
 
 /**
@@ -62,7 +62,7 @@ export function useExerciseBaselines(names: string[], beforeDate: string | undef
       // load that was beaten months ago. Canonicalised on lookup because the
       // record book is keyed on canonical names and `exercises.name` may be an
       // alias of one. See prTruth.ts.
-      return buildBaselines(rows, isTimedExercise, (key) => truthFloor(canonicalExerciseName(key)))
+      return buildBaselines(rows, isTimedExercise, (key) => prFloorFor(canonicalExerciseName(key)))
     },
   })
 }

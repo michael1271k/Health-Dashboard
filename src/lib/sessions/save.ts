@@ -11,7 +11,7 @@ import { countCommittedSets } from '@/lib/sessions/schema'
 import { sessionVolumeKg } from '@/lib/sessions/volume'
 import { isTimedExercise } from '@/lib/exercises/timed'
 import { buildBaselines, detectSessionPrs, recordSets, type PrAxis } from '@/lib/training/prEngine'
-import { truthFloor } from '@/lib/training/prTruth'
+import { prFloorFor } from '@/lib/training/prTruth'
 import { repWindowFor } from '@/lib/training/ceilings'
 import { normalizeCr10 } from '@/lib/training/effort'
 import { canonicalExerciseName } from '@/lib/exercises/aliases'
@@ -161,7 +161,7 @@ export async function saveSession(
     // two agree by construction. Without the floor, four months of set-less
     // Notion-era sessions would let a return to an old load read as a new
     // record — see prTruth.ts.
-    (key) => truthFloor(nameByEx.get(key)),
+    (key) => prFloorFor(nameByEx.get(key)),
   )
 
   const sessionDate = payload.startedAt.slice(0, 10)

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { PR_TRUTH, PR_TRUTH_AS_OF, truthFloor, truthAxisValue } from '@/lib/training/prTruth'
+import { PR_TRUTH, PR_TRUTH_AS_OF, PR_LOGGED, truthFloor, truthAxisValue, prFloorFor } from '@/lib/training/prTruth'
 import { canonicalExerciseName } from '@/lib/exercises/aliases'
 import { SEEDED_PRS } from '@/lib/training/prSeed'
 import {
@@ -124,11 +124,11 @@ describe('the asserted record book — shape', () => {
   })
 
   /**
-   * Hevy's 1RM is not Epley. Calf Press asserts 100.75 where epley1RM(67.5, 15)
-   * is 101.25; Face Pull asserts 24.25 against 24.38. The divergence is real and
-   * deliberately unresolved — max(logged, asserted) errs toward "not a record",
-   * which is the safe direction for a floor. What must NOT happen is the gap
-   * growing large enough that the asserted 1RM stops being a credible bar.
+   * Hevy's 1RM is not Epley — Calf Press asserts 100.75 where epley1RM(67.5, 15)
+   * is 101.3. `prFloorFor` handles the divergence; this pins that it stays SMALL.
+   * If a future edit lands a 1RM several kilos off Epley on its own stated set,
+   * one of the two numbers is wrong and the book should not be trusted until it
+   * is worked out which.
    */
   it('keeps the asserted 1RM within a kilo of Epley on the asserted best set', () => {
     for (const [name, rec] of Object.entries(PR_TRUTH)) {
@@ -161,11 +161,83 @@ describe('truthAxisValue', () => {
   })
 })
 
+/**
+ * THE MISTAKE THIS SUITE EXISTS TO PREVENT A SECOND TIME.
+ *
+ * The book is dated 2026-08-10 and therefore already contains everything set in
+ * the four weeks Helix can see. Feeding it straight to `buildBaselines` floors
+ * a record at the value that record itself established, so the session that set
+ * it stops counting. The first backfill dry run withdrew 13 flags and only ONE
+ * was the Calf Press false positive; the other twelve were Side Plank's 60 s,
+ * Hip Thrust 27.5 × 14, Reverse Crunch × 18 and nine more like them.
+ *
+ * `prFloorFor` nets the book against `PR_LOGGED` so only the genuine pre-July
+ * excess ever raises a bar.
+ */
+describe('the floor is the EXCESS over what Helix already logged', () => {
+  it('asserts nothing where the book merely equals the logged history', () => {
+    for (const [name, logged] of Object.entries(PR_LOGGED)) {
+      const f = prFloorFor(name)
+      if (!f) continue
+      if (f.weight != null) expect(f.weight, `${name} weight`).toBeGreaterThan(logged.weight ?? 0)
+      if (f.volume != null) expect(f.volume, `${name} volume`).toBeGreaterThan(logged.volume ?? 0)
+      if (f.sessionVolume != null) expect(f.sessionVolume, `${name} sessionVolume`).toBeGreaterThan(logged.sessionVolume ?? 0)
+      if (f.e1rm != null) expect(f.e1rm, `${name} e1rm`).toBeGreaterThan(logged.e1rm ?? 0)
+      if (f.reps != null) expect(f.reps, `${name} reps`).toBeGreaterThan(logged.reps ?? 0)
+      if (f.seconds != null) expect(f.seconds, `${name} seconds`).toBeGreaterThan(logged.seconds ?? 0)
+    }
+  })
+
+  it.each([
+    ['Side Plank', 'seconds'],
+    ['Reverse Crunch', 'reps'],
+    ['Hanging Knee Raise', 'reps'],
+  ] as const)('%s has no %s floor — its record was set inside the window', (name, axis) => {
+    expect(prFloorFor(name)?.[axis]).toBeUndefined()
+  })
+
+  it.each([
+    'Hip Thrust (Machine)', 'Incline DB Press', 'Chest Press (Machine)',
+    'Hack Squat', 'Crunch Machine', 'Romanian Deadlift (DB)',
+    'Neutral-Grip Lat Pulldown', 'Seated Cable Row (Wide Grip)',
+    'Preacher Curl (Machine)', 'DB Hammer Curl', 'Seated Incline DB Curl',
+    'Single Arm Cable Crossover', 'Single Arm Lateral Raise (Cable)',
+  ])('%s gets no 1RM floor from estimator noise', (name) => {
+    // Hevy's estimate runs a few hundred grams above Epley on these, which is
+    // the same size as a real e1RM advance. Trusting it suppressed six genuine
+    // records. The floor only takes Hevy's figure when the max-weight set is
+    // one Helix demonstrably never saw — i.e. when `weight` also floors.
+    const f = prFloorFor(name)
+    expect(f?.e1rm).toBeUndefined()
+  })
+
+  it.each([
+    ['Leg Press', 109.59],
+    ['Lat Pulldown', 67.81],
+    ['Leg Extension', 59.86],
+    ['Seated Leg Curl', 73.53],
+  ] as const)('%s keeps its real 1RM floor', (name, value) => {
+    // These all floor on `weight` too, so the estimate belongs to a set Helix
+    // never saw and can be trusted whole.
+    expect(prFloorFor(name)?.e1rm).toBe(value)
+  })
+
+  it.each([
+    ['Rope Triceps Pushdown', 22.5],
+    ['Seated Cable Row (V-Grip)', 62.3],
+  ] as const)('%s floors its 1RM from Epley on the asserted set', (name, value) => {
+    // Max weight is already logged here, so Hevy's number is not trusted — but
+    // the asserted best SET is one Helix never saw, and Epley on it is directly
+    // comparable to what detection produces.
+    expect(prFloorFor(name)?.e1rm).toBeCloseTo(value, 1)
+  })
+})
+
 // ── The regression this whole file exists for ────────────────────────────────
 
 const CALF = 'Calf Press'
 const isTimed = (k: string) => k === 'Side Plank'
-const floor = (k: string) => truthFloor(k)
+const floor = (k: string) => prFloorFor(k)
 
 /** Calf Press as Helix actually holds it: 24 sets, nothing above 67.5 kg. */
 const CALF_HISTORY: BaselineSetRow[] = [
@@ -266,10 +338,13 @@ describe('sessionVolume — the one session-level axis', () => {
     { key: EX, weightKg: 55, reps: 0,  sessionId: 'h1' },
   ]
 
-  it('fires when the day beats the best day, on the set that completed it', () => {
+  it('fires when the day beats the best day, on the BIGGEST set — not the last', () => {
     const baselines = buildBaselines(history, () => false)
     const r = detectSessionPrs([s(55, 12), s(55, 12), s(55, 4)], baselines)   // 1,540
-    expect(r.perSet[2].axes).toContain('sessionVolume')
+    // The 55 × 4 finisher completed the total but did the least work. Hanging a
+    // trophy on it is the mistake that helped kill the old session-total axis.
+    expect(r.perSet[2].axes).not.toContain('sessionVolume')
+    expect(r.perSet[1].axes).toContain('sessionVolume')   // ties keep the later top set
     expect(r.perSet[0].axes).not.toContain('sessionVolume')
     expect(r.sessionVolumeByKey.get(EX)).toBe(1540)
   })
@@ -280,12 +355,20 @@ describe('sessionVolume — the one session-level axis', () => {
     for (const d of r.perSet) expect(d.axes).not.toContain('sessionVolume')
   })
 
-  it('is floored by the asserted best session, not just the logged one', () => {
-    const thin: BaselineSetRow[] = [{ key: EX, weightKg: 55, reps: 10, sessionId: 'h1' }]  // 550
-    const baselines = buildBaselines(thin, () => false, floor)
-    // 1,100 would smash the 550 Helix has seen, but PR_TRUTH asserts 1,320.
-    const r = detectSessionPrs([s(55, 10), s(55, 10)], baselines)
-    for (const d of r.perSet) expect(d.axes).not.toContain('sessionVolume')
+  /**
+   * The book's session totals count WARM-UPS IN; the axis counts them out. They
+   * are two different measurements of the same day, so no floor can be derived
+   * between them. Proven on Leg Press, the only exercise with warm-up rows
+   * logged: the asserted 3,655 is exactly 2026-08-03's
+   * `900 (warm-up) + 942.5 + 870 + 942.5`, and the working total that day was
+   * 2,755. Flooring at 3,655 put the axis 33% out of reach — on a session Helix
+   * holds complete sets for, so not pre-July history at all.
+   */
+  it('is NOT floored from the book — the two count warm-ups differently', () => {
+    for (const name of Object.keys(PR_TRUTH)) {
+      expect(prFloorFor(name)?.sessionVolume, name).toBeUndefined()
+    }
+    expect(PR_TRUTH['Leg Press'].sessionVolume).toBe(3655)   // kept as reference
   })
 
   it('excludes warm-ups and drop sets from the total, as every other axis does', () => {
