@@ -42,7 +42,17 @@ export interface ScoringInputs {
    * leg day as a win, no matter how either was actually executed.
    */
   trailingAvgVolumeKg: number
-  splitDay?: 'push' | 'pull' | 'legs' | 'upper' | 'lower'  // hardest split drives battery drain
+  /**
+   * CR-10 the session was logged with (`workout_sessions.session_rpe`), from the
+   * hardest session of the day. Scales the battery's workout drain — it is the
+   * only subjective signal the app collects about how a session actually went,
+   * and until v7 it was written every day and read by nothing.
+   *
+   * Absent on the 74 Notion-era sessions, which is not the same as zero: the
+   * battery falls back to `BATTERY.defaultRpe`, not to "it never happened".
+   */
+  sessionRpe?: number | null
+  splitDay?: 'push' | 'pull' | 'legs' | 'upper' | 'lower'  // workout score; NOT battery drain since v7
   /** Exercises the program prescribes for the day (0/undefined = unknown). */
   plannedExercises?: number
   /** Distinct exercises actually logged. */

@@ -8,36 +8,73 @@ export interface BatteryState {
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v))
 
 /**
- * Phone-like battery — a strict DRAIN-ONLY model (v6). Calibration intent:
- *   - Wake high (≈90–100% after good sleep, never below 55%).
- *   - Only ever depletes through the day: chronological time + activity + the
- *     workout. There is NO recharge term, so eating breakfast can never make the
- *     battery "jump" (the old protein/water recharge bug).
- *   - The workout drain is HARDNESS-aware: heavy sessions (legs, high volume)
- *     drain far more than easy ones (arms, low volume). Base drains are lighter
- *     than v5 so the workout is the differentiator instead of flooring every day.
+ * Phone-like battery — drain-only (v7).
+ *
+ * ── WHY v6 WAS REPLACED ──────────────────────────────────────────────────────
+ * v6 could not describe a training day. On 2026-08-10 (`legs_a`, 13,072.5 kg) it
+ * read 16% at 16:58 and finished at the floor, on a day that scored 98 overall
+ * with a 100 sleep score. That was not a mistuned constant, it was arithmetic:
+ *
+ *     max charge                                        = 100
+ *     max time drain      2.2 × 18                      =  39.6
+ *     max activity drain                                =  14
+ *     leg-day workout     (5 + 0.0022 × 13072) × 1.5    =  50.6
+ *                                                         ─────
+ *                                                         104.2
+ *
+ * The drain budget exceeded the charge budget, so a leg day hit the floor before
+ * bedtime NO MATTER HOW WELL YOU SLEPT. The one reading that should be most
+ * informative — how much is left after real training — was the one reading with
+ * no dynamic range at all.
+ *
+ * Four further faults, all fixed here:
+ *
+ *   1. SPLIT_DRAIN charged the same fact twice. Legs already carry ~4× the
+ *      tonnage of an arms day (legs_a 12.8 t vs arms 3.4 t), so multiplying the
+ *      tonnage term by another 1.5 for being legs double-counted. DELETED.
+ *   2. `session_rpe` is collected on every session and was never read. Aug 10
+ *      was logged RPE 7 — a moderate day — and drained like a maximal one.
+ *   3. Absolute tonnage is the wrong load proxy. 13,072 kg sounds enormous and
+ *      is in fact a 1.03× TYPICAL leg day against its own 12,712 kg trailing
+ *      average. What costs you is a session that is hard FOR YOU, not one that
+ *      moves a lot of iron because the machine is loaded heavy.
+ *   4. Time drain was linear, so hour 1 cost what hour 15 cost.
+ *
+ * ── THE MODEL ────────────────────────────────────────────────────────────────
+ *   - Wake high (≈90–100 after good sleep, never below 55).
+ *   - Only ever depletes: chronological time + activity + the workout. There is
+ *     still NO recharge term, so eating breakfast can never make the battery
+ *     jump (the old protein/water bug stays fixed).
+ *   - The workout term is RELATIVE and RPE-aware, so a normal session for you
+ *     reads as normal whatever its absolute tonnage.
+ *   - The drain budget is CAPPED BELOW THE CHARGE BUDGET. That invariant is
+ *     asserted in the test suite, because it is the exact rule v6 broke.
+ *
+ * ── KNOWN LIMIT ──────────────────────────────────────────────────────────────
+ * Helix is not open during the workout (D8) — Hevy tracks live and the session
+ * is transcribed afterwards. So the workout drain appears the moment you paste,
+ * not the moment you trained. That is inherent to post-hoc logging and is not
+ * modelled around: the day's end state is right, the intraday path is not.
  */
 export const BATTERY = {
   floor: 5,
   wakeMin: 55,         // worst-sleep wake charge
   wakeRange: 45,       // + up to 45 for perfect sleep → 100
-  drainPerHour: 2.2,   // chronological drain (1h→2.2, 16h→35.2) — lighter than v5
-  activityCap: 14,
-  // Workout drain = (flat + perKg·volume) · splitFactor. A heavy ~9,000kg leg day
-  // → (5 + 19.8)·1.5 ≈ 37; a light ~3,500kg arm day → (5 + 7.7)·1.0 ≈ 13.
-  workoutFlat: 5,
-  workoutPerKg: 0.0022,
+  timeMax: 35,         // full chronological cost of an 18h day, cosine-distributed
+  activityCap: 12,
+  workoutMax: 30,      // an RPE-10 session at 1.4× your own normal
+  defaultRpe: 0.7,     // when session_rpe is absent (74 legacy sessions carry none)
+  relMin: 0.6,         // a session at ≤60% of normal still costs something
+  relMax: 1.4,         // beyond 140% of normal, more tonnage stops adding drain
   maxAwake: 18,
 } as const
 
 /**
- * Split-hardness multiplier on the workout drain. Legs/lower are the most
- * systemically taxing; upper a touch more than a single push/pull. Unknown or
- * accessory splits fall back to 1.0 (the volume term still differentiates them).
+ * Sum of every drain term at maximum. Held strictly below 100 so that a
+ * well-slept day can never floor, and a floor reading therefore MEANS something.
+ * v6's equivalent figure was 104.2 — see the note above.
  */
-export const SPLIT_DRAIN: Record<NonNullable<ScoringInputs['splitDay']>, number> = {
-  legs: 1.5, lower: 1.4, upper: 1.1, push: 1.0, pull: 1.0,
-}
+export const MAX_TOTAL_DRAIN = BATTERY.timeMax + BATTERY.activityCap + BATTERY.workoutMax
 
 /** Wake charge from sleep quality (0..1): 55 + 45·q, rounded. */
 export function computeMorningCharge(sleepQuality: number): number {
@@ -60,23 +97,59 @@ export function computeSleepQuality(inputs: ScoringInputs): number {
 }
 
 /**
+ * Chronological drain, as a raised cosine over the waking day rather than a line.
+ *
+ * A linear 2.2/hour charged the first hour of the morning exactly what it
+ * charged the fifteenth, which is not how a day feels. This costs little before
+ * hour 6, most between 8 and 14, and flattens out late — you are already tired
+ * by then and the last hour of a long evening does not halve you again.
+ *
+ * `awake = 0 → 0` · `awake = maxAwake → timeMax`. Monotonic throughout.
+ */
+export function timeDrain(hoursAwake: number): number {
+  const awake = clamp(hoursAwake, 0, BATTERY.maxAwake)
+  return BATTERY.timeMax * (1 - Math.cos(Math.PI * awake / BATTERY.maxAwake)) / 2
+}
+
+/**
+ * Workout drain — RELATIVE to your own normal for this session type, scaled by
+ * how hard you said it was.
+ *
+ * `trailingAvgVolumeKg` is already computed per exact `day_key` (compute-score
+ * scopes it to the same programme day, 6 sessions back), so "relative" compares
+ * a legs_a against other legs_a days and never against an arms day. With no
+ * history to compare to, a session is assumed typical rather than assumed huge.
+ *
+ * `sessionRpe` is the CR-10 the session was logged with. Absent, it defaults to
+ * 0.7 — a normal hard-ish session — rather than to 0, because a session you
+ * forgot to rate still happened.
+ */
+export function workoutDrain(
+  sessionVolumeKg: number,
+  trailingAvgVolumeKg: number,
+  sessionRpe?: number | null,
+): number {
+  if (!(sessionVolumeKg > 0)) return 0
+  const relative = trailingAvgVolumeKg > 0 ? sessionVolumeKg / trailingAvgVolumeKg : 1
+  const intensity = sessionRpe != null && sessionRpe > 0 ? clamp(sessionRpe / 10, 0, 1) : BATTERY.defaultRpe
+  return BATTERY.workoutMax * intensity * clamp(relative, BATTERY.relMin, BATTERY.relMax) / BATTERY.relMax
+}
+
+/**
  * Current battery % — strict drain-only.
  *   currentPct = clamp(wakeCharge − timeDrain − activityDrain − workoutDrain, floor, 100)
- *   timeDrain     = drainPerHour × hoursAwake
+ *   timeDrain     = timeMax × (1 − cos(π · awake/maxAwake)) / 2
  *   activityDrain = min(cap, 0.004×activeCal + 0.5×(steps/1000))
- *   workoutDrain  = sessionVolumeKg>0 ? (flat + perKg×volume) × splitFactor : 0
+ *   workoutDrain  = workoutMax × (rpe/10) × clamp(vol/trailingAvg, 0.6, 1.4) / 1.4
  */
 export function computeBattery(inputs: ScoringInputs, hoursAwake?: number): BatteryState {
   const wakeCharge = computeMorningCharge(computeSleepQuality(inputs))
 
   const awake = clamp(hoursAwake ?? inputs.hoursAwake ?? 8, 0, BATTERY.maxAwake)
-  const timeDrain = BATTERY.drainPerHour * awake
-  const activityDrain = Math.min(BATTERY.activityCap, 0.004 * inputs.activeCal + 0.5 * (inputs.steps / 1000))
-  const splitFactor = inputs.splitDay ? SPLIT_DRAIN[inputs.splitDay] : 1.0
-  const workoutDrain = inputs.sessionVolumeKg > 0
-    ? (BATTERY.workoutFlat + BATTERY.workoutPerKg * inputs.sessionVolumeKg) * splitFactor
-    : 0
+  const time = timeDrain(awake)
+  const activity = Math.min(BATTERY.activityCap, 0.004 * inputs.activeCal + 0.5 * (inputs.steps / 1000))
+  const workout = workoutDrain(inputs.sessionVolumeKg, inputs.trailingAvgVolumeKg, inputs.sessionRpe)
 
-  const currentPct = clamp(wakeCharge - timeDrain - activityDrain - workoutDrain, BATTERY.floor, 100)
+  const currentPct = clamp(wakeCharge - time - activity - workout, BATTERY.floor, 100)
   return { morningCharge: wakeCharge, currentPct: Math.round(currentPct) }
 }

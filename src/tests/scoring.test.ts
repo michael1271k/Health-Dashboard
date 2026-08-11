@@ -10,7 +10,7 @@ import {
   computeAlerts,
 } from '@/lib/scoring/score'
 import { computeHydrationScore } from '@/lib/scoring/score'
-import { computeMorningCharge, computeBattery, computeSleepQuality, BATTERY } from '@/lib/scoring/battery'
+import { computeMorningCharge, computeBattery, computeSleepQuality, timeDrain, BATTERY, MAX_TOTAL_DRAIN } from '@/lib/scoring/battery'
 import { computeReadiness } from '@/lib/scoring/readiness'
 import type { ScoringInputs } from '@/lib/scoring/types'
 
@@ -527,14 +527,22 @@ describe('computeAlerts', () => {
   })
 })
 
-describe('computeBattery — drain-only (v6)', () => {
-  it('a heavy leg day drains MUCH more than a light arm day', () => {
+describe('computeBattery — drain-only (v7)', () => {
+  /**
+   * v6 read this as legs-versus-arms. v7 reads it as 2.6× normal versus exactly
+   * normal, which is the same day described honestly: `base` carries a 3,500 kg
+   * trailing average, so a 9,000 kg session is a genuine outlier for this athlete
+   * and a 3,500 kg one is a Tuesday. The spread is smaller than v6's because
+   * v6's spread was inflated by the SPLIT_DRAIN double-count, and because the
+   * 1.4× relative clamp is what keeps the total drain budget under a full charge.
+   */
+  it('a session far above your own normal drains more than a typical one', () => {
     const base = { ...PERFECT, proteinG: 0, waterMl: 0 }  // recharge no longer exists
-    const legDay = computeBattery({ ...base, splitDay: 'legs', sessionVolumeKg: 9000 }, 12).currentPct
-    const armDay = computeBattery({ ...base, splitDay: 'pull', sessionVolumeKg: 3500 }, 12).currentPct
-    expect(legDay).toBeLessThan(armDay - 12)   // a clear, sensible spread
-    expect(legDay).toBeGreaterThan(BATTERY.floor)  // hard day, but not pinned at floor
-    expect(armDay).toBeGreaterThan(30)             // easy day stays comfortably up
+    const bigDay = computeBattery({ ...base, splitDay: 'legs', sessionVolumeKg: 9000 }, 12).currentPct
+    const normalDay = computeBattery({ ...base, splitDay: 'pull', sessionVolumeKg: 3500 }, 12).currentPct
+    expect(bigDay).toBeLessThan(normalDay - 4)
+    expect(bigDay).toBeGreaterThan(BATTERY.floor)  // hard day, but not pinned at floor
+    expect(normalDay).toBeGreaterThan(30)          // easy day stays comfortably up
   })
 
   it('eating does not raise the battery (no recharge term)', () => {
@@ -546,9 +554,112 @@ describe('computeBattery — drain-only (v6)', () => {
 
 // ─── Battery constants ────────────────────────────────────────────────────────
 describe('BATTERY constants', () => {
-  it('exposes a sane floor + chronological drain rate', () => {
+  it('exposes a sane floor + waking window', () => {
     expect(BATTERY.floor).toBe(5)
-    expect(BATTERY.drainPerHour).toBe(2.2)
     expect(BATTERY.maxAwake).toBe(18)
+  })
+
+  /**
+   * THE INVARIANT v6 BROKE, and the reason v7 exists.
+   *
+   * v6's terms summed to 39.6 + 14 + 50.6 = 104.2 against a 100-point charge, so
+   * a leg day floored before bedtime however well you had slept. Every drain
+   * term together must stay strictly under a full charge, or the number stops
+   * carrying information on exactly the days it matters most.
+   */
+  it('the total drain budget stays below a full charge', () => {
+    expect(MAX_TOTAL_DRAIN).toBe(BATTERY.timeMax + BATTERY.activityCap + BATTERY.workoutMax)
+    expect(MAX_TOTAL_DRAIN).toBeLessThanOrEqual(85)
+  })
+
+  it('a perfect-sleep day can never reach the floor, whatever it contains', () => {
+    const worst = computeBattery({
+      ...PERFECT,
+      steps: 40000, activeCal: 3000,          // activity pinned to its cap
+      sessionVolumeKg: 30000, trailingAvgVolumeKg: 1000,  // 30× normal, clamped to 1.4
+      sessionRpe: 10,
+    }, 18)
+    expect(worst.currentPct).toBeGreaterThan(BATTERY.floor)
+    expect(worst.currentPct).toBeGreaterThanOrEqual(100 - MAX_TOTAL_DRAIN)
+  })
+})
+
+// ─── Battery v7 — the 2026-08-10 regression ───────────────────────────────────
+/**
+ * REAL DATA. `legs_a`, 13,072.5 kg, session_rpe 7, 476 min sleep, 9,693 steps,
+ * 878 active kcal, against a 12,712.5 kg trailing average for the same day_key.
+ *
+ * v6 read 16% at 16:58 and finished at the floor (5), stored, on a day that
+ * scored 98 overall. The whole point of v7 is that this day is unremarkable:
+ * 13,072 / 12,712 = 1.03, i.e. a bang-average leg day.
+ */
+const AUG_10: ScoringInputs = {
+  ...PERFECT,
+  sleepHours: 476 / 60, deepMinutes: 100, remMinutes: 100, sleepGoalHours: 8,
+  steps: 9693, activeCal: 878,
+  sessionVolumeKg: 13072.5, trailingAvgVolumeKg: 12712.5, sessionRpe: 7,
+  splitDay: 'legs',
+}
+
+describe('computeBattery v7 — 2026-08-10 legs_a', () => {
+  it('reads as most of a battery in the late afternoon, not almost none', () => {
+    const pct = computeBattery(AUG_10, 10).currentPct   // ~16:58 on a 07:00 wake
+    expect(pct).toBeGreaterThanOrEqual(45)
+    expect(pct).toBeLessThanOrEqual(60)
+  })
+
+  it('ends the day tired but not empty', () => {
+    const pct = computeBattery(AUG_10, 18).currentPct
+    expect(pct).toBeGreaterThanOrEqual(25)
+    expect(pct).toBeLessThanOrEqual(45)
+  })
+
+  it('a typical leg day and a typical arms day cost the same — splitDay is not a drain', () => {
+    const legs = computeBattery({ ...AUG_10, splitDay: 'legs', sessionVolumeKg: 13072.5, trailingAvgVolumeKg: 12712.5 }, 12)
+    const arms = computeBattery({ ...AUG_10, splitDay: 'push', sessionVolumeKg: 3414, trailingAvgVolumeKg: 3414 }, 12)
+    // Both are 1.0× their own normal at the same RPE. v6 charged legs 1.5× for
+    // being legs, on top of tonnage that is already ~4× — the same fact twice.
+    expect(Math.abs(legs.currentPct - arms.currentPct)).toBeLessThanOrEqual(1)
+  })
+
+  it('an unusually big session for you still costs more than a typical one', () => {
+    const typical = computeBattery({ ...AUG_10, sessionVolumeKg: 12712.5 }, 12).currentPct
+    const huge    = computeBattery({ ...AUG_10, sessionVolumeKg: 17000 }, 12).currentPct
+    expect(huge).toBeLessThan(typical)
+  })
+
+  it('reads the logged RPE — an easy session drains less than a maximal one', () => {
+    const easy = computeBattery({ ...AUG_10, sessionRpe: 4 }, 12).currentPct
+    const max  = computeBattery({ ...AUG_10, sessionRpe: 10 }, 12).currentPct
+    expect(easy).toBeGreaterThan(max)
+  })
+
+  it('a session with no RPE is treated as normal-hard, not as no session', () => {
+    const unrated = computeBattery({ ...AUG_10, sessionRpe: null }, 12).currentPct
+    const rest    = computeBattery({ ...AUG_10, sessionVolumeKg: 0 }, 12).currentPct
+    expect(unrated).toBeLessThan(rest)
+    expect(unrated).toBe(computeBattery({ ...AUG_10, sessionRpe: 7 }, 12).currentPct)
+  })
+
+  it('with no trailing baseline a session is assumed typical, not assumed huge', () => {
+    const noHistory = computeBattery({ ...AUG_10, trailingAvgVolumeKg: 0 }, 12).currentPct
+    const typical   = computeBattery({ ...AUG_10, sessionVolumeKg: 12712.5 }, 12).currentPct
+    expect(Math.abs(noHistory - typical)).toBeLessThanOrEqual(1)
+  })
+})
+
+describe('timeDrain — raised cosine over the waking day', () => {
+  it('costs nothing at wake and the full budget at the end', () => {
+    expect(timeDrain(0)).toBe(0)
+    expect(timeDrain(18)).toBeCloseTo(BATTERY.timeMax, 6)
+    expect(timeDrain(30)).toBeCloseTo(BATTERY.timeMax, 6)   // clamped
+  })
+
+  it('is monotonic, and the early morning is cheap', () => {
+    const hours = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18]
+    const drains = hours.map(timeDrain)
+    for (let i = 1; i < drains.length; i++) expect(drains[i]).toBeGreaterThan(drains[i - 1])
+    // The first two hours cost under a tenth of what the middle four do.
+    expect(timeDrain(2)).toBeLessThan((timeDrain(12) - timeDrain(8)) / 5)
   })
 })

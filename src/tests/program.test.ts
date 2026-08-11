@@ -135,14 +135,23 @@ describe('v6 battery lift drain (drain-only)', () => {
     expect(drain).toBeGreaterThanOrEqual(12)
     expect(drain).toBeLessThanOrEqual(16)
   })
-  it('a heavy leg day drains far more than the same-volume default split', () => {
+  /**
+   * v6 asserted the opposite of this: `legs` drained 1.5× a same-volume generic
+   * split. That multiplier was the bug — legs already carry ~4× the tonnage of
+   * an arms day, so multiplying the tonnage term for being legs charged the same
+   * fact twice, and it is why a leg day floored the battery by bedtime. What a
+   * session costs is how hard it was FOR YOU, which is volume relative to your
+   * own normal for that day type, not which muscles it used.
+   */
+  it('splitDay no longer drains — the same volume costs the same whatever it trained', () => {
     const legs    = computeBattery({ ...base, sessionVolumeKg: 8000, splitDay: 'legs' }, 10).currentPct
     const generic = computeBattery({ ...base, sessionVolumeKg: 8000 }, 10).currentPct
-    expect(legs).toBeLessThan(generic)
+    expect(legs).toBe(generic)
   })
-  it('constants reflect the v6 calibration', () => {
-    expect(BATTERY.workoutFlat).toBe(5)
-    expect(BATTERY.workoutPerKg).toBe(0.0022)
+  it('constants reflect the v7 calibration', () => {
+    expect(BATTERY.workoutMax).toBe(30)
+    expect(BATTERY.defaultRpe).toBe(0.7)
+    expect(BATTERY.timeMax).toBe(35)
   })
 })
 

@@ -55,7 +55,7 @@ async function computeForDate(supabase: DB, userId: string, date: string, hoursA
     // empty/legacy) — count only the ones actually ticked off.
     supabase.from('supplement_log').select('item_key').eq('user_id', userId).eq('date', date).eq('taken', true),
     supabase.from('user_goals').select('*').eq('user_id', userId).maybeSingle(),
-    supabase.from('workout_sessions').select('id, total_volume_kg, split_day, day_key, set_count').eq('user_id', userId)
+    supabase.from('workout_sessions').select('id, total_volume_kg, split_day, day_key, set_count, session_rpe').eq('user_id', userId)
       .gte('started_at', `${date}T00:00:00Z`).lt('started_at', `${end}T00:00:00Z`),
   ])
 
@@ -67,7 +67,7 @@ async function computeForDate(supabase: DB, userId: string, date: string, hoursA
   const goals = goalsRes.data as Tables<'user_goals'> | null
   const daySessions = sessionsRes.data as Array<{
     id: string; total_volume_kg: number | null; split_day: ScoringInputs['splitDay']
-    day_key: string | null; set_count: number | null
+    day_key: string | null; set_count: number | null; session_rpe: number | null
   }> | null
 
   // Trailing volume baseline, scoped to the SAME SESSION TYPE.
@@ -178,10 +178,13 @@ async function computeForDate(supabase: DB, userId: string, date: string, hoursA
 
   const totalWaterMl = (water ?? []).reduce((s, r) => s + r.amount_ml, 0)
   const sessionVolumeKg = (daySessions ?? []).reduce((s, r) => s + (r.total_volume_kg ?? 0), 0)
-  // Battery hardness keys off the heaviest session of the day (legs ≫ arms).
-  const hardestSplit = (daySessions ?? [])
+  // The heaviest session of the day carries the day's character. Its split feeds
+  // the workout score; its RPE feeds the battery (v7) — on a double-session day
+  // the second, lighter session's effort rating should not describe the day.
+  const hardestSession = (daySessions ?? [])
     .slice()
-    .sort((a, b) => (b.total_volume_kg ?? 0) - (a.total_volume_kg ?? 0))[0]?.split_day ?? undefined
+    .sort((a, b) => (b.total_volume_kg ?? 0) - (a.total_volume_kg ?? 0))[0]
+  const hardestSplit = hardestSession?.split_day ?? undefined
 
   const inputs: ScoringInputs = {
     sleepHours: sleep ? sleep.duration_min / 60 : 0,
@@ -210,6 +213,7 @@ async function computeForDate(supabase: DB, userId: string, date: string, hoursA
     sessionVolumeKg,
     splitDay: hardestSplit,
     trailingAvgVolumeKg: trailingAvg,
+    sessionRpe: hardestSession?.session_rpe ?? null,
     plannedExercises: prescribed?.exercises,
     plannedSets: prescribed?.sets,
     loggedExercises,
