@@ -51,10 +51,14 @@ export function computeSleepScore(inputs: Pick<ScoringInputs,
  * Protein adherence weighted double.
  * Calories: over-eating penalized harder than under-eating on a cut.
  * Carbs + fat: single weight.
+ *
+ * On a DECLARED EXCEPTION DAY, protein is the only thing graded — see the
+ * branch below and `lib/nutrition/exceptionDay.ts` for why.
  */
 export function computeNutritionScore(inputs: Pick<ScoringInputs,
   'calories' | 'proteinG' | 'carbsG' | 'fatG' |
-  'calorieGoal' | 'proteinGoalG' | 'carbsGoalG' | 'fatGoalG' | 'contextMode'>
+  'calorieGoal' | 'proteinGoalG' | 'carbsGoalG' | 'fatGoalG' | 'contextMode' |
+  'nutritionException'>
 ): number | null {
   if (inputs.calories <= 0) return null   // nothing logged → unknown
   const pMult = penaltyMult(inputs.contextMode)
@@ -63,6 +67,26 @@ export function computeNutritionScore(inputs: Pick<ScoringInputs,
     const err = (actual - goal) / goal
     if (asymmetric && err > 0) return err * 1.5 * 100  // over-eating on a cut: harsher
     return Math.abs(err) * 100
+  }
+
+  // ── Declared exception: grade protein, and only protein ────────────────────
+  // Calories, carbs and fat are what a night out moves, and the day was flagged
+  // precisely to say that moving them was the plan. Protein is not forgiven:
+  // it is the intake that defends lean mass in a deficit, it is achievable at
+  // any calorie level, and dropping it too would leave nothing to grade — a
+  // silent 100 for every flagged day, which is an excuse rather than a score.
+  //
+  // Protein's double weight collapses to identity as the only term, so it is
+  // counted once here rather than duplicated to no effect.
+  //
+  // Nothing else in the app is forgiven. Intake still reaches the weekly
+  // average, the deficit and the weight trend at full value.
+  if (inputs.nutritionException) {
+    // No protein target (Bulk/Maintenance leave macros null) → nothing this day
+    // can be graded on, so it is unknown rather than perfect. The composite
+    // drops null components and renormalizes.
+    if (!(inputs.proteinGoalG > 0)) return null
+    return clamp(100 - pctError(inputs.proteinG, inputs.proteinGoalG) * pMult)
   }
 
   // Only grade macros that have a target (>0). Bulk/Maintenance leave macros

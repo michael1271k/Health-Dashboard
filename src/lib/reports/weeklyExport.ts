@@ -36,6 +36,7 @@ import { isTimedExercise } from '@/lib/exercises/timed'
 import { formatSet, isUnloadedSet } from '@/lib/utils/setFormat'
 import { prAxisLabel, type PrAxis } from '@/lib/training/prEngine'
 import { weighInSkipReason } from '@/lib/body/weighIn'
+import { exceptionTag } from '@/lib/nutrition/exceptionDay'
 import { TEF_FACTOR, tefKcal, tdeeBreakdown } from '@/lib/nutrition/energy'
 import { volumeZone, type VolumeZone } from '@/lib/training/landmarks'
 
@@ -108,6 +109,16 @@ export interface ExportDay {
    * `lib/body/weighIn.ts`.
    */
   weighInSkipReason: string | null
+  /**
+   * A day DECLARED an exception — allowed to miss its calorie target.
+   *
+   * Tagged on the day line, and deliberately absent from every aggregate: the
+   * week's average intake, the energy balance and the weight trend all keep the
+   * real number, because they describe physics. A cut that shows a stall must
+   * still show the intake that caused it. The tag exists so the reader knows
+   * the spike was chosen, not so the spike can be discounted.
+   */
+  nutritionException: string | null
 }
 
 /**
@@ -846,7 +857,10 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
     L.push(
       `- **${d.weekdayLabel} ${d.date}** · ${performed || d.isTrainingDay ? 'Train' : 'Rest'}`
       + `${offPlan ? ' (off-plan / swapped)' : ''} · `
-      + `sleep ${sleep(d.sleepMin)} · intake ${n(d.calories)} kcal${macros} · `
+      // The tag sits ON the intake it explains, not at the end of the line —
+      // a reader (human or model) meeting "3210 kcal" needs the reason in the
+      // same breath, not eight fields later.
+      + `sleep ${sleep(d.sleepMin)} · intake ${n(d.calories)} kcal${macros}${exceptionTag(d.nutritionException)} · `
       + `water ${n(d.waterMl == null ? null : d.waterMl / 1000, 1)} L · ${n(d.steps)} steps · `
       // The daily weigh-in belongs on the daily line. It used to appear ONLY in
       // the nested InBody row, which is emitted for full scale readings — so a

@@ -74,7 +74,7 @@ export function useInsights() {
 
       const [logsRes, nutritionRes, sessionsRes, scoreRes, goalsRes] = await Promise.all([
         supabase.from('daily_logs')
-          .select('date, sleep_minutes, avg_rest_heart_rate, avg_heart_rate, respiratory_rate, weight_kg')
+          .select('date, sleep_minutes, avg_rest_heart_rate, avg_heart_rate, respiratory_rate, weight_kg, nutrition_exception')
           .gte('date', from).order('date', { ascending: true }),
         supabase.from('nutrition_entries')
           .select('date, calories, carbs_g').eq('meal_type', 'daily')
@@ -86,9 +86,21 @@ export function useInsights() {
         supabase.from('user_goals').select('calorie_goal, context_mode').maybeSingle(),
       ])
 
-      const logs = (logsRes.data ?? []) as Array<{
+      // PostgREST 400s the WHOLE select for one unknown column. Losing sleep,
+      // resting HR and weight — the inputs to most of the engine — because
+      // `nutrition_exception` is not migrated yet would be a poor trade, so the
+      // narrow select is retried on error.
+      let logsRows = logsRes.data
+      if (logsRes.error) {
+        const retry = await supabase.from('daily_logs')
+          .select('date, sleep_minutes, avg_rest_heart_rate, avg_heart_rate, respiratory_rate, weight_kg')
+          .gte('date', from).order('date', { ascending: true })
+        logsRows = retry.data
+      }
+      const logs = (logsRows ?? []) as Array<{
         date: string; sleep_minutes: number | null; avg_rest_heart_rate: number | null
         avg_heart_rate: number | null; respiratory_rate: number | null; weight_kg: number | null
+        nutrition_exception?: string | null
       }>
       const nutrition = (nutritionRes.data ?? []) as Array<{ date: string; calories: number | null; carbs_g: number | null }>
       const calByDate = new Map(nutrition.map((n) => [n.date, n.calories]))
@@ -105,6 +117,7 @@ export function useInsights() {
         calories: calByDate.get(l.date) ?? null,
         calorieGoal,
         carbsG: carbsByDate.get(l.date) ?? null,
+        exception: l.nutrition_exception ?? null,
       }))
 
       const sessions: SessionPoint[] = ((sessionsRes.data ?? []) as Array<{

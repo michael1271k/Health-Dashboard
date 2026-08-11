@@ -9,6 +9,7 @@ import { isRestDayFor, prescribedFor } from '@/lib/programs'
 import { denyIfUnauthorized } from '@/lib/auth/guard'
 import { resolveCallerUserId } from '@/lib/auth/identity'
 import { nightWindow } from '@/lib/sleep/nightWindow'
+import { isExceptionDay } from '@/lib/nutrition/exceptionDay'
 import { logicalTodayISO, hoursAwakeToday } from '@/lib/utils/day'
 
 type DB = SupabaseClient<Database>
@@ -96,15 +97,28 @@ async function computeForDate(supabase: DB, userId: string, date: string, hoursA
   const dlQuery = (cols: string) => supabase
     .from('daily_logs').select(cols).eq('user_id', userId)
     .lte('date', date).order('date', { ascending: false }).limit(8)
+  // Tried widest-first, each tier dropping the newest column. PostgREST 400s the
+  // WHOLE select when one column is unknown, so a single fallback would have made
+  // an unmigrated `nutrition_exception` cost us `hrv_ms` as well — losing a live
+  // baseline to a column that isn't there yet. Normal path is still one request.
+  const DL_COLUMN_SETS = [
+    'date, hrv_ms, avg_rest_heart_rate, nutrition_exception',
+    'date, hrv_ms, avg_rest_heart_rate',
+    'date, avg_rest_heart_rate',
+  ]
   let dlRaw: unknown[] | null = null
-  const dlFull = await dlQuery('date, hrv_ms, avg_rest_heart_rate')
-  if (dlFull.error) {
-    const dlFallback = await dlQuery('date, avg_rest_heart_rate')
-    dlRaw = (dlFallback.data ?? []).map((r) => ({ ...(r as object), hrv_ms: null }))
-  } else {
-    dlRaw = dlFull.data
+  for (const cols of DL_COLUMN_SETS) {
+    const res = await dlQuery(cols)
+    if (!res.error) { dlRaw = res.data; break }
   }
-  const dl = (dlRaw ?? []) as Array<{ date: string; hrv_ms: number | null; avg_rest_heart_rate: number | null }>
+  // Absent keys read as undefined, which every `!= null` filter below already
+  // drops — a missing column degrades to "no data", never to a wrong number.
+  const dl = (dlRaw ?? []) as Array<{
+    date: string
+    hrv_ms?: number | null
+    avg_rest_heart_rate: number | null
+    nutrition_exception?: string | null
+  }>
   const todayDl = dl.find((r) => r.date === date)
   const trail = dl.filter((r) => r.date !== date)
   const avgOf = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null)
@@ -182,6 +196,10 @@ async function computeForDate(supabase: DB, userId: string, date: string, hoursA
     proteinGoalG: g.protein_goal_g ?? 0,
     carbsGoalG: g.carbs_goal_g ?? 0,
     fatGoalG: g.fat_goal_g ?? 0,
+    // A declared exception grades the day on protein alone. Read from the day's
+    // own row, so back-filling the flag onto a past date and recomputing gives
+    // that date the same score it would have had if flagged at the time.
+    nutritionException: isExceptionDay(todayDl?.nutrition_exception),
     steps: metrics?.steps ?? 0,
     activeCal: metrics?.active_cal ?? 0,
     stepsGoal: g.steps_goal,

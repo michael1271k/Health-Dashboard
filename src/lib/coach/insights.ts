@@ -3,6 +3,7 @@
  * real correlations from the user's recent metrics. Strict English. No network,
  * no randomness: same data → same insights, so it's free to run client-side.
  */
+import { isExceptionDay } from '@/lib/nutrition/exceptionDay'
 
 export interface DayPoint {
   date: string
@@ -15,6 +16,10 @@ export interface DayPoint {
   carbsG?: number | null
   steps?: number | null
   waterMl?: number | null
+  /** Declared nutrition exception — the day was ALLOWED to miss its calorie
+   *  target. Read by `calorieAdherence` and by nothing else: a night out is not
+   *  an adherence lapse, but it is still a real 3 200 kcal to the weight trend. */
+  exception?: string | null
 }
 
 export interface SessionPoint { date: string; volumeKg: number }
@@ -195,7 +200,16 @@ function recoveryDrift(days: DayPoint[]): Insight | null {
 const ADHERENCE_MIN_DAYS = 5
 
 function calorieAdherence(days: DayPoint[]): Insight | null {
-  const ok = days.filter((d) => d.calories != null && d.calories > 0 && d.calorieGoal && d.calorieGoal > 0) as Array<DayPoint & { calories: number; calorieGoal: number }>
+  // Declared exceptions drop out of BOTH windows before anything is counted.
+  // This insight is the one place in the engine that grades intent rather than
+  // reporting a measurement, and a planned dinner is not a lapse of intent. It
+  // also protects the comparison itself: leaving one in would swing a 6-day
+  // window by 17 points and manufacture a "discipline is slipping" headline out
+  // of an evening the user told the app about in advance.
+  const ok = days.filter((d) =>
+    !isExceptionDay(d.exception)
+    && d.calories != null && d.calories > 0 && d.calorieGoal && d.calorieGoal > 0
+  ) as Array<DayPoint & { calories: number; calorieGoal: number }>
   const recent = ok.slice(-7)
   const prior = ok.slice(-14, -7)
   // Require enough REAL logged days in BOTH windows — otherwise stay silent

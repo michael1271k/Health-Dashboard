@@ -73,7 +73,7 @@ describe('buildWeeklyExport', () => {
     weightKg: null, calories: null, proteinG: null, carbsG: null, fatG: null,
     steps: null, distanceM: null, trainingMin: null,
     sleepMin: null, deepMin: null, remMin: null, restingHr: null, hrvMs: null,
-    waterMl: null, supplementsTaken: null, activeKcal: null, bmrKcal: null, weighInSkipReason: null,
+    waterMl: null, supplementsTaken: null, activeKcal: null, bmrKcal: null, weighInSkipReason: null, nutritionException: null,
   })
 
   const input: WeeklyExportInput = {
@@ -291,6 +291,23 @@ describe('buildWeeklyExport', () => {
     expect(withReason).not.toMatch(/\*\*Sun 2026-07-19\*\*.*Skip:/)
   })
 
+  it('tags a declared exception on the intake it explains, and changes no total', () => {
+    const dateNight = input.days.map((d) => (d.date === '2026-07-19'
+      ? { ...d, calories: 3210, nutritionException: 'Event' } : d))
+    const raw = buildWeeklyExport({ ...input, days: input.days.map((d) => (d.date === '2026-07-19'
+      ? { ...d, calories: 3210 } : d)) })
+    const tagged = buildWeeklyExport({ ...input, days: dateNight })
+
+    // The tag rides the kcal figure, not the end of the line.
+    expect(tagged).toMatch(/intake 3210 kcal \([^)]*\) \[Exception: Event\]/)
+    // An ordinary day is never annotated.
+    expect(tagged).not.toMatch(/\*\*Mon 2026-07-20\*\*.*Exception/)
+
+    // THE INVARIANT: forgiving the grade must not move a single aggregate. The
+    // only difference between these two exports is the tag itself.
+    expect(tagged.replace(' [Exception: Event]', '')).toBe(raw)
+  })
+
   it('names WHICH axis each PR was set on, in a fixed order', () => {
     const out = buildWeeklyExport(input)
     expect(out).toMatch(/- \*\*Chest Press\*\* 60kg × 12 — Weight, 1RM/)
@@ -456,7 +473,7 @@ describe('weeklySummary', () => {
     calories: null, proteinG: null, carbsG: null, fatG: null, steps: null, distanceM: null,
     trainingMin: null, sleepMin: null, deepMin: null, remMin: null, restingHr: null,
     hrvMs: null, waterMl: null, supplementsTaken: null, activeKcal: null, bmrKcal: null,
-    weighInSkipReason: null, ...o,
+    weighInSkipReason: null, nutritionException: null, ...o,
   })
   const base = (o: Partial<WeeklyExportInput> = {}): WeeklyExportInput => ({
     weekStart: '2026-07-19', weekEnd: '2026-07-25', programLabel: 'Helix Cut',
@@ -547,7 +564,7 @@ describe('week-over-week ledger', () => {
     calories: null, proteinG: null, carbsG: null, fatG: null, steps: null, distanceM: null,
     trainingMin: null, sleepMin: null, deepMin: null, remMin: null, restingHr: null,
     hrvMs: null, waterMl: null, supplementsTaken: null, activeKcal: null, bmrKcal: null,
-    weighInSkipReason: null, ...o,
+    weighInSkipReason: null, nutritionException: null, ...o,
   })
   const session = (volumeKg: number | null): ExportSession => ({
     date: '2026-07-20', label: 'Upper A', volumeKg, setCount: null, failureSets: null,
@@ -734,7 +751,7 @@ describe('weekly aggregates · previous-week reference · disclaimer', () => {
     calories: null, proteinG: null, carbsG: null, fatG: null, steps: null, distanceM: null,
     trainingMin: null, sleepMin: null, deepMin: null, remMin: null, restingHr: null,
     hrvMs: null, waterMl: null, supplementsTaken: null, activeKcal: null, bmrKcal: null,
-    weighInSkipReason: null, ...o,
+    weighInSkipReason: null, nutritionException: null, ...o,
   })
   const session = (o: Partial<ExportSession> = {}): ExportSession => ({
     date: '2026-07-20', label: 'Upper A', volumeKg: 1000, setCount: null, failureSets: null,
@@ -950,7 +967,7 @@ describe('body rows, effort and sparklines', () => {
     calories: null, proteinG: null, carbsG: null, fatG: null, steps: null, distanceM: null,
     trainingMin: null, sleepMin: null, deepMin: null, remMin: null, restingHr: null,
     hrvMs: null, waterMl: null, supplementsTaken: null, activeKcal: null, bmrKcal: null,
-    weighInSkipReason: null, ...o,
+    weighInSkipReason: null, nutritionException: null, ...o,
   })
   const session = (o: Partial<ExportSession> = {}): ExportSession => ({
     date: '2026-07-20', label: 'Upper A', volumeKg: 1000, setCount: null, failureSets: null,

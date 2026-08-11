@@ -14,6 +14,15 @@ export interface ScoringInputs {
   proteinGoalG: number
   carbsGoalG: number
   fatGoalG: number
+  /**
+   * This day was DECLARED an exception — a dinner out, a refeed, a sick day.
+   * The nutrition score then grades protein and nothing else.
+   *
+   * It forgives the grade only. Intake still reaches the weekly average, the
+   * deficit and the weight trend at full value; see
+   * `lib/nutrition/exceptionDay.ts`. Absent/false is an ordinary day.
+   */
+  nutritionException?: boolean
 
   // Activity
   steps: number

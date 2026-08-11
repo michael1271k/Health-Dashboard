@@ -33,7 +33,7 @@ describe('manual intake override reaches the export', () => {
     calories: null, proteinG: null, carbsG: null, fatG: null, steps: null, distanceM: null,
     trainingMin: null, sleepMin: null, deepMin: null, remMin: null, restingHr: null,
     hrvMs: null, waterMl: null, supplementsTaken: null, activeKcal: null, bmrKcal: null,
-    weighInSkipReason: null, ...o,
+    weighInSkipReason: null, nutritionException: null, ...o,
   })
   const base = (o: Partial<WeeklyExportInput> = {}): WeeklyExportInput => ({
     weekStart: '2026-08-02', weekEnd: '2026-08-08', weekLabel: 'Week 3',

@@ -76,7 +76,7 @@ async function fetchRange(weekStart: string, weekEnd: string) {
 
   // Active Energy, Day Score and Battery are deliberately NOT fetched — none of
   // the three appears in the export any more (see weeklyExport.ts).
-  const [logs, nutrition, sessions, sets, water, supps, doms, bodyComp, cardio, rpe, bodyLedger, skips, prAxes, whr] = await Promise.all([
+  const [logs, nutrition, sessions, sets, water, supps, doms, bodyComp, cardio, rpe, bodyLedger, skips, prAxes, whr, exceptions] = await Promise.all([
     // `active_energy` and `bmr` join the main select rather than getting their
     // own isolated slot: both are long-standing columns (verified live), and the
     // isolation convention exists for columns whose paste-SQL may not have run.
@@ -142,6 +142,12 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     // would 400 the whole statement and cost the export every body metric.
     supabase.from('daily_logs').select('date, estimated_waist_to_hip_ratio')
       .gte('date', weekStart).lte('date', weekEnd),
+    // Declared nutrition exceptions — days ALLOWED to miss the calorie target.
+    // Isolated for the same reason as the two selects above: it is the newest
+    // column here, and folding it in would cost the export a weigh-in reason or
+    // every body metric the day it turns out not to be migrated.
+    supabase.from('daily_logs').select('date, nutrition_exception')
+      .gte('date', weekStart).lte('date', weekEnd),
   ])
 
   return {
@@ -171,6 +177,9 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     // estimated_waist_to_hip_ratio may not be migrated yet — an error just means
     // the ratio is absent, and every other body metric still prints.
     whr: (whr.error ? [] : (whr.data ?? [])) as unknown as Array<{ date: string; estimated_waist_to_hip_ratio: number | null }>,
+    // nutrition_exception may not be migrated yet — an error just means no day
+    // was declared an exception, which is also what an ordinary week looks like.
+    exceptions: (exceptions.error ? [] : (exceptions.data ?? [])) as unknown as Array<{ date: string; nutrition_exception: string | null }>,
   }
 }
 
@@ -241,6 +250,9 @@ async function fetchTrendLedger(firstWeekStart: string, lastWeekStart: string): 
       restingHr: null, hrvMs: null,
       waterMl: waterByDate.get(date) ?? logByDate.get(date)?.water_ml ?? null,
       supplementsTaken: null, activeKcal: null, bmrKcal: null, weighInSkipReason: null,
+      // These days feed `trendTotals` and nothing else, and no aggregate reads
+      // the flag — an exception never changes a number, only a day line.
+      nutritionException: null,
     } satisfies ExportDay))
     const weekSessions = dates.flatMap((d) =>
       (volByDate.get(d) ?? []).map((v) => ({ volumeKg: v } as ExportSession)))
@@ -265,6 +277,8 @@ function toDays(weekStart: string, d: RangeData): ExportDay[] {
   for (const s of d.supps) suppsByDate.set(s.date, (suppsByDate.get(s.date) ?? 0) + 1)
   const skipByDate = new Map<string, string>()
   for (const s of d.skips) if (s.weighin_skip_reason) skipByDate.set(s.date, s.weighin_skip_reason)
+  const exceptionByDate = new Map<string, string>()
+  for (const e of d.exceptions) if (e.nutrition_exception) exceptionByDate.set(e.date, e.nutrition_exception)
 
   return Array.from({ length: 7 }, (_, i) => {
     const date = isoAddDays(weekStart, i)
@@ -291,6 +305,7 @@ function toDays(weekStart: string, d: RangeData): ExportDay[] {
       activeKcal: l?.active_energy ?? null,
       bmrKcal: l?.bmr ?? null,
       weighInSkipReason: skipByDate.get(date) ?? null,
+      nutritionException: exceptionByDate.get(date) ?? null,
     }
   })
 }
