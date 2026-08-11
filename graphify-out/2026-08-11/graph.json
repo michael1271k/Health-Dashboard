@@ -3942,8 +3942,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_l",
-      "community": 54,
-      "community_name": "constructor",
+      "community": 66,
+      "community_name": "delete",
       "norm_label": "l()"
     },
     {
@@ -3953,8 +3953,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_h",
-      "community": 54,
-      "community_name": "constructor",
+      "community": 66,
+      "community_name": "delete",
       "norm_label": "h()"
     },
     {
@@ -4074,8 +4074,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_deleteentry",
-      "community": 7,
-      "community_name": "sw.js",
+      "community": 66,
+      "community_name": "delete",
       "norm_label": "deleteentry()"
     },
     {
@@ -4162,8 +4162,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_popentry",
-      "community": 7,
-      "community_name": "sw.js",
+      "community": 66,
+      "community_name": "delete",
       "norm_label": "popentry()"
     },
     {
@@ -4173,8 +4173,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_shiftentry",
-      "community": 7,
-      "community_name": "sw.js",
+      "community": 66,
+      "community_name": "delete",
       "norm_label": "shiftentry()"
     },
     {
@@ -4206,8 +4206,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_removeentry",
-      "community": 7,
-      "community_name": "sw.js",
+      "community": 66,
+      "community_name": "delete",
       "norm_label": "_removeentry()"
     },
     {
@@ -4349,8 +4349,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_registersync",
-      "community": 63,
-      "community_name": "clone",
+      "community": 54,
+      "community_name": "constructor",
       "norm_label": "registersync()"
     },
     {
@@ -4360,8 +4360,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_addsynclistener",
-      "community": 63,
-      "community_name": "clone",
+      "community": 54,
+      "community_name": "constructor",
       "norm_label": "_addsynclistener()"
     },
     {
@@ -4745,8 +4745,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_delete",
-      "community": 54,
-      "community_name": "constructor",
+      "community": 66,
+      "community_name": "delete",
       "norm_label": "delete()"
     },
     {
@@ -4811,8 +4811,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_deletecacheandmetadata",
-      "community": 54,
-      "community_name": "constructor",
+      "community": 66,
+      "community_name": "delete",
       "norm_label": "deletecacheandmetadata()"
     },
     {
@@ -4888,8 +4888,8 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "public_sw_handleactivate",
-      "community": 54,
-      "community_name": "constructor",
+      "community": 66,
+      "community_name": "delete",
       "norm_label": "handleactivate()"
     },
     {
@@ -6109,8 +6109,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_reseed_muscle_groups",
-      "community": 75,
-      "community_name": "settings/page.tsx",
+      "community": 58,
+      "community_name": "muscleMap.ts",
       "norm_label": "reseed-muscle-groups.mts"
     },
     {
@@ -6120,8 +6120,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "scripts_reseed_muscle_groups_dry",
-      "community": 75,
-      "community_name": "settings/page.tsx",
+      "community": 58,
+      "community_name": "muscleMap.ts",
       "norm_label": "dry"
     },
     {
@@ -6131,8 +6131,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "scripts_reseed_muscle_groups_env",
-      "community": 75,
-      "community_name": "settings/page.tsx",
+      "community": 58,
+      "community_name": "muscleMap.ts",
       "norm_label": "env"
     },
     {
@@ -6142,8 +6142,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "scripts_reseed_muscle_groups_sb",
-      "community": 75,
-      "community_name": "settings/page.tsx",
+      "community": 58,
+      "community_name": "muscleMap.ts",
       "norm_label": "sb"
     },
     {
@@ -6153,8 +6153,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "scripts_reseed_muscle_groups_rows",
-      "community": 75,
-      "community_name": "settings/page.tsx",
+      "community": 58,
+      "community_name": "muscleMap.ts",
       "norm_label": "rows"
     },
     {
@@ -6385,7 +6385,7 @@
       "_origin": "ast",
       "id": "src_app_dashboard_nutrition_page",
       "community": 3,
-      "community_name": "nutrition/page.tsx",
+      "community_name": "logicalTodayISO",
       "norm_label": "nutrition/page.tsx"
     },
     {
@@ -6395,8 +6395,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "src_app_dashboard_nutrition_page_activegoals",
-      "community": 75,
-      "community_name": "settings/page.tsx",
+      "community": 68,
+      "community_name": "usePlanPhaseGoals.ts",
       "norm_label": "activegoals"
     },
     {
@@ -6407,7 +6407,7 @@
       "_origin": "ast",
       "id": "src_app_dashboard_nutrition_page_nutritionpage",
       "community": 3,
-      "community_name": "nutrition/page.tsx",
+      "community_name": "logicalTodayISO",
       "norm_label": "nutritionpage()"
     },
     {
@@ -6517,7 +6517,7 @@
       "_origin": "ast",
       "id": "src_app_dashboard_reports_page",
       "community": 33,
-      "community_name": "report/[id]/page.tsx",
+      "community_name": "phases.ts",
       "norm_label": "reports/page.tsx"
     },
     {
@@ -6528,7 +6528,7 @@
       "_origin": "ast",
       "id": "src_app_dashboard_reports_page_fmt",
       "community": 33,
-      "community_name": "report/[id]/page.tsx",
+      "community_name": "phases.ts",
       "norm_label": "fmt()"
     },
     {
@@ -6539,7 +6539,7 @@
       "_origin": "ast",
       "id": "src_app_dashboard_reports_page_reportspage",
       "community": 33,
-      "community_name": "report/[id]/page.tsx",
+      "community_name": "phases.ts",
       "norm_label": "reportspage()"
     },
     {
@@ -6549,7 +6549,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_dashboard_settings_page",
-      "community": 75,
+      "community": 21,
       "community_name": "settings/page.tsx",
       "norm_label": "settings/page.tsx"
     },
@@ -6560,7 +6560,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_app_dashboard_settings_page_wd_short",
-      "community": 75,
+      "community": 21,
       "community_name": "settings/page.tsx",
       "norm_label": "wd_short"
     },
@@ -6571,7 +6571,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_app_dashboard_settings_page_plan_phase_cascade_keys",
-      "community": 75,
+      "community": 21,
       "community_name": "settings/page.tsx",
       "norm_label": "plan_phase_cascade_keys"
     },
@@ -6582,7 +6582,7 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "src_app_dashboard_settings_page_planlist",
-      "community": 75,
+      "community": 21,
       "community_name": "settings/page.tsx",
       "norm_label": "planlist()"
     },
@@ -6593,7 +6593,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "src_app_dashboard_settings_page_mode_to_phase",
-      "community": 75,
+      "community": 21,
       "community_name": "settings/page.tsx",
       "norm_label": "mode_to_phase"
     },
@@ -6604,7 +6604,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "src_app_dashboard_settings_page_planphasepatch",
-      "community": 75,
+      "community": 21,
       "community_name": "settings/page.tsx",
       "norm_label": "planphasepatch()"
     },
@@ -6615,7 +6615,7 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "src_app_dashboard_settings_page_contextmode",
-      "community": 75,
+      "community": 21,
       "community_name": "settings/page.tsx",
       "norm_label": "contextmode"
     },
@@ -6626,7 +6626,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "src_app_dashboard_settings_page_goals",
-      "community": 75,
+      "community": 21,
       "community_name": "settings/page.tsx",
       "norm_label": "goals"
     },
@@ -6637,7 +6637,7 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "src_app_dashboard_settings_page_defaults",
-      "community": 75,
+      "community": 21,
       "community_name": "settings/page.tsx",
       "norm_label": "defaults"
     },
@@ -6648,7 +6648,7 @@
       "source_location": "L94",
       "_origin": "ast",
       "id": "src_app_dashboard_settings_page_context_labels",
-      "community": 75,
+      "community": 21,
       "community_name": "settings/page.tsx",
       "norm_label": "context_labels"
     },
@@ -6659,7 +6659,7 @@
       "source_location": "L102",
       "_origin": "ast",
       "id": "src_app_dashboard_settings_page_applyprefstodevice",
-      "community": 75,
+      "community": 21,
       "community_name": "settings/page.tsx",
       "norm_label": "applyprefstodevice()"
     },
@@ -6670,7 +6670,7 @@
       "source_location": "L110",
       "_origin": "ast",
       "id": "src_app_dashboard_settings_page_settingspage",
-      "community": 75,
+      "community": 21,
       "community_name": "settings/page.tsx",
       "norm_label": "settingspage()"
     },
@@ -6681,7 +6681,7 @@
       "source_location": "L885",
       "_origin": "ast",
       "id": "src_app_dashboard_settings_page_crashrecorderrow",
-      "community": 75,
+      "community": 21,
       "community_name": "settings/page.tsx",
       "norm_label": "crashrecorderrow()"
     },
@@ -7507,7 +7507,7 @@
       "_origin": "ast",
       "id": "src_app_report_id_page",
       "community": 33,
-      "community_name": "report/[id]/page.tsx",
+      "community_name": "phases.ts",
       "norm_label": "report/[id]/page.tsx"
     },
     {
@@ -7518,7 +7518,7 @@
       "_origin": "ast",
       "id": "src_app_report_id_page_reportdoc",
       "community": 33,
-      "community_name": "report/[id]/page.tsx",
+      "community_name": "phases.ts",
       "norm_label": "reportdoc"
     },
     {
@@ -7529,7 +7529,7 @@
       "_origin": "ast",
       "id": "src_app_report_id_page_usereportdoc",
       "community": 33,
-      "community_name": "report/[id]/page.tsx",
+      "community_name": "phases.ts",
       "norm_label": "usereportdoc()"
     },
     {
@@ -7540,7 +7540,7 @@
       "_origin": "ast",
       "id": "src_app_report_id_page_printstate",
       "community": 33,
-      "community_name": "report/[id]/page.tsx",
+      "community_name": "phases.ts",
       "norm_label": "printstate"
     },
     {
@@ -7551,7 +7551,7 @@
       "_origin": "ast",
       "id": "src_app_report_id_page_useprinttopdf",
       "community": 33,
-      "community_name": "report/[id]/page.tsx",
+      "community_name": "phases.ts",
       "norm_label": "useprinttopdf()"
     },
     {
@@ -7562,7 +7562,7 @@
       "_origin": "ast",
       "id": "src_app_report_id_page_reportpage",
       "community": 33,
-      "community_name": "report/[id]/page.tsx",
+      "community_name": "phases.ts",
       "norm_label": "reportpage()"
     },
     {
@@ -7572,8 +7572,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_session_id_page",
-      "community": 14,
-      "community_name": "session/[id]/page.tsx",
+      "community": 40,
+      "community_name": "ExerciseBreakdown.tsx",
       "norm_label": "session/[id]/page.tsx"
     },
     {
@@ -7583,8 +7583,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_app_session_id_page_sessionanalysispage",
-      "community": 14,
-      "community_name": "session/[id]/page.tsx",
+      "community": 40,
+      "community_name": "ExerciseBreakdown.tsx",
       "norm_label": "sessionanalysispage()"
     },
     {
@@ -7661,7 +7661,7 @@
       "_origin": "ast",
       "id": "src_components_activeplanbadge",
       "community": 33,
-      "community_name": "report/[id]/page.tsx",
+      "community_name": "phases.ts",
       "norm_label": "activeplanbadge.tsx"
     },
     {
@@ -7672,7 +7672,7 @@
       "_origin": "ast",
       "id": "src_components_activeplanbadge_phase_word",
       "community": 33,
-      "community_name": "report/[id]/page.tsx",
+      "community_name": "phases.ts",
       "norm_label": "phase_word"
     },
     {
@@ -7683,7 +7683,7 @@
       "_origin": "ast",
       "id": "src_components_activeplanbadge_activeplanbadge",
       "community": 33,
-      "community_name": "report/[id]/page.tsx",
+      "community_name": "phases.ts",
       "norm_label": "activeplanbadge()"
     },
     {
@@ -7847,8 +7847,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_charts_currentweekbutton",
-      "community": 170,
-      "community_name": "useTimelineWeeks.ts",
+      "community": 14,
+      "community_name": "weekStartOf",
       "norm_label": "currentweekbutton.tsx"
     },
     {
@@ -7858,8 +7858,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_components_charts_currentweekbutton_currentweekdays",
-      "community": 170,
-      "community_name": "useTimelineWeeks.ts",
+      "community": 14,
+      "community_name": "weekStartOf",
       "norm_label": "currentweekdays()"
     },
     {
@@ -7869,8 +7869,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_components_charts_currentweekbutton_currentweekbutton",
-      "community": 170,
-      "community_name": "useTimelineWeeks.ts",
+      "community": 14,
+      "community_name": "weekStartOf",
       "norm_label": "currentweekbutton()"
     },
     {
@@ -8089,8 +8089,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_charts_planerabutton",
-      "community": 55,
-      "community_name": "logicalTodayISO",
+      "community": 88,
+      "community_name": "app/page.tsx",
       "norm_label": "planerabutton.tsx"
     },
     {
@@ -8100,8 +8100,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_components_charts_planerabutton_daysbetween",
-      "community": 55,
-      "community_name": "logicalTodayISO",
+      "community": 88,
+      "community_name": "app/page.tsx",
       "norm_label": "daysbetween()"
     },
     {
@@ -8111,8 +8111,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_components_charts_planerabutton_planerabutton",
-      "community": 55,
-      "community_name": "logicalTodayISO",
+      "community": 88,
+      "community_name": "app/page.tsx",
       "norm_label": "planerabutton()"
     },
     {
@@ -8497,7 +8497,7 @@
       "_origin": "ast",
       "id": "src_components_command_center_exercisecard",
       "community": 62,
-      "community_name": "eraForDate",
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "exercisecard.tsx"
     },
     {
@@ -8508,7 +8508,7 @@
       "_origin": "ast",
       "id": "src_components_command_center_exercisecard_status_meta",
       "community": 62,
-      "community_name": "eraForDate",
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "status_meta"
     },
     {
@@ -8519,7 +8519,7 @@
       "_origin": "ast",
       "id": "src_components_command_center_exercisecard_readycue",
       "community": 62,
-      "community_name": "eraForDate",
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "readycue"
     },
     {
@@ -8530,7 +8530,7 @@
       "_origin": "ast",
       "id": "src_components_command_center_exercisecard_setgroup",
       "community": 62,
-      "community_name": "eraForDate",
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "setgroup"
     },
     {
@@ -8541,7 +8541,7 @@
       "_origin": "ast",
       "id": "src_components_command_center_exercisecard_groupsets",
       "community": 62,
-      "community_name": "eraForDate",
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "groupsets()"
     },
     {
@@ -8552,7 +8552,7 @@
       "_origin": "ast",
       "id": "src_components_command_center_exercisecard_pairasymmetry",
       "community": 62,
-      "community_name": "eraForDate",
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "pairasymmetry()"
     },
     {
@@ -8563,7 +8563,7 @@
       "_origin": "ast",
       "id": "src_components_command_center_exercisecard_fmtkg",
       "community": 62,
-      "community_name": "eraForDate",
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "fmtkg()"
     },
     {
@@ -8574,7 +8574,7 @@
       "_origin": "ast",
       "id": "src_components_command_center_exercisecard_fmtdate",
       "community": 62,
-      "community_name": "eraForDate",
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "fmtdate()"
     },
     {
@@ -8585,7 +8585,7 @@
       "_origin": "ast",
       "id": "src_components_command_center_exercisecard_exercisecard",
       "community": 62,
-      "community_name": "eraForDate",
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "exercisecard"
     },
     {
@@ -8596,7 +8596,7 @@
       "_origin": "ast",
       "id": "src_components_command_center_exercisedecklist",
       "community": 62,
-      "community_name": "eraForDate",
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "exercisedecklist.tsx"
     },
     {
@@ -8607,7 +8607,7 @@
       "_origin": "ast",
       "id": "src_components_command_center_exercisedecklist_drag_modifiers",
       "community": 62,
-      "community_name": "eraForDate",
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "drag_modifiers"
     },
     {
@@ -8618,7 +8618,7 @@
       "_origin": "ast",
       "id": "src_components_command_center_exercisedecklist_exercisedecklist",
       "community": 62,
-      "community_name": "eraForDate",
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "exercisedecklist()"
     },
     {
@@ -8738,8 +8738,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_command_center_postworkoutsummary",
-      "community": 90,
-      "community_name": "workout/page.tsx",
+      "community": 77,
+      "community_name": "useWeekSessions.ts",
       "norm_label": "postworkoutsummary.tsx"
     },
     {
@@ -8749,8 +8749,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_components_command_center_postworkoutsummary_toreportrow",
-      "community": 90,
-      "community_name": "workout/page.tsx",
+      "community": 77,
+      "community_name": "useWeekSessions.ts",
       "norm_label": "toreportrow()"
     },
     {
@@ -8760,8 +8760,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_components_command_center_postworkoutsummary_postworkoutsummary",
-      "community": 90,
-      "community_name": "workout/page.tsx",
+      "community": 77,
+      "community_name": "useWeekSessions.ts",
       "norm_label": "postworkoutsummary()"
     },
     {
@@ -8804,7 +8804,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_command_center_sessiondeck",
-      "community": 62,
+      "community": 25,
       "community_name": "eraForDate",
       "norm_label": "sessiondeck.tsx"
     },
@@ -8815,7 +8815,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_components_command_center_sessiondeck_sessiondeck",
-      "community": 62,
+      "community": 25,
       "community_name": "eraForDate",
       "norm_label": "sessiondeck()"
     },
@@ -8826,7 +8826,7 @@
       "source_location": "L194",
       "_origin": "ast",
       "id": "src_components_command_center_sessiondeck_stat",
-      "community": 62,
+      "community": 25,
       "community_name": "eraForDate",
       "norm_label": "stat()"
     },
@@ -8837,7 +8837,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_command_center_sessionnotescard",
-      "community": 62,
+      "community": 25,
       "community_name": "eraForDate",
       "norm_label": "sessionnotescard.tsx"
     },
@@ -8848,7 +8848,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_components_command_center_sessionnotescard_sessionnotescard",
-      "community": 62,
+      "community": 25,
       "community_name": "eraForDate",
       "norm_label": "sessionnotescard()"
     },
@@ -8925,8 +8925,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_command_center_weektodatetargets",
-      "community": 123,
-      "community_name": "MuscleAnalyticsPanel.tsx",
+      "community": 17,
+      "community_name": "useWeeklyVolume.ts",
       "norm_label": "weektodatetargets.tsx"
     },
     {
@@ -8936,8 +8936,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_components_command_center_weektodatetargets_weektodatetargets",
-      "community": 123,
-      "community_name": "MuscleAnalyticsPanel.tsx",
+      "community": 17,
+      "community_name": "useWeeklyVolume.ts",
       "norm_label": "weektodatetargets()"
     },
     {
@@ -8947,8 +8947,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_command_center_weeklysummarycard",
-      "community": 90,
-      "community_name": "workout/page.tsx",
+      "community": 77,
+      "community_name": "useWeekSessions.ts",
       "norm_label": "weeklysummarycard.tsx"
     },
     {
@@ -8958,8 +8958,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_components_command_center_weeklysummarycard_weeklysummarycard",
-      "community": 90,
-      "community_name": "workout/page.tsx",
+      "community": 77,
+      "community_name": "useWeekSessions.ts",
       "norm_label": "weeklysummarycard()"
     },
     {
@@ -9256,7 +9256,7 @@
       "_origin": "ast",
       "id": "src_components_dashboard_sleepstages",
       "community": 190,
-      "community_name": "SleepStages.tsx",
+      "community_name": "supabase/types.ts",
       "norm_label": "sleepstages.tsx"
     },
     {
@@ -9267,7 +9267,7 @@
       "_origin": "ast",
       "id": "src_components_dashboard_sleepstages_stages",
       "community": 190,
-      "community_name": "SleepStages.tsx",
+      "community_name": "supabase/types.ts",
       "norm_label": "stages"
     },
     {
@@ -9278,7 +9278,7 @@
       "_origin": "ast",
       "id": "src_components_dashboard_sleepstages_clock",
       "community": 190,
-      "community_name": "SleepStages.tsx",
+      "community_name": "supabase/types.ts",
       "norm_label": "clock()"
     },
     {
@@ -9289,7 +9289,7 @@
       "_origin": "ast",
       "id": "src_components_dashboard_sleepstages_sleepstages",
       "community": 190,
-      "community_name": "SleepStages.tsx",
+      "community_name": "supabase/types.ts",
       "norm_label": "sleepstages()"
     },
     {
@@ -9300,7 +9300,7 @@
       "_origin": "ast",
       "id": "src_components_dashboard_sleepstages_sleeparc",
       "community": 190,
-      "community_name": "SleepStages.tsx",
+      "community_name": "supabase/types.ts",
       "norm_label": "sleeparc()"
     },
     {
@@ -9311,7 +9311,7 @@
       "_origin": "ast",
       "id": "src_components_dashboard_sleepstages_nightlyhistogram",
       "community": 190,
-      "community_name": "SleepStages.tsx",
+      "community_name": "supabase/types.ts",
       "norm_label": "nightlyhistogram()"
     },
     {
@@ -9322,7 +9322,7 @@
       "_origin": "ast",
       "id": "src_components_dashboard_stepsjourney",
       "community": 190,
-      "community_name": "SleepStages.tsx",
+      "community_name": "supabase/types.ts",
       "norm_label": "stepsjourney.tsx"
     },
     {
@@ -9333,7 +9333,7 @@
       "_origin": "ast",
       "id": "src_components_dashboard_stepsjourney_pips",
       "community": 190,
-      "community_name": "SleepStages.tsx",
+      "community_name": "supabase/types.ts",
       "norm_label": "pips"
     },
     {
@@ -9344,7 +9344,7 @@
       "_origin": "ast",
       "id": "src_components_dashboard_stepsjourney_stepsjourney",
       "community": 190,
-      "community_name": "SleepStages.tsx",
+      "community_name": "supabase/types.ts",
       "norm_label": "stepsjourney()"
     },
     {
@@ -9531,7 +9531,7 @@
       "_origin": "ast",
       "id": "src_components_dashboard_weeklyreviewcard",
       "community": 55,
-      "community_name": "logicalTodayISO",
+      "community_name": "WeeklyReviewCard.tsx",
       "norm_label": "weeklyreviewcard.tsx"
     },
     {
@@ -9542,7 +9542,7 @@
       "_origin": "ast",
       "id": "src_components_dashboard_weeklyreviewcard_startofweekiso",
       "community": 55,
-      "community_name": "logicalTodayISO",
+      "community_name": "WeeklyReviewCard.tsx",
       "norm_label": "startofweekiso()"
     },
     {
@@ -9553,7 +9553,7 @@
       "_origin": "ast",
       "id": "src_components_dashboard_weeklyreviewcard_todayiso",
       "community": 55,
-      "community_name": "logicalTodayISO",
+      "community_name": "WeeklyReviewCard.tsx",
       "norm_label": "todayiso()"
     },
     {
@@ -9564,7 +9564,7 @@
       "_origin": "ast",
       "id": "src_components_dashboard_weeklyreviewcard_weekstats",
       "community": 55,
-      "community_name": "logicalTodayISO",
+      "community_name": "WeeklyReviewCard.tsx",
       "norm_label": "weekstats"
     },
     {
@@ -9575,7 +9575,7 @@
       "_origin": "ast",
       "id": "src_components_dashboard_weeklyreviewcard_useweekstats",
       "community": 55,
-      "community_name": "logicalTodayISO",
+      "community_name": "WeeklyReviewCard.tsx",
       "norm_label": "useweekstats()"
     },
     {
@@ -9586,7 +9586,7 @@
       "_origin": "ast",
       "id": "src_components_dashboard_weeklyreviewcard_statrowprops",
       "community": 55,
-      "community_name": "logicalTodayISO",
+      "community_name": "WeeklyReviewCard.tsx",
       "norm_label": "statrowprops"
     },
     {
@@ -9597,7 +9597,7 @@
       "_origin": "ast",
       "id": "src_components_dashboard_weeklyreviewcard_statrow",
       "community": 55,
-      "community_name": "logicalTodayISO",
+      "community_name": "WeeklyReviewCard.tsx",
       "norm_label": "statrow()"
     },
     {
@@ -9608,7 +9608,7 @@
       "_origin": "ast",
       "id": "src_components_dashboard_weeklyreviewcard_weeklyreviewcard",
       "community": 55,
-      "community_name": "logicalTodayISO",
+      "community_name": "WeeklyReviewCard.tsx",
       "norm_label": "weeklyreviewcard()"
     },
     {
@@ -10003,7 +10003,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_day_scheduleshortcut",
-      "community": 55,
+      "community": 3,
       "community_name": "logicalTodayISO",
       "norm_label": "scheduleshortcut.tsx"
     },
@@ -10014,7 +10014,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_components_day_scheduleshortcut_scheduleshortcut",
-      "community": 55,
+      "community": 3,
       "community_name": "logicalTodayISO",
       "norm_label": "scheduleshortcut()"
     },
@@ -10047,8 +10047,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_day_sleepdebtgauge",
-      "community": 45,
-      "community_name": "[date]/page.tsx",
+      "community": 13,
+      "community_name": "useBioStrips.ts",
       "norm_label": "sleepdebtgauge.tsx"
     },
     {
@@ -10058,8 +10058,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_components_day_sleepdebtgauge_debtcolor",
-      "community": 45,
-      "community_name": "[date]/page.tsx",
+      "community": 13,
+      "community_name": "useBioStrips.ts",
       "norm_label": "debtcolor()"
     },
     {
@@ -10069,8 +10069,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_components_day_sleepdebtgauge_sleepdebtgauge",
-      "community": 45,
-      "community_name": "[date]/page.tsx",
+      "community": 13,
+      "community_name": "useBioStrips.ts",
       "norm_label": "sleepdebtgauge"
     },
     {
@@ -10179,8 +10179,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_day_summarybands",
-      "community": 12,
-      "community_name": "displayWeight",
+      "community": 190,
+      "community_name": "supabase/types.ts",
       "norm_label": "summarybands.tsx"
     },
     {
@@ -10190,8 +10190,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_components_day_summarybands_stages",
-      "community": 12,
-      "community_name": "displayWeight",
+      "community": 190,
+      "community_name": "supabase/types.ts",
       "norm_label": "stages"
     },
     {
@@ -10201,8 +10201,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "src_components_day_summarybands_clock",
-      "community": 12,
-      "community_name": "displayWeight",
+      "community": 190,
+      "community_name": "supabase/types.ts",
       "norm_label": "clock()"
     },
     {
@@ -10212,8 +10212,8 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "src_components_day_summarybands_sleepband",
-      "community": 12,
-      "community_name": "displayWeight",
+      "community": 190,
+      "community_name": "supabase/types.ts",
       "norm_label": "sleepband()"
     },
     {
@@ -10223,8 +10223,8 @@
       "source_location": "L104",
       "_origin": "ast",
       "id": "src_components_day_summarybands_bodyband",
-      "community": 12,
-      "community_name": "displayWeight",
+      "community": 190,
+      "community_name": "supabase/types.ts",
       "norm_label": "bodyband()"
     },
     {
@@ -10300,8 +10300,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_day_waterhelix",
-      "community": 3,
-      "community_name": "nutrition/page.tsx",
+      "community": 45,
+      "community_name": "[date]/page.tsx",
       "norm_label": "waterhelix.tsx"
     },
     {
@@ -10311,8 +10311,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_components_day_waterhelix_node",
-      "community": 3,
-      "community_name": "nutrition/page.tsx",
+      "community": 45,
+      "community_name": "[date]/page.tsx",
       "norm_label": "node"
     },
     {
@@ -10322,8 +10322,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_components_day_waterhelix_buildhelix",
-      "community": 3,
-      "community_name": "nutrition/page.tsx",
+      "community": 45,
+      "community_name": "[date]/page.tsx",
       "norm_label": "buildhelix()"
     },
     {
@@ -10333,8 +10333,8 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "src_components_day_waterhelix_waterhelix",
-      "community": 3,
-      "community_name": "nutrition/page.tsx",
+      "community": 45,
+      "community_name": "[date]/page.tsx",
       "norm_label": "waterhelix()"
     },
     {
@@ -10378,7 +10378,7 @@
       "_origin": "ast",
       "id": "src_components_era_erafilterpills",
       "community": 3,
-      "community_name": "nutrition/page.tsx",
+      "community_name": "logicalTodayISO",
       "norm_label": "erafilterpills.tsx"
     },
     {
@@ -10389,7 +10389,7 @@
       "_origin": "ast",
       "id": "src_components_era_erafilterpills_erafilterpills",
       "community": 3,
-      "community_name": "nutrition/page.tsx",
+      "community_name": "logicalTodayISO",
       "norm_label": "erafilterpills()"
     },
     {
@@ -10520,8 +10520,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_fx_widgetboundary",
-      "community": 123,
-      "community_name": "MuscleAnalyticsPanel.tsx",
+      "community": 64,
+      "community_name": "pathfinder/page.tsx",
       "norm_label": "widgetboundary.tsx"
     },
     {
@@ -10531,8 +10531,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_components_fx_widgetboundary_widgetboundary",
-      "community": 123,
-      "community_name": "MuscleAnalyticsPanel.tsx",
+      "community": 64,
+      "community_name": "pathfinder/page.tsx",
       "norm_label": "widgetboundary"
     },
     {
@@ -10542,8 +10542,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_components_fx_widgetboundary_widgetboundary_getderivedstatefromerror",
-      "community": 123,
-      "community_name": "MuscleAnalyticsPanel.tsx",
+      "community": 64,
+      "community_name": "pathfinder/page.tsx",
       "norm_label": ".getderivedstatefromerror()"
     },
     {
@@ -10553,8 +10553,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_components_fx_widgetboundary_widgetboundary_componentdidcatch",
-      "community": 123,
-      "community_name": "MuscleAnalyticsPanel.tsx",
+      "community": 64,
+      "community_name": "pathfinder/page.tsx",
       "norm_label": ".componentdidcatch()"
     },
     {
@@ -10564,8 +10564,8 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "src_components_fx_widgetboundary_widgetboundary_render",
-      "community": 123,
-      "community_name": "MuscleAnalyticsPanel.tsx",
+      "community": 64,
+      "community_name": "pathfinder/page.tsx",
       "norm_label": ".render()"
     },
     {
@@ -10729,8 +10729,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_components_nav_bottomnav_bottomnav",
-      "community": 15,
-      "community_name": "app/layout.tsx",
+      "community": 11,
+      "community_name": "SetEditorRow.tsx",
       "norm_label": "bottomnav()"
     },
     {
@@ -10773,8 +10773,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_nutrition_exceptiondaybanner",
-      "community": 4,
-      "community_name": "program.test.ts",
+      "community": 156,
+      "community_name": "ExceptionDayBanner.tsx",
       "norm_label": "exceptiondaybanner.tsx"
     },
     {
@@ -10784,8 +10784,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "src_components_nutrition_exceptiondaybanner_exceptiondaybanner",
-      "community": 4,
-      "community_name": "program.test.ts",
+      "community": 156,
+      "community_name": "ExceptionDayBanner.tsx",
       "norm_label": "exceptiondaybanner()"
     },
     {
@@ -10795,8 +10795,8 @@
       "source_location": "L118",
       "_origin": "ast",
       "id": "src_components_nutrition_exceptiondaybanner_reasonchips",
-      "community": 4,
-      "community_name": "program.test.ts",
+      "community": 156,
+      "community_name": "ExceptionDayBanner.tsx",
       "norm_label": "reasonchips()"
     },
     {
@@ -10818,7 +10818,7 @@
       "_origin": "ast",
       "id": "src_components_nutrition_fuelforceband_fuelforceband",
       "community": 3,
-      "community_name": "nutrition/page.tsx",
+      "community_name": "logicalTodayISO",
       "norm_label": "fuelforceband"
     },
     {
@@ -10927,63 +10927,63 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_nutrition_nutritionloglist",
-      "community": 107,
-      "community_name": "BrandHeader.tsx",
+      "community": 16,
+      "community_name": "MacroRings.tsx",
       "norm_label": "nutritionloglist.tsx"
     },
     {
       "label": "Goals",
       "file_type": "code",
       "source_file": "src/components/nutrition/NutritionLogList.tsx",
-      "source_location": "L9",
+      "source_location": "L7",
       "_origin": "ast",
       "id": "src_components_nutrition_nutritionloglist_goals",
-      "community": 107,
-      "community_name": "BrandHeader.tsx",
+      "community": 16,
+      "community_name": "MacroRings.tsx",
       "norm_label": "goals"
     },
     {
       "label": "MACRO_COLOR",
       "file_type": "code",
       "source_file": "src/components/nutrition/NutritionLogList.tsx",
-      "source_location": "L11",
+      "source_location": "L9",
       "_origin": "ast",
       "id": "src_components_nutrition_nutritionloglist_macro_color",
-      "community": 107,
-      "community_name": "BrandHeader.tsx",
+      "community": 16,
+      "community_name": "MacroRings.tsx",
       "norm_label": "macro_color"
     },
     {
       "label": "PhaseTag()",
       "file_type": "code",
       "source_file": "src/components/nutrition/NutritionLogList.tsx",
-      "source_location": "L13",
+      "source_location": "L11",
       "_origin": "ast",
       "id": "src_components_nutrition_nutritionloglist_phasetag",
-      "community": 107,
-      "community_name": "BrandHeader.tsx",
+      "community": 16,
+      "community_name": "MacroRings.tsx",
       "norm_label": "phasetag()"
     },
     {
       "label": "MacroBar()",
       "file_type": "code",
       "source_file": "src/components/nutrition/NutritionLogList.tsx",
-      "source_location": "L26",
+      "source_location": "L24",
       "_origin": "ast",
       "id": "src_components_nutrition_nutritionloglist_macrobar",
-      "community": 107,
-      "community_name": "BrandHeader.tsx",
+      "community": 16,
+      "community_name": "MacroRings.tsx",
       "norm_label": "macrobar()"
     },
     {
       "label": "NutritionLogList()",
       "file_type": "code",
       "source_file": "src/components/nutrition/NutritionLogList.tsx",
-      "source_location": "L41",
+      "source_location": "L39",
       "_origin": "ast",
       "id": "src_components_nutrition_nutritionloglist_nutritionloglist",
-      "community": 107,
-      "community_name": "BrandHeader.tsx",
+      "community": 16,
+      "community_name": "MacroRings.tsx",
       "norm_label": "nutritionloglist()"
     },
     {
@@ -11258,7 +11258,7 @@
       "_origin": "ast",
       "id": "src_components_providers_motionprovider",
       "community": 156,
-      "community_name": "useHelixReducedMotion",
+      "community_name": "ExceptionDayBanner.tsx",
       "norm_label": "motionprovider.tsx"
     },
     {
@@ -11269,7 +11269,7 @@
       "_origin": "ast",
       "id": "src_components_providers_motionprovider_motionprovider",
       "community": 156,
-      "community_name": "useHelixReducedMotion",
+      "community_name": "ExceptionDayBanner.tsx",
       "norm_label": "motionprovider()"
     },
     {
@@ -11917,8 +11917,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_session_detail_musclefocus",
-      "community": 14,
-      "community_name": "session/[id]/page.tsx",
+      "community": 40,
+      "community_name": "ExerciseBreakdown.tsx",
       "norm_label": "musclefocus.tsx"
     },
     {
@@ -11928,8 +11928,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_components_session_detail_musclefocus_round1",
-      "community": 14,
-      "community_name": "session/[id]/page.tsx",
+      "community": 40,
+      "community_name": "ExerciseBreakdown.tsx",
       "norm_label": "round1()"
     },
     {
@@ -11939,8 +11939,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_components_session_detail_musclefocus_musclefocus",
-      "community": 14,
-      "community_name": "session/[id]/page.tsx",
+      "community": 40,
+      "community_name": "ExerciseBreakdown.tsx",
       "norm_label": "musclefocus()"
     },
     {
@@ -12016,8 +12016,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_session_detail_sessionhero",
-      "community": 14,
-      "community_name": "session/[id]/page.tsx",
+      "community": 40,
+      "community_name": "ExerciseBreakdown.tsx",
       "norm_label": "sessionhero.tsx"
     },
     {
@@ -12027,8 +12027,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "src_components_session_detail_sessionhero_headline",
-      "community": 14,
-      "community_name": "session/[id]/page.tsx",
+      "community": 40,
+      "community_name": "ExerciseBreakdown.tsx",
       "norm_label": "headline()"
     },
     {
@@ -12038,8 +12038,8 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "src_components_session_detail_sessionhero_stat",
-      "community": 14,
-      "community_name": "session/[id]/page.tsx",
+      "community": 40,
+      "community_name": "ExerciseBreakdown.tsx",
       "norm_label": "stat()"
     },
     {
@@ -12049,8 +12049,8 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "src_components_session_detail_sessionhero_sessionhero",
-      "community": 14,
-      "community_name": "session/[id]/page.tsx",
+      "community": 40,
+      "community_name": "ExerciseBreakdown.tsx",
       "norm_label": "sessionhero()"
     },
     {
@@ -12171,7 +12171,7 @@
       "_origin": "ast",
       "id": "src_components_timeline_continuumtimeline",
       "community": 20,
-      "community_name": "phases.ts",
+      "community_name": "ContinuumTimeline.tsx",
       "norm_label": "continuumtimeline.tsx"
     },
     {
@@ -12182,7 +12182,7 @@
       "_origin": "ast",
       "id": "src_components_timeline_continuumtimeline_scorecolor",
       "community": 20,
-      "community_name": "phases.ts",
+      "community_name": "ContinuumTimeline.tsx",
       "norm_label": "scorecolor()"
     },
     {
@@ -12193,7 +12193,7 @@
       "_origin": "ast",
       "id": "src_components_timeline_continuumtimeline_weekstartof",
       "community": 20,
-      "community_name": "phases.ts",
+      "community_name": "ContinuumTimeline.tsx",
       "norm_label": "weekstartof()"
     },
     {
@@ -12204,7 +12204,7 @@
       "_origin": "ast",
       "id": "src_components_timeline_continuumtimeline_row_macro_target",
       "community": 20,
-      "community_name": "phases.ts",
+      "community_name": "ContinuumTimeline.tsx",
       "norm_label": "row_macro_target"
     },
     {
@@ -12215,7 +12215,7 @@
       "_origin": "ast",
       "id": "src_components_timeline_continuumtimeline_macrobar",
       "community": 20,
-      "community_name": "phases.ts",
+      "community_name": "ContinuumTimeline.tsx",
       "norm_label": "macrobar()"
     },
     {
@@ -12226,7 +12226,7 @@
       "_origin": "ast",
       "id": "src_components_timeline_continuumtimeline_daycard",
       "community": 20,
-      "community_name": "phases.ts",
+      "community_name": "ContinuumTimeline.tsx",
       "norm_label": "daycard"
     },
     {
@@ -12237,7 +12237,7 @@
       "_origin": "ast",
       "id": "src_components_timeline_continuumtimeline_weekheader",
       "community": 20,
-      "community_name": "phases.ts",
+      "community_name": "ContinuumTimeline.tsx",
       "norm_label": "weekheader"
     },
     {
@@ -12248,7 +12248,7 @@
       "_origin": "ast",
       "id": "src_components_timeline_continuumtimeline_continuumtimeline",
       "community": 20,
-      "community_name": "phases.ts",
+      "community_name": "ContinuumTimeline.tsx",
       "norm_label": "continuumtimeline"
     },
     {
@@ -12259,7 +12259,7 @@
       "_origin": "ast",
       "id": "src_components_timeline_weekchip",
       "community": 20,
-      "community_name": "phases.ts",
+      "community_name": "ContinuumTimeline.tsx",
       "norm_label": "weekchip.tsx"
     },
     {
@@ -12270,7 +12270,7 @@
       "_origin": "ast",
       "id": "src_components_timeline_weekchip_weekchiplabel",
       "community": 20,
-      "community_name": "phases.ts",
+      "community_name": "ContinuumTimeline.tsx",
       "norm_label": "weekchiplabel()"
     },
     {
@@ -12281,7 +12281,7 @@
       "_origin": "ast",
       "id": "src_components_timeline_weekchip_dot",
       "community": 20,
-      "community_name": "phases.ts",
+      "community_name": "ContinuumTimeline.tsx",
       "norm_label": "dot()"
     },
     {
@@ -13667,7 +13667,7 @@
       "_origin": "ast",
       "id": "src_lib_era_erafilter",
       "community": 3,
-      "community_name": "nutrition/page.tsx",
+      "community_name": "logicalTodayISO",
       "norm_label": "erafilter.tsx"
     },
     {
@@ -13678,7 +13678,7 @@
       "_origin": "ast",
       "id": "src_lib_era_erafilter_isoadddays",
       "community": 3,
-      "community_name": "nutrition/page.tsx",
+      "community_name": "logicalTodayISO",
       "norm_label": "isoadddays()"
     },
     {
@@ -13688,8 +13688,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_lib_era_erafilter_erafilter",
-      "community": 3,
-      "community_name": "nutrition/page.tsx",
+      "community": 170,
+      "community_name": "useTimelineWeeks.ts",
       "norm_label": "erafilter"
     },
     {
@@ -13700,7 +13700,7 @@
       "_origin": "ast",
       "id": "src_lib_era_erafilter_era_filter_meta",
       "community": 3,
-      "community_name": "nutrition/page.tsx",
+      "community_name": "logicalTodayISO",
       "norm_label": "era_filter_meta"
     },
     {
@@ -13711,7 +13711,7 @@
       "_origin": "ast",
       "id": "src_lib_era_erafilter_era_filter_order",
       "community": 3,
-      "community_name": "nutrition/page.tsx",
+      "community_name": "logicalTodayISO",
       "norm_label": "era_filter_order"
     },
     {
@@ -13722,7 +13722,7 @@
       "_origin": "ast",
       "id": "src_lib_era_erafilter_subphase",
       "community": 3,
-      "community_name": "nutrition/page.tsx",
+      "community_name": "logicalTodayISO",
       "norm_label": "subphase"
     },
     {
@@ -13733,7 +13733,7 @@
       "_origin": "ast",
       "id": "src_lib_era_erafilter_subphasesel",
       "community": 3,
-      "community_name": "nutrition/page.tsx",
+      "community_name": "logicalTodayISO",
       "norm_label": "subphasesel"
     },
     {
@@ -13744,7 +13744,7 @@
       "_origin": "ast",
       "id": "src_lib_era_erafilter_sub_phase_meta",
       "community": 3,
-      "community_name": "nutrition/page.tsx",
+      "community_name": "logicalTodayISO",
       "norm_label": "sub_phase_meta"
     },
     {
@@ -13755,7 +13755,7 @@
       "_origin": "ast",
       "id": "src_lib_era_erafilter_sub_phase_order",
       "community": 3,
-      "community_name": "nutrition/page.tsx",
+      "community_name": "logicalTodayISO",
       "norm_label": "sub_phase_order"
     },
     {
@@ -13766,7 +13766,7 @@
       "_origin": "ast",
       "id": "src_lib_era_erafilter_weekstartsundayiso",
       "community": 3,
-      "community_name": "nutrition/page.tsx",
+      "community_name": "logicalTodayISO",
       "norm_label": "weekstartsundayiso()"
     },
     {
@@ -13777,7 +13777,7 @@
       "_origin": "ast",
       "id": "src_lib_era_erafilter_currentautophase",
       "community": 3,
-      "community_name": "nutrition/page.tsx",
+      "community_name": "logicalTodayISO",
       "norm_label": "currentautophase()"
     },
     {
@@ -13788,7 +13788,7 @@
       "_origin": "ast",
       "id": "src_lib_era_erafilter_resolvesubphase",
       "community": 3,
-      "community_name": "nutrition/page.tsx",
+      "community_name": "logicalTodayISO",
       "norm_label": "resolvesubphase()"
     },
     {
@@ -13799,7 +13799,7 @@
       "_origin": "ast",
       "id": "src_lib_era_erafilter_eradaterange",
       "community": 3,
-      "community_name": "nutrition/page.tsx",
+      "community_name": "logicalTodayISO",
       "norm_label": "eradaterange()"
     },
     {
@@ -13810,7 +13810,7 @@
       "_origin": "ast",
       "id": "src_lib_era_erafilter_eractx",
       "community": 3,
-      "community_name": "nutrition/page.tsx",
+      "community_name": "logicalTodayISO",
       "norm_label": "eractx"
     },
     {
@@ -13821,7 +13821,7 @@
       "_origin": "ast",
       "id": "src_lib_era_erafilter_erafiltercontext",
       "community": 3,
-      "community_name": "nutrition/page.tsx",
+      "community_name": "logicalTodayISO",
       "norm_label": "erafiltercontext"
     },
     {
@@ -13832,7 +13832,7 @@
       "_origin": "ast",
       "id": "src_lib_era_erafilter_erafilterprovider",
       "community": 3,
-      "community_name": "nutrition/page.tsx",
+      "community_name": "logicalTodayISO",
       "norm_label": "erafilterprovider()"
     },
     {
@@ -13843,7 +13843,7 @@
       "_origin": "ast",
       "id": "src_lib_era_erafilter_useerafilter",
       "community": 3,
-      "community_name": "nutrition/page.tsx",
+      "community_name": "logicalTodayISO",
       "norm_label": "useerafilter()"
     },
     {
@@ -13886,8 +13886,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_exercises_bodyweight",
-      "community": 62,
-      "community_name": "eraForDate",
+      "community": 92,
+      "community_name": "bodyweight.ts",
       "norm_label": "bodyweight.ts"
     },
     {
@@ -13897,8 +13897,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_lib_exercises_bodyweight_bodyweight_patterns",
-      "community": 62,
-      "community_name": "eraForDate",
+      "community": 92,
+      "community_name": "bodyweight.ts",
       "norm_label": "bodyweight_patterns"
     },
     {
@@ -13908,8 +13908,8 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "src_lib_exercises_bodyweight_isbodyweightexercise",
-      "community": 62,
-      "community_name": "eraForDate",
+      "community": 92,
+      "community_name": "bodyweight.ts",
       "norm_label": "isbodyweightexercise()"
     },
     {
@@ -13919,8 +13919,8 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "src_lib_exercises_bodyweight_isunloadedexercise",
-      "community": 62,
-      "community_name": "eraForDate",
+      "community": 92,
+      "community_name": "bodyweight.ts",
       "norm_label": "isunloadedexercise()"
     },
     {
@@ -13930,8 +13930,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_exercises_musclemap",
-      "community": 75,
-      "community_name": "settings/page.tsx",
+      "community": 58,
+      "community_name": "muscleMap.ts",
       "norm_label": "musclemap.ts"
     },
     {
@@ -13941,8 +13941,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_lib_exercises_musclemap_muscleentry",
-      "community": 75,
-      "community_name": "settings/page.tsx",
+      "community": 58,
+      "community_name": "muscleMap.ts",
       "norm_label": "muscleentry"
     },
     {
@@ -13952,8 +13952,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_lib_exercises_musclemap_dict",
-      "community": 75,
-      "community_name": "settings/page.tsx",
+      "community": 58,
+      "community_name": "muscleMap.ts",
       "norm_label": "dict"
     },
     {
@@ -13963,8 +13963,8 @@
       "source_location": "L137",
       "_origin": "ast",
       "id": "src_lib_exercises_musclemap_tokenize",
-      "community": 75,
-      "community_name": "settings/page.tsx",
+      "community": 58,
+      "community_name": "muscleMap.ts",
       "norm_label": "tokenize()"
     },
     {
@@ -13974,8 +13974,8 @@
       "source_location": "L145",
       "_origin": "ast",
       "id": "src_lib_exercises_musclemap_lookupmuscles",
-      "community": 75,
-      "community_name": "settings/page.tsx",
+      "community": 58,
+      "community_name": "muscleMap.ts",
       "norm_label": "lookupmuscles()"
     },
     {
@@ -13996,8 +13996,8 @@
       "source_location": "L171",
       "_origin": "ast",
       "id": "src_lib_exercises_musclemap_resolvemovers",
-      "community": 75,
-      "community_name": "settings/page.tsx",
+      "community": 58,
+      "community_name": "muscleMap.ts",
       "norm_label": "resolvemovers()"
     },
     {
@@ -14007,7 +14007,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_exercises_timed",
-      "community": 62,
+      "community": 25,
       "community_name": "eraForDate",
       "norm_label": "timed.ts"
     },
@@ -14018,7 +14018,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_lib_exercises_timed_istimedexercise",
-      "community": 62,
+      "community": 25,
       "community_name": "eraForDate",
       "norm_label": "istimedexercise()"
     },
@@ -14755,8 +14755,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_hooks_usecontinuum",
-      "community": 55,
-      "community_name": "logicalTodayISO",
+      "community": 13,
+      "community_name": "useBioStrips.ts",
       "norm_label": "usecontinuum.ts"
     },
     {
@@ -14766,8 +14766,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_lib_hooks_usecontinuum_continuumday",
-      "community": 107,
-      "community_name": "BrandHeader.tsx",
+      "community": 16,
+      "community_name": "MacroRings.tsx",
       "norm_label": "continuumday"
     },
     {
@@ -14777,8 +14777,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_lib_hooks_usecontinuum_isoadddays",
-      "community": 55,
-      "community_name": "logicalTodayISO",
+      "community": 13,
+      "community_name": "useBioStrips.ts",
       "norm_label": "isoadddays()"
     },
     {
@@ -14788,8 +14788,8 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "src_lib_hooks_usecontinuum_usecontinuum",
-      "community": 55,
-      "community_name": "logicalTodayISO",
+      "community": 13,
+      "community_name": "useBioStrips.ts",
       "norm_label": "usecontinuum()"
     },
     {
@@ -15019,8 +15019,8 @@
       "source_location": "L72",
       "_origin": "ast",
       "id": "src_lib_hooks_usedashboard_useensuretodayscore",
-      "community": 36,
-      "community_name": "client.ts",
+      "community": 88,
+      "community_name": "app/page.tsx",
       "norm_label": "useensuretodayscore()"
     },
     {
@@ -15129,8 +15129,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_lib_hooks_usedayvault_dayvaultdata",
-      "community": 107,
-      "community_name": "BrandHeader.tsx",
+      "community": 16,
+      "community_name": "MacroRings.tsx",
       "norm_label": "dayvaultdata"
     },
     {
@@ -15151,7 +15151,7 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "src_lib_hooks_usedayvault_usedayvault",
-      "community": 55,
+      "community": 3,
       "community_name": "logicalTodayISO",
       "norm_label": "usedayvault()"
     },
@@ -15294,7 +15294,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_hooks_useexercisebaselines",
-      "community": 62,
+      "community": 25,
       "community_name": "eraForDate",
       "norm_label": "useexercisebaselines.ts"
     },
@@ -15305,7 +15305,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_lib_hooks_useexercisebaselines_useexercisebaselines",
-      "community": 62,
+      "community": 25,
       "community_name": "eraForDate",
       "norm_label": "useexercisebaselines()"
     },
@@ -15514,7 +15514,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "src_lib_hooks_useexercisesethistory_useexercisesethistory",
-      "community": 62,
+      "community": 25,
       "community_name": "eraForDate",
       "norm_label": "useexercisesethistory()"
     },
@@ -15734,8 +15734,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_hooks_uselogicaldate",
-      "community": 170,
-      "community_name": "useTimelineWeeks.ts",
+      "community": 14,
+      "community_name": "weekStartOf",
       "norm_label": "uselogicaldate.ts"
     },
     {
@@ -15745,8 +15745,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_lib_hooks_uselogicaldate_msuntillocalmidnight",
-      "community": 170,
-      "community_name": "useTimelineWeeks.ts",
+      "community": 14,
+      "community_name": "weekStartOf",
       "norm_label": "msuntillocalmidnight()"
     },
     {
@@ -15756,8 +15756,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_lib_hooks_uselogicaldate_uselogicaldate",
-      "community": 170,
-      "community_name": "useTimelineWeeks.ts",
+      "community": 14,
+      "community_name": "weekStartOf",
       "norm_label": "uselogicaldate()"
     },
     {
@@ -15877,8 +15877,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_hooks_usenutrition",
-      "community": 107,
-      "community_name": "BrandHeader.tsx",
+      "community": 16,
+      "community_name": "MacroRings.tsx",
       "norm_label": "usenutrition.ts"
     },
     {
@@ -15888,8 +15888,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_lib_hooks_usenutrition_dailylog",
-      "community": 107,
-      "community_name": "BrandHeader.tsx",
+      "community": 16,
+      "community_name": "MacroRings.tsx",
       "norm_label": "dailylog"
     },
     {
@@ -15899,8 +15899,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_lib_hooks_usenutrition_todayiso",
-      "community": 107,
-      "community_name": "BrandHeader.tsx",
+      "community": 16,
+      "community_name": "MacroRings.tsx",
       "norm_label": "todayiso()"
     },
     {
@@ -15910,8 +15910,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_lib_hooks_usenutrition_daysagoiso",
-      "community": 107,
-      "community_name": "BrandHeader.tsx",
+      "community": 16,
+      "community_name": "MacroRings.tsx",
       "norm_label": "daysagoiso()"
     },
     {
@@ -15921,8 +15921,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "src_lib_hooks_usenutrition_usedailylogs",
-      "community": 107,
-      "community_name": "BrandHeader.tsx",
+      "community": 16,
+      "community_name": "MacroRings.tsx",
       "norm_label": "usedailylogs()"
     },
     {
@@ -15954,8 +15954,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_hooks_useplanphasegoals",
-      "community": 75,
-      "community_name": "settings/page.tsx",
+      "community": 68,
+      "community_name": "usePlanPhaseGoals.ts",
       "norm_label": "useplanphasegoals.ts"
     },
     {
@@ -15965,8 +15965,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_lib_hooks_useplanphasegoals_planphaseoverride",
-      "community": 75,
-      "community_name": "settings/page.tsx",
+      "community": 68,
+      "community_name": "usePlanPhaseGoals.ts",
       "norm_label": "planphaseoverride"
     },
     {
@@ -15976,8 +15976,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_lib_hooks_useplanphasegoals_planphasekey",
-      "community": 75,
-      "community_name": "settings/page.tsx",
+      "community": 68,
+      "community_name": "usePlanPhaseGoals.ts",
       "norm_label": "planphasekey()"
     },
     {
@@ -15987,8 +15987,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "src_lib_hooks_useplanphasegoals_row",
-      "community": 75,
-      "community_name": "settings/page.tsx",
+      "community": 68,
+      "community_name": "usePlanPhaseGoals.ts",
       "norm_label": "row"
     },
     {
@@ -15998,8 +15998,8 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "src_lib_hooks_useplanphasegoals_volumerow",
-      "community": 75,
-      "community_name": "settings/page.tsx",
+      "community": 68,
+      "community_name": "usePlanPhaseGoals.ts",
       "norm_label": "volumerow"
     },
     {
@@ -16009,8 +16009,8 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "src_lib_hooks_useplanphasegoals_rowtooverride",
-      "community": 75,
-      "community_name": "settings/page.tsx",
+      "community": 68,
+      "community_name": "usePlanPhaseGoals.ts",
       "norm_label": "rowtooverride()"
     },
     {
@@ -16020,8 +16020,8 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "src_lib_hooks_useplanphasegoals_extra_cols",
-      "community": 75,
-      "community_name": "settings/page.tsx",
+      "community": 68,
+      "community_name": "usePlanPhaseGoals.ts",
       "norm_label": "extra_cols"
     },
     {
@@ -16031,8 +16031,8 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "src_lib_hooks_useplanphasegoals_planphasedata",
-      "community": 75,
-      "community_name": "settings/page.tsx",
+      "community": 68,
+      "community_name": "usePlanPhaseGoals.ts",
       "norm_label": "planphasedata"
     },
     {
@@ -16042,8 +16042,8 @@
       "source_location": "L72",
       "_origin": "ast",
       "id": "src_lib_hooks_useplanphasegoals_empty",
-      "community": 75,
-      "community_name": "settings/page.tsx",
+      "community": 68,
+      "community_name": "usePlanPhaseGoals.ts",
       "norm_label": "empty"
     },
     {
@@ -16053,8 +16053,8 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "src_lib_hooks_useplanphasegoals_useplanphasegoals",
-      "community": 75,
-      "community_name": "settings/page.tsx",
+      "community": 68,
+      "community_name": "usePlanPhaseGoals.ts",
       "norm_label": "useplanphasegoals()"
     },
     {
@@ -16065,7 +16065,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_useprogressionqueue",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "eraForDate",
       "norm_label": "useprogressionqueue.ts"
     },
     {
@@ -16076,7 +16076,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_useprogressionqueue_progressionalert",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "eraForDate",
       "norm_label": "progressionalert"
     },
     {
@@ -16086,7 +16086,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "src_lib_hooks_useprogressionqueue_useprogressionqueue",
-      "community": 62,
+      "community": 25,
       "community_name": "eraForDate",
       "norm_label": "useprogressionqueue()"
     },
@@ -16494,7 +16494,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_usesentinelexport",
       "community": 33,
-      "community_name": "report/[id]/page.tsx",
+      "community_name": "phases.ts",
       "norm_label": "usesentinelexport.ts"
     },
     {
@@ -16505,7 +16505,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_usesentinelexport_sentinelreport",
       "community": 33,
-      "community_name": "report/[id]/page.tsx",
+      "community_name": "phases.ts",
       "norm_label": "sentinelreport"
     },
     {
@@ -16516,7 +16516,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_usesentinelexport_usesentinelreports",
       "community": 33,
-      "community_name": "report/[id]/page.tsx",
+      "community_name": "phases.ts",
       "norm_label": "usesentinelreports()"
     },
     {
@@ -16537,8 +16537,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_hooks_usesessiondetail",
-      "community": 14,
-      "community_name": "session/[id]/page.tsx",
+      "community": 40,
+      "community_name": "ExerciseBreakdown.tsx",
       "norm_label": "usesessiondetail.ts"
     },
     {
@@ -16570,8 +16570,8 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "src_lib_hooks_usesessiondetail_sessiondetail",
-      "community": 14,
-      "community_name": "session/[id]/page.tsx",
+      "community": 40,
+      "community_name": "ExerciseBreakdown.tsx",
       "norm_label": "sessiondetail"
     },
     {
@@ -16581,8 +16581,8 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "src_lib_hooks_usesessiondetail_rawset",
-      "community": 14,
-      "community_name": "session/[id]/page.tsx",
+      "community": 40,
+      "community_name": "ExerciseBreakdown.tsx",
       "norm_label": "rawset"
     },
     {
@@ -16592,8 +16592,8 @@
       "source_location": "L105",
       "_origin": "ast",
       "id": "src_lib_hooks_usesessiondetail_usesessiondetail",
-      "community": 14,
-      "community_name": "session/[id]/page.tsx",
+      "community": 40,
+      "community_name": "ExerciseBreakdown.tsx",
       "norm_label": "usesessiondetail()"
     },
     {
@@ -16725,7 +16725,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_usesessiontrends",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "eraForDate",
       "norm_label": "usesessiontrends.ts"
     },
     {
@@ -16736,7 +16736,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_usesessiontrends_setsatceilingof",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "eraForDate",
       "norm_label": "setsatceilingof()"
     },
     {
@@ -16747,7 +16747,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_usesessiontrends_exercisetrend",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "eraForDate",
       "norm_label": "exercisetrend"
     },
     {
@@ -16758,7 +16758,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_usesessiontrends_usesessiontrends",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "eraForDate",
       "norm_label": "usesessiontrends()"
     },
     {
@@ -16768,8 +16768,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_hooks_usesleepdebt",
-      "community": 55,
-      "community_name": "logicalTodayISO",
+      "community": 13,
+      "community_name": "useBioStrips.ts",
       "norm_label": "usesleepdebt.ts"
     },
     {
@@ -16779,8 +16779,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_lib_hooks_usesleepdebt_sleepdebt",
-      "community": 55,
-      "community_name": "logicalTodayISO",
+      "community": 13,
+      "community_name": "useBioStrips.ts",
       "norm_label": "sleepdebt"
     },
     {
@@ -16790,8 +16790,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_lib_hooks_usesleepdebt_computesleepdebt",
-      "community": 55,
-      "community_name": "logicalTodayISO",
+      "community": 13,
+      "community_name": "useBioStrips.ts",
       "norm_label": "computesleepdebt()"
     },
     {
@@ -16801,8 +16801,8 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "src_lib_hooks_usesleepdebt_usesleepdebt",
-      "community": 55,
-      "community_name": "logicalTodayISO",
+      "community": 13,
+      "community_name": "useBioStrips.ts",
       "norm_label": "usesleepdebt()"
     },
     {
@@ -17032,8 +17032,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_hooks_useuserdirectory",
-      "community": 55,
-      "community_name": "logicalTodayISO",
+      "community": 13,
+      "community_name": "useBioStrips.ts",
       "norm_label": "useuserdirectory.ts"
     },
     {
@@ -17043,8 +17043,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_lib_hooks_useuserdirectory_manageduser",
-      "community": 55,
-      "community_name": "logicalTodayISO",
+      "community": 13,
+      "community_name": "useBioStrips.ts",
       "norm_label": "manageduser"
     },
     {
@@ -17054,8 +17054,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_lib_hooks_useuserdirectory_useuserdirectory",
-      "community": 55,
-      "community_name": "logicalTodayISO",
+      "community": 13,
+      "community_name": "useBioStrips.ts",
       "norm_label": "useuserdirectory()"
     },
     {
@@ -17164,8 +17164,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_hooks_useweeksessions",
-      "community": 90,
-      "community_name": "workout/page.tsx",
+      "community": 77,
+      "community_name": "useWeekSessions.ts",
       "norm_label": "useweeksessions.ts"
     },
     {
@@ -17175,8 +17175,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_lib_hooks_useweeksessions_weeksessionrow",
-      "community": 90,
-      "community_name": "workout/page.tsx",
+      "community": 77,
+      "community_name": "useWeekSessions.ts",
       "norm_label": "weeksessionrow"
     },
     {
@@ -17186,8 +17186,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_lib_hooks_useweeksessions_weeksummary",
-      "community": 90,
-      "community_name": "workout/page.tsx",
+      "community": 77,
+      "community_name": "useWeekSessions.ts",
       "norm_label": "weeksummary"
     },
     {
@@ -17197,8 +17197,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "src_lib_hooks_useweeksessions_useweeksessions",
-      "community": 90,
-      "community_name": "workout/page.tsx",
+      "community": 77,
+      "community_name": "useWeekSessions.ts",
       "norm_label": "useweeksessions()"
     },
     {
@@ -17516,8 +17516,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_hooks_useweeklyvolume",
-      "community": 75,
-      "community_name": "settings/page.tsx",
+      "community": 17,
+      "community_name": "useWeeklyVolume.ts",
       "norm_label": "useweeklyvolume.ts"
     },
     {
@@ -17527,8 +17527,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_lib_hooks_useweeklyvolume_weeklyvolume",
-      "community": 75,
-      "community_name": "settings/page.tsx",
+      "community": 17,
+      "community_name": "useWeeklyVolume.ts",
       "norm_label": "weeklyvolume"
     },
     {
@@ -17538,8 +17538,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_lib_hooks_useweeklyvolume_useweeklyvolume",
-      "community": 123,
-      "community_name": "MuscleAnalyticsPanel.tsx",
+      "community": 17,
+      "community_name": "useWeeklyVolume.ts",
       "norm_label": "useweeklyvolume()"
     },
     {
@@ -17890,8 +17890,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_motion_springs",
-      "community": 4,
-      "community_name": "program.test.ts",
+      "community": 156,
+      "community_name": "ExceptionDayBanner.tsx",
       "norm_label": "springs.ts"
     },
     {
@@ -17902,7 +17902,7 @@
       "_origin": "ast",
       "id": "src_lib_motion_usehelixreducedmotion",
       "community": 156,
-      "community_name": "useHelixReducedMotion",
+      "community_name": "ExceptionDayBanner.tsx",
       "norm_label": "usehelixreducedmotion.ts"
     },
     {
@@ -17913,7 +17913,7 @@
       "_origin": "ast",
       "id": "src_lib_motion_usehelixreducedmotion_subscribetoboth",
       "community": 156,
-      "community_name": "useHelixReducedMotion",
+      "community_name": "ExceptionDayBanner.tsx",
       "norm_label": "subscribetoboth()"
     },
     {
@@ -17924,7 +17924,7 @@
       "_origin": "ast",
       "id": "src_lib_motion_usehelixreducedmotion_readreducedmotion",
       "community": 156,
-      "community_name": "useHelixReducedMotion",
+      "community_name": "ExceptionDayBanner.tsx",
       "norm_label": "readreducedmotion()"
     },
     {
@@ -17935,7 +17935,7 @@
       "_origin": "ast",
       "id": "src_lib_motion_usehelixreducedmotion_usehelixreducedmotion",
       "community": 156,
-      "community_name": "useHelixReducedMotion",
+      "community_name": "ExceptionDayBanner.tsx",
       "norm_label": "usehelixreducedmotion()"
     },
     {
@@ -17946,7 +17946,7 @@
       "_origin": "ast",
       "id": "src_lib_motion_usehelixreducedmotion_subscribetotransparency",
       "community": 156,
-      "community_name": "useHelixReducedMotion",
+      "community_name": "ExceptionDayBanner.tsx",
       "norm_label": "subscribetotransparency()"
     },
     {
@@ -17957,7 +17957,7 @@
       "_origin": "ast",
       "id": "src_lib_motion_usehelixreducedmotion_usereducedtransparency",
       "community": 156,
-      "community_name": "useHelixReducedMotion",
+      "community_name": "ExceptionDayBanner.tsx",
       "norm_label": "usereducedtransparency()"
     },
     {
@@ -17989,7 +17989,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_lib_native_haptics_tapsuccess",
-      "community": 62,
+      "community": 25,
       "community_name": "eraForDate",
       "norm_label": "tapsuccess()"
     },
@@ -18506,8 +18506,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_nutrition_exceptionday",
-      "community": 4,
-      "community_name": "program.test.ts",
+      "community": 91,
+      "community_name": "exceptionDay.ts",
       "norm_label": "exceptionday.ts"
     },
     {
@@ -18517,8 +18517,8 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "src_lib_nutrition_exceptionday_nutrition_exception_reasons",
-      "community": 4,
-      "community_name": "program.test.ts",
+      "community": 91,
+      "community_name": "exceptionDay.ts",
       "norm_label": "nutrition_exception_reasons"
     },
     {
@@ -18528,8 +18528,8 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "src_lib_nutrition_exceptionday_nutritionexceptionreason",
-      "community": 4,
-      "community_name": "program.test.ts",
+      "community": 91,
+      "community_name": "exceptionDay.ts",
       "norm_label": "nutritionexceptionreason"
     },
     {
@@ -18539,8 +18539,8 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "src_lib_nutrition_exceptionday_exceptionreason",
-      "community": 4,
-      "community_name": "program.test.ts",
+      "community": 91,
+      "community_name": "exceptionDay.ts",
       "norm_label": "exceptionreason()"
     },
     {
@@ -18550,8 +18550,8 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "src_lib_nutrition_exceptionday_isexceptionday",
-      "community": 4,
-      "community_name": "program.test.ts",
+      "community": 91,
+      "community_name": "exceptionDay.ts",
       "norm_label": "isexceptionday()"
     },
     {
@@ -18561,8 +18561,8 @@
       "source_location": "L76",
       "_origin": "ast",
       "id": "src_lib_nutrition_exceptionday_exceptiontag",
-      "community": 4,
-      "community_name": "program.test.ts",
+      "community": 91,
+      "community_name": "exceptionDay.ts",
       "norm_label": "exceptiontag()"
     },
     {
@@ -18660,8 +18660,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_nutrition_phase",
-      "community": 107,
-      "community_name": "BrandHeader.tsx",
+      "community": 16,
+      "community_name": "MacroRings.tsx",
       "norm_label": "phase.ts"
     },
     {
@@ -18671,8 +18671,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_lib_nutrition_phase_phase",
-      "community": 107,
-      "community_name": "BrandHeader.tsx",
+      "community": 16,
+      "community_name": "MacroRings.tsx",
       "norm_label": "phase"
     },
     {
@@ -18682,8 +18682,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_lib_nutrition_phase_derivephase",
-      "community": 107,
-      "community_name": "BrandHeader.tsx",
+      "community": 16,
+      "community_name": "MacroRings.tsx",
       "norm_label": "derivephase()"
     },
     {
@@ -18693,8 +18693,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_lib_nutrition_phase_phase_colors",
-      "community": 107,
-      "community_name": "BrandHeader.tsx",
+      "community": 16,
+      "community_name": "MacroRings.tsx",
       "norm_label": "phase_colors"
     },
     {
@@ -18704,8 +18704,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_lib_nutrition_phase_phase_meta",
-      "community": 107,
-      "community_name": "BrandHeader.tsx",
+      "community": 16,
+      "community_name": "MacroRings.tsx",
       "norm_label": "phase_meta"
     },
     {
@@ -18715,8 +18715,8 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "src_lib_nutrition_phase_phasedisplay",
-      "community": 107,
-      "community_name": "BrandHeader.tsx",
+      "community": 16,
+      "community_name": "MacroRings.tsx",
       "norm_label": "phasedisplay()"
     },
     {
@@ -18792,7 +18792,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_phases",
-      "community": 20,
+      "community": 33,
       "community_name": "phases.ts",
       "norm_label": "phases.ts"
     },
@@ -18804,7 +18804,7 @@
       "_origin": "ast",
       "id": "src_lib_phases_phasekind",
       "community": 33,
-      "community_name": "report/[id]/page.tsx",
+      "community_name": "phases.ts",
       "norm_label": "phasekind"
     },
     {
@@ -18815,7 +18815,7 @@
       "_origin": "ast",
       "id": "src_lib_phases_weekphase",
       "community": 20,
-      "community_name": "phases.ts",
+      "community_name": "ContinuumTimeline.tsx",
       "norm_label": "weekphase"
     },
     {
@@ -18825,7 +18825,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "src_lib_phases_phase_hex",
-      "community": 20,
+      "community": 33,
       "community_name": "phases.ts",
       "norm_label": "phase_hex"
     },
@@ -18836,7 +18836,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "src_lib_phases_phase_rgb",
-      "community": 20,
+      "community": 33,
       "community_name": "phases.ts",
       "norm_label": "phase_rgb"
     },
@@ -18847,7 +18847,7 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "src_lib_phases_ppl_hex",
-      "community": 20,
+      "community": 33,
       "community_name": "phases.ts",
       "norm_label": "ppl_hex"
     },
@@ -18858,7 +18858,7 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "src_lib_phases_phasehex",
-      "community": 20,
+      "community": 33,
       "community_name": "phases.ts",
       "norm_label": "phasehex()"
     },
@@ -18869,7 +18869,7 @@
       "source_location": "L77",
       "_origin": "ast",
       "id": "src_lib_phases_phasergb",
-      "community": 20,
+      "community": 33,
       "community_name": "phases.ts",
       "norm_label": "phasergb()"
     },
@@ -18880,7 +18880,7 @@
       "source_location": "L82",
       "_origin": "ast",
       "id": "src_lib_phases_phasecolor",
-      "community": 20,
+      "community": 33,
       "community_name": "phases.ts",
       "norm_label": "phasecolor()"
     },
@@ -18891,7 +18891,7 @@
       "source_location": "L105",
       "_origin": "ast",
       "id": "src_lib_phases_weekchip",
-      "community": 20,
+      "community": 33,
       "community_name": "phases.ts",
       "norm_label": "weekchip"
     },
@@ -18902,7 +18902,7 @@
       "source_location": "L117",
       "_origin": "ast",
       "id": "src_lib_phases_phasedef",
-      "community": 20,
+      "community": 33,
       "community_name": "phases.ts",
       "norm_label": "phasedef"
     },
@@ -18924,7 +18924,7 @@
       "source_location": "L152",
       "_origin": "ast",
       "id": "src_lib_phases_phase_rules",
-      "community": 20,
+      "community": 33,
       "community_name": "phases.ts",
       "norm_label": "phase_rules"
     },
@@ -18935,8 +18935,8 @@
       "source_location": "L158",
       "_origin": "ast",
       "id": "src_lib_phases_isoutc",
-      "community": 84,
-      "community_name": "FileSystemBrowser.tsx",
+      "community": 33,
+      "community_name": "phases.ts",
       "norm_label": "isoutc()"
     },
     {
@@ -18969,7 +18969,7 @@
       "_origin": "ast",
       "id": "src_lib_phases_getweekphase",
       "community": 33,
-      "community_name": "report/[id]/page.tsx",
+      "community_name": "phases.ts",
       "norm_label": "getweekphase()"
     },
     {
@@ -18980,7 +18980,7 @@
       "_origin": "ast",
       "id": "src_lib_phases_phasebadgestyle",
       "community": 33,
-      "community_name": "report/[id]/page.tsx",
+      "community_name": "phases.ts",
       "norm_label": "phasebadgestyle()"
     },
     {
@@ -19012,7 +19012,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_lib_programs_erafordate",
-      "community": 62,
+      "community": 25,
       "community_name": "eraForDate",
       "norm_label": "erafordate()"
     },
@@ -19023,8 +19023,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "src_lib_programs_era_meta",
-      "community": 90,
-      "community_name": "workout/page.tsx",
+      "community": 121,
+      "community_name": "programs.ts",
       "norm_label": "era_meta"
     },
     {
@@ -19089,7 +19089,7 @@
       "source_location": "L79",
       "_origin": "ast",
       "id": "src_lib_programs_program",
-      "community": 75,
+      "community": 21,
       "community_name": "settings/page.tsx",
       "norm_label": "program"
     },
@@ -19211,7 +19211,7 @@
       "_origin": "ast",
       "id": "src_lib_programs_programfordate",
       "community": 20,
-      "community_name": "phases.ts",
+      "community_name": "ContinuumTimeline.tsx",
       "norm_label": "programfordate()"
     },
     {
@@ -19397,8 +19397,8 @@
       "source_location": "L437",
       "_origin": "ast",
       "id": "src_lib_programs_getactiveprogramid",
-      "community": 121,
-      "community_name": "programs.ts",
+      "community": 17,
+      "community_name": "useWeeklyVolume.ts",
       "norm_label": "getactiveprogramid()"
     },
     {
@@ -19441,8 +19441,8 @@
       "source_location": "L473",
       "_origin": "ast",
       "id": "src_lib_programs_programdaylabel",
-      "community": 121,
-      "community_name": "programs.ts",
+      "community": 17,
+      "community_name": "useWeeklyVolume.ts",
       "norm_label": "programdaylabel()"
     },
     {
@@ -19629,7 +19629,7 @@
       "_origin": "ast",
       "id": "src_lib_reports_fmtv2_isfmtv2",
       "community": 33,
-      "community_name": "report/[id]/page.tsx",
+      "community_name": "phases.ts",
       "norm_label": "isfmtv2()"
     },
     {
@@ -19969,8 +19969,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_reports_weeknumber",
-      "community": 170,
-      "community_name": "useTimelineWeeks.ts",
+      "community": 14,
+      "community_name": "weekStartOf",
       "norm_label": "weeknumber.ts"
     },
     {
@@ -19980,8 +19980,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_lib_reports_weeknumber_weeknumberof",
-      "community": 170,
-      "community_name": "useTimelineWeeks.ts",
+      "community": 14,
+      "community_name": "weekStartOf",
       "norm_label": "weeknumberof()"
     },
     {
@@ -19991,8 +19991,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_lib_reports_weeknumber_weeknumberfordate",
-      "community": 170,
-      "community_name": "useTimelineWeeks.ts",
+      "community": 14,
+      "community_name": "weekStartOf",
       "norm_label": "weeknumberfordate()"
     },
     {
@@ -20003,7 +20003,7 @@
       "_origin": "ast",
       "id": "src_lib_reports_weeknumber_weeklabelof",
       "community": 33,
-      "community_name": "report/[id]/page.tsx",
+      "community_name": "phases.ts",
       "norm_label": "weeklabelof()"
     },
     {
@@ -20013,8 +20013,8 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "src_lib_reports_weeknumber_programweeknumber",
-      "community": 170,
-      "community_name": "useTimelineWeeks.ts",
+      "community": 14,
+      "community_name": "weekStartOf",
       "norm_label": "programweeknumber()"
     },
     {
@@ -21026,7 +21026,7 @@
       "_origin": "ast",
       "id": "src_lib_sessions_draft_issetcommitted",
       "community": 62,
-      "community_name": "eraForDate",
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "issetcommitted()"
     },
     {
@@ -21136,7 +21136,7 @@
       "_origin": "ast",
       "id": "src_lib_sessions_liveprs",
       "community": 62,
-      "community_name": "eraForDate",
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "liveprs.ts"
     },
     {
@@ -21158,7 +21158,7 @@
       "_origin": "ast",
       "id": "src_lib_sessions_liveprs_empty_live_prs",
       "community": 62,
-      "community_name": "eraForDate",
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "empty_live_prs"
     },
     {
@@ -21169,7 +21169,7 @@
       "_origin": "ast",
       "id": "src_lib_sessions_liveprs_liveprkey",
       "community": 62,
-      "community_name": "eraForDate",
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "liveprkey()"
     },
     {
@@ -21180,7 +21180,7 @@
       "_origin": "ast",
       "id": "src_lib_sessions_liveprs_liveprdigest",
       "community": 62,
-      "community_name": "eraForDate",
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "liveprdigest()"
     },
     {
@@ -21191,7 +21191,7 @@
       "_origin": "ast",
       "id": "src_lib_sessions_liveprs_computeliveprs",
       "community": 62,
-      "community_name": "eraForDate",
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "computeliveprs()"
     },
     {
@@ -21751,8 +21751,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_supabase_types",
-      "community": 12,
-      "community_name": "displayWeight",
+      "community": 190,
+      "community_name": "supabase/types.ts",
       "norm_label": "supabase/types.ts"
     },
     {
@@ -21762,8 +21762,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_lib_supabase_types_json",
-      "community": 12,
-      "community_name": "displayWeight",
+      "community": 190,
+      "community_name": "supabase/types.ts",
       "norm_label": "json"
     },
     {
@@ -21784,8 +21784,8 @@
       "source_location": "L379",
       "_origin": "ast",
       "id": "src_lib_supabase_types_tables",
-      "community": 12,
-      "community_name": "displayWeight",
+      "community": 190,
+      "community_name": "supabase/types.ts",
       "norm_label": "tables"
     },
     {
@@ -21806,8 +21806,8 @@
       "source_location": "L385",
       "_origin": "ast",
       "id": "src_lib_supabase_types_updaterow",
-      "community": 12,
-      "community_name": "displayWeight",
+      "community": 190,
+      "community_name": "supabase/types.ts",
       "norm_label": "updaterow"
     },
     {
@@ -21927,8 +21927,8 @@
       "source_location": "L72",
       "_origin": "ast",
       "id": "src_lib_theme_palette_alpha",
-      "community": 4,
-      "community_name": "program.test.ts",
+      "community": 156,
+      "community_name": "ExceptionDayBanner.tsx",
       "norm_label": "alpha()"
     },
     {
@@ -21938,7 +21938,7 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "src_lib_theme_palette_rgbtriple",
-      "community": 20,
+      "community": 33,
       "community_name": "phases.ts",
       "norm_label": "rgbtriple()"
     },
@@ -21982,8 +21982,8 @@
       "source_location": "L145",
       "_origin": "ast",
       "id": "src_lib_theme_palette_daycolor",
-      "community": 14,
-      "community_name": "session/[id]/page.tsx",
+      "community": 40,
+      "community_name": "ExerciseBreakdown.tsx",
       "norm_label": "daycolor()"
     },
     {
@@ -22015,8 +22015,8 @@
       "source_location": "L176",
       "_origin": "ast",
       "id": "src_lib_theme_palette_muscle",
-      "community": 14,
-      "community_name": "session/[id]/page.tsx",
+      "community": 40,
+      "community_name": "ExerciseBreakdown.tsx",
       "norm_label": "muscle"
     },
     {
@@ -22071,7 +22071,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "eraForDate",
       "norm_label": "ceilings.ts"
     },
     {
@@ -22082,7 +22082,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_repwindow",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "eraForDate",
       "norm_label": "repwindow"
     },
     {
@@ -22093,7 +22093,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_parserepwindow",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "eraForDate",
       "norm_label": "parserepwindow()"
     },
     {
@@ -22104,7 +22104,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_normalize",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "eraForDate",
       "norm_label": "normalize()"
     },
     {
@@ -22115,7 +22115,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_repwindowfor",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "eraForDate",
       "norm_label": "repwindowfor()"
     },
     {
@@ -22126,7 +22126,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_holdtargetfor",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "eraForDate",
       "norm_label": "holdtargetfor()"
     },
     {
@@ -22137,7 +22137,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_workingset",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "eraForDate",
       "norm_label": "workingset"
     },
     {
@@ -22148,7 +22148,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_clearedceiling",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "eraForDate",
       "norm_label": "clearedceiling()"
     },
     {
@@ -22159,7 +22159,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_loadrung",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "eraForDate",
       "norm_label": "loadrung"
     },
     {
@@ -22170,7 +22170,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_loadladder",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "eraForDate",
       "norm_label": "loadladder()"
     },
     {
@@ -22181,7 +22181,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_ladderstate",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "eraForDate",
       "norm_label": "ladderstate"
     },
     {
@@ -22192,7 +22192,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_ladderverdict",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "eraForDate",
       "norm_label": "ladderverdict"
     },
     {
@@ -22203,7 +22203,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_workloads",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "eraForDate",
       "norm_label": "workloads()"
     },
     {
@@ -22214,7 +22214,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_toploadcleared",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "eraForDate",
       "norm_label": "toploadcleared()"
     },
     {
@@ -22225,7 +22225,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_levelupcue",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "eraForDate",
       "norm_label": "levelupcue"
     },
     {
@@ -22236,7 +22236,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_progressionstate",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "eraForDate",
       "norm_label": "progressionstate"
     },
     {
@@ -22247,7 +22247,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_progressionverdict",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "eraForDate",
       "norm_label": "progressionverdict"
     },
     {
@@ -22258,7 +22258,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_timedprogressionverdict",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "eraForDate",
       "norm_label": "timedprogressionverdict()"
     },
     {
@@ -22324,7 +22324,7 @@
       "_origin": "ast",
       "id": "src_lib_training_landmarks",
       "community": 75,
-      "community_name": "settings/page.tsx",
+      "community_name": "landmarks.ts",
       "norm_label": "landmarks.ts"
     },
     {
@@ -22335,7 +22335,7 @@
       "_origin": "ast",
       "id": "src_lib_training_landmarks_program",
       "community": 75,
-      "community_name": "settings/page.tsx",
+      "community_name": "landmarks.ts",
       "norm_label": "program"
     },
     {
@@ -22345,8 +22345,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_lib_training_landmarks_programphase",
-      "community": 75,
-      "community_name": "settings/page.tsx",
+      "community": 17,
+      "community_name": "useWeeklyVolume.ts",
       "norm_label": "programphase"
     },
     {
@@ -22357,7 +22357,7 @@
       "_origin": "ast",
       "id": "src_lib_training_landmarks_landmark_muscles",
       "community": 75,
-      "community_name": "settings/page.tsx",
+      "community_name": "landmarks.ts",
       "norm_label": "landmark_muscles"
     },
     {
@@ -22367,8 +22367,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_lib_training_landmarks_landmarkmuscle",
-      "community": 14,
-      "community_name": "session/[id]/page.tsx",
+      "community": 40,
+      "community_name": "ExerciseBreakdown.tsx",
       "norm_label": "landmarkmuscle"
     },
     {
@@ -22379,7 +22379,7 @@
       "_origin": "ast",
       "id": "src_lib_training_landmarks_program_targets",
       "community": 75,
-      "community_name": "settings/page.tsx",
+      "community_name": "landmarks.ts",
       "norm_label": "program_targets"
     },
     {
@@ -22390,7 +22390,7 @@
       "_origin": "ast",
       "id": "src_lib_training_landmarks_programtargets",
       "community": 75,
-      "community_name": "settings/page.tsx",
+      "community_name": "landmarks.ts",
       "norm_label": "programtargets()"
     },
     {
@@ -22401,7 +22401,7 @@
       "_origin": "ast",
       "id": "src_lib_training_landmarks_tolandmarkmuscle",
       "community": 75,
-      "community_name": "settings/page.tsx",
+      "community_name": "landmarks.ts",
       "norm_label": "tolandmarkmuscle()"
     },
     {
@@ -22422,8 +22422,8 @@
       "source_location": "L126",
       "_origin": "ast",
       "id": "src_lib_training_landmarks_zone_meta",
-      "community": 75,
-      "community_name": "settings/page.tsx",
+      "community": 17,
+      "community_name": "useWeeklyVolume.ts",
       "norm_label": "zone_meta"
     },
     {
@@ -22434,7 +22434,7 @@
       "_origin": "ast",
       "id": "src_lib_training_landmarks_movertokens",
       "community": 75,
-      "community_name": "settings/page.tsx",
+      "community_name": "landmarks.ts",
       "norm_label": "movertokens"
     },
     {
@@ -22444,8 +22444,8 @@
       "source_location": "L174",
       "_origin": "ast",
       "id": "src_lib_training_landmarks_musclevolume",
-      "community": 75,
-      "community_name": "settings/page.tsx",
+      "community": 17,
+      "community_name": "useWeeklyVolume.ts",
       "norm_label": "musclevolume"
     },
     {
@@ -22456,7 +22456,7 @@
       "_origin": "ast",
       "id": "src_lib_training_landmarks_half",
       "community": 75,
-      "community_name": "settings/page.tsx",
+      "community_name": "landmarks.ts",
       "norm_label": "half()"
     },
     {
@@ -22467,7 +22467,7 @@
       "_origin": "ast",
       "id": "src_lib_training_landmarks_weeklyvolumebymuscle",
       "community": 75,
-      "community_name": "settings/page.tsx",
+      "community_name": "landmarks.ts",
       "norm_label": "weeklyvolumebymuscle()"
     },
     {
@@ -22478,7 +22478,7 @@
       "_origin": "ast",
       "id": "src_lib_training_landmarks_muscletonnage",
       "community": 75,
-      "community_name": "settings/page.tsx",
+      "community_name": "landmarks.ts",
       "norm_label": "muscletonnage"
     },
     {
@@ -22489,7 +22489,7 @@
       "_origin": "ast",
       "id": "src_lib_training_landmarks_weeklytonnagebymuscle",
       "community": 75,
-      "community_name": "settings/page.tsx",
+      "community_name": "landmarks.ts",
       "norm_label": "weeklytonnagebymuscle()"
     },
     {
@@ -22500,7 +22500,7 @@
       "_origin": "ast",
       "id": "src_lib_training_landmarks_landmark",
       "community": 75,
-      "community_name": "settings/page.tsx",
+      "community_name": "landmarks.ts",
       "norm_label": "landmark"
     },
     {
@@ -22511,7 +22511,7 @@
       "_origin": "ast",
       "id": "src_lib_training_landmarks_volume_landmarks",
       "community": 75,
-      "community_name": "settings/page.tsx",
+      "community_name": "landmarks.ts",
       "norm_label": "volume_landmarks"
     },
     {
@@ -22522,7 +22522,7 @@
       "_origin": "ast",
       "id": "src_lib_training_landmarks_landmarkfor",
       "community": 75,
-      "community_name": "settings/page.tsx",
+      "community_name": "landmarks.ts",
       "norm_label": "landmarkfor()"
     },
     {
@@ -22533,7 +22533,7 @@
       "_origin": "ast",
       "id": "src_lib_training_landmarks_bandzone",
       "community": 75,
-      "community_name": "settings/page.tsx",
+      "community_name": "landmarks.ts",
       "norm_label": "bandzone()"
     },
     {
@@ -22588,7 +22588,7 @@
       "_origin": "ast",
       "id": "src_lib_training_prengine_prbaselines",
       "community": 62,
-      "community_name": "eraForDate",
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "prbaselines"
     },
     {
@@ -22972,8 +22972,8 @@
       "source_location": "L88",
       "_origin": "ast",
       "id": "src_lib_types_workout_nutritionmode",
-      "community": 75,
-      "community_name": "settings/page.tsx",
+      "community": 68,
+      "community_name": "usePlanPhaseGoals.ts",
       "norm_label": "nutritionmode"
     },
     {
@@ -22983,8 +22983,8 @@
       "source_location": "L90",
       "_origin": "ast",
       "id": "src_lib_types_workout_nutritionpreset",
-      "community": 75,
-      "community_name": "settings/page.tsx",
+      "community": 68,
+      "community_name": "usePlanPhaseGoals.ts",
       "norm_label": "nutritionpreset"
     },
     {
@@ -23006,7 +23006,7 @@
       "_origin": "ast",
       "id": "src_lib_types_workout_plan_phases",
       "community": 75,
-      "community_name": "settings/page.tsx",
+      "community_name": "landmarks.ts",
       "norm_label": "plan_phases"
     },
     {
@@ -23017,7 +23017,7 @@
       "_origin": "ast",
       "id": "src_lib_types_workout_phasegoalsfor",
       "community": 75,
-      "community_name": "settings/page.tsx",
+      "community_name": "landmarks.ts",
       "norm_label": "phasegoalsfor()"
     },
     {
@@ -23071,8 +23071,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_utils_day",
-      "community": 55,
-      "community_name": "logicalTodayISO",
+      "community": 36,
+      "community_name": "client.ts",
       "norm_label": "day.ts"
     },
     {
@@ -23082,8 +23082,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_lib_utils_day_localparts",
-      "community": 55,
-      "community_name": "logicalTodayISO",
+      "community": 36,
+      "community_name": "client.ts",
       "norm_label": "localparts()"
     },
     {
@@ -23104,7 +23104,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "src_lib_utils_day_logicaltodayiso",
-      "community": 55,
+      "community": 3,
       "community_name": "logicalTodayISO",
       "norm_label": "logicaltodayiso()"
     },
@@ -23126,8 +23126,8 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "src_lib_utils_day_logicaldaysagoiso",
-      "community": 55,
-      "community_name": "logicalTodayISO",
+      "community": 13,
+      "community_name": "useBioStrips.ts",
       "norm_label": "logicaldaysagoiso()"
     },
     {
@@ -23226,7 +23226,7 @@
       "_origin": "ast",
       "id": "src_lib_utils_format",
       "community": 190,
-      "community_name": "SleepStages.tsx",
+      "community_name": "supabase/types.ts",
       "norm_label": "format.ts"
     },
     {
@@ -23237,7 +23237,7 @@
       "_origin": "ast",
       "id": "src_lib_utils_format_formatsleep",
       "community": 190,
-      "community_name": "SleepStages.tsx",
+      "community_name": "supabase/types.ts",
       "norm_label": "formatsleep()"
     },
     {
@@ -23248,7 +23248,7 @@
       "_origin": "ast",
       "id": "src_lib_utils_format_formatsleeplong",
       "community": 190,
-      "community_name": "SleepStages.tsx",
+      "community_name": "supabase/types.ts",
       "norm_label": "formatsleeplong()"
     },
     {
@@ -23259,7 +23259,7 @@
       "_origin": "ast",
       "id": "src_lib_utils_format_mltol",
       "community": 190,
-      "community_name": "SleepStages.tsx",
+      "community_name": "supabase/types.ts",
       "norm_label": "mltol()"
     },
     {
@@ -23270,7 +23270,7 @@
       "_origin": "ast",
       "id": "src_lib_utils_format_formatrelativetime",
       "community": 190,
-      "community_name": "SleepStages.tsx",
+      "community_name": "supabase/types.ts",
       "norm_label": "formatrelativetime()"
     },
     {
@@ -23456,8 +23456,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_utils_week",
-      "community": 170,
-      "community_name": "useTimelineWeeks.ts",
+      "community": 14,
+      "community_name": "weekStartOf",
       "norm_label": "week.ts"
     },
     {
@@ -23467,8 +23467,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_lib_utils_week_deviceweekstartday",
-      "community": 170,
-      "community_name": "useTimelineWeeks.ts",
+      "community": 14,
+      "community_name": "weekStartOf",
       "norm_label": "deviceweekstartday()"
     },
     {
@@ -23478,8 +23478,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_lib_utils_week_weekstartof",
-      "community": 170,
-      "community_name": "useTimelineWeeks.ts",
+      "community": 14,
+      "community_name": "weekStartOf",
       "norm_label": "weekstartof()"
     },
     {
@@ -23599,8 +23599,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_tests_bodyweight_test",
-      "community": 62,
-      "community_name": "eraForDate",
+      "community": 92,
+      "community_name": "bodyweight.ts",
       "norm_label": "bodyweight.test.ts"
     },
     {
@@ -23644,7 +23644,7 @@
       "_origin": "ast",
       "id": "src_tests_ceilings_test",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "eraForDate",
       "norm_label": "ceilings.test.ts"
     },
     {
@@ -23654,8 +23654,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_tests_chart_scale_test",
-      "community": 170,
-      "community_name": "useTimelineWeeks.ts",
+      "community": 14,
+      "community_name": "weekStartOf",
       "norm_label": "chart-scale.test.ts"
     },
     {
@@ -23742,8 +23742,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_tests_deck_render_test",
-      "community": 17,
-      "community_name": "deck-render.test.tsx",
+      "community": 62,
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "deck-render.test.tsx"
     },
     {
@@ -23753,8 +23753,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_tests_deck_render_test_committedcalls",
-      "community": 17,
-      "community_name": "deck-render.test.tsx",
+      "community": 62,
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "committedcalls"
     },
     {
@@ -23764,8 +23764,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_tests_deck_render_test_issetcommitted",
-      "community": 17,
-      "community_name": "deck-render.test.tsx",
+      "community": 62,
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "issetcommitted()"
     },
     {
@@ -23775,8 +23775,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_tests_deck_render_test_names",
-      "community": 17,
-      "community_name": "deck-render.test.tsx",
+      "community": 62,
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "names"
     },
     {
@@ -23786,8 +23786,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_tests_deck_render_test_deck",
-      "community": 17,
-      "community_name": "deck-render.test.tsx",
+      "community": 62,
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "deck()"
     },
     {
@@ -23797,8 +23797,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "src_tests_deck_render_test_keystroke",
-      "community": 17,
-      "community_name": "deck-render.test.tsx",
+      "community": 62,
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "keystroke()"
     },
     {
@@ -23808,8 +23808,8 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "src_tests_deck_render_test_noop",
-      "community": 17,
-      "community_name": "deck-render.test.tsx",
+      "community": 62,
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "noop()"
     },
     {
@@ -23819,8 +23819,8 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "src_tests_deck_render_test_props",
-      "community": 17,
-      "community_name": "deck-render.test.tsx",
+      "community": 62,
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "props"
     },
     {
@@ -23830,8 +23830,8 @@
       "source_location": "L83",
       "_origin": "ast",
       "id": "src_tests_deck_render_test_countrowrendersperkeystroke",
-      "community": 17,
-      "community_name": "deck-render.test.tsx",
+      "community": 62,
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "countrowrendersperkeystroke()"
     },
     {
@@ -23863,8 +23863,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_tests_exception_day_test",
-      "community": 4,
-      "community_name": "program.test.ts",
+      "community": 91,
+      "community_name": "exceptionDay.ts",
       "norm_label": "exception-day.test.ts"
     },
     {
@@ -23996,7 +23996,7 @@
       "_origin": "ast",
       "id": "src_tests_ingest_schema_test",
       "community": 190,
-      "community_name": "SleepStages.tsx",
+      "community_name": "supabase/types.ts",
       "norm_label": "ingest-schema.test.ts"
     },
     {
@@ -24106,7 +24106,7 @@
       "_origin": "ast",
       "id": "src_tests_landmarks_test",
       "community": 75,
-      "community_name": "settings/page.tsx",
+      "community_name": "landmarks.ts",
       "norm_label": "landmarks.test.ts"
     },
     {
@@ -24226,8 +24226,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_tests_muscle_taxonomy_test",
-      "community": 75,
-      "community_name": "settings/page.tsx",
+      "community": 58,
+      "community_name": "muscleMap.ts",
       "norm_label": "muscle-taxonomy.test.ts"
     },
     {
@@ -24436,7 +24436,7 @@
       "_origin": "ast",
       "id": "src_tests_plan_phase_test",
       "community": 75,
-      "community_name": "settings/page.tsx",
+      "community_name": "landmarks.ts",
       "norm_label": "plan-phase.test.ts"
     },
     {
@@ -24645,7 +24645,7 @@
       "_origin": "ast",
       "id": "src_tests_reduced_motion_bridge_test",
       "community": 156,
-      "community_name": "useHelixReducedMotion",
+      "community_name": "ExceptionDayBanner.tsx",
       "norm_label": "reduced-motion-bridge.test.tsx"
     },
     {
@@ -24656,7 +24656,7 @@
       "_origin": "ast",
       "id": "src_tests_reduced_motion_bridge_test_listener",
       "community": 156,
-      "community_name": "useHelixReducedMotion",
+      "community_name": "ExceptionDayBanner.tsx",
       "norm_label": "listener"
     },
     {
@@ -24667,7 +24667,7 @@
       "_origin": "ast",
       "id": "src_tests_reduced_motion_bridge_test_listeners",
       "community": 156,
-      "community_name": "useHelixReducedMotion",
+      "community_name": "ExceptionDayBanner.tsx",
       "norm_label": "listeners"
     },
     {
@@ -24678,7 +24678,7 @@
       "_origin": "ast",
       "id": "src_tests_reduced_motion_bridge_test_setospreference",
       "community": 156,
-      "community_name": "useHelixReducedMotion",
+      "community_name": "ExceptionDayBanner.tsx",
       "norm_label": "setospreference()"
     },
     {
@@ -24689,7 +24689,7 @@
       "_origin": "ast",
       "id": "src_tests_reduced_motion_bridge_test_probe",
       "community": 156,
-      "community_name": "useHelixReducedMotion",
+      "community_name": "ExceptionDayBanner.tsx",
       "norm_label": "probe()"
     },
     {
@@ -24700,7 +24700,7 @@
       "_origin": "ast",
       "id": "src_tests_reduced_motion_bridge_test_value",
       "community": 156,
-      "community_name": "useHelixReducedMotion",
+      "community_name": "ExceptionDayBanner.tsx",
       "norm_label": "value()"
     },
     {
@@ -24864,8 +24864,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_tests_set_format_test_s",
-      "community": 25,
-      "community_name": "ceilings.ts",
+      "community": 10,
+      "community_name": "draft.ts",
       "norm_label": "s()"
     },
     {
@@ -25029,8 +25029,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_tests_today_bands_test",
-      "community": 12,
-      "community_name": "displayWeight",
+      "community": 190,
+      "community_name": "supabase/types.ts",
       "norm_label": "today-bands.test.tsx"
     },
     {
@@ -25040,8 +25040,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_tests_today_bands_test_sleep",
-      "community": 12,
-      "community_name": "displayWeight",
+      "community": 190,
+      "community_name": "supabase/types.ts",
       "norm_label": "sleep()"
     },
     {
@@ -25062,7 +25062,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_tests_week_chip_test",
-      "community": 20,
+      "community": 33,
       "community_name": "phases.ts",
       "norm_label": "week-chip.test.ts"
     },
@@ -25766,8 +25766,8 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "src_lib_training_landmarks_muscle_color",
-      "community": 14,
-      "community_name": "session/[id]/page.tsx",
+      "community": 40,
+      "community_name": "ExerciseBreakdown.tsx",
       "norm_label": "muscle_color"
     },
     {
@@ -59091,7 +59091,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/nutrition/NutritionLogList.tsx",
-      "source_location": "L9",
+      "source_location": "L7",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_nutrition_nutritionloglist",
@@ -59102,7 +59102,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/nutrition/NutritionLogList.tsx",
-      "source_location": "L11",
+      "source_location": "L9",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_nutrition_nutritionloglist",
@@ -59113,7 +59113,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/nutrition/NutritionLogList.tsx",
-      "source_location": "L26",
+      "source_location": "L24",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_nutrition_nutritionloglist",
@@ -59124,7 +59124,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/nutrition/NutritionLogList.tsx",
-      "source_location": "L41",
+      "source_location": "L39",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_nutrition_nutritionloglist",
@@ -59135,7 +59135,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/nutrition/NutritionLogList.tsx",
-      "source_location": "L13",
+      "source_location": "L11",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_nutrition_nutritionloglist",
@@ -59195,30 +59195,6 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/components/nutrition/NutritionLogList.tsx",
-      "source_location": "L6",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_components_nutrition_nutritionloglist",
-      "target": "src_lib_nutrition_exceptionday",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "src/components/nutrition/NutritionLogList.tsx",
-      "source_location": "L6",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_components_nutrition_nutritionloglist",
-      "target": "src_lib_nutrition_exceptionday_isexceptionday",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "src/components/nutrition/NutritionLogList.tsx",
       "source_location": "L4",
       "weight": 1.0,
       "_origin": "ast",
@@ -59239,18 +59215,6 @@
       "confidence_score": 1.0
     },
     {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "src/components/nutrition/NutritionLogList.tsx",
-      "source_location": "L7",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_components_nutrition_nutritionloglist",
-      "target": "src_lib_theme_palette",
-      "confidence_score": 1.0
-    },
-    {
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -59267,24 +59231,12 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/components/nutrition/NutritionLogList.tsx",
-      "source_location": "L15",
+      "source_location": "L13",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_nutrition_nutritionloglist_phasetag",
       "target": "src_lib_nutrition_phase_phasedisplay",
       "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/components/nutrition/NutritionLogList.tsx",
-      "source_location": "L63",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_components_nutrition_nutritionloglist_nutritionloglist",
-      "target": "src_lib_nutrition_exceptionday_isexceptionday"
     },
     {
       "relation": "contains",

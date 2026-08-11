@@ -65,8 +65,8 @@
     "semantic_hash": "173952037e15718553035256a6b0f56a"
   },
   "ios/App/App/HelixViewController.swift": {
-    "mtime": 1786391337.9373658,
-    "ast_hash": "dce3973bb651683a41e2e90c8f12029d",
+    "mtime": 1786438195.245887,
+    "ast_hash": "d1590d75ade98503fab410fb8c837c04",
     "semantic_hash": ""
   },
   "ios/App/App/SecureStore.swift": {
@@ -120,8 +120,8 @@
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixWidgets.swift": {
-    "mtime": 1786391319.8635485,
-    "ast_hash": "a5876c17e599b37746aef943e5918225",
+    "mtime": 1786438195.2464368,
+    "ast_hash": "d21d1012814064454c64b895c630315b",
     "semantic_hash": ""
   },
   "ios/App/Shared/HelixSnapshot.swift": {
@@ -160,8 +160,8 @@
     "semantic_hash": ""
   },
   "public/sw.js": {
-    "mtime": 1786385413.9649475,
-    "ast_hash": "5a6ac12192943b6888c22d6aa57fd8bb",
+    "mtime": 1786439864.4975386,
+    "ast_hash": "aead6d4a5d811245cd2d86ebb945441c",
     "semantic_hash": ""
   },
   "scripts/generate-icons.mjs": {
@@ -185,8 +185,8 @@
     "semantic_hash": ""
   },
   "src/app/(dashboard)/nutrition/page.tsx": {
-    "mtime": 1786364957.2717018,
-    "ast_hash": "df45dab1c6beb4f3bd3df6c3d7c13828",
+    "mtime": 1786439439.3358326,
+    "ast_hash": "5d3e76245a870ed68004e5992c5035bf",
     "semantic_hash": ""
   },
   "src/app/(dashboard)/pathfinder/page.tsx": {
@@ -205,9 +205,9 @@
     "semantic_hash": ""
   },
   "src/app/api/compute-score/route.ts": {
-    "mtime": 1785163195.1702359,
-    "ast_hash": "03c273024ae140a35dac2c1297e3d5fc",
-    "semantic_hash": "03c273024ae140a35dac2c1297e3d5fc"
+    "mtime": 1786439075.9576228,
+    "ast_hash": "9af46f798831d9d9f7542bab1bcd14e7",
+    "semantic_hash": ""
   },
   "src/app/api/ingest/route.ts": {
     "mtime": 1784897420.2052488,
@@ -575,8 +575,8 @@
     "semantic_hash": ""
   },
   "src/components/nutrition/NutritionLogList.tsx": {
-    "mtime": 1786288406.3182707,
-    "ast_hash": "83df52b5a28662c321151a90e171ac48",
+    "mtime": 1786439932.9729445,
+    "ast_hash": "3784b07e3215f0bc1a204a8cef3e6e76",
     "semantic_hash": ""
   },
   "src/components/pathfinder/PathfinderTimeline.tsx": {
@@ -720,9 +720,9 @@
     "semantic_hash": ""
   },
   "src/lib/coach/insights.ts": {
-    "mtime": 1784897420.2391896,
-    "ast_hash": "e102ff5ffaeed233acd5a0f6a4536acd",
-    "semantic_hash": "e102ff5ffaeed233acd5a0f6a4536acd"
+    "mtime": 1786439557.6127295,
+    "ast_hash": "883f4c4e889b4d9784635eeb302efb4c",
+    "semantic_hash": ""
   },
   "src/lib/coach/reportSchema.ts": {
     "mtime": 1784897420.2394183,
@@ -810,9 +810,9 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useInsights.ts": {
-    "mtime": 1784897420.2459855,
-    "ast_hash": "e673db423c8eb8d5862df91171c1665b",
-    "semantic_hash": "e673db423c8eb8d5862df91171c1665b"
+    "mtime": 1786439509.5762537,
+    "ast_hash": "8f6aab704b97f7175bba226c3fbed11b",
+    "semantic_hash": ""
   },
   "src/lib/hooks/useLogger.ts": {
     "mtime": 1785503132.848367,
@@ -835,9 +835,9 @@
     "semantic_hash": "603132b231c7e94fb84fcdc73f3e4392"
   },
   "src/lib/hooks/useNutrition.ts": {
-    "mtime": 1784897420.2455955,
-    "ast_hash": "09910dae42b8fa64f39045a4fa222a54",
-    "semantic_hash": "09910dae42b8fa64f39045a4fa222a54"
+    "mtime": 1786439406.0476713,
+    "ast_hash": "a474b2452d2aadcb6a1840384f8fa568",
+    "semantic_hash": ""
   },
   "src/lib/hooks/usePlanPhaseGoals.ts": {
     "mtime": 1785505180.2632792,
@@ -925,8 +925,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useWeeklyLoop.ts": {
-    "mtime": 1786050489.9567158,
-    "ast_hash": "06e024d238df98942d288180dbc86989",
+    "mtime": 1786439720.6236515,
+    "ast_hash": "7cdc07f3f6f836302e026d7c008fd862",
     "semantic_hash": ""
   },
   "src/lib/hooks/useWeeklyVolume.ts": {
@@ -1010,8 +1010,8 @@
     "semantic_hash": ""
   },
   "src/lib/reports/weeklyExport.ts": {
-    "mtime": 1786309044.5100636,
-    "ast_hash": "0e6dc491c2974f26703e217c764e5499",
+    "mtime": 1786439764.3436365,
+    "ast_hash": "1caf5b599b67a93a85e8f0d80d06d5bf",
     "semantic_hash": ""
   },
   "src/lib/schedule/overrides.ts": {
@@ -1030,13 +1030,13 @@
     "semantic_hash": "9507ed55a8f71e2db085cb9d6cdf04ae"
   },
   "src/lib/scoring/score.ts": {
-    "mtime": 1785868236.3840842,
-    "ast_hash": "563ef64598a4f7293fe8fa09a016b7c8",
+    "mtime": 1786438870.7220633,
+    "ast_hash": "28ed67e5875068fa98caa5820fc0ec25",
     "semantic_hash": ""
   },
   "src/lib/scoring/types.ts": {
-    "mtime": 1786364838.8632228,
-    "ast_hash": "a77f00ec0b0df6ba2bd1d4c75d8a0822",
+    "mtime": 1786438889.9976869,
+    "ast_hash": "e7c201e28bbeee98b81eb1eabd04d0c7",
     "semantic_hash": ""
   },
   "src/lib/sessions/draft.ts": {
@@ -1305,8 +1305,8 @@
     "semantic_hash": "5dcb592b6e235d90eaffe401278184bd"
   },
   "src/tests/weekly-loop.test.ts": {
-    "mtime": 1786309077.0279188,
-    "ast_hash": "29ff8b4b1f2558dcc37162f70fdddd36",
+    "mtime": 1786439814.1705554,
+    "ast_hash": "c326eeaac4a506f4199fd5e24e469a84",
     "semantic_hash": ""
   },
   "src/tests/weigh-in.test.ts": {
@@ -1820,8 +1820,8 @@
     "semantic_hash": ""
   },
   "src/tests/macro-override.test.ts": {
-    "mtime": 1786049475.9618251,
-    "ast_hash": "af066c3626616c23185e5501892aa941",
+    "mtime": 1786439733.62105,
+    "ast_hash": "3f5d13334ba5ba73a54e1355a52c0469",
     "semantic_hash": ""
   },
   "scripts/reseed-muscle-groups.mts": {
@@ -1989,24 +1989,24 @@
     "ast_hash": "74a799574e3734cdb82696133a888e04",
     "semantic_hash": ""
   },
-  "ios/App/App/HelixLiveActivity.swift": {
-    "mtime": 1786391245.7509427,
-    "ast_hash": "3dba3955863a20ee6d96e23dafe1669a",
+  "src/lib/nutrition/exceptionDay.ts": {
+    "mtime": 1786438841.8986545,
+    "ast_hash": "a0c62ba5fa4e7e288a9c91309a31cfa7",
     "semantic_hash": ""
   },
-  "ios/App/HelixWidgets/HelixSessionLiveActivity.swift": {
-    "mtime": 1786391319.857626,
-    "ast_hash": "1f96aaf35ea3d2815a0b682dc00cf009",
+  "src/tests/exception-day.test.ts": {
+    "mtime": 1786438975.561696,
+    "ast_hash": "fe70cd6f533455f8d32d22ee06c38293",
     "semantic_hash": ""
   },
-  "ios/App/Shared/HelixSessionActivity.swift": {
-    "mtime": 1786391245.7538562,
-    "ast_hash": "467425af8e963a082963e5de675509ca",
+  "src/lib/hooks/useNutritionException.ts": {
+    "mtime": 1786439168.9039621,
+    "ast_hash": "73ab4e208867c144b5cb6a5c08822990",
     "semantic_hash": ""
   },
-  "src/lib/native/liveActivity.ts": {
-    "mtime": 1786391371.0871117,
-    "ast_hash": "7746a606dde56f4e9523f9831b7f7e3b",
+  "src/components/nutrition/ExceptionDayBanner.tsx": {
+    "mtime": 1786439273.7029872,
+    "ast_hash": "32ca33b1e2f6aa53ecadfd3c4e6fd2a7",
     "semantic_hash": ""
   }
 }
