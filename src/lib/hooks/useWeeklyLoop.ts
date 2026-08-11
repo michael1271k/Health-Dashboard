@@ -339,7 +339,7 @@ function dedupePrs(rows: Array<{ name: string; weightKg: number; reps: number }>
 // Every axis must be listed. `filter` DROPS anything missing here, so an
 // unlisted axis renders a PR line with no reason beside a pr_count that still
 // includes it — the export and the header disagreeing about the same session.
-const AXIS_ORDER: PrAxis[] = ['weight', 'reps', 'volume', 'e1rm', 'sessionVolume']
+const AXIS_ORDER: PrAxis[] = ['weight', 'reps', 'volume', 'e1rm']
 
 function axesBySession(rows: RangeData['prAxes']) {
   const byKey = new Map<string, Set<PrAxis>>()

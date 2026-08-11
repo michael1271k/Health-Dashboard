@@ -51,7 +51,7 @@ const jiti = createJiti(import.meta.url, {
 const { buildBaselines, detectSessionPrs, recordSets } = await jiti.import('../src/lib/training/prEngine.ts')
 const { isTimedExercise } = await jiti.import('../src/lib/exercises/timed.ts')
 const { repWindowFor } = await jiti.import('../src/lib/training/ceilings.ts')
-const { prFloorFor, truthFloor, truthAxisValue } = await jiti.import('../src/lib/training/prTruth.ts')
+const { prFloorFor } = await jiti.import('../src/lib/training/prTruth.ts')
 const { canonicalExerciseName } = await jiti.import('../src/lib/exercises/aliases.ts')
 
 // ── load everything, once ────────────────────────────────────────────────────
@@ -76,9 +76,24 @@ for (const r of sets) {
 
 console.log(`${sessions.length} sessions · ${sets.length} sets${DRY ? ' · DRY RUN' : ''}\n`)
 
+// PREFLIGHT — the reads must be COMPLETE, because an incomplete one deletes.
+// PostgREST truncates at a max-rows cap with no error and no flag, and a
+// truncated `sets` read means later sessions never enter the replay, never
+// enter `keep`, and their ledger rows are pruned as superseded. A silent read
+// failure would therefore present as data loss.
+const PGRST_CAP = 1000
+if (!sessions.length || !sets.length) { console.error('Empty read — refusing to run.'); process.exit(1) }
+for (const [label, n] of [['sessions', sessions.length], ['sets', sets.length]]) {
+  if (n % PGRST_CAP === 0) {
+    console.error(`${label} came back at exactly ${n} — that is the PostgREST page cap, so the read is truncated. Refusing to run.`)
+    process.exit(1)
+  }
+}
+
 // ── replay chronologically ───────────────────────────────────────────────────
 /** Every set seen so far, in the shape buildBaselines wants. Keyed by name so
  *  the ledger's exercise_key (also a name) lines up. */
+const dateStrOf = (s) => s.started_at.slice(0, 10)
 const seen = []
 const setUpdates = []       // { id, is_pr }
 const sessionUpdates = []   // { id, pr_count }
@@ -95,9 +110,17 @@ for (const s of sessions) {
   // very false positives it is meant to clear: sets only exist from 2026-07-16,
   // so a return to a pre-July load looks like a first-ever best. See prTruth.ts.
   const baselines = buildBaselines(seen, isTimedExercise, (k) => prFloorFor(canonicalExerciseName(k)))
-  const dateStr = s.started_at.slice(0, 10)
+  const dateStr = dateStrOf(s)
+  const unnamed = rows.filter((r) => !r.exercises?.name)
+  if (unnamed.length) {
+    console.error(`${dateStrOf(s)} — ${unnamed.length} set(s) with no exercise name. Refusing to guess a key.`)
+    process.exit(1)
+  }
   const candidates = rows.map((r) => {
-    const name = r.exercises?.name ?? r.exercise_id
+    // Canonicalised, matching `save.ts` — the ledger key is a canonical NAME.
+    // Keying raw here while the app keys canonical would file two rows for one
+    // lift the day an alias acquires a set, and the orphan is unprunable.
+    const name = canonicalExerciseName(r.exercises?.name ?? '')
     // Same window the app resolves, so the e1RM axis is gated identically.
     const win = repWindowFor(name, s.day_key ?? undefined)
     return {
@@ -161,15 +184,72 @@ for (const s of sessions) {
       key: candidates[i].key,
       weightKg: r.weight_kg, reps: r.reps, setType: r.set_type ?? null,
       side: r.side ?? null, pairId: r.pair_id ?? null,
-      // Groups rows into sessions for the sessionVolume axis. Without it that
-      // axis has no bar and can never fire.
-      sessionId: s.id,
       repFloor: candidates[i].repFloor,
     })
   }
 }
 
-console.log(`\n${flipped} set flags to change · ${sessionUpdates.length} pr_counts to change · ${ledger.length} ledger rows`)
+// ── what will actually be written, computed BEFORE the dry-run exit ──────────
+// A dry run that hides the deletes is not a dry run. `--dry-run` used to print
+// a count of intentions and stop, while the destructive half — the prune — was
+// computed only in the write path and never shown.
+//
+// DEFERRAL: a row is not written when the netted floor holds a higher value for
+// that axis. Detection already respects the floor, but the SEEDED era does not
+// go through detection — `detectSessionPrs` takes its axes straight from prSeed
+// for any session on or before 2026-07-31 — so a seeded win can carry a value
+// below the all-time best and would overwrite it. `prFloorFor`, not the raw
+// book: comparing against the book re-admits the Hevy-vs-Epley noise the floor
+// exists to reject, and would strand ~11 real e1RM records with no ledger row
+// while `is_pr` stayed true on their sets.
+const floorValue = (name, axis) => {
+  const f = prFloorFor(canonicalExerciseName(name))
+  if (!f) return null
+  return (axis === 'reps' ? (f.seconds ?? f.reps) : f[axis]) ?? null
+}
+const toWrite = []
+const deferred = []
+for (const row of ledger) {
+  const asserted = floorValue(row.exercise_key, row.axis)
+  if (asserted != null && asserted > row.value) { deferred.push({ row, asserted }); continue }
+  toWrite.push(row)
+}
+
+const keep = new Set(toWrite.map((r) => `${r.user_id}|${r.exercise_key}|${r.axis}`))
+const userIds = [...new Set(ledger.map((r) => r.user_id))]
+const { data: existing, error: readErr } = await db
+  .from('personal_records')
+  .select('user_id, exercise_key, axis, value, session_id')
+  .in('user_id', userIds)
+if (readErr) throw readErr
+
+// ASSERTED ROWS SURVIVE. A row with a null session_id was not derived from any
+// session — sync-pr-truth.mjs wrote it from the all-time book, and it exists
+// precisely BECAUSE no session in the database can produce it. Pruning
+// "anything the replay did not emit" would delete the entire vault on the first
+// run after seeding it, silently, and the false positives would come straight
+// back.
+const asserted = (existing ?? []).filter((r) => r.session_id == null)
+const toPrune = (existing ?? []).filter((r) => r.session_id != null
+  && !keep.has(`${r.user_id}|${r.exercise_key}|${r.axis}`))
+
+console.log(`\n${flipped} set flags to change · ${sessionUpdates.length} pr_counts to change`)
+console.log(`${toWrite.length} ledger rows to write · ${deferred.length} deferred to the asserted book · ${asserted.length} asserted rows kept`)
+console.log(`${toPrune.length} ledger rows to DELETE of ${existing?.length ?? 0} present`)
+if (deferred.length) {
+  console.log('\nDEFER (a seeded win below the all-time best)')
+  for (const { row, asserted: a } of deferred) console.log(`  ${row.exercise_key.padEnd(36)} ${row.axis.padEnd(8)} ${row.value} < ${a}`)
+}
+if (toPrune.length) {
+  console.log('\nDELETE')
+  for (const r of toPrune) console.log(`  ${r.exercise_key.padEnd(36)} ${r.axis.padEnd(8)} ${r.value}`)
+}
+
+// A prune that wants most of the table is a truncated read, not a rule change.
+if (existing?.length && toPrune.length > existing.length / 2) {
+  console.error(`\nRefusing to delete ${toPrune.length} of ${existing.length} ledger rows — that is a truncated read, not a rule change.`)
+  process.exit(1)
+}
 
 if (DRY) { console.log('\nDry run — nothing written.'); process.exit(0) }
 
@@ -187,60 +267,17 @@ for (const u of sessionUpdates) {
 
 // The ledger holds the CURRENT record per (user, exercise, axis). Replaying in
 // order means later sessions overwrite earlier ones, leaving the standing best.
-//
-// A row is NOT written when the asserted book holds a higher value for that
-// axis. Detection already respects the floor, but the SEEDED era does not go
-// through detection at all — `detectSessionPrs` takes its axes straight from
-// prSeed for any session on or before 2026-07-31 — so a seeded win can carry a
-// value below the all-time best and would overwrite it. Hip Thrust is the live
-// example: the seed files a 27.5 × 13 volume win (357.5) against an asserted
-// best of 27.5 × 14 (385). Skipping keeps the standing row correct and makes
-// this script and sync-pr-truth.mjs converge whichever order they run in.
-let deferred = 0
-for (const row of ledger) {
-  const assertedValue = truthAxisValue(truthFloor(canonicalExerciseName(row.exercise_key)), row.axis)
-  if (assertedValue != null && assertedValue > row.value) { deferred += 1; continue }
+for (const row of toWrite) {
   const { error } = await db.from('personal_records').upsert(row, { onConflict: 'user_id,exercise_key,axis' })
   if (error) throw error
 }
-if (deferred) console.log(`${deferred} ledger rows deferred to the asserted book (a seeded win below the all-time best)`)
 
-// PRUNE. The upsert above can only add or overwrite, so a rule change that
-// STOPS emitting an axis leaves the old row standing forever — and the Session
-// Report reads the ledger by session_id, so a superseded `e1rm` kept rendering
-// a gold chip for a record `pr_count` no longer counted. Anything the replay
-// did not produce is, by definition, not a current record.
-//
-// Scoped by user_id on BOTH the read and the delete. The natural key is
-// (user_id, exercise_key, axis), so deleting on exercise_key + axis alone would
-// take out every user who shares an exercise name — harmless on a single-user
-// database and catastrophic the moment it isn't.
-//
-// ASSERTED ROWS SURVIVE. A row with a null session_id was not derived from any
-// session — it was written by sync-pr-truth.mjs from the all-time book, and it
-// exists precisely BECAUSE no session in the database can produce it (the four
-// months that could are set-less). Pruning "anything the replay did not emit"
-// would therefore delete the entire vault on the first run after seeding it,
-// silently, and the false positives would come straight back.
-const keep = new Set(ledger.map((r) => `${r.user_id}|${r.exercise_key}|${r.axis}`))
-const userIds = [...new Set(ledger.map((r) => r.user_id))]
-const { data: existing, error: readErr } = await db
-  .from('personal_records')
-  .select('user_id, exercise_key, axis, session_id')
-  .in('user_id', userIds)
-if (readErr) throw readErr
-let pruned = 0
-let asserted = 0
-for (const row of existing ?? []) {
-  if (row.session_id == null) { asserted += 1; continue }
-  if (keep.has(`${row.user_id}|${row.exercise_key}|${row.axis}`)) continue
+for (const row of toPrune) {
   const { error } = await db.from('personal_records')
     .delete()
     .eq('user_id', row.user_id).eq('exercise_key', row.exercise_key).eq('axis', row.axis)
   if (error) throw error
-  pruned += 1
 }
-if (pruned) console.log(`${pruned} superseded ledger rows pruned`)
-if (asserted) console.log(`${asserted} asserted rows kept (session_id null — see sync-pr-truth.mjs)`)
+if (toPrune.length) console.log(`${toPrune.length} superseded ledger rows pruned`)
 
 console.log('Done.')

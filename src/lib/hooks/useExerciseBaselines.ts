@@ -31,7 +31,7 @@ export function useExerciseBaselines(names: string[], beforeDate: string | undef
         // `pair_id`/`side` are load-bearing for the volume axis: a unilateral
         // pair is ONE set scored at its weaker side, so the bar has to be built
         // that way too or a pair is judged against a per-side history.
-        .select('weight_kg, reps, est_1rm_kg, set_type, side, pair_id, session_id, exercises!inner(name), workout_sessions!inner(started_at)')
+        .select('weight_kg, reps, est_1rm_kg, set_type, side, pair_id, exercises!inner(name), workout_sessions!inner(started_at)')
         .in('exercises.name', names)
         .lt('workout_sessions.started_at', `${beforeDate}T00:00:00Z`)
         .limit(4000)
@@ -40,7 +40,6 @@ export function useExerciseBaselines(names: string[], beforeDate: string | undef
       const rows = ((data ?? []) as unknown as Array<{
         weight_kg: number | null; reps: number | null; est_1rm_kg: number | null
         set_type: string | null; side: string | null; pair_id: string | null
-        session_id: string | null
         exercises: { name: string }
       }>).map((r) => ({
         key: r.exercises.name,
@@ -50,7 +49,6 @@ export function useExerciseBaselines(names: string[], beforeDate: string | undef
         setType: r.set_type,
         side: r.side,
         pairId: r.pair_id,
-        sessionId: r.session_id,
       }))
 
       // Deliberately era-agnostic and NOT routine-scoped: a personal record is

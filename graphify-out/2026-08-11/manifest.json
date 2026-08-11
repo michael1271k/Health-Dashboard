@@ -925,8 +925,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useWeeklyLoop.ts": {
-    "mtime": 1786439720.6236515,
-    "ast_hash": "7cdc07f3f6f836302e026d7c008fd862",
+    "mtime": 1786458789.6398966,
+    "ast_hash": "1b701bcfa22a52ebe264ef3105d6dde3",
     "semantic_hash": ""
   },
   "src/lib/hooks/useWeeklyVolume.ts": {
@@ -1515,8 +1515,8 @@
     "semantic_hash": ""
   },
   "src/tests/pr-engine.test.ts": {
-    "mtime": 1786217905.6133885,
-    "ast_hash": "bf3aec7e15299b7e7e99911424f096dd",
+    "mtime": 1786458838.6061802,
+    "ast_hash": "43a5195a6ac924c78257a969a7ca5b10",
     "semantic_hash": ""
   },
   "src/tests/query-persistence.test.ts": {
@@ -2015,8 +2015,8 @@
     "semantic_hash": ""
   },
   "src/tests/pr-truth.test.ts": {
-    "mtime": 1786457551.529883,
-    "ast_hash": "3c4b1e58986e39837d1085439dd6cfb7",
+    "mtime": 1786458924.6609068,
+    "ast_hash": "c1ce56f8d8958698b6fa3fb7242bb7b7",
     "semantic_hash": ""
   },
   "scripts/sync-pr-truth.mjs": {

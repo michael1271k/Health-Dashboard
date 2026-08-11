@@ -317,7 +317,8 @@ export function truthAxisValue(rec: TruthRecord | undefined, axis: PrAxis): numb
     case 'weight':        return rec.weight
     case 'e1rm':          return rec.e1rm
     case 'volume':        return rec.setVolume ? rec.setVolume.kg * rec.setVolume.reps : undefined
-    case 'sessionVolume': return rec.sessionVolume
+    // `sessionVolume` is not a PrAxis — the axis was withdrawn (see prEngine).
+    // The figure survives on TruthRecord as reference and has no ledger row.
     case 'reps':          return rec.seconds ?? rec.reps
   }
 }

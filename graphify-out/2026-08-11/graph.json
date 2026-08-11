@@ -2611,8 +2611,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "package_dependencies_capacitor_app",
-      "community": 61,
-      "community_name": "dependencies",
+      "community": 183,
+      "community_name": "@capacitor/app",
       "norm_label": "@capacitor/app"
     },
     {
@@ -2622,8 +2622,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "capacitor_app",
-      "community": 61,
-      "community_name": "dependencies",
+      "community": 183,
+      "community_name": "@capacitor/app",
       "norm_label": "@capacitor/app"
     },
     {
@@ -2699,8 +2699,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "package_dependencies_capacitor_preferences",
-      "community": 183,
-      "community_name": "@capacitor/preferences",
+      "community": 61,
+      "community_name": "dependencies",
       "norm_label": "@capacitor/preferences"
     },
     {
@@ -2710,8 +2710,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "capacitor_preferences",
-      "community": 183,
-      "community_name": "@capacitor/preferences",
+      "community": 61,
+      "community_name": "dependencies",
       "norm_label": "@capacitor/preferences"
     },
     {
@@ -3260,8 +3260,8 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "package_devdependencies_capacitor_cli",
-      "community": 104,
-      "community_name": "@capacitor/cli",
+      "community": 50,
+      "community_name": "devDependencies",
       "norm_label": "@capacitor/cli"
     },
     {
@@ -3271,8 +3271,8 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "capacitor_cli",
-      "community": 104,
-      "community_name": "@capacitor/cli",
+      "community": 50,
+      "community_name": "devDependencies",
       "norm_label": "@capacitor/cli"
     },
     {
@@ -3590,8 +3590,8 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "package_devdependencies_eslint_config_next",
-      "community": 50,
-      "community_name": "devDependencies",
+      "community": 185,
+      "community_name": "eslint-config-next",
       "norm_label": "eslint-config-next"
     },
     {
@@ -3601,8 +3601,8 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "eslint_config_next",
-      "community": 50,
-      "community_name": "devDependencies",
+      "community": 185,
+      "community_name": "eslint-config-next",
       "norm_label": "eslint-config-next"
     },
     {
@@ -3942,8 +3942,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_l",
-      "community": 54,
-      "community_name": "constructor",
+      "community": 157,
+      "community_name": "delete",
       "norm_label": "l()"
     },
     {
@@ -3953,8 +3953,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_h",
-      "community": 54,
-      "community_name": "constructor",
+      "community": 157,
+      "community_name": "delete",
       "norm_label": "h()"
     },
     {
@@ -4074,8 +4074,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_deleteentry",
-      "community": 7,
-      "community_name": "sw.js",
+      "community": 157,
+      "community_name": "delete",
       "norm_label": "deleteentry()"
     },
     {
@@ -4085,8 +4085,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_getfirstentrybyqueuename",
-      "community": 96,
-      "community_name": "getDb",
+      "community": 7,
+      "community_name": "sw.js",
       "norm_label": "getfirstentrybyqueuename()"
     },
     {
@@ -4096,8 +4096,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_getlastentrybyqueuename",
-      "community": 96,
-      "community_name": "getDb",
+      "community": 7,
+      "community_name": "sw.js",
       "norm_label": "getlastentrybyqueuename()"
     },
     {
@@ -4107,8 +4107,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_getendentryfromindex",
-      "community": 96,
-      "community_name": "getDb",
+      "community": 7,
+      "community_name": "sw.js",
       "norm_label": "getendentryfromindex()"
     },
     {
@@ -4162,8 +4162,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_popentry",
-      "community": 7,
-      "community_name": "sw.js",
+      "community": 157,
+      "community_name": "delete",
       "norm_label": "popentry()"
     },
     {
@@ -4173,8 +4173,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_shiftentry",
-      "community": 7,
-      "community_name": "sw.js",
+      "community": 157,
+      "community_name": "delete",
       "norm_label": "shiftentry()"
     },
     {
@@ -4206,8 +4206,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_removeentry",
-      "community": 7,
-      "community_name": "sw.js",
+      "community": 157,
+      "community_name": "delete",
       "norm_label": "_removeentry()"
     },
     {
@@ -4349,8 +4349,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_registersync",
-      "community": 63,
-      "community_name": "clone",
+      "community": 54,
+      "community_name": "constructor",
       "norm_label": "registersync()"
     },
     {
@@ -4360,8 +4360,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_addsynclistener",
-      "community": 63,
-      "community_name": "clone",
+      "community": 54,
+      "community_name": "constructor",
       "norm_label": "_addsynclistener()"
     },
     {
@@ -4745,8 +4745,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_delete",
-      "community": 54,
-      "community_name": "constructor",
+      "community": 157,
+      "community_name": "delete",
       "norm_label": "delete()"
     },
     {
@@ -4778,8 +4778,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_isresponsedatefresh",
-      "community": 96,
-      "community_name": "getDb",
+      "community": 191,
+      "community_name": "cachedResponseWillBeUsed",
       "norm_label": "_isresponsedatefresh()"
     },
     {
@@ -4789,8 +4789,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_getdateheadertimestamp",
-      "community": 96,
-      "community_name": "getDb",
+      "community": 191,
+      "community_name": "cachedResponseWillBeUsed",
       "norm_label": "_getdateheadertimestamp()"
     },
     {
@@ -4811,8 +4811,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_deletecacheandmetadata",
-      "community": 54,
-      "community_name": "constructor",
+      "community": 157,
+      "community_name": "delete",
       "norm_label": "deletecacheandmetadata()"
     },
     {
@@ -4888,8 +4888,8 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "public_sw_handleactivate",
-      "community": 54,
-      "community_name": "constructor",
+      "community": 157,
+      "community_name": "delete",
       "norm_label": "handleactivate()"
     },
     {
@@ -8507,8 +8507,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_command_center_coachheadercard",
-      "community": 157,
-      "community_name": "CoachHeaderCard.tsx",
+      "community": 93,
+      "community_name": "useDayVault.ts",
       "norm_label": "coachheadercard.tsx"
     },
     {
@@ -8518,8 +8518,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_components_command_center_coachheadercard_statpatch",
-      "community": 157,
-      "community_name": "CoachHeaderCard.tsx",
+      "community": 93,
+      "community_name": "useDayVault.ts",
       "norm_label": "statpatch"
     },
     {
@@ -8529,8 +8529,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_components_command_center_coachheadercard_coachheadercard",
-      "community": 157,
-      "community_name": "CoachHeaderCard.tsx",
+      "community": 93,
+      "community_name": "useDayVault.ts",
       "norm_label": "coachheadercard()"
     },
     {
@@ -8540,8 +8540,8 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "src_components_command_center_coachheadercard_badge",
-      "community": 157,
-      "community_name": "CoachHeaderCard.tsx",
+      "community": 93,
+      "community_name": "useDayVault.ts",
       "norm_label": "badge()"
     },
     {
@@ -8551,8 +8551,8 @@
       "source_location": "L124",
       "_origin": "ast",
       "id": "src_components_command_center_coachheadercard_editbadge",
-      "community": 157,
-      "community_name": "CoachHeaderCard.tsx",
+      "community": 93,
+      "community_name": "useDayVault.ts",
       "norm_label": "editbadge()"
     },
     {
@@ -8584,8 +8584,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_command_center_datepickerpopover",
-      "community": 157,
-      "community_name": "CoachHeaderCard.tsx",
+      "community": 93,
+      "community_name": "useDayVault.ts",
       "norm_label": "datepickerpopover.tsx"
     },
     {
@@ -8595,8 +8595,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_components_command_center_datepickerpopover_wd",
-      "community": 157,
-      "community_name": "CoachHeaderCard.tsx",
+      "community": 93,
+      "community_name": "useDayVault.ts",
       "norm_label": "wd"
     },
     {
@@ -8606,8 +8606,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_components_command_center_datepickerpopover_iso",
-      "community": 157,
-      "community_name": "CoachHeaderCard.tsx",
+      "community": 93,
+      "community_name": "useDayVault.ts",
       "norm_label": "iso()"
     },
     {
@@ -8617,8 +8617,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_components_command_center_datepickerpopover_datepickerpopover",
-      "community": 157,
-      "community_name": "CoachHeaderCard.tsx",
+      "community": 93,
+      "community_name": "useDayVault.ts",
       "norm_label": "datepickerpopover()"
     },
     {
@@ -10135,8 +10135,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_day_scheduleshortcut",
-      "community": 93,
-      "community_name": "useDayVault.ts",
+      "community": 104,
+      "community_name": "useScheduleVersion",
       "norm_label": "scheduleshortcut.tsx"
     },
     {
@@ -10146,8 +10146,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_components_day_scheduleshortcut_scheduleshortcut",
-      "community": 93,
-      "community_name": "useDayVault.ts",
+      "community": 104,
+      "community_name": "useScheduleVersion",
       "norm_label": "scheduleshortcut()"
     },
     {
@@ -15283,8 +15283,8 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "src_lib_hooks_usedayvault_usedayvault",
-      "community": 93,
-      "community_name": "useDayVault.ts",
+      "community": 104,
+      "community_name": "useScheduleVersion",
       "norm_label": "usedayvault()"
     },
     {
@@ -15294,8 +15294,8 @@
       "source_location": "L118",
       "_origin": "ast",
       "id": "src_lib_hooks_usedayvault_useloggedsessiondates",
-      "community": 157,
-      "community_name": "CoachHeaderCard.tsx",
+      "community": 93,
+      "community_name": "useDayVault.ts",
       "norm_label": "useloggedsessiondates()"
     },
     {
@@ -16603,8 +16603,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_hooks_usescheduleversion",
-      "community": 93,
-      "community_name": "useDayVault.ts",
+      "community": 104,
+      "community_name": "useScheduleVersion",
       "norm_label": "usescheduleversion.ts"
     },
     {
@@ -16614,8 +16614,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_lib_hooks_usescheduleversion_usescheduleversion",
-      "community": 93,
-      "community_name": "useDayVault.ts",
+      "community": 104,
+      "community_name": "useScheduleVersion",
       "norm_label": "usescheduleversion()"
     },
     {
@@ -17524,7 +17524,7 @@
       "label": "AXIS_ORDER",
       "file_type": "code",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L339",
+      "source_location": "L342",
       "_origin": "ast",
       "id": "src_lib_hooks_useweeklyloop_axis_order",
       "community": 103,
@@ -17535,7 +17535,7 @@
       "label": "axesBySession()",
       "file_type": "code",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L341",
+      "source_location": "L344",
       "_origin": "ast",
       "id": "src_lib_hooks_useweeklyloop_axesbysession",
       "community": 103,
@@ -17546,7 +17546,7 @@
       "label": "toSessions()",
       "file_type": "code",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L357",
+      "source_location": "L360",
       "_origin": "ast",
       "id": "src_lib_hooks_useweeklyloop_tosessions",
       "community": 103,
@@ -17557,7 +17557,7 @@
       "label": "toBodyComp()",
       "file_type": "code",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L427",
+      "source_location": "L430",
       "_origin": "ast",
       "id": "src_lib_hooks_useweeklyloop_tobodycomp",
       "community": 103,
@@ -17568,7 +17568,7 @@
       "label": "toCardio()",
       "file_type": "code",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L487",
+      "source_location": "L490",
       "_origin": "ast",
       "id": "src_lib_hooks_useweeklyloop_tocardio",
       "community": 103,
@@ -17579,7 +17579,7 @@
       "label": "tonnageRows()",
       "file_type": "code",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L513",
+      "source_location": "L516",
       "_origin": "ast",
       "id": "src_lib_hooks_useweeklyloop_tonnagerows",
       "community": 103,
@@ -17590,7 +17590,7 @@
       "label": "weekPayload()",
       "file_type": "code",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L538",
+      "source_location": "L541",
       "_origin": "ast",
       "id": "src_lib_hooks_useweeklyloop_weekpayload",
       "community": 103,
@@ -17601,7 +17601,7 @@
       "label": "useWeeklyExport()",
       "file_type": "code",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L589",
+      "source_location": "L592",
       "_origin": "ast",
       "id": "src_lib_hooks_useweeklyloop_useweeklyexport",
       "community": 103,
@@ -17612,7 +17612,7 @@
       "label": "WeeklyAiSummary",
       "file_type": "code",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L633",
+      "source_location": "L636",
       "_origin": "ast",
       "id": "src_lib_hooks_useweeklyloop_weeklyaisummary",
       "community": 103,
@@ -17623,7 +17623,7 @@
       "label": "useWeeklyAiSummaries()",
       "file_type": "code",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L641",
+      "source_location": "L644",
       "_origin": "ast",
       "id": "src_lib_hooks_useweeklyloop_useweeklyaisummaries",
       "community": 21,
@@ -17634,7 +17634,7 @@
       "label": "useSaveWeeklyAiSummary()",
       "file_type": "code",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L657",
+      "source_location": "L660",
       "_origin": "ast",
       "id": "src_lib_hooks_useweeklyloop_usesaveweeklyaisummary",
       "community": 103,
@@ -19430,8 +19430,8 @@
       "source_location": "L366",
       "_origin": "ast",
       "id": "src_lib_programs_scheduledayfor",
-      "community": 93,
-      "community_name": "useDayVault.ts",
+      "community": 18,
+      "community_name": "useScheduleOverrides.ts",
       "norm_label": "scheduledayfor()"
     },
     {
@@ -19496,8 +19496,8 @@
       "source_location": "L412",
       "_origin": "ast",
       "id": "src_lib_programs_subscribeplanprefs",
-      "community": 93,
-      "community_name": "useDayVault.ts",
+      "community": 104,
+      "community_name": "useScheduleVersion",
       "norm_label": "subscribeplanprefs()"
     },
     {
@@ -19507,8 +19507,8 @@
       "source_location": "L417",
       "_origin": "ast",
       "id": "src_lib_programs_planprefsversion",
-      "community": 93,
-      "community_name": "useDayVault.ts",
+      "community": 104,
+      "community_name": "useScheduleVersion",
       "norm_label": "planprefsversion()"
     },
     {
@@ -20530,8 +20530,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_schedule_overrides",
-      "community": 10,
-      "community_name": "programs.ts",
+      "community": 104,
+      "community_name": "useScheduleVersion",
       "norm_label": "overrides.ts"
     },
     {
@@ -20541,8 +20541,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_lib_schedule_overrides_overridevalue",
-      "community": 10,
-      "community_name": "programs.ts",
+      "community": 104,
+      "community_name": "useScheduleVersion",
       "norm_label": "overridevalue"
     },
     {
@@ -20552,8 +20552,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "src_lib_schedule_overrides_listeners",
-      "community": 10,
-      "community_name": "programs.ts",
+      "community": 104,
+      "community_name": "useScheduleVersion",
       "norm_label": "listeners"
     },
     {
@@ -20563,8 +20563,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "src_lib_schedule_overrides_emit",
-      "community": 10,
-      "community_name": "programs.ts",
+      "community": 104,
+      "community_name": "useScheduleVersion",
       "norm_label": "emit()"
     },
     {
@@ -20574,8 +20574,8 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "src_lib_schedule_overrides_subscribescheduleoverrides",
-      "community": 93,
-      "community_name": "useDayVault.ts",
+      "community": 104,
+      "community_name": "useScheduleVersion",
       "norm_label": "subscribescheduleoverrides()"
     },
     {
@@ -20585,8 +20585,8 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "src_lib_schedule_overrides_scheduleoverridesversion",
-      "community": 93,
-      "community_name": "useDayVault.ts",
+      "community": 104,
+      "community_name": "useScheduleVersion",
       "norm_label": "scheduleoverridesversion()"
     },
     {
@@ -20596,8 +20596,8 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "src_lib_schedule_overrides_load",
-      "community": 10,
-      "community_name": "programs.ts",
+      "community": 104,
+      "community_name": "useScheduleVersion",
       "norm_label": "load()"
     },
     {
@@ -20607,8 +20607,8 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "src_lib_schedule_overrides_persist",
-      "community": 10,
-      "community_name": "programs.ts",
+      "community": 104,
+      "community_name": "useScheduleVersion",
       "norm_label": "persist()"
     },
     {
@@ -20618,8 +20618,8 @@
       "source_location": "L70",
       "_origin": "ast",
       "id": "src_lib_schedule_overrides_getscheduleoverride",
-      "community": 10,
-      "community_name": "programs.ts",
+      "community": 18,
+      "community_name": "useScheduleOverrides.ts",
       "norm_label": "getscheduleoverride()"
     },
     {
@@ -20629,8 +20629,8 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "src_lib_schedule_overrides_getallscheduleoverrides",
-      "community": 10,
-      "community_name": "programs.ts",
+      "community": 104,
+      "community_name": "useScheduleVersion",
       "norm_label": "getallscheduleoverrides()"
     },
     {
@@ -20640,8 +20640,8 @@
       "source_location": "L79",
       "_origin": "ast",
       "id": "src_lib_schedule_overrides_setscheduleoverridelocal",
-      "community": 10,
-      "community_name": "programs.ts",
+      "community": 104,
+      "community_name": "useScheduleVersion",
       "norm_label": "setscheduleoverridelocal()"
     },
     {
@@ -20651,8 +20651,8 @@
       "source_location": "L94",
       "_origin": "ast",
       "id": "src_lib_schedule_overrides_hydratescheduleoverrides",
-      "community": 10,
-      "community_name": "programs.ts",
+      "community": 104,
+      "community_name": "useScheduleVersion",
       "norm_label": "hydratescheduleoverrides()"
     },
     {
@@ -25062,8 +25062,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_tests_schedule_store_test",
-      "community": 10,
-      "community_name": "programs.ts",
+      "community": 104,
+      "community_name": "useScheduleVersion",
       "norm_label": "schedule-store.test.ts"
     },
     {
@@ -66662,7 +66662,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L492",
+      "source_location": "L495",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop_tocardio",
@@ -69571,7 +69571,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L522",
+      "source_location": "L525",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop_tonnagerows",
@@ -69583,7 +69583,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L552",
+      "source_location": "L555",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop_weekpayload",
@@ -80044,7 +80044,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L341",
+      "source_location": "L344",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop",
@@ -80055,7 +80055,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L339",
+      "source_location": "L342",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop",
@@ -80143,7 +80143,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L427",
+      "source_location": "L430",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop",
@@ -80154,7 +80154,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L487",
+      "source_location": "L490",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop",
@@ -80176,7 +80176,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L513",
+      "source_location": "L516",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop",
@@ -80187,7 +80187,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L357",
+      "source_location": "L360",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop",
@@ -80198,7 +80198,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L657",
+      "source_location": "L660",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop",
@@ -80209,7 +80209,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L641",
+      "source_location": "L644",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop",
@@ -80220,7 +80220,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L589",
+      "source_location": "L592",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop",
@@ -80242,7 +80242,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L633",
+      "source_location": "L636",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop",
@@ -80253,7 +80253,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L538",
+      "source_location": "L541",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop",
@@ -80697,7 +80697,7 @@
       "context": "export",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L693",
+      "source_location": "L696",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop",
@@ -80769,7 +80769,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L580",
+      "source_location": "L583",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop_weekpayload",
@@ -80793,7 +80793,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L604",
+      "source_location": "L607",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop_useweeklyexport",
@@ -80853,7 +80853,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L607",
+      "source_location": "L610",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop_useweeklyexport",
@@ -80889,7 +80889,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L545",
+      "source_location": "L548",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop_weekpayload",
@@ -80901,7 +80901,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L419",
+      "source_location": "L422",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop_tosessions",
@@ -80913,7 +80913,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L360",
+      "source_location": "L363",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop_tosessions",
@@ -80925,7 +80925,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L358",
+      "source_location": "L361",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop_tosessions",
@@ -80937,7 +80937,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L397",
+      "source_location": "L400",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop_tosessions",
@@ -80949,7 +80949,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L374",
+      "source_location": "L377",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop_tosessions",
@@ -80961,7 +80961,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L546",
+      "source_location": "L549",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop_weekpayload",
@@ -80973,7 +80973,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L578",
+      "source_location": "L581",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop_weekpayload",
@@ -80985,7 +80985,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L579",
+      "source_location": "L582",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop_weekpayload",
@@ -80997,7 +80997,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L523",
+      "source_location": "L526",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop_tonnagerows",
@@ -81009,7 +81009,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L576",
+      "source_location": "L579",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop_weekpayload",
@@ -81021,7 +81021,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L618",
+      "source_location": "L621",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop_useweeklyexport",
@@ -81033,7 +81033,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L570",
+      "source_location": "L573",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop_weekpayload",
@@ -81045,7 +81045,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L569",
+      "source_location": "L572",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop_weekpayload",
@@ -81057,7 +81057,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L576",
+      "source_location": "L579",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop_weekpayload",
@@ -81069,7 +81069,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L550",
+      "source_location": "L553",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop_weekpayload",
@@ -81081,7 +81081,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L566",
+      "source_location": "L569",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop_weekpayload",
@@ -81094,7 +81094,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L616",
+      "source_location": "L619",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop_useweeklyexport",
@@ -81106,7 +81106,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L622",
+      "source_location": "L625",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop_useweeklyexport",
@@ -81118,7 +81118,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L590",
+      "source_location": "L593",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop_useweeklyexport",
@@ -81130,7 +81130,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L607",
+      "source_location": "L610",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop_useweeklyexport",
@@ -81142,7 +81142,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/lib/hooks/useWeeklyLoop.ts",
-      "source_location": "L667",
+      "source_location": "L670",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useweeklyloop_usesaveweeklyaisummary",

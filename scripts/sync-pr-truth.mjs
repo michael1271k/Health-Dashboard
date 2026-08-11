@@ -58,15 +58,18 @@ const db = createClient(url, key, { auth: { persistSession: false } })
 const jiti = createJiti(import.meta.url, {
   alias: { '@': new URL('../src', import.meta.url).pathname },
 })
-// PR_TRUTH VERBATIM, not `prFloorFor`. The two answer different questions: the
-// floor is what DETECTION may not treat as new (netted against what Helix has
-// already logged, so it never erases a record set inside its own window), while
-// the ledger is what the record book DISPLAYS — which is the user's number, in
-// full, whether or not Helix can derive it.
-const { PR_TRUTH, PR_TRUTH_AS_OF, truthAxisValue } = await jiti.import('../src/lib/training/prTruth.ts')
+// `prFloorFor`, NOT the raw book. It returns only the axes Helix's own history
+// cannot reach — which is exactly the set of records that need an asserted row.
+//
+// Where Helix CAN derive a record it keeps the derived one, because that row is
+// attached to a real set on a real date and `useSessionDetail` can match it. The
+// book's figure for those is a rounding-level restatement of the same lift from
+// a different 1RM estimator (Hip Thrust 40.44 vs Helix's 40.3), and importing it
+// would trade a dated, attributable record for an undated, unattributable one.
+const { PR_TRUTH, PR_TRUTH_AS_OF, prFloorFor } = await jiti.import('../src/lib/training/prTruth.ts')
 
 /** Axes a record can stand on. `reps` covers unloaded reps and timed seconds. */
-const AXES = ['weight', 'reps', 'volume', 'e1rm', 'sessionVolume']
+const AXES = ['weight', 'reps', 'volume', 'e1rm']
 
 // ── who ──────────────────────────────────────────────────────────────────────
 // Scoped by user_id throughout: the natural key includes it, and a single-user
@@ -95,8 +98,11 @@ const unchanged = []
 const beaten = []
 
 for (const [name, rec] of Object.entries(PR_TRUTH)) {
+  const floor = prFloorFor(name)
   for (const axis of AXES) {
-    const asserted = truthAxisValue(rec, axis)
+    // `volume` is the per-set axis; the floor calls it `volume` too. `reps`
+    // carries an unloaded rep count or a hold's seconds, as everywhere else.
+    const asserted = axis === 'reps' ? (floor?.seconds ?? floor?.reps) : floor?.[axis]
     if (asserted == null) continue
 
     // The load and reps that made the record, where the book knows them. The
@@ -133,8 +139,17 @@ for (const [name, rec] of Object.entries(PR_TRUTH)) {
 }
 
 console.log(`user ${userId}`)
+const derivable = Object.keys(PR_TRUTH).length * AXES.length
 console.log(`${Object.keys(PR_TRUTH).length} exercises in the book · ${existingRows?.length ?? 0} ledger rows today`)
-console.log(`${writes.length} to write · ${unchanged.length} already exact · ${beaten.length} already beaten by a logged record${DRY ? ' · DRY RUN' : ''}\n`)
+console.log(`${writes.length} to write · ${unchanged.length} already exact · ${beaten.length} already beaten by a logged record`)
+console.log(`(of ${derivable} possible axes, only those Helix cannot derive get an asserted row)${DRY ? ' · DRY RUN' : ''}\n`)
+
+// PREFLIGHT. The write set is bounded by a committed constant, but a zero here
+// means the book failed to load and a full house means the netting broke.
+if (writes.length > derivable / 2) {
+  console.error(`Refusing to write ${writes.length} of ${derivable} axes — prFloorFor is not netting against PR_LOGGED.`)
+  process.exit(1)
+}
 
 if (writes.length) {
   console.log('WRITE')
@@ -167,8 +182,11 @@ if (aErr) throw aErr
 const post = new Map((after ?? []).map((r) => [`${r.exercise_key}|${r.axis}`, Number(r.value)]))
 let short = 0
 for (const [name, rec] of Object.entries(PR_TRUTH)) {
+  const floor = prFloorFor(name)
   for (const axis of AXES) {
-    const asserted = truthAxisValue(rec, axis)
+    // `volume` is the per-set axis; the floor calls it `volume` too. `reps`
+    // carries an unloaded rep count or a hold's seconds, as everywhere else.
+    const asserted = axis === 'reps' ? (floor?.seconds ?? floor?.reps) : floor?.[axis]
     if (asserted == null) continue
     const got = post.get(`${name}|${axis}`)
     if (got == null || got < asserted) {

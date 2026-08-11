@@ -24,12 +24,15 @@ import { seededAxesFor, isAssertedSession } from './prSeed'
 import type { PrFloor } from './prTruth'
 
 /**
- * `sessionVolume` is the one SESSION-level axis: the exercise's whole tonnage
- * for the day, against the best day it has ever had. Everything else is decided
- * per set. It is detected in a pass of its own after `supersedeWithinSession`
- * and attached to the set that completed the total — see `detectSessionPrs`.
+ * FOUR AXES, and a session total is deliberately not one of them — see the note
+ * above `detectSetPrs`. A `sessionVolume` axis was built on 2026-08-11 and
+ * withdrawn the same day: on the real history it fired on 14 sets, almost all
+ * of them ordinary sessions where no load rose and no set was a best. Four
+ * trophies landed on 2026-08-10 alone. Session volume is still SHOWN — the
+ * exercise-history screen has a "Best session vol" tile — it just is not a
+ * record. The asserted figures live on in `prTruth.ts` as reference.
  */
-export type PrAxis = 'weight' | 'reps' | 'volume' | 'e1rm' | 'sessionVolume'
+export type PrAxis = 'weight' | 'reps' | 'volume' | 'e1rm'
 
 /** A historical set row, pre-session. `est1rm` may be absent — it's recomputed. */
 export interface BaselineSetRow {
@@ -52,13 +55,6 @@ export interface BaselineSetRow {
   /** Unilateral pairing: L and R of ONE physical set share a `pairId`. */
   pairId?: string | null
   side?: string | null
-  /**
-   * Which session this row belongs to. Only the `sessionVolume` axis needs it —
-   * every other bar is a property of a single set and does not care where the
-   * set came from. Rows without it simply cannot contribute a session-volume
-   * bar; they still build every per-set bar normally.
-   */
-  sessionId?: string | null
 }
 
 /**
@@ -134,8 +130,6 @@ export interface PrBaselines {
   bestSeconds: Array<[string, number]>
   /** Heaviest SINGLE-SET tonnage (weight × reps) ever logged for the exercise. */
   bestSetVolume: Array<[string, number]>
-  /** Heaviest tonnage across ONE SESSION for the exercise. Needs `sessionId`. */
-  bestSessionVolume: Array<[string, number]>
 }
 
 export interface PrIndex {
@@ -144,12 +138,10 @@ export interface PrIndex {
   bestE1rm: Map<string, number>
   bestSeconds: Map<string, number>
   bestSetVolume: Map<string, number>
-  bestSessionVolume: Map<string, number>
 }
 
 export const EMPTY_BASELINES: PrBaselines = {
   bestWeight: [], bestRepsAtWeight: [], bestE1rm: [], bestSeconds: [], bestSetVolume: [],
-  bestSessionVolume: [],
 }
 
 /**
@@ -181,16 +173,12 @@ export function buildBaselines(
   const bestE1rm = new Map<string, number>()
   const bestSeconds = new Map<string, number>()
   const bestSetVolume = new Map<string, number>()
-  const bestSessionVolume = new Map<string, number>()
 
   const bump = (m: Map<string, number>, k: string, v: number) => m.set(k, Math.max(m.get(k) ?? 0, v))
 
   // The volume bar has to be built under the SAME unilateral rule detection
   // scores candidates by, or a pair is judged against a per-side history.
   const credits = volumeCredits(rows)
-
-  // `${key}|${sessionId}` → tonnage, folded down to a per-key max afterwards.
-  const perSession = new Map<string, { key: string; total: number }>()
 
   rows.forEach((r, i) => {
     // Symmetric with `absorbSet`: a row that cannot WIN an axis must not raise
@@ -208,16 +196,7 @@ export function buildBaselines(
     if (w != null && reps != null) {
       bump(bestRepsAtWeight, `${r.key}|${w}`, reps)
       const vol = credits[i]
-      if (vol != null) {
-        bump(bestSetVolume, r.key, vol)
-        // Same credits as the per-set bar, so a session of unilateral pairs is
-        // summed once per physical set rather than once per side.
-        if (r.sessionId) {
-          const sk = `${r.key}|${r.sessionId}`
-          const held = perSession.get(sk)
-          perSession.set(sk, { key: r.key, total: (held?.total ?? 0) + vol })
-        }
-      }
+      if (vol != null) bump(bestSetVolume, r.key, vol)
       if (e1rmEligible(reps, r.repFloor)) {
         // `||`, not `??`: rows written before Epley returned null for unloaded
         // work hold a stored est_1rm_kg of exactly 0, which is not an estimate.
@@ -226,8 +205,6 @@ export function buildBaselines(
       }
     }
   })
-
-  for (const { key, total } of perSession.values()) bump(bestSessionVolume, key, total)
 
   // The asserted floor, folded in last. `bump` is a max, so a key ends at
   // max(logged, asserted) and neither source can lower the other.
@@ -238,14 +215,13 @@ export function buildBaselines(
   if (floorFor) {
     for (const key of new Set([
       ...bestWeight.keys(), ...bestSeconds.keys(), ...bestSetVolume.keys(),
-      ...bestE1rm.keys(), ...bestSessionVolume.keys(),
+      ...bestE1rm.keys(),
     ])) {
       const t = floorFor(key)
       if (!t) continue
       if (t.weight != null) bump(bestWeight, key, t.weight)
       if (t.e1rm != null) bump(bestE1rm, key, t.e1rm)
       if (t.volume != null) bump(bestSetVolume, key, t.volume)
-      if (t.sessionVolume != null) bump(bestSessionVolume, key, t.sessionVolume)
       if (t.seconds != null) bump(bestSeconds, key, t.seconds)
       // Unloaded rep records are per-LOAD, and the only load they have is zero.
       if (t.reps != null) bump(bestRepsAtWeight, `${key}|0`, t.reps)
@@ -258,7 +234,6 @@ export function buildBaselines(
     bestE1rm: [...bestE1rm],
     bestSeconds: [...bestSeconds],
     bestSetVolume: [...bestSetVolume],
-    bestSessionVolume: [...bestSessionVolume],
   }
 }
 
@@ -271,7 +246,6 @@ export function baselineIndex(b: PrBaselines | undefined): PrIndex {
     bestE1rm: m(b?.bestE1rm),
     bestSeconds: m(b?.bestSeconds),
     bestSetVolume: m(b?.bestSetVolume),
-    bestSessionVolume: m(b?.bestSessionVolume),
   }
 }
 
@@ -434,9 +408,6 @@ function axisValue(axis: PrAxis, set: PrCandidateSet, volumeKg: number | null | 
   if (axis === 'weight') return set.weightKg
   if (axis === 'reps') return set.reps
   if (axis === 'volume') return volumeKg ?? set.weightKg * set.reps
-  // `sessionVolume` never reaches here — it is attached after supersession, and
-  // it is already unique per exercise, so there is no per-set contest to settle.
-  if (axis === 'sessionVolume') return 0
   return est1rm ?? 0
 }
 
@@ -501,44 +472,8 @@ export interface SessionPrResult {
   axesByKey: Map<string, Set<PrAxis>>
   /** Total distinct axis-PRs across exercises. Matches `workout_sessions.pr_count`. */
   prCount: number
-  /** This session's tonnage per exercise, under the unilateral collapse. */
-  sessionVolumeByKey: Map<string, number>
 }
 
-/**
- * The session's tonnage per exercise, and the LAST set that contributed to it.
- *
- * Eligibility mirrors every other axis: warm-ups and drop sets are excluded, so
- * the total the axis is judged on is the working total. Credits rather than raw
- * `weight × reps`, so a unilateral pair counts once as one physical set — the
- * same rule the per-set volume bar is built under. Timed holds are skipped:
- * their weight is zero, so their tonnage is zero and the axis is meaningless.
- */
-function sessionVolumes(
-  sets: readonly PrCandidateSet[],
-  credits: ReadonlyArray<number | null>,
-): Map<string, { total: number; bestIndex: number }> {
-  const out = new Map<string, { total: number; bestIndex: number; bestVol: number }>()
-  sets.forEach((s, i) => {
-    if (isPrIneligible(s.setType) || s.timed) return
-    const vol = credits[i]
-    if (vol == null) return
-    const held = out.get(s.key)
-    // The BIGGEST contributing set, not the last. Pinning a session-level axis
-    // to whichever set happened to come last is the second failure mode that
-    // killed the old session-total volume axis (see the note above
-    // `detectSetPrs`): Hack Squat's badge landed on 55 kg × 11 while 55 kg × 12
-    // sat directly above it, unmarked. `>=` so a later equal set wins, matching
-    // `recordSets` — loads ascend, so the last claimant is the top set.
-    const better = held == null || vol >= held.bestVol
-    out.set(s.key, {
-      total: (held?.total ?? 0) + vol,
-      bestIndex: better ? i : held.bestIndex,
-      bestVol: better ? vol : held.bestVol,
-    })
-  })
-  return out
-}
 
 /**
  * Run a whole session in order. This is the single entry point both callers use,
@@ -576,23 +511,6 @@ export function detectSessionPrs(sets: readonly PrCandidateSet[], baselines: PrB
   // where the record book — not the arithmetic — decides what counted.
   if (!seeded) supersedeWithinSession(sets, perSet, credits)
 
-  // ── The one session-level axis ─────────────────────────────────────────────
-  // It cannot be detected per set, because until the last set is in you do not
-  // know the total. So it runs AFTER supersession, which is a per-set contest
-  // this axis is not in: it attaches to exactly one set per exercise already —
-  // the last one that contributed — so there is nothing to arbitrate.
-  //
-  // Suppressed for a seeded session for the same reason every other axis is:
-  // there, the record book decides what counted, not the arithmetic.
-  const volumes = sessionVolumes(sets, credits)
-  const sessionVolumeByKey = new Map<string, number>()
-  for (const [key, { total, bestIndex }] of volumes) {
-    sessionVolumeByKey.set(key, total)
-    if (seeded) continue
-    const best = idx.bestSessionVolume.get(key)
-    if (best != null && total > best) perSet[bestIndex].axes.push('sessionVolume')
-    idx.bestSessionVolume.set(key, Math.max(best ?? 0, total))
-  }
 
   // Rebuilt from the per-set axes so `pr_count`, `is_pr` and the ledger can
   // never disagree about what counted. Every axis now lives on a set, so there
@@ -606,7 +524,7 @@ export function detectSessionPrs(sets: readonly PrCandidateSet[], baselines: PrB
   })
 
   const prCount = [...axesByKey.values()].reduce((n, s) => n + s.size, 0)
-  return { perSet, axesByKey, prCount, sessionVolumeByKey }
+  return { perSet, axesByKey, prCount }
 }
 
 /**
@@ -676,11 +594,6 @@ export function recordSets(
       const value = axis === 'weight' ? s.weightKg
         : axis === 'reps' ? s.reps
         : axis === 'volume' ? (credits[i] ?? s.weightKg * s.reps)
-        // The whole day's tonnage for the exercise, not this set's. `weightKg`
-        // and `reps` on the row still describe the set the axis is filed
-        // against — the last one that contributed — which is what makes the
-        // ledger row readable as "the session that ended here".
-        : axis === 'sessionVolume' ? (result.sessionVolumeByKey.get(s.key) ?? 0)
         : (d.est1rm ?? 0)                       // e1rm
       put(s.key, axis, { weightKg: s.weightKg, reps: s.reps, value })
     }
@@ -699,6 +612,5 @@ export function recordSets(
  */
 export function prAxisLabel(axis: PrAxis, timed = false): string {
   if (axis === 'reps') return timed ? 'Duration' : 'Reps'
-  if (axis === 'sessionVolume') return 'Session volume'
   return axis === 'weight' ? 'Weight' : axis === 'volume' ? 'Volume' : '1RM'
 }

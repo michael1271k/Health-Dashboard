@@ -3,8 +3,8 @@ import { PR_TRUTH, PR_TRUTH_AS_OF, PR_LOGGED, truthFloor, truthAxisValue, prFloo
 import { canonicalExerciseName } from '@/lib/exercises/aliases'
 import { SEEDED_PRS } from '@/lib/training/prSeed'
 import {
-  buildBaselines, detectSessionPrs, prAxisLabel,
-  type BaselineSetRow, type PrCandidateSet, type PrAxis,
+  buildBaselines, detectSessionPrs,
+  type BaselineSetRow, type PrCandidateSet,
 } from '@/lib/training/prEngine'
 
 /**
@@ -241,12 +241,12 @@ const floor = (k: string) => prFloorFor(k)
 
 /** Calf Press as Helix actually holds it: 24 sets, nothing above 67.5 kg. */
 const CALF_HISTORY: BaselineSetRow[] = [
-  { key: CALF, weightKg: 65, reps: 15, sessionId: 's1' },
-  { key: CALF, weightKg: 67.5, reps: 14, sessionId: 's1' },
-  { key: CALF, weightKg: 67.5, reps: 13, sessionId: 's1' },
-  { key: CALF, weightKg: 67.5, reps: 15, sessionId: 's2' },
-  { key: CALF, weightKg: 67.5, reps: 13, sessionId: 's2' },
-  { key: CALF, weightKg: 67.5, reps: 12, sessionId: 's2' },
+  { key: CALF, weightKg: 65, reps: 15 },
+  { key: CALF, weightKg: 67.5, reps: 14 },
+  { key: CALF, weightKg: 67.5, reps: 13 },
+  { key: CALF, weightKg: 67.5, reps: 15 },
+  { key: CALF, weightKg: 67.5, reps: 13 },
+  { key: CALF, weightKg: 67.5, reps: 12 },
 ]
 
 const set = (weightKg: number, reps: number, extra: Partial<PrCandidateSet> = {}): PrCandidateSet =>
@@ -304,7 +304,7 @@ describe('the floor across the other exercises it was primed to break', () => {
 
   it.each(cases)('$name: returning to $comeback kg is not a record', ({ name, logged, asserted, comeback }) => {
     expect(PR_TRUTH[name].weight).toBe(asserted)
-    const history: BaselineSetRow[] = [{ key: name, weightKg: logged, reps: 12, sessionId: 'h1' }]
+    const history: BaselineSetRow[] = [{ key: name, weightKg: logged, reps: 12 }]
     const baselines = buildBaselines(history, () => false, floor)
     const r = detectSessionPrs(
       [{ key: name, weightKg: comeback, reps: 10, timed: false, setType: null, date: '2026-08-12' }],
@@ -314,7 +314,7 @@ describe('the floor across the other exercises it was primed to break', () => {
   })
 
   it.each(cases)('$name: beating $asserted kg still is', ({ name, logged, asserted }) => {
-    const history: BaselineSetRow[] = [{ key: name, weightKg: logged, reps: 12, sessionId: 'h1' }]
+    const history: BaselineSetRow[] = [{ key: name, weightKg: logged, reps: 12 }]
     const baselines = buildBaselines(history, () => false, floor)
     const r = detectSessionPrs(
       [{ key: name, weightKg: asserted + 2.5, reps: 10, timed: false, setType: null, date: '2026-08-12' }],
@@ -324,99 +324,3 @@ describe('the floor across the other exercises it was primed to break', () => {
   })
 })
 
-// ── The fifth axis ───────────────────────────────────────────────────────────
-
-describe('sessionVolume — the one session-level axis', () => {
-  const EX = 'Hack Squat'
-  const s = (weightKg: number, reps: number, extra: Partial<PrCandidateSet> = {}): PrCandidateSet =>
-    ({ key: EX, weightKg, reps, timed: false, setType: null, date: '2026-08-12', ...extra })
-
-  const history: BaselineSetRow[] = [
-    // One session totalling 1,320 kg — which is also what PR_TRUTH asserts.
-    { key: EX, weightKg: 55, reps: 12, sessionId: 'h1' },
-    { key: EX, weightKg: 55, reps: 12, sessionId: 'h1' },
-    { key: EX, weightKg: 55, reps: 0,  sessionId: 'h1' },
-  ]
-
-  it('fires when the day beats the best day, on the BIGGEST set — not the last', () => {
-    const baselines = buildBaselines(history, () => false)
-    const r = detectSessionPrs([s(55, 12), s(55, 12), s(55, 4)], baselines)   // 1,540
-    // The 55 × 4 finisher completed the total but did the least work. Hanging a
-    // trophy on it is the mistake that helped kill the old session-total axis.
-    expect(r.perSet[2].axes).not.toContain('sessionVolume')
-    expect(r.perSet[1].axes).toContain('sessionVolume')   // ties keep the later top set
-    expect(r.perSet[0].axes).not.toContain('sessionVolume')
-    expect(r.sessionVolumeByKey.get(EX)).toBe(1540)
-  })
-
-  it('does not fire when the day only matches the best day', () => {
-    const baselines = buildBaselines(history, () => false)
-    const r = detectSessionPrs([s(55, 12), s(55, 12)], baselines)             // 1,320
-    for (const d of r.perSet) expect(d.axes).not.toContain('sessionVolume')
-  })
-
-  /**
-   * The book's session totals count WARM-UPS IN; the axis counts them out. They
-   * are two different measurements of the same day, so no floor can be derived
-   * between them. Proven on Leg Press, the only exercise with warm-up rows
-   * logged: the asserted 3,655 is exactly 2026-08-03's
-   * `900 (warm-up) + 942.5 + 870 + 942.5`, and the working total that day was
-   * 2,755. Flooring at 3,655 put the axis 33% out of reach — on a session Helix
-   * holds complete sets for, so not pre-July history at all.
-   */
-  it('is NOT floored from the book — the two count warm-ups differently', () => {
-    for (const name of Object.keys(PR_TRUTH)) {
-      expect(prFloorFor(name)?.sessionVolume, name).toBeUndefined()
-    }
-    expect(PR_TRUTH['Leg Press'].sessionVolume).toBe(3655)   // kept as reference
-  })
-
-  it('excludes warm-ups and drop sets from the total, as every other axis does', () => {
-    const baselines = buildBaselines(history, () => false)
-    const r = detectSessionPrs(
-      [s(20, 15, { setType: 'warmup' }), s(55, 12), s(55, 12), s(30, 20, { setType: 'dropset' })],
-      baselines,
-    )
-    expect(r.sessionVolumeByKey.get(EX)).toBe(1320)
-  })
-
-  /**
-   * The invariant most at risk in the fifth axis. Hevy counts one side of a
-   * unilateral exercise and Helix sums both, so the asserted figures are LOW —
-   * Single Arm Lateral Raise asserts 272.5 where 301.25 is genuinely logged.
-   * The total must be built from `volumeCredits`, which collapses an L/R pair
-   * to the one physical set it is, or a pair is counted twice and the axis
-   * fires on a session that did no more work than the last one.
-   */
-  it('counts a unilateral pair once, not once per side', () => {
-    const UNI = 'Single Arm Lateral Raise (Cable)'
-    const pair = (side: 'L' | 'R', reps: number, pairId: string): PrCandidateSet =>
-      ({ key: UNI, weightKg: 5, reps, timed: false, setType: null, side, pairId, date: '2026-08-12' })
-    const baselines = buildBaselines([{ key: UNI, weightKg: 5, reps: 15, sessionId: 'h1' }], () => false)
-    const r = detectSessionPrs([pair('L', 15, 'p1'), pair('R', 15, 'p1')], baselines)
-    // One physical set at the weaker side: 5 × 15 = 75, NOT 150.
-    expect(r.sessionVolumeByKey.get(UNI)).toBe(75)
-  })
-
-  it('skips timed holds entirely — a plank has no tonnage', () => {
-    const baselines = buildBaselines([{ key: 'Side Plank', weightKg: 0, reps: 58, sessionId: 'h1' }], isTimed)
-    const r = detectSessionPrs(
-      [{ key: 'Side Plank', weightKg: 0, reps: 60, timed: true, setType: null, date: '2026-08-12' }],
-      baselines,
-    )
-    expect(r.sessionVolumeByKey.has('Side Plank')).toBe(false)
-    for (const d of r.perSet) expect(d.axes).not.toContain('sessionVolume')
-  })
-
-  it('cannot fire without a sessionId on the history — no bar, no record', () => {
-    const unGrouped: BaselineSetRow[] = [{ key: EX, weightKg: 55, reps: 12 }]
-    const baselines = buildBaselines(unGrouped, () => false)
-    expect(baselines.bestSessionVolume).toHaveLength(0)
-    const r = detectSessionPrs([s(55, 12), s(55, 12)], baselines)
-    for (const d of r.perSet) expect(d.axes).not.toContain('sessionVolume')
-  })
-
-  it('has a label of its own', () => {
-    expect(prAxisLabel('sessionVolume' as PrAxis)).toBe('Session volume')
-  })
-})
