@@ -42,7 +42,8 @@ export interface DayVaultData {
      * be both a declared exception and a guess.
      */
     nutrition_exception: string | null
-    nutrition_estimated: boolean | null
+    /** Read in its OWN isolated query — absent (not false) until the paste-SQL runs. */
+    nutrition_estimated?: boolean | null
     /** Entered from the scale, never derived. Live column. */
     skeletal_muscle_mass_kg?: number | null
     /** Read in an isolated query — absent (not zero) until the paste-SQL runs. */
@@ -68,12 +69,12 @@ export function useDayVault(date: string) {
     enabled: /^\d{4}-\d{2}-\d{2}$/.test(date),
     queryFn: async (): Promise<DayVaultData> => {
       const nextDay = (() => { const x = new Date(`${date}T00:00:00Z`); x.setUTCDate(x.getUTCDate() + 1); return x.toISOString().slice(0, 10) })()
-      const [logRes, scoreRes, nutritionRes, sessionsRes, extrasRes] = await Promise.all([
+      const [logRes, scoreRes, nutritionRes, sessionsRes, extrasRes, estRes] = await Promise.all([
         // The derived mass columns MUST be selected. BodyMap reads
         // `log.muscle_mass_kg` / `fat_mass_kg` / … and falls back to re-deriving
         // when they are absent — and because they were never in this select,
         // the fallback was the only path that ever ran.
-        supabase.from('daily_logs').select('steps, water_ml, sleep_minutes, weight_kg, lean_mass_kg, body_fat_pct, avg_rest_heart_rate, hrv_ms, respiratory_rate, blood_oxygen, training_minutes, exercise_minutes, stand_hours, vo2max, active_energy, muscle_percent, water_percent, bone_mineral, visceral_fat, bmr, bmi, protein_percent, muscle_mass_kg, water_mass_kg, fat_mass_kg, bone_mineral_kg, protein_mass_kg, fat_free_mass_kg, weighin_skip_reason, skeletal_muscle_mass_kg, nutrition_exception, nutrition_estimated')
+        supabase.from('daily_logs').select('steps, water_ml, sleep_minutes, weight_kg, lean_mass_kg, body_fat_pct, avg_rest_heart_rate, hrv_ms, respiratory_rate, blood_oxygen, training_minutes, exercise_minutes, stand_hours, vo2max, active_energy, muscle_percent, water_percent, bone_mineral, visceral_fat, bmr, bmi, protein_percent, muscle_mass_kg, water_mass_kg, fat_mass_kg, bone_mineral_kg, protein_mass_kg, fat_free_mass_kg, weighin_skip_reason, skeletal_muscle_mass_kg, nutrition_exception')
           .eq('date', date).maybeSingle(),
         supabase.from('daily_scores').select('score, battery_pct').eq('date', date).maybeSingle(),
         supabase.from('nutrition_entries').select('calories, protein_g, carbs_g, fat_g, phase')
@@ -89,6 +90,16 @@ export function useDayVault(date: string) {
         // this one is still pending and fails alone until it does.
         supabase.from('daily_logs').select('estimated_waist_to_hip_ratio')
           .eq('date', date).maybeSingle(),
+        // A THIRD isolated select, and it cannot be folded into the one above.
+        // Two columns that are BOTH awaiting paste-SQL still gate each other:
+        // whichever lands first stays unreadable until the second one does. So
+        // a pending field shares a statement with nothing at all — not with
+        // live columns, and not with other pending ones.
+        //
+        // Merges upward into the main select once the ALTER TABLE has run, the
+        // same way `skeletal_muscle_mass_kg` already did.
+        supabase.from('daily_logs').select('nutrition_estimated')
+          .eq('date', date).maybeSingle(),
       ])
       const sessions = ((sessionsRes.data ?? []) as Array<{
         id: string; started_at: string; split_day: string; day_key: string | null; report_md: string | null
@@ -101,9 +112,14 @@ export function useDayVault(date: string) {
       }))
       const rawLog = (logRes.data ?? null) as DayVaultData['log']
       const extras = (extrasRes.error ? null : extrasRes.data) as Partial<DayVaultData['log']> | null
+      // Absent until the ALTER TABLE runs — an error means "not estimated",
+      // which is also what an ordinary day looks like.
+      const est = (estRes.error ? null : estRes.data) as Partial<DayVaultData['log']> | null
       // A day can have extras and no core row (a waist measured on an unweighed
       // morning), so the merge starts from whichever exists.
-      const merged = rawLog || extras ? { ...(rawLog ?? {}), ...(extras ?? {}) } as NonNullable<DayVaultData['log']> : null
+      const merged = rawLog || extras || est
+        ? { ...(rawLog ?? {}), ...(extras ?? {}), ...(est ?? {}) } as NonNullable<DayVaultData['log']>
+        : null
       return {
         // Mixed-unit blood oxygen coerced at the data layer (see normalizeSpO2).
         log: merged ? { ...merged, blood_oxygen: normalizeSpO2(merged.blood_oxygen) } : null,
