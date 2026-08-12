@@ -1,12 +1,12 @@
 'use client'
 
 import { useCallback, useRef, useState } from 'react'
-import { animate, m, AnimatePresence, useDragControls, useMotionValue, type AnimationPlaybackControls } from 'framer-motion'
+import { animate, m, AnimatePresence, useDragControls, useMotionValue, useTransform, type AnimationPlaybackControls } from 'framer-motion'
 import { X } from 'lucide-react'
 import { Portal, useOverlayBodyLock } from './overlay'
 import { tapLight } from '@/lib/native/haptics'
 import {
-  CROSSFADE, DRAWER, MOMENTUM, STANDARD,
+  CROSSFADE, DRAWER, MOMENTUM, SNAPPY,
   nearestSnap, project, rubberband, useHelixReducedMotion,
 } from '@/lib/motion'
 
@@ -76,7 +76,25 @@ export function Sheet({
 
   useOverlayBodyLock(open, onClose)
 
+  // Same reason as `useOverlayBodyLock`'s: every consumer passes an inline
+  // arrow, so depending on `onClose` directly gives `dismiss` a new identity on
+  // every parent render — and `dismiss` is the backdrop's onClick.
+  const closeRef = useRef(onClose)
+  closeRef.current = onClose
+
   const height = useCallback(() => panel.current?.offsetHeight ?? window.innerHeight, [])
+
+  /**
+   * The panel height, measured ONCE per gesture.
+   *
+   * `onDrag` used to call `height()` — i.e. read `offsetHeight` — on every
+   * frame the finger moved upward, which forces the browser to flush style and
+   * layout mid-gesture, every frame, to obtain a number that cannot change: the
+   * panel is not resizing while you drag it. That is the jank in the
+   * swipe-to-dismiss, and it is invisible in a profile unless you look for
+   * forced-reflow warnings specifically.
+   */
+  const dragH = useRef(0)
 
   /** Cancel whatever is animating `y` so a new gesture owns it outright. */
   const seize = useCallback(() => {
@@ -85,15 +103,33 @@ export function Sheet({
   }, [])
 
   /**
+   * Backdrop opacity, driven by the drag rather than by a fixed tween.
+   *
+   * The backdrop used to be a 0.16s crossfade completely decoupled from the
+   * panel, so a slow swipe-down pulled the sheet across a veil that stayed at
+   * full strength until the gesture ENDED and then snapped away. The sheet
+   * moved with the finger; the room behind it did not. That is the specific
+   * reason the gesture read as unfinished rather than merely slow.
+   *
+   * Composed with the enter/exit fade on the parent (opacity multiplies), so
+   * this only ever darkens what the crossfade is already doing.
+   */
+  const veil = useTransform(y, (v) => {
+    if (v <= 0) return 1
+    const h = dragH.current || height()
+    return h > 0 ? Math.max(0, 1 - v / h) : 1
+  })
+
+  /**
    * The one dismissal path, so the way out is identical whether it came from
    * the X, the backdrop or Escape — enter and exit along the same line.
    */
   const dismiss = useCallback(() => {
     seize()
-    if (reduce) { onClose(); return }
-    running.current = animate(y, height(), STANDARD)
-    void running.current.finished.then(onClose).catch(() => {})
-  }, [seize, reduce, y, height, onClose])
+    if (reduce) { closeRef.current(); return }
+    running.current = animate(y, height(), SNAPPY)
+    void running.current.finished.then(() => closeRef.current()).catch(() => {})
+  }, [seize, reduce, y, height])
 
   // z-ladder: nav 50 · PullToRefresh 70 · Sheet 80 · stacked Sheet 88 · DatePicker 90
   return (
@@ -104,16 +140,21 @@ export function Sheet({
           className={`fixed inset-0 flex items-end justify-center sm:items-center ${layer === 'stacked' ? 'z-[88]' : 'z-[80]'}`}
           role="dialog" aria-modal="true"
         >
-          {/* Backdrop — plain (no blur) so only a cheap opacity fade animates */}
+          {/* Backdrop — plain (no blur) so only a cheap opacity fade animates.
+              Two elements: the outer owns the enter/exit crossfade, the inner
+              tracks the drag. Opacity composes, so the veil lifts as the sheet
+              travels instead of holding full strength until release. */}
           <m.div
-            className="absolute inset-0 bg-black/65"
+            className="absolute inset-0"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={CROSSFADE}
             onClick={dismiss}
             aria-hidden="true"
-          />
+          >
+            <m.div className="absolute inset-0 bg-black/65" style={{ opacity: veil }} />
+          </m.div>
 
           {/* Panel — solid surface, transform-only motion */}
           <m.div
@@ -133,7 +174,15 @@ export function Sheet({
             animate={reduce ? { opacity: 1 } : { y: 0, scale: 1 }}
             exit={reduce ? { opacity: 0 } : { y: '100%', scale: 0.985 }}
             // bounce 0 on OPEN: nothing was thrown, so nothing should overshoot.
-            transition={reduce ? CROSSFADE : STANDARD}
+            //
+            // SNAPPY (0.28s) rather than STANDARD (0.4s). STANDARD is the
+            // tree-wide default from MotionConfig, and inheriting it here meant
+            // every sheet took four tenths of a second to arrive — which is the
+            // entire "it takes a second to load when tapped" complaint, with no
+            // data or rendering involved at all. SNAPPY keeps bounce at 0, so
+            // the no-overshoot rule above still holds; it just stops the panel
+            // from being the slowest thing on screen.
+            transition={reduce ? CROSSFADE : SNAPPY}
             // A drag that cannot move is a lie, so reduced motion has none. The
             // X and the backdrop remain, because removing the way out is never
             // the accessible choice.
@@ -143,16 +192,19 @@ export function Sheet({
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={0}      // resistance is ours, below
             dragMomentum={false} // and so is the projection
-            onDragStart={seize}
+            onDragStart={() => { seize(); dragH.current = height() }}
             onDrag={(_, info) => {
               // Down tracks the finger 1:1. Up resists progressively — there is
               // nothing above "open", and a hard stop there reads as a freeze.
-              if (info.offset.y < 0) y.set(-rubberband(-info.offset.y, height(), 0.55))
+              //
+              // `dragH.current` is measured once at dragStart. Reading
+              // offsetHeight here instead forced a layout flush every frame.
+              if (info.offset.y < 0) y.set(-rubberband(-info.offset.y, dragH.current, 0.55))
             }}
             onDragEnd={(_, info) => {
               const current = y.get()          // the presentation value, never the target
               const velocity = info.velocity.y // px/s, signed
-              const full = height()
+              const full = dragH.current || height()
               const projected = current + project(velocity)
               const target = nearestSnap(projected, [0, full])
 

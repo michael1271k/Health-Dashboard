@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { Moon, Flame, Dumbbell, Scale, Footprints, Pill } from 'lucide-react'
@@ -33,9 +33,43 @@ import { SleepStages } from '@/components/dashboard/SleepStages'
 
 // Modal-only bodies (522 lines between them) that were in the dashboard's
 // first-load bundle even though they render only once the domain sheet opens.
-const ScoreCard = dynamic(() => import('@/components/dashboard/ScoreCard').then((m) => m.ScoreCard), { ssr: false })
-const TrainingCard = dynamic(() => import('@/components/dashboard/TrainingCard').then((m) => m.TrainingCard), { ssr: false })
-const SupplementChecklist = dynamic(() => import('@/components/dashboard/SupplementChecklist').then((m) => m.SupplementChecklist), { ssr: false })
+//
+// ── THEY NOW HAVE A FALLBACK AND A PREFETCH, AND BOTH MATTER ────────────────
+// Splitting them out was right, but nothing covered the gap it created: no
+// `loading` fallback, and no prefetch. So the first tap on Readiness, Train or
+// Stack played the sheet's open spring over a COMPLETELY EMPTY PANEL while the
+// chunk was still downloading and parsing. That is the other half of "it takes
+// a second to load when tapped" — the panel really was empty, and no amount of
+// tuning the animation would have found it.
+//
+// `SheetSkeleton` means the panel is never blank, and `prefetchSheetBodies()`
+// (called from the same idle window the deferred cards use) means that on a
+// normal boot the chunk has been sitting in the module cache since long before
+// the finger arrives. The fallback is the safety net for a cold, throttled
+// first tap; the prefetch is what makes it almost never appear.
+const ScoreCard = dynamic(() => import('@/components/dashboard/ScoreCard').then((m) => m.ScoreCard), { ssr: false, loading: SheetSkeleton })
+const TrainingCard = dynamic(() => import('@/components/dashboard/TrainingCard').then((m) => m.TrainingCard), { ssr: false, loading: SheetSkeleton })
+const SupplementChecklist = dynamic(() => import('@/components/dashboard/SupplementChecklist').then((m) => m.SupplementChecklist), { ssr: false, loading: SheetSkeleton })
+
+/** Warm the three sheet chunks once the boot is done. Idempotent — the module
+ *  cache dedupes, so calling it twice costs nothing. */
+function prefetchSheetBodies() {
+  void import('@/components/dashboard/ScoreCard')
+  void import('@/components/dashboard/TrainingCard')
+  void import('@/components/dashboard/SupplementChecklist')
+}
+
+/** Placeholder while a sheet body's chunk resolves. Sized so the panel does not
+ *  jump when the real content lands. Hoisted — `dynamic()` above reads it at
+ *  module init. */
+function SheetSkeleton() {
+  return (
+    <div className="space-y-3 py-2" aria-hidden="true">
+      <div className="h-24 rounded-2xl border border-white/[0.07] bg-white/[0.03] animate-pulse" />
+      <div className="h-16 rounded-2xl border border-white/[0.07] bg-white/[0.03] animate-pulse" />
+    </div>
+  )
+}
 import { StepsJourney } from '@/components/dashboard/StepsJourney'
 import { ProgressionAlerts } from '@/components/command-center/ProgressionAlerts'
 import { useDailyLogs } from '@/lib/hooks/useNutrition'
@@ -109,6 +143,23 @@ export default function DashboardPage() {
   const router = useRouter()
   useEnsureTodayScore()
   const isDesktop = useIsDesktop()
+
+  // Warm the three sheet chunks after first paint, so a tap opens onto content
+  // rather than onto the skeleton. Same idle window the deferred cards use, and
+  // deliberately AFTER them in priority — a card the user can already see beats
+  // a sheet they have not opened.
+  useEffect(() => {
+    type IdleWindow = Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void }
+    const w = window as IdleWindow
+    if (w.requestIdleCallback) {
+      const id = w.requestIdleCallback(prefetchSheetBodies, { timeout: 4000 })
+      return () => w.cancelIdleCallback?.(id)
+    }
+    // iOS has no requestIdleCallback at all, so this timeout is the real path
+    // on the target device — see DeferredMount for the same caveat.
+    const t = setTimeout(prefetchSheetBodies, 1500)
+    return () => clearTimeout(t)
+  }, [])
   const { data: score, isLoading: scoreLoading } = useTodayScore()
   const { data: log } = useTodayDailyLog()
   const { data: metrics } = useTodayMetrics()

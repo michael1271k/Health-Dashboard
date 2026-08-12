@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 /**
@@ -35,16 +35,38 @@ function releaseOverlay() {
  * While `open`, lock body scroll, flag `body.helix-overlay-open` (globals.css
  * uses it to suspend glass backdrop-filter on the page so cards don't sample the
  * dim veil as solid black on iOS), and bind Escape → onClose.
+ *
+ * ── THE EFFECT DEPENDS ON `open` ALONE, AND THAT IS THE FIX ──────────────────
+ * It used to depend on `[open, onClose]`. Every consumer passes an inline arrow
+ * (`onClose={() => setSheet(null)}`), so `onClose` had a new identity on every
+ * parent render — and while a sheet was open, EACH parent render tore the
+ * effect down and re-ran it:
+ *
+ *     releaseOverlay()  → count hits 0 → body.style.overflow = ''
+ *                                      → classList.remove('helix-overlay-open')
+ *     acquireOverlay()  → both immediately re-applied
+ *
+ * That toggles a body-level class gating a page-wide rule (globals.css:
+ * `body.helix-overlay-open .app-chrome { backdrop-filter: none }`), so the
+ * browser invalidated and re-resolved backdrop-filter state on the app chrome
+ * on every render. On the dashboard the parent re-renders whenever any of its
+ * ~10 queries settle, which is precisely while the user is dragging.
+ *
+ * `onClose` lives in a ref instead. The listener reads it at event time, so a
+ * changed handler is still honoured — it just no longer re-runs the effect.
  */
 export function useOverlayBodyLock(open: boolean, onClose?: () => void) {
+  const closeRef = useRef(onClose)
+  closeRef.current = onClose
+
   useEffect(() => {
     if (!open) return
     acquireOverlay()
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose?.() }
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeRef.current?.() }
     window.addEventListener('keydown', onKey)
     return () => {
       releaseOverlay()
       window.removeEventListener('keydown', onKey)
     }
-  }, [open, onClose])
+  }, [open])
 }
