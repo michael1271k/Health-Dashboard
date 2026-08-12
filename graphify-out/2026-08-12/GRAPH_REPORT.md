@@ -1,7 +1,7 @@
 # Graph Report - Helix  (2026-08-12)
 
 ## Corpus Check
-- 384 files · ~668,902 words
+- 384 files · ~669,544 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `7ea5a70d`
+- Built from commit: `c48f79f1`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -85,7 +85,7 @@
 - _awaitComplete
 - constructor
 - @supabase/supabase-js
-- ContentView
+- HelixWatch_Watch_AppApp
 - Smart Background Sync
 - eslint.config.mjs
 - healthkit.ts
@@ -141,7 +141,7 @@
 - useDayVault.ts
 - cachedResponseWillBeUsed
 - weightUnit
-- @capacitor/app
+- @capacitor/core
 - jsdom
 - useBioStrips.ts
 - next
@@ -177,7 +177,7 @@
 - sync-pr-truth.mjs
 - palette-discipline.test.ts
 - remark-gfm
-- sharp
+- eslint-config-next
 - react
 - next-themes
 - prefsSync.ts
@@ -250,8 +250,8 @@ Cohesion: 0.10
 Nodes (25): applyPrefsToDevice(), CONTEXT_LABELS, ContextMode, DEFAULTS, Goals, MODE_TO_PHASE, PLAN_PHASE_CASCADE_KEYS, planList() (+17 more)
 
 ### Community 5 - "ContentView.swift"
-Cohesion: 0.11
-Nodes (34): Combine, Content, .body, Helix, MacrosScreen, .body, .remaining, NotConfiguredView (+26 more)
+Cohesion: 0.09
+Nodes (38): Combine, Content, ContentView, .body, Helix, MacrosScreen, .body, .remaining (+30 more)
 
 ### Community 6 - "session/[id]/page.tsx"
 Cohesion: 0.13
@@ -427,7 +427,7 @@ Nodes (10): RestSuggestion(), isUnderRecovered(), readinessReason(), TodayReadin
 
 ### Community 50 - "devDependencies"
 Cohesion: 0.13
-Nodes (15): @capacitor/cli, eslint-config-next, @netlify/plugin-nextjs, devDependencies, @capacitor/cli, eslint-config-next, @netlify/plugin-nextjs, @playwright/test (+7 more)
+Nodes (15): @capacitor/cli, @netlify/plugin-nextjs, devDependencies, @capacitor/cli, @netlify/plugin-nextjs, @playwright/test, postcss, shadcn (+7 more)
 
 ### Community 51 - "app/page.tsx"
 Cohesion: 0.11
@@ -467,7 +467,7 @@ Nodes (11): GET(), pendingDates(), POST(), resolveCreds(), denyIfUnauthorized(),
 
 ### Community 61 - "dependencies"
 Cohesion: 0.22
-Nodes (9): @capacitor/core, dependencies, @capacitor/core, @radix-ui/react-slider, react-markdown, @serwist/next, @radix-ui/react-slider, react-markdown (+1 more)
+Nodes (9): @capacitor/app, dependencies, @capacitor/app, @radix-ui/react-slider, react-markdown, @serwist/next, @radix-ui/react-slider, react-markdown (+1 more)
 
 ### Community 62 - "swap.ts"
 Cohesion: 0.27
@@ -493,9 +493,9 @@ Nodes (6): _awaitComplete(), destroy(), doneWaiting(), _getResponse(), handleAll
 Cohesion: 0.25
 Nodes (9): _addSyncListener(), addToPrecacheList(), constructor(), getIntegrityForPrecacheKey(), getUrlsToPrecacheKeys(), _match(), registerCapture(), registerRoute() (+1 more)
 
-### Community 70 - "ContentView"
-Cohesion: 0.20
-Nodes (8): App, ContentView, SnapshotStore, HelixWatch_Watch_AppApp, .body, ObservableObject, Scene, SwiftUI
+### Community 70 - "HelixWatch_Watch_AppApp"
+Cohesion: 0.40
+Nodes (4): App, HelixWatch_Watch_AppApp, Scene, SwiftUI
 
 ### Community 71 - "Smart Background Sync"
 Cohesion: 0.40
@@ -665,11 +665,11 @@ Nodes (5): CGFloat, .body, StageRibbon, .body, .body
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `View` connect `ContentView.swift` to `StageRibbon`, `HelixWidgets.swift`, `ContentView`, `HelixEntry`, `pathfinder/page.tsx`?**
+- **Why does `View` connect `ContentView.swift` to `StageRibbon`, `HelixWidgets.swift`, `HelixEntry`, `pathfinder/page.tsx`?**
   _High betweenness centrality (0.113) - this node is a cross-community bridge._
 - **Why does `logicalTodayISO()` connect `logicalTodayISO` to `useBioStrips.ts`, `VitalsGroups.tsx`, `SupplementChecklist.tsx`, `settings/page.tsx`, `ExerciseCard.tsx`, `palette.ts`, `report/[id]/page.tsx`, `landmarks.ts`, `useMuscleAnalytics.ts`, `useWeeklyLoop.ts`, `ReadinessOrb.tsx`, `PathfinderTimeline.tsx`, `[date]/page.tsx`, `RecoveryTrackers.tsx`, `supabase`, `weekStartOf`, `app/page.tsx`, `sessions/route.ts`, `program.test.ts`, `useTimelineWeeks.ts`, `compute-score/route.ts`, `healthkit.ts`, `useScheduleOverrides.ts`, `HelixViz.tsx`, `useScheduleVersion`, `workout/page.tsx`, `toDraft.ts`, `nutrition/page.tsx`, `BrandHeader.tsx`, `useDayVault.ts`, `weightUnit`?**
   _High betweenness centrality (0.072) - this node is a cross-community bridge._
-- **Why does `HelixSnapshot` connect `HelixSnapshot` to `.fetchWithFallback`, `HelixEntry`, `ContentView.swift`, `ContentView`?**
+- **Why does `HelixSnapshot` connect `HelixSnapshot` to `HelixEntry`, `ContentView.swift`, `.fetchWithFallback`?**
   _High betweenness centrality (0.047) - this node is a cross-community bridge._
 - **Are the 4 inferred relationships involving `displayWeight()` (e.g. with `WorkoutPage()` and `BodyCompositionChart()`) actually correct?**
   _`displayWeight()` has 4 INFERRED edges - model-reasoned connections that need verification._

@@ -1103,7 +1103,7 @@
       "_origin": "ast",
       "id": "swiftui",
       "community": 70,
-      "community_name": "ContentView",
+      "community_name": "HelixWatch_Watch_AppApp",
       "norm_label": "swiftui"
     },
     {
@@ -1136,8 +1136,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "ios_app_helixwatch_watch_app_contentview_snapshotstore",
-      "community": 70,
-      "community_name": "ContentView",
+      "community": 5,
+      "community_name": "ContentView.swift",
       "norm_label": "snapshotstore"
     },
     {
@@ -1147,8 +1147,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "observableobject",
-      "community": 70,
-      "community_name": "ContentView",
+      "community": 5,
+      "community_name": "ContentView.swift",
       "norm_label": "observableobject"
     },
     {
@@ -1158,8 +1158,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "ios_app_helixwatch_watch_app_contentview_snapshotstore_refresh",
-      "community": 70,
-      "community_name": "ContentView",
+      "community": 5,
+      "community_name": "ContentView.swift",
       "norm_label": ".refresh()"
     },
     {
@@ -1169,8 +1169,8 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "ios_app_helixwatch_watch_app_contentview_contentview",
-      "community": 70,
-      "community_name": "ContentView",
+      "community": 5,
+      "community_name": "ContentView.swift",
       "norm_label": "contentview"
     },
     {
@@ -1566,7 +1566,7 @@
       "_origin": "ast",
       "id": "ios_app_helixwatch_watch_app_helixwatchapp",
       "community": 70,
-      "community_name": "ContentView",
+      "community_name": "HelixWatch_Watch_AppApp",
       "norm_label": "helixwatchapp.swift"
     },
     {
@@ -1577,7 +1577,7 @@
       "_origin": "ast",
       "id": "ios_app_helixwatch_watch_app_helixwatchapp_helixwatch_watch_appapp",
       "community": 70,
-      "community_name": "ContentView",
+      "community_name": "HelixWatch_Watch_AppApp",
       "norm_label": "helixwatch_watch_appapp"
     },
     {
@@ -1588,7 +1588,7 @@
       "_origin": "ast",
       "id": "app",
       "community": 70,
-      "community_name": "ContentView",
+      "community_name": "HelixWatch_Watch_AppApp",
       "norm_label": "app"
     },
     {
@@ -1599,7 +1599,7 @@
       "_origin": "ast",
       "id": "scene",
       "community": 70,
-      "community_name": "ContentView",
+      "community_name": "HelixWatch_Watch_AppApp",
       "norm_label": "scene"
     },
     {
@@ -1609,8 +1609,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "ios_app_helixwatch_watch_app_helixwatchapp_helixwatch_watch_appapp_body",
-      "community": 70,
-      "community_name": "ContentView",
+      "community": 5,
+      "community_name": "ContentView.swift",
       "norm_label": ".body"
     },
     {
@@ -2633,8 +2633,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "package_dependencies_capacitor_app",
-      "community": 126,
-      "community_name": "@capacitor/app",
+      "community": 61,
+      "community_name": "dependencies",
       "norm_label": "@capacitor/app"
     },
     {
@@ -2644,8 +2644,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "capacitor_app",
-      "community": 126,
-      "community_name": "@capacitor/app",
+      "community": 61,
+      "community_name": "dependencies",
       "norm_label": "@capacitor/app"
     },
     {
@@ -2655,8 +2655,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "package_dependencies_capacitor_core",
-      "community": 61,
-      "community_name": "dependencies",
+      "community": 126,
+      "community_name": "@capacitor/core",
       "norm_label": "@capacitor/core"
     },
     {
@@ -2666,8 +2666,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "capacitor_core",
-      "community": 61,
-      "community_name": "dependencies",
+      "community": 126,
+      "community_name": "@capacitor/core",
       "norm_label": "@capacitor/core"
     },
     {
@@ -3568,8 +3568,8 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "package_devdependencies_eslint_config_next",
-      "community": 50,
-      "community_name": "devDependencies",
+      "community": 175,
+      "community_name": "eslint-config-next",
       "norm_label": "eslint-config-next"
     },
     {
@@ -3579,8 +3579,8 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "eslint_config_next",
-      "community": 50,
-      "community_name": "devDependencies",
+      "community": 175,
+      "community_name": "eslint-config-next",
       "norm_label": "eslint-config-next"
     },
     {
@@ -3656,8 +3656,8 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "package_devdependencies_sharp",
-      "community": 175,
-      "community_name": "sharp",
+      "community": 50,
+      "community_name": "devDependencies",
       "norm_label": "sharp"
     },
     {
@@ -3667,8 +3667,8 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "sharp",
-      "community": 175,
-      "community_name": "sharp",
+      "community": 50,
+      "community_name": "devDependencies",
       "norm_label": "sharp"
     },
     {
@@ -14763,7 +14763,7 @@
       "label": "useLoggedSessionDates()",
       "file_type": "code",
       "source_file": "src/lib/hooks/useDayVault.ts",
-      "source_location": "L128",
+      "source_location": "L138",
       "_origin": "ast",
       "id": "src_lib_hooks_usedayvault_useloggedsessiondates",
       "community": 125,
@@ -14774,7 +14774,7 @@
       "label": "useDeleteSession()",
       "file_type": "code",
       "source_file": "src/lib/hooks/useDayVault.ts",
-      "source_location": "L149",
+      "source_location": "L159",
       "_origin": "ast",
       "id": "src_lib_hooks_usedayvault_usedeletesession",
       "community": 123,
@@ -14785,7 +14785,7 @@
       "label": "useGlobalSessionNumber()",
       "file_type": "code",
       "source_file": "src/lib/hooks/useDayVault.ts",
-      "source_location": "L182",
+      "source_location": "L192",
       "_origin": "ast",
       "id": "src_lib_hooks_usedayvault_useglobalsessionnumber",
       "community": 123,
@@ -14796,7 +14796,7 @@
       "label": "BodyMetricsPatch",
       "file_type": "code",
       "source_file": "src/lib/hooks/useDayVault.ts",
-      "source_location": "L200",
+      "source_location": "L210",
       "_origin": "ast",
       "id": "src_lib_hooks_usedayvault_bodymetricspatch",
       "community": 26,
@@ -14807,7 +14807,7 @@
       "label": "EXTENDED_BODY_KEYS",
       "file_type": "code",
       "source_file": "src/lib/hooks/useDayVault.ts",
-      "source_location": "L244",
+      "source_location": "L254",
       "_origin": "ast",
       "id": "src_lib_hooks_usedayvault_extended_body_keys",
       "community": 26,
@@ -14818,7 +14818,7 @@
       "label": "BODY_MIRROR",
       "file_type": "code",
       "source_file": "src/lib/hooks/useDayVault.ts",
-      "source_location": "L258",
+      "source_location": "L268",
       "_origin": "ast",
       "id": "src_lib_hooks_usedayvault_body_mirror",
       "community": 123,
@@ -14829,7 +14829,7 @@
       "label": "useSaveBodyMetrics()",
       "file_type": "code",
       "source_file": "src/lib/hooks/useDayVault.ts",
-      "source_location": "L290",
+      "source_location": "L300",
       "_origin": "ast",
       "id": "src_lib_hooks_usedayvault_usesavebodymetrics",
       "community": 26,
@@ -24916,7 +24916,7 @@
       "label": "config",
       "file_type": "code",
       "source_file": "tailwind.config.ts",
-      "source_location": "L5",
+      "source_location": "L7",
       "_origin": "ast",
       "id": "tailwind_config_config",
       "community": 141,
@@ -71993,7 +71993,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useDayVault.ts",
-      "source_location": "L258",
+      "source_location": "L268",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_usedayvault",
@@ -72004,7 +72004,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useDayVault.ts",
-      "source_location": "L200",
+      "source_location": "L210",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_usedayvault",
@@ -72037,7 +72037,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useDayVault.ts",
-      "source_location": "L244",
+      "source_location": "L254",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_usedayvault",
@@ -72059,7 +72059,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useDayVault.ts",
-      "source_location": "L149",
+      "source_location": "L159",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_usedayvault",
@@ -72070,7 +72070,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useDayVault.ts",
-      "source_location": "L182",
+      "source_location": "L192",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_usedayvault",
@@ -72081,7 +72081,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useDayVault.ts",
-      "source_location": "L128",
+      "source_location": "L138",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_usedayvault",
@@ -72092,7 +72092,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useDayVault.ts",
-      "source_location": "L290",
+      "source_location": "L300",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_usedayvault",
@@ -72320,7 +72320,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/hooks/useDayVault.ts",
-      "source_location": "L192",
+      "source_location": "L202",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_usedayvault_useglobalsessionnumber",
@@ -72381,7 +72381,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/lib/hooks/useDayVault.ts",
-      "source_location": "L122",
+      "source_location": "L132",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_usedayvault_usedayvault",
@@ -72393,7 +72393,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/lib/hooks/useDayVault.ts",
-      "source_location": "L109",
+      "source_location": "L119",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_usedayvault_usedayvault",
@@ -72405,7 +72405,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/lib/hooks/useDayVault.ts",
-      "source_location": "L169",
+      "source_location": "L179",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_usedayvault_usedeletesession",
@@ -72417,7 +72417,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/lib/hooks/useDayVault.ts",
-      "source_location": "L161",
+      "source_location": "L171",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_usedayvault_usedeletesession",
@@ -72429,7 +72429,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/lib/hooks/useDayVault.ts",
-      "source_location": "L163",
+      "source_location": "L173",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_usedayvault_usedeletesession",
@@ -72441,7 +72441,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/lib/hooks/useDayVault.ts",
-      "source_location": "L163",
+      "source_location": "L173",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_usedayvault_usedeletesession",
@@ -72453,7 +72453,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/lib/hooks/useDayVault.ts",
-      "source_location": "L188",
+      "source_location": "L198",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_usedayvault_useglobalsessionnumber",
@@ -72465,7 +72465,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/lib/hooks/useDayVault.ts",
-      "source_location": "L301",
+      "source_location": "L311",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_usedayvault_usesavebodymetrics",
@@ -96050,7 +96050,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tailwind.config.ts",
-      "source_location": "L5",
+      "source_location": "L7",
       "weight": 1.0,
       "_origin": "ast",
       "source": "tailwind_config",
@@ -97132,5 +97132,5 @@
       "source_file": "docs/native-ios.md"
     }
   ],
-  "built_at_commit": "7ea5a70da29f2dd18883bd2c57926d94aa86541f"
+  "built_at_commit": "c48f79f15a4d17e3eff5ecc08b78aed9c5de956f"
 }

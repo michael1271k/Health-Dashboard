@@ -160,8 +160,8 @@
     "semantic_hash": ""
   },
   "public/sw.js": {
-    "mtime": 1786542946.7102592,
-    "ast_hash": "5c40904e643ba73b0171ea2db97ebcb8",
+    "mtime": 1786544198.0350208,
+    "ast_hash": "072c2918ad934f2c08faf121730ea1f1",
     "semantic_hash": ""
   },
   "scripts/generate-icons.mjs": {
@@ -785,8 +785,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useDayVault.ts": {
-    "mtime": 1786543662.1902413,
-    "ast_hash": "1de03052bf62577a3c510569bf39d565",
+    "mtime": 1786544159.7756453,
+    "ast_hash": "3e5c89d8d7115a38fc495fd77a5a04d2",
     "semantic_hash": ""
   },
   "src/lib/hooks/useEditSession.ts": {
