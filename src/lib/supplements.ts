@@ -64,7 +64,6 @@ export const SUPPLEMENT_PROTOCOL: SupplementSlot[] = [
 ]
 
 export const ALL_SUPPLEMENT_KEYS = SUPPLEMENT_PROTOCOL.flatMap((s) => s.items.map((i) => i.key))
-export const TOTAL_SUPPLEMENTS = ALL_SUPPLEMENT_KEYS.length
 
 /**
  * The SEED protocol for a given day — the fallback, not the source.

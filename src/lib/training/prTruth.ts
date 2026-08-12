@@ -188,9 +188,6 @@ export interface LoggedBest {
   seconds?: number
 }
 
-/** When {@link PR_LOGGED} was taken. */
-export const PR_LOGGED_AS_OF = '2026-08-11'
-
 /**
  * What Helix's OWN complete set history produces — every axis, run through the
  * real `buildBaselines` over all 361 logged sets, not approximated in SQL.

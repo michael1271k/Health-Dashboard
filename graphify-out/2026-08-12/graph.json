@@ -1103,7 +1103,7 @@
       "_origin": "ast",
       "id": "swiftui",
       "community": 70,
-      "community_name": "HelixWatch_Watch_AppApp",
+      "community_name": "ContentView",
       "norm_label": "swiftui"
     },
     {
@@ -1136,8 +1136,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "ios_app_helixwatch_watch_app_contentview_snapshotstore",
-      "community": 46,
-      "community_name": ".fetchWithFallback",
+      "community": 70,
+      "community_name": "ContentView",
       "norm_label": "snapshotstore"
     },
     {
@@ -1147,8 +1147,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "observableobject",
-      "community": 46,
-      "community_name": ".fetchWithFallback",
+      "community": 70,
+      "community_name": "ContentView",
       "norm_label": "observableobject"
     },
     {
@@ -1158,8 +1158,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "ios_app_helixwatch_watch_app_contentview_snapshotstore_refresh",
-      "community": 46,
-      "community_name": ".fetchWithFallback",
+      "community": 70,
+      "community_name": "ContentView",
       "norm_label": ".refresh()"
     },
     {
@@ -1169,8 +1169,8 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "ios_app_helixwatch_watch_app_contentview_contentview",
-      "community": 5,
-      "community_name": "ContentView.swift",
+      "community": 70,
+      "community_name": "ContentView",
       "norm_label": "contentview"
     },
     {
@@ -1566,7 +1566,7 @@
       "_origin": "ast",
       "id": "ios_app_helixwatch_watch_app_helixwatchapp",
       "community": 70,
-      "community_name": "HelixWatch_Watch_AppApp",
+      "community_name": "ContentView",
       "norm_label": "helixwatchapp.swift"
     },
     {
@@ -1577,7 +1577,7 @@
       "_origin": "ast",
       "id": "ios_app_helixwatch_watch_app_helixwatchapp_helixwatch_watch_appapp",
       "community": 70,
-      "community_name": "HelixWatch_Watch_AppApp",
+      "community_name": "ContentView",
       "norm_label": "helixwatch_watch_appapp"
     },
     {
@@ -1588,7 +1588,7 @@
       "_origin": "ast",
       "id": "app",
       "community": 70,
-      "community_name": "HelixWatch_Watch_AppApp",
+      "community_name": "ContentView",
       "norm_label": "app"
     },
     {
@@ -1599,7 +1599,7 @@
       "_origin": "ast",
       "id": "scene",
       "community": 70,
-      "community_name": "HelixWatch_Watch_AppApp",
+      "community_name": "ContentView",
       "norm_label": "scene"
     },
     {
@@ -1609,8 +1609,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "ios_app_helixwatch_watch_app_helixwatchapp_helixwatch_watch_appapp_body",
-      "community": 5,
-      "community_name": "ContentView.swift",
+      "community": 70,
+      "community_name": "ContentView",
       "norm_label": ".body"
     },
     {
@@ -2633,8 +2633,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "package_dependencies_capacitor_app",
-      "community": 61,
-      "community_name": "dependencies",
+      "community": 126,
+      "community_name": "@capacitor/app",
       "norm_label": "@capacitor/app"
     },
     {
@@ -2644,8 +2644,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "capacitor_app",
-      "community": 61,
-      "community_name": "dependencies",
+      "community": 126,
+      "community_name": "@capacitor/app",
       "norm_label": "@capacitor/app"
     },
     {
@@ -2655,8 +2655,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "package_dependencies_capacitor_core",
-      "community": 126,
-      "community_name": "@capacitor/core",
+      "community": 61,
+      "community_name": "dependencies",
       "norm_label": "@capacitor/core"
     },
     {
@@ -2666,8 +2666,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "capacitor_core",
-      "community": 126,
-      "community_name": "@capacitor/core",
+      "community": 61,
+      "community_name": "dependencies",
       "norm_label": "@capacitor/core"
     },
     {
@@ -3568,8 +3568,8 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "package_devdependencies_eslint_config_next",
-      "community": 175,
-      "community_name": "eslint-config-next",
+      "community": 50,
+      "community_name": "devDependencies",
       "norm_label": "eslint-config-next"
     },
     {
@@ -3579,8 +3579,8 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "eslint_config_next",
-      "community": 175,
-      "community_name": "eslint-config-next",
+      "community": 50,
+      "community_name": "devDependencies",
       "norm_label": "eslint-config-next"
     },
     {
@@ -3656,8 +3656,8 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "package_devdependencies_sharp",
-      "community": 50,
-      "community_name": "devDependencies",
+      "community": 175,
+      "community_name": "sharp",
       "norm_label": "sharp"
     },
     {
@@ -3667,8 +3667,8 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "sharp",
-      "community": 50,
-      "community_name": "devDependencies",
+      "community": 175,
+      "community_name": "sharp",
       "norm_label": "sharp"
     },
     {
@@ -6296,7 +6296,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_dashboard_workout_page",
-      "community": 121,
+      "community": 104,
       "community_name": "workout/page.tsx",
       "norm_label": "workout/page.tsx"
     },
@@ -6307,7 +6307,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_app_dashboard_workout_page_muscleanalyticspanel",
-      "community": 121,
+      "community": 104,
       "community_name": "workout/page.tsx",
       "norm_label": "muscleanalyticspanel"
     },
@@ -6318,7 +6318,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_app_dashboard_workout_page_wd",
-      "community": 121,
+      "community": 104,
       "community_name": "workout/page.tsx",
       "norm_label": "wd"
     },
@@ -6329,7 +6329,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_app_dashboard_workout_page_workoutpage",
-      "community": 121,
+      "community": 104,
       "community_name": "workout/page.tsx",
       "norm_label": "workoutpage()"
     },
@@ -6407,7 +6407,7 @@
       "_origin": "ast",
       "id": "src_app_api_ingest_route",
       "community": 54,
-      "community_name": "getServerSupabaseClient",
+      "community_name": "sessions/route.ts",
       "norm_label": "ingest/route.ts"
     },
     {
@@ -6418,7 +6418,7 @@
       "_origin": "ast",
       "id": "src_app_api_ingest_route_post",
       "community": 54,
-      "community_name": "getServerSupabaseClient",
+      "community_name": "sessions/route.ts",
       "norm_label": "post()"
     },
     {
@@ -6429,7 +6429,7 @@
       "_origin": "ast",
       "id": "src_app_api_ingest_route_get",
       "community": 54,
-      "community_name": "getServerSupabaseClient",
+      "community_name": "sessions/route.ts",
       "norm_label": "get()"
     },
     {
@@ -6494,7 +6494,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_api_sessions_route",
-      "community": 91,
+      "community": 54,
       "community_name": "sessions/route.ts",
       "norm_label": "sessions/route.ts"
     },
@@ -6505,7 +6505,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_app_api_sessions_route_post",
-      "community": 91,
+      "community": 54,
       "community_name": "sessions/route.ts",
       "norm_label": "post()"
     },
@@ -6516,7 +6516,7 @@
       "source_location": "L99",
       "_origin": "ast",
       "id": "src_app_api_sessions_route_get",
-      "community": 91,
+      "community": 54,
       "community_name": "sessions/route.ts",
       "norm_label": "get()"
     },
@@ -6528,7 +6528,7 @@
       "_origin": "ast",
       "id": "src_app_api_today_route",
       "community": 54,
-      "community_name": "getServerSupabaseClient",
+      "community_name": "sessions/route.ts",
       "norm_label": "today/route.ts"
     },
     {
@@ -6539,7 +6539,7 @@
       "_origin": "ast",
       "id": "src_app_api_today_route_get",
       "community": 54,
-      "community_name": "getServerSupabaseClient",
+      "community_name": "sessions/route.ts",
       "norm_label": "get()"
     },
     {
@@ -7111,7 +7111,7 @@
       "_origin": "ast",
       "id": "src_app_session_page",
       "community": 104,
-      "community_name": "eraForDate",
+      "community_name": "workout/page.tsx",
       "norm_label": "session/page.tsx"
     },
     {
@@ -7122,7 +7122,7 @@
       "_origin": "ast",
       "id": "src_app_session_page_sessionpage",
       "community": 104,
-      "community_name": "eraForDate",
+      "community_name": "workout/page.tsx",
       "norm_label": "sessionpage()"
     },
     {
@@ -7133,7 +7133,7 @@
       "_origin": "ast",
       "id": "src_app_session_page_sessionpageinner",
       "community": 104,
-      "community_name": "eraForDate",
+      "community_name": "workout/page.tsx",
       "norm_label": "sessionpageinner()"
     },
     {
@@ -7144,7 +7144,7 @@
       "_origin": "ast",
       "id": "src_app_session_page_pagespinner",
       "community": 104,
-      "community_name": "eraForDate",
+      "community_name": "workout/page.tsx",
       "norm_label": "pagespinner()"
     },
     {
@@ -8365,7 +8365,7 @@
       "_origin": "ast",
       "id": "src_components_command_center_sessiondeck",
       "community": 104,
-      "community_name": "eraForDate",
+      "community_name": "workout/page.tsx",
       "norm_label": "sessiondeck.tsx"
     },
     {
@@ -8376,7 +8376,7 @@
       "_origin": "ast",
       "id": "src_components_command_center_sessiondeck_sessiondeck",
       "community": 104,
-      "community_name": "eraForDate",
+      "community_name": "workout/page.tsx",
       "norm_label": "sessiondeck()"
     },
     {
@@ -8387,7 +8387,7 @@
       "_origin": "ast",
       "id": "src_components_command_center_sessiondeck_stat",
       "community": 104,
-      "community_name": "eraForDate",
+      "community_name": "workout/page.tsx",
       "norm_label": "stat()"
     },
     {
@@ -8398,7 +8398,7 @@
       "_origin": "ast",
       "id": "src_components_command_center_sessionnotescard",
       "community": 104,
-      "community_name": "eraForDate",
+      "community_name": "workout/page.tsx",
       "norm_label": "sessionnotescard.tsx"
     },
     {
@@ -8409,7 +8409,7 @@
       "_origin": "ast",
       "id": "src_components_command_center_sessionnotescard_sessionnotescard",
       "community": 104,
-      "community_name": "eraForDate",
+      "community_name": "workout/page.tsx",
       "norm_label": "sessionnotescard()"
     },
     {
@@ -12159,8 +12159,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_auth_guard",
-      "community": 91,
-      "community_name": "sessions/route.ts",
+      "community": 60,
+      "community_name": "sync-all/route.ts",
       "norm_label": "guard.ts"
     },
     {
@@ -12170,8 +12170,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_lib_auth_guard_sameorigin",
-      "community": 91,
-      "community_name": "sessions/route.ts",
+      "community": 60,
+      "community_name": "sync-all/route.ts",
       "norm_label": "sameorigin()"
     },
     {
@@ -12181,8 +12181,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_lib_auth_guard_isallowed",
-      "community": 91,
-      "community_name": "sessions/route.ts",
+      "community": 60,
+      "community_name": "sync-all/route.ts",
       "norm_label": "isallowed()"
     },
     {
@@ -12192,8 +12192,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "src_lib_auth_guard_denyifunauthorized",
-      "community": 91,
-      "community_name": "sessions/route.ts",
+      "community": 60,
+      "community_name": "sync-all/route.ts",
       "norm_label": "denyifunauthorized()"
     },
     {
@@ -12204,7 +12204,7 @@
       "_origin": "ast",
       "id": "src_lib_auth_identity",
       "community": 54,
-      "community_name": "getServerSupabaseClient",
+      "community_name": "sessions/route.ts",
       "norm_label": "identity.ts"
     },
     {
@@ -12215,7 +12215,7 @@
       "_origin": "ast",
       "id": "src_lib_auth_identity_db",
       "community": 54,
-      "community_name": "getServerSupabaseClient",
+      "community_name": "sessions/route.ts",
       "norm_label": "db"
     },
     {
@@ -12226,7 +12226,7 @@
       "_origin": "ast",
       "id": "src_lib_auth_identity_resolvecalleruserid",
       "community": 54,
-      "community_name": "getServerSupabaseClient",
+      "community_name": "sessions/route.ts",
       "norm_label": "resolvecalleruserid()"
     },
     {
@@ -12237,7 +12237,7 @@
       "_origin": "ast",
       "id": "src_lib_auth_identity_defaultuserid",
       "community": 54,
-      "community_name": "getServerSupabaseClient",
+      "community_name": "sessions/route.ts",
       "norm_label": "defaultuserid()"
     },
     {
@@ -12247,8 +12247,8 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "src_lib_auth_identity_requireuserid",
-      "community": 60,
-      "community_name": "sync-all/route.ts",
+      "community": 54,
+      "community_name": "sessions/route.ts",
       "norm_label": "requireuserid()"
     },
     {
@@ -13468,8 +13468,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_exercises_bodyweight",
-      "community": 104,
-      "community_name": "eraForDate",
+      "community": 121,
+      "community_name": "bodyweight.ts",
       "norm_label": "bodyweight.ts"
     },
     {
@@ -13479,8 +13479,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_lib_exercises_bodyweight_bodyweight_patterns",
-      "community": 104,
-      "community_name": "eraForDate",
+      "community": 121,
+      "community_name": "bodyweight.ts",
       "norm_label": "bodyweight_patterns"
     },
     {
@@ -13490,8 +13490,8 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "src_lib_exercises_bodyweight_isbodyweightexercise",
-      "community": 104,
-      "community_name": "eraForDate",
+      "community": 121,
+      "community_name": "bodyweight.ts",
       "norm_label": "isbodyweightexercise()"
     },
     {
@@ -13501,8 +13501,8 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "src_lib_exercises_bodyweight_isunloadedexercise",
-      "community": 104,
-      "community_name": "eraForDate",
+      "community": 121,
+      "community_name": "bodyweight.ts",
       "norm_label": "isunloadedexercise()"
     },
     {
@@ -13567,8 +13567,8 @@
       "source_location": "L157",
       "_origin": "ast",
       "id": "src_lib_exercises_musclemap_musclegroupsfor",
-      "community": 91,
-      "community_name": "sessions/route.ts",
+      "community": 108,
+      "community_name": "reseed-muscle-groups.mts",
       "norm_label": "musclegroupsfor()"
     },
     {
@@ -13590,7 +13590,7 @@
       "_origin": "ast",
       "id": "src_lib_exercises_timed",
       "community": 104,
-      "community_name": "eraForDate",
+      "community_name": "workout/page.tsx",
       "norm_label": "timed.ts"
     },
     {
@@ -13601,7 +13601,7 @@
       "_origin": "ast",
       "id": "src_lib_exercises_timed_istimedexercise",
       "community": 104,
-      "community_name": "eraForDate",
+      "community_name": "workout/page.tsx",
       "norm_label": "istimedexercise()"
     },
     {
@@ -13864,8 +13864,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_hevy_todraft",
-      "community": 12,
-      "community_name": "ExerciseCard.tsx",
+      "community": 109,
+      "community_name": "toDraft.ts",
       "norm_label": "todraft.ts"
     },
     {
@@ -13875,8 +13875,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_lib_hevy_todraft_daykey",
-      "community": 12,
-      "community_name": "ExerciseCard.tsx",
+      "community": 109,
+      "community_name": "toDraft.ts",
       "norm_label": "daykey"
     },
     {
@@ -13886,8 +13886,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_lib_hevy_todraft_day_key_guesses",
-      "community": 12,
-      "community_name": "ExerciseCard.tsx",
+      "community": 109,
+      "community_name": "toDraft.ts",
       "norm_label": "day_key_guesses"
     },
     {
@@ -13897,8 +13897,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_lib_hevy_todraft_guessdaykey",
-      "community": 12,
-      "community_name": "ExerciseCard.tsx",
+      "community": 109,
+      "community_name": "toDraft.ts",
       "norm_label": "guessdaykey()"
     },
     {
@@ -13908,8 +13908,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_lib_hevy_todraft_ishelixdaykey",
-      "community": 12,
-      "community_name": "ExerciseCard.tsx",
+      "community": 109,
+      "community_name": "toDraft.ts",
       "norm_label": "ishelixdaykey()"
     },
     {
@@ -13919,8 +13919,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_lib_hevy_todraft_hevyworkouttodraft",
-      "community": 12,
-      "community_name": "ExerciseCard.tsx",
+      "community": 109,
+      "community_name": "toDraft.ts",
       "norm_label": "hevyworkouttodraft()"
     },
     {
@@ -14888,7 +14888,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_useexercisebaselines",
       "community": 104,
-      "community_name": "eraForDate",
+      "community_name": "workout/page.tsx",
       "norm_label": "useexercisebaselines.ts"
     },
     {
@@ -14899,7 +14899,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_useexercisebaselines_useexercisebaselines",
       "community": 104,
-      "community_name": "eraForDate",
+      "community_name": "workout/page.tsx",
       "norm_label": "useexercisebaselines()"
     },
     {
@@ -15108,7 +15108,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_useexercisesethistory_useexercisesethistory",
       "community": 104,
-      "community_name": "eraForDate",
+      "community_name": "workout/page.tsx",
       "norm_label": "useexercisesethistory()"
     },
     {
@@ -15261,7 +15261,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_hooks_uselogger",
-      "community": 121,
+      "community": 104,
       "community_name": "workout/page.tsx",
       "norm_label": "uselogger.ts"
     },
@@ -15272,7 +15272,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_lib_hooks_uselogger_useexercisemap",
-      "community": 121,
+      "community": 104,
       "community_name": "workout/page.tsx",
       "norm_label": "useexercisemap()"
     },
@@ -15283,7 +15283,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_lib_hooks_uselogger_routinememoryentry",
-      "community": 121,
+      "community": 104,
       "community_name": "workout/page.tsx",
       "norm_label": "routinememoryentry"
     },
@@ -15294,7 +15294,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "src_lib_hooks_uselogger_useroutinememory",
-      "community": 121,
+      "community": 104,
       "community_name": "workout/page.tsx",
       "norm_label": "useroutinememory()"
     },
@@ -15305,7 +15305,7 @@
       "source_location": "L70",
       "_origin": "ast",
       "id": "src_lib_hooks_uselogger_routinememorymap",
-      "community": 121,
+      "community": 104,
       "community_name": "workout/page.tsx",
       "norm_label": "routinememorymap()"
     },
@@ -15316,7 +15316,7 @@
       "source_location": "L77",
       "_origin": "ast",
       "id": "src_lib_hooks_uselogger_uselatestsessionflag",
-      "community": 121,
+      "community": 104,
       "community_name": "workout/page.tsx",
       "norm_label": "uselatestsessionflag()"
     },
@@ -15657,8 +15657,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_hooks_useprogressionqueue",
-      "community": 25,
-      "community_name": "activeProgram",
+      "community": 104,
+      "community_name": "workout/page.tsx",
       "norm_label": "useprogressionqueue.ts"
     },
     {
@@ -15668,8 +15668,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_lib_hooks_useprogressionqueue_progressionalert",
-      "community": 25,
-      "community_name": "activeProgram",
+      "community": 104,
+      "community_name": "workout/page.tsx",
       "norm_label": "progressionalert"
     },
     {
@@ -15679,8 +15679,8 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "src_lib_hooks_useprogressionqueue_useprogressionqueue",
-      "community": 25,
-      "community_name": "activeProgram",
+      "community": 104,
+      "community_name": "workout/page.tsx",
       "norm_label": "useprogressionqueue()"
     },
     {
@@ -16285,7 +16285,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_usesessiontrends",
       "community": 25,
-      "community_name": "activeProgram",
+      "community_name": "ceilings.ts",
       "norm_label": "usesessiontrends.ts"
     },
     {
@@ -16296,7 +16296,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_usesessiontrends_setsatceilingof",
       "community": 25,
-      "community_name": "activeProgram",
+      "community_name": "ceilings.ts",
       "norm_label": "setsatceilingof()"
     },
     {
@@ -16307,7 +16307,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_usesessiontrends_exercisetrend",
       "community": 25,
-      "community_name": "activeProgram",
+      "community_name": "ceilings.ts",
       "norm_label": "exercisetrend"
     },
     {
@@ -16318,7 +16318,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_usesessiontrends_usesessiontrends",
       "community": 25,
-      "community_name": "activeProgram",
+      "community_name": "ceilings.ts",
       "norm_label": "usesessiontrends()"
     },
     {
@@ -17363,7 +17363,7 @@
       "_origin": "ast",
       "id": "src_lib_ingest_schema_ingestpayloadschema",
       "community": 54,
-      "community_name": "getServerSupabaseClient",
+      "community_name": "sessions/route.ts",
       "norm_label": "ingestpayloadschema"
     },
     {
@@ -17550,7 +17550,7 @@
       "_origin": "ast",
       "id": "src_lib_native_haptics_tapsuccess",
       "community": 104,
-      "community_name": "eraForDate",
+      "community_name": "workout/page.tsx",
       "norm_label": "tapsuccess()"
     },
     {
@@ -18551,7 +18551,7 @@
       "_origin": "ast",
       "id": "src_lib_programs_erafordate",
       "community": 104,
-      "community_name": "eraForDate",
+      "community_name": "workout/page.tsx",
       "norm_label": "erafordate()"
     },
     {
@@ -18561,7 +18561,7 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "src_lib_programs_era_meta",
-      "community": 121,
+      "community": 104,
       "community_name": "workout/page.tsx",
       "norm_label": "era_meta"
     },
@@ -18606,7 +18606,7 @@
       "_origin": "ast",
       "id": "src_lib_programs_programday",
       "community": 109,
-      "community_name": "templateDraft.ts",
+      "community_name": "toDraft.ts",
       "norm_label": "programday"
     },
     {
@@ -18715,8 +18715,8 @@
       "source_location": "L258",
       "_origin": "ast",
       "id": "src_lib_programs_programs",
-      "community": 109,
-      "community_name": "templateDraft.ts",
+      "community": 12,
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "programs"
     },
     {
@@ -18737,8 +18737,8 @@
       "source_location": "L288",
       "_origin": "ast",
       "id": "src_lib_programs_activeprogram",
-      "community": 25,
-      "community_name": "activeProgram",
+      "community": 104,
+      "community_name": "workout/page.tsx",
       "norm_label": "activeprogram()"
     },
     {
@@ -18859,7 +18859,7 @@
       "_origin": "ast",
       "id": "src_lib_programs_daysplitenum",
       "community": 109,
-      "community_name": "templateDraft.ts",
+      "community_name": "toDraft.ts",
       "norm_label": "daysplitenum()"
     },
     {
@@ -20607,8 +20607,8 @@
       "source_location": "L230",
       "_origin": "ast",
       "id": "src_lib_sessions_draft_peeksessiondraft",
-      "community": 12,
-      "community_name": "ExerciseCard.tsx",
+      "community": 104,
+      "community_name": "workout/page.tsx",
       "norm_label": "peeksessiondraft()"
     },
     {
@@ -20618,8 +20618,8 @@
       "source_location": "L247",
       "_origin": "ast",
       "id": "src_lib_sessions_draft_sanitizedraft",
-      "community": 12,
-      "community_name": "ExerciseCard.tsx",
+      "community": 104,
+      "community_name": "workout/page.tsx",
       "norm_label": "sanitizedraft()"
     },
     {
@@ -20630,7 +20630,7 @@
       "_origin": "ast",
       "id": "src_lib_sessions_liveprs",
       "community": 104,
-      "community_name": "eraForDate",
+      "community_name": "workout/page.tsx",
       "norm_label": "liveprs.ts"
     },
     {
@@ -20641,7 +20641,7 @@
       "_origin": "ast",
       "id": "src_lib_sessions_liveprs_liveprs",
       "community": 104,
-      "community_name": "eraForDate",
+      "community_name": "workout/page.tsx",
       "norm_label": "liveprs"
     },
     {
@@ -20652,7 +20652,7 @@
       "_origin": "ast",
       "id": "src_lib_sessions_liveprs_empty_live_prs",
       "community": 104,
-      "community_name": "eraForDate",
+      "community_name": "workout/page.tsx",
       "norm_label": "empty_live_prs"
     },
     {
@@ -20663,7 +20663,7 @@
       "_origin": "ast",
       "id": "src_lib_sessions_liveprs_liveprkey",
       "community": 104,
-      "community_name": "eraForDate",
+      "community_name": "workout/page.tsx",
       "norm_label": "liveprkey()"
     },
     {
@@ -20674,7 +20674,7 @@
       "_origin": "ast",
       "id": "src_lib_sessions_liveprs_liveprdigest",
       "community": 104,
-      "community_name": "eraForDate",
+      "community_name": "workout/page.tsx",
       "norm_label": "liveprdigest()"
     },
     {
@@ -20685,7 +20685,7 @@
       "_origin": "ast",
       "id": "src_lib_sessions_liveprs_computeliveprs",
       "community": 104,
-      "community_name": "eraForDate",
+      "community_name": "workout/page.tsx",
       "norm_label": "computeliveprs()"
     },
     {
@@ -20696,7 +20696,7 @@
       "_origin": "ast",
       "id": "src_lib_sessions_resolveexercises",
       "community": 91,
-      "community_name": "sessions/route.ts",
+      "community_name": "supabase/types.ts",
       "norm_label": "resolveexercises.ts"
     },
     {
@@ -20707,7 +20707,7 @@
       "_origin": "ast",
       "id": "src_lib_sessions_resolveexercises_db",
       "community": 91,
-      "community_name": "sessions/route.ts",
+      "community_name": "supabase/types.ts",
       "norm_label": "db"
     },
     {
@@ -20718,7 +20718,7 @@
       "_origin": "ast",
       "id": "src_lib_sessions_resolveexercises_compound_patterns",
       "community": 91,
-      "community_name": "sessions/route.ts",
+      "community_name": "supabase/types.ts",
       "norm_label": "compound_patterns"
     },
     {
@@ -20729,7 +20729,7 @@
       "_origin": "ast",
       "id": "src_lib_sessions_resolveexercises_iscompoundlift",
       "community": 91,
-      "community_name": "sessions/route.ts",
+      "community_name": "supabase/types.ts",
       "norm_label": "iscompoundlift()"
     },
     {
@@ -20739,7 +20739,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "src_lib_sessions_resolveexercises_resolveexercises",
-      "community": 91,
+      "community": 54,
       "community_name": "sessions/route.ts",
       "norm_label": "resolveexercises()"
     },
@@ -20872,7 +20872,7 @@
       "_origin": "ast",
       "id": "src_lib_sessions_seedtemplates",
       "community": 109,
-      "community_name": "templateDraft.ts",
+      "community_name": "toDraft.ts",
       "norm_label": "seedtemplates.ts"
     },
     {
@@ -20883,7 +20883,7 @@
       "_origin": "ast",
       "id": "src_lib_sessions_seedtemplates_seedset",
       "community": 109,
-      "community_name": "templateDraft.ts",
+      "community_name": "toDraft.ts",
       "norm_label": "seedset"
     },
     {
@@ -20894,7 +20894,7 @@
       "_origin": "ast",
       "id": "src_lib_sessions_seedtemplates_seedexercise",
       "community": 109,
-      "community_name": "templateDraft.ts",
+      "community_name": "toDraft.ts",
       "norm_label": "seedexercise"
     },
     {
@@ -20905,7 +20905,7 @@
       "_origin": "ast",
       "id": "src_lib_sessions_seedtemplates_seedcardio",
       "community": 109,
-      "community_name": "templateDraft.ts",
+      "community_name": "toDraft.ts",
       "norm_label": "seedcardio"
     },
     {
@@ -20916,7 +20916,7 @@
       "_origin": "ast",
       "id": "src_lib_sessions_seedtemplates_seedtemplate",
       "community": 109,
-      "community_name": "templateDraft.ts",
+      "community_name": "toDraft.ts",
       "norm_label": "seedtemplate"
     },
     {
@@ -20927,7 +20927,7 @@
       "_origin": "ast",
       "id": "src_lib_sessions_seedtemplates_warmup_cardio",
       "community": 109,
-      "community_name": "templateDraft.ts",
+      "community_name": "toDraft.ts",
       "norm_label": "warmup_cardio"
     },
     {
@@ -20938,7 +20938,7 @@
       "_origin": "ast",
       "id": "src_lib_sessions_seedtemplates_seed_templates",
       "community": 109,
-      "community_name": "templateDraft.ts",
+      "community_name": "toDraft.ts",
       "norm_label": "seed_templates"
     },
     {
@@ -20949,7 +20949,7 @@
       "_origin": "ast",
       "id": "src_lib_sessions_templatedraft",
       "community": 109,
-      "community_name": "templateDraft.ts",
+      "community_name": "toDraft.ts",
       "norm_label": "templatedraft.ts"
     },
     {
@@ -20960,7 +20960,7 @@
       "_origin": "ast",
       "id": "src_lib_sessions_templatedraft_helix_day_keys",
       "community": 109,
-      "community_name": "templateDraft.ts",
+      "community_name": "toDraft.ts",
       "norm_label": "helix_day_keys"
     },
     {
@@ -20971,7 +20971,7 @@
       "_origin": "ast",
       "id": "src_lib_sessions_templatedraft_exercisehistoryentry",
       "community": 109,
-      "community_name": "templateDraft.ts",
+      "community_name": "toDraft.ts",
       "norm_label": "exercisehistoryentry"
     },
     {
@@ -20982,7 +20982,7 @@
       "_origin": "ast",
       "id": "src_lib_sessions_templatedraft_seedfromhistory",
       "community": 109,
-      "community_name": "templateDraft.ts",
+      "community_name": "toDraft.ts",
       "norm_label": "seedfromhistory()"
     },
     {
@@ -20993,7 +20993,7 @@
       "_origin": "ast",
       "id": "src_lib_sessions_templatedraft_buildtemplatedraft",
       "community": 109,
-      "community_name": "templateDraft.ts",
+      "community_name": "toDraft.ts",
       "norm_label": "buildtemplatedraft()"
     },
     {
@@ -21223,8 +21223,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_supabase_server",
-      "community": 54,
-      "community_name": "getServerSupabaseClient",
+      "community": 91,
+      "community_name": "supabase/types.ts",
       "norm_label": "server.ts"
     },
     {
@@ -21235,7 +21235,7 @@
       "_origin": "ast",
       "id": "src_lib_supabase_server_getserversupabaseclient",
       "community": 54,
-      "community_name": "getServerSupabaseClient",
+      "community_name": "sessions/route.ts",
       "norm_label": "getserversupabaseclient()"
     },
     {
@@ -21245,8 +21245,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_supabase_types",
-      "community": 64,
-      "community_name": "compute-score/route.ts",
+      "community": 91,
+      "community_name": "supabase/types.ts",
       "norm_label": "supabase/types.ts"
     },
     {
@@ -21256,8 +21256,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_lib_supabase_types_json",
-      "community": 64,
-      "community_name": "compute-score/route.ts",
+      "community": 91,
+      "community_name": "supabase/types.ts",
       "norm_label": "json"
     },
     {
@@ -21267,8 +21267,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_lib_supabase_types_database",
-      "community": 60,
-      "community_name": "sync-all/route.ts",
+      "community": 91,
+      "community_name": "supabase/types.ts",
       "norm_label": "database"
     },
     {
@@ -21289,8 +21289,8 @@
       "source_location": "L382",
       "_origin": "ast",
       "id": "src_lib_supabase_types_insertrow",
-      "community": 64,
-      "community_name": "compute-score/route.ts",
+      "community": 91,
+      "community_name": "supabase/types.ts",
       "norm_label": "insertrow"
     },
     {
@@ -21300,8 +21300,8 @@
       "source_location": "L385",
       "_origin": "ast",
       "id": "src_lib_supabase_types_updaterow",
-      "community": 64,
-      "community_name": "compute-score/route.ts",
+      "community": 91,
+      "community_name": "supabase/types.ts",
       "norm_label": "updaterow"
     },
     {
@@ -21576,7 +21576,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings",
       "community": 25,
-      "community_name": "activeProgram",
+      "community_name": "ceilings.ts",
       "norm_label": "ceilings.ts"
     },
     {
@@ -21587,7 +21587,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_repwindow",
       "community": 25,
-      "community_name": "activeProgram",
+      "community_name": "ceilings.ts",
       "norm_label": "repwindow"
     },
     {
@@ -21598,7 +21598,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_parserepwindow",
       "community": 25,
-      "community_name": "activeProgram",
+      "community_name": "ceilings.ts",
       "norm_label": "parserepwindow()"
     },
     {
@@ -21609,7 +21609,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_normalize",
       "community": 25,
-      "community_name": "activeProgram",
+      "community_name": "ceilings.ts",
       "norm_label": "normalize()"
     },
     {
@@ -21620,7 +21620,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_repwindowfor",
       "community": 25,
-      "community_name": "activeProgram",
+      "community_name": "ceilings.ts",
       "norm_label": "repwindowfor()"
     },
     {
@@ -21631,7 +21631,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_holdtargetfor",
       "community": 25,
-      "community_name": "activeProgram",
+      "community_name": "ceilings.ts",
       "norm_label": "holdtargetfor()"
     },
     {
@@ -21642,7 +21642,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_workingset",
       "community": 25,
-      "community_name": "activeProgram",
+      "community_name": "ceilings.ts",
       "norm_label": "workingset"
     },
     {
@@ -21653,7 +21653,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_clearedceiling",
       "community": 25,
-      "community_name": "activeProgram",
+      "community_name": "ceilings.ts",
       "norm_label": "clearedceiling()"
     },
     {
@@ -21664,7 +21664,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_loadrung",
       "community": 25,
-      "community_name": "activeProgram",
+      "community_name": "ceilings.ts",
       "norm_label": "loadrung"
     },
     {
@@ -21675,7 +21675,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_loadladder",
       "community": 25,
-      "community_name": "activeProgram",
+      "community_name": "ceilings.ts",
       "norm_label": "loadladder()"
     },
     {
@@ -21686,7 +21686,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_ladderstate",
       "community": 25,
-      "community_name": "activeProgram",
+      "community_name": "ceilings.ts",
       "norm_label": "ladderstate"
     },
     {
@@ -21697,7 +21697,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_ladderverdict",
       "community": 25,
-      "community_name": "activeProgram",
+      "community_name": "ceilings.ts",
       "norm_label": "ladderverdict"
     },
     {
@@ -21708,7 +21708,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_workloads",
       "community": 25,
-      "community_name": "activeProgram",
+      "community_name": "ceilings.ts",
       "norm_label": "workloads()"
     },
     {
@@ -21719,7 +21719,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_toploadcleared",
       "community": 25,
-      "community_name": "activeProgram",
+      "community_name": "ceilings.ts",
       "norm_label": "toploadcleared()"
     },
     {
@@ -21730,7 +21730,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_levelupcue",
       "community": 25,
-      "community_name": "activeProgram",
+      "community_name": "ceilings.ts",
       "norm_label": "levelupcue"
     },
     {
@@ -21741,7 +21741,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_progressionstate",
       "community": 25,
-      "community_name": "activeProgram",
+      "community_name": "ceilings.ts",
       "norm_label": "progressionstate"
     },
     {
@@ -21752,7 +21752,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_progressionverdict",
       "community": 25,
-      "community_name": "activeProgram",
+      "community_name": "ceilings.ts",
       "norm_label": "progressionverdict"
     },
     {
@@ -21763,7 +21763,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_timedprogressionverdict",
       "community": 25,
-      "community_name": "activeProgram",
+      "community_name": "ceilings.ts",
       "norm_label": "timedprogressionverdict()"
     },
     {
@@ -22093,7 +22093,7 @@
       "_origin": "ast",
       "id": "src_lib_training_prengine_prbaselines",
       "community": 104,
-      "community_name": "eraForDate",
+      "community_name": "workout/page.tsx",
       "norm_label": "prbaselines"
     },
     {
@@ -23247,8 +23247,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_tests_bodyweight_test",
-      "community": 104,
-      "community_name": "eraForDate",
+      "community": 121,
+      "community_name": "bodyweight.ts",
       "norm_label": "bodyweight.test.ts"
     },
     {
@@ -23292,7 +23292,7 @@
       "_origin": "ast",
       "id": "src_tests_ceilings_test",
       "community": 25,
-      "community_name": "activeProgram",
+      "community_name": "ceilings.ts",
       "norm_label": "ceilings.test.ts"
     },
     {
@@ -23566,8 +23566,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_tests_exercise_memory_test",
-      "community": 109,
-      "community_name": "templateDraft.ts",
+      "community": 12,
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "exercise-memory.test.ts"
     },
     {
@@ -23632,8 +23632,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_tests_hevy_test",
-      "community": 12,
-      "community_name": "ExerciseCard.tsx",
+      "community": 109,
+      "community_name": "toDraft.ts",
       "norm_label": "hevy.test.ts"
     },
     {
@@ -24590,7 +24590,7 @@
       "_origin": "ast",
       "id": "src_tests_set_format_test_s",
       "community": 25,
-      "community_name": "activeProgram",
+      "community_name": "ceilings.ts",
       "norm_label": "s()"
     },
     {
@@ -24916,7 +24916,7 @@
       "label": "config",
       "file_type": "code",
       "source_file": "tailwind.config.ts",
-      "source_location": "L7",
+      "source_location": "L5",
       "_origin": "ast",
       "id": "tailwind_config_config",
       "community": 141,
@@ -96050,7 +96050,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tailwind.config.ts",
-      "source_location": "L7",
+      "source_location": "L5",
       "weight": 1.0,
       "_origin": "ast",
       "source": "tailwind_config",

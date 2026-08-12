@@ -12,9 +12,11 @@ the web build ships zero native code and behaves identically.
 - **Data path:** HealthKit → flat payload → `POST /api/ingest` with `Authorization:
   Bearer <jwt>` → the same `ingestDailyLog` fan-out + scoring the web uses. Realtime
   reflects the push on the phone AND any open desktop tab within ~1s.
-- **Files:** `src/lib/native/healthkit.ts` (read + POST), `sync.ts` (resume +
-  background orchestration), `platform.ts` (`usePlatform`, `isNative`),
-  `haptics.ts`.
+- **Files:** `src/lib/native/healthkit.ts` (read + POST), `sync.ts` (resume
+  orchestration), `haptics.ts`. That is the whole directory.
+  (A `platform.ts` exporting `usePlatform` / `isNative` was documented here for a
+  long time and has never existed; `isNative` survives only as a private local in
+  `src/lib/supabase/client.ts`.)
 
 ## HealthKit metric map (`healthkit.ts`)
 | HealthKit type | payload key | reduce |
@@ -35,13 +37,30 @@ The ingest schema's adaptive rules already handle these (e.g. `standing_minutes`
 minutes→hours, `training_minutes`→`exercise_minutes`).
 
 ## Smart background sync
-- **Foreground:** `initNativeSync()` runs on app resume (`@capacitor/app`
-  `appStateChange`), throttled by a 30-min watermark in localStorage.
-- **Background (native config, in Xcode):** register HealthKit **Background
-  Delivery** for sleep/HRV and a **BGAppRefreshTask** (`BGTaskScheduler`) on a
-  ~2–4h cadence that calls `backgroundSync()`. Coalesce; skip when unchanged.
+
+- **Foreground — SHIPPED.** `initNativeSync()` runs on app resume (`@capacitor/app`
+  `appStateChange`), behind a 10s re-entrancy guard (which collapses iOS's
+  duplicate resume events; it is not a throttle, and every genuine app-open runs
+  a full sync). Its `/api/compute-score` POST shares a watermark with the
+  dashboard's — see `src/lib/utils/scoreWatermark.ts`.
+
+- **Background — NOT IMPLEMENTED.** This section used to describe a
+  `BGAppRefreshTask` calling `backgroundSync()` as though it existed. It does
+  not, at any layer:
+  - `Info.plist` declares two identifiers (`app.helix.health.refresh`,
+    `app.helix.health.processing`), but **no Swift code registers a handler for
+    either** — no `BGTaskScheduler` call exists anywhere in `ios/`.
+  - The JS entry point `backgroundSync()` had zero callers for its whole life and
+    was removed on 2026-08-12. This paragraph was its only reference, which is
+    exactly how it survived a dead-code sweep: the doc made it look wired.
+
+  To actually build it: register the identifiers in `AppDelegate`, bridge to a
+  JS entry point, and re-add the export. Also worth pairing with HealthKit
+  **Background Delivery** for sleep/HRV, coalesced and skipped when unchanged.
+
 - **Battery:** per-metric last-synced watermark; `.immediate` delivery only for
-  sleep on wake.
+  sleep on wake. (Also aspirational — the current sync pulls the full metric map
+  each pass.)
 
 ## Your build steps
 

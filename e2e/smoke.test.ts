@@ -1,9 +1,13 @@
 import { test, expect } from '@playwright/test'
 
-test('auth page loads with sign-in form', async ({ page }) => {
+// `/auth` has ONE button and no input at all — auth/page.tsx states it outright:
+// "Single-user app: ONE button. There is no email/password form". These tests
+// asserted `getByLabel(/email/i)` against a form that has not existed for a long
+// time, which means the suite was describing an app nobody has shipped.
+test('auth page loads with the single sign-in button', async ({ page }) => {
   await page.goto('/auth')
   await expect(page.getByRole('heading', { name: /helix/i })).toBeVisible()
-  await expect(page.getByLabel(/email/i)).toBeVisible()
+  await expect(page.getByRole('button', { name: /continue as/i })).toBeVisible()
 })
 
 test('root page redirects to auth or renders dashboard', async ({ page }) => {
@@ -19,7 +23,7 @@ test('unauthenticated / never renders a blank dashboard — AuthGate redirects t
   await page.context().clearCookies()
   await page.goto('/')
   await page.waitForURL(/\/auth/, { timeout: 30_000 })
-  await expect(page.getByLabel(/email/i)).toBeVisible()
+  await expect(page.getByRole('button', { name: /continue as/i })).toBeVisible()
 })
 
 test('/api/version serves the deploy heartbeat with no-store', async ({ request }) => {
@@ -31,10 +35,12 @@ test('/api/version serves the deploy heartbeat with no-store', async ({ request 
   expect(buildId.length).toBeGreaterThan(0)
 })
 
-test('log page renders without crashing', async ({ page }) => {
-  await page.goto('/log')
-  // /log server-redirects to /workout (or /auth when signed out) — wait for the
-  // destination to settle before asserting, otherwise readyState races the redirect.
+// Was `/log`, with a comment claiming it "server-redirects to /workout". There
+// is no /log directory under src/app and no redirect in next.config.ts, so this
+// navigated to a 404 and then spent 30s waiting for a URL that never came.
+// The route it meant to smoke-test is /workout.
+test('workout page renders without crashing', async ({ page }) => {
+  await page.goto('/workout')
   await page.waitForURL(/workout|auth/, { timeout: 30_000 })
   await page.waitForLoadState('load')
   await expect(page).not.toHaveURL(/error/)

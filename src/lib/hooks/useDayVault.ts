@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase/client'
 import { normalizeSpO2 } from '@/lib/utils/units'
 import { authedFetch } from '@/lib/utils/authedFetch'
 import { invalidateWorkoutData } from '@/lib/query/workoutKeys'
-import { eraForDate, AXIS_ERA_START, HELIX_CUT_START } from '@/lib/programs'
+import { eraForDate, HELIX_CUT_START } from '@/lib/programs'
 import { hoursAwakeToday, logicalTodayISO } from '@/lib/utils/day'
 import type { Phase } from '@/lib/nutrition/phase'
 import type { GymReportRow } from '@/lib/hooks/useWeekly'
@@ -192,26 +192,6 @@ export function useGlobalSessionNumber(date: string) {
         .lt('started_at', `${addDayISO(date, 1)}T00:00:00Z`)
       if (error) return 1
       return Math.max(1, count ?? 1)
-    },
-  })
-}
-
-/** 1-based ordinal of this session among same-type sessions in the era ("#2"). */
-export function useSessionOrdinal(dayKey: string | null | undefined, splitDay: string, date: string) {
-  return useQuery({
-    queryKey: ['session_ordinal', dayKey ?? splitDay, date],
-    enabled: /^\d{4}-\d{2}-\d{2}$/.test(date),
-    staleTime: 60_000,
-    queryFn: async (): Promise<number> => {
-      const eraStart = eraForDate(date) === 'axis' ? AXIS_ERA_START : '2000-01-01'
-      const end = addDayISO(date, 1)
-      const { data, error } = await supabase.from('workout_sessions')
-        .select('day_key, split_day')
-        .gte('started_at', `${eraStart}T00:00:00Z`).lt('started_at', `${end}T00:00:00Z`)
-      if (error) return 1
-      const rows = (data ?? []) as Array<{ day_key: string | null; split_day: string }>
-      const match = rows.filter((r) => (dayKey ? r.day_key === dayKey : r.split_day === splitDay))
-      return Math.max(1, match.length)
     },
   })
 }

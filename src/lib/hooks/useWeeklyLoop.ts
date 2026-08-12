@@ -1,6 +1,6 @@
 'use client'
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { weekStartOf, isoAddDays } from '@/lib/utils/week'
 import { logicalTodayISO } from '@/lib/utils/day'
@@ -666,42 +666,6 @@ export function useWeeklyAiSummaries(limit = 12) {
       return ((data ?? []) as unknown as Array<{ id: string; period_start: string; content_md: string | null; created_at: string }>)
         .map((r) => ({ id: r.id, weekStart: r.period_start, content: r.content_md ?? '', createdAt: r.created_at }))
     },
-  })
-}
-
-/** Save a pasted AI weekly summary against its week (upsert — re-paste replaces). */
-export function useSaveWeeklyAiSummary() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: async ({ weekStart, content }: { weekStart: string; content: string }) => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Not signed in')
-      const { error } = await supabase.from('reports').upsert({
-        user_id: user.id,
-        type: WEEKLY_AI_TYPE,
-        period_start: weekStart,
-        period_end: isoAddDays(weekStart, 6),
-        content_md: content.trim(),
-      } as never, { onConflict: 'user_id,type,period_start' })
-      // The upsert needs a unique index on (user_id, type, period_start); without
-      // it Postgres raises 42P10. Surface that as an actionable message rather
-      // than a raw code, since the fix is a one-line migration.
-      if (error) {
-        // 23514 on `type` is `reports_type_check`, which allows only 'weekly'
-        // (verified live 2026-08-03) — a Notion-era leftover that silently
-        // blocked every pasted report. One ALTER TABLE, not a code change.
-        if (error.code === '23514' && /type/i.test(error.message)) {
-          throw new Error(
-            `The database still refuses report type "${WEEKLY_AI_TYPE}" — `
-            + 'reports_type_check predates the paste loop. Run the reports_type_check paste-SQL.',
-          )
-        }
-        throw new Error(/42P10|no unique|exclusion constraint/i.test(error.message)
-          ? 'Missing unique index on reports(user_id, type, period_start) — run the migration.'
-          : error.message)
-      }
-    },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['reports'] }) },
   })
 }
 

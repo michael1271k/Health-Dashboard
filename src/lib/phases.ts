@@ -148,12 +148,6 @@ export const PHASES: PhaseDef[] = [
   { kind: 'bulk',        name: 'Lean Bulk',   start: '2026-11-01', weeks: 11, numbered: true, era: 'helix', eraTag: 'HELIX Lean Bulk' },
 ]
 
-/** v5.1 phase exit / kill-switch protocol (judged on 7-day averages). */
-export const PHASE_RULES = {
-  cutExit: 'Exit Cut when 7-day avg BIA ≤ 13.0% AND navel waist ≤ 74 cm · hard stop 2026-10-17',
-  bulkKill: 'Kill Lean Bulk on ANY of: BIA ≥ 16.5% · waist +4 cm vs post-cut baseline · 2027-01-16',
-  rates: 'Cut −0.40…−0.50 kg/wk · Bulk +0.20…+0.25 kg/wk — 7-day rolling average only',
-} as const
 
 const isoUTC = (d: Date) => d.toISOString().slice(0, 10)
 

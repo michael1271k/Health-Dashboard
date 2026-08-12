@@ -16,13 +16,6 @@ function todayLocal(): string {
   return logicalTodayISO()
 }
 
-// Last 30 days for trend charts (used by Task 5 Charts hooks)
-export function last30Days(): string {
-  const d = new Date()
-  d.setDate(d.getDate() - 30)
-  return d.toLocaleDateString('en-CA')
-}
-
 /** Newest sync timestamp across scores + logs — for the header "Last Updated" stamp. */
 export function useLastUpdated() {
   return useQuery({

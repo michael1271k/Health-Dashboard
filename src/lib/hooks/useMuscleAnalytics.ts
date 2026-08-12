@@ -15,15 +15,6 @@ import {
 export { MUSCLE_MAP, MUSCLE_GROUPS }
 export type { MuscleStat }
 
-/** v5.1 exercise-name → muscle tags (parser aliases). Used by the catalog updater. */
-export const V51_EXERCISE_ALIASES: Record<string, string[]> = {
-  'Calf Press': ['calves'],
-  'Hack Squat': ['quads', 'glutes'],
-  'Smith Squat': ['quads', 'glutes'],
-  'Reverse EZ-Bar Curl': ['forearms', 'biceps'],
-  'Hanging Knee Raise': ['abs'],
-  'Cross-Body Cable Extension': ['triceps'],
-}
 export const GROUP_COLOR: Record<string, string> = GROUP
 
 export type MuscleAnalytics = MuscleAggregate

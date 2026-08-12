@@ -71,10 +71,6 @@ export function getScheduleOverride(dateISO: string): OverrideValue | undefined 
   return load()[dateISO]
 }
 
-export function getAllScheduleOverrides(): Record<string, OverrideValue> {
-  return { ...load() }
-}
-
 /** Optimistic local write (mirrors the DB upsert so the UI cascades at once). */
 export function setScheduleOverrideLocal(dateISO: string, value: OverrideValue | null): void {
   const c = load()

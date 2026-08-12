@@ -236,19 +236,6 @@ export interface ExportBodyComp {
   estimatedWaistToHipRatio: number | null
 }
 
-/** The same aggregate shape for this week and the one before it. */
-export interface WeekTotals {
-  avgKcal: number | null
-  avgProtein: number | null
-  avgSteps: number | null
-  avgSleepMin: number | null
-  sessions: number
-  volumeKg: number
-  sets: number
-  weightStart: number | null
-  weightEnd: number | null
-}
-
 export interface WeeklyExportInput {
   weekStart: string            // Sunday YYYY-MM-DD
   weekEnd: string
@@ -358,34 +345,6 @@ const cardioLabel = (kind: string): string =>
 
 const sleep = (min: number | null | undefined): string =>
   min == null ? '—' : `${Math.floor(min / 60)}h${String(Math.round(min % 60)).padStart(2, '0')}`
-
-function mean(xs: number[]): number | null {
-  return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null
-}
-
-/** The numeric fields of a day, pulled out with the nulls dropped. */
-type NumericDayField = {
-  [K in keyof ExportDay]: ExportDay[K] extends number | null ? K : never
-}[keyof ExportDay]
-
-const pick = (days: ExportDay[], k: NumericDayField): number[] =>
-  days.map((d) => d[k]).filter((v): v is number => typeof v === 'number')
-
-/** Aggregate a set of days + sessions into the shape used for week-over-week. */
-export function weekTotals(days: ExportDay[], sessions: ExportSession[]): WeekTotals {
-  const weights = pick(days, 'weightKg')
-  return {
-    avgKcal: mean(pick(days, 'calories')),
-    avgProtein: mean(pick(days, 'proteinG')),
-    avgSteps: mean(pick(days, 'steps')),
-    avgSleepMin: mean(pick(days, 'sleepMin')),
-    sessions: sessions.length,
-    volumeKg: sessions.reduce((s, x) => s + (x.volumeKg ?? 0), 0),
-    sets: sessions.reduce((s, x) => s + (x.setCount ?? 0), 0),
-    weightStart: weights[0] ?? null,
-    weightEnd: weights[weights.length - 1] ?? null,
-  }
-}
 
 /**
  * Render one exercise's working sets.

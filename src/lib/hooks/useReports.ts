@@ -1,9 +1,8 @@
 'use client'
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { weekNumberOf } from '@/lib/reports/weekNumber'
-import { isoAddDays } from '@/lib/utils/week'
 
 export interface ReportPayload {
   volumeKg: number
@@ -106,41 +105,5 @@ export function useReports() {
         created_at: r.created_at,
       }))
     },
-  })
-}
-
-export function useSaveReport() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: async (row: { kind: string; week_start: string; week_number: number; payload: ReportPayload }) => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Not signed in')
-      const type = row.kind || 'weekly'
-      const record = {
-        user_id: user.id,
-        type,
-        period_start: row.week_start,
-        period_end: isoAddDays(row.week_start, 7),
-        metrics: { payload: row.payload },
-      }
-      // Atomic upsert on the (user_id,type,period_start) unique constraint
-      // (added in the schema-hardening migration). content_md is now nullable,
-      // so a stats-only weekly report row saves cleanly.
-      const { error } = await supabase.from('reports')
-        .upsert(record as unknown as never, { onConflict: 'user_id,type,period_start' })
-      if (error) throw new Error(error.message)
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['reports'] }),
-  })
-}
-
-export function useDeleteReport() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from('reports').delete().eq('id', id)
-      if (error) throw new Error(error.message)
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['reports'] }),
   })
 }

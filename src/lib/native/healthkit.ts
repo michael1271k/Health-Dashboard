@@ -161,11 +161,6 @@ export async function requestHealthAuthorization(): Promise<boolean> {
   }
 }
 
-/** True when the native HealthKit plugin is actually attached to the bridge. */
-export function isHealthKitAvailable(): boolean {
-  return Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('CapacitorHealthkit')
-}
-
 /**
  * Run an async mapper over items in batches. Firing all ~28 metric queries at
  * once the instant authorization resolves hammered the HealthKit store during

@@ -164,11 +164,6 @@ export function initNativeSync(onSynced?: OnSynced): () => void {
   return () => { cancelled = true; removeListener?.() }
 }
 
-/** Entry point for a background task (registered natively). */
-export async function backgroundSync(): Promise<void> {
-  await runSync(true)
-}
-
 /** Force an immediate full sync (ignores the re-entrancy guard) — pull-to-refresh. */
 export async function forceHealthKitSync(onSynced?: OnSynced): Promise<void> {
   await runSync(true, onSynced)

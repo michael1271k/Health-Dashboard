@@ -31,8 +31,8 @@
  * number that was never lifted.
  *
  * Consumed by `detectSessionPrs` and, through it, by `scripts/backfill-prs.mjs`
- * and `scripts/nuke-and-seed-prs.mjs` — so a replay reproduces the list instead
- * of wiping it, and the backfill's prune pass can never delete a seeded row.
+ * — so a replay reproduces the list instead of wiping it, and the backfill's
+ * prune pass can never delete a seeded row.
  */
 import type { PrAxis } from './prEngine'
 import { canonicalExerciseName } from '@/lib/exercises/aliases'
@@ -51,7 +51,8 @@ export const SEED_CUTOFF = '2026-07-31'
  *      stood nothing under 63.75 kg could win the weight or e1RM axis, which is
  *      exactly why the two records the athlete DID earn (40 kg × 10 · weight +
  *      1RM) went unflagged. FIXED 2026-08-03: the row is now 35 kg × 12, its
- *      true load (`scripts/correct-logged-sets.mjs`).
+ *      true load. (Corrected by a one-shot script, since deleted — the fix is
+ *      in the data, not in anything that still needs to run.)
  *   2. Raw axis counting (the 2026-08-02 subsumption reversal, deliberate) means
  *      one improved set can carry `reps` + `e1rm` + a session `volume` axis with
  *      it. Seated Cable Row 42.5 × 13 alone produced three.

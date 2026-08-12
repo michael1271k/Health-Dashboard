@@ -52,8 +52,6 @@ _inject-*.sql
 # Local Claude Code skills / tooling
 .claude/
 
-# Generated Notion → SQL dump (run scripts/generate_notion_seed.ts locally)
-historical_seed.sql
 
 # Playwright
 /test-results/

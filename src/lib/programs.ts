@@ -11,9 +11,11 @@ import { DAY_COLOR, DIM, PLATINUM } from '@/lib/theme/palette'
 export type Era = 'ppl' | 'axis'
 export const AXIS_ERA_START = '2026-07-19'
 
-/** Helix Cut 5.1 nutrition block — the 1955 kcal target activates on this date. */
+/** Helix Cut 5.1 nutrition block — the target activates on this date. The kcal
+ *  figure itself lives in `user_goals.calorie_goal`; the constant that also
+ *  hardcoded it here had no readers and was a second source of truth waiting
+ *  to disagree with the first. */
 export const HELIX_CUT_START = '2026-07-15'
-export const HELIX_CUT_KCAL = 1955
 
 /**
  * The era boundary is HELIX_CUT_START (2026-07-15): the Helix Cut block

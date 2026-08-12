@@ -48,23 +48,6 @@ export function useGymReports(limit = 30) {
   })
 }
 
-/** Earliest logged session date — anchors the "Week N" program counter. */
-export function useProgramStart() {
-  return useQuery({
-    queryKey: ['program_start'],
-    queryFn: async (): Promise<string | null> => {
-      const { data } = await supabase
-        .from('workout_sessions')
-        .select('started_at')
-        .order('started_at', { ascending: true })
-        .limit(1)
-      const rows = (data ?? []) as Array<{ started_at: string }>
-      return rows.length ? rows[0].started_at.slice(0, 10) : null
-    },
-    staleTime: 10 * 60_000,
-  })
-}
-
 /**
  * ARRAYS, NOT SETS — deliberately.
  *

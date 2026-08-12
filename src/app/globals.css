@@ -80,13 +80,11 @@
   --text-fluid-3xl--line-height:    1.04;
   --text-fluid-3xl--letter-spacing: -0.022em;
 
-  /* The micro-label — 10px uppercase, the most repeated type in the app and
-     previously spelled three ways (tracking-[0.16em], -widest, -wide).
-     Uppercase at this size is exactly the case for POSITIVE tracking. */
-  --text-label: 0.625rem;
-  --text-label--line-height:    1;
-  --text-label--letter-spacing: 0.16em;
-  --text-label--font-weight:    700;
+  /* --text-label REMOVED 2026-08-12. It was added to unify the 10px uppercase
+     micro-label, "previously spelled three ways (tracking-[0.16em], -widest,
+     -wide)" — but no call site ever adopted the `text-label` utility, so all
+     three spellings survived AND a fourth definition sat here unused. Worth
+     redoing as an actual migration; not worth keeping as an intention. */
 
   /* Exercise TITLES specifically. One token so the logger deck and the session
      report can never drift apart, and so "make exercise names smaller" is one
@@ -401,13 +399,19 @@ html[data-reduce-motion='true'] .sync-breathe { animation: none !important; }
   --chrome-top: calc(var(--appbar-height) + var(--safe-top));
   --chrome-bottom: calc(var(--nav-height) + var(--safe-bottom));
 
-  /* Content measures. The SURFACE bleeds; only what is inside it is capped. */
-  --measure-read: 68ch;
-  --measure-data: 96ch;
+  /* Content measures. The SURFACE bleeds; only what is inside it is capped.
+     --measure-read (68ch) and --measure-data (96ch) removed 2026-08-12: zero
+     references anywhere, including inside this file. */
   --measure-grid: 80rem;
 }
 /* The session deck hides the tab bar and owns its own bottom edge (CommitBar),
-   so clearance there is zero — otherwise the deck grows ~90px of dead space. */
+   so clearance there is zero — otherwise the deck grows ~90px of dead space.
+
+   ⚠ DO NOT DELETE THIS AS DEAD CSS. The literal string `data-bottom-nav`
+   appears in NO TypeScript file, because BottomNav.tsx:34 writes it as
+   `document.documentElement.dataset.bottomNav` — which the DOM serialises to
+   the hyphenated attribute. A grep-driven cleanup reads this rule as unused and
+   silently breaks the deck's bottom clearance. */
 html[data-bottom-nav='false'] { --nav-height: 0rem; }
 /* Desktop navigates from the sidebar; there is no bottom bar to clear. */
 @media (min-width: 768px) {

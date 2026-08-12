@@ -58,9 +58,11 @@ export const SAND = '#E6C68C'
 export const TEXT = '#ECEEF2'
 export const MUTED = '#79808C'
 export const DIM = '#5A6472'
-export const SUCCESS = EMERALD
+// SUCCESS (= EMERALD) and WARN (= GOLD) removed 2026-08-12: zero importers.
+// Semantic aliases only earn their keep when call sites actually use them, and
+// every one of these reached for the jewel tone directly. DANGER survives
+// because SetEditorRow does use it.
 export const DANGER = OXIDE
-export const WARN = GOLD
 
 /**
  * Apply an alpha to a palette hex.

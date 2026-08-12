@@ -197,18 +197,3 @@ export function useLogDoms(date = logicalTodayISO()) {
     },
   })
 }
-
-/** DOMS across a date range — feeds the weekly AI export. */
-export function useDomsRange(from: string, to: string) {
-  return useQuery({
-    queryKey: ['doms_logs', 'range', from, to],
-    staleTime: 60_000,
-    queryFn: async (): Promise<Array<{ date: string; muscle: string; severity: number }>> => {
-      const { data, error } = await supabase.from('doms_logs')
-        .select('date, muscle_group, severity').gte('date', from).lte('date', to)
-      if (error) return []
-      return ((data ?? []) as Array<{ date: string; muscle_group: string; severity: number }>)
-        .map((r) => ({ date: r.date, muscle: r.muscle_group, severity: r.severity }))
-    },
-  })
-}
