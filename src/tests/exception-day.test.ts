@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  NUTRITION_EXCEPTION_REASONS, exceptionReason, isExceptionDay, exceptionTag,
+  NUTRITION_EXCEPTION_REASONS, exceptionReason, isExceptionDay, exceptionTag, estimatedTag,
 } from '@/lib/nutrition/exceptionDay'
 import { computeNutritionScore, computeDailyScore } from '@/lib/scoring/score'
 import type { ScoringInputs } from '@/lib/scoring/types'
@@ -39,6 +39,44 @@ describe('reading the flag', () => {
 
   it('every preset reads back as flagged', () => {
     for (const r of NUTRITION_EXCEPTION_REASONS) expect(isExceptionDay(r)).toBe(true)
+  })
+})
+
+// ─── The OTHER flag, and the line it must never cross ─────────────────────────
+
+describe('estimated is a confidence marker and nothing else', () => {
+  it('tags only when set', () => {
+    expect(estimatedTag(true)).toBe(' [Estimated]')
+    expect(estimatedTag(false)).toBe('')
+    expect(estimatedTag(null)).toBe('')
+    expect(estimatedTag(undefined)).toBe('')
+  })
+
+  it('composes with an exception rather than replacing it', () => {
+    // A restaurant birthday is BOTH. This is the whole argument for two columns
+    // instead of one enum — an enum would have made the day pick.
+    expect(exceptionTag('Event') + estimatedTag(true))
+      .toBe(' [Exception: Event] [Estimated]')
+  })
+
+  it('HAS NO PATH INTO THE SCORE — the invariant this file exists to hold', () => {
+    // There is deliberately no `nutritionEstimated` on ScoringInputs, so the
+    // strongest available statement is a structural one: the scorer's entire
+    // input surface knows nothing about the flag, and adding it would mean the
+    // score IMPROVES as the measurement gets worse.
+    //
+    // If a future change gives estimation a numeric consequence, the field will
+    // have to appear here first — and this assertion is where that gets caught.
+    const day = { calories: 3200, proteinG: 150, carbsG: 310, fatG: 120,
+      calorieGoal: 1900, proteinGoalG: 170, carbsGoalG: 190, fatGoalG: 54 }
+    expect('nutritionEstimated' in day).toBe(false)
+
+    // And the two flags are independent in the one direction that can be tested
+    // today: forgiveness comes from the exception alone, at every combination.
+    const plain = computeNutritionScore(day)
+    const forgiven = computeNutritionScore({ ...day, nutritionException: true })
+    expect(plain).not.toBe(forgiven)
+    expect(computeNutritionScore({ ...day, nutritionException: false })).toBe(plain)
   })
 })
 

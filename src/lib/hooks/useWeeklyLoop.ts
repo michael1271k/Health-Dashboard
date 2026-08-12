@@ -142,11 +142,15 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     // would 400 the whole statement and cost the export every body metric.
     supabase.from('daily_logs').select('date, estimated_waist_to_hip_ratio')
       .gte('date', weekStart).lte('date', weekEnd),
-    // Declared nutrition exceptions — days ALLOWED to miss the calorie target.
-    // Isolated for the same reason as the two selects above: it is the newest
-    // column here, and folding it in would cost the export a weigh-in reason or
-    // every body metric the day it turns out not to be migrated.
-    supabase.from('daily_logs').select('date, nutrition_exception')
+    // Declared nutrition context — days ALLOWED to miss the calorie target, and
+    // days whose numbers are a guess. Isolated for the same reason as the two
+    // selects above: these are the newest columns here, and folding them in
+    // would cost the export a weigh-in reason or every body metric the day one
+    // of them turns out not to be migrated.
+    //
+    // Both travel together because they are read together and fail together —
+    // a second isolated select would double the round trip to buy nothing.
+    supabase.from('daily_logs').select('date, nutrition_exception, nutrition_estimated')
       .gte('date', weekStart).lte('date', weekEnd),
   ])
 
@@ -177,9 +181,12 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     // estimated_waist_to_hip_ratio may not be migrated yet — an error just means
     // the ratio is absent, and every other body metric still prints.
     whr: (whr.error ? [] : (whr.data ?? [])) as unknown as Array<{ date: string; estimated_waist_to_hip_ratio: number | null }>,
-    // nutrition_exception may not be migrated yet — an error just means no day
-    // was declared an exception, which is also what an ordinary week looks like.
-    exceptions: (exceptions.error ? [] : (exceptions.data ?? [])) as unknown as Array<{ date: string; nutrition_exception: string | null }>,
+    // Either column may not be migrated yet — an error just means no day was
+    // declared an exception and none was estimated, which is also exactly what
+    // an ordinary week looks like.
+    exceptions: (exceptions.error ? [] : (exceptions.data ?? [])) as unknown as Array<{
+      date: string; nutrition_exception: string | null; nutrition_estimated: boolean | null
+    }>,
   }
 }
 
@@ -251,8 +258,11 @@ async function fetchTrendLedger(firstWeekStart: string, lastWeekStart: string): 
       waterMl: waterByDate.get(date) ?? logByDate.get(date)?.water_ml ?? null,
       supplementsTaken: null, activeKcal: null, bmrKcal: null, weighInSkipReason: null,
       // These days feed `trendTotals` and nothing else, and no aggregate reads
-      // the flag — an exception never changes a number, only a day line.
+      // either flag — neither one ever changes a number, only a day line, and
+      // the trend ledger emits no day lines. Hardcoded rather than joined so
+      // this path does not pay a read for something it cannot print.
       nutritionException: null,
+      nutritionEstimated: false,
     } satisfies ExportDay))
     const weekSessions = dates.flatMap((d) =>
       (volByDate.get(d) ?? []).map((v) => ({ volumeKg: v } as ExportSession)))
@@ -279,6 +289,8 @@ function toDays(weekStart: string, d: RangeData): ExportDay[] {
   for (const s of d.skips) if (s.weighin_skip_reason) skipByDate.set(s.date, s.weighin_skip_reason)
   const exceptionByDate = new Map<string, string>()
   for (const e of d.exceptions) if (e.nutrition_exception) exceptionByDate.set(e.date, e.nutrition_exception)
+  const estimatedByDate = new Set<string>()
+  for (const e of d.exceptions) if (e.nutrition_estimated) estimatedByDate.add(e.date)
 
   return Array.from({ length: 7 }, (_, i) => {
     const date = isoAddDays(weekStart, i)
@@ -306,6 +318,7 @@ function toDays(weekStart: string, d: RangeData): ExportDay[] {
       bmrKcal: l?.bmr ?? null,
       weighInSkipReason: skipByDate.get(date) ?? null,
       nutritionException: exceptionByDate.get(date) ?? null,
+      nutritionEstimated: estimatedByDate.has(date),
     }
   })
 }

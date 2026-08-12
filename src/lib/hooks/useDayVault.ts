@@ -33,6 +33,16 @@ export interface DayVaultData {
     fat_free_mass_kg: number | null
     /** Why a weightless day is weightless. Free text; null on weighed days. */
     weighin_skip_reason: string | null
+    /**
+     * The day's nutrition context — see `lib/nutrition/exceptionDay.ts`.
+     *
+     * These are what make `/day/[date]` a retroactive tagging surface: the page
+     * could not READ either flag before, which is why the exception control only
+     * ever existed for today. Two orthogonal fields, never an enum — a day can
+     * be both a declared exception and a guess.
+     */
+    nutrition_exception: string | null
+    nutrition_estimated: boolean | null
     /** Entered from the scale, never derived. Live column. */
     skeletal_muscle_mass_kg?: number | null
     /** Read in an isolated query — absent (not zero) until the paste-SQL runs. */
@@ -63,7 +73,7 @@ export function useDayVault(date: string) {
         // `log.muscle_mass_kg` / `fat_mass_kg` / … and falls back to re-deriving
         // when they are absent — and because they were never in this select,
         // the fallback was the only path that ever ran.
-        supabase.from('daily_logs').select('steps, water_ml, sleep_minutes, weight_kg, lean_mass_kg, body_fat_pct, avg_rest_heart_rate, hrv_ms, respiratory_rate, blood_oxygen, training_minutes, exercise_minutes, stand_hours, vo2max, active_energy, muscle_percent, water_percent, bone_mineral, visceral_fat, bmr, bmi, protein_percent, muscle_mass_kg, water_mass_kg, fat_mass_kg, bone_mineral_kg, protein_mass_kg, fat_free_mass_kg, weighin_skip_reason, skeletal_muscle_mass_kg')
+        supabase.from('daily_logs').select('steps, water_ml, sleep_minutes, weight_kg, lean_mass_kg, body_fat_pct, avg_rest_heart_rate, hrv_ms, respiratory_rate, blood_oxygen, training_minutes, exercise_minutes, stand_hours, vo2max, active_energy, muscle_percent, water_percent, bone_mineral, visceral_fat, bmr, bmi, protein_percent, muscle_mass_kg, water_mass_kg, fat_mass_kg, bone_mineral_kg, protein_mass_kg, fat_free_mass_kg, weighin_skip_reason, skeletal_muscle_mass_kg, nutrition_exception, nutrition_estimated')
           .eq('date', date).maybeSingle(),
         supabase.from('daily_scores').select('score, battery_pct').eq('date', date).maybeSingle(),
         supabase.from('nutrition_entries').select('calories, protein_g, carbs_g, fat_g, phase')

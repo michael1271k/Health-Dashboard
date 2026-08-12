@@ -77,3 +77,27 @@ export function exceptionTag(stored: string | null | undefined): string {
   const reason = exceptionReason(stored)
   return reason ? ` [Exception: ${reason}]` : ''
 }
+
+/**
+ * ── ESTIMATED — THE OTHER AXIS, AND IT FORGIVES NOTHING ──────────────────────
+ *
+ * "I ate out and could not weigh it" is a statement about CONFIDENCE, not about
+ * permission. It is orthogonal to the exception above and the two co-occur
+ * constantly: a restaurant birthday is both a declared surplus AND a guess.
+ * That is precisely why this is a second column and not a third enum member —
+ * an enum would have forced the day to pick one of two true things to say.
+ *
+ * ── IT HAS NO SCORING COUNTERPART, AND ADDING ONE WOULD BE A BUG ─────────────
+ * There is no `isEstimatedDay()` feeding `computeNutritionScore`, no branch in
+ * `score.ts`, and no term in adherence, energy balance or any average. An
+ * estimate is still your best knowledge of what you ate; grading it more gently
+ * would mean the score improves when the measurement gets worse, which is an
+ * incentive pointed the wrong way. Uncertainty is reported, never rewarded.
+ *
+ * So the whole module is one tag function. If a future change gives this flag a
+ * numeric consequence anywhere, that change is wrong — see the test in
+ * `exception-day.test.ts` that pins the score identical under both values.
+ */
+export function estimatedTag(estimated: boolean | null | undefined): string {
+  return estimated ? ' [Estimated]' : ''
+}

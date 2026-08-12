@@ -73,7 +73,8 @@ describe('buildWeeklyExport', () => {
     weightKg: null, calories: null, proteinG: null, carbsG: null, fatG: null,
     steps: null, distanceM: null, trainingMin: null,
     sleepMin: null, deepMin: null, remMin: null, restingHr: null, hrvMs: null,
-    waterMl: null, supplementsTaken: null, activeKcal: null, bmrKcal: null, weighInSkipReason: null, nutritionException: null,
+    waterMl: null, supplementsTaken: null, activeKcal: null, bmrKcal: null, weighInSkipReason: null,
+    nutritionException: null, nutritionEstimated: false,
   })
 
   const input: WeeklyExportInput = {
@@ -473,7 +474,7 @@ describe('weeklySummary', () => {
     calories: null, proteinG: null, carbsG: null, fatG: null, steps: null, distanceM: null,
     trainingMin: null, sleepMin: null, deepMin: null, remMin: null, restingHr: null,
     hrvMs: null, waterMl: null, supplementsTaken: null, activeKcal: null, bmrKcal: null,
-    weighInSkipReason: null, nutritionException: null, ...o,
+    weighInSkipReason: null, nutritionException: null, nutritionEstimated: false, ...o,
   })
   const base = (o: Partial<WeeklyExportInput> = {}): WeeklyExportInput => ({
     weekStart: '2026-07-19', weekEnd: '2026-07-25', programLabel: 'Helix Cut',
@@ -564,7 +565,7 @@ describe('week-over-week ledger', () => {
     calories: null, proteinG: null, carbsG: null, fatG: null, steps: null, distanceM: null,
     trainingMin: null, sleepMin: null, deepMin: null, remMin: null, restingHr: null,
     hrvMs: null, waterMl: null, supplementsTaken: null, activeKcal: null, bmrKcal: null,
-    weighInSkipReason: null, nutritionException: null, ...o,
+    weighInSkipReason: null, nutritionException: null, nutritionEstimated: false, ...o,
   })
   const session = (volumeKg: number | null): ExportSession => ({
     date: '2026-07-20', label: 'Upper A', volumeKg, setCount: null, failureSets: null,
@@ -751,7 +752,7 @@ describe('weekly aggregates · previous-week reference · disclaimer', () => {
     calories: null, proteinG: null, carbsG: null, fatG: null, steps: null, distanceM: null,
     trainingMin: null, sleepMin: null, deepMin: null, remMin: null, restingHr: null,
     hrvMs: null, waterMl: null, supplementsTaken: null, activeKcal: null, bmrKcal: null,
-    weighInSkipReason: null, nutritionException: null, ...o,
+    weighInSkipReason: null, nutritionException: null, nutritionEstimated: false, ...o,
   })
   const session = (o: Partial<ExportSession> = {}): ExportSession => ({
     date: '2026-07-20', label: 'Upper A', volumeKg: 1000, setCount: null, failureSets: null,
@@ -967,7 +968,7 @@ describe('body rows, effort and sparklines', () => {
     calories: null, proteinG: null, carbsG: null, fatG: null, steps: null, distanceM: null,
     trainingMin: null, sleepMin: null, deepMin: null, remMin: null, restingHr: null,
     hrvMs: null, waterMl: null, supplementsTaken: null, activeKcal: null, bmrKcal: null,
-    weighInSkipReason: null, nutritionException: null, ...o,
+    weighInSkipReason: null, nutritionException: null, nutritionEstimated: false, ...o,
   })
   const session = (o: Partial<ExportSession> = {}): ExportSession => ({
     date: '2026-07-20', label: 'Upper A', volumeKg: 1000, setCount: null, failureSets: null,

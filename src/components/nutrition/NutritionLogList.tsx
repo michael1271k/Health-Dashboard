@@ -4,7 +4,7 @@ import type { DailyLog } from '@/lib/hooks/useNutrition'
 import { phaseDisplay } from '@/lib/nutrition/phase'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { isExceptionDay } from '@/lib/nutrition/exceptionDay'
-import { SAND } from '@/lib/theme/palette'
+import { SAND, STEEL } from '@/lib/theme/palette'
 
 interface Goals { calorie: number; protein: number | null; carbs: number | null; fat: number | null }
 
@@ -84,6 +84,17 @@ export function NutritionLogList({ logs, goals, isLoading, emptyMessage, onDayCl
                 {flagged && (
                   <span className="text-[9px] font-bold uppercase tracking-wide" style={{ color: SAND }}>
                     · {l.exception}
+                  </span>
+                )}
+                {/* An estimate does NOT take the calorie colour above — the
+                    number is still counted at full weight and still graded
+                    normally, so recolouring it would claim a forgiveness that
+                    was never granted. It gets its own quiet mark instead, in
+                    STEEL rather than SAND, because "I guessed" and "I was
+                    allowed to miss" are different statements about a day. */}
+                {l.estimated && (
+                  <span className="text-[9px] font-bold uppercase tracking-wide" style={{ color: STEEL }}>
+                    · est
                   </span>
                 )}
               </div>

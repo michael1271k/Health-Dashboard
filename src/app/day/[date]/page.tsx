@@ -20,6 +20,7 @@ import { InBodyForm } from '@/components/day/InBody'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { useDoubleTap } from '@/lib/utils/doubleTap'
 import { MacroOverrideSheet } from '@/components/nutrition/MacroOverrideSheet'
+import { ExceptionDayBanner } from '@/components/nutrition/ExceptionDayBanner'
 import { phaseDisplay } from '@/lib/nutrition/phase'
 import { tdeeKcal, tefKcal, tdeeBreakdown } from '@/lib/nutrition/energy'
 import { ERA_META, eraForDate, scheduleDayFor, activeProgram } from '@/lib/programs'
@@ -36,9 +37,9 @@ import { SleepBand, BodyBand } from '@/components/day/SummaryBands'
  * `inbody` REPLACES `body` rather than stacking on it — a form is a push, not
  * a second drawer over the first — and closing it returns to `body`.
  */
-type DaySheet = 'sleep' | 'body' | 'inbody' | 'water' | 'macros' | null
+type DaySheet = 'sleep' | 'body' | 'inbody' | 'water' | 'macros' | 'nutrition' | null
 import { AppBar } from '@/components/nav/AppBar'
-import { EMBER, EMBER_DEEP, SAPPHIRE, STEEL, GOLD, OXIDE, EMERALD, MUTED, BODY } from '@/lib/theme/palette'
+import { EMBER, EMBER_DEEP, SAPPHIRE, STEEL, GOLD, OXIDE, EMERALD, MUTED, SAND, BODY } from '@/lib/theme/palette'
 
 // Local aliases over the real palette. These were six hardcoded hexes whose
 // NAMES disagreed with their values — `TEAL` held ember orange, `EMBER` held
@@ -201,6 +202,11 @@ export default function DailyNexusPage() {
   const battery = data?.score?.battery_pct ?? null
   // BMR + active + TEF. Null unless all three exist — see nutrition/energy.ts.
   const tdee = tdeeKcal(log?.bmr, log?.active_energy, n?.calories)
+  // The day's nutrition context. Both read straight off the vault select, which
+  // gained these two columns for exactly this — the page could not see either
+  // flag before, which is the whole reason tagging a past day was impossible.
+  const dayException = log?.nutrition_exception ?? null
+  const dayEstimated = log?.nutrition_estimated ?? false
 
   const pretty = new Date(date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
 
@@ -318,6 +324,37 @@ export default function DailyNexusPage() {
             </span>
           </ZoneRow>
         )}
+        {/* The day's nutrition context — the reason it was allowed to miss its
+            target, and whether the numbers are a guess.
+
+            A ROW OF ITS OWN, not a second job for the Fuel row's double-tap.
+            That gesture already means "edit the macros", and a control that
+            means two things depending on how hard you press is not a control.
+
+            This is the surface the flag never had: the writer and the hook were
+            always date-generic, but the only place that rendered them passed
+            today, so `daily_logs` held zero flagged days for the entire life of
+            the feature. You learn a day was an exception in the evening — often
+            the next morning — and by then today's page is gone. */}
+        <ZoneRow
+          asButton
+          className="flex items-center gap-2 w-full text-left min-h-[36px] active:opacity-70 transition-opacity"
+          onClick={() => setSheet('nutrition')}
+          title="Exception day and estimated intake"
+        >
+          <span className="text-[10px] text-muted shrink-0">Context</span>
+          {dayException || dayEstimated ? (
+            <span className="text-[11px] font-semibold truncate">
+              {dayException && <span style={{ color: SAND }}>Exception · {dayException}</span>}
+              {dayException && dayEstimated && <span className="text-muted"> · </span>}
+              {dayEstimated && <span style={{ color: STEEL }}>Estimated</span>}
+            </span>
+          ) : (
+            <span className="text-[11px] text-muted">Ordinary day</span>
+          )}
+          <ChevronRight className="w-3.5 h-3.5 text-muted ml-auto shrink-0" aria-hidden="true" />
+        </ZoneRow>
+
         {/* Water — the at-a-glance readout AND the way to the full helix.
             This bar and WaterHelix print the identical number and neither takes
             input (hydration arrives from HealthKit dietary water), so one of
@@ -407,6 +444,14 @@ export default function DailyNexusPage() {
           variant="full"
         />
         <div className="mt-3"><SleepDebtGauge /></div>
+      </Sheet>
+
+      {/* The retroactive tagging surface. `ExceptionDayBanner` takes `date` as a
+          plain prop and always did — nothing here is a special past-day variant
+          of it. The nutrition page renders the identical component with today's
+          date. */}
+      <Sheet open={sheet === 'nutrition'} onClose={() => setSheet(null)} title="Nutrition context" accent={SAND}>
+        <ExceptionDayBanner date={date} stored={dayException} estimated={dayEstimated} />
       </Sheet>
 
       <Sheet open={sheet === 'water'} onClose={() => setSheet(null)} title="Hydration" accent={ICE}>

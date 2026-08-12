@@ -19,6 +19,9 @@ export interface DailyLog {
   /** Declared nutrition exception, or null for an ordinary day. The day was
    *  ALLOWED to miss its calorie target — see `lib/nutrition/exceptionDay.ts`. */
   exception: string | null
+  /** The intake figures are a best guess (ate out, could not weigh). Orthogonal
+   *  to `exception` and forgives nothing — see `estimatedTag`'s note. */
+  estimated: boolean
 }
 
 function todayISO() {
@@ -61,11 +64,11 @@ export function useDailyLogs(daysOrRange: number | { from: string; to: string } 
           .gte('date', from)
           .lte('date', to),
 
-        // Declared exceptions. Its own read because the flag lives on
+        // Declared context. Its own read because both flags live on
         // `daily_logs` while every macro here comes from `nutrition_entries`.
         supabase
           .from('daily_logs')
-          .select('date, nutrition_exception')
+          .select('date, nutrition_exception, nutrition_estimated')
           .gte('date', from)
           .lte('date', to),
       ])
@@ -83,7 +86,7 @@ export function useDailyLogs(daysOrRange: number | { from: string; to: string } 
       // `nutrition_exception` is not migrated yet, and an unflagged history is
       // the correct reading of that — never a thrown query.
       const exceptions = (exceptionsRes.error ? [] : (exceptionsRes.data ?? [])) as Array<{
-        date: string; nutrition_exception: string | null
+        date: string; nutrition_exception: string | null; nutrition_estimated: boolean | null
       }>
 
       // Build date → row map, keyed by date string.
@@ -100,6 +103,7 @@ export function useDailyLogs(daysOrRange: number | { from: string; to: string } 
       const scoreMap = new Map(scores.map(r => [r.date, r]))
       const nutMap   = new Map(nutrition.map(r => [r.date, r]))
       const excMap   = new Map(exceptions.map(r => [r.date, r.nutrition_exception]))
+      const estMap   = new Map(exceptions.map(r => [r.date, r.nutrition_estimated ?? false]))
 
       return [...dateSet]
         .sort((a, b) => b.localeCompare(a))   // newest first
@@ -119,6 +123,7 @@ export function useDailyLogs(daysOrRange: number | { from: string; to: string } 
             batteryPct: s?.battery_pct ?? null,
             phase:      (n?.phase as Phase | null) ?? derivePhase(n?.calories ?? null),
             exception:  excMap.get(date) ?? null,
+            estimated:  estMap.get(date) ?? false,
           }
         })
     },

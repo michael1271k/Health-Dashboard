@@ -36,7 +36,7 @@ import { isTimedExercise } from '@/lib/exercises/timed'
 import { formatSet, isUnloadedSet } from '@/lib/utils/setFormat'
 import { prAxisLabel, type PrAxis } from '@/lib/training/prEngine'
 import { weighInSkipReason } from '@/lib/body/weighIn'
-import { exceptionTag } from '@/lib/nutrition/exceptionDay'
+import { exceptionTag, estimatedTag } from '@/lib/nutrition/exceptionDay'
 import { TEF_FACTOR, tefKcal, tdeeBreakdown } from '@/lib/nutrition/energy'
 import { volumeZone, type VolumeZone } from '@/lib/training/landmarks'
 
@@ -119,6 +119,16 @@ export interface ExportDay {
    * the spike was chosen, not so the spike can be discounted.
    */
   nutritionException: string | null
+  /**
+   * The day's intake figures are an ESTIMATE — ate out, could not weigh.
+   *
+   * Tagged on the day line for exactly the same reason as the exception above,
+   * and absent from every aggregate for a stronger one: it forgives nothing. An
+   * estimate is still the best available knowledge of what was eaten, so it
+   * enters the average at full weight. The tag exists so the reader can discount
+   * their CONFIDENCE in a single day's number without the arithmetic moving.
+   */
+  nutritionEstimated: boolean
 }
 
 /**
@@ -860,7 +870,8 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
       // The tag sits ON the intake it explains, not at the end of the line —
       // a reader (human or model) meeting "3210 kcal" needs the reason in the
       // same breath, not eight fields later.
-      + `sleep ${sleep(d.sleepMin)} · intake ${n(d.calories)} kcal${macros}${exceptionTag(d.nutritionException)} · `
+      + `sleep ${sleep(d.sleepMin)} · intake ${n(d.calories)} kcal${macros}`
+      + `${exceptionTag(d.nutritionException)}${estimatedTag(d.nutritionEstimated)} · `
       + `water ${n(d.waterMl == null ? null : d.waterMl / 1000, 1)} L · ${n(d.steps)} steps · `
       // The daily weigh-in belongs on the daily line. It used to appear ONLY in
       // the nested InBody row, which is emitted for full scale readings — so a

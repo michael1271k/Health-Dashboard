@@ -154,6 +154,7 @@ export default function NutritionPage() {
       <ExceptionDayBanner
         date={todayISO}
         stored={(dailyLog as { nutrition_exception?: string | null } | null)?.nutrition_exception ?? null}
+        estimated={(dailyLog as { nutrition_estimated?: boolean | null } | null)?.nutrition_estimated ?? false}
       />
 
       {/* Deep-dive into micronutrients + advanced HealthKit signals */}
