@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { normalizeSpO2 } from '@/lib/utils/units'
 import { nightWindow } from '@/lib/sleep/nightWindow'
 import { authedFetch } from '@/lib/utils/authedFetch'
+import { markScoreComputed, scoreComputedWithin } from '@/lib/utils/scoreWatermark'
 import type { Tables } from '@/lib/supabase/types'
 import { logicalTodayISO, hoursAwakeToday } from '@/lib/utils/day'
 import { fetchTodayBundle, todayBundleKey, type TodayBundle } from './useToday'
@@ -71,13 +72,19 @@ export function useTodayScore() {
  */
 export function useEnsureTodayScore(enabled = true) {
   const qc = useQueryClient()
-  const lastRun = useRef(0)
   useEffect(() => {
     if (!enabled) return
     const recompute = (backfillDays = 0) => {
-      const now = Date.now()
-      if (now - lastRun.current < 30_000) return
-      lastRun.current = now
+      // A SHARED watermark, not this hook's own ref. On native, `runSync` POSTs
+      // the same endpoint on every foreground with its own separate 10s guard,
+      // so the two used to fire together and race — see scoreWatermark.ts.
+      //
+      // The week backfill is exempt: it is a different job (8 days, not one),
+      // it runs at most once per browser session behind its own sessionStorage
+      // flag, and suppressing it because a single-day recompute happened four
+      // seconds ago would leave the weekly averages empty for the session.
+      if (backfillDays === 0 && scoreComputedWithin(30_000)) return
+      markScoreComputed()
       authedFetch('/api/compute-score', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         // Send the DEVICE's logical date + hours awake — the server has no idea
@@ -170,7 +177,27 @@ export function useDaySleep(dateISO: string) {
   })
 }
 
+/**
+ * The user's goals row.
+ *
+ * ── SEEDED FROM THE TODAY BUNDLE, WHICH ALREADY HAS IT ───────────────────────
+ * `GET /api/today` returns `goals` as part of its payload (useToday.ts), and
+ * this hook was ALSO issuing its own `user_goals` select — so every cold boot
+ * of the dashboard fetched the same row twice, over two round trips, because
+ * the two hooks were written a year apart and nobody joined them up.
+ *
+ * Seeding via `initialData` rather than reading the bundle directly, because
+ * the two are not interchangeable: five of this hook's seven call sites are on
+ * routes that never fetch the today bundle, and making them depend on it would
+ * trade one small request for one much larger one. `initialDataUpdatedAt`
+ * carries the bundle's own fetch time across, so the seeded copy ages out on
+ * the bundle's schedule instead of pretending to be fresh forever.
+ *
+ * Where the bundle is absent this behaves exactly as it always did.
+ */
 export function useUserGoals() {
+  const qc = useQueryClient()
+  const key = todayBundleKey()
   return useQuery({
     queryKey: ['user_goals'],
     queryFn: async () => {
@@ -181,6 +208,8 @@ export function useUserGoals() {
       if (error) throw error
       return data as Tables<'user_goals'> | null
     },
+    initialData: () => qc.getQueryData<TodayBundle>(key)?.goals ?? undefined,
+    initialDataUpdatedAt: () => qc.getQueryState(key)?.dataUpdatedAt,
     staleTime: 5 * 60 * 1000, // Goals rarely change — 5 min cache
   })
 }

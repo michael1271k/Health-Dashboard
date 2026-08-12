@@ -4,6 +4,7 @@ import { Capacitor } from '@capacitor/core'
 import { syncHealthKitToServer, syncYesterdayToServer, requestHealthAuthorization } from './healthkit'
 import { authedFetch } from '@/lib/utils/authedFetch'
 import { logicalTodayISO, hoursAwakeToday } from '@/lib/utils/day'
+import { markScoreComputed } from '@/lib/utils/scoreWatermark'
 
 const WATERMARK_KEY = 'helix_hk_last_sync'
 // Records the yesterday-date whose HealthKit catch-up already ran. Yesterday only
@@ -75,6 +76,15 @@ async function runSync(force: boolean, onSynced?: OnSynced): Promise<void> {
   // ── Phase 1 — TODAY (the visible day) ──
   try { await syncHealthKitToServer() } catch { /* HK pull failed — resume retries */ }
   try {
+    // Stamped BEFORE the await, not after: `useEnsureTodayScore`'s
+    // visibilitychange handler fires on the same foreground and would otherwise
+    // slip past the watermark during the seconds this request is in flight —
+    // which is the exact race the shared watermark exists to close.
+    //
+    // This path always runs regardless of the watermark. It is the authoritative
+    // one on native: it posts `force: true` immediately after the HealthKit
+    // pull, so it is the only recompute that has today's fresh metrics.
+    markScoreComputed()
     await authedFetch('/api/compute-score', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

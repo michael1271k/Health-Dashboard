@@ -387,8 +387,15 @@ export default function DashboardPage() {
         </div>
       </Surface>
 
-      {/* Smart Coach — lifts due a load bump next session (renders nothing when empty). */}
-      <ProgressionAlerts />
+      {/* Smart Coach — lifts due a load bump next session (renders nothing when empty).
+          DEFERRED. It queries `workout_sets` on mount, and it was doing so
+          eagerly, competing with the hero for the cold-start network. Nothing
+          above it depends on the result, and it renders nothing at all on a
+          week with no progressions — so it had the cost of an above-the-fold
+          card and, most days, none of the presence.
+          `minHeight={0}`: the empty case is genuinely zero-height, so reserving
+          space would introduce the layout gap the placeholder exists to avoid. */}
+      <DeferredMount minHeight={0}><ProgressionAlerts /></DeferredMount>
 
       {/* Compact 30-day trends (shrunk from the old tall sidecar).
           GATED ON A REAL BREAKPOINT, not `hidden md:block`. That class hid the
