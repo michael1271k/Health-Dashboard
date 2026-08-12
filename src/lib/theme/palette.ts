@@ -98,6 +98,34 @@ export const MACRO = {
   fat: GOLD,
 } as const
 
+/**
+ * Sleep stages — ONE MONOTONIC DEPTH RAMP, surfacing dark to light.
+ *
+ * The stages used to borrow four unrelated tones: AMETHYST for deep, SAPPHIRE
+ * for REM, STEEL for core, OXIDE for awake. Two problems, both visible on every
+ * night's arc.
+ *
+ * STEEL (#8E9AAC) and SAPPHIRE (#3D7AB8) are neighbours in hue AND close in
+ * value, and Core and REM are the two largest segments of a typical night — so
+ * more than half the arc rendered as one indistinct band. A stage split you
+ * cannot separate is not a stage split.
+ *
+ * And awake was OXIDE, the danger colour, the same red an over-target day gets.
+ * Waking up in the night is not an error; it is a fact about the night. Warm
+ * sand pulls it clean out of the blue ramp on hue alone, which is a separation
+ * that survives greyscale and colour-blindness both.
+ *
+ * Ordered deep → core → rem → awake so the gradient walks a single continuous
+ * ascent out of sleep rather than zig-zagging in value. `SleepStages.STAGES`
+ * must stay in this order for the arc to read as one ramp.
+ */
+export const SLEEP = {
+  deep: '#4C3F82',    // indigo — the floor of the night
+  core: '#3D7AB8',    // sapphire — the bulk of it
+  rem: '#5FA8C7',     // cyan — dreaming, nearer the surface
+  awake: '#C98A5E',   // warm sand — an interruption, not a failure
+} as const
+
 /** Training splits — one jewel tone each, no collisions. */
 export const SPLIT = {
   push: EMBER,

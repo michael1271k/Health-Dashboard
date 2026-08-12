@@ -4,7 +4,7 @@ import { useId } from 'react'
 import { Moon } from 'lucide-react'
 import type { Tables } from '@/lib/supabase/types'
 import { formatSleep } from '@/lib/utils/format'
-import { AMETHYST, SAPPHIRE, STEEL, OXIDE, MUTED, HAIRLINE, EMERALD, GOLD } from '@/lib/theme/palette'
+import { SLEEP, MUTED, HAIRLINE, EMERALD, GOLD, OXIDE } from '@/lib/theme/palette'
 
 /**
  * Sleep, as architecture rather than four flat squares.
@@ -17,11 +17,22 @@ import { AMETHYST, SAPPHIRE, STEEL, OXIDE, MUTED, HAIRLINE, EMERALD, GOLD } from
  * widths carry meaning. Storing per-segment intervals would need a new table.
  */
 
+/**
+ * ORDER IS LOad-BEARING: deep → core → rem → awake.
+ *
+ * The arc paints one gradient in this order, so the sequence has to be
+ * monotonic in depth for it to read as a single ascent out of sleep rather than
+ * four unrelated bands. It used to run deep → rem → core → awake, which
+ * zig-zagged in value because REM is lighter than Core.
+ *
+ * Colours are the `SLEEP` ramp — see the note on it in `palette.ts` for why
+ * Core and REM had to be separated and why Awake is no longer the danger red.
+ */
 const STAGES = [
-  { key: 'deep_min', label: 'Deep', color: AMETHYST },
-  { key: 'rem_min', label: 'REM', color: SAPPHIRE },
-  { key: 'core_min', label: 'Core', color: STEEL },
-  { key: 'awake_min', label: 'Awake', color: OXIDE },
+  { key: 'deep_min', label: 'Deep', color: SLEEP.deep },
+  { key: 'core_min', label: 'Core', color: SLEEP.core },
+  { key: 'rem_min', label: 'REM', color: SLEEP.rem },
+  { key: 'awake_min', label: 'Awake', color: SLEEP.awake },
 ] as const
 
 /** Local HH:MM for an ISO instant. */
@@ -58,7 +69,7 @@ export function SleepStages({ sleep, log, goalHours, nightly, variant = 'full' }
   if (totalMin == null) {
     return (
       <div className="flex flex-col items-center gap-2 py-6 text-center">
-        <Moon className="w-6 h-6" style={{ color: AMETHYST }} aria-hidden="true" />
+        <Moon className="w-6 h-6" style={{ color: SLEEP.deep }} aria-hidden="true" />
         <p className="text-fluid-sm text-text">No sleep synced for last night</p>
         <p className="text-[11px] text-muted">Sync your Watch to score the day.</p>
       </div>
@@ -84,7 +95,7 @@ export function SleepStages({ sleep, log, goalHours, nightly, variant = 'full' }
       {bed && wake && (
         <div className="flex items-center gap-2 text-[11px] text-muted helix-num">
           <span className="text-text font-semibold">{bed}</span>
-          <span className="flex-1 h-px" style={{ background: `linear-gradient(90deg, ${AMETHYST}66, ${GOLD}66)` }} aria-hidden="true" />
+          <span className="flex-1 h-px" style={{ background: `linear-gradient(90deg, ${SLEEP.deep}66, ${GOLD}66)` }} aria-hidden="true" />
           <span className="text-text font-semibold">{wake}</span>
         </div>
       )}
@@ -178,7 +189,20 @@ function SleepArc({ parts, total, totalMin, goalMin, bed, wake }: {
   wake: string | null
 }) {
   const uid = useId().replace(/:/g, '')
-  const W = 260, H = 132, R = 104, CX = W / 2, CY = 120
+  // ── H IS 146, NOT 132, AND THAT IS THE WHOLE BUG ─────────────────────────
+  // The bed/wake labels sit at `CY + 18`. At the old H = 132 they sat at 136 —
+  // a baseline four pixels BELOW the bottom of the viewBox — and an SVG root
+  // clips to its viewport by default, so all that rendered was a ~2px sliver of
+  // the digit tops. It read as a font bug rather than a geometry one.
+  //
+  // Fixed by giving the box the room, not by `overflow: visible`: painting
+  // outside the viewBox would spill into whatever the parent laid out next,
+  // and the parent reserved space for a 260×132 element.
+  //
+  // The arc itself is untouched — its painted bottom is CY + strokeWidth/2 =
+  // 127, and a 9px label with a 138 baseline descends to ~140, so 146 leaves
+  // six pixels of air.
+  const W = 260, H = 146, R = 104, CX = W / 2, CY = 120
 
   // Cumulative stops, each duplicated ±1.2% so transitions dissolve.
   const stops: Array<{ offset: number; color: string }> = []
@@ -226,8 +250,8 @@ function SleepArc({ parts, total, totalMin, goalMin, bed, wake }: {
           strokeDasharray={goalFrac != null ? `${LEN * goalFrac} ${LEN}` : undefined}
         />
 
-        {bed && <text x={CX - R} y={CY + 16} fill={MUTED} fontSize="9" textAnchor="middle">{bed}</text>}
-        {wake && <text x={CX + R} y={CY + 16} fill={MUTED} fontSize="9" textAnchor="middle">{wake}</text>}
+        {bed && <text x={CX - R} y={CY + 18} fill={MUTED} fontSize="9" textAnchor="middle">{bed}</text>}
+        {wake && <text x={CX + R} y={CY + 18} fill={MUTED} fontSize="9" textAnchor="middle">{wake}</text>}
       </svg>
     </div>
   )
@@ -262,7 +286,7 @@ function NightlyHistogram({ nights, goalMin }: {
               title={`${n.date} · ${n.minutes ? formatSleep(n.minutes) : 'no data'}`}
               style={{
                 height: `${Math.max(2, h)}%`,
-                background: n.minutes == null ? 'rgba(255,255,255,0.05)' : short ? `${GOLD}${last ? 'ee' : '55'}` : `${AMETHYST}${last ? 'ee' : '55'}`,
+                background: n.minutes == null ? 'rgba(255,255,255,0.05)' : short ? `${GOLD}${last ? 'ee' : '55'}` : `${SLEEP.deep}${last ? 'ee' : '55'}`,
               }} />
           )
         })}
