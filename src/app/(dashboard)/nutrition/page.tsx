@@ -9,7 +9,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useDailyLogs } from '@/lib/hooks/useNutrition'
 import { NUTRITION_PRESETS, type NutritionMode } from '@/lib/types/workout'
 import { NutritionLogList } from '@/components/nutrition/NutritionLogList'
-import { MacroRings } from '@/components/nutrition/MacroRings'
+import { MacroCards } from '@/components/nutrition/MacroCards'
 import { FuelForceBand } from '@/components/nutrition/FuelForceBand'
 import { WaterHelix } from '@/components/day/WaterHelix'
 import { useTodayDailyLog, useUserGoals } from '@/lib/hooks/useDashboard'
@@ -140,8 +140,8 @@ export default function NutritionPage() {
         <p className="text-muted text-fluid-sm mt-0.5">Macro rings · daily fuel cells · auto-tagged phase</p>
       </div>
 
-      {/* Macro rings hero — MFP-style rings + 7-day phase cells */}
-      <MacroRings
+      {/* Compact fuel hero — calories card + macro card + 7-day phase cells */}
+      <MacroCards
         today={todayLog ? { calories: todayLog.calories, proteinG: todayLog.proteinG, carbsG: todayLog.carbsG, fatG: todayLog.fatG } : null}
         logs={logs ?? []}
         goals={{ calorie: goals.calorie, protein: goals.protein, carbs: goals.carbs, fat: goals.fat }}

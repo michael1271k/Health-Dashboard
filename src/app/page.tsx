@@ -7,7 +7,7 @@ import { Moon, Flame, Dumbbell, Scale, Footprints, Pill } from 'lucide-react'
 import { Sheet } from '@/components/ui/Sheet'
 import { ReadinessOrb } from '@/components/dashboard/ReadinessOrb'
 import { BioStrip, type BioStripProps } from '@/components/dashboard/BioStrip'
-import { MacroRings } from '@/components/nutrition/MacroRings'
+import { MacroCards } from '@/components/nutrition/MacroCards'
 import { Surface, Tile } from '@/components/ui/Zone'
 import { InsightCoach } from '@/components/dashboard/InsightCoach'
 import { AnimatedCard } from '@/components/dashboard/AnimatedBento'
@@ -374,9 +374,10 @@ export default function DashboardPage() {
           <SleepStages sleep={sleep ?? null} log={log ?? null} goalHours={goals?.sleep_goal_hours ?? null} />
         )}
         {open === 'fuel' && (
-          // The elegant hero-calories + 3-macro-ring UI (double-tap any ring to
-          // override the day) — replaces the four flat stat squares.
-          <MacroRings
+          // Calories card + macro card (double-tap either to override the day).
+          // Compact matters more here than anywhere: this is inside a sheet, so
+          // the taller the content the more of it starts below the fold.
+          <MacroCards
             today={nutrition ? {
               calories: nutrition.calories, proteinG: nutrition.protein_g,
               carbsG: nutrition.carbs_g, fatG: nutrition.fat_g,
