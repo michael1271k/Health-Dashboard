@@ -10,6 +10,7 @@ import type { SaveWorkoutPayload } from '@/lib/types/workout'
 import { countCommittedSets } from '@/lib/sessions/schema'
 import { sessionVolumeKg } from '@/lib/sessions/volume'
 import { payloadToTemplate } from '@/lib/sessions/routineTemplate'
+import { estimateCalories, estimateAvgBpm, KCAL_SAMPLE_WINDOW_DAYS } from '@/lib/sessions/estimates'
 import { isTimedExercise } from '@/lib/exercises/timed'
 import { buildBaselines, detectSessionPrs, recordSets, type PrAxis } from '@/lib/training/prEngine'
 import { prFloorFor } from '@/lib/training/prTruth'
@@ -197,9 +198,73 @@ export async function saveSession(
     Math.max(0, Math.round((new Date(payload.endedAt).getTime() - new Date(payload.startedAt).getTime()) / 60000)) || null
   const durationMin = metrics.durationMin ?? computedDuration
 
-  // `session_rpe` isn't in the generated types yet (Supabase is schema-of-record
-  // and types.ts lags), hence the intersection rather than a bare InsertRow.
-  const sessionInsert: InsertRow<'workout_sessions'> & { session_rpe: number | null } = {
+  // ── Calories + heart rate, when the session carries neither ────────────────
+  // Only ever fills a GAP — a measured figure is kept untouched — and anything
+  // derived is stamped so the UI and the export can say so. See `estimates.ts`.
+  let caloriesBurned = metrics.caloriesBurned ?? null
+  let avgBpm = metrics.avgBpm ?? null
+  let caloriesEstimated = false
+  let avgBpmEstimated = false
+
+  if (caloriesBurned == null || avgBpm == null) {
+    try {
+      const windowStart = new Date(Date.parse(`${dateStr}T00:00:00Z`) - KCAL_SAMPLE_WINDOW_DAYS * 86_400_000)
+        .toISOString().slice(0, 10)
+      // Same split, recent, and MEASURED — an estimated row must never become
+      // the sample that justifies the next estimate.
+      const { data: priorRaw } = await supabase
+        .from('workout_sessions')
+        .select('started_at, duration_min, calories_burned, avg_bpm, calories_estimated, avg_bpm_estimated')
+        .eq('user_id', userId)
+        .eq('split_day', payload.splitDay)
+        .lt('started_at', `${dateStr}T00:00:00Z`)
+        .gte('started_at', `${windowStart}T00:00:00Z`)
+        .order('started_at', { ascending: false })
+        .limit(40)
+      const prior = (priorRaw ?? []) as unknown as Array<{
+        duration_min: number | null; calories_burned: number | null; avg_bpm: number | null
+        calories_estimated?: boolean | null; avg_bpm_estimated?: boolean | null
+      }>
+
+      if (caloriesBurned == null) {
+        const samples = prior
+          .filter((r) => !r.calories_estimated && r.calories_burned != null && r.duration_min != null)
+          .map((r) => ({ kcal: r.calories_burned as number, durationMin: r.duration_min as number }))
+        // Bodyweight scales the compendium fallback; absent, only the personal
+        // median can fire, which is the correct order of preference anyway.
+        const { data: bodyRaw } = await supabase
+          .from('body_composition').select('weight_kg')
+          .eq('user_id', userId).lte('date', dateStr)
+          .order('date', { ascending: false }).limit(1).maybeSingle()
+        const bodyweightKg = (bodyRaw as { weight_kg?: number | null } | null)?.weight_kg ?? null
+
+        const est = estimateCalories({ durationMin, samples, bodyweightKg })
+        if (est) {
+          caloriesBurned = est.kcal
+          caloriesEstimated = true
+          console.info(`[save] calories estimated (${est.basis}): ${est.kcal} kcal over ${durationMin} min`)
+        }
+      }
+
+      if (avgBpm == null) {
+        const lastMeasured = prior.find((r) => !r.avg_bpm_estimated && r.avg_bpm != null)
+        const est = estimateAvgBpm(lastMeasured?.avg_bpm)
+        if (est != null) { avgBpm = est; avgBpmEstimated = true }
+      }
+    } catch (e) {
+      // A gap-filler must never cost a workout. Fall through with the nulls.
+      console.error('[save] metric estimation failed:', e)
+    }
+  }
+
+  // `session_rpe` and the two `*_estimated` flags aren't in the generated types
+  // yet (Supabase is schema-of-record and types.ts lags), hence the intersection
+  // rather than a bare InsertRow.
+  const sessionInsert: InsertRow<'workout_sessions'> & {
+    session_rpe: number | null
+    calories_estimated: boolean
+    avg_bpm_estimated: boolean
+  } = {
     user_id: userId,
     started_at: payload.startedAt,
     ended_at: payload.endedAt,
@@ -210,8 +275,12 @@ export async function saveSession(
     set_count: setCount,
     pr_count: prCount,
     duration_min: durationMin,
-    calories_burned: metrics.caloriesBurned ?? null,
-    avg_bpm: metrics.avgBpm ?? null,
+    calories_burned: caloriesBurned,
+    avg_bpm: avgBpm,
+    // Provenance. A derived figure must be distinguishable from a measured one
+    // by every downstream reader, not just by the screen that shows it.
+    calories_estimated: caloriesEstimated,
+    avg_bpm_estimated: avgBpmEstimated,
     report_md: metrics.reportMd ?? null,
     client_session_id: payload.clientSessionId ?? null,
     day_key: payload.dayKey ?? null,
@@ -228,13 +297,16 @@ export async function saveSession(
     supabase.from('workout_sessions').insert(row).select('id').single()
 
   let { data: sessionRaw, error: sessionError } = await insertSession(sessionInsert as unknown)
-  // `session_rpe` is a newer column. Losing an entire workout because an
-  // optional effort rating has nowhere to land is never the right trade — drop
-  // the field and re-insert. The same pattern guards side/pair_id below.
-  if (sessionError && /session_rpe|schema cache|PGRST204/i.test(sessionError.message)) {
-    const { session_rpe: _dropped, ...withoutRpe } = sessionInsert as Record<string, unknown>
-    void _dropped
-    ;({ data: sessionRaw, error: sessionError } = await insertSession(withoutRpe))
+  // `session_rpe` and the two provenance flags are newer columns. Losing an
+  // entire workout because an optional effort rating or an estimate marker has
+  // nowhere to land is never the right trade — drop them and re-insert. The
+  // same pattern guards side/pair_id below.
+  if (sessionError && /session_rpe|estimated|schema cache|PGRST204/i.test(sessionError.message)) {
+    const {
+      session_rpe: _rpe, calories_estimated: _ce, avg_bpm_estimated: _be, ...withoutNewCols
+    } = sessionInsert as Record<string, unknown>
+    void _rpe; void _ce; void _be
+    ;({ data: sessionRaw, error: sessionError } = await insertSession(withoutNewCols))
   }
 
   const session = sessionRaw as { id: string } | null

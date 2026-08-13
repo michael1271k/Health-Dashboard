@@ -665,8 +665,8 @@
     "semantic_hash": ""
   },
   "src/components/session-detail/SessionHero.tsx": {
-    "mtime": 1786364559.9023733,
-    "ast_hash": "4abb7cf8bd0f50c2f01c9247ab36d6e0",
+    "mtime": 1786651186.747616,
+    "ast_hash": "0e903b1d54a22e399683e96c70a5b48e",
     "semantic_hash": ""
   },
   "src/components/settings/NotionSync.tsx": {
@@ -800,8 +800,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useExerciseSetHistory.ts": {
-    "mtime": 1786650113.491848,
-    "ast_hash": "5ab3021c7ceb363813feee8deb32e079",
+    "mtime": 1786650874.8910418,
+    "ast_hash": "bbce3ccfe78ea3f2db968ec9dc62c016",
     "semantic_hash": ""
   },
   "src/lib/hooks/useInsights.ts": {
@@ -915,8 +915,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useWeeklyLoop.ts": {
-    "mtime": 1786543662.1900902,
-    "ast_hash": "f22ada1a5df3f054e55e818159f0e91f",
+    "mtime": 1786651152.7579274,
+    "ast_hash": "2523ddbc57d3ec36f12bc6333ad360fd",
     "semantic_hash": ""
   },
   "src/lib/hooks/useWeeklyVolume.ts": {
@@ -1000,8 +1000,8 @@
     "semantic_hash": ""
   },
   "src/lib/reports/weeklyExport.ts": {
-    "mtime": 1786646160.7848682,
-    "ast_hash": "1420054af3a3da3f6a328d3b3f8617ea",
+    "mtime": 1786651113.5536478,
+    "ast_hash": "c14c35ef818dc6fb4b1e7ad4b71ced13",
     "semantic_hash": ""
   },
   "src/lib/schedule/overrides.ts": {
@@ -1040,8 +1040,8 @@
     "semantic_hash": ""
   },
   "src/lib/sessions/save.ts": {
-    "mtime": 1786650414.2737055,
-    "ast_hash": "0d5535322718e7649cd5637a51b87836",
+    "mtime": 1786651038.1622047,
+    "ast_hash": "4bab71e64d1975a683d3368fd4894132",
     "semantic_hash": ""
   },
   "src/lib/sessions/schema.ts": {
@@ -2040,8 +2040,18 @@
     "semantic_hash": ""
   },
   "scripts/backfill-routine-templates.mts": {
-    "mtime": 1786650758.497966,
-    "ast_hash": "21723bf1402e415dda993f5c54131aba",
+    "mtime": 1786650836.3997858,
+    "ast_hash": "a444b71dc4096227cf6176d279a0a5ec",
+    "semantic_hash": ""
+  },
+  "src/lib/sessions/estimates.ts": {
+    "mtime": 1786650946.8316543,
+    "ast_hash": "72cc64955ed6d3f1886e611c3f5f34e9",
+    "semantic_hash": ""
+  },
+  "src/tests/session-estimates.test.ts": {
+    "mtime": 1786651068.8114696,
+    "ast_hash": "cb7ea07b31a041fce5cbd920b768bfd9",
     "semantic_hash": ""
   }
 }

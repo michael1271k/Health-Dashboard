@@ -56,6 +56,9 @@ export interface SessionDetail {
   prCount: number
   durationMin: number | null
   avgBpm: number | null
+  /** Both figures may be formula-derived when the session carried no watch data. */
+  avgBpmEstimated: boolean
+  caloriesEstimated: boolean
   calories: number | null
   /**
    * Session difficulty, 1–10, as logged on the commit bar.
@@ -111,13 +114,14 @@ export function useSessionDetail(sessionId: string | null) {
     queryFn: async (): Promise<SessionDetail | null> => {
       const { data: sRaw } = await supabase
         .from('workout_sessions')
-        .select('id, started_at, split_day, day_key, total_volume_kg, set_count, pr_count, duration_min, avg_bpm, calories_burned, session_rpe')
+        .select('id, started_at, split_day, day_key, total_volume_kg, set_count, pr_count, duration_min, avg_bpm, calories_burned, session_rpe, calories_estimated, avg_bpm_estimated')
         .eq('id', sessionId as string)
         .single()
       const s = sRaw as {
         id: string; started_at: string; split_day: string; day_key: string | null
         total_volume_kg: number | null; set_count: number | null; pr_count: number | null
         duration_min: number | null; avg_bpm: number | null; calories_burned: number | null
+        calories_estimated: boolean | null; avg_bpm_estimated: boolean | null
         session_rpe: number | null
       } | null
       if (!s) return null
@@ -279,7 +283,9 @@ export function useSessionDetail(sessionId: string | null) {
         prCount: s.pr_count ?? exercises.reduce((n, e) => n + e.sets.filter((x) => x.isPr).length, 0),
         durationMin: s.duration_min,
         avgBpm: s.avg_bpm,
+        avgBpmEstimated: s.avg_bpm_estimated ?? false,
         calories: s.calories_burned,
+        caloriesEstimated: s.calories_estimated ?? false,
         sessionRpe: s.session_rpe,
         exercises,
         muscleSets,

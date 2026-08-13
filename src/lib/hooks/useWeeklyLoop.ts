@@ -67,6 +67,7 @@ interface RawSession {
   id: string; started_at: string; split_day: string; day_key: string | null
   total_volume_kg: number | null; set_count: number | null
   duration_min: number | null; avg_bpm: number | null; calories_burned: number | null
+  calories_estimated?: boolean | null; avg_bpm_estimated?: boolean | null
 }
 
 /** Pull every table a week's export needs, for an arbitrary [start, end] range. */
@@ -88,7 +89,7 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     supabase.from('nutrition_entries').select('date, calories, protein_g, carbs_g, fat_g')
       .eq('meal_type', 'daily').gte('date', weekStart).lte('date', weekEnd),
     supabase.from('workout_sessions')
-      .select('id, started_at, split_day, day_key, total_volume_kg, set_count, duration_min, avg_bpm, calories_burned')
+      .select('id, started_at, split_day, day_key, total_volume_kg, set_count, duration_min, avg_bpm, calories_burned, calories_estimated, avg_bpm_estimated')
       .gte('started_at', startInstant).lt('started_at', endInstant).order('started_at', { ascending: true }),
     // Sets are scoped by their PARENT SESSION's started_at, not their own
     // created_at — a session logged days later (back-dated) has created_at
@@ -422,6 +423,8 @@ function toSessions(d: RangeData): ExportSession[] {
       volumeKg, setCount: s.set_count,
       failureSets: failurePairs.size,
       durationMin: s.duration_min, avgBpm: s.avg_bpm, caloriesBurned: s.calories_burned,
+      caloriesEstimated: s.calories_estimated ?? false,
+      avgBpmEstimated: s.avg_bpm_estimated ?? false,
       sessionRpe: rpeById.get(s.id) ?? null,
       exercises: [...byName.values()],
       // Named PRs, not a bare count. No est-1RM — the raw lift only.

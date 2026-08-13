@@ -178,6 +178,14 @@ export interface ExportSession {
   durationMin: number | null
   avgBpm: number | null
   caloriesBurned: number | null
+  /**
+   * Provenance for the two figures above. A session logged without a watch has
+   * them filled by formula (see `sessions/estimates.ts`), and a derived number
+   * standing unmarked beside measured ones is read as measured — the one thing
+   * this export exists to prevent.
+   */
+  caloriesEstimated?: boolean | null
+  avgBpmEstimated?: boolean | null
   /** Borg CR10 session effort, when rated. */
   sessionRpe: number | null
   exercises: ExportExercise[]
@@ -897,8 +905,8 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
     L.push(`### ${s.date} · ${s.label}`)
     // Volume · sets · failures · time · kcal burned · avg HR — all metadata.
     L.push(`${exact(s.volumeKg)} kg volume · ${n(s.setCount)} sets · ${n(s.failureSets)} to failure`
-      + ` · ${n(s.durationMin)} min · ${n(s.caloriesBurned)} kcal`
-      + `${s.avgBpm != null ? ` · avg HR ${n(s.avgBpm)}` : ''}`
+      + ` · ${n(s.durationMin)} min · ${n(s.caloriesBurned)} kcal${s.caloriesEstimated ? ' [Estimated]' : ''}`
+      + `${s.avgBpm != null ? ` · avg HR ${n(s.avgBpm)}${s.avgBpmEstimated ? ' [Estimated]' : ''}` : ''}`
       // Borg CR10 — the subjective cost of the session, next to its objective cost.
       // Always printed. A missing segment is indistinguishable from a session
       // logged at effort 0, so the absence is stated rather than implied.
