@@ -166,12 +166,40 @@ describe('ingest — recovery keys: wrist_temp / time_in_daylight', () => {
 
 describe('ingest — nutrition uses explicit dietary energy, never derived', () => {
   // db that captures nutrition_entries inserts; other tables are no-ops.
-  function nutritionDb(): { db: any; getRow: () => any; inserted: () => boolean } {
+  //
+  // `daily_logs` and `user_goals` are readable here because the phase is no
+  // longer a pure function of calories: a declared day keeps the active phase.
+  function nutritionDb(
+    context: {
+      exception?: string | null
+      estimated?: boolean | null
+      goalPreset?: string | null
+    } = {},
+  ): { db: any; getRow: () => any; inserted: () => boolean } {
     let row: any = null
     let didInsert = false
     const db: any = {
       from(table: string) {
-        if (table === 'daily_logs') return { upsert: () => Promise.resolve({ error: null }) }
+        if (table === 'daily_logs') {
+          const chain: any = {
+            upsert: () => Promise.resolve({ error: null }),
+            select: () => chain, eq: () => chain,
+            maybeSingle: () => Promise.resolve({
+              data: {
+                nutrition_exception: context.exception ?? null,
+                nutrition_estimated: context.estimated ?? false,
+              },
+            }),
+          }
+          return chain
+        }
+        if (table === 'user_goals') {
+          const chain: any = {
+            select: () => chain, eq: () => chain,
+            maybeSingle: () => Promise.resolve({ data: { goal_preset: context.goalPreset ?? null } }),
+          }
+          return chain
+        }
         if (table === 'nutrition_entries') {
           const chain: any = {
             eq: () => chain, delete: () => chain,
@@ -203,6 +231,33 @@ describe('ingest — nutrition uses explicit dietary energy, never derived', () 
     const result = await ingestDailyLog(db, 'user-1', { date: '2026-07-19', protein: 170, carbs: 187, fats: 52 } as any)
     expect(inserted()).toBe(false)                      // no calorie invention
     expect(result.errors.some((e) => e.field === 'nutrition_entries')).toBe(false)
+  })
+
+  it('bands an ORDINARY day off its calories', async () => {
+    const { db, getRow } = nutritionDb({ goalPreset: 'cut' })
+    await ingestDailyLog(db, 'user-1', { date: '2026-08-12', calories: 2150 } as any)
+    expect(getRow().phase).toBe('maintenance')          // 2050 < 2150 < 2450
+  })
+
+  it('keeps a DECLARED day in the active phase — the 2026-08-11 date night', async () => {
+    // 2,150 kcal, flagged Social + Estimated, week four of a strict cut. The
+    // threshold said 'maintenance' and the history page filed a cut day under a
+    // phase that has not started. The phase belongs to the block, not the meal.
+    const { db, getRow } = nutritionDb({ exception: 'Social', estimated: true, goalPreset: 'cut' })
+    await ingestDailyLog(db, 'user-1', { date: '2026-08-11', calories: 2150 } as any)
+    expect(getRow().phase).toBe('cut')
+  })
+
+  it('an ESTIMATED-only day is held too — a guess is not evidence of a new phase', async () => {
+    const { db, getRow } = nutritionDb({ estimated: true, goalPreset: 'cut' })
+    await ingestDailyLog(db, 'user-1', { date: '2026-08-11', calories: 2150 } as any)
+    expect(getRow().phase).toBe('cut')
+  })
+
+  it('falls back to the calorie band when the active phase is unknown', async () => {
+    const { db, getRow } = nutritionDb({ exception: 'Social', goalPreset: null })
+    await ingestDailyLog(db, 'user-1', { date: '2026-08-11', calories: 2150 } as any)
+    expect(getRow().phase).toBe('maintenance')
   })
 })
 

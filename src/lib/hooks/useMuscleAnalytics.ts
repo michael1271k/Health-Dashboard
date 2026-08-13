@@ -30,13 +30,13 @@ export function useMuscleAnalytics(days = 30, era: 'all' | 'ppl' | 'axis' = 'all
       const from = new Date(Date.now() - days * 86400000).toISOString()
       const { data, error } = await supabase
         .from('workout_sets')
-        .select('id, weight_kg, reps, pair_id, exercises!inner(name, muscle_groups), workout_sessions!inner(started_at)')
+        .select('id, weight_kg, reps, pair_id, side, exercises!inner(name, muscle_groups), workout_sessions!inner(started_at)')
         .gte('workout_sessions.started_at', from)
         .limit(4000) // ceiling so a long history never scans unbounded
       if (error) throw error
 
       const rows = ((data ?? []) as unknown as Array<{
-        id: string; weight_kg: number; reps: number; pair_id: string | null
+        id: string; weight_kg: number; reps: number; pair_id: string | null; side: 'L' | 'R' | null
         exercises: { name: string; muscle_groups: string[] | null }
         workout_sessions: { started_at: string }
       }>)
@@ -49,6 +49,7 @@ export function useMuscleAnalytics(days = 30, era: 'all' | 'ppl' | 'axis' = 'all
           weightKg: r.weight_kg,
           reps: r.reps,
           pairId: r.pair_id,
+          side: r.side,
           // Primary AND secondary, flat and unweighted — DELIBERATELY different
           // from the volume accumulators. This drives FRESHNESS, which asks "when
           // was this muscle last under load", and a half set of assistance still

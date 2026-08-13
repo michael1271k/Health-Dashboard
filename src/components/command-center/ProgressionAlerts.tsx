@@ -1,7 +1,6 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
-import { TrendingUp, ChevronRight } from 'lucide-react'
+import { TrendingUp } from 'lucide-react'
 import { useProgressionQueue } from '@/lib/hooks/useProgressionQueue'
 import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { scheduleDayFor } from '@/lib/programs'
@@ -31,7 +30,13 @@ export function scopeToDay<T extends { dayKey: string | null }>(
 
 /**
  * Smart-Coach banner: the lifts on TODAY'S session that cleared their programmed
- * ceiling and are due a load bump. Each row deep-links to logging that day.
+ * ceiling and are due a load bump.
+ *
+ * STRICTLY INFORMATIONAL. The rows used to be buttons that pushed
+ * `/session?template=<dayKey>`. Every row is already scoped to today, so the
+ * destination was the session you were about to open anyway — a tap target that
+ * restated the obvious, on a card whose job is to be read at a glance. Read-only
+ * also means the widget can never open a deck for a day you did not intend.
  *
  * SCOPED TO THE DAY, DELIBERATELY. `useProgressionQueue` grades every exercise
  * in the active plan across every day — correct as a coach's queue, and what the
@@ -51,7 +56,6 @@ export function scopeToDay<T extends { dayKey: string | null }>(
  */
 export function ProgressionAlerts({ date = logicalTodayISO() }: { date?: string } = {}) {
   const { data: alerts } = useProgressionQueue()
-  const router = useRouter()
   const unit = weightUnit()
   useScheduleVersion()
 
@@ -91,10 +95,9 @@ export function ProgressionAlerts({ date = logicalTodayISO() }: { date?: string 
       </p>
       <div className="space-y-1.5">
         {(ready.length ? ready : oneMore).map((a) => (
-          <button
+          <div
             key={`${a.exerciseId}|${a.dayKey ?? ''}`}
-            onClick={() => a.dayKey && router.push(`/session?template=${a.dayKey}`)}
-            className="w-full flex items-center gap-2 rounded-lg bg-white/[0.02] border border-white/[0.05] px-2.5 py-2 text-left hover:bg-white/[0.04] transition-colors"
+            className="w-full flex items-center gap-2 rounded-lg bg-white/[0.02] border border-white/[0.05] px-2.5 py-2 text-left"
           >
             {/* No per-row day label: every row is the same day now, and it is
                 already in the header. */}
@@ -111,8 +114,7 @@ export function ProgressionAlerts({ date = logicalTodayISO() }: { date?: string 
                     ? `${displayWeight(a.currentKg)}→${displayWeight(a.suggestKg)}${unit}`
                     : `+2.5${unit}`}
             </span>
-            <ChevronRight className="w-4 h-4 text-muted shrink-0" aria-hidden="true" />
-          </button>
+          </div>
         ))}
       </div>
     </section>

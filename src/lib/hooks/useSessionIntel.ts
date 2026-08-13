@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { eraForDate, programDayFor, programDayByKey, DEFAULT_PROGRAM_ID } from '@/lib/programs'
 import { epley1RM } from '@/lib/utils/epley'
+import { sessionVolumeKg, type VolumeSet } from '@/lib/sessions/volume'
 
 export interface ExerciseDelta {
   exerciseId: string
@@ -55,7 +56,19 @@ export interface SessionIntel {
   isFirstOfType: boolean     // no previous same-type session → hide progression
 }
 
-type SetRow = { exercise_id: string; weight_kg: number; reps: number; is_pr: boolean; exercises: { name: string } }
+type SetRow = {
+  exercise_id: string; weight_kg: number; reps: number; is_pr: boolean
+  /** Unilateral tracking — needed so tonnage collapses a pair to its weaker side. */
+  side: string | null; pair_id: string | null
+  exercises: { name: string }
+}
+
+/** PostgREST hands `side` back as a bare string; only a real limb collapses. */
+const toVolumeSet = (s: Pick<SetRow, 'weight_kg' | 'reps' | 'side' | 'pair_id'>): VolumeSet => ({
+  weightKg: s.weight_kg, reps: s.reps,
+  side: s.side === 'L' || s.side === 'R' ? s.side : null,
+  pairId: s.pair_id ?? null,
+})
 
 /**
  * Data behind the Session Intel Card: per-exercise top set vs the PREVIOUS
@@ -117,7 +130,7 @@ export function useSessionIntel(sessionId: string | null) {
       const ids = [session.id, ...prev.map((p) => p.id)]
       const { data: setsRaw } = await supabase
         .from('workout_sets')
-        .select('session_id, exercise_id, weight_kg, reps, is_pr, exercises!inner(name)')
+        .select('session_id, exercise_id, weight_kg, reps, is_pr, side, pair_id, exercises!inner(name)')
         .in('session_id', ids)
       const sets = (setsRaw ?? []) as unknown as Array<SetRow & { session_id: string }>
 
@@ -133,22 +146,31 @@ export function useSessionIntel(sessionId: string | null) {
        */
       const top = (rows: Array<SetRow & { session_id: string }>, sid: string) => {
         const m = new Map<string, Top>()
+        // Tonnage is NOT accumulated here. A unilateral pair is two rows, and
+        // adding both credited the strong side's extra reps to the weak one —
+        // so this card disagreed with the session total it sits next to. The
+        // rows are collected whole and folded once, below, through the one rule.
+        const perEx = new Map<string, VolumeSet[]>()
         for (const s of rows.filter((r) => r.session_id === sid)) {
+          const bucket = perEx.get(s.exercise_id) ?? []
+          bucket.push(toVolumeSet(s))
+          perEx.set(s.exercise_id, bucket)
+
           const cur = m.get(s.exercise_id)
           const better = !cur || s.weight_kg > cur.kg || (s.weight_kg === cur.kg && s.reps > cur.reps)
           if (better) {
             m.set(s.exercise_id, {
               name: s.exercises.name, kg: s.weight_kg, reps: s.reps,
               isPr: cur?.isPr || s.is_pr,
-              volumeKg: (cur?.volumeKg ?? 0) + s.weight_kg * s.reps,
+              volumeKg: 0,
               unloaded: (cur?.unloaded ?? true) && !(s.weight_kg > 0),
             })
           } else {
             cur.isPr ||= s.is_pr
-            cur.volumeKg += s.weight_kg * s.reps
             cur.unloaded &&= !(s.weight_kg > 0)
           }
         }
+        for (const [exId, t] of m) t.volumeKg = sessionVolumeKg(perEx.get(exId) ?? [])
         return m
       }
       const thisTop = top(sets, session.id)
@@ -187,7 +209,7 @@ export function useSessionIntel(sessionId: string | null) {
 
       // Fallback totals computed from the fetched sets (guaranteed chips)
       const thisSets = sets.filter((s) => s.session_id === session.id)
-      const computedVolumeKg = Math.round(thisSets.reduce((sum, s) => sum + s.weight_kg * s.reps, 0))
+      const computedVolumeKg = Math.round(sessionVolumeKg(thisSets.map(toVolumeSet)))
       const computedSets = thisSets.length
       const thisVolume = session.total_volume_kg ?? computedVolumeKg
 

@@ -6,6 +6,7 @@ import { MUSCLE_MAP } from '@/lib/hooks/useMuscleAnalytics'
 import { resolveMovers } from '@/lib/exercises/muscleMap'
 import { toLandmarkMuscle, LANDMARK_MUSCLES, SECONDARY_SET_CREDIT, type LandmarkMuscle } from '@/lib/training/landmarks'
 import type { PrAxis } from '@/lib/sessions/save'
+import { sessionVolumeKg, type VolumeSet } from '@/lib/sessions/volume'
 
 export interface DetailSet {
   setNumber: number
@@ -135,6 +136,8 @@ export function useSessionDetail(sessionId: string | null) {
       const muscleAgg = new Map<LandmarkMuscle, Map<string, number>>()
       /** per-exercise working-set dedupe keys — a unilateral L/R pair is ONE set. */
       const workingSeen = new Map<string, Set<string>>()
+      /** per-exercise working sets, kept whole so tonnage can use the ONE rule. */
+      const workingVol = new Map<string, VolumeSet[]>()
       /** exercise → each landmark mover it trains, and what one set is worth to it. */
       const moversOf = new Map<string, Map<LandmarkMuscle, number>>()
       let failureSets = 0
@@ -184,7 +187,20 @@ export function useSessionDetail(sessionId: string | null) {
           side: r.side ?? null, pairId: r.pair_id ?? null, prAxes: [],
         })
         if (!isWarmup) {
-          ex.volumeKg += (r.weight_kg || 0) * (r.reps || 0)
+          // Collected, not summed. Tonnage now goes through `sessionVolumeKg`
+          // once per exercise (below) so a unilateral pair collapses to its
+          // weaker side here exactly as it does on the session total. Summing
+          // per row credited the strong arm's extra reps to the weak one, and
+          // the card disagreed with its own header.
+          const bucket = workingVol.get(r.exercise_id) ?? []
+          bucket.push({
+            weightKg: r.weight_kg || 0, reps: r.reps || 0,
+            // `RawSet.side` is a bare string from PostgREST; only the two real
+            // limbs may collapse a pair, so anything else reads as no side.
+            side: r.side === 'L' || r.side === 'R' ? r.side : null,
+            pairId: r.pair_id ?? null,
+          })
+          workingVol.set(r.exercise_id, bucket)
           if (r.weight_kg > ex.topKg) ex.topKg = r.weight_kg
           if (r.est_1rm_kg != null && (ex.bestEst1rm == null || r.est_1rm_kg > ex.bestEst1rm)) ex.bestEst1rm = r.est_1rm_kg
           // One direct set per landmark mover. Unilateral L/R sub-sets share a
@@ -203,7 +219,9 @@ export function useSessionDetail(sessionId: string | null) {
       }
 
       const exercises = [...byEx.values()].sort((a, b) => a.order - b.order)
-      exercises.forEach((e) => { e.volumeKg = Math.round(e.volumeKg) })
+      exercises.forEach((e) => {
+        e.volumeKg = Math.round(sessionVolumeKg(workingVol.get(e.exerciseId) ?? []))
+      })
 
       // PR axes achieved in THIS session, from the ledger (self-healing: a missing
       // personal_records table just yields no axis chips — is_pr trophies still show).

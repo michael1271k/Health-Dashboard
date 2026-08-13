@@ -356,4 +356,33 @@ describe('topLoadCleared', () => {
       [{ weightKg: 18, reps: 12 }, { weightKg: 18, reps: 12 }, { weightKg: 20, reps: 12 }], 12,
     )).toBe(false)
   })
+
+  it('refuses when the weight DROPS, even though every set hit the ceiling', () => {
+    // The reported case: 35, 35, then 30. All three reached 12 reps, but the
+    // session ended with the load coming down — that is not a consolidated 35.
+    expect(topLoadCleared(
+      [{ weightKg: 35, reps: 12 }, { weightKg: 35, reps: 12 }, { weightKg: 30, reps: 12 }], 12,
+    )).toBe(false)
+  })
+
+  it('the same drop-off still produces a levelUpCue', () => {
+    // The strict rule must not silence the cue that tells you what to do about
+    // it. topLoadCleared says "no progression"; levelUpCue says "bring the 30 up
+    // to 35 at the window floor". Both are correct about the same session.
+    expect(levelUpCue(
+      [{ weightKg: 35, reps: 12 }, { weightKg: 35, reps: 12 }, { weightKg: 30, reps: 12 }],
+      { floor: 8, ceiling: 12 },
+    )).toEqual({ fromKg: 30, toKg: 35, atReps: 8 })
+  })
+
+  it('a dropped weight blocks the progression verdict end to end', () => {
+    const faded = [{ weightKg: 35, reps: 12 }, { weightKg: 35, reps: 12 }, { weightKg: 30, reps: 12 }]
+    const clean = [{ weightKg: 35, reps: 12 }, { weightKg: 35, reps: 12 }, { weightKg: 35, reps: 12 }]
+    // Two faded sessions never earn the load.
+    expect(progressionVerdict([faded, faded], 12).state).toBe('no')
+    // One clean session after a faded one owes one more, rather than reading ready.
+    expect(progressionVerdict([faded, clean], 12).state).toBe('one-more')
+    // Two clean sessions still progress exactly as before.
+    expect(progressionVerdict([clean, clean], 12).state).toBe('ready')
+  })
 })

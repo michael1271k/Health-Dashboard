@@ -2,7 +2,8 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
-import { derivePhase, type Phase } from '@/lib/nutrition/phase'
+import { resolveDayPhase, type Phase } from '@/lib/nutrition/phase'
+import { activePhase } from '@/lib/programs'
 import { logicalTodayISO, logicalDaysAgoISO } from '@/lib/utils/day'
 
 export interface DailyLog {
@@ -111,6 +112,8 @@ export function useDailyLogs(daysOrRange: number | { from: string; to: string } 
           const n = nutMap.get(date)
           const m = metMap.get(date)
           const s = scoreMap.get(date)
+          const exception = excMap.get(date) ?? null
+          const estimated = estMap.get(date) ?? false
           return {
             date,
             calories:   n?.calories  ?? null,
@@ -121,9 +124,17 @@ export function useDailyLogs(daysOrRange: number | { from: string; to: string } 
             activeCal:  m?.active_cal ?? null,
             score:      s?.score      ?? null,
             batteryPct: s?.battery_pct ?? null,
-            phase:      (n?.phase as Phase | null) ?? derivePhase(n?.calories ?? null),
-            exception:  excMap.get(date) ?? null,
-            estimated:  estMap.get(date) ?? false,
+            // Resolved, not read straight off the column. A flagged day keeps
+            // the active phase even when a row written before that rule existed
+            // still carries the calorie-derived one (2026-08-11 stored
+            // 'maintenance' for a 2,150 kcal date night in week four of a cut).
+            phase:      resolveDayPhase({
+              calories: n?.calories ?? null,
+              stored: (n?.phase as Phase | null) ?? null,
+              exception, estimated, activePhase: activePhase(),
+            }),
+            exception,
+            estimated,
           }
         })
     },

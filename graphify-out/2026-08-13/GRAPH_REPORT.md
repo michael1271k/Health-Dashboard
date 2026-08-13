@@ -1,7 +1,7 @@
 # Graph Report - Helix  (2026-08-13)
 
 ## Corpus Check
-- 384 files · ~673,078 words
+- 384 files · ~673,042 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -163,7 +163,6 @@
 - favicon-32.png (32x32 site favicon: stylized bold 'X' crossing mark in orange and dark charcoal/black, diagonal crossed-bar design)
 - PWA icon (192x192): two intertwined DNA-helix-like ribbons forming an 'H' silhouette on a dark rounded-square background, left ribbon rendered in brushed silver/chrome, right ribbon rendered in glowing orange/fire, evoking the 'Helix' app name
 - icon-512.png (PWA app icon — dual DNA double-helix, silver and orange strands forming an H shape on dark rounded-square background)
-- sharp
 - react-dom
 - HELIX Data Pipeline (Apple Health → Ingest → Supabase → PWA/Notion)
 - Helix app master icon (dual DNA helix, silver + molten orange, dark rounded-square background)
@@ -180,6 +179,7 @@
 - @capacitor/core
 - react
 - next-themes
+- eslint
 - @next/bundle-analyzer
 - @capacitor/preferences
 - insights.ts
@@ -248,8 +248,8 @@ Cohesion: 0.18
 Nodes (16): axesBySession(), AXIS_ORDER, dedupePrs(), RangeData, RawSession, RawSet, supplementStack(), toBodyComp() (+8 more)
 
 ### Community 5 - "ContentView.swift"
-Cohesion: 0.09
-Nodes (38): Combine, Content, ContentView, .body, Helix, MacrosScreen, .body, .remaining (+30 more)
+Cohesion: 0.10
+Nodes (36): Combine, Content, ContentView, .body, Helix, MacrosScreen, .body, .remaining (+28 more)
 
 ### Community 6 - "useTimelineWeeks.ts"
 Cohesion: 0.25
@@ -376,8 +376,8 @@ Cohesion: 0.23
 Nodes (9): DRY, env, rows, sb, DICT, lookupMuscles(), MuscleEntry, resolveMovers() (+1 more)
 
 ### Community 37 - "HelixWidgets.swift"
-Cohesion: 0.19
-Nodes (14): Helix, HelixCaloriesWidget, .body, HelixSmallView, .kcalLeft, HelixWeekWidget, HelixWidgetsBundle, .body (+6 more)
+Cohesion: 0.17
+Nodes (15): Helix, HelixCaloriesWidget, HelixMediumView, .batteryRing, .body, HelixWeekWidget, .body, HelixWidgetsBundle (+7 more)
 
 ### Community 38 - "useHelixReducedMotion"
 Cohesion: 0.15
@@ -408,8 +408,8 @@ Cohesion: 0.26
 Nodes (10): acquireOverlay(), Portal(), releaseOverlay(), useOverlayBodyLock(), Sheet(), SheetProps, nearestSnap(), project() (+2 more)
 
 ### Community 46 - ".fetchWithFallback"
-Cohesion: 0.18
-Nodes (10): Error, Foundation, HelixSnapshotClient, .isConfigured, HelixSnapshotError, badStatus, .errorDescription, notConfigured (+2 more)
+Cohesion: 0.15
+Nodes (12): Error, Foundation, SnapshotStore, HelixSnapshotClient, .isConfigured, HelixSnapshotError, badStatus, .errorDescription (+4 more)
 
 ### Community 47 - "Breaking the watchOS install loop"
 Cohesion: 0.13
@@ -425,15 +425,15 @@ Nodes (16): BioDay, BODY_METRIC_FIELDS, BodyMetricField, LatestBodyMetrics, late
 
 ### Community 50 - "devDependencies"
 Cohesion: 0.13
-Nodes (15): @capacitor/cli, eslint, @netlify/plugin-nextjs, devDependencies, @capacitor/cli, eslint, @netlify/plugin-nextjs, @playwright/test (+7 more)
+Nodes (15): @capacitor/cli, @netlify/plugin-nextjs, devDependencies, @capacitor/cli, @netlify/plugin-nextjs, @playwright/test, postcss, shadcn (+7 more)
 
 ### Community 51 - "app/page.tsx"
 Cohesion: 0.11
 Nodes (31): avg(), BODY_TILES, DashboardPage(), n0(), n1(), prefetchSheetBodies(), ScoreCard, SHEET_ACCENT (+23 more)
 
 ### Community 52 - "HelixEntry"
-Cohesion: 0.15
-Nodes (15): Context, HelixEntry, HelixMediumView, .batteryRing, .body, HelixProvider, .body, Bool (+7 more)
+Cohesion: 0.16
+Nodes (14): Context, .body, HelixEntry, HelixProvider, HelixSmallView, .kcalLeft, Bool, Date (+6 more)
 
 ### Community 53 - "scripts"
 Cohesion: 0.14

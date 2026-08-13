@@ -790,8 +790,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useEditSession.ts": {
-    "mtime": 1786646768.3932233,
-    "ast_hash": "611e1f74f8a72b78236010d484405f62",
+    "mtime": 1786646744.6024382,
+    "ast_hash": "1820f4145a5e6332752b8e96138a5fce",
     "semantic_hash": ""
   },
   "src/lib/hooks/useExerciseHistory.ts": {

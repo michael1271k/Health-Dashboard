@@ -62,7 +62,18 @@ export async function saveSession(
   // EDIT flow: replace an existing session in place — delete it (+ its sets)
   // up front so the one-per-date guard doesn't block the re-commit and the
   // fresh insert below becomes the edited session.
+  //
+  // Anything the payload does not restate is LOST by that delete. `session_rpe`
+  // was exactly that: the edit deck never selected it, so every edit re-committed
+  // `undefined` → `normalizeCr10` → null, quietly erasing a rating the session
+  // had been logged with. The deck now repopulates it, and this carries it as a
+  // second line of defence for any path that still omits the field.
+  let carriedSessionRpe: number | null = null
   if (payload.replaceSessionId) {
+    const { data: prior } = await supabase.from('workout_sessions')
+      .select('session_rpe').eq('id', payload.replaceSessionId).eq('user_id', userId)
+      .maybeSingle() as unknown as { data: { session_rpe: number | null } | null }
+    carriedSessionRpe = prior?.session_rpe ?? null
     await supabase.from('workout_sets').delete().eq('session_id', payload.replaceSessionId).eq('user_id', userId)
     await supabase.from('workout_sessions').delete().eq('id', payload.replaceSessionId).eq('user_id', userId)
   }
@@ -206,7 +217,9 @@ export async function saveSession(
     coach_report: payload.coachReport ?? null,
     next_session_flag: payload.nextSessionFlag ?? null,
     // Self-heals: a pre-migration DB simply drops the key (see the retry below).
-    session_rpe: normalizeCr10(payload.sessionRpe),
+    // An edit that carries no rating keeps the one already stored rather than
+    // nulling it — see `carriedSessionRpe`.
+    session_rpe: normalizeCr10(payload.sessionRpe) ?? carriedSessionRpe,
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

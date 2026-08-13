@@ -222,10 +222,33 @@ export function ladderVerdict(sets: WorkingSet[], ceiling: number): LadderVerdic
 }
 
 /**
- * Did the session's TOP load earn a progression?
+ * The TOP RUNG's own verdict: at least two sets at the heaviest load, every one
+ * of them at the ceiling. Lighter rungs are ignored.
  *
- * The rule: **at least two sets at the top load, and EVERY set at that load
- * reached the ceiling.**
+ * This answers the MIXED-LOAD question — "is the weight I am chasing actually
+ * being handled?" — which is the only question `levelUpCue` can act on, because
+ * a level-up cue exists precisely when there are two loads to talk about.
+ * `topLoadCleared` cannot answer it: it now refuses every mixed-load session by
+ * construction, so routing `levelUpCue` through it would return null for the one
+ * input shape that produces a cue.
+ *
+ * Private on purpose. It is a rung-local fact, not a progression verdict, and
+ * exporting it invites exactly the confusion between the two that this split
+ * exists to prevent.
+ */
+function topRungCleared(sets: WorkingSet[], ceiling: number): boolean {
+  const working = workLoads(sets)
+  if (!working.length) return false
+  const top = Math.max(...working.map((s) => s.weightKg))
+  const atTop = working.filter((s) => s.weightKg === top)
+  return atTop.length >= 2 && atTop.every((s) => s.reps >= ceiling)
+}
+
+/**
+ * Did the session earn a progression?
+ *
+ * The rule: **ONE load across every working set, at least two sets of it, and
+ * every one of them at the ceiling.**
  *
  * This was briefly "at least two sets at the ceiling", on the reasoning that one
  * fatigued closing set shouldn't block progression forever. It produced exactly
@@ -240,19 +263,23 @@ export function ladderVerdict(sets: WorkingSet[], ceiling: number): LadderVerdic
  * program's own wording is unambiguous ("increase load only when ALL work sets
  * hit the ceiling"), so that is the rule again.
  *
- * Two things it still does NOT require, deliberately:
- *  · Sets at a LIGHTER load are ignored. Hitting ceiling reps on a back-off set
- *    says nothing about the load you are chasing — that was the SA Cable
- *    Crossover / Hack Squat false-positive source. Warm-ups are filtered out
- *    upstream, and sit below the top load anyway.
- *  · A single top-load set never clears. One set is not a capability.
+ * IT NOW ALSO REQUIRES A CONSTANT LOAD. Ignoring the lighter rungs was not
+ * enough: `35×12, 35×12, 30×12` cleared on the strength of the two 35s, but the
+ * session ended with the weight coming DOWN. Fading to a lighter load is the
+ * same evidence as fading on reps — the load was not consolidated — and calling
+ * it a completed progression overstates what happened. A mixed-load session that
+ * is genuinely going well gets `levelUpCue` instead, which says the useful thing:
+ * bring the light sets up to the load you are already handling.
+ *
+ * One thing it still does NOT require: a specific set COUNT beyond two. Two sets
+ * is the floor for a capability; the programme decides the rest.
  */
 export function topLoadCleared(sets: WorkingSet[], ceiling: number): boolean {
   const working = workLoads(sets)
-  if (!working.length) return false
-  const top = Math.max(...working.map((s) => s.weightKg))
-  const atTop = working.filter((s) => s.weightKg === top)
-  return atTop.length >= 2 && atTop.every((s) => s.reps >= ceiling)
+  // One set is not a capability, and a lone set is trivially "one load".
+  if (working.length < 2) return false
+  if (new Set(working.map((s) => s.weightKg)).size !== 1) return false
+  return working.every((s) => s.reps >= ceiling)
 }
 
 /**
@@ -277,8 +304,10 @@ export function levelUpCue(sets: WorkingSet[], window: RepWindow): LevelUpCue | 
   if (loads.length < 2) return null
   const lightest = loads[0]
   const top = loads[loads.length - 1]
-  // Only worth saying once the top load is actually being handled well.
-  if (!topLoadCleared(working, window.ceiling)) return null
+  // Only worth saying once the top load is actually being handled well. This is
+  // deliberately `topRungCleared`, not `topLoadCleared` — every input that can
+  // produce a cue spans two loads, which `topLoadCleared` now rejects outright.
+  if (!topRungCleared(working, window.ceiling)) return null
   return { fromKg: lightest, toKg: top, atReps: window.floor }
 }
 

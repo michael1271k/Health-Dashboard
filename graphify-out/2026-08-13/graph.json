@@ -1136,8 +1136,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "ios_app_helixwatch_watch_app_contentview_snapshotstore",
-      "community": 5,
-      "community_name": "ContentView.swift",
+      "community": 46,
+      "community_name": ".fetchWithFallback",
       "norm_label": "snapshotstore"
     },
     {
@@ -1147,8 +1147,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "observableobject",
-      "community": 5,
-      "community_name": "ContentView.swift",
+      "community": 46,
+      "community_name": ".fetchWithFallback",
       "norm_label": "observableobject"
     },
     {
@@ -1158,8 +1158,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "ios_app_helixwatch_watch_app_contentview_snapshotstore_refresh",
-      "community": 5,
-      "community_name": "ContentView.swift",
+      "community": 46,
+      "community_name": ".fetchWithFallback",
       "norm_label": ".refresh()"
     },
     {
@@ -1786,8 +1786,8 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixwidgets_helixsmallview",
-      "community": 37,
-      "community_name": "HelixWidgets.swift",
+      "community": 52,
+      "community_name": "HelixEntry",
       "norm_label": "helixsmallview"
     },
     {
@@ -1797,8 +1797,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixwidgets_swift_int",
-      "community": 37,
-      "community_name": "HelixWidgets.swift",
+      "community": 52,
+      "community_name": "HelixEntry",
       "norm_label": "int"
     },
     {
@@ -1808,8 +1808,8 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixwidgets_helixsmallview_kcalleft",
-      "community": 37,
-      "community_name": "HelixWidgets.swift",
+      "community": 52,
+      "community_name": "HelixEntry",
       "norm_label": ".kcalleft"
     },
     {
@@ -1819,8 +1819,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixwidgets_swift_double",
-      "community": 37,
-      "community_name": "HelixWidgets.swift",
+      "community": 52,
+      "community_name": "HelixEntry",
       "norm_label": "double"
     },
     {
@@ -1852,8 +1852,8 @@
       "source_location": "L86",
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixwidgets_helixmediumview",
-      "community": 52,
-      "community_name": "HelixEntry",
+      "community": 37,
+      "community_name": "HelixWidgets.swift",
       "norm_label": "helixmediumview"
     },
     {
@@ -1863,8 +1863,8 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixwidgets_helixmediumview_body",
-      "community": 52,
-      "community_name": "HelixEntry",
+      "community": 37,
+      "community_name": "HelixWidgets.swift",
       "norm_label": ".body"
     },
     {
@@ -1874,8 +1874,8 @@
       "source_location": "L105",
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixwidgets_helixmediumview_metric",
-      "community": 52,
-      "community_name": "HelixEntry",
+      "community": 37,
+      "community_name": "HelixWidgets.swift",
       "norm_label": ".metric()"
     },
     {
@@ -1885,8 +1885,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixwidgets_swift_string",
-      "community": 52,
-      "community_name": "HelixEntry",
+      "community": 37,
+      "community_name": "HelixWidgets.swift",
       "norm_label": "string"
     },
     {
@@ -1896,8 +1896,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixwidgets_swift_color",
-      "community": 52,
-      "community_name": "HelixEntry",
+      "community": 37,
+      "community_name": "HelixWidgets.swift",
       "norm_label": "color"
     },
     {
@@ -1907,8 +1907,8 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixwidgets_helixmediumview_batteryring",
-      "community": 52,
-      "community_name": "HelixEntry",
+      "community": 37,
+      "community_name": "HelixWidgets.swift",
       "norm_label": ".batteryring"
     },
     {
@@ -1951,8 +1951,8 @@
       "source_location": "L132",
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixwidgets_helixcalorieswidget_body",
-      "community": 37,
-      "community_name": "HelixWidgets.swift",
+      "community": 52,
+      "community_name": "HelixEntry",
       "norm_label": ".body"
     },
     {
@@ -1973,8 +1973,8 @@
       "source_location": "L143",
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixwidgets_helixweekwidget_body",
-      "community": 52,
-      "community_name": "HelixEntry",
+      "community": 37,
+      "community_name": "HelixWidgets.swift",
       "norm_label": ".body"
     },
     {
@@ -3546,8 +3546,8 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "package_devdependencies_eslint",
-      "community": 50,
-      "community_name": "devDependencies",
+      "community": 178,
+      "community_name": "eslint",
       "norm_label": "eslint"
     },
     {
@@ -3557,8 +3557,8 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "eslint",
-      "community": 50,
-      "community_name": "devDependencies",
+      "community": 178,
+      "community_name": "eslint",
       "norm_label": "eslint"
     },
     {
@@ -3656,8 +3656,8 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "package_devdependencies_sharp",
-      "community": 156,
-      "community_name": "sharp",
+      "community": 50,
+      "community_name": "devDependencies",
       "norm_label": "sharp"
     },
     {
@@ -3667,8 +3667,8 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "sharp",
-      "community": 156,
-      "community_name": "sharp",
+      "community": 50,
+      "community_name": "devDependencies",
       "norm_label": "sharp"
     },
     {
@@ -72741,7 +72741,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/lib/hooks/useEditSession.ts",
-      "source_location": "L105",
+      "source_location": "L102",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_hooks_useeditsession_useeditsession",

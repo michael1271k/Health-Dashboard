@@ -14,12 +14,41 @@ describe('aggregateMuscleSets', () => {
     // A cable lateral raise logs two rows sharing a pair_id. Counting two sets
     // doubles the muscle against its weekly landmark.
     const r = aggregateMuscleSets([
-      row({ id: 'a', pairId: 'p1', groups: ['Shoulders'], date: '2026-07-28', weightKg: 5, reps: 15 }),
-      row({ id: 'b', pairId: 'p1', groups: ['Shoulders'], date: '2026-07-28', weightKg: 5, reps: 15 }),
+      row({ id: 'a', pairId: 'p1', side: 'L', groups: ['Shoulders'], date: '2026-07-28', weightKg: 5, reps: 15 }),
+      row({ id: 'b', pairId: 'p1', side: 'R', groups: ['Shoulders'], date: '2026-07-28', weightKg: 5, reps: 15 }),
     ], '2026-07-28')
     const s = r.stats.find((x) => x.group === 'Shoulders')!
     expect(s.sets).toBe(1)
     expect(s.volume).toBe(150)     // 5×15 twice — both arms were lifted
+  })
+
+  it('scores an ASYMMETRIC pair at the weaker side, matching sessionVolumeKg', () => {
+    // L 5×10, R 5×14. Summing both rows credits the strong arm's 4 extra reps to
+    // the weak one — 120 kg here against 100 kg on the session card, the same
+    // work with two answers. The gap grew with every asymmetric week.
+    const r = aggregateMuscleSets([
+      row({ id: 'a', pairId: 'p1', side: 'L', groups: ['Arms'], date: '2026-08-06', weightKg: 5, reps: 10 }),
+      row({ id: 'b', pairId: 'p1', side: 'R', groups: ['Arms'], date: '2026-08-06', weightKg: 5, reps: 14 }),
+    ], '2026-08-06')
+    const s = r.stats.find((x) => x.group === 'Arms')!
+    expect(s.sets).toBe(1)
+    expect(s.volume).toBe(100)     // 2 × min(5,5) × min(10,14)
+  })
+
+  it('scores a lone side on its own — it is real work, just not a pair', () => {
+    const r = aggregateMuscleSets([
+      row({ id: 'a', pairId: 'p1', side: 'L', groups: ['Arms'], date: '2026-08-06', weightKg: 6, reps: 12 }),
+    ], '2026-08-06')
+    expect(r.stats.find((x) => x.group === 'Arms')!.volume).toBe(72)
+  })
+
+  it('leaves a pairId with no side alone — it is an ordinary set', () => {
+    // The Aug-13 shape: rows carrying a pair_id from a migration but no limb.
+    const r = aggregateMuscleSets([
+      row({ id: 'a', pairId: 'p1', groups: ['Arms'], date: '2026-08-06', weightKg: 5, reps: 10 }),
+      row({ id: 'b', pairId: 'p1', groups: ['Arms'], date: '2026-08-06', weightKg: 5, reps: 14 }),
+    ], '2026-08-06')
+    expect(r.stats.find((x) => x.group === 'Arms')!.volume).toBe(120)
   })
 
   it('credits a multi-group row to every group, once each', () => {

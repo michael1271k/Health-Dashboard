@@ -1112,10 +1112,33 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
   // about the measuring instrument, not data.
   L.push('---')
   L.push('')
+  L.push(UNILATERAL_VOLUME_NOTE)
+  L.push('')
   L.push(APPLE_WATCH_DISCLAIMER)
 
   return L.join('\n')
 }
+
+/**
+ * The standing statement of the asymmetry rule.
+ *
+ * The rule was already stated once, inside the per-muscle tonnage block — but
+ * that block only prints when there IS per-muscle tonnage, so a week whose
+ * sessions were all bilateral, or whose muscle rows were empty, published every
+ * volume figure with no account of how a two-sided set had been counted. A
+ * reader comparing "L 5 kg × 10 · R 5 kg × 14" against a 100 kg session total
+ * has to be able to find the arithmetic; guessing produces 120.
+ *
+ * Printed beside the instrument caveat, after the embedded previous week, so it
+ * governs every number in the document rather than one section of it.
+ */
+export const UNILATERAL_VOLUME_NOTE =
+  '*Note: Unilateral (single-arm / single-leg) work is logged per side and'
+  + ' scored at the WEAKER side, counted twice: 2 × min(weight) × min(reps).'
+  + ' "L 5 kg × 10 · R 5 kg × 14" is 100 kg of volume, not 120 — crediting the'
+  + ' strong side\'s extra reps to the weak one would inflate the trend without'
+  + ' the work being there. Each side keeps its own failure tag, and the pair'
+  + ' counts as ONE set.*'
 
 /**
  * The standing caveat about instrument accuracy, printed at the very bottom of

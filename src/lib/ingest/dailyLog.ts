@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- Supabase v2 hand-authored Insert types resolve to `never`; payloads are cast at write sites. */
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/lib/supabase/types'
-import { derivePhase } from '@/lib/nutrition/phase'
+import { resolveDayPhase, type Phase } from '@/lib/nutrition/phase'
 import { isManualHkUuid } from '@/lib/nutrition/manualEntry'
 import { logicalTodayInTZ } from '@/lib/utils/day'
 import { MIN_VALID_WEIGHT_KG } from '@/lib/utils/units'
@@ -309,11 +309,38 @@ export async function ingestDailyLog(
     if (isManualHkUuid((existingDaily as { hk_uuid?: string | null } | null)?.hk_uuid)) {
       result.results.nutrition = { ok: true, action: 'ignored', error: 'manual override present — HealthKit macros skipped' }
     } else {
+    // A DECLARED day keeps the block's phase rather than being re-banded by its
+    // calorie total — see `resolveDayPhase`. The declaration lives on daily_logs
+    // and the active phase on user_goals, so both are read here; either coming
+    // back empty simply falls back to the calorie-derived value.
+    //
+    // Wrapped: this decides a LABEL. A missing column, an unmigrated table or a
+    // transport failure must never take the calorie write down with it, so any
+    // failure degrades to the calorie-derived phase — exactly the old behaviour.
+    const phaseContext = await (async () => {
+      try {
+        const { data: flagRow } = await db.from('daily_logs')
+          .select('nutrition_exception, nutrition_estimated')
+          .eq('user_id', userId).eq('date', date).maybeSingle() as unknown as
+          { data: { nutrition_exception: string | null; nutrition_estimated: boolean | null } | null }
+        const { data: goalRow } = await db.from('user_goals')
+          .select('goal_preset').eq('user_id', userId).maybeSingle() as unknown as
+          { data: { goal_preset: string | null } | null }
+        return {
+          exception: flagRow?.nutrition_exception ?? null,
+          estimated: flagRow?.nutrition_estimated ?? false,
+          activePhase: (goalRow?.goal_preset as Phase | null) ?? null,
+        }
+      } catch {
+        return { exception: null, estimated: false, activePhase: null }
+      }
+    })()
+
     const baseRow = {
       user_id: userId, hk_uuid: null, logged_at: `${date}T00:00:00Z`, date, meal_type: 'daily',
       calories, protein_g: protein, carbs_g: carbs, fat_g: fats,
       fiber_g: payload.fiber ?? null,
-      phase: derivePhase(calories),
+      phase: resolveDayPhase({ calories, ...phaseContext }),
     }
     // Atomic upsert on the (user_id,date,meal_type) unique constraint — replaces
     // the old racy delete-then-insert. The DB trigger mirrors macros into

@@ -31,6 +31,8 @@ export interface MuscleSetRow {
   reps: number
   /** Unilateral L/R rows share this. Two rows, ONE set. */
   pairId: string | null
+  /** Which limb this row logged. A `pairId` only collapses WITH a side. */
+  side?: 'L' | 'R' | null
   /** Display groups this row credits (already canonicalised, deduped). */
   groups: string[]
   /** Session date, YYYY-MM-DD. */
@@ -42,6 +44,53 @@ export interface MuscleStat { group: string; sets: number; volume: number; daysS
 export interface MuscleAggregate {
   stats: MuscleStat[]
   weekly: Array<Record<string, number | string>>
+}
+
+/**
+ * Per-row tonnage with unilateral pairs collapsed to the WEAKER side.
+ *
+ * `sessionVolumeKg` cannot be called directly here: this aggregator credits each
+ * row to its own muscle groups, so it needs a per-ROW number, not a session
+ * total. The two must still agree, so a genuine L/R pair splits its collapsed
+ * total in half across its two rows — the pair then sums to exactly
+ * `2 × min(weight) × min(reps)`, which is what `sessionVolumeKg` returns, while
+ * each row keeps its own attribution.
+ *
+ * Rule 1 in this file already deduped the SET COUNT for pairs. Tonnage was never
+ * deduped, so "L 5 kg × 10, R 5 kg × 14" credited 120 kg to the group here and
+ * 100 kg on the session card — the same work, two answers, and the drift grew
+ * with every asymmetric week.
+ *
+ * A lone side, and a malformed bucket of 3+ rows, score as logged — the same
+ * fallbacks `sessionVolumeKg` takes.
+ */
+function effectiveVolumes(rows: readonly MuscleSetRow[]): Map<string, number> {
+  const out = new Map<string, number>()
+  const pairs = new Map<string, MuscleSetRow[]>()
+  const raw = (r: MuscleSetRow) => (r.weightKg || 0) * (r.reps || 0)
+
+  for (const r of rows) {
+    if (r.pairId && (r.side === 'L' || r.side === 'R')) {
+      const bucket = pairs.get(r.pairId) ?? []
+      bucket.push(r)
+      pairs.set(r.pairId, bucket)
+      continue
+    }
+    out.set(r.id, raw(r))
+  }
+
+  for (const bucket of pairs.values()) {
+    const left = bucket.find((x) => x.side === 'L')
+    const right = bucket.find((x) => x.side === 'R')
+    if (bucket.length === 2 && left && right) {
+      const half = Math.min(left.weightKg || 0, right.weightKg || 0)
+        * Math.min(left.reps || 0, right.reps || 0)
+      for (const x of bucket) out.set(x.id, half)
+    } else {
+      for (const x of bucket) out.set(x.id, raw(x))
+    }
+  }
+  return out
 }
 
 /** Sunday-anchored week start for a YYYY-MM-DD date. */
@@ -69,13 +118,14 @@ export function aggregateMuscleSets(rows: readonly MuscleSetRow[], todayISO: str
   const weekMap = new Map<string, Record<string, number>>()
   const countedSets = new Set<string>()     // `${group}|${dedupeKey}`
   const countedWeekly = new Set<string>()   // `${week}|${group}|${dedupeKey}`
+  const effective = effectiveVolumes(rows)
 
   for (const r of rows) {
     const groups = new Set(r.groups)
     if (!groups.size) continue
     const week = weekStartUTC(r.date)
     const dedupeKey = r.pairId ?? r.id
-    const vol = (r.weightKg || 0) * (r.reps || 0)
+    const vol = effective.get(r.id) ?? (r.weightKg || 0) * (r.reps || 0)
     for (const g of groups) {
       const a = agg.get(g) ?? { sets: 0, volume: 0, last: null }
       a.volume += vol
