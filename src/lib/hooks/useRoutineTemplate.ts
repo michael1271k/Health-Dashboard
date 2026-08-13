@@ -33,3 +33,31 @@ export function useRoutineTemplate(dayKey?: string | null) {
     },
   })
 }
+
+/**
+ * Every stored template, by day key — for Settings, which lists the whole split
+ * at once and would otherwise fire one query per day.
+ *
+ * Same tolerance as the single-day hook: an unreadable table yields an empty
+ * map, and the caller falls back to showing the programme as authored.
+ */
+export function useRoutineTemplates() {
+  return useQuery({
+    queryKey: routineTemplateKey('all'),
+    staleTime: 60_000,
+    queryFn: async (): Promise<Map<string, { template: RoutineTemplate; updatedAt: string | null }>> => {
+      const out = new Map<string, { template: RoutineTemplate; updatedAt: string | null }>()
+      const { data, error } = await supabase
+        .from('routine_templates')
+        .select('day_key, payload, updated_at')
+      if (error) return out
+      for (const row of (data ?? []) as unknown as Array<{
+        day_key: string; payload: unknown; updated_at: string | null
+      }>) {
+        const template = parseTemplate(row.payload)
+        if (template) out.set(row.day_key, { template, updatedAt: row.updated_at })
+      }
+      return out
+    },
+  })
+}

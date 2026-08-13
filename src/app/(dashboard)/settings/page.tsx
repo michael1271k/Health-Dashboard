@@ -18,6 +18,8 @@ import { usePlanPhaseGoals, type PlanPhaseOverride } from '@/lib/hooks/usePlanPh
 import { setTrackRpeMirror } from '@/lib/hooks/useTrackRpe'
 import { LANDMARK_MUSCLES } from '@/lib/training/landmarks'
 import { parseRepWindow } from '@/lib/training/ceilings'
+import { useRoutineTemplates } from '@/lib/hooks/useRoutineTemplate'
+import { countCommittedSets } from '@/lib/sessions/schema'
 import { AlertTriangle, Dumbbell, Calendar, Target } from 'lucide-react'
 import type { Tables } from '@/lib/supabase/types'
 import { Surface } from '@/components/ui/Zone'
@@ -138,6 +140,10 @@ export default function SettingsPage() {
   // The phase actually in force. goal_preset is the persisted tag; activePhase()
   // is the synchronous localStorage mirror the rest of the app reads.
   const livePhase = ((goals.goal_preset as NutritionMode) || (activePhase() as NutritionMode)) as NutritionMode
+  // The routine as it is actually RUN, per day — rewritten from the deck on
+  // every commit. Absent for a day never logged, which falls back to the
+  // programme as authored.
+  const { data: templates } = useRoutineTemplates()
 
   useEffect(() => {
     async function load() {
@@ -826,23 +832,58 @@ export default function SettingsPage() {
                         {d.sub && <span className="text-[9px] text-muted">· {d.sub}</span>}
                       </div>
                       {/* Clean vertical list — name + set×(floor–ceiling), ceiling gold.
-                          No weights (those live only in the live logger). */}
-                      <div className="space-y-0.5">
-                        {d.exercises.map((e) => {
-                          const w = parseRepWindow(e.reps)
-                          return (
-                            <div key={e.name} className="flex items-baseline justify-between gap-2 text-[11px] leading-snug">
-                              <span className="text-text/80 truncate">{e.name}</span>
-                              <span className="helix-num text-muted shrink-0 tabular-nums">
-                                {e.sets}×{' '}
-                                {w
-                                  ? <>{w.floor}<span className="opacity-40">–</span><span style={{ color: '#D4AF37' }}>{w.ceiling}</span></>
-                                  : e.reps}
-                              </span>
+                          No weights (those live only in the live logger).
+
+                          THE STORED TEMPLATE WINS, when there is one and this is
+                          the active plan. This card used to list the programme
+                          as AUTHORED, which stopped being what you actually run
+                          the first time you dropped a set or reordered anything
+                          — and there was no screen anywhere that showed the real
+                          routine. `routine_templates` is rewritten from the exact
+                          deck on every commit, so it is the honest answer. The
+                          rep window still comes from the programme: it is the
+                          TARGET, and a template records what happened, not what
+                          to aim for. */}
+                      {(() => {
+                        const stored = isActive ? templates?.get(d.key) : undefined
+                        const rows = stored
+                          ? stored.template.exercises
+                            .filter((e) => e.kind !== 'cardio')
+                            .map((e) => {
+                              // Physical sets — a unilateral pair is two rows and
+                              // ONE set, and printing the row count here is the
+                              // exact confusion this release removes.
+                              const programmed = d.exercises.find((x) => x.name === e.name)
+                              return { name: e.name, sets: countCommittedSets(e.sets), reps: programmed?.reps }
+                            })
+                          : d.exercises.map((e) => ({ name: e.name, sets: e.sets, reps: e.reps }))
+                        return (
+                          <>
+                            {stored && (
+                              <div className="text-[9px] text-muted mb-1">
+                                As last performed
+                                {stored.updatedAt ? ` · ${stored.updatedAt.slice(0, 10)}` : ''}
+                              </div>
+                            )}
+                            <div className="space-y-0.5">
+                              {rows.map((e) => {
+                                const w = e.reps ? parseRepWindow(e.reps) : null
+                                return (
+                                  <div key={e.name} className="flex items-baseline justify-between gap-2 text-[11px] leading-snug">
+                                    <span className="text-text/80 truncate">{e.name}</span>
+                                    <span className="helix-num text-muted shrink-0 tabular-nums">
+                                      {e.sets}×{' '}
+                                      {w
+                                        ? <>{w.floor}<span className="opacity-40">–</span><span style={{ color: '#D4AF37' }}>{w.ceiling}</span></>
+                                        : e.reps ?? ''}
+                                    </span>
+                                  </div>
+                                )
+                              })}
                             </div>
-                          )
-                        })}
-                      </div>
+                          </>
+                        )
+                      })()}
                     </div>
                   ))}
                 </div>

@@ -195,8 +195,8 @@
     "semantic_hash": ""
   },
   "src/app/(dashboard)/settings/page.tsx": {
-    "mtime": 1786460013.0739326,
-    "ast_hash": "1781c179b209d8db4bf4d3f6dbd1b122",
+    "mtime": 1786651543.5535386,
+    "ast_hash": "47ece5c53e4ad171d4361664d10dd693",
     "semantic_hash": ""
   },
   "src/app/(dashboard)/workout/page.tsx": {
@@ -790,8 +790,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useEditSession.ts": {
-    "mtime": 1786646768.3932233,
-    "ast_hash": "611e1f74f8a72b78236010d484405f62",
+    "mtime": 1786651380.3066525,
+    "ast_hash": "89482644b28bf0abd8ae55f3aea07f9f",
     "semantic_hash": ""
   },
   "src/lib/hooks/useExerciseHistory.ts": {
@@ -1195,9 +1195,9 @@
     "semantic_hash": ""
   },
   "src/tests/hevy.test.ts": {
-    "mtime": 1785176688.0083869,
-    "ast_hash": "45e5248ef18aebe056122c7e6bdb601d",
-    "semantic_hash": "45e5248ef18aebe056122c7e6bdb601d"
+    "mtime": 1786651415.806712,
+    "ast_hash": "2059585d5d42ca6db3edbe255d603202",
+    "semantic_hash": ""
   },
   "src/tests/ingest-schema.test.ts": {
     "mtime": 1784897420.191789,
@@ -2030,8 +2030,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useRoutineTemplate.ts": {
-    "mtime": 1786650442.1758838,
-    "ast_hash": "89d627e5097aa655907103de676407f5",
+    "mtime": 1786651486.816505,
+    "ast_hash": "d6cd58f30569a1c9f20d6f7a9b6ab4d7",
     "semantic_hash": ""
   },
   "src/tests/routine-template.test.ts": {

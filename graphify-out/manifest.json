@@ -160,8 +160,8 @@
     "semantic_hash": ""
   },
   "public/sw.js": {
-    "mtime": 1786544198.0350208,
-    "ast_hash": "072c2918ad934f2c08faf121730ea1f1",
+    "mtime": 1786651573.7586217,
+    "ast_hash": "9f422cff66bceb61bf4d33d714a0fb55",
     "semantic_hash": ""
   },
   "scripts/generate-icons.mjs": {
@@ -195,8 +195,8 @@
     "semantic_hash": ""
   },
   "src/app/(dashboard)/settings/page.tsx": {
-    "mtime": 1786460013.0739326,
-    "ast_hash": "1781c179b209d8db4bf4d3f6dbd1b122",
+    "mtime": 1786651543.5535386,
+    "ast_hash": "47ece5c53e4ad171d4361664d10dd693",
     "semantic_hash": ""
   },
   "src/app/(dashboard)/workout/page.tsx": {
@@ -1695,8 +1695,8 @@
     "semantic_hash": ""
   },
   "scripts/recompute-scores.mjs": {
-    "mtime": 1785868351.8852363,
-    "ast_hash": "6d86c0d4453025b2215e69a1a5c4493b",
+    "mtime": 1786651600.7586594,
+    "ast_hash": "3197926c6056d65a77291ebdb1fcd2a4",
     "semantic_hash": ""
   },
   "src/components/timeline/WeekChip.tsx": {
@@ -2030,8 +2030,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useRoutineTemplate.ts": {
-    "mtime": 1786650442.1758838,
-    "ast_hash": "89d627e5097aa655907103de676407f5",
+    "mtime": 1786651486.816505,
+    "ast_hash": "d6cd58f30569a1c9f20d6f7a9b6ab4d7",
     "semantic_hash": ""
   },
   "src/tests/routine-template.test.ts": {
