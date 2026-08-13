@@ -172,12 +172,18 @@ describe('hevyWorkoutToDraft — deck-ready draft', () => {
     expect(hevyWorkoutToDraft(parseHevyWorkout(JULY16)!).clientSessionId).toBe(draft.clientSessionId)
   })
 
-  it('commit round-trip: cardio excluded from sets, carried in notes', () => {
+  it('commit round-trip: cardio excluded from sets, carried STRUCTURALLY', () => {
     const body = buildCommitPayload(draft)
     expect(SaveWorkoutSchema.safeParse(body).success).toBe(true)
     expect(body.sets).toHaveLength(17)
+    // Still never a set: a 0 kg × 1 junk row would corrupt volume and PR math
+    // and spawn a phantom catalog entry via resolveExercises.
     expect(body.sets.some((s) => s.exerciseName === 'Treadmill')).toBe(false)
-    expect(body.notes).toContain('Cardio — Treadmill: 0.4 km · 5 min')
+    // …but no longer prose. It used to be flattened into `notes`, which the edit
+    // deck cannot read back — so re-opening a session showed the treadmill block
+    // as text. It now goes to cardio_logs and returns as a card.
+    expect(body.cardio).toEqual([{ name: 'Treadmill', distanceKm: 0.4, durationSec: 300 }])
+    expect(body.notes).not.toContain('Cardio —')
     expect(body.clientSessionId).toBe('hevy-2026-07-16-17-4336')
     expect(body.metrics).toEqual({ durationMin: 68, avgBpm: 125, caloriesBurned: 466 })
     // exerciseOrder counts strength exercises only (cardio consumes no slot).

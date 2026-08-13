@@ -359,6 +359,33 @@ export async function saveSession(
     throw new Error(`Failed to save sets: ${setsError.message}`)
   }
 
+  // ── Cardio blocks → cardio_logs ────────────────────────────────────────────
+  // Keyed to the session, so an edit replaces rather than duplicates: the FK is
+  // ON DELETE CASCADE and the edit path already deleted the old session row, so
+  // its cardio went with it. The rows carry `kind: 'treadmill'` rather than
+  // walk/run — a warm-up inside a lifting session is not the daily walk, and
+  // mixing the two would corrupt what the Zone-2 and cardio-PR readers see.
+  if (payload.cardio?.length) {
+    try {
+      const rows = payload.cardio.map((c) => ({
+        user_id: userId,
+        session_id: session.id,
+        date: dateStr,
+        kind: 'treadmill',
+        distance_m: c.distanceKm != null ? Math.round(c.distanceKm * 1000) : null,
+        duration_min: c.durationSec != null ? Math.round((c.durationSec / 60) * 100) / 100 : null,
+        from_healthkit: false,
+      }))
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await supabase.from('cardio_logs').insert(rows as any)
+      if (error && !/relation|does not exist|schema cache|PGRST20[0-9]/i.test(error.message)) {
+        console.error('[save] cardio_logs insert failed:', error.message)
+      }
+    } catch (e) {
+      console.error('[save] cardio_logs insert threw:', e)
+    }
+  }
+
   // ── The routine template ───────────────────────────────────────────────────
   // Written from the payload that just landed, on BOTH commit and edit, so the
   // next deck for this day opens as the exact shape you last performed —

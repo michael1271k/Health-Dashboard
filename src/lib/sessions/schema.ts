@@ -22,6 +22,22 @@ export const WorkoutSetSchema = z.object({
   pairId: z.string().max(64).optional(),
 })
 
+/**
+ * A cardio block logged INSIDE a lifting session — the treadmill warm-up, or a
+ * finisher.
+ *
+ * It used to be flattened into `notes` at commit ("Cardio — Treadmill: 0.4 km ·
+ * 5 min") and there was no way back: the edit deck reads `workout_sets`, which
+ * never held it, so re-opening a session showed the block as a line of prose in
+ * the notes box. Structured here, it round-trips.
+ */
+export const WorkoutCardioSchema = z.object({
+  name: z.string().min(1).max(120),
+  distanceKm: z.number().nonnegative().optional(),
+  durationSec: z.number().int().nonnegative().optional(),
+  note: z.string().max(300).optional(),
+})
+
 export const SaveWorkoutSchema = z.object({
   splitDay: z.enum(['push', 'pull', 'legs', 'upper', 'lower']),
   // `{ offset: true }` is load-bearing: an EDIT rebuilds its draft from the DB's
@@ -31,6 +47,8 @@ export const SaveWorkoutSchema = z.object({
   startedAt: z.string().datetime({ offset: true }),
   endedAt: z.string().datetime({ offset: true }),
   sets: z.array(WorkoutSetSchema).min(1),
+  /** Cardio blocks in deck order. Written to `cardio_logs`, not `workout_sets`. */
+  cardio: z.array(WorkoutCardioSchema).optional(),
   notes: z.string().max(2000).default(''),
   // ── Command Center extensions (all optional — manual logger untouched) ──
   clientSessionId: z.string().min(1).max(64).optional(),  // coach session.id → dedupe key

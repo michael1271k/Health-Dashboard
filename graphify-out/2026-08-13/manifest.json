@@ -665,8 +665,8 @@
     "semantic_hash": ""
   },
   "src/components/session-detail/SessionHero.tsx": {
-    "mtime": 1786651186.747616,
-    "ast_hash": "0e903b1d54a22e399683e96c70a5b48e",
+    "mtime": 1786651198.8934739,
+    "ast_hash": "8d2c498fda4b319735f48b98246db9cf",
     "semantic_hash": ""
   },
   "src/components/settings/NotionSync.tsx": {
@@ -860,8 +860,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useSessionDetail.ts": {
-    "mtime": 1786646015.569367,
-    "ast_hash": "b7019d53ba99aaa32a6a61ff327085ed",
+    "mtime": 1786651209.2895026,
+    "ast_hash": "749473cb956b03e8c287c45066c8dd24",
     "semantic_hash": ""
   },
   "src/lib/hooks/useSessionDraft.ts": {
@@ -1030,8 +1030,8 @@
     "semantic_hash": ""
   },
   "src/lib/sessions/draft.ts": {
-    "mtime": 1786217715.7039993,
-    "ast_hash": "bdcfd1bf92eb1d26e3cb98cbfe45b23e",
+    "mtime": 1786651311.2765017,
+    "ast_hash": "049f0fd5c494ede8fed754c02e93731c",
     "semantic_hash": ""
   },
   "src/lib/sessions/resolveExercises.ts": {
@@ -1040,13 +1040,13 @@
     "semantic_hash": ""
   },
   "src/lib/sessions/save.ts": {
-    "mtime": 1786651038.1622047,
-    "ast_hash": "4bab71e64d1975a683d3368fd4894132",
+    "mtime": 1786651329.8022907,
+    "ast_hash": "4d1f5cc52165051fbe312d5b5db38336",
     "semantic_hash": ""
   },
   "src/lib/sessions/schema.ts": {
-    "mtime": 1785503445.817486,
-    "ast_hash": "4d8ce39b8b57a2b4ce44d7894ea7852d",
+    "mtime": 1786651281.0211067,
+    "ast_hash": "b463f975445f03fff07a086d29525391",
     "semantic_hash": ""
   },
   "src/lib/sessions/seedTemplates.ts": {
@@ -1100,8 +1100,8 @@
     "semantic_hash": ""
   },
   "src/lib/types/workout.ts": {
-    "mtime": 1786308803.470497,
-    "ast_hash": "141520bddc942aa3c9f1b19423310f6d",
+    "mtime": 1786651348.766291,
+    "ast_hash": "6794857081af68deea2c1d23109bd630",
     "semantic_hash": ""
   },
   "src/lib/utils/authedFetch.ts": {
