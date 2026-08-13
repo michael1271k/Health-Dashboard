@@ -52,8 +52,15 @@ const SOURCES = sourceFiles('src').map((p) => ({ path: p, code: stripComments(re
 const REGISTERED = new Set<string>()
 for (const { code } of SOURCES) {
   for (const m of code.matchAll(/queryKey:\s*\[\s*'([^']+)'/g)) REGISTERED.add(m[1])
-  // `todayBundleKey(date)` — the one key built by a helper rather than inline.
+  // Keys built by a helper rather than inline. BOTH declaration shapes, because
+  // the codebase uses both and the scanner used to know only the first:
+  //   export function fooKey(id) { return ['foo', id] }
+  //   export const fooKey = (id) => ['foo', id]
+  // `todayBundleKey` is the second shape and was passing only because another
+  // file happened to spell `queryKey: ['today'` inline — a consumer registered
+  // by luck is a consumer this guard cannot actually see.
   for (const m of code.matchAll(/export function \w*Key\w*\([^)]*\)[^{]*\{\s*return \[\s*'([^']+)'/g)) REGISTERED.add(m[1])
+  for (const m of code.matchAll(/export const \w*Key\w*\s*=\s*\([^)]*\)[^=]*=>\s*\[\s*'([^']+)'/g)) REGISTERED.add(m[1])
 }
 
 /** The prefix lists that fan an invalidation out across the app. */
@@ -69,6 +76,8 @@ describe('every invalidated key prefix has a consumer', () => {
     expect(REGISTERED.size).toBeGreaterThan(30)
     expect(REGISTERED.has('today')).toBe(true)
     expect(REGISTERED.has('readiness_today')).toBe(true)
+    // Registered ONLY via an arrow-const key helper — guards the second pattern.
+    expect(REGISTERED.has('routine_template')).toBe(true)
   })
 
   it.each([

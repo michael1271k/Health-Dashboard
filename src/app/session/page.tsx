@@ -7,6 +7,7 @@ import { SessionDeck } from '@/components/command-center/SessionDeck'
 import { PastePanel } from '@/components/command-center/PastePanel'
 import { useSessionDraft } from '@/lib/hooks/useSessionDraft'
 import { useExerciseSetHistory } from '@/lib/hooks/useExerciseSetHistory'
+import { useRoutineTemplate } from '@/lib/hooks/useRoutineTemplate'
 import { buildTemplateDraft } from '@/lib/sessions/templateDraft'
 import { SEED_TEMPLATES } from '@/lib/sessions/seedTemplates'
 import { activeProgram, eraForDate } from '@/lib/programs'
@@ -78,9 +79,14 @@ function SessionPageInner() {
   // a HELIX deck is never seeded from PPL-legacy numbers.
   const historyQ = useExerciseSetHistory(seedNames, eraForDate(targetDate), templateDay?.key)
 
+  // The stored template outranks history (see buildTemplateDraft), so seeding
+  // has to wait for it too — seeding early would open the program's cold start
+  // and then never revisit it, because the auto-seed runs at most once.
+  const templateQ = useRoutineTemplate(templateDay?.key)
+
   // Seeding waits for history so the previous session's actual numbers land in
   // the inputs (the program's wk1 target stays the cold-start fallback).
-  const seedReady = !historyQ.isPending
+  const seedReady = !historyQ.isPending && !templateQ.isPending
   const { hydrated, draft, start, discard } = store
 
   // Match on program-day identity only — NOT the date. Back-dating an active
@@ -97,8 +103,8 @@ function SessionPageInner() {
   useEffect(() => {
     if (seededRef.current || !hydrated || draft || !templateDay || !seedReady) return
     seededRef.current = true
-    start(buildTemplateDraft(templateDay, targetDate, historyQ.data))
-  }, [hydrated, draft, templateDay, seedReady, targetDate, start, historyQ.data])
+    start(buildTemplateDraft(templateDay, targetDate, historyQ.data, templateQ.data))
+  }, [hydrated, draft, templateDay, seedReady, targetDate, start, historyQ.data, templateQ.data])
 
   const header = (
     <header className="flex items-center gap-3 mb-4">
@@ -133,7 +139,7 @@ function SessionPageInner() {
               Resume draft
             </button>
             <button
-              onClick={() => { discard(); start(buildTemplateDraft(templateDay, targetDate, historyQ.data)) }}
+              onClick={() => { discard(); start(buildTemplateDraft(templateDay, targetDate, historyQ.data, templateQ.data)) }}
               className="btn-glass w-full justify-center min-h-[48px] text-danger"
             >
               Start {templateDay.label} fresh

@@ -9,6 +9,7 @@ import type { Database, InsertRow } from '@/lib/supabase/types'
 import type { SaveWorkoutPayload } from '@/lib/types/workout'
 import { countCommittedSets } from '@/lib/sessions/schema'
 import { sessionVolumeKg } from '@/lib/sessions/volume'
+import { payloadToTemplate } from '@/lib/sessions/routineTemplate'
 import { isTimedExercise } from '@/lib/exercises/timed'
 import { buildBaselines, detectSessionPrs, recordSets, type PrAxis } from '@/lib/training/prEngine'
 import { prFloorFor } from '@/lib/training/prTruth'
@@ -284,6 +285,32 @@ export async function saveSession(
     console.error('[saveSession] sets insert failed:', setsError)
     await supabase.from('workout_sessions').delete().eq('id', session.id)
     throw new Error(`Failed to save sets: ${setsError.message}`)
+  }
+
+  // ── The routine template ───────────────────────────────────────────────────
+  // Written from the payload that just landed, on BOTH commit and edit, so the
+  // next deck for this day opens as the exact shape you last performed —
+  // exercise ORDER included, which is what makes drag-reorder persist.
+  //
+  // Self-healing and non-fatal: the sets are already saved, and losing a
+  // template only costs the next deck its seed. A day with no `dayKey` (a
+  // free-form paste, or a PPL-era session) has no template slot and is skipped.
+  if (payload.dayKey) {
+    const template = payloadToTemplate(payload.sets)
+    if (template) {
+      try {
+        const { error } = await supabase.from('routine_templates').upsert({
+          user_id: userId, day_key: payload.dayKey, payload: template,
+          source_session_id: session.id, updated_at: new Date().toISOString(),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any, { onConflict: 'user_id,day_key' })
+        if (error && !/relation|does not exist|schema cache|PGRST20[0-9]/i.test(error.message)) {
+          console.error('[save] routine_templates upsert failed:', error.message)
+        }
+      } catch (e) {
+        console.error('[save] routine_templates upsert threw:', e)
+      }
+    }
   }
 
   // The ledger records the set that WON each axis, not the session's maximum

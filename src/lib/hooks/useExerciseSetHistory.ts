@@ -7,12 +7,30 @@ import { eraForDate, type Era } from '@/lib/programs'
 /** The set tags that round-trip through seeding. Mirrors `DraftSet['setType']`. */
 export type HistorySetType = 'warmup' | 'failure' | 'dropset'
 
+/** One historical set. A unilateral pair is TWO of these sharing `pairId`. */
+export interface HistorySet {
+  weightKg: number
+  reps: number
+  setType?: HistorySetType
+  /**
+   * Unilateral tracking, carried so seeding can rebuild the PAIR.
+   *
+   * Without these the two rows of a pair were indistinguishable from two
+   * ordinary sets, so re-seeding turned last week's 2 physical sets into a
+   * 3-set deck — one invented set per pair, every week. 2026-08-13's Single
+   * Arm Triceps Pushdown is exactly that: Aug 6 logged set 1 plus one L/R
+   * pair (3 rows), and Aug 13 opened with 3 independent sets.
+   */
+  side?: 'L' | 'R'
+  pairId?: string
+}
+
 export interface ExerciseHistory {
   date: string                                    // most recent session date
   /** That session's FULL set list, ordered by set_number (1..n) — warm-ups
    *  included. The tag is carried so seeding reproduces last time exactly;
    *  callers that need a working-set baseline use `workingSets()`. */
-  sets: Array<{ weightKg: number; reps: number; setType?: HistorySetType }>
+  sets: HistorySet[]
 }
 
 /**
@@ -50,7 +68,7 @@ export function useExerciseSetHistory(names: string[], era?: Era, dayKey?: strin
     queryFn: async (): Promise<Map<string, ExerciseHistory>> => {
       const { data, error } = await supabase
         .from('workout_sets')
-        .select('weight_kg, reps, set_number, set_type, exercises!inner(name), workout_sessions!inner(started_at, day_key)')
+        .select('weight_kg, reps, set_number, set_type, side, pair_id, exercises!inner(name), workout_sessions!inner(started_at, day_key)')
         .in('exercises.name', names)
         .order('created_at', { ascending: false })
         // 2000, not 600: this now SEEDS the logger, and a low cap silently
@@ -61,6 +79,7 @@ export function useExerciseSetHistory(names: string[], era?: Era, dayKey?: strin
 
       const rows = ((data ?? []) as unknown as Array<{
         weight_kg: number; reps: number; set_number: number; set_type: string | null
+        side: string | null; pair_id: string | null
         exercises: { name: string }
         workout_sessions: { started_at: string; day_key: string | null }
       }>)
@@ -73,16 +92,20 @@ export function useExerciseSetHistory(names: string[], era?: Era, dayKey?: strin
       // old code appended in that arbitrary order and then blindly `.reverse()`d,
       // which flipped an already-correct list into `11, 12, 12`. Sort by
       // set_number instead: deterministic 1..n regardless of insert timing.
-      type Row = { weightKg: number; reps: number; setNumber: number; setType?: HistorySetType }
+      type Row = HistorySet & { setNumber: number }
       const TAGS: readonly string[] = ['warmup', 'failure', 'dropset']
       const acc = new Map<string, { date: string; rows: Row[] }>()
       for (const r of rows) {
         const date = r.workout_sessions.started_at.slice(0, 10)
         if (era && eraForDate(date) !== era) continue
         const name = r.exercises.name
+        // Only a genuine two-sided row carries the pair through — a `pair_id`
+        // with no side, or a side with no `pair_id`, is an ordinary set.
+        const sided = r.pair_id && (r.side === 'L' || r.side === 'R')
         const row: Row = {
           weightKg: r.weight_kg, reps: r.reps, setNumber: r.set_number,
           ...(r.set_type && TAGS.includes(r.set_type) ? { setType: r.set_type as HistorySetType } : {}),
+          ...(sided ? { side: r.side as 'L' | 'R', pairId: r.pair_id as string } : {}),
         }
         const existing = acc.get(name)
         if (!existing) acc.set(name, { date, rows: [row] })
@@ -92,9 +115,10 @@ export function useExerciseSetHistory(names: string[], era?: Era, dayKey?: strin
 
       const out = new Map<string, ExerciseHistory>()
       for (const [name, { date, rows: setRows }] of acc) {
-        const sets = [...setRows]
+        const sets: HistorySet[] = [...setRows]
           .sort((a, b) => a.setNumber - b.setNumber)
-          .map(({ weightKg, reps, setType }) => (setType ? { weightKg, reps, setType } : { weightKg, reps }))
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          .map(({ setNumber, ...s }) => s)
         out.set(name, { date, sets })
       }
       return out

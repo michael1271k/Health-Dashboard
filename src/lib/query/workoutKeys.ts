@@ -27,6 +27,7 @@ export const WORKOUT_QUERY_KEYS: string[][] = [
   ['workout_sessions'],
   ['workout_sets'],
   ['exercises'],       // the catalog: a commit can CREATE a row (resolveExercises)
+  ['routine_template'], // saveSession rewrites the day's template on every commit
   ['continuum'],
   ['day_vault'],
   ['readiness_today'], // battery drains on volume RELATIVE to this day type's own
