@@ -21,8 +21,18 @@ function nextDay(d: string): string {
   const x = new Date(`${d}T00:00:00Z`); x.setUTCDate(x.getUTCDate() + 1); return x.toISOString().slice(0, 10)
 }
 
-/** Compute + upsert the daily_scores row for a single date. */
-async function computeForDate(supabase: DB, userId: string, date: string, hoursAwake: number, isToday = false, force = false): Promise<void> {
+/**
+ * Compute + upsert the daily_scores row for a single date.
+ *
+ * RETURNS THE ROW IT WROTE (null when it wrote nothing — a frozen past day, or
+ * a day with no underlying data). The caller echoes it back to the client, which
+ * paints it straight into the cache instead of waiting out a refetch: the commit
+ * path used to invalidate BEFORE this ran, read the pre-recompute battery, and
+ * then sit on it for `useTodayReadiness`'s five-minute staleTime.
+ */
+type ComputedScoreRow = InsertRow<'daily_scores'> & { finalized?: boolean }
+
+async function computeForDate(supabase: DB, userId: string, date: string, hoursAwake: number, isToday = false, force = false): Promise<ComputedScoreRow | null> {
   // FREEZE: a past day is sealed the first time it's computed after its own
   // midnight. Today accumulates live (recomputed every call); a past day whose
   // row is already `finalized` is immutable — re-ingesting old data never
@@ -31,7 +41,7 @@ async function computeForDate(supabase: DB, userId: string, date: string, hoursA
   if (!isToday && !force) {
     const { data: existing, error } = await supabase
       .from('daily_scores').select('finalized').eq('user_id', userId).eq('date', date).maybeSingle()
-    if (!error && (existing as { finalized?: boolean } | null)?.finalized) return
+    if (!error && (existing as { finalized?: boolean } | null)?.finalized) return null
   }
 
   const end = nextDay(date)
@@ -129,7 +139,7 @@ async function computeForDate(supabase: DB, userId: string, date: string, hoursA
   // row — trailing baselines/rest-day logic can otherwise fabricate one
   // (score-only "ghost days" polluting the Journey). Today accumulates live.
   if (!isToday && date !== todayISO() && !metrics && !sleep && !nutrition
-      && !(water?.length) && !(supplements?.length) && !(daySessions?.length) && !todayDl) return
+      && !(water?.length) && !(supplements?.length) && !(daySessions?.length) && !todayDl) return null
 
   // The day's sets, scoped by the parent SESSION rather than workout_sets.created_at
   // (a back-dated session is written today, so created_at would miss it). Supplies
@@ -214,6 +224,7 @@ async function computeForDate(supabase: DB, userId: string, date: string, hoursA
     splitDay: hardestSplit,
     trailingAvgVolumeKg: trailingAvg,
     sessionRpe: hardestSession?.session_rpe ?? null,
+    sessionDayKey: hardestSession?.day_key ?? dayKey,
     plannedExercises: prescribed?.exercises,
     plannedSets: prescribed?.sets,
     loggedExercises,
@@ -234,9 +245,9 @@ async function computeForDate(supabase: DB, userId: string, date: string, hoursA
 
   const components = computeDailyScore(inputs)
   // No underlying data at all → leave the day blank rather than write a fake 0.
-  if (components.totalScore == null) return
+  if (components.totalScore == null) return null
   const battery = computeBattery(inputs, hoursAwake)
-  const scoreRow: InsertRow<'daily_scores'> & { finalized?: boolean } = {
+  const scoreRow: ComputedScoreRow = {
     user_id: userId, date,
     score: components.totalScore, sleep_score: components.sleepScore,
     nutrition_score: components.nutritionScore, activity_score: components.activityScore,
@@ -256,7 +267,9 @@ async function computeForDate(supabase: DB, userId: string, date: string, hoursA
     await supabase.from('daily_scores').upsert(legacy as unknown as any, { onConflict: 'user_id,date' })
   } else if (error) {
     console.error(`[compute-score] upsert ${date} failed:`, error.message)
+    return null
   }
+  return scoreRow
 }
 
 export async function POST(req: Request) {
@@ -295,6 +308,7 @@ export async function POST(req: Request) {
     return d.toISOString().slice(0, 10)
   })
 
+  let computed: ComputedScoreRow | null = null
   for (const userId of userIds) {
     // Today first (fast — it's the visible day), then fan the backfill range out
     // in PARALLEL. The old sequential loop ran up to 8 day-computations back to
@@ -311,11 +325,17 @@ export async function POST(req: Request) {
     // Pinning completed days to a full waking day makes a recompute idempotent
     // with respect to the wall clock, which is the only way its output can be
     // compared across runs.
-    await computeForDate(supabase, userId, today, targetIsToday ? awake : BATTERY.maxAwake, targetIsToday, force)
+    const row = await computeForDate(supabase, userId, today, targetIsToday ? awake : BATTERY.maxAwake, targetIsToday, force)
+    // The JWT path resolves to exactly one caller, so this is unambiguously the
+    // requesting user's row. The headless sweep has no client waiting on it.
+    if (caller && userId === caller) computed = row
     await Promise.all(
       backfillDates.map((d) => computeForDate(supabase, userId, d, BATTERY.maxAwake, false, force)),
     )
   }
 
-  return NextResponse.json({ ok: true, today, backfilled: backfillDays, users: userIds.length })
+  // `score` lets the client paint the new numbers without a round trip. Null
+  // when nothing was written (frozen past day, or a day with no data at all) —
+  // the client then simply falls back to invalidating.
+  return NextResponse.json({ ok: true, today, backfilled: backfillDays, users: userIds.length, score: computed })
 }

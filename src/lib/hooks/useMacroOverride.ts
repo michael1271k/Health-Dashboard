@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { authedFetch } from '@/lib/utils/authedFetch'
 import { logicalTodayISO } from '@/lib/utils/day'
+import { recomputeAndPaint } from '@/lib/scoring/applyComputedScore'
 import { resolveDayPhase } from '@/lib/nutrition/phase'
 import { activePhase } from '@/lib/programs'
 import { manualHkUuid } from '@/lib/nutrition/manualEntry'
@@ -78,12 +79,8 @@ export function useMacroOverride(date: string) {
         .upsert(row as never, { onConflict: 'user_id,date,meal_type' })
       if (error) throw new Error(error.message)
       // Recompute the day's score/battery from the edited macros (force bypasses
-      // the finalized freeze for a past day).
-      await authedFetch('/api/compute-score', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date, force: true, isToday: date === logicalTodayISO() }),
-      })
+      // the finalized freeze for a past day) and paint the result immediately.
+      await recomputeAndPaint(qc, date, { force: true, isToday: date === logicalTodayISO() }, authedFetch)
     },
     onSuccess: () => { for (const k of CASCADE_KEYS) qc.invalidateQueries({ queryKey: k }) },
   })

@@ -53,6 +53,15 @@ export interface ScoringInputs {
    */
   sessionRpe?: number | null
   splitDay?: 'push' | 'pull' | 'legs' | 'upper' | 'lower'  // workout score; NOT battery drain since v7
+  /**
+   * The programme day (`cb_a` | `legs_a` | `arms` | `cb_b` | `legs_b`).
+   *
+   * Battery drain is CEILINGED per day type — a hard leg day can cost more than
+   * a hard arms day (see `WORKOUT_MAX_BY_DAY`). Distinct from `splitDay`, which
+   * is coarser ('upper' covers both A and B) and still drains nothing.
+   * Absent on legacy rows; `workoutMaxFor` falls back to the upper-day figure.
+   */
+  sessionDayKey?: string | null
   /** Exercises the program prescribes for the day (0/undefined = unknown). */
   plannedExercises?: number
   /** Distinct exercises actually logged. */

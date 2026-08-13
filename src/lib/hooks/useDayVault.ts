@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase/client'
 import { normalizeSpO2 } from '@/lib/utils/units'
 import { authedFetch } from '@/lib/utils/authedFetch'
 import { invalidateWorkoutData } from '@/lib/query/workoutKeys'
+import { recomputeAndPaint } from '@/lib/scoring/applyComputedScore'
 import { eraForDate, HELIX_CUT_START } from '@/lib/programs'
 import { hoursAwakeToday, logicalTodayISO } from '@/lib/utils/day'
 import type { Phase } from '@/lib/nutrition/phase'
@@ -173,12 +174,12 @@ export function useDeleteSession(date: string) {
       if (e1) throw new Error(e1.message)
       const { error: e2 } = await supabase.from('workout_sessions').delete().eq('id', sessionId).eq('user_id', user.id)
       if (e2) throw new Error(e2.message)
-      try {
-        await authedFetch('/api/compute-score', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ date, force: true, isToday: date === logicalTodayISO(), backfillDays: 0, hoursAwake: hoursAwakeToday() }),
-        })
-      } catch { /* score recompute is best-effort */ }
+      // Best-effort — the delete itself has already landed. Painting the result
+      // means the battery reflects the removed session immediately, rather than
+      // still counting a workout that no longer exists.
+      await recomputeAndPaint(qc, date, {
+        force: true, isToday: date === logicalTodayISO(), backfillDays: 0, hoursAwake: hoursAwakeToday(),
+      }, authedFetch)
     },
     onSuccess: () => {
       // Same full cascade as commit — a delete must un-count everywhere too.

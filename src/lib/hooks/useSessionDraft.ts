@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { authedFetch } from '@/lib/utils/authedFetch'
 import { supabase } from '@/lib/supabase/client'
 import { invalidateWorkoutData } from '@/lib/query/workoutKeys'
+import { recomputeAndPaint } from '@/lib/scoring/applyComputedScore'
 import { logicalTodayISO, hoursAwakeToday } from '@/lib/utils/day'
 import { DRAFT_STORAGE_KEY, buildCommitPayload, cascadeSetEdit, isSetCommitted, peekSessionDraft, type SessionDraft, type DraftSet } from '@/lib/sessions/draft'
 import type { PrAxis } from '@/lib/sessions/save'
@@ -318,15 +319,20 @@ export function useSessionDraft() {
         invalidateWorkoutData(qc)
         // Readiness/Daily-Score reflect the workout — recompute that day now
         // (force bypasses the finalized freeze for a back-dated log/edit).
+        //
+        // The recompute's own result is painted straight into the cache, so the
+        // battery moves the moment the POST returns rather than after a refetch
+        // that used to race it and lose. The invalidations below still run, for
+        // everything derived from the score — but nothing visible waits on them.
         if (committedDate) {
-          void authedFetch('/api/compute-score', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ date: committedDate, force: true, isToday: committedDate === logicalTodayISO(), backfillDays: 0, hoursAwake: hoursAwakeToday() }),
-          }).then(() => {
+          void recomputeAndPaint(qc, committedDate, {
+            force: true, isToday: committedDate === logicalTodayISO(),
+            backfillDays: 0, hoursAwake: hoursAwakeToday(),
+          }, authedFetch).then(() => {
             qc.invalidateQueries({ queryKey: ['today'] })
             qc.invalidateQueries({ queryKey: ['readiness_today'] })
             qc.invalidateQueries({ queryKey: ['day_vault', committedDate] })
-          }).catch(() => {})
+          })
         }
       }
       setDraft(null)

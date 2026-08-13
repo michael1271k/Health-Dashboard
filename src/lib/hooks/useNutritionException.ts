@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase/client'
 import { authedFetch } from '@/lib/utils/authedFetch'
 import { logicalTodayISO, hoursAwakeToday } from '@/lib/utils/day'
 import { todayBundleKey, type TodayBundle } from '@/lib/hooks/useToday'
+import { recomputeAndPaint } from '@/lib/scoring/applyComputedScore'
 import { resolveDayPhase } from '@/lib/nutrition/phase'
 import { activePhase } from '@/lib/programs'
 
@@ -115,15 +116,11 @@ export function useSetNutritionException(date: string) {
       // The flag only reaches the score through a recompute, and the nutrition
       // component is weight 0.30 — without `force` the day's existing row would
       // stand and the banner would claim a forgiveness the score never applied.
-      try {
-        await authedFetch('/api/compute-score', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            date, force: true, isToday: date === logicalTodayISO(),
-            backfillDays: 0, hoursAwake: hoursAwakeToday(),
-          }),
-        })
-      } catch { /* score recompute is best-effort; the flag itself is saved */ }
+      // Best-effort by contract — the flag itself is already saved.
+      await recomputeAndPaint(qc, date, {
+        force: true, isToday: date === logicalTodayISO(),
+        backfillDays: 0, hoursAwake: hoursAwakeToday(),
+      }, authedFetch)
     },
 
     // Optimistic: the chips are toggles, and a toggle that waits for a round trip

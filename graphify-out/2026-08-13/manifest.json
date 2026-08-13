@@ -205,8 +205,8 @@
     "semantic_hash": ""
   },
   "src/app/api/compute-score/route.ts": {
-    "mtime": 1786461035.560996,
-    "ast_hash": "1a7fd7da939110086713dada056cea44",
+    "mtime": 1786647253.8804693,
+    "ast_hash": "114375971f6866632ab8564f33800ee4",
     "semantic_hash": ""
   },
   "src/app/api/ingest/route.ts": {
@@ -785,13 +785,13 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useDayVault.ts": {
-    "mtime": 1786544159.7756453,
-    "ast_hash": "3e5c89d8d7115a38fc495fd77a5a04d2",
+    "mtime": 1786647406.7211335,
+    "ast_hash": "d685f18b5c1584e4347917c488778e32",
     "semantic_hash": ""
   },
   "src/lib/hooks/useEditSession.ts": {
-    "mtime": 1786646744.6024382,
-    "ast_hash": "1820f4145a5e6332752b8e96138a5fce",
+    "mtime": 1786646768.3932233,
+    "ast_hash": "611e1f74f8a72b78236010d484405f62",
     "semantic_hash": ""
   },
   "src/lib/hooks/useExerciseHistory.ts": {
@@ -815,8 +815,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useMacroOverride.ts": {
-    "mtime": 1786646364.8054743,
-    "ast_hash": "3520f28f9d300683fedd13aed42534af",
+    "mtime": 1786647345.5312085,
+    "ast_hash": "0f0eb0994acde15126c616d23c1bf8ca",
     "semantic_hash": ""
   },
   "src/lib/hooks/useMuscleAnalytics.ts": {
@@ -865,8 +865,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useSessionDraft.ts": {
-    "mtime": 1786354454.6317456,
-    "ast_hash": "4f6271c9ec41ee5c7543a994dd2e9f66",
+    "mtime": 1786647319.2839694,
+    "ast_hash": "15e0a53392e0b682dee7f501e308d944",
     "semantic_hash": ""
   },
   "src/lib/hooks/useSessionIntel.ts": {
@@ -990,8 +990,8 @@
     "semantic_hash": ""
   },
   "src/lib/query/workoutKeys.ts": {
-    "mtime": 1786354569.2692127,
-    "ast_hash": "504a99c118ac54b4208ca1dff1e99320",
+    "mtime": 1786647420.2462678,
+    "ast_hash": "d0aca82988df4e3e390a304bfe737453",
     "semantic_hash": ""
   },
   "src/lib/reports/weekNumber.ts": {
@@ -1010,8 +1010,8 @@
     "semantic_hash": ""
   },
   "src/lib/scoring/battery.ts": {
-    "mtime": 1786446614.9305377,
-    "ast_hash": "7a42f0bf934edb27fcdb76efb842b61f",
+    "mtime": 1786647038.6569862,
+    "ast_hash": "82100612bb0291ff21fe240b2e60a2e5",
     "semantic_hash": ""
   },
   "src/lib/scoring/readiness.ts": {
@@ -1025,8 +1025,8 @@
     "semantic_hash": ""
   },
   "src/lib/scoring/types.ts": {
-    "mtime": 1786455630.6891108,
-    "ast_hash": "88d86baebfbeaeacdc3de23660813520",
+    "mtime": 1786647057.7746892,
+    "ast_hash": "6343e0f5517bd7f13bfa57a5abfab60a",
     "semantic_hash": ""
   },
   "src/lib/sessions/draft.ts": {
@@ -1255,8 +1255,8 @@
     "semantic_hash": "ef9ae11115a0dca64101adaeb9f05410"
   },
   "src/tests/scoring.test.ts": {
-    "mtime": 1786455775.7051928,
-    "ast_hash": "437b47939c140c649c614bc7c05276c8",
+    "mtime": 1786647114.9787276,
+    "ast_hash": "3bcec796b0dcc7f34f8cbd4ab856e57c",
     "semantic_hash": ""
   },
   "src/tests/session-modifiers.test.ts": {
@@ -1960,8 +1960,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useNutritionException.ts": {
-    "mtime": 1786646480.16142,
-    "ast_hash": "7cf2315e7092e55d61fdd1b033c876de",
+    "mtime": 1786647369.4685647,
+    "ast_hash": "2fafba9fad93cc77df9ea2eb08dbe798",
     "semantic_hash": ""
   },
   "src/components/nutrition/ExceptionDayBanner.tsx": {
@@ -2012,6 +2012,11 @@
   "vitest-env.d.ts": {
     "mtime": 1786543791.16386,
     "ast_hash": "4d99f37ab6d2d1006e63cbcdcb643bc8",
+    "semantic_hash": ""
+  },
+  "src/lib/scoring/applyComputedScore.ts": {
+    "mtime": 1786647287.2220554,
+    "ast_hash": "c8e8640a17fd11a3f009b0593da631ce",
     "semantic_hash": ""
   }
 }

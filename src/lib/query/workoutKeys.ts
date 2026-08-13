@@ -29,7 +29,8 @@ export const WORKOUT_QUERY_KEYS: string[][] = [
   ['exercises'],       // the catalog: a commit can CREATE a row (resolveExercises)
   ['continuum'],
   ['day_vault'],
-  ['readiness_today'], // battery drains on session volume (SPLIT_DRAIN × volumeKg)
+  ['readiness_today'], // battery drains on volume RELATIVE to this day type's own
+                       // trailing average, ceilinged per day (WORKOUT_MAX_BY_DAY)
   ['weekly_volume'],   // MEV/MAV accumulator — stale after every commit/edit
   ['session_trends'],  // per-exercise progression + double-progression verdict
   ['weekly_export'],   // the AI payload embeds sessions + volume
