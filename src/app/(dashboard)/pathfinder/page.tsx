@@ -4,7 +4,7 @@ import { Suspense, useMemo, useState } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { GitBranch, LineChart, HeartPulse, CalendarDays, ChevronLeft, ChevronRight, FolderOpen, Scale, Radar } from 'lucide-react'
+import { GitBranch, HeartPulse, CalendarDays, ChevronLeft, ChevronRight, FolderOpen, Scale, Radar } from 'lucide-react'
 import { useMonthActivity, monthActivitySets, useGymReports } from '@/lib/hooks/useWeekly'
 import { useReports } from '@/lib/hooks/useReports'
 import { useWeightTrend } from '@/lib/hooks/useCharts'
@@ -18,13 +18,20 @@ import { WidgetBoundary } from '@/components/fx/WidgetBoundary'
 // Both render only for their own sub-view, but were imported eagerly — so the
 // Timeline (the default view) paid for a recharts-backed analytics panel and a
 // 56-day vitals grid it never showed.
-const AnalyticsPanel = dynamic(() => import('@/components/progression/AnalyticsPanel').then((m) => m.AnalyticsPanel), { ssr: false })
+const BodyProgressPanel = dynamic(() => import('@/components/progression/BodyProgressPanel').then((m) => m.BodyProgressPanel), { ssr: false })
 const VitalsGroups = dynamic(() => import('@/components/insights/VitalsGroups').then((m) => m.VitalsGroups), { ssr: false })
 import { ScheduleShortcut } from '@/components/day/ScheduleShortcut'
 import { Sheet } from '@/components/ui/Sheet'
 import { displayWeight, weightUnit } from '@/lib/utils/units'
 
-type View = 'timeline' | 'analytics' | 'vitals'
+/**
+ * `'body'` replaced `'analytics'`. The old view was four unrelated charts behind
+ * one range rail; volume moved to Workout and macros to Nutrition, and what is
+ * left here is the body — weight, composition, and the steps that move it.
+ * `?view=analytics` still resolves, so the old deep links and bookmarks land on
+ * the surface that inherited their content rather than falling back to Timeline.
+ */
+type View = 'timeline' | 'body' | 'vitals'
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 const iso = (d: Date) => d.toISOString().slice(0, 10)
@@ -49,7 +56,7 @@ function PathfinderInner() {
   const params = useSearchParams()
   const initial = params.get('view')
   const [view, setView] = useState<View>(
-    initial === 'analytics' ? 'analytics' : initial === 'vitals' ? 'vitals' : 'timeline',
+    initial === 'body' || initial === 'analytics' ? 'body' : initial === 'vitals' ? 'vitals' : 'timeline',
   )
 
   const router = useRouter()
@@ -103,7 +110,7 @@ function PathfinderInner() {
           <p className="text-muted text-fluid-sm mt-0.5">Your life over time · days, weeks, performance &amp; vitals</p>
         </div>
         <div className="flex rounded-xl border border-white/[0.08] overflow-hidden shrink-0">
-          {([['timeline', 'Timeline', GitBranch], ['analytics', 'Analytics', LineChart], ['vitals', 'Vitals', HeartPulse]] as const).map(([v, t, Icon]) => (
+          {([['timeline', 'Timeline', GitBranch], ['body', 'Body', Scale], ['vitals', 'Vitals', HeartPulse]] as const).map(([v, t, Icon]) => (
             <button key={v} onClick={() => setView(v)}
               className={`flex items-center gap-1.5 px-3.5 py-2 text-fluid-xs font-semibold ${view === v ? 'bg-primary/15 text-primary' : 'text-muted hover:text-text'}`}>
               <Icon className="w-3.5 h-3.5" aria-hidden="true" /> {t}
@@ -122,8 +129,8 @@ function PathfinderInner() {
             <EraFilterPills label="" />
             <div className="flex-1" />
             {latestWeight != null && (
-              <button onClick={() => setView('analytics')}
-                className="btn-glass shrink-0 min-h-[40px] text-fluid-xs" aria-label="Open body-composition analytics">
+              <button onClick={() => setView('body')}
+                className="btn-glass shrink-0 min-h-[40px] text-fluid-xs" aria-label="Open body-composition charts">
                 <Scale className="w-3.5 h-3.5" /> <span className="helix-num">{displayWeight(latestWeight)}{weightUnit()}</span>
               </button>
             )}
@@ -215,8 +222,8 @@ function PathfinderInner() {
             )}
           </Sheet>
         </>
-      ) : view === 'analytics' ? (
-        <WidgetBoundary label="Analytics" minHeight={200}><AnalyticsPanel /></WidgetBoundary>
+      ) : view === 'body' ? (
+        <WidgetBoundary label="Body" minHeight={200}><BodyProgressPanel /></WidgetBoundary>
       ) : (
         <WidgetBoundary label="Vitals" minHeight={200}><VitalsGroups /></WidgetBoundary>
       )}

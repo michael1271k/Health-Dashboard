@@ -151,6 +151,54 @@ export function useVolumeTrend(days = 90) {
   })
 }
 
+export interface StepsPoint { date: string; steps: number }
+
+/**
+ * Merge the two places a step count can live, per date.
+ *
+ * `daily_metrics.steps` is the Apple-Health fan-out and wins; `daily_logs.steps`
+ * is the flat canonical row and covers dates that only ever arrived through a
+ * Shortcut push. This is the SAME precedence the widget snapshot applies
+ * (`api/widget/snapshot/route.ts`), and it has to be, or the widget and the chart
+ * disagree about the same day.
+ *
+ * Pure + exported so the precedence is testable without a DB.
+ */
+export function mergeStepsTrend(
+  metrics: Array<{ date: string; steps: number | null }>,
+  logs: Array<{ date: string; steps: number | null }>,
+): StepsPoint[] {
+  const byDate = new Map<string, number>()
+  // logs first, so metrics overwrite them.
+  for (const r of [...logs, ...metrics]) {
+    if (r.steps == null || !Number.isFinite(r.steps)) continue
+    byDate.set(r.date, Math.round(r.steps))
+  }
+  return [...byDate.entries()]
+    .map(([date, steps]) => ({ date, steps }))
+    .sort((a, b) => a.date.localeCompare(b.date))
+}
+
+export function useStepsTrend(days = 30) {
+  return useQuery({
+    queryKey: ['steps_trend', days],
+    staleTime: CHART_STALE_MS,
+    queryFn: async (): Promise<StepsPoint[]> => {
+      const since = daysAgo(days)
+      const [dm, dl] = await Promise.all([
+        supabase.from('daily_metrics').select('date, steps').gte('date', since),
+        supabase.from('daily_logs').select('date, steps').gte('date', since),
+      ])
+      // Neither table is load-bearing on its own — a missing one degrades the
+      // chart to the other's rows rather than emptying it.
+      return mergeStepsTrend(
+        (dm.error ? [] : (dm.data ?? [])) as Array<{ date: string; steps: number | null }>,
+        (dl.error ? [] : (dl.data ?? [])) as Array<{ date: string; steps: number | null }>,
+      )
+    },
+  })
+}
+
 export function useMacroHistory(days = 14) {
   return useQuery({
     queryKey: ['nutrition_entries', 'history', days],

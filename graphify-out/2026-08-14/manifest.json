@@ -160,8 +160,8 @@
     "semantic_hash": ""
   },
   "public/sw.js": {
-    "mtime": 1786693084.0797977,
-    "ast_hash": "a42f2d05999ed82f5cd66fd51ab37e5c",
+    "mtime": 1786695932.8731701,
+    "ast_hash": "475c93ada1f837677df5ad299352f3b5",
     "semantic_hash": ""
   },
   "scripts/generate-icons.mjs": {
@@ -185,13 +185,13 @@
     "semantic_hash": ""
   },
   "src/app/(dashboard)/nutrition/page.tsx": {
-    "mtime": 1786695798.1566043,
-    "ast_hash": "07d724b5e0bdcf9225b928109aa7b16d",
+    "mtime": 1786696520.7497723,
+    "ast_hash": "42fa4364e387d493c83a3dbdadcc4fc5",
     "semantic_hash": ""
   },
   "src/app/(dashboard)/pathfinder/page.tsx": {
-    "mtime": 1786309044.5082095,
-    "ast_hash": "0a99bf0b1ae3a2b727eda02bfc4b4ebb",
+    "mtime": 1786696541.4418359,
+    "ast_hash": "2a9aba6ed841f52323de21302fa648b5",
     "semantic_hash": ""
   },
   "src/app/(dashboard)/settings/page.tsx": {
@@ -319,16 +319,6 @@
     "ast_hash": "e4a42bf6393bf1b8375923e2d2700ce4",
     "semantic_hash": ""
   },
-  "src/components/charts/PlanEraButton.tsx": {
-    "mtime": 1785075954.1005423,
-    "ast_hash": "84755829ad2373d93ab699a0f9961ff7",
-    "semantic_hash": "84755829ad2373d93ab699a0f9961ff7"
-  },
-  "src/components/charts/RangeSelector.tsx": {
-    "mtime": 1785093344.4611018,
-    "ast_hash": "bb35434cee2988c227ea39a898fa3d9c",
-    "semantic_hash": "bb35434cee2988c227ea39a898fa3d9c"
-  },
   "src/components/charts/StrengthTrends.tsx": {
     "mtime": 1786288406.313918,
     "ast_hash": "cb59dec50096361d79318232973375a3",
@@ -365,8 +355,8 @@
     "semantic_hash": ""
   },
   "src/components/command-center/MuscleAnalyticsPanel.tsx": {
-    "mtime": 1786288406.308803,
-    "ast_hash": "aa0f8f52f00ab8f0c681b8494f3ab54f",
+    "mtime": 1786696429.0106492,
+    "ast_hash": "4ec84ab992e160eadf6fc51f562ad36c",
     "semantic_hash": ""
   },
   "src/components/command-center/PastePanel.tsx": {
@@ -579,11 +569,6 @@
     "ast_hash": "3732bf8c65c7038d9c9c9e7938cb3c57",
     "semantic_hash": ""
   },
-  "src/components/progression/AnalyticsPanel.tsx": {
-    "mtime": 1786288406.3151193,
-    "ast_hash": "7c6f9fbbdbb69fae516f6f68b22433f6",
-    "semantic_hash": ""
-  },
   "src/components/providers/AuthGate.tsx": {
     "mtime": 1785075304.9377093,
     "ast_hash": "aa60d0076842de2a4d4fc43ee077e312",
@@ -765,8 +750,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useCharts.ts": {
-    "mtime": 1786004930.7786715,
-    "ast_hash": "8f6c8e4d9d6e13aac8390eed4b72b4e5",
+    "mtime": 1786696117.3384485,
+    "ast_hash": "e4b0c5b7a6ea5f8ec0f171525e8281f7",
     "semantic_hash": ""
   },
   "src/lib/hooks/useContinuum.ts": {
@@ -1175,8 +1160,8 @@
     "semantic_hash": ""
   },
   "src/tests/charts.test.ts": {
-    "mtime": 1785786077.5378568,
-    "ast_hash": "f4695c30507b7333984813f76b91620d",
+    "mtime": 1786696579.733482,
+    "ast_hash": "aecb482422a6bc7f561549db604f863f",
     "semantic_hash": ""
   },
   "src/tests/coach-report.test.ts": {
@@ -1529,19 +1514,14 @@
     "ast_hash": "46d1aab331c635cb861d2776fa88bcd3",
     "semantic_hash": ""
   },
-  "src/components/charts/CurrentWeekButton.tsx": {
-    "mtime": 1785785856.9873192,
-    "ast_hash": "82aa3517bae25789e1f2e61058e1db47",
-    "semantic_hash": ""
-  },
   "src/lib/charts/scale.ts": {
     "mtime": 1785573826.1846905,
     "ast_hash": "20f76711a7c0f17959b539b8df2226c5",
     "semantic_hash": ""
   },
   "src/tests/chart-scale.test.ts": {
-    "mtime": 1786309044.510403,
-    "ast_hash": "e347e9b3b18fe0f60eb23f5fba029634",
+    "mtime": 1786696399.8955166,
+    "ast_hash": "ecfcb56a51a29e0c623508781159d76c",
     "semantic_hash": ""
   },
   "src/lib/charts/intensityCalendar.ts": {
@@ -2072,6 +2052,31 @@
   "src/components/day/WaterOverrideSheet.tsx": {
     "mtime": 1786695622.8002818,
     "ast_hash": "3ce6cc814df7a474656320bcfe71dae5",
+    "semantic_hash": ""
+  },
+  "src/tests/water-override.test.ts": {
+    "mtime": 1786695881.5051649,
+    "ast_hash": "33bf4066621c2f127df9ec207e7405aa",
+    "semantic_hash": ""
+  },
+  "src/lib/hooks/useEraWindow.ts": {
+    "mtime": 1786696092.424405,
+    "ast_hash": "bad7ab7bc3d04469e28a0b517e08da9b",
+    "semantic_hash": ""
+  },
+  "src/components/charts/ChartRange.tsx": {
+    "mtime": 1786696608.5048401,
+    "ast_hash": "96a8573f8798b28a6fedff65a5dfa57d",
+    "semantic_hash": ""
+  },
+  "src/components/charts/StepsChart.tsx": {
+    "mtime": 1786696146.3185232,
+    "ast_hash": "56094b0ee93835d08f1d0320564afcb3",
+    "semantic_hash": ""
+  },
+  "src/components/progression/BodyProgressPanel.tsx": {
+    "mtime": 1786696189.4920452,
+    "ast_hash": "ab7668320ebb0ea9343b73f62b91e1be",
     "semantic_hash": ""
   }
 }

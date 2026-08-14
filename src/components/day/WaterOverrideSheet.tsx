@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react'
 import { Droplets, RotateCcw } from 'lucide-react'
 import { Sheet } from '@/components/ui/Sheet'
 import { useWaterOverride, useClearWaterOverride, useHasWaterOverride, MIN_WATER_ML } from '@/lib/hooks/useWaterOverride'
+import { SAPPHIRE } from '@/lib/theme/palette'
 
-const ACCENT = '#3D7AB8'   // the same hue WaterHelix uses for its chrome
+const ACCENT = SAPPHIRE   // the same hue WaterHelix uses for its chrome
 
 /** Steps sized to what you actually drink from: a glass and a bottle. */
 const STEPS = [250, 500] as const
