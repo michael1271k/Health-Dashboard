@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
 import { getServerSupabaseClient } from '@/lib/supabase/server'
 import { nightWindow } from '@/lib/sleep/nightWindow'
-import { weekStartOf, isoAddDays } from '@/lib/utils/week'
+import { weekStartOf, isoAddDays, weekStartDayFromEndDay } from '@/lib/utils/week'
 import { logicalTodayInTZ } from '@/lib/utils/day'
-import { scheduleDayFor, isRestDayFor } from '@/lib/programs'
+import { scheduleDayFor, isRestDayFor, activeProgram } from '@/lib/programs'
 import { validWeight } from '@/lib/utils/units'
 import type { WidgetSnapshot } from '@/lib/widget/snapshot'
 
@@ -34,6 +34,27 @@ function bearer(req: Request): string | null {
   return m ? m[1].trim() : null
 }
 
+/**
+ * Run a sub-query so a transport failure degrades ONE field instead of the page.
+ *
+ * The eight reads below used to sit in a bare `Promise.all`. Supabase resolves
+ * query errors into `{ error }` rather than rejecting, so that held for ordinary
+ * failures — but a DNS blip, an aborted socket, or an unmigrated table reached
+ * through a throwing client rejects for real, and `Promise.all` turns one
+ * rejection into a 500. A widget extension gets a few hundred milliseconds and
+ * one shot; handing it nothing because the sleep table hiccuped is the worst
+ * possible trade, and `snapshot.ts` is explicit that every field is nullable
+ * precisely so a partial answer is a valid one.
+ */
+async function soft<T>(p: PromiseLike<{ data: T | null }>): Promise<T | null> {
+  try {
+    const { data } = await p
+    return data ?? null
+  } catch {
+    return null
+  }
+}
+
 export async function GET(req: Request) {
   const token = bearer(req)
   if (!token) {
@@ -62,41 +83,47 @@ export async function GET(req: Request) {
   const tz = url.searchParams.get('tz') || (goals.timezone as string | null) || HOME_TZ
   const date = logicalTodayInTZ(tz)
   const night = nightWindow(date)
-  const weekStart = weekStartOf(date)
+  // The user's week, not the server's. `weekStartOf` defaults to
+  // `deviceWeekStartDay()`, which has no localStorage here and therefore always
+  // answered Sunday — so a Monday-start preference made the widget's "this week"
+  // disagree with the same figure inside the app, by up to a whole session.
+  const weekStart = weekStartOf(date, weekStartDayFromEndDay(goals.week_end_day as number | null))
   const weekEndExclusive = `${isoAddDays(weekStart, 7)}T00:00:00Z`
 
-  const [scoreRes, logRes, metricsRes, sleepRes, nutriRes, waterRes, weightRes, weekRes] = await Promise.all([
-    supabase.from('daily_scores').select('score, battery_pct').eq('user_id', userId).eq('date', date).maybeSingle(),
-    supabase.from('daily_logs').select('steps, distance_m, active_energy, water_ml, sleep_minutes')
-      .eq('user_id', userId).eq('date', date).maybeSingle(),
-    supabase.from('daily_metrics').select('steps, active_cal').eq('user_id', userId).eq('date', date).maybeSingle(),
-    supabase.from('sleep_sessions').select('duration_min, deep_min, rem_min').eq('user_id', userId)
+  const [score, log, metrics, sleep, nutri, waterRows, weightRows, weekRows] = await Promise.all([
+    soft(supabase.from('daily_scores').select('score, battery_pct').eq('user_id', userId).eq('date', date).maybeSingle()),
+    soft(supabase.from('daily_logs').select('steps, distance_m, active_energy, water_ml, sleep_minutes')
+      .eq('user_id', userId).eq('date', date).maybeSingle()),
+    soft(supabase.from('daily_metrics').select('steps, active_cal').eq('user_id', userId).eq('date', date).maybeSingle()),
+    soft(supabase.from('sleep_sessions').select('duration_min, deep_min, rem_min').eq('user_id', userId)
       .gte('start_time', night.from).lt('start_time', night.to)
-      .order('duration_min', { ascending: false }).limit(1).maybeSingle(),
-    supabase.from('nutrition_entries').select('calories, protein_g, carbs_g, fat_g')
-      .eq('user_id', userId).eq('date', date).eq('meal_type', 'daily').maybeSingle(),
-    supabase.from('water_intake').select('amount_ml').eq('user_id', userId).eq('date', date),
+      .order('duration_min', { ascending: false }).limit(1).maybeSingle()),
+    soft(supabase.from('nutrition_entries').select('calories, protein_g, carbs_g, fat_g')
+      .eq('user_id', userId).eq('date', date).eq('meal_type', 'daily').maybeSingle()),
+    soft(supabase.from('water_intake').select('amount_ml').eq('user_id', userId).eq('date', date)),
     // Last two weigh-ins, for the delta.
-    supabase.from('body_composition').select('date, weight_kg').eq('user_id', userId)
-      .order('date', { ascending: false }).limit(8),
-    supabase.from('workout_sessions').select('started_at, total_volume_kg, set_count, pr_count')
+    soft(supabase.from('body_composition').select('date, weight_kg').eq('user_id', userId)
+      .order('date', { ascending: false }).limit(8)),
+    soft(supabase.from('workout_sessions').select('started_at, total_volume_kg, set_count, pr_count, day_key')
       .eq('user_id', userId)
-      .gte('started_at', `${weekStart}T00:00:00Z`).lt('started_at', weekEndExclusive),
-  ])
+      .gte('started_at', `${weekStart}T00:00:00Z`).lt('started_at', weekEndExclusive)),
+  ]) as [
+    { score: number | null; battery_pct: number | null } | null,
+    Record<string, number | null> | null,
+    { steps: number | null; active_cal: number | null } | null,
+    { duration_min: number | null; deep_min: number | null; rem_min: number | null } | null,
+    Record<string, number | null> | null,
+    Array<{ amount_ml: number }> | null,
+    Array<{ date: string; weight_kg: number | null }> | null,
+    Array<{ started_at: string; total_volume_kg: number | null; set_count: number | null; pr_count: number | null; day_key: string | null }> | null,
+  ]
 
-  const score = scoreRes.data as { score: number | null; battery_pct: number | null } | null
-  const log = logRes.data as Record<string, number | null> | null
-  const metrics = metricsRes.data as { steps: number | null; active_cal: number | null } | null
-  const sleep = sleepRes.data as { duration_min: number | null; deep_min: number | null; rem_min: number | null } | null
-  const nutri = nutriRes.data as Record<string, number | null> | null
-  const water = (waterRes.data ?? []) as Array<{ amount_ml: number }>
-  const weekSessions = (weekRes.data ?? []) as Array<{
-    started_at: string; total_volume_kg: number | null; set_count: number | null; pr_count: number | null
-  }>
+  const water = waterRows ?? []
+  const weekSessions = weekRows ?? []
 
   // Weigh-ins, de-duplicated by VALUE so a re-synced identical reading doesn't
   // read as a fresh weigh-in (same rule as the dashboard's Body card).
-  const weighIns = ((weightRes.data ?? []) as Array<{ date: string; weight_kg: number | null }>)
+  const weighIns = (weightRows ?? [])
     .map((r) => ({ date: r.date, kg: validWeight(r.weight_kg) }))
     .filter((r): r is { date: string; kg: number } => r.kg != null)
   const latest = weighIns[0] ?? null
@@ -126,7 +153,9 @@ export async function GET(req: Request) {
       proteinG: nutri?.protein_g ?? null,
       proteinGoalG: num(goals.protein_goal_g),
       carbsG: nutri?.carbs_g ?? null,
+      carbsGoalG: num(goals.carbs_goal_g),
       fatG: nutri?.fat_g ?? null,
+      fatGoalG: num(goals.fat_goal_g),
     },
     water: {
       ml: water.length ? water.reduce((s, r) => s + r.amount_ml, 0) : log?.water_ml ?? null,
@@ -140,6 +169,9 @@ export async function GET(req: Request) {
     },
     workout: {
       label: day === 'rest' ? 'Rest' : day.label,
+      // The program key, so a widget can tint itself with the day's own colour
+      // instead of inferring one from the label string.
+      dayKey: day === 'rest' ? null : (day.dayKey ?? null),
       logged: weekSessions.some((s) => s.started_at.slice(0, 10) === date),
       isRestDay: isRestDayFor(date),
     },
@@ -148,6 +180,10 @@ export async function GET(req: Request) {
       volumeKg: Math.round(weekSessions.reduce((s, r) => s + (r.total_volume_kg ?? 0), 0)),
       prs: weekSessions.reduce((s, r) => s + (r.pr_count ?? 0), 0),
       sets: weekSessions.reduce((s, r) => s + (r.set_count ?? 0), 0),
+      // How many training days the active plan schedules — without it, "3
+      // sessions" is a number with nothing to be measured against, which is the
+      // one thing a glanceable surface cannot afford.
+      sessionTarget: activeProgram().days.length,
     },
   }
 

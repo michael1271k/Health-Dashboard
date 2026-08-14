@@ -90,8 +90,8 @@
     "semantic_hash": "9deb2ada1cc834bbebf8bbad9c8978a1"
   },
   "ios/App/HelixWatch Watch App/ContentView.swift": {
-    "mtime": 1786289264.7255003,
-    "ast_hash": "81e5de848ba3c2b56d098eb5ccd401c3",
+    "mtime": 1786696989.3580544,
+    "ast_hash": "971b3a8ab5c43a94965d8c249943ed56",
     "semantic_hash": ""
   },
   "ios/App/HelixWatch Watch App/HelixWatchApp.swift": {
@@ -120,14 +120,14 @@
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixWidgets.swift": {
-    "mtime": 1786438195.2464368,
-    "ast_hash": "d21d1012814064454c64b895c630315b",
+    "mtime": 1786697105.4052336,
+    "ast_hash": "8c520f7e1ceb5b7f4eb389c7df45c264",
     "semantic_hash": ""
   },
   "ios/App/Shared/HelixSnapshot.swift": {
-    "mtime": 1784898111.763284,
-    "ast_hash": "7cd03f731b8a821f5c8a5655578f4008",
-    "semantic_hash": "7cd03f731b8a821f5c8a5655578f4008"
+    "mtime": 1786696974.1143985,
+    "ast_hash": "15b2ccd423ef67645635dea2c8beaf48",
+    "semantic_hash": ""
   },
   "netlify/functions/keep-alive.mts": {
     "mtime": 1782485854.08713,
@@ -160,8 +160,8 @@
     "semantic_hash": ""
   },
   "public/sw.js": {
-    "mtime": 1786696650.2302413,
-    "ast_hash": "3ab4e0fe8ce9d4441d763554e9a83d46",
+    "mtime": 1786697152.3057508,
+    "ast_hash": "cfcd1e82972dfc148189970883f284fd",
     "semantic_hash": ""
   },
   "scripts/generate-icons.mjs": {
@@ -235,9 +235,9 @@
     "semantic_hash": "b42be3e58f4e070c10f2d409d0ce499f"
   },
   "src/app/api/widget/snapshot/route.ts": {
-    "mtime": 1784898077.6186478,
-    "ast_hash": "05de085800579ac1b1e1ad7eb0771189",
-    "semantic_hash": "05de085800579ac1b1e1ad7eb0771189"
+    "mtime": 1786696869.4648466,
+    "ast_hash": "1445bae8bb3c10a4edb89b7bcbb59ca4",
+    "semantic_hash": ""
   },
   "src/app/auth/page.tsx": {
     "mtime": 1786308698.1303484,
@@ -1125,8 +1125,8 @@
     "semantic_hash": "b4e23dc51b7516f2fca9bc91cf4f0be7"
   },
   "src/lib/utils/prefsSync.ts": {
-    "mtime": 1786459987.4182103,
-    "ast_hash": "5b5ddadc90438f6f08044c472a812481",
+    "mtime": 1786696756.1790516,
+    "ast_hash": "e7c72fe1732fd73c42d8ce903c19654f",
     "semantic_hash": ""
   },
   "src/lib/utils/units.ts": {
@@ -1135,14 +1135,14 @@
     "semantic_hash": "f536a7ccba610eb44d43d4a274fa5b22"
   },
   "src/lib/utils/week.ts": {
-    "mtime": 1785769881.560112,
-    "ast_hash": "f455ea66b0b82ea2214a5daaab8f7d36",
+    "mtime": 1786696724.3891063,
+    "ast_hash": "d449a19cbe135e41d9265cebc224e179",
     "semantic_hash": ""
   },
   "src/lib/widget/snapshot.ts": {
-    "mtime": 1784898043.2859566,
-    "ast_hash": "860e578058a2ed6e95fdbb99f5b4b535",
-    "semantic_hash": "860e578058a2ed6e95fdbb99f5b4b535"
+    "mtime": 1786696878.9645724,
+    "ast_hash": "2a7259fb9a3766b293849192bdd11d17",
+    "semantic_hash": ""
   },
   "src/sw.ts": {
     "mtime": 1786460644.0785787,
@@ -1290,9 +1290,9 @@
     "semantic_hash": "2baadb805734c61d422af569659f2a20"
   },
   "src/tests/widget-snapshot.test.ts": {
-    "mtime": 1784898137.2789803,
-    "ast_hash": "4e67c4f19dce4ed1e98dce0c84dd0193",
-    "semantic_hash": "4e67c4f19dce4ed1e98dce0c84dd0193"
+    "mtime": 1786696912.3338172,
+    "ast_hash": "d1a7cc94698e20c741f4d5da6c824354",
+    "semantic_hash": ""
   },
   "tailwind.config.ts": {
     "mtime": 1786543982.5402725,

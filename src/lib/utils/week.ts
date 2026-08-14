@@ -16,6 +16,22 @@ export function deviceWeekStartDay(): number {
 }
 
 /**
+ * The stored preference → a week-start day, for code with no `window`.
+ *
+ * `user_goals.week_end_day` is the DB column; `helix_week_start` is its device
+ * mirror, written by prefsSync using exactly this rule. Server routes have no
+ * localStorage, so `deviceWeekStartDay()` silently answers Sunday for them —
+ * which is right for the weekly-report windows (deliberately Sunday-anchored)
+ * and WRONG for anything that has to agree with what the user sees, like the
+ * widget's "this week". Those callers read the column and come through here, so
+ * there is one definition of the mapping rather than two that can drift.
+ */
+export function weekStartDayFromEndDay(endDay: number | null | undefined): number {
+  if (endDay == null) return 0
+  return endDay === 0 ? 1 : 0   // week ends Sunday ⇒ it starts Monday
+}
+
+/**
  * First day (per `startDay`) of the week containing dateISO (YYYY-MM-DD).
  *
  * TOTAL by design. A malformed date used to reach `toISOString()` and throw
