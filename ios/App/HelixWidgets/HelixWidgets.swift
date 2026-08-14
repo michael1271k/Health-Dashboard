@@ -354,10 +354,19 @@ struct WeekView: View {
     private var s: HelixSnapshot? { entry.snapshot }
     private func tint(_ c: Color) -> Color { mode == .accented ? .white : c }
 
+    /// The week is optional here, its FIELDS are not — `sessions`, `volumeKg`,
+    /// `sets` and `prs` are plain `Int`/`Double` because a snapshot always counts
+    /// them, even at zero. That is why they are formatted off this one optional
+    /// rather than in place: in `s?.week.volumeKg.map { … }` the `.map` binds to
+    /// the *unwrapped* `Double`, which has no such member, so the whole file
+    /// fails to compile. Only a leaf that is itself optional (`macros.proteinG`)
+    /// can take `.map` mid-chain.
+    private var week: HelixSnapshot.Week? { s?.week }
+
     /// Sessions carry a denominator when the plan states one. "3" alone is not a
     /// fact you can act on at a glance; "3/5" is.
     private var sessions: String? {
-        guard let week = s?.week else { return nil }
+        guard let week else { return nil }
         if let target = week.sessionTarget, target > 0 { return "\(week.sessions)/\(target)" }
         return "\(week.sessions)"
     }
@@ -374,11 +383,11 @@ struct WeekView: View {
                     }
                     Metric(value: sessions, label: "sessions", color: tint(Helix.sapphire))
                     Metric(
-                        value: s?.week.volumeKg.map { String(format: "%.1f t", $0 / 1000) },
+                        value: week.map { String(format: "%.1f t", $0.volumeKg / 1000) },
                         label: "volume", color: .white
                     )
-                    Metric(value: s?.week.sets.map { "\($0)" }, label: "sets", color: Helix.steel)
-                    Metric(value: s?.week.prs.map { "\($0)" }, label: "PRs", color: tint(Helix.gold))
+                    Metric(value: week.map { "\($0.sets)" }, label: "sets", color: Helix.steel)
+                    Metric(value: week.map { "\($0.prs)" }, label: "PRs", color: tint(Helix.gold))
                 }
                 Spacer(minLength: 0)
                 BatteryRing(pct: s?.battery)

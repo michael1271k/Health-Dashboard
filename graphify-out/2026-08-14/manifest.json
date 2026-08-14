@@ -160,7 +160,7 @@
     "semantic_hash": ""
   },
   "public/sw.js": {
-    "mtime": 1786698340.0661707,
+    "mtime": 1786709520.0352461,
     "ast_hash": "cfcd1e82972dfc148189970883f284fd",
     "semantic_hash": ""
   },
@@ -235,7 +235,7 @@
     "semantic_hash": "b42be3e58f4e070c10f2d409d0ce499f"
   },
   "src/app/api/widget/snapshot/route.ts": {
-    "mtime": 1786709381.7372284,
+    "mtime": 1786709467.6859164,
     "ast_hash": "7188ddc45cbec36c7939b0ee564680cc",
     "semantic_hash": ""
   },
@@ -2107,6 +2107,11 @@
   "src/lib/utils/measure.ts": {
     "mtime": 1786709329.220757,
     "ast_hash": "ac5444eed7e2b0b1c4e040de21ac3be4",
+    "semantic_hash": ""
+  },
+  "src/tests/route-client-boundary.test.ts": {
+    "mtime": 1786709439.079433,
+    "ast_hash": "472a40c218cf5a0f3a3657ea95b656db",
     "semantic_hash": ""
   }
 }
