@@ -167,11 +167,22 @@ export function cardioSummary(ex: DraftExercise): string {
  */
 export function buildCommitPayload(draft: SessionDraft): SaveWorkoutInput {
   const sets: SaveWorkoutInput['sets'] = []
-  const cardioLines: string[] = []
+  const cardio: NonNullable<SaveWorkoutInput['cardio']> = []
   let order = 0
   for (const ex of draft.exercises) {
     if (ex.kind === 'cardio') {
-      cardioLines.push(`Cardio — ${cardioSummary(ex)}`)
+      // STRUCTURED, not a notes line. Flattening to prose was a one-way trip:
+      // the edit deck rebuilds from the database, and `notes` is not a place a
+      // distance and a duration can be read back out of. A block with neither
+      // figure is dropped — an empty treadmill card is a card you did not use.
+      if (ex.distanceKm != null || ex.durationSec != null) {
+        cardio.push({
+          name: ex.name,
+          ...(ex.distanceKm != null ? { distanceKm: ex.distanceKm } : {}),
+          ...(ex.durationSec != null ? { durationSec: ex.durationSec } : {}),
+          ...(ex.note ? { note: ex.note } : {}),
+        })
+      }
       continue
     }
     // ONLY completed (green) sets are recorded — an unchecked template set stays
@@ -206,7 +217,8 @@ export function buildCommitPayload(draft: SessionDraft): SaveWorkoutInput {
     startedAt: draft.startedAt,
     endedAt,
     sets,
-    notes: [draft.notes.trim(), ...cardioLines].filter(Boolean).join('\n'),
+    cardio: cardio.length ? cardio : undefined,
+    notes: draft.notes.trim(),
     clientSessionId: draft.clientSessionId,
     replaceSessionId: draft.replaceSessionId,
     dayKey: draft.dayKey,

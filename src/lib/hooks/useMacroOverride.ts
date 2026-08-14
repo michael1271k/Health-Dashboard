@@ -4,7 +4,9 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { authedFetch } from '@/lib/utils/authedFetch'
 import { logicalTodayISO } from '@/lib/utils/day'
-import { derivePhase } from '@/lib/nutrition/phase'
+import { recomputeAndPaint } from '@/lib/scoring/applyComputedScore'
+import { resolveDayPhase } from '@/lib/nutrition/phase'
+import { activePhase } from '@/lib/programs'
 import { manualHkUuid } from '@/lib/nutrition/manualEntry'
 
 export interface MacroValues {
@@ -49,6 +51,13 @@ export function useMacroOverride(date: string) {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not signed in')
       const calories = Math.max(0, Math.round(vals.calories))
+      // The day's declaration lives on daily_logs, the phase on this row — two
+      // tables, two write paths. Read the flags here so a hand-corrected
+      // exception day is not re-banded into a phase the block is not in.
+      const { data: flags } = await supabase.from('daily_logs')
+        .select('nutrition_exception, nutrition_estimated')
+        .eq('user_id', user.id).eq('date', date).maybeSingle() as unknown as
+        { data: { nutrition_exception: string | null; nutrition_estimated: boolean | null } | null }
       const row = {
         user_id: user.id,
         date,
@@ -59,18 +68,19 @@ export function useMacroOverride(date: string) {
         protein_g: Math.max(0, vals.protein_g),
         carbs_g: Math.max(0, vals.carbs_g),
         fat_g: Math.max(0, vals.fat_g),
-        phase: derivePhase(calories),
+        phase: resolveDayPhase({
+          calories,
+          exception: flags?.nutrition_exception ?? null,
+          estimated: flags?.nutrition_estimated ?? false,
+          activePhase: activePhase(),
+        }),
       }
       const { error } = await supabase.from('nutrition_entries')
         .upsert(row as never, { onConflict: 'user_id,date,meal_type' })
       if (error) throw new Error(error.message)
       // Recompute the day's score/battery from the edited macros (force bypasses
-      // the finalized freeze for a past day).
-      await authedFetch('/api/compute-score', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date, force: true, isToday: date === logicalTodayISO() }),
-      })
+      // the finalized freeze for a past day) and paint the result immediately.
+      await recomputeAndPaint(qc, date, { force: true, isToday: date === logicalTodayISO() }, authedFetch)
     },
     onSuccess: () => { for (const k of CASCADE_KEYS) qc.invalidateQueries({ queryKey: k }) },
   })

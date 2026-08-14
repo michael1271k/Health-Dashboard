@@ -9,6 +9,8 @@ import type { Database, InsertRow } from '@/lib/supabase/types'
 import type { SaveWorkoutPayload } from '@/lib/types/workout'
 import { countCommittedSets } from '@/lib/sessions/schema'
 import { sessionVolumeKg } from '@/lib/sessions/volume'
+import { payloadToTemplate } from '@/lib/sessions/routineTemplate'
+import { estimateCalories, estimateAvgBpm, KCAL_SAMPLE_WINDOW_DAYS } from '@/lib/sessions/estimates'
 import { isTimedExercise } from '@/lib/exercises/timed'
 import { buildBaselines, detectSessionPrs, recordSets, type PrAxis } from '@/lib/training/prEngine'
 import { prFloorFor } from '@/lib/training/prTruth'
@@ -62,7 +64,18 @@ export async function saveSession(
   // EDIT flow: replace an existing session in place — delete it (+ its sets)
   // up front so the one-per-date guard doesn't block the re-commit and the
   // fresh insert below becomes the edited session.
+  //
+  // Anything the payload does not restate is LOST by that delete. `session_rpe`
+  // was exactly that: the edit deck never selected it, so every edit re-committed
+  // `undefined` → `normalizeCr10` → null, quietly erasing a rating the session
+  // had been logged with. The deck now repopulates it, and this carries it as a
+  // second line of defence for any path that still omits the field.
+  let carriedSessionRpe: number | null = null
   if (payload.replaceSessionId) {
+    const { data: prior } = await supabase.from('workout_sessions')
+      .select('session_rpe').eq('id', payload.replaceSessionId).eq('user_id', userId)
+      .maybeSingle() as unknown as { data: { session_rpe: number | null } | null }
+    carriedSessionRpe = prior?.session_rpe ?? null
     await supabase.from('workout_sets').delete().eq('session_id', payload.replaceSessionId).eq('user_id', userId)
     await supabase.from('workout_sessions').delete().eq('id', payload.replaceSessionId).eq('user_id', userId)
   }
@@ -185,9 +198,73 @@ export async function saveSession(
     Math.max(0, Math.round((new Date(payload.endedAt).getTime() - new Date(payload.startedAt).getTime()) / 60000)) || null
   const durationMin = metrics.durationMin ?? computedDuration
 
-  // `session_rpe` isn't in the generated types yet (Supabase is schema-of-record
-  // and types.ts lags), hence the intersection rather than a bare InsertRow.
-  const sessionInsert: InsertRow<'workout_sessions'> & { session_rpe: number | null } = {
+  // ── Calories + heart rate, when the session carries neither ────────────────
+  // Only ever fills a GAP — a measured figure is kept untouched — and anything
+  // derived is stamped so the UI and the export can say so. See `estimates.ts`.
+  let caloriesBurned = metrics.caloriesBurned ?? null
+  let avgBpm = metrics.avgBpm ?? null
+  let caloriesEstimated = false
+  let avgBpmEstimated = false
+
+  if (caloriesBurned == null || avgBpm == null) {
+    try {
+      const windowStart = new Date(Date.parse(`${dateStr}T00:00:00Z`) - KCAL_SAMPLE_WINDOW_DAYS * 86_400_000)
+        .toISOString().slice(0, 10)
+      // Same split, recent, and MEASURED — an estimated row must never become
+      // the sample that justifies the next estimate.
+      const { data: priorRaw } = await supabase
+        .from('workout_sessions')
+        .select('started_at, duration_min, calories_burned, avg_bpm, calories_estimated, avg_bpm_estimated')
+        .eq('user_id', userId)
+        .eq('split_day', payload.splitDay)
+        .lt('started_at', `${dateStr}T00:00:00Z`)
+        .gte('started_at', `${windowStart}T00:00:00Z`)
+        .order('started_at', { ascending: false })
+        .limit(40)
+      const prior = (priorRaw ?? []) as unknown as Array<{
+        duration_min: number | null; calories_burned: number | null; avg_bpm: number | null
+        calories_estimated?: boolean | null; avg_bpm_estimated?: boolean | null
+      }>
+
+      if (caloriesBurned == null) {
+        const samples = prior
+          .filter((r) => !r.calories_estimated && r.calories_burned != null && r.duration_min != null)
+          .map((r) => ({ kcal: r.calories_burned as number, durationMin: r.duration_min as number }))
+        // Bodyweight scales the compendium fallback; absent, only the personal
+        // median can fire, which is the correct order of preference anyway.
+        const { data: bodyRaw } = await supabase
+          .from('body_composition').select('weight_kg')
+          .eq('user_id', userId).lte('date', dateStr)
+          .order('date', { ascending: false }).limit(1).maybeSingle()
+        const bodyweightKg = (bodyRaw as { weight_kg?: number | null } | null)?.weight_kg ?? null
+
+        const est = estimateCalories({ durationMin, samples, bodyweightKg })
+        if (est) {
+          caloriesBurned = est.kcal
+          caloriesEstimated = true
+          console.info(`[save] calories estimated (${est.basis}): ${est.kcal} kcal over ${durationMin} min`)
+        }
+      }
+
+      if (avgBpm == null) {
+        const lastMeasured = prior.find((r) => !r.avg_bpm_estimated && r.avg_bpm != null)
+        const est = estimateAvgBpm(lastMeasured?.avg_bpm)
+        if (est != null) { avgBpm = est; avgBpmEstimated = true }
+      }
+    } catch (e) {
+      // A gap-filler must never cost a workout. Fall through with the nulls.
+      console.error('[save] metric estimation failed:', e)
+    }
+  }
+
+  // `session_rpe` and the two `*_estimated` flags aren't in the generated types
+  // yet (Supabase is schema-of-record and types.ts lags), hence the intersection
+  // rather than a bare InsertRow.
+  const sessionInsert: InsertRow<'workout_sessions'> & {
+    session_rpe: number | null
+    calories_estimated: boolean
+    avg_bpm_estimated: boolean
+  } = {
     user_id: userId,
     started_at: payload.startedAt,
     ended_at: payload.endedAt,
@@ -198,15 +275,21 @@ export async function saveSession(
     set_count: setCount,
     pr_count: prCount,
     duration_min: durationMin,
-    calories_burned: metrics.caloriesBurned ?? null,
-    avg_bpm: metrics.avgBpm ?? null,
+    calories_burned: caloriesBurned,
+    avg_bpm: avgBpm,
+    // Provenance. A derived figure must be distinguishable from a measured one
+    // by every downstream reader, not just by the screen that shows it.
+    calories_estimated: caloriesEstimated,
+    avg_bpm_estimated: avgBpmEstimated,
     report_md: metrics.reportMd ?? null,
     client_session_id: payload.clientSessionId ?? null,
     day_key: payload.dayKey ?? null,
     coach_report: payload.coachReport ?? null,
     next_session_flag: payload.nextSessionFlag ?? null,
     // Self-heals: a pre-migration DB simply drops the key (see the retry below).
-    session_rpe: normalizeCr10(payload.sessionRpe),
+    // An edit that carries no rating keeps the one already stored rather than
+    // nulling it — see `carriedSessionRpe`.
+    session_rpe: normalizeCr10(payload.sessionRpe) ?? carriedSessionRpe,
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -214,13 +297,16 @@ export async function saveSession(
     supabase.from('workout_sessions').insert(row).select('id').single()
 
   let { data: sessionRaw, error: sessionError } = await insertSession(sessionInsert as unknown)
-  // `session_rpe` is a newer column. Losing an entire workout because an
-  // optional effort rating has nowhere to land is never the right trade — drop
-  // the field and re-insert. The same pattern guards side/pair_id below.
-  if (sessionError && /session_rpe|schema cache|PGRST204/i.test(sessionError.message)) {
-    const { session_rpe: _dropped, ...withoutRpe } = sessionInsert as Record<string, unknown>
-    void _dropped
-    ;({ data: sessionRaw, error: sessionError } = await insertSession(withoutRpe))
+  // `session_rpe` and the two provenance flags are newer columns. Losing an
+  // entire workout because an optional effort rating or an estimate marker has
+  // nowhere to land is never the right trade — drop them and re-insert. The
+  // same pattern guards side/pair_id below.
+  if (sessionError && /session_rpe|estimated|schema cache|PGRST204/i.test(sessionError.message)) {
+    const {
+      session_rpe: _rpe, calories_estimated: _ce, avg_bpm_estimated: _be, ...withoutNewCols
+    } = sessionInsert as Record<string, unknown>
+    void _rpe; void _ce; void _be
+    ;({ data: sessionRaw, error: sessionError } = await insertSession(withoutNewCols))
   }
 
   const session = sessionRaw as { id: string } | null
@@ -271,6 +357,59 @@ export async function saveSession(
     console.error('[saveSession] sets insert failed:', setsError)
     await supabase.from('workout_sessions').delete().eq('id', session.id)
     throw new Error(`Failed to save sets: ${setsError.message}`)
+  }
+
+  // ── Cardio blocks → cardio_logs ────────────────────────────────────────────
+  // Keyed to the session, so an edit replaces rather than duplicates: the FK is
+  // ON DELETE CASCADE and the edit path already deleted the old session row, so
+  // its cardio went with it. The rows carry `kind: 'treadmill'` rather than
+  // walk/run — a warm-up inside a lifting session is not the daily walk, and
+  // mixing the two would corrupt what the Zone-2 and cardio-PR readers see.
+  if (payload.cardio?.length) {
+    try {
+      const rows = payload.cardio.map((c) => ({
+        user_id: userId,
+        session_id: session.id,
+        date: dateStr,
+        kind: 'treadmill',
+        distance_m: c.distanceKm != null ? Math.round(c.distanceKm * 1000) : null,
+        duration_min: c.durationSec != null ? Math.round((c.durationSec / 60) * 100) / 100 : null,
+        from_healthkit: false,
+      }))
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await supabase.from('cardio_logs').insert(rows as any)
+      if (error && !/relation|does not exist|schema cache|PGRST20[0-9]/i.test(error.message)) {
+        console.error('[save] cardio_logs insert failed:', error.message)
+      }
+    } catch (e) {
+      console.error('[save] cardio_logs insert threw:', e)
+    }
+  }
+
+  // ── The routine template ───────────────────────────────────────────────────
+  // Written from the payload that just landed, on BOTH commit and edit, so the
+  // next deck for this day opens as the exact shape you last performed —
+  // exercise ORDER included, which is what makes drag-reorder persist.
+  //
+  // Self-healing and non-fatal: the sets are already saved, and losing a
+  // template only costs the next deck its seed. A day with no `dayKey` (a
+  // free-form paste, or a PPL-era session) has no template slot and is skipped.
+  if (payload.dayKey) {
+    const template = payloadToTemplate(payload.sets)
+    if (template) {
+      try {
+        const { error } = await supabase.from('routine_templates').upsert({
+          user_id: userId, day_key: payload.dayKey, payload: template,
+          source_session_id: session.id, updated_at: new Date().toISOString(),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any, { onConflict: 'user_id,day_key' })
+        if (error && !/relation|does not exist|schema cache|PGRST20[0-9]/i.test(error.message)) {
+          console.error('[save] routine_templates upsert failed:', error.message)
+        }
+      } catch (e) {
+        console.error('[save] routine_templates upsert threw:', e)
+      }
+    }
   }
 
   // The ledger records the set that WON each axis, not the session's maximum

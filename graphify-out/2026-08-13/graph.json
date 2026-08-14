@@ -1103,7 +1103,7 @@
       "_origin": "ast",
       "id": "swiftui",
       "community": 70,
-      "community_name": "ContentView",
+      "community_name": "HelixWatch_Watch_AppApp",
       "norm_label": "swiftui"
     },
     {
@@ -1136,8 +1136,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "ios_app_helixwatch_watch_app_contentview_snapshotstore",
-      "community": 70,
-      "community_name": "ContentView",
+      "community": 46,
+      "community_name": ".fetchWithFallback",
       "norm_label": "snapshotstore"
     },
     {
@@ -1147,8 +1147,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "observableobject",
-      "community": 70,
-      "community_name": "ContentView",
+      "community": 46,
+      "community_name": ".fetchWithFallback",
       "norm_label": "observableobject"
     },
     {
@@ -1158,8 +1158,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "ios_app_helixwatch_watch_app_contentview_snapshotstore_refresh",
-      "community": 70,
-      "community_name": "ContentView",
+      "community": 46,
+      "community_name": ".fetchWithFallback",
       "norm_label": ".refresh()"
     },
     {
@@ -1169,8 +1169,8 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "ios_app_helixwatch_watch_app_contentview_contentview",
-      "community": 70,
-      "community_name": "ContentView",
+      "community": 5,
+      "community_name": "ContentView.swift",
       "norm_label": "contentview"
     },
     {
@@ -1566,7 +1566,7 @@
       "_origin": "ast",
       "id": "ios_app_helixwatch_watch_app_helixwatchapp",
       "community": 70,
-      "community_name": "ContentView",
+      "community_name": "HelixWatch_Watch_AppApp",
       "norm_label": "helixwatchapp.swift"
     },
     {
@@ -1577,7 +1577,7 @@
       "_origin": "ast",
       "id": "ios_app_helixwatch_watch_app_helixwatchapp_helixwatch_watch_appapp",
       "community": 70,
-      "community_name": "ContentView",
+      "community_name": "HelixWatch_Watch_AppApp",
       "norm_label": "helixwatch_watch_appapp"
     },
     {
@@ -1588,7 +1588,7 @@
       "_origin": "ast",
       "id": "app",
       "community": 70,
-      "community_name": "ContentView",
+      "community_name": "HelixWatch_Watch_AppApp",
       "norm_label": "app"
     },
     {
@@ -1599,7 +1599,7 @@
       "_origin": "ast",
       "id": "scene",
       "community": 70,
-      "community_name": "ContentView",
+      "community_name": "HelixWatch_Watch_AppApp",
       "norm_label": "scene"
     },
     {
@@ -1609,8 +1609,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "ios_app_helixwatch_watch_app_helixwatchapp_helixwatch_watch_appapp_body",
-      "community": 70,
-      "community_name": "ContentView",
+      "community": 5,
+      "community_name": "ContentView.swift",
       "norm_label": ".body"
     },
     {
@@ -2633,8 +2633,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "package_dependencies_capacitor_app",
-      "community": 61,
-      "community_name": "dependencies",
+      "community": 180,
+      "community_name": "@capacitor/app",
       "norm_label": "@capacitor/app"
     },
     {
@@ -2644,8 +2644,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "capacitor_app",
-      "community": 61,
-      "community_name": "dependencies",
+      "community": 180,
+      "community_name": "@capacitor/app",
       "norm_label": "@capacitor/app"
     },
     {
@@ -2787,8 +2787,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "package_dependencies_dnd_kit_sortable",
-      "community": 175,
-      "community_name": "@dnd-kit/sortable",
+      "community": 61,
+      "community_name": "dependencies",
       "norm_label": "@dnd-kit/sortable"
     },
     {
@@ -2798,8 +2798,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "dnd_kit_sortable",
-      "community": 175,
-      "community_name": "@dnd-kit/sortable",
+      "community": 61,
+      "community_name": "dependencies",
       "norm_label": "@dnd-kit/sortable"
     },
     {
@@ -3568,8 +3568,8 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "package_devdependencies_eslint_config_next",
-      "community": 50,
-      "community_name": "devDependencies",
+      "community": 175,
+      "community_name": "eslint-config-next",
       "norm_label": "eslint-config-next"
     },
     {
@@ -3579,8 +3579,8 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "eslint_config_next",
-      "community": 50,
-      "community_name": "devDependencies",
+      "community": 175,
+      "community_name": "eslint-config-next",
       "norm_label": "eslint-config-next"
     },
     {
@@ -3656,8 +3656,8 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "package_devdependencies_sharp",
-      "community": 180,
-      "community_name": "sharp",
+      "community": 50,
+      "community_name": "devDependencies",
       "norm_label": "sharp"
     },
     {
@@ -3667,8 +3667,8 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "sharp",
-      "community": 180,
-      "community_name": "sharp",
+      "community": 50,
+      "community_name": "devDependencies",
       "norm_label": "sharp"
     },
     {
@@ -5556,7 +5556,7 @@
       "label": "appUrl",
       "file_type": "code",
       "source_file": "scripts/recompute-scores.mjs",
-      "source_location": "L110",
+      "source_location": "L100",
       "_origin": "ast",
       "id": "scripts_recompute_scores_appurl",
       "community": 35,
@@ -6373,7 +6373,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_dashboard_workout_page",
-      "community": 117,
+      "community": 25,
       "community_name": "workout/page.tsx",
       "norm_label": "workout/page.tsx"
     },
@@ -6384,7 +6384,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_app_dashboard_workout_page_muscleanalyticspanel",
-      "community": 117,
+      "community": 25,
       "community_name": "workout/page.tsx",
       "norm_label": "muscleanalyticspanel"
     },
@@ -6395,7 +6395,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_app_dashboard_workout_page_wd",
-      "community": 117,
+      "community": 25,
       "community_name": "workout/page.tsx",
       "norm_label": "wd"
     },
@@ -6406,7 +6406,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_app_dashboard_workout_page_workoutpage",
-      "community": 117,
+      "community": 25,
       "community_name": "workout/page.tsx",
       "norm_label": "workoutpage()"
     },
@@ -7220,7 +7220,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "src_app_session_page_sessionpageinner",
-      "community": 117,
+      "community": 25,
       "community_name": "workout/page.tsx",
       "norm_label": "sessionpageinner()"
     },
@@ -8452,8 +8452,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_command_center_sessiondeck",
-      "community": 117,
-      "community_name": "workout/page.tsx",
+      "community": 108,
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "sessiondeck.tsx"
     },
     {
@@ -8463,7 +8463,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_components_command_center_sessiondeck_sessiondeck",
-      "community": 117,
+      "community": 25,
       "community_name": "workout/page.tsx",
       "norm_label": "sessiondeck()"
     },
@@ -8474,8 +8474,8 @@
       "source_location": "L194",
       "_origin": "ast",
       "id": "src_components_command_center_sessiondeck_stat",
-      "community": 117,
-      "community_name": "workout/page.tsx",
+      "community": 108,
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "stat()"
     },
     {
@@ -8485,8 +8485,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_command_center_sessionnotescard",
-      "community": 117,
-      "community_name": "workout/page.tsx",
+      "community": 108,
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "sessionnotescard.tsx"
     },
     {
@@ -8496,8 +8496,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_components_command_center_sessionnotescard_sessionnotescard",
-      "community": 117,
-      "community_name": "workout/page.tsx",
+      "community": 108,
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "sessionnotescard()"
     },
     {
@@ -13699,7 +13699,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_exercises_timed",
-      "community": 117,
+      "community": 25,
       "community_name": "workout/page.tsx",
       "norm_label": "timed.ts"
     },
@@ -13710,7 +13710,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_lib_exercises_timed_istimedexercise",
-      "community": 117,
+      "community": 25,
       "community_name": "workout/page.tsx",
       "norm_label": "istimedexercise()"
     },
@@ -15008,8 +15008,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_lib_hooks_useexercisebaselines_useexercisebaselines",
-      "community": 117,
-      "community_name": "workout/page.tsx",
+      "community": 1,
+      "community_name": "prEngine.ts",
       "norm_label": "useexercisebaselines()"
     },
     {
@@ -15228,7 +15228,7 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "src_lib_hooks_useexercisesethistory_useexercisesethistory",
-      "community": 117,
+      "community": 25,
       "community_name": "workout/page.tsx",
       "norm_label": "useexercisesethistory()"
     },
@@ -15382,7 +15382,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_hooks_uselogger",
-      "community": 117,
+      "community": 25,
       "community_name": "workout/page.tsx",
       "norm_label": "uselogger.ts"
     },
@@ -15393,7 +15393,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_lib_hooks_uselogger_useexercisemap",
-      "community": 117,
+      "community": 25,
       "community_name": "workout/page.tsx",
       "norm_label": "useexercisemap()"
     },
@@ -15404,7 +15404,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_lib_hooks_uselogger_routinememoryentry",
-      "community": 117,
+      "community": 25,
       "community_name": "workout/page.tsx",
       "norm_label": "routinememoryentry"
     },
@@ -15415,7 +15415,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "src_lib_hooks_uselogger_useroutinememory",
-      "community": 117,
+      "community": 25,
       "community_name": "workout/page.tsx",
       "norm_label": "useroutinememory()"
     },
@@ -15426,7 +15426,7 @@
       "source_location": "L70",
       "_origin": "ast",
       "id": "src_lib_hooks_uselogger_routinememorymap",
-      "community": 117,
+      "community": 25,
       "community_name": "workout/page.tsx",
       "norm_label": "routinememorymap()"
     },
@@ -15437,7 +15437,7 @@
       "source_location": "L77",
       "_origin": "ast",
       "id": "src_lib_hooks_uselogger_uselatestsessionflag",
-      "community": 117,
+      "community": 25,
       "community_name": "workout/page.tsx",
       "norm_label": "uselatestsessionflag()"
     },
@@ -15789,7 +15789,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_hooks_useprogressionqueue",
-      "community": 117,
+      "community": 25,
       "community_name": "workout/page.tsx",
       "norm_label": "useprogressionqueue.ts"
     },
@@ -15800,7 +15800,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_lib_hooks_useprogressionqueue_progressionalert",
-      "community": 117,
+      "community": 25,
       "community_name": "workout/page.tsx",
       "norm_label": "progressionalert"
     },
@@ -15811,7 +15811,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "src_lib_hooks_useprogressionqueue_useprogressionqueue",
-      "community": 117,
+      "community": 25,
       "community_name": "workout/page.tsx",
       "norm_label": "useprogressionqueue()"
     },
@@ -16361,8 +16361,8 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "src_lib_hooks_usesessiondraft_commitresult",
-      "community": 1,
-      "community_name": "prEngine.ts",
+      "community": 108,
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "commitresult"
     },
     {
@@ -16472,7 +16472,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_usesessiontrends",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "workout/page.tsx",
       "norm_label": "usesessiontrends.ts"
     },
     {
@@ -16483,7 +16483,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_usesessiontrends_setsatceilingof",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "workout/page.tsx",
       "norm_label": "setsatceilingof()"
     },
     {
@@ -16494,7 +16494,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_usesessiontrends_exercisetrend",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "workout/page.tsx",
       "norm_label": "exercisetrend"
     },
     {
@@ -16505,7 +16505,7 @@
       "_origin": "ast",
       "id": "src_lib_hooks_usesessiontrends_usesessiontrends",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "workout/page.tsx",
       "norm_label": "usesessiontrends()"
     },
     {
@@ -17714,8 +17714,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_native_haptics",
-      "community": 117,
-      "community_name": "workout/page.tsx",
+      "community": 108,
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "haptics.ts"
     },
     {
@@ -17736,8 +17736,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_lib_native_haptics_tapsuccess",
-      "community": 117,
-      "community_name": "workout/page.tsx",
+      "community": 108,
+      "community_name": "ExerciseCard.tsx",
       "norm_label": "tapsuccess()"
     },
     {
@@ -18759,7 +18759,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_lib_programs_erafordate",
-      "community": 117,
+      "community": 25,
       "community_name": "workout/page.tsx",
       "norm_label": "erafordate()"
     },
@@ -21026,7 +21026,7 @@
       "_origin": "ast",
       "id": "src_lib_sessions_liveprs_liveprdigest",
       "community": 117,
-      "community_name": "workout/page.tsx",
+      "community_name": "deck-render.test.tsx",
       "norm_label": "liveprdigest()"
     },
     {
@@ -22049,7 +22049,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "workout/page.tsx",
       "norm_label": "ceilings.ts"
     },
     {
@@ -22060,7 +22060,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_repwindow",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "workout/page.tsx",
       "norm_label": "repwindow"
     },
     {
@@ -22071,7 +22071,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_parserepwindow",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "workout/page.tsx",
       "norm_label": "parserepwindow()"
     },
     {
@@ -22082,7 +22082,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_normalize",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "workout/page.tsx",
       "norm_label": "normalize()"
     },
     {
@@ -22093,7 +22093,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_repwindowfor",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "workout/page.tsx",
       "norm_label": "repwindowfor()"
     },
     {
@@ -22104,7 +22104,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_holdtargetfor",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "workout/page.tsx",
       "norm_label": "holdtargetfor()"
     },
     {
@@ -22115,7 +22115,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_workingset",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "workout/page.tsx",
       "norm_label": "workingset"
     },
     {
@@ -22126,7 +22126,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_clearedceiling",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "workout/page.tsx",
       "norm_label": "clearedceiling()"
     },
     {
@@ -22137,7 +22137,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_loadrung",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "workout/page.tsx",
       "norm_label": "loadrung"
     },
     {
@@ -22148,7 +22148,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_loadladder",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "workout/page.tsx",
       "norm_label": "loadladder()"
     },
     {
@@ -22159,7 +22159,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_ladderstate",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "workout/page.tsx",
       "norm_label": "ladderstate"
     },
     {
@@ -22170,7 +22170,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_ladderverdict",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "workout/page.tsx",
       "norm_label": "ladderverdict"
     },
     {
@@ -22181,7 +22181,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_workloads",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "workout/page.tsx",
       "norm_label": "workloads()"
     },
     {
@@ -22192,7 +22192,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_toprungcleared",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "workout/page.tsx",
       "norm_label": "toprungcleared()"
     },
     {
@@ -22203,7 +22203,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_toploadcleared",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "workout/page.tsx",
       "norm_label": "toploadcleared()"
     },
     {
@@ -22214,7 +22214,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_levelupcue",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "workout/page.tsx",
       "norm_label": "levelupcue"
     },
     {
@@ -22225,7 +22225,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_progressionstate",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "workout/page.tsx",
       "norm_label": "progressionstate"
     },
     {
@@ -22236,7 +22236,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_progressionverdict",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "workout/page.tsx",
       "norm_label": "progressionverdict"
     },
     {
@@ -22247,7 +22247,7 @@
       "_origin": "ast",
       "id": "src_lib_training_ceilings_timedprogressionverdict",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "workout/page.tsx",
       "norm_label": "timedprogressionverdict()"
     },
     {
@@ -23776,7 +23776,7 @@
       "_origin": "ast",
       "id": "src_tests_ceilings_test",
       "community": 25,
-      "community_name": "ceilings.ts",
+      "community_name": "workout/page.tsx",
       "norm_label": "ceilings.test.ts"
     },
     {
@@ -23896,8 +23896,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_tests_deck_render_test",
-      "community": 108,
-      "community_name": "ExerciseCard.tsx",
+      "community": 117,
+      "community_name": "deck-render.test.tsx",
       "norm_label": "deck-render.test.tsx"
     },
     {
@@ -23907,8 +23907,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_tests_deck_render_test_committedcalls",
-      "community": 108,
-      "community_name": "ExerciseCard.tsx",
+      "community": 117,
+      "community_name": "deck-render.test.tsx",
       "norm_label": "committedcalls"
     },
     {
@@ -23918,8 +23918,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_tests_deck_render_test_issetcommitted",
-      "community": 108,
-      "community_name": "ExerciseCard.tsx",
+      "community": 117,
+      "community_name": "deck-render.test.tsx",
       "norm_label": "issetcommitted()"
     },
     {
@@ -23929,8 +23929,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_tests_deck_render_test_names",
-      "community": 108,
-      "community_name": "ExerciseCard.tsx",
+      "community": 117,
+      "community_name": "deck-render.test.tsx",
       "norm_label": "names"
     },
     {
@@ -23940,8 +23940,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_tests_deck_render_test_deck",
-      "community": 108,
-      "community_name": "ExerciseCard.tsx",
+      "community": 117,
+      "community_name": "deck-render.test.tsx",
       "norm_label": "deck()"
     },
     {
@@ -23951,8 +23951,8 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "src_tests_deck_render_test_keystroke",
-      "community": 108,
-      "community_name": "ExerciseCard.tsx",
+      "community": 117,
+      "community_name": "deck-render.test.tsx",
       "norm_label": "keystroke()"
     },
     {
@@ -23962,8 +23962,8 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "src_tests_deck_render_test_noop",
-      "community": 108,
-      "community_name": "ExerciseCard.tsx",
+      "community": 117,
+      "community_name": "deck-render.test.tsx",
       "norm_label": "noop()"
     },
     {
@@ -23973,8 +23973,8 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "src_tests_deck_render_test_props",
-      "community": 108,
-      "community_name": "ExerciseCard.tsx",
+      "community": 117,
+      "community_name": "deck-render.test.tsx",
       "norm_label": "props"
     },
     {
@@ -23984,8 +23984,8 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "src_tests_deck_render_test_countrowrendersperkeystroke",
-      "community": 108,
-      "community_name": "ExerciseCard.tsx",
+      "community": 117,
+      "community_name": "deck-render.test.tsx",
       "norm_label": "countrowrendersperkeystroke()"
     },
     {
@@ -35852,7 +35852,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "scripts/recompute-scores.mjs",
-      "source_location": "L110",
+      "source_location": "L100",
       "weight": 1.0,
       "_origin": "ast",
       "source": "scripts_recompute_scores",

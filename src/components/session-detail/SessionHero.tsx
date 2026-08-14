@@ -48,11 +48,26 @@ function Headline({ value, label, color }: { value: string; label: string; color
  * composition. Scrolls horizontally rather than wrapping, so it can never
  * become the two-row block of boxes it started as.
  */
-function Stat({ value, label, color }: { value: string; label: string; color: string }) {
+function Stat({ value, label, color, estimated }: {
+  value: string; label: string; color: string
+  /** Derived by formula rather than measured — see `sessions/estimates.ts`. */
+  estimated?: boolean
+}) {
   return (
     <span className="inline-flex items-baseline gap-1 shrink-0">
       <span className="helix-num text-fluid-base font-bold text-text tabular-nums leading-none">{value}</span>
       <span className="text-[10px] uppercase tracking-wide" style={{ color }}>{label}</span>
+      {/* The value keeps its own colour — an estimate is still your best figure
+          and is counted at full weight everywhere. What it must not do is pass
+          for a measurement, so the provenance is stated rather than implied. */}
+      {estimated && (
+        <span
+          className="text-[9px] uppercase tracking-wide text-muted"
+          title="Calculated by formula — no watch data for this session"
+        >
+          calc
+        </span>
+      )}
     </span>
   )
 }
@@ -104,9 +119,9 @@ export function SessionHero({ detail }: { detail: SessionDetail }) {
           <Headline value={`${detail.prCount}`} label={detail.prCount === 1 ? 'Record' : 'Records'} color={GOLD} />
         </div>
         <div className="flex items-baseline gap-4 overflow-x-auto no-scrollbar border-t border-white/[0.06] pt-2">
-          {detail.avgBpm != null && <Stat value={`${detail.avgBpm}`} label="bpm" color={EMBER} />}
+          {detail.avgBpm != null && <Stat value={`${detail.avgBpm}`} label="bpm" color={EMBER} estimated={detail.avgBpmEstimated} />}
           {/* Calories take the app-wide calorie hue, not the record hue. */}
-          {detail.calories != null && <Stat value={`${detail.calories}`} label="kcal" color={MACRO.calories} />}
+          {detail.calories != null && <Stat value={`${detail.calories}`} label="kcal" color={MACRO.calories} estimated={detail.caloriesEstimated} />}
           {/* Session difficulty as logged on the commit bar — /10 so it reads as
               a scale rather than a count sitting beside "18 sets". */}
           {detail.sessionRpe != null && <Stat value={`${detail.sessionRpe}/10`} label="difficulty" color={EMBER} />}

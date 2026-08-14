@@ -23,6 +23,32 @@ function PhaseTag({ phase, date }: { phase: DailyLog['phase']; date: string }) {
   )
 }
 
+/**
+ * A day's declaration, in the same pill language as the phase tag.
+ *
+ * These two facts used to render as `· Social` and `· est` — 9px text floating
+ * after the calorie number, at the one place on the row the eye has already left
+ * because the big number is to its left. The flag is the reason the number does
+ * not mean what it appears to mean, so it has to survive a scan of the column.
+ *
+ * The exception carries the glow, the estimate does not: one says the day was
+ * ALLOWED to miss its target, the other only says the figure is a guess. The
+ * estimate is reported, never rewarded — see `exceptionDay.ts`.
+ */
+function ContextChip({ label, color, glow = false }: { label: string; color: string; glow?: boolean }) {
+  return (
+    <span
+      className="inline-flex items-center px-1.5 py-px rounded-md text-[9px] font-bold uppercase tracking-wide shrink-0"
+      style={{
+        color, background: `${color}1f`, border: `1px solid ${color}55`,
+        ...(glow ? { boxShadow: `0 0 8px ${color}44` } : {}),
+      }}
+    >
+      {label}
+    </span>
+  )
+}
+
 function MacroBar({ label, value, goal }: { label: 'P' | 'C' | 'F'; value: number | null; goal: number | null }) {
   const color = MACRO_COLOR[label]
   const pct = goal && value != null ? Math.min(100, (value / goal) * 100) : 0
@@ -78,25 +104,19 @@ export function NutritionLogList({ logs, goals, isLoading, emptyMessage, onDayCl
             </div>
 
             <div className="flex-1 min-w-0">
-              <div className="flex items-baseline gap-1">
-                <span className="helix-num text-fluid-lg font-bold leading-none" style={{ color: calColor }}>{l.calories != null ? Math.round(l.calories).toLocaleString() : '—'}</span>
-                <span className="text-[10px] text-muted">kcal</span>
-                {flagged && (
-                  <span className="text-[9px] font-bold uppercase tracking-wide" style={{ color: SAND }}>
-                    · {l.exception}
-                  </span>
-                )}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="flex items-baseline gap-1">
+                  <span className="helix-num text-fluid-lg font-bold leading-none" style={{ color: calColor }}>{l.calories != null ? Math.round(l.calories).toLocaleString() : '—'}</span>
+                  <span className="text-[10px] text-muted">kcal</span>
+                </span>
+                {flagged && l.exception && <ContextChip label={l.exception} color={SAND} glow />}
                 {/* An estimate does NOT take the calorie colour above — the
                     number is still counted at full weight and still graded
                     normally, so recolouring it would claim a forgiveness that
                     was never granted. It gets its own quiet mark instead, in
                     STEEL rather than SAND, because "I guessed" and "I was
                     allowed to miss" are different statements about a day. */}
-                {l.estimated && (
-                  <span className="text-[9px] font-bold uppercase tracking-wide" style={{ color: STEEL }}>
-                    · est
-                  </span>
-                )}
+                {l.estimated && <ContextChip label="Est" color={STEEL} />}
               </div>
               <div className="flex items-center gap-2 mt-1.5">
                 <MacroBar label="P" value={l.proteinG} goal={goals.protein} />

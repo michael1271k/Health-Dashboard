@@ -6,6 +6,7 @@ import { MUSCLE_MAP } from '@/lib/hooks/useMuscleAnalytics'
 import { resolveMovers } from '@/lib/exercises/muscleMap'
 import { toLandmarkMuscle, LANDMARK_MUSCLES, SECONDARY_SET_CREDIT, type LandmarkMuscle } from '@/lib/training/landmarks'
 import type { PrAxis } from '@/lib/sessions/save'
+import { sessionVolumeKg, type VolumeSet } from '@/lib/sessions/volume'
 
 export interface DetailSet {
   setNumber: number
@@ -55,6 +56,9 @@ export interface SessionDetail {
   prCount: number
   durationMin: number | null
   avgBpm: number | null
+  /** Both figures may be formula-derived when the session carried no watch data. */
+  avgBpmEstimated: boolean
+  caloriesEstimated: boolean
   calories: number | null
   /**
    * Session difficulty, 1–10, as logged on the commit bar.
@@ -110,13 +114,14 @@ export function useSessionDetail(sessionId: string | null) {
     queryFn: async (): Promise<SessionDetail | null> => {
       const { data: sRaw } = await supabase
         .from('workout_sessions')
-        .select('id, started_at, split_day, day_key, total_volume_kg, set_count, pr_count, duration_min, avg_bpm, calories_burned, session_rpe')
+        .select('id, started_at, split_day, day_key, total_volume_kg, set_count, pr_count, duration_min, avg_bpm, calories_burned, session_rpe, calories_estimated, avg_bpm_estimated')
         .eq('id', sessionId as string)
         .single()
       const s = sRaw as {
         id: string; started_at: string; split_day: string; day_key: string | null
         total_volume_kg: number | null; set_count: number | null; pr_count: number | null
         duration_min: number | null; avg_bpm: number | null; calories_burned: number | null
+        calories_estimated: boolean | null; avg_bpm_estimated: boolean | null
         session_rpe: number | null
       } | null
       if (!s) return null
@@ -135,6 +140,8 @@ export function useSessionDetail(sessionId: string | null) {
       const muscleAgg = new Map<LandmarkMuscle, Map<string, number>>()
       /** per-exercise working-set dedupe keys — a unilateral L/R pair is ONE set. */
       const workingSeen = new Map<string, Set<string>>()
+      /** per-exercise working sets, kept whole so tonnage can use the ONE rule. */
+      const workingVol = new Map<string, VolumeSet[]>()
       /** exercise → each landmark mover it trains, and what one set is worth to it. */
       const moversOf = new Map<string, Map<LandmarkMuscle, number>>()
       let failureSets = 0
@@ -184,7 +191,20 @@ export function useSessionDetail(sessionId: string | null) {
           side: r.side ?? null, pairId: r.pair_id ?? null, prAxes: [],
         })
         if (!isWarmup) {
-          ex.volumeKg += (r.weight_kg || 0) * (r.reps || 0)
+          // Collected, not summed. Tonnage now goes through `sessionVolumeKg`
+          // once per exercise (below) so a unilateral pair collapses to its
+          // weaker side here exactly as it does on the session total. Summing
+          // per row credited the strong arm's extra reps to the weak one, and
+          // the card disagreed with its own header.
+          const bucket = workingVol.get(r.exercise_id) ?? []
+          bucket.push({
+            weightKg: r.weight_kg || 0, reps: r.reps || 0,
+            // `RawSet.side` is a bare string from PostgREST; only the two real
+            // limbs may collapse a pair, so anything else reads as no side.
+            side: r.side === 'L' || r.side === 'R' ? r.side : null,
+            pairId: r.pair_id ?? null,
+          })
+          workingVol.set(r.exercise_id, bucket)
           if (r.weight_kg > ex.topKg) ex.topKg = r.weight_kg
           if (r.est_1rm_kg != null && (ex.bestEst1rm == null || r.est_1rm_kg > ex.bestEst1rm)) ex.bestEst1rm = r.est_1rm_kg
           // One direct set per landmark mover. Unilateral L/R sub-sets share a
@@ -203,7 +223,9 @@ export function useSessionDetail(sessionId: string | null) {
       }
 
       const exercises = [...byEx.values()].sort((a, b) => a.order - b.order)
-      exercises.forEach((e) => { e.volumeKg = Math.round(e.volumeKg) })
+      exercises.forEach((e) => {
+        e.volumeKg = Math.round(sessionVolumeKg(workingVol.get(e.exerciseId) ?? []))
+      })
 
       // PR axes achieved in THIS session, from the ledger (self-healing: a missing
       // personal_records table just yields no axis chips — is_pr trophies still show).
@@ -261,7 +283,9 @@ export function useSessionDetail(sessionId: string | null) {
         prCount: s.pr_count ?? exercises.reduce((n, e) => n + e.sets.filter((x) => x.isPr).length, 0),
         durationMin: s.duration_min,
         avgBpm: s.avg_bpm,
+        avgBpmEstimated: s.avg_bpm_estimated ?? false,
         calories: s.calories_burned,
+        caloriesEstimated: s.calories_estimated ?? false,
         sessionRpe: s.session_rpe,
         exercises,
         muscleSets,

@@ -3,6 +3,7 @@ import { PROGRAMS } from '@/lib/programs'
 import { buildTemplateDraft, type ExerciseHistoryEntry } from '@/lib/sessions/templateDraft'
 import { workingSets, type ExerciseHistory } from '@/lib/hooks/useExerciseSetHistory'
 import { routineMemoryMap } from '@/lib/hooks/useLogger'
+import { countCommittedSets } from '@/lib/sessions/schema'
 
 const legsB = PROGRAMS.apex51.days.find((d) => d.key === 'legs_b')!
 
@@ -75,6 +76,95 @@ describe('seedFromHistory reproduces ALL tags, not just failure', () => {
   it('every seeded set opens UNCHECKED — a template is a plan, not a log', () => {
     const d = buildTemplateDraft(legsB, '2026-08-07')
     for (const ex of d.exercises) for (const s of ex.sets) expect(s.done).toBe(false)
+  })
+})
+
+/**
+ * THE GHOST SET.
+ *
+ * A unilateral set is TWO rows in `workout_sets` sharing a pair_id, and the deck
+ * folds them back into ONE numbered set. `seedFromHistory` copied weight, reps
+ * and tag and dropped side/pairId, so both rows returned as ordinary independent
+ * sets and last week's pair silently became two sets this week.
+ *
+ * The reported case: 2026-08-06 `cb_b` logged Single Arm Triceps Pushdown as 2
+ * physical sets — set 1 solo, set 2 split L/R — which is 3 rows. The Aug 13 deck
+ * opened with 3 separate sets, and the third was committed.
+ */
+describe('seedFromHistory rebuilds unilateral PAIRS, never two loose sets', () => {
+  const seedCurl = (sets: ExerciseHistoryEntry['sets']) => {
+    const history = new Map<string, ExerciseHistoryEntry>([
+      ['Seated Leg Curl', { date: '2026-08-06', sets }],
+    ])
+    return buildTemplateDraft(legsB, '2026-08-13', history)
+      .exercises.find((e) => e.name === 'Seated Leg Curl')!
+  }
+
+  /** The production definition of "how many sets is this" — pairs count once. */
+  const physicalSets = (sets: Array<{ pairId?: string }>) => countCommittedSets(sets)
+
+  it('a solo set plus one L/R pair seeds as TWO sets, not three', () => {
+    const curl = seedCurl([
+      { weightKg: 6.25, reps: 15 },
+      { weightKg: 6.25, reps: 15, side: 'L', pairId: 'pair_aug06' },
+      { weightKg: 6.25, reps: 13, side: 'R', pairId: 'pair_aug06', setType: 'failure' },
+    ])
+    expect(curl.sets).toHaveLength(3)        // still three ROWS…
+    expect(physicalSets(curl.sets)).toBe(2)  // …but two SETS
+  })
+
+  it('keeps both sides, their own tags, and one shared pairId', () => {
+    const curl = seedCurl([
+      { weightKg: 6.25, reps: 15, side: 'L', pairId: 'pair_aug06' },
+      { weightKg: 6.25, reps: 13, side: 'R', pairId: 'pair_aug06', setType: 'failure' },
+    ])
+    const [left, right] = curl.sets
+    expect(left.side).toBe('L')
+    expect(right.side).toBe('R')
+    expect(left.pairId).toBe(right.pairId)
+    expect(left.pairId).toBeTruthy()
+    // The failure tag is PER SIDE and must not migrate to the other arm.
+    expect(left.setType).toBeUndefined()
+    expect(right.setType).toBe('failure')
+  })
+
+  it('regenerates the pairId — this week is not last week', () => {
+    const curl = seedCurl([
+      { weightKg: 6.25, reps: 15, side: 'L', pairId: 'pair_aug06' },
+      { weightKg: 6.25, reps: 15, side: 'R', pairId: 'pair_aug06' },
+    ])
+    expect(curl.sets[0].pairId).not.toBe('pair_aug06')
+  })
+
+  it('unlinks an ASYMMETRIC pair so an edit cannot mirror the asymmetry away', () => {
+    const asym = seedCurl([
+      { weightKg: 6.25, reps: 15, side: 'L', pairId: 'p' },
+      { weightKg: 6.25, reps: 13, side: 'R', pairId: 'p' },
+    ])
+    expect(asym.sets.every((s) => s.linked === false)).toBe(true)
+
+    const sym = seedCurl([
+      { weightKg: 6.25, reps: 15, side: 'L', pairId: 'p' },
+      { weightKg: 6.25, reps: 15, side: 'R', pairId: 'p' },
+    ])
+    expect(sym.sets.every((s) => s.linked === true)).toBe(true)
+  })
+
+  it('leaves a side with no pairId (or a pairId with no side) as an ordinary set', () => {
+    const curl = seedCurl([
+      { weightKg: 6.25, reps: 15, side: 'L' },
+      { weightKg: 6.25, reps: 15, pairId: 'p' },
+    ])
+    expect(physicalSets(curl.sets)).toBe(2)
+    expect(curl.sets.every((s) => s.pairId === undefined)).toBe(true)
+  })
+
+  it('still opens every side unchecked', () => {
+    const curl = seedCurl([
+      { weightKg: 6.25, reps: 15, side: 'L', pairId: 'p' },
+      { weightKg: 6.25, reps: 15, side: 'R', pairId: 'p' },
+    ])
+    expect(curl.sets.every((s) => s.done === false)).toBe(true)
   })
 })
 

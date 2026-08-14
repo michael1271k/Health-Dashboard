@@ -97,11 +97,22 @@ if (DRY) {
 }
 
 // ── recompute ────────────────────────────────────────────────────────────────
-const appUrl = (env.NEXT_PUBLIC_APP_URL ?? '').replace(/\/$/, '')
+// `--app-url` overrides NEXT_PUBLIC_APP_URL.
+//
+// A formula change lives in the working tree long before it is deployed, and
+// this script recomputes by POSTing to a RUNNING SERVER — so pointed at the
+// deployed URL it would faithfully rewrite every sealed day using the OLD
+// formula, report success, and leave history exactly as wrong as it found it.
+// Point it at a local `next start` instead:
+//
+//   npx next build && npx next start &
+//   node scripts/recompute-scores.mjs --app-url http://localhost:3000
+const appUrl = (opt('app-url') ?? env.NEXT_PUBLIC_APP_URL ?? '').replace(/\/$/, '')
 if (!appUrl) {
   console.error('NEXT_PUBLIC_APP_URL unset — cannot reach /api/compute-score.')
   process.exit(1)
 }
+console.log(`target: ${appUrl}`)
 
 let ok = 0
 for (const date of dates) {

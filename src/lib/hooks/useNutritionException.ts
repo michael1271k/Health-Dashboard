@@ -5,6 +5,9 @@ import { supabase } from '@/lib/supabase/client'
 import { authedFetch } from '@/lib/utils/authedFetch'
 import { logicalTodayISO, hoursAwakeToday } from '@/lib/utils/day'
 import { todayBundleKey, type TodayBundle } from '@/lib/hooks/useToday'
+import { recomputeAndPaint } from '@/lib/scoring/applyComputedScore'
+import { resolveDayPhase } from '@/lib/nutrition/phase'
+import { activePhase } from '@/lib/programs'
 
 /**
  * A day's nutrition CONTEXT — the declared exception and the estimate marker.
@@ -29,6 +32,48 @@ import { todayBundleKey, type TodayBundle } from '@/lib/hooks/useToday'
 export interface DayNutritionContext {
   reason?: string | null
   estimated?: boolean
+}
+
+/**
+ * Re-stamp `nutrition_entries.phase` after a declaration changes.
+ *
+ * The two facts live in different tables written by different paths: the flag on
+ * `daily_logs`, the phase on `nutrition_entries`. Macros almost always land
+ * FIRST — the morning HealthKit sync — so by the time an evening is declared,
+ * the phase column already holds the calorie-derived answer. Without this write
+ * the flag would change the score and the export while the history page went on
+ * filing the day under a phase the block is not in.
+ *
+ * Symmetric on withdrawal: clearing the flag re-bands the day from its calories,
+ * because an ordinary day IS its intake.
+ *
+ * Best-effort. The flag itself is already saved; a failure here leaves a stale
+ * label that the read path (`useNutrition`) resolves correctly anyway.
+ */
+async function restampPhase(userId: string, date: string): Promise<void> {
+  const { data: entry } = await supabase.from('nutrition_entries')
+    .select('calories, phase')
+    .eq('user_id', userId).eq('date', date).eq('meal_type', 'daily')
+    .maybeSingle() as unknown as
+    { data: { calories: number | null; phase: string | null } | null }
+  if (!entry) return
+
+  const { data: flags } = await supabase.from('daily_logs')
+    .select('nutrition_exception, nutrition_estimated')
+    .eq('user_id', userId).eq('date', date).maybeSingle() as unknown as
+    { data: { nutrition_exception: string | null; nutrition_estimated: boolean | null } | null }
+
+  const next = resolveDayPhase({
+    calories: entry.calories,
+    exception: flags?.nutrition_exception ?? null,
+    estimated: flags?.nutrition_estimated ?? false,
+    activePhase: activePhase(),
+  })
+  if (next === (entry.phase ?? null)) return
+
+  await supabase.from('nutrition_entries')
+    .update({ phase: next } as never)
+    .eq('user_id', userId).eq('date', date).eq('meal_type', 'daily')
 }
 
 /**
@@ -58,6 +103,10 @@ export function useSetNutritionException(date: string) {
         .upsert(row as any, { onConflict: 'user_id,date' })
       if (error) throw new Error(error.message)
 
+      // BOTH flags move the phase label, so this runs before the score's
+      // exception-only early return below.
+      try { await restampPhase(user.id, date) } catch { /* label only; read path resolves it */ }
+
       // ONLY the exception moves the score. `estimated` is a confidence marker
       // with no scoring counterpart by design, so toggling it alone must not
       // burn a forced recompute — and if this call ever becomes unconditional,
@@ -67,15 +116,11 @@ export function useSetNutritionException(date: string) {
       // The flag only reaches the score through a recompute, and the nutrition
       // component is weight 0.30 — without `force` the day's existing row would
       // stand and the banner would claim a forgiveness the score never applied.
-      try {
-        await authedFetch('/api/compute-score', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            date, force: true, isToday: date === logicalTodayISO(),
-            backfillDays: 0, hoursAwake: hoursAwakeToday(),
-          }),
-        })
-      } catch { /* score recompute is best-effort; the flag itself is saved */ }
+      // Best-effort by contract — the flag itself is already saved.
+      await recomputeAndPaint(qc, date, {
+        force: true, isToday: date === logicalTodayISO(),
+        backfillDays: 0, hoursAwake: hoursAwakeToday(),
+      }, authedFetch)
     },
 
     // Optimistic: the chips are toggles, and a toggle that waits for a round trip

@@ -178,6 +178,14 @@ export interface ExportSession {
   durationMin: number | null
   avgBpm: number | null
   caloriesBurned: number | null
+  /**
+   * Provenance for the two figures above. A session logged without a watch has
+   * them filled by formula (see `sessions/estimates.ts`), and a derived number
+   * standing unmarked beside measured ones is read as measured — the one thing
+   * this export exists to prevent.
+   */
+  caloriesEstimated?: boolean | null
+  avgBpmEstimated?: boolean | null
   /** Borg CR10 session effort, when rated. */
   sessionRpe: number | null
   exercises: ExportExercise[]
@@ -897,8 +905,8 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
     L.push(`### ${s.date} · ${s.label}`)
     // Volume · sets · failures · time · kcal burned · avg HR — all metadata.
     L.push(`${exact(s.volumeKg)} kg volume · ${n(s.setCount)} sets · ${n(s.failureSets)} to failure`
-      + ` · ${n(s.durationMin)} min · ${n(s.caloriesBurned)} kcal`
-      + `${s.avgBpm != null ? ` · avg HR ${n(s.avgBpm)}` : ''}`
+      + ` · ${n(s.durationMin)} min · ${n(s.caloriesBurned)} kcal${s.caloriesEstimated ? ' [Estimated]' : ''}`
+      + `${s.avgBpm != null ? ` · avg HR ${n(s.avgBpm)}${s.avgBpmEstimated ? ' [Estimated]' : ''}` : ''}`
       // Borg CR10 — the subjective cost of the session, next to its objective cost.
       // Always printed. A missing segment is indistinguishable from a session
       // logged at effort 0, so the absence is stated rather than implied.
@@ -1112,10 +1120,33 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
   // about the measuring instrument, not data.
   L.push('---')
   L.push('')
+  L.push(UNILATERAL_VOLUME_NOTE)
+  L.push('')
   L.push(APPLE_WATCH_DISCLAIMER)
 
   return L.join('\n')
 }
+
+/**
+ * The standing statement of the asymmetry rule.
+ *
+ * The rule was already stated once, inside the per-muscle tonnage block — but
+ * that block only prints when there IS per-muscle tonnage, so a week whose
+ * sessions were all bilateral, or whose muscle rows were empty, published every
+ * volume figure with no account of how a two-sided set had been counted. A
+ * reader comparing "L 5 kg × 10 · R 5 kg × 14" against a 100 kg session total
+ * has to be able to find the arithmetic; guessing produces 120.
+ *
+ * Printed beside the instrument caveat, after the embedded previous week, so it
+ * governs every number in the document rather than one section of it.
+ */
+export const UNILATERAL_VOLUME_NOTE =
+  '*Note: Unilateral (single-arm / single-leg) work is logged per side and'
+  + ' scored at the WEAKER side, counted twice: 2 × min(weight) × min(reps).'
+  + ' "L 5 kg × 10 · R 5 kg × 14" is 100 kg of volume, not 120 — crediting the'
+  + ' strong side\'s extra reps to the weak one would inflate the trend without'
+  + ' the work being there. Each side keeps its own failure tag, and the pair'
+  + ' counts as ONE set.*'
 
 /**
  * The standing caveat about instrument accuracy, printed at the very bottom of

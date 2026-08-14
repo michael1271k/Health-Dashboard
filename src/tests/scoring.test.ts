@@ -10,7 +10,10 @@ import {
   computeAlerts,
 } from '@/lib/scoring/score'
 import { computeHydrationScore } from '@/lib/scoring/score'
-import { computeMorningCharge, computeBattery, computeSleepQuality, timeDrain, BATTERY, MAX_TOTAL_DRAIN } from '@/lib/scoring/battery'
+import {
+  computeMorningCharge, computeBattery, computeSleepQuality, timeDrain, BATTERY, MAX_TOTAL_DRAIN,
+  WORKOUT_MAX_BY_DAY, WORKOUT_MAX_DEFAULT, workoutMaxFor, workoutDrain,
+} from '@/lib/scoring/battery'
 import { computeReadiness } from '@/lib/scoring/readiness'
 import type { ScoringInputs } from '@/lib/scoring/types'
 
@@ -549,6 +552,61 @@ describe('computeBattery — drain-only (v7)', () => {
     const hungry = computeBattery({ ...PERFECT, proteinG: 0, waterMl: 0, sessionVolumeKg: 0 }, 8).currentPct
     const fed    = computeBattery({ ...PERFECT, proteinG: 170, waterMl: 3000, sessionVolumeKg: 0 }, 8).currentPct
     expect(fed).toBe(hungry)   // protein/water make no difference to battery now
+  })
+})
+
+// ─── Per-day drain ceilings ───────────────────────────────────────────────────
+describe('workout drain is ceilinged per programme day', () => {
+  /** Identical session, identical RPE, identical relative volume — only the day differs. */
+  const sameSession = {
+    ...PERFECT, proteinG: 0, waterMl: 0,
+    sessionVolumeKg: 8000, trailingAvgVolumeKg: 8000,
+  }
+  const pctFor = (sessionDayKey: string) =>
+    computeBattery({ ...sameSession, sessionDayKey }, 12).currentPct
+
+  it('ranks legs hardest and delts & arms easiest', () => {
+    // Lower battery = more drain.
+    const legs = pctFor('legs_a')
+    const upper = pctFor('cb_a')
+    const arms = pctFor('arms')
+    expect(legs).toBeLessThan(upper)
+    expect(upper).toBeLessThan(arms)
+    expect(pctFor('legs_b')).toBe(legs)   // both leg days rank together
+    expect(pctFor('cb_b')).toBe(upper)    // both upper days rank together
+  })
+
+  /**
+   * The v6 failure was a per-split MULTIPLIER on absolute tonnage, which charged
+   * legs twice and pushed the budget past a full charge. A per-day CEILING
+   * cannot: the worst case is a fixed constant, so this holds by construction.
+   */
+  it('leaves the drain budget invariant intact', () => {
+    expect(Math.max(...Object.values(WORKOUT_MAX_BY_DAY))).toBe(BATTERY.workoutMax)
+    expect(MAX_TOTAL_DRAIN).toBe(77)
+    expect(MAX_TOTAL_DRAIN).toBeLessThan(100)
+  })
+
+  it('falls back to the upper-day ceiling for a session with no programme day', () => {
+    // The 74 Notion-era sessions carry no day_key. Assume the middle.
+    expect(workoutMaxFor(null)).toBe(WORKOUT_MAX_DEFAULT)
+    expect(workoutMaxFor(undefined)).toBe(WORKOUT_MAX_DEFAULT)
+    expect(workoutMaxFor('ppl_push')).toBe(WORKOUT_MAX_DEFAULT)
+    expect(workoutMaxFor('cb_a')).toBe(WORKOUT_MAX_DEFAULT)   // upper IS the default
+  })
+
+  it('still returns zero drain for a day with no session, whatever the day type', () => {
+    expect(workoutDrain(0, 8000, 8, 'legs_a')).toBe(0)
+  })
+
+  it('keeps RPE and relative volume working on top of the ceiling', () => {
+    // Same leg day, half the effort — the ceiling scales, it does not replace.
+    const hard = workoutDrain(8000, 8000, 10, 'legs_a')
+    const easy = workoutDrain(8000, 8000, 5, 'legs_a')
+    expect(hard).toBeCloseTo(WORKOUT_MAX_BY_DAY.legs_a / BATTERY.relMax, 5)
+    expect(easy).toBeCloseTo(hard / 2, 5)
+    // A hard ARMS day still costs less than a hard leg day.
+    expect(workoutDrain(8000, 8000, 10, 'arms')).toBeLessThan(hard)
   })
 })
 

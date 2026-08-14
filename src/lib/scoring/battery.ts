@@ -62,7 +62,7 @@ export const BATTERY = {
   wakeRange: 45,       // + up to 45 for perfect sleep → 100
   timeMax: 35,         // full chronological cost of an 18h day, cosine-distributed
   activityCap: 12,
-  workoutMax: 30,      // an RPE-10 session at 1.4× your own normal
+  workoutMax: 30,      // the HEAVIEST day's ceiling — see WORKOUT_MAX_BY_DAY
   defaultRpe: 0.7,     // when session_rpe is absent (74 legacy sessions carry none)
   relMin: 0.6,         // a session at ≤60% of normal still costs something
   relMax: 1.4,         // beyond 140% of normal, more tonnage stops adding drain
@@ -73,8 +73,52 @@ export const BATTERY = {
  * Sum of every drain term at maximum. Held strictly below 100 so that a
  * well-slept day can never floor, and a floor reading therefore MEANS something.
  * v6's equivalent figure was 104.2 — see the note above.
+ *
+ * Uses `workoutMax`, the ceiling across every day type, so the invariant is
+ * checked against the worst case a leg day can produce.
  */
 export const MAX_TOTAL_DRAIN = BATTERY.timeMax + BATTERY.activityCap + BATTERY.workoutMax
+
+/**
+ * The workout drain ceiling, PER PROGRAMME DAY.
+ *
+ * ── WHY THIS IS NOT SPLIT_DRAIN COMING BACK ──────────────────────────────────
+ * v6 multiplied the tonnage term by 1.5 for legs. That was a double-count: the
+ * term it multiplied was ABSOLUTE tonnage, and legs already carry ~4× an arms
+ * day, so the same fact was charged twice — which is how the drain budget
+ * reached 104.2 against a 100-point charge and a leg day floored by bedtime.
+ *
+ * v7 removed the multiplier AND changed what it would have multiplied: drain is
+ * now driven by `relative = volume / trailingAvg(day_key)`, normalised against
+ * that day type's own history. A typical leg day and a typical arms day both
+ * read 1.0. The absolute-tonnage advantage that made the multiplier a
+ * double-count is simply gone.
+ *
+ * That is what makes a per-day CEILING safe where a per-day MULTIPLIER was not.
+ * A hard leg day can cost more than a hard arms day — which is true, and the
+ * relative term alone cannot express it — while the worst case stays a fixed
+ * 30, so `MAX_TOTAL_DRAIN` is unchanged at 77 and the invariant that v6 broke
+ * still holds by construction.
+ *
+ * Keyed on `day_key` (the programme day), NOT `split_day`. `splitDay` still
+ * does not drain — see the guard in `program.test.ts`.
+ */
+export const WORKOUT_MAX_BY_DAY: Readonly<Record<string, number>> = {
+  legs_a: 30, legs_b: 30,   // hardest
+  cb_a: 24, cb_b: 24,       // upper A / upper B
+  arms: 18,                 // delts & arms — the easiest day
+}
+
+/**
+ * Default 24, the upper-day figure, for a session with no programme day: the
+ * 74 legacy Notion-era sessions and any PPL-era row. Assuming the middle is
+ * better than assuming either extreme.
+ */
+export const WORKOUT_MAX_DEFAULT = 24
+
+export function workoutMaxFor(dayKey?: string | null): number {
+  return (dayKey ? WORKOUT_MAX_BY_DAY[dayKey] : undefined) ?? WORKOUT_MAX_DEFAULT
+}
 
 /** Wake charge from sleep quality (0..1): 55 + 45·q, rounded. */
 export function computeMorningCharge(sleepQuality: number): number {
@@ -128,11 +172,12 @@ export function workoutDrain(
   sessionVolumeKg: number,
   trailingAvgVolumeKg: number,
   sessionRpe?: number | null,
+  dayKey?: string | null,
 ): number {
   if (!(sessionVolumeKg > 0)) return 0
   const relative = trailingAvgVolumeKg > 0 ? sessionVolumeKg / trailingAvgVolumeKg : 1
   const intensity = sessionRpe != null && sessionRpe > 0 ? clamp(sessionRpe / 10, 0, 1) : BATTERY.defaultRpe
-  return BATTERY.workoutMax * intensity * clamp(relative, BATTERY.relMin, BATTERY.relMax) / BATTERY.relMax
+  return workoutMaxFor(dayKey) * intensity * clamp(relative, BATTERY.relMin, BATTERY.relMax) / BATTERY.relMax
 }
 
 /**
@@ -148,7 +193,9 @@ export function computeBattery(inputs: ScoringInputs, hoursAwake?: number): Batt
   const awake = clamp(hoursAwake ?? inputs.hoursAwake ?? 8, 0, BATTERY.maxAwake)
   const time = timeDrain(awake)
   const activity = Math.min(BATTERY.activityCap, 0.004 * inputs.activeCal + 0.5 * (inputs.steps / 1000))
-  const workout = workoutDrain(inputs.sessionVolumeKg, inputs.trailingAvgVolumeKg, inputs.sessionRpe)
+  const workout = workoutDrain(
+    inputs.sessionVolumeKg, inputs.trailingAvgVolumeKg, inputs.sessionRpe, inputs.sessionDayKey,
+  )
 
   const currentPct = clamp(wakeCharge - time - activity - workout, BATTERY.floor, 100)
   return { morningCharge: wakeCharge, currentPct: Math.round(currentPct) }
