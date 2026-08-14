@@ -143,3 +143,66 @@ describe('parseTemplate — an unreadable payload is ABSENT, never a throw', () 
     expect(parseTemplate(JSON.parse(JSON.stringify(t)))).toEqual(t)
   })
 })
+
+/**
+ * Cardio is a first-class deck entry, so the template has to carry it — and at
+ * the right position. `exerciseOrder` counts STRENGTH exercises only (cardio
+ * consumes no slot, so a 0 kg junk row never reaches workout_sets), which makes
+ * the two orders incomparable; `deckOrder` is the one number that distinguishes
+ * a warm-up from a finisher.
+ */
+describe('cardio blocks keep their place in the template', () => {
+  const strength = [
+    set({ exerciseName: 'Chest Press (Machine)', exerciseOrder: 0 }),
+    set({ exerciseName: 'Preacher Curl (Machine)', exerciseOrder: 1 }),
+  ]
+
+  it('puts a warm-up first', () => {
+    const t = payloadToTemplate(strength, [
+      { name: 'Treadmill', distanceKm: 0.4, durationSec: 300, deckOrder: 0 },
+    ])!
+    expect(t.exercises.map((e) => e.name)).toEqual([
+      'Treadmill', 'Chest Press (Machine)', 'Preacher Curl (Machine)',
+    ])
+    expect(t.exercises[0].kind).toBe('cardio')
+    expect(t.exercises[0].distanceKm).toBe(0.4)
+    expect(t.exercises[0].durationSec).toBe(300)
+  })
+
+  it('puts a finisher last', () => {
+    const t = payloadToTemplate(strength, [
+      { name: 'Treadmill', distanceKm: 2, durationSec: 720, deckOrder: 2 },
+    ])!
+    expect(t.exercises.map((e) => e.name)).toEqual([
+      'Chest Press (Machine)', 'Preacher Curl (Machine)', 'Treadmill',
+    ])
+  })
+
+  it('keeps a warm-up AND a finisher on opposite ends', () => {
+    const t = payloadToTemplate(strength, [
+      { name: 'Treadmill', distanceKm: 0.4, durationSec: 300, deckOrder: 0 },
+      { name: 'Treadmill', distanceKm: 2, durationSec: 720, deckOrder: 3 },
+    ])!
+    expect(t.exercises.map((e) => e.kind ?? 'strength')).toEqual([
+      'cardio', 'strength', 'strength', 'cardio',
+    ])
+    expect(t.exercises.map((e) => e.order)).toEqual([0, 1, 2, 3])
+  })
+
+  it('round-trips a cardio block back into the deck', () => {
+    const t = payloadToTemplate(strength, [
+      { name: 'Treadmill', distanceKm: 0.4, durationSec: 300, deckOrder: 0 },
+    ])!
+    const d = templateToDraft(t, cbB, '2026-08-20', 'cb_b')
+    const first = d.exercises[0]
+    expect(first.kind).toBe('cardio')
+    expect(first.distanceKm).toBe(0.4)
+    expect(first.durationSec).toBe(300)
+    expect(first.sets).toEqual([])   // a cardio block has no sets to tick
+  })
+
+  it('survives a missing deckOrder by landing at the end', () => {
+    const t = payloadToTemplate(strength, [{ name: 'Treadmill', distanceKm: 1 }])!
+    expect(t.exercises[t.exercises.length - 1].name).toBe('Treadmill')
+  })
+})

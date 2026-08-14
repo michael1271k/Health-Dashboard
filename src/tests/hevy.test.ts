@@ -182,7 +182,10 @@ describe('hevyWorkoutToDraft — deck-ready draft', () => {
     // …but no longer prose. It used to be flattened into `notes`, which the edit
     // deck cannot read back — so re-opening a session showed the treadmill block
     // as text. It now goes to cardio_logs and returns as a card.
-    expect(body.cardio).toEqual([{ name: 'Treadmill', distanceKm: 0.4, durationSec: 300 }])
+    // `deckOrder` is the position among ALL deck entries — 0 here, i.e. a
+    // warm-up. `exerciseOrder` on the sets counts strength exercises only, so
+    // it cannot express that.
+    expect(body.cardio).toEqual([{ name: 'Treadmill', distanceKm: 0.4, durationSec: 300, deckOrder: 0 }])
     expect(body.notes).not.toContain('Cardio —')
     expect(body.clientSessionId).toBe('hevy-2026-07-16-17-4336')
     expect(body.metrics).toEqual({ durationMin: 68, avgBpm: 125, caloriesBurned: 466 })

@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase/client'
 import { invalidateWorkoutData } from '@/lib/query/workoutKeys'
 import { recomputeAndPaint } from '@/lib/scoring/applyComputedScore'
 import { logicalTodayISO, hoursAwakeToday } from '@/lib/utils/day'
-import { DRAFT_STORAGE_KEY, buildCommitPayload, cascadeSetEdit, isSetCommitted, peekSessionDraft, type SessionDraft, type DraftSet } from '@/lib/sessions/draft'
+import { DRAFT_STORAGE_KEY, buildCommitPayload, cascadeSetEdit, isSetCommitted, peekSessionDraft, type SessionDraft, type DraftSet, type DraftExercise } from '@/lib/sessions/draft'
 import type { PrAxis } from '@/lib/sessions/save'
 
 const COMMIT_TIMEOUT_MS = 25_000
@@ -149,6 +149,36 @@ export function useSessionDraft() {
         }
         return { ...ex, sets }
       }),
+    }))
+  }, [])
+
+  /**
+   * Add a cardio block to the deck.
+   *
+   * A FIRST-CLASS DECK ENTRY, not a fixed warm-up slot. Cardio used to exist
+   * only as the Treadmill card `buildTemplateDraft` prepends, with no way to add
+   * a second one — so a finisher had nowhere to go and got typed into the notes
+   * box. It sorts with everything else (dnd-kit already handles it), and commits
+   * to `cardio_logs` rather than `workout_sets`.
+   *
+   * Appended at the END: a block added mid-session is almost always a finisher,
+   * and dragging it up is one gesture if it is not.
+   */
+  const addCardio = useCallback((name = 'Treadmill') => {
+    setDraft((d) => d && ({
+      ...d,
+      exercises: [...d.exercises, {
+        localId: `cardio-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
+        name, kind: 'cardio' as const, sets: [],
+      }],
+    }))
+  }, [])
+
+  /** Edit a cardio block's distance / duration / note. */
+  const updateCardio = useCallback((localId: string, patch: Partial<Pick<DraftExercise, 'distanceKm' | 'durationSec' | 'note' | 'name'>>) => {
+    setDraft((d) => d && ({
+      ...d,
+      exercises: d.exercises.map((ex) => (ex.localId === localId ? { ...ex, ...patch } : ex)),
     }))
   }, [])
 
@@ -326,5 +356,5 @@ export function useSessionDraft() {
     },
   })
 
-  return { draft, hydrated, start, discard, updateSet, splitSet, mergeSet, addSet, removeSet, toggleSetDone, checkAllSets, removeExercise, reorder, setNotes, setExerciseNote, setStats, setSessionRpe, setDate, commit }
+  return { draft, hydrated, start, discard, updateSet, splitSet, mergeSet, addCardio, updateCardio, addSet, removeSet, toggleSetDone, checkAllSets, removeExercise, reorder, setNotes, setExerciseNote, setStats, setSessionRpe, setDate, commit }
 }

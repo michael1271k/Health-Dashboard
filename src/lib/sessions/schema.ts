@@ -36,6 +36,16 @@ export const WorkoutCardioSchema = z.object({
   distanceKm: z.number().nonnegative().optional(),
   durationSec: z.number().int().nonnegative().optional(),
   note: z.string().max(300).optional(),
+  /**
+   * Position among ALL deck entries, cardio and strength together.
+   *
+   * `WorkoutSetSchema.exerciseOrder` counts strength exercises ONLY (cardio
+   * consumes no slot, so a 0 kg junk row never reaches workout_sets), which
+   * makes the two orders incomparable. This is the one number that says whether
+   * a block was a warm-up or a finisher, and the routine template needs it to
+   * re-seed the deck in the order it was performed.
+   */
+  deckOrder: z.number().int().nonnegative().optional(),
 })
 
 export const SaveWorkoutSchema = z.object({

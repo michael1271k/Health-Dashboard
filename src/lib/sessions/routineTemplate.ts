@@ -75,6 +75,16 @@ export interface TemplateSourceSet {
   pairId?: string | null
 }
 
+/** A committed cardio block, as `buildCommitPayload` emits it. */
+export interface TemplateSourceCardio {
+  name: string
+  distanceKm?: number
+  durationSec?: number
+  note?: string
+  /** Position among ALL deck entries — this is what says warm-up vs finisher. */
+  deckOrder?: number
+}
+
 const TEMPLATE_TAGS: readonly string[] = ['warmup', 'failure', 'dropset']
 
 /**
@@ -88,7 +98,10 @@ const TEMPLATE_TAGS: readonly string[] = ['warmup', 'failure', 'dropset']
  * Returns null when nothing was committed, so a failed or empty session cannot
  * blank a good template.
  */
-export function payloadToTemplate(sets: readonly TemplateSourceSet[]): RoutineTemplate | null {
+export function payloadToTemplate(
+  sets: readonly TemplateSourceSet[],
+  cardio: readonly TemplateSourceCardio[] = [],
+): RoutineTemplate | null {
   if (!sets.length) return null
 
   const byName = new Map<string, TemplateExercise>()
@@ -115,6 +128,24 @@ export function payloadToTemplate(sets: readonly TemplateSourceSet[]): RoutineTe
   }
 
   const exercises = [...byName.values()].sort((a, b) => a.order - b.order)
+
+  // Cardio slots back in at its real deck position. `exerciseOrder` counts
+  // STRENGTH exercises only, so the two orders are not comparable — `deckOrder`
+  // is the one number that distinguishes a warm-up from a finisher, and without
+  // it every block would re-seed at the top.
+  for (const c of [...cardio].sort((a, b) => (a.deckOrder ?? 0) - (b.deckOrder ?? 0))) {
+    const at = Math.min(Math.max(c.deckOrder ?? exercises.length, 0), exercises.length)
+    exercises.splice(at, 0, {
+      name: c.name,
+      order: at,
+      kind: 'cardio',
+      sets: [],
+      ...(c.distanceKm != null ? { distanceKm: c.distanceKm } : {}),
+      ...(c.durationSec != null ? { durationSec: c.durationSec } : {}),
+      ...(c.note ? { note: c.note } : {}),
+    })
+  }
+
   // Re-index so the stored order is dense 0..n-1 regardless of what the deck
   // happened to emit (a removed exercise leaves a hole in `exerciseOrder`).
   exercises.forEach((e, i) => { e.order = i })

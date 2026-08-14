@@ -177,7 +177,7 @@ export function buildCommitPayload(draft: SessionDraft): SaveWorkoutInput {
   const sets: SaveWorkoutInput['sets'] = []
   const cardio: NonNullable<SaveWorkoutInput['cardio']> = []
   let order = 0
-  for (const ex of draft.exercises) {
+  draft.exercises.forEach((ex, deckIdx) => {
     if (ex.kind === 'cardio') {
       // STRUCTURED, not a notes line. Flattening to prose was a one-way trip:
       // the edit deck rebuilds from the database, and `notes` is not a place a
@@ -189,14 +189,15 @@ export function buildCommitPayload(draft: SessionDraft): SaveWorkoutInput {
           ...(ex.distanceKm != null ? { distanceKm: ex.distanceKm } : {}),
           ...(ex.durationSec != null ? { durationSec: ex.durationSec } : {}),
           ...(ex.note ? { note: ex.note } : {}),
+          deckOrder: deckIdx,
         })
       }
-      continue
+      return
     }
     // ONLY completed (green) sets are recorded — an unchecked template set stays
     // in the deck but is never logged. Set numbers renumber over the kept sets.
     const committed = ex.sets.filter(isSetCommitted)
-    if (!committed.length) continue        // no green sets → the exercise didn't happen
+    if (!committed.length) return        // no green sets → the exercise didn't happen
     committed.forEach((s, i) => {
       sets.push({
         exerciseName: ex.name,
@@ -212,7 +213,7 @@ export function buildCommitPayload(draft: SessionDraft): SaveWorkoutInput {
       })
     })
     order += 1
-  }
+  })
 
   // endedAt derives from startedAt + duration. Passing wall-clock "now" here
   // would blow duration_min up into DAYS whenever a session is logged after

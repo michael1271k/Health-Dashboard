@@ -26,9 +26,51 @@ const STATUS_META: Record<NonNullable<DraftExercise['status']>, { label: string;
   NEW:      { label: 'NEW',      color: '#8E9AAC' },
 }
 
-const CARDIO_VIOLET = '#B4522A'
+export const CARDIO_VIOLET = '#B4522A'
 const READY_GOLD = '#D4AF37'
 const AMBER = '#E0A03C'   // one-more-session: earned, not yet due
+
+/**
+ * One numeric field of a cardio block.
+ *
+ * Keeps a local text buffer while focused, for the same reason `NumberField`
+ * does in `SetEditorRow`: committing on every keystroke means typing "0.4"
+ * commits 0 on the first character, and a value-derived input fights the user
+ * mid-word. An empty field commits `null` — clearing a distance is a real edit,
+ * not a zero.
+ */
+function CardioField({ label, unit, step, value, onCommit }: {
+  label: string
+  unit: string
+  step: number
+  value: number | null | undefined
+  onCommit: (v: number | null) => void
+}) {
+  const [text, setText] = useState<string | null>(null)
+  const shown = text ?? (value != null ? String(value) : '')
+  return (
+    <label className="flex-1 min-w-0">
+      <span className="block text-[9px] font-bold uppercase tracking-widest text-muted mb-1">{label}</span>
+      <span className="flex items-center gap-1 rounded-xl border border-white/[0.08] bg-white/[0.04] px-2 min-h-[38px]">
+        <input
+          type="number" inputMode="decimal" step={step} min={0}
+          value={shown}
+          onChange={(e) => {
+            setText(e.target.value)
+            const t = e.target.value.trim()
+            if (t === '') { onCommit(null); return }
+            const n = Number(t)
+            if (Number.isFinite(n) && n >= 0) onCommit(n)
+          }}
+          onBlur={() => setText(null)}
+          className="helix-num w-full bg-transparent text-fluid-base font-bold text-text tabular-nums outline-none min-w-0"
+          aria-label={`${label} in ${unit}`}
+        />
+        <span className="text-[10px] text-muted shrink-0">{unit}</span>
+      </span>
+    </label>
+  )
+}
 
 /** Smart-Coach cue for this lift. `ready` = earned the bump (two clean sessions
  *  at the top load); `one-more` = cleared once and needs it repeated. */
@@ -109,7 +151,7 @@ const fmtDate = (d: string) =>
  * means lifting `useSortable` into a shell component and moving the grip out of
  * this header — a real refactor, deliberately not done here.
  */
-export const ExerciseCard = memo(function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collapsed = false, onUpdateSet, onSplitSet, onMergeSet, onAddSet, onRemoveSet, onToggleDone, onCheckAll, onRemoveExercise, onSetNote, onPrTap }: {
+export const ExerciseCard = memo(function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collapsed = false, onUpdateSet, onSplitSet, onMergeSet, onAddSet, onRemoveSet, onToggleDone, onCheckAll, onRemoveExercise, onSetNote, onPrTap, onUpdateCardio }: {
   exercise: DraftExercise
   history: ExerciseHistory | null
   /** Live records keyed `${localId}|${setIdx}` — computed once for the whole
@@ -147,6 +189,8 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, live
   onSetNote: (localId: string, note: string) => void
   /** Tapping a set's trophy strip — opens the record sheet for that set. */
   onPrTap?: (localId: string, setIdx: number) => void
+  /** Cardio blocks only: edit distance / duration. */
+  onUpdateCardio?: (localId: string, patch: { distanceKm?: number; durationSec?: number }) => void
 }) {
   const localId = exercise.localId
 
@@ -302,8 +346,20 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, live
     return null
   }, [ladder, levelUp, ready, exercise.targetNext, unilateral])
 
-  // ── Cardio variant: slim card, distance/duration chips, no set rows ──
+  // ── Cardio variant: slim card, distance/duration, no set rows ──
+  //
+  // INTERACTIVE. The two figures used to be display-only chips, so the treadmill
+  // card could be read and never corrected — and since commit flattened cardio
+  // into the notes string, an edit of the session brought it back as prose with
+  // no inputs at all. Both are editable here, and the block commits to
+  // `cardio_logs` keyed on the session.
   if (exercise.kind === 'cardio') {
+    const chip = (label: string, value: string) => (
+      <span className="helix-num text-fluid-sm font-bold tabular-nums px-2 py-1 rounded-lg"
+        style={{ color: CARDIO_VIOLET, background: `${CARDIO_VIOLET}14`, border: `1px solid ${CARDIO_VIOLET}33` }}>
+        {value}<span className="text-[10px] font-normal ml-0.5">{label}</span>
+      </span>
+    )
     return (
       <div ref={setNodeRef} style={sortableStyle}
         className={`rounded-2xl border border-white/[0.07] bg-white/[0.03] p-2.5 !rounded-2xl shadow-[0_4px_22px_rgba(0,0,0,0.26)] ${dragClass}`}
@@ -314,22 +370,20 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, live
             style={{ background: `${CARDIO_VIOLET}1c`, color: CARDIO_VIOLET }}>
             <Footprints className="w-4 h-4" aria-hidden="true" />
           </span>
-          <div className="flex-1 min-w-0">
+          <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open}
+            className="flex-1 min-w-0 text-left">
             <span className="font-semibold text-text leading-snug truncate block" style={{ fontSize: 'var(--text-exercise-title)' }}>{exercise.name}</span>
-            <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: CARDIO_VIOLET }}>Cardio · warm-up</span>
-          </div>
+            {/* No longer hardcoded "warm-up": a block added mid-session is a
+                finisher, and calling it a warm-up misdescribes it. */}
+            <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: CARDIO_VIOLET }}>
+              {exercise.note?.trim() || 'Cardio'}
+            </span>
+          </button>
           <div className="flex items-center gap-1.5 shrink-0">
-            {exercise.distanceKm != null && (
-              <span className="helix-num text-fluid-sm font-bold tabular-nums px-2 py-1 rounded-lg"
-                style={{ color: CARDIO_VIOLET, background: `${CARDIO_VIOLET}14`, border: `1px solid ${CARDIO_VIOLET}33` }}>
-                {exercise.distanceKm}<span className="text-[10px] font-normal ml-0.5">km</span>
-              </span>
-            )}
-            {exercise.durationSec != null && (
-              <span className="helix-num text-fluid-sm font-bold tabular-nums px-2 py-1 rounded-lg"
-                style={{ color: CARDIO_VIOLET, background: `${CARDIO_VIOLET}14`, border: `1px solid ${CARDIO_VIOLET}33` }}>
-                {Math.round(exercise.durationSec / 60)}<span className="text-[10px] font-normal ml-0.5">min</span>
-              </span>
+            {!open && exercise.distanceKm != null && chip('km', String(exercise.distanceKm))}
+            {!open && exercise.durationSec != null && chip('min', String(Math.round(exercise.durationSec / 60)))}
+            {!open && exercise.distanceKm == null && exercise.durationSec == null && (
+              <span className="text-[10px] text-muted">Tap to log</span>
             )}
             <button type="button" onClick={() => onRemoveExercise(localId)}
               className="min-h-[32px] min-w-[32px] rounded-lg flex items-center justify-center text-muted hover:text-danger"
@@ -338,6 +392,22 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, live
             </button>
           </div>
         </div>
+
+        {open && onUpdateCardio && (
+          <div className="mt-2 border-t border-white/[0.06] pt-2 flex items-end gap-2">
+            <CardioField
+              label="Distance" unit="km" step={0.1} value={exercise.distanceKm}
+              onCommit={(v) => onUpdateCardio(localId, { distanceKm: v ?? undefined })}
+            />
+            <CardioField
+              label="Duration" unit="min" step={1}
+              value={exercise.durationSec != null ? Math.round((exercise.durationSec / 60) * 10) / 10 : null}
+              // Stored in SECONDS — the deck's own unit is minutes because that
+              // is how a treadmill is set, but a 4:30 warm-up must survive.
+              onCommit={(v) => onUpdateCardio(localId, { durationSec: v == null ? undefined : Math.round(v * 60) })}
+            />
+          </div>
+        )}
       </div>
     )
   }

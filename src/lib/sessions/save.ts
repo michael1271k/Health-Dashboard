@@ -395,7 +395,7 @@ export async function saveSession(
   // template only costs the next deck its seed. A day with no `dayKey` (a
   // free-form paste, or a PPL-era session) has no template slot and is skipped.
   if (payload.dayKey) {
-    const template = payloadToTemplate(payload.sets)
+    const template = payloadToTemplate(payload.sets, payload.cardio ?? [])
     if (template) {
       try {
         const { error } = await supabase.from('routine_templates').upsert({
