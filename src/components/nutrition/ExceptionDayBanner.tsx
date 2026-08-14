@@ -1,13 +1,12 @@
 'use client'
 
-import { useState } from 'react'
 import { m } from 'framer-motion'
-import { BadgeCheck, Plus, CircleDashed } from 'lucide-react'
+import { Check } from 'lucide-react'
 import { NUTRITION_EXCEPTION_REASONS, exceptionReason } from '@/lib/nutrition/exceptionDay'
 import { useSetNutritionException } from '@/lib/hooks/useNutritionException'
 import { useHelixReducedMotion } from '@/lib/motion/useHelixReducedMotion'
 import { SNAPPY, CROSSFADE } from '@/lib/motion/springs'
-import { SAND, STEEL, MUTED, alpha } from '@/lib/theme/palette'
+import { AMETHYST, SAND, MUTED, alpha } from '@/lib/theme/palette'
 
 /**
  * A day's nutrition context: it was allowed to miss its target, and/or its
@@ -21,38 +20,34 @@ import { SAND, STEEL, MUTED, alpha } from '@/lib/theme/palette'
  * they are two fields rather than one enum, and why the estimate has to be
  * settable on an otherwise perfectly ordinary day.
  *
- * ── WHY SAND, AND WHY THE ESTIMATE IS NOT SAND ───────────────────────────────
- * The palette already carries the exception's meaning. SAND is documented as
- * "the travel/deload tone — a deliberate 'away' colour, not a mistake", which is
- * precisely what an exception day is. It costs no new hue and collides with
- * nothing: EMBER is the cut phase itself (an exception is not a phase change),
- * GOLD is a record, EMERALD is a target met, OXIDE is danger — and this is none
- * of those. The whole point is that the day is not a failure.
+ * ── WHY THIS IS NOW A CHECKBOX ROW ───────────────────────────────────────────
+ * It used to be a collapsed prompt ("Off-plan or estimated? Add context") that
+ * expanded into a chip row, above one of two prose bands explaining what the
+ * flag had done. Three states, an expand animation, a Change button, and two
+ * paragraphs — roughly 120px of surface to record two booleans and pick from
+ * five words.
  *
- * The estimate gets STEEL instead, and the difference is the point: it is not an
- * 'away' day, it is an ordinary day whose measurement is fuzzy. Painting it SAND
- * would say the day was excused, which is the one thing an estimate never does.
+ * The pills were also the wrong affordance. A row of rounded pills reads as
+ * "pick one", and the estimate is not one of the five and not exclusive with
+ * them — the divider was there to fight the shape rather than use it. A checkbox
+ * says what these controls actually are: independent, multi-select, on or off.
+ * Nothing expands, so the state is always visible and setting both is two taps
+ * with no intermediate state to manage.
  *
- * ── WHY NO FROSTED BLUR ──────────────────────────────────────────────────────
- * `globals.css` reserves translucency for structural chrome, because a
- * backdrop-filter on a content surface over a flat canvas pays a full blur pass
- * to sample a solid colour. The material read comes from a tint over the
- * surface and a hairline, the same way every other band in the app gets it.
+ * The terms are still stated, but as ONE line and only once something is
+ * declared: forgiveness whose terms the user cannot see is indistinguishable
+ * from the app quietly not counting things.
  *
- * ── WHY IT IS QUIET UNTIL IT IS USED ─────────────────────────────────────────
- * Unflagged, this is one muted line — an ordinary day must not be dominated by
- * an offer to excuse it, and an always-open row of tempting chips is an
- * invitation to use them. Flagged, it becomes a full band that states what the
- * flag actually did, because forgiveness the user cannot see the terms of is
- * indistinguishable from the app quietly not counting things.
+ * ── COLOUR ───────────────────────────────────────────────────────────────────
+ * AMETHYST for the exception, SAND for the estimate — the same two hues the
+ * history rows and the 7-day rail use, so a declared day is one colour wherever
+ * it appears. Both are documented "away" tones rather than failure tones, which
+ * is the point: the day is not a failure.
  *
  * ── IT IS NOT ABOUT TODAY ────────────────────────────────────────────────────
  * Every string here is date-neutral, because the one thing you reliably know
- * about an exception is that you know it afterwards. `date` has always been a
- * plain prop and the write hook has always been date-generic; the copy was the
- * only thing pinning this component to today, which is why `daily_logs` held
- * zero flagged days for as long as the feature existed. The day page passes a
- * past date; the nutrition page passes today. Nothing else differs.
+ * about an exception is that you know it afterwards. The day page passes a past
+ * date; the nutrition page passes today. Nothing else differs.
  */
 export function ExceptionDayBanner({ date, stored, estimated = false }: {
   date: string
@@ -60,244 +55,92 @@ export function ExceptionDayBanner({ date, stored, estimated = false }: {
   estimated?: boolean
 }) {
   const reason = exceptionReason(stored)
-  const [picking, setPicking] = useState(false)
   const reduced = useHelixReducedMotion()
   const set = useSetNutritionException(date)
-
   const transition = reduced ? CROSSFADE : SNAPPY
-  const choose = (next: string | null) => {
-    set.mutate({ reason: next })
-    setPicking(false)
-  }
-  // Deliberately does NOT close the picker: the estimate is usually the second
-  // thing you set after a reason, and collapsing the row under the finger would
-  // make setting both a two-tap-two-open chore.
-  const toggleEstimated = () => set.mutate({ estimated: !estimated })
 
-  const controls = (
-    <ContextChips
-      open={picking}
-      current={reason}
-      estimated={estimated}
-      onChoose={choose}
-      onToggleEstimated={toggleEstimated}
-      reduced={reduced}
-      inset={reason != null || estimated}
-    />
-  )
-
-  // ── Ordinary day, nothing declared: one line, and nothing more ──
-  if (!reason && !estimated) {
-    return (
-      <div>
-        <m.button
-          type="button"
-          onClick={() => setPicking((v) => !v)}
-          aria-expanded={picking}
-          whileTap={reduced ? undefined : { scale: 0.98 }}
-          transition={transition}
-          className="w-full flex items-center gap-2 rounded-xl px-3 min-h-[44px] text-left border transition-colors"
-          style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)' }}
-        >
-          <Plus className="w-3.5 h-3.5 shrink-0" style={{ color: MUTED }} aria-hidden="true" />
-          <span className="text-[12px] text-muted">
-            Off-plan or estimated? <span className="text-text/80 font-semibold">Add context</span>
-          </span>
-        </m.button>
-        {controls}
-      </div>
-    )
-  }
-
-  // ── Estimated only: an ordinary day with fuzzy numbers. Not an exception, and
-  //    the band must not imply it was one. ──
-  if (!reason) {
-    return (
-      <div
-        className="rounded-xl border overflow-hidden"
-        style={{ borderColor: alpha(STEEL, 0.26), background: alpha(STEEL, 0.06) }}
-      >
-        <div className="flex items-center gap-2.5 px-3 py-2.5">
-          <span
-            className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-            style={{ background: alpha(STEEL, 0.14), color: STEEL }}
-          >
-            <CircleDashed className="w-4 h-4" aria-hidden="true" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-[13px] font-semibold leading-tight" style={{ color: STEEL }}>
-              Estimated intake
-            </p>
-            <p className="text-[11px] text-muted leading-snug mt-0.5">
-              Counted in full. Nothing is forgiven — this only flags the numbers as a guess.
-            </p>
-          </div>
-          <ChangeButton picking={picking} onClick={() => setPicking((v) => !v)} reduced={reduced} />
-        </div>
-        {controls}
-      </div>
-    )
-  }
-
-  // ── Declared exception (with or without an estimate on top) ──
   return (
-    <div
-      className="rounded-xl border overflow-hidden"
-      style={{ borderColor: alpha(SAND, 0.28), background: alpha(SAND, 0.07) }}
+    <div className="rounded-xl border px-3 py-2.5 space-y-2"
+      style={{
+        borderColor: reason || estimated ? alpha(AMETHYST, 0.24) : 'rgba(255,255,255,0.08)',
+        background: reason || estimated ? alpha(AMETHYST, 0.05) : 'rgba(255,255,255,0.03)',
+      }}
     >
-      <div className="flex items-center gap-2.5 px-3 py-2.5">
-        <span
-          className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-          style={{ background: alpha(SAND, 0.14), color: SAND }}
-        >
-          <BadgeCheck className="w-4 h-4" aria-hidden="true" />
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-[10px] font-bold uppercase tracking-[0.14em] shrink-0" style={{ color: MUTED }}>
+          Context
         </span>
-        <div className="min-w-0 flex-1">
-          <p className="text-[13px] font-semibold leading-tight" style={{ color: SAND }}>
-            Exception day · {reason}
-            {estimated && <span className="font-normal" style={{ color: STEEL }}> · estimated</span>}
-          </p>
-          {/* The terms, stated. "Forgiven" without saying what was forgiven is
-              how a score quietly stops meaning anything. */}
-          <p className="text-[11px] text-muted leading-snug mt-0.5">
-            Graded on protein only. Intake still counts toward the week and the trend.
-          </p>
-        </div>
-        <ChangeButton picking={picking} onClick={() => setPicking((v) => !v)} reduced={reduced} />
+        {NUTRITION_EXCEPTION_REASONS.map((r) => (
+          <ContextBox
+            key={r}
+            label={r}
+            color={AMETHYST}
+            checked={reason === r}
+            reduced={reduced}
+            transition={transition}
+            // Tapping the checked reason withdraws the exception entirely —
+            // the same "tap it again to undo" the weigh-in chips use.
+            onToggle={() => set.mutate({ reason: reason === r ? null : r })}
+          />
+        ))}
+        <span className="w-px self-stretch mx-0.5" style={{ background: 'rgba(255,255,255,0.08)' }} aria-hidden="true" />
+        {/* After a divider, not as a sixth reason. It is not a reason, and it is
+            not exclusive with one. */}
+        <ContextBox
+          label="Estimated"
+          color={SAND}
+          checked={estimated}
+          reduced={reduced}
+          transition={transition}
+          onToggle={() => set.mutate({ estimated: !estimated })}
+        />
       </div>
-      {controls}
+
+      {(reason || estimated) && (
+        <p className="text-[10px] text-muted leading-snug">
+          {reason
+            ? 'Graded on protein only. Intake still counts toward the week and the trend.'
+            : 'Counted in full. Nothing is forgiven — this only flags the numbers as a guess.'}
+        </p>
+      )}
     </div>
   )
 }
 
-function ChangeButton({ picking, onClick, reduced }: {
-  picking: boolean; onClick: () => void; reduced: boolean
+/**
+ * One checkbox. The box carries the state and the label names it — no pill
+ * background to read as a segmented control, and a 36px minimum so it stays a
+ * real touch target at 11px of text.
+ */
+function ContextBox({ label, color, checked, onToggle, reduced, transition }: {
+  label: string
+  color: string
+  checked: boolean
+  onToggle: () => void
+  reduced: boolean
+  transition: typeof SNAPPY | typeof CROSSFADE
 }) {
   return (
     <m.button
       type="button"
-      onClick={onClick}
-      aria-expanded={picking}
-      whileTap={reduced ? undefined : { scale: 0.96 }}
-      transition={reduced ? CROSSFADE : SNAPPY}
-      className="shrink-0 rounded-full px-3 min-h-[36px] text-[11px] font-semibold border transition-colors"
-      style={{ color: MUTED, borderColor: 'rgba(255,255,255,0.10)' }}
+      onClick={onToggle}
+      role="checkbox"
+      aria-checked={checked}
+      whileTap={reduced ? undefined : { scale: 0.94 }}
+      transition={transition}
+      className="flex items-center gap-1.5 min-h-[36px] px-1 text-[11px] font-semibold transition-colors"
+      style={{ color: checked ? color : undefined }}
     >
-      Change
+      <span
+        className="w-4 h-4 rounded-[5px] flex items-center justify-center shrink-0 transition-colors"
+        style={{
+          background: checked ? color : 'transparent',
+          border: `1px solid ${checked ? color : 'rgba(255,255,255,0.22)'}`,
+        }}
+      >
+        {checked && <Check className="w-3 h-3" style={{ color: '#0A0B0D' }} aria-hidden="true" />}
+      </span>
+      {label}
     </m.button>
-  )
-}
-
-/**
- * The reason row, plus the estimate toggle.
- *
- * Expanded with `grid-template-rows: 0fr → 1fr` rather than `height: auto`.
- * Animating to `auto` makes the compositor measure the subtree every frame; the
- * grid form is a single interpolated track and costs one layout on each end.
- *
- * The estimate sits after a hairline divider rather than as a sixth reason chip.
- * It is not a reason and it is not mutually exclusive with one — dropping it in
- * the same row would read as "pick one of six", which is the precise mistake the
- * two-column schema exists to avoid.
- */
-function ContextChips({
-  open, current, estimated, onChoose, onToggleEstimated, reduced, inset = false,
-}: {
-  open: boolean
-  current: string | null
-  estimated: boolean
-  onChoose: (next: string | null) => void
-  onToggleEstimated: () => void
-  reduced: boolean
-  inset?: boolean
-}) {
-  const chipTransition = reduced ? CROSSFADE : SNAPPY
-  return (
-    <m.div
-      initial={false}
-      animate={{ gridTemplateRows: open ? '1fr' : '0fr', opacity: open ? 1 : 0 }}
-      transition={chipTransition}
-      className="grid"
-      style={{ gridTemplateRows: '0fr' }}
-      aria-hidden={!open}
-    >
-      <div className="overflow-hidden">
-        <div
-          className={inset ? 'px-3 pb-3 pt-0.5' : 'pt-2'}
-          // Chips are unreachable by keyboard while collapsed, not merely invisible.
-          {...(open ? {} : { inert: '' as unknown as boolean })}
-        >
-          <div className="flex flex-wrap gap-1.5">
-            {NUTRITION_EXCEPTION_REASONS.map((r) => {
-              const on = current === r
-              return (
-                <m.button
-                  key={r}
-                  type="button"
-                  // Tapping the active reason withdraws the exception entirely —
-                  // the same "tap it again to undo" the weigh-in chips use.
-                  onClick={() => onChoose(on ? null : r)}
-                  aria-pressed={on}
-                  whileTap={reduced ? undefined : { scale: 0.94 }}
-                  transition={chipTransition}
-                  className="rounded-full px-3 min-h-[36px] text-[11px] font-semibold transition-colors"
-                  style={{
-                    color: on ? SAND : undefined,
-                    background: on ? alpha(SAND, 0.14) : 'rgba(255,255,255,0.03)',
-                    border: `1px solid ${on ? alpha(SAND, 0.42) : 'rgba(255,255,255,0.08)'}`,
-                  }}
-                >
-                  {r}
-                </m.button>
-              )
-            })}
-            {current && (
-              <m.button
-                type="button"
-                onClick={() => onChoose(null)}
-                whileTap={reduced ? undefined : { scale: 0.94 }}
-                transition={chipTransition}
-                className="rounded-full px-3 min-h-[36px] text-[11px] font-semibold text-muted transition-colors"
-                style={{ border: '1px solid rgba(255,255,255,0.08)' }}
-              >
-                Not an exception
-              </m.button>
-            )}
-          </div>
-
-          <div className="h-px my-2.5" style={{ background: 'rgba(255,255,255,0.07)' }} />
-
-          <m.button
-            type="button"
-            onClick={onToggleEstimated}
-            aria-pressed={estimated}
-            whileTap={reduced ? undefined : { scale: 0.96 }}
-            transition={chipTransition}
-            className="w-full flex items-center gap-2 rounded-lg px-2.5 min-h-[40px] text-left transition-colors"
-            style={{
-              background: estimated ? alpha(STEEL, 0.12) : 'rgba(255,255,255,0.03)',
-              border: `1px solid ${estimated ? alpha(STEEL, 0.40) : 'rgba(255,255,255,0.08)'}`,
-            }}
-          >
-            <CircleDashed
-              className="w-3.5 h-3.5 shrink-0"
-              style={{ color: estimated ? STEEL : MUTED }}
-              aria-hidden="true"
-            />
-            <span className="min-w-0 flex-1">
-              <span
-                className="block text-[11px] font-semibold leading-tight"
-                style={{ color: estimated ? STEEL : undefined }}
-              >
-                Estimated
-              </span>
-              <span className="block text-[10px] text-muted leading-tight mt-px">
-                Ate out — couldn&apos;t weigh it. Changes no score.
-              </span>
-            </span>
-          </m.button>
-        </div>
-      </div>
-    </m.div>
   )
 }

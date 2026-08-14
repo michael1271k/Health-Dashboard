@@ -570,8 +570,8 @@
     "semantic_hash": "4bf40ad4e456ceec7dc8822c6eabe8d9"
   },
   "src/components/nutrition/NutritionLogList.tsx": {
-    "mtime": 1786691338.4312978,
-    "ast_hash": "fd366a860caf2dca0f281ad7cb5cc717",
+    "mtime": 1786692944.8597245,
+    "ast_hash": "c23a379a55c11e9e956372b0c6e47260",
     "semantic_hash": ""
   },
   "src/components/pathfinder/PathfinderTimeline.tsx": {
@@ -1040,8 +1040,8 @@
     "semantic_hash": ""
   },
   "src/lib/sessions/save.ts": {
-    "mtime": 1786691338.438127,
-    "ast_hash": "4d1f5cc52165051fbe312d5b5db38336",
+    "mtime": 1786692685.4193578,
+    "ast_hash": "d1ed04441e8081a45c483b85babb364d",
     "semantic_hash": ""
   },
   "src/lib/sessions/schema.ts": {
@@ -1195,8 +1195,8 @@
     "semantic_hash": ""
   },
   "src/tests/hevy.test.ts": {
-    "mtime": 1786691338.4397352,
-    "ast_hash": "2059585d5d42ca6db3edbe255d603202",
+    "mtime": 1786692742.407247,
+    "ast_hash": "0f77143b087a69d6bd2044cb10bd9b49",
     "semantic_hash": ""
   },
   "src/tests/ingest-schema.test.ts": {
@@ -1965,8 +1965,8 @@
     "semantic_hash": ""
   },
   "src/components/nutrition/ExceptionDayBanner.tsx": {
-    "mtime": 1786533701.7191846,
-    "ast_hash": "a0a79c325cddebffdba9bad2765700f4",
+    "mtime": 1786693041.730262,
+    "ast_hash": "a0860c08e0bc22f393c87e0533f6bea6",
     "semantic_hash": ""
   },
   "src/lib/training/prTruth.ts": {
@@ -2000,8 +2000,8 @@
     "semantic_hash": ""
   },
   "src/components/nutrition/MacroCards.tsx": {
-    "mtime": 1786542236.9341,
-    "ast_hash": "b18b454a54aae7c4fac8be8be26f3a9c",
+    "mtime": 1786692881.912206,
+    "ast_hash": "8de1b34e7949b15b6fe5171c5b97e513",
     "semantic_hash": ""
   },
   "src/lib/utils/scoreWatermark.ts": {
@@ -2025,8 +2025,8 @@
     "semantic_hash": ""
   },
   "src/lib/sessions/routineTemplate.ts": {
-    "mtime": 1786692651.8831794,
-    "ast_hash": "1379e66bd17db72d7fed24d7d508c517",
+    "mtime": 1786692678.5617003,
+    "ast_hash": "35029a349b3dba0fa82d66f26b851ffd",
     "semantic_hash": ""
   },
   "src/lib/hooks/useRoutineTemplate.ts": {
@@ -2035,8 +2035,8 @@
     "semantic_hash": ""
   },
   "src/tests/routine-template.test.ts": {
-    "mtime": 1786691919.5757492,
-    "ast_hash": "970f4d916ff37fc24636787a2af69670",
+    "mtime": 1786692701.7064707,
+    "ast_hash": "f995f5f59d418d7b292ed7c384e622c5",
     "semantic_hash": ""
   },
   "scripts/backfill-routine-templates.mts": {

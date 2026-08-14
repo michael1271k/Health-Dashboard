@@ -160,8 +160,8 @@
     "semantic_hash": ""
   },
   "public/sw.js": {
-    "mtime": 1786691338.4241898,
-    "ast_hash": "9f422cff66bceb61bf4d33d714a0fb55",
+    "mtime": 1786693084.0797977,
+    "ast_hash": "a42f2d05999ed82f5cd66fd51ab37e5c",
     "semantic_hash": ""
   },
   "scripts/generate-icons.mjs": {
@@ -265,8 +265,8 @@
     "semantic_hash": ""
   },
   "src/app/page.tsx": {
-    "mtime": 1786543216.9643307,
-    "ast_hash": "e547541a9bf1272ac53e5b6903c7e19d",
+    "mtime": 1786693072.1111684,
+    "ast_hash": "86871892ba464524eb83cbbf42c20943",
     "semantic_hash": ""
   },
   "src/app/session/[id]/page.tsx": {
@@ -570,8 +570,8 @@
     "semantic_hash": "4bf40ad4e456ceec7dc8822c6eabe8d9"
   },
   "src/components/nutrition/NutritionLogList.tsx": {
-    "mtime": 1786691338.4312978,
-    "ast_hash": "fd366a860caf2dca0f281ad7cb5cc717",
+    "mtime": 1786692944.8597245,
+    "ast_hash": "c23a379a55c11e9e956372b0c6e47260",
     "semantic_hash": ""
   },
   "src/components/pathfinder/PathfinderTimeline.tsx": {
@@ -1965,8 +1965,8 @@
     "semantic_hash": ""
   },
   "src/components/nutrition/ExceptionDayBanner.tsx": {
-    "mtime": 1786533701.7191846,
-    "ast_hash": "a0a79c325cddebffdba9bad2765700f4",
+    "mtime": 1786693041.730262,
+    "ast_hash": "a0860c08e0bc22f393c87e0533f6bea6",
     "semantic_hash": ""
   },
   "src/lib/training/prTruth.ts": {
@@ -2000,8 +2000,8 @@
     "semantic_hash": ""
   },
   "src/components/nutrition/MacroCards.tsx": {
-    "mtime": 1786542236.9341,
-    "ast_hash": "b18b454a54aae7c4fac8be8be26f3a9c",
+    "mtime": 1786692881.912206,
+    "ast_hash": "8de1b34e7949b15b6fe5171c5b97e513",
     "semantic_hash": ""
   },
   "src/lib/utils/scoreWatermark.ts": {

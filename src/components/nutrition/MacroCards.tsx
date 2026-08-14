@@ -2,9 +2,10 @@
 
 import { memo, useState } from 'react'
 import type { DailyLog } from '@/lib/hooks/useNutrition'
-import { PHASE_META } from '@/lib/nutrition/phase'
+import { isExceptionDay } from '@/lib/nutrition/exceptionDay'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
-import { OXIDE, EMERALD, MUTED } from '@/lib/theme/palette'
+import { OXIDE, EMERALD, MUTED, DIM, AMETHYST, SAND } from '@/lib/theme/palette'
+import { logicalTodayISO } from '@/lib/utils/day'
 import { KineticNumber } from '@/components/fx/KineticNumber'
 import { useDoubleTap } from '@/lib/utils/doubleTap'
 import { MacroOverrideSheet } from '@/components/nutrition/MacroOverrideSheet'
@@ -13,12 +14,18 @@ import type { MacroValues } from '@/lib/hooks/useMacroOverride'
 interface Goals { calorie: number; protein: number | null; carbs: number | null; fat: number | null }
 type MacroField = keyof MacroValues
 
-/** The v5.1 cut-day ceiling. Past it the day is over budget, not merely on it. */
-const CUT_CEILING = 2050
-
 /**
- * One horizontal fill. Replaces the SVG ring stroke and keeps its easing, so
- * the number still animates into place rather than snapping.
+ * One horizontal fill, with the target marked and the overshoot shown.
+ *
+ * ── THE FILL USED TO CLAMP AT THE GOAL ───────────────────────────────────────
+ * `Math.min(1, value / goal)` meant 2,100 kcal against a 1,950 goal and 3,400
+ * kcal against the same goal drew the IDENTICAL full bar. The one reading the
+ * bar exists to give — how far past you went — was the one it could not draw.
+ *
+ * So the track rescales to `max(value, goal)`: the fill runs to the goal, a
+ * tick marks where the goal sits, and the excess continues past it in OXIDE.
+ * The tick is what keeps the bar readable while it rescales — without it, a
+ * bar that shortens as you eat more is just confusing.
  *
  * The track alpha is the ring track's `rgba(255,255,255,0.07)` unchanged — the
  * empty part of the goal reads at exactly the weight it always did.
@@ -26,24 +33,56 @@ const CUT_CEILING = 2050
 function Bar({ value, goal, color, height = 6 }: {
   value: number | null; goal: number | null; color: string; height?: number
 }) {
-  const pct = value != null && goal ? Math.min(1, Math.max(0, value / goal)) : 0
+  const v = value ?? 0
+  const g = goal ?? 0
+  const scale = Math.max(v, g)
+  const pct = (n: number) => (scale > 0 ? (n / scale) * 100 : 0)
+  const over = g > 0 && v > g
+
   return (
     <div
-      className="w-full rounded-full overflow-hidden"
+      className="relative w-full rounded-full overflow-hidden"
       style={{ height, background: 'rgba(255,255,255,0.07)' }}
       aria-hidden="true"
     >
       <div
-        className="h-full rounded-full"
+        className="absolute inset-y-0 left-0 rounded-full"
         style={{
-          width: `${pct * 100}%`,
+          width: `${pct(Math.min(v, g || v))}%`,
           background: color,
           transition: 'width 0.9s cubic-bezier(0.4,0,0.2,1)',
         }}
       />
+      {over && (
+        <div
+          className="absolute inset-y-0 rounded-r-full"
+          style={{
+            left: `${pct(g)}%`,
+            width: `${pct(v - g)}%`,
+            background: OXIDE,
+            transition: 'width 0.9s cubic-bezier(0.4,0,0.2,1), left 0.9s cubic-bezier(0.4,0,0.2,1)',
+          }}
+        />
+      )}
+      {/* The target tick. Only drawn once there is something past it to
+          separate — on an under-budget day the end of the fill IS the answer. */}
+      {over && (
+        <div
+          className="absolute inset-y-0 w-px"
+          style={{ left: `${pct(g)}%`, background: 'rgba(255,255,255,0.55)' }}
+        />
+      )}
     </div>
   )
 }
+
+/** The seven-day rail's four states, in the order they are tested. */
+const CELL_STATES = {
+  exception: { color: AMETHYST, label: 'Exception' },
+  estimated: { color: SAND, label: 'Estimated' },
+  tracked: { color: EMERALD, label: 'Tracked' },
+  untracked: { color: null, label: 'Not tracked' },
+} as const
 
 /**
  * MacroCards — the compact horizontal nutrition summary.
@@ -81,7 +120,12 @@ export const MacroCards = memo(function MacroCards({ today, logs, goals, date }:
   date?: string
 }) {
   const kcal = today?.calories != null ? Math.round(today.calories) : null
-  const over = kcal != null && kcal > CUT_CEILING
+  // OVER THE TARGET YOU SET, not a constant. This read `kcal > 2050`, a
+  // hardcoded v5.1 cut ceiling, so editing the calorie goal in Settings moved
+  // the number and the remainder but not the colour — a 1,900 goal called a
+  // 2,000 kcal day fine, and a 2,400 goal called it over.
+  const over = kcal != null && goals.calorie > 0 && kcal > goals.calorie
+  const todayISO = logicalTodayISO()
   const remaining = kcal != null ? goals.calorie - kcal : null
   const cells = [...logs].slice(0, 7).reverse()
   const calColor = over ? OXIDE : MACRO_COLORS.calories
@@ -186,15 +230,39 @@ export const MacroCards = memo(function MacroCards({ today, logs, goals, date }:
         </div>
       </div>
 
-      {/* 7-day phase fuel cells */}
+      {/* ── 7-day adherence rail ──
+          These cells used to be tinted by PHASE, which is the one thing about a
+          day this strip could not usefully say: on a cut every cell is the same
+          colour, so seven identical boxes carried a weekday letter and nothing
+          else. Adherence changes day to day, which is what makes a row of seven
+          worth looking at — and it is the axis the exception and estimate flags
+          already describe.
+
+          The colours match the history rows exactly: an Exception is AMETHYST
+          in both places, an Estimate is SAND in both. Two surfaces disagreeing
+          about what colour a declared day is would be worse than either. */}
       <div className="flex items-center justify-center gap-1.5 pt-1">
         {cells.map((d) => {
-          const c = d.phase ? PHASE_META[d.phase].color : null
+          const state = isExceptionDay(d.exception) ? CELL_STATES.exception
+            : d.estimated ? CELL_STATES.estimated
+            : d.calories != null ? CELL_STATES.tracked
+            : CELL_STATES.untracked
+          const c = state.color
+          const isToday = d.date === todayISO
           return (
-            <div key={d.date} title={`${d.date}${d.calories != null ? ` · ${Math.round(d.calories)} kcal` : ''}`}
+            <div key={d.date}
+              title={`${d.date} · ${state.label}${d.calories != null ? ` · ${Math.round(d.calories)} kcal` : ''}`}
               className="w-7 h-9 rounded-md border flex items-end justify-center pb-0.5"
-              style={{ borderColor: c ? `${c}55` : 'rgba(255,255,255,0.08)', background: c ? `${c}18` : 'rgba(255,255,255,0.02)', boxShadow: c ? `0 0 8px ${c}30` : undefined }}>
-              <span className="text-[8px] font-bold" style={{ color: c ?? '#5A6472' }}>
+              style={{
+                borderColor: c ? `${c}55` : 'rgba(255,255,255,0.08)',
+                background: c ? `${c}18` : 'rgba(255,255,255,0.02)',
+                boxShadow: c ? `0 0 8px ${c}30` : undefined,
+                // Today keeps an outline rather than a colour of its own — it
+                // has a state like every other day and must still show it.
+                outline: isToday ? '1px solid rgba(255,255,255,0.35)' : undefined,
+                outlineOffset: isToday ? '1px' : undefined,
+              }}>
+              <span className="text-[8px] font-bold" style={{ color: c ?? DIM }}>
                 {new Date(d.date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'narrow' })}
               </span>
             </div>

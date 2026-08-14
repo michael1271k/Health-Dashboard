@@ -442,7 +442,11 @@ export default function DashboardPage() {
             } : null}
             logs={fuelLogs ?? []}
             goals={{
-              calorie: goals?.calorie_goal ?? 1955,
+              // 0, not a hardcoded 1,955. The bar and the "over" colour are
+              // driven by this number now, so an invented target would paint a
+              // verdict against a goal the user never set. At 0 the bar simply
+              // has no target to draw, which is the truth until goals load.
+              calorie: goals?.calorie_goal ?? 0,
               protein: goals?.protein_goal_g ?? null,
               carbs: goals?.carbs_goal_g ?? null,
               fat: goals?.fat_goal_g ?? null,

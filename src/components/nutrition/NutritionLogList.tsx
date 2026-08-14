@@ -4,7 +4,7 @@ import type { DailyLog } from '@/lib/hooks/useNutrition'
 import { phaseDisplay } from '@/lib/nutrition/phase'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { isExceptionDay } from '@/lib/nutrition/exceptionDay'
-import { SAND, STEEL } from '@/lib/theme/palette'
+import { SAND, AMETHYST } from '@/lib/theme/palette'
 
 interface Goals { calorie: number; protein: number | null; carbs: number | null; fat: number | null }
 
@@ -87,7 +87,7 @@ export function NutritionLogList({ logs, goals, isLoading, emptyMessage, onDayCl
         // danger colour, the same one an unravelled week gets — which is
         // precisely the verdict the flag exists to withdraw.
         const flagged = isExceptionDay(l.exception)
-        const calColor = flagged ? SAND
+        const calColor = flagged ? AMETHYST
           : l.calories == null ? '#79808C'
           : Math.abs(l.calories - goals.calorie) <= 150 ? '#3E9E7A'
           : Math.abs(l.calories - goals.calorie) <= 350 ? '#D4AF37' : '#C4514E'
@@ -109,14 +109,17 @@ export function NutritionLogList({ logs, goals, isLoading, emptyMessage, onDayCl
                   <span className="helix-num text-fluid-lg font-bold leading-none" style={{ color: calColor }}>{l.calories != null ? Math.round(l.calories).toLocaleString() : '—'}</span>
                   <span className="text-[10px] text-muted">kcal</span>
                 </span>
-                {flagged && l.exception && <ContextChip label={l.exception} color={SAND} glow />}
+                {flagged && l.exception && <ContextChip label={l.exception} color={AMETHYST} glow />}
                 {/* An estimate does NOT take the calorie colour above — the
                     number is still counted at full weight and still graded
                     normally, so recolouring it would claim a forgiveness that
                     was never granted. It gets its own quiet mark instead, in
-                    STEEL rather than SAND, because "I guessed" and "I was
-                    allowed to miss" are different statements about a day. */}
-                {l.estimated && <ContextChip label="Est" color={STEEL} />}
+                    SAND rather than AMETHYST, because "I guessed" and "I was
+                    allowed to miss" are different statements about a day.
+                    These two hues are shared with the 7-day rail in MacroCards;
+                    two surfaces disagreeing about the colour of a declared day
+                    would be worse than either choice. */}
+                {l.estimated && <ContextChip label="Est" color={SAND} />}
               </div>
               <div className="flex items-center gap-2 mt-1.5">
                 <MacroBar label="P" value={l.proteinG} goal={goals.protein} />
