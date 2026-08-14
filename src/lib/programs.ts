@@ -7,7 +7,7 @@
  */
 import { getScheduleOverride, REST_OVERRIDE } from '@/lib/schedule/overrides'
 import { getProgramLayout } from '@/lib/schedule/layoutStore'
-import { effectiveWeekday } from '@/lib/schedule/layout'
+import { effectiveWeekday, type DayLayout } from '@/lib/schedule/layout'
 import { DAY_COLOR, DIM, PLATINUM } from '@/lib/theme/palette'
 
 export type Era = 'ppl' | 'axis'
@@ -323,8 +323,12 @@ export function programForDate(dateISO: string): Program {
  */
 export function programDayFor(programId: string, weekday: number): ProgramDay | 'rest' {
   const p = PROGRAMS[programId] ?? APEX51
-  const layout = getProgramLayout(p.id)
-  return p.days.find((d) => effectiveWeekday(d, layout) === weekday) ?? 'rest'
+  return programDayIn(p, getProgramLayout(p.id), weekday)
+}
+
+/** {@link programDayFor} with the layout supplied rather than read from a store. */
+export function programDayIn(program: Program, layout: DayLayout, weekday: number): ProgramDay | 'rest' {
+  return program.days.find((d) => effectiveWeekday(d, layout) === weekday) ?? 'rest'
 }
 
 /** Exact program day by its stored `day_key` (server-safe; searches all programs). */
@@ -357,18 +361,13 @@ export function prescribedFor(dayKey: string, phase: 'cut' | 'bulk'): { exercise
  * rest (so Jul 15, a Wednesday, reads as rest).
  */
 export function isTrainingDay(dateISO: string): boolean {
-  // A per-date swap wins over the weekday default (client cascade; empty on server).
-  const override = getScheduleOverride(dateISO)
-  if (override != null) return override !== REST_OVERRIDE
-  const weekday = new Date(`${dateISO}T12:00:00Z`).getUTCDay()
-  if (eraForDate(dateISO) === 'ppl') return weekday !== 5 && weekday !== 6 // legacy PPL: trained Sun–Thu
   // The ACTIVE plan, not the default one. This read `DEFAULT_PROGRAM_ID`, which
   // is a no-op while Helix-5 is active but would have answered against Helix-5's
   // week for a user running Helix-4 — and this function gates the supplement
   // cascade, so it would have added pre-workout stimulants to rest days and
   // stripped them from training days. `scheduleDayFor` next door already reads
   // the active plan; the two disagreeing was the latent half of the bug.
-  return programDayFor(getActiveProgramId(), weekday) !== 'rest'
+  return isTrainingDayIn(clientScheduleContext(), dateISO)
 }
 
 /** Inverse of {@link isTrainingDay} — Wed/Sat Zone-2 rest in HELIX-5, Fri/Sat in PPL. */
@@ -390,11 +389,71 @@ export interface ScheduleDay { label: string; sub?: string; dayKey?: string }
  * show the active program's day. 'rest' on scheduled rest days.
  */
 export function scheduleDayFor(dateISO: string, programId = getActiveProgramId()): ScheduleDay | 'rest' {
+  return scheduleDayIn(clientScheduleContext(programId), dateISO)
+}
+
+// ── The pure schedule core ───────────────────────────────────────────────────
+//
+// ── WHY A CONTEXT OBJECT AND NOT JUST MORE ARGUMENTS ─────────────────────────
+// Everything above resolves four things — the plan, the phase, the per-date
+// swaps and the permanent weekday layout — and every one of them lives behind
+// `localStorage`. On a server all four silently answer with a default, so
+// `/api/widget/snapshot` announced the wrong session for any non-default plan
+// and ignored `schedule_overrides` entirely, and `/api/compute-score` graded
+// rest days against a week the athlete was not training.
+//
+// The fix is to state the four inputs once, as a value. A browser fills it from
+// the caches it already keeps; a route fills it from `user_goals`,
+// `schedule_overrides` and `program_day_layout`. There is exactly one rule and
+// both callers run it, which is the only arrangement in which they cannot drift.
+
+/** Everything the schedule rule needs, with nothing read from a global. */
+export interface ScheduleContext {
+  programId: string
+  phase: ProgramPhase
+  /** `date → day_key | 'rest'` (`schedule_overrides`). */
+  overrides: Readonly<Record<string, string>>
+  /** `dayKey → weekday` for THIS plan (`program_day_layout`). */
+  layout: DayLayout
+}
+
+/** The context the BROWSER is running — read from the synchronous caches. */
+export function clientScheduleContext(programId: string = getActiveProgramId()): ScheduleContext {
+  return {
+    programId,
+    phase: activePhase(),
+    // `getScheduleOverride` is a single-key read over a private cache; there is
+    // no bulk accessor and adding one would leak the cache's identity into
+    // render (the reason it is a version-counter store at all). The rule only
+    // ever asks about one date, so the context carries a one-entry view built
+    // lazily by `overrideFor` below.
+    overrides: CLIENT_OVERRIDES,
+    layout: getProgramLayout(PROGRAMS[programId] ? programId : DEFAULT_PROGRAM_ID),
+  }
+}
+
+/**
+ * A live view onto the client override cache. `scheduleDayIn` only ever reads
+ * one key, so a Proxy-free object with a getter trap is unnecessary: a plain
+ * object whose lookups delegate is enough, and it keeps `ScheduleContext` a
+ * boring record on the server side where it matters.
+ */
+const CLIENT_OVERRIDES: Readonly<Record<string, string>> = new Proxy({}, {
+  get: (_t, key) => (typeof key === 'string' ? getScheduleOverride(key) : undefined),
+  has: (_t, key) => typeof key === 'string' && getScheduleOverride(key) != null,
+})
+
+/** {@link scheduleDayFor}, as a pure function of an explicit context. */
+export function scheduleDayIn(ctx: ScheduleContext, dateISO: string): ScheduleDay | 'rest' {
+  const program = PROGRAMS[ctx.programId] ?? APEX51
   // A per-date swap wins over the weekday default so the whole app cascades.
-  const override = getScheduleOverride(dateISO)
+  const override = ctx.overrides[dateISO]
   if (override != null) {
     if (override === REST_OVERRIDE) return 'rest'
-    const od = (PROGRAMS[programId] ?? APEX51).days.find((d) => d.key === override)
+    const od = program.days.find((d) => d.key === override)
+    // An override naming a day this plan does not have is a stale row from a
+    // plan the user has left. Fall through to the weekday default rather than
+    // invent a session out of a key nothing can resolve.
     if (od) return { label: od.label, sub: od.sub, dayKey: od.key }
   }
   const weekday = new Date(`${dateISO}T12:00:00Z`).getUTCDay()
@@ -402,8 +461,29 @@ export function scheduleDayFor(dateISO: string, programId = getActiveProgramId()
     const label = PPL_WEEKDAY[weekday]
     return label ? { label } : 'rest'
   }
-  const d = programDayFor(programId, weekday)
+  const d = programDayIn(program, ctx.layout, weekday)
   return d === 'rest' ? 'rest' : { label: d.label, sub: d.sub, dayKey: d.key }
+}
+
+/** {@link isTrainingDay}, as a pure function of an explicit context. */
+export function isTrainingDayIn(ctx: ScheduleContext, dateISO: string): boolean {
+  const override = ctx.overrides[dateISO]
+  if (override != null) return override !== REST_OVERRIDE
+  const weekday = new Date(`${dateISO}T12:00:00Z`).getUTCDay()
+  if (eraForDate(dateISO) === 'ppl') return weekday !== 5 && weekday !== 6 // legacy PPL: trained Sun–Thu
+  return programDayIn(PROGRAMS[ctx.programId] ?? APEX51, ctx.layout, weekday) !== 'rest'
+}
+
+/**
+ * How many sessions the plan schedules in a week — the denominator on "3/5".
+ *
+ * Counted off the UNTRIMMED plan on purpose. A cut drops bulk-only lifts and can
+ * empty an exercise list, but it never deletes a training day; grading against
+ * the trimmed count would shrink the target for the phase in which hitting it
+ * matters most.
+ */
+export function sessionTargetIn(ctx: ScheduleContext): number {
+  return (PROGRAMS[ctx.programId] ?? PROGRAMS[DEFAULT_PROGRAM_ID]).days.length
 }
 
 // Map a program-day key onto the existing split_day enum (for saving sessions).

@@ -1,19 +1,30 @@
 'use client'
 
 import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import { initNativeSync } from '@/lib/native/sync'
+import { initDeepLinks } from '@/lib/native/deepLink'
+import { reloadWidgets } from '@/lib/native/widgets'
 import { invalidateHealthData } from '@/lib/query/workoutKeys'
 import { hydratePrefsFromDb } from '@/lib/utils/prefsSync'
 
 /**
- * Boots native-only behaviour (HealthKit permission + resume/foreground sync).
- * A no-op on the web — every initializer guards on the native platform — so it's
- * safe to mount unconditionally in the root layout. Each full sync revalidates
- * the health-derived React Query surfaces so the open UI updates immediately.
+ * Boots native-only behaviour (HealthKit permission + resume/foreground sync,
+ * and widget deep links). A no-op on the web — every initializer guards on the
+ * native platform — so it's safe to mount unconditionally in the root layout.
+ * Each full sync revalidates the health-derived React Query surfaces so the open
+ * UI updates immediately.
  */
 export function NativeBoot() {
   const qc = useQueryClient()
+  const router = useRouter()
+
+  // Widget taps. Separate from the sync effect on purpose: a deep link must be
+  // handled the instant it arrives, and the sync effect deliberately waits out
+  // a paint frame and a permission sheet before it does anything.
+  useEffect(() => initDeepLinks((path) => router.push(path)), [router])
+
   useEffect(() => {
     const stopSync = initNativeSync(() => {
       invalidateHealthData(qc)
@@ -25,6 +36,10 @@ export function NativeBoot() {
       // never triggers that path.
       void hydratePrefsFromDb()
       qc.invalidateQueries({ queryKey: ['schedule_overrides'] })
+      // A sync is the moment the server's answer definitely changed. Without
+      // this the home screen keeps whatever it fetched up to half an hour ago,
+      // even though the app is right here having just replaced it.
+      void reloadWidgets()
     })
     return () => { stopSync() }
   }, [qc])

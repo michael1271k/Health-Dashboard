@@ -16,6 +16,8 @@
 		4C8EA42A3014D14A007CEF26 /* HelixWidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 4C8EA41B3014D149007CEF26 /* HelixWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		4C8EA4303014D24C007CEF26 /* HelixSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C8EA4133014D04D007CEF26 /* HelixSnapshot.swift */; };
 		4CA0FA6A3018E01F00141641 /* SecureStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CA0FA693018E01F00141641 /* SecureStore.swift */; };
+		4CB1A0113100000000000001 /* HelixBackgroundRefresh.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CB1A0013100000000000001 /* HelixBackgroundRefresh.swift */; };
+		4CB1A0123100000000000002 /* HelixWidgetBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CB1A0023100000000000002 /* HelixWidgetBridge.swift */; };
 		4CC46EC2300C030F00DFDFCE /* HelixHealth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CC46EC1300C030D00DFDFCE /* HelixHealth.swift */; };
 		4CC46EC5300C034500DFDFCE /* HelixHealthRegistration.m in Sources */ = {isa = PBXBuildFile; fileRef = 4CC46EC4300C034300DFDFCE /* HelixHealthRegistration.m */; };
 		4CC46EC7300C03F600DFDFCE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504EC3071FED79650016851F /* AppDelegate.swift */; };
@@ -79,6 +81,8 @@
 		4C8EA4313014DDD1007CEF26 /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 		4C90F0413013EFF50096E03F /* HelixWatch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "HelixWatch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4CA0FA693018E01F00141641 /* SecureStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecureStore.swift; sourceTree = "<group>"; };
+		4CB1A0013100000000000001 /* HelixBackgroundRefresh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelixBackgroundRefresh.swift; sourceTree = "<group>"; };
+		4CB1A0023100000000000002 /* HelixWidgetBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelixWidgetBridge.swift; sourceTree = "<group>"; };
 		4CC46EC1300C030D00DFDFCE /* HelixHealth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelixHealth.swift; sourceTree = "<group>"; };
 		4CC46EC3300C031D00DFDFCE /* App-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "App-Bridging-Header.h"; sourceTree = "<group>"; };
 		4CC46EC4300C034300DFDFCE /* HelixHealthRegistration.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = HelixHealthRegistration.m; sourceTree = "<group>"; };
@@ -192,6 +196,8 @@
 			isa = PBXGroup;
 			children = (
 				4CC46EC4300C034300DFDFCE /* HelixHealthRegistration.m */,
+				4CB1A0013100000000000001 /* HelixBackgroundRefresh.swift */,
+				4CB1A0023100000000000002 /* HelixWidgetBridge.swift */,
 				4CC46EC1300C030D00DFDFCE /* HelixHealth.swift */,
 				4CC46ED1300C030D00DFDFCE /* HelixViewController.swift */,
 				4CDD20C0300B802400E3AA88 /* App.entitlements */,
@@ -423,6 +429,8 @@
 				4CC46EC7300C03F600DFDFCE /* AppDelegate.swift in Sources */,
 				4C8EA4163014D04D007CEF26 /* HelixSnapshot.swift in Sources */,
 				4CA0FA6A3018E01F00141641 /* SecureStore.swift in Sources */,
+				4CB1A0113100000000000001 /* HelixBackgroundRefresh.swift in Sources */,
+				4CB1A0123100000000000002 /* HelixWidgetBridge.swift in Sources */,
 				4CC46EC2300C030F00DFDFCE /* HelixHealth.swift in Sources */,
 				4CC46ED0300C030F00DFDFCE /* HelixViewController.swift in Sources */,
 				4CC46EC5300C034500DFDFCE /* HelixHealthRegistration.m in Sources */,

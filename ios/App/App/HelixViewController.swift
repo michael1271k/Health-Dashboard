@@ -14,6 +14,11 @@ import Capacitor
 class HelixViewController: CAPBridgeViewController {
   override func capacitorDidLoad() {
     bridge?.registerPluginInstance(HealthkitPlugin())
+    // Lets the web layer call `WidgetCenter.reloadAllTimelines()` after a sync
+    // or a commit — see src/lib/native/widgets.ts. Without registration the
+    // call would reject silently, which is exactly the failure the comment
+    // above this method describes.
+    bridge?.registerPluginInstance(HelixWidgetsPlugin())
     // SecureStore (Keychain session persistence) was retired: the web app no longer
     // calls it (auth is a one-tap re-login). SecureStore.swift can be removed from the
     // App target in Xcode; leaving it compiled but unregistered is harmless meanwhile.

@@ -3,6 +3,7 @@
 import type { QueryClient } from '@tanstack/react-query'
 import { todayBundleKey, type TodayBundle } from '@/lib/hooks/useToday'
 import type { TodayReadiness } from '@/lib/hooks/useTodayReadiness'
+import { reloadWidgets } from '@/lib/native/widgets'
 
 /**
  * The `daily_scores` row `POST /api/compute-score` echoes back.
@@ -85,6 +86,12 @@ export async function recomputeAndPaint(
     })
     const json = await res.json().catch(() => null) as { score?: ComputedScore | null } | null
     paintComputedScore(qc, date, json?.score)
+    // Every path that recomputes a score has just changed what the widget
+    // endpoint would answer — a commit, an edit, a water log, a foreground sync.
+    // This is the single place all of them pass through, so it is the one place
+    // the home screen needs to be told. Fire-and-forget: a widget that refreshes
+    // late is a small loss, a commit that fails because of one is not.
+    void reloadWidgets()
     return !!json?.score
   } catch {
     return false

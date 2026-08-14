@@ -249,7 +249,12 @@ export interface Database {
           finalized: boolean
           computed_at: string
         }
+        // `computed_at` defaults to now() on insert, but there is no update
+        // trigger — so an upsert that updates an existing row leaves the old
+        // stamp in place and the column silently means "first computed at".
+        // Writable, because the scorer now sets it explicitly.
         Insert: Omit<Database['public']['Tables']['daily_scores']['Row'], 'id' | 'computed_at'>
+          & { computed_at?: string }
         Update: Partial<Database['public']['Tables']['daily_scores']['Insert']>
       }
       profiles: {

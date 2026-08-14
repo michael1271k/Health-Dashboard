@@ -3,12 +3,21 @@ import { getServerSupabaseClient } from '@/lib/supabase/server'
 import { nightWindow } from '@/lib/sleep/nightWindow'
 import { weekStartOf, isoAddDays, weekStartDayFromEndDay } from '@/lib/utils/week'
 import { logicalTodayInTZ } from '@/lib/utils/day'
-import { scheduleDayFor, isRestDayFor, activeProgram } from '@/lib/programs'
+import { scheduleDayIn, isTrainingDayIn, sessionTargetIn } from '@/lib/programs'
+import { serverScheduleContext } from '@/lib/schedule/serverContext'
+import { computeForDate } from '@/lib/scoring/computeForDate'
+import { BATTERY } from '@/lib/scoring/battery'
 // `utils/units` is a `'use client'` module — importing validWeight from THERE
 // hands a route handler a client-reference proxy that throws on call. See
 // `utils/measure.ts` for why the pure rules were split out.
 import { validWeight } from '@/lib/utils/measure'
-import type { WidgetSnapshot } from '@/lib/widget/snapshot'
+import {
+  parseScope, type WidgetScope, type WidgetSnapshot, type WidgetWeekTotals,
+} from '@/lib/widget/snapshot'
+import {
+  trendPoints, meanBetween, topRecords, e1rmTrends, volumeByFamily, shiftISO,
+  type SetRow,
+} from '@/lib/widget/derive'
 
 /**
  * GET /api/widget/snapshot — the iOS Widget + Watch data source.
@@ -26,10 +35,17 @@ import type { WidgetSnapshot } from '@/lib/widget/snapshot'
  * Timezone comes from the caller (`?tz=Europe/London`) with the stored
  * user_goals.timezone as the fallback — the server clock is UTC and would put
  * the widget a day out for part of every day.
+ *
+ * `?scope=lifestyle|performance|full` trims the expensive extras. See
+ * `WidgetScope`: the base contract ships in every scope, so the Swift decoder
+ * never has to reason about which fields a query parameter happened to include.
  */
 export const dynamic = 'force-dynamic'
 
 const HOME_TZ = 'Asia/Jerusalem'
+
+/** How old today's score row may be before the widget recomputes it. */
+const SCORE_STALE_MINUTES = 20
 
 function bearer(req: Request): string | null {
   const h = req.headers.get('authorization') ?? ''
@@ -40,8 +56,8 @@ function bearer(req: Request): string | null {
 /**
  * Run a sub-query so a transport failure degrades ONE field instead of the page.
  *
- * The eight reads below used to sit in a bare `Promise.all`. Supabase resolves
- * query errors into `{ error }` rather than rejecting, so that held for ordinary
+ * The reads below used to sit in a bare `Promise.all`. Supabase resolves query
+ * errors into `{ error }` rather than rejecting, so that held for ordinary
  * failures — but a DNS blip, an aborted socket, or an unmigrated table reached
  * through a throwing client rejects for real, and `Promise.all` turns one
  * rejection into a 500. A widget extension gets a few hundred milliseconds and
@@ -55,6 +71,36 @@ async function soft<T>(p: PromiseLike<{ data: T | null }>): Promise<T | null> {
     return data ?? null
   } catch {
     return null
+  }
+}
+
+/**
+ * Roughly how far through the waking day the user is, in their own timezone.
+ *
+ * The battery drains against this, so it is the reason a widget can go stale
+ * without any new data arriving at all. `hoursAwakeToday` reads the SERVER
+ * clock, which is UTC — for a Jerusalem morning that is a three-hour error in
+ * the one input that changes every hour.
+ */
+function hoursAwakeInTZ(tz: string, wakeHour = 7): number {
+  try {
+    const hh = new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', hour12: false })
+      .format(new Date())
+    return Math.max(0, Math.min(BATTERY.maxAwake, Number(hh) - wakeHour))
+  } catch {
+    return Math.max(0, Math.min(BATTERY.maxAwake, new Date().getUTCHours() - wakeHour))
+  }
+}
+
+/** Sum a week's session rows into the shape both `week` and `weekPrev` use. */
+function totalsOf(rows: ReadonlyArray<{
+  total_volume_kg: number | null; set_count: number | null; pr_count: number | null
+}>): WidgetWeekTotals {
+  return {
+    sessions: rows.length,
+    volumeKg: Math.round(rows.reduce((s, r) => s + (r.total_volume_kg ?? 0), 0)),
+    prs: rows.reduce((s, r) => s + (r.pr_count ?? 0), 0),
+    sets: rows.reduce((s, r) => s + (r.set_count ?? 0), 0),
   }
 }
 
@@ -83,6 +129,10 @@ export async function GET(req: Request) {
   const goals = (goalsRow ?? {}) as Record<string, number | string | null>
 
   const url = new URL(req.url)
+  const scope: WidgetScope = parseScope(url.searchParams.get('scope'))
+  const wantsLifestyle = scope !== 'performance'
+  const wantsPerformance = scope !== 'lifestyle'
+
   const tz = url.searchParams.get('tz') || (goals.timezone as string | null) || HOME_TZ
   const date = logicalTodayInTZ(tz)
   const night = nightWindow(date)
@@ -91,30 +141,55 @@ export async function GET(req: Request) {
   // answered Sunday — so a Monday-start preference made the widget's "this week"
   // disagree with the same figure inside the app, by up to a whole session.
   const weekStart = weekStartOf(date, weekStartDayFromEndDay(goals.week_end_day as number | null))
+  const prevWeekStart = isoAddDays(weekStart, -7)
   const weekEndExclusive = `${isoAddDays(weekStart, 7)}T00:00:00Z`
+
+  // ── The plan the user is ACTUALLY running ──────────────────────────────────
+  // This used to be `scheduleDayFor(date)` / `isRestDayFor(date)` /
+  // `activeProgram().days.length`, all of which resolve through localStorage and
+  // therefore answered with the DEFAULT plan, the bulk phase and an empty
+  // override map on a server. The widget announced the wrong session for any
+  // other plan and ignored every swap in `schedule_overrides`.
+  const schedule = await serverScheduleContext(supabase, userId, goals)
+
+  // ── Keep the score honest before answering ─────────────────────────────────
+  // `battery_pct` decays with hours awake, so the stored row is wrong within an
+  // hour of being written even when no new data has arrived — which is exactly
+  // why the widget looked frozen until the app was opened. Recomputing here
+  // makes a widget refresh a *data* refresh. Bounded deliberately: today only,
+  // never a finalized past day, and skipped entirely when the row is fresh.
+  await refreshTodayScore(supabase, userId, date, tz, !isTrainingDayIn(schedule, date))
 
   const [score, log, metrics, sleep, nutri, waterRows, weightRows, weekRows] = await Promise.all([
     soft(supabase.from('daily_scores').select('score, battery_pct').eq('user_id', userId).eq('date', date).maybeSingle()),
     soft(supabase.from('daily_logs').select('steps, distance_m, active_energy, water_ml, sleep_minutes')
       .eq('user_id', userId).eq('date', date).maybeSingle()),
     soft(supabase.from('daily_metrics').select('steps, active_cal').eq('user_id', userId).eq('date', date).maybeSingle()),
-    soft(supabase.from('sleep_sessions').select('duration_min, deep_min, rem_min').eq('user_id', userId)
+    soft(supabase.from('sleep_sessions')
+      .select('duration_min, deep_min, rem_min, core_min, awake_min, sleep_score, start_time, end_time')
+      .eq('user_id', userId)
       .gte('start_time', night.from).lt('start_time', night.to)
       .order('duration_min', { ascending: false }).limit(1).maybeSingle()),
     soft(supabase.from('nutrition_entries').select('calories, protein_g, carbs_g, fat_g')
       .eq('user_id', userId).eq('date', date).eq('meal_type', 'daily').maybeSingle()),
     soft(supabase.from('water_intake').select('amount_ml').eq('user_id', userId).eq('date', date)),
-    // Last two weigh-ins, for the delta.
+    // Enough weigh-ins for a fortnight trace AND last week's mean baseline —
+    // the route already fetched eight and threw six of them away.
     soft(supabase.from('body_composition').select('date, weight_kg').eq('user_id', userId)
-      .order('date', { ascending: false }).limit(8)),
+      .order('date', { ascending: false }).limit(30)),
+    // Two weeks of sessions: this one for the totals, last one for the deltas.
     soft(supabase.from('workout_sessions').select('started_at, total_volume_kg, set_count, pr_count, day_key')
       .eq('user_id', userId)
-      .gte('started_at', `${weekStart}T00:00:00Z`).lt('started_at', weekEndExclusive)),
+      .gte('started_at', `${prevWeekStart}T00:00:00Z`).lt('started_at', weekEndExclusive)),
   ]) as [
     { score: number | null; battery_pct: number | null } | null,
     Record<string, number | null> | null,
     { steps: number | null; active_cal: number | null } | null,
-    { duration_min: number | null; deep_min: number | null; rem_min: number | null } | null,
+    {
+      duration_min: number | null; deep_min: number | null; rem_min: number | null
+      core_min: number | null; awake_min: number | null; sleep_score: number | null
+      start_time: string | null; end_time: string | null
+    } | null,
     Record<string, number | null> | null,
     Array<{ amount_ml: number }> | null,
     Array<{ date: string; weight_kg: number | null }> | null,
@@ -122,7 +197,9 @@ export async function GET(req: Request) {
   ]
 
   const water = waterRows ?? []
-  const weekSessions = weekRows ?? []
+  const allSessions = weekRows ?? []
+  const weekSessions = allSessions.filter((s) => s.started_at.slice(0, 10) >= weekStart)
+  const prevSessions = allSessions.filter((s) => s.started_at.slice(0, 10) < weekStart)
 
   // Weigh-ins, de-duplicated by VALUE so a re-synced identical reading doesn't
   // read as a fresh weigh-in (same rule as the dashboard's Body card).
@@ -132,23 +209,36 @@ export async function GET(req: Request) {
   const latest = weighIns[0] ?? null
   const previous = weighIns.find((r) => latest && Math.abs(r.kg - latest.kg) >= 0.05) ?? null
 
-  const day = scheduleDayFor(date)
+  const weightSeries = trendPoints(weighIns.map((r) => ({ date: r.date, value: r.kg })), 14)
+
+  const day = scheduleDayIn(schedule, date)
   const num = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null)
 
   const snapshot: WidgetSnapshot = {
     date,
     generatedAt: new Date().toISOString(),
+    scope,
     battery: score?.battery_pct ?? null,
     score: score?.score ?? null,
     sleep: {
       minutes: sleep?.duration_min ?? log?.sleep_minutes ?? null,
       deepMin: sleep?.deep_min ?? null,
       remMin: sleep?.rem_min ?? null,
+      coreMin: sleep?.core_min ?? null,
+      awakeMin: sleep?.awake_min ?? null,
+      score: sleep?.sleep_score ?? null,
+      startTime: sleep?.start_time ?? null,
+      endTime: sleep?.end_time ?? null,
     },
     weight: {
       kg: latest?.kg ?? null,
       deltaKg: latest && previous ? Math.round((latest.kg - previous.kg) * 100) / 100 : null,
       measuredOn: latest?.date ?? null,
+      targetKg: num(goals.target_weight_kg),
+      // The baseline the fortnight is read against. Null — never zero — when
+      // last week holds no weigh-in at all.
+      prevWeekMeanKg: meanBetween(weightSeries, prevWeekStart, weekStart),
+      ...(wantsLifestyle ? { trend: weightSeries } : {}),
     },
     macros: {
       kcal: nutri?.calories ?? null,
@@ -176,18 +266,23 @@ export async function GET(req: Request) {
       // instead of inferring one from the label string.
       dayKey: day === 'rest' ? null : (day.dayKey ?? null),
       logged: weekSessions.some((s) => s.started_at.slice(0, 10) === date),
-      isRestDay: isRestDayFor(date),
+      isRestDay: !isTrainingDayIn(schedule, date),
     },
     week: {
-      sessions: weekSessions.length,
-      volumeKg: Math.round(weekSessions.reduce((s, r) => s + (r.total_volume_kg ?? 0), 0)),
-      prs: weekSessions.reduce((s, r) => s + (r.pr_count ?? 0), 0),
-      sets: weekSessions.reduce((s, r) => s + (r.set_count ?? 0), 0),
+      ...totalsOf(weekSessions),
       // How many training days the active plan schedules — without it, "3
       // sessions" is a number with nothing to be measured against, which is the
       // one thing a glanceable surface cannot afford.
-      sessionTarget: activeProgram().days.length,
+      sessionTarget: sessionTargetIn(schedule),
     },
+    weekPrev: totalsOf(prevSessions),
+  }
+
+  if (wantsLifestyle) {
+    snapshot.steps.trend = await stepsTrend(supabase, userId, date)
+  }
+  if (wantsPerformance) {
+    Object.assign(snapshot, await performanceSlice(supabase, userId, date, weekStart, weekEndExclusive))
   }
 
   // Best-effort usage stamp — never let it fail the request.
@@ -199,8 +294,127 @@ export async function GET(req: Request) {
   return NextResponse.json(snapshot, {
     headers: {
       // Widgets refresh on their own timeline; a short edge cache keeps repeated
-      // small/medium/Watch fetches from hitting the DB three times over.
+      // small/medium/Watch fetches from hitting the DB three times over. Keyed
+      // per scope by Vary so a Lifestyle response is never served to a
+      // Performance widget.
       'Cache-Control': 'private, max-age=60',
+      'Vary': 'Authorization',
     },
   })
+}
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+type Db = ReturnType<typeof getServerSupabaseClient>
+
+/**
+ * Recompute today's score when the stored one has gone stale.
+ *
+ * Yes, this is a write on a GET. It is deliberate and bounded: idempotent,
+ * scoped to the one user the token resolves to, restricted to their logical
+ * TODAY (a finalized past day is never touched), and skipped entirely when the
+ * row was written within `SCORE_STALE_MINUTES`. The alternative is the state
+ * this replaces — a home-screen battery that is only ever as fresh as the last
+ * time the app happened to be opened.
+ *
+ * Failure is silent by design. A widget with a slightly old battery is a far
+ * better outcome than a widget with no battery, so nothing here may reject.
+ */
+async function refreshTodayScore(
+  supabase: Db, userId: string, date: string, tz: string, isRestDay: boolean,
+): Promise<void> {
+  try {
+    const { data } = await (supabase as any)
+      .from('daily_scores').select('computed_at')
+      .eq('user_id', userId).eq('date', date).maybeSingle()
+    const writtenAt = (data as { computed_at?: string | null } | null)?.computed_at ?? null
+    if (writtenAt) {
+      const ageMin = (Date.now() - new Date(writtenAt).getTime()) / 60000
+      if (Number.isFinite(ageMin) && ageMin < SCORE_STALE_MINUTES) return
+    }
+    await computeForDate(supabase as any, userId, date, hoursAwakeInTZ(tz), {
+      isRestDay, todayISO: date, isToday: true,
+    })
+  } catch {
+    /* a stale battery beats no battery */
+  }
+}
+
+/** Seven days of step counts, preferring the HealthKit mirror over the log. */
+async function stepsTrend(supabase: Db, userId: string, date: string) {
+  const from = shiftISO(date, -6)
+  const [metrics, logs] = await Promise.all([
+    soft((supabase as any).from('daily_metrics').select('date, steps')
+      .eq('user_id', userId).gte('date', from).lte('date', date)),
+    soft((supabase as any).from('daily_logs').select('date, steps')
+      .eq('user_id', userId).gte('date', from).lte('date', date)),
+  ]) as [Array<{ date: string; steps: number | null }> | null, Array<{ date: string; steps: number | null }> | null]
+
+  const byDate = new Map<string, number | null>()
+  for (const r of logs ?? []) byDate.set(r.date, r.steps)
+  // daily_metrics is the deduplicated HealthKit read (iPhone + Watch resolved by
+  // HKStatisticsQuery); daily_logs is the older mirror. Metrics wins where both
+  // exist — that is the number the Health app itself shows.
+  for (const r of metrics ?? []) if (r.steps != null) byDate.set(r.date, r.steps)
+
+  return trendPoints([...byDate].map(([d, v]) => ({ date: d, value: v })), 7)
+}
+
+/**
+ * Records, 1RM movement and the week's muscle-family split.
+ *
+ * Three reads, all small: 421 sets and 66 ledger rows exist in total, and the
+ * exercise catalogue is 59 names. The name join is done here rather than as a
+ * PostgREST embed because `workout_sets` carries only `exercise_id` and the
+ * record ledger carries only a display NAME — the two have to be reconciled in
+ * one place regardless.
+ */
+async function performanceSlice(
+  supabase: Db, userId: string, date: string, weekStart: string, weekEndExclusive: string,
+) {
+  const since = shiftISO(date, -35)   // enough history for a 28-day 1RM delta
+  const [ledger, catalog, sessions] = await Promise.all([
+    soft((supabase as any).from('personal_records')
+      .select('exercise_key, axis, value, reps, achieved_on').eq('user_id', userId)
+      .order('achieved_on', { ascending: false }).limit(40)),
+    soft((supabase as any).from('exercises').select('id, name')),
+    soft((supabase as any).from('workout_sessions').select('id, started_at')
+      .eq('user_id', userId).gte('started_at', `${since}T00:00:00Z`)),
+  ]) as [
+    Array<{ exercise_key: string; axis: string; value: number | null; reps: number | null; achieved_on: string | null }> | null,
+    Array<{ id: string; name: string }> | null,
+    Array<{ id: string; started_at: string }> | null,
+  ]
+
+  const sessionDay = new Map((sessions ?? []).map((s) => [s.id, s.started_at.slice(0, 10)]))
+  const names = new Map((catalog ?? []).map((e) => [e.id, e.name]))
+
+  const setRows = sessionDay.size
+    ? (await soft((supabase as any).from('workout_sets')
+      .select('session_id, exercise_id, weight_kg, reps, est_1rm_kg, set_type')
+      .eq('user_id', userId).in('session_id', [...sessionDay.keys()])) as Array<{
+        session_id: string; exercise_id: string; weight_kg: number | null
+        reps: number | null; est_1rm_kg: number | null; set_type: string | null
+      }> | null) ?? []
+    : []
+
+  const sets: SetRow[] = setRows
+    .map((r) => ({
+      exercise: names.get(r.exercise_id) ?? '',
+      day: sessionDay.get(r.session_id) ?? '',
+      weightKg: r.weight_kg,
+      reps: r.reps,
+      est1rmKg: r.est_1rm_kg,
+      setType: r.set_type,
+    }))
+    // A set whose exercise or session cannot be named is a set nothing can say
+    // anything true about — drop it rather than attribute it to "".
+    .filter((s) => s.exercise !== '' && s.day !== '')
+
+  const weekSets = sets.filter((s) => s.day >= weekStart && `${s.day}T00:00:00Z` < weekEndExclusive)
+
+  return {
+    records: topRecords(ledger ?? [], 3),
+    e1rm: e1rmTrends(sets, { asOf: date, limit: 3 }),
+    volumeByFamily: volumeByFamily(weekSets),
+  }
 }

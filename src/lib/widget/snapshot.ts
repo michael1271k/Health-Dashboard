@@ -18,18 +18,89 @@
  * showing "—" is correct, a widget showing a stale or invented number is not.
  */
 
+/**
+ * Which slice of the payload a caller wants.
+ *
+ * The two composite widgets read disjoint halves, and an extension is measured
+ * in hundreds of milliseconds and a hard memory cap. `full` is the default so
+ * the Watch and the five original widget kinds are untouched by the split.
+ *
+ * The scope only ever trims the EXPENSIVE extras — trends, ledgers, per-family
+ * rollups. Every field the original contract promised ships in every scope,
+ * because a shape that changes with a query parameter is a shape the Swift
+ * decoder cannot rely on.
+ */
+export type WidgetScope = 'lifestyle' | 'performance' | 'full'
+
+export const WIDGET_SCOPES: readonly WidgetScope[] = ['lifestyle', 'performance', 'full']
+
+export function parseScope(raw: string | null | undefined): WidgetScope {
+  return WIDGET_SCOPES.includes(raw as WidgetScope) ? (raw as WidgetScope) : 'full'
+}
+
+/** One dated reading. Short keys: every byte crosses into a capped extension. */
+export interface TrendPoint { d: string; v: number }
+
+/** A standing record off the `personal_records` ledger, floored by the book. */
+export interface WidgetRecord {
+  exercise: string
+  /** 'weight' | 'reps' | 'volume' | 'e1rm' — free text, so a new axis renders. */
+  axis: string
+  value: number
+  reps: number | null
+  achievedOn: string
+}
+
+/** A lift's current estimated 1RM, and its movement over the trailing window. */
+export interface WidgetE1rm {
+  exercise: string
+  kg: number
+  /** Null when the lift has no session old enough to compare against. */
+  deltaKg: number | null
+}
+
+/** A muscle family's share of the training week. `sets` is fractional by design. */
+export interface WidgetFamilyVolume { family: string; kg: number; sets: number }
+
+/** Training totals for a seven-day window. */
+export interface WidgetWeekTotals { sessions: number; volumeKg: number; prs: number; sets: number }
+
 export interface WidgetSnapshot {
   /** The user's logical date this snapshot describes. */
   date: string
   generatedAt: string
+  /** Which slice this payload is, echoed so a cache can be keyed on it. */
+  scope: WidgetScope
 
   /** Drain-only day battery, 0–100. */
   battery: number | null
   /** Composite daily score, 0–100. */
   score: number | null
 
-  sleep: { minutes: number | null; deepMin: number | null; remMin: number | null }
-  weight: { kg: number | null; deltaKg: number | null; measuredOn: string | null }
+  sleep: {
+    minutes: number | null
+    deepMin: number | null
+    remMin: number | null
+    /** Stage totals, NOT a timeline — the Sleep Rainbow is a stacked bar, not a
+     *  hypnogram, and drawing it as one would claim an ordering we do not have. */
+    coreMin: number | null
+    awakeMin: number | null
+    score: number | null
+    /** Bedtime and wake, ISO. `start_time` is the PREVIOUS evening. */
+    startTime: string | null
+    endTime: string | null
+  }
+
+  weight: {
+    kg: number | null
+    deltaKg: number | null
+    measuredOn: string | null
+    targetKg: number | null
+    /** Last week's mean — the dotted baseline the fortnight is read against. */
+    prevWeekMeanKg: number | null
+    /** Up to 14 weigh-ins, oldest first. Gaps are left as gaps. */
+    trend?: TrendPoint[]
+  }
 
   macros: {
     kcal: number | null; kcalGoal: number | null
@@ -38,13 +109,24 @@ export interface WidgetSnapshot {
     fatG: number | null; fatGoalG: number | null
   }
   water: { ml: number | null; goalMl: number | null }
-  steps: { count: number | null; goal: number | null; distanceM: number | null; activeKcal: number | null }
+  steps: {
+    count: number | null; goal: number | null; distanceM: number | null; activeKcal: number | null
+    /** Seven days, oldest first. */
+    trend?: TrendPoint[]
+  }
 
   /** Today's scheduled session, and whether it's already logged. */
   workout: { label: string; dayKey: string | null; logged: boolean; isRestDay: boolean }
 
   /** Week-to-date training totals, and how many sessions the plan schedules. */
   week: { sessions: number; volumeKg: number; prs: number; sets: number; sessionTarget: number }
+  /** The same seven figures for LAST week, so "up or down" is answerable. */
+  weekPrev?: WidgetWeekTotals
+
+  /** Performance scope only — omitted, never emptied, when not requested. */
+  records?: WidgetRecord[]
+  e1rm?: WidgetE1rm[]
+  volumeByFamily?: WidgetFamilyVolume[]
 }
 
 /** kcal left against the goal — the small widget's headline. Null if unknown. */
