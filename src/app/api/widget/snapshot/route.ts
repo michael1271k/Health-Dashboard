@@ -4,7 +4,10 @@ import { nightWindow } from '@/lib/sleep/nightWindow'
 import { weekStartOf, isoAddDays, weekStartDayFromEndDay } from '@/lib/utils/week'
 import { logicalTodayInTZ } from '@/lib/utils/day'
 import { scheduleDayFor, isRestDayFor, activeProgram } from '@/lib/programs'
-import { validWeight } from '@/lib/utils/units'
+// `utils/units` is a `'use client'` module — importing validWeight from THERE
+// hands a route handler a client-reference proxy that throws on call. See
+// `utils/measure.ts` for why the pure rules were split out.
+import { validWeight } from '@/lib/utils/measure'
 import type { WidgetSnapshot } from '@/lib/widget/snapshot'
 
 /**
