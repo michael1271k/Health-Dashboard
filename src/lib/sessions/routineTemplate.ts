@@ -172,16 +172,6 @@ export function templateToDraft(
         }
         return set
       })
-      // Symmetric pair ⇒ linked; asymmetric ⇒ unlinked, so an edit cannot
-      // mirror away an asymmetry that was deliberately logged.
-      const byPair = new Map<string, DraftSet[]>()
-      for (const s of sets) if (s.pairId) {
-        const g = byPair.get(s.pairId) ?? []; g.push(s); byPair.set(s.pairId, g)
-      }
-      for (const g of byPair.values()) {
-        const linked = g.length === 2 && g[0].weightKg === g[1].weightKg && g[0].reps === g[1].reps
-        for (const s of g) s.linked = linked
-      }
       return { localId: localId(), name: ex.name, sets }
     })
 

@@ -99,18 +99,15 @@ describe('templateToDraft — a template is a PLAN, never a log', () => {
     expect(idOf(a)).not.toBe(idOf(b))
   })
 
-  it('unlinks an asymmetric pair and links a symmetric one', () => {
+  it('keeps each side its own numbers — the sides are independent', () => {
+    // No `linked` flag exists to mirror them, so an asymmetry logged last week
+    // opens as an asymmetry this week.
     const asym = templateToDraft(template, cbB, '2026-08-20', 'cb_b')
       .exercises.find((e) => e.name === 'SA Triceps Pushdown')!
-    expect(asym.sets.every((s) => s.linked === false)).toBe(true)
-
-    const symTemplate = payloadToTemplate([
-      set({ exerciseName: 'SA Triceps Pushdown', weightKg: 6.25, reps: 15, side: 'L', pairId: 'p1' }),
-      set({ exerciseName: 'SA Triceps Pushdown', weightKg: 6.25, reps: 15, side: 'R', pairId: 'p1' }),
-    ])!
-    const sym = templateToDraft(symTemplate, cbB, '2026-08-20', 'cb_b')
-      .exercises.find((e) => e.name === 'SA Triceps Pushdown')!
-    expect(sym.sets.every((s) => s.linked === true)).toBe(true)
+    expect(asym.sets.map((s) => [s.side, s.weightKg, s.reps])).toEqual([
+      ['L', 6.25, 15],
+      ['R', 6.25, 13],
+    ])
   })
 
   it('carries the order across the round trip', () => {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Check, CopyCheck, Trophy } from 'lucide-react'
 import { CoachHeaderCard } from './CoachHeaderCard'
 import { ExerciseDeckList } from './ExerciseDeckList'
@@ -9,7 +9,8 @@ import { SessionNotesCard } from './SessionNotesCard'
 import { CommitBar } from './CommitBar'
 import { useExerciseSetHistory } from '@/lib/hooks/useExerciseSetHistory'
 import { useExerciseBaselines } from '@/lib/hooks/useExerciseBaselines'
-import { computeLivePrs, livePrDigest } from '@/lib/sessions/livePrs'
+import { computeLivePrs, livePrDigest, livePrKey } from '@/lib/sessions/livePrs'
+import { PrRecordSheet } from './PrRecordSheet'
 import { useProgressionQueue } from '@/lib/hooks/useProgressionQueue'
 import { useDeleteSession } from '@/lib/hooks/useDayVault'
 import { eraForDate } from '@/lib/programs'
@@ -32,7 +33,7 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
   /** Post-finish destination: the just-committed session's analysis page. */
   onViewSession?: (sessionId: string) => void
 }) {
-  const { draft, updateSet, splitSet, mergeSet, toggleSetLink, addSet, removeSet, toggleSetDone, checkAllSets, removeExercise, reorder, setNotes, setExerciseNote, setStats, setSessionRpe, setDate, discard, commit } = store
+  const { draft, updateSet, splitSet, mergeSet, addSet, removeSet, toggleSetDone, checkAllSets, removeExercise, reorder, setNotes, setExerciseNote, setStats, setSessionRpe, setDate, discard, commit } = store
   const [result, setResult] = useState<CommitResult | null>(null)
   const [committedDate, setCommittedDate] = useState<string | null>(null)
   // Delete the ACTUAL committed session (edit mode's trash), keyed to its date.
@@ -64,6 +65,37 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
     () => new Map<string, ReadyCue>((queue ?? []).map((a) => [a.name, { suggestKg: a.suggestKg, currentKg: a.currentKg, timed: a.timed, state: a.state }])),
     [queue],
   )
+
+  // Which set's trophy was tapped. Held as (localId, setIdx) rather than as the
+  // resolved record, so the sheet re-reads `livePrs` if the set changes while it
+  // is open — the numbers on screen are always the numbers the engine holds.
+  const [prTarget, setPrTarget] = useState<{ localId: string; setIdx: number } | null>(null)
+  const handlePrTap = useCallback(
+    (localId: string, setIdx: number) => setPrTarget({ localId, setIdx }),
+    [],
+  )
+
+  const prSheet = useMemo(() => {
+    if (!prTarget || !draft) return null
+    const ex = draft.exercises.find((e) => e.localId === prTarget.localId)
+    const set = ex?.sets[prTarget.setIdx]
+    if (!ex || !set) return null
+    // The label names the SET, and the side when there is one — a pair's two
+    // halves can each hold a record and the sheet has to say which arm.
+    const setNum = ex.sets.slice(0, prTarget.setIdx + 1)
+      .reduce<{ n: number; seen: Set<string> }>((acc, s) => {
+        const key = s.pairId ?? `#${acc.n}`
+        if (!acc.seen.has(key)) { acc.n += 1; acc.seen.add(key) }
+        return acc
+      }, { n: 0, seen: new Set() }).n
+    const side = set.side === 'L' ? ' · Left' : set.side === 'R' ? ' · Right' : ''
+    return {
+      exerciseName: ex.name,
+      setLabel: `Set ${setNum}${side}`,
+      records: livePrs.detailBySet.get(livePrKey(prTarget.localId, prTarget.setIdx)),
+      timed: isTimedExercise(ex.name),
+    }
+  }, [prTarget, draft, livePrs])
 
   if (result) {
     return (
@@ -177,16 +209,27 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
           onUpdateSet={updateSet}
           onSplitSet={splitSet}
           onMergeSet={mergeSet}
-          onToggleLink={toggleSetLink}
           onAddSet={addSet}
           onRemoveSet={removeSet}
           onToggleDone={toggleSetDone}
           onCheckAll={checkAllSets}
           onRemoveExercise={removeExercise}
           onSetNote={setExerciseNote}
+          onPrTap={handlePrTap}
         />
         <div className="lg:hidden">{commitBar}</div>
       </div>
+
+      {prSheet && (
+        <PrRecordSheet
+          open={!!prTarget}
+          onClose={() => setPrTarget(null)}
+          exerciseName={prSheet.exerciseName}
+          setLabel={prSheet.setLabel}
+          records={prSheet.records}
+          timed={prSheet.timed}
+        />
+      )}
     </div>
   )
 }

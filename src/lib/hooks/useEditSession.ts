@@ -90,17 +90,10 @@ export function useEditSession() {
         ex.sets.push(set)
       }
 
-      // Restore each unilateral pair's link state: matching weight+reps on both
-      // sides ⇒ still linked; asymmetric ⇒ unlinked (so a later edit won't
-      // clobber the logged asymmetry by mirroring).
-      for (const ex of byEx.values()) {
-        const pairs = new Map<string, DraftSet[]>()
-        for (const s of ex.sets) if (s.pairId) { const g = pairs.get(s.pairId) ?? []; g.push(s); pairs.set(s.pairId, g) }
-        for (const g of pairs.values()) {
-          const linked = g.length === 2 && g[0].weightKg === g[1].weightKg && g[0].reps === g[1].reps
-          for (const s of g) s.linked = linked
-        }
-      }
+      // No link state to restore: the two sides of a pair are independent now.
+      // This block used to re-derive a `linked` flag from the observed symmetry
+      // so a later edit would not mirror away the logged asymmetry — the flag
+      // itself is gone, and with it the failure mode it was guarding against.
 
       // Cardio comes back as an interactive CARD, not a line of prose. It used
       // to be flattened into `notes` at commit and there was no way back — this

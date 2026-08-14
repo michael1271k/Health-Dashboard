@@ -396,7 +396,28 @@ export function absorbSet(set: PrCandidateSet, idx: PrIndex, volumeKg?: number |
   }
 }
 
-export interface DetectedSet { axes: PrAxis[]; est1rm: number | null }
+/** What a set achieved on one axis, and the standing figure it beat. */
+export interface AxisRecord {
+  /** The new record — the number this set set. */
+  value: number
+  /** The value it beat. Always present: a record REQUIRES an existing baseline. */
+  previous: number
+}
+
+export interface DetectedSet {
+  axes: PrAxis[]
+  est1rm: number | null
+  /**
+   * Per winning axis, the new value and the one it beat.
+   *
+   * The beaten baseline was in scope during detection and thrown away, so the
+   * deck could say "this set holds a record" and nothing anywhere could say by
+   * how much. `personal_records` cannot answer it either — it is upsert-on-
+   * conflict, so writing the new record destroys the old value. Captured here,
+   * before `absorbSet` folds the winner into the index.
+   */
+  records: Partial<Record<PrAxis, AxisRecord>>
+}
 
 /**
  * What a set scored on an axis — the number the record IS.
@@ -404,11 +425,40 @@ export interface DetectedSet { axes: PrAxis[]; est1rm: number | null }
  * Only meaningful for a set that actually won the axis; `supersedeWithinSession`
  * calls it nowhere else.
  */
-function axisValue(axis: PrAxis, set: PrCandidateSet, volumeKg: number | null | undefined, est1rm: number | null): number {
+export function axisValue(axis: PrAxis, set: PrCandidateSet, volumeKg: number | null | undefined, est1rm: number | null): number {
   if (axis === 'weight') return set.weightKg
   if (axis === 'reps') return set.reps
   if (axis === 'volume') return volumeKg ?? set.weightKg * set.reps
   return est1rm ?? 0
+}
+
+/**
+ * The standing figure each winning axis beat, read straight out of the index.
+ *
+ * Must be called BEFORE `absorbSet`, or the index already holds this set's own
+ * numbers and the previous best is gone. An asserted (record-book) session can
+ * name an axis the arithmetic did not, so a missing baseline is simply omitted
+ * rather than reported as zero — a delta against nothing is not a delta.
+ */
+function beatenBaselines(
+  set: PrCandidateSet,
+  idx: PrIndex,
+  axes: readonly PrAxis[],
+  volumeKg: number | null | undefined,
+  est1rm: number | null,
+): Partial<Record<PrAxis, AxisRecord>> {
+  const out: Partial<Record<PrAxis, AxisRecord>> = {}
+  for (const axis of axes) {
+    const previous = axis === 'weight' ? idx.bestWeight.get(set.key)
+      : axis === 'reps' ? (set.timed
+        ? idx.bestSeconds.get(set.key)
+        : idx.bestRepsAtWeight.get(`${set.key}|${set.weightKg}`))
+      : axis === 'volume' ? idx.bestSetVolume.get(set.key)
+      : idx.bestE1rm.get(set.key)
+    if (previous == null) continue
+    out[axis] = { value: axisValue(axis, set, volumeKg, est1rm), previous }
+  }
+  return out
 }
 
 /**
@@ -498,12 +548,17 @@ export function detectSessionPrs(sets: readonly PrCandidateSet[], baselines: PrB
   const perSet: DetectedSet[] = sets.map((s, i) => {
     const asserted = seededAxesFor(s.date, s.exerciseName ?? s.key, s.setNumber, s.weightKg, s.reps)
     const axes = seeded ? [...asserted] : detectSetPrs(s, idx, credits[i])
+    // No load, no one-rep max to estimate — `epley1RM` returns null at 0 kg, so
+    // neither a hold nor a Reverse Crunch prints "1RM 0".
+    const est1rm = s.timed ? null : epley1RM(s.weightKg, s.reps)
+    // READ THE BEATEN BASELINE BEFORE ABSORBING. One line later the index holds
+    // this set's own figures and the previous best is unrecoverable — which is
+    // why the delta never existed anywhere until now.
+    const records = beatenBaselines(s, idx, axes, credits[i], est1rm)
     // The index still advances through a seeded session so its baselines stay
     // correct for everything that comes after it.
     absorbSet(s, idx, credits[i])
-    // No load, no one-rep max to estimate — `epley1RM` returns null at 0 kg, so
-    // neither a hold nor a Reverse Crunch prints "1RM 0".
-    return { axes, est1rm: s.timed ? null : epley1RM(s.weightKg, s.reps) }
+    return { axes, est1rm, records }
   })
 
   // A climbing session hands the same axis to every set on the way up; only the

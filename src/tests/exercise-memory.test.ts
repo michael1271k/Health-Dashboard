@@ -136,18 +136,17 @@ describe('seedFromHistory rebuilds unilateral PAIRS, never two loose sets', () =
     expect(curl.sets[0].pairId).not.toBe('pair_aug06')
   })
 
-  it('unlinks an ASYMMETRIC pair so an edit cannot mirror the asymmetry away', () => {
-    const asym = seedCurl([
+  it('reproduces an ASYMMETRIC pair side for side', () => {
+    // The sides are independent — there is no `linked` flag to mirror them, so
+    // a weaker arm survives the round trip as a weaker arm.
+    const curl = seedCurl([
       { weightKg: 6.25, reps: 15, side: 'L', pairId: 'p' },
-      { weightKg: 6.25, reps: 13, side: 'R', pairId: 'p' },
+      { weightKg: 5.0, reps: 13, side: 'R', pairId: 'p' },
     ])
-    expect(asym.sets.every((s) => s.linked === false)).toBe(true)
-
-    const sym = seedCurl([
-      { weightKg: 6.25, reps: 15, side: 'L', pairId: 'p' },
-      { weightKg: 6.25, reps: 15, side: 'R', pairId: 'p' },
+    expect(curl.sets.map((s) => [s.side, s.weightKg, s.reps])).toEqual([
+      ['L', 6.25, 15],
+      ['R', 5.0, 13],
     ])
-    expect(sym.sets.every((s) => s.linked === true)).toBe(true)
   })
 
   it('leaves a side with no pairId (or a pairId with no side) as an ordinary set', () => {

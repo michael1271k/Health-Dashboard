@@ -51,7 +51,7 @@ const noop = () => {}
 const PROPS: Omit<ComponentProps<typeof ExerciseDeckList>, 'draft'> = {
   history: undefined, livePrs: new Map(), readyByName: new Map(),
   onReorder: noop, onUpdateSet: noop, onSplitSet: noop, onMergeSet: noop,
-  onToggleLink: noop, onAddSet: noop, onRemoveSet: noop, onToggleDone: noop,
+  onAddSet: noop, onRemoveSet: noop, onToggleDone: noop,
   onCheckAll: noop, onRemoveExercise: noop, onSetNote: noop,
 }
 

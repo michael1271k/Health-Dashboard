@@ -23,7 +23,7 @@ const DRAG_MODIFIERS = [restrictToVerticalAxis, restrictToParentElement]
  * Stays a SINGLE column at every breakpoint — verticalListSortingStrategy +
  * restrictToVerticalAxis are only valid for a one-column list.
  */
-export function ExerciseDeckList({ draft, history, livePrs, readyByName, onReorder, onUpdateSet, onSplitSet, onMergeSet, onToggleLink, onAddSet, onRemoveSet, onToggleDone, onCheckAll, onRemoveExercise, onSetNote }: {
+export function ExerciseDeckList({ draft, history, livePrs, readyByName, onReorder, onUpdateSet, onSplitSet, onMergeSet, onAddSet, onRemoveSet, onToggleDone, onCheckAll, onRemoveExercise, onSetNote, onPrTap }: {
   draft: SessionDraft
   history: Map<string, ExerciseHistory> | undefined
   /** Live records keyed `${localId}|${setIdx}` — see `computeLivePrs`. */
@@ -34,13 +34,14 @@ export function ExerciseDeckList({ draft, history, livePrs, readyByName, onReord
   onUpdateSet: (localId: string, setIdx: number, patch: Partial<DraftSet>) => void
   onSplitSet: (localId: string, setIdx: number) => void
   onMergeSet: (localId: string, pairId: string) => void
-  onToggleLink: (localId: string, pairId: string) => void
   onAddSet: (localId: string) => void
   onRemoveSet: (localId: string, setIdx: number) => void
   onToggleDone: (localId: string, setIdx: number) => void
   onCheckAll: (localId: string) => void
   onRemoveExercise: (localId: string) => void
   onSetNote: (localId: string, note: string) => void
+  /** Tapping a set's trophy strip — opens the record sheet for that set. */
+  onPrTap?: (localId: string, setIdx: number) => void
 }) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
@@ -109,13 +110,13 @@ export function ExerciseDeckList({ draft, history, livePrs, readyByName, onReord
               onUpdateSet={onUpdateSet}
               onSplitSet={onSplitSet}
               onMergeSet={onMergeSet}
-              onToggleLink={onToggleLink}
               onAddSet={onAddSet}
               onRemoveSet={onRemoveSet}
               onToggleDone={onToggleDone}
               onCheckAll={onCheckAll}
               onRemoveExercise={onRemoveExercise}
               onSetNote={onSetNote}
+              onPrTap={onPrTap}
             />
           ))}
         </div>

@@ -93,8 +93,8 @@ export function useSessionDraft() {
 
   // Editing Set 1's weight/reps cascades to later matching sets (Hevy-style);
   // see cascadeSetEdit. Other rows and setType (W/F) edits stay local. A
-  // unilateral pair bypasses the cascade: if LINKED, weight/reps mirror to the
-  // other side; setType (F) never mirrors — failure is per side.
+  // unilateral pair bypasses BOTH: each side is edited alone, so a genuinely
+  // weaker arm can be recorded. setType (F) is per side too.
   const updateSet = useCallback((localId: string, setIdx: number, patch: Partial<DraftSet>) => {
     setDraft((d) => d && ({
       ...d,
@@ -102,26 +102,24 @@ export function useSessionDraft() {
         if (ex.localId !== localId) return ex
         const target = ex.sets[setIdx]
         if (target?.pairId) {
-          const mirror = target.linked !== false
-          const sets = ex.sets.map((s, i) => {
-            if (i === setIdx) return { ...s, ...patch }
-            if (mirror && s.pairId === target.pairId) {
-              const m: Partial<DraftSet> = {}
-              if (patch.weightKg != null) m.weightKg = patch.weightKg
-              if (patch.reps != null) m.reps = patch.reps
-              if (patch.rpe != null) m.rpe = patch.rpe
-              return Object.keys(m).length ? { ...s, ...m } : s
-            }
-            return s
-          })
-          return { ...ex, sets }
+          // A SIDE IS EDITED ALONE. This used to mirror weight and reps to the
+          // other side whenever the pair was "linked" (the default), which
+          // defeats the only reason to split a set: an arm that is genuinely
+          // weaker cannot be recorded if typing its number silently rewrites
+          // the other one. The Linked toggle is gone and so is the mirror.
+          //
+          // No cascade either. `cascadeSetEdit` fires from set 1 to later sets
+          // that shared its value — and the other side of a first-set pair
+          // always shares it, so cascading here would be mirroring under a
+          // different name.
+          return { ...ex, sets: ex.sets.map((s, i) => (i === setIdx ? { ...s, ...patch } : s)) }
         }
         return { ...ex, sets: cascadeSetEdit(ex.sets, setIdx, patch) }
       }),
     }))
   }, [])
 
-  /** Unilateral: split a normal set into linked Left + Right sub-rows. */
+  /** Unilateral: split a normal set into independent Left + Right sub-rows. */
   const splitSet = useCallback((localId: string, setIdx: number) => {
     setDraft((d) => d && ({
       ...d,
@@ -130,7 +128,7 @@ export function useSessionDraft() {
         const base = ex.sets[setIdx]
         if (!base || base.pairId) return ex // absent or already split
         const pairId = `pair_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`
-        const mk = (side: 'L' | 'R'): DraftSet => ({ weightKg: base.weightKg, reps: base.reps, rpe: base.rpe, done: base.done, side, pairId, linked: true })
+        const mk = (side: 'L' | 'R'): DraftSet => ({ weightKg: base.weightKg, reps: base.reps, rpe: base.rpe, done: base.done, side, pairId })
         return { ...ex, sets: [...ex.sets.slice(0, setIdx), mk('L'), mk('R'), ...ex.sets.slice(setIdx + 1)] }
       }),
     }))
@@ -150,18 +148,6 @@ export function useSessionDraft() {
           } else sets.push(s)
         }
         return { ...ex, sets }
-      }),
-    }))
-  }, [])
-
-  /** Unilateral: toggle whether a L/R pair's weight+reps stay mirrored. */
-  const toggleSetLink = useCallback((localId: string, pairId: string) => {
-    setDraft((d) => d && ({
-      ...d,
-      exercises: d.exercises.map((ex) => {
-        if (ex.localId !== localId) return ex
-        const nextLinked = !ex.sets.some((s) => s.pairId === pairId && s.linked !== false)
-        return { ...ex, sets: ex.sets.map((s) => (s.pairId === pairId ? { ...s, linked: nextLinked } : s)) }
       }),
     }))
   }, [])
@@ -340,5 +326,5 @@ export function useSessionDraft() {
     },
   })
 
-  return { draft, hydrated, start, discard, updateSet, splitSet, mergeSet, toggleSetLink, addSet, removeSet, toggleSetDone, checkAllSets, removeExercise, reorder, setNotes, setExerciseNote, setStats, setSessionRpe, setDate, commit }
+  return { draft, hydrated, start, discard, updateSet, splitSet, mergeSet, addSet, removeSet, toggleSetDone, checkAllSets, removeExercise, reorder, setNotes, setExerciseNote, setStats, setSessionRpe, setDate, commit }
 }

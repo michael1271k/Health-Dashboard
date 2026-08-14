@@ -3,7 +3,8 @@
 import { memo, useCallback, useMemo, useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { ArrowLeftRight, CheckCheck, ChevronDown, Footprints, GripVertical, History, NotebookPen, Plus, Target, X } from 'lucide-react'
+import { ArrowLeftRight, Check, CheckCheck, ChevronDown, Footprints, GripVertical, History, NotebookPen, Plus, Target, X } from 'lucide-react'
+import { tapLight } from '@/lib/native/haptics'
 import { SetEditorRow } from './SetEditorRow'
 import { EffortChips } from './EffortChips'
 import { useTrackRpe } from '@/lib/hooks/useTrackRpe'
@@ -108,7 +109,7 @@ const fmtDate = (d: string) =>
  * means lifting `useSortable` into a shell component and moving the grip out of
  * this header — a real refactor, deliberately not done here.
  */
-export const ExerciseCard = memo(function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collapsed = false, onUpdateSet, onSplitSet, onMergeSet, onToggleLink, onAddSet, onRemoveSet, onToggleDone, onCheckAll, onRemoveExercise, onSetNote }: {
+export const ExerciseCard = memo(function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collapsed = false, onUpdateSet, onSplitSet, onMergeSet, onAddSet, onRemoveSet, onToggleDone, onCheckAll, onRemoveExercise, onSetNote, onPrTap }: {
   exercise: DraftExercise
   history: ExerciseHistory | null
   /** Live records keyed `${localId}|${setIdx}` — computed once for the whole
@@ -138,13 +139,14 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, live
   onUpdateSet: (localId: string, setIdx: number, patch: Partial<DraftSet>) => void
   onSplitSet: (localId: string, setIdx: number) => void
   onMergeSet: (localId: string, pairId: string) => void
-  onToggleLink: (localId: string, pairId: string) => void
   onAddSet: (localId: string) => void
   onRemoveSet: (localId: string, setIdx: number) => void
   onToggleDone: (localId: string, setIdx: number) => void
   onCheckAll: (localId: string) => void
   onRemoveExercise: (localId: string) => void
   onSetNote: (localId: string, note: string) => void
+  /** Tapping a set's trophy strip — opens the record sheet for that set. */
+  onPrTap?: (localId: string, setIdx: number) => void
 }) {
   const localId = exercise.localId
 
@@ -176,8 +178,13 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, live
   const handleRemove = useCallback((i: number) => { setActiveSet(null); onRemoveSet(localId, i) }, [onRemoveSet, localId])
   const handleToggleDone = useCallback((i: number) => onToggleDone(localId, i), [onToggleDone, localId])
   const handleSplit = useCallback((i: number) => onSplitSet(localId, i), [onSplitSet, localId])
-  const handleToggleLink = useCallback((pairId: string) => onToggleLink(localId, pairId), [onToggleLink, localId])
   const handleMerge = useCallback((pairId: string) => onMergeSet(localId, pairId), [onMergeSet, localId])
+  // Undefined when the parent supplies no handler, so the row renders the
+  // trophy strip as inert rather than as a dead-looking button.
+  const handlePrTap = useMemo(
+    () => (onPrTap ? (i: number) => onPrTap(localId, i) : undefined),
+    [onPrTap, localId],
+  )
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } =
     useSortable({ id: exercise.localId })
 
@@ -519,24 +526,55 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, live
                   onRemove={handleRemove}
                   onToggleDone={handleToggleDone}
                   onSplit={handleSplit}
+                  onPrTap={handlePrTap}
                 />
               )
             }
             // Unilateral pair → ONE "Set N" card that expands into L/R sub-rows.
+            //
+            // ONE TICK PER SET, NOT ONE PER ARM. The two sub-rows each used to
+            // render their own checkmark, which showed two controls for one
+            // physical set and made the deck look like it had twice the work in
+            // it. `toggleSetDone` was already pair-aware — ticking either side
+            // ticked both — so the second control never even did anything the
+            // first did not. It lives on the container now, which is also what
+            // the completed tint should follow.
             const asym = pairAsymmetry(g.left?.set, g.right?.set)
-            const linked = (g.left?.set.linked ?? g.right?.set.linked) !== false
+            const pairIdx = g.left?.idx ?? g.right?.idx
+            const pairDone = isSetCommitted(g.left?.set ?? g.right?.set ?? { weightKg: 0, reps: 0, done: false })
             return (
-              <div key={`p${g.pairId}`} className="rounded-lg border border-white/[0.07] bg-white/[0.02] p-1.5 space-y-1">
+              <div key={`p${g.pairId}`}
+                className={`rounded-lg border p-1.5 space-y-1 transition-colors ${
+                  pairDone ? 'border-[#3E9E7A]/40 bg-[#3E9E7A]/[0.10]' : 'border-white/[0.07] bg-white/[0.02]'}`}>
                 <div className="flex items-center gap-2 px-1">
                   <span className="text-[10px] font-bold uppercase tracking-wide text-muted">Set {g.num}</span>
                   <span className="text-[9px] font-bold uppercase tracking-wide px-1 py-px rounded"
                     style={{ color: '#E0703C', background: '#E0703C1f', border: '1px solid #E0703C55' }}>L / R</span>
                   {asym && (
-                    <span className="text-[9px] font-bold uppercase tracking-wide px-1 py-px rounded ml-auto"
+                    <span className="text-[9px] font-bold uppercase tracking-wide px-1 py-px rounded"
                       style={{ color: '#C4514E', background: '#C4514E1f', border: '1px solid #C4514E55' }}
                       title={`${asym.weak === 'L' ? 'Left' : 'Right'} side ${asym.pct}% weaker (by volume)`}>
                       −{asym.pct}% {asym.weak}
                     </span>
+                  )}
+                  {pairIdx != null && (
+                    <button
+                      type="button"
+                      // Haptic on pointer-DOWN so it lands on the same frame as
+                      // the press highlight; commit on click, so dragging off
+                      // still cancels.
+                      onPointerDown={() => { void tapLight() }}
+                      onClick={() => handleToggleDone(pairIdx)}
+                      aria-pressed={pairDone}
+                      aria-label={pairDone ? `Mark set ${g.num} not done` : `Mark set ${g.num} done — both sides`}
+                      className="ml-auto min-h-[32px] min-w-[32px] rounded-lg flex items-center justify-center shrink-0
+                                 active:scale-95 transition-[color,background-color,border-color,transform] duration-150"
+                      style={pairDone
+                        ? { color: '#fff', background: '#3E9E7A', border: '1px solid #3E9E7A' }
+                        : { color: 'var(--color-muted)', background: 'transparent', border: '1px solid rgba(255,255,255,0.14)' }}
+                    >
+                      <Check className="w-3.5 h-3.5" aria-hidden="true" />
+                    </button>
                   )}
                 </div>
                 {g.left && (
@@ -547,7 +585,7 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, live
                     onActivate={handleActivate}
                     onChange={handleChange}
                     onRemove={handleRemove}
-                    onToggleDone={handleToggleDone}
+                    onPrTap={handlePrTap}
                   />
                 )}
                 {g.right && (
@@ -558,18 +596,16 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, live
                     onActivate={handleActivate}
                     onChange={handleChange}
                     onRemove={handleRemove}
-                    onToggleDone={handleToggleDone}
+                    onPrTap={handlePrTap}
                   />
                 )}
-                {/* Pair-level controls — link mirrors weight+reps; merge collapses back. */}
+                {/* Merge collapses the pair back into one bilateral set.
+                    The "Linked" toggle is GONE. It mirrored weight and reps
+                    between the two sides, which defeats the only reason to split
+                    a set in the first place: an arm that is genuinely weaker
+                    cannot be recorded if editing one side silently rewrites the
+                    other. Asymmetry is the measurement, not a mistake. */}
                 <div className="flex items-center gap-1.5 px-1 pt-0.5">
-                  <button type="button" onClick={() => handleToggleLink(g.pairId)} aria-pressed={linked}
-                    className="min-h-[30px] px-2.5 rounded-lg text-[10px] font-bold uppercase tracking-wide active:scale-95 transition-colors"
-                    style={linked
-                      ? { color: '#8E9AAC', background: '#8E9AAC1f', border: '1px solid #8E9AAC66' }
-                      : { color: 'var(--color-muted)', background: 'transparent', border: '1px solid rgba(255,255,255,0.10)' }}>
-                    {linked ? 'Linked' : 'Unlinked'}
-                  </button>
                   <button type="button" onClick={() => handleMerge(g.pairId)}
                     className="min-h-[30px] px-2.5 rounded-lg text-[10px] font-bold uppercase tracking-wide text-muted border border-white/10 hover:text-danger active:scale-95 transition-colors">
                     Merge

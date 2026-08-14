@@ -733,3 +733,76 @@ describe('supersedeWithinSession', () => {
     expect(res.perSet[1].axes).not.toContain('weight')
   })
 })
+
+/**
+ * THE DELTA. `detectSetPrs` held the beaten baseline in scope and returned only
+ * the axis name, and `personal_records` is upsert-on-conflict — so writing the
+ * new record destroyed the value it replaced. "Weight PR" could not be turned
+ * into "+2.5 kg" anywhere in the app. `detectSessionPrs` now captures both,
+ * BEFORE `absorbSet` folds the winner into the index.
+ */
+describe('per-set records carry what was beaten', () => {
+  const baselines = buildBaselines(HISTORY, isTimed)
+
+  it('reports the new value and the previous best on the weight axis', () => {
+    // History tops out at 27.5 kg for Hip Thrust.
+    const r = detectSessionPrs([set(HIP, 30, 10)], baselines)
+    expect(r.perSet[0].axes).toContain('weight')
+    expect(r.perSet[0].records.weight).toEqual({ value: 30, previous: 27.5 })
+  })
+
+  it('reports reps for UNLOADED work — the only place that axis is eligible', () => {
+    // `repsAxisEligible` is weight === 0: on a loaded lift more reps at the same
+    // load already shows up as volume and e1RM, so the reps axis exists for
+    // movements that have no other one.
+    const CRUNCH = 'Reverse Crunch'
+    const bw = buildBaselines([
+      { key: CRUNCH, weightKg: 0, reps: 15 },
+      { key: CRUNCH, weightKg: 0, reps: 17 },
+    ], isTimed)
+    const r = detectSessionPrs([set(CRUNCH, 0, 20)], bw)
+    expect(r.perSet[0].axes).toContain('reps')
+    expect(r.perSet[0].records.reps).toEqual({ value: 20, previous: 17 })
+  })
+
+  it('does NOT claim a reps record on a loaded set', () => {
+    // 25 kg × 15 beats 25 kg × 14, but the axis is ineligible at load.
+    const r = detectSessionPrs([set(HIP, 25, 15)], baselines)
+    expect(r.perSet[0].axes).not.toContain('reps')
+    expect(r.perSet[0].records.reps).toBeUndefined()
+  })
+
+  it('reports seconds for a timed movement', () => {
+    const r = detectSessionPrs([set(PLANK, 0, 60)], baselines)
+    expect(r.perSet[0].axes).toEqual(['reps'])
+    expect(r.perSet[0].records.reps).toEqual({ value: 60, previous: 57 })
+  })
+
+  it('reads the baseline BEFORE the set is absorbed', () => {
+    // Two climbing sets. The second must be measured against the first (which
+    // absorbSet folded in), not against the original history.
+    const r = detectSessionPrs([set(HIP, 30, 10), set(HIP, 32.5, 10)], baselines)
+    expect(r.perSet[1].records.weight).toEqual({ value: 32.5, previous: 30 })
+  })
+
+  it('keeps no record for an axis superseded later in the session', () => {
+    // The first set holds the weight axis for exactly as long as it takes to
+    // reach the second. "Was a record for four minutes" is not a record.
+    const r = detectSessionPrs([set(HIP, 30, 10), set(HIP, 32.5, 10)], baselines)
+    expect(r.perSet[0].axes).not.toContain('weight')
+  })
+
+  it('is empty for a set that set nothing', () => {
+    const r = detectSessionPrs([set(HIP, 20, 8)], baselines)
+    expect(r.perSet[0].axes).toEqual([])
+    expect(r.perSet[0].records).toEqual({})
+  })
+
+  it('never reports a previous of zero for an axis with no baseline', () => {
+    // A brand-new exercise is a new data point, not a PR — so there is nothing
+    // to report a delta against, and a 0 baseline would invent one.
+    const r = detectSessionPrs([set('Brand New Machine', 40, 12)], EMPTY_BASELINES)
+    expect(r.perSet[0].axes).toEqual([])
+    expect(r.perSet[0].records).toEqual({})
+  })
+})

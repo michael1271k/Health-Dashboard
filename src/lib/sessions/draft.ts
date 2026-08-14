@@ -23,13 +23,21 @@ export interface DraftSet {
    * or edited session's sets are pre-completed). See {@link isSetCommitted}.
    */
   done?: boolean
-  /** Unilateral (per-side) tracking. A split set = two DraftSets sharing
-   *  `pairId`, one `side` 'L' one 'R'. `linked` (default true) mirrors
-   *  weight+reps between the two sides on edit; unlink to log asymmetry.
-   *  `setType` (incl. failure) is never mirrored — it is per side. */
+  /**
+   * Unilateral (per-side) tracking. A split set = two DraftSets sharing
+   * `pairId`, one `side` 'L' one `'R'`, and the deck folds the two back into ONE
+   * numbered set with ONE checkmark.
+   *
+   * THE SIDES ARE INDEPENDENT. There used to be a `linked` flag (default true)
+   * that mirrored weight and reps between them on edit, with an "Unlinked"
+   * toggle to opt out. It defeated the only reason to split a set: an arm that
+   * is genuinely weaker cannot be recorded if typing its number silently
+   * rewrites the other one, and the default meant asymmetry was lost unless you
+   * knew to disable it first. Deleted — `setType` was already per side, and now
+   * every field is.
+   */
   side?: 'L' | 'R'
   pairId?: string
-  linked?: boolean
 }
 
 /** A set is committed (green, saved) unless it was explicitly ticked off
@@ -271,7 +279,9 @@ function sanitizeDraft(value: unknown): SessionDraft | null {
       // is meaningful — everything else stays committed).
       if (s.done === false) clean.done = false
       // Preserve unilateral split state across reloads / v1→v2 migration.
-      if (s.side === 'L' || s.side === 'R') { clean.side = s.side; clean.pairId = s.pairId; clean.linked = s.linked ?? true }
+      // `linked` is deliberately NOT carried across: a draft written before the
+      // flag was deleted must not resurrect the mirroring it described.
+      if (s.side === 'L' || s.side === 'R') { clean.side = s.side; clean.pairId = s.pairId }
       return clean
     }),
   }))

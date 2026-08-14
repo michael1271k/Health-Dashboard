@@ -35,7 +35,7 @@ const maxFor = (w: number) => Math.max(60, Math.ceil((w + 30) / 10) * 10)
  * The card shells above still re-execute; they are cheap once their subtree
  * bails out.
  */
-export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subRow = false, set, active, timed = false, bodyweight = false, prAxes = [], onActivate, onChange, onRemove, onToggleDone, onSplit, onToggleLink, onMerge }: {
+export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subRow = false, set, active, timed = false, bodyweight = false, prAxes = [], onActivate, onChange, onRemove, onToggleDone, onSplit, onPrTap }: {
   index: number
   /** Records this set just set, computed live by the parent from `prEngine`. */
   prAxes?: PrAxis[]
@@ -67,10 +67,8 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
   onToggleDone?: (index: number) => void
   /** Unilateral: split a normal set into Left/Right (absent once already split). */
   onSplit?: (index: number) => void
-  /** Unilateral: toggle whether this L/R pair mirrors weight+reps. */
-  onToggleLink?: (pairId: string) => void
-  /** Unilateral: collapse this L/R pair back into one bilateral set. */
-  onMerge?: (pairId: string) => void
+  /** Tapping the trophy opens the record sheet for this set. */
+  onPrTap?: (index: number) => void
 }) {
   // 3.75 must display as 3.75, not "3.8" — quarter-step plates are real loads.
   const weightLabel = set.weightKg % 1 === 0 ? set.weightKg.toFixed(0)
@@ -208,23 +206,6 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
             )}
             {set.rpe != null && <span className="text-[10px] text-muted shrink-0">RPE {set.rpe}</span>}
           </span>
-          {/* Live records. Appears the instant the set is ticked green, from the
-              SAME engine that writes personal_records at commit — a badge shown
-              here is a badge that gets recorded. Indented to the load column so
-              it reads as belonging to these numbers, and one trophy leads the
-              run rather than repeating per axis. */}
-          {prAxes.length > 0 && (
-            <span className="flex items-center gap-1 flex-wrap pl-[34px]">
-              <Trophy className="w-2.5 h-2.5 shrink-0" style={{ color: GOLD }} aria-hidden="true" />
-              {prAxes.map((axis) => (
-                <span key={axis} className="text-[8px] font-bold uppercase tracking-wide leading-none px-1 py-0.5 rounded"
-                  style={{ color: GOLD, background: `${GOLD}1a`, border: `1px solid ${GOLD}55` }}
-                  title={`Personal record — ${prAxisLabel(axis, timed)}`}>
-                  {prAxisLabel(axis, timed)}
-                </span>
-              ))}
-            </span>
-          )}
         </button>
         {onToggleDone && (
           <button
@@ -255,6 +236,39 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
           <X className="w-3.5 h-3.5" aria-hidden="true" />
         </button>
       </div>
+
+      {/* ── Live records ──
+          Appears the instant the set is ticked green, from the SAME engine that
+          writes personal_records at commit — a badge shown here is a badge that
+          gets recorded. Indented to the load column so it reads as belonging to
+          these numbers, and one trophy leads the run rather than repeating per
+          axis.
+
+          ITS OWN CONTROL, on its own line. It used to live INSIDE the row's
+          activate button, where it could not be tapped independently (a button
+          cannot hold a button) and any tap opened the tuner instead. Tapping it
+          now opens the record sheet, which is the only place the numbers behind
+          the badge — what was beaten, and by how much — actually exist. */}
+      {prAxes.length > 0 && (
+        <button
+          type="button"
+          onPointerDown={onPrTap ? () => { void tapLight() } : undefined}
+          onClick={onPrTap ? () => onPrTap(index) : undefined}
+          disabled={!onPrTap}
+          className={`w-full flex items-center gap-1 flex-wrap pl-[42px] pr-2 pb-1.5 -mt-0.5 text-left
+                      ${onPrTap ? 'active:scale-[0.98] transition-transform duration-150' : ''}`}
+          aria-label={onPrTap ? `Records on this set — ${prAxes.map((a) => prAxisLabel(a, timed)).join(', ')}` : undefined}
+        >
+          <Trophy className="w-2.5 h-2.5 shrink-0" style={{ color: GOLD }} aria-hidden="true" />
+          {prAxes.map((axis) => (
+            <span key={axis} className="text-[8px] font-bold uppercase tracking-wide leading-none px-1 py-0.5 rounded"
+              style={{ color: GOLD, background: `${GOLD}1a`, border: `1px solid ${GOLD}55` }}
+              title={`Personal record — ${prAxisLabel(axis, timed)}`}>
+              {prAxisLabel(axis, timed)}
+            </span>
+          ))}
+        </button>
+      )}
 
       {/* ── Tuner (active row only) ── */}
       {active && (
@@ -349,31 +363,14 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
             <TypeChip active={isFail} color={DANGER} label="Failure" short="F" onClick={() => toggleType('failure')} />
             <TypeChip active={isDrop} color={DROP} label="Drop set" short="D" onClick={() => toggleType('dropset')} />
           </div>
-          {/* Unilateral — split into Left/Right (pair Link/Merge live on the parent
-              "Set N" card, so a nested sub-row shows only its own tuner). */}
-          {(onSplit || onToggleLink || onMerge) && (
+          {/* Unilateral — split into Left/Right. Merge lives on the parent "Set N"
+              card, so a nested sub-row shows only its own tuner. */}
+          {onSplit && (
             <div className="flex items-center gap-1.5 flex-wrap">
-              {onSplit && (
-                <button type="button" onClick={() => onSplit(index)}
-                  className="min-h-[32px] px-2.5 rounded-lg text-[11px] font-bold uppercase tracking-wide text-muted border border-white/10 hover:text-text active:scale-95 transition-colors">
-                  Split L / R
-                </button>
-              )}
-              {set.side && onToggleLink && (
-                <button type="button" onClick={() => onToggleLink(set.pairId!)} aria-pressed={set.linked !== false}
-                  className="min-h-[32px] px-2.5 rounded-lg text-[11px] font-bold uppercase tracking-wide active:scale-95 transition-colors"
-                  style={set.linked !== false
-                    ? { color: '#8E9AAC', background: '#8E9AAC1f', border: '1px solid #8E9AAC66' }
-                    : { color: 'var(--color-muted)', background: 'transparent', border: '1px solid rgba(255,255,255,0.10)' }}>
-                  {set.linked !== false ? 'Linked' : 'Unlinked'}
-                </button>
-              )}
-              {set.side && onMerge && (
-                <button type="button" onClick={() => onMerge(set.pairId!)}
-                  className="min-h-[32px] px-2.5 rounded-lg text-[11px] font-bold uppercase tracking-wide text-muted border border-white/10 hover:text-danger active:scale-95 transition-colors">
-                  Merge
-                </button>
-              )}
+              <button type="button" onClick={() => onSplit(index)}
+                className="min-h-[32px] px-2.5 rounded-lg text-[11px] font-bold uppercase tracking-wide text-muted border border-white/10 hover:text-text active:scale-95 transition-colors">
+                Split L / R
+              </button>
             </div>
           )}
         </div>

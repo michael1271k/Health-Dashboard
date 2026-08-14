@@ -1,15 +1,24 @@
 import { isSetCommitted, type SessionDraft } from '@/lib/sessions/draft'
 import { isTimedExercise } from '@/lib/exercises/timed'
-import { detectSessionPrs, type PrAxis, type PrBaselines, type PrCandidateSet } from '@/lib/training/prEngine'
+import { detectSessionPrs, type AxisRecord, type PrAxis, type PrBaselines, type PrCandidateSet } from '@/lib/training/prEngine'
 
 export interface LivePrs {
   /** `${localId}|${setIdx}` → the axes that set just claimed. */
   bySet: Map<string, PrAxis[]>
+  /**
+   * `${localId}|${setIdx}` → what each claimed axis achieved and what it beat.
+   *
+   * A SECOND map rather than a richer `bySet`, deliberately. `bySet` is a prop on
+   * every set row and its identity is what `memo` holds on; widening it would put
+   * the sheet's data on the render-hot path for no benefit, since only the one
+   * set whose trophy was tapped ever needs it.
+   */
+  detailBySet: Map<string, Partial<Record<PrAxis, AxisRecord>>>
   /** Distinct axis-records across the session — the "Records Achieved" counter. */
   count: number
 }
 
-export const EMPTY_LIVE_PRS: LivePrs = { bySet: new Map(), count: 0 }
+export const EMPTY_LIVE_PRS: LivePrs = { bySet: new Map(), detailBySet: new Map(), count: 0 }
 
 export const livePrKey = (localId: string, setIdx: number) => `${localId}|${setIdx}`
 
@@ -89,8 +98,20 @@ export function computeLivePrs(draft: SessionDraft | null, baselines: PrBaseline
 
   const r = detectSessionPrs(candidates, baselines)
   const bySet = new Map<string, PrAxis[]>()
+  const detailBySet = new Map<string, Partial<Record<PrAxis, AxisRecord>>>()
   r.perSet.forEach((d, i) => {
-    if (d.axes.length) bySet.set(livePrKey(origin[i].localId, origin[i].setIdx), d.axes)
+    if (!d.axes.length) return
+    const key = livePrKey(origin[i].localId, origin[i].setIdx)
+    bySet.set(key, d.axes)
+    // Only the axes that SURVIVED `supersedeWithinSession` — a set that held an
+    // axis for four minutes before a heavier set took it keeps no badge, and
+    // must not keep a delta either.
+    const detail: Partial<Record<PrAxis, AxisRecord>> = {}
+    for (const axis of d.axes) {
+      const rec = d.records[axis]
+      if (rec) detail[axis] = rec
+    }
+    if (Object.keys(detail).length) detailBySet.set(key, detail)
   })
-  return { bySet, count: r.prCount }
+  return { bySet, detailBySet, count: r.prCount }
 }

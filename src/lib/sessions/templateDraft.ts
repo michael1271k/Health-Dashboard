@@ -62,10 +62,6 @@ export interface ExerciseHistoryEntry {
  * within the session being logged, and carrying last week's id into this week's
  * rows makes two sessions' pairs indistinguishable in any query that groups by
  * it alone.
- *
- * `linked` is set from the observed symmetry, matching how `useEditSession`
- * restores a committed pair — mirroring a pair that was logged asymmetrically
- * would overwrite the asymmetry on the first edit.
  */
 function seedFromHistory(prev: ExerciseHistoryEntry, newPairId: () => string): DraftSet[] {
   const remap = new Map<string, string>()
@@ -81,15 +77,6 @@ function seedFromHistory(prev: ExerciseHistoryEntry, newPairId: () => string): D
     return set
   })
 
-  // Symmetric pair ⇒ still linked; asymmetric ⇒ unlinked.
-  const byPair = new Map<string, DraftSet[]>()
-  for (const s of sets) if (s.pairId) {
-    const g = byPair.get(s.pairId) ?? []; g.push(s); byPair.set(s.pairId, g)
-  }
-  for (const g of byPair.values()) {
-    const linked = g.length === 2 && g[0].weightKg === g[1].weightKg && g[0].reps === g[1].reps
-    for (const s of g) s.linked = linked
-  }
   return sets
 }
 
