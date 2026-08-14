@@ -176,6 +176,13 @@ export interface Database {
           day_key: string | null
           coach_report: unknown | null
           next_session_flag: string | null
+          /** Borg CR10 for the whole session. numeric(3,1), no CHECK. Derived
+           *  from the per-set ratings on save unless one is typed explicitly. */
+          session_rpe: number | null
+          /** Provenance — a derived figure must be distinguishable from a
+           *  measured one by every reader, not just the screen that shows it. */
+          calories_estimated: boolean
+          avg_bpm_estimated: boolean
           notion_page_id?: string | null   // live column (Notion-migration provenance)
           created_at: string
           updated_at: string
@@ -186,7 +193,11 @@ export interface Database {
             | 'set_count' | 'pr_count' | 'duration_min' | 'calories_burned'
             | 'avg_bpm' | 'report_md' | 'migrated_from_notion' | 'status'
             | 'client_session_id' | 'day_key' | 'coach_report' | 'next_session_flag'
+            | 'session_rpe' | 'calories_estimated' | 'avg_bpm_estimated'
         > & {
+          session_rpe?: number | null
+          calories_estimated?: boolean
+          avg_bpm_estimated?: boolean
           set_count?: number | null
           pr_count?: number | null
           duration_min?: number | null
@@ -280,13 +291,16 @@ export interface Database {
           unit_system: 'kg' | 'lb'
           reduce_motion: boolean
           auto_log_supplements: boolean
+          /** Per-set effort logging. Off = the ladder never mounts and
+           *  `workout_sets.rpe` simply stays null. */
+          track_rpe: boolean
           active_program: string
           timezone: string
           created_at: string
           updated_at: string
         }
-        Insert: Omit<Database['public']['Tables']['user_goals']['Row'], 'id' | 'created_at' | 'updated_at' | 'day_cutoff_hour' | 'unit_system' | 'reduce_motion' | 'auto_log_supplements' | 'active_program'>
-          & { day_cutoff_hour?: number; unit_system?: 'kg' | 'lb'; reduce_motion?: boolean; auto_log_supplements?: boolean; active_program?: string; timezone?: string }
+        Insert: Omit<Database['public']['Tables']['user_goals']['Row'], 'id' | 'created_at' | 'updated_at' | 'day_cutoff_hour' | 'unit_system' | 'reduce_motion' | 'auto_log_supplements' | 'track_rpe' | 'active_program'>
+          & { day_cutoff_hour?: number; unit_system?: 'kg' | 'lb'; reduce_motion?: boolean; auto_log_supplements?: boolean; track_rpe?: boolean; active_program?: string; timezone?: string }
         Update: Partial<Database['public']['Tables']['user_goals']['Insert']>
       }
       daily_logs: {

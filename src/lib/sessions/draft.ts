@@ -7,11 +7,28 @@
 import type { SplitDay } from '@/lib/types/workout'
 import type { SaveWorkoutInput } from '@/lib/sessions/schema'
 import { sessionVolumeKg } from '@/lib/sessions/volume'
+import { resolveSeededRpe } from '@/lib/training/rpeMemory'
 
 export interface DraftSet {
   weightKg: number
   reps: number
   rpe?: number
+  /**
+   * RPE MEMORY — client-only, never sent to the server.
+   *
+   * `rpeSeed` is last session's rating for this slot, and the weight/reps it was
+   * earned against. They exist so `cascadeSetEdit` can tell a rating you gave
+   * from a rating you inherited: the moment the work gets harder in either axis,
+   * the inherited one clears. See `resolveSeededRpe`.
+   *
+   * The seed is dropped the instant you tap a rating yourself — from then on the
+   * value is yours and nothing may overwrite it.
+   */
+  rpeSeed?: number
+  rpeSeedWeightKg?: number
+  rpeSeedReps?: number
+  /** Cleared by a load/rep increase — drives the "rate this" pip. Not persisted. */
+  rpeStale?: boolean
   /** Hevy-style set modifier; absent = a normal working set. Warmups + drop sets
    *  count toward volume + set count but are never PR-eligible. Failure is tracked
    *  PER SIDE for unilateral sets. */
@@ -134,6 +151,9 @@ export function cascadeSetEdit(sets: DraftSet[], setIdx: number, patch: Partial<
   const prev = sets[setIdx]
   if (!prev) return sets
   const next = sets.map((s, i) => (i === setIdx ? { ...s, ...patch } : s))
+  // A rating you tapped yourself is yours. Releasing the seed here is what stops
+  // a later weight edit from wiping a value you deliberately entered.
+  if (patch.rpe !== undefined) next[setIdx] = releaseRpeSeed(next[setIdx])
   if (setIdx === 0) {
     for (let i = 1; i < next.length; i++) {
       const upd: Partial<DraftSet> = {}
@@ -148,6 +168,43 @@ export function cascadeSetEdit(sets: DraftSet[], setIdx: number, patch: Partial<
       if (Object.keys(upd).length) next[i] = { ...next[i], ...upd }
     }
   }
+  // Re-resolve every inherited rating against the numbers as they now stand.
+  // This runs over the WHOLE list, not just the edited row, because the cascade
+  // above can raise the load on rows the user never touched — and an inherited
+  // rating surviving a cascade is the same lie as one surviving a direct edit.
+  return next.map(applyRpeMemory)
+}
+
+/** The user has taken ownership of this rating; memory stops governing it. */
+function releaseRpeSeed(s: DraftSet): DraftSet {
+  if (s.rpeSeed === undefined && !s.rpeStale) return s
+  const next: DraftSet = { ...s }
+  delete next.rpeSeed
+  delete next.rpeSeedWeightKg
+  delete next.rpeSeedReps
+  delete next.rpeStale
+  return next
+}
+
+/**
+ * Reconcile one set's inherited rating with its current numbers.
+ *
+ * `weight === 0` is real data: a bodyweight set carries 0 on both sides of the
+ * comparison, so the reps branch inside `resolveSeededRpe` is the only one that
+ * can fire — which is what those lifts need. Do not guard this on `weightKg > 0`.
+ */
+function applyRpeMemory(s: DraftSet): DraftSet {
+  if (s.rpeSeed === undefined || s.rpeSeedWeightKg === undefined || s.rpeSeedReps === undefined) return s
+  const { rpe, stale } = resolveSeededRpe(
+    { rpe: s.rpeSeed, weightKg: s.rpeSeedWeightKg, reps: s.rpeSeedReps },
+    { weightKg: s.weightKg, reps: s.reps },
+  )
+  if (s.rpe === rpe && !!s.rpeStale === stale) return s
+  const next: DraftSet = { ...s }
+  if (rpe === undefined) delete next.rpe
+  else next.rpe = rpe
+  if (stale) next.rpeStale = true
+  else delete next.rpeStale
   return next
 }
 
@@ -275,6 +332,14 @@ function sanitizeDraft(value: unknown): SessionDraft | null {
     sets: (ex.sets ?? []).map((s) => {
       const clean: DraftSet = { weightKg: s.weightKg, reps: s.reps }
       if (s.rpe != null) clean.rpe = s.rpe
+      // RPE memory survives a reload, or reopening the app would silently stop
+      // auto-clearing inherited ratings for the rest of the session. `rpeStale`
+      // is derived, not stored — recomputed below from the numbers as they stand.
+      if (s.rpeSeed != null && s.rpeSeedWeightKg != null && s.rpeSeedReps != null) {
+        clean.rpeSeed = s.rpeSeed
+        clean.rpeSeedWeightKg = s.rpeSeedWeightKg
+        clean.rpeSeedReps = s.rpeSeedReps
+      }
       if (s.setType === 'warmup' || s.setType === 'failure' || s.setType === 'dropset') clean.setType = s.setType
       // Preserve the Hevy completion flag across reloads (only an explicit false
       // is meaningful — everything else stays committed).
@@ -283,7 +348,7 @@ function sanitizeDraft(value: unknown): SessionDraft | null {
       // `linked` is deliberately NOT carried across: a draft written before the
       // flag was deleted must not resurrect the mirroring it described.
       if (s.side === 'L' || s.side === 'R') { clean.side = s.side; clean.pairId = s.pairId }
-      return clean
+      return applyRpeMemory(clean)
     }),
   }))
   return d

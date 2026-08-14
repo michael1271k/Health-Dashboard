@@ -57,6 +57,8 @@ export const WEEKLY_AI_TYPE = 'weekly_ai'
 
 interface RawSet {
   id: string; pair_id: string | null; side: string | null; weight_kg: number; reps: number
+  /** numeric(3,1) — may arrive as a string on some PostgREST paths. */
+  rpe: number | string | null
   est_1rm_kg: number | null; set_type: string | null; is_pr: boolean | null
   session_id: string
   /** Performance order within the session — the export sorts on these. */
@@ -99,7 +101,7 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     // is why sets sometimes read bottom-to-top. `useSessionDetail` has always
     // ordered this way, so the UI and the export were built on different rules.
     supabase.from('workout_sets')
-      .select('id, pair_id, side, weight_kg, reps, est_1rm_kg, set_type, is_pr, session_id, exercise_order, set_number, exercises!inner(name, muscle_groups), workout_sessions!inner(started_at)')
+      .select('id, pair_id, side, weight_kg, reps, rpe, est_1rm_kg, set_type, is_pr, session_id, exercise_order, set_number, exercises!inner(name, muscle_groups), workout_sessions!inner(started_at)')
       .gte('workout_sessions.started_at', startInstant).lt('workout_sessions.started_at', endInstant)
       .order('exercise_order', { ascending: true }).order('set_number', { ascending: true })
       .limit(3000),
@@ -394,6 +396,9 @@ function toSessions(d: RangeData): ExportSession[] {
       }
       e.sets.push({
         weightKg: r.weight_kg, reps: r.reps,
+        // numeric(3,1) can arrive as a string; coerce once, and keep the
+        // null — it is the difference between "felt easy" and "never rated".
+        rpe: r.rpe != null && Number.isFinite(Number(r.rpe)) ? Number(r.rpe) : null,
         side: r.side === 'L' || r.side === 'R' ? r.side : null,
         failure: r.set_type === 'failure',
         warmup: r.set_type === 'warmup',

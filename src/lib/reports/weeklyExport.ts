@@ -152,6 +152,12 @@ export interface ExportCardio {
 export interface ExportSet {
   weightKg: number
   reps: number
+  /**
+   * Per-set effort, 1–10 on the 0.5 grid. null = NOT REPORTED, which the export
+   * states outright rather than implying — an omitted rating and a set that felt
+   * easy are different facts, and a reader with no marker cannot tell them apart.
+   */
+  rpe: number | null
   side: 'L' | 'R' | null
   failure: boolean
   /** Ramp-up set. Exported and tagged, never silently dropped. */
@@ -374,6 +380,24 @@ const sleep = (min: number | null | undefined): string =>
 export function setDetail(sets: ExportSet[], exerciseName?: string): string {
   if (!sets.length) return '—'
   const sided = sets.some((s) => s.side != null)
+  /**
+   * Effort coverage for THIS exercise. Warm-ups are excluded — they are never
+   * rated by design, so their silence is not a gap.
+   *
+   * The marker is placed at the coarsest level that is still unambiguous:
+   *   · nothing rated  → one note at the end of the line
+   *   · partly rated   → a note on each unrated group, so it is clear WHICH
+   *                      sets are missing rather than which are present
+   * Marking every group unconditionally would put the phrase on almost every
+   * line in the report, which trains the reader to stop seeing it.
+   */
+  const anyRated = sets.some((s) => !s.warmup && s.rpe != null)
+  const noneRated = !anyRated && sets.some((s) => !s.warmup)
+  const NOT_REPORTED = 'RPE not reported'
+  // Every rating is on the 0.5 grid, so the natural string is already exact:
+  // 8.5 stays "8.5" and 9 stays "9". A fixed 1 dp would print "9.0" and "10.0",
+  // which reads as more precision than the scale has.
+  const fmtRpe = (v: number) => String(v)
   const timed = isTimedExercise(exerciseName)
   // `tight` keeps the L/R columns as narrow as they have always been — that line
   // already carries two sets, and the spacing is the only thing holding it on
@@ -385,19 +409,29 @@ export function setDetail(sets: ExportSet[], exerciseName?: string): string {
 
   if (!sided) {
     // Group consecutive same-load sets; append (F) to a group with any failure.
-    const groups: Array<{ w: number; reps: number[]; fail: boolean; warm: boolean }> = []
+    //
+    // RPE rides on the REP, not on the group: `60kg × 12@8.5, 11@9` keeps the
+    // load grouping that makes this line readable while still reporting a rating
+    // that changed between sets. Grouping by (load, rpe) instead would shatter a
+    // straight-load exercise into one group per set.
+    const groups: Array<{ w: number; reps: Array<{ n: number; rpe: number | null }>; fail: boolean; warm: boolean }> = []
     for (const s of sets) {
       const last = groups[groups.length - 1]
       const warm = s.warmup === true
       // A warm-up never merges into a working group at the same load — that
       // would read as an extra work set.
-      if (last && last.w === s.weightKg && last.warm === warm) { last.reps.push(s.reps); last.fail ||= s.failure }
-      else groups.push({ w: s.weightKg, reps: [s.reps], fail: s.failure, warm })
+      if (last && last.w === s.weightKg && last.warm === warm) { last.reps.push({ n: s.reps, rpe: s.rpe }); last.fail ||= s.failure }
+      else groups.push({ w: s.weightKg, reps: [{ n: s.reps, rpe: s.rpe }], fail: s.failure, warm })
     }
-    return groups.map((g) => {
-      const tag = g.warm ? ' (Warmup)' : g.fail ? ' (Failure)' : ''
-      return `${fmt(g.w, g.reps.join(','))}${tag}`
+    const line = groups.map((g) => {
+      const reps = g.reps.map((r) => (r.rpe != null ? `${r.n}@${fmtRpe(r.rpe)}` : `${r.n}`)).join(',')
+      const tags = [
+        g.warm ? 'Warmup' : g.fail ? 'Failure' : null,
+        anyRated && !g.warm && g.reps.every((r) => r.rpe == null) ? NOT_REPORTED : null,
+      ].filter(Boolean)
+      return `${fmt(g.w, reps)}${tags.length ? ` (${tags.join(' · ')})` : ''}`
     }).join(' · ')
+    return noneRated ? `${line} (${NOT_REPORTED})` : line
   }
 
   // Unilateral: pair L/R by pairId, preserving first-seen order.
@@ -411,13 +445,21 @@ export function setDetail(sets: ExportSet[], exerciseName?: string): string {
     if (s.side === 'R') p.R = s
     else p.L = s   // 'L' or an unsided straggler both read as the left column
   }
+  // The rating is PER SIDE, like the failure tag — a weaker arm can genuinely
+  // rate harder at the same load, and collapsing the two would erase the only
+  // reason to split the set.
   const side = (s: ExportSet | undefined, tag: 'L' | 'R') =>
-    s ? `${tag} ${fmt(s.weightKg, s.reps, true)}${s.warmup ? ' (Warmup)' : s.failure ? ' (Failure)' : ''}` : null
-  return order.map((key, i) => {
+    s ? `${tag} ${fmt(s.weightKg, s.reps, true)}${s.rpe != null ? `@${fmtRpe(s.rpe)}` : ''}${s.warmup ? ' (Warmup)' : s.failure ? ' (Failure)' : ''}` : null
+  const sidedLine = order.map((key, i) => {
     const p = pairs.get(key)!
     const cols = [side(p.L, 'L'), side(p.R, 'R')].filter(Boolean).join(' · ')
-    return `S${i + 1} ${cols}`
+    // Marked on the PAIR, not twice per side — that line already carries two
+    // sets, and the spacing is the only thing holding it on one row.
+    const inPair = [p.L, p.R].filter(Boolean) as ExportSet[]
+    const unreported = anyRated && inPair.some((s) => !s.warmup) && inPair.every((s) => s.rpe == null)
+    return `S${i + 1} ${cols}${unreported ? ` (${NOT_REPORTED})` : ''}`
   }).join(' · ')
+  return noneRated ? `${sidedLine} (${NOT_REPORTED})` : sidedLine
 }
 
 
@@ -453,6 +495,14 @@ export interface WeeklySummary {
    */
   avgSessionRpe: number | null
   ratedSessions: number
+  /**
+   * Per-set coverage. The session average above says how hard the weeks' workouts
+   * felt; this says how much of that is actually evidence. 4 of 96 sets rated is
+   * a different claim from 90 of 96, and the mean alone hides which one it is.
+   * Warm-ups are excluded from both — they are never rated by design.
+   */
+  ratedSets: number
+  workingSets: number
 }
 
 /**
@@ -487,6 +537,16 @@ export function weeklySummary(input: WeeklyExportInput): WeeklySummary {
     peakDoms: peak,
     avgSessionRpe: meanOf(rated.map((s) => s.sessionRpe)),
     ratedSessions: rated.length,
+    ...(() => {
+      let ratedSets = 0
+      let workingSets = 0
+      for (const s of input.sessions) for (const ex of s.exercises) for (const set of ex.sets) {
+        if (set.warmup) continue
+        workingSets += 1
+        if (set.rpe != null && Number.isFinite(set.rpe)) ratedSets += 1
+      }
+      return { ratedSets, workingSets }
+    })(),
   }
 }
 
@@ -808,6 +868,10 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
     L.push(`- Average workout effort: ${w.avgSessionRpe != null
       ? `${n(w.avgSessionRpe, 1)}/10 CR10 across ${w.ratedSessions} rated session${w.ratedSessions === 1 ? '' : 's'}`
       : 'not rated'}`)
+    // Coverage, so the average above can be read for what it is worth. Stated
+    // even at zero — "0 of 96 rated" is a fact about the log, and silence here
+    // would let an unrated week look like a week with nothing to say.
+    L.push(`- Per-set effort coverage: ${w.ratedSets} of ${w.workingSets} working set${w.workingSets === 1 ? '' : 's'} rated`)
     L.push(`- Highest DOMS: ${w.peakDoms
       ? `${w.peakDoms.muscle} — ${dLabel[w.peakDoms.severity] ?? w.peakDoms.severity} (${w.peakDoms.date})`
       : 'none reported'}`)

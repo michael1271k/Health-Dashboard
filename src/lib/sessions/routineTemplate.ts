@@ -30,10 +30,22 @@ import type { SessionDraft, DraftExercise, DraftSet } from '@/lib/sessions/draft
 import type { ProgramDay } from '@/lib/programs'
 import { daySplitEnum } from '@/lib/programs'
 
-/** Mirrors `DraftSet`, minus the client-only fields (`done`, `linked`, `rpe`). */
+/**
+ * Mirrors `DraftSet`, minus the client-only fields (`done`, `linked`, and the
+ * `rpeSeed*` bookkeeping).
+ *
+ * `rpe` USED TO BE EXCLUDED HERE, and that exclusion was load-bearing in the
+ * worst way: a stored template short-circuits history entirely
+ * (`templateDraft.ts` PRIORITY 1), so dropping the rating here meant per-set RPE
+ * memory would have been dead on the common path — every templated day — while
+ * appearing to work on the rare cold-start one.
+ */
 export interface TemplateSet {
   weightKg: number
   reps: number
+  /** Last committed rating for this slot. Seeds the next deck; cleared again the
+   *  moment the load or the reps go up. Warm-ups never carry one. */
+  rpe?: number
   setType?: 'warmup' | 'failure' | 'dropset'
   /** A unilateral pair is TWO of these sharing `pairId`. Never flattened. */
   side?: 'L' | 'R'
@@ -69,6 +81,7 @@ export interface TemplateSourceSet {
   exerciseName: string
   weightKg: number
   reps: number
+  rpe?: number | null
   setType?: string | null
   exerciseOrder?: number | null
   side?: string | null
@@ -118,6 +131,9 @@ export function payloadToTemplate(
     if (s.setType && TEMPLATE_TAGS.includes(s.setType)) {
       set.setType = s.setType as TemplateSet['setType']
     }
+    // A warm-up is never rated, so a rating on one is stale data from some other
+    // path — it must not seed next week's deck.
+    if (s.rpe != null && Number.isFinite(s.rpe) && set.setType !== 'warmup') set.rpe = s.rpe
     // Only a genuine two-sided row keeps the pair — the same guard every other
     // reader of these two columns applies.
     if (s.pairId && (s.side === 'L' || s.side === 'R')) {
@@ -195,6 +211,15 @@ export function templateToDraft(
       const sets: DraftSet[] = ex.sets.map((s) => {
         const set: DraftSet = { weightKg: s.weightKg, reps: s.reps, done: false }
         if (s.setType) set.setType = s.setType
+        // Seed the remembered rating together with the numbers it was earned
+        // against, so raising the load clears it instead of quietly claiming the
+        // heavier set felt the same.
+        if (s.rpe != null && s.setType !== 'warmup') {
+          set.rpe = s.rpe
+          set.rpeSeed = s.rpe
+          set.rpeSeedWeightKg = s.weightKg
+          set.rpeSeedReps = s.reps
+        }
         if (s.pairId && (s.side === 'L' || s.side === 'R')) {
           let pid = remap.get(s.pairId)
           if (!pid) { pid = newPairId(); remap.set(s.pairId, pid) }

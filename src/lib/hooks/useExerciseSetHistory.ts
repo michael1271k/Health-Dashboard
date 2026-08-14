@@ -11,6 +11,9 @@ export type HistorySetType = 'warmup' | 'failure' | 'dropset'
 export interface HistorySet {
   weightKg: number
   reps: number
+  /** Last session's per-set rating, carried so the deck can seed it and clear it
+   *  again the moment the load goes up. See `resolveSeededRpe`. */
+  rpe?: number
   setType?: HistorySetType
   /**
    * Unilateral tracking, carried so seeding can rebuild the PAIR.
@@ -68,7 +71,7 @@ export function useExerciseSetHistory(names: string[], era?: Era, dayKey?: strin
     queryFn: async (): Promise<Map<string, ExerciseHistory>> => {
       const { data, error } = await supabase
         .from('workout_sets')
-        .select('weight_kg, reps, set_number, set_type, side, pair_id, exercises!inner(name), workout_sessions!inner(started_at, day_key)')
+        .select('weight_kg, reps, rpe, set_number, set_type, side, pair_id, exercises!inner(name), workout_sessions!inner(started_at, day_key)')
         .in('exercises.name', names)
         .order('created_at', { ascending: false })
         // 2000, not 600: this now SEEDS the logger, and a low cap silently
@@ -78,7 +81,7 @@ export function useExerciseSetHistory(names: string[], era?: Era, dayKey?: strin
       if (error) throw error
 
       const rows = ((data ?? []) as unknown as Array<{
-        weight_kg: number; reps: number; set_number: number; set_type: string | null
+        weight_kg: number; reps: number; rpe: number | null; set_number: number; set_type: string | null
         side: string | null; pair_id: string | null
         exercises: { name: string }
         workout_sessions: { started_at: string; day_key: string | null }
@@ -104,6 +107,9 @@ export function useExerciseSetHistory(names: string[], era?: Era, dayKey?: strin
         const sided = r.pair_id && (r.side === 'L' || r.side === 'R')
         const row: Row = {
           weightKg: r.weight_kg, reps: r.reps, setNumber: r.set_number,
+          // Supabase returns numeric(3,1) as a string on some paths; coerce once
+          // here so nothing downstream compares '8.5' to 8.5.
+          ...(r.rpe != null && Number.isFinite(Number(r.rpe)) ? { rpe: Number(r.rpe) } : {}),
           ...(r.set_type && TAGS.includes(r.set_type) ? { setType: r.set_type as HistorySetType } : {}),
           ...(sided ? { side: r.side as 'L' | 'R', pairId: r.pair_id as string } : {}),
         }

@@ -97,15 +97,15 @@ describe('buildWeeklyExport', () => {
         exercises: [{
           name: 'Chest Press', repWindow: '10–12', topKg: 60,
           sets: [
-            { weightKg: 60, reps: 12, side: null, failure: false, pairId: null },
-            { weightKg: 60, reps: 11, side: null, failure: false, pairId: null },
-            { weightKg: 57.5, reps: 10, side: null, failure: true, pairId: null },
+            { weightKg: 60, reps: 12, rpe: null, side: null, failure: false, pairId: null },
+            { weightKg: 60, reps: 11, rpe: null, side: null, failure: false, pairId: null },
+            { weightKg: 57.5, reps: 10, rpe: null, side: null, failure: true, pairId: null },
           ],
         }, {
           name: 'Single Arm Cable Crossover', repWindow: '12–15', topKg: 7.5,
           sets: [
-            { weightKg: 7.5, reps: 15, side: 'L', failure: false, pairId: 'p1' },
-            { weightKg: 7.5, reps: 13, side: 'R', failure: true, pairId: 'p1' },
+            { weightKg: 7.5, reps: 15, rpe: null, side: 'L', failure: false, pairId: 'p1' },
+            { weightKg: 7.5, reps: 13, rpe: null, side: 'R', failure: true, pairId: 'p1' },
           ],
         }],
         prs: [{ name: 'Chest Press', weightKg: 60, reps: 12, axes: ['weight', 'e1rm'] }],
@@ -433,8 +433,8 @@ describe('buildWeeklyExport', () => {
         exercises: [{
           name: 'Leg Press', topKg: 70, repWindow: '8-12',
           sets: [
-            { weightKg: 40, reps: 10, side: null, failure: false, warmup: true, pairId: null },
-            { weightKg: 70, reps: 12, side: null, failure: false, pairId: null },
+            { weightKg: 40, reps: 10, rpe: null, side: null, failure: false, warmup: true, pairId: null },
+            { weightKg: 70, reps: 12, rpe: null, side: null, failure: false, pairId: null },
           ],
         }],
       }],

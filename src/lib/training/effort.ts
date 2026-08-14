@@ -12,6 +12,8 @@
  * drives weekly load management and shows up in the telemetry report.
  */
 
+import { EMERALD, SAND, EMBER, OXIDE, GARNET, STEEL } from '@/lib/theme/palette'
+
 export const CR10_MIN = 1
 export const CR10_MAX = 10
 
@@ -51,9 +53,81 @@ export function normalizeCr10(v: number | null | undefined): number | null {
 
 /** Colour ramp for the effort chip: green (easy) → amber → red (maximal). */
 export function cr10Color(v: number | null | undefined): string {
-  if (v == null) return '#8E9AAC'
-  if (v <= 4) return '#3E9E7A'
+  if (v == null) return STEEL
+  if (v <= 4) return EMERALD
+  // Deliberately NOT the palette GOLD: gold means a personal record app-wide.
   if (v <= 6) return '#C9A227'
-  if (v <= 8) return '#E0703C'
-  return '#C4514E'
+  if (v <= 8) return EMBER
+  return OXIDE
+}
+
+/* ── The per-set ladder ─────────────────────────────────────────────────────
+ *
+ * Per-set RPE used to be three chips (Easy 7 / Hard 9 / Failure 10), which
+ * collapsed the distinction that matters most in a hypertrophy block: a set with
+ * zero reps left but clean form is not a set you failed.
+ *
+ * Seven stops, all already on the 0.5 grid `workout_sets.rpe` stores, so this
+ * needed no migration. It stays CR10-compatible on purpose — `session_rpe` and
+ * `cardio_logs.effort` speak the same scale, and one app should not hold two
+ * vocabularies for "how hard was that".
+ *
+ * The granularity lives where the granularity is. Below 7 one word is enough,
+ * because a set that easy is a data point about the LOAD, not about the effort.
+ */
+
+export interface RpeStop {
+  /** Stored value. Always on the 0.5 grid. */
+  value: number
+  label: string
+  /** Reps-in-reserve gloss — the question you can actually answer. */
+  hint: string
+}
+
+export const RPE_LADDER: readonly RpeStop[] = [
+  { value: 5, label: 'Very Easy', hint: '5+ reps left' },
+  { value: 6.5, label: 'Easy', hint: '~4 left' },
+  { value: 7.5, label: 'Medium', hint: '3 left' },
+  { value: 8.5, label: 'Hard', hint: '2 left' },
+  { value: 9, label: 'Very Hard', hint: '1 left' },
+  { value: 9.5, label: 'Max Effort', hint: '0 left, form held' },
+  { value: 10, label: 'Failure', hint: 'missed or form broke' },
+] as const
+
+/** Index of the lit pip, or -1 for unrated and for nudged off-ladder values. */
+export function rpeStopIndex(v: number | null | undefined): number {
+  if (v == null || !Number.isFinite(v)) return -1
+  return RPE_LADDER.findIndex((s) => s.value === v)
+}
+
+/**
+ * Ladder label on an exact stop, CR10 anchor otherwise. The fallback is
+ * load-bearing: rows written before the ladder existed hold 6, 7, 8, 9 and 10,
+ * and none of them may render as a dash.
+ */
+export function rpeLabel(v: number | null | undefined): string {
+  const i = rpeStopIndex(v)
+  return i >= 0 ? RPE_LADDER[i].label : cr10Label(v)
+}
+
+/**
+ * A ramp of its own rather than `cr10Color`, for two reasons. The ladder lives
+ * in a compressed 5–10 band where CR10's bands paint four of the seven stops
+ * the same red; and CR10's middle band is GOLD, which means a personal record
+ * app-wide (`WEEK_STATE.pr`) and must not also mean "medium effort".
+ */
+export function rpeColor(v: number | null | undefined): string {
+  if (v == null || !Number.isFinite(v)) return STEEL   // unrated
+  if (v <= 6.5) return EMERALD
+  if (v <= 7.5) return SAND
+  if (v <= 9) return EMBER
+  if (v <= 9.5) return OXIDE
+  return GARNET   // failure reads distinct from max effort
+}
+
+/** Long-press ±0.5, so the column's full resolution stays reachable without
+ *  paying for it in tap targets. Never invents a rating on an unrated set. */
+export function nudgeRpe(v: number | null | undefined, dir: 1 | -1): number | null {
+  if (v == null || !Number.isFinite(v)) return null
+  return normalizeCr10(v + dir * 0.5)
 }

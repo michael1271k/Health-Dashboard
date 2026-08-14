@@ -31,6 +31,8 @@ export interface ExerciseHistoryEntry {
   sets: Array<{
     weightKg: number
     reps: number
+    /** Last session's rating for this slot — seeds the deck, see `seedFromHistory`. */
+    rpe?: number
     setType?: 'warmup' | 'failure' | 'dropset'
     side?: 'L' | 'R'
     pairId?: string
@@ -68,6 +70,16 @@ function seedFromHistory(prev: ExerciseHistoryEntry, newPairId: () => string): D
   const sets: DraftSet[] = prev.sets.map((s) => {
     const set: DraftSet = { weightKg: s.weightKg, reps: s.reps }
     if (s.setType) set.setType = s.setType
+    // RPE MEMORY. Last session's rating opens as this session's proposal, along
+    // with the numbers it was earned against, so raising the load clears it
+    // rather than silently reporting that the heavier set felt identical.
+    // Warm-ups are never rated and never seed one.
+    if (s.rpe != null && s.setType !== 'warmup') {
+      set.rpe = s.rpe
+      set.rpeSeed = s.rpe
+      set.rpeSeedWeightKg = s.weightKg
+      set.rpeSeedReps = s.reps
+    }
     if (s.pairId && (s.side === 'L' || s.side === 'R')) {
       let pid = remap.get(s.pairId)
       if (!pid) { pid = newPairId(); remap.set(s.pairId, pid) }

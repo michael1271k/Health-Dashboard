@@ -6,6 +6,8 @@ import { Check, X, Trophy } from 'lucide-react'
 import { tapLight } from '@/lib/native/haptics'
 import { isSetCommitted, type DraftSet } from '@/lib/sessions/draft'
 import { prAxisLabel, type PrAxis } from '@/lib/training/prEngine'
+import { rpeColor, rpeLabel } from '@/lib/training/effort'
+import { RpeLadder } from './RpeLadder'
 
 const WEIGHT_STEPS = [-2.5, -0.25, +0.25, +2.5] as const
 const ORANGE = '#E0703C' // warm-up
@@ -35,8 +37,14 @@ const maxFor = (w: number) => Math.max(60, Math.ceil((w + 30) / 10) * 10)
  * The card shells above still re-execute; they are cheap once their subtree
  * bails out.
  */
-export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subRow = false, set, active, timed = false, bodyweight = false, prAxes = [], onActivate, onChange, onRemove, onToggleDone, onSplit, onPrTap }: {
+export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subRow = false, set, active, timed = false, bodyweight = false, trackRpe = false, prAxes = [], onActivate, onChange, onRemove, onToggleDone, onSplit, onPrTap }: {
   index: number
+  /**
+   * `user_goals.track_rpe`. Off = the ladder never mounts and no rating is ever
+   * written; the column simply stays null, which is what "not reported" means
+   * everywhere downstream.
+   */
+  trackRpe?: boolean
   /** Records this set just set, computed live by the parent from `prEngine`. */
   prAxes?: PrAxis[]
   /**
@@ -204,7 +212,24 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
                 {typeTag.label}
               </span>
             )}
-            {set.rpe != null && <span className="text-[10px] text-muted shrink-0">RPE {set.rpe}</span>}
+            {/* Effort readout. Carries the WORD, not just the number: "8.5"
+                means nothing to someone who has not memorised the ladder. A
+                value inherited from last session renders dimmer, because it is
+                a proposal until you either confirm it or commit the session. */}
+            {set.rpe != null && (
+              <span
+                className="text-[10px] font-bold uppercase tracking-wide shrink-0"
+                style={{ color: rpeColor(set.rpe), opacity: set.rpeSeed != null ? 0.55 : 1 }}
+                title={set.rpeSeed != null ? 'Carried from last session — tap to confirm or change' : undefined}
+              >
+                {rpeLabel(set.rpe)}
+              </span>
+            )}
+            {/* Cleared because the load or the reps went up. One dot, no banner. */}
+            {set.rpe == null && set.rpeStale && (
+              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: ORANGE }}
+                title="Heavier than last time — rate this set" aria-label="Needs an effort rating" />
+            )}
           </span>
         </button>
         {onToggleDone && (
@@ -363,6 +388,26 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
             <TypeChip active={isFail} color={DANGER} label="Failure" short="F" onClick={() => toggleType('failure')} />
             <TypeChip active={isDrop} color={DROP} label="Drop set" short="D" onClick={() => toggleType('dropset')} />
           </div>
+          {/* Effort — per SET, and only on a working one.
+              A warm-up is never rated, for the same reason it wins no record:
+              it is not the effort the question is about. Rating the Failure
+              stop also tags the set `failure`, because that is what the word
+              means on this row — but only ADDITIVELY: clearing the rating
+              leaves a W/F/D chip the user set separately alone. */}
+          {trackRpe && !isWarm && (
+            <div className="pt-0.5">
+              <RpeLadder
+                value={set.rpe}
+                stale={set.rpeStale}
+                seeded={set.rpeSeed != null}
+                setLabel={`set ${displayNum ?? index + 1}`}
+                onPick={(choice) => onChange(index, {
+                  rpe: choice?.rpe,
+                  ...(choice?.failure ? { setType: 'failure' as const } : {}),
+                })}
+              />
+            </div>
+          )}
           {/* Unilateral — split into Left/Right. Merge lives on the parent "Set N"
               card, so a nested sub-row shows only its own tuner. */}
           {onSplit && (

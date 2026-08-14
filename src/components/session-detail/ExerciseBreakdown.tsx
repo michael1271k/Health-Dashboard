@@ -10,6 +10,7 @@ import { useSessionTrends, LOAD_STEP_KG } from '@/lib/hooks/useSessionTrends'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 import { isTimedExercise } from '@/lib/exercises/timed'
 import { formatSet } from '@/lib/utils/setFormat'
+import { rpeColor, rpeLabel } from '@/lib/training/effort'
 import { GROUP_COLOR } from '@/lib/hooks/useMuscleAnalytics'
 import { GOLD, OXIDE, EMERALD, SAPPHIRE, EMBER, PLATINUM } from '@/lib/theme/palette'
 
@@ -242,7 +243,17 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
                             title={tag.full} aria-label={tag.full}>{tag.label}</span>
                         )}
                         <SetPrBadges set={row.set} timed={timed} />
-                        {row.set.rpe != null && <span className="text-[10px] text-muted shrink-0">RPE {row.set.rpe}</span>}
+                        {/* The word, not just the number — "8.5" means nothing
+                            to a reader who has not memorised the ladder, and
+                            legacy rows hold off-ladder values (6, 7, 8) that
+                            still resolve to a CR10 anchor rather than a dash. */}
+                        {row.set.rpe != null && (
+                          <span className="text-[10px] font-bold uppercase tracking-wide shrink-0"
+                            style={{ color: rpeColor(row.set.rpe) }}
+                            title={`Effort ${row.set.rpe} / 10`}>
+                            {rpeLabel(row.set.rpe)}
+                          </span>
+                        )}
                         {/* `> 0`, not `!= null`: bodyweight rows written before
                             Epley returned null hold a stored 0, which rendered
                             as "1RM 0" on every Reverse Crunch. */}

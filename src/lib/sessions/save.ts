@@ -16,6 +16,7 @@ import { buildBaselines, detectSessionPrs, recordSets, type PrAxis } from '@/lib
 import { prFloorFor } from '@/lib/training/prTruth'
 import { repWindowFor } from '@/lib/training/ceilings'
 import { normalizeCr10 } from '@/lib/training/effort'
+import { deriveSessionRpe } from '@/lib/training/rpeMemory'
 import { canonicalExerciseName } from '@/lib/exercises/aliases'
 
 type DB = SupabaseClient<Database>
@@ -257,14 +258,7 @@ export async function saveSession(
     }
   }
 
-  // `session_rpe` and the two `*_estimated` flags aren't in the generated types
-  // yet (Supabase is schema-of-record and types.ts lags), hence the intersection
-  // rather than a bare InsertRow.
-  const sessionInsert: InsertRow<'workout_sessions'> & {
-    session_rpe: number | null
-    calories_estimated: boolean
-    avg_bpm_estimated: boolean
-  } = {
+  const sessionInsert: InsertRow<'workout_sessions'> = {
     user_id: userId,
     started_at: payload.startedAt,
     ended_at: payload.endedAt,
@@ -287,9 +281,19 @@ export async function saveSession(
     coach_report: payload.coachReport ?? null,
     next_session_flag: payload.nextSessionFlag ?? null,
     // Self-heals: a pre-migration DB simply drops the key (see the retry below).
-    // An edit that carries no rating keeps the one already stored rather than
-    // nulling it — see `carriedSessionRpe`.
-    session_rpe: normalizeCr10(payload.sessionRpe) ?? carriedSessionRpe,
+    //
+    // Precedence, highest first:
+    //   1. an explicit rating typed in the finish sheet — you overrode it, you win
+    //   2. the volume-weighted mean of this session's per-set ratings
+    //   3. the rating already stored (EDIT flow — an edit that carries neither
+    //      must not null a good value; see `carriedSessionRpe`)
+    //
+    // Weighted rather than maxed because `battery.ts` reads this as an intensity
+    // multiplier, and a max would over-drain a session whose only hard set was a
+    // finisher.
+    session_rpe: normalizeCr10(payload.sessionRpe)
+      ?? deriveSessionRpe(payload.sets)
+      ?? carriedSessionRpe,
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -328,7 +332,10 @@ export async function saveSession(
       set_number: s.setNumber,
       weight_kg: s.weightKg,
       reps: s.reps,
-      rpe: s.rpe ?? null,
+      // Snapped through the SAME normaliser as session_rpe. Per-set RPE used to
+      // go in raw, so nothing but the DB CHECK stood between a client and an
+      // off-grid value the ladder can never render.
+      rpe: normalizeCr10(s.rpe),
       is_pr: isPr,
       est_1rm_kg: est1rm,
       exercise_order: s.exerciseOrder ?? null,

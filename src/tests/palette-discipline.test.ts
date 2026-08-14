@@ -78,7 +78,7 @@ const ALLOWED_ORPHANS: Record<string, string> = {
 // 297 → 268: the phase table stopped hand-transcribing four hexes into decimal
 // triples, and SessionHero / ProgressionTrail / JourneyTimeline stopped keeping
 // nine local copies under names that did not match their values.
-const HEX_CEILING = 268
+const HEX_CEILING = 264
 
 function scan() {
   const files = sourceFiles('src').filter(
