@@ -1,12 +1,18 @@
 'use client'
 
-import { Check, Loader2, Trash2, X } from 'lucide-react'
+import { ChevronUp, Loader2, Trash2, X } from 'lucide-react'
 import { draftTotals, type SessionDraft } from '@/lib/sessions/draft'
 import { fmtVolume } from '@/lib/utils/units'
-import { EffortScale } from '@/components/ui/EffortScale'
 
 /**
- * Sticky commit bar: live totals, discard/cancel, delete, and the commit CTA.
+ * Sticky commit bar: discard/cancel, delete, and the button that opens the
+ * finish sheet.
+ *
+ * It used to carry the session-effort scale and commit directly. Both moved into
+ * `FinishSheet`: the CR10 row sat above the CTA for the whole session, and
+ * committing from here meant the three end-of-session numbers had to be asked
+ * somewhere they could not be answered — the top of the deck. This bar is now
+ * one decision wide.
  *
  * EDIT mode (draft.replaceSessionId set) exposes TWO distinct destructive
  * actions so they're never confused:
@@ -14,16 +20,16 @@ import { EffortScale } from '@/components/ui/EffortScale'
  *   · Trash              — ALWAYS deletes the actual committed session.
  * A brand-new draft keeps the single trash = discard-draft behaviour.
  */
-export function CommitBar({ draft, busy, error, deleting, onCommit, onDiscard, onCancelEdit, onDelete, onSessionRpe }: {
+export function CommitBar({ draft, busy, error, deleting, onFinish, onDiscard, onCancelEdit, onDelete }: {
   draft: SessionDraft
   busy: boolean
   error: string | null
   deleting?: boolean
-  onCommit: () => void
+  /** Opens the finish sheet — the commit itself happens in there. */
+  onFinish: () => void
   onDiscard: () => void
   onCancelEdit?: () => void
   onDelete?: () => void
-  onSessionRpe?: (v: number | null) => void
 }) {
   const totals = draftTotals(draft)
   const isEdit = !!draft.replaceSessionId
@@ -32,15 +38,6 @@ export function CommitBar({ draft, busy, error, deleting, onCommit, onDiscard, o
     <div className="sticky bottom-0 z-10 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] keyboard-safe space-y-2
                     bg-gradient-to-t from-[var(--color-bg)] via-[var(--color-bg)]/90 to-transparent">
       {error && <p className="text-danger text-fluid-sm" dir="auto">{error}</p>}
-      {/* Rate the session BEFORE committing — asked at the one moment the
-          answer is still fresh. Optional: an unrated session commits fine, it
-          just contributes nothing to the weekly load picture. Hidden until
-          there's something to rate. */}
-      {onSessionRpe && totals.sets > 0 && (
-        <div className="px-0.5">
-          <EffortScale value={draft.sessionRpe} onChange={onSessionRpe} compact />
-        </div>
-      )}
       <div className="flex items-center gap-2">
         {isEdit ? (
           <>
@@ -77,13 +74,13 @@ export function CommitBar({ draft, busy, error, deleting, onCommit, onDiscard, o
         )}
         <button
           type="button"
-          onClick={onCommit}
+          onClick={onFinish}
           disabled={busy || totals.sets === 0}
           className="btn-primary flex-1 justify-center disabled:opacity-50 min-h-[52px] text-fluid-base"
         >
           {busy
             ? <><Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> {isEdit ? 'Saving…' : 'Committing…'}</>
-            : <><Check className="w-4 h-4" aria-hidden="true" />
+            : <><ChevronUp className="w-4 h-4" aria-hidden="true" />
                 {isEdit ? 'Save Edits' : 'Finish Session'}
                 <span className="text-xs opacity-70 ml-1">{totals.sets} sets · {fmtVolume(totals.volumeKg)}kg</span></>}
         </button>

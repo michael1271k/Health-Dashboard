@@ -8,10 +8,10 @@ import { AppBar } from '@/components/nav/AppBar'
 import { Zone, ZoneRow, ZoneEmpty, ZoneSkeleton } from '@/components/ui/Zone'
 import { useExerciseCatalog, type CatalogExercise } from '@/lib/hooks/useExerciseCatalog'
 import { exerciseHistoryQuery } from '@/lib/hooks/useExerciseHistory'
-import { GROUP, EMBER, MUTED } from '@/lib/theme/palette'
+import { EMBER, MUTED } from '@/lib/theme/palette'
+import { groupColor } from '@/lib/theme/muscleHue'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
 
-const groupColor = (g: string) => (GROUP as Record<string, string>)[g] ?? MUTED
 
 /**
  * Every lift you have ever logged, grouped by what it trains.

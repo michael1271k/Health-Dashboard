@@ -4,13 +4,13 @@ import { useId } from 'react'
 import {
   ResponsiveContainer, AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip,
 } from 'recharts'
-import { Dumbbell, TrendingUp, Layers, Activity, Repeat, Info } from 'lucide-react'
+import { TrendingUp, Activity, Info } from 'lucide-react'
 import { ChartTooltip } from '@/components/charts/ChartTooltip'
 import { useExerciseHistory } from '@/lib/hooks/useExerciseHistory'
 import { isUnloadedExercise } from '@/lib/exercises/bodyweight'
 import { displayWeight, weightUnit } from '@/lib/utils/units'
 import { shortDate } from '@/lib/utils/day'
-import { STEEL, GOLD, MUTED } from '@/lib/theme/palette'
+import { STEEL, MUTED } from '@/lib/theme/palette'
 
 /**
  * Everything a single exercise has ever done — records, trends, recent work.
@@ -70,9 +70,90 @@ export function ExerciseHistoryBody({ exerciseId, exerciseName, accent = STEEL }
     ? { data: repsData, label: 'Reps per session', unit: '' }
     : { data: e1rmData, label: `Estimated 1RM · ${unit}`, unit }
 
+  /**
+   * ── THE RECORD STRIP ────────────────────────────────────────────────────────
+   * The three numbers you opened this page for, first.
+   *
+   * They used to sit ~300px down, below a 170px chart and a 120px bar chart, as
+   * a 2×2 of bordered tinted tiles — four boxes of equal visual weight, told
+   * apart only by one of them being gold. Four framed tiles is a lot of
+   * furniture around twelve characters of data, so the frames are gone: the
+   * numbers are separated by hairlines and sized by importance instead.
+   *
+   * Only the est-1RM carries the accent, and the accent is the EXERCISE's own
+   * hue rather than GOLD — gold means a personal record app-wide.
+   */
+  const strip: Array<{ label: string; value: string; unit?: string; note?: string; accent?: boolean }> = [
+    {
+      label: 'Heaviest',
+      value: !unloaded && r?.heaviest_weight ? `${displayWeight(r.heaviest_weight)}` : '—',
+      unit,
+    },
+    unloaded
+      ? { label: 'Most reps in a session', value: bestReps != null ? bestReps.toLocaleString() : '—', accent: true }
+      : {
+        label: 'Best est-1RM',
+        value: r?.best_1rm ? `${displayWeight(r.best_1rm)}` : '—',
+        unit,
+        accent: true,
+        note: r?.best_1rm ? undefined : 'no estimate yet',
+      },
+    {
+      label: 'Best session vol',
+      value: r?.best_session_volume ? `${Math.round(displayWeight(r.best_session_volume) ?? 0).toLocaleString()}` : '—',
+      unit,
+    },
+  ]
+
   return (
     <div className="space-y-4">
-      {/* Hero trend — 1RM for a loaded lift, reps for one you cannot load. */}
+      <div>
+        <div className="grid grid-cols-3">
+          {strip.map((c, i) => (
+            <div key={c.label} className={i > 0 ? 'pl-3 border-l border-white/[0.07]' : 'pr-3'}>
+              <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-muted leading-tight">
+                {c.label}
+              </span>
+              <div
+                className="helix-num font-bold text-fluid-xl tabular-nums leading-none mt-1.5"
+                style={{ color: c.accent && c.value !== '—' ? accent : 'var(--color-text)' }}
+              >
+                {c.value}
+                {c.unit && c.value !== '—' && (
+                  <span className="text-[10px] text-muted font-normal ml-1">{c.unit}</span>
+                )}
+              </div>
+              {c.note && <span className="block text-[9px] text-muted mt-1">{c.note}</span>}
+            </div>
+          ))}
+        </div>
+
+        {/* The caveats, demoted. Both are real numbers, but neither is a headline:
+            one is a per-side figure that reads as a total, the other is a
+            lifetime count that only moves in one direction. */}
+        <p className="mt-3 pt-2.5 border-t border-white/[0.06] text-[11px] text-muted flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span>
+            <span className="uppercase tracking-wide text-[10px] font-bold">Heaviest single set</span>{' '}
+            <span className="helix-num text-text tabular-nums">
+              {r?.best_set_volume ? `${Math.round(displayWeight(r.best_set_volume) ?? 0).toLocaleString()}${unit}` : '—'}
+            </span>
+          </span>
+          <span>
+            <span className="uppercase tracking-wide text-[10px] font-bold">Total reps</span>{' '}
+            <span className="helix-num text-text tabular-nums">{(r?.total_reps ?? 0).toLocaleString()}</span>
+          </span>
+          {/* The RPC does not collapse L/R pairs the way volumeCredits does, and
+              exposes no pair_id to let us. Say so rather than imply a total. */}
+          <span className="flex items-center gap-1 text-muted/70">
+            <Info className="w-2.5 h-2.5 shrink-0" aria-hidden="true" />
+            Unilateral lifts count each side separately.
+          </span>
+        </p>
+      </div>
+
+      {/* Hero trend — 1RM for a loaded lift, reps for one you cannot load.
+          Below the records now: a trend answers "where is this going", which is
+          the second question, not the first. */}
       {hero.data.length >= 2 ? (
         <div className="rounded-2xl bg-white/[0.02] border border-white/[0.05] p-3">
           <p className="text-[11px] font-bold uppercase tracking-wide text-muted mb-2 flex items-center gap-1.5">
@@ -115,30 +196,6 @@ export function ExerciseHistoryBody({ exerciseId, exerciseName, accent = STEEL }
         </div>
       )}
 
-      {/* Records */}
-      <div className="grid grid-cols-2 gap-2">
-        <Record icon={Dumbbell} label="Heaviest"
-          value={!unloaded && r?.heaviest_weight ? `${displayWeight(r.heaviest_weight)}` : '—'} unit={unit} />
-        {unloaded ? (
-          <Record icon={Repeat} label="Most reps in a session"
-            value={bestReps != null ? bestReps.toLocaleString() : '—'} highlight />
-        ) : (
-          <Record icon={TrendingUp} label="Best est-1RM"
-            value={r?.best_1rm ? `${displayWeight(r.best_1rm)}` : '—'}
-            unit={unit} highlight
-            note={r?.best_1rm ? undefined : 'no estimate yet'} />
-        )}
-        <Record icon={Layers} label="Heaviest single set"
-          value={r?.best_set_volume ? `${Math.round(displayWeight(r.best_set_volume) ?? 0).toLocaleString()}` : '—'}
-          unit={unit}
-          // The RPC does not collapse L/R pairs the way volumeCredits does, and
-          // it exposes no pair_id to let us. Say so rather than imply a total.
-          info="Unilateral lifts count each side separately." />
-        <Record icon={Activity} label="Best session vol"
-          value={r?.best_session_volume ? `${Math.round(displayWeight(r.best_session_volume) ?? 0).toLocaleString()}` : '—'} unit={unit} />
-      </div>
-      <Record icon={Repeat} label="Total reps (all time)" value={(r?.total_reps ?? 0).toLocaleString()} />
-
       {/* Recent sessions */}
       {recent.length > 0 && (
         <div className="space-y-1.5">
@@ -157,35 +214,6 @@ export function ExerciseHistoryBody({ exerciseId, exerciseName, accent = STEEL }
           ))}
         </div>
       )}
-    </div>
-  )
-}
-
-function Record({ icon: Icon, label, value, unit, highlight, note, info }: {
-  icon: typeof Dumbbell
-  label: string
-  value: string
-  unit?: string
-  highlight?: boolean
-  /** Shown in place of a unit when the number is genuinely unavailable. */
-  note?: string
-  /** A one-line caveat about how the number is computed. */
-  info?: string
-}) {
-  const color = highlight ? GOLD : STEEL
-  return (
-    <div className="rounded-xl px-3 py-2.5"
-      style={{ background: `${color}${highlight ? '14' : '0d'}`, border: `1px solid ${color}${highlight ? '55' : '2e'}` }}>
-      <span className="text-[10px] font-bold uppercase tracking-wide flex items-center gap-1" style={{ color }}>
-        <Icon className="w-3 h-3" aria-hidden="true" /> {label}
-        {info && <Info className="w-2.5 h-2.5 opacity-60 shrink-0" aria-label={info} />}
-      </span>
-      <div className="helix-num font-bold text-fluid-lg text-text tabular-nums mt-0.5">
-        {value}
-        {unit && value !== '—' && <span className="text-[10px] text-muted font-normal ml-1">{unit}</span>}
-      </div>
-      {note && <span className="block text-[9px] text-muted mt-0.5">{note}</span>}
-      {info && <span className="block text-[9px] text-muted/70 mt-0.5 leading-tight">{info}</span>}
     </div>
   )
 }

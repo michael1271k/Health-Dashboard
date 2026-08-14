@@ -192,31 +192,67 @@ export function splitColor(split?: string | null): string {
   return dayColor(null, split)
 }
 
-/** Broad muscle display groups. */
+/**
+ * ── MUSCLE COLOUR: SIX FAMILIES, ONE SYSTEM ──────────────────────────────────
+ *
+ * These two maps used to contradict each other. `GROUP` painted Legs AMETHYST
+ * while `MUSCLE` painted Quads EMBER_DEEP, Hamstrings EMERALD_DEEP and Glutes
+ * SAPPHIRE_DEEP — three unrelated hues inside one violet family. A radar chart
+ * and a volume chart of the same workout shared no visual language, because the
+ * 13 landmarks had been chosen for mutual distinguishability alone, with no
+ * reference to the 6 groups above them.
+ *
+ * `GROUP.Shoulders` was also GOLD, which `WEEK_STATE.pr` reserves app-wide for a
+ * personal record. Gold now means that and nothing else.
+ *
+ * The system is three levels:
+ *   1. six FAMILY hues, spread across the wheel so no two neighbour each other
+ *   2. each landmark is a STEP inside its family's ramp, light → dark
+ *   3. an exercise nudges one step within its landmark (see `muscleHue.ts`)
+ *
+ * Ramp steps are literal hexes rather than computed, because recharts needs a
+ * real string for the `${EMBER}1a` alpha idiom and a lookup table is testable in
+ * a way a colour-space conversion is not.
+ */
+
+/** Broad muscle display groups — the six family hues. */
 export const GROUP = {
-  Chest: EMBER,
-  Back: SAPPHIRE,
-  Shoulders: GOLD,
-  Arms: PLATINUM,
-  Legs: AMETHYST,
-  Core: EMERALD,
+  Chest: EMBER,        // the signature hue keeps the signature muscle
+  Back: EMERALD,
+  Shoulders: AMETHYST, // frees GOLD for records
+  Arms: COPPER,        // warm, adjacent to Chest, still clearly separable
+  Legs: SAPPHIRE,
+  Core: STEEL,         // neutral substrate
 } as const
 
-/** The 13 landmark muscles — a full jewel ramp, all distinguishable. */
+/**
+ * The 13 landmark muscles as ramp positions inside their family.
+ *
+ * A family with one landmark sits on the base hue. A family with several ramps
+ * light → dark, deepest for the biggest muscle, so the ORDER carries meaning
+ * rather than just separating the cells.
+ */
 export const MUSCLE = {
+  // Chest · Back · Core — one landmark each, so each is its family base.
   Chest: EMBER,
-  Back: SAPPHIRE,
-  'Side delts': GOLD,
-  'Rear delts': BRONZE,
-  Biceps: AMETHYST,
-  Triceps: COPPER,
-  Forearms: PLUM,
-  Quads: EMBER_DEEP,
-  Hamstrings: EMERALD_DEEP,
+  Back: EMERALD,
+  'Abs/core': STEEL,
+
+  // Shoulders — amethyst, two steps.
+  'Side delts': '#A085BC',
+  'Rear delts': '#6E5589',
+
+  // Arms — copper, three steps.
+  Forearms: '#DB9A6E',
+  Biceps: COPPER,
+  Triceps: '#A6602F',
+
+  // Legs — sapphire, five steps. Calves deepest, adductors lightest.
+  Adductors: '#7FA9D4',
+  Quads: '#5B93CC',
+  Hamstrings: SAPPHIRE,
   Glutes: SAPPHIRE_DEEP,
-  Adductors: STEEL,
-  Calves: EMERALD,
-  'Abs/core': PLATINUM,
+  Calves: '#24486B',
 } as const
 
 /** Ordered series for charts with N arbitrary categories. */

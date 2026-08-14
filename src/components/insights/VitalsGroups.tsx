@@ -71,21 +71,23 @@ export function VitalsGroups() {
         const metrics = g.metrics.map((m) => ({ def: m, win: vitalWindow(rows, m.pick, m.agg) }))
         const allEmpty = metrics.every(({ win }) => win.coverage === 0)
         return (
-          <section key={g.title} className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-2.5" style={{ borderColor: `${g.accent}22` }}>
-            <div className="flex items-center gap-2">
-              <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: `${g.accent}1a`, color: g.accent }}>
-                <g.icon className="w-4 h-4" aria-hidden="true" />
-              </span>
-              <div className="min-w-0">
-                <h3 className="font-heading font-semibold text-fluid-base text-text leading-tight">{g.title}</h3>
-                <p className="text-[11px] text-muted leading-tight">{g.blurb}</p>
-              </div>
+          /* A BAND, NOT A CARD. `p-5` on a rounded bordered box, four times down
+             the page, is 40px of padding and four frames around what is already
+             a list. The 2px rule in the group's accent says the same thing in
+             two pixels, and the rows below it get the width back. */
+          <section key={g.title} className="pl-3" style={{ borderLeft: `2px solid ${g.accent}` }}>
+            <div className="flex items-baseline gap-2 mb-1">
+              <g.icon className="w-3 h-3 shrink-0 translate-y-px" style={{ color: g.accent }} aria-hidden="true" />
+              <h3 className="text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: g.accent }}>{g.title}</h3>
+              <p className="text-[10px] text-muted leading-tight truncate">{g.blurb}</p>
             </div>
             {allEmpty ? (
               <p className="text-fluid-xs text-muted/70 py-1">No data from Apple Health yet.</p>
             ) : (
-              <div className="grid gap-2 sm:grid-cols-2">
-                {metrics.map(({ def, win }) => <VitalRow key={def.key} def={def} win={win} days={rows} />)}
+              <div>
+                {metrics.map(({ def, win }, i) => (
+                  <VitalRow key={def.key} def={def} win={win} days={rows} divide={i > 0} />
+                ))}
               </div>
             )}
           </section>
@@ -96,7 +98,9 @@ export function VitalsGroups() {
   )
 }
 
-function VitalRow({ def, win, days }: { def: MetricDef; win: ReturnType<typeof vitalWindow>; days: VitalsDay[] }) {
+function VitalRow({ def, win, days, divide }: {
+  def: MetricDef; win: ReturnType<typeof vitalWindow>; days: VitalsDay[]; divide?: boolean
+}) {
   const series = vitalWeeklySeries(days, def.pick, def.agg)
   const deltaColor = win.delta == null || win.delta === 0 || def.better === 'neutral'
     ? '#79808C'
@@ -109,44 +113,53 @@ function VitalRow({ def, win, days }: { def: MetricDef; win: ReturnType<typeof v
 
   if (empty) {
     return (
-      <div className="flex items-center gap-3 rounded-xl bg-white/[0.015] border border-white/[0.04] px-3 py-2.5 opacity-60">
-        <div className="flex-1 min-w-0">
-          <span className="block text-[10px] font-bold uppercase tracking-wide" style={{ color: def.color }}>{def.label}</span>
-          <span className="block text-fluid-sm font-medium text-muted leading-tight">Not enough data</span>
-          <span className="text-[10px] text-muted/70">Needs a few days of readings</span>
-        </div>
+      <div className={`flex items-baseline gap-3 py-2 opacity-60 ${divide ? 'border-t border-white/[0.05]' : ''}`}>
+        <span className="min-w-0 flex-1 text-fluid-xs text-text/80 truncate">{def.label}</span>
+        <span className="shrink-0 text-[11px] text-muted">Not enough data yet</span>
       </div>
     )
   }
 
+  /**
+   * The trace is the row's GROUND, not a 96px sidecar beside it.
+   *
+   * As a sidecar it competed with the value for horizontal space and got 96px of
+   * it — eight weekly points across two thirds of an inch. Behind the row it
+   * spans the full width for free, at an opacity low enough that the numbers
+   * still read first, which is the Health.app treatment and the reason it works:
+   * the shape is context, and context belongs behind the fact.
+   */
   return (
-    <div className="flex items-center gap-3 rounded-xl bg-white/[0.02] border border-white/[0.05] px-3 py-2.5">
-      <div className="flex-1 min-w-0">
-        <span className="block text-[10px] font-bold uppercase tracking-wide" style={{ color: def.color }}>{def.label}</span>
-        <span className="helix-num block text-fluid-lg font-bold text-text leading-tight tabular-nums">
+    <div className={`relative py-2 ${divide ? 'border-t border-white/[0.05]' : ''}`}>
+      <Spark series={series} color={def.color} />
+      <div className="relative flex items-baseline gap-3">
+        <span className="min-w-0 flex-1">
+          <span className="block text-fluid-xs text-text/90 truncate">{def.label}</span>
+          <span className="block text-[10px] text-muted leading-tight">
+            {collecting
+              ? `Collecting · ${win.coverage}/7 days`
+              : `7-day ${def.agg === 'avg' ? 'avg' : 'total'} · ${win.coverage}/7 days`}
+          </span>
+        </span>
+        {!collecting && win.delta != null && win.delta !== 0 && (
+          <span className="shrink-0 text-[10px] font-bold tabular-nums"
+            style={{ color: deltaColor }}
+            aria-label="Change vs prior week">
+            {win.delta > 0 ? '+' : '−'}{(def.deltaFmt ?? def.fmt)(Math.abs(win.delta))}
+          </span>
+        )}
+        <span className="helix-num shrink-0 text-fluid-base font-bold text-text tabular-nums leading-none">
           {def.fmt(win.current!)}
         </span>
-        <span className="text-[10px] text-muted">
-          {collecting
-            ? `Collecting · ${win.coverage}/7 days`
-            : `7-day ${def.agg === 'avg' ? 'avg' : 'total'} · ${win.coverage}/7 days`}
-        </span>
       </div>
-      {!collecting && win.delta != null && win.delta !== 0 && (
-        <span className="shrink-0 text-[11px] font-semibold tabular-nums px-1.5 py-0.5 rounded-md"
-          style={{ color: deltaColor, background: `${deltaColor}14`, border: `1px solid ${deltaColor}33` }}
-          aria-label="Change vs prior week">
-          {win.delta > 0 ? '+' : '−'}{(def.deltaFmt ?? def.fmt)(Math.abs(win.delta))}
-        </span>
-      )}
-      <Spark series={series} color={def.color} />
     </div>
   )
 }
 
+/** Absolutely positioned behind the row, stretched to its full width. */
 function Spark({ series, color }: { series: Array<number | null>; color: string }) {
   const pts = series.map((v, i) => ({ v, i })).filter((p): p is { v: number; i: number } => p.v != null)
-  if (pts.length < 2) return <div className="w-24 h-9 shrink-0" aria-hidden="true" />
+  if (pts.length < 2) return null
   const min = Math.min(...pts.map((p) => p.v))
   const max = Math.max(...pts.map((p) => p.v))
   const span = max - min || 1
@@ -158,10 +171,12 @@ function Spark({ series, color }: { series: Array<number | null>; color: string 
   const area = `${line} L${x(pts[pts.length - 1].i).toFixed(1)},${H - PAD} L${x(pts[0].i).toFixed(1)},${H - PAD} Z`
   const last = pts[pts.length - 1]
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-24 h-9 shrink-0" aria-hidden="true">
-      <path d={area} fill={color} opacity="0.12" />
-      <path d={line} fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" opacity="0.9" />
-      <circle cx={x(last.i)} cy={y(last.v)} r="2" fill={color} />
+    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none"
+      className="absolute inset-0 w-full h-full pointer-events-none" aria-hidden="true">
+      <path d={area} fill={color} opacity="0.07" />
+      <path d={line} fill="none" stroke={color} strokeWidth="1.75" vectorEffect="non-scaling-stroke"
+        strokeLinecap="round" strokeLinejoin="round" opacity="0.32" />
+      <circle cx={x(last.i)} cy={y(last.v)} r="2" fill={color} opacity="0.55" />
     </svg>
   )
 }

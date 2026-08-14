@@ -16,6 +16,7 @@ import { workingSets, type ExerciseHistory } from '@/lib/hooks/useExerciseSetHis
 import type { PrAxis } from '@/lib/training/prEngine'
 import { livePrKey } from '@/lib/sessions/livePrs'
 import { SAPPHIRE, STEEL, MUTED, HAIRLINE } from '@/lib/theme/palette'
+import { exerciseColor } from '@/lib/theme/muscleHue'
 
 const STATUS_META: Record<NonNullable<DraftExercise['status']>, { label: string; color: string }> = {
   PR:       { label: 'PR',       color: '#D4AF37' },  // gold
@@ -209,6 +210,13 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, live
   // working sets — a warm-up is not the effort the question is about, which is
   // the same reason it wins no record.
   const trackRpe = useTrackRpe()
+
+  // The band's rule. Cardio keeps its violet — it is not a muscle, and giving it
+  // a muscle hue would file it under one.
+  const accent = useMemo(
+    () => (exercise.kind === 'cardio' ? CARDIO_VIOLET : exerciseColor(exercise.name, exercise.muscleGroups)),
+    [exercise.kind, exercise.name, exercise.muscleGroups],
+  )
 
   const handleActivate = useCallback((i: number) => setActiveSet((cur) => (cur === i ? null : i)), [])
   const handleChange = useCallback((i: number, patch: Partial<DraftSet>) => onUpdateSet(localId, i, patch), [onUpdateSet, localId])
@@ -420,8 +428,20 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, live
   })()
 
   return (
-    <div ref={setNodeRef} style={sortableStyle}
-      className={`rounded-2xl border border-white/[0.07] bg-white/[0.03] p-3 !rounded-2xl shadow-[0_4px_22px_rgba(0,0,0,0.26)] ${dragClass}`}
+    /**
+     * ── A BAND, NOT A CARD ────────────────────────────────────────────────────
+     * This was `rounded-2xl border bg-white/[0.03] p-3` with a 22px shadow. Ten
+     * exercises is ten shadows and 60px of vertical padding spent on frames
+     * around content that is already a list — and a shadow that deep on a
+     * near-black canvas reads as smudge rather than as elevation.
+     *
+     * What replaces the frame is a 3px rule in THE EXERCISE'S OWN HUE
+     * (`muscleHue.ts`), which is what actually makes a long deck scannable: you
+     * find the leg movement by its blue, not by counting cards. The radius stays
+     * only on the left edge so the rule reads as an edge rather than a chip.
+     */
+    <div ref={setNodeRef} style={{ ...sortableStyle, borderLeft: `3px solid ${accent}` }}
+      className={`rounded-r-xl border-y border-r border-white/[0.06] bg-white/[0.02] px-3 py-2.5 ${dragClass}`}
     >
       {/* ── Header: grip + name + status + collapse ── */}
       <div className="flex items-center gap-2">

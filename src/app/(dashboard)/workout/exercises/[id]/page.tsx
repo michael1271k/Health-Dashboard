@@ -8,10 +8,9 @@ import { AppBar } from '@/components/nav/AppBar'
 import dynamic from 'next/dynamic'
 import { useExerciseCatalog } from '@/lib/hooks/useExerciseCatalog'
 import { exerciseHistoryQuery } from '@/lib/hooks/useExerciseHistory'
-import { GROUP, MUTED } from '@/lib/theme/palette'
+import { MUTED } from '@/lib/theme/palette'
+import { exerciseColor, groupColor } from '@/lib/theme/muscleHue'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
-
-const groupColor = (g: string) => (GROUP as Record<string, string>)[g] ?? MUTED
 
 /*
  * recharts is ~120 kB and this was the ONE route importing it statically —
@@ -48,7 +47,12 @@ export default function ExerciseDetailPage() {
   const current = i >= 0 ? flat[i] : null
   const prev = i > 0 ? flat[i - 1] : null
   const next = i >= 0 && i < flat.length - 1 ? flat[i + 1] : null
-  const accent = current ? groupColor(current.group) : MUTED
+  // Accented by the EXERCISE, not by its group. The group is already spelled out
+  // in the label under the title, so spending the accent on it says the same
+  // thing twice; spending it on the exercise makes two lifts in one family
+  // distinguishable while you walk the library with the chevrons.
+  const accent = current ? exerciseColor(current.name) : MUTED
+  const groupTint = current ? groupColor(current.group) : MUTED
 
   // Warm both neighbours once the page is idle, so ‹ and › are instant. Skipped
   // on a metered connection — this is convenience, not content.
@@ -78,7 +82,7 @@ export default function ExerciseDetailPage() {
           <h1 className="font-heading text-fluid-sm font-bold text-text truncate leading-tight">
             {current?.name ?? 'Exercise'}
           </h1>
-          {current && <span className="text-[10px]" style={{ color: accent }}>{current.group}</span>}
+          {current && <span className="text-[10px]" style={{ color: groupTint }}>{current.group}</span>}
         </div>
         {/* Buttons, not a swipe: the body is a chart, and a horizontal drag over
             a chart belongs to the chart. */}

@@ -1,8 +1,8 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, FlaskConical, Pill } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, FlaskConical, Pill } from 'lucide-react'
 import { useTodayDailyLog, useTodayNutrition } from '@/lib/hooks/useDashboard'
 import { useSupplements } from '@/lib/hooks/useSupplements'
 import { stackForDate } from '@/lib/supplements'
@@ -11,7 +11,8 @@ import { isTrainingDay } from '@/lib/programs'
 import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { supplementMicros, mergeMicros } from '@/lib/nutrition/supplementMicros'
-import { MICRO_TARGETS, MICRO_SIGNALS } from '@/lib/nutrition/microTargets'
+import { MICRO_TARGETS, MICRO_SIGNALS, MICRO_GROUPS } from '@/lib/nutrition/microTargets'
+import { EMERALD, OXIDE, STEEL, DIM } from '@/lib/theme/palette'
 
 /**
  * Nutrition & Micros deep-dive. Evidence-based daily micro TARGETS for this
@@ -61,6 +62,8 @@ export default function MicrosPage() {
     return typeof v === 'number' ? v : null
   }
 
+  const [why, setWhy] = useState<string | null>(null)
+
   return (
     <div data-boxed className="space-y-4">
       <header className="flex items-center gap-3">
@@ -75,76 +78,96 @@ export default function MicrosPage() {
         </div>
       </header>
 
-      {/* ── Diet micro targets ── */}
-      <section className="space-y-3">
-        <h2 className="font-heading text-fluid-base font-bold text-text px-1">Daily Micro Targets</h2>
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-          {MICRO_TARGETS.map((m) => {
-            const have = intake[m.key]
-            const pct = have != null && m.target ? Math.min(1, have / m.target) : null
-            const overCeiling = m.kind === 'ceiling' && have != null && have > m.target
-            const stackShare = fromStack[m.key] ?? 0
-            return (
-              <div key={m.key} className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-3 space-y-2" style={{ borderColor: `${m.color}26` }}>
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="font-semibold text-fluid-sm text-text flex items-center gap-1 min-w-0">
-                    <span className="truncate">{m.label}</span>
-                    {stackShare > 0 && (
-                      <Pill className="w-3 h-3 shrink-0" style={{ color: m.color }}
-                        aria-label="from the supplement stack" />
-                    )}
-                  </span>
-                  <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded shrink-0"
-                    style={{ color: m.color, background: `${m.color}1a`, border: `1px solid ${m.color}44` }}>
-                    {m.kind === 'floor' ? 'aim' : 'max'}
-                  </span>
-                </div>
-                <div className="flex items-baseline gap-1">
-                  <span className="helix-num text-fluid-xl font-bold" style={{ color: overCeiling ? '#C4514E' : m.color }}>
-                    {have != null ? Math.round(have) : '—'}
-                  </span>
-                  <span className="text-fluid-xs text-muted">/ {m.target} {m.unit}</span>
-                </div>
-                <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-                  <div className="h-full rounded-full" style={{
-                    width: `${(pct ?? 0) * 100}%`,
-                    background: overCeiling ? '#C4514E' : m.color,
-                  }} />
-                </div>
-                {stackShare > 0 && (
-                  <p className="text-[10px] font-semibold" style={{ color: m.color }}>
-                    {Math.round(stackShare).toLocaleString()} {m.unit} from the stack
-                  </p>
-                )}
-                <p className="text-[10px] leading-snug text-muted">{m.why}</p>
-              </div>
-            )
-          })}
-        </div>
-        <p className="text-[10px] text-muted px-1 leading-snug">
-          Rows marked with a pill icon are credited from the supplement stack the moment you tick
-          the item off — Apple Health can&apos;t export supplements, so those doses are read from your
-          protocol&apos;s labels. Diet micros populate from your HealthKit food log on each sync; a micro
-          shows “—” on days the source didn&apos;t record it.
-        </p>
-      </section>
+      {/* ── Diet micro targets ──
+          Four named bands of 32px rows, not twenty bordered tinted cards.
+
+          The card grid gave every nutrient identical visual weight and a hue of
+          its own — except twenty nutrients only had about seven hues between
+          them, so the colour identified nothing while the label identified
+          everything. Colour now says STATE: short of target, on it, or past a
+          ceiling. That is the one thing the label cannot tell you.
+
+          The progress bar is gone too: the row's own bottom hairline fills, so
+          the row IS the gauge instead of containing one. */}
+      {MICRO_GROUPS.map((group) => {
+        const rows = MICRO_TARGETS.filter((m) => m.group === group)
+        if (!rows.length) return null
+        return (
+          <section key={group}>
+            <h2 className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted mb-1 px-0.5">{group}</h2>
+            <div>
+              {rows.map((m, i) => {
+                const have = intake[m.key]
+                const pct = have != null && m.target ? Math.min(1, have / m.target) : 0
+                const overCeiling = m.kind === 'ceiling' && have != null && have > m.target
+                const onTarget = have != null && (m.kind === 'ceiling' ? !overCeiling : have >= m.target)
+                const stackShare = fromStack[m.key] ?? 0
+                const state = have == null ? DIM : overCeiling ? OXIDE : onTarget ? EMERALD : STEEL
+                const open = why === m.key
+                return (
+                  <div key={m.key} className={i > 0 ? 'border-t border-white/[0.05]' : ''}>
+                    <button
+                      type="button"
+                      onClick={() => setWhy(open ? null : m.key)}
+                      aria-expanded={open}
+                      className="w-full text-left pt-2 pb-1.5 active:scale-[0.995] transition-transform"
+                    >
+                      <span className="flex items-baseline justify-between gap-2">
+                        <span className="min-w-0 flex items-center gap-1 text-fluid-xs text-text/90">
+                          <span className="truncate">{m.label}</span>
+                          {stackShare > 0 && (
+                            <Pill className="w-2.5 h-2.5 shrink-0 text-muted"
+                              aria-label={`${Math.round(stackShare).toLocaleString()} ${m.unit} from the supplement stack`} />
+                          )}
+                          {m.kind === 'ceiling' && (
+                            <span className="text-[9px] uppercase tracking-wide text-muted/70 shrink-0">max</span>
+                          )}
+                        </span>
+                        <span className="shrink-0 helix-num text-fluid-xs tabular-nums" style={{ color: state }}>
+                          {have != null ? Math.round(have).toLocaleString() : '—'}
+                          <span className="text-muted font-normal"> / {m.target.toLocaleString()} {m.unit}</span>
+                          {overCeiling && <AlertTriangle className="inline w-3 h-3 ml-1 -mt-0.5" aria-label="over the ceiling" />}
+                        </span>
+                      </span>
+                      {/* The rule IS the gauge — a 1px baseline that fills, rather
+                          than a 6px bar stacked under the row. */}
+                      <span className="mt-1.5 block h-px w-full bg-white/[0.07]">
+                        <span className="block h-px" style={{ width: `${pct * 100}%`, background: state }} />
+                      </span>
+                    </button>
+                    {open && <p className="pb-2 text-[10px] leading-snug text-muted">{m.why}</p>}
+                  </div>
+                )
+              })}
+            </div>
+          </section>
+        )
+      })}
+
+      <p className="text-[10px] text-muted leading-snug">
+        Tap a nutrient for why the target is what it is. A pill icon means the supplement stack
+        credited part of it the moment you ticked the item off — Apple Health cannot export
+        supplements, so those doses are read from your protocol&apos;s labels. Diet micros populate
+        from your HealthKit food log on each sync; a nutrient shows &ldquo;—&rdquo; on days the
+        source did not record it.
+      </p>
 
       {/* ── Passive HealthKit signals ── */}
-      <section className="space-y-3">
-        <h2 className="font-heading text-fluid-base font-bold text-text px-1">Advanced Signals</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-          {MICRO_SIGNALS.map((s) => {
+      <section>
+        <h2 className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted mb-1 px-0.5">Advanced signals</h2>
+        <div>
+          {MICRO_SIGNALS.map((s, i) => {
             const v = signalValue(s.key)
             return (
-              <div key={s.key} className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-3 space-y-1" style={{ borderColor: `${s.color}22` }}>
-                <div className="flex items-baseline gap-1">
-                  <span className="helix-num text-fluid-lg font-bold text-text">
-                    {v != null ? (Math.abs(v) < 10 ? Math.round(v * 10) / 10 : Math.round(v)) : '—'}
-                  </span>
-                  {s.unit && <span className="text-[10px] text-muted">{s.unit}</span>}
-                </div>
-                <span className="block text-[10px] font-semibold uppercase tracking-wide" style={{ color: s.color }}>{s.label}</span>
-                <p className="text-[10px] leading-snug text-muted">{s.reference}</p>
+              <div key={s.key} className={`flex items-baseline gap-3 py-2 ${i > 0 ? 'border-t border-white/[0.05]' : ''}`}>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-fluid-xs text-text/90 truncate">{s.label}</span>
+                  <span className="block text-[10px] leading-snug text-muted/70">{s.reference}</span>
+                </span>
+                <span className="shrink-0 helix-num text-fluid-sm tabular-nums" style={{ color: v != null ? 'var(--color-text)' : DIM }}>
+                  {v != null ? (Math.abs(v) < 10 ? Math.round(v * 10) / 10 : Math.round(v)) : '—'}
+                  {s.unit && <span className="text-[10px] text-muted font-normal ml-0.5">{s.unit}</span>}
+                </span>
               </div>
             )
           })}

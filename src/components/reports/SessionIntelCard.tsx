@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Star, ChevronDown, Sparkles } from 'lucide-react'
 import type { GymReportRow } from '@/lib/hooks/useWeekly'
-import { useSessionIntel } from '@/lib/hooks/useSessionIntel'
+import { useSessionIntel, type ExerciseDelta } from '@/lib/hooks/useSessionIntel'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 import { formatSet } from '@/lib/utils/setFormat'
 import { MarkdownView } from './MarkdownView'
@@ -55,7 +55,24 @@ export function SessionIntelCard({ session }: { session: GymReportRow }) {
   // Session Report starts EXPANDED (Command Center wants the full debrief open,
   // not a tap-to-reveal). The chevron still collapses it if the user wants.
   const [notesOpen, setNotesOpen] = useState(true)
+  const [heldOpen, setHeldOpen] = useState(false)
   const unit = useUnitSystem()
+
+  /**
+   * Records first, then what moved, then what did not.
+   *
+   * The table was in whatever order the deltas arrived, which is exercise order
+   * — the order you performed them, not the order they matter. On a six-exercise
+   * day that puts a record fourth and three unchanged lifts above it.
+   *
+   * "Unchanged" is not nothing, so it is not dropped; it is collapsed to a line
+   * you can open, because holding a load is the expected case and does not need
+   * a row each.
+   */
+  const RANK = (d: ExerciseDelta) => (d.isPr ? 0 : d.delta === 1 ? 1 : d.delta === -1 ? 2 : 3)
+  const all = intel?.deltas ?? []
+  const held = all.filter((d) => !d.isPr && d.delta === 0)
+  const ranked = [...all.filter((d) => !(!d.isPr && d.delta === 0))].sort((a, b) => RANK(a) - RANK(b))
 
   // The coach output is now a brief 2-sentence insight, surfaced up top. Older
   // sessions may still carry a long markdown report — those stay collapsible.
@@ -121,66 +138,78 @@ export function SessionIntelCard({ session }: { session: GymReportRow }) {
       {isLoading ? (
         <div className="h-32 rounded-2xl bg-surface-2/60 animate-pulse" />
       ) : (!intel?.isFirstOfType && !!intel?.deltas.length) && (
+        /**
+         * ── TWO LINES PER EXERCISE, NOT FOUR COLUMNS ──────────────────────────
+         *
+         * This was a table: Exercise / Top set / Prev / Δ, `min-w-[360px]` inside
+         * an `overflow-x-auto`. Four columns of numbers do not fit a phone, and
+         * the sideways scroll was the SYMPTOM — a table is the wrong shape for
+         * data whose only variable-length field is the first column.
+         *
+         * Nothing sits beside anything now, so nothing can overflow: the name
+         * and the verdict own the first line, and the numbers own the second in
+         * the order you read them — what you did, then what you did last time.
+         *
+         * Sorted records-first, then improvements, then regressions, then holds:
+         * the good news is above the fold, and the rows you would scroll past
+         * anyway collapse into one line at the end.
+         */
         <div className="rounded-2xl border border-white/[0.07] overflow-hidden">
-          {/* SCROLLS SIDEWAYS RATHER THAN CLIPPING.
-              Four columns of numbers do not fit a 360 px phone, and the outer
-              `overflow-hidden` — there for the rounded corners — turned that
-              into a silent truncation: the Δ column's glyph was sliced at the
-              right edge with no scrollbar and no way to reach it. The radius
-              stays on the shell and the scroller sits inside it, so the corners
-              survive and the table stays reachable. `min-w` stops the columns
-              collapsing into unreadable slivers before the scroll kicks in. */}
-          <div className="overflow-x-auto overscroll-x-contain">
-          <table className="w-full min-w-[360px] text-fluid-xs">
-            <thead>
-              <tr className="border-b border-white/[0.08] text-muted">
-                <th className="px-3 py-2 text-left font-semibold whitespace-nowrap">Exercise</th>
-                <th className="px-2 py-2 text-right font-semibold whitespace-nowrap">Top set</th>
-                <th className="px-2 py-2 text-right font-semibold whitespace-nowrap">Prev</th>
-                <th className="px-3 py-2 text-right font-semibold whitespace-nowrap">Δ</th>
-              </tr>
-            </thead>
-            <tbody>
-              {intel.deltas.map((d) => {
-                const t = trend(d)
-                return (
-                  <tr key={d.name}
-                    className="border-b border-white/[0.06] last:border-0"
-                    // A record is worth seeing from across the row, not just in
-                    // the last cell: the whole row lifts into gold, with a left
-                    // rule so it still reads on a monochrome / printed page.
-                    style={d.isPr
-                      ? { background: `${GOLD}14`, boxShadow: `inset 3px 0 0 ${GOLD}` }
-                      : undefined}>
-                    {/* The name is the one cell allowed to ellipsis — it is the
-                        only variable-length column, and truncating "Single Arm
-                        Lateral Raise (Cable)" costs nothing that the row's own
-                        numbers don't already identify. `title` keeps the full
-                        name reachable. */}
-                    <td className="px-3 py-2.5 text-text/90 truncate max-w-[150px]" title={d.name}>
-                      {d.name}
-                      {d.isPr && <Star className="inline w-3 h-3 ml-1 -mt-0.5" style={{ color: GOLD }} aria-hidden="true" />}
-                    </td>
-                    <td className="px-2 py-2.5 text-right helix-num text-text whitespace-nowrap">
-                      {formatSet(d.topKg, d.topReps, { unit, toDisplay: displayWeight })}
-                    </td>
-                    <td className="px-2 py-2.5 text-right helix-num text-muted whitespace-nowrap">
-                      {d.prevKg == null ? '—'
-                        : d.unloaded ? formatSet(0, d.prevReps, {})
-                        : `${displayWeight(d.prevKg)}${unit}`}
-                    </td>
-                    <td className="px-3 py-2.5 text-right leading-none whitespace-nowrap" aria-label={t.label}>
-                      <span className="text-base align-middle" aria-hidden="true">{t.glyph}</span>
-                      {t.pct && (
-                        <span className="helix-num text-[10px] font-bold align-middle ml-1" style={{ color: t.color }}>{t.pct}</span>
-                      )}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-          </div>
+          {ranked.map((d, i) => {
+            const t = trend(d)
+            return (
+              <div
+                key={d.name}
+                className={`px-3 py-2.5 ${i > 0 ? 'border-t border-white/[0.06]' : ''}`}
+                // A record is worth seeing from across the row. The left rule
+                // survives monochrome and print, where the tint does not.
+                style={d.isPr ? { background: `${GOLD}14`, boxShadow: `inset 3px 0 0 ${GOLD}` } : undefined}
+              >
+                <div className="flex items-baseline gap-2">
+                  <span className="min-w-0 flex-1 truncate text-fluid-xs text-text/90" title={d.name}>
+                    {d.name}
+                    {d.isPr && <Star className="inline w-3 h-3 ml-1 -mt-0.5" style={{ color: GOLD }} aria-hidden="true" />}
+                  </span>
+                  <span className="shrink-0 flex items-baseline gap-1 leading-none" aria-label={t.label}>
+                    <span className="text-sm" aria-hidden="true">{t.glyph}</span>
+                    {t.pct && (
+                      <span className="helix-num text-[10px] font-bold" style={{ color: t.color }}>{t.pct}</span>
+                    )}
+                  </span>
+                </div>
+                <div className="mt-1 flex items-baseline gap-2 text-[11px]">
+                  <span className="helix-num text-text tabular-nums">
+                    {formatSet(d.topKg, d.topReps, { unit, toDisplay: displayWeight })}
+                  </span>
+                  <span className="helix-num text-muted tabular-nums truncate">
+                    was {d.prevKg == null ? '—'
+                      : d.unloaded ? formatSet(0, d.prevReps, {})
+                      : `${displayWeight(d.prevKg)}${unit}`}
+                  </span>
+                </div>
+              </div>
+            )
+          })}
+          {held.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setHeldOpen((v) => !v)}
+              aria-expanded={heldOpen}
+              className="w-full px-3 py-2.5 border-t border-white/[0.06] text-left text-[11px] text-muted
+                         flex items-center justify-between active:scale-[0.995] transition-transform"
+            >
+              <span>{held.length} exercise{held.length === 1 ? '' : 's'} unchanged</span>
+              <span aria-hidden="true">{heldOpen ? '⌃' : '⌄'}</span>
+            </button>
+          )}
+          {heldOpen && held.map((d) => (
+            <div key={d.name} className="px-3 py-2 border-t border-white/[0.06] flex items-baseline gap-2 text-[11px]">
+              <span className="min-w-0 flex-1 truncate text-text/70" title={d.name}>{d.name}</span>
+              <span className="helix-num text-muted tabular-nums shrink-0">
+                {formatSet(d.topKg, d.topReps, { unit, toDisplay: displayWeight })}
+              </span>
+            </div>
+          ))}
         </div>
       )}
 

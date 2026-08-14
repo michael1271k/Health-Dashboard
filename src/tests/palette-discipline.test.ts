@@ -75,10 +75,16 @@ const ALLOWED_ORPHANS: Record<string, string> = {
  * Today's count. This number may only ever be lowered.
  * If a change legitimately adds colour, convert something else first.
  */
+// 268 → 264: effort.ts stopped spelling out five palette values by hand.
+// 264 → 231: the 20 micronutrient targets and 5 advanced signals each carried
+// their own `color`, and twenty nutrients shared about seven hues between them —
+// so the colour identified nothing that the label did not already identify
+// perfectly. Colour there now encodes STATE (under / on target / over a
+// ceiling), which is the one thing a label cannot say.
 // 297 → 268: the phase table stopped hand-transcribing four hexes into decimal
 // triples, and SessionHero / ProgressionTrail / JourneyTimeline stopped keeping
 // nine local copies under names that did not match their values.
-const HEX_CEILING = 264
+const HEX_CEILING = 231
 
 function scan() {
   const files = sourceFiles('src').filter(

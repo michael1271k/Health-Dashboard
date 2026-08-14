@@ -7,6 +7,7 @@ import { ExerciseDeckList } from './ExerciseDeckList'
 import type { ReadyCue } from './ExerciseCard'
 import { SessionNotesCard } from './SessionNotesCard'
 import { CommitBar } from './CommitBar'
+import { FinishSheet } from './FinishSheet'
 import { useExerciseSetHistory } from '@/lib/hooks/useExerciseSetHistory'
 import { useExerciseBaselines } from '@/lib/hooks/useExerciseBaselines'
 import { computeLivePrs, livePrDigest, livePrKey } from '@/lib/sessions/livePrs'
@@ -35,6 +36,7 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
 }) {
   const { draft, updateSet, splitSet, mergeSet, addCardio, updateCardio, addSet, removeSet, toggleSetDone, checkAllSets, removeExercise, reorder, setNotes, setExerciseNote, setStats, setSessionRpe, setDate, discard, commit } = store
   const [result, setResult] = useState<CommitResult | null>(null)
+  const [finishOpen, setFinishOpen] = useState(false)
   const [committedDate, setCommittedDate] = useState<string | null>(null)
   // Delete the ACTUAL committed session (edit mode's trash), keyed to its date.
   const del = useDeleteSession(draft?.date ?? '')
@@ -150,27 +152,33 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
 
   if (!draft) return null
 
+  const doCommit = () => {
+    const date = draft.date
+    setCommittedDate(date)
+    commit.mutate(undefined, {
+      onSuccess: (r) => {
+        if (!r.duplicate) void tapSuccess()
+        setFinishOpen(false)
+        // Finish → the just-logged session's analysis page (Workout Summary),
+        // not the day view. A duplicate (already logged) still has a sessionId
+        // to open. Falls back to the day view, then the in-deck result screen.
+        if (onViewSession && r.sessionId) onViewSession(r.sessionId)
+        else if (onViewDay) onViewDay(date)
+        else setResult(r)
+      },
+    })
+  }
+
+  const commitError = commit.isError
+    ? (commit.error instanceof Error ? commit.error.message : 'Save failed')
+    : null
+
   const commitBar = (
     <CommitBar
       draft={draft}
       busy={commit.isPending}
-      error={commit.isError ? (commit.error instanceof Error ? commit.error.message : 'Save failed') : null}
-      onCommit={() => {
-        const date = draft.date
-        setCommittedDate(date)
-        commit.mutate(undefined, {
-          onSuccess: (r) => {
-            if (!r.duplicate) void tapSuccess()
-            // Finish → the just-logged session's analysis page (Workout Summary),
-            // not the day view. A duplicate (already logged) still has a sessionId
-            // to open. Falls back to the day view, then the in-deck result screen.
-            if (onViewSession && r.sessionId) onViewSession(r.sessionId)
-            else if (onViewDay) onViewDay(date)
-            else setResult(r)
-          },
-        })
-      }}
-      onSessionRpe={setSessionRpe}
+      error={commitError}
+      onFinish={() => setFinishOpen(true)}
       onDiscard={() => { discard(); onClose() }}
       onCancelEdit={() => { discard(); onClose() }}
       deleting={del.isPending}
@@ -191,9 +199,21 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
 
   return (
     <div className="lg:grid lg:grid-cols-[minmax(320px,380px)_1fr] lg:gap-5 lg:items-start">
+      {/* One sheet, not one per CommitBar — the bar renders twice (desktop rail
+          and mobile deck) and a dialog rendered twice is two dialogs. */}
+      <FinishSheet
+        open={finishOpen}
+        onClose={() => setFinishOpen(false)}
+        draft={draft}
+        busy={commit.isPending}
+        error={commitError}
+        onSetStats={setStats}
+        onSessionRpe={setSessionRpe}
+        onCommit={doCommit}
+      />
       {/* ── Left rail (sticky on desktop): identity, insight, notes, commit ── */}
       <div className="space-y-3 lg:sticky lg:top-4">
-        <CoachHeaderCard draft={draft} recordCount={livePrs.count} onSetDate={setDate} onSetStats={setStats} />
+        <CoachHeaderCard draft={draft} recordCount={livePrs.count} onSetDate={setDate} />
         <SessionNotesCard notes={draft.notes} onChange={setNotes} />
         <div className="hidden lg:block">{commitBar}</div>
       </div>

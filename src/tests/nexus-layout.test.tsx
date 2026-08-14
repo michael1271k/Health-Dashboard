@@ -220,26 +220,44 @@ describe('the app shell keeps its own gutters', () => {
  * of numbers do not fit 360 px, and the rounded shell's `overflow-hidden` turned
  * that into a silent truncation with no scrollbar and no way to reach the cell.
  */
-describe('the quick-view session table survives a phone', () => {
-  const src = readFileSync('src/components/reports/SessionIntelCard.tsx', 'utf8')
+/**
+ * The post-workout summary used to be a four-column table — Exercise / Top set /
+ * Prev / Δ — floored at `min-w-[360px]` inside an `overflow-x-auto`. Four columns
+ * of numbers do not fit a phone, and the sideways scroll was the SYMPTOM: a
+ * table is the wrong shape for data whose only variable-length field is the
+ * first column.
+ *
+ * These now pin the stronger property. Not "the scroll is reachable" — there is
+ * nothing to scroll.
+ */
+describe('the post-workout summary fits a phone without scrolling', () => {
+  // Comments are documentation, not markup — the file explains at length what
+  // the table USED to do, and naming the old class is not the same as shipping
+  // it. Same convention as `palette-discipline`.
+  const raw = readFileSync('src/components/reports/SessionIntelCard.tsx', 'utf8')
+  const src = raw.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:])\/\/.*$/gm, '$1')
 
-  it('scrolls sideways instead of cutting the last column off', () => {
-    expect(src).toMatch(/overflow-x-auto/)
+  it('has no horizontal scroller at all', () => {
+    expect(src).not.toMatch(/overflow-x-auto/)
+    expect(src).not.toMatch(/min-w-\[\d+px\]/)
   })
 
-  it('keeps the radius on the shell and the scroller inside it', () => {
-    // Clipping and scrolling on the SAME element is the bug: `overflow-hidden`
-    // wins and the columns past the fold become unreachable.
-    expect(src).toMatch(/rounded-2xl border border-white\/\[0\.07\] overflow-hidden">\s*\{\/\*[\s\S]*?\*\/\}\s*<div className="overflow-x-auto/)
+  it('is not a table — nothing sits beside anything that can overflow', () => {
+    expect(src).not.toMatch(/<table/)
+    expect(src).not.toMatch(/<t[dhr][\s>]/)
   })
 
-  it('floors the table width so columns cannot collapse into slivers', () => {
-    expect(src).toMatch(/min-w-\[360px\]/)
+  it('lets only the exercise name ellipsis, and keeps its full text reachable', () => {
+    expect(src).toMatch(/truncate text-fluid-xs text-text\/90" title=\{d\.name\}/)
   })
 
-  it('keeps every numeric cell on one line', () => {
-    // Only the exercise name — the one variable-length column — may ellipsis.
-    expect(src.match(/whitespace-nowrap/g)?.length ?? 0).toBeGreaterThanOrEqual(6)
-    expect(src).toMatch(/truncate max-w-\[150px\]" title=\{d\.name\}/)
+  it('keeps the record treatment readable in monochrome and in print', () => {
+    // The tint alone disappears on a printed page; the inset rule does not.
+    expect(src).toMatch(/inset 3px 0 0 \$\{GOLD\}/)
+  })
+
+  it('puts the good news first rather than in performance order', () => {
+    expect(src).toMatch(/const RANK = /)
+    expect(src).toMatch(/\.sort\(\(a, b\) => RANK\(a\) - RANK\(b\)\)/)
   })
 })

@@ -6,26 +6,37 @@ import type { SessionDraft } from '@/lib/sessions/draft'
 import { draftTotals } from '@/lib/sessions/draft'
 import { fmtVolume } from '@/lib/utils/units'
 import { logicalTodayISO } from '@/lib/utils/day'
-import { parseDurationMin } from '@/lib/utils/duration'
 import { useLoggedSessionDates } from '@/lib/hooks/useDayVault'
+import { EMBER, GOLD, MUTED, STEEL, AMETHYST } from '@/lib/theme/palette'
 import { DatePickerPopover } from './DatePickerPopover'
 
-type StatPatch = Partial<NonNullable<SessionDraft['stats']>>
-
 /**
- * Deck header: session identity, the custom date picker (late logging, blocks
- * already-logged dates), the editable stats strip (Duration / Avg HR / Calories
- * are tap-to-edit; Volume/Sets are live-derived), and coach insight/flag.
+ * Deck header: session identity, the date picker (late logging, blocks
+ * already-logged dates), a live status rail, and coach insight / next-session
+ * flag.
+ *
+ * ── WHAT THIS USED TO BE, AND WHY IT SHRANK ──────────────────────────────────
+ * A title row, a six-cell 3×2 grid of bordered tinted badges at ~54px each, and
+ * up to two tinted rounded callouts — roughly 200px before the first exercise
+ * appeared, on the one screen whose entire purpose is the middle.
+ *
+ * Three of those six badges were Duration, Avg HR and Calories, and they are
+ * facts you CANNOT KNOW UNTIL THE SESSION ENDS. They were being edited at the
+ * top of the screen, throughout a workout, to hold numbers that only exist
+ * afterwards. They now live in the finish sheet, at the moment you can answer
+ * them (see `FinishSheet`).
+ *
+ * What is left is the three figures that change WHILE you lift — volume, sets,
+ * records — as one 32px rail of inline values rather than three boxes. Roughly
+ * 130px reclaimed, which is about two more exercise rows above the fold.
  */
-export function CoachHeaderCard({ draft, recordCount = 0, onSetDate, onSetStats }: {
+export function CoachHeaderCard({ draft, recordCount = 0, onSetDate }: {
   draft: SessionDraft
   /** Distinct axis-records claimed so far this session (live, from `prEngine`). */
   recordCount?: number
   onSetDate: (dateISO: string) => void
-  onSetStats: (patch: StatPatch) => void
 }) {
   const totals = draftTotals(draft)
-  const s = draft.stats
   const [pickerOpen, setPickerOpen] = useState(false)
   const { data: loggedDates } = useLoggedSessionDates()
 
@@ -33,28 +44,34 @@ export function CoachHeaderCard({ draft, recordCount = 0, onSetDate, onSetStats 
     .toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
 
   return (
-    <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-4 space-y-3">
+    <div className="space-y-2.5">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <h3 className="font-heading font-bold text-fluid-xl text-text leading-tight truncate">
+          <h3 className="font-heading font-bold text-fluid-lg text-text leading-tight truncate">
             {draft.title ?? draft.splitDay.toUpperCase()}
           </h3>
-          <p className="text-xs text-muted mt-0.5">
-            {draft.week != null && <>Week {draft.week} · </>}
-            {draft.phase && <span className="text-info font-semibold">{draft.phase === 'CUT' ? 'Cut' : draft.phase}</span>}
-          </p>
+          {(draft.week != null || draft.phase) && (
+            <p className="text-[11px] text-muted mt-0.5">
+              {draft.week != null && <>Week {draft.week}</>}
+              {draft.week != null && draft.phase && ' · '}
+              {draft.phase && (
+                <span className="text-info font-semibold">{draft.phase === 'CUT' ? 'Cut' : draft.phase}</span>
+              )}
+            </p>
+          )}
         </div>
-        {/* Date chip — tap to open the custom calendar (grays logged/future dates) */}
+        {/* Date chip — tap to open the custom calendar (greys logged/future dates).
+            Still 44pt tall; it lost the fill, not the target. */}
         <div className="relative shrink-0">
           <button
             type="button"
             onClick={() => setPickerOpen((v) => !v)}
-            className="flex items-center gap-2 px-3.5 min-h-[44px] rounded-xl text-fluid-sm font-semibold text-text
-                       bg-primary/10 border border-primary/30 hover:bg-primary/15 hover:border-primary/50 transition-colors"
+            className="flex items-center gap-1.5 px-2.5 min-h-[44px] rounded-xl text-[11px] font-semibold text-text
+                       border border-white/[0.10] hover:border-primary/40 active:scale-[0.98] transition-[border-color,transform]"
             aria-label={`Session date: ${dateLabel}. Tap to change`}
             aria-expanded={pickerOpen}
           >
-            <CalendarDays className="w-4 h-4 text-primary" aria-hidden="true" />
+            <CalendarDays className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
             {dateLabel}
           </button>
           {pickerOpen && (
@@ -69,88 +86,57 @@ export function CoachHeaderCard({ draft, recordCount = 0, onSetDate, onSetStats 
         </div>
       </div>
 
-      {/* Stats strip — Volume/Sets live-derived; Duration/Avg HR/Calories editable. */}
-      <div className="grid grid-cols-3 gap-2">
-        <Badge label="Volume" value={fmtVolume(totals.volumeKg)} unit="kg" color="#E0703C" />
-        <Badge label="Sets" value={String(totals.sets)} color="#8E9AAC" />
-        <EditBadge label="Duration" value={s?.duration_min ?? null} unit="m" color="#B4522A"
-          onChange={(v) => onSetStats({ duration_min: v })} parse={parseDurationMin} />
-        <EditBadge label="Avg HR" value={s?.avg_hr_bpm ?? null} unit="bpm" color="#C4514E"
-          onChange={(v) => onSetStats({ avg_hr_bpm: v })} />
-        <EditBadge label="Calories" value={s?.calories_kcal ?? null} unit="kcal" color="#D4AF37"
-          onChange={(v) => onSetStats({ calories_kcal: v })} />
-        {/* Replaced "Δ vs prior", which was un-editable AND uncomputed — nothing
-            in the app ever filled volume_delta_pct_vs_prior; it only arrived
-            from a pasted coach JSON, so in a normal session it read "—" forever.
-            This counts up live as you tick sets. */}
-        <Badge
-          label="Records"
+      {/* The live rail. Only what moves while you lift. */}
+      <div className="flex items-baseline gap-4 border-y border-white/[0.06] py-2">
+        <Stat value={fmtVolume(totals.volumeKg)} unit="kg" label="Volume" color={EMBER} />
+        <Stat value={String(totals.sets)} label="Sets" color={STEEL} />
+        <Stat
           value={recordCount > 0 ? String(recordCount) : '—'}
-          color={recordCount > 0 ? '#C9A227' : '#79808C'}
+          label={recordCount === 1 ? 'Record' : 'Records'}
+          // Gold, and only when there is something to be gold about. A permanent
+          // gold zero is how gold stops meaning a personal record.
+          color={recordCount > 0 ? GOLD : MUTED}
         />
       </div>
 
-      {draft.coachInsight && (
-        <div className="rounded-xl px-3 py-2.5 flex gap-2 items-start"
-          style={{ background: 'rgba(138,111,168,0.08)', border: '1px solid rgba(138,111,168,0.28)' }}>
-          <Sparkles className="w-3.5 h-3.5 shrink-0 mt-0.5 text-primary" aria-hidden="true" />
-          <p className="text-sm text-text leading-relaxed" dir="auto">{draft.coachInsight}</p>
-        </div>
-      )}
-
-      {draft.nextSessionFlag && (
-        <div className="rounded-xl px-3 py-2.5 flex gap-2 items-start"
-          style={{ background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.38)' }}>
-          <Flag className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: '#D4AF37' }} aria-hidden="true" />
-          <p className="text-sm leading-relaxed" style={{ color: '#D4AF37' }} dir="auto">{draft.nextSessionFlag}</p>
-        </div>
-      )}
+      {/* Coach lines. A 2px rule instead of a tinted rounded block: the colour
+          still says which kind of note this is, without the callout eating the
+          width of the screen to say it. */}
+      {draft.coachInsight && <Note text={draft.coachInsight} color={AMETHYST} icon={Sparkles} />}
+      {draft.nextSessionFlag && <Note text={draft.nextSessionFlag} color={GOLD} icon={Flag} />}
     </div>
   )
 }
 
-function Badge({ label, value, unit, color }: { label: string; value: string; unit?: string; color: string }) {
+function Stat({ value, unit, label, color }: { value: string; unit?: string; label: string; color: string }) {
   return (
-    <div className="rounded-xl px-2 py-2 text-center" style={{ background: `${color}14`, border: `1px solid ${color}33` }}>
-      <div className="helix-num font-bold text-fluid-base tabular-nums leading-tight" style={{ color }}>
-        {value}{unit && <span className="text-[10px] font-normal ml-0.5 opacity-70">{unit}</span>}
-      </div>
-      <div className="text-[10px] text-muted mt-0.5">{label}</div>
+    <div className="min-w-0">
+      <span className="helix-num font-bold text-fluid-base tabular-nums leading-none" style={{ color }}>
+        {value}
+        {unit && <span className="text-[10px] font-normal ml-0.5 opacity-70">{unit}</span>}
+      </span>
+      <span className="ml-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-muted">{label}</span>
     </div>
   )
 }
 
-/** Tap-to-edit numeric metadata badge (Duration / Avg HR / Calories). */
-function EditBadge({ label, value, unit, color, onChange, parse }: {
-  label: string; value: number | null; unit: string; color: string
-  onChange: (v: number | null) => void
-  /** Custom string→number parser (e.g. Duration accepts "1:06"). */
-  parse?: (raw: string) => number | null
-}) {
-  const [editing, setEditing] = useState(false)
-  const toNumber = parse ?? ((raw: string) => (raw.trim() === '' ? null : Number(raw)))
+/**
+ * A coach line. Collapsed to two lines by default and tapped open — these
+ * arrive from a pasted report and can run to a paragraph, which at the top of
+ * the logging screen is a wall between you and the first set.
+ */
+function Note({ text, color, icon: Icon }: { text: string; color: string; icon: typeof Flag }) {
+  const [open, setOpen] = useState(false)
   return (
-    <div className="rounded-xl px-2 py-2 text-center" style={{ background: `${color}14`, border: `1px solid ${color}33` }}>
-      {editing ? (
-        <input
-          autoFocus
-          type={parse ? 'text' : 'number'}
-          inputMode="numeric"
-          defaultValue={value ?? ''}
-          onBlur={(e) => { onChange(toNumber(e.target.value)); setEditing(false) }}
-          onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
-          className="w-full bg-transparent text-center helix-num font-bold text-fluid-base tabular-nums outline-none"
-          style={{ color }}
-          aria-label={`Edit ${label}`}
-        />
-      ) : (
-        <button type="button" onClick={() => setEditing(true)} className="w-full" aria-label={`Edit ${label}`}>
-          <span className="helix-num font-bold text-fluid-base tabular-nums leading-tight" style={{ color }}>
-            {value != null ? value : '—'}{value != null && <span className="text-[10px] font-normal ml-0.5 opacity-70">{unit}</span>}
-          </span>
-        </button>
-      )}
-      <div className="text-[10px] text-muted mt-0.5">{label} ✎</div>
-    </div>
+    <button
+      type="button"
+      onClick={() => setOpen((v) => !v)}
+      aria-expanded={open}
+      className="w-full flex gap-2 items-start text-left py-1 pl-2.5 active:scale-[0.995] transition-transform"
+      style={{ borderLeft: `2px solid ${color}` }}
+    >
+      <Icon className="w-3 h-3 shrink-0 mt-[3px]" style={{ color }} aria-hidden="true" />
+      <p className={`text-[11px] leading-snug text-text/90 ${open ? '' : 'line-clamp-2'}`} dir="auto">{text}</p>
+    </button>
   )
 }
