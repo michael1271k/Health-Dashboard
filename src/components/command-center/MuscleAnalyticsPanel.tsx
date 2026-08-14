@@ -1,15 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import dynamic from 'next/dynamic'
-import { PlanEraButton } from '@/components/charts/PlanEraButton'
-import { CurrentWeekButton } from '@/components/charts/CurrentWeekButton'
+import { ChartRange, DEFAULT_RANGE_DAYS } from '@/components/charts/ChartRange'
+import { eraForRange } from '@/lib/hooks/useEraWindow'
 import { WeekToDateTargets } from './WeekToDateTargets'
 import { DeferredMount } from '@/components/fx/DeferredMount'
 import { WidgetBoundary } from '@/components/fx/WidgetBoundary'
-import { useEraFilter } from '@/lib/era/eraFilter'
-import { activeProgram } from '@/lib/programs'
-import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
+import { eraForDate } from '@/lib/programs'
+import { useVolumeTrend, usePRHistory } from '@/lib/hooks/useCharts'
 
 // Recharts-heavy — client-only so they never touch the Command Center's first load.
 const chartFallback = () => (
@@ -22,31 +21,53 @@ const VolumeStream = dynamic(() => import('@/components/charts/HelixViz').then((
 const RpeCalendar = dynamic(() => import('@/components/charts/HelixViz').then((m) => m.RpeCalendar), { ssr: false, loading: chartFallback })
 const MuscleAnalyticsSection = dynamic(() => import('@/components/charts/MuscleAnalytics').then((m) => m.MuscleAnalyticsSection), { ssr: false, loading: chartFallback })
 const StrengthTrends = dynamic(() => import('@/components/charts/StrengthTrends').then((m) => m.StrengthTrends), { ssr: false, loading: chartFallback })
-
-const STEEL = '#8E9AAC'
+// Both came from the deleted central Analytics panel. Volume describes the
+// sessions on this page, and a PR is a fact about a lift — neither had any
+// business living a tab away from the workout it belongs to.
+const VolumeChart = dynamic(() => import('@/components/charts/VolumeChart').then((m) => m.VolumeChart), { ssr: false, loading: chartFallback })
+const PRHistoryChart = dynamic(() => import('@/components/charts/PRHistoryChart').then((m) => m.PRHistoryChart), { ssr: false, loading: chartFallback })
 
 /**
- * The gym/muscle-progress graphs — Muscle Contour Map, Intensity Calendar,
- * Volume Stream, Strength Trends and the Muscle Analytics detail.
+ * Every chart about TRAINING, on the page where the training happens — session
+ * volume, the Muscle Contour Map, Strength Trends, PR history, the Intensity
+ * Calendar and the Volume Stream.
+ *
+ * Volume and PR history arrived here when the central Analytics view was deleted.
+ * They had been sitting on the Progress tab beside body weight and macros, which
+ * meant the two charts that describe the sessions listed a few hundred pixels
+ * above were a tab-switch and a scroll away from them. Nothing about a tonnage
+ * trend belongs next to a weigh-in.
  *
  * TWO SECTIONS, and the split is about TIME, not topic.
  *
  * "Weekly Overview" sits ABOVE the toggle because everything in it is defined
  * by the current week: MEV/MAV targets are a weekly landmark, and rendering
- * them under a "30 Days" or "Plan Era" control implied a window they do not
- * have. It was the same card twice on this page at one point, once with a
- * timeframe control it ignored.
+ * them under a "1 Month" or era control implied a window they do not have. It
+ * was the same card twice on this page at one point, once with a timeframe
+ * control it ignored.
  *
- * Everything below the toggle honours it — including Strength Trends, which
- * used to carry its own Week / 30 Days / Era trio a few pixels away from this
- * one. Two toggles that look identical and move different charts is worse than
- * either alone.
+ * Everything below the toggle honours it, and there is now exactly ONE toggle in
+ * the app. This spot alone used to hold three — a plan-week button, a
+ * hand-rolled "30 Days", and the era — sitting a few pixels apart, styled alike,
+ * and moving overlapping sets of charts. The era is no longer a control at all:
+ * it is derived from the window (`eraForRange`), so the two can't disagree.
  */
 export function MuscleAnalyticsPanel() {
-  // The era filter button prints `activeProgram().label` straight into JSX.
-  void useScheduleVersion()
-  const [days, setDays] = useState(30)
-  const { era } = useEraFilter()
+  const [days, setDays] = useState(DEFAULT_RANGE_DAYS)
+  // Derived from the window rather than read from EraFilterProvider — one
+  // control, one meaning. See eraForRange's docblock.
+  const era = eraForRange(days)
+
+  const { data: volumeData, isLoading: volumeLoading } = useVolumeTrend(days)
+  const { data: prData, isLoading: prLoading } = usePRHistory(undefined, days)
+  const vData = useMemo(
+    () => (volumeData ?? []).filter((d) => era === 'all' || eraForDate(d.date) === era),
+    [volumeData, era],
+  )
+  const pData = useMemo(
+    () => (prData ?? []).filter((d) => era === 'all' || eraForDate(d.date) === era),
+    [prData, era],
+  )
 
   return (
     <DeferredMount minHeight={480}>
@@ -61,26 +82,17 @@ export function MuscleAnalyticsPanel() {
           {/* ── Everything below shares ONE window ── */}
           <section className="space-y-3 min-w-0">
             <div className="flex items-center justify-between gap-3 flex-wrap">
-              <h2 className="font-heading text-fluid-lg font-bold text-text">Muscle Analytics</h2>
-              {/* Current plan week · 30 Days (default) · the active plan's Era. */}
-              <div className="flex items-center gap-2 flex-wrap">
-                <CurrentWeekButton value={days} onChange={setDays} />
-                <button
-                  onClick={() => setDays(30)}
-                  aria-pressed={days === 30}
-                  className="inline-flex items-center px-3.5 py-1.5 rounded-xl text-fluid-xs font-semibold min-h-[40px] border transition-colors shrink-0"
-                  style={days === 30
-                    ? { color: STEEL, borderColor: `${STEEL}55`, background: `${STEEL}1f`, boxShadow: `0 0 10px ${STEEL}33` }
-                    : { color: '#79808C', borderColor: 'transparent' }}
-                >
-                  30 Days
-                </button>
-                <PlanEraButton value={days} onChange={setDays} label={`${activeProgram().label} Era`} />
-              </div>
+              <h2 className="font-heading text-fluid-lg font-bold text-text">Performance</h2>
+              {/* ONE control. This spot used to hold three — a plan-week button, a
+                  hand-rolled "30 Days", and the era — none of which agreed about
+                  what they were for. See ChartRange. */}
+              <ChartRange value={days} onChange={setDays} />
             </div>
             <div className="space-y-4 min-w-0">
+              <VolumeChart data={vData} isLoading={volumeLoading} era={era} />
               <MuscleAnalyticsSection days={days} era={era} />
               <StrengthTrends days={days} era={era} />
+              <PRHistoryChart data={pData} isLoading={prLoading} />
               {/* [&>*]:min-w-0 lets each chart shrink below its Recharts intrinsic
                   width; [&>*]:h-full makes the pair the SAME height on desktop.
                   Grid items stretch by default, but the cards inside them size to

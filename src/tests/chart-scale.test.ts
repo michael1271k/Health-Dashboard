@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import { niceDomain, compactKg } from '@/lib/charts/scale'
-import { currentWeekDays } from '@/components/charts/CurrentWeekButton'
 import { programWeekNumber, weekNumberOf } from '@/lib/reports/weekNumber'
 import { weekStartOf } from '@/lib/utils/week'
 
@@ -103,9 +102,9 @@ describe('current-week timeframe', () => {
     expect(Number.isFinite(programWeekNumber('not-a-date'))).toBe(true)
   })
 
-  it('counts Sunday through today inclusive', () => {
-    // 2026-08-01 is a Saturday; its Sunday-anchored week began 2026-07-26.
-    expect(currentWeekDays('2026-08-01')).toBe(7)
-    expect(currentWeekDays('2026-07-26')).toBe(1)
-  })
+  // `currentWeekDays` went with the plan-week chart toggle: every chart now has
+  // exactly two windows (1 Month / era), and a week-scoped range implied that a
+  // trend line over 3 days meant something. Week-scoped FACTS still exist — they
+  // live in WeekToDateTargets, which sits above the timeframe control precisely
+  // because it does not honour one.
 })

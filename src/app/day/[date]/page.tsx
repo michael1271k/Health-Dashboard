@@ -12,6 +12,7 @@ import { RestSuggestion } from '@/components/day/RestSuggestion'
 import { DomsTracker } from '@/components/day/RecoveryTrackers'
 import { CardioLogger } from '@/components/day/CardioLogger'
 import { WaterHelix } from '@/components/day/WaterHelix'
+import { WaterOverrideSheet } from '@/components/day/WaterOverrideSheet'
 import { useDayVault, dayCompleteness, type DayVaultData } from '@/lib/hooks/useDayVault'
 import { useUserGoals, useDaySleep } from '@/lib/hooks/useDashboard'
 import { useBioSeries } from '@/lib/hooks/useBioStrips'
@@ -37,7 +38,7 @@ import { SleepBand, BodyBand } from '@/components/day/SummaryBands'
  * `inbody` REPLACES `body` rather than stacking on it — a form is a push, not
  * a second drawer over the first — and closing it returns to `body`.
  */
-type DaySheet = 'sleep' | 'body' | 'inbody' | 'water' | 'macros' | 'nutrition' | null
+type DaySheet = 'sleep' | 'body' | 'inbody' | 'water' | 'water-edit' | 'macros' | 'nutrition' | null
 import { AppBar } from '@/components/nav/AppBar'
 import { EMBER, EMBER_DEEP, SAPPHIRE, STEEL, GOLD, OXIDE, EMERALD, MUTED, SAND, BODY } from '@/lib/theme/palette'
 
@@ -356,11 +357,15 @@ export default function DailyNexusPage() {
         </ZoneRow>
 
         {/* Water — the at-a-glance readout AND the way to the full helix.
-            This bar and WaterHelix print the identical number and neither takes
-            input (hydration arrives from HealthKit dietary water), so one of
-            them was pure duplication. Making the bar navigate turns the
-            duplication into a route: the glance stays here, the visual stays in
-            the pager, and there is exactly one place to go for more. */}
+            This bar and WaterHelix print the identical number, so one of them
+            was pure duplication. Making the bar navigate turns the duplication
+            into a route: the glance stays here, the visual stays in the pager,
+            and there is exactly one place to go for more.
+
+            The bar's SINGLE tap keeps opening the sheet. Correcting the day is a
+            double-tap on the helix inside it — adding a second gesture here
+            would mean delaying this tap ~300ms to disambiguate, i.e. making the
+            common action slower to reach the rare one. */}
         <ZoneRow
           asButton
           className="flex items-center gap-2 w-full text-left min-h-[36px] active:opacity-70 transition-opacity"
@@ -456,9 +461,21 @@ export default function DailyNexusPage() {
 
       <Sheet open={sheet === 'water'} onClose={() => setSheet(null)} title="Hydration" accent={ICE}>
         <div className="flex justify-center py-2">
-          <WaterHelix ml={log?.water_ml ?? null} goalMl={goals?.water_goal_ml ?? 3000} />
+          <WaterHelix ml={log?.water_ml ?? null} goalMl={goals?.water_goal_ml ?? 3000}
+            onOverride={() => setSheet('water-edit')} />
         </div>
       </Sheet>
+
+      {/* Replaces the Hydration sheet rather than stacking on it — a form is a
+          push, not a second drawer — and closing returns to where you were,
+          the same rule the InBody form follows. */}
+      <WaterOverrideSheet
+        open={sheet === 'water-edit'}
+        onClose={() => setSheet('water')}
+        date={date}
+        currentMl={log?.water_ml ?? null}
+        goalMl={goals?.water_goal_ml ?? 3000}
+      />
 
       <Sheet open={sheet === 'body'} onClose={() => setSheet(null)} title="Body composition" accent={BODY.weight}>
         <BodyPanel date={date} log={log ?? null} onEdit={() => setSheet('inbody')} />

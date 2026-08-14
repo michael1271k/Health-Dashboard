@@ -99,6 +99,7 @@ describe('every invalidated key prefix has a consumer', () => {
   it('the hand-rolled cascades match too', () => {
     for (const [path, name] of [
       ['src/lib/hooks/useMacroOverride.ts', 'const CASCADE_KEYS'],
+      ['src/lib/hooks/useWaterOverride.ts', 'const CASCADE_KEYS'],
       ['src/app/(dashboard)/settings/page.tsx', 'const PLAN_PHASE_CASCADE_KEYS'],
     ] as const) {
       const roots = declaredList(path, name)

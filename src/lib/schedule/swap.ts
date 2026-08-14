@@ -19,7 +19,8 @@
 
 import { isoAddDays } from '@/lib/utils/week'
 import { REST_OVERRIDE } from './overrides'
-import type { ScheduleDay } from '@/lib/programs'
+import { moveDay, type DayLayout } from './layout'
+import type { ScheduleDay, Program } from '@/lib/programs'
 
 /** One row destined for `schedule_overrides`. `dayKey` may be REST_OVERRIDE. */
 export interface ScheduleWrite {
@@ -157,6 +158,143 @@ function findInWeek(dateISO: string, dayKey: string, resolve: ResolveDay): strin
     if (s !== 'rest' && s.dayKey === dayKey) return d
   }
   return null
+}
+
+// ── What a LOGGED session does to a swap ─────────────────────────────────────
+
+/** A committed session, as the scheduler needs to see it. */
+export interface LoggedDay { date: string; dayKey: string | null }
+
+/** Why a move was refused, or `null` when it is allowed. */
+export type SwapBlock =
+  | { kind: 'target-logged'; date: string; dayKey: string | null }
+  | { kind: 'source-logged'; date: string; dayKey: string | null }
+
+/**
+ * Can `dayKey` be placed on `dateISO`?
+ *
+ * ── THE RULE, AND WHY IT IS THE ONLY SAFE ONE ────────────────────────────────
+ * A session is attributed by its own `day_key`, never by the weekday it landed
+ * on — that is a load-bearing invariant everywhere else in the app (a swapped
+ * Wednesday "Delts & Arms" belongs to the Delts & Arms curve, not to Wednesday).
+ * The schedule, meanwhile, says what is PLANNED. The two are independent, and
+ * they only contradict each other in one situation: when a date holds a
+ * committed session AND the plan is changed to say a different day belongs
+ * there.
+ *
+ *   · TARGET already logged — placing `legs_a` on a date that logged `arms`
+ *     leaves the plan and the record disagreeing about the same day, and the
+ *     week counts a session that was never performed. Refused, unless the
+ *     incoming key IS what was logged, which is a no-op.
+ *
+ *   · SOURCE already logged — moving `arms` off Tuesday when Tuesday's arms
+ *     session is committed leaves the session on Tuesday (it keeps its own
+ *     day_key) AND opens an arms slot on the new date. The week then counts arms
+ *     twice. Its work is done; a completed day cannot be moved.
+ *
+ * Both refusals name the session, because "you can't do that" without saying
+ * what is in the way is the kind of block people work around by deleting data.
+ */
+export function blockForPlacement(
+  dateISO: string,
+  dayKey: string,
+  logged: readonly LoggedDay[],
+  sourceDate: string | null,
+): SwapBlock | null {
+  const onTarget = logged.find((l) => l.date === dateISO)
+  if (onTarget && onTarget.dayKey !== dayKey) {
+    return { kind: 'target-logged', date: dateISO, dayKey: onTarget.dayKey }
+  }
+  if (sourceDate && sourceDate !== dateISO) {
+    const onSource = logged.find((l) => l.date === sourceDate)
+    if (onSource) return { kind: 'source-logged', date: sourceDate, dayKey: onSource.dayKey }
+  }
+  return null
+}
+
+/** One sentence naming what stands in the way. */
+export function describeBlock(block: SwapBlock, labelFor: (dayKey: string | null) => string): string {
+  const what = labelFor(block.dayKey)
+  return block.kind === 'target-logged'
+    ? `${shortDayLabel(block.date)} already has ${what} logged.`
+    : `${what} is already logged on ${shortDayLabel(block.date)} — it can't move.`
+}
+
+// ── The PERMANENT tier ───────────────────────────────────────────────────────
+
+export interface PermanentMovePlan {
+  /** The layout to store, or null when the move was refused. */
+  layout: DayLayout | null
+  /** Per-date overrides that PIN already-happened days to what they were. */
+  writes: ScheduleWrite[]
+  /** Those dates, so the UI can say which part of this week is unaffected. */
+  pinned: string[]
+  block: SwapBlock | null
+}
+
+/**
+ * Move a day permanently, and protect the part of this week that already happened.
+ *
+ * ── THE COUNTER-INTUITIVE PART ───────────────────────────────────────────────
+ * A permanent layout change needs NO writes to make it take effect. It is read
+ * by `programDayFor`, which `scheduleDayFor` falls through to, so every date
+ * without a per-date override picks it up on the next render — including future
+ * weeks, forever. That is the entire feature.
+ *
+ * The writes exist for the opposite reason: to stop it applying where it must
+ * not. Because the layout is read for EVERY date, it also retroactively rewrites
+ * the earlier days of the current week — a Tuesday that logged Delts & Arms
+ * would start claiming Legs A was scheduled. The session keeps its own `day_key`
+ * (attribution never comes from the weekday), so the plan and the record would
+ * sit on one screen contradicting each other, and any week already reported on
+ * would quietly change meaning underneath the report.
+ *
+ * So every day of this week that is already SPENT — logged, or simply in the
+ * past — and whose meaning the change would alter is pinned to what it was, with
+ * an ordinary `schedule_overrides` row. The change starts from today and runs
+ * forward. Nothing is rewritten behind you.
+ *
+ * `resolveWith` is injected rather than imported so this stays pure: the caller
+ * decides what "effective" means, exactly as `planRestDay` does with `resolve`.
+ */
+export function planPermanentMove(input: {
+  program: Program
+  layout: DayLayout
+  dayKey: string
+  weekday: number
+  todayISO: string
+  logged: readonly LoggedDay[]
+  resolveWith: (dateISO: string, layout: DayLayout) => ScheduleDay | 'rest'
+}): PermanentMovePlan {
+  const { program, layout, dayKey, weekday, todayISO, logged, resolveWith } = input
+  const nextLayout = moveDay(program, layout, dayKey, weekday)
+
+  const week = weekDatesOf(todayISO)
+  const targetDate = dateForWeekday(todayISO, weekday)
+  const sourceDate = week.find((d) => {
+    const s = resolveWith(d, layout)
+    return s !== 'rest' && s.dayKey === dayKey
+  }) ?? null
+
+  const block = blockForPlacement(targetDate, dayKey, logged, sourceDate)
+  if (block) return { layout: null, writes: [], pinned: [], block }
+
+  // "Spent" is simply "before today". A logged date needs no extra clause, and
+  // that is a property of the block rule rather than an oversight: an exchange
+  // changes the meaning of exactly TWO weekdays — the source's and the target's —
+  // so today's meaning can only move if today is one of them, and
+  // `blockForPlacement` has already refused both when today carries a session.
+  const writes: ScheduleWrite[] = []
+  for (const d of week) {
+    if (d >= todayISO) continue
+    const before = resolveWith(d, layout)
+    const after = resolveWith(d, nextLayout)
+    const beforeKey = before === 'rest' ? REST_OVERRIDE : (before.dayKey ?? REST_OVERRIDE)
+    const afterKey = after === 'rest' ? REST_OVERRIDE : (after.dayKey ?? REST_OVERRIDE)
+    if (beforeKey !== afterKey) writes.push({ date: d, dayKey: beforeKey })
+  }
+
+  return { layout: nextLayout, writes, pinned: writes.map((w) => w.date), block: null }
 }
 
 /** "Wed 6 Aug" — the shape a swap confirmation needs. */

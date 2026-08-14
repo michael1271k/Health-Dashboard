@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { epley1RM, collapseToSessionBest, type PRRawRow } from '@/lib/hooks/useCharts'
+import { epley1RM, collapseToSessionBest, mergeStepsTrend, type PRRawRow } from '@/lib/hooks/useCharts'
+import { resolveEraStart, daysBetween, eraForRange } from '@/lib/hooks/useEraWindow'
+import { HELIX_CUT_START } from '@/lib/programs'
 
 /** Epley returns `number | null`; these cases are all loaded, so assert non-null. */
 const e = (w: number, r: number): number => {
@@ -86,5 +88,80 @@ describe('collapseToSessionBest (strength-trend ghost-data fix)', () => {
     ]
     const out = collapseToSessionBest(rows)
     expect(out.map((p) => p.est_1rm_kg)).toEqual([76, 80]) // real progression, sorted by date
+  })
+})
+
+describe('mergeStepsTrend — daily_metrics wins per date', () => {
+  it('prefers the HealthKit fan-out over the flat log row', () => {
+    // The SAME precedence api/widget/snapshot applies. If these two disagreed,
+    // the widget and the chart would report different step counts for one day.
+    const out = mergeStepsTrend(
+      [{ date: '2026-08-10', steps: 9812 }],
+      [{ date: '2026-08-10', steps: 9000 }],
+    )
+    expect(out).toEqual([{ date: '2026-08-10', steps: 9812 }])
+  })
+
+  it('falls back to daily_logs for a date daily_metrics never received', () => {
+    const out = mergeStepsTrend(
+      [{ date: '2026-08-10', steps: 9812 }],
+      [{ date: '2026-08-09', steps: 7100 }, { date: '2026-08-10', steps: 9000 }],
+    )
+    expect(out).toEqual([
+      { date: '2026-08-09', steps: 7100 },
+      { date: '2026-08-10', steps: 9812 },
+    ])
+  })
+
+  it('drops nulls rather than plotting them as zero', () => {
+    // A day with no reading is a GAP. Zero is a claim you stood still all day.
+    const out = mergeStepsTrend([], [{ date: '2026-08-09', steps: null }, { date: '2026-08-10', steps: 8000 }])
+    expect(out).toEqual([{ date: '2026-08-10', steps: 8000 }])
+  })
+
+  it('a null in daily_metrics does NOT erase a real daily_logs value', () => {
+    // Precedence is per-VALUE, not per-table: metrics winning outright would let
+    // an empty fan-out row blank a day the flat log actually has.
+    const out = mergeStepsTrend([{ date: '2026-08-10', steps: null }], [{ date: '2026-08-10', steps: 9000 }])
+    expect(out).toEqual([{ date: '2026-08-10', steps: 9000 }])
+  })
+
+  it('sorts chronologically whatever order the rows arrive in', () => {
+    const out = mergeStepsTrend([], [
+      { date: '2026-08-12', steps: 3 }, { date: '2026-08-10', steps: 1 }, { date: '2026-08-11', steps: 2 },
+    ])
+    expect(out.map((p) => p.date)).toEqual(['2026-08-10', '2026-08-11', '2026-08-12'])
+  })
+})
+
+describe('the era chart window', () => {
+  it('prefers the plan start over the phase start', () => {
+    // The toggle is labelled with the PLAN's name, so a window anchored to the
+    // phase would be narrower than the thing it claims to span.
+    expect(resolveEraStart('2026-07-15', '2026-08-01')).toBe('2026-07-15')
+  })
+
+  it('falls back to the phase start, then to the era anchor', () => {
+    expect(resolveEraStart(null, '2026-08-01')).toBe('2026-08-01')
+    expect(resolveEraStart(null, null)).toBe(HELIX_CUT_START)
+    // Both columns exist but are empty in the live DB — the fallback is the
+    // normal path, not the edge case.
+    expect(resolveEraStart(undefined, undefined)).toBe(HELIX_CUT_START)
+  })
+
+  it('counts inclusively and never returns 0 or NaN', () => {
+    expect(daysBetween('2026-08-01', '2026-08-01')).toBe(1)
+    expect(daysBetween('2026-07-15', '2026-08-14')).toBe(31)
+    expect(daysBetween('2026-08-14', '2026-08-01')).toBe(1)   // reversed → floored
+    expect(Number.isFinite(daysBetween('not-a-date', '2026-08-01'))).toBe(true)
+  })
+
+  it('1 Month means all eras; anything else means the active plan era', () => {
+    // Over 30 days every row is inside the current era anyway, so filtering
+    // would only ever remove rows on the one month you switched plans — exactly
+    // when you want to see both sides of the switch.
+    expect(eraForRange(30)).toBe('all')
+    expect(eraForRange(31)).toBe('axis')
+    expect(eraForRange(400)).toBe('axis')
   })
 })

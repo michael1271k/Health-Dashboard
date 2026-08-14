@@ -40,9 +40,9 @@ final class SnapshotStore: ObservableObject {
     func refresh() async {
         guard configured else { return }
         isLoading = true
-        let (snap, stale) = await HelixSnapshotClient.fetchWithFallback()
+        let (snap, status) = await HelixSnapshotClient.fetchWithFallback()
         if let snap { snapshot = snap }
-        isStale = stale
+        isStale = status != .ok
         isLoading = false
     }
 }

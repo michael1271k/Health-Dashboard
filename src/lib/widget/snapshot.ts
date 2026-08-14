@@ -34,16 +34,17 @@ export interface WidgetSnapshot {
   macros: {
     kcal: number | null; kcalGoal: number | null
     proteinG: number | null; proteinGoalG: number | null
-    carbsG: number | null; fatG: number | null
+    carbsG: number | null; carbsGoalG: number | null
+    fatG: number | null; fatGoalG: number | null
   }
   water: { ml: number | null; goalMl: number | null }
   steps: { count: number | null; goal: number | null; distanceM: number | null; activeKcal: number | null }
 
   /** Today's scheduled session, and whether it's already logged. */
-  workout: { label: string; logged: boolean; isRestDay: boolean }
+  workout: { label: string; dayKey: string | null; logged: boolean; isRestDay: boolean }
 
-  /** Week-to-date training totals. */
-  week: { sessions: number; volumeKg: number; prs: number; sets: number }
+  /** Week-to-date training totals, and how many sessions the plan schedules. */
+  week: { sessions: number; volumeKg: number; prs: number; sets: number; sessionTarget: number }
 }
 
 /** kcal left against the goal — the small widget's headline. Null if unknown. */

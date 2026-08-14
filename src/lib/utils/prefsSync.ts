@@ -3,6 +3,7 @@
 import { supabase } from '@/lib/supabase/client'
 import { normalizePlanId, setActiveProgramId, setActivePhase } from '@/lib/programs'
 import { setTrackRpeMirror } from '@/lib/hooks/useTrackRpe'
+import { weekStartDayFromEndDay } from '@/lib/utils/week'
 
 /**
  * Boot-time preference hydration: the database row (user_goals) is the source
@@ -74,6 +75,6 @@ export async function hydratePrefsFromDb(): Promise<void> {
   try {
     const { data } = await supabase.from('user_goals').select('week_end_day').maybeSingle()
     const end = (data as { week_end_day?: number | null } | null)?.week_end_day
-    if (end != null) localStorage.setItem('helix_week_start', end === 0 ? '1' : '0')
+    if (end != null) localStorage.setItem('helix_week_start', String(weekStartDayFromEndDay(end)))
   } catch { /* column not migrated — Sunday-start default stands */ }
 }

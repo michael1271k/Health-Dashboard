@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, useRef } from 'react'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { FlaskConical, ChevronRight } from 'lucide-react'
@@ -12,6 +13,23 @@ import { NutritionLogList } from '@/components/nutrition/NutritionLogList'
 import { MacroCards } from '@/components/nutrition/MacroCards'
 import { FuelForceBand } from '@/components/nutrition/FuelForceBand'
 import { WaterHelix } from '@/components/day/WaterHelix'
+import { WaterOverrideSheet } from '@/components/day/WaterOverrideSheet'
+import { ChartRange, DEFAULT_RANGE_DAYS } from '@/components/charts/ChartRange'
+import { useMacroHistory } from '@/lib/hooks/useCharts'
+
+// Recharts is ~50kB and this page's first paint is the rings, not the chart —
+// client-only so it never reaches the Nutrition bundle.
+const MacroProgressChart = dynamic(
+  () => import('@/components/charts/MacroProgressChart').then((m) => m.MacroProgressChart),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 h-64 flex items-center justify-center">
+        <div className="w-full h-40 bg-surface-2 rounded-xl animate-pulse" />
+      </div>
+    ),
+  },
+)
 import { useTodayDailyLog, useUserGoals } from '@/lib/hooks/useDashboard'
 import { ScheduleShortcut } from '@/components/day/ScheduleShortcut'
 import { logicalTodayISO } from '@/lib/utils/day'
@@ -47,6 +65,9 @@ export default function NutritionPage() {
   const { data: userGoals } = useUserGoals()
 
   const [goals, setGoals] = useState<ActiveGoals>({ calorie: 1955, protein: 170, carbs: 195, fat: 55, mode: 'cut' })
+  const [waterEdit, setWaterEdit] = useState(false)
+  const [macroDays, setMacroDays] = useState(DEFAULT_RANGE_DAYS)
+  const { data: macroHistory, isLoading: macroLoading } = useMacroHistory(macroDays)
 
   /**
    * The auto-heal runs AT MOST ONCE per mount, and that latch is the only thing
@@ -169,17 +190,38 @@ export default function NutritionPage() {
         <ChevronRight className="w-4 h-4 text-muted shrink-0" aria-hidden="true" />
       </Link>
 
-      {/* Water Intake — the same glowing DNA double-helix as the Nexus gauge */}
+      {/* Water Intake — the same glowing DNA double-helix as the Nexus gauge.
+          Double-tap to correct the day: this card has no single-tap action, so
+          the gesture costs nothing here (the day page's compact bar does, which
+          is why the editor hangs off the helix inside its sheet instead). */}
       <div>
         <div className="text-[10px] uppercase tracking-widest text-muted mb-2">Water intake</div>
-        <WaterHelix ml={dailyLog?.water_ml ?? null} goalMl={userGoals?.water_goal_ml ?? 3000} />
+        <WaterHelix ml={dailyLog?.water_ml ?? null} goalMl={userGoals?.water_goal_ml ?? 3000}
+          onOverride={() => setWaterEdit(true)} />
       </div>
+      <WaterOverrideSheet
+        open={waterEdit}
+        onClose={() => setWaterEdit(false)}
+        date={todayISO}
+        currentMl={dailyLog?.water_ml ?? null}
+        goalMl={userGoals?.water_goal_ml ?? 3000}
+      />
 
       {/* Fuel → Force: links today's fuel to today's session (renders only if trained) */}
       <FuelForceBand date={todayISO} proteinG={todayLog?.proteinG ?? null} proteinGoal={goals.protein} />
 
       {/* Training-day shortcut → the deck, pre-seeded (hidden once logged) */}
       <ScheduleShortcut />
+
+      {/* Macros vs goal — moved here from the deleted central Analytics view.
+          It graded the same numbers the rings above show, from a different tab.
+          Its window is the chart control's, NOT the history filter's below:
+          `useDailyLogs(eraDateRange(era))` reaches back to the first tracked
+          phase on 'All', and a 200-day bar chart is a smear. */}
+      <div className="space-y-3">
+        <ChartRange value={macroDays} onChange={setMacroDays} />
+        <MacroProgressChart data={macroHistory ?? []} goals={userGoals ?? null} isLoading={macroLoading} />
+      </div>
 
       {/* Era + nested sub-phase filter + dense daily log */}
       <div className="space-y-3">

@@ -13,10 +13,41 @@ import { logicalTodayISO } from '@/lib/utils/day'
 
 interface OverrideRow { date: string; day_key: string }
 
-// The training-only pre-workout stimulants (L-Citrulline + Caffeine) that a
-// Rest↔Train swap adds/removes from the pill tracker.
+// The SEED's training-only pre-workout stimulants (L-Citrulline + Caffeine).
+// Only the fallback — see `trainingOnlyKeys`.
 const PRE_SLOT = SUPPLEMENT_PROTOCOL.find((s) => s.key === 'pre')
-const PRE_KEYS = (PRE_SLOT?.items ?? []).filter((i) => i.trainingOnly).map((i) => i.key)
+const SEED_PRE_KEYS = (PRE_SLOT?.items ?? []).filter((i) => i.trainingOnly).map((i) => i.key)
+
+/**
+ * Which supplements move when a training day moves.
+ *
+ * ── WHY THIS IS NOT A CONSTANT ANY MORE ──────────────────────────────────────
+ * It was `SEED_PRE_KEYS` — derived from `SUPPLEMENT_PROTOCOL`, the hardcoded
+ * SEED. But the stack lives in `custom_supplements` and has been editable since
+ * the day supplements.ts stopped being the source of truth (see its header). So
+ * a third training-only item added in the app would render on training days,
+ * count toward the day's score, and then silently NOT follow a swap — present on
+ * the rest day it moved away from, absent on the day it moved to.
+ *
+ * The user's own rows win; the seed is the fallback for an unseeded or
+ * unreachable table. A stack that HAS rows but names no training-only item
+ * returns an empty list, deliberately: that is a real answer ("nothing is
+ * training-gated"), not a missing one, and substituting the seed there would
+ * resurrect two items the user had removed.
+ */
+async function trainingOnlyKeys(): Promise<string[]> {
+  try {
+    const { data, error } = await supabase.from('custom_supplements').select('schedule')
+    if (error) return SEED_PRE_KEYS
+    const rows = (data ?? []) as Array<{ schedule: { key?: string; trainingOnly?: boolean } | null }>
+    if (!rows.length) return SEED_PRE_KEYS
+    return rows
+      .filter((r) => r.schedule?.trainingOnly && r.schedule.key)
+      .map((r) => r.schedule!.key as string)
+  } catch {
+    return SEED_PRE_KEYS
+  }
+}
 
 /** What a swap did, so the UI can say where the session went. */
 export type SwapOutcome =
@@ -56,7 +87,19 @@ export function useScheduleOverrides() {
   })
 }
 
-/** Persist a set of schedule writes and cascade the side effects. */
+/**
+ * Persist a set of schedule writes and cascade the side effects.
+ *
+ * Exported because the PERMANENT tier (`usePermanentMove`) writes the same kind
+ * of row — the pins that protect the spent part of the current week — and going
+ * through this rather than `supabase.upsert` directly is what makes it inherit
+ * the supplement cascade. A second writer would be a second place for the pills
+ * and the plan to drift apart.
+ */
+export async function applyScheduleWrites(userId: string, writes: ScheduleWrite[]): Promise<void> {
+  return applyWrites(userId, writes)
+}
+
 async function applyWrites(userId: string, writes: ScheduleWrite[]): Promise<void> {
   if (!writes.length) return
   const rows = writes.map((w) => ({ user_id: userId, date: w.date, day_key: w.dayKey }))
@@ -70,7 +113,8 @@ async function applyWrites(userId: string, writes: ScheduleWrite[]): Promise<voi
   // past their 11:45 slot); Train→Rest removes them entirely. The checklist
   // DISPLAY already follows the swap via isTrainingDay; this keeps
   // supplement_log (score + history) consistent with it.
-  for (const w of writes) await syncPreWorkoutSupps(userId, w.date, w.dayKey !== REST_OVERRIDE)
+  const keys = await trainingOnlyKeys()
+  for (const w of writes) await syncPreWorkoutSupps(userId, w.date, w.dayKey !== REST_OVERRIDE, keys)
 }
 
 /**
@@ -81,18 +125,24 @@ async function applyWrites(userId: string, writes: ScheduleWrite[]): Promise<voi
  * L-Citrulline and Caffeine pills while their rows stayed deleted — the day
  * then scored as if the user had skipped two supplements they were never asked
  * about. One writer, both directions.
+ *
+ * `keys` is passed in rather than read here so a multi-date swap resolves the
+ * user's stack ONCE instead of per date — and so the two directions provably
+ * operate on the same list.
  */
-async function syncPreWorkoutSupps(userId: string, date: string, training: boolean): Promise<void> {
-  if (!PRE_KEYS.length) return
+async function syncPreWorkoutSupps(
+  userId: string, date: string, training: boolean, keys: string[],
+): Promise<void> {
+  if (!keys.length) return
   if (!training) {
-    await supabase.from('supplement_log').delete().eq('user_id', userId).eq('date', date).in('item_key', PRE_KEYS)
+    await supabase.from('supplement_log').delete().eq('user_id', userId).eq('date', date).in('item_key', keys)
     return
   }
   // Only auto-tick when it's today and the 11:45 slot has passed; otherwise the
   // items simply show unchecked in the tracker.
   if (date !== logicalTodayISO() || !PRE_SLOT || !slotTimePassed(PRE_SLOT.time)) return
   const nowIso = new Date().toISOString()
-  const supRows = PRE_KEYS.map((item_key) => ({ user_id: userId, date, item_key, taken: true, taken_at: nowIso }))
+  const supRows = keys.map((item_key) => ({ user_id: userId, date, item_key, taken: true, taken_at: nowIso }))
   await supabase.from('supplement_log').upsert(supRows as never, { onConflict: 'user_id,date,item_key' })
 }
 
@@ -157,8 +207,9 @@ export function useClearScheduleOverride() {
       // restored default weekday, then re-run the supplement cascade against
       // it — otherwise undo left the pills drawn but their rows deleted.
       for (const d of dates) setScheduleOverrideLocal(d, null)
+      const keys = await trainingOnlyKeys()
       for (const d of dates) {
-        await syncPreWorkoutSupps(user.id, d, scheduleDayFor(d) !== REST_OVERRIDE)
+        await syncPreWorkoutSupps(user.id, d, scheduleDayFor(d) !== REST_OVERRIDE, keys)
       }
     },
     onSuccess: () => {

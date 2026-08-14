@@ -41,7 +41,9 @@ struct HelixSnapshot: Codable {
     let proteinG: Double?
     let proteinGoalG: Double?
     let carbsG: Double?
+    let carbsGoalG: Double?
     let fatG: Double?
+    let fatGoalG: Double?
   }
   struct Water: Codable {
     let ml: Double?
@@ -55,6 +57,7 @@ struct HelixSnapshot: Codable {
   }
   struct Workout: Codable {
     let label: String
+    let dayKey: String?
     let logged: Bool
     let isRestDay: Bool
   }
@@ -63,6 +66,9 @@ struct HelixSnapshot: Codable {
     let volumeKg: Double
     let prs: Int
     let sets: Int
+    /// How many training days the plan schedules — "3 sessions" needs a
+    /// denominator to mean anything at a glance.
+    let sessionTarget: Int?
   }
 
   let date: String
@@ -152,16 +158,36 @@ enum HelixSnapshotClient {
     return try JSONDecoder().decode(HelixSnapshot.self, from: data)
   }
 
+  /// Why a surface has no fresh data. A widget that shows zeros is worse than
+  /// one that shows nothing, and one that shows nothing is worse than one that
+  /// says WHICH of these went wrong — the three have completely different fixes
+  /// (edit Secrets.xcconfig, rotate the token, wait for signal) and a blank
+  /// rectangle points at none of them.
+  enum Status: Equatable {
+    case ok
+    /// No URL/token baked into the build.
+    case notConfigured
+    /// Reached the server; it refused the token.
+    case unauthorized
+    /// Could not reach it at all, or it answered with something undecodable.
+    case unreachable
+  }
+
   /// Fetch, falling back to the last good snapshot when the network is down.
   /// A widget that briefly shows yesterday's numbers is better than one that
-  /// shows nothing — but the caller is handed `isStale` so it can say so.
-  static func fetchWithFallback() async -> (snapshot: HelixSnapshot?, isStale: Bool) {
+  /// shows nothing — but the caller is handed the status so it can say so.
+  static func fetchWithFallback() async -> (snapshot: HelixSnapshot?, status: Status) {
     do {
       let fresh = try await fetch()
       cache(fresh)
-      return (fresh, false)
+      return (fresh, .ok)
+    } catch let error as HelixSnapshotError {
+      switch error {
+      case .notConfigured:            return (cached(), .notConfigured)
+      case .badStatus(let code):      return (cached(), code == 401 ? .unauthorized : .unreachable)
+      }
     } catch {
-      return (cached(), true)
+      return (cached(), .unreachable)
     }
   }
 
