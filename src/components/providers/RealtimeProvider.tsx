@@ -61,7 +61,11 @@ const TABLE_KEYS: Record<string, string[][]> = {
   workout_sets: WORKOUT_QUERY_KEYS,
   daily_scores: [['today'], ['readiness_today'], ['daily_logs'], ['weekly_review'], ['trends'], ['coach'], ['continuum'], ['day_vault'], ['month_activity'], ['week_recovery']],
   supplement_log: [['supplement_log'], ['day_vault']],
-  water_intake: [['today'], ['day_vault']],
+  // `['water_intake']` is what tells the OTHER device a day now carries a manual
+  // override, and therefore whether to offer "Clear & use Apple Health". Without
+  // it, correcting hydration on the phone left the laptop's sheet unable to show
+  // the way back out of an override it could see the result of.
+  water_intake: [['water_intake'], ['today'], ['day_vault'], ['continuum'], ['weekly_review']],
   reports: [['reports'], ['weekly_review']],
   // Settings live-sync across devices: a change on desktop invalidates the phone.
   //

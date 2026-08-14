@@ -1,7 +1,8 @@
 'use client'
 
 import { useMemo } from 'react'
-import { Droplets } from 'lucide-react'
+import { Droplets, Pencil } from 'lucide-react'
+import { useDoubleTap } from '@/lib/utils/doubleTap'
 
 // Empty baseline = slate/grey; it fills with blue as intake rises. Filled strands
 // are a DEEP blue (darker outer edges) and the inner base-pair rungs a lighter AQUA
@@ -43,11 +44,32 @@ function buildHelix(): { nodes: Node[]; closed: string } {
  * strands bottom-up (a bright, glowing overlay revealed by a clip-path inset that
  * transitions with the fill). GPU-cheap, theme-agnostic, and static under
  * reduce-motion (only a clip-path state change animates — no infinite loop).
+ *
+ * ── DOUBLE-TAP TO CORRECT (opt-in) ───────────────────────────────────────────
+ * `onOverride` makes the card editable. Absent, it stays exactly as inert as it
+ * was — which is why the dashboard's read-only use needs no change.
+ *
+ * Double-tap rather than a visible button, matching the macro cards, because the
+ * gauge is a READOUT first: hydration arrives from HealthKit and is correct on
+ * almost every day, so a permanent Edit control would advertise an action that
+ * is nearly always the wrong one. The affordance is a hint, not a button.
+ *
+ * `useDoubleTap` (not `useSingleOrDoubleTap`) is deliberate: this card has no
+ * single-tap action, so nothing needs deferring by 300 ms to disambiguate. Where
+ * a single tap DOES exist — the day page's compact water bar, which opens the
+ * Hydration sheet — that tap is left alone and this card takes the double-tap
+ * inside the sheet instead. Paying a tap delay everywhere to add a second gesture
+ * makes the common action worse to reach the rare one.
  */
-export function WaterHelix({ ml, goalMl }: { ml: number | null; goalMl: number }) {
+export function WaterHelix({ ml, goalMl, onOverride }: {
+  ml: number | null
+  goalMl: number
+  onOverride?: () => void
+}) {
   const { nodes, closed } = useMemo(buildHelix, [])
   const have = ml ?? 0
   const pct = Math.max(0, Math.min(1, goalMl > 0 ? have / goalMl : 0))
+  const onTap = useDoubleTap(() => onOverride?.())
 
   // Base-pair rungs every few samples (skip near the crossings where they'd be a dot).
   const rungs = nodes.filter((_, i) => i % 4 === 2 && Math.abs(nodes[i].xa - nodes[i].xb) > 6)
@@ -80,10 +102,23 @@ export function WaterHelix({ ml, goalMl }: { ml: number | null; goalMl: number }
   )
 
   return (
-    <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-2 min-h-[120px]" style={{ borderColor: `${ACCENT}30` }}>
+    <section
+      className={`rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-2 min-h-[120px] ${
+        onOverride ? 'cursor-pointer select-none active:scale-[0.99] transition-transform' : ''
+      }`}
+      style={{ borderColor: `${ACCENT}30` }}
+      onClick={onOverride ? onTap : undefined}
+      role={onOverride ? 'button' : undefined}
+      tabIndex={onOverride ? 0 : undefined}
+      // Keyboard has no double-tap. Enter/Space opens the editor directly —
+      // the gesture is a touch shortcut, never the only way in.
+      onKeyDown={onOverride ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOverride() } } : undefined}
+      aria-label={onOverride ? 'Hydration — double-tap to correct' : undefined}
+    >
       <div className="flex items-center gap-1.5">
         <Droplets className="w-3.5 h-3.5" style={{ color: ACCENT }} aria-hidden="true" />
         <span className="font-heading font-semibold text-fluid-sm text-text">Hydration</span>
+        {onOverride && <Pencil className="w-2.5 h-2.5 opacity-40" style={{ color: ACCENT }} aria-hidden="true" />}
         <span className="ml-auto text-[10px] font-bold" style={{ color: ACCENT }}>{Math.round(pct * 100)}%</span>
       </div>
 
@@ -120,7 +155,11 @@ export function WaterHelix({ ml, goalMl }: { ml: number | null; goalMl: number }
             <span className="helix-num text-fluid-2xl font-bold text-text">{(have / 1000).toFixed(1)}</span>
             <span className="text-fluid-xs text-muted">/ {(goalMl / 1000).toFixed(1)} L</span>
           </div>
-          <span className="text-[10px] text-muted">Dietary water · today</span>
+          {/* Was "Dietary water · today" — the day page renders this for a PAST
+              date, so the second half was a claim the component cannot make. */}
+          <span className="text-[10px] text-muted">
+            {onOverride ? 'Double-tap to correct' : 'Dietary water'}
+          </span>
         </div>
       </div>
     </section>

@@ -3,6 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/lib/supabase/types'
 import { resolveDayPhase, type Phase } from '@/lib/nutrition/phase'
 import { isManualHkUuid } from '@/lib/nutrition/manualEntry'
+import { isManualWaterHkUuid } from '@/lib/nutrition/manualWater'
 import { logicalTodayInTZ } from '@/lib/utils/day'
 import { MIN_VALID_WEIGHT_KG } from '@/lib/utils/units'
 import { nightWindow, fallbackBedTime } from '@/lib/sleep/nightWindow'
@@ -63,6 +64,23 @@ export interface IngestResult {
 }
 
 const skipped = (): SectionResult => ({ ok: true, action: 'skipped' })
+
+/**
+ * Has this day's hydration been corrected by hand?
+ *
+ * Total by design: an unmigrated column or a transport failure must never take
+ * a whole push down over ONE metric, so it degrades to `false` — i.e. exactly
+ * the pre-override behaviour, HealthKit writes and wins.
+ */
+async function hasManualWater(db: DB, userId: string, date: string): Promise<boolean> {
+  try {
+    const { data } = await db.from('water_intake')
+      .select('hk_uuid').eq('user_id', userId).eq('date', date)
+    return ((data ?? []) as Array<{ hk_uuid: string | null }>).some((r) => isManualWaterHkUuid(r.hk_uuid))
+  } catch {
+    return false
+  }
+}
 
 /** Every metric key a push source can send (canonical names, post-normalization). */
 const KNOWN_KEYS = [
@@ -161,12 +179,19 @@ export async function ingestDailyLog(
     weight = undefined
   }
 
+  // A hand-corrected day's hydration wins over HealthKit. ONE probe, TWO skips:
+  // `daily_logs.water_ml` below and the `water_intake` fan-out in §5. They are
+  // read by different consumers (the UI vs the score) and suppressing only one
+  // would let the displayed litres and the graded litres drift apart with
+  // nothing on screen able to say so. See lib/nutrition/manualWater.ts.
+  const manualWater = payload.water !== undefined && await hasManualWater(db, userId, date)
+
   // ── 1. daily_logs (canonical flat row) ──
   const row: Record<string, any> = { user_id: userId, date }
   const set = (k: string, v: number | undefined) => { if (v !== undefined) row[k] = v }
   set('steps', payload.steps)
   set('distance_m', payload.distance_m)
-  set('water_ml', payload.water)
+  set('water_ml', manualWater ? undefined : payload.water)
   set('sleep_minutes', payload.sleep_minutes)
   set('carbs_g', payload.carbs)
   set('protein_g', payload.protein)
@@ -383,12 +408,22 @@ export async function ingestDailyLog(
 
   // ── 5. Fan-out: water_intake ──
   if (payload.water !== undefined) {
-    await db.from('water_intake').delete().eq('user_id', userId).eq('date', date)
-    const { error } = await db.from('water_intake').insert({
-      user_id: userId, hk_uuid: null, logged_at: `${date}T00:00:00Z`, date, amount_ml: payload.water,
-    } as any)
-    result.results.water = error ? { ok: false, action: 'inserted', error: error.message } : { ok: true, action: 'inserted' }
-    if (error) errors.push({ field: 'water_intake', error: error.message })
+    if (manualWater) {
+      // Reported, not silent. The push succeeded; this metric was declined.
+      result.results.water = { ok: true, action: 'ignored', error: 'manual override present — HealthKit water skipped' }
+    } else {
+      // `.is('hk_uuid', null)` scopes the overwrite to HealthKit's own rows. The
+      // guard above already means we never get here with a manual row present,
+      // but a delete that can reach it is one race away from destroying the
+      // correction it exists to protect — and synced rows are always null, so
+      // the filter costs nothing.
+      await db.from('water_intake').delete().eq('user_id', userId).eq('date', date).is('hk_uuid', null)
+      const { error } = await db.from('water_intake').insert({
+        user_id: userId, hk_uuid: null, logged_at: `${date}T00:00:00Z`, date, amount_ml: payload.water,
+      } as any)
+      result.results.water = error ? { ok: false, action: 'inserted', error: error.message } : { ok: true, action: 'inserted' }
+      if (error) errors.push({ field: 'water_intake', error: error.message })
+    }
   }
 
   // ── 6. Fan-out: sleep_sessions — UNCONDITIONAL OVERWRITE for the night ──

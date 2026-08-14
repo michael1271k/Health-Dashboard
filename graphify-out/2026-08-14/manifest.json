@@ -160,8 +160,8 @@
     "semantic_hash": ""
   },
   "public/sw.js": {
-    "mtime": 1786691338.4241898,
-    "ast_hash": "9f422cff66bceb61bf4d33d714a0fb55",
+    "mtime": 1786693084.0797977,
+    "ast_hash": "a42f2d05999ed82f5cd66fd51ab37e5c",
     "semantic_hash": ""
   },
   "scripts/generate-icons.mjs": {
@@ -185,8 +185,8 @@
     "semantic_hash": ""
   },
   "src/app/(dashboard)/nutrition/page.tsx": {
-    "mtime": 1786542260.7920072,
-    "ast_hash": "5d9019fd5a7c03e67dc1b50db787bd25",
+    "mtime": 1786695798.1566043,
+    "ast_hash": "07d724b5e0bdcf9225b928109aa7b16d",
     "semantic_hash": ""
   },
   "src/app/(dashboard)/pathfinder/page.tsx": {
@@ -245,8 +245,8 @@
     "semantic_hash": ""
   },
   "src/app/day/[date]/page.tsx": {
-    "mtime": 1786534188.1420264,
-    "ast_hash": "ba3b467f1fa791e2b6142543a3a2814d",
+    "mtime": 1786695762.1206148,
+    "ast_hash": "c45b7f70a0ad2a6e9dd3963648a4fb17",
     "semantic_hash": ""
   },
   "src/app/global-error.tsx": {
@@ -265,8 +265,8 @@
     "semantic_hash": ""
   },
   "src/app/page.tsx": {
-    "mtime": 1786543216.9643307,
-    "ast_hash": "e547541a9bf1272ac53e5b6903c7e19d",
+    "mtime": 1786693072.1111684,
+    "ast_hash": "86871892ba464524eb83cbbf42c20943",
     "semantic_hash": ""
   },
   "src/app/session/[id]/page.tsx": {
@@ -510,8 +510,8 @@
     "semantic_hash": ""
   },
   "src/components/day/WaterHelix.tsx": {
-    "mtime": 1786288406.3153486,
-    "ast_hash": "9187ea3a9c29905a9e3aff663acb033e",
+    "mtime": 1786695699.0493553,
+    "ast_hash": "111ce5a2187ede8bb575f015149e1ef5",
     "semantic_hash": ""
   },
   "src/components/era/EraFilterPills.tsx": {
@@ -610,8 +610,8 @@
     "semantic_hash": ""
   },
   "src/components/providers/RealtimeProvider.tsx": {
-    "mtime": 1786460705.2969797,
-    "ast_hash": "140988e32b5c7655b6473511314e3b9a",
+    "mtime": 1786695817.6286633,
+    "ast_hash": "e2c6a41fbb52bb9f214f1bb18a64e256",
     "semantic_hash": ""
   },
   "src/components/providers/ReloadHome.tsx": {
@@ -925,8 +925,8 @@
     "semantic_hash": ""
   },
   "src/lib/ingest/dailyLog.ts": {
-    "mtime": 1786691338.4356592,
-    "ast_hash": "0f140dba8da118b6ccffc892d7e6208f",
+    "mtime": 1786695492.8135643,
+    "ast_hash": "d32859fe001706f6b090a2027c9524d9",
     "semantic_hash": ""
   },
   "src/lib/ingest/schema.ts": {
@@ -1915,8 +1915,8 @@
     "semantic_hash": ""
   },
   "src/tests/query-key-coverage.test.ts": {
-    "mtime": 1786691338.4402952,
-    "ast_hash": "b714a1ac1e62e4efb80923f35c337c21",
+    "mtime": 1786695832.326852,
+    "ast_hash": "05c71adc45a4d3f5a5b6bfef02646dc2",
     "semantic_hash": ""
   },
   "src/tests/goal-autoheal.test.ts": {
@@ -2057,6 +2057,21 @@
   "src/components/command-center/PrRecordSheet.tsx": {
     "mtime": 1786692216.1072197,
     "ast_hash": "5dcab1851b21a7971bd3fef88c9fb1a6",
+    "semantic_hash": ""
+  },
+  "src/lib/nutrition/manualWater.ts": {
+    "mtime": 1786695423.781149,
+    "ast_hash": "63c11c794cb87f3779d323e754466bb8",
+    "semantic_hash": ""
+  },
+  "src/lib/hooks/useWaterOverride.ts": {
+    "mtime": 1786695588.009264,
+    "ast_hash": "d4426fd058a939ed1266b83f103b6955",
+    "semantic_hash": ""
+  },
+  "src/components/day/WaterOverrideSheet.tsx": {
+    "mtime": 1786695622.8002818,
+    "ast_hash": "3ce6cc814df7a474656320bcfe71dae5",
     "semantic_hash": ""
   }
 }

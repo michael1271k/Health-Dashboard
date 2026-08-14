@@ -12,6 +12,7 @@ import { NutritionLogList } from '@/components/nutrition/NutritionLogList'
 import { MacroCards } from '@/components/nutrition/MacroCards'
 import { FuelForceBand } from '@/components/nutrition/FuelForceBand'
 import { WaterHelix } from '@/components/day/WaterHelix'
+import { WaterOverrideSheet } from '@/components/day/WaterOverrideSheet'
 import { useTodayDailyLog, useUserGoals } from '@/lib/hooks/useDashboard'
 import { ScheduleShortcut } from '@/components/day/ScheduleShortcut'
 import { logicalTodayISO } from '@/lib/utils/day'
@@ -47,6 +48,7 @@ export default function NutritionPage() {
   const { data: userGoals } = useUserGoals()
 
   const [goals, setGoals] = useState<ActiveGoals>({ calorie: 1955, protein: 170, carbs: 195, fat: 55, mode: 'cut' })
+  const [waterEdit, setWaterEdit] = useState(false)
 
   /**
    * The auto-heal runs AT MOST ONCE per mount, and that latch is the only thing
@@ -169,11 +171,22 @@ export default function NutritionPage() {
         <ChevronRight className="w-4 h-4 text-muted shrink-0" aria-hidden="true" />
       </Link>
 
-      {/* Water Intake — the same glowing DNA double-helix as the Nexus gauge */}
+      {/* Water Intake — the same glowing DNA double-helix as the Nexus gauge.
+          Double-tap to correct the day: this card has no single-tap action, so
+          the gesture costs nothing here (the day page's compact bar does, which
+          is why the editor hangs off the helix inside its sheet instead). */}
       <div>
         <div className="text-[10px] uppercase tracking-widest text-muted mb-2">Water intake</div>
-        <WaterHelix ml={dailyLog?.water_ml ?? null} goalMl={userGoals?.water_goal_ml ?? 3000} />
+        <WaterHelix ml={dailyLog?.water_ml ?? null} goalMl={userGoals?.water_goal_ml ?? 3000}
+          onOverride={() => setWaterEdit(true)} />
       </div>
+      <WaterOverrideSheet
+        open={waterEdit}
+        onClose={() => setWaterEdit(false)}
+        date={todayISO}
+        currentMl={dailyLog?.water_ml ?? null}
+        goalMl={userGoals?.water_goal_ml ?? 3000}
+      />
 
       {/* Fuel → Force: links today's fuel to today's session (renders only if trained) */}
       <FuelForceBand date={todayISO} proteinG={todayLog?.proteinG ?? null} proteinGoal={goals.protein} />
