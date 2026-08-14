@@ -120,8 +120,8 @@
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixWidgets.swift": {
-    "mtime": 1786697064.045036,
-    "ast_hash": "4ec76631699979cf15b6ae6c64f0e44c",
+    "mtime": 1786697105.4052336,
+    "ast_hash": "8c520f7e1ceb5b7f4eb389c7df45c264",
     "semantic_hash": ""
   },
   "ios/App/Shared/HelixSnapshot.swift": {
@@ -160,8 +160,8 @@
     "semantic_hash": ""
   },
   "public/sw.js": {
-    "mtime": 1786696650.2302413,
-    "ast_hash": "3ab4e0fe8ce9d4441d763554e9a83d46",
+    "mtime": 1786697152.3057508,
+    "ast_hash": "cfcd1e82972dfc148189970883f284fd",
     "semantic_hash": ""
   },
   "scripts/generate-icons.mjs": {
@@ -200,8 +200,8 @@
     "semantic_hash": ""
   },
   "src/app/(dashboard)/workout/page.tsx": {
-    "mtime": 1786309785.6174097,
-    "ast_hash": "60312c773a0e222bcc88ca2fe2c93d78",
+    "mtime": 1786697757.9001746,
+    "ast_hash": "baf63b68924e3a4ce15fa763a8c66b07",
     "semantic_hash": ""
   },
   "src/app/api/compute-score/route.ts": {
@@ -840,8 +840,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useScheduleOverrides.ts": {
-    "mtime": 1786218060.0681336,
-    "ast_hash": "87c058833f5709a73bcdab0081031cdf",
+    "mtime": 1786697579.3817763,
+    "ast_hash": "2e7b8c07fd10821bbaf5c4b6a8fe4c50",
     "semantic_hash": ""
   },
   "src/lib/hooks/useSessionDetail.ts": {
@@ -970,8 +970,8 @@
     "semantic_hash": ""
   },
   "src/lib/programs.ts": {
-    "mtime": 1786543589.543285,
-    "ast_hash": "e16da30952274139da16d186b121941d",
+    "mtime": 1786697303.898042,
+    "ast_hash": "2bf85c5dea86d96ec7ba23eb23e9f120",
     "semantic_hash": ""
   },
   "src/lib/query/workoutKeys.ts": {
@@ -1655,8 +1655,8 @@
     "semantic_hash": ""
   },
   "src/lib/schedule/swap.ts": {
-    "mtime": 1785837692.8246572,
-    "ast_hash": "cfb94da298cfbabacc43ace19db195a2",
+    "mtime": 1786697431.5854654,
+    "ast_hash": "0edca290d0abdc7c404828e609a563a1",
     "semantic_hash": ""
   },
   "src/tests/markdown-view.test.tsx": {
@@ -1685,8 +1685,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useScheduleVersion.ts": {
-    "mtime": 1785869631.533197,
-    "ast_hash": "bb37c48fbd3484d7f2e249d7e2f54a85",
+    "mtime": 1786697339.8862958,
+    "ast_hash": "0dce47740963acb134e772e12320dd94",
     "semantic_hash": ""
   },
   "src/tests/schedule-store.test.ts": {
@@ -2077,6 +2077,31 @@
   "src/components/progression/BodyProgressPanel.tsx": {
     "mtime": 1786696189.4920452,
     "ast_hash": "ab7668320ebb0ea9343b73f62b91e1be",
+    "semantic_hash": ""
+  },
+  "src/lib/schedule/layout.ts": {
+    "mtime": 1786697230.210431,
+    "ast_hash": "7bc6cc628864946cfd64549ff1766e2d",
+    "semantic_hash": ""
+  },
+  "src/lib/schedule/layoutStore.ts": {
+    "mtime": 1786697255.991267,
+    "ast_hash": "0ea205803fa4d7c839b48a5dc0f68124",
+    "semantic_hash": ""
+  },
+  "src/lib/hooks/useProgramLayout.ts": {
+    "mtime": 1786697472.7036548,
+    "ast_hash": "cac530c7a4311d70f90906161b894509",
+    "semantic_hash": ""
+  },
+  "src/components/schedule/WeekScheduler.tsx": {
+    "mtime": 1786697688.301366,
+    "ast_hash": "8d87b7378f08c7b8f1d11d749730eac8",
+    "semantic_hash": ""
+  },
+  "src/tests/program-layout.test.ts": {
+    "mtime": 1786697846.720278,
+    "ast_hash": "f824731b74393779c3b0058bfe241680",
     "semantic_hash": ""
   }
 }

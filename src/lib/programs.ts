@@ -6,6 +6,8 @@
  * Sessions are classified purely by date via `eraForDate` (no DB column needed).
  */
 import { getScheduleOverride, REST_OVERRIDE } from '@/lib/schedule/overrides'
+import { getProgramLayout } from '@/lib/schedule/layoutStore'
+import { effectiveWeekday } from '@/lib/schedule/layout'
 import { DAY_COLOR, DIM, PLATINUM } from '@/lib/theme/palette'
 
 export type Era = 'ppl' | 'axis'
@@ -303,10 +305,26 @@ export function programForDate(dateISO: string): Program {
   return activeProgram()
 }
 
-/** Weekday → day for a program (or 'rest'). */
+/**
+ * Weekday → day for a program (or 'rest').
+ *
+ * ── THE LAYOUT LAYER ─────────────────────────────────────────────────────────
+ * `d.weekday` is the weekday the plan was AUTHORED with; `effectiveWeekday` is
+ * where the user has since moved it (`program_day_layout`, a permanent remap).
+ * Matching on the authored value would leave a moved day answering at BOTH
+ * weekdays — its old slot and its new one — which is a duplicated session rather
+ * than a moved one. So there is exactly one place the remap is applied, and this
+ * is it: every caller (`scheduleDayFor`, `isTrainingDay`, the week scheduler)
+ * inherits it without knowing it exists.
+ *
+ * The store is empty on the server and on a device that has never remapped
+ * anything, in which case `effectiveWeekday` returns `d.weekday` and this is the
+ * function it always was.
+ */
 export function programDayFor(programId: string, weekday: number): ProgramDay | 'rest' {
   const p = PROGRAMS[programId] ?? APEX51
-  return p.days.find((d) => d.weekday === weekday) ?? 'rest'
+  const layout = getProgramLayout(p.id)
+  return p.days.find((d) => effectiveWeekday(d, layout) === weekday) ?? 'rest'
 }
 
 /** Exact program day by its stored `day_key` (server-safe; searches all programs). */
@@ -344,7 +362,13 @@ export function isTrainingDay(dateISO: string): boolean {
   if (override != null) return override !== REST_OVERRIDE
   const weekday = new Date(`${dateISO}T12:00:00Z`).getUTCDay()
   if (eraForDate(dateISO) === 'ppl') return weekday !== 5 && weekday !== 6 // legacy PPL: trained Sun–Thu
-  return programDayFor(DEFAULT_PROGRAM_ID, weekday) !== 'rest'
+  // The ACTIVE plan, not the default one. This read `DEFAULT_PROGRAM_ID`, which
+  // is a no-op while Helix-5 is active but would have answered against Helix-5's
+  // week for a user running Helix-4 — and this function gates the supplement
+  // cascade, so it would have added pre-workout stimulants to rest days and
+  // stripped them from training days. `scheduleDayFor` next door already reads
+  // the active plan; the two disagreeing was the latent half of the bug.
+  return programDayFor(getActiveProgramId(), weekday) !== 'rest'
 }
 
 /** Inverse of {@link isTrainingDay} — Wed/Sat Zone-2 rest in HELIX-5, Fri/Sat in PPL. */

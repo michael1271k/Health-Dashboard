@@ -2,6 +2,7 @@
 
 import { useCallback, useSyncExternalStore } from 'react'
 import { subscribeScheduleOverrides, scheduleOverridesVersion } from '@/lib/schedule/overrides'
+import { subscribeProgramLayout, programLayoutVersion } from '@/lib/schedule/layoutStore'
 import { subscribePlanPrefs, planPrefsVersion } from '@/lib/programs'
 
 /**
@@ -15,11 +16,16 @@ import { subscribePlanPrefs, planPrefsVersion } from '@/lib/programs'
  * bug where a swap made on the phone showed the old day on the desktop until
  * something unrelated forced a re-render.
  *
- * It covers TWO stores because they answer one question between them: the
- * per-date overrides (`schedule_overrides`) and the plan/phase preferences
- * (`user_goals.active_plan` / `active_phase`). Switching plan changes which
- * days exist; switching phase changes the prescribed sets within them. A
- * component that cared about one and not the other would be right half the time.
+ * It covers THREE stores because they answer one question between them:
+ *
+ *   · per-date overrides (`schedule_overrides`) — this week's rearrangements
+ *   · the permanent weekday layout (`program_day_layout`) — every week's
+ *   · plan/phase preferences (`user_goals.active_plan` / `active_phase`) —
+ *     which days exist at all, and how many sets each prescribes
+ *
+ * A component that subscribed to one and not the others would be right some of
+ * the time, which is the worst available outcome: it would look correct until
+ * the day it silently wasn't.
  *
  * Returns a version number so it can be used as a `useMemo` dependency:
  *
@@ -31,11 +37,15 @@ import { subscribePlanPrefs, planPrefsVersion } from '@/lib/programs'
 export function useScheduleVersion(): number {
   const subscribe = useCallback((onChange: () => void) => {
     const offSchedule = subscribeScheduleOverrides(onChange)
+    const offLayout = subscribeProgramLayout(onChange)
     const offPlan = subscribePlanPrefs(onChange)
-    return () => { offSchedule(); offPlan() }
+    return () => { offSchedule(); offLayout(); offPlan() }
   }, [])
   // Summed, not concatenated: the contract is only "a different number when
-  // something changed", and both counters increase monotonically.
-  const snapshot = useCallback(() => scheduleOverridesVersion() + planPrefsVersion(), [])
+  // something changed", and every counter increases monotonically.
+  const snapshot = useCallback(
+    () => scheduleOverridesVersion() + programLayoutVersion() + planPrefsVersion(),
+    [],
+  )
   return useSyncExternalStore(subscribe, snapshot, () => 0)
 }

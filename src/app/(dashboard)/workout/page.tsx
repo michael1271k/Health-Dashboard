@@ -20,6 +20,7 @@ import { displayWeight, weightUnit } from '@/lib/utils/units'
 import { formatSet } from '@/lib/utils/setFormat'
 import { isTimedExercise } from '@/lib/exercises/timed'
 import { Plus, TrendingUp, Moon, ArrowRight, Flag, FileClock, ChevronDown, ChevronRight, BookOpen } from 'lucide-react'
+import { WeekScheduler } from '@/components/schedule/WeekScheduler'
 import { Surface } from '@/components/ui/Zone'
 import { STEEL } from '@/lib/theme/palette'
 
@@ -27,7 +28,6 @@ import { STEEL } from '@/lib/theme/palette'
 // Muscle Analytics) — relocated here from the Momentum → Analytics tab.
 const MuscleAnalyticsPanel = dynamic(() => import('@/components/command-center/MuscleAnalyticsPanel').then((m) => m.MuscleAnalyticsPanel), { ssr: false })
 
-const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const REST_VIOLET = '#B4522A'
 
 export default function WorkoutPage() {
@@ -77,7 +77,10 @@ export default function WorkoutPage() {
   // `new Date(...)` in the render body re-parsed on every keystroke anywhere on
   // the page; the day-of-week of "today" is not going to change while you look
   // at it.
-  const todayWD = useMemo(() => WD[new Date(`${today}T12:00:00Z`).getUTCDay()], [today])
+  const todayWD = useMemo(
+    () => new Date(`${today}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'short', timeZone: 'UTC' }),
+    [today],
+  )
   const todayKey = schedule !== 'rest' ? schedule.dayKey : undefined
   const todayDay = useMemo(
     () => (todayKey ? program.days.find((d) => d.key === todayKey) : undefined),
@@ -201,7 +204,20 @@ export default function WorkoutPage() {
         </span>
       </Surface>
 
-      {/* Week plan — ultra-compact: one dense row per day inside a single card. */}
+      {/* ── The WEEK: which day falls when, and how to rearrange it. ──
+          This used to be the card below, which listed `program.days` by their
+          AUTHORED weekday and was therefore blind to every swap already made. */}
+      <div className="space-y-2">
+        <h2 className="font-heading text-fluid-lg font-bold text-text">This week</h2>
+        <WeekScheduler />
+      </div>
+
+      {/* ── The ROUTINE: what each day PRESCRIBES. A different question from the
+          one above, which is why they are two cards and not one — content vs
+          calendar. No weekday chip here on purpose: after a permanent move the
+          authored weekday is no longer where the day sits, and two cards
+          disagreeing about that is worse than one of them staying silent. */}
+      <h2 className="font-heading text-fluid-lg font-bold text-text">Routine</h2>
       <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-1.5 divide-y divide-white/[0.05]">
         {program.days.map((day) => {
           const isToday = day.key === todayKey
@@ -220,7 +236,6 @@ export default function WorkoutPage() {
               >
                 <span className="w-1 h-4 rounded-full shrink-0" style={{ background: day.color }} aria-hidden="true" />
                 <span className="split-label font-bold text-fluid-sm truncate" style={{ color: day.color }}>{day.label}</span>
-                <span className="text-[10px] text-muted uppercase shrink-0">{WD[day.weekday]}</span>
                 {isToday && <span className="text-[9px] px-1 rounded font-bold shrink-0" style={{ color: day.color, background: `${day.color}22` }}>TODAY</span>}
                 <span className="ml-auto text-[10px] text-muted shrink-0">{day.exercises.length} ex · {totalSets} sets</span>
                 <ChevronDown className={`w-3.5 h-3.5 text-muted shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
