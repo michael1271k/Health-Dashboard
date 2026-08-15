@@ -2175,13 +2175,13 @@
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixLifestyle.swift": {
-    "mtime": 1786805547.069304,
-    "ast_hash": "0b866a1f9540802b3719399518790bcb",
+    "mtime": 1786805607.0700383,
+    "ast_hash": "ece4e21a6881f3f2813223e440309b46",
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixPerformance.swift": {
-    "mtime": 1786804239.3996444,
-    "ast_hash": "5d6b5ec5f2a9312e1805c599b493d5af",
+    "mtime": 1786807324.0796738,
+    "ast_hash": "49dc194b9a9239fc162c4f2b7754bd29",
     "semantic_hash": ""
   },
   "src/lib/native/deepLink.ts": {

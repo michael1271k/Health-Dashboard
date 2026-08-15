@@ -253,39 +253,7 @@ struct RecordGridFace: View {
   // ── Register 3: where the tonnage actually went ───────────────────────────
   @ViewBuilder private var familyRegister: some View {
     Register(title: "MUSCLE SPLIT", accent: tint(Helix.sapphire)) {
-      let families = s?.volumeByFamily ?? []
-      if families.isEmpty {
-        Text("no sets logged this week")
-          .font(.system(size: 10)).foregroundStyle(Helix.muted)
-      } else {
-        // Scaled against the week's OWN maximum. There is no per-family volume
-        // landmark to grade against — `volumeZone` measures direct SETS against
-        // per-muscle RP targets — so a bar coloured by "zone" here would look
-        // like a verdict and be an invention. Relative emphasis is a comparison
-        // the data actually supports.
-        let peak = families.map(\.kg).max() ?? 1
-        HStack(alignment: .bottom, spacing: 6) {
-          ForEach(families) { family in
-            VStack(spacing: 3) {
-              GeometryReader { geo in
-                VStack(spacing: 0) {
-                  Spacer(minLength: 0)
-                  RoundedRectangle(cornerRadius: 2)
-                    .fill(mono ? .white : Helix.family(family.family))
-                    .frame(height: max(2, geo.size.height * CGFloat(peak > 0 ? family.kg / peak : 0)))
-                }
-              }
-              .frame(height: 26)
-              Text(family.family.prefix(4).uppercased())
-                .font(.system(size: 7, weight: .bold)).foregroundStyle(Helix.muted)
-              Text(String(format: "%.0f", family.sets))
-                .font(.system(size: 8, weight: .semibold)).monospacedDigit()
-                .foregroundStyle(.white)
-            }
-            .frame(maxWidth: .infinity)
-          }
-        }
-      }
+      FamilySplit(families: s?.volumeByFamily ?? [], mono: mono, height: 26)
     }
   }
 
@@ -425,6 +393,55 @@ private struct LiftRow: View {
         DeltaChip(delta: lift.deltaKg, decimals: 1, suffix: " kg", monochrome: mono)
       }
       Rail(progress: peak > 0 ? min(1, lift.kg / peak) : nil, color: color, height: 3)
+    }
+  }
+}
+
+/// Where the week's tonnage went, as one bar per muscle family.
+///
+/// Scaled against the week's OWN maximum. There is no per-family volume landmark
+/// to grade against — `volumeZone` measures direct SETS against per-muscle
+/// Renaissance-Periodisation targets, which is a different quantity entirely — so
+/// a bar coloured by "zone" here would look like a verdict and be an invention.
+/// Relative emphasis is the comparison the data actually supports.
+///
+/// Shared by the Records Large and the Volume Large: it is the same register
+/// answering the same question, and two copies of it would drift.
+struct FamilySplit: View {
+  let families: [HelixSnapshot.FamilyVolume]
+  let mono: Bool
+  var height: CGFloat = 26
+
+  var body: some View {
+    if families.isEmpty {
+      Text("no sets logged this week")
+        .font(.system(size: 10)).foregroundStyle(Helix.muted)
+    } else {
+      let peak = families.map(\.kg).max() ?? 1
+      HStack(alignment: .bottom, spacing: 6) {
+        ForEach(families) { family in
+          VStack(spacing: 3) {
+            GeometryReader { geo in
+              VStack(spacing: 0) {
+                Spacer(minLength: 0)
+                RoundedRectangle(cornerRadius: 2)
+                  .fill(mono ? .white : Helix.family(family.family))
+                  .frame(height: max(2, geo.size.height * CGFloat(peak > 0 ? family.kg / peak : 0)))
+              }
+            }
+            .frame(height: height)
+            Text(family.family.prefix(4).uppercased())
+              .font(.system(size: 7, weight: .bold)).foregroundStyle(Helix.muted)
+            // Sets, not tonnage: the bar already carries the tonnage, and the
+            // set count is the figure the programme is actually written in.
+            // Fractional by design — a secondary mover earns half a set.
+            Text(String(format: "%.0f", family.sets))
+              .font(.system(size: 8, weight: .semibold)).monospacedDigit()
+              .foregroundStyle(.white)
+          }
+          .frame(maxWidth: .infinity)
+        }
+      }
     }
   }
 }

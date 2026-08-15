@@ -2180,8 +2180,8 @@
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixPerformance.swift": {
-    "mtime": 1786804239.3996444,
-    "ast_hash": "5d6b5ec5f2a9312e1805c599b493d5af",
+    "mtime": 1786815862.2485886,
+    "ast_hash": "43d3ef308b8b8e273c93097f62e2a8d8",
     "semantic_hash": ""
   },
   "src/lib/native/deepLink.ts": {
