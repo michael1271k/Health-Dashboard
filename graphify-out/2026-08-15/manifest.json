@@ -235,8 +235,8 @@
     "semantic_hash": "b42be3e58f4e070c10f2d409d0ce499f"
   },
   "src/app/api/widget/snapshot/route.ts": {
-    "mtime": 1786784660.665127,
-    "ast_hash": "11464577825ba51c5de2f2a3d8085812",
+    "mtime": 1786784448.6105936,
+    "ast_hash": "495e50109268194e434c7ac663c5f831",
     "semantic_hash": ""
   },
   "src/app/auth/page.tsx": {

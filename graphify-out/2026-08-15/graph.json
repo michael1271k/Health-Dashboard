@@ -5649,8 +5649,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "package_dependencies_capacitor_app",
-      "community": 61,
-      "community_name": "dependencies",
+      "community": 109,
+      "community_name": "@capacitor/app",
       "norm_label": "@capacitor/app"
     },
     {
@@ -5660,8 +5660,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "capacitor_app",
-      "community": 61,
-      "community_name": "dependencies",
+      "community": 109,
+      "community_name": "@capacitor/app",
       "norm_label": "@capacitor/app"
     },
     {
@@ -5693,8 +5693,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "package_dependencies_capacitor_haptics",
-      "community": 109,
-      "community_name": "@capacitor/haptics",
+      "community": 61,
+      "community_name": "dependencies",
       "norm_label": "@capacitor/haptics"
     },
     {
@@ -5704,8 +5704,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "capacitor_haptics",
-      "community": 109,
-      "community_name": "@capacitor/haptics",
+      "community": 61,
+      "community_name": "dependencies",
       "norm_label": "@capacitor/haptics"
     },
     {
@@ -6936,8 +6936,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_l",
-      "community": 173,
-      "community_name": "constructor",
+      "community": 119,
+      "community_name": "delete",
       "norm_label": "l()"
     },
     {
@@ -6947,8 +6947,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_h",
-      "community": 173,
-      "community_name": "constructor",
+      "community": 119,
+      "community_name": "delete",
       "norm_label": "h()"
     },
     {
@@ -6958,8 +6958,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_get",
-      "community": 130,
-      "community_name": "cachedResponseWillBeUsed",
+      "community": 108,
+      "community_name": "getDb",
       "norm_label": "get()"
     },
     {
@@ -6969,8 +6969,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_b",
-      "community": 7,
-      "community_name": "sw.js",
+      "community": 108,
+      "community_name": "getDb",
       "norm_label": "b()"
     },
     {
@@ -6980,8 +6980,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_r",
-      "community": 7,
-      "community_name": "sw.js",
+      "community": 108,
+      "community_name": "getDb",
       "norm_label": "r()"
     },
     {
@@ -7068,8 +7068,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_deleteentry",
-      "community": 108,
-      "community_name": "getDb",
+      "community": 119,
+      "community_name": "delete",
       "norm_label": "deleteentry()"
     },
     {
@@ -7123,8 +7123,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_upgradedb",
-      "community": 7,
-      "community_name": "sw.js",
+      "community": 108,
+      "community_name": "getDb",
       "norm_label": "_upgradedb()"
     },
     {
@@ -7156,8 +7156,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_popentry",
-      "community": 108,
-      "community_name": "getDb",
+      "community": 119,
+      "community_name": "delete",
       "norm_label": "popentry()"
     },
     {
@@ -7167,8 +7167,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_shiftentry",
-      "community": 108,
-      "community_name": "getDb",
+      "community": 119,
+      "community_name": "delete",
       "norm_label": "shiftentry()"
     },
     {
@@ -7200,8 +7200,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_removeentry",
-      "community": 108,
-      "community_name": "getDb",
+      "community": 119,
+      "community_name": "delete",
       "norm_label": "_removeentry()"
     },
     {
@@ -7343,8 +7343,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_registersync",
-      "community": 63,
-      "community_name": "clone",
+      "community": 173,
+      "community_name": "constructor",
       "norm_label": "registersync()"
     },
     {
@@ -7354,8 +7354,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_addsynclistener",
-      "community": 63,
-      "community_name": "clone",
+      "community": 173,
+      "community_name": "constructor",
       "norm_label": "_addsynclistener()"
     },
     {
@@ -7673,8 +7673,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_upgradedbanddeleteolddbs",
-      "community": 7,
-      "community_name": "sw.js",
+      "community": 108,
+      "community_name": "getDb",
       "norm_label": "_upgradedbanddeleteolddbs()"
     },
     {
@@ -7739,8 +7739,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_delete",
-      "community": 173,
-      "community_name": "constructor",
+      "community": 119,
+      "community_name": "delete",
       "norm_label": "delete()"
     },
     {
@@ -7805,8 +7805,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_deletecacheandmetadata",
-      "community": 173,
-      "community_name": "constructor",
+      "community": 119,
+      "community_name": "delete",
       "norm_label": "deletecacheandmetadata()"
     },
     {
@@ -7882,8 +7882,8 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "public_sw_handleactivate",
-      "community": 173,
-      "community_name": "constructor",
+      "community": 119,
+      "community_name": "delete",
       "norm_label": "handleactivate()"
     },
     {
@@ -9672,7 +9672,7 @@
       "label": "Db",
       "file_type": "code",
       "source_file": "src/app/api/widget/snapshot/route.ts",
-      "source_location": "L430",
+      "source_location": "L426",
       "_origin": "ast",
       "id": "src_app_api_widget_snapshot_route_db",
       "community": 12,
@@ -9683,7 +9683,7 @@
       "label": "refreshTodayScore()",
       "file_type": "code",
       "source_file": "src/app/api/widget/snapshot/route.ts",
-      "source_location": "L445",
+      "source_location": "L441",
       "_origin": "ast",
       "id": "src_app_api_widget_snapshot_route_refreshtodayscore",
       "community": 12,
@@ -9694,7 +9694,7 @@
       "label": "stepsTrend()",
       "file_type": "code",
       "source_file": "src/app/api/widget/snapshot/route.ts",
-      "source_location": "L466",
+      "source_location": "L462",
       "_origin": "ast",
       "id": "src_app_api_widget_snapshot_route_stepstrend",
       "community": 12,
@@ -9705,7 +9705,7 @@
       "label": "performanceSlice()",
       "file_type": "code",
       "source_file": "src/app/api/widget/snapshot/route.ts",
-      "source_location": "L494",
+      "source_location": "L490",
       "_origin": "ast",
       "id": "src_app_api_widget_snapshot_route_performanceslice",
       "community": 12,
@@ -17078,8 +17078,8 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "src_lib_hevy_parse_hevyworkout",
-      "community": 30,
-      "community_name": "parse.ts",
+      "community": 58,
+      "community_name": "draft.ts",
       "norm_label": "hevyworkout"
     },
     {
@@ -17276,8 +17276,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_hevy_todraft",
-      "community": 30,
-      "community_name": "parse.ts",
+      "community": 58,
+      "community_name": "draft.ts",
       "norm_label": "todraft.ts"
     },
     {
@@ -17287,8 +17287,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_lib_hevy_todraft_daykey",
-      "community": 30,
-      "community_name": "parse.ts",
+      "community": 58,
+      "community_name": "draft.ts",
       "norm_label": "daykey"
     },
     {
@@ -17298,8 +17298,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_lib_hevy_todraft_day_key_guesses",
-      "community": 30,
-      "community_name": "parse.ts",
+      "community": 58,
+      "community_name": "draft.ts",
       "norm_label": "day_key_guesses"
     },
     {
@@ -17309,8 +17309,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_lib_hevy_todraft_guessdaykey",
-      "community": 30,
-      "community_name": "parse.ts",
+      "community": 58,
+      "community_name": "draft.ts",
       "norm_label": "guessdaykey()"
     },
     {
@@ -17320,8 +17320,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_lib_hevy_todraft_ishelixdaykey",
-      "community": 30,
-      "community_name": "parse.ts",
+      "community": 58,
+      "community_name": "draft.ts",
       "norm_label": "ishelixdaykey()"
     },
     {
@@ -17331,8 +17331,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_lib_hevy_todraft_hevyworkouttodraft",
-      "community": 30,
-      "community_name": "parse.ts",
+      "community": 58,
+      "community_name": "draft.ts",
       "norm_label": "hevyworkouttodraft()"
     },
     {
@@ -19938,8 +19938,8 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "src_lib_hooks_usesessiondraft_commitresult",
-      "community": 58,
-      "community_name": "draft.ts",
+      "community": 120,
+      "community_name": "SessionDeck.tsx",
       "norm_label": "commitresult"
     },
     {
@@ -23128,8 +23128,8 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "src_lib_query_workoutkeys_invalidateworkoutdata",
-      "community": 58,
-      "community_name": "draft.ts",
+      "community": 176,
+      "community_name": "useDayVault.ts",
       "norm_label": "invalidateworkoutdata()"
     },
     {
@@ -25647,8 +25647,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_sessions_schema",
-      "community": 22,
-      "community_name": "routineTemplate.ts",
+      "community": 58,
+      "community_name": "draft.ts",
       "norm_label": "sessions/schema.ts"
     },
     {
@@ -25658,8 +25658,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_lib_sessions_schema_workoutsetschema",
-      "community": 22,
-      "community_name": "routineTemplate.ts",
+      "community": 58,
+      "community_name": "draft.ts",
       "norm_label": "workoutsetschema"
     },
     {
@@ -25669,8 +25669,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "src_lib_sessions_schema_workoutcardioschema",
-      "community": 22,
-      "community_name": "routineTemplate.ts",
+      "community": 58,
+      "community_name": "draft.ts",
       "norm_label": "workoutcardioschema"
     },
     {
@@ -25691,8 +25691,8 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "src_lib_sessions_schema_saveworkoutinput",
-      "community": 22,
-      "community_name": "routineTemplate.ts",
+      "community": 58,
+      "community_name": "draft.ts",
       "norm_label": "saveworkoutinput"
     },
     {
@@ -29211,8 +29211,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_tests_hevy_test",
-      "community": 30,
-      "community_name": "parse.ts",
+      "community": 58,
+      "community_name": "draft.ts",
       "norm_label": "hevy.test.ts"
     },
     {
@@ -54579,7 +54579,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/app/api/widget/snapshot/route.ts",
-      "source_location": "L430",
+      "source_location": "L426",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_api_widget_snapshot_route",
@@ -54612,7 +54612,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/app/api/widget/snapshot/route.ts",
-      "source_location": "L494",
+      "source_location": "L490",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_api_widget_snapshot_route",
@@ -54623,7 +54623,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/app/api/widget/snapshot/route.ts",
-      "source_location": "L445",
+      "source_location": "L441",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_api_widget_snapshot_route",
@@ -54645,7 +54645,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/app/api/widget/snapshot/route.ts",
-      "source_location": "L466",
+      "source_location": "L462",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_api_widget_snapshot_route",
@@ -55172,7 +55172,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/app/api/widget/snapshot/route.ts",
-      "source_location": "L499",
+      "source_location": "L495",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_api_widget_snapshot_route_performanceslice",
@@ -55184,7 +55184,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/app/api/widget/snapshot/route.ts",
-      "source_location": "L469",
+      "source_location": "L465",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_api_widget_snapshot_route_stepstrend",
@@ -55196,7 +55196,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/app/api/widget/snapshot/route.ts",
-      "source_location": "L457",
+      "source_location": "L453",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_api_widget_snapshot_route_refreshtodayscore",
@@ -55208,7 +55208,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/app/api/widget/snapshot/route.ts",
-      "source_location": "L347",
+      "source_location": "L343",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_api_widget_snapshot_route_get",
@@ -55220,7 +55220,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/app/api/widget/snapshot/route.ts",
-      "source_location": "L370",
+      "source_location": "L366",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_api_widget_snapshot_route_get",
@@ -55244,7 +55244,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/app/api/widget/snapshot/route.ts",
-      "source_location": "L367",
+      "source_location": "L363",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_api_widget_snapshot_route_get",
@@ -55281,7 +55281,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/api/widget/snapshot/route.ts",
-      "source_location": "L351",
+      "source_location": "L347",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_api_widget_snapshot_route_get",
@@ -55305,7 +55305,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/api/widget/snapshot/route.ts",
-      "source_location": "L403",
+      "source_location": "L399",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_api_widget_snapshot_route_get",
@@ -55425,7 +55425,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/api/widget/snapshot/route.ts",
-      "source_location": "L363",
+      "source_location": "L359",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_api_widget_snapshot_route_get",
@@ -55449,7 +55449,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/api/widget/snapshot/route.ts",
-      "source_location": "L374",
+      "source_location": "L370",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_api_widget_snapshot_route_get",
@@ -55472,7 +55472,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/app/api/widget/snapshot/route.ts",
-      "source_location": "L457",
+      "source_location": "L453",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_api_widget_snapshot_route_refreshtodayscore",
@@ -55484,7 +55484,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/app/api/widget/snapshot/route.ts",
-      "source_location": "L467",
+      "source_location": "L463",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_api_widget_snapshot_route_stepstrend",
@@ -55496,7 +55496,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/app/api/widget/snapshot/route.ts",
-      "source_location": "L482",
+      "source_location": "L478",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_api_widget_snapshot_route_stepstrend",
@@ -55508,7 +55508,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/app/api/widget/snapshot/route.ts",
-      "source_location": "L540",
+      "source_location": "L536",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_api_widget_snapshot_route_performanceslice",
@@ -55520,7 +55520,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/app/api/widget/snapshot/route.ts",
-      "source_location": "L497",
+      "source_location": "L493",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_api_widget_snapshot_route_performanceslice",
@@ -55532,7 +55532,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/app/api/widget/snapshot/route.ts",
-      "source_location": "L539",
+      "source_location": "L535",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_api_widget_snapshot_route_performanceslice",
@@ -55544,7 +55544,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/app/api/widget/snapshot/route.ts",
-      "source_location": "L541",
+      "source_location": "L537",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_api_widget_snapshot_route_performanceslice",
