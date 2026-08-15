@@ -377,22 +377,39 @@ private struct LiftRow: View {
   let mono: Bool
   let large: Bool
 
+  private var points: [Double] { (lift.trend ?? []).map(\.v) }
+
   var body: some View {
-    VStack(alignment: .leading, spacing: 3) {
-      HStack(alignment: .firstTextBaseline, spacing: 6) {
-        Text(lift.exercise)
-          .font(.system(size: large ? 12 : 11, weight: .semibold))
-          .foregroundStyle(.white)
-          .lineLimit(1)
-        Spacer(minLength: 4)
-        Text(String(format: "%.1f", lift.kg))
-          .font(.system(size: large ? 14 : 12, weight: .bold, design: .rounded))
-          .monospacedDigit()
-          .foregroundStyle(color)
-        Text("kg").font(.system(size: 9)).foregroundStyle(Helix.muted)
-        DeltaChip(delta: lift.deltaKg, decimals: 1, suffix: " kg", monochrome: mono)
+    HStack(spacing: 8) {
+      VStack(alignment: .leading, spacing: 3) {
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+          Text(lift.exercise)
+            .font(.system(size: large ? 12 : 11, weight: .semibold))
+            .foregroundStyle(.white)
+            .lineLimit(1)
+          Spacer(minLength: 4)
+          Text(String(format: "%.1f", lift.kg))
+            .font(.system(size: large ? 14 : 12, weight: .bold, design: .rounded))
+            .monospacedDigit()
+            .foregroundStyle(color)
+          Text("kg").font(.system(size: 9)).foregroundStyle(Helix.muted)
+          DeltaChip(delta: lift.deltaKg, decimals: 1, suffix: " kg", monochrome: mono)
+        }
+        // Against the heaviest of the tracked lifts, because there is no target
+        // 1RM in the payload — a bar drawn against an invented ceiling would be
+        // a verdict where this is only a comparison.
+        Rail(progress: peak > 0 ? min(1, lift.kg / peak) : nil, color: color, height: 3)
       }
-      Rail(progress: peak > 0 ? min(1, lift.kg / peak) : nil, color: color, height: 3)
+
+      // ── WHY THE LARGE GETS A TRACE PER LIFT ──────────────────────────────
+      // A chip says the estimate moved. It cannot say whether it climbed over
+      // four sessions or spiked once and gave it back, and those two lifts want
+      // opposite decisions next time. Never zero-based: a 52-to-55 kg month read
+      // against zero is a flat line, which is the one reading it is not.
+      if large, points.count >= 2 {
+        Sparkline(points: points, color: color)
+          .frame(width: 76, height: 24)
+      }
     }
   }
 }

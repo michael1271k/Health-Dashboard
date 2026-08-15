@@ -2180,8 +2180,8 @@
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixPerformance.swift": {
-    "mtime": 1786807324.0796738,
-    "ast_hash": "49dc194b9a9239fc162c4f2b7754bd29",
+    "mtime": 1786816023.9761183,
+    "ast_hash": "3a36f36221f049e0be335262fd5ac53c",
     "semantic_hash": ""
   },
   "src/lib/native/deepLink.ts": {
@@ -2290,8 +2290,8 @@
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixTraining.swift": {
-    "mtime": 1786804513.7251556,
-    "ast_hash": "a5ceff2c1d87b65356f7a5bbe6344c90",
+    "mtime": 1786815997.9081056,
+    "ast_hash": "9d08b55bac6e29d9836ba8aacbe3d387",
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixLock.swift": {

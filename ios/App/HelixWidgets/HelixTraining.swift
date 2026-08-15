@@ -58,7 +58,7 @@ struct TrainingView: View {
     // Was `StreakFace`, literally.
     case (.volume, .small):     VolumeFocusFace(entry: entry, mono: mono)
     case (.volume, .medium):    VolumeFace(entry: entry, mono: mono)
-    case (.volume, .large):     VolumeFace(entry: entry, mono: mono)
+    case (.volume, .large):     VolumeLargeFace(entry: entry, mono: mono)
 
     case (.streak, .small):     StreakFace(entry: entry, mono: mono)
     case (.streak, .medium):    ConsistencyFace(entry: entry, mono: mono, large: false)
@@ -120,14 +120,22 @@ struct TodayFace: View {
       if !compact, let done {
         Hairline()
         TodayStats(done: done, mono: mono)
-      } else if !compact {
-        // A rail is the wrong shape for "not yet" — this is the week's progress,
-        // which is the only thing there IS to say before a session exists.
+      }
+
+      if !compact {
+        // ── CONTEXT, NOT A COUNT ────────────────────────────────────────────
+        // This used to be "3/5 this week" over a rail, which is a number you
+        // cannot act on: it says how many sessions happened and nothing about
+        // WHICH, so a week of three leg days and a week of a proper rotation
+        // rendered identically. The chips name the sessions in their own
+        // `DAY_COLOR`, so the shape of the week is visible rather than counted.
         Hairline()
-        HStack(spacing: 6) {
+        HStack(spacing: 5) {
           Text(weekText)
-            .font(.system(size: 10)).foregroundStyle(Helix.muted)
-          Rail(progress: sessionProgress, color: isRest ? Helix.steel : accent, height: 3)
+            .font(.system(size: 9, weight: .semibold)).foregroundStyle(Helix.muted)
+            .lineLimit(1)
+          Spacer(minLength: 4)
+          SessionChips(entry: entry, mono: mono)
         }
       }
     }
@@ -151,6 +159,67 @@ struct TodayFace: View {
   private var sessionProgress: Double? {
     guard let week = s?.week, let target = week.sessionTarget, target > 0 else { return nil }
     return min(1, Double(week.sessions) / Double(target))
+  }
+}
+
+/// This week's sessions, newest last, each in its own day colour.
+///
+/// Filled = trained, hollow outline = a scheduled day that did not happen. Rest
+/// days are absent entirely: they are not sessions, and including them as a
+/// third state would make the row a calendar, which is a different focus.
+///
+/// The label comes from `CalendarDay.label` — the plan's own words, resolved
+/// server-side and previously discarded. A colour identifies a session; it
+/// cannot name one, so before the payload carried the label there was nothing
+/// here but dots.
+private struct SessionChips: View {
+  let entry: HelixEntry
+  let mono: Bool
+
+  private var s: HelixSnapshot? { entry.snapshot }
+
+  /// The trailing week of the 42-day window, scheduled days only, oldest first.
+  private var week: [HelixSnapshot.CalendarDay] {
+    let all = s?.calendar ?? []
+    return (all.count > 7 ? Array(all.suffix(7)) : all).filter(\.scheduled)
+  }
+
+  var body: some View {
+    if week.isEmpty {
+      // The Fuel and Body scopes do not carry a calendar, and neither does a
+      // fresh install. Silence beats an empty row of placeholder pills.
+      EmptyView()
+    } else {
+      HStack(spacing: 3) {
+        ForEach(week) { day in
+          let color = mono ? Color.white : Helix.day(day.dayKey)
+          Text(shortLabel(day))
+            .font(.system(size: 8, weight: .bold))
+            .lineLimit(1)
+            .foregroundStyle(day.logged ? Helix.background : color)
+            .padding(.horizontal, 4)
+            .padding(.vertical, 2)
+            .background(
+              RoundedRectangle(cornerRadius: 3, style: .continuous)
+                .fill(day.logged ? color : .clear)
+                .strokeBorder(color.opacity(day.logged ? 0 : 0.55), lineWidth: 1)
+            )
+        }
+      }
+    }
+  }
+
+  /// "Legs & Core B" in a chip is a chip full of ellipsis. The initials of the
+  /// significant words carry it — "LCB" — and the colour does the rest.
+  private func shortLabel(_ day: HelixSnapshot.CalendarDay) -> String {
+    guard let label = day.label, !label.isEmpty else { return "·" }
+    let initials = label
+      .split(separator: " ")
+      .filter { $0 != "&" }
+      .compactMap { $0.first.map(String.init) }
+      .joined()
+      .uppercased()
+    return initials.isEmpty ? "·" : String(initials.prefix(3))
   }
 }
 
@@ -294,9 +363,17 @@ private struct DayRow: View {
         .font(.system(size: 11, weight: isToday ? .bold : .semibold))
         .foregroundStyle(isToday ? .white : Helix.muted)
         .frame(width: 42, alignment: .leading)
-      Text(state)
+      // The plan's own name for the session, which the payload now carries. A
+      // week of rows reading "trained · trained · trained" said only that they
+      // happened, never which ones — and which ones is the whole question a rest
+      // day is asking.
+      Text(day.label ?? state)
         .font(.system(size: 11, weight: .medium))
         .foregroundStyle(day.logged ? .white : Helix.muted)
+        .lineLimit(1)
+      Text(state)
+        .font(.system(size: 9))
+        .foregroundStyle(stateColor)
         .lineLimit(1)
       Spacer(minLength: 4)
       if let volume = HelixSnapshot.tonnes(day.volumeKg) {
@@ -310,10 +387,16 @@ private struct DayRow: View {
   /// A rest day is not a failure and must never be worded like one. A scheduled
   /// day still ahead of the clock is not a miss either.
   private var state: String {
-    if day.logged { return "trained" }
+    if day.logged { return "done" }
     if !day.scheduled { return "rest" }
-    if isToday { return "due today" }
+    if isToday { return "due" }
     return "missed"
+  }
+
+  private var stateColor: Color {
+    if day.logged { return mono ? .white : Helix.emerald }
+    if day.scheduled && !isToday { return mono ? .white : Helix.oxide }
+    return Helix.muted
   }
 }
 
@@ -575,56 +658,138 @@ struct VolumeFocusFace: View {
   }
 }
 
+/// Medium · the figures on the left, the eight weeks on the right.
+///
+/// ── WHY BARS REPLACED THE LINE ───────────────────────────────────────────────
+/// The old face drew a six-point line on a band of exactly min…max, so the
+/// lightest week was always pinned to the floor and the heaviest to the ceiling
+/// however small the real spread — twelve tonnes to fourteen drew the same cliff
+/// as two to twenty. And a LINE claims the quantity existed between its points,
+/// which for weekly tonnage is simply untrue: a week is a bucket, and the space
+/// between two of them is not a slower Tuesday, it is nothing at all.
+///
+/// `BarChart` is zero-based, so the bars are in proportion to each other and to
+/// nothing invented, with the trailing mean as a dotted rule to read them against.
 struct VolumeFace: View {
   let entry: HelixEntry
   let mono: Bool
 
   private var s: HelixSnapshot? { entry.snapshot }
-  private var deltaTonnes: Double? {
-    guard let now = s?.week.volumeKg, let then = s?.weekPrev?.volumeKg else { return nil }
-    return (now - then) / 1000
-  }
+  private var accent: Color { mono ? .white : Helix.emerald }
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 6) {
-      HStack(spacing: 5) {
-        Caption("VOLUME", color: mono ? .white : Helix.emerald)
-        Spacer(minLength: 0)
-        if entry.isStale { StaleTag() }
-      }
-
-      HStack(alignment: .bottom, spacing: 8) {
-        BigValue(value: HelixSnapshot.tonnes(s?.week.volumeKg), size: 28, color: .white)
-        DeltaChip(delta: deltaTonnes, decimals: 1, suffix: " t", monochrome: mono)
-        Spacer(minLength: 0)
-        Text("this week").font(.system(size: 9)).foregroundStyle(Helix.muted)
-      }
-
-      if let trend = s?.volumeTrend, trend.count >= 2 {
-        Sparkline(points: trend.map(\.v), color: mono ? .white : Helix.emerald, zeroBased: true)
-          .frame(maxHeight: .infinity)
-        HStack(spacing: 0) {
-          Text("\(trend.count) weeks").font(.system(size: 8)).foregroundStyle(Helix.muted)
-          Spacer(minLength: 0)
-          Text(HelixSnapshot.tonnes(trend.map(\.v).max()).map { "peak \($0)" } ?? "")
-            .font(.system(size: 8)).foregroundStyle(Helix.muted)
+    HStack(spacing: 12) {
+      VStack(alignment: .leading, spacing: 4) {
+        HStack(spacing: 4) {
+          Caption("VOLUME", color: accent)
+          if entry.isStale { StaleTag() }
         }
-      } else {
-        Text("a tonnage trend appears here\nonce there are two weeks of it")
-          .font(.system(size: 9)).foregroundStyle(Helix.muted)
-          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        Spacer(minLength: 0)
+        BigValue(value: HelixSnapshot.tonnes(s?.week.volumeKg), size: 30, color: .white)
+        Text("this week").font(.system(size: 9)).foregroundStyle(Helix.muted)
+        DeltaChip(delta: volumeDeltaTonnes(s), decimals: 1, suffix: " t", monochrome: mono)
+        Spacer(minLength: 0)
+        Hairline()
+        LedgerRow(label: "SESSIONS", value: sessionsText(s), color: .white)
+        LedgerRow(label: "SETS", value: s.map { "\($0.week.sets)" }, color: Helix.steel)
+      }
+      .frame(width: 118, alignment: .leading)
+
+      Hairline(vertical: true)
+
+      VStack(alignment: .leading, spacing: 4) {
+        HStack(spacing: 4) {
+          Caption("EIGHT WEEKS", color: Helix.muted)
+          Spacer(minLength: 0)
+          if let mean = trailingMean(s) {
+            Text("mean \(HelixSnapshot.tonnes(mean) ?? "—")")
+              .font(.system(size: 8)).foregroundStyle(Helix.muted)
+          }
+        }
+        BarChart(points: s?.volumeTrend ?? [], goal: trailingMean(s), color: accent,
+                 label: { weekLabel($0.d) })
+          .frame(maxHeight: .infinity)
+      }
+      .frame(maxWidth: .infinity)
+    }
+  }
+}
+
+/// Large · the week, the eight weeks, and where the tonnage actually went.
+struct VolumeLargeFace: View {
+  let entry: HelixEntry
+  let mono: Bool
+
+  private var s: HelixSnapshot? { entry.snapshot }
+  private func tint(_ c: Color) -> Color { mono ? .white : c }
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 9) {
+      Register(title: "THIS WEEK", accent: tint(Helix.emerald)) {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+          BigValue(value: HelixSnapshot.tonnes(s?.week.volumeKg), size: 34, color: .white)
+          DeltaChip(delta: volumeDeltaTonnes(s), decimals: 1, suffix: " t", monochrome: mono)
+          Spacer(minLength: 0)
+          if entry.isStale { StaleTag() }
+        }
+        HStack(spacing: 0) {
+          Stat(value: sessionsText(s), label: "SESSIONS", color: .white)
+          Stat(value: s.map { "\($0.week.sets)" }, label: "SETS", color: .white)
+          Stat(value: s.map { "\($0.week.prs)" }, label: "RECORDS",
+               color: (s?.week.prs ?? 0) > 0 ? tint(Helix.gold) : Helix.muted)
+          Stat(value: HelixSnapshot.tonnes(s?.weekPrev?.volumeKg), label: "LAST WEEK",
+               color: Helix.steel)
+        }
       }
 
       Hairline()
 
-      HStack(spacing: 0) {
-        Stat(value: s.map { "\($0.week.sessions)" }, label: "SESSIONS", color: .white)
-        Stat(value: s.map { "\($0.week.sets)" }, label: "SETS", color: .white)
-        Stat(value: s.map { "\($0.week.prs)" }, label: "RECORDS",
-             color: (s?.week.prs ?? 0) > 0 ? (mono ? .white : Helix.gold) : Helix.muted)
+      Register(title: "EIGHT WEEKS", accent: tint(Helix.sapphire)) {
+        BarChart(points: s?.volumeTrend ?? [], goal: trailingMean(s), color: tint(Helix.emerald),
+                 label: { weekLabel($0.d) })
+          .frame(maxHeight: .infinity)
+      }
+      .frame(maxHeight: .infinity)
+
+      Hairline()
+
+      Register(title: "WHERE IT WENT", accent: tint(Helix.amethyst)) {
+        FamilySplit(families: s?.volumeByFamily ?? [], mono: mono, height: 30)
       }
     }
   }
+}
+
+/// This week against last, in tonnes. Nil when either week is missing — a first
+/// week compared against nothing is "new", not "+everything".
+private func volumeDeltaTonnes(_ s: HelixSnapshot?) -> Double? {
+  guard let now = s?.week.volumeKg, let then = s?.weekPrev?.volumeKg else { return nil }
+  return (now - then) / 1000
+}
+
+/// "3/5" when the plan states a target, "3" when it does not. A session count
+/// with no denominator is not a fact you can act on at a glance.
+private func sessionsText(_ s: HelixSnapshot?) -> String? {
+  guard let week = s?.week else { return nil }
+  if let target = week.sessionTarget, target > 0 { return "\(week.sessions)/\(target)" }
+  return "\(week.sessions)"
+}
+
+/// The mean of the COMPLETED weeks — this one is excluded because it is still
+/// being written, and a Monday would drag the rule down to a level no week has
+/// ever finished at. Nil with fewer than two completed weeks to average.
+private func trailingMean(_ s: HelixSnapshot?) -> Double? {
+  let trend = s?.volumeTrend ?? []
+  let completed = trend.count > 1 ? Array(trend.dropLast()) : []
+  guard completed.count >= 2 else { return nil }
+  return completed.reduce(0) { $0 + $1.v } / Double(completed.count)
+}
+
+/// A week bucket's label: the day of its START date. Eight "W"s would be no
+/// label at all, and a week number would need a programme epoch the payload
+/// does not carry.
+private func weekLabel(_ iso: String) -> String {
+  HelixSnapshot.dayOfMonth(iso).map { "\($0)" } ?? ""
 }
 
 // MARK: - Streak
