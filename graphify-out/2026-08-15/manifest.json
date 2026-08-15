@@ -120,13 +120,13 @@
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixWidgets.swift": {
-    "mtime": 1786729696.9906633,
-    "ast_hash": "36083b6c97daa343f714bdcc93d52a11",
+    "mtime": 1786799660.4784725,
+    "ast_hash": "7ba7f9fe8556c392de1437bbc2d598b3",
     "semantic_hash": ""
   },
   "ios/App/Shared/HelixSnapshot.swift": {
-    "mtime": 1786729194.8010108,
-    "ast_hash": "305925aba15fca3921ebd1178269a2dd",
+    "mtime": 1786799304.0581884,
+    "ast_hash": "0f481f463984a7d55f6d9299abf10a87",
     "semantic_hash": ""
   },
   "netlify/functions/keep-alive.mts": {
@@ -265,8 +265,8 @@
     "semantic_hash": ""
   },
   "src/app/page.tsx": {
-    "mtime": 1786782891.5350716,
-    "ast_hash": "b387519100ee58ba51f10ff68af8e5b5",
+    "mtime": 1786799092.1236186,
+    "ast_hash": "79b75845ef264bffa6856c7cb606c23e",
     "semantic_hash": ""
   },
   "src/app/session/[id]/page.tsx": {
@@ -355,8 +355,8 @@
     "semantic_hash": ""
   },
   "src/components/command-center/MuscleAnalyticsPanel.tsx": {
-    "mtime": 1786783556.0222094,
-    "ast_hash": "7495a99302db6e59174176e98b947be9",
+    "mtime": 1786799114.8472817,
+    "ast_hash": "e380e04c6632de0e0f5fbbe0f4ef0cb1",
     "semantic_hash": ""
   },
   "src/components/command-center/PastePanel.tsx": {
@@ -447,11 +447,6 @@
   "src/components/dashboard/TrendStrip.tsx": {
     "mtime": 1786288262.8525543,
     "ast_hash": "8620987c8516164d507ee0f898a951ce",
-    "semantic_hash": ""
-  },
-  "src/components/dashboard/WeeklyReviewCard.tsx": {
-    "mtime": 1786288275.0795548,
-    "ast_hash": "5cc8bb146839272034f3bb65dcd2d8a6",
     "semantic_hash": ""
   },
   "src/components/day/BodyMap.tsx": {
@@ -2160,8 +2155,8 @@
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixPalette.swift": {
-    "mtime": 1786729252.3950272,
-    "ast_hash": "53330a256be387897e4e8ab08c0cf662",
+    "mtime": 1786799509.5520651,
+    "ast_hash": "1f1aef21d28a60a033ee62d2b8d19efa",
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixPrimitives.swift": {
@@ -2170,23 +2165,23 @@
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixProvider.swift": {
-    "mtime": 1786729716.7855859,
-    "ast_hash": "bb4cd986521530a5ddc41921ad9bacc2",
+    "mtime": 1786799397.1096163,
+    "ast_hash": "af02d3162dc9e401780cea88b0c3af35",
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixIntents.swift": {
-    "mtime": 1786729526.5130074,
-    "ast_hash": "ba64b150117a16be155669ebf829531e",
+    "mtime": 1786799370.8119016,
+    "ast_hash": "c716a7d1047d21ffe1893e74ca923715",
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixLifestyle.swift": {
-    "mtime": 1786729582.8916504,
-    "ast_hash": "1d2f8d36b08f2934126823f63ef7440a",
+    "mtime": 1786799708.0686338,
+    "ast_hash": "0f2b304726da4210126a6eb25c2bd701",
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixPerformance.swift": {
-    "mtime": 1786729747.8550668,
-    "ast_hash": "5ae14483715952e3b9478942ec338b04",
+    "mtime": 1786799509.5650086,
+    "ast_hash": "fce43359f3cdcfac69c20801bf9d5e47",
     "semantic_hash": ""
   },
   "src/lib/native/deepLink.ts": {
@@ -2280,8 +2275,33 @@
     "semantic_hash": ""
   },
   "src/components/dashboard/WeekSoFarCard.tsx": {
-    "mtime": 1786799079.912323,
-    "ast_hash": "cb9c92c5cccf5c69366b8487cd479a50",
+    "mtime": 1786799096.6581235,
+    "ast_hash": "213e07c6e408d1e14b73f0c8bccaefea",
+    "semantic_hash": ""
+  },
+  "src/tests/week-so-far.test.ts": {
+    "mtime": 1786799139.758377,
+    "ast_hash": "0e08d7219a242469618e547ed97debb6",
+    "semantic_hash": ""
+  },
+  "src/tests/day-color-parity.test.ts": {
+    "mtime": 1786799319.7956665,
+    "ast_hash": "f85cb621d41a67a7cb9216724b8da1ae",
+    "semantic_hash": ""
+  },
+  "ios/App/HelixWidgets/HelixTraining.swift": {
+    "mtime": 1786799600.5041888,
+    "ast_hash": "c24420381c61a9554e7fe5dd85717adc",
+    "semantic_hash": ""
+  },
+  "ios/App/HelixWidgets/HelixLock.swift": {
+    "mtime": 1786799626.996652,
+    "ast_hash": "bc04a25c3bff01001dc108a1e966d188",
+    "semantic_hash": ""
+  },
+  "src/tests/widget-link-parity.test.ts": {
+    "mtime": 1786799752.8598728,
+    "ast_hash": "816dd79fe87ee968d23279c77cda9a31",
     "semantic_hash": ""
   }
 }

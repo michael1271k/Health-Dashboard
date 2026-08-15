@@ -8,11 +8,13 @@ import SwiftUI
 ///
 /// The entry carries it because `AppIntentConfiguration`'s content closure is
 /// handed the ENTRY, not the configuration — the provider is the last place that
-/// sees both, so it stamps one onto the other. Nil for the five static kinds,
-/// which have nothing to configure.
+/// sees both, so it stamps one onto the other. Nil on a placeholder entry, which
+/// has no configuration at all and still has to render something.
 enum HelixFocus {
-  case lifestyle(LifestyleFocus)
-  case performance(PerformanceFocus)
+  case fuel(FuelFocus)
+  case training(TrainingFocus)
+  case body(BodyFocus)
+  case lock(LockFocus)
 }
 
 struct HelixEntry: TimelineEntry {
@@ -26,15 +28,22 @@ struct HelixEntry: TimelineEntry {
   /// Nothing to draw at all — the diagnostic face takes over.
   var isEmpty: Bool { snapshot == nil }
 
-  /// The configured focus, or the widget's default. A placeholder entry has no
-  /// configuration at all and still has to render something.
-  var lifestyleFocus: LifestyleFocus {
-    if case .lifestyle(let f) = focus { return f }
+  /// The configured focus, or the family's default.
+  var fuelFocus: FuelFocus {
+    if case .fuel(let f) = focus { return f }
     return .calories
   }
-  var performanceFocus: PerformanceFocus {
-    if case .performance(let f) = focus { return f }
-    return .records
+  var trainingFocus: TrainingFocus {
+    if case .training(let f) = focus { return f }
+    return .today
+  }
+  var bodyFocus: BodyFocus {
+    if case .body(let f) = focus { return f }
+    return .weight
+  }
+  var lockFocus: LockFocus {
+    if case .lock(let f) = focus { return f }
+    return .battery
   }
 
   static func placeholder(_ date: Date = Date()) -> HelixEntry {
@@ -83,33 +92,12 @@ enum HelixRefresh {
 
 // MARK: - Providers
 
-/// The five original `StaticConfiguration` widgets. Unchanged in behaviour so
-/// nothing already sitting on a home screen is disturbed by the split.
-struct HelixProvider: TimelineProvider {
-  func placeholder(in context: Context) -> HelixEntry { .placeholder() }
-
-  func getSnapshot(in context: Context, completion: @escaping (HelixEntry) -> Void) {
-    Task {
-      let (snap, status) = await HelixSnapshotClient.fetchWithFallback()
-      completion(HelixEntry(date: Date(), snapshot: snap, status: status))
-    }
-  }
-
-  func getTimeline(in context: Context, completion: @escaping (Timeline<HelixEntry>) -> Void) {
-    Task {
-      let (snap, status) = await HelixSnapshotClient.fetchWithFallback()
-      let entry = HelixEntry(date: Date(), snapshot: snap, status: status)
-      completion(Timeline(entries: [entry], policy: .after(HelixRefresh.nextRefresh(ok: status == .ok))))
-    }
-  }
-}
-
-/// The configurable composites. A DIFFERENT protocol from `TimelineProvider`
-/// (`AppIntentTimelineProvider` receives the configuration alongside the
-/// context), which is why `HelixProvider` is generalised here rather than reused.
+/// The one provider. `AppIntentTimelineProvider` receives the configuration
+/// alongside the context, which plain `TimelineProvider` does not — and now that
+/// the five static kinds are gone, nothing needs the plain one.
 ///
-/// The generic carries the intent AND the scope it implies, so a Lifestyle
-/// widget can never end up fetching — or caching under — the Performance slice.
+/// The generic carries the intent AND the scope it implies, so a Fuel widget can
+/// never end up fetching — or caching under — the Training slice.
 struct HelixIntentProvider<Intent: WidgetConfigurationIntent & HelixScoped>: AppIntentTimelineProvider {
   func placeholder(in context: Context) -> HelixEntry { .placeholder() }
 
@@ -123,11 +111,24 @@ struct HelixIntentProvider<Intent: WidgetConfigurationIntent & HelixScoped>: App
     let entry = HelixEntry(date: Date(), snapshot: snap, status: status, focus: configuration.helixFocus)
     return Timeline(entries: [entry], policy: .after(HelixRefresh.nextRefresh(ok: status == .ok)))
   }
+
+  /// One gallery tile per focus.
+  ///
+  /// Without this the gallery shows a single generic preview per KIND, so a
+  /// family's focuses are invisible until after you have placed one and gone
+  /// looking for "Edit Widget" — the choice is hidden at exactly the moment it
+  /// is being made. The options come off the intent so the provider stays
+  /// generic and no family can be added without declaring its own.
+  func recommendations() -> [AppIntentRecommendation<Intent>] {
+    Intent.galleryOptions.map { AppIntentRecommendation(intent: $0.intent, description: $0.title) }
+  }
 }
 
-/// An intent that knows which half of the payload its widget reads, and which
-/// face it was configured to lead with.
+/// An intent that knows which slice of the payload its widget reads, which face
+/// it was configured to lead with, and what to offer in the gallery.
 protocol HelixScoped {
   var scope: HelixScope { get }
   var helixFocus: HelixFocus { get }
+  /// One entry per focus, in the order the gallery should list them.
+  static var galleryOptions: [(intent: Self, title: LocalizedStringResource)] { get }
 }

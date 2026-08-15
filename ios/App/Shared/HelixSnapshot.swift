@@ -31,6 +31,8 @@ import Foundation
 enum HelixScope: String {
   case lifestyle
   case performance
+  case training
+  case body
   case full
 }
 
@@ -56,6 +58,9 @@ struct HelixSnapshot: Codable {
     let score: Int?
     let startTime: String?
     let endTime: String?
+    /// The user's own target, in minutes. The sleep face hardcoded 480, so a
+    /// seven-hour goal was graded against someone else's eight.
+    let goalMin: Int?
   }
   struct Weight: Codable {
     let kg: Double?
@@ -137,6 +142,75 @@ struct HelixSnapshot: Codable {
     var id: String { family }
   }
 
+  /// TODAY's logged session — distinct from `workout`, which is what the PLAN
+  /// says. Null until something has actually been logged, which is exactly the
+  /// difference the Today face is drawing.
+  struct Today: Codable {
+    let durationMin: Int?
+    let sessionRpe: Double?
+    let volumeKg: Double?
+    let setCount: Int?
+    let prCount: Int?
+  }
+
+  /// One day of the training calendar.
+  ///
+  /// `dayKey` is the PLAN's key for that date, resolved server-side through
+  /// `serverScheduleContext` so a swap moves it — and it is what tints the ring
+  /// (`Helix.day`). `logged` is whether a session actually landed. The two
+  /// disagreeing is the whole point of the surface.
+  struct CalendarDay: Codable, Identifiable {
+    let d: String
+    let dayKey: String?
+    /// False on a scheduled rest day.
+    let scheduled: Bool
+    let logged: Bool
+    let volumeKg: Double?
+    var id: String { d }
+  }
+
+  /// Consistency in two numbers. `current` counts backwards over SCHEDULED
+  /// training days only, so Wednesday and Saturday rest never breaks it.
+  struct Streak: Codable {
+    let current: Int
+    let best: Int
+  }
+
+  /// The five sub-scores behind the composite.
+  ///
+  /// `Double`, not `Int`: these are `numeric` columns read straight out of
+  /// `daily_scores`, and a single 82.4 in the payload makes an Int decoder throw
+  /// — which surfaces as "can't reach HELIX", blaming the network for a type.
+  struct Scores: Codable {
+    let sleep: Double?
+    let nutrition: Double?
+    let activity: Double?
+    let workout: Double?
+    let recovery: Double?
+  }
+
+  /// Today's readiness verdict, as `computeReadiness` grades it. `color` is a
+  /// hex string from the same palette — parsed, never guessed at.
+  struct Readiness: Codable {
+    let level: String
+    let label: String
+    let color: String
+    let reason: String
+  }
+
+  /// Body composition beyond the scale weight.
+  ///
+  /// Three DIFFERENT measurements, never interchangeable: `smmKg` is skeletal
+  /// muscle (~27 kg, entered by hand), `muscleKg` is lean soft tissue (~50 kg,
+  /// and must be LABELLED as such), `ffmKg` is fat-free mass (~53 kg, derived).
+  struct Body: Codable {
+    let fatPct: Double?
+    let muscleKg: Double?
+    let smmKg: Double?
+    let ffmKg: Double?
+    let fatTrend: [Point]?
+  }
+
   let date: String
   let generatedAt: String
   /// Echoed by the server so a cache can be keyed on it. Optional so a build
@@ -155,6 +229,19 @@ struct HelixSnapshot: Codable {
   let records: [Record]?
   let e1rm: [E1rm]?
   let volumeByFamily: [FamilyVolume]?
+
+  // ── Added with the four configurable families ──────────────────────────────
+  // Every one is OPTIONAL, including `today`, which the server sends in all
+  // scopes as `null` on a day with no session. A build talking to a deployment
+  // from before these existed still decodes; the faces render "—", which is
+  // what they do for a missing reading anyway.
+  let today: Today?
+  let streak: Streak?
+  let calendar: [CalendarDay]?
+  let volumeTrend: [Point]?
+  let body: Body?
+  let scores: Scores?
+  let readiness: Readiness?
 }
 
 extension HelixSnapshot {

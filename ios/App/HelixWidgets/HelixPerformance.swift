@@ -1,48 +1,34 @@
 import WidgetKit
 import SwiftUI
 
-// MARK: - Helix Performance
+// MARK: - Performance faces
 //
-//   Small   C6 Focus        one record, one lift, or one week figure
-//   Medium  C1 Ledger       week volume against last week, plus four facts
-//   Large   C4 Record Grid   three registers at three densities:
-//                              1. the week, each figure against last week
-//                              2. the three most recent records — the only gold
-//                              3. the six muscle families' share of the tonnage
+// These are the Training family's `records` and `oneRepMax` focuses. They kept
+// their own file and their own payload slice — records and estimated 1RM are the
+// only faces that need the performance scope, and a calendar should not pay to
+// decode a ledger it never draws (see `TrainingFocus.scope`).
 //
-// This is the answer to "use the Large family properly": three questions
-// answered at three densities, and not a single box.
+// The dispatching `PerformanceView` and its widget declaration are gone; the
+// faces below are now reached through `TrainingView`.
 
-struct PerformanceView: View {
-  let entry: HelixEntry
-  let focus: PerformanceFocus
-  @Environment(\.widgetFamily) private var family
-  @Environment(\.widgetRenderingMode) private var mode
+/// What a performance face leads with. Internal, not an `AppEnum`: the picker
+/// shows `TrainingFocus`, and a face should not know which widget it is inside.
+enum PerfFace {
+  case records, heaviest, oneRepMax, volume
 
-  private var mono: Bool { mode == .accented }
-
-  var body: some View {
-    Group {
-      if entry.isEmpty {
-        Unavailable(status: entry.status, compact: family == .systemSmall)
-      } else {
-        switch family {
-        case .systemSmall: PerfFocusFace(entry: entry, focus: focus, mono: mono)
-        case .systemLarge: RecordGridFace(entry: entry, mono: mono)
-        default:           PerfLedgerFace(entry: entry, focus: focus, mono: mono)
-        }
-      }
+  var link: URL? {
+    switch self {
+    case .records, .heaviest, .oneRepMax: return HelixLink.exercises
+    case .volume:                         return HelixLink.reports
     }
-    .containerBackground(Helix.background, for: .widget)
-    .widgetURL(focus.link)
   }
 }
 
 // MARK: - C6 · Focus (Small)
 
-private struct PerfFocusFace: View {
+struct PerfFocusFace: View {
   let entry: HelixEntry
-  let focus: PerformanceFocus
+  let focus: PerfFace
   let mono: Bool
 
   private var s: HelixSnapshot? { entry.snapshot }
@@ -144,9 +130,9 @@ private struct PerfFocusFace: View {
 
 // MARK: - C1 · Ledger (Medium)
 
-private struct PerfLedgerFace: View {
+struct PerfLedgerFace: View {
   let entry: HelixEntry
-  let focus: PerformanceFocus
+  let focus: PerfFace
   let mono: Bool
 
   private var s: HelixSnapshot? { entry.snapshot }
@@ -212,7 +198,7 @@ private struct PerfLedgerFace: View {
 
 // MARK: - C4 · Record Grid (Large)
 
-private struct RecordGridFace: View {
+struct RecordGridFace: View {
   let entry: HelixEntry
   let mono: Bool
 
@@ -392,22 +378,5 @@ private struct RecordRow: View {
     case "seconds": return "\(Int(record.value.rounded()))s"
     default:        return String(format: "%.1f kg", record.value)
     }
-  }
-}
-
-// MARK: - Widget declaration
-
-struct HelixPerformanceWidget: Widget {
-  var body: some WidgetConfiguration {
-    AppIntentConfiguration(
-      kind: "HelixPerformance",
-      intent: PerformanceConfiguration.self,
-      provider: HelixIntentProvider<PerformanceConfiguration>()
-    ) { entry in
-      PerformanceView(entry: entry, focus: entry.performanceFocus)
-    }
-    .configurationDisplayName("Performance")
-    .description("Records, estimated 1RM and the training week. Tap through to the library.")
-    .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
   }
 }

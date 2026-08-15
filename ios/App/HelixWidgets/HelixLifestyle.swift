@@ -1,22 +1,45 @@
 import WidgetKit
 import SwiftUI
 
-// MARK: - Helix Lifestyle
+// MARK: - Fuel and Body
 //
-// One widget, three sizes, four focuses. The layout LANGUAGE changes with the
-// size, and the focus changes what leads — not merely which number is bold.
+// Two of the four families, sharing one set of faces. The layout LANGUAGE
+// changes with the size, and the focus changes what leads — not merely which
+// number is bold.
 //
 //   Small   C6 Focus       one idea, said once
 //   Medium  C1 Ledger      a hero plus four supporting facts, no boxes
-//           C2 Depth Bars  when the focus is sleep — a stacked bar is the shape
-//                          of a night, and a row of numbers is not
-//           C3 Trendline   when the focus is weight — a fortnight against last
-//                          week's mean, so the comparison is seen, not read
+//           C7 Macros      the calorie bar with its three parts underneath
+//           C2 Depth Bars  for sleep — a stacked bar is the shape of a night,
+//                          and a row of numbers is not
+//           C3 Trendline   for weight — a fortnight against last week's mean,
+//                          so the comparison is seen rather than read
 //   Large   C5 Split       today in the context of the week
+//           C8 Wellbeing   the score, its five parts, and today's verdict
 
-struct LifestyleView: View {
+/// The face-level focus, which is NOT the user-facing one.
+///
+/// `FuelFocus` and `BodyFocus` are what the picker shows; this is what the faces
+/// switch on. They are deliberately separate: two families draw from one set of
+/// faces, and a face should not have to know which widget it is inside.
+enum FaceFocus {
+  case calories, steps, sleep, weight
+
+  /// Where a REGION of a face should land, which is not always where the whole
+  /// widget lands — the root `widgetURL` is per-widget, `Link` is per-view.
+  var link: URL? {
+    switch self {
+    case .calories:                  return HelixLink.nutrition
+    case .steps, .sleep, .weight:    return HelixLink.progress
+    }
+  }
+}
+
+// MARK: - Helix Fuel
+
+struct FuelView: View {
   let entry: HelixEntry
-  let focus: LifestyleFocus
+  let focus: FuelFocus
   @Environment(\.widgetFamily) private var family
   @Environment(\.widgetRenderingMode) private var mode
 
@@ -28,14 +51,17 @@ struct LifestyleView: View {
         Unavailable(status: entry.status, compact: family == .systemSmall)
       } else {
         switch family {
-        case .systemSmall:  FocusFace(entry: entry, focus: focus, mono: mono)
-        case .systemLarge:  SplitFace(entry: entry, focus: focus, mono: mono)
+        case .systemSmall:
+          FocusFace(entry: entry, focus: focus == .water ? .steps : .calories, mono: mono)
+        case .systemLarge:
+          SplitFace(entry: entry, mono: mono)
         default:
-          switch focus {
-          case .sleep:  DepthFace(entry: entry, mono: mono)
-          case .weight: TrendFace(entry: entry, mono: mono)
-          default:      LedgerFace(entry: entry, focus: focus, mono: mono)
-          }
+          // Macros is the face this family was rebuilt for: `carbsG` and `fatG`
+          // have shipped in the payload since the first version and were drawn
+          // nowhere, so a cut's two hardest numbers to hit were the two the
+          // widget could not show.
+          if focus == .macros { MacroFace(entry: entry, mono: mono) }
+          else { LedgerFace(entry: entry, focus: focus == .water ? .steps : .calories, mono: mono) }
         }
       }
     }
@@ -51,15 +77,51 @@ struct LifestyleView: View {
   }
 }
 
+// MARK: - Helix Body
+
+struct BodyView: View {
+  let entry: HelixEntry
+  let focus: BodyFocus
+  @Environment(\.widgetFamily) private var family
+  @Environment(\.widgetRenderingMode) private var mode
+
+  private var mono: Bool { mode == .accented }
+
+  var body: some View {
+    Group {
+      if entry.isEmpty {
+        Unavailable(status: entry.status, compact: family == .systemSmall)
+      } else {
+        switch family {
+        case .systemSmall:
+          FocusFace(entry: entry, focus: focus == .sleep ? .sleep : .weight, mono: mono)
+        case .systemLarge:
+          if focus == .wellbeing { WellbeingFace(entry: entry, mono: mono) }
+          else if focus == .sleep { DepthFace(entry: entry, mono: mono) }
+          else { TrendFace(entry: entry, mono: mono) }
+        default:
+          switch focus {
+          case .sleep:     DepthFace(entry: entry, mono: mono)
+          case .weight:    TrendFace(entry: entry, mono: mono)
+          case .wellbeing: WellbeingFace(entry: entry, mono: mono)
+          }
+        }
+      }
+    }
+    .containerBackground(Helix.background, for: .widget)
+    .widgetURL(focus.link)
+  }
+}
+
 // MARK: - C6 · Focus (Small)
 //
-// A Small holds exactly one idea. `FuelView` and `BatteryView` already do this
-// correctly, so this extends the pattern rather than redesigning it: caption,
-// one big number, one supporting line, one rail.
+// A Small holds exactly one idea: caption, one big number, one supporting line,
+// one rail. This is the shape the original static Fuel and Battery tiles had —
+// the only thing they got right, and the reason it survived them.
 
-private struct FocusFace: View {
+struct FocusFace: View {
   let entry: HelixEntry
-  let focus: LifestyleFocus
+  let focus: FaceFocus
   let mono: Bool
 
   private var s: HelixSnapshot? { entry.snapshot }
@@ -127,7 +189,12 @@ private struct FocusFace: View {
     switch focus {
     case .calories: return HelixSnapshot.progress(s?.macros.kcal, s?.macros.kcalGoal)
     case .steps:    return HelixSnapshot.progress(s?.steps.count.map(Double.init), s?.steps.goal.map(Double.init))
-    case .sleep:    return HelixSnapshot.progress(s?.sleep.minutes.map(Double.init), 480)
+    case .sleep:
+      // The USER's goal, not eight hours. A seven-hour target graded against a
+      // hard-coded 480 draws a full night as 88% of one.
+      return HelixSnapshot.progress(
+        s?.sleep.minutes.map(Double.init),
+        s?.sleep.goalMin.map(Double.init) ?? 480)
     case .weight:
       // Progress toward the target, measured from where the fortnight started.
       // Without a start there is nothing to be a fraction OF, so: no rail.
@@ -144,9 +211,9 @@ private struct FocusFace: View {
 // hairline-separated rows. One focal point, four supporting facts, zero boxes —
 // which is the whole reason the previous Medium faces looked like wide Smalls.
 
-private struct LedgerFace: View {
+struct LedgerFace: View {
   let entry: HelixEntry
-  let focus: LifestyleFocus
+  let focus: FaceFocus
   let mono: Bool
 
   private var s: HelixSnapshot? { entry.snapshot }
@@ -219,7 +286,7 @@ private struct LedgerFace: View {
 
 // MARK: - C2 · Depth Bars (Medium) · the Sleep Rainbow
 
-private struct DepthFace: View {
+struct DepthFace: View {
   let entry: HelixEntry
   let mono: Bool
 
@@ -287,7 +354,7 @@ private struct DepthFace: View {
 
 // MARK: - C3 · Trendline (Medium) · Weight
 
-private struct TrendFace: View {
+struct TrendFace: View {
   let entry: HelixEntry
   let mono: Bool
 
@@ -349,9 +416,8 @@ private struct TrendFace: View {
 // brightened. Today read in the context of the week — the most informative Large
 // layout the data we already hold can support.
 
-private struct SplitFace: View {
+struct SplitFace: View {
   let entry: HelixEntry
-  let focus: LifestyleFocus
   let mono: Bool
 
   private var s: HelixSnapshot? { entry.snapshot }
@@ -493,19 +559,190 @@ private struct WeekColumns: View {
   }
 }
 
-// MARK: - Widget declaration
+// MARK: - C7 · Macros (Medium)
+//
+// ── THE FACE THIS FAMILY WAS REBUILT FOR ─────────────────────────────────────
+// `carbsG`, `carbsGoalG`, `fatG` and `fatGoalG` have shipped in the payload
+// since the first version and were drawn nowhere. On a cut those are two of the
+// three numbers that decide the day, and the only widget that could show them
+// showed protein alone.
+//
+// Left 60%: the calorie headline over a full-width rail, then the three macros
+// as 3pt rails with their own figures — one bar per thing being filled, which is
+// the same grammar as the app's Fuel card. Right 40%, hairline-separated: the
+// four facts that are NOT macros, so the two halves never argue about what they
+// are for.
 
-struct HelixLifestyleWidget: Widget {
-  var body: some WidgetConfiguration {
-    AppIntentConfiguration(
-      kind: "HelixLifestyle",
-      intent: LifestyleConfiguration.self,
-      provider: HelixIntentProvider<LifestyleConfiguration>()
-    ) { entry in
-      LifestyleView(entry: entry, focus: entry.lifestyleFocus)
+struct MacroFace: View {
+  let entry: HelixEntry
+  let mono: Bool
+
+  private var s: HelixSnapshot? { entry.snapshot }
+  private func tint(_ c: Color) -> Color { mono ? .white : c }
+
+  var body: some View {
+    HStack(spacing: 12) {
+      Link(destination: HelixLink.nutrition ?? HelixLink.home!) { macroColumn }
+      Hairline(vertical: true)
+      Link(destination: HelixLink.home ?? HelixLink.nutrition!) { ledgerColumn }
     }
-    .configurationDisplayName("Lifestyle")
-    .description("Fuel, movement, sleep and weight. Tap through to the page it came from.")
-    .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+  }
+
+  private var macroColumn: some View {
+    VStack(alignment: .leading, spacing: 5) {
+      HStack(spacing: 4) {
+        Caption("FUEL", color: tint(Helix.ember))
+        if entry.isStale { StaleTag() }
+      }
+      BigValue(value: s?.caloriesRemaining.map { "\($0)" }, size: 26, color: .white)
+      Text("kcal left").font(.system(size: 9)).foregroundStyle(Helix.muted)
+      Rail(progress: HelixSnapshot.progress(s?.macros.kcal, s?.macros.kcalGoal),
+           color: tint(Helix.ember))
+
+      Spacer(minLength: 2)
+
+      MacroRail(label: "P", value: s?.macros.proteinG, goal: s?.macros.proteinGoalG,
+                color: tint(Helix.emerald))
+      MacroRail(label: "C", value: s?.macros.carbsG, goal: s?.macros.carbsGoalG,
+                color: tint(Helix.sapphire))
+      MacroRail(label: "F", value: s?.macros.fatG, goal: s?.macros.fatGoalG,
+                color: tint(Helix.gold))
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
+  }
+
+  private var ledgerColumn: some View {
+    VStack(spacing: 0) {
+      LedgerRow(label: "BATTERY", value: s?.battery.map { "\($0)" },
+                color: mono ? .white : Helix.battery(s?.battery), trailing: "%")
+      Hairline().padding(.vertical, 4)
+      LedgerRow(label: "SLEEP", value: sleepText, color: .white)
+      Hairline().padding(.vertical, 4)
+      LedgerRow(label: "WATER", value: s?.water.ml.map { String(format: "%.1f", $0 / 1000) },
+                color: tint(Helix.sapphire), trailing: "L")
+      Hairline().padding(.vertical, 4)
+      LedgerRow(label: "STEPS", value: s?.steps.count.map { "\($0)" }, color: Helix.steel)
+    }
+    .frame(maxWidth: .infinity)
+  }
+
+  private var sleepText: String? {
+    guard let m = s?.sleep.minutes, m > 0 else { return nil }
+    return HelixSnapshot.formatSleep(m)
+  }
+}
+
+/// One macro: an initial, a 3pt rail, and `128 / 165 g` in a tabular face.
+///
+/// The figures are the point — a rail alone says "most of the way" for anything
+/// between 70 and 95 percent, and the difference between those two is a meal.
+private struct MacroRail: View {
+  let label: String
+  let value: Double?
+  let goal: Double?
+  let color: Color
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 2) {
+      HStack(spacing: 4) {
+        Text(label)
+          .font(.system(size: 8, weight: .bold, design: .rounded))
+          .foregroundStyle(color)
+        Spacer(minLength: 0)
+        Text(figures)
+          .font(.system(size: 9, weight: .medium, design: .monospaced))
+          .foregroundStyle(Helix.muted)
+          .lineLimit(1)
+      }
+      Rail(progress: HelixSnapshot.progress(value, goal), color: color, height: 3)
+    }
+  }
+
+  /// "128 / 165 g", or an em dash for the half that is missing. A goal with no
+  /// intake is still worth printing: it says what the day is asking for.
+  private var figures: String {
+    let now = value.map { "\(Int($0.rounded()))" } ?? "—"
+    let target = goal.map { "\(Int($0.rounded()))" } ?? "—"
+    return "\(now) / \(target) g"
+  }
+}
+
+// MARK: - C8 · Wellbeing (Large)
+//
+// The composite score is one number standing on five, and the five are what you
+// can actually act on — a 62 tells you nothing about whether to sleep earlier or
+// eat more. The readiness verdict underneath is `computeReadiness`'s own words,
+// carried through the payload rather than re-derived here: two implementations
+// of one grade is how they come to disagree.
+
+struct WellbeingFace: View {
+  let entry: HelixEntry
+  let mono: Bool
+
+  private var s: HelixSnapshot? { entry.snapshot }
+  private func tint(_ c: Color) -> Color { mono ? .white : c }
+
+  private var parts: [(String, Double?, Color)] {
+    let sc = s?.scores
+    return [
+      ("SLEEP", sc?.sleep, tint(Helix.sapphire)),
+      ("NUTRITION", sc?.nutrition, tint(Helix.ember)),
+      ("ACTIVITY", sc?.activity, tint(Helix.emerald)),
+      ("WORKOUT", sc?.workout, tint(Helix.amethyst)),
+      ("RECOVERY", sc?.recovery, tint(Helix.steel)),
+    ]
+  }
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 10) {
+      HStack(alignment: .firstTextBaseline, spacing: 6) {
+        Caption("WELL-BEING", color: tint(Helix.emerald))
+        Spacer(minLength: 0)
+        if entry.isStale { StaleTag() }
+        BatteryRing(pct: s?.battery, size: 40, lineWidth: 5, monochrome: mono)
+      }
+
+      HStack(alignment: .bottom, spacing: 8) {
+        BigValue(value: s?.score.map { "\($0)" }, size: 40, color: .white)
+        Text("daily score").font(.system(size: 10)).foregroundStyle(Helix.muted)
+        Spacer(minLength: 0)
+      }
+
+      Hairline()
+
+      VStack(spacing: 7) {
+        ForEach(parts, id: \.0) { name, value, color in
+          HStack(spacing: 8) {
+            Text(name)
+              .font(.system(size: 8, weight: .bold))
+              .foregroundStyle(Helix.muted)
+              .frame(width: 62, alignment: .leading)
+            Rail(progress: value.map { min(1, max(0, $0 / 100)) }, color: color, height: 4)
+            Text(value.map { "\(Int($0.rounded()))" } ?? "—")
+              .font(.system(size: 10, weight: .semibold, design: .monospaced))
+              .foregroundStyle(.white)
+              .frame(width: 22, alignment: .trailing)
+          }
+        }
+      }
+
+      Spacer(minLength: 0)
+
+      if let readiness = s?.readiness {
+        Hairline()
+        VStack(alignment: .leading, spacing: 2) {
+          Text(readiness.label)
+            .font(.system(size: 11, weight: .bold))
+            // The verdict's own colour, parsed from the payload — the same hex
+            // the app paints it with, so the two surfaces cannot disagree about
+            // what "compromised" looks like.
+            .foregroundStyle(mono ? .white : Color(hexString: readiness.color) ?? .white)
+          Text(readiness.reason)
+            .font(.system(size: 9))
+            .foregroundStyle(Helix.muted)
+            .lineLimit(2)
+        }
+      }
+    }
   }
 }

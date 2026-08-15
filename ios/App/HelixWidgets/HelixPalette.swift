@@ -68,6 +68,39 @@ enum Helix {
     }
   }
 
+  /// The colour of a ROUTINE DAY, mirroring `DAY_COLOR` in palette.ts.
+  ///
+  /// Every training surface in the app is tinted by which session it is — Upper
+  /// A is always steel, Legs & Core B always emerald — so the widget calendar
+  /// and the Today face have to read from the same table or the two disagree
+  /// about what colour Thursday is.
+  ///
+  /// `src/tests/day-color-parity.test.ts` fails if a key is added on the web
+  /// side without appearing here, which is the only thing keeping two hand-kept
+  /// copies of one table honest.
+  static func day(_ dayKey: String?) -> Color {
+    switch dayKey {
+    // Helix-5 (active)
+    case "cb_a":         return steel
+    case "legs_a":       return sapphire
+    case "arms":         return amethyst
+    case "cb_b":         return gold
+    case "legs_b":       return emerald
+    // Helix-4 (drawer) — mirrors its Helix-5 counterpart
+    case "upper_a":      return steel
+    case "lower_a":      return sapphire
+    case "upper_b":      return gold
+    case "lower_b":      return emerald
+    // PPL legacy — the split colours, since the day IS the split
+    case "ppl_push_sun": return ember
+    case "ppl_push_thu": return ember
+    case "ppl_pull_mon": return sapphire
+    case "ppl_pull_fri": return sapphire
+    case "ppl_legs_tue": return amethyst
+    default:             return steel
+    }
+  }
+
   /// Battery banding — the one place a traffic light is the right metaphor,
   /// because the number genuinely is a fuel gauge.
   static func battery(_ pct: Int?) -> Color {
@@ -84,6 +117,20 @@ enum Helix {
 }
 
 extension Color {
+  /// `"#3E9E7A"` → a colour, or nil.
+  ///
+  /// For colours that arrive in the PAYLOAD rather than the palette — the
+  /// readiness verdict carries the exact hex the app paints it with, and
+  /// re-deriving it here from the level string is how the two surfaces come to
+  /// disagree about what "compromised" looks like. Nil rather than a fallback:
+  /// the caller decides what an unparseable colour becomes.
+  init?(hexString: String?) {
+    guard var raw = hexString?.trimmingCharacters(in: .whitespaces), !raw.isEmpty else { return nil }
+    if raw.hasPrefix("#") { raw.removeFirst() }
+    guard raw.count == 6, let value = UInt32(raw, radix: 16) else { return nil }
+    self.init(hex: value)
+  }
+
   /// `0xE0703C` → a colour. Hex literals are how the palette is written on the
   /// web side, so keeping the same notation makes the two diffable by eye.
   init(hex: UInt32) {
