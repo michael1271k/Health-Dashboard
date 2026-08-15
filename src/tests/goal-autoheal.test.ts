@@ -28,9 +28,9 @@ const SRC = RAW
 describe('the goal auto-heal cannot loop', () => {
   it('latches, so the write is attempted at most once per mount', () => {
     expect(SRC).toMatch(/const healed = useRef\(false\)/)
-    expect(SRC).toMatch(/drifted && !healed\.current/)
+    expect(SRC).toMatch(/if \(!g \|\| healed\.current\) return/)
     // Set BEFORE the await — two effect passes can otherwise both get through.
-    const branch = SRC.slice(SRC.indexOf('!healed.current'))
+    const branch = SRC.slice(SRC.indexOf('healed.current) return'))
     const latchAt = branch.indexOf('healed.current = true')
     const awaitAt = branch.indexOf('await supabase')
     expect(latchAt).toBeGreaterThan(-1)
@@ -43,10 +43,16 @@ describe('the goal auto-heal cannot loop', () => {
     expect(SRC).toMatch(/if \(!error\) qc\.invalidateQueries\(\{ queryKey: \['user_goals'\] \}\)/)
   })
 
-  it('still shows the preset when the heal could not be written', () => {
-    // Falling through to the drifted row would show a number the app has just
-    // decided is wrong. The preset is the source of truth either way.
-    expect(SRC).toMatch(/if \(preset && drifted\) \{[\s\S]{0,200}setGoals\(\{ calorie: preset\.calorieGoal/)
+  it('does not derive what it DISPLAYS from the row it is repairing', () => {
+    // This used to be "still shows the preset when the heal could not be
+    // written", enforced by a second setGoals(preset) branch inside the effect.
+    // The effect no longer owns the display at all: `useNutritionGoals()` ranks
+    // the plan+phase preset above the stored row, so a failed heal costs a stale
+    // widget rather than a wrong ring, and the fallback branch is unreachable
+    // code that can be deleted. See nutrition-goals.test.ts for the ranking.
+    expect(SRC).toMatch(/const goals = useNutritionGoals\(\)/)
+    expect(SRC).not.toMatch(/setGoals\(/)
+    expect(SRC).not.toMatch(/1955/)
   })
 })
 

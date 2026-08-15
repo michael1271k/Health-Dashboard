@@ -22,6 +22,8 @@ const BodyProgressPanel = dynamic(() => import('@/components/progression/BodyPro
 const VitalsGroups = dynamic(() => import('@/components/insights/VitalsGroups').then((m) => m.VitalsGroups), { ssr: false })
 import { ScheduleShortcut } from '@/components/day/ScheduleShortcut'
 import { Sheet } from '@/components/ui/Sheet'
+import { Segmented } from '@/components/ui/Segmented'
+import { EMBER } from '@/lib/theme/palette'
 import { displayWeight, weightUnit } from '@/lib/utils/units'
 
 /**
@@ -109,14 +111,17 @@ function PathfinderInner() {
           </div>
           <p className="text-muted text-fluid-sm mt-0.5">Your life over time · days, weeks, performance &amp; vitals</p>
         </div>
-        <div className="flex rounded-xl border border-white/[0.08] overflow-hidden shrink-0">
-          {([['timeline', 'Timeline', GitBranch], ['body', 'Body', Scale], ['vitals', 'Vitals', HeartPulse]] as const).map(([v, t, Icon]) => (
-            <button key={v} onClick={() => setView(v)}
-              className={`flex items-center gap-1.5 px-3.5 py-2 text-fluid-xs font-semibold ${view === v ? 'bg-primary/15 text-primary' : 'text-muted hover:text-text'}`}>
-              <Icon className="w-3.5 h-3.5" aria-hidden="true" /> {t}
-            </button>
-          ))}
-        </div>
+        <Segmented<View>
+          label="Progress view"
+          value={view}
+          onChange={setView}
+          accent={EMBER}
+          options={[
+            { value: 'timeline', label: 'Timeline', icon: GitBranch },
+            { value: 'body', label: 'Body', icon: Scale },
+            { value: 'vitals', label: 'Vitals', icon: HeartPulse },
+          ]}
+        />
       </div>
 
       {view === 'timeline' ? (

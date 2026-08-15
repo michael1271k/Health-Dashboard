@@ -2,7 +2,8 @@
 
 import { Sparkles } from 'lucide-react'
 import { useEraWindow } from '@/lib/hooks/useEraWindow'
-import { STEEL, GOLD, MUTED } from '@/lib/theme/palette'
+import { Segmented } from '@/components/ui/Segmented'
+import { STEEL, GOLD } from '@/lib/theme/palette'
 
 /** The default window. Every chart in the app opens on this. */
 export const DEFAULT_RANGE_DAYS = 30
@@ -43,41 +44,27 @@ export function ChartRange({ value, onChange, className = '' }: {
   className?: string
 }) {
   const era = useEraWindow()
-  const monthActive = value === DEFAULT_RANGE_DAYS
   // Not `value === era.days`: when the plan started ~30 days ago the two windows
   // coincide, and highlighting BOTH segments would say the app cannot tell them
   // apart. The month wins the tie because it is the default.
-  const eraActive = !monthActive
+  const monthActive = value === DEFAULT_RANGE_DAYS
 
   return (
-    <div className={`flex gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.06] w-fit ${className}`}
-      role="group" aria-label="Chart timeframe">
-      <button
-        type="button"
-        onClick={() => onChange(DEFAULT_RANGE_DAYS)}
-        aria-pressed={monthActive}
-        title="The last 30 days"
-        className="px-3.5 py-1.5 rounded-xl text-fluid-xs font-semibold min-h-[40px] border transition-colors shrink-0"
-        style={monthActive
-          ? { color: STEEL, borderColor: `${STEEL}55`, background: `${STEEL}1f`, boxShadow: `0 0 10px ${STEEL}33` }
-          : { color: MUTED, borderColor: 'transparent' }}
-      >
-        1 Month
-      </button>
-      <button
-        type="button"
-        onClick={() => onChange(era.days)}
-        aria-pressed={eraActive}
-        // The anchor date, because "Helix-5 Era" alone does not say how far back
-        // it reaches — and right now that is close enough to a month to matter.
-        title={`Since ${era.startISO} · ${era.days} days`}
-        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-fluid-xs font-semibold min-h-[40px] border transition-colors shrink-0"
-        style={eraActive
-          ? { color: GOLD, borderColor: `${GOLD}55`, background: `${GOLD}1f`, boxShadow: `0 0 10px ${GOLD}33` }
-          : { color: MUTED, borderColor: 'transparent' }}
-      >
-        <Sparkles className="w-3.5 h-3.5" aria-hidden="true" /> {era.label}
-      </button>
-    </div>
+    <Segmented<'month' | 'era'>
+      label="Chart timeframe"
+      className={className}
+      value={monthActive ? 'month' : 'era'}
+      onChange={(v) => onChange(v === 'month' ? DEFAULT_RANGE_DAYS : era.days)}
+      options={[
+        { value: 'month', label: '1 Month', color: STEEL, title: 'The last 30 days' },
+        {
+          value: 'era', label: era.label, icon: Sparkles, color: GOLD,
+          // The anchor date, because "Helix-5 Era" alone does not say how far
+          // back it reaches — and right now that is close enough to a month to
+          // matter.
+          title: `Since ${era.startISO} · ${era.days} days`,
+        },
+      ]}
+    />
   )
 }

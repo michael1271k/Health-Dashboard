@@ -15,6 +15,7 @@ import { WaterHelix } from '@/components/day/WaterHelix'
 import { WaterOverrideSheet } from '@/components/day/WaterOverrideSheet'
 import { useDayVault, dayCompleteness, type DayVaultData } from '@/lib/hooks/useDayVault'
 import { useUserGoals, useDaySleep } from '@/lib/hooks/useDashboard'
+import { useNutritionGoals } from '@/lib/hooks/useNutritionGoals'
 import { useBioSeries } from '@/lib/hooks/useBioStrips'
 import { SleepStages } from '@/components/dashboard/SleepStages'
 import { InBodyForm } from '@/components/day/InBody'
@@ -68,12 +69,16 @@ function scoreColor(score: number | null | undefined): string {
  * is a third of the height.
  */
 function MicroRing({ value, goalHint, color, label, size = 56 }: {
-  value: number | null | undefined; goalHint: number; color: string; label: string; size?: number
+  value: number | null | undefined
+  /** Absent when the plan sets no target for this macro — the arc stays empty
+   *  rather than grading the day against an invented number. */
+  goalHint?: number | null
+  color: string; label: string; size?: number
 }) {
   const stroke = Math.max(5, Math.round(size / 11))
   const r = (size - stroke) / 2
   const circ = 2 * Math.PI * r
-  const pct = value != null ? Math.min(1, value / goalHint) : 0
+  const pct = value != null && goalHint != null && goalHint > 0 ? Math.min(1, value / goalHint) : 0
   return (
     <div className="flex flex-col items-center gap-1">
       <div className="relative" style={{ width: size, height: size, filter: `drop-shadow(0 0 8px ${color}40)` }}>
@@ -161,6 +166,8 @@ export default function DailyNexusPage() {
   const date = /^\d{4}-\d{2}-\d{2}$/.test(raw ?? '') ? raw : ''
   const { data, isLoading } = useDayVault(date)
   const { data: goals } = useUserGoals()
+  // The plan+phase macro targets — one resolver, shared with /nutrition.
+  const macroGoals = useNutritionGoals()
   const { data: daySleep } = useDaySleep(date)
   // Already fetched for the dashboard strip and never shown on this page —
   // one night in isolation cannot tell you if it was a bad night or a bad week.
@@ -298,9 +305,14 @@ export default function DailyNexusPage() {
             </span>
             {n ? (
               <div className="flex items-center gap-3 ml-auto">
-                <MicroRing value={n.carbs_g} goalHint={200} color={MACRO_COLORS.carbs} label="C" />
-                <MicroRing value={n.fat_g} goalHint={60} color={MACRO_COLORS.fat} label="F" />
-                <MicroRing value={n.protein_g} goalHint={180} color={MACRO_COLORS.protein} label="P" />
+                {/* The goals come from the plan+phase, not from three literals.
+                    These rings used to grade every day against 200/60/180 —
+                    numbers that matched no preset, so a perfect cut day drew
+                    three partly-filled rings and the same day drew three full
+                    ones on /nutrition. */}
+                <MicroRing value={n.carbs_g} goalHint={macroGoals.carbs} color={MACRO_COLORS.carbs} label="C" />
+                <MicroRing value={n.fat_g} goalHint={macroGoals.fat} color={MACRO_COLORS.fat} label="F" />
+                <MicroRing value={n.protein_g} goalHint={macroGoals.protein} color={MACRO_COLORS.protein} label="P" />
               </div>
             ) : <span className="text-[11px] text-muted ml-auto">Double-tap to add</span>}
           </div>

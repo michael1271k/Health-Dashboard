@@ -4,7 +4,7 @@ import { memo, useState } from 'react'
 import type { DailyLog } from '@/lib/hooks/useNutrition'
 import { isExceptionDay } from '@/lib/nutrition/exceptionDay'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
-import { OXIDE, EMERALD, MUTED, DIM, AMETHYST, SAND } from '@/lib/theme/palette'
+import { OXIDE, EMERALD, MUTED, AMETHYST, SAND } from '@/lib/theme/palette'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { KineticNumber } from '@/components/fx/KineticNumber'
 import { useDoubleTap } from '@/lib/utils/doubleTap'
@@ -191,6 +191,48 @@ export const MacroCards = memo(function MacroCards({ today, logs, goals, date }:
         </div>
 
         <Bar value={kcal} goal={goals.calorie} color={calColor} height={6} />
+
+        {/* ── 7-day adherence rail ──
+            It sits UNDER the calorie bar because that is what it is about.
+            As a free-standing strip of `w-7 h-9` cells it owned ~44px of the
+            centre column to say seven things that are each one bit wide, and it
+            floated between the macro card and the water gauge as though
+            adherence were a third topic. Proximity is the whole fix: a property
+            of calories belongs against the calorie bar, and at 3px it costs the
+            page nothing.
+
+            These cells used to be tinted by PHASE, which is the one thing about
+            a day this strip could not usefully say: on a cut every cell is the
+            same colour. Adherence changes day to day, which is what makes a row
+            of seven worth looking at.
+
+            The colours match the history rows exactly: an Exception is AMETHYST
+            in both places, an Estimate is SAND in both. Two surfaces disagreeing
+            about what colour a declared day is would be worse than either. */}
+        <div className="flex items-center gap-[3px] mt-2" role="img" aria-label="Adherence, last 7 days">
+          {cells.map((d) => {
+            const state = isExceptionDay(d.exception) ? CELL_STATES.exception
+              : d.estimated ? CELL_STATES.estimated
+              : d.calories != null ? CELL_STATES.tracked
+              : CELL_STATES.untracked
+            const c = state.color
+            const isToday = d.date === todayISO
+            const weekday = new Date(d.date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short' })
+            return (
+              <div key={d.date}
+                title={`${weekday} ${d.date} · ${state.label}${d.calories != null ? ` · ${Math.round(d.calories)} kcal` : ''}`}
+                className="flex-1 rounded-full"
+                style={{
+                  height: 3,
+                  background: c ?? 'rgba(255,255,255,0.07)',
+                  // Today keeps an outline rather than a colour of its own — it
+                  // has a state like every other day and must still show it.
+                  outline: isToday ? '1px solid rgba(255,255,255,0.35)' : undefined,
+                  outlineOffset: isToday ? '1px' : undefined,
+                }} />
+            )
+          })}
+        </div>
       </div>
 
       {/* ── Card 2 · Macros ── */}
@@ -228,46 +270,6 @@ export const MacroCards = memo(function MacroCards({ today, logs, goals, date }:
             )
           })}
         </div>
-      </div>
-
-      {/* ── 7-day adherence rail ──
-          These cells used to be tinted by PHASE, which is the one thing about a
-          day this strip could not usefully say: on a cut every cell is the same
-          colour, so seven identical boxes carried a weekday letter and nothing
-          else. Adherence changes day to day, which is what makes a row of seven
-          worth looking at — and it is the axis the exception and estimate flags
-          already describe.
-
-          The colours match the history rows exactly: an Exception is AMETHYST
-          in both places, an Estimate is SAND in both. Two surfaces disagreeing
-          about what colour a declared day is would be worse than either. */}
-      <div className="flex items-center justify-center gap-1.5 pt-1">
-        {cells.map((d) => {
-          const state = isExceptionDay(d.exception) ? CELL_STATES.exception
-            : d.estimated ? CELL_STATES.estimated
-            : d.calories != null ? CELL_STATES.tracked
-            : CELL_STATES.untracked
-          const c = state.color
-          const isToday = d.date === todayISO
-          return (
-            <div key={d.date}
-              title={`${d.date} · ${state.label}${d.calories != null ? ` · ${Math.round(d.calories)} kcal` : ''}`}
-              className="w-7 h-9 rounded-md border flex items-end justify-center pb-0.5"
-              style={{
-                borderColor: c ? `${c}55` : 'rgba(255,255,255,0.08)',
-                background: c ? `${c}18` : 'rgba(255,255,255,0.02)',
-                boxShadow: c ? `0 0 8px ${c}30` : undefined,
-                // Today keeps an outline rather than a colour of its own — it
-                // has a state like every other day and must still show it.
-                outline: isToday ? '1px solid rgba(255,255,255,0.35)' : undefined,
-                outlineOffset: isToday ? '1px' : undefined,
-              }}>
-              <span className="text-[8px] font-bold" style={{ color: c ?? DIM }}>
-                {new Date(d.date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'narrow' })}
-              </span>
-            </div>
-          )
-        })}
       </div>
 
       {date && (

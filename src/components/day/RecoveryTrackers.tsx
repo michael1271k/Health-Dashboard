@@ -5,6 +5,7 @@ import { Activity, Dumbbell } from 'lucide-react'
 import { useDoms, useLogDoms, useDomsSources, DOMS_MUSCLES, DOMS_LEVELS, type DomsMuscle } from '@/lib/hooks/useRecovery'
 import { EMBER, MUTED, HAIRLINE } from '@/lib/theme/palette'
 import { Sheet } from '@/components/ui/Sheet'
+import { Segmented } from '@/components/ui/Segmented'
 import { SorenessMap, GROUP_MUSCLES, GROUP_LABEL, type SorenessGroup } from '@/components/day/SorenessMap'
 import { SEVERITY_COLOR, SEVERITY_WORD } from '@/components/day/severity'
 
@@ -147,23 +148,16 @@ export function DomsTracker({ date }: { date: string }) {
         ) : (
           <span className="text-[10px] text-muted">Tap a muscle to rate</span>
         )}
-        {/* Front / back — a segmented pill, the RangeSelector pattern. */}
-        <div className="ml-auto flex rounded-lg overflow-hidden border border-white/[0.08] shrink-0">
-          {(['front', 'back'] as const).map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => setSide(s)}
-              aria-pressed={side === s}
-              className="px-2.5 min-h-[32px] text-[10px] font-semibold uppercase tracking-wide capitalize transition-colors"
-              style={side === s
-                ? { background: `${EMBER}1f`, color: EMBER }
-                : { color: MUTED }}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
+        {/* Front / back — the one segmented control, at its qualifying size. */}
+        <Segmented<'front' | 'back'>
+          label="Body map side"
+          className="ml-auto"
+          size="sm"
+          accent={EMBER}
+          value={side}
+          onChange={setSide}
+          options={[{ value: 'front', label: 'Front' }, { value: 'back', label: 'Back' }]}
+        />
       </div>
 
       <div className="flex items-center gap-3">

@@ -37,14 +37,7 @@ import { useEraFilter, eraDateRange, SUB_PHASE_META } from '@/lib/era/eraFilter'
 import { EraFilterPills } from '@/components/era/EraFilterPills'
 import { ExceptionDayBanner } from '@/components/nutrition/ExceptionDayBanner'
 import { isExceptionDay } from '@/lib/nutrition/exceptionDay'
-
-interface ActiveGoals {
-  calorie: number
-  protein: number | null
-  carbs: number | null
-  fat: number | null
-  mode: NutritionMode | null
-}
+import { useNutritionGoals } from '@/lib/hooks/useNutritionGoals'
 
 export default function NutritionPage() {
   const qc = useQueryClient()
@@ -64,7 +57,10 @@ export default function NutritionPage() {
   const { data: dailyLog } = useTodayDailyLog()
   const { data: userGoals } = useUserGoals()
 
-  const [goals, setGoals] = useState<ActiveGoals>({ calorie: 1955, protein: 170, carbs: 195, fat: 55, mode: 'cut' })
+  // ONE goal source for the whole app — see useNutritionGoals for why local
+  // state seeded with a literal (1955, a number no preset has ever contained)
+  // was worse than no goal at all.
+  const goals = useNutritionGoals()
   const [waterEdit, setWaterEdit] = useState(false)
   const [macroDays, setMacroDays] = useState(DEFAULT_RANGE_DAYS)
   const { data: macroHistory, isLoading: macroLoading } = useMacroHistory(macroDays)
@@ -94,43 +90,38 @@ export default function NutritionPage() {
 
   // Reads the row `useUserGoals()` already has in cache instead of issuing its
   // own getSession + select — that pair was a second, uncached fetch of exactly
-  // the same row on every Nutrition mount. The auto-heal write below is the
-  // only reason this effect still exists.
+  // the same row on every Nutrition mount.
+  //
+  // What this effect NO LONGER does is decide what the page displays. It only
+  // repairs the stored row, because that row is what OTHER readers see — the
+  // widget snapshot endpoint among them, which has no `useNutritionGoals` to
+  // resolve through. The display resolves through the hook either way, so a
+  // failed heal now costs a stale widget rather than a wrong ring.
   useEffect(() => {
-    async function load() {
+    async function heal() {
       const g = userGoals ?? null
-      if (!g) return
+      if (!g || healed.current) return
       const mode = (g.goal_preset as NutritionMode | null) ?? null
       const preset = mode ? NUTRITION_PRESETS[mode] : null
       // AUTO-HEAL: if the stored row drifted from its own preset
       // (e.g. maintenance saved at 2,300 while the preset says 2,375), the
-      // preset is the source of truth — re-sync the row so selector, rings,
-      // and goal text can never disagree again.
+      // preset is the source of truth — re-sync the row so every reader outside
+      // this page agrees with what the page itself is showing.
       const drifted = preset != null && (
         g.calorie_goal !== preset.calorieGoal || g.protein_goal_g !== preset.proteinGoalG
         || g.carbs_goal_g !== preset.carbsGoalG || g.fat_goal_g !== preset.fatGoalG
       )
-      if (preset && drifted && !healed.current) {
-        healed.current = true
-        setGoals({ calorie: preset.calorieGoal, protein: preset.proteinGoalG, carbs: preset.carbsGoalG, fat: preset.fatGoalG, mode })
-        const { error } = await supabase.from('user_goals').upsert({
-          user_id: g.user_id, calorie_goal: preset.calorieGoal, protein_goal_g: preset.proteinGoalG,
-          carbs_goal_g: preset.carbsGoalG, fat_goal_g: preset.fatGoalG, goal_preset: mode,
-        } as unknown as never, { onConflict: 'user_id' })
-        // Only re-read if there is something new to read. Invalidating after a
-        // failed write is what closed the loop.
-        if (!error) qc.invalidateQueries({ queryKey: ['user_goals'] })
-        return
-      }
-      // Drifted but already attempted this mount: show the preset (what the row
-      // is supposed to say) rather than the value the write failed to correct.
-      if (preset && drifted) {
-        setGoals({ calorie: preset.calorieGoal, protein: preset.proteinGoalG, carbs: preset.carbsGoalG, fat: preset.fatGoalG, mode })
-        return
-      }
-      setGoals({ calorie: g.calorie_goal, protein: g.protein_goal_g, carbs: g.carbs_goal_g, fat: g.fat_goal_g, mode })
+      if (!preset || !drifted) return
+      healed.current = true
+      const { error } = await supabase.from('user_goals').upsert({
+        user_id: g.user_id, calorie_goal: preset.calorieGoal, protein_goal_g: preset.proteinGoalG,
+        carbs_goal_g: preset.carbsGoalG, fat_goal_g: preset.fatGoalG, goal_preset: mode,
+      } as unknown as never, { onConflict: 'user_id' })
+      // Only re-read if there is something new to read. Invalidating after a
+      // failed write is what closed the loop.
+      if (!error) qc.invalidateQueries({ queryKey: ['user_goals'] })
     }
-    load()
+    heal()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userGoals])
 
@@ -178,17 +169,11 @@ export default function NutritionPage() {
         estimated={(dailyLog as { nutrition_estimated?: boolean | null } | null)?.nutrition_estimated ?? false}
       />
 
-      {/* Deep-dive into micronutrients + advanced HealthKit signals */}
-      <Link href="/nutrition/micros" className="rounded-xl border border-white/[0.08] bg-white/[0.04] w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/[0.03] transition-colors">
-        <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: 'rgba(138,111,168,0.16)', color: '#E0703C' }}>
-          <FlaskConical className="w-4 h-4" aria-hidden="true" />
-        </span>
-        <span className="flex-1 min-w-0">
-          <span className="block text-sm font-semibold text-text">Nutrition &amp; Micros</span>
-          <span className="block text-[11px] text-muted">Fiber, iron, vitamins &amp; advanced signals — with your cut targets</span>
-        </span>
-        <ChevronRight className="w-4 h-4 text-muted shrink-0" aria-hidden="true" />
-      </Link>
+      {/* Fuel → Force: links today's fuel to today's session (renders only if trained) */}
+      <FuelForceBand date={todayISO} proteinG={todayLog?.proteinG ?? null} proteinGoal={goals.protein} />
+
+      {/* Training-day shortcut → the deck, pre-seeded (hidden once logged) */}
+      <ScheduleShortcut />
 
       {/* Water Intake — the same glowing DNA double-helix as the Nexus gauge.
           Double-tap to correct the day: this card has no single-tap action, so
@@ -207,11 +192,17 @@ export default function NutritionPage() {
         goalMl={userGoals?.water_goal_ml ?? 3000}
       />
 
-      {/* Fuel → Force: links today's fuel to today's session (renders only if trained) */}
-      <FuelForceBand date={todayISO} proteinG={todayLog?.proteinG ?? null} proteinGoal={goals.protein} />
-
-      {/* Training-day shortcut → the deck, pre-seeded (hidden once logged) */}
-      <ScheduleShortcut />
+      {/* Deep-dive into micronutrients + advanced HealthKit signals */}
+      <Link href="/nutrition/micros" className="rounded-xl border border-white/[0.08] bg-white/[0.04] w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/[0.03] transition-colors">
+        <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: 'rgba(138,111,168,0.16)', color: '#E0703C' }}>
+          <FlaskConical className="w-4 h-4" aria-hidden="true" />
+        </span>
+        <span className="flex-1 min-w-0">
+          <span className="block text-sm font-semibold text-text">Nutrition &amp; Micros</span>
+          <span className="block text-[11px] text-muted">Fiber, iron, vitamins &amp; advanced signals — with your cut targets</span>
+        </span>
+        <ChevronRight className="w-4 h-4 text-muted shrink-0" aria-hidden="true" />
+      </Link>
 
       {/* Macros vs goal — moved here from the deleted central Analytics view.
           It graded the same numbers the rings above show, from a different tab.
@@ -220,22 +211,37 @@ export default function NutritionPage() {
           phase on 'All', and a 200-day bar chart is a smear. */}
       <div className="space-y-3">
         <ChartRange value={macroDays} onChange={setMacroDays} />
-        <MacroProgressChart data={macroHistory ?? []} goals={userGoals ?? null} isLoading={macroLoading} />
+        <MacroProgressChart data={macroHistory ?? []} goals={goals} isLoading={macroLoading} />
       </div>
 
-      {/* Era + nested sub-phase filter + dense daily log */}
-      <div className="space-y-3">
-        <EraFilterPills />
-        <NutritionLogList
-          logs={filteredLogs}
-          goals={goals}
-          isLoading={isLoading}
-          emptyMessage={era === 'axis'
-            ? `No ${SUB_PHASE_META[resolvedPhase].label} days yet in Helix 5.1.`
-            : 'No nutrition data yet — sync from the app.'}
-          onDayClick={(d) => router.push(`/day/${d}`)}
-        />
-      </div>
+      {/* ── History, collapsed ──
+          The daily log is a REFERENCE, not an answer. It was 28 rows of dense
+          numbers sitting between the chart and the plan link, so the page's own
+          question — am I on track today? — was answered at the top and then
+          buried under a month of days that had already been answered.
+
+          A native <details> keeps it one tap away (and findable by the
+          browser's own in-page search, which a JS-gated list is not) while the
+          first screen stays about today. */}
+      <details className="group">
+        <summary className="list-none cursor-pointer select-none flex items-center gap-2 py-2 text-fluid-sm font-semibold text-text">
+          <ChevronRight className="w-4 h-4 text-muted shrink-0 transition-transform group-open:rotate-90" aria-hidden="true" />
+          History
+          <span className="text-[11px] font-normal text-muted">· {filteredLogs.length} days</span>
+        </summary>
+        <div className="space-y-3 pt-2">
+          <EraFilterPills />
+          <NutritionLogList
+            logs={filteredLogs}
+            goals={goals}
+            isLoading={isLoading}
+            emptyMessage={era === 'axis'
+              ? `No ${SUB_PHASE_META[resolvedPhase].label} days yet in Helix 5.1.`
+              : 'No nutrition data yet — sync from the app.'}
+            onDayClick={(d) => router.push(`/day/${d}`)}
+          />
+        </div>
+      </details>
 
       {/* Phase targets (Cut / Maintenance / Lean Bulk) moved to Settings → Plan &
           Phase, where selecting one also drives step goal + target weight + tags.

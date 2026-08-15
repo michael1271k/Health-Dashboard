@@ -185,13 +185,13 @@
     "semantic_hash": ""
   },
   "src/app/(dashboard)/nutrition/page.tsx": {
-    "mtime": 1786783375.745494,
-    "ast_hash": "6d803627e3b0e25e435ce6d7a9372fd8",
+    "mtime": 1786798474.2567732,
+    "ast_hash": "cb4974a63e5ff12023dfce41d57a0236",
     "semantic_hash": ""
   },
   "src/app/(dashboard)/pathfinder/page.tsx": {
-    "mtime": 1786698213.9113584,
-    "ast_hash": "2a9aba6ed841f52323de21302fa648b5",
+    "mtime": 1786798063.3562267,
+    "ast_hash": "dda1205e21ef2359ebe05dd8c4c55e80",
     "semantic_hash": ""
   },
   "src/app/(dashboard)/settings/page.tsx": {
@@ -235,8 +235,8 @@
     "semantic_hash": "b42be3e58f4e070c10f2d409d0ce499f"
   },
   "src/app/api/widget/snapshot/route.ts": {
-    "mtime": 1786784448.6105936,
-    "ast_hash": "495e50109268194e434c7ac663c5f831",
+    "mtime": 1786784660.665127,
+    "ast_hash": "11464577825ba51c5de2f2a3d8085812",
     "semantic_hash": ""
   },
   "src/app/auth/page.tsx": {
@@ -305,8 +305,8 @@
     "semantic_hash": ""
   },
   "src/components/charts/MacroProgressChart.tsx": {
-    "mtime": 1786288406.312912,
-    "ast_hash": "9acf3b71df7e8ee843415bd3cdb71de8",
+    "mtime": 1786798163.370105,
+    "ast_hash": "fe899db3b32bb0e2170234a9ba014bf1",
     "semantic_hash": ""
   },
   "src/components/charts/MuscleAnalytics.tsx": {
@@ -470,8 +470,8 @@
     "semantic_hash": "b9c83460809c2c7f5aa4f4da9fbc2b31"
   },
   "src/components/day/RecoveryTrackers.tsx": {
-    "mtime": 1786309188.8881881,
-    "ast_hash": "dbc9a8af006056e86e1ab592f43c5fcb",
+    "mtime": 1786798091.7850645,
+    "ast_hash": "aecdbdd5412f81e4cf039c865fc01e1f",
     "semantic_hash": ""
   },
   "src/components/day/ScheduleShortcut.tsx": {
@@ -530,8 +530,8 @@
     "semantic_hash": ""
   },
   "src/components/insights/VitalsGroups.tsx": {
-    "mtime": 1786727671.159542,
-    "ast_hash": "0d0d4e41017302e9c31b0d05d916abbc",
+    "mtime": 1786798316.8735633,
+    "ast_hash": "2b357e67d12271e927b4478db90be222",
     "semantic_hash": ""
   },
   "src/components/nav/BottomNav.tsx": {
@@ -2055,8 +2055,8 @@
     "semantic_hash": ""
   },
   "src/components/charts/ChartRange.tsx": {
-    "mtime": 1786698213.913751,
-    "ast_hash": "dfbea73dc7e0f570a7853de16208bd0a",
+    "mtime": 1786784957.0484095,
+    "ast_hash": "c573831060f1bae3cae62734ca667412",
     "semantic_hash": ""
   },
   "src/components/charts/StepsChart.tsx": {
@@ -2247,6 +2247,21 @@
   "src/tests/widget-calendar.test.ts": {
     "mtime": 1786784538.6457894,
     "ast_hash": "8ec4c47ffac167f53b78bb1a216f6db8",
+    "semantic_hash": ""
+  },
+  "src/components/ui/Segmented.tsx": {
+    "mtime": 1786784916.4995937,
+    "ast_hash": "4e4551c9d6bb5fd16ec9ab385964b468",
+    "semantic_hash": ""
+  },
+  "src/tests/vitals-detail.test.ts": {
+    "mtime": 1786798340.5140362,
+    "ast_hash": "4ed30ad45a1078be33b0315ad82ad79a",
+    "semantic_hash": ""
+  },
+  "src/lib/hooks/useNutritionGoals.ts": {
+    "mtime": 1786798415.4768603,
+    "ast_hash": "0ffeb858f50488f7255ab9e5c0fe984a",
     "semantic_hash": ""
   }
 }
