@@ -6,7 +6,8 @@ import type { DayVaultData } from '@/lib/hooks/useDayVault'
 import { ZoneRow } from '@/components/ui/Zone'
 import { displayWeight, weightUnit } from '@/lib/utils/units'
 import { formatSleep } from '@/lib/utils/format'
-import { AMETHYST, SAPPHIRE, STEEL, OXIDE, MUTED, BODY } from '@/lib/theme/palette'
+import { AMETHYST, SAPPHIRE, STEEL, OXIDE, MUTED, SAND, BODY } from '@/lib/theme/palette'
+import { bodyCompGapLabel, bodyCompGapShort } from '@/lib/body/compGap'
 
 /**
  * The one-line summaries that replaced the paged carousel.
@@ -119,6 +120,9 @@ export function BodyBand({ log, previousWeightKg = null, onOpen }: {
   const fat = log?.body_fat_pct ?? null
   const muscle = log?.muscle_mass_kg ?? null
   const delta = w != null && previousWeightKg != null ? w - previousWeightKg : null
+  // Non-null only when a weight arrived without its manual half — see compGap.
+  const gap = bodyCompGapLabel(log)
+  const gapShort = bodyCompGapShort(log)
 
   // Fat / muscle / the rest, as a share of bodyweight. Only drawn when both
   // components are real — a bar with one known slice is a guess with a border.
@@ -148,11 +152,22 @@ export function BodyBand({ log, previousWeightKg = null, onOpen }: {
           </span>
         )}
         <span className="min-w-0 flex-1">
-          <span className="block text-[10px] truncate" style={{ color: MUTED }}>
+          <span className="block text-[10px] truncate" style={{ color: gap ? SAND : MUTED }}>
             {fat != null && <span style={{ color: BODY.fat }}>{fat.toFixed(1)}% fat</span>}
             {fat != null && muscle != null && ' · '}
             {muscle != null && <span style={{ color: BODY.muscle }}>{displayWeight(muscle)}{unit} muscle</span>}
-            {fat == null && muscle == null && 'No weigh-in today'}
+            {/* The band used to say "No weigh-in today" whenever fat and muscle
+                were both absent — true on a day with no weight, FALSE on a day
+                Apple Health synced one. HealthKit carries bodyweight and nothing
+                else the scale measures, so that second day is a real weigh-in
+                with the manual half missing, and it is the one worth acting on:
+                the numbers are still on the scale's display today and will not
+                be tomorrow. */}
+            {fat == null && muscle == null && (gap ?? 'No weigh-in today')}
+            {/* Appended, not substituted: a day with a body fat but no skeletal
+                muscle is mostly complete, and hiding the numbers to ask for the
+                rest of them would be a scold rather than a reminder. */}
+            {gapShort && <span style={{ color: SAND }}> · {gapShort}</span>}
           </span>
           {segments && (
             <span className="mt-1 flex h-1.5 w-full max-w-[160px] rounded-full overflow-hidden" aria-hidden="true">

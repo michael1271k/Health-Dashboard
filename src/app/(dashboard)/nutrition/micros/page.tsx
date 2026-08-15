@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AlertTriangle, ArrowLeft, FlaskConical, Pill } from 'lucide-react'
-import { useTodayDailyLog, useTodayNutrition } from '@/lib/hooks/useDashboard'
+import { useTodayNutrition } from '@/lib/hooks/useDashboard'
 import { useSupplements } from '@/lib/hooks/useSupplements'
 import { stackForDate } from '@/lib/supplements'
 import { useCustomSupplements, customSlotsForDate, microPayloads } from '@/lib/hooks/useCustomSupplements'
@@ -11,18 +11,21 @@ import { isTrainingDay } from '@/lib/programs'
 import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { supplementMicros, mergeMicros } from '@/lib/nutrition/supplementMicros'
-import { MICRO_TARGETS, MICRO_SIGNALS, MICRO_GROUPS } from '@/lib/nutrition/microTargets'
+import { MICRO_TARGETS, MICRO_GROUPS } from '@/lib/nutrition/microTargets'
 import { EMERALD, OXIDE, STEEL, DIM } from '@/lib/theme/palette'
 
 /**
  * Nutrition & Micros deep-dive. Evidence-based daily micro TARGETS for this
- * athlete's cut, the supplement stack's contribution, and the passive HealthKit
- * signals already modelled on daily_logs. Diet micros light up once a paid Apple
- * account re-enables HealthKit; stack micros are live today.
+ * athlete's cut and the supplement stack's contribution to them. Diet micros
+ * light up once a paid Apple account re-enables HealthKit; stack micros are live
+ * today.
+ *
+ * The passive HealthKit signals (HRV, blood oxygen, respiratory rate, wrist
+ * temperature, daylight) used to render here too. They live in Vitals now, and
+ * only there — see the note at the foot of this file.
  */
 export default function MicrosPage() {
   const router = useRouter()
-  const { data: log } = useTodayDailyLog()
   const { data: nutrition } = useTodayNutrition()
   const { data: taken } = useSupplements()
   const { data: customs } = useCustomSupplements()
@@ -56,11 +59,6 @@ export default function MicrosPage() {
       ...microsBundle,
     }, fromStack)
   }, [nutrition, fromStack])
-
-  const signalValue = (key: string): number | null => {
-    const v = (log as Record<string, unknown> | null)?.[key]
-    return typeof v === 'number' ? v : null
-  }
 
   const [why, setWhy] = useState<string | null>(null)
 
@@ -152,27 +150,15 @@ export default function MicrosPage() {
         source did not record it.
       </p>
 
-      {/* ── Passive HealthKit signals ── */}
-      <section>
-        <h2 className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted mb-1 px-0.5">Advanced signals</h2>
-        <div>
-          {MICRO_SIGNALS.map((s, i) => {
-            const v = signalValue(s.key)
-            return (
-              <div key={s.key} className={`flex items-baseline gap-3 py-2 ${i > 0 ? 'border-t border-white/[0.05]' : ''}`}>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-fluid-xs text-text/90 truncate">{s.label}</span>
-                  <span className="block text-[10px] leading-snug text-muted/70">{s.reference}</span>
-                </span>
-                <span className="shrink-0 helix-num text-fluid-sm tabular-nums" style={{ color: v != null ? 'var(--color-text)' : DIM }}>
-                  {v != null ? (Math.abs(v) < 10 ? Math.round(v * 10) / 10 : Math.round(v)) : '—'}
-                  {s.unit && <span className="text-[10px] text-muted font-normal ml-0.5">{s.unit}</span>}
-                </span>
-              </div>
-            )
-          })}
-        </div>
-      </section>
+      {/* ── "Advanced signals" (HRV, blood oxygen, respiratory rate, wrist
+          temperature, daylight) used to render here as well as in Vitals.
+          They are passive HealthKit readings, not nutrition: nothing on this
+          page acts on them, and a number shown in two places is a number you
+          have to reconcile. Vitals (Progress → Vitals, `VitalsGroups`) is the
+          single home — it groups them with resting heart rate and the fitness
+          engine, and gives each a 7-day window they can actually be read
+          against. The HealthKit authorizations stay; only the second rendering
+          is gone. ── */}
     </div>
   )
 }

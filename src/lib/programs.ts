@@ -375,9 +375,33 @@ export function isRestDayFor(dateISO: string): boolean {
   return !isTrainingDay(dateISO)
 }
 
-// Legacy PPL weekday schedule (labels for pre-HELIX dates).
-const PPL_WEEKDAY: Record<number, string | null> = {
-  0: 'Upper', 1: 'Legs', 2: 'Push', 3: 'Pull', 4: 'Legs', 5: null, 6: null,
+/**
+ * The plan that owns a date, era-aware.
+ *
+ * ── THE SECOND PPL TRUTH, AND WHY IT IS GONE ─────────────────────────────────
+ * There used to be a `PPL_WEEKDAY` map here — `{0:'Upper', 1:'Legs', 2:'Push',
+ * 3:'Pull', 4:'Legs', 5:null, 6:null}` — feeding `scheduleDayIn`, while
+ * `PPL_LEGACY.days` in this same file said Sun Push · Mon Pull · Tue Legs ·
+ * Thu Push · Fri Pull. Two answers to one question, and the app used whichever
+ * one the caller happened to reach.
+ *
+ * The logged sessions settle it. Dominant `split_day` per weekday before
+ * 2026-07-15: Sun push ×11 · Mon pull ×8 · Tue legs ×9 · Thu push ×10 ·
+ * Fri pull ×9. `PPL_LEGACY.days` matches all five; `PPL_WEEKDAY` matched none,
+ * used a label ("Upper") that is not a PPL split at all, and called Friday — 14
+ * logged sessions, the second-busiest day of that block — a rest day.
+ *
+ * So the legacy era resolves through the same `programDayIn` rule as every other
+ * era, against `PROGRAMS.ppl`. One code path, one answer, and PPL dates gain the
+ * `dayKey` they never had — which is what lets `dayColor` tint them (the
+ * `ppl_push_sun` … `ppl_pull_fri` keys already exist in `DAY_COLOR`).
+ *
+ * The layout is `{}` on purpose: `program_day_layout` records a remap of the
+ * plan you are RUNNING. Applying it to a finished block would move history.
+ */
+function programForContext(ctx: ScheduleContext, dateISO: string): { program: Program; layout: DayLayout } {
+  if (eraForDate(dateISO) === 'ppl') return { program: PROGRAMS.ppl ?? APEX51, layout: {} }
+  return { program: PROGRAMS[ctx.programId] ?? APEX51, layout: ctx.layout }
 }
 
 export interface ScheduleDay { label: string; sub?: string; dayKey?: string }
@@ -445,7 +469,7 @@ const CLIENT_OVERRIDES: Readonly<Record<string, string>> = new Proxy({}, {
 
 /** {@link scheduleDayFor}, as a pure function of an explicit context. */
 export function scheduleDayIn(ctx: ScheduleContext, dateISO: string): ScheduleDay | 'rest' {
-  const program = PROGRAMS[ctx.programId] ?? APEX51
+  const { program, layout } = programForContext(ctx, dateISO)
   // A per-date swap wins over the weekday default so the whole app cascades.
   const override = ctx.overrides[dateISO]
   if (override != null) {
@@ -457,11 +481,7 @@ export function scheduleDayIn(ctx: ScheduleContext, dateISO: string): ScheduleDa
     if (od) return { label: od.label, sub: od.sub, dayKey: od.key }
   }
   const weekday = new Date(`${dateISO}T12:00:00Z`).getUTCDay()
-  if (eraForDate(dateISO) === 'ppl') {
-    const label = PPL_WEEKDAY[weekday]
-    return label ? { label } : 'rest'
-  }
-  const d = programDayIn(program, ctx.layout, weekday)
+  const d = programDayIn(program, layout, weekday)
   return d === 'rest' ? 'rest' : { label: d.label, sub: d.sub, dayKey: d.key }
 }
 
@@ -470,8 +490,12 @@ export function isTrainingDayIn(ctx: ScheduleContext, dateISO: string): boolean 
   const override = ctx.overrides[dateISO]
   if (override != null) return override !== REST_OVERRIDE
   const weekday = new Date(`${dateISO}T12:00:00Z`).getUTCDay()
-  if (eraForDate(dateISO) === 'ppl') return weekday !== 5 && weekday !== 6 // legacy PPL: trained Sun–Thu
-  return programDayIn(PROGRAMS[ctx.programId] ?? APEX51, ctx.layout, weekday) !== 'rest'
+  // This read `weekday !== 5 && weekday !== 6` for the PPL era — "trained
+  // Sun–Thu", the same claim `PPL_WEEKDAY` made and the logged sessions refute:
+  // Friday carried 14 of them. It goes through the plan now, like every other
+  // date. See `programForContext`.
+  const { program, layout } = programForContext(ctx, dateISO)
+  return programDayIn(program, layout, weekday) !== 'rest'
 }
 
 /**

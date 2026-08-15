@@ -232,7 +232,7 @@ export default function NutritionPage() {
           isLoading={isLoading}
           emptyMessage={era === 'axis'
             ? `No ${SUB_PHASE_META[resolvedPhase].label} days yet in Helix 5.1.`
-            : 'No nutrition data yet — paste from Hevy or sync from the app.'}
+            : 'No nutrition data yet — sync from the app.'}
           onDayClick={(d) => router.push(`/day/${d}`)}
         />
       </div>

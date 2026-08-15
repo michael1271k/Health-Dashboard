@@ -38,9 +38,20 @@ describe('HELIX-5 split', () => {
     expect(isRestDayFor('2026-07-24')).toBe(false) // Fri = training
     expect(isRestDayFor('2026-07-19')).toBe(false) // Sun = D1
   })
-  it('PPL-legacy era keeps Fri/Sat rest', () => {
-    expect(isRestDayFor('2026-06-05')).toBe(true)  // Fri, PPL era
-    expect(isRestDayFor('2026-06-04')).toBe(false) // Thu, PPL era
+  /**
+   * The PPL era rested WED and SAT, not Fri/Sat.
+   *
+   * This asserted Friday-rest, from a `PPL_WEEKDAY` map that contradicted
+   * `PPL_LEGACY.days` in the same file. Both halves of the old assertion are
+   * refuted by the logged sessions: 2026-06-05 (Fri) carries a session and
+   * 2026-06-04 (Thu) does not, and across the whole block Friday is the
+   * second-busiest weekday at 14 sessions.
+   */
+  it('PPL-legacy era rests Wed/Sat — Friday was a training day', () => {
+    expect(isRestDayFor('2026-06-05')).toBe(false) // Fri, PPL era — Pull
+    expect(isRestDayFor('2026-06-03')).toBe(true)  // Wed, PPL era — rest
+    expect(isRestDayFor('2026-06-06')).toBe(true)  // Sat, PPL era — rest
+    expect(isRestDayFor('2026-06-01')).toBe(false) // Mon, PPL era — Pull
   })
   it('derives per-phase set counts from the (bulk/cut) plan data', () => {
     const totals = (phase: 'bulk' | 'cut') =>

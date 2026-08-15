@@ -5,7 +5,6 @@ import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { useExerciseMap, useRoutineMemory, routineMemoryMap, useLatestSessionFlag } from '@/lib/hooks/useLogger'
 import { useWeekSessions, weekStartOf } from '@/lib/hooks/useWeekSessions'
-import { WeeklySummaryCard } from '@/components/command-center/WeeklySummaryCard'
 import { PostWorkoutSummary } from '@/components/command-center/PostWorkoutSummary'
 import { SwapDayControl, RestTodayButton } from '@/components/day/SwapDayControl'
 import { RestSuggestion } from '@/components/day/RestSuggestion'
@@ -162,9 +161,6 @@ export default function WorkoutPage() {
 
       {/* Smart Coach — lifts that cleared their ceiling twice, due a load bump. */}
       <ProgressionAlerts />
-
-      {/* Friday week-complete summary CTA / quiet last-week review */}
-      <WeeklySummaryCard />
 
       {/* Surviving draft (autosaved) — resume where the session left off */}
       {resumeDraft && (

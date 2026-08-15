@@ -21,10 +21,21 @@ type ChartSplit = SplitDay | 'upper_a' | 'upper_b' | 'arms' | 'legs_a' | 'legs_b
 
 // The pill set is era-specific. PPL trains Push/Pull/Legs (no "Upper" — zero
 // records); HELIX-5 logs the five real splits. Legacy "lower" folds into legs.
-const SPLITS_FOR_ERA: Record<'all' | 'ppl' | 'axis', ChartSplit[]> = {
-  all: ['push', 'pull', 'legs'],
-  ppl: ['push', 'pull', 'legs'],
-  axis: ['upper_a', 'upper_b', 'arms', 'legs_a', 'legs_b'],
+//
+// `all` was a COPY OF THE PPL SET, which made it a trap rather than a superset:
+// a chart handed era 'all' offered Push / Pull / Legs while every Helix session
+// bucketed to `upper_a` / `legs_b` / … matched none of them, so it named a plan
+// that ended in July and then drew an empty curve. It is the union now, so the
+// worst an 'all' caller can do is offer more pills than it has data for —
+// visible and harmless — instead of silently showing the wrong plan.
+// `eraForRange` no longer returns 'all' at all; this is the belt for the prop
+// default, not the braces.
+const AXIS_SPLITS: ChartSplit[] = ['upper_a', 'upper_b', 'arms', 'legs_a', 'legs_b']
+const PPL_SPLITS: ChartSplit[] = ['push', 'pull', 'legs']
+export const SPLITS_FOR_ERA: Record<'all' | 'ppl' | 'axis', ChartSplit[]> = {
+  all: [...AXIS_SPLITS, ...PPL_SPLITS],
+  ppl: PPL_SPLITS,
+  axis: AXIS_SPLITS,
 }
 const splitLabel = (s: ChartSplit) => {
   if (s === 'upper_a') return 'Upper A'

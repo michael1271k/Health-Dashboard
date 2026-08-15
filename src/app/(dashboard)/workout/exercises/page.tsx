@@ -39,8 +39,12 @@ export default function ExerciseLibraryPage() {
   return (
     <div data-fullbleed className="min-h-dvh">
       <AppBar accent={EMBER}>
-        <button onClick={() => router.back()} onPointerUp={blurOnTap}
-          className="btn-glass shrink-0 min-h-[44px]" aria-label="Back">
+        {/* An explicit push to the tab, NOT `router.back()`. The exercise detail
+            page returns here with a push, so history grows: Workout → list →
+            detail → list. `back()` from the list then walked INTO the exercise
+            just left, which read as the Back button going forwards. */}
+        <button onClick={() => router.push('/workout')} onPointerUp={blurOnTap}
+          className="btn-glass shrink-0 min-h-[44px]" aria-label="Back to Workout">
           <ArrowLeft className="w-4 h-4" />
         </button>
         <div className="min-w-0 flex-1">

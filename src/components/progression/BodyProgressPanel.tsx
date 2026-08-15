@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic'
 import { useWeightTrend, useBodyDetailTrend, useStepsTrend } from '@/lib/hooks/useCharts'
 import { useUserGoals } from '@/lib/hooks/useDashboard'
 import { ChartRange, DEFAULT_RANGE_DAYS } from '@/components/charts/ChartRange'
-import { eraForRange } from '@/lib/hooks/useEraWindow'
+import { useChartEra } from '@/lib/hooks/useEraWindow'
 import { eraForDate } from '@/lib/programs'
 import { WidgetBoundary } from '@/components/fx/WidgetBoundary'
 
@@ -34,14 +34,15 @@ const StepsChart = dynamic(() => import('@/components/charts/StepsChart').then((
  * diagnosis, whereas the same two facts on different tabs are two shrugs.
  *
  * ── ONE WINDOW, TWO CHARTS ───────────────────────────────────────────────────
- * `ChartRange` is the only control, and the era filter is DERIVED from it
- * (`eraForRange`) rather than stored, so the two cannot disagree. The era
- * boundary marker on the composition chart shows only in the all-eras window,
- * where a boundary is a thing you can actually see across.
+ * `ChartRange` is the only control. The era is the ACTIVE PLAN's, not a function
+ * of the window: 1 Month used to answer 'all', which is a third era with its own
+ * meaning rather than "no filter" (see `eraForRange`). The era boundary marker
+ * on the composition chart shows only in the all-eras window, where a boundary
+ * is a thing you can actually see across.
  */
 export function BodyProgressPanel() {
   const [days, setDays] = useState(DEFAULT_RANGE_DAYS)
-  const era = eraForRange(days)
+  const era = useChartEra()
 
   const { data: weightData, isLoading: weightLoading } = useWeightTrend(days)
   const { data: bodyDetail, isLoading: detailLoading } = useBodyDetailTrend(days)

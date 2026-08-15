@@ -95,11 +95,39 @@ describe('the schedule context resolves without a browser', () => {
     expect((scheduleDayIn(moved, WEDNESDAY) as { dayKey?: string }).dayKey).toBe(sundayDay.key)
   })
 
-  it('resolves PPL-era dates from the legacy weekday table, not the active plan', () => {
-    // Pre-2026-07-15 is the PPL era; the active plan has no authority there.
-    expect(scheduleDayIn(ctx(), '2026-06-14')).toEqual({ label: 'Upper' })   // Sunday
-    expect(scheduleDayIn(ctx(), '2026-06-19')).toBe('rest')                  // Friday
-    expect(isTrainingDayIn(ctx(), '2026-06-19')).toBe(false)
+  /**
+   * Pre-2026-07-15 is the PPL era; the active plan has no authority there.
+   *
+   * This used to assert Sunday → 'Upper' and Friday → rest, from a `PPL_WEEKDAY`
+   * map that contradicted `PPL_LEGACY.days` in the same file. The logged sessions
+   * settle it — dominant `split_day` per weekday before the cut opened:
+   * Sun push ×11 · Mon pull ×8 · Tue legs ×9 · Thu push ×10 · Fri pull ×9.
+   * The map matched none of them and called Friday, which carried 14 sessions,
+   * a rest day.
+   */
+  it('resolves PPL-era dates from the legacy PLAN, not the active one', () => {
+    expect(scheduleDayIn(ctx(), '2026-06-14')).toMatchObject({ label: 'Push', dayKey: 'ppl_push_sun' })  // Sunday
+    expect(scheduleDayIn(ctx(), '2026-06-15')).toMatchObject({ label: 'Pull' })                          // Monday
+    expect(scheduleDayIn(ctx(), '2026-06-16')).toMatchObject({ label: 'Legs' })                          // Tuesday
+    expect(scheduleDayIn(ctx(), '2026-06-18')).toMatchObject({ label: 'Push' })                          // Thursday
+  })
+
+  it('Friday was a training day in the PPL era, not a rest day', () => {
+    expect(scheduleDayIn(ctx(), '2026-06-19')).toMatchObject({ label: 'Pull' })
+    expect(isTrainingDayIn(ctx(), '2026-06-19')).toBe(true)
+  })
+
+  it('rests Wednesday and Saturday, as the legacy plan is authored', () => {
+    expect(scheduleDayIn(ctx(), '2026-06-17')).toBe('rest')   // Wednesday
+    expect(scheduleDayIn(ctx(), '2026-06-20')).toBe('rest')   // Saturday
+    expect(isTrainingDayIn(ctx(), '2026-06-20')).toBe(false)
+  })
+
+  it('gives PPL dates a dayKey, so the colour system can tint them', () => {
+    // `DAY_COLOR` has carried ppl_push_sun … ppl_pull_fri all along; the weekday
+    // table returned a bare label, so nothing could ever look them up.
+    const day = scheduleDayIn(ctx(), '2026-06-19') as { dayKey?: string }
+    expect(day.dayKey).toBe('ppl_pull_fri')
   })
 
   it('still lets an override win inside the PPL era', () => {

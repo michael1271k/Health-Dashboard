@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { ChartRange, DEFAULT_RANGE_DAYS } from '@/components/charts/ChartRange'
-import { eraForRange } from '@/lib/hooks/useEraWindow'
+import { useChartEra } from '@/lib/hooks/useEraWindow'
 import { WeekToDateTargets } from './WeekToDateTargets'
 import { DeferredMount } from '@/components/fx/DeferredMount'
 import { WidgetBoundary } from '@/components/fx/WidgetBoundary'
@@ -54,9 +54,10 @@ const PRHistoryChart = dynamic(() => import('@/components/charts/PRHistoryChart'
  */
 export function MuscleAnalyticsPanel() {
   const [days, setDays] = useState(DEFAULT_RANGE_DAYS)
-  // Derived from the window rather than read from EraFilterProvider — one
-  // control, one meaning. See eraForRange's docblock.
-  const era = eraForRange(days)
+  // The ACTIVE plan's era, not a function of the window — see eraForRange's
+  // docblock for why 1 Month answering 'all' put the PPL splits on this chart.
+  // Read from localStorage, so it comes with its own subscription.
+  const era = useChartEra()
 
   const { data: volumeData, isLoading: volumeLoading } = useVolumeTrend(days)
   const { data: prData, isLoading: prLoading } = usePRHistory(undefined, days)

@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { m } from 'framer-motion'
-import { navItems } from '@/lib/nav-items'
+import { navItems, isNavActive } from '@/lib/nav-items'
 import { SNAPPY } from '@/lib/motion'
 
 export function Sidebar() {
@@ -35,7 +35,7 @@ export function Sidebar() {
       <nav aria-label="Main navigation" className="flex-1 overflow-y-auto px-3 py-4">
         <ul className="space-y-1" role="list">
           {navItems.map(({ href, icon: Icon, label }) => {
-            const active = (pathname === href || (href === '/pathfinder' && (pathname.startsWith('/day') || pathname.startsWith('/session'))))
+            const active = isNavActive(href, pathname)
             return (
               <li key={href}>
                 <Link

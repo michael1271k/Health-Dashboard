@@ -92,6 +92,40 @@ function seedFromHistory(prev: ExerciseHistoryEntry, newPairId: () => string): D
   return sets
 }
 
+/** The standard opener: Treadmill, 0.37 km, 5 min, pace rising 4.3 → 5.0. */
+function warmupCardioBlock(): DraftExercise {
+  return {
+    localId: `cardio-warmup-${Math.random().toString(36).slice(2, 8)}`,
+    name: WARMUP_CARDIO.name,
+    kind: 'cardio',
+    distanceKm: WARMUP_CARDIO.distanceKm,
+    durationSec: WARMUP_CARDIO.durationSec,
+    note: WARMUP_CARDIO.note,
+    sets: [],
+  }
+}
+
+/**
+ * Open a deck with the Treadmill warm-up, unless it already has cardio in it.
+ *
+ * ── WHY THIS IS A WRAPPER AND NOT A LINE IN ONE BRANCH ───────────────────────
+ * It used to be a bare `exercises.push(...)` inside the SEED branch only. That
+ * branch runs when a day has no stored `routine_templates` row — so the moment a
+ * day had been logged once, `buildTemplateDraft` returned early through
+ * `templateToDraft` and the warm-up silently stopped appearing. Legs B, the most
+ * frequently committed day, therefore never opened with it; the days that still
+ * did were simply the ones never logged from the deck.
+ *
+ * The guard is on `kind === 'cardio'`, not on the name: a deck whose stored
+ * template already carries a Treadmill row (because it was committed with one)
+ * must not get a second, and a deck that opens with a bike instead has made its
+ * own choice.
+ */
+export function withWarmupCardio(draft: SessionDraft): SessionDraft {
+  if (draft.exercises.some((e) => e.kind === 'cardio')) return draft
+  return { ...draft, exercises: [warmupCardioBlock(), ...draft.exercises] }
+}
+
 export function buildTemplateDraft(
   day: ProgramDay,
   date: string,
@@ -105,7 +139,7 @@ export function buildTemplateDraft(
   // day, exercise ORDER included. It already reflects history (it was written
   // FROM a session), so consulting history again here would only re-derive a
   // worse version of the same answer and discard the ordering.
-  if (template?.exercises.length) return templateToDraft(template, day, date, dayKey)
+  if (template?.exercises.length) return withWarmupCardio(templateToDraft(template, day, date, dayKey))
 
   let i = 0
   const localId = () => `tpl-${i++}-${Math.random().toString(36).slice(2, 8)}`
@@ -118,13 +152,6 @@ export function buildTemplateDraft(
 
   const seed = SEED_TEMPLATES[day.key]
   const exercises: DraftExercise[] = []
-
-  // Every seeded deck opens with the standard Treadmill warm-up.
-  exercises.push({
-    localId: localId(), name: WARMUP_CARDIO.name, kind: 'cardio',
-    distanceKm: WARMUP_CARDIO.distanceKm, durationSec: WARMUP_CARDIO.durationSec,
-    note: WARMUP_CARDIO.note, sets: [],
-  })
 
   // A template deck is a PLAN, not a log: every set opens UNCHECKED (done:false)
   // and only the ones you tick green are recorded on finish.
@@ -164,7 +191,7 @@ export function buildTemplateDraft(
     }
   }
 
-  return {
+  return withWarmupCardio({
     // Stable idempotency key for THIS logging attempt: a retry of the same
     // template deck dedupes instead of duplicating; two separate sessions get
     // distinct ids (random suffix).
@@ -178,5 +205,5 @@ export function buildTemplateDraft(
     // + duration at commit, so a back-dated template still gets a sane window).
     startedAt: `${date}T${new Date().toISOString().slice(11)}`,
     exercises,
-  }
+  })
 }

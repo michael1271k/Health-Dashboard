@@ -29,6 +29,62 @@ export interface ProgressionAlert {
   state: 'ready' | 'one-more'
 }
 
+/** A `workout_sets` row joined to the session that owns it. */
+export interface ProgressionSetRow {
+  exercise_id: string
+  weight_kg: number
+  reps: number
+  set_type: string | null
+  workout_sessions: { started_at: string; day_key: string | null }
+}
+
+/** The bucket key a routine-scoped history is stored under. */
+export const exerciseDayKey = (dayKey: string, exerciseId: string) => `${dayKey}|${exerciseId}`
+
+/**
+ * Fold set rows into `(routine day, exercise) → session instant → working sets`.
+ *
+ * Warm-ups are dropped — a light opener is not evidence about a ceiling. Rows
+ * whose session carries no `day_key` are dropped too: they cannot be attributed
+ * to a routine, and a routine's ceiling is the only thing this history is graded
+ * against. Pooling them under the exercise is precisely the bug this shape
+ * exists to prevent.
+ *
+ * Pure, so the Leg Press case can be asserted without a database.
+ */
+export function bucketByExerciseDay(rows: ProgressionSetRow[]): Map<string, Map<string, WorkingSet[]>> {
+  const out = new Map<string, Map<string, WorkingSet[]>>()
+  for (const r of rows) {
+    if (r.set_type === 'warmup') continue
+    const dk = r.workout_sessions.day_key
+    if (!dk) continue
+    const at = r.workout_sessions.started_at
+    const key = exerciseDayKey(dk, r.exercise_id)
+    const perEx = out.get(key) ?? new Map<string, WorkingSet[]>()
+    perEx.set(at, [...(perEx.get(at) ?? []), { weightKg: r.weight_kg, reps: r.reps }])
+    out.set(key, perEx)
+  }
+  return out
+}
+
+/**
+ * The last two sessions for one bucket, oldest first — the shape
+ * `progressionVerdict` grades. Empty when the lift has never been logged on
+ * that routine day.
+ */
+export function lastTwoSessions(
+  byExDay: Map<string, Map<string, WorkingSet[]>>,
+  dayKey: string,
+  exerciseId: string,
+): WorkingSet[][] {
+  const perEx = byExDay.get(exerciseDayKey(dayKey, exerciseId))
+  if (!perEx) return []
+  return [...perEx.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .slice(-2)
+    .map(([, sets]) => sets)
+}
+
 /**
  * The forward-carrying Smart-Coach queue. For every exercise in the ACTIVE plan,
  * it grades the last two era-scoped sessions with the SAME strict engine the
@@ -37,6 +93,23 @@ export interface ProgressionAlert {
  * load bump. The verdict is derived purely from the last two sessions, so the
  * moment a heavier load is logged the old-load chain breaks and the alert clears
  * itself — no strike counter to persist or reset.
+ *
+ * ── HISTORY IS SCOPED TO THE ROUTINE DAY, NOT THE EXERCISE ───────────────────
+ * `targets` is keyed by (exercise, DAY) because the rep ceiling comes from the
+ * day: Leg Press is 8–12 on Legs A and 12–15 on Legs B ("horizontal sled").
+ * The set history used to be fetched by `exercise_id` ALONE and shared between
+ * both targets, so the Legs A target — ceiling 12 — was graded against Legs B
+ * sets. Two Legs B sessions of 13×2 at one load cleared a ceiling of 12 twice
+ * and the coach said "add load" on a lift that had not touched its own window.
+ *
+ * So the fetch joins `workout_sessions.day_key` and buckets by
+ * (exercise, day, session) — the same join `useRoutineMemory` already makes for
+ * the "Previous: Xkg × Y" chip, and for the same reason.
+ *
+ * A session with no `day_key` cannot be attributed to a routine, so it cannot be
+ * graded against a routine's ceiling: those rows are dropped rather than pooled.
+ * The cost is that a lift stays silent until it has been logged on its own day,
+ * which is the correct silence — the alternative is the false positive above.
  */
 export function useProgressionQueue() {
   const { data: exMap } = useExerciseMap()
@@ -62,55 +135,41 @@ export function useProgressionQueue() {
     return [...seen.values()]
   }, [exMap])
 
-  const ids = targets.map((t) => t.id)
+  const ids = [...new Set(targets.map((t) => t.id))]
+  const dayKeys = [...new Set(targets.map((t) => t.dayKey))]
   const eraDate = logicalTodayISO()
 
   return useQuery({
-    queryKey: ['progression_queue', eraDate, [...ids].sort().join(',')],
+    queryKey: ['progression_queue', eraDate, [...ids].sort().join(','), [...dayKeys].sort().join('|')],
     enabled: ids.length > 0,
     staleTime: 60_000,
     queryFn: async (): Promise<ProgressionAlert[]> => {
       const era = eraForDate(eraDate)
       let q = supabase
         .from('workout_sets')
-        .select('exercise_id, weight_kg, reps, set_type, workout_sessions!inner(started_at)')
+        .select('exercise_id, weight_kg, reps, set_type, workout_sessions!inner(started_at, day_key)')
         .in('exercise_id', ids)
+        .in('workout_sessions.day_key', dayKeys)
       q = era === 'axis'
         ? q.gte('workout_sessions.started_at', `${HELIX_CUT_START}T00:00:00Z`)
         : q.lt('workout_sessions.started_at', `${HELIX_CUT_START}T00:00:00Z`)
       const { data, error } = await q.limit(3000)
       if (error) throw error
 
-      const rows = ((data ?? []) as unknown as Array<{
-        exercise_id: string; weight_kg: number; reps: number; set_type: string | null
-        workout_sessions: { started_at: string }
-      }>).filter((r) => r.set_type !== 'warmup' && eraForDate(r.workout_sessions.started_at.slice(0, 10)) === era)
+      const rows = ((data ?? []) as unknown as ProgressionSetRow[])
+        .filter((r) => eraForDate(r.workout_sessions.started_at.slice(0, 10)) === era)
 
-      // exercise → session instant → working sets
-      const byEx = new Map<string, Map<string, WorkingSet[]>>()
-      for (const r of rows) {
-        const at = r.workout_sessions.started_at
-        const perEx = byEx.get(r.exercise_id) ?? new Map<string, WorkingSet[]>()
-        const bucket = perEx.get(at) ?? []
-        bucket.push({ weightKg: r.weight_kg, reps: r.reps })
-        perEx.set(at, bucket)
-        byEx.set(r.exercise_id, perEx)
-      }
+      const byExDay = bucketByExerciseDay(rows)
 
       const alerts: ProgressionAlert[] = []
       for (const t of targets) {
-        const perEx = byEx.get(t.id)
-        if (!perEx) continue
-        const ordered = [...perEx.entries()].sort(([a], [b]) => a.localeCompare(b))
-        const latest = ordered[ordered.length - 1]?.[1]
+        const sessions = lastTwoSessions(byExDay, t.dayKey, t.id)
+        const latest = sessions[sessions.length - 1]
         if (!latest) continue
-        const previous = ordered.length >= 2 ? ordered[ordered.length - 2][1] : null
 
         const timed = isTimedExercise(t.name)
         const ceiling = timed ? holdTargetFor(t.name, t.dayKey) : (repWindowFor(t.name, t.dayKey)?.ceiling ?? null)
-        const verdict = (timed ? timedProgressionVerdict : progressionVerdict)(
-          previous ? [previous, latest] : [latest], ceiling,
-        )
+        const verdict = (timed ? timedProgressionVerdict : progressionVerdict)(sessions, ceiling)
         // 'one-more' is surfaced too: seeing the trigger approach is more use
         // than silence followed by a sudden instruction.
         if (verdict.state !== 'ready' && verdict.state !== 'one-more') continue
@@ -124,7 +183,14 @@ export function useProgressionQueue() {
           timed, ceiling, state: verdict.state,
         })
       }
-      return alerts.sort((a, b) => (a.dayLabel ?? '').localeCompare(b.dayLabel ?? '') || a.name.localeCompare(b.name))
+      // PLAN ORDER, not alphabetical. `targets` is built by walking
+      // `activeProgram().days[].exercises[]`, so pushing in that order already
+      // yields Settings/Plan order — day by day, and within a day the sequence
+      // the session is actually performed in. Sorting by `dayLabel` afterwards
+      // undid exactly that: "Delts & Arms" landed before "Legs & Core A", and
+      // inside a day the lifts came out alphabetically rather than in the order
+      // you meet them on the floor.
+      return alerts
     },
   })
 }

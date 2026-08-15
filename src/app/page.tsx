@@ -12,6 +12,7 @@ import { Surface, Tile } from '@/components/ui/Zone'
 import { InsightCoach } from '@/components/dashboard/InsightCoach'
 import { AnimatedCard } from '@/components/dashboard/AnimatedBento'
 import { WeeklyReviewCard } from '@/components/dashboard/WeeklyReviewCard'
+import { WeeklySummaryCard } from '@/components/dashboard/WeeklySummaryCard'
 import { WidgetBoundary } from '@/components/fx/WidgetBoundary'
 import { BrandHeader } from '@/components/dashboard/BrandHeader'
 import { DeferredMount } from '@/components/fx/DeferredMount'
@@ -374,6 +375,13 @@ export default function DashboardPage() {
           </div>
         </Surface>
       </AnimatedCard>
+
+      {/* Week-complete CTA — the FINAL day of the week, once every training day
+          the plan asked for is logged. Renders nothing on every other day, so it
+          needs no reserved height. Moved here from the Workout tab: the day it
+          fires is a scheduled rest day, which is the one day Workout has no
+          reason to be opened. */}
+      <WeeklySummaryCard />
 
       {/* Daily domain strips. The Body strip is dual-action: tap opens the
           composition popup, double-tap jumps to today's Nexus InBody entry. */}

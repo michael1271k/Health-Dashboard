@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { epley1RM, collapseToSessionBest, mergeStepsTrend, type PRRawRow } from '@/lib/hooks/useCharts'
 import { resolveEraStart, daysBetween, eraForRange } from '@/lib/hooks/useEraWindow'
 import { HELIX_CUT_START } from '@/lib/programs'
+import { SPLITS_FOR_ERA } from '@/components/charts/VolumeChart'
 
 /** Epley returns `number | null`; these cases are all loaded, so assert non-null. */
 const e = (w: number, r: number): number => {
@@ -156,12 +157,33 @@ describe('the era chart window', () => {
     expect(Number.isFinite(daysBetween('not-a-date', '2026-08-01'))).toBe(true)
   })
 
-  it('1 Month means all eras; anything else means the active plan era', () => {
-    // Over 30 days every row is inside the current era anyway, so filtering
-    // would only ever remove rows on the one month you switched plans — exactly
-    // when you want to see both sides of the switch.
-    expect(eraForRange(30)).toBe('all')
-    expect(eraForRange(31)).toBe('axis')
-    expect(eraForRange(400)).toBe('axis')
+  /**
+   * 1 Month used to answer 'all', on the reasoning that a 30-day window sits
+   * inside the current era anyway so the filter is a no-op. The WINDOW was —
+   * the era VALUE was not. 'all' is a third era with its own meaning, and
+   * `VolumeChart` keys its split pills off it: the `all` pill set was Push /
+   * Pull / Legs, so the 1 Month view of a Helix-5 block offered the splits of a
+   * plan that ended in July and matched none of its own sessions.
+   */
+  it('every window means the ACTIVE plan era — never "all"', () => {
+    expect(eraForRange()).toBe('axis')
+    expect(eraForRange()).not.toBe('all')
+  })
+})
+
+describe('VolumeChart pill sets', () => {
+  it('never offers PPL splits under the active Helix era', () => {
+    // The regression, stated as the chart sees it.
+    expect(SPLITS_FOR_ERA[eraForRange()]).toEqual(
+      expect.arrayContaining(['upper_a', 'upper_b', 'arms', 'legs_a', 'legs_b']),
+    )
+    expect(SPLITS_FOR_ERA[eraForRange()]).not.toContain('push')
+  })
+
+  it('"all" is the UNION, not a copy of the PPL set', () => {
+    // It is unreachable from `eraForRange` now, but it is still the prop
+    // default, and a default that names one plan is how this got shipped.
+    expect(SPLITS_FOR_ERA.all).toEqual(expect.arrayContaining(SPLITS_FOR_ERA.axis))
+    expect(SPLITS_FOR_ERA.all).toEqual(expect.arrayContaining(SPLITS_FOR_ERA.ppl))
   })
 })

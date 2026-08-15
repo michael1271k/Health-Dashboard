@@ -19,12 +19,41 @@ import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
  * while the filter claimed an era, and nothing on screen would say which one the
  * charts were obeying. A function of `days` cannot desync from `days`.
  *
- * 1 Month is 'all' because over a 30-day window every row is inside the current
- * era anyway — the filter would be a no-op that only removed rows if you had
- * switched plans this month, which is precisely when you'd want to see both.
+ * ── WHY BOTH WINDOWS ARE CLAMPED TO THE ACTIVE ERA ───────────────────────────
+ * 1 Month used to answer `'all'`, on the reasoning that a 30-day window sits
+ * inside the current era anyway so the filter would be a no-op. The window was
+ * — the ERA VALUE was not. `'all'` is not "no filter" downstream; it is a third
+ * era with its own meaning, and the charts read it. `VolumeChart` keys its split
+ * pills off it (`SPLITS_FOR_ERA`), and the `all` pill set is Push / Pull / Legs
+ * — so the 1 Month view of a Helix-5 block offered the PPL splits, and every
+ * Helix session (bucketed `upper_a`, `legs_b`, …) matched none of them. The
+ * chart named a plan that ended in July and drew almost nothing.
+ *
+ * `resolveChartSplit` has the same shape of dependency: its weekday fallback for
+ * legacy `split_day='upper'` rows is gated on `era === 'axis'`, so `'all'` also
+ * turned that off.
+ *
+ * Both windows now mean "this plan", and differ only in how much of it they
+ * show. The PPL era is still reachable — through `EraFilterPills` on the two
+ * LIST surfaces, which is where looking at a finished block belongs.
  */
-export function eraForRange(days: number, monthDays = 30): EraFilter {
-  return days === monthDays ? 'all' : activeProgram().era
+export function eraForRange(): EraFilter {
+  return activeProgram().era
+}
+
+/**
+ * `eraForRange` with the subscription it needs.
+ *
+ * `activeProgram()` reads `localStorage` synchronously during render, which
+ * React cannot see. `ChartRange` gets that subscription for free through
+ * `useEraWindow`, but the panels calling `eraForRange` directly did not — so
+ * switching plan in Settings renamed the toggle while the charts beneath it went
+ * on filtering to the previous plan's era until something else forced a render.
+ * Bundling the two means a caller cannot take the value without the subscription.
+ */
+export function useChartEra(): EraFilter {
+  void useScheduleVersion()
+  return eraForRange()
 }
 
 /** Inclusive day count between two ISO dates, floored at 1. */

@@ -74,7 +74,11 @@ export default function ExerciseDetailPage() {
   return (
     <div data-fullbleed className="min-h-dvh">
       <AppBar accent={accent}>
-        <button onClick={() => router.push('/workout/exercises')} onPointerUp={blurOnTap}
+        {/* `replace`, not `push`. Pushing grew the stack every time you stepped
+            out of an exercise, so the list's own Back button had somewhere
+            forward to walk to. Replacing keeps the depth flat: whatever you came
+            from stays the thing behind the list. */}
+        <button onClick={() => router.replace('/workout/exercises')} onPointerUp={blurOnTap}
           className="btn-glass shrink-0 min-h-[44px]" aria-label="Back to exercises">
           <ArrowLeft className="w-4 h-4" />
         </button>

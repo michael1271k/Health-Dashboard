@@ -590,7 +590,7 @@ export default function SettingsPage() {
             <div className="text-sm text-text font-medium">Track effort (RPE)</div>
             <div className="text-xs text-muted">
               Rate each exercise Easy / Hard / Failure when you log a session. Off by default —
-              Hevy&rsquo;s export carries no RPE, so it is typed from memory.
+              an imported workout carries no RPE, so it is typed from memory.
             </div>
           </div>
           <button

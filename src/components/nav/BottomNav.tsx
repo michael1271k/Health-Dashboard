@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { m } from 'framer-motion'
 import { type LucideIcon } from 'lucide-react'
-import { coreNavItems } from '@/lib/nav-items'
+import { coreNavItems, isNavActive } from '@/lib/nav-items'
 import { SNAPPY } from '@/lib/motion'
 import { tapLight } from '@/lib/native/haptics'
 
@@ -36,12 +36,6 @@ export function BottomNav() {
 
   if (hidden) return null
 
-  // Pathfinder owns the daily Nexus (/day/*) and the workout analysis deep-dive,
-  // both reached from within it.
-  const isActive = (href: string) =>
-    pathname === href ||
-    (href === '/pathfinder' && (pathname.startsWith('/day') || pathname.startsWith('/session')))
-
   return (
     <nav
       aria-label="Mobile navigation"
@@ -51,7 +45,7 @@ export function BottomNav() {
     >
       <ul className="flex items-stretch justify-around h-[var(--nav-height)]" role="list">
         {coreNavItems.map(({ href, icon: Icon, label }) => (
-          <NavCell key={href} href={href} Icon={Icon} label={label} active={isActive(href)} />
+          <NavCell key={href} href={href} Icon={Icon} label={label} active={isNavActive(href, pathname)} />
         ))}
       </ul>
     </nav>

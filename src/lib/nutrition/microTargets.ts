@@ -115,8 +115,15 @@ export const MICRO_TARGETS: MicroTarget[] = [
 ]
 
 /**
- * Passive HealthKit signals (not diet) worth surfacing on the deep-dive — these
- * ARE already modelled on daily_logs, so they render as soon as data exists.
+ * Passive HealthKit signals (not diet) — already modelled on `daily_logs`, so
+ * they carry a value as soon as data exists.
+ *
+ * These used to render on the Micros deep-dive AND in Vitals. Vitals is now the
+ * only place they appear: nothing on a nutrition page acts on HRV, and a number
+ * shown twice is a number you have to reconcile. What survives here is the
+ * REFERENCE COPY — the one-line "what counts as normal" for each signal, which
+ * Vitals reads. That copy is the reason this list is not simply deleted: the
+ * wrist-temp entry below encodes a correction that was expensive to find.
  */
 export interface MicroSignal {
   key: string
