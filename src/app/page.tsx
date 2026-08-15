@@ -11,7 +11,7 @@ import { MacroCards } from '@/components/nutrition/MacroCards'
 import { Surface, Tile } from '@/components/ui/Zone'
 import { InsightCoach } from '@/components/dashboard/InsightCoach'
 import { AnimatedCard } from '@/components/dashboard/AnimatedBento'
-import { WeeklyReviewCard } from '@/components/dashboard/WeeklyReviewCard'
+import { WeekSoFarCard } from '@/components/dashboard/WeekSoFarCard'
 import { WeeklySummaryCard } from '@/components/dashboard/WeeklySummaryCard'
 import { WidgetBoundary } from '@/components/fx/WidgetBoundary'
 import { BrandHeader } from '@/components/dashboard/BrandHeader'
@@ -415,7 +415,7 @@ export default function DashboardPage() {
 
       {/* Below-the-fold: mount after idle so the hero owns first paint */}
       <DeferredMount minHeight={140}><AnimatedCard index={9}><InsightCoach /></AnimatedCard></DeferredMount>
-      <DeferredMount minHeight={120}><AnimatedCard index={10}><WeeklyReviewCard /></AnimatedCard></DeferredMount>
+      <DeferredMount minHeight={120}><AnimatedCard index={10}><WeekSoFarCard /></AnimatedCard></DeferredMount>
 
       {/* ── Domain detail: liquid-glass popup, tinted by its own domain accent ── */}
       {/* ONE drawer, seven contents. Every domain strip and the readiness hero

@@ -12,7 +12,8 @@ import { ProgressionTrail } from '@/components/session-detail/ProgressionTrail'
 import { getWeekPhase, phaseBadgeStyle } from '@/lib/phases'
 import { weekStartOf } from '@/lib/utils/week'
 import { activeProgram } from '@/lib/programs'
-import { dayColor } from '@/lib/theme/palette'
+import { dayColor, EMBER } from '@/lib/theme/palette'
+import { Surface } from '@/components/ui/Zone'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
 import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 
@@ -89,15 +90,28 @@ export default function SessionAnalysisPage() {
             </button>
           </div>
         ) : (
+          /* ── THREE BANDS, NOT FIVE CARDS ──
+             The report was five `rounded-2xl border … p-5` panels stacked down
+             the page, and the first of them nested a second bordered frame
+             inside itself. Five frames around what is one document is the
+             grandiosity — every section announced itself as a separate thing,
+             so reading the report meant re-entering five times.
+
+             What survived is the content, regrouped by the question each part
+             answers: what the session WAS (header), how it compares and what it
+             trained (progression), and what actually happened set by set
+             (breakdown). Records fold into the middle band as chips, because a
+             PR is a fact about the session rather than a section of it. */
           <>
             <SessionHero detail={data} />
-            {/* Records and the strongest lift, above everything. They used to be a
-                gold chip somewhere inside one exercise and a coloured border on
-                another — both a full scroll away. */}
-            <SessionHighlights exercises={data.exercises} />
-            <ProgressionTrail sessionId={data.id} />
+
+            <Surface variant="band" accent={EMBER} pad="snug" className="space-y-3">
+              <ProgressionTrail sessionId={data.id} />
+              <SessionHighlights exercises={data.exercises} />
+              <MuscleFocus detail={data} />
+            </Surface>
+
             <ExerciseBreakdown sessionId={data.id} exercises={data.exercises} date={data.date} dayKey={data.dayKey} />
-            <MuscleFocus detail={data} />
           </>
         )}
       </div>

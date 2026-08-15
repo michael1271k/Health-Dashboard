@@ -65,43 +65,41 @@ export function SessionHighlights({ exercises }: { exercises: DetailExercise[] }
 
   if (!highlights.length && !strongest) return null
 
-  return (
-    <section className="rounded-2xl border overflow-hidden"
-      style={{ borderColor: highlights.length ? `${GOLD}3d` : 'rgba(255,255,255,0.08)' }}>
-      {highlights.map((h, i) => (
-        <div key={h.name}
-          className="flex items-center gap-2 px-3 py-2 text-fluid-xs"
-          style={{
-            background: `${GOLD}0d`,
-            borderTop: i ? '1px solid rgba(255,255,255,0.06)' : undefined,
-          }}>
-          <Trophy className="w-3.5 h-3.5 shrink-0" style={{ color: GOLD, filter: `drop-shadow(0 0 4px ${GOLD}99)` }} aria-hidden="true" />
-          <span className="text-text font-semibold truncate min-w-0">{h.name}</span>
-          {h.axes.map((a) => (
-            <span key={a} className="text-[8px] font-bold uppercase px-1 py-px rounded shrink-0"
-              style={{ color: GOLD, background: `${GOLD}1f`, border: `1px solid ${GOLD}4d` }}>{a}</span>
-          ))}
-          <span className="helix-num ml-auto shrink-0 font-bold tabular-nums" style={{ color: GOLD }}>{h.detail}</span>
-        </div>
-      ))}
+  /* ── CHIPS, NOT A PANEL ──
+     A record is a FACT ABOUT the session, not a section of the report. This
+     used to be a bordered panel of full-width tinted rows sitting between the
+     header and Progression — so a session with one PR spent a whole card
+     saying it, and a session with none left a gap where readers had learned to
+     look. Inline chips inside the Progression band carry the same three facts
+     (movement, axes, the set that won it) and cost one line.
 
+     Sapphire and a flame for "strongest", gold and a trophy for records: a
+     ranking within one session is not a record, and sharing gold made two
+     different things look identical. */
+  return (
+    <div className="flex items-center gap-1.5 flex-wrap">
+      {highlights.map((h) => (
+        <span key={h.name}
+          title={`Record · ${h.axes.join(' · ')} · ${h.detail}`}
+          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold max-w-full"
+          style={{ color: GOLD, background: `${GOLD}14`, border: `1px solid ${GOLD}40` }}>
+          <Trophy className="w-3 h-3 shrink-0" style={{ filter: `drop-shadow(0 0 4px ${GOLD}99)` }} aria-hidden="true" />
+          <span className="truncate min-w-0 text-text">{h.name}</span>
+          <span className="helix-num tabular-nums shrink-0">{h.detail}</span>
+        </span>
+      ))}
       {strongest && (
-        <div className="flex items-center gap-2 px-3 py-2 text-fluid-xs"
-          style={{
-            background: `${SAPPHIRE}0d`,
-            borderTop: highlights.length ? '1px solid rgba(255,255,255,0.06)' : undefined,
-          }}>
-          {/* Sapphire, and a flame rather than a trophy. "Strongest" is a
-              ranking within one session, not a record — sharing gold and a
-              trophy with the rows above made two different things identical. */}
-          <Flame className="w-3.5 h-3.5 shrink-0" style={{ color: SAPPHIRE }} aria-hidden="true" />
-          <span className="text-muted shrink-0">Strongest</span>
-          <span className="text-text font-semibold truncate min-w-0">{strongest.name}</span>
-          <span className="helix-num ml-auto shrink-0 font-bold tabular-nums" style={{ color: SAPPHIRE }}>
+        <span
+          title={`Strongest lift of the session · ${strongest.name}`}
+          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold max-w-full"
+          style={{ color: SAPPHIRE, background: `${SAPPHIRE}14`, border: `1px solid ${SAPPHIRE}40` }}>
+          <Flame className="w-3 h-3 shrink-0" aria-hidden="true" />
+          <span className="truncate min-w-0 text-text">{strongest.name}</span>
+          <span className="helix-num tabular-nums shrink-0">
             e1RM {displayWeight(strongest.bestEst1rm ?? 0)}{unit}
           </span>
-        </div>
+        </span>
       )}
-    </section>
+    </div>
   )
 }

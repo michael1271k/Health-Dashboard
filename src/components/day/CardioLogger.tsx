@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Footprints, Zap, Plus, Trash2, X, Info, HeartPulse, Trophy, ChevronDown } from 'lucide-react'
+import { Footprints, Zap, Plus, Trash2, Info, Trophy, ChevronDown } from 'lucide-react'
 import {
   useCardioLogs, useCardioHistory, useLastCardio, useAddCardio, useDeleteCardio,
   useZone2Week, ZONE2_WEEKLY_TARGET,
@@ -10,11 +10,13 @@ import { paceMinPerKm, formatPace, activeKcalOf } from '@/lib/cardio/metrics'
 import { axesHeldBy, CARDIO_AXIS_LABEL } from '@/lib/cardio/cardioPrs'
 import { normalizeCr10, cr10Color } from '@/lib/training/effort'
 import { EffortScale } from '@/components/ui/EffortScale'
+import { Sheet } from '@/components/ui/Sheet'
+import { Zone } from '@/components/ui/Zone'
+import { EMERALD, EMBER, SAPPHIRE, GOLD } from '@/lib/theme/palette'
 
-const EMERALD = '#3E9E7A'
-const EMBER = '#E0703C'
-const AZURE = '#3D7AB8'
-const GOLD = '#D4AF37'
+// Imported, not re-declared. These four were local consts holding the exact
+// values the palette already exports — the hex ratchet counts literals, and it
+// is right to. SAPPHIRE was this file's private name for SAPPHIRE.
 
 const KINDS = [
   { key: 'walk' as const, label: 'Walk', Icon: Footprints, color: EMERALD },
@@ -99,35 +101,30 @@ export function CardioLogger({ date, hkActiveEnergy }: { date: string; hkActiveE
   const lastKm = last?.distance_m != null ? Math.round((last.distance_m / 1000) * 100) / 100 : null
 
   return (
-    // No card chrome: this is the content of a Nexus band whose label already
-    // says Cardio.
-    <div className="px-3 py-2 space-y-2.5">
-      <div className="flex items-center gap-2">
-        <Footprints className="w-3.5 h-3.5" style={{ color: EMERALD }} aria-hidden="true" />
-        <span className="text-[11px] text-muted flex-1">Walk or run — logged apart from Active Energy</span>
-        <button onClick={() => setOpen((v) => !v)} className="btn-glass min-h-[36px] text-fluid-xs px-2.5"
-          aria-label={open ? 'Close cardio form' : 'Log cardio'}>
-          {open ? <X className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
-        </button>
-      </div>
-
-      {/* Zone-2 weekly goal: 2× 20–30 min steady sessions on rest days. Visual only. */}
-      <div className="flex items-center gap-2 rounded-lg px-2.5 py-1.5"
-        style={{ background: `${AZURE}12`, border: `1px solid ${AZURE}2e` }}>
-        <HeartPulse className="w-3.5 h-3.5 shrink-0" style={{ color: AZURE }} aria-hidden="true" />
-        <span className="text-[11px] font-semibold text-text">Zone 2</span>
-        <span className="text-[10px] text-muted">20–30 min · rest days</span>
-        <div className="ml-auto flex items-center gap-1.5">
+    /* The Zone lives HERE, not at the call site, because the `+` belongs in its
+       header: an action that opens the form is a property of the section, and a
+       button floating inside the content to open a form below itself was a
+       control describing its own container. */
+    <Zone label="Cardio" accent={EMERALD} action={
+      <span className="flex items-center gap-2.5">
+        {/* Zone 2, inline. This was a tinted, bordered, full-width block with a
+            heart icon, a title, a subtitle and a fraction — a card to say "1 of
+            2 done". Four dots and a count say it in the space a label already
+            occupies. */}
+        <span className="flex items-center gap-1" title={`Zone 2 · ${zone2 ?? 0}/${ZONE2_WEEKLY_TARGET} this week · 20–30 min on rest days`}>
           {Array.from({ length: ZONE2_WEEKLY_TARGET }).map((_, i) => (
-            <span key={i} className="w-2.5 h-2.5 rounded-full"
-              style={{ background: (zone2 ?? 0) > i ? AZURE : 'transparent', border: `1.5px solid ${AZURE}${(zone2 ?? 0) > i ? '' : '66'}` }} />
+            <span key={i} className="w-2 h-2 rounded-full"
+              style={{ background: (zone2 ?? 0) > i ? SAPPHIRE : 'transparent', border: `1.5px solid ${SAPPHIRE}${(zone2 ?? 0) > i ? '' : '66'}` }} />
           ))}
-          <span className="helix-num text-[11px] font-bold tabular-nums ml-0.5" style={{ color: AZURE }}>
-            {Math.min(zone2 ?? 0, ZONE2_WEEKLY_TARGET)}/{ZONE2_WEEKLY_TARGET}
-          </span>
-        </div>
-      </div>
-
+          <span className="helix-num text-[10px] font-bold tabular-nums ml-0.5" style={{ color: SAPPHIRE }}>Z2</span>
+        </span>
+        <button onClick={() => setOpen(true)} className="btn-glass min-h-[32px] px-2 text-fluid-xs"
+          aria-label="Log cardio">
+          <Plus className="w-3.5 h-3.5" />
+        </button>
+      </span>
+    }>
+      <div className="px-3 py-2 space-y-2">
       {entries.length > 0 ? (
         <div className="space-y-1.5">
           {entries.map((c) => {
@@ -168,12 +165,25 @@ export function CardioLogger({ date, hkActiveEnergy }: { date: string; hkActiveE
             )
           })}
         </div>
-      ) : !open ? (
+      ) : (
         <p className="text-[11px] text-muted">No cardio logged — tap + to add a walk or run.</p>
-      ) : null}
+      )}
 
-      {open && (
-        <div className="space-y-2.5 pt-1">
+      {hkActiveEnergy != null && entries.length > 0 && (
+        <p className="text-[10px] text-muted flex items-start gap-1 leading-snug">
+          <Info className="w-3 h-3 mt-0.5 shrink-0" aria-hidden="true" />
+          Apple Active Energy ({Math.round(hkActiveEnergy)} kcal) already includes this — logged here for detail, never added on top.
+        </p>
+      )}
+      </div>
+
+      {/* THE FORM IS A DRAWER. Inline, it pushed the day's own entries — the
+          thing you came to read — below a five-field form that is open on the
+          two minutes a week you are logging and closed the rest of the time.
+          Sheet also gives it swipe-to-dismiss, which an inline block with an X
+          in the corner cannot have. */}
+      <Sheet open={open} onClose={() => { setOpen(false) }} title="Log cardio" accent={accent}>
+        <div className="px-1 pb-4 space-y-2.5">
           {/* Kind — two glyph tiles that carry their colour through the form,
               the way an exercise card takes its muscle colour. */}
           <div className="grid grid-cols-2 gap-2">
@@ -265,14 +275,7 @@ export function CardioLogger({ date, hkActiveEnergy }: { date: string; hkActiveE
           </button>
           {add.isError && <p className="text-danger text-[11px]">{add.error instanceof Error && /relation|does not exist|schema cache/i.test(add.error.message) ? 'Run the cardio_logs paste-SQL first.' : 'Could not log.'}</p>}
         </div>
-      )}
-
-      {hkActiveEnergy != null && entries.length > 0 && (
-        <p className="text-[10px] text-muted flex items-start gap-1 leading-snug">
-          <Info className="w-3 h-3 mt-0.5 shrink-0" aria-hidden="true" />
-          Apple Active Energy ({Math.round(hkActiveEnergy)} kcal) already includes this — logged here for detail, never added on top.
-        </p>
-      )}
-    </div>
+      </Sheet>
+    </Zone>
   )
 }

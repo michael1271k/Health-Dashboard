@@ -9,6 +9,7 @@ import { useSessionIntel } from '@/lib/hooks/useSessionIntel'
 import { useSessionTrends, LOAD_STEP_KG } from '@/lib/hooks/useSessionTrends'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 import { isTimedExercise } from '@/lib/exercises/timed'
+import { Surface } from '@/components/ui/Zone'
 import { formatSet } from '@/lib/utils/setFormat'
 import { rpeColor, rpeLabel } from '@/lib/training/effort'
 import { GROUP_COLOR } from '@/lib/hooks/useMuscleAnalytics'
@@ -149,6 +150,35 @@ function SetPrBadges({ set, timed, compact = false }: { set: DetailSet; timed: b
  * Every set stays VISIBLE. Collapsing them behind a tap would be shorter still,
  * but a session report you have to expand six times is not a report.
  */
+/**
+ * The double-progression decision, compressed to a chip.
+ *
+ * `ready` means the load ceiling was cleared on two consecutive sessions of
+ * this routine day — add load. `one-more` means once more will do it. Anything
+ * else has nothing to say and must render nothing: a cue that always appears is
+ * a cue nobody reads.
+ */
+export function progressionCue(
+  t: { progression: { state: string; ceiling: number | null; suggestKg: number | null } } | undefined,
+  timed: boolean,
+  unit: string,
+): { short: string; title: string; color: string } | null {
+  const p = t?.progression
+  if (!p || (p.state !== 'ready' && p.state !== 'one-more')) return null
+  const ceil = `${p.ceiling}${timed ? 's' : ' reps'}`
+  if (p.state === 'one-more') {
+    return { short: '1 more', title: `One more clean session at ${ceil}`, color: GOLD }
+  }
+  if (timed) return { short: 'extend', title: `Cleared twice — extend past ${p.ceiling}s`, color: EMBER }
+  // No load to add on bodyweight work; the cue is reps.
+  if (p.suggestKg == null) return { short: 'extend', title: `Cleared twice — extend past ${ceil}`, color: EMBER }
+  return {
+    short: `+${LOAD_STEP_KG}${unit}`,
+    title: `Cleared twice — add ${LOAD_STEP_KG}${unit} to ${displayWeight(p.suggestKg)}${unit}`,
+    color: EMBER,
+  }
+}
+
 export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
   sessionId: string
   exercises: DetailExercise[]
@@ -167,13 +197,17 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
   )
 
   return (
-    <div className="rounded-2xl border border-white/[0.07] overflow-hidden bg-white/[0.015]">
+    /* The report is three bands now, and this is the third — so no rounded
+       bordered box of its own. It was already the densest and best-argued thing
+       on the page; all it loses is the frame. */
+    <Surface variant="band" pad="none">
       {exercises.map((ex, i) => {
         const timed = isTimedExercise(ex.name)
         const glyph = deltaGlyph(deltaFor.get(ex.exerciseId))
         const t = trends?.[ex.exerciseId]
         const rows = toRows(ex.sets)
         const accent = GROUP_COLOR[ex.muscleGroups[0]] ?? PLATINUM
+        const cue = progressionCue(t, timed, unit)
 
         return (
           <section key={ex.exerciseId} style={{ borderTop: i ? '1px solid rgba(255,255,255,0.07)' : undefined }}>
@@ -210,6 +244,19 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
                   )}
                 </span>
               </span>
+              {/* The progression cue is a property of the EXERCISE, so it reads
+                  on the exercise's own line. It used to be a bordered, tinted
+                  block below the ledger with a full sentence in it — a second
+                  paragraph-shaped object per movement, which on a five-exercise
+                  day was five more frames. The sentence survives in the title;
+                  the chip carries the decision. */}
+              {cue && (
+                <span title={cue.title}
+                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold shrink-0"
+                  style={{ color: cue.color, background: `${cue.color}1a`, border: `1px solid ${cue.color}3d` }}>
+                  <TrendingUp className="w-2.5 h-2.5" aria-hidden="true" />{cue.short}
+                </span>
+              )}
               {t ? <Sparkline points={t.points} color={accent} />
                 : <ChevronRight className="w-4 h-4 text-muted/50 shrink-0" aria-hidden="true" />}
             </button>
@@ -286,27 +333,6 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
                 )
               })}
 
-              {/* Double progression — one line, inline with the ledger. */}
-              {(t?.progression.state === 'ready' || t?.progression.state === 'one-more') && (
-                <div className="flex items-center gap-1.5 mt-1 ml-[22px] mr-3 rounded-lg px-2 py-1"
-                  style={t.progression.state === 'ready'
-                    ? { background: `${EMBER}14`, border: `1px solid ${EMBER}3d` }
-                    : { background: `${GOLD}0f`, border: `1px solid ${GOLD}2e` }}>
-                  <TrendingUp className="w-3 h-3 shrink-0" style={{ color: t.progression.state === 'ready' ? EMBER : GOLD }} aria-hidden="true" />
-                  <span className="text-[10px] font-semibold" style={{ color: t.progression.state === 'ready' ? EMBER : GOLD }}>
-                    {t.progression.state === 'ready'
-                      ? (timed
-                        ? <>Cleared twice — extend past {t.progression.ceiling}s</>
-                        // No load to add on bodyweight work; the cue is reps.
-                        : t.progression.suggestKg == null
-                        ? <>Cleared twice — extend past {t.progression.ceiling} reps</>
-                        : <>Cleared twice — add {LOAD_STEP_KG}{unit} → {displayWeight(t.progression.suggestKg)}{unit}</>)
-                      : (timed
-                        ? <>One more session at {t.progression.ceiling}s</>
-                        : <>One more clean session at {t.progression.ceiling} reps</>)}
-                  </span>
-                </div>
-              )}
             </div>
           </section>
         )
@@ -318,6 +344,6 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
         open={!!active}
         onClose={() => setActive(null)}
       />
-    </div>
+    </Surface>
   )
 }

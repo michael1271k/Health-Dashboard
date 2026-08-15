@@ -443,10 +443,9 @@ export default function DailyNexusPage() {
         <DomsTracker date={date} />
       </Zone>
 
-      {/* Cardio (walk/run) — separate ledger; never double-counts Active Energy */}
-      <Zone label="Cardio" accent={EMERALD}>
-        <CardioLogger date={date} hkActiveEnergy={log?.active_energy ?? null} />
-      </Zone>
+      {/* Cardio (walk/run) — separate ledger; never double-counts Active Energy.
+          Owns its own Zone so the `+` can live in the section header. */}
+      <CardioLogger date={date} hkActiveEnergy={log?.active_energy ?? null} />
 
       {/* ══ The drawers ══
           One at a time, by construction — `sheet` is a single value. Each is

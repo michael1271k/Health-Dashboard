@@ -185,8 +185,8 @@
     "semantic_hash": ""
   },
   "src/app/(dashboard)/nutrition/page.tsx": {
-    "mtime": 1786798474.2567732,
-    "ast_hash": "cb4974a63e5ff12023dfce41d57a0236",
+    "mtime": 1786798595.7840242,
+    "ast_hash": "dbbf768a6adf6f631a4e762f8c16c7c6",
     "semantic_hash": ""
   },
   "src/app/(dashboard)/pathfinder/page.tsx": {
@@ -245,8 +245,8 @@
     "semantic_hash": ""
   },
   "src/app/day/[date]/page.tsx": {
-    "mtime": 1786698213.9129384,
-    "ast_hash": "c45b7f70a0ad2a6e9dd3963648a4fb17",
+    "mtime": 1786798957.657446,
+    "ast_hash": "3a82a6795fdc6675039e52f89ba2ae74",
     "semantic_hash": ""
   },
   "src/app/global-error.tsx": {
@@ -270,8 +270,8 @@
     "semantic_hash": ""
   },
   "src/app/session/[id]/page.tsx": {
-    "mtime": 1786309044.5086815,
-    "ast_hash": "c6a40e8a643e5f75cb0894f24b3c756d",
+    "mtime": 1786798804.194401,
+    "ast_hash": "352711cba222e718d959cfcf131c9b47",
     "semantic_hash": ""
   },
   "src/app/session/page.tsx": {
@@ -305,8 +305,8 @@
     "semantic_hash": ""
   },
   "src/components/charts/MacroProgressChart.tsx": {
-    "mtime": 1786798163.370105,
-    "ast_hash": "fe899db3b32bb0e2170234a9ba014bf1",
+    "mtime": 1786798496.939467,
+    "ast_hash": "d7555fe22109a9b2bec4fd4633b1047c",
     "semantic_hash": ""
   },
   "src/components/charts/MuscleAnalytics.tsx": {
@@ -460,8 +460,8 @@
     "semantic_hash": ""
   },
   "src/components/day/CardioLogger.tsx": {
-    "mtime": 1785914623.964119,
-    "ast_hash": "0dc5d626bf8253a3732cb788a33b1070",
+    "mtime": 1786798965.6890469,
+    "ast_hash": "d2582cbd47fd741b49c5687e865e94ef",
     "semantic_hash": ""
   },
   "src/components/day/CompletenessArc.tsx": {
@@ -470,8 +470,8 @@
     "semantic_hash": "b9c83460809c2c7f5aa4f4da9fbc2b31"
   },
   "src/components/day/RecoveryTrackers.tsx": {
-    "mtime": 1786798091.7850645,
-    "ast_hash": "aecdbdd5412f81e4cf039c865fc01e1f",
+    "mtime": 1786798919.4104831,
+    "ast_hash": "d323383914d3b6422cd0e3b667c51aa2",
     "semantic_hash": ""
   },
   "src/components/day/ScheduleShortcut.tsx": {
@@ -630,23 +630,23 @@
     "semantic_hash": ""
   },
   "src/components/session-detail/ExerciseBreakdown.tsx": {
-    "mtime": 1786717012.3419545,
-    "ast_hash": "18d32fd1bcdb4207ffd4786c7d04a63c",
+    "mtime": 1786798843.3106146,
+    "ast_hash": "2bffd4f7e52cf453b2116dedb41fb1aa",
     "semantic_hash": ""
   },
   "src/components/session-detail/MuscleFocus.tsx": {
-    "mtime": 1786288406.317592,
-    "ast_hash": "d91610aff1f1dcf26c320d579f765787",
+    "mtime": 1786798804.1942632,
+    "ast_hash": "643ced074c2baa72eda82f3cfdc56eb3",
     "semantic_hash": ""
   },
   "src/components/session-detail/ProgressionTrail.tsx": {
-    "mtime": 1786364599.238792,
-    "ast_hash": "32a1267f90d4f1d38c68bb52ca3f612c",
+    "mtime": 1786798761.687809,
+    "ast_hash": "dbff65c5ae647b450a3b1115f84d3bb4",
     "semantic_hash": ""
   },
   "src/components/session-detail/SessionHero.tsx": {
-    "mtime": 1786691338.4319866,
-    "ast_hash": "8d2c498fda4b319735f48b98246db9cf",
+    "mtime": 1786798726.4039888,
+    "ast_hash": "b2f7d5c990f1be7f3046e779b9bb983c",
     "semantic_hash": ""
   },
   "src/components/settings/NotionSync.tsx": {
@@ -1550,8 +1550,8 @@
     "semantic_hash": ""
   },
   "src/components/session-detail/SessionHighlights.tsx": {
-    "mtime": 1785786507.3168213,
-    "ast_hash": "acc596a6525bbbe8ca44865168a7e8ae",
+    "mtime": 1786798788.6870165,
+    "ast_hash": "7d07afafe5b0106fc2effbe960f921bb",
     "semantic_hash": ""
   },
   "src/tests/session-report.test.ts": {
@@ -1895,8 +1895,8 @@
     "semantic_hash": ""
   },
   "src/tests/goal-autoheal.test.ts": {
-    "mtime": 1786365031.3555295,
-    "ast_hash": "7284e7750642873c2389c368985ac7a3",
+    "mtime": 1786798657.0170143,
+    "ast_hash": "b671d9706422ae3193552cc86ed05ce6",
     "semantic_hash": ""
   },
   "src/tests/native-assets.test.ts": {
@@ -1970,8 +1970,8 @@
     "semantic_hash": ""
   },
   "src/components/nutrition/MacroCards.tsx": {
-    "mtime": 1786692881.912206,
-    "ast_hash": "8de1b34e7949b15b6fe5171c5b97e513",
+    "mtime": 1786798570.0806777,
+    "ast_hash": "aad0281bd95d880a53773d34670b4a70",
     "semantic_hash": ""
   },
   "src/lib/utils/scoreWatermark.ts": {
@@ -2262,6 +2262,26 @@
   "src/lib/hooks/useNutritionGoals.ts": {
     "mtime": 1786798415.4768603,
     "ast_hash": "0ffeb858f50488f7255ab9e5c0fe984a",
+    "semantic_hash": ""
+  },
+  "src/tests/nutrition-goals.test.ts": {
+    "mtime": 1786798619.3668382,
+    "ast_hash": "cf00df5b50709311111a79c28ccd1454",
+    "semantic_hash": ""
+  },
+  "src/tests/progression-cue.test.ts": {
+    "mtime": 1786798868.715145,
+    "ast_hash": "90e74dd94c618011905ad267636902f6",
+    "semantic_hash": ""
+  },
+  "src/lib/reports/directive.ts": {
+    "mtime": 1786799026.214016,
+    "ast_hash": "dee15c3be30876b6bf68d423d758efba",
+    "semantic_hash": ""
+  },
+  "src/components/dashboard/WeekSoFarCard.tsx": {
+    "mtime": 1786799079.912323,
+    "ast_hash": "cb9c92c5cccf5c69366b8487cd479a50",
     "semantic_hash": ""
   }
 }

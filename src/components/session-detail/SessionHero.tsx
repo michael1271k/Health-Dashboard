@@ -9,6 +9,7 @@ import { useDeleteSession, useGlobalSessionNumber } from '@/lib/hooks/useDayVaul
 import { dayColor, STEEL, EMBER, OXIDE, GOLD, EMERALD, MACRO } from '@/lib/theme/palette'
 import { displayWeight, weightUnit, fmtVolume } from '@/lib/utils/units'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
+import { Surface, StatStrip } from '@/components/ui/Zone'
 
 /*
  * This file used to open with six local constants, four of which named a colour
@@ -24,24 +25,6 @@ import { blurOnTap } from '@/lib/utils/blurOnTap'
  * said ember. Values are otherwise unchanged — this is a naming fix, and any
  * actual repaint belongs to the palette phase.
  */
-
-/**
- * A HEADLINE metric — duration, volume, records.
- *
- * These three answer "what was this session", and they used to be the same 13px
- * as "warm-up sets" in one undifferentiated scroll strip. Given their own row at
- * display size, they read before anything else does; the value stays on the
- * neutral text colour and the LABEL carries the accent, so three big numbers
- * side by side don't turn into three competing colours.
- */
-function Headline({ value, label, color }: { value: string; label: string; color: string }) {
-  return (
-    <div className="flex flex-col gap-0.5 min-w-0 flex-1">
-      <span className="helix-num text-fluid-xl font-extrabold text-text tabular-nums leading-none truncate">{value}</span>
-      <span className="text-[9px] font-bold uppercase tracking-[0.14em]" style={{ color }}>{label}</span>
-    </div>
-  )
-}
 
 /**
  * One metric in the secondary strip — heart rate, calories, difficulty, set
@@ -92,12 +75,12 @@ export function SessionHero({ detail }: { detail: SessionDetail }) {
   const pretty = new Date(detail.date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'long' })
 
   return (
-    <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-3" style={{ borderColor: `${accent}33`, boxShadow: `0 0 24px ${accent}14` }}>
+    <Surface variant="band" accent={accent} pad="snug" className="space-y-2.5">
       {/* IDENTITY LIVES IN THE STICKY COMMAND BAR, not here.
           The page went full-bleed and grew a pinned header carrying the back
           button, the day label in its own colour, the date and the phase badge.
           Repeating all four inside a card 60 px below it read as a rendering
-          bug, so the hero keeps only what the bar has no room for: which
+          bug, so the header keeps only what the bar has no room for: which
           session this is in the global count. */}
       <div className="flex items-baseline gap-2">
         <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted">
@@ -106,29 +89,33 @@ export function SessionHero({ detail }: { detail: SessionDetail }) {
         <span className="text-fluid-xs text-muted ml-auto truncate">{pretty}</span>
       </div>
 
-      {/* TWO tiers, not one flat strip.
-          Tier 1 — what the session WAS: time, tonnage, records. Fixed three-up,
-          display size, no scroll: these must never be the thing you swipe to
-          reach. Tier 2 — how it went and what it was made of. */}
-      <div className="rounded-xl bg-white/[0.02] border border-white/[0.06] px-3 py-2.5 space-y-2.5">
-        <div className="flex items-start gap-3">
-          <Headline value={detail.durationMin != null ? `${detail.durationMin}′` : '—'} label="Duration" color={EMBER} />
-          <span className="w-px self-stretch bg-white/[0.07]" aria-hidden="true" />
-          <Headline value={fmtVolume(displayWeight(detail.volumeKg))} label={`Volume ${unit}`} color={STEEL} />
-          <span className="w-px self-stretch bg-white/[0.07]" aria-hidden="true" />
-          <Headline value={`${detail.prCount}`} label={detail.prCount === 1 ? 'Record' : 'Records'} color={GOLD} />
-        </div>
-        <div className="flex items-baseline gap-4 overflow-x-auto no-scrollbar border-t border-white/[0.06] pt-2">
-          {detail.avgBpm != null && <Stat value={`${detail.avgBpm}`} label="bpm" color={EMBER} estimated={detail.avgBpmEstimated} />}
-          {/* Calories take the app-wide calorie hue, not the record hue. */}
-          {detail.calories != null && <Stat value={`${detail.calories}`} label="kcal" color={MACRO.calories} estimated={detail.caloriesEstimated} />}
-          {/* Session difficulty as logged on the commit bar — /10 so it reads as
-              a scale rather than a count sitting beside "18 sets". */}
-          {detail.sessionRpe != null && <Stat value={`${detail.sessionRpe}/10`} label="difficulty" color={EMBER} />}
-          <Stat value={`${detail.setCount}`} label="sets" color={STEEL} />
-          {detail.failureSets > 0 && <Stat value={`${detail.failureSets}`} label="to failure" color={OXIDE} />}
-          {detail.warmupSets > 0 && <Stat value={`${detail.warmupSets}`} label="warm-up" color={EMERALD} />}
-        </div>
+      {/* ── ONE STRIP, NOT A FRAME INSIDE A FRAME ──
+          This was a rounded, bordered, tinted box nested inside the rounded,
+          bordered, tinted card that already surrounded it — chrome inside
+          chrome, which is most of what made this page feel grandiose. Inside it,
+          three `text-fluid-xl` headlines separated by `w-px` rules took a full
+          display row to say four short numbers.
+
+          A StatStrip says the same four in one scrolling line, and the second
+          line carries the composition. The hierarchy that the display size was
+          buying is now carried by ORDER — what the session was, then what it was
+          made of — which is cheaper and survives a narrow screen. */}
+      <StatStrip stats={[
+        { label: 'Duration', value: detail.durationMin != null ? `${detail.durationMin}′` : null, color: EMBER },
+        { label: `Volume ${unit}`, value: fmtVolume(displayWeight(detail.volumeKg)), color: STEEL },
+        ...(detail.sessionRpe != null
+          ? [{ label: 'Difficulty', value: `${detail.sessionRpe}/10`, color: EMBER }] : []),
+        { label: 'Sets', value: `${detail.setCount}`, color: STEEL },
+        ...(detail.prCount > 0
+          ? [{ label: detail.prCount === 1 ? 'Record' : 'Records', value: `${detail.prCount}`, color: GOLD }] : []),
+      ]} />
+
+      <div className="flex items-baseline gap-4 overflow-x-auto no-scrollbar">
+        {detail.avgBpm != null && <Stat value={`${detail.avgBpm}`} label="bpm" color={EMBER} estimated={detail.avgBpmEstimated} />}
+        {/* Calories take the app-wide calorie hue, not the record hue. */}
+        {detail.calories != null && <Stat value={`${detail.calories}`} label="kcal" color={MACRO.calories} estimated={detail.caloriesEstimated} />}
+        {detail.failureSets > 0 && <Stat value={`${detail.failureSets}`} label="to failure" color={OXIDE} />}
+        {detail.warmupSets > 0 && <Stat value={`${detail.warmupSets}`} label="warm-up" color={EMERALD} />}
       </div>
 
       {confirm ? (
@@ -157,6 +144,6 @@ export function SessionHero({ detail }: { detail: SessionDetail }) {
           </button>
         </div>
       )}
-    </section>
+    </Surface>
   )
 }

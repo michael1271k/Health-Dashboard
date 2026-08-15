@@ -5,6 +5,7 @@ import { Activity, Dumbbell } from 'lucide-react'
 import { useDoms, useLogDoms, useDomsSources, DOMS_MUSCLES, DOMS_LEVELS, type DomsMuscle } from '@/lib/hooks/useRecovery'
 import { EMBER, MUTED, HAIRLINE } from '@/lib/theme/palette'
 import { Sheet } from '@/components/ui/Sheet'
+import { ZoneRow } from '@/components/ui/Zone'
 import { Segmented } from '@/components/ui/Segmented'
 import { SorenessMap, GROUP_MUSCLES, GROUP_LABEL, type SorenessGroup } from '@/components/day/SorenessMap'
 import { SEVERITY_COLOR, SEVERITY_WORD } from '@/components/day/severity'
@@ -132,67 +133,102 @@ export function DomsTracker({ date }: { date: string }) {
   const log = useLogDoms(date)
   const [side, setSide] = useState<'front' | 'back'>('front')
   const [picking, setPicking] = useState<SorenessGroup | null>(null)
+  const [open, setOpen] = useState(false)
 
   const { sore, clear, peak } = sorenessSummary(doms)
 
   return (
-    // No card chrome: this is the content of a Nexus band, and the band's label
-    // already says Soreness. A heading here would say it twice.
-    <div className="px-3 py-2 space-y-2.5">
-      <div className="flex items-center gap-1.5 min-h-[32px]">
+    /* ── ONE ROW, NOT A PANEL ──
+       The map, the severity list and the summary all rendered inline, about
+       180px of a page whose other bands are 44. Soreness is a thing you rate on
+       the two days it exists and glance at on the other five, so the resting
+       state has to be one line: how many, which, how bad.
+
+       Nothing was built for this. The full map — 21 tappable regions, front and
+       back, with its own group picker — already existed and simply moved into a
+       Sheet, so the interaction is unchanged and only its resting height is. */
+    <>
+      <ZoneRow divide={false} asButton onClick={() => setOpen(true)}
+        title="Rate today's soreness"
+        className="min-h-[44px] flex items-center gap-2">
         {sore.length > 0 ? (
-          <span className="flex items-center gap-1 text-[10px] font-semibold" style={{ color: SEVERITY_COLOR[peak] }}>
-            <Activity className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-            {sore.length} sore · {SEVERITY_WORD[peak]}
-          </span>
+          <>
+            <Activity className="w-3.5 h-3.5 shrink-0" style={{ color: SEVERITY_COLOR[peak] }} aria-hidden="true" />
+            <span className="text-fluid-xs font-semibold shrink-0" style={{ color: SEVERITY_COLOR[peak] }}>
+              {sore.length} sore
+            </span>
+            <span className="text-[11px] text-muted truncate min-w-0">
+              {sore.map((x) => x.muscle).join(' · ')}
+            </span>
+            {/* One dot per sore muscle, in its own severity — the shape of the
+                day before any of the words are read. */}
+            <span className="flex items-center gap-1 ml-auto shrink-0" aria-hidden="true">
+              {sore.slice(0, 5).map(({ muscle, severity }) => (
+                <span key={muscle} className="w-1.5 h-1.5 rounded-full"
+                  style={{ background: SEVERITY_COLOR[severity] }} />
+              ))}
+            </span>
+          </>
         ) : (
-          <span className="text-[10px] text-muted">Tap a muscle to rate</span>
+          <>
+            <Activity className="w-3.5 h-3.5 shrink-0 text-muted" aria-hidden="true" />
+            <span className="text-fluid-xs text-text/80">No soreness logged</span>
+            <span className="text-[11px] text-muted ml-auto shrink-0">Rate</span>
+          </>
         )}
-        {/* Front / back — the one segmented control, at its qualifying size. */}
-        <Segmented<'front' | 'back'>
-          label="Body map side"
-          className="ml-auto"
-          size="sm"
-          accent={EMBER}
-          value={side}
-          onChange={setSide}
-          options={[{ value: 'front', label: 'Front' }, { value: 'back', label: 'Back' }]}
-        />
-      </div>
+      </ZoneRow>
 
-      <div className="flex items-center gap-3">
-        {/* The map. Fixed aspect so the two views can't jump height on flip. */}
-        <div className="shrink-0 w-[86px] sm:w-[104px]" style={{ aspectRatio: '120 / 260' }}>
-          <SorenessMap side={side} doms={doms} onPick={setPicking} />
-        </div>
+      {/* THE MAP IS THE INTERFACE — it just isn't the resting state. */}
+      <Sheet open={open} onClose={() => setOpen(false)} title="Soreness" accent={EMBER}>
+        <div className="px-1 pb-4 space-y-2.5">
+          <div className="flex items-center gap-1.5 min-h-[32px]">
+            <span className="text-[11px] text-muted">Tap a muscle to rate</span>
+            {/* Front / back — the one segmented control, at its qualifying size. */}
+            <Segmented<'front' | 'back'>
+              label="Body map side"
+              className="ml-auto"
+              size="sm"
+              accent={EMBER}
+              value={side}
+              onChange={setSide}
+              options={[{ value: 'front', label: 'Front' }, { value: 'back', label: 'Back' }]}
+            />
+          </div>
 
-        {/* The exact reading, worst first. */}
-        <div className="flex-1 min-w-0 space-y-1">
-          {sore.map(({ muscle, severity }) => {
-            const src = sources?.[muscle]
-            return (
-              <div key={muscle} className="flex items-center gap-2">
-                <span className="text-fluid-xs text-text w-[68px] shrink-0 truncate">{muscle}</span>
-                <SeverityBar severity={severity} />
-                <span className="text-[9px] uppercase tracking-wide w-14 shrink-0 text-right"
-                  style={{ color: SEVERITY_COLOR[severity] }}>{SEVERITY_WORD[severity]}</span>
-                {src && (
-                  <span className="hidden sm:flex items-center gap-1 text-[9px] text-muted shrink-0 max-w-[120px]">
-                    <Dumbbell className="w-2.5 h-2.5 shrink-0" style={{ color: EMBER }} aria-hidden="true" />
-                    <span className="truncate">{src.label}</span>
-                  </span>
-                )}
-              </div>
-            )
-          })}
-          {clear.length > 0 && (
-            <p className="text-[10px] text-muted leading-snug pt-0.5">
-              <span className="uppercase tracking-wide opacity-70">Clear</span>{' · '}
-              {clear.join('  ')}
-            </p>
-          )}
+          <div className="flex items-center gap-3">
+            {/* The map. Fixed aspect so the two views can't jump height on flip. */}
+            <div className="shrink-0 w-[110px] sm:w-[130px]" style={{ aspectRatio: '120 / 260' }}>
+              <SorenessMap side={side} doms={doms} onPick={setPicking} />
+            </div>
+
+            {/* The exact reading, worst first. */}
+            <div className="flex-1 min-w-0 space-y-1">
+              {sore.map(({ muscle, severity }) => {
+                const src = sources?.[muscle]
+                return (
+                  <div key={muscle} className="flex items-center gap-2">
+                    <span className="text-fluid-xs text-text w-[68px] shrink-0 truncate">{muscle}</span>
+                    <SeverityBar severity={severity} />
+                    <span className="text-[9px] uppercase tracking-wide w-14 shrink-0 text-right"
+                      style={{ color: SEVERITY_COLOR[severity] }}>{SEVERITY_WORD[severity]}</span>
+                    {src && (
+                      <span className="text-[9px] text-muted shrink-0 truncate max-w-[72px]" title={`${src.label} · ${OFFSET_LABEL[src.dayOffset] ?? ''}`}>
+                        {src.label}
+                      </span>
+                    )}
+                  </div>
+                )
+              })}
+              {clear.length > 0 && (
+                <p className="text-[10px] text-muted leading-snug pt-0.5">
+                  <span className="uppercase tracking-wide opacity-70">Clear</span>{' · '}
+                  {clear.join('  ')}
+                </p>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
+      </Sheet>
 
       {/* One drawer per broad area — the whole group rated in one place.
           A rating pass is a handful of taps you want to leave quickly, which is
@@ -203,6 +239,7 @@ export function DomsTracker({ date }: { date: string }) {
         onClose={() => setPicking(null)}
         title={picking ? GROUP_LABEL[picking] : undefined}
         accent={EMBER}
+        layer="stacked"
       >
         <p className="text-[11px] text-muted leading-snug mb-3">
           Rate 24–72h after training — that&apos;s when soreness peaks. Each muscle links to the workout that caused it.
@@ -219,6 +256,6 @@ export function DomsTracker({ date }: { date: string }) {
           ))}
         </div>
       </Sheet>
-    </div>
+    </>
   )
 }

@@ -74,13 +74,18 @@ export function MuscleAnalyticsPanel() {
     <DeferredMount minHeight={480}>
       <WidgetBoundary label="Muscle analytics" minHeight={280}>
         <div className="space-y-5">
-          {/* ── Weekly Overview — strictly this week, no timeframe control ── */}
-          <section className="space-y-3 min-w-0">
-            <h2 className="font-heading text-fluid-lg font-bold text-text">Weekly Overview</h2>
-            <WeekToDateTargets />
-          </section>
+          {/* ── ONE SECTION. ──
+              "Weekly Overview" was a full `text-fluid-lg` heading over a single
+              card, immediately above a second heading of the same weight. Two
+              headings a card apart is not a hierarchy, it is a page announcing
+              itself twice — and the thing under the first one is week-to-date
+              volume against MEV/MAV, which is the same subject as the volume
+              chart directly below it.
 
-          {/* ── Everything below shares ONE window ── */}
+              WeekToDateTargets keeps its no-timeframe semantics by sitting ABOVE
+              the ChartRange row and outside anything the control feeds: MEV/MAV
+              are weekly landmarks, and rendering them under a "1 Month" toggle
+              would imply a window they do not have. */}
           <section className="space-y-3 min-w-0">
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <h2 className="font-heading text-fluid-lg font-bold text-text">Performance</h2>
@@ -90,6 +95,7 @@ export function MuscleAnalyticsPanel() {
               <ChartRange value={days} onChange={setDays} />
             </div>
             <div className="space-y-4 min-w-0">
+              <WeekToDateTargets />
               <VolumeChart data={vData} isLoading={volumeLoading} era={era} />
               <MuscleAnalyticsSection days={days} era={era} />
               <StrengthTrends days={days} era={era} />

@@ -44,19 +44,22 @@ export function ProgressionTrail({ sessionId }: { sessionId: string }) {
   const { data: intel, isLoading } = useSessionIntel(sessionId)
   const unit = useUnitSystem()
 
-  if (isLoading) return <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 h-40 animate-pulse" aria-hidden="true" />
+  if (isLoading) return <div className="h-24 rounded-xl bg-white/[0.03] animate-pulse" aria-hidden="true" />
   if (!intel) return null
 
   const maxVol = Math.max(...(intel.volumes.map((v) => v.volumeKg) ?? [1]), 1)
 
   return (
-    <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-3" style={{ borderColor: `${EMBER}28` }}>
-      <div className="flex items-baseline justify-between gap-2 flex-wrap">
-        <h2 className="font-heading text-fluid-base font-bold text-text flex items-center gap-2">
-          <TrendingUp className="w-4 h-4" style={{ color: EMBER }} aria-hidden="true" /> Progression
-        </h2>
+    /* NO CARD OF ITS OWN. The page composes three bands and this is the middle
+       one's first block; a rounded bordered panel here would put a frame inside
+       a frame, which is what made the report feel like a stack of certificates. */
+    <div className="space-y-2.5">
+      <div className="flex items-baseline gap-2 flex-wrap">
+        <span className="text-[10px] font-bold uppercase tracking-[0.16em] flex items-center gap-1.5" style={{ color: EMBER }}>
+          <TrendingUp className="w-3 h-3" aria-hidden="true" /> Progression
+        </span>
         {intel.previousDate && (
-          <span className="text-[10px] text-muted">
+          <span className="text-[10px] text-muted ml-auto">
             vs <span className="text-text/80 font-medium">{intel.typeLabel}</span> · {shortDate(intel.previousDate)}
           </span>
         )}
@@ -67,36 +70,33 @@ export function ProgressionTrail({ sessionId }: { sessionId: string }) {
           First {intel.typeLabel || 'session'} of this era — baseline set. Progression appears next time.
         </p>
       ) : (
-        <div className="grid grid-cols-3 gap-1.5">
+        /* ── ONE ROW, NOT NINE TILES ──
+           Each metric used to own a bordered tile carrying a label, a value,
+           two stacked comparison bars and a "last …" caption — a 3x3 grid of
+           boxes roughly 220px tall to compare six numbers to six numbers. The
+           two bars said the same thing as the percentage above them, twice, in
+           a form that cannot be read precisely.
+
+           A scrolling strip of value + delta chip says it once. The direction
+           is the arrow, the size is the percentage, and the previous figure
+           moves to the title where it is available on demand rather than
+           occupying a line per metric. */
+        <div className="flex items-baseline gap-3.5 overflow-x-auto no-scrollbar">
           {intel.metrics.map((m) => {
             const b = metricBadge(m)
-            const cur = m.value ?? 0
-            const prev = m.previous ?? 0
-            const max = Math.max(cur, prev, 1)
             return (
-              <div key={m.key} className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-2.5 py-2.5">
-                <div className="flex items-center justify-between gap-1">
-                  <span className="text-[9px] uppercase tracking-wide text-muted leading-none">{m.label}</span>
+              <span key={m.key} className="inline-flex flex-col gap-0.5 shrink-0"
+                title={m.previous != null ? `last ${fmtMetric(m, m.previous)}` : 'First of this type'}>
+                <span className="inline-flex items-baseline gap-1">
+                  <span className="helix-num text-fluid-sm font-bold text-text tabular-nums leading-none">
+                    {fmtMetric(m, m.value)}
+                  </span>
                   {b
-                    ? <span className="helix-num text-[9px] font-bold inline-flex items-center gap-0.5 leading-none" style={{ color: b.color }}>{b.arrow}{b.text}</span>
+                    ? <span className="helix-num text-[9px] font-bold leading-none" style={{ color: b.color }}>{b.arrow}{b.text}</span>
                     : <span className="text-[9px] font-bold leading-none" style={{ color: GOLD }}>new</span>}
-                </div>
-                <span className="helix-num block text-fluid-base font-bold text-text mt-1 leading-none truncate">
-                  {fmtMetric(m, m.value)}
                 </span>
-                {/* This-vs-last comparison: current accent bar over a muted prev bar. */}
-                {m.previous != null && (
-                  <div className="mt-2 space-y-1">
-                    <div className="h-1 rounded-full bg-white/[0.05] overflow-hidden" aria-hidden="true">
-                      <div className="h-full rounded-full" style={{ width: `${(cur / max) * 100}%`, background: b?.color ?? EMBER }} />
-                    </div>
-                    <div className="h-1 rounded-full bg-white/[0.05] overflow-hidden" aria-hidden="true">
-                      <div className="h-full rounded-full bg-white/25" style={{ width: `${(prev / max) * 100}%` }} />
-                    </div>
-                    <span className="block text-[8px] text-muted helix-num leading-none">last {fmtMetric(m, m.previous)}</span>
-                  </div>
-                )}
-              </div>
+                <span className="text-[9px] uppercase tracking-wide leading-none text-muted">{m.label}</span>
+              </span>
             )
           })}
         </div>
@@ -108,13 +108,13 @@ export function ProgressionTrail({ sessionId }: { sessionId: string }) {
 
       {!intel.isFirstOfType && intel.volumes.length >= 2 && (
         <div>
-          <p className="text-[10px] uppercase tracking-wide text-muted mb-1.5">
-            Volume across the last {intel.volumes.length} {intel.typeLabel || 'session'}s · tap a point
+          <p className="text-[10px] uppercase tracking-wide text-muted mb-1">
+            Volume · last {intel.volumes.length} {intel.typeLabel || 'session'}s · tap a point
           </p>
           <VolumeCurve points={intel.volumes} max={maxVol} unit={unit} />
         </div>
       )}
-    </section>
+    </div>
   )
 }
 
@@ -140,7 +140,9 @@ function VolumeCurve({ points, max, unit }: {
   // Scoped — an SVG id is document-global, so a hardcoded one collides with any
   // second instance on the page.
   const volTrail = `volTrail-${useId().replace(/:/g, '')}`
-  const W = 300, H = 68, PAD_X = 6, PAD_TOP = 8, PAD_BOTTOM = 10
+  // 40 tall, not 68. This is a direction-of-travel lane under a metric row, not
+  // the section's centrepiece — the exact figures are in the caption beneath it.
+  const W = 300, H = 40, PAD_X = 6, PAD_TOP = 6, PAD_BOTTOM = 8
   const x = (i: number) => PAD_X + (i / n) * (W - PAD_X * 2)
   const y = (v: number) => PAD_TOP + (1 - v / max) * (H - PAD_TOP - PAD_BOTTOM)
 
