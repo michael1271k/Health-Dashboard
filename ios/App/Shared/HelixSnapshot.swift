@@ -297,6 +297,43 @@ extension HelixSnapshot {
     guard let iso, let date = isoFormatter.date(from: iso) else { return nil }
     return clockFormatter.string(from: date)
   }
+
+  // ── Calendar helpers ───────────────────────────────────────────────────────
+  //
+  // ── WHY WEEKDAYS ARE DERIVED AND NEVER ASSUMED ───────────────────────────────
+  // The calendar payload is a rolling window ENDING TODAY, so its first cell is
+  // whatever weekday today happens to be minus forty-one. The old grid chunked it
+  // seven at a time and printed a hardcoded "S M T W T F S" over the result, so
+  // every column was mislabelled by however far today sat from a Sunday. These
+  // read the weekday out of the DATE, which is right whatever the window start —
+  // and stays right if the server later aligns the window.
+
+  /// 0 = Sunday … 6 = Saturday, for a `YYYY-MM-DD`. Nil for an unparseable one.
+  static func weekdayIndex(_ iso: String?) -> Int? {
+    guard let iso, let date = dayFormatter.date(from: iso) else { return nil }
+    return Calendar.current.component(.weekday, from: date) - 1
+  }
+
+  /// "S" / "M" / "T" … for a `YYYY-MM-DD`. Empty string when undatable, so a
+  /// header cell holds its column rather than collapsing the grid.
+  static func weekdayInitial(_ iso: String?) -> String {
+    guard let index = weekdayIndex(iso) else { return "" }
+    return ["S", "M", "T", "W", "T", "F", "S"][max(0, min(6, index))]
+  }
+
+  /// The day of the month — the number that goes INSIDE a calendar ring, and
+  /// which the grid drew none of.
+  static func dayOfMonth(_ iso: String?) -> Int? {
+    guard let iso, let date = dayFormatter.date(from: iso) else { return nil }
+    return Calendar.current.component(.day, from: date)
+  }
+
+  /// "AUG" on the first of a month, nil otherwise. What turns six undifferentiated
+  /// rows of numbers into a calendar you can find a date in.
+  static func monthMarker(_ iso: String?) -> String? {
+    guard dayOfMonth(iso) == 1, let date = dayFormatter.date(from: iso ?? "") else { return nil }
+    return monthFormatter.string(from: date).uppercased()
+  }
 }
 
 private let dayFormatter: DateFormatter = {
@@ -309,6 +346,12 @@ private let dayFormatter: DateFormatter = {
 private let shortDayFormatter: DateFormatter = {
   let f = DateFormatter()
   f.dateFormat = "d MMM"
+  return f
+}()
+
+private let monthFormatter: DateFormatter = {
+  let f = DateFormatter()
+  f.dateFormat = "MMM"
   return f
 }()
 

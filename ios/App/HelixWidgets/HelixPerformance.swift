@@ -3,200 +3,189 @@ import SwiftUI
 
 // MARK: - Performance faces
 //
-// These are the Training family's `records` and `oneRepMax` focuses. They kept
-// their own file and their own payload slice — records and estimated 1RM are the
-// only faces that need the performance scope, and a calendar should not pay to
-// decode a ledger it never draws (see `TrainingFocus.scope`).
+// The Training family's `records` and `oneRepMax` focuses. They kept their own
+// file and their own payload slice — records and estimated 1RM are the only
+// faces that need the performance scope, and a calendar should not pay to decode
+// a ledger it never draws (see `TrainingFocus.scope`).
 //
-// The dispatching `PerformanceView` and its widget declaration are gone; the
-// faces below are now reached through `TrainingView`.
+// ── WHY THESE TWO FOCUSES USED TO BE ONE ─────────────────────────────────────
+// There was a `PerfFace` enum here too, and `PerfLedgerFace` took it — then read
+// it only to choose a deep LINK, never to choose content. So the Records Medium
+// and the 1RM Medium rendered the same four rows of week totals, and at Large
+// both routed to `RecordGridFace`. Picking "Estimated 1RM" got you the record
+// book at every size above Small.
+//
+// The enum is gone. Each focus has its own face at each size, and the numbers
+// they draw are different numbers: records are a LEDGER of things that happened
+// on a date, 1RM is a CURRENT ESTIMATE per lift with a direction of travel.
 
-/// What a performance face leads with. Internal, not an `AppEnum`: the picker
-/// shows `TrainingFocus`, and a face should not know which widget it is inside.
-enum PerfFace {
-  case records, heaviest, oneRepMax, volume
+// MARK: - Axis vocabulary
+//
+// ── WHY A 440 kg ROMANIAN DEADLIFT APPEARED IN THE RECORD BOOK ───────────────
+// `personal_records` carries four axes and the newest rows are usually `volume`
+// and `e1rm`, not `weight`. The formatter had cases for `reps` and `seconds` and
+// sent everything else to `String(format: "%.1f kg")` — so a 440 kg per-SET
+// VOLUME record and a 54.7 kg ESTIMATED 1RM both printed as bare loads. One of
+// those is a number nobody has ever lifted.
+//
+// The fix is not a longer value string; it is a second line. The value keeps its
+// unit and the AXIS gets named underneath, so the reader is told which of the
+// four kinds of record they are looking at.
 
-  var link: URL? {
-    switch self {
-    case .records, .heaviest, .oneRepMax: return HelixLink.exercises
-    case .volume:                         return HelixLink.reports
+extension HelixSnapshot.Record {
+  /// The figure with the unit its axis implies — and nothing else, so it stays
+  /// legible at 28pt.
+  var display: String {
+    switch axis {
+    case "reps":    return "\(Int(value.rounded()))"
+    case "seconds": return "\(Int(value.rounded()))s"
+    case "volume":  return "\(Int(value.rounded())) kg"
+    default:        return String(format: "%.1f kg", value)
+    }
+  }
+
+  /// Which KIND of record this is, in two words. This is the half that was
+  /// missing, and the half that stops a set volume reading as a load.
+  var axisLabel: String {
+    switch axis {
+    case "weight":  return "heaviest load"
+    case "e1rm":    return "est. 1RM"
+    case "volume":  return "set volume"
+    case "reps":    return "most reps"
+    case "seconds": return "longest hold"
+    default:        return axis
+    }
+  }
+
+  /// The axis as a glyph. Four axes and four shapes, so a ROW says which kind of
+  /// record it is without spending a word of its width on the label.
+  var axisSymbol: String {
+    switch axis {
+    case "weight": return "scalemass.fill"
+    case "reps":   return "repeat"
+    case "volume": return "square.stack.3d.up.fill"
+    case "e1rm":   return "chart.line.uptrend.xyaxis"
+    default:       return "trophy.fill"
     }
   }
 }
 
-// MARK: - C6 · Focus (Small)
+// MARK: - Records · Small
 
-struct PerfFocusFace: View {
+struct RecordFocusFace: View {
   let entry: HelixEntry
-  let focus: PerfFace
   let mono: Bool
 
   private var s: HelixSnapshot? { entry.snapshot }
-  private var topRecord: HelixSnapshot.Record? { s?.records?.first }
-  private var topLift: HelixSnapshot.E1rm? { s?.e1rm?.first }
+  private var top: HelixSnapshot.Record? { s?.records?.first }
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 5) {
+    VStack(alignment: .leading, spacing: 4) {
       HStack(spacing: 4) {
-        Caption(caption, color: mono ? .white : accent)
+        Caption("LATEST PR", color: mono ? .white : Helix.gold)
         Spacer(minLength: 0)
         if entry.isStale { StaleTag() }
       }
-      BigValue(value: hero, size: 28, color: .white)
-      if let sub {
-        Text(sub).font(.system(size: 10)).foregroundStyle(Helix.muted).lineLimit(2)
+
+      if let top {
+        BigValue(value: top.display, size: 26, color: .white)
+        Text(top.axisLabel)
+          .font(.system(size: 9, weight: .semibold))
+          .foregroundStyle(mono ? .white : Helix.gold)
+        Text(top.exercise)
+          .font(.system(size: 11, weight: .semibold))
+          .foregroundStyle(.white)
+          .lineLimit(2)
+          .minimumScaleFactor(0.8)
+        Spacer(minLength: 0)
+        HStack(spacing: 4) {
+          if let when = HelixSnapshot.relativeDay(top.achievedOn) {
+            Text(when).font(.system(size: 9, weight: .semibold)).foregroundStyle(Helix.muted)
+          }
+          Spacer(minLength: 0)
+          if let prs = s?.week.prs, prs > 0 {
+            Text("\(prs) this week")
+              .font(.system(size: 9)).foregroundStyle(Helix.muted)
+          }
+        }
+      } else {
+        // A week without a record is an ordinary week, not a failure.
+        Text("no records in the book yet")
+          .font(.system(size: 11)).foregroundStyle(Helix.muted)
+        Spacer(minLength: 0)
       }
-      Spacer(minLength: 0)
-      footer
-    }
-  }
-
-  private var accent: Color {
-    // GOLD, and only for records. Everywhere else it would stop meaning one.
-    switch focus {
-    case .records:   return Helix.gold
-    case .heaviest:  return Helix.ember
-    case .oneRepMax: return Helix.sapphire
-    case .volume:    return Helix.emerald
-    }
-  }
-
-  private var caption: String {
-    switch focus {
-    case .records:   return "LATEST PR"
-    case .heaviest:  return "HEAVIEST"
-    case .oneRepMax: return "EST 1RM"
-    case .volume:    return "WEEK VOLUME"
-    }
-  }
-
-  private var hero: String? {
-    switch focus {
-    case .records:
-      return topRecord.map { formatRecord($0) }
-    case .heaviest:
-      // The heaviest LOAD the ledger knows about, which is what "heaviest"
-      // means to a lifter — not the biggest number on any axis.
-      return (s?.records?.filter { $0.axis == "weight" }.map(\.value).max())
-        .map { String(format: "%.1f kg", $0) }
-    case .oneRepMax:
-      return topLift.map { String(format: "%.1f kg", $0.kg) }
-    case .volume:
-      return HelixSnapshot.tonnes(s?.week.volumeKg)
-    }
-  }
-
-  private var sub: String? {
-    switch focus {
-    case .records:   return topRecord?.exercise
-    case .heaviest:  return s?.records?.filter { $0.axis == "weight" }
-      .max(by: { $0.value < $1.value })?.exercise
-    case .oneRepMax: return topLift?.exercise
-    case .volume:    return s.map { "\($0.week.sessions) session\($0.week.sessions == 1 ? "" : "s")" }
-    }
-  }
-
-  @ViewBuilder private var footer: some View {
-    switch focus {
-    case .records:
-      if let when = HelixSnapshot.relativeDay(topRecord?.achievedOn) {
-        Text(when).font(.system(size: 9, weight: .semibold)).foregroundStyle(Helix.muted)
-      }
-    case .oneRepMax:
-      DeltaChip(delta: topLift?.deltaKg, decimals: 1, suffix: " kg", monochrome: mono)
-    case .volume:
-      DeltaChip(delta: volumeDeltaTonnes, decimals: 1, suffix: " t", monochrome: mono)
-    case .heaviest:
-      Rail(progress: nil, color: Helix.ember)
-    }
-  }
-
-  private var volumeDeltaTonnes: Double? {
-    guard let now = s?.week.volumeKg, let then = s?.weekPrev?.volumeKg else { return nil }
-    return (now - then) / 1000
-  }
-
-  /// "105 kg" / "17 reps" / "1 240 kg" — the axis decides the unit, because
-  /// printing a rep count with "kg" after it is the kind of wrong that looks
-  /// authoritative.
-  private func formatRecord(_ r: HelixSnapshot.Record) -> String {
-    switch r.axis {
-    case "reps":    return "\(Int(r.value.rounded())) reps"
-    case "seconds": return "\(Int(r.value.rounded()))s"
-    default:        return String(format: "%.1f kg", r.value)
     }
   }
 }
 
-// MARK: - C1 · Ledger (Medium)
+// MARK: - Records · Medium
+//
+// The ask was "add a vs last week metric", and the payload already answers it:
+// `week.prs` against `weekPrev.prs` ships in every scope. So the hero becomes
+// the COUNT with its comparison, and the ledger beside it becomes the records
+// themselves — which is what the face is called.
 
-struct PerfLedgerFace: View {
+struct RecordLedgerFace: View {
   let entry: HelixEntry
-  let focus: PerfFace
   let mono: Bool
 
   private var s: HelixSnapshot? { entry.snapshot }
-  private func tint(_ c: Color) -> Color { mono ? .white : c }
+  private var accent: Color { mono ? .white : Helix.gold }
+  private var records: [HelixSnapshot.Record] { s?.records ?? [] }
+
+  private var prDelta: Double? {
+    guard let now = s?.week.prs, let then = s?.weekPrev?.prs else { return nil }
+    return Double(now - then)
+  }
 
   var body: some View {
     HStack(spacing: 12) {
-      Link(destination: HelixLink.reports ?? HelixLink.home!) { heroColumn }
+      Link(destination: HelixLink.exercises ?? HelixLink.home!) { heroColumn }
       Hairline(vertical: true)
-      Link(destination: focus.link ?? HelixLink.home!) { ledgerColumn }
+      Link(destination: HelixLink.exercises ?? HelixLink.home!) { ledgerColumn }
     }
   }
 
   private var heroColumn: some View {
     VStack(alignment: .leading, spacing: 4) {
       HStack(spacing: 4) {
-        Caption("THIS WEEK", color: tint(Helix.emerald))
+        Caption("RECORDS", color: accent)
         if entry.isStale { StaleTag() }
       }
       Spacer(minLength: 0)
-      BigValue(value: HelixSnapshot.tonnes(s?.week.volumeKg), size: 30, color: .white)
-      HStack(spacing: 5) {
-        Text("volume").font(.system(size: 10)).foregroundStyle(Helix.muted)
-        DeltaChip(delta: volumeDeltaTonnes, decimals: 1, suffix: " t", monochrome: mono)
+      BigValue(value: s.map { "\($0.week.prs)" }, size: 32,
+               color: (s?.week.prs ?? 0) > 0 ? accent : .white)
+      Text("this week").font(.system(size: 10)).foregroundStyle(Helix.muted)
+      HStack(spacing: 4) {
+        DeltaChip(delta: prDelta, decimals: 0, monochrome: mono)
+        Text("vs last").font(.system(size: 9)).foregroundStyle(Helix.muted)
       }
-      // Sessions carry a denominator when the plan states one. "3" alone is not
-      // a fact you can act on at a glance; "3/5" is.
-      Rail(progress: sessionProgress, color: tint(Helix.emerald))
+      Spacer(minLength: 0)
     }
     .frame(maxWidth: .infinity, alignment: .leading)
   }
 
   private var ledgerColumn: some View {
-    VStack(spacing: 0) {
-      LedgerRow(label: "SESSIONS", value: sessions, color: tint(Helix.sapphire))
-      Hairline().padding(.vertical, 4)
-      LedgerRow(label: "SETS", value: s.map { "\($0.week.sets)" }, color: Helix.steel)
-      Hairline().padding(.vertical, 4)
-      LedgerRow(label: "RECORDS", value: s.map { "\($0.week.prs)" },
-                color: (s?.week.prs ?? 0) > 0 ? tint(Helix.gold) : Helix.muted)
-      Hairline().padding(.vertical, 4)
-      LedgerRow(label: "TODAY", value: s?.workout.label, color: .white)
+    VStack(alignment: .leading, spacing: 5) {
+      if records.isEmpty {
+        Text("no records in the book yet")
+          .font(.system(size: 10)).foregroundStyle(Helix.muted)
+          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+      } else {
+        ForEach(records.prefix(3)) { record in
+          RecordRow(record: record, mono: mono, showDate: false)
+        }
+        Spacer(minLength: 0)
+      }
     }
     .frame(maxWidth: .infinity)
   }
-
-  private var sessions: String? {
-    guard let week = s?.week else { return nil }
-    if let target = week.sessionTarget, target > 0 { return "\(week.sessions)/\(target)" }
-    return "\(week.sessions)"
-  }
-
-  private var sessionProgress: Double? {
-    guard let week = s?.week, let target = week.sessionTarget, target > 0 else { return nil }
-    return min(1, Double(week.sessions) / Double(target))
-  }
-
-  private var volumeDeltaTonnes: Double? {
-    guard let now = s?.week.volumeKg, let then = s?.weekPrev?.volumeKg else { return nil }
-    return (now - then) / 1000
-  }
 }
 
-// MARK: - C4 · Record Grid (Large)
+// MARK: - Records · Large
+//
+// Three registers of different kinds, which is what a Large owes over a Medium:
+// the week in figures, the records themselves, and where the tonnage went.
 
 struct RecordGridFace: View {
   let entry: HelixEntry
@@ -212,7 +201,6 @@ struct RecordGridFace: View {
       recordRegister
       Hairline()
       familyRegister
-      Spacer(minLength: 0)
     }
   }
 
@@ -224,8 +212,7 @@ struct RecordGridFace: View {
                  delta: delta(s?.week.sessions, s?.weekPrev?.sessions), decimals: 0, mono: mono)
         // `.map` binds to the UNWRAPPED `Double` here — `week` is the optional,
         // `volumeKg` is not — so `s?.week.volumeKg.map { … }` does not compile.
-        // Only a leaf that is itself optional can take `.map` mid-chain. Same
-        // trap as `WeekView.week`; unwrapped through a property instead.
+        // Only a leaf that is itself optional can take `.map` mid-chain.
         WeekCell(label: "VOLUME", value: HelixSnapshot.tonnes(s?.week.volumeKg),
                  delta: delta(tonnesThisWeek, tonnesLastWeek), decimals: 1, mono: mono)
         WeekCell(label: "SETS", value: s.map { "\($0.week.sets)" },
@@ -243,19 +230,24 @@ struct RecordGridFace: View {
       let records = s?.records ?? []
       if records.isEmpty {
         // A week without a record is an ordinary week, not a failure — and
-        // certainly not an empty gold row implying one was missed.
+        // certainly not an empty gold row implying one was missed. Given real
+        // height so the register keeps its share of the face instead of
+        // collapsing and dumping its space on whatever sits below.
         Text("no new records in the book yet")
           .font(.system(size: 10)).foregroundStyle(Helix.muted)
+          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
       } else {
-        VStack(spacing: 4) {
+        VStack(spacing: 5) {
           ForEach(records) { record in
             Link(destination: HelixLink.exercises ?? HelixLink.home!) {
               RecordRow(record: record, mono: mono)
             }
           }
         }
+        .frame(maxHeight: .infinity)
       }
     }
+    .frame(maxHeight: .infinity)
   }
 
   // ── Register 3: where the tonnage actually went ───────────────────────────
@@ -318,6 +310,125 @@ struct RecordGridFace: View {
   }
 }
 
+// MARK: - Estimated 1RM
+//
+// A different question from records, and now a different face. `e1rmTrends`
+// reports where each main lift's estimate stands TODAY and how far it has moved
+// over the trailing window — a current position with a direction, where a record
+// is a dated event. Drawing the ledger for both is what made the two focuses
+// indistinguishable.
+
+struct OneRepMaxFocusFace: View {
+  let entry: HelixEntry
+  let mono: Bool
+
+  private var s: HelixSnapshot? { entry.snapshot }
+  private var top: HelixSnapshot.E1rm? { s?.e1rm?.first }
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 5) {
+      HStack(spacing: 4) {
+        Caption("EST 1RM", color: mono ? .white : Helix.sapphire)
+        Spacer(minLength: 0)
+        if entry.isStale { StaleTag() }
+      }
+
+      if let top {
+        BigValue(value: String(format: "%.1f", top.kg), size: 28, color: .white)
+        Text("kg").font(.system(size: 10)).foregroundStyle(Helix.muted)
+        Text(top.exercise)
+          .font(.system(size: 11, weight: .semibold))
+          .foregroundStyle(.white)
+          .lineLimit(2)
+          .minimumScaleFactor(0.8)
+        Spacer(minLength: 0)
+        DeltaChip(delta: top.deltaKg, decimals: 1, suffix: " kg", monochrome: mono)
+      } else {
+        Text("log a few working sets and an\nestimate appears here")
+          .font(.system(size: 10)).foregroundStyle(Helix.muted)
+        Spacer(minLength: 0)
+      }
+    }
+  }
+}
+
+/// Medium and Large · every tracked lift as a row, with its movement.
+///
+/// The bar is RELATIVE — each lift against the heaviest of them — because there
+/// is no target 1RM in the payload to grade against, and a bar drawn against an
+/// invented ceiling would be a verdict rather than a comparison.
+struct OneRepMaxLedgerFace: View {
+  let entry: HelixEntry
+  let mono: Bool
+  let large: Bool
+
+  private var s: HelixSnapshot? { entry.snapshot }
+  private var accent: Color { mono ? .white : Helix.sapphire }
+  private var lifts: [HelixSnapshot.E1rm] { s?.e1rm ?? [] }
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: large ? 10 : 7) {
+      HStack(spacing: 5) {
+        Caption("ESTIMATED 1RM", color: accent)
+        Spacer(minLength: 0)
+        if entry.isStale { StaleTag() }
+        Text("since 28 days").font(.system(size: 8)).foregroundStyle(Helix.muted)
+      }
+
+      if lifts.isEmpty {
+        Text("log a few working sets and the main lifts appear here")
+          .font(.system(size: 10)).foregroundStyle(Helix.muted)
+          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+      } else {
+        let peak = lifts.map(\.kg).max() ?? 1
+        VStack(spacing: large ? 9 : 6) {
+          ForEach(lifts) { lift in
+            LiftRow(lift: lift, peak: peak, color: accent, mono: mono, large: large)
+          }
+        }
+        .frame(maxHeight: .infinity)
+      }
+
+      if large {
+        Hairline()
+        HStack(spacing: 0) {
+          Stat(value: HelixSnapshot.tonnes(s?.week.volumeKg), label: "WEEK VOLUME", color: .white)
+          Stat(value: s.map { "\($0.week.sets)" }, label: "SETS", color: .white)
+          Stat(value: s.map { "\($0.week.prs)" }, label: "RECORDS",
+               color: (s?.week.prs ?? 0) > 0 ? (mono ? .white : Helix.gold) : Helix.muted)
+        }
+      }
+    }
+  }
+}
+
+private struct LiftRow: View {
+  let lift: HelixSnapshot.E1rm
+  let peak: Double
+  let color: Color
+  let mono: Bool
+  let large: Bool
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 3) {
+      HStack(alignment: .firstTextBaseline, spacing: 6) {
+        Text(lift.exercise)
+          .font(.system(size: large ? 12 : 11, weight: .semibold))
+          .foregroundStyle(.white)
+          .lineLimit(1)
+        Spacer(minLength: 4)
+        Text(String(format: "%.1f", lift.kg))
+          .font(.system(size: large ? 14 : 12, weight: .bold, design: .rounded))
+          .monospacedDigit()
+          .foregroundStyle(color)
+        Text("kg").font(.system(size: 9)).foregroundStyle(Helix.muted)
+        DeltaChip(delta: lift.deltaKg, decimals: 1, suffix: " kg", monochrome: mono)
+      }
+      Rail(progress: peak > 0 ? min(1, lift.kg / peak) : nil, color: color, height: 3)
+    }
+  }
+}
+
 private struct WeekCell: View {
   let label: String
   let value: String?
@@ -339,44 +450,32 @@ private struct WeekCell: View {
 private struct RecordRow: View {
   let record: HelixSnapshot.Record
   let mono: Bool
+  var showDate = true
 
   var body: some View {
     HStack(spacing: 8) {
-      Image(systemName: axisSymbol)
+      Image(systemName: record.axisSymbol)
         .font(.system(size: 9))
         .foregroundStyle(mono ? .white : Helix.gold)
         .frame(width: 12)
-      Text(record.exercise)
-        .font(.system(size: 11, weight: .semibold)).foregroundStyle(.white)
-        .lineLimit(1)
+      VStack(alignment: .leading, spacing: 0) {
+        Text(record.exercise)
+          .font(.system(size: 11, weight: .semibold)).foregroundStyle(.white)
+          .lineLimit(1)
+        // The axis, named. Without it a 440 kg per-set VOLUME record and a 105 kg
+        // heaviest LOAD are the same sentence.
+        Text(record.axisLabel)
+          .font(.system(size: 8)).foregroundStyle(Helix.muted)
+          .lineLimit(1)
+      }
       Spacer(minLength: 4)
-      Text(valueText)
+      Text(record.display)
         .font(.system(size: 12, weight: .bold, design: .rounded)).monospacedDigit()
         .foregroundStyle(mono ? .white : Helix.gold)
-      if let when = HelixSnapshot.relativeDay(record.achievedOn) {
+      if showDate, let when = HelixSnapshot.relativeDay(record.achievedOn) {
         Text(when).font(.system(size: 9)).foregroundStyle(Helix.muted)
           .frame(width: 52, alignment: .trailing)
       }
-    }
-  }
-
-  /// The axis, as a glyph. Four axes and four shapes, so the ROW says which kind
-  /// of record it is without spending a word of the width on the label.
-  private var axisSymbol: String {
-    switch record.axis {
-    case "weight": return "scalemass.fill"
-    case "reps":   return "repeat"
-    case "volume": return "square.stack.3d.up.fill"
-    case "e1rm":   return "chart.line.uptrend.xyaxis"
-    default:       return "trophy.fill"
-    }
-  }
-
-  private var valueText: String {
-    switch record.axis {
-    case "reps":    return "\(Int(record.value.rounded())) reps"
-    case "seconds": return "\(Int(record.value.rounded()))s"
-    default:        return String(format: "%.1f kg", record.value)
     }
   }
 }

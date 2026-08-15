@@ -125,8 +125,8 @@
     "semantic_hash": ""
   },
   "ios/App/Shared/HelixSnapshot.swift": {
-    "mtime": 1786799304.0581884,
-    "ast_hash": "0f481f463984a7d55f6d9299abf10a87",
+    "mtime": 1786803984.5397806,
+    "ast_hash": "66eb637c3fc08842bdd6c75e35b8867c",
     "semantic_hash": ""
   },
   "netlify/functions/keep-alive.mts": {
@@ -405,8 +405,8 @@
     "semantic_hash": ""
   },
   "src/components/dashboard/BrandHeader.tsx": {
-    "mtime": 1786217676.7216752,
-    "ast_hash": "87efea77964fff07dd2936aed6d945b1",
+    "mtime": 1786804320.53683,
+    "ast_hash": "59fea3d2beea5ab4647321961457ba08",
     "semantic_hash": ""
   },
   "src/components/dashboard/InsightCoach.tsx": {
@@ -415,9 +415,9 @@
     "semantic_hash": ""
   },
   "src/components/dashboard/ReadinessOrb.tsx": {
-    "mtime": 1784897420.2251298,
-    "ast_hash": "c661a657c3b5cccdabdb6c0eac20c2d8",
-    "semantic_hash": "c661a657c3b5cccdabdb6c0eac20c2d8"
+    "mtime": 1786804365.5578842,
+    "ast_hash": "f2a44ba3860440d8dff242c53e5f02ee",
+    "semantic_hash": ""
   },
   "src/components/dashboard/ScoreCard.tsx": {
     "mtime": 1786288248.5144644,
@@ -2160,8 +2160,8 @@
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixPrimitives.swift": {
-    "mtime": 1786729313.158311,
-    "ast_hash": "43d500f8fe7d87172ae7dcf5b30f2bb2",
+    "mtime": 1786803736.039996,
+    "ast_hash": "f47f3f39dd4bde72a82eb05e402957dc",
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixProvider.swift": {
@@ -2175,13 +2175,13 @@
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixLifestyle.swift": {
-    "mtime": 1786799708.0686338,
-    "ast_hash": "0f2b304726da4210126a6eb25c2bd701",
+    "mtime": 1786803939.71222,
+    "ast_hash": "1a062d38234991e67be2a3ccd070eb48",
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixPerformance.swift": {
-    "mtime": 1786799509.5650086,
-    "ast_hash": "fce43359f3cdcfac69c20801bf9d5e47",
+    "mtime": 1786804239.3996444,
+    "ast_hash": "5d6b5ec5f2a9312e1805c599b493d5af",
     "semantic_hash": ""
   },
   "src/lib/native/deepLink.ts": {
@@ -2290,8 +2290,8 @@
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixTraining.swift": {
-    "mtime": 1786799600.5041888,
-    "ast_hash": "c24420381c61a9554e7fe5dd85717adc",
+    "mtime": 1786804281.1657758,
+    "ast_hash": "759467d8dc4e4613cb6dbbbb1d34be4b",
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixLock.swift": {
@@ -2300,8 +2300,18 @@
     "semantic_hash": ""
   },
   "src/tests/widget-link-parity.test.ts": {
-    "mtime": 1786799752.8598728,
-    "ast_hash": "816dd79fe87ee968d23279c77cda9a31",
+    "mtime": 1786799780.2638407,
+    "ast_hash": "e9fb150ea4f467c9f7e0cd3b94c7d108",
+    "semantic_hash": ""
+  },
+  "src/tests/widget-focus-parity.test.ts": {
+    "mtime": 1786804478.440562,
+    "ast_hash": "21b4789167b65c2b5491d3059597ec27",
+    "semantic_hash": ""
+  },
+  "src/tests/program-day.test.ts": {
+    "mtime": 1786804454.5705295,
+    "ast_hash": "231c7fef911c3705472ab17026b91389",
     "semantic_hash": ""
   }
 }

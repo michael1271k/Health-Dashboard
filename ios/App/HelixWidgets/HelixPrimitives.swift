@@ -16,6 +16,27 @@ import WidgetKit
 // They were all `private`, which is why the whole extension was one 482-line
 // file: a second file could not use any of them. They are internal now.
 
+/// The three Home Screen sizes, collapsed out of `WidgetFamily`.
+///
+/// ── WHY THIS EXISTS AND WHY IT IS NOT AN OPTIONAL ────────────────────────────
+/// Face dispatchers switch on `(focus, size)` and are exhaustive with NO
+/// `default:`. `WidgetFamily` carries a dozen cases including every accessory
+/// one, so switching on it directly FORCES a `default:` — and a `default:` in a
+/// dispatcher is exactly how six focuses came to draw another focus's face
+/// without anything failing to compile. Three cases means a missing combination
+/// is a build error.
+enum HelixSize {
+  case small, medium, large
+
+  init(_ family: WidgetFamily) {
+    switch family {
+    case .systemSmall:                    self = .small
+    case .systemLarge, .systemExtraLarge: self = .large
+    default:                              self = .medium
+    }
+  }
+}
+
 struct Dash: View {
   var size: CGFloat = 20
   var body: some View {
@@ -265,16 +286,41 @@ struct Sparkline: View {
   let points: [Double]
   var baseline: Double?
   var color: Color = Helix.ember
+  /// Read against zero. True for quantities that HAVE a meaningful zero —
+  /// tonnage, water, calories — and false for bodyweight, where zero-basing an
+  /// 78-to-80 kg fortnight flattens the only signal in it.
+  var zeroBased = false
   /// Nil draws nothing at all rather than a flat line at zero.
   private var usable: [Double]? { points.count >= 2 ? points : nil }
+
+  /// ── WHY THE BAND IS NEVER EXACTLY min…max ──────────────────────────────────
+  /// A band of exactly the series' own range pins the lowest reading to the
+  /// floor and the highest to the ceiling on EVERY chart, whatever the real
+  /// variation. Eight weeks between 12.1 t and 14.2 t then draws the same cliff
+  /// as eight weeks between 2 t and 20 t: the line always starts at the bottom
+  /// and ends at the top, and its SHAPE stops carrying information.
+  ///
+  /// A flat series is the other end of the same problem — a zero span divides by
+  /// nothing — so it gets an arbitrary band and sits in the middle of it, which
+  /// is the honest picture of "this did not move".
+  static func band(lo: Double, hi: Double, zeroBased: Bool) -> (lo: Double, hi: Double) {
+    let floor = zeroBased ? Swift.min(0, lo) : lo
+    let span = hi - floor
+    guard span > 0.0001 else { return (floor - 1, hi + 1) }
+    let pad = span * 0.12
+    // No pad BELOW a zero base: a bar dipping under its own axis is a bar
+    // claiming a negative quantity.
+    return (zeroBased ? floor : floor - pad, hi + pad)
+  }
 
   var body: some View {
     GeometryReader { geo in
       if let values = usable {
         // The band includes the baseline so the dotted line can never fall
         // outside the drawn area — which is exactly when it matters most.
-        let lo = min(values.min() ?? 0, baseline ?? .greatestFiniteMagnitude)
-        let hi = max(values.max() ?? 1, baseline ?? -.greatestFiniteMagnitude)
+        let rawLo = min(values.min() ?? 0, baseline ?? .greatestFiniteMagnitude)
+        let rawHi = max(values.max() ?? 1, baseline ?? -.greatestFiniteMagnitude)
+        let (lo, hi) = Self.band(lo: rawLo, hi: rawHi, zeroBased: zeroBased)
         let span = max(hi - lo, 0.0001)
         let y = { (v: Double) in geo.size.height * (1 - CGFloat((v - lo) / span)) }
         let x = { (i: Int) in geo.size.width * CGFloat(i) / CGFloat(max(values.count - 1, 1)) }

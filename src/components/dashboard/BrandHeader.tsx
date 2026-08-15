@@ -18,8 +18,22 @@ const PLAN_CHIP_COLOR: Record<string, string> = {
   ppl: '#79808C',    // legacy — muted
 }
 
-/** Days elapsed since the program start (2026-07-15), inclusive — the streak. */
-export function programStreak(): number {
+/**
+ * Days elapsed since the program start (2026-07-15), inclusive.
+ *
+ * ── THIS IS NOT A STREAK, AND IT USED TO SAY IT WAS ──────────────────────────
+ * It was called `programStreak` and rendered as "Day Streak", which made it look
+ * like the same quantity the widget shows — and the two disagreed by ten,
+ * because they are not remotely the same measurement. This one counts CALENDAR
+ * days since the cut began and can never go down. `streakFrom` in
+ * `src/lib/widget/derive.ts` counts consecutive SCHEDULED training days actually
+ * trained, and resets when one is missed.
+ *
+ * Both are worth having. Neither may be labelled with the other's word. If the
+ * dashboard ever wants the real streak, it reads `streakFrom` — which is pure,
+ * server-safe and already tested — rather than growing a third implementation.
+ */
+export function programDay(): number {
   const start = Date.parse(`${HELIX_CUT_START}T00:00:00Z`)
   const today = Date.parse(`${logicalTodayISO()}T00:00:00Z`)
   return Math.max(1, Math.floor((today - start) / 86_400_000) + 1)
