@@ -65,6 +65,107 @@ export function meanBetween(
   return Math.round((sum / inWindow.length) * 100) / 100
 }
 
+// ── The training calendar ────────────────────────────────────────────────────
+
+/** A session, as the calendar needs it. */
+export interface CalendarSession { date: string; volumeKg: number | null }
+
+/**
+ * Scheduled-vs-logged for a run of days, oldest first.
+ *
+ * `scheduledFor` is injected rather than imported so this stays pure: the route
+ * hands it a closure over `serverScheduleContext`, which is the only correct
+ * server-side plan resolver — reading the schedule here would mean reading
+ * `localStorage`, which on a server silently answers with the default plan and
+ * ignores every swap.
+ *
+ * A day appears whether or not it was trained. The empty ones are the content:
+ * a calendar that only showed sessions would be a list.
+ */
+export function calendarDays(
+  days: readonly string[],
+  sessions: readonly CalendarSession[],
+  scheduledFor: (dateISO: string) => { dayKey: string | null; scheduled: boolean },
+): Array<{ d: string; dayKey: string | null; scheduled: boolean; logged: boolean; volumeKg: number | null }> {
+  // Two sessions on one date SUM. A day with sessions but no recorded volume
+  // stays null rather than becoming 0 — "trained, tonnage unknown" and "trained
+  // nothing" are different days, and the ring is drawn from `logged` anyway.
+  const logged = new Set<string>()
+  const volume = new Map<string, number>()
+  for (const s of sessions) {
+    logged.add(s.date)
+    if (typeof s.volumeKg === 'number' && Number.isFinite(s.volumeKg)) {
+      volume.set(s.date, (volume.get(s.date) ?? 0) + s.volumeKg)
+    }
+  }
+  return days.map((d) => {
+    const { dayKey, scheduled } = scheduledFor(d)
+    return { d, dayKey, scheduled, logged: logged.has(d), volumeKg: volume.get(d) ?? null }
+  })
+}
+
+/**
+ * The streak, counted over SCHEDULED days only.
+ *
+ * ── WHY REST DAYS CANNOT BREAK IT ────────────────────────────────────────────
+ * Helix-5 rests Wednesday and Saturday. A streak that counted raw consecutive
+ * calendar days would reset twice a week by design, which is a counter measuring
+ * the plan rather than the athlete — it could never exceed 3.
+ *
+ * So the walk skips unscheduled days entirely and breaks only on a scheduled day
+ * with no session. Today is a special case: a training day that has not been
+ * done YET is not a miss, it is a day still in progress, so the walk starts at
+ * the most recent scheduled day that is either logged or in the past.
+ *
+ * `best` is the longest such run anywhere in the window, which is why it can
+ * exceed `current` and why both are worth showing.
+ */
+export function streakFrom(
+  days: ReadonlyArray<{ d: string; scheduled: boolean; logged: boolean }>,
+  todayISO: string,
+): { current: number; best: number } {
+  const scheduled = days.filter((x) => x.scheduled).sort((a, b) => (a.d < b.d ? -1 : 1))
+
+  let best = 0, run = 0
+  for (const x of scheduled) {
+    run = x.logged ? run + 1 : 0
+    if (run > best) best = run
+  }
+
+  // Walk backwards. Today is skipped when it is scheduled but not yet logged —
+  // an unfinished day is not a broken one.
+  let current = 0
+  for (let i = scheduled.length - 1; i >= 0; i--) {
+    const x = scheduled[i]
+    if (x.d === todayISO && !x.logged) continue
+    if (x.d > todayISO) continue          // a scheduled future day owes nothing
+    if (!x.logged) break
+    current++
+  }
+  return { current, best }
+}
+
+/**
+ * Weekly tonnage, oldest first, `d` set to each week's START date.
+ *
+ * A week with sessions but no recorded volume contributes 0 rather than being
+ * dropped: the gap in a VOLUME series means "trained light", and leaving it out
+ * would let the sparkline draw a straight line over a week that happened.
+ * A week with no sessions at all is omitted, because that is a real gap.
+ */
+export function weeklyVolume(
+  sessions: ReadonlyArray<{ date: string; volumeKg: number | null }>,
+  weekStartOfDate: (dateISO: string) => string,
+  limit: number,
+): TrendPoint[] {
+  const byWeek = new Map<string, number>()
+  for (const s of sessions) {
+    const w = weekStartOfDate(s.date)
+    byWeek.set(w, (byWeek.get(w) ?? 0) + (s.volumeKg ?? 0))
+  }
+  return trendPoints([...byWeek].map(([d, v]) => ({ date: d, value: v })), limit)
+}
+
 // ── Records ──────────────────────────────────────────────────────────────────
 
 /** One row of the `personal_records` ledger, as the route selects it. */

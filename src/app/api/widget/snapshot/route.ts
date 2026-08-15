@@ -16,8 +16,10 @@ import {
 } from '@/lib/widget/snapshot'
 import {
   trendPoints, meanBetween, topRecords, e1rmTrends, volumeByFamily, shiftISO,
+  calendarDays, streakFrom, weeklyVolume,
   type SetRow,
 } from '@/lib/widget/derive'
+import { computeReadiness } from '@/lib/scoring/readiness'
 
 /**
  * GET /api/widget/snapshot — the iOS Widget + Watch data source.
@@ -130,8 +132,13 @@ export async function GET(req: Request) {
 
   const url = new URL(req.url)
   const scope: WidgetScope = parseScope(url.searchParams.get('scope'))
-  const wantsLifestyle = scope !== 'performance'
-  const wantsPerformance = scope !== 'lifestyle'
+  // One flag per FAMILY. `full` wants everything; every other scope wants its
+  // own quarter and nothing else, because an extension is measured in hundreds
+  // of milliseconds and a hard memory cap.
+  const wantsLifestyle = scope === 'lifestyle' || scope === 'full'
+  const wantsPerformance = scope === 'performance' || scope === 'full'
+  const wantsTraining = scope === 'training' || scope === 'full'
+  const wantsBody = scope === 'body' || scope === 'full'
 
   const tz = url.searchParams.get('tz') || (goals.timezone as string | null) || HOME_TZ
   const date = logicalTodayInTZ(tz)
@@ -140,9 +147,21 @@ export async function GET(req: Request) {
   // `deviceWeekStartDay()`, which has no localStorage here and therefore always
   // answered Sunday — so a Monday-start preference made the widget's "this week"
   // disagree with the same figure inside the app, by up to a whole session.
-  const weekStart = weekStartOf(date, weekStartDayFromEndDay(goals.week_end_day as number | null))
+  const weekStartDay = weekStartDayFromEndDay(goals.week_end_day as number | null)
+  const weekStart = weekStartOf(date, weekStartDay)
   const prevWeekStart = isoAddDays(weekStart, -7)
   const weekEndExclusive = `${isoAddDays(weekStart, 7)}T00:00:00Z`
+  // ── ONE session read, not four ─────────────────────────────────────────────
+  // The calendar wants six weeks, the volume sparkline wants eight, the totals
+  // want two and "today" wants one — all from `workout_sessions`, all nested
+  // inside the widest. Eight weeks of this athlete's sessions is ~40 rows, so
+  // the wide read is cheaper than the extra round trips, and every derived
+  // figure is then guaranteed to agree with the others.
+  const VOLUME_WEEKS = 8
+  const CALENDAR_DAYS = 42
+  const historyStart = isoAddDays(weekStartOf(date, weekStartDay), -7 * (VOLUME_WEEKS - 1))
+  const sessionsFrom = historyStart < isoAddDays(date, -(CALENDAR_DAYS - 1))
+    ? historyStart : isoAddDays(date, -(CALENDAR_DAYS - 1))
 
   // ── The plan the user is ACTUALLY running ──────────────────────────────────
   // This used to be `scheduleDayFor(date)` / `isRestDayFor(date)` /
@@ -161,7 +180,9 @@ export async function GET(req: Request) {
   await refreshTodayScore(supabase, userId, date, tz, !isTrainingDayIn(schedule, date))
 
   const [score, log, metrics, sleep, nutri, waterRows, weightRows, weekRows] = await Promise.all([
-    soft(supabase.from('daily_scores').select('score, battery_pct').eq('user_id', userId).eq('date', date).maybeSingle()),
+    soft(supabase.from('daily_scores')
+      .select('score, battery_pct, sleep_score, nutrition_score, activity_score, workout_score, recovery_score')
+      .eq('user_id', userId).eq('date', date).maybeSingle()),
     soft(supabase.from('daily_logs').select('steps, distance_m, active_energy, water_ml, sleep_minutes')
       .eq('user_id', userId).eq('date', date).maybeSingle()),
     soft(supabase.from('daily_metrics').select('steps, active_cal').eq('user_id', userId).eq('date', date).maybeSingle()),
@@ -175,14 +196,22 @@ export async function GET(req: Request) {
     soft(supabase.from('water_intake').select('amount_ml').eq('user_id', userId).eq('date', date)),
     // Enough weigh-ins for a fortnight trace AND last week's mean baseline —
     // the route already fetched eight and threw six of them away.
-    soft(supabase.from('body_composition').select('date, weight_kg').eq('user_id', userId)
-      .order('date', { ascending: false }).limit(30)),
-    // Two weeks of sessions: this one for the totals, last one for the deltas.
-    soft(supabase.from('workout_sessions').select('started_at, total_volume_kg, set_count, pr_count, day_key')
+    soft(supabase.from('body_composition')
+      .select('date, weight_kg, body_fat_pct, muscle_mass_kg, skeletal_muscle_mass_kg, fat_free_mass_kg')
       .eq('user_id', userId)
-      .gte('started_at', `${prevWeekStart}T00:00:00Z`).lt('started_at', weekEndExclusive)),
+      .order('date', { ascending: false }).limit(30)),
+    // The one session read — see `sessionsFrom`. Totals, deltas, the calendar,
+    // the volume sparkline and today's row all come out of this.
+    soft(supabase.from('workout_sessions')
+      .select('started_at, total_volume_kg, set_count, pr_count, day_key, duration_min, session_rpe')
+      .eq('user_id', userId)
+      .gte('started_at', `${sessionsFrom}T00:00:00Z`).lt('started_at', weekEndExclusive)),
   ]) as [
-    { score: number | null; battery_pct: number | null } | null,
+    {
+      score: number | null; battery_pct: number | null
+      sleep_score: number | null; nutrition_score: number | null; activity_score: number | null
+      workout_score: number | null; recovery_score: number | null
+    } | null,
     Record<string, number | null> | null,
     { steps: number | null; active_cal: number | null } | null,
     {
@@ -192,14 +221,24 @@ export async function GET(req: Request) {
     } | null,
     Record<string, number | null> | null,
     Array<{ amount_ml: number }> | null,
-    Array<{ date: string; weight_kg: number | null }> | null,
-    Array<{ started_at: string; total_volume_kg: number | null; set_count: number | null; pr_count: number | null; day_key: string | null }> | null,
+    Array<{
+      date: string; weight_kg: number | null; body_fat_pct: number | null
+      muscle_mass_kg: number | null; skeletal_muscle_mass_kg: number | null
+      fat_free_mass_kg: number | null
+    }> | null,
+    Array<{
+      started_at: string; total_volume_kg: number | null; set_count: number | null
+      pr_count: number | null; day_key: string | null
+      duration_min: number | null; session_rpe: number | null
+    }> | null,
   ]
 
   const water = waterRows ?? []
   const allSessions = weekRows ?? []
-  const weekSessions = allSessions.filter((s) => s.started_at.slice(0, 10) >= weekStart)
-  const prevSessions = allSessions.filter((s) => s.started_at.slice(0, 10) < weekStart)
+  const dayOf = (s: { started_at: string }) => s.started_at.slice(0, 10)
+  const weekSessions = allSessions.filter((s) => dayOf(s) >= weekStart)
+  const prevSessions = allSessions.filter((s) => dayOf(s) >= prevWeekStart && dayOf(s) < weekStart)
+  const todaySessions = allSessions.filter((s) => dayOf(s) === date)
 
   // Weigh-ins, de-duplicated by VALUE so a re-synced identical reading doesn't
   // read as a fresh weigh-in (same rule as the dashboard's Body card).
@@ -213,6 +252,32 @@ export async function GET(req: Request) {
 
   const day = scheduleDayIn(schedule, date)
   const num = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null)
+
+  // ── The calendar, and the streak that falls out of it ──────────────────────
+  // Built for every scope because `streak` is cheap once the days exist, and
+  // `calendar` is the only expensive half (42 entries) — that one is trimmed.
+  const calendarWindow = Array.from({ length: CALENDAR_DAYS }, (_, i) =>
+    isoAddDays(date, -(CALENDAR_DAYS - 1 - i)))
+  const calendar = calendarDays(
+    calendarWindow,
+    allSessions.map((s) => ({ date: dayOf(s), volumeKg: s.total_volume_kg })),
+    // The PLAN's answer for that date, swaps and layout included — never a
+    // weekday guess, which a swap breaks.
+    (d) => {
+      const sd = scheduleDayIn(schedule, d)
+      return { dayKey: sd === 'rest' ? null : (sd.dayKey ?? null), scheduled: isTrainingDayIn(schedule, d) }
+    },
+  )
+
+  // Today's session, if one has landed. Two sessions in a day are summed for
+  // the tonnage and counts; RPE and duration take the longer one, because
+  // averaging two efforts describes neither.
+  const longest = todaySessions.reduce<typeof todaySessions[number] | null>(
+    (best, s) => (best == null || (s.duration_min ?? 0) > (best.duration_min ?? 0) ? s : best), null)
+  const sum = (pick: (s: typeof todaySessions[number]) => number | null): number | null => {
+    const vals = todaySessions.map(pick).filter((v): v is number => typeof v === 'number' && Number.isFinite(v))
+    return vals.length ? vals.reduce((a, b) => a + b, 0) : null
+  }
 
   const snapshot: WidgetSnapshot = {
     date,
@@ -229,6 +294,12 @@ export async function GET(req: Request) {
       score: sleep?.sleep_score ?? null,
       startTime: sleep?.start_time ?? null,
       endTime: sleep?.end_time ?? null,
+      // The user's own target. The Small sleep face read a hardcoded 480, so it
+      // graded every night against 8 hours regardless of what Settings said.
+      goalMin: (() => {
+        const h = num(goals.sleep_goal_hours)
+        return h == null ? null : Math.round(h * 60)
+      })(),
     },
     weight: {
       kg: latest?.kg ?? null,
@@ -238,7 +309,11 @@ export async function GET(req: Request) {
       // The baseline the fortnight is read against. Null — never zero — when
       // last week holds no weigh-in at all.
       prevWeekMeanKg: meanBetween(weightSeries, prevWeekStart, weekStart),
-      ...(wantsLifestyle ? { trend: weightSeries } : {}),
+      // Body is where the weight face lives now; lifestyle keeps it because the
+      // Lifestyle composite still ships with a weight focus until the Swift
+      // families land, and a widget already on a home screen must not go blank
+      // between the deploy and the app update.
+      ...(wantsLifestyle || wantsBody ? { trend: weightSeries } : {}),
     },
     macros: {
       kcal: nutri?.calories ?? null,
@@ -276,6 +351,16 @@ export async function GET(req: Request) {
       sessionTarget: sessionTargetIn(schedule),
     },
     weekPrev: totalsOf(prevSessions),
+    // Null until something has been logged. `workout` above says what the PLAN
+    // asks for; this says what happened, and the two are different questions.
+    today: todaySessions.length ? {
+      durationMin: longest?.duration_min ?? null,
+      sessionRpe: longest?.session_rpe ?? null,
+      volumeKg: sum((s) => s.total_volume_kg),
+      setCount: sum((s) => s.set_count),
+      prCount: sum((s) => s.pr_count),
+    } : null,
+    streak: streakFrom(calendar, date),
   }
 
   if (wantsLifestyle) {
@@ -283,6 +368,44 @@ export async function GET(req: Request) {
   }
   if (wantsPerformance) {
     Object.assign(snapshot, await performanceSlice(supabase, userId, date, weekStart, weekEndExclusive))
+  }
+  if (wantsTraining) {
+    snapshot.calendar = calendar
+    snapshot.volumeTrend = weeklyVolume(
+      allSessions.map((s) => ({ date: dayOf(s), volumeKg: s.total_volume_kg })),
+      (d) => weekStartOf(d, weekStartDay),
+      VOLUME_WEEKS,
+    )
+  }
+  if (wantsBody) {
+    const newest = <K extends keyof NonNullable<typeof weightRows>[number]>(field: K) =>
+      num((weightRows ?? []).find((r) => num(r[field]) != null)?.[field])
+    snapshot.body = {
+      fatPct: newest('body_fat_pct'),
+      muscleKg: newest('muscle_mass_kg'),
+      smmKg: newest('skeletal_muscle_mass_kg'),
+      ffmKg: newest('fat_free_mass_kg'),
+      // Read FIELD BY FIELD, not row by row: a day can carry a weight and a body
+      // fat but no muscle mass, so the newest muscle figure often lives on an
+      // older row than the newest weight (the same rule `CARRY_FIELDS` follows).
+      fatTrend: trendPoints(
+        (weightRows ?? []).map((r) => ({ date: r.date, value: r.body_fat_pct })), 14),
+    }
+    snapshot.scores = {
+      sleep: num(score?.sleep_score), nutrition: num(score?.nutrition_score),
+      activity: num(score?.activity_score), workout: num(score?.workout_score),
+      recovery: num(score?.recovery_score),
+    }
+    // `computeReadiness` needs a battery to weigh against; with no score row at
+    // all there is nothing to grade, and a verdict invented from a default would
+    // be exactly the confident wrong answer the payload contract forbids.
+    if (snapshot.battery != null) {
+      const { level, label, color, reason } = computeReadiness(
+        { sleepScore: snapshot.scores.sleep, recoveryScore: snapshot.scores.recovery },
+        snapshot.battery,
+      )
+      snapshot.readiness = { level, label, color, reason }
+    }
   }
 
   // Best-effort usage stamp — never let it fail the request.

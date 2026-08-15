@@ -11,6 +11,7 @@ const base: WidgetSnapshot = {
   sleep: {
     minutes: 555, deepMin: 94, remMin: 122, coreMin: 301, awakeMin: 38, score: 81,
     startTime: '2026-07-23T21:48:00.000Z', endTime: '2026-07-24T07:03:00.000Z',
+    goalMin: 480,
   },
   weight: {
     kg: 64.9, deltaKg: -0.3, measuredOn: '2026-07-22', targetKg: 62, prevWeekMeanKg: 65.4,
@@ -26,6 +27,9 @@ const base: WidgetSnapshot = {
     trend: [{ d: '2026-07-23', v: 9120 }, { d: '2026-07-24', v: 8412 }],
   },
   workout: { label: 'Legs & Core B', dayKey: 'legs_b', logged: false, isRestDay: false },
+  // The plan says Legs B is due; nothing has been logged yet, so there is no
+  // session to describe. `workout` and `today` are different questions.
+  today: null,
   week: { sessions: 4, volumeKg: 38400, prs: 2, sets: 96, sessionTarget: 5 },
   weekPrev: { sessions: 5, volumeKg: 41200, prs: 1, sets: 104 },
   records: [{ exercise: 'Hack Squat', axis: 'weight', value: 105, reps: 8, achievedOn: '2026-07-22' }],

@@ -21,18 +21,25 @@
 /**
  * Which slice of the payload a caller wants.
  *
- * The two composite widgets read disjoint halves, and an extension is measured
- * in hundreds of milliseconds and a hard memory cap. `full` is the default so
- * the Watch and the five original widget kinds are untouched by the split.
+ * One scope per widget FAMILY, because an extension is measured in hundreds of
+ * milliseconds and a hard memory cap, and no family reads more than its own
+ * quarter. `full` is the default so the Watch is untouched by the split.
  *
- * The scope only ever trims the EXPENSIVE extras — trends, ledgers, per-family
- * rollups. Every field the original contract promised ships in every scope,
- * because a shape that changes with a query parameter is a shape the Swift
- * decoder cannot rely on.
+ *   · `lifestyle`   — Fuel: macros, water, steps, battery
+ *   · `training`    — Training: today's session, the month calendar, volume, streak
+ *   · `performance` — records, 1RM movement, the week's muscle-family split
+ *   · `body`        — weight, composition, sleep stages, the score breakdown
+ *
+ * The scope only ever trims the EXPENSIVE extras — trends, ledgers, calendars,
+ * per-family rollups. Every field the original contract promised ships in every
+ * scope, because a shape that changes with a query parameter is a shape the
+ * Swift decoder cannot rely on.
  */
-export type WidgetScope = 'lifestyle' | 'performance' | 'full'
+export type WidgetScope = 'lifestyle' | 'performance' | 'training' | 'body' | 'full'
 
-export const WIDGET_SCOPES: readonly WidgetScope[] = ['lifestyle', 'performance', 'full']
+export const WIDGET_SCOPES: readonly WidgetScope[] = [
+  'lifestyle', 'performance', 'training', 'body', 'full',
+]
 
 export function parseScope(raw: string | null | undefined): WidgetScope {
   return WIDGET_SCOPES.includes(raw as WidgetScope) ? (raw as WidgetScope) : 'full'
@@ -65,6 +72,81 @@ export interface WidgetFamilyVolume { family: string; kg: number; sets: number }
 /** Training totals for a seven-day window. */
 export interface WidgetWeekTotals { sessions: number; volumeKg: number; prs: number; sets: number }
 
+/**
+ * TODAY's session, once it exists.
+ *
+ * Distinct from `workout`, which describes what the PLAN says. This describes
+ * what happened, and is null until something has. The route already read this
+ * table for the week aggregates and simply threw the per-day row away.
+ */
+export interface WidgetToday {
+  durationMin: number | null
+  sessionRpe: number | null
+  volumeKg: number | null
+  setCount: number | null
+  prCount: number | null
+}
+
+/**
+ * One day of the training calendar.
+ *
+ * `dayKey` is the PLAN's key for that date — resolved through
+ * `serverScheduleContext`, so a swap moves it — and it is what the widget tints
+ * the ring with (`DAY_COLOR`). `logged` is whether a session actually landed.
+ * The two disagreeing is the whole point of the surface.
+ */
+export interface WidgetCalendarDay {
+  d: string
+  dayKey: string | null
+  /** False on a scheduled rest day. */
+  scheduled: boolean
+  logged: boolean
+  volumeKg: number | null
+}
+
+/**
+ * Consistency, in two numbers.
+ *
+ * `current` counts backwards from today over SCHEDULED training days only, so
+ * Wednesday and Saturday rest never breaks a streak — a streak that a rest day
+ * could end would be measuring the calendar rather than the athlete. `best` is
+ * the longest such run on record.
+ */
+export interface WidgetStreak { current: number; best: number }
+
+/** The five sub-scores behind the composite, each 0–100. */
+export interface WidgetScores {
+  sleep: number | null
+  nutrition: number | null
+  activity: number | null
+  workout: number | null
+  recovery: number | null
+}
+
+/** Today's readiness verdict, as `computeReadiness` grades it. */
+export interface WidgetReadiness {
+  level: string
+  label: string
+  color: string
+  reason: string
+}
+
+/**
+ * Body composition beyond the scale weight.
+ *
+ * Three DIFFERENT measurements, never interchangeable: `smmKg` is skeletal
+ * muscle (~27 kg, entered by hand), `muscleKg` is lean soft tissue (~50 kg,
+ * labelled as such), `ffmKg` is fat-free mass (~53 kg, derived).
+ */
+export interface WidgetBody {
+  fatPct: number | null
+  muscleKg: number | null
+  smmKg: number | null
+  ffmKg: number | null
+  /** Up to 14 body-fat readings, oldest first. Gaps are left as gaps. */
+  fatTrend?: TrendPoint[]
+}
+
 export interface WidgetSnapshot {
   /** The user's logical date this snapshot describes. */
   date: string
@@ -89,6 +171,8 @@ export interface WidgetSnapshot {
     /** Bedtime and wake, ISO. `start_time` is the PREVIOUS evening. */
     startTime: string | null
     endTime: string | null
+    /** The user's own target, in minutes. The Small sleep face hardcoded 480. */
+    goalMin: number | null
   }
 
   weight: {
@@ -127,6 +211,29 @@ export interface WidgetSnapshot {
   records?: WidgetRecord[]
   e1rm?: WidgetE1rm[]
   volumeByFamily?: WidgetFamilyVolume[]
+
+  /**
+   * Today's logged session, or null on a day with none.
+   *
+   * Cheap enough to ship in every scope: it comes from `workout_sessions` rows
+   * the route already fetches for the week totals.
+   */
+  today: WidgetToday | null
+
+  /** Consistency. Cheap — derived from the calendar the training scope builds. */
+  streak?: WidgetStreak
+
+  /** Training scope — six weeks of scheduled-vs-logged days, oldest first. */
+  calendar?: WidgetCalendarDay[]
+  /** Training scope — eight weekly tonnage totals, oldest first, `d` = week start. */
+  volumeTrend?: TrendPoint[]
+
+  /** Body scope — composition beyond the scale weight. */
+  body?: WidgetBody
+  /** Body scope — the five sub-scores behind `score`. */
+  scores?: WidgetScores
+  /** Body scope — today's readiness verdict. */
+  readiness?: WidgetReadiness
 }
 
 /** kcal left against the goal — the small widget's headline. Null if unknown. */
