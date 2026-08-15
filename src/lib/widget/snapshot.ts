@@ -64,6 +64,14 @@ export interface WidgetE1rm {
   kg: number
   /** Null when the lift has no session old enough to compare against. */
   deltaKg: number | null
+  /**
+   * The per-DAY best estimate over the trailing window, oldest first.
+   *
+   * A number and an arrow say the lift moved; the series says whether it climbed
+   * steadily or spiked once and gave it back, which is the difference between
+   * progressing and having a good day.
+   */
+  trend?: TrendPoint[]
 }
 
 /** A muscle family's share of the training week. `sets` is fractional by design. */
@@ -98,6 +106,8 @@ export interface WidgetToday {
 export interface WidgetCalendarDay {
   d: string
   dayKey: string | null
+  /** The plan's own name for the day — "Legs & Core B". Null on a rest day. */
+  label: string | null
   /** False on a scheduled rest day. */
   scheduled: boolean
   logged: boolean
@@ -143,6 +153,15 @@ export interface WidgetBody {
   muscleKg: number | null
   smmKg: number | null
   ffmKg: number | null
+  /**
+   * Movement since the previous DIFFERENT reading of that field — not since the
+   * previous row. `body_composition` carries values forward, so row-to-row would
+   * report 0.0 on every day between weigh-ins and call it "held steady".
+   */
+  fatPctDelta: number | null
+  muscleKgDelta: number | null
+  smmKgDelta: number | null
+  ffmKgDelta: number | null
   /** Up to 14 body-fat readings, oldest first. Gaps are left as gaps. */
   fatTrend?: TrendPoint[]
 }
@@ -173,6 +192,14 @@ export interface WidgetSnapshot {
     endTime: string | null
     /** The user's own target, in minutes. The Small sleep face hardcoded 480. */
     goalMin: number | null
+    /**
+     * Seven nights of duration, oldest first, bucketed by `nightOf`.
+     *
+     * Body scope only. One night is a reading; seven is the thing you can act
+     * on — and it is what fills the Sleep Large, which was otherwise the Medium
+     * with an inch of obsidian under it.
+     */
+    trend?: TrendPoint[]
   }
 
   weight: {
@@ -191,8 +218,14 @@ export interface WidgetSnapshot {
     proteinG: number | null; proteinGoalG: number | null
     carbsG: number | null; carbsGoalG: number | null
     fatG: number | null; fatGoalG: number | null
+    /** Seven days of intake, oldest first. Lifestyle scope. */
+    kcalTrend?: TrendPoint[]
   }
-  water: { ml: number | null; goalMl: number | null }
+  water: {
+    ml: number | null; goalMl: number | null
+    /** Seven days of intake, oldest first. Lifestyle scope. */
+    trend?: TrendPoint[]
+  }
   steps: {
     count: number | null; goal: number | null; distanceM: number | null; activeKcal: number | null
     /** Seven days, oldest first. */

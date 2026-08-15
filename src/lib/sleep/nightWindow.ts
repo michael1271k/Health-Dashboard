@@ -34,6 +34,31 @@ export function nightWindow(dateISO: string): NightWindow {
   return { from: `${prevDayISO(dateISO)}T12:00:00Z`, to: `${dateISO}T12:00:00Z` }
 }
 
+/** Next calendar day (UTC-safe, date-only). */
+export function nextDayISO(dateISO: string): string {
+  const d = new Date(`${dateISO}T00:00:00Z`)
+  d.setUTCDate(d.getUTCDate() + 1)
+  return d.toISOString().slice(0, 10)
+}
+
+/**
+ * The inverse of `nightWindow`: which date's night a bedtime belongs to.
+ *
+ * Needed the moment anything reads MORE than one night at a time — a seven-night
+ * trend gets back a flat list of sessions and has to bucket them, and doing that
+ * by `start_time.slice(0, 10)` would file every pre-midnight bedtime under the
+ * evening it began rather than the morning it ended. Half the nights would land
+ * on the wrong day, and only the half you went to bed early on.
+ *
+ * Derived from the window rather than guessed alongside it: [prev 12:00Z, D
+ * 12:00Z) means anything at or after noon belongs to TOMORROW's night.
+ */
+export function nightOf(startTime: string): string {
+  const day = startTime.slice(0, 10)
+  const hour = Number(startTime.slice(11, 13))
+  return Number.isFinite(hour) && hour >= 12 ? nextDayISO(day) : day
+}
+
 /**
  * Where to stamp a sleep session that has no reported bed time (legacy Shortcut
  * pushes and manual web entries carry only a duration). It MUST sit inside

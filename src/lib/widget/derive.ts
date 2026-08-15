@@ -65,6 +65,57 @@ export function meanBetween(
   return Math.round((sum / inWindow.length) * 100) / 100
 }
 
+/**
+ * A dated series where several rows can share a date, rolled up per day.
+ *
+ * `sum` is right for anything logged in pieces — water arrives one glass at a
+ * time — and `max` for anything where the rows are competing readings of one
+ * event, which is what two sleep sessions on one night are.
+ *
+ * Days with no rows are OMITTED, not zeroed, on the same rule as `trendPoints`:
+ * a day you forgot to log and a day you drank nothing are different days, and a
+ * bar chart is the surface least able to tell them apart once one is drawn as
+ * the other.
+ */
+export function dailySeries(
+  rows: ReadonlyArray<{ date: string; value: number | null | undefined }>,
+  opts: { limit: number; combine?: 'sum' | 'max' },
+): TrendPoint[] {
+  const combine = opts.combine ?? 'sum'
+  const byDay = new Map<string, number>()
+  for (const r of rows) {
+    if (typeof r.value !== 'number' || !Number.isFinite(r.value)) continue
+    const held = byDay.get(r.date)
+    byDay.set(r.date, held == null ? r.value : combine === 'max' ? Math.max(held, r.value) : held + r.value)
+  }
+  return trendPoints([...byDay].map(([date, value]) => ({ date, value })), opts.limit)
+}
+
+/**
+ * The newest reading of a field and how far it moved from the one before it.
+ *
+ * ── WHY THE PREVIOUS READING IS NOT SIMPLY THE SECOND ROW ────────────────────
+ * `body_composition` carries values forward, so the three most recent rows very
+ * often hold the same body-fat percentage — the scale was only stepped on once.
+ * Taking row two would report a delta of exactly 0.0 every day between weigh-ins,
+ * which reads as "held steady" and is really "not measured since". The previous
+ * reading is the newest one that actually DIFFERS, on the same 0.05 rule the
+ * weight card already uses, and a field with only one distinct value has no
+ * delta at all rather than a zero.
+ */
+export function latestDelta(
+  series: ReadonlyArray<TrendPoint>,
+): { value: number | null; delta: number | null } {
+  // `series` is oldest-first everywhere else in this file, so newest is the end.
+  const latest = series[series.length - 1]
+  if (!latest) return { value: null, delta: null }
+  const previous = [...series].reverse().find((p) => Math.abs(p.v - latest.v) >= 0.05)
+  return {
+    value: latest.v,
+    delta: previous ? Math.round((latest.v - previous.v) * 100) / 100 : null,
+  }
+}
+
 // ── The training calendar ────────────────────────────────────────────────────
 
 /** A session, as the calendar needs it. */
@@ -85,8 +136,11 @@ export interface CalendarSession { date: string; volumeKg: number | null }
 export function calendarDays(
   days: readonly string[],
   sessions: readonly CalendarSession[],
-  scheduledFor: (dateISO: string) => { dayKey: string | null; scheduled: boolean },
-): Array<{ d: string; dayKey: string | null; scheduled: boolean; logged: boolean; volumeKg: number | null }> {
+  scheduledFor: (dateISO: string) => { dayKey: string | null; scheduled: boolean; label?: string | null },
+): Array<{
+  d: string; dayKey: string | null; label: string | null
+  scheduled: boolean; logged: boolean; volumeKg: number | null
+}> {
   // Two sessions on one date SUM. A day with sessions but no recorded volume
   // stays null rather than becoming 0 — "trained, tonnage unknown" and "trained
   // nothing" are different days, and the ring is drawn from `logged` anyway.
@@ -99,8 +153,11 @@ export function calendarDays(
     }
   }
   return days.map((d) => {
-    const { dayKey, scheduled } = scheduledFor(d)
-    return { d, dayKey, scheduled, logged: logged.has(d), volumeKg: volume.get(d) ?? null }
+    const { dayKey, scheduled, label } = scheduledFor(d)
+    // The plan's own words for that day — "Legs & Core B", not "legs_b". The
+    // colour alone cannot name a session, and any face listing days as ROWS
+    // rather than as dots needs the name.
+    return { d, dayKey, label: label ?? null, scheduled, logged: logged.has(d), volumeKg: volume.get(d) ?? null }
   })
 }
 
@@ -274,6 +331,10 @@ export function e1rmTrends(
       exercise,
       kg: round1(current),
       deltaKg: baseline == null ? null : round1(current - baseline),
+      // The per-day series behind the number. A chip says the lift moved; the
+      // shape says whether it climbed or spiked once and gave it back — and
+      // those two lifts want opposite decisions next session.
+      trend: sorted.map(([d, v]) => ({ d, v: round1(v) })),
       lastDay,
     })
   }
@@ -283,7 +344,7 @@ export function e1rmTrends(
     // what you are best at. Heaviest breaks a same-day tie.
     .sort((a, b) => (a.lastDay === b.lastDay ? b.kg - a.kg : a.lastDay < b.lastDay ? 1 : -1))
     .slice(0, opts.limit ?? 3)
-    .map(({ exercise, kg, deltaKg }) => ({ exercise, kg, deltaKg }))
+    .map(({ exercise, kg, deltaKg, trend }) => ({ exercise, kg, deltaKg, trend }))
 }
 
 // ── Volume by muscle family ──────────────────────────────────────────────────

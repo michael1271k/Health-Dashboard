@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getServerSupabaseClient } from '@/lib/supabase/server'
-import { nightWindow } from '@/lib/sleep/nightWindow'
+import { nightWindow, nightOf } from '@/lib/sleep/nightWindow'
 import { weekStartOf, isoAddDays, weekStartDayFromEndDay } from '@/lib/utils/week'
 import { logicalTodayInTZ } from '@/lib/utils/day'
 import { scheduleDayIn, isTrainingDayIn, sessionTargetIn } from '@/lib/programs'
@@ -16,7 +16,7 @@ import {
 } from '@/lib/widget/snapshot'
 import {
   trendPoints, meanBetween, topRecords, e1rmTrends, volumeByFamily, shiftISO,
-  calendarDays, streakFrom, weeklyVolume,
+  calendarDays, streakFrom, weeklyVolume, dailySeries, latestDelta,
   type SetRow,
 } from '@/lib/widget/derive'
 import { computeReadiness } from '@/lib/scoring/readiness'
@@ -159,6 +159,13 @@ export async function GET(req: Request) {
   // figure is then guaranteed to agree with the others.
   const VOLUME_WEEKS = 8
   const CALENDAR_DAYS = 42
+  // ── One week of the daily logs, not one day ────────────────────────────────
+  // Water, calories and sleep were each read for TODAY alone, which is why the
+  // Fuel and Sleep Large faces had nothing to put in a third register and filled
+  // with air instead. Seven days of three small tables is a handful of rows and
+  // no extra round trips — the queries already existed, they were just narrow.
+  const TREND_DAYS = 7
+  const trendFrom = isoAddDays(date, -(TREND_DAYS - 1))
   const historyStart = isoAddDays(weekStartOf(date, weekStartDay), -7 * (VOLUME_WEEKS - 1))
   const sessionsFrom = historyStart < isoAddDays(date, -(CALENDAR_DAYS - 1))
     ? historyStart : isoAddDays(date, -(CALENDAR_DAYS - 1))
@@ -179,21 +186,24 @@ export async function GET(req: Request) {
   // never a finalized past day, and skipped entirely when the row is fresh.
   await refreshTodayScore(supabase, userId, date, tz, !isTrainingDayIn(schedule, date))
 
-  const [score, log, metrics, sleep, nutri, waterRows, weightRows, weekRows] = await Promise.all([
+  const [score, log, metrics, sleepRows, nutriRows, waterRows, weightRows, weekRows] = await Promise.all([
     soft(supabase.from('daily_scores')
       .select('score, battery_pct, sleep_score, nutrition_score, activity_score, workout_score, recovery_score')
       .eq('user_id', userId).eq('date', date).maybeSingle()),
     soft(supabase.from('daily_logs').select('steps, distance_m, active_energy, water_ml, sleep_minutes')
       .eq('user_id', userId).eq('date', date).maybeSingle()),
     soft(supabase.from('daily_metrics').select('steps, active_cal').eq('user_id', userId).eq('date', date).maybeSingle()),
+    // Seven nights, not one. Tonight's row is picked out of these below, so the
+    // detail face and the trend cannot disagree about what last night was.
     soft(supabase.from('sleep_sessions')
       .select('duration_min, deep_min, rem_min, core_min, awake_min, sleep_score, start_time, end_time')
       .eq('user_id', userId)
-      .gte('start_time', night.from).lt('start_time', night.to)
-      .order('duration_min', { ascending: false }).limit(1).maybeSingle()),
-    soft(supabase.from('nutrition_entries').select('calories, protein_g, carbs_g, fat_g')
-      .eq('user_id', userId).eq('date', date).eq('meal_type', 'daily').maybeSingle()),
-    soft(supabase.from('water_intake').select('amount_ml').eq('user_id', userId).eq('date', date)),
+      .gte('start_time', nightWindow(trendFrom).from).lt('start_time', night.to)
+      .order('duration_min', { ascending: false })),
+    soft(supabase.from('nutrition_entries').select('date, calories, protein_g, carbs_g, fat_g')
+      .eq('user_id', userId).gte('date', trendFrom).lte('date', date).eq('meal_type', 'daily')),
+    soft(supabase.from('water_intake').select('date, amount_ml')
+      .eq('user_id', userId).gte('date', trendFrom).lte('date', date)),
     // Enough weigh-ins for a fortnight trace AND last week's mean baseline —
     // the route already fetched eight and threw six of them away.
     soft(supabase.from('body_composition')
@@ -214,13 +224,16 @@ export async function GET(req: Request) {
     } | null,
     Record<string, number | null> | null,
     { steps: number | null; active_cal: number | null } | null,
-    {
+    Array<{
       duration_min: number | null; deep_min: number | null; rem_min: number | null
       core_min: number | null; awake_min: number | null; sleep_score: number | null
       start_time: string | null; end_time: string | null
-    } | null,
-    Record<string, number | null> | null,
-    Array<{ amount_ml: number }> | null,
+    }> | null,
+    Array<{
+      date: string; calories: number | null
+      protein_g: number | null; carbs_g: number | null; fat_g: number | null
+    }> | null,
+    Array<{ date: string; amount_ml: number }> | null,
     Array<{
       date: string; weight_kg: number | null; body_fat_pct: number | null
       muscle_mass_kg: number | null; skeletal_muscle_mass_kg: number | null
@@ -233,7 +246,18 @@ export async function GET(req: Request) {
     }> | null,
   ]
 
-  const water = waterRows ?? []
+  // ── Today, picked out of the week ──────────────────────────────────────────
+  // These three reads are now seven days wide, so "today" has to be selected
+  // rather than assumed. Selecting it from the SAME rows the trend is built from
+  // is the point: a detail face and its own sparkline cannot disagree about what
+  // last night was if they came out of one query.
+  const water = (waterRows ?? []).filter((r) => r.date === date)
+  const nutri = (nutriRows ?? []).find((r) => r.date === date) ?? null
+  // The query is ordered by duration descending, so the first row inside
+  // tonight's window is the longest — which is the one the detail face wants.
+  const sleep = (sleepRows ?? []).find(
+    (r) => r.start_time != null && nightOf(r.start_time) === date) ?? null
+
   const allSessions = weekRows ?? []
   const dayOf = (s: { started_at: string }) => s.started_at.slice(0, 10)
   const weekSessions = allSessions.filter((s) => dayOf(s) >= weekStart)
@@ -265,7 +289,13 @@ export async function GET(req: Request) {
     // weekday guess, which a swap breaks.
     (d) => {
       const sd = scheduleDayIn(schedule, d)
-      return { dayKey: sd === 'rest' ? null : (sd.dayKey ?? null), scheduled: isTrainingDayIn(schedule, d) }
+      return {
+        dayKey: sd === 'rest' ? null : (sd.dayKey ?? null),
+        // The plan's own words. Already resolved here and previously discarded,
+        // so any face that lists days as ROWS had a colour and no name for them.
+        label: sd === 'rest' ? null : sd.label,
+        scheduled: isTrainingDayIn(schedule, d),
+      }
     },
   )
 
@@ -365,32 +395,68 @@ export async function GET(req: Request) {
 
   if (wantsLifestyle) {
     snapshot.steps.trend = await stepsTrend(supabase, userId, date)
+    // Both off rows already fetched — the queries went from one day wide to
+    // seven, not from one query to three.
+    snapshot.water.trend = dailySeries(
+      (waterRows ?? []).map((r) => ({ date: r.date, value: r.amount_ml })),
+      { limit: TREND_DAYS })
+    snapshot.macros.kcalTrend = dailySeries(
+      (nutriRows ?? []).map((r) => ({ date: r.date, value: r.calories })),
+      { limit: TREND_DAYS })
   }
   if (wantsPerformance) {
     Object.assign(snapshot, await performanceSlice(supabase, userId, date, weekStart, weekEndExclusive))
   }
-  if (wantsTraining) {
-    snapshot.calendar = calendar
+  // ── volumeTrend belongs to BOTH training and performance ───────────────────
+  // The Volume faces need the per-family split for their third register, and
+  // that lives in the performance slice — so `TrainingFocus.volume` fetches the
+  // performance scope. It still needs the eight-week trend, which is derived
+  // from `allSessions` and therefore free in every scope; withholding it would
+  // have cost a `workout_sets` read to avoid nothing.
+  if (wantsTraining || wantsPerformance) {
     snapshot.volumeTrend = weeklyVolume(
       allSessions.map((s) => ({ date: dayOf(s), volumeKg: s.total_volume_kg })),
       (d) => weekStartOf(d, weekStartDay),
       VOLUME_WEEKS,
     )
   }
+  if (wantsTraining) {
+    snapshot.calendar = calendar
+  }
   if (wantsBody) {
-    const newest = <K extends keyof NonNullable<typeof weightRows>[number]>(field: K) =>
-      num((weightRows ?? []).find((r) => num(r[field]) != null)?.[field])
+    // Read FIELD BY FIELD, not row by row: a day can carry a weight and a body
+    // fat but no muscle mass, so the newest muscle figure often lives on an
+    // older row than the newest weight (the same rule `CARRY_FIELDS` follows).
+    // `latestDelta` then skips back to the previous DIFFERING reading, because
+    // this table carries values forward and row-to-row would report 0.0 on every
+    // day between weigh-ins and call it "held steady".
+    const field = <K extends keyof NonNullable<typeof weightRows>[number]>(key: K) =>
+      latestDelta(trendPoints((weightRows ?? []).map((r) => ({ date: r.date, value: num(r[key]) })), 30))
+
+    // Three DIFFERENT measurements, never interchangeable: skeletal muscle
+    // (~27 kg, entered by hand), lean soft tissue (~50 kg, and it must be
+    // LABELLED as such), fat-free mass (~53 kg, derived).
+    const fat = field('body_fat_pct')
+    const lean = field('muscle_mass_kg')
+    const skeletal = field('skeletal_muscle_mass_kg')
+    const ffm = field('fat_free_mass_kg')
+
     snapshot.body = {
-      fatPct: newest('body_fat_pct'),
-      muscleKg: newest('muscle_mass_kg'),
-      smmKg: newest('skeletal_muscle_mass_kg'),
-      ffmKg: newest('fat_free_mass_kg'),
-      // Read FIELD BY FIELD, not row by row: a day can carry a weight and a body
-      // fat but no muscle mass, so the newest muscle figure often lives on an
-      // older row than the newest weight (the same rule `CARRY_FIELDS` follows).
+      fatPct: fat.value, fatPctDelta: fat.delta,
+      muscleKg: lean.value, muscleKgDelta: lean.delta,
+      smmKg: skeletal.value, smmKgDelta: skeletal.delta,
+      ffmKg: ffm.value, ffmKgDelta: ffm.delta,
       fatTrend: trendPoints(
         (weightRows ?? []).map((r) => ({ date: r.date, value: r.body_fat_pct })), 14),
     }
+    // Seven nights, bucketed by `nightOf` — never by `start_time.slice(0, 10)`,
+    // which files a pre-midnight bedtime under the evening it began instead of
+    // the morning it ended.
+    snapshot.sleep.trend = dailySeries(
+      (sleepRows ?? [])
+        .filter((r) => r.start_time != null)
+        .map((r) => ({ date: nightOf(r.start_time as string), value: r.duration_min })),
+      { limit: TREND_DAYS, combine: 'max' })
     snapshot.scores = {
       sleep: num(score?.sleep_score), nutrition: num(score?.nutrition_score),
       activity: num(score?.activity_score), workout: num(score?.workout_score),
@@ -536,8 +602,11 @@ async function performanceSlice(
   const weekSets = sets.filter((s) => s.day >= weekStart && `${s.day}T00:00:00Z` < weekEndExclusive)
 
   return {
-    records: topRecords(ledger ?? [], 3),
-    e1rm: e1rmTrends(sets, { asOf: date, limit: 3 }),
+    // Six and five, up from three each. The Large faces list them as rows and
+    // three rows over a Large's height was the "dead space at the bottom" — the
+    // ledger already fetches forty, so the extra entries cost nothing but bytes.
+    records: topRecords(ledger ?? [], 6),
+    e1rm: e1rmTrends(sets, { asOf: date, limit: 5 }),
     volumeByFamily: volumeByFamily(weekSets),
   }
 }

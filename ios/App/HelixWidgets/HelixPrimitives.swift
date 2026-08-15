@@ -355,6 +355,182 @@ struct Sparkline: View {
   }
 }
 
+/// The Sleep Rainbow as a semicircular gauge.
+///
+/// ── WHY AN ARC RATHER THAN A SECOND BAR ──────────────────────────────────────
+/// `DepthBar` answers "what was the night made of" and answers it well, but it
+/// cannot answer "was it enough" — a stacked bar is always full width, so a
+/// five-hour night and a nine-hour one draw the identical rectangle. The Small
+/// sleep face therefore had nothing to show but text.
+///
+/// The arc carries BOTH. Its sweep is duration against the goal, so a short night
+/// is visibly a short arc; the fill is then sub-divided by stage, so the same
+/// shape still says how much of it was deep. One gauge, two questions, and the
+/// stage ramp survives intact.
+///
+/// Over-sleeping caps the sweep at full rather than wrapping. A gauge that laps
+/// itself reads as a short night.
+struct DepthArc: View {
+  /// `(stage, minutes)` — a stage with no reading is absent, not zero.
+  let segments: [(Helix.SleepStage, Int)]
+  let minutes: Int?
+  let goalMin: Int?
+  var lineWidth: CGFloat = 10
+  var monochrome = false
+
+  private var staged: Int { segments.reduce(0) { $0 + $1.1 } }
+  /// How much of the semicircle is filled. Nil draws the empty track only —
+  /// which is the honest picture of a night with no reading at all.
+  private var fill: Double? {
+    guard let minutes, minutes > 0 else { return nil }
+    let goal = Double(goalMin ?? 480)
+    guard goal > 0 else { return nil }
+    return min(1, Double(minutes) / goal)
+  }
+
+  var body: some View {
+    GeometryReader { geo in
+      // The drawn circle is a square whose TOP HALF is the arc; the label sits in
+      // the bowl beneath it. Height is 0.72 of that square because nothing is
+      // ever drawn in the bottom quarter, and reserving it is how a gauge ends up
+      // with an inch of nothing under it.
+      let d = min(geo.size.width, geo.size.height / 0.72)
+      ZStack {
+        Circle()
+          .trim(from: 0, to: 0.5)
+          .stroke(.white.opacity(0.08), style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+          .rotationEffect(.degrees(180))
+
+        if let fill {
+          // Each stage takes its SHARE OF THE FILL, so the segments always add up
+          // to exactly the arc that was drawn — never to more of it than the night
+          // actually earned.
+          ForEach(Array(arcSpans(fill: fill).enumerated()), id: \.offset) { _, span in
+            Circle()
+              .trim(from: 0.5 * span.from, to: 0.5 * span.to)
+              .stroke(span.color, style: StrokeStyle(lineWidth: lineWidth, lineCap: .butt))
+              .rotationEffect(.degrees(180))
+          }
+        }
+
+        VStack(spacing: 1) {
+          BigValue(value: HelixSnapshot.formatSleep(minutes) == "—" ? nil
+                   : HelixSnapshot.formatSleep(minutes), size: d * 0.17, color: .white)
+          if let goalMin {
+            Text("goal \(HelixSnapshot.formatSleep(goalMin))")
+              .font(.system(size: max(7, d * 0.075)))
+              .foregroundStyle(Helix.muted)
+          }
+        }
+        .offset(y: d * 0.12)
+      }
+      .frame(width: d, height: d)
+      .frame(width: geo.size.width, height: geo.size.height, alignment: .top)
+    }
+  }
+
+  /// Fractions of the semicircle, one span per reported stage.
+  ///
+  /// With no stage breakdown at all — a night synced as a duration and nothing
+  /// else — the whole fill is drawn in one colour rather than vanishing. The
+  /// duration is real even when the composition is not.
+  private func arcSpans(fill: Double) -> [(from: Double, to: Double, color: Color)] {
+    guard staged > 0 else {
+      return [(0, fill, monochrome ? .white : Helix.sapphire)]
+    }
+    var cursor = 0.0
+    var out: [(Double, Double, Color)] = []
+    for stage in Helix.SleepStage.allCases {
+      guard let m = segments.first(where: { $0.0 == stage })?.1, m > 0 else { continue }
+      let width = fill * Double(m) / Double(staged)
+      out.append((cursor, cursor + width, monochrome ? Color.white.opacity(stageOpacity(stage)) : stage.color))
+      cursor += width
+    }
+    return out
+  }
+
+  private func stageOpacity(_ stage: Helix.SleepStage) -> Double {
+    switch stage {
+    case .deep:  return 1.0
+    case .core:  return 0.75
+    case .rem:   return 0.5
+    case .awake: return 0.3
+    }
+  }
+}
+
+/// Zero-based bars over a short window, with an optional dotted rule.
+///
+/// ── WHY BARS AND NOT THE SPARKLINE ───────────────────────────────────────────
+/// A line implies that the value existed between its points. For a WEEK of
+/// tonnage or a DAY of water that is false — each reading is a bucket, and the
+/// space between two of them is not a slower Tuesday, it is nothing at all. Bars
+/// say "these are the eight quantities" where a line says "this is how it
+/// moved", and only one of those is true here.
+///
+/// Zero-based for the same reason `Sparkline.band` exists: eight weeks between
+/// 12.1 t and 14.2 t auto-scaled to their own range draw a cliff. Against zero
+/// they draw eight bars of nearly equal height, which is what happened.
+struct BarChart: View {
+  let points: [HelixSnapshot.Point]
+  /// Drawn as a dotted rule AND included in the scale, so a goal you are miles
+  /// short of still appears on the chart.
+  var goal: Double?
+  var color: Color
+  /// The most recent bar is the one you are still able to change.
+  var highlightLast = true
+  /// A caption under each bar — a weekday initial, a week number. Nil draws none.
+  var label: ((HelixSnapshot.Point) -> String)?
+
+  private var peak: Double {
+    max(points.map(\.v).max() ?? 0, goal ?? 0, 0.0001)
+  }
+
+  var body: some View {
+    if points.isEmpty {
+      Text("no readings in this window")
+        .font(.system(size: 9)).foregroundStyle(Helix.muted)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    } else {
+      VStack(spacing: 3) {
+        GeometryReader { geo in
+          ZStack(alignment: .bottom) {
+            HStack(alignment: .bottom, spacing: max(2, geo.size.width / CGFloat(points.count) * 0.22)) {
+              ForEach(Array(points.enumerated()), id: \.element.id) { index, point in
+                let isLast = index == points.count - 1
+                RoundedRectangle(cornerRadius: 2, style: .continuous)
+                  .fill(color.opacity(highlightLast && !isLast ? 0.45 : 1))
+                  // A floor of 1pt, so a genuinely tiny day is a hairline rather
+                  // than an absence — absence is what an omitted point means.
+                  .frame(height: max(1, geo.size.height * CGFloat(point.v / peak)))
+                  .frame(maxWidth: .infinity)
+              }
+            }
+            if let goal, goal > 0 {
+              Path { p in
+                let y = geo.size.height * (1 - CGFloat(goal / peak))
+                p.move(to: CGPoint(x: 0, y: y))
+                p.addLine(to: CGPoint(x: geo.size.width, y: y))
+              }
+              .stroke(Helix.muted.opacity(0.8), style: StrokeStyle(lineWidth: 1, dash: [3, 3]))
+            }
+          }
+        }
+        if let label {
+          HStack(spacing: max(2, 4)) {
+            ForEach(points) { point in
+              Text(label(point))
+                .font(.system(size: 7, weight: .bold))
+                .foregroundStyle(Helix.muted)
+                .frame(maxWidth: .infinity)
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 /// A ▲/▼ chip against a comparison. Neutral — not green — when nothing moved.
 struct DeltaChip: View {
   let delta: Double?

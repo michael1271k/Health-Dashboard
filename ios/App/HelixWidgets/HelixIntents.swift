@@ -56,13 +56,19 @@ enum TrainingFocus: String, AppEnum {
     .oneRepMax: DisplayRepresentation(title: "Estimated 1RM", subtitle: "Where the main lifts are trending"),
   ]
 
-  /// Records and 1RM are the only faces that need the performance slice; the
-  /// rest read the training one. The scope follows the FOCUS, not the widget,
-  /// so a calendar never pays to decode a ledger it does not draw.
+  /// The scope follows the FOCUS, not the widget, so a calendar never pays to
+  /// decode a ledger it does not draw.
+  ///
+  /// Volume sits with records and 1RM because its Large register is the
+  /// per-muscle-family split, and `volumeByFamily` needs a `workout_sets` read
+  /// that only the performance slice does. The eight-week tonnage trend it also
+  /// needs is derived from sessions the route fetches in EVERY scope, so the
+  /// server ships `volumeTrend` under both — which is what makes moving this
+  /// focus lossless rather than a trade.
   var scope: HelixScope {
     switch self {
-    case .records, .oneRepMax: return .performance
-    default:                   return .training
+    case .records, .oneRepMax, .volume: return .performance
+    case .today, .calendar, .streak:    return .training
     }
   }
 

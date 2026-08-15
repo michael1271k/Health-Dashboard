@@ -61,6 +61,9 @@ struct HelixSnapshot: Codable {
     /// The user's own target, in minutes. The sleep face hardcoded 480, so a
     /// seven-hour goal was graded against someone else's eight.
     let goalMin: Int?
+    /// Seven nights of duration, oldest first. Body scope. One night is a
+    /// reading; seven is the thing worth changing a bedtime over.
+    let trend: [Point]?
   }
   struct Weight: Codable {
     let kg: Double?
@@ -82,10 +85,16 @@ struct HelixSnapshot: Codable {
     let carbsGoalG: Double?
     let fatG: Double?
     let fatGoalG: Double?
+    /// Seven days of intake, oldest first. Lifestyle scope.
+    let kcalTrend: [Point]?
   }
   struct Water: Codable {
     let ml: Double?
     let goalMl: Double?
+    /// Seven days of intake, oldest first. Lifestyle scope — without it a Water
+    /// face above Small has one number and a goal, which is a Small's worth of
+    /// content however much room it is given.
+    let trend: [Point]?
   }
   struct Steps: Codable {
     let count: Int?
@@ -132,6 +141,10 @@ struct HelixSnapshot: Codable {
     /// Nil when the lift has no session old enough to compare against — which
     /// is a different statement from "no change", and must not render as +0.
     let deltaKg: Double?
+    /// The per-DAY best estimate over the window, oldest first. The chip says
+    /// the lift moved; the shape says whether it climbed or spiked once and gave
+    /// it back, and those two want opposite decisions next session.
+    let trend: [Point]?
     var id: String { exercise }
   }
   struct FamilyVolume: Codable, Identifiable {
@@ -162,6 +175,9 @@ struct HelixSnapshot: Codable {
   struct CalendarDay: Codable, Identifiable {
     let d: String
     let dayKey: String?
+    /// The plan's own name for the day — "Legs & Core B". Nil on a rest day.
+    /// A colour identifies a session; it cannot name one.
+    let label: String?
     /// False on a scheduled rest day.
     let scheduled: Bool
     let logged: Bool
@@ -208,6 +224,13 @@ struct HelixSnapshot: Codable {
     let muscleKg: Double?
     let smmKg: Double?
     let ffmKg: Double?
+    /// Movement since the previous DIFFERENT reading of that field. The table
+    /// carries values forward, so a row-to-row delta would be 0.0 on every day
+    /// between weigh-ins — "held steady" where the truth is "not measured".
+    let fatPctDelta: Double?
+    let muscleKgDelta: Double?
+    let smmKgDelta: Double?
+    let ffmKgDelta: Double?
     let fatTrend: [Point]?
   }
 

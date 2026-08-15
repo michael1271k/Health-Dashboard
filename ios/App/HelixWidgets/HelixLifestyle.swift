@@ -138,16 +138,6 @@ struct FocusSpec {
   }
 }
 
-/// One row of a Medium's ledger column, as data. Passing views here instead
-/// would put the hairline interleaving at every call site.
-struct LedgerEntry: Identifiable {
-  let label: String
-  let value: String?
-  var color: Color = .white
-  var trailing: String?
-  var id: String { label }
-}
-
 // MARK: - Helix Fuel
 
 struct FuelView: View {
@@ -182,8 +172,7 @@ struct FuelView: View {
   @ViewBuilder private var face: some View {
     switch (focus, HelixSize(family)) {
     case (.calories, .small):  FocusFace(spec: .calories(s), stale: entry.isStale, mono: mono)
-    case (.calories, .medium): LedgerFace(entry: entry, spec: .calories(s),
-                                          entries: dayLedger, heroLink: HelixLink.nutrition, mono: mono)
+    case (.calories, .medium): CalorieLedgerFace(entry: entry, mono: mono)
     case (.calories, .large):  CalorieDayFace(entry: entry, mono: mono)
 
     case (.macros, .small):    MacroFocusFace(entry: entry, mono: mono)
@@ -191,44 +180,25 @@ struct FuelView: View {
     case (.macros, .large):    MacroLargeFace(entry: entry, mono: mono)
 
     case (.water, .small):     FocusFace(spec: .water(s), stale: entry.isStale, mono: mono)
-    case (.water, .medium):    LedgerFace(entry: entry, spec: .water(s),
-                                          entries: moveLedger, heroLink: HelixLink.nutrition, mono: mono)
+    case (.water, .medium):    WaterLedgerFace(entry: entry, mono: mono)
     case (.water, .large):     WaterLargeFace(entry: entry, mono: mono)
     }
   }
 
-  /// What a calorie hero is read alongside: the rest of the day.
-  private var dayLedger: [LedgerEntry] {
-    [
-      LedgerEntry(label: "PROTEIN", value: s?.macros.proteinG.map { "\(Int($0.rounded()))" },
-                  color: mono ? .white : Helix.emerald, trailing: "g"),
-      LedgerEntry(label: "WATER", value: s?.water.ml.map { String(format: "%.1f", $0 / 1000) },
-                  color: mono ? .white : Helix.sapphire, trailing: "L"),
-      LedgerEntry(label: "SLEEP", value: sleepText),
-      LedgerEntry(label: "BATTERY", value: s?.battery.map { "\($0)" },
-                  color: mono ? .white : Helix.battery(s?.battery), trailing: "%"),
-    ]
-  }
+}
 
-  /// What a WATER hero is read alongside — movement and rest, not macros.
-  /// The old Water Medium showed protein and calories beside a STEPS hero, which
-  /// is three different subjects and none of them the one you asked for.
-  private var moveLedger: [LedgerEntry] {
-    [
-      LedgerEntry(label: "STEPS", value: s?.steps.count.map { "\($0)" },
-                  color: mono ? .white : Helix.emerald),
-      LedgerEntry(label: "MOVE", value: s?.steps.activeKcal.map { "\(Int($0.rounded()))" },
-                  color: .white, trailing: "kcal"),
-      LedgerEntry(label: "SLEEP", value: sleepText),
-      LedgerEntry(label: "BATTERY", value: s?.battery.map { "\($0)" },
-                  color: mono ? .white : Helix.battery(s?.battery), trailing: "%"),
-    ]
-  }
+/// Sleep, as a duration, or nil. Shared because five faces need the same two
+/// lines of guarding and `formatSleep` returns an em dash rather than nil.
+func sleepDuration(_ s: HelixSnapshot?) -> String? {
+  guard let m = s?.sleep.minutes, m > 0 else { return nil }
+  return HelixSnapshot.formatSleep(m)
+}
 
-  private var sleepText: String? {
-    guard let m = s?.sleep.minutes, m > 0 else { return nil }
-    return HelixSnapshot.formatSleep(m)
-  }
+/// What today's session is, in the fewest words that still identify it.
+func nextSessionText(_ s: HelixSnapshot?) -> String? {
+  guard let label = s?.workout.label, !label.isEmpty else { return nil }
+  if s?.workout.isRestDay == true { return "Rest" }
+  return s?.today != nil ? "\(label) ✓" : label
 }
 
 // MARK: - Helix Body
@@ -256,13 +226,13 @@ struct BodyView: View {
 
   @ViewBuilder private var face: some View {
     switch (focus, HelixSize(family)) {
-    case (.weight, .small):     FocusFace(spec: .weight(s), stale: entry.isStale, mono: mono)
+    case (.weight, .small):     WeightFocusFace(entry: entry, mono: mono)
     case (.weight, .medium):    WeightTrendFace(entry: entry, mono: mono)
-    case (.weight, .large):     WeightTrendFace(entry: entry, mono: mono)
+    case (.weight, .large):     WeightLargeFace(entry: entry, mono: mono)
 
-    case (.sleep, .small):      FocusFace(spec: .sleep(s), stale: entry.isStale, mono: mono)
+    case (.sleep, .small):      SleepArcFace(entry: entry, mono: mono)
     case (.sleep, .medium):     SleepDepthFace(entry: entry, mono: mono)
-    case (.sleep, .large):      SleepDepthFace(entry: entry, mono: mono)
+    case (.sleep, .large):      SleepLargeFace(entry: entry, mono: mono)
 
     // Was `focus == .sleep ? .sleep : .weight` — which is why asking for the
     // daily score got you the bathroom scale.
@@ -305,130 +275,468 @@ struct FocusFace: View {
 
 // MARK: - C1 · Ledger (Medium)
 //
-// Left third: one hero with a rail beneath it. Right two-thirds: four facts as
-// hairline-separated rows. One focal point, four supporting facts, zero boxes —
-// which is the whole reason the previous Medium faces looked like wide Smalls.
+// Left: one hero with a rail beneath it. Right, hairline-separated: the four
+// facts it is read alongside. One focal point, four supporting facts, zero boxes
+// — which is the whole reason the previous Medium faces looked like wide Smalls.
+//
+// Two concrete faces rather than one parameterised one. The generic version took
+// a hero spec and a list of rows, which made it possible — and it happened — for
+// the Water face to be handed a STEPS hero and a nutrition ledger. What each
+// half contains is a design decision about that focus, not a parameter.
 
-struct LedgerFace: View {
+/// Calories Medium · exactly the ask: calories with their macros directly
+/// underneath on the left, and the rest of the day on the right.
+struct CalorieLedgerFace: View {
   let entry: HelixEntry
-  let spec: FocusSpec
-  let entries: [LedgerEntry]
-  var heroLink: URL?
   let mono: Bool
 
-  private var accent: Color { mono ? .white : spec.accent }
+  private var s: HelixSnapshot? { entry.snapshot }
+  private func tint(_ c: Color) -> Color { mono ? .white : c }
 
   var body: some View {
     HStack(spacing: 12) {
-      // Two regions, two destinations. The hero column opens the page its number
-      // came from; the ledger column opens Nutrition, because most of its rows
-      // live there. `Link` is the per-view mechanism — the root's `widgetURL`
-      // still catches the gaps between them.
-      Link(destination: heroLink ?? HelixLink.home!) { heroColumn }
-
+      Link(destination: HelixLink.nutrition ?? HelixLink.home!) { heroColumn }
       Hairline(vertical: true)
-
-      Link(destination: HelixLink.nutrition ?? HelixLink.home!) { ledgerColumn }
+      Link(destination: HelixLink.home ?? HelixLink.nutrition!) { ledgerColumn }
     }
   }
 
   private var heroColumn: some View {
     VStack(alignment: .leading, spacing: 4) {
       HStack(spacing: 4) {
-        Caption(spec.caption, color: accent)
+        Caption("KCAL LEFT", color: tint(Helix.ember))
         if entry.isStale { StaleTag() }
       }
-      Spacer(minLength: 0)
-      BigValue(value: spec.hero, size: 32, color: .white)
-      if let sub = spec.sub {
-        Text(sub).font(.system(size: 10)).foregroundStyle(Helix.muted).lineLimit(1)
-      }
-      Rail(progress: spec.progress, color: accent)
+      BigValue(value: s?.caloriesRemaining.map { "\($0)" }, size: 30, color: .white)
+      Rail(progress: HelixSnapshot.progress(s?.macros.kcal, s?.macros.kcalGoal),
+           color: tint(Helix.ember), height: 5)
+
+      Spacer(minLength: 2)
+
+      // The macros sit UNDER the calories they add up to, which is the mapping
+      // principle: they are a decomposition of the bar above them, not four
+      // unrelated meters that happen to share a column.
+      MacroRail(label: "P", value: s?.macros.proteinG, goal: s?.macros.proteinGoalG,
+                color: tint(Helix.emerald))
+      MacroRail(label: "C", value: s?.macros.carbsG, goal: s?.macros.carbsGoalG,
+                color: tint(Helix.sapphire))
+      MacroRail(label: "F", value: s?.macros.fatG, goal: s?.macros.fatGoalG,
+                color: tint(Helix.gold))
     }
     .frame(maxWidth: .infinity, alignment: .leading)
   }
 
   private var ledgerColumn: some View {
     VStack(spacing: 0) {
-      ForEach(Array(entries.enumerated()), id: \.element.id) { index, row in
-        if index > 0 { Hairline().padding(.vertical, 4) }
-        LedgerRow(label: row.label, value: row.value, color: row.color, trailing: row.trailing)
+      LedgerRow(label: "SLEEP", value: sleepDuration(s), color: tint(Helix.sapphire))
+      Hairline().padding(.vertical, 4)
+      LedgerRow(label: "WATER", value: s?.water.ml.map { String(format: "%.1f", $0 / 1000) },
+                color: tint(Helix.sapphire), trailing: "L")
+      Hairline().padding(.vertical, 4)
+      LedgerRow(label: "BATTERY", value: s?.battery.map { "\($0)" },
+                color: mono ? .white : Helix.battery(s?.battery), trailing: "%")
+      Hairline().padding(.vertical, 4)
+      // The day's session, in the day's own colour. Four rows of numbers and
+      // then the one thing that is not a number.
+      HStack(alignment: .firstTextBaseline, spacing: 6) {
+        Text("TODAY")
+          .font(.system(size: 10, weight: .semibold)).tracking(0.6)
+          .foregroundStyle(Helix.muted)
+        Spacer(minLength: 4)
+        Text(nextSessionText(s) ?? "—")
+          .font(.system(size: 12, weight: .bold))
+          .foregroundStyle(mono ? .white : Helix.day(s?.workout.dayKey))
+          .lineLimit(1)
+          .minimumScaleFactor(0.7)
       }
     }
     .frame(maxWidth: .infinity)
   }
 }
 
-// MARK: - C2 · Depth Bars (Medium) · the Sleep Rainbow
+/// Water Medium · hydration led by hydration.
+///
+/// The old one put a STEPS hero beside protein, water, sleep and battery — three
+/// subjects, none of them the one on the label. This is water, its week, and the
+/// two figures that belong to the same question of how much the day moved.
+struct WaterLedgerFace: View {
+  let entry: HelixEntry
+  let mono: Bool
 
-struct SleepDepthFace: View {
+  private var s: HelixSnapshot? { entry.snapshot }
+  private func tint(_ c: Color) -> Color { mono ? .white : c }
+
+  var body: some View {
+    HStack(spacing: 12) {
+      Link(destination: HelixLink.nutrition ?? HelixLink.home!) { heroColumn }
+      Hairline(vertical: true)
+      Link(destination: HelixLink.progress ?? HelixLink.home!) { weekColumn }
+    }
+  }
+
+  private var heroColumn: some View {
+    VStack(alignment: .leading, spacing: 4) {
+      HStack(spacing: 4) {
+        Caption("WATER", color: tint(Helix.sapphire))
+        if entry.isStale { StaleTag() }
+      }
+      Spacer(minLength: 0)
+      HStack(alignment: .firstTextBaseline, spacing: 4) {
+        BigValue(value: s?.water.ml.map { String(format: "%.1f", $0 / 1000) }, size: 32, color: .white)
+        Text("L").font(.system(size: 11)).foregroundStyle(Helix.muted)
+      }
+      if let goal = s?.water.goalMl {
+        Text(String(format: "of %.1f L", goal / 1000))
+          .font(.system(size: 10)).foregroundStyle(Helix.muted)
+      }
+      Rail(progress: HelixSnapshot.progress(s?.water.ml, s?.water.goalMl),
+           color: tint(Helix.sapphire), height: 5)
+      if let left = litresLeft {
+        Text(left).font(.system(size: 9, weight: .semibold)).foregroundStyle(Helix.muted)
+      }
+      Spacer(minLength: 0)
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
+  }
+
+  private var weekColumn: some View {
+    VStack(alignment: .leading, spacing: 5) {
+      HStack(spacing: 4) {
+        Caption("7 DAYS", color: Helix.muted)
+        Spacer(minLength: 0)
+        if let mean = weeklyMean {
+          Text(String(format: "avg %.1f L", mean / 1000))
+            .font(.system(size: 8)).foregroundStyle(Helix.muted)
+        }
+      }
+      BarChart(points: s?.water.trend ?? [], goal: s?.water.goalMl,
+               color: tint(Helix.sapphire),
+               label: { HelixSnapshot.weekdayInitial($0.d) })
+        .frame(maxHeight: .infinity)
+      Hairline()
+      HStack(spacing: 0) {
+        Stat(value: s?.steps.count.map { "\($0)" }, label: "STEPS", color: .white)
+        Stat(value: s?.steps.activeKcal.map { "\(Int($0.rounded()))" }, label: "MOVE KCAL",
+             color: tint(Helix.emerald))
+      }
+    }
+    .frame(maxWidth: .infinity)
+  }
+
+  private var weeklyMean: Double? {
+    let points = s?.water.trend ?? []
+    guard !points.isEmpty else { return nil }
+    return points.reduce(0) { $0 + $1.v } / Double(points.count)
+  }
+
+  /// "0.6 L to go", or "goal met". Never a negative litre count.
+  private var litresLeft: String? {
+    guard let ml = s?.water.ml, let goal = s?.water.goalMl, goal > 0 else { return nil }
+    let gap = goal - ml
+    return gap <= 0 ? "goal met" : String(format: "%.1f L to go", gap / 1000)
+  }
+}
+
+// MARK: - Sleep · the Rainbow at three sizes
+//
+// The stage ramp is the same at every size; what changes is the SHAPE it is
+// drawn in, because the three sizes are being asked different questions.
+//
+//   Small   an arc      was it enough, and what was it made of
+//   Medium  arc + rows  how much of each stage, in minutes and in share
+//   Large   + seven     is this a normal night for you
+
+/// The stages, as `DepthBar` and `DepthArc` both want them. A stage with no
+/// reading is ABSENT, not zero — the difference between "you had no deep sleep"
+/// and "the watch did not report deep sleep".
+func sleepSegments(_ s: HelixSnapshot?) -> [(Helix.SleepStage, Int)] {
+  guard let sleep = s?.sleep else { return [] }
+  return [
+    (Helix.SleepStage.deep, sleep.deepMin),
+    (Helix.SleepStage.core, sleep.coreMin),
+    (Helix.SleepStage.rem, sleep.remMin),
+    (Helix.SleepStage.awake, sleep.awakeMin),
+  ].compactMap { stage, minutes in minutes.map { (stage, $0) } }
+}
+
+/// "21:48 → 07:03". Both ends or neither — half a window is a riddle.
+func sleepWindowText(_ s: HelixSnapshot?) -> String? {
+  guard let from = HelixSnapshot.clockTime(s?.sleep.startTime),
+        let to = HelixSnapshot.clockTime(s?.sleep.endTime) else { return nil }
+  return "\(from) → \(to)"
+}
+
+/// Small · the ask, exactly. The old Small was a caption, a duration and a flat
+/// rail — text where the one metric with a genuinely beautiful shape was
+/// concerned. The arc is a gauge AND the rainbow: its sweep is the night against
+/// the goal, its fill is the stages.
+struct SleepArcFace: View {
   let entry: HelixEntry
   let mono: Bool
 
   private var s: HelixSnapshot? { entry.snapshot }
 
-  /// A stage with no reading is ABSENT, not zero — the difference between "you
-  /// had no deep sleep" and "the watch did not report deep sleep".
-  private var segments: [(Helix.SleepStage, Int)] {
-    guard let sleep = s?.sleep else { return [] }
-    return [
-      (Helix.SleepStage.deep, sleep.deepMin),
-      (Helix.SleepStage.core, sleep.coreMin),
-      (Helix.SleepStage.rem, sleep.remMin),
-      (Helix.SleepStage.awake, sleep.awakeMin),
-    ].compactMap { stage, minutes in minutes.map { (stage, $0) } }
-  }
-
   var body: some View {
-    VStack(alignment: .leading, spacing: 8) {
-      HStack(alignment: .firstTextBaseline, spacing: 6) {
+    VStack(alignment: .leading, spacing: 4) {
+      HStack(spacing: 4) {
         Caption("SLEEP", color: mono ? .white : Helix.sapphire)
         Spacer(minLength: 0)
-        if let window { Text(window).font(.system(size: 9)).foregroundStyle(Helix.muted) }
         if entry.isStale { StaleTag() }
       }
 
-      HStack(alignment: .firstTextBaseline, spacing: 8) {
-        BigValue(value: durationText, size: 30, color: .white)
+      DepthArc(segments: sleepSegments(s), minutes: s?.sleep.minutes,
+               goalMin: s?.sleep.goalMin, lineWidth: 11, monochrome: mono)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+      HStack(spacing: 4) {
         if let score = s?.sleep.score {
-          Text("score \(score)").font(.system(size: 11)).foregroundStyle(Helix.muted)
+          Text("score \(score)").font(.system(size: 10, weight: .semibold)).foregroundStyle(.white)
+        }
+        Spacer(minLength: 0)
+        if let window = sleepWindowText(s) {
+          Text(window).font(.system(size: 9)).foregroundStyle(Helix.muted).lineLimit(1)
         }
       }
+    }
+  }
+}
 
-      DepthBar(segments: segments, height: 12, monochrome: mono)
+/// Medium · a bigger arc, and the stages as rows beside it.
+///
+/// The bars were fine and are kept as the row accents; what they could not say
+/// is whether the night was long enough, which is what the arc adds. Minutes AND
+/// share of night, because "68m deep" and "14% deep" answer different questions
+/// and the second one is the one that travels between nights of different length.
+struct SleepDepthFace: View {
+  let entry: HelixEntry
+  let mono: Bool
 
-      HStack(spacing: 0) {
-        ForEach(Helix.SleepStage.allCases, id: \.self) { stage in
-          let minutes = segments.first(where: { $0.0 == stage })?.1
-          VStack(alignment: .leading, spacing: 1) {
-            HStack(spacing: 3) {
-              Circle().fill(mono ? Color.white : stage.color).frame(width: 5, height: 5)
-              Text(stage.label).font(.system(size: 8, weight: .bold)).foregroundStyle(Helix.muted)
+  private var s: HelixSnapshot? { entry.snapshot }
+  private var segments: [(Helix.SleepStage, Int)] { sleepSegments(s) }
+  private var total: Int { segments.reduce(0) { $0 + $1.1 } }
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 6) {
+      HStack(alignment: .firstTextBaseline, spacing: 6) {
+        Caption("SLEEP", color: mono ? .white : Helix.sapphire)
+        Spacer(minLength: 0)
+        if let window = sleepWindowText(s) {
+          Text(window).font(.system(size: 9)).foregroundStyle(Helix.muted)
+        }
+        if let score = s?.sleep.score {
+          Text("score \(score)").font(.system(size: 9, weight: .semibold)).foregroundStyle(.white)
+        }
+        if entry.isStale { StaleTag() }
+      }
+
+      HStack(spacing: 12) {
+        DepthArc(segments: segments, minutes: s?.sleep.minutes,
+                 goalMin: s?.sleep.goalMin, lineWidth: 10, monochrome: mono)
+          .frame(width: 108)
+
+        VStack(spacing: 5) {
+          ForEach(Helix.SleepStage.allCases, id: \.self) { stage in
+            StageRow(stage: stage,
+                     minutes: segments.first(where: { $0.0 == stage })?.1,
+                     total: total, mono: mono)
+          }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+      }
+      .frame(maxHeight: .infinity)
+    }
+  }
+}
+
+/// One stage: its colour, its name, its minutes, and its share of the night.
+private struct StageRow: View {
+  let stage: Helix.SleepStage
+  let minutes: Int?
+  let total: Int
+  let mono: Bool
+
+  var body: some View {
+    HStack(spacing: 6) {
+      Circle()
+        .fill(mono ? Color.white : stage.color)
+        .frame(width: 6, height: 6)
+      Text(stage.label)
+        .font(.system(size: 9, weight: .bold))
+        .foregroundStyle(Helix.muted)
+        .frame(width: 40, alignment: .leading)
+      Rail(progress: share, color: mono ? .white : stage.color, height: 4)
+      Text(minutes.map { "\($0)m" } ?? "—")
+        .font(.system(size: 10, weight: .semibold, design: .monospaced))
+        .foregroundStyle(.white)
+        .frame(width: 34, alignment: .trailing)
+      Text(share.map { "\(Int(($0 * 100).rounded()))%" } ?? "")
+        .font(.system(size: 9))
+        .foregroundStyle(Helix.muted)
+        .frame(width: 26, alignment: .trailing)
+    }
+  }
+
+  /// Share of the STAGED total, not of the goal — this is a composition, and a
+  /// composition that does not add to 100% is not one.
+  private var share: Double? {
+    guard let minutes, total > 0 else { return nil }
+    return Double(minutes) / Double(total)
+  }
+}
+
+/// Large · three registers, where it used to be the Medium and a hand's width of
+/// obsidian. The seven-night register is what fills it, and it is the register
+/// that makes last night mean anything: 6h14m is a bad night or an ordinary one
+/// depending entirely on the six before it.
+struct SleepLargeFace: View {
+  let entry: HelixEntry
+  let mono: Bool
+
+  private var s: HelixSnapshot? { entry.snapshot }
+  private func tint(_ c: Color) -> Color { mono ? .white : c }
+  private var segments: [(Helix.SleepStage, Int)] { sleepSegments(s) }
+  private var total: Int { segments.reduce(0) { $0 + $1.1 } }
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 9) {
+      Register(title: "LAST NIGHT", accent: tint(Helix.sapphire)) {
+        HStack(spacing: 12) {
+          DepthArc(segments: segments, minutes: s?.sleep.minutes,
+                   goalMin: s?.sleep.goalMin, lineWidth: 11, monochrome: mono)
+            .frame(width: 124, height: 74)
+          VStack(alignment: .leading, spacing: 4) {
+            if let score = s?.sleep.score {
+              HStack(alignment: .firstTextBaseline, spacing: 5) {
+                BigValue(value: "\(score)", size: 24, color: .white)
+                Text("sleep score").font(.system(size: 9)).foregroundStyle(Helix.muted)
+              }
             }
-            BigValue(value: minutes.map { "\($0)m" }, size: 12, color: .white)
+            if let window = sleepWindowText(s) {
+              Text(window).font(.system(size: 11, weight: .semibold)).foregroundStyle(.white)
+            }
+            if let debt = debtText {
+              Text(debt).font(.system(size: 10)).foregroundStyle(Helix.muted)
+            }
+            Spacer(minLength: 0)
+            if entry.isStale { StaleTag() }
           }
           .frame(maxWidth: .infinity, alignment: .leading)
         }
       }
-      Spacer(minLength: 0)
+
+      Hairline()
+
+      Register(title: "STAGES", accent: tint(Helix.amethyst)) {
+        DepthBar(segments: segments, height: 12, monochrome: mono)
+        VStack(spacing: 5) {
+          ForEach(Helix.SleepStage.allCases, id: \.self) { stage in
+            StageRow(stage: stage,
+                     minutes: segments.first(where: { $0.0 == stage })?.1,
+                     total: total, mono: mono)
+          }
+        }
+      }
+      .frame(maxHeight: .infinity)
+
+      Hairline()
+
+      Register(title: "SEVEN NIGHTS", accent: tint(Helix.emerald)) {
+        BarChart(points: s?.sleep.trend ?? [],
+                 goal: s?.sleep.goalMin.map(Double.init) ?? 480,
+                 color: tint(Helix.sapphire),
+                 label: { HelixSnapshot.weekdayInitial($0.d) })
+          .frame(maxHeight: .infinity)
+      }
+      .frame(maxHeight: .infinity)
     }
   }
 
-  private var durationText: String? {
-    guard let m = s?.sleep.minutes, m > 0 else { return nil }
-    return HelixSnapshot.formatSleep(m)
-  }
-
-  /// "21:48 → 07:03". Both ends or neither — half a window is a riddle.
-  private var window: String? {
-    guard let from = HelixSnapshot.clockTime(s?.sleep.startTime),
-          let to = HelixSnapshot.clockTime(s?.sleep.endTime) else { return nil }
-    return "\(from) → \(to)"
+  /// How far under the goal the night fell. Silent when it met it — "0m short"
+  /// is a sentence about nothing.
+  private var debtText: String? {
+    guard let minutes = s?.sleep.minutes, minutes > 0 else { return nil }
+    let goal = s?.sleep.goalMin ?? 480
+    let gap = goal - minutes
+    return gap > 5 ? "\(HelixSnapshot.formatSleep(gap)) short of goal" : "goal met"
   }
 }
 
-// MARK: - C3 · Trendline (Medium) · Weight
+// MARK: - Weight · the scale, and what the scale is made of
+//
+// ── THREE MEASUREMENTS, NEVER INTERCHANGEABLE ────────────────────────────────
+// `smmKg` is SKELETAL MUSCLE (~27 kg, entered by hand off the InBody — never
+// derived from anything). `muscleKg` is LEAN SOFT TISSUE (~50 kg) and is labelled
+// as such, because calling it "muscle" next to a 27 puts two numbers for the same
+// word on one face, twenty kilos apart. `ffmKg` is FAT-FREE MASS (~53 kg).
+// Whichever of the three a face shows, it shows under its own name.
 
+/// A composition figure and its movement since the last DIFFERENT reading.
+private struct CompositionRow: View {
+  let label: String
+  let value: Double?
+  let delta: Double?
+  let unit: String
+  let color: Color
+  let mono: Bool
+  /// Down is good for body fat and bad for lean tissue — the metric decides,
+  /// never the sign.
+  var upIsGood = true
+  var compact = false
+
+  var body: some View {
+    HStack(alignment: .firstTextBaseline, spacing: 6) {
+      Text(label)
+        .font(.system(size: compact ? 8 : 9, weight: .bold))
+        .foregroundStyle(Helix.muted)
+        .lineLimit(1)
+        .minimumScaleFactor(0.8)
+      Spacer(minLength: 4)
+      BigValue(value: value.map { String(format: "%.1f", $0) }, size: compact ? 12 : 14, color: color)
+      Text(unit).font(.system(size: 8)).foregroundStyle(Helix.muted)
+      DeltaChip(delta: delta, decimals: 1, upIsGood: upIsGood, monochrome: mono)
+    }
+  }
+}
+
+/// Small · the ask: a trendline and the composition packed under it, where there
+/// used to be a number, a delta and a flat progress rail.
+struct WeightFocusFace: View {
+  let entry: HelixEntry
+  let mono: Bool
+
+  private var s: HelixSnapshot? { entry.snapshot }
+  private var accent: Color { mono ? .white : Helix.amethyst }
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 3) {
+      HStack(spacing: 4) {
+        Caption("WEIGHT", color: accent)
+        Spacer(minLength: 0)
+        if entry.isStale { StaleTag() }
+      }
+
+      HStack(alignment: .firstTextBaseline, spacing: 4) {
+        BigValue(value: s?.weight.kg.map { String(format: "%.1f", $0) }, size: 27, color: .white)
+        Text("kg").font(.system(size: 10)).foregroundStyle(Helix.muted)
+        DeltaChip(delta: s?.weight.deltaKg, decimals: 1, upIsGood: false, monochrome: mono)
+      }
+
+      Sparkline(points: (s?.weight.trend ?? []).map(\.v),
+                baseline: s?.weight.prevWeekMeanKg, color: accent)
+        .frame(maxHeight: .infinity)
+
+      Hairline()
+
+      CompositionRow(label: "FAT", value: s?.body?.fatPct, delta: s?.body?.fatPctDelta,
+                     unit: "%", color: mono ? .white : Helix.ember, mono: mono,
+                     upIsGood: false, compact: true)
+      CompositionRow(label: "LEAN", value: s?.body?.muscleKg, delta: s?.body?.muscleKgDelta,
+                     unit: "kg", color: mono ? .white : Helix.emerald, mono: mono, compact: true)
+    }
+  }
+}
+
+/// Medium · the fortnight, and the composition beside it.
 struct WeightTrendFace: View {
   let entry: HelixEntry
   let mono: Bool
@@ -437,8 +745,16 @@ struct WeightTrendFace: View {
   private var points: [Double] { (s?.weight.trend ?? []).map(\.v) }
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 6) {
-      HStack(alignment: .firstTextBaseline, spacing: 8) {
+    HStack(spacing: 12) {
+      trendColumn
+      Hairline(vertical: true)
+      compositionColumn
+    }
+  }
+
+  private var trendColumn: some View {
+    VStack(alignment: .leading, spacing: 5) {
+      HStack(alignment: .firstTextBaseline, spacing: 6) {
         Caption("WEIGHT", color: mono ? .white : Helix.amethyst)
         Spacer(minLength: 0)
         if let measured = HelixSnapshot.relativeDay(s?.weight.measuredOn) {
@@ -447,8 +763,8 @@ struct WeightTrendFace: View {
         if entry.isStale { StaleTag() }
       }
 
-      HStack(alignment: .firstTextBaseline, spacing: 8) {
-        BigValue(value: s?.weight.kg.map { String(format: "%.1f", $0) }, size: 30, color: .white)
+      HStack(alignment: .firstTextBaseline, spacing: 6) {
+        BigValue(value: s?.weight.kg.map { String(format: "%.1f", $0) }, size: 28, color: .white)
         Text("kg").font(.system(size: 11)).foregroundStyle(Helix.muted)
         // Down is the good direction here, and only here. `deltaVerdict.ts`
         // makes the same point on the web: the sign does not decide the verdict,
@@ -462,10 +778,10 @@ struct WeightTrendFace: View {
                 color: mono ? .white : Helix.amethyst)
         .frame(maxHeight: .infinity)
 
-      HStack(spacing: 10) {
+      HStack(spacing: 6) {
         if let baseline = s?.weight.prevWeekMeanKg {
           Label {
-            Text(String(format: "last week %.1f", baseline))
+            Text(String(format: "last wk %.1f", baseline))
               .font(.system(size: 9)).foregroundStyle(Helix.muted)
           } icon: {
             Rectangle().fill(Helix.muted).frame(width: 8, height: 1)
@@ -474,24 +790,145 @@ struct WeightTrendFace: View {
         Spacer(minLength: 0)
         if let togo {
           Text(togo).font(.system(size: 9, weight: .semibold)).foregroundStyle(Helix.muted)
+            .lineLimit(1)
         }
       }
     }
+    .frame(maxWidth: .infinity, alignment: .leading)
+  }
+
+  private var compositionColumn: some View {
+    VStack(spacing: 0) {
+      CompositionRow(label: "BODY FAT", value: s?.body?.fatPct, delta: s?.body?.fatPctDelta,
+                     unit: "%", color: mono ? .white : Helix.ember, mono: mono, upIsGood: false)
+      Hairline().padding(.vertical, 4)
+      CompositionRow(label: "LEAN SOFT TISSUE", value: s?.body?.muscleKg, delta: s?.body?.muscleKgDelta,
+                     unit: "kg", color: mono ? .white : Helix.emerald, mono: mono)
+      Hairline().padding(.vertical, 4)
+      CompositionRow(label: "SKELETAL MUSCLE", value: s?.body?.smmKg, delta: s?.body?.smmKgDelta,
+                     unit: "kg", color: mono ? .white : Helix.sapphire, mono: mono)
+      Hairline().padding(.vertical, 4)
+      CompositionRow(label: "FAT-FREE MASS", value: s?.body?.ffmKg, delta: s?.body?.ffmKgDelta,
+                     unit: "kg", color: .white, mono: mono)
+    }
+    .frame(maxWidth: .infinity)
   }
 
   /// "1.8 kg to target", or nothing. Never "0.0 kg to target" from a missing goal.
   private var togo: String? {
     guard let now = s?.weight.kg, let target = s?.weight.targetKg else { return nil }
     let gap = abs(now - target)
-    return gap < 0.05 ? "at target" : String(format: "%.1f kg to target", gap)
+    return gap < 0.05 ? "at target" : String(format: "%.1f kg to go", gap)
   }
 }
 
-// MARK: - C5 · Split Column (Large)
+/// Large · the scale, what it is made of, and where both have been.
+struct WeightLargeFace: View {
+  let entry: HelixEntry
+  let mono: Bool
+
+  private var s: HelixSnapshot? { entry.snapshot }
+  private func tint(_ c: Color) -> Color { mono ? .white : c }
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 9) {
+      Register(title: "THE SCALE", accent: tint(Helix.amethyst)) {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+          BigValue(value: s?.weight.kg.map { String(format: "%.1f", $0) }, size: 36, color: .white)
+          Text("kg").font(.system(size: 12)).foregroundStyle(Helix.muted)
+          DeltaChip(delta: s?.weight.deltaKg, decimals: 1, upIsGood: false, monochrome: mono)
+          Spacer(minLength: 0)
+          if entry.isStale { StaleTag() }
+          if let measured = HelixSnapshot.relativeDay(s?.weight.measuredOn) {
+            Text(measured).font(.system(size: 9)).foregroundStyle(Helix.muted)
+          }
+        }
+        if let target = s?.weight.targetKg, let now = s?.weight.kg {
+          let gap = abs(now - target)
+          Text(gap < 0.05
+               ? String(format: "at target %.1f kg", target)
+               : String(format: "%.1f kg to target %.1f", gap, target))
+            .font(.system(size: 10)).foregroundStyle(Helix.muted)
+        }
+      }
+
+      Hairline()
+
+      Register(title: "COMPOSITION", accent: tint(Helix.emerald)) {
+        VStack(spacing: 0) {
+          CompositionRow(label: "BODY FAT", value: s?.body?.fatPct, delta: s?.body?.fatPctDelta,
+                         unit: "%", color: tint(Helix.ember), mono: mono, upIsGood: false)
+          Hairline().padding(.vertical, 4)
+          CompositionRow(label: "LEAN SOFT TISSUE", value: s?.body?.muscleKg,
+                         delta: s?.body?.muscleKgDelta, unit: "kg",
+                         color: tint(Helix.emerald), mono: mono)
+          Hairline().padding(.vertical, 4)
+          CompositionRow(label: "SKELETAL MUSCLE", value: s?.body?.smmKg, delta: s?.body?.smmKgDelta,
+                         unit: "kg", color: tint(Helix.sapphire), mono: mono)
+          Hairline().padding(.vertical, 4)
+          CompositionRow(label: "FAT-FREE MASS", value: s?.body?.ffmKg, delta: s?.body?.ffmKgDelta,
+                         unit: "kg", color: .white, mono: mono)
+        }
+      }
+      .frame(maxHeight: .infinity)
+
+      Hairline()
+
+      // Two traces, two subjects, two scales — so they are stacked rather than
+      // overlaid. A body-fat percentage and a bodyweight share no axis, and
+      // drawing them on one would make the crossing point look like an event.
+      Register(title: "THE FORTNIGHT", accent: tint(Helix.steel)) {
+        VStack(alignment: .leading, spacing: 4) {
+          TraceRow(title: "WEIGHT", unit: "kg",
+                   points: (s?.weight.trend ?? []).map(\.v),
+                   color: tint(Helix.amethyst))
+          TraceRow(title: "BODY FAT", unit: "%",
+                   points: (s?.body?.fatTrend ?? []).map(\.v),
+                   color: tint(Helix.ember))
+        }
+      }
+      .frame(maxHeight: .infinity)
+    }
+  }
+}
+
+/// A labelled sparkline with its own first and last readings called out.
+private struct TraceRow: View {
+  let title: String
+  let unit: String
+  let points: [Double]
+  let color: Color
+
+  var body: some View {
+    HStack(spacing: 8) {
+      VStack(alignment: .leading, spacing: 1) {
+        Text(title).font(.system(size: 8, weight: .bold)).foregroundStyle(Helix.muted)
+        Text(points.last.map { String(format: "%.1f \(unit)", $0) } ?? "—")
+          .font(.system(size: 12, weight: .bold, design: .rounded))
+          .monospacedDigit()
+          .foregroundStyle(color)
+      }
+      .frame(width: 62, alignment: .leading)
+      Sparkline(points: points, color: color)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+    .frame(maxHeight: .infinity)
+  }
+}
+
+// MARK: - Calories (Large)
 //
-// Left: today as four rails. Right: the week as seven stacked columns, today's
-// brightened. Today read in the context of the week — the most informative Large
-// layout the data we already hold can support.
+// ── WHAT THE MISSING HIERARCHY ACTUALLY WAS ──────────────────────────────────
+// The data on this face was right; it was a flat wall of it. Four rails, seven
+// columns and three footers, all the same weight, with nothing saying which
+// question any group answered — so reading it meant recognising each number
+// rather than being told what you were looking at.
+//
+// Three named registers fix that, and they are named for the QUESTION rather
+// than the table: what is left to eat, how the rest of the day is going, and
+// whether this is a normal day for you. That last one is what the seven-day
+// register earns its height with — a 612 kcal deficit is unremarkable or alarming
+// depending entirely on the six days behind it, and nothing on the old face said.
 
 struct CalorieDayFace: View {
   let entry: HelixEntry
@@ -501,51 +938,96 @@ struct CalorieDayFace: View {
   private func tint(_ c: Color) -> Color { mono ? .white : c }
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 10) {
-      HStack(alignment: .firstTextBaseline, spacing: 6) {
-        Caption("TODAY", color: tint(Helix.ember))
-        Text(s?.workout.label ?? "—")
-          .font(.system(size: 10, weight: .semibold)).foregroundStyle(Helix.muted).lineLimit(1)
-        Spacer(minLength: 0)
-        if entry.isStale { StaleTag() }
-        BatteryRing(pct: s?.battery, size: 40, lineWidth: 5, monochrome: mono)
+    VStack(alignment: .leading, spacing: 9) {
+      Register(title: "LEFT TO EAT", accent: tint(Helix.ember)) {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+          BigValue(value: s?.caloriesRemaining.map { "\($0)" }, size: 34, color: .white)
+          Text("kcal").font(.system(size: 11)).foregroundStyle(Helix.muted)
+          if let goal = s?.macros.kcalGoal {
+            Text("of \(Int(goal.rounded()))")
+              .font(.system(size: 10)).foregroundStyle(Helix.muted)
+          }
+          Spacer(minLength: 0)
+          if entry.isStale { StaleTag() }
+          BatteryRing(pct: s?.battery, size: 38, lineWidth: 5, monochrome: mono)
+        }
+        Rail(progress: HelixSnapshot.progress(s?.macros.kcal, s?.macros.kcalGoal),
+             color: tint(Helix.ember), height: 5)
+        HStack(spacing: 5) {
+          MacroChip(label: "P", value: s?.macros.proteinG, goal: s?.macros.proteinGoalG,
+                    color: tint(Helix.emerald))
+          MacroChip(label: "C", value: s?.macros.carbsG, goal: s?.macros.carbsGoalG,
+                    color: tint(Helix.sapphire))
+          MacroChip(label: "F", value: s?.macros.fatG, goal: s?.macros.fatGoalG,
+                    color: tint(Helix.gold))
+        }
       }
 
       Hairline()
 
-      HStack(alignment: .top, spacing: 14) {
-        VStack(spacing: 9) {
-          Gauge(label: "FUEL", value: s?.caloriesRemaining.map { "\($0)" }, unit: "left",
-                progress: HelixSnapshot.progress(s?.macros.kcal, s?.macros.kcalGoal), color: tint(Helix.ember))
-          Gauge(label: "PROTEIN", value: s?.macros.proteinG.map { "\(Int($0.rounded()))" }, unit: "g",
-                progress: HelixSnapshot.progress(s?.macros.proteinG, s?.macros.proteinGoalG), color: tint(Helix.emerald))
-          Gauge(label: "STEPS", value: s?.steps.count.map { "\($0)" }, unit: "",
-                progress: HelixSnapshot.progress(s?.steps.count.map(Double.init), s?.steps.goal.map(Double.init)), color: .white)
+      Register(title: "THE REST OF THE DAY", accent: tint(Helix.emerald)) {
+        VStack(spacing: 7) {
           Gauge(label: "WATER", value: s?.water.ml.map { String(format: "%.1f", $0 / 1000) }, unit: "L",
                 progress: HelixSnapshot.progress(s?.water.ml, s?.water.goalMl), color: tint(Helix.sapphire))
+          Gauge(label: "STEPS", value: s?.steps.count.map { "\($0)" }, unit: "",
+                progress: HelixSnapshot.progress(
+                  s?.steps.count.map(Double.init), s?.steps.goal.map(Double.init)), color: tint(Helix.emerald))
+          Gauge(label: "SLEEP", value: sleepDuration(s), unit: "",
+                progress: HelixSnapshot.progress(
+                  s?.sleep.minutes.map(Double.init),
+                  s?.sleep.goalMin.map(Double.init) ?? 480), color: tint(Helix.sapphire))
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+      }
+      .frame(maxHeight: .infinity)
 
-        Hairline(vertical: true)
+      Hairline()
 
-        WeekColumns(entry: entry, mono: mono)
-          .frame(maxWidth: .infinity)
+      Register(title: "SEVEN DAYS", accent: tint(Helix.gold)) {
+        BarChart(points: s?.macros.kcalTrend ?? [], goal: s?.macros.kcalGoal,
+                 color: tint(Helix.ember),
+                 label: { HelixSnapshot.weekdayInitial($0.d) })
+          .frame(maxHeight: .infinity)
       }
       .frame(maxHeight: .infinity)
 
       Hairline()
 
       HStack(spacing: 0) {
-        Foot(label: "SLEEP", value: sleepText, color: tint(Helix.sapphire))
-        Foot(label: "WEIGHT", value: s?.weight.kg.map { String(format: "%.1f kg", $0) }, color: tint(Helix.amethyst))
+        Foot(label: "TODAY", value: nextSessionText(s),
+             color: mono ? .white : Helix.day(s?.workout.dayKey))
+        Foot(label: "WEIGHT", value: s?.weight.kg.map { String(format: "%.1f kg", $0) },
+             color: tint(Helix.amethyst))
         Foot(label: "SCORE", value: s?.score.map { "\($0)" }, color: .white)
       }
     }
   }
+}
 
-  private var sleepText: String? {
-    guard let m = s?.sleep.minutes, m > 0 else { return nil }
-    return HelixSnapshot.formatSleep(m)
+/// A macro as one inline chip — letter, figure, target. For a register that has
+/// already spent its vertical budget on the headline rail above it.
+private struct MacroChip: View {
+  let label: String
+  let value: Double?
+  let goal: Double?
+  let color: Color
+
+  var body: some View {
+    HStack(spacing: 3) {
+      Text(label)
+        .font(.system(size: 8, weight: .bold, design: .rounded))
+        .foregroundStyle(color)
+      Text(figures)
+        .font(.system(size: 9, weight: .medium, design: .monospaced))
+        .foregroundStyle(Helix.muted)
+        .lineLimit(1)
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
+  }
+
+  private var figures: String {
+    let now = value.map { "\(Int($0.rounded()))" } ?? "—"
+    let target = goal.map { "\(Int($0.rounded()))" } ?? "—"
+    return "\(now)/\(target)g"
   }
 }
 
@@ -681,54 +1163,92 @@ struct MacroFace: View {
   private func tint(_ c: Color) -> Color { mono ? .white : c }
 
   var body: some View {
-    HStack(spacing: 12) {
-      Link(destination: HelixLink.nutrition ?? HelixLink.home!) { macroColumn }
-      Hairline(vertical: true)
-      Link(destination: HelixLink.home ?? HelixLink.nutrition!) { ledgerColumn }
-    }
-  }
-
-  private var macroColumn: some View {
-    VStack(alignment: .leading, spacing: 5) {
-      HStack(spacing: 4) {
-        Caption("FUEL", color: tint(Helix.ember))
+    // Full width, not two columns. The two-column version spent 40% of a Medium
+    // on battery, sleep, water and steps — a ledger of four things that are not
+    // macros, on the face you chose BECAUSE you wanted macros. The width goes to
+    // the bars instead.
+    VStack(alignment: .leading, spacing: 7) {
+      HStack(alignment: .firstTextBaseline, spacing: 6) {
+        Caption("MACROS", color: tint(Helix.ember))
+        Spacer(minLength: 0)
+        BigValue(value: s?.caloriesRemaining.map { "\($0)" }, size: 20, color: .white)
+        Text("kcal left").font(.system(size: 9)).foregroundStyle(Helix.muted)
         if entry.isStale { StaleTag() }
       }
-      BigValue(value: s?.caloriesRemaining.map { "\($0)" }, size: 26, color: .white)
-      Text("kcal left").font(.system(size: 9)).foregroundStyle(Helix.muted)
+
       Rail(progress: HelixSnapshot.progress(s?.macros.kcal, s?.macros.kcalGoal),
-           color: tint(Helix.ember))
+           color: tint(Helix.ember), height: 4)
 
-      Spacer(minLength: 2)
-
-      MacroRail(label: "P", value: s?.macros.proteinG, goal: s?.macros.proteinGoalG,
-                color: tint(Helix.emerald))
-      MacroRail(label: "C", value: s?.macros.carbsG, goal: s?.macros.carbsGoalG,
-                color: tint(Helix.sapphire))
-      MacroRail(label: "F", value: s?.macros.fatG, goal: s?.macros.fatGoalG,
-                color: tint(Helix.gold))
+      VStack(spacing: 6) {
+        MacroLine(name: "PROTEIN", value: s?.macros.proteinG, goal: s?.macros.proteinGoalG,
+                  color: tint(Helix.emerald))
+        MacroLine(name: "CARBS", value: s?.macros.carbsG, goal: s?.macros.carbsGoalG,
+                  color: tint(Helix.sapphire))
+        MacroLine(name: "FAT", value: s?.macros.fatG, goal: s?.macros.fatGoalG,
+                  color: tint(Helix.gold))
+      }
+      .frame(maxHeight: .infinity)
     }
-    .frame(maxWidth: .infinity, alignment: .leading)
+  }
+}
+
+/// One macro, inline: name, figures, a short bar, and what is LEFT of it.
+///
+/// ── WHY THE REMAINDER IS A SEPARATE NUMBER ───────────────────────────────────
+/// "128 / 165 g" requires the reader to do the subtraction, and the subtraction
+/// is the only part they were going to act on — nobody eats a ratio. So the
+/// remainder is stated, signed, and coloured by whether it is a shortfall or an
+/// overshoot. Protein over target is a good day and fat over target is not, but
+/// that judgement belongs to the app's own grading, so the chip stays neutral in
+/// wording ("+12 g over") and lets the colour carry only the DIRECTION.
+private struct MacroLine: View {
+  let name: String
+  let value: Double?
+  let goal: Double?
+  let color: Color
+
+  var body: some View {
+    HStack(spacing: 8) {
+      Text(name)
+        .font(.system(size: 9, weight: .bold))
+        .foregroundStyle(color)
+        .frame(width: 52, alignment: .leading)
+
+      Rail(progress: HelixSnapshot.progress(value, goal), color: color, height: 5)
+
+      Text(figures)
+        .font(.system(size: 9, weight: .medium, design: .monospaced))
+        .foregroundStyle(Helix.muted)
+        .frame(width: 62, alignment: .trailing)
+        .lineLimit(1)
+
+      Text(remainder)
+        .font(.system(size: 10, weight: .bold, design: .rounded))
+        .monospacedDigit()
+        .foregroundStyle(remainderColor)
+        .frame(width: 46, alignment: .trailing)
+        .lineLimit(1)
+    }
   }
 
-  private var ledgerColumn: some View {
-    VStack(spacing: 0) {
-      LedgerRow(label: "BATTERY", value: s?.battery.map { "\($0)" },
-                color: mono ? .white : Helix.battery(s?.battery), trailing: "%")
-      Hairline().padding(.vertical, 4)
-      LedgerRow(label: "SLEEP", value: sleepText, color: .white)
-      Hairline().padding(.vertical, 4)
-      LedgerRow(label: "WATER", value: s?.water.ml.map { String(format: "%.1f", $0 / 1000) },
-                color: tint(Helix.sapphire), trailing: "L")
-      Hairline().padding(.vertical, 4)
-      LedgerRow(label: "STEPS", value: s?.steps.count.map { "\($0)" }, color: Helix.steel)
-    }
-    .frame(maxWidth: .infinity)
+  private var figures: String {
+    let now = value.map { "\(Int($0.rounded()))" } ?? "—"
+    let target = goal.map { "\(Int($0.rounded()))" } ?? "—"
+    return "\(now)/\(target)g"
   }
 
-  private var sleepText: String? {
-    guard let m = s?.sleep.minutes, m > 0 else { return nil }
-    return HelixSnapshot.formatSleep(m)
+  /// Nothing to be left OF without a goal — an em dash, never a bare intake
+  /// figure dressed up as a remainder.
+  private var remainder: String {
+    guard let value, let goal else { return "—" }
+    let gap = goal - value
+    if abs(gap) < 0.5 { return "met" }
+    return gap > 0 ? "\(Int(gap.rounded()))g" : "+\(Int((-gap).rounded()))g"
+  }
+
+  private var remainderColor: Color {
+    guard let value, let goal else { return Helix.muted }
+    return abs(goal - value) < 0.5 ? Helix.emerald : .white
   }
 }
 
