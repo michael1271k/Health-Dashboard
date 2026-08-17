@@ -128,13 +128,19 @@ export interface NutritionPreset {
 }
 
 // The DEFAULT (Helix) nutrition targets per phase. A plan can override any of
-// these via PLAN_PHASES (PPL runs a leaner cut). Cut = 1950 kcal / 170P·195C·55F;
+// these via PLAN_PHASES (PPL runs a leaner cut). Cut = 1955 kcal / 170P·195C·55F;
 // Lean Bulk = 2600 / 160P·330C·70F (fat is a hard cap).
+//
+// The cut's calorie figure is not a preference, it is the sum of its own macros:
+// 170·4 + 195·4 + 55·9 = 680 + 780 + 495 = 1955. It read 1950 here while the
+// server's fallback (scoring/computeForDate.ts) read 1955, so the same day could
+// be graded against two different targets depending on which one answered.
+// `cut-baseline.test.ts` now holds the two together.
 export const NUTRITION_PRESETS: Record<NutritionMode, NutritionPreset> = {
   cut: {
     mode: 'cut',
     label: 'Cut',
-    calorieGoal: 1950,
+    calorieGoal: 1955,
     proteinGoalG: 170,
     carbsGoalG: 195,
     fatGoalG: 55,

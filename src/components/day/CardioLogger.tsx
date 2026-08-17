@@ -261,7 +261,7 @@ export function CardioLogger({ date, hkActiveEnergy }: { date: string; hkActiveE
                   <input type="text" inputMode="decimal" value={val}
                     onChange={(e) => set(e.target.value)} placeholder="—"
                     aria-label={`${label} in ${unit}`}
-                    className="w-full rounded-lg bg-white/[0.03] border border-white/[0.08] px-2 py-2 min-h-[40px] helix-num text-fluid-sm text-text text-center outline-none focus:border-primary/40" />
+                    className="w-full rounded-lg bg-white/[0.03] border border-white/[0.08] px-2 py-2 min-h-[40px] helix-num field-compact text-text text-center outline-none focus:border-primary/40" />
                 </label>
               ))}
             </div>

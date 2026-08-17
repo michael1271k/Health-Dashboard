@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Search, ChevronRight } from 'lucide-react'
+import { Search, ChevronRight } from 'lucide-react'
 import { AppBar } from '@/components/nav/AppBar'
 import { Zone, ZoneRow, ZoneEmpty, ZoneSkeleton } from '@/components/ui/Zone'
 import { useExerciseCatalog, type CatalogExercise } from '@/lib/hooks/useExerciseCatalog'
@@ -11,6 +11,7 @@ import { exerciseHistoryQuery } from '@/lib/hooks/useExerciseHistory'
 import { EMBER, MUTED } from '@/lib/theme/palette'
 import { groupColor } from '@/lib/theme/muscleHue'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
+import { BackLink } from '@/components/nav/NavChevron'
 
 
 /**
@@ -43,10 +44,8 @@ export default function ExerciseLibraryPage() {
             page returns here with a push, so history grows: Workout → list →
             detail → list. `back()` from the list then walked INTO the exercise
             just left, which read as the Back button going forwards. */}
-        <button onClick={() => router.push('/workout')} onPointerUp={blurOnTap}
-          className="btn-glass shrink-0 min-h-[44px]" aria-label="Back to Workout">
-          <ArrowLeft className="w-4 h-4" />
-        </button>
+        <BackLink onClick={() => router.push('/workout')} onPointerUp={blurOnTap}
+          label="Back to Workout" />
         <div className="min-w-0 flex-1">
           <h1 className="font-heading text-fluid-sm font-bold text-text truncate leading-tight">Exercises</h1>
           <span className="text-[10px] text-muted">{total} with history</span>
@@ -63,7 +62,7 @@ export default function ExerciseLibraryPage() {
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search exercises"
             aria-label="Search exercises"
-            className="flex-1 min-w-0 bg-transparent text-sm text-text placeholder:text-muted outline-none"
+            className="flex-1 min-w-0 bg-transparent field-compact text-text placeholder:text-muted outline-none"
           />
         </label>
       </div>

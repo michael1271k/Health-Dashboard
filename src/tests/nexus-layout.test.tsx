@@ -163,7 +163,11 @@ describe('the Session page is full-bleed', () => {
 
   it('pins the way out — a long document you must scroll up to escape is a trap', () => {
     expect(src).toMatch(/<AppBar/)
-    expect(src).toMatch(/aria-label="Back"/)
+    // `BackLink` carries the label now (it defaults to "Back"), so the literal
+    // aria-label no longer appears here. The assertion is that the control is
+    // present and is the SHARED one — a hand-rolled glass box would pass a
+    // string match and fail the point.
+    expect(src).toMatch(/<BackLink/)
   })
 
   it('takes its reading measure ONCE, on the content and not on the page', () => {

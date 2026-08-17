@@ -135,12 +135,9 @@ html[data-theme='travel'] {
     -webkit-text-size-adjust: 100%;
   }
 
-  /* iOS zooms the whole page when a focused input is under 16px, which is the
-     real reason the viewport had to lock userScalable. Fix the cause and
-     pinch-zoom can come back. */
-  @media (pointer: coarse) {
-    input, select, textarea { font-size: 16px; }
-  }
+  /* The 16px form-control floor MOVED OUT OF THIS LAYER. See the block near
+     `main#main-content` — inside @layer base it lost to every Tailwind text-size
+     utility, which is exactly the case that needed it. */
 
   /* Scrollbar */
   ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -169,6 +166,17 @@ html[data-theme='travel'] {
   .helix-num {
     @apply font-mono tabular-nums;
     letter-spacing: -0.010em;
+  }
+
+  /* A form control that has to READ dense.
+     Replaces the sub-16px text utilities that used to sit on these fields and
+     did nothing but zoom the page (see the unlayered floor further down). Type
+     size is off the table, so density comes from tracking and leading only —
+     and deliberately NOT from padding, which stays each call site's business
+     via its own utilities. */
+  .field-compact {
+    letter-spacing: -0.012em;
+    line-height: 1.2;
   }
 
   /* Primary button */
@@ -435,6 +443,31 @@ main#main-content {
 @media (min-width: 1280px) {
   main#main-content { padding-left: calc(18rem + var(--safe-left)); }
 }
+/* ── THE 16px FORM-CONTROL FLOOR ──────────────────────────────────────────────
+   iOS zooms the whole page when a focused control computes under 16px, and
+   nothing zooms it back — you land on a magnified, horizontally scrolled app
+   after typing a bodyweight. This rule is the fix, and it was already here.
+
+   It did nothing, because it lived in @layer base. Layer order is resolved
+   BEFORE specificity, so `input { font-size: 16px }` in a layer loses to a
+   `text-fluid-sm` utility on the element — and the twelve controls carrying one
+   were, necessarily, the twelve that zoomed. A guard that only applies where it
+   is not needed.
+
+   DELIBERATELY UNLAYERED: unlayered CSS beats every layer, utilities included.
+   This is the one property in the app that must be un-overridable, because the
+   consequence of losing is not a visual regression, it is the page moving.
+
+   Density comes from `.field-compact` instead — tracking and leading, which
+   cost nothing, rather than type size, which costs the viewport.
+
+   Note `--text-fluid-base` floors at 0.92rem ≈ 14.7px, so the weight and reps
+   inputs were under the line as well. Those are the most-touched controls in
+   the app. */
+@media (pointer: coarse) {
+  input, select, textarea { font-size: 16px; }
+}
+
 /* Focus and scrollIntoView must not park a field behind the chrome. */
 html {
   scroll-padding-top: var(--chrome-top);

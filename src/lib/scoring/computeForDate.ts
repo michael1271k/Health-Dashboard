@@ -3,9 +3,13 @@ import { computeDailyScore } from '@/lib/scoring/score'
 import { computeBattery } from '@/lib/scoring/battery'
 import type { ScoringInputs } from '@/lib/scoring/types'
 import type { Database, Tables, InsertRow } from '@/lib/supabase/types'
-import { prescribedFor } from '@/lib/programs'
+import { prescribedFor, DEFAULT_PROGRAM_ID } from '@/lib/programs'
+import { phaseGoalsFor } from '@/lib/types/workout'
 import { nightWindow } from '@/lib/sleep/nightWindow'
 import { isExceptionDay } from '@/lib/nutrition/exceptionDay'
+
+/** The goals a user with no `user_goals` row is graded against. */
+const CUT = phaseGoalsFor(DEFAULT_PROGRAM_ID, 'cut')
 
 /**
  * Compute and upsert one day's `daily_scores` row.
@@ -207,9 +211,21 @@ export async function computeForDate(
   const isCurrentDay = isToday || date === todayISO
   const localHour = Math.min(23, 7 + Math.round(hoursAwake))
 
+  // The macro half of this fallback used to be six literals that drifted from
+  // the preset they were copied from (1955 here, 1950 there), so a user with no
+  // `user_goals` row was graded against a different cut than everyone else.
+  // Only the four figures the preset does not carry stay written down here.
   const g = goals ?? {
-    sleep_goal_hours: 8, calorie_goal: 1955, protein_goal_g: 170, carbs_goal_g: 195,
-    fat_goal_g: 55, steps_goal: 10000, active_cal_goal: 500, water_goal_ml: 3000,
+    sleep_goal_hours: 8,
+    calorie_goal: CUT.calorieGoal,
+    // `?? 0` is the preset's own convention for "no macro target": score.ts
+    // counts a macro only when its goal is > 0. The cut defines all three.
+    protein_goal_g: CUT.proteinGoalG ?? 0,
+    carbs_goal_g: CUT.carbsGoalG ?? 0,
+    fat_goal_g: CUT.fatGoalG ?? 0,
+    steps_goal: CUT.stepsGoal,
+    active_cal_goal: 500,
+    water_goal_ml: 3000,
   }
   // What the program prescribed for this day, per phase (cut uses each lift's
   // cutSets; bulk-only lifts drop out). null when the day isn't a known program

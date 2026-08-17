@@ -16,7 +16,7 @@ export function SessionNotesCard({ notes, onChange }: { notes: string; onChange:
         rows={3}
         dir="auto"
         placeholder="How did it feel? Anything to remember for next time…"
-        className="w-full rounded-xl bg-white/[0.03] border border-white/[0.08] px-3 py-2.5 text-sm text-text
+        className="w-full rounded-xl bg-white/[0.03] border border-white/[0.08] px-3 py-2.5 field-compact text-text
                    placeholder:text-muted/50 outline-none focus:border-primary/40 resize-y min-h-[76px]"
       />
     </div>

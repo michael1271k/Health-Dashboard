@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { FileText, Dumbbell, ChevronRight, Home, ArrowLeft } from 'lucide-react'
+import { FileText, Dumbbell, ChevronRight, Home } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { GymReportRow } from '@/lib/hooks/useWeekly'
 import type { ReportRow } from '@/lib/hooks/useReports'
@@ -12,6 +12,7 @@ import { blurOnTap } from '@/lib/utils/blurOnTap'
 import { MarkdownView } from './MarkdownView'
 import { SessionIntelCard } from './SessionIntelCard'
 import { JourneyTimeline } from './JourneyTimeline'
+import { BackLink } from '@/components/nav/NavChevron'
 
 interface FileItem { key: string; name: string; sub?: string; icon: LucideIcon; accent: string; body: string; meta?: GymReportRow }
 
@@ -67,7 +68,7 @@ export function FileSystemBrowser({ reports, gymReports, focusWeek, era = 'all' 
 
       {file ? (
         <div className="space-y-3">
-          <button onClick={() => setFileKey(null)} className="btn-glass text-fluid-xs"><ArrowLeft className="w-3.5 h-3.5" /> Back</button>
+          <BackLink onClick={() => setFileKey(null)} showLabel />
           {file.meta ? (
             /* Gym sessions render as a data-first Intel Card */
             <SessionIntelCard session={file.meta} />

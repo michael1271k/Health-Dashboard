@@ -275,7 +275,7 @@ export function InBodyForm({ date, log, onSaved }: {
                 // saved by accident.
                 placeholder={ghost != null ? String(ghost) : '—'}
                 className="w-full rounded-lg bg-white/[0.03] border border-white/[0.08] px-2 py-2 min-h-[40px]
-                           helix-num text-fluid-sm text-text text-center tabular-nums
+                           helix-num field-compact text-text text-center tabular-nums
                            placeholder:text-muted/40 outline-none focus:border-primary/40"
                 aria-label={`${f.label}${f.unit ? ` in ${f.unit}` : ''}${ghost != null ? `, last reading ${ghost}` : ''}`}
               />

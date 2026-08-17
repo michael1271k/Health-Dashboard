@@ -16,6 +16,7 @@ import { dayColor, EMBER } from '@/lib/theme/palette'
 import { Surface } from '@/components/ui/Zone'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
 import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
+import { BackLink } from '@/components/nav/NavChevron'
 
 /**
  * Workout Analysis — the dedicated deep-dive for one session (reached by tapping
@@ -56,10 +57,7 @@ export default function SessionAnalysisPage() {
           top edge: Upper A is always steel, Legs & Core B always emerald, so
           the report identifies itself before the title is read. */}
       <AppBar accent={accent}>
-          <button onClick={() => router.back()} onPointerUp={blurOnTap}
-            className="btn-glass shrink-0 min-h-[44px]" aria-label="Back">
-            <ArrowLeft className="w-4 h-4" />
-          </button>
+          <BackLink onClick={() => router.back()} onPointerUp={blurOnTap} />
           <div className="min-w-0 flex-1">
             <h1 className="font-heading text-fluid-sm font-bold truncate leading-tight" style={{ color: accent }}>
               {label}

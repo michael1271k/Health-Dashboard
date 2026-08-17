@@ -453,7 +453,7 @@ function NumberField({ value, onCommit, inputMode, ariaLabel }: {
         if (Number.isFinite(n)) onCommit(n)
       }}
       onBlur={() => { const n = parseFloat(text); if (Number.isFinite(n)) onCommit(n); setEditing(false) }}
-      className="w-full min-w-0 bg-transparent text-fluid-base font-bold tabular-nums text-text outline-none"
+      className="w-full min-w-0 bg-transparent field-compact font-bold tabular-nums text-text outline-none"
     />
   )
 }

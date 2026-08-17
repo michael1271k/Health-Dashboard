@@ -54,3 +54,24 @@ export function isoAddDays(dateISO: string, n: number): string {
   d.setUTCDate(d.getUTCDate() + n)
   return d.toISOString().slice(0, 10)
 }
+
+/**
+ * A week is COMPLETE when it is over — strictly after its final day.
+ *
+ * `today > weekStart + 6`, which is the same instant as `>= weekStart + 7`: the
+ * midnight that opens the following week, under whatever "Week starts on" is
+ * set to. Not the final day. On the final day the week is still running and
+ * more can still be logged into it, so anything that calls it complete then is
+ * making a claim the calendar does not support.
+ *
+ * Distinct from `isWeekReady`, which is about having done the work and is
+ * deliberately allowed to fire mid-week — it drives the gold aura, the "you are
+ * on top of it" signal. This one is purely about the calendar.
+ *
+ * Lived in PathfinderTimeline, where the dashboard could not reach it — which is
+ * how the dashboard came to carry a second, looser rule (`>= weekStart + 6`)
+ * that announced a complete week with a whole day of it still to run.
+ */
+export function isWeekComplete(weekStart: string, today: string): boolean {
+  return today > isoAddDays(weekStart, 6)
+}

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
-import { ArrowLeft, Dumbbell, Moon, Flame, ChevronRight, ChevronLeft } from 'lucide-react'
+import { Dumbbell, Moon, Flame, ChevronRight } from 'lucide-react'
 import { CompletenessArc } from '@/components/day/CompletenessArc'
 import { BodyPanel } from '@/components/day/BodyPanel'
 import { SleepDebtGauge } from '@/components/day/SleepDebtGauge'
@@ -41,6 +41,7 @@ import { SleepBand, BodyBand } from '@/components/day/SummaryBands'
  */
 type DaySheet = 'sleep' | 'body' | 'inbody' | 'water' | 'water-edit' | 'macros' | 'nutrition' | null
 import { AppBar } from '@/components/nav/AppBar'
+import { BackLink, NavChevron } from '@/components/nav/NavChevron'
 import { EMBER, EMBER_DEEP, SAPPHIRE, STEEL, GOLD, OXIDE, EMERALD, MUTED, SAND, BODY } from '@/lib/theme/palette'
 
 // Local aliases over the real palette. These were six hardcoded hexes whose
@@ -231,9 +232,7 @@ export default function DailyNexusPage() {
           up to escape is a trap. The era colour bleeds along the top edge, so
           one piece of chrome says which block of training this day belongs to. */}
       <AppBar accent={eraMeta.color}>
-          <button onClick={() => router.back()} className="btn-glass shrink-0 min-h-[44px]" aria-label="Back">
-            <ArrowLeft className="w-4 h-4" />
-          </button>
+          <BackLink onClick={() => router.back()} />
           <div className="min-w-0 flex-1">
             <h1 className="font-heading text-fluid-sm font-bold text-text truncate leading-tight">{pretty}</h1>
             <span className="text-[10px] text-muted">
@@ -243,15 +242,9 @@ export default function DailyNexusPage() {
           </div>
           {/* Previous / Next day — discrete native-feeling chevrons */}
           <div className="flex items-center gap-0.5 shrink-0">
-            <button onClick={() => router.push(`/day/${prevDate}`)}
-              className="btn-glass min-h-[44px] min-w-[38px] justify-center" aria-label="Previous day">
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button onClick={() => router.push(`/day/${nextDate}`)} disabled={nextIsFuture}
-              className="btn-glass min-h-[44px] min-w-[38px] justify-center disabled:opacity-30 disabled:pointer-events-none"
-              aria-label="Next day">
-              <ChevronRight className="w-4 h-4" />
-            </button>
+            <NavChevron direction="prev" label="Previous day" onClick={() => router.push(`/day/${prevDate}`)} />
+            <NavChevron direction="next" label="Next day" disabled={nextIsFuture}
+              onClick={() => router.push(`/day/${nextDate}`)} />
           </div>
           <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded shrink-0"
             style={{ color: eraMeta.color, background: `${eraMeta.color}1a`, border: `1px solid ${eraMeta.color}40` }}>

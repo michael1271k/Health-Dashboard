@@ -68,7 +68,7 @@ export function PastePanel({ onDraft }: { onDraft: (d: SessionDraft) => void }) 
           rows={9}
           dir="auto"
           placeholder={'upper b, Thursday 16 jul…\n\nChest Press (Machine)\nSet 1: 35 kg x 12\n…'}
-          className="w-full rounded-xl bg-white/[0.03] border border-white/[0.08] px-3 py-2.5 text-sm text-text
+          className="w-full rounded-xl bg-white/[0.03] border border-white/[0.08] px-3 py-2.5 field-compact text-text
                      placeholder:text-muted/40 outline-none focus:border-primary/40 resize-y min-h-[180px] font-mono text-[13px]"
         />
 

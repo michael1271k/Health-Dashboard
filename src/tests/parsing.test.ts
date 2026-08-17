@@ -4,7 +4,7 @@ import { NUTRITION_PRESETS } from '@/lib/types/workout'
 
 describe('Nutrition modes', () => {
   it('defines Cut / Bulk / Maintenance with correct calories', () => {
-    expect(NUTRITION_PRESETS.cut.calorieGoal).toBe(1950)     // Helix cut
+    expect(NUTRITION_PRESETS.cut.calorieGoal).toBe(1955)     // Helix cut — 170·4 + 195·4 + 55·9
     expect(NUTRITION_PRESETS.bulk.calorieGoal).toBe(2600)   // Lean Bulk
     expect(NUTRITION_PRESETS.maintenance.calorieGoal).toBe(2375)
   })

@@ -4,10 +4,9 @@ import { memo, useEffect, useState } from 'react'
 import { STEEL } from '@/lib/theme/palette'
 import { useLastUpdated } from '@/lib/hooks/useDashboard'
 import { useMyProfile } from '@/lib/hooks/useMyProfile'
-import { HELIX_CUT_START, activeProgram, activePhase } from '@/lib/programs'
+import { activeProgram, activePhase } from '@/lib/programs'
 import { PHASE_COLORS, PHASE_META, type Phase } from '@/lib/nutrition/phase'
 import { programWeekNumber } from '@/lib/reports/weekNumber'
-import { logicalTodayISO } from '@/lib/utils/day'
 import { useLogicalDate } from '@/lib/hooks/useLogicalDate'
 import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 
@@ -18,26 +17,21 @@ const PLAN_CHIP_COLOR: Record<string, string> = {
   ppl: '#79808C',    // legacy — muted
 }
 
-/**
- * Days elapsed since the program start (2026-07-15), inclusive.
+/*
+ * `programDay()` lived here and is GONE.
  *
- * ── THIS IS NOT A STREAK, AND IT USED TO SAY IT WAS ──────────────────────────
- * It was called `programStreak` and rendered as "Day Streak", which made it look
- * like the same quantity the widget shows — and the two disagreed by ten,
- * because they are not remotely the same measurement. This one counts CALENDAR
- * days since the cut began and can never go down. `streakFrom` in
- * `src/lib/widget/derive.ts` counts consecutive SCHEDULED training days actually
- * trained, and resets when one is missed.
+ * It counted calendar days since the cut began (2026-07-15) and never went
+ * down. Renamed once already — it was `programStreak`, rendered as "Day Streak"
+ * — and even under the honest label "Program Day" it sat under a flame beside a
+ * widget showing the real streak, twenty-two against thirty-two. Two numbers,
+ * one glyph, and no way for anyone glancing at a phone to know which question
+ * either was answering.
  *
- * Both are worth having. Neither may be labelled with the other's word. If the
- * dashboard ever wants the real streak, it reads `streakFrom` — which is pure,
- * server-safe and already tested — rather than growing a third implementation.
+ * One number now: `streakFrom` in lib/training/streak.ts, read by the app
+ * through `useStreak()` and by the widget through the payload route. If a
+ * "days since the cut started" figure is ever wanted again it is a phase fact,
+ * belongs beside the phase chip, and must not take the flame with it.
  */
-export function programDay(): number {
-  const start = Date.parse(`${HELIX_CUT_START}T00:00:00Z`)
-  const today = Date.parse(`${logicalTodayISO()}T00:00:00Z`)
-  return Math.max(1, Math.floor((today - start) / 86_400_000) + 1)
-}
 
 /**
  * Ticking clock (client-only to avoid hydration mismatch).

@@ -32,6 +32,22 @@ function releaseOverlay() {
 }
 
 /**
+ * Drop the lock unconditionally, whatever the count says.
+ *
+ * A ref count is only correct while every acquire is paired with its release,
+ * and the cost of the one time it is not is a body that can never scroll again —
+ * a state the user cannot get out of, because the overlay that would have
+ * released it is already gone. Navigation is the natural amnesty: no overlay
+ * survives a route change, so at that moment the count is known to be zero and
+ * anything still set on <body> is by definition a leak.
+ */
+export function resetOverlayLock() {
+  overlayCount = 0
+  document.body.style.overflow = ''
+  document.body.classList.remove('helix-overlay-open')
+}
+
+/**
  * While `open`, lock body scroll, flag `body.helix-overlay-open` (globals.css
  * uses it to suspend glass backdrop-filter on the page so cards don't sample the
  * dim veil as solid black on iOS), and bind Escape → onClose.

@@ -15,7 +15,7 @@ import { useTimelineWeeks, type TimelineWeekNode } from '@/lib/hooks/useTimeline
 import { useContinuum, type ContinuumDay } from '@/lib/hooks/useContinuum'
 import { useWeeklyExport, useWeeklyAiSummaries } from '@/lib/hooks/useWeeklyLoop'
 import { useSentinelReports, useSaveSentinelReport } from '@/lib/hooks/useSentinelExport'
-import { weekStartOf, isoAddDays } from '@/lib/utils/week'
+import { weekStartOf, isoAddDays, isWeekComplete } from '@/lib/utils/week'
 import { splitColor } from '@/lib/types/workout'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { displayWeight, weightUnit, useUnitSystem } from '@/lib/utils/units'
@@ -58,18 +58,11 @@ export function isWeekReady(weekStart: string, loggedDates: Set<string>, today: 
   return due.every((d) => loggedDates.has(d))
 }
 
-/**
- * A week is COMPLETE when it is over — strictly after its final day.
- *
- * Distinct from `isWeekReady`, which is about having done the work and is
- * deliberately allowed to fire mid-week (it drives the gold aura, the "you're
- * on top of it" signal). "Complete" is a statement about the calendar, so
- * labelling the live week complete on its last training day was simply wrong:
- * the week hadn't finished, and more could still be logged into it.
- */
-export function isWeekComplete(weekStart: string, today: string): boolean {
-  return today > isoAddDays(weekStart, 6)
-}
+// `isWeekComplete` moved to lib/utils/week.ts. It lived here, where the
+// dashboard could not reach it, and the dashboard duly grew a second and looser
+// rule of its own that fired a day early. Re-exported so this file's importers
+// are unaffected.
+export { isWeekComplete }
 
 /** Stable empty ref — a fresh `[]` per render defeats the capsule's memo. */
 const NO_DAYS: ContinuumDay[] = []
@@ -453,7 +446,7 @@ function WeekActions({ node }: { node: TimelineWeekNode }) {
             onChange={(e) => setDraft(e.target.value)}
             rows={8}
             placeholder="Paste the finished report here…"
-            className="w-full rounded-xl border px-3 py-2.5 text-fluid-xs text-text bg-surface-2 outline-none focus:ring-2 focus:ring-primary/60"
+            className="w-full rounded-xl border px-3 py-2.5 field-compact text-text bg-surface-2 outline-none focus:ring-2 focus:ring-primary/60"
             style={{ borderColor: 'rgba(255,255,255,0.10)' }}
           />
           <p className="text-[11px] text-muted leading-snug">

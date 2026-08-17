@@ -6,7 +6,7 @@ import { NotionSync } from '@/components/settings/NotionSync'
 import { supabase } from '@/lib/supabase/client'
 import { derivePhase, phaseDisplay } from '@/lib/nutrition/phase'
 import { logicalTodayISO } from '@/lib/utils/day'
-import type { NutritionMode, NutritionPreset } from '@/lib/types/workout'
+import { phaseGoalsFor, type NutritionMode, type NutritionPreset } from '@/lib/types/workout'
 import { phaseBadgeStyle } from '@/lib/phases'
 import { Sheet } from '@/components/ui/Sheet'
 import { EMBER, STEEL } from '@/lib/theme/palette'
@@ -78,13 +78,23 @@ interface Goals {
   auto_log_supplements: boolean
 }
 
+/**
+ * What the form shows for the fraction of a second before the row loads.
+ *
+ * The macros used to be a THIRD set of numbers — 2500 / 180·250·80 — matching no
+ * preset and no phase, so the settings page opened by flashing a target the user
+ * has never been on. They come from the cut preset now, same as the server's
+ * fallback; only the figures no preset carries are still written here.
+ */
+const CUT = phaseGoalsFor(DEFAULT_PROGRAM_ID, 'cut')
+
 const DEFAULTS: Goals = {
   sleep_goal_hours: 8,
-  calorie_goal: 2500,
-  protein_goal_g: 180,
-  carbs_goal_g: 250,
-  fat_goal_g: 80,
-  steps_goal: 10000,
+  calorie_goal: CUT.calorieGoal,
+  protein_goal_g: CUT.proteinGoalG ?? 0,   // ?? 0 is the preset's "no target"
+  carbs_goal_g: CUT.carbsGoalG ?? 0,
+  fat_goal_g: CUT.fatGoalG ?? 0,
+  steps_goal: CUT.stepsGoal,
   active_cal_goal: 500,
   water_goal_ml: 3000,
   context_mode: 'normal',
@@ -746,7 +756,7 @@ export default function SettingsPage() {
                             patch: { ...planPhasePatch(pp), [field]: n },
                           })
                         }}
-                        className="w-full bg-transparent helix-num text-fluid-sm font-bold text-text outline-none tabular-nums"
+                        className="w-full bg-transparent helix-num field-compact font-bold text-text outline-none tabular-nums"
                       />
                     </label>
                   ))}
@@ -774,7 +784,7 @@ export default function SettingsPage() {
                           if (!Number.isFinite(n) || n < 0 || n === volTargets[m]) return
                           void saveVolumeTarget({ planId: previewPlan.id, phase: phaseMode, muscle: m, targetSets: n })
                         }}
-                        className="w-10 bg-transparent helix-num text-fluid-sm font-bold text-text text-right outline-none tabular-nums"
+                        className="w-10 bg-transparent helix-num field-compact font-bold text-text text-right outline-none tabular-nums"
                       />
                     </label>
                   ))}

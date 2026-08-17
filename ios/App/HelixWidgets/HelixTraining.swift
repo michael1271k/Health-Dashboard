@@ -800,9 +800,13 @@ private func weekLabel(_ iso: String) -> String {
 // plan rather than the athlete. `streakFrom` walks SCHEDULED days only, and today
 // does not count against you until it is over.
 //
-// This is ALSO not the number on the dashboard orb. That one is `programDay()` —
-// days elapsed since the cut began — and it used to be called `programStreak`,
-// which is how the two came to disagree by ten while claiming to be one thing.
+// This IS the number on the dashboard orb, as of the streak unification. The orb
+// used to show `programDay()` — days elapsed since the cut began — which is how
+// the two came to disagree by ten while both sitting under a flame. That counter
+// is deleted; `streakFrom` (src/lib/training/streak.ts) is the only derivation
+// left, and the app reads it through `useStreak()` over the same 42-day window
+// this payload is built from. If this face and the orb ever differ again, the
+// cause is staleness, not arithmetic.
 
 struct StreakFace: View {
   let entry: HelixEntry
@@ -831,19 +835,20 @@ struct StreakFace: View {
       Text(subtitle).font(.system(size: 10)).foregroundStyle(Helix.muted).lineLimit(1)
 
       Spacer(minLength: 0)
-
-      if let best = s?.streak?.best, best > 0 {
-        Rail(progress: current.map { min(1, Double($0) / Double(best)) },
-             color: mono ? .white : Helix.ember, height: 3)
-        Text("best \(best)").font(.system(size: 9)).foregroundStyle(Helix.muted)
-      }
     }
   }
 
+  /// ── WHY THERE IS NO LONGER A BAR ───────────────────────────────────────────
+  /// A `Rail` used to draw `current / best` with a "best 27" caption under it.
+  /// That is a progress bar toward your own record, and it reads as a target —
+  /// so the better your best gets, the emptier a perfectly good streak looks.
+  /// A streak has no denominator. The flame and the number are the whole idea,
+  /// and `best` still lives on the Medium/Large face where it is a LEDGER ROW
+  /// rather than a finish line.
   private var subtitle: String {
     guard let current else { return "no sessions on record" }
     if current == 0 { return "training days, not calendar days" }
-    return current == 1 ? "scheduled day" : "scheduled days"
+    return "day streak"
   }
 }
 
@@ -896,7 +901,7 @@ struct ConsistencyFace: View {
           // a `map` it does not have. Same trap as `week.volumeKg`.
           BigValue(value: s?.streak.map { "\($0.current)" }, size: large ? 40 : 30, color: .white)
         }
-        Text("scheduled days")
+        Text("day streak")
           .font(.system(size: 9)).foregroundStyle(Helix.muted).lineLimit(1)
         Spacer(minLength: 0)
       }

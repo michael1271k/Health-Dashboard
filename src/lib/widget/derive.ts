@@ -161,46 +161,10 @@ export function calendarDays(
   })
 }
 
-/**
- * The streak, counted over SCHEDULED days only.
- *
- * ── WHY REST DAYS CANNOT BREAK IT ────────────────────────────────────────────
- * Helix-5 rests Wednesday and Saturday. A streak that counted raw consecutive
- * calendar days would reset twice a week by design, which is a counter measuring
- * the plan rather than the athlete — it could never exceed 3.
- *
- * So the walk skips unscheduled days entirely and breaks only on a scheduled day
- * with no session. Today is a special case: a training day that has not been
- * done YET is not a miss, it is a day still in progress, so the walk starts at
- * the most recent scheduled day that is either logged or in the past.
- *
- * `best` is the longest such run anywhere in the window, which is why it can
- * exceed `current` and why both are worth showing.
- */
-export function streakFrom(
-  days: ReadonlyArray<{ d: string; scheduled: boolean; logged: boolean }>,
-  todayISO: string,
-): { current: number; best: number } {
-  const scheduled = days.filter((x) => x.scheduled).sort((a, b) => (a.d < b.d ? -1 : 1))
-
-  let best = 0, run = 0
-  for (const x of scheduled) {
-    run = x.logged ? run + 1 : 0
-    if (run > best) best = run
-  }
-
-  // Walk backwards. Today is skipped when it is scheduled but not yet logged —
-  // an unfinished day is not a broken one.
-  let current = 0
-  for (let i = scheduled.length - 1; i >= 0; i--) {
-    const x = scheduled[i]
-    if (x.d === todayISO && !x.logged) continue
-    if (x.d > todayISO) continue          // a scheduled future day owes nothing
-    if (!x.logged) break
-    current++
-  }
-  return { current, best }
-}
+// `streakFrom` moved to lib/training/streak.ts. It was the app's only reason to
+// import from the widget's payload workshop, and the streak is training domain,
+// not serialisation. Re-exported so the payload route's import is unchanged.
+export { streakFrom, STREAK_WINDOW_DAYS, type StreakDay } from '@/lib/training/streak'
 
 /**
  * Weekly tonnage, oldest first, `d` set to each week's START date.

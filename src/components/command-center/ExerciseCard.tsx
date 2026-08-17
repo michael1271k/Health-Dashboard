@@ -63,7 +63,7 @@ function CardioField({ label, unit, step, value, onCommit }: {
             if (Number.isFinite(n) && n >= 0) onCommit(n)
           }}
           onBlur={() => setText(null)}
-          className="helix-num w-full bg-transparent text-fluid-base font-bold text-text tabular-nums outline-none min-w-0"
+          className="helix-num w-full bg-transparent field-compact font-bold text-text tabular-nums outline-none min-w-0"
           aria-label={`${label} in ${unit}`}
         />
         <span className="text-[10px] text-muted shrink-0">{unit}</span>
@@ -548,7 +548,7 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, live
               onBlur={(e) => { onSetNote(localId, e.target.value.trim()); setEditingNote(false) }}
               dir="auto"
               placeholder="Note for this exercise…"
-              className="w-full rounded-lg bg-white/[0.04] border border-white/[0.12] px-2.5 py-1.5 text-xs text-text
+              className="w-full rounded-lg bg-white/[0.04] border border-white/[0.12] px-2.5 py-1.5 field-compact text-text
                          placeholder:text-muted/50 outline-none focus:border-primary/40 resize-none"
             />
           ) : (

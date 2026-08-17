@@ -143,7 +143,7 @@ export function SupplementChecklist() {
               value={editing?.dose ?? ''}
               onChange={(e) => setEditing((s) => (s ? { ...s, dose: e.target.value } : s))}
               placeholder="e.g. 6 g"
-              className="mt-1 w-full rounded-lg bg-surface-2 border border-border px-3 py-2 text-sm text-text"
+              className="mt-1 w-full rounded-lg bg-surface-2 border border-border px-3 py-2 field-compact text-text"
             />
           </label>
           <div className="flex gap-2 justify-end">
@@ -169,10 +169,10 @@ export function SupplementChecklist() {
         <div className="space-y-2.5">
           <div className="space-y-2.5">
             <div className="grid grid-cols-2 gap-2">
-              <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="Name" className="rounded-lg bg-surface-2 border border-border px-3 py-2 text-sm text-text" />
-              <input value={form.dose} onChange={(e) => setForm((f) => ({ ...f, dose: e.target.value }))} placeholder="Dose (e.g. 2 caps)" className="rounded-lg bg-surface-2 border border-border px-3 py-2 text-sm text-text" />
-              <input type="time" value={form.time} onChange={(e) => setForm((f) => ({ ...f, time: e.target.value }))} className="rounded-lg bg-surface-2 border border-border px-3 py-2 text-sm text-text helix-num" />
-              <select value={form.formType} onChange={(e) => setForm((f) => ({ ...f, formType: e.target.value }))} className="rounded-lg bg-surface-2 border border-border px-3 py-2 text-sm text-text capitalize">
+              <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="Name" className="rounded-lg bg-surface-2 border border-border px-3 py-2 field-compact text-text" />
+              <input value={form.dose} onChange={(e) => setForm((f) => ({ ...f, dose: e.target.value }))} placeholder="Dose (e.g. 2 caps)" className="rounded-lg bg-surface-2 border border-border px-3 py-2 field-compact text-text" />
+              <input type="time" value={form.time} onChange={(e) => setForm((f) => ({ ...f, time: e.target.value }))} className="rounded-lg bg-surface-2 border border-border px-3 py-2 field-compact text-text helix-num" />
+              <select value={form.formType} onChange={(e) => setForm((f) => ({ ...f, formType: e.target.value }))} className="rounded-lg bg-surface-2 border border-border px-3 py-2 field-compact text-text capitalize">
                 {FORMS.map((x) => <option key={x} value={x}>{x}</option>)}
               </select>
             </div>
@@ -181,9 +181,9 @@ export function SupplementChecklist() {
                 Blank → the base dose is used on both. */}
             <div className="grid grid-cols-2 gap-2">
               <input value={form.trainingDose} onChange={(e) => setForm((f) => ({ ...f, trainingDose: e.target.value }))}
-                placeholder="Training-day dose (optional)" className="rounded-lg bg-surface-2 border border-border px-3 py-2 text-sm text-text" />
+                placeholder="Training-day dose (optional)" className="rounded-lg bg-surface-2 border border-border px-3 py-2 field-compact text-text" />
               <input value={form.restDose} onChange={(e) => setForm((f) => ({ ...f, restDose: e.target.value }))}
-                placeholder="Rest-day dose (optional)" className="rounded-lg bg-surface-2 border border-border px-3 py-2 text-sm text-text" />
+                placeholder="Rest-day dose (optional)" className="rounded-lg bg-surface-2 border border-border px-3 py-2 field-compact text-text" />
             </div>
 
             {/* A rule the dose can't state on its own. Stored on the row and
@@ -191,7 +191,7 @@ export function SupplementChecklist() {
                 text rather than a fixed vocabulary. */}
             <input value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
               placeholder='Note / rule (optional) — e.g. "empty stomach"'
-              className="w-full rounded-lg bg-surface-2 border border-border px-3 py-2 text-sm text-text" />
+              className="w-full rounded-lg bg-surface-2 border border-border px-3 py-2 field-compact text-text" />
 
             {/* Colour */}
             <div className="flex items-center gap-2">

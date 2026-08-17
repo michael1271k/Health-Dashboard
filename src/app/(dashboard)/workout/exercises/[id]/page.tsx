@@ -3,7 +3,6 @@
 import { useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
 import { AppBar } from '@/components/nav/AppBar'
 import dynamic from 'next/dynamic'
 import { useExerciseCatalog } from '@/lib/hooks/useExerciseCatalog'
@@ -11,6 +10,7 @@ import { exerciseHistoryQuery } from '@/lib/hooks/useExerciseHistory'
 import { MUTED } from '@/lib/theme/palette'
 import { exerciseColor, groupColor } from '@/lib/theme/muscleHue'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
+import { BackLink, NavChevron } from '@/components/nav/NavChevron'
 
 /*
  * recharts is ~120 kB and this was the ONE route importing it statically —
@@ -78,10 +78,8 @@ export default function ExerciseDetailPage() {
             out of an exercise, so the list's own Back button had somewhere
             forward to walk to. Replacing keeps the depth flat: whatever you came
             from stays the thing behind the list. */}
-        <button onClick={() => router.replace('/workout/exercises')} onPointerUp={blurOnTap}
-          className="btn-glass shrink-0 min-h-[44px]" aria-label="Back to exercises">
-          <ArrowLeft className="w-4 h-4" />
-        </button>
+        <BackLink onClick={() => router.replace('/workout/exercises')} onPointerUp={blurOnTap}
+          label="Back to exercises" />
         <div className="min-w-0 flex-1">
           <h1 className="font-heading text-fluid-sm font-bold text-text truncate leading-tight">
             {current?.name ?? 'Exercise'}
@@ -91,20 +89,12 @@ export default function ExerciseDetailPage() {
         {/* Buttons, not a swipe: the body is a chart, and a horizontal drag over
             a chart belongs to the chart. */}
         <div className="flex items-center gap-0.5 shrink-0">
-          <button
+          <NavChevron direction="prev" disabled={!prev}
             onClick={() => prev && router.push(`/workout/exercises/${prev.id}`)}
-            disabled={!prev}
-            aria-label={prev ? `Previous exercise: ${prev.name}` : 'Previous exercise'}
-            className="btn-glass min-h-[44px] min-w-[38px] justify-center disabled:opacity-30 disabled:pointer-events-none">
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <button
+            label={prev ? `Previous exercise: ${prev.name}` : 'Previous exercise'} />
+          <NavChevron direction="next" disabled={!next}
             onClick={() => next && router.push(`/workout/exercises/${next.id}`)}
-            disabled={!next}
-            aria-label={next ? `Next exercise: ${next.name}` : 'Next exercise'}
-            className="btn-glass min-h-[44px] min-w-[38px] justify-center disabled:opacity-30 disabled:pointer-events-none">
-            <ChevronRight className="w-4 h-4" />
-          </button>
+            label={next ? `Next exercise: ${next.name}` : 'Next exercise'} />
         </div>
       </AppBar>
 

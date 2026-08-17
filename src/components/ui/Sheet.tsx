@@ -6,7 +6,7 @@ import { X } from 'lucide-react'
 import { Portal, useOverlayBodyLock } from './overlay'
 import { tapLight } from '@/lib/native/haptics'
 import {
-  CROSSFADE, DRAWER, MOMENTUM, SNAPPY,
+  CROSSFADE, DRAWER, SNAPPY,
   nearestSnap, project, rubberband, useHelixReducedMotion,
 } from '@/lib/motion'
 
@@ -123,13 +123,36 @@ export function Sheet({
   /**
    * The one dismissal path, so the way out is identical whether it came from
    * the X, the backdrop or Escape — enter and exit along the same line.
+   *
+   * ── WHY THIS CLOSES SYNCHRONOUSLY ────────────────────────────────────────────
+   * It used to animate the panel out itself and call `onClose` from the
+   * animation's promise:
+   *
+   *     running.current = animate(y, height(), SNAPPY)
+   *     void running.current.finished.then(() => closeRef.current())
+   *
+   * `seize()` calls `.stop()`, and a stopped animation's `finished` promise
+   * NEVER SETTLES — it neither resolves nor rejects. That promise was the only
+   * path to `onClose`, so any interrupt stranded the sheet: `open` stayed true
+   * with the panel parked mid-travel and the veil already faded out. The root is
+   * `fixed inset-0 z-[80]` and the nav is z-50, so one stranded sheet is an
+   * invisible sheet of glass over the entire application. Every tap — tabs,
+   * tiles, everything — lands on it. Only a force-quit recovers.
+   *
+   * The interrupt is not exotic. `seize()` runs on pointerdown anywhere in the
+   * header, so tapping the X and letting a finger brush the header inside the
+   * 0.28s close was enough to kill the app.
+   *
+   * So the animation stops being load-bearing. `onClose` is called outright, and
+   * AnimatePresence's `exit` — which already animates `y: '100%'` — owns the
+   * travel. The panel was being animated out TWICE before this; now it is
+   * animated out once, by the mechanism that also unmounts it, so there is no
+   * longer any way for the visual and the state to disagree.
    */
   const dismiss = useCallback(() => {
     seize()
-    if (reduce) { closeRef.current(); return }
-    running.current = animate(y, height(), SNAPPY)
-    void running.current.finished.then(() => closeRef.current()).catch(() => {})
-  }, [seize, reduce, y, height])
+    closeRef.current()
+  }, [seize])
 
   // z-ladder: nav 50 · PullToRefresh 70 · Sheet 80 · stacked Sheet 88 · DatePicker 90
   return (
@@ -137,6 +160,11 @@ export function Sheet({
     <AnimatePresence onExitComplete={() => y.set(0)}>
       {open && (
         <div
+          // Keyed even though it is the only child. AnimatePresence tracks
+          // presence BY KEY, and the dashboard drives seven different bodies
+          // through one <Sheet>, so "the only child" is a claim about this
+          // render and not about the component.
+          key="sheet"
           className={`fixed inset-0 flex items-end justify-center sm:items-center ${layer === 'stacked' ? 'z-[88]' : 'z-[80]'}`}
           role="dialog" aria-modal="true"
         >
@@ -211,14 +239,19 @@ export function Sheet({
               seize()
               if (target === 0) {
                 // Settling back open after a gesture that carried momentum —
-                // the one place a little overshoot is earned.
+                // the one place a little overshoot is earned. Nothing downstream
+                // depends on this finishing, so it is safe to seize.
                 running.current = animate(y, 0, { ...DRAWER, velocity })
               } else {
-                // Thrown out. Hand the finger's exact speed to the spring so
-                // there is no seam between dragging and animating, and unmount
-                // only once it has landed.
-                running.current = animate(y, full, { ...MOMENTUM, velocity })
-                void running.current.finished.then(onClose).catch(() => {})
+                // Thrown out. Close NOW and let the exit carry it the rest of
+                // the way from wherever the finger left it — see `dismiss`.
+                //
+                // The cost is the velocity handoff: the exit spring starts from
+                // rest rather than at the speed of the throw. That continuity
+                // was worth having, but it was bought with a promise that could
+                // be orphaned into an app-wide freeze, and no amount of polish
+                // on a gesture is worth a force-quit.
+                closeRef.current()
               }
             }}
           >

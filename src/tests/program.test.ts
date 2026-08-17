@@ -67,9 +67,9 @@ describe('HELIX-5 split', () => {
     expect(exCount('cut', 'legs_b')).toBe(7)
   })
 
-  it('phaseGoalsFor: Helix cut = 1950 kcal, PPL cut is leaner (1935, higher protein)', () => {
-    expect(phaseGoalsFor('apex51', 'cut').calorieGoal).toBe(1950)
-    expect(phaseGoalsFor('axis4', 'cut').calorieGoal).toBe(1950)   // Helix-4 shares the Helix cut
+  it('phaseGoalsFor: Helix cut = 1955 kcal, PPL cut is leaner (1935, higher protein)', () => {
+    expect(phaseGoalsFor('apex51', 'cut').calorieGoal).toBe(1955)
+    expect(phaseGoalsFor('axis4', 'cut').calorieGoal).toBe(1955)   // Helix-4 shares the Helix cut
     const ppl = phaseGoalsFor('ppl', 'cut')
     expect(ppl.calorieGoal).toBe(1935)
     expect(ppl.proteinGoalG).toBe(180)

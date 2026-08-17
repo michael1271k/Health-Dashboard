@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { ArrowLeft, FileClock, Loader2 } from 'lucide-react'
+import { FileClock, Loader2 } from 'lucide-react'
 import { SessionDeck } from '@/components/command-center/SessionDeck'
 import { PastePanel } from '@/components/command-center/PastePanel'
 import { useSessionDraft } from '@/lib/hooks/useSessionDraft'
@@ -13,6 +13,7 @@ import { SEED_TEMPLATES } from '@/lib/sessions/seedTemplates'
 import { activeProgram, eraForDate } from '@/lib/programs'
 import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { logicalTodayISO } from '@/lib/utils/day'
+import { BackLink } from '@/components/nav/NavChevron'
 
 /**
  * /session — the fullscreen Workout Command Center. The ONLY logging path.
@@ -108,9 +109,7 @@ function SessionPageInner() {
 
   const header = (
     <header className="flex items-center gap-3 mb-4">
-      <button onClick={() => router.back()} className="btn-glass shrink-0 min-h-[44px]" aria-label="Back — the draft autosaves">
-        <ArrowLeft className="w-4 h-4" aria-hidden="true" />
-      </button>
+      <BackLink onClick={() => router.back()} label="Back — the draft autosaves" />
       <div className="min-w-0 flex-1">
         <h1 className="font-heading text-fluid-xl font-bold text-text leading-tight truncate">Log</h1>
         <p className="text-[11px] text-muted">Autosaves as you edit — back never discards</p>

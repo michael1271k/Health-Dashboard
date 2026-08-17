@@ -142,7 +142,7 @@ function Field({ label, unit, value, onChange, parse }: {
           onBlur={(e) => { onChange(toNumber(e.target.value)); setText(null) }}
           onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
           placeholder="—"
-          className="helix-num w-full min-w-0 bg-transparent text-fluid-base font-bold text-text tabular-nums outline-none placeholder:text-muted placeholder:font-normal"
+          className="helix-num w-full min-w-0 bg-transparent field-compact font-bold text-text tabular-nums outline-none placeholder:text-muted placeholder:font-normal"
           aria-label={label}
         />
         <span className="text-[10px] text-muted shrink-0">{unit}</span>

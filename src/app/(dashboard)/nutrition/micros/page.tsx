@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { AlertTriangle, ArrowLeft, FlaskConical, Pill } from 'lucide-react'
+import { AlertTriangle, FlaskConical, Pill } from 'lucide-react'
 import { useTodayNutrition } from '@/lib/hooks/useDashboard'
 import { useSupplements } from '@/lib/hooks/useSupplements'
 import { stackForDate } from '@/lib/supplements'
@@ -13,6 +13,7 @@ import { logicalTodayISO } from '@/lib/utils/day'
 import { supplementMicros, mergeMicros } from '@/lib/nutrition/supplementMicros'
 import { MICRO_TARGETS, MICRO_GROUPS } from '@/lib/nutrition/microTargets'
 import { EMERALD, OXIDE, STEEL, DIM } from '@/lib/theme/palette'
+import { BackLink } from '@/components/nav/NavChevron'
 
 /**
  * Nutrition & Micros deep-dive. Evidence-based daily micro TARGETS for this
@@ -65,9 +66,7 @@ export default function MicrosPage() {
   return (
     <div data-boxed className="space-y-4">
       <header className="flex items-center gap-3">
-        <button onClick={() => router.back()} className="btn-glass shrink-0 min-h-[44px]" aria-label="Back">
-          <ArrowLeft className="w-4 h-4" />
-        </button>
+        <BackLink onClick={() => router.back()} />
         <div className="min-w-0 flex-1">
           <h1 className="font-heading text-fluid-lg font-bold text-text flex items-center gap-2">
             <FlaskConical className="w-5 h-5 text-primary" aria-hidden="true" /> Nutrition &amp; Micros

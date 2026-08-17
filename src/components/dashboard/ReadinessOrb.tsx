@@ -6,7 +6,7 @@ import type { Tables } from '@/lib/supabase/types'
 import { KineticNumber } from '@/components/fx/KineticNumber'
 import { EcgPulse } from '@/components/fx/EcgPulse'
 import { hoursAwakeToday } from '@/lib/utils/day'
-import { programDay } from '@/components/dashboard/BrandHeader'
+import { useStreak } from '@/lib/hooks/useStreak'
 import { EMBER, GOLD, OXIDE, DIM, HAIRLINE } from '@/lib/theme/palette'
 
 /**
@@ -35,7 +35,7 @@ export const ReadinessOrb = memo(function ReadinessOrb({ score, isLoading }: { s
   // never a fabricated number built from nutrition/activity alone.
   const awaitingSleep = composite != null && (score?.sleep_score ?? null) == null
   const color = batteryColor(battery)
-  const dayNumber = programDay()
+  const { current: streak } = useStreak()
   const R = 84
   const CIRC = 2 * Math.PI * R
   // Hours-awake is TIME-dependent, so computing it during render made the
@@ -103,21 +103,21 @@ export const ReadinessOrb = memo(function ReadinessOrb({ score, isLoading }: { s
       </div>
 
       {/*
-        Program day — relocated here from the header, which had no room.
+        THE streak — the same number the widget shows, from the same derivation.
 
-        Labelled "Program day", not "Day Streak". It counts calendar days since
-        the cut began and never resets, so calling it a streak put it in direct
-        contradiction with the widget's streak (consecutive scheduled days
-        trained) — two different numbers under one word, ten apart.
+        This chip used to hold `programDay()`: calendar days since the cut began,
+        a figure that never resets. Under a flame, beside a widget showing the
+        real streak, that was two different measurements sharing one glyph and
+        disagreeing by ten. The flame belongs to the number that can be broken.
       */}
       <span
         className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full shrink-0 -mt-1"
         style={{ color: EMBER, background: `${EMBER}14`, border: `1px solid ${EMBER}3d` }}
-        aria-label={`Program day ${dayNumber}`}
+        aria-label={`${streak} day streak`}
       >
         <span aria-hidden="true" className="text-fluid-sm leading-none">🔥</span>
-        <span className="helix-num text-fluid-sm font-extrabold leading-none">{dayNumber}</span>
-        <span className="text-[10px] font-bold uppercase tracking-wide leading-none">Program Day</span>
+        <span className="helix-num text-fluid-sm font-extrabold leading-none">{streak}</span>
+        <span className="text-[10px] font-bold uppercase tracking-wide leading-none">Day Streak</span>
       </span>
 
       <div className="w-52"><EcgPulse level={battery} color={color} /></div>

@@ -160,8 +160,8 @@
     "semantic_hash": ""
   },
   "public/sw.js": {
-    "mtime": 1786910983.330778,
-    "ast_hash": "72f1e4a66e0d1a0a2626072aa4cc322a",
+    "mtime": 1786730144.2788181,
+    "ast_hash": "ae036efb3b63d9e72b6eaac997fe6b6c",
     "semantic_hash": ""
   },
   "scripts/generate-icons.mjs": {
@@ -2347,11 +2347,6 @@
   "src/components/nav/NavChevron.tsx": {
     "mtime": 1786910779.3106172,
     "ast_hash": "d33803d8c8103fb8ed7bb1fff290757b",
-    "semantic_hash": ""
-  },
-  "src/tests/nav-chevrons.test.ts": {
-    "mtime": 1786910952.4480722,
-    "ast_hash": "1495bd8119dee7056177e36c458fe4fd",
     "semantic_hash": ""
   }
 }

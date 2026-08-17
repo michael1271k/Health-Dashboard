@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { ChevronRight, Trophy } from 'lucide-react'
 import { useWeekSessions, weekStartOf } from '@/lib/hooks/useWeekSessions'
 import { isWeekReady } from '@/components/pathfinder/PathfinderTimeline'
-import { isoAddDays } from '@/lib/utils/week'
+import { isoAddDays, isWeekComplete } from '@/lib/utils/week'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { fmtVolume } from '@/lib/utils/units'
 import { Surface } from '@/components/ui/Zone'
@@ -12,37 +12,30 @@ import { Surface } from '@/components/ui/Zone'
 const GOLD = '#D4AF37'
 
 /**
- * The week's last day, under whatever "Week starts on" is set to.
+ * Weekly Session Summary entry point. The gold CTA appears at 00:00 on the first
+ * day of a new week, reviewing the week that has just CONCLUDED, once every
+ * training day that week asked for was logged. Opens the full Pathfinder review.
  *
- * ── WHY THIS IS NOT `weekday === 5` ──────────────────────────────────────────
- * It used to be. Weeks here are Sunday-anchored (`WEEK0_START = '2026-07-12'`
- * is a Sunday), so a Sunday-start week ENDS on Saturday — and the card fired on
- * Friday, announcing a complete week with a whole day of it still to run. The
- * number 5 was reasoning about Legs B, the last TRAINING day, which is a fact
- * about the plan and not about the calendar.
+ * ── WHY IT REVIEWS LAST WEEK AND NOT THIS ONE ────────────────────────────────
+ * It used to fire on the final day of the live week (`today >= weekStart + 6`,
+ * a rule this file carried privately). A week with a day left to run is not
+ * over: more can still be logged into it, and the summary the card promises
+ * would be describing a week that is still changing underneath it. The card was
+ * announcing a result before the last event.
  *
- * The weekday is also not fixed: "Week starts on" is a real setting (Sunday or
- * Monday), so the final day is Saturday or Sunday depending on it. Deriving it
- * from `weekStartOf` means the card follows the preference for free, the way
- * every other week-scoped surface already does.
+ * So the subject moved back one week and the trigger moved forward one day. The
+ * week under review is `weekStartOf(today) - 7`, and `isWeekComplete` (now in
+ * lib/utils/week.ts, shared with the Pathfinder capsules) is what says it is
+ * genuinely over — strictly after its final day, i.e. the midnight that opens
+ * the new one, under whatever "Week starts on" is set to.
  *
- * `>=` rather than `===` so a clock that jumps cannot land the user in a week
- * whose end has quietly passed with the card never having appeared.
- */
-export function isWeekOver(weekStart: string, today: string): boolean {
-  return today >= isoAddDays(weekStart, 6)
-}
-
-/**
- * Weekly Session Summary entry point. The gold CTA appears on the FINAL DAY of
- * the week, once every training day the plan asked for has been logged. Opens
- * the full Pathfinder review.
+ * The window is the first day of the new week. That is the same one-day
+ * lifetime the card always had, moved to the far side of the boundary.
  *
  * ── WHY IT LIVES ON THE DASHBOARD ────────────────────────────────────────────
  * It was on the Workout tab, which is the surface you open to train. A weekly
  * retrospective is not a training action, and the day it fires is a scheduled
- * rest day — the one day you have no reason to open Workout at all. The
- * Dashboard is what gets opened on a rest Saturday.
+ * rest day — the one day you have no reason to open Workout at all.
  *
  * Not Progress either: `/pathfinder` is the page this CTA navigates TO, and a
  * link to the page you are already on is not an entry point.
@@ -51,16 +44,23 @@ export function WeeklySummaryCard() {
   const router = useRouter()
   const today = logicalTodayISO()
   const thisWeekStart = weekStartOf(today)
+  const lastWeekStart = isoAddDays(thisWeekStart, -7)
+  const lastWeekEnd = isoAddDays(lastWeekStart, 6)
 
-  const thisWeek = useWeekSessions(thisWeekStart)
-  const sessions = thisWeek.data?.sessions
+  const lastWeek = useWeekSessions(lastWeekStart)
+  const sessions = lastWeek.data?.sessions
 
   // The calendar says the week is over; `isWeekReady` says the work in it is
-  // done. Both, or there is nothing to celebrate. `isWeekReady` counts only
-  // training days that have PASSED, so on the final day that is the whole week —
-  // and Wed/Sat rest never blocks it.
+  // done. Both, or there is nothing to celebrate.
+  //
+  // `isWeekReady` is bounded by a `today` so the LIVE week can be ready on its
+  // last training day. Here the week is finished, so the bound is its own final
+  // day — every training day it asked for counts, and Wed/Sat rest never blocks.
   const logged = new Set((sessions ?? []).map((s) => s.date))
-  const weekComplete = isWeekOver(thisWeekStart, today) && isWeekReady(thisWeekStart, logged, today)
+  const weekComplete =
+    today === thisWeekStart &&
+    isWeekComplete(lastWeekStart, today) &&
+    isWeekReady(lastWeekStart, logged, lastWeekEnd)
 
   // The band is INSIDE the guard on purpose. Rendered by the page, an empty
   // `Surface variant="band"` still paints its bottom border, so every day that
@@ -79,7 +79,7 @@ export function WeeklySummaryCard() {
         <span className="flex-1 min-w-0">
           <span className="block text-sm font-semibold" style={{ color: GOLD }}>Week complete — Session Summary ready</span>
           <span className="block text-[11px] text-muted">
-            {sessions?.length ?? 0} sessions · {fmtVolume(thisWeek.data?.totals.volumeKg)} kg · vs last week inside
+            {sessions?.length ?? 0} sessions · {fmtVolume(lastWeek.data?.totals.volumeKg)} kg · vs the week before inside
           </span>
         </span>
         <ChevronRight className="w-4 h-4 shrink-0" style={{ color: GOLD }} aria-hidden="true" />

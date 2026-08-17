@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { createPortal } from 'react-dom'
+import { useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { Portal, useOverlayBodyLock } from '@/components/ui/overlay'
 
 const WD = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 const iso = (y: number, m: number, d: number) =>
@@ -24,13 +24,12 @@ export function DatePickerPopover({ value, max, disabledDates, onSelect, onClose
 }) {
   const [y, setY] = useState(() => Number(value.slice(0, 4)))
   const [m, setM] = useState(() => Number(value.slice(5, 7)) - 1)
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => { setMounted(true) }, [])
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
+
+  // Was a private portal + a private Escape listener + no body lock at all, so
+  // the page scrolled behind the calendar and PullToRefresh — which stands down
+  // on `body.helix-overlay-open` — happily armed itself underneath it. Same
+  // primitives as the Sheet now, so there is one answer to "is an overlay open".
+  useOverlayBodyLock(true, onClose)
 
   const firstDay = new Date(Date.UTC(y, m, 1)).getUTCDay()
   const daysInMonth = new Date(Date.UTC(y, m + 1, 0)).getUTCDate()
@@ -40,9 +39,8 @@ export function DatePickerPopover({ value, max, disabledDates, onSelect, onClose
   const nextMonth = () => (m === 11 ? (setY(y + 1), setM(0)) : setM(m + 1))
   const canGoNext = iso(y, m, daysInMonth) < max
 
-  if (!mounted) return null
-
-  return createPortal(
+  return (
+    <Portal>
     <div className="fixed inset-0 z-[90] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Pick session date">
       <button type="button" aria-label="Close" onClick={onClose}
         className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
@@ -94,7 +92,7 @@ export function DatePickerPopover({ value, max, disabledDates, onSelect, onClose
           Dot = already logged (can&apos;t double-log). Future dates disabled.
         </p>
       </div>
-    </div>,
-    document.body,
+    </div>
+    </Portal>
   )
 }

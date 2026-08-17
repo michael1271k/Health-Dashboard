@@ -16,9 +16,10 @@ import {
 } from '@/lib/widget/snapshot'
 import {
   trendPoints, meanBetween, topRecords, e1rmTrends, volumeByFamily, shiftISO,
-  calendarDays, streakFrom, weeklyVolume, dailySeries, latestDelta,
+  calendarDays, weeklyVolume, dailySeries, latestDelta,
   type SetRow,
 } from '@/lib/widget/derive'
+import { streakFrom, STREAK_WINDOW_DAYS } from '@/lib/training/streak'
 import { computeReadiness } from '@/lib/scoring/readiness'
 
 /**
@@ -158,7 +159,9 @@ export async function GET(req: Request) {
   // the wide read is cheaper than the extra round trips, and every derived
   // figure is then guaranteed to agree with the others.
   const VOLUME_WEEKS = 8
-  const CALENDAR_DAYS = 42
+  // Shared with the app's own streak hook, so the widget and the dashboard can
+  // never count the same streak over different amounts of history.
+  const CALENDAR_DAYS = STREAK_WINDOW_DAYS
   // ── One week of the daily logs, not one day ────────────────────────────────
   // Water, calories and sleep were each read for TODAY alone, which is why the
   // Fuel and Sleep Large faces had nothing to put in a third register and filled

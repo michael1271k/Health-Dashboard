@@ -5,10 +5,15 @@ import { phaseGoalsFor, NUTRITION_PRESETS } from '@/lib/types/workout'
 /**
  * One goal, four consumers.
  *
- * Before this resolver: `/nutrition` seeded `1955` (a number no preset holds —
- * the cut preset says 1950), `MacroProgressChart` on the SAME page read the raw
- * `user_goals` row, and `/day/<date>` graded its three rings against literal
- * 200 / 60 / 180. Three surfaces, three answers, same day.
+ * Before this resolver: `/nutrition` seeded a literal, `MacroProgressChart` on
+ * the SAME page read the raw `user_goals` row, and `/day/<date>` graded its three
+ * rings against literal 200 / 60 / 180. Three surfaces, three answers, same day.
+ *
+ * ── 1950 vs 1955 ─────────────────────────────────────────────────────────────
+ * This file used to assert 1950 and describe 1955 as "the literal that matched
+ * no preset". That had it backwards: 1955 IS the preset's own macros — 170·4 +
+ * 195·4 + 55·9 — and 1950 was the number that matched nothing. The stray was
+ * fixed at its source instead of being enforced here. See `cut-baseline.test.ts`.
  */
 
 const CUT = phaseGoalsFor('apex51', 'cut')
@@ -32,8 +37,9 @@ describe('resolveNutritionGoals', () => {
     expect(out.source).toBe('plan-phase')
   })
 
-  it('never returns 1955 — the literal that matched no preset', () => {
-    expect(resolveNutritionGoals(null, CUT, 'cut').calorie).toBe(1950)
+  it('returns the preset itself when there is no row, never a literal', () => {
+    expect(resolveNutritionGoals(null, CUT, 'cut').calorie).toBe(CUT.calorieGoal)
+    expect(resolveNutritionGoals(null, CUT, 'cut').calorie).toBe(1955)
   })
 
   it('carries all three macros, not calories alone', () => {
