@@ -1,5 +1,8 @@
 'use client'
 
+import { deltaColor, type Metric } from '@/lib/body/deltaVerdict'
+import { activePhase } from '@/lib/programs'
+import type { ProgramPhase } from '@/lib/training/landmarks'
 import { useMemo } from 'react'
 import {
   parseFmtV2, bodyCompSeries, parseTdeeAnchors, parseAsymmetry,
@@ -8,7 +11,7 @@ import {
 } from '@/lib/reports/fmtV2'
 import { MarkdownView } from './MarkdownView'
 import { splitSmartBlocks } from '@/lib/reports/smartBlocks'
-import { GOLD, EMERALD, OXIDE, SAPPHIRE, EMBER, PLATINUM, MUTED } from '@/lib/theme/palette'
+import { GOLD, OXIDE, SAPPHIRE, EMBER, PLATINUM, MUTED } from '@/lib/theme/palette'
 
 /**
  * A pasted FMT v2 audit, drawn rather than dumped.
@@ -20,6 +23,22 @@ import { GOLD, EMERALD, OXIDE, SAPPHIRE, EMBER, PLATINUM, MUTED } from '@/lib/th
  * no report format, so the renderer must never be the reason a section
  * disappears. A block it does not recognise is a block it prints.
  */
+/**
+ * Which body metric a body-comp column names, or null.
+ *
+ * Deliberately conservative: a column this does not recognise is drawn in grey,
+ * because a wrong verdict on a number you pasted from your own report is worse
+ * than no verdict.
+ */
+function metricOf(label: string): Metric | null {
+  const l = label.toLowerCase()
+  if (/musc/.test(l)) return 'muscle'
+  if (/fat|bf/.test(l)) return 'fat'
+  if (/h₂o|h2o|water/.test(l)) return 'water'
+  if (/wt|weight|kg\b/.test(l) && !/fat|musc|ffm/.test(l)) return 'weight'
+  return null
+}
+
 export function FmtV2Report({ md }: { md: string }) {
   const report = useMemo(() => parseFmtV2(md), [md])
   // The preamble is the title line and the banner box, and the box carries more
@@ -208,9 +227,15 @@ function BodyCompTrajectory({ table }: { table: ParsedTable }) {
           const last = pts[pts.length - 1]?.value ?? null
           const delta = first != null && last != null ? Math.round((last - first) * 100) / 100 : null
           // Down is not automatically bad and up is not automatically good —
-          // weight and fat falling is the point of a cut. Colour by direction
-          // only, and let the label carry the meaning.
-          const color = delta == null || delta === 0 ? MUTED : delta > 0 ? EMERALD : OXIDE
+          // and "colour by direction only" was not the neutral answer it looks
+          // like: it painted every falling column red, including the two the cut
+          // exists to lower. The verdict engine already knows which metric this
+          // is and which phase you are in; an unrecognised column (H₂O%, BMR)
+          // gets no colour at all rather than a guessed one.
+          const metric = metricOf(s.label)
+          const color = delta == null || delta === 0 || !metric
+            ? MUTED
+            : deltaColor(metric, delta, activePhase() as ProgramPhase)
           return (
             <div key={s.label} className="rounded-xl border border-white/[0.06] bg-white/[0.015] px-2.5 py-2">
               <div className="flex items-baseline justify-between gap-1">

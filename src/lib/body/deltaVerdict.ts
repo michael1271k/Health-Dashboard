@@ -1,4 +1,5 @@
 import type { ProgramPhase } from '@/lib/training/landmarks'
+import { EMERALD, OXIDE, MUTED } from '@/lib/theme/palette'
 
 /**
  * Is a body-composition change good, bad, or neither — given the phase you are
@@ -71,4 +72,30 @@ export function deltaVerdict(metric: Metric, delta: number, phase: ProgramPhase)
   return phase === 'cut'
     ? (delta < 0 ? 'good' : 'bad')
     : (delta > 0 ? 'good' : 'bad')
+}
+
+/**
+ * The colour a verdict is drawn in.
+ *
+ * Lives here rather than in each surface because the whole point of the verdict
+ * is that one rule decides. Nine call sites were computing `delta <= 0 ? green :
+ * red` inline — which is the CUT rule, hardcoded, and therefore wrong on a bulk
+ * in a way nobody would notice until the colours stopped matching the plan.
+ *
+ * Neutral is MUTED and not a third hue: grey is the honest answer for "this
+ * moved and it does not mean anything", and inventing an amber for it would
+ * imply a warning nobody made.
+ */
+export function verdictColor(verdict: Verdict): string {
+  switch (verdict) {
+    case 'good': return EMERALD
+    case 'bad': return OXIDE
+    default: return MUTED
+  }
+}
+
+/** The one call a surface should make: metric + delta + phase → a colour. */
+export function deltaColor(metric: Metric, delta: number | null | undefined, phase: ProgramPhase): string {
+  if (delta == null) return MUTED
+  return verdictColor(deltaVerdict(metric, delta, phase))
 }

@@ -70,6 +70,27 @@ export function whrBand(ratio: number, sex: 'male' | 'female' = 'male'): WhrBand
   return ratio < hi ? 'moderate' : 'high'
 }
 
+/**
+ * Visceral-fat index bands.
+ *
+ * ── THESE ARE STRICTER THAN THE SCALE'S ──────────────────────────────────────
+ * A consumer BIA scale calls anything under 10 "normal", which is true of the
+ * general population and useless to someone at 17% body fat: the reading would
+ * sit at 5 and wear a green label from the first week of a cut to the last,
+ * never once describing a change. The bands here come from the plan's own
+ * targets — under 5 is where this cut is trying to get, 5–7 is where it started,
+ * and 8+ is the range where the scale's own warning would eventually agree.
+ *
+ * The index is unitless and manufacturer-specific by construction; nothing here
+ * converts it to a mass or compares it across devices.
+ */
+export type VisceralBand = 'optimal' | 'elevated' | 'high'
+
+export function visceralBand(index: number): VisceralBand {
+  if (index < 5) return 'optimal'
+  return index <= 7 ? 'elevated' : 'high'
+}
+
 const num = (v: number | null | undefined): number | undefined =>
   typeof v === 'number' && Number.isFinite(v) ? v : undefined
 

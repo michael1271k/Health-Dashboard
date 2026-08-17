@@ -91,12 +91,19 @@ export const DayCard = memo(function DayCard({ d, unit, active, onOpen, onSwap }
       onPointerLeave={endHold} onPointerCancel={endHold}
       onContextMenu={(e) => { if (onSwap) e.preventDefault() }}
       aria-current={active ? 'date' : undefined}
-      className={`w-full rounded-xl py-2.5 pl-3 text-left border transition-colors active:opacity-80 ${onSwap ? 'pr-10' : 'pr-3'}`}
+      className={`w-full rounded-xl py-2 pl-3 text-left border transition-colors active:opacity-80 ${onSwap ? 'pr-10' : 'pr-3'}`}
       style={{
-        contentVisibility: 'auto', containIntrinsicSize: 'auto 88px',
+        contentVisibility: 'auto', containIntrinsicSize: 'auto 80px',
         WebkitTouchCallout: 'none',
-        background: active ? '#E0703C14' : 'rgba(255,255,255,0.02)',
-        borderColor: active ? '#E0703C66' : 'rgba(255,255,255,0.06)',
+        // ── THE WASH ──
+        // A day's own score, at 6% alpha, behind the row. No new rule and no
+        // new threshold: `scoreColor` is the same banding the orb, the calendar
+        // and the widget already use, so a green row here and a green dot there
+        // mean the same thing. At this alpha it reads as temperature rather than
+        // as a highlight — a scanned month shows where the bad weeks were
+        // without any row shouting.
+        background: active ? '#E0703C14' : d.score != null ? `${sc}10` : 'rgba(255,255,255,0.02)',
+        borderColor: active ? '#E0703C66' : d.score != null ? `${sc}2b` : 'rgba(255,255,255,0.06)',
         boxShadow: active ? '0 0 14px #E0703C33' : undefined,
       } as React.CSSProperties}>
       {/* Top line — score dot · date · calories */}
@@ -115,13 +122,13 @@ export const DayCard = memo(function DayCard({ d, unit, active, onOpen, onSwap }
         <span className="text-[9px] text-muted">kcal</span>
       </div>
       {/* Macro sliders — Carbs · Fat · Protein */}
-      <div className="flex items-center gap-3 mt-2 pl-[18px]">
+      <div className="flex items-center gap-3 mt-1.5 pl-[18px]">
         <MacroBar label="C" g={d.carbsG} target={ROW_MACRO_TARGET.carbs} color={MACRO_COLORS.carbs} />
         <MacroBar label="F" g={d.fatG} target={ROW_MACRO_TARGET.fat} color={MACRO_COLORS.fat} />
         <MacroBar label="P" g={d.proteinG} target={ROW_MACRO_TARGET.protein} color={MACRO_COLORS.protein} />
       </div>
       {/* Workout / rest line + steps */}
-      <div className="flex items-center gap-1.5 mt-2 pl-[18px] text-[11px] min-w-0">
+      <div className="flex items-center gap-1.5 mt-1.5 pl-[18px] text-[11px] min-w-0">
         <span className="flex items-center gap-1.5 min-w-0 flex-1" style={{ color: d.session ? '#8E9AAC' : VIOLET }}>
           {d.session ? <Dumbbell className="w-3 h-3 shrink-0" /> : <Moon className="w-3 h-3 shrink-0" />}
           <span className="truncate">

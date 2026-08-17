@@ -4,6 +4,9 @@ import { Moon, ChevronRight } from 'lucide-react'
 import type { Tables } from '@/lib/supabase/types'
 import type { DayVaultData } from '@/lib/hooks/useDayVault'
 import { ZoneRow } from '@/components/ui/Zone'
+import { deltaColor } from '@/lib/body/deltaVerdict'
+import { activePhase } from '@/lib/programs'
+import type { ProgramPhase } from '@/lib/training/landmarks'
 import { displayWeight, weightUnit } from '@/lib/utils/units'
 import { formatSleep } from '@/lib/utils/format'
 import { AMETHYST, SAPPHIRE, STEEL, OXIDE, MUTED, SAND, BODY } from '@/lib/theme/palette'
@@ -147,7 +150,10 @@ export function BodyBand({ log, previousWeightKg = null, onOpen }: {
         </span>
         {delta != null && Math.abs(delta) >= 0.05 && (
           <span className="helix-num text-[11px] font-bold shrink-0"
-            style={{ color: delta < 0 ? BODY.lean : OXIDE }}>
+            // Phase-aware, not `delta < 0 ? green : red` — that is the cut rule
+            // hardcoded, and it painted a bulk doing exactly what it was asked
+            // to in the same red it uses for a failure.
+            style={{ color: deltaColor('weight', delta, activePhase() as ProgramPhase) }}>
             {delta < 0 ? '▼' : '▲'}{Math.abs(displayWeight(delta) ?? 0).toFixed(1)}
           </span>
         )}

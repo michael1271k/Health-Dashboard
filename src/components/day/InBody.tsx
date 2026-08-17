@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Check, History, Loader2 } from 'lucide-react'
 import { useSaveBodyMetrics, type BodyMetricsPatch, type DayVaultData } from '@/lib/hooks/useDayVault'
 import { useLatestBodyReading, type CarryField } from '@/lib/hooks/useLatestBodyReading'
-import { deriveBodyComp, whrBand, type BodyCompInput, type BodyCompDerived, type WhrBand } from '@/lib/body/composition'
+import { deriveBodyComp, whrBand, visceralBand, type BodyCompInput, type BodyCompDerived, type WhrBand, type VisceralBand } from '@/lib/body/composition'
 import { deltaVerdict, type Metric, type Verdict } from '@/lib/body/deltaVerdict'
 import { activePhase } from '@/lib/programs'
 import { EMBER, EMERALD, GOLD, OXIDE, MUTED } from '@/lib/theme/palette'
@@ -16,6 +16,7 @@ const ACCENT = EMBER
 
 /** WHO abdominal-obesity bands, in the app's own semantic colours. */
 const WHR_COLOR: Record<WhrBand, string> = { low: EMERALD, moderate: GOLD, high: OXIDE }
+const VISCERAL_COLOR: Record<VisceralBand, string> = { optimal: EMERALD, elevated: GOLD, high: OXIDE }
 
 /** A change is green, red, or grey — the phase decides which. See deltaVerdict. */
 const VERDICT_COLOR: Record<Verdict, string> = { good: EMERALD, bad: OXIDE, neutral: MUTED }
@@ -300,6 +301,23 @@ export function InBodyForm({ date, log, onSaved }: {
                 </div>
               )
             })}
+            {/* Visceral fat wears a band for the same reason the ratio does: an
+                index printed bare is a number you cannot act on, and the one
+                the scale itself would apply calls everything under 10 fine —
+                which would be green from the first week of the cut to the last.
+                See `visceralBand` for why these thresholds are stricter. */}
+            {(() => {
+              const raw = shown('visceral_fat')
+              const v = parseFloat(raw)
+              if (raw.trim() === '' || !Number.isFinite(v)) return null
+              const band = visceralBand(v)
+              return (
+                <div className="text-center">
+                  <span className="helix-num block text-fluid-sm font-bold leading-tight" style={{ color: VISCERAL_COLOR[band] }}>{v}</span>
+                  <span className="text-[8px] uppercase tracking-wide text-muted">{band} visceral</span>
+                </div>
+              )
+            })()}
             {/* The scale's own ratio — entered, not derived, but it belongs in
                 the read-out beside the masses. Wears its WHO band. */}
             {(() => {

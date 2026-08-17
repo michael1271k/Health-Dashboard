@@ -30,7 +30,7 @@ type MacroField = keyof MacroValues
  * The track alpha is the ring track's `rgba(255,255,255,0.07)` unchanged — the
  * empty part of the goal reads at exactly the weight it always did.
  */
-function Bar({ value, goal, color, height = 6 }: {
+export function Bar({ value, goal, color, height = 6 }: {
   value: number | null; goal: number | null; color: string; height?: number
 }) {
   const v = value ?? 0

@@ -19,7 +19,9 @@ import { weekStartOf, isoAddDays, isWeekComplete } from '@/lib/utils/week'
 import { splitColor } from '@/lib/types/workout'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { displayWeight, weightUnit, useUnitSystem } from '@/lib/utils/units'
-import { eraForDate, isTrainingDay } from '@/lib/programs'
+import { eraForDate, isTrainingDay, activePhase } from '@/lib/programs'
+import { deltaColor } from '@/lib/body/deltaVerdict'
+import type { ProgramPhase } from '@/lib/training/landmarks'
 import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { WeekChipLabel } from '@/components/timeline/WeekChip'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
@@ -30,7 +32,7 @@ const MarkdownView = dynamic(() => import('@/components/reports/MarkdownView').t
 import { Sheet } from '@/components/ui/Sheet'
 import { DayCard } from '@/components/timeline/ContinuumTimeline'
 import { SwapDayControl, RestTodayButton } from '@/components/day/SwapDayControl'
-import { EMERALD, OXIDE, SAPPHIRE, WEEK_STATE } from '@/lib/theme/palette'
+import { EMERALD, SAPPHIRE, WEEK_STATE } from '@/lib/theme/palette'
 
 const label = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 
@@ -271,7 +273,7 @@ const WeekCapsule = memo(forwardRef<HTMLDivElement, {
             {/* The only gold left on this capsule, which is the point. */}
             {hasPRs && <span className="flex items-center gap-1" style={{ color: WEEK_STATE.pr }}><Trophy className="w-3 h-3" />{node.prs}</span>}
             {node.weightDelta != null && (
-              <span className="helix-num" style={{ color: node.weightDelta <= 0 ? EMERALD : OXIDE }}>
+              <span className="helix-num" style={{ color: deltaColor('weight', node.weightDelta, activePhase() as ProgramPhase) }}>
                 {node.weightDelta > 0 ? '+' : ''}{node.weightDelta}{weightUnit()}
               </span>
             )}
@@ -302,19 +304,13 @@ const WeekCapsule = memo(forwardRef<HTMLDivElement, {
                 </div>
               )}
 
-              {/* Body deltas */}
-              {(node.weightDelta != null || node.fatDelta != null) && (
-                <div className="flex gap-5 text-fluid-xs">
-                  {node.weightDelta != null && (
-                    <span className="text-muted">Weight Δ <span className="helix-num font-bold" style={{ color: node.weightDelta <= 0 ? EMERALD : OXIDE }}>{node.weightDelta > 0 ? '+' : ''}{node.weightDelta} {weightUnit()}</span></span>
-                  )}
-                  {node.fatDelta != null && (
-                    <span className="text-muted">Body-fat Δ <span className="helix-num font-bold" style={{ color: node.fatDelta <= 0 ? EMERALD : OXIDE }}>{node.fatDelta > 0 ? '+' : ''}{node.fatDelta}%</span></span>
-                  )}
-                </div>
-              )}
-
-              <WeekRecoveryStrip weekStart={node.weekStart} />
+              {/* ── ONE VITALS ROW ──
+                  Weight Δ and body-fat Δ used to float as loose text above two
+                  free-standing recovery chips: four readings, three visual
+                  treatments, no alignment between them. They are all the same
+                  KIND of fact — how the week left your body — so they are one
+                  row of four cells now. */}
+              <WeekVitalsRow node={node} />
 
               {/* A legacy generated report (pre-paste-loop) still renders inline.
                   The actions ALWAYS render now — WeekActions is the report
@@ -334,15 +330,26 @@ const WeekCapsule = memo(forwardRef<HTMLDivElement, {
   )
 }))
 
-/** Compact weekly recovery: avg battery & sleep score across the week. */
-function WeekRecoveryStrip({ weekStart }: { weekStart: string }) {
-  const end = isoAddDays(weekStart, 6)
+/**
+ * The week's vitals: weight, body fat, battery, sleep — one row, four cells.
+ *
+ * ── WHY THE COLOURS MOVED ────────────────────────────────────────────────────
+ * Both deltas were painted `delta <= 0 ? green : red` inline. That is the CUT
+ * rule, hardcoded, and it was wrong on a bulk in the least visible way possible:
+ * a bulk gaining 0.4 kg is doing exactly what it was asked to, and the app drew
+ * it in the same red it uses for a failure. `deltaVerdict` has encoded the
+ * phase-aware rule (including "fat gain in a bulk is NEUTRAL, not green") since
+ * it was written, and nine surfaces were quietly not using it.
+ */
+function WeekVitalsRow({ node }: { node: TimelineWeekNode }) {
+  const end = isoAddDays(node.weekStart, 6)
+  const phase = activePhase() as ProgramPhase
   const { data } = useQuery({
-    queryKey: ['week_recovery', weekStart],
+    queryKey: ['week_recovery', node.weekStart],
     staleTime: 60_000,
     queryFn: async () => {
       const { data } = await supabase.from('daily_scores')
-        .select('battery_pct, sleep_score').gte('date', weekStart).lte('date', end)
+        .select('battery_pct, sleep_score').gte('date', node.weekStart).lte('date', end)
       const rows = (data ?? []) as Array<{ battery_pct: number | null; sleep_score: number | null }>
       const avg = (xs: (number | null)[]) => {
         const n = xs.filter((v): v is number => v != null)
@@ -351,19 +358,44 @@ function WeekRecoveryStrip({ weekStart }: { weekStart: string }) {
       return { battery: avg(rows.map((r) => r.battery_pct)), sleep: avg(rows.map((r) => r.sleep_score)) }
     },
   })
-  if (!data || (data.battery == null && data.sleep == null)) return null
+
+  const cells: Array<{ key: string; label: string; value: string; color?: string; icon?: typeof Moon }> = []
+  if (node.weightDelta != null) {
+    cells.push({
+      key: 'weight', label: 'Weight Δ',
+      value: `${node.weightDelta > 0 ? '+' : ''}${node.weightDelta} ${weightUnit()}`,
+      color: deltaColor('weight', node.weightDelta, phase),
+    })
+  }
+  if (node.fatDelta != null) {
+    cells.push({
+      key: 'fat', label: 'Fat Δ',
+      value: `${node.fatDelta > 0 ? '+' : ''}${node.fatDelta}%`,
+      color: deltaColor('fat', node.fatDelta, phase),
+    })
+  }
+  if (data?.battery != null) {
+    cells.push({ key: 'battery', label: 'Battery', value: `${data.battery}%`, icon: BatteryMedium })
+  }
+  if (data?.sleep != null) {
+    cells.push({ key: 'sleep', label: 'Sleep', value: `${data.sleep}`, icon: Moon })
+  }
+  if (!cells.length) return null
+
   return (
-    <div className="flex gap-3">
-      {data.battery != null && (
-        <span className="flex items-center gap-1.5 rounded-lg bg-white/[0.03] px-2.5 py-1.5 text-fluid-xs">
-          <BatteryMedium className="w-3.5 h-3.5 text-primary" /> <span className="text-muted">Battery</span> <span className="helix-num font-bold text-text">{data.battery}%</span>
-        </span>
-      )}
-      {data.sleep != null && (
-        <span className="flex items-center gap-1.5 rounded-lg bg-white/[0.03] px-2.5 py-1.5 text-fluid-xs">
-          <Moon className="w-3.5 h-3.5 text-primary" /> <span className="text-muted">Sleep</span> <span className="helix-num font-bold text-text">{data.sleep}</span>
-        </span>
-      )}
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-px rounded-xl overflow-hidden"
+      style={{ background: 'rgba(255,255,255,0.06)' }}>
+      {cells.map((c) => (
+        <div key={c.key} className="px-2.5 py-1.5" style={{ background: 'rgb(12,13,16)' }}>
+          <div className="flex items-center gap-1 text-[9px] uppercase tracking-[0.08em] text-muted">
+            {c.icon && <c.icon className="w-2.5 h-2.5" aria-hidden="true" />}
+            {c.label}
+          </div>
+          <div className="helix-num text-fluid-xs font-bold tabular-nums" style={{ color: c.color ?? undefined }}>
+            {c.value}
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

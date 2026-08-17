@@ -19,6 +19,7 @@ import { useNutritionGoals } from '@/lib/hooks/useNutritionGoals'
 import { useBioSeries } from '@/lib/hooks/useBioStrips'
 import { SleepStages } from '@/components/dashboard/SleepStages'
 import { InBodyForm } from '@/components/day/InBody'
+import { Bar } from '@/components/nutrition/MacroCards'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { useDoubleTap } from '@/lib/utils/doubleTap'
 import { MacroOverrideSheet } from '@/components/nutrition/MacroOverrideSheet'
@@ -64,36 +65,29 @@ function scoreColor(score: number | null | undefined): string {
 }
 
 /**
- * A macro ring (adherence = intake / goal-ish hint).
+ * One macro: letter, bar, and the two numbers.
  *
- * 88px in a `pt-4 pb-1` block used to cost ~200px of page for three two-digit
- * numbers. At 56px the ring is still the dominant thing in its row and the row
- * is a third of the height.
+ * The bar itself comes from `MacroCards` so the two surfaces cannot disagree
+ * about what "over goal" looks like. What is added here is the pair of figures
+ * — a bar with no number is a mood, and this row is where you check whether you
+ * have room for dinner.
  */
-function MicroRing({ value, goalHint, color, label, size = 56 }: {
+function MacroLine({ label, value, goal, color }: {
+  label: string
   value: number | null | undefined
-  /** Absent when the plan sets no target for this macro — the arc stays empty
+  /** Absent when the plan sets no target for this macro — the bar stays empty
    *  rather than grading the day against an invented number. */
-  goalHint?: number | null
-  color: string; label: string; size?: number
+  goal?: number | null
+  color: string
 }) {
-  const stroke = Math.max(5, Math.round(size / 11))
-  const r = (size - stroke) / 2
-  const circ = 2 * Math.PI * r
-  const pct = value != null && goalHint != null && goalHint > 0 ? Math.min(1, value / goalHint) : 0
   return (
-    <div className="flex flex-col items-center gap-1">
-      <div className="relative" style={{ width: size, height: size, filter: `drop-shadow(0 0 8px ${color}40)` }}>
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90" aria-hidden="true">
-          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth={stroke} />
-          {pct > 0 && <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={stroke} strokeLinecap="round"
-            strokeDasharray={circ} strokeDashoffset={circ * (1 - pct)} style={{ transition: 'stroke-dashoffset 600ms cubic-bezier(0.22,1,0.36,1)' }} />}
-        </svg>
-        <span className="absolute inset-0 flex items-center justify-center helix-num text-fluid-sm font-bold text-text">
-          {value != null ? Math.round(value) : '—'}
-        </span>
-      </div>
-      <span className="text-[9px] font-semibold uppercase tracking-wide" style={{ color }}>{label}</span>
+    <div className="flex items-center gap-1.5">
+      <span className="text-[9px] font-bold w-2 shrink-0" style={{ color }}>{label}</span>
+      <span className="flex-1 min-w-0"><Bar value={value ?? null} goal={goal ?? null} color={color} height={5} /></span>
+      <span className="helix-num text-[10px] tabular-nums shrink-0 text-text/90">
+        {value != null ? Math.round(value) : '—'}
+        {goal != null && goal > 0 && <span className="text-muted">/{Math.round(goal)}</span>}
+      </span>
     </div>
   )
 }
@@ -306,15 +300,18 @@ export default function DailyNexusPage() {
               <span className="text-[10px] text-muted font-bold">kcal</span>
             </span>
             {n ? (
-              <div className="flex items-center gap-3 ml-auto">
-                {/* The goals come from the plan+phase, not from three literals.
-                    These rings used to grade every day against 200/60/180 —
-                    numbers that matched no preset, so a perfect cut day drew
-                    three partly-filled rings and the same day drew three full
-                    ones on /nutrition. */}
-                <MicroRing value={n.carbs_g} goalHint={macroGoals.carbs} color={MACRO_COLORS.carbs} label="C" />
-                <MicroRing value={n.fat_g} goalHint={macroGoals.fat} color={MACRO_COLORS.fat} label="F" />
-                <MicroRing value={n.protein_g} goalHint={macroGoals.protein} color={MACRO_COLORS.protein} label="P" />
+              /* ── BARS, NOT RINGS ──
+                 Three 56px rings cost the width of the row to show three
+                 two-digit numbers, and a ring cannot show OVERSHOOT: 220 g of
+                 carbs against a 195 g goal drew the same full circle as 195.
+                 `MacroCards`' bar already solves that — it rescales to
+                 max(value, goal), ticks where the goal sits and continues past
+                 it in oxide — and reusing it means the day page and the
+                 nutrition page finally draw the same fact the same way. */
+              <div className="ml-auto grid gap-1 flex-1 max-w-[210px]">
+                <MacroLine label="C" value={n.carbs_g} goal={macroGoals.carbs} color={MACRO_COLORS.carbs} />
+                <MacroLine label="F" value={n.fat_g} goal={macroGoals.fat} color={MACRO_COLORS.fat} />
+                <MacroLine label="P" value={n.protein_g} goal={macroGoals.protein} color={MACRO_COLORS.protein} />
               </div>
             ) : <span className="text-[11px] text-muted ml-auto">Double-tap to add</span>}
           </div>
@@ -440,14 +437,16 @@ export default function DailyNexusPage() {
         <BodyBand log={log ?? null} onOpen={() => setSheet('body')} />
       </Zone>
 
+      {/* Cardio ABOVE soreness, because it is a thing you LOG and soreness is a
+          thing you report. The logging surfaces belong together and near the
+          top of the ones you scroll to; DOMS is a 24–72h retrospective and is
+          the last thing you touch on the day it applies to. */}
+      <CardioLogger date={date} hkActiveEnergy={log?.active_energy ?? null} />
+
       {/* Recovery inputs — soreness 24–72h post-session, on the body map */}
       <Zone label="Soreness" accent={EMBER}>
         <DomsTracker date={date} />
       </Zone>
-
-      {/* Cardio (walk/run) — separate ledger; never double-counts Active Energy.
-          Owns its own Zone so the `+` can live in the section header. */}
-      <CardioLogger date={date} hkActiveEnergy={log?.active_energy ?? null} />
 
       {/* ══ The drawers ══
           One at a time, by construction — `sheet` is a single value. Each is
@@ -539,14 +538,27 @@ export default function DailyNexusPage() {
             <p className="text-fluid-sm text-text font-medium">
               No session logged for {schedule !== 'rest' ? schedule.label : 'today'} yet.
             </p>
-            {schedule !== 'rest' && schedule.dayKey && (
-              <Link href={`/session?template=${schedule.dayKey}&date=${date}`}
-                className="btn-primary w-full justify-center min-h-[44px]" style={{ background: CYAN, boxShadow: `0 0 18px ${CYAN}55` }}>
-                <Dumbbell className="w-4 h-4" aria-hidden="true" /> Log {schedule.label}
-              </Link>
-            )}
+            {/* ── ONE ROW OF ACTIONS ──
+                Three full-width stacked buttons — Log, Rest day, Swap — read as
+                three decisions of equal weight, and pushed the rest of the day
+                below the fold on a phone. Logging is the primary action and
+                keeps its size; rescheduling is the alternative and sits beside
+                it, which is also what it IS: the same decision made the other
+                way. */}
+            <div className="flex items-start gap-2">
+              {schedule !== 'rest' && schedule.dayKey && (
+                <Link href={`/session?template=${schedule.dayKey}&date=${date}`}
+                  className="btn-primary flex-1 justify-center min-h-[44px]" style={{ background: CYAN, boxShadow: `0 0 18px ${CYAN}55` }}>
+                  <Dumbbell className="w-4 h-4" aria-hidden="true" /> Log {schedule.label}
+                </Link>
+              )}
+              {/* Swap sits BESIDE the log button because it is the same decision
+                  made the other way, and it keeps its own width: the control
+                  expands into a consequence panel when armed, and a flex child
+                  that grows would squash that panel's text into a column. */}
+              <SwapDayControl date={date} className="shrink-0" />
+            </div>
             <RestTodayButton date={date} label="Rest day" />
-            <SwapDayControl date={date} />
           </section>
         </>
       )}

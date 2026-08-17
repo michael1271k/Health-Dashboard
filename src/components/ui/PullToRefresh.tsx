@@ -7,6 +7,8 @@ import { animate, m, useMotionValue, useTransform } from 'framer-motion'
 import { Capacitor } from '@capacitor/core'
 import { RefreshCw, Check } from 'lucide-react'
 import { forceHealthKitSync } from '@/lib/native/sync'
+import { syncDay } from '@/lib/native/healthkit'
+import { logicalTodayISO } from '@/lib/utils/day'
 import { tapLight } from '@/lib/native/haptics'
 import { invalidateHealthData } from '@/lib/query/workoutKeys'
 import { DRAWER, SNAPPY, STANDARD, rubberband } from '@/lib/motion'
@@ -120,7 +122,26 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
     animate(pillOpacity, 1, SNAPPY)
     animate(y, 0, STANDARD)
     try {
-      if (Capacitor.isNativePlatform()) await forceHealthKitSync(() => invalidateHealthData(queryClient)).catch(() => {})
+      // ── ON A DAY PAGE, PULL THAT DAY ────────────────────────────────────
+      // `forceHealthKitSync` fetches today AND yesterday, which is right for
+      // the dashboard and wrong here: standing on 2026-08-03 and pulling
+      // refreshed two days that are not the one on screen, so the gesture
+      // appeared to do nothing. `syncDay` has always been single-day; the day
+      // route just never called it.
+      //
+      // Manual-override protection is server-side (`ingest/dailyLog.ts`), so a
+      // hand-entered macro or weight survives this exactly as it survives the
+      // background sync — nothing extra is needed here, and adding a client
+      // guard would be a second, drifting copy of that rule.
+      if (Capacitor.isNativePlatform()) {
+        const dayMatch = /^\/day\/(\d{4}-\d{2}-\d{2})/.exec(pathname ?? '')
+        if (dayMatch) {
+          await syncDay(dayMatch[1], dayMatch[1] === logicalTodayISO()).catch(() => null)
+          invalidateHealthData(queryClient)
+        } else {
+          await forceHealthKitSync(() => invalidateHealthData(queryClient)).catch(() => {})
+        }
+      }
     } finally {
       // Revalidate ONLY the health-derived surfaces (not the whole cache) — the
       // spinner is already released, so refetches happen off the critical path.
@@ -134,7 +155,7 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
         animate(pillOpacity, 0, STANDARD)
       }, DONE_MS)
     }
-  }, [phase, queryClient, pill, pillOpacity, y])
+  }, [phase, queryClient, pill, pillOpacity, y, pathname])
 
   const onTouchStart = useCallback((e: TouchEvent) => {
     claimed.current = false
