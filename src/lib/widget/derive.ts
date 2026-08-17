@@ -187,6 +187,85 @@ export function weeklyVolume(
   return trendPoints([...byWeek].map(([d, v]) => ({ date: d, value: v })), limit)
 }
 
+// ── Cardio ───────────────────────────────────────────────────────────────────
+
+/** One `cardio_logs` row, as the route selects it. */
+export interface CardioRow {
+  date: string
+  kind: string | null
+  distance_m: number | null
+  duration_min: number | null
+}
+
+/**
+ * The cardio block: the last session, and how the week is going against Zone 2.
+ *
+ * ── THE DEFINITION COMES FROM THE APP, NOT FROM HERE ─────────────────────────
+ * `zone2MinMinutes` and `weekTarget` are injected rather than written down,
+ * because `useCardio.ts` already owns them (`ZONE2_MIN_MINUTES`,
+ * `ZONE2_WEEKLY_TARGET`) and a second copy is a second thing to change. Zone 2
+ * in this app is a COUNT OF SESSIONS at or over that minimum — not a minute
+ * total — and a widget that showed minutes under the word "Zone 2" would
+ * disagree with the pips in the CardioLogger on the same phone.
+ *
+ * `paceOf` is injected for the same reason: pace is a MINIMUM with a 1 km floor
+ * (`lib/cardio/metrics.ts`), and this module must not become the place that
+ * rule is reimplemented.
+ */
+export function cardioBlock(
+  rows: readonly CardioRow[],
+  opts: {
+    today: string
+    weekStart: string
+    zone2MinMinutes: number
+    weekTarget: number
+    paceOf: (distanceM: number | null, durationMin: number | null) => number | null
+    trendDays: number
+  },
+): {
+  last: {
+    kind: string; date: string; distanceM: number | null
+    durationMin: number | null; paceMinPerKm: number | null
+  } | null
+  weekSessions: number
+  weekTarget: number
+  weekMinutes: number
+  trend: TrendPoint[]
+} {
+  // Newest first. A tie on the date keeps whichever the caller ordered first,
+  // which is `created_at` ascending — so the LAST logged session of a day wins.
+  const sorted = [...rows].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
+  const newest = sorted.find((r) => r.date <= opts.today) ?? null
+
+  const thisWeek = rows.filter((r) => r.date >= opts.weekStart && r.date <= opts.today)
+  const minutesOf = (r: CardioRow) =>
+    typeof r.duration_min === 'number' && Number.isFinite(r.duration_min) ? r.duration_min : 0
+
+  return {
+    last: newest
+      // A row with no `kind` is still a cardio session; "Cardio" is a truthful
+      // fallback where an empty string would render as a missing line.
+      ? {
+        kind: newest.kind || 'Cardio',
+        date: newest.date,
+        distanceM: newest.distance_m ?? null,
+        durationMin: newest.duration_min ?? null,
+        paceMinPerKm: opts.paceOf(newest.distance_m, newest.duration_min),
+      }
+      : null,
+    weekSessions: thisWeek.filter((r) => minutesOf(r) >= opts.zone2MinMinutes).length,
+    weekTarget: opts.weekTarget,
+    weekMinutes: Math.round(thisWeek.reduce((s, r) => s + minutesOf(r), 0)),
+    // Summed per day: two twenty-minute walks are forty minutes of cardio, and
+    // a day with none is omitted rather than zeroed — same rule as every other
+    // series in this file.
+    trend: dailySeries(
+      rows.map((r) => ({ date: r.date, value: r.duration_min })),
+      { limit: opts.trendDays },
+    ),
+  }
+}
+
 // ── Records ──────────────────────────────────────────────────────────────────
 
 /** One row of the `personal_records` ledger, as the route selects it. */

@@ -115,6 +115,43 @@ export interface WidgetCalendarDay {
 }
 
 /**
+ * Cardio, as the Cardio focus needs it.
+ *
+ * ── ZONE 2 IS A SESSION COUNT, NOT A MINUTE TOTAL ────────────────────────────
+ * `useCardio.ts` defines it: a session of `ZONE2_MIN_MINUTES` (20) or more
+ * counts as one, and the weekly target is `ZONE2_WEEKLY_TARGET` (2). Shipping
+ * minutes as "Zone 2" would put one definition on the home screen and another in
+ * the CardioLogger — the same failure the streak had, with a different noun. The
+ * route imports both constants rather than restating them.
+ *
+ * `weekMinutes` ships alongside because it is genuinely useful context, clearly
+ * labelled as minutes, and cannot be mistaken for the target.
+ */
+export interface WidgetCardio {
+  /** The most recent session, however long ago. Null on a fresh install. */
+  last: {
+    kind: string
+    date: string
+    distanceM: number | null
+    durationMin: number | null
+    /**
+     * Minutes per kilometre, from `lib/cardio/metrics.ts` — never recomputed on
+     * the Swift side. Pace there is a MINIMUM with a 1 km floor, and a second
+     * implementation is a second chance to get that wrong.
+     */
+    paceMinPerKm: number | null
+  } | null
+  /** Sessions this week at or over the Zone-2 minimum. */
+  weekSessions: number
+  /** `ZONE2_WEEKLY_TARGET`, shipped so the widget never hardcodes a 2. */
+  weekTarget: number
+  /** Every cardio minute this week, Zone 2 or not. */
+  weekMinutes: number
+  /** Seven days of minutes, oldest first. Days with no cardio are omitted. */
+  trend?: TrendPoint[]
+}
+
+/**
  * Consistency, in two numbers.
  *
  * `current` counts backwards from today over SCHEDULED training days only, so
@@ -232,8 +269,37 @@ export interface WidgetSnapshot {
     trend?: TrendPoint[]
   }
 
-  /** Today's scheduled session, and whether it's already logged. */
-  workout: { label: string; dayKey: string | null; logged: boolean; isRestDay: boolean }
+  /**
+   * Today's scheduled session, whether it's already logged, and what the plan
+   * asks of it.
+   *
+   * ── WHY THE PRESCRIPTION IS IN HERE ──────────────────────────────────────────
+   * The Today face renders its stat row only once a session exists, so on an
+   * unlogged training day — the state you actually look at the widget in — it
+   * was a title, "not logged yet", and two-thirds of a Spacer. There was nothing
+   * to put there because the payload never carried the plan's own ask.
+   *
+   * `prescribedFor` (lib/programs.ts) has answered this the whole time; the
+   * route simply never called it.
+   */
+  workout: {
+    label: string; dayKey: string | null; logged: boolean; isRestDay: boolean
+    /**
+     * What the plan prescribes for today, in the ACTIVE phase — cut drops
+     * bulk-only lifts to zero sets and they fall out of both counts.
+     *
+     * Null on a rest day and when the key resolves to no program day. Never 0,
+     * which on a training day reads as "nothing to do" rather than "unknown".
+     */
+    plannedExercises: number | null
+    plannedSets: number | null
+    /**
+     * Tonnage the last time this same `dayKey` was trained — the number that
+     * answers "what am I chasing". Null when this split has no earlier session
+     * inside the window the route already reads.
+     */
+    lastVolumeKg: number | null
+  }
 
   /** Week-to-date training totals, and how many sessions the plan schedules. */
   week: { sessions: number; volumeKg: number; prs: number; sets: number; sessionTarget: number }
@@ -256,7 +322,20 @@ export interface WidgetSnapshot {
   /** Consistency. Cheap — derived from the calendar the training scope builds. */
   streak?: WidgetStreak
 
-  /** Training scope — six weeks of scheduled-vs-logged days, oldest first. */
+  /** Training scope — cardio's own slice. Off `cardio_logs`, one extra read. */
+  cardio?: WidgetCardio
+
+  /**
+   * Training scope — scheduled-vs-logged days, oldest first.
+   *
+   * ── WHY THIS IS NO LONGER A PURE TRAILING WINDOW ─────────────────────────────
+   * It was 42 days ending TODAY, which is exactly what the streak needs and
+   * exactly what a month grid cannot use: the back half of the current month is
+   * in the future and therefore absent, so the calendar face could only ever
+   * draw a rolling six weeks. The window is now the trailing 42 days UNION the
+   * current calendar month, so both surfaces get the days they need out of one
+   * array. Future days carry the plan's answer and `logged: false`.
+   */
   calendar?: WidgetCalendarDay[]
   /** Training scope — eight weekly tonnage totals, oldest first, `d` = week start. */
   volumeTrend?: TrendPoint[]

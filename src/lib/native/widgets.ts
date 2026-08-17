@@ -24,15 +24,36 @@ import { Capacitor, registerPlugin } from '@capacitor/core'
  * commit handler is not.
  */
 interface HelixWidgetsPlugin {
-  reload(): Promise<void>
+  reload(options?: { kinds?: string[] }): Promise<void>
 }
 
 const plugin = registerPlugin<HelixWidgetsPlugin>('HelixWidgets')
 
-export async function reloadWidgets(): Promise<void> {
+/**
+ * Reload widget timelines. No argument means all of them.
+ *
+ * ── WHY NAMING KINDS IS WORTH THE TROUBLE ────────────────────────────────────
+ * WidgetKit budgets reloads PER KIND — roughly 40–70 a day each. A blanket
+ * reload therefore spends the Training widget's whole allowance on water logs
+ * and macro edits, and then has nothing left at the moment a session commits,
+ * which is the one moment Training had to be fresh. Naming the kinds a write
+ * actually changes leaves each family's budget for the events that move it.
+ *
+ * The default stays "all" deliberately: a caller that has not thought about
+ * which kinds it touches gets the old, safe behaviour rather than a silently
+ * narrower one. See `widgetKinds.ts` for how the list is kept honest against
+ * Swift.
+ *
+ * Silently inert on the web and on a build without the plugin. A widget that
+ * refreshes half an hour late is a small loss; an exception thrown out of a
+ * commit handler is not.
+ */
+export async function reloadWidgets(kinds?: readonly string[]): Promise<void> {
   if (!Capacitor.isNativePlatform()) return
   try {
-    await plugin.reload()
+    // An empty array would be indistinguishable from "none" on the Swift side,
+    // so it is normalised away here rather than guarded for there.
+    await plugin.reload(kinds && kinds.length ? { kinds: [...kinds] } : undefined)
   } catch {
     /* plugin missing (older build) — the timeline still refreshes on its own */
   }

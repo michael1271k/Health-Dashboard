@@ -99,10 +99,20 @@ struct HelixWidgetsBundle: WidgetBundle {
   var body: some Widget {
     // The gallery lists a bundle in declaration order, so this is the order the
     // families are offered in: what to eat, what to train, how the body is
-    // doing, and then the accessory sizes.
+    // doing, the whole day at once, and then the accessory sizes.
+    //
+    // ⚠️ `kind:` strings are load-bearing beyond WidgetKit: the app names them
+    // when it reloads a subset of timelines, and `widget-kind-parity.test.ts`
+    // asserts this file's set matches `WIDGET_KINDS` in
+    // src/lib/native/widgetKinds.ts in both directions. Adding a widget without
+    // registering it there fails the suite — which is what makes targeted
+    // reloads safe to rely on.
     HelixFuelWidget()
     HelixTrainingWidget()
     HelixBodyWidget()
+    // ADDING a kind is safe — it is REMOVING one that wipes placed instances.
+    // Nothing above is disturbed by this line.
+    HelixDailyWidget()
     HelixLockWidget()
   }
 }

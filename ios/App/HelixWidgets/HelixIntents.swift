@@ -40,11 +40,29 @@ enum FuelFocus: String, AppEnum {
     .water:    DisplayRepresentation(title: "Water", subtitle: "Hydration, steps and the battery"),
   ]
 
-  var link: URL? { HelixLink.nutrition }
+  /// ── WHY THESE TAKE A DATE NOW ──────────────────────────────────────────────
+  /// A focus used to name a tab root, so the water face opened Nutrition and
+  /// left you to find hydration — a shortcut that costs a navigation instead of
+  /// saving one. The precise destinations live on the DAY page, which needs a
+  /// date, and the only correct date is the payload's (`snapshot.date`): it is
+  /// the user's logical day resolved server-side in their own timezone, where an
+  /// extension calling `Date()` would open the wrong day for anyone whose
+  /// logical day and calendar day differ.
+  ///
+  /// Nil date falls back to the tab root — a placeholder entry has no payload
+  /// and still has to be tappable.
+  func link(_ date: String?) -> URL? {
+    switch self {
+    // Calories and macros belong to the Nutrition page, which is where they are
+    // actually edited. Only water has a drawer on the day page.
+    case .calories, .macros: return HelixLink.nutrition
+    case .water:             return date.flatMap { HelixLink.day($0, section: "water") } ?? HelixLink.nutrition
+    }
+  }
 }
 
 enum TrainingFocus: String, AppEnum {
-  case today, calendar, volume, streak, records, oneRepMax
+  case today, calendar, volume, streak, records, oneRepMax, cardio
 
   static var typeDisplayRepresentation: TypeDisplayRepresentation { "Focus" }
   static var caseDisplayRepresentations: [TrainingFocus: DisplayRepresentation] = [
@@ -54,6 +72,7 @@ enum TrainingFocus: String, AppEnum {
     .streak:    DisplayRepresentation(title: "Streak", subtitle: "Consecutive scheduled days trained"),
     .records:   DisplayRepresentation(title: "Records", subtitle: "The most recent personal records"),
     .oneRepMax: DisplayRepresentation(title: "Estimated 1RM", subtitle: "Where the main lifts are trending"),
+    .cardio:    DisplayRepresentation(title: "Cardio", subtitle: "The last session, and the week's Zone 2"),
   ]
 
   /// The scope follows the FOCUS, not the widget, so a calendar never pays to
@@ -67,32 +86,52 @@ enum TrainingFocus: String, AppEnum {
   /// focus lossless rather than a trade.
   var scope: HelixScope {
     switch self {
-    case .records, .oneRepMax, .volume: return .performance
-    case .today, .calendar, .streak:    return .training
+    case .records, .oneRepMax, .volume:       return .performance
+    // Cardio rides with the training slice because that is where the route
+    // builds it — one extra `cardio_logs` read beside the calendar, rather than
+    // a fifth scope for a block this small.
+    case .today, .calendar, .streak, .cardio: return .training
     }
   }
 
-  var link: URL? {
+  /// See `FuelFocus.link(_:)` for why this takes the payload's date.
+  func link(_ date: String?) -> URL? {
     switch self {
     case .today:               return HelixLink.workout
     case .calendar, .streak:   return HelixLink.progress
     case .volume:              return HelixLink.workout
     case .records, .oneRepMax: return HelixLink.exercises
+    // Cardio is logged ON the day, not in the workout deck.
+    case .cardio:              return date.flatMap { HelixLink.day($0) } ?? HelixLink.progress
     }
   }
 }
 
 enum BodyFocus: String, AppEnum {
-  case weight, sleep, wellbeing
+  case weight, sleep, wellbeing, composition
 
   static var typeDisplayRepresentation: TypeDisplayRepresentation { "Focus" }
   static var caseDisplayRepresentations: [BodyFocus: DisplayRepresentation] = [
     .weight:    DisplayRepresentation(title: "Weight", subtitle: "The latest weigh-in and the fortnight trend"),
     .sleep:     DisplayRepresentation(title: "Sleep", subtitle: "Duration and the stage breakdown"),
     .wellbeing: DisplayRepresentation(title: "Well-being", subtitle: "The daily score, its parts, and today's verdict"),
+    // "Composition", not "muscle": this face shows three different measurements
+    // and one of them is called muscle. See HelixLifestyle's Weight header.
+    .composition: DisplayRepresentation(title: "Composition", subtitle: "Body fat, lean tissue and fat-free mass"),
   ]
 
-  var link: URL? { HelixLink.progress }
+  /// See `FuelFocus.link(_:)` for why this takes the payload's date.
+  func link(_ date: String?) -> URL? {
+    switch self {
+    // The night is a drawer on the day, not a section of Progress.
+    case .sleep:                    return date.flatMap { HelixLink.day($0, section: "sleep") } ?? HelixLink.progress
+    // The InBody form is where composition is entered, and the drawer the
+    // dashboard's Body card already deep-links to.
+    case .weight, .composition:     return date.flatMap { HelixLink.day($0, section: "inbody") } ?? HelixLink.progress
+    // Well-being is a whole-of-Progress question; there is no one drawer for it.
+    case .wellbeing:                return HelixLink.progress
+    }
+  }
 }
 
 enum LockFocus: String, AppEnum {
@@ -106,7 +145,12 @@ enum LockFocus: String, AppEnum {
     .workout:  DisplayRepresentation(title: "Workout", subtitle: "Today's session, or rest"),
   ]
 
-  var link: URL? {
+  /// See `FuelFocus.link(_:)` for why this takes the payload's date.
+  ///
+  /// The accessory faces stay on tab roots deliberately — a Lock Screen tap is
+  /// made in a hurry, and landing inside a drawer you then have to dismiss is
+  /// worse there than the extra navigation.
+  func link(_ date: String?) -> URL? {
     switch self {
     case .battery:  return HelixLink.home
     case .calories: return HelixLink.nutrition
@@ -164,7 +208,8 @@ struct TrainingConfiguration: WidgetConfigurationIntent, HelixScoped {
      (recommendation(.volume), "Volume"),
      (recommendation(.streak), "Streak"),
      (recommendation(.records), "Records"),
-     (recommendation(.oneRepMax), "Estimated 1RM")]
+     (recommendation(.oneRepMax), "Estimated 1RM"),
+     (recommendation(.cardio), "Cardio")]
   }
 
   static func recommendation(_ focus: TrainingFocus) -> TrainingConfiguration {
@@ -189,7 +234,8 @@ struct BodyConfiguration: WidgetConfigurationIntent, HelixScoped {
   static var galleryOptions: [(intent: BodyConfiguration, title: LocalizedStringResource)] {
     [(recommendation(.weight), "Weight"),
      (recommendation(.sleep), "Sleep"),
-     (recommendation(.wellbeing), "Well-being")]
+     (recommendation(.wellbeing), "Well-being"),
+     (recommendation(.composition), "Composition")]
   }
 
   static func recommendation(_ focus: BodyFocus) -> BodyConfiguration {

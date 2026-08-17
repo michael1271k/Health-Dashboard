@@ -341,6 +341,11 @@ export function useSessionDraft() {
         // that used to race it and lose. The invalidations below still run, for
         // everything derived from the score — but nothing visible waits on them.
         if (committedDate) {
+          // EVERY kind. A commit is the one write that reaches all of them:
+          // today's session, the calendar ring, the streak, the week's tonnage,
+          // the score and the battery. This is the moment Training's reload
+          // budget is FOR — which is why the day-to-day writes above spend
+          // DAY_KINDS and leave it alone.
           void recomputeAndPaint(qc, committedDate, {
             force: true, isToday: committedDate === logicalTodayISO(),
             backfillDays: 0, hoursAwake: hoursAwakeToday(),

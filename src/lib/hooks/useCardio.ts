@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { weekStartOf, isoAddDays } from '@/lib/utils/week'
+import { isZone2 } from '@/lib/cardio/zone2'
 
 export interface CardioLog {
   id: string
@@ -147,11 +148,10 @@ export function useDeleteCardio() {
   })
 }
 
-/** Zone-2 target = 2 steady cardio sessions per week (the plan's rest-day work). */
-export const ZONE2_WEEKLY_TARGET = 2
-/** A session counts as Zone-2 when it's a steady ≥ 20 min effort (excludes the
- *  5-min treadmill warm-up); anything shorter isn't a Zone-2 block. */
-const ZONE2_MIN_MINUTES = 20
+// The definition moved to `lib/cardio/zone2.ts` — this module is `'use client'`,
+// and the widget route needs the same two numbers to count the same way. It is
+// re-exported so every existing importer is unchanged.
+export { ZONE2_WEEKLY_TARGET } from '@/lib/cardio/zone2'
 
 /** How many Zone-2 sessions have been logged in the week containing `date`. */
 export function useZone2Week(date: string) {
@@ -167,7 +167,7 @@ export function useZone2Week(date: string) {
         .select('duration_min')
         .gte('date', from).lt('date', to)
       if (error) return 0 // table not migrated yet
-      return (data ?? []).filter((r) => ((r as { duration_min: number | null }).duration_min ?? 0) >= ZONE2_MIN_MINUTES).length
+      return (data ?? []).filter((r) => isZone2((r as { duration_min: number | null }).duration_min)).length
     },
   })
 }

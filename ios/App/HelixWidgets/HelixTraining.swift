@@ -42,7 +42,7 @@ struct TrainingView: View {
       }
     }
     .containerBackground(Helix.background, for: .widget)
-    .widgetURL(focus.link)
+    .widgetURL(focus.link(entry.snapshot?.date))
   }
 
   @ViewBuilder private var face: some View {
@@ -71,6 +71,10 @@ struct TrainingView: View {
     case (.oneRepMax, .small):  OneRepMaxFocusFace(entry: entry, mono: mono)
     case (.oneRepMax, .medium): OneRepMaxLedgerFace(entry: entry, mono: mono, large: false)
     case (.oneRepMax, .large):  OneRepMaxLedgerFace(entry: entry, mono: mono, large: true)
+
+    case (.cardio, .small):     CardioFocusFace(entry: entry, mono: mono)
+    case (.cardio, .medium):    CardioLedgerFace(entry: entry, mono: mono)
+    case (.cardio, .large):     CardioLargeFace(entry: entry, mono: mono)
     }
   }
 }
@@ -103,10 +107,10 @@ struct TodayFace: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: compact ? 6 : 8) {
-      TodayHeader(entry: entry, mono: mono)
+      TodayHeader(entry: entry, mono: mono, branded: !compact)
 
       Text(s?.workout.label ?? "—")
-        .font(.system(size: compact ? 15 : 18, weight: .bold))
+        .font(HelixType.label(compact ? 15 : 18, weight: .bold))
         .foregroundStyle(.white)
         .lineLimit(2)
         .minimumScaleFactor(0.8)
@@ -117,9 +121,21 @@ struct TodayFace: View {
 
       Spacer(minLength: 0)
 
+      // ── THE ROW IS PRESENT IN BOTH STATES ───────────────────────────────────
+      // It used to render only `if let done`, so an unlogged training day — the
+      // state you actually look at a widget in — was a title, one grey line and
+      // two-thirds of a Spacer. The file's own header says the three states are
+      // one layout deliberately, "a widget whose height and layout change with
+      // the day is one you have to re-read every morning", and then the layout
+      // changed with the day.
+      //
+      // Rest is the one state that genuinely has no figures, and says so above.
       if !compact, let done {
         Hairline()
         TodayStats(done: done, mono: mono)
+      } else if !compact, !isRest, let s {
+        Hairline()
+        TodayPlanned(workout: s.workout, week: s.week, mono: mono)
       }
 
       if !compact {
@@ -141,13 +157,29 @@ struct TodayFace: View {
     }
   }
 
-  /// Rest says what is NEXT; due says how much of it there is; done says nothing
+  /// Rest says what it is for; due says how much work it is; done says nothing
   /// here, because the metadata row below is already saying it.
+  ///
+  /// ── THE SMALL'S ONLY LINE ────────────────────────────────────────────────
+  /// A Small never renders the stat row (there is no room for four figures under
+  /// a headline), so this sentence is the entire content of a Small below its
+  /// title. "not logged yet" was true and said nothing you could act on. The
+  /// prescription is the thing worth a glance: how much work today is.
   private var sub: String? {
     if isRest { return "recovery is the session" }
-    if done != nil { return nil }
-    guard let sets = s?.today?.setCount, sets > 0 else { return "not logged yet" }
-    return "\(sets) sets logged"
+    if let done {
+      // On a Small, where the stat row is absent, the two figures that matter.
+      guard compact else { return nil }
+      let time = done.durationMin.map { "\($0)′" }
+      let volume = HelixSnapshot.tonnes(done.volumeKg)
+      let parts = [time, volume].compactMap { $0 }
+      return parts.isEmpty ? "logged" : parts.joined(separator: " · ")
+    }
+    if let exercises = s?.workout.plannedExercises, let sets = s?.workout.plannedSets {
+      return "\(exercises) exercises · \(sets) sets"
+    }
+    // No prescription resolved — an unknown plan is not a zero one.
+    return "not logged yet"
   }
 
   private var weekText: String {
@@ -228,6 +260,10 @@ private struct SessionChips: View {
 private struct TodayHeader: View {
   let entry: HelixEntry
   let mono: Bool
+  /// Whether to carry the Helix mark. Medium and Large do; a Small is 150pt and
+  /// cannot spare the corner, and nobody needs branding on a widget they chose
+  /// to install.
+  var branded = false
 
   private var s: HelixSnapshot? { entry.snapshot }
   private var isRest: Bool { s?.workout.isRestDay == true }
@@ -240,7 +276,9 @@ private struct TodayHeader: View {
         .foregroundStyle(isRest ? Helix.muted : accent)
       Caption(caption, color: isRest ? Helix.muted : accent)
       Spacer(minLength: 0)
-      if entry.isStale { StaleTag() }
+      if entry.isStale { StaleTag(age: entry.age) }
+      // Small excluded — see CalendarFace. `TodayLargeFace` carries its own.
+      if branded { HelixBrand(monochrome: mono, size: 12) }
     }
   }
 
@@ -252,6 +290,30 @@ private struct TodayHeader: View {
   private var caption: String {
     if isRest { return "REST DAY" }
     return s?.today != nil ? "DONE" : "DUE TODAY"
+  }
+}
+
+/// The DUE state's four figures — the row that used not to exist.
+///
+/// Same four columns, same heights, same `Stat` as the done state, so switching
+/// between them is a change of contents rather than a change of layout. What the
+/// plan asks, what it asked last time, and where the week stands.
+private struct TodayPlanned: View {
+  let workout: HelixSnapshot.Workout
+  let week: HelixSnapshot.Week
+  let mono: Bool
+
+  var body: some View {
+    HStack(spacing: 0) {
+      Stat(value: workout.plannedExercises.map { "\($0)" }, label: "EXERCISES", color: .white)
+      Stat(value: workout.plannedSets.map { "\($0)" }, label: "SETS", color: .white)
+      // The number you are chasing. Nil — not zero — when this split has no
+      // earlier session; "0.0 t last time" would be a target of nothing.
+      Stat(value: HelixSnapshot.tonnes(workout.lastVolumeKg), label: "LAST TIME",
+           color: mono ? .white : Helix.steel)
+      Stat(value: week.sessionTarget.map { "\(week.sessions)/\($0)" } ?? "\(week.sessions)",
+           label: "THIS WEEK", color: .white)
+    }
   }
 }
 
@@ -297,7 +359,7 @@ struct TodayLargeFace: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 10) {
       Register(title: "TODAY", accent: mono ? .white : accent) {
-        TodayHeader(entry: entry, mono: mono)
+        TodayHeader(entry: entry, mono: mono, branded: true)
         Text(s?.workout.label ?? "—")
           .font(.system(size: 24, weight: .bold))
           .foregroundStyle(.white)
@@ -308,8 +370,10 @@ struct TodayLargeFace: View {
         } else if s?.workout.isRestDay == true {
           Text("recovery is the session")
             .font(.system(size: 10)).foregroundStyle(Helix.muted)
-        } else {
-          Text("not logged yet").font(.system(size: 10)).foregroundStyle(Helix.muted)
+        } else if let s {
+          // Was "not logged yet" — true, and nothing you could act on, on the
+          // largest surface in the gallery.
+          TodayPlanned(workout: s.workout, week: s.week, mono: mono)
         }
       }
 
@@ -459,20 +523,43 @@ struct CalendarFace: View {
 
   private var s: HelixSnapshot? { entry.snapshot }
 
-  /// The trailing `weeks × 7` days. Sliced by DAY count rather than by row so
-  /// the padding below decides where the weeks actually break.
+  /// The days this size actually draws.
+  ///
+  /// ── SMALL IS A WEEK, EVERYTHING ELSE IS THE MONTH ──────────────────────────
+  /// The payload window now runs the trailing 42 days UNION the current calendar
+  /// month, so the days after today exist for the first time and a real month
+  /// grid is drawable. A Small still is not the place for one — 42 cells in
+  /// 150pt is a texture, not a calendar — so it keeps the trailing week and says
+  /// so in its caption rather than calling a rolling window "this month".
   private var days: [HelixSnapshot.CalendarDay] {
     let all = s?.calendar ?? []
-    let wanted = weeks * 7
-    return all.count > wanted ? Array(all.suffix(wanted)) : all
+    guard weeks > 1 else {
+      return all.count > 7 ? Array(all.suffix(7)) : all
+    }
+    // The calendar month containing today. `d` is `YYYY-MM-DD`, so the month is
+    // a string prefix — no date parsing, no timezone to get wrong.
+    let month = String((s?.date ?? "").prefix(7))
+    let inMonth = all.filter { $0.d.hasPrefix(month) }
+    return inMonth.isEmpty ? all : inMonth
+  }
+
+  /// "AUGUST" — the month the grid is showing. The Small says "THIS WEEK",
+  /// because that is what it is showing and the complaint that it claimed
+  /// otherwise was right.
+  private var caption: String {
+    guard weeks > 1 else { return "THIS WEEK" }
+    return HelixSnapshot.monthName(s?.date)?.uppercased() ?? "CALENDAR"
   }
 
   var body: some View {
     VStack(alignment: .leading, spacing: weeks > 1 ? 7 : 6) {
       HStack(spacing: 5) {
-        Caption(weeks == 1 ? "THIS WEEK" : "CALENDAR", color: mono ? .white : Helix.steel)
+        Caption(caption, color: mono ? .white : Helix.steel)
         Spacer(minLength: 0)
-        if entry.isStale { StaleTag() }
+        if entry.isStale { StaleTag(age: entry.age) }
+        // Medium and Large only. A Small is 150pt and cannot spare a corner for
+        // a logo — and nobody needs branding on a widget they chose to install.
+        if weeks > 1 { HelixBrand(monochrome: mono, size: 12) }
         if let streak = s?.streak, streak.current > 0 {
           HStack(spacing: 3) {
             Image(systemName: "flame.fill")
@@ -561,7 +648,21 @@ struct MonthGrid: View {
             ForEach(Array(week.enumerated()), id: \.offset) { _, day in
               Group {
                 if let day {
-                  DayCell(day: day, isToday: day.d == today, mono: mono, size: cell)
+                  // ── EACH CELL IS ITS OWN DESTINATION ───────────────────────
+                  // Tapping a Sunday used to open the Progress tab and leave you
+                  // to find Sunday. A `Link` inside a widget works at Medium and
+                  // Large only — a Small gets exactly one tap target, which
+                  // stays the face's `widgetURL` — so this is wrapped rather
+                  // than replaced, and the Small keeps working as before.
+                  if let url = HelixLink.day(day.d) {
+                    Link(destination: url) {
+                      DayCell(day: day, isToday: day.d == today, mono: mono, size: cell,
+                              outside: !HelixSnapshot.sameMonth(day.d, as: today))
+                    }
+                  } else {
+                    DayCell(day: day, isToday: day.d == today, mono: mono, size: cell,
+                            outside: !HelixSnapshot.sameMonth(day.d, as: today))
+                  }
                 } else {
                   Color.clear
                 }
@@ -589,30 +690,72 @@ private struct DayCell: View {
   let isToday: Bool
   let mono: Bool
   let size: CGFloat
+  /// Days from the neighbouring month, dimmed rather than blanked so the month
+  /// has edges without the grid having holes.
+  var outside = false
 
   /// A rest day has no `dayKey`, and `Helix.day(nil)` answers steel — which is
   /// pale enough to read as white. Rest days therefore never ask for it.
   private var color: Color { mono ? .white : Helix.day(day.dayKey) }
 
+  /// ── THE DATE IS WHITE IN EVERY STATE ──────────────────────────────────────
+  /// A logged day used to be a SOLID fill of the day colour with the number in
+  /// `Helix.background` on top. At `size * 0.42` in a Small cell that is roughly
+  /// 4.6pt of near-black on gold — not small text, a smudge. The report that the
+  /// widget showed "white circles covering the dates" was describing exactly
+  /// this: the ring won, and the date lost.
+  ///
+  /// A 22%-alpha wash with a full-strength ring says "trained" just as clearly
+  /// against obsidian, and leaves the number legible on top of it. The date is
+  /// the thing you are looking for in a calendar; nothing may outrank it.
+  private var textColor: Color {
+    if outside { return Helix.muted.opacity(0.55) }
+    return day.scheduled || day.logged ? .white : Helix.muted
+  }
+
   var body: some View {
     ZStack {
       if day.logged {
-        Circle().fill(color)
+        Circle().fill(color.opacity(0.22))
+        Circle().strokeBorder(color, lineWidth: 1.5)
       } else if day.scheduled {
-        Circle().strokeBorder(color.opacity(0.55), lineWidth: 1.5)
+        Circle().strokeBorder(color.opacity(0.5), lineWidth: 1.5)
       }
-      if isToday {
-        Circle().strokeBorder(.white.opacity(0.85), lineWidth: 1)
-          .frame(width: size + 3, height: size + 3)
-      }
+
       Text(HelixSnapshot.dayOfMonth(day.d).map { "\($0)" } ?? "")
-        .font(.system(size: max(7, size * 0.42), weight: day.logged ? .bold : .semibold))
-        // On a filled ring the number sits ON the colour, so it takes the widget
-        // background rather than white-on-gold, which is unreadable.
-        .foregroundStyle(day.logged ? Helix.background : (day.scheduled ? .white : Helix.muted))
+        .font(HelixType.figure(max(7, size * 0.42)))
+        .fontWeight(day.logged ? .bold : .semibold)
+        .foregroundStyle(textColor)
         .minimumScaleFactor(0.7)
+
+      // Today is a dot UNDER the number, not a second ring around the cell. Two
+      // concentric rings on one cell is two states competing to be read first,
+      // and the outer one won on a surface where the inner one carries the
+      // meaning.
+      if isToday {
+        VStack(spacing: 0) {
+          Spacer(minLength: 0)
+          Circle()
+            .fill(mono ? Color.white : Helix.ember)
+            .frame(width: max(2.5, size * 0.13), height: max(2.5, size * 0.13))
+        }
+        .frame(height: size)
+      }
+
+      // A rest day inside the month gets a faint dot so the grid still reads as
+      // a grid rather than as scattered rings over blank space.
+      if !day.scheduled && !day.logged && !outside {
+        VStack(spacing: 0) {
+          Spacer(minLength: 0)
+          Circle()
+            .fill(Helix.muted.opacity(isToday ? 0 : 0.4))
+            .frame(width: max(2, size * 0.09), height: max(2, size * 0.09))
+        }
+        .frame(height: size)
+      }
     }
     .frame(width: size, height: size)
+    .opacity(outside ? 0.35 : 1)
   }
 }
 
@@ -642,7 +785,7 @@ struct VolumeFocusFace: View {
       HStack(spacing: 4) {
         Caption("VOLUME", color: mono ? .white : Helix.emerald)
         Spacer(minLength: 0)
-        if entry.isStale { StaleTag() }
+        if entry.isStale { StaleTag(age: entry.age) }
       }
       BigValue(value: HelixSnapshot.tonnes(s?.week.volumeKg), size: 28, color: .white)
       HStack(spacing: 5) {
@@ -682,7 +825,7 @@ struct VolumeFace: View {
       VStack(alignment: .leading, spacing: 4) {
         HStack(spacing: 4) {
           Caption("VOLUME", color: accent)
-          if entry.isStale { StaleTag() }
+          if entry.isStale { StaleTag(age: entry.age) }
         }
         Spacer(minLength: 0)
         BigValue(value: HelixSnapshot.tonnes(s?.week.volumeKg), size: 30, color: .white)
@@ -730,7 +873,8 @@ struct VolumeLargeFace: View {
           BigValue(value: HelixSnapshot.tonnes(s?.week.volumeKg), size: 34, color: .white)
           DeltaChip(delta: volumeDeltaTonnes(s), decimals: 1, suffix: " t", monochrome: mono)
           Spacer(minLength: 0)
-          if entry.isStale { StaleTag() }
+          if entry.isStale { StaleTag(age: entry.age) }
+          HelixBrand(monochrome: mono)
         }
         HStack(spacing: 0) {
           Stat(value: sessionsText(s), label: "SESSIONS", color: .white)
@@ -820,7 +964,7 @@ struct StreakFace: View {
       HStack(spacing: 4) {
         Caption("STREAK", color: mono ? .white : Helix.ember)
         Spacer(minLength: 0)
-        if entry.isStale { StaleTag() }
+        if entry.isStale { StaleTag(age: entry.age) }
       }
 
       Spacer(minLength: 0)
@@ -889,7 +1033,7 @@ struct ConsistencyFace: View {
       VStack(alignment: .leading, spacing: 4) {
         HStack(spacing: 4) {
           Caption("STREAK", color: accent)
-          if entry.isStale { StaleTag() }
+          if entry.isStale { StaleTag(age: entry.age) }
         }
         Spacer(minLength: 0)
         HStack(alignment: .center, spacing: 6) {

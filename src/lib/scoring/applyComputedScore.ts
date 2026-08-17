@@ -77,6 +77,15 @@ export async function recomputeAndPaint(
   date: string,
   body: Record<string, unknown>,
   post: (url: string, init: RequestInit) => Promise<Response>,
+  /**
+   * Which widget kinds this write actually changed. Omitted means all of them.
+   *
+   * This funnel cannot know — a water log and a session commit arrive here
+   * looking identical — so the caller says. WidgetKit budgets reloads per kind,
+   * and spending Training's allowance on a glass of water is how Training comes
+   * to be throttled at the moment a session commits. See `widgetKinds.ts`.
+   */
+  kinds?: readonly string[],
 ): Promise<boolean> {
   try {
     const res = await post('/api/compute-score', {
@@ -91,7 +100,7 @@ export async function recomputeAndPaint(
     // This is the single place all of them pass through, so it is the one place
     // the home screen needs to be told. Fire-and-forget: a widget that refreshes
     // late is a small loss, a commit that fails because of one is not.
-    void reloadWidgets()
+    void reloadWidgets(kinds)
     return !!json?.score
   } catch {
     return false

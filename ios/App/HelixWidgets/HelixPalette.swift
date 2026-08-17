@@ -176,5 +176,25 @@ enum HelixLink {
   static let workout   = path("/workout")
   static let exercises = path("/workout/exercises")
   static let reports   = path("/reports")
-  static let session   = path("/session")
+
+  /// One day, optionally with a drawer already open.
+  ///
+  /// ── WHY THE TAP HAS TO LAND ON THE THING YOU TAPPED ──────────────────────
+  /// Every face used to point at a tab root: the sleep face opened Progress and
+  /// left you to find last night, the water face opened Nutrition and left you
+  /// to find hydration. That is a shortcut that costs a navigation instead of
+  /// saving one. `section` names the drawer, and the day page validates it
+  /// against `DAY_SECTIONS` — an unknown one opens the day with nothing open
+  /// rather than guessing.
+  ///
+  /// ── AND WHY THE DATE IS PASSED IN ────────────────────────────────────────
+  /// Always from `snapshot.date`, never from `Date()` in the extension. The
+  /// payload's date is the user's LOGICAL day, resolved server-side in their own
+  /// timezone; an extension deciding for itself would open the wrong day for
+  /// anyone whose logical day and calendar day differ — which is most people,
+  /// for part of every day.
+  static func day(_ iso: String, section: String? = nil) -> URL? {
+    guard !iso.isEmpty else { return nil }
+    return path(section.map { "/day/\(iso)?section=\($0)" } ?? "/day/\(iso)")
+  }
 }

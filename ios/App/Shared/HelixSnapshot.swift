@@ -108,6 +108,15 @@ struct HelixSnapshot: Codable {
     let dayKey: String?
     let logged: Bool
     let isRestDay: Bool
+    /// What the PLAN asks of today, phase-resolved server-side. Optional so a
+    /// build talking to an older deployment still decodes; nil renders as "—",
+    /// never as a zero, because on a training day a zero reads as "nothing to
+    /// do".
+    let plannedExercises: Int?
+    let plannedSets: Int?
+    /// Tonnage the last time this same `dayKey` was trained — the number the
+    /// due state is chasing.
+    let lastVolumeKg: Double?
   }
   struct Week: Codable {
     let sessions: Int
@@ -185,6 +194,33 @@ struct HelixSnapshot: Codable {
     var id: String { d }
   }
 
+  /// Cardio: the last session, and how the week stands against Zone 2.
+  ///
+  /// ── ZONE 2 IS A COUNT OF SESSIONS ──────────────────────────────────────────
+  /// `weekSessions` counts sessions at or over 20 minutes, against `weekTarget`
+  /// (2). It is NOT a minute total, and `weekMinutes` beside it is deliberately
+  /// labelled as minutes so the two can never be confused. The app draws one pip
+  /// per session in the CardioLogger; a widget counting minutes under the same
+  /// words would disagree with it on the same phone, which is the failure the
+  /// streak already taught this project once.
+  struct Cardio: Codable {
+    struct Session: Codable {
+      let kind: String
+      let date: String
+      let distanceM: Double?
+      let durationMin: Double?
+      /// Minutes per kilometre, computed SERVER-side. Pace there is a minimum
+      /// with a 1 km floor; recomputing it here would be a second chance to get
+      /// that wrong.
+      let paceMinPerKm: Double?
+    }
+    let last: Session?
+    let weekSessions: Int
+    let weekTarget: Int
+    let weekMinutes: Int
+    let trend: [Point]?
+  }
+
   /// Consistency in two numbers. `current` counts backwards over SCHEDULED
   /// training days only, so Wednesday and Saturday rest never breaks it.
   struct Streak: Codable {
@@ -260,6 +296,7 @@ struct HelixSnapshot: Codable {
   // what they do for a missing reading anyway.
   let today: Today?
   let streak: Streak?
+  let cardio: Cardio?
   let calendar: [CalendarDay]?
   let volumeTrend: [Point]?
   let body: Body?
@@ -321,6 +358,30 @@ extension HelixSnapshot {
     return clockFormatter.string(from: date)
   }
 
+  /// An ISO timestamp → a `Date`, tolerating a missing fractional-seconds part.
+  ///
+  /// `generatedAt` is written by `new Date().toISOString()`, which ALWAYS
+  /// carries milliseconds — but the strict formatter this file already uses
+  /// rejects a timestamp without them, and Postgres-sourced values elsewhere in
+  /// the payload arrive both ways. One parser that accepts both is the
+  /// difference between a staleness tag that works and one that silently never
+  /// fires, which is the failure mode this whole helper exists to end.
+  static func timestamp(_ iso: String?) -> Date? {
+    guard let iso else { return nil }
+    return isoFormatter.date(from: iso) ?? plainIsoFormatter.date(from: iso)
+  }
+
+  /// A payload age as a caption: "4m", "2h", "3d". Nil below a minute — a widget
+  /// announcing it is forty seconds old is noise, not information.
+  static func shortAge(_ seconds: TimeInterval?) -> String? {
+    guard let seconds, seconds >= 60 else { return nil }
+    let minutes = Int(seconds / 60)
+    if minutes < 60 { return "\(minutes)m" }
+    let hours = minutes / 60
+    if hours < 24 { return "\(hours)h" }
+    return "\(hours / 24)d"
+  }
+
   // ── Calendar helpers ───────────────────────────────────────────────────────
   //
   // ── WHY WEEKDAYS ARE DERIVED AND NEVER ASSUMED ───────────────────────────────
@@ -357,6 +418,25 @@ extension HelixSnapshot {
     guard dayOfMonth(iso) == 1, let date = dayFormatter.date(from: iso ?? "") else { return nil }
     return monthFormatter.string(from: date).uppercased()
   }
+
+  /// "August" for any date in it — the calendar grid's own title.
+  ///
+  /// Distinct from `monthMarker`, which is a marker INSIDE a rolling grid and is
+  /// deliberately nil on every day but the first. This one always answers, and
+  /// it is what let the Calendar face stop captioning a month "THIS WEEK".
+  static func monthName(_ iso: String?) -> String? {
+    guard let iso, let date = dayFormatter.date(from: iso) else { return nil }
+    return fullMonthFormatter.string(from: date)
+  }
+
+  /// Whether a day belongs to the same calendar month as `reference`.
+  ///
+  /// String prefixes, not `Calendar` — `d` is `YYYY-MM-DD` and the first seven
+  /// characters ARE the month, with no parsing to get a timezone wrong in.
+  static func sameMonth(_ iso: String, as reference: String?) -> Bool {
+    guard let reference, reference.count >= 7 else { return true }
+    return iso.hasPrefix(reference.prefix(7))
+  }
 }
 
 private let dayFormatter: DateFormatter = {
@@ -378,6 +458,13 @@ private let monthFormatter: DateFormatter = {
   return f
 }()
 
+/// "August" — the grid's title, where `monthFormatter` gives the "AUG" marker.
+private let fullMonthFormatter: DateFormatter = {
+  let f = DateFormatter()
+  f.dateFormat = "MMMM"
+  return f
+}()
+
 private let clockFormatter: DateFormatter = {
   let f = DateFormatter()
   f.dateFormat = "HH:mm"
@@ -389,6 +476,15 @@ private let isoFormatter: ISO8601DateFormatter = {
   // Postgres timestamps arrive with fractional seconds; the default parser
   // rejects them outright and every bedtime would silently read as "—".
   f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+  return f
+}()
+
+/// The same thing WITHOUT fractional seconds. `ISO8601DateFormatter` is strict
+/// in both directions — a parser configured for milliseconds rejects a timestamp
+/// that has none — so the two are tried in turn by `timestamp(_:)`.
+private let plainIsoFormatter: ISO8601DateFormatter = {
+  let f = ISO8601DateFormatter()
+  f.formatOptions = [.withInternetDateTime]
   return f
 }()
 
@@ -408,7 +504,24 @@ enum HelixSnapshotError: Error, LocalizedError {
   }
 }
 
-enum HelixSnapshotClient {
+/// Where a snapshot comes from.
+///
+/// ── WHY A PROTOCOL FOR ONE CONFORMER ─────────────────────────────────────────
+/// There is exactly one implementation and there will be exactly one until this
+/// account stops being a free personal team. The seam exists because the fetch
+/// path is not a design choice — it is a workaround for App Groups being a paid
+/// capability (see the file header), and the day that changes, the correct
+/// source becomes a shared container read with no network at all. Naming the
+/// boundary now makes that a one-file swap instead of an archaeology exercise
+/// across four view files.
+///
+/// Deliberately minimal: no caching, no status, no fallback. Those are policy
+/// and belong to `HelixSnapshotClient`, which is what every caller actually uses.
+protocol HelixSnapshotSource {
+  static func fetch(scope: HelixScope) async throws -> HelixSnapshot
+}
+
+enum HelixSnapshotClient: HelixSnapshotSource {
   private static func infoValue(_ key: String) -> String? {
     guard let raw = Bundle.main.object(forInfoDictionaryKey: key) as? String else { return nil }
     let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)

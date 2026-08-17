@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server'
 import { getServerSupabaseClient } from '@/lib/supabase/server'
 import { nightWindow, nightOf } from '@/lib/sleep/nightWindow'
-import { weekStartOf, isoAddDays, weekStartDayFromEndDay } from '@/lib/utils/week'
+import {
+  weekStartOf, isoAddDays, weekStartDayFromEndDay, monthStartOf, lastDayOfMonth,
+} from '@/lib/utils/week'
 import { logicalTodayInTZ } from '@/lib/utils/day'
-import { scheduleDayIn, isTrainingDayIn, sessionTargetIn } from '@/lib/programs'
+import { scheduleDayIn, isTrainingDayIn, sessionTargetIn, prescribedFor } from '@/lib/programs'
+import { paceMinPerKm } from '@/lib/cardio/metrics'
+import { ZONE2_WEEKLY_TARGET, ZONE2_MIN_MINUTES } from '@/lib/cardio/zone2'
 import { serverScheduleContext } from '@/lib/schedule/serverContext'
 import { computeForDate } from '@/lib/scoring/computeForDate'
 import { BATTERY } from '@/lib/scoring/battery'
@@ -16,8 +20,8 @@ import {
 } from '@/lib/widget/snapshot'
 import {
   trendPoints, meanBetween, topRecords, e1rmTrends, volumeByFamily, shiftISO,
-  calendarDays, weeklyVolume, dailySeries, latestDelta,
-  type SetRow,
+  calendarDays, weeklyVolume, dailySeries, latestDelta, cardioBlock,
+  type SetRow, type CardioRow,
 } from '@/lib/widget/derive'
 import { streakFrom, STREAK_WINDOW_DAYS } from '@/lib/training/streak'
 import { computeReadiness } from '@/lib/scoring/readiness'
@@ -280,11 +284,55 @@ export async function GET(req: Request) {
   const day = scheduleDayIn(schedule, date)
   const num = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null)
 
+  // ── What the plan ASKS of today ────────────────────────────────────────────
+  // `prescribedFor` has answered this since the scorer needed it and the route
+  // never called it, which is the whole reason the Today face had nothing to
+  // draw on an unlogged training day — the state you actually look at a widget
+  // in. Phase-aware: on a cut, bulk-only lifts drop to zero sets and fall out of
+  // both counts, so this is the session that will really be run.
+  //
+  // The phase comes off `schedule`, which `serverScheduleContext` already
+  // resolved from `user_goals.active_phase` — not from a second read of the
+  // goals row, which is how a server ends up holding two different opinions
+  // about which phase the athlete is in. `prescribedFor` takes cut|bulk only,
+  // and maintenance runs the bulk prescription.
+  const prescribed = day === 'rest' || !day.dayKey
+    ? null
+    : prescribedFor(day.dayKey, schedule.phase === 'cut' ? 'cut' : 'bulk')
+
+  // The last time THIS split was trained — the number that answers "what am I
+  // chasing". Off `allSessions`, already read for the week aggregates, so it
+  // costs nothing. Today's own session is excluded: comparing a session to
+  // itself is not a target.
+  const lastVolumeKg = day === 'rest' || !day.dayKey ? null : (() => {
+    const earlier = allSessions
+      .filter((s) => s.day_key === day.dayKey && dayOf(s) < date)
+      .sort((a, b) => (dayOf(a) < dayOf(b) ? 1 : -1))
+    const v = earlier[0]?.total_volume_kg
+    return typeof v === 'number' && Number.isFinite(v) ? Math.round(v) : null
+  })()
+
   // ── The calendar, and the streak that falls out of it ──────────────────────
   // Built for every scope because `streak` is cheap once the days exist, and
-  // `calendar` is the only expensive half (42 entries) — that one is trimmed.
-  const calendarWindow = Array.from({ length: CALENDAR_DAYS }, (_, i) =>
-    isoAddDays(date, -(CALENDAR_DAYS - 1 - i)))
+  // `calendar` is the only expensive half — that one is trimmed.
+  //
+  // ── WHY THE WINDOW RUNS PAST TODAY ─────────────────────────────────────────
+  // It was 42 days ending today: exactly what the streak needs, and exactly what
+  // a MONTH grid cannot use. The back half of the current month is in the future
+  // and so was simply absent, which is why the calendar face could only ever
+  // draw a rolling six weeks and captioned its Small "THIS WEEK".
+  //
+  // The union, not a replacement. The streak must keep walking over exactly
+  // STREAK_WINDOW_DAYS or the widget and the dashboard are once again counting
+  // over different amounts of history — the precise failure `lib/training/
+  // streak.ts` exists to end. Future days are safe for it: `streakFrom` skips
+  // anything after today when walking `current`, and `best` is a maximum a
+  // future unlogged day can only interrupt at the boundary, never lower.
+  const trailingStart = isoAddDays(date, -(CALENDAR_DAYS - 1))
+  const windowStart = monthStartOf(date) < trailingStart ? monthStartOf(date) : trailingStart
+  const windowEnd = lastDayOfMonth(date) > date ? lastDayOfMonth(date) : date
+  const calendarWindow: string[] = []
+  for (let d = windowStart; d <= windowEnd; d = isoAddDays(d, 1)) calendarWindow.push(d)
   const calendar = calendarDays(
     calendarWindow,
     allSessions.map((s) => ({ date: dayOf(s), volumeKg: s.total_volume_kg })),
@@ -375,6 +423,11 @@ export async function GET(req: Request) {
       dayKey: day === 'rest' ? null : (day.dayKey ?? null),
       logged: weekSessions.some((s) => s.started_at.slice(0, 10) === date),
       isRestDay: !isTrainingDayIn(schedule, date),
+      // Null, never 0. On a training day a zero reads as "nothing to do", which
+      // is the one thing it cannot mean.
+      plannedExercises: prescribed?.exercises ?? null,
+      plannedSets: prescribed?.sets ?? null,
+      lastVolumeKg,
     },
     week: {
       ...totalsOf(weekSessions),
@@ -425,6 +478,36 @@ export async function GET(req: Request) {
   }
   if (wantsTraining) {
     snapshot.calendar = calendar
+    // ── Cardio ───────────────────────────────────────────────────────────────
+    // The one read this wave adds. Deliberately soft and deliberately last: a
+    // widget that loses its calendar because `cardio_logs` hiccuped is a bad
+    // trade, and the table is late enough in this project's history that an old
+    // deployment may not have it at all.
+    //
+    // Two weeks wide so the seven-day trend has a full window and "the last
+    // session" survives a quiet week. `date` bounds it above — a widget must
+    // never announce a session logged into tomorrow.
+    const cardioRows = await soft(supabase.from('cardio_logs')
+      .select('date, kind, distance_m, duration_min')
+      .eq('user_id', userId)
+      .gte('date', isoAddDays(date, -13)).lte('date', date)
+      .order('created_at', { ascending: true })) as CardioRow[] | null
+
+    snapshot.cardio = cardioBlock(cardioRows ?? [], {
+      today: date,
+      weekStart,
+      // Both constants come from `lib/cardio/zone2.ts`, which is also what the
+      // CardioLogger's pips count with. Zone 2 here is a COUNT OF SESSIONS at
+      // or over the minimum, never a minute total — the widget and the app
+      // disagreeing about a definition is the failure this whole wave keeps
+      // being about.
+      zone2MinMinutes: ZONE2_MIN_MINUTES,
+      weekTarget: ZONE2_WEEKLY_TARGET,
+      // Pace is a MINIMUM with a 1 km floor. Injected rather than reimplemented,
+      // here and on the Swift side.
+      paceOf: (m, min) => paceMinPerKm(m, min),
+      trendDays: TREND_DAYS,
+    })
   }
   if (wantsBody) {
     // Read FIELD BY FIELD, not row by row: a day can carry a weight and a body

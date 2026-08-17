@@ -142,11 +142,22 @@ struct Metric: View {
   }
 }
 
-/// "last known", shown only when a CACHED snapshot is on screen. A number you
-/// cannot date is worse than no number.
+/// How old the numbers on screen are. A number you cannot date is worse than no
+/// number.
+///
+/// ── WHY THIS TOOK AN ARGUMENT ────────────────────────────────────────────────
+/// It used to render the fixed string "last known" and appear only when a fetch
+/// had FAILED. That covers the case where the phone has no signal and misses the
+/// one that actually bites: a payload fetched perfectly at 06:00 and still on
+/// screen at 14:00, wearing no tag, looking exactly as confident as a fresh one.
+/// `generatedAt` had been in the payload the whole time and nothing read it.
 struct StaleTag: View {
+  /// Seconds since the payload was generated. Nil when it cannot be dated, which
+  /// falls back to the honest, vaguer wording rather than inventing an age.
+  var age: TimeInterval?
+
   var body: some View {
-    Text("last known")
+    Text(HelixSnapshot.shortAge(age).map { "\($0) ago" } ?? "last known")
       .font(.system(size: 8, weight: .semibold))
       .foregroundStyle(Helix.muted)
   }
@@ -597,4 +608,123 @@ struct DayColumn: View {
       }
     }
   }
+}
+
+// MARK: - Brand
+//
+// ── WHY THE MARK IS DRAWN AND NOT SHIPPED AS AN IMAGE ────────────────────────
+// The only Helix mark in this repo is `AppIcon-widget-1024.png`: a photoreal
+// render of a copper-and-steel double helix, with a bloom, a gradient and a
+// specular highlight. It is the right icon and it is the wrong asset here, for
+// two independent reasons.
+//
+// Size. This sits at 13pt in a widget corner. A 1024px render with a glow
+// downsamples to about four grey pixels and a smudge — every feature that makes
+// it recognisable is smaller than a pixel at the size it would actually appear.
+//
+// Tint. iOS 18's accented rendering mode flattens an image to a single colour.
+// The copper strand against the steel strand IS the logo; in accented mode the
+// image becomes one flat blob, which reads as a rendering fault rather than a
+// brand.
+//
+// Two stroked sine strands survive both. They read at 11pt because they are
+// lines rather than surfaces, and they tint correctly because each strand is its
+// own `Path` and can take its own colour — or the same one, deliberately, when
+// the widget is accented.
+
+/// The Helix mark: two strands crossing, in the icon's geometry.
+///
+/// One period of a sine, drawn twice half a period apart. That gives the two
+/// crossings the icon has, at the ribbon angle it has, without any of the
+/// shading that does not survive being small.
+struct HelixStrand: Shape {
+  /// Phase offset in periods. 0 is the front strand, 0.5 the back one.
+  var phase: Double
+
+  func path(in rect: CGRect) -> Path {
+    var path = Path()
+    let steps = 24
+    for step in 0...steps {
+      let t = Double(step) / Double(steps)
+      // Inset by the stroke's own half-width so the caps stay inside the frame.
+      let x = rect.minX + rect.width * (0.5 + 0.42 * sin((t + phase) * 2 * .pi))
+      let y = rect.minY + rect.height * (0.08 + 0.84 * t)
+      let point = CGPoint(x: x, y: y)
+      if step == 0 { path.move(to: point) } else { path.addLine(to: point) }
+    }
+    return path
+  }
+}
+
+/// The mark, at a size. Ember in front, steel behind — or both white when the
+/// widget is rendered in accented mode, where two colours would be a lie.
+struct HelixMark: View {
+  var size: CGFloat = 13
+  var monochrome = false
+  var opacity: Double = 0.55
+
+  private var front: Color { monochrome ? .white : Helix.ember }
+  private var back: Color { monochrome ? .white : Helix.steel }
+
+  var body: some View {
+    ZStack {
+      HelixStrand(phase: 0.5).stroke(back, style: stroke)
+      HelixStrand(phase: 0).stroke(front, style: stroke)
+    }
+    .frame(width: size * 0.72, height: size)
+    .opacity(opacity)
+    .accessibilityHidden(true)
+  }
+
+  private var stroke: StrokeStyle {
+    StrokeStyle(lineWidth: max(1, size * 0.13), lineCap: .round, lineJoin: .round)
+  }
+}
+
+/// The mark, placed. Top-trailing, out of the way, never in the tap path.
+///
+/// Small is deliberately EXCLUDED at every call site rather than here: 150pt is
+/// not enough surface to spend a corner on a logo, and nobody needs branding on
+/// a widget they chose to install. This view only knows how to draw it once the
+/// decision is made.
+struct HelixBrand: View {
+  var monochrome = false
+  var size: CGFloat = 13
+
+  var body: some View {
+    HelixMark(size: size, monochrome: monochrome)
+      .allowsHitTesting(false)
+  }
+}
+
+// MARK: - Type
+//
+// ── ONE SCALE, THREE JOBS ────────────────────────────────────────────────────
+// The rule was already half-observed and never written down: `BigValue` is
+// `.rounded` and `Stat` is `.monospaced`, because a figure that changes between
+// refreshes must not reflow its row when a 1 becomes a 7. Everywhere else the
+// faces reach for `.system(size:weight:)` directly and get whichever they
+// happened to type.
+//
+// Naming it means the next face gets it right by default rather than by memory.
+
+enum HelixType {
+  /// A headline value. Rounded, because it is the one thing being read.
+  static func hero(_ size: CGFloat) -> Font {
+    .system(size: size, weight: .bold, design: .rounded)
+  }
+
+  /// Anything that CHANGES between refreshes — counts, tonnages, times. Monospaced
+  /// digits keep the column still while the number moves.
+  static func figure(_ size: CGFloat) -> Font {
+    .system(size: size, weight: .bold, design: .monospaced)
+  }
+
+  /// A name, a label, a session title. Prose, not data.
+  static func label(_ size: CGFloat, weight: Font.Weight = .semibold) -> Font {
+    .system(size: size, weight: weight)
+  }
+
+  /// The small-caps register caption. Paired with `.tracking(1.5)` in `Caption`.
+  static let caption = Font.system(size: 10, weight: .heavy)
 }

@@ -26,7 +26,12 @@ const base: WidgetSnapshot = {
     count: 8412, goal: 10000, distanceM: 6100, activeKcal: 412,
     trend: [{ d: '2026-07-23', v: 9120 }, { d: '2026-07-24', v: 8412 }],
   },
-  workout: { label: 'Legs & Core B', dayKey: 'legs_b', logged: false, isRestDay: false },
+  workout: {
+    label: 'Legs & Core B', dayKey: 'legs_b', logged: false, isRestDay: false,
+    // What the plan ASKS of the day, which is what the Today face draws before
+    // a session exists — the state the widget is actually looked at in.
+    plannedExercises: 7, plannedSets: 22, lastVolumeKg: 9800,
+  },
   // The plan says Legs B is due; nothing has been logged yet, so there is no
   // session to describe. `workout` and `today` are different questions.
   today: null,

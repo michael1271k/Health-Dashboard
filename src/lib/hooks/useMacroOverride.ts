@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase/client'
 import { authedFetch } from '@/lib/utils/authedFetch'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { recomputeAndPaint } from '@/lib/scoring/applyComputedScore'
+import { DAY_KINDS } from '@/lib/native/widgetKinds'
 import { resolveDayPhase } from '@/lib/nutrition/phase'
 import { activePhase } from '@/lib/programs'
 import { manualHkUuid } from '@/lib/nutrition/manualEntry'
@@ -80,7 +81,10 @@ export function useMacroOverride(date: string) {
       if (error) throw new Error(error.message)
       // Recompute the day's score/battery from the edited macros (force bypasses
       // the finalized freeze for a past day) and paint the result immediately.
-      await recomputeAndPaint(qc, date, { force: true, isToday: date === logicalTodayISO() }, authedFetch)
+      // DAY_KINDS: macros move the score, the battery and the Fuel face. The
+      // Training widget draws none of them, and its reload budget is per kind.
+      await recomputeAndPaint(
+        qc, date, { force: true, isToday: date === logicalTodayISO() }, authedFetch, DAY_KINDS)
     },
     onSuccess: () => { for (const k of CASCADE_KEYS) qc.invalidateQueries({ queryKey: k }) },
   })

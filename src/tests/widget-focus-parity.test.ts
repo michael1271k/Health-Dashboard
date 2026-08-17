@@ -81,9 +81,19 @@ const FAMILIES = [
 
 describe('widget focus parity', () => {
   it('finds the focus enums at all — a silent regex miss would pass everything', () => {
+    // Exact lists, deliberately: the checks below DERIVE their cases from these,
+    // so a regex that silently matched nothing would make every one of them
+    // vacuously pass. That means this line has to be edited whenever a focus is
+    // added — which is the cost of the guard, and it is worth paying.
     expect(focusCases('FuelFocus')).toEqual(['calories', 'macros', 'water'])
-    expect(focusCases('BodyFocus')).toEqual(['weight', 'sleep', 'wellbeing'])
-    expect(focusCases('TrainingFocus').length).toBeGreaterThanOrEqual(6)
+    // `composition` added in Wave B: body fat as the hero, where the weight
+    // faces make it a footnote under the scale.
+    expect(focusCases('BodyFocus')).toEqual(['weight', 'sleep', 'wellbeing', 'composition'])
+    // `cardio` added in Wave B — a focus rather than a kind, because cardio is
+    // training and the Training picker is where a user would look for it.
+    expect(focusCases('TrainingFocus')).toEqual([
+      'today', 'calendar', 'volume', 'streak', 'records', 'oneRepMax', 'cardio',
+    ])
   })
 
   for (const family of FAMILIES) {

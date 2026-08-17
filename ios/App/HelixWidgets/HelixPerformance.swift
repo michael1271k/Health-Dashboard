@@ -84,7 +84,7 @@ struct RecordFocusFace: View {
       HStack(spacing: 4) {
         Caption("LATEST PR", color: mono ? .white : Helix.gold)
         Spacer(minLength: 0)
-        if entry.isStale { StaleTag() }
+        if entry.isStale { StaleTag(age: entry.age) }
       }
 
       if let top {
@@ -150,7 +150,8 @@ struct RecordLedgerFace: View {
     VStack(alignment: .leading, spacing: 4) {
       HStack(spacing: 4) {
         Caption("RECORDS", color: accent)
-        if entry.isStale { StaleTag() }
+        if entry.isStale { StaleTag(age: entry.age) }
+        HelixBrand(monochrome: mono)
       }
       Spacer(minLength: 0)
       BigValue(value: s.map { "\($0.week.prs)" }, size: 32,
@@ -298,7 +299,8 @@ struct OneRepMaxFocusFace: View {
       HStack(spacing: 4) {
         Caption("EST 1RM", color: mono ? .white : Helix.sapphire)
         Spacer(minLength: 0)
-        if entry.isStale { StaleTag() }
+        if entry.isStale { StaleTag(age: entry.age) }
+        HelixBrand(monochrome: mono)
       }
 
       if let top {
@@ -339,7 +341,8 @@ struct OneRepMaxLedgerFace: View {
       HStack(spacing: 5) {
         Caption("ESTIMATED 1RM", color: accent)
         Spacer(minLength: 0)
-        if entry.isStale { StaleTag() }
+        if entry.isStale { StaleTag(age: entry.age) }
+        HelixBrand(monochrome: mono)
         Text("since 28 days").font(.system(size: 8)).foregroundStyle(Helix.muted)
       }
 

@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase/client'
 import { authedFetch } from '@/lib/utils/authedFetch'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { recomputeAndPaint } from '@/lib/scoring/applyComputedScore'
+import { DAY_KINDS } from '@/lib/native/widgetKinds'
 import { manualWaterHkUuid, isManualWaterHkUuid } from '@/lib/nutrition/manualWater'
 
 /**
@@ -34,7 +35,11 @@ async function cascade(qc: ReturnType<typeof useQueryClient>, date: string): Pro
   // Recompute BEFORE invalidating: `['today']` is in the fan-out, and a refetch
   // fired first would read the pre-recompute score and then mark it fresh for
   // the full staleTime — the exact race applyComputedScore.ts documents.
-  await recomputeAndPaint(qc, date, { force: true, isToday: date === logicalTodayISO() }, authedFetch)
+  // DAY_KINDS, not all of them: hydration moves the score, the battery and the
+  // Fuel face, and touches nothing the Training widget draws. Reloading
+  // Training here would spend its per-kind budget on a glass of water.
+  await recomputeAndPaint(
+    qc, date, { force: true, isToday: date === logicalTodayISO() }, authedFetch, DAY_KINDS)
   for (const k of CASCADE_KEYS) qc.invalidateQueries({ queryKey: k })
   qc.invalidateQueries({ queryKey: ['water_intake'] })
 }

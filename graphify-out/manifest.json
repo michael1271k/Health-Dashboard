@@ -120,13 +120,13 @@
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixWidgets.swift": {
-    "mtime": 1786799660.4784725,
-    "ast_hash": "7ba7f9fe8556c392de1437bbc2d598b3",
+    "mtime": 1786949307.8626943,
+    "ast_hash": "1cc42ecef68a58a8424eac0d1536c803",
     "semantic_hash": ""
   },
   "ios/App/Shared/HelixSnapshot.swift": {
-    "mtime": 1786805142.6900969,
-    "ast_hash": "9609975d27bc9eeec4875aac9de9ef30",
+    "mtime": 1786949056.3796556,
+    "ast_hash": "cb3730e52dca4b95d404aa6b48ab5eb8",
     "semantic_hash": ""
   },
   "netlify/functions/keep-alive.mts": {
@@ -160,8 +160,8 @@
     "semantic_hash": ""
   },
   "public/sw.js": {
-    "mtime": 1786910983.330778,
-    "ast_hash": "72f1e4a66e0d1a0a2626072aa4cc322a",
+    "mtime": 1786949636.2893858,
+    "ast_hash": "6589a9b35e549b2c56c1fce1e89927c5",
     "semantic_hash": ""
   },
   "scripts/generate-icons.mjs": {
@@ -235,8 +235,8 @@
     "semantic_hash": "b42be3e58f4e070c10f2d409d0ce499f"
   },
   "src/app/api/widget/snapshot/route.ts": {
-    "mtime": 1786910001.363263,
-    "ast_hash": "60fbee866f6ae01640219ec72a8a15de",
+    "mtime": 1786948013.2362232,
+    "ast_hash": "6e2348596d3110a45d7417c413fdeee1",
     "semantic_hash": ""
   },
   "src/app/auth/page.tsx": {
@@ -245,8 +245,8 @@
     "semantic_hash": ""
   },
   "src/app/day/[date]/page.tsx": {
-    "mtime": 1786910700.6212668,
-    "ast_hash": "678c7902e9d71c1d6e16124a0908b0ae",
+    "mtime": 1786949619.6438382,
+    "ast_hash": "16894260e830ec47f80819ca547d32b8",
     "semantic_hash": ""
   },
   "src/app/global-error.tsx": {
@@ -735,8 +735,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useCardio.ts": {
-    "mtime": 1785914496.3020706,
-    "ast_hash": "0531833b7f1593a5e02e19986e848464",
+    "mtime": 1786947866.7589767,
+    "ast_hash": "d164e2e50e84bd90748049c3918a23bc",
     "semantic_hash": ""
   },
   "src/lib/hooks/useCharts.ts": {
@@ -760,8 +760,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useDayVault.ts": {
-    "mtime": 1786691338.4323885,
-    "ast_hash": "d685f18b5c1584e4347917c488778e32",
+    "mtime": 1786948273.227411,
+    "ast_hash": "c898bfb45c2576c45afce6cffa4425bb",
     "semantic_hash": ""
   },
   "src/lib/hooks/useEditSession.ts": {
@@ -790,8 +790,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useMacroOverride.ts": {
-    "mtime": 1786691338.433275,
-    "ast_hash": "0f0eb0994acde15126c616d23c1bf8ca",
+    "mtime": 1786948240.4349697,
+    "ast_hash": "c35eadaf03f3a542e99e08f9c96fe508",
     "semantic_hash": ""
   },
   "src/lib/hooks/useMuscleAnalytics.ts": {
@@ -840,8 +840,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useSessionDraft.ts": {
-    "mtime": 1786692364.4337244,
-    "ast_hash": "59d2d720b6c854a0a89bec806338f8f6",
+    "mtime": 1786948292.2536564,
+    "ast_hash": "5e2bf96afeb6ea2a8474580871a2d356",
     "semantic_hash": ""
   },
   "src/lib/hooks/useSessionIntel.ts": {
@@ -1125,13 +1125,13 @@
     "semantic_hash": ""
   },
   "src/lib/utils/week.ts": {
-    "mtime": 1786909639.9697723,
-    "ast_hash": "cf7fa8b2f235934753fadf0bb1682c98",
+    "mtime": 1786947685.9184844,
+    "ast_hash": "5fb491522f91f6118c9e9bb86ccb6a02",
     "semantic_hash": ""
   },
   "src/lib/widget/snapshot.ts": {
-    "mtime": 1786804811.9007154,
-    "ast_hash": "8a830ef7b6dd7161bfe7a84f9d872ce8",
+    "mtime": 1786947759.507382,
+    "ast_hash": "5493a35b3575064d96fb4962ad871161",
     "semantic_hash": ""
   },
   "src/sw.ts": {
@@ -1280,8 +1280,8 @@
     "semantic_hash": "2baadb805734c61d422af569659f2a20"
   },
   "src/tests/widget-snapshot.test.ts": {
-    "mtime": 1786784488.8897753,
-    "ast_hash": "8faae6bf3527f429d0357619051adb0e",
+    "mtime": 1786948036.003901,
+    "ast_hash": "9d4394ef22dd5c44cdf02c2ad2cfc8f6",
     "semantic_hash": ""
   },
   "tailwind.config.ts": {
@@ -1930,8 +1930,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useNutritionException.ts": {
-    "mtime": 1786691338.4340189,
-    "ast_hash": "2fafba9fad93cc77df9ea2eb08dbe798",
+    "mtime": 1786948256.7835689,
+    "ast_hash": "8fae26f34ebae62498f98370ae7e7100",
     "semantic_hash": ""
   },
   "src/components/nutrition/ExceptionDayBanner.tsx": {
@@ -1980,8 +1980,8 @@
     "semantic_hash": ""
   },
   "src/lib/scoring/applyComputedScore.ts": {
-    "mtime": 1786729906.6807175,
-    "ast_hash": "b4dad432427c379120e0f495f872c1ae",
+    "mtime": 1786948193.3265953,
+    "ast_hash": "072a89613c9eef338a1946a60effa6f1",
     "semantic_hash": ""
   },
   "src/tests/computed-score-paint.test.ts": {
@@ -2030,8 +2030,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useWaterOverride.ts": {
-    "mtime": 1786698213.9191737,
-    "ast_hash": "d4426fd058a939ed1266b83f103b6955",
+    "mtime": 1786948228.9952726,
+    "ast_hash": "727cee71dccd00308a6fc88cecd70469",
     "semantic_hash": ""
   },
   "src/components/day/WaterOverrideSheet.tsx": {
@@ -2145,8 +2145,8 @@
     "semantic_hash": ""
   },
   "src/lib/widget/derive.ts": {
-    "mtime": 1786909968.7489293,
-    "ast_hash": "f22abbcdba070be07fe817f3cc24a7e8",
+    "mtime": 1786947791.541465,
+    "ast_hash": "500cce40141ee048793eb3f79f083a91",
     "semantic_hash": ""
   },
   "src/tests/widget-derive.test.ts": {
@@ -2155,33 +2155,33 @@
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixPalette.swift": {
-    "mtime": 1786799509.5520651,
-    "ast_hash": "1f1aef21d28a60a033ee62d2b8d19efa",
+    "mtime": 1786948620.9918573,
+    "ast_hash": "4af043a3ae715bd97ff4e15a41c69039",
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixPrimitives.swift": {
-    "mtime": 1786805259.6445174,
-    "ast_hash": "60b2f4d1176da93b661458f0eea128ef",
+    "mtime": 1786948815.862481,
+    "ast_hash": "80366e3e9621140f34f25970227fe8c8",
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixProvider.swift": {
-    "mtime": 1786799397.1096163,
-    "ast_hash": "af02d3162dc9e401780cea88b0c3af35",
+    "mtime": 1786948442.574096,
+    "ast_hash": "ad759e844451deaf3eefa330bf851a3e",
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixIntents.swift": {
-    "mtime": 1786805159.8767998,
-    "ast_hash": "9eb56a42c0d2ee8597586676fde498f9",
+    "mtime": 1786948738.782281,
+    "ast_hash": "d75f342fefc63dd1e321c5a5c66542e6",
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixLifestyle.swift": {
-    "mtime": 1786805607.0700383,
-    "ast_hash": "ece4e21a6881f3f2813223e440309b46",
+    "mtime": 1786949374.935997,
+    "ast_hash": "9856d48992e61b1ab56c89b19881e9a6",
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixPerformance.swift": {
-    "mtime": 1786816023.9761183,
-    "ast_hash": "3a36f36221f049e0be335262fd5ac53c",
+    "mtime": 1786949374.9364789,
+    "ast_hash": "faadad3dc46fc3344fdc79c5578e16c5",
     "semantic_hash": ""
   },
   "src/lib/native/deepLink.ts": {
@@ -2195,13 +2195,13 @@
     "semantic_hash": ""
   },
   "src/lib/native/widgets.ts": {
-    "mtime": 1786729834.6306827,
-    "ast_hash": "cdc379a45ff8eb127dac460120bcd1a9",
+    "mtime": 1786948157.2970378,
+    "ast_hash": "14634f05c7142e431b364f18712614e5",
     "semantic_hash": ""
   },
   "ios/App/App/HelixWidgetBridge.swift": {
-    "mtime": 1786729940.1429114,
-    "ast_hash": "d864e92d965d57a5b83288ba8e2e3908",
+    "mtime": 1786948314.5263505,
+    "ast_hash": "66919d9a1993d6d8be1b469032053504",
     "semantic_hash": ""
   },
   "ios/App/App/HelixBackgroundRefresh.swift": {
@@ -2290,23 +2290,23 @@
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixTraining.swift": {
-    "mtime": 1786910263.4279895,
-    "ast_hash": "9d924ed945015d0afd8051a282cf4481",
+    "mtime": 1786949462.034135,
+    "ast_hash": "da2eb43c73abba86de77dbe0139c5355",
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixLock.swift": {
-    "mtime": 1786799626.996652,
-    "ast_hash": "bc04a25c3bff01001dc108a1e966d188",
+    "mtime": 1786948738.7826285,
+    "ast_hash": "4da94f34c9b02fdab204fab3ed8da2b0",
     "semantic_hash": ""
   },
   "src/tests/widget-link-parity.test.ts": {
-    "mtime": 1786799780.2638407,
-    "ast_hash": "e9fb150ea4f467c9f7e0cd3b94c7d108",
+    "mtime": 1786949619.6469638,
+    "ast_hash": "caaa68cc9cc9ccb1e473d72e88d60e58",
     "semantic_hash": ""
   },
   "src/tests/widget-focus-parity.test.ts": {
-    "mtime": 1786804478.440562,
-    "ast_hash": "21b4789167b65c2b5491d3059597ec27",
+    "mtime": 1786949508.723676,
+    "ast_hash": "962b30d532999545f61ac24624b42357",
     "semantic_hash": ""
   },
   "src/tests/program-day.test.ts": {
@@ -2352,6 +2352,66 @@
   "src/tests/nav-chevrons.test.ts": {
     "mtime": 1786910952.4480722,
     "ast_hash": "1495bd8119dee7056177e36c458fe4fd",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-08-17-wave-b-widgets-design.md": {
+    "mtime": 1786946922.678207,
+    "ast_hash": "3e0f4eeb442776cd099f1bd63f55f6b2",
+    "semantic_hash": ""
+  },
+  "src/lib/cardio/zone2.ts": {
+    "mtime": 1786947820.9442036,
+    "ast_hash": "e3f22f3580945f1715429da0f9052bd7",
+    "semantic_hash": ""
+  },
+  "src/tests/widget-cardio.test.ts": {
+    "mtime": 1786948073.234582,
+    "ast_hash": "673febdefc1b5d8eecdc8fd5d35468fd",
+    "semantic_hash": ""
+  },
+  "src/tests/streak-future-days.test.ts": {
+    "mtime": 1786948108.844311,
+    "ast_hash": "3914b6354ae031bd7001e1f0b2c8622e",
+    "semantic_hash": ""
+  },
+  "src/lib/native/widgetKinds.ts": {
+    "mtime": 1786948133.0577524,
+    "ast_hash": "8d7dfe3d862934ea064134f66a2ed275",
+    "semantic_hash": ""
+  },
+  "src/lib/widget/cadence.ts": {
+    "mtime": 1786948504.3654978,
+    "ast_hash": "56cbf2c24bb3c9fb3c49fe655876debb",
+    "semantic_hash": ""
+  },
+  "src/tests/widget-cadence.test.ts": {
+    "mtime": 1786948531.7890933,
+    "ast_hash": "b13a9c0f7ae08af0deb77b5ee1dabc3f",
+    "semantic_hash": ""
+  },
+  "ios/App/HelixWidgets/HelixCardio.swift": {
+    "mtime": 1786949127.5829268,
+    "ast_hash": "e37763afc250521a02de5bb77658e79f",
+    "semantic_hash": ""
+  },
+  "ios/App/HelixWidgets/HelixComposition.swift": {
+    "mtime": 1786949242.032942,
+    "ast_hash": "787f92f53824897f5b918b83ed6e5bce",
+    "semantic_hash": ""
+  },
+  "ios/App/HelixWidgets/HelixDaily.swift": {
+    "mtime": 1786949287.8752046,
+    "ast_hash": "66a8083750cdd09ee8c6ed660a9bfc19",
+    "semantic_hash": ""
+  },
+  "src/tests/widget-kind-parity.test.ts": {
+    "mtime": 1786949333.5491471,
+    "ast_hash": "91c65d230c6112b6d559c4d9c81aa389",
+    "semantic_hash": ""
+  },
+  "src/lib/day/sections.ts": {
+    "mtime": 1786949571.005897,
+    "ast_hash": "73755289fa145163f2b833adeac7d1ac",
     "semantic_hash": ""
   }
 }

@@ -36,11 +36,29 @@ public class HelixWidgetsPlugin: CAPPlugin, CAPBridgedPlugin {
   ]
 
   @objc func reload(_ call: CAPPluginCall) {
-    // Reload ALL kinds rather than naming them. Seven kinds exist and two of
-    // them are configurable with four focuses each; enumerating that list here
-    // would be a second place to forget a widget, and the reload is cheap —
-    // WidgetKit coalesces and still honours its own budget.
-    WidgetCenter.shared.reloadAllTimelines()
-    call.resolve(["ok": true])
+    // ── WHY THIS NAMES KINDS NOW ─────────────────────────────────────────────
+    // It used to reload ALL kinds unconditionally, on the argument that
+    // enumerating them here would be a second place to forget a widget. That is
+    // a real hazard and it is not the whole picture: WidgetKit budgets reloads
+    // PER KIND, roughly 40–70 a day each. A blanket reload therefore spends the
+    // Training widget's entire allowance on water logs and macro edits, and has
+    // nothing left at the moment a session commits — which is the single moment
+    // Training had to be fresh.
+    //
+    // The forget-a-widget hazard is answered on the other side instead: the kind
+    // list lives in `src/lib/native/widgetKinds.ts` and
+    // `widget-kind-parity.test.ts` asserts it matches the `kind:` strings in
+    // HelixWidgets.swift in both directions, so a Swift widget that is not
+    // registered — or a registration with no widget — fails the suite.
+    //
+    // No kinds means all of them, so a caller that has not thought about this
+    // gets the old, safe behaviour rather than a silently narrower one.
+    let kinds = call.getArray("kinds", String.self) ?? []
+    if kinds.isEmpty {
+      WidgetCenter.shared.reloadAllTimelines()
+    } else {
+      for kind in kinds { WidgetCenter.shared.reloadTimelines(ofKind: kind) }
+    }
+    call.resolve(["ok": true, "kinds": kinds])
   }
 }

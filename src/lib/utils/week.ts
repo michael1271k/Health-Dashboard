@@ -55,6 +55,29 @@ export function isoAddDays(dateISO: string, n: number): string {
   return d.toISOString().slice(0, 10)
 }
 
+/** The first day of the month containing dateISO. Pure string work. */
+export function monthStartOf(dateISO: string): string {
+  return `${dateISO.slice(0, 7)}-01`
+}
+
+/**
+ * The last day of the month containing dateISO.
+ *
+ * Day 0 of the NEXT month is the last day of this one — which is how the leap
+ * year is handled without a table: `Date` knows that 2028-02-00 is 2028-02-29
+ * and 2026-02-00 is 2026-02-28, and any rule written here would be a second
+ * opinion about it.
+ *
+ * Midday-anchored like every other helper in this file, so a timezone shift
+ * cannot roll the answer into the neighbouring day.
+ */
+export function lastDayOfMonth(dateISO: string): string {
+  const [y, m] = dateISO.split('-').map(Number)
+  if (!Number.isFinite(y) || !Number.isFinite(m)) return dateISO
+  const d = new Date(Date.UTC(y, m, 0, 12))
+  return d.toISOString().slice(0, 10)
+}
+
 /**
  * A week is COMPLETE when it is over — strictly after its final day.
  *

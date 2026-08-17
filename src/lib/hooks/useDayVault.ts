@@ -177,6 +177,9 @@ export function useDeleteSession(date: string) {
       // Best-effort — the delete itself has already landed. Painting the result
       // means the battery reflects the removed session immediately, rather than
       // still counting a workout that no longer exists.
+      // EVERY kind, deliberately. This is a session DELETE: the calendar loses a
+      // ring, the streak can break, today's stats vanish and the score moves —
+      // so there is no family this does not reach.
       await recomputeAndPaint(qc, date, {
         force: true, isToday: date === logicalTodayISO(), backfillDays: 0, hoursAwake: hoursAwakeToday(),
       }, authedFetch)

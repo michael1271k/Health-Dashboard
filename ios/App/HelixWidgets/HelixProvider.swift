@@ -23,8 +23,32 @@ struct HelixEntry: TimelineEntry {
   let status: HelixSnapshotClient.Status
   var focus: HelixFocus?
 
-  /// Showing a cached snapshot because the live fetch failed.
-  var isStale: Bool { snapshot != nil && status != .ok }
+  /// How old the payload on screen actually is, from its own `generatedAt`.
+  ///
+  /// ── WHY THIS WAS MISSING AND WHY IT MATTERS ────────────────────────────────
+  /// `generatedAt` has been in the payload since the first version and no Swift
+  /// line ever read it. Staleness was `status != .ok` — purely "the last fetch
+  /// failed" — so a payload fetched perfectly at 06:00 and still on screen at
+  /// 14:00 carried no tag at all. That is the case that matters: a widget whose
+  /// numbers are eight hours old and look confident is worse than one that
+  /// admits it, because it is the confident one you act on.
+  ///
+  /// Nil when unparseable. An unknown age must never render as a fresh one.
+  var age: TimeInterval? {
+    guard let iso = snapshot?.generatedAt,
+          let then = HelixSnapshot.timestamp(iso) else { return nil }
+    return max(0, date.timeIntervalSince(then))
+  }
+
+  /// Showing a cached snapshot because the fetch failed, OR a fresh one that has
+  /// simply been on screen too long. Both mean "do not trust this to the
+  /// minute"; the tag says which.
+  ///
+  /// 45 minutes is chosen against the cadence table: longer than the densest
+  /// band (20) so an ordinary refresh never trips it, shorter than the sparsest
+  /// daytime one (45) so a skipped refresh does. A tag that appears during
+  /// normal operation is a tag that gets ignored.
+  var isStale: Bool { snapshot != nil && (status != .ok || (age ?? 0) > 45 * 60) }
   /// Nothing to draw at all — the diagnostic face takes over.
   var isEmpty: Bool { snapshot == nil }
 
@@ -70,21 +94,51 @@ struct HelixEntry: TimelineEntry {
 // something has to keep the server's own numbers moving.
 
 enum HelixRefresh {
-  static let successMinutesDay = 30
-  static let successMinutesNight = 120
+  /// The interval to ask for, by the hour the request is made in.
+  ///
+  /// ── WHY NOT SIMPLY 15 MINUTES ALL DAY ──────────────────────────────────────
+  /// Because that makes the widget STALER, not fresher. The grant is 40–70
+  /// refreshes a day; a flat 15 minutes asks for 96, and past the grant the
+  /// system does not stretch the interval, it drops the requests — so the widget
+  /// sits on whatever it last got, at an hour nobody chose. The old flat 30
+  /// asked for 48, already at the top of the band, and spent three of them
+  /// between midnight and six on a sleeping athlete.
+  ///
+  /// Shaping the same budget buys roughly twice the density in the two windows
+  /// where anything actually changes — the morning look, and the evening when
+  /// training and dinner are logged — for FEWER refreshes than before:
+  ///
+  ///   00:00–06:00  150 min  ≈  2.4     asleep; the battery decays predictably
+  ///   06:00–10:00   20 min  ≈ 12       sleep has landed, the day starts
+  ///   10:00–17:00   45 min  ≈  9.3     at work; nothing is being logged
+  ///   17:00–22:00   20 min  ≈ 15       training and the evening meal
+  ///   22:00–00:00   60 min  ≈  2       winding down
+  ///                                   ≈ 41 / day
+  ///
+  /// Mirrored in `src/lib/widget/cadence.ts` with a parity test, because there
+  /// is no Swift test runner in this project and an untested budget is one that
+  /// drifts past the grant without anything noticing.
+  static let schedule: [(fromHour: Int, minutes: Int)] = [
+    (0, 150), (6, 20), (10, 45), (17, 20), (22, 60),
+  ]
+
+  /// A failed fetch retries fast and separately. Thirty minutes of "can't reach
+  /// HELIX" when the phone regained signal forty seconds later is a widget
+  /// nobody trusts again.
   static let failureMinutes = 5
 
-  /// Night is 00:00–06:00 local. Deliberately not "since the last sleep sample":
-  /// a widget whose refresh cadence depends on data it may have failed to fetch
-  /// has a failure mode where it never refreshes again.
+  /// The interval for a given local hour.
+  static func minutes(forHour hour: Int) -> Int {
+    // Last band whose start is at or before the hour. The table is ordered and
+    // starts at 0, so there is always one.
+    schedule.last { hour >= $0.fromHour }?.minutes ?? 30
+  }
+
+  /// Deliberately keyed on the CLOCK, not on "since the last sleep sample": a
+  /// widget whose cadence depends on data it may have failed to fetch has a
+  /// failure mode where it never refreshes again.
   static func nextRefresh(after now: Date = Date(), ok: Bool, calendar: Calendar = .current) -> Date {
-    let minutes: Int
-    if !ok {
-      minutes = failureMinutes
-    } else {
-      let hour = calendar.component(.hour, from: now)
-      minutes = (hour < 6) ? successMinutesNight : successMinutesDay
-    }
+    let minutes = ok ? minutes(forHour: calendar.component(.hour, from: now)) : failureMinutes
     return calendar.date(byAdding: .minute, value: minutes, to: now)
       ?? now.addingTimeInterval(TimeInterval(minutes * 60))
   }

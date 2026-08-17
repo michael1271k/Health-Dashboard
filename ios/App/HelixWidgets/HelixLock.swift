@@ -34,7 +34,7 @@ struct LockView: View {
     // `.clear`, not the widget background: an accessory sits on the wallpaper
     // and painting obsidian behind it draws a black rectangle on the Lock Screen.
     .containerBackground(.clear, for: .widget)
-    .widgetURL(focus.link)
+    .widgetURL(focus.link(entry.snapshot?.date))
   }
 
   // MARK: Circular

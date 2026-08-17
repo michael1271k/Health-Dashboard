@@ -41,6 +41,7 @@ import { SleepBand, BodyBand } from '@/components/day/SummaryBands'
  */
 type DaySheet = 'sleep' | 'body' | 'inbody' | 'water' | 'water-edit' | 'macros' | 'nutrition' | null
 import { AppBar } from '@/components/nav/AppBar'
+import { parseDaySection } from '@/lib/day/sections'
 import { BackLink, NavChevron } from '@/components/nav/NavChevron'
 import { EMBER, EMBER_DEEP, SAPPHIRE, STEEL, GOLD, OXIDE, EMERALD, MUTED, SAND, BODY } from '@/lib/theme/palette'
 
@@ -188,12 +189,20 @@ export default function DailyNexusPage() {
   const [sheet, setSheet] = useState<DaySheet>(null)
   const tapFuel = useDoubleTap(() => setSheet('macros'))
 
-  // Deep-link from the dashboard Body card (double-tap → …?section=inbody).
+  // Deep-link from the dashboard Body card (double-tap → …?section=inbody) and
+  // from every widget face that names a day: Sleep → `?section=sleep`, Water →
+  // `?section=water`, Body/composition → `?section=inbody`.
+  //
+  // It used to compare against the single literal 'inbody', so the other six
+  // drawers were unreachable by link even though the machinery to open them was
+  // identical — which is why a widget tap could only ever land on the day and
+  // leave you to find the thing you tapped.
+  //
   // Opening a drawer needs no timing: there is no pager to swipe and nothing to
   // scroll to, so the link just names the drawer.
   const searchParams = useSearchParams()
-  const focusInbody = searchParams.get('section') === 'inbody'
-  useEffect(() => { if (focusInbody) setSheet('inbody') }, [focusInbody])
+  const section = parseDaySection(searchParams.get('section'))
+  useEffect(() => { if (section) setSheet(section) }, [section])
 
   if (!date) return <p className="text-muted p-6">Invalid date.</p>
 

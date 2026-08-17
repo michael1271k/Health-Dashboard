@@ -165,13 +165,13 @@ struct FuelView: View {
     // inner one silently wins nothing at all. Sub-regions of the Medium and
     // Large faces use `Link`, which IS per-view, and everything they do not
     // cover falls through to this.
-    .widgetURL(focus.link)
+    .widgetURL(focus.link(entry.snapshot?.date))
   }
 
   /// Nine combinations, nine cases, no `default:`. This is the ratchet.
   @ViewBuilder private var face: some View {
     switch (focus, HelixSize(family)) {
-    case (.calories, .small):  FocusFace(spec: .calories(s), stale: entry.isStale, mono: mono)
+    case (.calories, .small):  FocusFace(spec: .calories(s), stale: entry.isStale, age: entry.age, mono: mono)
     case (.calories, .medium): CalorieLedgerFace(entry: entry, mono: mono)
     case (.calories, .large):  CalorieDayFace(entry: entry, mono: mono)
 
@@ -179,7 +179,7 @@ struct FuelView: View {
     case (.macros, .medium):   MacroFace(entry: entry, mono: mono)
     case (.macros, .large):    MacroLargeFace(entry: entry, mono: mono)
 
-    case (.water, .small):     FocusFace(spec: .water(s), stale: entry.isStale, mono: mono)
+    case (.water, .small):     FocusFace(spec: .water(s), stale: entry.isStale, age: entry.age, mono: mono)
     case (.water, .medium):    WaterLedgerFace(entry: entry, mono: mono)
     case (.water, .large):     WaterLargeFace(entry: entry, mono: mono)
     }
@@ -221,7 +221,7 @@ struct BodyView: View {
       }
     }
     .containerBackground(Helix.background, for: .widget)
-    .widgetURL(focus.link)
+    .widgetURL(focus.link(entry.snapshot?.date))
   }
 
   @ViewBuilder private var face: some View {
@@ -236,9 +236,13 @@ struct BodyView: View {
 
     // Was `focus == .sleep ? .sleep : .weight` — which is why asking for the
     // daily score got you the bathroom scale.
-    case (.wellbeing, .small):  FocusFace(spec: .wellbeing(s), stale: entry.isStale, mono: mono)
+    case (.wellbeing, .small):  FocusFace(spec: .wellbeing(s), stale: entry.isStale, age: entry.age, mono: mono)
     case (.wellbeing, .medium): WellbeingLedgerFace(entry: entry, mono: mono)
     case (.wellbeing, .large):  WellbeingFace(entry: entry, mono: mono)
+
+    case (.composition, .small):  CompositionFocusFace(entry: entry, mono: mono)
+    case (.composition, .medium): CompositionFace(entry: entry, mono: mono, large: false)
+    case (.composition, .large):  CompositionFace(entry: entry, mono: mono, large: true)
     }
   }
 }
@@ -252,6 +256,10 @@ struct BodyView: View {
 struct FocusFace: View {
   let spec: FocusSpec
   var stale = false
+  /// The payload's age, so the tag can say it. Passed alongside `stale` rather
+  /// than replacing it: this face is handed a boolean by callers that have
+  /// already decided, and an age of nil is "undatable", not "fresh".
+  var age: TimeInterval?
   let mono: Bool
 
   private var accent: Color { mono ? .white : spec.accent }
@@ -261,7 +269,7 @@ struct FocusFace: View {
       HStack(spacing: 4) {
         Caption(spec.caption, color: accent)
         Spacer(minLength: 0)
-        if stale { StaleTag() }
+        if stale { StaleTag(age: age) }
       }
       BigValue(value: spec.hero, size: 30, color: .white)
       if let sub = spec.sub {
@@ -305,7 +313,8 @@ struct CalorieLedgerFace: View {
     VStack(alignment: .leading, spacing: 4) {
       HStack(spacing: 4) {
         Caption("KCAL LEFT", color: tint(Helix.ember))
-        if entry.isStale { StaleTag() }
+        if entry.isStale { StaleTag(age: entry.age) }
+        HelixBrand(monochrome: mono)
       }
       BigValue(value: s?.caloriesRemaining.map { "\($0)" }, size: 30, color: .white)
       Rail(progress: HelixSnapshot.progress(s?.macros.kcal, s?.macros.kcalGoal),
@@ -378,7 +387,8 @@ struct WaterLedgerFace: View {
     VStack(alignment: .leading, spacing: 4) {
       HStack(spacing: 4) {
         Caption("WATER", color: tint(Helix.sapphire))
-        if entry.isStale { StaleTag() }
+        if entry.isStale { StaleTag(age: entry.age) }
+        HelixBrand(monochrome: mono)
       }
       Spacer(minLength: 0)
       HStack(alignment: .firstTextBaseline, spacing: 4) {
@@ -481,7 +491,7 @@ struct SleepArcFace: View {
       HStack(spacing: 4) {
         Caption("SLEEP", color: mono ? .white : Helix.sapphire)
         Spacer(minLength: 0)
-        if entry.isStale { StaleTag() }
+        if entry.isStale { StaleTag(age: entry.age) }
       }
 
       DepthArc(segments: sleepSegments(s), minutes: s?.sleep.minutes,
@@ -526,7 +536,8 @@ struct SleepDepthFace: View {
         if let score = s?.sleep.score {
           Text("score \(score)").font(.system(size: 9, weight: .semibold)).foregroundStyle(.white)
         }
-        if entry.isStale { StaleTag() }
+        if entry.isStale { StaleTag(age: entry.age) }
+        HelixBrand(monochrome: mono)
       }
 
       HStack(spacing: 12) {
@@ -618,7 +629,8 @@ struct SleepLargeFace: View {
               Text(debt).font(.system(size: 10)).foregroundStyle(Helix.muted)
             }
             Spacer(minLength: 0)
-            if entry.isStale { StaleTag() }
+            if entry.isStale { StaleTag(age: entry.age) }
+            HelixBrand(monochrome: mono)
           }
           .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -671,7 +683,11 @@ struct SleepLargeFace: View {
 // Whichever of the three a face shows, it shows under its own name.
 
 /// A composition figure and its movement since the last DIFFERENT reading.
-private struct CompositionRow: View {
+///
+/// Internal rather than private since the Composition focus exists: the rows it
+/// draws are these rows, and a second copy would be a second place for the
+/// "down is good for fat, bad for lean tissue" rule to be got wrong.
+struct CompositionRow: View {
   let label: String
   let value: Double?
   let delta: Double?
@@ -712,7 +728,7 @@ struct WeightFocusFace: View {
       HStack(spacing: 4) {
         Caption("WEIGHT", color: accent)
         Spacer(minLength: 0)
-        if entry.isStale { StaleTag() }
+        if entry.isStale { StaleTag(age: entry.age) }
       }
 
       HStack(alignment: .firstTextBaseline, spacing: 4) {
@@ -760,7 +776,8 @@ struct WeightTrendFace: View {
         if let measured = HelixSnapshot.relativeDay(s?.weight.measuredOn) {
           Text(measured).font(.system(size: 9)).foregroundStyle(Helix.muted)
         }
-        if entry.isStale { StaleTag() }
+        if entry.isStale { StaleTag(age: entry.age) }
+        HelixBrand(monochrome: mono)
       }
 
       HStack(alignment: .firstTextBaseline, spacing: 6) {
@@ -838,7 +855,8 @@ struct WeightLargeFace: View {
           Text("kg").font(.system(size: 12)).foregroundStyle(Helix.muted)
           DeltaChip(delta: s?.weight.deltaKg, decimals: 1, upIsGood: false, monochrome: mono)
           Spacer(minLength: 0)
-          if entry.isStale { StaleTag() }
+          if entry.isStale { StaleTag(age: entry.age) }
+          HelixBrand(monochrome: mono)
           if let measured = HelixSnapshot.relativeDay(s?.weight.measuredOn) {
             Text(measured).font(.system(size: 9)).foregroundStyle(Helix.muted)
           }
@@ -948,7 +966,8 @@ struct CalorieDayFace: View {
               .font(.system(size: 10)).foregroundStyle(Helix.muted)
           }
           Spacer(minLength: 0)
-          if entry.isStale { StaleTag() }
+          if entry.isStale { StaleTag(age: entry.age) }
+          HelixBrand(monochrome: mono)
           BatteryRing(pct: s?.battery, size: 38, lineWidth: 5, monochrome: mono)
         }
         Rail(progress: HelixSnapshot.progress(s?.macros.kcal, s?.macros.kcalGoal),
@@ -1133,7 +1152,7 @@ struct MacroFocusFace: View {
       HStack(spacing: 4) {
         Caption("MACROS", color: tint(Helix.ember))
         Spacer(minLength: 0)
-        if entry.isStale { StaleTag() }
+        if entry.isStale { StaleTag(age: entry.age) }
       }
       HStack(alignment: .firstTextBaseline, spacing: 4) {
         BigValue(value: s?.caloriesRemaining.map { "\($0)" }, size: 22, color: .white)
@@ -1173,7 +1192,8 @@ struct MacroFace: View {
         Spacer(minLength: 0)
         BigValue(value: s?.caloriesRemaining.map { "\($0)" }, size: 20, color: .white)
         Text("kcal left").font(.system(size: 9)).foregroundStyle(Helix.muted)
-        if entry.isStale { StaleTag() }
+        if entry.isStale { StaleTag(age: entry.age) }
+        HelixBrand(monochrome: mono)
       }
 
       Rail(progress: HelixSnapshot.progress(s?.macros.kcal, s?.macros.kcalGoal),
@@ -1272,7 +1292,8 @@ struct MacroLargeFace: View {
           BigValue(value: s?.caloriesRemaining.map { "\($0)" }, size: 32, color: .white)
           Text("kcal left").font(.system(size: 10)).foregroundStyle(Helix.muted)
           Spacer(minLength: 0)
-          if entry.isStale { StaleTag() }
+          if entry.isStale { StaleTag(age: entry.age) }
+          HelixBrand(monochrome: mono)
           BatteryRing(pct: s?.battery, size: 38, lineWidth: 5, monochrome: mono)
         }
         Rail(progress: HelixSnapshot.progress(s?.macros.kcal, s?.macros.kcalGoal),
@@ -1439,7 +1460,8 @@ struct WaterLargeFace: View {
               .font(.system(size: 10)).foregroundStyle(Helix.muted)
           }
           Spacer(minLength: 0)
-          if entry.isStale { StaleTag() }
+          if entry.isStale { StaleTag(age: entry.age) }
+          HelixBrand(monochrome: mono)
           BatteryRing(pct: s?.battery, size: 38, lineWidth: 5, monochrome: mono)
         }
         Rail(progress: HelixSnapshot.progress(s?.water.ml, s?.water.goalMl),
@@ -1528,7 +1550,8 @@ struct WellbeingLedgerFace: View {
       VStack(alignment: .leading, spacing: 4) {
         HStack(spacing: 4) {
           Caption("SCORE", color: mono ? .white : Helix.emerald)
-          if entry.isStale { StaleTag() }
+          if entry.isStale { StaleTag(age: entry.age) }
+          HelixBrand(monochrome: mono)
         }
         Spacer(minLength: 0)
         BigValue(value: s?.score.map { "\($0)" }, size: 34, color: .white)
@@ -1578,7 +1601,8 @@ struct WellbeingFace: View {
       HStack(alignment: .firstTextBaseline, spacing: 6) {
         Caption("WELL-BEING", color: tint(Helix.emerald))
         Spacer(minLength: 0)
-        if entry.isStale { StaleTag() }
+        if entry.isStale { StaleTag(age: entry.age) }
+        HelixBrand(monochrome: mono)
         BatteryRing(pct: s?.battery, size: 40, lineWidth: 5, monochrome: mono)
       }
 
