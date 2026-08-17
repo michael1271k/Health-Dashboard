@@ -101,6 +101,23 @@ struct CompositionFace: View {
 
       Hairline()
 
+      // ── THE FIGURE, ON THE LARGE FACE ──
+      // Filled EVENLY, and that is the honest rendering: the scale measures
+      // composition for the whole body and reports nothing per muscle, so a
+      // figure with individually tinted bellies would be inventing a
+      // distribution nobody measured. What it does carry is scale — 46% lean
+      // tissue drawn on a body reads as a proportion in a way "46.2 kg" never
+      // will on a 2×2 tile.
+      HStack(alignment: .top, spacing: 10) {
+        if large, let lean = b?.muscleKg, let weight = s?.weight.kg, weight > 0 {
+          HelixAtlasFigure(
+            side: .both,
+            worked: HelixAtlasFigure.uniform(min(max(lean / weight, 0), 1)),
+            color: Helix.emerald,
+            monochrome: mono)
+            .frame(width: 78, height: 104)
+        }
+
       VStack(spacing: large ? 7 : 5) {
         // "Lean Soft Tissue", never "muscle" — see the header. Up IS good for
         // all three of these, and that is a statement about the metric, not
@@ -114,6 +131,7 @@ struct CompositionFace: View {
         CompositionRow(label: "FAT-FREE MASS", value: b?.ffmKg, delta: b?.ffmKgDelta,
                        unit: "kg", color: mono ? .white : Helix.steel, mono: mono,
                        upIsGood: true, compact: !large)
+      }
       }
 
       if large {

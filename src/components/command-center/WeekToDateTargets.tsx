@@ -6,6 +6,8 @@ import { ZONE_META } from '@/lib/training/landmarks'
 import { weekStartOf } from '@/lib/utils/week'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { EMBER } from '@/lib/theme/palette'
+import { MuscleAtlas } from '@/components/body/MuscleAtlas'
+import { setsToWorked } from '@/lib/body/atlas'
 
 /**
  * Week-to-date direct sets vs the active program's per-muscle target — the single
@@ -42,7 +44,21 @@ export function WeekToDateTargets() {
         </span>
       </div>
 
-      <div className="space-y-2.5">
+      {/* ── THE WEEK, ON A BODY ──
+          Thirteen labelled bars answer "how much" precisely and "where" not at
+          all. The figure answers the second question in one glance — a week
+          that has trained nothing but the anterior chain is a shape, not a list
+          — and it is scaled against the week's OWN hardest-worked muscle, so it
+          describes distribution rather than re-stating the bars underneath. */}
+      <div className="flex items-start gap-4">
+        <div className="h-40 shrink-0" style={{ width: 150 }}>
+          <MuscleAtlas
+            view="both"
+            worked={setsToWorked(Object.fromEntries(rows.map((m) => [m.muscle, m.sets])))}
+            label="Muscles trained this week"
+          />
+        </div>
+        <div className="flex-1 min-w-0 space-y-2.5">
         {rows.map((m) => {
           const meta = ZONE_META[m.zone]
           const scaleMax = Math.max(m.target * 1.4, m.sets, 1)
@@ -73,6 +89,7 @@ export function WeekToDateTargets() {
             </div>
           )
         })}
+        </div>
       </div>
     </section>
   )

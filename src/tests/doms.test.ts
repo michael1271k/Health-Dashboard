@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { DOMS_MUSCLES, domsMuscleOf, type DomsMuscle } from '@/lib/hooks/useRecovery'
 import { sorenessSummary, SEVERITY_COLOR, SEVERITY_WORD } from '@/components/day/RecoveryTrackers'
-import { REGIONS, GROUP_MUSCLES, groupOf, musclesOnSide, type SorenessGroup } from '@/components/day/SorenessMap'
+import { GROUP_MUSCLES, groupOf, groupOfLandmark, musclesOnSide, type SorenessGroup } from '@/components/day/SorenessMap'
+import { MUSCLE_PATHS, DOMS_TO_LANDMARK, landmarkToDoms, domsToWorked } from '@/lib/body/atlas'
 
 describe('DOMS_MUSCLES', () => {
   it('tracks Glutes as its own muscle', () => {
@@ -89,8 +90,32 @@ describe('sorenessSummary — what the panel renders', () => {
 
 describe('the soreness map', () => {
   it('draws every tracked muscle somewhere — no muscle is unreachable by tap', () => {
-    const drawn = new Set(REGIONS.map((r) => r.muscle))
-    for (const m of DOMS_MUSCLES) expect(drawn).toContain(m)
+    // Via the atlas now: a DOMS muscle is reachable if ANY landmark it folds
+    // onto is drawn. "Arms" is three landmarks and needs only one of them.
+    const drawn = new Set(MUSCLE_PATHS.map((p) => p.muscle))
+    for (const m of DOMS_MUSCLES) {
+      expect(DOMS_TO_LANDMARK[m].some((l) => drawn.has(l)), m).toBe(true)
+    }
+  })
+
+  it('gives every drawn muscle somewhere to go when tapped', () => {
+    // The map is tappable, so a belly that highlights and then opens nothing is
+    // a dead region. Adductors is the interesting case: it is drawn, and it has
+    // no DOMS rating of its own, so it opens the Legs picker rather than
+    // pretending to be Quads.
+    for (const p of MUSCLE_PATHS) {
+      expect(GROUP_MUSCLES[groupOfLandmark(p.muscle)], p.muscle).toBeTruthy()
+    }
+    expect(landmarkToDoms('Adductors')).toBeNull()
+    expect(groupOfLandmark('Adductors')).toBe('legs')
+  })
+
+  it('spreads one reported soreness across every muscle it covers', () => {
+    const worked = domsToWorked({ Arms: 3 })
+    expect(worked.Biceps).toBe(1)
+    expect(worked.Triceps).toBe(1)
+    expect(worked.Forearms).toBe(1)
+    expect(worked.Chest).toBeUndefined()
   })
 
   it('assigns every muscle to exactly one group', () => {
@@ -115,11 +140,12 @@ describe('the soreness map', () => {
 
   it('mirrors every paired muscle so one side is never tappable and the other not', () => {
     // A left quad with no right quad is a rendering bug you only notice by eye.
-    const paired = ['Shoulders', 'Arms', 'Quads', 'Calves', 'Glutes', 'Hamstrings']
-    for (const r of REGIONS) {
-      if (!paired.includes(r.muscle)) continue
-      const same = REGIONS.filter((x) => x.side === r.side && x.muscle === r.muscle)
-      expect(same.length).toBe(2)
+    const PAIRED = ['Side delts', 'Rear delts', 'Biceps', 'Triceps', 'Forearms',
+      'Quads', 'Adductors', 'Calves', 'Glutes', 'Hamstrings']
+    for (const p of MUSCLE_PATHS) {
+      if (!PAIRED.includes(p.muscle)) continue
+      const same = MUSCLE_PATHS.filter((x) => x.view === p.view && x.muscle === p.muscle)
+      expect(same.length, `${p.muscle} on ${p.view}`).toBe(2)
     }
   })
 })

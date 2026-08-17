@@ -3,6 +3,7 @@
 import { ChevronUp, Loader2, Trash2, X } from 'lucide-react'
 import { draftTotals, type SessionDraft } from '@/lib/sessions/draft'
 import { fmtVolume } from '@/lib/utils/units'
+import { MuscleDistribution } from './MuscleDistribution'
 
 /**
  * Sticky commit bar: discard/cancel, delete, and the button that opens the
@@ -72,6 +73,9 @@ export function CommitBar({ draft, busy, error, deleting, onFinish, onDiscard, o
             <Trash2 className="w-4 h-4" aria-hidden="true" />
           </button>
         )}
+        {/* Where the session is landing — 24px beside the set count, the sheet
+            behind it for when something looks off. */}
+        <MuscleDistribution draft={draft} />
         <button
           type="button"
           onClick={onFinish}

@@ -2,7 +2,9 @@
 
 import { Target } from 'lucide-react'
 import type { SessionDetail } from '@/lib/hooks/useSessionDetail'
-import { MUSCLE_COLOR } from '@/lib/training/landmarks'
+import { MUSCLE_COLOR, type LandmarkMuscle } from '@/lib/training/landmarks'
+import { MuscleAtlas } from '@/components/body/MuscleAtlas'
+import { setsToWorked } from '@/lib/body/atlas'
 import { EMBER, MUTED } from '@/lib/theme/palette'
 
 /**
@@ -42,6 +44,24 @@ export function MuscleFocus({ detail }: { detail: SessionDetail }) {
         <span className="text-[10px] text-muted ml-auto helix-num">{total} weighted sets</span>
       </div>
 
+      {/* ── THE FIGURE, BESIDE THE RAMP ──
+          The ramp answers "in what proportion" and the body answers "where" —
+          two different questions, and the second one was being asked of a
+          legend of thirteen words. Both views, because a session that trained
+          only the posterior chain looks EMPTY from the front, and an empty
+          front is exactly the reading. */}
+      <div className="flex items-center gap-3">
+        <div className="h-24 shrink-0" style={{ width: 96 }}>
+          <MuscleAtlas
+            view="both"
+            worked={setsToWorked(Object.fromEntries(
+              detail.muscleSets.map((m) => [m.muscle as LandmarkMuscle, m.sets]),
+            ))}
+            label="Muscles trained in this session"
+          />
+        </div>
+        <div className="flex-1 min-w-0 space-y-1.5">
+
       <div className="flex h-2 rounded-full overflow-hidden bg-white/[0.05]" aria-hidden="true">
         {detail.muscleSets.map((m) => (
           <span key={m.muscle}
@@ -63,6 +83,8 @@ export function MuscleFocus({ detail }: { detail: SessionDetail }) {
             </span>
           )
         })}
+      </div>
+        </div>
       </div>
     </div>
   )

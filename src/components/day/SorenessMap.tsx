@@ -1,6 +1,9 @@
 'use client'
 
 import { DOMS_MUSCLES, type DomsMuscle } from '@/lib/hooks/useRecovery'
+import { MuscleAtlas } from '@/components/body/MuscleAtlas'
+import { domsToWorked, landmarkToDoms, musclesOnView, type AtlasView } from '@/lib/body/atlas'
+import type { LandmarkMuscle } from '@/lib/training/landmarks'
 import { MUTED } from '@/lib/theme/palette'
 import { SEVERITY_COLOR } from '@/components/day/severity'
 
@@ -52,104 +55,74 @@ export function groupOf(muscle: DomsMuscle): SorenessGroup {
   return 'torso'
 }
 
-export interface Region {
-  muscle: DomsMuscle
-  side: 'front' | 'back'
-  /** Path data on the shared 120 × 260 viewBox. */
-  d: string
-}
+/**
+ * ── THE GEOMETRY MOVED ───────────────────────────────────────────────────────
+ * The 21 hand-authored paths that used to live here are now `MUSCLE_PATHS` in
+ * `lib/body/atlas.ts`, keyed on the 13 LANDMARK muscles rather than the 9 DOMS
+ * ones. Same viewBox, same skeleton, same silhouette — this is a
+ * reorganisation, not a redraw.
+ *
+ * Why it had to move: the widget needs the same figure and SwiftUI cannot parse
+ * an SVG `d`, so the paths are now generated into `HelixAtlas.swift` from one
+ * source with a parity test. A second copy of a body drawn by hand would drift
+ * the first time either was nudged, and nobody would notice until the two
+ * surfaces disagreed about where the glutes are.
+ *
+ * What stays here is the SORENESS vocabulary: the groups a tap opens, and the
+ * fold from a DOMS severity onto the atlas's intensities. That is this file's
+ * actual job.
+ */
 
 /**
- * Silhouette geometry. Shared skeleton: head at cy 22, shoulders at y 48,
- * waist at y 130, knees at y 190, ankles at y 240 — so front and back line up
- * when the view flips.
+ * The group a drawn muscle opens.
+ *
+ * Every landmark the atlas draws must lead somewhere, and one of them —
+ * Adductors — has no DOMS muscle at all: soreness is reported in nine muscles
+ * and the inner thigh is not one of them. Rather than invent a tenth rating (or
+ * fold adductors into Quads, which would light the wrong belly whenever a leg
+ * day was sore), the tap opens the Legs picker, where the muscles that ARE
+ * rated live.
  */
-export const REGIONS: readonly Region[] = [
-  // ── FRONT ──
-  { muscle: 'Shoulders', side: 'front', d: 'M38,44 C28,45 21,52 20,64 L33,69 C34,58 39,53 45,51 Z' },
-  { muscle: 'Shoulders', side: 'front', d: 'M82,44 C92,45 99,52 100,64 L87,69 C86,58 81,53 75,51 Z' },
-  { muscle: 'Chest', side: 'front', d: 'M45,50 L75,50 C82,52 84,60 83,72 C76,80 66,83 60,83 C54,83 44,80 37,72 C36,60 38,52 45,50 Z' },
-  { muscle: 'Abs', side: 'front', d: 'M42,86 L78,86 C79,102 77,118 72,132 L48,132 C43,118 41,102 42,86 Z' },
-  { muscle: 'Arms', side: 'front', d: 'M22,68 C18,82 17,101 19,121 C20,133 23,141 27,147 L35,144 C31,134 29,121 30,107 C31,92 33,80 34,72 Z' },
-  { muscle: 'Arms', side: 'front', d: 'M98,68 C102,82 103,101 101,121 C100,133 97,141 93,147 L85,144 C89,134 91,121 90,107 C89,92 87,80 86,72 Z' },
-  { muscle: 'Quads', side: 'front', d: 'M43,133 C38,149 37,169 40,189 L53,189 C55,171 56,151 58,135 Z' },
-  { muscle: 'Quads', side: 'front', d: 'M77,133 C82,149 83,169 80,189 L67,189 C65,171 64,151 62,135 Z' },
-  { muscle: 'Calves', side: 'front', d: 'M41,193 C40,209 41,227 43,240 L53,240 C54,224 54,207 53,193 Z' },
-  { muscle: 'Calves', side: 'front', d: 'M79,193 C80,209 79,227 77,240 L67,240 C66,224 66,207 67,193 Z' },
-
-  // ── BACK ──
-  { muscle: 'Shoulders', side: 'back', d: 'M38,44 C28,45 21,52 20,64 L33,69 C34,58 39,53 45,51 Z' },
-  { muscle: 'Shoulders', side: 'back', d: 'M82,44 C92,45 99,52 100,64 L87,69 C86,58 81,53 75,51 Z' },
-  { muscle: 'Back', side: 'back', d: 'M45,50 L75,50 C83,53 86,64 84,81 C80,97 72,105 60,107 C48,105 40,97 36,81 C34,64 37,53 45,50 Z' },
-  { muscle: 'Arms', side: 'back', d: 'M22,68 C18,82 17,101 19,121 C20,133 23,141 27,147 L35,144 C31,134 29,121 30,107 C31,92 33,80 34,72 Z' },
-  { muscle: 'Arms', side: 'back', d: 'M98,68 C102,82 103,101 101,121 C100,133 97,141 93,147 L85,144 C89,134 91,121 90,107 C89,92 87,80 86,72 Z' },
-  { muscle: 'Glutes', side: 'back', d: 'M43,109 C37,117 36,131 41,141 C48,146 55,145 59,140 L59,109 Z' },
-  { muscle: 'Glutes', side: 'back', d: 'M77,109 C83,117 84,131 79,141 C72,146 65,145 61,140 L61,109 Z' },
-  { muscle: 'Hamstrings', side: 'back', d: 'M41,145 C38,161 38,177 41,190 L54,190 C55,175 56,159 58,145 Z' },
-  { muscle: 'Hamstrings', side: 'back', d: 'M79,145 C82,161 82,177 79,190 L66,190 C65,175 64,159 62,145 Z' },
-  { muscle: 'Calves', side: 'back', d: 'M42,194 C40,209 41,226 44,237 L54,237 C55,223 55,207 54,194 Z' },
-  { muscle: 'Calves', side: 'back', d: 'M78,194 C80,209 79,226 76,237 L66,237 C65,223 65,207 66,194 Z' },
-] as const
+export function groupOfLandmark(muscle: LandmarkMuscle): SorenessGroup {
+  const doms = landmarkToDoms(muscle)
+  if (doms) return groupOf(doms)
+  return muscle === 'Adductors' ? 'legs' : 'torso'
+}
 
 /** Every muscle drawn on a given view. Order follows DOMS_MUSCLES. */
-export function musclesOnSide(side: 'front' | 'back'): DomsMuscle[] {
-  const present = new Set(REGIONS.filter((r) => r.side === side).map((r) => r.muscle))
+export function musclesOnSide(side: AtlasView): DomsMuscle[] {
+  const present = new Set(
+    musclesOnView(side).map(landmarkToDoms).filter((m): m is DomsMuscle => m !== null),
+  )
   return DOMS_MUSCLES.filter((m) => present.has(m))
 }
 
 export function SorenessMap({ side, doms, onPick, className = '' }: {
-  side: 'front' | 'back'
+  side: AtlasView
   /** muscle → severity 0–3. Missing means unrated, drawn as the empty fill. */
   doms: Partial<Record<DomsMuscle, number>> | undefined
   /** Fired with the tapped region's group so the host can open its picker. */
   onPick: (group: SorenessGroup) => void
   className?: string
 }) {
-  return (
-    <svg
-      viewBox="0 0 120 260"
-      className={`w-full h-full ${className}`}
-      role="group"
-      aria-label={`Soreness map, ${side} view`}
-    >
-      {/* Head + neck — anatomy, not data. Never interactive. */}
-      <g aria-hidden="true" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.10)" strokeWidth="0.75">
-        <circle cx="60" cy="22" r="14" />
-        <path d="M53,35 L67,35 L67,45 L53,45 Z" />
-        {/* Feet, so the figure doesn't end at the ankle. */}
-        <path d="M43,240 L53,240 L54,251 L42,251 Z" />
-        <path d="M77,240 L67,240 L66,251 L78,251 Z" />
-      </g>
+  // Severity 0–3 → intensity 0–1. The atlas draws intensity and has no opinion
+  // about what it means; the COLOUR still comes from the soreness scale, which
+  // is this surface's own vocabulary and not the atlas's.
+  const worked = domsToWorked(doms)
+  // The most severe muscle on this view decides the hue — one figure cannot
+  // carry four severity colours without becoming a heat map of nothing.
+  const peak = Math.max(0, ...musclesOnSide(side).map((m) => doms?.[m] ?? 0))
+  const color = SEVERITY_COLOR[peak] ?? MUTED
 
-      {REGIONS.filter((r) => r.side === side).map((r, i) => {
-        const severity = doms?.[r.muscle] ?? 0
-        const c = SEVERITY_COLOR[severity] ?? MUTED
-        return (
-          <path
-            key={`${r.muscle}-${i}`}
-            d={r.d}
-            role="button"
-            tabIndex={0}
-            aria-label={`${r.muscle} — ${severity > 0 ? `soreness ${severity} of 3` : 'not sore'}. Rate ${GROUP_LABEL[groupOf(r.muscle)]}.`}
-            aria-pressed={severity > 0}
-            onClick={() => onPick(groupOf(r.muscle))}
-            onKeyDown={(e) => {
-              if (e.key !== 'Enter' && e.key !== ' ') return
-              e.preventDefault()
-              onPick(groupOf(r.muscle))
-            }}
-            className="cursor-pointer outline-none focus-visible:stroke-[1.6]"
-            style={{
-              // Unrated regions read as the body, not as "level 0 soreness" —
-              // MUTED at full strength would paint a healthy figure grey.
-              fill: severity > 0 ? `${c}59` : 'rgba(255,255,255,0.05)',
-              stroke: severity > 0 ? c : 'rgba(255,255,255,0.12)',
-              strokeWidth: severity > 0 ? 1.1 : 0.75,
-              transition: 'fill 220ms ease, stroke 220ms ease',
-            }}
-          />
-        )
-      })}
-    </svg>
+  return (
+    <MuscleAtlas
+      view={side}
+      worked={worked}
+      color={color}
+      interactive
+      className={className}
+      label={`Soreness map, ${side} view`}
+      onPick={(muscle) => onPick(groupOfLandmark(muscle))}
+    />
   )
 }

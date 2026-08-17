@@ -13,6 +13,8 @@
     "test:ui": "vitest --ui",
     "typecheck": "tsc --noEmit",
     "check:swift": "bash scripts/check-swift.sh",
+    "atlas": "node scripts/gen-atlas-swift.mjs",
+    "check:atlas": "node scripts/gen-atlas-swift.mjs --check",
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
     "icons": "node scripts/generate-icons.mjs",
