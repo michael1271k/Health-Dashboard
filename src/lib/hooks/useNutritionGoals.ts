@@ -6,6 +6,7 @@ import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { getActiveProgramId } from '@/lib/programs'
 import { phaseGoalsFor, type NutritionMode, type NutritionPreset } from '@/lib/types/workout'
 import type { Tables } from '@/lib/supabase/types'
+import { leverById, activeLeverOf, type LeverId } from '@/lib/nutrition/levers'
 
 /**
  * The ONE answer to "what are today's nutrition goals?".
@@ -28,8 +29,8 @@ import type { Tables } from '@/lib/supabase/types'
  * the same number. That is the whole contract here.
  *
  * ── RESOLUTION ORDER ─────────────────────────────────────────────────────────
- * `plan_phase_goals` override → `phaseGoalsFor(plan, phase)` → the stored
- * `user_goals` row. The first two are one step: `usePlanPhaseGoals().resolve`
+ * The active LEVER → `plan_phase_goals` override → `phaseGoalsFor(plan, phase)`
+ * → the stored `user_goals` row. The first two are one step: `usePlanPhaseGoals().resolve`
  * already merges the user's per-(plan, phase) edits over the plan default, so
  * the numbers a user typed in Settings → Plan & Phase are what comes back.
  *
@@ -52,10 +53,19 @@ export interface ActiveNutritionGoals {
   /** Null only when no phase has ever been chosen. */
   mode: NutritionMode | null
   /** Which source won — surfaced so the UI can explain a number if it has to. */
-  source: 'plan-phase' | 'user-row' | 'default'
+  source: 'lever' | 'plan-phase' | 'user-row' | 'default'
+  /** The rung in force, when one is. Null means no lever was selected. */
+  lever: LeverId | null
 }
 
-type GoalsRow = Pick<Tables<'user_goals'>, 'calorie_goal' | 'protein_goal_g' | 'carbs_goal_g' | 'fat_goal_g' | 'goal_preset'>
+type GoalsRow = Pick<Tables<'user_goals'>, 'calorie_goal' | 'protein_goal_g' | 'carbs_goal_g' | 'fat_goal_g' | 'goal_preset'> & {
+  /**
+   * OPTIONAL because the column is newer than the type: `active_lever` reads as
+   * `undefined` on a database that has not had the one line of DDL applied, and
+   * everything downstream then behaves exactly as it did before levers existed.
+   */
+  active_lever?: string | null
+}
 
 /**
  * Pure resolver — the hook is a thin wrapper so this can be tested without a
@@ -65,7 +75,30 @@ export function resolveNutritionGoals(
   row: GoalsRow | null | undefined,
   preset: NutritionPreset,
   mode: NutritionMode | null,
+  /** The active phase lever, when one is selected. Outranks everything below. */
+  leverId?: string | null,
 ): ActiveNutritionGoals {
+  // ── THE LEVER IS THE TOP LAYER ─────────────────────────────────────────────
+  // Not because it is the most authoritative source of nutrition science, but
+  // because it is the only layer BOTH sides can resolve identically: the server
+  // scorer reads `user_goals.active_lever` and has no access to your per-phase
+  // overrides. See the note in `levers.ts` — a goal displayed and a goal graded
+  // that disagree is worse than either ordering.
+  const lever = leverById(leverId)
+  if (lever) {
+    return {
+      calorie: lever.calorieGoal,
+      protein: lever.proteinGoalG,
+      carbs: lever.carbsGoalG,
+      fat: lever.fatGoalG,
+      fiberMin: preset.fiberMin ?? null,
+      fiberMax: preset.fiberMax ?? null,
+      mode,
+      source: 'lever',
+      lever: lever.id,
+    }
+  }
+
   if (mode) {
     return {
       calorie: preset.calorieGoal,
@@ -76,6 +109,7 @@ export function resolveNutritionGoals(
       fiberMax: preset.fiberMax ?? null,
       mode,
       source: 'plan-phase',
+      lever: null,
     }
   }
   // No phase chosen. A stored row is a real decision someone made; honour it.
@@ -90,6 +124,7 @@ export function resolveNutritionGoals(
       fiberMax: preset.fiberMax ?? null,
       mode: null,
       source: 'user-row',
+      lever: null,
     }
   }
   // Nothing anywhere: the active plan's cut numbers, never a literal.
@@ -102,6 +137,7 @@ export function resolveNutritionGoals(
     fiberMax: preset.fiberMax ?? null,
     mode: null,
     source: 'default',
+    lever: null,
   }
 }
 
@@ -119,5 +155,5 @@ export function useNutritionGoals(): ActiveNutritionGoals {
   // branch still returns this plan's numbers rather than a magic constant.
   const preset = mode ? resolve(planId, mode) : phaseGoalsFor(planId, 'cut')
 
-  return resolveNutritionGoals(row ?? null, preset, mode)
+  return resolveNutritionGoals(row ?? null, preset, mode, activeLeverOf(row))
 }

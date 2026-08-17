@@ -23,6 +23,8 @@ import { countCommittedSets } from '@/lib/sessions/schema'
 import { AlertTriangle, Dumbbell, Calendar, Target } from 'lucide-react'
 import type { Tables } from '@/lib/supabase/types'
 import { Surface } from '@/components/ui/Zone'
+import { EditPlanCard, type PlanNumbers } from '@/components/settings/EditPlanCard'
+import { isLeverId, type LeverId } from '@/lib/nutrition/levers'
 
 const WD_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
@@ -140,6 +142,11 @@ export default function SettingsPage() {
   // yet would fail EVERY settings save, not just this one. Own state, own
   // self-healing writer — the same shape week-start uses.
   const [trackRpe, setTrackRpe] = useState(false)
+  // The persisted phase lever. Same shape as track_rpe and for the same reason:
+  // `active_lever` is a fresh column, and folding it into the `Goals` object
+  // would make EVERY settings save fail on a database that has not run the one
+  // line of DDL. Own state, own self-healing writer.
+  const [activeLever, setActiveLever] = useState<LeverId | null>(null)
   // Active training PLAN + the Preview drawer / two-step switch confirm.
   const [activePlanId, setActivePlanId] = useState<string>(DEFAULT_PROGRAM_ID)
   const [previewPlan, setPreviewPlan] = useState<Program | null>(null)
@@ -188,6 +195,8 @@ export default function SettingsPage() {
         const ws: 0 | 1 = we === 0 ? 1 : 0
         setWeekStart(ws)
         try { localStorage.setItem('helix_week_start', String(ws)) } catch { /* ignore */ }
+        const lv = (data as { active_lever?: string | null }).active_lever
+        setActiveLever(isLeverId(lv) ? lv : null)
         const tr = (data as { track_rpe?: boolean | null }).track_rpe ?? false
         setTrackRpe(tr)
         setTrackRpeMirror(tr)
@@ -245,6 +254,31 @@ export default function SettingsPage() {
     if (error && !/column|track_rpe|schema cache|PGRST204/i.test(error.message)) {
       setStatus({ type: 'error', msg: error.message })
     }
+  }
+
+  /**
+   * Commit the Edit Plan card: the five numbers AND the rung that produced them.
+   *
+   * The numbers go into `user_goals` as they always have, so every existing
+   * consumer — the widget snapshot, the scorer's fallback, the macro rings —
+   * keeps reading one row and needs no knowledge of levers at all. The rung is
+   * written alongside as the DECISION, which is what lets a later phase switch
+   * know whether these figures were chosen or merely inherited.
+   */
+  async function savePlanNumbers(next: PlanNumbers, lever: LeverId) {
+    await save(next)
+    setActiveLever(lever)
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return
+    const { error } = await supabase.from('user_goals').upsert(
+      { user_id: session.user.id, active_lever: lever } as unknown as never, { onConflict: 'user_id' },
+    )
+    // Column not migrated yet → the numbers still saved and everything grades
+    // correctly; only the NAME of the rung is lost until the paste-SQL runs.
+    if (error && !/column|active_lever|schema cache|PGRST204/i.test(error.message)) {
+      setStatus({ type: 'error', msg: error.message }); return
+    }
+    for (const key of PLAN_PHASE_CASCADE_KEYS) queryClient.invalidateQueries({ queryKey: key })
   }
 
   async function save(updates: Partial<Goals>) {
@@ -392,6 +426,21 @@ export default function SettingsPage() {
         <h1 className="font-heading text-fluid-2xl font-bold text-text">Settings</h1>
         <p className="text-muted text-sm mt-0.5">Goals &amp; context for daily scoring</p>
       </div>
+
+      {/* Edit Plan — the phase levers and the five numbers they set, staged
+          behind an explicit Save because these targets regrade the day. */}
+      <EditPlanCard
+        current={{
+          calorie_goal: goals.calorie_goal,
+          protein_goal_g: goals.protein_goal_g,
+          carbs_goal_g: goals.carbs_goal_g,
+          fat_goal_g: goals.fat_goal_g,
+          steps_goal: goals.steps_goal,
+        }}
+        activeLever={activeLever}
+        saving={saving}
+        onSave={savePlanNumbers}
+      />
 
       {/* ── Plans. A PHASE is not a separate setting — it is configuration that
              belongs to a plan, so it is chosen (and its macros, goals and set

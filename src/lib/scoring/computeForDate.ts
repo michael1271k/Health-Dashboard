@@ -7,6 +7,7 @@ import { prescribedFor, DEFAULT_PROGRAM_ID } from '@/lib/programs'
 import { phaseGoalsFor } from '@/lib/types/workout'
 import { nightWindow } from '@/lib/sleep/nightWindow'
 import { isExceptionDay } from '@/lib/nutrition/exceptionDay'
+import { applyLever, activeLeverOf } from '@/lib/nutrition/levers'
 
 /** The goals a user with no `user_goals` row is graded against. */
 const CUT = phaseGoalsFor(DEFAULT_PROGRAM_ID, 'cut')
@@ -227,6 +228,23 @@ export async function computeForDate(
     active_cal_goal: 500,
     water_goal_ml: 3000,
   }
+  // ── THE ACTIVE LEVER, RESOLVED SERVER-SIDE ────────────────────────────────
+  // Same rung the client shows, read from the same column, applied before any
+  // of these numbers reach the scorer. Without this the app would DISPLAY Lever
+  // 1's 1,885 kcal and GRADE the day against the baseline's 1,955 — the goal
+  // shown and the goal scored differing by 70 kcal every day, invisibly.
+  //
+  // Absent column, absent selection and `custom` all leave `g` untouched.
+  const levered = applyLever(
+    { calorie: g.calorie_goal, protein: g.protein_goal_g, carbs: g.carbs_goal_g, fat: g.fat_goal_g, steps: g.steps_goal },
+    activeLeverOf(goals),
+  )
+  g.calorie_goal = levered.calorie
+  g.protein_goal_g = levered.protein ?? 0
+  g.carbs_goal_g = levered.carbs ?? 0
+  g.fat_goal_g = levered.fat ?? 0
+  g.steps_goal = levered.steps ?? g.steps_goal
+
   // What the program prescribed for this day, per phase (cut uses each lift's
   // cutSets; bulk-only lifts drop out). null when the day isn't a known program
   // day — the scorer then drops the coverage component rather than inventing a plan.
