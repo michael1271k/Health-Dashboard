@@ -25,6 +25,7 @@ import {
 } from '@/lib/widget/derive'
 import { streakFrom, STREAK_WINDOW_DAYS } from '@/lib/training/streak'
 import { computeReadiness } from '@/lib/scoring/readiness'
+import { contextFromDayLabel, CONTEXT_META } from '@/lib/nutrition/context'
 
 /**
  * GET /api/widget/snapshot — the iOS Widget + Watch data source.
@@ -197,7 +198,7 @@ export async function GET(req: Request) {
     soft(supabase.from('daily_scores')
       .select('score, battery_pct, sleep_score, nutrition_score, activity_score, workout_score, recovery_score')
       .eq('user_id', userId).eq('date', date).maybeSingle()),
-    soft(supabase.from('daily_logs').select('steps, distance_m, active_energy, water_ml, sleep_minutes')
+    soft(supabase.from('daily_logs').select('steps, distance_m, active_energy, water_ml, sleep_minutes, nutrition_exception')
       .eq('user_id', userId).eq('date', date).maybeSingle()),
     soft(supabase.from('daily_metrics').select('steps, active_cal').eq('user_id', userId).eq('date', date).maybeSingle()),
     // Seven nights, not one. Tonight's row is picked out of these below, so the
@@ -416,6 +417,13 @@ export async function GET(req: Request) {
       distanceM: log?.distance_m ?? null,
       activeKcal: metrics?.active_cal ?? log?.active_energy ?? null,
     },
+    // The day's own stamp is the source, not the current setting: the widget
+    // describes the DAY it is showing, and an ended illness must not repaint a
+    // Tuesday that was lived normally.
+    context: (() => {
+      const mode = contextFromDayLabel((log as { nutrition_exception?: string | null } | null)?.nutrition_exception)
+      return mode === 'normal' ? null : { mode, label: CONTEXT_META[mode].label }
+    })(),
     workout: {
       label: day === 'rest' ? 'Rest' : day.label,
       // The program key, so a widget can tint itself with the day's own colour

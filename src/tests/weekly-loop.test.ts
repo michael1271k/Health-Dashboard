@@ -304,9 +304,14 @@ describe('buildWeeklyExport', () => {
     // An ordinary day is never annotated.
     expect(tagged).not.toMatch(/\*\*Mon 2026-07-20\*\*.*Exception/)
 
+    // A PR set on a declared day is still a PR, and is TAGGED rather than
+    // suppressed — "he hit a record on the night out" is the interesting fact,
+    // and it reads as an ordinary Sunday without the annotation.
+    expect(tagged).toMatch(/\*\*Chest Press\*\* 60kg × 12 — Weight, 1RM _\(under Event\)_/)
+
     // THE INVARIANT: forgiving the grade must not move a single aggregate. The
-    // only difference between these two exports is the tag itself.
-    expect(tagged.replace(' [Exception: Event]', '')).toBe(raw)
+    // only differences between these two exports are the two annotations.
+    expect(tagged.replace(' [Exception: Event]', '').replace(' _(under Event)_', '')).toBe(raw)
   })
 
   it('names WHICH axis each PR was set on, in a fixed order', () => {

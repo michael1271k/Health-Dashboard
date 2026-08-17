@@ -2,8 +2,11 @@
 
 import { m } from 'framer-motion'
 import { Check } from 'lucide-react'
-import { NUTRITION_EXCEPTION_REASONS, exceptionReason } from '@/lib/nutrition/exceptionDay'
+import { exceptionReason } from '@/lib/nutrition/exceptionDay'
 import { useSetNutritionException } from '@/lib/hooks/useNutritionException'
+import { useSetContext, useContextMode } from '@/lib/hooks/useContextMode'
+import { ContextSelector } from '@/components/nutrition/ContextSelector'
+import { contextFromDayLabel, isRangeMode } from '@/lib/nutrition/context'
 import { useHelixReducedMotion } from '@/lib/motion/useHelixReducedMotion'
 import { SNAPPY, CROSSFADE } from '@/lib/motion/springs'
 import { AMETHYST, SAND, MUTED, alpha } from '@/lib/theme/palette'
@@ -57,6 +60,13 @@ export function ExceptionDayBanner({ date, stored, estimated = false }: {
   const reason = exceptionReason(stored)
   const reduced = useHelixReducedMotion()
   const set = useSetNutritionException(date)
+  const setContext = useSetContext(date)
+  const active = useContextMode()
+  // The day's OWN label wins; an active range only speaks for a day it has not
+  // stamped yet (today, most often, before the first recompute of the day).
+  const stamped = contextFromDayLabel(stored)
+  const mode = stamped !== 'normal' ? stamped
+    : isRangeMode(active.mode) ? active.mode : 'normal'
   const transition = reduced ? CROSSFADE : SNAPPY
 
   return (
@@ -66,24 +76,18 @@ export function ExceptionDayBanner({ date, stored, estimated = false }: {
         background: reason || estimated ? alpha(AMETHYST, 0.05) : 'rgba(255,255,255,0.03)',
       }}
     >
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-[10px] font-bold uppercase tracking-[0.14em] shrink-0" style={{ color: MUTED }}>
+      <div className="space-y-2">
+        <span className="block text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: MUTED }}>
           Context
         </span>
-        {NUTRITION_EXCEPTION_REASONS.map((r) => (
-          <ContextBox
-            key={r}
-            label={r}
-            color={AMETHYST}
-            checked={reason === r}
-            reduced={reduced}
-            transition={transition}
-            // Tapping the checked reason withdraws the exception entirely —
-            // the same "tap it again to undo" the weigh-in chips use.
-            onToggle={() => set.mutate({ reason: reason === r ? null : r })}
-          />
-        ))}
-        <span className="w-px self-stretch mx-0.5" style={{ background: 'rgba(255,255,255,0.08)' }} aria-hidden="true" />
+        {/* ONE selector, shared with Settings. The five checkboxes that used to
+            live here spoke a vocabulary the global context mode did not, so
+            declaring illness on the day left the scorer grading you as a
+            healthy person. Same control, same words, both places. */}
+        <ContextSelector value={mode} onChange={(next) => setContext.mutate(next)} showRangeHint={false} />
+      </div>
+
+      <div className="flex items-center gap-2 flex-wrap">
         {/* After a divider, not as a sixth reason. It is not a reason, and it is
             not exclusive with one. */}
         <ContextBox
@@ -99,7 +103,9 @@ export function ExceptionDayBanner({ date, stored, estimated = false }: {
       {(reason || estimated) && (
         <p className="text-[10px] text-muted leading-snug">
           {reason
-            ? 'Graded on protein only. Intake still counts toward the week and the trend.'
+            ? isRangeMode(mode)
+              ? 'Graded on protein only, and it stays on until you tap it again. Intake still counts toward the week and the trend.'
+              : 'Graded on protein only. Intake still counts toward the week and the trend.'
             : 'Counted in full. Nothing is forgiven — this only flags the numbers as a guess.'}
         </p>
       )}

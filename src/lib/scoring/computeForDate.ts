@@ -7,6 +7,10 @@ import { prescribedFor, DEFAULT_PROGRAM_ID } from '@/lib/programs'
 import { phaseGoalsFor } from '@/lib/types/workout'
 import { nightWindow } from '@/lib/sleep/nightWindow'
 import { isExceptionDay } from '@/lib/nutrition/exceptionDay'
+import {
+  CONTEXT_META, contextFromDayLabel, contextFromSetting, rangeCovers, scoringContextFor,
+  type ContextMode,
+} from '@/lib/nutrition/context'
 import { applyLever, activeLeverOf } from '@/lib/nutrition/levers'
 
 /** The goals a user with no `user_goals` row is graded against. */
@@ -228,6 +232,34 @@ export async function computeForDate(
     active_cal_goal: 500,
     water_goal_ml: 3000,
   }
+  // ── THE DAY'S OWN CONTEXT ─────────────────────────────────────────────────
+  // Read from the DAY first, and from the current setting only for a date the
+  // active range actually covers. That ordering is what makes a recompute of a
+  // past day stable: last Tuesday carries the context it was lived in, so
+  // re-scoring it today does not grade it against how you feel now — which is
+  // precisely what a single global `context_mode` did.
+  //
+  // `nutrition_exception` is the one column both halves write, so there is no
+  // second source of truth and every existing export and adherence reader keeps
+  // working with no knowledge of any of this.
+  const settingMode = contextFromSetting((goals as { context_mode?: string | null } | null)?.context_mode)
+  const since = (goals as { context_since?: string | null } | null)?.context_since ?? null
+  const stamped = contextFromDayLabel(todayDl?.nutrition_exception)
+  const effectiveMode: ContextMode = stamped !== 'normal'
+    ? stamped
+    : rangeCovers(settingMode, since, date, todayISO) ? settingMode : 'normal'
+  const dayContext = scoringContextFor(effectiveMode)
+
+  // Materialise the range onto the day, ONCE, and never over a value the user
+  // set themselves. A day inside an illness that carries no label would read as
+  // an ordinary day in the export forever after the range ends.
+  if (stamped === 'normal' && effectiveMode !== 'normal' && CONTEXT_META[effectiveMode].dayLabel) {
+    await supabase.from('daily_logs').upsert(
+      { user_id: userId, date, nutrition_exception: CONTEXT_META[effectiveMode].dayLabel } as unknown as never,
+      { onConflict: 'user_id,date' },
+    ).then(() => {}, () => {})
+  }
+
   // ── THE ACTIVE LEVER, RESOLVED SERVER-SIDE ────────────────────────────────
   // Same rung the client shows, read from the same column, applied before any
   // of these numbers reach the scorer. Without this the app would DISPLAY Lever
@@ -277,7 +309,12 @@ export async function computeForDate(
     // A declared exception grades the day on protein alone. Read from the day's
     // own row, so back-filling the flag onto a past date and recomputing gives
     // that date the same score it would have had if flagged at the time.
-    nutritionException: isExceptionDay(todayDl?.nutrition_exception),
+    // Any non-normal context is an exception day, whether it was stamped on the
+    // day or comes from an active range covering it. Travel and Illness were
+    // already members of the day-flag vocabulary, so this widens nothing — it
+    // stops a range-declared illness being the one way to be ill and still be
+    // graded on carbohydrates.
+    nutritionException: effectiveMode !== 'normal' || isExceptionDay(todayDl?.nutrition_exception),
     steps: metrics?.steps ?? 0,
     activeCal: metrics?.active_cal ?? 0,
     stepsGoal: g.steps_goal,
@@ -303,7 +340,7 @@ export async function computeForDate(
     baselineHR: rhrBaseline ?? undefined,
     hrvMs: todayDl?.hrv_ms ?? undefined,
     hrvBaseline: hrvBaseline ?? undefined,
-    contextMode: (g as typeof g & { context_mode?: string }).context_mode as ScoringInputs['contextMode'] ?? 'normal',
+    contextMode: dayContext,
     isCurrentDay,
     localHour,
   }

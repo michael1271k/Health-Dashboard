@@ -163,6 +163,39 @@ struct StaleTag: View {
   }
 }
 
+/// The day's declared context — Illness, Travel, Refeed — or nothing at all.
+///
+/// ── WHY A WIDGET NEEDS THIS AT ALL ───────────────────────────────────────────
+/// The widget is the surface you glance at without opening anything, which makes
+/// it the one most likely to be believed and the one least able to explain
+/// itself. On a declared day the app has already forgiven the grade; a face that
+/// shows the low number with no mark on it reports a failure that the rest of
+/// the system does not think happened.
+///
+/// Amethyst, not a warning colour, and for the reason the app uses it
+/// everywhere else: a declared day is not a failure.
+struct ContextChip: View {
+  let context: HelixSnapshot.DayContext?
+  var monochrome = false
+
+  var body: some View {
+    if let context {
+      Text(context.label.uppercased())
+        .font(.system(size: 8, weight: .bold))
+        .tracking(0.4)
+        .padding(.horizontal, 4)
+        .padding(.vertical, 1.5)
+        .foregroundStyle(monochrome ? Color.white : Helix.amethyst)
+        .background(
+          RoundedRectangle(cornerRadius: 4, style: .continuous)
+            .fill((monochrome ? Color.white : Helix.amethyst).opacity(0.16))
+        )
+    } else {
+      EmptyView()
+    }
+  }
+}
+
 /// What to do about it, not just that something is wrong.
 struct Unavailable: View {
   let status: HelixSnapshotClient.Status

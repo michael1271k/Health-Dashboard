@@ -37,6 +37,7 @@ import { formatSet, isUnloadedSet } from '@/lib/utils/setFormat'
 import { prAxisLabel, type PrAxis } from '@/lib/training/prEngine'
 import { weighInSkipReason } from '@/lib/body/weighIn'
 import { exceptionTag, estimatedTag } from '@/lib/nutrition/exceptionDay'
+import { contextRangesIn, contextRangeLabel, contextFromDayLabel, CONTEXT_META } from '@/lib/nutrition/context'
 import { TEF_FACTOR, tefKcal, tdeeBreakdown } from '@/lib/nutrition/energy'
 import { volumeZone, type VolumeZone } from '@/lib/training/landmarks'
 
@@ -827,6 +828,15 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
   L.push(`**Program:** ${input.programLabel}`)
   L.push(`**Targets:** ${n(input.calorieGoal)} kcal · ${n(input.proteinGoalG)} g protein · `
     + `${n(input.stepsGoal)} steps · ${n(input.sleepGoalHours, 1)} h sleep`)
+
+  // ── The week's CONTEXT, once, as a fact about the week ──
+  // Derived from the days themselves rather than from the current setting, so an
+  // export of a past week describes that week and not how you feel today. The
+  // per-day `[Exception: …]` tags still print; what this removes is the reader
+  // having to infer "he was ill from Tuesday" four times from four annotations.
+  const ranges = contextRangesIn(days.map((d) => ({ date: d.date, exception: d.nutritionException })))
+  for (const r of ranges) L.push(`**Context:** ${contextRangeLabel(r)}`)
+
   L.push('')
 
   // Session labels per date — for the readable daily log below.
@@ -986,12 +996,21 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
       // One line per movement, so a session's records read as a list rather
       // than a run-on: "Hack Squat 55kg × 11 — Volume, 1RM".
       L.push('- PRs:')
+      // A record set under a declared context is STILL A RECORD — PR detection
+      // deliberately ignores every gating flag, and suppressing one here would
+      // be the same mistake made downstream instead of upstream. It is tagged,
+      // because "he hit a 1RM on day three of the flu" is the most interesting
+      // fact on the page and reads as an ordinary Tuesday without the tag.
+      const dayContext = contextFromDayLabel(
+        days.find((d) => d.date === s.date)?.nutritionException,
+      )
+      const tag = dayContext === 'normal' ? '' : ` _(under ${CONTEXT_META[dayContext].label})_`
       for (const p of s.prs) {
         const timed = isTimedExercise(p.name)
         const axes = p.axes.length
           ? ` — ${p.axes.map((a) => prAxisLabel(a, timed)).join(', ')}`
           : ''
-        L.push(`    - **${p.name}** ${formatSet(p.weightKg, p.reps, { timed })}${axes}`)
+        L.push(`    - **${p.name}** ${formatSet(p.weightKg, p.reps, { timed })}${axes}${tag}`)
       }
     }
     L.push('')

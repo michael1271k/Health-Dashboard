@@ -301,6 +301,16 @@ export interface WidgetSnapshot {
     lastVolumeKg: number | null
   }
 
+  /**
+   * The day's declared context, when it has one.
+   *
+   * A widget that presents a sick day as a normal one is the surface most
+   * likely to be believed and least able to explain itself — you glance at it,
+   * see a low score, and have no way to know the app already forgave the day.
+   * Null on an ordinary day; the faces render nothing for it.
+   */
+  context?: { mode: string; label: string } | null
+
   /** Week-to-date training totals, and how many sessions the plan schedules. */
   week: { sessions: number; volumeKg: number; prs: number; sets: number; sessionTarget: number }
   /** The same seven figures for LAST week, so "up or down" is answerable. */

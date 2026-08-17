@@ -109,8 +109,20 @@ export function computeNutritionScore(inputs: Pick<ScoringInputs,
  * Diminishing returns above goal (each 10% over = +2%).
  */
 export function computeActivityScore(inputs: Pick<ScoringInputs,
-  'steps' | 'activeCal' | 'stepsGoal' | 'activeCalGoal'>
+  'steps' | 'activeCal' | 'stepsGoal' | 'activeCalGoal' | 'contextMode'>
 ): number | null {
+  // ── ILLNESS AND EMERGENCY SUSPEND THE TARGET ────────────────────────────────
+  // Not "relax it" — suspend it. Relaxing a step goal you were told not to chase
+  // still scores 2,000 steps against 12,000 and lands the day's third-heaviest
+  // component near 20, so a week of following the instruction reads as a week of
+  // failing. Null drops the component out of the weighted mean entirely and the
+  // remaining components renormalise, which is the existing machinery for "this
+  // was not measured" and is exactly the right shape for "this was not asked".
+  //
+  // Travel is deliberately NOT here: an airport is one of the few places you
+  // outwalk your goal by accident.
+  const ctx = inputs.contextMode
+  if (ctx === 'illness' || ctx === 'emergency') return null
   if (inputs.steps <= 0 && inputs.activeCal <= 0) return null   // no activity data
   function score(actual: number, goal: number): number {
     if (goal === 0) return 100

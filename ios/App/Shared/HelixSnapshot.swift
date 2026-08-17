@@ -270,6 +270,14 @@ struct HelixSnapshot: Codable {
     let fatTrend: [Point]?
   }
 
+  /// A declared context, as the server writes it: the vocabulary key and the
+  /// label to draw. The label comes down rather than being mapped here so the
+  /// two sides cannot disagree about what "refeed" is called.
+  struct DayContext: Codable {
+    let mode: String
+    let label: String
+  }
+
   let date: String
   let generatedAt: String
   /// Echoed by the server so a cache can be keyed on it. Optional so a build
@@ -296,6 +304,10 @@ struct HelixSnapshot: Codable {
   // what they do for a missing reading anyway.
   let today: Today?
   let streak: Streak?
+  /// The day's declared context (Illness, Travel, Refeed…), or nil for an
+  /// ordinary day. A widget that presents a sick day as a normal one is the
+  /// surface most likely to be believed and least able to explain itself.
+  let context: DayContext?
   let cardio: Cardio?
   let calendar: [CalendarDay]?
   let volumeTrend: [Point]?

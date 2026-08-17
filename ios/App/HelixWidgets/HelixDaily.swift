@@ -81,6 +81,9 @@ struct DailyView: View {
     VStack(alignment: .leading, spacing: 8) {
       HStack(spacing: 5) {
         Caption("TODAY", color: mono ? .white : Helix.ember)
+        // Before the spacer: a declared day is a fact ABOUT today, so it reads
+        // as part of the title rather than as another badge on the right.
+        ContextChip(context: s?.context, monochrome: mono)
         Spacer(minLength: 0)
         if entry.isStale { StaleTag(age: entry.age) }
         HelixBrand(monochrome: mono)

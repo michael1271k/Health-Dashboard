@@ -25,6 +25,9 @@ import type { Tables } from '@/lib/supabase/types'
 import { Surface } from '@/components/ui/Zone'
 import { EditPlanCard, type PlanNumbers } from '@/components/settings/EditPlanCard'
 import { isLeverId, type LeverId } from '@/lib/nutrition/levers'
+import { ContextSelector } from '@/components/nutrition/ContextSelector'
+import { contextRangeLine, suspendsStepGoal } from '@/lib/nutrition/context'
+import { useContextMode, useSetContext } from '@/lib/hooks/useContextMode'
 
 const WD_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
@@ -106,12 +109,6 @@ const DEFAULTS: Goals = {
   auto_log_supplements: false,
 }
 
-const CONTEXT_LABELS: Record<ContextMode, { label: string; desc: string }> = {
-  normal:    { label: 'Normal',    desc: 'Standard scoring and targets' },
-  travel:    { label: 'Travel',    desc: 'Relaxed activity / sleep targets' },
-  illness:   { label: 'Illness',   desc: 'Penalties reduced, rest prioritized' },
-  emergency: { label: 'Emergency', desc: 'All penalties strongly relaxed' },
-}
 
 /** Mirror device prefs to localStorage (read synchronously by the units + motion utils). */
 function applyPrefsToDevice(units: 'kg' | 'lb', motion: boolean) {
@@ -147,6 +144,10 @@ export default function SettingsPage() {
   // would make EVERY settings save fail on a database that has not run the one
   // line of DDL. Own state, own self-healing writer.
   const [activeLever, setActiveLever] = useState<LeverId | null>(null)
+  // The context range, read and written through the SAME hook the day banner
+  // uses — there is no settings-only copy of this state any more.
+  const contextMode = useContextMode()
+  const setContext = useSetContext(logicalTodayISO())
   // Active training PLAN + the Preview drawer / two-step switch confirm.
   const [activePlanId, setActivePlanId] = useState<string>(DEFAULT_PROGRAM_ID)
   const [previewPlan, setPreviewPlan] = useState<Program | null>(null)
@@ -510,28 +511,36 @@ export default function SettingsPage() {
 
       {/* Desktop: cards flow into two columns so the width isn't wasted. */}
       <div className="grid gap-6 lg:grid-cols-2 items-start">
-      {/* Context mode */}
+      {/* Context — the SAME control the day banner shows, writing the same two
+             places. Two disjoint systems used to live here and there: five
+             checkboxes on the day (Event/Refeed/Travel/Illness/Social) and four
+             radio rows here (normal/travel/illness/emergency), overlapping in
+             two values, stored in different columns, with no code reading one to
+             set the other. Whichever you used, the other was wrong. */}
       <Surface variant="band" measure="grid" pad="snug" className="space-y-3">
-        <h2 className="font-semibold text-text">Context Mode</h2>
-        <p className="text-xs text-muted">
-          Adjusts scoring penalties for exceptional circumstances.
-        </p>
-        <div className="grid grid-cols-2 gap-2">
-          {(Object.keys(CONTEXT_LABELS) as ContextMode[]).map((mode) => (
-            <button
-              key={mode}
-              onClick={() => save({ context_mode: mode })}
-              disabled={saving}
-              className={`rounded-xl border px-3 py-2.5 text-left text-sm transition-colors duration-150
-                ${goals.context_mode === mode
-                  ? 'border-primary bg-primary/10 text-primary'
-                  : 'border-border text-muted hover:border-primary/40 hover:text-text'}`}
-            >
-              <div className="font-medium">{CONTEXT_LABELS[mode].label}</div>
-              <div className="text-xs opacity-70 mt-0.5">{CONTEXT_LABELS[mode].desc}</div>
-            </button>
-          ))}
+        <div>
+          <h2 className="font-semibold text-text">Context</h2>
+          <p className="text-xs text-muted mt-0.5">
+            What is going on right now. Travel, Illness and Emergency stay on until you
+            end them and stamp every day they cover; the rest describe today only.
+          </p>
         </div>
+        <ContextSelector
+          value={contextMode.mode}
+          onChange={(next) => setContext.mutate(next)}
+          disabled={saving || setContext.isPending}
+        />
+        {contextMode.mode !== 'normal' && (
+          <p className="helix-num text-[11px] text-muted tabular-nums">
+            {contextRangeLine(contextMode.mode, contextMode.since, logicalTodayISO())}
+          </p>
+        )}
+        {suspendsStepGoal(contextMode.mode) && (
+          <p className="text-[11px] leading-snug" style={{ color: STEEL }}>
+            Step target suspended — the activity component is dropped from the score rather
+            than graded low. A missed target you were told to miss is not a failure.
+          </p>
+        )}
       </Surface>
 
       {/* Nutrition goals */}

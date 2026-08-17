@@ -1151,6 +1151,10 @@ struct MacroFocusFace: View {
     VStack(alignment: .leading, spacing: 6) {
       HStack(spacing: 4) {
         Caption("MACROS", color: tint(Helix.ember))
+        // A declared day changes what the number MEANS — the app has already
+        // forgiven the grade, and a face showing the overshoot with no mark on
+        // it reports a failure the rest of the system does not think happened.
+        ContextChip(context: s?.context, monochrome: mono)
         Spacer(minLength: 0)
         if entry.isStale { StaleTag(age: entry.age) }
       }
