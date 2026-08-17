@@ -92,7 +92,13 @@ struct DailyView: View {
       VStack(spacing: 8) {
         HStack(alignment: .top, spacing: 10) {
           quadrant(HelixLink.nutrition) { FuelQuadrant(snapshot: s, mono: mono) }
-          quadrant(s?.date.flatMap { HelixLink.day($0, section: "water") } ?? HelixLink.nutrition) {
+          // `s?.date` is NOT an optional chain onto an optional `date` — the
+          // chain belongs to `s`, and `HelixSnapshot.date` is a plain `String`.
+          // Writing `s?.date.flatMap { … }` therefore calls SEQUENCE's flatMap
+          // over the string's Characters and yields `[URL]?`. `HelixLink.day`
+          // already treats an empty ISO as no destination, so the coalesce
+          // happens on the argument and the optionality stays where it belongs.
+          quadrant(HelixLink.day(s?.date ?? "", section: "water") ?? HelixLink.nutrition) {
             WaterQuadrant(snapshot: s, mono: mono)
           }
         }

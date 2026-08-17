@@ -2390,8 +2390,8 @@
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixCardio.swift": {
-    "mtime": 1786949127.5829268,
-    "ast_hash": "e37763afc250521a02de5bb77658e79f",
+    "mtime": 1786951328.2973614,
+    "ast_hash": "6ca74476af87d7ecd580c15dd04216ff",
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixComposition.swift": {
@@ -2400,8 +2400,8 @@
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixDaily.swift": {
-    "mtime": 1786949287.8752046,
-    "ast_hash": "66a8083750cdd09ee8c6ed660a9bfc19",
+    "mtime": 1786951284.2711835,
+    "ast_hash": "de50f386c7b219fe0c7dcb1898baad31",
     "semantic_hash": ""
   },
   "src/tests/widget-kind-parity.test.ts": {
@@ -2412,6 +2412,11 @@
   "src/lib/day/sections.ts": {
     "mtime": 1786949571.005897,
     "ast_hash": "73755289fa145163f2b833adeac7d1ac",
+    "semantic_hash": ""
+  },
+  "scripts/check-swift.sh": {
+    "mtime": 1786951380.3610182,
+    "ast_hash": "7141179e09f8992884abfa3088089af9",
     "semantic_hash": ""
   }
 }

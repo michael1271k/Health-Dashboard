@@ -230,5 +230,9 @@ enum CardioFormat {
 
 private extension Int {
   /// Rounding can land on 60, which would render "5:60 /km".
-  var clampedToSecond: Int { self >= 60 ? 59 : max(0, self) }
+  ///
+  /// `Swift.max` in full, because inside an extension on `Int` the bare name
+  /// `max` finds the type's own static `Int.max` first and the call fails to
+  /// compile — a shadowing that only exists here, inside the extended type.
+  var clampedToSecond: Int { self >= 60 ? 59 : Swift.max(0, self) }
 }
