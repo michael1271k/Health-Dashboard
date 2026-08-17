@@ -20,6 +20,7 @@ import { tapSuccess } from '@/lib/native/haptics'
 import type { useSessionDraft, CommitResult } from '@/lib/hooks/useSessionDraft'
 import { prAxisLabel } from '@/lib/training/prEngine'
 import { isTimedExercise } from '@/lib/exercises/timed'
+import { useReportTargets } from '@/lib/hooks/useReportTargets'
 
 /**
  * The Command Center deck — the ONE logging surface. Hosted fullscreen on
@@ -34,7 +35,7 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
   /** Post-finish destination: the just-committed session's analysis page. */
   onViewSession?: (sessionId: string) => void
 }) {
-  const { draft, updateSet, splitSet, mergeSet, addCardio, updateCardio, addSet, removeSet, toggleSetDone, checkAllSets, removeExercise, reorder, setNotes, setExerciseNote, setStats, setSessionRpe, setDate, discard, commit } = store
+  const { draft, updateSet, splitSet, mergeSet, updateCardio, addSet, removeSet, toggleSetDone, checkAllSets, removeExercise, reorder, setNotes, setExerciseNote, setStats, setSessionRpe, setDate, discard, commit } = store
   const [result, setResult] = useState<CommitResult | null>(null)
   const [finishOpen, setFinishOpen] = useState(false)
   const [committedDate, setCommittedDate] = useState<string | null>(null)
@@ -67,6 +68,10 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
     () => new Map<string, ReadyCue>((queue ?? []).map((a) => [a.name, { suggestKg: a.suggestKg, currentKg: a.currentKg, timed: a.timed, state: a.state }])),
     [queue],
   )
+
+  // The last report's prescriptions, resolved ONCE for the deck. Every card
+  // matches its own row out of this by canonical name.
+  const { targets: reportTargets } = useReportTargets()
 
   // Which set's trophy was tapped. Held as (localId, setIdx) rather than as the
   // resolved record, so the sheet re-reads `livePrs` if the set changes while it
@@ -225,6 +230,7 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
           history={history}
           livePrs={livePrs.bySet}
           readyByName={readyByName}
+          reportTargets={reportTargets}
           onReorder={reorder}
           onUpdateSet={updateSet}
           onSplitSet={splitSet}
@@ -237,7 +243,6 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
           onSetNote={setExerciseNote}
           onPrTap={handlePrTap}
           onUpdateCardio={updateCardio}
-          onAddCardio={addCardio}
         />
         <div className="lg:hidden">{commitBar}</div>
       </div>

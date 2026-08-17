@@ -1,4 +1,4 @@
-import { parseFmtV2 } from '@/lib/reports/fmtV2'
+import { parseFmtV2, cleanInstruction } from '@/lib/reports/fmtV2'
 
 /**
  * The one instruction to carry forward from the last pasted report.
@@ -20,13 +20,6 @@ import { parseFmtV2 } from '@/lib/reports/fmtV2'
 /** Sections that carry forward-looking instructions, in preference order. */
 const DIRECTIVE_SECTION = /DIRECTIVE|ACTION|NEXT\s*WEEK|PROTOCOL|PRESCRIPTION|ADJUST|DO\s*THIS/i
 
-/** Leading bullet glyphs the reports use, stripped before display. */
-const BULLET = /^\s*(?:[-*•▸▪◆◇→⚑>]|\d+[.)])\s+/
-
-/** Box-drawing, rules, and other pure decoration — never an instruction. */
-const DECORATION = /^[\s─━═╔╚║╠▓▒░#|+=_.·—–-]*$/
-
-const MIN_LEN = 12
 const MAX_LEN = 140
 
 /**
@@ -43,25 +36,12 @@ export function firstDirective(md: string | null | undefined): string | null {
   const preferred = sections.filter((s) => DIRECTIVE_SECTION.test(s.title))
   for (const s of preferred) {
     for (const raw of s.lines) {
-      const line = clean(raw)
+      // `cleanInstruction` lives in the parser because the targets reader makes
+      // the identical judgement about what a sentence is; two copies of that
+      // rule would drift the first time either was tuned.
+      const line = cleanInstruction(raw, MAX_LEN)
       if (line) return line
     }
   }
   return null
-}
-
-function clean(raw: string): string | null {
-  let line = raw.trim()
-  if (!line || DECORATION.test(line)) return null
-  // A table row is data, not an instruction.
-  if (line.includes('|')) return null
-  line = line.replace(BULLET, '')
-  // A nested heading inside the section ("⚑ LOAD"), not the instruction itself.
-  if (/^#{1,6}\s/.test(line)) return null
-  line = line.replace(/\*\*/g, '').replace(/`/g, '').trim()
-  if (line.length < MIN_LEN) return null
-  // Shouted lines are headings the parser did not claim — a real directive is
-  // written as a sentence.
-  if (line === line.toUpperCase() && /[A-Z]{4}/.test(line)) return null
-  return line.length > MAX_LEN ? `${line.slice(0, MAX_LEN - 1).trimEnd()}…` : line
 }

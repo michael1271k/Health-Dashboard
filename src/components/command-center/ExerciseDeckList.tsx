@@ -7,8 +7,8 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
 import { restrictToVerticalAxis, restrictToParentElement } from '@dnd-kit/modifiers'
-import { Footprints } from 'lucide-react'
-import { ExerciseCard, CARDIO_VIOLET, type ReadyCue } from './ExerciseCard'
+import { ExerciseCard, type ReadyCue } from './ExerciseCard'
+import type { ReportTargets } from '@/lib/reports/fmtV2'
 import { tapLight } from '@/lib/native/haptics'
 import type { SessionDraft, DraftSet } from '@/lib/sessions/draft'
 import type { ExerciseHistory } from '@/lib/hooks/useExerciseSetHistory'
@@ -24,13 +24,15 @@ const DRAG_MODIFIERS = [restrictToVerticalAxis, restrictToParentElement]
  * Stays a SINGLE column at every breakpoint — verticalListSortingStrategy +
  * restrictToVerticalAxis are only valid for a one-column list.
  */
-export function ExerciseDeckList({ draft, history, livePrs, readyByName, onReorder, onUpdateSet, onSplitSet, onMergeSet, onAddSet, onRemoveSet, onToggleDone, onCheckAll, onRemoveExercise, onSetNote, onPrTap, onUpdateCardio, onAddCardio }: {
+export function ExerciseDeckList({ draft, history, livePrs, readyByName, reportTargets, onReorder, onUpdateSet, onSplitSet, onMergeSet, onAddSet, onRemoveSet, onToggleDone, onCheckAll, onRemoveExercise, onSetNote, onPrTap, onUpdateCardio }: {
   draft: SessionDraft
   history: Map<string, ExerciseHistory> | undefined
   /** Live records keyed `${localId}|${setIdx}` — see `computeLivePrs`. */
   livePrs?: Map<string, PrAxis[]>
   /** Forward-carried progression cues, keyed by exercise name. */
   readyByName?: Map<string, ReadyCue>
+  /** What the last pasted report prescribed, resolved per card by name. */
+  reportTargets?: ReportTargets | null
   onReorder: (orderedIds: string[]) => void
   onUpdateSet: (localId: string, setIdx: number, patch: Partial<DraftSet>) => void
   onSplitSet: (localId: string, setIdx: number) => void
@@ -45,8 +47,6 @@ export function ExerciseDeckList({ draft, history, livePrs, readyByName, onReord
   onPrTap?: (localId: string, setIdx: number) => void
   /** Cardio blocks only: edit distance / duration. */
   onUpdateCardio?: (localId: string, patch: { distanceKm?: number; durationSec?: number }) => void
-  /** Append a cardio block to the deck. */
-  onAddCardio?: (name?: string) => void
 }) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
@@ -111,6 +111,7 @@ export function ExerciseDeckList({ draft, history, livePrs, readyByName, onReord
               livePrs={livePrs}
               dayKey={draft.dayKey}
               ready={readyByName?.get(ex.name) ?? null}
+              reportTargets={reportTargets}
               collapsed={reordering}
               onUpdateSet={onUpdateSet}
               onSplitSet={onSplitSet}
@@ -128,23 +129,14 @@ export function ExerciseDeckList({ draft, history, livePrs, readyByName, onReord
         </div>
       </SortableContext>
 
-      {/* ── Add a cardio block ──
-          Cardio is a first-class deck entry, not a fixed warm-up slot. The only
-          one that existed was the Treadmill card the template prepends, so a
-          finisher had nowhere to go and ended up typed into the notes box. A new
-          block lands at the end and drags anywhere — the sort strategy already
-          covers it, because a cardio card has always been a sortable. */}
-      {onAddCardio && (
-        <button
-          type="button"
-          onClick={() => onAddCardio()}
-          className="mt-2 w-full min-h-[38px] rounded-xl border border-dashed text-xs font-medium
-                     flex items-center justify-center gap-1.5 transition-colors active:scale-[0.99]"
-          style={{ color: CARDIO_VIOLET, borderColor: `${CARDIO_VIOLET}4d` }}
-        >
-          <Footprints className="w-3.5 h-3.5" aria-hidden="true" /> Add cardio
-        </button>
-      )}
+      {/* ── NO "Add cardio" BUTTON ──
+          It sat under every deck, on every training day, to serve the rare
+          finisher — and cardio has its own logger on the day surface, which is
+          where a walk or a bike actually gets recorded. A permanent button for
+          an occasional action, one tap from the last set you are trying to
+          finish, is a mis-tap waiting to happen. Cardio blocks that arrive from
+          a TEMPLATE still render and still edit; only the manual entry point is
+          gone from here. */}
     </DndContext>
   )
 }

@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { ChevronRight, Quote } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
@@ -9,6 +10,10 @@ import { weekStartOf } from '@/lib/utils/week'
 import { programWeekNumber } from '@/lib/reports/weekNumber'
 import { firstDirective } from '@/lib/reports/directive'
 import { useReports } from '@/lib/hooks/useReports'
+import { useReportTargets } from '@/lib/hooks/useReportTargets'
+import { useWeekActuals } from '@/lib/hooks/useWeekActuals'
+import { targetRows, type WeekActuals } from '@/lib/reports/targetVerdict'
+import { TargetsVsActual } from '@/components/dashboard/TargetsVsActual'
 import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { clientScheduleContext, sessionTargetIn } from '@/lib/programs'
 import { EMBER, EMERALD, OXIDE, MUTED, GOLD } from '@/lib/theme/palette'
@@ -178,21 +183,29 @@ export function WeekSoFarCard() {
   const { data, isLoading } = useWeekSoFar(thisWeek, lastWeek, today)
   const { data: reports } = useReports()
 
+  const { targets, weekStart: reportWeek } = useReportTargets()
+  const { data: actuals } = useWeekActuals(thisWeek, today)
+
   const target = sessionTargetIn(clientScheduleContext())
   const done = data?.cur.sessions ?? 0
   const change = data ? biggestChange(data.cur, data.prev) : null
   // The newest report is the one that describes THIS week's instructions —
   // it was written about last week and prescribes the next one.
   const directive = firstDirective(reports?.[0]?.content_md)
+  const rows = targetRows(targets, actuals ?? EMPTY_ACTUALS, today)
 
   if (isLoading) {
     return <Surface variant="band" measure="grid" pad="snug"><div className="h-16 rounded-xl bg-white/[0.04] animate-pulse" aria-hidden="true" /></Surface>
   }
 
   return (
-    <Surface variant="band" measure="grid" pad="snug" href="/pathfinder" label="The week so far">
+    // NOT a linked Surface any more. Each target row is its own link to the
+    // surface that fixes it, and an anchor inside an anchor is invalid markup
+    // that React refuses to hydrate — so the card's own link moved inward onto
+    // the header row it always described.
+    <Surface variant="band" measure="grid" pad="snug" label="The week so far">
       <div className="space-y-2">
-        <div className="flex items-center gap-2.5">
+        <Link href="/pathfinder" className="flex items-center gap-2.5 active:opacity-80" aria-label="The week so far">
           <SessionRing done={done} target={target} />
           <span className="min-w-0 flex-1">
             <span className="block font-heading font-semibold text-fluid-sm text-text leading-tight">
@@ -203,7 +216,7 @@ export function WeekSoFarCard() {
             </span>
           </span>
           <ChevronRight className="w-4 h-4 text-muted shrink-0" aria-hidden="true" />
-        </div>
+        </Link>
 
         {/* The single largest move, NAMED. Four means said less than this one
             sentence, and cost four rows to say it. */}
@@ -221,19 +234,26 @@ export function WeekSoFarCard() {
           )}
         </p>
 
-        {/* RETRIEVED from your last pasted report — never generated. Renders
-            nothing at all when no report carries a directive. */}
-        {directive && (
+        {/* RETRIEVED from your last pasted report — never generated.
+            The comparison table wins when the report prescribed numbers; the
+            single directive line remains for reports that only wrote prose, so
+            a text-only week is not silently dropped. */}
+        {rows.length > 0 ? (
+          <TargetsVsActual rows={rows} weekStart={reportWeek} />
+        ) : directive ? (
           <p className="flex items-start gap-1.5 text-[11px] leading-snug rounded-lg px-2 py-1.5"
             style={{ background: `${GOLD}0f`, border: `1px solid ${GOLD}2e` }}>
             <Quote className="w-3 h-3 mt-0.5 shrink-0" style={{ color: GOLD }} aria-hidden="true" />
             <span className="text-text/90 min-w-0">{directive}</span>
           </p>
-        )}
+        ) : null}
       </div>
     </Surface>
   )
 }
+
+/** No readings yet is not a week of zeros — every field stays null. */
+const EMPTY_ACTUALS: WeekActuals = { waterL: null, steps: null, kcal: null, proteinG: null }
 
 const isoMinus = (iso: string, n: number): string => {
   const d = new Date(`${iso}T12:00:00Z`)

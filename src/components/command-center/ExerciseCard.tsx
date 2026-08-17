@@ -14,6 +14,8 @@ import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { repWindowFor, holdTargetFor, ladderVerdict, levelUpCue } from '@/lib/training/ceilings'
 import { workingSets, type ExerciseHistory } from '@/lib/hooks/useExerciseSetHistory'
 import type { PrAxis } from '@/lib/training/prEngine'
+import type { ReportTargets } from '@/lib/reports/fmtV2'
+import { targetForExercise, formatTarget } from '@/lib/reports/targetMatch'
 import { livePrKey } from '@/lib/sessions/livePrs'
 import { SAPPHIRE, STEEL, MUTED, HAIRLINE } from '@/lib/theme/palette'
 import { exerciseColor } from '@/lib/theme/muscleHue'
@@ -151,7 +153,7 @@ const fmtDate = (d: string) =>
  * means lifting `useSortable` into a shell component and moving the grip out of
  * this header — a real refactor, deliberately not done here.
  */
-export const ExerciseCard = memo(function ExerciseCard({ exercise, history, livePrs, dayKey, ready, collapsed = false, onUpdateSet, onSplitSet, onMergeSet, onAddSet, onRemoveSet, onToggleDone, onCheckAll, onRemoveExercise, onSetNote, onPrTap, onUpdateCardio }: {
+export const ExerciseCard = memo(function ExerciseCard({ exercise, history, livePrs, dayKey, ready, reportTargets, collapsed = false, onUpdateSet, onSplitSet, onMergeSet, onAddSet, onRemoveSet, onToggleDone, onCheckAll, onRemoveExercise, onSetNote, onPrTap, onUpdateCardio }: {
   exercise: DraftExercise
   history: ExerciseHistory | null
   /** Live records keyed `${localId}|${setIdx}` — computed once for the whole
@@ -163,6 +165,14 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, live
   dayKey?: string | null
   /** Forward-carried progression cue for this lift (cleared its ceiling twice). */
   ready?: ReadyCue | null
+  /**
+   * What the last pasted report prescribed, for the whole session. Passed as the
+   * WHOLE object rather than this card's row so the deck resolves it once: the
+   * match runs through the catalog alias table and a per-card hook would also
+   * add a query subscription to every card, which is what memo here exists to
+   * avoid.
+   */
+  reportTargets?: ReportTargets | null
   /** Force header-only (drag-reorder collapses the whole deck for visibility). */
   collapsed?: boolean
   /*
@@ -300,6 +310,14 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, live
     [repWindow, committedWork],
   )
 
+  // What the last report asked for on THIS movement, matched by canonical name.
+  // Null for every exercise the report did not name — a target nobody wrote is
+  // not a target of the current load.
+  const reportTarget = useMemo(
+    () => targetForExercise(reportTargets, exercise.name),
+    [reportTargets, exercise.name],
+  )
+
   // Unilateral lifts (already split, or a single-arm/per-side movement) get the
   // asymmetry rule: the STRONG side sets the rep count, the weak side matches it.
   const unilateral = exercise.sets.some((s) => s.side || s.pairId)
@@ -329,6 +347,16 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, live
         text: `Ceiling cleared twice — add load: ${fmtKg(ready.currentKg)} → ${fmtKg(ready.suggestKg)}kg`,
       }
     }
+    // Earned the progression with no load to add. Reps ARE the record here, so
+    // the instruction is a rep beyond the ceiling — the branch above needs a
+    // `suggestKg` this movement can never have, and without this the card fell
+    // through to a generic line and said nothing about what it just earned.
+    if (ready?.state === 'ready' && !ready.timed && ready.suggestKg == null && repWindow) {
+      return {
+        color: READY_GOLD, icon: Target,
+        text: `Ceiling cleared twice — go past ${repWindow.ceiling} reps this session`,
+      }
+    }
     if (ready?.state === 'one-more') {
       return {
         color: AMBER, icon: Target,
@@ -345,7 +373,7 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, live
       }
     }
     return null
-  }, [ladder, levelUp, ready, exercise.targetNext, unilateral])
+  }, [ladder, levelUp, ready, repWindow, exercise.targetNext, unilateral])
 
   // ── Cardio variant: slim card, distance/duration, no set rows ──
   //
@@ -472,9 +500,19 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, live
                 <span
                   className="shrink-0 inline-flex items-center gap-0.5 px-1.5 py-px rounded-md text-[9px] font-bold uppercase tracking-wide"
                   style={{ color: READY_GOLD, background: `${READY_GOLD}1f`, border: `1px solid ${READY_GOLD}66` }}
-                  title="Cleared the ceiling twice — add load this session"
+                  title={bodyweightEx
+                    ? 'Cleared the ceiling twice — add a rep this session'
+                    : 'Cleared the ceiling twice — add load this session'}
                 >
-                  ▲ {ready.timed ? 'HOLD+' : ready.suggestKg != null ? `${fmtKg(ready.suggestKg)}kg` : '+2.5kg'}
+                  {/* A BODYWEIGHT movement has no load to add. The fallback here
+                      used to be the literal string "+2.5kg", so a Hanging Knee
+                      Raise that earned its progression was told to add a plate
+                      it cannot hold — the one instruction on the card, and it
+                      was impossible to follow. `suggestKg` is already null for
+                      unloaded work; only the fallback was wrong. */}
+                  ▲ {ready.timed ? 'HOLD+'
+                    : ready.suggestKg != null ? `${fmtKg(ready.suggestKg)}kg`
+                    : '+1 REP'}
                 </span>
               )}
               {/* Programmed target — floor–ceiling, ceiling highlighted gold. */}
@@ -486,6 +524,18 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, live
                 >
                   {repWindow.floor}<span className="opacity-40 mx-px">–</span>
                   <span style={{ color: READY_GOLD }}>{repWindow.ceiling}</span>
+                </span>
+              )}
+              {/* What your last report asked for on this lift. RETRIEVED from a
+                  document you pasted — the app writes no targets of its own. */}
+              {reportTarget && formatTarget(reportTarget) && (
+                <span
+                  className="shrink-0 inline-flex items-center gap-1 px-1.5 py-px rounded-md text-[9px] font-bold uppercase tracking-wide tabular-nums"
+                  style={{ color: SAPPHIRE, background: `${SAPPHIRE}18`, border: `1px solid ${SAPPHIRE}55` }}
+                  title="From your last pasted report — never generated in-app"
+                >
+                  <Target className="w-2.5 h-2.5" aria-hidden="true" />
+                  {formatTarget(reportTarget)}
                 </span>
               )}
               {timedEx && holdTarget != null && (

@@ -67,8 +67,34 @@ export interface AsymmetryRow {
   gapPct: number | null
 }
 
+/**
+ * One movement the report asked for by name and load.
+ *
+ * `loadKg` is what to put on the bar; the rep window is kept SEPARATELY from it
+ * because a prescription is frequently one without the other ("Leg Press → hold
+ * 120 kg, chase reps"), and a chip that needs both to render would show nothing
+ * for exactly the weeks the instruction mattered most.
+ */
+export interface TargetExercise {
+  /** As written in the report, then run through the catalog's alias table. */
+  name: string
+  loadKg: number | null
+  repsLow: number | null
+  repsHigh: number | null
+}
+
+/** What the last report asked for, in the shapes the app can act on. */
+export interface ReportTargets {
+  exercises: TargetExercise[]
+  water: { minL: number; maxL: number } | null
+  steps: number | null
+  macros: { kcal: number | null; proteinG: number | null; carbsG: number | null; fatG: number | null } | null
+  /** Instruction sentences from the same sections, for the dashboard. */
+  notes: string[]
+}
+
 /** Sections the renderer draws instead of printing. Everything else is `null`. */
-export type FmtV2SectionKind = 'tdee' | 'bodyComp' | 'asymmetry'
+export type FmtV2SectionKind = 'tdee' | 'bodyComp' | 'asymmetry' | 'targets'
 
 export interface FmtV2Section {
   /** Leading emoji, when the heading had one. */
@@ -99,6 +125,8 @@ export interface FmtV2Report {
   tdee: TdeeAnchor[]
   bodyComp: ParsedTable | null
   asymmetry: AsymmetryRow[]
+  /** Null when the report prescribed nothing this reader recognised. */
+  targets: ReportTargets | null
 }
 
 /** Box-drawing and rule characters that carry no content of their own. */
@@ -255,6 +283,176 @@ export function parseAsymmetry(lines: string[]): AsymmetryRow[] {
   return out
 }
 
+/**
+ * A line of the report reduced to the sentence a human would read out, or null
+ * if it is decoration, a table row, or a heading the parser did not claim.
+ *
+ * Lives here rather than in `directive.ts` because the targets reader needs the
+ * identical judgement, and two copies of "what counts as an instruction" would
+ * drift the moment either was tuned.
+ */
+export function cleanInstruction(raw: string, maxLen = 140): string | null {
+  let line = raw.trim()
+  if (!line || DECORATION.test(line)) return null
+  if (line.includes('|')) return null                 // a table row is data
+  line = line.replace(BULLET, '')
+  if (/^#{1,6}\s/.test(line)) return null             // a nested heading
+  line = line.replace(/\*\*/g, '').replace(/`/g, '').trim()
+  if (line.length < 12) return null
+  // Shouted lines are headings the section split missed — a real instruction is
+  // written as a sentence.
+  if (line === line.toUpperCase() && /[A-Z]{4}/.test(line)) return null
+  return line.length > maxLen ? `${line.slice(0, maxLen - 1).trimEnd()}…` : line
+}
+
+/** Leading bullet glyphs the reports use, stripped before display. */
+const BULLET = /^\s*(?:[-*•▸▪◆◇→⚑>]|\d+[.)])\s+/
+/** Box-drawing, rules, and other pure decoration — never an instruction. */
+const DECORATION = /^[\s─━═╔╚║╠▓▒░#|+=_.·—–-]*$/
+
+/** `8-10`, `8–10`, `× 12`, `x8` — a rep window or a single number. */
+function repsIn(text: string): { low: number | null; high: number | null } {
+  const m = /(?:[×x]\s*|\breps?\s*[:=]?\s*)(\d{1,3})\s*(?:[-–—]|to)\s*(\d{1,3})/i.exec(text)
+    ?? /(\d{1,3})\s*(?:[-–—]|to)\s*(\d{1,3})\s*reps?\b/i.exec(text)
+  if (m) return { low: numOf(m[1]), high: numOf(m[2]) }
+  const one = /(?:[×x]\s*(\d{1,3})\b)|(?:\b(\d{1,3})\s*reps?\b)/i.exec(text)
+  if (one) {
+    const n = numOf(one[1] ?? one[2] ?? '')
+    return { low: n, high: n }
+  }
+  return { low: null, high: null }
+}
+
+/**
+ * What the report told you to do next week, in the shapes the app can act on.
+ *
+ * ── EVERY FIELD IS OPTIONAL, INDEPENDENTLY ───────────────────────────────────
+ * Same discipline as the rest of this reader: a report with a hydration line and
+ * no load ladder yields a hydration target and nothing else, never an error and
+ * never a zero. A consumer that receives `null` for a field renders nothing for
+ * it, because a prescription nobody wrote is not a prescription of zero.
+ *
+ * The exercise ladder is read from a pipe table when there is one and from
+ * inline `Name → 49.5 kg × 8-10` lines when there is not, because reports have
+ * been written both ways and neither shape is the contract.
+ */
+export function parseTargets(lines: string[]): ReportTargets {
+  const exercises: TargetExercise[] = []
+  const seen = new Set<string>()
+  const push = (name: string, loadKg: number | null, reps: { low: number | null; high: number | null }) => {
+    const clean = name.replace(/^[\s·—–>-]+|[\s·—–:>-]+$/g, '').replace(/\*\*/g, '').trim()
+    if (clean.length < 3 || !/[a-z]/i.test(clean)) return
+    const key = clean.toLowerCase()
+    if (seen.has(key)) return
+    seen.add(key)
+    exercises.push({ name: clean, loadKg, repsLow: reps.low, repsHigh: reps.high })
+  }
+
+  const table = parseTable(lines)
+  if (table) {
+    const li = table.columns.findIndex((c) => /\b(kg|load|weight|target)\b/i.test(c))
+    const ri = table.columns.findIndex((c) => /\breps?\b|\brange\b|\bwindow\b/i.test(c))
+    if (li > 0) {
+      for (const cells of table.rows) {
+        const load = numOf((cells[li] ?? '').replace(/[^\d.,]/g, ''))
+        push(cells[0] ?? '', load, repsIn(ri >= 0 ? (cells[ri] ?? '') : ''))
+      }
+    }
+  }
+
+  // Lines already read as a NUMBER are not also read as prose. Without this the
+  // notes fill up with the load ladder restated in words, and the one sentence
+  // the report actually wrote to you falls off the end of the list.
+  const consumed = new Set<number>()
+
+  for (const [i, raw] of lines.entries()) {
+    if (raw.includes('|')) continue
+    const line = raw.replace(BULLET, '').trim()
+    // A load line needs a NAME and a kg figure. Requiring the separator is what
+    // stops "Volume dropped to 24 kg per set on Tuesday" being read as a
+    // prescription for an exercise called "Volume dropped to".
+    const m = /^(.{2,64}?)\s*(?:[→⇒:·•]|[—–-]{1,2}|\bat\b|\bto\b|\bhold\b)\s*(\d[\d.,]*)\s*kg\b(.*)$/i.exec(line)
+    if (!m) continue
+    const load = numOf(m[2])
+    if (load == null || load <= 0) continue
+    push(m[1], load, repsIn(m[3]))
+    consumed.add(i)
+  }
+
+  let water: ReportTargets['water'] = null
+  let steps: number | null = null
+  let macros: ReportTargets['macros'] = null
+  const notes: string[] = []
+
+  for (const [i, raw] of lines.entries()) {
+    const line = raw.replace(BULLET, '').trim()
+
+    if (!water && /water|hydrat|h₂o|h2o|fluid/i.test(line)) {
+      const range = /(\d[\d.]*)\s*(?:[-–—]|to)\s*(\d[\d.]*)\s*(?:L\b|litre|liter)/i.exec(line)
+      const single = /(\d[\d.]*)\s*(?:L\b|litre|liter)/i.exec(line)
+      const lo = range ? numOf(range[1]) : single ? numOf(single[1]) : null
+      const hi = range ? numOf(range[2]) : lo
+      // A "3.2 L" that is really "3200 ml" written oddly, or a stray year, is
+      // not a hydration target. Bounds, not trust.
+      if (lo != null && hi != null && lo >= 0.5 && hi <= 12) { water = { minL: lo, maxL: hi }; consumed.add(i) }
+    }
+
+    if (steps == null && /\bsteps?\b/i.test(line)) {
+      const k = /(\d[\d.]*)\s*k\b/i.exec(line)
+      const plain = /(\d[\d,]{2,})/.exec(line)
+      const n = k ? (numOf(k[1]) ?? 0) * 1000 : plain ? numOf(plain[1]) : null
+      if (n != null && n >= 1000 && n <= 60000) { steps = Math.round(n); consumed.add(i) }
+    }
+
+    if (!macros && /kcal|calorie/i.test(line)) {
+      const kcal = /(\d[\d,]{2,})\s*(?:kcal|cal)/i.exec(line)
+      const grams = (letter: string) =>
+        numOf(new RegExp(`(\\d{1,3})\\s*(?:g\\s*)?${letter}\\b`, 'i').exec(line)?.[1] ?? '')
+        ?? numOf(new RegExp(`${letter}[a-z]*\\s*[:=]?\\s*(\\d{1,3})\\s*g?\\b`, 'i').exec(line)?.[1] ?? '')
+      const value = {
+        kcal: kcal ? numOf(kcal[1]) : null,
+        proteinG: grams('P'), carbsG: grams('C'), fatG: grams('F'),
+      }
+      if (value.kcal != null) { macros = value; consumed.add(i) }
+    }
+
+    if (notes.length < 4 && !consumed.has(i)) {
+      const note = cleanInstruction(raw)
+      if (note) notes.push(note)
+    }
+  }
+
+  return { exercises, water, steps, macros, notes }
+}
+
+/**
+ * Fold several sections' targets into one. First non-null wins per field, so a
+ * later section repeating last week's hydration line cannot overwrite this
+ * week's; exercises accumulate, deduplicated by name.
+ */
+function mergeTargets(all: ReportTargets[]): ReportTargets {
+  const out: ReportTargets = { exercises: [], water: null, steps: null, macros: null, notes: [] }
+  const seen = new Set<string>()
+  for (const t of all) {
+    for (const ex of t.exercises) {
+      const key = ex.name.toLowerCase()
+      if (seen.has(key)) continue
+      seen.add(key)
+      out.exercises.push(ex)
+    }
+    out.water ??= t.water
+    out.steps ??= t.steps
+    out.macros ??= t.macros
+    for (const n of t.notes) if (out.notes.length < 4 && !out.notes.includes(n)) out.notes.push(n)
+  }
+  return out
+}
+
+/** Is there anything here worth showing? An all-empty result is treated as none. */
+export function hasTargets(t: ReportTargets | null | undefined): t is ReportTargets {
+  return !!t && (t.exercises.length > 0 || !!t.water || t.steps != null || !!t.macros || t.notes.length > 0)
+}
+
 function parseHeader(preamble: string[], md: string): FmtV2Header {
   const version = (/\bFMT\s*(v?\d+)\b/i.exec(md)?.[1] ?? 'v2').toLowerCase()
 
@@ -359,6 +557,21 @@ export function parseFmtV2(md: string | null | undefined): FmtV2Report | null {
   const asymmetry = asymSection ? parseAsymmetry(asymSection.lines) : []
   if (asymSection && asymmetry.length) asymSection.kind = 'asymmetry'
 
+  // Prescriptions are spread across whatever the week's report called them, so
+  // EVERY matching section contributes rather than the first one winning. A
+  // hydration line under "PROTOCOL" and a load ladder under "DB LADDER" are one
+  // set of instructions to the person reading them.
+  const targetSections = allSections.filter((s) =>
+    /DIRECTIVE|ACTION|NEXT\s*WEEK|PROTOCOL|PRESCRIPTION|ADJUST|DO\s*THIS|LADDER|LOAD|TARGET|PROJECTION/i.test(s.title))
+  const targets = targetSections.length
+    ? mergeTargets(targetSections.map((s) => parseTargets(s.lines)))
+    : null
+  if (targets && hasTargets(targets)) {
+    for (const s of targetSections) {
+      if (!s.kind && hasTargets(parseTargets(s.lines))) s.kind = 'targets'
+    }
+  }
+
   return {
     header: parseHeader(preamble, md),
     parts,
@@ -366,6 +579,7 @@ export function parseFmtV2(md: string | null | undefined): FmtV2Report | null {
     tdee,
     bodyComp,
     asymmetry,
+    targets: hasTargets(targets) ? targets : null,
   }
 }
 
