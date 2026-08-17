@@ -6,6 +6,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { ArrowLeftRight, Check, CheckCheck, ChevronDown, Footprints, GripVertical, History, NotebookPen, Plus, Target, X } from 'lucide-react'
 import { tapLight } from '@/lib/native/haptics'
 import { SetEditorRow } from './SetEditorRow'
+import { RestTimer } from './RestTimer'
 import { useTrackRpe } from '@/lib/hooks/useTrackRpe'
 import { cardioSummary, isSetCommitted, type DraftExercise, type DraftSet } from '@/lib/sessions/draft'
 import { isTimedExercise } from '@/lib/exercises/timed'
@@ -153,9 +154,15 @@ const fmtDate = (d: string) =>
  * means lifting `useSortable` into a shell component and moving the grip out of
  * this header — a real refactor, deliberately not done here.
  */
-export const ExerciseCard = memo(function ExerciseCard({ exercise, history, livePrs, dayKey, ready, reportTargets, collapsed = false, onUpdateSet, onSplitSet, onMergeSet, onAddSet, onRemoveSet, onToggleDone, onCheckAll, onRemoveExercise, onSetNote, onPrTap, onUpdateCardio }: {
+export const ExerciseCard = memo(function ExerciseCard({ exercise, history, globalHistory, livePrs, dayKey, ready, reportTargets, collapsed = false, onUpdateSet, onSplitSet, onMergeSet, onAddSet, onRemoveSet, onToggleDone, onCheckAll, onRemoveExercise, onSetNote, onPrTap, onUpdateCardio }: {
   exercise: DraftExercise
   history: ExerciseHistory | null
+  /**
+   * The last time this movement was done in ANY routine — what the PREVIOUS
+   * column on each set row shows. Separate from `history`, which is
+   * routine-scoped because everything that PACES you must be.
+   */
+  globalHistory?: ExerciseHistory | null
   /** Live records keyed `${localId}|${setIdx}` — computed once for the whole
    *  deck so a set is judged against the ones ticked before it. */
   livePrs?: Map<string, PrAxis[]>
@@ -273,6 +280,13 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, live
   // Declared ABOVE the cardio early-return: hooks must run in the same order on
   // every render, and a cardio card returns before this point.
   const prevWork = useMemo(() => workingSets(history ?? undefined), [history])
+  // Indexed by working-set position, which is what the row's "Previous" means:
+  // set 2 against set 2. A session with fewer sets than today simply runs out,
+  // and the later rows show nothing rather than repeating the last one.
+  const prevGlobal = useMemo(
+    () => workingSets(globalHistory ?? history ?? undefined),
+    [globalHistory, history],
+  )
   const timedEx = useMemo(() => isTimedExercise(exercise.name), [exercise.name])
   // No load to progress → the deck shows no load controls (see SetEditorRow).
   const bodyweightEx = useMemo(() => isBodyweightExercise(exercise.name), [exercise.name])
@@ -313,6 +327,26 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, live
   // What the last report asked for on THIS movement, matched by canonical name.
   // Null for every exercise the report did not name — a target nobody wrote is
   // not a target of the current load.
+  // The last tick on THIS exercise, and whether there is anything left to rest
+  // for. `doneAt` is client-only and absent on a seeded or edited session, so a
+  // reopened session shows no timer rather than a fictional one.
+  //
+  // BOTH derived in ONE memo keyed on the set list. Computed inline they would
+  // re-run `isSetCommitted` for every set of every card on every keystroke —
+  // the deck's card shells re-execute regardless (dnd-kit context), so anything
+  // in a card body is paid six times per character typed. `deck-render.test`
+  // counts exactly those calls.
+  const { lastDoneAt, allDone } = useMemo(() => {
+    let last: number | null = null
+    let every = exercise.sets.length > 0
+    for (const st of exercise.sets) {
+      const done = isSetCommitted(st)
+      if (!done) { every = false; continue }
+      if (typeof st.doneAt === 'number' && (last == null || st.doneAt > last)) last = st.doneAt
+    }
+    return { lastDoneAt: last, allDone: every }
+  }, [exercise.sets])
+
   const reportTarget = useMemo(
     () => targetForExercise(reportTargets, exercise.name),
     [reportTargets, exercise.name],
@@ -575,6 +609,7 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, live
           <div className="flex items-center gap-2 shrink-0">
             {/* Current-input glance — only when the card is collapsed. Expanded,
                 the live set rows below say the same thing, so it's redundant. */}
+            <RestTimer since={lastDoneAt} finished={allDone} />
             {!showBody && (
               <span className="helix-num text-xs text-muted tabular-nums">
                 {timedEx ? `${summary} sec`
@@ -651,6 +686,7 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, live
                   index={i}
                   displayNum={g.num}
                   set={g.set}
+                  prev={prevGlobal[g.num - 1] ?? null}
                   active={activeSet === i}
                   timed={timed}
                   bodyweight={bodyweightEx}
@@ -659,7 +695,15 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, live
                   onChange={handleChange}
                   onRemove={handleRemove}
                   onToggleDone={handleToggleDone}
-                  onSplit={handleSplit}
+                  // ── SPLIT L/R IS FOR UNILATERAL WORK ONLY ──
+                  // It was offered on every set of every movement, including a
+                  // barbell bench press, where "left side 60 kg" is not a thing
+                  // that can happen. Worse than clutter: a mis-tap silently
+                  // halves one set into two rows that the PR engine then judges
+                  // per side. `unilateral` is the same test the coach cue uses —
+                  // an already-split set, or a name that says single-arm /
+                  // single-leg / per side.
+                  onSplit={unilateral ? handleSplit : undefined}
                   onPrTap={handlePrTap}
                 />
               )
@@ -715,6 +759,7 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, live
                   <SetEditorRow
                   trackRpe={trackRpe}
                     key={`l${g.left.idx}`} index={g.left.idx} displayNum={g.num} subRow set={g.left.set}
+                    prev={prevGlobal[g.num - 1] ?? null}
                     active={activeSet === g.left.idx} timed={timed} bodyweight={bodyweightEx}
                     prAxes={livePrs?.get(livePrKey(exercise.localId, g.left.idx))}
                     onActivate={handleActivate}
@@ -727,6 +772,7 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, live
                   <SetEditorRow
                   trackRpe={trackRpe}
                     key={`r${g.right.idx}`} index={g.right.idx} displayNum={g.num} subRow set={g.right.set}
+                    prev={prevGlobal[g.num - 1] ?? null}
                     active={activeSet === g.right.idx} timed={timed} bodyweight={bodyweightEx}
                     prAxes={livePrs?.get(livePrKey(exercise.localId, g.right.idx))}
                     onActivate={handleActivate}

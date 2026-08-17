@@ -179,6 +179,65 @@ export function progressionCue(
   }
 }
 
+/**
+ * The six facts a finished exercise has, computed once.
+ *
+ * ── WHY THIS IS A STRIP AND NOT A PARAGRAPH ──────────────────────────────────
+ * The report already carried tonnage and set count in a run-on metadata line
+ * and left everything else to be reconstructed by reading the ledger: total
+ * reps by adding them up, effort by scanning for the ratings, rest by not being
+ * recorded at all. Those are the questions asked of a finished session, and a
+ * reader should not have to do arithmetic on their own workout.
+ *
+ * REST IS MEASURED OR ABSENT. `restSec` exists only for sessions logged through
+ * the deck's tick — see `WorkoutSetSchema`. Historic and pasted sessions show a
+ * dash, never a zero, because nobody rested for no time.
+ *
+ * Warm-ups are excluded from every figure except the set count they never had:
+ * they are not the work, and a light first set drags a mean down.
+ */
+export function exerciseStats(ex: DetailExercise): {
+  totalReps: number
+  avgRpe: number | null
+  medianRestSec: number | null
+  topKg: number
+} {
+  const working = ex.sets.filter((s) => s.setType !== 'warmup')
+  // A unilateral pair is ONE set of work, so its reps count once — the same
+  // rule tonnage already uses, and the reason this cannot just sum the rows.
+  const seen = new Set<string>()
+  let totalReps = 0
+  for (const s of working) {
+    const key = s.pairId ?? `#${s.setNumber}-${s.side ?? ''}`
+    if (s.pairId && seen.has(key)) continue
+    seen.add(key)
+    totalReps += s.reps
+  }
+
+  const rpes = working.map((s) => s.rpe).filter((v): v is number => v != null)
+  const avgRpe = rpes.length
+    ? Math.round((rpes.reduce((a, b) => a + b, 0) / rpes.length) * 10) / 10
+    : null
+
+  // MEDIAN, not mean: one set interrupted by a conversation should not move the
+  // number that describes how you actually paced the exercise.
+  const rests = working.map((s) => s.restSec).filter((v): v is number => v != null && v > 0).sort((a, b) => a - b)
+  const medianRestSec = rests.length ? rests[Math.floor(rests.length / 2)] : null
+
+  return {
+    totalReps,
+    avgRpe,
+    medianRestSec,
+    topKg: working.reduce((m, s) => Math.max(m, s.weightKg), 0),
+  }
+}
+
+/** "1:30" / "45s" — a rest interval, or null. */
+export function formatRest(sec: number | null): string | null {
+  if (sec == null || sec <= 0) return null
+  return sec < 60 ? `${sec}s` : `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`
+}
+
 export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
   sessionId: string
   exercises: DetailExercise[]
@@ -208,6 +267,7 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
         const rows = toRows(ex.sets)
         const accent = GROUP_COLOR[ex.muscleGroups[0]] ?? PLATINUM
         const cue = progressionCue(t, timed, unit)
+        const stats = exerciseStats(ex)
 
         return (
           <section key={ex.exerciseId} style={{ borderTop: i ? '1px solid rgba(255,255,255,0.07)' : undefined }}>
@@ -261,6 +321,28 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
                 : <ChevronRight className="w-4 h-4 text-muted/50 shrink-0" aria-hidden="true" />}
             </button>
 
+            {/* ── The exercise's own numbers, as a strip ──
+                Effort, PRs, tonnage, sets, reps and rest, side by side. Each
+                cell renders a dash when the fact does not exist, rather than
+                disappearing — a strip whose cells come and go cannot be
+                compared between two exercises at a glance, which is the only
+                reason to put them in a row. */}
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-px mx-2.5 mb-1.5 rounded-lg overflow-hidden"
+              style={{ background: 'rgba(255,255,255,0.05)' }}>
+              <Cell label="Volume" value={t?.byReps
+                ? `${t.tonnage}${t.timed ? 's' : ''}`
+                : `${Math.round(displayWeight(ex.volumeKg) ?? 0).toLocaleString()}${unit}`} />
+              <Cell label="Sets" value={`${ex.workingSets}`} />
+              <Cell label={timed ? 'Seconds' : 'Reps'} value={`${stats.totalReps}`} />
+              <Cell label="Top" value={stats.topKg > 0 ? `${displayWeight(stats.topKg)}${unit}` : '—'} />
+              <Cell label="Effort" value={stats.avgRpe != null ? rpeLabel(stats.avgRpe) : '—'}
+                color={stats.avgRpe != null ? rpeColor(stats.avgRpe) : undefined} />
+              <Cell label="Rest" value={formatRest(stats.medianRestSec) ?? '—'}
+                title={stats.medianRestSec != null
+                  ? 'Median measured rest between sets'
+                  : 'Rest is measured from the logger — sessions logged elsewhere carry none'} />
+            </div>
+
             {/* ── Set ledger ── */}
             <div className="pb-1.5">
               {rows.map((row, ri) => {
@@ -309,6 +391,14 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
                             1RM {displayWeight(row.set.est1rmKg)}
                           </span>
                         )}
+                        {/* The rest BEFORE this set — never shown on set 1, which
+                            has nothing before it to measure from. */}
+                        {formatRest(row.set.restSec) && (
+                          <span className="helix-num text-[10px] text-muted/60 shrink-0 tabular-nums ml-2"
+                            title="Measured rest before this set">
+                            ⏱ {formatRest(row.set.restSec)}
+                          </span>
+                        )}
                       </>
                     ) : (
                       <span className="flex items-center gap-1.5 flex-wrap">
@@ -345,5 +435,17 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
         onClose={() => setActive(null)}
       />
     </Surface>
+  )
+}
+
+/** One cell of an exercise's stat strip. */
+function Cell({ label, value, color, title }: {
+  label: string; value: string; color?: string; title?: string
+}) {
+  return (
+    <div className="px-2 py-1" style={{ background: 'rgb(12,13,16)' }} title={title}>
+      <div className="text-[8px] uppercase tracking-[0.1em] text-muted">{label}</div>
+      <div className="helix-num text-[11px] font-bold tabular-nums" style={{ color: color ?? undefined }}>{value}</div>
+    </div>
   )
 }

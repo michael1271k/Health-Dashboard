@@ -37,8 +37,14 @@ const maxFor = (w: number) => Math.max(60, Math.ceil((w + 30) / 10) * 10)
  * The card shells above still re-execute; they are cheap once their subtree
  * bails out.
  */
-export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subRow = false, set, active, timed = false, bodyweight = false, trackRpe = false, prAxes = [], onActivate, onChange, onRemove, onToggleDone, onSplit, onPrTap }: {
+export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subRow = false, set, prev, active, timed = false, bodyweight = false, trackRpe = false, prAxes = [], onActivate, onChange, onRemove, onToggleDone, onSplit, onPrTap }: {
   index: number
+  /**
+   * What you did on THIS set number the last time you trained this movement,
+   * from any routine — see `useGlobalSetHistory`. Absent when the movement is
+   * new, or when last time had fewer sets than this one does.
+   */
+  prev?: { weightKg: number; reps: number } | null
   /**
    * `user_goals.track_rpe`. Off = the ladder never mounts and no rating is ever
    * written; the column simply stays null, which is what "not reported" means
@@ -158,20 +164,43 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
   // reads as a unit — is answered by the chip's border and tint, which read as a
   // tag rather than a suffix, plus the full word in `title`/`aria-label`. This
   // is the treatment the read-only ledger already shipped (ExerciseBreakdown).
-  const badge = set.side ?? `S${displayNum ?? index + 1}`
-  // setType is single-valued (see `toggleType`), so at most one tag ever shows.
-  const typeTag = isWarm ? { label: 'W', full: 'Warm-up', color: ORANGE }
+  // ── THE LEFT COLUMN IS THE SET'S IDENTITY ──
+  // It used to read `S1` and carry the type as a separate chip further along
+  // the row, which meant a warm-up announced itself twice — once as a number it
+  // is not (a warm-up is not "set 1 of 4") and once as a tag. Hevy puts the
+  // letter WHERE the number goes, because a warm-up has no ordinal: it is the W.
+  // A split side still wins the box (L/R is the more specific fact) and its type
+  // falls back to the chip.
+  const typeBadge = isWarm ? { label: 'W', full: 'Warm-up', color: ORANGE }
+    : isFail ? { label: 'F', full: 'Taken to failure', color: DANGER }
     : isDrop ? { label: 'D', full: 'Drop set', color: DROP }
-    : isFail ? { label: set.side ? `F-${set.side}` : 'F', full: 'Taken to failure', color: DANGER }
+    : null
+  const badge = set.side ?? typeBadge?.label ?? `${displayNum ?? index + 1}`
+  const badgeColor = set.side ? sideColor : typeBadge?.color ?? null
+  // Only when the box could not carry it — a sided row that is also to failure.
+  const typeTag = set.side && typeBadge
+    ? { label: `${typeBadge.label}-${set.side}`, full: typeBadge.full, color: typeBadge.color }
     : null
 
   return (
     <div
+      // ── DONE OUTRANKS ACTIVE ──
+      // The expanded row used to drop its green the moment you opened it, so
+      // the one state the tick exists to show disappeared exactly when you were
+      // editing the set it belonged to — and a row you reopened to fix a rep
+      // count looked identical to one you had never completed. Green stays;
+      // the active row is distinguished by its ring instead.
       className={`rounded-lg border transition-colors ${
-        active ? 'border-primary/30 bg-white/[0.03]'
-        : done ? 'border-[#3E9E7A]/40 bg-[#3E9E7A]/[0.10]'
+        done ? 'border-[#3E9E7A]/45 bg-[#3E9E7A]/[0.10]'
+        : active ? 'border-primary/30 bg-white/[0.03]'
         : isWarm ? 'border-transparent bg-[#E0703C]/[0.06]' : 'border-transparent'}`}
-      style={subRow && sideColor ? { borderLeft: `2px solid ${sideColor}`, borderTopLeftRadius: 2, borderBottomLeftRadius: 2 } : undefined}
+      style={{
+        ...(subRow && sideColor
+          ? { borderLeft: `2px solid ${sideColor}`, borderTopLeftRadius: 2, borderBottomLeftRadius: 2 }
+          : null),
+        // The active ring, drawn as a shadow so it survives the done colours.
+        ...(active ? { boxShadow: 'inset 0 0 0 1px rgba(224,112,60,0.45)' } : null),
+      }}
     >
       {/* ── Summary block (always visible) ──
           Two lines, Hevy-style. The numbers own the first line; records hang
@@ -189,11 +218,27 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
         >
           <span className="flex items-center gap-2.5 min-w-0">
             <span
-              className="w-6 shrink-0 text-[10px] font-bold uppercase tracking-wide tabular-nums"
-              style={{ color: sideColor ?? 'var(--color-muted)' }}
+              className="w-6 h-6 shrink-0 rounded-md flex items-center justify-center text-[11px] font-bold uppercase tabular-nums"
+              style={badgeColor
+                ? { color: badgeColor, background: `${badgeColor}1f`, border: `1px solid ${badgeColor}55` }
+                : { color: 'var(--color-muted)' }}
+              title={typeBadge?.full}
+              aria-label={typeBadge ? `${typeBadge.full}, set ${displayNum ?? index + 1}` : `Set ${displayNum ?? index + 1}`}
             >
               {badge}
             </span>
+            {/* ── PREVIOUS ──
+                What this same set number was last time, from ANY routine. It
+                sits between the identity and today's numbers because that is
+                the order you read them in: which set, what it was, what it is.
+                Dimmed and never editable — it is a reference, and a reference
+                that looks like an input gets typed into. */}
+            {prev && (
+              <span className="helix-num text-[10px] tabular-nums text-muted/70 shrink-0 hidden xs:inline"
+                title="Last time you did this movement">
+                {prev.weightKg > 0 ? `${prev.weightKg}×${prev.reps}` : `${prev.reps}`}
+              </span>
+            )}
             {showLoad && (
               <>
                 <span className={`helix-num text-fluid-base font-bold tabular-nums ${isWarm ? 'text-muted' : 'text-text'}`}>
@@ -297,7 +342,7 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
 
       {/* ── Tuner (active row only) ── */}
       {active && (
-        <div className="px-2 pb-2 space-y-2">
+        <div className="px-2 pb-2 space-y-1.5">
           {/* Direct keyboard entry — type weight/reps on desktop or mobile.
               The slider + steppers below stay for tactile tuning. */}
           <div className="flex items-center gap-2">
@@ -382,10 +427,17 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
           </div>
           {/* Set type — Warm-up / Failure / Drop set (Hevy parity). "Normal" is the
               absence of all three; "Remove" is the X on the summary line. Failure is
-              PER SIDE for a split set (F on Right while Left holds). */}
-          <div className="flex items-center gap-1.5">
+              PER SIDE for a split set (F on Right while Left holds).
+
+              ONE SEGMENTED GROUP, not three floating buttons: these are mutually
+              exclusive (see `toggleType`) and three separate outlines claimed
+              otherwise. Hairline dividers, one container, one radius. */}
+          <div className="inline-flex items-stretch rounded-lg overflow-hidden"
+            style={{ border: '1px solid rgba(255,255,255,0.10)' }}>
             <TypeChip active={isWarm} color={ORANGE} label="Warm-up" short="W" onClick={() => toggleType('warmup')} />
+            <span className="w-px" style={{ background: 'rgba(255,255,255,0.10)' }} aria-hidden="true" />
             <TypeChip active={isFail} color={DANGER} label="Failure" short="F" onClick={() => toggleType('failure')} />
+            <span className="w-px" style={{ background: 'rgba(255,255,255,0.10)' }} aria-hidden="true" />
             <TypeChip active={isDrop} color={DROP} label="Drop set" short="D" onClick={() => toggleType('dropset')} />
           </div>
           {/* Effort — per SET, and only on a working one.
@@ -466,10 +518,10 @@ function TypeChip({ active, color, label, short, onClick }: {
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className="min-h-[32px] px-2.5 rounded-lg text-[11px] font-bold uppercase tracking-wide transition-colors active:scale-95"
+      className="min-h-[32px] px-2.5 text-[11px] font-bold uppercase tracking-wide transition-colors active:scale-95"
       style={active
-        ? { color, background: `${color}1f`, border: `1px solid ${color}66` }
-        : { color: 'var(--color-muted)', background: 'transparent', border: '1px solid rgba(255,255,255,0.10)' }}
+        ? { color, background: `${color}24` }
+        : { color: 'var(--color-muted)', background: 'transparent' }}
     >
       <span aria-hidden="true">{short}</span>
       <span className="ml-1 hidden sm:inline">{label}</span>

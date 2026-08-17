@@ -41,6 +41,17 @@ export interface DraftSet {
    */
   done?: boolean
   /**
+   * When this set was ticked, epoch ms. CLIENT-ONLY, like `rpeSeed` — never
+   * sent to the server and never read by the PR engine.
+   *
+   * It exists for one thing: the rest timer. Rest is the one number a logging
+   * app can measure for free and this one was throwing it away, so "how long
+   * have I been sitting here" was a question you answered by looking at the
+   * clock and doing arithmetic. Unticking clears it, because a set that is not
+   * done did not end.
+   */
+  doneAt?: number
+  /**
    * Unilateral (per-side) tracking. A split set = two DraftSets sharing
    * `pairId`, one `side` 'L' one `'R'`, and the deck folds the two back into ONE
    * numbered set with ONE checkmark.
@@ -256,9 +267,19 @@ export function buildCommitPayload(draft: SessionDraft): SaveWorkoutInput {
     const committed = ex.sets.filter(isSetCommitted)
     if (!committed.length) return        // no green sets → the exercise didn't happen
     committed.forEach((s, i) => {
+      // Rest BEFORE this set: the gap between the previous set's tick and this
+      // one's. Both stamps must exist — `doneAt` is client-only and absent on a
+      // pasted or bulk-checked session — and the gap must be plausible, so a
+      // deck left open overnight does not record a 9-hour rest.
+      const prevDoneAt = i > 0 ? committed[i - 1].doneAt : undefined
+      const gapSec = prevDoneAt != null && s.doneAt != null
+        ? Math.round((s.doneAt - prevDoneAt) / 1000)
+        : null
+      const restSec = gapSec != null && gapSec >= 0 && gapSec <= 3600 ? gapSec : undefined
       sets.push({
         exerciseName: ex.name,
         setNumber: i + 1,
+        ...(restSec != null ? { restSec } : {}),
         weightKg: s.weightKg,
         reps: s.reps,
         rpe: s.rpe,

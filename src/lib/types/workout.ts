@@ -19,6 +19,9 @@ export interface WorkoutSet {
   // `pairId`, one side 'L' one 'R'. Absent = a normal bilateral set.
   side?: 'L' | 'R'
   pairId?: string
+  /** MEASURED rest before this set, in seconds. Absent when unobserved — see
+   *  `WorkoutSetSchema`. Never a prescription and never an estimate. */
+  restSec?: number
 }
 
 // In-progress workout session (client-side, before saved to DB)

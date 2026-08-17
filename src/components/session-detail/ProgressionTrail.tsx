@@ -3,6 +3,7 @@
 import { useId, useState } from 'react'
 import { TrendingUp } from 'lucide-react'
 import { useSessionIntel, type IntelMetric } from '@/lib/hooks/useSessionIntel'
+import { sessionVerdict } from '@/lib/training/sessionVerdict'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 // Imported under their real names. EMBER/EMERALD/OXIDE were aliased on import
 // to VIOLET/TEAL/ROSE — three colour names the design system does not contain
@@ -48,6 +49,9 @@ export function ProgressionTrail({ sessionId }: { sessionId: string }) {
   if (!intel) return null
 
   const maxVol = Math.max(...(intel.volumes.map((v) => v.volumeKg) ?? [1]), 1)
+  const verdict = sessionVerdict(intel.volumeDeltaPct, intel.deltas.map((d) => ({
+    name: d.name, topKg: d.topKg, prevKg: d.prevKg, unloaded: d.unloaded,
+  })))
 
   return (
     /* NO CARD OF ITS OWN. The page composes three bands and this is the middle
@@ -64,6 +68,27 @@ export function ProgressionTrail({ sessionId }: { sessionId: string }) {
           </span>
         )}
       </div>
+
+      {/* ── THE SENTENCE, BEFORE THE NUMBERS ──
+          Tonnage falls whenever load goes up and reps reset to the window floor
+          — which on double progression is the exact moment the program was
+          waiting for, reported in red as a regression. `sessionVerdict` names
+          the load increase FIRST and the volume drop as its consequence. It
+          forgives nothing: a drop with no load increase anywhere says so. */}
+      {verdict && (
+        <p className="text-fluid-xs leading-snug"
+          style={{ color: verdict.tone === 'praise' ? EMERALD : verdict.tone === 'caution' ? OXIDE : MUTED }}>
+          {verdict.headline}
+          {verdict.loadGains.length > 0 && (
+            <span className="text-muted">
+              {' '}
+              {verdict.loadGains.slice(0, 3).map((g) => (
+                `${g.name} ${displayWeight(g.fromKg)}→${displayWeight(g.toKg)}${unit}`
+              )).join(' · ')}
+            </span>
+          )}
+        </p>
+      )}
 
       {intel.isFirstOfType ? (
         <p className="text-fluid-xs text-muted">

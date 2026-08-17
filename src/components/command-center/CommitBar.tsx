@@ -79,9 +79,9 @@ export function CommitBar({ draft, busy, error, deleting, onFinish, onDiscard, o
           className="btn-primary flex-1 justify-center disabled:opacity-50 min-h-[52px] text-fluid-base"
         >
           {busy
-            ? <><Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> {isEdit ? 'Saving…' : 'Committing…'}</>
+            ? <><Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> {isEdit ? 'Saving…' : 'Completing…'}</>
             : <><ChevronUp className="w-4 h-4" aria-hidden="true" />
-                {isEdit ? 'Save Edits' : 'Finish Session'}
+                {isEdit ? 'Save Changes' : 'Finish Session'}
                 <span className="text-xs opacity-70 ml-1">{totals.sets} sets · {fmtVolume(totals.volumeKg)}kg</span></>}
         </button>
       </div>

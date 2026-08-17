@@ -24,9 +24,11 @@ const DRAG_MODIFIERS = [restrictToVerticalAxis, restrictToParentElement]
  * Stays a SINGLE column at every breakpoint — verticalListSortingStrategy +
  * restrictToVerticalAxis are only valid for a one-column list.
  */
-export function ExerciseDeckList({ draft, history, livePrs, readyByName, reportTargets, onReorder, onUpdateSet, onSplitSet, onMergeSet, onAddSet, onRemoveSet, onToggleDone, onCheckAll, onRemoveExercise, onSetNote, onPrTap, onUpdateCardio }: {
+export function ExerciseDeckList({ draft, history, globalHistory, livePrs, readyByName, reportTargets, onReorder, onUpdateSet, onSplitSet, onMergeSet, onAddSet, onRemoveSet, onToggleDone, onCheckAll, onRemoveExercise, onSetNote, onPrTap, onUpdateCardio }: {
   draft: SessionDraft
   history: Map<string, ExerciseHistory> | undefined
+  /** Unscoped memory — the last time this movement was done in ANY routine. */
+  globalHistory?: Map<string, ExerciseHistory>
   /** Live records keyed `${localId}|${setIdx}` — see `computeLivePrs`. */
   livePrs?: Map<string, PrAxis[]>
   /** Forward-carried progression cues, keyed by exercise name. */
@@ -108,6 +110,7 @@ export function ExerciseDeckList({ draft, history, livePrs, readyByName, reportT
               key={ex.localId}
               exercise={ex}
               history={history?.get(ex.name) ?? null}
+              globalHistory={globalHistory?.get(ex.name) ?? null}
               livePrs={livePrs}
               dayKey={draft.dayKey}
               ready={readyByName?.get(ex.name) ?? null}

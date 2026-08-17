@@ -20,6 +20,16 @@ export const WorkoutSetSchema = z.object({
   // Unilateral: a split set is two rows sharing `pairId`, one per `side`.
   side: z.enum(['L', 'R']).optional(),
   pairId: z.string().max(64).optional(),
+  /**
+   * MEASURED rest before this set, in seconds — the gap between the previous
+   * set's tick and this one's. Never prescribed and never estimated: absent
+   * whenever the deck did not observe both ticks (a pasted session, an edit, a
+   * set checked in bulk), because a rest interval nobody watched is a number
+   * that would be indistinguishable from one that was.
+   *
+   * Capped at an hour: a longer gap is a deck left open, not a rest.
+   */
+  restSec: z.number().int().nonnegative().max(3600).optional(),
 })
 
 /**

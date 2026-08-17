@@ -204,9 +204,13 @@ export function useSessionDraft() {
         const target = ex.sets[setIdx]
         if (!target) return ex
         const next = !isSetCommitted(target) // currently unchecked → check it
+        // The tick is also the only honest timestamp in a logging session: it
+        // is the moment you stopped. Both halves of a pair carry it, because a
+        // pair is one set and its rest starts when the second arm finishes.
+        const stamp = next ? { doneAt: Date.now() } : { doneAt: undefined }
         const sets = ex.sets.map((s, i) => {
-          if (i === setIdx) return { ...s, done: next }
-          if (target.pairId && s.pairId === target.pairId) return { ...s, done: next }
+          if (i === setIdx) return { ...s, done: next, ...stamp }
+          if (target.pairId && s.pairId === target.pairId) return { ...s, done: next, ...stamp }
           return s
         })
         return { ...ex, sets }
@@ -219,7 +223,11 @@ export function useSessionDraft() {
     setDraft((d) => d && ({
       ...d,
       exercises: d.exercises.map((ex) =>
-        ex.localId === localId ? { ...ex, sets: ex.sets.map((s) => ({ ...s, done: true })) } : ex),
+        ex.localId === localId
+          // "Check all" stamps nothing: these sets did not finish now, and a
+          // rest timer counting from a bulk action would be a fiction.
+          ? { ...ex, sets: ex.sets.map((s) => ({ ...s, done: true })) }
+          : ex),
     }))
   }, [])
 

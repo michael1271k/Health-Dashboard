@@ -1,14 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { Check, Loader2 } from 'lucide-react'
+import { Check, Loader2, Timer, HeartPulse, Flame, Layers, Dumbbell } from 'lucide-react'
 import { Sheet } from '@/components/ui/Sheet'
 import { EffortScale } from '@/components/ui/EffortScale'
 import { draftTotals, isSetCommitted, type SessionDraft } from '@/lib/sessions/draft'
 import { deriveSessionRpe } from '@/lib/training/rpeMemory'
 import { fmtVolume } from '@/lib/utils/units'
 import { parseDurationMin } from '@/lib/utils/duration'
-import { EMBER, STEEL } from '@/lib/theme/palette'
+import { EMBER, STEEL, OXIDE, GOLD, SAPPHIRE } from '@/lib/theme/palette'
 
 type StatPatch = Partial<NonNullable<SessionDraft['stats']>>
 
@@ -51,19 +51,24 @@ export function FinishSheet({ open, onClose, draft, busy, error, onSetStats, onS
   return (
     <Sheet open={open} onClose={onClose} title={isEdit ? 'Save edits' : 'Finish session'} accent={EMBER}>
       <div className="space-y-5 pb-2">
-        <div className="flex items-baseline gap-5">
-          <Total value={fmtVolume(totals.volumeKg)} unit="kg" label="Volume" color={EMBER} />
-          <Total value={String(totals.sets)} label="Sets" color={STEEL} />
+        {/* ── WHAT YOU DID, THEN WHAT ONLY YOU KNOW ──
+            The two totals are already true and are not asked for; the three
+            fields below are the only numbers the app cannot derive. Splitting
+            them visually is the whole point of this screen — a grid of five
+            identical boxes makes "volume" look like something you type. */}
+        <div className="grid grid-cols-2 gap-2">
+          <Total icon={Dumbbell} value={fmtVolume(totals.volumeKg)} unit="kg" label="Volume" color={EMBER} />
+          <Total icon={Layers} value={String(totals.sets)} label="Sets" color={STEEL} />
         </div>
 
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted mb-2">Session</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted mb-2">The parts only you know</p>
           <div className="grid grid-cols-3 gap-2">
-            <Field label="Duration" unit="min" value={s?.duration_min ?? null}
+            <Field label="Duration" unit="min" icon={Timer} color={SAPPHIRE} value={s?.duration_min ?? null}
               onChange={(v) => onSetStats({ duration_min: v })} parse={parseDurationMin} />
-            <Field label="Avg HR" unit="bpm" value={s?.avg_hr_bpm ?? null}
+            <Field label="Avg HR" unit="bpm" icon={HeartPulse} color={OXIDE} value={s?.avg_hr_bpm ?? null}
               onChange={(v) => onSetStats({ avg_hr_bpm: v })} />
-            <Field label="Calories" unit="kcal" value={s?.calories_kcal ?? null}
+            <Field label="Calories" unit="kcal" icon={Flame} color={GOLD} value={s?.calories_kcal ?? null}
               onChange={(v) => onSetStats({ calories_kcal: v })} />
           </div>
           <p className="text-[10px] text-muted/70 mt-1.5">
@@ -94,21 +99,26 @@ export function FinishSheet({ open, onClose, draft, busy, error, onSetStats, onS
           className="btn-primary w-full justify-center disabled:opacity-50 min-h-[52px] text-fluid-base"
         >
           {busy
-            ? <><Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> {isEdit ? 'Saving…' : 'Committing…'}</>
-            : <><Check className="w-4 h-4" aria-hidden="true" /> {isEdit ? 'Save Edits' : 'Commit Workout'}</>}
+            ? <><Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> {isEdit ? 'Saving…' : 'Completing…'}</>
+            : <><Check className="w-4 h-4" aria-hidden="true" /> {isEdit ? 'Save Changes' : 'Complete Session'}</>}
         </button>
       </div>
     </Sheet>
   )
 }
 
-function Total({ value, unit, label, color }: { value: string; unit?: string; label: string; color: string }) {
+function Total({ icon: Icon, value, unit, label, color }: {
+  icon: typeof Dumbbell; value: string; unit?: string; label: string; color: string
+}) {
   return (
-    <div>
-      <div className="helix-num font-bold text-fluid-2xl tabular-nums leading-none" style={{ color }}>
-        {value}{unit && <span className="text-[11px] font-normal ml-1 opacity-70">{unit}</span>}
+    <div className="rounded-xl px-3 py-2.5" style={{ background: `${color}0f`, border: `1px solid ${color}33` }}>
+      <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color }}>
+        <Icon className="w-3 h-3" aria-hidden="true" />
+        {label}
       </div>
-      <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted mt-1">{label}</div>
+      <div className="helix-num font-bold text-fluid-2xl tabular-nums leading-none mt-1 text-text">
+        {value}{unit && <span className="text-[11px] font-normal ml-1 text-muted">{unit}</span>}
+      </div>
     </div>
   )
 }
@@ -119,20 +129,25 @@ function Total({ value, unit, label, color }: { value: string; unit?: string; la
  * mid-word, and an empty field must commit null rather than 0 — you did not
  * burn zero calories, you did not record the number.
  */
-function Field({ label, unit, value, onChange, parse }: {
+function Field({ label, unit, value, onChange, parse, icon: Icon, color }: {
   label: string
   unit: string
   value: number | null
   onChange: (v: number | null) => void
   /** Custom string→number parser (Duration accepts "1:06"). */
   parse?: (raw: string) => number | null
+  icon: typeof Timer
+  color: string
 }) {
   const [text, setText] = useState<string | null>(null)
   const toNumber = parse ?? ((raw: string) => (raw.trim() === '' ? null : Number(raw)))
   const shown = text ?? (value != null ? String(value) : '')
   return (
     <label className="min-w-0">
-      <span className="block text-[10px] font-bold uppercase tracking-wide text-muted mb-1">{label}</span>
+      <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide mb-1" style={{ color }}>
+        <Icon className="w-3 h-3" aria-hidden="true" />
+        <span className="truncate">{label}</span>
+      </span>
       <span className="flex items-baseline gap-1 rounded-xl border border-white/[0.08] bg-white/[0.04] px-2.5 min-h-[44px]">
         <input
           type={parse ? 'text' : 'number'}

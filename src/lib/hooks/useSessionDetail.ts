@@ -28,6 +28,14 @@ export interface DetailSet {
    * also crowding the title until long names wrapped.
    */
   prAxes: PrAxis[]
+  /**
+   * MEASURED rest before this set, in seconds, or null.
+   *
+   * Only sessions logged with the deck's tick carry it — see `WorkoutSetSchema`.
+   * Historic sessions, pasted sessions and edits are null, which the report
+   * renders as an em dash rather than as a zero: nobody rested for no time.
+   */
+  restSec: number | null
 }
 
 export interface DetailExercise {
@@ -97,6 +105,8 @@ type RawSet = {
   set_type: string | null
   side: string | null
   pair_id: string | null
+  /** Absent on a database without the column, and on every historic row. */
+  rest_sec?: number | null
   exercises: { name: string; muscle_groups: string[] | null; is_compound: boolean }
 }
 
@@ -128,11 +138,25 @@ export function useSessionDetail(sessionId: string | null) {
 
       const { data: setsRaw } = await supabase
         .from('workout_sets')
-        .select('exercise_id, set_number, weight_kg, reps, rpe, is_pr, est_1rm_kg, exercise_order, set_type, side, pair_id, exercises!inner(name, muscle_groups, is_compound)')
+        // `rest_sec` is newer than most rows and may not be migrated at all —
+        // hence the fallback select below rather than one query that fails.
+        .select('exercise_id, set_number, weight_kg, reps, rpe, is_pr, est_1rm_kg, exercise_order, set_type, side, pair_id, rest_sec, exercises!inner(name, muscle_groups, is_compound)')
         .eq('session_id', sessionId as string)
         .order('exercise_order', { ascending: true })
         .order('set_number', { ascending: true })
-      const rows = (setsRaw ?? []) as unknown as RawSet[]
+      let rows = (setsRaw ?? []) as unknown as RawSet[]
+      if (!rows.length) {
+        // Either an empty session or a database without `rest_sec`. Retry
+        // without it: losing the whole report to a column that only annotates
+        // it would be the wrong trade.
+        const { data: legacy } = await supabase
+          .from('workout_sets')
+          .select('exercise_id, set_number, weight_kg, reps, rpe, is_pr, est_1rm_kg, exercise_order, set_type, side, pair_id, exercises!inner(name, muscle_groups, is_compound)')
+          .eq('session_id', sessionId as string)
+          .order('exercise_order', { ascending: true })
+          .order('set_number', { ascending: true })
+        rows = (legacy ?? []) as unknown as RawSet[]
+      }
 
       // Group sets by exercise, preserving exercise_order.
       const byEx = new Map<string, DetailExercise>()
@@ -189,6 +213,7 @@ export function useSessionDetail(sessionId: string | null) {
           setNumber: r.set_number, weightKg: r.weight_kg, reps: r.reps,
           rpe: r.rpe, isPr: r.is_pr, est1rmKg: r.est_1rm_kg, setType,
           side: r.side ?? null, pairId: r.pair_id ?? null, prAxes: [],
+          restSec: typeof r.rest_sec === 'number' ? r.rest_sec : null,
         })
         if (!isWarmup) {
           // Collected, not summed. Tonnage now goes through `sessionVolumeKg`

@@ -8,7 +8,7 @@ import type { ReadyCue } from './ExerciseCard'
 import { SessionNotesCard } from './SessionNotesCard'
 import { CommitBar } from './CommitBar'
 import { FinishSheet } from './FinishSheet'
-import { useExerciseSetHistory } from '@/lib/hooks/useExerciseSetHistory'
+import { useExerciseSetHistory, useGlobalSetHistory } from '@/lib/hooks/useExerciseSetHistory'
 import { useExerciseBaselines } from '@/lib/hooks/useExerciseBaselines'
 import { computeLivePrs, livePrDigest, livePrKey } from '@/lib/sessions/livePrs'
 import { PrRecordSheet } from './PrRecordSheet'
@@ -45,6 +45,9 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
   // Era-aware previous-session memory for every exercise in the deck.
   const names = draft?.exercises.filter((ex) => ex.kind !== 'cardio').map((ex) => ex.name) ?? []
   const { data: history } = useExerciseSetHistory(names, draft ? eraForDate(draft.date) : undefined, draft?.dayKey)
+  // The PREVIOUS column asks a different question from the coach — see the note
+  // on `useGlobalSetHistory`. Friday's leg curl shows Monday's numbers.
+  const { data: globalHistory } = useGlobalSetHistory(names, draft ? eraForDate(draft.date) : undefined)
 
   // Live PR detection. All-time baselines strictly BEFORE this session's date,
   // run through the same engine `saveSession` uses — so a badge that appears on
@@ -110,7 +113,7 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
         <div className="flex items-center gap-2 text-success">
           {result.duplicate ? <CopyCheck className="w-5 h-5" aria-hidden="true" /> : <Check className="w-5 h-5" aria-hidden="true" />}
           <h3 className="font-heading font-bold text-fluid-lg text-text">
-            {result.duplicate ? 'Already logged' : 'Session Committed'}
+            {result.duplicate ? 'Already logged' : 'Session Complete'}
           </h3>
         </div>
         {result.duplicate ? (
@@ -228,6 +231,7 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
         <ExerciseDeckList
           draft={draft}
           history={history}
+          globalHistory={globalHistory}
           livePrs={livePrs.bySet}
           readyByName={readyByName}
           reportTargets={reportTargets}

@@ -131,3 +131,25 @@ export function useExerciseSetHistory(names: string[], era?: Era, dayKey?: strin
     },
   })
 }
+
+/**
+ * The same memory, UNSCOPED — the last time you did this movement at all.
+ *
+ * ── WHY BOTH EXIST ───────────────────────────────────────────────────────────
+ * The routine-scoped lookup above is right for everything that PACES you: rep
+ * windows, the ceiling check and progression are per-routine, and blending
+ * Legs A's leg curl with Legs B's is what made the coach argue with itself.
+ *
+ * The "Previous" column on a set row is a different question. It asks what you
+ * lifted last time you did this movement, and the honest answer on a Friday is
+ * Monday's leg curl even though Monday was a different routine — otherwise the
+ * column is empty on every movement that appears in two splits, which is most
+ * of them.
+ *
+ * It is a second query rather than a second filter over one, deliberately: the
+ * scoped hook's `queryKey` carries the routine, and widening it would rebuild
+ * the whole cache entry every time a deck opened on a different day.
+ */
+export function useGlobalSetHistory(names: string[], era?: Era) {
+  return useExerciseSetHistory(names, era)
+}
