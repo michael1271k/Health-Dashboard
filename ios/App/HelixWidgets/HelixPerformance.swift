@@ -85,6 +85,7 @@ struct RecordFocusFace: View {
         Caption("LATEST PR", color: mono ? .white : Helix.gold)
         Spacer(minLength: 0)
         if entry.isStale { StaleTag(age: entry.age) }
+        HelixBrand(monochrome: mono, size: 12)
       }
 
       if let top {

@@ -270,6 +270,7 @@ struct FocusFace: View {
         Caption(spec.caption, color: accent)
         Spacer(minLength: 0)
         if stale { StaleTag(age: age) }
+        HelixBrand(monochrome: mono, size: 12)
       }
       BigValue(value: spec.hero, size: 30, color: .white)
       if let sub = spec.sub {
@@ -492,6 +493,7 @@ struct SleepArcFace: View {
         Caption("SLEEP", color: mono ? .white : Helix.sapphire)
         Spacer(minLength: 0)
         if entry.isStale { StaleTag(age: entry.age) }
+        HelixBrand(monochrome: mono, size: 12)
       }
 
       DepthArc(segments: sleepSegments(s), minutes: s?.sleep.minutes,
@@ -729,6 +731,7 @@ struct WeightFocusFace: View {
         Caption("WEIGHT", color: accent)
         Spacer(minLength: 0)
         if entry.isStale { StaleTag(age: entry.age) }
+        HelixBrand(monochrome: mono, size: 12)
       }
 
       HStack(alignment: .firstTextBaseline, spacing: 4) {
@@ -1157,6 +1160,7 @@ struct MacroFocusFace: View {
         ContextChip(context: s?.context, monochrome: mono)
         Spacer(minLength: 0)
         if entry.isStale { StaleTag(age: entry.age) }
+        HelixBrand(monochrome: mono, size: 12)
       }
       HStack(alignment: .firstTextBaseline, spacing: 4) {
         BigValue(value: s?.caloriesRemaining.map { "\($0)" }, size: 22, color: .white)

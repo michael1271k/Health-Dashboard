@@ -51,7 +51,7 @@ struct TrainingView: View {
     case (.today, .medium):     TodayFace(entry: entry, mono: mono, compact: false)
     case (.today, .large):      TodayLargeFace(entry: entry, mono: mono)
 
-    case (.calendar, .small):   CalendarFace(entry: entry, mono: mono, weeks: 1)
+    case (.calendar, .small):   CalendarFace(entry: entry, mono: mono, weeks: 6, compact: true)
     case (.calendar, .medium):  CalendarFace(entry: entry, mono: mono, weeks: 4)
     case (.calendar, .large):   CalendarFace(entry: entry, mono: mono, weeks: 6)
 
@@ -277,8 +277,10 @@ private struct TodayHeader: View {
       Caption(caption, color: isRest ? Helix.muted : accent)
       Spacer(minLength: 0)
       if entry.isStale { StaleTag(age: entry.age) }
-      // Small excluded — see CalendarFace. `TodayLargeFace` carries its own.
-      if branded { HelixBrand(monochrome: mono, size: 12) }
+      // Every size, sized to the room it has. It used to be Medium-and-up
+      // only, so the Small Today face — the most-installed widget in the set —
+      // was the one that never said whose it was.
+      HelixBrand(monochrome: mono, size: branded ? 15 : 12)
     }
   }
 
@@ -517,25 +519,28 @@ struct Stat: View {
 struct CalendarFace: View {
   let entry: HelixEntry
   let mono: Bool
-  /// How many weeks this size can hold legibly. 42 cells in a Small is a
-  /// texture, not a calendar.
+  /// How many weeks the grid may draw. Only the summary strip depends on it now.
   let weeks: Int
+  /// The Small face: same month, less furniture around it.
+  var compact = false
 
   private var s: HelixSnapshot? { entry.snapshot }
 
-  /// The days this size actually draws.
+  /// The days the grid draws — the calendar month containing today, at EVERY
+  /// size.
   ///
-  /// ── SMALL IS A WEEK, EVERYTHING ELSE IS THE MONTH ──────────────────────────
-  /// The payload window now runs the trailing 42 days UNION the current calendar
-  /// month, so the days after today exist for the first time and a real month
-  /// grid is drawable. A Small still is not the place for one — 42 cells in
-  /// 150pt is a texture, not a calendar — so it keeps the trailing week and says
-  /// so in its caption rather than calling a rolling window "this month".
+  /// ── SMALL USED TO BE A ROLLING WEEK ────────────────────────────────────────
+  /// It drew the trailing seven days and captioned them "THIS WEEK". Honest, and
+  /// not what a calendar widget is for: a strip of the last seven days answers
+  /// "what did I just do", which the Today face already answers, while the
+  /// question you put a calendar on a home screen to answer is "where am I in
+  /// the month". Seven cells also left most of a 150pt square empty to say it.
+  ///
+  /// A month fits: `MonthGrid` sizes its cells to whichever axis binds, so six
+  /// rows in a Small land near 18pt a cell — comfortably above the 11pt floor,
+  /// and the digits stay above 7pt.
   private var days: [HelixSnapshot.CalendarDay] {
     let all = s?.calendar ?? []
-    guard weeks > 1 else {
-      return all.count > 7 ? Array(all.suffix(7)) : all
-    }
     // The calendar month containing today. `d` is `YYYY-MM-DD`, so the month is
     // a string prefix — no date parsing, no timezone to get wrong.
     let month = String((s?.date ?? "").prefix(7))
@@ -543,24 +548,22 @@ struct CalendarFace: View {
     return inMonth.isEmpty ? all : inMonth
   }
 
-  /// "AUGUST" — the month the grid is showing. The Small says "THIS WEEK",
-  /// because that is what it is showing and the complaint that it claimed
-  /// otherwise was right.
+  /// "AUGUST" — the month the grid is showing, at every size.
   private var caption: String {
-    guard weeks > 1 else { return "THIS WEEK" }
-    return HelixSnapshot.monthName(s?.date)?.uppercased() ?? "CALENDAR"
+    HelixSnapshot.monthName(s?.date)?.uppercased() ?? "CALENDAR"
   }
 
   var body: some View {
-    VStack(alignment: .leading, spacing: weeks > 1 ? 7 : 6) {
+    VStack(alignment: .leading, spacing: compact ? 5 : 7) {
       HStack(spacing: 5) {
         Caption(caption, color: mono ? .white : Helix.steel)
         Spacer(minLength: 0)
         if entry.isStale { StaleTag(age: entry.age) }
-        // Medium and Large only. A Small is 150pt and cannot spare a corner for
-        // a logo — and nobody needs branding on a widget they chose to install.
-        if weeks > 1 { HelixBrand(monochrome: mono, size: 12) }
-        if let streak = s?.streak, streak.current > 0 {
+        // The mark, at every size. Small pays for it by dropping the streak
+        // flame below — of the two, the one that has to survive is the one that
+        // says whose widget this is; the streak is on the Today face as well.
+        HelixBrand(monochrome: mono, size: compact ? 12 : 15)
+        if !compact, let streak = s?.streak, streak.current > 0 {
           HStack(spacing: 3) {
             Image(systemName: "flame.fill")
               .font(.system(size: 9))
@@ -577,11 +580,11 @@ struct CalendarFace: View {
           .font(.system(size: 10)).foregroundStyle(Helix.muted)
           .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
       } else {
-        MonthGrid(days: days, today: s?.date, mono: mono, showHeader: weeks > 1)
+        MonthGrid(days: days, today: s?.date, mono: mono, showHeader: !compact)
           .frame(maxHeight: .infinity)
       }
 
-      if weeks >= 6 {
+      if weeks >= 6 && !compact {
         Hairline()
         HStack(spacing: 0) {
           Stat(value: s.map { "\($0.week.sessions)" }, label: "THIS WEEK", color: .white)
@@ -698,26 +701,30 @@ private struct DayCell: View {
   /// pale enough to read as white. Rest days therefore never ask for it.
   private var color: Color { mono ? .white : Helix.day(day.dayKey) }
 
-  /// ── THE DATE IS WHITE IN EVERY STATE ──────────────────────────────────────
-  /// A logged day used to be a SOLID fill of the day colour with the number in
-  /// `Helix.background` on top. At `size * 0.42` in a Small cell that is roughly
-  /// 4.6pt of near-black on gold — not small text, a smudge. The report that the
-  /// widget showed "white circles covering the dates" was describing exactly
-  /// this: the ring won, and the date lost.
+  /// ── A TRAINED DAY IS SOLID WHITE WITH A BLACK DATE ────────────────────────
+  /// It was a 22%-alpha wash of the day colour under a white number — legible,
+  /// and quiet: on a grid of thirty cells the trained days did not jump out,
+  /// which is the entire job of a training calendar.
   ///
-  /// A 22%-alpha wash with a full-strength ring says "trained" just as clearly
-  /// against obsidian, and leaves the number legible on top of it. The date is
-  /// the thing you are looking for in a calendar; nothing may outrank it.
+  /// White-on-black is the highest contrast this surface can produce, in both
+  /// directions, so the fill reads at a glance AND the date survives on top of
+  /// it. That is the difference from the version this replaces, which filled
+  /// with the DAY COLOUR and printed near-black on top: at `size * 0.42` in a
+  /// Small cell, roughly 4.6pt of obsidian on gold — not small text, a smudge.
+  /// Gold is a mid-tone; white is not.
+  ///
+  /// The day colour does not disappear: it still draws the scheduled-but-missed
+  /// ring, which is where it is carrying information rather than decoration.
   private var textColor: Color {
     if outside { return Helix.muted.opacity(0.55) }
-    return day.scheduled || day.logged ? .white : Helix.muted
+    if day.logged { return .black }
+    return day.scheduled ? .white : Helix.muted
   }
 
   var body: some View {
     ZStack {
       if day.logged {
-        Circle().fill(color.opacity(0.22))
-        Circle().strokeBorder(color, lineWidth: 1.5)
+        Circle().fill(.white)
       } else if day.scheduled {
         Circle().strokeBorder(color.opacity(0.5), lineWidth: 1.5)
       }
@@ -726,29 +733,31 @@ private struct DayCell: View {
         .font(HelixType.figure(max(7, size * 0.42)))
         .fontWeight(day.logged ? .bold : .semibold)
         .foregroundStyle(textColor)
-        .minimumScaleFactor(0.7)
+        // 0.6, not 0.7: a Small month is six rows, so the cell is smaller than
+        // it was on any face that drew this before, and a two-digit date must
+        // shrink rather than truncate.
+        .minimumScaleFactor(0.6)
 
-      // Today is a dot UNDER the number, not a second ring around the cell. Two
-      // concentric rings on one cell is two states competing to be read first,
-      // and the outer one won on a surface where the inner one carries the
-      // meaning.
+      // Today is a RING AROUND the cell, not a dot under the number.
+      //
+      // The dot sat inside the circle, which was fine over a 22% wash and is
+      // invisible over a solid white one — and painting it dark instead would
+      // put a second black mark inside a cell that already has a black date in
+      // it. Outside the fill it cannot collide with either.
       if isToday {
-        VStack(spacing: 0) {
-          Spacer(minLength: 0)
-          Circle()
-            .fill(mono ? Color.white : Helix.ember)
-            .frame(width: max(2.5, size * 0.13), height: max(2.5, size * 0.13))
-        }
-        .frame(height: size)
+        Circle()
+          .strokeBorder(mono ? Color.white : Helix.ember, lineWidth: max(1, size * 0.075))
+          .frame(width: size, height: size)
       }
 
       // A rest day inside the month gets a faint dot so the grid still reads as
-      // a grid rather than as scattered rings over blank space.
-      if !day.scheduled && !day.logged && !outside {
+      // a grid rather than as scattered rings over blank space. Suppressed on
+      // today, which now carries its own ring.
+      if !day.scheduled && !day.logged && !outside && !isToday {
         VStack(spacing: 0) {
           Spacer(minLength: 0)
           Circle()
-            .fill(Helix.muted.opacity(isToday ? 0 : 0.4))
+            .fill(Helix.muted.opacity(0.4))
             .frame(width: max(2, size * 0.09), height: max(2, size * 0.09))
         }
         .frame(height: size)
@@ -786,6 +795,7 @@ struct VolumeFocusFace: View {
         Caption("VOLUME", color: mono ? .white : Helix.emerald)
         Spacer(minLength: 0)
         if entry.isStale { StaleTag(age: entry.age) }
+        HelixBrand(monochrome: mono, size: 12)
       }
       BigValue(value: HelixSnapshot.tonnes(s?.week.volumeKg), size: 28, color: .white)
       HStack(spacing: 5) {
@@ -965,6 +975,7 @@ struct StreakFace: View {
         Caption("STREAK", color: mono ? .white : Helix.ember)
         Spacer(minLength: 0)
         if entry.isStale { StaleTag(age: entry.age) }
+        HelixBrand(monochrome: mono, size: 12)
       }
 
       Spacer(minLength: 0)

@@ -660,14 +660,49 @@ struct DayColumn: View {
 // image becomes one flat blob, which reads as a rendering fault rather than a
 // brand.
 //
-// Two stroked sine strands survive both. They read at 11pt because they are
-// lines rather than surfaces, and they tint correctly because each strand is its
-// own `Path` and can take its own colour — or the same one, deliberately, when
-// the widget is accented.
+// Two stroked sine strands and their rungs survive both. They read small because
+// they are lines rather than surfaces, and they tint correctly because each
+// strand is its own `Path` and can take its own colour — or the same one at
+// different alphas, deliberately, when the widget is accented.
 
-/// The Helix mark: two strands crossing, in the icon's geometry.
+// ── WHY IT GAINED RUNGS ──────────────────────────────────────────────────────
+// Two sine strands is what a double helix looks like from a distance; it is not
+// what one READS as at 13pt. Without the base pairs between them the mark is two
+// crossing squiggles, which is a shape, not a molecule — and the thing the icon
+// is a picture of is the molecule.
+//
+// The rungs go where the strands are furthest apart — the quarter phases — and
+// nowhere else. Three of them, which is how many quarter phases 1.5 periods
+// contains. A rung anywhere else is shorter, and a rung AT a crossing has zero
+// length: with a round cap that draws a dot in the middle of the mark, and a
+// column of dots down the centre reads as a seam rather than as a ladder.
+//
+// The strand count went from one period to 1.5 for the same reason: one period
+// gives two crossings and reads as an X. One and a half gives three, which is
+// the minimum that reads as a repeating twist rather than a single knot.
+
+/// Vertical span of the drawing, as a fraction of the frame. The strands and
+/// the rungs share it so a rung always lands ON the strands.
+private let HELIX_TOP = 0.06
+private let HELIX_RUN = 0.88
+/// Horizontal swing, either side of centre.
+private let HELIX_AMPLITUDE = 0.40
+/// How many periods the strands turn through.
+private let HELIX_PERIODS = 1.5
+
+@inline(__always)
+private func helixX(_ rect: CGRect, _ t: Double, _ phase: Double) -> CGFloat {
+  rect.minX + rect.width * (0.5 + HELIX_AMPLITUDE * sin((t * HELIX_PERIODS + phase) * 2 * .pi))
+}
+
+@inline(__always)
+private func helixY(_ rect: CGRect, _ t: Double) -> CGFloat {
+  rect.minY + rect.height * (HELIX_TOP + HELIX_RUN * t)
+}
+
+/// The Helix mark: two strands twisting, in the icon's geometry.
 ///
-/// One period of a sine, drawn twice half a period apart. That gives the two
+/// A sine of 1.5 periods, drawn twice half a period apart. That gives the three
 /// crossings the icon has, at the ribbon angle it has, without any of the
 /// shading that does not survive being small.
 struct HelixStrand: Shape {
@@ -676,14 +711,39 @@ struct HelixStrand: Shape {
 
   func path(in rect: CGRect) -> Path {
     var path = Path()
-    let steps = 24
+    // 36, not 24: the strand turns through half again as much now, and a
+    // polyline coarse enough to show its corners at 16pt is a coarse logo.
+    let steps = 36
     for step in 0...steps {
       let t = Double(step) / Double(steps)
-      // Inset by the stroke's own half-width so the caps stay inside the frame.
-      let x = rect.minX + rect.width * (0.5 + 0.42 * sin((t + phase) * 2 * .pi))
-      let y = rect.minY + rect.height * (0.08 + 0.84 * t)
-      let point = CGPoint(x: x, y: y)
+      let point = CGPoint(x: helixX(rect, t, phase), y: helixY(rect, t))
       if step == 0 { path.move(to: point) } else { path.addLine(to: point) }
+    }
+    return path
+  }
+}
+
+/// The base pairs — the short bars between the strands.
+///
+/// Drawn only where the two strands are far enough apart to have something
+/// between them; at a crossing a rung is a dot, and a row of dots down the
+/// middle reads as a seam rather than a ladder.
+struct HelixRungs: Shape {
+  func path(in rect: CGRect) -> Path {
+    var path = Path()
+    // Quarter phases of the 1.5-period run: 0.25, 0.75 and 1.25 of a period,
+    // expressed in t. (t = 1 is the third CROSSING, not a quarter phase — see
+    // the note above for why it must not be in this list.)
+    let stops: [Double] = [1.0 / 6.0, 1.0 / 2.0, 5.0 / 6.0]
+    for t in stops {
+      let a = helixX(rect, t, 0)
+      let b = helixX(rect, t, 0.5)
+      let y = helixY(rect, t)
+      // Pull each end back toward the middle so the rung tucks under the
+      // strand's round cap instead of poking out past it.
+      let inset = (b - a) * 0.12
+      path.move(to: CGPoint(x: a + inset, y: y))
+      path.addLine(to: CGPoint(x: b - inset, y: y))
     }
     return path
   }
@@ -691,38 +751,53 @@ struct HelixStrand: Shape {
 
 /// The mark, at a size. Ember in front, steel behind — or both white when the
 /// widget is rendered in accented mode, where two colours would be a lie.
+///
+/// The back strand is drawn at partial alpha under a full-strength front one, so
+/// the two read as interlocking rather than as two lines that happen to cross.
+/// That survives accented mode, where they are both white: the depth is carried
+/// by the alpha split, not by the hue.
 struct HelixMark: View {
-  var size: CGFloat = 13
+  var size: CGFloat = 16
   var monochrome = false
-  var opacity: Double = 0.55
+  /// 0.85, not 0.55. At just over half opacity on a near-black canvas the mark
+  /// was a watermark — present enough to occupy the corner, too faint to be the
+  /// logo it was there to be.
+  var opacity: Double = 0.85
 
   private var front: Color { monochrome ? .white : Helix.ember }
   private var back: Color { monochrome ? .white : Helix.steel }
 
   var body: some View {
     ZStack {
-      HelixStrand(phase: 0.5).stroke(back, style: stroke)
+      HelixStrand(phase: 0.5).stroke(back.opacity(0.55), style: stroke)
+      HelixRungs().stroke(back.opacity(0.75), style: rungStroke)
       HelixStrand(phase: 0).stroke(front, style: stroke)
     }
-    .frame(width: size * 0.72, height: size)
+    .frame(width: size * 0.70, height: size)
     .opacity(opacity)
     .accessibilityHidden(true)
   }
 
   private var stroke: StrokeStyle {
-    StrokeStyle(lineWidth: max(1, size * 0.13), lineCap: .round, lineJoin: .round)
+    StrokeStyle(lineWidth: max(1, size * 0.15), lineCap: .round, lineJoin: .round)
+  }
+
+  /// Thinner than the strands: a rung as heavy as a strand turns the ladder into
+  /// a filled slab the moment the mark gets small.
+  private var rungStroke: StrokeStyle {
+    StrokeStyle(lineWidth: max(0.9, size * 0.10), lineCap: .round)
   }
 }
 
 /// The mark, placed. Top-trailing, out of the way, never in the tap path.
 ///
-/// Small is deliberately EXCLUDED at every call site rather than here: 150pt is
-/// not enough surface to spend a corner on a logo, and nobody needs branding on
-/// a widget they chose to install. This view only knows how to draw it once the
-/// decision is made.
+/// Which faces carry it is each call site's decision, not this view's; it only
+/// knows how to draw it once that decision is made. Small faces pass a smaller
+/// `size` rather than opting out, since 150pt is short of surface but not short
+/// enough to be worth being the one widget family with no mark on it.
 struct HelixBrand: View {
   var monochrome = false
-  var size: CGFloat = 13
+  var size: CGFloat = 16
 
   var body: some View {
     HelixMark(size: size, monochrome: monochrome)
