@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Check, Loader2, Timer, HeartPulse, Flame, Layers, Dumbbell } from 'lucide-react'
 import { Sheet } from '@/components/ui/Sheet'
 import { EffortScale } from '@/components/ui/EffortScale'
-import { draftTotals, isSetCommitted, type SessionDraft } from '@/lib/sessions/draft'
+import { isSetCommitted, type SessionDraft } from '@/lib/sessions/draft'
 import { deriveSessionRpe } from '@/lib/training/rpeMemory'
 import { fmtVolume } from '@/lib/utils/units'
 import { parseDurationMin } from '@/lib/utils/duration'
@@ -27,17 +27,19 @@ type StatPatch = Partial<NonNullable<SessionDraft['stats']>>
  * knows the answer, and making you retype it would be asking for agreement, not
  * for information.
  */
-export function FinishSheet({ open, onClose, draft, busy, error, onSetStats, onSessionRpe, onCommit }: {
+export function FinishSheet({ open, onClose, draft, totals, busy, error, onSetStats, onSessionRpe, onCommit }: {
   open: boolean
   onClose: () => void
   draft: SessionDraft
+  /** Computed once in `SessionDeck`, so the bar, the sheet and the deck header
+   *  can never disagree about what the session weighs. */
+  totals: { volumeKg: number; sets: number }
   busy: boolean
   error: string | null
   onSetStats: (patch: StatPatch) => void
   onSessionRpe: (v: number | null) => void
   onCommit: () => void
 }) {
-  const totals = draftTotals(draft)
   const s = draft.stats
   const isEdit = !!draft.replaceSessionId
 
@@ -71,9 +73,11 @@ export function FinishSheet({ open, onClose, draft, busy, error, onSetStats, onS
             <Field label="Calories" unit="kcal" icon={Flame} color={GOLD} value={s?.calories_kcal ?? null}
               onChange={(v) => onSetStats({ calories_kcal: v })} />
           </div>
-          <p className="text-[10px] text-muted/70 mt-1.5">
-            Left blank, calories and heart rate are estimated from the work you logged, and marked as estimates.
-          </p>
+          {/* Was: "Left blank, calories and heart rate are estimated from the
+              work you logged, and marked as estimates." Twenty words under three
+              inputs, restating what the ≈ on an estimated figure already says
+              everywhere else in the app. */}
+          <p className="text-[10px] text-muted/60 mt-1.5">Left blank → estimated.</p>
         </div>
 
         {totals.sets > 0 && (
@@ -111,12 +115,12 @@ function Total({ icon: Icon, value, unit, label, color }: {
   icon: typeof Dumbbell; value: string; unit?: string; label: string; color: string
 }) {
   return (
-    <div className="rounded-xl px-3 py-2.5" style={{ background: `${color}0f`, border: `1px solid ${color}33` }}>
+    <div className="rounded-xl px-3 py-2" style={{ background: `${color}0f`, border: `1px solid ${color}33` }}>
       <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color }}>
         <Icon className="w-3 h-3" aria-hidden="true" />
         {label}
       </div>
-      <div className="helix-num font-bold text-fluid-2xl tabular-nums leading-none mt-1 text-text">
+      <div className="helix-num font-bold text-fluid-xl tabular-nums leading-none mt-1 text-text">
         {value}{unit && <span className="text-[11px] font-normal ml-1 text-muted">{unit}</span>}
       </div>
     </div>
@@ -143,12 +147,25 @@ function Field({ label, unit, value, onChange, parse, icon: Icon, color }: {
   const toNumber = parse ?? ((raw: string) => (raw.trim() === '' ? null : Number(raw)))
   const shown = text ?? (value != null ? String(value) : '')
   return (
-    <label className="min-w-0">
-      <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide mb-1" style={{ color }}>
-        <Icon className="w-3 h-3" aria-hidden="true" />
+    /* ── WHY THE TEXT USED TO FLOAT ──
+       The label sat OUTSIDE the box and the box was `items-baseline` with a
+       `min-h-[44px]` and no vertical padding: content aligned on a baseline
+       inside a 44px shell, i.e. pinned near the top of it with all the slack
+       underneath. Beside it, `Total` had real `py-2.5` and no min-height and so
+       centred naturally — which is why the two rows of this sheet looked like
+       they came from different screens.
+
+       The fix is to stop having two anatomies. The label moves INSIDE the box
+       and the box takes `Total`'s chrome (tinted fill, tinted hairline, same
+       radius, same padding), so all five read as one family, and vertical
+       centring stops being something the CSS has to be asked for. */
+    <label className="min-w-0 block rounded-xl px-3 py-2 cursor-text"
+      style={{ background: `${color}0f`, border: `1px solid ${color}33` }}>
+      <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide" style={{ color }}>
+        <Icon className="w-3 h-3 shrink-0" aria-hidden="true" />
         <span className="truncate">{label}</span>
       </span>
-      <span className="flex items-baseline gap-1 rounded-xl border border-white/[0.08] bg-white/[0.04] px-2.5 min-h-[44px]">
+      <span className="flex items-baseline gap-1 mt-1">
         <input
           type={parse ? 'text' : 'number'}
           inputMode="numeric"
@@ -157,7 +174,7 @@ function Field({ label, unit, value, onChange, parse, icon: Icon, color }: {
           onBlur={(e) => { onChange(toNumber(e.target.value)); setText(null) }}
           onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
           placeholder="—"
-          className="helix-num w-full min-w-0 bg-transparent field-compact font-bold text-text tabular-nums outline-none placeholder:text-muted placeholder:font-normal"
+          className="helix-num w-full min-w-0 bg-transparent field-compact font-bold text-text tabular-nums outline-none leading-none placeholder:text-muted placeholder:font-normal"
           aria-label={label}
         />
         <span className="text-[10px] text-muted shrink-0">{unit}</span>

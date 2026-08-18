@@ -11,6 +11,7 @@ import { useTrackRpe } from '@/lib/hooks/useTrackRpe'
 import { cardioSummary, isSetCommitted, type DraftExercise, type DraftSet } from '@/lib/sessions/draft'
 import { isTimedExercise } from '@/lib/exercises/timed'
 import { isBodyweightExercise } from '@/lib/exercises/bodyweight'
+import { isUnilateralExercise } from '@/lib/exercises/unilateral'
 import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { repWindowFor, holdTargetFor, ladderVerdict, levelUpCue } from '@/lib/training/ceilings'
 import { workingSets, type ExerciseHistory } from '@/lib/hooks/useExerciseSetHistory'
@@ -123,9 +124,6 @@ function pairAsymmetry(l?: DraftSet, r?: DraftSet): { pct: number; weak: 'L' | '
 
 // Show the real load: 3.75 must never display as "3.8" (quarter-step plates).
 const fmtKg = (w: number) => (w % 1 === 0 ? w.toFixed(0) : (w * 10) % 1 === 0 ? w.toFixed(1) : w.toFixed(2))
-const fmtDate = (d: string) =>
-  new Date(d + 'T12:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
-
 /**
  * One exercise widget of the deck: dnd-kit sortable (drag from the grip only),
  * coach status chip, the era-scoped "PREV" reference chip beside today's
@@ -352,10 +350,19 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
     [reportTargets, exercise.name],
   )
 
-  // Unilateral lifts (already split, or a single-arm/per-side movement) get the
-  // asymmetry rule: the STRONG side sets the rep count, the weak side matches it.
+  // Unilateral lifts (already split, or a movement trained one side at a time)
+  // get the asymmetry rule: the STRONG side sets the rep count, the weak side
+  // matches it — and only they are offered the Split L/R control.
+  //
+  // The name test used to be a four-alternation regex spelled right here, which
+  // covered the three catalog entries saying "single arm" and missed every
+  // movement that is unilateral without saying so. It lives in
+  // `exercises/unilateral.ts` now, beside its siblings and under test.
+  //
+  // The `sets.some(...)` half stays as an escape hatch: a set already carrying a
+  // side or a pairId must remain editable whatever the name check thinks.
   const unilateral = exercise.sets.some((s) => s.side || s.pairId)
-    || /single[- ]?arm|one[- ]?arm|single[- ]?leg|per (side|arm)/i.test(exercise.name)
+    || isUnilateralExercise(exercise.name)
 
   // Highest-priority coach line only. Order = how actionable it is in THIS set:
   // an unmet obligation beats an earned reward, which beats a status note,
@@ -480,15 +487,6 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
   // A pair contributes one "L|R" token so the header doesn't double-count sides.
   const summary = groups.map((g) => g.kind === 'single' ? g.set.reps : `${g.left?.set.reps ?? '–'}|${g.right?.set.reps ?? '–'}`).join('/')
   const topWeight = Math.max(...exercise.sets.map((s) => s.weightKg), 0)
-  // "Prev 0kg × 15, 16" is a load that does not exist in front of the only
-  // numbers a bodyweight movement has. Reps (or seconds) lead instead.
-  const prevChip = (() => {
-    const reps = prevWork.map((s) => s.reps).join(', ')
-    if (timedEx) return `${reps} sec`
-    const top = Math.max(...prevWork.map((s) => s.weightKg), 0)
-    return top > 0 ? `${fmtKg(top)}kg × ${reps}` : `${reps} reps`
-  })()
-
   return (
     /**
      * ── A BAND, NOT A CARD ────────────────────────────────────────────────────
@@ -582,27 +580,24 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
                 </span>
               )}
             </div>
-            {/* Historical memory — the previous comparable session, as a clear
-                reference widget. It also states PROVENANCE: whether the inputs
-                below were seeded from that session or are program targets, so a
-                cold-start number is never mistaken for something you lifted. */}
-            <span
-              className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-md text-[11px] leading-snug tabular-nums"
-              style={history
-                ? { color: STEEL, background: `${SAPPHIRE}14`, border: `1px solid ${SAPPHIRE}47` }
-                : { color: MUTED, background: 'rgba(255,255,255,0.04)', border: `1px solid ${HAIRLINE}` }}
-            >
-              <History className="w-3 h-3 shrink-0" aria-hidden="true" />
-              {/* Working sets only. The history payload now carries warm-ups so
-                  seeding can reproduce them, but a warm-up in the PREV chip
-                  understates the top load and misreads as a regression. */}
-              {history && prevWork.length
-                ? <>Prev {prevChip} · {fmtDate(history.date)}</>
-                : 'No history in this era — showing program targets'}
-            </span>
-            {exercise.seededFrom && (
-              <span className="ml-1.5 text-[10px]" style={{ color: MUTED }}>
-                seeded from {fmtDate(exercise.seededFrom)}
+            {/* ── THE PREV CHIP IS GONE — IT IS A COLUMN NOW ──
+                It read "Prev 36kg × 12, 11, 10 · 12 Aug": every set of last
+                session's numbers, comma-separated, in one tinted pill above the
+                rows those numbers belong to. To use it you re-counted commas
+                against set rows, and it duplicated data the row already had —
+                `SetEditorRow` has been handed `prev` per set for a while and was
+                hiding it below the `xs` breakpoint.
+
+                What survives is the one thing the column cannot say: that there
+                is NO history, so the numbers you are looking at came from the
+                program rather than from you. */}
+            {!prevWork.length && (
+              <span
+                className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-md text-[10px] leading-snug"
+                style={{ color: MUTED, background: 'rgba(255,255,255,0.04)', border: `1px solid ${HAIRLINE}` }}
+              >
+                <History className="w-3 h-3 shrink-0" aria-hidden="true" />
+                No history in this era — showing program targets
               </span>
             )}
           </div>

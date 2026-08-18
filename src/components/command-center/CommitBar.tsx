@@ -1,7 +1,7 @@
 'use client'
 
 import { ChevronUp, Loader2, Trash2, X } from 'lucide-react'
-import { draftTotals, type SessionDraft } from '@/lib/sessions/draft'
+import type { SessionDraft } from '@/lib/sessions/draft'
 import { fmtVolume } from '@/lib/utils/units'
 import { MuscleDistribution } from './MuscleDistribution'
 
@@ -21,8 +21,12 @@ import { MuscleDistribution } from './MuscleDistribution'
  *   · Trash              — ALWAYS deletes the actual committed session.
  * A brand-new draft keeps the single trash = discard-draft behaviour.
  */
-export function CommitBar({ draft, busy, error, deleting, onFinish, onDiscard, onCancelEdit, onDelete }: {
+export function CommitBar({ draft, totals, busy, error, deleting, onFinish, onDiscard, onCancelEdit, onDelete }: {
   draft: SessionDraft
+  /** Computed once in `SessionDeck` — this bar renders twice (desktop rail and
+   *  mobile deck), so recomputing here walked every set of every exercise twice
+   *  per render. */
+  totals: { volumeKg: number; sets: number }
   busy: boolean
   error: string | null
   deleting?: boolean
@@ -32,7 +36,6 @@ export function CommitBar({ draft, busy, error, deleting, onFinish, onDiscard, o
   onCancelEdit?: () => void
   onDelete?: () => void
 }) {
-  const totals = draftTotals(draft)
   const isEdit = !!draft.replaceSessionId
 
   return (

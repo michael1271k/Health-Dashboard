@@ -1,7 +1,6 @@
 'use client'
 
 import { memo, useEffect, useState } from 'react'
-import * as Slider from '@radix-ui/react-slider'
 import { Check, X, Trophy } from 'lucide-react'
 import { tapLight } from '@/lib/native/haptics'
 import { isSetCommitted, type DraftSet } from '@/lib/sessions/draft'
@@ -9,20 +8,28 @@ import { prAxisLabel, type PrAxis } from '@/lib/training/prEngine'
 import { rpeColor, rpeLabel } from '@/lib/training/effort'
 import { RpeLadder } from './RpeLadder'
 
-const WEIGHT_STEPS = [-2.5, -0.25, +0.25, +2.5] as const
+/** Plate step (the flanking ± on the weight field) and the microload step. */
+const PLATE_STEP = 2.5
+const FINE_STEP = 0.25
 const ORANGE = '#E0703C' // warm-up
 const DANGER = '#C4514E' // failure
 const DROP = '#9A6DD7'   // drop set
 const GREEN = '#3E9E7A'  // completed (ticked green)
 const GOLD = '#C9A227'   // personal record
 
-/** Stable slider ceiling for a load (multiple of 10, ≥ weight + 30 headroom). */
-const maxFor = (w: number) => Math.max(60, Math.ceil((w + 30) / 10) * 10)
-
 /**
- * One set row of the deck: tap to activate the tuner (Radix weight slider +
- * haptic stepper chips, reps ±1, Warm-up/Failure toggles). Only the active row
- * mounts its slider, keeping long decks light.
+ * One set row of the deck: tap to activate the tuner (typeable weight/reps
+ * fields with flanking steppers, microload chips, Warm-up/Failure/Drop toggles,
+ * Split L/R, effort ladder).
+ *
+ * ── THE SLIDER IS GONE ───────────────────────────────────────────────────────
+ * A Radix weight slider used to sit between the number fields and the steppers.
+ * It was the tallest control in the tuner — a 24px track plus a 20px thumb plus
+ * its own margins — to do imprecisely what the field above it and the chips
+ * below it both did precisely. It also carried the only piece of state in this
+ * file that existed purely to protect an interaction from itself: a grow-only
+ * `sliderMax`, because a max derived from the live value rescaled the track
+ * mid-drag and snapped 35 to 25.
  *
  * ── MEMOIZED — THIS IS THE ONE THAT ACTUALLY PAYS ────────────────────────────
  * A keystroke re-rendered all six cards and all twenty-four rows: 2.664 ms,
@@ -124,15 +131,6 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
    */
   const canAddLoad = bodyweight && !timed
 
-  // The Radix max must NOT be derived from the live value: a shrinking max
-  // rescales the track mid-drag and snaps the value (the 35→25 jump). Keep it
-  // grow-only so an interaction never rescales downward.
-  const [sliderMax, setSliderMax] = useState(() => maxFor(set.weightKg))
-  useEffect(() => {
-    const cand = maxFor(set.weightKg)
-    setSliderMax((m) => (cand > m ? cand : m))
-  }, [set.weightKg])
-
   const isWarm = set.setType === 'warmup'
   const isFail = set.setType === 'failure'
   const isDrop = set.setType === 'dropset'
@@ -216,7 +214,7 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
           className="flex-1 min-w-0 flex flex-col gap-1 text-left min-h-[34px] justify-center"
           aria-expanded={active}
         >
-          <span className="flex items-center gap-2.5 min-w-0">
+          <span className="grid grid-cols-[24px_minmax(0,1fr)_minmax(0,1fr)_44px] items-center gap-1.5 min-w-0">
             <span
               className="w-6 h-6 shrink-0 rounded-md flex items-center justify-center text-[11px] font-bold uppercase tabular-nums"
               style={badgeColor
@@ -227,54 +225,67 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
             >
               {badge}
             </span>
-            {/* ── PREVIOUS ──
-                What this same set number was last time, from ANY routine. It
-                sits between the identity and today's numbers because that is
-                the order you read them in: which set, what it was, what it is.
-                Dimmed and never editable — it is a reference, and a reference
-                that looks like an input gets typed into. */}
-            {prev && (
-              <span className="helix-num text-[10px] tabular-nums text-muted/70 shrink-0 hidden xs:inline"
-                title="Last time you did this movement">
-                {prev.weightKg > 0 ? `${prev.weightKg}×${prev.reps}` : `${prev.reps}`}
+
+            {/* TODAY */}
+            <span className="flex items-baseline gap-1 min-w-0">
+              {showLoad && (
+                <>
+                  <span className={`helix-num text-fluid-base font-bold tabular-nums truncate ${isWarm ? 'text-muted' : 'text-text'}`}>
+                    {weightLabel}<span className="text-[10px] text-muted font-normal ml-0.5">kg</span>
+                  </span>
+                  <span className="text-muted text-xs shrink-0">×</span>
+                </>
+              )}
+              <span className={`helix-num text-fluid-base font-bold tabular-nums shrink-0 ${isWarm ? 'text-muted' : 'text-text'}`}>
+                {set.reps}{timed && <span className="text-[10px] text-muted font-normal ml-0.5">sec</span>}
               </span>
-            )}
-            {showLoad && (
-              <>
-                <span className={`helix-num text-fluid-base font-bold tabular-nums ${isWarm ? 'text-muted' : 'text-text'}`}>
-                  {weightLabel}<span className="text-[10px] text-muted font-normal ml-0.5">kg</span>
+              {typeTag && (
+                <span className="text-[9px] font-bold uppercase px-1 py-px rounded shrink-0"
+                  style={{ color: typeTag.color, background: `${typeTag.color}1f`, border: `1px solid ${typeTag.color}55` }}
+                  title={typeTag.full} aria-label={typeTag.full}>
+                  {typeTag.label}
                 </span>
-                <span className="text-muted text-xs">×</span>
-              </>
-            )}
-            <span className={`helix-num text-fluid-base font-bold tabular-nums ${isWarm ? 'text-muted' : 'text-text'}`}>
-              {set.reps}<span className="text-[10px] text-muted font-normal ml-0.5">{timed ? 'sec' : 'reps'}</span>
+              )}
+              {/* Cleared because the load or the reps went up. One dot, no banner. */}
+              {set.rpe == null && set.rpeStale && (
+                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: ORANGE }}
+                  title="Heavier than last time — rate this set" aria-label="Needs an effort rating" />
+              )}
             </span>
-            {typeTag && (
-              <span className="text-[9px] font-bold uppercase px-1 py-px rounded shrink-0"
-                style={{ color: typeTag.color, background: `${typeTag.color}1f`, border: `1px solid ${typeTag.color}55` }}
-                title={typeTag.full} aria-label={typeTag.full}>
-                {typeTag.label}
-              </span>
-            )}
+
+            {/* ── PREVIOUS ──
+                What this same set number was last time you did the movement, on
+                ANY routine. It sits between today's numbers and the effort
+                because that is the order you read them in: what it is, what it
+                was, how hard it felt.
+
+                A COLUMN, not a chip. This value was already fetched, threaded
+                and rendered — behind `hidden xs:inline`, i.e. invisible on every
+                phone narrower than 400px, which is the device it exists for. The
+                card above it carried a "Prev 36kg × 12, 11, 10" pill instead,
+                where you re-counted commas to find the set you were on.
+
+                Dimmed and never editable: a reference that looks like an input
+                gets typed into. */}
+            <span className="helix-num text-[11px] tabular-nums text-muted/70 truncate"
+              title={prev ? 'Last time you did this movement' : undefined}>
+              {prev ? (prev.weightKg > 0 ? `${prev.weightKg}×${prev.reps}` : `${prev.reps}`) : '—'}
+            </span>
+
             {/* Effort readout. Carries the WORD, not just the number: "8.5"
                 means nothing to someone who has not memorised the ladder. A
                 value inherited from last session renders dimmer, because it is
                 a proposal until you either confirm it or commit the session. */}
-            {set.rpe != null && (
-              <span
-                className="text-[10px] font-bold uppercase tracking-wide shrink-0"
-                style={{ color: rpeColor(set.rpe), opacity: set.rpeSeed != null ? 0.55 : 1 }}
-                title={set.rpeSeed != null ? 'Carried from last session — tap to confirm or change' : undefined}
-              >
-                {rpeLabel(set.rpe)}
-              </span>
-            )}
-            {/* Cleared because the load or the reps went up. One dot, no banner. */}
-            {set.rpe == null && set.rpeStale && (
-              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: ORANGE }}
-                title="Heavier than last time — rate this set" aria-label="Needs an effort rating" />
-            )}
+            <span
+              className="text-[10px] font-bold uppercase tracking-wide text-right truncate"
+              style={set.rpe != null
+                ? { color: rpeColor(set.rpe), opacity: set.rpeSeed != null ? 0.55 : 1 }
+                : { color: 'transparent' }}
+              title={set.rpe == null ? undefined
+                : set.rpeSeed != null ? 'Carried from last session — tap to confirm or change' : undefined}
+            >
+              {set.rpe != null ? rpeLabel(set.rpe) : '—'}
+            </span>
           </span>
         </button>
         {onToggleDone && (
@@ -340,15 +351,24 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
         </button>
       )}
 
-      {/* ── Tuner (active row only) ── */}
+      {/* ── Tuner (active row only) ──
+          THREE ROWS, DOWN FROM SIX. It used to stack: number fields, a weight
+          slider, a stepper row, the W/F/D group, the effort ladder and Split
+          L/R on its own line — a control surface taller than the four set rows
+          around it, for a set whose whole content is two numbers and a rating.
+
+          The fields absorbed the steppers (± flanks the number it changes,
+          which is also where your thumb already is), the slider left, and Split
+          moved up beside the type chips it belongs with. What is left is: the
+          numbers, what kind of set it was, how hard it was. */}
       {active && (
         <div className="px-2 pb-2 space-y-1.5">
-          {/* Direct keyboard entry — type weight/reps on desktop or mobile.
-              The slider + steppers below stay for tactile tuning. */}
-          <div className="flex items-center gap-2">
+          {/* Row 1 — the numbers. Type them, or step them from either side. */}
+          <div className="flex items-center gap-1.5">
             {showLoadControls && (
               <>
-                <label className="flex-1 flex items-center gap-1.5 rounded-lg border border-border bg-surface-2 px-2.5 min-h-[38px]">
+                <Step label="−" ariaLabel={`${PLATE_STEP}kg less`} onClick={() => nudgeWeight(-PLATE_STEP)} />
+                <label className="flex-1 min-w-0 flex items-center gap-1 rounded-lg border border-border bg-surface-2 px-2 min-h-[38px]">
                   <NumberField
                     value={set.weightKg}
                     inputMode="decimal"
@@ -357,10 +377,12 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
                   />
                   <span className="text-[10px] uppercase tracking-wide text-muted shrink-0">kg</span>
                 </label>
-                <span className="text-muted text-xs shrink-0">×</span>
+                <Step label="+" ariaLabel={`${PLATE_STEP}kg more`} onClick={() => nudgeWeight(+PLATE_STEP)} />
+                <span className="text-muted text-xs shrink-0 px-0.5">×</span>
               </>
             )}
-            <label className="flex-1 flex items-center gap-1.5 rounded-lg border border-border bg-surface-2 px-2.5 min-h-[38px]">
+            <Step label="−" ariaLabel="One rep less" onClick={() => nudgeReps(-1)} />
+            <label className="flex-1 min-w-0 flex items-center gap-1 rounded-lg border border-border bg-surface-2 px-2 min-h-[38px]">
               <NumberField
                 value={set.reps}
                 inputMode="numeric"
@@ -369,112 +391,129 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
               />
               <span className="text-[10px] uppercase tracking-wide text-muted shrink-0">{timed ? 'sec' : 'reps'}</span>
             </label>
+            <Step label="+" ariaLabel="One rep more" onClick={() => nudgeReps(+1)} />
           </div>
-          {showLoadControls && (
-          <Slider.Root
-            className="relative flex items-center select-none touch-none w-full h-6"
-            min={0}
-            max={sliderMax}
-            step={0.25}
-            value={[set.weightKg]}
-            onValueChange={([v]) => onChange(index, { weightKg: v })}
-            onValueCommit={() => void tapLight()}
-            aria-label={`Weight for set ${index + 1}`}
-          >
-            <Slider.Track className="relative grow rounded-full h-1.5 bg-surface-2">
-              <Slider.Range className="absolute rounded-full h-full bg-primary/80" />
-            </Slider.Track>
-            <Slider.Thumb
-              className="block w-5 h-5 rounded-full bg-primary outline-none
-                         focus-visible:ring-2 focus-visible:ring-primary/60
-                         shadow-[0_0_12px_rgba(224,112,60,0.55)]"
-            />
-          </Slider.Root>
-          )}
-          <div className="flex items-center justify-between gap-1.5">
-            <div className="flex items-center gap-1">
-              {showLoadControls ? WEIGHT_STEPS.map((d) => (
-                <button
-                  key={d}
-                  type="button"
-                  onClick={() => nudgeWeight(d)}
-                  className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-2 min-h-[34px] text-[11px] font-semibold text-text tabular-nums active:scale-95 transition-transform"
-                >
-                  {d > 0 ? `+${d}` : d}
-                </button>
-              )) : canAddLoad ? (
-                // Weighted variants stay one tap away — a belt on a dip, a plate
-                // held on a knee raise. Revealing the controls is enough; the
-                // load itself stays 0 until the user sets one, so a stray tap
-                // cannot invent tonnage or cost the set its reps axis.
-                <button
-                  type="button"
-                  onClick={() => { void tapLight(); setLoadOpen(true) }}
-                  aria-label={`Add load to set ${displayNum ?? index + 1}`}
-                  className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-2.5 min-h-[34px] text-[11px] font-semibold text-muted active:scale-95 transition-transform"
-                >
-                  + Add load
-                </button>
-              ) : null}
-            </div>
-            <div className="flex items-center gap-1">
-              <button type="button" onClick={() => nudgeReps(-1)} aria-label="One rep less"
-                className="rounded-xl border border-white/[0.08] bg-white/[0.04] min-h-[34px] min-w-[34px] text-sm font-bold text-text active:scale-95 transition-transform">−</button>
-              <span className="helix-num text-fluid-sm font-bold text-text w-7 text-center tabular-nums">{set.reps}</span>
-              <button type="button" onClick={() => nudgeReps(+1)} aria-label="One rep more"
-                className="rounded-xl border border-white/[0.08] bg-white/[0.04] min-h-[34px] min-w-[34px] text-sm font-bold text-text active:scale-95 transition-transform">+</button>
-            </div>
-          </div>
-          {/* Set type — Warm-up / Failure / Drop set (Hevy parity). "Normal" is the
-              absence of all three; "Remove" is the X on the summary line. Failure is
-              PER SIDE for a split set (F on Right while Left holds).
 
+          {/* Row 2 — microloads, set type, and Split.
+              Wraps rather than overflows: on a unilateral movement at 390px this
+              line carries two microload chips, three type chips and Split, and a
+              second line is a better failure than a clipped control.
+
+              Set type is Warm-up / Failure / Drop set (Hevy parity). "Normal" is
+              the absence of all three; "Remove" is the X on the summary line.
+              Failure is PER SIDE for a split set (F on Right while Left holds).
               ONE SEGMENTED GROUP, not three floating buttons: these are mutually
               exclusive (see `toggleType`) and three separate outlines claimed
-              otherwise. Hairline dividers, one container, one radius. */}
-          <div className="inline-flex items-stretch rounded-lg overflow-hidden"
-            style={{ border: '1px solid rgba(255,255,255,0.10)' }}>
-            <TypeChip active={isWarm} color={ORANGE} label="Warm-up" short="W" onClick={() => toggleType('warmup')} />
-            <span className="w-px" style={{ background: 'rgba(255,255,255,0.10)' }} aria-hidden="true" />
-            <TypeChip active={isFail} color={DANGER} label="Failure" short="F" onClick={() => toggleType('failure')} />
-            <span className="w-px" style={{ background: 'rgba(255,255,255,0.10)' }} aria-hidden="true" />
-            <TypeChip active={isDrop} color={DROP} label="Drop set" short="D" onClick={() => toggleType('dropset')} />
+              otherwise. */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {showLoadControls ? (
+              // The quarter-kg grid survives the slider's removal: microloading is
+              // how a 3.75kg lateral raise progresses, and it is not something you
+              // want to open a keyboard for.
+              <div className="inline-flex items-stretch rounded-lg overflow-hidden shrink-0"
+                style={{ border: '1px solid rgba(255,255,255,0.10)' }}>
+                <FineStep label={`−${FINE_STEP}`} onClick={() => nudgeWeight(-FINE_STEP)} />
+                <span className="w-px" style={{ background: 'rgba(255,255,255,0.10)' }} aria-hidden="true" />
+                <FineStep label={`+${FINE_STEP}`} onClick={() => nudgeWeight(+FINE_STEP)} />
+              </div>
+            ) : canAddLoad ? (
+              // Weighted variants stay one tap away — a belt on a dip, a plate
+              // held on a knee raise. Revealing the controls is enough; the
+              // load itself stays 0 until the user sets one, so a stray tap
+              // cannot invent tonnage or cost the set its reps axis.
+              <button
+                type="button"
+                onClick={() => { void tapLight(); setLoadOpen(true) }}
+                aria-label={`Add load to set ${displayNum ?? index + 1}`}
+                className="rounded-lg border border-white/[0.10] bg-white/[0.04] px-2.5 min-h-[32px] text-[11px] font-semibold text-muted active:scale-95 transition-transform shrink-0"
+              >
+                + Add load
+              </button>
+            ) : null}
+
+            <div className="inline-flex items-stretch rounded-lg overflow-hidden shrink-0"
+              style={{ border: '1px solid rgba(255,255,255,0.10)' }}>
+              <TypeChip active={isWarm} color={ORANGE} label="Warm-up" short="W" onClick={() => toggleType('warmup')} />
+              <span className="w-px" style={{ background: 'rgba(255,255,255,0.10)' }} aria-hidden="true" />
+              <TypeChip active={isFail} color={DANGER} label="Failure" short="F" onClick={() => toggleType('failure')} />
+              <span className="w-px" style={{ background: 'rgba(255,255,255,0.10)' }} aria-hidden="true" />
+              <TypeChip active={isDrop} color={DROP} label="Drop set" short="D" onClick={() => toggleType('dropset')} />
+            </div>
+
+            {/* Unilateral — split into Left/Right. Offered ONLY on a movement
+                trained one side at a time (`isUnilateralExercise`, checked in
+                `ExerciseCard`): splitting a bilateral set is not cosmetic, since
+                a pair is scored at its weaker side and counts as ONE set of work.
+                Merge lives on the parent "Set N" card, so a nested sub-row shows
+                only its own tuner. */}
+            {onSplit && (
+              <button type="button" onClick={() => onSplit(index)}
+                className="min-h-[32px] px-2.5 rounded-lg text-[11px] font-bold uppercase tracking-wide text-muted border border-white/10 hover:text-text active:scale-95 transition-colors shrink-0 ml-auto">
+                Split L / R
+              </button>
+            )}
           </div>
-          {/* Effort — per SET, and only on a working one.
+
+          {/* Row 3 — effort, per SET, and only on a working one.
               A warm-up is never rated, for the same reason it wins no record:
               it is not the effort the question is about. Rating the Failure
               stop also tags the set `failure`, because that is what the word
               means on this row — but only ADDITIVELY: clearing the rating
               leaves a W/F/D chip the user set separately alone. */}
           {trackRpe && !isWarm && (
-            <div className="pt-0.5">
-              <RpeLadder
-                value={set.rpe}
-                stale={set.rpeStale}
-                seeded={set.rpeSeed != null}
-                setLabel={`set ${displayNum ?? index + 1}`}
-                onPick={(choice) => onChange(index, {
-                  rpe: choice?.rpe,
-                  ...(choice?.failure ? { setType: 'failure' as const } : {}),
-                })}
-              />
-            </div>
-          )}
-          {/* Unilateral — split into Left/Right. Merge lives on the parent "Set N"
-              card, so a nested sub-row shows only its own tuner. */}
-          {onSplit && (
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <button type="button" onClick={() => onSplit(index)}
-                className="min-h-[32px] px-2.5 rounded-lg text-[11px] font-bold uppercase tracking-wide text-muted border border-white/10 hover:text-text active:scale-95 transition-colors">
-                Split L / R
-              </button>
-            </div>
+            <RpeLadder
+              value={set.rpe}
+              stale={set.rpeStale}
+              seeded={set.rpeSeed != null}
+              setLabel={`set ${displayNum ?? index + 1}`}
+              onPick={(choice) => onChange(index, {
+                rpe: choice?.rpe,
+                ...(choice?.failure ? { setType: 'failure' as const } : {}),
+              })}
+            />
           )}
         </div>
       )}
     </div>
   )
 })
+
+/**
+ * The ± that flanks a number field.
+ *
+ * Its own component because there are four of them and each is a 34px square
+ * whose only job is a haptic nudge — inline, they were four near-identical
+ * seven-line className strings, which is how the reps stepper and the weight
+ * chips drifted onto different radii in the first place.
+ */
+function Step({ label, ariaLabel, onClick }: { label: string; ariaLabel: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={ariaLabel}
+      className="shrink-0 rounded-lg border border-white/[0.08] bg-white/[0.04] min-h-[38px] min-w-[34px]
+                 text-sm font-bold text-text active:scale-95 transition-transform"
+    >
+      {label}
+    </button>
+  )
+}
+
+/** A microload chip — the quarter-kg grid, inside the segmented pair. */
+function FineStep({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={`${label} kilograms`}
+      className="min-h-[32px] px-2 text-[11px] font-bold text-muted tabular-nums hover:text-text
+                 active:scale-95 transition-[color,transform] duration-150"
+    >
+      {label}
+    </button>
+  )
+}
 
 /**
  * Typeable numeric field. Keeps a local text buffer while focused so partial

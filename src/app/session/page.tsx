@@ -107,6 +107,10 @@ function SessionPageInner() {
     start(buildTemplateDraft(templateDay, targetDate, historyQ.data, templateQ.data))
   }, [hydrated, draft, templateDay, seedReady, targetDate, start, historyQ.data, templateQ.data])
 
+  // Only the pre-deck states carry this. Once a draft exists, `SessionDeck`
+  // renders `LiveSessionBar` — a pinned AppBar with the session's identity and
+  // its live totals — and a second static header above it would be a title bar
+  // stacked on a title bar.
   const header = (
     <header className="flex items-center gap-3 mb-4">
       <BackLink onClick={() => router.back()} label="Back — the draft autosaves" />
@@ -149,21 +153,25 @@ function SessionPageInner() {
     )
   }
 
-  return (
-    <div data-boxed>
-      {header}
-      {draft ? (
+  // Full-bleed while logging: the pinned bar has to span the viewport, and
+  // `[data-boxed]`'s inline padding would inset it and its scroll-edge fade.
+  if (draft) {
+    return (
+      <div data-fullbleed className="min-h-dvh">
         <SessionDeck
           store={store}
           onClose={() => router.back()}
           onViewDay={(date) => router.replace(`/day/${date}`)}
           onViewSession={(id) => router.replace(`/session/${id}`)}
         />
-      ) : templateDay ? (
-        <PageSpinner />
-      ) : (
-        <PastePanel onDraft={start} />
-      )}
+      </div>
+    )
+  }
+
+  return (
+    <div data-boxed>
+      {header}
+      {templateDay ? <PageSpinner /> : <PastePanel onDraft={start} />}
     </div>
   )
 }

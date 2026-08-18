@@ -2,7 +2,8 @@
 
 import { useCallback, useMemo, useState } from 'react'
 import { Check, CopyCheck, Trophy } from 'lucide-react'
-import { CoachHeaderCard } from './CoachHeaderCard'
+import { CoachNotes } from './CoachNotes'
+import { LiveSessionBar } from './LiveSessionBar'
 import { ExerciseDeckList } from './ExerciseDeckList'
 import type { ReadyCue } from './ExerciseCard'
 import { SessionNotesCard } from './SessionNotesCard'
@@ -15,6 +16,8 @@ import { PrRecordSheet } from './PrRecordSheet'
 import { useProgressionQueue } from '@/lib/hooks/useProgressionQueue'
 import { useDeleteSession } from '@/lib/hooks/useDayVault'
 import { eraForDate } from '@/lib/programs'
+import { dayColor, EMBER, STEEL, GOLD, MUTED } from '@/lib/theme/palette'
+import { draftTotals } from '@/lib/sessions/draft'
 import { fmtVolume } from '@/lib/utils/units'
 import { tapSuccess } from '@/lib/native/haptics'
 import type { useSessionDraft, CommitResult } from '@/lib/hooks/useSessionDraft'
@@ -64,6 +67,12 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const livePrs = useMemo(() => computeLivePrs(draft, baselines), [prKey, baselines])
 
+  // ONE `draftTotals` for the whole deck. It was called in three places —
+  // CoachHeaderCard, CommitBar and FinishSheet — each walking every set of every
+  // exercise on every render of its own subtree. Null-safe because hooks must
+  // run before the `if (!draft) return null` below.
+  const totals = useMemo(() => (draft ? draftTotals(draft) : { volumeKg: 0, sets: 0 }), [draft])
+
   // Forward-carried Smart-Coach cues — lifts due a load bump, keyed by name so a
   // matching card in this session shows the "▲ add load" chip inline.
   const { data: queue } = useProgressionQueue()
@@ -109,7 +118,7 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
 
   if (result) {
     return (
-      <div className="max-w-md mx-auto space-y-4 pt-6">
+      <div className="max-w-md mx-auto space-y-4 pt-6 px-4">
         <div className="flex items-center gap-2 text-success">
           {result.duplicate ? <CopyCheck className="w-5 h-5" aria-hidden="true" /> : <Check className="w-5 h-5" aria-hidden="true" />}
           <h3 className="font-heading font-bold text-fluid-lg text-text">
@@ -120,10 +129,13 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
           <p className="text-sm text-muted">This session was committed before — nothing was duplicated.</p>
         ) : (
           <>
-            <div className="grid grid-cols-3 gap-2 text-center">
-              <Stat label="Volume" value={`${fmtVolume(result.totalVolumeKg)}kg`} />
-              <Stat label="Sets" value={String(result.setCount)} />
-              <Stat label="PRs" value={String(result.prCount)} />
+            <div className="grid grid-cols-3 gap-2">
+              <Stat label="Volume" value={`${fmtVolume(result.totalVolumeKg)}kg`} color={EMBER} />
+              <Stat label="Sets" value={String(result.setCount)} color={STEEL} />
+              {/* Gold only when there is something to be gold about — a
+                  permanent gold zero is how gold stops meaning a record. */}
+              <Stat label={result.prCount === 1 ? 'Record' : 'Records'} value={String(result.prCount)}
+                color={result.prCount > 0 ? GOLD : MUTED} />
             </div>
             {result.newPRs.length > 0 && (
               <div className="rounded-xl px-3 py-2.5 space-y-1"
@@ -184,6 +196,7 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
   const commitBar = (
     <CommitBar
       draft={draft}
+      totals={totals}
       busy={commit.isPending}
       error={commitError}
       onFinish={() => setFinishOpen(true)}
@@ -206,22 +219,47 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
   )
 
   return (
-    <div className="lg:grid lg:grid-cols-[minmax(320px,380px)_1fr] lg:gap-5 lg:items-start">
+    <>
+      {/* The pinned identity + live rail. `draftTotals` runs HERE, once, and the
+          bar takes three numbers: handed the draft it would re-render on every
+          keystroke in every set field to redraw two figures that only move when
+          a set is ticked. See `src/tests/deck-render.test*`. */}
+      <LiveSessionBar
+        title={draft.title ?? draft.splitDay.toUpperCase()}
+        week={draft.week}
+        phase={draft.phase}
+        dateISO={draft.date}
+        accent={dayColor(draft.dayKey, draft.splitDay)}
+        volumeKg={totals.volumeKg}
+        sets={totals.sets}
+        recordCount={livePrs.count}
+        onBack={onClose}
+        onSetDate={setDate}
+      />
+
+    {/* The route is full-bleed so the bar above can span the viewport; the
+        deck keeps its own measure and padding here. */}
+    <div className="mx-auto w-full max-w-[80rem] px-3 sm:px-5 pt-3 pb-6
+                    lg:grid lg:grid-cols-[minmax(320px,380px)_1fr] lg:gap-5 lg:items-start">
       {/* One sheet, not one per CommitBar — the bar renders twice (desktop rail
           and mobile deck) and a dialog rendered twice is two dialogs. */}
       <FinishSheet
         open={finishOpen}
         onClose={() => setFinishOpen(false)}
         draft={draft}
+        totals={totals}
         busy={commit.isPending}
         error={commitError}
         onSetStats={setStats}
         onSessionRpe={setSessionRpe}
         onCommit={doCommit}
       />
-      {/* ── Left rail (sticky on desktop): identity, insight, notes, commit ── */}
+      {/* ── Left rail (sticky on desktop): insight, notes, commit ──
+          Identity and the live rail left for `LiveSessionBar`: they were the
+          two things that had to stay on screen and this rail scrolls away on a
+          phone with the first swipe. */}
       <div className="space-y-3 lg:sticky lg:top-4">
-        <CoachHeaderCard draft={draft} recordCount={livePrs.count} onSetDate={setDate} />
+        <CoachNotes draft={draft} />
         <SessionNotesCard notes={draft.notes} onChange={setNotes} />
         <div className="hidden lg:block">{commitBar}</div>
       </div>
@@ -262,17 +300,25 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
         />
       )}
     </div>
+    </>
   )
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+/**
+ * One tile of the success screen.
+ *
+ * Label ABOVE value, matching every other metric grid in the app (the session
+ * header, the exercise record strip, the finish sheet). It used to be the only
+ * one the other way up, so the number arrived before you knew what it counted.
+ */
+function Stat({ label, value, color }: { label: string; value: string; color: string }) {
   // Solid surface (no backdrop-filter): this success screen sits outside any
   // overlay, so the helix-overlay-open guard can't reach it — an opaque tile is
   // immune to the iOS composited-black glitch.
   return (
-    <div className="rounded-2xl py-2.5" style={{ background: 'rgba(13,18,32,0.9)', border: '1px solid rgba(255,255,255,0.08)' }}>
-      <div className="helix-num font-bold text-text">{value}</div>
-      <div className="text-[11px] text-muted">{label}</div>
+    <div className="rounded-2xl px-3 py-2.5" style={{ background: 'rgba(13,18,32,0.9)', border: '1px solid rgba(255,255,255,0.08)' }}>
+      <div className="text-[10px] font-bold uppercase tracking-[0.14em] truncate" style={{ color }}>{label}</div>
+      <div className="helix-num font-bold text-fluid-xl tabular-nums leading-none mt-1.5 text-text">{value}</div>
     </div>
   )
 }
