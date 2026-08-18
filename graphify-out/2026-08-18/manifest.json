@@ -140,8 +140,8 @@
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1787060919.183228,
-    "ast_hash": "b7fe3fab73ad3eba0a4ac67baedd8001",
+    "mtime": 1786972247.7636302,
+    "ast_hash": "46a3dc842c4b208693f89ba35d35cfdc",
     "semantic_hash": ""
   },
   "playwright.config.ts": {
@@ -160,8 +160,8 @@
     "semantic_hash": ""
   },
   "public/sw.js": {
-    "mtime": 1787061771.1094954,
-    "ast_hash": "37e5d400d6c4eec0af4bb7143bc654f0",
+    "mtime": 1786949636.2893858,
+    "ast_hash": "6589a9b35e549b2c56c1fce1e89927c5",
     "semantic_hash": ""
   },
   "scripts/generate-icons.mjs": {
@@ -200,8 +200,8 @@
     "semantic_hash": ""
   },
   "src/app/(dashboard)/workout/page.tsx": {
-    "mtime": 1787061250.8698347,
-    "ast_hash": "e5ef4cbc3e1cea4f3fa84d9647367b31",
+    "mtime": 1786782803.5987523,
+    "ast_hash": "9a469447285c96530bce338adb2d997f",
     "semantic_hash": ""
   },
   "src/app/api/compute-score/route.ts": {
@@ -270,13 +270,13 @@
     "semantic_hash": ""
   },
   "src/app/session/[id]/page.tsx": {
-    "mtime": 1787060099.8071194,
-    "ast_hash": "7408b5bd28f3b3dcf5934868fd84f66e",
+    "mtime": 1786910853.8668494,
+    "ast_hash": "19a1d80b1b94b12172acbe91b60350b5",
     "semantic_hash": ""
   },
   "src/app/session/page.tsx": {
-    "mtime": 1787060783.0496404,
-    "ast_hash": "f4bc28c1f6ff42fdfb2e5f85b65f486c",
+    "mtime": 1786910853.8666956,
+    "ast_hash": "28f5be76b0889d79afa0d959b5e48d67",
     "semantic_hash": ""
   },
   "src/app/template.tsx": {
@@ -329,9 +329,14 @@
     "ast_hash": "7d053546194b757651dd9c57d1b6b9ed",
     "semantic_hash": ""
   },
+  "src/components/command-center/CoachHeaderCard.tsx": {
+    "mtime": 1786727271.6269274,
+    "ast_hash": "2f0c5ed3db478d3064e78982b69311d2",
+    "semantic_hash": ""
+  },
   "src/components/command-center/CommitBar.tsx": {
-    "mtime": 1787060832.336528,
-    "ast_hash": "86e095ff12330920ca8b4a487b57112b",
+    "mtime": 1786972100.6979032,
+    "ast_hash": "51dd8f170ca95cf9e5c7d97716316688",
     "semantic_hash": ""
   },
   "src/components/command-center/DatePickerPopover.tsx": {
@@ -340,8 +345,8 @@
     "semantic_hash": ""
   },
   "src/components/command-center/ExerciseCard.tsx": {
-    "mtime": 1787060480.7545428,
-    "ast_hash": "a5eb22fb8e827927bcd4eee7c874545c",
+    "mtime": 1786971313.927699,
+    "ast_hash": "edb78f9d14d9aa956e70e7af7242ad99",
     "semantic_hash": ""
   },
   "src/components/command-center/ExerciseDeckList.tsx": {
@@ -370,8 +375,8 @@
     "semantic_hash": ""
   },
   "src/components/command-center/SessionDeck.tsx": {
-    "mtime": 1787060883.0642724,
-    "ast_hash": "346fa5a1c18f9a0fc42eb328f238fc58",
+    "mtime": 1786971470.3790634,
+    "ast_hash": "cb8ed4bb71885061d01c7d7631d40c5c",
     "semantic_hash": ""
   },
   "src/components/command-center/SessionNotesCard.tsx": {
@@ -380,8 +385,8 @@
     "semantic_hash": ""
   },
   "src/components/command-center/SetEditorRow.tsx": {
-    "mtime": 1787060610.9344466,
-    "ast_hash": "19f1f8cc1a5ba82a77cd6a0f0d3c50a8",
+    "mtime": 1786971162.596837,
+    "ast_hash": "0ab6b49d7a35c97ef6967ff5243b441e",
     "semantic_hash": ""
   },
   "src/components/command-center/WeekToDateTargets.tsx": {
@@ -495,8 +500,8 @@
     "semantic_hash": ""
   },
   "src/components/exercises/ExerciseHistorySheet.tsx": {
-    "mtime": 1787061124.7453892,
-    "ast_hash": "b7945889ade2bab95305af8f422c8d40",
+    "mtime": 1786309609.0954065,
+    "ast_hash": "d6cd1ab7a551ddef33c9da220b39212a",
     "semantic_hash": ""
   },
   "src/components/fx/DeferredMount.tsx": {
@@ -620,23 +625,23 @@
     "semantic_hash": ""
   },
   "src/components/session-detail/ExerciseBreakdown.tsx": {
-    "mtime": 1787061296.6689074,
-    "ast_hash": "8102e728347c89feaf7916543ec293e6",
+    "mtime": 1786971630.3927863,
+    "ast_hash": "71f60644ceacf8ece4604dee3c4005d2",
     "semantic_hash": ""
   },
   "src/components/session-detail/MuscleFocus.tsx": {
-    "mtime": 1787060112.0488584,
-    "ast_hash": "e3618c57ea65cc37ac5413ee9a61a741",
+    "mtime": 1786972047.659829,
+    "ast_hash": "7ada665b20bf0dd394d7ddb48bb7a095",
     "semantic_hash": ""
   },
   "src/components/session-detail/ProgressionTrail.tsx": {
-    "mtime": 1787060084.719599,
-    "ast_hash": "e963318035d28d5faba4bf240cf76f22",
+    "mtime": 1786971420.5631943,
+    "ast_hash": "eebdbd4d5e9559aa5a8621a273b34eb8",
     "semantic_hash": ""
   },
   "src/components/session-detail/SessionHero.tsx": {
-    "mtime": 1787060037.17569,
-    "ast_hash": "6fdc12acbf4fec4b72f2dac7b8a4f741",
+    "mtime": 1786798726.4039888,
+    "ast_hash": "b2f7d5c990f1be7f3046e779b9bb983c",
     "semantic_hash": ""
   },
   "src/components/settings/NotionSync.tsx": {
@@ -770,8 +775,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useExerciseSetHistory.ts": {
-    "mtime": 1787060127.6570306,
-    "ast_hash": "b0da7ab975b021d023c2ada6ab6f7e61",
+    "mtime": 1786971182.5718637,
+    "ast_hash": "14c199d537fd375e2e94ace8169d1ed6",
     "semantic_hash": ""
   },
   "src/lib/hooks/useInsights.ts": {
@@ -840,8 +845,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useSessionIntel.ts": {
-    "mtime": 1787059969.6521838,
-    "ast_hash": "cbe27f19215e4e0d0549ce92cf8ec160",
+    "mtime": 1786691338.435047,
+    "ast_hash": "60a7673dfcedd7a59938f87bbb716b73",
     "semantic_hash": ""
   },
   "src/lib/hooks/useSessionTrends.ts": {
@@ -1840,8 +1845,8 @@
     "semantic_hash": ""
   },
   "src/components/exercises/ExerciseHistoryBody.tsx": {
-    "mtime": 1787061103.5145125,
-    "ast_hash": "4547cd017775061973a2f21974654112",
+    "mtime": 1786727200.4033654,
+    "ast_hash": "d7f0a715618e24f310d10898f03b6445",
     "semantic_hash": ""
   },
   "src/app/(dashboard)/workout/exercises/page.tsx": {
@@ -1850,8 +1855,8 @@
     "semantic_hash": ""
   },
   "src/app/(dashboard)/workout/exercises/[id]/page.tsx": {
-    "mtime": 1787061083.3376575,
-    "ast_hash": "7efff3038d735d7f46af554716c9d95f",
+    "mtime": 1786910853.8660774,
+    "ast_hash": "13b7290d5491d3e5b922bfacf6441870",
     "semantic_hash": ""
   },
   "src/tests/exercise-history-body.test.tsx": {
@@ -2120,8 +2125,8 @@
     "semantic_hash": ""
   },
   "src/components/command-center/FinishSheet.tsx": {
-    "mtime": 1787060861.6358407,
-    "ast_hash": "cc88d850728a26a3ba69a487ad4df08f",
+    "mtime": 1786971450.832741,
+    "ast_hash": "3b7ac81fcc79506ab640cc32051f58fc",
     "semantic_hash": ""
   },
   "src/tests/schedule-context.test.ts": {
@@ -2155,8 +2160,8 @@
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixPrimitives.swift": {
-    "mtime": 1787061713.2249994,
-    "ast_hash": "b3ea4d98d6f6e100561794f7f2c24194",
+    "mtime": 1786970412.39794,
+    "ast_hash": "600ae83baa3ee1594c03a7744058c9f7",
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixProvider.swift": {
@@ -2170,13 +2175,13 @@
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixLifestyle.swift": {
-    "mtime": 1787061557.5125222,
-    "ast_hash": "24e7b812bbb387cadb85593dbc3db49f",
+    "mtime": 1786970437.4894145,
+    "ast_hash": "b7fe77a55e0ae73ee4d40599763a1329",
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixPerformance.swift": {
-    "mtime": 1787061557.5142012,
-    "ast_hash": "e900b425d4accb9cd48f1cd74ed9755d",
+    "mtime": 1786949374.9364789,
+    "ast_hash": "faadad3dc46fc3344fdc79c5578e16c5",
     "semantic_hash": ""
   },
   "src/lib/native/deepLink.ts": {
@@ -2285,8 +2290,8 @@
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixTraining.swift": {
-    "mtime": 1787061581.0793877,
-    "ast_hash": "45e1992cd08f954ce74d0e770c8ea464",
+    "mtime": 1786949462.034135,
+    "ast_hash": "da2eb43c73abba86de77dbe0139c5355",
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixLock.swift": {
@@ -2385,13 +2390,13 @@
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixCardio.swift": {
-    "mtime": 1787061600.4815497,
-    "ast_hash": "cd4b2e78f250013f1a2b4aa379ac54d6",
+    "mtime": 1786951328.2973614,
+    "ast_hash": "6ca74476af87d7ecd580c15dd04216ff",
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixComposition.swift": {
-    "mtime": 1787061581.078969,
-    "ast_hash": "535c3764471311df8f23cacb84df6827",
+    "mtime": 1786972195.343657,
+    "ast_hash": "a7cf4153487b63e17abd208d984ff537",
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixDaily.swift": {
@@ -2537,41 +2542,6 @@
   "ios/App/HelixWidgets/HelixAtlasFigure.swift": {
     "mtime": 1786972167.9937818,
     "ast_hash": "e3f5983407b604544b468ec7cd2b674c",
-    "semantic_hash": ""
-  },
-  "src/components/command-center/CoachNotes.tsx": {
-    "mtime": 1787060755.1604238,
-    "ast_hash": "d5ff01ce64126b1105b754d178c1a787",
-    "semantic_hash": ""
-  },
-  "src/components/command-center/LiveSessionBar.tsx": {
-    "mtime": 1787060695.881757,
-    "ast_hash": "ffb0af4a0b7d4dce84bc42311975af0d",
-    "semantic_hash": ""
-  },
-  "src/components/exercises/ExerciseLedger.tsx": {
-    "mtime": 1787061064.229867,
-    "ast_hash": "158f5ff9465671ef3820bece2ce5b212",
-    "semantic_hash": ""
-  },
-  "src/lib/exercises/unilateral.ts": {
-    "mtime": 1787060425.9470747,
-    "ast_hash": "5ee7ed9004206c46b3db5cd48a377feb",
-    "semantic_hash": ""
-  },
-  "src/lib/hooks/useExerciseSetLedger.ts": {
-    "mtime": 1787061296.6859236,
-    "ast_hash": "40d0c19f2f2e355ce031e1ad56a32d1f",
-    "semantic_hash": ""
-  },
-  "src/tests/exercise-ledger.test.ts": {
-    "mtime": 1787061323.4673176,
-    "ast_hash": "af9772a7aabbb3bf2d3a35d020b764c0",
-    "semantic_hash": ""
-  },
-  "src/tests/unilateral.test.ts": {
-    "mtime": 1787060425.951619,
-    "ast_hash": "8d37cdce73b0df5181292f12dbd80ec1",
     "semantic_hash": ""
   }
 }
