@@ -14,6 +14,16 @@ export interface ExerciseHistoryPoint {
   day: string
   top_weight: number | null
   best_1rm: number | null
+  /**
+   * Mean est-1RM over the day's WORKING sets — the session's strength, not its
+   * best set. Optional: a database whose `exercise_history` has not been
+   * replaced yet omits it, and every reader falls back to `best_1rm`.
+   *
+   * `best_1rm` is a max, so under double progression it freezes as soon as set
+   * 1 reaches the rep ceiling and stays frozen while the later sets climb. The
+   * chart drew a flat line through five sessions of real progress.
+   */
+  avg_1rm?: number | null
   session_volume: number | null
   reps: number | null
 }

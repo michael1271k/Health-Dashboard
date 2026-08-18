@@ -18,9 +18,31 @@ import { EMBER, MUTED } from '@/lib/theme/palette'
 /** Half sets are the smallest real unit; anything finer is float noise. */
 const round1 = (v: number): number => Math.round(v * 10) / 10
 
+/**
+ * ── TWO COUNTS, AND THE PAGE NOW SAYS WHICH IS WHICH ─────────────────────────
+ *
+ * The header says "Sets 20". This block used to say "31.5 weighted sets", one
+ * word apart, twenty pixels down. Nothing on the page explained that they are
+ * answers to different questions, so the only available reading was that one of
+ * them was wrong.
+ *
+ * They are both right:
+ *
+ *   PHYSICAL SETS      what you performed. A unilateral pair is one set;
+ *                      warm-ups are not work. This is the header's number.
+ *   WEIGHTED SETS      what each MUSCLE received. One physical set credits 1.0
+ *                      to every muscle it directly trains and 0.5 to every
+ *                      muscle that assists, so a compound lift lands on several
+ *                      muscles and the distribution sums above the set count.
+ *                      This is the number weekly volume landmarks are graded on.
+ *
+ * Both are printed, labelled, on one line, in that order — physical first,
+ * because that is the one you can count on the floor.
+ */
 export function MuscleFocus({ detail }: { detail: SessionDetail }) {
   if (!detail.muscleSets.length) return null
   const total = round1(detail.muscleSets.reduce((n, m) => n + m.sets, 0))
+  const physical = detail.workingSets || detail.setCount
 
   /* ── ONE RAMP, NOT THIRTEEN BARS ──
      This was a `p-5` card with a heading and one full-width labelled bar per
@@ -38,10 +60,12 @@ export function MuscleFocus({ detail }: { detail: SessionDetail }) {
         <span className="text-[10px] font-bold uppercase tracking-[0.16em] flex items-center gap-1.5" style={{ color: EMBER }}>
           <Target className="w-3 h-3" aria-hidden="true" /> Focus
         </span>
-        {/* Not "direct sets" any more — assisting muscles earn half a set each
-            (SECONDARY_SET_CREDIT), so the total is a weighted count and can
-            land on a half. Summed floats need the round; 11 − 10.7 is not 0.3. */}
-        <span className="text-[10px] text-muted ml-auto helix-num">{total} weighted sets</span>
+        <span className="text-[10px] text-muted ml-auto helix-num tabular-nums"
+          title="Physical sets performed, then the weighted total those sets distribute across the muscles (1.0 direct, 0.5 assisting)">
+          <span className="font-bold text-text">{physical}</span> physical
+          <span className="mx-1 opacity-40">·</span>
+          <span className="font-bold text-text">{total}</span> weighted
+        </span>
       </div>
 
       {/* ── THE FIGURE, BESIDE THE RAMP ──
@@ -70,6 +94,13 @@ export function MuscleFocus({ detail }: { detail: SessionDetail }) {
                 }} />
             ))}
           </div>
+
+          {/* The distribution's own caption, so the ramp is never read as a
+              second, disagreeing set count. */}
+          <p className="text-[9px] text-muted/70 leading-snug">
+            Muscle volume distribution — a set credits 1.0 to each muscle it trains
+            directly and 0.5 to each it assists.
+          </p>
 
           <div className="flex items-center gap-x-3 gap-y-1 flex-wrap">
             {detail.muscleSets.map((m) => {

@@ -46,8 +46,9 @@ describe('groupLedgerRows', () => {
     ])
     expect(out[0].workingSets).toBe(1)
     expect(out[0].sets.map((x) => x.workingNum)).toEqual([1, 1])
-    // Not 20×10 + 20×8 = 360. The weak side sets the credit.
-    expect(out[0].volumeKg).toBe(320)
+    // Not 20×10 + 20×8 = 360, and not the doubled 320 either. One set of work,
+    // at the weaker side: 20 × 8.
+    expect(out[0].volumeKg).toBe(160)
   })
 
   it('warm-ups earn no tonnage', () => {

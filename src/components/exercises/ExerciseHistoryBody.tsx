@@ -47,9 +47,22 @@ export function ExerciseHistoryBody({ exerciseId, exerciseName, accent = STEEL }
 
   // One shape for both hero series, so the chart has a single generic.
   // `> 0`, not `!= null`. Zero is the sentinel the column actually stores.
+  //
+  // ── THE SESSION'S STRENGTH, NOT ITS BEST SET ────────────────────────────────
+  // This plotted `best_1rm`, a MAX over the day. Under double progression the
+  // top set reaches the rep ceiling first and then stays there for weeks while
+  // the later sets climb toward it, so the max freezes and the curve goes flat
+  // through a block of genuine progress — DB Hammer Curl held exactly 28.0 kg
+  // across five sessions while set 3 went 9 → 10 → 11 → 11 → 12.
+  //
+  // `avg_1rm` is the mean over the day's working sets: it moves when any set
+  // moves. It is optional because it comes from a replaced RPC — a database
+  // still on the old function omits it and this falls back to the old series
+  // rather than drawing nothing.
+  const heroE1rm = (p: (typeof timeline)[number]) => p.avg_1rm ?? p.best_1rm
   const e1rmData = timeline
-    .filter((p) => p.best_1rm != null && p.best_1rm > 0)
-    .map((p) => ({ date: shortDate(p.day), value: displayWeight(p.best_1rm!) ?? 0 }))
+    .filter((p) => (heroE1rm(p) ?? 0) > 0)
+    .map((p) => ({ date: shortDate(p.day), value: displayWeight(heroE1rm(p)!) ?? 0 }))
 
   const volumeData = timeline
     .filter((p) => p.session_volume != null && p.session_volume > 0)

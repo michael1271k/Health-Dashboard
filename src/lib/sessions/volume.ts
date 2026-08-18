@@ -6,8 +6,31 @@
  * per side. When the sides differ — "L 5 kg × 10, R 5 kg × 14" — summing both
  * literally credits the strong side's extra reps as if the weak side had done
  * them, and the number drifts up week over week without the work being there.
- * So a pair is scored at the WEAKER side, counted twice: 2 × (min weight × min
- * reps). The 5×10/5×14 example is 100 kg, not 120 kg.
+ * So a pair is scored at the WEAKER side: min weight × min reps. The 5×10/5×14
+ * example is 50 kg.
+ *
+ * ── AND IT IS SCORED ONCE, NOT TWICE (fixed 2026-08-18) ──────────────────────
+ * This used to return `2 × min w × min reps`, on the reasoning that both arms
+ * did the work so a SESSION TOTAL must count both. That reasoning is sound in
+ * isolation and wrong in practice, because the same physical set gets logged
+ * BOTH WAYS in this database. 2026-08-18's Single Arm Lateral Raise (Cable) is
+ * the proof, in one exercise on one day:
+ *
+ *     sets 1–2   L 5 × 15 / R 5 × 14   split      →  2 × 5 × 14 = 140 kg
+ *     sets 3–4   3.75 × 16, 3.75 × 15  unsided    →       60 + 56.25 kg
+ *     sets 5–6   L 3.75 × 15 / R 3.75 × 15 split  →  2 × 3.75 × 15 = 112.5 kg
+ *
+ * Four physical sets of one arm-at-a-time raise, and the two that happened to
+ * be split scored roughly double the two that were not. Splitting a set is a
+ * bookkeeping choice about how carefully you record asymmetry; it must not be
+ * a way to earn tonnage. `volumeCredits` already reached this conclusion for
+ * the per-set PR axis on 2026-08-05 and explicitly left the session total
+ * alone — this closes that gap, so BOTH now mean "the tonnage of the set as
+ * performed".
+ *
+ * It also reconciles the total with Hevy, which counts a single-arm set once:
+ * that day read 3700.5 kg here against 3574.2 kg there, and the 126.3 kg
+ * difference is exactly the two doubled pairs above.
  *
  * A side logged with no partner (only L committed) is scored on its own — it is
  * real work, just not a pair. Bilateral sets are plain weight × reps.
@@ -46,8 +69,9 @@ export function sessionVolumeKg(sets: readonly VolumeSet[]): number {
     const left = bucket.find((x) => x.side === 'L')
     const right = bucket.find((x) => x.side === 'R')
     if (left && right) {
-      // The weaker side, counted once per limb.
-      total += 2 * Math.min(left.weightKg, right.weightKg) * Math.min(left.reps, right.reps)
+      // ONE set of work, scored at the weaker side — identical to what the same
+      // set weighs when it is logged as a single unsided row.
+      total += Math.min(left.weightKg, right.weightKg) * Math.min(left.reps, right.reps)
     } else {
       // A lone side (or a malformed 3+ bucket) — score each row as logged.
       for (const x of bucket) total += x.weightKg * x.reps

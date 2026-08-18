@@ -83,9 +83,15 @@ function effectiveVolumes(rows: readonly MuscleSetRow[]): Map<string, number> {
     const left = bucket.find((x) => x.side === 'L')
     const right = bucket.find((x) => x.side === 'R')
     if (bucket.length === 2 && left && right) {
-      const half = Math.min(left.weightKg || 0, right.weightKg || 0)
+      // ONE set's tonnage, at the weaker side, landing on ONE row — the second
+      // row of the pair contributes nothing. Splitting it across both rows and
+      // letting the caller sum them credited the pair TWICE (2026-08-18): a
+      // split single-arm raise outweighed the identical set logged unsided.
+      // `sessionVolumeKg` carries the full argument.
+      const one = Math.min(left.weightKg || 0, right.weightKg || 0)
         * Math.min(left.reps || 0, right.reps || 0)
-      for (const x of bucket) out.set(x.id, half)
+      out.set(right.id, one)
+      out.set(left.id, 0)
     } else {
       for (const x of bucket) out.set(x.id, raw(x))
     }

@@ -89,6 +89,16 @@ export interface SessionDetail {
    * so a Legs & Core day rendered Chest + Back at zero sets.
    */
   muscleSets: Array<{ muscle: LandmarkMuscle; sets: number }>
+  /**
+   * PHYSICAL working sets — warm-ups excluded, a unilateral pair counted once.
+   *
+   * Distinct from `muscleSets`, whose figures are WEIGHTED (a set credits 1.0 to
+   * each muscle it directly trains and 0.5 to each it assists), and therefore
+   * larger. Both numbers are correct and they answer different questions; they
+   * are carried side by side so the Focus block can say which is which instead
+   * of printing one of them under a word that could mean either.
+   */
+  workingSets: number
   failureSets: number
   warmupSets: number
 }
@@ -305,6 +315,7 @@ export function useSessionDetail(sessionId: string | null) {
         dayKey: s.day_key,
         volumeKg: s.total_volume_kg ?? computedVolume,
         setCount: s.set_count ?? workingSetCount,
+        workingSets: workingSetCount,
         prCount: s.pr_count ?? exercises.reduce((n, e) => n + e.sets.filter((x) => x.isPr).length, 0),
         durationMin: s.duration_min,
         avgBpm: s.avg_bpm,

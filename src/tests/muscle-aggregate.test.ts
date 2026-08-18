@@ -12,27 +12,29 @@ const row = (o: Partial<MuscleSetRow> & Pick<MuscleSetRow, 'id' | 'groups' | 'da
 describe('aggregateMuscleSets', () => {
   it('counts a unilateral L/R pair as ONE set but sums BOTH sides of volume', () => {
     // A cable lateral raise logs two rows sharing a pair_id. Counting two sets
-    // doubles the muscle against its weekly landmark.
+    // doubles the muscle against its weekly landmark. Its TONNAGE is one set's
+    // worth too — see sessionVolumeKg; a split set must not outweigh the same
+    // set logged unsided.
     const r = aggregateMuscleSets([
       row({ id: 'a', pairId: 'p1', side: 'L', groups: ['Shoulders'], date: '2026-07-28', weightKg: 5, reps: 15 }),
       row({ id: 'b', pairId: 'p1', side: 'R', groups: ['Shoulders'], date: '2026-07-28', weightKg: 5, reps: 15 }),
     ], '2026-07-28')
     const s = r.stats.find((x) => x.group === 'Shoulders')!
     expect(s.sets).toBe(1)
-    expect(s.volume).toBe(150)     // 5×15 twice — both arms were lifted
+    expect(s.volume).toBe(75)      // ONE set of work, at the weaker side
   })
 
   it('scores an ASYMMETRIC pair at the weaker side, matching sessionVolumeKg', () => {
     // L 5×10, R 5×14. Summing both rows credits the strong arm's 4 extra reps to
-    // the weak one — 120 kg here against 100 kg on the session card, the same
-    // work with two answers. The gap grew with every asymmetric week.
+    // the weak one; doubling the collapsed figure credits the set twice. Both
+    // produced a number the session card disagreed with.
     const r = aggregateMuscleSets([
       row({ id: 'a', pairId: 'p1', side: 'L', groups: ['Arms'], date: '2026-08-06', weightKg: 5, reps: 10 }),
       row({ id: 'b', pairId: 'p1', side: 'R', groups: ['Arms'], date: '2026-08-06', weightKg: 5, reps: 14 }),
     ], '2026-08-06')
     const s = r.stats.find((x) => x.group === 'Arms')!
     expect(s.sets).toBe(1)
-    expect(s.volume).toBe(100)     // 2 × min(5,5) × min(10,14)
+    expect(s.volume).toBe(50)      // min(5,5) × min(10,14), counted once
   })
 
   it('scores a lone side on its own — it is real work, just not a pair', () => {

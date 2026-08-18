@@ -66,13 +66,42 @@ export function draftMuscleSets(draft: SessionDraft | null): Partial<Record<Land
   return out
 }
 
+/**
+ * PHYSICAL working sets in a draft — warm-ups excluded, a unilateral pair
+ * counted once. The same rule `draftMuscleSets` counts with, before the
+ * primary/secondary credit is applied.
+ *
+ * Exported so the sheet can print it beside the weighted totals: those numbers
+ * sum well above the deck's set count by design, and without the physical
+ * figure next to them the sheet reads as a second, disagreeing tally.
+ */
+export function draftPhysicalSets(draft: SessionDraft | null): number {
+  if (!draft) return 0
+  let total = 0
+  for (const ex of draft.exercises) {
+    if (ex.kind === 'cardio') continue
+    const seen = new Set<string>()
+    for (const s of ex.sets) {
+      if (!isSetCommitted(s) || s.setType === 'warmup') continue
+      if (s.pairId) {
+        if (seen.has(s.pairId)) continue
+        seen.add(s.pairId)
+      }
+      total += 1
+    }
+  }
+  return total
+}
+
 export function MuscleDistribution({ draft }: { draft: SessionDraft | null }) {
   const [open, setOpen] = useState(false)
   const sets = useMemo(() => draftMuscleSets(draft), [draft])
   const worked = useMemo(() => setsToWorked(sets), [sets])
+  const physical = useMemo(() => draftPhysicalSets(draft), [draft])
   const entries = LANDMARK_MUSCLES
     .map((m) => ({ muscle: m, sets: Math.round((sets[m] ?? 0) * 10) / 10 }))
     .filter((e) => e.sets > 0)
+  const weighted = Math.round(entries.reduce((n, e) => n + e.sets, 0) * 10) / 10
 
   if (!entries.length) return null
 
@@ -91,6 +120,14 @@ export function MuscleDistribution({ draft }: { draft: SessionDraft | null }) {
 
       <Sheet open={open} onClose={() => setOpen(false)} title="Muscle distribution" accent={EMBER}>
         <div className="space-y-3 pb-2">
+          {/* The two counts, named, before the figures that use them. The deck's
+              own set count is the physical one; everything in the list below is
+              the weighted one, and they are supposed to differ. */}
+          <div className="grid grid-cols-2 gap-2">
+            <Count value={physical} label="Physical sets" hint="What you performed" />
+            <Count value={weighted} label="Weighted sets" hint="Spread across muscles" />
+          </div>
+
           <div className="h-56 mx-auto" style={{ maxWidth: 260 }}>
             <MuscleAtlas view="both" worked={worked} color={EMBER} label="Muscles worked this session" />
           </div>
@@ -108,11 +145,24 @@ export function MuscleDistribution({ draft }: { draft: SessionDraft | null }) {
               same rule the week's volume targets are graded on. Without the
               note the totals here look wrong next to the deck's set count. */}
           <p className="text-[10px] text-muted leading-snug">
-            Weighted sets — a muscle assisting a lift earns half a set, the same credit the
-            weekly targets use. Warm-ups and unticked sets are not counted.
+            One physical set credits 1.0 to every muscle it trains directly and 0.5 to every
+            muscle that assists — so a compound lift lands on several, and the weighted total
+            is higher than the set count on purpose. It is the same credit the weekly volume
+            targets are graded on. Warm-ups and unticked sets are not counted.
           </p>
         </div>
       </Sheet>
     </>
+  )
+}
+
+/** One of the two headline counts above the distribution. */
+function Count({ value, label, hint }: { value: number; label: string; hint: string }) {
+  return (
+    <div className="rounded-xl px-3 py-2" style={{ background: `${EMBER}0f`, border: `1px solid ${EMBER}33` }}>
+      <span className="block text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: EMBER }}>{label}</span>
+      <span className="helix-num font-bold text-fluid-xl tabular-nums text-text leading-none block mt-1">{value}</span>
+      <span className="block text-[9px] text-muted mt-1">{hint}</span>
+    </div>
   )
 }

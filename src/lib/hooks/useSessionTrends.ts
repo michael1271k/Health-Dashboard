@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase/client'
 import { epley1RM } from '@/lib/utils/epley'
 import { eraForDate, HELIX_CUT_START } from '@/lib/programs'
 import { isTimedExercise } from '@/lib/exercises/timed'
+import { sessionVolumeKg } from '@/lib/sessions/volume'
 import {
   repWindowFor, holdTargetFor, progressionVerdict, timedProgressionVerdict, workLoads,
   LOAD_STEP_KG, type ProgressionVerdict, type WorkingSet,
@@ -31,9 +32,30 @@ export function setsAtCeilingOf(sets: WorkingSet[], ceiling: number | null): num
 
 export interface ExerciseTrend {
   /**
-   * Per-session headline, oldest → newest (one point per session). For a loaded
-   * lift this is the best est-1RM (kg); for a TIMED hold it is the best hold
-   * (seconds) — `timed` says which axis, so the graph never plots a plank as 0 kg.
+   * Per-session headline, oldest → newest (one point per session): the MEAN
+   * across that session's working sets. For a loaded lift that is mean est-1RM
+   * (kg); for a TIMED hold, mean hold (seconds) — `timed` says which axis, so
+   * the graph never plots a plank as 0 kg.
+   *
+   * ── WHY THE MEAN AND NOT THE BEST SET (fixed 2026-08-18) ────────────────────
+   * This was `max`, and on a double-progression program a max is a curve that
+   * stops moving. The top set arrives at the rep ceiling first and then holds
+   * there — deliberately, that is the program — while the remaining sets climb
+   * toward it over the following weeks. The headline is pinned by the set that
+   * is not allowed to change:
+   *
+   *   DB Hammer Curl   set 1        set 2        set 3        max      mean
+   *   2026-07-21       20 × 12      20 × 10      18 × 9       28.0     26.0
+   *   2026-07-28       20 × 12      20 × 10      18 × 10      28.0     26.2
+   *   2026-08-05       20 × 12      20 × 11      18 × 11      28.0     26.6
+   *   2026-08-12       20 × 12      20 × 12      18 × 11      28.0     26.9
+   *   2026-08-18       20 × 12      20 × 12      18 × 12      28.0     27.1
+   *
+   * Five sessions, every one of them better than the last, drawn as a dead flat
+   * line at 28.0 with `pctChange` permanently 0. The mean moves when any set
+   * moves, which is what the graph is being asked.
+   *
+   * `best` keeps the max — an all-time record IS a best-set question.
    */
   points: number[]
   /** % change from the previous session's headline to this one. */
@@ -162,15 +184,35 @@ export function useSessionTrends(exerciseIds: string[], eraDate: string, dayKey?
           && [...perEx.values()].every((sets) => sets.every((s) => !(s.weightKg > 0)))
         const byReps = timed || unloaded
 
-        // Per-set headline: reps/seconds for unloaded work, best est-1RM loaded.
+        // Per-set headline: reps/seconds for unloaded work, est-1RM loaded.
         const headline = (s: SetRow) => (byReps ? s.reps : (s.est || epley1RM(s.weightKg, s.reps) || 0))
         const bestOf = (sets: SetRow[]) => sets.reduce((m, s) => Math.max(m, headline(s)), 0)
+        /**
+         * The SESSION's headline — the mean over its working sets, with a
+         * unilateral pair counted once so a split exercise is not silently
+         * weighted double against a bilateral one in the same average.
+         */
+        const meanOf = (sets: SetRow[]) => {
+          const one = collapsePairs(sets)
+          if (!one.length) return 0
+          return one.reduce((sum, s) => sum + headline(s), 0) / one.length
+        }
+        // Tonnage over the SAME one-set-per-pair rule as everything else. Summing
+        // the raw rows counted a unilateral pair twice, so this figure and the
+        // session total it sits beside disagreed on any split exercise.
         const tonnageOf = (sets: SetRow[]) =>
-          Math.round(sets.reduce((s, x) => s + (byReps ? x.reps : x.weightKg * x.reps), 0))
+          Math.round(byReps
+            ? collapsePairs(sets).reduce((s, x) => s + x.reps, 0)
+            : sessionVolumeKg(sets.map((x) => ({
+                weightKg: x.weightKg, reps: x.reps,
+                side: x.side === 'L' || x.side === 'R' ? x.side : null, pairId: x.pairId,
+              }))))
 
         const ordered = [...perEx.entries()].sort(([a], [b]) => a.localeCompare(b))
-        // Reps and seconds are whole; est-1RM keeps a decimal.
-        const points = ordered.map(([, sets]) => byReps ? bestOf(sets) : Math.round(bestOf(sets) * 10) / 10)
+        // One decimal on both axes now. Reps and seconds are whole PER SET, but
+        // a mean over three of them is not, and rounding "14, 13, 13" to a flat
+        // 13 reintroduces exactly the granularity this change exists to recover.
+        const points = ordered.map(([, sets]) => Math.round(meanOf(sets) * 10) / 10)
         const cur = points[points.length - 1]
         const prev = points.length >= 2 ? points[points.length - 2] : null
 
@@ -190,7 +232,9 @@ export function useSessionTrends(exerciseIds: string[], eraDate: string, dayKey?
         out[id] = {
           points,
           pctChange: prev && prev > 0 ? Math.round(((cur - prev) / prev) * 1000) / 10 : null,
-          best: Math.max(...points),
+          // The all-time BEST SET, not the best session mean — a record is a
+          // best-set question and `points` no longer answers it.
+          best: Math.max(...ordered.map(([, sets]) => bestOf(sets))),
           tonnage,
           tonnageDelta: prevSets ? tonnage - tonnageOf(prevSets) : null,
           topSet: topSet ? { weightKg: topSet.weightKg, reps: topSet.reps } : null,

@@ -2,9 +2,10 @@ import { describe, it, expect } from 'vitest'
 import { sessionVolumeKg } from '@/lib/sessions/volume'
 
 /**
- * The asymmetry rule: a unilateral L/R pair is scored at the WEAKER side,
- * counted twice — otherwise the strong side's extra reps inflate the session
- * total and the week-over-week volume trend drifts up without the work.
+ * The asymmetry rule: a unilateral L/R pair is ONE set of work, scored at the
+ * WEAKER side and counted ONCE — otherwise the strong side's extra reps inflate
+ * the total, and, worse, the same physical set weighs twice as much when it
+ * happens to be logged split as when it is logged as a single unsided row.
  */
 describe('sessionVolumeKg', () => {
   it('sums bilateral sets as weight × reps', () => {
@@ -15,26 +16,31 @@ describe('sessionVolumeKg', () => {
     ])).toBe(60 * 12 + 60 * 11 + 57.5 * 10)
   })
 
-  it('scores an asymmetric L/R pair at the LOWER rep count, both sides', () => {
-    // The brief's example: L 5kg × 10, R 5kg × 14 → 100 kg, not 120 kg.
+  it('scores an asymmetric L/R pair at the LOWER rep count, ONCE', () => {
+    // L 5kg × 10, R 5kg × 14 → 50 kg. Not 70 (the strong side), not 100 (both).
     expect(sessionVolumeKg([
       { weightKg: 5, reps: 10, side: 'L', pairId: 'p1' },
       { weightKg: 5, reps: 14, side: 'R', pairId: 'p1' },
-    ])).toBe(100)
+    ])).toBe(50)
   })
 
   it('also takes the lower WEIGHT when the sides used different loads', () => {
     expect(sessionVolumeKg([
       { weightKg: 7.5, reps: 12, side: 'L', pairId: 'p1' },
       { weightKg: 10, reps: 12, side: 'R', pairId: 'p1' },
-    ])).toBe(2 * 7.5 * 12)
+    ])).toBe(7.5 * 12)
   })
 
-  it('leaves a symmetric pair untouched', () => {
-    expect(sessionVolumeKg([
-      { weightKg: 7.5, reps: 15, side: 'L', pairId: 'p1' },
-      { weightKg: 7.5, reps: 15, side: 'R', pairId: 'p1' },
-    ])).toBe(2 * 7.5 * 15)
+  it('weighs a split set the same as the identical set logged unsided', () => {
+    // 2026-08-18's Single Arm Lateral Raise logged BOTH ways in one exercise.
+    // Whether you record the asymmetry is a bookkeeping choice; it must not
+    // change what the work weighs.
+    const split = sessionVolumeKg([
+      { weightKg: 3.75, reps: 15, side: 'L', pairId: 'p1' },
+      { weightKg: 3.75, reps: 15, side: 'R', pairId: 'p1' },
+    ])
+    expect(split).toBe(sessionVolumeKg([{ weightKg: 3.75, reps: 15 }]))
+    expect(split).toBe(56.25)
   })
 
   it('scores a lone logged side on its own (not a pair)', () => {
@@ -50,7 +56,7 @@ describe('sessionVolumeKg', () => {
       { weightKg: 5, reps: 14, side: 'R', pairId: 'p1' },
       { weightKg: 5, reps: 12, side: 'L', pairId: 'p2' },
       { weightKg: 5, reps: 12, side: 'R', pairId: 'p2' },
-    ])).toBe(600 + 100 + 120)
+    ])).toBe(600 + 50 + 60)
   })
 
   // A quarter-kg plate can only ever land on a quarter, so 2 dp is exact rather
