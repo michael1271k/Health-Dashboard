@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
-import { useExerciseMap, useRoutineMemory, routineMemoryMap, useLatestSessionFlag } from '@/lib/hooks/useLogger'
+import { useLatestSessionFlag } from '@/lib/hooks/useLogger'
 import { useWeekSessions, weekStartOf } from '@/lib/hooks/useWeekSessions'
 import { PostWorkoutSummary } from '@/components/command-center/PostWorkoutSummary'
 import { SwapDayControl, RestTodayButton } from '@/components/day/SwapDayControl'
@@ -16,12 +16,23 @@ import {
 import { logicalTodayISO } from '@/lib/utils/day'
 import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { displayWeight, weightUnit } from '@/lib/utils/units'
-import { formatSet } from '@/lib/utils/setFormat'
 import { isTimedExercise } from '@/lib/exercises/timed'
 import { Plus, TrendingUp, Moon, ArrowRight, Flag, FileClock, ChevronDown, ChevronRight, BookOpen } from 'lucide-react'
 import { WeekScheduler } from '@/components/schedule/WeekScheduler'
 import { Surface } from '@/components/ui/Zone'
-import { STEEL } from '@/lib/theme/palette'
+import { Segmented } from '@/components/ui/Segmented'
+import { useExerciseSetHistory, workingSets, type ExerciseHistory } from '@/lib/hooks/useExerciseSetHistory'
+import { sessionVolumeKg } from '@/lib/sessions/volume'
+import { STEEL, EMBER } from '@/lib/theme/palette'
+
+const PLAN_VIEWS = [
+  { value: 'week' as const, label: 'Week' },
+  { value: 'routine' as const, label: 'Routine' },
+]
+type PlanView = (typeof PLAN_VIEWS)[number]['value']
+
+const shortDate = (iso: string) =>
+  new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 
 // Gym/muscle-progress graphs (Contour Map, Intensity Calendar, Volume Stream,
 // Muscle Analytics) — relocated here from the Momentum → Analytics tab.
@@ -31,20 +42,18 @@ const REST_VIOLET = '#B4522A'
 
 export default function WorkoutPage() {
   const router = useRouter()
-  const { data: exMap } = useExerciseMap()
   const { data: nextFlag } = useLatestSessionFlag()
   // The active plan+phase is chosen in Settings → Plans (single source).
   // Init to a deterministic default so SSR and first client render match; the
   // effect then reads the real active plan (localStorage) after mount.
   const [program, setProgram] = useState<Program>(() => activeProgram('apex51', 'bulk'))
   const [openPlan, setOpenPlan] = useState<string | null>(null)
+  const [planView, setPlanView] = useState<PlanView>('week')
   const unit = weightUnit()
 
-  // Memory is per ROUTINE: the same lift on two different days keeps two
-  // separate "previous" values. Tuples in, Map out (JSON can't carry a Map).
-  const dayKeys = useMemo(() => program.days.map((d) => d.key), [program])
-  const { data: memoryRows } = useRoutineMemory(dayKeys)
-  const memory = useMemo(() => routineMemoryMap(memoryRows), [memoryRows])
+  // The per-routine "previous top set" memory (`useRoutineMemory`) is gone from
+  // this page. It answered with ONE set per exercise, which is the question the
+  // expanded plan day now answers with the whole session — see `lastRun`.
 
   // Surviving deck draft (autosaved on /session) — offer to resume it.
   const [resumeDraft, setResumeDraft] = useState<SessionDraft | null>(null)
@@ -81,6 +90,47 @@ export default function WorkoutPage() {
     [today],
   )
   const todayKey = schedule !== 'rest' ? schedule.dayKey : undefined
+
+  /**
+   * The last time you ran the day you just expanded.
+   *
+   * Fetched for the OPEN day only — expanding is the signal, so a page that
+   * nobody expands costs nothing, and the query is routine-scoped because a
+   * preview of Legs A that blends in Legs B's leg curl is not a preview of Legs A.
+   */
+  const openDay = program.days.find((d) => d.key === openPlan) ?? null
+  const openNames = useMemo(() => openDay?.exercises.map((e) => e.name) ?? [], [openDay])
+  const { data: lastRunSets } = useExerciseSetHistory(openNames, eraForDate(today), openPlan ?? undefined)
+
+  const lastRun = useMemo(() => {
+    if (!lastRunSets?.size) return null
+    // Each entry is that exercise's most recent session of this routine, which
+    // is usually the same session for all of them — but not if a lift was
+    // skipped last time. Sum only the ones that share the newest date, so the
+    // header never adds two sessions together.
+    let date = ''
+    for (const h of lastRunSets.values()) if (h.date > date) date = h.date
+    if (!date) return null
+
+    let volumeKg = 0
+    let sets = 0
+    const byName = new Map<string, ExerciseHistory>()
+    for (const [name, h] of lastRunSets) {
+      if (h.date !== date) continue
+      byName.set(name, h)
+      const work = workingSets(h)
+      volumeKg += sessionVolumeKg(work.map((sd) => ({
+        weightKg: sd.weightKg, reps: sd.reps, side: sd.side ?? null, pairId: sd.pairId ?? null,
+      })))
+      // A unilateral pair is ONE set of work — the same rule tonnage uses.
+      const pairs = new Set<string>()
+      for (const sd of work) {
+        if (sd.pairId) { if (!pairs.has(sd.pairId)) { pairs.add(sd.pairId); sets += 1 } }
+        else sets += 1
+      }
+    }
+    return { date, volumeKg: Math.round(volumeKg), sets, byName }
+  }, [lastRunSets])
   const todayDay = useMemo(
     () => (todayKey ? program.days.find((d) => d.key === todayKey) : undefined),
     [todayKey, program],
@@ -200,72 +250,117 @@ export default function WorkoutPage() {
         </span>
       </Surface>
 
-      {/* ── The WEEK: which day falls when, and how to rearrange it. ──
-          This used to be the card below, which listed `program.days` by their
-          AUTHORED weekday and was therefore blind to every swap already made. */}
+      {/* ── ONE SECTION, TWO QUESTIONS ──
+          These were two stacked `<h2>`s — "This week" over the scheduler, then
+          "Routine" over the plan accordion — argued for as "content vs
+          calendar". They ARE two questions, but they are two questions about
+          the same thing, asked one after the other down a scrolling page, so
+          answering the second meant losing sight of the first. A segmented
+          control is what "two views of one subject" looks like; two headings is
+          what "two subjects" looks like. */}
       <div className="space-y-2">
-        <h2 className="font-heading text-fluid-lg font-bold text-text">This week</h2>
-        <WeekScheduler />
-      </div>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="font-heading text-fluid-lg font-bold text-text">Plan</h2>
+          <Segmented
+            options={PLAN_VIEWS}
+            value={planView}
+            onChange={setPlanView}
+            accent={EMBER}
+            size="sm"
+            label="Plan view"
+          />
+        </div>
 
-      {/* ── The ROUTINE: what each day PRESCRIBES. A different question from the
-          one above, which is why they are two cards and not one — content vs
-          calendar. No weekday chip here on purpose: after a permanent move the
-          authored weekday is no longer where the day sits, and two cards
-          disagreeing about that is worse than one of them staying silent. */}
-      <h2 className="font-heading text-fluid-lg font-bold text-text">Routine</h2>
-      <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-1.5 divide-y divide-white/[0.05]">
-        {program.days.map((day) => {
-          const isToday = day.key === todayKey
-          // Program week-plan defaults to MINIMIZED — every day collapsed until
-          // tapped (the today "Session block" hero above stays expanded).
-          const isOpen = openPlan === day.key
-          // day is phase-resolved — its exercises are already the current phase's.
-          const totalSets = day.exercises.reduce((n, e) => n + e.sets, 0)
-          return (
-            <div key={day.key} className="overflow-hidden"
-              style={{ background: isToday ? `${day.color}0f` : undefined, borderRadius: 8 }}>
-              <button
-                onClick={() => setOpenPlan(isOpen ? '' : day.key)}
-                aria-expanded={isOpen}
-                className="w-full flex items-center gap-2 px-2 py-1.5 text-left"
-              >
-                <span className="w-1 h-4 rounded-full shrink-0" style={{ background: day.color }} aria-hidden="true" />
-                <span className="split-label font-bold text-fluid-sm truncate" style={{ color: day.color }}>{day.label}</span>
-                {isToday && <span className="text-[9px] px-1 rounded font-bold shrink-0" style={{ color: day.color, background: `${day.color}22` }}>TODAY</span>}
-                <span className="ml-auto text-[10px] text-muted shrink-0">{day.exercises.length} ex · {totalSets} sets</span>
-                <ChevronDown className={`w-3.5 h-3.5 text-muted shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
-              </button>
-              {isOpen && (
-                <div className="px-2.5 pb-2 space-y-0.5">
-                  {day.sub && <p className="text-[10px] text-muted mb-1">{day.sub}</p>}
-                  {day.exercises.map((ex) => {
-                    const id = exMap?.get(ex.name)
-                    const prev = id ? memory.get(`${day.key}|${id}`) : undefined
-                    const target = displayWeight(ex.wk1Kg)
-                    return (
-                      <div key={ex.name} className="rounded-lg px-2.5 py-1.5 bg-white/[0.02] border border-white/[0.05]">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-xs font-medium text-text leading-tight truncate">{ex.name}</span>
-                          <span className="text-[10px] text-muted shrink-0">{ex.sets}×{ex.reps}</span>
-                        </div>
-                        <div className="text-[10px] text-muted flex items-center gap-2 mt-0.5">
-                          {prev
-                            ? <span className="flex items-center gap-1 text-success"><TrendingUp className="w-2.5 h-2.5" />{formatSet(prev.weightKg, prev.reps, { timed: isTimedExercise(ex.name), unit, toDisplay: displayWeight })}</span>
-                            : target != null && <span>Wk1 {target}{unit}</span>}
-                        </div>
-                      </div>
-                    )
-                  })}
-                  <button onClick={() => openDeck(day.key)}
-                    className="btn-glass w-full justify-center min-h-[40px] text-fluid-xs mt-1" style={{ color: day.color }}>
-                    <Plus className="w-3.5 h-3.5" /> Log {day.label}
+        {planView === 'week' ? (
+          /* Which day falls when, and how to rearrange it. This used to be the
+             accordion below, which listed `program.days` by their AUTHORED
+             weekday and was therefore blind to every swap already made. */
+          <WeekScheduler />
+        ) : (
+          /* What each day PRESCRIBES — and, once expanded, what you actually did
+             the last time you ran it. No weekday chip here on purpose: after a
+             permanent move the authored weekday is no longer where the day sits,
+             and two views disagreeing about that is worse than one staying
+             silent. */
+          <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-1.5 divide-y divide-white/[0.05]">
+            {program.days.map((day) => {
+              const isToday = day.key === todayKey
+              // Program week-plan defaults to MINIMIZED — every day collapsed until
+              // tapped (the today "Session block" hero above stays expanded).
+              const isOpen = openPlan === day.key
+              // day is phase-resolved — its exercises are already the current phase's.
+              const totalSets = day.exercises.reduce((n, e) => n + e.sets, 0)
+              return (
+                <div key={day.key} className="overflow-hidden"
+                  style={{ background: isToday ? `${day.color}0f` : undefined, borderRadius: 8 }}>
+                  <button
+                    onClick={() => setOpenPlan(isOpen ? '' : day.key)}
+                    aria-expanded={isOpen}
+                    className="w-full flex items-center gap-2 px-2 py-1.5 text-left"
+                  >
+                    <span className="w-1 h-4 rounded-full shrink-0" style={{ background: day.color }} aria-hidden="true" />
+                    <span className="split-label font-bold text-fluid-sm truncate" style={{ color: day.color }}>{day.label}</span>
+                    {isToday && <span className="text-[9px] px-1 rounded font-bold shrink-0" style={{ color: day.color, background: `${day.color}22` }}>TODAY</span>}
+                    <span className="ml-auto text-[10px] text-muted shrink-0">{day.exercises.length} ex · {totalSets} sets</span>
+                    <ChevronDown className={`w-3.5 h-3.5 text-muted shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
                   </button>
+                  {isOpen && (
+                    <div className="px-2.5 pb-2 space-y-1">
+                      {day.sub && <p className="text-[10px] text-muted mb-1">{day.sub}</p>}
+
+                      {/* ── LAST TIME YOU RAN THIS DAY ──
+                          The accordion used to show the PLAN and, per exercise,
+                          one top set carried over from `useRoutineMemory`. What
+                          you want before repeating a workout is the workout:
+                          every set, at the loads you actually used. Fetched only
+                          for the day you expand, and routine-scoped on purpose —
+                          a preview of Legs A must not blend in Legs B's leg curl. */}
+                      {lastRun && (
+                        <p className="text-[10px] text-muted helix-num">
+                          Last performed {shortDate(lastRun.date)} · {Math.round(displayWeight(lastRun.volumeKg) ?? 0).toLocaleString()}{unit} · {lastRun.sets} sets
+                        </p>
+                      )}
+
+                      {day.exercises.map((ex) => {
+                        const done = isOpen ? workingSets(lastRun?.byName.get(ex.name)) : []
+                        const target = displayWeight(ex.wk1Kg)
+                        const exTimed = isTimedExercise(ex.name)
+                        return (
+                          <div key={ex.name} className="rounded-lg px-2.5 py-1.5 bg-white/[0.02] border border-white/[0.05]">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-fluid-sm font-medium text-text leading-tight truncate">{ex.name}</span>
+                              <span className="text-fluid-xs text-muted shrink-0 helix-num">{ex.sets}×{ex.reps}</span>
+                            </div>
+                            <div className="text-fluid-xs text-muted flex items-center gap-1.5 mt-0.5 flex-wrap">
+                              {done.length > 0 ? (
+                                <>
+                                  <TrendingUp className="w-2.5 h-2.5 shrink-0 text-success" aria-hidden="true" />
+                                  {done.map((sd, i) => (
+                                    <span key={i} className="helix-num tabular-nums text-text/80">
+                                      {sd.weightKg > 0
+                                        ? `${displayWeight(sd.weightKg)}×${sd.reps}`
+                                        : `${sd.reps}${exTimed ? 's' : ''}`}
+                                    </span>
+                                  ))}
+                                </>
+                              ) : target != null ? (
+                                <span>Wk1 {target}{unit}</span>
+                              ) : null}
+                            </div>
+                          </div>
+                        )
+                      })}
+                      <button onClick={() => openDeck(day.key)}
+                        className="btn-glass w-full justify-center min-h-[40px] text-fluid-xs mt-1" style={{ color: day.color }}>
+                        <Plus className="w-3.5 h-3.5" /> Log {day.label}
+                      </button>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          )
-        })}
+              )
+            })}
+          </div>
+        )}
       </div>
 
       {/* Weekly volume vs target now lives inside MuscleAnalyticsPanel below —

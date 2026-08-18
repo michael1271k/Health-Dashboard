@@ -60,7 +60,6 @@ export function ExerciseHistoryBody({ exerciseId, exerciseName, accent = STEEL }
     .map((p) => ({ date: shortDate(p.day), value: p.reps! }))
 
   const bestReps = repsData.length ? Math.max(...repsData.map((p) => p.value)) : null
-  const recent = [...timeline].reverse().slice(0, 8)
 
   if (isPending) {
     return <div className="h-64 animate-pulse rounded-xl bg-white/[0.04]" aria-hidden="true" />
@@ -196,24 +195,15 @@ export function ExerciseHistoryBody({ exerciseId, exerciseName, accent = STEEL }
         </div>
       )}
 
-      {/* Recent sessions */}
-      {recent.length > 0 && (
-        <div className="space-y-1.5">
-          <p className="text-[11px] font-bold uppercase tracking-wide text-muted">Recent sessions</p>
-          {recent.map((p) => (
-            <div key={p.day} className="flex items-center gap-3 rounded-lg bg-white/[0.02] border border-white/[0.05] px-3 py-2 text-fluid-xs">
-              <span className="text-muted w-16 shrink-0">{shortDate(p.day)}</span>
-              <span className="flex-1 helix-num text-text tabular-nums">
-                {!unloaded && p.top_weight ? `${displayWeight(p.top_weight)}${unit}` : '—'}
-              </span>
-              <span className="helix-num text-muted tabular-nums">
-                {p.session_volume ? `${Math.round(displayWeight(p.session_volume) ?? 0).toLocaleString()}${unit}` : '—'}
-              </span>
-              <span className="helix-num text-muted tabular-nums shrink-0">{p.reps ?? 0} reps</span>
-            </div>
-          ))}
-        </div>
-      )}
+      {/* ── THE "RECENT SESSIONS" LIST LEFT ──
+          Eight rows of date · top weight · session volume · reps: the two charts
+          directly above it, printed as numbers. It was the closest thing this
+          page had to a training log, which is exactly why it looked like one and
+          answered none of a log's questions — it could not say what the third
+          set was, or how many sets there were.
+
+          The History tab does that now, from the sets themselves. This tab keeps
+          what it is actually for: the records, and which way they are moving. */}
     </div>
   )
 }

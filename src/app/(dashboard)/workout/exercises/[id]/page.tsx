@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import { AppBar } from '@/components/nav/AppBar'
@@ -11,6 +11,7 @@ import { MUTED } from '@/lib/theme/palette'
 import { exerciseColor, groupColor } from '@/lib/theme/muscleHue'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
 import { BackLink, NavChevron } from '@/components/nav/NavChevron'
+import { Segmented } from '@/components/ui/Segmented'
 
 /*
  * recharts is ~120 kB and this was the ONE route importing it statically —
@@ -22,6 +23,31 @@ const ExerciseHistoryBody = dynamic(
   () => import('@/components/exercises/ExerciseHistoryBody').then((m) => m.ExerciseHistoryBody),
   { ssr: false, loading: () => <div className="h-64 rounded-xl bg-surface-2/60 animate-pulse" /> },
 )
+
+/*
+ * The ledger imports no chart library, so it is deferred for the opposite
+ * reason: it is the tab you do NOT land on, and its query is the heavier of the
+ * two. Splitting it out means opening an exercise still costs one RPC.
+ */
+const ExerciseLedger = dynamic(
+  () => import('@/components/exercises/ExerciseLedger').then((m) => m.ExerciseLedger),
+  { ssr: false, loading: () => <div className="h-64 rounded-xl bg-surface-2/60 animate-pulse" /> },
+)
+
+/**
+ * Two questions, two tabs.
+ *
+ * Summary is "how strong am I on this, and which way is it going" — records and
+ * trend lines, computed. History is "what did I actually do" — the sets
+ * themselves, grouped by the workout they happened on. They were one scroll
+ * before, and the second half did not exist: the page ended with the last EIGHT
+ * sessions summarised to one line each, which is the chart again in words.
+ */
+const TABS = [
+  { value: 'summary' as const, label: 'Summary' },
+  { value: 'history' as const, label: 'History' },
+]
+type Tab = (typeof TABS)[number]['value']
 
 /**
  * One exercise, everything it has ever done.
@@ -41,6 +67,7 @@ export default function ExerciseDetailPage() {
   const router = useRouter()
   const qc = useQueryClient()
   const { data } = useExerciseCatalog()
+  const [tab, setTab] = useState<Tab>('summary')
 
   const flat = data?.flat ?? []
   const i = flat.findIndex((e) => e.id === id)
@@ -98,12 +125,28 @@ export default function ExerciseDetailPage() {
         </div>
       </AppBar>
 
-      <div className="mx-auto w-full max-w-[68ch] px-3 py-3 pb-8">
-        <ExerciseHistoryBody
-          exerciseId={id ?? null}
-          exerciseName={current?.name ?? ''}
+      <div className="mx-auto w-full max-w-[68ch] px-3 py-3 pb-8 space-y-3">
+        <Segmented
+          options={TABS}
+          value={tab}
+          onChange={setTab}
           accent={accent}
+          size="sm"
+          label="Exercise view"
         />
+        {tab === 'summary' ? (
+          <ExerciseHistoryBody
+            exerciseId={id ?? null}
+            exerciseName={current?.name ?? ''}
+            accent={accent}
+          />
+        ) : (
+          <ExerciseLedger
+            exerciseId={id ?? null}
+            exerciseName={current?.name ?? ''}
+            accent={accent}
+          />
+        )}
       </div>
     </div>
   )

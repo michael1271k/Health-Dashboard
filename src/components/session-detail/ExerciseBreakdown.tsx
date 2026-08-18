@@ -426,7 +426,7 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
                 return (
                   <div key={`${row.kind}-${ri}`}
                     style={rowIsPr ? { background: `${GOLD}12`, boxShadow: `inset 3px 0 0 ${GOLD}` } : undefined}
-                    className="grid grid-cols-[18px_minmax(0,1fr)_minmax(0,1fr)_46px] items-center gap-2 pl-[22px] pr-3 py-[3px] text-fluid-xs">
+                    className="grid grid-cols-[18px_minmax(0,1fr)_minmax(0,1fr)_46px] items-center gap-2 pl-[22px] pr-3 py-[3px] text-fluid-sm">
                     <span className="helix-num text-[10px] font-bold text-right tabular-nums"
                       style={{ color: replaces && tag ? tag.color : 'rgba(255,255,255,0.45)' }}
                       title={tag?.full}>
@@ -468,7 +468,7 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
 
                     {/* The same set, last time you did this movement — on ANY
                         day, which is why a Friday leg curl can quote Monday's. */}
-                    <span className="helix-num text-[11px] text-muted/70 tabular-nums truncate">
+                    <span className="helix-num text-fluid-xs text-muted/70 tabular-nums truncate">
                       {prev
                         ? formatSet(prev.weightKg, prev.reps, { timed, unit, toDisplay: displayWeight })
                         : '—'}
