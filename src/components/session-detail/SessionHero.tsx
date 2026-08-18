@@ -6,10 +6,11 @@ import { Pencil, Trash2, Loader2 } from 'lucide-react'
 import type { SessionDetail } from '@/lib/hooks/useSessionDetail'
 import { useEditSession } from '@/lib/hooks/useEditSession'
 import { useDeleteSession, useGlobalSessionNumber } from '@/lib/hooks/useDayVault'
+import { useSessionIntel, type IntelMetric } from '@/lib/hooks/useSessionIntel'
 import { dayColor, STEEL, EMBER, OXIDE, GOLD, EMERALD, MACRO } from '@/lib/theme/palette'
 import { displayWeight, weightUnit, fmtVolume } from '@/lib/utils/units'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
-import { Surface, StatStrip } from '@/components/ui/Zone'
+import { Surface } from '@/components/ui/Zone'
 
 /*
  * This file used to open with six local constants, four of which named a colour
@@ -27,39 +28,121 @@ import { Surface, StatStrip } from '@/components/ui/Zone'
  */
 
 /**
- * One metric in the secondary strip — heart rate, calories, difficulty, set
- * composition. Scrolls horizontally rather than wrapping, so it can never
- * become the two-row block of boxes it started as.
+ * ── WHY THIS HEADER NO LONGER SCROLLS ────────────────────────────────────────
+ *
+ * There were THREE independent horizontal scrollers on this page: a `StatStrip`
+ * here, a second hand-rolled `overflow-x-auto` row here, and a third in
+ * `ProgressionTrail`. Between them they printed volume, sets, duration,
+ * calories and average HR TWICE — once as a value, once as a value-with-delta —
+ * and none of them could be read without dragging sideways.
+ *
+ * Scrolling was the wrong answer to "there are nine numbers". The right answer
+ * is that there are not nine numbers of equal weight. Three of them say what
+ * the session WAS (volume, duration, sets); the rest are context. So the header
+ * is two fixed grids — a 3-up at display size and a 4-up at label size — and
+ * nothing overflows at 390px.
+ *
+ * The second half of the fix lives in `ProgressionTrail`: absolutes appear ONLY
+ * here, deltas appear ONLY as the ▲/▼ attached to the number they modify. That
+ * is what stops the duplication coming back — there is no longer a second place
+ * for an absolute to live.
  */
-function Stat({ value, label, color, estimated }: {
-  value: string; label: string; color: string
-  /** Derived by formula rather than measured — see `sessions/estimates.ts`. */
-  estimated?: boolean
-}) {
+
+/** Percent change for a metric, in the direction that metric considers good. */
+function pctOf(m: IntelMetric | undefined): { pct: number; good: boolean } | null {
+  if (!m || m.value == null || m.previous == null || m.previous === 0) return null
+  const pct = Math.round(((m.value - m.previous) / m.previous) * 100)
+  if (pct === 0) return null
+  return { pct, good: pct > 0 === m.higherIsBetter }
+}
+
+/** The ▲6% / ▼4% that rides beside a headline number. */
+function Delta({ metric }: { metric: IntelMetric | undefined }) {
+  const d = pctOf(metric)
+  if (!d) return null
   return (
-    <span className="inline-flex items-baseline gap-1 shrink-0">
-      <span className="helix-num text-fluid-base font-bold text-text tabular-nums leading-none">{value}</span>
-      <span className="text-[10px] uppercase tracking-wide" style={{ color }}>{label}</span>
-      {/* The value keeps its own colour — an estimate is still your best figure
-          and is counted at full weight everywhere. What it must not do is pass
-          for a measurement, so the provenance is stated rather than implied. */}
-      {estimated && (
-        <span
-          className="text-[9px] uppercase tracking-wide text-muted"
-          title="Calculated by formula — no watch data for this session"
-        >
-          calc
-        </span>
-      )}
+    <span
+      className="helix-num text-[10px] font-bold tabular-nums ml-1.5 align-middle"
+      style={{ color: d.good ? EMERALD : OXIDE }}
+      title={`vs the previous session of this type`}
+    >
+      {d.pct > 0 ? '▲' : '▼'}{Math.abs(d.pct)}%
     </span>
   )
 }
 
 /**
- * Deep-dive header: session identity (program-day label · date · phase badge ·
- * "Session #N"), a six-tile at-a-glance stat grid, and the Edit / Delete
- * actions. Edit routes through the same commit → global-update cascade; Delete
- * removes only this session + its sets, then navigates back.
+ * One of the three headline cells. Hairline on the left for every cell but the
+ * first — the same recipe as the exercise record strip, so the two pages read
+ * as one system.
+ */
+function Head({ label, value, unit, sub, metric, first }: {
+  label: string
+  value: string | null
+  unit?: string
+  sub?: string
+  metric?: IntelMetric
+  first?: boolean
+}) {
+  return (
+    <div className={first ? 'pr-3' : 'pl-3 border-l border-white/[0.07]'}>
+      <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-muted leading-tight">
+        {label}
+      </span>
+      <div className="helix-num font-bold text-fluid-xl tabular-nums leading-none mt-1.5 text-text">
+        {value ?? '—'}
+        {unit && value != null && <span className="text-[10px] text-muted font-normal ml-1">{unit}</span>}
+        {value != null && <Delta metric={metric} />}
+      </div>
+      {/* Reserved whether or not it is filled: a sub-line that appears only on
+          some sessions makes the three cells different heights. */}
+      <span className="block text-[9px] text-muted mt-1 leading-tight min-h-[1em]">{sub ?? ''}</span>
+    </div>
+  )
+}
+
+/**
+ * One of the four context cells. Same anatomy at label size — deliberately not
+ * a different component shape, so the eye reads the second row as a quieter
+ * version of the first rather than as a different kind of thing.
+ */
+function Sub({ label, value, unit, color, estimated }: {
+  label: string
+  value: string | null
+  unit?: string
+  color: string
+  /** Derived by formula rather than measured — see `sessions/estimates.ts`. */
+  estimated?: boolean
+}) {
+  return (
+    <div className="min-w-0">
+      <span className="block text-[9px] font-bold uppercase tracking-[0.12em] truncate" style={{ color }}>
+        {label}
+      </span>
+      <div className="helix-num font-bold text-[13px] tabular-nums leading-none mt-1 text-text truncate">
+        {value ?? '—'}
+        {unit && value != null && <span className="text-[9px] text-muted font-normal ml-0.5">{unit}</span>}
+        {/* The value keeps its own colour — an estimate is still your best figure
+            and is counted at full weight everywhere. What it must not do is pass
+            for a measurement, so the provenance is stated rather than implied. */}
+        {estimated && value != null && (
+          <span
+            className="text-[8px] uppercase tracking-wide text-muted font-normal ml-1"
+            title="Calculated by formula — no watch data for this session"
+          >
+            calc
+          </span>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Deep-dive header: session identity ("Session #N" · date), every session
+ * metric in two non-scrolling grids, and the Edit / Delete actions. Edit routes
+ * through the same commit → global-update cascade; Delete removes only this
+ * session + its sets, then navigates back.
  */
 export function SessionHero({ detail }: { detail: SessionDetail }) {
   const router = useRouter()
@@ -68,14 +151,27 @@ export function SessionHero({ detail }: { detail: SessionDetail }) {
   const { data: globalNum } = useGlobalSessionNumber(detail.date)
   const [confirm, setConfirm] = useState(false)
 
+  // Same query key as ProgressionTrail's — TanStack serves both from one fetch.
+  // The deltas belong on the numbers they describe, so they are read here and
+  // the progression block no longer repeats the absolutes.
+  const { data: intel } = useSessionIntel(detail.id)
+  const m = (key: IntelMetric['key']) => intel?.metrics.find((x) => x.key === key)
+
   // The day label and the phase badge moved to the page's sticky command bar;
-  // only the ACCENT is still read here, to tint the card's border and glow.
+  // only the ACCENT is still read here, to tint the band's rule and border.
   const accent = dayColor(detail.dayKey, detail.splitDay)
   const unit = weightUnit()
   const pretty = new Date(detail.date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'long' })
 
+  // Warm-ups and failure sets were two of the nine scrolling stats. They are
+  // not session headlines — they describe the SET COUNT — so they ride under it.
+  const composition = [
+    detail.warmupSets > 0 ? `${detail.warmupSets} warm-up` : null,
+    detail.failureSets > 0 ? `${detail.failureSets} to failure` : null,
+  ].filter(Boolean).join(' · ')
+
   return (
-    <Surface variant="band" accent={accent} pad="snug" className="space-y-2.5">
+    <Surface variant="band" accent={accent} pad="snug" className="space-y-3">
       {/* IDENTITY LIVES IN THE STICKY COMMAND BAR, not here.
           The page went full-bleed and grew a pinned header carrying the back
           button, the day label in its own colour, the date and the phase badge.
@@ -89,33 +185,33 @@ export function SessionHero({ detail }: { detail: SessionDetail }) {
         <span className="text-fluid-xs text-muted ml-auto truncate">{pretty}</span>
       </div>
 
-      {/* ── ONE STRIP, NOT A FRAME INSIDE A FRAME ──
-          This was a rounded, bordered, tinted box nested inside the rounded,
-          bordered, tinted card that already surrounded it — chrome inside
-          chrome, which is most of what made this page feel grandiose. Inside it,
-          three `text-fluid-xl` headlines separated by `w-px` rules took a full
-          display row to say four short numbers.
+      <div className="grid grid-cols-3">
+        <Head
+          first
+          label="Volume"
+          value={fmtVolume(displayWeight(detail.volumeKg))}
+          unit={unit}
+          metric={m('volume')}
+        />
+        <Head
+          label="Duration"
+          value={detail.durationMin != null ? `${detail.durationMin}′` : null}
+          metric={m('duration')}
+        />
+        <Head
+          label="Sets"
+          value={`${detail.setCount}`}
+          sub={composition}
+          metric={m('sets')}
+        />
+      </div>
 
-          A StatStrip says the same four in one scrolling line, and the second
-          line carries the composition. The hierarchy that the display size was
-          buying is now carried by ORDER — what the session was, then what it was
-          made of — which is cheaper and survives a narrow screen. */}
-      <StatStrip stats={[
-        { label: 'Duration', value: detail.durationMin != null ? `${detail.durationMin}′` : null, color: EMBER },
-        { label: `Volume ${unit}`, value: fmtVolume(displayWeight(detail.volumeKg)), color: STEEL },
-        ...(detail.sessionRpe != null
-          ? [{ label: 'Difficulty', value: `${detail.sessionRpe}/10`, color: EMBER }] : []),
-        { label: 'Sets', value: `${detail.setCount}`, color: STEEL },
-        ...(detail.prCount > 0
-          ? [{ label: detail.prCount === 1 ? 'Record' : 'Records', value: `${detail.prCount}`, color: GOLD }] : []),
-      ]} />
-
-      <div className="flex items-baseline gap-4 overflow-x-auto no-scrollbar">
-        {detail.avgBpm != null && <Stat value={`${detail.avgBpm}`} label="bpm" color={EMBER} estimated={detail.avgBpmEstimated} />}
+      <div className="grid grid-cols-4 gap-3 pt-2.5 border-t border-white/[0.06]">
+        <Sub label="Difficulty" value={detail.sessionRpe != null ? `${detail.sessionRpe}/10` : null} color={EMBER} />
+        <Sub label={detail.prCount === 1 ? 'Record' : 'Records'} value={`${detail.prCount}`} color={GOLD} />
+        <Sub label="Avg HR" value={detail.avgBpm != null ? `${detail.avgBpm}` : null} unit="bpm" color={OXIDE} estimated={detail.avgBpmEstimated} />
         {/* Calories take the app-wide calorie hue, not the record hue. */}
-        {detail.calories != null && <Stat value={`${detail.calories}`} label="kcal" color={MACRO.calories} estimated={detail.caloriesEstimated} />}
-        {detail.failureSets > 0 && <Stat value={`${detail.failureSets}`} label="to failure" color={OXIDE} />}
-        {detail.warmupSets > 0 && <Stat value={`${detail.warmupSets}`} label="warm-up" color={EMERALD} />}
+        <Sub label="Calories" value={detail.calories != null ? `${detail.calories}` : null} unit="kcal" color={MACRO.calories} estimated={detail.caloriesEstimated} />
       </div>
 
       {confirm ? (

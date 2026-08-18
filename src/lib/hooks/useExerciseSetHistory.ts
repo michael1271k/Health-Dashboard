@@ -61,11 +61,11 @@ export function workingSets(h: ExerciseHistory | undefined): ExerciseHistory['se
  * seeded from a 2-set day and the coach paced you against the wrong session.
  * Unscoped lookup survives only for a free-form paste deck, which has no routine.
  */
-export function useExerciseSetHistory(names: string[], era?: Era, dayKey?: string) {
+export function useExerciseSetHistory(names: string[], era?: Era, dayKey?: string, before?: string) {
   const key = [...names].sort().join('|')
   const scopeKey = dayKey ?? null
   return useQuery({
-    queryKey: ['workout_sets', 'deck_history', key, era ?? 'all', scopeKey ?? 'any'],
+    queryKey: ['workout_sets', 'deck_history', key, era ?? 'all', scopeKey ?? 'any', before ?? 'latest'],
     enabled: names.length > 0,
     staleTime: 60_000,
     queryFn: async (): Promise<Map<string, ExerciseHistory>> => {
@@ -80,6 +80,13 @@ export function useExerciseSetHistory(names: string[], era?: Era, dayKey?: strin
         .limit(2000)
       if (error) throw error
 
+      // `before` is an EXCLUSIVE upper bound on the session date.
+      //
+      // Without it "previous" means "the most recent session, full stop", which
+      // is right in a live deck (today is not saved yet) and wrong everywhere
+      // that reads an OLD session: opening July's workout would compare each
+      // set against August, i.e. against its own future. The filter is applied
+      // on the date string because that is what the accumulator keys on.
       const rows = ((data ?? []) as unknown as Array<{
         weight_kg: number; reps: number; rpe: number | null; set_number: number; set_type: string | null
         side: string | null; pair_id: string | null
@@ -88,6 +95,7 @@ export function useExerciseSetHistory(names: string[], era?: Era, dayKey?: strin
       }>)
         // Only previous sessions of the SAME routine.
         .filter((r) => !scopeKey || r.workout_sessions.day_key === scopeKey)
+        .filter((r) => !before || r.workout_sessions.started_at.slice(0, 10) < before)
 
       // Rows arrive newest-first (created_at desc) to pick each exercise's most
       // recent session. But WITHIN a session the working sets are batch-inserted
@@ -150,6 +158,6 @@ export function useExerciseSetHistory(names: string[], era?: Era, dayKey?: strin
  * scoped hook's `queryKey` carries the routine, and widening it would rebuild
  * the whole cache entry every time a deck opened on a different day.
  */
-export function useGlobalSetHistory(names: string[], era?: Era) {
-  return useExerciseSetHistory(names, era)
+export function useGlobalSetHistory(names: string[], era?: Era, before?: string) {
+  return useExerciseSetHistory(names, era, undefined, before)
 }

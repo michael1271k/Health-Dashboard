@@ -106,6 +106,16 @@ export default function SessionAnalysisPage() {
             <Surface variant="band" accent={EMBER} pad="snug" className="space-y-3">
               <ProgressionTrail sessionId={data.id} />
               <SessionHighlights exercises={data.exercises} />
+            </Surface>
+
+            {/* FOCUS IS ITS OWN BAND, not a third block sharing the one above.
+                Stacked inside `space-y-3` it sat 12px under the PR chips, so the
+                body map and the record list read as one paragraph — the atlas
+                looked like a decoration attached to the PRs rather than the
+                answer to "what did this session train?". A band boundary is the
+                cheapest possible separation and the one the rest of the page
+                already uses. */}
+            <Surface variant="band" accent={EMBER} pad="snug">
               <MuscleFocus detail={data} />
             </Surface>
 

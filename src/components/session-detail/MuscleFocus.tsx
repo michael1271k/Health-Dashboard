@@ -33,7 +33,7 @@ export function MuscleFocus({ detail }: { detail: SessionDetail }) {
      WIDTH is its share of the session, which is the actual question, and the
      legend underneath keeps the exact per-muscle counts. */
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       <div className="flex items-baseline gap-2">
         <span className="text-[10px] font-bold uppercase tracking-[0.16em] flex items-center gap-1.5" style={{ color: EMBER }}>
           <Target className="w-3 h-3" aria-hidden="true" /> Focus
@@ -61,29 +61,28 @@ export function MuscleFocus({ detail }: { detail: SessionDetail }) {
           />
         </div>
         <div className="flex-1 min-w-0 space-y-1.5">
+          <div className="flex h-2 rounded-full overflow-hidden bg-white/[0.05]" aria-hidden="true">
+            {detail.muscleSets.map((m) => (
+              <span key={m.muscle}
+                style={{
+                  width: `${(m.sets / (total || 1)) * 100}%`,
+                  background: MUSCLE_COLOR[m.muscle] ?? MUTED,
+                }} />
+            ))}
+          </div>
 
-      <div className="flex h-2 rounded-full overflow-hidden bg-white/[0.05]" aria-hidden="true">
-        {detail.muscleSets.map((m) => (
-          <span key={m.muscle}
-            style={{
-              width: `${(m.sets / (total || 1)) * 100}%`,
-              background: MUSCLE_COLOR[m.muscle] ?? MUTED,
-            }} />
-        ))}
-      </div>
-
-      <div className="flex items-center gap-x-3 gap-y-1 flex-wrap">
-        {detail.muscleSets.map((m) => {
-          const color = MUSCLE_COLOR[m.muscle] ?? MUTED
-          return (
-            <span key={m.muscle} className="inline-flex items-center gap-1 text-[10px]">
-              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: color }} aria-hidden="true" />
-              <span className="text-muted">{m.muscle}</span>
-              <span className="helix-num font-bold text-text tabular-nums">{m.sets}</span>
-            </span>
-          )
-        })}
-      </div>
+          <div className="flex items-center gap-x-3 gap-y-1 flex-wrap">
+            {detail.muscleSets.map((m) => {
+              const color = MUSCLE_COLOR[m.muscle] ?? MUTED
+              return (
+                <span key={m.muscle} className="inline-flex items-center gap-1 text-[10px]">
+                  <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: color }} aria-hidden="true" />
+                  <span className="text-muted">{m.muscle}</span>
+                  <span className="helix-num font-bold text-text tabular-nums">{m.sets}</span>
+                </span>
+              )
+            })}
+          </div>
         </div>
       </div>
     </div>

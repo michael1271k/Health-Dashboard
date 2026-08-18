@@ -117,7 +117,9 @@ export function useSessionIntel(sessionId: string | null) {
         .eq('split_day', session.split_day)
         .lt('started_at', session.started_at)
         .order('started_at', { ascending: false })
-        .limit(12)
+        // 60, not 12: the volume trail draws EVERY same-type session in the era,
+        // and 12 raw rows became ~4 after the same-type + era filters below.
+        .limit(60)
       const sameType = (p: { started_at: string; day_key?: string | null }) =>
         session.day_key && p.day_key
           ? p.day_key === session.day_key
@@ -125,9 +127,19 @@ export function useSessionIntel(sessionId: string | null) {
       const prev = ((prevQuery.data ?? []) as unknown as SessRow[])
         .filter(sameType)
         .filter((p) => eraForDate(p.started_at.slice(0, 10)) === sessionEra)
-        .slice(0, 2)
 
-      const ids = [session.id, ...prev.map((p) => p.id)]
+      /**
+       * The set fetch is deliberately NOT `prev` — it is this session and the
+       * ONE before it.
+       *
+       * `prev` used to be capped at 2 entries, which is where the volume trail's
+       * three-point ceiling came from: the cap existed to keep this `.in()`
+       * small, and the chart inherited it. The two consumers want different
+       * windows — the per-exercise deltas compare against exactly one session,
+       * the trail wants the whole era — so they now take different slices
+       * instead of sharing the smaller one.
+       */
+      const ids = [session.id, ...(prev[0] ? [prev[0].id] : [])]
       const { data: setsRaw } = await supabase
         .from('workout_sets')
         .select('session_id, exercise_id, weight_kg, reps, is_pr, side, pair_id, exercises!inner(name)')

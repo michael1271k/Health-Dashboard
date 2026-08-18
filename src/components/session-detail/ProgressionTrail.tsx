@@ -2,44 +2,32 @@
 
 import { useId, useState } from 'react'
 import { TrendingUp } from 'lucide-react'
-import { useSessionIntel, type IntelMetric } from '@/lib/hooks/useSessionIntel'
+import { useSessionIntel } from '@/lib/hooks/useSessionIntel'
 import { sessionVerdict } from '@/lib/training/sessionVerdict'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 // Imported under their real names. EMBER/EMERALD/OXIDE were aliased on import
 // to VIOLET/TEAL/ROSE — three colour names the design system does not contain
 // and none of which describes the value being renamed.
-import { GOLD, EMBER, EMERALD, OXIDE, MUTED } from '@/lib/theme/palette'
+import { EMBER, EMERALD, OXIDE, MUTED } from '@/lib/theme/palette'
 
 const shortDate = (iso: string) =>
   new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
-
-/** Format any number in a metric's unit — volume converts to tonnes, rest raw. */
-function fmtMetric(m: IntelMetric, n: number | null): string {
-  if (n == null) return '—'
-  if (m.key === 'volume') return `${((displayWeight(n) ?? 0) / 1000).toFixed(1)}t`
-  return `${Math.round(n).toLocaleString()}${m.unit ? ` ${m.unit}` : ''}`
-}
-
-/** Percentage delta badge vs the previous same-type session (arrow + %). */
-function metricBadge(m: IntelMetric): { text: string; color: string; arrow: string } | null {
-  if (m.previous == null) return null          // first of type → "new", no badge
-  if (m.delta == null || m.delta === 0 || m.previous === 0) return { text: '0%', color: MUTED, arrow: '' }
-  const pct = Math.round((m.delta / Math.abs(m.previous)) * 100)
-  const good = m.higherIsBetter ? m.delta > 0 : m.delta < 0
-  // Average HR has no good direction — context for the volume, not a grade.
-  const color = m.key === 'avgBpm' ? MUTED : good ? EMERALD : OXIDE
-  return { text: `${pct > 0 ? '+' : ''}${pct}%`, color, arrow: m.delta > 0 ? '▲' : '▼' }
-}
 
 /**
  * Historical comparison for the session — every headline metric against the
  * previous session of the SAME type, a gold PR spotlight, and the volume
  * trajectory across recent sessions of this type.
  *
- * The comparison used to be one run-on line ("vs last legs & core b posterior
- * focus · volume +3% · sets ="), which crammed the session-type name, two
- * metrics and a bare "=" into a single wrapping sentence. It's a grid now, and
- * it carries time, calories, average HR and PRs alongside volume and sets.
+ * ── WHY THERE ARE NO NUMBERS IN HERE ANY MORE ───────────────────────────────
+ * This block used to carry a scrolling strip of every headline metric with its
+ * delta — volume, sets, time, calories, avg HR, PRs. The header 100px above it
+ * printed the same six values without deltas. Two rows, six numbers, one
+ * screen, and neither could be read without dragging sideways.
+ *
+ * The split is now by KIND, not by which component got there first: absolute
+ * values live in `SessionHero`, and the ▲/▼ that qualifies each one is rendered
+ * ON that value. What is left here is what only this block can say — the
+ * sentence explaining the session, and the trajectory it sits on.
  */
 export function ProgressionTrail({ sessionId }: { sessionId: string }) {
   const { data: intel, isLoading } = useSessionIntel(sessionId)
@@ -90,41 +78,10 @@ export function ProgressionTrail({ sessionId }: { sessionId: string }) {
         </p>
       )}
 
-      {intel.isFirstOfType ? (
+      {intel.isFirstOfType && (
         <p className="text-fluid-xs text-muted">
           First {intel.typeLabel || 'session'} of this era — baseline set. Progression appears next time.
         </p>
-      ) : (
-        /* ── ONE ROW, NOT NINE TILES ──
-           Each metric used to own a bordered tile carrying a label, a value,
-           two stacked comparison bars and a "last …" caption — a 3x3 grid of
-           boxes roughly 220px tall to compare six numbers to six numbers. The
-           two bars said the same thing as the percentage above them, twice, in
-           a form that cannot be read precisely.
-
-           A scrolling strip of value + delta chip says it once. The direction
-           is the arrow, the size is the percentage, and the previous figure
-           moves to the title where it is available on demand rather than
-           occupying a line per metric. */
-        <div className="flex items-baseline gap-3.5 overflow-x-auto no-scrollbar">
-          {intel.metrics.map((m) => {
-            const b = metricBadge(m)
-            return (
-              <span key={m.key} className="inline-flex flex-col gap-0.5 shrink-0"
-                title={m.previous != null ? `last ${fmtMetric(m, m.previous)}` : 'First of this type'}>
-                <span className="inline-flex items-baseline gap-1">
-                  <span className="helix-num text-fluid-sm font-bold text-text tabular-nums leading-none">
-                    {fmtMetric(m, m.value)}
-                  </span>
-                  {b
-                    ? <span className="helix-num text-[9px] font-bold leading-none" style={{ color: b.color }}>{b.arrow}{b.text}</span>
-                    : <span className="text-[9px] font-bold leading-none" style={{ color: GOLD }}>new</span>}
-                </span>
-                <span className="text-[9px] uppercase tracking-wide leading-none text-muted">{m.label}</span>
-              </span>
-            )
-          })}
-        </div>
       )}
 
       {/* The gold PR list moved to SessionHighlights at the top of the report.
@@ -132,9 +89,13 @@ export function ProgressionTrail({ sessionId }: { sessionId: string }) {
           the same records rendered twice. */}
 
       {!intel.isFirstOfType && intel.volumes.length >= 2 && (
-        <div>
+        /* Inset rather than full-measure. The curve is a shape, not a table:
+           stretched to the full 68ch column it read as a banner and its slope
+           flattened toward horizontal, which is the one thing it exists to
+           show. `max-w` narrows the drawing without narrowing the band. */
+        <div className="mx-auto w-full max-w-[92%]">
           <p className="text-[10px] uppercase tracking-wide text-muted mb-1">
-            Volume · last {intel.volumes.length} {intel.typeLabel || 'session'}s · tap a point
+            Volume · every {intel.typeLabel || 'session'} ({intel.volumes.length}) · tap a point
           </p>
           <VolumeCurve points={intel.volumes} max={maxVol} unit={unit} />
         </div>
@@ -165,9 +126,14 @@ function VolumeCurve({ points, max, unit }: {
   // Scoped — an SVG id is document-global, so a hardcoded one collides with any
   // second instance on the page.
   const volTrail = `volTrail-${useId().replace(/:/g, '')}`
-  // 40 tall, not 68. This is a direction-of-travel lane under a metric row, not
-  // the section's centrepiece — the exact figures are in the caption beneath it.
-  const W = 300, H = 40, PAD_X = 6, PAD_TOP = 6, PAD_BOTTOM = 8
+  // 56 tall, not 40. At 40 the lane was letterboxed enough that a 15% swing in
+  // tonnage drew as a nearly flat line; the trail now runs the whole era rather
+  // than three points, so it needs the vertical room to separate them.
+  const W = 300, H = 56, PAD_X = 6, PAD_TOP = 8, PAD_BOTTOM = 10
+  // Past a handful of sessions a dot per point becomes a dotted line. Beyond
+  // the threshold only the two that carry meaning stay drawn — the one you
+  // picked and the latest — while every point keeps its invisible hit target.
+  const DENSE = points.length > 8
   const x = (i: number) => PAD_X + (i / n) * (W - PAD_X * 2)
   const y = (v: number) => PAD_TOP + (1 - v / max) * (H - PAD_TOP - PAD_BOTTOM)
 
@@ -214,12 +180,14 @@ function VolumeCurve({ points, max, unit }: {
           const isLatest = i === n
           return (
             <g key={p.date}>
-              <circle cx={x(i)} cy={y(p.volumeKg)} r={isSelected ? 4.5 : isLatest ? 3.5 : 2.5}
-                fill={isSelected || isLatest ? EMBER : 'rgba(255,255,255,0.35)'}
-                style={isSelected ? { filter: `drop-shadow(0 0 6px ${EMBER})` } : undefined} />
+              {(!DENSE || isSelected || isLatest) && (
+                <circle cx={x(i)} cy={y(p.volumeKg)} r={isSelected ? 4.5 : isLatest ? 3.5 : 2.5}
+                  fill={isSelected || isLatest ? EMBER : 'rgba(255,255,255,0.35)'}
+                  style={isSelected ? { filter: `drop-shadow(0 0 6px ${EMBER})` } : undefined} />
+              )}
               {/* A generous invisible hit target — a 4px dot is untappable on
                   a touch screen. */}
-              <circle cx={x(i)} cy={y(p.volumeKg)} r="14" fill="transparent"
+              <circle cx={x(i)} cy={y(p.volumeKg)} r={DENSE ? Math.max(5, (W - PAD_X * 2) / (n * 2)) : 14} fill="transparent"
                 className="cursor-pointer" role="button" tabIndex={0}
                 aria-label={`${p.date}: ${Math.round(displayWeight(p.volumeKg) ?? 0)} ${unit}`}
                 onClick={() => setSelected(i)}

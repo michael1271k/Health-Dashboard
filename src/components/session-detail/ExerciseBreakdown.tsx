@@ -12,8 +12,11 @@ import { isTimedExercise } from '@/lib/exercises/timed'
 import { Surface } from '@/components/ui/Zone'
 import { formatSet } from '@/lib/utils/setFormat'
 import { rpeColor, rpeLabel } from '@/lib/training/effort'
-import { GROUP_COLOR } from '@/lib/hooks/useMuscleAnalytics'
-import { GOLD, OXIDE, EMERALD, SAPPHIRE, EMBER, PLATINUM } from '@/lib/theme/palette'
+import { exerciseColor } from '@/lib/theme/muscleHue'
+import { useGlobalSetHistory, workingSets, type HistorySet } from '@/lib/hooks/useExerciseSetHistory'
+import { repWindowFor, holdTargetFor } from '@/lib/training/ceilings'
+import { eraForDate } from '@/lib/programs'
+import { GOLD, OXIDE, EMERALD, SAPPHIRE, EMBER } from '@/lib/theme/palette'
 
 // recharts lives ONLY in this sheet, which opens on tap. Loading it statically
 // pulled the whole chart library into the Session Report's first-load bundle
@@ -67,7 +70,7 @@ function Sparkline({ points, color }: { points: number[]; color: string }) {
   const d = points.map((v, i) => `${i === 0 ? 'M' : 'L'}${(i / n) * 44 + 1} ${18 - ((v - min) / span) * 14}`).join(' ')
   const lastY = 18 - ((points[n] - min) / span) * 14
   return (
-    <svg viewBox="0 0 48 22" className="w-11 h-5 shrink-0" aria-hidden="true">
+    <svg viewBox="0 0 48 22" className="w-16 h-6 shrink-0" aria-hidden="true">
       <path d={d} fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" opacity="0.95" />
       <circle cx={45} cy={lastY} r="1.8" fill={color} style={{ filter: `drop-shadow(0 0 3px ${color})` }} />
     </svg>
@@ -232,6 +235,10 @@ export function exerciseStats(ex: DetailExercise): {
   }
 }
 
+/** "12 Aug" — the date the PREVIOUS column is quoting. */
+const shortDate = (iso: string) =>
+  new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+
 /** "1:30" / "45s" — a rest interval, or null. */
 export function formatRest(sec: number | null): string | null {
   if (sec == null || sec <= 0) return null
@@ -249,6 +256,20 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
   const { data: intel } = useSessionIntel(sessionId)
   const exerciseIds = useMemo(() => exercises.map((e) => e.exerciseId), [exercises])
   const { data: trends } = useSessionTrends(exerciseIds, date, dayKey)
+
+  /**
+   * The PREVIOUS column: what these exact sets looked like last time.
+   *
+   * Global, not routine-scoped — "last time I pressed" is a fact about the
+   * movement, and scoping it to this program day empties the column on every
+   * exercise that appears in two splits, which is most of them.
+   *
+   * `date` is passed as an EXCLUSIVE bound. Without it the hook answers with the
+   * most recent session full stop, so opening a July workout would compare each
+   * set against August: a report grading itself against its own future.
+   */
+  const names = useMemo(() => exercises.map((e) => e.name), [exercises])
+  const { data: globalHistory } = useGlobalSetHistory(names, eraForDate(date), date)
   const [active, setActive] = useState<{ id: string; name: string } | null>(null)
   const deltaFor = useMemo(
     () => new Map((intel?.deltas ?? []).map((d) => [d.exerciseId, d.delta])),
@@ -265,88 +286,137 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
         const glyph = deltaGlyph(deltaFor.get(ex.exerciseId))
         const t = trends?.[ex.exerciseId]
         const rows = toRows(ex.sets)
-        const accent = GROUP_COLOR[ex.muscleGroups[0]] ?? PLATINUM
+        // Per-EXERCISE hue, not per-family. `exerciseColor` already existed and
+        // was used only by the library route, so this page painted six muscle
+        // groups with six colours: every pressing movement on a push day shared
+        // one rule and one sparkline colour, and nothing told them apart.
+        const accent = exerciseColor(ex.name, ex.muscleGroups)
         const cue = progressionCue(t, timed, unit)
         const stats = exerciseStats(ex)
+        const prevSets = workingSets(globalHistory?.get(ex.name))
+        const prevDate = globalHistory?.get(ex.name)?.date ?? null
+
+        // The prescription, said the way the program says it: how many sets, at
+        // what rep window, on what rest. It was previously spread across a
+        // "3×" fragment in the header and two cells of a six-cell table.
+        const window = timed
+          ? (holdTargetFor(ex.name, dayKey) != null ? `${holdTargetFor(ex.name, dayKey)}s` : null)
+          : (() => { const w = repWindowFor(ex.name, dayKey); return w ? `${w.floor}–${w.ceiling}` : null })()
+        const rest = formatRest(stats.medianRestSec)
+        const prescription = [
+          `${ex.workingSets} set${ex.workingSets === 1 ? '' : 's'}${window ? ` @ ${window}` : ''}`,
+          rest ? `${rest} rest` : null,
+        ].filter(Boolean).join(' · ')
 
         return (
           <section key={ex.exerciseId} style={{ borderTop: i ? '1px solid rgba(255,255,255,0.07)' : undefined }}>
-            {/* ── Header: accent rule · NAME · totals · trend ── */}
-            <button onClick={() => setActive({ id: ex.exerciseId, name: ex.name })}
-              className="w-full flex items-center gap-2.5 pl-2.5 pr-3 py-2 text-left active:bg-white/[0.04] transition-colors"
-              aria-label={`${ex.name} history`}>
-              <span className="w-[3px] self-stretch rounded-full shrink-0" style={{ background: accent }} aria-hidden="true" />
-              <span className="min-w-0 flex-1">
-                <span className="flex items-baseline gap-1.5 min-w-0">
-                  <span className="font-heading font-bold uppercase tracking-wide leading-tight text-text truncate"
-                    style={{ fontSize: 'var(--text-exercise-title)' }}>{ex.name}</span>
-                  {glyph && <span className="text-[10px] shrink-0" aria-hidden="true">{glyph}</span>}
-                </span>
-                {/* ONE metadata line. Was three — muscle chips, a totals line,
-                    and a separate tonnage / top-set / ceiling row. */}
-                <span className="flex items-center gap-1.5 text-[10px] text-muted helix-num">
-                  <span>{ex.workingSets}×</span>
-                  <span aria-hidden="true">·</span>
-                  {/* Tonnage is kg only when the movement is loaded; for a hold
-                      or bodyweight work `tonnage` counts seconds / reps. */}
-                  <span>{t?.byReps ? `${t.tonnage} ${t.timed ? 'sec' : 'reps'}`
-                    : `${Math.round(displayWeight(ex.volumeKg) ?? 0).toLocaleString()}${unit}`}</span>
-                  {t?.pctChange != null && t.pctChange !== 0 && (
-                    <span className="font-bold" style={{ color: t.pctChange > 0 ? EMERALD : OXIDE }}>
-                      {t.pctChange > 0 ? '+' : ''}{t.pctChange}%
-                    </span>
-                  )}
-                  {t?.progression.ceiling != null && (
-                    <>
-                      <span aria-hidden="true">·</span>
-                      <span>{t.setsAtCeiling}/{ex.workingSets} @ {t.progression.ceiling}{timed ? 's' : ''}</span>
-                    </>
-                  )}
-                </span>
-              </span>
-              {/* The progression cue is a property of the EXERCISE, so it reads
-                  on the exercise's own line. It used to be a bordered, tinted
-                  block below the ledger with a full sentence in it — a second
-                  paragraph-shaped object per movement, which on a five-exercise
-                  day was five more frames. The sentence survives in the title;
-                  the chip carries the decision. */}
-              {cue && (
-                <span title={cue.title}
-                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold shrink-0"
-                  style={{ color: cue.color, background: `${cue.color}1a`, border: `1px solid ${cue.color}3d` }}>
-                  <TrendingUp className="w-2.5 h-2.5" aria-hidden="true" />{cue.short}
-                </span>
-              )}
-              {t ? <Sparkline points={t.points} color={accent} />
-                : <ChevronRight className="w-4 h-4 text-muted/50 shrink-0" aria-hidden="true" />}
-            </button>
+            {/* ── THE HEADER, AS ONE TINTED LAYER ──
+                What was here: a header line carrying "3× · 2,940kg · +4% ·
+                2/3 @ 12", then a six-cell bordered table under it repeating
+                volume, sets and reps at 8px — the smallest type in the app,
+                spent on labels rather than on data.
 
-            {/* ── The exercise's own numbers, as a strip ──
-                Effort, PRs, tonnage, sets, reps and rest, side by side. Each
-                cell renders a dash when the fact does not exist, rather than
-                disappearing — a strip whose cells come and go cannot be
-                compared between two exercises at a glance, which is the only
-                reason to put them in a row. */}
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-px mx-2.5 mb-1.5 rounded-lg overflow-hidden"
-              style={{ background: 'rgba(255,255,255,0.05)' }}>
-              <Cell label="Volume" value={t?.byReps
-                ? `${t.tonnage}${t.timed ? 's' : ''}`
-                : `${Math.round(displayWeight(ex.volumeKg) ?? 0).toLocaleString()}${unit}`} />
-              <Cell label="Sets" value={`${ex.workingSets}`} />
-              <Cell label={timed ? 'Seconds' : 'Reps'} value={`${stats.totalReps}`} />
-              <Cell label="Top" value={stats.topKg > 0 ? `${displayWeight(stats.topKg)}${unit}` : '—'} />
-              <Cell label="Effort" value={stats.avgRpe != null ? rpeLabel(stats.avgRpe) : '—'}
-                color={stats.avgRpe != null ? rpeColor(stats.avgRpe) : undefined} />
-              <Cell label="Rest" value={formatRest(stats.medianRestSec) ?? '—'}
-                title={stats.medianRestSec != null
-                  ? 'Median measured rest between sets'
-                  : 'Rest is measured from the logger — sessions logged elsewhere carry none'} />
+                What is here now: the title, the PRESCRIPTION (sets, rep window,
+                rest — what the program asked for), and one metadata strip of
+                the four numbers the session actually produced. The exercise's
+                own colour washes the whole block, so scrolling a six-exercise
+                report reads as six distinct movements rather than one long
+                ledger. */}
+            <div style={{ background: `linear-gradient(180deg, ${accent}14, transparent)` }}>
+              <button onClick={() => setActive({ id: ex.exerciseId, name: ex.name })}
+                className="w-full flex items-center gap-2.5 pl-2.5 pr-3 pt-2 pb-1 text-left active:bg-white/[0.04] transition-colors"
+                aria-label={`${ex.name} history`}>
+                <span className="w-[3px] self-stretch rounded-full shrink-0" style={{ background: accent }} aria-hidden="true" />
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-baseline gap-1.5 min-w-0">
+                    <span className="font-heading font-bold uppercase tracking-wide leading-tight text-text truncate"
+                      style={{ fontSize: 'var(--text-exercise-title)' }}>{ex.name}</span>
+                    {glyph && <span className="text-[10px] shrink-0" aria-hidden="true">{glyph}</span>}
+                  </span>
+                  <span className="flex items-center gap-1.5 text-[10px] text-muted helix-num">
+                    <span className="truncate">{prescription}</span>
+                    {t?.progression.ceiling != null && t.setsAtCeiling > 0 && (
+                      <span className="shrink-0" title={`Working sets that reached the ${t.progression.ceiling}${timed ? 's' : '-rep'} ceiling`}>
+                        · {t.setsAtCeiling}/{ex.workingSets} @ ceiling
+                      </span>
+                    )}
+                  </span>
+                </span>
+                {/* The progression cue is a property of the EXERCISE, so it reads
+                    on the exercise's own line. It used to be a bordered, tinted
+                    block below the ledger with a full sentence in it — a second
+                    paragraph-shaped object per movement, which on a five-exercise
+                    day was five more frames. The sentence survives in the title;
+                    the chip carries the decision. */}
+                {cue && (
+                  <span title={cue.title}
+                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold shrink-0"
+                    style={{ color: cue.color, background: `${cue.color}1a`, border: `1px solid ${cue.color}3d` }}>
+                    <TrendingUp className="w-2.5 h-2.5" aria-hidden="true" />{cue.short}
+                  </span>
+                )}
+                {t ? <Sparkline points={t.points} color={accent} />
+                  : <ChevronRight className="w-4 h-4 text-muted/50 shrink-0" aria-hidden="true" />}
+              </button>
+
+              {/* Four numbers, no boxes. Wraps rather than scrolls — a strip you
+                  have to drag sideways is a strip nobody reads the end of. */}
+              <div className="flex items-baseline gap-x-4 gap-y-1 flex-wrap pl-[22px] pr-3 pb-2">
+                <Meta label="Vol" value={t?.byReps
+                  ? `${t.tonnage}${t.timed ? 's' : ''}`
+                  : `${Math.round(displayWeight(ex.volumeKg) ?? 0).toLocaleString()}${unit}`}
+                  delta={t?.pctChange ?? null} />
+                <Meta label={timed ? 'Secs' : 'Reps'} value={`${stats.totalReps}`} />
+                <Meta label="Top" value={stats.topKg > 0 ? `${displayWeight(stats.topKg)}${unit}` : '—'} />
+                <Meta label="Rest" value={rest ?? '—'}
+                  title={rest
+                    ? 'Median measured rest between sets'
+                    : 'Rest is measured from the logger — sessions logged elsewhere carry none'} />
+              </div>
             </div>
 
-            {/* ── Set ledger ── */}
+            {/* ── Set ledger ──
+                Four columns on a real grid, not eight items on a flex line.
+                The old row put set number, load × reps, tag, trophy, effort,
+                estimated 1RM and rest on ONE non-wrapping line, of which only
+                the "prev" fragment was width-guarded — so a sided failure set on
+                a 390px phone compressed its own numbers against the tick button.
+
+                The 1RM column is gone. It was a derived figure printed on every
+                row of every session, and the one place it is actually read — the
+                movement's own best — has a tile of its own in the library. Rest
+                went with it: the MEDIAN is in the header, which is the question
+                ("how did I pace this?"), and per-set rest survives in the title. */}
             <div className="pb-1.5">
+              <div className="grid grid-cols-[18px_minmax(0,1fr)_minmax(0,1fr)_46px] items-baseline gap-2 pl-[22px] pr-3 pb-1
+                text-[9px] font-bold uppercase tracking-[0.1em] text-muted/60">
+                <span aria-hidden="true" />
+                <span className="truncate">{timed ? 'Load × Secs' : 'Weight × Reps'}</span>
+                <span className="truncate" title={prevDate ? `Last performed ${prevDate}` : undefined}>
+                  {prevSets.length && prevDate ? `Prev · ${shortDate(prevDate)}` : 'Prev'}
+                </span>
+                <span className="text-right">Effort</span>
+              </div>
               {rows.map((row, ri) => {
-                const tag = row.kind === 'single' ? TAG[row.set.setType] : undefined
+                const tagKey = row.kind === 'single' ? row.set.setType : (row.left?.setType ?? row.right?.setType)
+                const tag = tagKey ? TAG[tagKey] : undefined
+                // W and F REPLACE the number. A warm-up never had one, and a set
+                // taken to failure is identified better by what happened to it
+                // than by its position. A DROP SET keeps its number — it is a
+                // working set with a tail — and carries its tag in the load cell.
+                const replaces = tagKey === 'warmup' || tagKey === 'failure'
+                const marker = replaces && tag ? tag.label : (row.num != null ? String(row.num) : '·')
+                // Pairing is by WORKING-set index, which is exactly what `row.num`
+                // counts and what `workingSets()` filtered the history down to.
+                // Warm-ups are shown and never paired: a light first set matched
+                // against last week's working set is a comparison of two
+                // different things.
+                const prev: HistorySet | undefined = row.num != null ? prevSets[row.num - 1] : undefined
+                // A pair is ONE set of work, so it gets ONE effort: the harder
+                // side, which is the side that decides whether the set was hard.
+                const pairRpe = row.kind === 'pair'
+                  ? Math.max(row.left?.rpe ?? -1, row.right?.rpe ?? -1) : -1
+                const rpe = row.kind === 'single' ? row.set.rpe : (pairRpe < 0 ? null : pairRpe)
                 // A record should be visible while scanning the ledger, not only
                 // once your eye reaches the trophy: the row that set it lifts
                 // into gold and carries a left rule, which survives printing.
@@ -356,73 +426,66 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
                 return (
                   <div key={`${row.kind}-${ri}`}
                     style={rowIsPr ? { background: `${GOLD}12`, boxShadow: `inset 3px 0 0 ${GOLD}` } : undefined}
-                    className="flex items-center gap-2 pl-[22px] pr-3 py-[3px] text-fluid-xs">
-                    <span className="helix-num w-4 shrink-0 text-[10px] text-muted/70 text-right tabular-nums">
-                      {row.num ?? '·'}
+                    className="grid grid-cols-[18px_minmax(0,1fr)_minmax(0,1fr)_46px] items-center gap-2 pl-[22px] pr-3 py-[3px] text-fluid-xs">
+                    <span className="helix-num text-[10px] font-bold text-right tabular-nums"
+                      style={{ color: replaces && tag ? tag.color : 'rgba(255,255,255,0.45)' }}
+                      title={tag?.full}>
+                      {marker}
                     </span>
+
                     {row.kind === 'single' ? (
-                      <>
-                        <span className="helix-num font-semibold text-text tabular-nums shrink-0"
-                          style={{ minWidth: '5.5rem' }}>
+                      <span className="flex items-center gap-1.5 min-w-0">
+                        <span className="helix-num font-semibold text-text tabular-nums truncate"
+                          title={formatRest(row.set.restSec) ? `Rested ${formatRest(row.set.restSec)} before this set` : undefined}>
                           {formatSet(row.set.weightKg, row.set.reps, { timed, unit, toDisplay: displayWeight })}
                         </span>
-                        {tag && (
+                        {tag && !replaces && (
                           <span className="text-[8px] font-bold uppercase px-1 py-px rounded shrink-0"
                             style={{ color: tag.color, background: `${tag.color}1f` }}
                             title={tag.full} aria-label={tag.full}>{tag.label}</span>
                         )}
-                        <SetPrBadges set={row.set} timed={timed} />
-                        {/* The word, not just the number — "8.5" means nothing
-                            to a reader who has not memorised the ladder, and
-                            legacy rows hold off-ladder values (6, 7, 8) that
-                            still resolve to a CR10 anchor rather than a dash. */}
-                        {row.set.rpe != null && (
-                          <span className="text-[10px] font-bold uppercase tracking-wide shrink-0"
-                            style={{ color: rpeColor(row.set.rpe) }}
-                            title={`Effort ${row.set.rpe} / 10`}>
-                            {rpeLabel(row.set.rpe)}
-                          </span>
-                        )}
-                        {/* `> 0`, not `!= null`: bodyweight rows written before
-                            Epley returned null hold a stored 0, which rendered
-                            as "1RM 0" on every Reverse Crunch. */}
-                        {row.set.est1rmKg != null && row.set.est1rmKg > 0 && !timed && (
-                          <span className="ml-auto helix-num text-[10px] text-muted/70 shrink-0 tabular-nums">
-                            1RM {displayWeight(row.set.est1rmKg)}
-                          </span>
-                        )}
-                        {/* The rest BEFORE this set — never shown on set 1, which
-                            has nothing before it to measure from. */}
-                        {formatRest(row.set.restSec) && (
-                          <span className="helix-num text-[10px] text-muted/60 shrink-0 tabular-nums ml-2"
-                            title="Measured rest before this set">
-                            ⏱ {formatRest(row.set.restSec)}
-                          </span>
-                        )}
-                      </>
+                        <SetPrBadges set={row.set} timed={timed} compact />
+                      </span>
                     ) : (
-                      <span className="flex items-center gap-1.5 flex-wrap">
+                      <span className="flex items-center gap-1 min-w-0">
                         {(['left', 'right'] as const).map((k) => {
-                          const s = row[k]
-                          if (!s) return null
+                          const sd = row[k]
+                          if (!sd) return null
                           const c = k === 'left' ? SAPPHIRE : EMBER
                           return (
-                            <span key={k} className="inline-flex items-center gap-1 rounded px-1.5 py-px"
+                            <span key={k} className="inline-flex items-center gap-1 rounded px-1 py-px min-w-0"
                               style={{ background: `${c}14`, border: `1px solid ${c}33` }}>
-                              <span className="text-[9px] font-bold" style={{ color: c }}>{k === 'left' ? 'L' : 'R'}</span>
-                              <span className="helix-num font-semibold text-text text-[11px] tabular-nums">
-                                {formatSet(s.weightKg, s.reps, { timed, unit, toDisplay: displayWeight })}
+                              <span className="text-[9px] font-bold shrink-0" style={{ color: c }}>{k === 'left' ? 'L' : 'R'}</span>
+                              <span className="helix-num font-semibold text-text text-[11px] tabular-nums truncate">
+                                {formatSet(sd.weightKg, sd.reps, { timed, unit, toDisplay: displayWeight })}
                               </span>
-                              <SetPrBadges set={s} timed={timed} compact />
+                              <SetPrBadges set={sd} timed={timed} compact />
                             </span>
                           )
                         })}
                       </span>
                     )}
+
+                    {/* The same set, last time you did this movement — on ANY
+                        day, which is why a Friday leg curl can quote Monday's. */}
+                    <span className="helix-num text-[11px] text-muted/70 tabular-nums truncate">
+                      {prev
+                        ? formatSet(prev.weightKg, prev.reps, { timed, unit, toDisplay: displayWeight })
+                        : '—'}
+                    </span>
+
+                    {/* The word, not just the number — "8.5" means nothing to a
+                        reader who has not memorised the ladder, and legacy rows
+                        hold off-ladder values (6, 7, 8) that still resolve to a
+                        CR10 anchor rather than a dash. */}
+                    <span className="text-[10px] font-bold uppercase tracking-wide text-right truncate"
+                      style={{ color: rpe != null ? rpeColor(rpe) : 'transparent' }}
+                      title={rpe != null ? `Effort ${rpe} / 10` : undefined}>
+                      {rpe != null ? rpeLabel(rpe) : '—'}
+                    </span>
                   </div>
                 )
               })}
-
             </div>
           </section>
         )
@@ -438,14 +501,31 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
   )
 }
 
-/** One cell of an exercise's stat strip. */
-function Cell({ label, value, color, title }: {
-  label: string; value: string; color?: string; title?: string
+/**
+ * One fact in an exercise's metadata layer.
+ *
+ * Replaces `Cell`, which drew a bordered box per number by laying six divs on a
+ * translucent background with `gap-px` — a table with 8px labels, the smallest
+ * type in the app, spent on saying "SETS". Label and value sit on one baseline
+ * here, so four facts cost one line instead of two rows of chrome.
+ */
+function Meta({ label, value, delta, title }: {
+  label: string
+  value: string
+  /** Percent change vs the previous session of this type, when there is one. */
+  delta?: number | null
+  title?: string
 }) {
   return (
-    <div className="px-2 py-1" style={{ background: 'rgb(12,13,16)' }} title={title}>
-      <div className="text-[8px] uppercase tracking-[0.1em] text-muted">{label}</div>
-      <div className="helix-num text-[11px] font-bold tabular-nums" style={{ color: color ?? undefined }}>{value}</div>
-    </div>
+    <span className="inline-flex items-baseline gap-1 min-w-0" title={title}>
+      <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-muted shrink-0">{label}</span>
+      <span className="helix-num text-[11px] font-bold text-text tabular-nums truncate">{value}</span>
+      {delta != null && delta !== 0 && (
+        <span className="helix-num text-[9px] font-bold tabular-nums shrink-0"
+          style={{ color: delta > 0 ? EMERALD : OXIDE }}>
+          {delta > 0 ? '+' : ''}{delta}%
+        </span>
+      )}
+    </span>
   )
 }
