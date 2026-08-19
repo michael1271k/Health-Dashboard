@@ -16,6 +16,8 @@ const DANGER = '#C4514E' // failure
 const DROP = '#9A6DD7'   // drop set
 const GREEN = '#3E9E7A'  // completed (ticked green)
 const GOLD = '#C9A227'   // personal record
+/** The ladder stop that MEANS failure — the one rating the `F` tag mirrors. */
+const FAILURE_RPE = 10
 
 /**
  * One set row of the deck: tap to activate the tuner (typeable weight/reps
@@ -147,9 +149,29 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
     void tapLight()
     onChange(index, { reps: Math.max(1, set.reps + delta) })
   }
+  /**
+   * ── FAILURE AND A 10 ARE THE SAME CLAIM, SO THEY MOVE TOGETHER ─────────────
+   * The ladder's top stop already tagged the set `failure` on the way in, and
+   * nothing carried the fact back: tapping `F` left the rating untouched, and
+   * clearing a 10 left the `F` chip lit. So a set could read "F" at RPE 8, and
+   * "10 · Failure" with no tag — two controls describing one fact and
+   * disagreeing about it, which is what `setType` gets exported as and what the
+   * PR engine reads.
+   *
+   * The sync is strict and it is narrow. Only the FAILURE tag is mirrored (a
+   * warm-up and a drop set say nothing about proximity to failure), only while
+   * ratings are being tracked at all, and only over a rating that IS the
+   * failure stop — dropping the tag never touches an 8.5 you entered yourself.
+   */
   const toggleType = (t: 'warmup' | 'failure' | 'dropset') => {
     void tapLight()
-    onChange(index, { setType: set.setType === t ? undefined : t })
+    const nextType = set.setType === t ? undefined : t
+    const patch: Partial<DraftSet> = { setType: nextType }
+    if (t === 'failure' && trackRpe) {
+      if (nextType === 'failure') patch.rpe = FAILURE_RPE
+      else if (set.rpe === FAILURE_RPE) patch.rpe = undefined
+    }
+    onChange(index, patch)
   }
 
   const sideColor = set.side === 'L' ? '#8E9AAC' : set.side === 'R' ? '#E0703C' : null
@@ -468,7 +490,12 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
               setLabel={`set ${displayNum ?? index + 1}`}
               onPick={(choice) => onChange(index, {
                 rpe: choice?.rpe,
-                ...(choice?.failure ? { setType: 'failure' as const } : {}),
+                // The other direction of the same sync as `toggleType`: the top
+                // stop lights the F tag, and stepping off it (or clearing the
+                // rating) puts the tag out. Only a tag this control set is
+                // withdrawn — a warm-up or drop set chip is left alone.
+                ...(choice?.failure ? { setType: 'failure' as const }
+                  : isFail ? { setType: undefined } : {}),
               })}
             />
           )}

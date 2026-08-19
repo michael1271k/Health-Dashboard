@@ -20,6 +20,7 @@ import { isTimedExercise } from '@/lib/exercises/timed'
 import { Plus, TrendingUp, Moon, ArrowRight, Flag, FileClock, ChevronDown, ChevronRight, BookOpen } from 'lucide-react'
 import { WeekScheduler } from '@/components/schedule/WeekScheduler'
 import { Surface } from '@/components/ui/Zone'
+import { RestTargetControl } from '@/components/training/RestTargetControl'
 import { Segmented } from '@/components/ui/Segmented'
 import { useExerciseSetHistory, workingSets, type ExerciseHistory } from '@/lib/hooks/useExerciseSetHistory'
 import { sessionVolumeKg } from '@/lib/sessions/volume'
@@ -330,6 +331,14 @@ export default function WorkoutPage() {
                             <div className="flex items-center justify-between gap-2">
                               <span className="text-fluid-sm font-medium text-text leading-tight truncate">{ex.name}</span>
                               <span className="text-fluid-xs text-muted shrink-0 helix-num">{ex.sets}×{ex.reps}</span>
+                            </div>
+                            {/* Target rest, from the plan and adjustable here.
+                                The logger shows the same number and edits the
+                                same store, so a change made on the gym floor is
+                                the plan's number afterwards — not a per-session
+                                tweak that evaporates on commit. */}
+                            <div className="mt-1">
+                              <RestTargetControl exerciseName={ex.name} dayKey={day.key} />
                             </div>
                             <div className="text-fluid-xs text-muted flex items-center gap-1.5 mt-0.5 flex-wrap">
                               {done.length > 0 ? (

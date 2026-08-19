@@ -41,17 +41,6 @@ export interface DraftSet {
    */
   done?: boolean
   /**
-   * When this set was ticked, epoch ms. CLIENT-ONLY, like `rpeSeed` — never
-   * sent to the server and never read by the PR engine.
-   *
-   * It exists for one thing: the rest timer. Rest is the one number a logging
-   * app can measure for free and this one was throwing it away, so "how long
-   * have I been sitting here" was a question you answered by looking at the
-   * clock and doing arithmetic. Unticking clears it, because a set that is not
-   * done did not end.
-   */
-  doneAt?: number
-  /**
    * Unilateral (per-side) tracking. A split set = two DraftSets sharing
    * `pairId`, one `side` 'L' one `'R'`, and the deck folds the two back into ONE
    * numbered set with ONE checkmark.
@@ -153,10 +142,23 @@ export function draftTotals(draft: SessionDraft): { volumeKg: number; sets: numb
 }
 
 /**
- * Hevy-style cascade for a set edit: apply `patch` to `setIdx`, and when the
- * first set changed, propagate its new weight/reps to every later set that
- * still shared the first set's *previous* value (manually-tuned sets are left
- * alone). setType (W/F) is never cascaded.
+ * Cascade for a set edit: apply `patch` to `setIdx`, then carry the new
+ * weight/reps to the NEXT set — and only the next one. setType (W/F) is never
+ * cascaded.
+ *
+ * ── ONE STEP, NOT THE WHOLE TAIL (2026-08-19) ────────────────────────────────
+ * This used to propagate from set 1 to EVERY later set that still matched. On
+ * paper that is convenient; in a session it overreaches. Correcting set 1 from
+ * 10 to 11 reps rewrote sets 2 and 3 as well, so a set you had not performed
+ * yet arrived pre-filled with a claim about it — and on the double-progression
+ * surfaces those pre-filled rows are indistinguishable from work, which is how
+ * three sets could read at the ceiling after one of them had been touched.
+ *
+ * One step is the honest amount. Sets 1 and 2 share a load by construction (you
+ * pick a weight and repeat it), so carrying the edit forward once is a
+ * correction of the same decision; carrying it to set 3 is a prediction. The
+ * guard is unchanged: only a set that still holds the edited set's PREVIOUS
+ * value follows, so anything you tuned by hand is left alone.
  */
 export function cascadeSetEdit(sets: DraftSet[], setIdx: number, patch: Partial<DraftSet>): DraftSet[] {
   const prev = sets[setIdx]
@@ -165,19 +167,18 @@ export function cascadeSetEdit(sets: DraftSet[], setIdx: number, patch: Partial<
   // A rating you tapped yourself is yours. Releasing the seed here is what stops
   // a later weight edit from wiping a value you deliberately entered.
   if (patch.rpe !== undefined) next[setIdx] = releaseRpeSeed(next[setIdx])
-  if (setIdx === 0) {
-    for (let i = 1; i < next.length; i++) {
-      const upd: Partial<DraftSet> = {}
-      // A 0 → n weight edit is a change of KIND, not a load progression, and it
-      // must not cascade. On a bodyweight movement every later set also reads 0,
-      // so putting a belt on set 1 loaded sets 2 and 3 that had not been
-      // performed yet — and `repsAxisEligible` requires weight 0, so the cascade
-      // silently stripped the reps axis (the only axis those lifts have) from
-      // every set it touched.
-      if (patch.weightKg != null && prev.weightKg > 0 && next[i].weightKg === prev.weightKg) upd.weightKg = patch.weightKg
-      if (patch.reps != null && next[i].reps === prev.reps) upd.reps = patch.reps
-      if (Object.keys(upd).length) next[i] = { ...next[i], ...upd }
-    }
+  const heir = setIdx + 1
+  if (heir < next.length) {
+    const upd: Partial<DraftSet> = {}
+    // A 0 → n weight edit is a change of KIND, not a load progression, and it
+    // must not cascade. On a bodyweight movement every later set also reads 0,
+    // so putting a belt on set 1 loaded a set that had not been performed yet —
+    // and `repsAxisEligible` requires weight 0, so the cascade silently
+    // stripped the reps axis (the only axis those lifts have) from the row it
+    // touched.
+    if (patch.weightKg != null && prev.weightKg > 0 && next[heir].weightKg === prev.weightKg) upd.weightKg = patch.weightKg
+    if (patch.reps != null && next[heir].reps === prev.reps) upd.reps = patch.reps
+    if (Object.keys(upd).length) next[heir] = { ...next[heir], ...upd }
   }
   // Re-resolve every inherited rating against the numbers as they now stand.
   // This runs over the WHOLE list, not just the edited row, because the cascade
@@ -267,19 +268,19 @@ export function buildCommitPayload(draft: SessionDraft): SaveWorkoutInput {
     const committed = ex.sets.filter(isSetCommitted)
     if (!committed.length) return        // no green sets → the exercise didn't happen
     committed.forEach((s, i) => {
-      // Rest BEFORE this set: the gap between the previous set's tick and this
-      // one's. Both stamps must exist — `doneAt` is client-only and absent on a
-      // pasted or bulk-checked session — and the gap must be plausible, so a
-      // deck left open overnight does not record a 9-hour rest.
-      const prevDoneAt = i > 0 ? committed[i - 1].doneAt : undefined
-      const gapSec = prevDoneAt != null && s.doneAt != null
-        ? Math.round((s.doneAt - prevDoneAt) / 1000)
-        : null
-      const restSec = gapSec != null && gapSec >= 0 && gapSec <= 3600 ? gapSec : undefined
+      // ── NO `restSec` IS DERIVED HERE ANY MORE (2026-08-19) ──
+      // Each set used to carry a client-only `doneAt` stamp, and this loop
+      // subtracted consecutive stamps into `workout_sets.rest_sec`. Measuring
+      // rest turned out to answer a question nobody was asking: what a lifter
+      // needs between sets is the plan's TARGET, which the program now carries
+      // per exercise (`ProgramExercise.restSec`, resolved by
+      // `lib/training/restTargets.ts`). The column and every reader of it stay
+      // — the rows written while the stopwatch existed are real measurements —
+      // but new sessions leave it null, which is what "not recorded" means
+      // everywhere else in this schema.
       sets.push({
         exerciseName: ex.name,
         setNumber: i + 1,
-        ...(restSec != null ? { restSec } : {}),
         weightKg: s.weightKg,
         reps: s.reps,
         rpe: s.rpe,

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Check, Loader2, Timer, HeartPulse, Flame, Layers, Dumbbell } from 'lucide-react'
 import { Sheet } from '@/components/ui/Sheet'
 import { EffortScale } from '@/components/ui/EffortScale'
@@ -8,6 +8,8 @@ import { isSetCommitted, type SessionDraft } from '@/lib/sessions/draft'
 import { deriveSessionRpe } from '@/lib/training/rpeMemory'
 import { fmtVolume } from '@/lib/utils/units'
 import { parseDurationMin } from '@/lib/utils/duration'
+import { useSessionMetricsSeed } from '@/lib/hooks/useSessionMetricsSeed'
+import { shortDate } from '@/lib/utils/day'
 import { EMBER, STEEL, OXIDE, GOLD, SAPPHIRE } from '@/lib/theme/palette'
 
 type StatPatch = Partial<NonNullable<SessionDraft['stats']>>
@@ -43,6 +45,35 @@ export function FinishSheet({ open, onClose, draft, totals, busy, error, onSetSt
   const s = draft.stats
   const isEdit = !!draft.replaceSessionId
 
+  /**
+   * ── THE THREE FIELDS ARRIVE PRE-FILLED ─────────────────────────────────────
+   * From the previous performance of THIS routine (`day_key`, never the
+   * weekday), per field, with the routine's recent average as the fallback —
+   * see `useSessionMetricsSeed`. Session effort has proposed its answer for a
+   * while and these three had stayed blank, which made the sheet look like it
+   * knew less than it does: Upper A has taken 62 minutes eleven times running.
+   *
+   * The fill runs ONCE per opening and only over fields that are empty. A
+   * number you typed is never overwritten, and clearing a field on purpose
+   * stays cleared — the guard is the ref, not the value, so a blanked field is
+   * not re-seeded the moment the query settles.
+   */
+  const { data: seed } = useSessionMetricsSeed(draft.dayKey, draft.replaceSessionId)
+  const seeded = useRef(false)
+  useEffect(() => {
+    if (!open) { seeded.current = false; return }
+    if (seeded.current || !seed) return
+    seeded.current = true
+    const patch: StatPatch = {}
+    if (s?.duration_min == null && seed.durationMin != null) patch.duration_min = seed.durationMin
+    if (s?.avg_hr_bpm == null && seed.avgBpm != null) patch.avg_hr_bpm = seed.avgBpm
+    if (s?.calories_kcal == null && seed.calories != null) patch.calories_kcal = seed.calories
+    if (Object.keys(patch).length) onSetStats(patch)
+    // `s` is read, not tracked: re-running on every keystroke in these fields is
+    // exactly the overwrite the ref exists to prevent.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, seed])
+
   // The same set list the commit payload will carry, so the proposed rating
   // matches the one that gets stored.
   const committed = draft.exercises
@@ -73,11 +104,15 @@ export function FinishSheet({ open, onClose, draft, totals, busy, error, onSetSt
             <Field label="Calories" unit="kcal" icon={Flame} color={GOLD} value={s?.calories_kcal ?? null}
               onChange={(v) => onSetStats({ calories_kcal: v })} />
           </div>
-          {/* Was: "Left blank, calories and heart rate are estimated from the
-              work you logged, and marked as estimates." Twenty words under three
-              inputs, restating what the ≈ on an estimated figure already says
-              everywhere else in the app. */}
-          <p className="text-[10px] text-muted/60 mt-1.5">Left blank → estimated.</p>
+          {/* Where the pre-filled numbers came from. A proposal you cannot
+              trace is a number you either accept blindly or delete. */}
+          {seed?.lastDate ? (
+            <p className="text-[10px] text-muted/60 mt-1.5">
+              Pre-filled from {shortDate(seed.lastDate)}{seed.averaged ? ' and your recent average' : ''} · edit anything that changed.
+            </p>
+          ) : (
+            <p className="text-[10px] text-muted/60 mt-1.5">Left blank → estimated.</p>
+          )}
         </div>
 
         {totals.sets > 0 && (

@@ -63,6 +63,22 @@ export interface ProgramExercise {
   cutSets?: number
   wk1Kg: number | null   // starting load (seeds progressive-overload memory); DB loads = TOTAL kg
   reps: string           // rep window (double progression) — also drives the overload ceiling
+  /**
+   * TARGET rest between working sets, in seconds. Helix 5.1's own numbers —
+   * bigger compounds get more, isolation and core get less.
+   *
+   * ── PRESCRIBED, NOT MEASURED ────────────────────────────────────────────────
+   * This is the FIRST rest figure the program has ever carried. Helix used to
+   * answer "how long should I rest" by measuring the gap between two set ticks
+   * and printing it, which is a different question with a different answer: a
+   * stopwatch tells you what you did, and this tells you what the plan asks for.
+   * The stopwatch is gone (see the tombstone in `ExerciseCard`), so the only
+   * rest number on screen is now one the plan can be held to.
+   *
+   * Absent = the movement has no prescribed rest (free choices, legacy PPL).
+   * The user's own edits live in `training/restTargets.ts` and outrank this.
+   */
+  restSec?: number
   muscles: string[]
   compound?: boolean
   note?: string
@@ -109,55 +125,55 @@ export const APEX51: Program = {
   blurb: '5-day antagonist hybrid — Sun/Mon/Tue/Thu/Fri, Wed & Sat Zone-2 rest.',
   days: [
     { key: 'cb_a', label: 'Upper A', sub: 'Chest + Back', color: C.cb_a, weekday: 0, exercises: [
-      { name: 'Incline DB Press', sets: 3, cutSets: 3, wk1Kg: 32, reps: '8–12', muscles: ['chest', 'shoulders'], compound: true },
-      { name: 'Lat Pulldown', sets: 3, cutSets: 3, wk1Kg: 45, reps: '8–12', muscles: ['back'], compound: true },
-      { name: 'Chest Press (Machine)', sets: 3, cutSets: 2, wk1Kg: 34, reps: '10–12', muscles: ['chest', 'triceps'], compound: true },
-      { name: 'Seated Cable Row (V-Grip)', sets: 3, cutSets: 2, wk1Kg: 38.5, reps: '10–12', muscles: ['back'], compound: true, note: 'V-grip' },
-      { name: 'Pec Deck', sets: 2, cutSets: 2, wk1Kg: 47.5, reps: '12–15', muscles: ['chest'] },
-      { name: 'Straight-Arm Pulldown', sets: 2, cutSets: 2, wk1Kg: 15, reps: '12–15', muscles: ['back'] },
-      { name: 'Face Pull', sets: 3, cutSets: 2, wk1Kg: 13.75, reps: '12–15', muscles: ['shoulders', 'back'] },
+      { name: 'Incline DB Press', sets: 3, cutSets: 3, wk1Kg: 32, reps: '8–12', restSec: 120, muscles: ['chest', 'shoulders'], compound: true },
+      { name: 'Lat Pulldown', sets: 3, cutSets: 3, wk1Kg: 45, reps: '8–12', restSec: 135, muscles: ['back'], compound: true },
+      { name: 'Chest Press (Machine)', sets: 3, cutSets: 2, wk1Kg: 34, reps: '10–12', restSec: 135, muscles: ['chest', 'triceps'], compound: true },
+      { name: 'Seated Cable Row (V-Grip)', sets: 3, cutSets: 2, wk1Kg: 38.5, reps: '10–12', restSec: 120, muscles: ['back'], compound: true, note: 'V-grip' },
+      { name: 'Pec Deck', sets: 2, cutSets: 2, wk1Kg: 47.5, reps: '12–15', restSec: 120, muscles: ['chest'] },
+      { name: 'Straight-Arm Pulldown', sets: 2, cutSets: 2, wk1Kg: 15, reps: '12–15', restSec: 105, muscles: ['back'] },
+      { name: 'Face Pull', sets: 3, cutSets: 2, wk1Kg: 13.75, reps: '12–15', restSec: 105, muscles: ['shoulders', 'back'] },
     ] },
     { key: 'legs_a', label: 'Legs & Core A', sub: 'Quad Focus', color: C.legs_a, weekday: 1, exercises: [
-      { name: 'Leg Press', sets: 4, cutSets: 3, wk1Kg: 70, reps: '8–12', muscles: ['quads', 'glutes'], compound: true, note: '1 warm-up @40kg' },
-      { name: 'Hack Squat', sets: 3, cutSets: 2, wk1Kg: null, reps: '10–12', muscles: ['quads', 'glutes'], compound: true },
-      { name: 'Leg Extension', sets: 3, cutSets: 3, wk1Kg: 37.5, reps: '12–15', muscles: ['quads'] },
-      { name: 'Seated Leg Curl', sets: 3, cutSets: 3, wk1Kg: 40, reps: '10–15', muscles: ['hamstrings'] },
-      { name: 'Calf Press', sets: 4, cutSets: 3, wk1Kg: 65, reps: '10–15', muscles: ['calves'] },
-      { name: 'Crunch Machine', sets: 3, cutSets: 3, wk1Kg: 52.5, reps: '10–12', muscles: ['core'] },
-      { name: 'Reverse Crunch', sets: 3, cutSets: 2, wk1Kg: null, reps: '12–15', muscles: ['core'] },
+      { name: 'Leg Press', sets: 4, cutSets: 3, wk1Kg: 70, reps: '8–12', restSec: 135, muscles: ['quads', 'glutes'], compound: true, note: '1 warm-up @40kg' },
+      { name: 'Hack Squat', sets: 3, cutSets: 2, wk1Kg: null, reps: '10–12', restSec: 135, muscles: ['quads', 'glutes'], compound: true },
+      { name: 'Leg Extension', sets: 3, cutSets: 3, wk1Kg: 37.5, reps: '12–15', restSec: 120, muscles: ['quads'] },
+      { name: 'Seated Leg Curl', sets: 3, cutSets: 3, wk1Kg: 40, reps: '10–15', restSec: 105, muscles: ['hamstrings'] },
+      { name: 'Calf Press', sets: 4, cutSets: 3, wk1Kg: 65, reps: '10–15', restSec: 90, muscles: ['calves'] },
+      { name: 'Crunch Machine', sets: 3, cutSets: 3, wk1Kg: 52.5, reps: '10–12', restSec: 90, muscles: ['core'] },
+      { name: 'Reverse Crunch', sets: 3, cutSets: 2, wk1Kg: null, reps: '12–15', restSec: 75, muscles: ['core'] },
     ] },
     { key: 'arms', label: 'Delts & Arms', color: C.arms, weekday: 2, exercises: [
-      { name: 'DB Shoulder Press', sets: 3, cutSets: 3, wk1Kg: 28, reps: '8–10', muscles: ['shoulders', 'triceps'], compound: true },
-      { name: 'Single Arm Lateral Raise (Cable)', sets: 5, cutSets: 4, wk1Kg: 5, reps: '12–20', muscles: ['shoulders'], note: 'per side' },
-      { name: 'Seated Incline DB Curl', sets: 3, cutSets: 3, wk1Kg: 14, reps: '8–12', muscles: ['biceps'] },
-      { name: 'Cable Overhead Extension', sets: 3, cutSets: 2, wk1Kg: 9, reps: '10–15', muscles: ['triceps'] },
-      { name: 'DB Hammer Curl', sets: 3, cutSets: 2, wk1Kg: 16, reps: '10–12', muscles: ['biceps', 'forearms'] },
-      { name: 'Rope Triceps Pushdown', sets: 2, cutSets: 2, wk1Kg: 13.5, reps: '12–15', muscles: ['triceps'] },
-      { name: 'Reverse EZ-Bar Curl', sets: 2, cutSets: 2, wk1Kg: 15, reps: '12–15', muscles: ['forearms', 'biceps'] },
-      { name: 'Seated DB Wrist Curl', sets: 2, cutSets: 0, wk1Kg: 16, reps: '15–20', muscles: ['forearms'] },
+      { name: 'DB Shoulder Press', sets: 3, cutSets: 3, wk1Kg: 28, reps: '8–10', restSec: 105, muscles: ['shoulders', 'triceps'], compound: true },
+      { name: 'Single Arm Lateral Raise (Cable)', sets: 5, cutSets: 4, wk1Kg: 5, reps: '12–20', restSec: 105, muscles: ['shoulders'], note: 'per side' },
+      { name: 'Seated Incline DB Curl', sets: 3, cutSets: 3, wk1Kg: 14, reps: '8–12', restSec: 105, muscles: ['biceps'] },
+      { name: 'Cable Overhead Extension', sets: 3, cutSets: 2, wk1Kg: 9, reps: '10–15', restSec: 90, muscles: ['triceps'] },
+      { name: 'DB Hammer Curl', sets: 3, cutSets: 2, wk1Kg: 16, reps: '10–12', restSec: 105, muscles: ['biceps', 'forearms'] },
+      { name: 'Rope Triceps Pushdown', sets: 2, cutSets: 2, wk1Kg: 13.5, reps: '12–15', restSec: 90, muscles: ['triceps'] },
+      { name: 'Reverse EZ-Bar Curl', sets: 2, cutSets: 2, wk1Kg: 15, reps: '12–15', restSec: 90, muscles: ['forearms', 'biceps'] },
+      { name: 'Seated DB Wrist Curl', sets: 2, cutSets: 0, wk1Kg: 16, reps: '15–20', restSec: 90, muscles: ['forearms'] },
     ] },
     // Names match the canonical (alias-resolved) catalog rows the sessions commit
     // under, so useExerciseMemory pre-loads the last logged numbers per exercise.
     { key: 'cb_b', label: 'Upper B', sub: 'Chest + Back', color: C.cb_b, weekday: 4, exercises: [
-      { name: 'Chest Press (Machine)', sets: 3, cutSets: 3, wk1Kg: 35, reps: '10–12', muscles: ['chest', 'triceps'], compound: true },
-      { name: 'Neutral-Grip Lat Pulldown', sets: 3, cutSets: 2, wk1Kg: 45, reps: '10–12', muscles: ['back'], compound: true },
-      { name: 'Single Arm Cable Crossover', sets: 2, cutSets: 2, wk1Kg: 7.5, reps: '12–15', muscles: ['chest'], note: 'per arm' },
-      { name: 'Seated Cable Row (Wide Grip)', sets: 3, cutSets: 2, wk1Kg: 35, reps: '10–12', muscles: ['back'], compound: true, note: 'wide bar' },
-      { name: 'Single Arm Lateral Raise (Cable)', sets: 4, cutSets: 3, wk1Kg: 3.75, reps: '15–20', muscles: ['shoulders'], note: 'per side' },
-      { name: 'Preacher Curl (Machine)', sets: 3, cutSets: 3, wk1Kg: 15, reps: '8–12', muscles: ['biceps'] },
-      { name: 'Single Arm Triceps Pushdown (Cable)', sets: 2, cutSets: 2, wk1Kg: 5, reps: '12–15', muscles: ['triceps'], note: 'per arm' },
+      { name: 'Chest Press (Machine)', sets: 3, cutSets: 3, wk1Kg: 35, reps: '10–12', restSec: 120, muscles: ['chest', 'triceps'], compound: true },
+      { name: 'Neutral-Grip Lat Pulldown', sets: 3, cutSets: 2, wk1Kg: 45, reps: '10–12', restSec: 120, muscles: ['back'], compound: true },
+      { name: 'Single Arm Cable Crossover', sets: 2, cutSets: 2, wk1Kg: 7.5, reps: '12–15', restSec: 105, muscles: ['chest'], note: 'per arm' },
+      { name: 'Seated Cable Row (Wide Grip)', sets: 3, cutSets: 2, wk1Kg: 35, reps: '10–12', restSec: 120, muscles: ['back'], compound: true, note: 'wide bar' },
+      { name: 'Single Arm Lateral Raise (Cable)', sets: 4, cutSets: 3, wk1Kg: 3.75, reps: '15–20', restSec: 90, muscles: ['shoulders'], note: 'per side' },
+      { name: 'Preacher Curl (Machine)', sets: 3, cutSets: 3, wk1Kg: 15, reps: '8–12', restSec: 105, muscles: ['biceps'] },
+      { name: 'Single Arm Triceps Pushdown (Cable)', sets: 2, cutSets: 2, wk1Kg: 5, reps: '12–15', restSec: 90, muscles: ['triceps'], note: 'per arm' },
     ] },
     // Cold-start loads/reps mirror the user's real Legs B (memory overrides once
     // logged under these canonical names); bodyweight moves seed at 0 kg.
     { key: 'legs_b', label: 'Legs & Core B', sub: 'Posterior Focus', color: C.legs_b, weekday: 5, exercises: [
-      { name: 'Romanian Deadlift (Dumbbell)', sets: 4, cutSets: 3, wk1Kg: 30, reps: '8–12', muscles: ['hamstrings', 'glutes', 'back'], compound: true },
-      { name: 'Hip Thrust (Machine)', sets: 3, cutSets: 3, wk1Kg: 25, reps: '8–15', muscles: ['glutes'], compound: true },
-      { name: 'Leg Press', sets: 2, cutSets: 2, wk1Kg: 70, reps: '12–15', muscles: ['quads', 'glutes'], compound: true, note: 'horizontal sled' },
-      { name: 'Hip Adduction', sets: 2, cutSets: 0, wk1Kg: 50, reps: '12–15', muscles: ['glutes'] },
-      { name: 'Seated Leg Curl', sets: 2, cutSets: 2, wk1Kg: 45, reps: '10–15', muscles: ['hamstrings'] },
-      { name: 'Calf Press', sets: 4, cutSets: 3, wk1Kg: 67.5, reps: '10–15', muscles: ['calves'] },
-      { name: 'Hanging Knee Raise', sets: 3, cutSets: 3, wk1Kg: null, reps: '10–15', muscles: ['core'] },
-      { name: 'Side Plank', sets: 2, cutSets: 2, wk1Kg: null, reps: '55s', muscles: ['core'], note: 'per side' },
+      { name: 'Romanian Deadlift (Dumbbell)', sets: 4, cutSets: 3, wk1Kg: 30, reps: '8–12', restSec: 120, muscles: ['hamstrings', 'glutes', 'back'], compound: true },
+      { name: 'Hip Thrust (Machine)', sets: 3, cutSets: 3, wk1Kg: 25, reps: '8–15', restSec: 135, muscles: ['glutes'], compound: true },
+      { name: 'Leg Press', sets: 2, cutSets: 2, wk1Kg: 70, reps: '12–15', restSec: 135, muscles: ['quads', 'glutes'], compound: true, note: 'horizontal sled' },
+      { name: 'Hip Adduction', sets: 2, cutSets: 0, wk1Kg: 50, reps: '12–15', restSec: 90, muscles: ['glutes'] },
+      { name: 'Seated Leg Curl', sets: 2, cutSets: 2, wk1Kg: 45, reps: '10–15', restSec: 105, muscles: ['hamstrings'] },
+      { name: 'Calf Press', sets: 4, cutSets: 3, wk1Kg: 67.5, reps: '10–15', restSec: 105, muscles: ['calves'] },
+      { name: 'Hanging Knee Raise', sets: 3, cutSets: 3, wk1Kg: null, reps: '10–15', restSec: 90, muscles: ['core'] },
+      { name: 'Side Plank', sets: 2, cutSets: 2, wk1Kg: null, reps: '55s', restSec: 90, muscles: ['core'], note: 'per side' },
     ] },
   ],
 }
@@ -170,41 +186,41 @@ export const HELIX4: Program = {
   blurb: '4-day upper/lower backup — Mon/Tue/Thu/Fri. Bulk adds volume; cut trims it.',
   days: [
     { key: 'upper_a', label: 'Upper A', color: C.cb_a, weekday: 1, exercises: [
-      { name: 'Incline DB Press', sets: 3, cutSets: 3, wk1Kg: 32, reps: '8–12', muscles: ['chest', 'shoulders'], compound: true },
-      { name: 'Lat Pulldown', sets: 3, cutSets: 3, wk1Kg: 45, reps: '8–12', muscles: ['back'], compound: true },
-      { name: 'Chest Press (Machine)', sets: 2, cutSets: 0, wk1Kg: 34, reps: '10–12', muscles: ['chest', 'triceps'], compound: true },
-      { name: 'Seated Cable Row (V-Grip)', sets: 3, cutSets: 2, wk1Kg: 38.5, reps: '10–12', muscles: ['back'], compound: true, note: 'V-grip' },
-      { name: 'Seated Incline DB Curl', sets: 3, cutSets: 3, wk1Kg: 14, reps: '8–12', muscles: ['biceps'] },
-      { name: 'Rope Triceps Pushdown', sets: 3, cutSets: 2, wk1Kg: 13.5, reps: '12–15', muscles: ['triceps'] },
-      { name: 'Face Pull', sets: 2, cutSets: 2, wk1Kg: 13.75, reps: '12–15', muscles: ['shoulders', 'back'] },
+      { name: 'Incline DB Press', sets: 3, cutSets: 3, wk1Kg: 32, reps: '8–12', restSec: 120, muscles: ['chest', 'shoulders'], compound: true },
+      { name: 'Lat Pulldown', sets: 3, cutSets: 3, wk1Kg: 45, reps: '8–12', restSec: 135, muscles: ['back'], compound: true },
+      { name: 'Chest Press (Machine)', sets: 2, cutSets: 0, wk1Kg: 34, reps: '10–12', restSec: 120, muscles: ['chest', 'triceps'], compound: true },
+      { name: 'Seated Cable Row (V-Grip)', sets: 3, cutSets: 2, wk1Kg: 38.5, reps: '10–12', restSec: 120, muscles: ['back'], compound: true, note: 'V-grip' },
+      { name: 'Seated Incline DB Curl', sets: 3, cutSets: 3, wk1Kg: 14, reps: '8–12', restSec: 105, muscles: ['biceps'] },
+      { name: 'Rope Triceps Pushdown', sets: 3, cutSets: 2, wk1Kg: 13.5, reps: '12–15', restSec: 90, muscles: ['triceps'] },
+      { name: 'Face Pull', sets: 2, cutSets: 2, wk1Kg: 13.75, reps: '12–15', restSec: 105, muscles: ['shoulders', 'back'] },
     ] },
     { key: 'lower_a', label: 'Lower A', color: C.legs_a, weekday: 2, exercises: [
-      { name: 'Leg Press', sets: 3, cutSets: 3, wk1Kg: 70, reps: '8–12', muscles: ['quads', 'glutes'], compound: true },
-      { name: 'Hack Squat', sets: 2, cutSets: 0, wk1Kg: null, reps: '10–12', muscles: ['quads', 'glutes'], compound: true },
-      { name: 'Leg Extension', sets: 2, cutSets: 3, wk1Kg: 37.5, reps: '12–15', muscles: ['quads'] },
-      { name: 'Seated Leg Curl', sets: 3, cutSets: 3, wk1Kg: 40, reps: '10–15', muscles: ['hamstrings'] },
-      { name: 'Calf Press', sets: 4, cutSets: 3, wk1Kg: 65, reps: '10–15', muscles: ['calves'] },
-      { name: 'Crunch Machine', sets: 3, cutSets: 3, wk1Kg: 52.5, reps: '10–12', muscles: ['core'] },
-      { name: 'Reverse Crunch', sets: 2, cutSets: 2, wk1Kg: null, reps: '12–15', muscles: ['core'] },
+      { name: 'Leg Press', sets: 3, cutSets: 3, wk1Kg: 70, reps: '8–12', restSec: 135, muscles: ['quads', 'glutes'], compound: true },
+      { name: 'Hack Squat', sets: 2, cutSets: 0, wk1Kg: null, reps: '10–12', restSec: 135, muscles: ['quads', 'glutes'], compound: true },
+      { name: 'Leg Extension', sets: 2, cutSets: 3, wk1Kg: 37.5, reps: '12–15', restSec: 120, muscles: ['quads'] },
+      { name: 'Seated Leg Curl', sets: 3, cutSets: 3, wk1Kg: 40, reps: '10–15', restSec: 105, muscles: ['hamstrings'] },
+      { name: 'Calf Press', sets: 4, cutSets: 3, wk1Kg: 65, reps: '10–15', restSec: 90, muscles: ['calves'] },
+      { name: 'Crunch Machine', sets: 3, cutSets: 3, wk1Kg: 52.5, reps: '10–12', restSec: 90, muscles: ['core'] },
+      { name: 'Reverse Crunch', sets: 2, cutSets: 2, wk1Kg: null, reps: '12–15', restSec: 75, muscles: ['core'] },
     ] },
     { key: 'upper_b', label: 'Upper B', color: C.cb_b, weekday: 4, exercises: [
-      { name: 'DB Shoulder Press', sets: 3, cutSets: 3, wk1Kg: 28, reps: '8–10', muscles: ['shoulders', 'triceps'], compound: true },
-      { name: 'Single Arm Lateral Raise (Cable)', sets: 4, cutSets: 4, wk1Kg: 5, reps: '12–20', muscles: ['shoulders'], note: 'per side' },
-      { name: 'Pec Deck', sets: 2, cutSets: 1, wk1Kg: 47.5, reps: '12–15', muscles: ['chest'], note: 'cut: rotates with Chest Press (Machine)' },
-      { name: 'Seated Cable Row (Wide Grip)', sets: 3, cutSets: 2, wk1Kg: 35, reps: '10–12', muscles: ['back'], compound: true, note: 'wide bar' },
-      { name: 'DB Hammer Curl', sets: 3, cutSets: 2, wk1Kg: 16, reps: '10–12', muscles: ['biceps', 'forearms'] },
-      { name: 'Single Arm Triceps Pushdown (Cable)', sets: 2, cutSets: 2, wk1Kg: 5, reps: '12–15', muscles: ['triceps'], note: 'per arm' },
-      { name: 'Reverse EZ-Bar Curl', sets: 2, cutSets: 2, wk1Kg: 15, reps: '12–15', muscles: ['forearms', 'biceps'] },
-      { name: 'Seated DB Wrist Curl', sets: 2, cutSets: 0, wk1Kg: 16, reps: '15–20', muscles: ['forearms'] },
+      { name: 'DB Shoulder Press', sets: 3, cutSets: 3, wk1Kg: 28, reps: '8–10', restSec: 105, muscles: ['shoulders', 'triceps'], compound: true },
+      { name: 'Single Arm Lateral Raise (Cable)', sets: 4, cutSets: 4, wk1Kg: 5, reps: '12–20', restSec: 105, muscles: ['shoulders'], note: 'per side' },
+      { name: 'Pec Deck', sets: 2, cutSets: 1, wk1Kg: 47.5, reps: '12–15', restSec: 120, muscles: ['chest'], note: 'cut: rotates with Chest Press (Machine)' },
+      { name: 'Seated Cable Row (Wide Grip)', sets: 3, cutSets: 2, wk1Kg: 35, reps: '10–12', restSec: 120, muscles: ['back'], compound: true, note: 'wide bar' },
+      { name: 'DB Hammer Curl', sets: 3, cutSets: 2, wk1Kg: 16, reps: '10–12', restSec: 105, muscles: ['biceps', 'forearms'] },
+      { name: 'Single Arm Triceps Pushdown (Cable)', sets: 2, cutSets: 2, wk1Kg: 5, reps: '12–15', restSec: 90, muscles: ['triceps'], note: 'per arm' },
+      { name: 'Reverse EZ-Bar Curl', sets: 2, cutSets: 2, wk1Kg: 15, reps: '12–15', restSec: 90, muscles: ['forearms', 'biceps'] },
+      { name: 'Seated DB Wrist Curl', sets: 2, cutSets: 0, wk1Kg: 16, reps: '15–20', restSec: 90, muscles: ['forearms'] },
     ] },
     { key: 'lower_b', label: 'Lower B', color: C.legs_b, weekday: 5, exercises: [
-      { name: 'DB RDL', sets: 3, cutSets: 3, wk1Kg: 26, reps: '8–12', muscles: ['hamstrings', 'glutes', 'back'], compound: true },
-      { name: 'Machine Hip Thrust', sets: 3, cutSets: 3, wk1Kg: 23.5, reps: '8–15', muscles: ['glutes'], compound: true },
-      { name: 'Leg Press', sets: 2, cutSets: 2, wk1Kg: 70, reps: '12–15', muscles: ['quads', 'glutes'], compound: true, note: 'horizontal sled' },
-      { name: 'Hip Adduction', sets: 2, cutSets: 0, wk1Kg: 50, reps: '12–15', muscles: ['glutes'] },
-      { name: 'Calf Press', sets: 3, cutSets: 3, wk1Kg: 65, reps: '10–15', muscles: ['calves'] },
-      { name: 'Hanging Knee Raise', sets: 3, cutSets: 3, wk1Kg: null, reps: '10–15', muscles: ['core'] },
-      { name: 'Side Plank', sets: 2, cutSets: 2, wk1Kg: null, reps: '55s', muscles: ['core'], note: 'per side' },
+      { name: 'DB RDL', sets: 3, cutSets: 3, wk1Kg: 26, reps: '8–12', restSec: 120, muscles: ['hamstrings', 'glutes', 'back'], compound: true },
+      { name: 'Machine Hip Thrust', sets: 3, cutSets: 3, wk1Kg: 23.5, reps: '8–15', restSec: 135, muscles: ['glutes'], compound: true },
+      { name: 'Leg Press', sets: 2, cutSets: 2, wk1Kg: 70, reps: '12–15', restSec: 135, muscles: ['quads', 'glutes'], compound: true, note: 'horizontal sled' },
+      { name: 'Hip Adduction', sets: 2, cutSets: 0, wk1Kg: 50, reps: '12–15', restSec: 90, muscles: ['glutes'] },
+      { name: 'Calf Press', sets: 3, cutSets: 3, wk1Kg: 65, reps: '10–15', restSec: 105, muscles: ['calves'] },
+      { name: 'Hanging Knee Raise', sets: 3, cutSets: 3, wk1Kg: null, reps: '10–15', restSec: 90, muscles: ['core'] },
+      { name: 'Side Plank', sets: 2, cutSets: 2, wk1Kg: null, reps: '55s', restSec: 90, muscles: ['core'], note: 'per side' },
     ] },
   ],
 }

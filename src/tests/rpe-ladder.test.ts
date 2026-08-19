@@ -262,11 +262,30 @@ describe('cascadeSetEdit — inherited ratings clear across the cascade', () => 
     expect(out[0].rpeStale).toBe(true)
   })
 
-  it('clears the CASCADED rows too, not just the one that was touched', () => {
+  it('clears the CASCADED row too, not just the one that was touched', () => {
     const sets = [seeded(60, 10, 8.5), seeded(60, 10, 9), seeded(60, 10, 9.5)]
     const out = cascadeSetEdit(sets, 0, { weightKg: 65 })
-    expect(out.map((s) => s.weightKg)).toEqual([65, 65, 65])
-    expect(out.every((s) => s.rpe === undefined && s.rpeStale)).toBe(true)
+    // ONE STEP: set 2 follows set 1, set 3 does not. Set 3 keeps its rating
+    // because nothing about it changed.
+    expect(out.map((s) => s.weightKg)).toEqual([65, 65, 60])
+    expect(out.slice(0, 2).every((s) => s.rpe === undefined && s.rpeStale)).toBe(true)
+    expect(out[2].rpe).toBe(9.5)
+  })
+
+  it('cascades exactly one set forward — never to the third', () => {
+    const sets: DraftSet[] = [
+      { weightKg: 40, reps: 10 }, { weightKg: 40, reps: 10 }, { weightKg: 40, reps: 10 },
+    ]
+    const out = cascadeSetEdit(sets, 0, { reps: 11 })
+    expect(out.map((s) => s.reps)).toEqual([11, 11, 10])
+  })
+
+  it('carries an edit from a middle set to the one after it', () => {
+    const sets: DraftSet[] = [
+      { weightKg: 40, reps: 10 }, { weightKg: 40, reps: 10 }, { weightKg: 40, reps: 10 },
+    ]
+    const out = cascadeSetEdit(sets, 1, { weightKg: 42.5 })
+    expect(out.map((s) => s.weightKg)).toEqual([40, 42.5, 42.5])
   })
 
   it('leaves a manually-tuned later set alone — it neither cascades nor clears', () => {

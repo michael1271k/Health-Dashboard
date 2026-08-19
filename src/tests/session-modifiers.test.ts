@@ -32,11 +32,13 @@ describe('countCommittedSets — unilateral L/R sub-sets count once', () => {
   })
 })
 
-describe('cascadeSetEdit — Hevy-style Set 1 cascade', () => {
-  it('cascades Set 1 weight to later sets that still shared its previous value', () => {
+describe('cascadeSetEdit — one step forward, never the whole tail', () => {
+  it('carries a Set 1 edit to Set 2 and stops there', () => {
     const sets = [{ weightKg: 40, reps: 10 }, { weightKg: 40, reps: 10 }, { weightKg: 40, reps: 8 }]
     const out = cascadeSetEdit(sets, 0, { weightKg: 45 })
-    expect(out.map((s) => s.weightKg)).toEqual([45, 45, 45])
+    // Set 3 keeps 40: it has not been performed, and pre-filling it is a claim
+    // about work that has not happened — which the ceiling surfaces then read.
+    expect(out.map((s) => s.weightKg)).toEqual([45, 45, 40])
     expect(out.map((s) => s.reps)).toEqual([10, 10, 8]) // reps untouched
   })
 
@@ -46,10 +48,13 @@ describe('cascadeSetEdit — Hevy-style Set 1 cascade', () => {
     expect(out.map((s) => s.weightKg)).toEqual([45, 50]) // set 2 kept its own load
   })
 
-  it('does NOT cascade when a non-first set is edited', () => {
-    const sets = [{ weightKg: 40, reps: 10 }, { weightKg: 40, reps: 10 }, { weightKg: 40, reps: 10 }]
+  it('carries a middle-set edit to its immediate successor only', () => {
+    const sets = [
+      { weightKg: 40, reps: 10 }, { weightKg: 40, reps: 10 },
+      { weightKg: 40, reps: 10 }, { weightKg: 40, reps: 10 },
+    ]
     const out = cascadeSetEdit(sets, 1, { weightKg: 60 })
-    expect(out.map((s) => s.weightKg)).toEqual([40, 60, 40])
+    expect(out.map((s) => s.weightKg)).toEqual([40, 60, 60, 40])
   })
 
   it('never cascades a setType (W/F) change', () => {

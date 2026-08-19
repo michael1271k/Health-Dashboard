@@ -3,10 +3,9 @@
 import { memo, useCallback, useMemo, useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { ArrowLeftRight, Check, CheckCheck, ChevronDown, Footprints, GripVertical, History, NotebookPen, Plus, Target, X } from 'lucide-react'
+import { ArrowLeftRight, Check, CheckCheck, ChevronDown, Footprints, GripVertical, History, NotebookPen, Plus, Target, Timer, X } from 'lucide-react'
 import { tapLight } from '@/lib/native/haptics'
 import { SetEditorRow } from './SetEditorRow'
-import { RestTimer } from './RestTimer'
 import { useTrackRpe } from '@/lib/hooks/useTrackRpe'
 import { cardioSummary, isSetCommitted, type DraftExercise, type DraftSet } from '@/lib/sessions/draft'
 import { isTimedExercise } from '@/lib/exercises/timed'
@@ -14,6 +13,9 @@ import { isBodyweightExercise } from '@/lib/exercises/bodyweight'
 import { isUnilateralExercise } from '@/lib/exercises/unilateral'
 import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { repWindowFor, holdTargetFor, ladderVerdict, levelUpCue } from '@/lib/training/ceilings'
+import { restTargetFor, hasRestOverride, formatRestTarget } from '@/lib/training/restTargets'
+import { useRestTargets } from '@/lib/hooks/useRestTargets'
+import { RestTargetControl } from '@/components/training/RestTargetControl'
 import { workingSets, type ExerciseHistory } from '@/lib/hooks/useExerciseSetHistory'
 import type { PrAxis } from '@/lib/training/prEngine'
 import type { ReportTargets } from '@/lib/reports/fmtV2'
@@ -225,6 +227,14 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
   // working sets — a warm-up is not the effort the question is about, which is
   // the same reason it wins no record.
   const trackRpe = useTrackRpe()
+  // Rest targets are a module-level cache; without this subscription an edit
+  // made here would not reach the routine layout (or the next card) until an
+  // unrelated re-render. Same contract as `useScheduleVersion`.
+  const restVersion = useRestTargets()
+  const restEdited = useMemo(
+    () => { void restVersion; return hasRestOverride(exercise.name, dayKey) },
+    [restVersion, exercise.name, dayKey],
+  )
 
   // The band's rule. Cardio keeps its violet — it is not a muscle, and giving it
   // a muscle hue would file it under one.
@@ -325,25 +335,25 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
   // What the last report asked for on THIS movement, matched by canonical name.
   // Null for every exercise the report did not name — a target nobody wrote is
   // not a target of the current load.
-  // The last tick on THIS exercise, and whether there is anything left to rest
-  // for. `doneAt` is client-only and absent on a seeded or edited session, so a
-  // reopened session shows no timer rather than a fictional one.
-  //
-  // BOTH derived in ONE memo keyed on the set list. Computed inline they would
-  // re-run `isSetCommitted` for every set of every card on every keystroke —
-  // the deck's card shells re-execute regardless (dnd-kit context), so anything
-  // in a card body is paid six times per character typed. `deck-render.test`
-  // counts exactly those calls.
-  const { lastDoneAt, allDone } = useMemo(() => {
-    let last: number | null = null
-    let every = exercise.sets.length > 0
-    for (const st of exercise.sets) {
-      const done = isSetCommitted(st)
-      if (!done) { every = false; continue }
-      if (typeof st.doneAt === 'number' && (last == null || st.doneAt > last)) last = st.doneAt
-    }
-    return { lastDoneAt: last, allDone: every }
-  }, [exercise.sets])
+  /**
+   * ── THE LIVE REST STOPWATCH IS GONE (2026-08-19) ───────────────────────────
+   * A `RestTimer` used to sit in this header counting up from the last set's
+   * tick, fed by a client-only `doneAt` stamp on every DraftSet and written out
+   * as `workout_sets.rest_sec` on commit. It measured honestly and answered the
+   * wrong question: a running clock tells you what you have done, and the thing
+   * a lifter needs between sets is what the plan ASKS for. It also nagged by
+   * construction — a number that ticks demands to be looked at, every set,
+   * twenty-four times a session.
+   *
+   * Helix 5.1 writes the prescription down instead (`ProgramExercise.restSec`),
+   * so the chip below is a TARGET: fixed, editable, and silent. `rest_sec` stays
+   * in the schema and Session Inspect still reads it — the rows logged while the
+   * stopwatch existed are real data — but nothing writes it any more.
+   */
+  const restTarget = useMemo(
+    () => { void restVersion; return restTargetFor(exercise.name, dayKey) },
+    [restVersion, exercise.name, dayKey],
+  )
 
   const reportTarget = useMemo(
     () => targetForExercise(reportTargets, exercise.name),
@@ -367,6 +377,34 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
   // Highest-priority coach line only. Order = how actionable it is in THIS set:
   // an unmet obligation beats an earned reward, which beats a status note,
   // which beats a standing technique reminder.
+  /**
+   * ── THE SET IN FRONT OF YOU OUTRANKS THE ONE BEHIND ────────────────────────
+   * `ready` is a verdict on the last two SESSIONS, fetched by
+   * `useProgressionQueue` before this one started. It was rendered
+   * unconditionally, so a lift that earned its bump last week kept saying
+   * "add load: 30 → 32.5kg" while today's rows read 30kg × 11 against a
+   * ceiling of 12 — a weight increase advised on a set that had not reached the
+   * programmed ceiling. That is the bug; the ceiling itself was never wrong
+   * (`repWindowFor` reads the explicit window off the active program, per day).
+   *
+   * Two live facts retire the historical verdict:
+   *
+   *   · `bumpTaken` — today's top load is already at or past the suggestion, so
+   *     the advice has been followed and the old chain is finished.
+   *   · `shortOfCeiling` — there IS committed work today and it has not cleared
+   *     the ceiling. What is owed is reps, not plates.
+   *
+   * Before the first set is ticked neither holds, and the badge is exactly what
+   * it should be: today's instruction.
+   */
+  const liveTopKg = useMemo(
+    () => (committedWork.length ? Math.max(...committedWork.map((w) => w.weightKg)) : null),
+    [committedWork],
+  )
+  const bumpTaken = ready?.suggestKg != null && liveTopKg != null && liveTopKg >= ready.suggestKg
+  const shortOfCeiling = committedWork.length > 0 && ladder?.state === 'incomplete'
+  const readyNow = ready && !bumpTaken && !shortOfCeiling ? ready : null
+
   const coachCue = useMemo((): { text: string; color: string; icon: typeof Target } | null => {
     // MIXED LOADS: never "add weight". The correct move is to bring the light
     // sets up to the load already being handled, earned at the window FLOOR.
@@ -382,26 +420,34 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
         text: `Clear ${fmtKg(ladder.bindingLoadKg ?? 0)}kg first — ${ladder.repsOwed} more rep${ladder.repsOwed === 1 ? '' : 's'} to reach ${ladder.ceiling} on every set before ${fmtKg(ladder.topLoadKg ?? 0)}kg replaces it.`,
       }
     }
-    if (ready?.state === 'ready' && !ready.timed && ready.currentKg != null && ready.suggestKg != null) {
+    // Today's work is under the programmed ceiling at ONE load. Whatever last
+    // week earned, the instruction for the set in front of you is reps.
+    if (shortOfCeiling && ladder && ladder.repsOwed > 0 && ladder.bindingLoadKg != null) {
+      return {
+        color: AMBER, icon: Target,
+        text: `${ladder.repsOwed} more rep${ladder.repsOwed === 1 ? '' : 's'} to reach ${ladder.ceiling} at ${fmtKg(ladder.bindingLoadKg)}kg before the load moves`,
+      }
+    }
+    if (readyNow?.state === 'ready' && !readyNow.timed && readyNow.currentKg != null && readyNow.suggestKg != null) {
       return {
         color: READY_GOLD, icon: Target,
-        text: `Ceiling cleared twice — add load: ${fmtKg(ready.currentKg)} → ${fmtKg(ready.suggestKg)}kg`,
+        text: `Ceiling cleared twice — add load: ${fmtKg(readyNow.currentKg)} → ${fmtKg(readyNow.suggestKg)}kg`,
       }
     }
     // Earned the progression with no load to add. Reps ARE the record here, so
     // the instruction is a rep beyond the ceiling — the branch above needs a
     // `suggestKg` this movement can never have, and without this the card fell
     // through to a generic line and said nothing about what it just earned.
-    if (ready?.state === 'ready' && !ready.timed && ready.suggestKg == null && repWindow) {
+    if (readyNow?.state === 'ready' && !readyNow.timed && readyNow.suggestKg == null && repWindow) {
       return {
         color: READY_GOLD, icon: Target,
         text: `Ceiling cleared twice — go past ${repWindow.ceiling} reps this session`,
       }
     }
-    if (ready?.state === 'one-more') {
+    if (readyNow?.state === 'one-more') {
       return {
         color: AMBER, icon: Target,
-        text: ready.timed
+        text: readyNow.timed
           ? 'Hold cleared — one more session like it to earn a longer hold'
           : 'Top load cleared — one more session like it to earn the next load',
       }
@@ -414,7 +460,7 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
       }
     }
     return null
-  }, [ladder, levelUp, ready, repWindow, exercise.targetNext, unilateral])
+  }, [ladder, levelUp, readyNow, shortOfCeiling, repWindow, exercise.targetNext, unilateral])
 
   // ── Cardio variant: slim card, distance/duration, no set rows ──
   //
@@ -528,7 +574,9 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
                   {status.label}
                 </span>
               )}
-              {ready && (
+              {/* Same rule as the cue: an earned bump stops being today's
+                  instruction the moment today's own sets contradict it. */}
+              {readyNow && (
                 <span
                   className="shrink-0 inline-flex items-center gap-0.5 px-1.5 py-px rounded-md text-[9px] font-bold uppercase tracking-wide"
                   style={{ color: READY_GOLD, background: `${READY_GOLD}1f`, border: `1px solid ${READY_GOLD}66` }}
@@ -542,8 +590,8 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
                       it cannot hold — the one instruction on the card, and it
                       was impossible to follow. `suggestKg` is already null for
                       unloaded work; only the fallback was wrong. */}
-                  ▲ {ready.timed ? 'HOLD+'
-                    : ready.suggestKg != null ? `${fmtKg(ready.suggestKg)}kg`
+                  ▲ {readyNow.timed ? 'HOLD+'
+                    : readyNow.suggestKg != null ? `${fmtKg(readyNow.suggestKg)}kg`
                     : '+1 REP'}
                 </span>
               )}
@@ -602,9 +650,23 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
             )}
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            {/* Target rest — what the plan asks for between working sets. Shown
+                on the header because that is where the question is asked, and
+                it is a plain fact, not a countdown: no ticking, nothing to
+                dismiss. Tap the card open to change it. */}
+            {restTarget != null && (
+              <span
+                className="shrink-0 inline-flex items-center gap-1 px-1.5 py-px rounded-md text-[10px] font-bold tabular-nums"
+                style={{ color: STEEL, background: `${STEEL}14`, border: `1px solid ${STEEL}3d` }}
+                title={`Target rest between sets${restEdited ? ' — your own value' : ''}`}
+              >
+                <Timer className="w-2.5 h-2.5" aria-hidden="true" />
+                {formatRestTarget(restTarget)}
+                {restEdited && <span className="opacity-60" aria-hidden="true">*</span>}
+              </span>
+            )}
             {/* Current-input glance — only when the card is collapsed. Expanded,
                 the live set rows below say the same thing, so it's redundant. */}
-            <RestTimer since={lastDoneAt} finished={allDone} />
             {!showBody && (
               <span className="helix-num text-xs text-muted tabular-nums">
                 {timedEx ? `${summary} sec`
@@ -653,6 +715,16 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
               <coachCue.icon className="w-3 h-3 shrink-0" aria-hidden="true" />
               {coachCue.text}
             </p>
+          )}
+
+          {/* Target rest, editable where you are standing. The header chip is
+              the reading; this is the dial, and it only exists while the card is
+              open — a stepper on every collapsed card would be twenty-four
+              controls for a number you change twice a block. */}
+          {restTarget != null && (
+            <div className="pt-0.5">
+              <RestTargetControl exerciseName={exercise.name} dayKey={dayKey} />
+            </div>
           )}
         </div>
       )}

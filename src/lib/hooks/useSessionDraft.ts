@@ -204,13 +204,12 @@ export function useSessionDraft() {
         const target = ex.sets[setIdx]
         if (!target) return ex
         const next = !isSetCommitted(target) // currently unchecked → check it
-        // The tick is also the only honest timestamp in a logging session: it
-        // is the moment you stopped. Both halves of a pair carry it, because a
-        // pair is one set and its rest starts when the second arm finishes.
-        const stamp = next ? { doneAt: Date.now() } : { doneAt: undefined }
+        // The tick used to also stamp `doneAt`, which fed the live rest
+        // stopwatch and, on commit, `workout_sets.rest_sec`. Both are gone —
+        // rest is a TARGET the plan prescribes now, not a gap this app times.
         const sets = ex.sets.map((s, i) => {
-          if (i === setIdx) return { ...s, done: next, ...stamp }
-          if (target.pairId && s.pairId === target.pairId) return { ...s, done: next, ...stamp }
+          if (i === setIdx) return { ...s, done: next }
+          if (target.pairId && s.pairId === target.pairId) return { ...s, done: next }
           return s
         })
         return { ...ex, sets }
