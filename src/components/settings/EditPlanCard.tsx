@@ -7,8 +7,16 @@ import { LEVERS, atwaterKcal, type LeverId } from '@/lib/nutrition/levers'
 import { EMERALD, GOLD, MUTED, OXIDE } from '@/lib/theme/palette'
 
 /**
- * Edit Plan — the one place in Settings with a Save button, and the reason it
+ * Cut Levers — the one place in Settings with a Save button, and the reason it
  * has one.
+ *
+ * ── IT USED TO BE CALLED "EDIT PLAN" ─────────────────────────────────────────
+ * Which is what the card does and not what it IS. "Plan" already means three
+ * other things on this page — the training plan, the plan's phase, the plan's
+ * per-phase macro overrides — so a card headed "Edit Plan" sitting above a
+ * section headed "Plans" read as the editor for that section. It is not: it is
+ * the rung of the cut, which is the one dial on this page that regrades a day.
+ * The rungs are literally called levers everywhere else in the code.
  *
  * ── WHY THIS DOES NOT AUTO-SAVE ──────────────────────────────────────────────
  * Everything else on this page commits on blur, which is right for a toggle and
@@ -33,19 +41,40 @@ export interface PlanNumbers {
   steps_goal: number
 }
 
-export function EditPlanCard({ current, activeLever, saving, onSave }: {
+export function EditPlanCard({ current, activeLever, planLabel, phaseLabel, saving, onSave }: {
   current: PlanNumbers
-  /** The rung persisted in `user_goals.active_lever`, or null pre-migration. */
+  /**
+   * The rung IN FORCE — the stored `user_goals.active_lever` when there is one,
+   * else the one `LEVER_SCHEDULE` puts on today. The schedule fallback matters:
+   * without it this card claims "Custom" on a database that never ran the
+   * `active_lever` DDL while every ring in the app is grading against Lever 1.
+   */
   activeLever: LeverId | null
+  /** The plan + phase a save writes onto, named so the button is not a mystery. */
+  planLabel?: string
+  phaseLabel?: string
   saving: boolean
   onSave: (next: PlanNumbers, lever: LeverId) => void | Promise<void>
 }) {
-  const [draft, setDraft] = useState<PlanNumbers>(current)
+  // The fields SHOW the rung in force, not whatever `user_goals` happens to
+  // hold. A rung that arrived from the schedule has never been written to that
+  // row, so seeding from the row alone would print 1,955 under a Lever 1 pill.
+  const inForce = LEVERS.find((l) => l.id === activeLever)
+  const seedNumbers: PlanNumbers = inForce
+    ? {
+      calorie_goal: inForce.calorieGoal,
+      protein_goal_g: inForce.proteinGoalG,
+      carbs_goal_g: inForce.carbsGoalG,
+      fat_goal_g: inForce.fatGoalG,
+      steps_goal: inForce.stepsGoal,
+    }
+    : current
+  const [draft, setDraft] = useState<PlanNumbers>(seedNumbers)
   const [lever, setLever] = useState<LeverId>(activeLever ?? 'custom')
 
   // Re-seed when the row finally lands (or another device changes it) — but only
   // while the form is CLEAN, or a slow query would wipe an edit in progress.
-  const currentKey = JSON.stringify(current)
+  const currentKey = JSON.stringify(seedNumbers)
   const dirty = useMemo(
     () => JSON.stringify(draft) !== currentKey || lever !== (activeLever ?? 'custom'),
     [draft, currentKey, lever, activeLever],
@@ -90,10 +119,11 @@ export function EditPlanCard({ current, activeLever, saving, onSave }: {
   return (
     <Surface variant="band" measure="grid" pad="snug" className="space-y-3">
       <div>
-        <h2 className="font-semibold text-text">Edit Plan</h2>
+        <h2 className="font-semibold text-text">Cut Levers</h2>
         <p className="text-xs text-muted mt-0.5">
-          Phase levers, or your own numbers. Nothing here applies until you save —
-          these targets regrade the day.
+          The rung of the cut, or your own numbers. Nothing here applies until you
+          save — these targets regrade the day, and they save straight onto the
+          active plan and phase.
         </p>
       </div>
 
@@ -165,8 +195,16 @@ export function EditPlanCard({ current, activeLever, saving, onSave }: {
           className="btn-primary min-h-[44px] px-4 justify-center disabled:opacity-40"
         >
           <Check className="w-4 h-4" aria-hidden="true" />
-          {saving ? 'Saving…' : 'Save plan'}
+          {saving ? 'Saving…' : 'Save to plan'}
         </button>
+        {/* A save writes these numbers onto the ACTIVE plan and phase, not into
+            a floating preference. Saying which one is the difference between a
+            button you trust and one you press twice to check. */}
+        {planLabel && phaseLabel && (
+          <span className="text-[11px] shrink-0" style={{ color: MUTED }}>
+            → {planLabel} · {phaseLabel}
+          </span>
+        )}
         {dirty && (
           <button
             type="button"

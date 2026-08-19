@@ -1,6 +1,7 @@
 'use client'
 
 import { memo, useEffect, useState } from 'react'
+import { LeverTag } from '@/components/nutrition/LeverTag'
 import { STEEL } from '@/lib/theme/palette'
 import { useLastUpdated } from '@/lib/hooks/useDashboard'
 import { useMyProfile } from '@/lib/hooks/useMyProfile'
@@ -180,6 +181,12 @@ export function BrandHeader() {
               <span className="helix-num tabular-nums">Wk {planWeek}</span>
             </span>
           )}
+          {/* Which rung of the cut is in force. It sits with the phase because
+              it IS a phase fact — "Cut" says what the block is, the lever says
+              how tight it is set — and because the calorie target moving by 70
+              overnight with nothing on the dashboard naming the cause is how a
+              deliberate change reads as a bug. */}
+          <LeverTag compact />
         </div>
       </div>
     </header>

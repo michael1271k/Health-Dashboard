@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { NotionSync } from '@/components/settings/NotionSync'
 import { supabase } from '@/lib/supabase/client'
-import { derivePhase, phaseDisplay } from '@/lib/nutrition/phase'
+import { derivePhase, phaseDisplay, PHASE_META } from '@/lib/nutrition/phase'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { phaseGoalsFor, type NutritionMode, type NutritionPreset } from '@/lib/types/workout'
 import { phaseBadgeStyle } from '@/lib/phases'
@@ -24,7 +24,7 @@ import { AlertTriangle, Dumbbell, Calendar, Target } from 'lucide-react'
 import type { Tables } from '@/lib/supabase/types'
 import { Surface } from '@/components/ui/Zone'
 import { EditPlanCard, type PlanNumbers } from '@/components/settings/EditPlanCard'
-import { isLeverId, type LeverId } from '@/lib/nutrition/levers'
+import { isLeverId, leverForDate, type LeverId } from '@/lib/nutrition/levers'
 import { ContextSelector } from '@/components/nutrition/ContextSelector'
 import { contextRangeLine, suspendsStepGoal } from '@/lib/nutrition/context'
 import { useContextMode, useSetContext } from '@/lib/hooks/useContextMode'
@@ -158,6 +158,12 @@ export default function SettingsPage() {
   // The phase actually in force. goal_preset is the persisted tag; activePhase()
   // is the synchronous localStorage mirror the rest of the app reads.
   const livePhase = ((goals.goal_preset as NutritionMode) || (activePhase() as NutritionMode)) as NutritionMode
+  // The rung the app is ACTUALLY grading against today: the stored selection
+  // when there is one, else whatever `LEVER_SCHEDULE` puts on today's date.
+  // Reading `activeLever` alone made this card disagree with every macro ring
+  // in the app on a database that has never had the column.
+  const todayISO = logicalTodayISO()
+  const leverInForce = leverForDate(todayISO, activeLever, todayISO)
   // The routine as it is actually RUN, per day — rewritten from the deck on
   // every commit. Absent for a day never logged, which falls back to the
   // programme as authored.
@@ -269,6 +275,25 @@ export default function SettingsPage() {
   async function savePlanNumbers(next: PlanNumbers, lever: LeverId) {
     await save(next)
     setActiveLever(lever)
+    // ── AND ONTO THE ACTIVE PLAN + PHASE ──
+    // `user_goals` is the row the server scorer reads; `plan_phase_goals` is
+    // what the app resolves for the plan you are actually running. Writing only
+    // the first left the second holding the plan's authored defaults, so typing
+    // your own numbers here changed the grade and NOT the plan — and switching
+    // phase and back silently restored the old macros over the ones you set.
+    // A manual save is a statement about this plan's cut, so it is written as
+    // one.
+    await saveOverride({
+      planId: activePlanId,
+      phase: livePhase,
+      patch: {
+        calorieGoal: next.calorie_goal,
+        proteinGoalG: next.protein_goal_g,
+        carbsGoalG: next.carbs_goal_g,
+        fatGoalG: next.fat_goal_g,
+        stepsGoal: next.steps_goal,
+      },
+    }).catch(() => { /* table unmigrated → user_goals still carries the numbers */ })
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) return
     const { error } = await supabase.from('user_goals').upsert(
@@ -438,7 +463,9 @@ export default function SettingsPage() {
           fat_goal_g: goals.fat_goal_g,
           steps_goal: goals.steps_goal,
         }}
-        activeLever={activeLever}
+        activeLever={leverInForce}
+        planLabel={PROGRAMS[activePlanId]?.label ?? activePlanId}
+        phaseLabel={PHASE_META[livePhase]?.label ?? livePhase}
         saving={saving}
         onSave={savePlanNumbers}
       />

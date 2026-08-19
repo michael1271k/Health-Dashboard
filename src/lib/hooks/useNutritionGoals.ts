@@ -6,7 +6,8 @@ import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { getActiveProgramId } from '@/lib/programs'
 import { phaseGoalsFor, type NutritionMode, type NutritionPreset } from '@/lib/types/workout'
 import type { Tables } from '@/lib/supabase/types'
-import { leverById, activeLeverOf, type LeverId } from '@/lib/nutrition/levers'
+import { leverById, activeLeverOf, leverForDate, type LeverId } from '@/lib/nutrition/levers'
+import { logicalTodayISO } from '@/lib/utils/day'
 
 /**
  * The ONE answer to "what are today's nutrition goals?".
@@ -155,5 +156,11 @@ export function useNutritionGoals(): ActiveNutritionGoals {
   // branch still returns this plan's numbers rather than a magic constant.
   const preset = mode ? resolve(planId, mode) : phaseGoalsFor(planId, 'cut')
 
-  return resolveNutritionGoals(row ?? null, preset, mode, activeLeverOf(row))
+  // The rung in force TODAY — your stored selection when there is one, else the
+  // one `LEVER_SCHEDULE` puts on today's date. The schedule fallback is what
+  // makes a database that never ran the `active_lever` DDL still show 1,885
+  // from 16 Aug, and it is the same resolution the server scorer performs, so
+  // the goal displayed and the goal graded cannot diverge.
+  const today = logicalTodayISO()
+  return resolveNutritionGoals(row ?? null, preset, mode, leverForDate(today, activeLeverOf(row), today))
 }

@@ -11,7 +11,7 @@ import {
   CONTEXT_META, contextFromDayLabel, contextFromSetting, rangeCovers, scoringContextFor,
   type ContextMode,
 } from '@/lib/nutrition/context'
-import { applyLever, activeLeverOf } from '@/lib/nutrition/levers'
+import { applyLever, activeLeverOf, leverForDate } from '@/lib/nutrition/levers'
 
 /** The goals a user with no `user_goals` row is graded against. */
 const CUT = phaseGoalsFor(DEFAULT_PROGRAM_ID, 'cut')
@@ -260,16 +260,22 @@ export async function computeForDate(
     ).then(() => {}, () => {})
   }
 
-  // ── THE ACTIVE LEVER, RESOLVED SERVER-SIDE ────────────────────────────────
-  // Same rung the client shows, read from the same column, applied before any
-  // of these numbers reach the scorer. Without this the app would DISPLAY Lever
-  // 1's 1,885 kcal and GRADE the day against the baseline's 1,955 — the goal
-  // shown and the goal scored differing by 70 kcal every day, invisibly.
+  // ── THE LEVER IN FORCE **ON THIS DATE**, RESOLVED SERVER-SIDE ─────────────
+  // Same rung the client shows, applied before any of these numbers reach the
+  // scorer. Without it the app would DISPLAY Lever 1's 1,885 kcal and GRADE the
+  // day against the baseline's 1,955 — the goal shown and the goal scored
+  // differing by 70 kcal every day, invisibly.
+  //
+  // AND IT IS DATE-BOUND. This used to read `active_lever` alone, which is one
+  // mutable value applied to every day ever scored: pulling Lever 1 on 16 Aug
+  // re-marked the month behind it against a target that did not exist when
+  // those days were eaten. `leverForDate` gives the past to the schedule and
+  // today onward to your current selection — see `LEVER_SCHEDULE`.
   //
   // Absent column, absent selection and `custom` all leave `g` untouched.
   const levered = applyLever(
     { calorie: g.calorie_goal, protein: g.protein_goal_g, carbs: g.carbs_goal_g, fat: g.fat_goal_g, steps: g.steps_goal },
-    activeLeverOf(goals),
+    leverForDate(date, activeLeverOf(goals), todayISO),
   )
   g.calorie_goal = levered.calorie
   g.protein_goal_g = levered.protein ?? 0

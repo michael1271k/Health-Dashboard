@@ -84,6 +84,81 @@ export const LEVERS: NutritionLever[] = [
 
 export const DEFAULT_LEVER: LeverId = 'baseline'
 
+/**
+ * WHEN each rung came into force.
+ *
+ * ── WHY A DATE AXIS EXISTS AT ALL ────────────────────────────────────────────
+ * `user_goals.active_lever` holds ONE value: the rung you are on now. Every
+ * grade in the app read that value, including grades of days that finished
+ * weeks ago — so pulling Lever 1 on 16 Aug did not tighten the cut going
+ * forward, it silently re-marked the whole of it. Thirty-one days eaten at
+ * 1,955 kcal, every one of them planned and hit, were suddenly 70 kcal over a
+ * target that did not exist when they were eaten. Adherence is a claim about
+ * what you were asked for at the time; a single mutable field cannot make it.
+ *
+ * So the rungs get the one thing they were missing — a start date — and the
+ * schedule below is the record of when each was pulled:
+ *
+ *   · 2026-07-15 (HELIX_CUT_START) … 2026-08-15   baseline, 1,955 kcal
+ *   · 2026-08-16 onward                            Lever 1, 1,885 kcal
+ *
+ * It is CODE, not a table, for the same reason the rungs themselves are: this
+ * is the block's own history, it is three lines long, and a schema for it would
+ * be a migration plus a fetch plus a cache in front of a fact that changes
+ * about once a month. It is also the only shape the server scorer and the
+ * client can both resolve without a round trip.
+ *
+ * Dates are inclusive lower bounds, newest LAST.
+ */
+export interface LeverPeriod {
+  /** First date this rung applies to, inclusive (YYYY-MM-DD). */
+  from: string
+  leverId: LeverId
+}
+
+export const LEVER_SCHEDULE: readonly LeverPeriod[] = [
+  { from: '2026-07-15', leverId: 'baseline' },
+  { from: '2026-08-16', leverId: 'lever-1' },
+]
+
+/** The rung the SCHEDULE puts on a date, or null before the cut opened. */
+export function scheduledLeverOn(dateISO: string): LeverId | null {
+  let found: LeverId | null = null
+  for (const p of LEVER_SCHEDULE) {
+    if (dateISO >= p.from) found = p.leverId
+    else break
+  }
+  return found
+}
+
+/**
+ * The rung in force on a date — the one thing every grader should ask.
+ *
+ * ── HOW THE SCHEDULE AND YOUR SELECTION SHARE THE JOB ────────────────────────
+ * The past belongs to the schedule: a finished day was eaten against the rung
+ * that was in force, and nothing you pick today may re-mark it. Today and
+ * anything after it belong to your SELECTION, because that is the decision you
+ * are currently holding — pulling Lever 2 must take effect immediately without
+ * waiting for a code change, and it must not reach backwards.
+ *
+ * `custom` is a real selection (your own numbers) and wins today the same way a
+ * rung does; `applyLever` then leaves the goals untouched, which is what custom
+ * means. An absent selection — no column, nothing chosen — falls through to the
+ * schedule on every date, which is why a database that has never seen the
+ * `active_lever` DDL still grades 16 Aug onward at 1,885.
+ *
+ * Pure and server-safe. `todayISO` is passed in rather than read from a clock so
+ * the scorer, the export and the tests all agree about where "today" is.
+ */
+export function leverForDate(
+  dateISO: string,
+  storedLeverId: string | null | undefined,
+  todayISO: string,
+): LeverId | null {
+  if (dateISO >= todayISO && isLeverId(storedLeverId)) return storedLeverId
+  return scheduledLeverOn(dateISO)
+}
+
 /** The rung a stored value names, or null for `custom`/unknown/absent. */
 export function leverById(id: string | null | undefined): NutritionLever | null {
   if (!id) return null

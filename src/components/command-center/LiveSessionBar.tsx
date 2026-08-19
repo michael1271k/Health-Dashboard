@@ -2,6 +2,7 @@
 
 import { memo, useState } from 'react'
 import { CalendarDays } from 'lucide-react'
+import { LeverTag } from '@/components/nutrition/LeverTag'
 import { AppBar } from '@/components/nav/AppBar'
 import { BackLink } from '@/components/nav/NavChevron'
 import { fmtVolume } from '@/lib/utils/units'
@@ -86,6 +87,12 @@ export const LiveSessionBar = memo(function LiveSessionBar({
               {dateLabel}
             </span>
           </button>
+          {/* Which rung of the cut you are training under. It lives here rather
+              than only in Settings because the deck is where the day is spent —
+              a target that moved by 70 kcal overnight should be readable
+              without leaving the session. Compact: this row already carries
+              three numbers. */}
+          <span className="flex mt-0.5"><LeverTag compact /></span>
           {pickerOpen && (
             <DatePickerPopover
               value={dateISO}
