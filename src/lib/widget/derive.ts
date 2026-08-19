@@ -457,3 +457,39 @@ export function shiftISO(dateISO: string, days: number): string {
   d.setUTCDate(d.getUTCDate() + days)
   return d.toISOString().slice(0, 10)
 }
+
+/**
+ * One overnight vital: today's reading, the trailing baseline, and the trace.
+ *
+ * ── THE BASELINE EXCLUDES TODAY, DELIBERATELY ────────────────────────────────
+ * "Your HRV is 8 ms below normal" is only a sentence if "normal" is a thing
+ * today can differ FROM. Averaging today into its own baseline drags the
+ * reference toward the reading — over a fortnight that is a ~7% dilution, which
+ * is the same order as the deltas these widgets exist to show, so a genuinely
+ * bad night reads as a mildly bad one.
+ *
+ * Missing days are skipped, not zero-filled: a night with the watch on the
+ * charger is an absent reading, and averaging a 0 ms HRV into a fortnight is
+ * how a forgotten charge becomes a recovery alarm.
+ */
+export function vitalBlock(
+  rows: ReadonlyArray<{ date: string; value: number | null | undefined }>,
+  todayISO: string,
+  opts: { trendLimit: number },
+): { value: number | null; baseline: number | null; trend: TrendPoint[] } {
+  const real = rows.filter(
+    (r): r is { date: string; value: number } => typeof r.value === 'number' && Number.isFinite(r.value),
+  )
+  const today = real.find((r) => r.date === todayISO)?.value ?? null
+  const past = real.filter((r) => r.date !== todayISO)
+  const baseline = past.length
+    ? Math.round((past.reduce((sum, r) => sum + r.value, 0) / past.length) * 10) / 10
+    : null
+  return {
+    value: today,
+    baseline,
+    // `max`, not `sum`: these are readings, not quantities. Two rows for one day
+    // (a re-sync) must not add up to a heart rate of 108.
+    trend: dailySeries(real, { limit: opts.trendLimit, combine: 'max' }),
+  }
+}

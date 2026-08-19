@@ -302,14 +302,27 @@ export interface WeeklyExportInput {
    */
   ledger?: LedgerWeek[]
   /**
-   * The PREVIOUS week's complete export, appended verbatim at the bottom under
-   * its own heading.
+   * ── THE PREVIOUS WEEK IS NO LONGER EMBEDDED (2026-08-19) ────────────────────
+   * This field used to carry week X-1's COMPLETE export — every day, every set,
+   * every reading — appended verbatim under its own heading. The reasoning was
+   * that a model handed one week can only describe it while two let it see a
+   * direction, and that is true; what it cost was not.
    *
-   * One clipboard payload carrying two weeks: a model handed a single week can
-   * only describe it, while two weeks let it see a direction. Passed as a
-   * finished string rather than as another `WeeklyExportInput` so the recursion
-   * is structurally impossible — week X-1's payload is built by a caller that
-   * leaves this field unset, so X-2 can never be dragged in behind it.
+   * It doubled the document, and the half it doubled was the line-by-line half:
+   * two hundred set rows of a week already reported on, ahead of the trend
+   * ledger that summarises the same period in six numbers per week. It also
+   * doubled the fetch — fourteen more round trips for data that had already
+   * been exported once, by hand, the week before.
+   *
+   * So the payload is ONE week line-by-line, the `ledger` carries the direction
+   * (which is what a direction actually needs — a series, not a neighbour), and
+   * a closing note tells the reader the prior week's report is supplied
+   * separately. See `PRIOR_REPORT_NOTE`.
+   *
+   * The field is kept and still honoured so an existing caller does not break,
+   * but nothing in the app passes it any more.
+   *
+   * @deprecated Pass the prior week's REPORT alongside the payload instead.
    */
   previousWeekMarkdown?: string
 }
@@ -1198,16 +1211,37 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
   }
 
   // ── Provenance ──
-  // The absolute last line, after everything including the previous week, so it
-  // governs both. Verbatim and hardcoded on purpose: it is a standing statement
-  // about the measuring instrument, not data.
+  // The absolute last lines, so they govern everything above them. Verbatim and
+  // hardcoded on purpose: standing statements about the instrument and about
+  // what is NOT in this document, neither of which is data.
   L.push('---')
+  L.push('')
+  L.push(priorReportNote(input.weekLabel))
   L.push('')
   L.push(UNILATERAL_VOLUME_NOTE)
   L.push('')
   L.push(APPLE_WATCH_DISCLAIMER)
 
   return L.join('\n')
+}
+
+/**
+ * The closing line that replaces the embedded previous week.
+ *
+ * It exists so the absence is EXPLICIT. A model handed one week of data with no
+ * word about the week before it will either assume none exists or invent a
+ * comparison from the trend ledger and present it as a reading — both worse
+ * than a sentence saying where the prior week actually is.
+ *
+ * The label is the one this payload is FOR — `weekLabel`, the same string the
+ * document's own H1 carries, so the reader is being pointed at a report they
+ * can actually identify. Falls back to unnumbered wording when the payload
+ * carries no label, because "Week undefined" is worse than no number at all.
+ */
+export function priorReportNote(weekLabel?: string | null): string {
+  const label = weekLabel?.trim()
+  const week = label ? label : 'The previous week\'s'
+  return `*Note: ${week} report is provided manually for reference and comparison.*`
 }
 
 /**
@@ -1225,11 +1259,12 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
  */
 export const UNILATERAL_VOLUME_NOTE =
   '*Note: Unilateral (single-arm / single-leg) work is logged per side and'
-  + ' scored at the WEAKER side, counted twice: 2 × min(weight) × min(reps).'
-  + ' "L 5 kg × 10 · R 5 kg × 14" is 100 kg of volume, not 120 — crediting the'
-  + ' strong side\'s extra reps to the weak one would inflate the trend without'
-  + ' the work being there. Each side keeps its own failure tag, and the pair'
-  + ' counts as ONE set.*'
+  + ' scored ONCE at the WEAKER side: min(weight) × min(reps).'
+  + ' "L 5 kg × 10 · R 5 kg × 14" is 50 kg of volume, not 70 and not 100 —'
+  + ' crediting the strong side\'s extra reps to the weak one would inflate the'
+  + ' trend without the work being there, and doubling it would make the same'
+  + ' physical set weigh twice as much purely for having been recorded per side.'
+  + ' Each side keeps its own failure tag, and the pair counts as ONE set.*'
 
 /**
  * The standing caveat about instrument accuracy, printed at the very bottom of

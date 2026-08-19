@@ -119,7 +119,7 @@ struct DailyView: View {
         Stat(value: s?.score.map { "\($0)" }, label: "SCORE", color: .white)
         Stat(value: s?.battery.map { "\($0)%" }, label: "BATTERY",
              color: mono ? .white : Helix.battery(s?.battery))
-        Stat(value: s?.streak.map { "\($0.current)" }, label: "STREAK",
+        Stat(value: s?.streak.map { "\($0.current)" }, label: "PROGRAM DAY",
              color: mono ? .white : Helix.ember)
       }
     }

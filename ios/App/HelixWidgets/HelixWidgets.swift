@@ -18,6 +18,7 @@ import SwiftUI
 //   Fuel      calories · macros · water            S M L
 //   Training  today · calendar · volume · streak · records · 1RM   S M L
 //   Body      weight · sleep · well-being          S M L
+//   Vitals    panel · recovery · breathing · temperature   S M L
 //   Lock      battery · calories · steps · workout accessory
 //
 // ⚠️ THE OLD KINDS ARE GONE, and a widget kind that no longer exists disappears
@@ -79,6 +80,21 @@ struct HelixBodyWidget: Widget {
   }
 }
 
+struct HelixVitalsWidget: Widget {
+  var body: some WidgetConfiguration {
+    AppIntentConfiguration(
+      kind: "HelixVitalsFamily",
+      intent: VitalsConfiguration.self,
+      provider: HelixIntentProvider<VitalsConfiguration>()
+    ) { entry in
+      VitalsView(entry: entry, focus: entry.vitalsFocus)
+    }
+    .configurationDisplayName("Vitals")
+    .description("Overnight readings against your own normal — HRV, resting HR, temperature, blood oxygen, breathing.")
+    .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+  }
+}
+
 struct HelixLockWidget: Widget {
   var body: some WidgetConfiguration {
     AppIntentConfiguration(
@@ -113,6 +129,9 @@ struct HelixWidgetsBundle: WidgetBundle {
     // ADDING a kind is safe — it is REMOVING one that wipes placed instances.
     // Nothing above is disturbed by this line.
     HelixDailyWidget()
+    // Same reasoning as the line above: ADDING a kind disturbs nothing that is
+    // already on a Home Screen.
+    HelixVitalsWidget()
     HelixLockWidget()
   }
 }

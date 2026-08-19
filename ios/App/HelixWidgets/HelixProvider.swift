@@ -14,6 +14,7 @@ enum HelixFocus {
   case fuel(FuelFocus)
   case training(TrainingFocus)
   case body(BodyFocus)
+  case vitals(VitalsFocus)
   case lock(LockFocus)
 }
 
@@ -64,6 +65,10 @@ struct HelixEntry: TimelineEntry {
   var bodyFocus: BodyFocus {
     if case .body(let f) = focus { return f }
     return .weight
+  }
+  var vitalsFocus: VitalsFocus {
+    if case .vitals(let f) = focus { return f }
+    return .panel
   }
   var lockFocus: LockFocus {
     if case .lock(let f) = focus { return f }

@@ -1,3 +1,5 @@
+import { HELIX_CUT_START } from '@/lib/programs'
+
 /**
  * THE STREAK. One derivation, one number, everywhere.
  *
@@ -9,9 +11,24 @@
  * never go down — under the label "Program Day". Same glance, same phone, two
  * different answers to what reads as the same question.
  *
- * The streak is the one worth keeping: it is the number that can be broken, so
- * it is the only one of the two that describes behaviour rather than the passage
- * of time. `programDay` is gone.
+ * The streak was the one kept: it is the number that can be broken, so it was
+ * the only one of the two that described behaviour rather than the passage of
+ * time.
+ *
+ * ── AND IT HAS NOW BEEN REDEFINED (2026-08-19) ───────────────────────────────
+ * The consecutive-scheduled-days walk survives below as `streakFrom` — it is
+ * still the honest answer to "how many training days in a row" and the calendar
+ * window it needs is still built for the widget. But the number the app SHOWS
+ * under the flame is the program day again, by explicit decision: how far into
+ * the cut you are, counted from `HELIX_CUT_START`.
+ *
+ * The old objection to that counter was never the arithmetic — it was that two
+ * different numbers wore one glyph on one screen. That is what is fixed here:
+ * there is one derivation (`programDayCount`), the app and the widget payload
+ * both read it, and `streakFrom` is no longer rendered anywhere. A counter that
+ * cannot go down is the correct shape for the thing being measured, because a
+ * cut does not restart when you miss a Tuesday — it is thirty-six days long
+ * whatever happened inside it.
  *
  * The derivation lived in `lib/widget/derive.ts`, which is the widget payload's
  * private workshop — importing it into the app would have made every dashboard
@@ -80,4 +97,26 @@ export function streakFrom(
     current++
   }
   return { current, best }
+}
+
+/**
+ * PROGRAM DAY — how deep into the cut you are, inclusive of both ends.
+ *
+ * 2026-07-15 is day 1 (`HELIX_CUT_START`, the day the Helix Cut block opened),
+ * so 2026-08-18 is day 35 and each following date is one more. It never falls,
+ * because elapsed time does not fall; a missed session costs the day's score,
+ * not the block's length.
+ *
+ * Returns 0 for any date before the block opened rather than a negative number:
+ * "you are minus four days into the cut" is not a fact anything should render.
+ *
+ * Pure and server-safe. Both ends are dates, not instants, so this is plain
+ * calendar arithmetic in UTC — no timezone can make 15 Jul → 18 Aug anything
+ * other than 35 days.
+ */
+export function programDayCount(todayISO: string, startISO: string = HELIX_CUT_START): number {
+  const start = Date.parse(`${startISO}T00:00:00Z`)
+  const today = Date.parse(`${todayISO}T00:00:00Z`)
+  if (!Number.isFinite(start) || !Number.isFinite(today) || today < start) return 0
+  return Math.round((today - start) / 86_400_000) + 1
 }

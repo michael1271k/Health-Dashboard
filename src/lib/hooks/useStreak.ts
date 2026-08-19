@@ -1,44 +1,33 @@
 'use client'
 
-import { useMemo } from 'react'
-import { useContinuum } from '@/lib/hooks/useContinuum'
-import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
-import { isTrainingDay } from '@/lib/programs'
-import { logicalTodayISO } from '@/lib/utils/day'
-import { isoAddDays } from '@/lib/utils/week'
-import { streakFrom, STREAK_WINDOW_DAYS } from '@/lib/training/streak'
+import { useLogicalDate } from '@/lib/hooks/useLogicalDate'
+import { programDayCount } from '@/lib/training/streak'
 
 /**
  * The app's read of the streak — the same number the widget shows, from the same
- * derivation, over the same window.
+ * derivation.
  *
- * ── WHY IT REBUILDS THE WINDOW INSTEAD OF WALKING THE CONTINUUM ──────────────
- * `useContinuum` deliberately drops days with no data at all, so a scheduled
- * training day that was simply MISSED does not appear in its list. Walking that
- * list would therefore never see the thing the streak is defined by. The days
- * are enumerated from today instead and each one asked two questions — was it
- * scheduled, was it trained — which is exactly the shape the payload route
- * builds server-side.
+ * ── IT IS THE PROGRAM DAY NOW ────────────────────────────────────────────────
+ * This used to rebuild a 42-day window and walk it with `streakFrom`, counting
+ * consecutive scheduled training days actually trained. That answered a real
+ * question and not the one the flame on the dashboard is asking: how far into
+ * the cut you are. See the note at the top of `lib/training/streak.ts` — the
+ * counter is deliberately monotonic, because a block's length is not something
+ * a missed Tuesday shortens.
  *
- * `useScheduleVersion` is not decoration: `isTrainingDay` reads the schedule
- * override store, which lives outside React and changes when a day is swapped.
- * Without the subscription this memo would keep answering with the pre-swap
- * plan for the rest of the session.
+ * Which also means there is nothing left to fetch. The old hook pulled the
+ * whole continuum and subscribed to the schedule store to ask, per day, whether
+ * it was a training day; the answer now needs one date and one constant.
+ *
+ * `useLogicalDate` rather than a bare `logicalTodayISO()` call: the number has
+ * to advance the instant the day boundary passes, and a value read during
+ * render only changes when something else re-renders.
  */
 export function useStreak(): { current: number; best: number } {
-  const { data } = useContinuum()
-  const scheduleVersion = useScheduleVersion()
-
-  return useMemo(() => {
-    void scheduleVersion   // isTrainingDay reads the store; this is the read
-    const today = logicalTodayISO()
-    const logged = new Set((data ?? []).filter((d) => d.session).map((d) => d.date))
-
-    const days = Array.from({ length: STREAK_WINDOW_DAYS }, (_, i) => {
-      const d = isoAddDays(today, -(STREAK_WINDOW_DAYS - 1 - i))
-      return { d, scheduled: isTrainingDay(d), logged: logged.has(d) }
-    })
-
-    return streakFrom(days, today)
-  }, [data, scheduleVersion])
+  const today = useLogicalDate()
+  const day = programDayCount(today)
+  // `best` is kept in the shape because the widget payload carries the same
+  // pair. For a counter that only rises the two are the same number, and that
+  // is the honest answer rather than an omission.
+  return { current: day, best: day }
 }

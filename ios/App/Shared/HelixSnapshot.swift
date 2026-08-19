@@ -221,11 +221,49 @@ struct HelixSnapshot: Codable {
     let trend: [Point]?
   }
 
-  /// Consistency in two numbers. `current` counts backwards over SCHEDULED
-  /// training days only, so Wednesday and Saturday rest never breaks it.
+  /// The program day, twice.
+  ///
+  /// `current` is days elapsed since the cut opened (2026-07-15), both ends
+  /// counted — a figure that only rises. `best` carries the same number: the
+  /// shape predates the redefinition and a monotonic count has no separate
+  /// record, so reporting them as equal is the honest answer rather than an
+  /// omission. See `lib/training/streak.ts` for why the consecutive-days walk
+  /// is still derived and no longer rendered.
   struct Streak: Codable {
     let current: Int
     let best: Int
+  }
+
+  /// One overnight reading, with the normal it is read against.
+  ///
+  /// `baseline` is computed SERVER-side over a fortnight, excluding today. A
+  /// widget that averaged its own seven-point trend would be a second
+  /// definition of "normal" and would disagree with the app the first time the
+  /// windows differed by a day — the same class of split the streak taught this
+  /// project once already.
+  struct Vital: Codable {
+    let value: Double?
+    let baseline: Double?
+    let trend: [Point]?
+
+    /// How far tonight sits from your own normal, or nil when either is missing.
+    var delta: Double? {
+      guard let value, let baseline else { return nil }
+      return value - baseline
+    }
+  }
+
+  /// The five readings a watch takes overnight.
+  ///
+  /// Steps and sleep are deliberately absent: they have their own blocks with
+  /// their own goals, and the Vitals faces read those. Duplicating them here
+  /// would be two payload fields that must agree and one day would not.
+  struct Vitals: Codable {
+    let hrvMs: Vital?
+    let restingBpm: Vital?
+    let wristTempDeltaC: Vital?
+    let bloodOxygenPct: Vital?
+    let respiratoryRate: Vital?
   }
 
   /// The five sub-scores behind the composite.
@@ -314,6 +352,9 @@ struct HelixSnapshot: Codable {
   let body: Body?
   let scores: Scores?
   let readiness: Readiness?
+  /// Lifestyle scope. Absent on an older deployment; every face treats that as
+  /// "no readings", which is the same thing it renders for a night off-wrist.
+  let vitals: Vitals?
 }
 
 extension HelixSnapshot {
@@ -343,6 +384,17 @@ extension HelixSnapshot {
 
   /// "+2.5" / "−1.2" / nil. The minus is U+2212, which is the same width as the
   /// plus in a tabular face; a hyphen is not, and the column jitters.
+  /// A reading at a fixed number of decimals, or nil.
+  ///
+  /// `String(format:)` and not a `NumberFormatter`: the vitals faces call this
+  /// once per row per redraw, and a formatter allocated per call is real cost
+  /// inside an extension's memory cap for output that never varies by locale —
+  /// these are all monospaced-digit readings, not prose.
+  static func fixed(_ v: Double?, decimals: Int) -> String? {
+    guard let v, v.isFinite else { return nil }
+    return String(format: "%.\(max(0, decimals))f", v)
+  }
+
   static func signed(_ v: Double?, decimals: Int = 1) -> String? {
     guard let v else { return nil }
     let magnitude = String(format: "%.\(decimals)f", abs(v))

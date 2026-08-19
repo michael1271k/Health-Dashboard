@@ -69,7 +69,7 @@ enum TrainingFocus: String, AppEnum {
     .today:     DisplayRepresentation(title: "Today", subtitle: "The session due, or the one you finished"),
     .calendar:  DisplayRepresentation(title: "Calendar", subtitle: "Six weeks of scheduled against logged"),
     .volume:    DisplayRepresentation(title: "Volume", subtitle: "This week's tonnage against last"),
-    .streak:    DisplayRepresentation(title: "Streak", subtitle: "Consecutive scheduled days trained"),
+    .streak:    DisplayRepresentation(title: "Program Day", subtitle: "Days elapsed since the cut began"),
     .records:   DisplayRepresentation(title: "Records", subtitle: "The most recent personal records"),
     .oneRepMax: DisplayRepresentation(title: "Estimated 1RM", subtitle: "Where the main lifts are trending"),
     .cardio:    DisplayRepresentation(title: "Cardio", subtitle: "The last session, and the week's Zone 2"),
@@ -131,6 +131,33 @@ enum BodyFocus: String, AppEnum {
     // Well-being is a whole-of-Progress question; there is no one drawer for it.
     case .wellbeing:                return HelixLink.progress
     }
+  }
+}
+
+/// The Vitals panel's four cuts of the same seven readings.
+///
+/// Not one focus per reading. Five near-identical entries in a picker is a
+/// menu you scroll rather than choose from, and the readings genuinely group:
+/// HRV and resting heart rate are the same question about recovery, blood
+/// oxygen and respiratory rate the same question about breathing.
+enum VitalsFocus: String, AppEnum {
+  case panel, recovery, respiration, temperature
+
+  static var typeDisplayRepresentation: TypeDisplayRepresentation { "Show" }
+  static var caseDisplayRepresentations: [VitalsFocus: DisplayRepresentation] = [
+    .panel:       DisplayRepresentation(title: "Panel", subtitle: "Every overnight reading against your normal"),
+    .recovery:    DisplayRepresentation(title: "Recovery", subtitle: "HRV and resting heart rate"),
+    .respiration: DisplayRepresentation(title: "Breathing", subtitle: "Blood oxygen and respiratory rate"),
+    .temperature: DisplayRepresentation(title: "Temperature", subtitle: "Wrist temperature against your baseline"),
+  ]
+
+  /// See `FuelFocus.link(_:)` for why this takes the payload's date.
+  ///
+  /// All four land on the DAY, not on Progress: these are readings taken on one
+  /// night, and the day drawer is where that night's numbers live. Progress is
+  /// where trends live, which is a different question from "what happened".
+  func link(_ date: String?) -> URL? {
+    date.flatMap { HelixLink.day($0) } ?? HelixLink.progress
   }
 }
 
@@ -206,7 +233,7 @@ struct TrainingConfiguration: WidgetConfigurationIntent, HelixScoped {
     [(recommendation(.today), "Today"),
      (recommendation(.calendar), "Calendar"),
      (recommendation(.volume), "Volume"),
-     (recommendation(.streak), "Streak"),
+     (recommendation(.streak), "Program Day"),
      (recommendation(.records), "Records"),
      (recommendation(.oneRepMax), "Estimated 1RM"),
      (recommendation(.cardio), "Cardio")]
@@ -240,6 +267,35 @@ struct BodyConfiguration: WidgetConfigurationIntent, HelixScoped {
 
   static func recommendation(_ focus: BodyFocus) -> BodyConfiguration {
     let intent = BodyConfiguration()
+    intent.focus = focus
+    return intent
+  }
+}
+
+struct VitalsConfiguration: WidgetConfigurationIntent, HelixScoped {
+  static var title: LocalizedStringResource { "Helix Vitals" }
+  static var description: IntentDescription {
+    IntentDescription("HRV, resting heart rate, temperature, blood oxygen and breathing.")
+  }
+
+  @Parameter(title: "Show", default: .panel)
+  var focus: VitalsFocus
+
+  /// The lifestyle slice — `vitals` ships there, alongside the steps and sleep
+  /// blocks the panel's floor row reads. Nothing here needs a calendar, a
+  /// ledger or a set history.
+  var scope: HelixScope { .lifestyle }
+  var helixFocus: HelixFocus { .vitals(focus) }
+
+  static var galleryOptions: [(intent: VitalsConfiguration, title: LocalizedStringResource)] {
+    [(recommendation(.panel), "Panel"),
+     (recommendation(.recovery), "Recovery"),
+     (recommendation(.respiration), "Breathing"),
+     (recommendation(.temperature), "Temperature")]
+  }
+
+  static func recommendation(_ focus: VitalsFocus) -> VitalsConfiguration {
+    let intent = VitalsConfiguration()
     intent.focus = focus
     return intent
   }

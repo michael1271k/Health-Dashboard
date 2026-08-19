@@ -105,19 +105,24 @@ export const ReadinessOrb = memo(function ReadinessOrb({ score, isLoading }: { s
       {/*
         THE streak — the same number the widget shows, from the same derivation.
 
-        This chip used to hold `programDay()`: calendar days since the cut began,
-        a figure that never resets. Under a flame, beside a widget showing the
-        real streak, that was two different measurements sharing one glyph and
-        disagreeing by ten. The flame belongs to the number that can be broken.
+        It is the PROGRAM DAY: days elapsed since the cut opened on 2026-07-15,
+        both ends counted. It briefly held the consecutive-training-days walk
+        instead, on the argument that the flame belongs to a number that can be
+        broken; the objection that actually mattered was two numbers sharing one
+        glyph, and that is settled by there being one derivation
+        (`programDayCount`) which the widget payload reads too. The label says
+        "Program Day" because that is what the figure is — calling a monotonic
+        count a streak is how the two got confused in the first place.
       */}
       <span
         className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full shrink-0 -mt-1"
         style={{ color: EMBER, background: `${EMBER}14`, border: `1px solid ${EMBER}3d` }}
-        aria-label={`${streak} day streak`}
+        aria-label={`Program day ${streak} of the cut`}
+        title="Days since the cut began — 15 July is day 1"
       >
         <span aria-hidden="true" className="text-fluid-sm leading-none">🔥</span>
         <span className="helix-num text-fluid-sm font-extrabold leading-none">{streak}</span>
-        <span className="text-[10px] font-bold uppercase tracking-wide leading-none">Day Streak</span>
+        <span className="text-[10px] font-bold uppercase tracking-wide leading-none">Program Day</span>
       </span>
 
       <div className="w-52"><EcgPulse level={battery} color={color} /></div>

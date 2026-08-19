@@ -895,7 +895,25 @@ describe('weekly aggregates · previous-week reference · disclaimer', () => {
     expect(out).toMatch(/cardio session or not/)
   })
 
-  // ── Previous week ──
+  // ── The prior week is NAMED, not embedded ──
+  it('closes with the note pointing at the prior week\'s report', () => {
+    const out = buildWeeklyExport(base({ weekLabel: 'Week 5' }))
+    expect(out).toMatch(/\*Note: Week 5 report is provided manually for reference and comparison\.\*/)
+  })
+
+  it('falls back to unnumbered wording rather than printing "Week undefined"', () => {
+    const out = buildWeeklyExport(base())
+    expect(out).toMatch(/The previous week's report is provided manually/)
+    expect(out).not.toMatch(/Week undefined/)
+  })
+
+  it('does not carry a second week of line-by-line data by default', () => {
+    const out = buildWeeklyExport(base({ sessions: [session()] }))
+    expect(out).not.toMatch(/PREVIOUS WEEK REFERENCE/)
+  })
+
+  // The field is deprecated but still honoured, so an older caller does not
+  // silently lose its context block.
   it('appends the previous week under an unmistakable heading', () => {
     const out = buildWeeklyExport(base({ previousWeekMarkdown: '# WEEK 2026-07-12 → 2026-07-18\n\nprior data' }))
     expect(out).toMatch(/# PREVIOUS WEEK REFERENCE \(For AI Context\)/)

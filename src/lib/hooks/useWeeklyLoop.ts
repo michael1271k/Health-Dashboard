@@ -614,20 +614,25 @@ export function useWeeklyExport(weekStart = weekStartOf(logicalTodayISO()), enab
   const weekEnd = isoAddDays(weekStart, 6)
   return useQuery({
     queryKey: ['weekly_export', weekStart],
-    // ~28 round-trips: TWO full weeks, because the payload now carries the
-    // previous week's complete export as AI context. That is the deliberate
-    // trade — a model given one week can only describe it — and it is why this
-    // stays off until someone actually asks for the payload. It used to run the
-    // moment a week capsule expanded. See `useSentinelExport` for the other
-    // half of that bill.
+    // ── ONE WEEK, NOT TWO (2026-08-19) ──
+    // This used to fetch the previous week in full as well — ~28 round trips —
+    // and append its complete export at the bottom as AI context. The context
+    // was real; the price was two hundred set rows of a week that had already
+    // been reported on, ahead of the trend ledger that says the same thing in
+    // six numbers per week. The prior week's REPORT is pasted alongside by hand
+    // now, and the payload closes with a line saying so.
+    //
+    // Still gated: ~14 round trips is not free, and this used to run the moment
+    // a week capsule expanded. See `useSentinelExport` for the other half.
     enabled,
     staleTime: 60_000,
     queryFn: async (): Promise<string> => {
-      const prevStart = isoAddDays(weekStart, -7)
-      const [cur, prevRange, ledger, goalsRes, customsRes] = await Promise.all([
+      const [cur, ledger, goalsRes, customsRes] = await Promise.all([
         fetchRange(weekStart, weekEnd),
-        fetchRange(prevStart, isoAddDays(prevStart, 6)),
-        // Week 0 to the exported week — the whole programme, five selects.
+        // Week 0 to the exported week — the whole programme, five selects. THIS
+        // is where the direction lives now that the previous week is not
+        // embedded: a series beats a neighbour for seeing a trend, and it costs
+        // one narrow query set rather than a second full week.
         fetchTrendLedger(weekStartOf(WEEK0_START), weekStart),
         supabase.from('user_goals').select('calorie_goal, protein_goal_g, steps_goal, sleep_goal_hours').maybeSingle(),
         supabase.from('custom_supplements').select('id, name, dose, color, form, time, schedule, micros'),
@@ -639,16 +644,9 @@ export function useWeeklyExport(weekStart = weekStartOf(logicalTodayISO()), enab
       // The ACTIVE phase, not a calorie guess — maintenance used to collapse to cut.
       const phase: ProgramPhase = activePhase() as ProgramPhase
 
-      const prev = weekPayload(prevStart, prevRange, goals, customs, phase)
-      // No `previous` and no `previousWeekMarkdown` on the reference week: it is
-      // context, not a report, so it carries neither its own trend table nor a
-      // third week behind it.
-      const previousWeekMarkdown = buildWeeklyExport(prev)
-
       return buildWeeklyExport({
         ...weekPayload(weekStart, cur, goals, customs, phase),
         ledger,
-        previousWeekMarkdown,
       })
     },
   })

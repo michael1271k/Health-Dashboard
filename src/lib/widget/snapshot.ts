@@ -203,6 +203,35 @@ export interface WidgetBody {
   fatTrend?: TrendPoint[]
 }
 
+/**
+ * One overnight reading, with the normal it is read against.
+ *
+ * `baseline` is the mean of the trailing window EXCLUDING today, because a
+ * baseline that contains the reading it is judging pulls itself toward it —
+ * with a fortnight of data that is a ~7% dilution of every delta, which is the
+ * same order as the deltas themselves.
+ */
+export interface WidgetVital {
+  value: number | null
+  baseline: number | null
+  /** Up to 7 days, oldest first. Gaps are omitted, never zero-filled. */
+  trend?: TrendPoint[]
+}
+
+/** The five overnight readings. See `WidgetSnapshot.vitals`. */
+export interface WidgetVitals {
+  /** Heart-rate variability, ms. Higher is better. */
+  hrvMs: WidgetVital
+  /** Resting heart rate, bpm. Lower is better. */
+  restingBpm: WidgetVital
+  /** Wrist temperature DELTA from your own baseline, °C. Already a deviation. */
+  wristTempDeltaC: WidgetVital
+  /** Blood oxygen saturation, %. */
+  bloodOxygenPct: WidgetVital
+  /** Respiratory rate, breaths per minute. */
+  respiratoryRate: WidgetVital
+}
+
 export interface WidgetSnapshot {
   /** The user's logical date this snapshot describes. */
   date: string
@@ -328,6 +357,28 @@ export interface WidgetSnapshot {
    * the route already fetches for the week totals.
    */
   today: WidgetToday | null
+
+  /**
+   * Overnight physiology — the readings a watch takes while you sleep.
+   *
+   * ── WHY THEY ARE ONE BLOCK AND NOT FIVE TOP-LEVEL FIELDS ────────────────────
+   * HRV, resting heart rate, wrist temperature, blood oxygen and respiratory
+   * rate are all the same KIND of number: one nightly reading, meaningless in
+   * isolation, read entirely against your own recent normal. A wrist temperature
+   * of 36.4 °C says nothing; +0.4 against your fortnight says something. So every
+   * one of them carries its baseline in the payload rather than leaving the
+   * widget to invent one from a seven-point trend — a widget that computes its
+   * own normal is a second definition of normal, and it will disagree with the
+   * app's the first time the window differs by a day.
+   *
+   * Steps and sleep are deliberately NOT duplicated here. They already have
+   * their own blocks with their own goals, and the Vitals faces read those.
+   *
+   * Lifestyle scope. The whole block is nullable field-by-field: a night with no
+   * watch on the wrist is a real state, and every face renders it as absence
+   * rather than as zero.
+   */
+  vitals?: WidgetVitals
 
   /** Consistency. Cheap — derived from the calendar the training scope builds. */
   streak?: WidgetStreak

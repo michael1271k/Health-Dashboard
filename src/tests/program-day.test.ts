@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
-import { streakFrom, STREAK_WINDOW_DAYS } from '@/lib/training/streak'
+import { streakFrom, programDayCount, STREAK_WINDOW_DAYS } from '@/lib/training/streak'
 import { streakFrom as streakFromDerive } from '@/lib/widget/derive'
 
 /**
@@ -17,13 +17,18 @@ import { streakFrom as streakFromDerive } from '@/lib/widget/derive'
  *
  * Ten apart on the same morning, both correct. The first fix was the label, and
  * it was not enough: a flame with a number beside it is read as a streak
- * whatever the caption underneath says. So there is now one quantity. The
- * calendar-day counter is deleted, `streakFrom` moved to the training domain
- * where both surfaces can reach it, and the two windows are the same constant.
+ * whatever the caption underneath says. So there is ONE quantity on the flame,
+ * derived in one place in the training domain, read by the dashboard orb and by
+ * the widget payload from that one place.
  *
- * This file guards the unification rather than the old distinction: that the
- * deleted counter has not grown back, that there is exactly one implementation,
- * and that the arithmetic the widget depended on is unchanged by the move.
+ * WHICH quantity flipped on 2026-08-19 — by explicit decision it is the program
+ * day, days elapsed since the cut opened. `streakFrom` survives (it is still the
+ * honest consecutive-training-days answer, and its arithmetic is still asserted
+ * below) but nothing renders it.
+ *
+ * This file guards the unification, not the choice: that there is exactly one
+ * implementation of each, that the surfaces agree about which one is on the
+ * flame, and that neither derivation drifted.
  */
 
 const BRAND = readFileSync('src/components/dashboard/BrandHeader.tsx', 'utf8')
@@ -50,14 +55,21 @@ const perfectMonth = (missed?: string) =>
   })
 
 describe('there is one streak', () => {
-  it('the calendar-day counter is gone from the source', () => {
+  it('nobody re-implements the counter at a call site', () => {
+    // The header is where `programDay()` used to be defined. It may discuss the
+    // history in comments — that is where the explanation lives — but the
+    // arithmetic belongs in the training domain and nowhere else.
     expect(BRAND).not.toMatch(/export function programDay\(/)
     expect(BRAND).not.toMatch(/export function programStreak\(/)
-    // The orb is where the number is actually RENDERED. Both files still discuss
-    // the old counter in comments, and they should — that is where the
-    // explanation lives — so the assertions are on the JSX text nodes.
-    expect(ORB).not.toMatch(/>Program Day</)
-    expect(ORB).toMatch(/>Day Streak</)
+    expect(ORB).not.toMatch(/export function programDay\(/)
+  })
+
+  it('the orb renders the program day, and says so', () => {
+    // The assertion is on the JSX text node: the caption is the only thing that
+    // tells a reader which of the two quantities the flame is carrying, and it
+    // read "Day Streak" over a monotonic counter for exactly one afternoon.
+    expect(ORB).toMatch(/>Program Day</)
+    expect(ORB).not.toMatch(/>Day Streak</)
   })
 
   it('has exactly one implementation, in the training domain', () => {
@@ -68,12 +80,37 @@ describe('there is one streak', () => {
     expect(streakFromDerive).toBe(streakFrom)
   })
 
-  it('counts the same window on both surfaces', () => {
+  it('both surfaces read the same derivation for the flame', () => {
     const ROUTE = readFileSync('src/app/api/widget/snapshot/route.ts', 'utf8')
     const HOOK = readFileSync('src/lib/hooks/useStreak.ts', 'utf8')
+    expect(ROUTE).toMatch(/programDayCount\(/)
+    expect(HOOK).toMatch(/programDayCount\(/)
+    // The calendar window is still the widget's, and still one constant — the
+    // month grid and `streakFrom` are both built from it.
     expect(ROUTE).toMatch(/CALENDAR_DAYS = STREAK_WINDOW_DAYS/)
-    expect(HOOK).toMatch(/STREAK_WINDOW_DAYS/)
     expect(STREAK_WINDOW_DAYS).toBe(42)
+  })
+})
+
+describe('programDayCount', () => {
+  it('counts both ends — 15 July is day 1', () => {
+    expect(programDayCount('2026-07-15')).toBe(1)
+    expect(programDayCount('2026-07-16')).toBe(2)
+  })
+
+  it('reads 35 on 2026-08-18, which is what the block is', () => {
+    expect(programDayCount('2026-08-18')).toBe(35)
+  })
+
+  it('is 0 before the block opened, never negative', () => {
+    expect(programDayCount('2026-07-14')).toBe(0)
+    expect(programDayCount('2026-01-01')).toBe(0)
+  })
+
+  it('only ever rises', () => {
+    const a = programDayCount('2026-08-01')
+    const b = programDayCount('2026-08-02')
+    expect(b).toBe(a + 1)
   })
 })
 

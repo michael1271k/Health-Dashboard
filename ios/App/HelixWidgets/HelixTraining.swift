@@ -588,8 +588,8 @@ struct CalendarFace: View {
         Hairline()
         HStack(spacing: 0) {
           Stat(value: s.map { "\($0.week.sessions)" }, label: "THIS WEEK", color: .white)
-          Stat(value: s?.streak.map { "\($0.best)" },
-               label: "BEST STREAK", color: mono ? .white : Helix.ember)
+          Stat(value: s?.streak.map { "\($0.current)" },
+               label: "PROGRAM DAY", color: mono ? .white : Helix.ember)
           Stat(value: HelixSnapshot.tonnes(s?.week.volumeKg), label: "VOLUME", color: .white)
         }
       }
@@ -946,21 +946,22 @@ private func weekLabel(_ iso: String) -> String {
   HelixSnapshot.dayOfMonth(iso).map { "\($0)" } ?? ""
 }
 
-// MARK: - Streak
+// MARK: - Program day
 //
-// ── WHY THE NUMBER IS NOT A RUN OF CALENDAR DAYS ─────────────────────────────
-// Helix-5 rests Wednesday and Saturday, so a consecutive-day counter could never
-// exceed three and would break every week by design — it would be measuring the
-// plan rather than the athlete. `streakFrom` walks SCHEDULED days only, and today
-// does not count against you until it is over.
+// ── WHAT THE FLAME COUNTS NOW ────────────────────────────────────────────────
+// Days elapsed since the cut opened on 2026-07-15, both ends counted. It is a
+// monotonic figure and that is deliberate: a block's length is not something a
+// missed Tuesday shortens, and the thing this face is asked at a glance is "how
+// deep am I into this".
 //
-// This IS the number on the dashboard orb, as of the streak unification. The orb
-// used to show `programDay()` — days elapsed since the cut began — which is how
-// the two came to disagree by ten while both sitting under a flame. That counter
-// is deleted; `streakFrom` (src/lib/training/streak.ts) is the only derivation
-// left, and the app reads it through `useStreak()` over the same 42-day window
-// this payload is built from. If this face and the orb ever differ again, the
-// cause is staleness, not arithmetic.
+// It briefly counted consecutive SCHEDULED days trained instead. That number is
+// still derived and still tested (`streakFrom`, src/lib/training/streak.ts) —
+// it is the honest answer to a different question — but nothing renders it. The
+// failure this whole area exists to prevent was never which number was chosen;
+// it was TWO numbers under one flame, ten apart, on the same phone. There is one
+// derivation (`programDayCount`), the payload route and `useStreak()` both read
+// it, so if this face and the dashboard orb ever differ again the cause is
+// staleness, not arithmetic.
 
 struct StreakFace: View {
   let entry: HelixEntry
@@ -972,7 +973,7 @@ struct StreakFace: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 6) {
       HStack(spacing: 4) {
-        Caption("STREAK", color: mono ? .white : Helix.ember)
+        Caption("PROGRAM DAY", color: mono ? .white : Helix.ember)
         Spacer(minLength: 0)
         if entry.isStale { StaleTag(age: entry.age) }
         HelixBrand(monochrome: mono, size: 12)
@@ -1002,8 +1003,8 @@ struct StreakFace: View {
   /// rather than a finish line.
   private var subtitle: String {
     guard let current else { return "no sessions on record" }
-    if current == 0 { return "training days, not calendar days" }
-    return "day streak"
+    if current == 0 { return "the cut has not opened yet" }
+    return "days into the cut"
   }
 }
 

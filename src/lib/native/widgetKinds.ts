@@ -22,6 +22,7 @@ export const WIDGET_KINDS = [
   'HelixBodyFamily',
   'HelixLockFamily',
   'HelixDailyFamily',
+  'HelixVitalsFamily',
 ] as const
 
 export type WidgetKind = (typeof WIDGET_KINDS)[number]
@@ -36,4 +37,9 @@ export type WidgetKind = (typeof WIDGET_KINDS)[number]
  */
 export const DAY_KINDS: readonly WidgetKind[] = [
   'HelixFuelFamily', 'HelixBodyFamily', 'HelixLockFamily', 'HelixDailyFamily',
+  // Vitals is in here for the same reason Body is: the panel's floor row draws
+  // today's steps and sleep against their goals, both of which move when the
+  // day is logged. Its five overnight readings do not, but a kind is the unit
+  // of reload — there is no way to refresh half a widget.
+  'HelixVitalsFamily',
 ]

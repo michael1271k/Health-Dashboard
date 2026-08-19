@@ -20,10 +20,10 @@ import {
 } from '@/lib/widget/snapshot'
 import {
   trendPoints, meanBetween, topRecords, e1rmTrends, volumeByFamily, shiftISO,
-  calendarDays, weeklyVolume, dailySeries, latestDelta, cardioBlock,
+  calendarDays, weeklyVolume, dailySeries, latestDelta, cardioBlock, vitalBlock,
   type SetRow, type CardioRow,
 } from '@/lib/widget/derive'
-import { streakFrom, STREAK_WINDOW_DAYS } from '@/lib/training/streak'
+import { programDayCount, STREAK_WINDOW_DAYS } from '@/lib/training/streak'
 import { computeReadiness } from '@/lib/scoring/readiness'
 import { contextFromDayLabel, CONTEXT_META } from '@/lib/nutrition/context'
 
@@ -454,7 +454,11 @@ export async function GET(req: Request) {
       setCount: sum((s) => s.set_count),
       prCount: sum((s) => s.pr_count),
     } : null,
-    streak: streakFrom(calendar, date),
+    // ONE derivation with the app (`useStreak`): the program day, counted from
+    // the cut's start. `streakFrom` is still exported and still tested — it is
+    // the honest consecutive-training-days answer — but nothing renders it, and
+    // the widget must never show a different number under the same flame.
+    streak: { current: programDayCount(date), best: programDayCount(date) },
   }
 
   if (wantsLifestyle) {
@@ -467,6 +471,7 @@ export async function GET(req: Request) {
     snapshot.macros.kcalTrend = dailySeries(
       (nutriRows ?? []).map((r) => ({ date: r.date, value: r.calories })),
       { limit: TREND_DAYS })
+    snapshot.vitals = await vitalsSlice(supabase, userId, date)
   }
   if (wantsPerformance) {
     Object.assign(snapshot, await performanceSlice(supabase, userId, date, weekStart, weekEndExclusive))
@@ -702,5 +707,57 @@ async function performanceSlice(
     records: topRecords(ledger ?? [], 6),
     e1rm: e1rmTrends(sets, { asOf: date, limit: 5 }),
     volumeByFamily: volumeByFamily(weekSets),
+  }
+}
+
+/**
+ * The overnight vitals slice — five readings, each against its own baseline.
+ *
+ * ── ONE READ, A FORTNIGHT WIDE ───────────────────────────────────────────────
+ * The baseline needs more history than the trace does: seven points is a
+ * picture, and fourteen is the smallest window in which "normal" survives one
+ * bad night. Both come out of the same query, so the extra week costs rows, not
+ * round trips.
+ *
+ * `soft`, like every other read here: an unmigrated column or a transport blip
+ * degrades the Vitals faces to their empty state instead of 500-ing a payload
+ * the Fuel and Training faces were also waiting on.
+ */
+const VITALS_BASELINE_DAYS = 14
+/** Points in a vital's trace. Matches the seven-day traces elsewhere. */
+const VITALS_TREND_DAYS = 7
+
+async function vitalsSlice(
+  supabase: ReturnType<typeof getServerSupabaseClient>,
+  userId: string,
+  date: string,
+): Promise<WidgetSnapshot['vitals']> {
+  const from = isoAddDays(date, -(VITALS_BASELINE_DAYS - 1))
+  const rows = await soft(
+    supabase.from('daily_logs')
+      .select('date, hrv_ms, avg_rest_heart_rate, wrist_temp_delta, blood_oxygen, respiratory_rate')
+      .eq('user_id', userId).gte('date', from).lte('date', date),
+  ) as Array<{
+    date: string
+    hrv_ms: number | null
+    avg_rest_heart_rate: number | null
+    wrist_temp_delta: number | null
+    blood_oxygen: number | null
+    respiratory_rate: number | null
+  }> | null
+
+  const all = rows ?? []
+  const of = (pick: (r: (typeof all)[number]) => number | null) =>
+    vitalBlock(all.map((r) => ({ date: r.date, value: pick(r) })), date, { trendLimit: VITALS_TREND_DAYS })
+
+  return {
+    hrvMs: of((r) => r.hrv_ms),
+    restingBpm: of((r) => r.avg_rest_heart_rate),
+    // Already a deviation from Apple's own baseline, so its `baseline` here is a
+    // deviation-of-a-deviation — kept anyway, because "you have run warm for a
+    // fortnight" is a different fact from "you are warm tonight".
+    wristTempDeltaC: of((r) => r.wrist_temp_delta),
+    bloodOxygenPct: of((r) => r.blood_oxygen),
+    respiratoryRate: of((r) => r.respiratory_rate),
   }
 }
