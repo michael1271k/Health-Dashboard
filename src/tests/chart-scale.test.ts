@@ -108,3 +108,40 @@ describe('current-week timeframe', () => {
   // live in WeekToDateTargets, which sits above the timeframe control precisely
   // because it does not honour one.
 })
+
+describe('the session report curve is not a flat line', () => {
+  /**
+   * The failure this guards, stated as numbers: three sessions of one routine
+   * at 3 000 / 3 010 / 3 020 kg. Against the old hardcoded [0, max] domain the
+   * whole 20 kg of progression occupies 20/3020 of the plot — on a 38px-tall
+   * lane, about a quarter of a pixel. The progression was real and the axis
+   * was hiding it.
+   */
+  it('zooms a 20kg move on 3 tonnes into a readable share of the plot', () => {
+    const [lo, hi] = niceDomain([3000, 3010, 3020], { padPct: 0.12, hardMin: 0 })
+    const span = hi - lo
+    expect(lo, 'the axis is still pinned to zero').toBeGreaterThan(0)
+    // The data's own range has to be a meaningful fraction of the axis. A tenth
+    // is generous — it is ~0.7% under the zero-based domain.
+    expect(20 / span).toBeGreaterThan(0.1)
+    // And the bounds still have to be numbers a human reads as round.
+    expect(Number.isInteger(lo)).toBe(true)
+    expect(Number.isInteger(hi)).toBe(true)
+  })
+
+  it('never crops a point out of view', () => {
+    const values = [3000, 3010, 3020]
+    const [lo, hi] = niceDomain(values, { padPct: 0.12, hardMin: 0 })
+    for (const v of values) {
+      expect(v).toBeGreaterThanOrEqual(lo)
+      expect(v).toBeLessThanOrEqual(hi)
+    }
+  })
+
+  it('survives a routine performed exactly once', () => {
+    // One point is a flat series; a zero-height domain divides by zero in the
+    // curve's y().
+    const [lo, hi] = niceDomain([3000], { padPct: 0.12, hardMin: 0 })
+    expect(hi).toBeGreaterThan(lo)
+  })
+})

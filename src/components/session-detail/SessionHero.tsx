@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Pencil, Trash2, Loader2 } from 'lucide-react'
 import type { SessionDetail } from '@/lib/hooks/useSessionDetail'
 import { useEditSession } from '@/lib/hooks/useEditSession'
-import { useDeleteSession, useGlobalSessionNumber } from '@/lib/hooks/useDayVault'
+import { useDeleteSession } from '@/lib/hooks/useDayVault'
 import { useSessionIntel, type IntelMetric } from '@/lib/hooks/useSessionIntel'
 import { dayColor, STEEL, EMBER, OXIDE, GOLD, EMERALD, MACRO } from '@/lib/theme/palette'
 import { displayWeight, weightUnit, fmtVolume } from '@/lib/utils/units'
@@ -56,15 +56,29 @@ function pctOf(m: IntelMetric | undefined): { pct: number; good: boolean } | nul
   return { pct, good: pct > 0 === m.higherIsBetter }
 }
 
-/** The ▲6% / ▼4% that rides beside a headline number. */
+/**
+ * The ▲6% / ▼4% that qualifies a headline number.
+ *
+ * ── IT USED TO RIDE ON THE VALUE'S OWN LINE, AND IT COLLIDED ─────────────────
+ * This was an inline `<span>` sharing a `text-fluid-xl` line box with the value
+ * and its unit, inside a `grid-cols-3` that had no `gap` and cells with no
+ * `min-w-0`. A grid item's default `min-width: auto` means a cell does not
+ * shrink to its track — so "12,480 kg ▲14%" simply grew past its column and
+ * landed on top of the duration beside it. With no `whitespace-nowrap` it could
+ * also wrap instead, which broke the `leading-none` alignment across all three
+ * cells.
+ *
+ * A delta is a second statement about a number, not part of it. It belongs on
+ * the line below, in the slot `Head` already reserves — which costs nothing,
+ * because that slot was being rendered empty on two cells out of three anyway.
+ */
 function Delta({ metric }: { metric: IntelMetric | undefined }) {
   const d = pctOf(metric)
   if (!d) return null
   return (
     <span
-      className="helix-num text-[10px] font-bold tabular-nums ml-1.5 align-middle"
+      className="helix-num font-bold whitespace-nowrap"
       style={{ color: d.good ? EMERALD : OXIDE }}
-      title={`vs the previous session of this type`}
     >
       {d.pct > 0 ? '▲' : '▼'}{Math.abs(d.pct)}%
     </span>
@@ -85,18 +99,24 @@ function Head({ label, value, unit, sub, metric, first }: {
   first?: boolean
 }) {
   return (
-    <div className={first ? 'pr-3' : 'pl-3 border-l border-white/[0.07]'}>
-      <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-muted leading-tight">
+    // `min-w-0` is the load-bearing class here — without it a grid item refuses
+    // to shrink below its content and overruns the cell beside it.
+    <div className={`min-w-0 ${first ? '' : 'pl-3 border-l border-white/[0.07]'}`}>
+      <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-muted leading-tight truncate">
         {label}
       </span>
-      <div className="helix-num font-bold text-fluid-xl tabular-nums leading-none mt-1.5 text-text">
+      <div className="helix-num font-bold text-fluid-xl leading-none mt-1.5 text-text whitespace-nowrap">
         {value ?? '—'}
         {unit && value != null && <span className="text-[10px] text-muted font-normal ml-1">{unit}</span>}
-        {value != null && <Delta metric={metric} />}
       </div>
-      {/* Reserved whether or not it is filled: a sub-line that appears only on
-          some sessions makes the three cells different heights. */}
-      <span className="block text-[9px] text-muted mt-1 leading-tight min-h-[1em]">{sub ?? ''}</span>
+      {/* The qualifier line. Reserved whether or not it is filled: a sub-line
+          that appears only on some sessions makes the three cells different
+          heights. It now carries the delta FIRST — the delta is the thing this
+          line exists for — then whatever else the metric has to add. */}
+      <span className="flex items-baseline gap-1.5 text-[9px] text-muted mt-1 leading-tight min-h-[1em] min-w-0">
+        {value != null && <Delta metric={metric} />}
+        {sub && <span className="truncate">{sub}</span>}
+      </span>
     </div>
   )
 }
@@ -148,7 +168,6 @@ export function SessionHero({ detail }: { detail: SessionDetail }) {
   const router = useRouter()
   const edit = useEditSession()
   const del = useDeleteSession(detail.date)
-  const { data: globalNum } = useGlobalSessionNumber(detail.date)
   const [confirm, setConfirm] = useState(false)
 
   // Same query key as ProgressionTrail's — TanStack serves both from one fetch.
@@ -161,7 +180,6 @@ export function SessionHero({ detail }: { detail: SessionDetail }) {
   // only the ACCENT is still read here, to tint the band's rule and border.
   const accent = dayColor(detail.dayKey, detail.splitDay)
   const unit = weightUnit()
-  const pretty = new Date(detail.date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'long' })
 
   // Warm-ups and failure sets were two of the nine scrolling stats. They are
   // not session headlines — they describe the SET COUNT — so they ride under it.
@@ -172,20 +190,26 @@ export function SessionHero({ detail }: { detail: SessionDetail }) {
 
   return (
     <Surface variant="band" accent={accent} pad="snug" className="space-y-3">
-      {/* IDENTITY LIVES IN THE STICKY COMMAND BAR, not here.
-          The page went full-bleed and grew a pinned header carrying the back
-          button, the day label in its own colour, the date and the phase badge.
-          Repeating all four inside a card 60 px below it read as a rendering
-          bug, so the header keeps only what the bar has no room for: which
-          session this is in the global count. */}
-      <div className="flex items-baseline gap-2">
-        <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted">
-          Session{globalNum ? ` · #${String(globalNum).padStart(2, '0')}` : ''}
-        </span>
-        <span className="text-fluid-xs text-muted ml-auto truncate">{pretty}</span>
-      </div>
+      {/* ── IDENTITY MOVED UP TO `SessionTitle` ──
+          This row carried "Session · #07" on the left and the date on the
+          right. The date was the SECOND copy on the page — the first sat under
+          the bar's title 60px above, computed from scratch with byte-identical
+          options — and the session number had no reason to be separated from
+          it. Both now live under the large title, where the question they
+          answer ("which session was this, and when") is asked.
 
-      <div className="grid grid-cols-3">
+          What is left is what this box is for: the numbers. */}
+      {intel?.previousDate && (
+        <p className="text-[10px] text-muted">
+          Compared with <span className="text-text/80 font-medium">{intel.typeLabel}</span>
+          {' · '}{new Date(`${intel.previousDate}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+        </p>
+      )}
+
+      {/* `gap-x-3` rather than per-cell `pr-3`/`pl-3`: the gap is a property of
+          the grid, and stating it on the children meant the first cell had a
+          different box model from the other two. */}
+      <div className="grid grid-cols-3 gap-x-3">
         <Head
           first
           label="Volume"

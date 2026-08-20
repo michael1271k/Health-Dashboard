@@ -1,5 +1,8 @@
 'use client'
 
+import { useState } from 'react'
+import { tapLight } from '@/lib/native/haptics'
+import { MuscleDistributionSheet } from '@/components/command-center/MuscleDistributionSheet'
 import { Target } from 'lucide-react'
 import type { SessionDetail } from '@/lib/hooks/useSessionDetail'
 import { MUSCLE_COLOR, type LandmarkMuscle } from '@/lib/training/landmarks'
@@ -39,7 +42,8 @@ const round1 = (v: number): number => Math.round(v * 10) / 10
  * Both are printed, labelled, on one line, in that order — physical first,
  * because that is the one you can count on the floor.
  */
-export function MuscleFocus({ detail }: { detail: SessionDetail }) {
+export function MuscleFocus({ detail, accent = EMBER }: { detail: SessionDetail; accent?: string }) {
+  const [open, setOpen] = useState(false)
   if (!detail.muscleSets.length) return null
   const total = round1(detail.muscleSets.reduce((n, m) => n + m.sets, 0))
   const physical = detail.workingSets || detail.setCount
@@ -75,7 +79,23 @@ export function MuscleFocus({ detail }: { detail: SessionDetail }) {
           only the posterior chain looks EMPTY from the front, and an empty
           front is exactly the reading. */}
       <div className="flex items-center gap-3">
-        <div className="h-24 shrink-0" style={{ width: 96 }}>
+        {/* ── THE FIGURE IS A BUTTON ──
+            It was a 96px picture beside a legend of thirteen muscle names, and
+            the readable version of exactly this — counts, both views at size,
+            the credit rule spelled out — already existed one tap away in the
+            live deck. Tapping the body now opens that same sheet, because
+            "which muscles did this session train" is a question you ask OF the
+            figure, and the figure was the one thing on the card that did not
+            answer. */}
+        <button
+          type="button"
+          onPointerDown={() => { void tapLight() }}
+          onClick={() => setOpen(true)}
+          aria-label="Open the full muscle distribution for this session"
+          title="Where this session landed"
+          className="h-24 shrink-0 rounded-lg active:scale-95 transition-transform"
+          style={{ width: 96 }}
+        >
           <MuscleAtlas
             view="both"
             worked={setsToWorked(Object.fromEntries(
@@ -83,7 +103,7 @@ export function MuscleFocus({ detail }: { detail: SessionDetail }) {
             ))}
             label="Muscles trained in this session"
           />
-        </div>
+        </button>
         <div className="flex-1 min-w-0 space-y-1.5">
           <div className="flex h-2 rounded-full overflow-hidden bg-white/[0.05]" aria-hidden="true">
             {detail.muscleSets.map((m) => (
@@ -116,6 +136,15 @@ export function MuscleFocus({ detail }: { detail: SessionDetail }) {
           </div>
         </div>
       </div>
+
+      <MuscleDistributionSheet
+        open={open}
+        onClose={() => setOpen(false)}
+        entries={detail.muscleSets.map((m) => ({ muscle: m.muscle as LandmarkMuscle, sets: m.sets }))}
+        physical={physical}
+        weighted={total}
+        accent={accent}
+      />
     </div>
   )
 }

@@ -5,6 +5,7 @@ import { TrendingUp } from 'lucide-react'
 import { useSessionIntel } from '@/lib/hooks/useSessionIntel'
 import { sessionVerdict } from '@/lib/training/sessionVerdict'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
+import { niceDomain, compactKg } from '@/lib/charts/scale'
 // Imported under their real names. EMBER/EMERALD/OXIDE were aliased on import
 // to VIOLET/TEAL/ROSE — three colour names the design system does not contain
 // and none of which describes the value being renamed.
@@ -36,7 +37,6 @@ export function ProgressionTrail({ sessionId }: { sessionId: string }) {
   if (isLoading) return <div className="h-24 rounded-xl bg-white/[0.03] animate-pulse" aria-hidden="true" />
   if (!intel) return null
 
-  const maxVol = Math.max(...(intel.volumes.map((v) => v.volumeKg) ?? [1]), 1)
   const verdict = sessionVerdict(intel.volumeDeltaPct, intel.deltas.map((d) => ({
     name: d.name, topKg: d.topKg, prevKg: d.prevKg, unloaded: d.unloaded,
   })))
@@ -62,19 +62,18 @@ export function ProgressionTrail({ sessionId }: { sessionId: string }) {
           — which on double progression is the exact moment the program was
           waiting for, reported in red as a regression. `sessionVerdict` names
           the load increase FIRST and the volume drop as its consequence. It
-          forgives nothing: a drop with no load increase anywhere says so. */}
+          forgives nothing: a drop with no load increase anywhere says so.
+
+          THE SENTENCE ENDS AT THE FULL STOP. It used to run on into
+          `loadGains.slice(0,3).map(...).join(' · ')` — a `·`-separated string
+          of movement names and arrows, set in muted grey, capped at three with
+          nothing to say so. It read as debug output appended to prose. Those
+          gains are chips now, in `SessionHighlights`, beside the records they
+          belong with. */}
       {verdict && (
         <p className="text-fluid-xs leading-snug"
           style={{ color: verdict.tone === 'praise' ? EMERALD : verdict.tone === 'caution' ? OXIDE : MUTED }}>
           {verdict.headline}
-          {verdict.loadGains.length > 0 && (
-            <span className="text-muted">
-              {' '}
-              {verdict.loadGains.slice(0, 3).map((g) => (
-                `${g.name} ${displayWeight(g.fromKg)}→${displayWeight(g.toKg)}${unit}`
-              )).join(' · ')}
-            </span>
-          )}
         </p>
       )}
 
@@ -97,7 +96,7 @@ export function ProgressionTrail({ sessionId }: { sessionId: string }) {
           <p className="text-[10px] uppercase tracking-wide text-muted mb-1">
             Volume · every {intel.typeLabel || 'session'} ({intel.volumes.length}) · tap a point
           </p>
-          <VolumeCurve points={intel.volumes} max={maxVol} unit={unit} />
+          <VolumeCurve points={intel.volumes} unit={unit} />
         </div>
       )}
     </div>
@@ -116,9 +115,8 @@ export function ProgressionTrail({ sessionId }: { sessionId: string }) {
  * Every point is TAPPABLE: `<title>` alone is a desktop hover affordance that
  * does nothing on a phone, which is where this is actually read.
  */
-function VolumeCurve({ points, max, unit }: {
+function VolumeCurve({ points, unit }: {
   points: Array<{ date: string; volumeKg: number }>
-  max: number
   unit: string
 }) {
   const n = points.length - 1
@@ -134,8 +132,27 @@ function VolumeCurve({ points, max, unit }: {
   // the threshold only the two that carry meaning stay drawn — the one you
   // picked and the latest — while every point keeps its invisible hit target.
   const DENSE = points.length > 8
+
+  /**
+   * ── THE AXIS FITS THE DATA, NOT ZERO ────────────────────────────────────────
+   * The scale was `1 - v / max`, i.e. a domain hardcoded to [0, max]. Session
+   * volume for one routine lives in a narrow band — three sessions of Upper B
+   * might read 3 010, 3 000 and 3 020 kg — so against a floor of zero all three
+   * points land within a third of a pixel of each other and the "trajectory"
+   * this chart exists to show draws as a horizontal line. The progression was
+   * real; the axis was hiding it.
+   *
+   * `niceDomain` was written for exactly this failure on the weekly volume
+   * chart (see the header of `lib/charts/scale.ts`) and is already used by
+   * `VolumeChart` and `BodyCompositionChart`. It fits [lo, hi] to the data with
+   * padding and snaps both ends outward to a round 1/2/5×10ⁿ step, so the
+   * bounds stay readable numbers. Nothing here is hardcoded: the domain is
+   * recomputed from the points on every render and re-fits as sessions land.
+   */
+  const [lo, hi] = niceDomain(points.map((p) => p.volumeKg), { padPct: 0.12, hardMin: 0 })
+  const span = hi - lo || 1
   const x = (i: number) => PAD_X + (i / n) * (W - PAD_X * 2)
-  const y = (v: number) => PAD_TOP + (1 - v / max) * (H - PAD_TOP - PAD_BOTTOM)
+  const y = (v: number) => PAD_TOP + (1 - (v - lo) / span) * (H - PAD_TOP - PAD_BOTTOM)
 
   // Catmull-Rom → cubic Bézier: the curve passes THROUGH every real point.
   // (A plain quadratic smoothing would round the peaks off, drawing volumes
@@ -154,6 +171,7 @@ function VolumeCurve({ points, max, unit }: {
   }
   const area = `${line} L${x(n)} ${H - PAD_BOTTOM} L${x(0)} ${H - PAD_BOTTOM} Z`
 
+  const mid = (lo + hi) / 2
   const active = points[selected] ?? points[n]
   const exact = Math.round(displayWeight(active.volumeKg) ?? 0).toLocaleString()
   const prev = selected > 0 ? points[selected - 1] : null
@@ -173,6 +191,16 @@ function VolumeCurve({ points, max, unit }: {
             <stop offset="100%" stopColor={EMBER} stopOpacity="0" />
           </linearGradient>
         </defs>
+        {/* ── THE AXIS DECLARES ITSELF ──
+            The fill still closes at the bottom of the plot, but the bottom is
+            `lo` now rather than 0 — so without these labels the shaded area
+            silently implies a magnitude it does not have. A clipped axis that
+            states its bounds is a zoom; one that stays quiet about them is a
+            lie about the size of the change. */}
+        <line x1={PAD_X} x2={W - PAD_X} y1={y(mid)} y2={y(mid)}
+          stroke="rgba(255,255,255,0.06)" strokeWidth="1" strokeDasharray="2 3" />
+        <text x={PAD_X} y={PAD_TOP - 1} className="fill-muted" style={{ fontSize: 7, opacity: 0.7 }}>{compactKg(hi)}</text>
+        <text x={PAD_X} y={H - PAD_BOTTOM + 7} className="fill-muted" style={{ fontSize: 7, opacity: 0.7 }}>{compactKg(lo)}</text>
         <path d={area} fill={"url(#" + volTrail + ")"} />
         <path d={line} fill="none" stroke={EMBER} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         {points.map((p, i) => {

@@ -1,9 +1,11 @@
 'use client'
 
+import { useEffect, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { useSessionDetail } from '@/lib/hooks/useSessionDetail'
 import { SessionHero } from '@/components/session-detail/SessionHero'
+import { SessionTitle } from '@/components/session-detail/SessionTitle'
 import { AppBar } from '@/components/nav/AppBar'
 import { ExerciseBreakdown } from '@/components/session-detail/ExerciseBreakdown'
 import { SessionHighlights } from '@/components/session-detail/SessionHighlights'
@@ -12,7 +14,7 @@ import { ProgressionTrail } from '@/components/session-detail/ProgressionTrail'
 import { getWeekPhase, phaseBadgeStyle } from '@/lib/phases'
 import { weekStartOf } from '@/lib/utils/week'
 import { activeProgram } from '@/lib/programs'
-import { dayColor, EMBER } from '@/lib/theme/palette'
+import { dayColor } from '@/lib/theme/palette'
 import { Surface } from '@/components/ui/Zone'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
 import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
@@ -46,9 +48,28 @@ export default function SessionAnalysisPage() {
     ? ((data.dayKey && activeProgram().days.find((d) => d.key === data.dayKey)?.label)
       ?? (data.splitDay[0].toUpperCase() + data.splitDay.slice(1)))
     : 'Session'
-  const pretty = data
-    ? new Date(`${data.date}T00:00:00`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'long' })
-    : ''
+
+  /**
+   * ── THE BAR NAMES THE SESSION ONLY ONCE THE PAGE HAS STOPPED DOING IT ──────
+   * The large title (`SessionTitle`) is the real one. A compact copy in the
+   * pinned bar is useful the moment that title has scrolled off and useless
+   * while it is still on screen, where it reads as the same words printed
+   * twice 40px apart.
+   *
+   * Watched with an IntersectionObserver on the title itself rather than a
+   * scroll listener — the same trick `AppBar` already uses for its edge fade,
+   * for the same reason: a scroll handler runs at pointer rate on the main
+   * thread to answer a question with two states.
+   */
+  const titleRef = useRef<HTMLDivElement>(null)
+  const [titlePassed, setTitlePassed] = useState(false)
+  useEffect(() => {
+    const el = titleRef.current
+    if (!el || typeof IntersectionObserver === 'undefined') return
+    const io = new IntersectionObserver(([e]) => setTitlePassed(!e.isIntersecting), { threshold: 0 })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [data?.id])
 
   return (
     <div data-fullbleed className="min-h-dvh">
@@ -59,10 +80,14 @@ export default function SessionAnalysisPage() {
       <AppBar accent={accent}>
           <BackLink onClick={() => router.back()} onPointerUp={blurOnTap} />
           <div className="min-w-0 flex-1">
-            <h1 className="font-heading text-fluid-sm font-bold truncate leading-tight" style={{ color: accent }}>
+            <h1
+              className={`font-heading text-fluid-sm font-bold truncate leading-tight transition-opacity duration-200
+                          ${titlePassed ? 'opacity-100' : 'opacity-0'}`}
+              aria-hidden={!titlePassed}
+              style={{ color: accent }}
+            >
               {label}
             </h1>
-            <span className="text-[10px] text-muted">{pretty || 'Session'}</span>
           </div>
           {phase && (
             <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded shrink-0"
@@ -101,11 +126,21 @@ export default function SessionAnalysisPage() {
              (breakdown). Records fold into the middle band as chips, because a
              PR is a fact about the session rather than a section of it. */
           <>
+            {/* The observer's target. `SessionTitle` bleeds its wash past the
+                measure, so the wrapper — not the heading — is what is watched. */}
+            <div ref={titleRef}>
+              <SessionTitle label={label} accent={accent} date={data.date} />
+            </div>
+
             <SessionHero detail={data} />
 
-            <Surface variant="band" accent={EMBER} pad="snug" className="space-y-3">
+            {/* ONE IDENTITY DOWN THE WHOLE REPORT. These two bands were pinned
+                to EMBER while the hero used the day's colour, so a gold Upper B
+                report turned orange halfway down for no reason a reader could
+                name. */}
+            <Surface variant="band" accent={accent} pad="snug" className="space-y-3">
               <ProgressionTrail sessionId={data.id} />
-              <SessionHighlights exercises={data.exercises} />
+              <SessionHighlights sessionId={data.id} exercises={data.exercises} />
             </Surface>
 
             {/* FOCUS IS ITS OWN BAND, not a third block sharing the one above.
@@ -115,8 +150,8 @@ export default function SessionAnalysisPage() {
                 answer to "what did this session train?". A band boundary is the
                 cheapest possible separation and the one the rest of the page
                 already uses. */}
-            <Surface variant="band" accent={EMBER} pad="snug">
-              <MuscleFocus detail={data} />
+            <Surface variant="band" accent={accent} pad="snug">
+              <MuscleFocus detail={data} accent={accent} />
             </Surface>
 
             <ExerciseBreakdown sessionId={data.id} exercises={data.exercises} date={data.date} dayKey={data.dayKey} />

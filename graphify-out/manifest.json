@@ -160,8 +160,8 @@
     "semantic_hash": ""
   },
   "public/sw.js": {
-    "mtime": 1787250282.2662497,
-    "ast_hash": "b3df2b2a90b28daf719f9dc32dad30a6",
+    "mtime": 1787253600.664807,
+    "ast_hash": "b298fc6729b0fc2d244689bc44051393",
     "semantic_hash": ""
   },
   "scripts/generate-icons.mjs": {
@@ -270,8 +270,8 @@
     "semantic_hash": ""
   },
   "src/app/session/[id]/page.tsx": {
-    "mtime": 1787060099.8071194,
-    "ast_hash": "7408b5bd28f3b3dcf5934868fd84f66e",
+    "mtime": 1787252384.9110832,
+    "ast_hash": "59f81bdddf0e42355871cbe4b7b253fe",
     "semantic_hash": ""
   },
   "src/app/session/page.tsx": {
@@ -620,23 +620,23 @@
     "semantic_hash": ""
   },
   "src/components/session-detail/ExerciseBreakdown.tsx": {
-    "mtime": 1787061296.6689074,
-    "ast_hash": "8102e728347c89feaf7916543ec293e6",
+    "mtime": 1787253362.2072191,
+    "ast_hash": "9de42c37e5d0cbf2e3fa4bf1c3771497",
     "semantic_hash": ""
   },
   "src/components/session-detail/MuscleFocus.tsx": {
-    "mtime": 1787074158.3264093,
-    "ast_hash": "08c4dad2d2937bfa92d93131dc6844a0",
+    "mtime": 1787252544.8330312,
+    "ast_hash": "ab3942eae8a03fdbae36bd9fb28ec893",
     "semantic_hash": ""
   },
   "src/components/session-detail/ProgressionTrail.tsx": {
-    "mtime": 1787060084.719599,
-    "ast_hash": "e963318035d28d5faba4bf240cf76f22",
+    "mtime": 1787252458.2967467,
+    "ast_hash": "475256fb653225b5b6a1cb08601f3c71",
     "semantic_hash": ""
   },
   "src/components/session-detail/SessionHero.tsx": {
-    "mtime": 1787060037.17569,
-    "ast_hash": "6fdc12acbf4fec4b72f2dac7b8a4f741",
+    "mtime": 1787252424.6117105,
+    "ast_hash": "ee6723b4e86f0a4b6e4ff11659fe0154",
     "semantic_hash": ""
   },
   "src/components/settings/NotionSync.tsx": {
@@ -1505,8 +1505,8 @@
     "semantic_hash": ""
   },
   "src/tests/chart-scale.test.ts": {
-    "mtime": 1786698213.9232354,
-    "ast_hash": "ecfcb56a51a29e0c623508781159d76c",
+    "mtime": 1787252751.864552,
+    "ast_hash": "566e79393354e4d403ef32d89c070306",
     "semantic_hash": ""
   },
   "src/lib/charts/intensityCalendar.ts": {
@@ -1540,8 +1540,8 @@
     "semantic_hash": ""
   },
   "src/components/session-detail/SessionHighlights.tsx": {
-    "mtime": 1786798788.6870165,
-    "ast_hash": "7d07afafe5b0106fc2effbe960f921bb",
+    "mtime": 1787252493.5088398,
+    "ast_hash": "ff9ad614d6eae83bc621f815fb0b2eb8",
     "semantic_hash": ""
   },
   "src/tests/session-report.test.ts": {
@@ -2525,8 +2525,8 @@
     "semantic_hash": ""
   },
   "src/components/command-center/MuscleDistribution.tsx": {
-    "mtime": 1787074182.3147483,
-    "ast_hash": "8007c7c2c0b761b24a5b854f437bfc40",
+    "mtime": 1787252561.3875585,
+    "ast_hash": "bb6b048d701c2e0c242cba1db17f714c",
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixAtlasFigure.swift": {
@@ -2620,8 +2620,8 @@
     "semantic_hash": ""
   },
   "e2e/set-row-grid.spec.ts": {
-    "mtime": 1787250176.7246132,
-    "ast_hash": "3aec2ba92998d91a65a6e3702120965d",
+    "mtime": 1787253414.5191534,
+    "ast_hash": "5674eaa20b68cfe310062fce7b32f944",
     "semantic_hash": ""
   },
   "src/components/command-center/RestTargetSheet.tsx": {
@@ -2650,13 +2650,38 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/set-rows.html": {
-    "mtime": 1787250264.6349049,
+    "mtime": 1787253575.9994502,
     "ast_hash": "564c961148c893932c1db6dbd3ce42fc",
     "semantic_hash": ""
   },
   "public/offline.html": {
     "mtime": 1787249351.8097155,
     "ast_hash": "4a743c5a438413e29b705e81ad1ad659",
+    "semantic_hash": ""
+  },
+  "src/components/session-detail/SessionTitle.tsx": {
+    "mtime": 1787252355.3588586,
+    "ast_hash": "97dc1ea41c297b5ab8be253db232aa2f",
+    "semantic_hash": ""
+  },
+  "e2e/session-ledger.spec.ts": {
+    "mtime": 1787253414.5189762,
+    "ast_hash": "e11f3d5c0bf0e806daa57982b1771bd3",
+    "semantic_hash": ""
+  },
+  "src/components/command-center/MuscleDistributionSheet.tsx": {
+    "mtime": 1787252517.794432,
+    "ast_hash": "f63265ef05aff24639f1de99300347da",
+    "semantic_hash": ""
+  },
+  "src/tests/session-report-render.test.tsx": {
+    "mtime": 1787252856.2362416,
+    "ast_hash": "2d1fe8b683df64c1d160618671ca6b89",
+    "semantic_hash": ""
+  },
+  "e2e/__fixtures__/session-ledger.html": {
+    "mtime": 1787253574.2699094,
+    "ast_hash": "229c9d7e8c30c8a3a3651ce8ea3b148c",
     "semantic_hash": ""
   }
 }

@@ -88,13 +88,21 @@
 
   /* Exercise TITLES specifically. One token so the logger deck and the session
      report can never drift apart, and so "make exercise names smaller" is one
-     edit rather than six. Deliberately a notch under --text-fluid-sm: the
-     longest real name, "Leg Press Horizontal (Machine)", has to sit on one line
-     beside its weight/reps at 390px — at fluid-sm it pushed them to a second
-     row. */
-  --text-exercise-title: clamp(0.76rem, 0.72rem + 0.18vw, 0.86rem);
+     edit rather than six.
+
+     RAISED 2026-08-20, from clamp(0.76rem … 0.86rem). It was pinned a notch
+     UNDER --text-fluid-sm to keep the longest real name ("Leg Press Horizontal
+     (Machine)") on one line beside its weight and reps at 390px. That layout
+     no longer exists: both surfaces moved the numbers off the title's line —
+     the deck wraps its chips to a second row, the report puts the prescription
+     underneath — so the constraint was being paid for by a screen that had
+     stopped needing it, and the name of the movement ended up set smaller than
+     the labels around it. It is a heading again. Long names wrap on the report
+     rather than truncate; the deck still truncates, where vertical space is
+     the scarcer thing. */
+  --text-exercise-title: clamp(0.875rem, 0.83rem + 0.20vw, 1rem);
   --text-exercise-title--line-height:    1.25;
-  --text-exercise-title--letter-spacing: 0.004em;
+  --text-exercise-title--letter-spacing: -0.004em;
 
   /* The only surviving shadow token — btn-primary's hover glow. The card
      shadows went with the cards; they were still quoting the pre-palette

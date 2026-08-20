@@ -58,8 +58,42 @@ for (const vp of VIEWPORTS) {
       const out: string[] = []
       for (const el of Array.from(document.querySelectorAll('#probe-deck *'))) {
         const e = el as HTMLElement
-        if (!e.textContent?.trim() || e.children.length) continue
-        if (e.scrollWidth > e.clientWidth + 1) out.push(`"${e.textContent.trim()}" ${e.clientWidth}px < ${e.scrollWidth}px`)
+        if (!e.textContent?.trim()) continue
+        // ── CHECK EVERY ELEMENT, NOT JUST LEAVES ──
+        // The first version skipped anything with element children, on the
+        // theory that only a text node can be clipped. It let a real clip
+        // through: `102.25kg × 8` ellipsized inside a `truncate` span whose
+        // own box was fine, because the shrinking happened one level up. What
+        // identifies a clip is not childlessness, it is a box that hides
+        // overflow while holding more than it can show.
+        const cs = getComputedStyle(e)
+        const clips = cs.overflowX === 'hidden' || cs.overflowX === 'clip' || cs.textOverflow === 'ellipsis'
+        if (!clips) continue
+        // ── MEASURED WITH A RANGE, NOT WITH `scrollWidth` ──
+        // `scrollWidth` reported 107 against a 107px box for text the browser
+        // was visibly rendering as "102.25kg ×…". It rounds, and on a box whose
+        // content is a single nowrap text run it can agree with `clientWidth`
+        // while an ellipsis is on screen. A Range over the element's contents
+        // measures the text's own laid-out extent, which is the thing being
+        // clipped, and it caught what two earlier versions of this check let
+        // through.
+        const r = document.createRange()
+        r.selectNodeContents(e)
+        const textW = r.getBoundingClientRect().width
+        r.detach()
+        // ── THE BOX IS FRACTIONAL; `clientWidth` IS NOT ──
+        // `102.25kg × 8` measured 106.72px of text and reported a clientWidth
+        // of 107, so every integer comparison said it fit — while the browser
+        // drew "102.25kg ×…" on screen, because the REAL box was 106.53px and
+        // the last glyph fell outside it. `clientWidth` rounds up; the layout
+        // does not. So the content box is reconstructed from the fractional
+        // rect, and the comparison is exact.
+        const cw = e.getBoundingClientRect().width
+          - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)
+          - parseFloat(cs.borderLeftWidth) - parseFloat(cs.borderRightWidth)
+        if (textW > cw + 0.05) {
+          out.push(`"${e.textContent.trim().slice(0, 40)}" box ${cw.toFixed(2)}px < text ${textW.toFixed(2)}px`)
+        }
       }
       return out
     })

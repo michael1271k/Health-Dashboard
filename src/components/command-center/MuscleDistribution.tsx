@@ -1,16 +1,16 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Sheet } from '@/components/ui/Sheet'
 import { MuscleAtlas } from '@/components/body/MuscleAtlas'
+import { MuscleDistributionSheet } from './MuscleDistributionSheet'
 import { setsToWorked } from '@/lib/body/atlas'
 import { resolveMovers } from '@/lib/exercises/muscleMap'
 import {
-  SECONDARY_SET_CREDIT, toLandmarkMuscle, MUSCLE_COLOR, LANDMARK_MUSCLES,
+  SECONDARY_SET_CREDIT, toLandmarkMuscle, LANDMARK_MUSCLES,
   type LandmarkMuscle,
 } from '@/lib/training/landmarks'
 import { isSetCommitted, type SessionDraft } from '@/lib/sessions/draft'
-import { EMBER, MUTED } from '@/lib/theme/palette'
+import { EMBER } from '@/lib/theme/palette'
 
 /**
  * Where the session you are logging is actually going.
@@ -118,51 +118,17 @@ export function MuscleDistribution({ draft }: { draft: SessionDraft | null }) {
         <span className="h-6 w-6 block"><MuscleAtlas view="front" worked={worked} color={EMBER} /></span>
       </button>
 
-      <Sheet open={open} onClose={() => setOpen(false)} title="Muscle distribution" accent={EMBER}>
-        <div className="space-y-3 pb-2">
-          {/* The two counts, named, before the figures that use them. The deck's
-              own set count is the physical one; everything in the list below is
-              the weighted one, and they are supposed to differ. */}
-          <div className="grid grid-cols-2 gap-2">
-            <Count value={physical} label="Physical sets" hint="What you performed" />
-            <Count value={weighted} label="Weighted sets" hint="Spread across muscles" />
-          </div>
-
-          <div className="h-56 mx-auto" style={{ maxWidth: 260 }}>
-            <MuscleAtlas view="both" worked={worked} color={EMBER} label="Muscles worked this session" />
-          </div>
-          <ul className="space-y-1">
-            {entries.sort((a, b) => b.sets - a.sets).map((e) => (
-              <li key={e.muscle} className="flex items-center gap-2 text-[11px]">
-                <span className="w-1.5 h-1.5 rounded-full shrink-0"
-                  style={{ background: MUSCLE_COLOR[e.muscle] ?? MUTED }} aria-hidden="true" />
-                <span className="text-muted flex-1 min-w-0 truncate">{e.muscle}</span>
-                <span className="helix-num font-bold text-text tabular-nums">{e.sets}</span>
-              </li>
-            ))}
-          </ul>
-          {/* Weighted, and it says so: an assisting muscle earns half a set, the
-              same rule the week's volume targets are graded on. Without the
-              note the totals here look wrong next to the deck's set count. */}
-          <p className="text-[10px] text-muted leading-snug">
-            One physical set credits 1.0 to every muscle it trains directly and 0.5 to every
-            muscle that assists — so a compound lift lands on several, and the weighted total
-            is higher than the set count on purpose. It is the same credit the weekly volume
-            targets are graded on. Warm-ups and unticked sets are not counted.
-          </p>
-        </div>
-      </Sheet>
+      {/* The enlarged view is shared with the session report — see
+          `MuscleDistributionSheet`. It used to be written inline here, which is
+          why the report's body chart could not open it: this component takes a
+          live draft, and a finished session has none. */}
+      <MuscleDistributionSheet
+        open={open}
+        onClose={() => setOpen(false)}
+        entries={entries}
+        physical={physical}
+        weighted={weighted}
+      />
     </>
-  )
-}
-
-/** One of the two headline counts above the distribution. */
-function Count({ value, label, hint }: { value: number; label: string; hint: string }) {
-  return (
-    <div className="rounded-xl px-3 py-2" style={{ background: `${EMBER}0f`, border: `1px solid ${EMBER}33` }}>
-      <span className="block text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: EMBER }}>{label}</span>
-      <span className="helix-num font-bold text-fluid-xl tabular-nums text-text leading-none block mt-1">{value}</span>
-      <span className="block text-[9px] text-muted mt-1">{hint}</span>
-    </div>
   )
 }
