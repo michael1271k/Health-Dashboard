@@ -67,17 +67,47 @@ export function useSessionDraft() {
   }, [])
 
   // Debounced autosave on every draft change.
+  const writeDraft = useCallback((d: SessionDraft | null) => {
+    try {
+      if (d) localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(d))
+      else localStorage.removeItem(DRAFT_STORAGE_KEY)
+    } catch { /* storage full/unavailable — non-fatal */ }
+  }, [])
+
   useEffect(() => {
     if (!hydrated) return
     if (saveTimer.current) clearTimeout(saveTimer.current)
-    saveTimer.current = setTimeout(() => {
-      try {
-        if (draft) localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft))
-        else localStorage.removeItem(DRAFT_STORAGE_KEY)
-      } catch { /* storage full/unavailable — non-fatal */ }
-    }, 500)
+    saveTimer.current = setTimeout(() => writeDraft(draft), 500)
     return () => { if (saveTimer.current) clearTimeout(saveTimer.current) }
-  }, [draft, hydrated])
+  }, [draft, hydrated, writeDraft])
+
+  /**
+   * ── FLUSH BEFORE THE PROCESS CAN DIE ────────────────────────────────────────
+   * The 500 ms debounce is right for typing and wrong for leaving: iOS kills a
+   * backgrounded WKWebView's content process without warning, and everything
+   * typed in the half-second before the phone was locked lived only in memory.
+   * You came back to a set you had already entered, missing.
+   *
+   * `pagehide` and the hide half of `visibilitychange` are the last synchronous
+   * moments the page is guaranteed to get — iOS never fires `beforeunload`
+   * reliably, so those two are the whole budget. Write through, cancel the
+   * pending timer, and let the debounce own only the keystroke case it was
+   * added for.
+   */
+  useEffect(() => {
+    if (!hydrated) return
+    const flush = () => {
+      if (saveTimer.current) { clearTimeout(saveTimer.current); saveTimer.current = null }
+      writeDraft(draft)
+    }
+    const onHide = () => { if (document.visibilityState === 'hidden') flush() }
+    document.addEventListener('visibilitychange', onHide)
+    window.addEventListener('pagehide', flush)
+    return () => {
+      document.removeEventListener('visibilitychange', onHide)
+      window.removeEventListener('pagehide', flush)
+    }
+  }, [draft, hydrated, writeDraft])
 
   // start/discard write through SYNCHRONOUSLY: both are typically followed by
   // an immediate navigation, which would cancel the debounced autosave and

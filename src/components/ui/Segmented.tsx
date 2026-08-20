@@ -64,6 +64,7 @@ export function Segmented<T extends string>({
   accent,
   size = 'md',
   label,
+  fluid = false,
   className = '',
 }: {
   options: ReadonlyArray<SegmentedOption<T>>
@@ -74,6 +75,17 @@ export function Segmented<T extends string>({
   size?: SegmentedSize
   /** Accessible name for the group. Required — a control with no name is a puzzle. */
   label: string
+  /**
+   * Fill the line and split it evenly between the segments.
+   *
+   * The default sizes each segment to its own label, which is right when the
+   * control qualifies something beside it. It is wrong when the control IS the
+   * line — a set's type in the tuner, where the segments are the only thing on
+   * that row and ragged widths read as four buttons that happen to be adjacent.
+   * `w-fit` and `w-full` are both width utilities, so a caller cannot reliably
+   * override this from `className`; it has to be a prop.
+   */
+  fluid?: boolean
   className?: string
 }) {
   const s = SIZE[size]
@@ -81,7 +93,7 @@ export function Segmented<T extends string>({
     <div
       role="group"
       aria-label={label}
-      className={`inline-flex gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.06] w-fit ${className}`}
+      className={`${fluid ? 'flex w-full' : 'inline-flex w-fit'} gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.06] ${className}`}
     >
       {options.map((o) => {
         const active = o.value === value
@@ -97,7 +109,8 @@ export function Segmented<T extends string>({
             aria-pressed={active}
             title={o.title}
             className={`inline-flex items-center justify-center ${s.gap} ${s.pad} ${s.text}
-                        rounded-xl font-semibold border shrink-0 whitespace-nowrap
+                        rounded-xl font-semibold border whitespace-nowrap
+                        ${fluid ? 'flex-1 min-w-0' : 'shrink-0'}
                         transition-colors active:scale-[0.97]`}
             style={active && c
               ? { color: c, borderColor: `${c}55`, background: `${c}1f`, boxShadow: `0 0 10px ${c}33` }

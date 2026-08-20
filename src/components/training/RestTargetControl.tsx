@@ -52,7 +52,10 @@ export function RestTargetControl({ exerciseName, dayKey, label = 'Rest' }: {
         disabled={target <= REST_MIN_SEC}
         onClick={() => setRestTarget(exerciseName, target - REST_STEP_SEC, dayKey)}
       />
-      <span className="helix-num text-xs font-bold tabular-nums text-text w-10 text-center">
+      {/* Wide enough for the longest string the formatter can produce ("2:00"
+          at this weight, not "45s"), because a readout that clips is a readout
+          that lies about the number it is there to show. */}
+      <span className="helix-num text-xs font-bold tabular-nums text-text min-w-[3.25rem] text-center">
         {formatRestTarget(target)}
       </span>
       <Nudge

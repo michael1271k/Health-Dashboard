@@ -37,6 +37,15 @@ const serwist = new Serwist({
     //      purges every cache and reloads. A stale shell survives seconds, not
     //      a session. If that gate is ever removed, this must go back to
     //      NetworkFirst in the same commit.
+    //
+    //      NARROWED 2026-08-20: the gate now declines to act while the app is
+    //      hidden, while a live workout draft exists, or while offline — a
+    //      cache purge you cannot finish deletes the only shell able to render,
+    //      and a reload fired into a backgrounding iOS webview is the black
+    //      screen on resume. The gate is therefore DEFERRED, never skipped: it
+    //      re-checks on the next foreground, so a stale shell survives until the
+    //      user racks the bar rather than seconds. That window is the price of
+    //      never blanking mid-set, and it is the right trade.
     //   2. `skipWaiting` + `clientsClaim` below, so a new worker takes over
     //      without waiting for every tab to close.
     //

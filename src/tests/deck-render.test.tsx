@@ -178,3 +178,52 @@ describe('the livePrs digest', () => {
     expect(empty.bySet.size).toBe(0)
   })
 })
+
+/**
+ * ── THE GRID, ASSERTED ───────────────────────────────────────────────────────
+ * Everything below is a rendering claim that used to be false, and each one was
+ * invisible to both the type checker and the linter: a header that does not
+ * exist, a label cut to six characters, a set number where a medal belongs.
+ * They are cheap to assert and they were expensive to notice.
+ */
+describe('the set row reads as a table', () => {
+  it('puts column headers above the rows, once per exercise', () => {
+    const { container } = render(<ExerciseDeckList draft={deck(false, 2)} {...PROPS} />)
+    const text = container.textContent ?? ''
+    for (const label of ['Set', 'Previous', 'kg', 'Reps']) {
+      expect(text, `no "${label}" column header`).toContain(label)
+    }
+    // One header per card, not one per row.
+    expect(container.querySelectorAll('[class*="tracking-[0.1em]"]').length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('renders the effort word in full — no truncation on any label', () => {
+    // "VERY HARD" is nine characters and lived in a 44px column. Whatever else
+    // changes, the chip that carries it must not be able to clip.
+    const d = deck(true)
+    const rated = {
+      ...d,
+      exercises: d.exercises.map((ex, e) => e !== 0 ? ex : {
+        ...ex, sets: ex.sets.map((s, i) => i === 0 ? { ...s, rpe: 9 } : s),
+      }),
+    } as SessionDraft
+    const { container } = render(<ExerciseDeckList draft={rated} {...PROPS} />)
+    const chip = Array.from(container.querySelectorAll('span'))
+      .find((el) => el.textContent === 'Very Hard')
+    expect(chip, 'the effort label does not render').toBeTruthy()
+    expect(chip!.className, 'the effort label can still be truncated').not.toContain('truncate')
+  })
+
+  it('shows the previous set with its unit, not a bare pair of numbers', () => {
+    // "17.5×12" made the reader supply the kg themselves, one column away from
+    // a number that had one. A reference costs nothing to read or it is not a
+    // reference.
+    const history = new Map([[NAMES[0], {
+      date: '2026-08-05',
+      sets: [{ weightKg: 17.5, reps: 12 }, { weightKg: 17.5, reps: 11 }],
+    }]]) as ComponentProps<typeof ExerciseDeckList>['history']
+    const { container } = render(<ExerciseDeckList draft={deck(true, 1)} {...PROPS} history={history} />)
+    expect(container.textContent, 'the previous column never rendered').toContain('17.5kg × 12')
+    expect(container.textContent, 'a unitless previous pair is still being rendered').not.toMatch(/\d×\d/)
+  })
+})

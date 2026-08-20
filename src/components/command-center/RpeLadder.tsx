@@ -50,9 +50,32 @@ export function RpeLadder({ value, stale, seeded, onPick, setLabel }: {
   const color = rpeColor(value)
 
   return (
-    <div className="flex items-center gap-2 min-w-0">
-      <span className="text-[10px] font-bold uppercase tracking-wide text-muted shrink-0">Effort</span>
+    /**
+     * ── TWO LINES, BECAUSE THE WORD IS THE POINT ──────────────────────────────
+     * This was one line: the label, seven 18px pips, the readout, and two
+     * steppers. Everything but the readout was `shrink-0`, so the readout — the
+     * only element that says what the rating MEANS — absorbed every pixel of
+     * overflow and was the first thing to ellipsize. On a 390px phone
+     * "9 · VERY HARD" rendered as "9 · VER…", and "MAX EFFORT" never rendered
+     * at all. Giving it its own line costs 14px and removes the failure mode
+     * entirely, however narrow the screen gets.
+     */
+    <div className="space-y-1">
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-muted/60">Effort</span>
+        {/* Readout. Carries the word, not just the number — "8.5" means nothing
+            to someone who has not memorised the ladder, and the label is the
+            whole point of having one. No `truncate`: it is on its own line now
+            and there is nothing for it to lose a fight with. */}
+        <span
+          className="text-[10px] font-bold uppercase tracking-wide text-right"
+          style={{ color: rated ? color : 'var(--color-muted)', opacity: seeded ? 0.65 : 1 }}
+        >
+          {rated ? `${value} · ${rpeLabel(value)}` : stale ? 'Rate this' : 'Not rated'}
+        </span>
+      </div>
 
+      <div className="flex items-center gap-2 min-w-0">
       <div
         className="flex items-center gap-1 shrink-0"
         role="radiogroup"
@@ -96,16 +119,6 @@ export function RpeLadder({ value, stale, seeded, onPick, setLabel }: {
         })}
       </div>
 
-      {/* Readout. Carries the word, not just the number — "8.5" means nothing
-          to someone who has not memorised the ladder, and the label is the whole
-          point of having one. */}
-      <span
-        className="text-[10px] font-bold uppercase tracking-wide truncate"
-        style={{ color: rated ? color : 'var(--color-muted)', opacity: seeded ? 0.65 : 1 }}
-      >
-        {rated ? `${value} · ${rpeLabel(value)}` : stale ? 'Rate this' : 'Not rated'}
-      </span>
-
       {/* The load went up and the inherited rating went with it. One dot, no
           banner — enough to say this set wants an answer without interrupting. */}
       {stale && !rated && (
@@ -138,6 +151,7 @@ export function RpeLadder({ value, stale, seeded, onPick, setLabel }: {
           ))}
         </span>
       )}
+      </div>
     </div>
   )
 }

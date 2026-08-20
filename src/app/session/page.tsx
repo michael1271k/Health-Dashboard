@@ -12,6 +12,7 @@ import { buildTemplateDraft } from '@/lib/sessions/templateDraft'
 import { SEED_TEMPLATES } from '@/lib/sessions/seedTemplates'
 import { activeProgram, eraForDate } from '@/lib/programs'
 import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
+import { useWakeLock } from '@/lib/hooks/useWakeLock'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { BackLink } from '@/components/nav/NavChevron'
 
@@ -100,6 +101,18 @@ function SessionPageInner() {
   // deck re-triggers this effect (draft just became null, ?template= is still
   // in the URL) and re-seeds a zombie draft in the instant before router.back()
   // unmounts the page.
+  /**
+   * ── THE SCREEN STAYS ON WHILE THERE IS A DECK ───────────────────────────────
+   * Not a convenience. A locked screen is what gets the webview's content
+   * process jetsammed, which is what makes Capacitor reload a remote url, which
+   * is what painted the black screen you came back to. Holding the wake lock for
+   * the life of the draft removes the first domino. See `useWakeLock`.
+   *
+   * Only while a draft exists — the paste panel and the resume chooser are
+   * reading screens, and there is no reason to burn a phone's battery on them.
+   */
+  useWakeLock(!!draft)
+
   const seededRef = useRef(false)
   useEffect(() => {
     if (seededRef.current || !hydrated || draft || !templateDay || !seedReady) return

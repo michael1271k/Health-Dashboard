@@ -3,7 +3,7 @@
 import { memo, useCallback, useMemo, useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { ArrowLeftRight, Check, CheckCheck, ChevronDown, Footprints, GripVertical, History, NotebookPen, Plus, Target, Timer, X } from 'lucide-react'
+import { ArrowLeftRight, Check, CheckCheck, ChevronDown, Footprints, GripVertical, History, NotebookPen, Plus, Target, Timer, Weight, X } from 'lucide-react'
 import { tapLight } from '@/lib/native/haptics'
 import { SetEditorRow } from './SetEditorRow'
 import { useTrackRpe } from '@/lib/hooks/useTrackRpe'
@@ -15,7 +15,8 @@ import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { repWindowFor, holdTargetFor, ladderVerdict, levelUpCue } from '@/lib/training/ceilings'
 import { restTargetFor, hasRestOverride, formatRestTarget } from '@/lib/training/restTargets'
 import { useRestTargets } from '@/lib/hooks/useRestTargets'
-import { RestTargetControl } from '@/components/training/RestTargetControl'
+import { RestTargetSheet } from './RestTargetSheet'
+import { SET_GRID, SET_HEADER_TEXT, SET_TAIL_W } from './setGrid'
 import { workingSets, type ExerciseHistory } from '@/lib/hooks/useExerciseSetHistory'
 import type { PrAxis } from '@/lib/training/prEngine'
 import type { ReportTargets } from '@/lib/reports/fmtV2'
@@ -215,6 +216,7 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
   const showBody = open && !collapsed
   const [activeSet, setActiveSet] = useState<number | null>(null)
   const [editingNote, setEditingNote] = useState(false)
+  const [restSheet, setRestSheet] = useState(false)
 
   /*
    * Bound ONCE per card, not once per row per render. These are what let
@@ -650,21 +652,6 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
             )}
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            {/* Target rest — what the plan asks for between working sets. Shown
-                on the header because that is where the question is asked, and
-                it is a plain fact, not a countdown: no ticking, nothing to
-                dismiss. Tap the card open to change it. */}
-            {restTarget != null && (
-              <span
-                className="shrink-0 inline-flex items-center gap-1 px-1.5 py-px rounded-md text-[10px] font-bold tabular-nums"
-                style={{ color: STEEL, background: `${STEEL}14`, border: `1px solid ${STEEL}3d` }}
-                title={`Target rest between sets${restEdited ? ' — your own value' : ''}`}
-              >
-                <Timer className="w-2.5 h-2.5" aria-hidden="true" />
-                {formatRestTarget(restTarget)}
-                {restEdited && <span className="opacity-60" aria-hidden="true">*</span>}
-              </span>
-            )}
             {/* Current-input glance — only when the card is collapsed. Expanded,
                 the live set rows below say the same thing, so it's redundant. */}
             {!showBody && (
@@ -677,7 +664,42 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
             <ChevronDown className={`w-4 h-4 text-muted transition-transform duration-200 ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
           </div>
         </button>
+
+        {/* ── Target rest — the ONLY rest control on the card ──
+            What the plan asks for between working sets. A plain fact, not a
+            countdown: nothing ticks, nothing has to be dismissed. Tapping it
+            opens the sheet that used to be a permanently-mounted ± dial under
+            the exercise name — the same number, rendered twice, on a card whose
+            job is set rows.
+
+            A SIBLING of the collapse button, not a child of it. A button cannot
+            contain a button (the PR trophy strip learned this the hard way in
+            `SetEditorRow`), so this lives outside and the header's tap target
+            stops at the chevron. */}
+        {restTarget != null && (
+          <button
+            type="button"
+            onPointerDown={() => { void tapLight() }}
+            onClick={() => setRestSheet(true)}
+            className="shrink-0 inline-flex items-center gap-1 px-2 min-h-[32px] rounded-lg text-[10px] font-bold tabular-nums
+                       active:scale-95 transition-transform"
+            style={{ color: STEEL, background: `${STEEL}14`, border: `1px solid ${STEEL}3d` }}
+            aria-label={`Target rest ${formatRestTarget(restTarget)}${restEdited ? ', your own value' : ''} — tap to change`}
+            title={`Target rest between sets${restEdited ? ' — your own value' : ''}`}
+          >
+            <Timer className="w-2.5 h-2.5" aria-hidden="true" />
+            {formatRestTarget(restTarget)}
+            {restEdited && <span className="opacity-60" aria-hidden="true">*</span>}
+          </button>
+        )}
       </div>
+
+      <RestTargetSheet
+        open={restSheet}
+        onClose={() => setRestSheet(false)}
+        exerciseName={exercise.name}
+        dayKey={dayKey}
+      />
 
       {/* ── Note (editable) + next-target ── */}
       {showBody && (
@@ -717,15 +739,6 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
             </p>
           )}
 
-          {/* Target rest, editable where you are standing. The header chip is
-              the reading; this is the dial, and it only exists while the card is
-              open — a stepper on every collapsed card would be twenty-four
-              controls for a number you change twice a block. */}
-          {restTarget != null && (
-            <div className="pt-0.5">
-              <RestTargetControl exerciseName={exercise.name} dayKey={dayKey} />
-            </div>
-          )}
         </div>
       )}
 
@@ -741,6 +754,26 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
               style={{ color: '#3E9E7A', background: '#3E9E7A14', border: '1px solid #3E9E7A44' }}>
               <CheckCheck className="w-3 h-3" aria-hidden="true" /> Check all
             </button>
+          </div>
+          {/* ── Column headers ──
+              The set rows carried none, so every value had to be identified by
+              what it looked like: the muted pair was last time, the bold pair
+              was now, probably. Four words remove that inference, and they cost
+              one 14px line per card.
+
+              The template comes from `setGrid.ts`, the same constant the rows
+              import, so a column cannot be added here without the data moving
+              with it. */}
+          <div className="flex items-center gap-2 px-2 pb-1">
+            <span className={`flex-1 ${SET_GRID} ${SET_HEADER_TEXT}`}>
+              <span>Set</span>
+              <span>Previous</span>
+              <span className="inline-flex items-center gap-1">
+                <Weight className="w-2.5 h-2.5" aria-hidden="true" />kg
+              </span>
+              <span>{timedEx ? 'Sec' : 'Reps'}</span>
+            </span>
+            <span className={`${SET_TAIL_W} shrink-0`} aria-hidden="true" />
           </div>
           {groups.map((g) => {
             const timed = timedEx
@@ -812,13 +845,13 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
                       onClick={() => handleToggleDone(pairIdx)}
                       aria-pressed={pairDone}
                       aria-label={pairDone ? `Mark set ${g.num} not done` : `Mark set ${g.num} done — both sides`}
-                      className="ml-auto min-h-[32px] min-w-[32px] rounded-lg flex items-center justify-center shrink-0
-                                 active:scale-95 transition-[color,background-color,border-color,transform] duration-150"
+                      className={`ml-auto ${SET_TAIL_W} min-h-[34px] rounded-lg flex items-center justify-center shrink-0
+                                 active:scale-95 transition-[color,background-color,border-color,transform] duration-150`}
                       style={pairDone
                         ? { color: '#fff', background: '#3E9E7A', border: '1px solid #3E9E7A' }
                         : { color: 'var(--color-muted)', background: 'transparent', border: '1px solid rgba(255,255,255,0.14)' }}
                     >
-                      <Check className="w-3.5 h-3.5" aria-hidden="true" />
+                      <Check className="w-4 h-4" strokeWidth={3} aria-hidden="true" />
                     </button>
                   )}
                 </div>

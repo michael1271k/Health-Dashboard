@@ -1,10 +1,28 @@
 'use client'
 
 import { useEffect } from 'react'
+import { peekSessionDraft } from '@/lib/sessions/draft'
 
 const LOADED_AT = Date.now()
 const LAUNCH_WINDOW_MS = 5000
 const VERSION_FLAG = 'helix_version_reloaded'
+
+/**
+ * A reload is only ever safe when the app is VISIBLE and there is no live
+ * workout on screen.
+ *
+ * Both halves were learned the hard way. Reloading a hidden webview means iOS
+ * suspends the process mid-navigation and you resume onto a half-loaded, blank
+ * document — this file used to do that deliberately, on the theory that a
+ * reload nobody is watching is free. It is not free on a remote-url native
+ * shell. And a reload during a session throws away the deck the user is
+ * standing in front of, for an update that can wait until they rack the bar.
+ */
+function safeToReload(): boolean {
+  if (document.visibilityState !== 'visible') return false
+  try { if (peekSessionDraft()) return false } catch { /* storage blocked — treat as safe */ }
+  return true
+}
 
 /**
  * Service-worker lifecycle + deploy-drift protection.
@@ -15,13 +33,13 @@ const VERSION_FLAG = 'helix_version_reloaded'
  *
  * 1. Controller-change reload policy: within the first seconds of a launch a
  *    reload is imperceptible, so when a NEW service worker takes control inside
- *    the launch window we reload IMMEDIATELY. Only genuinely mid-session
- *    updates defer to the next hide — never yanking a live foreground session.
+ *    the launch window we reload IMMEDIATELY. Genuinely mid-session updates
+ *    wait for a moment when reloading is safe — see `safeToReload`.
  *
  * 2. Version gate: the client's inlined build id is compared against
  *    /api/version (no-store) on boot and on foreground. A mismatch = a deploy
  *    landed under us → one guarded reload BEFORE the stale module graph can
- *    throw. sessionStorage-flagged so a broken network can't reload-loop.
+ *    throw. Flagged so a broken network can't reload-loop.
  */
 export function SerwistRegister() {
   // Version gate — boot + foreground.
@@ -36,20 +54,31 @@ export function SerwistRegister() {
         const res = await fetch(`/api/version?t=${Date.now()}`, { cache: 'no-store' })
         if (!res.ok) return
         const { buildId } = await res.json() as { buildId?: string }
-        if (buildId && buildId !== 'unknown' && buildId !== myBuild) {
-          if (sessionStorage.getItem(VERSION_FLAG) === buildId) return // already tried for this deploy
-          sessionStorage.setItem(VERSION_FLAG, buildId)
-          // Purge every cache BEFORE reloading — a bare reload can be served
-          // the same stale precached chunks that caused the mismatch, which
-          // is exactly the React #130 "element type is an object" signature.
-          try {
-            if ('caches' in window) {
-              const keys = await caches.keys()
-              await Promise.all(keys.map((k) => caches.delete(k)))
-            }
-          } catch { /* best-effort */ }
-          window.location.reload()
-        }
+        if (!buildId || buildId === 'unknown' || buildId === myBuild) return
+        // ── THE FLAG LIVES IN localStorage, NOT sessionStorage ──
+        // It is a reload-LOOP guard, and the loop it guards against is one that
+        // starts with the process being killed — which is exactly what clears
+        // sessionStorage. The guard was reliably absent in the only situation
+        // it existed for. Keyed by build id, so a genuine new deploy still gets
+        // its one attempt.
+        if (localStorage.getItem(VERSION_FLAG) === buildId) return
+        // A deploy landed, but not at a moment we can act on: leave the flag
+        // UNSET so the next safe foreground still catches it.
+        if (!safeToReload()) return
+        // ── NEVER PURGE WHILE OFFLINE ──
+        // The purge deletes the precached shell so the reload cannot be served
+        // the stale chunks that caused the mismatch. Offline, that same delete
+        // removes the only copy of the app that can still render, and the
+        // reload that follows has nothing to load. Gym wifi is exactly this.
+        if (!navigator.onLine) return
+        localStorage.setItem(VERSION_FLAG, buildId)
+        try {
+          if ('caches' in window) {
+            const keys = await caches.keys()
+            await Promise.all(keys.map((k) => caches.delete(k)))
+          }
+        } catch { /* best-effort */ }
+        window.location.reload()
       } catch { /* offline — the SW keeps serving the consistent cached pair */ }
       finally { checking = false }
     }
@@ -76,18 +105,33 @@ export function SerwistRegister() {
     if (!('serviceWorker' in navigator)) return
     const hadController = !!navigator.serviceWorker.controller
     let reloading = false
+    let waiting = false
     const reload = () => { if (!reloading) { reloading = true; window.location.reload() } }
+
+    // Retry on every visibility change until the app is both visible and free
+    // of a live session. The old version listened `{ once: true }` for the next
+    // HIDE and reloaded then — a reload issued into a backgrounding webview,
+    // which is the blank-on-resume bug.
+    const onMaybeReload = () => {
+      if (!waiting || reloading) return
+      if (!safeToReload()) return
+      document.removeEventListener('visibilitychange', onMaybeReload)
+      waiting = false
+      reload()
+    }
 
     const onControllerChange = () => {
       if (reloading) return
       if (!hadController) return // first-ever takeover of a fresh tab needs no reload
       const inLaunchWindow = Date.now() - LOADED_AT < LAUNCH_WINDOW_MS
-      if (inLaunchWindow || document.visibilityState === 'hidden') {
-        reload() // imperceptible at launch / while hidden
-      } else {
-        // Mid-session update: defer to the next hide — never yank a live session.
-        const onHide = () => { if (document.visibilityState === 'hidden') reload() }
-        document.addEventListener('visibilitychange', onHide, { once: true })
+      if (inLaunchWindow && safeToReload()) {
+        reload() // imperceptible at launch
+        return
+      }
+      // Mid-session update: hold it until reloading is actually safe.
+      if (!waiting) {
+        waiting = true
+        document.addEventListener('visibilitychange', onMaybeReload)
       }
     }
     navigator.serviceWorker.addEventListener('controllerchange', onControllerChange)
@@ -97,7 +141,10 @@ export function SerwistRegister() {
       registration.update().catch(() => {})
     }).catch((err) => console.error('SW registration failed:', err))
 
-    return () => navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange)
+    return () => {
+      navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange)
+      document.removeEventListener('visibilitychange', onMaybeReload)
+    }
   }, [])
 
   return null

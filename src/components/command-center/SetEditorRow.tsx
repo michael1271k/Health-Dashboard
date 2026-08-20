@@ -1,12 +1,14 @@
 'use client'
 
 import { memo, useEffect, useState } from 'react'
-import { Check, X, Trophy } from 'lucide-react'
+import { Check, Medal, Trash2, Trophy } from 'lucide-react'
 import { tapLight } from '@/lib/native/haptics'
 import { isSetCommitted, type DraftSet } from '@/lib/sessions/draft'
 import { prAxisLabel, type PrAxis } from '@/lib/training/prEngine'
 import { rpeColor, rpeLabel } from '@/lib/training/effort'
+import { Segmented } from '@/components/ui/Segmented'
 import { RpeLadder } from './RpeLadder'
+import { SET_GRID, SET_SUBLINE_INDENT, SET_TAIL_W } from './setGrid'
 
 /** Plate step (the flanking ± on the weight field) and the microload step. */
 const PLATE_STEP = 2.5
@@ -19,10 +21,28 @@ const GOLD = '#C9A227'   // personal record
 /** The ladder stop that MEANS failure — the one rating the `F` tag mirrors. */
 const FAILURE_RPE = 10
 
+type SetTypeValue = 'normal' | 'warmup' | 'failure' | 'dropset'
+
 /**
  * One set row of the deck: tap to activate the tuner (typeable weight/reps
- * fields with flanking steppers, microload chips, Warm-up/Failure/Drop toggles,
- * Split L/R, effort ladder).
+ * fields with flanking steppers, microload chips, set-type control, Split L/R,
+ * effort ladder).
+ *
+ * ── THE ROW IS A TABLE ROW NOW ───────────────────────────────────────────────
+ * It used to be a four-column grid with no header above it, and two of those
+ * columns were doing more than one job: today's weight AND reps AND a type chip
+ * AND a stale-rating dot shared one `flex` cell, while the last column was a
+ * fixed 44px holding words like "VERY HARD" and "MAX EFFORT". The first made
+ * the numbers zig-zag down the card, because a cell that packs a variable
+ * number of children cannot line up with the cell below it. The second
+ * truncated: at 10px bold uppercase, 44px is about six characters, so the only
+ * effort ratings that rendered in full were HARD and EASY — the labels exist to
+ * be read, and half of them were being cut in half.
+ *
+ * Now: SET · PREVIOUS · KG · REPS · ✓, one job per column, a header row above
+ * them (`setGrid.ts` owns the template so the two cannot drift), and everything
+ * of variable width — the effort word, the record chips — on a second line that
+ * can be as wide as it needs to be.
  *
  * ── THE SLIDER IS GONE ───────────────────────────────────────────────────────
  * A Radix weight slider used to sit between the number fields and the steppers.
@@ -139,6 +159,7 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
   // Green = committable = will be recorded on finish. Template decks seed every
   // set as NOT committed (done:false); pasted/edited sets are committed by default.
   const done = isSetCommitted(set)
+  const hasPr = prAxes.length > 0
 
   const nudgeWeight = (delta: number) => {
     void tapLight()
@@ -163,44 +184,50 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
    * ratings are being tracked at all, and only over a rating that IS the
    * failure stop — dropping the tag never touches an 8.5 you entered yourself.
    */
-  const toggleType = (t: 'warmup' | 'failure' | 'dropset') => {
+  const pickType = (choice: SetTypeValue) => {
     void tapLight()
-    const nextType = set.setType === t ? undefined : t
+    const nextType = choice === 'normal' ? undefined : choice
     const patch: Partial<DraftSet> = { setType: nextType }
-    if (t === 'failure' && trackRpe) {
+    if (trackRpe) {
       if (nextType === 'failure') patch.rpe = FAILURE_RPE
-      else if (set.rpe === FAILURE_RPE) patch.rpe = undefined
+      else if (isFail && set.rpe === FAILURE_RPE) patch.rpe = undefined
     }
     onChange(index, patch)
   }
 
   const sideColor = set.side === 'L' ? '#8E9AAC' : set.side === 'R' ? '#E0703C' : null
-  // The badge box is 24px (`w-6 shrink-0`). "Warmup" and "Dropset" are six and
-  // seven uppercase characters, and `shrink-0` stops them even trying to fit —
-  // they spilled into the load column 10px away. So the box now holds only what
-  // is guaranteed to fit (S1 / L / R) and the grid stays aligned however the set
-  // is typed; the TYPE moves to a chip beside the numbers, where `F` already
-  // lived. The earlier objection to a bare letter — that "W" next to "20kg"
-  // reads as a unit — is answered by the chip's border and tint, which read as a
-  // tag rather than a suffix, plus the full word in `title`/`aria-label`. This
-  // is the treatment the read-only ledger already shipped (ExerciseBreakdown).
+  // The badge box is 28px. "Warmup" and "Dropset" are six and seven uppercase
+  // characters and were never going to fit — they spilled into the load column
+  // 10px away. So the box holds only what is guaranteed to fit (a digit, a
+  // letter, a medal) and the grid stays aligned however the set is typed.
+  //
   // ── THE LEFT COLUMN IS THE SET'S IDENTITY ──
   // It used to read `S1` and carry the type as a separate chip further along
   // the row, which meant a warm-up announced itself twice — once as a number it
   // is not (a warm-up is not "set 1 of 4") and once as a tag. Hevy puts the
   // letter WHERE the number goes, because a warm-up has no ordinal: it is the W.
-  // A split side still wins the box (L/R is the more specific fact) and its type
-  // falls back to the chip.
+  //
+  // A RECORD OUTRANKS THE ORDINAL for the same reason. The set number is the
+  // least interesting fact about the one set of the day that beat something,
+  // and a medal in the identity slot is legible at a glance from arm's length,
+  // which is the distance a phone on a bench actually gets read from. A side
+  // still wins the box (L/R is the more specific fact) and its type falls back
+  // to a chip on the second line.
   const typeBadge = isWarm ? { label: 'W', full: 'Warm-up', color: ORANGE }
     : isFail ? { label: 'F', full: 'Taken to failure', color: DANGER }
     : isDrop ? { label: 'D', full: 'Drop set', color: DROP }
     : null
+  const showMedal = hasPr && !set.side
   const badge = set.side ?? typeBadge?.label ?? `${displayNum ?? index + 1}`
-  const badgeColor = set.side ? sideColor : typeBadge?.color ?? null
-  // Only when the box could not carry it — a sided row that is also to failure.
-  const typeTag = set.side && typeBadge
-    ? { label: `${typeBadge.label}-${set.side}`, full: typeBadge.full, color: typeBadge.color }
+  const badgeColor = set.side ? sideColor : showMedal ? GOLD : typeBadge?.color ?? null
+  // Only when the box could not carry it — a sided row that is also to failure,
+  // or a row whose box the medal took.
+  const typeTag = typeBadge && (set.side || showMedal)
+    ? { label: set.side ? `${typeBadge.label}-${set.side}` : typeBadge.label, full: typeBadge.full, color: typeBadge.color }
     : null
+
+  const setTypeValue: SetTypeValue = isWarm ? 'warmup' : isFail ? 'failure' : isDrop ? 'dropset' : 'normal'
+  const subLine = set.rpe != null || hasPr || typeTag != null
 
   return (
     <div
@@ -210,10 +237,15 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
       // editing the set it belonged to — and a row you reopened to fix a rep
       // count looked identical to one you had never completed. Green stays;
       // the active row is distinguished by its ring instead.
-      className={`rounded-lg border transition-colors ${
-        done ? 'border-[#3E9E7A]/45 bg-[#3E9E7A]/[0.10]'
-        : active ? 'border-primary/30 bg-white/[0.03]'
-        : isWarm ? 'border-transparent bg-[#E0703C]/[0.06]' : 'border-transparent'}`}
+      //
+      // The green is now a FULL-WIDTH BAND with no border of its own. A ticked
+      // set is not an outlined object among unticked ones, it is a stripe you
+      // can find without reading — which is how it reads on the reference and
+      // how it reads from three feet away.
+      className={`rounded-lg transition-colors ${
+        done ? 'bg-[#3E9E7A]/[0.13]'
+        : active ? 'bg-white/[0.045]'
+        : isWarm ? 'bg-[#E0703C]/[0.06]' : ''}`}
       style={{
         ...(subRow && sideColor
           ? { borderLeft: `2px solid ${sideColor}`, borderTopLeftRadius: 2, borderBottomLeftRadius: 2 }
@@ -222,94 +254,67 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
         ...(active ? { boxShadow: 'inset 0 0 0 1px rgba(224,112,60,0.45)' } : null),
       }}
     >
-      {/* ── Summary block (always visible) ──
-          Two lines, Hevy-style. The numbers own the first line; records hang
-          UNDER them on a second. They used to sit inline after the reps, which
-          on a three-axis set (Weight + Volume + 1RM) pushed the row past the
-          viewport and slid under the green tick — the one control that must
-          always be hittable. A sub-line cannot collide with it by construction,
-          however many axes a set wins. */}
+      {/* ── Summary line (always visible) ──
+          One job per column. Anything whose width depends on its value — the
+          effort word, the record chips, a type tag the badge could not carry —
+          lives on the second line, where nothing has to line up with anything
+          and so nothing has to be cut short. */}
       <div className="flex items-center gap-2 px-2 py-1">
         <button
           type="button"
           onClick={() => onActivate(index)}
-          className="flex-1 min-w-0 flex flex-col gap-1 text-left min-h-[34px] justify-center"
+          className="flex-1 min-w-0 text-left min-h-[36px] flex items-center"
           aria-expanded={active}
         >
-          <span className="grid grid-cols-[24px_minmax(0,1fr)_minmax(0,1fr)_44px] items-center gap-1.5 min-w-0">
+          <span className={`w-full ${SET_GRID}`}>
+            {/* SET — the identity: side, then record, then type, then ordinal. */}
             <span
-              className="w-6 h-6 shrink-0 rounded-md flex items-center justify-center text-[11px] font-bold uppercase tabular-nums"
+              className="w-7 h-7 shrink-0 rounded-md flex items-center justify-center helix-num text-[12px] font-bold uppercase tabular-nums"
               style={badgeColor
                 ? { color: badgeColor, background: `${badgeColor}1f`, border: `1px solid ${badgeColor}55` }
-                : { color: 'var(--color-muted)' }}
-              title={typeBadge?.full}
-              aria-label={typeBadge ? `${typeBadge.full}, set ${displayNum ?? index + 1}` : `Set ${displayNum ?? index + 1}`}
+                : { color: 'var(--color-text)' }}
+              title={showMedal ? 'Personal record' : typeBadge?.full}
+              aria-label={showMedal ? `Set ${displayNum ?? index + 1} — personal record`
+                : typeBadge ? `${typeBadge.full}, set ${displayNum ?? index + 1}`
+                : `Set ${displayNum ?? index + 1}`}
             >
-              {badge}
-            </span>
-
-            {/* TODAY */}
-            <span className="flex items-baseline gap-1 min-w-0">
-              {showLoad && (
-                <>
-                  <span className={`helix-num text-fluid-base font-bold tabular-nums truncate ${isWarm ? 'text-muted' : 'text-text'}`}>
-                    {weightLabel}<span className="text-[10px] text-muted font-normal ml-0.5">kg</span>
-                  </span>
-                  <span className="text-muted text-xs shrink-0">×</span>
-                </>
-              )}
-              <span className={`helix-num text-fluid-base font-bold tabular-nums shrink-0 ${isWarm ? 'text-muted' : 'text-text'}`}>
-                {set.reps}{timed && <span className="text-[10px] text-muted font-normal ml-0.5">sec</span>}
-              </span>
-              {typeTag && (
-                <span className="text-[9px] font-bold uppercase px-1 py-px rounded shrink-0"
-                  style={{ color: typeTag.color, background: `${typeTag.color}1f`, border: `1px solid ${typeTag.color}55` }}
-                  title={typeTag.full} aria-label={typeTag.full}>
-                  {typeTag.label}
-                </span>
-              )}
-              {/* Cleared because the load or the reps went up. One dot, no banner. */}
-              {set.rpe == null && set.rpeStale && (
-                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: ORANGE }}
-                  title="Heavier than last time — rate this set" aria-label="Needs an effort rating" />
-              )}
+              {showMedal
+                ? <Medal className="w-3.5 h-3.5" aria-hidden="true" />
+                : badge}
             </span>
 
             {/* ── PREVIOUS ──
                 What this same set number was last time you did the movement, on
-                ANY routine. It sits between today's numbers and the effort
-                because that is the order you read them in: what it is, what it
-                was, how hard it felt.
+                ANY routine. It sits before today's numbers because that is the
+                order the reference reads them in — what it was, then what it is
+                — and because a target you glance at belongs to the left of the
+                value you are about to type.
 
-                A COLUMN, not a chip. This value was already fetched, threaded
-                and rendered — behind `hidden xs:inline`, i.e. invisible on every
-                phone narrower than 400px, which is the device it exists for. The
-                card above it carried a "Prev 36kg × 12, 11, 10" pill instead,
-                where you re-counted commas to find the set you were on.
+                It carries its UNIT. "17.5×12" next to a bare 17.5 in the KG
+                column made the reader supply the kg themselves; the whole point
+                of a reference is that it costs nothing to read.
 
                 Dimmed and never editable: a reference that looks like an input
                 gets typed into. */}
             <span className="helix-num text-[11px] tabular-nums text-muted/70 truncate"
               title={prev ? 'Last time you did this movement' : undefined}>
-              {prev ? (prev.weightKg > 0 ? `${prev.weightKg}×${prev.reps}` : `${prev.reps}`) : '—'}
+              {prev ? (prev.weightKg > 0 ? `${prev.weightKg}kg × ${prev.reps}` : `${prev.reps}`) : '—'}
             </span>
 
-            {/* Effort readout. Carries the WORD, not just the number: "8.5"
-                means nothing to someone who has not memorised the ladder. A
-                value inherited from last session renders dimmer, because it is
-                a proposal until you either confirm it or commit the session. */}
-            <span
-              className="text-[10px] font-bold uppercase tracking-wide text-right truncate"
-              style={set.rpe != null
-                ? { color: rpeColor(set.rpe), opacity: set.rpeSeed != null ? 0.55 : 1 }
-                : { color: 'transparent' }}
-              title={set.rpe == null ? undefined
-                : set.rpeSeed != null ? 'Carried from last session — tap to confirm or change' : undefined}
-            >
-              {set.rpe != null ? rpeLabel(set.rpe) : '—'}
+            {/* KG — its own column, so every weight in the card shares an edge. */}
+            <span className={`helix-num text-fluid-base font-bold tabular-nums truncate ${isWarm ? 'text-muted' : 'text-text'}`}>
+              {showLoad
+                ? <>{weightLabel}<span className="text-[10px] text-muted font-normal ml-0.5">kg</span></>
+                : <span className="text-muted font-normal">—</span>}
+            </span>
+
+            {/* REPS (or seconds on a hold). */}
+            <span className={`helix-num text-fluid-base font-bold tabular-nums truncate ${isWarm ? 'text-muted' : 'text-text'}`}>
+              {set.reps}{timed && <span className="text-[10px] text-muted font-normal ml-0.5">s</span>}
             </span>
           </span>
         </button>
+
         {onToggleDone && (
           <button
             type="button"
@@ -322,166 +327,164 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
             onClick={() => { onToggleDone(index) }}
             aria-pressed={done}
             aria-label={done ? `Mark set ${index + 1} not done` : `Mark set ${index + 1} done`}
-            className="min-h-[32px] min-w-[32px] rounded-lg flex items-center justify-center active:scale-95 transition-[color,background-color,border-color,transform] duration-150"
+            className={`${SET_TAIL_W} shrink-0 min-h-[34px] rounded-lg flex items-center justify-center
+                        active:scale-95 transition-[color,background-color,border-color,transform] duration-150`}
             style={done
               ? { color: '#fff', background: GREEN, border: `1px solid ${GREEN}` }
               : { color: 'var(--color-muted)', background: 'transparent', border: '1px solid rgba(255,255,255,0.14)' }}
           >
-            <Check className="w-3.5 h-3.5" aria-hidden="true" />
+            <Check className="w-4 h-4" strokeWidth={3} aria-hidden="true" />
           </button>
         )}
-        <button
-          type="button"
-          onClick={() => onRemove(index)}
-          className="min-h-[32px] min-w-[32px] rounded-lg flex items-center justify-center text-muted hover:text-danger active:scale-95 transition-transform"
-          aria-label={`Remove set ${index + 1}`}
-        >
-          <X className="w-3.5 h-3.5" aria-hidden="true" />
-        </button>
       </div>
 
-      {/* ── Live records ──
-          Appears the instant the set is ticked green, from the SAME engine that
-          writes personal_records at commit — a badge shown here is a badge that
-          gets recorded. Indented to the load column so it reads as belonging to
-          these numbers, and one trophy leads the run rather than repeating per
-          axis.
+      {/* ── Second line: effort, records, and any type the badge could not carry ──
+          Everything here is variable-width, which is exactly why it is not in
+          the grid. The effort word used to live in a fixed 44px column and be
+          ellipsized to "VER…"; here it is a chip that is as wide as the word.
 
-          ITS OWN CONTROL, on its own line. It used to live INSIDE the row's
-          activate button, where it could not be tapped independently (a button
-          cannot hold a button) and any tap opened the tuner instead. Tapping it
-          now opens the record sheet, which is the only place the numbers behind
-          the badge — what was beaten, and by how much — actually exist. */}
-      {prAxes.length > 0 && (
-        <button
-          type="button"
-          onPointerDown={onPrTap ? () => { void tapLight() } : undefined}
-          onClick={onPrTap ? () => onPrTap(index) : undefined}
-          disabled={!onPrTap}
-          className={`w-full flex items-center gap-1 flex-wrap pl-[42px] pr-2 pb-1.5 -mt-0.5 text-left
-                      ${onPrTap ? 'active:scale-[0.98] transition-transform duration-150' : ''}`}
-          aria-label={onPrTap ? `Records on this set — ${prAxes.map((a) => prAxisLabel(a, timed)).join(', ')}` : undefined}
-        >
-          <Trophy className="w-2.5 h-2.5 shrink-0" style={{ color: GOLD }} aria-hidden="true" />
-          {prAxes.map((axis) => (
-            <span key={axis} className="text-[8px] font-bold uppercase tracking-wide leading-none px-1 py-0.5 rounded"
-              style={{ color: GOLD, background: `${GOLD}1a`, border: `1px solid ${GOLD}55` }}
-              title={`Personal record — ${prAxisLabel(axis, timed)}`}>
-              {prAxisLabel(axis, timed)}
+          Records come from the SAME engine that writes personal_records at
+          commit — a badge shown here is a badge that gets recorded. The trophy
+          run is its own control: it used to sit INSIDE the row's activate
+          button, where it could not be tapped independently (a button cannot
+          hold a button) and any tap opened the tuner instead. Tapping it now
+          opens the record sheet, which is the only place the numbers behind the
+          badge — what was beaten, and by how much — actually exist. */}
+      {subLine && (
+        <div className={`flex items-center flex-wrap gap-1 ${SET_SUBLINE_INDENT} pr-2 pb-1.5 -mt-0.5`}>
+          {set.rpe != null && (
+            <span
+              className="text-[10px] font-bold uppercase tracking-wide leading-none px-1.5 py-1 rounded"
+              style={{
+                color: rpeColor(set.rpe),
+                background: `${rpeColor(set.rpe)}1a`,
+                border: `1px solid ${rpeColor(set.rpe)}55`,
+                // A value inherited from last session renders dimmer, because it
+                // is a proposal until you either confirm it or commit.
+                opacity: set.rpeSeed != null ? 0.6 : 1,
+              }}
+              title={set.rpeSeed != null ? 'Carried from last session — tap the set to confirm or change' : undefined}
+            >
+              {rpeLabel(set.rpe)}
             </span>
-          ))}
-        </button>
+          )}
+          {/* Cleared because the load or the reps went up. One dot, no banner. */}
+          {set.rpe == null && set.rpeStale && (
+            <span className="w-1.5 h-1.5 rounded-full" style={{ background: ORANGE }}
+              title="Heavier than last time — rate this set" aria-label="Needs an effort rating" />
+          )}
+          {typeTag && (
+            <span className="text-[10px] font-bold uppercase tracking-wide leading-none px-1.5 py-1 rounded"
+              style={{ color: typeTag.color, background: `${typeTag.color}1f`, border: `1px solid ${typeTag.color}55` }}
+              title={typeTag.full} aria-label={typeTag.full}>
+              {typeTag.label}
+            </span>
+          )}
+          {hasPr && (
+            <button
+              type="button"
+              onPointerDown={onPrTap ? () => { void tapLight() } : undefined}
+              onClick={onPrTap ? () => onPrTap(index) : undefined}
+              disabled={!onPrTap}
+              className={`flex items-center gap-1 flex-wrap text-left
+                          ${onPrTap ? 'active:scale-[0.97] transition-transform duration-150' : ''}`}
+              aria-label={onPrTap ? `Records on this set — ${prAxes.map((a) => prAxisLabel(a, timed)).join(', ')}` : undefined}
+            >
+              <Trophy className="w-2.5 h-2.5 shrink-0" style={{ color: GOLD }} aria-hidden="true" />
+              {prAxes.map((axis) => (
+                <span key={axis} className="text-[10px] font-bold uppercase tracking-wide leading-none px-1.5 py-1 rounded"
+                  style={{ color: GOLD, background: `${GOLD}1a`, border: `1px solid ${GOLD}55` }}
+                  title={`Personal record — ${prAxisLabel(axis, timed)}`}>
+                  {prAxisLabel(axis, timed)}
+                </span>
+              ))}
+            </button>
+          )}
+        </div>
       )}
 
       {/* ── Tuner (active row only) ──
-          THREE ROWS, DOWN FROM SIX. It used to stack: number fields, a weight
-          slider, a stepper row, the W/F/D group, the effort ladder and Split
-          L/R on its own line — a control surface taller than the four set rows
-          around it, for a set whose whole content is two numbers and a rating.
+          ONE CONTROL PER LINE, IN THE ORDER YOU REACH FOR THEM. It used to open
+          with six controls on a single non-wrapping flex line — `− weight + × −
+          reps +` — where both number fields were `flex-1` competing for what
+          the four 34px steppers and two unit labels left behind. On a 390px
+          phone that is a few characters each, and since `globals.css` forces
+          16px on every form control (the iOS zoom guard), "8.75" and "14" were
+          clipping inside their own inputs.
 
-          The fields absorbed the steppers (± flanks the number it changes,
-          which is also where your thumb already is), the slider left, and Split
-          moved up beside the type chips it belongs with. What is left is: the
-          numbers, what kind of set it was, how hard it was. */}
+          So the numbers get a block each, half the width apiece, with the
+          stepper that changes them on either side and the microloads directly
+          underneath the value they microload. Then effort (asked every working
+          set), then type (asked occasionally), then split and remove (asked
+          rarely, and one of them destructive). */}
       {active && (
-        <div className="px-2 pb-2 space-y-1.5">
-          {/* Row 1 — the numbers. Type them, or step them from either side. */}
-          <div className="flex items-center gap-1.5">
+        <div className="px-2 pb-2 pt-0.5 space-y-2">
+          <div className={`grid gap-2 ${showLoadControls ? 'grid-cols-2' : 'grid-cols-1'}`}>
             {showLoadControls && (
-              <>
-                <Step label="−" ariaLabel={`${PLATE_STEP}kg less`} onClick={() => nudgeWeight(-PLATE_STEP)} />
-                <label className="flex-1 min-w-0 flex items-center gap-1 rounded-lg border border-border bg-surface-2 px-2 min-h-[38px]">
+              <TunerBlock label="Weight · kg">
+                <div className="flex items-stretch gap-1">
+                  <Step label="−" ariaLabel={`${PLATE_STEP}kg less`} onClick={() => nudgeWeight(-PLATE_STEP)} />
+                  <label className="flex-1 min-w-0 flex items-center rounded-lg border border-border bg-surface-2 px-1 min-h-[44px]">
+                    <NumberField
+                      value={set.weightKg}
+                      inputMode="decimal"
+                      ariaLabel={`Weight for set ${index + 1}`}
+                      onCommit={(n) => onChange(index, { weightKg: Math.max(0, n) })}
+                    />
+                  </label>
+                  <Step label="+" ariaLabel={`${PLATE_STEP}kg more`} onClick={() => nudgeWeight(+PLATE_STEP)} />
+                </div>
+                {/* The quarter-kg grid survives the slider's removal: microloading
+                    is how a 3.75kg lateral raise progresses, and it is not
+                    something you want to open a keyboard for. Directly under the
+                    number it moves — a control placed away from what it changes
+                    needs a label to explain itself, and this one no longer does. */}
+                <div className="flex items-stretch w-fit rounded-lg overflow-hidden mt-1 mx-auto"
+                  style={{ border: '1px solid rgba(255,255,255,0.10)' }}>
+                  <FineStep label={`−${FINE_STEP}`} onClick={() => nudgeWeight(-FINE_STEP)} />
+                  <span className="w-px" style={{ background: 'rgba(255,255,255,0.10)' }} aria-hidden="true" />
+                  <FineStep label={`+${FINE_STEP}`} onClick={() => nudgeWeight(+FINE_STEP)} />
+                </div>
+              </TunerBlock>
+            )}
+
+            <TunerBlock label={timed ? 'Seconds' : 'Reps'}>
+              <div className="flex items-stretch gap-1">
+                <Step label="−" ariaLabel={timed ? 'One second less' : 'One rep less'} onClick={() => nudgeReps(-1)} />
+                <label className="flex-1 min-w-0 flex items-center rounded-lg border border-border bg-surface-2 px-1 min-h-[44px]">
                   <NumberField
-                    value={set.weightKg}
-                    inputMode="decimal"
-                    ariaLabel={`Weight for set ${index + 1}`}
-                    onCommit={(n) => onChange(index, { weightKg: Math.max(0, n) })}
+                    value={set.reps}
+                    inputMode="numeric"
+                    ariaLabel={`${timed ? 'Seconds' : 'Reps'} for set ${index + 1}`}
+                    onCommit={(n) => onChange(index, { reps: Math.max(1, Math.round(n)) })}
                   />
-                  <span className="text-[10px] uppercase tracking-wide text-muted shrink-0">kg</span>
                 </label>
-                <Step label="+" ariaLabel={`${PLATE_STEP}kg more`} onClick={() => nudgeWeight(+PLATE_STEP)} />
-                <span className="text-muted text-xs shrink-0 px-0.5">×</span>
-              </>
-            )}
-            <Step label="−" ariaLabel="One rep less" onClick={() => nudgeReps(-1)} />
-            <label className="flex-1 min-w-0 flex items-center gap-1 rounded-lg border border-border bg-surface-2 px-2 min-h-[38px]">
-              <NumberField
-                value={set.reps}
-                inputMode="numeric"
-                ariaLabel={`${timed ? 'Seconds' : 'Reps'} for set ${index + 1}`}
-                onCommit={(n) => onChange(index, { reps: Math.max(1, Math.round(n)) })}
-              />
-              <span className="text-[10px] uppercase tracking-wide text-muted shrink-0">{timed ? 'sec' : 'reps'}</span>
-            </label>
-            <Step label="+" ariaLabel="One rep more" onClick={() => nudgeReps(+1)} />
-          </div>
-
-          {/* Row 2 — microloads, set type, and Split.
-              Wraps rather than overflows: on a unilateral movement at 390px this
-              line carries two microload chips, three type chips and Split, and a
-              second line is a better failure than a clipped control.
-
-              Set type is Warm-up / Failure / Drop set (Hevy parity). "Normal" is
-              the absence of all three; "Remove" is the X on the summary line.
-              Failure is PER SIDE for a split set (F on Right while Left holds).
-              ONE SEGMENTED GROUP, not three floating buttons: these are mutually
-              exclusive (see `toggleType`) and three separate outlines claimed
-              otherwise. */}
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {showLoadControls ? (
-              // The quarter-kg grid survives the slider's removal: microloading is
-              // how a 3.75kg lateral raise progresses, and it is not something you
-              // want to open a keyboard for.
-              <div className="inline-flex items-stretch rounded-lg overflow-hidden shrink-0"
-                style={{ border: '1px solid rgba(255,255,255,0.10)' }}>
-                <FineStep label={`−${FINE_STEP}`} onClick={() => nudgeWeight(-FINE_STEP)} />
-                <span className="w-px" style={{ background: 'rgba(255,255,255,0.10)' }} aria-hidden="true" />
-                <FineStep label={`+${FINE_STEP}`} onClick={() => nudgeWeight(+FINE_STEP)} />
+                <Step label="+" ariaLabel={timed ? 'One second more' : 'One rep more'} onClick={() => nudgeReps(+1)} />
               </div>
-            ) : canAddLoad ? (
-              // Weighted variants stay one tap away — a belt on a dip, a plate
-              // held on a knee raise. Revealing the controls is enough; the
-              // load itself stays 0 until the user sets one, so a stray tap
-              // cannot invent tonnage or cost the set its reps axis.
-              <button
-                type="button"
-                onClick={() => { void tapLight(); setLoadOpen(true) }}
-                aria-label={`Add load to set ${displayNum ?? index + 1}`}
-                className="rounded-lg border border-white/[0.10] bg-white/[0.04] px-2.5 min-h-[32px] text-[11px] font-semibold text-muted active:scale-95 transition-transform shrink-0"
-              >
-                + Add load
-              </button>
-            ) : null}
-
-            <div className="inline-flex items-stretch rounded-lg overflow-hidden shrink-0"
-              style={{ border: '1px solid rgba(255,255,255,0.10)' }}>
-              <TypeChip active={isWarm} color={ORANGE} label="Warm-up" short="W" onClick={() => toggleType('warmup')} />
-              <span className="w-px" style={{ background: 'rgba(255,255,255,0.10)' }} aria-hidden="true" />
-              <TypeChip active={isFail} color={DANGER} label="Failure" short="F" onClick={() => toggleType('failure')} />
-              <span className="w-px" style={{ background: 'rgba(255,255,255,0.10)' }} aria-hidden="true" />
-              <TypeChip active={isDrop} color={DROP} label="Drop set" short="D" onClick={() => toggleType('dropset')} />
-            </div>
-
-            {/* Unilateral — split into Left/Right. Offered ONLY on a movement
-                trained one side at a time (`isUnilateralExercise`, checked in
-                `ExerciseCard`): splitting a bilateral set is not cosmetic, since
-                a pair is scored at its weaker side and counts as ONE set of work.
-                Merge lives on the parent "Set N" card, so a nested sub-row shows
-                only its own tuner. */}
-            {onSplit && (
-              <button type="button" onClick={() => onSplit(index)}
-                className="min-h-[32px] px-2.5 rounded-lg text-[11px] font-bold uppercase tracking-wide text-muted border border-white/10 hover:text-text active:scale-95 transition-colors shrink-0 ml-auto">
-                Split L / R
-              </button>
-            )}
+              {/* Weighted variants stay one tap away — a belt on a dip, a plate
+                  held on a knee raise. Revealing the controls is enough; the
+                  load itself stays 0 until the user sets one, so a stray tap
+                  cannot invent tonnage or cost the set its reps axis. */}
+              {!showLoadControls && canAddLoad && (
+                <button
+                  type="button"
+                  onClick={() => { void tapLight(); setLoadOpen(true) }}
+                  aria-label={`Add load to set ${displayNum ?? index + 1}`}
+                  className="mt-1 w-full rounded-lg border border-white/[0.10] bg-white/[0.04] min-h-[36px]
+                             text-[11px] font-semibold text-muted active:scale-95 transition-transform"
+                >
+                  + Add load
+                </button>
+              )}
+            </TunerBlock>
           </div>
 
-          {/* Row 3 — effort, per SET, and only on a working one.
-              A warm-up is never rated, for the same reason it wins no record:
-              it is not the effort the question is about. Rating the Failure
-              stop also tags the set `failure`, because that is what the word
-              means on this row — but only ADDITIVELY: clearing the rating
-              leaves a W/F/D chip the user set separately alone. */}
+          {/* Effort, per SET, and only on a working one. A warm-up is never
+              rated, for the same reason it wins no record: it is not the effort
+              the question is about. Rating the Failure stop also tags the set
+              `failure`, because that is what the word means on this row — but
+              only ADDITIVELY: clearing the rating leaves a type the user set
+              separately alone. */}
           {trackRpe && !isWarm && (
             <RpeLadder
               value={set.rpe}
@@ -490,15 +493,72 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
               setLabel={`set ${displayNum ?? index + 1}`}
               onPick={(choice) => onChange(index, {
                 rpe: choice?.rpe,
-                // The other direction of the same sync as `toggleType`: the top
-                // stop lights the F tag, and stepping off it (or clearing the
-                // rating) puts the tag out. Only a tag this control set is
-                // withdrawn — a warm-up or drop set chip is left alone.
+                // The other direction of the same sync as `pickType`: the top
+                // stop lights the failure type, and stepping off it (or clearing
+                // the rating) puts it out. Only a type this control set is
+                // withdrawn — a warm-up or drop set is left alone.
                 ...(choice?.failure ? { setType: 'failure' as const }
                   : isFail ? { setType: undefined } : {}),
               })}
             />
           )}
+
+          {/* ── Set type ──
+              FOUR SEGMENTS, AND ONE OF THEM IS "NORMAL". These are mutually
+              exclusive (see `pickType`) and the null state is a real choice —
+              it used to be the absence of three separate toggles, which meant
+              the control could not show you what the set currently IS, only
+              what it is not. Full width, because on this line it is the only
+              thing there.
+
+              And the words are visible. The old chips carried `hidden sm:inline`
+              on their labels, so below 640px — i.e. on every phone, which is
+              the only place this screen is used — the entire control read
+              "W F D". */}
+          <Segmented
+            fluid
+            size="sm"
+            label={`Set type for set ${displayNum ?? index + 1}`}
+            value={setTypeValue}
+            onChange={pickType}
+            options={[
+              { value: 'normal', label: 'Normal' },
+              { value: 'warmup', label: 'Warm-up', color: ORANGE },
+              { value: 'failure', label: 'Failure', color: DANGER },
+              { value: 'dropset', label: 'Drop', color: DROP, title: 'Drop set' },
+            ]}
+          />
+
+          <div className="flex items-center gap-2">
+            {/* Unilateral — split into Left/Right. Offered ONLY on a movement
+                trained one side at a time (`isUnilateralExercise`, checked in
+                `ExerciseCard`): splitting a bilateral set is not cosmetic, since
+                a pair is scored at its weaker side and counts as ONE set of work.
+                Merge lives on the parent "Set N" card, so a nested sub-row shows
+                only its own tuner. */}
+            {onSplit && (
+              <button type="button" onClick={() => { void tapLight(); onSplit(index) }}
+                className="flex-1 min-h-[44px] px-3 rounded-xl text-[11px] font-bold uppercase tracking-wide
+                           text-muted border border-white/10 hover:text-text active:scale-[0.98] transition-transform">
+                Split L / R
+              </button>
+            )}
+            {/* ── REMOVE MOVED IN HERE ──
+                It was a permanent 32px × on every collapsed row, one thumb-width
+                from the tick — the two most consequential controls on the deck,
+                adjacent, one of them destructive and reached far more often by
+                accident than on purpose. It costs a tap now, and that tap is the
+                row you are already opening to edit. */}
+            <button type="button" onClick={() => { void tapLight(); onRemove(index) }}
+              className={`${onSplit ? 'flex-1' : 'w-full'} min-h-[44px] px-3 rounded-xl text-[11px] font-bold uppercase tracking-wide
+                          border border-white/10 hover:border-danger/40 active:scale-[0.98] transition-transform
+                          flex items-center justify-center gap-1.5 text-danger`}
+              aria-label={`Remove set ${displayNum ?? index + 1}`}
+            >
+              <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+              Remove set
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -506,12 +566,41 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
 })
 
 /**
+ * One labelled control group in the tuner.
+ *
+ * The label is what lets the block be half a line wide without ambiguity: a
+ * bare number field flanked by ± could be either of the two, and the reader
+ * should not have to infer it from which one has a `kg` after it.
+ */
+/*
+ * The unit lives in the LABEL, not in the field.
+ *
+ * It used to be both: a block headed WEIGHT containing "8.75 KG", and a block
+ * headed REPS containing "14 REPS". Two statements of the same fact, and the
+ * second one was charging rent — at 360px the suffix crowded the number hard
+ * enough that "8.75KG" ran together with no space between them, on the exact
+ * control this refactor exists to make readable. The label says it once, above,
+ * where it does not compete with the value for width.
+ */
+function TunerBlock({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="min-w-0">
+      <span className="block mb-1 text-[9px] font-bold uppercase tracking-[0.1em] text-muted/60">{label}</span>
+      {children}
+    </div>
+  )
+}
+
+/**
  * The ± that flanks a number field.
  *
- * Its own component because there are four of them and each is a 34px square
- * whose only job is a haptic nudge — inline, they were four near-identical
- * seven-line className strings, which is how the reps stepper and the weight
- * chips drifted onto different radii in the first place.
+ * Its own component because there are four of them and each is one square whose
+ * only job is a haptic nudge — inline, they were four near-identical seven-line
+ * className strings, which is how the reps stepper and the weight chips drifted
+ * onto different radii in the first place.
+ *
+ * 44px, not the 34px it was. That is the smallest target a thumb hits reliably,
+ * and this one gets pressed with a shaking hand between sets.
  */
 function Step({ label, ariaLabel, onClick }: { label: string; ariaLabel: string; onClick: () => void }) {
   return (
@@ -519,8 +608,8 @@ function Step({ label, ariaLabel, onClick }: { label: string; ariaLabel: string;
       type="button"
       onClick={onClick}
       aria-label={ariaLabel}
-      className="shrink-0 rounded-lg border border-white/[0.08] bg-white/[0.04] min-h-[38px] min-w-[34px]
-                 text-sm font-bold text-text active:scale-95 transition-transform"
+      className="shrink-0 rounded-lg border border-white/[0.08] bg-white/[0.04] min-h-[44px] min-w-[44px]
+                 text-base font-bold text-text active:scale-95 transition-transform"
     >
       {label}
     </button>
@@ -534,7 +623,7 @@ function FineStep({ label, onClick }: { label: string; onClick: () => void }) {
       type="button"
       onClick={onClick}
       aria-label={`${label} kilograms`}
-      className="min-h-[32px] px-2 text-[11px] font-bold text-muted tabular-nums hover:text-text
+      className="min-h-[32px] px-3 text-[11px] font-bold text-muted tabular-nums hover:text-text
                  active:scale-95 transition-[color,transform] duration-150"
     >
       {label}
@@ -547,6 +636,16 @@ function FineStep({ label, onClick }: { label: string; onClick: () => void }) {
  * entries ("16", "16.", "16.2") don't fight the parsed value; commits every
  * valid parse up to the parent. Weight is NOT snapped to the 0.25 grid on typed
  * input — the user gets the exact number they enter (the ± chips still snap).
+ *
+ * ── IT IS SIZED, NOT SQUEEZED ────────────────────────────────────────────────
+ * `globals.css` forces `font-size: 16px` on every form control on a coarse
+ * pointer — the iOS auto-zoom guard, and non-negotiable. So the input's width
+ * has to be budgeted for 16px glyphs rather than for the 13px the surrounding
+ * type suggests: `102.25` is six characters plus a decimal point, and when this
+ * field was a `flex-1` fighting four steppers for the same line it got about
+ * three. `min-w` in `ch` units states the requirement in the only unit that
+ * tracks the rendered font, and centring means an over-long value is visibly
+ * over-long rather than silently scrolled out of frame.
  */
 function NumberField({ value, onCommit, inputMode, ariaLabel }: {
   value: number
@@ -571,26 +670,7 @@ function NumberField({ value, onCommit, inputMode, ariaLabel }: {
         if (Number.isFinite(n)) onCommit(n)
       }}
       onBlur={() => { const n = parseFloat(text); if (Number.isFinite(n)) onCommit(n); setEditing(false) }}
-      className="w-full min-w-0 bg-transparent field-compact font-bold tabular-nums text-text outline-none"
+      className="min-w-0 w-full bg-transparent text-center font-bold tabular-nums text-text outline-none"
     />
-  )
-}
-
-function TypeChip({ active, color, label, short, onClick }: {
-  active: boolean; color: string; label: string; short: string; onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className="min-h-[32px] px-2.5 text-[11px] font-bold uppercase tracking-wide transition-colors active:scale-95"
-      style={active
-        ? { color, background: `${color}24` }
-        : { color: 'var(--color-muted)', background: 'transparent' }}
-    >
-      <span aria-hidden="true">{short}</span>
-      <span className="ml-1 hidden sm:inline">{label}</span>
-    </button>
   )
 }

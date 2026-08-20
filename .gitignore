@@ -58,6 +58,10 @@ _inject-*.sql
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+# Layout probes from e2e/set-row-grid.spec.ts — regenerated on every run, and a
+# binary diff per run is noise. The FIXTURE beside them is not ignored: it is
+# the spec's input, emitted by the unit suite.
+/e2e/__screenshots__/
 
 # iOS Widget/Watch secrets — the real xcconfig carries the snapshot token
 ios/App/Secrets.xcconfig
