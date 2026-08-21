@@ -45,6 +45,8 @@ export const WorkoutCardioSchema = z.object({
   name: z.string().min(1).max(120),
   distanceKm: z.number().nonnegative().optional(),
   durationSec: z.number().int().nonnegative().optional(),
+  /** Treadmill gradient, percent. Capped well above any real machine. */
+  inclinePct: z.number().nonnegative().max(50).optional(),
   note: z.string().max(300).optional(),
   /**
    * Position among ALL deck entries, cardio and strength together.

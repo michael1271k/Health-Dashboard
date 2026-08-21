@@ -53,6 +53,17 @@ export const BONE = '#E6EAF0'
 /** The travel/deload tone. Promoted from `PPL_RGB.maintenance`, which was a
  *  nameless triple in phases.ts. It is a deliberate "away" colour, not a mistake. */
 export const SAND = '#E6C68C'
+/**
+ * The muscle atlas's own blue — the default tint for a worked muscle.
+ *
+ * Brighter and cooler than SAPPHIRE, which is a UI accent and reads as muted
+ * navy against the greyscale body. This one has to survive being laid over
+ * shaded grey at 20% alpha on a 24px thumbnail and still say "lit".
+ *
+ * It is a DEFAULT, not a law: `MuscleFocus` still passes the session's own day
+ * colour, which is what makes an Upper B report gold from the title to the body.
+ */
+export const ATLAS_BLUE = '#3FA9F5'
 
 // ── Semantic ─────────────────────────────────────────────────────────────────
 export const TEXT = '#ECEEF2'

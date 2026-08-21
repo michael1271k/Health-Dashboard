@@ -72,6 +72,27 @@ describe('payloadToTemplate — built from what actually reached the database', 
 })
 
 describe('templateToDraft — a template is a PLAN, never a log', () => {
+  it('carries the program\'s muscles onto every exercise', () => {
+    // The template stores a name, an order and sets — never muscles, which are
+    // the program's property. But this is the PRIMARY seeding path from the
+    // second session of any day onwards, and without them `resolveMovers` falls
+    // back to matching the name. The name table does not know "Barbell Bench
+    // Press", so the live muscle distribution went blank for exactly the
+    // compounds a chest day is built on.
+    const template = payloadToTemplate(
+      cbB.exercises.slice(0, 2).map((ex, i) => ({
+        exerciseName: ex.name, weightKg: 40, reps: 10, exerciseOrder: i,
+      })),
+      [],
+    )!
+    const d = templateToDraft(template, cbB, '2026-08-20', 'cb_b')
+    for (const ex of d.exercises.filter((e) => e.kind !== 'cardio')) {
+      const programmed = cbB.exercises.find((p) => p.name === ex.name)
+      if (!programmed) continue
+      expect(ex.muscleGroups, `${ex.name} lost its muscles`).toEqual(programmed.muscles)
+    }
+  })
+
   const template = payloadToTemplate([
     set({ exerciseName: 'Chest Press (Machine)', exerciseOrder: 0, weightKg: 40, reps: 11 }),
     set({ exerciseName: 'SA Triceps Pushdown', exerciseOrder: 1, weightKg: 6.25, reps: 15, side: 'L', pairId: 'p1' }),

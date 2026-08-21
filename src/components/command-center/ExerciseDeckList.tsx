@@ -24,7 +24,7 @@ const DRAG_MODIFIERS = [restrictToVerticalAxis, restrictToParentElement]
  * Stays a SINGLE column at every breakpoint — verticalListSortingStrategy +
  * restrictToVerticalAxis are only valid for a one-column list.
  */
-export function ExerciseDeckList({ draft, history, globalHistory, livePrs, readyByName, reportTargets, onReorder, onUpdateSet, onSplitSet, onMergeSet, onAddSet, onRemoveSet, onToggleDone, onCheckAll, onRemoveExercise, onSetNote, onPrTap, onUpdateCardio }: {
+export function ExerciseDeckList({ draft, history, globalHistory, livePrs, readyByName, reportTargets, onReorder, onUpdateSet, onSplitSet, onMergeSet, onAddSet, onRemoveSet, onToggleDone, onRemoveExercise, onSetNote, onPrTap, onUpdateCardio }: {
   draft: SessionDraft
   history: Map<string, ExerciseHistory> | undefined
   /** Unscoped memory — the last time this movement was done in ANY routine. */
@@ -42,13 +42,12 @@ export function ExerciseDeckList({ draft, history, globalHistory, livePrs, ready
   onAddSet: (localId: string) => void
   onRemoveSet: (localId: string, setIdx: number) => void
   onToggleDone: (localId: string, setIdx: number) => void
-  onCheckAll: (localId: string) => void
   onRemoveExercise: (localId: string) => void
   onSetNote: (localId: string, note: string) => void
   /** Tapping a set's trophy strip — opens the record sheet for that set. */
   onPrTap?: (localId: string, setIdx: number) => void
   /** Cardio blocks only: edit distance / duration. */
-  onUpdateCardio?: (localId: string, patch: { distanceKm?: number; durationSec?: number }) => void
+  onUpdateCardio?: (localId: string, patch: { distanceKm?: number; durationSec?: number; inclinePct?: number }) => void
 }) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
@@ -122,7 +121,6 @@ export function ExerciseDeckList({ draft, history, globalHistory, livePrs, ready
               onAddSet={onAddSet}
               onRemoveSet={onRemoveSet}
               onToggleDone={onToggleDone}
-              onCheckAll={onCheckAll}
               onRemoveExercise={onRemoveExercise}
               onSetNote={onSetNote}
               onPrTap={onPrTap}

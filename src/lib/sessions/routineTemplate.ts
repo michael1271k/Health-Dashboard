@@ -29,6 +29,7 @@
 import type { SessionDraft, DraftExercise, DraftSet } from '@/lib/sessions/draft'
 import type { ProgramDay } from '@/lib/programs'
 import { daySplitEnum } from '@/lib/programs'
+import { canonicalExerciseName } from '@/lib/exercises/aliases'
 
 /**
  * Mirrors `DraftSet`, minus the client-only fields (`done`, `linked`, and the
@@ -61,6 +62,8 @@ export interface TemplateExercise {
   kind?: 'strength' | 'cardio'
   distanceKm?: number
   durationSec?: number
+  /** Treadmill gradient, percent — see `DraftExercise.inclinePct`. */
+  inclinePct?: number
   note?: string
 }
 
@@ -93,6 +96,7 @@ export interface TemplateSourceCardio {
   name: string
   distanceKm?: number
   durationSec?: number
+  inclinePct?: number
   note?: string
   /** Position among ALL deck entries — this is what says warm-up vs finisher. */
   deckOrder?: number
@@ -158,6 +162,7 @@ export function payloadToTemplate(
       sets: [],
       ...(c.distanceKm != null ? { distanceKm: c.distanceKm } : {}),
       ...(c.durationSec != null ? { durationSec: c.durationSec } : {}),
+      ...(c.inclinePct != null ? { inclinePct: c.inclinePct } : {}),
       ...(c.note ? { note: c.note } : {}),
     })
   }
@@ -198,13 +203,38 @@ export function templateToDraft(
   let p = 0
   const newPairId = () => `pair_${Date.now().toString(36)}_${p++}_${Math.random().toString(36).slice(2, 6)}`
 
+  /**
+   * ── THE MUSCLES HAVE TO COME WITH THE EXERCISE ─────────────────────────────
+   * A template row stores a name, an order and sets. It does NOT store muscles,
+   * and it never should — that is the program's property, not the log's.
+   *
+   * But this function is the PRIMARY seeding path (`buildTemplateDraft` prefers
+   * a stored template over the program the moment one exists, i.e. from the
+   * second session of any day onwards), and the drafts it produced carried no
+   * `muscleGroups` at all. `resolveMovers` therefore fell back to matching the
+   * NAME, and the name table does not know "Barbell Bench Press" or "Overhead
+   * Press" — so the muscle distribution went blank for exactly the compound
+   * lifts a chest or shoulder day is built on, and the figure showed a session
+   * landing nowhere.
+   *
+   * The program day is already in hand for the split and the title. Reading the
+   * muscles off it costs one map and fixes the figure at its source rather than
+   * teaching the atlas to guess.
+   */
+  const byName = new Map<string, string[]>(
+    day.exercises.map((e) => [canonicalExerciseName(e.name).toLowerCase(), e.muscles]),
+  )
+  const muscleGroupsFor = (name: string): string[] | undefined =>
+    byName.get(canonicalExerciseName(name).toLowerCase())
+
   const exercises: DraftExercise[] = [...template.exercises]
     .sort((a, b) => a.order - b.order)
     .map((ex) => {
       if (ex.kind === 'cardio') {
         return {
           localId: localId(), name: ex.name, kind: 'cardio' as const,
-          distanceKm: ex.distanceKm, durationSec: ex.durationSec, note: ex.note, sets: [],
+          distanceKm: ex.distanceKm, durationSec: ex.durationSec, inclinePct: ex.inclinePct,
+          note: ex.note, sets: [],
         }
       }
       const remap = new Map<string, string>()
@@ -228,7 +258,7 @@ export function templateToDraft(
         }
         return set
       })
-      return { localId: localId(), name: ex.name, sets }
+      return { localId: localId(), name: ex.name, muscleGroups: muscleGroupsFor(ex.name), sets }
     })
 
   return {

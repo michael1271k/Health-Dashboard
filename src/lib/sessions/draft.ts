@@ -73,6 +73,12 @@ export interface DraftExercise {
   kind?: 'strength' | 'cardio'
   distanceKm?: number
   durationSec?: number
+  /**
+   * Treadmill gradient, percent. A 5 km/h walk at 0% and the same walk at 12%
+   * are not the same session, and neither distance nor duration says which one
+   * happened — this is the number that does.
+   */
+  inclinePct?: number
   status?: 'PR' | 'PROGRESS' | 'HOLD' | 'REGRESS' | 'NEW'
   note?: string
   targetNext?: string
@@ -230,6 +236,7 @@ export function cardioSummary(ex: DraftExercise): string {
   const parts = [
     ex.distanceKm != null ? `${ex.distanceKm} km` : null,
     ex.durationSec != null ? fmtCardioDuration(ex.durationSec) : null,
+    ex.inclinePct ? `${ex.inclinePct}% incline` : null,
   ].filter(Boolean)
   return parts.length ? `${ex.name}: ${parts.join(' · ')}` : ex.name
 }
@@ -257,6 +264,7 @@ export function buildCommitPayload(draft: SessionDraft): SaveWorkoutInput {
           name: ex.name,
           ...(ex.distanceKm != null ? { distanceKm: ex.distanceKm } : {}),
           ...(ex.durationSec != null ? { durationSec: ex.durationSec } : {}),
+          ...(ex.inclinePct != null ? { inclinePct: ex.inclinePct } : {}),
           ...(ex.note ? { note: ex.note } : {}),
           deckOrder: deckIdx,
         })

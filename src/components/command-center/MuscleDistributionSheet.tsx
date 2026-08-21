@@ -4,7 +4,7 @@ import { MuscleAtlas } from '@/components/body/MuscleAtlas'
 import { Sheet } from '@/components/ui/Sheet'
 import { setsToWorked } from '@/lib/body/atlas'
 import { MUSCLE_COLOR, type LandmarkMuscle } from '@/lib/training/landmarks'
-import { EMBER, MUTED } from '@/lib/theme/palette'
+import { ATLAS_BLUE, MUTED } from '@/lib/theme/palette'
 
 export interface MuscleEntry { muscle: LandmarkMuscle; sets: number }
 
@@ -22,7 +22,7 @@ export interface MuscleEntry { muscle: LandmarkMuscle; sets: number }
  * derives them from the live draft, the report reads them off `SessionDetail`.
  * So the shared piece takes the numbers, not the source.
  */
-export function MuscleDistributionSheet({ open, onClose, entries, physical, weighted, accent = EMBER }: {
+export function MuscleDistributionSheet({ open, onClose, entries, physical, weighted, accent = ATLAS_BLUE }: {
   open: boolean
   onClose: () => void
   /** Weighted sets per muscle, already filtered to the ones that were worked. */
@@ -31,7 +31,7 @@ export function MuscleDistributionSheet({ open, onClose, entries, physical, weig
   physical: number
   /** The weighted total those sets distribute across the muscles. */
   weighted: number
-  /** The session's own colour on the report; ember in the live deck. */
+  /** The session's own colour on the report; the atlas's blue in the live deck. */
   accent?: string
 }) {
   const worked = setsToWorked(Object.fromEntries(entries.map((e) => [e.muscle, e.sets])))
@@ -42,8 +42,15 @@ export function MuscleDistributionSheet({ open, onClose, entries, physical, weig
             own set count is the physical one; everything in the list below is
             the weighted one, and they are supposed to differ. */}
         <div className="grid grid-cols-2 gap-2">
-          <Count value={physical} label="Physical sets" hint="What you performed" />
-          <Count value={weighted} label="Weighted sets" hint="Spread across muscles" />
+          <Count value={physical} label="Physical sets" hint="What you performed on the gym floor" />
+          <Count
+            value={weighted}
+            label="Weighted sets"
+            hint={'One physical set credits 1.0 to every muscle it trains directly and 0.5 to '
+              + 'every muscle that assists — so a compound lift lands on several, and this total '
+              + 'is higher than the set count on purpose. It is the same credit the weekly volume '
+              + 'targets are graded on. Warm-ups and unticked sets are not counted.'}
+          />
         </div>
 
         <div className="h-56 mx-auto" style={{ maxWidth: 260 }}>
@@ -59,14 +66,15 @@ export function MuscleDistributionSheet({ open, onClose, entries, physical, weig
             </li>
           ))}
         </ul>
-        {/* Weighted, and it says so: an assisting muscle earns half a set, the
-            same rule the week's volume targets are graded on. Without the
-            note the totals here look wrong next to the deck's set count. */}
+        {/* ── ONE LINE, NOT FIVE ──
+            This was a five-line paragraph explaining the whole credit rule, and
+            it was the tallest thing in the sheet after the body itself — a
+            footnote outweighing the figure it annotates. The rule has to be
+            stated somewhere, because the weighted total is SUPPOSED to exceed
+            the deck's set count and looks like a bug otherwise. It is stated
+            here in one line, and in full on the tile it explains. */}
         <p className="text-[10px] text-muted leading-snug">
-          One physical set credits 1.0 to every muscle it trains directly and 0.5 to every
-          muscle that assists — so a compound lift lands on several, and the weighted total
-          is higher than the set count on purpose. It is the same credit the weekly volume
-          targets are graded on. Warm-ups and unticked sets are not counted.
+          Direct work counts 1.0, assistance 0.5 — warm-ups and unticked sets excluded.
         </p>
       </div>
     </Sheet>

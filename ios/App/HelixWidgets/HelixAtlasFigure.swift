@@ -38,13 +38,22 @@ struct HelixAtlasFigure: View {
     Canvas { context, size in
       let rect = CGRect(origin: .zero, size: size)
 
-      // Head, neck and feet first, and never tinted: they carry no data, and a
+      // The silhouette first, and never tinted: it carries no data, and a
       // glowing head would read as a muscle nobody can train.
+      //
+      // A vertical gradient stands in for the app's 145-degree one. `Canvas`
+      // shading is per-fill, and a linear gradient across a 40pt widget cell
+      // costs a gradient evaluation per pixel per body — at this size the top-to-
+      // bottom falloff carries the same "this has mass" reading for a fraction
+      // of the work, which is the trade the widget has to make everywhere.
       for build in HelixAtlas.base {
         var path = Path()
         build(rect, &path)
-        context.fill(path, with: .color(.white.opacity(0.06)))
-        context.stroke(path, with: .color(.white.opacity(0.10)), lineWidth: 0.5)
+        context.fill(path, with: .linearGradient(
+          Gradient(colors: [.white.opacity(0.13), .white.opacity(0.05)]),
+          startPoint: CGPoint(x: rect.minX, y: rect.minY),
+          endPoint: CGPoint(x: rect.maxX, y: rect.maxY)))
+        context.stroke(path, with: .color(.white.opacity(0.12)), lineWidth: 0.5)
       }
 
       for entry in HelixAtlas.muscles where entry.view == view {
@@ -59,9 +68,18 @@ struct HelixAtlasFigure: View {
           context.fill(path, with: .color(tint.opacity(0.18 + intensity * 0.55)))
           context.stroke(path, with: .color(tint.opacity(0.9)), lineWidth: 0.6)
         } else {
-          context.fill(path, with: .color(.white.opacity(0.05)))
-          context.stroke(path, with: .color(.white.opacity(0.12)), lineWidth: 0.4)
+          context.fill(path, with: .color(.white.opacity(0.09)))
+          context.stroke(path, with: .color(.white.opacity(0.13)), lineWidth: 0.4)
         }
+      }
+
+      // Definition last, over everything, and STROKED ONLY — several of these
+      // are open paths, and SwiftUI closes an open path when it fills one, so a
+      // filled brow would be a wedge across the forehead.
+      for entry in HelixAtlas.detail where entry.view == view {
+        var path = Path()
+        entry.build(rect, &path)
+        context.stroke(path, with: .color(.white.opacity(0.20)), lineWidth: 0.35)
       }
     }
     .accessibilityHidden(true)

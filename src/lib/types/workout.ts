@@ -45,7 +45,7 @@ export interface SaveWorkoutPayload {
    * 0 kg × 1 junk set would corrupt volume and PR math. Flattening these into
    * `notes` was the old behaviour and it could not be read back on edit.
    */
-  cardio?: Array<{ name: string; distanceKm?: number; durationSec?: number; note?: string }>
+  cardio?: Array<{ name: string; distanceKm?: number; durationSec?: number; inclinePct?: number; note?: string }>
   // ── Command Center extensions (optional on every legacy path) ──
   clientSessionId?: string      // coach session.id — idempotency/dedupe key
   replaceSessionId?: string     // EDIT flow: delete this session then re-insert

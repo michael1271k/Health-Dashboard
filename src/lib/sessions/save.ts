@@ -386,7 +386,7 @@ export async function saveSession(
   // mixing the two would corrupt what the Zone-2 and cardio-PR readers see.
   if (payload.cardio?.length) {
     try {
-      const rows = payload.cardio.map((c) => ({
+      const base = payload.cardio.map((c) => ({
         user_id: userId,
         session_id: session.id,
         date: dateStr,
@@ -395,8 +395,28 @@ export async function saveSession(
         duration_min: c.durationSec != null ? Math.round((c.durationSec / 60) * 100) / 100 : null,
         from_healthkit: false,
       }))
+      const rows = base.map((r, i) => {
+        const incline = payload.cardio?.[i]?.inclinePct
+        return incline != null ? { ...r, incline_pct: incline } : r
+      })
+      /**
+       * ── THE INCLINE IS OPTIONAL AT THE DATABASE, NOT JUST IN THE UI ────────
+       * `cardio_logs.incline_pct` is a column the app can run without. PostgREST
+       * rejects an unknown column with PGRST204 and rejects the WHOLE statement
+       * with it — so sending incline against a database that has not had the
+       * migration would silently lose the distance and the duration as well,
+       * which are the two figures that were already working.
+       *
+       * So the retry is not defensive noise: it is the difference between one
+       * missing field and a missing cardio block.
+       */
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await supabase.from('cardio_logs').insert(rows as any)
+      let { error } = await supabase.from('cardio_logs').insert(rows as any)
+      if (error && /incline_pct|PGRST204/i.test(error.message)) {
+        console.warn('[save] cardio_logs has no incline_pct — retrying without it')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ;({ error } = await supabase.from('cardio_logs').insert(base as any))
+      }
       if (error && !/relation|does not exist|schema cache|PGRST20[0-9]/i.test(error.message)) {
         console.error('[save] cardio_logs insert failed:', error.message)
       }

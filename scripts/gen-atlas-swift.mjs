@@ -31,16 +31,34 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const SOURCE = join(ROOT, 'src/lib/body/atlas.ts')
 const TARGET = join(ROOT, 'ios/App/HelixWidgets/HelixAtlas.swift')
 
-/** Pull the literal arrays out of the TypeScript without importing it. */
+/**
+ * Pull the literal arrays out of the TypeScript without importing it.
+ *
+ * Three shapes, and they are distinguished by their KEYS, not by their order in
+ * the file:
+ *
+ *   · BASE_SHAPES   — bare string literals, one per line
+ *   · MUSCLE_PATHS  — `{ muscle: …, view: …, d: … }`
+ *   · DETAIL_SHAPES — `{ view: …, d: … }`, no muscle
+ *
+ * The detail regex cannot match a muscle path (a muscle path opens with
+ * `muscle:`), and the base regex cannot match either object form (both open
+ * with `{`). That is what keeps the face out of the silhouette: swept into
+ * `base`, the eyes and the linea alba would be FILLED as body mass on the
+ * widget, which is a body with a hole in it rather than a body with a face.
+ */
 export function readAtlas(ts) {
   const base = [...ts.matchAll(/^\s*'(M[^']+)',\s*$/gm)].map((m) => m[1])
   const paths = [...ts.matchAll(/\{\s*muscle:\s*'([^']+)',\s*view:\s*'(front|back)',\s*d:\s*'([^']+)'\s*\}/g)]
     .map((m) => ({ muscle: m[1], view: m[2], d: m[3] }))
+  const detail = [...ts.matchAll(/\{\s*view:\s*'(front|back)',\s*d:\s*'([^']+)'\s*\}/g)]
+    .map((m) => ({ view: m[1], d: m[2] }))
   if (!paths.length) throw new Error('atlas.ts: no MUSCLE_PATHS found — did the shape change?')
+  if (!detail.length) throw new Error('atlas.ts: no DETAIL_SHAPES found — did the shape change?')
   // BASE_SHAPES are the bare string literals; the muscle paths are matched
   // above and must not be counted twice.
   const muscleDs = new Set(paths.map((p) => p.d))
-  return { base: base.filter((d) => !muscleDs.has(d)), paths }
+  return { base: base.filter((d) => !muscleDs.has(d)), paths, detail }
 }
 
 const NUM = /-?\d*\.?\d+/g
@@ -89,9 +107,14 @@ export function swiftPath(d) {
 }
 
 export function generate(ts) {
-  const { base, paths } = readAtlas(ts)
+  const { base, paths, detail } = readAtlas(ts)
   const entry = (p) => [
     '  HelixAtlasPath(muscle: "' + p.muscle + '", view: .' + p.view + ') { rect, p in',
+    swiftPath(p.d).split('\n').map((l) => '  ' + l).join('\n'),
+    '  },',
+  ].join('\n')
+  const detailEntry = (p) => [
+    '  HelixAtlasDetail(view: .' + p.view + ') { rect, p in',
     swiftPath(p.d).split('\n').map((l) => '  ' + l).join('\n'),
     '  },',
   ].join('\n')
@@ -111,6 +134,21 @@ enum HelixAtlasView: String {
   case front, back
 }
 
+/// A definition line — stroked, never filled, never tinted, never a hit target.
+///
+/// Several of these are OPEN paths (a brow, the linea alba). SwiftUI closes an
+/// open path implicitly when it fills one, so filling this layer would turn
+/// every line into a wedge. \`HelixAtlasFigure\` strokes it and only strokes it.
+struct HelixAtlasDetail {
+  let view: HelixAtlasView
+  let build: (CGRect, inout Path) -> Void
+
+  init(view: HelixAtlasView, _ build: @escaping (CGRect, inout Path) -> Void) {
+    self.view = view
+    self.build = build
+  }
+}
+
 struct HelixAtlasPath: Identifiable {
   let muscle: String
   let view: HelixAtlasView
@@ -128,13 +166,19 @@ struct HelixAtlasPath: Identifiable {
 enum HelixAtlas {
   static let viewBox = CGSize(width: 120, height: 260)
 
-  /// Head, neck and feet: anatomy, never data, never tinted.
+  /// The silhouette — head, hair, neck, torso, arms, fists, legs, feet.
+  /// Anatomy, never data, never tinted.
   static let base: [(CGRect, inout Path) -> Void] = [
 ${base.map((d) => '  { rect, p in\n' + swiftPath(d).split('\n').map((l) => '  ' + l).join('\n') + '\n  },').join('\n')}
   ]
 
   static let muscles: [HelixAtlasPath] = [
 ${paths.map(entry).join('\n')}
+  ]
+
+  /// Definition: the face, the six-pack seams, the erector groove, the kneecaps.
+  static let detail: [HelixAtlasDetail] = [
+${detail.map(detailEntry).join('\n')}
   ]
 
   /// One viewBox point, scaled into \`rect\` with the aspect ratio preserved.

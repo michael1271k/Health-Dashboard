@@ -13,6 +13,21 @@ enum HelixAtlasView: String {
   case front, back
 }
 
+/// A definition line — stroked, never filled, never tinted, never a hit target.
+///
+/// Several of these are OPEN paths (a brow, the linea alba). SwiftUI closes an
+/// open path implicitly when it fills one, so filling this layer would turn
+/// every line into a wedge. `HelixAtlasFigure` strokes it and only strokes it.
+struct HelixAtlasDetail {
+  let view: HelixAtlasView
+  let build: (CGRect, inout Path) -> Void
+
+  init(view: HelixAtlasView, _ build: @escaping (CGRect, inout Path) -> Void) {
+    self.view = view
+    self.build = build
+  }
+}
+
 struct HelixAtlasPath: Identifiable {
   let muscle: String
   let view: HelixAtlasView
@@ -30,233 +45,630 @@ struct HelixAtlasPath: Identifiable {
 enum HelixAtlas {
   static let viewBox = CGSize(width: 120, height: 260)
 
-  /// Head, neck and feet: anatomy, never data, never tinted.
+  /// The silhouette — head, hair, neck, torso, arms, fists, legs, feet.
+  /// Anatomy, never data, never tinted.
   static let base: [(CGRect, inout Path) -> Void] = [
   { rect, p in
-    p.move(to: pt(60, 8, in: rect))
-    p.addCurve(to: pt(74, 22, in: rect), control1: pt(67.7, 8, in: rect), control2: pt(74, 14.3, in: rect))
-    p.addCurve(to: pt(60, 36, in: rect), control1: pt(74, 29.7, in: rect), control2: pt(67.7, 36, in: rect))
-    p.addCurve(to: pt(46, 22, in: rect), control1: pt(52.3, 36, in: rect), control2: pt(46, 29.7, in: rect))
-    p.addCurve(to: pt(60, 8, in: rect), control1: pt(46, 14.3, in: rect), control2: pt(52.3, 8, in: rect))
+    p.move(to: pt(60, 10, in: rect))
+    p.addCurve(to: pt(72, 24, in: rect), control1: pt(67, 10, in: rect), control2: pt(72, 16, in: rect))
+    p.addCurve(to: pt(63, 39, in: rect), control1: pt(72, 31, in: rect), control2: pt(68, 37, in: rect))
+    p.addCurve(to: pt(60, 40, in: rect), control1: pt(62, 40, in: rect), control2: pt(61, 40, in: rect))
+    p.addCurve(to: pt(57, 39, in: rect), control1: pt(59, 40, in: rect), control2: pt(58, 40, in: rect))
+    p.addCurve(to: pt(48, 24, in: rect), control1: pt(52, 37, in: rect), control2: pt(48, 31, in: rect))
+    p.addCurve(to: pt(60, 10, in: rect), control1: pt(48, 16, in: rect), control2: pt(53, 10, in: rect))
     p.closeSubpath()
   },
   { rect, p in
-    p.move(to: pt(53, 35, in: rect))
-    p.addLine(to: pt(67, 35, in: rect))
-    p.addLine(to: pt(67, 45, in: rect))
-    p.addLine(to: pt(53, 45, in: rect))
+    p.move(to: pt(48, 24, in: rect))
+    p.addCurve(to: pt(60, 8, in: rect), control1: pt(48, 14, in: rect), control2: pt(53, 8, in: rect))
+    p.addCurve(to: pt(72, 24, in: rect), control1: pt(67, 8, in: rect), control2: pt(72, 14, in: rect))
+    p.addCurve(to: pt(69, 15, in: rect), control1: pt(72, 20, in: rect), control2: pt(71, 17, in: rect))
+    p.addCurve(to: pt(51, 15, in: rect), control1: pt(65, 11, in: rect), control2: pt(55, 11, in: rect))
+    p.addCurve(to: pt(48, 24, in: rect), control1: pt(49, 17, in: rect), control2: pt(48, 20, in: rect))
     p.closeSubpath()
   },
   { rect, p in
-    p.move(to: pt(43, 240, in: rect))
-    p.addLine(to: pt(53, 240, in: rect))
-    p.addLine(to: pt(54, 251, in: rect))
-    p.addLine(to: pt(42, 251, in: rect))
+    p.move(to: pt(56, 37, in: rect))
+    p.addCurve(to: pt(53, 47, in: rect), control1: pt(56, 41, in: rect), control2: pt(55, 44, in: rect))
+    p.addLine(to: pt(67, 47, in: rect))
+    p.addCurve(to: pt(64, 37, in: rect), control1: pt(65, 44, in: rect), control2: pt(64, 41, in: rect))
+    p.addCurve(to: pt(60, 40, in: rect), control1: pt(63, 39, in: rect), control2: pt(62, 40, in: rect))
+    p.addCurve(to: pt(56, 37, in: rect), control1: pt(58, 40, in: rect), control2: pt(57, 39, in: rect))
     p.closeSubpath()
   },
   { rect, p in
-    p.move(to: pt(77, 240, in: rect))
-    p.addLine(to: pt(67, 240, in: rect))
-    p.addLine(to: pt(66, 251, in: rect))
-    p.addLine(to: pt(78, 251, in: rect))
+    p.move(to: pt(43, 52, in: rect))
+    p.addCurve(to: pt(60, 44, in: rect), control1: pt(48, 46, in: rect), control2: pt(53, 44, in: rect))
+    p.addCurve(to: pt(77, 52, in: rect), control1: pt(67, 44, in: rect), control2: pt(72, 46, in: rect))
+    p.addCurve(to: pt(84, 84, in: rect), control1: pt(83, 58, in: rect), control2: pt(85, 71, in: rect))
+    p.addCurve(to: pt(77, 122, in: rect), control1: pt(83, 98, in: rect), control2: pt(79, 110, in: rect))
+    p.addCurve(to: pt(81, 150, in: rect), control1: pt(78, 132, in: rect), control2: pt(80, 142, in: rect))
+    p.addLine(to: pt(39, 150, in: rect))
+    p.addCurve(to: pt(43, 122, in: rect), control1: pt(40, 142, in: rect), control2: pt(42, 132, in: rect))
+    p.addCurve(to: pt(36, 84, in: rect), control1: pt(41, 110, in: rect), control2: pt(37, 98, in: rect))
+    p.addCurve(to: pt(43, 52, in: rect), control1: pt(35, 71, in: rect), control2: pt(37, 58, in: rect))
+    p.closeSubpath()
+  },
+  { rect, p in
+    p.move(to: pt(41, 51, in: rect))
+    p.addCurve(to: pt(26, 75, in: rect), control1: pt(33, 54, in: rect), control2: pt(27, 63, in: rect))
+    p.addCurve(to: pt(27, 112, in: rect), control1: pt(25, 87, in: rect), control2: pt(25, 100, in: rect))
+    p.addCurve(to: pt(34, 150, in: rect), control1: pt(28, 126, in: rect), control2: pt(31, 139, in: rect))
+    p.addLine(to: pt(42, 148, in: rect))
+    p.addCurve(to: pt(36, 112, in: rect), control1: pt(39, 137, in: rect), control2: pt(37, 125, in: rect))
+    p.addCurve(to: pt(37, 77, in: rect), control1: pt(35, 100, in: rect), control2: pt(35, 88, in: rect))
+    p.addCurve(to: pt(43, 52, in: rect), control1: pt(38, 66, in: rect), control2: pt(40, 56, in: rect))
+    p.closeSubpath()
+  },
+  { rect, p in
+    p.move(to: pt(79, 51, in: rect))
+    p.addCurve(to: pt(94, 75, in: rect), control1: pt(87, 54, in: rect), control2: pt(93, 63, in: rect))
+    p.addCurve(to: pt(93, 112, in: rect), control1: pt(95, 87, in: rect), control2: pt(95, 100, in: rect))
+    p.addCurve(to: pt(86, 150, in: rect), control1: pt(92, 126, in: rect), control2: pt(89, 139, in: rect))
+    p.addLine(to: pt(78, 148, in: rect))
+    p.addCurve(to: pt(84, 112, in: rect), control1: pt(81, 137, in: rect), control2: pt(83, 125, in: rect))
+    p.addCurve(to: pt(83, 77, in: rect), control1: pt(85, 100, in: rect), control2: pt(85, 88, in: rect))
+    p.addCurve(to: pt(77, 52, in: rect), control1: pt(82, 66, in: rect), control2: pt(80, 56, in: rect))
+    p.closeSubpath()
+  },
+  { rect, p in
+    p.move(to: pt(34, 149, in: rect))
+    p.addCurve(to: pt(31, 163, in: rect), control1: pt(30, 152, in: rect), control2: pt(28, 158, in: rect))
+    p.addCurve(to: pt(44, 163, in: rect), control1: pt(34, 168, in: rect), control2: pt(41, 168, in: rect))
+    p.addCurve(to: pt(43, 148, in: rect), control1: pt(46, 159, in: rect), control2: pt(45, 153, in: rect))
+    p.closeSubpath()
+  },
+  { rect, p in
+    p.move(to: pt(86, 149, in: rect))
+    p.addCurve(to: pt(89, 163, in: rect), control1: pt(90, 152, in: rect), control2: pt(92, 158, in: rect))
+    p.addCurve(to: pt(76, 163, in: rect), control1: pt(86, 168, in: rect), control2: pt(79, 168, in: rect))
+    p.addCurve(to: pt(77, 148, in: rect), control1: pt(74, 159, in: rect), control2: pt(75, 153, in: rect))
+    p.closeSubpath()
+  },
+  { rect, p in
+    p.move(to: pt(39, 150, in: rect))
+    p.addCurve(to: pt(35, 178, in: rect), control1: pt(36, 160, in: rect), control2: pt(35, 168, in: rect))
+    p.addCurve(to: pt(38, 194, in: rect), control1: pt(35, 186, in: rect), control2: pt(36, 190, in: rect))
+    p.addCurve(to: pt(36, 214, in: rect), control1: pt(36, 200, in: rect), control2: pt(35, 206, in: rect))
+    p.addCurve(to: pt(43, 240, in: rect), control1: pt(37, 224, in: rect), control2: pt(39, 233, in: rect))
+    p.addLine(to: pt(52, 240, in: rect))
+    p.addCurve(to: pt(52, 214, in: rect), control1: pt(53, 232, in: rect), control2: pt(53, 223, in: rect))
+    p.addCurve(to: pt(51, 194, in: rect), control1: pt(52, 206, in: rect), control2: pt(52, 200, in: rect))
+    p.addCurve(to: pt(56, 178, in: rect), control1: pt(53, 190, in: rect), control2: pt(55, 186, in: rect))
+    p.addCurve(to: pt(58, 150, in: rect), control1: pt(57, 168, in: rect), control2: pt(57, 160, in: rect))
+    p.closeSubpath()
+  },
+  { rect, p in
+    p.move(to: pt(81, 150, in: rect))
+    p.addCurve(to: pt(85, 178, in: rect), control1: pt(84, 160, in: rect), control2: pt(85, 168, in: rect))
+    p.addCurve(to: pt(82, 194, in: rect), control1: pt(85, 186, in: rect), control2: pt(84, 190, in: rect))
+    p.addCurve(to: pt(84, 214, in: rect), control1: pt(84, 200, in: rect), control2: pt(85, 206, in: rect))
+    p.addCurve(to: pt(77, 240, in: rect), control1: pt(83, 224, in: rect), control2: pt(81, 233, in: rect))
+    p.addLine(to: pt(68, 240, in: rect))
+    p.addCurve(to: pt(68, 214, in: rect), control1: pt(67, 232, in: rect), control2: pt(67, 223, in: rect))
+    p.addCurve(to: pt(69, 194, in: rect), control1: pt(68, 206, in: rect), control2: pt(68, 200, in: rect))
+    p.addCurve(to: pt(64, 178, in: rect), control1: pt(67, 190, in: rect), control2: pt(65, 186, in: rect))
+    p.addCurve(to: pt(62, 150, in: rect), control1: pt(63, 168, in: rect), control2: pt(63, 160, in: rect))
+    p.closeSubpath()
+  },
+  { rect, p in
+    p.move(to: pt(43, 239, in: rect))
+    p.addCurve(to: pt(39, 252, in: rect), control1: pt(40, 243, in: rect), control2: pt(38, 248, in: rect))
+    p.addCurve(to: pt(52, 253, in: rect), control1: pt(41, 254, in: rect), control2: pt(48, 254, in: rect))
+    p.addCurve(to: pt(52, 239, in: rect), control1: pt(54, 251, in: rect), control2: pt(53, 245, in: rect))
+    p.closeSubpath()
+  },
+  { rect, p in
+    p.move(to: pt(77, 239, in: rect))
+    p.addCurve(to: pt(81, 252, in: rect), control1: pt(80, 243, in: rect), control2: pt(82, 248, in: rect))
+    p.addCurve(to: pt(68, 253, in: rect), control1: pt(79, 254, in: rect), control2: pt(72, 254, in: rect))
+    p.addCurve(to: pt(68, 239, in: rect), control1: pt(66, 251, in: rect), control2: pt(67, 245, in: rect))
     p.closeSubpath()
   },
   ]
 
   static let muscles: [HelixAtlasPath] = [
   HelixAtlasPath(muscle: "Side delts", view: .front) { rect, p in
-    p.move(to: pt(38, 44, in: rect))
-    p.addCurve(to: pt(20, 64, in: rect), control1: pt(28, 45, in: rect), control2: pt(21, 52, in: rect))
-    p.addLine(to: pt(33, 69, in: rect))
-    p.addCurve(to: pt(45, 51, in: rect), control1: pt(34, 58, in: rect), control2: pt(39, 53, in: rect))
+    p.move(to: pt(43, 50, in: rect))
+    p.addCurve(to: pt(27, 71, in: rect), control1: pt(35, 53, in: rect), control2: pt(29, 61, in: rect))
+    p.addCurve(to: pt(27, 79, in: rect), control1: pt(26, 74, in: rect), control2: pt(26, 77, in: rect))
+    p.addLine(to: pt(38, 76, in: rect))
+    p.addCurve(to: pt(44, 54, in: rect), control1: pt(38, 69, in: rect), control2: pt(40, 60, in: rect))
     p.closeSubpath()
   },
   HelixAtlasPath(muscle: "Side delts", view: .front) { rect, p in
-    p.move(to: pt(82, 44, in: rect))
-    p.addCurve(to: pt(100, 64, in: rect), control1: pt(92, 45, in: rect), control2: pt(99, 52, in: rect))
-    p.addLine(to: pt(87, 69, in: rect))
-    p.addCurve(to: pt(75, 51, in: rect), control1: pt(86, 58, in: rect), control2: pt(81, 53, in: rect))
+    p.move(to: pt(77, 50, in: rect))
+    p.addCurve(to: pt(93, 71, in: rect), control1: pt(85, 53, in: rect), control2: pt(91, 61, in: rect))
+    p.addCurve(to: pt(93, 79, in: rect), control1: pt(94, 74, in: rect), control2: pt(94, 77, in: rect))
+    p.addLine(to: pt(82, 76, in: rect))
+    p.addCurve(to: pt(76, 54, in: rect), control1: pt(82, 69, in: rect), control2: pt(80, 60, in: rect))
     p.closeSubpath()
   },
   HelixAtlasPath(muscle: "Chest", view: .front) { rect, p in
-    p.move(to: pt(45, 50, in: rect))
-    p.addLine(to: pt(75, 50, in: rect))
-    p.addCurve(to: pt(83, 72, in: rect), control1: pt(82, 52, in: rect), control2: pt(84, 60, in: rect))
-    p.addCurve(to: pt(60, 83, in: rect), control1: pt(76, 80, in: rect), control2: pt(66, 83, in: rect))
-    p.addCurve(to: pt(37, 72, in: rect), control1: pt(54, 83, in: rect), control2: pt(44, 80, in: rect))
-    p.addCurve(to: pt(45, 50, in: rect), control1: pt(36, 60, in: rect), control2: pt(38, 52, in: rect))
+    p.move(to: pt(58, 59, in: rect))
+    p.addLine(to: pt(45, 60, in: rect))
+    p.addCurve(to: pt(40, 76, in: rect), control1: pt(41, 63, in: rect), control2: pt(39, 69, in: rect))
+    p.addCurve(to: pt(54, 90, in: rect), control1: pt(41, 84, in: rect), control2: pt(47, 89, in: rect))
+    p.addCurve(to: pt(58, 84, in: rect), control1: pt(57, 90, in: rect), control2: pt(58, 87, in: rect))
+    p.addCurve(to: pt(58, 59, in: rect), control1: pt(58, 76, in: rect), control2: pt(58, 67, in: rect))
+    p.closeSubpath()
+  },
+  HelixAtlasPath(muscle: "Chest", view: .front) { rect, p in
+    p.move(to: pt(62, 59, in: rect))
+    p.addLine(to: pt(75, 60, in: rect))
+    p.addCurve(to: pt(80, 76, in: rect), control1: pt(79, 63, in: rect), control2: pt(81, 69, in: rect))
+    p.addCurve(to: pt(66, 90, in: rect), control1: pt(79, 84, in: rect), control2: pt(73, 89, in: rect))
+    p.addCurve(to: pt(62, 84, in: rect), control1: pt(63, 90, in: rect), control2: pt(62, 87, in: rect))
+    p.addCurve(to: pt(62, 59, in: rect), control1: pt(62, 76, in: rect), control2: pt(62, 67, in: rect))
     p.closeSubpath()
   },
   HelixAtlasPath(muscle: "Abs/core", view: .front) { rect, p in
-    p.move(to: pt(42, 86, in: rect))
-    p.addLine(to: pt(78, 86, in: rect))
-    p.addCurve(to: pt(72, 132, in: rect), control1: pt(79, 102, in: rect), control2: pt(77, 118, in: rect))
-    p.addLine(to: pt(48, 132, in: rect))
-    p.addCurve(to: pt(42, 86, in: rect), control1: pt(43, 118, in: rect), control2: pt(41, 102, in: rect))
+    p.move(to: pt(50, 93, in: rect))
+    p.addCurve(to: pt(46, 99, in: rect), control1: pt(47, 93, in: rect), control2: pt(46, 95, in: rect))
+    p.addCurve(to: pt(51, 133, in: rect), control1: pt(46, 110, in: rect), control2: pt(48, 123, in: rect))
+    p.addLine(to: pt(69, 133, in: rect))
+    p.addCurve(to: pt(74, 99, in: rect), control1: pt(72, 123, in: rect), control2: pt(74, 110, in: rect))
+    p.addCurve(to: pt(70, 93, in: rect), control1: pt(74, 95, in: rect), control2: pt(73, 93, in: rect))
+    p.closeSubpath()
+  },
+  HelixAtlasPath(muscle: "Abs/core", view: .front) { rect, p in
+    p.move(to: pt(45, 99, in: rect))
+    p.addCurve(to: pt(42, 114, in: rect), control1: pt(42, 101, in: rect), control2: pt(41, 107, in: rect))
+    p.addCurve(to: pt(48, 132, in: rect), control1: pt(43, 121, in: rect), control2: pt(45, 127, in: rect))
+    p.addLine(to: pt(49, 132, in: rect))
+    p.addCurve(to: pt(45, 99, in: rect), control1: pt(47, 122, in: rect), control2: pt(45, 110, in: rect))
+    p.closeSubpath()
+  },
+  HelixAtlasPath(muscle: "Abs/core", view: .front) { rect, p in
+    p.move(to: pt(75, 99, in: rect))
+    p.addCurve(to: pt(78, 114, in: rect), control1: pt(78, 101, in: rect), control2: pt(79, 107, in: rect))
+    p.addCurve(to: pt(72, 132, in: rect), control1: pt(77, 121, in: rect), control2: pt(75, 127, in: rect))
+    p.addLine(to: pt(71, 132, in: rect))
+    p.addCurve(to: pt(75, 99, in: rect), control1: pt(73, 122, in: rect), control2: pt(75, 110, in: rect))
     p.closeSubpath()
   },
   HelixAtlasPath(muscle: "Biceps", view: .front) { rect, p in
-    p.move(to: pt(22, 68, in: rect))
-    p.addCurve(to: pt(19, 107, in: rect), control1: pt(19, 80, in: rect), control2: pt(18, 94, in: rect))
-    p.addLine(to: pt(31, 105, in: rect))
-    p.addCurve(to: pt(34, 72, in: rect), control1: pt(31, 92, in: rect), control2: pt(33, 80, in: rect))
+    p.move(to: pt(39, 62, in: rect))
+    p.addCurve(to: pt(30, 82, in: rect), control1: pt(34, 66, in: rect), control2: pt(31, 73, in: rect))
+    p.addCurve(to: pt(30, 108, in: rect), control1: pt(29, 91, in: rect), control2: pt(29, 100, in: rect))
+    p.addLine(to: pt(37, 106, in: rect))
+    p.addCurve(to: pt(38, 81, in: rect), control1: pt(36, 98, in: rect), control2: pt(36, 90, in: rect))
+    p.addCurve(to: pt(41, 62, in: rect), control1: pt(39, 73, in: rect), control2: pt(40, 67, in: rect))
     p.closeSubpath()
   },
   HelixAtlasPath(muscle: "Biceps", view: .front) { rect, p in
-    p.move(to: pt(98, 68, in: rect))
-    p.addCurve(to: pt(101, 107, in: rect), control1: pt(101, 80, in: rect), control2: pt(102, 94, in: rect))
-    p.addLine(to: pt(89, 105, in: rect))
-    p.addCurve(to: pt(86, 72, in: rect), control1: pt(89, 92, in: rect), control2: pt(87, 80, in: rect))
+    p.move(to: pt(81, 62, in: rect))
+    p.addCurve(to: pt(90, 82, in: rect), control1: pt(86, 66, in: rect), control2: pt(89, 73, in: rect))
+    p.addCurve(to: pt(90, 108, in: rect), control1: pt(91, 91, in: rect), control2: pt(91, 100, in: rect))
+    p.addLine(to: pt(83, 106, in: rect))
+    p.addCurve(to: pt(82, 81, in: rect), control1: pt(84, 98, in: rect), control2: pt(84, 90, in: rect))
+    p.addCurve(to: pt(79, 62, in: rect), control1: pt(81, 73, in: rect), control2: pt(80, 67, in: rect))
     p.closeSubpath()
   },
   HelixAtlasPath(muscle: "Forearms", view: .front) { rect, p in
-    p.move(to: pt(19, 109, in: rect))
-    p.addCurve(to: pt(27, 147, in: rect), control1: pt(19, 122, in: rect), control2: pt(21, 136, in: rect))
-    p.addLine(to: pt(35, 144, in: rect))
-    p.addCurve(to: pt(30, 107, in: rect), control1: pt(31, 134, in: rect), control2: pt(29, 121, in: rect))
+    p.move(to: pt(30, 112, in: rect))
+    p.addCurve(to: pt(33, 140, in: rect), control1: pt(30, 121, in: rect), control2: pt(31, 131, in: rect))
+    p.addCurve(to: pt(36, 148, in: rect), control1: pt(34, 144, in: rect), control2: pt(35, 146, in: rect))
+    p.addLine(to: pt(42, 146, in: rect))
+    p.addCurve(to: pt(38, 123, in: rect), control1: pt(40, 139, in: rect), control2: pt(39, 131, in: rect))
+    p.addCurve(to: pt(38, 111, in: rect), control1: pt(38, 118, in: rect), control2: pt(38, 115, in: rect))
     p.closeSubpath()
   },
   HelixAtlasPath(muscle: "Forearms", view: .front) { rect, p in
-    p.move(to: pt(101, 109, in: rect))
-    p.addCurve(to: pt(93, 147, in: rect), control1: pt(101, 122, in: rect), control2: pt(99, 136, in: rect))
-    p.addLine(to: pt(85, 144, in: rect))
-    p.addCurve(to: pt(90, 107, in: rect), control1: pt(89, 134, in: rect), control2: pt(91, 121, in: rect))
+    p.move(to: pt(90, 112, in: rect))
+    p.addCurve(to: pt(87, 140, in: rect), control1: pt(90, 121, in: rect), control2: pt(89, 131, in: rect))
+    p.addCurve(to: pt(84, 148, in: rect), control1: pt(86, 144, in: rect), control2: pt(85, 146, in: rect))
+    p.addLine(to: pt(78, 146, in: rect))
+    p.addCurve(to: pt(82, 123, in: rect), control1: pt(80, 139, in: rect), control2: pt(81, 131, in: rect))
+    p.addCurve(to: pt(82, 111, in: rect), control1: pt(82, 118, in: rect), control2: pt(82, 115, in: rect))
     p.closeSubpath()
   },
   HelixAtlasPath(muscle: "Quads", view: .front) { rect, p in
-    p.move(to: pt(43, 133, in: rect))
-    p.addCurve(to: pt(40, 189, in: rect), control1: pt(38, 149, in: rect), control2: pt(37, 169, in: rect))
-    p.addLine(to: pt(53, 189, in: rect))
-    p.addCurve(to: pt(58, 135, in: rect), control1: pt(55, 171, in: rect), control2: pt(56, 151, in: rect))
+    p.move(to: pt(41, 153, in: rect))
+    p.addCurve(to: pt(39, 192, in: rect), control1: pt(37, 164, in: rect), control2: pt(36, 178, in: rect))
+    p.addLine(to: pt(52, 192, in: rect))
+    p.addCurve(to: pt(56, 153, in: rect), control1: pt(53, 178, in: rect), control2: pt(54, 164, in: rect))
     p.closeSubpath()
   },
   HelixAtlasPath(muscle: "Quads", view: .front) { rect, p in
-    p.move(to: pt(77, 133, in: rect))
-    p.addCurve(to: pt(80, 189, in: rect), control1: pt(82, 149, in: rect), control2: pt(83, 169, in: rect))
-    p.addLine(to: pt(67, 189, in: rect))
-    p.addCurve(to: pt(62, 135, in: rect), control1: pt(65, 171, in: rect), control2: pt(64, 151, in: rect))
+    p.move(to: pt(79, 153, in: rect))
+    p.addCurve(to: pt(81, 192, in: rect), control1: pt(83, 164, in: rect), control2: pt(84, 178, in: rect))
+    p.addLine(to: pt(68, 192, in: rect))
+    p.addCurve(to: pt(64, 153, in: rect), control1: pt(67, 178, in: rect), control2: pt(66, 164, in: rect))
     p.closeSubpath()
   },
   HelixAtlasPath(muscle: "Adductors", view: .front) { rect, p in
-    p.move(to: pt(55, 136, in: rect))
-    p.addCurve(to: pt(58, 178, in: rect), control1: pt(56, 152, in: rect), control2: pt(57, 166, in: rect))
-    p.addLine(to: pt(60, 178, in: rect))
-    p.addCurve(to: pt(59, 136, in: rect), control1: pt(60, 160, in: rect), control2: pt(60, 146, in: rect))
+    p.move(to: pt(57, 153, in: rect))
+    p.addCurve(to: pt(56, 184, in: rect), control1: pt(57, 164, in: rect), control2: pt(57, 174, in: rect))
+    p.addLine(to: pt(59, 184, in: rect))
+    p.addCurve(to: pt(59, 153, in: rect), control1: pt(59, 174, in: rect), control2: pt(59, 164, in: rect))
     p.closeSubpath()
   },
   HelixAtlasPath(muscle: "Adductors", view: .front) { rect, p in
-    p.move(to: pt(65, 136, in: rect))
-    p.addCurve(to: pt(62, 178, in: rect), control1: pt(64, 152, in: rect), control2: pt(63, 166, in: rect))
-    p.addLine(to: pt(60, 178, in: rect))
-    p.addCurve(to: pt(61, 136, in: rect), control1: pt(60, 160, in: rect), control2: pt(60, 146, in: rect))
+    p.move(to: pt(63, 153, in: rect))
+    p.addCurve(to: pt(64, 184, in: rect), control1: pt(63, 164, in: rect), control2: pt(63, 174, in: rect))
+    p.addLine(to: pt(61, 184, in: rect))
+    p.addCurve(to: pt(61, 153, in: rect), control1: pt(61, 174, in: rect), control2: pt(61, 164, in: rect))
     p.closeSubpath()
   },
   HelixAtlasPath(muscle: "Calves", view: .front) { rect, p in
-    p.move(to: pt(41, 193, in: rect))
-    p.addCurve(to: pt(43, 240, in: rect), control1: pt(40, 209, in: rect), control2: pt(41, 227, in: rect))
-    p.addLine(to: pt(53, 240, in: rect))
-    p.addCurve(to: pt(53, 193, in: rect), control1: pt(54, 224, in: rect), control2: pt(54, 207, in: rect))
+    p.move(to: pt(37, 200, in: rect))
+    p.addCurve(to: pt(38, 232, in: rect), control1: pt(36, 210, in: rect), control2: pt(36, 222, in: rect))
+    p.addCurve(to: pt(42, 239, in: rect), control1: pt(39, 236, in: rect), control2: pt(40, 238, in: rect))
+    p.addLine(to: pt(51, 239, in: rect))
+    p.addCurve(to: pt(51, 200, in: rect), control1: pt(52, 228, in: rect), control2: pt(52, 214, in: rect))
     p.closeSubpath()
   },
   HelixAtlasPath(muscle: "Calves", view: .front) { rect, p in
-    p.move(to: pt(79, 193, in: rect))
-    p.addCurve(to: pt(77, 240, in: rect), control1: pt(80, 209, in: rect), control2: pt(79, 227, in: rect))
-    p.addLine(to: pt(67, 240, in: rect))
-    p.addCurve(to: pt(67, 193, in: rect), control1: pt(66, 224, in: rect), control2: pt(66, 207, in: rect))
+    p.move(to: pt(83, 200, in: rect))
+    p.addCurve(to: pt(82, 232, in: rect), control1: pt(84, 210, in: rect), control2: pt(84, 222, in: rect))
+    p.addCurve(to: pt(78, 239, in: rect), control1: pt(81, 236, in: rect), control2: pt(80, 238, in: rect))
+    p.addLine(to: pt(69, 239, in: rect))
+    p.addCurve(to: pt(69, 200, in: rect), control1: pt(68, 228, in: rect), control2: pt(68, 214, in: rect))
     p.closeSubpath()
   },
   HelixAtlasPath(muscle: "Rear delts", view: .back) { rect, p in
-    p.move(to: pt(38, 44, in: rect))
-    p.addCurve(to: pt(20, 64, in: rect), control1: pt(28, 45, in: rect), control2: pt(21, 52, in: rect))
-    p.addLine(to: pt(33, 69, in: rect))
-    p.addCurve(to: pt(45, 51, in: rect), control1: pt(34, 58, in: rect), control2: pt(39, 53, in: rect))
+    p.move(to: pt(43, 50, in: rect))
+    p.addCurve(to: pt(27, 71, in: rect), control1: pt(35, 53, in: rect), control2: pt(29, 61, in: rect))
+    p.addCurve(to: pt(27, 79, in: rect), control1: pt(26, 74, in: rect), control2: pt(26, 77, in: rect))
+    p.addLine(to: pt(38, 76, in: rect))
+    p.addCurve(to: pt(44, 54, in: rect), control1: pt(38, 69, in: rect), control2: pt(40, 60, in: rect))
     p.closeSubpath()
   },
   HelixAtlasPath(muscle: "Rear delts", view: .back) { rect, p in
-    p.move(to: pt(82, 44, in: rect))
-    p.addCurve(to: pt(100, 64, in: rect), control1: pt(92, 45, in: rect), control2: pt(99, 52, in: rect))
-    p.addLine(to: pt(87, 69, in: rect))
-    p.addCurve(to: pt(75, 51, in: rect), control1: pt(86, 58, in: rect), control2: pt(81, 53, in: rect))
+    p.move(to: pt(77, 50, in: rect))
+    p.addCurve(to: pt(93, 71, in: rect), control1: pt(85, 53, in: rect), control2: pt(91, 61, in: rect))
+    p.addCurve(to: pt(93, 79, in: rect), control1: pt(94, 74, in: rect), control2: pt(94, 77, in: rect))
+    p.addLine(to: pt(82, 76, in: rect))
+    p.addCurve(to: pt(76, 54, in: rect), control1: pt(82, 69, in: rect), control2: pt(80, 60, in: rect))
     p.closeSubpath()
   },
   HelixAtlasPath(muscle: "Back", view: .back) { rect, p in
-    p.move(to: pt(45, 50, in: rect))
-    p.addLine(to: pt(75, 50, in: rect))
-    p.addCurve(to: pt(84, 81, in: rect), control1: pt(83, 53, in: rect), control2: pt(86, 64, in: rect))
-    p.addCurve(to: pt(60, 107, in: rect), control1: pt(80, 97, in: rect), control2: pt(72, 105, in: rect))
-    p.addCurve(to: pt(36, 81, in: rect), control1: pt(48, 105, in: rect), control2: pt(40, 97, in: rect))
-    p.addCurve(to: pt(45, 50, in: rect), control1: pt(34, 64, in: rect), control2: pt(37, 53, in: rect))
+    p.move(to: pt(60, 45, in: rect))
+    p.addCurve(to: pt(77, 52, in: rect), control1: pt(66, 45, in: rect), control2: pt(72, 47, in: rect))
+    p.addCurve(to: pt(63, 70, in: rect), control1: pt(75, 60, in: rect), control2: pt(70, 66, in: rect))
+    p.addLine(to: pt(60, 71, in: rect))
+    p.addLine(to: pt(57, 70, in: rect))
+    p.addCurve(to: pt(43, 52, in: rect), control1: pt(50, 66, in: rect), control2: pt(45, 60, in: rect))
+    p.addCurve(to: pt(60, 45, in: rect), control1: pt(48, 47, in: rect), control2: pt(54, 45, in: rect))
+    p.closeSubpath()
+  },
+  HelixAtlasPath(muscle: "Back", view: .back) { rect, p in
+    p.move(to: pt(42, 62, in: rect))
+    p.addCurve(to: pt(39, 90, in: rect), control1: pt(39, 70, in: rect), control2: pt(38, 80, in: rect))
+    p.addCurve(to: pt(51, 113, in: rect), control1: pt(41, 100, in: rect), control2: pt(45, 108, in: rect))
+    p.addLine(to: pt(57, 113, in: rect))
+    p.addCurve(to: pt(55, 70, in: rect), control1: pt(57, 100, in: rect), control2: pt(56, 86, in: rect))
+    p.addCurve(to: pt(42, 62, in: rect), control1: pt(50, 69, in: rect), control2: pt(45, 66, in: rect))
+    p.closeSubpath()
+  },
+  HelixAtlasPath(muscle: "Back", view: .back) { rect, p in
+    p.move(to: pt(78, 62, in: rect))
+    p.addCurve(to: pt(81, 90, in: rect), control1: pt(81, 70, in: rect), control2: pt(82, 80, in: rect))
+    p.addCurve(to: pt(69, 113, in: rect), control1: pt(79, 100, in: rect), control2: pt(75, 108, in: rect))
+    p.addLine(to: pt(63, 113, in: rect))
+    p.addCurve(to: pt(65, 70, in: rect), control1: pt(63, 100, in: rect), control2: pt(64, 86, in: rect))
+    p.addCurve(to: pt(78, 62, in: rect), control1: pt(70, 69, in: rect), control2: pt(75, 66, in: rect))
+    p.closeSubpath()
+  },
+  HelixAtlasPath(muscle: "Back", view: .back) { rect, p in
+    p.move(to: pt(56, 115, in: rect))
+    p.addCurve(to: pt(64, 115, in: rect), control1: pt(58, 116, in: rect), control2: pt(62, 116, in: rect))
+    p.addCurve(to: pt(66, 137, in: rect), control1: pt(64, 124, in: rect), control2: pt(65, 131, in: rect))
+    p.addLine(to: pt(54, 137, in: rect))
+    p.addCurve(to: pt(56, 115, in: rect), control1: pt(55, 131, in: rect), control2: pt(56, 124, in: rect))
     p.closeSubpath()
   },
   HelixAtlasPath(muscle: "Triceps", view: .back) { rect, p in
-    p.move(to: pt(22, 68, in: rect))
-    p.addCurve(to: pt(19, 107, in: rect), control1: pt(19, 80, in: rect), control2: pt(18, 94, in: rect))
-    p.addLine(to: pt(31, 105, in: rect))
-    p.addCurve(to: pt(34, 72, in: rect), control1: pt(31, 92, in: rect), control2: pt(33, 80, in: rect))
+    p.move(to: pt(39, 62, in: rect))
+    p.addCurve(to: pt(30, 82, in: rect), control1: pt(34, 66, in: rect), control2: pt(31, 73, in: rect))
+    p.addCurve(to: pt(30, 108, in: rect), control1: pt(29, 91, in: rect), control2: pt(29, 100, in: rect))
+    p.addLine(to: pt(37, 106, in: rect))
+    p.addCurve(to: pt(38, 81, in: rect), control1: pt(36, 98, in: rect), control2: pt(36, 90, in: rect))
+    p.addCurve(to: pt(41, 62, in: rect), control1: pt(39, 73, in: rect), control2: pt(40, 67, in: rect))
     p.closeSubpath()
   },
   HelixAtlasPath(muscle: "Triceps", view: .back) { rect, p in
-    p.move(to: pt(98, 68, in: rect))
-    p.addCurve(to: pt(101, 107, in: rect), control1: pt(101, 80, in: rect), control2: pt(102, 94, in: rect))
-    p.addLine(to: pt(89, 105, in: rect))
-    p.addCurve(to: pt(86, 72, in: rect), control1: pt(89, 92, in: rect), control2: pt(87, 80, in: rect))
+    p.move(to: pt(81, 62, in: rect))
+    p.addCurve(to: pt(90, 82, in: rect), control1: pt(86, 66, in: rect), control2: pt(89, 73, in: rect))
+    p.addCurve(to: pt(90, 108, in: rect), control1: pt(91, 91, in: rect), control2: pt(91, 100, in: rect))
+    p.addLine(to: pt(83, 106, in: rect))
+    p.addCurve(to: pt(82, 81, in: rect), control1: pt(84, 98, in: rect), control2: pt(84, 90, in: rect))
+    p.addCurve(to: pt(79, 62, in: rect), control1: pt(81, 73, in: rect), control2: pt(80, 67, in: rect))
     p.closeSubpath()
   },
   HelixAtlasPath(muscle: "Forearms", view: .back) { rect, p in
-    p.move(to: pt(19, 109, in: rect))
-    p.addCurve(to: pt(27, 147, in: rect), control1: pt(19, 122, in: rect), control2: pt(21, 136, in: rect))
-    p.addLine(to: pt(35, 144, in: rect))
-    p.addCurve(to: pt(30, 107, in: rect), control1: pt(31, 134, in: rect), control2: pt(29, 121, in: rect))
+    p.move(to: pt(30, 112, in: rect))
+    p.addCurve(to: pt(33, 140, in: rect), control1: pt(30, 121, in: rect), control2: pt(31, 131, in: rect))
+    p.addCurve(to: pt(36, 148, in: rect), control1: pt(34, 144, in: rect), control2: pt(35, 146, in: rect))
+    p.addLine(to: pt(42, 146, in: rect))
+    p.addCurve(to: pt(38, 123, in: rect), control1: pt(40, 139, in: rect), control2: pt(39, 131, in: rect))
+    p.addCurve(to: pt(38, 111, in: rect), control1: pt(38, 118, in: rect), control2: pt(38, 115, in: rect))
     p.closeSubpath()
   },
   HelixAtlasPath(muscle: "Forearms", view: .back) { rect, p in
-    p.move(to: pt(101, 109, in: rect))
-    p.addCurve(to: pt(93, 147, in: rect), control1: pt(101, 122, in: rect), control2: pt(99, 136, in: rect))
-    p.addLine(to: pt(85, 144, in: rect))
-    p.addCurve(to: pt(90, 107, in: rect), control1: pt(89, 134, in: rect), control2: pt(91, 121, in: rect))
+    p.move(to: pt(90, 112, in: rect))
+    p.addCurve(to: pt(87, 140, in: rect), control1: pt(90, 121, in: rect), control2: pt(89, 131, in: rect))
+    p.addCurve(to: pt(84, 148, in: rect), control1: pt(86, 144, in: rect), control2: pt(85, 146, in: rect))
+    p.addLine(to: pt(78, 146, in: rect))
+    p.addCurve(to: pt(82, 123, in: rect), control1: pt(80, 139, in: rect), control2: pt(81, 131, in: rect))
+    p.addCurve(to: pt(82, 111, in: rect), control1: pt(82, 118, in: rect), control2: pt(82, 115, in: rect))
     p.closeSubpath()
   },
   HelixAtlasPath(muscle: "Glutes", view: .back) { rect, p in
-    p.move(to: pt(43, 109, in: rect))
-    p.addCurve(to: pt(41, 141, in: rect), control1: pt(37, 117, in: rect), control2: pt(36, 131, in: rect))
-    p.addCurve(to: pt(59, 140, in: rect), control1: pt(48, 146, in: rect), control2: pt(55, 145, in: rect))
-    p.addLine(to: pt(59, 109, in: rect))
+    p.move(to: pt(43, 132, in: rect))
+    p.addCurve(to: pt(41, 152, in: rect), control1: pt(40, 137, in: rect), control2: pt(39, 145, in: rect))
+    p.addCurve(to: pt(54, 154, in: rect), control1: pt(44, 156, in: rect), control2: pt(49, 157, in: rect))
+    p.addCurve(to: pt(59, 143, in: rect), control1: pt(57, 152, in: rect), control2: pt(59, 148, in: rect))
+    p.addLine(to: pt(59, 132, in: rect))
     p.closeSubpath()
   },
   HelixAtlasPath(muscle: "Glutes", view: .back) { rect, p in
-    p.move(to: pt(77, 109, in: rect))
-    p.addCurve(to: pt(79, 141, in: rect), control1: pt(83, 117, in: rect), control2: pt(84, 131, in: rect))
-    p.addCurve(to: pt(61, 140, in: rect), control1: pt(72, 146, in: rect), control2: pt(65, 145, in: rect))
-    p.addLine(to: pt(61, 109, in: rect))
+    p.move(to: pt(77, 132, in: rect))
+    p.addCurve(to: pt(79, 152, in: rect), control1: pt(80, 137, in: rect), control2: pt(81, 145, in: rect))
+    p.addCurve(to: pt(66, 154, in: rect), control1: pt(76, 156, in: rect), control2: pt(71, 157, in: rect))
+    p.addCurve(to: pt(61, 143, in: rect), control1: pt(63, 152, in: rect), control2: pt(61, 148, in: rect))
+    p.addLine(to: pt(61, 132, in: rect))
     p.closeSubpath()
   },
   HelixAtlasPath(muscle: "Hamstrings", view: .back) { rect, p in
-    p.move(to: pt(41, 145, in: rect))
-    p.addCurve(to: pt(41, 190, in: rect), control1: pt(38, 161, in: rect), control2: pt(38, 177, in: rect))
-    p.addLine(to: pt(54, 190, in: rect))
-    p.addCurve(to: pt(58, 145, in: rect), control1: pt(55, 175, in: rect), control2: pt(56, 159, in: rect))
+    p.move(to: pt(40, 157, in: rect))
+    p.addCurve(to: pt(39, 192, in: rect), control1: pt(37, 168, in: rect), control2: pt(36, 180, in: rect))
+    p.addLine(to: pt(52, 192, in: rect))
+    p.addCurve(to: pt(56, 157, in: rect), control1: pt(53, 180, in: rect), control2: pt(54, 168, in: rect))
     p.closeSubpath()
   },
   HelixAtlasPath(muscle: "Hamstrings", view: .back) { rect, p in
-    p.move(to: pt(79, 145, in: rect))
-    p.addCurve(to: pt(79, 190, in: rect), control1: pt(82, 161, in: rect), control2: pt(82, 177, in: rect))
-    p.addLine(to: pt(66, 190, in: rect))
-    p.addCurve(to: pt(62, 145, in: rect), control1: pt(65, 175, in: rect), control2: pt(64, 159, in: rect))
+    p.move(to: pt(80, 157, in: rect))
+    p.addCurve(to: pt(81, 192, in: rect), control1: pt(83, 168, in: rect), control2: pt(84, 180, in: rect))
+    p.addLine(to: pt(68, 192, in: rect))
+    p.addCurve(to: pt(64, 157, in: rect), control1: pt(67, 180, in: rect), control2: pt(66, 168, in: rect))
     p.closeSubpath()
   },
   HelixAtlasPath(muscle: "Calves", view: .back) { rect, p in
-    p.move(to: pt(42, 194, in: rect))
-    p.addCurve(to: pt(44, 237, in: rect), control1: pt(40, 209, in: rect), control2: pt(41, 226, in: rect))
-    p.addLine(to: pt(54, 237, in: rect))
-    p.addCurve(to: pt(54, 194, in: rect), control1: pt(55, 223, in: rect), control2: pt(55, 207, in: rect))
+    p.move(to: pt(37, 199, in: rect))
+    p.addCurve(to: pt(38, 230, in: rect), control1: pt(36, 208, in: rect), control2: pt(36, 220, in: rect))
+    p.addCurve(to: pt(42, 237, in: rect), control1: pt(39, 234, in: rect), control2: pt(40, 236, in: rect))
+    p.addLine(to: pt(51, 237, in: rect))
+    p.addCurve(to: pt(51, 199, in: rect), control1: pt(52, 226, in: rect), control2: pt(52, 212, in: rect))
     p.closeSubpath()
   },
   HelixAtlasPath(muscle: "Calves", view: .back) { rect, p in
-    p.move(to: pt(78, 194, in: rect))
-    p.addCurve(to: pt(76, 237, in: rect), control1: pt(80, 209, in: rect), control2: pt(79, 226, in: rect))
-    p.addLine(to: pt(66, 237, in: rect))
-    p.addCurve(to: pt(66, 194, in: rect), control1: pt(65, 223, in: rect), control2: pt(65, 207, in: rect))
+    p.move(to: pt(83, 199, in: rect))
+    p.addCurve(to: pt(82, 230, in: rect), control1: pt(84, 208, in: rect), control2: pt(84, 220, in: rect))
+    p.addCurve(to: pt(78, 237, in: rect), control1: pt(81, 234, in: rect), control2: pt(80, 236, in: rect))
+    p.addLine(to: pt(69, 237, in: rect))
+    p.addCurve(to: pt(69, 199, in: rect), control1: pt(68, 226, in: rect), control2: pt(68, 212, in: rect))
     p.closeSubpath()
+  },
+  ]
+
+  /// Definition: the face, the six-pack seams, the erector groove, the kneecaps.
+  static let detail: [HelixAtlasDetail] = [
+  HelixAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(52, 21, in: rect))
+    p.addCurve(to: pt(57, 21, in: rect), control1: pt(54, 20, in: rect), control2: pt(56, 20, in: rect))
+  },
+  HelixAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(63, 21, in: rect))
+    p.addCurve(to: pt(68, 21, in: rect), control1: pt(64, 20, in: rect), control2: pt(66, 20, in: rect))
+  },
+  HelixAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(53, 25, in: rect))
+    p.addCurve(to: pt(57, 25, in: rect), control1: pt(54, 24, in: rect), control2: pt(56, 24, in: rect))
+    p.addCurve(to: pt(53, 25, in: rect), control1: pt(56, 26, in: rect), control2: pt(54, 26, in: rect))
+    p.closeSubpath()
+  },
+  HelixAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(63, 25, in: rect))
+    p.addCurve(to: pt(67, 25, in: rect), control1: pt(64, 24, in: rect), control2: pt(66, 24, in: rect))
+    p.addCurve(to: pt(63, 25, in: rect), control1: pt(66, 26, in: rect), control2: pt(64, 26, in: rect))
+    p.closeSubpath()
+  },
+  HelixAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(60, 27, in: rect))
+    p.addLine(to: pt(59, 32, in: rect))
+    p.addLine(to: pt(61, 32, in: rect))
+  },
+  HelixAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(56, 36, in: rect))
+    p.addCurve(to: pt(64, 36, in: rect), control1: pt(58, 37, in: rect), control2: pt(62, 37, in: rect))
+  },
+  HelixAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(48, 55, in: rect))
+    p.addCurve(to: pt(59, 50, in: rect), control1: pt(52, 51, in: rect), control2: pt(57, 50, in: rect))
+  },
+  HelixAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(72, 55, in: rect))
+    p.addCurve(to: pt(61, 50, in: rect), control1: pt(68, 51, in: rect), control2: pt(63, 50, in: rect))
+  },
+  HelixAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(39, 55, in: rect))
+    p.addCurve(to: pt(30, 75, in: rect), control1: pt(34, 60, in: rect), control2: pt(31, 67, in: rect))
+  },
+  HelixAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(81, 55, in: rect))
+    p.addCurve(to: pt(90, 75, in: rect), control1: pt(86, 60, in: rect), control2: pt(89, 67, in: rect))
+  },
+  HelixAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(60, 60, in: rect))
+    p.addLine(to: pt(60, 90, in: rect))
+  },
+  HelixAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(60, 93, in: rect))
+    p.addLine(to: pt(60, 132, in: rect))
+  },
+  HelixAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(49, 103, in: rect))
+    p.addLine(to: pt(71, 103, in: rect))
+  },
+  HelixAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(48, 113, in: rect))
+    p.addLine(to: pt(72, 113, in: rect))
+  },
+  HelixAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(49, 123, in: rect))
+    p.addLine(to: pt(71, 123, in: rect))
+  },
+  HelixAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(43, 82, in: rect))
+    p.addLine(to: pt(47, 86, in: rect))
+  },
+  HelixAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(43, 88, in: rect))
+    p.addLine(to: pt(48, 91, in: rect))
+  },
+  HelixAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(77, 82, in: rect))
+    p.addLine(to: pt(73, 86, in: rect))
+  },
+  HelixAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(77, 88, in: rect))
+    p.addLine(to: pt(72, 91, in: rect))
+  },
+  HelixAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(31, 155, in: rect))
+    p.addLine(to: pt(42, 153, in: rect))
+  },
+  HelixAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(32, 159, in: rect))
+    p.addLine(to: pt(43, 157, in: rect))
+  },
+  HelixAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(89, 155, in: rect))
+    p.addLine(to: pt(78, 153, in: rect))
+  },
+  HelixAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(88, 159, in: rect))
+    p.addLine(to: pt(77, 157, in: rect))
+  },
+  HelixAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(47, 157, in: rect))
+    p.addCurve(to: pt(44, 190, in: rect), control1: pt(45, 169, in: rect), control2: pt(44, 180, in: rect))
+  },
+  HelixAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(73, 157, in: rect))
+    p.addCurve(to: pt(76, 190, in: rect), control1: pt(75, 169, in: rect), control2: pt(76, 180, in: rect))
+  },
+  HelixAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(41, 193, in: rect))
+    p.addCurve(to: pt(42, 204, in: rect), control1: pt(39, 197, in: rect), control2: pt(39, 202, in: rect))
+    p.addCurve(to: pt(52, 202, in: rect), control1: pt(46, 206, in: rect), control2: pt(50, 205, in: rect))
+    p.addCurve(to: pt(50, 192, in: rect), control1: pt(53, 198, in: rect), control2: pt(52, 194, in: rect))
+    p.closeSubpath()
+  },
+  HelixAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(79, 193, in: rect))
+    p.addCurve(to: pt(78, 204, in: rect), control1: pt(81, 197, in: rect), control2: pt(81, 202, in: rect))
+    p.addCurve(to: pt(68, 202, in: rect), control1: pt(74, 206, in: rect), control2: pt(70, 205, in: rect))
+    p.addCurve(to: pt(70, 192, in: rect), control1: pt(67, 198, in: rect), control2: pt(68, 194, in: rect))
+    p.closeSubpath()
+  },
+  HelixAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(44, 204, in: rect))
+    p.addCurve(to: pt(46, 233, in: rect), control1: pt(43, 214, in: rect), control2: pt(44, 224, in: rect))
+  },
+  HelixAtlasDetail(view: .front) { rect, p in
+    p.move(to: pt(76, 204, in: rect))
+    p.addCurve(to: pt(74, 233, in: rect), control1: pt(77, 214, in: rect), control2: pt(76, 224, in: rect))
+  },
+  HelixAtlasDetail(view: .back) { rect, p in
+    p.move(to: pt(60, 45, in: rect))
+    p.addLine(to: pt(60, 71, in: rect))
+  },
+  HelixAtlasDetail(view: .back) { rect, p in
+    p.move(to: pt(60, 71, in: rect))
+    p.addLine(to: pt(60, 137, in: rect))
+  },
+  HelixAtlasDetail(view: .back) { rect, p in
+    p.move(to: pt(56, 116, in: rect))
+    p.addCurve(to: pt(57, 137, in: rect), control1: pt(56, 125, in: rect), control2: pt(56, 131, in: rect))
+  },
+  HelixAtlasDetail(view: .back) { rect, p in
+    p.move(to: pt(64, 116, in: rect))
+    p.addCurve(to: pt(63, 137, in: rect), control1: pt(64, 125, in: rect), control2: pt(64, 131, in: rect))
+  },
+  HelixAtlasDetail(view: .back) { rect, p in
+    p.move(to: pt(47, 66, in: rect))
+    p.addCurve(to: pt(53, 89, in: rect), control1: pt(51, 74, in: rect), control2: pt(53, 81, in: rect))
+  },
+  HelixAtlasDetail(view: .back) { rect, p in
+    p.move(to: pt(73, 66, in: rect))
+    p.addCurve(to: pt(67, 89, in: rect), control1: pt(69, 74, in: rect), control2: pt(67, 81, in: rect))
+  },
+  HelixAtlasDetail(view: .back) { rect, p in
+    p.move(to: pt(42, 64, in: rect))
+    p.addCurve(to: pt(47, 102, in: rect), control1: pt(40, 76, in: rect), control2: pt(41, 90, in: rect))
+  },
+  HelixAtlasDetail(view: .back) { rect, p in
+    p.move(to: pt(78, 64, in: rect))
+    p.addCurve(to: pt(73, 102, in: rect), control1: pt(80, 76, in: rect), control2: pt(79, 90, in: rect))
+  },
+  HelixAtlasDetail(view: .back) { rect, p in
+    p.move(to: pt(39, 55, in: rect))
+    p.addCurve(to: pt(30, 75, in: rect), control1: pt(34, 60, in: rect), control2: pt(31, 67, in: rect))
+  },
+  HelixAtlasDetail(view: .back) { rect, p in
+    p.move(to: pt(81, 55, in: rect))
+    p.addCurve(to: pt(90, 75, in: rect), control1: pt(86, 60, in: rect), control2: pt(89, 67, in: rect))
+  },
+  HelixAtlasDetail(view: .back) { rect, p in
+    p.move(to: pt(60, 133, in: rect))
+    p.addLine(to: pt(60, 155, in: rect))
+  },
+  HelixAtlasDetail(view: .back) { rect, p in
+    p.move(to: pt(41, 152, in: rect))
+    p.addCurve(to: pt(57, 154, in: rect), control1: pt(46, 156, in: rect), control2: pt(52, 157, in: rect))
+  },
+  HelixAtlasDetail(view: .back) { rect, p in
+    p.move(to: pt(79, 152, in: rect))
+    p.addCurve(to: pt(63, 154, in: rect), control1: pt(74, 156, in: rect), control2: pt(68, 157, in: rect))
+  },
+  HelixAtlasDetail(view: .back) { rect, p in
+    p.move(to: pt(47, 159, in: rect))
+    p.addCurve(to: pt(45, 191, in: rect), control1: pt(45, 170, in: rect), control2: pt(45, 181, in: rect))
+  },
+  HelixAtlasDetail(view: .back) { rect, p in
+    p.move(to: pt(73, 159, in: rect))
+    p.addCurve(to: pt(75, 191, in: rect), control1: pt(75, 170, in: rect), control2: pt(75, 181, in: rect))
+  },
+  HelixAtlasDetail(view: .back) { rect, p in
+    p.move(to: pt(39, 194, in: rect))
+    p.addLine(to: pt(52, 194, in: rect))
+  },
+  HelixAtlasDetail(view: .back) { rect, p in
+    p.move(to: pt(81, 194, in: rect))
+    p.addLine(to: pt(68, 194, in: rect))
+  },
+  HelixAtlasDetail(view: .back) { rect, p in
+    p.move(to: pt(44, 201, in: rect))
+    p.addCurve(to: pt(46, 231, in: rect), control1: pt(43, 212, in: rect), control2: pt(44, 222, in: rect))
+  },
+  HelixAtlasDetail(view: .back) { rect, p in
+    p.move(to: pt(76, 201, in: rect))
+    p.addCurve(to: pt(74, 231, in: rect), control1: pt(77, 212, in: rect), control2: pt(76, 222, in: rect))
+  },
+  HelixAtlasDetail(view: .back) { rect, p in
+    p.move(to: pt(41, 237, in: rect))
+    p.addCurve(to: pt(40, 251, in: rect), control1: pt(39, 242, in: rect), control2: pt(38, 247, in: rect))
+    p.addLine(to: pt(49, 251, in: rect))
+    p.addCurve(to: pt(50, 237, in: rect), control1: pt(50, 245, in: rect), control2: pt(50, 241, in: rect))
+    p.closeSubpath()
+  },
+  HelixAtlasDetail(view: .back) { rect, p in
+    p.move(to: pt(79, 237, in: rect))
+    p.addCurve(to: pt(80, 251, in: rect), control1: pt(81, 242, in: rect), control2: pt(82, 247, in: rect))
+    p.addLine(to: pt(71, 251, in: rect))
+    p.addCurve(to: pt(70, 237, in: rect), control1: pt(70, 245, in: rect), control2: pt(70, 241, in: rect))
+    p.closeSubpath()
+  },
+  HelixAtlasDetail(view: .back) { rect, p in
+    p.move(to: pt(30, 156, in: rect))
+    p.addLine(to: pt(44, 155, in: rect))
+  },
+  HelixAtlasDetail(view: .back) { rect, p in
+    p.move(to: pt(90, 156, in: rect))
+    p.addLine(to: pt(76, 155, in: rect))
   },
   ]
 

@@ -4,7 +4,10 @@ import { resolve, dirname } from 'node:path'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { LazyMotion, domMax } from 'framer-motion'
 import { SetEditorRow } from '@/components/command-center/SetEditorRow'
-import { SET_GRID, SET_HEADER_TEXT, SET_TAIL_W } from '@/components/command-center/setGrid'
+import {
+  setGridFor, setValueLabel, SET_BADGE_W, SET_HEADER_TEXT, SET_TAIL_W,
+  type SetGridMode,
+} from '@/components/command-center/setGrid'
 import type { DraftSet } from '@/lib/sessions/draft'
 
 /**
@@ -24,6 +27,12 @@ import type { DraftSet } from '@/lib/sessions/draft'
  * So the markup is emitted here, where the JSX transform is React's, and the
  * Playwright spec reads the file. Running the unit suite refreshes it, which is
  * why this lives in `src/tests` rather than in a script nobody remembers to run.
+ *
+ * ── AND IT EMITS ALL THREE COLUMN MODES ──────────────────────────────────────
+ * A hold and a knee raise have fewer columns than a bench press (see
+ * `SetGridMode`), and each mode is its own grid template. Measuring only the
+ * loaded one would leave the other two — the ones with the widest PREVIOUS
+ * column and therefore the most room to get the template wrong — unchecked.
  */
 
 const FIXTURE = resolve(__dirname, '../../e2e/__fixtures__/set-rows.html')
@@ -31,33 +40,71 @@ const FIXTURE = resolve(__dirname, '../../e2e/__fixtures__/set-rows.html')
 const noop = () => {}
 
 /** A card's worth of rows: warm-up, a heavy load, an open tuner, a ticked set. */
-const SETS: DraftSet[] = [
+const LOADED: DraftSet[] = [
   { weightKg: 17.5, reps: 12, setType: 'warmup', done: false },
   { weightKg: 102.25, reps: 8, done: false },
   { weightKg: 8.75, reps: 14, rpe: 9, done: false },   // "Very Hard", tuner open
   { weightKg: 60, reps: 10, rpe: 9.5, done: true },    // "Max Effort", ticked
 ]
 
+/** Bodyweight: reps only, no load anywhere, so no KG column. */
+const REPS: DraftSet[] = [
+  { weightKg: 0, reps: 15, done: false },
+  { weightKg: 0, reps: 12, rpe: 9, done: true },
+]
+
+/** A hold: the reps field carries seconds, and there is nothing else. */
+const TIME: DraftSet[] = [
+  { weightKg: 0, reps: 45, done: false },
+  { weightKg: 0, reps: 90, rpe: 9.5, done: true },
+]
+
+/** The header frame, spelled exactly as `ExerciseCard` spells it. */
+function Header({ mode }: { mode: SetGridMode }) {
+  return (
+    <div className="flex items-center gap-2 px-2 pb-1">
+      <span className={`${SET_BADGE_W} shrink-0 ${SET_HEADER_TEXT}`}>Set</span>
+      <span className={`flex-1 ${setGridFor(mode)} ${SET_HEADER_TEXT}`}>
+        <span>Previous</span>
+        {mode === 'loaded' && <span>kg</span>}
+        <span>{setValueLabel(mode)}</span>
+      </span>
+      <span className={`${SET_TAIL_W} shrink-0`} />
+    </div>
+  )
+}
+
+function Deck({ mode, sets, activeIdx, timed }: {
+  mode: SetGridMode
+  sets: DraftSet[]
+  activeIdx: number
+  timed?: boolean
+}) {
+  return (
+    <div data-probe-deck={mode} style={{ padding: 12 }}>
+      <Header mode={mode} />
+      {sets.map((set, i) => (
+        <SetEditorRow
+          key={i} index={i} displayNum={i + 1} set={set}
+          prev={{ weightKg: mode === 'loaded' ? 17.5 : 0, reps: mode === 'time' ? 60 : 12 }}
+          active={i === activeIdx} trackRpe prAxes={[]}
+          gridMode={mode} timed={timed} bodyweight={mode !== 'loaded'}
+          onActivate={noop} onChange={noop} onRemove={noop}
+          onToggleDone={noop} onSplit={noop} onPrTap={noop}
+        />
+      ))}
+    </div>
+  )
+}
+
 describe('the set row markup the browser test measures', () => {
-  it('renders every state, and lands in the fixture the e2e spec reads', () => {
+  it('renders every state and every column mode, and lands in the fixture the e2e spec reads', () => {
     const html = renderToStaticMarkup(
       <LazyMotion features={domMax} strict>
-        <div id="probe-deck" style={{ padding: 12 }}>
-          <div className="flex items-center gap-2 px-2 pb-1">
-            <span className={`flex-1 ${SET_GRID} ${SET_HEADER_TEXT}`}>
-              <span>Set</span><span>Previous</span><span>kg</span><span>Reps</span>
-            </span>
-            <span className={`${SET_TAIL_W} shrink-0`} />
-          </div>
-          {SETS.map((set, i) => (
-            <SetEditorRow
-              key={i} index={i} displayNum={i + 1} set={set}
-              prev={{ weightKg: 17.5, reps: 12 }}
-              active={i === 2} trackRpe prAxes={[]}
-              onActivate={noop} onChange={noop} onRemove={noop}
-              onToggleDone={noop} onSplit={noop} onPrTap={noop}
-            />
-          ))}
+        <div id="probe-deck">
+          <Deck mode="loaded" sets={LOADED} activeIdx={2} />
+          <Deck mode="reps" sets={REPS} activeIdx={0} />
+          <Deck mode="time" sets={TIME} activeIdx={0} timed />
         </div>
       </LazyMotion>,
     )
@@ -68,8 +115,12 @@ describe('the set row markup the browser test measures', () => {
     expect(html).toContain('Max Effort')
     expect(html).toContain('102.25')
     expect(html).toContain('17.5kg × 12')
-    expect(html).toContain('Warm-up')      // the words, not just "W"
-    expect(html).toContain('Remove set')   // the tuner is open on row 3
+    // The tuner is open on one row per deck, and the widest thing in it is the
+    // weight pill's outer step.
+    expect(html).toContain('−2.5')
+    expect(html).toContain('Weight · kg')
+    // A hold's previous is seconds, not a weight and not a rep count.
+    expect(html).toContain('60s')
 
     mkdirSync(dirname(FIXTURE), { recursive: true })
     writeFileSync(FIXTURE, html, 'utf8')

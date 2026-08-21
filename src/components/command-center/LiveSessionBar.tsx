@@ -1,15 +1,12 @@
 'use client'
 
-import { memo, useState } from 'react'
-import { CalendarDays } from 'lucide-react'
-import { LeverTag } from '@/components/nutrition/LeverTag'
+import { memo } from 'react'
 import { AppBar } from '@/components/nav/AppBar'
 import { BackLink } from '@/components/nav/NavChevron'
+import { MuscleDistribution } from './MuscleDistribution'
 import { fmtVolume } from '@/lib/utils/units'
-import { logicalTodayISO } from '@/lib/utils/day'
-import { useLoggedSessionDates } from '@/lib/hooks/useDayVault'
 import { EMBER, GOLD, MUTED, STEEL } from '@/lib/theme/palette'
-import { DatePickerPopover } from './DatePickerPopover'
+import type { SessionDraft } from '@/lib/sessions/draft'
 
 /**
  * The pinned bar for a live session.
@@ -35,78 +32,62 @@ import { DatePickerPopover } from './DatePickerPopover'
  * that cannot change until the session ends. Duration, average HR and calories
  * belong to the finish sheet, where you can actually answer them.
  *
- * ── WHY IT TAKES PRIMITIVES, NOT THE DRAFT ───────────────────────────────────
+ * ── IT IS THE SECOND HALF OF A TITLE, NOT THE WHOLE OF ONE ───────────────────
+ * The identity, the date control and the metrics now open the document in
+ * `LiveSessionHero`, at a size a title deserves. What is here is the compact
+ * copy: it starts invisible and fades in only once the hero has scrolled off
+ * (`titlePassed`, driven by an IntersectionObserver in `SessionDeck`). Above the
+ * fold the bar is just the way out; below it, it names the session and carries
+ * the three numbers that move while you lift.
+ *
+ * The muscle button does NOT fade. It is a control, not a label — the whole
+ * reason it left the commit bar was that it could not be reached without
+ * scrolling, and hiding it above the fold would reintroduce exactly that.
+ *
+ * ── WHY IT TAKES PRIMITIVES, NOT THE DRAFT (MOSTLY) ──────────────────────────
  * `SessionDeck` computes `draftTotals` once and hands down three numbers. Given
  * the draft, this bar would re-render on every keystroke in every set field —
  * exactly the cost `src/tests/deck-render.test*` exists to catch — and it would
  * pay it to redraw two figures that only move when a set is ticked.
+ *
+ * `MuscleDistribution` genuinely needs the draft (it walks every committed set),
+ * so it takes it — and it is `memo`ised at the point that matters, because its
+ * own `useMemo`s are keyed on the draft object. This bar re-rendering is the
+ * cost of that; it is one 36px figure, and it is why the deck's row-render
+ * assertion measures rows rather than bars.
  */
 export const LiveSessionBar = memo(function LiveSessionBar({
-  title, week, phase, dateISO, accent, volumeKg, sets, recordCount, onBack, onSetDate,
+  title, accent, volumeKg, sets, recordCount, titlePassed, draft, onBack,
 }: {
   title: string
-  week?: number | null
-  phase?: string | null
-  dateISO: string
   /** Hex for the bar's top hairline — which workout this is. */
   accent?: string
   volumeKg: number
   sets: number
   /** Distinct axis-records claimed so far this session (live, from `prEngine`). */
   recordCount: number
+  /** The hero has scrolled off, so the bar takes over as the title. */
+  titlePassed: boolean
+  /** For the muscle figure only — it walks the committed sets itself. */
+  draft: SessionDraft
   onBack: () => void
-  onSetDate: (dateISO: string) => void
 }) {
-  const [pickerOpen, setPickerOpen] = useState(false)
-  const { data: loggedDates } = useLoggedSessionDates()
-
-  const dateLabel = new Date(dateISO + 'T12:00:00Z')
-    .toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
-
   return (
     <AppBar accent={accent}>
       <BackLink onClick={onBack} label="Back — the draft autosaves" />
 
-      <div className="min-w-0 flex-1">
+      <div
+        className={`min-w-0 flex-1 transition-opacity duration-200 ${titlePassed ? 'opacity-100' : 'opacity-0'}`}
+        aria-hidden={!titlePassed}
+      >
         <h1 className="font-heading font-bold text-fluid-sm text-text leading-tight truncate">{title}</h1>
-        {/* The date is the control, not a label beside one. A separate 44pt
-            chip cost the width of three characters of the title to say the same
-            thing the line already says. */}
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setPickerOpen((v) => !v)}
-            className="flex items-center gap-1 text-[10px] text-muted leading-tight active:opacity-70 transition-opacity"
-            aria-label={`Session date: ${dateLabel}. Tap to change`}
-            aria-expanded={pickerOpen}
-          >
-            <CalendarDays className="w-3 h-3 text-primary shrink-0" aria-hidden="true" />
-            <span className="truncate">
-              {week != null && <>Week {week} · </>}
-              {phase && <span className="text-info font-semibold">{phase === 'CUT' ? 'Cut' : phase} · </span>}
-              {dateLabel}
-            </span>
-          </button>
-          {/* Which rung of the cut you are training under. It lives here rather
-              than only in Settings because the deck is where the day is spent —
-              a target that moved by 70 kcal overnight should be readable
-              without leaving the session. Compact: this row already carries
-              three numbers. */}
-          <span className="flex mt-0.5"><LeverTag compact /></span>
-          {pickerOpen && (
-            <DatePickerPopover
-              value={dateISO}
-              max={logicalTodayISO()}
-              disabledDates={loggedDates ?? new Set()}
-              onSelect={onSetDate}
-              onClose={() => setPickerOpen(false)}
-            />
-          )}
-        </div>
       </div>
 
       {/* The live rail. Only what moves while you lift. */}
-      <div className="flex items-baseline gap-2.5 shrink-0">
+      <div
+        className={`flex items-baseline gap-2.5 shrink-0 transition-opacity duration-200 ${titlePassed ? 'opacity-100' : 'opacity-0'}`}
+        aria-hidden={!titlePassed}
+      >
         <Stat value={fmtVolume(volumeKg)} unit="kg" label="Vol" color={EMBER} />
         <Stat value={String(sets)} label="Sets" color={STEEL} />
         <Stat
@@ -117,6 +98,9 @@ export const LiveSessionBar = memo(function LiveSessionBar({
           color={recordCount > 0 ? GOLD : MUTED}
         />
       </div>
+
+      {/* Always visible — see the note above. */}
+      <MuscleDistribution draft={draft} />
     </AppBar>
   )
 })

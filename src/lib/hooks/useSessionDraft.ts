@@ -205,7 +205,7 @@ export function useSessionDraft() {
   }, [])
 
   /** Edit a cardio block's distance / duration / note. */
-  const updateCardio = useCallback((localId: string, patch: Partial<Pick<DraftExercise, 'distanceKm' | 'durationSec' | 'note' | 'name'>>) => {
+  const updateCardio = useCallback((localId: string, patch: Partial<Pick<DraftExercise, 'distanceKm' | 'durationSec' | 'inclinePct' | 'note' | 'name'>>) => {
     setDraft((d) => d && ({
       ...d,
       exercises: d.exercises.map((ex) => (ex.localId === localId ? { ...ex, ...patch } : ex)),
@@ -247,18 +247,15 @@ export function useSessionDraft() {
     }))
   }, [])
 
-  /** "Check all" — mark every set in the exercise complete (green). */
-  const checkAllSets = useCallback((localId: string) => {
-    setDraft((d) => d && ({
-      ...d,
-      exercises: d.exercises.map((ex) =>
-        ex.localId === localId
-          // "Check all" stamps nothing: these sets did not finish now, and a
-          // rest timer counting from a bulk action would be a fiction.
-          ? { ...ex, sets: ex.sets.map((s) => ({ ...s, done: true })) }
-          : ex),
-    }))
-  }, [])
+  /*
+   * ── THERE IS NO "CHECK ALL" ─────────────────────────────────────────────────
+   * There was: one tap turned every set in an exercise green. It was removed
+   * deliberately. The tick is the single assertion this app makes about what
+   * actually happened on the gym floor — every downstream number, volume, the
+   * PR engine, the muscle distribution, reads it as "I performed this" — and a
+   * control that asserts four of them at once from a card you have not looked
+   * at makes that claim cheap. Sets are ticked one at a time, as they are done.
+   */
 
   const removeSet = useCallback((localId: string, setIdx: number) => {
     setDraft((d) => d && ({
@@ -398,5 +395,5 @@ export function useSessionDraft() {
     },
   })
 
-  return { draft, hydrated, start, discard, updateSet, splitSet, mergeSet, addCardio, updateCardio, addSet, removeSet, toggleSetDone, checkAllSets, removeExercise, reorder, setNotes, setExerciseNote, setStats, setSessionRpe, setDate, commit }
+  return { draft, hydrated, start, discard, updateSet, splitSet, mergeSet, addCardio, updateCardio, addSet, removeSet, toggleSetDone, removeExercise, reorder, setNotes, setExerciseNote, setStats, setSessionRpe, setDate, commit }
 }

@@ -10,7 +10,6 @@ import {
   type LandmarkMuscle,
 } from '@/lib/training/landmarks'
 import { isSetCommitted, type SessionDraft } from '@/lib/sessions/draft'
-import { EMBER } from '@/lib/theme/palette'
 
 /**
  * Where the session you are logging is actually going.
@@ -93,7 +92,11 @@ export function draftPhysicalSets(draft: SessionDraft | null): number {
   return total
 }
 
-export function MuscleDistribution({ draft }: { draft: SessionDraft | null }) {
+export function MuscleDistribution({ draft, size = 'sm' }: {
+  draft: SessionDraft | null
+  /** `lg` is the hero's 44px target; `sm` the 36px one in the pinned bar. */
+  size?: 'sm' | 'lg'
+}) {
   const [open, setOpen] = useState(false)
   const sets = useMemo(() => draftMuscleSets(draft), [draft])
   const worked = useMemo(() => setsToWorked(sets), [sets])
@@ -103,19 +106,34 @@ export function MuscleDistribution({ draft }: { draft: SessionDraft | null }) {
     .filter((e) => e.sets > 0)
   const weighted = Math.round(entries.reduce((n, e) => n + e.sets, 0) * 10) / 10
 
-  if (!entries.length) return null
+  /**
+   * ── IT RENDERS EVEN WITH NOTHING TO SHOW ────────────────────────────────────
+   * It used to `return null` until the first set was ticked. That was fine when
+   * it lived in the commit bar and nothing was above it; in the header it means
+   * a control materialising mid-session and shifting the title, the date and
+   * three figures sideways at the exact moment you are reaching for a tick.
+   *
+   * So it is always drawn, and dimmed and disabled until there is an answer —
+   * which also tells you the answer is coming, rather than that the feature does
+   * not exist.
+   */
+  const empty = !entries.length
+  const box = size === 'lg' ? 'h-11 w-11' : 'h-9 w-9'
+  const fig = size === 'lg' ? 'h-8 w-8' : 'h-6 w-6'
 
   return (
     <>
       <button
         type="button"
         onClick={() => setOpen(true)}
+        disabled={empty}
         aria-label="Muscle distribution for this session"
-        title="Where this session is landing"
-        className="shrink-0 h-9 w-9 rounded-lg flex items-center justify-center active:scale-95 transition-transform"
+        title={empty ? 'Tick a set to see where this session is landing' : 'Where this session is landing'}
+        className={`shrink-0 ${box} rounded-xl flex items-center justify-center transition-transform
+                    ${empty ? 'opacity-40' : 'active:scale-95'}`}
         style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
       >
-        <span className="h-6 w-6 block"><MuscleAtlas view="front" worked={worked} color={EMBER} /></span>
+        <span className={`${fig} block`}><MuscleAtlas view="front" worked={worked} /></span>
       </button>
 
       {/* The enlarged view is shared with the session report — see

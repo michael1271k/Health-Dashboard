@@ -3,7 +3,6 @@
 import { ChevronUp, Loader2, Trash2, X } from 'lucide-react'
 import type { SessionDraft } from '@/lib/sessions/draft'
 import { fmtVolume } from '@/lib/utils/units'
-import { MuscleDistribution } from './MuscleDistribution'
 
 /**
  * Sticky commit bar: discard/cancel, delete, and the button that opens the
@@ -76,9 +75,11 @@ export function CommitBar({ draft, totals, busy, error, deleting, onFinish, onDi
             <Trash2 className="w-4 h-4" aria-hidden="true" />
           </button>
         )}
-        {/* Where the session is landing — 24px beside the set count, the sheet
-            behind it for when something looks off. */}
-        <MuscleDistribution draft={draft} />
+        {/* The muscle figure USED TO SIT HERE, and that was the bug: the one
+            control answering "where is this session landing" was reachable only
+            by scrolling past every set you had not done yet. It lives in the
+            header now — in the hero and in the pinned bar, so it is one tap away
+            at any scroll position. See `LiveSessionHero`. */}
         <button
           type="button"
           onClick={onFinish}

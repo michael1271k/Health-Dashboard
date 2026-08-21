@@ -3,7 +3,7 @@
 import { memo, useCallback, useMemo, useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { ArrowLeftRight, Check, CheckCheck, ChevronDown, Footprints, GripVertical, History, NotebookPen, Plus, Target, Timer, Weight, X } from 'lucide-react'
+import { ArrowLeftRight, Check, ChevronDown, Footprints, GripVertical, History, NotebookPen, Plus, Target, Timer, Weight, X } from 'lucide-react'
 import { tapLight } from '@/lib/native/haptics'
 import { SetEditorRow } from './SetEditorRow'
 import { useTrackRpe } from '@/lib/hooks/useTrackRpe'
@@ -16,7 +16,7 @@ import { repWindowFor, holdTargetFor, ladderVerdict, levelUpCue } from '@/lib/tr
 import { restTargetFor, hasRestOverride, formatRestTarget } from '@/lib/training/restTargets'
 import { useRestTargets } from '@/lib/hooks/useRestTargets'
 import { RestTargetSheet } from './RestTargetSheet'
-import { SET_GRID, SET_HEADER_TEXT, SET_TAIL_W } from './setGrid'
+import { setGridFor, setValueLabel, SET_BADGE_W, SET_HEADER_TEXT, SET_TAIL_W, type SetGridMode } from './setGrid'
 import { workingSets, type ExerciseHistory } from '@/lib/hooks/useExerciseSetHistory'
 import type { PrAxis } from '@/lib/training/prEngine'
 import type { ReportTargets } from '@/lib/reports/fmtV2'
@@ -155,7 +155,7 @@ const fmtKg = (w: number) => (w % 1 === 0 ? w.toFixed(0) : (w * 10) % 1 === 0 ? 
  * means lifting `useSortable` into a shell component and moving the grip out of
  * this header — a real refactor, deliberately not done here.
  */
-export const ExerciseCard = memo(function ExerciseCard({ exercise, history, globalHistory, livePrs, dayKey, ready, reportTargets, collapsed = false, onUpdateSet, onSplitSet, onMergeSet, onAddSet, onRemoveSet, onToggleDone, onCheckAll, onRemoveExercise, onSetNote, onPrTap, onUpdateCardio }: {
+export const ExerciseCard = memo(function ExerciseCard({ exercise, history, globalHistory, livePrs, dayKey, ready, reportTargets, collapsed = false, onUpdateSet, onSplitSet, onMergeSet, onAddSet, onRemoveSet, onToggleDone, onRemoveExercise, onSetNote, onPrTap, onUpdateCardio }: {
   exercise: DraftExercise
   history: ExerciseHistory | null
   /**
@@ -202,13 +202,12 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
   onAddSet: (localId: string) => void
   onRemoveSet: (localId: string, setIdx: number) => void
   onToggleDone: (localId: string, setIdx: number) => void
-  onCheckAll: (localId: string) => void
   onRemoveExercise: (localId: string) => void
   onSetNote: (localId: string, note: string) => void
   /** Tapping a set's trophy strip — opens the record sheet for that set. */
   onPrTap?: (localId: string, setIdx: number) => void
-  /** Cardio blocks only: edit distance / duration. */
-  onUpdateCardio?: (localId: string, patch: { distanceKm?: number; durationSec?: number }) => void
+  /** Cardio blocks only: edit distance / duration / incline. */
+  onUpdateCardio?: (localId: string, patch: { distanceKm?: number; durationSec?: number; inclinePct?: number }) => void
 }) {
   const localId = exercise.localId
 
@@ -300,6 +299,26 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
   const timedEx = useMemo(() => isTimedExercise(exercise.name), [exercise.name])
   // No load to progress → the deck shows no load controls (see SetEditorRow).
   const bodyweightEx = useMemo(() => isBodyweightExercise(exercise.name), [exercise.name])
+
+  /**
+   * ── WHICH COLUMNS THIS EXERCISE HAS ────────────────────────────────────────
+   * Resolved ONCE, here, and handed to every row — rows of one card that
+   * disagreed about their columns would not be a table, and the header is drawn
+   * from this same value so it cannot describe a column that is not rendered.
+   *
+   * The `weightKg > 0` clause is what keeps a weighted variant working. A
+   * belt on a dip or a plate on a knee raise promotes the WHOLE exercise back
+   * to `loaded` the moment any set carries load, which is also what the tuner's
+   * "+ Add load" button is for: it reveals the field, the user types a number,
+   * and the column appears for every row at once.
+   */
+  const gridMode: SetGridMode = useMemo(() => {
+    const carriesLoad = exercise.sets.some((s) => s.weightKg > 0)
+    if (carriesLoad) return 'loaded'
+    if (timedEx) return 'time'
+    if (bodyweightEx) return 'reps'
+    return 'loaded'
+  }, [exercise.sets, timedEx, bodyweightEx])
   // Both of these resolve through `activeProgram()`, so they DO depend on
   // something that can change while you log: the plan/phase preference lands
   // from `user_goals` after first render, and the phase decides the prescribed
@@ -500,6 +519,7 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
           <div className="flex items-center gap-1.5 shrink-0">
             {!open && exercise.distanceKm != null && chip('km', String(exercise.distanceKm))}
             {!open && exercise.durationSec != null && chip('min', String(Math.round(exercise.durationSec / 60)))}
+            {!open && exercise.inclinePct != null && exercise.inclinePct > 0 && chip('%', String(exercise.inclinePct))}
             {!open && exercise.distanceKm == null && exercise.durationSec == null && (
               <span className="text-[10px] text-muted">Tap to log</span>
             )}
@@ -523,6 +543,18 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
               // Stored in SECONDS — the deck's own unit is minutes because that
               // is how a treadmill is set, but a 4:30 warm-up must survive.
               onCommit={(v) => onUpdateCardio(localId, { durationSec: v == null ? undefined : Math.round(v * 60) })}
+            />
+            {/* ── INCLINE ──
+                A treadmill walk at 0% and the same walk at 12% are not the same
+                session, and until now the deck had nowhere to say which one
+                happened — the two figures beside this one describe how far and
+                how long, and neither is the reason a 5 km/h walk was hard.
+
+                Half-percent steps, because that is the grid a treadmill's own
+                buttons move on. */}
+            <CardioField
+              label="Incline" unit="%" step={0.5} value={exercise.inclinePct}
+              onCommit={(v) => onUpdateCardio(localId, { inclinePct: v ?? undefined })}
             />
           </div>
         )}
@@ -745,35 +777,37 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
       {/* ── Set rows ── */}
       {showBody && (
         <div className="mt-2 border-t border-white/[0.06] pt-1.5 space-y-0.5">
-          {/* Check-all — tick every set green in one tap (log a whole exercise
-              after the fact). Only green sets are recorded on finish. Sits on
-              the divider rather than owning a full row of its own. */}
-          <div className="flex justify-end -mt-4 mb-0.5">
-            <button type="button" onClick={() => onCheckAll(localId)}
-              className="min-h-[26px] px-2 rounded-lg text-[10px] font-bold uppercase tracking-wide flex items-center gap-1 active:scale-95 transition-colors"
-              style={{ color: '#3E9E7A', background: '#3E9E7A14', border: '1px solid #3E9E7A44' }}>
-              <CheckCheck className="w-3 h-3" aria-hidden="true" /> Check all
-            </button>
-          </div>
           {/* ── Column headers ──
               The set rows carried none, so every value had to be identified by
               what it looked like: the muted pair was last time, the bold pair
               was now, probably. Four words remove that inference, and they cost
               one 14px line per card.
 
-              The template comes from `setGrid.ts`, the same constant the rows
-              import, so a column cannot be added here without the data moving
-              with it. */}
+              The frame comes from `setGrid.ts`, the same module the rows import
+              — badge width, grid template and tail width — so a column cannot
+              be added here without the data moving with it, and a movement with
+              no load cannot grow a KG header over a column that is not there.
+
+              The tick has a header now too. It was an empty `aria-hidden`
+              spacer, which lined the row up correctly and left the one column
+              carrying the most consequential control on the deck as the only
+              unlabelled thing in the table. */}
           <div className="flex items-center gap-2 px-2 pb-1">
-            <span className={`flex-1 ${SET_GRID} ${SET_HEADER_TEXT}`}>
-              <span>Set</span>
+            <span className={`${SET_BADGE_W} shrink-0 ${SET_HEADER_TEXT}`}>Set</span>
+            <span className={`flex-1 ${setGridFor(gridMode)} ${SET_HEADER_TEXT}`}>
               <span>Previous</span>
-              <span className="inline-flex items-center gap-1">
-                <Weight className="w-2.5 h-2.5" aria-hidden="true" />kg
-              </span>
-              <span>{timedEx ? 'Sec' : 'Reps'}</span>
+              {gridMode === 'loaded' && (
+                <span className="inline-flex items-center gap-1">
+                  <Weight className="w-2.5 h-2.5" aria-hidden="true" />kg
+                </span>
+              )}
+              <span>{setValueLabel(gridMode)}</span>
             </span>
-            <span className={`${SET_TAIL_W} shrink-0`} aria-hidden="true" />
+            <span className={`${SET_TAIL_W} shrink-0 flex items-center justify-center ${SET_HEADER_TEXT}`}
+              title="Completed — only ticked sets are recorded">
+              <Check className="w-2.5 h-2.5" strokeWidth={3} aria-hidden="true" />
+              <span className="sr-only">Completed</span>
+            </span>
           </div>
           {groups.map((g) => {
             const timed = timedEx
@@ -788,7 +822,7 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
                   set={g.set}
                   prev={prevGlobal[g.num - 1] ?? null}
                   active={activeSet === i}
-                  timed={timed}
+                  timed={timed} gridMode={gridMode}
                   bodyweight={bodyweightEx}
                   prAxes={livePrs?.get(livePrKey(exercise.localId, i))}
                   onActivate={handleActivate}
@@ -860,7 +894,7 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
                   trackRpe={trackRpe}
                     key={`l${g.left.idx}`} index={g.left.idx} displayNum={g.num} subRow set={g.left.set}
                     prev={prevGlobal[g.num - 1] ?? null}
-                    active={activeSet === g.left.idx} timed={timed} bodyweight={bodyweightEx}
+                    active={activeSet === g.left.idx} timed={timed} gridMode={gridMode} bodyweight={bodyweightEx}
                     prAxes={livePrs?.get(livePrKey(exercise.localId, g.left.idx))}
                     onActivate={handleActivate}
                     onChange={handleChange}
@@ -873,7 +907,7 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
                   trackRpe={trackRpe}
                     key={`r${g.right.idx}`} index={g.right.idx} displayNum={g.num} subRow set={g.right.set}
                     prev={prevGlobal[g.num - 1] ?? null}
-                    active={activeSet === g.right.idx} timed={timed} bodyweight={bodyweightEx}
+                    active={activeSet === g.right.idx} timed={timed} gridMode={gridMode} bodyweight={bodyweightEx}
                     prAxes={livePrs?.get(livePrKey(exercise.localId, g.right.idx))}
                     onActivate={handleActivate}
                     onChange={handleChange}

@@ -13,10 +13,11 @@ import { resolve } from 'node:path'
  *
  * So the real markup — emitted by `src/tests/set-row-markup.test.tsx`, which is
  * where React's JSX transform lives — is injected into a page that has already
- * loaded the app's real stylesheet, and measured. Two claims:
+ * loaded the app's real stylesheet, and measured. Three claims:
  *
  *   · every cell N shares a left edge down the card. That IS a column.
  *   · nothing that carries a word is narrower than the word it carries.
+ *   · and each of the three column MODES resolves to the tracks it claims.
  *
  * Run the unit suite first; the fixture is its output.
  */
@@ -28,35 +29,70 @@ const VIEWPORTS = [
   { name: 'iphone-14', width: 390 },
 ]
 
+/** How many DATA columns each mode has — the badge and the tick are outside. */
+const TRACKS: Record<string, number> = { loaded: 3, reps: 2, time: 2 }
+
 for (const vp of VIEWPORTS) {
   test(`set rows form real columns @ ${vp.name} (${vp.width}px)`, async ({ page }) => {
     expect(existsSync(FIXTURE), `missing ${FIXTURE} — run \`npm test\` to emit it`).toBe(true)
     const html = readFileSync(FIXTURE, 'utf8')
 
-    await page.setViewportSize({ width: vp.width, height: 844 })
+    await page.setViewportSize({ width: vp.width, height: 1400 })
     await page.goto('/auth', { waitUntil: 'domcontentloaded' })
     await page.evaluate((markup) => {
       const host = document.createElement('div')
+      // Pinned over the page. The app's fixed chrome and Next's dev overlay
+      // both paint above content in normal flow, and an element screenshot of
+      // something underneath them is a screenshot of them.
+      host.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#0A0B0D'
       host.innerHTML = markup
       document.body.appendChild(host)
     }, html)
 
-    const lefts = await page.evaluate(() => {
-      const grids = Array.from(document.querySelectorAll('#probe-deck [class*="grid-cols-["]'))
-      return grids.map((g) => Array.from(g.children).map((c) => Math.round(c.getBoundingClientRect().left)))
+    /**
+     * ── THE GRID HAS TO HAVE COMPILED ──────────────────────────────────────
+     * `setGridFor` builds arbitrary Tailwind classes (`grid-cols-[28px_…]`).
+     * A class the dev server has not compiled yet resolves to `none`, and every
+     * measurement below then describes an UNSTYLED stack of spans — which
+     * aligns perfectly and clips nothing. This probe once passed a screenshot
+     * that visibly showed the bug for exactly that reason.
+     */
+    const modes = await page.evaluate(() => {
+      const out: Array<{ mode: string; tracks: number[]; lefts: number[][] }> = []
+      for (const deck of Array.from(document.querySelectorAll('[data-probe-deck]'))) {
+        const mode = (deck as HTMLElement).dataset.probeDeck ?? '?'
+        const grids = Array.from(deck.querySelectorAll('[class*="grid-cols-["]'))
+        out.push({
+          mode,
+          tracks: grids.map((g) => getComputedStyle(g).gridTemplateColumns.split(/\s+/).filter(Boolean).length),
+          lefts: grids.map((g) => Array.from(g.children).map((c) => Math.round(c.getBoundingClientRect().left))),
+        })
+      }
+      return out
     })
-    // Header + four rows.
-    expect(lefts.length, 'the fixture did not render as grids').toBeGreaterThanOrEqual(5)
-    for (let col = 0; col < 4; col++) {
-      const xs = lefts.map((r) => r[col])
-      const drift = Math.max(...xs) - Math.min(...xs)
-      expect(drift, `column ${col} drifts by ${drift}px across ${xs.length} rows`).toBeLessThanOrEqual(1)
+
+    expect(modes.map((m) => m.mode), 'the fixture did not emit all three column modes')
+      .toEqual(['loaded', 'reps', 'time'])
+
+    for (const { mode, tracks, lefts } of modes) {
+      const want = TRACKS[mode]
+      // Header + at least two rows.
+      expect(lefts.length, `${mode}: the fixture did not render as grids`).toBeGreaterThanOrEqual(3)
+      for (const t of tracks) {
+        expect(t, `${mode}: grid resolved to ${t} tracks, not ${want} — the arbitrary class did not compile`)
+          .toBe(want)
+      }
+      for (let col = 0; col < want; col++) {
+        const xs = lefts.map((r) => r[col])
+        const drift = Math.max(...xs) - Math.min(...xs)
+        expect(drift, `${mode}: column ${col} drifts by ${drift}px across ${xs.length} rows`).toBeLessThanOrEqual(1)
+      }
     }
 
     // `scrollWidth` past `clientWidth` is exactly what an ellipsis hides.
     const clipped = await page.evaluate(() => {
       const out: string[] = []
-      for (const el of Array.from(document.querySelectorAll('#probe-deck *'))) {
+      for (const el of Array.from(document.querySelectorAll('[data-probe-deck] *'))) {
         const e = el as HTMLElement
         if (!e.textContent?.trim()) continue
         // ── CHECK EVERY ELEMENT, NOT JUST LEAVES ──

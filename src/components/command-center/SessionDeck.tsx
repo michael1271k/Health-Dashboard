@@ -1,9 +1,10 @@
 'use client'
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Check, CopyCheck, Trophy } from 'lucide-react'
 import { CoachNotes } from './CoachNotes'
 import { LiveSessionBar } from './LiveSessionBar'
+import { LiveSessionHero } from './LiveSessionHero'
 import { ExerciseDeckList } from './ExerciseDeckList'
 import type { ReadyCue } from './ExerciseCard'
 import { SessionNotesCard } from './SessionNotesCard'
@@ -38,7 +39,7 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
   /** Post-finish destination: the just-committed session's analysis page. */
   onViewSession?: (sessionId: string) => void
 }) {
-  const { draft, updateSet, splitSet, mergeSet, updateCardio, addSet, removeSet, toggleSetDone, checkAllSets, removeExercise, reorder, setNotes, setExerciseNote, setStats, setSessionRpe, setDate, discard, commit } = store
+  const { draft, updateSet, splitSet, mergeSet, updateCardio, addSet, removeSet, toggleSetDone, removeExercise, reorder, setNotes, setExerciseNote, setStats, setSessionRpe, setDate, discard, commit } = store
   const [result, setResult] = useState<CommitResult | null>(null)
   const [finishOpen, setFinishOpen] = useState(false)
   const [committedDate, setCommittedDate] = useState<string | null>(null)
@@ -88,6 +89,25 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
   // Which set's trophy was tapped. Held as (localId, setIdx) rather than as the
   // resolved record, so the sheet re-reads `livePrs` if the set changes while it
   // is open — the numbers on screen are always the numbers the engine holds.
+  /**
+   * ── ONE TITLE, TWO ELEMENTS ────────────────────────────────────────────────
+   * The hero carries the identity at the top of the document; the pinned bar
+   * carries a compact copy that appears only once the hero has left. An
+   * IntersectionObserver on the hero, not a scroll handler: a scroll listener on
+   * a sticky header runs on the main thread at pointer rate to answer a question
+   * with two states, on the surface whose keystroke latency has been measured
+   * and fixed twice.
+   */
+  const heroRef = useRef<HTMLDivElement>(null)
+  const [titlePassed, setTitlePassed] = useState(false)
+  useEffect(() => {
+    const el = heroRef.current
+    if (!el || typeof IntersectionObserver === 'undefined') return
+    const io = new IntersectionObserver(([entry]) => setTitlePassed(!entry.isIntersecting), { threshold: 0 })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+
   const [prTarget, setPrTarget] = useState<{ localId: string; setIdx: number } | null>(null)
   const handlePrTap = useCallback(
     (localId: string, setIdx: number) => setPrTarget({ localId, setIdx }),
@@ -226,21 +246,32 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
           a set is ticked. See `src/tests/deck-render.test*`. */}
       <LiveSessionBar
         title={draft.title ?? draft.splitDay.toUpperCase()}
-        week={draft.week}
-        phase={draft.phase}
-        dateISO={draft.date}
         accent={dayColor(draft.dayKey, draft.splitDay)}
         volumeKg={totals.volumeKg}
         sets={totals.sets}
         recordCount={livePrs.count}
+        titlePassed={titlePassed}
+        draft={draft}
         onBack={onClose}
-        onSetDate={setDate}
       />
 
     {/* The route is full-bleed so the bar above can span the viewport; the
         deck keeps its own measure and padding here. */}
-    <div className="mx-auto w-full max-w-[80rem] px-3 sm:px-5 pt-3 pb-6
-                    lg:grid lg:grid-cols-[minmax(320px,380px)_1fr] lg:gap-5 lg:items-start">
+    <div className="mx-auto w-full max-w-[80rem] px-3 sm:px-5 pb-6">
+      {/* The hero spans BOTH desktop columns — it is the document's title, and a
+          title indented into a sidebar is a sidebar heading. */}
+      <div ref={heroRef}>
+        <LiveSessionHero
+          draft={draft}
+          accent={dayColor(draft.dayKey, draft.splitDay)}
+          volumeKg={totals.volumeKg}
+          sets={totals.sets}
+          recordCount={livePrs.count}
+          onSetDate={setDate}
+        />
+      </div>
+
+    <div className="lg:grid lg:grid-cols-[minmax(320px,380px)_1fr] lg:gap-5 lg:items-start">
       {/* One sheet, not one per CommitBar — the bar renders twice (desktop rail
           and mobile deck) and a dialog rendered twice is two dialogs. */}
       <FinishSheet
@@ -280,7 +311,6 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
           onAddSet={addSet}
           onRemoveSet={removeSet}
           onToggleDone={toggleSetDone}
-          onCheckAll={checkAllSets}
           onRemoveExercise={removeExercise}
           onSetNote={setExerciseNote}
           onPrTap={handlePrTap}
@@ -299,6 +329,7 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
           timed={prSheet.timed}
         />
       )}
+    </div>
     </div>
     </>
   )

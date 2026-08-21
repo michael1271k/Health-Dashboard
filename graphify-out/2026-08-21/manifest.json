@@ -160,8 +160,8 @@
     "semantic_hash": ""
   },
   "public/sw.js": {
-    "mtime": 1787304193.8763025,
-    "ast_hash": "ee5a553068dc8735fbf9989c8ddae77c",
+    "mtime": 1787303526.2868092,
+    "ast_hash": "4a45f434897abbe64c6e1629978eae02",
     "semantic_hash": ""
   },
   "scripts/generate-icons.mjs": {
@@ -1985,8 +1985,8 @@
     "semantic_hash": ""
   },
   "src/lib/sessions/routineTemplate.ts": {
-    "mtime": 1787304144.7344801,
-    "ast_hash": "9eb002fb08491a43e31b3e7eff804354",
+    "mtime": 1787302712.2317548,
+    "ast_hash": "6a3cda5e0313f1325f7af8e6cdb227a2",
     "semantic_hash": ""
   },
   "src/lib/hooks/useRoutineTemplate.ts": {
@@ -1995,8 +1995,8 @@
     "semantic_hash": ""
   },
   "src/tests/routine-template.test.ts": {
-    "mtime": 1787304156.192196,
-    "ast_hash": "6204b5c79cf705f9d2053cf2c28f6769",
+    "mtime": 1786692701.7064707,
+    "ast_hash": "f995f5f59d418d7b292ed7c384e622c5",
     "semantic_hash": ""
   },
   "scripts/backfill-routine-templates.mts": {
@@ -2650,7 +2650,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/set-rows.html": {
-    "mtime": 1787304290.8479125,
+    "mtime": 1787303863.4713016,
     "ast_hash": "db839a493482fd7f4720b86660f851a7",
     "semantic_hash": ""
   },
@@ -2670,8 +2670,8 @@
     "semantic_hash": ""
   },
   "src/components/command-center/MuscleDistributionSheet.tsx": {
-    "mtime": 1787304285.904131,
-    "ast_hash": "d499554ac7cf7dc058f929ff69afce7e",
+    "mtime": 1787302937.3403335,
+    "ast_hash": "ea8dd8ece06459fb58fe03b3c8951def",
     "semantic_hash": ""
   },
   "src/tests/session-report-render.test.tsx": {
@@ -2680,7 +2680,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-ledger.html": {
-    "mtime": 1787304289.3055458,
+    "mtime": 1787303861.997931,
     "ast_hash": "229c9d7e8c30c8a3a3651ce8ea3b148c",
     "semantic_hash": ""
   },
@@ -2705,8 +2705,8 @@
     "semantic_hash": ""
   },
   "src/tests/live-header.test.tsx": {
-    "mtime": 1787304163.615988,
-    "ast_hash": "2094c1bc414d73087e009e90ab33a61a",
+    "mtime": 1787303950.9034126,
+    "ast_hash": "80c39aa14767b43bcbb4094b7b1c2f89",
     "semantic_hash": ""
   },
   "e2e/live-header.spec.ts": {
@@ -2715,8 +2715,8 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/live-header.html": {
-    "mtime": 1787304289.2702124,
-    "ast_hash": "097f93777305cb7632e33c75a687d18f",
+    "mtime": 1787303951.7739768,
+    "ast_hash": "be5f965f8ed9b7239d128b3beca5608d",
     "semantic_hash": ""
   }
 }

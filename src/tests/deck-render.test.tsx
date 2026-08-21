@@ -52,7 +52,7 @@ const PROPS: Omit<ComponentProps<typeof ExerciseDeckList>, 'draft'> = {
   history: undefined, livePrs: new Map(), readyByName: new Map(),
   onReorder: noop, onUpdateSet: noop, onSplitSet: noop, onMergeSet: noop,
   onAddSet: noop, onRemoveSet: noop, onToggleDone: noop,
-  onCheckAll: noop, onRemoveExercise: noop, onSetNote: noop,
+  onRemoveExercise: noop, onSetNote: noop,
 }
 
 /**
@@ -212,6 +212,35 @@ describe('the set row reads as a table', () => {
       .find((el) => el.textContent === 'Very Hard')
     expect(chip, 'the effort label does not render').toBeTruthy()
     expect(chip!.className, 'the effort label can still be truncated').not.toContain('truncate')
+  })
+
+  it('has no "Check all" anywhere — the tick is a per-set assertion', () => {
+    // One tap used to turn every set in an exercise green. The tick is the
+    // single claim this app makes about what happened on the gym floor, and
+    // every downstream number reads it as "I performed this"; a control that
+    // asserts four of them at once from a card you have not looked at makes
+    // that claim cheap. Removed deliberately — see `useSessionDraft`.
+    const { container } = render(<ExerciseDeckList draft={deck(false, 2)} {...PROPS} />)
+    expect(container.textContent ?? '').not.toContain('Check all')
+  })
+
+  it('makes the set badge a control, and keeps set type out of the row', () => {
+    // The tuner was ~250px for one set, and ~90px of that went on three
+    // controls reached a handful of times a session. They live behind the badge
+    // now (`SetActionSheet`), which was already drawn and already displayed the
+    // value they change.
+    const { container } = render(<ExerciseDeckList draft={deck(true, 1)} {...PROPS} />)
+    const badge = Array.from(container.querySelectorAll('button'))
+      .find((b) => (b.getAttribute('aria-label') ?? '').includes('Set options'))
+    expect(badge, 'the set badge is not a button').toBeTruthy()
+
+    // The row is collapsed, so nothing of the tuner should be mounted — but
+    // more importantly the segmented type control must not be in the ROW at
+    // any time, open or closed.
+    for (const word of ['Warm-up', 'Drop set', 'Remove set', 'Split L / R']) {
+      expect(container.textContent ?? '', `"${word}" is still rendered inline in the row`)
+        .not.toContain(word)
+    }
   })
 
   it('shows the previous set with its unit, not a bare pair of numbers', () => {

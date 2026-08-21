@@ -1,16 +1,16 @@
 'use client'
 
 import { memo, useEffect, useState } from 'react'
-import { Check, Medal, Trash2, Trophy } from 'lucide-react'
+import { Check, Medal, Trophy } from 'lucide-react'
 import { tapLight } from '@/lib/native/haptics'
 import { isSetCommitted, type DraftSet } from '@/lib/sessions/draft'
 import { prAxisLabel, type PrAxis } from '@/lib/training/prEngine'
 import { rpeColor, rpeLabel } from '@/lib/training/effort'
-import { Segmented } from '@/components/ui/Segmented'
 import { RpeLadder } from './RpeLadder'
-import { SET_GRID, SET_SUBLINE_INDENT, SET_TAIL_W } from './setGrid'
+import { SetActionSheet, type SetTypeValue } from './SetActionSheet'
+import { setGridFor, SET_BADGE_W, SET_SUBLINE_INDENT, SET_TAIL_W, type SetGridMode } from './setGrid'
 
-/** Plate step (the flanking ± on the weight field) and the microload step. */
+/** Plate step (the outer ± of the weight pill) and the microload step (the inner ±). */
 const PLATE_STEP = 2.5
 const FINE_STEP = 0.25
 const ORANGE = '#E0703C' // warm-up
@@ -21,28 +21,29 @@ const GOLD = '#C9A227'   // personal record
 /** The ladder stop that MEANS failure — the one rating the `F` tag mirrors. */
 const FAILURE_RPE = 10
 
-type SetTypeValue = 'normal' | 'warmup' | 'failure' | 'dropset'
-
 /**
  * One set row of the deck: tap to activate the tuner (typeable weight/reps
- * fields with flanking steppers, microload chips, set-type control, Split L/R,
- * effort ladder).
+ * fields with inline steppers and an effort ladder); tap the badge for
+ * everything else the set can be.
  *
- * ── THE ROW IS A TABLE ROW NOW ───────────────────────────────────────────────
+ * ── THE ROW IS A TABLE ROW ───────────────────────────────────────────────────
  * It used to be a four-column grid with no header above it, and two of those
  * columns were doing more than one job: today's weight AND reps AND a type chip
  * AND a stale-rating dot shared one `flex` cell, while the last column was a
  * fixed 44px holding words like "VERY HARD" and "MAX EFFORT". The first made
  * the numbers zig-zag down the card, because a cell that packs a variable
  * number of children cannot line up with the cell below it. The second
- * truncated: at 10px bold uppercase, 44px is about six characters, so the only
- * effort ratings that rendered in full were HARD and EASY — the labels exist to
- * be read, and half of them were being cut in half.
+ * truncated: at 10px bold uppercase, 44px is about six characters.
  *
  * Now: SET · PREVIOUS · KG · REPS · ✓, one job per column, a header row above
  * them (`setGrid.ts` owns the template so the two cannot drift), and everything
  * of variable width — the effort word, the record chips — on a second line that
  * can be as wide as it needs to be.
+ *
+ * ── AND ITS COLUMNS DEPEND ON THE MOVEMENT ───────────────────────────────────
+ * `gridMode` comes from the card, resolved once for every row in it. A hold has
+ * no KG column and a knee raise has no KG column, because neither has a KG. See
+ * `SetGridMode`.
  *
  * ── THE SLIDER IS GONE ───────────────────────────────────────────────────────
  * A Radix weight slider used to sit between the number fields and the steppers.
@@ -66,7 +67,7 @@ type SetTypeValue = 'normal' | 'warmup' | 'failure' | 'dropset'
  * The card shells above still re-execute; they are cheap once their subtree
  * bails out.
  */
-export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subRow = false, set, prev, active, timed = false, bodyweight = false, trackRpe = false, prAxes = [], onActivate, onChange, onRemove, onToggleDone, onSplit, onPrTap }: {
+export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subRow = false, set, prev, active, timed = false, bodyweight = false, gridMode = 'loaded', trackRpe = false, prAxes = [], onActivate, onChange, onRemove, onToggleDone, onSplit, onPrTap }: {
   index: number
   /**
    * What you did on THIS set number the last time you trained this movement,
@@ -84,10 +85,12 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
   prAxes?: PrAxis[]
   /**
    * Movement with no load to progress (Hanging Knee Raise, Reverse Crunch, a
-   * hold). Its load controls stay hidden while the set is at 0 kg — see
-   * `isBodyweightExercise`.
+   * hold). Decides whether the tuner offers an "Add load" escape hatch — the
+   * COLUMN question is `gridMode`'s, and the card answers it once.
    */
   bodyweight?: boolean
+  /** Which columns this card's rows carry. Resolved once per exercise. */
+  gridMode?: SetGridMode
   /** Human set number (groups a unilateral pair as ONE set); falls back to index+1. */
   displayNum?: number
   /** True when rendered as a Left/Right sub-row nested inside a "Set N" pair card. */
@@ -117,14 +120,17 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
   const weightLabel = set.weightKg % 1 === 0 ? set.weightKg.toFixed(0)
     : (set.weightKg * 10) % 1 === 0 ? set.weightKg.toFixed(1) : set.weightKg.toFixed(2)
 
+  /** Everything the set can be that is not its two numbers. See `SetActionSheet`. */
+  const [actionSheet, setActionSheet] = useState(false)
+
   /**
    * Show the load half at all? "0kg × 15 reps" on a Hanging Knee Raise states a
    * weight that does not exist and buries the only number the set has. A
-   * bodyweight movement carrying actual load (weighted pull-up) renders as any
-   * other loaded set — the test is the movement AND the value, never one alone.
+   * bodyweight movement carrying actual load (weighted pull-up) promotes the
+   * WHOLE CARD back to `loaded`, which is why this is one flag from the parent
+   * and not a per-row test: rows of one exercise must agree about their columns.
    */
-  const unloadedMovement = bodyweight || timed
-  const showLoad = !unloadedMovement || set.weightKg > 0
+  const showLoad = gridMode === 'loaded'
 
   /**
    * The tuner's load controls are LATCHED open, not derived from the value.
@@ -201,7 +207,7 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
   // 10px away. So the box holds only what is guaranteed to fit (a digit, a
   // letter, a medal) and the grid stays aligned however the set is typed.
   //
-  // ── THE LEFT COLUMN IS THE SET'S IDENTITY ──
+  // ── THE LEFT COLUMN IS THE SET'S IDENTITY, AND NOW ITS CONTROL ──
   // It used to read `S1` and carry the type as a separate chip further along
   // the row, which meant a warm-up announced itself twice — once as a number it
   // is not (a warm-up is not "set 1 of 4") and once as a tag. Hevy puts the
@@ -228,6 +234,8 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
 
   const setTypeValue: SetTypeValue = isWarm ? 'warmup' : isFail ? 'failure' : isDrop ? 'dropset' : 'normal'
   const subLine = set.rpe != null || hasPr || typeTag != null
+  const ordinal = displayNum ?? index + 1
+  const setLabel = `Set ${ordinal}${set.side === 'L' ? ' · Left' : set.side === 'R' ? ' · Right' : ''}`
 
   return (
     <div
@@ -258,31 +266,44 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
           One job per column. Anything whose width depends on its value — the
           effort word, the record chips, a type tag the badge could not carry —
           lives on the second line, where nothing has to line up with anything
-          and so nothing has to be cut short. */}
+          and so nothing has to be cut short.
+
+          Three flex children: the badge, the grid, the tick. The outer two are
+          buttons, so they cannot be tracks inside the grid — the grid itself is
+          the row's activate button, and a button cannot contain a button. The
+          header above reproduces this exact frame. */}
       <div className="flex items-center gap-2 px-2 py-1">
+        {/* SET — the identity: side, then record, then type, then ordinal. And
+            the way in to everything the set can BE: type, split, remove. A
+            control that displays a value is the obvious place to change it. */}
+        <button
+          type="button"
+          onPointerDown={() => { void tapLight() }}
+          onClick={() => setActionSheet(true)}
+          className={`${SET_BADGE_W} h-7 shrink-0 rounded-md flex items-center justify-center
+                      helix-num text-[12px] font-bold uppercase tabular-nums
+                      active:scale-95 transition-transform`}
+          style={badgeColor
+            ? { color: badgeColor, background: `${badgeColor}1f`, border: `1px solid ${badgeColor}55` }
+            : { color: 'var(--color-text)', border: '1px solid rgba(255,255,255,0.10)' }}
+          title={showMedal ? 'Personal record — tap for set options' : typeBadge ? `${typeBadge.full} — tap for set options` : 'Set options'}
+          aria-label={showMedal ? `${setLabel} — personal record. Set options`
+            : typeBadge ? `${typeBadge.full}, ${setLabel}. Set options`
+            : `${setLabel}. Set options`}
+        >
+          {showMedal
+            ? <Medal className="w-3.5 h-3.5" aria-hidden="true" />
+            : badge}
+        </button>
+
         <button
           type="button"
           onClick={() => onActivate(index)}
           className="flex-1 min-w-0 text-left min-h-[36px] flex items-center"
           aria-expanded={active}
+          aria-label={`Edit ${setLabel}`}
         >
-          <span className={`w-full ${SET_GRID}`}>
-            {/* SET — the identity: side, then record, then type, then ordinal. */}
-            <span
-              className="w-7 h-7 shrink-0 rounded-md flex items-center justify-center helix-num text-[12px] font-bold uppercase tabular-nums"
-              style={badgeColor
-                ? { color: badgeColor, background: `${badgeColor}1f`, border: `1px solid ${badgeColor}55` }
-                : { color: 'var(--color-text)' }}
-              title={showMedal ? 'Personal record' : typeBadge?.full}
-              aria-label={showMedal ? `Set ${displayNum ?? index + 1} — personal record`
-                : typeBadge ? `${typeBadge.full}, set ${displayNum ?? index + 1}`
-                : `Set ${displayNum ?? index + 1}`}
-            >
-              {showMedal
-                ? <Medal className="w-3.5 h-3.5" aria-hidden="true" />
-                : badge}
-            </span>
-
+          <span className={`w-full ${setGridFor(gridMode)}`}>
             {/* ── PREVIOUS ──
                 What this same set number was last time you did the movement, on
                 ANY routine. It sits before today's numbers because that is the
@@ -292,21 +313,28 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
 
                 It carries its UNIT. "17.5×12" next to a bare 17.5 in the KG
                 column made the reader supply the kg themselves; the whole point
-                of a reference is that it costs nothing to read.
+                of a reference is that it costs nothing to read. On an unloaded
+                movement there is no weight to quote, so it quotes the reps —
+                or the seconds, which is the only number a hold has.
 
                 Dimmed and never editable: a reference that looks like an input
                 gets typed into. */}
             <span className="helix-num text-[11px] tabular-nums text-muted/70 truncate"
               title={prev ? 'Last time you did this movement' : undefined}>
-              {prev ? (prev.weightKg > 0 ? `${prev.weightKg}kg × ${prev.reps}` : `${prev.reps}`) : '—'}
+              {prev
+                ? gridMode === 'time' ? `${prev.reps}s`
+                  : prev.weightKg > 0 ? `${prev.weightKg}kg × ${prev.reps}`
+                  : `${prev.reps}`
+                : '—'}
             </span>
 
-            {/* KG — its own column, so every weight in the card shares an edge. */}
-            <span className={`helix-num text-fluid-base font-bold tabular-nums truncate ${isWarm ? 'text-muted' : 'text-text'}`}>
-              {showLoad
-                ? <>{weightLabel}<span className="text-[10px] text-muted font-normal ml-0.5">kg</span></>
-                : <span className="text-muted font-normal">—</span>}
-            </span>
+            {/* KG — its own column, so every weight in the card shares an edge.
+                Absent entirely on an unloaded movement: see `SetGridMode`. */}
+            {showLoad && (
+              <span className={`helix-num text-fluid-base font-bold tabular-nums truncate ${isWarm ? 'text-muted' : 'text-text'}`}>
+                {weightLabel}<span className="text-[10px] text-muted font-normal ml-0.5">kg</span>
+              </span>
+            )}
 
             {/* REPS (or seconds on a hold). */}
             <span className={`helix-num text-fluid-base font-bold tabular-nums truncate ${isWarm ? 'text-muted' : 'text-text'}`}>
@@ -326,7 +354,7 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
             onPointerDown={() => { void tapLight() }}
             onClick={() => { onToggleDone(index) }}
             aria-pressed={done}
-            aria-label={done ? `Mark set ${index + 1} not done` : `Mark set ${index + 1} done`}
+            aria-label={done ? `Mark ${setLabel} not done` : `Mark ${setLabel} done`}
             className={`${SET_TAIL_W} shrink-0 min-h-[34px] rounded-lg flex items-center justify-center
                         active:scale-95 transition-[color,background-color,border-color,transform] duration-150`}
             style={done
@@ -404,80 +432,82 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
       )}
 
       {/* ── Tuner (active row only) ──
-          ONE CONTROL PER LINE, IN THE ORDER YOU REACH FOR THEM. It used to open
-          with six controls on a single non-wrapping flex line — `− weight + × −
-          reps +` — where both number fields were `flex-1` competing for what
-          the four 34px steppers and two unit labels left behind. On a 390px
-          phone that is a few characters each, and since `globals.css` forces
-          16px on every form control (the iOS zoom guard), "8.75" and "14" were
-          clipping inside their own inputs.
+          ONE VALUE PER LINE, EACH ON ONE LINE.
 
-          So the numbers get a block each, half the width apiece, with the
-          stepper that changes them on either side and the microloads directly
-          underneath the value they microload. Then effort (asked every working
-          set), then type (asked occasionally), then split and remove (asked
-          rarely, and one of them destructive). */}
+          It used to open with six controls on a single non-wrapping flex line —
+          `− weight + × − reps +` — where both number fields were `flex-1`
+          competing for what the four 34px steppers and two unit labels left
+          behind. On a 390px phone that is a few characters each, and since
+          `globals.css` forces 16px on every form control (the iOS zoom guard),
+          "8.75" and "14" were clipping inside their own inputs.
+
+          The fix for that was two half-width blocks, each two tiers tall: a
+          stepper row, then a separate bordered microload pair underneath. It
+          stopped the clipping and cost ~250px of height for one set.
+
+          This is the same information in one tier. Each value gets the FULL
+          width — which is what actually resolves the cramping — and both step
+          sizes are segments of the value's own pill rather than a second row:
+
+              Weight · kg   [ −2.5 │ −0.25 │  8.75  │ +0.25 │ +2.5 ]
+
+          The order you reach for them is unchanged: the numbers, then effort
+          (asked every working set). Type, Split and Remove are asked rarely and
+          one of them is destructive, so they left the row entirely — the badge
+          opens them. See `SetActionSheet`. */}
       {active && (
         <div className="px-2 pb-2 pt-0.5 space-y-2">
-          <div className={`grid gap-2 ${showLoadControls ? 'grid-cols-2' : 'grid-cols-1'}`}>
-            {showLoadControls && (
-              <TunerBlock label="Weight · kg">
-                <div className="flex items-stretch gap-1">
-                  <Step label="−" ariaLabel={`${PLATE_STEP}kg less`} onClick={() => nudgeWeight(-PLATE_STEP)} />
-                  <label className="flex-1 min-w-0 flex items-center rounded-lg border border-border bg-surface-2 px-1 min-h-[44px]">
-                    <NumberField
-                      value={set.weightKg}
-                      inputMode="decimal"
-                      ariaLabel={`Weight for set ${index + 1}`}
-                      onCommit={(n) => onChange(index, { weightKg: Math.max(0, n) })}
-                    />
-                  </label>
-                  <Step label="+" ariaLabel={`${PLATE_STEP}kg more`} onClick={() => nudgeWeight(+PLATE_STEP)} />
-                </div>
-                {/* The quarter-kg grid survives the slider's removal: microloading
-                    is how a 3.75kg lateral raise progresses, and it is not
-                    something you want to open a keyboard for. Directly under the
-                    number it moves — a control placed away from what it changes
-                    needs a label to explain itself, and this one no longer does. */}
-                <div className="flex items-stretch w-fit rounded-lg overflow-hidden mt-1 mx-auto"
-                  style={{ border: '1px solid rgba(255,255,255,0.10)' }}>
-                  <FineStep label={`−${FINE_STEP}`} onClick={() => nudgeWeight(-FINE_STEP)} />
-                  <span className="w-px" style={{ background: 'rgba(255,255,255,0.10)' }} aria-hidden="true" />
-                  <FineStep label={`+${FINE_STEP}`} onClick={() => nudgeWeight(+FINE_STEP)} />
-                </div>
-              </TunerBlock>
-            )}
+          {showLoadControls && (
+            <TunerRow label="Weight · kg">
+              <Step label={`−${PLATE_STEP}`} ariaLabel={`${PLATE_STEP}kg less`} onClick={() => nudgeWeight(-PLATE_STEP)} />
+              <Divider />
+              {/* The quarter-kg grid: microloading is how a 3.75kg lateral raise
+                  progresses, and it is not something you want to open a keyboard
+                  for. Inside the same pill as the plate steps, so the two sizes
+                  read as one control with a coarse and a fine end. */}
+              <Step label={`−${FINE_STEP}`} ariaLabel={`${FINE_STEP}kg less`} fine onClick={() => nudgeWeight(-FINE_STEP)} />
+              <Divider />
+              <NumberField
+                value={set.weightKg}
+                inputMode="decimal"
+                ariaLabel={`Weight for ${setLabel}`}
+                onCommit={(n) => onChange(index, { weightKg: Math.max(0, n) })}
+              />
+              <Divider />
+              <Step label={`+${FINE_STEP}`} ariaLabel={`${FINE_STEP}kg more`} fine onClick={() => nudgeWeight(+FINE_STEP)} />
+              <Divider />
+              <Step label={`+${PLATE_STEP}`} ariaLabel={`${PLATE_STEP}kg more`} onClick={() => nudgeWeight(+PLATE_STEP)} />
+            </TunerRow>
+          )}
 
-            <TunerBlock label={timed ? 'Seconds' : 'Reps'}>
-              <div className="flex items-stretch gap-1">
-                <Step label="−" ariaLabel={timed ? 'One second less' : 'One rep less'} onClick={() => nudgeReps(-1)} />
-                <label className="flex-1 min-w-0 flex items-center rounded-lg border border-border bg-surface-2 px-1 min-h-[44px]">
-                  <NumberField
-                    value={set.reps}
-                    inputMode="numeric"
-                    ariaLabel={`${timed ? 'Seconds' : 'Reps'} for set ${index + 1}`}
-                    onCommit={(n) => onChange(index, { reps: Math.max(1, Math.round(n)) })}
-                  />
-                </label>
-                <Step label="+" ariaLabel={timed ? 'One second more' : 'One rep more'} onClick={() => nudgeReps(+1)} />
-              </div>
-              {/* Weighted variants stay one tap away — a belt on a dip, a plate
-                  held on a knee raise. Revealing the controls is enough; the
-                  load itself stays 0 until the user sets one, so a stray tap
-                  cannot invent tonnage or cost the set its reps axis. */}
-              {!showLoadControls && canAddLoad && (
-                <button
-                  type="button"
-                  onClick={() => { void tapLight(); setLoadOpen(true) }}
-                  aria-label={`Add load to set ${displayNum ?? index + 1}`}
-                  className="mt-1 w-full rounded-lg border border-white/[0.10] bg-white/[0.04] min-h-[36px]
-                             text-[11px] font-semibold text-muted active:scale-95 transition-transform"
-                >
-                  + Add load
-                </button>
-              )}
-            </TunerBlock>
-          </div>
+          <TunerRow label={timed ? 'Seconds' : 'Reps'}>
+            <Step label="−" ariaLabel={timed ? 'One second less' : 'One rep less'} onClick={() => nudgeReps(-1)} />
+            <Divider />
+            <NumberField
+              value={set.reps}
+              inputMode="numeric"
+              ariaLabel={`${timed ? 'Seconds' : 'Reps'} for ${setLabel}`}
+              onCommit={(n) => onChange(index, { reps: Math.max(1, Math.round(n)) })}
+            />
+            <Divider />
+            <Step label="+" ariaLabel={timed ? 'One second more' : 'One rep more'} onClick={() => nudgeReps(+1)} />
+          </TunerRow>
+
+          {/* Weighted variants stay one tap away — a belt on a dip, a plate held
+              on a knee raise. Revealing the controls is enough; the load itself
+              stays 0 until the user sets one, so a stray tap cannot invent
+              tonnage or cost the set its reps axis. */}
+          {!showLoadControls && canAddLoad && (
+            <button
+              type="button"
+              onClick={() => { void tapLight(); setLoadOpen(true) }}
+              aria-label={`Add load to ${setLabel}`}
+              className="w-full rounded-lg border border-white/[0.10] bg-white/[0.04] min-h-[36px]
+                         text-[11px] font-semibold text-muted active:scale-95 transition-transform"
+            >
+              + Add load
+            </button>
+          )}
 
           {/* Effort, per SET, and only on a working one. A warm-up is never
               rated, for the same reason it wins no record: it is not the effort
@@ -490,7 +520,7 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
               value={set.rpe}
               stale={set.rpeStale}
               seeded={set.rpeSeed != null}
-              setLabel={`set ${displayNum ?? index + 1}`}
+              setLabel={`set ${ordinal}`}
               onPick={(choice) => onChange(index, {
                 rpe: choice?.rpe,
                 // The other direction of the same sync as `pickType`: the top
@@ -502,79 +532,30 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
               })}
             />
           )}
-
-          {/* ── Set type ──
-              FOUR SEGMENTS, AND ONE OF THEM IS "NORMAL". These are mutually
-              exclusive (see `pickType`) and the null state is a real choice —
-              it used to be the absence of three separate toggles, which meant
-              the control could not show you what the set currently IS, only
-              what it is not. Full width, because on this line it is the only
-              thing there.
-
-              And the words are visible. The old chips carried `hidden sm:inline`
-              on their labels, so below 640px — i.e. on every phone, which is
-              the only place this screen is used — the entire control read
-              "W F D". */}
-          <Segmented
-            fluid
-            size="sm"
-            label={`Set type for set ${displayNum ?? index + 1}`}
-            value={setTypeValue}
-            onChange={pickType}
-            options={[
-              { value: 'normal', label: 'Normal' },
-              { value: 'warmup', label: 'Warm-up', color: ORANGE },
-              { value: 'failure', label: 'Failure', color: DANGER },
-              { value: 'dropset', label: 'Drop', color: DROP, title: 'Drop set' },
-            ]}
-          />
-
-          <div className="flex items-center gap-2">
-            {/* Unilateral — split into Left/Right. Offered ONLY on a movement
-                trained one side at a time (`isUnilateralExercise`, checked in
-                `ExerciseCard`): splitting a bilateral set is not cosmetic, since
-                a pair is scored at its weaker side and counts as ONE set of work.
-                Merge lives on the parent "Set N" card, so a nested sub-row shows
-                only its own tuner. */}
-            {onSplit && (
-              <button type="button" onClick={() => { void tapLight(); onSplit(index) }}
-                className="flex-1 min-h-[44px] px-3 rounded-xl text-[11px] font-bold uppercase tracking-wide
-                           text-muted border border-white/10 hover:text-text active:scale-[0.98] transition-transform">
-                Split L / R
-              </button>
-            )}
-            {/* ── REMOVE MOVED IN HERE ──
-                It was a permanent 32px × on every collapsed row, one thumb-width
-                from the tick — the two most consequential controls on the deck,
-                adjacent, one of them destructive and reached far more often by
-                accident than on purpose. It costs a tap now, and that tap is the
-                row you are already opening to edit. */}
-            <button type="button" onClick={() => { void tapLight(); onRemove(index) }}
-              className={`${onSplit ? 'flex-1' : 'w-full'} min-h-[44px] px-3 rounded-xl text-[11px] font-bold uppercase tracking-wide
-                          border border-white/10 hover:border-danger/40 active:scale-[0.98] transition-transform
-                          flex items-center justify-center gap-1.5 text-danger`}
-              aria-label={`Remove set ${displayNum ?? index + 1}`}
-            >
-              <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-              Remove set
-            </button>
-          </div>
         </div>
       )}
+
+      <SetActionSheet
+        open={actionSheet}
+        onClose={() => setActionSheet(false)}
+        setLabel={setLabel}
+        value={setTypeValue}
+        onPick={pickType}
+        onSplit={onSplit ? () => onSplit(index) : undefined}
+        onRemove={() => onRemove(index)}
+      />
     </div>
   )
 })
 
 /**
- * One labelled control group in the tuner.
+ * One labelled control line in the tuner.
  *
- * The label is what lets the block be half a line wide without ambiguity: a
- * bare number field flanked by ± could be either of the two, and the reader
- * should not have to infer it from which one has a `kg` after it.
- */
-/*
- * The unit lives in the LABEL, not in the field.
+ * The label is what lets the pill be unambiguous: a number field flanked by ±
+ * could be either of the two values, and the reader should not have to infer it
+ * from which one has a `kg` after it.
  *
+ * ── THE UNIT LIVES IN THE LABEL, NOT IN THE FIELD ───────────────────────────
  * It used to be both: a block headed WEIGHT containing "8.75 KG", and a block
  * headed REPS containing "14 REPS". Two statements of the same fact, and the
  * second one was charging rent — at 360px the suffix crowded the number hard
@@ -582,49 +563,50 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
  * control this refactor exists to make readable. The label says it once, above,
  * where it does not compete with the value for width.
  */
-function TunerBlock({ label, children }: { label: string; children: React.ReactNode }) {
+function TunerRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="min-w-0">
       <span className="block mb-1 text-[9px] font-bold uppercase tracking-[0.1em] text-muted/60">{label}</span>
-      {children}
+      {/* One pill, hairline-divided. A single bordered container rather than
+          separate bordered buttons: five outlines in a 44px row reads as five
+          objects, and they are one control. */}
+      <div className="flex items-stretch rounded-xl border border-border bg-surface-2 overflow-hidden min-h-[44px]">
+        {children}
+      </div>
     </div>
   )
 }
 
+/** The hairline between two segments of a tuner pill. */
+function Divider() {
+  return <span className="w-px shrink-0 self-stretch" style={{ background: 'rgba(255,255,255,0.08)' }} aria-hidden="true" />
+}
+
 /**
- * The ± that flanks a number field.
+ * One ± segment of a tuner pill.
  *
- * Its own component because there are four of them and each is one square whose
- * only job is a haptic nudge — inline, they were four near-identical seven-line
+ * Its own component because there are up to six of them and each is one target
+ * whose only job is a haptic nudge — inline, they were near-identical seven-line
  * className strings, which is how the reps stepper and the weight chips drifted
  * onto different radii in the first place.
  *
- * 44px, not the 34px it was. That is the smallest target a thumb hits reliably,
- * and this one gets pressed with a shaking hand between sets.
+ * 44px tall, which is the smallest target a thumb hits reliably; this one gets
+ * pressed with a shaking hand between sets. `fine` is the quarter-kg end of the
+ * pill: same height, quieter type, because it is the smaller claim.
  */
-function Step({ label, ariaLabel, onClick }: { label: string; ariaLabel: string; onClick: () => void }) {
+function Step({ label, ariaLabel, onClick, fine = false }: {
+  label: string
+  ariaLabel: string
+  onClick: () => void
+  fine?: boolean
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
       aria-label={ariaLabel}
-      className="shrink-0 rounded-lg border border-white/[0.08] bg-white/[0.04] min-h-[44px] min-w-[44px]
-                 text-base font-bold text-text active:scale-95 transition-transform"
-    >
-      {label}
-    </button>
-  )
-}
-
-/** A microload chip — the quarter-kg grid, inside the segmented pair. */
-function FineStep({ label, onClick }: { label: string; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={`${label} kilograms`}
-      className="min-h-[32px] px-3 text-[11px] font-bold text-muted tabular-nums hover:text-text
-                 active:scale-95 transition-[color,transform] duration-150"
+      className={`shrink-0 px-2.5 min-h-[44px] tabular-nums active:scale-95 transition-transform
+                  ${fine ? 'text-[11px] font-bold text-muted' : 'text-[13px] font-bold text-text'}`}
     >
       {label}
     </button>
@@ -635,17 +617,16 @@ function FineStep({ label, onClick }: { label: string; onClick: () => void }) {
  * Typeable numeric field. Keeps a local text buffer while focused so partial
  * entries ("16", "16.", "16.2") don't fight the parsed value; commits every
  * valid parse up to the parent. Weight is NOT snapped to the 0.25 grid on typed
- * input — the user gets the exact number they enter (the ± chips still snap).
+ * input — the user gets the exact number they enter (the ± steps still snap).
  *
  * ── IT IS SIZED, NOT SQUEEZED ────────────────────────────────────────────────
  * `globals.css` forces `font-size: 16px` on every form control on a coarse
  * pointer — the iOS auto-zoom guard, and non-negotiable. So the input's width
  * has to be budgeted for 16px glyphs rather than for the 13px the surrounding
- * type suggests: `102.25` is six characters plus a decimal point, and when this
- * field was a `flex-1` fighting four steppers for the same line it got about
- * three. `min-w` in `ch` units states the requirement in the only unit that
- * tracks the rendered font, and centring means an over-long value is visibly
- * over-long rather than silently scrolled out of frame.
+ * type suggests: `102.25` is six characters plus a decimal point. It takes the
+ * whole centre of the pill (`flex-1`), which is the widest this value has ever
+ * been, and centring means an over-long value is visibly over-long rather than
+ * silently scrolled out of frame.
  */
 function NumberField({ value, onCommit, inputMode, ariaLabel }: {
   value: number
@@ -670,7 +651,7 @@ function NumberField({ value, onCommit, inputMode, ariaLabel }: {
         if (Number.isFinite(n)) onCommit(n)
       }}
       onBlur={() => { const n = parseFloat(text); if (Number.isFinite(n)) onCommit(n); setEditing(false) }}
-      className="min-w-0 w-full bg-transparent text-center font-bold tabular-nums text-text outline-none"
+      className="flex-1 min-w-0 bg-transparent text-center font-bold tabular-nums text-text outline-none px-1"
     />
   )
 }
