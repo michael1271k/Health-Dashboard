@@ -2,20 +2,46 @@
 
 import { useCallback, useMemo, useState } from 'react'
 import {
-  DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors,
-  type DragEndEvent,
+  DndContext, DragOverlay, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors,
+  defaultDropAnimationSideEffects,
+  type DragEndEvent, type DragStartEvent, type DropAnimation,
 } from '@dnd-kit/core'
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
-import { restrictToVerticalAxis, restrictToParentElement } from '@dnd-kit/modifiers'
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers'
 import { ExerciseCard, type ReadyCue } from './ExerciseCard'
 import type { ReportTargets } from '@/lib/reports/fmtV2'
-import { tapLight } from '@/lib/native/haptics'
+import { tapLight, tapSuccess } from '@/lib/native/haptics'
+import { useHelixReducedMotion } from '@/lib/motion'
 import type { SessionDraft, DraftSet } from '@/lib/sessions/draft'
 import type { ExerciseHistory } from '@/lib/hooks/useExerciseSetHistory'
 import type { PrAxis } from '@/lib/training/prEngine'
+import { exerciseColor } from '@/lib/theme/muscleHue'
+import { GRAPHITE } from '@/lib/theme/palette'
+import { CARDIO_VIOLET } from './ExerciseCard'
 
-/** Module-level so the array identity never changes — see the note on `ids`. */
-const DRAG_MODIFIERS = [restrictToVerticalAxis, restrictToParentElement]
+/**
+ * Module-level so the array identity never changes — see the note on `ids`.
+ *
+ * `restrictToParentElement` USED to be here as well, and it was part of the
+ * problem: it clamps the dragged element to a parent whose height was changing
+ * mid-gesture (every card collapsed on lift), so the card fought a boundary that
+ * was moving. With the lifted card in a portal there is nothing to clamp it to
+ * and nothing that needs clamping.
+ */
+const DRAG_MODIFIERS = [restrictToVerticalAxis]
+
+/**
+ * The drop is the one moment bounce is EARNED — the card was physically thrown
+ * at a slot and arrives with momentum. `SNAPPY`'s curve, expressed as the cubic
+ * bézier dnd-kit's drop animation can take.
+ */
+const DROP_ANIMATION: DropAnimation = {
+  duration: 260,
+  easing: 'cubic-bezier(0.2, 0.9, 0.3, 1)',
+  sideEffects: defaultDropAnimationSideEffects({
+    styles: { active: { opacity: '0.4' } },
+  }),
+}
 
 /**
  * The sortable exercise deck. Long-press (250 ms) lifts a card on touch so
@@ -23,6 +49,28 @@ const DRAG_MODIFIERS = [restrictToVerticalAxis, restrictToParentElement]
  * and keyboard users reorder with space + arrows (dnd-kit sortable defaults).
  * Stays a SINGLE column at every breakpoint — verticalListSortingStrategy +
  * restrictToVerticalAxis are only valid for a one-column list.
+ *
+ * ── WHY REORDERING USED TO FEEL BROKEN ───────────────────────────────────────
+ * Four causes, and the first is the one you could feel:
+ *
+ *   1. EVERY CARD COLLAPSED THE INSTANT A DRAG LIFTED. The idea was clarity —
+ *      see the whole session at once — but it changes the list's total height
+ *      and every sibling's position under a finger that has already committed
+ *      to a gesture. The card you grabbed jumps, the drop targets are somewhere
+ *      new, and the whole thing reads as the app fighting you. Gone.
+ *   2. NO `DragOverlay`. The lifted card was transformed in place, inside the
+ *      list's own stacking context, so it needed a hand-written `z-10` and
+ *      still could not paint cleanly above its neighbours.
+ *   3. `restrictToParentElement`, clamping against the parent that (1) was
+ *      resizing.
+ *   4. `useSortable`'s default transition is `250ms linear` — the one easing
+ *      curve that never occurs in the physical world, so the siblings shuffled
+ *      like a spreadsheet rather than settling like objects.
+ *
+ * Now: nothing collapses, the lifted card rides in a portal above everything,
+ * the siblings ease with the house curve, and the drop carries the small bounce
+ * a thrown object has earned. Under `prefers-reduced-motion` the travel drops
+ * out and the drop is instant.
  */
 export function ExerciseDeckList({ draft, history, globalHistory, livePrs, readyByName, reportTargets, onReorder, onUpdateSet, onSplitSet, onMergeSet, onAddSet, onRemoveSet, onToggleDone, onRemoveExercise, onSetNote, onPrTap, onUpdateCardio }: {
   draft: SessionDraft
@@ -44,19 +92,19 @@ export function ExerciseDeckList({ draft, history, globalHistory, livePrs, ready
   onToggleDone: (localId: string, setIdx: number) => void
   onRemoveExercise: (localId: string) => void
   onSetNote: (localId: string, note: string) => void
-  /** Tapping a set's trophy strip — opens the record sheet for that set. */
+  /** Tapping a set that holds a record — opens the record sheet for that set. */
   onPrTap?: (localId: string, setIdx: number) => void
-  /** Cardio blocks only: edit distance / duration. */
+  /** Cardio blocks only: edit distance / duration / incline. */
   onUpdateCardio?: (localId: string, patch: { distanceKm?: number; durationSec?: number; inclinePct?: number }) => void
 }) {
+  const reduced = useHelixReducedMotion()
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
 
-  // Hevy-style reorder clarity: the moment a drag lifts, collapse EVERY card to
-  // its header row so the whole session is visible at once; drop restores them.
-  const [reordering, setReordering] = useState(false)
+  /** Which card is in the air — it draws in the overlay, not in the list. */
+  const [dragId, setDragId] = useState<string | null>(null)
 
   /*
    * ── THESE MUST KEEP THEIR IDENTITY, OR memo(ExerciseCard) IS POINTLESS ─────
@@ -64,7 +112,6 @@ export function ExerciseDeckList({ draft, history, globalHistory, livePrs, ready
    * SortableContext memoizes its context value on `items`, so a fresh array
    * republished the context, and CONTEXT PROPAGATION BYPASSES memo: all six
    * `useSortable` consumers re-rendered no matter how stable their props were.
-   * Memoizing the card alone changed nothing (measured: 2.585 ms, unmoved).
    *
    * The id list only changes when an exercise is added, removed or reordered,
    * so it is derived from a join key rather than from the array identity —
@@ -73,25 +120,38 @@ export function ExerciseDeckList({ draft, history, globalHistory, livePrs, ready
   const idKey = draft.exercises.map((ex) => ex.localId).join('|')
   const ids = useMemo(() => (idKey ? idKey.split('|') : []), [idKey])
 
+  const dragging = useMemo(
+    () => draft.exercises.find((ex) => ex.localId === dragId) ?? null,
+    [draft.exercises, dragId],
+  )
+
   const handleDragEnd = useCallback((event: DragEndEvent) => {
-    setReordering(false)
+    setDragId(null)
     const { active, over } = event
     if (!over || active.id === over.id) return
     const from = ids.indexOf(String(active.id))
     const to = ids.indexOf(String(over.id))
     if (from < 0 || to < 0) return
-    void tapLight()
+    // The move landed. A distinct haptic from the lift, because they are
+    // different events and one of them changed your session.
+    void tapSuccess()
     onReorder(arrayMove(ids, from, to))
   }, [ids, onReorder])
 
-  const handleDragStart = useCallback(() => { setReordering(true); void tapLight() }, [])
-  const handleDragCancel = useCallback(() => setReordering(false), [])
+  const handleDragStart = useCallback((e: DragStartEvent) => {
+    setDragId(String(e.active.id))
+    void tapLight()
+  }, [])
+  const handleDragCancel = useCallback(() => setDragId(null), [])
 
   return (
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
       modifiers={DRAG_MODIFIERS}
+      // A deck is taller than the viewport by the third exercise, so a drag has
+      // to be able to reach the end of it without letting go.
+      autoScroll={{ threshold: { x: 0, y: 0.2 } }}
       onDragStart={handleDragStart}
       onDragCancel={handleDragCancel}
       onDragEnd={handleDragEnd}
@@ -114,7 +174,7 @@ export function ExerciseDeckList({ draft, history, globalHistory, livePrs, ready
               dayKey={draft.dayKey}
               ready={readyByName?.get(ex.name) ?? null}
               reportTargets={reportTargets}
-              collapsed={reordering}
+              reducedMotion={reduced}
               onUpdateSet={onUpdateSet}
               onSplitSet={onSplitSet}
               onMergeSet={onMergeSet}
@@ -129,6 +189,42 @@ export function ExerciseDeckList({ draft, history, globalHistory, livePrs, ready
           ))}
         </div>
       </SortableContext>
+
+      {/* ── The card in the air ──
+          A PORTAL, which is the whole point: it escapes the list's stacking and
+          overflow context, so it paints above every sibling without a
+          hand-written z-index and cannot be clipped by the scroller it came out
+          of. What it renders is deliberately NOT the full card — a card with
+          twenty-four live set rows following a finger is work per frame for a
+          picture nobody can read while it moves. It is the header: the name, the
+          hue rule that identifies it, and the set count. */}
+      <DragOverlay dropAnimation={reduced ? null : DROP_ANIMATION} modifiers={DRAG_MODIFIERS}>
+        {dragging ? (
+          <div
+            className="rounded-r-xl border-y border-r border-white/[0.10] px-3 py-3
+                       shadow-[0_16px_48px_rgba(0,0,0,0.6)] cursor-grabbing"
+            style={{
+              // OPAQUE, not the deck's `bg-white/[0.02]`. This floats above the
+              // list, and a translucent card in the air shows the cards it is
+              // passing over straight through itself.
+              background: GRAPHITE,
+              borderLeft: `3px solid ${dragging.kind === 'cardio'
+                ? CARDIO_VIOLET
+                : exerciseColor(dragging.name, dragging.muscleGroups)}`,
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-text leading-snug truncate"
+                style={{ fontSize: 'var(--text-exercise-title)' }}>
+                {dragging.name}
+              </span>
+              <span className="ml-auto shrink-0 helix-num text-[11px] text-muted tabular-nums">
+                {dragging.sets.length || '—'} {dragging.sets.length === 1 ? 'set' : 'sets'}
+              </span>
+            </div>
+          </div>
+        ) : null}
+      </DragOverlay>
 
       {/* ── NO "Add cardio" BUTTON ──
           It sat under every deck, on every training day, to serve the rare

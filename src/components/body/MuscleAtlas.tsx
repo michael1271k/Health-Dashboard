@@ -1,10 +1,12 @@
 'use client'
 
-import { memo, useId } from 'react'
+import { memo, useId, useState } from 'react'
 import {
   ATLAS_VIEWBOX, BASE_SHAPES, DETAIL_SHAPES, MUSCLE_PATHS, type AtlasView,
 } from '@/lib/body/atlas'
 import type { LandmarkMuscle } from '@/lib/training/landmarks'
+import { RASTER_ATLAS_ENABLED } from '@/lib/body/rasterAtlas'
+import { RasterAtlas } from '@/components/body/RasterAtlas'
 import { ATLAS_BLUE } from '@/lib/theme/palette'
 
 /**
@@ -63,12 +65,36 @@ export const MuscleAtlas = memo(function MuscleAtlas({
   label?: string
 }) {
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '')
+  /**
+   * The raster body is opt-in AND self-disabling: the flag turns it on, and a
+   * base image that 404s turns it back off for this mount. A body that fails to
+   * load must degrade to the vector figure, never to a blank box — which is what
+   * makes shipping the layer before the art exists safe.
+   */
+  const [rasterFailed, setRasterFailed] = useState(false)
+  const raster = RASTER_ATLAS_ENABLED && !rasterFailed
 
   if (view === 'both') {
     return (
       <div className={`flex items-stretch gap-1 ${className}`}>
         <MuscleAtlas worked={worked} view="front" color={color} interactive={interactive} onPick={onPick} className="flex-1" />
         <MuscleAtlas worked={worked} view="back" color={color} interactive={interactive} onPick={onPick} className="flex-1" />
+      </div>
+    )
+  }
+
+  if (raster) {
+    return (
+      <div className={`w-full h-full ${className}`}>
+        <RasterAtlas
+          view={view}
+          worked={worked}
+          color={color}
+          interactive={interactive}
+          onPick={onPick}
+          label={label}
+          onUnavailable={() => setRasterFailed(true)}
+        />
       </div>
     )
   }
@@ -127,13 +153,17 @@ export const MuscleAtlas = memo(function MuscleAtlas({
         const on = intensity > 0
         // Alpha over the gradient, not a colour ramp: one hue at several
         // strengths reads as "more of the same thing", where a green→red ramp
-        // would read as a verdict — and this figure makes no verdicts. Floor of
-        // 0.30 so the lightest real work is still visible against the base.
+        // would read as a verdict — and this figure makes no verdicts.
         const common = {
           d: p.d,
           style: {
             fill: on ? `url(#${workedId})` : `url(#${bellyId})`,
-            fillOpacity: on ? 0.30 + intensity * 0.62 : 1,
+            // Alpha carries the volume: a muscle that got one set out of twelve
+            // is visibly lighter than the one that got twelve. The floor is 0.22
+            // rather than 0.30 and the range runs to 0.94, because the old band
+            // was narrow enough that a light session and a heavy one looked
+            // nearly the same.
+            fillOpacity: on ? 0.22 + intensity * 0.72 : 1,
             stroke: on ? color : 'rgba(255,255,255,0.14)',
             strokeWidth: on ? 1 : 0.6,
             strokeLinejoin: 'round' as const,

@@ -225,6 +225,11 @@ export function useSessionDetail(sessionId: string | null) {
           side: r.side ?? null, pairId: r.pair_id ?? null, prAxes: [],
           restSec: typeof r.rest_sec === 'number' ? r.rest_sec : null,
         })
+        // One set per landmark mover, deduped across a unilateral pair. Declared
+        // out here because both the working-set count and the muscle credit
+        // below use it, and only one of the two is inside the warm-up guard.
+        const workingKey = r.pair_id ?? `${r.exercise_id}:${r.set_number}`
+
         if (!isWarmup) {
           // Collected, not summed. Tonnage now goes through `sessionVolumeKg`
           // once per exercise (below) so a unilateral pair collapses to its
@@ -242,18 +247,27 @@ export function useSessionDetail(sessionId: string | null) {
           workingVol.set(r.exercise_id, bucket)
           if (r.weight_kg > ex.topKg) ex.topKg = r.weight_kg
           if (r.est_1rm_kg != null && (ex.bestEst1rm == null || r.est_1rm_kg > ex.bestEst1rm)) ex.bestEst1rm = r.est_1rm_kg
-          // One direct set per landmark mover. Unilateral L/R sub-sets share a
-          // pair_id and must count ONCE, matching the weekly accumulator.
-          const dedupeKey = r.pair_id ?? `${r.exercise_id}:${r.set_number}`
           // Working-set COUNT dedupes the same way (volume still summed per side).
           const wseen = workingSeen.get(r.exercise_id) ?? new Set<string>()
-          if (!wseen.has(dedupeKey)) { wseen.add(dedupeKey); ex.workingSets += 1 }
+          if (!wseen.has(workingKey)) { wseen.add(workingKey); ex.workingSets += 1 }
           workingSeen.set(r.exercise_id, wseen)
-          for (const [mu, weight] of moversOf.get(r.exercise_id) ?? []) {
-            const seen = muscleAgg.get(mu) ?? new Map<string, number>()
-            seen.set(dedupeKey, Math.max(seen.get(dedupeKey) ?? 0, weight))
-            muscleAgg.set(mu, seen)
-          }
+        }
+
+        // ── THE MUSCLE CREDIT IS OUTSIDE THE WARM-UP GUARD ────────────────────
+        // Deliberately, and it is the only counter in this file that is. Every
+        // other number here answers "what did you achieve" — records, tonnage,
+        // whether a rep ceiling was cleared — and a warm-up achieves none of
+        // them. This one answers "where did this session land", and two warm-up
+        // sets of leg press are two sets of leg press as far as the quads are
+        // concerned. It is also the figure compared against Hevy's breakdown,
+        // and Hevy counts them: reconciled set by set against a real session,
+        // one excluded warm-up was a third of the disagreement.
+        //
+        // Unilateral L/R sub-sets share a pair_id and must count ONCE.
+        for (const [mu, weight] of moversOf.get(r.exercise_id) ?? []) {
+          const seen = muscleAgg.get(mu) ?? new Map<string, number>()
+          seen.set(workingKey, Math.max(seen.get(workingKey) ?? 0, weight))
+          muscleAgg.set(mu, seen)
         }
       }
 

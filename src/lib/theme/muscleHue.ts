@@ -24,13 +24,15 @@ export type MuscleFamily = keyof typeof GROUP
 /**
  * Which family each landmark belongs to.
  *
- * This is the join that did not exist before. The 13 landmarks and the 6 display
+ * This is the join that did not exist before. The landmarks and the 6 display
  * groups were two independent taxonomies with two independent colour maps, which
  * is how Quads ended up orange inside a violet Legs group.
  */
 const FAMILY_OF: Record<LandmarkMuscle, MuscleFamily> = {
   Chest: 'Chest',
-  Back: 'Back',
+  Lats: 'Back',
+  'Upper back': 'Back',
+  'Lower back': 'Back',
   'Side delts': 'Shoulders',
   'Rear delts': 'Shoulders',
   Biceps: 'Arms',

@@ -2,6 +2,7 @@ import { describe, it, expect, afterEach, vi } from 'vitest'
 import type { ComponentProps } from 'react'
 import { render, cleanup, act } from '@testing-library/react'
 import { ExerciseDeckList } from '@/components/command-center/ExerciseDeckList'
+import { SetEditorRow } from '@/components/command-center/SetEditorRow'
 import { livePrDigest, computeLivePrs } from '@/lib/sessions/livePrs'
 import { EMPTY_BASELINES } from '@/lib/training/prEngine'
 import type { SessionDraft, DraftSet } from '@/lib/sessions/draft'
@@ -197,9 +198,11 @@ describe('the set row reads as a table', () => {
     expect(container.querySelectorAll('[class*="tracking-[0.1em]"]').length).toBeGreaterThanOrEqual(2)
   })
 
-  it('renders the effort word in full — no truncation on any label', () => {
-    // "VERY HARD" is nine characters and lived in a 44px column. Whatever else
-    // changes, the chip that carries it must not be able to clip.
+  it('puts effort in a column, not on a second line under the row', () => {
+    // "VERY HARD" was a chip below the row, ~22px, so a rated set was
+    // two-thirds taller than an unrated one and the deck grew as you logged it.
+    // It is the NUMBER in a 30px column now; the word survives as the accessible
+    // name and the tooltip, which is what keeps the row one line tall.
     const d = deck(true)
     const rated = {
       ...d,
@@ -208,10 +211,11 @@ describe('the set row reads as a table', () => {
       }),
     } as SessionDraft
     const { container } = render(<ExerciseDeckList draft={rated} {...PROPS} />)
-    const chip = Array.from(container.querySelectorAll('span'))
-      .find((el) => el.textContent === 'Very Hard')
-    expect(chip, 'the effort label does not render').toBeTruthy()
-    expect(chip!.className, 'the effort label can still be truncated').not.toContain('truncate')
+    const cell = Array.from(container.querySelectorAll('span'))
+      .find((el) => el.getAttribute('aria-label') === 'Effort Very Hard')
+    expect(cell, 'the effort cell does not render').toBeTruthy()
+    expect(cell!.textContent, 'the column should carry the number').toBe('9')
+    expect(cell!.getAttribute('title')).toBe('Very Hard')
   })
 
   it('has no "Check all" anywhere — the tick is a per-set assertion', () => {
@@ -231,7 +235,7 @@ describe('the set row reads as a table', () => {
     // value they change.
     const { container } = render(<ExerciseDeckList draft={deck(true, 1)} {...PROPS} />)
     const badge = Array.from(container.querySelectorAll('button'))
-      .find((b) => (b.getAttribute('aria-label') ?? '').includes('Set options'))
+      .find((b) => (b.getAttribute('aria-label') ?? '').includes('set options'))
     expect(badge, 'the set badge is not a button').toBeTruthy()
 
     // The row is collapsed, so nothing of the tuner should be mounted — but
@@ -254,5 +258,41 @@ describe('the set row reads as a table', () => {
     const { container } = render(<ExerciseDeckList draft={deck(true, 1)} {...PROPS} history={history} />)
     expect(container.textContent, 'the previous column never rendered').toContain('17.5kg × 12')
     expect(container.textContent, 'a unitless previous pair is still being rendered').not.toMatch(/\d×\d/)
+  })
+})
+
+
+/**
+ * ── EFFORT ON A WARM-UP ──────────────────────────────────────────────────────
+ * Rendered directly rather than through the deck: whether the ladder mounts at
+ * all is `useTrackRpe()`'s decision, which reads `user_goals` and is false in a
+ * test. The question here is the OTHER gate — the one this pass removed.
+ */
+describe('every set can be rated, not only the working ones', () => {
+  const base = { weightKg: 40, reps: 10, done: true } as DraftSet
+  const row = (set: DraftSet) => render(
+    <SetEditorRow
+      index={0} displayNum={1} set={set} prev={null} active trackRpe prAxes={[]}
+      onActivate={noop} onChange={noop} onRemove={noop} onToggleDone={noop}
+    />,
+  )
+
+  it('rates a warm-up, because a log is not a verdict', () => {
+    // The ladder used to be gated on `!isWarm`, on the reasoning that a warm-up
+    // is not the effort the question is about. True of a RECORD — and the PR
+    // engine still ignores warm-ups — but not of the log: a warm-up that felt
+    // like a working set is exactly the thing worth writing down.
+    const { container } = row({ ...base, setType: 'warmup' })
+    expect(container.textContent ?? '').toContain('Effort')
+  })
+
+  it('rates a drop set too', () => {
+    const { container } = row({ ...base, setType: 'dropset' })
+    expect(container.textContent ?? '').toContain('Effort')
+  })
+
+  it('still rates a normal set', () => {
+    const { container } = row(base)
+    expect(container.textContent ?? '').toContain('Effort')
   })
 })

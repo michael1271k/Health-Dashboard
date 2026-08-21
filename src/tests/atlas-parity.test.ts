@@ -89,11 +89,12 @@ describe('the anatomy itself', () => {
     ])
     expect(musclesOnView('back')).toEqual([
       // LANDMARK_MUSCLES order, not drawing order — hamstrings before glutes.
-      'Back', 'Rear delts', 'Triceps', 'Forearms', 'Hamstrings', 'Glutes', 'Calves',
+      'Lats', 'Upper back', 'Lower back', 'Rear delts', 'Triceps', 'Forearms',
+      'Hamstrings', 'Glutes', 'Calves',
     ])
   })
 
-  it('draws all thirteen landmark muscles somewhere', () => {
+  it('draws all fifteen landmark muscles somewhere', () => {
     const drawn = new Set(MUSCLE_PATHS.map((p) => p.muscle))
     for (const m of LANDMARK_MUSCLES) expect(drawn, m).toContain(m)
   })

@@ -6,6 +6,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { LazyMotion, domMax } from 'framer-motion'
 import { LiveSessionHero } from '@/components/command-center/LiveSessionHero'
+import { LiveSessionBar } from '@/components/command-center/LiveSessionBar'
 import { GOLD } from '@/lib/theme/palette'
 import type { SessionDraft } from '@/lib/sessions/draft'
 
@@ -62,14 +63,16 @@ function wrap(ui: React.ReactNode) {
 }
 
 const HERO = (
-  <LiveSessionHero draft={DRAFT} accent={GOLD} volumeKg={12480} sets={18} recordCount={2} onSetDate={() => {}} />
+  <LiveSessionHero draft={DRAFT} accent={GOLD} volumeKg={12480} sets={18} recordCount={2} onBack={() => {}} onSetDate={() => {}} />
 )
 
 describe('the live session hero', () => {
   it('names the workout at title size, in the workout\'s own colour', () => {
     const { container } = render(wrap(HERO))
     const h1 = container.querySelector('h1')
-    expect(h1?.textContent).toBe('UPPER B')
+    // The program day's own label, in its own case — not `splitDay.toUpperCase()`,
+    // which is what the bar used to shout when it had no better source.
+    expect(h1?.textContent).toBe('Upper B')
     // `text-fluid-sm` is what it was — roughly 13–15px, and smaller than the
     // numbers underneath it. The scale's companion tokens carry the tracking
     // and leading for the larger size, so this is not just a font-size.
@@ -94,6 +97,37 @@ describe('the live session hero', () => {
     }
   })
 
+  it('shows the NAME, never the strapline', () => {
+    // `buildTemplateDraft` composes the title as "Legs & Core B · Posterior
+    // Focus". That is a document heading, not a header: at 360px it truncated
+    // to "Legs & Core B · Posterio…", cutting the only part that was optional.
+    const composed = { ...DRAFT, dayKey: 'legs_b', title: 'Legs & Core B · Posterior Focus' } as SessionDraft
+    const { container } = render(wrap(
+      <LiveSessionHero draft={composed} accent={GOLD} volumeKg={0} sets={0} recordCount={0}
+        onBack={() => {}} onSetDate={() => {}} />,
+    ))
+    expect(container.querySelector('h1')?.textContent).toBe('Legs & Core B')
+    expect(container.textContent ?? '').not.toContain('Posterior Focus')
+  })
+
+  it('carries exactly one back button and one muscle button', () => {
+    // There used to be a second of each in a sticky band above this block whose
+    // only visible content at scroll-top was the chevron. The band is gone; the
+    // collapsed bar carries the other copy and the two never coexist.
+    const { container } = render(wrap(HERO))
+    const labelled = (needle: string) => Array.from(container.querySelectorAll('button'))
+      .filter((b) => (b.getAttribute('aria-label') ?? '').includes(needle)).length
+    expect(labelled('Back')).toBe(1)
+    expect(labelled('Muscle distribution')).toBe(1)
+  })
+
+  it('tints the muscle figure in the workout\'s colour, not the atlas default', () => {
+    const { container } = render(wrap(HERO))
+    const svg = container.querySelector('button[aria-label="Muscle distribution for this session"] svg')
+    // The worked gradient is built from the accent, so the stop carries it.
+    expect(svg?.innerHTML ?? '').toContain(GOLD)
+  })
+
   it('states the date exactly once, and as a control', () => {
     const { container } = render(wrap(HERO))
     const matches = (container.textContent ?? '').match(/Thu 20 Aug/g) ?? []
@@ -109,7 +143,7 @@ describe('the live session hero', () => {
     // three figures sideways at the moment you are reaching for a tick.
     const cold = { ...DRAFT, exercises: [{ ...DRAFT.exercises[0], sets: [{ weightKg: 60, reps: 8, done: false }] }] } as SessionDraft
     const { container } = render(wrap(
-      <LiveSessionHero draft={cold} accent={GOLD} volumeKg={0} sets={0} recordCount={0} onSetDate={() => {}} />,
+      <LiveSessionHero draft={cold} accent={GOLD} volumeKg={0} sets={0} recordCount={0} onBack={() => {}} onSetDate={() => {}} />,
     ))
     const btn = Array.from(container.querySelectorAll('button'))
       .find((b) => b.getAttribute('aria-label') === 'Muscle distribution for this session')
@@ -127,10 +161,33 @@ describe('the live session hero', () => {
   })
 
   it('emits the fixture the browser test measures', () => {
+    // BOTH states, stacked: the hero as it sits at the top of the deck, and the
+    // collapsed bar as it slides in once the hero scrolls off. The bar is the
+    // half that had no coverage at all and the half that was reported as
+    // "looks terrible" — a long title ellipsized on one line.
     const html = renderToStaticMarkup(
-      <div id="probe-header" style={{ padding: 12 }}>{wrap(HERO)}</div>,
+      <div id="probe-header">
+        <div data-probe-part="hero">{wrap(HERO)}</div>
+        {/* `transform` makes this a containing block for `position: fixed`, so
+            the bar lays out inside its own 60px box instead of jumping to the
+            top of the viewport and covering the hero. That is a real CSS rule,
+            not a hack — and it is the only way to see both halves at once, which
+            in the app never happens. */}
+        <div data-probe-part="bar" style={{ position: 'relative', height: 60, transform: 'translateZ(0)' }}>
+          {wrap(
+            <LiveSessionBar
+              draft={{ ...DRAFT, dayKey: 'legs_b', title: 'Legs & Core B · Posterior Focus' } as SessionDraft}
+              accent={GOLD} volumeKg={12480} sets={18} recordCount={2} shown onBack={() => {}}
+            />,
+          )}
+        </div>
+      </div>,
     )
-    expect(html).toContain('UPPER B')
+    expect(html).toContain('Upper B')
+    // Escaped, because this is serialised markup rather than a DOM node — the
+    // browser side reads `textContent` and sees the ampersand.
+    expect(html).toContain('Legs &amp; Core B')
+    expect(html).not.toContain('Posterior Focus')
     mkdirSync(dirname(FIXTURE), { recursive: true })
     writeFileSync(FIXTURE, html, 'utf8')
   })

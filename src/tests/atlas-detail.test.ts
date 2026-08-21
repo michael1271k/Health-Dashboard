@@ -61,7 +61,7 @@ describe('the three layers stay separate', () => {
 })
 
 describe('the redraw kept every landmark', () => {
-  it('draws all thirteen landmark muscles somewhere', () => {
+  it('draws all fifteen landmark muscles somewhere', () => {
     const drawn = new Set(MUSCLE_PATHS.map((p) => p.muscle))
     for (const m of LANDMARK_MUSCLES) {
       expect(drawn.has(m), `${m} is not drawn on either view`).toBe(true)
@@ -81,7 +81,7 @@ describe('the redraw kept every landmark', () => {
       expect(musclesOnView('front'), `${m} left the front`).toContain(m)
       expect(musclesOnView('back'), `${m} appeared on the back`).not.toContain(m)
     }
-    for (const m of ['Back', 'Glutes', 'Hamstrings', 'Triceps', 'Rear delts'] as const) {
+    for (const m of ['Lats', 'Upper back', 'Lower back', 'Glutes', 'Hamstrings', 'Triceps', 'Rear delts'] as const) {
       expect(musclesOnView('back'), `${m} left the back`).toContain(m)
       expect(musclesOnView('front'), `${m} appeared on the front`).not.toContain(m)
     }

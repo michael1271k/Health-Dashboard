@@ -52,10 +52,13 @@ describe('weekly deltoid distribution after the fix', () => {
     expect(of('Side delts').sets).toBe(2.5)
     expect(of('Triceps').sets).toBe(0.5)
   })
-  it('face pull lands on rear delts direct, and pays the back indirectly', () => {
+  it('face pull lands on rear delts direct, and pays the UPPER back indirectly', () => {
+    // Not "the back": the split means a face pull now credits the upper back
+    // specifically, and leaves the lats — which it does not train — alone.
     expect(of('Rear delts').sets).toBe(1)
     expect(of('Rear delts').directSets).toBe(1)
-    expect(of('Back').sets).toBe(0.5)
+    expect(of('Upper back').sets).toBe(0.5)
+    expect(of('Lats')?.sets ?? 0).toBe(0)
   })
 })
 

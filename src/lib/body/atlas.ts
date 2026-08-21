@@ -126,6 +126,11 @@ export const BASE_SHAPES: readonly string[] = [
  * a shield; drawn as the shapes they are, the figure gains its whole midline.
  * The key is what matters — every path keyed `Chest` lights together, because
  * the program prescribes a chest, not a left pec.
+ *
+ * The back's four shapes carry THREE keys, because the program does prescribe
+ * lats separately from traps: this is the split that turned one `Back` landmark
+ * into `Lats` / `Upper back` / `Lower back`, and it needed no redraw — the
+ * shapes were already apart, they had simply been sharing a name.
  */
 export const MUSCLE_PATHS: readonly AtlasPath[] = [
   // ── FRONT ──
@@ -157,14 +162,14 @@ export const MUSCLE_PATHS: readonly AtlasPath[] = [
   { muscle: 'Rear delts', view: 'back', d: 'M43,50 C35,53 29,61 27,71 C26,74 26,77 27,79 L38,76 C38,69 40,60 44,54 Z' },
   { muscle: 'Rear delts', view: 'back', d: 'M77,50 C85,53 91,61 93,71 C94,74 94,77 93,79 L82,76 C82,69 80,60 76,54 Z' },
   // Trapezius — the diamond from the neck out to both shoulders.
-  { muscle: 'Back', view: 'back', d: 'M60,45 C66,45 72,47 77,52 C75,60 70,66 63,70 L60,71 L57,70 C50,66 45,60 43,52 C48,47 54,45 60,45 Z' },
+  { muscle: 'Upper back', view: 'back', d: 'M60,45 C66,45 72,47 77,52 C75,60 70,66 63,70 L60,71 L57,70 C50,66 45,60 43,52 C48,47 54,45 60,45 Z' },
   // Lats: wide at the armpit, sweeping IN to the waist. Drawn as their own
   // shapes with the spine between them rather than as one slab across the back,
   // because the V is the whole silhouette of a trained back.
-  { muscle: 'Back', view: 'back', d: 'M42,62 C39,70 38,80 39,90 C41,100 45,108 51,113 L57,113 C57,100 56,86 55,70 C50,69 45,66 42,62 Z' },
-  { muscle: 'Back', view: 'back', d: 'M78,62 C81,70 82,80 81,90 C79,100 75,108 69,113 L63,113 C63,100 64,86 65,70 C70,69 75,66 78,62 Z' },
+  { muscle: 'Lats', view: 'back', d: 'M42,62 C39,70 38,80 39,90 C41,100 45,108 51,113 L57,113 C57,100 56,86 55,70 C50,69 45,66 42,62 Z' },
+  { muscle: 'Lats', view: 'back', d: 'M78,62 C81,70 82,80 81,90 C79,100 75,108 69,113 L63,113 C63,100 64,86 65,70 C70,69 75,66 78,62 Z' },
   // The erector column between the lats and the pelvis.
-  { muscle: 'Back', view: 'back', d: 'M56,115 C58,116 62,116 64,115 C64,124 65,131 66,137 L54,137 C55,131 56,124 56,115 Z' },
+  { muscle: 'Lower back', view: 'back', d: 'M56,115 C58,116 62,116 64,115 C64,124 65,131 66,137 L54,137 C55,131 56,124 56,115 Z' },
   { muscle: 'Triceps', view: 'back', d: 'M39,62 C34,66 31,73 30,82 C29,91 29,100 30,108 L37,106 C36,98 36,90 38,81 C39,73 40,67 41,62 Z' },
   { muscle: 'Triceps', view: 'back', d: 'M81,62 C86,66 89,73 90,82 C91,91 91,100 90,108 L83,106 C84,98 84,90 82,81 C81,73 80,67 79,62 Z' },
   { muscle: 'Forearms', view: 'back', d: 'M30,112 C30,121 31,131 33,140 C34,144 35,146 36,148 L42,146 C40,139 39,131 38,123 C38,118 38,115 38,111 Z' },
@@ -272,7 +277,7 @@ export function primaryViewOf(muscle: LandmarkMuscle): AtlasView | null {
  */
 export const DOMS_TO_LANDMARK: Record<DomsMuscle, readonly LandmarkMuscle[]> = {
   Chest: ['Chest'],
-  Back: ['Back'],
+  Back: ['Lats', 'Upper back', 'Lower back'],
   Arms: ['Biceps', 'Triceps', 'Forearms'],
   Shoulders: ['Side delts', 'Rear delts'],
   Abs: ['Abs/core'],

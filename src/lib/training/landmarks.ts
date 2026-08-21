@@ -17,9 +17,21 @@ import { MUSCLE } from '@/lib/theme/palette'
 export type Program = ProgramPhase
 export type ProgramPhase = 'cut' | 'maintenance' | 'bulk'
 
-/** The 13 tracked muscles (display order). */
+/**
+ * The 15 tracked muscles (display order).
+ *
+ * ── WHY `Back` BECAME THREE ─────────────────────────────────────────────────
+ * It was one landmark, so a lat pulldown, a face pull and a rack pull all
+ * scored against a single weekly number — and any back session read as balanced
+ * whatever it actually trained. It also made the muscle breakdown impossible to
+ * compare with Hevy line by line, since Hevy separates the three.
+ *
+ * The split costs nothing in the atlas: the trapezius, the two lats and the
+ * erector column were already four separate paths that happened to share a key.
+ */
 export const LANDMARK_MUSCLES = [
-  'Chest', 'Back', 'Side delts', 'Rear delts', 'Biceps', 'Triceps', 'Forearms',
+  'Chest', 'Lats', 'Upper back', 'Lower back', 'Side delts', 'Rear delts',
+  'Biceps', 'Triceps', 'Forearms',
   'Quads', 'Hamstrings', 'Glutes', 'Adductors', 'Calves', 'Abs/core',
 ] as const
 export type LandmarkMuscle = (typeof LANDMARK_MUSCLES)[number]
@@ -34,19 +46,26 @@ export type LandmarkMuscle = (typeof LANDMARK_MUSCLES)[number]
  */
 export const PROGRAM_TARGETS: Record<ProgramPhase, Record<LandmarkMuscle, number>> = {
   // Helix Cut — MEV+ (defend muscle in the deficit)
+  // The three back numbers sum to the single `Back` target they replaced
+  // (11 / 12 / 14), split the way the program actually trains it: pulldowns and
+  // rows are lat-dominant, and the erector work is incidental to RDLs and hip
+  // thrusts rather than directly prescribed.
   cut: {
-    Chest: 11, Back: 11, 'Side delts': 7, 'Rear delts': 2, Biceps: 8, Triceps: 6,
+    Chest: 11, Lats: 6, 'Upper back': 4, 'Lower back': 1,
+    'Side delts': 7, 'Rear delts': 2, Biceps: 8, Triceps: 6,
     Forearms: 4, Quads: 10, Hamstrings: 8, Glutes: 6, Adductors: 0, Calves: 6, 'Abs/core': 10,
   },
   // Maintenance — between MEV+ and MAV: enough to keep progressing without the
   // recovery cost of a full bulk block.
   maintenance: {
-    Chest: 12, Back: 12, 'Side delts': 8, 'Rear delts': 3, Biceps: 8, Triceps: 7,
+    Chest: 12, Lats: 7, 'Upper back': 4, 'Lower back': 1,
+    'Side delts': 8, 'Rear delts': 3, Biceps: 8, Triceps: 7,
     Forearms: 5, Quads: 11, Hamstrings: 8, Glutes: 6, Adductors: 1, Calves: 7, 'Abs/core': 10,
   },
   // Helix Bulk — MAV (productive ceiling)
   bulk: {
-    Chest: 13, Back: 14, 'Side delts': 9, 'Rear delts': 3, Biceps: 9, Triceps: 7,
+    Chest: 13, Lats: 8, 'Upper back': 5, 'Lower back': 1,
+    'Side delts': 9, 'Rear delts': 3, Biceps: 9, Triceps: 7,
     Forearms: 7, Quads: 12, Hamstrings: 9, Glutes: 7, Adductors: 2, Calves: 8, 'Abs/core': 11,
   },
 }
@@ -60,14 +79,20 @@ export function programTargets(phase: ProgramPhase): Record<LandmarkMuscle, numb
 
 /**
  * Fold a raw muscle token (from `exercises.muscle_groups`, seeded by muscleMap)
- * into one of the 13 landmark muscles, or null when it isn't a tracked target.
+ * into one of the 15 landmark muscles, or null when it isn't a tracked target.
  * Handles both refined tokens (side_delts / rear_delts) and legacy generic ones
  * (a bare "shoulders" is treated as side-delt isolation, the common case).
  */
 export function toLandmarkMuscle(token: string): LandmarkMuscle | null {
   switch (token.toLowerCase().replace(/[\s-]+/g, '_')) {
     case 'chest': case 'pecs': return 'Chest'
-    case 'lats': case 'upper_back': case 'lower_back': case 'traps': case 'rhomboids': case 'back': return 'Back'
+    // A bare "back" resolves to LATS, not to a fourth bucket: the movements in
+    // the catalog tagged only "back" are pulldowns and rows, which are
+    // lat-dominant. Traps and rhomboids are the upper-back pullers; the erector
+    // tokens are the only ones that mean the lower back.
+    case 'lats': case 'back': return 'Lats'
+    case 'upper_back': case 'traps': case 'rhomboids': return 'Upper back'
+    case 'lower_back': case 'erectors': case 'spinal_erectors': return 'Lower back'
     case 'side_delts': case 'lateral_delts': case 'shoulders': case 'delts': return 'Side delts'
     case 'rear_delts': case 'rear_delt': return 'Rear delts'
     case 'front_delts': return null // pressing already covers front delts — not a separate target

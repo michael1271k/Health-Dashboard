@@ -5,7 +5,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { LazyMotion, domMax } from 'framer-motion'
 import { SetEditorRow } from '@/components/command-center/SetEditorRow'
 import {
-  setGridFor, setValueLabel, SET_BADGE_W, SET_HEADER_TEXT, SET_TAIL_W,
+  setGridFor, setValueLabel, SET_BADGE_W, SET_FRAME_GAP, SET_HEADER_TEXT, SET_TAIL_W,
   type SetGridMode,
 } from '@/components/command-center/setGrid'
 import type { DraftSet } from '@/lib/sessions/draft'
@@ -62,12 +62,13 @@ const TIME: DraftSet[] = [
 /** The header frame, spelled exactly as `ExerciseCard` spells it. */
 function Header({ mode }: { mode: SetGridMode }) {
   return (
-    <div className="flex items-center gap-2 px-2 pb-1">
+    <div className={`flex items-center ${SET_FRAME_GAP} px-2 pb-1`}>
       <span className={`${SET_BADGE_W} shrink-0 ${SET_HEADER_TEXT}`}>Set</span>
       <span className={`flex-1 ${setGridFor(mode)} ${SET_HEADER_TEXT}`}>
         <span>Previous</span>
-        {mode === 'loaded' && <span>kg</span>}
+        {mode === 'loaded' ? <span>kg</span> : <span aria-hidden="true" />}
         <span>{setValueLabel(mode)}</span>
+        <span className="text-right">RPE</span>
       </span>
       <span className={`${SET_TAIL_W} shrink-0`} />
     </div>
@@ -111,14 +112,15 @@ describe('the set row markup the browser test measures', () => {
 
     // The states the browser test needs to be able to see. If one of these
     // stops rendering, the layout assertions downstream go quietly vacuous.
-    expect(html).toContain('Very Hard')
+    expect(html).toContain('Very Hard')   // the tooltip, not a chip
     expect(html).toContain('Max Effort')
     expect(html).toContain('102.25')
     expect(html).toContain('17.5kg × 12')
-    // The tuner is open on one row per deck, and the widest thing in it is the
-    // weight pill's outer step.
-    expect(html).toContain('−2.5')
+    // The tuner is open on one row per deck.
     expect(html).toContain('Weight · kg')
+    // Effort is a COLUMN now, not a chip on a second line. The words survive
+    // only as tooltips, which is what keeps the row one line tall.
+    expect(html).not.toContain('>Very Hard<')
     // A hold's previous is seconds, not a weight and not a rep count.
     expect(html).toContain('60s')
 

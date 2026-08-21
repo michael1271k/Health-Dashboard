@@ -245,13 +245,12 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
           keystroke in every set field to redraw two figures that only move when
           a set is ticked. See `src/tests/deck-render.test*`. */}
       <LiveSessionBar
-        title={draft.title ?? draft.splitDay.toUpperCase()}
+        draft={draft}
         accent={dayColor(draft.dayKey, draft.splitDay)}
         volumeKg={totals.volumeKg}
         sets={totals.sets}
         recordCount={livePrs.count}
-        titlePassed={titlePassed}
-        draft={draft}
+        shown={titlePassed}
         onBack={onClose}
       />
 
@@ -267,6 +266,7 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
           volumeKg={totals.volumeKg}
           sets={totals.sets}
           recordCount={livePrs.count}
+          onBack={onClose}
           onSetDate={setDate}
         />
       </div>

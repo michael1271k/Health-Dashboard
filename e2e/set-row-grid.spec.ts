@@ -29,8 +29,12 @@ const VIEWPORTS = [
   { name: 'iphone-14', width: 390 },
 ]
 
-/** How many DATA columns each mode has — the badge and the tick are outside. */
-const TRACKS: Record<string, number> = { loaded: 3, reps: 2, time: 2 }
+/**
+ * How many DATA columns each mode has — the badge and the tick are outside.
+ * Four in every mode now: the load track is always present so every value in
+ * the deck shares an edge, and the unloaded modes leave it empty.
+ */
+const TRACKS: Record<string, number> = { loaded: 4, reps: 4, time: 4 }
 
 for (const vp of VIEWPORTS) {
   test(`set rows form real columns @ ${vp.name} (${vp.width}px)`, async ({ page }) => {

@@ -27,8 +27,14 @@ export interface MuscleEntry { primary: string[]; secondary: string[] }
  */
 const DICT: Array<{ tokens: string[]; muscles: MuscleEntry }> = [
   // ── Quads ───────────────────────────────────────────────────────────────────
-  { tokens: ['leg', 'press', 'horizontal'], muscles: { primary: ['quadriceps'], secondary: ['glutes', 'hamstrings'] } },
-  { tokens: ['leg', 'press'], muscles: { primary: ['quadriceps'], secondary: ['glutes', 'hamstrings'] } },
+  // ── ADDUCTORS AND FOREARMS WERE MISSING, AND IT SHOWED ────────────────────
+  // Reconciled against Hevy's own breakdown for a real session: a leg press
+  // spreads the stance wide enough to load the adductors, and a dumbbell RDL is
+  // held for its whole set — the grip is a real secondary, which is why every
+  // other database lists it. Both were absent here, so the weekly totals for
+  // two muscles read zero on days that trained them.
+  { tokens: ['leg', 'press', 'horizontal'], muscles: { primary: ['quadriceps'], secondary: ['glutes', 'hamstrings', 'adductors'] } },
+  { tokens: ['leg', 'press'], muscles: { primary: ['quadriceps'], secondary: ['glutes', 'hamstrings', 'adductors'] } },
   { tokens: ['hack', 'squat'], muscles: { primary: ['quadriceps'], secondary: ['glutes', 'hamstrings'] } },
   { tokens: ['leg', 'extension'], muscles: { primary: ['quadriceps'], secondary: [] } },
 
@@ -37,8 +43,8 @@ const DICT: Array<{ tokens: string[]; muscles: MuscleEntry }> = [
   // crosses the knee — it is a real contributor, not a courtesy tag.
   { tokens: ['seated', 'leg', 'curl'], muscles: { primary: ['hamstrings'], secondary: ['calves'] } },
   { tokens: ['leg', 'curl'], muscles: { primary: ['hamstrings'], secondary: ['calves'] } },
-  { tokens: ['romanian', 'deadlift'], muscles: { primary: ['hamstrings'], secondary: ['glutes', 'lower back', 'upper back', 'lats'] } },
-  { tokens: ['rdl'], muscles: { primary: ['hamstrings'], secondary: ['glutes', 'lower back', 'upper back', 'lats'] } },
+  { tokens: ['romanian', 'deadlift'], muscles: { primary: ['hamstrings'], secondary: ['glutes', 'lower back', 'upper back', 'lats', 'forearms'] } },
+  { tokens: ['rdl'], muscles: { primary: ['hamstrings'], secondary: ['glutes', 'lower back', 'upper back', 'lats', 'forearms'] } },
   { tokens: ['hip', 'thrust'], muscles: { primary: ['glutes'], secondary: ['hamstrings', 'quadriceps'] } },
   // Hip adduction was invisible to the accumulator TWICE OVER: no dictionary
   // entry, and the DB tagged the machine variant `inner_thigh`, a token

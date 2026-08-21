@@ -43,7 +43,7 @@ for (const vp of VIEWPORTS) {
 
     // ── The title is one line, and it is the biggest text in the block ──
     const title = await page.evaluate(() => {
-      const h1 = document.querySelector('#probe-header h1') as HTMLElement
+      const h1 = document.querySelector('[data-probe-part="hero"] h1') as HTMLElement
       const cs = getComputedStyle(h1)
       const lineHeight = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize)
       const figure = document.querySelector('#probe-header .helix-num') as HTMLElement
@@ -81,6 +81,31 @@ for (const vp of VIEWPORTS) {
       return out
     })
     expect(clipped, `clipped: ${clipped.join(' · ')}`).toEqual([])
+
+    // ── The collapsed bar is two lines, and the title is one of them ──
+    // It used to be one line carrying a title, a date and three stat columns at
+    // 360px, so the title got what was left — an ellipsis mid-strapline. The
+    // name now has a line to itself and the numbers have the line below it.
+    const bar = await page.evaluate(() => {
+      const root = document.querySelector('[data-probe-part="bar"] header') as HTMLElement
+      const h1 = root.querySelector('h1') as HTMLElement
+      const meta = root.querySelector('p') as HTMLElement
+      const cs = getComputedStyle(h1)
+      const lh = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize)
+      return {
+        title: h1.textContent,
+        titleLines: Math.round(h1.getBoundingClientRect().height / lh),
+        // Two boxes, one above the other, is what "two lines" means here.
+        stacked: meta.getBoundingClientRect().top >= h1.getBoundingClientRect().bottom - 1,
+        buttons: root.querySelectorAll('button').length,
+      }
+    })
+    // The NAME, never the strapline — see `cleanSessionTitle`.
+    expect(bar.title).toBe('Legs & Core B')
+    expect(bar.titleLines, 'the collapsed title wraps').toBe(1)
+    expect(bar.stacked, 'the collapsed bar is not two lines').toBe(true)
+    // Back and the muscle figure. Nothing else earns a permanent target here.
+    expect(bar.buttons).toBe(2)
 
     // And it never pushes the page sideways.
     const overflow = await page.evaluate(() => ({

@@ -323,7 +323,7 @@ enum HelixAtlas {
     p.addCurve(to: pt(76, 54, in: rect), control1: pt(82, 69, in: rect), control2: pt(80, 60, in: rect))
     p.closeSubpath()
   },
-  HelixAtlasPath(muscle: "Back", view: .back) { rect, p in
+  HelixAtlasPath(muscle: "Upper back", view: .back) { rect, p in
     p.move(to: pt(60, 45, in: rect))
     p.addCurve(to: pt(77, 52, in: rect), control1: pt(66, 45, in: rect), control2: pt(72, 47, in: rect))
     p.addCurve(to: pt(63, 70, in: rect), control1: pt(75, 60, in: rect), control2: pt(70, 66, in: rect))
@@ -333,7 +333,7 @@ enum HelixAtlas {
     p.addCurve(to: pt(60, 45, in: rect), control1: pt(48, 47, in: rect), control2: pt(54, 45, in: rect))
     p.closeSubpath()
   },
-  HelixAtlasPath(muscle: "Back", view: .back) { rect, p in
+  HelixAtlasPath(muscle: "Lats", view: .back) { rect, p in
     p.move(to: pt(42, 62, in: rect))
     p.addCurve(to: pt(39, 90, in: rect), control1: pt(39, 70, in: rect), control2: pt(38, 80, in: rect))
     p.addCurve(to: pt(51, 113, in: rect), control1: pt(41, 100, in: rect), control2: pt(45, 108, in: rect))
@@ -342,7 +342,7 @@ enum HelixAtlas {
     p.addCurve(to: pt(42, 62, in: rect), control1: pt(50, 69, in: rect), control2: pt(45, 66, in: rect))
     p.closeSubpath()
   },
-  HelixAtlasPath(muscle: "Back", view: .back) { rect, p in
+  HelixAtlasPath(muscle: "Lats", view: .back) { rect, p in
     p.move(to: pt(78, 62, in: rect))
     p.addCurve(to: pt(81, 90, in: rect), control1: pt(81, 70, in: rect), control2: pt(82, 80, in: rect))
     p.addCurve(to: pt(69, 113, in: rect), control1: pt(79, 100, in: rect), control2: pt(75, 108, in: rect))
@@ -351,7 +351,7 @@ enum HelixAtlas {
     p.addCurve(to: pt(78, 62, in: rect), control1: pt(70, 69, in: rect), control2: pt(75, 66, in: rect))
     p.closeSubpath()
   },
-  HelixAtlasPath(muscle: "Back", view: .back) { rect, p in
+  HelixAtlasPath(muscle: "Lower back", view: .back) { rect, p in
     p.move(to: pt(56, 115, in: rect))
     p.addCurve(to: pt(64, 115, in: rect), control1: pt(58, 116, in: rect), control2: pt(62, 116, in: rect))
     p.addCurve(to: pt(66, 137, in: rect), control1: pt(64, 124, in: rect), control2: pt(65, 131, in: rect))

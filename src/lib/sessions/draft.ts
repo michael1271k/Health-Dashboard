@@ -8,6 +8,7 @@ import type { SplitDay } from '@/lib/types/workout'
 import type { SaveWorkoutInput } from '@/lib/sessions/schema'
 import { sessionVolumeKg } from '@/lib/sessions/volume'
 import { resolveSeededRpe } from '@/lib/training/rpeMemory'
+import { activeProgram } from '@/lib/programs'
 
 export interface DraftSet {
   weightKg: number
@@ -229,6 +230,34 @@ function applyRpeMemory(s: DraftSet): DraftSet {
 const fmtCardioDuration = (sec: number): string => {
   const m = Math.floor(sec / 60); const s = sec % 60
   return s ? `${m}:${String(s).padStart(2, '0')} min` : `${m} min`
+}
+
+/**
+ * The workout's NAME, without its strapline.
+ *
+ * ── WHY A TITLE NEEDS CLEANING ───────────────────────────────────────────────
+ * `buildTemplateDraft` composes the title as `${day.label} · ${day.sub}` —
+ * "Legs & Core B · Posterior Focus". That is the right string for a document
+ * heading and the wrong one for a header: at 360px it truncates to "Legs & Core
+ * B · Posterio…", so the part that identifies the session is intact and the part
+ * that is cut is the part nobody needed. In the collapsed bar it was worse — one
+ * line, ellipsized mid-strapline, on the element whose whole job is to say what
+ * you are doing.
+ *
+ * The strapline is not lost; it is simply not the title. It stays in the
+ * program, in Settings, and on the day surface, where there is room for it.
+ *
+ * Three sources, most specific first: the program day's own label (the
+ * authoritative name), then the stored title up to its first separator, then the
+ * split. Never returns empty.
+ */
+export function cleanSessionTitle(draft: Pick<SessionDraft, 'title' | 'dayKey' | 'splitDay'>): string {
+  if (draft.dayKey) {
+    const label = activeProgram().days.find((d) => d.key === draft.dayKey)?.label
+    if (label) return label
+  }
+  const head = draft.title?.split('·')[0]?.trim()
+  return head || draft.splitDay || 'Workout'
 }
 
 /** "Treadmill: 0.4 km · 5 min" — the human-readable cardio summary. */

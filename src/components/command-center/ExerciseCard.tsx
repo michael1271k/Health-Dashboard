@@ -16,7 +16,7 @@ import { repWindowFor, holdTargetFor, ladderVerdict, levelUpCue } from '@/lib/tr
 import { restTargetFor, hasRestOverride, formatRestTarget } from '@/lib/training/restTargets'
 import { useRestTargets } from '@/lib/hooks/useRestTargets'
 import { RestTargetSheet } from './RestTargetSheet'
-import { setGridFor, setValueLabel, SET_BADGE_W, SET_HEADER_TEXT, SET_TAIL_W, type SetGridMode } from './setGrid'
+import { setGridFor, setValueLabel, SET_BADGE_W, SET_FRAME_GAP, SET_HEADER_TEXT, SET_TAIL_W, type SetGridMode } from './setGrid'
 import { workingSets, type ExerciseHistory } from '@/lib/hooks/useExerciseSetHistory'
 import type { PrAxis } from '@/lib/training/prEngine'
 import type { ReportTargets } from '@/lib/reports/fmtV2'
@@ -155,7 +155,7 @@ const fmtKg = (w: number) => (w % 1 === 0 ? w.toFixed(0) : (w * 10) % 1 === 0 ? 
  * means lifting `useSortable` into a shell component and moving the grip out of
  * this header — a real refactor, deliberately not done here.
  */
-export const ExerciseCard = memo(function ExerciseCard({ exercise, history, globalHistory, livePrs, dayKey, ready, reportTargets, collapsed = false, onUpdateSet, onSplitSet, onMergeSet, onAddSet, onRemoveSet, onToggleDone, onRemoveExercise, onSetNote, onPrTap, onUpdateCardio }: {
+export const ExerciseCard = memo(function ExerciseCard({ exercise, history, globalHistory, livePrs, dayKey, ready, reportTargets, reducedMotion = false, onUpdateSet, onSplitSet, onMergeSet, onAddSet, onRemoveSet, onToggleDone, onRemoveExercise, onSetNote, onPrTap, onUpdateCardio }: {
   exercise: DraftExercise
   history: ExerciseHistory | null
   /**
@@ -181,8 +181,17 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
    * avoid.
    */
   reportTargets?: ReportTargets | null
-  /** Force header-only (drag-reorder collapses the whole deck for visibility). */
-  collapsed?: boolean
+  /**
+   * `prefers-reduced-motion`, resolved once by the deck rather than per card.
+   *
+   * This prop USED to be `collapsed`, forcing every card to its header row the
+   * instant a drag lifted. The intent was clarity — see the whole session at
+   * once — and the effect was the opposite: the list's height and every
+   * sibling's position changed under a finger that had already committed to a
+   * gesture, so the card you grabbed jumped and the drop targets moved. That is
+   * most of what made reordering feel broken.
+   */
+  reducedMotion?: boolean
   /*
    * ── EVERY HANDLER TAKES `localId` ────────────────────────────────────────
    * These used to be pre-bound: the card received `(setIdx, patch)` and the
@@ -212,7 +221,7 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
   const localId = exercise.localId
 
   const [open, setOpen] = useState(true)
-  const showBody = open && !collapsed
+  const showBody = open
   const [activeSet, setActiveSet] = useState<number | null>(null)
   const [editingNote, setEditingNote] = useState(false)
   const [restSheet, setRestSheet] = useState(false)
@@ -259,12 +268,28 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } =
     useSortable({ id: exercise.localId })
 
+  /**
+   * ── THE SIBLINGS' SHUFFLE ──────────────────────────────────────────────────
+   * dnd-kit's own `transition` is `250ms linear` — the one easing curve that
+   * never occurs in the physical world, which is why the deck used to reorder
+   * like a spreadsheet rather than settle like objects. It is replaced with the
+   * house curve (the cubic-bézier form of `SNAPPY`), and dropped entirely under
+   * `prefers-reduced-motion`, where travel is exactly what the user asked not
+   * to see.
+   *
+   * The DRAGGED card is not styled here at all any more: it rides in a
+   * `DragOverlay` portal (see `ExerciseDeckList`) and this one just fades in
+   * place, so it no longer needs a hand-written z-index to escape the list's
+   * stacking context — which it never fully managed anyway.
+   */
   const sortableStyle = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: reducedMotion ? undefined
+      : transition?.replace(/linear/, 'cubic-bezier(0.2, 0.9, 0.3, 1)') ?? undefined,
     willChange: isDragging ? 'transform' as const : undefined,
+    opacity: isDragging ? 0.4 : undefined,
   }
-  const dragClass = isDragging ? 'z-10 relative shadow-[0_12px_40px_rgba(0,0,0,0.55)] border-primary/30' : ''
+  const dragClass = ''
 
   const grip = (
     <button
@@ -792,16 +817,20 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
               spacer, which lined the row up correctly and left the one column
               carrying the most consequential control on the deck as the only
               unlabelled thing in the table. */}
-          <div className="flex items-center gap-2 px-2 pb-1">
+          <div className={`flex items-center ${SET_FRAME_GAP} px-2 pb-1`}>
             <span className={`${SET_BADGE_W} shrink-0 ${SET_HEADER_TEXT}`}>Set</span>
             <span className={`flex-1 ${setGridFor(gridMode)} ${SET_HEADER_TEXT}`}>
               <span>Previous</span>
-              {gridMode === 'loaded' && (
+              {/* The load track is always in the template so every value in the
+                  deck shares an edge; on an unloaded movement it carries no
+                  label, because there is nothing under it. */}
+              {gridMode === 'loaded' ? (
                 <span className="inline-flex items-center gap-1">
                   <Weight className="w-2.5 h-2.5" aria-hidden="true" />kg
                 </span>
-              )}
+              ) : <span aria-hidden="true" />}
               <span>{setValueLabel(gridMode)}</span>
+              <span className="text-right" title="Effort — the RPE you rated this set">RPE</span>
             </span>
             <span className={`${SET_TAIL_W} shrink-0 flex items-center justify-center ${SET_HEADER_TEXT}`}
               title="Completed — only ticked sets are recorded">

@@ -244,10 +244,19 @@ export const GROUP = {
  * rather than just separating the cells.
  */
 export const MUSCLE = {
-  // Chest · Back · Core — one landmark each, so each is its family base.
+  // Chest · Core — one landmark each, so each is its family base.
   Chest: EMBER,
-  Back: EMERALD,
   'Abs/core': STEEL,
+
+  // Back — emerald, three steps. It used to be ONE landmark called `Back`,
+  // which meant a pulldown and a rack pull scored against the same weekly
+  // number and Hevy's own breakdown could not be compared to ours line by line.
+  // The atlas already drew the trapezius, the lats and the erector column as
+  // separate shapes; now they are separate muscles as well. Lats keeps the old
+  // emerald because it is the one that carries most of the week's back volume.
+  Lats: EMERALD,
+  'Upper back': '#5FBF9B',
+  'Lower back': EMERALD_DEEP,
 
   // Shoulders — amethyst, two steps.
   'Side delts': '#A085BC',

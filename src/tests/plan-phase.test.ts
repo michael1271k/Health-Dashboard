@@ -72,7 +72,7 @@ describe('weeklyVolumeByMuscle honours per-plan+phase overrides', () => {
   it('lets a user override replace the target for one muscle only', () => {
     const graded = weeklyVolumeByMuscle(rows, 'cut', { Chest: 2 })
     expect(graded.find((m) => m.muscle === 'Chest')!.target).toBe(2)
-    expect(graded.find((m) => m.muscle === 'Back')!.target).toBe(PROGRAM_TARGETS.cut.Back)
+    expect(graded.find((m) => m.muscle === 'Lats')!.target).toBe(PROGRAM_TARGETS.cut.Lats)
   })
 
   it('reads the phase, so the same sets grade differently on cut vs bulk', () => {

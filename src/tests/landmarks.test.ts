@@ -12,15 +12,28 @@ describe('PROGRAM_TARGETS — user-supplied per-program targets', () => {
     expect(PROGRAM_TARGETS.cut['Abs/core']).toBe(10)
   })
   it('bulk targets match the spec', () => {
-    expect(PROGRAM_TARGETS.bulk.Back).toBe(14)
+    // The three back numbers replaced a single `Back: 14` and still sum to it.
+    expect(PROGRAM_TARGETS.bulk.Lats + PROGRAM_TARGETS.bulk['Upper back']
+      + PROGRAM_TARGETS.bulk['Lower back']).toBe(14)
+    expect(PROGRAM_TARGETS.bulk.Lats).toBe(8)
     expect(PROGRAM_TARGETS.bulk.Adductors).toBe(2)
     expect(PROGRAM_TARGETS.bulk['Side delts']).toBe(9)
   })
 })
 
 describe('toLandmarkMuscle', () => {
-  it('folds back tokens into Back', () => {
-    for (const t of ['lats', 'upper back', 'traps', 'lower back']) expect(toLandmarkMuscle(t)).toBe('Back')
+  it('separates the three back muscles rather than folding them together', () => {
+    // They were ONE landmark, which meant a pulldown and a rack pull scored
+    // against the same weekly number and no back session could read as
+    // unbalanced. A bare "back" is a pulldown or a row in this catalog, so it
+    // is lat work, not a fourth bucket.
+    expect(toLandmarkMuscle('lats')).toBe('Lats')
+    expect(toLandmarkMuscle('back')).toBe('Lats')
+    expect(toLandmarkMuscle('upper back')).toBe('Upper back')
+    expect(toLandmarkMuscle('traps')).toBe('Upper back')
+    expect(toLandmarkMuscle('rhomboids')).toBe('Upper back')
+    expect(toLandmarkMuscle('lower back')).toBe('Lower back')
+    expect(toLandmarkMuscle('erectors')).toBe('Lower back')
   })
   it('maps legacy generic shoulders to Side delts, and rear_delts to Rear delts', () => {
     expect(toLandmarkMuscle('shoulders')).toBe('Side delts')
@@ -61,7 +74,7 @@ describe('weeklyVolumeByMuscle', () => {
 
   it('returns every tracked muscle even with no data', () => {
     const out = weeklyVolumeByMuscle([], 'bulk')
-    expect(out).toHaveLength(13)
+    expect(out).toHaveLength(15)
     expect(out.every((m) => m.sets === 0)).toBe(true)
   })
 })
@@ -149,13 +162,25 @@ describe('secondary mover credit', () => {
   })
 
   it('gives ONE full credit when a muscle is both primary and secondary', () => {
-    // A pulldown's `lats` and `upper back` both fold to Back. 1.0, not 1.5.
+    // `lats` primary and `lats` secondary on one row is still 1.0, not 1.5.
+    const out = weeklyVolumeByMuscle(
+      [{ primary: ['lats'], secondary: ['lats', 'biceps'], dedupeKey: 's1' }],
+      'cut',
+    )
+    expect(out.find((m) => m.muscle === 'Lats')!.sets).toBe(1)
+    expect(out.find((m) => m.muscle === 'Biceps')!.sets).toBe(0.5)
+  })
+
+  it('scores a pulldown\'s lats and upper back apart, not as one Back', () => {
+    // They used to fold into a single landmark, so a session of nothing but
+    // pulldowns graded a whole back as trained. The lats take the full set, the
+    // upper back takes the assisting half.
     const out = weeklyVolumeByMuscle(
       [{ primary: ['lats'], secondary: ['upper back', 'biceps'], dedupeKey: 's1' }],
       'cut',
     )
-    expect(out.find((m) => m.muscle === 'Back')!.sets).toBe(1)
-    expect(out.find((m) => m.muscle === 'Biceps')!.sets).toBe(0.5)
+    expect(out.find((m) => m.muscle === 'Lats')!.sets).toBe(1)
+    expect(out.find((m) => m.muscle === 'Upper back')!.sets).toBe(0.5)
   })
 
   it('still collapses a unilateral L/R pair to one credited set', () => {
@@ -214,9 +239,9 @@ describe('secondary mover credit', () => {
 
   it('never pays tonnage twice to a muscle named by both lists', () => {
     const out = weeklyTonnageByMuscle([
-      { primary: ['lats'], secondary: ['upper back'], volumeKg: 500 },
+      { primary: ['lats'], secondary: ['lats'], volumeKg: 500 },
     ])
-    expect(out).toEqual([expect.objectContaining({ muscle: 'Back', volumeKg: 500, directKg: 500 })])
+    expect(out).toEqual([expect.objectContaining({ muscle: 'Lats', volumeKg: 500, directKg: 500 })])
   })
 
   it('credits the hip-adduction machine to Adductors — it used to credit nothing', () => {

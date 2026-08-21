@@ -28,16 +28,32 @@ import { isSetCommitted, type SessionDraft } from '@/lib/sessions/draft'
  * "am I balanced" is only meaningful across the whole session.
  */
 
-/** Weighted set counts per landmark muscle for a draft, using the ONE credit rule. */
+/**
+ * Weighted set counts per landmark muscle for a draft, using the ONE credit rule.
+ *
+ * ── WARM-UPS COUNT HERE, AND ONLY HERE ───────────────────────────────────────
+ * Everywhere else in Helix a warm-up is not a set: it wins no record, it does
+ * not prove you cleared a rep ceiling, and it is excluded from the weekly volume
+ * targets, which were calibrated on working sets.
+ *
+ * This figure is different, because it answers a different question. "Where did
+ * this session land" is about what the body was asked to do, and two warm-up
+ * sets of leg press are two sets of leg press as far as the quads are concerned.
+ * It is also the number that gets compared against Hevy's own breakdown, and
+ * Hevy counts them — reconciled set by set against a real session, where the
+ * single excluded warm-up accounted for a third of the disagreement.
+ *
+ * The line that keeps this honest is in the sheet, which prints "physical sets"
+ * beside "weighted sets" and now says warm-ups are in the count.
+ */
 export function draftMuscleSets(draft: SessionDraft | null): Partial<Record<LandmarkMuscle, number>> {
   const out: Partial<Record<LandmarkMuscle, number>> = {}
   if (!draft) return out
 
   for (const ex of draft.exercises) {
     if (ex.kind === 'cardio') continue
-    // Only committed working sets — the same rule the commit payload uses, so
-    // this figure never counts a set the session will not record.
-    const sets = ex.sets.filter((s) => isSetCommitted(s) && s.setType !== 'warmup')
+    // Every committed set, WARM-UPS INCLUDED — see the note above the export.
+    const sets = ex.sets.filter(isSetCommitted)
     if (!sets.length) continue
     // A unilateral pair is ONE set of work, exactly as it is for tonnage.
     const seen = new Set<string>()
@@ -81,7 +97,7 @@ export function draftPhysicalSets(draft: SessionDraft | null): number {
     if (ex.kind === 'cardio') continue
     const seen = new Set<string>()
     for (const s of ex.sets) {
-      if (!isSetCommitted(s) || s.setType === 'warmup') continue
+      if (!isSetCommitted(s)) continue
       if (s.pairId) {
         if (seen.has(s.pairId)) continue
         seen.add(s.pairId)
@@ -92,9 +108,18 @@ export function draftPhysicalSets(draft: SessionDraft | null): number {
   return total
 }
 
-export function MuscleDistribution({ draft, size = 'sm' }: {
+export function MuscleDistribution({ draft, accent, size = 'sm' }: {
   draft: SessionDraft | null
-  /** `lg` is the hero's 44px target; `sm` the 36px one in the pinned bar. */
+  /**
+   * The workout's own colour — `dayColor(dayKey, splitDay)`.
+   *
+   * The figure used to fill in the atlas's default blue whatever session you
+   * were in, so the one element on the header that was supposed to say "this is
+   * where Upper B is landing" said it in a colour Upper B never uses. Passing
+   * the accent makes the worked muscles the same gold as the title above them.
+   */
+  accent?: string
+  /** `lg` is the hero's 44px target; `sm` the 36px one in the collapsed bar. */
   size?: 'sm' | 'lg'
 }) {
   const [open, setOpen] = useState(false)
@@ -133,7 +158,7 @@ export function MuscleDistribution({ draft, size = 'sm' }: {
                     ${empty ? 'opacity-40' : 'active:scale-95'}`}
         style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
       >
-        <span className={`${fig} block`}><MuscleAtlas view="front" worked={worked} /></span>
+        <span className={`${fig} block`}><MuscleAtlas view="front" worked={worked} color={accent} /></span>
       </button>
 
       {/* The enlarged view is shared with the session report — see
@@ -146,6 +171,7 @@ export function MuscleDistribution({ draft, size = 'sm' }: {
         entries={entries}
         physical={physical}
         weighted={weighted}
+        accent={accent}
       />
     </>
   )

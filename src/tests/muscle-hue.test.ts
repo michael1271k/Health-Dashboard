@@ -70,7 +70,7 @@ describe('landmarks are ramp positions inside their family', () => {
   it('maps them the way the training taxonomy does', () => {
     const expected: Record<LandmarkMuscle, string> = {
       Chest: 'Chest',
-      Back: 'Back',
+      Lats: 'Back', 'Upper back': 'Back', 'Lower back': 'Back',
       'Side delts': 'Shoulders', 'Rear delts': 'Shoulders',
       Biceps: 'Arms', Triceps: 'Arms', Forearms: 'Arms',
       Quads: 'Legs', Hamstrings: 'Legs', Glutes: 'Legs', Adductors: 'Legs', Calves: 'Legs',
@@ -79,8 +79,8 @@ describe('landmarks are ramp positions inside their family', () => {
     for (const m of LANDMARK_MUSCLES) expect(familyOf(m)).toBe(expected[m])
   })
 
-  it('keeps all 13 distinguishable', () => {
-    expect(new Set(LANDMARK_MUSCLES.map(landmarkColor)).size).toBe(13)
+  it('keeps all 15 distinguishable', () => {
+    expect(new Set(LANDMARK_MUSCLES.map(landmarkColor)).size).toBe(15)
   })
 
   /** A Legs landmark must read as blue, or the family hue is doing no work. */
@@ -106,7 +106,7 @@ describe('landmarks are ramp positions inside their family', () => {
 
   it('honours the two requested hues', () => {
     expect(landmarkColor('Hamstrings')).toBe(SAPPHIRE)   // Legs = blue
-    expect(landmarkColor('Back')).toBe(EMERALD)          // Back = green
+    expect(landmarkColor('Lats')).toBe(EMERALD)          // Back family = green
   })
 })
 
@@ -134,7 +134,7 @@ describe('exerciseColor — a nudge within the landmark, never a new hue', () =>
       ['Hammer Curl', 'Biceps'],
       ['Preacher Curl', 'Biceps'],
       ['Hack Squat', 'Quads'],
-      ['Lat Pulldown', 'Back'],
+      ['Lat Pulldown', 'Lats'],
       ['Face Pull', 'Rear delts'],
     ]
     for (const [name, landmark] of cases) {
