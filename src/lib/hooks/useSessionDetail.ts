@@ -28,14 +28,20 @@ export interface DetailSet {
    * also crowding the title until long names wrapped.
    */
   prAxes: PrAxis[]
-  /**
-   * MEASURED rest before this set, in seconds, or null.
+  /*
+   * `restSec` USED to be here, and it is worth saying why it is not.
    *
-   * Only sessions logged with the deck's tick carry it — see `WorkoutSetSchema`.
-   * Historic sessions, pasted sessions and edits are null, which the report
-   * renders as an em dash rather than as a zero: nobody rested for no time.
+   * It held MEASURED rest, written by the deck's stopwatch on commit. The
+   * stopwatch was removed on 2026-08-19 when rest became a PRESCRIPTION rather
+   * than a measurement — a target the plan states and you read, not a clock that
+   * grades you. Nothing has written the column since, and nothing ever wrote it
+   * before either: across the whole database, 0 of 523 sets carry a value.
+   *
+   * So the report's "Actual" strip has shown an em dash on every session that
+   * has ever existed, sitting next to a "Rest" target chip that DOES have a
+   * number. Two fields both called rest, one permanently blank, is one number
+   * nobody trusts. The column is dropped; `restTargetFor` is the answer.
    */
-  restSec: number | null
 }
 
 export interface DetailExercise {
@@ -101,6 +107,8 @@ export interface SessionDetail {
   workingSets: number
   failureSets: number
   warmupSets: number
+  /** Sets logged as a drop set — the third of the three tags a set can carry. */
+  dropsetSets: number
 }
 
 type RawSet = {
@@ -116,7 +124,6 @@ type RawSet = {
   side: string | null
   pair_id: string | null
   /** Absent on a database without the column, and on every historic row. */
-  rest_sec?: number | null
   exercises: { name: string; muscle_groups: string[] | null; is_compound: boolean }
 }
 
@@ -146,27 +153,18 @@ export function useSessionDetail(sessionId: string | null) {
       } | null
       if (!s) return null
 
+      // ONE query. There used to be a second, identical but for `rest_sec`,
+      // retried whenever the first returned nothing — a guard against databases
+      // that had not taken that column yet. The column is gone, and with it the
+      // ambiguity that made the guard necessary: an empty result now means an
+      // empty session, which is a fact rather than a schema question.
       const { data: setsRaw } = await supabase
         .from('workout_sets')
-        // `rest_sec` is newer than most rows and may not be migrated at all —
-        // hence the fallback select below rather than one query that fails.
-        .select('exercise_id, set_number, weight_kg, reps, rpe, is_pr, est_1rm_kg, exercise_order, set_type, side, pair_id, rest_sec, exercises!inner(name, muscle_groups, is_compound)')
+        .select('exercise_id, set_number, weight_kg, reps, rpe, is_pr, est_1rm_kg, exercise_order, set_type, side, pair_id, exercises!inner(name, muscle_groups, is_compound)')
         .eq('session_id', sessionId as string)
         .order('exercise_order', { ascending: true })
         .order('set_number', { ascending: true })
-      let rows = (setsRaw ?? []) as unknown as RawSet[]
-      if (!rows.length) {
-        // Either an empty session or a database without `rest_sec`. Retry
-        // without it: losing the whole report to a column that only annotates
-        // it would be the wrong trade.
-        const { data: legacy } = await supabase
-          .from('workout_sets')
-          .select('exercise_id, set_number, weight_kg, reps, rpe, is_pr, est_1rm_kg, exercise_order, set_type, side, pair_id, exercises!inner(name, muscle_groups, is_compound)')
-          .eq('session_id', sessionId as string)
-          .order('exercise_order', { ascending: true })
-          .order('set_number', { ascending: true })
-        rows = (legacy ?? []) as unknown as RawSet[]
-      }
+      const rows = (setsRaw ?? []) as unknown as RawSet[]
 
       // Group sets by exercise, preserving exercise_order.
       const byEx = new Map<string, DetailExercise>()
@@ -180,12 +178,14 @@ export function useSessionDetail(sessionId: string | null) {
       const moversOf = new Map<string, Map<LandmarkMuscle, number>>()
       let failureSets = 0
       let warmupSets = 0
+      let dropsetSets = 0
 
       for (const r of rows) {
         const setType = r.set_type ?? 'normal'
         const isWarmup = setType === 'warmup'
         if (isWarmup) warmupSets += 1
         if (setType === 'failure') failureSets += 1
+        if (setType === 'dropset') dropsetSets += 1
 
         let ex = byEx.get(r.exercise_id)
         if (!ex) {
@@ -223,7 +223,6 @@ export function useSessionDetail(sessionId: string | null) {
           setNumber: r.set_number, weightKg: r.weight_kg, reps: r.reps,
           rpe: r.rpe, isPr: r.is_pr, est1rmKg: r.est_1rm_kg, setType,
           side: r.side ?? null, pairId: r.pair_id ?? null, prAxes: [],
-          restSec: typeof r.rest_sec === 'number' ? r.rest_sec : null,
         })
         // One set per landmark mover, deduped across a unilateral pair. Declared
         // out here because both the working-set count and the muscle credit
@@ -341,6 +340,7 @@ export function useSessionDetail(sessionId: string | null) {
         muscleSets,
         failureSets,
         warmupSets,
+        dropsetSets,
       }
     },
   })

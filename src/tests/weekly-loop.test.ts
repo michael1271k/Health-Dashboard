@@ -67,6 +67,25 @@ describe('stallProtocol — one lever, never a list', () => {
   })
 })
 
+/**
+ * One day's block from a rendered export — its header line and every indented
+ * line under it, up to the next day.
+ *
+ * A day is four lines now rather than one, and `.` does not cross a newline, so
+ * `/\*\*Sun …\*\*.*weight/` silently stopped matching what it used to. Worse,
+ * `[\s\S]*?` matches straight PAST the day it was anchored on and into the next
+ * one — which turns a "this day has no skip marker" assertion into "some later
+ * day has none", and those pass for the wrong reason.
+ */
+function dayBlock(out: string, date: string): string[] {
+  const lines = out.split('\n')
+  const start = lines.findIndex((l) => l.includes(`**`) && l.includes(date))
+  if (start < 0) return []
+  const block = [lines[start]]
+  for (let i = start + 1; i < lines.length && lines[i].startsWith('    '); i++) block.push(lines[i])
+  return block
+}
+
 describe('buildWeeklyExport', () => {
   const emptyDay = (date: string, weekdayLabel: string): ExportDay => ({
     date, weekdayLabel, isTrainingDay: false,
@@ -124,7 +143,9 @@ describe('buildWeeklyExport', () => {
 
   it('marks missing data as "—" instead of dropping the row or implying zero', () => {
     const out = buildWeeklyExport(input)
-    expect(out).toMatch(/\*\*Mon 2026-07-20\*\* · Rest · sleep — · intake — kcal/)   // the empty day is still present
+    // The empty day is still PRESENT, with every field named and dashed.
+    expect(out).toMatch(/\*\*Mon 2026-07-20\*\* · Rest\n {4}- Macros: — kcal/)
+    expect(out).toMatch(/Vitals: sleep — · RHR — · HRV —/)
     expect(out).toMatch(/—/)
     expect(out).not.toMatch(/\*\*Mon 2026-07-20\*\*.*0 kcal/)    // never fabricates a 0
   })
@@ -210,10 +231,11 @@ describe('buildWeeklyExport', () => {
     expect(buildWeeklyExport(input)).toMatch(/effort 8\.0\/10 CR10/)
   })
 
-  it('lists EVERY working set, grouped by load — not just the top set', () => {
+  it('lists EVERY working set, one per numbered line — not just the top set', () => {
     const out = buildWeeklyExport(input)
-    expect(out).toMatch(/60kg × 12,11/)
-    expect(out).toMatch(/57\.5kg × 10/)
+    expect(out).toMatch(/- Set 1: 60 kg × 12/)
+    expect(out).toMatch(/- Set 2: 60 kg × 11/)
+    expect(out).toMatch(/- Set 3: 57\.5 kg × 10/)
     expect(out).toMatch(/target 10–12/)
   })
 
@@ -224,13 +246,13 @@ describe('buildWeeklyExport', () => {
 
   it('marks a set taken to failure and NEVER emits an estimated 1RM', () => {
     const out = buildWeeklyExport(input)
-    expect(out).toMatch(/57\.5kg × 10 \(Failure\)/)   // spelled out, not (F)
+    expect(out).toMatch(/Set 3: 57\.5 kg × 10 \(to failure\)/)   // spelled out, not (F)
     expect(out).not.toMatch(/e1RM/i)            // no derived 1RM anywhere
   })
 
   it('splits unilateral work per side (L/R weight · reps · failure)', () => {
     const out = buildWeeklyExport(input)
-    expect(out).toMatch(/S1 L 7\.5kg×15 · R 7\.5kg×13 \(Failure\)/)
+    expect(out).toMatch(/Set 1: L 7\.5 kg × 15 · R 7\.5 kg × 13 \(to failure\)/)
   })
 
   it('names the PRs (raw lift, no 1RM VALUE) rather than counting them', () => {
@@ -262,14 +284,33 @@ describe('buildWeeklyExport', () => {
     const out = buildWeeklyExport(input)
     expect(out).not.toMatch(/^\| Day \|/m)   // no daily table header
     expect(out).not.toMatch(/\|---/)         // no table separator rows anywhere
-    expect(out).not.toMatch(/km|Battery|Score|Supps/)
+    // The ban here used to include /km/, which only ever passed because this
+    // fixture logs no cardio — every walk line has always printed a distance.
+    // Daily distance now prints too, on the Activity line, and it is measured
+    // data like any other. What is actually banned is HELIX's own opinions.
+    expect(out).not.toMatch(/Battery|Supps/)
   })
 
-  // The mandated day order: sleep → intake (food) → water → steps.
-  it('renders a readable per-day line in the fixed order', () => {
+  /**
+   * A day is FOUR GROUPED LINES, not one long one. It used to be a single
+   * ~300-character run of eleven `·`-separated fields, which is correct data and
+   * an unreadable row: nothing marked where nutrition stopped and vitals began.
+   *
+   * The order is fixed and the groups are: identity → what was eaten → what was
+   * moved → what the body reported.
+   */
+  it('renders each day as four grouped lines, in a fixed order', () => {
     const out = buildWeeklyExport(input)
     expect(out).toMatch(/## Days/)
-    expect(out).toMatch(/\*\*Sun 2026-07-19\*\* · Train · sleep 9h11 · intake 1940 kcal \(172P\/190C\/54F\) · water 3\.0 L · 9200 steps · RHR 48 · HRV 62 · weight 65\.3 kg · Upper A/)
+    // The four lines IN ORDER and adjacent — asserted as one block, because
+    // what is under test is the grouping, and four independent `toMatch` calls
+    // would pass on four lines scattered through the document.
+    expect(dayBlock(out, '2026-07-19')).toEqual([
+      '- **Sun 2026-07-19** · Train · Upper A',
+      '    - Macros: 1940 kcal (172P / 190C / 54F) · water 3.0 L',
+      '    - Activity: 9200 steps · 7.10 km · 68 min training',
+      '    - Vitals: sleep 9h11 · RHR 48 · HRV 62 · weight 65.3 kg',
+    ])
   })
 
   // A blank weight can mean "not weighed", "the sync dropped it", or "skipped on
@@ -279,17 +320,17 @@ describe('buildWeeklyExport', () => {
     // scale before a bowel movement IS the protocol, and reporting it as a
     // logging gap reads a deliberate week as a sloppy one.
     const out = buildWeeklyExport(input)
-    expect(out).toMatch(/\*\*Mon 2026-07-20\*\*.*weight — \[Skip: As Planned\]/)
+    expect(out).toMatch(/\*\*Mon 2026-07-20\*\*[\s\S]*?weight — \[Skip: As Planned\]/)
 
     const withReason = buildWeeklyExport({
       ...input,
       days: input.days.map((d) => (d.date === '2026-07-20' ? { ...d, weighInSkipReason: 'Travel' } : d)),
     })
     // Read DYNAMICALLY off the day — change the reason and the export follows.
-    expect(withReason).toMatch(/\*\*Mon 2026-07-20\*\*.*weight — \[Skip: Travel\]/)
+    expect(withReason).toMatch(/\*\*Mon 2026-07-20\*\*[\s\S]*?weight — \[Skip: Travel\]/)
     expect(withReason).not.toMatch(/As Planned/)
     // A day that WAS weighed never carries a skip marker.
-    expect(withReason).not.toMatch(/\*\*Sun 2026-07-19\*\*.*Skip:/)
+    expect(dayBlock(withReason, '2026-07-19').join('\n')).not.toMatch(/Skip:/)
   })
 
   it('tags a declared exception on the intake it explains, and changes no total', () => {
@@ -300,9 +341,9 @@ describe('buildWeeklyExport', () => {
     const tagged = buildWeeklyExport({ ...input, days: dateNight })
 
     // The tag rides the kcal figure, not the end of the line.
-    expect(tagged).toMatch(/intake 3210 kcal \([^)]*\) \[Exception: Event\]/)
+    expect(tagged).toMatch(/Macros: 3210 kcal \([^)]*\) \[Exception: Event\]/)
     // An ordinary day is never annotated.
-    expect(tagged).not.toMatch(/\*\*Mon 2026-07-20\*\*.*Exception/)
+    expect(tagged).not.toMatch(/\*\*Mon 2026-07-20\*\*[\s\S]*?- Macros:[^\n]*Exception/)
 
     // A PR set on a declared day is still a PR, and is TAGGED rather than
     // suppressed — "he hit a record on the night out" is the interesting fact,
@@ -444,8 +485,9 @@ describe('buildWeeklyExport', () => {
         }],
       }],
     })
-    expect(out).toMatch(/40kg × 10 \(Warmup\)/)
-    expect(out).toMatch(/70kg × 12/)
+    // Named rather than numbered — "Set 1" is the first WORKING set.
+    expect(out).toMatch(/- Warm-up: 40 kg × 10 \(warm-up\)/)
+    expect(out).toMatch(/- Set 1: 70 kg × 12/)
   })
 
   it('states a missing session effort rather than omitting the segment', () => {
@@ -776,7 +818,13 @@ describe('weekly aggregates · previous-week reference · disclaimer', () => {
       sessions: [session({ volumeKg: 3571.25 })],
       tonnageByMuscle: [{ muscle: 'Quads', volumeKg: 22000 }, { muscle: 'Chest', volumeKg: 15000 }],
     }))
-    expect(out).toMatch(/## Weekly aggregates/)
+    // Sets-per-muscle and tonnage-per-muscle now sit under ONE heading, next
+    // to each other — they answer the same question in two units, and used to
+    // be four sections apart with the DOMS list in between.
+    expect(out).toMatch(/## Muscle volume/)
+    expect(out).toMatch(/### Sets per muscle vs target/)
+    expect(out).toMatch(/### Volume by muscle group \(kg\)/)
+    expect(out.indexOf('### Sets per muscle')).toBeLessThan(out.indexOf('### Volume by muscle group'))
     expect(out).toMatch(/- Quads: 22000 kg/)
     expect(out).toMatch(/- Chest: 15000 kg/)
   })
@@ -793,7 +841,7 @@ describe('weekly aggregates · previous-week reference · disclaimer', () => {
       sessions: [session()],
       tonnageByMuscle: [{ muscle: 'Quads', volumeKg: 900 }, { muscle: 'Glutes', volumeKg: 900 }],
     }))
-    expect(out).toMatch(/sum to MORE than the total volume/)
+    expect(out).toMatch(/sum to MORE than the total above/)
   })
 
   // ── Energy balance ──
@@ -936,19 +984,31 @@ describe('weekly aggregates · previous-week reference · disclaimer', () => {
     expect(out.indexOf('## Weekly aggregates')).toBeLessThan(out.indexOf('PREVIOUS WEEK REFERENCE'))
   })
 
-  // ── Disclaimer ──
-  it('closes with the Apple Watch note, verbatim and absolutely last', () => {
-    const out = buildWeeklyExport(base({ previousWeekMarkdown: 'prior data' }))
+  /**
+   * ── THE PRIOR-REPORT NOTE IS THE LAST LINE OF THE DOCUMENT ─────────────────
+   * It used to sit FIRST of the three closing notes, under a rule and above two
+   * statements about how the numbers were computed — so the one line pointing
+   * at something outside the payload read as a third methodology footnote.
+   *
+   * It is the last thing in the file now. The Apple Watch caveat still governs
+   * every number above it; it just is not the final sentence.
+   */
+  it('closes with the prior-report note, absolutely last', () => {
+    const out = buildWeeklyExport(base({ weekLabel: 'Week 3', previousWeekMarkdown: 'prior data' }))
     expect(out.trimEnd().endsWith(
-      '*Note: Heart rate, calories, and steps data are sourced from the Apple Watch'
-      + ' and may not be entirely accurate.*',
+      '*Note: Week 3 report is provided manually for reference and comparison.*',
     )).toBe(true)
     // After the previous week, so it governs both.
     expect(out.indexOf('PREVIOUS WEEK REFERENCE')).toBeLessThan(out.indexOf('*Note: Heart rate'))
   })
 
-  it('still closes with the note when there is no previous week', () => {
-    expect(buildWeeklyExport(base()).trimEnd().endsWith('may not be entirely accurate.*')).toBe(true)
+  it('still carries the Apple Watch note, verbatim, immediately above it', () => {
+    const out = buildWeeklyExport(base())
+    expect(out).toContain(
+      '*Note: Heart rate, calories, and steps data are sourced from the Apple Watch'
+      + ' and may not be entirely accurate.*',
+    )
+    expect(out.indexOf('*Note: Heart rate')).toBeLessThan(out.indexOf('is provided manually'))
   })
 
   // ── Swap-day attribution in the daily log ──
@@ -976,7 +1036,9 @@ describe('weekly aggregates · previous-week reference · disclaimer', () => {
     const out = buildWeeklyExport(base({
       days: [day({ date: '2026-08-04', weekdayLabel: 'Tue', isTrainingDay: false })],
     }))
-    expect(out).toMatch(/\*\*Tue 2026-08-04\*\* · Rest · /)
+    // "Rest" and nothing else — it used to read "Rest · rest", the word twice.
+    expect(out).toMatch(/\*\*Tue 2026-08-04\*\* · Rest\n/)
+    expect(out).not.toMatch(/· Rest · rest/)
   })
 })
 

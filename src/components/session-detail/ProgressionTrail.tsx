@@ -5,7 +5,7 @@ import { TrendingUp } from 'lucide-react'
 import { useSessionIntel } from '@/lib/hooks/useSessionIntel'
 import { sessionVerdict } from '@/lib/training/sessionVerdict'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
-import { niceDomain, compactKg } from '@/lib/charts/scale'
+import { tightDomain, axisBound } from '@/lib/charts/scale'
 // Imported under their real names. EMBER/EMERALD/OXIDE were aliased on import
 // to VIOLET/TEAL/ROSE — three colour names the design system does not contain
 // and none of which describes the value being renamed.
@@ -124,32 +124,37 @@ function VolumeCurve({ points, unit }: {
   // Scoped — an SVG id is document-global, so a hardcoded one collides with any
   // second instance on the page.
   const volTrail = `volTrail-${useId().replace(/:/g, '')}`
-  // 56 tall, not 40. At 40 the lane was letterboxed enough that a 15% swing in
-  // tonnage drew as a nearly flat line; the trail now runs the whole era rather
-  // than three points, so it needs the vertical room to separate them.
-  const W = 300, H = 56, PAD_X = 6, PAD_TOP = 8, PAD_BOTTOM = 10
+  // 64 tall, not 40 and no longer 56. At 40 the lane was letterboxed enough that
+  // a 15% swing in tonnage drew as a nearly flat line; the trail now runs the
+  // whole era rather than three points, so it needs the vertical room to
+  // separate them. The padding came in with it — 18px of the old 56 was margin,
+  // which is a third of the height spent on nothing.
+  const W = 300, H = 64, PAD_X = 6, PAD_TOP = 6, PAD_BOTTOM = 8
   // Past a handful of sessions a dot per point becomes a dotted line. Beyond
   // the threshold only the two that carry meaning stay drawn — the one you
   // picked and the latest — while every point keeps its invisible hit target.
   const DENSE = points.length > 8
 
   /**
-   * ── THE AXIS FITS THE DATA, NOT ZERO ────────────────────────────────────────
-   * The scale was `1 - v / max`, i.e. a domain hardcoded to [0, max]. Session
-   * volume for one routine lives in a narrow band — three sessions of Upper B
-   * might read 3 010, 3 000 and 3 020 kg — so against a floor of zero all three
-   * points land within a third of a pixel of each other and the "trajectory"
-   * this chart exists to show draws as a horizontal line. The progression was
-   * real; the axis was hiding it.
+   * ── THE AXIS FITS THE DATA, NOT ZERO — AND NOW IT FITS IT TIGHTLY ───────────
+   * The scale was originally `1 - v / max`, i.e. a domain hardcoded to [0, max].
+   * Session volume for one routine lives in a narrow band — three sessions of
+   * Upper B might read 3 010, 3 000 and 3 020 kg — so against a floor of zero
+   * all three points land within a third of a pixel of each other and the
+   * "trajectory" this chart exists to show draws as a horizontal line.
    *
-   * `niceDomain` was written for exactly this failure on the weekly volume
-   * chart (see the header of `lib/charts/scale.ts`) and is already used by
-   * `VolumeChart` and `BodyCompositionChart`. It fits [lo, hi] to the data with
-   * padding and snaps both ends outward to a round 1/2/5×10ⁿ step, so the
-   * bounds stay readable numbers. Nothing here is hardcoded: the domain is
-   * recomputed from the points on every render and re-fits as sessions land.
+   * `niceDomain` fixed that and then gave most of it back. Its job is round TICK
+   * LABELS, so after padding it snaps both ends outward to a 1/2/5×10ⁿ step —
+   * and on a narrow band the snap is half the domain (12 400–12 600 kg pads to
+   * 248 and snaps to 400). Half the lane was being spent on round numbers this
+   * chart does not even print as ticks; it prints two bounds.
+   *
+   * `tightDomain` fits and stops. The two labels below state the real bounds, so
+   * the zoom is declared — and its span floor is what stops the zoom becoming
+   * the opposite lie, where a quarter-kilo microload draws as a staircase. See
+   * the header of `lib/charts/scale.ts`.
    */
-  const [lo, hi] = niceDomain(points.map((p) => p.volumeKg), { padPct: 0.12, hardMin: 0 })
+  const [lo, hi] = tightDomain(points.map((p) => p.volumeKg), { padPct: 0.06, hardMin: 0 })
   const span = hi - lo || 1
   const x = (i: number) => PAD_X + (i / n) * (W - PAD_X * 2)
   const y = (v: number) => PAD_TOP + (1 - (v - lo) / span) * (H - PAD_TOP - PAD_BOTTOM)
@@ -199,8 +204,12 @@ function VolumeCurve({ points, unit }: {
             lie about the size of the change. */}
         <line x1={PAD_X} x2={W - PAD_X} y1={y(mid)} y2={y(mid)}
           stroke="rgba(255,255,255,0.06)" strokeWidth="1" strokeDasharray="2 3" />
-        <text x={PAD_X} y={PAD_TOP - 1} className="fill-muted" style={{ fontSize: 7, opacity: 0.7 }}>{compactKg(hi)}</text>
-        <text x={PAD_X} y={H - PAD_BOTTOM + 7} className="fill-muted" style={{ fontSize: 7, opacity: 0.7 }}>{compactKg(lo)}</text>
+        {/* `axisBound`, not `compactKg` — see its note. A zoomed axis whose
+            labels round to whole thousands reports bounds that are out by
+            hundreds of kilos, and those two labels are the only thing that
+            makes the zoom honest rather than a flattering picture. */}
+        <text x={PAD_X} y={PAD_TOP - 1} className="fill-muted" style={{ fontSize: 7, opacity: 0.7 }}>{axisBound(hi, span)}</text>
+        <text x={PAD_X} y={H - PAD_BOTTOM + 7} className="fill-muted" style={{ fontSize: 7, opacity: 0.7 }}>{axisBound(lo, span)}</text>
         <path d={area} fill={"url(#" + volTrail + ")"} />
         <path d={line} fill="none" stroke={EMBER} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         {points.map((p, i) => {

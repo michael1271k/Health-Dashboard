@@ -100,7 +100,23 @@ export const DEFAULT_LEVER: LeverId = 'baseline'
  * schedule below is the record of when each was pulled:
  *
  *   · 2026-07-15 (HELIX_CUT_START) … 2026-08-15   baseline, 1,955 kcal
- *   · 2026-08-16 onward                            Lever 1, 1,885 kcal
+ *   · 2026-08-16 … 2026-08-19                     Lever 1,  1,885 kcal
+ *   · 2026-08-20 onward                           custom,   1,955 kcal
+ *
+ * ── A RUNG COMING OFF IS ALSO AN EVENT ───────────────────────────────────────
+ * The 2026-08-20 row was missing for a day, and its absence is instructive. The
+ * schedule recorded Lever 1 being PULLED and nothing about it being RELEASED, so
+ * `leverForDate` kept answering "Lever 1" for every past date from 16 Aug
+ * onward — including Thursday 20 Aug, which `user_goals.updated_at` timestamps
+ * at 08:47 that morning as the moment the rung came off and the food went back
+ * to 1,955. One day of the cut was graded 70 kcal over a target that had already
+ * been abandoned, and the weekly export printed a single figure for a week that
+ * had two.
+ *
+ * So the rule is symmetric: a row goes in whenever the rung CHANGES, and going
+ * back to your own numbers is a change. `custom` is a real selection — it means
+ * "these are my figures, leave them alone" — and `applyLever` correctly declines
+ * to overwrite the goals when it sees one.
  *
  * It is CODE, not a table, for the same reason the rungs themselves are: this
  * is the block's own history, it is three lines long, and a schema for it would
@@ -119,6 +135,9 @@ export interface LeverPeriod {
 export const LEVER_SCHEDULE: readonly LeverPeriod[] = [
   { from: '2026-07-15', leverId: 'baseline' },
   { from: '2026-08-16', leverId: 'lever-1' },
+  // Released — back to hand-set numbers (1,955 kcal · 170/195/55) while keeping
+  // Lever 1's 10k step floor. Timestamped by `user_goals.updated_at`.
+  { from: '2026-08-20', leverId: 'custom' },
 ]
 
 /** The rung the SCHEDULE puts on a date, or null before the cut opened. */
@@ -215,4 +234,76 @@ export function activeLeverOf(row: unknown): string | null {
   if (!row || typeof row !== 'object') return null
   const v = (row as { active_lever?: unknown }).active_lever
   return typeof v === 'string' && v ? v : null
+}
+
+/**
+ * One contiguous stretch of days that shared a single set of targets.
+ *
+ * Distinct from `LeverPeriod` above, which is a row in the SCHEDULE — "this rung
+ * came into force on this date". This is the RESOLVED answer for a specific
+ * range of days, which is what a report needs to print.
+ */
+export interface TargetPeriod {
+  /** The rung's id, or `'custom'` when the user's own numbers were in force. */
+  leverId: LeverId
+  /** "Lever 1" / "Baseline" / "Custom". */
+  label: string
+  goals: LeverGoals
+  /** ISO dates, in order. Contiguous by construction. */
+  dates: string[]
+}
+
+/**
+ * Which targets were in force on each day of a range, collapsed into runs.
+ *
+ * ── WHY A REPORT CANNOT JUST PRINT `user_goals` ──────────────────────────────
+ * A week is not necessarily one target. Pull a lever on Wednesday and the week
+ * has two, and the export's old `**Targets:** 1955 kcal · …` line — read
+ * straight off the CURRENT `user_goals` row with no lever applied — printed one
+ * figure for the whole seven days, silently attributing today's numbers to
+ * Sunday. Adherence is a claim about what you were asked for AT THE TIME, and a
+ * single mutable row cannot make it.
+ *
+ * `leverForDate` already knows the answer per day: the past belongs to
+ * `LEVER_SCHEDULE`, today and after belong to your current selection. All this
+ * does is ask it for every day and glue equal neighbours together, so the report
+ * can say "Lever 1 on Sun–Wed, your own numbers from Thu" instead of one number
+ * that was true for part of the week.
+ *
+ * Runs are compared on the RESOLVED GOALS, not on the rung's name: Lever 2 and
+ * Lever 3 differ only in step target, and two rungs that ask for exactly the
+ * same food and the same steps are the same instruction however they are
+ * labelled. Splitting on the label alone would print two identical blocks.
+ *
+ * Pure, and `todayISO` is a parameter — the export, the scorer and the tests
+ * have to agree about where "today" is, and a clock read inside here would make
+ * the same week render differently tomorrow.
+ */
+export function leverPeriods(
+  dates: readonly string[],
+  storedLeverId: string | null | undefined,
+  todayISO: string,
+  /** The user's own numbers — what `custom` (and an unknown rung) resolves to. */
+  fallback: LeverGoals,
+): TargetPeriod[] {
+  const out: TargetPeriod[] = []
+  const same = (a: LeverGoals, b: LeverGoals) =>
+    a.calorie === b.calorie && a.protein === b.protein
+    && a.carbs === b.carbs && a.fat === b.fat && a.steps === b.steps
+
+  for (const date of dates) {
+    const id = leverForDate(date, storedLeverId, todayISO) ?? DEFAULT_LEVER
+    const goals = applyLever(fallback, id)
+    const last = out[out.length - 1]
+    if (last && same(last.goals, goals)) { last.dates.push(date); continue }
+    out.push({
+      leverId: id,
+      // `leverById` returns null for `custom`, which is the point — it names the
+      // ABSENCE of a rung, and the numbers beside it are the user's own.
+      label: leverById(id)?.label ?? 'Custom',
+      goals,
+      dates: [date],
+    })
+  }
+  return out
 }

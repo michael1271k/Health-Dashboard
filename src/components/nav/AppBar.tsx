@@ -55,6 +55,8 @@ export function AppBar({
   below,
   className = '',
   printHidden = false,
+  float = false,
+  shown = true,
 }: {
   /** Hex. Bleeds along the top edge as a hairline — which block of training,
    *  which workout, which phase this screen belongs to. */
@@ -68,6 +70,23 @@ export function AppBar({
   className?: string
   /** The report reader hides its chrome when printing. */
   printHidden?: boolean
+  /**
+   * Take the bar OUT OF FLOW and slide it in on `shown`.
+   *
+   * ── STICKY RESERVES ITS BOX; FIXED DOES NOT ────────────────────────────────
+   * The default is sticky, which is right when the bar is on screen from the
+   * first frame. It is wrong for a bar that only appears once a large title has
+   * scrolled past: sticky occupies its 44px at EVERY scroll position, so at the
+   * top of the document it is a band of chrome around a chevron and a title
+   * rendered at `opacity-0`. Conditionally unmounting it is worse — the box
+   * would appear mid-scroll and shove the document down under the reader's eye.
+   *
+   * Fixed is out of flow, so the bar can materialise over the content without
+   * moving any of it, and the page starts at its own first line.
+   */
+  float?: boolean
+  /** Only meaningful with `float` — slides the bar down when true. */
+  shown?: boolean
 }) {
   const sentinel = useRef<HTMLDivElement>(null)
   const [underContent, setUnderContent] = useState(false)
@@ -91,7 +110,11 @@ export function AppBar({
       <header
         {...(printHidden ? { 'data-print-hide': true } : {})}
         data-edge={underContent ? 'on' : 'off'}
-        className={`app-chrome app-chrome--top sticky top-0 z-30 safe-pt ${className}`}
+        className={`app-chrome app-chrome--top z-30 safe-pt ${className} `
+          + (float
+            ? 'fixed inset-x-0 top-0 transition-transform duration-200 ease-out '
+              + (shown ? 'translate-y-0' : '-translate-y-full pointer-events-none')
+            : 'sticky top-0')}
       >
         {accent && (
           <span

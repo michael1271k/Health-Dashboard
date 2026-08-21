@@ -11,6 +11,7 @@ import { dayColor, STEEL, EMBER, OXIDE, GOLD, EMERALD, MACRO } from '@/lib/theme
 import { displayWeight, weightUnit, fmtVolume } from '@/lib/utils/units'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
 import { Surface } from '@/components/ui/Zone'
+import { setComposition } from '@/lib/training/setTags'
 
 /*
  * This file used to open with six local constants, four of which named a colour
@@ -94,7 +95,9 @@ function Head({ label, value, unit, sub, metric, first }: {
   label: string
   value: string | null
   unit?: string
-  sub?: string
+  /** Rendered beside the delta. A node, not a string — the set cell puts
+   *  coloured chips here and a sentence would not fit. */
+  sub?: React.ReactNode
   metric?: IntelMetric
   first?: boolean
 }) {
@@ -115,7 +118,7 @@ function Head({ label, value, unit, sub, metric, first }: {
           line exists for — then whatever else the metric has to add. */}
       <span className="flex items-baseline gap-1.5 text-[9px] text-muted mt-1 leading-tight min-h-[1em] min-w-0">
         {value != null && <Delta metric={metric} />}
-        {sub && <span className="truncate">{sub}</span>}
+        {sub}
       </span>
     </div>
   )
@@ -181,12 +184,27 @@ export function SessionHero({ detail }: { detail: SessionDetail }) {
   const accent = dayColor(detail.dayKey, detail.splitDay)
   const unit = weightUnit()
 
-  // Warm-ups and failure sets were two of the nine scrolling stats. They are
-  // not session headlines — they describe the SET COUNT — so they ride under it.
-  const composition = [
-    detail.warmupSets > 0 ? `${detail.warmupSets} warm-up` : null,
-    detail.failureSets > 0 ? `${detail.failureSets} to failure` : null,
-  ].filter(Boolean).join(' · ')
+  /**
+   * ── THE SET COMPOSITION, AS CHIPS ────────────────────────────────────────
+   * This was `"1 warm-up · 1 to failure"` — up to 26 characters joined into a
+   * `truncate`d slot roughly a third of the header wide, so on a phone it read
+   * "1 warm-up · 1 to fail…". Longer sessions were worse: add a drop set and
+   * the first tag is all that survives.
+   *
+   * The words are the wrong unit for the space. The ledger below already writes
+   * W, F and D on every set that has one, and so does the live logger while you
+   * are typing it — so the header spelling them out in full was the odd one
+   * out, at the one size where it did not fit.
+   *
+   * `setComposition` is that shared table (`lib/training/setTags.ts`). The full
+   * word survives in each chip's tooltip, and in the weekly export, which is
+   * what a coach actually reads.
+   */
+  const composition = setComposition({
+    warmup: detail.warmupSets,
+    failure: detail.failureSets,
+    dropset: detail.dropsetSets,
+  })
 
   return (
     <Surface variant="band" accent={accent} pad="snug" className="space-y-3">
@@ -225,7 +243,19 @@ export function SessionHero({ detail }: { detail: SessionDetail }) {
         <Head
           label="Sets"
           value={`${detail.setCount}`}
-          sub={composition}
+          sub={composition.length > 0 && (
+            <span className="flex items-baseline gap-1 min-w-0">
+              {composition.map((c, i) => (
+                <span key={c.label} className="flex items-baseline gap-1 shrink-0">
+                  {i > 0 && <span className="opacity-30" aria-hidden="true">·</span>}
+                  <span className="helix-num font-bold tabular-nums" style={{ color: c.color }}
+                    title={`${c.count} × ${c.full}`}>
+                    {c.count}{c.label}
+                  </span>
+                </span>
+              ))}
+            </span>
+          )}
           metric={m('sets')}
         />
       </div>

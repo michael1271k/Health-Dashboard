@@ -2,7 +2,7 @@
 
 import { memo, useEffect, useState } from 'react'
 import { LeverTag } from '@/components/nutrition/LeverTag'
-import { STEEL } from '@/lib/theme/palette'
+import { STEEL, PLAN_CHIP } from '@/lib/theme/palette'
 import { useLastUpdated } from '@/lib/hooks/useDashboard'
 import { useMyProfile } from '@/lib/hooks/useMyProfile'
 import { activeProgram, activePhase } from '@/lib/programs'
@@ -10,13 +10,6 @@ import { PHASE_COLORS, PHASE_META, type Phase } from '@/lib/nutrition/phase'
 import { programWeekNumber } from '@/lib/reports/weekNumber'
 import { useLogicalDate } from '@/lib/hooks/useLogicalDate'
 import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
-
-/** Per-plan chip colour — Helix-5 gets a premium iridescent violet of its own. */
-const PLAN_CHIP_COLOR: Record<string, string> = {
-  apex51: '#8B7CF6', // Helix-5 — premium violet
-  axis4: '#5FB8E8',  // Helix-4 — aqua
-  ppl: '#79808C',    // legacy — muted
-}
 
 /*
  * `programDay()` lived here and is GONE.
@@ -104,7 +97,7 @@ export function BrandHeader() {
   const [tags, setTags] = useState<{ planLabel: string; planColor: string; phase: Phase } | null>(null)
   useEffect(() => {
     const p = activeProgram()
-    setTags({ planLabel: p.label, planColor: PLAN_CHIP_COLOR[p.id] ?? STEEL, phase: activePhase() as Phase })
+    setTags({ planLabel: p.label, planColor: PLAN_CHIP[p.id] ?? STEEL, phase: activePhase() as Phase })
   }, [planVersion])
 
   // THE program week — the same counter Momentum labels its capsules with, not a

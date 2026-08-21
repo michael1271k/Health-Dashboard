@@ -160,8 +160,8 @@
     "semantic_hash": ""
   },
   "public/sw.js": {
-    "mtime": 1787304193.8763025,
-    "ast_hash": "ee5a553068dc8735fbf9989c8ddae77c",
+    "mtime": 1787319605.782043,
+    "ast_hash": "e1d1ade4c0ba3a513b0d83f22404fc23",
     "semantic_hash": ""
   },
   "scripts/generate-icons.mjs": {
@@ -1910,8 +1910,8 @@
     "semantic_hash": ""
   },
   "src/tests/deck-render.test.tsx": {
-    "mtime": 1787318806.8627017,
-    "ast_hash": "8ecd2448d817d3fadc3caf771aa0b9eb",
+    "mtime": 1787319571.6663282,
+    "ast_hash": "47f02d3f795d3f4b57b8f5bf6713cbc5",
     "semantic_hash": ""
   },
   "src/lib/nutrition/exceptionDay.ts": {
@@ -2515,7 +2515,7 @@
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixAtlas.swift": {
-    "mtime": 1787318472.4145768,
+    "mtime": 1787319636.8731139,
     "ast_hash": "52fb3d4e17366650ba5f7ba1d7186d55",
     "semantic_hash": ""
   },
@@ -2650,7 +2650,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/set-rows.html": {
-    "mtime": 1787319203.6191947,
+    "mtime": 1787319585.6173172,
     "ast_hash": "dcf08d8e5f047c6af03f81741ad93adb",
     "semantic_hash": ""
   },
@@ -2680,7 +2680,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-ledger.html": {
-    "mtime": 1787319202.6596684,
+    "mtime": 1787319584.8589327,
     "ast_hash": "229c9d7e8c30c8a3a3651ce8ea3b148c",
     "semantic_hash": ""
   },
@@ -2695,8 +2695,8 @@
     "semantic_hash": ""
   },
   "src/tests/set-grid-mode.test.ts": {
-    "mtime": 1787319200.5278723,
-    "ast_hash": "7d1d34a87c0fb9bd46118bc634af452c",
+    "mtime": 1787319552.3664758,
+    "ast_hash": "8e9770af9e458067d80a3c9dc8f5ed25",
     "semantic_hash": ""
   },
   "src/tests/atlas-detail.test.ts": {
@@ -2705,18 +2705,18 @@
     "semantic_hash": ""
   },
   "src/tests/live-header.test.tsx": {
-    "mtime": 1787319047.8585653,
-    "ast_hash": "317b0e78ddad74f7b2066f5cd2bfcfd1",
+    "mtime": 1787319515.6841795,
+    "ast_hash": "f191c3538f6e9b424cf56092b4a6629d",
     "semantic_hash": ""
   },
   "e2e/live-header.spec.ts": {
-    "mtime": 1787303971.6137443,
-    "ast_hash": "a0f44309e23a6cf797e3e303fb19ab89",
+    "mtime": 1787319445.682477,
+    "ast_hash": "0bb49322bd14e5bfeae29218e6922346",
     "semantic_hash": ""
   },
   "e2e/__fixtures__/live-header.html": {
-    "mtime": 1787319202.1900208,
-    "ast_hash": "ab5f010e29bcb4b087c291698fcf209d",
+    "mtime": 1787319585.96004,
+    "ast_hash": "e392f2ffe4073d74affa37c44e65bd43",
     "semantic_hash": ""
   },
   "src/tests/hevy-parity.test.ts": {

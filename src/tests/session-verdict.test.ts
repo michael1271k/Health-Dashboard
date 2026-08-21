@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import { sessionVerdict } from '@/lib/training/sessionVerdict'
-import { exerciseStats, formatRest } from '@/components/session-detail/ExerciseBreakdown'
+import { exerciseStats } from '@/components/session-detail/ExerciseBreakdown'
 import type { DetailExercise, DetailSet } from '@/lib/hooks/useSessionDetail'
 
 const set = (o: Partial<DetailSet> & Pick<DetailSet, 'setNumber' | 'weightKg' | 'reps'>): DetailSet => ({
   rpe: null, isPr: false, est1rmKg: null, setType: 'normal', side: null, pairId: null,
-  prAxes: [], restSec: null, ...o,
+  prAxes: [], ...o,
 })
 
 describe('sessionVerdict', () => {
@@ -79,26 +79,51 @@ describe('exerciseStats', () => {
     expect(stats.totalReps).toBe(12)
   })
 
-  it('takes the MEDIAN rest, so one interrupted set does not describe the exercise', () => {
+  /*
+   * Three rest cases used to live here — a median, an absence, and a clock
+   * format. All three are gone with `restSec`, which was measured by a stopwatch
+   * removed on 2026-08-19 and stored in a column that held a value on 0 of 523
+   * sets. Rest is `restTargetFor` now, and it is a prescription with its own
+   * tests.
+   */
+
+  /**
+   * ── TOP IS WHICHEVER AXIS THE MOVEMENT HAS ─────────────────────────────────
+   * `topKg` is 0 on every bodyweight and timed lift, so a report that only knew
+   * about load printed "Top —" on Hanging Knee Raise, Side Plank and Reverse
+   * Crunch. `topReps` is the fallback, and it is the best SINGLE set rather than
+   * a sum: "top" means the best one.
+   */
+  it('reports the best set by reps when the movement carries no load', () => {
     const stats = exerciseStats(ex([
-      set({ setNumber: 1, weightKg: 60, reps: 10, restSec: 90 }),
-      set({ setNumber: 2, weightKg: 60, reps: 9, restSec: 95 }),
-      set({ setNumber: 3, weightKg: 60, reps: 8, restSec: 900 }),
+      set({ setNumber: 1, weightKg: 0, reps: 15 }),
+      set({ setNumber: 2, weightKg: 0, reps: 17 }),
+      set({ setNumber: 3, weightKg: 0, reps: 12 }),
     ]))
-    expect(stats.medianRestSec).toBe(95)
+    expect(stats.topKg).toBe(0)
+    expect(stats.topReps).toBe(17)
+    // The sum is a DIFFERENT number and stays available — 44 reps of work is
+    // not a 44-rep set.
+    expect(stats.totalReps).toBe(44)
   })
 
-  it('reports rest as ABSENT, never zero, when nothing was measured', () => {
-    const stats = exerciseStats(ex([set({ setNumber: 1, weightKg: 60, reps: 10 })]))
-    expect(stats.medianRestSec).toBeNull()
-    expect(formatRest(null)).toBeNull()
-    expect(formatRest(0)).toBeNull()
+  it('still reports the heaviest set when there IS load', () => {
+    const stats = exerciseStats(ex([
+      set({ setNumber: 1, weightKg: 60, reps: 10 }),
+      set({ setNumber: 2, weightKg: 62.5, reps: 8 }),
+    ]))
+    expect(stats.topKg).toBe(62.5)
+    // Both axes are computed either way; the renderer picks by whether there is
+    // a load. A `topReps` that only existed on unloaded work would be a second
+    // code path to keep in step.
+    expect(stats.topReps).toBe(10)
   })
 
-  it('formats rest the way a clock does', () => {
-    expect(formatRest(45)).toBe('45s')
-    expect(formatRest(90)).toBe('1:30')
-    expect(formatRest(605)).toBe('10:05')
+  it('never returns a null Top — a warm-up-only exercise still has a best set', () => {
+    // Warm-ups are excluded from every working figure, so this is the degenerate
+    // case: the fallback must be 0, not null, or the cell renders "Top null".
+    const stats = exerciseStats(ex([set({ setNumber: 1, weightKg: 0, reps: 10, setType: 'warmup' })]))
+    expect(stats.topReps).toBe(0)
   })
 
   it('averages effort over working sets', () => {

@@ -12,8 +12,11 @@ import { isTimedExercise } from '@/lib/exercises/timed'
 import { Surface } from '@/components/ui/Zone'
 import { formatSet } from '@/lib/utils/setFormat'
 import { rpeColor, rpeLabel } from '@/lib/training/effort'
+import { setTagFor } from '@/lib/training/setTags'
 import { exerciseColor } from '@/lib/theme/muscleHue'
 import { useGlobalSetHistory, workingSets, type HistorySet } from '@/lib/hooks/useExerciseSetHistory'
+import { useSessionPrRecords, prSetKey } from '@/lib/hooks/useSessionPrRecords'
+import { PrRecordSheet } from '@/components/command-center/PrRecordSheet'
 import { repWindowFor, holdTargetFor } from '@/lib/training/ceilings'
 import { restTargetFor, formatRestTarget } from '@/lib/training/restTargets'
 import { eraForDate } from '@/lib/programs'
@@ -28,25 +31,11 @@ const ExerciseHistorySheet = dynamic(
   { ssr: false },
 )
 
-// "Warmup" is eight characters on the one row that has no spare width: set
-// number, load × reps, tag, trophy + axis chips, RPE and the 1RM column all
-// share it, and the tag pushed the numbers into a wrap on a phone. "W" reads
-// unambiguously in context (it is the only single-letter tag on a warm-up row)
-// and the full word survives where there IS room — the weekly export writes
-// "(Warmup)" verbatim (weeklyExport.ts), which is what a coach reads.
-// "Dropset" and "Failure" are seven characters each — the same overflow the
-// warm-up tag was already shortened for. All three are single letters now, with
-// the full word in the tooltip, and the LOGGER uses exactly the same three tags
-// (SetEditorRow) so a set reads identically while you type it and after.
-//
-// Warm-up is EMBER, not emerald. Ember is the documented set-type colour, and
-// emerald already means "committed" in the logger — a green warm-up chip on a
-// green-ticked row says two things at once.
-const TAG: Record<string, { label: string; full: string; color: string }> = {
-  warmup: { label: 'W', full: 'Warm-up', color: EMBER },
-  failure: { label: 'F', full: 'Taken to failure', color: OXIDE },
-  dropset: { label: 'D', full: 'Drop set', color: '#9A6DD7' },
-}
+// The W / F / D table used to be declared here. It now lives in
+// `lib/training/setTags.ts`, because the session HEADER needed it too — its
+// set-count line was spelling "1 warm-up · 1 to failure" into a slot that
+// truncated — and a component is the wrong place to keep a vocabulary three
+// surfaces share.
 
 /**
  * vs-last-same-type glyph: ⬆️ improved · ═ held · ⬇️ regressed · 🆕 baseline.
@@ -209,8 +198,15 @@ function rowsWithPrev(rows: Row[], prevSets: HistorySet[]): Array<{
  * letter keeps the box — the type is the more specific fact about what the set
  * WAS — and the record is carried by a gold border and a gold corner dot. One
  * badge, two facts, no ambiguity about which set it belongs to.
+ *
+ * ── AND WHEN IT HOLDS A RECORD IT IS A BUTTON ────────────────────────────────
+ * The medal was a `<span>`. In the live logger the same badge opens
+ * `PrRecordSheet` — what was beaten, and by how much — so the one surface built
+ * to be READ was the one where the trophy answered nothing. Same gesture, same
+ * sheet, same arithmetic (see `useSessionPrRecords` for why the delta has to be
+ * recomputed rather than read).
  */
-function SetBadge({ num, tag, isPr, timed, axes = [] }: {
+function SetBadge({ num, tag, isPr, timed, axes = [], onOpen }: {
   num: number | null
   tag?: { label: string; full: string; color: string }
   isPr: boolean
@@ -219,6 +215,8 @@ function SetBadge({ num, tag, isPr, timed, axes = [] }: {
    *  a device opening a session it viewed BEFORE the field existed rehydrates
    *  sets without it. The medal alone is the correct degraded state. */
   axes?: PrAxis[]
+  /** Present only on a record. Opens the sheet that explains it. */
+  onOpen?: () => void
 }) {
   const ordinal = num != null ? `set ${num}` : 'set'
   const prPart = isPr
@@ -227,15 +225,23 @@ function SetBadge({ num, tag, isPr, timed, axes = [] }: {
   const label = tag ? `${tag.full}, ${ordinal}${prPart}` : `${ordinal[0].toUpperCase()}${ordinal.slice(1)}${prPart}`
 
   const face = tag?.color ?? (isPr ? GOLD : null)
+  // A record is the only thing here worth tapping, so it is the only thing that
+  // becomes a button. Rendering every badge as one would put a focus stop on
+  // every row of a document nobody navigates by keyboard set-by-set.
+  const Tag = isPr && onOpen ? 'button' : 'span'
   return (
-    <span
-      className="relative w-6 h-6 shrink-0 rounded-md flex items-center justify-center
-                 helix-num text-[11px] font-bold uppercase"
+    <Tag
+      {...(isPr && onOpen
+        ? { type: 'button' as const, onClick: onOpen }
+        : {})}
+      className={`relative w-6 h-6 shrink-0 rounded-md flex items-center justify-center
+                 helix-num text-[11px] font-bold uppercase`
+        + (isPr && onOpen ? ' cursor-pointer active:scale-95 transition-transform' : '')}
       style={face
         ? { color: face, background: `${face}1f`, border: `1px solid ${isPr ? GOLD : `${face}55`}` }
         : { color: 'rgba(255,255,255,0.55)' }}
-      title={label}
-      aria-label={label}
+      title={isPr && onOpen ? `${label} — tap for detail` : label}
+      aria-label={isPr && onOpen ? `${label}. Show what this record beat.` : label}
     >
       {tag ? tag.label : isPr ? <Medal className="w-3.5 h-3.5" aria-hidden="true" /> : (num != null ? num : '·')}
       {/* The record, when the letter already owns the box. Small on purpose —
@@ -245,7 +251,7 @@ function SetBadge({ num, tag, isPr, timed, axes = [] }: {
         <span className="absolute -top-0.5 -right-0.5 w-[5px] h-[5px] rounded-full"
           style={{ background: GOLD, boxShadow: `0 0 4px ${GOLD}` }} aria-hidden="true" />
       )}
-    </span>
+    </Tag>
   )
 }
 
@@ -306,9 +312,15 @@ export function progressionCue(
  * recorded at all. Those are the questions asked of a finished session, and a
  * reader should not have to do arithmetic on their own workout.
  *
- * REST IS MEASURED OR ABSENT. `restSec` exists only for sessions logged through
- * the deck's tick — see `WorkoutSetSchema`. Historic and pasted sessions show a
- * dash, never a zero, because nobody rested for no time.
+ * REST IS NOT HERE ANY MORE. It was a median over `restSec`, a column that no
+ * session in the database has ever carried a value in, printed under the label
+ * "Actual" beside a rest TARGET that does have one. See `DetailSet`.
+ *
+ * TOP HAS TWO AXES, because a lift has whichever one it has. `topKg` is 0 on
+ * every bodyweight and timed movement, so the report read "Top —" on Hanging
+ * Knee Raise, Side Plank and every unloaded lift — on the page whose whole job
+ * is to say what you did. The best SET is still a fact about those movements;
+ * it is just measured in reps or in seconds.
  *
  * Warm-ups are excluded from every figure except the set count they never had:
  * they are not the work, and a light first set drags a mean down.
@@ -316,8 +328,9 @@ export function progressionCue(
 export function exerciseStats(ex: DetailExercise): {
   totalReps: number
   avgRpe: number | null
-  medianRestSec: number | null
   topKg: number
+  /** Best single set by reps (or seconds, on a timed hold). Never null. */
+  topReps: number
 } {
   const working = ex.sets.filter((s) => s.setType !== 'warmup')
   // A unilateral pair is ONE set of work, so its reps count once — the same
@@ -336,28 +349,21 @@ export function exerciseStats(ex: DetailExercise): {
     ? Math.round((rpes.reduce((a, b) => a + b, 0) / rpes.length) * 10) / 10
     : null
 
-  // MEDIAN, not mean: one set interrupted by a conversation should not move the
-  // number that describes how you actually paced the exercise.
-  const rests = working.map((s) => s.restSec).filter((v): v is number => v != null && v > 0).sort((a, b) => a - b)
-  const medianRestSec = rests.length ? rests[Math.floor(rests.length / 2)] : null
-
   return {
     totalReps,
     avgRpe,
-    medianRestSec,
     topKg: working.reduce((m, s) => Math.max(m, s.weightKg), 0),
+    // Per SET, not summed — "top" means the best one, which on an unloaded lift
+    // is the longest set rather than the heaviest. A pair is not deduped here
+    // because taking the max of two sides is already the weaker-side-agnostic
+    // answer: the best single effort is the best single effort.
+    topReps: working.reduce((m, s) => Math.max(m, s.reps || 0), 0),
   }
 }
 
 /** "12 Aug" — the date the PREVIOUS column is quoting. */
 const shortDate = (iso: string) =>
   new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
-
-/** "1:30" / "45s" — a rest interval, or null. */
-export function formatRest(sec: number | null): string | null {
-  if (sec == null || sec <= 0) return null
-  return sec < 60 ? `${sec}s` : `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`
-}
 
 export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
   sessionId: string
@@ -385,6 +391,21 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
   const names = useMemo(() => exercises.map((e) => e.name), [exercises])
   const { data: globalHistory } = useGlobalSetHistory(names, eraForDate(date), date)
   const [active, setActive] = useState<{ id: string; name: string } | null>(null)
+  /**
+   * Which medal was tapped. Also the gate on the record query — nothing is
+   * fetched until a reader actually asks, and the answer is then cached for the
+   * rest of the visit.
+   */
+  const [prTarget, setPrTarget] = useState<
+    { exerciseId: string; name: string; setNumber: number; label: string; timed: boolean } | null
+  >(null)
+  // The four facts the detector needs, from the props this component already
+  // takes — no extra plumbing through the page.
+  const prInput = useMemo(
+    () => ({ id: sessionId, date, dayKey: dayKey ?? null, exercises }),
+    [sessionId, date, dayKey, exercises],
+  )
+  const { data: prRecords } = useSessionPrRecords(prInput, !!prTarget)
   const deltaFor = useMemo(
     () => new Map((intel?.deltas ?? []).map((d) => [d.exerciseId, d.delta])),
     [intel],
@@ -416,12 +437,13 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
         const window = timed
           ? (holdTargetFor(ex.name, dayKey) != null ? `${holdTargetFor(ex.name, dayKey)}s` : null)
           : (() => { const w = repWindowFor(ex.name, dayKey); return w ? `${w.floor}–${w.ceiling}` : null })()
-        const rest = formatRest(stats.medianRestSec)
         const restTarget = restTargetFor(ex.name, dayKey)
-        const prescription = [
-          `${ex.workingSets} set${ex.workingSets === 1 ? '' : 's'}${window ? ` @ ${window}` : ''}`,
-          rest ? `${rest} rest` : null,
-        ].filter(Boolean).join(' · ')
+        // What the PROGRAM asked for. It used to append a measured median rest
+        // here as well, which meant the line could print two different rest
+        // figures — one prescribed, one measured — and the measured one was
+        // always absent. The target keeps its own chip below.
+        const prescription =
+          `${ex.workingSets} set${ex.workingSets === 1 ? '' : 's'}${window ? ` @ ${window}` : ''}`
 
         return (
           <section key={ex.exerciseId} style={{ borderTop: i ? '1px solid rgba(255,255,255,0.07)' : undefined }}>
@@ -490,14 +512,20 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
                   : `${Math.round(displayWeight(ex.volumeKg) ?? 0).toLocaleString()}${unit}`}
                   delta={t?.pctChange ?? null} />
                 <Meta label={timed ? 'Secs' : 'Reps'} value={`${stats.totalReps}`} />
-                <Meta label="Top" value={stats.topKg > 0 ? `${displayWeight(stats.topKg)}${unit}` : '—'} />
-                {/* MEASURED, and now labelled as such. It sat under the word
-                    "Rest" beside the prescribed target added below, and two
-                    numbers both called rest is one number nobody trusts. */}
-                <Meta label="Actual" value={rest ?? '—'}
-                  title={rest
-                    ? 'Median measured rest between sets'
-                    : 'Rest is measured from the logger — sessions logged elsewhere carry none'} />
+                {/* ── TOP IS WHATEVER THE MOVEMENT ACTUALLY HAS ──
+                    This read `topKg > 0 ? … : '—'`, so every bodyweight and
+                    timed lift in the report said "Top —". The best set on a
+                    Hanging Knee Raise is a real fact; it is just counted in
+                    reps. Same `weight === 0` blind spot the logger had. */}
+                <Meta label="Top"
+                  value={stats.topKg > 0
+                    ? `${displayWeight(stats.topKg)}${unit}`
+                    : `${stats.topReps}${timed ? 's' : ' reps'}`}
+                  title={stats.topKg > 0
+                    ? 'Heaviest working set'
+                    : timed ? 'Longest working hold' : 'Best working set by reps'} />
+                {/* "Actual" — a median MEASURED rest — used to sit here. No
+                    session has ever carried the data; see `DetailSet`. */}
                 {/* ── THE TARGET THE PLAN ASKED FOR ──
                     Same chip as the live logger's header, same source
                     (`restTargets.ts`), same silence: a reading, never a
@@ -540,7 +568,7 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
               </div>
               {rowsWithPrev(rows, prevSets).map(({ row, prev, prevRight }, ri) => {
                 const tagKey = row.kind === 'single' ? row.set.setType : (row.left?.setType ?? row.right?.setType)
-                const tag = tagKey ? TAG[tagKey] : undefined
+                const tag = setTagFor(tagKey)
                 // A record should be visible while scanning the ledger, not only
                 // once your eye reaches the badge: the row that set it lifts
                 // into gold and carries a left rule, which survives printing.
@@ -572,12 +600,28 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
                     data-set-row={row.kind}
                     style={rowIsPr ? { background: `${GOLD}12`, boxShadow: `inset 3px 0 0 ${GOLD}` } : undefined}
                     className={`${LEDGER_GRID} items-center py-[3px] text-fluid-base`}>
-                    <SetBadge num={row.num} tag={tag} isPr={rowIsPr} timed={timed} axes={axes} />
+                    <SetBadge num={row.num} tag={tag} isPr={rowIsPr} timed={timed} axes={axes}
+                      onOpen={rowIsPr ? () => {
+                        // Which SET earned it. On a pair, whichever side holds
+                        // the record — the sheet names the arm, because the two
+                        // halves can each set a different one.
+                        const winner = row.kind === 'single'
+                          ? row.set
+                          : (row.left?.isPr ? row.left : row.right)
+                        if (!winner) return
+                        const side = winner.side === 'L' ? ' · Left' : winner.side === 'R' ? ' · Right' : ''
+                        setPrTarget({
+                          exerciseId: ex.exerciseId,
+                          name: ex.name,
+                          setNumber: winner.setNumber,
+                          label: `Set ${row.num ?? winner.setNumber}${side}`,
+                          timed,
+                        })
+                      } : undefined} />
 
                     {row.kind === 'single' ? (
                       <span className="flex items-center gap-1.5 min-w-0">
-                        <span className="helix-num font-semibold text-text truncate"
-                          title={formatRest(row.set.restSec) ? `Rested ${formatRest(row.set.restSec)} before this set` : undefined}>
+                        <span className="helix-num font-semibold text-text truncate">
                           {formatSet(row.set.weightKg, row.set.reps, { timed, unit, toDisplay: displayWeight })}
                         </span>
                       </span>
@@ -675,6 +719,21 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
         open={!!active}
         onClose={() => setActive(null)}
       />
+
+      {/* The SAME sheet the live logger opens from the same gesture. It renders
+          nothing when there is no baseline to quote — an asserted (record-book)
+          session can name an axis the arithmetic never computed a previous
+          value for, and "beat nothing by nothing" is not worth a panel. */}
+      {prTarget && (
+        <PrRecordSheet
+          open
+          onClose={() => setPrTarget(null)}
+          exerciseName={prTarget.name}
+          setLabel={prTarget.label}
+          records={prRecords?.bySet.get(prSetKey(prTarget.exerciseId, prTarget.setNumber))}
+          timed={prTarget.timed}
+        />
+      )}
     </Surface>
   )
 }

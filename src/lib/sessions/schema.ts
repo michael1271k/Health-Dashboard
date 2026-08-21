@@ -20,16 +20,16 @@ export const WorkoutSetSchema = z.object({
   // Unilateral: a split set is two rows sharing `pairId`, one per `side`.
   side: z.enum(['L', 'R']).optional(),
   pairId: z.string().max(64).optional(),
-  /**
-   * MEASURED rest before this set, in seconds — the gap between the previous
-   * set's tick and this one's. Never prescribed and never estimated: absent
-   * whenever the deck did not observe both ticks (a pasted session, an edit, a
-   * set checked in bulk), because a rest interval nobody watched is a number
-   * that would be indistinguishable from one that was.
+  /*
+   * `restSec` used to be accepted here — MEASURED rest, from the deck's
+   * stopwatch. The stopwatch went on 2026-08-19 and the column it fed has now
+   * gone with it; nothing in the app has sent the field since.
    *
-   * Capped at an hour: a longer gap is a deck left open, not a rest.
+   * Dropping it from the schema is safe rather than breaking: zod strips
+   * unknown keys by default, so a draft that has been sitting in localStorage
+   * since before the change still commits — the stale field is simply ignored
+   * instead of being written to a column that no longer exists.
    */
-  restSec: z.number().int().nonnegative().max(3600).optional(),
 })
 
 /**

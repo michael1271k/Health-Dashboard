@@ -19,9 +19,13 @@ export interface WorkoutSet {
   // `pairId`, one side 'L' one 'R'. Absent = a normal bilateral set.
   side?: 'L' | 'R'
   pairId?: string
-  /** MEASURED rest before this set, in seconds. Absent when unobserved — see
-   *  `WorkoutSetSchema`. Never a prescription and never an estimate. */
-  restSec?: number
+  /*
+   * `restSec` is gone. It carried MEASURED rest from the deck's stopwatch,
+   * which was removed on 2026-08-19 when rest became a prescription the plan
+   * states rather than a clock that grades you — and the column it wrote to
+   * never held a value on any set, ever. See `ProgramExercise.restSec` and
+   * `restTargets.ts` for the number that replaced it.
+   */
 }
 
 // In-progress workout session (client-side, before saved to DB)

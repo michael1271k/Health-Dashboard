@@ -91,7 +91,7 @@ describe('manual intake override reaches the export', () => {
     const out = buildWeeklyExport(base({
       days: [day({ calories: 1891, proteinG: 173, carbsG: 188, fatG: 52 })],
     }))
-    expect(out).toMatch(/intake 1891 kcal \(173P\/188C\/52F\)/)
+    expect(out).toMatch(/Macros: 1891 kcal \(173P \/ 188C \/ 52F\)/)
   })
 
   it('carries a corrected value that differs from the synced one', () => {
@@ -99,8 +99,8 @@ describe('manual intake override reaches the export', () => {
     // prints. There is no second source of calories to fall back to.
     const synced = buildWeeklyExport(base({ days: [day({ calories: 2400 })] }))
     const corrected = buildWeeklyExport(base({ days: [day({ calories: 1891 })] }))
-    expect(synced).toMatch(/intake 2400 kcal/)
-    expect(corrected).toMatch(/intake 1891 kcal/)
+    expect(synced).toMatch(/Macros: 2400 kcal/)
+    expect(corrected).toMatch(/Macros: 1891 kcal/)
     expect(corrected).not.toMatch(/2400/)
   })
 
@@ -117,6 +117,6 @@ describe('manual intake override reaches the export', () => {
   it('prints a zero-calorie correction as 0, not as "not recorded"', () => {
     // A logged fast is a measurement. Only an ABSENT entry is an em-dash.
     const out = buildWeeklyExport(base({ days: [day({ calories: 0 })] }))
-    expect(out).toMatch(/intake 0 kcal/)
+    expect(out).toMatch(/Macros: 0 kcal/)
   })
 })

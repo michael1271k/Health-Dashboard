@@ -5,10 +5,10 @@ import { tapLight } from '@/lib/native/haptics'
 import { MuscleDistributionSheet } from '@/components/command-center/MuscleDistributionSheet'
 import { Target } from 'lucide-react'
 import type { SessionDetail } from '@/lib/hooks/useSessionDetail'
-import { MUSCLE_COLOR, type LandmarkMuscle } from '@/lib/training/landmarks'
+import { type LandmarkMuscle } from '@/lib/training/landmarks'
 import { MuscleAtlas } from '@/components/body/MuscleAtlas'
 import { setsToWorked } from '@/lib/body/atlas'
-import { EMBER, MUTED } from '@/lib/theme/palette'
+import { EMBER } from '@/lib/theme/palette'
 
 /**
  * Muscle Focus — what THIS session actually trained (direct-set distribution
@@ -20,6 +20,23 @@ import { EMBER, MUTED } from '@/lib/theme/palette'
  */
 /** Half sets are the smallest real unit; anything finer is float noise. */
 const round1 = (v: number): number => Math.round(v * 10) / 10
+
+/**
+ * How strongly one muscle is tinted, 0–1.
+ *
+ * ── WHY THE SESSION'S OWN MAXIMUM, AND NOT AN ABSOLUTE SCALE ─────────────────
+ * The question this block answers is "where did THIS session land", not "how
+ * does it compare to a week". Normalising against the hardest-worked muscle
+ * means the heaviest is always fully saturated and the ranking is legible
+ * without reading a single number — on a light session and a brutal one alike.
+ * An absolute scale would render an entire recovery day in near-invisible
+ * washes, which is a true statement rendered uselessly.
+ *
+ * The 0.30 floor is not decoration: a muscle that got half a set still GOT half
+ * a set, and a segment at 5% opacity reads as absent.
+ */
+const tintFor = (sets: number, max: number): number =>
+  0.30 + (max > 0 ? Math.min(1, sets / max) : 0) * 0.70
 
 /**
  * ── TWO COUNTS, AND THE PAGE NOW SAYS WHICH IS WHICH ─────────────────────────
@@ -47,6 +64,9 @@ export function MuscleFocus({ detail, accent = EMBER }: { detail: SessionDetail;
   if (!detail.muscleSets.length) return null
   const total = round1(detail.muscleSets.reduce((n, m) => n + m.sets, 0))
   const physical = detail.workingSets || detail.setCount
+  // `muscleSets` arrives sorted by sets descending (see `useSessionDetail`), so
+  // the first entry IS the session's hardest-worked muscle.
+  const heaviest = detail.muscleSets[0]?.sets ?? 0
 
   /* ── ONE RAMP, NOT THIRTEEN BARS ──
      This was a `p-5` card with a heading and one full-width labelled bar per
@@ -98,6 +118,11 @@ export function MuscleFocus({ detail, accent = EMBER }: { detail: SessionDetail;
         >
           <MuscleAtlas
             view="both"
+            // The workout's colour, not the atlas default. This figure sat blue
+            // inside a band tinted with the day's own hue, which made it read as
+            // a stock illustration dropped into the report rather than as part
+            // of it.
+            color={accent}
             worked={setsToWorked(Object.fromEntries(
               detail.muscleSets.map((m) => [m.muscle as LandmarkMuscle, m.sets]),
             ))}
@@ -105,12 +130,29 @@ export function MuscleFocus({ detail, accent = EMBER }: { detail: SessionDetail;
           />
         </button>
         <div className="flex-1 min-w-0 space-y-1.5">
+          {/* ── ONE HUE, NOT THIRTEEN ──
+              Every segment used to take `MUSCLE_COLOR[muscle]`, so a gold Upper
+              B report grew a thirteen-colour bar across its middle — a rainbow
+              on a page whose whole design is that ONE colour identifies the
+              workout from the title down. The colour was carrying muscle
+              identity, but the legend under it already does that by name, at a
+              precision a hue never reaches.
+
+              So the bar carries the thing it is actually good at: WEIGHT. The
+              workout's own colour, opacity by share, heaviest fully saturated.
+
+              The 1px divider is load-bearing — without it two adjacent muscles
+              of similar size have no edge between them and the bar reads as one
+              smeared gradient rather than as segments. It is the page
+              background rather than a light rule so it reads as a gap. */}
           <div className="flex h-2 rounded-full overflow-hidden bg-white/[0.05]" aria-hidden="true">
-            {detail.muscleSets.map((m) => (
+            {detail.muscleSets.map((m, i) => (
               <span key={m.muscle}
                 style={{
                   width: `${(m.sets / (total || 1)) * 100}%`,
-                  background: MUSCLE_COLOR[m.muscle] ?? MUTED,
+                  background: accent,
+                  opacity: tintFor(m.sets, heaviest),
+                  borderLeft: i ? '1px solid var(--color-bg)' : undefined,
                 }} />
             ))}
           </div>
@@ -123,16 +165,16 @@ export function MuscleFocus({ detail, accent = EMBER }: { detail: SessionDetail;
           </p>
 
           <div className="flex items-center gap-x-3 gap-y-1 flex-wrap">
-            {detail.muscleSets.map((m) => {
-              const color = MUSCLE_COLOR[m.muscle] ?? MUTED
-              return (
-                <span key={m.muscle} className="inline-flex items-center gap-1 text-[10px]">
-                  <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: color }} aria-hidden="true" />
-                  <span className="text-muted">{m.muscle}</span>
-                  <span className="helix-num font-bold text-text tabular-nums">{m.sets}</span>
-                </span>
-              )
-            })}
+            {detail.muscleSets.map((m) => (
+              <span key={m.muscle} className="inline-flex items-center gap-1 text-[10px]">
+                {/* The same ramp as the bar above, so a dot and its segment are
+                    obviously the same object. */}
+                <span className="w-1.5 h-1.5 rounded-full shrink-0"
+                  style={{ background: accent, opacity: tintFor(m.sets, heaviest) }} aria-hidden="true" />
+                <span className="text-muted">{m.muscle}</span>
+                <span className="helix-num font-bold text-text tabular-nums">{m.sets}</span>
+              </span>
+            ))}
           </div>
         </div>
       </div>

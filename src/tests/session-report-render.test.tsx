@@ -25,13 +25,22 @@ vi.mock('@/lib/hooks/useExerciseSetHistory', async (orig) => ({
   ...(await orig<typeof import('@/lib/hooks/useExerciseSetHistory')>()),
   useGlobalSetHistory: () => ({ data: undefined }),
 }))
+// The medal's record sheet re-derives what each PR beat from the whole history
+// of the movement (see `useSessionPrRecords` for why it cannot be read from the
+// ledger). It is lazy — nothing fetches until a medal is tapped — but the hook
+// still calls `useQuery` on mount, which needs a client. What is under test
+// here is markup, so it is stubbed like the other three.
+vi.mock('@/lib/hooks/useSessionPrRecords', async (orig) => ({
+  ...(await orig<typeof import('@/lib/hooks/useSessionPrRecords')>()),
+  useSessionPrRecords: () => ({ data: undefined }),
+}))
 
 afterEach(cleanup)
 
 let n = 0
 const set = (over: Partial<DetailSet> = {}): DetailSet => ({
   setNumber: ++n, weightKg: 60, reps: 10, rpe: null, isPr: false, est1rmKg: null,
-  setType: 'normal', side: null, pairId: null, restSec: null, prAxes: [], ...over,
+  setType: 'normal', side: null, pairId: null, prAxes: [], ...over,
 })
 
 const exercise = (sets: DetailSet[], name = 'Single-Arm Cable Row'): DetailExercise => ({
@@ -54,6 +63,57 @@ describe('the date is stated once', () => {
     expect(text).toContain('14 August')
     // Exactly one — the bar's copy and the metadata box's copy are both gone.
     expect(text.match(/August/g)).toHaveLength(1)
+  })
+})
+
+/**
+ * ── THE HEADER HAD A 44px BAND HOLDING A CHEVRON ─────────────────────────────
+ *
+ * The page rendered a pinned `AppBar` above this title carrying a back arrow, a
+ * phase badge, and a title at `opacity-0` until you scrolled past. At the top of
+ * the document — where every visit starts — that is chrome around a chevron, and
+ * the report opened 44px lower than it needed to.
+ *
+ * Both moved down here. The badge split into two on the way: "Helix Cut" fused
+ * the programme, the phase and the week into one string that answered none of
+ * them precisely.
+ */
+describe('the title row carries the way out and the week identity', () => {
+  it('renders exactly one back control, in the title row', () => {
+    const { container } = render(
+      <SessionTitle label="Upper B" accent="#D4AF37" date="2026-08-14" onBack={() => {}} />,
+    )
+    const buttons = container.querySelectorAll('button[aria-label]')
+    const back = [...buttons].filter((b) => /back/i.test(b.getAttribute('aria-label') ?? ''))
+    expect(back).toHaveLength(1)
+    // On the same line as the heading, not stacked above it.
+    expect(back[0].closest('div')?.querySelector('h1')?.textContent).toBe('Upper B')
+  })
+
+  it('omits it entirely when no handler is given, rather than rendering a dead arrow', () => {
+    const { container } = render(<SessionTitle label="Upper B" accent="#D4AF37" date="2026-08-14" />)
+    expect(container.querySelectorAll('button')).toHaveLength(0)
+  })
+
+  it('splits the phase badge into a plan tag and a phase-plus-week tag', () => {
+    const { container } = render(
+      <SessionTitle label="Upper B" accent="#D4AF37" date="2026-08-14" onBack={() => {}} />,
+    )
+    const text = container.textContent ?? ''
+    // 14 Aug 2026 is Helix-5, Cut, week 4 of the block.
+    expect(text).toMatch(/Helix-5/)
+    expect(text).toMatch(/Cut/)
+    expect(text).toMatch(/Wk \d/)
+    // The fused single-tag wording is gone.
+    expect(text).not.toMatch(/Helix Cut/)
+  })
+
+  it('reads the week from the SESSION date, not from current settings', () => {
+    // A PPL-era report has to keep saying PPL — resolving from the active plan
+    // would let the report rewrite its own history on every plan switch.
+    const helix = render(<SessionTitle label="Upper B" accent="#D4AF37" date="2026-08-14" />)
+    const ppl = render(<SessionTitle label="Push" accent="#8E9AAC" date="2026-03-02" />)
+    expect(helix.container.textContent).not.toBe(ppl.container.textContent)
   })
 })
 

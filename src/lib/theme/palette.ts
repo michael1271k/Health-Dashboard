@@ -42,6 +42,16 @@ export const GOLD = '#D4AF37'
 export const GOLD_DEEP = '#A88722'
 export const AMETHYST = '#8A6FA8'
 export const PLUM = '#6B4E7D'
+/**
+ * Drop sets, and drop sets only.
+ *
+ * Brighter and bluer than AMETHYST because AMETHYST is already spoken for as a
+ * DAY colour (Legs, Delts & Arms, Shoulders) — a drop-set chip in the day's own
+ * hue says nothing, which is exactly what the chip is for. Promoted here from a
+ * bare literal in `ExerciseBreakdown` now that the logger, the ledger and the
+ * session header all read the same tag table.
+ */
+export const DROPSET = '#9A6DD7'
 export const PLATINUM = '#C9CDD6'
 export const STEEL = '#8E9AAC'
 export const OXIDE = '#C4514E'
@@ -276,6 +286,24 @@ export const MUSCLE = {
 } as const
 
 /** Ordered series for charts with N arbitrary categories. */
+/**
+ * Per-plan chip colour — which PROGRAMME a week belongs to.
+ *
+ * Helix-5 gets a premium iridescent violet of its own, Helix-4 an aqua, and the
+ * PPL legacy era a deliberate muted grey so a week from before the rebuild
+ * cannot be mistaken for a current one.
+ *
+ * Lives here rather than in `BrandHeader` because the dashboard is no longer
+ * the only surface that names a plan: the session report tags itself the same
+ * way, and two copies of a colour table is how one of them ends up a release
+ * behind.
+ */
+export const PLAN_CHIP: Record<string, string> = {
+  apex51: '#8B7CF6', // Helix-5 — premium violet
+  axis4: '#5FB8E8',  // Helix-4 — aqua
+  ppl: '#79808C',    // legacy — muted
+}
+
 export const SERIES = [EMBER, SAPPHIRE, GOLD, EMERALD, AMETHYST, COPPER, PLATINUM, PLUM] as const
 
 /**

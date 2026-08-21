@@ -27,7 +27,31 @@ describe('the schedule', () => {
     expect(scheduledLeverOn('2026-07-15')).toBe('baseline')
     expect(scheduledLeverOn('2026-08-15')).toBe('baseline')
     expect(scheduledLeverOn('2026-08-16')).toBe('lever-1')
-    expect(scheduledLeverOn('2026-09-01')).toBe('lever-1')
+    expect(scheduledLeverOn('2026-08-19')).toBe('lever-1')
+  })
+
+  /**
+   * A rung coming OFF is an event too, and for a day this one was not recorded.
+   * The schedule held the pull (16 Aug) and nothing else, so every past date
+   * from then on answered "Lever 1" — including 20 Aug, the morning
+   * `user_goals` was set back to 1,955 kcal. A day eaten at the baseline was
+   * being graded 70 kcal over a target that no longer existed.
+   */
+  it('records the release, not just the pull', () => {
+    expect(scheduledLeverOn('2026-08-20')).toBe('custom')
+    expect(scheduledLeverOn('2026-09-01')).toBe('custom')
+    // The last Lever 1 day and the first custom day are adjacent — no gap, no
+    // overlap. A schedule with either would make one date ungradeable.
+    expect(scheduledLeverOn('2026-08-19')).not.toBe(scheduledLeverOn('2026-08-20'))
+  })
+
+  /**
+   * `custom` names the ABSENCE of a rung, so nothing may be read off it — the
+   * user's own stored goals stand. This is what stops the release row silently
+   * re-imposing baseline's 8k step target on a week held at 10k.
+   */
+  it('resolves custom to no rung, so the stored goals survive', () => {
+    expect(leverById('custom')).toBeNull()
   })
 
   it('is null before the block opened — there was no rung to be on', () => {

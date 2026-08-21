@@ -5,7 +5,7 @@ import type { DetailSet, DetailExercise } from '@/lib/hooks/useSessionDetail'
 
 const set = (o: Partial<DetailSet> & Pick<DetailSet, 'setNumber' | 'weightKg' | 'reps'>): DetailSet => ({
   rpe: null, isPr: false, est1rmKg: null, setType: 'normal', side: null, pairId: null, prAxes: [],
-  restSec: null, ...o,
+  ...o,
 })
 
 const ex = (o: Partial<DetailExercise> & Pick<DetailExercise, 'name' | 'sets'>): DetailExercise => ({

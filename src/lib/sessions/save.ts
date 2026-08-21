@@ -340,10 +340,10 @@ export async function saveSession(
       est_1rm_kg: est1rm,
       exercise_order: s.exerciseOrder ?? null,
       set_type: s.setType ?? 'normal',
-      // Measured, never prescribed — see WorkoutSetSchema. Null rather than 0
-      // when the deck did not observe both ticks: zero rest is a claim, absence
-      // is the truth.
-      rest_sec: s.restSec ?? null,
+      // `rest_sec` used to be written here, from the deck's stopwatch. Both the
+      // stopwatch and the column are gone: rest is a TARGET the plan states
+      // (`restTargets.ts`), not a measurement, and across the whole database the
+      // column never held a single value.
     }
     if (hasUnilateral) { row.side = s.side ?? null; row.pair_id = s.pairId ?? null }
     return row
@@ -354,14 +354,6 @@ export async function saveSession(
   // Self-heal: unilateral used but the side/pair_id columns aren't migrated yet →
   // retry without them so the session still saves (L/R metadata dropped until the
   // migration runs). Mirrors the daily_logs v5.1 column self-heal.
-  // `rest_sec` is newer than the table. Losing a whole session because a rest
-  // measurement has nowhere to land is never the trade — drop the column and
-  // re-insert, exactly as side/pair_id and session_rpe do.
-  if (setsError && /rest_sec|column|schema cache|PGRST204/i.test(setsError.message ?? '')) {
-    const noRest = dbSets.map((r) => { const { rest_sec: _r, ...rest } = r; void _r; return rest })
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;({ error: setsError } = await supabase.from('workout_sets').insert(noRest as unknown as any))
-  }
   if (setsError && hasUnilateral && /column|schema cache|PGRST204|side|pair_id/i.test(setsError.message ?? '')) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars -- destructure-to-omit the two unmigrated columns
     const baseSets = dbSets.map((r) => { const { side: _s, pair_id: _p, ...rest } = r; return rest })

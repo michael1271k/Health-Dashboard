@@ -11,8 +11,6 @@ import { ExerciseBreakdown } from '@/components/session-detail/ExerciseBreakdown
 import { SessionHighlights } from '@/components/session-detail/SessionHighlights'
 import { MuscleFocus } from '@/components/session-detail/MuscleFocus'
 import { ProgressionTrail } from '@/components/session-detail/ProgressionTrail'
-import { getWeekPhase, phaseBadgeStyle } from '@/lib/phases'
-import { weekStartOf } from '@/lib/utils/week'
 import { activeProgram } from '@/lib/programs'
 import { dayColor } from '@/lib/theme/palette'
 import { Surface } from '@/components/ui/Zone'
@@ -42,7 +40,6 @@ export default function SessionAnalysisPage() {
   // lands from `user_goals` and would name the wrong split for the whole visit.
   void useScheduleVersion()
 
-  const phase = data ? getWeekPhase(weekStartOf(data.date)) : null
   const accent = data ? dayColor(data.dayKey, data.splitDay) : '#8E9AAC'
   const label = data
     ? ((data.dayKey && activeProgram().days.find((d) => d.key === data.dayKey)?.label)
@@ -73,26 +70,31 @@ export default function SessionAnalysisPage() {
 
   return (
     <div data-fullbleed className="min-h-dvh">
-      {/* The way out is pinned — a document this long that you have to scroll
-          back up to escape is a trap. The workout's own colour bleeds along the
-          top edge: Upper A is always steel, Legs & Core B always emerald, so
-          the report identifies itself before the title is read. */}
-      <AppBar accent={accent}>
+      {/* ── THE BAR EXISTS ONLY ONCE THE TITLE HAS GONE ──
+          It used to be sticky, so it held its 44px at the top of the page too —
+          a band containing a back chevron, a phase badge, and a title at
+          `opacity-0`. Every visit to this report started 44px lower than it
+          needed to, for chrome around a chevron.
+
+          The chevron and the badge now live in `SessionTitle` (the badge split
+          into the dashboard's two tags on the way), which leaves this bar with
+          one job: name the session after its real title has scrolled away. So
+          it is `float`ed — out of flow, sliding in on `titlePassed` — and there
+          is nothing to render at the top of the page at all.
+
+          The workout's own colour still bleeds along the top edge: Upper A is
+          always steel, Legs & Core B always emerald, so the report identifies
+          itself before the title is read. */}
+      <AppBar accent={accent} float shown={titlePassed}>
           <BackLink onClick={() => router.back()} onPointerUp={blurOnTap} />
           <div className="min-w-0 flex-1">
             <h1
-              className={`font-heading text-fluid-sm font-bold truncate leading-tight transition-opacity duration-200
-                          ${titlePassed ? 'opacity-100' : 'opacity-0'}`}
-              aria-hidden={!titlePassed}
+              className="font-heading text-fluid-sm font-bold truncate leading-tight"
               style={{ color: accent }}
             >
               {label}
             </h1>
           </div>
-          {phase && (
-            <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded shrink-0"
-              style={phaseBadgeStyle(phase.kind, false, phase.era)}>{phase.eraTag}</span>
-          )}
       </AppBar>
 
       {/* ONE reading measure, applied once — edge-to-edge on a phone, a centred
@@ -129,7 +131,7 @@ export default function SessionAnalysisPage() {
             {/* The observer's target. `SessionTitle` bleeds its wash past the
                 measure, so the wrapper — not the heading — is what is watched. */}
             <div ref={titleRef}>
-              <SessionTitle label={label} accent={accent} date={data.date} />
+              <SessionTitle label={label} accent={accent} date={data.date} onBack={() => router.back()} />
             </div>
 
             <SessionHero detail={data} />

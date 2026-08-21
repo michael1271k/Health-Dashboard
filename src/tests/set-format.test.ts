@@ -58,70 +58,91 @@ describe('formatSet', () => {
 })
 
 describe('setDetail carries the same rule into the export', () => {
-  it('groups a loaded exercise by load', () => {
-    expect(setDetail([s(60, 12), s(60, 11), s(57.5, 10)], 'Hack Squat'))
-      .toBe('60kg × 12,11 · 57.5kg × 10 (RPE not reported)')
+  it('gives every set its own line, named and in the unit the movement has', () => {
+    expect(setDetail([s(60, 12, { rpe: 8.5 }), s(60, 11, { rpe: 9 })], 'Hack Squat')).toEqual([
+      'Set 1: 60 kg × 12 (RPE 8.5 — Hard)',
+      'Set 2: 60 kg × 11 (RPE 9 — Very Hard)',
+    ])
   })
 
   it('writes bodyweight work as reps, not as 0 kg', () => {
-    expect(setDetail([s(0, 17), s(0, 16)], 'Reverse Crunch')).toBe('17,16 reps (RPE not reported)')
+    expect(setDetail([s(0, 17), s(0, 16)], 'Reverse Crunch')).toEqual([
+      'Set 1: 17 reps', 'Set 2: 16 reps',
+      '_(RPE not reported for any working set)_',
+    ])
   })
 
   it('writes a hold as seconds', () => {
-    expect(setDetail([s(0, 58)], 'Side Plank')).toBe('58 sec (RPE not reported)')
+    expect(setDetail([s(0, 58, { rpe: 9 })], 'Side Plank')).toEqual([
+      'Set 1: 58 sec (RPE 9 — Very Hard)',
+    ])
   })
 
-  it('keeps the tags spelled out on unloaded sets too', () => {
-    expect(setDetail([s(0, 12, { warmup: true }), s(0, 17)], 'Hanging Knee Raise'))
-      .toBe('12 reps (Warmup) · 17 reps (RPE not reported)')
+  it('names a warm-up rather than numbering it — Set 1 is the first WORKING set', () => {
+    expect(setDetail([s(0, 12, { warmup: true }), s(0, 17, { rpe: 9 })], 'Hanging Knee Raise')).toEqual([
+      'Warm-up: 12 reps (warm-up)',
+      'Set 1: 17 reps (RPE 9 — Very Hard)',
+    ])
   })
 })
 
 /**
  * PER-SET EFFORT IN THE EXPORT.
  *
- * `ExportSet` had no `rpe` field and the query never selected the column, so
- * per-set effort could not reach the report at all. The rating now rides on the
- * REP — `60kg × 12@8.5, 11@9` — which keeps the load grouping that makes the
- * line readable while still reporting a rating that changed between sets.
+ * The rating used to ride on the rep — `60kg × 12@8.5,11@9` — which is compact
+ * and requires the reader to know that `@` means effort on a ten-point scale.
+ * It is the number AND the word now, which is what the ladder actually means
+ * and what the app's own ledger prints.
  *
  * A missing rating is STATED, never implied: an omitted rating and a set that
- * felt easy are different facts. The marker sits at the coarsest unambiguous
- * level, because putting it on every group would train the reader to stop
- * seeing it.
+ * felt easy are different facts.
  */
 describe('setDetail — per-set RPE', () => {
-  it('hangs the rating off the rep, keeping the load grouping intact', () => {
-    expect(setDetail([s(60, 12, { rpe: 8.5 }), s(60, 11, { rpe: 9 }), s(60, 10, { rpe: 10 })], 'Hack Squat'))
-      .toBe('60kg × 12@8.5,11@9,10@10')
+  it('gives the number and the word, because neither is much use alone', () => {
+    expect(setDetail([s(60, 10, { rpe: 10 })], 'Hack Squat'))
+      .toEqual(['Set 1: 60 kg × 10 (RPE 10 — Failure)'])
+    expect(setDetail([s(60, 10, { rpe: 7.5 })], 'Hack Squat'))
+      .toEqual(['Set 1: 60 kg × 10 (RPE 7.5 — Medium)'])
   })
 
   it('states it once for the exercise when nothing was rated', () => {
-    expect(setDetail([s(60, 12), s(60, 11)], 'Hack Squat'))
-      .toBe('60kg × 12,11 (RPE not reported)')
+    expect(setDetail([s(60, 12), s(60, 11)], 'Hack Squat')).toEqual([
+      'Set 1: 60 kg × 12', 'Set 2: 60 kg × 11',
+      '_(RPE not reported for any working set)_',
+    ])
   })
 
-  it('marks the UNRATED group when the exercise is partly rated', () => {
-    expect(setDetail([s(60, 12, { rpe: 8.5 }), s(65, 10)], 'Hack Squat'))
-      .toBe('60kg × 12@8.5 · 65kg × 10 (RPE not reported)')
+  it('marks the UNRATED set when the exercise is partly rated', () => {
+    expect(setDetail([s(60, 12, { rpe: 8.5 }), s(65, 10)], 'Hack Squat')).toEqual([
+      'Set 1: 60 kg × 12 (RPE 8.5 — Hard)',
+      'Set 2: 65 kg × 10 (RPE not reported)',
+    ])
   })
 
   it('never asks a warm-up for a rating', () => {
-    // The warm-up is silent by design, so the note belongs to the working set.
-    expect(setDetail([s(20, 12, { warmup: true }), s(60, 10, { rpe: 9 })], 'Hack Squat'))
-      .toBe('20kg × 12 (Warmup) · 60kg × 10@9')
-    // …and an all-warm-up line makes no claim about effort at all.
+    expect(setDetail([s(20, 12, { warmup: true }), s(60, 10, { rpe: 9 })], 'Hack Squat')).toEqual([
+      'Warm-up: 20 kg × 12 (warm-up)',
+      'Set 1: 60 kg × 10 (RPE 9 — Very Hard)',
+    ])
+    // …and an all-warm-up exercise makes no claim about effort at all.
     expect(setDetail([s(20, 12, { warmup: true })], 'Hack Squat'))
-      .toBe('20kg × 12 (Warmup)')
+      .toEqual(['Warm-up: 20 kg × 12 (warm-up)'])
   })
 
-  it('keeps the failure tag and the effort together, not competing', () => {
+  it('does not say "Failure" twice — RPE 10 IS the top of the ladder', () => {
     expect(setDetail([s(60, 8, { rpe: 10, failure: true })], 'Hack Squat'))
-      .toBe('60kg × 8@10 (Failure)')
+      .toEqual(['Set 1: 60 kg × 8 (RPE 10 — Failure)'])
   })
 
-  it('rates unloaded work too — reps are the only axis it has', () => {
-    expect(setDetail([s(0, 17, { rpe: 9 })], 'Reverse Crunch')).toBe('17@9 reps')
+  it('but keeps the tag when the rating does NOT already carry it', () => {
+    // Reaching failure at 9 is a real combination — the set broke down before
+    // the rating said it would — and the tag is the only thing that reports it.
+    expect(setDetail([s(60, 8, { rpe: 9, failure: true })], 'Hack Squat'))
+      .toEqual(['Set 1: 60 kg × 8 (RPE 9 — Very Hard, to failure)'])
+    // …and an unrated failure keeps it too, alongside the coverage note the
+    // exercise earns for having no ratings at all.
+    expect(setDetail([s(60, 8, { failure: true })], 'Hack Squat'))
+      .toEqual(['Set 1: 60 kg × 8 (to failure)', '_(RPE not reported for any working set)_'])
   })
 
   /** The rating is PER SIDE, like the failure tag — a weaker arm can genuinely
@@ -130,16 +151,60 @@ describe('setDetail — per-set RPE', () => {
     expect(setDetail([
       s(20, 12, { side: 'L', pairId: 'p1', rpe: 8.5 }),
       s(20, 10, { side: 'R', pairId: 'p1', rpe: 10 }),
-    ], 'Single Arm Row')).toBe('S1 L 20kg×12@8.5 · R 20kg×10@10')
+    ], 'Single Arm Row'))
+      .toEqual(['Set 1: L 20 kg × 12 (RPE 8.5 — Hard) · R 20 kg × 10 (RPE 10 — Failure)'])
+  })
+})
+
+/**
+ * ── THE HARDCODED "L" ────────────────────────────────────────────────────────
+ *
+ * The old renderer asked one question for the whole exercise — is ANY set sided?
+ * — and then ran every set through the unilateral branch, where an unsided set
+ * hit `else p.L = s` and came out stamped LEFT.
+ *
+ * The fixture below is not invented. It is `Single Arm Lateral Raise (Cable)`
+ * exactly as `workout_sets` holds it for 2026-08-18: two paired sets, two
+ * BILATERAL sets with no side and no pairId, two paired sets. The export
+ * reported a left-arm-only session for the middle two.
+ */
+describe('a mixed unilateral exercise', () => {
+  const AUG_18: ExportSet[] = [
+    s(5, 15, { side: 'L', pairId: 'zfpf', rpe: 8.5 }),
+    s(5, 14, { side: 'R', pairId: 'zfpf', rpe: 8.5 }),
+    s(3.75, 16, { rpe: 8.5 }),
+    s(3.75, 15, { rpe: 9 }),
+    s(3.75, 15, { side: 'L', pairId: 'mbof2', rpe: 9 }),
+    s(3.75, 15, { side: 'R', pairId: 'mbof2', rpe: 8.5 }),
+  ]
+
+  it('never invents a side for a set the log does not give one', () => {
+    const lines = setDetail(AUG_18, 'Single Arm Lateral Raise (Cable)')
+    expect(lines[1]).toBe('Set 2: 3.75 kg × 16 (RPE 8.5 — Hard)')
+    expect(lines[2]).toBe('Set 3: 3.75 kg × 15 (RPE 9 — Very Hard)')
+    // The whole bug in one assertion: neither bilateral set may name a limb.
+    expect(lines[1]).not.toMatch(/\bL\b|\bR\b/)
+    expect(lines[2]).not.toMatch(/\bL\b|\bR\b/)
   })
 
-  it('marks an unrated pair once, not twice', () => {
-    expect(setDetail([
-      s(20, 12, { side: 'L', pairId: 'p1', rpe: 8.5 }),
-      s(20, 10, { side: 'R', pairId: 'p1', rpe: 10 }),
-      s(20, 10, { side: 'L', pairId: 'p2' }),
-      s(20, 10, { side: 'R', pairId: 'p2' }),
-    ], 'Single Arm Row'))
-      .toBe('S1 L 20kg×12@8.5 · R 20kg×10@10 · S2 L 20kg×10 · R 20kg×10 (RPE not reported)')
+  it('still pairs the sets that ARE two-sided, in place', () => {
+    const lines = setDetail(AUG_18, 'Single Arm Lateral Raise (Cable)')
+    expect(lines[0]).toBe('Set 1: L 5 kg × 15 (RPE 8.5 — Hard) · R 5 kg × 14 (RPE 8.5 — Hard)')
+    expect(lines[3]).toBe('Set 4: L 3.75 kg × 15 (RPE 9 — Very Hard) · R 3.75 kg × 15 (RPE 8.5 — Hard)')
+  })
+
+  it('numbers four sets, not six and not five', () => {
+    // Six rows, four sets of work: a pair is ONE set. The old renderer gave the
+    // two bilateral rows their own S-numbers off a separate `solo` counter.
+    const lines = setDetail(AUG_18, 'Single Arm Lateral Raise (Cable)')
+    expect(lines).toHaveLength(4)
+    expect(lines.map((l) => l.split(':')[0])).toEqual(['Set 1', 'Set 2', 'Set 3', 'Set 4'])
+  })
+
+  it('treats a bare side with no pair as a plain set, not half of one', () => {
+    // A `side` with no `pairId` is an annotation, not evidence of a partner row.
+    // Reading it as a pair would leave a permanently half-empty set.
+    expect(setDetail([s(5, 15, { side: 'L', rpe: 9 })], 'Single Arm Row'))
+      .toEqual(['Set 1: 5 kg × 15 (RPE 9 — Very Hard)'])
   })
 })

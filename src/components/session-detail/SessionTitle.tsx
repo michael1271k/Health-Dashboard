@@ -1,6 +1,10 @@
 'use client'
 
 import { useGlobalSessionNumber } from '@/lib/hooks/useDayVault'
+import { BackLink } from '@/components/nav/NavChevron'
+import { PhaseTags } from '@/components/timeline/PhaseTags'
+import { weekStartOf } from '@/lib/utils/week'
+import { blurOnTap } from '@/lib/utils/blurOnTap'
 
 /**
  * The report's large title — the day this session was, at the size the day
@@ -26,14 +30,33 @@ import { useGlobalSessionNumber } from '@/lib/hooks/useDayVault'
  * on its own rather than being hand-corrected at the call site. 2xl is about
  * twice the old size and still fits the longest day label ("Legs & Core B") on
  * one line at 390px; 3xl wraps it.
+ *
+ * ── THE WAY OUT LIVES HERE NOW, AND SO DO THE TAGS ───────────────────────────
+ * Above this block sat a 44px pinned bar holding a back chevron, a phase badge,
+ * and a title rendered at `opacity-0` until you had scrolled past. At the top of
+ * the page — where every visit starts — that is a band of chrome around a
+ * chevron, and the report opened 44px lower than it needed to for no reason a
+ * reader could see.
+ *
+ * The chevron moves into this heading row, so the band has nothing left to hold
+ * and disappears at scroll-top; the bar goes `fixed` and slides in only once
+ * this title has left (see `page.tsx`). Sticky would not do — it reserves its
+ * box, so a bar that materialised mid-scroll would shove the document under it.
+ *
+ * The badge came with it, and split in two on the way. "Helix Cut" fused the
+ * programme, the phase and the week into one string that answered none of them;
+ * `PhaseTags` is the dashboard's own pair, resolved from this session's DATE so
+ * a PPL-era report keeps saying PPL.
  */
-export function SessionTitle({ label, accent, date }: {
+export function SessionTitle({ label, accent, date, onBack }: {
   /** The program day's own label — "Upper B", "Legs & Core A". */
   label: string
   /** `dayColor(dayKey, splitDay)` — steel for Upper A, gold for Upper B, and so on. */
   accent: string
   /** ISO date of the session. */
   date: string
+  /** The way out. Rendered in the title row — see the note above. */
+  onBack?: () => void
 }) {
   const { data: globalNum } = useGlobalSessionNumber(date)
   const pretty = new Date(`${date}T00:00:00`)
@@ -53,13 +76,23 @@ export function SessionTitle({ label, accent, date }: {
         className="absolute inset-0 -z-10 pointer-events-none"
         style={{ background: `linear-gradient(180deg, ${accent}26 0%, ${accent}0a 45%, transparent 100%)` }}
       />
-      <h1
-        data-session-title
-        className="font-heading font-bold text-fluid-2xl leading-none"
-        style={{ color: accent }}
-      >
-        {label}
-      </h1>
+      {/* Chevron and title on ONE line. `-ml-3` pulls the chevron's own padding
+          back out so the glyph optically aligns with the text below it rather
+          than sitting a thumb's width further in than everything else. */}
+      <div className="flex items-center gap-1 min-w-0">
+        {onBack && (
+          <span className="-ml-3 shrink-0">
+            <BackLink onClick={onBack} onPointerUp={blurOnTap} />
+          </span>
+        )}
+        <h1
+          data-session-title
+          className="font-heading font-bold text-fluid-2xl leading-none min-w-0 truncate"
+          style={{ color: accent }}
+        >
+          {label}
+        </h1>
+      </div>
       {/* ── THE ONLY DATE ON THE PAGE ──
           It was rendered twice: once under the bar's title and once, computed
           from scratch with byte-identical options, on the right of the metadata
@@ -75,6 +108,13 @@ export function SessionTitle({ label, accent, date }: {
         ) : null}
         {pretty}
       </p>
+      {/* Which programme, which phase, how far in — the three facts the single
+          "Helix Cut" badge in the pinned bar was compressing into two words.
+          They wrap rather than truncate: a week number cut in half is worse than
+          a second line. */}
+      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        <PhaseTags weekStart={weekStartOf(date)} />
+      </div>
     </div>
   )
 }

@@ -14,7 +14,8 @@ import { sessionVolumeKg } from '@/lib/sessions/volume'
 import { activeProgram, activePhase, eraForDate, isTrainingDay } from '@/lib/programs'
 import { repWindowFor } from '@/lib/training/ceilings'
 import { resolveMovers } from '@/lib/exercises/muscleMap'
-import { weeklyVolumeByMuscle, weeklyTonnageByMuscle, type MoverTokens, type ProgramPhase } from '@/lib/training/landmarks'
+import { weeklyVolumeByMuscle, weeklyTonnageByMuscle, type MoverTokens, type ProgramPhase, type LandmarkMuscle } from '@/lib/training/landmarks'
+import { leverPeriods, activeLeverOf } from '@/lib/nutrition/levers'
 import { SUPPLEMENT_PROTOCOL } from '@/lib/supplements'
 import { type CustomSupplement } from '@/lib/hooks/useCustomSupplements'
 import { normalizeSpO2 } from '@/lib/utils/units'
@@ -559,12 +560,42 @@ function tonnageRows(sets: RangeData['sets']): Array<MoverTokens & { volumeKg: n
  * the SAME code. Two builders for one payload is how the reference week starts
  * quietly disagreeing with the week it is meant to give context to.
  */
-function weekPayload(
+export interface GoalRow {
+  calorie_goal?: number
+  protein_goal_g?: number
+  carbs_goal_g?: number
+  fat_goal_g?: number
+  steps_goal?: number
+  sleep_goal_hours?: number
+  /** The rung currently selected — `'custom'` when the numbers are hand-set. */
+  active_lever?: string | null
+}
+
+/** A user-set weekly landmark for one muscle, on one plan, in one phase. */
+interface VolumeTargetRow {
+  plan_id: string
+  phase: string
+  muscle: string
+  target_sets: number
+}
+
+/**
+ * Exported for the tests, which is the only reason it is not module-private.
+ *
+ * The bug this is now pinned against was a MISSING ARGUMENT — `volumeOverrides`
+ * was never passed to `weeklyVolumeByMuscle`, so the export graded a week
+ * against the program defaults while the app graded it against the user's own
+ * landmarks. Nothing in the type system could see it (the parameter is
+ * optional) and no test could reach it (this function was private).
+ */
+export function weekPayload(
   weekStart: string,
   range: RangeData,
-  goals: { calorie_goal?: number; protein_goal_g?: number; steps_goal?: number; sleep_goal_hours?: number } | null,
+  goals: GoalRow | null,
   customs: CustomSupplement[],
   phase: ProgramPhase,
+  /** Per-muscle set targets the user has overridden — see `plan_phase_volume`. */
+  volumeOverrides: Partial<Record<LandmarkMuscle, number>> = {},
 ): WeeklyExportInput {
   const days = toDays(weekStart, range)
   const sessions = toSessions(range)
@@ -577,6 +608,11 @@ function weekPayload(
       dedupeKey: r.pair_id ?? r.id,
     })),
     phase,
+    // THE USER'S OWN LANDMARKS. This third argument was simply never passed —
+    // the hook has accepted it since the overrides shipped, and the Command
+    // Center passes it, so a target edited in Settings moved the app's grading
+    // and left the export grading the same week against the program defaults.
+    volumeOverrides,
   ).map((m) => ({
     muscle: m.muscle, sets: m.sets, target: m.target,
     directSets: m.directSets, indirectSets: m.indirectSets,
@@ -596,6 +632,30 @@ function weekPayload(
     proteinGoalG: goals?.protein_goal_g ?? null,
     stepsGoal: goals?.steps_goal ?? null,
     sleepGoalHours: goals?.sleep_goal_hours ?? null,
+    /**
+     * WHICH TARGETS WERE IN FORCE, DAY BY DAY.
+     *
+     * The four fields above are the goal row as it stands NOW. That is the
+     * right answer for today and the wrong one for any finished day in a week
+     * where a lever moved: pulling Lever 1 on a Wednesday does not retroactively
+     * re-mark Sunday, and printing one figure for the whole week said it did.
+     *
+     * `leverForDate` has always known better — the past belongs to
+     * `LEVER_SCHEDULE`, today onward to the current selection — and nothing in
+     * the export had ever asked it.
+     */
+    targetPeriods: leverPeriods(
+      days.map((d) => d.date),
+      activeLeverOf(goals),
+      logicalTodayISO(),
+      {
+        calorie: goals?.calorie_goal ?? 0,
+        protein: goals?.protein_goal_g ?? null,
+        carbs: goals?.carbs_goal_g ?? null,
+        fat: goals?.fat_goal_g ?? null,
+        steps: goals?.steps_goal ?? null,
+      },
+    ),
     days, sessions, volumeByMuscle, doms,
     tonnageByMuscle: weeklyTonnageByMuscle(tonnageRows(range.sets))
       .map((t) => ({ muscle: t.muscle, volumeKg: t.volumeKg })),
@@ -627,25 +687,43 @@ export function useWeeklyExport(weekStart = weekStartOf(logicalTodayISO()), enab
     enabled,
     staleTime: 60_000,
     queryFn: async (): Promise<string> => {
-      const [cur, ledger, goalsRes, customsRes] = await Promise.all([
+      const [cur, ledger, goalsRes, customsRes, volRes] = await Promise.all([
         fetchRange(weekStart, weekEnd),
         // Week 0 to the exported week — the whole programme, five selects. THIS
         // is where the direction lives now that the previous week is not
         // embedded: a series beats a neighbour for seeing a trend, and it costs
         // one narrow query set rather than a second full week.
         fetchTrendLedger(weekStartOf(WEEK0_START), weekStart),
-        supabase.from('user_goals').select('calorie_goal, protein_goal_g, steps_goal, sleep_goal_hours').maybeSingle(),
+        // `active_lever` and the two macro columns are new here. Without them
+        // the export could not say which RUNG a week was eaten against, only
+        // what the goal row happens to hold today — see `leverPeriods`.
+        supabase.from('user_goals')
+          .select('calorie_goal, protein_goal_g, carbs_goal_g, fat_goal_g, steps_goal, sleep_goal_hours, active_lever')
+          .maybeSingle(),
         supabase.from('custom_supplements').select('id, name, dose, color, form, time, schedule, micros'),
+        // The user's OWN per-muscle set targets. The Command Center has applied
+        // these since they shipped; the export did not, so the two graded the
+        // same week against different landmarks the moment one was set.
+        supabase.from('plan_phase_volume').select('plan_id, phase, muscle, target_sets'),
       ])
       const customs = (customsRes.error ? [] : (customsRes.data ?? [])) as CustomSupplement[]
-      const goals = goalsRes.data as {
-        calorie_goal?: number; protein_goal_g?: number; steps_goal?: number; sleep_goal_hours?: number
-      } | null
+      const goals = goalsRes.data as GoalRow | null
       // The ACTIVE phase, not a calorie guess — maintenance used to collapse to cut.
       const phase: ProgramPhase = activePhase() as ProgramPhase
 
+      // Overrides for THIS plan and phase only. A missing table is not an
+      // error here: no rows simply means the program's own landmarks stand.
+      const volumeOverrides: Partial<Record<LandmarkMuscle, number>> = {}
+      if (!volRes.error) {
+        const planId = activeProgram().id
+        for (const r of (volRes.data ?? []) as unknown as VolumeTargetRow[]) {
+          if (r.plan_id !== planId || r.phase !== phase) continue
+          volumeOverrides[r.muscle as LandmarkMuscle] = r.target_sets
+        }
+      }
+
       return buildWeeklyExport({
-        ...weekPayload(weekStart, cur, goals, customs, phase),
+        ...weekPayload(weekStart, cur, goals, customs, phase, volumeOverrides),
         ledger,
       })
     },
