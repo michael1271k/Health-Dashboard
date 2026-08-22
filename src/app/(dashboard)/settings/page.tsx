@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { NotionSync } from '@/components/settings/NotionSync'
 import { supabase } from '@/lib/supabase/client'
 import { derivePhase, phaseDisplay, PHASE_META } from '@/lib/nutrition/phase'
 import { logicalTodayISO } from '@/lib/utils/day'
@@ -722,8 +721,6 @@ export default function SettingsPage() {
           ))}
         </div>
       </Surface>
-
-      <NotionSync />
 
       <CrashRecorderRow />
       </div>

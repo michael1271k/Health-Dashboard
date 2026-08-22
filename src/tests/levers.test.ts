@@ -29,7 +29,9 @@ describe('the rungs themselves', () => {
   })
 
   it('baseline is the plan as written', () => {
-    expect(LEVERS[0]).toMatchObject({ id: 'baseline', calorieGoal: 1955, stepsGoal: 8000 })
+    // 10k, not 8k — corrected 2026-08-22 to agree with NUTRITION_PRESETS.cut
+    // and the live user_goals row, which had both said 10,000 all along.
+    expect(LEVERS[0]).toMatchObject({ id: 'baseline', calorieGoal: 1955, stepsGoal: 10000 })
   })
 })
 
@@ -62,9 +64,13 @@ describe('activeLeverOf — tolerant of a database without the column', () => {
   })
 
   it('knows which ids are real', () => {
-    expect(isLeverId('lever-3')).toBe(true)
+    expect(isLeverId('lever-2')).toBe(true)
     expect(isLeverId('custom')).toBe(true)
     expect(isLeverId('lever-9')).toBe(false)
+    // Deleted 2026-08-22 when its step ceiling was folded into Lever 2's band.
+    // A stored 'lever-3' must now read as unknown rather than resolving to a
+    // rung that no longer exists.
+    expect(isLeverId('lever-3')).toBe(false)
     expect(leverById('custom')).toBeNull()
   })
 })

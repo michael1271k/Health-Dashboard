@@ -113,8 +113,10 @@ export function sessionPrRecords(detail: PrSessionInput, history: readonly PrHis
       repFloor: floorOf(r.name),
     })),
     (key) => isTimedExercise(key),
-    // Without the floor, four months of set-less Notion-era sessions would make
-    // a return to an old load look like a new record. See prTruth.ts.
+    // Without the floor, a return to an old load could still read as a new
+    // record: the 2026-08-22 backfill rebuilt most of the Notion era, but ten
+    // sessions remain set-less and PR history was deliberately left frozen
+    // rather than recomputed over the new rows. See prTruth.ts.
     (key) => prFloorFor(key),
   )
 

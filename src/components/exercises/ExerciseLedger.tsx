@@ -122,9 +122,10 @@ function Row({ set, timed, unit }: { set: LedgerSet; timed: boolean; unit: strin
 /**
  * Where the record starts.
  *
- * Stated rather than implied: 75 of 94 pre-July sessions were imported from
- * Notion as totals and carry no rows in `workout_sets`, so a ledger that simply
- * ends looks like a training gap that never happened.
+ * Stated rather than implied: the pre-July sessions arrived from Notion as
+ * totals, and although most were rebuilt into real sets on 2026-08-22, ten could
+ * not be reconciled and still carry none — so a ledger that simply ends looks
+ * like a training gap that never happened.
  */
 function Floor() {
   const from = new Date(`${PER_SET_HISTORY_FROM}T12:00:00Z`)

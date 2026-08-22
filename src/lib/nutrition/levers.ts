@@ -29,7 +29,7 @@
  * answer, whichever side asks.
  */
 
-export type LeverId = 'baseline' | 'lever-1' | 'lever-2' | 'lever-3' | 'custom'
+export type LeverId = 'baseline' | 'lever-1' | 'lever-2' | 'custom'
 
 export interface NutritionLever {
   id: LeverId
@@ -51,9 +51,15 @@ export const LEVERS: NutritionLever[] = [
   {
     id: 'baseline',
     label: 'Baseline',
-    summary: 'The plan as written — full carbs, 8k steps.',
+    // ── 10k, NOT 8k (corrected 2026-08-22) ──
+    // The rung said 8,000 while `NUTRITION_PRESETS.cut` said 10,000 and the
+    // live `user_goals` row said 10,000. Two of the three agreed and the rung
+    // was the odd one out, so the baseline was grading step adherence against a
+    // target the athlete had never been set — and because `baseline` governs
+    // the WHOLE cut from 2026-07-15, every day of it was graded that way.
+    summary: 'The plan as written — full carbs, 10k steps.',
     calorieGoal: 1955, proteinGoalG: 170, carbsGoalG: 195, fatGoalG: 55,
-    stepsGoal: 8000,
+    stepsGoal: 10000,
   },
   {
     id: 'lever-1',
@@ -64,21 +70,27 @@ export const LEVERS: NutritionLever[] = [
   },
   {
     // From here the FOOD stops moving. Protein is already at the floor a cut can
-    // hold and cutting carbs further costs training quality, so the next two
-    // rungs deepen the deficit with movement instead — which is also the half
-    // you can abandon on a bad week without eating into recovery.
+    // hold and cutting carbs further costs training quality, so this rung
+    // deepens the deficit with movement instead — which is also the half you
+    // can abandon on a bad week without eating into recovery.
+    //
+    // ── THE LAST RUNG, AND IT IS A BAND (merged 2026-08-22) ──
+    // This was two rungs: Lever 2 at 12k steps and Lever 3 at 15k, identical in
+    // every other field. They were never two decisions — the food is the same,
+    // the deficit is the same shape, and the only thing that moved was how far
+    // you walked on a given day, which is not something a rung should have to
+    // be swapped to express. Lever 3 is deleted and its ceiling becomes the top
+    // of this one's band.
+    //
+    // `stepsGoal` STAYS 12000 and no second field was added: it is the number
+    // every grader, the scorer, the widget and the export compare against, and
+    // a band that graded at its ceiling would mark a 13k day as a miss. 12k is
+    // the floor that counts; 15k is where the band runs out.
     id: 'lever-2',
     label: 'Lever 2',
-    summary: 'Same food as Lever 1, steps to 12k.',
+    summary: 'Same food as Lever 1, steps 12k–15k. The last rung.',
     calorieGoal: 1885, proteinGoalG: 170, carbsGoalG: 182, fatGoalG: 53,
     stepsGoal: 12000,
-  },
-  {
-    id: 'lever-3',
-    label: 'Lever 3',
-    summary: 'Same food as Lever 1, steps to 15k. The last rung.',
-    calorieGoal: 1885, proteinGoalG: 170, carbsGoalG: 182, fatGoalG: 53,
-    stepsGoal: 15000,
   },
 ]
 
@@ -270,8 +282,8 @@ export interface TargetPeriod {
  * can say "Lever 1 on Sun–Wed, your own numbers from Thu" instead of one number
  * that was true for part of the week.
  *
- * Runs are compared on the RESOLVED GOALS, not on the rung's name: Lever 2 and
- * Lever 3 differ only in step target, and two rungs that ask for exactly the
+ * Runs are compared on the RESOLVED GOALS, not on the rung's name: Lever 1 and
+ * Lever 2 differ only in step target, and two rungs that ask for exactly the
  * same food and the same steps are the same instruction however they are
  * labelled. Splitting on the label alone would print two identical blocks.
  *

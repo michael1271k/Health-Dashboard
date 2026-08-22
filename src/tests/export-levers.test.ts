@@ -59,18 +59,18 @@ describe('the rung in force, day by day', () => {
    * two blocks with the same five numbers in them.
    */
   it('groups on the resolved numbers, not on the rung name', () => {
-    // Lever 2 and Lever 3 share Lever 1's food and differ only in steps, so a
-    // 2→3 move is a real change and must split.
+    // Lever 1 and Lever 2 share the same food and differ only in steps, so a
+    // 1→2 move is a real change and must split.
+    const l1 = leverPeriods(['2026-08-20'], 'lever-1', '2026-08-20', OWN)[0]
     const l2 = leverPeriods(['2026-08-20'], 'lever-2', '2026-08-20', OWN)[0]
-    const l3 = leverPeriods(['2026-08-20'], 'lever-3', '2026-08-20', OWN)[0]
-    expect(l2.goals.calorie).toBe(l3.goals.calorie)
-    expect(l2.goals.steps).not.toBe(l3.goals.steps)
+    expect(l1.goals.calorie).toBe(l2.goals.calorie)
+    expect(l1.goals.steps).not.toBe(l2.goals.steps)
   })
 
   /** The past belongs to the schedule; only today onward follows the selection. */
   it('never lets a selection made today re-mark a finished day', () => {
-    const periods = leverPeriods(['2026-08-17'], 'lever-3', TODAY, OWN)
-    expect(periods[0].leverId).toBe('lever-1')   // not lever-3
+    const periods = leverPeriods(['2026-08-17'], 'lever-2', TODAY, OWN)
+    expect(periods[0].leverId).toBe('lever-1')   // not lever-2
   })
 
   it('is anchored on the real schedule, so a released rung stays released', () => {

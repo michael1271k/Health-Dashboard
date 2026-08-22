@@ -54,13 +54,21 @@ export interface LedgerSession {
  * purpose — Seated Cable Row is three exercises by grip, and their ledgers are
  * not interchangeable.
  *
- * ── THE FLOOR ────────────────────────────────────────────────────────────────
- * Per-set history begins 2026-07-16. Sessions before that were imported from
- * Notion as totals and carry zero rows in `workout_sets`, so an empty tail here
- * means "not recorded", never "not trained" — which is why the component states
- * the floor rather than letting the list imply it.
+ * ── THE FLOOR (moved back four months on 2026-08-22) ─────────────────────────
+ * Per-set history used to begin 2026-07-16: everything before it arrived from
+ * Notion as session totals with zero rows in `workout_sets`. Those sets were
+ * never actually lost — they were itemised in each session's `report_md` — and
+ * `scripts/backfill-notion-sets.mjs` parsed 1,586 of them back into rows, so the
+ * record now opens on the first PPL session.
+ *
+ * TEN sessions still carry no sets, because their rebuilt tonnage disagreed with
+ * the stored `total_volume_kg` and the backfill refuses to write a session it
+ * cannot reconcile: 2026-04-27, 05-13, 05-15, 05-18, 05-22, 05-28, 06-01, 06-09,
+ * 06-14, 06-23. An empty tail here still means "not recorded", never "not
+ * trained" — which is why the component states the floor rather than letting the
+ * list imply it.
  */
-export const PER_SET_HISTORY_FROM = '2026-07-16'
+export const PER_SET_HISTORY_FROM = '2026-03-10'
 
 export function useExerciseSetLedger(exerciseId: string | null, sessionLimit = 25) {
   return useQuery({

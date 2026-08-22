@@ -61,9 +61,9 @@ describe('the schedule', () => {
 
 describe('leverForDate', () => {
   it('grades a finished day against the rung that was in force THEN', () => {
-    // The selection you are holding today is Lever 3; 20 July was still 1,955.
-    expect(leverForDate('2026-07-20', 'lever-3', TODAY)).toBe('baseline')
-    expect(leverById(leverForDate('2026-07-20', 'lever-3', TODAY))?.calorieGoal).toBe(1955)
+    // The selection you are holding today is Lever 2; 20 July was still 1,955.
+    expect(leverForDate('2026-07-20', 'lever-2', TODAY)).toBe('baseline')
+    expect(leverById(leverForDate('2026-07-20', 'lever-2', TODAY))?.calorieGoal).toBe(1955)
   })
 
   it('grades 16 Aug onward against Lever 1, even with nothing stored', () => {
@@ -79,7 +79,7 @@ describe('leverForDate', () => {
 
   it('never lets a new selection reach backwards', () => {
     const before = leverForDate('2026-08-01', 'baseline', TODAY)
-    expect(leverForDate('2026-08-01', 'lever-3', TODAY)).toBe(before)
+    expect(leverForDate('2026-08-01', 'lever-2', TODAY)).toBe(before)
   })
 
   it('treats `custom` as a real selection today and not in the past', () => {

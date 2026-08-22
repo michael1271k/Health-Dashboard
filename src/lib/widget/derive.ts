@@ -285,8 +285,9 @@ const AXIS_FLOOR_KEY: Record<string, 'weight' | 'e1rm' | 'volume' | 'reps'> = {
  * The most recent genuine records, newest first.
  *
  * ── WHY THE LEDGER ALONE IS NOT ENOUGH ───────────────────────────────────────
- * 75 of the logged sessions are Notion-era and carry **zero sets**, so Helix's
- * own history cannot see the bests set before 2026-07-16. `personal_records`
+ * Ten Notion-era sessions still carry **zero sets**, and the rest were rebuilt
+ * from their own reports rather than logged live, so Helix's own history is
+ * still not a complete witness to the bests set before July. `personal_records`
  * holds what Helix has detected; `prFloorFor` holds what the asserted book knows
  * it cannot have detected. A ledger row below its floor is not a personal
  * record — it is a Helix-era best that the pre-Helix book already beats — and

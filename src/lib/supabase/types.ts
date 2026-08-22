@@ -170,7 +170,6 @@ export interface Database {
           calories_burned: number | null
           avg_bpm: number | null
           report_md: string | null
-          migrated_from_notion: boolean
           status: string
           client_session_id: string | null
           day_key: string | null
@@ -183,7 +182,6 @@ export interface Database {
            *  measured one by every reader, not just the screen that shows it. */
           calories_estimated: boolean
           avg_bpm_estimated: boolean
-          notion_page_id?: string | null   // live column (Notion-migration provenance)
           created_at: string
           updated_at: string
         }
@@ -191,7 +189,7 @@ export interface Database {
           Database['public']['Tables']['workout_sessions']['Row'],
           'id' | 'created_at' | 'updated_at'
             | 'set_count' | 'pr_count' | 'duration_min' | 'calories_burned'
-            | 'avg_bpm' | 'report_md' | 'migrated_from_notion' | 'status'
+            | 'avg_bpm' | 'report_md' | 'status'
             | 'client_session_id' | 'day_key' | 'coach_report' | 'next_session_flag'
             | 'session_rpe' | 'calories_estimated' | 'avg_bpm_estimated'
         > & {
@@ -204,7 +202,6 @@ export interface Database {
           calories_burned?: number | null
           avg_bpm?: number | null
           report_md?: string | null
-          migrated_from_notion?: boolean
           status?: string
           client_session_id?: string | null
           day_key?: string | null
@@ -267,16 +264,6 @@ export interface Database {
         }
         Insert: { user_id: string } & Partial<Omit<Database['public']['Tables']['profiles']['Row'], 'user_id' | 'created_at'>>
         Update: Partial<Database['public']['Tables']['profiles']['Insert']>
-      }
-      notion_exports: {
-        Row: {
-          user_id: string
-          date: string
-          exported_at: string
-          page_url: string | null
-        }
-        Insert: { user_id: string; date: string; exported_at?: string; page_url?: string | null }
-        Update: Partial<{ exported_at: string; page_url: string | null }>
       }
       user_goals: {
         Row: {
@@ -363,7 +350,6 @@ export interface Database {
           session_summary_md: string | null
           weight_report_md: string | null
           metrics: Record<string, unknown> | null
-          notion_page_id: string | null
           created_at: string
         }
         Insert: { user_id: string; type: string; period_start: string } & Partial<

@@ -22,10 +22,9 @@ Apple Health  ──►  Native iOS app (HealthKit bridge)  ──►  /api/inge
                                                                 ▼
                                                         Supabase (Postgres)
                                                                 │
-                          ┌─────────────────────────────────────┴───────────────┐
-                          ▼                                                      ▼
-              Next.js PWA on Netlify                                Notion (daily-log mirror)
-        (dashboard · charts · workout logger)                     best-effort per-DAY summary
+                                                                ▼
+                                                    Next.js PWA on Netlify
+                                            (dashboard · charts · workout logger)
 ```
 
 1. **Ingest** — The native iOS app reads Apple Health via a Capacitor HealthKit
@@ -39,9 +38,6 @@ Apple Health  ──►  Native iOS app (HealthKit bridge)  ──►  /api/inge
    guidance from sleep, HRV, and training load.
 4. **View** — A Next.js App Router PWA (installable, offline-capable via Serwist)
    renders the dashboard, charts, and workout logger.
-5. **Mirror** — Changed days are written to a Notion database as a formatted day
-   summary (best-effort; a Notion outage never blocks the app).
-
 Workouts are tracked live in **Hevy** and transcribed into Helix afterwards — the
 logger is a transcription surface, not a gym timer. Nothing in the app may assume
 an in-progress session.
@@ -55,7 +51,6 @@ an in-progress session.
 - **Motion**: framer-motion via `LazyMotion` in strict mode (`m.*` only, never `motion.*`)
 - **PWA**: Serwist service worker
 - **Native**: Capacitor 6 (iOS) with custom HealthKit and Face ID plugins
-- **Integrations**: Notion REST (hand-rolled `fetch`, no SDK)
 - **Validation**: Zod
 - **Testing**: Vitest + Testing Library (unit) · Playwright (e2e)
 - **Deployment**: Netlify (Node 22)
@@ -84,8 +79,6 @@ Copy `.env.example` to `.env.local` and fill in your values:
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon/public key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server-side service-role key (never exposed to client) |
-| `NOTION_TOKEN` | Notion integration token for the daily-log mirror |
-| `NOTION_DAILY_LOG_DB_ID` | Target Notion database ID |
 | `NEXT_PUBLIC_APP_URL` | Public app URL (used for same-origin auth checks) |
 | `NEXT_PUBLIC_BUILD_ID` | Inlined build id — the deploy-drift version gate compares it against `/api/version` |
 | `NEXT_PUBLIC_DEV_EMAIL` / `NEXT_PUBLIC_DEV_PASSWORD` | Local dev sign-in |

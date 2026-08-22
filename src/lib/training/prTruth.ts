@@ -34,11 +34,25 @@ import type { PrAxis } from './prEngine'
  * record now requires beating the ALL-TIME best rather than merely the best
  * Helix happens to have witnessed.
  *
- * ── WHAT THIS FILE IS NOT ────────────────────────────────────────────────────
- * It does not close the hole. Session volume, muscle tonnage, progression
- * trails and any future ACWR still see a history that begins 2026-07-16. Only
- * a real import of the missing sessions fixes those, through the Hevy parser
- * that already exists. This file floors the RECORDS and nothing else.
+ * ── THE HOLE IS MOSTLY CLOSED NOW (2026-08-22) ───────────────────────────────
+ * The table above described the database as it stood when this file was written.
+ * It no longer holds: `scripts/backfill-notion-sets.mjs` rebuilt 1,586 sets
+ * across 65 of those 75 sessions by parsing the itemised `## Exercises` block
+ * out of each session's own `report_md`, so volume, muscle tonnage and
+ * progression trails now see history from 2026-03-10. Ten sessions could not be
+ * reconciled against their stored `total_volume_kg` and remain set-less.
+ *
+ * ── AND THIS FILE STILL STANDS ───────────────────────────────────────────────
+ * Nothing here was recalculated. PR history was deliberately left FROZEN: the
+ * backfill sets no `is_pr` flag and never touches `personal_records`, because
+ * re-deriving records over four months of newly arrived history would rewrite
+ * the asserted book rather than confirm it.
+ *
+ * `buildBaselines` takes `max(logged, asserted)`, so the arrival of real history
+ * can only raise the logged side toward the assertion — never above it, and
+ * never in a way that manufactures a record. Where the two now agree, the floor
+ * is simply redundant; where they still differ, it is doing exactly the job it
+ * was written for. Removing it would re-expose the ten missing sessions.
  *
  * ── THE BOOK IS NOT THE FLOOR — READ THIS BEFORE CHANGING ANYTHING ───────────
  * The book is dated 2026-08-10, so it ALREADY CONTAINS everything achieved in

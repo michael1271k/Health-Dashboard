@@ -48,7 +48,8 @@ export interface ScoringInputs {
    * only subjective signal the app collects about how a session actually went,
    * and until v7 it was written every day and read by nothing.
    *
-   * Absent on the 74 Notion-era sessions, which is not the same as zero: the
+   * Absent on every Notion-era session — the rebuilt sets carry no RPE, because
+   * `report_md` never recorded one — which is not the same as zero: the
    * battery falls back to `BATTERY.defaultRpe`, not to "it never happened".
    */
   sessionRpe?: number | null
