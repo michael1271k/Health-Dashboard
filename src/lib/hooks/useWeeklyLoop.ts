@@ -11,6 +11,7 @@ import {
 } from '@/lib/reports/weeklyExport'
 import { weekLabelOf, WEEK0_START } from '@/lib/reports/weekNumber'
 import { sessionVolumeKg } from '@/lib/sessions/volume'
+import { epley1RM } from '@/lib/utils/epley'
 import { activeProgram, activePhase, eraForDate, isTrainingDay } from '@/lib/programs'
 import { repWindowFor } from '@/lib/training/ceilings'
 import { resolveMovers } from '@/lib/exercises/muscleMap'
@@ -20,7 +21,7 @@ import { SUPPLEMENT_PROTOCOL } from '@/lib/supplements'
 import { type CustomSupplement } from '@/lib/hooks/useCustomSupplements'
 import { normalizeSpO2 } from '@/lib/utils/units'
 import { activeKcalOf } from '@/lib/cardio/metrics'
-import type { PrAxis } from '@/lib/training/prEngine'
+import { volumeCredits, type PrAxis } from '@/lib/training/prEngine'
 
 /**
  * The user's stack, as rows, for the export to render.
@@ -80,14 +81,14 @@ async function fetchRange(weekStart: string, weekEnd: string) {
 
   // Active Energy, Day Score and Battery are deliberately NOT fetched — none of
   // the three appears in the export any more (see weeklyExport.ts).
-  const [logs, nutrition, sessions, sets, water, supps, doms, bodyComp, cardio, rpe, bodyLedger, skips, prAxes, whr, exceptions] = await Promise.all([
+  const [logs, nutrition, sessions, sets, water, supps, doms, bodyComp, cardio, rpe, bodyLedger, skips, prAxes, whr, exceptions, priorCount] = await Promise.all([
     // `active_energy` and `bmr` join the main select rather than getting their
     // own isolated slot: both are long-standing columns (verified live), and the
     // isolation convention exists for columns whose paste-SQL may not have run.
     // Neither is printed on a daily line — they are the two sides of the weekly
     // energy-balance estimate. See weeklyExport's header.
     supabase.from('daily_logs')
-      .select('date, weight_kg, steps, distance_m, training_minutes, sleep_minutes, water_ml, avg_rest_heart_rate, hrv_ms, blood_oxygen, active_energy, bmr')
+      .select('date, weight_kg, steps, distance_m, training_minutes, sleep_minutes, water_ml, avg_rest_heart_rate, hrv_ms, blood_oxygen, wrist_temp_delta, active_energy, bmr')
       .gte('date', weekStart).lte('date', weekEnd),
     supabase.from('nutrition_entries').select('date, calories, protein_g, carbs_g, fat_g')
       .eq('meal_type', 'daily').gte('date', weekStart).lte('date', weekEnd),
@@ -112,7 +113,7 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     // Body composition — its own query so an un-migrated column can't take down
     // the daily-logs fetch above; on error it's simply omitted.
     supabase.from('daily_logs')
-      .select('date, weight_kg, bmi, body_fat_pct, muscle_percent, water_percent, bone_mineral, visceral_fat, bmr, muscle_mass_kg, fat_free_mass_kg, fat_mass_kg, protein_mass_kg, bone_mineral_kg, water_mass_kg, skeletal_muscle_mass_kg')
+      .select('date, weight_kg, bmi, body_fat_pct, muscle_percent, water_percent, bone_mineral, visceral_fat, bmr, muscle_mass_kg, fat_free_mass_kg, fat_mass_kg, protein_mass_kg, protein_percent, bone_mineral_kg, water_mass_kg, skeletal_muscle_mass_kg')
       .gte('date', weekStart).lte('date', weekEnd),
     // Walks / runs — a separate ledger; exported flagged as already counted.
     supabase.from('cardio_logs').select('date, kind, distance_m, duration_min, kcal, active_kcal, total_kcal, avg_hr, effort')
@@ -126,7 +127,7 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     // that exists only in the ledger — a HealthKit weigh-in with no manual
     // entry — was silently absent from the export's InBody lines.
     supabase.from('body_composition')
-      .select('date, weight_kg, bmi, body_fat_pct, muscle_pct, water_pct, bone_mineral_pct, visceral_fat, bmr, muscle_mass_kg, fat_free_mass_kg, fat_mass_kg, protein_mass_kg, bone_mass_kg, body_water_mass_kg, skeletal_muscle_mass_kg')
+      .select('date, weight_kg, bmi, body_fat_pct, muscle_pct, water_pct, bone_mineral_pct, visceral_fat, bmr, muscle_mass_kg, fat_free_mass_kg, fat_mass_kg, protein_mass_kg, protein_pct, bone_mass_kg, body_water_mass_kg, skeletal_muscle_mass_kg')
       .gte('date', weekStart).lte('date', weekEnd),
     // Why a weigh-in was skipped. Its OWN query, and deliberately so: the column
     // is newer than the rest of daily_logs, and folding it into the select above
@@ -156,6 +157,12 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     // a second isolated select would double the round trip to buy nothing.
     supabase.from('daily_logs').select('date, nutrition_exception, nutrition_estimated')
       .gte('date', weekStart).lte('date', weekEnd),
+    // HOW MANY SESSIONS CAME BEFORE — the base for the "Session #15" ordinal.
+    // A count, not a fetch: the number of preceding sessions is all that is
+    // needed, and pulling their rows to length an array would cost a page of
+    // data to compute an integer. `head: true` sends no rows at all.
+    supabase.from('workout_sessions').select('id', { count: 'exact', head: true })
+      .lt('started_at', startInstant),
   ])
 
   return {
@@ -191,6 +198,9 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     exceptions: (exceptions.error ? [] : (exceptions.data ?? [])) as unknown as Array<{
       date: string; nutrition_exception: string | null; nutrition_estimated: boolean | null
     }>,
+    // Sessions logged before this week. Null (not 0) when the count fails, so a
+    // failed query prints no ordinal rather than restarting the numbering at 1.
+    priorSessions: priorCount.error ? null : (priorCount.count ?? null),
   }
 }
 
@@ -258,7 +268,7 @@ async function fetchTrendLedger(firstWeekStart: string, lastWeekStart: string): 
       proteinG: null, carbsG: null, fatG: null,
       steps: logByDate.get(date)?.steps ?? null,
       distanceM: null, trainingMin: null, sleepMin: null, deepMin: null, remMin: null,
-      restingHr: null, hrvMs: null,
+      restingHr: null, hrvMs: null, wristTempDeltaC: null, bloodOxygenPct: null,
       waterMl: waterByDate.get(date) ?? logByDate.get(date)?.water_ml ?? null,
       supplementsTaken: null, activeKcal: null, bmrKcal: null, weighInSkipReason: null,
       // These days feed `trendTotals` and nothing else, and no aggregate reads
@@ -315,6 +325,8 @@ function toDays(weekStart: string, d: RangeData): ExportDay[] {
       remMin: null,
       restingHr: l?.avg_rest_heart_rate ?? null,
       hrvMs: l?.hrv_ms ?? null,
+      wristTempDeltaC: l?.wrist_temp_delta ?? null,
+      bloodOxygenPct: l?.blood_oxygen ?? null,
       waterMl: waterByDate.get(date) ?? l?.water_ml ?? null,
       supplementsTaken: suppsByDate.get(date) ?? null,
       // Estimate inputs only — neither reaches a daily line.
@@ -333,8 +345,11 @@ function toDays(weekStart: string, d: RangeData): ExportDay[] {
  * Mirrors `highlightsOf` in the session report, deliberately: the export and
  * the report must not disagree about how many records a session held.
  */
-function dedupePrs(rows: Array<{ name: string; weightKg: number; reps: number }>) {
-  const best = new Map<string, { name: string; weightKg: number; reps: number }>()
+function dedupePrs<T extends { name: string; weightKg: number; reps: number }>(rows: T[]): T[] {
+  // Generic so the winning ROW survives intact. Typing it to the three fields it
+  // compares on quietly discarded everything else the caller attached — which is
+  // how the PR line lost its tonnage and its 1RM on the way through.
+  const best = new Map<string, T>()
   for (const r of rows) {
     const cur = best.get(r.name)
     const better = !cur
@@ -376,9 +391,12 @@ function axesBySession(rows: RangeData['prAxes']) {
 /** Shape a fetched range into the export's session rows (with every set). */
 function toSessions(d: RangeData): ExportSession[] {
   const program = activeProgram()
+  // The week's sessions arrive in chronological order, so the ordinal is simply
+  // "everything before this week" plus this session's index within it.
+  const priorSessions = d.priorSessions
   const rpeById = new Map(d.rpe.map((r) => [r.id, r.session_rpe]))
   const axesFor = axesBySession(d.prAxes)
-  return d.sessions.map((s) => {
+  return d.sessions.map((s, sessionIndex) => {
     // Warm-ups are KEPT and tagged. They were dropped here, so the export
     // silently hid the ramp-up: a session read as starting at its top load.
     // Sorted defensively so the builder never depends on transport order.
@@ -409,6 +427,13 @@ function toSessions(d: RangeData): ExportSession[] {
       if (r.set_type !== 'warmup') e.topKg = Math.max(e.topKg ?? 0, r.weight_kg) || null
       byName.set(r.exercises.name, e)
     }
+    // Per-set volume CREDIT for every row, from the engine that owns the rule.
+    // Indexed by row id because `dedupePrs` reorders and filters what follows.
+    const credits = volumeCredits(mine.map((r) => ({
+      weightKg: r.weight_kg, reps: r.reps, pairId: r.pair_id, side: r.side,
+    })))
+    const creditByRow = new Map(mine.map((r, i) => [r.id, credits[i]]))
+
     // A unilateral pair (shared pair_id) is ONE set to failure, not two.
     const failurePairs = new Set(mine.filter((r) => r.set_type === 'failure').map((r) => r.pair_id ?? r.id))
     // Volume is RECOMPUTED from the set rows rather than read from
@@ -425,6 +450,7 @@ function toSessions(d: RangeData): ExportSession[] {
       : s.total_volume_kg
     return {
       date: s.started_at.slice(0, 10),
+      sessionNumber: priorSessions == null ? null : priorSessions + sessionIndex + 1,
       label: (s.day_key && program.days.find((x) => x.key === s.day_key)?.label) ?? s.split_day,
       volumeKg, setCount: s.set_count,
       failureSets: failurePairs.size,
@@ -443,6 +469,26 @@ function toSessions(d: RangeData): ExportSession[] {
       // won it (heaviest tonnage, ties to the heavier load).
       prs: dedupePrs(mine.filter((r) => r.is_pr).map((r) => ({
         name: r.exercises.name, weightKg: r.weight_kg, reps: r.reps,
+        // THE CREDITED TONNAGE, not `weight × reps`.
+        //
+        // Those differ on exactly the case this export is worst at explaining.
+        // A unilateral pair is ONE set scored at the WEAKER side — L 5 kg × 8
+        // and R 6 kg × 10 is a 40 kg set, not a 60 kg one — and `volumeCredits`
+        // files that collapsed figure on whichever row completes the pair,
+        // which is a positional rule and need not be the weaker side. So the
+        // `is_pr` row's own product can be the STRONGER side's 60 while the
+        // record that was actually set is 40, and printing 60 beside the axis
+        // named "Volume" states a number that never entered the ledger.
+        //
+        // Asking `prEngine` rather than re-deriving it is the rule this file
+        // already lives by for session totals (`sessionVolumeKg`): a second
+        // implementation of a tonnage rule is a bug waiting for a unilateral
+        // movement to set a record.
+        volumeKg: creditByRow.get(r.id) ?? null,
+        // `||` and not `??` on the stored estimate: unloaded work stores 0, and
+        // 0 is a number the report would print as an estimate. `epley1RM`
+        // returns null there, which is the honest answer.
+        e1rmKg: (r.est_1rm_kg || epley1RM(r.weight_kg, r.reps)) ?? null,
       }))).map((p) => ({ ...p, axes: axesFor(s.id, p.name) })),
     }
   })
@@ -463,6 +509,7 @@ function toBodyComp(d: RangeData): ExportBodyComp[] {
       muscle_mass_kg: r.muscle_mass_kg, fat_free_mass_kg: r.fat_free_mass_kg,
       // The ledger spells three of these differently again.
       fat_mass_kg: r.fat_mass_kg, protein_mass_kg: r.protein_mass_kg,
+      protein_percent: r.protein_pct,
       bone_mineral_kg: r.bone_mass_kg, water_mass_kg: r.body_water_mass_kg,
       skeletal_muscle_mass_kg: r.skeletal_muscle_mass_kg,
     })
@@ -496,6 +543,7 @@ function toBodyComp(d: RangeData): ExportBodyComp[] {
       fatFreeMassKg: (r.fat_free_mass_kg as number | null) ?? null,
       fatMassKg: (r.fat_mass_kg as number | null) ?? null,
       proteinMassKg: (r.protein_mass_kg as number | null) ?? null,
+      proteinPercent: (r.protein_percent as number | null) ?? null,
       boneMineralKg: (r.bone_mineral_kg as number | null) ?? null,
       waterMassKg: (r.water_mass_kg as number | null) ?? null,
       skeletalMuscleMassKg: (r.skeletal_muscle_mass_kg as number | null) ?? null,
@@ -567,6 +615,7 @@ export interface GoalRow {
   fat_goal_g?: number
   steps_goal?: number
   sleep_goal_hours?: number
+  water_goal_ml?: number
   /** The rung currently selected — `'custom'` when the numbers are hand-set. */
   active_lever?: string | null
 }
@@ -636,6 +685,11 @@ export function weekPayload(
     proteinGoalG: goals?.protein_goal_g ?? null,
     stepsGoal: goals?.steps_goal ?? null,
     sleepGoalHours: goals?.sleep_goal_hours ?? null,
+    waterGoalMl: goals?.water_goal_ml ?? null,
+    // The phase the week was RUN in, named. `programLabel` above already bakes
+    // it into a title ("Helix Cut"), which is a name rather than a statement —
+    // and it collapses maintenance into "Bulk", so it cannot be read as one.
+    phaseLabel: phase === 'cut' ? 'Cut' : phase === 'bulk' ? 'Bulk' : 'Maintenance',
     /**
      * WHICH TARGETS WERE IN FORCE, DAY BY DAY.
      *
@@ -702,7 +756,7 @@ export function useWeeklyExport(weekStart = weekStartOf(logicalTodayISO()), enab
         // the export could not say which RUNG a week was eaten against, only
         // what the goal row happens to hold today — see `leverPeriods`.
         supabase.from('user_goals')
-          .select('calorie_goal, protein_goal_g, carbs_goal_g, fat_goal_g, steps_goal, sleep_goal_hours, active_lever')
+          .select('calorie_goal, protein_goal_g, carbs_goal_g, fat_goal_g, steps_goal, sleep_goal_hours, water_goal_ml, active_lever')
           .maybeSingle(),
         supabase.from('custom_supplements').select('id, name, dose, color, form, time, schedule, micros'),
         // The user's OWN per-muscle set targets. The Command Center has applied

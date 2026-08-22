@@ -84,7 +84,8 @@ const day = (date: string, weekdayLabel: string): ExportDay => ({
   date, weekdayLabel, isTrainingDay: false,
   weightKg: null, calories: null, proteinG: null, carbsG: null, fatG: null,
   steps: null, distanceM: null, trainingMin: null, sleepMin: null, deepMin: null, remMin: null,
-  restingHr: null, hrvMs: null, waterMl: null, supplementsTaken: null,
+  restingHr: null, hrvMs: null, wristTempDeltaC: null, bloodOxygenPct: null,
+  waterMl: null, supplementsTaken: null,
   activeKcal: null, bmrKcal: null, weighInSkipReason: null,
   nutritionException: null, nutritionEstimated: false,
 })
@@ -105,9 +106,9 @@ describe('the Targets & Levers section', () => {
     const out = buildWeeklyExport(input())
     expect(out).toContain('## Targets & Levers')
     expect(out).toContain('- **Lever 1** — 1885 kcal · 170P / 182C / 53F · 10000 steps')
-    expect(out).toContain('    - Active: Sun 16, Mon 17, Tue 18 & Wed 19 Aug (4 days)')
+    expect(out).toContain('    - **Lever 1 was active on Sun 16, Mon 17, Tue 18 & Wed 19 Aug** — 4 days.')
     expect(out).toContain('- **Custom** — 1955 kcal · 170P / 195C / 55F · 10000 steps')
-    expect(out).toContain('    - Active: Thu 20, Fri 21 & Sat 22 Aug (3 days)')
+    expect(out).toContain('    - **Custom was active on Thu 20, Fri 21 & Sat 22 Aug** — 3 days.')
   })
 
   it('states the CHANGE — which morning, and by how much', () => {

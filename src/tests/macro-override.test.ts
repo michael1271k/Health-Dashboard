@@ -32,6 +32,7 @@ describe('manual intake override reaches the export', () => {
     date: '2026-08-05', weekdayLabel: 'Wed', isTrainingDay: true, weightKg: null,
     calories: null, proteinG: null, carbsG: null, fatG: null, steps: null, distanceM: null,
     trainingMin: null, sleepMin: null, deepMin: null, remMin: null, restingHr: null,
+    wristTempDeltaC: null, bloodOxygenPct: null,
     hrvMs: null, waterMl: null, supplementsTaken: null, activeKcal: null, bmrKcal: null,
     weighInSkipReason: null, nutritionException: null, nutritionEstimated: false, ...o,
   })

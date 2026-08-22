@@ -22,7 +22,7 @@ import { countCommittedSets } from '@/lib/sessions/schema'
 import { AlertTriangle, Dumbbell, Calendar, Target } from 'lucide-react'
 import type { Tables } from '@/lib/supabase/types'
 import { Surface } from '@/components/ui/Zone'
-import { EditPlanCard, type PlanNumbers } from '@/components/settings/EditPlanCard'
+import { EditPlanCard, type PlanNumbers, type RecoveryNumbers } from '@/components/settings/EditPlanCard'
 import { isLeverId, leverForDate, type LeverId } from '@/lib/nutrition/levers'
 import { ContextSelector } from '@/components/nutrition/ContextSelector'
 import { contextRangeLine, suspendsStepGoal } from '@/lib/nutrition/context'
@@ -271,8 +271,16 @@ export default function SettingsPage() {
    * written alongside as the DECISION, which is what lets a later phase switch
    * know whether these figures were chosen or merely inherited.
    */
-  async function savePlanNumbers(next: PlanNumbers, lever: LeverId) {
-    await save(next)
+  async function savePlanNumbers(next: PlanNumbers, rec: RecoveryNumbers, lever: LeverId) {
+    // One upsert for both groups. Sleep, active calories and water are ordinary
+    // `user_goals` columns that no lever governs, so they ride along with the
+    // five the rung does — but they are NOT sent to `plan_phase_goals` below,
+    // which stores a plan's macro prescription and has no column for them.
+    // `goal_preset` is tagged here because the deleted "Nutrition Goals" card
+    // did it on every macro edit, and `livePhase` reads back through it. Losing
+    // the write would leave a database that has never switched phase resolving
+    // its phase from the program default forever.
+    await save({ ...next, ...rec, goal_preset: livePhase })
     setActiveLever(lever)
     // ── AND ONTO THE ACTIVE PLAN + PHASE ──
     // `user_goals` is the row the server scorer reads; `plan_phase_goals` is
@@ -407,26 +415,6 @@ export default function SettingsPage() {
     setStatus({ type: 'success', msg: `${PROGRAMS[planId]?.label ?? 'Plan'} · ${mode} is now active.` })
   }
 
-  /**
-   * A manual macro edit is saved BOTH to the live goals (today's targets) AND as a
-   * persistent override for the active plan+phase, so switching away and back
-   * reloads the hand-edited numbers instead of the static preset. The whole macro
-   * set is written each time so a single-field edit never nulls the others.
-   */
-  async function persistMacroEdit(key: 'calorie_goal' | 'protein_goal_g' | 'carbs_goal_g' | 'fat_goal_g', value: number) {
-    const phase = activePhase() as NutritionMode
-    await save({ [key]: value, goal_preset: phase })
-    await saveOverride({
-      planId: activePlanId, phase,
-      patch: {
-        calorieGoal: key === 'calorie_goal' ? value : goals.calorie_goal,
-        proteinGoalG: key === 'protein_goal_g' ? value : goals.protein_goal_g,
-        carbsGoalG: key === 'carbs_goal_g' ? value : goals.carbs_goal_g,
-        fatGoalG: key === 'fat_goal_g' ? value : goals.fat_goal_g,
-      },
-    })
-  }
-
   /** Persist the phase's body-composition targets (BF % + muscle mass).
    *  Self-heals if the columns aren't migrated. */
   async function saveBodyTargets(p: NutritionPreset) {
@@ -438,10 +426,6 @@ export default function SettingsPage() {
     )
     if (error && !/column|target_|schema cache|PGRST204/i.test(error.message)) setStatus({ type: 'error', msg: error.message })
   }
-
-  const inputCls =
-    'w-full rounded-xl border border-border bg-surface-2 px-3 py-2 text-text text-sm ' +
-    'focus:outline-none focus:ring-2 focus:ring-primary/60 transition-[border-color] duration-200'
 
   if (loading) return <p className="text-muted text-sm">Loading…</p>
 
@@ -462,7 +446,25 @@ export default function SettingsPage() {
           fat_goal_g: goals.fat_goal_g,
           steps_goal: goals.steps_goal,
         }}
+        recovery={{
+          sleep_goal_hours: goals.sleep_goal_hours,
+          active_cal_goal: goals.active_cal_goal,
+          water_goal_ml: goals.water_goal_ml,
+        }}
         activeLever={leverInForce}
+        phaseBadge={(() => {
+          // Moved out of the deleted "Nutrition Goals" card. It reads the phase
+          // OFF the calorie target, so it belongs beside the field that sets it.
+          const p = derivePhase(goals.calorie_goal)
+          if (!p) return null
+          const m = phaseDisplay(p, logicalTodayISO())
+          return (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wide shrink-0"
+              style={{ color: m.color, background: `${m.color}1f`, border: `1px solid ${m.color}55`, boxShadow: `0 0 10px ${m.color}44` }}>
+              Auto: {m.label}
+            </span>
+          )
+        })()}
         planLabel={PROGRAMS[activePlanId]?.label ?? activePlanId}
         phaseLabel={PHASE_META[livePhase]?.label ?? livePhase}
         saving={saving}
@@ -569,48 +571,6 @@ export default function SettingsPage() {
         )}
       </Surface>
 
-      {/* Nutrition goals */}
-      <Surface variant="band" measure="grid" pad="snug" className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-text">Nutrition Goals</h2>
-          {(() => {
-            const p = derivePhase(goals.calorie_goal)
-            if (!p) return null
-            const m = phaseDisplay(p, logicalTodayISO())
-            return (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wide"
-                style={{ color: m.color, background: `${m.color}1f`, border: `1px solid ${m.color}55`, boxShadow: `0 0 10px ${m.color}44` }}>
-                Auto: {m.label}
-              </span>
-            )
-          })()}
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          {([
-            { key: 'calorie_goal' as const,   label: 'Calories (kcal)',  step: 50 },
-            { key: 'protein_goal_g' as const,  label: 'Protein (g)',     step: 5  },
-            { key: 'carbs_goal_g' as const,    label: 'Carbs (g)',       step: 5  },
-            { key: 'fat_goal_g' as const,      label: 'Fat (g)',         step: 1  },
-          ]).map(({ key, label, step }) => (
-            <div key={key} className="space-y-1">
-              <label className="text-xs font-medium text-muted">{label}</label>
-              <input
-                type="number"
-                step={step}
-                value={goals[key]}
-                onChange={(e) => setGoals((g) => ({ ...g, [key]: Number(e.target.value) }))}
-                onBlur={() => persistMacroEdit(key, goals[key])}
-                className={inputCls}
-              />
-            </div>
-          ))}
-        </div>
-        <p className="text-[11px] text-muted">
-          Edits save to the <span className="text-text/80 font-medium">{PROGRAMS[activePlanId]?.label ?? 'active plan'} · {activePhase()}</span> phase
-          and reload when you switch back to it.
-        </p>
-      </Surface>
-
       {/* Preferences */}
       <Surface variant="band" measure="grid" pad="snug" className="space-y-4">
         <h2 className="font-semibold text-text">Preferences</h2>
@@ -694,31 +654,6 @@ export default function SettingsPage() {
           >
             <span className={`absolute top-1 left-1 h-5 w-5 rounded-full bg-white transition-transform duration-200 ${trackRpe ? 'translate-x-5' : 'translate-x-0'}`} />
           </button>
-        </div>
-      </Surface>
-
-      {/* Activity + sleep + water */}
-      <Surface variant="band" measure="grid" pad="snug" className="space-y-4">
-        <h2 className="font-semibold text-text">Activity &amp; Recovery Goals</h2>
-        <div className="grid grid-cols-2 gap-4">
-          {([
-            { key: 'sleep_goal_hours' as const,  label: 'Sleep (hours)',       step: 0.5 },
-            { key: 'steps_goal' as const,         label: 'Daily Steps',         step: 500  },
-            { key: 'active_cal_goal' as const,    label: 'Active Calories',     step: 50   },
-            { key: 'water_goal_ml' as const,      label: 'Water (ml)',          step: 100  },
-          ]).map(({ key, label, step }) => (
-            <div key={key} className="space-y-1">
-              <label className="text-xs font-medium text-muted">{label}</label>
-              <input
-                type="number"
-                step={step}
-                value={goals[key]}
-                onChange={(e) => setGoals((g) => ({ ...g, [key]: Number(e.target.value) }))}
-                onBlur={() => save({ [key]: goals[key] })}
-                className={inputCls}
-              />
-            </div>
-          ))}
         </div>
       </Surface>
 

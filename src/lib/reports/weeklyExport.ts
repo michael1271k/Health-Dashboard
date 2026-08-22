@@ -82,6 +82,20 @@ export interface ExportDay {
   remMin: number | null
   restingHr: number | null
   hrvMs: number | null
+  /**
+   * Wrist temperature DEVIATION from the wearer's own baseline, in °C — which
+   * is why it is signed and usually near zero. It was fetched by nothing and
+   * printed by nothing until 2026-08-22, despite `daily_logs.wrist_temp_delta`
+   * having carried it all along.
+   */
+  wristTempDeltaC: number | null
+  /**
+   * Blood oxygen saturation, %. This one was worse than absent: `fetchRange`
+   * has always SELECTED `blood_oxygen`, and the value was then dropped on the
+   * floor in `toDays` and never mapped onto a field. The column, the query and
+   * the reader all existed; only the assignment was missing.
+   */
+  bloodOxygenPct: number | null
   waterMl: number | null
   supplementsTaken: number | null
   /**
@@ -179,6 +193,16 @@ export interface ExportExercise {
 
 export interface ExportSession {
   date: string
+  /**
+   * The session's ordinal across the WHOLE history, 1-based — "Session #15".
+   * Counted from every session that precedes it, not from the week, so the
+   * number means the same thing in every report it ever appears in.
+   *
+   * Optional: it is derived from a count of everything that came before, which
+   * a caller building a session by hand has no way to know. Absent means "not
+   * numbered", and the line simply omits the "#" rather than inventing one.
+   */
+  sessionNumber?: number | null
   label: string                // "Upper A"
   volumeKg: number | null
   setCount: number | null
@@ -207,7 +231,20 @@ export interface ExportSession {
    * The axis is the whole meaning, and without it the reader can only guess
    * which number moved. Empty when the ledger holds no row for the movement.
    */
-  prs: Array<{ name: string; weightKg: number; reps: number; axes: PrAxis[] }>
+  prs: Array<{
+    name: string
+    weightKg: number
+    reps: number
+    axes: PrAxis[]
+    /** The set's own tonnage — weight × reps, the volume axis's actual value. */
+    volumeKg: number | null
+    /**
+     * Estimated 1RM, Epley. Read from the stored `est_1rm_kg` where there is
+     * one and computed where there is not — with `||`, never `??`, because an
+     * unloaded set stores 0 and 0 is not an estimate.
+     */
+    e1rmKg: number | null
+  }>
 }
 
 export interface ExportDoms {
@@ -247,6 +284,11 @@ export interface ExportBodyComp {
   proteinMassKg: number | null
   boneMineralKg: number | null
   waterMassKg: number | null
+  /**
+   * Protein as a share of bodyweight, %. The mass beside it is proteinMassKg.
+   * Optional: older readings predate the column and carry the mass alone.
+   */
+  proteinPercent?: number | null
   /** Entered from the scale — NOT weight × muscle%. See lib/body/composition.ts. */
   skeletalMuscleMassKg: number | null
   /** The scale's own estimate. Helix tracks no tape measurements. */
@@ -262,6 +304,10 @@ export interface WeeklyExportInput {
   proteinGoalG: number | null
   stepsGoal: number | null
   sleepGoalHours: number | null
+  /** Daily hydration target, ml. Part of the week's instruction like any other. */
+  waterGoalMl?: number | null
+  /** "Cut" / "Maintenance" — the phase the week was run in. */
+  phaseLabel?: string | null
   /**
    * What was actually asked for, day by day, collapsed into runs.
    *
@@ -312,30 +358,6 @@ export interface WeeklyExportInput {
    * none.
    */
   ledger?: LedgerWeek[]
-  /**
-   * ── THE PREVIOUS WEEK IS NO LONGER EMBEDDED (2026-08-19) ────────────────────
-   * This field used to carry week X-1's COMPLETE export — every day, every set,
-   * every reading — appended verbatim under its own heading. The reasoning was
-   * that a model handed one week can only describe it while two let it see a
-   * direction, and that is true; what it cost was not.
-   *
-   * It doubled the document, and the half it doubled was the line-by-line half:
-   * two hundred set rows of a week already reported on, ahead of the trend
-   * ledger that summarises the same period in six numbers per week. It also
-   * doubled the fetch — fourteen more round trips for data that had already
-   * been exported once, by hand, the week before.
-   *
-   * So the payload is ONE week line-by-line, the `ledger` carries the direction
-   * (which is what a direction actually needs — a series, not a neighbour), and
-   * a closing note tells the reader the prior week's report is supplied
-   * separately. See `PRIOR_REPORT_NOTE`.
-   *
-   * The field is kept and still honoured so an existing caller does not break,
-   * but nothing in the app passes it any more.
-   *
-   * @deprecated Pass the prior week's REPORT alongside the payload instead.
-   */
-  previousWeekMarkdown?: string
 }
 
 const n = (v: number | null | undefined, digits = 0): string =>
@@ -414,6 +436,27 @@ function dayRangeLabel(dates: readonly string[], days: readonly ExportDay[]): st
     : `${parts.slice(0, -1).join(', ')} & ${parts[parts.length - 1]}`
   return spans ? joined : `${joined} ${month(dates[dates.length - 1])}`
 }
+
+/**
+ * "7h 20m" — the spoken form, for the day's own vitals line.
+ *
+ * Distinct from `sleep` below, which packs the same minutes as "7h32" for the
+ * weekly average and the trend table where the figure is one cell among many.
+ * On a line already carrying five labelled readings the compact form reads as a
+ * decimal, which 7h32 is not.
+ */
+const sleepLong = (min: number | null | undefined): string => {
+  if (min == null || !Number.isFinite(min)) return DASH
+  const h = Math.floor(min / 60)
+  return `${h}h ${String(Math.round(min - h * 60)).padStart(2, '0')}m`
+}
+
+/**
+ * A wrist-temperature DEVIATION, which is signed and usually near zero.
+ * "+0.2°C" and "-0.2°C" are opposite findings; an unsigned "0.2" is neither.
+ */
+const signedC = (v: number | null | undefined): string =>
+  v == null || !Number.isFinite(v) ? DASH : `${v > 0 ? '+' : ''}${v.toFixed(1)}°C`
 
 const sleep = (min: number | null | undefined): string =>
   min == null ? '—' : `${Math.floor(min / 60)}h${String(Math.round(min % 60)).padStart(2, '0')}`
@@ -939,6 +982,10 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
   L.push(`# WEEK ${input.weekStart} → ${input.weekEnd}${input.weekLabel ? ` · ${input.weekLabel}` : ''}`)
   L.push('')
   L.push(`**Program:** ${input.programLabel}`)
+  // The phase is the frame every target in this document sits inside — the same
+  // 1,955 kcal is an aggressive cut or a light surplus depending on it — and it
+  // was nowhere in the payload.
+  if (input.phaseLabel?.trim()) L.push(`**Phase:** ${input.phaseLabel.trim()}`)
 
   // ── The week's CONTEXT, once, as a fact about the week ──
   // Derived from the days themselves rather than from the current setting, so an
@@ -973,7 +1020,12 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
       const g = p.goals
       L.push(`- **${p.label}** — ${n(g.calorie)} kcal · `
         + `${n(g.protein)}P / ${n(g.carbs)}C / ${n(g.fat)}F · ${n(g.steps)} steps`)
-      L.push(`    - Active: ${dayRangeLabel(p.dates, days)} (${p.dates.length} day${p.dates.length === 1 ? '' : 's'})`)
+      // SPELLED OUT AS A SENTENCE, not a date range in brackets. A reader
+      // scanning for "when was Lever 1 on?" needs a clause they can lift whole;
+      // "Sun 16, Mon 17 & Tue 18 Aug" answers the question only after they work
+      // out that the list is exhaustive rather than a sample.
+      L.push(`    - **${p.label} was active on ${dayRangeLabel(p.dates, days)}**`
+        + ` — ${p.dates.length} day${p.dates.length === 1 ? '' : 's'}.`)
       // The CHANGE is the interesting fact — a reader scanning the daily rows
       // needs to know the target moved under them, and on which morning.
       if (i > 0) {
@@ -990,7 +1042,14 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
     L.push(`- **Targets:** ${n(input.calorieGoal)} kcal · ${n(input.proteinGoalG)} g protein · `
       + `${n(input.stepsGoal)} steps`)
   }
-  L.push(`- Sleep target: ${n(input.sleepGoalHours, 1)} h${periods.length > 1 ? ' — unchanged all week' : ''}`)
+  // The two targets no rung governs. They belong in the instruction all the
+  // same: a week's adherence cannot be read against goals the document omits.
+  L.push(`- Sleep target: ${n(input.sleepGoalHours, 1)} h`
+    + `${periods.length > 1 ? ' — unchanged all week' : ''}`)
+  if (input.waterGoalMl != null) {
+    L.push(`- Water target: ${n(input.waterGoalMl / 1000, 1)} L`
+      + `${periods.length > 1 ? ' — unchanged all week' : ''}`)
+  }
   L.push('')
 
   // Session labels per date — for the readable daily log below.
@@ -999,6 +1058,14 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
     const arr = labelsByDate.get(s.date) ?? []
     arr.push(s.label)
     labelsByDate.set(s.date, arr)
+  }
+
+  // The day's own sessions, so the day block can carry them.
+  const sessionsByDate = new Map<string, ExportSession[]>()
+  for (const s of sessions) {
+    const arr = sessionsByDate.get(s.date) ?? []
+    arr.push(s)
+    sessionsByDate.set(s.date, arr)
   }
 
   // Full body-composition reading per weigh-in date (nested under its day below).
@@ -1042,9 +1109,17 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
     L.push('')
   }
 
-  // ── Readable per-day log (one line per day, all data · no tables) ──
-  // FIXED ORDER: sleep → intake (food) → water → steps, then the vitals and the
-  // day's workout. The deep InBody reading and any walks nest under the day.
+  /* ── THE DAY IS THE UNIT (restructured 2026-08-22) ──────────────────────────
+     `## Days` and `## Sessions` used to be two sections forty lines apart, so
+     reading what happened on Monday meant reading Monday's row here and then
+     hunting for Monday's session further down. They are one thing: a session
+     happens ON a day, against that day's sleep, that day's food and that day's
+     weigh-in, and every question worth asking of this document crosses that
+     boundary.
+
+     So the day owns everything that happened inside it — vitals, the scale, the
+     session with all its sets, and the walk — and the sections below are only
+     what genuinely spans the week. */
   L.push('## Days')
   L.push('')
   for (const d of days) {
@@ -1056,29 +1131,25 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
     // when nothing was logged, where the plan is the only evidence there is.
     const performed = labelsByDate.get(d.date)
     const offPlan = performed != null && !d.isTrainingDay
-    // A rest day that logged nothing has nothing to name — the day type on the
-    // same line already said "Rest", and appending "· rest" to it printed the
-    // word twice. A TRAINING day with no session is a different fact and still
-    // says so, because a planned session that never happened is worth seeing.
     const workout = performed?.join(' + ') ?? (d.isTrainingDay ? 'not logged' : null)
     const macros = [d.proteinG, d.carbsG, d.fatG].some((v) => v != null)
       ? ` (${n(d.proteinG)}P / ${n(d.carbsG)}C / ${n(d.fatG)}F)` : ''
 
-    /* ── FOUR LINES, GROUPED BY SUBJECT ──
-       This was ONE line carrying eleven fields — day type, sleep, intake,
-       macros, exception tags, water, steps, RHR, HRV, weight and workout — in a
-       single ~300-character run of `·`-separated fragments. Every field was
-       correct and the row was unreadable: nothing marked where nutrition
-       stopped and vitals began, and finding a number meant counting separators.
-
-       Four groups, each answering one question. The day's identity leads; then
-       what was eaten, what was moved, and what the body reported. The cardio
-       and InBody rows nest under this block as they always did, so a day is now
-       one indented paragraph rather than one very long sentence. */
     L.push(
       `- **${d.weekdayLabel} ${d.date}** · ${performed || d.isTrainingDay ? 'Train' : 'Rest'}`
       + `${offPlan ? ' (off-plan / swapped)' : ''}${workout ? ` · ${workout}` : ''}`,
     )
+
+    // ── Sleep & vitals ──
+    // EVERY field named every time, `—` where there is no reading. Wrist
+    // temperature and blood oxygen appear here for the first time: the column
+    // and the query for the second both already existed and the value was
+    // simply never assigned to anything.
+    L.push(`    - Sleep & Vitals: Sleep: ${sleepLong(d.sleepMin)} · HRV: ${n(d.hrvMs)} ms`
+      + ` · Resting HR: ${n(d.restingHr)} bpm`
+      + ` · Wrist Temp: ${signedC(d.wristTempDeltaC)}`
+      + ` · Blood O2: ${d.bloodOxygenPct != null ? `${n(d.bloodOxygenPct)}%` : DASH}`)
+
     // The exception tag sits ON the intake it explains, not at the end of the
     // block — a reader meeting "3210 kcal" needs the reason in the same breath.
     L.push(
@@ -1089,43 +1160,104 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
     L.push(`    - Activity: ${n(d.steps)} steps`
       + `${d.distanceM != null ? ` · ${n(d.distanceM / 1000, 2)} km` : ''}`
       + `${d.trainingMin != null ? ` · ${n(d.trainingMin)} min training` : ''}`)
-    // The daily weigh-in belongs here rather than only in the nested InBody row,
-    // which is emitted for FULL scale readings — so a weight-only morning
-    // exported no weight at all, and a skipped one was indistinguishable from a
-    // day that was never opened.
-    L.push(`    - Vitals: sleep ${sleep(d.sleepMin)} · RHR ${n(d.restingHr)} · HRV ${n(d.hrvMs)}`
-      + ` · ${weighIn(d.weightKg, d.weighInSkipReason)}`)
+
+    // ── The scale ──
     // NO WEIGHT, NO READING. A scale reading is anchored on a bodyweight —
     // every mass below is derived from one — so a row that has lost its weight
     // is not a partial measurement, it is a fragment. 2026-08-02 carries a
     // skeletal-muscle figure and a waist:hip ratio and nothing else, which
     // printed two lines of twenty em-dashes: visually a catastrophic weigh-in,
-    // actually a sync that dropped the weight. The day line above already says
-    // `weight — [Skip: …]`, which is the whole truth about that day.
+    // actually a sync that dropped the weight.
     const b = bodyByDate.get(d.date)
     if (b && b.weightKg != null && Number.isFinite(b.weightKg)) {
-      // Percentages first (what the scale shows), then every compartment in
-      // absolute kg (what actually moved). Both, every day, named every time —
-      // an omitted field is indistinguishable from a zero to whoever reads this.
+      /* ── ONE LINE, EVERY COMPARTMENT, IN THE SCALE'S OWN ORDER ──
+         Percentage then mass, pair by pair, so a reader comparing weeks never
+         has to multiply by a bodyweight that is itself moving.
+
+         "Muscle Mass" carries its gloss because THREE different numbers on this
+         line could answer to that name and they are ~23 kg apart: skeletal
+         muscle (~27 kg, entered from the scale), lean soft tissue (~50 kg,
+         weight × muscle%) and fat-free mass (~53 kg, weight − fat, which
+         includes bone and water). Naming one of them "Muscle Mass" unqualified
+         is how a report ends up contradicting itself. */
       L.push(
-        `    - InBody · weight ${n(b.weightKg, 1)} kg · BMI ${n(b.bmi, 1)} · BF ${n(b.bodyFatPct, 1)}% · `
-        + `muscle ${n(b.musclePercent, 1)}% · water ${n(b.waterPercent, 1)}% · visceral ${n(b.visceralFat)} · `
-        + `BMR ${n(b.bmr)} · bone ${n(b.boneMineral, 1)}%`,
+        `    - Weight Data: Weight: ${n(b.weightKg, 1)} kg · BMI: ${n(b.bmi, 1)}`
+        + ` · Body Fat Percentage: ${n(b.bodyFatPct, 1)}% · Fat Mass: ${n(b.fatMassKg, 1)} kg`
+        + ` · Muscle Percentage: ${n(b.musclePercent, 1)}%`
+        + ` · Muscle Mass (Lean Soft Tissue): ${n(b.muscleMassKg, 1)} kg`
+        + ` · Water Percentage: ${n(b.waterPercent, 1)}% · Body Water Mass: ${n(b.waterMassKg, 1)} kg`
+        + ` · Protein Percentage: ${n(b.proteinPercent, 1)}% · Protein Mass: ${n(b.proteinMassKg, 1)} kg`
+        + ` · Bone Mineral Percentage: ${n(b.boneMineral, 1)}%`
+        + ` · Bone Mineral Content: ${n(b.boneMineralKg, 2)} kg`
+        + ` · Skeletal Muscle Mass: ${n(b.skeletalMuscleMassKg, 1)} kg`
+        + ` · Visceral Fat Rating: ${n(b.visceralFat)}`
+        + ` · Basal Metabolic Rate: ${n(b.bmr)}`
+        + ` · Estimated Waist to Hip Ratio: ${n(b.estimatedWaistToHipRatio, 2)}`
+        + ` · Fat-free body weight: ${n(b.fatFreeMassKg, 1)} kg.`,
       )
-      L.push(
-        `    - Mass · lean mass ${n(b.muscleMassKg, 1)} kg · skeletal muscle ${n(b.skeletalMuscleMassKg, 1)} kg · `
-        + `fat mass ${n(b.fatMassKg, 1)} kg · protein ${n(b.proteinMassKg, 1)} kg · `
-        + `bone mineral ${n(b.boneMineralKg, 2)} kg · body water ${n(b.waterMassKg, 1)} kg · `
-        + `fat-free mass ${n(b.fatFreeMassKg, 1)} kg · est. waist:hip ${n(b.estimatedWaistToHipRatio, 2)}`,
-      )
+    } else {
+      // A day with no full reading still says what happened to the weigh-in —
+      // "skipped, as planned" and "never opened the app" are different facts.
+      L.push(`    - Weight Data: ${weighIn(d.weightKg, d.weighInSkipReason)}`)
     }
+
+    // ── The session(s), inside the day ──
+    for (const s of sessionsByDate.get(d.date) ?? []) {
+      L.push('')
+      L.push(`    - **Session${s.sessionNumber != null ? ` #${s.sessionNumber}` : ''}: ${s.label}**`)
+      // Volume · sets · failures · time · kcal · avg HR · PRs · effort, in one
+      // labelled run. Every segment is printed even when empty: a missing one is
+      // indistinguishable from a session logged at zero.
+      L.push(`        - Session Metadata: Duration: ${n(s.durationMin)} Minutes`
+        + ` · Volume: ${exact(s.volumeKg)} kg`
+        + ` · Sets: ${n(s.setCount)}${s.failureSets ? ` (${n(s.failureSets)} to failure)` : ''}`
+        + ` · Calories: ${n(s.caloriesBurned)} kcal${s.caloriesEstimated ? ' [Estimated]' : ''}`
+        + ` · Avg HR: ${s.avgBpm != null ? `${n(s.avgBpm)}${s.avgBpmEstimated ? ' [Estimated]' : ''}` : DASH}`
+        + ` · PRs: ${s.prs.length}`
+        + ` · Effort: ${s.sessionRpe != null ? `${n(s.sessionRpe, 1)}/10 CR10` : 'Not reported'}`)
+      for (const e of s.exercises) {
+        L.push(`        - **${e.name}**${e.repWindow ? ` _(target ${e.repWindow})_` : ''}:`)
+        // One set per line. The old single-line form packed a whole exercise
+        // into a bespoke notation (`60kg × 12,11,10`, `11@8.5`) a reader had to
+        // decode before they could read it.
+        for (const line of setDetail(e.sets, e.name)) L.push(`            - ${line}`)
+      }
+      if (s.prs.length) {
+        L.push('        - PRs:')
+        // A record set under a declared context is STILL A RECORD — PR detection
+        // deliberately ignores every gating flag, and suppressing one here would
+        // repeat that mistake downstream. It is tagged, because "he hit a 1RM on
+        // day three of the flu" is the most interesting fact on the page and
+        // reads as an ordinary Tuesday without the tag.
+        const dayContext = contextFromDayLabel(d.nutritionException)
+        const tag = dayContext === 'normal' ? '' : ` _(under ${CONTEXT_META[dayContext].label})_`
+        for (const p of s.prs) {
+          const timed = isTimedExercise(p.name)
+          /* ── THE AXIS IS THE LABEL OF ITS OWN VALUE ──
+             Naming the axes and then listing the numbers separately printed
+             each record twice — "— Volume, 1RM — Volume: 440, 1RM: 54.67 kg".
+             The axis names ARE the labels, so where an axis has a number it
+             carries it, and where it does not (a Weight or Reps record, whose
+             value is the lift already printed to the left) it stands alone. */
+          const axes = p.axes.map((a) => {
+            const label = prAxisLabel(a, timed)
+            if (a === 'volume' && p.volumeKg != null) return `${label}: ${exact(p.volumeKg)} kg`
+            if (a === 'e1rm' && p.e1rmKg != null) return `${label}: ${n(p.e1rmKg, 2)} kg`
+            return label
+          })
+          L.push(`            - **${p.name}** ${formatSet(p.weightKg, p.reps, { timed })}`
+            + `${axes.length ? ` — ${axes.join(', ')}` : ''}${tag}`)
+        }
+      }
+    }
+
+    // ── The walk ──
     for (const c of cardioByDate.get(d.date) ?? []) {
-      // EVERY metric is named, EVERY time. This used to drop absent fields from
-      // the line, which reads fine until you compare two walks: one showing
-      // "avg HR 112" and one not, with no way to tell whether the second had no
-      // heart-rate reading or whether the exporter simply didn't carry it. An
-      // em-dash says "not recorded" — which is information — while a 0 would be
-      // a lie, and printing zeros is still forbidden.
+      // EVERY metric is named, EVERY time. This used to drop absent fields,
+      // which reads fine until you compare two walks: one showing "avg HR 112"
+      // and one not, with no way to tell whether the second had no heart-rate
+      // reading or the exporter simply didn't carry it. An em-dash says "not
+      // recorded" — which is information — while a 0 would be a lie.
       const pace = paceMinPerKm(c.distanceM, c.durationMin)
       const bits = [
         `time ${c.durationMin != null ? `${n(c.durationMin)} min` : DASH}`,
@@ -1136,80 +1268,23 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
         `avg HR ${c.avgHr != null ? n(c.avgHr) : DASH}`,
         `effort ${c.effort != null ? `${n(c.effort, 1)}/10` : DASH}`,
       ].join(' · ')
-      L.push(`    - ${cardioLabel(c.kind)} · ${bits} (Already accounted for in daily steps and calories)`)
-    }
-  }
-  L.push('')
-
-  // "Week aggregates" and "vs previous week" USED to sit here. Both were
-  // derived: every number in them is a sum or a difference of the daily rows
-  // already printed above. Pre-chewing the data invites the reader to trust the
-  // summary over the source, and a stale aggregate is worse than none.
-
-  // ── Sessions, with every set ──
-  L.push('## Sessions')
-  L.push('')
-  if (!sessions.length) L.push('_None logged this week._')
-  for (const s of sessions) {
-    L.push(`### ${s.date} · ${s.label}`)
-    // Volume · sets · failures · time · kcal burned · avg HR — all metadata.
-    L.push(`${exact(s.volumeKg)} kg volume · ${n(s.setCount)} sets · ${n(s.failureSets)} to failure`
-      + ` · ${n(s.durationMin)} min · ${n(s.caloriesBurned)} kcal${s.caloriesEstimated ? ' [Estimated]' : ''}`
-      + `${s.avgBpm != null ? ` · avg HR ${n(s.avgBpm)}${s.avgBpmEstimated ? ' [Estimated]' : ''}` : ''}`
-      // Borg CR10 — the subjective cost of the session, next to its objective cost.
-      // Always printed. A missing segment is indistinguishable from a session
-      // logged at effort 0, so the absence is stated rather than implied.
-      + ` · effort ${s.sessionRpe != null ? `${n(s.sessionRpe, 1)}/10 CR10` : 'Not reported'}`)
-    L.push('')
-    for (const e of s.exercises) {
-      L.push(`- **${e.name}**${e.repWindow ? ` _(target ${e.repWindow})_` : ''}:`)
-      // One set per line, nested under the movement. See `setDetail`: the old
-      // single-line form packed a whole exercise into a bespoke notation
-      // (`60kg × 12,11,10`, `11@8.5`) that a reader had to decode before they
-      // could read it.
-      for (const line of setDetail(e.sets, e.name)) L.push(`    - ${line}`)
-    }
-    if (s.prs.length) {
-      // No est-1RM VALUE — the raw lift only. The 1RM AXIS is named, because
-      // "which record" is not the same claim as "what the estimate was".
-      //
-      // One line per movement, so a session's records read as a list rather
-      // than a run-on: "Hack Squat 55kg × 11 — Volume, 1RM".
-      L.push('- PRs:')
-      // A record set under a declared context is STILL A RECORD — PR detection
-      // deliberately ignores every gating flag, and suppressing one here would
-      // be the same mistake made downstream instead of upstream. It is tagged,
-      // because "he hit a 1RM on day three of the flu" is the most interesting
-      // fact on the page and reads as an ordinary Tuesday without the tag.
-      const dayContext = contextFromDayLabel(
-        days.find((d) => d.date === s.date)?.nutritionException,
-      )
-      const tag = dayContext === 'normal' ? '' : ` _(under ${CONTEXT_META[dayContext].label})_`
-      for (const p of s.prs) {
-        const timed = isTimedExercise(p.name)
-        const axes = p.axes.length
-          ? ` — ${p.axes.map((a) => prAxisLabel(a, timed)).join(', ')}`
-          : ''
-        L.push(`    - **${p.name}** ${formatSet(p.weightKg, p.reps, { timed })}${axes}${tag}`)
-      }
+      L.push('')
+      // The warning is OUT of its parentheses and emphasised. Parenthesised, it
+      // read as a footnote about provenance; it is in fact an instruction not to
+      // add these calories and steps to the day's totals, which a reader
+      // summing the document will otherwise do.
+      L.push(`    - Cardio: ${cardioLabel(c.kind)} · ${bits}`
+        + ' **(Already accounted for in daily steps and calories — do NOT add to the day.)**')
     }
     L.push('')
   }
 
-  /* ── MUSCLE VOLUME: SETS AND TONNAGE, TOGETHER ──
-     These were two sections about the same subject, separated by four others —
-     "Weekly volume vs target" here and "Volume by muscle group (kg)" buried
-     inside a "Weekly aggregates" block at the very bottom, past the trend
-     ledger. A reader asking "did my back get enough work?" had two answers to
-     find, in two places, in two units, with the DOMS list and the supplement
-     protocol in between.
-
-     They belong side by side: sets are the dose the program prescribes and
-     tonnage is the load that dose actually carried. The credit rule is
-     identical for both, and now it is stated once for both. */
-  L.push('## Muscle volume')
-  L.push('')
-  L.push('### Sets per muscle vs target')
+  /* ── SETS PER MUSCLE VS TARGET ──────────────────────────────────────────────
+     Vertical, one muscle per line: this is a list of sixteen comparisons and it
+     was being read as prose. The tonnage half moved to the aggregates block at
+     the foot of the document — sets are the DOSE the programme prescribes and
+     belong beside the week's training; kilograms are an aggregate. */
+  L.push('## Sets Targets')
   L.push('')
   for (const m of volumeByMuscle) {
     // ONE grading rule, shared with the app (see landmarks.volumeZone): only the
@@ -1218,65 +1293,104 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
     // disagreeing about the same week.
     const status = m.target <= 0 ? '—'
       : ZONE_WORD[volumeZone(m.sets, m.target, m.directSets ?? m.sets)]
-    // The split is only printed where there IS indirect work, so an isolation
-    // muscle's line stays a plain count.
     const split = m.indirectSets != null && m.indirectSets > 0 && m.directSets != null
       ? ` (${m.directSets} direct + ${m.indirectSets} indirect)`
       : ''
-    L.push(`- ${m.muscle}: ${m.sets} / ${m.target} sets${split} — ${status}`)
+    L.push(`- ${m.muscle}: ${m.sets}/${m.target}${split} — ${status}`)
   }
   L.push('')
-
-  // ── Tonnage per muscle, directly under the set counts ──
-  {
-    const tonnage = input.tonnageByMuscle ?? []
-    const totalVolume = sum(sessions.map((s) => s.volumeKg))
-    if (totalVolume != null) {
-      L.push('### Volume by muscle group (kg)')
-      L.push('')
-      L.push(`- **Total volume:** ${exact(totalVolume)} kg across ${sessions.length}`
-        + ` session${sessions.length === 1 ? '' : 's'}`)
-      for (const t of tonnage) {
-        const assisted = t.directKg != null && t.directKg < t.volumeKg
-          ? ` (${exact(t.directKg)} direct)`
-          : ''
-        L.push(`- ${t.muscle}: ${exact(t.volumeKg)} kg${assisted}`)
-      }
-      if (tonnage.length) {
-        // Said out loud because the arithmetic invites the opposite assumption.
-        // The RULE itself is stated once below, for both sub-sections — this
-        // note only has to warn about the consequence.
-        L.push('')
-        L.push('_These rows sum to MORE than the total above: the same kilogram'
-          + ' is counted against every muscle that moved it. Unilateral pairs are'
-          + ' scored at the weaker side, identically to the session total._')
-      }
-      L.push('')
-    }
-  }
-
-  // ── The credit rule, once, for both sections above ──
-  // SHORTENED and GENERICISED. It used to work through named examples — an RDL
-  // paying hamstrings in full and glutes at half, a row paying back and biceps —
-  // which is three sentences spent teaching two movements rather than stating a
-  // rule that governs every movement in the report.
   L.push('_A set credits 1.0 to each muscle a movement directly trains and 0.5 to'
     + ' each it assists. Half sets are real and are not rounded away. Targets are'
     + ' DIRECT-set landmarks, so the verdict is asymmetric on purpose: assistance'
     + ' can lift a muscle out of UNDER, but only direct work can put one OVER._')
   L.push('')
 
-  /* ── NUTRITION & ENERGY ──
-     The balance used to be the second bullet of a "Weekly aggregates" block at
-     the very bottom of the document, under the trend ledger, sharing a heading
-     with muscle tonnage and a step average. It is the answer to the question a
-     cut is actually run on and it had no section of its own. */
+  // ── Soreness ──
+  if (doms.length) {
+    const label = ['none', 'mild', 'moderate', 'severe']
+    L.push('## DOMS (soreness, 0–3)')
+    L.push('')
+    for (const d of doms) {
+      L.push(`- ${d.date} · ${d.muscle}: ${d.severity} (${label[d.severity] ?? d.severity})`)
+    }
+    L.push('')
+  }
+
+  // ── Supplements protocol (ONE list) ──
+  const protocol = input.supplementProtocol
+  if (protocol?.length) {
+    L.push('## Supplements protocol')
+    L.push('')
+    for (const s of consolidateSupplements(protocol)) L.push(`- ${s}`)
+    L.push('')
+  }
+
+  // ── The cumulative ledger ──
+  // The raw week comes first and the trajectory follows it: a reader who starts
+  // with the trend anchors on it and reads the evidence to confirm.
+  if (input.ledger?.length) {
+    const label = input.weekLabel?.trim()
+    L.push(`## Week-over-Week Trends (${input.programLabel}${label ? ` · ${label}` : ''})`)
+    L.push('')
+    L.push(...trendLedger(input.ledger))
+    L.push('')
+    L.push('_Every week of the programme, oldest first. Averages skip days with no'
+      + ' entry rather than counting them as zero; volume and cardio are totals, so'
+      + ' a short week is genuinely a smaller number. Δ is the change in average'
+      + ' bodyweight from the row above, and the arrow shows direction only —'
+      + ' whether a move is progress depends on the phase._')
+    L.push('')
+  }
+
+  /* ── WEEKLY AGGREGATES ──────────────────────────────────────────────────────
+     Everything that is a sum, a mean or a shape across the seven days, gathered
+     under one heading instead of scattered across three.
+
+     These sit AFTER the daily log on purpose. Every number here is derived from
+     rows already printed above, and a reader who meets the totals first anchors
+     on them and reads the evidence to confirm rather than to check. The one
+     exception is the Weekly summary at the top, which is orientation — the means
+     a reader needs before they can tell whether a given Tuesday was unusual. */
+  L.push('## Weekly aggregates')
+  L.push('')
+
+  // ── Total volume, and where it landed ──
+  {
+    const tonnage = input.tonnageByMuscle ?? []
+    const totalVolume = sum(sessions.map((s) => s.volumeKg))
+    if (totalVolume != null) {
+      L.push('### Total volume')
+      L.push('')
+      L.push(`- **Total volume:** ${exact(totalVolume)} kg across ${sessions.length}`
+        + ` session${sessions.length === 1 ? '' : 's'}`)
+      L.push('')
+      if (tonnage.length) {
+        L.push('### Volume by muscle group (kg)')
+        L.push('')
+        for (const t of tonnage) {
+          const assisted = t.directKg != null && t.directKg < t.volumeKg
+            ? ` (${exact(t.directKg)} direct)`
+            : ''
+          L.push(`- ${t.muscle}: ${exact(t.volumeKg)} kg${assisted}`)
+        }
+        // Said out loud because the arithmetic invites the opposite assumption.
+        L.push('')
+        L.push('_These rows sum to MORE than the total above: the same kilogram'
+          + ' is counted against every muscle that moved it. Unilateral pairs are'
+          + ' scored at the weaker side, identically to the session total._')
+        L.push('')
+      }
+    }
+  }
+
+  // ── Energy balance ──
+  // The answer to the question a cut is actually run on.
   {
     const energy = energyBalance(days)
     if (energy.balanceKcal != null) {
       const deficit = energy.balanceKcal < 0
       const mag = Math.abs(energy.balanceKcal)
-      L.push('## Nutrition & Energy')
+      L.push('### Energy balance')
       L.push('')
       L.push(`- **Energy balance (estimated):** ${n(mag)} kcal ${deficit ? 'DEFICIT' : 'SURPLUS'}`
         + ` over ${energy.daysCounted} day${energy.daysCounted === 1 ? '' : 's'}`
@@ -1287,15 +1401,12 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
         + ' kcal/day, averaged)')
 
       /* ── WHICH DAYS WERE LEFT OUT, BY NAME ──
-         The arithmetic here was already right — intake − (BMR + active + TEF),
-         both sides required per day so a half-logged day cannot masquerade as a
+         The arithmetic was already right — intake − (BMR + active + TEF), both
+         sides required per day so a half-logged day cannot masquerade as a
          1,900 kcal deficit. What it did not do was say WHICH days it dropped.
-         "over 5 days" in a seven-day week is a fact about the estimate that the
+         "over 5 days" in a seven-day week is a fact about the estimate the
          reader cannot act on without knowing whether the missing two were rest
-         days or the two biggest sessions of the week.
-
-         An estimate the reader can audit is a different object from a number
-         that merely admits to being an estimate. */
+         days or the two biggest sessions of the week. */
       const counted = new Set(energy.countedDates)
       const skipped = days.filter((d) => !counted.has(d.date))
       if (skipped.length) {
@@ -1316,15 +1427,12 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
     }
   }
 
-  /* ── CARDIO & ACTIVITY ──
-     Steps and the daily shape, promoted out of the same bottom-of-document
-     block. Both describe movement rather than lifting, and neither had anything
-     to do with the tonnage rows they were sharing a heading with. */
+  // ── Steps, and the week's shape ──
   {
     const stepDays = days.filter((d) => d.steps != null && Number.isFinite(d.steps))
     const avgSteps = meanOf(days.map((d) => d.steps))
 
-    L.push('## Cardio & Activity')
+    L.push('### Steps & daily shape')
     L.push('')
     // Spelled out because the question was asked directly: the average is over
     // every day that logged a step count. It is read from the day's own step
@@ -1335,7 +1443,6 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
       + ` day${stepDays.length === 1 ? '' : 's'} with a logged count`
       + ' (every such day counts, cardio session or not)')
 
-    // ── Daily shape ──
     // The numbers above are the week's totals; these are its SHAPE. 22 000 kg
     // spread evenly and 22 000 kg carried by one enormous Monday are different
     // weeks that summarise identically, and seven glyphs say which it was
@@ -1363,64 +1470,6 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
     L.push('')
   }
 
-  // ── Soreness ──
-  if (doms.length) {
-    const label = ['none', 'mild', 'moderate', 'severe']
-    L.push('## DOMS (soreness, 0–3)')
-    L.push('')
-    for (const d of doms) {
-      L.push(`- ${d.date} · ${d.muscle}: ${d.severity} (${label[d.severity] ?? d.severity})`)
-    }
-    L.push('')
-  }
-
-  // Body composition is nested under each weigh-in day in "## Days" (no table).
-
-  // ── Supplements protocol (ONE list) ──
-  const protocol = input.supplementProtocol
-  if (protocol?.length) {
-    L.push('## Supplements protocol')
-    L.push('')
-    for (const s of consolidateSupplements(protocol)) L.push(`- ${s}`)
-    L.push('')
-  }
-
-  // ── The cumulative ledger (LAST, on purpose) ──
-  // The raw week comes first and the trajectory closes it: a reader who starts
-  // with the trend anchors on it and reads the evidence to confirm. Sitting at
-  // the bottom, this is context for everything already read rather than a
-  // verdict announced ahead of it.
-  if (input.ledger?.length) {
-    const label = input.weekLabel?.trim()
-    L.push(`## Week-over-Week Trends (${input.programLabel}${label ? ` · ${label}` : ''})`)
-    L.push('')
-    L.push(...trendLedger(input.ledger))
-    L.push('')
-    L.push('_Every week of the programme, oldest first. Averages skip days with no'
-      + ' entry rather than counting them as zero; volume and cardio are totals, so'
-      + ' a short week is genuinely a smaller number. Δ is the change in average'
-      + ' bodyweight from the row above, and the arrow shows direction only —'
-      + ' whether a move is progress depends on the phase._')
-    L.push('')
-  }
-
-  // ── Previous week, verbatim ──
-  // LAST of the current week's own content, so nothing above it is displaced.
-  // A horizontal rule and an unmistakable heading, because the failure mode of
-  // pasting two weeks into one payload is a reader that averages them together.
-  if (input.previousWeekMarkdown?.trim()) {
-    L.push('---')
-    L.push('')
-    L.push('# PREVIOUS WEEK REFERENCE (For AI Context)')
-    L.push('')
-    L.push('_The complete export for the week before this one, unmodified. It is'
-      + ' CONTEXT for the week above, not part of it — do not merge the two when'
-      + ' computing this week\'s numbers._')
-    L.push('')
-    L.push(input.previousWeekMarkdown.trim())
-    L.push('')
-  }
-
   // ── Provenance ──
   // The absolute last lines, so they govern everything above them. Verbatim and
   // hardcoded on purpose: standing statements about the instrument and about
@@ -1429,13 +1478,14 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
   L.push('')
   L.push(UNILATERAL_VOLUME_NOTE)
   L.push('')
+  L.push(EPLEY_NOTE)
+  L.push('')
   L.push(APPLE_WATCH_DISCLAIMER)
   L.push('')
   // ── THE VERY LAST LINE OF THE DOCUMENT ──
   // It points at something OUTSIDE this payload — the prior week's report,
   // pasted alongside by hand — so it is the one statement that has to survive
-  // being read last. Sitting third from the end, under two notes about how the
-  // numbers above were computed, it read as another methodology footnote.
+  // being read last.
   L.push(priorReportNote(input.weekLabel))
 
   return L.join('\n')
@@ -1491,6 +1541,20 @@ export const UNILATERAL_VOLUME_NOTE =
  * device estimate rather than a measured burn. Stating it once, last, is what
  * lets the numbers above be printed plainly.
  */
+/**
+ * The estimator behind every "1RM:" figure in this document.
+ *
+ * The PR lines print the estimate's VALUE now, not only the name of the axis it
+ * fell on, and a bare number invites the reader to compare it with Hevy's —
+ * which is a different formula. Stating the method once, at the foot, is what
+ * makes the numbers above safe to read.
+ */
+export const EPLEY_NOTE =
+  '*Note: every "1RM" here is an ESTIMATE from the Epley formula '
+  + '(weight × (1 + reps/30)), not a lift that was performed. Hevy estimates it '
+  + 'differently, so the two will not agree exactly. Unloaded work has no 1RM '
+  + 'estimate at all and shows none.*'
+
 export const APPLE_WATCH_DISCLAIMER =
   '*Note: Heart rate, calories, and steps data are sourced from the Apple Watch'
   + ' and may not be entirely accurate.*'

@@ -20,13 +20,14 @@ const day = (date: string, weekdayLabel: string, o: Partial<ExportDay> = {}): Ex
   date, weekdayLabel, isTrainingDay: false,
   weightKg: null, calories: null, proteinG: null, carbsG: null, fatG: null,
   steps: null, distanceM: null, trainingMin: null, sleepMin: null, deepMin: null, remMin: null,
-  restingHr: null, hrvMs: null, waterMl: null, supplementsTaken: null,
+  restingHr: null, hrvMs: null, wristTempDeltaC: null, bloodOxygenPct: null,
+  waterMl: null, supplementsTaken: null,
   activeKcal: null, bmrKcal: null, weighInSkipReason: null,
   nutritionException: null, nutritionEstimated: false, ...o,
 })
 
 const session: ExportSession = {
-  date: '2026-08-17', label: 'Upper A', volumeKg: 5000, setCount: 18, failureSets: 1,
+  date: '2026-08-17', sessionNumber: 12, label: 'Upper A', volumeKg: 5000, setCount: 18, failureSets: 1,
   durationMin: 60, avgBpm: 120, caloriesBurned: 400, sessionRpe: 8,
   exercises: [{
     name: 'Chest Press', repWindow: '8–12', topKg: 60,
@@ -69,37 +70,46 @@ describe('the document order', () => {
       '## Targets & Levers',
       '## Weekly summary',
       '## Days',
-      '## Sessions',
-      '## Muscle volume',
-      '## Nutrition & Energy',
-      '## Cardio & Activity',
+      '## Sets Targets',
       '## DOMS',
       '## Supplements protocol',
       '## Week-over-Week Trends',
+      '## Weekly aggregates',
     ].map((h) => at(out, h))
     expect(order).toEqual([...order].sort((a, b) => a - b))
   })
 
-  it('puts the two muscle-volume units next to each other, under one heading', () => {
+  it('has no separate Sessions section — the day owns its session', () => {
+    // `## Days` and `## Sessions` were two sections forty lines apart describing
+    // the same Monday. A session happens ON a day, against that day's sleep,
+    // food and weigh-in, so it is printed inside it.
     const out = buildWeeklyExport(full())
-    const sets = at(out, '### Sets per muscle vs target')
-    const kg = at(out, '### Volume by muscle group (kg)')
-    expect(sets).toBeLessThan(kg)
-    // Nothing may come between them — that separation is the whole complaint.
-    expect(out.slice(sets, kg)).not.toMatch(/^## /m)
+    expect(out).not.toContain('## Sessions')
+    const days = at(out, '## Days')
+    const next = out.indexOf('## Sets Targets')
+    expect(out.slice(days, next)).toContain('Session Metadata:')
   })
 
-  it('no longer has a "Weekly aggregates" grab-bag', () => {
-    // It held tonnage, the energy balance, the step average and the sparklines —
-    // four unrelated subjects under one heading, below the trend ledger.
-    expect(buildWeeklyExport(full())).not.toContain('## Weekly aggregates')
+  it('gathers every week-spanning total under one aggregates heading', () => {
+    // The reverse of the 2026-08-03 split: tonnage, the energy balance and the
+    // step average are all sums over the same seven days, and each had grown its
+    // own top-level heading between the daily log and the trend table.
+    const out = buildWeeklyExport(full())
+    const agg = at(out, '## Weekly aggregates')
+    expect(out.indexOf('**Total volume:**')).toBeGreaterThan(agg)
+    expect(out.indexOf('**Energy balance (estimated):**')).toBeGreaterThan(agg)
+    expect(out.indexOf('**Steps (avg/day):**')).toBeGreaterThan(agg)
+    expect(out.indexOf('**Daily shape**')).toBeGreaterThan(agg)
+    expect(out).not.toContain('## Nutrition & Energy')
+    expect(out).not.toContain('## Cardio & Activity')
   })
 
-  it('gives the energy balance and the step average their own sections', () => {
+  it('keeps the aggregates BELOW the evidence they are derived from', () => {
+    // Every number in that block is a sum of rows already printed. A reader who
+    // meets the totals first anchors on them and reads the daily log to confirm
+    // rather than to check.
     const out = buildWeeklyExport(full())
-    expect(out.indexOf('**Energy balance (estimated):**')).toBeGreaterThan(at(out, '## Nutrition & Energy'))
-    expect(out.indexOf('**Steps (avg/day):**')).toBeGreaterThan(at(out, '## Cardio & Activity'))
-    expect(out.indexOf('**Daily shape**')).toBeGreaterThan(at(out, '## Cardio & Activity'))
+    expect(at(out, '## Days')).toBeLessThan(at(out, '## Weekly aggregates'))
   })
 })
 
@@ -109,10 +119,17 @@ describe('the closing notes', () => {
     expect(out.endsWith('*Note: Week 6 report is provided manually for reference and comparison.*')).toBe(true)
   })
 
-  it('keeps the two methodology notes above it', () => {
+  it('keeps the methodology notes above it', () => {
     const out = buildWeeklyExport(full())
-    expect(out.indexOf('*Note: Unilateral')).toBeLessThan(out.indexOf('*Note: Heart rate'))
+    expect(out.indexOf('*Note: Unilateral')).toBeLessThan(out.indexOf('*Note: every "1RM"'))
+    expect(out.indexOf('*Note: every "1RM"')).toBeLessThan(out.indexOf('*Note: Heart rate'))
     expect(out.indexOf('*Note: Heart rate')).toBeLessThan(out.indexOf('is provided manually'))
+  })
+
+  it('names Epley, because the PR lines now print the estimate itself', () => {
+    // A bare "1RM: 53.73 kg" invites comparison with Hevy's figure, which is a
+    // different formula. Printing the value obliges the document to say how.
+    expect(buildWeeklyExport(full())).toContain('ESTIMATE from the Epley formula')
   })
 })
 

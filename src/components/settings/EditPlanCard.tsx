@@ -31,6 +31,25 @@ import { EMERALD, GOLD, MUTED, OXIDE } from '@/lib/theme/palette'
  * Picking a rung fills the fields; typing in a field selects Custom. There is no
  * hidden state where the pills say Lever 1 and the numbers say something else —
  * the selection always describes what is in the inputs.
+ *
+ * ── IT IS NOW THE ONLY TARGETS EDITOR (2026-08-22) ───────────────────────────
+ * Settings used to carry three cards that overlapped: this one, "Nutrition
+ * Goals" (the same four macros) and "Activity & Recovery Goals" (the same step
+ * goal, plus sleep, active calories and water). The duplication was not merely
+ * untidy — the two copies disagreed about how to WRITE.
+ *
+ * This card stages behind a Save button because these numbers regrade the day.
+ * The other two committed on blur, and "Activity & Recovery" wrote `steps_goal`
+ * into `user_goals` while touching neither `active_lever` nor
+ * `plan_phase_goals` — so editing your step target there left this card showing
+ * a rung whose step figure the row no longer held. One editor, one write path,
+ * one answer.
+ *
+ * Sleep, active calories and water came across with it. They are NOT lever
+ * fields — `LeverGoals` covers calories, the three macros and steps, and nothing
+ * else — so picking a rung deliberately leaves them alone. They are staged and
+ * saved alongside because they belong to the same decision, not because a rung
+ * has an opinion about them.
  */
 
 export interface PlanNumbers {
@@ -41,8 +60,27 @@ export interface PlanNumbers {
   steps_goal: number
 }
 
-export function EditPlanCard({ current, activeLever, planLabel, phaseLabel, saving, onSave }: {
+/**
+ * The targets a rung does not govern.
+ *
+ * Separate from `PlanNumbers` on purpose: `applyLever` replaces exactly the five
+ * fields above and returns everything else untouched. Folding these into the
+ * same object would invite a future `pick()` to overwrite your sleep target
+ * because Lever 2 was selected, which no rung has ever claimed to do.
+ */
+export interface RecoveryNumbers {
+  sleep_goal_hours: number
+  active_cal_goal: number
+  water_goal_ml: number
+}
+
+export function EditPlanCard({
+  current, recovery, activeLever, planLabel, phaseLabel, phaseBadge, saving, onSave,
+}: {
   current: PlanNumbers
+  recovery: RecoveryNumbers
+  /** The derived-phase chip, rendered by the page that knows the phase rules. */
+  phaseBadge?: React.ReactNode
   /**
    * The rung IN FORCE — the stored `user_goals.active_lever` when there is one,
    * else the one `LEVER_SCHEDULE` puts on today. The schedule fallback matters:
@@ -54,7 +92,7 @@ export function EditPlanCard({ current, activeLever, planLabel, phaseLabel, savi
   planLabel?: string
   phaseLabel?: string
   saving: boolean
-  onSave: (next: PlanNumbers, lever: LeverId) => void | Promise<void>
+  onSave: (next: PlanNumbers, rec: RecoveryNumbers, lever: LeverId) => void | Promise<void>
 }) {
   // The fields SHOW the rung in force, not whatever `user_goals` happens to
   // hold. A rung that arrived from the schedule has never been written to that
@@ -70,24 +108,29 @@ export function EditPlanCard({ current, activeLever, planLabel, phaseLabel, savi
     }
     : current
   const [draft, setDraft] = useState<PlanNumbers>(seedNumbers)
+  const [rec, setRec] = useState<RecoveryNumbers>(recovery)
   const [lever, setLever] = useState<LeverId>(activeLever ?? 'custom')
 
   // Re-seed when the row finally lands (or another device changes it) — but only
   // while the form is CLEAN, or a slow query would wipe an edit in progress.
   const currentKey = JSON.stringify(seedNumbers)
+  const recKey = JSON.stringify(recovery)
   const dirty = useMemo(
-    () => JSON.stringify(draft) !== currentKey || lever !== (activeLever ?? 'custom'),
-    [draft, currentKey, lever, activeLever],
+    () => JSON.stringify(draft) !== currentKey
+      || JSON.stringify(rec) !== recKey
+      || lever !== (activeLever ?? 'custom'),
+    [draft, currentKey, rec, recKey, lever, activeLever],
   )
   const dirtyRef = dirty
   useEffect(() => {
     if (dirtyRef) return
     setDraft(JSON.parse(currentKey) as PlanNumbers)
+    setRec(JSON.parse(recKey) as RecoveryNumbers)
     setLever(activeLever ?? 'custom')
     // `dirtyRef` deliberately excluded: this must react to the ROW changing, not
     // to the form becoming dirty (which would re-seed away the user's typing).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentKey, activeLever])
+  }, [currentKey, recKey, activeLever])
 
   const pick = (id: LeverId) => {
     const rung = LEVERS.find((l) => l.id === id)
@@ -119,11 +162,14 @@ export function EditPlanCard({ current, activeLever, planLabel, phaseLabel, savi
   return (
     <Surface variant="band" measure="grid" pad="snug" className="space-y-3">
       <div>
-        <h2 className="font-semibold text-text">Cut Levers</h2>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="font-semibold text-text">Targets</h2>
+          {phaseBadge}
+        </div>
         <p className="text-xs text-muted mt-0.5">
-          The rung of the cut, or your own numbers. Nothing here applies until you
-          save — these targets regrade the day, and they save straight onto the
-          active plan and phase.
+          Every goal in one place — the rung of the cut, or your own numbers.
+          Nothing here applies until you save: these targets regrade the day, and
+          they save straight onto the active plan and phase.
         </p>
       </div>
 
@@ -187,11 +233,39 @@ export function EditPlanCard({ current, activeLever, planLabel, phaseLabel, savi
         {gap === 0 ? ' — exact.' : ` — ${gap > 0 ? '+' : '−'}${Math.abs(gap)} against the calorie target.`}
       </p>
 
+      {/* ── Recovery & hydration ──
+          Under the same Save button, above the same hairline, but visibly a
+          separate group: no rung moves these, and a reader who has just watched
+          four numbers change by clicking "Lever 2" needs to see where the rung's
+          reach stops. */}
+      <div className="pt-3 border-t border-white/[0.06]">
+        <span className="block text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: MUTED }}>
+          Recovery &amp; hydration
+        </span>
+        <div className="grid grid-cols-3 gap-2">
+          <Field
+            label="Sleep" unit="h" value={rec.sleep_goal_hours} step={0.5}
+            onChange={(v) => setRec((r) => ({ ...r, sleep_goal_hours: v }))}
+          />
+          <Field
+            label="Active" unit="kcal" value={rec.active_cal_goal} step={50}
+            onChange={(v) => setRec((r) => ({ ...r, active_cal_goal: v }))}
+          />
+          <Field
+            label="Water" unit="ml" value={rec.water_goal_ml} step={100}
+            onChange={(v) => setRec((r) => ({ ...r, water_goal_ml: v }))}
+          />
+        </div>
+        <p className="text-[11px] text-muted mt-2 leading-snug">
+          Not part of a rung — picking a lever leaves these where you set them.
+        </p>
+      </div>
+
       <div className="flex items-center gap-2">
         <button
           type="button"
           disabled={!dirty || saving}
-          onClick={() => void onSave(draft, lever)}
+          onClick={() => void onSave(draft, rec, lever)}
           className="btn-primary min-h-[44px] px-4 justify-center disabled:opacity-40"
         >
           <Check className="w-4 h-4" aria-hidden="true" />
@@ -208,7 +282,11 @@ export function EditPlanCard({ current, activeLever, planLabel, phaseLabel, savi
         {dirty && (
           <button
             type="button"
-            onClick={() => { setDraft(JSON.parse(currentKey) as PlanNumbers); setLever(activeLever ?? 'custom') }}
+            onClick={() => {
+              setDraft(JSON.parse(currentKey) as PlanNumbers)
+              setRec(JSON.parse(recKey) as RecoveryNumbers)
+              setLever(activeLever ?? 'custom')
+            }}
             className="min-h-[44px] px-3 rounded-xl text-xs text-muted hover:text-text flex items-center gap-1.5"
           >
             <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" /> Revert
@@ -248,7 +326,11 @@ function Field({ label, unit, value, step = 1, onChange }: {
           onChange={(e) => {
             setText(e.target.value)
             const n = Number(e.target.value)
-            if (Number.isFinite(n) && n >= 0) onChange(Math.round(n))
+            // A fractional STEP means fractional values are the point: rounding
+            // here turned a 7.5 h sleep target into 8 h the moment it was typed.
+            // Whole-number fields still round, so a stray "1885.4" cannot reach
+            // the calorie column.
+            if (Number.isFinite(n) && n >= 0) onChange(step < 1 ? n : Math.round(n))
           }}
           onBlur={() => setText(null)}
           className="helix-num w-full bg-transparent field-compact font-bold text-text tabular-nums outline-none min-w-0"

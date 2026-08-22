@@ -89,6 +89,7 @@ function dayBlock(out: string, date: string): string[] {
 describe('buildWeeklyExport', () => {
   const emptyDay = (date: string, weekdayLabel: string): ExportDay => ({
     date, weekdayLabel, isTrainingDay: false,
+    wristTempDeltaC: null, bloodOxygenPct: null,
     weightKg: null, calories: null, proteinG: null, carbsG: null, fatG: null,
     steps: null, distanceM: null, trainingMin: null,
     sleepMin: null, deepMin: null, remMin: null, restingHr: null, hrvMs: null,
@@ -111,7 +112,7 @@ describe('buildWeeklyExport', () => {
     ],
     sessions: [
       {
-        date: '2026-07-19', label: 'Upper A', volumeKg: 8240, setCount: 24,
+        date: '2026-07-19', sessionNumber: 9, label: 'Upper A', volumeKg: 8240, setCount: 24,
         failureSets: 1, durationMin: 68, avgBpm: 118, caloriesBurned: 512, sessionRpe: 8,
         exercises: [{
           name: 'Chest Press', repWindow: '10–12', topKg: 60,
@@ -127,7 +128,10 @@ describe('buildWeeklyExport', () => {
             { weightKg: 7.5, reps: 13, rpe: null, side: 'R', failure: true, pairId: 'p1' },
           ],
         }],
-        prs: [{ name: 'Chest Press', weightKg: 60, reps: 12, axes: ['weight', 'e1rm'] }],
+        prs: [{
+          name: 'Chest Press', weightKg: 60, reps: 12, axes: ['weight', 'e1rm'],
+          volumeKg: 720, e1rmKg: 84,
+        }],
       },
     ],
     volumeByMuscle: [
@@ -144,8 +148,12 @@ describe('buildWeeklyExport', () => {
   it('marks missing data as "—" instead of dropping the row or implying zero', () => {
     const out = buildWeeklyExport(input)
     // The empty day is still PRESENT, with every field named and dashed.
-    expect(out).toMatch(/\*\*Mon 2026-07-20\*\* · Rest\n {4}- Macros: — kcal/)
-    expect(out).toMatch(/Vitals: sleep — · RHR — · HRV —/)
+    expect(out).toMatch(/\*\*Mon 2026-07-20\*\* · Rest\n {4}- Sleep & Vitals: Sleep: —/)
+    expect(out).toMatch(/Sleep & Vitals: Sleep: — · HRV: — ms · Resting HR: — bpm/)
+    // The two vitals that were fetched-and-dropped (blood oxygen) or never
+    // fetched at all (wrist temperature) are named on every day now, dashed
+    // when absent — the whole point of adding them.
+    expect(out).toMatch(/Wrist Temp: — · Blood O2: —/)
     expect(out).toMatch(/—/)
     expect(out).not.toMatch(/\*\*Mon 2026-07-20\*\*.*0 kcal/)    // never fabricates a 0
   })
@@ -166,28 +174,32 @@ describe('buildWeeklyExport', () => {
     // The export now grades with the app's own `volumeZone` instead of its own
     // three-way comparison, so it says "building" where the Command Center says
     // building. 4 of 8 is half the target: short, but not the bottom band.
-    expect(out).toMatch(/- Biceps: 4 \/ 8 sets — building/)
+    expect(out).toMatch(/- Biceps: 4\/8 — building/)
   })
 
   it('nests body composition under the weigh-in day only when supplied', () => {
-    expect(buildWeeklyExport(input)).not.toMatch(/InBody/)
+    expect(buildWeeklyExport(input)).not.toMatch(/Body Fat Percentage/)
     const withBody = buildWeeklyExport({
       ...input,
       bodyComp: [{
         date: '2026-07-19', weightKg: 65.3, bmi: 22.4, bodyFatPct: 13.2, musclePercent: 46.1,
         waterPercent: 60.5, visceralFat: 6, bmr: 1620, boneMineral: 4.1,
         muscleMassKg: 30.1, fatFreeMassKg: 56.7,
-        fatMassKg: 8.6, proteinMassKg: 12.9, boneMineralKg: 2.81, waterMassKg: 39.5,
+        fatMassKg: 8.6, proteinMassKg: 12.9, proteinPercent: 19.7, boneMineralKg: 2.81, waterMassKg: 39.5,
         skeletalMuscleMassKg: 27.0, estimatedWaistToHipRatio: 0.8,
       }],
     })
-    // TWO lines now: the percentages the scale shows, then every compartment in
-    // absolute kg. A percentage of a falling bodyweight can rise while the
-    // tissue shrinks, so the masses are what a week-over-week read needs.
-    expect(withBody).toMatch(/InBody · weight 65\.3 kg · BMI 22\.4 · BF 13\.2% · muscle 46\.1% · water 60\.5% · visceral 6 · BMR 1620 · bone 4\.1%/)
-    expect(withBody).toMatch(/Mass · lean mass 30\.1 kg · skeletal muscle 27\.0 kg · fat mass 8\.6 kg · protein 12\.9 kg · bone mineral 2\.81 kg · body water 39\.5 kg · fat-free mass 56\.7 kg · est\. waist:hip 0\.80/)
-    // Skeletal muscle and lean mass are ~23 kg apart and never share a label.
-    expect(withBody).not.toMatch(/lean soft/i)
+    // ONE line, percentage-then-mass pair by pair, in the scale's own order —
+    // so a week-over-week read never has to multiply by a bodyweight that is
+    // itself moving.
+    expect(withBody).toMatch(/Weight Data: Weight: 65\.3 kg · BMI: 22\.4 · Body Fat Percentage: 13\.2% · Fat Mass: 8\.6 kg/)
+    expect(withBody).toMatch(/Muscle Percentage: 46\.1% · Muscle Mass \(Lean Soft Tissue\): 30\.1 kg/)
+    expect(withBody).toMatch(/Protein Percentage: 19\.7% · Protein Mass: 12\.9 kg/)
+    expect(withBody).toMatch(/Skeletal Muscle Mass: 27\.0 kg · Visceral Fat Rating: 6 · Basal Metabolic Rate: 1620/)
+    expect(withBody).toMatch(/Estimated Waist to Hip Ratio: 0\.80 · Fat-free body weight: 56\.7 kg\./)
+    // THREE numbers on this line could answer to "muscle mass" and they are
+    // ~23 kg apart. The gloss is what stops the report contradicting itself.
+    expect(withBody).toMatch(/Muscle Mass \(Lean Soft Tissue\)/)
     expect(withBody).not.toMatch(/W:H/)
   })
 
@@ -203,7 +215,7 @@ describe('buildWeeklyExport', () => {
     // Every requested metric, named, in a fixed order. Pace is DERIVED
     // (45 min ÷ 4.2 km = 10:43 /km), never a stored column.
     expect(withCardio).toMatch(
-      /Walk · time 45 min · distance 4\.20 km · pace 10:43 \/km · active 210 kcal · total 265 kcal · avg HR 112 · effort 4\.0\/10 \(Already accounted for in daily steps and calories\)/,
+      /Cardio: Walk · time 45 min · distance 4\.20 km · pace 10:43 \/km · active 210 kcal · total 265 kcal · avg HR 112 · effort 4\.0\/10 \*\*\(Already accounted for in daily steps and calories — do NOT add to the day\.\)\*\*/,
     )
   })
 
@@ -228,7 +240,7 @@ describe('buildWeeklyExport', () => {
   })
 
   it('carries the Borg CR10 session effort onto the session line', () => {
-    expect(buildWeeklyExport(input)).toMatch(/effort 8\.0\/10 CR10/)
+    expect(buildWeeklyExport(input)).toMatch(/Effort: 8\.0\/10 CR10/)
   })
 
   it('lists EVERY working set, one per numbered line — not just the top set', () => {
@@ -241,7 +253,9 @@ describe('buildWeeklyExport', () => {
 
   it('carries per-workout volume, failures, time and kcal burned', () => {
     const out = buildWeeklyExport(input)
-    expect(out).toMatch(/8240 kg volume · 24 sets · 1 to failure · 68 min · 512 kcal/)
+    expect(out).toMatch(
+      /Session Metadata: Duration: 68 Minutes · Volume: 8240 kg · Sets: 24 \(1 to failure\) · Calories: 512 kcal/,
+    )
   })
 
   it('marks a set taken to failure and NEVER emits an estimated 1RM', () => {
@@ -255,16 +269,22 @@ describe('buildWeeklyExport', () => {
     expect(out).toMatch(/Set 1: L 7\.5 kg × 15 · R 7\.5 kg × 13 \(to failure\)/)
   })
 
-  it('names the PRs (raw lift, no 1RM VALUE) rather than counting them', () => {
+  it('names the PRs, and each axis carries its own value', () => {
+    // The axis names ARE the labels: a Weight record's value is the lift
+    // already printed to its left and stands alone, while the 1RM axis carries
+    // the estimate a reader would otherwise have to compute.
     const out = buildWeeklyExport(input)
     expect(out).toMatch(/- PRs:/)
-    expect(out).toMatch(/\*\*Chest Press\*\* 60kg × 12/)
+    expect(out).toMatch(/\*\*Chest Press\*\* 60kg × 12 — Weight, 1RM: 84\.00 kg/)
+    // Never both — the axis list and a separate value list printed each record
+    // twice ("— Volume, 1RM — Volume: 440, 1RM: 54.67 kg").
+    expect(out).not.toMatch(/— Weight, 1RM — /)
   })
 
   it('carries steps and recovery signals per day', () => {
     const out = buildWeeklyExport(input)
     expect(out).toMatch(/9200 steps/)
-    expect(out).toMatch(/RHR 48 · HRV 62/)           // RHR, HRV
+    expect(out).toMatch(/HRV: 62 ms · Resting HR: 48 bpm/)
   })
 
   // Active Energy is HealthKit-inflated, Score/Battery are HELIX's own derived
@@ -307,9 +327,10 @@ describe('buildWeeklyExport', () => {
     // would pass on four lines scattered through the document.
     expect(dayBlock(out, '2026-07-19')).toEqual([
       '- **Sun 2026-07-19** · Train · Upper A',
+      '    - Sleep & Vitals: Sleep: 9h 11m · HRV: 62 ms · Resting HR: 48 bpm · Wrist Temp: — · Blood O2: —',
       '    - Macros: 1940 kcal (172P / 190C / 54F) · water 3.0 L',
       '    - Activity: 9200 steps · 7.10 km · 68 min training',
-      '    - Vitals: sleep 9h11 · RHR 48 · HRV 62 · weight 65.3 kg',
+      '    - Weight Data: weight 65.3 kg',
     ])
   })
 
@@ -348,7 +369,7 @@ describe('buildWeeklyExport', () => {
     // A PR set on a declared day is still a PR, and is TAGGED rather than
     // suppressed — "he hit a record on the night out" is the interesting fact,
     // and it reads as an ordinary Sunday without the annotation.
-    expect(tagged).toMatch(/\*\*Chest Press\*\* 60kg × 12 — Weight, 1RM _\(under Event\)_/)
+    expect(tagged).toMatch(/\*\*Chest Press\*\* 60kg × 12 — Weight, 1RM: 84\.00 kg _\(under Event\)_/)
 
     // THE INVARIANT: forgiving the grade must not move a single aggregate. The
     // only differences between these two exports are the two annotations.
@@ -374,13 +395,13 @@ describe('buildWeeklyExport', () => {
       ...input,
       sessions: input.sessions.map((s) => ({ ...s, volumeKg: 8329.25 })),
     })
-    expect(precise).toMatch(/8329\.25 kg volume/)
+    expect(precise).toMatch(/Volume: 8329\.25 kg/)
     // A whole number stays whole — no cosmetic ".00".
     const whole = buildWeeklyExport({
       ...input,
       sessions: input.sessions.map((s) => ({ ...s, volumeKg: 8240 })),
     })
-    expect(whole).toMatch(/8240 kg volume/)
+    expect(whole).toMatch(/Volume: 8240 kg/)
   })
 
   it('renders ONE chronological supplements list, only when supplied', () => {
@@ -495,7 +516,7 @@ describe('buildWeeklyExport', () => {
       ...input,
       sessions: [{ ...input.sessions[0], sessionRpe: null }],
     })
-    expect(out).toMatch(/effort Not reported/)
+    expect(out).toMatch(/Effort: Not reported/)
   })
 
   it('includes soreness', () => {
@@ -520,6 +541,7 @@ describe('weeklySummary', () => {
     date: '2026-07-19', weekdayLabel: 'Sun', isTrainingDay: false, weightKg: null,
     calories: null, proteinG: null, carbsG: null, fatG: null, steps: null, distanceM: null,
     trainingMin: null, sleepMin: null, deepMin: null, remMin: null, restingHr: null,
+    wristTempDeltaC: null, bloodOxygenPct: null,
     hrvMs: null, waterMl: null, supplementsTaken: null, activeKcal: null, bmrKcal: null,
     weighInSkipReason: null, nutritionException: null, nutritionEstimated: false, ...o,
   })
@@ -611,6 +633,7 @@ describe('week-over-week ledger', () => {
     date: '2026-07-19', weekdayLabel: 'Sun', isTrainingDay: false, weightKg: null,
     calories: null, proteinG: null, carbsG: null, fatG: null, steps: null, distanceM: null,
     trainingMin: null, sleepMin: null, deepMin: null, remMin: null, restingHr: null,
+    wristTempDeltaC: null, bloodOxygenPct: null,
     hrvMs: null, waterMl: null, supplementsTaken: null, activeKcal: null, bmrKcal: null,
     weighInSkipReason: null, nutritionException: null, nutritionEstimated: false, ...o,
   })
@@ -798,6 +821,7 @@ describe('weekly aggregates · previous-week reference · disclaimer', () => {
     date: '2026-07-19', weekdayLabel: 'Sun', isTrainingDay: false, weightKg: null,
     calories: null, proteinG: null, carbsG: null, fatG: null, steps: null, distanceM: null,
     trainingMin: null, sleepMin: null, deepMin: null, remMin: null, restingHr: null,
+    wristTempDeltaC: null, bloodOxygenPct: null,
     hrvMs: null, waterMl: null, supplementsTaken: null, activeKcal: null, bmrKcal: null,
     weighInSkipReason: null, nutritionException: null, nutritionEstimated: false, ...o,
   })
@@ -818,13 +842,14 @@ describe('weekly aggregates · previous-week reference · disclaimer', () => {
       sessions: [session({ volumeKg: 3571.25 })],
       tonnageByMuscle: [{ muscle: 'Quads', volumeKg: 22000 }, { muscle: 'Chest', volumeKg: 15000 }],
     }))
-    // Sets-per-muscle and tonnage-per-muscle now sit under ONE heading, next
-    // to each other — they answer the same question in two units, and used to
-    // be four sections apart with the DOMS list in between.
-    expect(out).toMatch(/## Muscle volume/)
-    expect(out).toMatch(/### Sets per muscle vs target/)
+    // The two units are now split by WHAT THEY ARE, not merged by subject:
+    // sets are the DOSE the programme prescribes and sit with the week's
+    // training, kilograms are a sum over seven days and sit with the other
+    // aggregates. Both still say so under a heading that names the unit.
+    expect(out).toMatch(/## Sets Targets/)
     expect(out).toMatch(/### Volume by muscle group \(kg\)/)
-    expect(out.indexOf('### Sets per muscle')).toBeLessThan(out.indexOf('### Volume by muscle group'))
+    expect(out.indexOf('## Sets Targets')).toBeLessThan(out.indexOf('## Weekly aggregates'))
+    expect(out.indexOf('## Weekly aggregates')).toBeLessThan(out.indexOf('### Volume by muscle group'))
     expect(out).toMatch(/- Quads: 22000 kg/)
     expect(out).toMatch(/- Chest: 15000 kg/)
   })
@@ -960,28 +985,13 @@ describe('weekly aggregates · previous-week reference · disclaimer', () => {
     expect(out).not.toMatch(/PREVIOUS WEEK REFERENCE/)
   })
 
-  // The field is deprecated but still honoured, so an older caller does not
-  // silently lose its context block.
-  it('appends the previous week under an unmistakable heading', () => {
-    const out = buildWeeklyExport(base({ previousWeekMarkdown: '# WEEK 2026-07-12 → 2026-07-18\n\nprior data' }))
-    expect(out).toMatch(/# PREVIOUS WEEK REFERENCE \(For AI Context\)/)
-    expect(out).toMatch(/prior data/)
-    // Separated by a rule, and told not to merge the two.
-    expect(out).toMatch(/---\n\n# PREVIOUS WEEK REFERENCE/)
-    expect(out).toMatch(/do not merge the two/)
-  })
-
-  it('omits the reference entirely when there is no prior week', () => {
-    expect(buildWeeklyExport(base())).not.toMatch(/PREVIOUS WEEK REFERENCE/)
-  })
-
-  it('places the reference AFTER the current week, never inside it', () => {
-    const out = buildWeeklyExport(base({
-      sessions: [session()],
-      previousWeekMarkdown: 'prior data',
-    }))
-    expect(out.indexOf('## Sessions')).toBeLessThan(out.indexOf('PREVIOUS WEEK REFERENCE'))
-    expect(out.indexOf('## Weekly aggregates')).toBeLessThan(out.indexOf('PREVIOUS WEEK REFERENCE'))
+  it('has no second-week block at all — the field is gone, not merely unset', () => {
+    // `previousWeekMarkdown` was deprecated on 2026-08-19 when the export
+    // dropped to ONE week, and nothing has passed it since. The render branch
+    // outlived the caller by three months; it is deleted here so the document
+    // has exactly one shape.
+    expect(buildWeeklyExport(base({ sessions: [session()] })))
+      .not.toMatch(/PREVIOUS WEEK REFERENCE/)
   })
 
   /**
@@ -994,12 +1004,12 @@ describe('weekly aggregates · previous-week reference · disclaimer', () => {
    * every number above it; it just is not the final sentence.
    */
   it('closes with the prior-report note, absolutely last', () => {
-    const out = buildWeeklyExport(base({ weekLabel: 'Week 3', previousWeekMarkdown: 'prior data' }))
+    const out = buildWeeklyExport(base({ weekLabel: 'Week 3' }))
     expect(out.trimEnd().endsWith(
       '*Note: Week 3 report is provided manually for reference and comparison.*',
     )).toBe(true)
-    // After the previous week, so it governs both.
-    expect(out.indexOf('PREVIOUS WEEK REFERENCE')).toBeLessThan(out.indexOf('*Note: Heart rate'))
+    // Below the Apple Watch caveat, which still governs every number above it.
+    expect(out.indexOf('*Note: Heart rate')).toBeLessThan(out.indexOf('is provided manually'))
   })
 
   it('still carries the Apple Watch note, verbatim, immediately above it', () => {
@@ -1052,6 +1062,7 @@ describe('body rows, effort and sparklines', () => {
     date: '2026-07-19', weekdayLabel: 'Sun', isTrainingDay: false, weightKg: null,
     calories: null, proteinG: null, carbsG: null, fatG: null, steps: null, distanceM: null,
     trainingMin: null, sleepMin: null, deepMin: null, remMin: null, restingHr: null,
+    wristTempDeltaC: null, bloodOxygenPct: null,
     hrvMs: null, waterMl: null, supplementsTaken: null, activeKcal: null, bmrKcal: null,
     weighInSkipReason: null, nutritionException: null, nutritionEstimated: false, ...o,
   })
@@ -1083,19 +1094,22 @@ describe('body rows, effort and sparklines', () => {
       days: [day({ date: '2026-08-02', weekdayLabel: 'Sun' })],
       bodyComp: [body({ date: '2026-08-02', skeletalMuscleMassKg: 26.8, estimatedWaistToHipRatio: 0.8 })],
     }))
-    expect(out).not.toMatch(/InBody/)
-    expect(out).not.toMatch(/^ +Mass · /m)
+    expect(out).not.toMatch(/Body Fat Percentage/)
+    expect(out).not.toMatch(/Skeletal Muscle Mass:/)
     // The day line still tells the whole truth about the day.
     expect(out).toMatch(/weight — \[Skip: As Planned\]/)
   })
 
-  it('still prints both rows the moment a weight is present', () => {
+  it('still prints the reading the moment a weight is present', () => {
     const out = buildWeeklyExport(base({
       days: [day({ date: '2026-08-02', weekdayLabel: 'Sun', weightKg: 64.2 })],
       bodyComp: [body({ date: '2026-08-02', weightKg: 64.2, bodyFatPct: 17.3, skeletalMuscleMassKg: 26.8 })],
     }))
-    expect(out).toMatch(/InBody · weight 64\.2 kg/)
-    expect(out).toMatch(/Mass · lean mass — kg · skeletal muscle 26\.8 kg/)
+    expect(out).toMatch(/Weight Data: Weight: 64\.2 kg/)
+    // The absent compartments dash rather than vanish — an omitted field is
+    // indistinguishable from a zero to whoever reads this.
+    expect(out).toMatch(/Muscle Mass \(Lean Soft Tissue\): — kg/)
+    expect(out).toMatch(/Skeletal Muscle Mass: 26\.8 kg/)
   })
 
   it('does not suppress a genuine reading just because some fields are absent', () => {
@@ -1108,7 +1122,8 @@ describe('body rows, effort and sparklines', () => {
         muscleMassKg: 50.31, fatFreeMassKg: 53.15, skeletalMuscleMassKg: 26.6,
       })],
     }))
-    expect(out).toMatch(/InBody · weight 64\.5 kg · BMI 22\.3 · BF 17\.6% · muscle 78\.0%/)
+    expect(out).toMatch(/Weight Data: Weight: 64\.5 kg · BMI: 22\.3 · Body Fat Percentage: 17\.6%/)
+    expect(out).toMatch(/Muscle Percentage: 78\.0% · Muscle Mass \(Lean Soft Tissue\): 50\.3 kg/)
   })
 
   // ── §5b · effort ──
