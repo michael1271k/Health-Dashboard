@@ -71,13 +71,32 @@ export function SerwistRegister() {
         // removes the only copy of the app that can still render, and the
         // reload that follows has nothing to load. Gym wifi is exactly this.
         if (!navigator.onLine) return
-        localStorage.setItem(VERSION_FLAG, buildId)
         try {
           if ('caches' in window) {
             const keys = await caches.keys()
             await Promise.all(keys.map((k) => caches.delete(k)))
           }
         } catch { /* best-effort */ }
+        // ── RE-CHECK AFTER THE PURGE, NOT ONLY BEFORE IT ──────────────────
+        // `safeToReload()` was checked before the fetch above, and then two
+        // awaits ran: the version request and the cache purge. On a cold radio
+        // that is seconds, and iOS backgrounds an app inside it routinely. The
+        // reload then fired into a webview on its way out — the precise
+        // "blank on resume" this file's own docblock warns about — except now
+        // with every cache deleted, so there was nothing left to render when
+        // the user came back.
+        //
+        // The flag is also set LAST for the same reason. It used to be written
+        // before the purge, so a run that died between the two left the gate
+        // believing this build was already handled: caches gone, shell stale,
+        // and no retry on any future foreground. That is a permanently broken
+        // app, healed only by a reinstall.
+        //
+        // Bailing here is safe and self-healing: the caches are gone but the
+        // flag is unset, so the next visible foreground re-runs the whole gate
+        // and reloads properly.
+        if (!safeToReload()) return
+        try { localStorage.setItem(VERSION_FLAG, buildId) } catch { /* ignore */ }
         window.location.reload()
       } catch { /* offline — the SW keeps serving the consistent cached pair */ }
       finally { checking = false }

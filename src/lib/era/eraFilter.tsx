@@ -16,11 +16,10 @@ import { usePathname } from 'next/navigation'
 import { HELIX_CUT_START } from '@/lib/programs'
 import { PHASES, getWeekPhase } from '@/lib/phases'
 import { logicalTodayISO } from '@/lib/utils/day'
-
-const isoAddDays = (d: string, n: number) => {
-  const x = new Date(`${d}T12:00:00Z`); x.setUTCDate(x.getUTCDate() + n)
-  return x.toISOString().slice(0, 10)
-}
+// Was a module-private const with the SAME NAME and a byte-identical body as
+// the exported one. Two copies of date arithmetic is how two screens end up
+// disagreeing about which week it is.
+import { isoAddDays } from '@/lib/utils/week'
 
 export type EraFilter = 'all' | 'ppl' | 'axis'
 

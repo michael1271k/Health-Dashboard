@@ -23,16 +23,32 @@ import { useEffect, useState } from 'react'
  * state is genuinely zero-height, where a reserved box would create exactly the
  * gap the placeholder exists to prevent.
  */
+/**
+ * ── THE DELAY IS PAID ONCE PER LAUNCH, NOT ONCE PER NAVIGATION ──────────────
+ * `app/template.tsx` remounts the entire page subtree on every tab switch, so
+ * `useState(false)` meant every return to a tab re-paid the 200 ms skeleton
+ * before its charts could even begin mounting — the deferral was designed to
+ * keep heavy widgets off the FIRST paint, and instead it put a stall in front
+ * of every navigation for the rest of the session.
+ *
+ * The flag is module-level on purpose: it lives as long as the JS context, which
+ * is exactly the scope of "we have already got past the launch render". A real
+ * reload resets it, which is when the deferral is wanted again.
+ */
+let warmedUp = false
+
 export function DeferredMount({ children, minHeight = 120 }: { children: React.ReactNode; minHeight?: number }) {
-  const [ready, setReady] = useState(false)
+  const [ready, setReady] = useState(warmedUp)
   useEffect(() => {
+    if (warmedUp) return
     type IdleWindow = Window & { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void }
     const w = window as IdleWindow
+    const done = () => { warmedUp = true; setReady(true) }
     if (w.requestIdleCallback) {
-      const id = w.requestIdleCallback(() => setReady(true), { timeout: 1200 })
+      const id = w.requestIdleCallback(done, { timeout: 1200 })
       return () => w.cancelIdleCallback?.(id)
     }
-    const t = setTimeout(() => setReady(true), 200) // Safari/iOS: no rIC — see above
+    const t = setTimeout(done, 200) // Safari/iOS: no rIC — see above
     return () => clearTimeout(t)
   }, [])
   if (!ready) {

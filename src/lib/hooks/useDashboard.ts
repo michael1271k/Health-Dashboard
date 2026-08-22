@@ -104,10 +104,24 @@ export function useEnsureTodayScore(enabled = true) {
     // Kick it off AFTER first paint via requestIdleCallback so the score/battery
     // POST never competes with the launch render — the dashboard already paints
     // from the persisted cache, so nothing waits on this.
+    // CANCELLABLE. iOS has no `requestIdleCallback`, so the `setTimeout` branch
+    // is the real path on the primary target device — and it was never cleared.
+    // Unmount the dashboard inside those 400 ms (a tab switch does exactly that,
+    // since `template.tsx` remounts on every navigation) and the callback still
+    // fired, POSTing /api/compute-score from a page that no longer exists.
+    let idleHandle: number | null = null
+    let idleIsRic = false
     const onIdle = (cb: () => void) => {
-      const ric = (window as unknown as { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => void }).requestIdleCallback
-      if (typeof ric === 'function') ric(cb, { timeout: 2000 })
-      else setTimeout(cb, 400)
+      const w = window as unknown as {
+        requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number
+      }
+      if (typeof w.requestIdleCallback === 'function') {
+        idleIsRic = true
+        idleHandle = w.requestIdleCallback(cb, { timeout: 2000 })
+      } else {
+        idleIsRic = false
+        idleHandle = window.setTimeout(cb, 400)
+      }
     }
     let backfilled = false
     try { backfilled = sessionStorage.getItem('helix_backfilled') === '1' } catch {}
@@ -122,6 +136,11 @@ export function useEnsureTodayScore(enabled = true) {
     document.addEventListener('visibilitychange', onVisible)
     window.addEventListener('online', onOnline)
     return () => {
+      if (idleHandle != null) {
+        const w = window as unknown as { cancelIdleCallback?: (h: number) => void }
+        if (idleIsRic && typeof w.cancelIdleCallback === 'function') w.cancelIdleCallback(idleHandle)
+        else if (!idleIsRic) window.clearTimeout(idleHandle)
+      }
       document.removeEventListener('visibilitychange', onVisible)
       window.removeEventListener('online', onOnline)
     }

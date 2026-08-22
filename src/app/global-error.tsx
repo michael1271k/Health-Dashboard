@@ -47,6 +47,29 @@ function canRecoverSilently(): boolean {
  * "Reset app data" button, so there is exactly one implementation of the
  * most destructive thing this screen can do.
  */
+/**
+ * Reload, but never INTO a webview that is on its way out.
+ *
+ * A reload issued while the document is hidden is the blank-on-resume bug: iOS
+ * suspends the process mid-navigation and the user comes back to a half-loaded
+ * document with nothing on it. When hidden we therefore wait for the next
+ * foreground and reload then — the app is already unusable, so a few seconds of
+ * a splash costs nothing, and it is the difference between recovering and
+ * resuming onto black.
+ */
+function reloadWhenVisible(): void {
+  if (typeof document === 'undefined' || document.visibilityState === 'visible') {
+    window.location.reload()
+    return
+  }
+  const onVisible = () => {
+    if (document.visibilityState !== 'visible') return
+    document.removeEventListener('visibilitychange', onVisible)
+    window.location.reload()
+  }
+  document.addEventListener('visibilitychange', onVisible)
+}
+
 async function purgeAndReload(): Promise<void> {
   try {
     if ('serviceWorker' in navigator) {
@@ -58,7 +81,11 @@ async function purgeAndReload(): Promise<void> {
       await Promise.all(keys.map((k) => caches.delete(k)))
     }
   } catch { /* best-effort */ }
-  window.location.reload()
+  // Not a bare `location.reload()`. This function unregisters the worker and
+  // deletes every cache, so if the reload lands in a backgrounded webview the
+  // app resumes with no shell AND no service worker — the worst version of the
+  // black screen, and the one a user cannot get out of by reopening the app.
+  reloadWhenVisible()
 }
 
 export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {

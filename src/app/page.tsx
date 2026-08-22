@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { Moon, Flame, Dumbbell, Scale, Footprints, Pill } from 'lucide-react'
@@ -177,6 +177,16 @@ export default function DashboardPage() {
 
   const [open, setOpen] = useState<SheetKey>(null)
   // Body strip: single tap → composition popup · double tap → Nexus InBody entry.
+  /** One stable handler per strip key, cached — see the note on `strips`. */
+  const openers = useRef(new Map<Exclude<SheetKey, null>, () => void>())
+  const onOpen = useCallback((key: Exclude<SheetKey, null>) => {
+    const hit = openers.current.get(key)
+    if (hit) return hit
+    const fn = () => setOpen(key)
+    openers.current.set(key, fn)
+    return fn
+  }, [])
+
   const onBodyTap = useSingleOrDoubleTap(
     () => setOpen('body'),
     () => router.push(`/day/${logicalTodayISO()}?section=inbody`),
@@ -255,7 +265,14 @@ export default function DashboardPage() {
     }
   }, [weighIn])
 
-  const strips: Array<BioStripProps & { key: Exclude<SheetKey, null> }> = [
+  /**
+   * ── THIS ARRAY IS WHY `BioStrip`'s `memo` NEVER HIT ─────────────────────────
+   * Six objects, three `.map()` chains over `bioSeries`, and a JSX node, all
+   * rebuilt on every render of a page that re-renders whenever any of its
+   * sixteen queries settles. `BioStrip` is `memo`-wrapped and was being handed
+   * fresh props each time, so the wrapper cost a comparison and bought nothing.
+   */
+  const strips: Array<BioStripProps & { key: Exclude<SheetKey, null> }> = useMemo(() => [
     {
       key: 'sleep', icon: Moon, label: 'Sleep', accent: VIOLET,
       value: log?.sleep_minutes != null ? formatSleep(log.sleep_minutes) : null,
@@ -318,7 +335,11 @@ export default function DashboardPage() {
       value: `${suppCount}/${suppTotal}`,
       status: suppCount >= suppTotal ? 'protocol complete ✓' : 'tap to check off',
     },
-  ]
+  ], [
+    log, bioSeries, lastWeigh, suppCount, suppTotal, todayDay, kcalSeries,
+    calGoal, calToday, lastSession, lastSplit, loggedToday, phase, steps, tdeeToday,
+    todayEra, todaySession, unit,
+  ])
 
   const sheetTitle: Record<Exclude<SheetKey, null>, string> = {
     readiness: 'Readiness', sleep: 'Sleep & Recovery', fuel: 'Fuel', train: 'Training',
@@ -389,7 +410,9 @@ export default function DashboardPage() {
         <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
           {strips.map((s, i) => (
             <AnimatedCard key={s.key} index={i + 2}>
-              <BioStrip {...s} onClick={s.key === 'body' ? onBodyTap : () => setOpen(s.key)} />
+              {/* `onOpen` is stable, so the arrow that used to be created here
+                  per strip per render no longer defeats the memo above. */}
+              <BioStrip {...s} onClick={s.key === 'body' ? onBodyTap : onOpen(s.key)} />
             </AnimatedCard>
           ))}
         </div>
