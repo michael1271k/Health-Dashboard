@@ -8,7 +8,7 @@ import { WeekToDateTargets } from './WeekToDateTargets'
 import { DeferredMount } from '@/components/fx/DeferredMount'
 import { WidgetBoundary } from '@/components/fx/WidgetBoundary'
 import { eraForDate } from '@/lib/programs'
-import { useVolumeTrend, usePRHistory } from '@/lib/hooks/useCharts'
+import { useVolumeTrend } from '@/lib/hooks/useCharts'
 
 // Recharts-heavy — client-only so they never touch the Command Center's first load.
 const chartFallback = () => (
@@ -16,7 +16,6 @@ const chartFallback = () => (
     <div className="w-full h-40 bg-surface-2 rounded-xl animate-pulse" />
   </div>
 )
-const BodyHeatmap = dynamic(() => import('@/components/charts/HelixViz').then((m) => m.BodyHeatmap), { ssr: false, loading: chartFallback })
 const VolumeStream = dynamic(() => import('@/components/charts/HelixViz').then((m) => m.VolumeStream), { ssr: false, loading: chartFallback })
 const RpeCalendar = dynamic(() => import('@/components/charts/HelixViz').then((m) => m.RpeCalendar), { ssr: false, loading: chartFallback })
 const MuscleAnalyticsSection = dynamic(() => import('@/components/charts/MuscleAnalytics').then((m) => m.MuscleAnalyticsSection), { ssr: false, loading: chartFallback })
@@ -25,11 +24,10 @@ const StrengthTrends = dynamic(() => import('@/components/charts/StrengthTrends'
 // sessions on this page, and a PR is a fact about a lift — neither had any
 // business living a tab away from the workout it belongs to.
 const VolumeChart = dynamic(() => import('@/components/charts/VolumeChart').then((m) => m.VolumeChart), { ssr: false, loading: chartFallback })
-const PRHistoryChart = dynamic(() => import('@/components/charts/PRHistoryChart').then((m) => m.PRHistoryChart), { ssr: false, loading: chartFallback })
 
 /**
  * Every chart about TRAINING, on the page where the training happens — session
- * volume, the Muscle Contour Map, Strength Trends, PR history, the Intensity
+ * volume, Strength Trends, the Intensity
  * Calendar and the Volume Stream.
  *
  * Volume and PR history arrived here when the central Analytics view was deleted.
@@ -60,14 +58,9 @@ export function MuscleAnalyticsPanel() {
   const era = useChartEra()
 
   const { data: volumeData, isLoading: volumeLoading } = useVolumeTrend(days)
-  const { data: prData, isLoading: prLoading } = usePRHistory(undefined, days)
   const vData = useMemo(
     () => (volumeData ?? []).filter((d) => era === 'all' || eraForDate(d.date) === era),
     [volumeData, era],
-  )
-  const pData = useMemo(
-    () => (prData ?? []).filter((d) => era === 'all' || eraForDate(d.date) === era),
-    [prData, era],
   )
 
   return (
@@ -98,17 +91,16 @@ export function MuscleAnalyticsPanel() {
               <WeekToDateTargets />
               <VolumeChart data={vData} isLoading={volumeLoading} era={era} />
               <MuscleAnalyticsSection days={days} era={era} />
+              {/* ── ONE TREND WIDGET, NOT TWO ──
+                  `PRHistoryChart` ("Estimated 1RM Trends") sat immediately under
+                  StrengthTrends, drawing est-1RM per exercise over time from the
+                  same `usePRHistory` rows — a second axis chart answering the
+                  question the sparkline list above it had just answered, down to
+                  an empty state that read "Log workouts to see strength trends."
+                  StrengthTrends survived because it names the number, the best
+                  and the delta per lift; the axis chart only showed the shape. */}
               <StrengthTrends days={days} era={era} />
-              <PRHistoryChart data={pData} isLoading={prLoading} />
-              {/* [&>*]:min-w-0 lets each chart shrink below its Recharts intrinsic
-                  width; [&>*]:h-full makes the pair the SAME height on desktop.
-                  Grid items stretch by default, but the cards inside them size to
-                  their content, so the shorter one (the RPE calendar) used to
-                  float against a taller neighbour with a ragged gap below it. */}
-              <div className="grid lg:grid-cols-2 gap-4 items-stretch [&>*]:min-w-0 [&>*]:h-full">
-                <BodyHeatmap days={days} era={era} />
-                <RpeCalendar days={days} era={era} />
-              </div>
+              <RpeCalendar days={days} era={era} />
               <VolumeStream days={days} era={era} />
             </div>
           </section>

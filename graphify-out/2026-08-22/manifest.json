@@ -160,8 +160,8 @@
     "semantic_hash": ""
   },
   "public/sw.js": {
-    "mtime": 1787396137.048371,
-    "ast_hash": "a404c446af8481b3ace1671923893a92",
+    "mtime": 1787395063.1400802,
+    "ast_hash": "8ff28efd7ab7fc1a96ff81f062946171",
     "semantic_hash": ""
   },
   "scripts/generate-icons.mjs": {
@@ -700,8 +700,8 @@
     "semantic_hash": ""
   },
   "src/lib/exercises/muscleMap.ts": {
-    "mtime": 1787396048.1480954,
-    "ast_hash": "3198a5b7fdcf86d20110a2036c98d3a1",
+    "mtime": 1787394044.5357819,
+    "ast_hash": "5966f1057027a2f5cb7bce85455bebdd",
     "semantic_hash": ""
   },
   "src/lib/exercises/timed.ts": {
@@ -1190,8 +1190,8 @@
     "semantic_hash": "7d330f738b3642f60f4f1016d60d660f"
   },
   "src/tests/muscle-taxonomy.test.ts": {
-    "mtime": 1787396099.6720982,
-    "ast_hash": "a33ce0fcca5ec2da98585c071db4e4ef",
+    "mtime": 1787394232.3579233,
+    "ast_hash": "19e236774d7728fcdf22b6cc832f2481",
     "semantic_hash": ""
   },
   "src/tests/night-window.test.ts": {
@@ -2630,7 +2630,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/set-rows.html": {
-    "mtime": 1787396111.8648994,
+    "mtime": 1787395044.3310654,
     "ast_hash": "dcf08d8e5f047c6af03f81741ad93adb",
     "semantic_hash": ""
   },
@@ -2660,7 +2660,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-ledger.html": {
-    "mtime": 1787396110.5938761,
+    "mtime": 1787395043.1029265,
     "ast_hash": "6f50fa4f2aeaf92cc98b2ce5890d0d48",
     "semantic_hash": ""
   },
@@ -2695,13 +2695,13 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/live-header.html": {
-    "mtime": 1787396110.496044,
+    "mtime": 1787395042.9726088,
     "ast_hash": "e392f2ffe4073d74affa37c44e65bd43",
     "semantic_hash": ""
   },
   "src/tests/hevy-parity.test.ts": {
-    "mtime": 1787396099.6716902,
-    "ast_hash": "0038c820b05f819b1422e8b9fa010b7b",
+    "mtime": 1787394125.031281,
+    "ast_hash": "f920705cd39fb02885ad1fc257f92431",
     "semantic_hash": ""
   },
   "src/lib/hooks/useHoldRepeat.ts": {
@@ -2780,7 +2780,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-summary-header.html": {
-    "mtime": 1787396111.0559509,
+    "mtime": 1787395043.695049,
     "ast_hash": "ff7f914026132398b2a0e4148434f4b6",
     "semantic_hash": ""
   }

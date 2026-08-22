@@ -51,13 +51,27 @@ import { ATLAS_BLUE } from '@/lib/theme/palette'
  * painted four times.
  */
 export const MuscleAtlas = memo(function MuscleAtlas({
-  worked, view = 'front', color = ATLAS_BLUE, interactive = false, onPick, className = '', label,
+  worked, view = 'front', color = ATLAS_BLUE, colorFor, interactive = false, onPick, className = '', label,
 }: {
   /** muscle → 0–1. Missing or 0 draws as base greyscale. */
   worked?: Partial<Record<LandmarkMuscle, number>>
   /** `both` draws front and back side by side, sharing one scale. */
   view?: AtlasView | 'both'
   color?: string
+  /**
+   * Per-muscle hue, overriding `color` for the muscles it answers for.
+   *
+   * ── WHY A FUNCTION AND NOT A MAP ────────────────────────────────────────────
+   * The figure must not import the training taxonomy. Every caller that wants
+   * anatomical colour already has `landmarkColor` to hand, and passing the
+   * lookup keeps this component knowing only geometry and light — which is what
+   * lets the same body serve the DOMS tracker (one accent) and the weekly
+   * breakdown (sixteen hues) without either of them owning the other's palette.
+   *
+   * Returning a falsy value for a muscle falls back to `color`, so a caller can
+   * tint three muscles and leave the rest alone.
+   */
+  colorFor?: (muscle: LandmarkMuscle) => string | undefined
   interactive?: boolean
   onPick?: (muscle: LandmarkMuscle) => void
   className?: string
@@ -77,8 +91,8 @@ export const MuscleAtlas = memo(function MuscleAtlas({
   if (view === 'both') {
     return (
       <div className={`flex items-stretch gap-1 ${className}`}>
-        <MuscleAtlas worked={worked} view="front" color={color} interactive={interactive} onPick={onPick} className="flex-1" />
-        <MuscleAtlas worked={worked} view="back" color={color} interactive={interactive} onPick={onPick} className="flex-1" />
+        <MuscleAtlas worked={worked} view="front" color={color} colorFor={colorFor} interactive={interactive} onPick={onPick} className="flex-1" />
+        <MuscleAtlas worked={worked} view="back" color={color} colorFor={colorFor} interactive={interactive} onPick={onPick} className="flex-1" />
       </div>
     )
   }
@@ -104,6 +118,21 @@ export const MuscleAtlas = memo(function MuscleAtlas({
   const fleshId = `atlas-flesh-${uid}`
   const bellyId = `atlas-belly-${uid}`
   const workedId = `atlas-worked-${uid}`
+
+  /**
+   * One `worked` gradient per DISTINCT hue on this view, not one per muscle.
+   *
+   * A `<linearGradient>` per path would put thirty defs into a 24px thumbnail
+   * for no visible gain; a single-accent figure — which is still every caller
+   * but the weekly breakdown — emits exactly the one gradient it always did.
+   * The default `color` is seeded first so it keeps the stable `workedId`.
+   */
+  const hueOf = (m: LandmarkMuscle) => colorFor?.(m) || color
+  const hues = new Map<string, string>([[color, workedId]])
+  for (const p of paths) {
+    const hue = hueOf(p.muscle)
+    if (!hues.has(hue)) hues.set(hue, `atlas-worked-${hues.size}-${uid}`)
+  }
 
   return (
     <svg
@@ -132,11 +161,13 @@ export const MuscleAtlas = memo(function MuscleAtlas({
           <stop offset="50%" stopColor="white" stopOpacity="0.10" />
           <stop offset="100%" stopColor="black" stopOpacity="0.10" />
         </linearGradient>
-        <linearGradient id={workedId} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="1" />
-          <stop offset="55%" stopColor={color} stopOpacity="0.82" />
-          <stop offset="100%" stopColor={color} stopOpacity="0.55" />
-        </linearGradient>
+        {[...hues].map(([hue, id]) => (
+          <linearGradient key={id} id={id} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor={hue} stopOpacity="1" />
+            <stop offset="55%" stopColor={hue} stopOpacity="0.82" />
+            <stop offset="100%" stopColor={hue} stopOpacity="0.55" />
+          </linearGradient>
+        ))}
       </defs>
 
       {/* ── Layer 1: the body ──
@@ -154,17 +185,18 @@ export const MuscleAtlas = memo(function MuscleAtlas({
         // Alpha over the gradient, not a colour ramp: one hue at several
         // strengths reads as "more of the same thing", where a green→red ramp
         // would read as a verdict — and this figure makes no verdicts.
+        const hue = hueOf(p.muscle)
         const common = {
           d: p.d,
           style: {
-            fill: on ? `url(#${workedId})` : `url(#${bellyId})`,
+            fill: on ? `url(#${hues.get(hue) ?? workedId})` : `url(#${bellyId})`,
             // Alpha carries the volume: a muscle that got one set out of twelve
             // is visibly lighter than the one that got twelve. The floor is 0.22
             // rather than 0.30 and the range runs to 0.94, because the old band
             // was narrow enough that a light session and a heavy one looked
             // nearly the same.
             fillOpacity: on ? 0.22 + intensity * 0.72 : 1,
-            stroke: on ? color : 'rgba(255,255,255,0.14)',
+            stroke: on ? hue : 'rgba(255,255,255,0.14)',
             strokeWidth: on ? 1 : 0.6,
             strokeLinejoin: 'round' as const,
             transition: 'fill-opacity 220ms ease, stroke 220ms ease',

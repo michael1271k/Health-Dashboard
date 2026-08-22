@@ -247,7 +247,7 @@ export const GROUP = {
 } as const
 
 /**
- * The 13 landmark muscles as ramp positions inside their family.
+ * The 16 landmark muscles as ramp positions inside their family.
  *
  * A family with one landmark sits on the base hue. A family with several ramps
  * light → dark, deepest for the biggest muscle, so the ORDER carries meaning
@@ -268,7 +268,10 @@ export const MUSCLE = {
   'Upper back': '#5FBF9B',
   'Lower back': EMERALD_DEEP,
 
-  // Shoulders — amethyst, two steps.
+  // Shoulders — amethyst, three steps. Front delts is the lightest because it
+  // is the most assisted head: almost all of its weekly volume arrives as
+  // pressing assistance rather than direct work, and the ramp reads that way.
+  'Front delts': '#BFA6D4',
   'Side delts': '#A085BC',
   'Rear delts': '#6E5589',
 

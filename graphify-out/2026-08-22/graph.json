@@ -3142,7 +3142,7 @@
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixintents_fuelfocus",
       "community": 190,
-      "community_name": "BodyFocus",
+      "community_name": "LockFocus",
       "norm_label": "fuelfocus"
     },
     {
@@ -3153,7 +3153,7 @@
       "_origin": "ast",
       "id": "appenum",
       "community": 190,
-      "community_name": "BodyFocus",
+      "community_name": "LockFocus",
       "norm_label": "appenum"
     },
     {
@@ -3164,7 +3164,7 @@
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixintents_fuelfocus_calories",
       "community": 190,
-      "community_name": "BodyFocus",
+      "community_name": "LockFocus",
       "norm_label": "calories"
     },
     {
@@ -3175,7 +3175,7 @@
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixintents_fuelfocus_macros",
       "community": 190,
-      "community_name": "BodyFocus",
+      "community_name": "LockFocus",
       "norm_label": "macros"
     },
     {
@@ -3186,7 +3186,7 @@
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixintents_fuelfocus_water",
       "community": 190,
-      "community_name": "BodyFocus",
+      "community_name": "LockFocus",
       "norm_label": "water"
     },
     {
@@ -3197,7 +3197,7 @@
       "_origin": "ast",
       "id": "typedisplayrepresentation",
       "community": 190,
-      "community_name": "BodyFocus",
+      "community_name": "LockFocus",
       "norm_label": "typedisplayrepresentation"
     },
     {
@@ -3208,7 +3208,7 @@
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixintents_fuelfocus_typedisplayrepresentation",
       "community": 190,
-      "community_name": "BodyFocus",
+      "community_name": "LockFocus",
       "norm_label": ".typedisplayrepresentation"
     },
     {
@@ -3219,7 +3219,7 @@
       "_origin": "ast",
       "id": "displayrepresentation",
       "community": 190,
-      "community_name": "BodyFocus",
+      "community_name": "LockFocus",
       "norm_label": "displayrepresentation"
     },
     {
@@ -3372,8 +3372,8 @@
       "source_location": "L110",
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixintents_bodyfocus",
-      "community": 190,
-      "community_name": "BodyFocus",
+      "community": 87,
+      "community_name": "HelixFocus",
       "norm_label": "bodyfocus"
     },
     {
@@ -3383,8 +3383,8 @@
       "source_location": "L111",
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixintents_bodyfocus_weight",
-      "community": 190,
-      "community_name": "BodyFocus",
+      "community": 87,
+      "community_name": "HelixFocus",
       "norm_label": "weight"
     },
     {
@@ -3394,8 +3394,8 @@
       "source_location": "L111",
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixintents_bodyfocus_sleep",
-      "community": 190,
-      "community_name": "BodyFocus",
+      "community": 87,
+      "community_name": "HelixFocus",
       "norm_label": "sleep"
     },
     {
@@ -3405,8 +3405,8 @@
       "source_location": "L111",
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixintents_bodyfocus_wellbeing",
-      "community": 190,
-      "community_name": "BodyFocus",
+      "community": 87,
+      "community_name": "HelixFocus",
       "norm_label": "wellbeing"
     },
     {
@@ -3416,8 +3416,8 @@
       "source_location": "L111",
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixintents_bodyfocus_composition",
-      "community": 190,
-      "community_name": "BodyFocus",
+      "community": 87,
+      "community_name": "HelixFocus",
       "norm_label": "composition"
     },
     {
@@ -3427,8 +3427,8 @@
       "source_location": "L113",
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixintents_bodyfocus_typedisplayrepresentation",
-      "community": 190,
-      "community_name": "BodyFocus",
+      "community": 87,
+      "community_name": "HelixFocus",
       "norm_label": ".typedisplayrepresentation"
     },
     {
@@ -3449,8 +3449,8 @@
       "source_location": "L143",
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixintents_vitalsfocus",
-      "community": 87,
-      "community_name": "HelixFocus",
+      "community": 190,
+      "community_name": "LockFocus",
       "norm_label": "vitalsfocus"
     },
     {
@@ -3460,8 +3460,8 @@
       "source_location": "L144",
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixintents_vitalsfocus_panel",
-      "community": 87,
-      "community_name": "HelixFocus",
+      "community": 190,
+      "community_name": "LockFocus",
       "norm_label": "panel"
     },
     {
@@ -3471,8 +3471,8 @@
       "source_location": "L144",
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixintents_vitalsfocus_recovery",
-      "community": 87,
-      "community_name": "HelixFocus",
+      "community": 190,
+      "community_name": "LockFocus",
       "norm_label": "recovery"
     },
     {
@@ -3482,8 +3482,8 @@
       "source_location": "L144",
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixintents_vitalsfocus_respiration",
-      "community": 87,
-      "community_name": "HelixFocus",
+      "community": 190,
+      "community_name": "LockFocus",
       "norm_label": "respiration"
     },
     {
@@ -3493,8 +3493,8 @@
       "source_location": "L144",
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixintents_vitalsfocus_temperature",
-      "community": 87,
-      "community_name": "HelixFocus",
+      "community": 190,
+      "community_name": "LockFocus",
       "norm_label": "temperature"
     },
     {
@@ -3504,8 +3504,8 @@
       "source_location": "L146",
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixintents_vitalsfocus_typedisplayrepresentation",
-      "community": 87,
-      "community_name": "HelixFocus",
+      "community": 190,
+      "community_name": "LockFocus",
       "norm_label": ".typedisplayrepresentation"
     },
     {
@@ -3527,7 +3527,7 @@
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixintents_lockfocus",
       "community": 190,
-      "community_name": "BodyFocus",
+      "community_name": "LockFocus",
       "norm_label": "lockfocus"
     },
     {
@@ -3538,7 +3538,7 @@
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixintents_lockfocus_battery",
       "community": 190,
-      "community_name": "BodyFocus",
+      "community_name": "LockFocus",
       "norm_label": "battery"
     },
     {
@@ -3549,7 +3549,7 @@
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixintents_lockfocus_calories",
       "community": 190,
-      "community_name": "BodyFocus",
+      "community_name": "LockFocus",
       "norm_label": "calories"
     },
     {
@@ -3560,7 +3560,7 @@
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixintents_lockfocus_steps",
       "community": 190,
-      "community_name": "BodyFocus",
+      "community_name": "LockFocus",
       "norm_label": "steps"
     },
     {
@@ -3571,7 +3571,7 @@
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixintents_lockfocus_workout",
       "community": 190,
-      "community_name": "BodyFocus",
+      "community_name": "LockFocus",
       "norm_label": "workout"
     },
     {
@@ -3582,7 +3582,7 @@
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixintents_lockfocus_typedisplayrepresentation",
       "community": 190,
-      "community_name": "BodyFocus",
+      "community_name": "LockFocus",
       "norm_label": ".typedisplayrepresentation"
     },
     {
@@ -3692,7 +3692,7 @@
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixintents_fuelconfiguration_recommendation",
       "community": 190,
-      "community_name": "BodyFocus",
+      "community_name": "LockFocus",
       "norm_label": ".recommendation()"
     },
     {
@@ -3845,8 +3845,8 @@
       "source_location": "L268",
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixintents_bodyconfiguration_recommendation",
-      "community": 190,
-      "community_name": "BodyFocus",
+      "community": 87,
+      "community_name": "HelixFocus",
       "norm_label": ".recommendation()"
     },
     {
@@ -3922,8 +3922,8 @@
       "source_location": "L297",
       "_origin": "ast",
       "id": "ios_app_helixwidgets_helixintents_vitalsconfiguration_recommendation",
-      "community": 87,
-      "community_name": "HelixFocus",
+      "community": 190,
+      "community_name": "LockFocus",
       "norm_label": ".recommendation()"
     },
     {
@@ -11347,8 +11347,8 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "package_devdependencies_eslint",
-      "community": 182,
-      "community_name": "eslint",
+      "community": 50,
+      "community_name": "devDependencies",
       "norm_label": "eslint"
     },
     {
@@ -11358,8 +11358,8 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "eslint",
-      "community": 182,
-      "community_name": "eslint",
+      "community": 50,
+      "community_name": "devDependencies",
       "norm_label": "eslint"
     },
     {
@@ -11391,8 +11391,8 @@
       "source_location": "L68",
       "_origin": "ast",
       "id": "package_devdependencies_jsdom",
-      "community": 50,
-      "community_name": "devDependencies",
+      "community": 205,
+      "community_name": "jsdom",
       "norm_label": "jsdom"
     },
     {
@@ -11402,8 +11402,8 @@
       "source_location": "L68",
       "_origin": "ast",
       "id": "jsdom",
-      "community": 50,
-      "community_name": "devDependencies",
+      "community": 205,
+      "community_name": "jsdom",
       "norm_label": "jsdom"
     },
     {
@@ -11721,7 +11721,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_l",
-      "community": 197,
+      "community": 52,
       "community_name": "delete",
       "norm_label": "l()"
     },
@@ -11732,7 +11732,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_h",
-      "community": 197,
+      "community": 52,
       "community_name": "delete",
       "norm_label": "h()"
     },
@@ -11963,8 +11963,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_getall",
-      "community": 52,
-      "community_name": "useSessionIntel.ts",
+      "community": 166,
+      "community_name": "backfill-prs.mjs",
       "norm_label": "getall()"
     },
     {
@@ -12008,7 +12008,7 @@
       "_origin": "ast",
       "id": "public_sw_toobject",
       "community": 121,
-      "community_name": "waitUntil",
+      "community_name": "_addRequest",
       "norm_label": "toobject()"
     },
     {
@@ -12052,7 +12052,7 @@
       "_origin": "ast",
       "id": "public_sw_pushrequest",
       "community": 121,
-      "community_name": "waitUntil",
+      "community_name": "_addRequest",
       "norm_label": "pushrequest()"
     },
     {
@@ -12063,7 +12063,7 @@
       "_origin": "ast",
       "id": "public_sw_unshiftrequest",
       "community": 121,
-      "community_name": "waitUntil",
+      "community_name": "_addRequest",
       "norm_label": "unshiftrequest()"
     },
     {
@@ -12096,7 +12096,7 @@
       "_origin": "ast",
       "id": "public_sw_addrequest",
       "community": 121,
-      "community_name": "waitUntil",
+      "community_name": "_addRequest",
       "norm_label": "_addrequest()"
     },
     {
@@ -12128,8 +12128,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_registersync",
-      "community": 121,
-      "community_name": "waitUntil",
+      "community": 34,
+      "community_name": "constructor",
       "norm_label": "registersync()"
     },
     {
@@ -12139,8 +12139,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_addsynclistener",
-      "community": 121,
-      "community_name": "waitUntil",
+      "community": 34,
+      "community_name": "constructor",
       "norm_label": "_addsynclistener()"
     },
     {
@@ -12271,8 +12271,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_waituntil",
-      "community": 121,
-      "community_name": "waitUntil",
+      "community": 34,
+      "community_name": "constructor",
       "norm_label": "waituntil()"
     },
     {
@@ -12492,7 +12492,7 @@
       "_origin": "ast",
       "id": "public_sw_expireentries",
       "community": 197,
-      "community_name": "delete",
+      "community_name": "cachedResponseWillBeUsed",
       "norm_label": "expireentries()"
     },
     {
@@ -12503,7 +12503,7 @@
       "_origin": "ast",
       "id": "public_sw_updatetimestamp",
       "community": 197,
-      "community_name": "delete",
+      "community_name": "cachedResponseWillBeUsed",
       "norm_label": "updatetimestamp()"
     },
     {
@@ -12524,7 +12524,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_delete",
-      "community": 197,
+      "community": 52,
       "community_name": "delete",
       "norm_label": "delete()"
     },
@@ -12536,7 +12536,7 @@
       "_origin": "ast",
       "id": "public_sw_getcacheexpiration",
       "community": 197,
-      "community_name": "delete",
+      "community_name": "cachedResponseWillBeUsed",
       "norm_label": "_getcacheexpiration()"
     },
     {
@@ -12547,7 +12547,7 @@
       "_origin": "ast",
       "id": "public_sw_cachedresponsewillbeused",
       "community": 197,
-      "community_name": "delete",
+      "community_name": "cachedResponseWillBeUsed",
       "norm_label": "cachedresponsewillbeused()"
     },
     {
@@ -12557,8 +12557,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_isresponsedatefresh",
-      "community": 7,
-      "community_name": "sw.js",
+      "community": 197,
+      "community_name": "cachedResponseWillBeUsed",
       "norm_label": "_isresponsedatefresh()"
     },
     {
@@ -12568,8 +12568,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_getdateheadertimestamp",
-      "community": 7,
-      "community_name": "sw.js",
+      "community": 197,
+      "community_name": "cachedResponseWillBeUsed",
       "norm_label": "_getdateheadertimestamp()"
     },
     {
@@ -12580,7 +12580,7 @@
       "_origin": "ast",
       "id": "public_sw_cachedidupdate",
       "community": 197,
-      "community_name": "delete",
+      "community_name": "cachedResponseWillBeUsed",
       "norm_label": "cachedidupdate()"
     },
     {
@@ -12590,8 +12590,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "public_sw_deletecacheandmetadata",
-      "community": 34,
-      "community_name": "constructor",
+      "community": 52,
+      "community_name": "delete",
       "norm_label": "deletecacheandmetadata()"
     },
     {
@@ -12667,7 +12667,7 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "public_sw_handleactivate",
-      "community": 197,
+      "community": 52,
       "community_name": "delete",
       "norm_label": "handleactivate()"
     },
@@ -12678,8 +12678,8 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "public_sw_handlecache",
-      "community": 121,
-      "community_name": "waitUntil",
+      "community": 182,
+      "community_name": "handleRequest",
       "norm_label": "handlecache()"
     },
     {
@@ -12799,8 +12799,8 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "public_sw_handlerequest",
-      "community": 29,
-      "community_name": "handle",
+      "community": 182,
+      "community_name": "handleRequest",
       "norm_label": "handlerequest()"
     },
     {
@@ -12810,8 +12810,8 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "public_sw_findmatchingroute",
-      "community": 29,
-      "community_name": "handle",
+      "community": 182,
+      "community_name": "handleRequest",
       "norm_label": "findmatchingroute()"
     },
     {
@@ -13709,8 +13709,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_split_exercise_by_day",
-      "community": 52,
-      "community_name": "useSessionIntel.ts",
+      "community": 166,
+      "community_name": "backfill-prs.mjs",
       "norm_label": "split-exercise-by-day.mjs"
     },
     {
@@ -13720,8 +13720,8 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "scripts_split_exercise_by_day_dry",
-      "community": 52,
-      "community_name": "useSessionIntel.ts",
+      "community": 166,
+      "community_name": "backfill-prs.mjs",
       "norm_label": "dry"
     },
     {
@@ -13731,8 +13731,8 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "scripts_split_exercise_by_day_args",
-      "community": 52,
-      "community_name": "useSessionIntel.ts",
+      "community": 166,
+      "community_name": "backfill-prs.mjs",
       "norm_label": "args"
     },
     {
@@ -13742,8 +13742,8 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "scripts_split_exercise_by_day_map",
-      "community": 52,
-      "community_name": "useSessionIntel.ts",
+      "community": 166,
+      "community_name": "backfill-prs.mjs",
       "norm_label": "map"
     },
     {
@@ -13753,8 +13753,8 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "scripts_split_exercise_by_day_env",
-      "community": 52,
-      "community_name": "useSessionIntel.ts",
+      "community": 166,
+      "community_name": "backfill-prs.mjs",
       "norm_label": "env"
     },
     {
@@ -13764,8 +13764,8 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "scripts_split_exercise_by_day_db",
-      "community": 52,
-      "community_name": "useSessionIntel.ts",
+      "community": 166,
+      "community_name": "backfill-prs.mjs",
       "norm_label": "db"
     },
     {
@@ -13775,8 +13775,8 @@
       "source_location": "L92",
       "_origin": "ast",
       "id": "scripts_split_exercise_by_day_buckets",
-      "community": 52,
-      "community_name": "useSessionIntel.ts",
+      "community": 166,
+      "community_name": "backfill-prs.mjs",
       "norm_label": "buckets"
     },
     {
@@ -13786,8 +13786,8 @@
       "source_location": "L93",
       "_origin": "ast",
       "id": "scripts_split_exercise_by_day_unmapped",
-      "community": 52,
-      "community_name": "useSessionIntel.ts",
+      "community": 166,
+      "community_name": "backfill-prs.mjs",
       "norm_label": "unmapped"
     },
     {
@@ -16151,8 +16151,8 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "src_components_command_center_exercisecard_readycue",
-      "community": 96,
-      "community_name": "tapLight",
+      "community": 188,
+      "community_name": "ExerciseDeckList.tsx",
       "norm_label": "readycue"
     },
     {
@@ -16206,8 +16206,8 @@
       "source_location": "L158",
       "_origin": "ast",
       "id": "src_components_command_center_exercisecard_exercisecard",
-      "community": 96,
-      "community_name": "tapLight",
+      "community": 188,
+      "community_name": "ExerciseDeckList.tsx",
       "norm_label": "exercisecard"
     },
     {
@@ -16217,8 +16217,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_command_center_exercisedecklist",
-      "community": 96,
-      "community_name": "tapLight",
+      "community": 188,
+      "community_name": "ExerciseDeckList.tsx",
       "norm_label": "exercisedecklist.tsx"
     },
     {
@@ -16228,8 +16228,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_components_command_center_exercisedecklist_drag_modifiers",
-      "community": 96,
-      "community_name": "tapLight",
+      "community": 188,
+      "community_name": "ExerciseDeckList.tsx",
       "norm_label": "drag_modifiers"
     },
     {
@@ -16239,8 +16239,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "src_components_command_center_exercisedecklist_drop_animation",
-      "community": 96,
-      "community_name": "tapLight",
+      "community": 188,
+      "community_name": "ExerciseDeckList.tsx",
       "norm_label": "drop_animation"
     },
     {
@@ -16250,8 +16250,8 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "src_components_command_center_exercisedecklist_exercisedecklist",
-      "community": 96,
-      "community_name": "tapLight",
+      "community": 188,
+      "community_name": "ExerciseDeckList.tsx",
       "norm_label": "exercisedecklist()"
     },
     {
@@ -16316,8 +16316,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_command_center_livesessionbar",
-      "community": 104,
-      "community_name": "LiveSessionHero.tsx",
+      "community": 218,
+      "community_name": "SessionDeck.tsx",
       "norm_label": "livesessionbar.tsx"
     },
     {
@@ -16327,8 +16327,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "src_components_command_center_livesessionbar_livesessionbar",
-      "community": 104,
-      "community_name": "LiveSessionHero.tsx",
+      "community": 218,
+      "community_name": "SessionDeck.tsx",
       "norm_label": "livesessionbar"
     },
     {
@@ -16338,8 +16338,8 @@
       "source_location": "L108",
       "_origin": "ast",
       "id": "src_components_command_center_livesessionbar_stat",
-      "community": 104,
-      "community_name": "LiveSessionHero.tsx",
+      "community": 218,
+      "community_name": "SessionDeck.tsx",
       "norm_label": "stat()"
     },
     {
@@ -16349,8 +16349,8 @@
       "source_location": "L116",
       "_origin": "ast",
       "id": "src_components_command_center_livesessionbar_dot",
-      "community": 104,
-      "community_name": "LiveSessionHero.tsx",
+      "community": 218,
+      "community_name": "SessionDeck.tsx",
       "norm_label": "dot()"
     },
     {
@@ -16360,8 +16360,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_command_center_livesessionhero",
-      "community": 104,
-      "community_name": "LiveSessionHero.tsx",
+      "community": 218,
+      "community_name": "SessionDeck.tsx",
       "norm_label": "livesessionhero.tsx"
     },
     {
@@ -16371,8 +16371,8 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "src_components_command_center_livesessionhero_livesessionhero",
-      "community": 104,
-      "community_name": "LiveSessionHero.tsx",
+      "community": 218,
+      "community_name": "SessionDeck.tsx",
       "norm_label": "livesessionhero()"
     },
     {
@@ -16382,8 +16382,8 @@
       "source_location": "L148",
       "_origin": "ast",
       "id": "src_components_command_center_livesessionhero_tile",
-      "community": 104,
-      "community_name": "LiveSessionHero.tsx",
+      "community": 218,
+      "community_name": "SessionDeck.tsx",
       "norm_label": "tile()"
     },
     {
@@ -16877,8 +16877,8 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "src_components_command_center_seteditorrow_seteditorrow",
-      "community": 188,
-      "community_name": "deck-render.test.tsx",
+      "community": 96,
+      "community_name": "tapLight",
       "norm_label": "seteditorrow"
     },
     {
@@ -16954,8 +16954,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_command_center_setgrid",
-      "community": 63,
-      "community_name": "ExerciseCard.tsx",
+      "community": 96,
+      "community_name": "tapLight",
       "norm_label": "setgrid.ts"
     },
     {
@@ -16965,8 +16965,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_components_command_center_setgrid_setgridmode",
-      "community": 63,
-      "community_name": "ExerciseCard.tsx",
+      "community": 96,
+      "community_name": "tapLight",
       "norm_label": "setgridmode"
     },
     {
@@ -16976,8 +16976,8 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "src_components_command_center_setgrid_setgridfor",
-      "community": 63,
-      "community_name": "ExerciseCard.tsx",
+      "community": 96,
+      "community_name": "tapLight",
       "norm_label": "setgridfor()"
     },
     {
@@ -16987,8 +16987,8 @@
       "source_location": "L85",
       "_origin": "ast",
       "id": "src_components_command_center_setgrid_setvaluelabel",
-      "community": 63,
-      "community_name": "ExerciseCard.tsx",
+      "community": 96,
+      "community_name": "tapLight",
       "norm_label": "setvaluelabel()"
     },
     {
@@ -18604,8 +18604,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_exercises_exerciseledger",
-      "community": 184,
-      "community_name": "displayWeight",
+      "community": 104,
+      "community_name": "isTimedExercise",
       "norm_label": "exerciseledger.tsx"
     },
     {
@@ -18615,8 +18615,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_components_exercises_exerciseledger_tag",
-      "community": 184,
-      "community_name": "displayWeight",
+      "community": 104,
+      "community_name": "isTimedExercise",
       "norm_label": "tag"
     },
     {
@@ -18626,8 +18626,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_components_exercises_exerciseledger_longdate",
-      "community": 184,
-      "community_name": "displayWeight",
+      "community": 104,
+      "community_name": "isTimedExercise",
       "norm_label": "longdate()"
     },
     {
@@ -18637,8 +18637,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "src_components_exercises_exerciseledger_exerciseledger",
-      "community": 184,
-      "community_name": "displayWeight",
+      "community": 104,
+      "community_name": "isTimedExercise",
       "norm_label": "exerciseledger()"
     },
     {
@@ -18659,8 +18659,8 @@
       "source_location": "L129",
       "_origin": "ast",
       "id": "src_components_exercises_exerciseledger_floor",
-      "community": 184,
-      "community_name": "displayWeight",
+      "community": 104,
+      "community_name": "isTimedExercise",
       "norm_label": "floor()"
     },
     {
@@ -19022,8 +19022,8 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "src_components_nav_bottomnav_navcell",
-      "community": 42,
-      "community_name": "app/layout.tsx",
+      "community": 96,
+      "community_name": "tapLight",
       "norm_label": "navcell()"
     },
     {
@@ -20199,8 +20199,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_reports_sessionintelcard",
-      "community": 52,
-      "community_name": "useSessionIntel.ts",
+      "community": 184,
+      "community_name": "displayWeight",
       "norm_label": "sessionintelcard.tsx"
     },
     {
@@ -20210,8 +20210,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_components_reports_sessionintelcard_chip",
-      "community": 52,
-      "community_name": "useSessionIntel.ts",
+      "community": 184,
+      "community_name": "displayWeight",
       "norm_label": "chip()"
     },
     {
@@ -20221,8 +20221,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "src_components_reports_sessionintelcard_trend",
-      "community": 52,
-      "community_name": "useSessionIntel.ts",
+      "community": 184,
+      "community_name": "displayWeight",
       "norm_label": "trend()"
     },
     {
@@ -20232,8 +20232,8 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "src_components_reports_sessionintelcard_sessionintelcard",
-      "community": 52,
-      "community_name": "useSessionIntel.ts",
+      "community": 184,
+      "community_name": "displayWeight",
       "norm_label": "sessionintelcard()"
     },
     {
@@ -20353,8 +20353,8 @@
       "source_location": "L82",
       "_origin": "ast",
       "id": "src_components_session_detail_exercisebreakdown_torows",
-      "community": 52,
-      "community_name": "useSessionIntel.ts",
+      "community": 166,
+      "community_name": "backfill-prs.mjs",
       "norm_label": "torows()"
     },
     {
@@ -20595,8 +20595,8 @@
       "source_location": "L170",
       "_origin": "ast",
       "id": "src_components_session_detail_sessionhero_sessionhero",
-      "community": 73,
-      "community_name": "useDayVault.ts",
+      "community": 184,
+      "community_name": "displayWeight",
       "norm_label": "sessionhero()"
     },
     {
@@ -23070,8 +23070,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_exercises_bodyweight",
-      "community": 218,
-      "community_name": "SessionDeck.tsx",
+      "community": 104,
+      "community_name": "isTimedExercise",
       "norm_label": "bodyweight.ts"
     },
     {
@@ -23081,8 +23081,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_lib_exercises_bodyweight_bodyweight_patterns",
-      "community": 218,
-      "community_name": "SessionDeck.tsx",
+      "community": 104,
+      "community_name": "isTimedExercise",
       "norm_label": "bodyweight_patterns"
     },
     {
@@ -23092,8 +23092,8 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "src_lib_exercises_bodyweight_isbodyweightexercise",
-      "community": 218,
-      "community_name": "SessionDeck.tsx",
+      "community": 104,
+      "community_name": "isTimedExercise",
       "norm_label": "isbodyweightexercise()"
     },
     {
@@ -23103,8 +23103,8 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "src_lib_exercises_bodyweight_isunloadedexercise",
-      "community": 218,
-      "community_name": "SessionDeck.tsx",
+      "community": 104,
+      "community_name": "isTimedExercise",
       "norm_label": "isunloadedexercise()"
     },
     {
@@ -23144,7 +23144,7 @@
       "label": "tokenize()",
       "file_type": "code",
       "source_file": "src/lib/exercises/muscleMap.ts",
-      "source_location": "L178",
+      "source_location": "L152",
       "_origin": "ast",
       "id": "src_lib_exercises_musclemap_tokenize",
       "community": 60,
@@ -23155,7 +23155,7 @@
       "label": "lookupMuscles()",
       "file_type": "code",
       "source_file": "src/lib/exercises/muscleMap.ts",
-      "source_location": "L186",
+      "source_location": "L160",
       "_origin": "ast",
       "id": "src_lib_exercises_musclemap_lookupmuscles",
       "community": 60,
@@ -23166,7 +23166,7 @@
       "label": "muscleGroupsFor()",
       "file_type": "code",
       "source_file": "src/lib/exercises/muscleMap.ts",
-      "source_location": "L198",
+      "source_location": "L172",
       "_origin": "ast",
       "id": "src_lib_exercises_musclemap_musclegroupsfor",
       "community": 60,
@@ -23177,7 +23177,7 @@
       "label": "resolveMovers()",
       "file_type": "code",
       "source_file": "src/lib/exercises/muscleMap.ts",
-      "source_location": "L212",
+      "source_location": "L186",
       "_origin": "ast",
       "id": "src_lib_exercises_musclemap_resolvemovers",
       "community": 60,
@@ -23191,8 +23191,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_exercises_timed",
-      "community": 218,
-      "community_name": "SessionDeck.tsx",
+      "community": 104,
+      "community_name": "isTimedExercise",
       "norm_label": "timed.ts"
     },
     {
@@ -23202,8 +23202,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_lib_exercises_timed_istimedexercise",
-      "community": 218,
-      "community_name": "SessionDeck.tsx",
+      "community": 104,
+      "community_name": "isTimedExercise",
       "norm_label": "istimedexercise()"
     },
     {
@@ -24478,8 +24478,8 @@
       "source_location": "L145",
       "_origin": "ast",
       "id": "src_lib_hooks_usedayvault_useloggedsessiondates",
-      "community": 104,
-      "community_name": "LiveSessionHero.tsx",
+      "community": 218,
+      "community_name": "SessionDeck.tsx",
       "norm_label": "useloggedsessiondates()"
     },
     {
@@ -24687,8 +24687,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_lib_hooks_useexercisebaselines_useexercisebaselines",
-      "community": 218,
-      "community_name": "SessionDeck.tsx",
+      "community": 33,
+      "community_name": "prEngine.ts",
       "norm_label": "useexercisebaselines()"
     },
     {
@@ -24962,8 +24962,8 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "src_lib_hooks_useexercisesetledger_useexercisesetledger",
-      "community": 184,
-      "community_name": "displayWeight",
+      "community": 104,
+      "community_name": "isTimedExercise",
       "norm_label": "useexercisesetledger()"
     },
     {
@@ -26436,8 +26436,8 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "src_lib_hooks_usesessiondraft_commitresult",
-      "community": 33,
-      "community_name": "prEngine.ts",
+      "community": 218,
+      "community_name": "SessionDeck.tsx",
       "norm_label": "commitresult"
     },
     {
@@ -26458,8 +26458,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_hooks_usesessionintel",
-      "community": 52,
-      "community_name": "useSessionIntel.ts",
+      "community": 184,
+      "community_name": "displayWeight",
       "norm_label": "usesessionintel.ts"
     },
     {
@@ -26469,8 +26469,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_lib_hooks_usesessionintel_exercisedelta",
-      "community": 52,
-      "community_name": "useSessionIntel.ts",
+      "community": 184,
+      "community_name": "displayWeight",
       "norm_label": "exercisedelta"
     },
     {
@@ -26491,8 +26491,8 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "src_lib_hooks_usesessionintel_sessionintel",
-      "community": 52,
-      "community_name": "useSessionIntel.ts",
+      "community": 184,
+      "community_name": "displayWeight",
       "norm_label": "sessionintel"
     },
     {
@@ -26502,8 +26502,8 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "src_lib_hooks_usesessionintel_setrow",
-      "community": 52,
-      "community_name": "useSessionIntel.ts",
+      "community": 184,
+      "community_name": "displayWeight",
       "norm_label": "setrow"
     },
     {
@@ -26513,8 +26513,8 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "src_lib_hooks_usesessionintel_tovolumeset",
-      "community": 52,
-      "community_name": "useSessionIntel.ts",
+      "community": 184,
+      "community_name": "displayWeight",
       "norm_label": "tovolumeset()"
     },
     {
@@ -26524,8 +26524,8 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "src_lib_hooks_usesessionintel_usesessionintel",
-      "community": 52,
-      "community_name": "useSessionIntel.ts",
+      "community": 184,
+      "community_name": "displayWeight",
       "norm_label": "usesessionintel()"
     },
     {
@@ -26535,8 +26535,8 @@
       "source_location": "L282",
       "_origin": "ast",
       "id": "src_lib_hooks_usesessionintel_sessiontypelabel",
-      "community": 52,
-      "community_name": "useSessionIntel.ts",
+      "community": 184,
+      "community_name": "displayWeight",
       "norm_label": "sessiontypelabel()"
     },
     {
@@ -28174,8 +28174,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_lib_native_haptics_tapsuccess",
-      "community": 96,
-      "community_name": "tapLight",
+      "community": 188,
+      "community_name": "ExerciseDeckList.tsx",
       "norm_label": "tapsuccess()"
     },
     {
@@ -29967,8 +29967,8 @@
       "source_location": "L340",
       "_origin": "ast",
       "id": "src_lib_programs_programdayfor",
-      "community": 52,
-      "community_name": "useSessionIntel.ts",
+      "community": 184,
+      "community_name": "displayWeight",
       "norm_label": "programdayfor()"
     },
     {
@@ -31155,8 +31155,8 @@
       "source_location": "L155",
       "_origin": "ast",
       "id": "src_lib_reports_weeklyexport_exportset",
-      "community": 52,
-      "community_name": "useSessionIntel.ts",
+      "community": 210,
+      "community_name": "ExerciseBreakdown.tsx",
       "norm_label": "exportset"
     },
     {
@@ -32728,8 +32728,8 @@
       "source_location": "L254",
       "_origin": "ast",
       "id": "src_lib_sessions_draft_cleansessiontitle",
-      "community": 104,
-      "community_name": "LiveSessionHero.tsx",
+      "community": 218,
+      "community_name": "SessionDeck.tsx",
       "norm_label": "cleansessiontitle()"
     },
     {
@@ -32860,8 +32860,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_sessions_liveprs",
-      "community": 218,
-      "community_name": "SessionDeck.tsx",
+      "community": 33,
+      "community_name": "prEngine.ts",
       "norm_label": "liveprs.ts"
     },
     {
@@ -32871,8 +32871,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_lib_sessions_liveprs_liveprs",
-      "community": 218,
-      "community_name": "SessionDeck.tsx",
+      "community": 33,
+      "community_name": "prEngine.ts",
       "norm_label": "liveprs"
     },
     {
@@ -32882,8 +32882,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_lib_sessions_liveprs_empty_live_prs",
-      "community": 218,
-      "community_name": "SessionDeck.tsx",
+      "community": 33,
+      "community_name": "prEngine.ts",
       "norm_label": "empty_live_prs"
     },
     {
@@ -33146,8 +33146,8 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "src_lib_sessions_save_savesessionresult",
-      "community": 33,
-      "community_name": "prEngine.ts",
+      "community": 30,
+      "community_name": "save.ts",
       "norm_label": "savesessionresult"
     },
     {
@@ -34862,8 +34862,8 @@
       "source_location": "L400",
       "_origin": "ast",
       "id": "src_lib_training_prengine_axisrecord",
-      "community": 218,
-      "community_name": "SessionDeck.tsx",
+      "community": 33,
+      "community_name": "prEngine.ts",
       "norm_label": "axisrecord"
     },
     {
@@ -36050,8 +36050,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_utils_setformat",
-      "community": 52,
-      "community_name": "useSessionIntel.ts",
+      "community": 210,
+      "community_name": "ExerciseBreakdown.tsx",
       "norm_label": "setformat.ts"
     },
     {
@@ -36061,8 +36061,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_lib_utils_setformat_setformatoptions",
-      "community": 52,
-      "community_name": "useSessionIntel.ts",
+      "community": 210,
+      "community_name": "ExerciseBreakdown.tsx",
       "norm_label": "setformatoptions"
     },
     {
@@ -36072,8 +36072,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "src_lib_utils_setformat_isunloadedset",
-      "community": 52,
-      "community_name": "useSessionIntel.ts",
+      "community": 210,
+      "community_name": "ExerciseBreakdown.tsx",
       "norm_label": "isunloadedset()"
     },
     {
@@ -36083,8 +36083,8 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "src_lib_utils_setformat_formatset",
-      "community": 52,
-      "community_name": "useSessionIntel.ts",
+      "community": 210,
+      "community_name": "ExerciseBreakdown.tsx",
       "norm_label": "formatset()"
     },
     {
@@ -36094,8 +36094,8 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "src_lib_utils_setformat_formatload",
-      "community": 52,
-      "community_name": "useSessionIntel.ts",
+      "community": 210,
+      "community_name": "ExerciseBreakdown.tsx",
       "norm_label": "formatload()"
     },
     {
@@ -36105,8 +36105,8 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "src_lib_utils_setformat_formatreps",
-      "community": 52,
-      "community_name": "useSessionIntel.ts",
+      "community": 210,
+      "community_name": "ExerciseBreakdown.tsx",
       "norm_label": "formatreps()"
     },
     {
@@ -36864,8 +36864,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_tests_bodyweight_test",
-      "community": 218,
-      "community_name": "SessionDeck.tsx",
+      "community": 104,
+      "community_name": "isTimedExercise",
       "norm_label": "bodyweight.test.ts"
     },
     {
@@ -36941,8 +36941,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_tests_charts_test_e",
-      "community": 34,
-      "community_name": "constructor",
+      "community": 52,
+      "community_name": "delete",
       "norm_label": "e()"
     },
     {
@@ -37107,7 +37107,7 @@
       "_origin": "ast",
       "id": "src_tests_deck_render_test",
       "community": 188,
-      "community_name": "deck-render.test.tsx",
+      "community_name": "ExerciseDeckList.tsx",
       "norm_label": "deck-render.test.tsx"
     },
     {
@@ -37118,7 +37118,7 @@
       "_origin": "ast",
       "id": "src_tests_deck_render_test_committedcalls",
       "community": 188,
-      "community_name": "deck-render.test.tsx",
+      "community_name": "ExerciseDeckList.tsx",
       "norm_label": "committedcalls"
     },
     {
@@ -37129,7 +37129,7 @@
       "_origin": "ast",
       "id": "src_tests_deck_render_test_issetcommitted",
       "community": 188,
-      "community_name": "deck-render.test.tsx",
+      "community_name": "ExerciseDeckList.tsx",
       "norm_label": "issetcommitted()"
     },
     {
@@ -37140,7 +37140,7 @@
       "_origin": "ast",
       "id": "src_tests_deck_render_test_names",
       "community": 188,
-      "community_name": "deck-render.test.tsx",
+      "community_name": "ExerciseDeckList.tsx",
       "norm_label": "names"
     },
     {
@@ -37151,7 +37151,7 @@
       "_origin": "ast",
       "id": "src_tests_deck_render_test_deck",
       "community": 188,
-      "community_name": "deck-render.test.tsx",
+      "community_name": "ExerciseDeckList.tsx",
       "norm_label": "deck()"
     },
     {
@@ -37162,7 +37162,7 @@
       "_origin": "ast",
       "id": "src_tests_deck_render_test_keystroke",
       "community": 188,
-      "community_name": "deck-render.test.tsx",
+      "community_name": "ExerciseDeckList.tsx",
       "norm_label": "keystroke()"
     },
     {
@@ -37173,7 +37173,7 @@
       "_origin": "ast",
       "id": "src_tests_deck_render_test_noop",
       "community": 188,
-      "community_name": "deck-render.test.tsx",
+      "community_name": "ExerciseDeckList.tsx",
       "norm_label": "noop()"
     },
     {
@@ -37184,7 +37184,7 @@
       "_origin": "ast",
       "id": "src_tests_deck_render_test_props",
       "community": 188,
-      "community_name": "deck-render.test.tsx",
+      "community_name": "ExerciseDeckList.tsx",
       "norm_label": "props"
     },
     {
@@ -37195,7 +37195,7 @@
       "_origin": "ast",
       "id": "src_tests_deck_render_test_countrowrendersperkeystroke",
       "community": 188,
-      "community_name": "deck-render.test.tsx",
+      "community_name": "ExerciseDeckList.tsx",
       "norm_label": "countrowrendersperkeystroke()"
     },
     {
@@ -37642,7 +37642,7 @@
       "label": "WEEK",
       "file_type": "code",
       "source_file": "src/tests/hevy-parity.test.ts",
-      "source_location": "L173",
+      "source_location": "L159",
       "_origin": "ast",
       "id": "src_tests_hevy_parity_test_week",
       "community": 60,
@@ -37653,7 +37653,7 @@
       "label": "weekRows()",
       "file_type": "code",
       "source_file": "src/tests/hevy-parity.test.ts",
-      "source_location": "L217",
+      "source_location": "L203",
       "_origin": "ast",
       "id": "src_tests_hevy_parity_test_weekrows",
       "community": 60,
@@ -37843,8 +37843,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_tests_live_header_test",
-      "community": 104,
-      "community_name": "LiveSessionHero.tsx",
+      "community": 218,
+      "community_name": "SessionDeck.tsx",
       "norm_label": "live-header.test.tsx"
     },
     {
@@ -37854,8 +37854,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_tests_live_header_test_fixture",
-      "community": 104,
-      "community_name": "LiveSessionHero.tsx",
+      "community": 218,
+      "community_name": "SessionDeck.tsx",
       "norm_label": "fixture"
     },
     {
@@ -37865,8 +37865,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "src_tests_live_header_test_rgb",
-      "community": 104,
-      "community_name": "LiveSessionHero.tsx",
+      "community": 218,
+      "community_name": "SessionDeck.tsx",
       "norm_label": "rgb()"
     },
     {
@@ -37876,8 +37876,8 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "src_tests_live_header_test_draft",
-      "community": 104,
-      "community_name": "LiveSessionHero.tsx",
+      "community": 218,
+      "community_name": "SessionDeck.tsx",
       "norm_label": "draft"
     },
     {
@@ -37887,8 +37887,8 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "src_tests_live_header_test_wrap",
-      "community": 104,
-      "community_name": "LiveSessionHero.tsx",
+      "community": 218,
+      "community_name": "SessionDeck.tsx",
       "norm_label": "wrap()"
     },
     {
@@ -39460,8 +39460,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_tests_set_format_test",
-      "community": 52,
-      "community_name": "useSessionIntel.ts",
+      "community": 210,
+      "community_name": "ExerciseBreakdown.tsx",
       "norm_label": "set-format.test.ts"
     },
     {
@@ -39471,8 +39471,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_tests_set_format_test_s",
-      "community": 52,
-      "community_name": "useSessionIntel.ts",
+      "community": 166,
+      "community_name": "backfill-prs.mjs",
       "norm_label": "s()"
     },
     {
@@ -39482,8 +39482,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_tests_set_grid_mode_test",
-      "community": 218,
-      "community_name": "SessionDeck.tsx",
+      "community": 104,
+      "community_name": "isTimedExercise",
       "norm_label": "set-grid-mode.test.ts"
     },
     {
@@ -39493,8 +39493,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_tests_set_grid_mode_test_modefor",
-      "community": 218,
-      "community_name": "SessionDeck.tsx",
+      "community": 104,
+      "community_name": "isTimedExercise",
       "norm_label": "modefor()"
     },
     {
@@ -39504,8 +39504,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_tests_set_row_markup_test",
-      "community": 63,
-      "community_name": "ExerciseCard.tsx",
+      "community": 96,
+      "community_name": "tapLight",
       "norm_label": "set-row-markup.test.tsx"
     },
     {
@@ -39515,8 +39515,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "src_tests_set_row_markup_test_fixture",
-      "community": 63,
-      "community_name": "ExerciseCard.tsx",
+      "community": 96,
+      "community_name": "tapLight",
       "norm_label": "fixture"
     },
     {
@@ -39526,8 +39526,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "src_tests_set_row_markup_test_noop",
-      "community": 63,
-      "community_name": "ExerciseCard.tsx",
+      "community": 96,
+      "community_name": "tapLight",
       "norm_label": "noop()"
     },
     {
@@ -39537,8 +39537,8 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "src_tests_set_row_markup_test_loaded",
-      "community": 63,
-      "community_name": "ExerciseCard.tsx",
+      "community": 96,
+      "community_name": "tapLight",
       "norm_label": "loaded"
     },
     {
@@ -39548,8 +39548,8 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "src_tests_set_row_markup_test_reps",
-      "community": 63,
-      "community_name": "ExerciseCard.tsx",
+      "community": 96,
+      "community_name": "tapLight",
       "norm_label": "reps"
     },
     {
@@ -39559,8 +39559,8 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "src_tests_set_row_markup_test_time",
-      "community": 63,
-      "community_name": "ExerciseCard.tsx",
+      "community": 96,
+      "community_name": "tapLight",
       "norm_label": "time"
     },
     {
@@ -39570,8 +39570,8 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "src_tests_set_row_markup_test_header",
-      "community": 63,
-      "community_name": "ExerciseCard.tsx",
+      "community": 96,
+      "community_name": "tapLight",
       "norm_label": "header()"
     },
     {
@@ -39581,8 +39581,8 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "src_tests_set_row_markup_test_deck",
-      "community": 63,
-      "community_name": "ExerciseCard.tsx",
+      "community": 96,
+      "community_name": "tapLight",
       "norm_label": "deck()"
     },
     {
@@ -119636,7 +119636,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/exercises/muscleMap.ts",
-      "source_location": "L186",
+      "source_location": "L160",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_exercises_musclemap",
@@ -119658,7 +119658,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/exercises/muscleMap.ts",
-      "source_location": "L198",
+      "source_location": "L172",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_exercises_musclemap",
@@ -119669,7 +119669,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/exercises/muscleMap.ts",
-      "source_location": "L212",
+      "source_location": "L186",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_exercises_musclemap",
@@ -119680,7 +119680,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/exercises/muscleMap.ts",
-      "source_location": "L178",
+      "source_location": "L152",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_exercises_musclemap",
@@ -119812,7 +119812,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/exercises/muscleMap.ts",
-      "source_location": "L187",
+      "source_location": "L161",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_exercises_musclemap_lookupmuscles",
@@ -119824,7 +119824,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/exercises/muscleMap.ts",
-      "source_location": "L199",
+      "source_location": "L173",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_exercises_musclemap_musclegroupsfor",
@@ -119836,7 +119836,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/exercises/muscleMap.ts",
-      "source_location": "L216",
+      "source_location": "L190",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_exercises_musclemap_resolvemovers",
@@ -120076,7 +120076,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/tests/hevy-parity.test.ts",
-      "source_location": "L224",
+      "source_location": "L210",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_tests_hevy_parity_test_weekrows",
@@ -161562,7 +161562,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/tests/hevy-parity.test.ts",
-      "source_location": "L173",
+      "source_location": "L159",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_tests_hevy_parity_test",
@@ -161573,7 +161573,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/tests/hevy-parity.test.ts",
-      "source_location": "L217",
+      "source_location": "L203",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_tests_hevy_parity_test",

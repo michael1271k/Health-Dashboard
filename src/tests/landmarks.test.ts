@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   PROGRAM_TARGETS, toLandmarkMuscle, volumeZone, weeklyVolumeByMuscle,
-  weeklyTonnageByMuscle, landmarkFor, bandZone,
+  weeklyTonnageByMuscle, landmarkFor, bandZone, LANDMARK_MUSCLES,
 } from '@/lib/training/landmarks'
 
 describe('PROGRAM_TARGETS — user-supplied per-program targets', () => {
@@ -39,8 +39,15 @@ describe('toLandmarkMuscle', () => {
     expect(toLandmarkMuscle('shoulders')).toBe('Side delts')
     expect(toLandmarkMuscle('rear_delts')).toBe('Rear delts')
   })
-  it('drops untracked tokens (front delts, abductors)', () => {
-    expect(toLandmarkMuscle('front_delts')).toBeNull()
+  it('routes the anterior deltoid to its own landmark', () => {
+    // This used to return null on the theory that pressing "covers" the front
+    // delt. Pressing does cover it — nine weighted sets in a real week — which
+    // is exactly why discarding the credit made a trained muscle read as zero.
+    expect(toLandmarkMuscle('front_delts')).toBe('Front delts')
+    expect(toLandmarkMuscle('anterior_delts')).toBe('Front delts')
+  })
+
+  it('drops untracked tokens (abductors)', () => {
     expect(toLandmarkMuscle('abductors')).toBeNull()
   })
 })
@@ -74,7 +81,7 @@ describe('weeklyVolumeByMuscle', () => {
 
   it('returns every tracked muscle even with no data', () => {
     const out = weeklyVolumeByMuscle([], 'bulk')
-    expect(out).toHaveLength(15)
+    expect(out).toHaveLength(LANDMARK_MUSCLES.length)
     expect(out.every((m) => m.sets === 0)).toBe(true)
   })
 })

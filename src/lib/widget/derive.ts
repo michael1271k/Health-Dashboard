@@ -400,6 +400,13 @@ export function e1rmTrends(
  * disagree. A family named by both lists takes the primary's full share once,
  * never full plus a half.
  *
+ * WARM-UPS COUNT, for the same reason. This function used to skip them while
+ * `useWeeklyVolume` skipped them too, so the claim above held by accident. When
+ * the Week-to-Date card started counting them, this became the app's second
+ * answer to one question — on the surface furthest from anywhere you could
+ * check it, since the snapshot route selects sets with no `set_type` predicate
+ * at all and the exclusion happened silently in here.
+ *
  * Deliberately NOT graded into volume zones. `volumeZone` measures direct SETS
  * against per-landmark Renaissance-Periodisation targets; there are no targets
  * at family granularity, and inventing them by summing thirteen landmark numbers
@@ -412,7 +419,6 @@ export function volumeByFamily(sets: readonly SetRow[]): WidgetFamilyVolume[] {
   const setCount = new Map<MuscleFamily, number>()
 
   for (const s of sets) {
-    if (s.setType === 'warmup') continue
     const volume = (s.weightKg ?? 0) * (s.reps ?? 0)
     const movers = resolveMovers(s.exercise)
     const families = (tokens: readonly string[]) => {

@@ -17,10 +17,11 @@ import { SEVERITY_COLOR } from '@/components/day/severity'
  * and are unmaintained. The whole asset here is a few hundred bytes of path
  * data with no runtime.
  *
- * WHY NOT `BodyHeatmap` (HelixViz.tsx)
- * Its `REGIONS` are six coarse blobs — one `Legs`, one `Arms`. Quads vs
+ * WHY NOT THE OLD `BodyHeatmap` (deleted from HelixViz.tsx)
+ * Its `REGIONS` were six coarse blobs — one `Legs`, one `Arms`. Quads vs
  * Hamstrings vs Calves is precisely the distinction DOMS exists to make, so
- * reusing it would erase the data it is meant to show.
+ * reusing it would have erased the data it is meant to show. That argument is
+ * why it never got reused, and eventually why it was removed outright.
  *
  * ACCESSIBILITY
  * Every region is a real `<button>` wrapping its path with an `aria-label` and

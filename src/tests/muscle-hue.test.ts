@@ -63,7 +63,7 @@ describe('muscle families — six hues, none of them gold', () => {
 })
 
 describe('landmarks are ramp positions inside their family', () => {
-  it('places all 13 landmarks in a family', () => {
+  it('places all 16 landmarks in a family', () => {
     for (const m of LANDMARK_MUSCLES) expect(MUSCLE_GROUPS).toContain(familyOf(m))
   })
 
@@ -71,7 +71,7 @@ describe('landmarks are ramp positions inside their family', () => {
     const expected: Record<LandmarkMuscle, string> = {
       Chest: 'Chest',
       Lats: 'Back', 'Upper back': 'Back', 'Lower back': 'Back',
-      'Side delts': 'Shoulders', 'Rear delts': 'Shoulders',
+      'Front delts': 'Shoulders', 'Side delts': 'Shoulders', 'Rear delts': 'Shoulders',
       Biceps: 'Arms', Triceps: 'Arms', Forearms: 'Arms',
       Quads: 'Legs', Hamstrings: 'Legs', Glutes: 'Legs', Adductors: 'Legs', Calves: 'Legs',
       'Abs/core': 'Core',
@@ -79,8 +79,8 @@ describe('landmarks are ramp positions inside their family', () => {
     for (const m of LANDMARK_MUSCLES) expect(familyOf(m)).toBe(expected[m])
   })
 
-  it('keeps all 15 distinguishable', () => {
-    expect(new Set(LANDMARK_MUSCLES.map(landmarkColor)).size).toBe(15)
+  it('keeps all 16 distinguishable', () => {
+    expect(new Set(LANDMARK_MUSCLES.map(landmarkColor)).size).toBe(16)
   })
 
   /** A Legs landmark must read as blue, or the family hue is doing no work. */
@@ -100,7 +100,7 @@ describe('landmarks are ramp positions inside their family', () => {
   it('gives the five leg muscles five steps, not five unrelated colours', () => {
     expect(familyRamp('Legs')).toHaveLength(5)
     expect(familyRamp('Arms')).toHaveLength(3)
-    expect(familyRamp('Shoulders')).toHaveLength(2)
+    expect(familyRamp('Shoulders')).toHaveLength(3)   // front · side · rear
     expect(familyRamp('Chest')).toHaveLength(1)
   })
 

@@ -18,7 +18,7 @@ export type Program = ProgramPhase
 export type ProgramPhase = 'cut' | 'maintenance' | 'bulk'
 
 /**
- * The 15 tracked muscles (display order).
+ * The 16 tracked muscles (display order).
  *
  * ── WHY `Back` BECAME THREE ─────────────────────────────────────────────────
  * It was one landmark, so a lat pulldown, a face pull and a rack pull all
@@ -30,7 +30,8 @@ export type ProgramPhase = 'cut' | 'maintenance' | 'bulk'
  * erector column were already four separate paths that happened to share a key.
  */
 export const LANDMARK_MUSCLES = [
-  'Chest', 'Lats', 'Upper back', 'Lower back', 'Side delts', 'Rear delts',
+  'Chest', 'Lats', 'Upper back', 'Lower back',
+  'Front delts', 'Side delts', 'Rear delts',
   'Biceps', 'Triceps', 'Forearms',
   'Quads', 'Hamstrings', 'Glutes', 'Adductors', 'Calves', 'Abs/core',
 ] as const
@@ -52,20 +53,20 @@ export const PROGRAM_TARGETS: Record<ProgramPhase, Record<LandmarkMuscle, number
   // thrusts rather than directly prescribed.
   cut: {
     Chest: 11, Lats: 6, 'Upper back': 4, 'Lower back': 1,
-    'Side delts': 7, 'Rear delts': 2, Biceps: 8, Triceps: 6,
+    'Front delts': 4, 'Side delts': 7, 'Rear delts': 2, Biceps: 8, Triceps: 6,
     Forearms: 4, Quads: 10, Hamstrings: 8, Glutes: 6, Adductors: 0, Calves: 6, 'Abs/core': 10,
   },
   // Maintenance — between MEV+ and MAV: enough to keep progressing without the
   // recovery cost of a full bulk block.
   maintenance: {
     Chest: 12, Lats: 7, 'Upper back': 4, 'Lower back': 1,
-    'Side delts': 8, 'Rear delts': 3, Biceps: 8, Triceps: 7,
+    'Front delts': 5, 'Side delts': 8, 'Rear delts': 3, Biceps: 8, Triceps: 7,
     Forearms: 5, Quads: 11, Hamstrings: 8, Glutes: 6, Adductors: 1, Calves: 7, 'Abs/core': 10,
   },
   // Helix Bulk — MAV (productive ceiling)
   bulk: {
     Chest: 13, Lats: 8, 'Upper back': 5, 'Lower back': 1,
-    'Side delts': 9, 'Rear delts': 3, Biceps: 9, Triceps: 7,
+    'Front delts': 6, 'Side delts': 9, 'Rear delts': 3, Biceps: 9, Triceps: 7,
     Forearms: 7, Quads: 12, Hamstrings: 9, Glutes: 7, Adductors: 2, Calves: 8, 'Abs/core': 11,
   },
 }
@@ -79,7 +80,7 @@ export function programTargets(phase: ProgramPhase): Record<LandmarkMuscle, numb
 
 /**
  * Fold a raw muscle token (from `exercises.muscle_groups`, seeded by muscleMap)
- * into one of the 15 landmark muscles, or null when it isn't a tracked target.
+ * into one of the 16 landmark muscles, or null when it isn't a tracked target.
  * Handles both refined tokens (side_delts / rear_delts) and legacy generic ones
  * (a bare "shoulders" is treated as side-delt isolation, the common case).
  */
@@ -95,7 +96,16 @@ export function toLandmarkMuscle(token: string): LandmarkMuscle | null {
     case 'lower_back': case 'erectors': case 'spinal_erectors': return 'Lower back'
     case 'side_delts': case 'lateral_delts': case 'shoulders': case 'delts': return 'Side delts'
     case 'rear_delts': case 'rear_delt': return 'Rear delts'
-    case 'front_delts': return null // pressing already covers front delts — not a separate target
+    // ── WHY FRONT DELTS STOPPED BEING THROWN AWAY ──────────────────────────
+    // This returned null on the argument that "pressing already covers front
+    // delts". Pressing DOES cover them — that is precisely why discarding the
+    // credit was wrong. Reconciling a real week (2026-08-16 → 22) against Hevy,
+    // NINE weighted sets evaporated here: three of overhead press as a primary,
+    // and every chest press, incline press, pec deck and crossover as a
+    // secondary. A muscle trained nine times a week that reports nothing is not
+    // "covered", it is invisible, and it was the single largest gap in the
+    // whole breakdown.
+    case 'front_delts': case 'anterior_delts': return 'Front delts'
     case 'biceps': return 'Biceps'
     case 'triceps': return 'Triceps'
     case 'forearms': case 'brachioradialis': return 'Forearms'

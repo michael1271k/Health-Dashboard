@@ -2,7 +2,7 @@
  * Muscle colour, three levels deep.
  *
  *   1. FAMILY  — six hues (`GROUP` in palette.ts), spread across the wheel.
- *   2. LANDMARK — each of the 13 tracked muscles is a step inside its family's
+ *   2. LANDMARK — each of the 16 tracked muscles is a step inside its family's
  *      ramp, light → dark (`MUSCLE` in palette.ts).
  *   3. EXERCISE — one nudge within its landmark, so Barbell Curl and Hammer Curl
  *      are both visibly Biceps and visibly not each other.
@@ -33,6 +33,7 @@ const FAMILY_OF: Record<LandmarkMuscle, MuscleFamily> = {
   Lats: 'Back',
   'Upper back': 'Back',
   'Lower back': 'Back',
+  'Front delts': 'Shoulders',
   'Side delts': 'Shoulders',
   'Rear delts': 'Shoulders',
   Biceps: 'Arms',

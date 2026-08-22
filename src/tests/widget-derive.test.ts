@@ -235,8 +235,13 @@ describe('volumeByFamily', () => {
     expect(out).toEqual([{ family: 'Core', kg: 0, sets: 1 }])
   })
 
-  it('never counts a warm-up', () => {
-    expect(volumeByFamily([s({ setType: 'warmup' })])).toEqual([])
+  it('counts a warm-up, exactly as the Week-to-Date card does', () => {
+    // This asserted the opposite until the app stopped excluding warm-ups from
+    // weekly per-muscle volume. A green test pinning the widget to the old rule
+    // was hiding the disagreement rather than proving there was none.
+    expect(volumeByFamily([s({ setType: 'warmup' })])).toEqual(
+      volumeByFamily([s()]),
+    )
   })
 
   it('sorts heaviest first', () => {

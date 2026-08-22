@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Moon, Check, ArrowRight, RotateCcw, AlertTriangle } from 'lucide-react'
+import { Moon, ArrowRight, RotateCcw, AlertTriangle } from 'lucide-react'
 import { Sheet } from '@/components/ui/Sheet'
 import { activeProgram, scheduleDayFor, type ProgramDay } from '@/lib/programs'
 import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
@@ -15,7 +15,7 @@ import { blockForPlacement, describeBlock, shortDayLabel, dateForWeekday, weekDa
 import { weekStartOf } from '@/lib/utils/week'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
-import { MUTED, EMERALD, GOLD, EMBER_DEEP } from '@/lib/theme/palette'
+import { MUTED, EMERALD, GOLD, EMBER_DEEP, OBSIDIAN, TEXT } from '@/lib/theme/palette'
 
 const WD_LONG = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 const WD_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -63,71 +63,118 @@ export function WeekScheduler() {
   )
   const loggedByDate = useMemo(() => new Map(logged.map((l) => [l.date, l])), [logged])
 
+  /** The splits this week actually contains, in calendar order, deduped. */
+  const weekSplits = useMemo(() => {
+    const out: ProgramDay[] = []
+    for (const date of dates) {
+      const schedule = scheduleDayFor(date)
+      if (schedule === 'rest') continue
+      const day = program.days.find((d) => d.key === schedule.dayKey)
+      if (day && !out.some((o) => o.key === day.key)) out.push(day)
+    }
+    return out
+    // `useScheduleVersion` above is what re-runs this when a swap lands — the
+    // schedule store is a synchronous cache React cannot see on its own.
+  }, [dates, program])
+
   const reset = useResetProgramLayout()
   const customised = isLayoutCustomised()
 
   return (
     <div className="space-y-2">
-      <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-1.5 divide-y divide-white/[0.05]">
-        {dates.map((date) => {
-          const schedule = scheduleDayFor(date)
-          const day = schedule === 'rest' ? null : program.days.find((d) => d.key === schedule.dayKey) ?? null
-          const isToday = date === today
-          const isPast = date < today
-          const done = loggedByDate.get(date)
-          const weekday = new Date(`${date}T12:00:00Z`).getUTCDay()
+      {/* ── SEVEN ACROSS, NOT SEVEN DOWN ────────────────────────────────────
+          This was a vertical list of seven 44px rows — about 330px of screen to
+          say what a week looks like, on a page that also has to hold today's
+          session, the coach line and the whole analytics panel. A week is seven
+          things in a row; that is what a week IS, and reading it as a column
+          meant scrolling to compare Monday with Friday.
 
-          return (
-            <button
-              key={date}
-              type="button"
-              // A rest day has nothing to move. Tapping a logged day opens the
-              // sheet anyway — it will explain why it can't move, which is more
-              // useful than a control that does nothing.
-              disabled={!day}
-              onClick={() => day && setMoving(day)}
-              onPointerUp={blurOnTap}
-              className="w-full flex items-center gap-2 px-2 py-2 text-left min-h-[44px] disabled:opacity-100 disabled:cursor-default"
-              style={{ background: isToday ? `${day?.color ?? MUTED}0f` : undefined, borderRadius: 8 }}
-            >
-              <span className="w-9 shrink-0">
-                <span className="block text-[10px] font-bold uppercase tracking-wide" style={{ color: isToday ? (day?.color ?? MUTED) : MUTED }}>
+          Every cell keeps its 44px tap target, and nothing about the swap model
+          changes: tapping still opens `MoveDaySheet`, which still states the
+          consequence before anything happens. What changed is that the state
+          badges became marks — a ring on the date instead of the word "Logged",
+          the split's colour instead of its name — because seven columns cannot
+          hold sentences and a mark is legible at a glance anyway. The name is
+          still there for anyone who needs it, in the cell's accessible label. */}
+      <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-1.5">
+        <div className="grid grid-cols-7 gap-0.5">
+          {dates.map((date) => {
+            const schedule = scheduleDayFor(date)
+            const day = schedule === 'rest' ? null : program.days.find((d) => d.key === schedule.dayKey) ?? null
+            const isToday = date === today
+            const isPast = date < today
+            const done = loggedByDate.get(date)
+            const weekday = new Date(`${date}T12:00:00Z`).getUTCDay()
+            const hue = day?.color ?? MUTED
+            const missed = !done && isPast && !!day
+
+            return (
+              <button
+                key={date}
+                type="button"
+                // A rest day has nothing to move. Tapping a logged day opens the
+                // sheet anyway — it will explain why it can't move, which is more
+                // useful than a control that does nothing.
+                disabled={!day}
+                onClick={() => day && setMoving(day)}
+                onPointerUp={blurOnTap}
+                aria-label={`${WD_LONG[weekday]} ${date.slice(8)} — ${day?.label ?? 'Rest'}${
+                  done ? ', logged' : missed ? ', missed' : ''
+                }${isToday ? ', today' : ''}`}
+                className="flex flex-col items-center gap-1 py-1.5 min-h-[64px] rounded-lg
+                           disabled:cursor-default transition-colors"
+                style={{ background: isToday ? `${hue}14` : undefined }}
+              >
+                <span
+                  className="text-[9px] font-bold uppercase tracking-wide"
+                  style={{ color: isToday ? hue : MUTED }}
+                >
                   {WD_SHORT[weekday]}
                 </span>
-                <span className="block text-[9px]" style={{ color: MUTED }}>{date.slice(8)}</span>
-              </span>
 
-              {day ? (
-                <>
-                  <span className="w-1 h-5 rounded-full shrink-0" style={{ background: day.color }} aria-hidden="true" />
-                  <span className="split-label font-bold text-fluid-sm truncate" style={{ color: day.color }}>{day.label}</span>
-                </>
-              ) : (
-                <>
-                  <Moon className="w-3.5 h-3.5 shrink-0" style={{ color: EMBER_DEEP }} aria-hidden="true" />
-                  <span className="text-fluid-sm font-semibold" style={{ color: EMBER_DEEP }}>Rest</span>
-                </>
-              )}
+                {/* The date sits inside the state ring: filled = logged, hollow
+                    = a training day that has passed unlogged, bare = neither.
+                    One glyph carrying the date and its status costs a row of
+                    height that seven columns cannot spare twice. */}
+                <span
+                  className="helix-num text-[11px] font-bold w-6 h-6 rounded-full inline-flex items-center justify-center"
+                  style={
+                    done
+                      ? { color: OBSIDIAN, background: EMERALD }
+                      : missed
+                        ? { color: MUTED, boxShadow: `inset 0 0 0 1px ${MUTED}66` }
+                        : { color: isToday ? TEXT : MUTED }
+                  }
+                >
+                  {Number(date.slice(8))}
+                </span>
 
-              <span className="ml-auto flex items-center gap-1.5 shrink-0">
-                {done && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-bold" style={{ color: EMERALD }}>
-                    <Check className="w-3 h-3" aria-hidden="true" /> Logged
-                  </span>
+                {day ? (
+                  <span
+                    className="w-4 h-1 rounded-full"
+                    style={{ background: day.color }}
+                    aria-hidden="true"
+                    title={day.label}
+                  />
+                ) : (
+                  <Moon className="w-2.5 h-2.5" style={{ color: EMBER_DEEP }} aria-hidden="true" />
                 )}
-                {!done && isPast && day && (
-                  <span className="text-[10px]" style={{ color: MUTED }}>missed</span>
-                )}
-                {isToday && (
-                  <span className="text-[9px] px-1 rounded font-bold"
-                    style={{ color: day?.color ?? MUTED, background: `${day?.color ?? MUTED}22` }}>
-                    TODAY
-                  </span>
-                )}
-              </span>
-            </button>
-          )
-        })}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* The colour bars are only legible if something names them once. A
+            legend under the strip is cheaper than seven truncated labels in it,
+            and it lists the week's OWN splits rather than the whole program. */}
+        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 px-1 pt-1.5 mt-1 border-t border-white/[0.05]">
+          {weekSplits.map((d) => (
+            <span key={d.key} className="inline-flex items-center gap-1 text-[9px]" style={{ color: d.color }}>
+              <span className="w-2 h-1 rounded-full" style={{ background: d.color }} aria-hidden="true" />
+              <span className="split-label font-bold">{d.label}</span>
+            </span>
+          ))}
+        </div>
       </div>
 
       {customised && (

@@ -33,8 +33,21 @@ const DICT: Array<{ tokens: string[]; muscles: MuscleEntry }> = [
   // held for its whole set — the grip is a real secondary, which is why every
   // other database lists it. Both were absent here, so the weekly totals for
   // two muscles read zero on days that trained them.
-  { tokens: ['leg', 'press', 'horizontal'], muscles: { primary: ['quadriceps'], secondary: ['glutes', 'hamstrings', 'adductors'] } },
-  { tokens: ['leg', 'press'], muscles: { primary: ['quadriceps'], secondary: ['glutes', 'hamstrings', 'adductors'] } },
+  // ── THE ADDUCTORS ARE THE HIP THRUST'S, NOT THE LEG PRESS'S ───────────────
+  // They were put here on the reasoning that a leg press spreads the stance
+  // wide enough to load them, and the arithmetic seemed to agree — one session
+  // with three leg-press sets produced Hevy's Adductors 1.5 exactly. It was a
+  // coincidence of set counts. Across the whole week the same rule pays 3.5
+  // against Hevy's 1.5, and Hevy's own leg-press definition lists only
+  // hamstrings and glutes. A machine leg press fixes the feet; there is no
+  // adduction moment to resist.
+  //
+  // The hip thrust is where that credit belongs, and 0.5 × 3 sets is Hevy's
+  // 1.5 to the decimal. The adductor magnus is a primary hip extensor — in a
+  // thrust it is doing the same job as the glute, which is exactly what a
+  // secondary tag is for.
+  { tokens: ['leg', 'press', 'horizontal'], muscles: { primary: ['quadriceps'], secondary: ['glutes', 'hamstrings'] } },
+  { tokens: ['leg', 'press'], muscles: { primary: ['quadriceps'], secondary: ['glutes', 'hamstrings'] } },
   { tokens: ['hack', 'squat'], muscles: { primary: ['quadriceps'], secondary: ['glutes', 'hamstrings'] } },
   { tokens: ['leg', 'extension'], muscles: { primary: ['quadriceps'], secondary: [] } },
 
@@ -43,9 +56,19 @@ const DICT: Array<{ tokens: string[]; muscles: MuscleEntry }> = [
   // crosses the knee — it is a real contributor, not a courtesy tag.
   { tokens: ['seated', 'leg', 'curl'], muscles: { primary: ['hamstrings'], secondary: ['calves'] } },
   { tokens: ['leg', 'curl'], muscles: { primary: ['hamstrings'], secondary: ['calves'] } },
+  // `upper back` is BACK, and it was removed in error. Hevy's own definition
+  // lists it, and dropping it only appeared to fix the weekly Upper back total
+  // because the straight-arm pulldown was over-counting there by the same 1.5.
+  // Two wrongs summing to the right answer is the worst kind of green.
+  //
+  // `forearms` stays despite not appearing in Hevy's displayed "other muscles"
+  // list, because Hevy's own NUMBERS say it is there: the 2026-08-21 session
+  // has exactly one grip-loaded movement, this one, and Hevy reported Forearms
+  // 1.5 for it — which is 0.5 × 3 sets of dumbbell RDL and cannot be anything
+  // else. The displayed list is abbreviated; the arithmetic is not.
   { tokens: ['romanian', 'deadlift'], muscles: { primary: ['hamstrings'], secondary: ['glutes', 'lower back', 'upper back', 'lats', 'forearms'] } },
   { tokens: ['rdl'], muscles: { primary: ['hamstrings'], secondary: ['glutes', 'lower back', 'upper back', 'lats', 'forearms'] } },
-  { tokens: ['hip', 'thrust'], muscles: { primary: ['glutes'], secondary: ['hamstrings', 'quadriceps'] } },
+  { tokens: ['hip', 'thrust'], muscles: { primary: ['glutes'], secondary: ['hamstrings', 'quadriceps', 'adductors'] } },
   // Hip adduction was invisible to the accumulator TWICE OVER: no dictionary
   // entry, and the DB tagged the machine variant `inner_thigh`, a token
   // toLandmarkMuscle did not know. The Adductors target could never be met
@@ -91,15 +114,23 @@ const DICT: Array<{ tokens: string[]; muscles: MuscleEntry }> = [
   { tokens: ['seated', 'cable', 'row', 'wide'], muscles: { primary: ['upper back'], secondary: ['lats', 'traps', 'rear_delts', 'biceps', 'forearms'] } },
   { tokens: ['seated', 'cable', 'row', 'v'], muscles: { primary: ['upper back'], secondary: ['lats', 'biceps', 'forearms'] } },
   // Elbows locked, shoulder extension only — the long head of the triceps does
-  // cross the shoulder, so it earns a secondary here where a fly does not.
-  { tokens: ['straight', 'arm', 'pulldown'], muscles: { primary: ['lats'], secondary: ['triceps', 'upper back'] } },
+  // cross the shoulder, so it earns a secondary here where a fly does not. The
+  // upper back does NOT: the scapulae depress rather than retract, and Hevy's
+  // definition names the triceps alone. This was the real source of the weekly
+  // Upper back over-count that the RDL was wrongly blamed for.
+  { tokens: ['straight', 'arm', 'pulldown'], muscles: { primary: ['lats'], secondary: ['triceps'] } },
 
   // ── Delts ───────────────────────────────────────────────────────────────────
   // Deltoid work is NOT interchangeable for volume accounting. A bare 'shoulders'
   // primary folded everything (press + face pull + lateral raise) into Side delts
   // via toLandmarkMuscle, so overhead press and rear-delt face pulls inflated the
   // side-delt count. Route each head to its real primary instead.
-  { tokens: ['face', 'pull'], muscles: { primary: ['rear_delts'], secondary: ['upper back', 'traps'] } },
+  // A FACE PULL IS NOT UPPER-BACK WORK. It reads like it — the scapulae retract
+  // — but the load is chosen for the rear delt and the rhomboids never shorten
+  // against anything like it. Hevy classes the whole movement as shoulders and
+  // gives the upper back nothing, and reconciling a real week against it, that
+  // secondary was 1.5 of the 3.0 by which Helix over-counted Upper back.
+  { tokens: ['face', 'pull'], muscles: { primary: ['rear_delts'], secondary: [] } },
   // `Shoulder Press (DB)` used to resolve to NOTHING: the parenthesis was
   // stripped before matching, so `['db','shoulder','press']` could not fire, and
   // the fallback `muscle_groups[0]` was a bare 'shoulders' that folded to SIDE
@@ -118,10 +149,14 @@ const DICT: Array<{ tokens: string[]; muscles: MuscleEntry }> = [
   // ── Biceps / forearms ───────────────────────────────────────────────────────
   { tokens: ['hammer', 'curl'], muscles: { primary: ['biceps'], secondary: ['forearms'] } },
   { tokens: ['neutral', 'grip', 'curl'], muscles: { primary: ['biceps'], secondary: ['forearms'] } },
-  // Reverse (pronated) curl is a brachioradialis/forearm movement — the program
-  // itself tags it forearms-first. muscleMap said biceps, so 2 forearm sets/week
-  // were mis-credited to biceps.
-  { tokens: ['reverse', 'curl'], muscles: { primary: ['forearms'], secondary: ['biceps'] } },
+  // Reverse (pronated) curl: BICEPS primary, forearms secondary. This file has
+  // now had it both ways round. The brachioradialis argument is real — pronation
+  // does shift load onto it — but the movement is still elbow flexion against a
+  // load chosen for the elbow flexors, and the biceps brachii shortens through
+  // the whole range whichever way the hand faces. Hevy calls it biceps-primary,
+  // and flipping it back is what puts the weekly Forearms line on 8.5 instead
+  // of 9.5.
+  { tokens: ['reverse', 'curl'], muscles: { primary: ['biceps'], secondary: ['forearms'] } },
   { tokens: ['wrist', 'curl'], muscles: { primary: ['forearms'], secondary: [] } },
   { tokens: ['preacher', 'curl'], muscles: { primary: ['biceps'], secondary: [] } },
   { tokens: ['incline', 'curl'], muscles: { primary: ['biceps'], secondary: [] } },

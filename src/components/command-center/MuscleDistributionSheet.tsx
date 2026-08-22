@@ -47,10 +47,15 @@ export function MuscleDistributionSheet({ open, onClose, entries, physical, weig
           <Count
             value={weighted}
             label="Weighted sets"
+            // This tooltip used to end "Warm-ups and unticked sets are not
+            // counted", which contradicted both `draftMuscleSets` (which counts
+            // warm-ups, deliberately) and the line printed six elements below
+            // it. One component, two answers, and the wrong one was the one you
+            // got by hovering the number.
             hint={'One physical set credits 1.0 to every muscle it trains directly and 0.5 to '
               + 'every muscle that assists — so a compound lift lands on several, and this total '
               + 'is higher than the set count on purpose. It is the same credit the weekly volume '
-              + 'targets are graded on. Warm-ups and unticked sets are not counted.'}
+              + 'targets are graded on. Warm-ups count; unticked sets do not.'}
           />
         </div>
 
@@ -62,7 +67,10 @@ export function MuscleDistributionSheet({ open, onClose, entries, physical, weig
             <li key={e.muscle} className="flex items-center gap-2 text-[11px]">
               <span className="w-1.5 h-1.5 rounded-full shrink-0"
                 style={{ background: MUSCLE_COLOR[e.muscle] ?? MUTED }} aria-hidden="true" />
-              <span className="text-muted flex-1 min-w-0 truncate">{e.muscle}</span>
+              {/* No `truncate`: "Front delts" and "Hamstrings" are the longest
+                  names here and the row's only other content is a two-character
+                  number, so clipping them bought nothing and cost the label. */}
+              <span className="text-muted flex-1 min-w-0">{e.muscle}</span>
               <span className="helix-num font-bold text-text tabular-nums">{e.sets}</span>
             </li>
           ))}

@@ -33,7 +33,8 @@ import type { DomsMuscle } from '@/lib/hooks/useRecovery'
  *   1. `BASE_SHAPES`   — the silhouette. Head, hair, neck, torso, arms, fists,
  *                        legs, feet. Drawn under every view, never tinted: this
  *                        is the body, not the data.
- *   2. `MUSCLE_PATHS`  — the 13 landmarks, per view. The only interactive layer,
+ *   2. `MUSCLE_PATHS`  — the landmarks that have geometry, per view (every one
+ *      but `Front delts`). The only interactive layer,
  *                        and the only one that carries intensity.
  *   3. `DETAIL_SHAPES` — definition. The face, the knuckles, the linea alba and
  *                        the three tendinous intersections that make a six-pack,
@@ -279,7 +280,11 @@ export const DOMS_TO_LANDMARK: Record<DomsMuscle, readonly LandmarkMuscle[]> = {
   Chest: ['Chest'],
   Back: ['Lats', 'Upper back', 'Lower back'],
   Arms: ['Biceps', 'Triceps', 'Forearms'],
-  Shoulders: ['Side delts', 'Rear delts'],
+  // 'Front delts' is here even though the atlas has no anterior-delt shape to
+  // light yet: a sore shoulder is a sore shoulder, and leaving the landmark out
+  // of this table would make the omission permanent and invisible the day that
+  // geometry lands.
+  Shoulders: ['Front delts', 'Side delts', 'Rear delts'],
   Abs: ['Abs/core'],
   Glutes: ['Glutes'],
   Quads: ['Quads'],

@@ -601,9 +601,13 @@ export function weekPayload(
   const sessions = toSessions(range)
 
   // Weekly volume, same rule as the Weekly Volume card: a full set to the
-  // primary movers, SECONDARY_SET_CREDIT to the assistants.
+  // primary movers, SECONDARY_SET_CREDIT to the assistants — and, since the
+  // card stopped excluding warm-ups, no warm-up filter here either. The export
+  // and the card grade the same week against the same targets; the moment one
+  // of them filtered and the other did not, the report and the screen were
+  // quietly disagreeing about the week they both described.
   const volumeByMuscle = weeklyVolumeByMuscle(
-    range.sets.filter((r) => r.set_type !== 'warmup').map((r) => ({
+    range.sets.map((r) => ({
       ...resolveMovers(r.exercises.name, r.exercises.muscle_groups),
       dedupeKey: r.pair_id ?? r.id,
     })),

@@ -1,7 +1,8 @@
 /**
- * The aggregation behind FIVE charts — Muscle Balance, Volume by Body Part,
- * Muscle Freshness, Volume Stream and the Muscle Contour Map. PURE, so the
- * arithmetic can be tested without a database.
+ * The aggregation behind FOUR charts — Muscle Balance, Volume by Body Part,
+ * Muscle Freshness and Volume Stream. PURE, so the arithmetic can be tested
+ * without a database. (The Muscle Contour Map was the fifth; it drew a second,
+ * cruder body beside the real atlas and was deleted.)
  *
  * It lived inside `useMuscleAnalytics`' queryFn, which meant the only way to
  * check any of it was to look at the rendered chart and decide whether the

@@ -6,8 +6,8 @@ import { weeklyVolumeByMuscle } from '@/lib/training/landmarks'
  * The Muscle-Focus overcount: Side Delts read 11 on a cut whose target is 7.
  * Root cause — every `shoulders` primary folded into Side delts, so overhead
  * PRESS (front delt) and FACE PULLS (rear delt) inflated the side-delt count.
- * Reverse curls (a forearm move) were likewise mis-credited to biceps. The fix
- * routes each to its real primary at the dictionary source.
+ * The fix routes each to its real primary at the dictionary source. (The
+ * reverse curl travelled the other way and back again — see its own test.)
  */
 describe('deltoid + forearm primaries', () => {
   const primary = (name: string) => lookupMuscles(name)?.primary ?? []
@@ -22,8 +22,15 @@ describe('deltoid + forearm primaries', () => {
   it('overhead press is a FRONT-DELT movement (an untracked isolation target)', () => {
     expect(primary('DB Shoulder Press')).toEqual(['front_delts'])
   })
-  it('reverse (pronated) curl is a FOREARM movement, not biceps', () => {
-    expect(primary('Reverse EZ-Bar Curl')).toEqual(['forearms'])
+  it('reverse (pronated) curl is a BICEPS movement that pays the forearms', () => {
+    // This file has had it both ways. Pronation genuinely shifts load onto the
+    // brachioradialis, which is why it was flipped to forearms-primary — but
+    // the movement is still elbow flexion against a load chosen for the elbow
+    // flexors, and the biceps shortens through the whole range whichever way
+    // the hand faces. Hevy calls it biceps-primary, and matching it is what put
+    // the weekly Forearms line on 8.5 instead of 9.5.
+    expect(primary('Reverse EZ-Bar Curl')).toEqual(['biceps'])
+    expect(resolveMovers('Reverse EZ-Bar Curl').secondary).toContain('forearms')
   })
 })
 
@@ -52,12 +59,15 @@ describe('weekly deltoid distribution after the fix', () => {
     expect(of('Side delts').sets).toBe(2.5)
     expect(of('Triceps').sets).toBe(0.5)
   })
-  it('face pull lands on rear delts direct, and pays the UPPER back indirectly', () => {
-    // Not "the back": the split means a face pull now credits the upper back
-    // specifically, and leaves the lats — which it does not train — alone.
+  it('face pull lands on rear delts and pays the back NOTHING', () => {
+    // It used to pay the upper back half a set. It reads like upper-back work —
+    // the scapulae retract — but the load is chosen for the rear delt and the
+    // rhomboids never shorten against anything like it. Hevy classes the whole
+    // movement as shoulders; reconciling the week of 2026-08-16 line by line,
+    // that secondary was half of a 3.0-set over-count on Upper back.
     expect(of('Rear delts').sets).toBe(1)
     expect(of('Rear delts').directSets).toBe(1)
-    expect(of('Upper back').sets).toBe(0.5)
+    expect(of('Upper back')?.sets ?? 0).toBe(0)
     expect(of('Lats')?.sets ?? 0).toBe(0)
   })
 })

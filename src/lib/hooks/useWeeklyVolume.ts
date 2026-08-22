@@ -19,7 +19,8 @@ export interface WeeklyVolume {
 /**
  * Committed sets per landmark muscle across a WHOLE week (Sunday 00:00 local →
  * the following Sunday), graded against the active program's MEV/MAV targets.
- * Unilateral L/R sub-sets (shared pair_id) count once.
+ * Unilateral L/R sub-sets (shared pair_id) count once, and WARM-UPS COUNT — see
+ * the note on the query below.
  *
  * `weekStart` defaults to the current week, so the card resets every Sunday.
  * Pass a Sunday to accumulate a past week — the Session Report needs the week
@@ -61,13 +62,20 @@ export function useWeeklyVolume(
           .select('id, pair_id, exercises!inner(name, muscle_groups), workout_sessions!inner(started_at)')
           .gte('workout_sessions.started_at', weekStartInstant)
           .lt('workout_sessions.started_at', weekEndInstant)
-          // WORKING sets only. Warm-ups aren't training volume — the per-session
-          // card already excludes them (useSessionDetail `if (!isWarmup)`); this
-          // accumulator used to count them, silently inflating every muscle.
-          // 'failure' stays (still a working set). NULL set_type is legacy
-          // 'normal' data, so it must survive — `neq` alone would drop it
-          // (SQL `NULL <> 'warmup'` is NULL, not true).
-          .or('set_type.is.null,set_type.neq.warmup')
+          // ── WARM-UPS ARE SETS HERE ────────────────────────────────────────
+          // This used to filter them out on the argument that a warm-up is not
+          // training volume. The argument is not wrong, but it made this the
+          // ONLY per-muscle counter in the app that applied it: the logger's
+          // own distribution sheet counts warm-ups (see `draftMuscleSets`), the
+          // weekly tonnage counts them, and Hevy — the thing these numbers get
+          // compared against, line by line, by a human — counts them.
+          //
+          // One app, two answers for the same question is worse than either
+          // answer. Reconciling the week of 2026-08-16, two Leg Press warm-ups
+          // were the entire Quads −2 / Hamstrings −1 / Glutes −1 gap, to the
+          // decimal. PROGRAM_TARGETS were written on working sets and have NOT
+          // been retuned, so a grade now runs marginally generous; that is a
+          // deliberate trade against a number that could not be checked at all.
           .limit(2000),
       ])
       if (error) throw error

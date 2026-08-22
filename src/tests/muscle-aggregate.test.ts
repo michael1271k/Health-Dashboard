@@ -6,7 +6,7 @@ const row = (o: Partial<MuscleSetRow> & Pick<MuscleSetRow, 'id' | 'groups' | 'da
 
 /**
  * The arithmetic under Muscle Balance, Volume by Body Part, Muscle Freshness,
- * the Volume Stream and the Contour Map. It used to live inside a queryFn, so
+ * and the Volume Stream. It used to live inside a queryFn, so
  * none of it had ever been checked against anything but a screenshot.
  */
 describe('aggregateMuscleSets', () => {
