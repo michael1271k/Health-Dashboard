@@ -168,20 +168,38 @@ enum HelixAtlas {
   ]
 
   static let muscles: [HelixAtlasPath] = [
+  HelixAtlasPath(muscle: "Front delts", view: .front) { rect, p in
+    p.move(to: pt(43, 50, in: rect))
+    p.addCurve(to: pt(39, 55, in: rect), control1: pt(41, 52, in: rect), control2: pt(40, 53, in: rect))
+    p.addCurve(to: pt(30, 75, in: rect), control1: pt(34, 60, in: rect), control2: pt(31, 67, in: rect))
+    p.addLine(to: pt(38, 76, in: rect))
+    p.addCurve(to: pt(44, 54, in: rect), control1: pt(38, 69, in: rect), control2: pt(40, 60, in: rect))
+    p.closeSubpath()
+  },
+  HelixAtlasPath(muscle: "Front delts", view: .front) { rect, p in
+    p.move(to: pt(77, 50, in: rect))
+    p.addCurve(to: pt(81, 55, in: rect), control1: pt(79, 52, in: rect), control2: pt(80, 53, in: rect))
+    p.addCurve(to: pt(90, 75, in: rect), control1: pt(86, 60, in: rect), control2: pt(89, 67, in: rect))
+    p.addLine(to: pt(82, 76, in: rect))
+    p.addCurve(to: pt(76, 54, in: rect), control1: pt(82, 69, in: rect), control2: pt(80, 60, in: rect))
+    p.closeSubpath()
+  },
   HelixAtlasPath(muscle: "Side delts", view: .front) { rect, p in
     p.move(to: pt(43, 50, in: rect))
     p.addCurve(to: pt(27, 71, in: rect), control1: pt(35, 53, in: rect), control2: pt(29, 61, in: rect))
     p.addCurve(to: pt(27, 79, in: rect), control1: pt(26, 74, in: rect), control2: pt(26, 77, in: rect))
-    p.addLine(to: pt(38, 76, in: rect))
-    p.addCurve(to: pt(44, 54, in: rect), control1: pt(38, 69, in: rect), control2: pt(40, 60, in: rect))
+    p.addLine(to: pt(30, 75, in: rect))
+    p.addCurve(to: pt(39, 55, in: rect), control1: pt(31, 67, in: rect), control2: pt(34, 60, in: rect))
+    p.addCurve(to: pt(43, 50, in: rect), control1: pt(40, 53, in: rect), control2: pt(41, 52, in: rect))
     p.closeSubpath()
   },
   HelixAtlasPath(muscle: "Side delts", view: .front) { rect, p in
     p.move(to: pt(77, 50, in: rect))
     p.addCurve(to: pt(93, 71, in: rect), control1: pt(85, 53, in: rect), control2: pt(91, 61, in: rect))
     p.addCurve(to: pt(93, 79, in: rect), control1: pt(94, 74, in: rect), control2: pt(94, 77, in: rect))
-    p.addLine(to: pt(82, 76, in: rect))
-    p.addCurve(to: pt(76, 54, in: rect), control1: pt(82, 69, in: rect), control2: pt(80, 60, in: rect))
+    p.addLine(to: pt(90, 75, in: rect))
+    p.addCurve(to: pt(81, 55, in: rect), control1: pt(89, 67, in: rect), control2: pt(86, 60, in: rect))
+    p.addCurve(to: pt(77, 50, in: rect), control1: pt(80, 53, in: rect), control2: pt(79, 52, in: rect))
     p.closeSubpath()
   },
   HelixAtlasPath(muscle: "Chest", view: .front) { rect, p in

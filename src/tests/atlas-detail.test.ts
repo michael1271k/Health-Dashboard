@@ -61,31 +61,13 @@ describe('the three layers stay separate', () => {
 })
 
 describe('the redraw kept every landmark', () => {
-  /**
-   * ── ONE DOCUMENTED HOLE: FRONT DELTS ────────────────────────────────────────
-   * `Front delts` became a landmark when the weekly counter stopped discarding
-   * nine sets a week of pressing assistance. The atlas has no anterior-deltoid
-   * SHAPE for it — the front view's two shoulder caps are tagged `Side delts` —
-   * so the muscle is real in the arithmetic and absent from the body.
-   *
-   * That is stated here rather than papered over. Closing it means splitting
-   * each cap into an anterior and a lateral path, regenerating the SwiftUI
-   * geometry through `scripts/gen-atlas-swift.mjs`, and re-passing the parity
-   * test — which is a piece of art work, not a rename, and is deliberately not
-   * bundled with the arithmetic fix.
-   */
-  const NOT_YET_DRAWN = new Set<string>(['Front delts'])
-
-  it('draws every landmark muscle that has geometry', () => {
+  it('draws all sixteen landmark muscles somewhere', () => {
+    // There is no exception list any more. `Front delts` was the last hole —
+    // real in the arithmetic, absent from the body — and the deltoid cap has
+    // since been split into an anterior and a lateral path to close it.
     const drawn = new Set(MUSCLE_PATHS.map((p) => p.muscle))
     for (const m of LANDMARK_MUSCLES) {
-      if (NOT_YET_DRAWN.has(m)) continue
       expect(drawn.has(m), `${m} is not drawn on either view`).toBe(true)
-    }
-    // The hole must stay a hole ON PURPOSE: if someone draws the anterior delt,
-    // this line fails and the exception above gets deleted with it.
-    for (const m of NOT_YET_DRAWN) {
-      expect(drawn.has(m as never), `${m} is drawn now — remove it from NOT_YET_DRAWN`).toBe(false)
     }
   })
 

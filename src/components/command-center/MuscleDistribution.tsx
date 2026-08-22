@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { MuscleAtlas } from '@/components/body/MuscleAtlas'
 import { MuscleDistributionSheet } from './MuscleDistributionSheet'
 import { setsToWorked } from '@/lib/body/atlas'
+import { landmarkColor } from '@/lib/theme/muscleHue'
 import { resolveMovers } from '@/lib/exercises/muscleMap'
 import {
   SECONDARY_SET_CREDIT, toLandmarkMuscle, LANDMARK_MUSCLES,
@@ -108,15 +109,30 @@ export function draftPhysicalSets(draft: SessionDraft | null): number {
   return total
 }
 
+/**
+ * ── ONE BODY, ONE COLOUR LANGUAGE ───────────────────────────────────────────
+ * Every atlas that shows WHICH MUSCLES WERE TRAINED now paints each muscle in
+ * its own group's hue — Chest ember, Back emerald, Shoulders amethyst, Arms
+ * copper, Legs sapphire, Core steel — with each landmark a step on its family's
+ * ramp and opacity carrying the set count. Three channels: hue says the group,
+ * the ramp step says which muscle, alpha says how much work.
+ *
+ * This replaces a single day-accent tint. The accent still identifies the
+ * WORKOUT everywhere else on these screens — the title, the rule, the buttons —
+ * but on the body it was answering the wrong question: it said which session
+ * you were in, which you already knew, and said nothing about where the work
+ * landed. The soreness map is deliberately NOT converted: its colour encodes
+ * severity, not identity.
+ */
 export function MuscleDistribution({ draft, accent, size = 'sm' }: {
   draft: SessionDraft | null
   /**
    * The workout's own colour — `dayColor(dayKey, splitDay)`.
    *
-   * The figure used to fill in the atlas's default blue whatever session you
-   * were in, so the one element on the header that was supposed to say "this is
-   * where Upper B is landing" said it in a colour Upper B never uses. Passing
-   * the accent makes the worked muscles the same gold as the title above them.
+   * It no longer tints the FIGURE (the body speaks group hues now); it is
+   * forwarded to the sheet, whose chrome still belongs to the session. Kept as
+   * a prop rather than dropped because the sheet needs it and this is the
+   * component that knows it.
    */
   accent?: string
   /** `lg` is the hero's 44px target; `sm` the 36px one in the collapsed bar. */
@@ -158,7 +174,8 @@ export function MuscleDistribution({ draft, accent, size = 'sm' }: {
                     ${empty ? 'opacity-40' : 'active:scale-95'}`}
         style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
       >
-        <span className={`${fig} block`}><MuscleAtlas view="front" worked={worked} color={accent} /></span>
+        {/* Group-tinted, not accent-tinted — see the note above the component. */}
+        <span className={`${fig} block`}><MuscleAtlas view="front" worked={worked} colorFor={landmarkColor} /></span>
       </button>
 
       {/* The enlarged view is shared with the session report — see

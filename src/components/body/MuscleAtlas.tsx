@@ -1,12 +1,10 @@
 'use client'
 
-import { memo, useId, useState } from 'react'
+import { memo, useId } from 'react'
 import {
   ATLAS_VIEWBOX, BASE_SHAPES, DETAIL_SHAPES, MUSCLE_PATHS, type AtlasView,
 } from '@/lib/body/atlas'
 import type { LandmarkMuscle } from '@/lib/training/landmarks'
-import { RASTER_ATLAS_ENABLED } from '@/lib/body/rasterAtlas'
-import { RasterAtlas } from '@/components/body/RasterAtlas'
 import { ATLAS_BLUE } from '@/lib/theme/palette'
 
 /**
@@ -79,36 +77,11 @@ export const MuscleAtlas = memo(function MuscleAtlas({
   label?: string
 }) {
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '')
-  /**
-   * The raster body is opt-in AND self-disabling: the flag turns it on, and a
-   * base image that 404s turns it back off for this mount. A body that fails to
-   * load must degrade to the vector figure, never to a blank box — which is what
-   * makes shipping the layer before the art exists safe.
-   */
-  const [rasterFailed, setRasterFailed] = useState(false)
-  const raster = RASTER_ATLAS_ENABLED && !rasterFailed
-
   if (view === 'both') {
     return (
       <div className={`flex items-stretch gap-1 ${className}`}>
         <MuscleAtlas worked={worked} view="front" color={color} colorFor={colorFor} interactive={interactive} onPick={onPick} className="flex-1" />
         <MuscleAtlas worked={worked} view="back" color={color} colorFor={colorFor} interactive={interactive} onPick={onPick} className="flex-1" />
-      </div>
-    )
-  }
-
-  if (raster) {
-    return (
-      <div className={`w-full h-full ${className}`}>
-        <RasterAtlas
-          view={view}
-          worked={worked}
-          color={color}
-          interactive={interactive}
-          onPick={onPick}
-          label={label}
-          onUnavailable={() => setRasterFailed(true)}
-        />
       </div>
     )
   }

@@ -33,8 +33,7 @@ import type { DomsMuscle } from '@/lib/hooks/useRecovery'
  *   1. `BASE_SHAPES`   — the silhouette. Head, hair, neck, torso, arms, fists,
  *                        legs, feet. Drawn under every view, never tinted: this
  *                        is the body, not the data.
- *   2. `MUSCLE_PATHS`  — the landmarks that have geometry, per view (every one
- *      but `Front delts`). The only interactive layer,
+ *   2. `MUSCLE_PATHS`  — the 16 landmarks, per view. The only interactive layer,
  *                        and the only one that carries intensity.
  *   3. `DETAIL_SHAPES` — definition. The face, the knuckles, the linea alba and
  *                        the three tendinous intersections that make a six-pack,
@@ -135,8 +134,25 @@ export const BASE_SHAPES: readonly string[] = [
  */
 export const MUSCLE_PATHS: readonly AtlasPath[] = [
   // ── FRONT ──
-  { muscle: 'Side delts', view: 'front', d: 'M43,50 C35,53 29,61 27,71 C26,74 26,77 27,79 L38,76 C38,69 40,60 44,54 Z' },
-  { muscle: 'Side delts', view: 'front', d: 'M77,50 C85,53 91,61 93,71 C94,74 94,77 93,79 L82,76 C82,69 80,60 76,54 Z' },
+  // ── THE DELTOID CAP IS TWO MUSCLES, AND THE SEAM WAS ALREADY DRAWN ────────
+  // Front view used to be one `Side delts` shape per shoulder, so the anterior
+  // head — which every press in the program trains, and which the weekly
+  // counter now credits nine sets a week — had no way to light. The split
+  // follows the definition hairline that was already stroked over this exact
+  // cap (see the deltoid seam in DETAIL_SHAPES), so the fill boundary and the
+  // drawn line agree instead of crossing each other.
+  //
+  // Anterior takes the MEDIAL wedge (toward the sternum), lateral keeps the
+  // outer sweep. Both still close on the original outline, so the silhouette is
+  // byte-for-byte the shape it was — only the interior boundary is new.
+  //
+  // NOTE for anyone editing these: the two ORIGINAL cap strings are reused
+  // verbatim as the back view's `Rear delts`. A find-and-replace on the old
+  // path data hits four entries, not two.
+  { muscle: 'Front delts', view: 'front', d: 'M43,50 C41,52 40,53 39,55 C34,60 31,67 30,75 L38,76 C38,69 40,60 44,54 Z' },
+  { muscle: 'Front delts', view: 'front', d: 'M77,50 C79,52 80,53 81,55 C86,60 89,67 90,75 L82,76 C82,69 80,60 76,54 Z' },
+  { muscle: 'Side delts', view: 'front', d: 'M43,50 C35,53 29,61 27,71 C26,74 26,77 27,79 L30,75 C31,67 34,60 39,55 C40,53 41,52 43,50 Z' },
+  { muscle: 'Side delts', view: 'front', d: 'M77,50 C85,53 91,61 93,71 C94,74 94,77 93,79 L90,75 C89,67 86,60 81,55 C80,53 79,52 77,50 Z' },
   { muscle: 'Chest', view: 'front', d: 'M58,59 L45,60 C41,63 39,69 40,76 C41,84 47,89 54,90 C57,90 58,87 58,84 C58,76 58,67 58,59 Z' },
   { muscle: 'Chest', view: 'front', d: 'M62,59 L75,60 C79,63 81,69 80,76 C79,84 73,89 66,90 C63,90 62,87 62,84 C62,76 62,67 62,59 Z' },
   { muscle: 'Abs/core', view: 'front', d: 'M50,93 C47,93 46,95 46,99 C46,110 48,123 51,133 L69,133 C72,123 74,110 74,99 C74,95 73,93 70,93 Z' },
@@ -280,10 +296,8 @@ export const DOMS_TO_LANDMARK: Record<DomsMuscle, readonly LandmarkMuscle[]> = {
   Chest: ['Chest'],
   Back: ['Lats', 'Upper back', 'Lower back'],
   Arms: ['Biceps', 'Triceps', 'Forearms'],
-  // 'Front delts' is here even though the atlas has no anterior-delt shape to
-  // light yet: a sore shoulder is a sore shoulder, and leaving the landmark out
-  // of this table would make the omission permanent and invisible the day that
-  // geometry lands.
+  // A sore shoulder is a sore shoulder — all three heads light. (This entry
+  // was written before the anterior head had geometry; it does now.)
   Shoulders: ['Front delts', 'Side delts', 'Rear delts'],
   Abs: ['Abs/core'],
   Glutes: ['Glutes'],

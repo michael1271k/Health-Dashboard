@@ -1,6 +1,7 @@
 'use client'
 
 import { MuscleAtlas } from '@/components/body/MuscleAtlas'
+import { landmarkColor } from '@/lib/theme/muscleHue'
 import { Sheet } from '@/components/ui/Sheet'
 import { setsToWorked } from '@/lib/body/atlas'
 import { MUSCLE_COLOR, type LandmarkMuscle } from '@/lib/training/landmarks'
@@ -60,7 +61,8 @@ export function MuscleDistributionSheet({ open, onClose, entries, physical, weig
         </div>
 
         <div className="h-56 mx-auto" style={{ maxWidth: 260 }}>
-          <MuscleAtlas view="both" worked={worked} color={tint} label="Muscles worked this session" />
+          {/* Per-muscle group hues. `tint` still accents the sheet's chrome. */}
+          <MuscleAtlas view="both" worked={worked} colorFor={landmarkColor} label="Muscles worked this session" />
         </div>
         <ul className="space-y-1">
           {entries.sort((a, b) => b.sets - a.sets).map((e) => (

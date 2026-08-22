@@ -40,7 +40,7 @@ describe('weekly deltoid distribution after the fix', () => {
   const names = [
     'Cable Lateral Raise', 'Single Arm Lateral Raise (Cable)', // side delts, DIRECT
     'Face Pull',                                               // rear delts, DIRECT
-    'DB Shoulder Press',                                       // front delts (untracked)
+    'DB Shoulder Press',                                       // front delts, DIRECT
   ]
   const out = weeklyVolumeByMuscle(
     names.map((n, i) => ({ ...resolveMovers(n), dedupeKey: `s${i}` })),
@@ -52,9 +52,11 @@ describe('weekly deltoid distribution after the fix', () => {
     expect(of('Side delts').directSets).toBe(2)
   })
   it('an overhead press pays the side delts a HALF set, not a full one and not zero', () => {
-    // The press is a front-delt movement, and front delts are not a tracked
-    // target — but the medial head genuinely assists, so the set is neither the
-    // full credit that inflated Side delts to 11/7 nor the zero that replaced it.
+    // The press is a front-delt movement — a tracked landmark in its own right
+    // since the accumulator stopped discarding nine sets a week of pressing
+    // assistance — but the medial head genuinely assists, so the set is neither
+    // the full credit that inflated Side delts to 11/7 nor the zero that
+    // replaced it.
     expect(of('Side delts').indirectSets).toBe(0.5)
     expect(of('Side delts').sets).toBe(2.5)
     expect(of('Triceps').sets).toBe(0.5)
@@ -69,6 +71,10 @@ describe('weekly deltoid distribution after the fix', () => {
     expect(of('Rear delts').directSets).toBe(1)
     expect(of('Upper back')?.sets ?? 0).toBe(0)
     expect(of('Lats')?.sets ?? 0).toBe(0)
+    // It pays the BICEPS, though — the rope finishes beside the ears, which the
+    // elbow cannot do without closing. This is the credit that closed the last
+    // open line in the weekly Hevy reconciliation.
+    expect(of('Biceps').sets).toBe(0.5)
   })
 })
 

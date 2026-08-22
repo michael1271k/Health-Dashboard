@@ -7,7 +7,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { LazyMotion, domMax } from 'framer-motion'
 import { LiveSessionHero } from '@/components/command-center/LiveSessionHero'
 import { LiveSessionBar } from '@/components/command-center/LiveSessionBar'
-import { GOLD } from '@/lib/theme/palette'
+import { GOLD, MUSCLE } from '@/lib/theme/palette'
 import type { SessionDraft } from '@/lib/sessions/draft'
 
 /**
@@ -121,11 +121,19 @@ describe('the live session hero', () => {
     expect(labelled('Muscle distribution')).toBe(1)
   })
 
-  it('tints the muscle figure in the workout\'s colour, not the atlas default', () => {
+  it('tints the muscle figure by MUSCLE GROUP, not by the workout colour', () => {
+    // This asserted the opposite — that the figure carried the day's accent.
+    // The accent still owns the header's chrome, but on the body it answered a
+    // question the title had already answered ("which session is this") while
+    // leaving the only question the figure can answer — where did the work land
+    // — with no colour at all. Each muscle now wears its group's hue.
     const { container } = render(wrap(HERO))
     const svg = container.querySelector('button[aria-label="Muscle distribution for this session"] svg')
-    // The worked gradient is built from the accent, so the stop carries it.
-    expect(svg?.innerHTML ?? '').toContain(GOLD)
+    const html = svg?.innerHTML ?? ''
+    expect(html).not.toContain(GOLD)
+    const hues = new Set(Object.values(MUSCLE).map((h) => h.toLowerCase()))
+    const painted = [...hues].filter((h) => html.toLowerCase().includes(h))
+    expect(painted.length, 'no landmark hue reached the figure').toBeGreaterThan(0)
   })
 
   it('states the date exactly once, and as a control', () => {

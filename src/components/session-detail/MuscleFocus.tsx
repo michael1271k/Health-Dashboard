@@ -8,6 +8,7 @@ import type { SessionDetail } from '@/lib/hooks/useSessionDetail'
 import { type LandmarkMuscle } from '@/lib/training/landmarks'
 import { MuscleAtlas } from '@/components/body/MuscleAtlas'
 import { setsToWorked } from '@/lib/body/atlas'
+import { landmarkColor } from '@/lib/theme/muscleHue'
 import { EMBER } from '@/lib/theme/palette'
 
 /**
@@ -117,17 +118,26 @@ export function MuscleFocus({ detail, accent = EMBER }: { detail: SessionDetail;
           style={{ width: 96 }}
         >
           <MuscleAtlas
-            view="both"
-            // The workout's colour, not the atlas default. This figure sat blue
-            // inside a band tinted with the day's own hue, which made it read as
-            // a stock illustration dropped into the report rather than as part
-            // of it.
-            color={accent}
-            worked={setsToWorked(Object.fromEntries(
-              detail.muscleSets.map((m) => [m.muscle as LandmarkMuscle, m.sets]),
-            ))}
-            label="Muscles trained in this session"
-          />
+          view="both"
+          // ── GROUP HUES, NOT THE DAY ACCENT ──
+          // This deliberately painted every worked muscle in the session's own
+          // colour, arguing that a thirteen-hue body was "a rainbow on a page
+          // whose whole design is that ONE colour identifies the workout". The
+          // argument was sound about the PAGE and wrong about the BODY: the
+          // accent told you which session you were looking at, which the title
+          // two lines up already said, while the one question only the figure
+          // can answer — where did the work land — got no colour at all.
+          //
+          // Hue is the muscle group now, the ramp step is the muscle, and alpha
+          // is still the set count. The accent keeps the band, the rule and the
+          // sheet's chrome. Identical to the live logger's figure, on purpose:
+          // the same body during the session and after it.
+          colorFor={landmarkColor}
+          worked={setsToWorked(Object.fromEntries(
+            detail.muscleSets.map((m) => [m.muscle as LandmarkMuscle, m.sets]),
+          ))}
+          label="Muscles trained in this session"
+        />
         </button>
         <div className="flex-1 min-w-0 space-y-1.5">
           {/* ── ONE HUE, NOT THIRTEEN ──

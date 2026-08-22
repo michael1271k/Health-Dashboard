@@ -160,8 +160,8 @@
     "semantic_hash": ""
   },
   "public/sw.js": {
-    "mtime": 1787396137.048371,
-    "ast_hash": "a404c446af8481b3ace1671923893a92",
+    "mtime": 1787409440.2590683,
+    "ast_hash": "bf12471fdcac57f7a6c4ea1d2eae44b1",
     "semantic_hash": ""
   },
   "scripts/generate-icons.mjs": {
@@ -620,8 +620,8 @@
     "semantic_hash": ""
   },
   "src/components/session-detail/MuscleFocus.tsx": {
-    "mtime": 1787327258.7878938,
-    "ast_hash": "29ea3ed9af1d009880899505eb1bacc9",
+    "mtime": 1787409354.025478,
+    "ast_hash": "12495bb2f75aec7100764cd59139707f",
     "semantic_hash": ""
   },
   "src/components/session-detail/ProgressionTrail.tsx": {
@@ -700,8 +700,8 @@
     "semantic_hash": ""
   },
   "src/lib/exercises/muscleMap.ts": {
-    "mtime": 1787396048.1480954,
-    "ast_hash": "3198a5b7fdcf86d20110a2036c98d3a1",
+    "mtime": 1787409244.5410888,
+    "ast_hash": "f5872ca7e2626d963227b91d94f9c3fe",
     "semantic_hash": ""
   },
   "src/lib/exercises/timed.ts": {
@@ -1190,8 +1190,8 @@
     "semantic_hash": "7d330f738b3642f60f4f1016d60d660f"
   },
   "src/tests/muscle-taxonomy.test.ts": {
-    "mtime": 1787396099.6720982,
-    "ast_hash": "a33ce0fcca5ec2da98585c071db4e4ef",
+    "mtime": 1787409244.541518,
+    "ast_hash": "be544d1fe6a819f287581db4889b4dda",
     "semantic_hash": ""
   },
   "src/tests/night-window.test.ts": {
@@ -1292,16 +1292,6 @@
   "README.md": {
     "mtime": 1786543915.7181344,
     "ast_hash": "19fd7fa667731143bd605de2426a9880",
-    "semantic_hash": ""
-  },
-  "docs/ios-deploy-guide.md": {
-    "mtime": 1784491703.1925235,
-    "ast_hash": "f86c7fee242d7d9d1e3f0b9aa1fc0bed",
-    "semantic_hash": "f86c7fee242d7d9d1e3f0b9aa1fc0bed"
-  },
-  "docs/native-ios.md": {
-    "mtime": 1786543957.236012,
-    "ast_hash": "1106e157f4db1aca744fccef9be751fe",
     "semantic_hash": ""
   },
   "ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png": {
@@ -1482,11 +1472,6 @@
   "CLAUDE.md": {
     "mtime": 1785429176.842181,
     "ast_hash": "82efb97a359f5c7290bf2513d14686be",
-    "semantic_hash": ""
-  },
-  "docs/watchos-install-loop.md": {
-    "mtime": 1785519441.2246375,
-    "ast_hash": "5f90714cd399d81911c7f784ed5507e3",
     "semantic_hash": ""
   },
   "src/components/charts/BodyCompositionChart.tsx": {
@@ -2485,13 +2470,13 @@
     "semantic_hash": ""
   },
   "src/lib/body/atlas.ts": {
-    "mtime": 1787395029.4671724,
-    "ast_hash": "0a8da1618b246d49ff811370f8124752",
+    "mtime": 1787409298.5975595,
+    "ast_hash": "b035775a3450f1310b1da61871446d07",
     "semantic_hash": ""
   },
   "src/components/body/MuscleAtlas.tsx": {
-    "mtime": 1787394296.0932782,
-    "ast_hash": "59a7348a99bf6aac691968425a52bb44",
+    "mtime": 1787409276.4992568,
+    "ast_hash": "774538dc341974118fb224de3295317e",
     "semantic_hash": ""
   },
   "scripts/gen-atlas-swift.mjs": {
@@ -2500,18 +2485,18 @@
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixAtlas.swift": {
-    "mtime": 1787319636.8731139,
-    "ast_hash": "52fb3d4e17366650ba5f7ba1d7186d55",
+    "mtime": 1787409298.6944432,
+    "ast_hash": "d0f00719df3893fc1b76dc35183d3115",
     "semantic_hash": ""
   },
   "src/tests/atlas-parity.test.ts": {
-    "mtime": 1787394212.346375,
-    "ast_hash": "4090a1fc32cc8e962e0c40433c342bf7",
+    "mtime": 1787409313.5510116,
+    "ast_hash": "19338c3bcc391b3c32ec454ff2299451",
     "semantic_hash": ""
   },
   "src/components/command-center/MuscleDistribution.tsx": {
-    "mtime": 1787319023.1546853,
-    "ast_hash": "304417eb915ad214e1f66713920b9f30",
+    "mtime": 1787409354.025224,
+    "ast_hash": "14303734e5fdc82bde9574e22e66fccf",
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixAtlasFigure.swift": {
@@ -2630,7 +2615,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/set-rows.html": {
-    "mtime": 1787396111.8648994,
+    "mtime": 1787409414.1829116,
     "ast_hash": "dcf08d8e5f047c6af03f81741ad93adb",
     "semantic_hash": ""
   },
@@ -2650,8 +2635,8 @@
     "semantic_hash": ""
   },
   "src/components/command-center/MuscleDistributionSheet.tsx": {
-    "mtime": 1787394829.2195346,
-    "ast_hash": "6dbfe466f4e73299fa1bac62104b745e",
+    "mtime": 1787409335.420195,
+    "ast_hash": "5e657a5a04b8eabd61b9736652792e84",
     "semantic_hash": ""
   },
   "src/tests/session-report-render.test.tsx": {
@@ -2660,7 +2645,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-ledger.html": {
-    "mtime": 1787396110.5938761,
+    "mtime": 1787409412.9774323,
     "ast_hash": "6f50fa4f2aeaf92cc98b2ce5890d0d48",
     "semantic_hash": ""
   },
@@ -2680,13 +2665,13 @@
     "semantic_hash": ""
   },
   "src/tests/atlas-detail.test.ts": {
-    "mtime": 1787394212.3460417,
-    "ast_hash": "f08b507c41f70f3cd77cc84f703c9a31",
+    "mtime": 1787409313.5513368,
+    "ast_hash": "76857c4c845cafcfe7e4b71ca75f6257",
     "semantic_hash": ""
   },
   "src/tests/live-header.test.tsx": {
-    "mtime": 1787319515.6841795,
-    "ast_hash": "f191c3538f6e9b424cf56092b4a6629d",
+    "mtime": 1787409402.481459,
+    "ast_hash": "4f81953a8e97786902e81488b2ba0fef",
     "semantic_hash": ""
   },
   "e2e/live-header.spec.ts": {
@@ -2695,13 +2680,13 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/live-header.html": {
-    "mtime": 1787396110.496044,
-    "ast_hash": "e392f2ffe4073d74affa37c44e65bd43",
+    "mtime": 1787409412.7701857,
+    "ast_hash": "c3c700f0f548c2406aae095000c34978",
     "semantic_hash": ""
   },
   "src/tests/hevy-parity.test.ts": {
-    "mtime": 1787396099.6716902,
-    "ast_hash": "0038c820b05f819b1422e8b9fa010b7b",
+    "mtime": 1787409244.5413327,
+    "ast_hash": "2ac7b2eb978b0c461d22e90ec4bbe85b",
     "semantic_hash": ""
   },
   "src/lib/hooks/useHoldRepeat.ts": {
@@ -2712,21 +2697,6 @@
   "src/tests/reorder-persists.test.ts": {
     "mtime": 1787319258.2116637,
     "ast_hash": "0f27049cccb6af212bff66465cf6c08b",
-    "semantic_hash": ""
-  },
-  "src/lib/body/rasterAtlas.ts": {
-    "mtime": 1787319286.6434305,
-    "ast_hash": "d6f1d55866db862b00797eeb2b9f5a72",
-    "semantic_hash": ""
-  },
-  "src/components/body/RasterAtlas.tsx": {
-    "mtime": 1787319320.7146287,
-    "ast_hash": "0431eeecac2df7e6316728ce97113d50",
-    "semantic_hash": ""
-  },
-  "src/tests/raster-atlas.test.ts": {
-    "mtime": 1787319381.787594,
-    "ast_hash": "74aa298f425c711bb75a9d579c80b205",
     "semantic_hash": ""
   },
   "e2e/session-summary-header.spec.ts": {
@@ -2780,7 +2750,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-summary-header.html": {
-    "mtime": 1787396111.0559509,
+    "mtime": 1787409413.6581185,
     "ast_hash": "ff7f914026132398b2a0e4148434f4b6",
     "semantic_hash": ""
   }

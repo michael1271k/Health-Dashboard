@@ -85,7 +85,7 @@ describe('the anatomy itself', () => {
 
   it('draws the anterior chain in front and the posterior chain behind', () => {
     expect(musclesOnView('front')).toEqual([
-      'Chest', 'Side delts', 'Biceps', 'Forearms', 'Quads', 'Adductors', 'Calves', 'Abs/core',
+      'Chest', 'Front delts', 'Side delts', 'Biceps', 'Forearms', 'Quads', 'Adductors', 'Calves', 'Abs/core',
     ])
     expect(musclesOnView('back')).toEqual([
       // LANDMARK_MUSCLES order, not drawing order — hamstrings before glutes.
@@ -99,7 +99,6 @@ describe('the anatomy itself', () => {
     // It is a landmark in the arithmetic without an anterior-deltoid shape yet.
     const drawn = new Set(MUSCLE_PATHS.map((p) => p.muscle))
     for (const m of LANDMARK_MUSCLES) {
-      if (m === 'Front delts') continue
       expect(drawn, m).toContain(m)
     }
   })

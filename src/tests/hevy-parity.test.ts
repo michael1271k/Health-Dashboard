@@ -246,7 +246,7 @@ describe('the WEEK-to-date breakdown, 2026-08-16 → 2026-08-22', () => {
     'Front delts': 9,
     'Side delts': 8.5,
     'Rear delts': 4,
-    Biceps: 15.5,
+    Biceps: 17,
     Triceps: 15,
     Forearms: 8.5,
     Quads: 13.5,
@@ -290,6 +290,8 @@ describe('the lines that must equal Hevy exactly', () => {
     // biceps-primary, and the adductors moved from the leg press to the hip
     // thrust. Eleven of the twelve comparable lines are now exact.
     Forearms: 8.5, Adductors: 1.5,
+    // The last line to close: the face pull pays the biceps, which is 0.5 × 3.
+    Biceps: 17,
   }
 
   for (const [muscle, want] of Object.entries(HEVY_EXACT) as Array<[LandmarkMuscle, number]>) {
@@ -310,16 +312,14 @@ describe('the lines that must equal Hevy exactly', () => {
     expect(delts - 17).toBe(4.5)
   })
 
-  it('holds the ONE line still short, and says by how much', () => {
-    // Biceps is the last open number: Hevy 17, Helix 15.5. The gap is exactly
-    // 1.5, which is 0.5 × 3 sets — one three-set movement paying the biceps a
-    // secondary that this dictionary does not. The only three-set movement in
-    // the week with any elbow flexion under load is the FACE PULL, where the
-    // rope is pulled to the face through a genuine flexion range. Adding it
-    // would close the line to 17, but it is an inference from a set count and
-    // not a definition anyone has read out of Hevy, so it is written down here
-    // rather than acted on.
-    expect(byMuscle.Biceps).toBe(15.5)
-    expect(17 - byMuscle.Biceps).toBe(1.5)
+  it('leaves NOTHING short — twelve of twelve', () => {
+    // The face pull was the answer, and it was found by arithmetic before it
+    // was confirmed by a definition: the gap was exactly 1.5 = 0.5 × 3 sets,
+    // and the face pull was the only three-set movement in the week with elbow
+    // flexion under load. Every comparable line now equals Hevy's.
+    expect(byMuscle.Biceps).toBe(17)
+    const short = (Object.entries(HEVY_EXACT) as Array<[LandmarkMuscle, number]>)
+      .filter(([m, want]) => byMuscle[m] !== want)
+    expect(short).toEqual([])
   })
 })

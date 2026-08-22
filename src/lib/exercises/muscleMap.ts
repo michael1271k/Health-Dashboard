@@ -130,7 +130,16 @@ const DICT: Array<{ tokens: string[]; muscles: MuscleEntry }> = [
   // against anything like it. Hevy classes the whole movement as shoulders and
   // gives the upper back nothing, and reconciling a real week against it, that
   // secondary was 1.5 of the 3.0 by which Helix over-counted Upper back.
-  { tokens: ['face', 'pull'], muscles: { primary: ['rear_delts'], secondary: [] } },
+  //
+  // IT DOES PAY THE BICEPS, and that was the last line in the whole breakdown
+  // still short of Hevy: exactly 1.5, which is 0.5 × these three sets. A rope
+  // face pull is elbow FLEXION under load as much as it is horizontal
+  // abduction — the hands finish beside the ears, which they cannot do without
+  // the elbow closing. Hevy's own definition is "Primary: Shoulders, Secondary:
+  // Biceps"; `rear_delts` is how this taxonomy spells that primary, because a
+  // bare `shoulders` token folds to SIDE delts and would re-create the exact
+  // mis-credit the three-head split exists to prevent.
+  { tokens: ['face', 'pull'], muscles: { primary: ['rear_delts'], secondary: ['biceps'] } },
   // `Shoulder Press (DB)` used to resolve to NOTHING: the parenthesis was
   // stripped before matching, so `['db','shoulder','press']` could not fire, and
   // the fallback `muscle_groups[0]` was a bare 'shoulders' that folded to SIDE
