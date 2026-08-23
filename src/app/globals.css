@@ -413,7 +413,8 @@ html[data-reduce-motion='true'] .sync-breathe { animation: none !important; }
   --appbar-height: 3rem;
   --nav-height: 3.5rem;
   --chrome-top: calc(var(--appbar-height) + var(--safe-top));
-  --chrome-bottom: calc(var(--nav-height) + var(--safe-bottom));
+  --pill-height: 0rem;
+  --chrome-bottom: calc(var(--nav-height) + var(--safe-bottom) + var(--pill-height));
 
   /* Content measures. The SURFACE bleeds; only what is inside it is capped.
      --measure-read (68ch) and --measure-data (96ch) removed 2026-08-12: zero
@@ -429,6 +430,13 @@ html[data-reduce-motion='true'] .sync-breathe { animation: none !important; }
    the hyphenated attribute. A grep-driven cleanup reads this rule as unused and
    silently breaks the deck's bottom clearance. */
 html[data-bottom-nav='false'] { --nav-height: 0rem; }
+/* The minimised-workout pill floats above the tab bar, so it has to be part of
+   the bottom chrome budget too — otherwise the last element on every page
+   scrolls to a stop underneath it. Set by `LiveSessionPill`, the same way
+   `data-bottom-nav` is set by `BottomNav`: an attribute rather than :has(), so
+   it is deterministic and togglable in devtools. */
+html[data-live-pill='true'] { --pill-height: 3.625rem; }
+html:not([data-live-pill='true']) { --pill-height: 0rem; }
 /* Desktop navigates from the sidebar; there is no bottom bar to clear. */
 @media (min-width: 768px) {
   :root { --nav-height: 0rem; --chrome-bottom: 2rem; }

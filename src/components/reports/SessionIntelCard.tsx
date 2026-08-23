@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Star, ChevronDown, Sparkles } from 'lucide-react'
 import type { GymReportRow } from '@/lib/hooks/useWeekly'
-import { useSessionIntel, type ExerciseDelta } from '@/lib/hooks/useSessionIntel'
+import { useSessionIntel, type DeltaAxis, type ExerciseDelta } from '@/lib/hooks/useSessionIntel'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 import { formatSet } from '@/lib/utils/setFormat'
 import { MarkdownView } from './MarkdownView'
@@ -42,11 +42,38 @@ const DOWN = '#C4514E'
  * The glyph carries the size of the move, not just its sign.
  *
  * A PR outranks the trend: a record is the fact worth reading in that cell.
+ *
+ * ── THE VOLUME AXIS READS DIFFERENTLY ────────────────────────────────────────
+ * `delta` is decided by intensity first and by tonnage only when the intensity
+ * is identical (`compareProgress`). A volume-axis verdict therefore always
+ * carries `deltaPct === 0`, and printing "📈" with no percentage beside it
+ * invites the reading "improved by nothing".
+ *
+ * It did not improve by nothing — it is the same work done one more time, or
+ * one time fewer, which is a different KIND of change rather than a smaller
+ * one. So it gets its own words. The down case matters most: a dropped back-off
+ * set on a planned deload or a maintenance week should say what happened, not
+ * flash a red arrow that reads as a failure.
  */
-function trend(d: { delta: -1 | 0 | 1 | null; deltaPct: number | null; isPr: boolean }):
-  { glyph: string; label: string; color: string; pct: string | null } {
+function trend(d: {
+  delta: -1 | 0 | 1 | null; deltaPct: number | null; isPr: boolean
+  deltaAxis?: DeltaAxis | null; volumeKg?: number; prevVolumeKg?: number | null
+}): { glyph: string; label: string; color: string; pct: string | null } {
   if (d.isPr) return { glyph: '🏆', label: 'personal record', color: GOLD, pct: null }
   if (d.delta == null) return { glyph: '🆕', label: 'first time logged', color: '#8E9AAC', pct: null }
+  if (d.deltaAxis === 'volume' && d.delta !== 0) {
+    // The percentage shown here is TONNAGE, because tonnage is what decided it.
+    // Not a set count: an identical mean guarantees the intensity matched, not
+    // that exactly one set was added, and "+1 set" would be a claim this data
+    // cannot support.
+    const vp = d.prevVolumeKg && d.volumeKg != null && d.prevVolumeKg > 0
+      ? Math.round(((d.volumeKg - d.prevVolumeKg) / d.prevVolumeKg) * 1000) / 10
+      : null
+    const pct = vp != null && vp !== 0 ? `${vp > 0 ? '+' : ''}${vp}% work` : null
+    return d.delta === 1
+      ? { glyph: '📈', label: 'same weights, more work', color: UP, pct }
+      : { glyph: '📉', label: 'same weights, less work', color: DOWN, pct }
+  }
   const pct = d.deltaPct != null && d.deltaPct !== 0
     ? `${d.deltaPct > 0 ? '+' : ''}${d.deltaPct}%` : null
   if (d.delta === 1) return { glyph: '📈', label: 'improved', color: UP, pct }

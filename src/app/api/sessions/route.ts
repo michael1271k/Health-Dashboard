@@ -69,7 +69,6 @@ export async function POST(req: Request) {
       clientSessionId: input.clientSessionId,
       replaceSessionId: input.replaceSessionId,
       dayKey: input.dayKey,
-      coachReport: input.coachReport,
       nextSessionFlag: input.nextSessionFlag,
       sessionRpe: input.sessionRpe,
     }

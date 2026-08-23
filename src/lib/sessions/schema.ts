@@ -76,7 +76,6 @@ export const SaveWorkoutSchema = z.object({
   clientSessionId: z.string().min(1).max(64).optional(),  // coach session.id → dedupe key
   replaceSessionId: z.string().uuid().optional(),          // EDIT: replace this session in place
   dayKey: z.enum(['cb_a', 'legs_a', 'arms', 'cb_b', 'legs_b']).optional(),
-  coachReport: z.unknown().optional(),                    // validated client-side; archived as JSONB
   nextSessionFlag: z.string().max(300).optional(),
   // Borg CR10 session effort. Half-steps are meaningful on a ratio scale, so
   // this is not an int.

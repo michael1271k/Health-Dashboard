@@ -230,27 +230,39 @@ describe('Upper A · 2026-08-23 against Hevy', () => {
   it('splits the shoulder into the two heads this session actually trained', () => {
     // Hevy cannot say this: its single bucket cannot tell you that three of
     // those 5.5 sets were REAR delt work and none of it was side delt.
-    expect(at('Front delts')).toBe(3.5)
+    expect(at('Front delts')).toBe(2.5)
     expect(at('Rear delts')).toBe(3)
     expect(at('Side delts')).toBe(0)
   })
 
-  it('exceeds Hevy’s Shoulders 5.5 by exactly the pec deck’s 1.0', () => {
+  /**
+   * ── THIS TEST USED TO PIN THE OPPOSITE ─────────────────────────────────────
+   * It asserted `delts - 5.5 === 1` and called the gap deliberate: the pec
+   * deck's front-delt secondary, argued for on the anatomy and declined by
+   * Hevy. Reconciling the whole week (see `hevy-week-parity.test.ts`) showed
+   * the same 0.5-per-set credit appearing on three different days, on three
+   * different movements, always in the same direction. It was not a judgement
+   * call Hevy happened to disagree with; it was a rule that was wrong. The
+   * credit is gone, and this line is now zero.
+   */
+  it('matches Hevy’s Shoulders exactly — the pec deck pays no front delt', () => {
     const delts = at('Front delts') + at('Rear delts') + at('Side delts')
-    expect(delts).toBe(6.5)
-    expect(delts - 5.5).toBe(1)
-    // And that 1.0 has one source, so the claim is checkable rather than a
-    // coincidence of set counts: 0.5 × 2 pec-deck sets.
-    expect(resolveMovers('Pec Deck', null).secondary).toContain('front_delts')
+    expect(delts).toBe(5.5)
+    expect(delts - 5.5).toBe(0)
+    expect(resolveMovers('Pec Deck', null).secondary).not.toContain('front_delts')
   })
 
-  it('credits the V-grip row no rear delt — the WIDE grip is the one that does', () => {
-    // Both grips used to fall through to the generic `cable row` rule, which
-    // pays traps and rear delts. The V-grip's own entry does not, and this
-    // session is why the two must stay apart: with the generic rule the rear
-    // delt would read 4.0 and the gap against Hevy would be 2.0, not 1.0.
+  it('credits NEITHER row grip a rear delt', () => {
+    // The two grips still resolve to two different entries and must stay apart
+    // — the wide grip pays the traps and the V-grip does not, which is a real
+    // difference and the reason the catalogue split them. What changed is that
+    // neither pays the SHOULDER any more: Hevy classes a row as back work on
+    // either grip, and the wide grip's rear-delt credit was 1.0 of the 2.0 by
+    // which Upper B over-reported Shoulders.
     expect(resolveMovers('Seated Cable Row (V-Grip)', null).secondary).not.toContain('rear_delts')
-    expect(resolveMovers('Seated Cable Row (Wide Grip)', null).secondary).toContain('rear_delts')
+    expect(resolveMovers('Seated Cable Row (Wide Grip)', null).secondary).not.toContain('rear_delts')
+    expect(resolveMovers('Seated Cable Row (Wide Grip)', null).secondary).toContain('traps')
+    expect(resolveMovers('Seated Cable Row (V-Grip)', null).secondary).not.toContain('traps')
   })
 
   it('gives the straight-arm pulldown no upper back', () => {
@@ -351,9 +363,12 @@ describe('the WEEK-to-date breakdown, 2026-08-16 → 2026-08-22', () => {
     Lats: 11.5,
     'Upper back': 8,
     'Lower back': 1.5,
-    'Front delts': 9,
-    'Side delts': 8.5,
-    'Rear delts': 4,
+    // The three deltoid lines moved when the fly / row / press secondaries were
+    // removed — see `hevy-week-parity.test.ts`. They now sum to 17, which is
+    // Hevy's single `Shoulders` bucket for this week to the decimal.
+    'Front delts': 7,
+    'Side delts': 7,
+    'Rear delts': 3,
     Biceps: 17,
     Triceps: 15,
     Forearms: 8.5,
@@ -408,19 +423,30 @@ describe('the lines that must equal Hevy exactly', () => {
     })
   }
 
-  it('the shoulder total exceeds Hevy by exactly the four credits Hevy declines', () => {
-    // Hevy reports one `Shoulders` bucket at 17, which decomposes exactly as
-    // Shoulder Press 3 + Lateral Raise 7 + Face Pull 3 + Chest Press 2.5 +
-    // Incline DB 1.5. Helix additionally credits the pec deck (1) and the cable
-    // crossover (1) at the front delt, the wide-grip row (1) at the rear delt,
-    // and the shoulder press's own side-delt assistance (1.5). All four are real
-    // work; Hevy simply does not tag them. 17 + 4.5 = 21.5.
+  /**
+   * ── THE LAST LINE TO CLOSE, AND THE ONE THAT WAS ARGUED FOR ────────────────
+   * This test used to assert the OPPOSITE: `delts === 21.5`, exceeding Hevy's
+   * 17 by four credits described here as "all four are real work; Hevy simply
+   * does not tag them". Three of those four were the same mistake wearing three
+   * hats — a 0.5 secondary paid to a deltoid head by a movement whose load is
+   * chosen for something else (fly → front, row → rear, press → side). The
+   * fourth, the crossover, is the fly rule again.
+   *
+   * The decomposition quoted below was always right, which is what makes it
+   * worth keeping: Shoulder Press 3 + Lateral Raise 7 + Face Pull 3 + Chest
+   * Press 2.5 + Incline DB 1.5 = 17. That is now what Helix reports, unaided.
+   */
+  it('matches Hevy’s single Shoulders bucket exactly', () => {
     const delts = byMuscle['Front delts'] + byMuscle['Side delts'] + byMuscle['Rear delts']
-    expect(delts).toBe(21.5)
-    expect(delts - 17).toBe(4.5)
+    expect(delts).toBe(17)
+    expect(delts - 17).toBe(0)
+    // The split Hevy cannot report, preserved: 7 front, 7 side, 3 rear.
+    expect(byMuscle['Front delts']).toBe(7)
+    expect(byMuscle['Side delts']).toBe(7)
+    expect(byMuscle['Rear delts']).toBe(3)
   })
 
-  it('leaves NOTHING short — twelve of twelve', () => {
+  it('leaves NOTHING short — thirteen of thirteen, shoulders included', () => {
     // The face pull was the answer, and it was found by arithmetic before it
     // was confirmed by a definition: the gap was exactly 1.5 = 0.5 × 3 sets,
     // and the face pull was the only three-set movement in the week with elbow
@@ -429,5 +455,8 @@ describe('the lines that must equal Hevy exactly', () => {
     const short = (Object.entries(HEVY_EXACT) as Array<[LandmarkMuscle, number]>)
       .filter(([m, want]) => byMuscle[m] !== want)
     expect(short).toEqual([])
+    // And the thirteenth: the deltoid, which was the one line still diverging
+    // when this file said twelve of twelve.
+    expect(byMuscle['Front delts'] + byMuscle['Side delts'] + byMuscle['Rear delts']).toBe(17)
   })
 })

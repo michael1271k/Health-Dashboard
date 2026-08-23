@@ -51,14 +51,27 @@ describe('weekly deltoid distribution after the fix', () => {
   it('lateral raises are the only DIRECT side-delt work', () => {
     expect(of('Side delts').directSets).toBe(2)
   })
-  it('an overhead press pays the side delts a HALF set, not a full one and not zero', () => {
-    // The press is a front-delt movement — a tracked landmark in its own right
-    // since the accumulator stopped discarding nine sets a week of pressing
-    // assistance — but the medial head genuinely assists, so the set is neither
-    // the full credit that inflated Side delts to 11/7 nor the zero that
-    // replaced it.
-    expect(of('Side delts').indirectSets).toBe(0.5)
-    expect(of('Side delts').sets).toBe(2.5)
+  /**
+   * ── THIS ASSERTED THE OPPOSITE, AND THE WEEK SETTLED IT ────────────────────
+   * It required `Side delts.indirectSets === 0.5` — the press's medial-head
+   * assistance, argued for here as "neither the full credit that inflated Side
+   * delts to 11/7 nor the zero that replaced it".
+   *
+   * Reconciling five real sessions against Hevy (`hevy-week-parity.test.ts`)
+   * showed the cost of keeping it. Delts & Arms on 18 Aug paid Shoulders 8.5
+   * against Hevy's 7.0, and the gap was 0.5 x 3 press sets to the decimal.
+   *
+   * The deeper argument is the one this file exists for. The three-head split
+   * was introduced so that a press, a lateral raise and a face pull stop being
+   * one indistinguishable number. A press that credits the side delt on every
+   * set puts that number back in miniature: the side-delt line rises on a day
+   * with no lateral raise in it, which is exactly the reading the split was
+   * meant to make impossible. The press is front delts and triceps.
+   */
+  it('an overhead press pays the side delts NOTHING — it is a front-delt movement', () => {
+    expect(of('Side delts').indirectSets).toBe(0)
+    expect(of('Side delts').sets).toBe(2)
+    expect(of('Front delts').sets).toBe(1)
     expect(of('Triceps').sets).toBe(0.5)
   })
   it('face pull lands on rear delts and pays the back NOTHING', () => {
@@ -108,10 +121,17 @@ describe('secondary movers across the catalogue', () => {
     }
   })
 
-  it('pulls train the biceps, and rows also the rear delts', () => {
+  it('pulls train the biceps and the forearms — a row is back work, not shoulder work', () => {
     expect(movers('Lat Pulldown').secondary).toContain('biceps')
     expect(movers('Seated Cable Row (Wide Grip)').secondary)
-      .toEqual(expect.arrayContaining(['biceps', 'rear_delts']))
+      .toEqual(expect.arrayContaining(['biceps', 'forearms', 'traps']))
+    // `rear_delts` came off both row grips: Hevy classes a row as back work on
+    // either, and the wide grip's credit was 1.0 of the 2.0 by which Upper B
+    // over-reported Shoulders. The rear delt is trained by face pulls and
+    // reverse flies, where it is the PRIMARY.
+    expect(movers('Seated Cable Row (Wide Grip)').secondary).not.toContain('rear_delts')
+    expect(movers('Seated Cable Row (V-Grip)').secondary).not.toContain('rear_delts')
+    expect(movers('Face Pull').primary).toEqual(['rear_delts'])
   })
 
   it('a FLY is not a triceps movement — the elbow never extends under load', () => {

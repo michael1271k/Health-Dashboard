@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Sidebar } from '@/components/nav/Sidebar'
 import { BottomNav } from '@/components/nav/BottomNav'
+import { LiveSessionPill } from '@/components/command-center/LiveSessionPill'
 import { QueryProvider } from '@/components/providers/QueryProvider'
 import { RealtimeProvider } from '@/components/providers/RealtimeProvider'
 import { MotionProvider } from '@/components/providers/MotionProvider'
@@ -128,6 +129,13 @@ export default function RootLayout({
                     </div>
                   </PullToRefresh>
                 </main>
+                {/* The minimised workout. Above BottomNav in the DOM and
+                    above it on screen, on every route except the deck itself.
+                    It lives HERE rather than in the (dashboard) group because
+                    /day and /report sit outside that group and are exactly
+                    where you go mid-session. It also owns the wake lock for
+                    the life of the draft — see LiveSessionPill. */}
+                <LiveSessionPill />
                 <BottomNav />
               </MotionProvider>
               </EraFilterProvider>

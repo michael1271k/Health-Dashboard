@@ -8,7 +8,7 @@ import { RPE_LADDER, rpeColor, rpeLabel, rpeStopIndex, nudgeRpe } from '@/lib/tr
 import { EMBER } from '@/lib/theme/palette'
 
 /**
- * Per-SET effort — seven stops, one line.
+ * Per-SET effort — eight stops, one line.
  *
  * ── WHY THIS REPLACED THE THREE CHIPS ────────────────────────────────────────
  * The old control was Easy 7 / Hard 9 / Failure 10, one rating per EXERCISE. Its
@@ -28,11 +28,26 @@ import { EMBER } from '@/lib/theme/palette'
  * with zero reps left but clean form is not a set you failed. Below 7 one word
  * is enough, because a set that easy is a fact about the LOAD, not the effort.
  *
+ * ── THE EIGHTH PIP ───────────────────────────────────────────────────────────
+ * 8.0 "Challenging" was added between Medium and Hard because that was the
+ * ladder's widest gap and the band a hypertrophy block spends most of its sets
+ * in. Eight 18px targets plus their 4px gaps is 172px — the row still fits
+ * beside the readout at 390px, and each target keeps its 34px height, so the
+ * extra rung costs no reachability. It carries its own colour (AMBER) for the
+ * same reason it carries its own pip: a rung you cannot tell apart from the one
+ * above it is not a rung. See `rpeColor`.
+ *
  * ── OFF-LADDER VALUES ────────────────────────────────────────────────────────
- * The column is `numeric(3,1)` and rows already exist holding 6, 7 and 8. Those
+ * The column is `numeric(3,1)` and rows already exist holding 6 and 7. Those
  * light no pip; they render in the readout and stay reachable through the ±
  * steppers, which is also how you get to a half-step the ladder skips. A hidden
  * long-press would have been tidier and undiscoverable.
+ *
+ * 8 USED TO BE ON THAT LIST and is not any more: it became an exact stop when
+ * "Challenging" was added, so a row holding a bare 8 now lights the fourth pip
+ * and reads "Challenging" instead of falling through to CR10's "Very hard".
+ * The stored number did not move — see `RPE_LADDER` in `lib/training/effort`
+ * for why that relabel is the whole of the change to existing data.
  */
 export function RpeLadder({ value, stale, seeded, onPick, setLabel }: {
   value: number | null | undefined

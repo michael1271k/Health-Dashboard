@@ -29,11 +29,25 @@
  * answer, whichever side asks.
  */
 
-export type LeverId = 'baseline' | 'lever-1' | 'lever-2' | 'custom'
+export type LeverId = 'baseline' | 'lever-1' | 'lever-2' | 'maintenance-week' | 'custom'
 
 export interface NutritionLever {
   id: LeverId
   label: string
+  /**
+   * ── A RUNG IS NOT ALWAYS A TIGHTENING ──────────────────────────────────────
+   * `deficit` rungs are the ladder this file opens by describing: ordered,
+   * each strictly harder than the one above it, protein flat throughout.
+   *
+   * `release` is the other direction — a planned, bounded week at or near
+   * maintenance, taken ON PURPOSE inside a cut. It is a rung by every mechanic
+   * that matters (one named set of targets, in force from a date, resolved
+   * identically by the client and the server scorer, recorded in
+   * `LEVER_SCHEDULE` when it is pulled), and it is emphatically not a step on
+   * the ladder — so the ordering invariant applies to `deficit` only, and the
+   * UI paints a release in a different colour from the deficit rungs.
+   */
+  kind: 'deficit' | 'release'
   /** One line, written for the moment of choosing — not a description of a diet. */
   summary: string
   calorieGoal: number
@@ -50,6 +64,7 @@ export interface NutritionLever {
 export const LEVERS: NutritionLever[] = [
   {
     id: 'baseline',
+    kind: 'deficit',
     label: 'Baseline',
     // ── 10k, NOT 8k (corrected 2026-08-22) ──
     // The rung said 8,000 while `NUTRITION_PRESETS.cut` said 10,000 and the
@@ -63,6 +78,7 @@ export const LEVERS: NutritionLever[] = [
   },
   {
     id: 'lever-1',
+    kind: 'deficit',
     label: 'Lever 1',
     summary: '−70 kcal off carbs and fat, steps to 10k.',
     calorieGoal: 1885, proteinGoalG: 170, carbsGoalG: 182, fatGoalG: 53,
@@ -87,12 +103,63 @@ export const LEVERS: NutritionLever[] = [
     // a band that graded at its ceiling would mark a 13k day as a miss. 12k is
     // the floor that counts; 15k is where the band runs out.
     id: 'lever-2',
+    kind: 'deficit',
     label: 'Lever 2',
     summary: 'Same food as Lever 1, steps 12k–15k. The last rung.',
     calorieGoal: 1885, proteinGoalG: 170, carbsGoalG: 182, fatGoalG: 53,
     stepsGoal: 12000,
   },
+  {
+    /**
+     * ── THE MAINTENANCE WEEK ──────────────────────────────────────────────────
+     * A planned week at maintenance, inside the cut, without leaving the cut.
+     *
+     * ── WHY IT IS A LEVER AND NOT A PHASE ─────────────────────────────────────
+     * The obvious move is to flip `user_goals.goal_preset` to `maintenance` for
+     * a week. It is the wrong one, three times over:
+     *
+     *   · `maintenance` is a real phase with its own body targets (64 kg, 13.5%
+     *     body fat, 9k steps) and its own reason for existing. A week off the
+     *     deficit is not a decision to stop cutting, and it must not silently
+     *     restate the goal weight.
+     *   · `activeProgram(plan, phase)` resolves the TRAINING day list by phase.
+     *     Changing the phase to run a diet week would change which exercises
+     *     the deck seeds. The nutrition and the programme would move together
+     *     when only one of them was asked to.
+     *   · A phase has no end date. It would have to be remembered and flipped
+     *     back by hand, and forgetting is the default outcome.
+     *
+     * A lever has none of those problems and one property none of the
+     * alternatives have: `leverForDate` gives it a date axis for free. Selecting
+     * it applies from TODAY forward and can never re-mark a finished day, which
+     * is exactly what "activate it on the first day of the week" means. When it
+     * comes off, that is a `LEVER_SCHEDULE` row too — see the symmetry rule
+     * above; a rung being RELEASED is an event, and this one is guaranteed to
+     * be released.
+     *
+     * ── 2,445 AND NOT 2,450 ───────────────────────────────────────────────────
+     * The week was specified as "2450 kcal (170P / 295C / 65F)". Those macros
+     * are Atwater-exactly 170·4 + 295·4 + 65·9 = 2,445. The 2,450 is the round
+     * number the plan was written with, and this file has already been burned
+     * once by a calorie literal sitting beside macros that summed to something
+     * else — that is the whole story of `1950` vs `1955` in the header. The
+     * macros are the instruction; the calorie figure is their sum. Five kcal is
+     * nothing, and a target that disagrees with its own arithmetic is not.
+     *
+     * Steps stay at the cut's 10k floor. This week releases the FOOD; nothing
+     * about it says walk less.
+     */
+    id: 'maintenance-week',
+    kind: 'release',
+    label: 'Maintenance Week',
+    summary: 'A planned week at maintenance — full food, steps unchanged. Still cutting.',
+    calorieGoal: 2445, proteinGoalG: 170, carbsGoalG: 295, fatGoalG: 65,
+    stepsGoal: 10000,
+  },
 ]
+
+/** The ordered ladder — the rungs the "each is harder than the last" rule governs. */
+export const DEFICIT_LEVERS: NutritionLever[] = LEVERS.filter((l) => l.kind === 'deficit')
 
 export const DEFAULT_LEVER: LeverId = 'baseline'
 

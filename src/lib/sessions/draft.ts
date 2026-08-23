@@ -121,8 +121,6 @@ export interface SessionDraft {
   notes: string
   startedAt: string             // ISO
   exercises: DraftExercise[]
-  /** Source archive (validated coach JSON / parsed Hevy workout), stored as JSONB on commit. */
-  coachReport?: unknown
 }
 
 export const DRAFT_STORAGE_KEY = 'helix_session_draft:v2'
@@ -276,7 +274,14 @@ export function cardioSummary(ex: DraftExercise): string {
  * exercises are excluded from `sets` HERE, at the single choke point — a
  * 0 kg × 1 junk set would corrupt volume/PR math and spawn phantom catalog
  * rows via resolveExercises — and are carried as a formatted notes line
- * instead (the raw parse survives in coach_report).
+ * instead.
+ *
+ * `coachReport` used to ride along here too — the raw Hevy/coach-JSON parse,
+ * archived to `workout_sessions.coach_report` so a bad import could be replayed
+ * from its source text. The paste importer is gone and it had the only two
+ * writers, so the field would now archive `undefined` on every commit. The
+ * column is left in place (nullable, and never populated on this account) —
+ * nothing reads it, and dropping it is a separate, deliberate act.
  */
 export function buildCommitPayload(draft: SessionDraft): SaveWorkoutInput {
   const sets: SaveWorkoutInput['sets'] = []
@@ -347,7 +352,6 @@ export function buildCommitPayload(draft: SessionDraft): SaveWorkoutInput {
     clientSessionId: draft.clientSessionId,
     replaceSessionId: draft.replaceSessionId,
     dayKey: draft.dayKey,
-    coachReport: draft.coachReport,
     nextSessionFlag: draft.nextSessionFlag,
     sessionRpe: draft.sessionRpe,
     reportMd: draft.coachInsight,

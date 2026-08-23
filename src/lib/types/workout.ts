@@ -54,7 +54,6 @@ export interface SaveWorkoutPayload {
   clientSessionId?: string      // coach session.id — idempotency/dedupe key
   replaceSessionId?: string     // EDIT flow: delete this session then re-insert
   dayKey?: string               // HELIX-5 program-day identity (cb_a … legs_b)
-  coachReport?: unknown         // full validated coach JSON, archived as JSONB
   nextSessionFlag?: string
   sessionRpe?: number           // Borg CR10 session effort (1–10, 0.5 steps)
 }

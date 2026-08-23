@@ -1,14 +1,32 @@
 /**
- * Exercise alias map — incoming (coach/Hevy) names → canonical catalog names.
+ * Exercise alias map — historical and variant names → canonical catalog names.
  *
- * Hevy's exercise list lacks some variants, so placeholder names stand in for
- * what is actually performed (e.g. close-grip lat pulldown logged in Hevy is
- * really the neutral-grip movement). Canonicalizing here — at resolve time on
- * the server AND at draft-build time on the client — keeps the catalog free of
- * duplicate rows and every surface displaying the true movement name.
+ * Some entries date from when workouts arrived as pasted Hevy exports, whose
+ * exercise list lacks certain variants, so a placeholder name stood in for what
+ * was actually performed (a close-grip lat pulldown logged in Hevy is really
+ * the neutral-grip movement). The rest are renames and merges. Canonicalizing
+ * here — at resolve time on the server AND at draft-build time on the client —
+ * keeps the catalog free of duplicate rows and every surface displaying the
+ * true movement name.
  *
- * Keys are lowercase + trimmed. Extend alongside the coach-prompt vocabulary;
- * the raw incoming name is always preserved inside the archived coach_report.
+ * Keys are lowercase + trimmed.
+ *
+ * ── THIS MAP IS NO LONGER RECOVERABLE, SO IT IS NO LONGER GUESSWORK ──────────
+ * This header used to end "the raw incoming name is always preserved inside the
+ * archived coach_report" — the safety net that made a wrong alias a display bug
+ * rather than a data-loss bug. That archive is gone: the paste importer was
+ * deleted along with `lib/hevy/` and `lib/coach/reportSchema.ts`, they were
+ * `coach_report`'s only two writers, and the field no longer rides the commit
+ * payload at all (see `buildCommitPayload`).
+ *
+ * Nothing about that endangers the rows here, because nothing arrives from a
+ * foreign vocabulary any more: every workout is logged natively against the
+ * catalog, so the "incoming name" is a name this app already chose. What it
+ * does remove is the licence to add a SPECULATIVE alias. An entry that maps the
+ * wrong pair now silently merges two movements' history with no record of what
+ * was typed — which is the failure mode `exercise-catalog-merges` exists to
+ * warn about, minus the archive that used to make it reversible. Add a key only
+ * for a rename or a merge you are performing deliberately.
  */
 export const EXERCISE_ALIASES: Record<string, string> = {
   // Hevy has no neutral-grip lat pulldown — close grip is the stand-in.

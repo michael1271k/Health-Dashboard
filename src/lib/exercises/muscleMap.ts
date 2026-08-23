@@ -99,19 +99,60 @@ const DICT: Array<{ tokens: string[]; muscles: MuscleEntry }> = [
   // file and the DB both did) credited an isolation movement to a muscle that
   // does no work in it, and inflated the weekly triceps count with sets that
   // never touched them.
-  { tokens: ['pec', 'deck'], muscles: { primary: ['chest'], secondary: ['front_delts'] } },
-  { tokens: ['butterfly'], muscles: { primary: ['chest'], secondary: ['front_delts'] } },
-  { tokens: ['cable', 'crossover'], muscles: { primary: ['chest'], secondary: ['front_delts'] } },
-  { tokens: ['cable', 'fly'], muscles: { primary: ['chest'], secondary: ['front_delts'] } },
+  //
+  // ── AND IT IS NOT A FRONT-DELT MOVEMENT EITHER ────────────────────────────
+  // The same argument, one joint over, and it took a second pass to see it. A
+  // fly is a single-joint movement about the SHOULDER, so unlike the triceps
+  // the anterior deltoid genuinely does shorten — which is why the secondary
+  // looked defensible and survived a reconciliation that removed the triceps.
+  //
+  // What settled it was the arithmetic across a full week rather than one
+  // session. Against Hevy: Upper A (23 Aug) paid Shoulders 6.5 to Hevy's 5.5,
+  // and the excess was 0.5 x 2 pec-deck sets. Upper B (20 Aug) paid 6.5 to
+  // Hevy's 4.5, and 1.0 of that 2.0 was 0.5 x 2 crossover sets. One session's
+  // gap is an argument; the same gap appearing in two sessions on two different
+  // fly variants, at exactly the credit this line grants, is the line being
+  // wrong.
+  //
+  // The mechanism the credit rule actually asks about is not "does the muscle
+  // shorten" but "is it under a load chosen to train it". On a fly the cable is
+  // set for the pec at a length where the anterior delt has no leverage; the
+  // delt is holding a position, not producing the working moment. Hevy lists
+  // flies as chest and nothing else, and it is right.
+  { tokens: ['pec', 'deck'], muscles: { primary: ['chest'], secondary: [] } },
+  { tokens: ['butterfly'], muscles: { primary: ['chest'], secondary: [] } },
+  { tokens: ['cable', 'crossover'], muscles: { primary: ['chest'], secondary: [] } },
+  { tokens: ['cable', 'fly'], muscles: { primary: ['chest'], secondary: [] } },
 
   // ── Back ────────────────────────────────────────────────────────────────────
   { tokens: ['lat', 'pulldown'], muscles: { primary: ['lats'], secondary: ['upper back', 'biceps', 'forearms'] } },
   { tokens: ['lat', 'pulldown', 'neutral'], muscles: { primary: ['lats'], secondary: ['upper back', 'biceps', 'forearms'] } },
   { tokens: ['lat', 'pulldown', 'close'], muscles: { primary: ['lats'], secondary: ['upper back', 'biceps', 'forearms'] } },
-  // A row's rear delt involvement is real and load-bearing (horizontal
-  // abduction against the cable), unlike a pulldown's, which is incidental.
-  { tokens: ['cable', 'row'], muscles: { primary: ['upper back'], secondary: ['lats', 'traps', 'rear_delts', 'biceps', 'forearms'] } },
-  { tokens: ['seated', 'cable', 'row', 'wide'], muscles: { primary: ['upper back'], secondary: ['lats', 'traps', 'rear_delts', 'biceps', 'forearms'] } },
+  // ── THE ROW'S REAR DELT WAS A GRIP DISTINCTION THAT DID NOT SURVIVE ───────
+  // This file used to hold that a wide-grip row trains the rear delt (real
+  // horizontal abduction against the cable) while a V-grip row does not (elbows
+  // tucked, pure retraction). The mechanics of that are sound and the split is
+  // why `Seated Cable Row` is two entries rather than one — see the note in
+  // `exercise-catalog-merges`: the grips are different movements and must not
+  // be re-merged.
+  //
+  // The CREDIT is what changed, not the split. Upper B (20 Aug) paid Shoulders
+  // 6.5 against Hevy's 4.5; 1.0 of that 2.0 gap is 0.5 x 2 wide-grip row sets
+  // landing on the rear delt. Hevy classes every row as back work and gives the
+  // shoulder nothing, on either grip.
+  //
+  // Which is the more useful answer here, because the rear delt's contribution
+  // to a row is real but it is not what the row is FOR: the load is chosen for
+  // the mid-back, and a rear delt credited on every row makes the rear-delt
+  // line a function of how much back work the week held rather than of how much
+  // rear-delt work it held. Face pulls and reverse flies are where that muscle
+  // is actually trained, and they still carry it as a PRIMARY.
+  //
+  // Both grips keep `traps` — Hevy reports Traps separately (1.0 for this
+  // session's two sets), and Helix folds traps into `Upper back`, where the
+  // row's own primary already dominates it under the max-per-set dedupe.
+  { tokens: ['cable', 'row'], muscles: { primary: ['upper back'], secondary: ['lats', 'traps', 'biceps', 'forearms'] } },
+  { tokens: ['seated', 'cable', 'row', 'wide'], muscles: { primary: ['upper back'], secondary: ['lats', 'traps', 'biceps', 'forearms'] } },
   { tokens: ['seated', 'cable', 'row', 'v'], muscles: { primary: ['upper back'], secondary: ['lats', 'biceps', 'forearms'] } },
   // Elbows locked, shoulder extension only — the long head of the triceps does
   // cross the shoulder, so it earns a secondary here where a fly does not. The
@@ -145,7 +186,20 @@ const DICT: Array<{ tokens: string[]; muscles: MuscleEntry }> = [
   // the fallback `muscle_groups[0]` was a bare 'shoulders' that folded to SIDE
   // delts — the exact mis-credit the split above exists to prevent. One bare
   // `['shoulder','press']` entry catches every spelling.
-  { tokens: ['shoulder', 'press'], muscles: { primary: ['front_delts'], secondary: ['side_delts', 'triceps'] } },
+  //
+  // ── AND IT PAYS THE TRICEPS, NOT THE SIDE DELT ────────────────────────────
+  // `side_delts` was a secondary here on the anatomy: the lateral head does
+  // abduct, and in a dumbbell press it stabilises through the whole path. But
+  // Delts & Arms (18 Aug) paid Shoulders 8.5 against Hevy's 7.0, and the gap is
+  // 0.5 x 3 press sets to the decimal — this line and nothing else.
+  //
+  // Removing it is also the honest reading of what the three-head split is FOR.
+  // The split exists so that "shoulders" stops being one number that a press,
+  // a lateral raise and a face pull all inflate indistinguishably. A press that
+  // credits the side delt on every set puts that number back: the side-delt
+  // line would rise on a day with no lateral raise in it. The press is a front
+  // delt movement with a triceps cost, which is exactly what Hevy says.
+  { tokens: ['shoulder', 'press'], muscles: { primary: ['front_delts'], secondary: ['triceps'] } },
   { tokens: ['lateral', 'raise'], muscles: { primary: ['side_delts'], secondary: [] } },
 
   // ── Triceps ─────────────────────────────────────────────────────────────────

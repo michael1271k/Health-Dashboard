@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Check, RotateCcw } from 'lucide-react'
 import { Surface } from '@/components/ui/Zone'
-import { LEVERS, atwaterKcal, type LeverId } from '@/lib/nutrition/levers'
+import { LEVERS, DEFICIT_LEVERS, atwaterKcal, type LeverId } from '@/lib/nutrition/levers'
 import { EMERALD, GOLD, MUTED, OXIDE } from '@/lib/theme/palette'
 
 /**
@@ -173,9 +173,12 @@ export function EditPlanCard({
         </p>
       </div>
 
-      {/* ── The rungs ── */}
+      {/* ── The rungs ──
+          Deficit rungs only. The ladder is one ordered decision — "how tight is
+          this week" — and it reads as one because every cell in the grid is a
+          step on it. */}
       <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
-        {LEVERS.map((l) => {
+        {DEFICIT_LEVERS.map((l) => {
           const on = lever === l.id
           return (
             <button
@@ -214,6 +217,46 @@ export function EditPlanCard({
           <span className="block text-[10px] text-muted">Your own numbers</span>
         </button>
       </div>
+
+      {/* ── The release ──
+          Separated from the grid above, and green rather than gold, because it
+          is not a step on that ladder — it is a planned week OFF it. Sitting it
+          in the same row of pills would say "a slightly easier Lever 0", which
+          is the one thing a maintenance week must not be mistaken for: it is a
+          deliberate, bounded pause, not a failure to tighten.
+
+          It behaves like any other rung underneath — `pick` fills the fields,
+          saving writes `active_lever`, and `leverForDate` makes it apply from
+          today forward without touching a single finished day of the cut. */}
+      {LEVERS.filter((l) => l.kind === 'release').map((l) => {
+        const on = lever === l.id
+        return (
+          <button
+            key={l.id}
+            type="button"
+            onClick={() => pick(l.id)}
+            aria-pressed={on}
+            className="w-full rounded-xl px-3 py-2.5 text-left transition-colors min-h-[52px]
+                       flex items-center justify-between gap-3"
+            style={{
+              background: on ? `${EMERALD}1a` : 'rgba(255,255,255,0.035)',
+              border: `1px solid ${on ? `${EMERALD}66` : 'rgba(255,255,255,0.07)'}`,
+            }}
+          >
+            <span className="min-w-0">
+              <span className="block text-[11px] font-semibold" style={{ color: on ? EMERALD : undefined }}>
+                {l.label}
+              </span>
+              <span className="block text-[10px] text-muted leading-snug">
+                Applies from today forward — finished days keep the targets they were eaten against.
+              </span>
+            </span>
+            <span className="helix-num text-[10px] text-muted tabular-nums shrink-0">
+              {l.calorieGoal} kcal · {l.proteinGoalG}/{l.carbsGoalG}/{l.fatGoalG}
+            </span>
+          </button>
+        )
+      })}
 
       <p className="text-[11px] text-muted leading-snug">
         {LEVERS.find((l) => l.id === lever)?.summary ?? 'Set every target by hand.'}

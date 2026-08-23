@@ -22,17 +22,44 @@ import { PROGRAMS } from '@/lib/programs'
  * reps left but clean form is not a set you failed. Seven stops, all of them on
  * the 0.5 grid `workout_sets.rpe` already stores, so no DDL.
  */
-describe('RPE_LADDER — seven stops on the existing 0.5 grid', () => {
+describe('RPE_LADDER — eight stops on the existing 0.5 grid', () => {
   it('is the agreed ladder, in order', () => {
     expect(RPE_LADDER.map((s) => [s.value, s.label])).toEqual([
       [5, 'Very Easy'],
       [6.5, 'Easy'],
       [7.5, 'Medium'],
+      [8, 'Challenging'],
       [8.5, 'Hard'],
       [9, 'Very Hard'],
       [9.5, 'Max Effort'],
       [10, 'Failure'],
     ])
+  })
+
+  /**
+   * The gap that 8.0 closes. Medium → Hard used to be a full point while the
+   * top four stops shared 1.5 between them, so the ladder was coarsest exactly
+   * where a hypertrophy block spends its sets.
+   */
+  it('has no gap wider than 1.5, and none wider than a point above Medium', () => {
+    const vals = RPE_LADDER.map((s) => s.value)
+    const gaps = vals.slice(1).map((v, i) => Math.round((v - vals[i]) * 10) / 10)
+    expect(Math.max(...gaps)).toBeLessThanOrEqual(1.5)
+    const aboveMedium = vals.slice(vals.indexOf(7.5) + 1)
+    for (const v of aboveMedium) {
+      const prev = vals[vals.indexOf(v) - 1]
+      expect(Math.round((v - prev) * 10) / 10).toBeLessThanOrEqual(0.5)
+    }
+  })
+
+  /**
+   * ── THE DATA-SAFETY CLAUSE ────────────────────────────────────────────────
+   * The whole reason this stop could be added without a migration: it is on the
+   * grid `numeric(3,1)` already stores. If a future stop is ever added off the
+   * 0.5 grid, this fails before it reaches the database.
+   */
+  it('every stop is on the 0.5 grid the column stores', () => {
+    for (const s of RPE_LADDER) expect(s.value * 2).toBe(Math.round(s.value * 2))
   })
 
   it('every stop survives normalizeCr10 unchanged — the column can store all of them', () => {
@@ -48,12 +75,13 @@ describe('RPE_LADDER — seven stops on the existing 0.5 grid', () => {
 describe('rpeStopIndex — which pip is lit', () => {
   it('finds the exact stop', () => {
     expect(rpeStopIndex(5)).toBe(0)
-    expect(rpeStopIndex(8.5)).toBe(3)
-    expect(rpeStopIndex(10)).toBe(6)
+    expect(rpeStopIndex(8)).toBe(3)
+    expect(rpeStopIndex(8.5)).toBe(4)
+    expect(rpeStopIndex(10)).toBe(7)
   })
 
   it('returns -1 for a value between stops — a nudged rating lights no pip cleanly', () => {
-    expect(rpeStopIndex(8)).toBe(-1)
+    expect(rpeStopIndex(7)).toBe(-1)
     expect(rpeStopIndex(6)).toBe(-1)
   })
 
@@ -74,10 +102,22 @@ describe('rpeLabel — every stored value gets a word, including historical ones
    * sessions hold 6, 7 and 8. None of those may render as a dash.
    */
   it('falls back to the CR10 anchor for off-ladder legacy values', () => {
-    expect(rpeLabel(8)).toBe(cr10Label(8))
     expect(rpeLabel(7)).toBe(cr10Label(7))
     expect(rpeLabel(6)).toBe(cr10Label(6))
+    expect(rpeLabel(7)).not.toBe('—')
+  })
+
+  /**
+   * ── WHAT ADDING 8.0 DID TO HISTORY, STATED EXACTLY ────────────────────────
+   * A stored 8 used to fall through to the CR10 anchor "Very hard". It is now
+   * an exact stop, so it reads "Challenging" instead. The NUMBER is untouched —
+   * that is the whole contract. Nothing is orphaned, nothing renders as a dash,
+   * and no row was rewritten.
+   */
+  it('relabels a stored 8 without moving it', () => {
+    expect(rpeLabel(8)).toBe('Challenging')
     expect(rpeLabel(8)).not.toBe('—')
+    expect(normalizeCr10(8)).toBe(8)
   })
 
   it('is a dash only when there is genuinely no rating', () => {
@@ -98,6 +138,18 @@ describe('rpeColor — a dedicated ramp, because cr10Color flattens the ladder',
   it('separates the top four stops, which cr10Color paints identically', () => {
     const top = [8.5, 9, 9.5, 10]
     expect(new Set(top.map(rpeColor)).size).toBeGreaterThan(1)
+  })
+
+  /**
+   * The reason AMBER exists. 8, 8.5 and 9 are the three rungs that separate
+   * "hard" from "nearly failed"; before this band they all painted EMBER, so
+   * the pip row said one thing at three different ratings.
+   */
+  it('gives 8.0 a band of its own, distinct from the stops on either side', () => {
+    expect(rpeColor(8)).toBe('#E0A03C')
+    expect(rpeColor(8)).not.toBe(rpeColor(7.5))
+    expect(rpeColor(8)).not.toBe(rpeColor(8.5))
+    expect(rpeColor(8.5)).toBe(rpeColor(9))
   })
 
   it('is monotonic — no stop is cooler than the one below it', () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { basisOf } from '@/lib/hooks/useSessionIntel'
+import { basisOf, compareProgress } from '@/lib/hooks/useSessionIntel'
 
 /**
  * ── THE `═` THAT SHOULD HAVE BEEN `⬆️` ───────────────────────────────────────
@@ -118,5 +118,77 @@ describe('a session with no working set on an exercise', () => {
   it('a real unloaded set is never 0, so bodyweight work is never disqualified', () => {
     const reps = (r: number) => ({ weight_kg: 0, reps: r, est_1rm_kg: null, side: null, pair_id: null })
     expect(basisOf([reps(1)], true)).toBe(1)
+  })
+})
+
+/**
+ * ── THE TIEBREAK: WHAT COUNTS AS PROGRESS WHEN INTENSITY DOES NOT MOVE ───────
+ *
+ * `basisOf` is a MEAN, so it is deliberately blind to how many sets it averages
+ * — that is what makes it immune to a warm-up and to a dropped back-off set.
+ * The cost is that it is also silent on the one form of overload that changes
+ * nothing else: the same work, one more time.
+ *
+ * `compareProgress` is the rule that closes that gap without reopening the one
+ * this file was written for. Intensity decides; tonnage only breaks an exact
+ * tie. See its header for why there is no dead band.
+ */
+describe('compareProgress — intensity first, tonnage as the tiebreak', () => {
+  it('lets intensity decide even when tonnage disagrees — the Lat Pulldown case', () => {
+    // 16 Aug 49.5×10, 49.5×10, 47×11 → 23 Aug 49.5×10, 49.5×10, 49.5×9.
+    // The load went up on set 3 and cost two reps: tonnage FALLS by 71.5 kg
+    // while the mean est-1RM rises. Volume-first would call this a regression.
+    const before = { basis: basisOf(AUG_16['Lat Pulldown'], false), volumeKg: 1507 }
+    const now = { basis: basisOf(AUG_23['Lat Pulldown'], false), volumeKg: 1435.5 }
+    expect(now.volumeKg).toBeLessThan(before.volumeKg)
+    expect(compareProgress(now, before)).toEqual({ delta: 1, axis: 'intensity' })
+  })
+
+  it('never demotes a small intensity gain to the volume axis — no dead band', () => {
+    // The same session, stated as the invariant rather than as a number: the
+    // Lat Pulldown moved +0.1%, and any floor worth having would have swallowed
+    // it and handed the verdict to a tonnage that fell.
+    const a = basisOf(AUG_23['Lat Pulldown'], false)
+    const b = basisOf(AUG_16['Lat Pulldown'], false)
+    expect(Math.abs((a - b) / b) * 100).toBeLessThan(1)
+    expect(compareProgress({ basis: a, volumeKg: 1 }, { basis: b, volumeKg: 999 }).axis).toBe('intensity')
+  })
+
+  it('credits the same work done one more time', () => {
+    // Three sets of 40×10 → four sets of 40×10. Identical mean, 25% more work.
+    // This is the case a pure mean cannot see, and it is unambiguously progress.
+    const three = basisOf([set(40, 10), set(40, 10), set(40, 10)], false)
+    const four = basisOf([set(40, 10), set(40, 10), set(40, 10), set(40, 10)], false)
+    // NOT `toBe`. Averaging the same value over three divisors and over four
+    // lands 1.4e-14 apart in IEEE 754 — which is precisely why
+    // `compareProgress` compares to 1e-9 instead of with `===`. Asserting exact
+    // equality here would have failed on a rule that is behaving correctly.
+    expect(four).toBeCloseTo(three, 9)
+    expect(compareProgress({ basis: four, volumeKg: 1600 }, { basis: three, volumeKg: 1200 }))
+      .toEqual({ delta: 1, axis: 'volume' })
+  })
+
+  it('reports a dropped set on the VOLUME axis, so a deload can be described as one', () => {
+    // The symmetric case, and the reason `axis` is exported rather than kept
+    // private: during a maintenance week this fires often, and a surface that
+    // knows the intensity held can say "same weights, less work" instead of
+    // showing a bare red arrow for a planned week.
+    const v = compareProgress(
+      { basis: basisOf([set(40, 10), set(40, 10)], false), volumeKg: 800 },
+      { basis: basisOf([set(40, 10), set(40, 10), set(40, 10)], false), volumeKg: 1200 },
+    )
+    expect(v).toEqual({ delta: -1, axis: 'volume' })
+  })
+
+  it('holds only when NEITHER dial moved', () => {
+    expect(compareProgress({ basis: 50, volumeKg: 1200 }, { basis: 50, volumeKg: 1200 }))
+      .toEqual({ delta: 0, axis: 'intensity' })
+  })
+
+  it('does not mistake float noise in a mean for a change', () => {
+    // Two sessions of the same sets can differ in the last bit; that is not a
+    // week of progress.
+    expect(compareProgress({ basis: 50 + 1e-12, volumeKg: 1200 }, { basis: 50, volumeKg: 1200 }))
+      .toEqual({ delta: 0, axis: 'intensity' })
   })
 })

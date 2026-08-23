@@ -12,7 +12,7 @@
  * drives weekly load management and shows up in the telemetry report.
  */
 
-import { EMERALD, SAND, EMBER, OXIDE, GARNET, STEEL } from '@/lib/theme/palette'
+import { EMERALD, SAND, AMBER, EMBER, OXIDE, GARNET, STEEL } from '@/lib/theme/palette'
 
 export const CR10_MIN = 1
 export const CR10_MAX = 10
@@ -67,13 +67,31 @@ export function cr10Color(v: number | null | undefined): string {
  * collapsed the distinction that matters most in a hypertrophy block: a set with
  * zero reps left but clean form is not a set you failed.
  *
- * Seven stops, all already on the 0.5 grid `workout_sets.rpe` stores, so this
+ * Eight stops, all already on the 0.5 grid `workout_sets.rpe` stores, so this
  * needed no migration. It stays CR10-compatible on purpose — `session_rpe` and
  * `cardio_logs.effort` speak the same scale, and one app should not hold two
  * vocabularies for "how hard was that".
  *
  * The granularity lives where the granularity is. Below 7 one word is enough,
  * because a set that easy is a data point about the LOAD, not about the effort.
+ *
+ * ── WHY 8.0 WAS ADDED ────────────────────────────────────────────────────────
+ * The seven-stop ladder was not evenly spaced where it mattered. From "Medium"
+ * to "Hard" was a full point (7.5 → 8.5) — the single widest gap on the ladder —
+ * while the top crammed four stops into the 1.5 points above it (8.5, 9, 9.5,
+ * 10). That is backwards: the hard-but-not-near-failure band is where a
+ * hypertrophy block actually LIVES, and it was the one band with no rung to
+ * stand on. A set with three clean reps left and a set with two are different
+ * sets, and the ladder made you round one of them into the other.
+ *
+ * ── WHY THIS BREAKS NO HISTORY ───────────────────────────────────────────────
+ * 8.0 is already on the 0.5 grid, so `numeric(3,1)` stores it unchanged: no
+ * DDL, no migration, no backfill, and every historical value keeps rendering —
+ * `rpeStopIndex` returns -1 off-ladder and `rpeLabel` falls through to
+ * `cr10Label`. The ONLY visible change to existing data is that rows already
+ * holding a bare 8 stop borrowing CR10's "Very hard" and start reading
+ * "Challenging", which is a better description of the number they always held.
+ * The stored value does not move.
  */
 
 export interface RpeStop {
@@ -88,6 +106,7 @@ export const RPE_LADDER: readonly RpeStop[] = [
   { value: 5, label: 'Very Easy', hint: '5+ reps left' },
   { value: 6.5, label: 'Easy', hint: '~4 left' },
   { value: 7.5, label: 'Medium', hint: '3 left' },
+  { value: 8, label: 'Challenging', hint: '2–3 left' },
   { value: 8.5, label: 'Hard', hint: '2 left' },
   { value: 9, label: 'Very Hard', hint: '1 left' },
   { value: 9.5, label: 'Max Effort', hint: '0 left, form held' },
@@ -112,14 +131,20 @@ export function rpeLabel(v: number | null | undefined): string {
 
 /**
  * A ramp of its own rather than `cr10Color`, for two reasons. The ladder lives
- * in a compressed 5–10 band where CR10's bands paint four of the seven stops
+ * in a compressed 5–10 band where CR10's bands paint four of the eight stops
  * the same red; and CR10's middle band is GOLD, which means a personal record
  * app-wide (`WEEK_STATE.pr`) and must not also mean "medium effort".
+ *
+ * The AMBER band exists for the 8.0 stop. Without it the three stops that were
+ * added or kept to separate "hard" from "nearly failed" — 8, 8.5, 9 — all
+ * painted EMBER, so the pip row said the same thing at three different ratings.
+ * A ladder whose rungs are indistinguishable is a slider with extra steps.
  */
 export function rpeColor(v: number | null | undefined): string {
   if (v == null || !Number.isFinite(v)) return STEEL   // unrated
   if (v <= 6.5) return EMERALD
   if (v <= 7.5) return SAND
+  if (v <= 8) return AMBER
   if (v <= 9) return EMBER
   if (v <= 9.5) return OXIDE
   return GARNET   // failure reads distinct from max effort

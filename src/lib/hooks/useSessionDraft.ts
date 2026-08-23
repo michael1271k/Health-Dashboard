@@ -8,6 +8,7 @@ import { invalidateWorkoutData } from '@/lib/query/workoutKeys'
 import { recomputeAndPaint } from '@/lib/scoring/applyComputedScore'
 import { logicalTodayISO, hoursAwakeToday } from '@/lib/utils/day'
 import { DRAFT_STORAGE_KEY, buildCommitPayload, cascadeSetEdit, isSetCommitted, peekSessionDraft, type SessionDraft, type DraftSet, type DraftExercise } from '@/lib/sessions/draft'
+import { notifyDraftChanged } from '@/lib/sessions/draftStore'
 import type { PrAxis } from '@/lib/sessions/save'
 
 const COMMIT_TIMEOUT_MS = 25_000
@@ -72,6 +73,11 @@ export function useSessionDraft() {
       if (d) localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(d))
       else localStorage.removeItem(DRAFT_STORAGE_KEY)
     } catch { /* storage full/unavailable — non-fatal */ }
+    // The app shell reads the draft through `draftStore`, not through this
+    // hook — a second `useSessionDraft()` would be a second copy of the state,
+    // not a view of it. Storage is where the two trees meet, so every write
+    // through it has to say so. See `draftStore.ts`.
+    notifyDraftChanged()
   }, [])
 
   useEffect(() => {
@@ -115,10 +121,12 @@ export function useSessionDraft() {
   const start = useCallback((d: SessionDraft) => {
     setDraft(d)
     try { localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(d)) } catch { /* ignore */ }
+    notifyDraftChanged()
   }, [])
   const discard = useCallback(() => {
     setDraft(null)
     try { localStorage.removeItem(DRAFT_STORAGE_KEY) } catch { /* ignore */ }
+    notifyDraftChanged()
   }, [])
 
   // Editing Set 1's weight/reps cascades to later matching sets (Hevy-style);
@@ -392,6 +400,10 @@ export function useSessionDraft() {
       }
       setDraft(null)
       try { localStorage.removeItem(DRAFT_STORAGE_KEY) } catch { /* ignore */ }
+      // The session is committed and the draft is gone — the pill in the app
+      // shell has to hear that, or a finished workout keeps floating above the
+      // tab bar until the next navigation.
+      notifyDraftChanged()
     },
   })
 

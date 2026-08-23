@@ -51,6 +51,13 @@ const ExerciseHistorySheet = dynamic(
  * sparkline on this row is drawn from. See `basisOf` in `useSessionIntel` for
  * the worked example. The glyph and the graph beside it cannot disagree any
  * more, because they are the same number.
+ *
+ * ── AND WHEN THE MEAN CANNOT DECIDE ──────────────────────────────────────────
+ * `compareProgress` falls through to TONNAGE when the mean is identical on both
+ * sides — the same sets performed one more time, or one time fewer, which the
+ * mean is blind to by construction. The direction is still a direction, so this
+ * glyph is unchanged for that case; the SessionIntelCard, which has room for
+ * words, is where "same weights, more work" is spelled out.
  */
 function deltaGlyph(delta: -1 | 0 | 1 | null | undefined): string | null {
   if (delta === undefined) return null

@@ -278,7 +278,6 @@ export async function saveSession(
     report_md: metrics.reportMd ?? null,
     client_session_id: payload.clientSessionId ?? null,
     day_key: payload.dayKey ?? null,
-    coach_report: payload.coachReport ?? null,
     next_session_flag: payload.nextSessionFlag ?? null,
     // Self-heals: a pre-migration DB simply drops the key (see the retry below).
     //

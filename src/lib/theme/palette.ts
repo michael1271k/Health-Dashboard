@@ -46,6 +46,20 @@ export const EMERALD_DEEP = '#2F7D63'
  * two places (a ticked set row and its tick) that must agree.
  */
 export const EMERALD_LIGHT = '#5FBF98'
+/**
+ * The effort ladder's fourth rung, and nothing else.
+ *
+ * The per-set RPE ramp runs EMERALD → SAND → EMBER → OXIDE → GARNET. Adding an
+ * 8.0 stop between "Medium" (7.5) and "Hard" (8.5) put THREE consecutive stops
+ * — 8, 8.5, 9 — inside the same EMBER band, so the control's whole purpose (you
+ * can see at a glance which rung you are on) failed at exactly the rung that
+ * was added to make the distinction.
+ *
+ * Not GOLD, which means a personal record app-wide (`WEEK_STATE.pr`); this is
+ * hotter and less yellow, so a lit 8.0 pip cannot be mistaken for a PR marker
+ * sitting in a row of effort dots.
+ */
+export const AMBER = '#E0A03C'
 export const GOLD = '#D4AF37'
 export const GOLD_DEEP = '#A88722'
 export const AMETHYST = '#8A6FA8'

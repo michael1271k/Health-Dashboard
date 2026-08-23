@@ -19,9 +19,20 @@ export interface ExerciseDelta {
   /** null = first time this exercise is logged (no baseline to compare). */
   delta: -1 | 0 | 1 | null
   /**
+   * WHICH dial decided `delta`. `'intensity'` means the mean est-1RM moved;
+   * `'volume'` means it did not and the tonnage broke the tie — the same work
+   * done one more time, or one time fewer. See `compareProgress`. Null
+   * alongside a null `delta`.
+   */
+  deltaAxis: DeltaAxis | null
+  /**
    * Percent change in the comparison basis — the mean est-1RM across the
    * working sets, or mean reps for unloaded work. See `basisOf`. Null with no
    * baseline.
+   *
+   * ZERO IS A REAL ANSWER, and it is the reason `deltaAxis` exists: a delta of
+   * ±1 alongside `deltaPct === 0` is a volume-axis verdict, not a rounding
+   * artefact.
    */
   deltaPct: number | null
   isPr: boolean
@@ -122,6 +133,73 @@ export function basisOf(
     // the note in `lib/training/prEngine`.
     unloaded ? r.reps : (r.est_1rm_kg || epley1RM(r.weight_kg, r.reps) || 0)
   return one.reduce((sum, r) => sum + headline(r), 0) / one.length
+}
+
+/**
+ * ── WHAT COUNTS AS PROGRESS WHEN THE METRICS DISAGREE ────────────────────────
+ *
+ * Progressive overload has two dials and they can move in opposite directions
+ * in the same week. The case that forces a decision:
+ *
+ *   Lat Pulldown   16 Aug   49.5×10  49.5×10  47×11     tonnage 1507.0 kg
+ *                  23 Aug   49.5×10  49.5×10  49.5×9    tonnage 1435.5 kg
+ *
+ * The load went UP on the third set and it cost two reps. Tonnage fell by 71 kg.
+ * By volume this is a bad week; by every coach's reading it is a good one.
+ *
+ * ── THE RULE ─────────────────────────────────────────────────────────────────
+ * INTENSITY decides. VOLUME breaks a tie. Nothing else is consulted.
+ *
+ *   1. `basis` — mean estimated 1RM across the working sets (mean REPS for
+ *      unloaded work, where reps are the only dial there is). If it moved at
+ *      all, that is the answer, and `axis` reports `'intensity'`.
+ *   2. If the basis is identical on both sides, `tonnage` decides, and `axis`
+ *      reports `'volume'`.
+ *   3. Both identical → held.
+ *
+ * ── WHY INTENSITY FIRST, AND WITH NO DEAD BAND ───────────────────────────────
+ * Ranking volume first fails the case above, and it fails it in the direction
+ * that matters: it would tell you a successful load increase was a step
+ * backwards, which is advice that makes you stop taking load increases.
+ *
+ * A noise floor was considered and rejected on the same session. Lat Pulldown's
+ * basis moved +0.1% — under any floor worth having — and demoting it to the
+ * volume tiebreak would have printed ⬇️ on the exact lift this whole rule was
+ * rewritten to stop mis-reporting. A 0.1% rise in mean e1RM is a small piece of
+ * progress, and "small" is what `deltaPct` is for; it is not noise, because
+ * these numbers are not sampled, they are the sets you performed.
+ *
+ * ── WHY VOLUME IS STILL HERE ─────────────────────────────────────────────────
+ * The mean is deliberately blind to how many sets it averages, which is what
+ * makes it immune to a warm-up or a dropped back-off set — and also what makes
+ * it silent on the one form of overload that changes nothing else: the SAME
+ * work, one more time. Three sets of 40×10 becoming four sets of 40×10 has an
+ * identical mean and 25% more work done, and it is unambiguously progress. The
+ * tie is exactly where volume is the right answer and nowhere else.
+ *
+ * The symmetric case is a set REMOVED — a deload, or the maintenance week the
+ * lever now describes. That reports ⬇️ on the volume axis, which is honest:
+ * less work was done. `axis` is exported so a surface can say "same weights,
+ * one set fewer" instead of showing a bare red arrow for a planned week.
+ *
+ * ── EPSILON ──────────────────────────────────────────────────────────────────
+ * "Identical" is a float comparison on a mean, so it is taken to 1e-9 rather
+ * than with `===`. Two sessions of the same sets differ by nothing real, but
+ * they can differ in the last bit.
+ */
+export type DeltaAxis = 'intensity' | 'volume'
+
+export function compareProgress(
+  now: { basis: number; volumeKg: number },
+  before: { basis: number; volumeKg: number },
+): { delta: -1 | 0 | 1; axis: DeltaAxis } {
+  if (Math.abs(now.basis - before.basis) > 1e-9) {
+    return { delta: now.basis > before.basis ? 1 : -1, axis: 'intensity' }
+  }
+  if (Math.abs(now.volumeKg - before.volumeKg) > 1e-9) {
+    return { delta: now.volumeKg > before.volumeKg ? 1 : -1, axis: 'volume' }
+  }
+  return { delta: 0, axis: 'intensity' }
 }
 
 /**
@@ -329,7 +407,11 @@ export function useSessionIntel(sessionId: string | null) {
          */
         const a = t.basis > 0 ? t.basis : null
         const b = p && p.basis > 0 ? p.basis : null
-        const comparable = a != null && b != null
+        const comparable = a != null && b != null && p != null
+        // Intensity first, tonnage as the tiebreak — see `compareProgress`.
+        const verdict = comparable
+          ? compareProgress({ basis: a, volumeKg: t.volumeKg }, { basis: b, volumeKg: p.volumeKg })
+          : null
         return {
           exerciseId: exId,
           name: t.name, topKg: t.kg, topReps: t.reps,
@@ -339,7 +421,8 @@ export function useSessionIntel(sessionId: string | null) {
           // null = first log of this exercise (no baseline), or a session with
           // no working set on either side. A PR also requires a baseline to
           // beat — never a gold star the first time.
-          delta: comparable ? (a > b ? 1 : a < b ? -1 : 0) : null,
+          delta: verdict ? verdict.delta : null,
+          deltaAxis: verdict ? verdict.axis : null,
           deltaPct: comparable ? Math.round(((a - b) / b) * 1000) / 10 : null,
           isPr: t.isPr && p != null,
           unloaded: t.unloaded,
