@@ -66,7 +66,15 @@ export function SessionTitle({ label, accent, date, onBack }: {
     /* Bleeds past the reading measure's gutters so the wash reaches the screen
        edges on a phone — a tint that stops 8px short of the edge reads as a
        panel behind the title rather than as the page's own colour. */
-    <div className="relative -mx-2 px-4 pt-4 pb-5">
+    /* `pb-2`, not `pb-5`. Between the title and the metadata box there were
+       four separate pieces of air — this padding (20px), the page's own
+       `space-y-3` (12px), the band's inset, and a "Compared with …" caption
+       that has since gone (see `SessionHero`). Stacked, that was three to four
+       blank lines on the one screen that opens to the numbers. Trimmed here
+       because this is the only one of the four that was pure decoration: the
+       wash it pads has already dissolved by the time it reaches the bottom of
+       the block. */
+    <div className="relative -mx-2 px-4 pt-4 pb-2">
       {/* The wash, not a band. A solid block of the day's colour would compete
           with the numbers directly beneath it; a gradient that has fully
           dissolved by the time it reaches the metadata box colours the top of
@@ -112,7 +120,7 @@ export function SessionTitle({ label, accent, date, onBack }: {
           "Helix Cut" badge in the pinned bar was compressing into two words.
           They wrap rather than truncate: a week number cut in half is worse than
           a second line. */}
-      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
         <PhaseTags weekStart={weekStartOf(date)} />
       </div>
     </div>

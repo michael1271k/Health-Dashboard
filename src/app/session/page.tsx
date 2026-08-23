@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useEffect, useMemo, useRef } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { FileClock, Loader2 } from 'lucide-react'
 import { SessionDeck } from '@/components/command-center/SessionDeck'
@@ -113,6 +113,31 @@ function SessionPageInner() {
    */
   useWakeLock(!!draft)
 
+  /**
+   * ── THE GHOST SCREEN ───────────────────────────────────────────────────────
+   * Finishing a session used to flash the PASTE PANEL — "Paste your session",
+   * a Hevy textarea — for the second or so between the commit landing and the
+   * router arriving at the summary page. Nothing was wrong with the commit; the
+   * sequence was simply visible:
+   *
+   *   1. `commit.onSuccess` calls `setDraft(null)` (correct — the draft is now a
+   *      real session, and leaving it in localStorage would resurrect it).
+   *   2. THIS component re-renders with `draft === null`, and the entry-state
+   *      branch at the bottom is exactly right for that: no draft, no template
+   *      → offer the paste gate.
+   *   3. `router.replace('/session/<id>')` finally commits the navigation.
+   *
+   * Step 2 is the ghost, and no amount of tuning the paste panel fixes it,
+   * because the paste panel is not the bug — rendering an ENTRY state during an
+   * EXIT is. A navigation is in flight from the moment the commit resolves, so
+   * the page holds a spinner until it lands rather than re-deciding what screen
+   * you are on. The paste gate itself is untouched: it is still the deliberate
+   * no-template entry (Workout → "Log workout" with no scheduled day).
+   */
+  const [leaving, setLeaving] = useState(false)
+  const goToSession = useCallback((id: string) => { setLeaving(true); router.replace(`/session/${id}`) }, [router])
+  const goToDay = useCallback((date: string) => { setLeaving(true); router.replace(`/day/${date}`) }, [router])
+
   const seededRef = useRef(false)
   useEffect(() => {
     if (seededRef.current || !hydrated || draft || !templateDay || !seedReady) return
@@ -135,6 +160,8 @@ function SessionPageInner() {
   )
 
   if (!hydrated) return <PageSpinner />
+  // A commit has landed and the router is on its way out — see `leaving`.
+  if (leaving) return <PageSpinner />
 
   // A surviving draft + a DIFFERENT template request → the user decides.
   if (draft && templateDay && !draftMatchesTemplate) {
@@ -174,8 +201,8 @@ function SessionPageInner() {
         <SessionDeck
           store={store}
           onClose={() => router.back()}
-          onViewDay={(date) => router.replace(`/day/${date}`)}
-          onViewSession={(id) => router.replace(`/session/${id}`)}
+          onViewDay={goToDay}
+          onViewSession={goToSession}
         />
       </div>
     )

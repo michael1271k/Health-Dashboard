@@ -36,6 +36,12 @@ const WD_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
  * which handles the OTHER devices.
  */
 const PLAN_PHASE_CASCADE_KEYS: string[][] = [
+  // `plan_phase_goals` FIRST, and it was missing: it is the query
+  // `useNutritionGoals` resolves ahead of `user_goals`, so leaving it inside its
+  // 5-minute staleTime meant every surface below could be invalidated and still
+  // re-render the OLD targets. The mutation invalidates it too; this is the
+  // belt, because the plan/phase switch path does not go through that mutation.
+  ['plan_phase_goals'],
   ['user_goals'], ['today'], ['readiness_today'], ['coach'], ['day_vault'], ['nutrition_entries'],
 ]
 
@@ -290,17 +296,35 @@ export default function SettingsPage() {
     // phase and back silently restored the old macros over the ones you set.
     // A manual save is a statement about this plan's cut, so it is written as
     // one.
-    await saveOverride({
-      planId: activePlanId,
-      phase: livePhase,
-      patch: {
-        calorieGoal: next.calorie_goal,
-        proteinGoalG: next.protein_goal_g,
-        carbsGoalG: next.carbs_goal_g,
-        fatGoalG: next.fat_goal_g,
-        stepsGoal: next.steps_goal,
-      },
-    }).catch(() => { /* table unmigrated → user_goals still carries the numbers */ })
+    /**
+     * ── AND IT IS NOT ALLOWED TO FAIL QUIETLY ──────────────────────────────
+     * This `await` used to end in `.catch(() => {})`, on the reasoning that an
+     * unmigrated table just means `user_goals` still carries the numbers. That
+     * reasoning is false HERE, and it hid the Custom-targets bug for as long as
+     * it existed: `useNutritionGoals` resolves the plan+phase override BEFORE
+     * the stored `user_goals` row, so a failed write does not fall back to the
+     * numbers you typed — it falls back to the PLAN'S AUTHORED DEFAULTS, and
+     * the button says "Saved!" over the top of it.
+     *
+     * (What was actually failing: the upsert never sent `user_id`, which is
+     * half of that table's primary key. See `usePlanPhaseGoals`.)
+     */
+    try {
+      await saveOverride({
+        planId: activePlanId,
+        phase: livePhase,
+        patch: {
+          calorieGoal: next.calorie_goal,
+          proteinGoalG: next.protein_goal_g,
+          carbsGoalG: next.carbs_goal_g,
+          fatGoalG: next.fat_goal_g,
+          stepsGoal: next.steps_goal,
+        },
+      })
+    } catch (e) {
+      setStatus({ type: 'error', msg: e instanceof Error ? e.message : 'Targets did not save to the plan.' })
+      return
+    }
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) return
     const { error } = await supabase.from('user_goals').upsert(

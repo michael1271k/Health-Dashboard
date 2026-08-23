@@ -5,6 +5,7 @@ import { CalendarDays } from 'lucide-react'
 import { LeverTag } from '@/components/nutrition/LeverTag'
 import { BackLink } from '@/components/nav/NavChevron'
 import { MuscleDistribution } from './MuscleDistribution'
+import { FinishButton } from './FinishButton'
 import { DatePickerPopover } from './DatePickerPopover'
 import { useLoggedSessionDates } from '@/lib/hooks/useDayVault'
 import { logicalTodayISO } from '@/lib/utils/day'
@@ -40,7 +41,7 @@ import { EMBER, GOLD, MUTED, STEEL } from '@/lib/theme/palette'
  * title now, tinted in the workout's own colour, and the collapsed bar carries
  * the same button once this scrolls off.
  */
-export function LiveSessionHero({ draft, accent, volumeKg, sets, recordCount, onBack, onSetDate }: {
+export function LiveSessionHero({ draft, accent, volumeKg, sets, recordCount, onBack, onSetDate, onFinish, finishBusy, isEdit }: {
   draft: SessionDraft
   /** `dayColor(dayKey, splitDay)` — steel for Upper A, gold for Upper B. */
   accent: string
@@ -50,6 +51,24 @@ export function LiveSessionHero({ draft, accent, volumeKg, sets, recordCount, on
   recordCount: number
   onBack: () => void
   onSetDate: (dateISO: string) => void
+  /**
+   * ── FINISH LIVES AT THE TOP NOW ────────────────────────────────────────────
+   * It used to be the full-width primary in `CommitBar`, pinned to the BOTTOM of
+   * a deck that is taller than the viewport by the third exercise. That put the
+   * one irreversible action of the session directly under the thumb that is
+   * ticking sets, and put it at the far end of the document from the title,
+   * the date and the totals it is a decision about.
+   *
+   * Up here it sits beside the muscle figure — the two controls that answer
+   * "where is this landing" and "am I done" — and the collapsed bar carries the
+   * same pair once this scrolls off, so both are one tap away at any scroll
+   * position. The bottom bar keeps discard/delete, which are the actions you
+   * should have to travel to.
+   */
+  onFinish: () => void
+  finishBusy?: boolean
+  /** Edit mode says "Save", not "Finish" — it is not ending anything. */
+  isEdit?: boolean
 }) {
   const [pickerOpen, setPickerOpen] = useState(false)
   const { data: loggedDates } = useLoggedSessionDates()
@@ -84,6 +103,7 @@ export function LiveSessionHero({ draft, accent, volumeKg, sets, recordCount, on
           {title}
         </h1>
         <MuscleDistribution draft={draft} accent={accent} size="lg" />
+        <FinishButton onClick={onFinish} busy={finishBusy} disabled={sets === 0} isEdit={isEdit} />
       </div>
 
       {/* The date is the CONTROL, not a label beside one — a separate chip cost

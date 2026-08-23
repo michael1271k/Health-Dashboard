@@ -107,7 +107,30 @@ export function usePlanPhaseGoals() {
 
   const save = useMutation({
     mutationFn: async ({ planId, phase, patch }: { planId: string; phase: NutritionMode; patch: PlanPhaseOverride }) => {
+      /**
+       * ── `user_id` IS PART OF THE ROW, AND WAS MISSING ──────────────────────
+       * `plan_phase_goals`' primary key is `(user_id, plan_id, phase)`, the
+       * column is NOT NULL with no default, and its RLS policy is
+       * `auth.uid() = user_id` on both USING and WITH CHECK. This upsert sent
+       * `plan_id` and `phase` and nothing else, so EVERY write this hook has
+       * ever made was rejected — the table was empty on a live account that had
+       * saved custom targets more than once.
+       *
+       * It failed silently for two compounding reasons, both fixed below:
+       *   · the not-null error message contains the word "column", which the
+       *     pre-migration retry below matched — so it stripped the newer columns
+       *     and tried again, failed identically, and DISCARDED that result;
+       *   · the caller in Settings wrapped the whole thing in `.catch(() => {})`.
+       *
+       * So Settings said "Saved!", `user_goals` really did take the numbers, and
+       * `useNutritionGoals` — which resolves plan-phase BEFORE the stored row —
+       * kept answering with the plan's authored defaults. The targets were saved
+       * to the one place nothing reads.
+       */
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('Not signed in — targets were not saved.')
       const row: Record<string, unknown> = {
+        user_id: session.user.id,
         plan_id: planId, phase,
         kcal: patch.calorieGoal ?? null, protein_g: patch.proteinGoalG ?? null,
         carbs_g: patch.carbsGoalG ?? null, fat_g: patch.fatGoalG ?? null,
@@ -120,10 +143,19 @@ export function usePlanPhaseGoals() {
       const up = (r: Record<string, unknown>) =>
         supabase.from('plan_phase_goals').upsert(r as unknown as never, { onConflict: 'user_id,plan_id,phase' })
       const { error } = await up(row)
-      if (error && /schema cache|PGRST204|column/i.test(error.message)) {
-        for (const k of EXTRA_COLS) delete row[k]
-        await up(row)
-      }
+      if (!error) return
+      /**
+       * The pre-migration retry, narrowed. It used to match `/column/`, which
+       * also matches `null value in column "user_id" … violates not-null
+       * constraint` — so a hard constraint failure was treated as "this database
+       * predates the extra columns", retried, and thrown away. Only PostgREST's
+       * own schema-cache codes qualify now, and whatever the retry returns is
+       * RAISED rather than swallowed.
+       */
+      if (!/schema cache|PGRST204|PGRST205/i.test(error.message)) throw new Error(error.message)
+      for (const k of EXTRA_COLS) delete row[k]
+      const retry = await up(row)
+      if (retry.error) throw new Error(retry.error.message)
     },
     onSuccess: () => { void qc.invalidateQueries({ queryKey: ['plan_phase_goals'] }) },
   })
@@ -132,12 +164,21 @@ export function usePlanPhaseGoals() {
     mutationFn: async ({ planId, phase, muscle, targetSets }: {
       planId: string; phase: NutritionMode; muscle: LandmarkMuscle; targetSets: number
     }) => {
-      // Self-healing: a missing plan_phase_volume table just means the defaults
-      // keep applying — the paste-SQL adds it.
-      await supabase.from('plan_phase_volume').upsert(
-        { plan_id: planId, phase, muscle, target_sets: targetSets } as unknown as never,
+      // Same missing `user_id` as `plan_phase_goals` above, same PK, same RLS —
+      // and the same effect: nothing has ever been written here.
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('Not signed in — the set target was not saved.')
+      // Self-healing on the TABLE only: a `plan_phase_volume` that was never
+      // created just means the program defaults keep applying, and the paste-SQL
+      // adds it. A row that is rejected for any other reason is a real failure
+      // and now says so.
+      const { error } = await supabase.from('plan_phase_volume').upsert(
+        { user_id: session.user.id, plan_id: planId, phase, muscle, target_sets: targetSets } as unknown as never,
         { onConflict: 'user_id,plan_id,phase,muscle' },
-      ).then(() => {}, () => {})
+      )
+      if (error && !/schema cache|PGRST204|PGRST205|does not exist/i.test(error.message)) {
+        throw new Error(error.message)
+      }
     },
     onSuccess: () => { void qc.invalidateQueries({ queryKey: ['plan_phase_goals'] }) },
   })

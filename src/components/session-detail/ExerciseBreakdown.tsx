@@ -42,8 +42,15 @@ const ExerciseHistorySheet = dynamic(
  *
  * ✅ used to mean "matched", off top LOAD alone — which on a double-progression
  * program is most weeks, because the load is deliberately held while reps climb.
- * The basis is estimated 1RM now (see `useSessionIntel`), so the arrow moves when
- * the training does; a tick that never changes is not feedback.
+ * Then it was the top set's estimated 1RM, which is the same blindness one level
+ * up: the top set is the set the program PINS, so it holds still while sets two
+ * and three climb, and a session where every back-off set improved still printed
+ * `═` beside a sparkline showing +1.7%.
+ *
+ * The basis is the MEAN across the working sets now — the same axis the
+ * sparkline on this row is drawn from. See `basisOf` in `useSessionIntel` for
+ * the worked example. The glyph and the graph beside it cannot disagree any
+ * more, because they are the same number.
  */
 function deltaGlyph(delta: -1 | 0 | 1 | null | undefined): string | null {
   if (delta === undefined) return null

@@ -63,7 +63,7 @@ function wrap(ui: React.ReactNode) {
 }
 
 const HERO = (
-  <LiveSessionHero draft={DRAFT} accent={GOLD} volumeKg={12480} sets={18} recordCount={2} onBack={() => {}} onSetDate={() => {}} />
+  <LiveSessionHero draft={DRAFT} accent={GOLD} volumeKg={12480} sets={18} recordCount={2} onBack={() => {}} onSetDate={() => {}} onFinish={() => {}} />
 )
 
 describe('the live session hero', () => {
@@ -104,7 +104,7 @@ describe('the live session hero', () => {
     const composed = { ...DRAFT, dayKey: 'legs_b', title: 'Legs & Core B · Posterior Focus' } as SessionDraft
     const { container } = render(wrap(
       <LiveSessionHero draft={composed} accent={GOLD} volumeKg={0} sets={0} recordCount={0}
-        onBack={() => {}} onSetDate={() => {}} />,
+        onBack={() => {}} onSetDate={() => {}} onFinish={() => {}} />,
     ))
     expect(container.querySelector('h1')?.textContent).toBe('Legs & Core B')
     expect(container.textContent ?? '').not.toContain('Posterior Focus')
@@ -151,7 +151,7 @@ describe('the live session hero', () => {
     // three figures sideways at the moment you are reaching for a tick.
     const cold = { ...DRAFT, exercises: [{ ...DRAFT.exercises[0], sets: [{ weightKg: 60, reps: 8, done: false }] }] } as SessionDraft
     const { container } = render(wrap(
-      <LiveSessionHero draft={cold} accent={GOLD} volumeKg={0} sets={0} recordCount={0} onBack={() => {}} onSetDate={() => {}} />,
+      <LiveSessionHero draft={cold} accent={GOLD} volumeKg={0} sets={0} recordCount={0} onBack={() => {}} onSetDate={() => {}} onFinish={() => {}} />,
     ))
     const btn = Array.from(container.querySelectorAll('button'))
       .find((b) => b.getAttribute('aria-label') === 'Muscle distribution for this session')
@@ -185,7 +185,7 @@ describe('the live session hero', () => {
           {wrap(
             <LiveSessionBar
               draft={{ ...DRAFT, dayKey: 'legs_b', title: 'Legs & Core B · Posterior Focus' } as SessionDraft}
-              accent={GOLD} volumeKg={12480} sets={18} recordCount={2} shown onBack={() => {}}
+              accent={GOLD} volumeKg={12480} sets={18} recordCount={2} shown onBack={() => {}} onFinish={() => {}}
             />,
           )}
         </div>

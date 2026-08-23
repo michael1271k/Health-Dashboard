@@ -217,13 +217,17 @@ export function SessionHero({ detail }: { detail: SessionDetail }) {
           answer ("which session was this, and when") is asked.
 
           What is left is what this box is for: the numbers. */}
-      {intel?.previousDate && (
-        <p className="text-[10px] text-muted">
-          Compared with <span className="text-text/80 font-medium">{intel.typeLabel}</span>
-          {' · '}{new Date(`${intel.previousDate}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
-        </p>
-      )}
+      {/* ── "Compared with Upper A · 16 Aug" USED TO SIT HERE ──
+          It was the third statement of the same fact. `ProgressionTrail`, one
+          band below, already prints "vs Upper A · 16 Aug" as the heading of the
+          block that IS the comparison; the ▲/▼ on each number here is the
+          comparison; and the page title names the session. What this line added
+          was a caption above a metric grid, pushing the numbers down a line on
+          the one screen that opens to them.
 
+          It is not replaced. A delta that has to explain what it is measured
+          against, directly above the deltas, is a sign the deltas are in the
+          wrong place — and they are not. */}
       {/* `gap-x-3` rather than per-cell `pr-3`/`pl-3`: the gap is a property of
           the grid, and stating it on the children meant the first cell had a
           different box model from the other two. */}

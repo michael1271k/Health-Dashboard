@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import {
   DndContext, DragOverlay, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors,
-  defaultDropAnimationSideEffects,
+  defaultDropAnimationSideEffects, MeasuringStrategy,
   type DragEndEvent, type DragStartEvent, type DropAnimation,
 } from '@dnd-kit/core'
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
@@ -29,6 +29,19 @@ import { CARDIO_VIOLET } from './ExerciseCard'
  * and nothing that needs clamping.
  */
 const DRAG_MODIFIERS = [restrictToVerticalAxis]
+
+/**
+ * ── RE-MEASURE EVERY FRAME OF A DRAG ────────────────────────────────────────
+ * dnd-kit's default (`WhileDragging`) measures the droppables ONCE, at lift.
+ * That is correct for a list whose geometry is fixed for the gesture, and wrong
+ * the moment the list can change height mid-drag — which it now can, because
+ * every card that is not in the air folds to its header (see `dragCollapsed` in
+ * `ExerciseCard`). With a stale measurement the drop targets stay where the tall
+ * cards used to be, so the card lands two slots from where you aimed it. That
+ * exact failure is what made the FIRST attempt at a drag-collapse feel broken;
+ * measuring always is what makes this one safe.
+ */
+const MEASURING = { droppable: { strategy: MeasuringStrategy.Always } }
 
 /**
  * The drop is the one moment bounce is EARNED — the card was physically thrown
@@ -67,10 +80,20 @@ const DROP_ANIMATION: DropAnimation = {
  *      curve that never occurs in the physical world, so the siblings shuffled
  *      like a spreadsheet rather than settling like objects.
  *
- * Now: nothing collapses, the lifted card rides in a portal above everything,
- * the siblings ease with the house curve, and the drop carries the small bounce
- * a thrown object has earned. Under `prefers-reduced-motion` the travel drops
- * out and the drop is instant.
+ * Now: the lifted card rides in a portal above everything, the siblings ease
+ * with the house curve, and the drop carries the small bounce a thrown object
+ * has earned. Under `prefers-reduced-motion` the travel drops out and the drop
+ * is instant.
+ *
+ * ── AND THE COLLAPSE IS BACK, ON DIFFERENT TERMS (2026-08-23) ────────────────
+ * Cause (1) above is now a FEATURE, because the two things that made it a bug
+ * are gone. The card you grabbed can no longer jump — it is in the overlay, not
+ * in the list — and the drop targets can no longer go stale, because
+ * `MEASURING` re-measures every frame. What is left is the thing the original
+ * idea was after: on a ten-exercise deck the whole session collapses to one
+ * screen, so dragging the first lift to the end is a short movement instead of
+ * a multi-second autoscroll with no view of the destination. The physics is
+ * untouched — same sensor, same modifiers, same drop curve.
  */
 export function ExerciseDeckList({ draft, history, globalHistory, livePrs, readyByName, reportTargets, onReorder, onUpdateSet, onSplitSet, onMergeSet, onAddSet, onRemoveSet, onToggleDone, onRemoveExercise, onSetNote, onPrTap, onUpdateCardio }: {
   draft: SessionDraft
@@ -152,6 +175,7 @@ export function ExerciseDeckList({ draft, history, globalHistory, livePrs, ready
       // A deck is taller than the viewport by the third exercise, so a drag has
       // to be able to reach the end of it without letting go.
       autoScroll={{ threshold: { x: 0, y: 0.2 } }}
+      measuring={MEASURING}
       onDragStart={handleDragStart}
       onDragCancel={handleDragCancel}
       onDragEnd={handleDragEnd}
@@ -175,6 +199,11 @@ export function ExerciseDeckList({ draft, history, globalHistory, livePrs, ready
               ready={readyByName?.get(ex.name) ?? null}
               reportTargets={reportTargets}
               reducedMotion={reduced}
+              // Every card BUT the one in the air folds while a drag is live —
+              // see the long note on `dragCollapsed`. The dragged card's own
+              // in-list ghost folds too: it is at 0.4 opacity behind the
+              // overlay, and leaving it full height would defeat the point.
+              dragCollapsed={dragId != null}
               onUpdateSet={onUpdateSet}
               onSplitSet={onSplitSet}
               onMergeSet={onMergeSet}

@@ -38,6 +38,14 @@ export const SAPPHIRE = '#3D7AB8'
 export const SAPPHIRE_DEEP = '#2E5C8A'
 export const EMERALD = '#3E9E7A'
 export const EMERALD_DEEP = '#2F7D63'
+/**
+ * The pale end of the emerald ramp — the light source on a COMPLETED surface.
+ *
+ * Promoted rather than spelled inline because a gradient needs three stops to
+ * read as lit rather than as two colours meeting, and "done" is now a ramp in
+ * two places (a ticked set row and its tick) that must agree.
+ */
+export const EMERALD_LIGHT = '#5FBF98'
 export const GOLD = '#D4AF37'
 export const GOLD_DEEP = '#A88722'
 export const AMETHYST = '#8A6FA8'

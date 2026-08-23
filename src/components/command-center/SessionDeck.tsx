@@ -108,6 +108,11 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
     return () => io.disconnect()
   }, [])
 
+  // Stable, because it is handed to two memoized headers (`LiveSessionBar` is
+  // `memo`, and the hero sits under it) — an inline arrow would change identity
+  // on every keystroke in every set field and undo that memo.
+  const openFinish = useCallback(() => setFinishOpen(true), [])
+
   const [prTarget, setPrTarget] = useState<{ localId: string; setIdx: number } | null>(null)
   const handlePrTap = useCallback(
     (localId: string, setIdx: number) => setPrTarget({ localId, setIdx }),
@@ -216,10 +221,7 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
   const commitBar = (
     <CommitBar
       draft={draft}
-      totals={totals}
-      busy={commit.isPending}
       error={commitError}
-      onFinish={() => setFinishOpen(true)}
       onDiscard={() => { discard(); onClose() }}
       onCancelEdit={() => { discard(); onClose() }}
       deleting={del.isPending}
@@ -252,6 +254,9 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
         recordCount={livePrs.count}
         shown={titlePassed}
         onBack={onClose}
+        onFinish={openFinish}
+        finishBusy={commit.isPending}
+        isEdit={!!draft.replaceSessionId}
       />
 
     {/* The route is full-bleed so the bar above can span the viewport; the
@@ -268,6 +273,9 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
           recordCount={livePrs.count}
           onBack={onClose}
           onSetDate={setDate}
+          onFinish={openFinish}
+          finishBusy={commit.isPending}
+          isEdit={!!draft.replaceSessionId}
         />
       </div>
 

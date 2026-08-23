@@ -155,7 +155,7 @@ const fmtKg = (w: number) => (w % 1 === 0 ? w.toFixed(0) : (w * 10) % 1 === 0 ? 
  * means lifting `useSortable` into a shell component and moving the grip out of
  * this header — a real refactor, deliberately not done here.
  */
-export const ExerciseCard = memo(function ExerciseCard({ exercise, history, globalHistory, livePrs, dayKey, ready, reportTargets, reducedMotion = false, onUpdateSet, onSplitSet, onMergeSet, onAddSet, onRemoveSet, onToggleDone, onRemoveExercise, onSetNote, onPrTap, onUpdateCardio }: {
+export const ExerciseCard = memo(function ExerciseCard({ exercise, history, globalHistory, livePrs, dayKey, ready, reportTargets, reducedMotion = false, dragCollapsed = false, onUpdateSet, onSplitSet, onMergeSet, onAddSet, onRemoveSet, onToggleDone, onRemoveExercise, onSetNote, onPrTap, onUpdateCardio }: {
   exercise: DraftExercise
   history: ExerciseHistory | null
   /**
@@ -192,6 +192,35 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
    * most of what made reordering feel broken.
    */
   reducedMotion?: boolean
+  /**
+   * ── AND YET IT COLLAPSES AGAIN, DELIBERATELY (2026-08-23) ──────────────────
+   * The note above is the history of a collapse that was WRONG, and it is worth
+   * keeping because this one is the same shape and is not. Three things changed:
+   *
+   *   1. It is `dragCollapsed`, not `collapsed` — only the OTHER cards fold. The
+   *      one under your finger rides in the `DragOverlay` portal at full size,
+   *      so the thing you grabbed never changes under you.
+   *   2. `SortableContext` re-measures continuously while a drag is live
+   *      (`MeasuringStrategy.Always` in `ExerciseDeckList`). The original
+   *      version measured once, at lift, so when the list shrank the drop
+   *      targets stayed where the tall cards used to be — which IS the
+   *      "everything moves and nothing lands where you aimed" bug. Measuring
+   *      every frame is what makes the fold safe.
+   *   3. The fold is CSS-only (`showBody` goes false), so no state is lost:
+   *      an open card, an in-progress note, an active set row all come back
+   *      exactly as they were when the drag ends.
+   *
+   * What it buys: a ten-exercise deck is roughly 3.5 screens tall, so reordering
+   * the first lift to the end meant an autoscroll drag of several seconds with
+   * no view of the destination. Folded, the whole session is one screen and the
+   * drop is a single short movement.
+   *
+   * Folded cards show the NAME and the programmed floor–ceiling only. Everything
+   * else on that header — status, the progression cue, the report target, the
+   * live glance, the rest chip — is about the set in front of you, and while you
+   * are dragging there is no set in front of you.
+   */
+  dragCollapsed?: boolean
   /*
    * ── EVERY HANDLER TAKES `localId` ────────────────────────────────────────
    * These used to be pre-bound: the card received `(setIdx, patch)` and the
@@ -221,7 +250,9 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
   const localId = exercise.localId
 
   const [open, setOpen] = useState(true)
-  const showBody = open
+  // The drag fold wins over the card's own state, and does not touch it — see
+  // `dragCollapsed`. `open` is untouched, so the card comes back as it was.
+  const showBody = open && !dragCollapsed
   const [activeSet, setActiveSet] = useState<number | null>(null)
   const [editingNote, setEditingNote] = useState(false)
   const [restSheet, setRestSheet] = useState(false)
@@ -625,7 +656,10 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
                 kept their width. Now the chips drop to a second line instead. */}
             <div className="flex items-center gap-x-2 gap-y-1 min-w-0 flex-wrap">
               <span className="font-semibold text-text leading-snug truncate" style={{ fontSize: 'var(--text-exercise-title)' }}>{exercise.name}</span>
-              {status && (
+              {/* Everything from here to the rep window is about the set in
+                  front of you. While a drag is live there is no set in front of
+                  you — see `dragCollapsed`. */}
+              {!dragCollapsed && status && (
                 <span
                   className="shrink-0 inline-flex items-center px-1.5 py-px rounded-md text-[9px] font-bold uppercase tracking-wide"
                   style={{ color: status.color, background: `${status.color}1f`, border: `1px solid ${status.color}55` }}
@@ -635,7 +669,7 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
               )}
               {/* Same rule as the cue: an earned bump stops being today's
                   instruction the moment today's own sets contradict it. */}
-              {readyNow && (
+              {!dragCollapsed && readyNow && (
                 <span
                   className="shrink-0 inline-flex items-center gap-0.5 px-1.5 py-px rounded-md text-[9px] font-bold uppercase tracking-wide"
                   style={{ color: READY_GOLD, background: `${READY_GOLD}1f`, border: `1px solid ${READY_GOLD}66` }}
@@ -667,7 +701,7 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
               )}
               {/* What your last report asked for on this lift. RETRIEVED from a
                   document you pasted — the app writes no targets of its own. */}
-              {reportTarget && formatTarget(reportTarget) && (
+              {!dragCollapsed && reportTarget && formatTarget(reportTarget) && (
                 <span
                   className="shrink-0 inline-flex items-center gap-1 px-1.5 py-px rounded-md text-[9px] font-bold uppercase tracking-wide tabular-nums"
                   style={{ color: SAPPHIRE, background: `${SAPPHIRE}18`, border: `1px solid ${SAPPHIRE}55` }}
@@ -698,7 +732,7 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
                 What survives is the one thing the column cannot say: that there
                 is NO history, so the numbers you are looking at came from the
                 program rather than from you. */}
-            {!prevWork.length && (
+            {!dragCollapsed && !prevWork.length && (
               <span
                 className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-md text-[10px] leading-snug"
                 style={{ color: MUTED, background: 'rgba(255,255,255,0.04)', border: `1px solid ${HAIRLINE}` }}
@@ -711,14 +745,25 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
           <div className="flex items-center gap-2 shrink-0">
             {/* Current-input glance — only when the card is collapsed. Expanded,
                 the live set rows below say the same thing, so it's redundant. */}
-            {!showBody && (
+            {/* Folded for a drag, the tail is the SET COUNT — how big a block
+                you are moving. The live glance ("36kg × 12,11,10") is about the
+                work; while dragging, the question is the shape of the session. */}
+            {dragCollapsed ? (
               <span className="helix-num text-xs text-muted tabular-nums">
-                {timedEx ? `${summary} sec`
-                  : topWeight > 0 ? `${fmtKg(topWeight)}kg × ${summary}`
-                  : `${summary} reps`}
+                {exercise.sets.length || '—'} {exercise.sets.length === 1 ? 'set' : 'sets'}
               </span>
+            ) : (
+              <>
+                {!showBody && (
+                  <span className="helix-num text-xs text-muted tabular-nums">
+                    {timedEx ? `${summary} sec`
+                      : topWeight > 0 ? `${fmtKg(topWeight)}kg × ${summary}`
+                      : `${summary} reps`}
+                  </span>
+                )}
+                <ChevronDown className={`w-4 h-4 text-muted transition-transform duration-200 ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
+              </>
             )}
-            <ChevronDown className={`w-4 h-4 text-muted transition-transform duration-200 ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
           </div>
         </button>
 
@@ -733,7 +778,7 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
             contain a button (the PR trophy strip learned this the hard way in
             `SetEditorRow`), so this lives outside and the header's tap target
             stops at the chevron. */}
-        {restTarget != null && (
+        {!dragCollapsed && restTarget != null && (
           <button
             type="button"
             onPointerDown={() => { void tapLight() }}

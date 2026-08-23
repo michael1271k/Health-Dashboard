@@ -154,6 +154,114 @@ describe('the three fixes, individually', () => {
 })
 
 /**
+ * ── UPPER A, 2026-08-23, AND THE ONE LINE THAT IS NOT HEVY'S ─────────────────
+ *
+ * Read straight out of `workout_sets`: seven movements, eighteen sets, no
+ * warm-ups. Twelve of Hevy's own lines are reproduced exactly; the thirteenth is
+ * the deltoid, and the arithmetic below is why it is a MODELLING difference
+ * rather than a dictionary bug.
+ *
+ * Hevy has ONE `Shoulders` bucket. Helix has three heads, because a face pull
+ * and an overhead press are not interchangeable volume and folding them
+ * together is what used to inflate the side delt. Compared head-for-head the two
+ * cannot be compared at all, so the test compares the SUM:
+ *
+ *   Hevy  Shoulders 5.5 = Face Pull 3 (primary) + Incline DB Press 1.5 + Chest
+ *                         Press (Machine) 1.0  — and nothing for the pec deck.
+ *   Helix         6.5 = Front delts 3.5 (Incline 1.5 + Chest Press 1.0 +
+ *                         Pec Deck 1.0) + Rear delts 3.0 (Face Pull).
+ *
+ * The gap is EXACTLY 1.0, and it is exactly the pec deck's front-delt secondary
+ * — 0.5 × 2 sets. That credit is deliberate and already argued in `muscleMap`:
+ * a pec deck is horizontal adduction with the elbow fixed, and the anterior
+ * deltoid is a horizontal adductor. Hevy declines to tag it; the weekly test
+ * below has recorded the same divergence (pec deck + cable crossover + wide-grip
+ * row + shoulder-press side-delt assistance = 4.5) since the twelve-of-twelve
+ * pass. It is left alone here rather than reversed, and pinned so that if
+ * anybody ever DOES reverse it, it is a decision and not a drift.
+ */
+const UPPER_A_0823: Array<{ name: string; groups: string[]; sets: number }> = [
+  { name: 'Chest Press (Machine)', groups: ['chest', 'triceps', 'front_delts'], sets: 2 },
+  { name: 'Face Pull', groups: ['rear_delts', 'upper back', 'traps'], sets: 3 },
+  { name: 'Incline DB Press', groups: ['chest', 'triceps', 'front_delts'], sets: 3 },
+  { name: 'Lat Pulldown', groups: ['lats', 'upper back', 'biceps', 'forearms'], sets: 3 },
+  { name: 'Pec Deck', groups: ['chest', 'front_delts'], sets: 2 },
+  { name: 'Seated Cable Row (V-Grip)', groups: ['upper back', 'lats', 'biceps', 'forearms'], sets: 2 },
+  { name: 'Straight-Arm Pulldown', groups: ['lats', 'triceps'], sets: 3 },
+]
+
+function upperADraft(): SessionDraft {
+  return {
+    date: '2026-08-23', dayKey: 'cb_a', splitDay: 'upper', notes: '',
+    exercises: UPPER_A_0823.map((ex, i) => ({
+      localId: `ua${i}`,
+      name: ex.name,
+      kind: 'lift' as const,
+      muscleGroups: ex.groups,
+      sets: Array.from({ length: ex.sets }, (): DraftSet => ({ weightKg: 40, reps: 10, done: true })),
+    })),
+  } as unknown as SessionDraft
+}
+
+describe('Upper A · 2026-08-23 against Hevy', () => {
+  const actual = draftMuscleSets(upperADraft())
+  const at = (m: LandmarkMuscle) => Math.round((actual[m] ?? 0) * 10) / 10
+
+  /** Hevy's lines for this session. `Shoulders` is handled separately below. */
+  const HEVY_0823: Partial<Record<LandmarkMuscle, number>> = {
+    Chest: 7,
+    Lats: 7,
+    Biceps: 4,
+    Triceps: 4,
+    'Upper back': 3.5,
+    Forearms: 2.5,
+  }
+
+  for (const [muscle, want] of Object.entries(HEVY_0823) as Array<[LandmarkMuscle, number]>) {
+    it(`${muscle} matches Hevy at ${want}`, () => {
+      expect(at(muscle)).toBe(want)
+    })
+  }
+
+  it('counts eighteen physical sets', () => {
+    expect(draftPhysicalSets(upperADraft())).toBe(18)
+  })
+
+  it('splits the shoulder into the two heads this session actually trained', () => {
+    // Hevy cannot say this: its single bucket cannot tell you that three of
+    // those 5.5 sets were REAR delt work and none of it was side delt.
+    expect(at('Front delts')).toBe(3.5)
+    expect(at('Rear delts')).toBe(3)
+    expect(at('Side delts')).toBe(0)
+  })
+
+  it('exceeds Hevy’s Shoulders 5.5 by exactly the pec deck’s 1.0', () => {
+    const delts = at('Front delts') + at('Rear delts') + at('Side delts')
+    expect(delts).toBe(6.5)
+    expect(delts - 5.5).toBe(1)
+    // And that 1.0 has one source, so the claim is checkable rather than a
+    // coincidence of set counts: 0.5 × 2 pec-deck sets.
+    expect(resolveMovers('Pec Deck', null).secondary).toContain('front_delts')
+  })
+
+  it('credits the V-grip row no rear delt — the WIDE grip is the one that does', () => {
+    // Both grips used to fall through to the generic `cable row` rule, which
+    // pays traps and rear delts. The V-grip's own entry does not, and this
+    // session is why the two must stay apart: with the generic rule the rear
+    // delt would read 4.0 and the gap against Hevy would be 2.0, not 1.0.
+    expect(resolveMovers('Seated Cable Row (V-Grip)', null).secondary).not.toContain('rear_delts')
+    expect(resolveMovers('Seated Cable Row (Wide Grip)', null).secondary).toContain('rear_delts')
+  })
+
+  it('gives the straight-arm pulldown no upper back', () => {
+    // The other line that has to hold for Upper back to land on 3.5: the row's
+    // 2.0 primary plus the lat pulldown's 1.5 secondary, and nothing else.
+    expect(resolveMovers('Straight-Arm Pulldown', null).secondary).not.toContain('upper back')
+    expect(at('Upper back')).toBe(3.5)
+  })
+})
+
+/**
  * ── THE WHOLE WEEK, PINNED ───────────────────────────────────────────────────
  *
  * The session fixture above proves the DRAFT path. This one proves the path the

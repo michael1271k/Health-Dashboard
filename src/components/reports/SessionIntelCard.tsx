@@ -28,9 +28,18 @@ const DOWN = '#C4514E'
  * double-progression program that made it a wall of green ticks: you hold the
  * load and add reps for weeks, so the load is unchanged and "matched" was
  * reported for every week where progress was actually happening. Bodyweight work
- * could never read anything else at all. The basis is now estimated 1RM (reps
- * and load both move it) — or reps for unloaded work — and the glyph carries the
- * size of the move, not just its sign.
+ * could never read anything else at all.
+ *
+ * Then it was the TOP SET's estimated 1RM, which is the same blindness one level
+ * up: on double progression the top set is the set the program PINS, so it
+ * reaches the ceiling and holds there while the back-off sets climb. The basis
+ * is the MEAN across the working sets now — mean est-1RM, or mean reps for
+ * unloaded work — so any set moving moves the glyph. See `basisOf` in
+ * `useSessionIntel` for the worked example. `deltaPct` is a percentage of THAT
+ * mean; nothing here reads it as a top-set figure, but the contract is stated
+ * because it has now changed twice.
+ *
+ * The glyph carries the size of the move, not just its sign.
  *
  * A PR outranks the trend: a record is the fact worth reading in that cell.
  */

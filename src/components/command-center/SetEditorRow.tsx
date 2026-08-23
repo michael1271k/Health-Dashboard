@@ -10,6 +10,7 @@ import { useHoldRepeat } from '@/lib/hooks/useHoldRepeat'
 import { RpeLadder } from './RpeLadder'
 import { SetActionSheet, type SetTypeValue } from './SetActionSheet'
 import { setGridFor, SET_BADGE_W, SET_FRAME_GAP, SET_TAIL_W, type SetGridMode } from './setGrid'
+import { EMERALD_DEEP, EMERALD_LIGHT } from '@/lib/theme/palette'
 
 /** Plate step (a tap on ±) and the microload step (a press-and-hold). */
 const PLATE_STEP = 2.5
@@ -18,7 +19,28 @@ const ORANGE = '#E0703C' // warm-up
 const DANGER = '#C4514E' // failure
 const DROP = '#9A6DD7'   // drop set
 const GREEN = '#3E9E7A'  // completed (ticked green)
+const GREEN_LIGHT = EMERALD_LIGHT  // the pale end of the completed ramp
 const GOLD = '#C9A227'   // personal record
+
+/**
+ * ── THE COMPLETED SET IS A GRADIENT, NOT A FILL ─────────────────────────────
+ * A ticked row used to be one flat `rgba(62,158,122,0.13)` wash edge to edge,
+ * and the tick itself a solid block of `#3E9E7A`. Flat colour at that alpha is
+ * the cheapest possible "done" state: it reads as a highlighted table row
+ * rather than as a set that has been PUT AWAY, and against the deck's near-
+ * black it is the one surface in the logger with no light direction at all.
+ *
+ * Both are ramps now, in the same direction (light at the leading edge, falling
+ * away to the right) so the row and its tick belong to one light source. The
+ * row's is deliberately PALER than the old flat fill at its far end — the point
+ * is a green that has settled, not a green that shouts. The tick keeps full
+ * saturation because it is 34px wide and has to survive being read at a glance
+ * mid-set.
+ */
+const DONE_ROW_BG =
+  `linear-gradient(100deg, ${GREEN}2b 0%, ${GREEN}17 42%, ${GREEN}09 100%)`
+const DONE_TICK_BG =
+  `linear-gradient(150deg, ${GREEN_LIGHT} 0%, ${GREEN} 55%, ${EMERALD_DEEP} 100%)`
 /** The ladder stop that MEANS failure — the one rating the `F` tag mirrors. */
 const FAILURE_RPE = 10
 /** How long the badge is held before it opens set options instead of records. */
@@ -253,13 +275,20 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
       // editing the set it belonged to. Green stays; the active row is
       // distinguished by its ring instead.
       className={`rounded-lg transition-colors ${
-        done ? 'bg-[#3E9E7A]/[0.13]'
+        done ? ''
         : active ? 'bg-white/[0.045]'
         : isWarm ? 'bg-[#E0703C]/[0.06]' : ''}`}
       style={{
+        // The ramp, not a fill — see DONE_ROW_BG. A `background` (not
+        // `backgroundColor`) so it can only be set from here, which is why the
+        // `done` branch above no longer carries a Tailwind class.
+        ...(done ? { background: DONE_ROW_BG } : null),
         ...(subRow && sideColor
           ? { borderLeft: `2px solid ${sideColor}`, borderTopLeftRadius: 2, borderBottomLeftRadius: 2 }
           : null),
+        // The active ring outranks the done ramp on purpose: DONE OUTRANKS
+        // ACTIVE for COLOUR (the green stays), but the row you are editing still
+        // has to say so, and a ring is the one signal the ramp cannot swallow.
         ...(active ? { boxShadow: 'inset 0 0 0 1px rgba(224,112,60,0.45)' } : null),
       }}
     >
@@ -382,7 +411,15 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
             className={`${SET_TAIL_W} shrink-0 min-h-[34px] rounded-lg flex items-center justify-center
                         active:scale-95 transition-[color,background-color,border-color,transform] duration-150`}
             style={done
-              ? { color: '#fff', background: GREEN, border: `1px solid ${GREEN}` }
+              ? {
+                color: '#fff',
+                background: DONE_TICK_BG,
+                border: `1px solid ${GREEN_LIGHT}66`,
+                // A single soft bloom, at the alpha the deck's other lit
+                // controls use. Not a drop shadow: this button sits INSIDE the
+                // row's own green, and an offset shadow there reads as grime.
+                boxShadow: `0 0 12px ${GREEN}59, inset 0 1px 0 rgba(255,255,255,0.22)`,
+              }
               : { color: 'var(--color-muted)', background: 'transparent', border: '1px solid rgba(255,255,255,0.14)' }}
           >
             <Check className="w-4 h-4" strokeWidth={3} aria-hidden="true" />

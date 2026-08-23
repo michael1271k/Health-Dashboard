@@ -3,6 +3,7 @@
 import { memo } from 'react'
 import { BackLink } from '@/components/nav/NavChevron'
 import { MuscleDistribution } from './MuscleDistribution'
+import { FinishButton } from './FinishButton'
 import { fmtVolume } from '@/lib/utils/units'
 import { cleanSessionTitle, type SessionDraft } from '@/lib/sessions/draft'
 import { EMBER, GOLD, MUTED, STEEL } from '@/lib/theme/palette'
@@ -38,7 +39,7 @@ import { EMBER, GOLD, MUTED, STEEL } from '@/lib/theme/palette'
  * needs the draft (it walks every committed set), so it takes it.
  */
 export const LiveSessionBar = memo(function LiveSessionBar({
-  draft, accent, volumeKg, sets, recordCount, shown, onBack,
+  draft, accent, volumeKg, sets, recordCount, shown, onBack, onFinish, finishBusy, isEdit,
 }: {
   draft: SessionDraft
   /** Hex — the workout's own colour. Hairline and gradient both. */
@@ -50,6 +51,10 @@ export const LiveSessionBar = memo(function LiveSessionBar({
   /** The hero has scrolled off, so the bar takes over as the title. */
   shown: boolean
   onBack: () => void
+  /** The hero's own pair of controls, carried here — see `FinishButton`. */
+  onFinish: () => void
+  finishBusy?: boolean
+  isEdit?: boolean
 }) {
   return (
     <header
@@ -73,18 +78,27 @@ export const LiveSessionBar = memo(function LiveSessionBar({
         style={{ background: `linear-gradient(90deg, transparent, ${accent}b3, transparent)` }}
       />
 
-      <div className="mx-auto w-full max-w-[80rem] px-2 sm:px-4 py-1.5 flex items-center gap-2">
+      {/* ── AND WHY IT IS NO LONGER TINY ──
+          Collapsed did not have to mean illegible. The title was `text-fluid-sm`
+          (13–15px) and the three figures `text-[10px]` — smaller than any other
+          text in the app, on the element that IS the title for most of the time
+          you spend on this screen. Once the hero has gone this bar is the only
+          thing naming the session and the only thing reporting its totals, so it
+          is sized to be read at arm's length between sets: the name at
+          `text-fluid-base`, the numbers at 12px, and the same Focus/Finish pair
+          the hero carries. It costs about 8px of height. */}
+      <div className="mx-auto w-full max-w-[80rem] px-2 sm:px-4 py-2 flex items-center gap-2">
         <BackLink onClick={onBack} label="Back — the draft autosaves" />
 
         <div className="min-w-0 flex-1">
           {/* Line one: the name, and only the name. */}
-          <h1 className="font-heading font-bold text-fluid-sm leading-tight truncate" style={{ color: accent }}>
+          <h1 className="font-heading font-bold text-fluid-base leading-tight truncate" style={{ color: accent }}>
             {cleanSessionTitle(draft)}
           </h1>
           {/* Line two: everything that moves while you lift. Inline rather than
               in columns — at this size three stacked label/value pairs is six
               lines of type in a 34px strip. */}
-          <p className="flex items-center gap-1.5 text-[10px] leading-tight text-muted truncate">
+          <p className="flex items-center gap-2 text-[12px] leading-tight text-muted truncate">
             <Stat value={fmtVolume(volumeKg)} unit="kg" color={EMBER} />
             <Dot />
             <Stat value={String(sets)} unit={sets === 1 ? 'set' : 'sets'} color={STEEL} />
@@ -100,6 +114,7 @@ export const LiveSessionBar = memo(function LiveSessionBar({
         </div>
 
         <MuscleDistribution draft={draft} accent={accent} />
+        <FinishButton onClick={onFinish} busy={finishBusy} disabled={sets === 0} isEdit={isEdit} size="sm" />
       </div>
     </header>
   )
