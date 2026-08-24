@@ -7,7 +7,7 @@ import { Dumbbell, Moon, Flame, ChevronRight } from 'lucide-react'
 import { CompletenessArc } from '@/components/day/CompletenessArc'
 import { BodyPanel } from '@/components/day/BodyPanel'
 import { SleepDebtGauge } from '@/components/day/SleepDebtGauge'
-import { SwapDayControl, RestTodayButton } from '@/components/day/SwapDayControl'
+import { SwapDayControl } from '@/components/day/SwapDayControl'
 import { RestSuggestion } from '@/components/day/RestSuggestion'
 import { DomsTracker } from '@/components/day/RecoveryTrackers'
 import { CardioLogger } from '@/components/day/CardioLogger'
@@ -505,9 +505,17 @@ export default function DailyNexusPage() {
                   <Dumbbell className="w-4 h-4" aria-hidden="true" /> Log {schedule.label}
                 </Link>
               )}
+              {/* ── AND NO "REST DAY" BUTTON ──
+                  It sat on its own row beneath this one, and it was a literal
+                  duplicate: `SwapDayControl`'s panel already carries a Rest Day
+                  tile, calling the same `takeRest` from the same `useRestSwap`.
+                  One control, reached two ways, one of them a full row of
+                  vertical space on the screen with the least of it. Swap Day
+                  keeps the decision — a rest day IS a swap, it moves the
+                  session to the plan's next free rest slot — and the panel
+                  keeps saying which day it lands on. */}
               <SwapDayControl date={date} className="shrink-0" />
             </div>
-            <RestTodayButton date={date} label="Rest day" />
           </ZoneRow>
         </Zone>
       )}

@@ -2685,13 +2685,13 @@
     "semantic_hash": ""
   },
   "src/components/command-center/LiveSessionPill.tsx": {
-    "mtime": 1787505194.3437426,
-    "ast_hash": "14ba07a8745459ff20a5d609e04f1ff7",
+    "mtime": 1787575689.2787561,
+    "ast_hash": "42f1ced782a8b1163b1121818ee03095",
     "semantic_hash": ""
   },
   "src/tests/live-session-pill.test.tsx": {
-    "mtime": 1787505976.8656797,
-    "ast_hash": "fe8e1f4a5373aa36d5a859dcaf71e5a4",
+    "mtime": 1787575745.271771,
+    "ast_hash": "6ef901c6cf661e3323a38e0d6979eaba",
     "semantic_hash": ""
   },
   "src/components/session-detail/MetricGrid.tsx": {
