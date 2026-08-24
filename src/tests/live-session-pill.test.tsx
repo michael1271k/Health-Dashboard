@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { render, cleanup, screen } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { LazyMotion, domMax } from 'framer-motion'
 import { DRAFT_STORAGE_KEY, type SessionDraft } from '@/lib/sessions/draft'
 import {
@@ -36,6 +37,12 @@ vi.mock('next/navigation', () => ({
 // keeps this file about the pill rather than about navigator shims.
 vi.mock('@/lib/hooks/useWakeLock', () => ({ useWakeLock: () => {} }))
 vi.mock('@/lib/native/haptics', () => ({ tapLight: () => Promise.resolve() }))
+// The pill counts records through the deck's own query + engine. jsdom has no
+// network; an empty baseline set is the honest "nothing to beat yet" answer and
+// keeps this file about the pill rather than about Supabase.
+vi.mock('@/lib/hooks/useExerciseBaselines', () => ({
+  useExerciseBaselines: () => ({ data: undefined }),
+}))
 
 const { LiveSessionPill } = await import('@/components/command-center/LiveSessionPill')
 
@@ -62,7 +69,14 @@ function put(d: SessionDraft | null) {
   notifyDraftChanged()
 }
 
-const ui = () => render(<LazyMotion features={domMax}><LiveSessionPill /></LazyMotion>)
+const ui = () => {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  return render(
+    <QueryClientProvider client={qc}>
+      <LazyMotion features={domMax}><LiveSessionPill /></LazyMotion>
+    </QueryClientProvider>,
+  )
+}
 
 beforeEach(() => {
   pathname.current = '/'
@@ -122,8 +136,26 @@ describe('LiveSessionPill', () => {
     expect(btn.getAttribute('aria-label')).toContain('Upper A')
     expect(btn.textContent).toContain('Upper A')
     // Two completed sets, 40 kg x (11 + 9) = 800 kg.
-    expect(btn.textContent).toContain('2 sets')
+    // Each Stat prints its unit in its own span (no literal space), the same
+    // shape the collapsed bar uses.
+    expect(btn.textContent).toContain('2sets')
     expect(btn.textContent).toContain('800')
+    // Records are the third column, and read em-dash until one is claimed.
+    expect(btn.textContent).toContain('PRs')
+  })
+
+  /**
+   * Elapsed time was removed with its interval. The assertion is on the TIMER,
+   * not on the glyph: a 20 s `setInterval` on a fixed element mounted on every
+   * screen is the actual regression, and it is invisible in a screenshot.
+   */
+  it('runs no clock — the pill re-renders only when the draft moves', () => {
+    const spy = vi.spyOn(globalThis, 'setInterval')
+    put(DRAFT)
+    ui()
+    expect(spy).not.toHaveBeenCalled()
+    expect(screen.getByRole('button').textContent).not.toMatch(/\d+\s*min/)
+    spy.mockRestore()
   })
 
   it('takes you back to the deck', () => {

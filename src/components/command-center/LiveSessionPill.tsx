@@ -1,16 +1,18 @@
 'use client'
 
-import { useEffect, useState, useSyncExternalStore } from 'react'
+import { useEffect, useMemo, useSyncExternalStore } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { AnimatePresence, m } from 'framer-motion'
 import { ChevronUp } from 'lucide-react'
 import { SNAPPY } from '@/lib/motion/springs'
 import { useHelixReducedMotion } from '@/lib/motion/useHelixReducedMotion'
 import { useWakeLock } from '@/lib/hooks/useWakeLock'
+import { useExerciseBaselines } from '@/lib/hooks/useExerciseBaselines'
+import { computeLivePrs, livePrDigest } from '@/lib/sessions/livePrs'
 import { tapLight } from '@/lib/native/haptics'
 import { cleanSessionTitle, draftTotals } from '@/lib/sessions/draft'
 import { getDraftServerSnapshot, getDraftSnapshot, subscribeDraft } from '@/lib/sessions/draftStore'
-import { dayColor } from '@/lib/theme/palette'
+import { dayColor, EMBER, GOLD, MUTED, STEEL } from '@/lib/theme/palette'
 import { fmtVolume } from '@/lib/utils/units'
 
 /**
@@ -60,6 +62,19 @@ import { fmtVolume } from '@/lib/utils/units'
  * `body.helix-overlay-open .app-chrome` exists in globals.css because that has
  * already happened here once. The pill pays a flat background and keeps the
  * bug.
+ *
+ * ── WHAT IT REPORTS, AND WHY TIME IS NOT ON THE LIST ─────────────────────────
+ * Sets, volume, records — the three figures that answer "how is this session
+ * going". Elapsed time answered a different question ("how long have I been
+ * here"), one nothing on this bar acts on, and it cost a 20 s interval that
+ * re-rendered a fixed element on every screen in the app for a number that
+ * moves once a minute. Removing it removes the timer with it: this component
+ * now re-renders only when the draft itself changes.
+ *
+ * The record count comes from the SAME query key and the SAME engine the deck
+ * uses (`useExerciseBaselines` + `computeLivePrs`), so the gold figure here and
+ * the gold figure on the hero can never disagree — and returning from the deck
+ * is a cache hit, not a second fetch.
  */
 export function LiveSessionPill() {
   const router = useRouter()
@@ -71,24 +86,25 @@ export function LiveSessionPill() {
   // Above the early return, deliberately — see the wake-lock note above.
   useWakeLock(!!draft)
 
-  /**
-   * Elapsed time, at the resolution it is displayed. A 1 Hz interval to redraw
-   * a figure that changes once a minute is 59 wasted renders of a fixed element
-   * on every screen in the app; 20 s is fine for a minute counter and keeps the
-   * worst-case staleness under a third of a tick.
-   */
-  const [now, setNow] = useState(() => Date.now())
-  useEffect(() => {
-    if (!draft) return
-    const id = setInterval(() => setNow(Date.now()), 20_000)
-    return () => clearInterval(id)
-  }, [draft])
-
   // `/session` is the deck AND `/session/[id]` is the finished-session report.
   // Neither wants a "return to your workout" bar: on the first it is where you
   // already are, and on the second it would sit under the summary of the very
   // session you just finished, in the half-second before the draft clears.
   const open = !!draft && !pathname.startsWith('/session')
+
+  // Records, judged exactly as the deck judges them. `names`/`prKey` are cheap
+  // string walks; the query is keyed identically to the deck's, so this is the
+  // same cache entry rather than a second request.
+  const names = useMemo(
+    () => draft?.exercises.filter((ex) => ex.kind !== 'cardio').map((ex) => ex.name) ?? [],
+    [draft],
+  )
+  const { data: baselines } = useExerciseBaselines(names, draft?.date)
+  const prKey = livePrDigest(draft)
+  // `draft` is deliberately not a dependency — `prKey` already covers every
+  // field the answer can depend on, and including it defeats the memo.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const recordCount = useMemo(() => computeLivePrs(draft, baselines).count, [prKey, baselines])
 
   // Tell the shell to reserve room, the same way `BottomNav` does. Without it
   // the last element on every page hides behind the pill.
@@ -99,11 +115,10 @@ export function LiveSessionPill() {
 
   const accent = draft ? dayColor(draft.dayKey, draft.splitDay) : undefined
   const totals = draft ? draftTotals(draft) : null
-  const elapsed = draft?.startedAt ? elapsedLabel(draft.startedAt, now) : null
 
   return (
     <AnimatePresence>
-      {open && draft && totals && (
+      {open && draft && totals && accent && (
         <m.div
           key="live-session-pill"
           // Enter and exit are the SAME transform, so an interrupted dismissal
@@ -124,22 +139,48 @@ export function LiveSessionPill() {
             whileTap={reduce ? undefined : { scale: 0.97 }}
             transition={SNAPPY}
             aria-label={`Return to your live workout — ${cleanSessionTitle(draft)}`}
-            className="pointer-events-auto w-full min-h-[52px] rounded-2xl overflow-hidden
-                       flex items-center gap-2.5 pl-0 pr-3 py-2 text-left
-                       border border-white/[0.10] shadow-[0_8px_24px_rgba(0,0,0,0.45)]"
+            className="pointer-events-auto relative w-full min-h-[62px] rounded-2xl overflow-hidden
+                       flex items-center gap-2.5 pl-0 pr-2.5 py-2.5 text-left
+                       border border-white/[0.10] shadow-[0_10px_28px_rgba(0,0,0,0.5)]"
             style={{
               // Opaque. See the header — this may never become a second
               // backdrop-filter layer over the tab bar.
-              background: `linear-gradient(100deg, ${accent}26 0%, var(--color-surface, #1A1D23) 62%)`,
               backgroundColor: '#1A1D23',
             }}
           >
+            {/* ── THE WASH ──
+                Three stops, not two. A single diagonal ramp from `accent26` to
+                the surface put all of the colour in one corner and left the
+                right two-thirds flat, which is what read as "a solid bar with a
+                tint bolted on". This lays a broad diagonal that keeps a trace of
+                the hue the whole way across, then a soft radial bloom behind the
+                title where the eye actually lands. Both are painted as an inert
+                layer under the content rather than as the button's own
+                `background`, so `overflow-hidden` clips them to the radius and
+                neither can bleed over the text. */}
+            <span
+              aria-hidden="true"
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background:
+                  `radial-gradient(120% 180% at 4% 50%, ${accent}3d 0%, ${accent}14 38%, transparent 72%),` +
+                  `linear-gradient(100deg, ${accent}1f 0%, ${accent}0f 46%, rgba(255,255,255,0.03) 100%)`,
+              }}
+            />
+            {/* The light catching the top edge of the material — the same
+                hairline the hero and the collapsed bar both wear. */}
+            <span
+              aria-hidden="true"
+              className="absolute inset-x-0 top-0 h-px pointer-events-none"
+              style={{ background: `linear-gradient(90deg, transparent, ${accent}66, transparent)` }}
+            />
+
             {/* The day's own colour as a rule, not a fill. Same 3px hue
                 language the deck and the day cards already speak, so the pill
                 reads as THIS workout rather than as generic chrome. */}
             <span
               aria-hidden="true"
-              className="self-stretch w-[3px] shrink-0 rounded-r"
+              className="relative self-stretch w-[3px] shrink-0 rounded-r"
               style={{ background: accent }}
             />
 
@@ -156,18 +197,27 @@ export function LiveSessionPill() {
               <span className="relative inline-flex w-2 h-2 rounded-full" style={{ background: accent }} />
             </span>
 
-            <span className="min-w-0 flex-1">
-              <span className="block font-heading font-bold text-[13px] leading-tight truncate text-text">
+            <span className="relative min-w-0 flex-1">
+              <span className="block font-heading font-bold text-[15px] leading-tight truncate text-text tracking-[-0.01em]">
                 {cleanSessionTitle(draft)}
               </span>
-              <span className="flex items-center gap-1.5 text-[11px] leading-tight text-muted tabular-nums">
-                {elapsed && <><span className="helix-num">{elapsed}</span><Dot /></>}
-                <span className="helix-num">
-                  {totals.sets} {totals.sets === 1 ? 'set' : 'sets'}
-                </span>
-                {totals.volumeKg > 0 && (
-                  <><Dot /><span className="helix-num">{fmtVolume(totals.volumeKg)} kg</span></>
-                )}
+              {/* ── THREE COLUMNS, NOT AN INLINE RUN ──
+                  Inline with interpuncts, the three figures bunched at the left
+                  and left a ragged gap before the chevron whose width changed
+                  every time the tonnage gained a digit. An equal three-column
+                  grid gives each figure the same third of the line, so the row
+                  is stable as the numbers grow and there is no dead space to
+                  leave. */}
+              <span className="grid grid-cols-3 gap-1.5 mt-1 pr-1">
+                <Stat value={String(totals.sets)} unit={totals.sets === 1 ? 'set' : 'sets'} color={STEEL} />
+                <Stat value={totals.volumeKg > 0 ? fmtVolume(totals.volumeKg) : '—'} unit="kg" color={EMBER} />
+                <Stat
+                  value={recordCount > 0 ? String(recordCount) : '—'}
+                  unit={recordCount === 1 ? 'PR' : 'PRs'}
+                  // Gold, and only when there is something to be gold about. A
+                  // permanent gold zero is how gold stops meaning a record.
+                  color={recordCount > 0 ? GOLD : MUTED}
+                />
               </span>
             </span>
 
@@ -175,7 +225,7 @@ export function LiveSessionPill() {
                 the way out is to finish it or discard it, and both live in the
                 deck. This chevron says "expand", which is the only thing a tap
                 here does. */}
-            <ChevronUp className="w-4 h-4 shrink-0" style={{ color: accent }} aria-hidden="true" />
+            <ChevronUp className="relative w-4 h-4 shrink-0" style={{ color: accent }} aria-hidden="true" />
           </m.button>
         </m.div>
       )}
@@ -183,21 +233,10 @@ export function LiveSessionPill() {
   )
 }
 
-function Dot() {
-  return <span className="opacity-30" aria-hidden="true">·</span>
-}
-
-/**
- * "42 min" / "1:07". Minutes until the hour, then h:mm — the same shape a timer
- * on a watch face uses, and it never needs more than five characters.
- *
- * Clamped at zero: a draft that survived a clock change (or a device whose time
- * moved backwards over a sync) must not render "-3 min".
- */
-function elapsedLabel(startedAt: string, now: number): string | null {
-  const started = Date.parse(startedAt)
-  if (!Number.isFinite(started)) return null
-  const mins = Math.max(0, Math.floor((now - started) / 60_000))
-  if (mins < 60) return `${mins} min`
-  return `${Math.floor(mins / 60)}:${String(mins % 60).padStart(2, '0')}`
+function Stat({ value, unit, color }: { value: string; unit: string; color: string }) {
+  return (
+    <span className="helix-num font-bold tabular-nums text-[12px] leading-tight truncate" style={{ color }}>
+      {value}<span className="font-normal opacity-70 ml-0.5">{unit}</span>
+    </span>
+  )
 }
