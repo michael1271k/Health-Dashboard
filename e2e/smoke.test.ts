@@ -20,6 +20,19 @@ test('root page redirects to auth or renders dashboard', async ({ page }) => {
 })
 
 test('unauthenticated / never renders a blank dashboard — AuthGate redirects to /auth', async ({ page }) => {
+  /**
+   * ── THE BUDGET, NOT THE ASSERTION ──────────────────────────────────────────
+   * This is the only spec that needs TWO routes compiled from cold: `/`, to get
+   * the redirect, and then `/auth` to get its button. Playwright's default 30s
+   * is the whole TEST's budget, and under the full parallel run five workers ask
+   * the dev server for different first-compiles at once — so `page.goto('/')`
+   * alone can eat it before `waitForURL` has anything to wait for. Isolated it
+   * finishes in under three seconds.
+   *
+   * Raising the individual assertion timeouts did not help, because the timeout
+   * being hit is this one. The bet was on compile speed, not on the app.
+   */
+  test.setTimeout(120_000)
   // PWA storage isolation: an isolated storage container (no session) must land on
   // the sign-in screen, not an empty-but-"working" dashboard.
   await page.context().clearCookies()

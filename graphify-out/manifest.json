@@ -770,8 +770,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useSessionDraft.ts": {
-    "mtime": 1787576525.337101,
-    "ast_hash": "6e15ccb4166141336bcaaaeb23239266",
+    "mtime": 1787577192.5965354,
+    "ast_hash": "8ba260ccb22d1c91fa92855f4f358f68",
     "semantic_hash": ""
   },
   "src/lib/hooks/useSessionIntel.ts": {
@@ -930,8 +930,8 @@
     "semantic_hash": ""
   },
   "src/lib/sessions/draft.ts": {
-    "mtime": 1787576525.3372655,
-    "ast_hash": "565fb650a0e3b056e1d4cd6018aa6daf",
+    "mtime": 1787577172.2611423,
+    "ast_hash": "8cece9c9cccbeb9d0acb59e45bff1197",
     "semantic_hash": ""
   },
   "src/lib/sessions/resolveExercises.ts": {
@@ -1975,8 +1975,8 @@
     "semantic_hash": ""
   },
   "src/tests/rpe-ladder.test.ts": {
-    "mtime": 1787576332.5469353,
-    "ast_hash": "546864ae41a10ac89edbe29480d27abf",
+    "mtime": 1787577213.16209,
+    "ast_hash": "3ca675849e81928ff2896ef5e07155d4",
     "semantic_hash": ""
   },
   "src/lib/training/rpeMemory.ts": {
@@ -2515,7 +2515,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/set-rows.html": {
-    "mtime": 1787576927.5947511,
+    "mtime": 1787577227.260478,
     "ast_hash": "86569f2f098580e6a062f0ce9f52fa2b",
     "semantic_hash": ""
   },
@@ -2545,7 +2545,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-ledger.html": {
-    "mtime": 1787576848.8450763,
+    "mtime": 1787577223.6999893,
     "ast_hash": "6f50fa4f2aeaf92cc98b2ce5890d0d48",
     "semantic_hash": ""
   },
@@ -2580,7 +2580,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/live-header.html": {
-    "mtime": 1787576927.777633,
+    "mtime": 1787577224.8160408,
     "ast_hash": "27a12ba43b60a759107973174594ff32",
     "semantic_hash": ""
   },
@@ -2650,7 +2650,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-summary-header.html": {
-    "mtime": 1787576849.7212074,
+    "mtime": 1787577224.2218113,
     "ast_hash": "bdbbab0641faf576b6e46b58cbc1ceaa",
     "semantic_hash": ""
   },
