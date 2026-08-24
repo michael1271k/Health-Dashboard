@@ -9,7 +9,7 @@ import {
   cr10Label,
 } from '@/lib/training/effort'
 import { resolveSeededRpe, deriveSessionRpe } from '@/lib/training/rpeMemory'
-import { cascadeSetEdit, type DraftSet } from '@/lib/sessions/draft'
+import { applySetPatch, cascadeSetEdit, type DraftSet } from '@/lib/sessions/draft'
 import { buildTemplateDraft, type ExerciseHistoryEntry } from '@/lib/sessions/templateDraft'
 import { payloadToTemplate, templateToDraft } from '@/lib/sessions/routineTemplate'
 import { PROGRAMS } from '@/lib/programs'
@@ -507,5 +507,61 @@ describe('RPE memory reaches the deck through every seeding path', () => {
       expect(s.rpe).toBeUndefined()
       expect(s.rpeSeed).toBeUndefined()
     }
+  })
+})
+
+/**
+ * ── THE SPLIT SET IS A SECOND WRITE PATH, AND IT BYPASSES THE CASCADE ────────
+ *
+ * `useSessionDraft.updateSet` deliberately does NOT call `cascadeSetEdit` for a
+ * unilateral set: the other side of a first-set pair always shares its value,
+ * so cascading there would be mirroring under a different name — the exact
+ * behaviour the Linked toggle was deleted for.
+ *
+ * Which means anything that lives inside the cascade is something a split set
+ * silently never gets. When the failure derivation was first moved out of the
+ * component and into `cascadeSetEdit`, that is precisely what happened: the F
+ * tag lit on a bilateral set taken to failure and not on a per-side one, while
+ * `DraftSet` documents failure as tracked PER SIDE and `save.ts` would have
+ * persisted that side as `set_type: 'normal'` — the UI showing 10, the record
+ * losing the tag, and no test looking.
+ *
+ * The per-SET rules therefore live in `applySetPatch`, which BOTH paths call.
+ * These assert it directly, on a set carrying a `pairId`, because that is the
+ * shape the bypass is keyed on.
+ */
+describe('applySetPatch — the rules a split set must get too', () => {
+  const side = (s: 'L' | 'R', over: Partial<DraftSet> = {}): DraftSet =>
+    ({ weightKg: 20, reps: 10, side: s, pairId: 'pair_x', ...over })
+
+  it('derives the failure tag on a per-side set', () => {
+    expect(applySetPatch(side('L'), { rpe: 10 }).setType).toBe('failure')
+  })
+
+  it('clears it when that side steps off 10, and leaves the other side alone', () => {
+    const left = applySetPatch(side('L', { rpe: 10, setType: 'failure' }), { rpe: 9.5 })
+    expect(left.setType).toBeUndefined()
+    // The other side is a separate row and this function never sees it — which
+    // is the whole point of splitting: a genuinely weaker arm gets its own record.
+    const right = side('R', { rpe: 10, setType: 'failure' })
+    expect(right.setType).toBe('failure')
+  })
+
+  it('takes ownership of a seeded rating on a per-side set', () => {
+    const seededSide = side('L', { rpe: 8.5, rpeSeed: 8.5, rpeSeedWeightKg: 20, rpeSeedReps: 10 })
+    const out = applySetPatch(seededSide, { rpe: 10 })
+    expect(out.rpeSeed).toBeUndefined()
+    expect(out.setType).toBe('failure')
+  })
+
+  it('still refuses to overwrite a warm-up', () => {
+    expect(applySetPatch(side('L', { setType: 'warmup' }), { rpe: 10 }).setType).toBe('warmup')
+  })
+
+  it('leaves a patch that does not touch the rating completely alone', () => {
+    const out = applySetPatch(side('L', { rpe: 10, setType: 'failure' }), { reps: 11 })
+    expect(out.reps).toBe(11)
+    expect(out.rpe).toBe(10)
+    expect(out.setType).toBe('failure')
   })
 })

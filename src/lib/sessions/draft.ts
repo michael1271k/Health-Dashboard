@@ -190,17 +190,30 @@ export const FAILURE_RPE = 10
  * guard is unchanged: only a set that still holds the edited set's PREVIOUS
  * value follows, so anything you tuned by hand is left alone.
  */
-export function cascadeSetEdit(sets: DraftSet[], setIdx: number, patch: Partial<DraftSet>): DraftSet[] {
-  const prev = sets[setIdx]
-  if (!prev) return sets
-  const next = sets.map((s, i) => (i === setIdx ? { ...s, ...patch } : s))
+/**
+ * Apply a patch to ONE set, with the two rules that hold whatever else is
+ * happening around it.
+ *
+ * ── WHY THIS IS NOT INLINE IN `cascadeSetEdit` ───────────────────────────────
+ * Because `cascadeSetEdit` is not the only write path. A unilateral (L/R) set
+ * deliberately bypasses the cascade — `useSessionDraft.updateSet` edits one side
+ * alone, since cascading to the other side is mirroring under a different name
+ * — and it does so with a bare spread. Rules that live inside the cascade are
+ * therefore rules a split set never gets, silently: the F tag would light on a
+ * bilateral set taken to failure and not on a per-side one, while `DraftSet`
+ * documents failure as tracked PER SIDE, and `save.ts` would persist that side
+ * as `set_type: 'normal'`. Every path that edits a set calls this.
+ */
+export function applySetPatch(set: DraftSet, patch: Partial<DraftSet>): DraftSet {
+  let next: DraftSet = { ...set, ...patch }
+
   /**
    * ── ANY TOUCH OF THE RATING IS THE USER TAKING IT OVER ─────────────────────
    * This tested `patch.rpe !== undefined`, which made CLEARING a rating — the
    * one gesture that is unambiguously "I am deciding this myself" — the single
-   * case that did not take ownership. The seed stayed, `applyRpeMemory` ran at
-   * the bottom of this function and put the remembered value straight back, so
-   * tapping the lit stop on a seeded set appeared to do nothing at all.
+   * case that did not take ownership. The seed stayed, `applyRpeMemory` ran
+   * afterwards and put the remembered value straight back, so tapping the lit
+   * stop on a seeded set appeared to do nothing at all.
    *
    * That is also the whole of the vanishing-Failure bug. A set seeded from a
    * session you took to failure arrives holding rpe 10 with its seed intact.
@@ -213,31 +226,36 @@ export function cascadeSetEdit(sets: DraftSet[], setIdx: number, patch: Partial<
    * `'rpe' in patch` is the correct test: present-and-undefined is a decision,
    * absent is not.
    */
-  if ('rpe' in patch) next[setIdx] = releaseRpeSeed(next[setIdx])
+  if ('rpe' in patch) next = releaseRpeSeed(next)
 
   /**
    * ── FAILURE IS DERIVED FROM THE RATING, NOT KEPT BESIDE IT ─────────────────
    * The top of the ladder and the `F` tag are one claim. They used to be two
-   * pieces of state kept in step by side effects at two call sites, and the
-   * steppers were not one of those call sites — so nudging 9.5 up to 10 left a
-   * set reading "10 · FAILURE" with no tag, while tapping the same value on the
-   * pip tagged it. Two ways to say the same thing, disagreeing.
+   * pieces of state kept in step by side effects at the component's two call
+   * sites, and the ± steppers were not one of those sites — so nudging 9.5 up
+   * to 10 left a set reading "10 · FAILURE" with no tag, while tapping the same
+   * value on the pip tagged it. Two ways to say the same thing, disagreeing.
    *
-   * Reconciling here means every write path gets it, including ones not written
-   * yet. Narrow on purpose: only a patch that TOUCHES the rating may move the
-   * tag, an explicit `setType` in the same patch wins, and `warmup`/`dropset`
-   * are never overwritten — those are separate declarations about the set, not
+   * Narrow on purpose: only a patch that TOUCHES the rating may move the tag,
+   * an explicit `setType` in the same patch wins, and `warmup`/`dropset` are
+   * never overwritten — those are separate declarations about the set, not
    * statements about effort.
    */
-  if ('rpe' in patch && patch.setType === undefined && !('setType' in patch)) {
-    const row = next[setIdx]
-    if (row.rpe === FAILURE_RPE && row.setType === undefined) next[setIdx] = { ...row, setType: 'failure' }
-    else if (row.rpe !== FAILURE_RPE && row.setType === 'failure') {
-      const cleared: DraftSet = { ...row }
-      delete cleared.setType
-      next[setIdx] = cleared
+  if ('rpe' in patch && !('setType' in patch)) {
+    if (next.rpe === FAILURE_RPE && next.setType === undefined) next = { ...next, setType: 'failure' }
+    else if (next.rpe !== FAILURE_RPE && next.setType === 'failure') {
+      next = { ...next }
+      delete next.setType
     }
   }
+
+  return next
+}
+
+export function cascadeSetEdit(sets: DraftSet[], setIdx: number, patch: Partial<DraftSet>): DraftSet[] {
+  const prev = sets[setIdx]
+  if (!prev) return sets
+  const next = sets.map((s, i) => (i === setIdx ? applySetPatch(s, patch) : s))
   const heir = setIdx + 1
   if (heir < next.length) {
     const upd: Partial<DraftSet> = {}

@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase/client'
 import { invalidateWorkoutData } from '@/lib/query/workoutKeys'
 import { recomputeAndPaint } from '@/lib/scoring/applyComputedScore'
 import { logicalTodayISO, hoursAwakeToday } from '@/lib/utils/day'
-import { DRAFT_STORAGE_KEY, buildCommitPayload, cascadeSetEdit, isSetCommitted, peekSessionDraft, type SessionDraft, type DraftSet, type DraftExercise } from '@/lib/sessions/draft'
+import { DRAFT_STORAGE_KEY, applySetPatch, buildCommitPayload, cascadeSetEdit, isSetCommitted, peekSessionDraft, type SessionDraft, type DraftSet, type DraftExercise } from '@/lib/sessions/draft'
 import { notifyDraftChanged } from '@/lib/sessions/draftStore'
 import type { PrAxis } from '@/lib/sessions/save'
 
@@ -150,7 +150,15 @@ export function useSessionDraft() {
           // that shared its value — and the other side of a first-set pair
           // always shares it, so cascading here would be mirroring under a
           // different name.
-          return { ...ex, sets: ex.sets.map((s, i) => (i === setIdx ? { ...s, ...patch } : s)) }
+          //
+          // But it is `applySetPatch`, not a bare spread. The per-SET rules —
+          // taking ownership of a rating, and deriving the failure tag from it
+          // — are not cascade rules and must not be skipped just because the
+          // cascade is. `DraftSet` documents failure as tracked PER SIDE; a
+          // bare spread here would light the F badge on a bilateral set taken
+          // to failure and not on a per-side one, and `save.ts` would persist
+          // that side as `set_type: 'normal'`.
+          return { ...ex, sets: ex.sets.map((s, i) => (i === setIdx ? applySetPatch(s, patch) : s)) }
         }
         return { ...ex, sets: cascadeSetEdit(ex.sets, setIdx, patch) }
       }),
