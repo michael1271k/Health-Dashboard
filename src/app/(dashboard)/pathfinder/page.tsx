@@ -4,7 +4,7 @@ import { Suspense, useMemo, useState } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { GitBranch, HeartPulse, CalendarDays, ChevronLeft, ChevronRight, FolderOpen, Scale, Radar } from 'lucide-react'
+import { GitBranch, CalendarDays, ChevronLeft, ChevronRight, FolderOpen, Scale, Radar } from 'lucide-react'
 import { useMonthActivity, monthActivitySets, useGymReports } from '@/lib/hooks/useWeekly'
 import { useReports } from '@/lib/hooks/useReports'
 import { useWeightTrend } from '@/lib/hooks/useCharts'
@@ -19,7 +19,6 @@ import { WidgetBoundary } from '@/components/fx/WidgetBoundary'
 // Timeline (the default view) paid for a recharts-backed analytics panel and a
 // 56-day vitals grid it never showed.
 const BodyProgressPanel = dynamic(() => import('@/components/progression/BodyProgressPanel').then((m) => m.BodyProgressPanel), { ssr: false })
-const VitalsGroups = dynamic(() => import('@/components/insights/VitalsGroups').then((m) => m.VitalsGroups), { ssr: false })
 import { ScheduleShortcut } from '@/components/day/ScheduleShortcut'
 import { Sheet } from '@/components/ui/Sheet'
 import { Segmented } from '@/components/ui/Segmented'
@@ -33,7 +32,15 @@ import { displayWeight, weightUnit } from '@/lib/utils/units'
  * `?view=analytics` still resolves, so the old deep links and bookmarks land on
  * the surface that inherited their content rather than falling back to Timeline.
  */
-type View = 'timeline' | 'body' | 'vitals'
+/**
+ * ── VITALS LEFT THIS TAB ─────────────────────────────────────────────────────
+ * It was the third option behind a segmented control, which is where a thing
+ * goes to be forgotten: two taps deep on a screen you open to read the
+ * timeline. It is a dashboard widget now — four readings at a glance, the whole
+ * `VitalsGroups` panel one tap behind it. `?view=vitals` still resolves rather
+ * than 404-ing a bookmark; it lands on the timeline.
+ */
+type View = 'timeline' | 'body'
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 const iso = (d: Date) => d.toISOString().slice(0, 10)
@@ -58,7 +65,7 @@ function PathfinderInner() {
   const params = useSearchParams()
   const initial = params.get('view')
   const [view, setView] = useState<View>(
-    initial === 'body' || initial === 'analytics' ? 'body' : initial === 'vitals' ? 'vitals' : 'timeline',
+    initial === 'body' || initial === 'analytics' ? 'body' : 'timeline',
   )
 
   const router = useRouter()
@@ -119,7 +126,6 @@ function PathfinderInner() {
           options={[
             { value: 'timeline', label: 'Timeline', icon: GitBranch },
             { value: 'body', label: 'Body', icon: Scale },
-            { value: 'vitals', label: 'Vitals', icon: HeartPulse },
           ]}
         />
       </div>
@@ -227,10 +233,8 @@ function PathfinderInner() {
             )}
           </Sheet>
         </>
-      ) : view === 'body' ? (
-        <WidgetBoundary label="Body" minHeight={200}><BodyProgressPanel /></WidgetBoundary>
       ) : (
-        <WidgetBoundary label="Vitals" minHeight={200}><VitalsGroups /></WidgetBoundary>
+        <WidgetBoundary label="Body" minHeight={200}><BodyProgressPanel /></WidgetBoundary>
       )}
     </div>
   )

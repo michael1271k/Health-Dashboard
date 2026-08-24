@@ -3,10 +3,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
-import { Moon, Flame, Dumbbell, Scale, Footprints, Pill } from 'lucide-react'
+import { Moon, Flame, Dumbbell, Scale, Footprints, Pill, Activity, HeartPulse, BatteryMedium } from 'lucide-react'
 import { Sheet } from '@/components/ui/Sheet'
 import { ReadinessOrb } from '@/components/dashboard/ReadinessOrb'
-import { BioStrip, type BioStripProps } from '@/components/dashboard/BioStrip'
+import { WidgetGrid } from '@/components/dashboard/WidgetGrid'
+import { DashboardWidget, type DashboardWidgetProps } from '@/components/dashboard/DashboardWidget'
+import type { WidgetId, WidgetSize } from '@/lib/dashboard/layout'
 import { MacroCards } from '@/components/nutrition/MacroCards'
 import { Surface, Tile } from '@/components/ui/Zone'
 import { InsightCoach } from '@/components/dashboard/InsightCoach'
@@ -74,6 +76,7 @@ function SheetSkeleton() {
 import { StepsJourney } from '@/components/dashboard/StepsJourney'
 import { ProgressionAlerts } from '@/components/command-center/ProgressionAlerts'
 import { useDailyLogs } from '@/lib/hooks/useNutrition'
+import { useCardioLogs, useZone2Week, ZONE2_WEEKLY_TARGET } from '@/lib/hooks/useCardio'
 import {
   useTodayScore,
   useEnsureTodayScore,
@@ -87,6 +90,14 @@ import {
 import { useIsDesktop } from '@/lib/hooks/useBreakpoint'
 import { PPL_SPLITS } from '@/lib/types/workout'
 import type { SplitDay } from '@/lib/types/workout'
+
+// The Vitals sheet body — 56 days of readings and a chart per row. It has no
+// business in the dashboard's first-load bundle: nothing renders it until a
+// widget is tapped.
+const VitalsGroups = dynamic(
+  () => import('@/components/insights/VitalsGroups').then((m) => ({ default: m.VitalsGroups })),
+  { ssr: false, loading: () => <div className="h-40 rounded-2xl border border-white/[0.07] bg-white/[0.03] animate-pulse" /> },
+)
 
 const TrendStrip = dynamic(
   () => import('@/components/dashboard/TrendStrip').then((m) => ({ default: m.TrendStrip })),
@@ -105,12 +116,12 @@ const STEPS_INDIGO = PLATINUM  // Steps
 const n0 = (v: number | null | undefined) => (v == null ? null : Math.round(v))
 const n1 = (v: number | null | undefined) => (v == null ? null : Math.round(v * 10) / 10)
 
-type SheetKey = 'readiness' | 'sleep' | 'fuel' | 'train' | 'body' | 'steps' | 'stack' | null
+type SheetKey = 'readiness' | 'sleep' | 'fuel' | 'train' | 'body' | 'steps' | 'stack' | 'vitals' | null
 
 /** One accent per sheet — the glass picks up its own domain colour. */
 const SHEET_ACCENT: Record<Exclude<SheetKey, null>, string> = {
   readiness: EMBER, sleep: AMETHYST, fuel: MACRO_COLORS.calories, train: EMERALD,
-  body: EMBER, steps: PLATINUM, stack: GOLD,
+  body: EMBER, steps: PLATINUM, stack: GOLD, vitals: SAPPHIRE,
 }
 
 /**
@@ -174,6 +185,11 @@ export default function DashboardPage() {
   const { data: weighIn } = useLastWeighIn()
   const { data: bodyMetrics } = useLatestBodyMetrics()
   const { data: fuelLogs } = useDailyLogs(8)
+  // Cardio: today's logged walks/runs and the week's Zone-2 count. Two small
+  // queries, and the only ones the widget grid added — every other widget is
+  // fed by data this page already had on screen.
+  const { data: cardioToday } = useCardioLogs(logicalTodayISO())
+  const { data: zone2 } = useZone2Week(logicalTodayISO())
 
   const [open, setOpen] = useState<SheetKey>(null)
   // Body strip: single tap → composition popup · double tap → Nexus InBody entry.
@@ -186,6 +202,9 @@ export default function DashboardPage() {
     openers.current.set(key, fn)
     return fn
   }, [])
+
+  /** Cardio is logged on the day it happened, not in a dashboard drawer. */
+  const goToday = useCallback(() => router.push(`/day/${logicalTodayISO()}`), [router])
 
   const onBodyTap = useSingleOrDoubleTap(
     () => setOpen('body'),
@@ -265,30 +284,98 @@ export default function DashboardPage() {
     }
   }, [weighIn])
 
+  /** Today's logged cardio distance, in km, or null when nothing was logged. */
+  const cardioKm = useMemo(() => {
+    const m = (cardioToday ?? []).reduce((sum, c) => sum + (c.distance_m ?? 0), 0)
+    return m > 0 ? Math.round((m / 1000) * 10) / 10 : null
+  }, [cardioToday])
+
   /**
-   * ── THIS ARRAY IS WHY `BioStrip`'s `memo` NEVER HIT ─────────────────────────
-   * Six objects, three `.map()` chains over `bioSeries`, and a JSX node, all
-   * rebuilt on every render of a page that re-renders whenever any of its
-   * sixteen queries settles. `BioStrip` is `memo`-wrapped and was being handed
-   * fresh props each time, so the wrapper cost a comparison and bought nothing.
+   * The drivers BEHIND the recovery number — the extra desktop width beside the
+   * hero shows the "why" instead of dead space, and the Energy widget's large
+   * face shows the same four. Real HealthKit fields only.
+   *
+   * Memoised because the widget map depends on it: a fresh array every render would
+   * rebuild all nine widget objects and defeat their `memo`.
    */
-  const strips: Array<BioStripProps & { key: Exclude<SheetKey, null> }> = useMemo(() => [
-    {
-      key: 'sleep', icon: Moon, label: 'Sleep', accent: VIOLET,
+  const drivers: Array<{ label: string; value: string; color: string }> = useMemo(() => [
+    { label: 'Sleep', value: log?.sleep_minutes != null ? formatSleep(log.sleep_minutes) : '—', color: VIOLET },
+    { label: 'Resting HR', value: log?.avg_rest_heart_rate != null ? `${log.avg_rest_heart_rate} bpm` : '—', color: OXIDE },
+    { label: 'HRV', value: log?.hrv_ms != null ? `${Math.round(log.hrv_ms)} ms` : '—', color: AQUA },
+    { label: 'Energy left', value: score?.battery_pct != null ? `${score.battery_pct}%` : '—', color: CYAN },
+  ], [log, score])
+
+  /**
+   * ── THIS OBJECT IS WHY THE WIDGET `memo` HITS ───────────────────────────────
+   * Nine objects, several `.map()` chains over `bioSeries`, and a handful of JSX
+   * nodes, all rebuilt on every render of a page that re-renders whenever any of
+   * its queries settles. `DashboardWidget` is `memo`-wrapped and would be handed
+   * fresh props each time, so the wrapper would cost a comparison and buy
+   * nothing.
+   *
+   * Keyed by `WidgetId`, not an array: the ORDER lives in the saved layout now,
+   * and a list whose position carries meaning cannot also be user-arrangeable.
+   */
+  const widgets: Record<WidgetId, Omit<DashboardWidgetProps, 'size'>> = useMemo(() => ({
+    battery: {
+      icon: BatteryMedium, label: 'Energy', accent: CYAN,
+      value: score?.battery_pct ?? null, unit: '%',
+      status: score?.score != null ? `recovery ${Math.round(score.score)}` : 'charge left today',
+      detail: (
+        <span className="grid grid-cols-2 gap-1.5">
+          {drivers.map((d) => (
+            <span key={d.label} className="flex items-baseline justify-between gap-1 min-w-0">
+              <span className="text-[9px] uppercase tracking-wide text-muted truncate">{d.label}</span>
+              <span className="helix-num text-[11px] font-bold shrink-0" style={{ color: d.color }}>{d.value}</span>
+            </span>
+          ))}
+        </span>
+      ),
+    },
+    vitals: {
+      icon: HeartPulse, label: 'Vitals', accent: AQUA,
+      value: log?.hrv_ms != null ? Math.round(log.hrv_ms) : null, unit: 'ms HRV',
+      status: log?.avg_rest_heart_rate != null
+        ? `RHR ${log.avg_rest_heart_rate} bpm${log.blood_oxygen != null ? ` · SpO₂ ${Math.round(log.blood_oxygen)}%` : ''}`
+        : 'no reading today',
+      detail: (
+        <span className="grid grid-cols-2 gap-1.5">
+          {[
+            ['Resting HR', log?.avg_rest_heart_rate != null ? `${log.avg_rest_heart_rate}` : '—'],
+            ['SpO₂', log?.blood_oxygen != null ? `${Math.round(log.blood_oxygen)}%` : '—'],
+            ['Respiratory', log?.respiratory_rate != null ? log.respiratory_rate.toFixed(1) : '—'],
+            ['Stand', log?.stand_hours != null ? `${log.stand_hours}h` : '—'],
+          ].map(([k, v]) => (
+            <span key={k} className="flex items-baseline justify-between gap-1 min-w-0">
+              <span className="text-[9px] uppercase tracking-wide text-muted truncate">{k}</span>
+              <span className="helix-num text-[11px] font-bold text-text shrink-0">{v}</span>
+            </span>
+          ))}
+        </span>
+      ),
+    },
+    cardio: {
+      icon: Activity, label: 'Cardio', accent: EMERALD,
+      value: cardioKm, unit: 'km',
+      status: `Zone 2 · ${zone2 ?? 0}/${ZONE2_WEEKLY_TARGET} this week`,
+      decimals: 1,
+    },
+    sleep: {
+      icon: Moon, label: 'Sleep', accent: VIOLET,
       value: log?.sleep_minutes != null ? formatSleep(log.sleep_minutes) : null,
       status: log?.avg_rest_heart_rate != null ? `RHR ${log.avg_rest_heart_rate} bpm` : 'recovery',
       series: (bioSeries ?? []).map((d) => d.sleepMin),
     },
-    {
-      key: 'fuel', icon: Flame, label: 'Fuel', accent: MACRO_COLORS.calories,
+    fuel: {
+      icon: Flame, label: 'Fuel', accent: MACRO_COLORS.calories,
       value: calToday, unit: 'kcal',
       status: phase
         ? <span style={{ color: phaseDisplay(phase, logicalTodayISO()).color }}>{phaseDisplay(phase, logicalTodayISO()).label} day{calGoal ? ` · goal ${calGoal.toLocaleString()}` : ''}</span>
         : calGoal ? `goal ${calGoal.toLocaleString()}` : 'no log yet',
       series: kcalSeries,
     },
-    {
-      key: 'train', icon: Dumbbell, label: 'Train', accent: TRAIN_GREEN,
+    train: {
+      icon: Dumbbell, label: 'Train', accent: TRAIN_GREEN,
       value: todayDay === 'rest' ? 'Zone-2 / Rest' : todayDay.label,
       // Once logged, the strip reflects the completed session rather than still
       // prompting for it (the card behind it shows the full completed hero).
@@ -300,10 +387,10 @@ export default function DashboardPage() {
             ? `last: ${lastSplit?.label ?? ''} · ${fmtVolume(displayWeight(lastSession.total_volume_kg))} ${unit}`
             : todayEra === 'axis' ? 'no HELIX sessions yet — fresh slate' : 'no sessions yet',
     },
-    {
+    body: {
       // Weight carries forward from the last valid reading (never `— — —` at
       // midnight), never integer-rounded (64.9 stays 64.9), tinted by drop/gain.
-      key: 'body', icon: Scale, label: 'Body', accent: lastWeigh?.deltaColor ?? TEAL,
+      icon: Scale, label: 'Body', accent: lastWeigh?.deltaColor ?? TEAL,
       value: displayWeight(lastWeigh?.kg ?? validWeight(log?.weight_kg)), unit, decimals: 1,
       status: lastWeigh
         ? <span style={{ color: lastWeigh.recencyColor }}>
@@ -317,8 +404,8 @@ export default function DashboardPage() {
         : log?.body_fat_pct != null ? `${n1(log.body_fat_pct)}% body fat` : 'composition',
       series: (bioSeries ?? []).map((d) => displayWeight(d.weightKg)),
     },
-    {
-      key: 'steps', icon: Footprints, label: 'Steps', accent: STEPS_INDIGO,
+    steps: {
+      icon: Footprints, label: 'Steps', accent: STEPS_INDIGO,
       value: steps,
       // TDEE, not just the watch's active burn. `active kcal` alone is the half
       // of expenditure the watch happens to measure; the day's real cost is
@@ -330,30 +417,22 @@ export default function DashboardPage() {
         : log?.active_energy != null ? `${n0(log.active_energy)} active kcal` : 'movement',
       series: (bioSeries ?? []).map((d) => d.steps),
     },
-    {
-      key: 'stack', icon: Pill, label: 'Stack', accent: GOLD_ACCENT,
+    stack: {
+      icon: Pill, label: 'Stack', accent: GOLD_ACCENT,
       value: `${suppCount}/${suppTotal}`,
-      status: suppCount >= suppTotal ? 'protocol complete ✓' : 'tap to check off',
+      status: suppCount >= suppTotal ? 'protocol complete' : 'tap to check off',
     },
-  ], [
+  }), [
     log, bioSeries, lastWeigh, suppCount, suppTotal, todayDay, kcalSeries,
     calGoal, calToday, lastSession, lastSplit, loggedToday, phase, steps, tdeeToday,
-    todayEra, todaySession, unit,
+    todayEra, todaySession, unit, score, drivers, cardioKm, zone2,
   ])
 
   const sheetTitle: Record<Exclude<SheetKey, null>, string> = {
     readiness: 'Readiness', sleep: 'Sleep & Recovery', fuel: 'Fuel', train: 'Training',
     body: 'Body Composition', steps: 'Activity', stack: 'Supplement Protocol',
+    vitals: 'Vitals',
   }
-
-  // The drivers BEHIND the recovery number — the extra desktop width (2-col span)
-  // shows the "why" instead of dead space. Real HealthKit fields only.
-  const drivers: Array<{ label: string; value: string; color: string }> = [
-    { label: 'Sleep', value: log?.sleep_minutes != null ? formatSleep(log.sleep_minutes) : '—', color: VIOLET },
-    { label: 'Resting HR', value: log?.avg_rest_heart_rate != null ? `${log.avg_rest_heart_rate} bpm` : '—', color: '#C4514E' },
-    { label: 'HRV', value: log?.hrv_ms != null ? `${Math.round(log.hrv_ms)} ms` : '—', color: AQUA },
-    { label: 'Energy left', value: score?.battery_pct != null ? `${score.battery_pct}%` : '—', color: CYAN },
-  ]
 
   return (
     /* Bands, not a bento of floating cards. The SURFACE reaches both screen
@@ -404,18 +483,33 @@ export default function DashboardPage() {
           reason to be opened. */}
       <WeeklySummaryCard />
 
-      {/* Daily domain strips. The Body strip is dual-action: tap opens the
-          composition popup, double-tap jumps to today's Nexus InBody entry. */}
+      {/* ── THE GRID ──
+          These were six full-width `BioStrip` bands in a fixed order, which
+          meant every domain claimed exactly as much of the screen as every
+          other and none of them could be moved. A dashboard is the one screen
+          whose right arrangement is different for different people on different
+          days, so it is arranged by the person looking at it: long-press to
+          lift, drag to reorder, tap the badge to resize.
+
+          The Body widget stays dual-action: tap opens the composition popup,
+          double-tap jumps to today's Nexus InBody entry. */}
       <Surface measure="grid" pad="snug" variant="band">
-        <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
-          {strips.map((s, i) => (
-            <AnimatedCard key={s.key} index={i + 2}>
-              {/* `onOpen` is stable, so the arrow that used to be created here
-                  per strip per render no longer defeats the memo above. */}
-              <BioStrip {...s} onClick={s.key === 'body' ? onBodyTap : onOpen(s.key)} />
-            </AnimatedCard>
-          ))}
-        </div>
+        <WidgetGrid>
+          {(id: WidgetId, size: WidgetSize) => (
+            <DashboardWidget
+              {...widgets[id]}
+              size={size}
+              onOpen={
+                id === 'body' ? onBodyTap
+                  : id === 'battery' ? onOpen('readiness')
+                    // Cardio has no sheet of its own: logging one belongs on the
+                    // day it happened, beside the walk's own entry form.
+                    : id === 'cardio' ? goToday
+                      : onOpen(id as Exclude<SheetKey, null>)
+              }
+            />
+          )}
+        </WidgetGrid>
       </Surface>
 
       {/* Smart Coach — lifts due a load bump next session (renders nothing when empty).
@@ -546,6 +640,10 @@ export default function DashboardPage() {
           />
         )}
         {open === 'stack' && <SupplementChecklist />}
+        {/* The whole Vitals panel, unchanged, moved off the Progress tab where
+            it was one of three things behind a segmented control and got the
+            attention a third option gets. */}
+        {open === 'vitals' && <VitalsGroups />}
       </Sheet>
     </div>
   )

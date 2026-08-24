@@ -185,13 +185,13 @@
     "semantic_hash": ""
   },
   "src/app/(dashboard)/pathfinder/page.tsx": {
-    "mtime": 1787560161.8337731,
-    "ast_hash": "bddf1cea9359a066f453934ace733b44",
+    "mtime": 1787561336.2379024,
+    "ast_hash": "da9adfcde6f9b353605b99222e456908",
     "semantic_hash": ""
   },
   "src/app/(dashboard)/settings/page.tsx": {
-    "mtime": 1787491255.683231,
-    "ast_hash": "9aab5b7ec6cbfd69c27fa37c5a4838b7",
+    "mtime": 1787561033.5903842,
+    "ast_hash": "24c58813680b3ead844daba75414bb29",
     "semantic_hash": ""
   },
   "src/app/(dashboard)/workout/page.tsx": {
@@ -255,8 +255,8 @@
     "semantic_hash": ""
   },
   "src/app/page.tsx": {
-    "mtime": 1787410251.396252,
-    "ast_hash": "5798afd26e7cde84aea74ee9ff39f7a5",
+    "mtime": 1787561308.4828434,
+    "ast_hash": "d1f3b02ea0a3e16c75bbd1315232f7f5",
     "semantic_hash": ""
   },
   "src/app/session/[id]/page.tsx": {
@@ -369,11 +369,6 @@
     "ast_hash": "59a30c6b540a33f13ba77550a9f3dc60",
     "semantic_hash": ""
   },
-  "src/components/dashboard/BioStrip.tsx": {
-    "mtime": 1786288248.5142007,
-    "ast_hash": "ff5e9cf70b1c8531a9f9341f5587a494",
-    "semantic_hash": ""
-  },
   "src/components/dashboard/BrandHeader.tsx": {
     "mtime": 1787560152.3062842,
     "ast_hash": "7d06d9adfb204ab801c30d4eb1ae084f",
@@ -417,11 +412,6 @@
   "src/components/dashboard/TrendStrip.tsx": {
     "mtime": 1786288262.8525543,
     "ast_hash": "8620987c8516164d507ee0f898a951ce",
-    "semantic_hash": ""
-  },
-  "src/components/day/BodyMap.tsx": {
-    "mtime": 1786310074.0593283,
-    "ast_hash": "111a8e746c2eeb1e1753bc761220f070",
     "semantic_hash": ""
   },
   "src/components/day/CardioLogger.tsx": {
@@ -1490,18 +1480,18 @@
     "semantic_hash": ""
   },
   "src/components/day/BodyPanel.tsx": {
-    "mtime": 1786347091.6681361,
-    "ast_hash": "3666413c5eaf7fcf5d6be7509c9b7cee",
+    "mtime": 1787560607.2771597,
+    "ast_hash": "6d614cdd676d80a50d09b430e6f332f4",
     "semantic_hash": ""
   },
   "src/components/day/InBody.tsx": {
-    "mtime": 1786970928.6089199,
-    "ast_hash": "ddf4d0a8eac43557dbf6fa778f3a70c5",
+    "mtime": 1787560665.567495,
+    "ast_hash": "53a5dccfa9a95ffd23f0b1a1ee4f9a4e",
     "semantic_hash": ""
   },
   "src/tests/body-panel.test.tsx": {
-    "mtime": 1786346961.1869595,
-    "ast_hash": "74ad6526c48cba3437450449485b3eee",
+    "mtime": 1787560665.5805345,
+    "ast_hash": "e97867e5145dafeed7c414e5d2056cac",
     "semantic_hash": ""
   },
   "src/lib/hooks/useLogicalDate.ts": {
@@ -2350,8 +2340,8 @@
     "semantic_hash": ""
   },
   "src/components/settings/EditPlanCard.tsx": {
-    "mtime": 1787505380.8870904,
-    "ast_hash": "b28289e587ac13889a52f9c995d416ed",
+    "mtime": 1787560791.8685086,
+    "ast_hash": "097bab6bf20871a5619fd391aacfa2e8",
     "semantic_hash": ""
   },
   "src/tests/levers.test.ts": {
@@ -2530,7 +2520,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/set-rows.html": {
-    "mtime": 1787560330.5546103,
+    "mtime": 1787561383.8206987,
     "ast_hash": "86569f2f098580e6a062f0ce9f52fa2b",
     "semantic_hash": ""
   },
@@ -2560,7 +2550,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-ledger.html": {
-    "mtime": 1787560329.452477,
+    "mtime": 1787561382.1242633,
     "ast_hash": "6f50fa4f2aeaf92cc98b2ce5890d0d48",
     "semantic_hash": ""
   },
@@ -2595,7 +2585,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/live-header.html": {
-    "mtime": 1787560329.359553,
+    "mtime": 1787561382.1254635,
     "ast_hash": "9a21908c845da7f88c47733ff0a81ed3",
     "semantic_hash": ""
   },
@@ -2665,7 +2655,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-summary-header.html": {
-    "mtime": 1787560329.0469513,
+    "mtime": 1787561382.8167114,
     "ast_hash": "bdbbab0641faf576b6e46b58cbc1ceaa",
     "semantic_hash": ""
   },
@@ -2717,6 +2707,46 @@
   "src/components/PlanPhaseTags.tsx": {
     "mtime": 1787560128.635592,
     "ast_hash": "6f87bf22617394bfb66c755931a742bb",
+    "semantic_hash": ""
+  },
+  "src/components/body/CompositionLedger.tsx": {
+    "mtime": 1787560582.9428158,
+    "ast_hash": "d04ab8f35853ecc0458cc6194bdda9ae",
+    "semantic_hash": ""
+  },
+  "src/components/settings/CrashRecorderRow.tsx": {
+    "mtime": 1787561017.8252883,
+    "ast_hash": "9db8bb7b4ba6c9f14f2bbe0e6429f2b3",
+    "semantic_hash": ""
+  },
+  "src/components/settings/RoutineList.tsx": {
+    "mtime": 1787561017.8251665,
+    "ast_hash": "7888ebfa780c82fd979f1fa1587b43a5",
+    "semantic_hash": ""
+  },
+  "src/components/settings/SettingsRows.tsx": {
+    "mtime": 1787561017.8250337,
+    "ast_hash": "4fe12cb1b3deda064e2a2106cc5b8d6b",
+    "semantic_hash": ""
+  },
+  "src/lib/dashboard/layout.ts": {
+    "mtime": 1787561090.0003536,
+    "ast_hash": "e9926fa01f31f5c43b514eb82ef7897e",
+    "semantic_hash": ""
+  },
+  "src/components/dashboard/DashboardWidget.tsx": {
+    "mtime": 1787561120.583709,
+    "ast_hash": "cae449e57e2b04afd001ac03d5f87132",
+    "semantic_hash": ""
+  },
+  "src/components/dashboard/WidgetGrid.tsx": {
+    "mtime": 1787561162.4747128,
+    "ast_hash": "31746a265ee5c315463b71766e3a498e",
+    "semantic_hash": ""
+  },
+  "src/tests/dashboard-layout.test.ts": {
+    "mtime": 1787561371.6629846,
+    "ast_hash": "c55d1da32238ed12c0e577fea5114e42",
     "semantic_hash": ""
   }
 }

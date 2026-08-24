@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import { Scale, Plus, Pencil, Check } from 'lucide-react'
-import { BodyMap } from '@/components/day/BodyMap'
-import { InBodyHeadline, hasScaleMetrics } from '@/components/day/InBody'
+import { CompositionLedger } from '@/components/body/CompositionLedger'
+import { hasScaleMetrics } from '@/components/day/InBody'
 import { useSaveBodyMetrics, type DayVaultData } from '@/lib/hooks/useDayVault'
 import { WEIGH_IN_SKIP_REASONS, DEFAULT_WEIGH_IN_SKIP_REASON, weighInSkipReason } from '@/lib/body/weighIn'
 import { EMBER } from '@/lib/theme/palette'
@@ -123,9 +123,9 @@ function WeighInSkip({ date, current }: { date: string; current: string | null }
  * somewhere you had to scroll past the empty page to find.
  *
  * Now the page is self-sufficient: no reading → it IS the entry prompt; a
- * reading → the silhouette, the four headline numbers, and an Edit row. Either
- * way the form opens in its own drawer rather than inline: nine inputs inside a
- * summary would make the band as tall as the thing it summarises.
+ * reading → the composition ledger and an Edit row. Either way the form opens in
+ * its own drawer rather than inline: nine inputs inside a summary would make the
+ * band as tall as the thing it summarises.
  */
 export function BodyPanel({ date, log, onEdit }: {
   date: string
@@ -152,8 +152,7 @@ export function BodyPanel({ date, log, onEdit }: {
       <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-3" style={{ borderColor: `${ACCENT}26` }}>
         {has ? (
           <>
-            <BodyMap log={log} />
-            <InBodyHeadline log={log} date={date} />
+            <CompositionLedger log={log} date={date} />
             <button
               type="button"
               onClick={onEdit}

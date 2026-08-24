@@ -5,10 +5,7 @@ import { Check, History, Loader2 } from 'lucide-react'
 import { useSaveBodyMetrics, type BodyMetricsPatch, type DayVaultData } from '@/lib/hooks/useDayVault'
 import { useLatestBodyReading, type CarryField } from '@/lib/hooks/useLatestBodyReading'
 import { deriveBodyComp, whrBand, visceralBand, type BodyCompInput, type BodyCompDerived, type WhrBand, type VisceralBand } from '@/lib/body/composition'
-import { deltaVerdict, type Metric, type Verdict } from '@/lib/body/deltaVerdict'
-import { activePhase } from '@/lib/programs'
-import { EMBER, EMERALD, GOLD, OXIDE, MUTED } from '@/lib/theme/palette'
-import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
+import { EMBER, EMERALD, GOLD, OXIDE } from '@/lib/theme/palette'
 
 // Was `const ACCENT = '#E0703C'` — a name that lied about its value in two
 // separate files. The Body domain's accent is the signature ember.
@@ -18,8 +15,6 @@ const ACCENT = EMBER
 const WHR_COLOR: Record<WhrBand, string> = { low: EMERALD, moderate: GOLD, high: OXIDE }
 const VISCERAL_COLOR: Record<VisceralBand, string> = { optimal: EMERALD, elevated: GOLD, high: OXIDE }
 
-/** A change is green, red, or grey — the phase decides which. See deltaVerdict. */
-const VERDICT_COLOR: Record<Verdict, string> = { good: EMERALD, bad: OXIDE, neutral: MUTED }
 
 /**
  * Editable inputs — every one of them a number the SCALE reports.
@@ -72,72 +67,6 @@ export function hasScaleMetrics(log: DayVaultData['log']): boolean {
   return ['weight_kg', 'body_fat_pct', 'muscle_percent', 'water_percent', 'muscle_mass_kg',
     'fat_free_mass_kg', 'bone_mineral', 'visceral_fat', 'bmr', 'bmi',
     'skeletal_muscle_mass_kg', 'estimated_waist_to_hip_ratio'].some((k) => r[k] != null)
-}
-
-/**
- * The four headline readings for a day that has been weighed.
- *
- * "Lean" used to sit here reading `lean_mass_kg` — a column this very form
- * fills with weight × muscle% while HealthKit fills it with weight − fat. It
- * names the two masses separately now.
- *
- * The muscle tile prefers SKELETAL muscle mass, the number the scale reports and
- * the one that means "the tissue I train". Lean mass (weight × muscle%, ~23 kg
- * higher) stands in only when the skeletal reading wasn't taken — with its own
- * label, so the tile never shows two different quantities under one name.
- * Nothing is estimated: a day without either holds a dash.
- */
-export function InBodyHeadline({ log, date }: { log: DayVaultData['log']; date: string }) {
-  const r = log as Record<string, number | null> | null
-  const { data: last } = useLatestBodyReading(date)
-  // Subscribed: `activePhase()` decides whether a weight change grades green
-  // or red, and it arrives from the DB after mount.
-  void useScheduleVersion()
-  const phase = activePhase()
-
-  const d = deriveBodyComp({
-    weight_kg: r?.weight_kg ?? undefined, body_fat_pct: r?.body_fat_pct ?? undefined,
-    muscle_percent: r?.muscle_percent ?? undefined, water_percent: r?.water_percent ?? undefined,
-    bone_mineral: r?.bone_mineral ?? undefined, protein_percent: r?.protein_percent ?? undefined,
-  })
-  // The previous reading run through the SAME derivation, so a delta compares
-  // like with like rather than a stored mass against a freshly computed one.
-  const p = deriveBodyComp(last?.values ?? {})
-
-  const smm = r?.skeletal_muscle_mass_kg
-  const tiles: Array<{ label: string; v: number | null | undefined; u: string; prev?: number; metric: Metric }> = [
-    { label: 'Weight', v: r?.weight_kg, u: 'kg', prev: last?.values.weight_kg, metric: 'weight' },
-    { label: 'Body Fat', v: r?.body_fat_pct, u: '%', prev: last?.values.body_fat_pct, metric: 'fat' },
-    smm != null
-      // Compared against the last SKELETAL reading only — never against lean
-      // mass, which is a different quantity ~23 kg away.
-      ? { label: 'Skeletal', v: smm, u: 'kg', prev: last?.values.skeletal_muscle_mass_kg, metric: 'muscle' }
-      : { label: 'Lean Mass', v: r?.muscle_mass_kg ?? d.muscle_mass_kg, u: 'kg', prev: p.muscle_mass_kg, metric: 'muscle' },
-    { label: 'Fat-Free', v: r?.fat_free_mass_kg ?? d.fat_free_mass_kg, u: 'kg', prev: p.fat_free_mass_kg, metric: 'muscle' },
-  ]
-
-  return (
-    <div className="grid grid-cols-4 gap-2">
-      {tiles.map((s) => {
-        // Only a real before AND after is a delta. One reading is a reading.
-        const delta = s.v != null && s.prev != null ? Math.round((s.v - s.prev) * 100) / 100 : null
-        const verdict = delta != null ? deltaVerdict(s.metric, delta, phase) : null
-        return (
-          <div key={s.label} className="rounded-lg bg-white/[0.02] border border-white/[0.05] px-1 py-1.5 text-center">
-            <span className="helix-num block text-fluid-sm font-bold text-text leading-tight">
-              {s.v != null ? s.v : '—'}{s.v != null && s.u ? <span className="text-[9px] text-muted font-normal ml-0.5">{s.u}</span> : null}
-            </span>
-            <span className="text-[8px] uppercase tracking-wide" style={{ color: ACCENT }}>{s.label}</span>
-            {delta != null && verdict != null && (
-              <span className="helix-num block text-[9px] font-semibold leading-tight" style={{ color: VERDICT_COLOR[verdict] }}>
-                {delta > 0 ? '+' : ''}{delta}
-              </span>
-            )}
-          </div>
-        )
-      })}
-    </div>
-  )
 }
 
 /**

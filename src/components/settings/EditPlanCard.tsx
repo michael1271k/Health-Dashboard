@@ -74,11 +74,33 @@ export interface RecoveryNumbers {
   water_goal_ml: number
 }
 
+/**
+ * Where the phase is steering — the destination, not the daily dose.
+ *
+ * ── THESE HAD A SECOND EDITOR, AND IT WROTE DIFFERENTLY ──────────────────────
+ * They lived in the plan-preview drawer as three of eight text inputs that
+ * committed on blur into `plan_phase_goals`, ~90 lines above a read-only grid
+ * restating the same numbers. Meanwhile the five macros beside them existed
+ * HERE as well, staged behind a Save. One number, two editors, two write
+ * semantics — which is the actual defect the Settings rebuild is fixing, not
+ * the untidiness.
+ *
+ * Nullable throughout: a plan may legitimately have no body-fat or muscle-mass
+ * target, and clearing a field must mean "no target", not zero.
+ */
+export interface BodyTargets {
+  target_weight_kg: number | null
+  target_body_fat_pct: number | null
+  target_muscle_mass_kg: number | null
+}
+
 export function EditPlanCard({
-  current, recovery, activeLever, planLabel, phaseLabel, phaseBadge, saving, onSave,
+  current, recovery, body, activeLever, planLabel, phaseLabel, phaseBadge, saving, onSave,
 }: {
   current: PlanNumbers
   recovery: RecoveryNumbers
+  /** The plan+phase's destination targets. See `BodyTargets`. */
+  body: BodyTargets
   /** The derived-phase chip, rendered by the page that knows the phase rules. */
   phaseBadge?: React.ReactNode
   /**
@@ -92,7 +114,7 @@ export function EditPlanCard({
   planLabel?: string
   phaseLabel?: string
   saving: boolean
-  onSave: (next: PlanNumbers, rec: RecoveryNumbers, lever: LeverId) => void | Promise<void>
+  onSave: (next: PlanNumbers, rec: RecoveryNumbers, lever: LeverId, body: BodyTargets) => void | Promise<void>
 }) {
   // The fields SHOW the rung in force, not whatever `user_goals` happens to
   // hold. A rung that arrived from the schedule has never been written to that
@@ -109,28 +131,32 @@ export function EditPlanCard({
     : current
   const [draft, setDraft] = useState<PlanNumbers>(seedNumbers)
   const [rec, setRec] = useState<RecoveryNumbers>(recovery)
+  const [bodyDraft, setBodyDraft] = useState<BodyTargets>(body)
   const [lever, setLever] = useState<LeverId>(activeLever ?? 'custom')
 
   // Re-seed when the row finally lands (or another device changes it) — but only
   // while the form is CLEAN, or a slow query would wipe an edit in progress.
   const currentKey = JSON.stringify(seedNumbers)
   const recKey = JSON.stringify(recovery)
+  const bodyKey = JSON.stringify(body)
   const dirty = useMemo(
     () => JSON.stringify(draft) !== currentKey
       || JSON.stringify(rec) !== recKey
+      || JSON.stringify(bodyDraft) !== bodyKey
       || lever !== (activeLever ?? 'custom'),
-    [draft, currentKey, rec, recKey, lever, activeLever],
+    [draft, currentKey, rec, recKey, bodyDraft, bodyKey, lever, activeLever],
   )
   const dirtyRef = dirty
   useEffect(() => {
     if (dirtyRef) return
     setDraft(JSON.parse(currentKey) as PlanNumbers)
     setRec(JSON.parse(recKey) as RecoveryNumbers)
+    setBodyDraft(JSON.parse(bodyKey) as BodyTargets)
     setLever(activeLever ?? 'custom')
     // `dirtyRef` deliberately excluded: this must react to the ROW changing, not
     // to the form becoming dirty (which would re-seed away the user's typing).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentKey, recKey, activeLever])
+  }, [currentKey, recKey, bodyKey, activeLever])
 
   const pick = (id: LeverId) => {
     const rung = LEVERS.find((l) => l.id === id)
@@ -304,11 +330,39 @@ export function EditPlanCard({
         </p>
       </div>
 
+      {/* ── Where the phase is going ──
+          The daily dose is above; this is the destination. Same Save button for
+          the same reason as everything else here — they are one decision about
+          one plan's phase — but visibly its own group, because no rung moves
+          them either and an empty field here means "no target", not zero. */}
+      <div className="pt-3 border-t border-white/[0.06]">
+        <span className="block text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: MUTED }}>
+          Body targets
+        </span>
+        <div className="grid grid-cols-3 gap-2">
+          <OptField
+            label="Weight" unit="kg" value={bodyDraft.target_weight_kg} step={0.1}
+            onChange={(v) => setBodyDraft((b) => ({ ...b, target_weight_kg: v }))}
+          />
+          <OptField
+            label="Body fat" unit="%" value={bodyDraft.target_body_fat_pct} step={0.1}
+            onChange={(v) => setBodyDraft((b) => ({ ...b, target_body_fat_pct: v }))}
+          />
+          <OptField
+            label="Muscle" unit="kg" value={bodyDraft.target_muscle_mass_kg} step={0.1}
+            onChange={(v) => setBodyDraft((b) => ({ ...b, target_muscle_mass_kg: v }))}
+          />
+        </div>
+        <p className="text-[11px] text-muted mt-2 leading-snug">
+          Clear a field to remove the target — the plan&apos;s own default returns.
+        </p>
+      </div>
+
       <div className="flex items-center gap-2">
         <button
           type="button"
           disabled={!dirty || saving}
-          onClick={() => void onSave(draft, rec, lever)}
+          onClick={() => void onSave(draft, rec, lever, bodyDraft)}
           className="btn-primary min-h-[44px] px-4 justify-center disabled:opacity-40"
         >
           <Check className="w-4 h-4" aria-hidden="true" />
@@ -328,6 +382,7 @@ export function EditPlanCard({
             onClick={() => {
               setDraft(JSON.parse(currentKey) as PlanNumbers)
               setRec(JSON.parse(recKey) as RecoveryNumbers)
+              setBodyDraft(JSON.parse(bodyKey) as BodyTargets)
               setLever(activeLever ?? 'custom')
             }}
             className="min-h-[44px] px-3 rounded-xl text-xs text-muted hover:text-text flex items-center gap-1.5"
@@ -377,6 +432,50 @@ function Field({ label, unit, value, step = 1, onChange }: {
           }}
           onBlur={() => setText(null)}
           className="helix-num w-full bg-transparent field-compact font-bold text-text tabular-nums outline-none min-w-0"
+          aria-label={`${label} target in ${unit}`}
+        />
+        <span className="text-[10px] text-muted shrink-0">{unit}</span>
+      </span>
+    </label>
+  )
+}
+
+/**
+ * One staged number that is allowed to be absent.
+ *
+ * `Field` coerces everything to a number, which is right for a calorie target
+ * and wrong for a body-fat goal: emptying it has to mean "I am not steering by
+ * this", and a `Field` would read that as 0 and print a target of zero percent.
+ * Same chrome, same `field-compact` 16px rule that stops iOS zooming on focus.
+ */
+function OptField({ label, unit, value, step = 1, onChange }: {
+  label: string
+  unit: string
+  value: number | null
+  step?: number
+  onChange: (v: number | null) => void
+}) {
+  const [text, setText] = useState<string | null>(null)
+  return (
+    <label className="min-w-0">
+      <span className="block text-[9px] font-bold uppercase tracking-widest text-muted mb-1">{label}</span>
+      <span className="flex items-center gap-1 rounded-xl border border-white/[0.08] bg-white/[0.04] px-2 min-h-[40px]">
+        <input
+          type="number"
+          inputMode="decimal"
+          step={step}
+          min={0}
+          placeholder="—"
+          value={text ?? (value == null ? '' : String(value))}
+          onChange={(e) => {
+            setText(e.target.value)
+            const raw = e.target.value.trim()
+            if (raw === '') { onChange(null); return }
+            const n = Number(raw)
+            if (Number.isFinite(n) && n >= 0) onChange(step < 1 ? n : Math.round(n))
+          }}
+          onBlur={() => setText(null)}
+          className="helix-num w-full bg-transparent field-compact font-bold text-text tabular-nums outline-none min-w-0 placeholder:text-muted/40"
           aria-label={`${label} target in ${unit}`}
         />
         <span className="text-[10px] text-muted shrink-0">{unit}</span>

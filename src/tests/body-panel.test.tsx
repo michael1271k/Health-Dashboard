@@ -33,10 +33,10 @@ describe('BodyPanel — a self-sufficient Body page', () => {
     renderPanel({ weight_kg: 64.2, body_fat_pct: 17.3, muscle_percent: 78.3 })
     expect(screen.queryByText('No weigh-in today')).toBeNull()
     expect(screen.getByRole('button', { name: /edit measurements/i })).toBeInTheDocument()
-    // The four headline readings, with the two masses named separately — `lean`
-    // used to be one ambiguous tile here. Weight × muscle% is LEAN SOFT tissue,
-    // and says so: calling it "Muscle" put ~50 kg beside a scale reporting ~27.
-    for (const label of ['Weight', 'Body Fat', 'Lean Mass', 'Fat-Free']) {
+    // The headline readings, with the two masses named separately — `lean` used
+    // to be one ambiguous tile here. Weight × muscle% is LEAN SOFT TISSUE, and
+    // says so: calling it "Muscle" put ~50 kg beside a scale reporting ~27.
+    for (const label of ['Weight', 'Body Fat', 'Lean Soft Tissue', 'Fat-Free']) {
       expect(screen.getAllByText(label).length).toBeGreaterThan(0)
     }
     expect(screen.getByText('64.2')).toBeInTheDocument()
