@@ -76,7 +76,14 @@ describe('the live session hero', () => {
     // `text-fluid-sm` is what it was — roughly 13–15px, and smaller than the
     // numbers underneath it. The scale's companion tokens carry the tracking
     // and leading for the larger size, so this is not just a font-size.
-    expect(h1?.className, 'the title is back at bar size').toContain('text-fluid-2xl')
+    //
+    // It stepped 2xl → xl when the muscle figure left this row: at 390px a real
+    // workout name ("Legs & Core A") ellipsized against three controls, and the
+    // name is the one thing on this screen that is nowhere else on it. The
+    // assertion is on the FLOOR, not on one token — the failure this guards
+    // against is the title falling back to bar size, and xl is still the
+    // largest type on the screen by a clear margin.
+    expect(h1?.className, 'the title is back at bar size').toMatch(/text-fluid-(xl|2xl|3xl)\b/)
     // jsdom normalises an inline hex to `rgb()`, so the comparison converts
     // rather than hardcoding a second spelling of the same colour.
     expect(getComputedStyle(h1!).color).toBe(rgb(GOLD))

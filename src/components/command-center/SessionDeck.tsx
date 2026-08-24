@@ -7,7 +7,6 @@ import { LiveSessionBar } from './LiveSessionBar'
 import { LiveSessionHero } from './LiveSessionHero'
 import { ExerciseDeckList } from './ExerciseDeckList'
 import type { ReadyCue } from './ExerciseCard'
-import { SessionNotesCard } from './SessionNotesCard'
 import { CommitBar } from './CommitBar'
 import { FinishSheet } from './FinishSheet'
 import { useExerciseSetHistory, useGlobalSetHistory } from '@/lib/hooks/useExerciseSetHistory'
@@ -39,7 +38,7 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
   /** Post-finish destination: the just-committed session's analysis page. */
   onViewSession?: (sessionId: string) => void
 }) {
-  const { draft, updateSet, splitSet, mergeSet, updateCardio, addSet, removeSet, toggleSetDone, removeExercise, reorder, setNotes, setExerciseNote, setStats, setSessionRpe, setDate, discard, commit } = store
+  const { draft, updateSet, splitSet, mergeSet, updateCardio, addSet, removeSet, toggleSetDone, removeExercise, reorder, setExerciseNote, setStats, setSessionRpe, setDate, discard, commit } = store
   const [result, setResult] = useState<CommitResult | null>(null)
   const [finishOpen, setFinishOpen] = useState(false)
   const [committedDate, setCommittedDate] = useState<string | null>(null)
@@ -293,13 +292,19 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
         onSessionRpe={setSessionRpe}
         onCommit={doCommit}
       />
-      {/* ── Left rail (sticky on desktop): insight, notes, commit ──
+      {/* ── Left rail (sticky on desktop): insight, commit ──
           Identity and the live rail left for `LiveSessionBar`: they were the
           two things that had to stay on screen and this rail scrolls away on a
-          phone with the first swipe. */}
+          phone with the first swipe.
+
+          SESSION NOTES USED TO SIT HERE and does not any more. A free-text box
+          asked for prose during a workout, which is the one moment there is no
+          prose to give — nothing was ever typed into it. Everything it could
+          have carried already has a structured home: effort is the per-set
+          ladder, a technique reminder is the per-exercise note, and how the
+          session went is the report. */}
       <div className="space-y-3 lg:sticky lg:top-4">
         <CoachNotes draft={draft} />
-        <SessionNotesCard notes={draft.notes} onChange={setNotes} />
         <div className="hidden lg:block">{commitBar}</div>
       </div>
 

@@ -3,7 +3,7 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { Check, Medal } from 'lucide-react'
 import { tapLight, tapSuccess } from '@/lib/native/haptics'
-import { isSetCommitted, type DraftSet } from '@/lib/sessions/draft'
+import { isSetCommitted, FAILURE_RPE, type DraftSet } from '@/lib/sessions/draft'
 import { type PrAxis } from '@/lib/training/prEngine'
 import { rpeColor, rpeLabel } from '@/lib/training/effort'
 import { useHoldRepeat } from '@/lib/hooks/useHoldRepeat'
@@ -41,8 +41,6 @@ const DONE_ROW_BG =
   `linear-gradient(100deg, ${GREEN}2b 0%, ${GREEN}17 42%, ${GREEN}09 100%)`
 const DONE_TICK_BG =
   `linear-gradient(150deg, ${GREEN_LIGHT} 0%, ${GREEN} 55%, ${EMERALD_DEEP} 100%)`
-/** The ladder stop that MEANS failure — the one rating the `F` tag mirrors. */
-const FAILURE_RPE = 10
 /** How long the badge is held before it opens set options instead of records. */
 const LONG_PRESS_MS = 500
 
@@ -75,7 +73,7 @@ const LONG_PRESS_MS = 500
  * consumer no matter how stable its props are. The rows subscribe to nothing,
  * so this boundary is where the work stops.
  */
-export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subRow = false, set, prev, active, timed = false, bodyweight = false, gridMode = 'loaded', trackRpe = false, prAxes = [], onActivate, onChange, onRemove, onToggleDone, onSplit, onPrTap }: {
+export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subRow = false, set, prev, active, timed = false, loadable = false, gridMode = 'loaded', trackRpe = false, prAxes = [], onActivate, onChange, onRemove, onToggleDone, onSplit, onPrTap }: {
   index: number
   /**
    * What you did on THIS set number the last time you trained this movement,
@@ -92,11 +90,17 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
   /** Records this set just set, computed live by the parent from `prEngine`. */
   prAxes?: PrAxis[]
   /**
-   * Movement with no load to progress (Hanging Knee Raise, Reverse Crunch, a
-   * hold). Decides whether the tuner offers an "Add load" escape hatch — the
-   * COLUMN question is `gridMode`'s, and the card answers it once.
+   * Bodyweight movement that has a genuine WEIGHTED variant — a dip belt, a
+   * plate on the back. Decides whether the tuner offers the "Add load" escape
+   * hatch, and nothing else; the COLUMN question is `gridMode`'s and the card
+   * answers it once.
+   *
+   * It used to be a bare `bodyweight` flag, which put a full-width Add load
+   * button on Reverse Crunch and Hanging Knee Raise — the largest control in
+   * the tuner, on the movements with the least to configure, leading to a
+   * weight field with nothing to put in it. See `isLoadableBodyweightExercise`.
    */
-  bodyweight?: boolean
+  loadable?: boolean
   /** Which columns this card's rows carry. Resolved once per exercise. */
   gridMode?: SetGridMode
   /** Human set number (groups a unilateral pair as ONE set); falls back to index+1. */
@@ -161,7 +165,7 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
    * multiplies weight by `reps` — i.e. by SECONDS. One tap plus a 60 s plank
    * would inject 150 kg of phantom tonnage into the week.
    */
-  const canAddLoad = bodyweight && !timed
+  const canAddLoad = loadable && !timed
 
   const isWarm = set.setType === 'warmup'
   const isFail = set.setType === 'failure'
@@ -199,6 +203,7 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
     }
     onChange(index, patch)
   }
+
 
   const sideColor = set.side === 'L' ? '#8E9AAC' : set.side === 'R' ? '#E0703C' : null
   // The badge box is 28px. "Warmup" and "Dropset" were never going to fit, so
@@ -510,15 +515,12 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
               stale={set.rpeStale}
               seeded={set.rpeSeed != null}
               setLabel={`set ${ordinal}`}
-              onPick={(choice) => onChange(index, {
-                rpe: choice?.rpe,
-                // The other direction of the same sync as `pickType`: the top
-                // stop lights the failure type, and stepping off it puts it out.
-                // Only a type this control set is withdrawn — a warm-up or drop
-                // set is left alone.
-                ...(choice?.failure ? { setType: 'failure' as const }
-                  : isFail ? { setType: undefined } : {}),
-              })}
+              // The rating, and only the rating. The `F` tag used to be mirrored
+              // here by hand — which is why the ± steppers, who call the same
+              // `onPick`, never set it: nudging 9.5 up to 10 left a set reading
+              // "10 · FAILURE" with no tag. `cascadeSetEdit` derives the tag
+              // from the rating now, so every path agrees by construction.
+              onPick={(choice) => onChange(index, { rpe: choice?.rpe })}
             />
           )}
         </div>

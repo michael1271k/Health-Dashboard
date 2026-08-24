@@ -118,6 +118,22 @@ export interface SessionDraft {
     avg_hr_bpm: number | null
     calories_kcal: number | null
   }
+  /**
+   * ── CARRIED, NEVER AUTHORED ────────────────────────────────────────────────
+   * The Session Notes box was deleted: a free-text field asked for prose during
+   * a workout, which is the one moment there is none to give, and nothing was
+   * ever typed into it. Everything it might have carried has a structured home
+   * — the per-set effort ladder, the per-exercise note, the report.
+   *
+   * The FIELD stays, and so does `workout_sessions.notes`, because 45 sessions
+   * between 2026-04-21 and 2026-06-26 hold Notion-era prose that exists nowhere
+   * else — the same corpus the 1,586 rebuilt sets were mined from. Editing a
+   * session is a delete-and-re-insert (`replaceSessionId`), so a draft that
+   * stopped carrying this would erase that history the first time one of those
+   * days was opened and saved. It is loaded, held, and written straight back.
+   *
+   * New sessions write `''`, which `save.ts` stores as NULL.
+   */
   notes: string
   startedAt: string             // ISO
   exercises: DraftExercise[]
@@ -147,6 +163,15 @@ export function draftTotals(draft: SessionDraft): { volumeKg: number; sets: numb
 }
 
 /**
+ * The rating that MEANS failure, and the single definition of it.
+ *
+ * It lived as a private const in `SetEditorRow` while the write path in this
+ * file also needed it — which is how the tag and the rating came to be synced
+ * by hand at each call site. One number, one home.
+ */
+export const FAILURE_RPE = 10
+
+/**
  * Cascade for a set edit: apply `patch` to `setIdx`, then carry the new
  * weight/reps to the NEXT set — and only the next one. setType (W/F) is never
  * cascaded.
@@ -169,9 +194,50 @@ export function cascadeSetEdit(sets: DraftSet[], setIdx: number, patch: Partial<
   const prev = sets[setIdx]
   if (!prev) return sets
   const next = sets.map((s, i) => (i === setIdx ? { ...s, ...patch } : s))
-  // A rating you tapped yourself is yours. Releasing the seed here is what stops
-  // a later weight edit from wiping a value you deliberately entered.
-  if (patch.rpe !== undefined) next[setIdx] = releaseRpeSeed(next[setIdx])
+  /**
+   * ── ANY TOUCH OF THE RATING IS THE USER TAKING IT OVER ─────────────────────
+   * This tested `patch.rpe !== undefined`, which made CLEARING a rating — the
+   * one gesture that is unambiguously "I am deciding this myself" — the single
+   * case that did not take ownership. The seed stayed, `applyRpeMemory` ran at
+   * the bottom of this function and put the remembered value straight back, so
+   * tapping the lit stop on a seeded set appeared to do nothing at all.
+   *
+   * That is also the whole of the vanishing-Failure bug. A set seeded from a
+   * session you took to failure arrives holding rpe 10 with its seed intact.
+   * Tapping the lit stop looked like "rate this Failure" and was a no-op, so
+   * memory stayed in charge — and the next rep you added made the work harder
+   * than the seed was earned against, which cleared the rating. The readout
+   * lost "10 · FAILURE" and the ± steppers went with it, because they render
+   * only over a rating that exists.
+   *
+   * `'rpe' in patch` is the correct test: present-and-undefined is a decision,
+   * absent is not.
+   */
+  if ('rpe' in patch) next[setIdx] = releaseRpeSeed(next[setIdx])
+
+  /**
+   * ── FAILURE IS DERIVED FROM THE RATING, NOT KEPT BESIDE IT ─────────────────
+   * The top of the ladder and the `F` tag are one claim. They used to be two
+   * pieces of state kept in step by side effects at two call sites, and the
+   * steppers were not one of those call sites — so nudging 9.5 up to 10 left a
+   * set reading "10 · FAILURE" with no tag, while tapping the same value on the
+   * pip tagged it. Two ways to say the same thing, disagreeing.
+   *
+   * Reconciling here means every write path gets it, including ones not written
+   * yet. Narrow on purpose: only a patch that TOUCHES the rating may move the
+   * tag, an explicit `setType` in the same patch wins, and `warmup`/`dropset`
+   * are never overwritten — those are separate declarations about the set, not
+   * statements about effort.
+   */
+  if ('rpe' in patch && patch.setType === undefined && !('setType' in patch)) {
+    const row = next[setIdx]
+    if (row.rpe === FAILURE_RPE && row.setType === undefined) next[setIdx] = { ...row, setType: 'failure' }
+    else if (row.rpe !== FAILURE_RPE && row.setType === 'failure') {
+      const cleared: DraftSet = { ...row }
+      delete cleared.setType
+      next[setIdx] = cleared
+    }
+  }
   const heir = setIdx + 1
   if (heir < next.length) {
     const upd: Partial<DraftSet> = {}

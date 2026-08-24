@@ -55,8 +55,12 @@ export function RpeLadder({ value, stale, seeded, onPick, setLabel }: {
   stale?: boolean
   /** The value came from memory and has not been confirmed. Rendered dimmer. */
   seeded?: boolean
-  /** `null` clears the rating. `failure` mirrors the old chip's side effect. */
-  onPick: (choice: { rpe: number; failure?: boolean } | null) => void
+  /**
+   * `null` clears the rating. The FAILURE TAG IS NOT PASSED: it is derived from
+   * the rating in `cascadeSetEdit`, so this control and the ± steppers below —
+   * which call the same handler — can never disagree about it.
+   */
+  onPick: (choice: { rpe: number } | null) => void
   setLabel: string
 }) {
   const reduce = useHelixReducedMotion()
@@ -109,10 +113,25 @@ export function RpeLadder({ value, stale, seeded, onPick, setLabel }: {
               aria-checked={active}
               aria-label={`${stop.label} — ${stop.hint}`}
               title={`${stop.label} · ${stop.hint}`}
-              // Tapping the lit stop clears it, the same way EffortScale does —
-              // a rating you cannot withdraw is a rating you stop trusting.
+              /**
+               * Tapping the lit stop clears it, the same way EffortScale does —
+               * a rating you cannot withdraw is a rating you stop trusting.
+               *
+               * EXCEPT WHEN IT IS SEEDED, and that exception is the whole of a
+               * bug. A set carried over from a session you took to failure
+               * arrives already showing 10, dimmed, with its seed intact.
+               * Tapping it read as "rate this Failure" and was treated as
+               * "withdraw the rating" — which, because a seed had not been
+               * released, `applyRpeMemory` immediately undid. The tap did
+               * nothing, memory stayed in charge, and the next rep added made
+               * the work harder than the seed was earned against, so the rating
+               * cleared itself and took the readout and the steppers with it.
+               *
+               * A seeded value has never been affirmed. The first tap affirms
+               * it; a second one, now that it is genuinely yours, clears it.
+               */
               onPointerDown={() => { void tapLight() }}
-              onClick={() => onPick(active ? null : { rpe: stop.value, failure: stop.value === 10 })}
+              onClick={() => onPick(active && !seeded ? null : { rpe: stop.value })}
               whileTap={reduce ? undefined : { scale: 0.88 }}
               transition={SNAPPY}
               // 44pt of hit area around a 5px dot: the target is the padding,

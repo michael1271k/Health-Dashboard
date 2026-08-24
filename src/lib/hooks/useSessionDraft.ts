@@ -289,10 +289,6 @@ export function useSessionDraft() {
     })
   }, [])
 
-  const setNotes = useCallback((notes: string) => {
-    setDraft((d) => d && ({ ...d, notes }))
-  }, [])
-
   /** Manually edit session metadata (duration / avg HR / calories) pre-commit. */
   const setStats = useCallback((patch: Partial<NonNullable<SessionDraft['stats']>>) => {
     setDraft((d) => {
@@ -407,5 +403,5 @@ export function useSessionDraft() {
     },
   })
 
-  return { draft, hydrated, start, discard, updateSet, splitSet, mergeSet, addCardio, updateCardio, addSet, removeSet, toggleSetDone, removeExercise, reorder, setNotes, setExerciseNote, setStats, setSessionRpe, setDate, commit }
+  return { draft, hydrated, start, discard, updateSet, splitSet, mergeSet, addCardio, updateCardio, addSet, removeSet, toggleSetDone, removeExercise, reorder, setExerciseNote, setStats, setSessionRpe, setDate, commit }
 }

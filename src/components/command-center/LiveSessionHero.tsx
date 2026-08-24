@@ -5,6 +5,7 @@ import { CalendarDays } from 'lucide-react'
 import { LeverTag } from '@/components/nutrition/LeverTag'
 import { BackLink } from '@/components/nav/NavChevron'
 import { MuscleDistribution } from './MuscleDistribution'
+import { RestTimer } from './RestTimer'
 import { FinishButton } from './FinishButton'
 import { DatePickerPopover } from './DatePickerPopover'
 import { useLoggedSessionDates } from '@/lib/hooks/useDayVault'
@@ -94,15 +95,29 @@ export function LiveSessionHero({ draft, accent, volumeKg, sets, recordCount, on
         style={{ background: `linear-gradient(180deg, ${accent}26 0%, ${accent}0a 45%, transparent 100%)` }}
       />
 
+      {/* ── THE TITLE ROW HOLDS THE TITLE AND THE TWO LIVE ACTIONS ──
+          It used to hold three controls, and "Legs & Core A" — a real workout
+          name, not a pathological one — ellipsized at 390px before the first
+          set was logged. The name is the one thing on this screen that cannot
+          be recovered from anywhere else on it, so it wins the width.
+
+          Two changes buy it back. `text-fluid-xl` instead of `2xl` (the step is
+          about 4px at phone widths and the title is still the largest type on
+          the screen by a clear margin), and the muscle figure moves down to the
+          date row, which was carrying a date and nothing else across the whole
+          right half. Rest takes the 44px it vacated: a timer is a thing you
+          reach for BETWEEN sets, which is exactly when your eye is at the top
+          of the screen, and the collapsed bar keeps the muscle figure so it is
+          never more than one tap away at any scroll position. */}
       <div className="flex items-center gap-2">
         <BackLink onClick={onBack} label="Back — the draft autosaves" />
         <h1
-          className="flex-1 min-w-0 font-heading font-bold text-fluid-2xl leading-none truncate"
+          className="flex-1 min-w-0 font-heading font-bold text-fluid-xl leading-tight truncate tracking-[-0.01em]"
           style={{ color: accent }}
         >
           {title}
         </h1>
-        <MuscleDistribution draft={draft} accent={accent} size="lg" />
+        <RestTimer />
         <FinishButton onClick={onFinish} busy={finishBusy} disabled={sets === 0} isEdit={isEdit} />
       </div>
 
@@ -110,7 +125,8 @@ export function LiveSessionHero({ draft, accent, volumeKg, sets, recordCount, on
           the width of three characters of the title to say the same thing the
           line already says. Indented to the title's own left edge, past the
           chevron, so the two read as one block. */}
-      <div className="relative mt-1.5 ml-9">
+      <div className="relative mt-1.5 ml-9 flex items-start gap-2">
+        <div className="min-w-0 flex-1">
         <button
           type="button"
           onClick={() => setPickerOpen((v) => !v)}
@@ -139,6 +155,11 @@ export function LiveSessionHero({ draft, accent, volumeKg, sets, recordCount, on
             target that moved by 70 kcal overnight should be readable without
             leaving the session. */}
         <span className="flex mt-1"><LeverTag compact /></span>
+        </div>
+        {/* Where this session is landing. It sat in the title row and cost the
+            name 44px; here it fills space the date line never used, stays above
+            the fold, and is still one tap. */}
+        <MuscleDistribution draft={draft} accent={accent} size="lg" />
       </div>
 
       {/* The live rail. Only what moves while you lift — duration, average HR

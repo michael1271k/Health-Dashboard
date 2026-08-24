@@ -9,7 +9,7 @@ import { SetEditorRow } from './SetEditorRow'
 import { useTrackRpe } from '@/lib/hooks/useTrackRpe'
 import { cardioSummary, isSetCommitted, type DraftExercise, type DraftSet } from '@/lib/sessions/draft'
 import { isTimedExercise } from '@/lib/exercises/timed'
-import { isBodyweightExercise } from '@/lib/exercises/bodyweight'
+import { isBodyweightExercise, isLoadableBodyweightExercise } from '@/lib/exercises/bodyweight'
 import { isUnilateralExercise } from '@/lib/exercises/unilateral'
 import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { repWindowFor, holdTargetFor, ladderVerdict, levelUpCue } from '@/lib/training/ceilings'
@@ -355,6 +355,10 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
   const timedEx = useMemo(() => isTimedExercise(exercise.name), [exercise.name])
   // No load to progress → the deck shows no load controls (see SetEditorRow).
   const bodyweightEx = useMemo(() => isBodyweightExercise(exercise.name), [exercise.name])
+  // Whether the tuner offers "Add load" at all — a dip takes a belt, a reverse
+  // crunch does not. Separate from `bodyweightEx`, which answers the COLUMN
+  // question and stays true for both.
+  const loadableEx = useMemo(() => isLoadableBodyweightExercise(exercise.name), [exercise.name])
 
   /**
    * ── WHICH COLUMNS THIS EXERCISE HAS ────────────────────────────────────────
@@ -897,7 +901,7 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
                   prev={prevGlobal[g.num - 1] ?? null}
                   active={activeSet === i}
                   timed={timed} gridMode={gridMode}
-                  bodyweight={bodyweightEx}
+                  loadable={loadableEx}
                   prAxes={livePrs?.get(livePrKey(exercise.localId, i))}
                   onActivate={handleActivate}
                   onChange={handleChange}
@@ -968,7 +972,7 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
                   trackRpe={trackRpe}
                     key={`l${g.left.idx}`} index={g.left.idx} displayNum={g.num} subRow set={g.left.set}
                     prev={prevGlobal[g.num - 1] ?? null}
-                    active={activeSet === g.left.idx} timed={timed} gridMode={gridMode} bodyweight={bodyweightEx}
+                    active={activeSet === g.left.idx} timed={timed} gridMode={gridMode} loadable={loadableEx}
                     prAxes={livePrs?.get(livePrKey(exercise.localId, g.left.idx))}
                     onActivate={handleActivate}
                     onChange={handleChange}
@@ -981,7 +985,7 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
                   trackRpe={trackRpe}
                     key={`r${g.right.idx}`} index={g.right.idx} displayNum={g.num} subRow set={g.right.set}
                     prev={prevGlobal[g.num - 1] ?? null}
-                    active={activeSet === g.right.idx} timed={timed} gridMode={gridMode} bodyweight={bodyweightEx}
+                    active={activeSet === g.right.idx} timed={timed} gridMode={gridMode} loadable={loadableEx}
                     prAxes={livePrs?.get(livePrKey(exercise.localId, g.right.idx))}
                     onActivate={handleActivate}
                     onChange={handleChange}

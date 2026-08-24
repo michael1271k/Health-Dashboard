@@ -14,10 +14,13 @@
  * summary line dutifully read "0kg × 15 reps" because a control existed to feed
  * it.
  *
- * WEIGHTED VARIANTS STILL WORK. The flag suppresses the load controls only
- * while the set is actually at 0 kg; the deck keeps an "Add load" affordance, so
- * a weighted pull-up or a dip with a belt is one tap away and renders as a
- * normal loaded set the moment it carries weight.
+ * WEIGHTED VARIANTS STILL WORK, BUT ONLY WHERE THEY EXIST. The flag suppresses
+ * the load controls while the set is at 0 kg; the deck keeps an "Add load"
+ * affordance for the movements you can actually hang a belt on, so a weighted
+ * pull-up or a dip is one tap away and renders as a normal loaded set the
+ * moment it carries weight. See `isLoadableBodyweightExercise` — a Reverse
+ * Crunch has no such variant, and offering it one is offering a control that
+ * does nothing.
  *
  * Timed holds are NOT listed here. They are unloaded too, but `reps` carries
  * seconds for them and `isTimedExercise` already owns that distinction —
@@ -70,4 +73,40 @@ export function isBodyweightExercise(name: string | null | undefined): boolean {
  */
 export function isUnloadedExercise(name: string | null | undefined): boolean {
   return isTimedExercise(name) || isBodyweightExercise(name)
+}
+
+/**
+ * The subset of bodyweight movements that take EXTERNAL LOAD.
+ *
+ * ── WHY THE SET IS NOT "ALL OF THEM" ─────────────────────────────────────────
+ * The deck offered a full-width "+ Add load" button on every bodyweight set,
+ * which put it on Reverse Crunch, Hanging Knee Raise and the rest of the floor
+ * work — movements with no loaded variant to reach. It was the largest control
+ * in the tuner, on the exercises with the least to configure, and every tap of
+ * it led to a weight field nobody was going to fill.
+ *
+ * These four are the ones with a real weighted form: a dip belt, a plate on the
+ * back, a vest, a plate held at the chest. Everything else in
+ * `BODYWEIGHT_PATTERNS` is reps and nothing else — and if a loaded variant does
+ * exist it is a DIFFERENT catalog entry carrying its own qualifier ("Barbell
+ * Glute Bridge", "Crunch Machine"), which `isBodyweightExercise` already
+ * excludes before this is ever asked.
+ *
+ * A timed hold is never loadable here whatever its name: `reps` carries SECONDS
+ * on those, and `sessionVolumeKg` has no timed concept, so one tap plus a 60 s
+ * plank would inject phantom tonnage into the week. `SetEditorRow` gates on
+ * `!timed` for exactly that reason and this list does not restate it.
+ */
+const LOADABLE_PATTERNS: RegExp[] = [
+  /\b(pull|chin)[-\s]?ups?$/i,
+  /\bdips?$/i,
+  /\bpush[-\s]?ups?$/i,
+  /\bback\s+extensions?$/i,
+]
+
+/** True when the movement is bodyweight AND has a genuine weighted variant. */
+export function isLoadableBodyweightExercise(name: string | null | undefined): boolean {
+  if (!isBodyweightExercise(name)) return false
+  const n = (name as string).trim()
+  return LOADABLE_PATTERNS.some((re) => re.test(n))
 }

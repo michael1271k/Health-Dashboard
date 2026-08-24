@@ -358,6 +358,77 @@ describe('cascadeSetEdit — inherited ratings clear across the cascade', () => 
   })
 
   /**
+   * ── THE VANISHING FAILURE ──────────────────────────────────────────────────
+   * The exact sequence, from a real session. Leg Extension set 3 was taken to
+   * failure last week, so it seeds this week at 10 with the top pip already lit
+   * and its seed intact. Tapping that pip looked like "rate this Failure" and
+   * was read as "withdraw the rating" — and because a CLEAR did not release the
+   * seed (`patch.rpe !== undefined` is false when the value is undefined),
+   * `applyRpeMemory` put the remembered 10 straight back. The tap did nothing.
+   *
+   * Memory therefore still owned the row, so adding one rep made the work
+   * harder than the seed was earned against and the rating cleared itself. The
+   * "10 · FAILURE" readout went, and the ± steppers went with it — they render
+   * only over a rating that exists.
+   *
+   * The ladder now CONFIRMS a seeded stop on the first tap rather than clearing
+   * it, and any patch that carries an `rpe` key at all takes ownership.
+   */
+  it('a confirmed seeded rating survives the rep that follows it', () => {
+    const sets = [seeded(50, 11, 10)]
+    // Tap the lit-but-seeded stop: confirm, not clear.
+    const confirmed = cascadeSetEdit(sets, 0, { rpe: 10 })
+    expect(confirmed[0].rpeSeed).toBeUndefined()
+    expect(confirmed[0].setType).toBe('failure')
+    // One more rep. The rating is the user's now; memory has no say.
+    const after = cascadeSetEdit(confirmed, 0, { reps: 12 })
+    expect(after[0].rpe).toBe(10)
+    expect(after[0].setType).toBe('failure')
+    expect(after[0].rpeStale).toBeUndefined()
+  })
+
+  it('clearing a rating is a decision, and memory does not undo it', () => {
+    // `{ rpe: undefined }` is what the ladder sends on a withdraw. It used to
+    // leave the seed in place, so the remembered value reappeared instantly.
+    const out = cascadeSetEdit([seeded(50, 11, 8.5)], 0, { rpe: undefined })
+    expect(out[0].rpe).toBeUndefined()
+    expect(out[0].rpeSeed).toBeUndefined()
+    expect(out[0].rpeStale).toBeUndefined()
+  })
+
+  /**
+   * ── THE TAG IS DERIVED, SO EVERY CONTROL AGREES ────────────────────────────
+   * The `F` tag used to be mirrored by hand at the pip's own click handler. The
+   * ± steppers call the same `onPick` and were not part of that mirror, so
+   * nudging 9.5 up to 10 produced a set reading "10 · FAILURE" with no tag.
+   */
+  it('any rating that lands on 10 tags the set failure, however it got there', () => {
+    const stepped = cascadeSetEdit([{ weightKg: 50, reps: 11, rpe: 9.5 }], 0, { rpe: 10 })
+    expect(stepped[0].setType).toBe('failure')
+  })
+
+  it('stepping off 10 puts the tag out', () => {
+    const off = cascadeSetEdit([{ weightKg: 50, reps: 11, rpe: 10, setType: 'failure' }], 0, { rpe: 9.5 })
+    expect(off[0].setType).toBeUndefined()
+  })
+
+  it('never overwrites a warm-up or a drop set — those are not claims about effort', () => {
+    const warm = cascadeSetEdit([{ weightKg: 50, reps: 11, setType: 'warmup' }], 0, { rpe: 10 })
+    expect(warm[0].setType).toBe('warmup')
+    const drop = cascadeSetEdit([{ weightKg: 50, reps: 11, setType: 'dropset' }], 0, { rpe: 10 })
+    expect(drop[0].setType).toBe('dropset')
+  })
+
+  it('an explicit setType in the same patch wins over the derivation', () => {
+    // `pickType('warmup')` on a failed set sends both keys at once.
+    const out = cascadeSetEdit(
+      [{ weightKg: 50, reps: 11, rpe: 10, setType: 'failure' }], 0,
+      { setType: 'warmup', rpe: undefined },
+    )
+    expect(out[0].setType).toBe('warmup')
+  })
+
+  /**
    * Once you tap a rating it is YOURS. Without releasing the seed, a later
    * weight nudge would wipe a value you deliberately entered.
    */

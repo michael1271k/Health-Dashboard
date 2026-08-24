@@ -89,7 +89,9 @@ function Deck({ mode, sets, activeIdx, timed }: {
           key={i} index={i} displayNum={i + 1} set={set}
           prev={{ weightKg: mode === 'loaded' ? 17.5 : 0, reps: mode === 'time' ? 60 : 12 }}
           active={i === activeIdx} trackRpe prAxes={[]}
-          gridMode={mode} timed={timed} bodyweight={mode !== 'loaded'}
+          // `loadable` is the Add-load escape hatch, not the column question:
+          // a reps-mode probe stands in for a dip, which does take a belt.
+          gridMode={mode} timed={timed} loadable={mode === 'reps'}
           onActivate={noop} onChange={noop} onRemove={noop}
           onToggleDone={noop} onSplit={noop} onPrTap={noop}
         />

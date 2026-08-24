@@ -70,21 +70,37 @@ export function SessionSnippet({ session, date, measure = 'read' }: {
   /**
    * The per-exercise table, as one line.
    *
-   * A record outranks a trend — the same precedence the table itself uses — so
-   * a PR is never also counted as "up". Segments with a count of zero are
-   * dropped rather than printed as "0 held", and a debut session says so
-   * instead of reporting that nothing moved.
+   * ── IT DOES NOT COUNT RECORDS, AND THAT IS THE FIX ─────────────────────────
+   * It used to open with "2 records" while the gold cell above it read "3", and
+   * both were correct — they were counting different things under one word:
+   *
+   *   · `session.prCount` is `workout_sessions.pr_count`, the number of distinct
+   *     AXIS records. One exercise can claim weight, volume and est-1RM in the
+   *     same set, and that is three.
+   *   · `deltas.filter(isPr)` is the number of EXERCISES that claimed at least
+   *     one — and only those with a previous same-type session to compare
+   *     against (`isPr: t.isPr && p != null`), which the ledger does not
+   *     require.
+   *
+   * Two counts of two different quantities, side by side, both labelled
+   * "records", is a card arguing with itself. So the RECORD COUNT HAS ONE HOME
+   * — the gold cell, holding the same number the ledger and `personal_records`
+   * hold — and this line went back to being what it is: the trend table.
+   *
+   * A record-setting lift is therefore counted by its own trend verdict rather
+   * than pulled out of the tally, so every exercise lands in exactly one bucket
+   * and the segments sum to the session. Zero-count segments are dropped rather
+   * than printed as "0 held", and a debut says "new" instead of claiming
+   * nothing moved.
    */
   const deltas = intel?.deltas ?? []
   const summary = (() => {
     if (deltas.length === 0) return null
-    const prs = deltas.filter((d) => d.isPr).length
-    const up = deltas.filter((d) => !d.isPr && d.delta === 1).length
-    const down = deltas.filter((d) => !d.isPr && d.delta === -1).length
-    const held = deltas.filter((d) => !d.isPr && d.delta === 0).length
-    const fresh = deltas.filter((d) => !d.isPr && d.delta == null).length
+    const up = deltas.filter((d) => d.delta === 1).length
+    const down = deltas.filter((d) => d.delta === -1).length
+    const held = deltas.filter((d) => d.delta === 0).length
+    const fresh = deltas.filter((d) => d.delta == null).length
     const parts = [
-      prs > 0 ? `${prs} record${prs > 1 ? 's' : ''}` : null,
       up > 0 ? `${up} up` : null,
       down > 0 ? `${down} down` : null,
       held > 0 ? `${held} held` : null,
@@ -127,12 +143,18 @@ export function SessionSnippet({ session, date, measure = 'read' }: {
         <Sub label="Calories" value={session.calories != null ? `${session.calories}` : null} unit="kcal" color={MACRO.calories} />
       </div>
 
-      {/* The whole per-exercise table, as one sentence and a destination. */}
+      {/* The whole per-exercise table, as one sentence and a destination.
+
+          `pt-1` on top of the container's `space-y-3`: the line sat hard under
+          the second metric row, reading as a fourth cell of it rather than as a
+          summary of the card. And no chevron — `Inspect ›` on the title line is
+          already this card's one navigation affordance, and a second arrow
+          pointing at the same destination is decoration that looks like a
+          choice. */}
       {summary && (
         <Link href={`/session/${session.id}`} onPointerUp={blurOnTap}
-          className="flex items-center gap-2 text-fluid-xs text-muted -m-1 p-1 rounded-lg active:opacity-80">
-          <span className="min-w-0 truncate">{summary}</span>
-          <ChevronRight className="w-3.5 h-3.5 ml-auto shrink-0" aria-hidden="true" />
+          className="block pt-1 text-fluid-xs text-muted -mx-1 px-1 rounded-lg active:opacity-80">
+          <span className="block min-w-0 truncate">{summary}</span>
         </Link>
       )}
     </Surface>
