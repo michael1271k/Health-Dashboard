@@ -9,7 +9,7 @@ import { useMonthActivity, monthActivitySets, useGymReports } from '@/lib/hooks/
 import { useReports } from '@/lib/hooks/useReports'
 import { useWeightTrend } from '@/lib/hooks/useCharts'
 import { getWeekPhase, phaseBadgeStyle } from '@/lib/phases'
-import { ActivePlanBadge } from '@/components/ActivePlanBadge'
+import { PlanPhaseTags } from '@/components/PlanPhaseTags'
 import { useEraFilter } from '@/lib/era/eraFilter'
 import { EraFilterPills } from '@/components/era/EraFilterPills'
 import { FileSystemBrowser } from '@/components/reports/FileSystemBrowser'
@@ -107,7 +107,7 @@ function PathfinderInner() {
         <div className="min-w-0">
           <div className="flex items-center gap-2.5 flex-wrap">
             <h1 className="font-heading text-fluid-2xl font-bold text-text leading-tight">Progress</h1>
-            <ActivePlanBadge />
+            <PlanPhaseTags />
           </div>
           <p className="text-muted text-fluid-sm mt-0.5">Your life over time · days, weeks, performance &amp; vitals</p>
         </div>

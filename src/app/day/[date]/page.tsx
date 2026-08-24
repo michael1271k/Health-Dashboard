@@ -13,7 +13,7 @@ import { DomsTracker } from '@/components/day/RecoveryTrackers'
 import { CardioLogger } from '@/components/day/CardioLogger'
 import { WaterHelix } from '@/components/day/WaterHelix'
 import { WaterOverrideSheet } from '@/components/day/WaterOverrideSheet'
-import { useDayVault, dayCompleteness, type DayVaultData } from '@/lib/hooks/useDayVault'
+import { useDayVault, dayCompleteness } from '@/lib/hooks/useDayVault'
 import { useUserGoals, useDaySleep } from '@/lib/hooks/useDashboard'
 import { useNutritionGoals } from '@/lib/hooks/useNutritionGoals'
 import { useBioSeries } from '@/lib/hooks/useBioStrips'
@@ -26,11 +26,12 @@ import { MacroOverrideSheet } from '@/components/nutrition/MacroOverrideSheet'
 import { ExceptionDayBanner } from '@/components/nutrition/ExceptionDayBanner'
 import { phaseDisplay } from '@/lib/nutrition/phase'
 import { tdeeKcal, tefKcal, tdeeBreakdown } from '@/lib/nutrition/energy'
-import { ERA_META, eraForDate, scheduleDayFor, activeProgram } from '@/lib/programs'
-import { displayWeight, weightUnit, fmtVolume } from '@/lib/utils/units'
+import { ERA_META, eraForDate, scheduleDayFor } from '@/lib/programs'
+
 import { logicalTodayISO } from '@/lib/utils/day'
 import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { Zone, ZoneRow, StatStrip } from '@/components/ui/Zone'
+import { SessionSnippet } from '@/components/session-detail/SessionSnippet'
 import { Sheet } from '@/components/ui/Sheet'
 import { SleepBand, BodyBand } from '@/components/day/SummaryBands'
 
@@ -92,65 +93,6 @@ function MacroLine({ label, value, goal, color }: {
   )
 }
 
-/** Hevy-style colored metadata chip with an emoji glyph. */
-function MetaChip({ emoji, value, label, color }: { emoji: string; value: string; label: string; color: string }) {
-  return (
-    <span className="inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 border" style={{ borderColor: `${color}40`, background: `${color}14` }}>
-      <span aria-hidden="true">{emoji}</span>
-      <span className="helix-num font-bold text-fluid-sm tabular-nums" style={{ color }}>{value}</span>
-      <span className="text-[9px] uppercase tracking-wide text-muted">{label}</span>
-    </span>
-  )
-}
-
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <h2 className="font-heading text-fluid-base font-bold text-text px-1 pt-2">{children}</h2>
-}
-
-/** Program-day label from day_key (→ "Upper B", robust on swaps), else split. */
-function sessionLabel(dayKey: string | null | undefined, split: string): string {
-  const program = activeProgram()
-  return (dayKey && program.days.find((d) => d.key === dayKey)?.label) ?? (split[0]?.toUpperCase() + split.slice(1))
-}
-
-/**
- * Unified per-session block: header + Hevy-style metadata. Tapping anywhere on
- * the block navigates straight to the full session deep-dive — no intermediate
- * expand step.
- */
-function SessionBlock({ session: s, unit }: {
-  session: DayVaultData['sessions'][number]
-  unit: string
-}) {
-  const router = useRouter()
-  const name = sessionLabel(s.dayKey, s.split)
-  return (
-    <button type="button"
-      onClick={() => router.push(`/session/${s.id}`)}
-      className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 w-full text-left space-y-3 active:opacity-80"
-      style={{ borderColor: `${CYAN}30`, boxShadow: `0 0 24px ${CYAN}18` }}
-      aria-label={`Open full analysis for ${name}`}>
-      <div className="w-full flex items-center gap-2">
-        <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: `${CYAN}1a`, color: CYAN }}>
-          <Dumbbell className="w-4 h-4" aria-hidden="true" />
-        </span>
-        <h3 className="font-heading font-bold text-fluid-base text-text flex-1 min-w-0 truncate">{name}</h3>
-        <span className="text-[10px] font-semibold uppercase tracking-wide shrink-0 flex items-center gap-0.5" style={{ color: CYAN }}>
-          Inspect <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
-        </span>
-      </div>
-      {/* Hevy-style metadata */}
-      <div className="flex flex-wrap gap-2">
-        <MetaChip emoji="🏋️" value={fmtVolume(displayWeight(s.volumeKg))} label={unit} color={TEAL} />
-        <MetaChip emoji="🔁" value={`${s.setCount ?? '—'}`} label="sets" color={CYAN} />
-        <MetaChip emoji="⏱️" value={s.durationMin != null ? `${s.durationMin}` : '—'} label="min" color={VIOLET} />
-        <MetaChip emoji="❤️" value={s.avgBpm != null ? `${s.avgBpm}` : '—'} label="bpm" color={ROSE} />
-        <MetaChip emoji="🔥" value={s.calories != null ? `${s.calories}` : '—'} label="kcal" color={EMBER} />
-      </div>
-    </button>
-  )
-}
-
 /**
  * The Daily Nexus — one logical day:
  *   1 · Vitals & Nutrition   readiness, fuel, sleep/recovery, vitals, scale
@@ -207,7 +149,6 @@ export default function DailyNexusPage() {
   const trained = sessions.length > 0
   const restDay = !trained && schedule === 'rest'
   const { parts } = dayCompleteness(data)
-  const unit = weightUnit()
   const log = data?.log
   const n = data?.nutrition
   const score = data?.score?.score ?? null
@@ -406,6 +347,16 @@ export default function DailyNexusPage() {
         initial={{ calories: n?.calories ?? 0, protein_g: n?.protein_g ?? 0, carbs_g: n?.carbs_g ?? 0, fat_g: n?.fat_g ?? 0 }}
       />
 
+      {/* ── SLEEP · a glance, with the detail one tap away ── */}
+      <Zone label="Sleep" accent={VIOLET}>
+        <SleepBand
+          sleep={daySleep ?? null}
+          sleepMinutes={log?.sleep_minutes ?? null}
+          goalHours={goals?.sleep_goal_hours ?? null}
+          onOpen={() => setSheet('sleep')}
+        />
+      </Zone>
+
       {/* ── VITALS · one scrollable line, not a 3×2 grid of bordered boxes ── */}
       <Zone label="Vitals" accent={CYAN}>
         <ZoneRow divide={false}>
@@ -420,16 +371,6 @@ export default function DailyNexusPage() {
             { label: 'HRV', value: log?.hrv_ms != null ? `${Math.round(log.hrv_ms)}` : null, color: ICE },
           ]} />
         </ZoneRow>
-      </Zone>
-
-      {/* ── SLEEP · a glance, with the detail one tap away ── */}
-      <Zone label="Sleep" accent={VIOLET}>
-        <SleepBand
-          sleep={daySleep ?? null}
-          sleepMinutes={log?.sleep_minutes ?? null}
-          goalHours={goals?.sleep_goal_hours ?? null}
-          onOpen={() => setSheet('sleep')}
-        />
       </Zone>
 
       {/* ── BODY · same shape whether or not you weighed in today ── */}
@@ -502,49 +443,56 @@ export default function DailyNexusPage() {
         <InBodyForm date={date} log={log ?? null} onSaved={() => setSheet('body')} />
       </Sheet>
 
-      {/* ══ SECTION 2 · Session Debrief ══ (workout + progression, unified)
-          The last band is the only one that keeps card chrome inside it: a
-          session block is a TARGET, and a tappable thing needs an edge. */}
-      <div className="mx-auto w-full max-w-[68ch] px-3 py-3 space-y-3">
+      {/* ══ SECTION 2 · Session ══
+          ── WHY THIS IS A BAND NOW ────────────────────────────────────────────
+          It used to be the one region that opted OUT of the band system: a
+          `mx-auto max-w-[68ch] px-3 py-3 space-y-3` wrapper re-establishing its
+          own measure straight after a chain of full-bleed Zones, then a heading
+          adding `pt-2`, then a card adding `p-5`. Three stacked paddings and a
+          change of layout mode, which is exactly what the eye reads as "this
+          belongs to a different page" — the gap was structural, not cosmetic.
+
+          It is a Zone like everything above it now, and what is inside it is
+          `SessionSnippet` — the same component, with the same two metric grids,
+          that the Workout tab shows after a session. One session, one shape,
+          wherever you meet it. */}
       {trained ? (
-        <>
-          <SectionTitle>Session Debrief</SectionTitle>
-          {sessions.map((s) => <SessionBlock key={s.id} session={s} unit={unit} />)}
-        </>
+        sessions.map((s) => <SessionSnippet key={s.id} session={s} date={date} />)
       ) : restDay ? (
-        /* Rest day → a compact premium badge, NOT a big empty workout block */
-        <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 flex items-center gap-3 py-4"
-          style={{ borderColor: `${VIOLET}30`, boxShadow: `0 0 24px ${VIOLET}1f` }}>
-          <span className="w-11 h-11 rounded-full flex items-center justify-center shrink-0"
-            style={{ background: `${VIOLET}1c`, color: VIOLET, boxShadow: `0 0 18px ${VIOLET}55` }}>
-            <Moon className="w-5 h-5" aria-hidden="true" />
-          </span>
-          <div className="flex-1 min-w-0">
-            <p className="font-heading font-bold text-fluid-base" style={{ color: VIOLET }}>Rest · Zone-2 Recovery</p>
-            <p className="text-fluid-xs text-muted">Adaptation happens now — no lifting scheduled.</p>
-          </div>
-          <SwapDayControl date={date} />
-        </section>
+        /* Rest day → a row, not a big empty workout block. */
+        <Zone label="Session" accent={VIOLET}>
+          <ZoneRow divide={false} className="flex items-center gap-3">
+            <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
+              style={{ background: `${VIOLET}1c`, color: VIOLET }}>
+              <Moon className="w-4 h-4" aria-hidden="true" />
+            </span>
+            <span className="flex-1 min-w-0">
+              <span className="block font-heading font-bold text-fluid-sm" style={{ color: VIOLET }}>Rest · Zone-2 Recovery</span>
+              <span className="block text-fluid-xs text-muted">Adaptation happens now — no lifting scheduled.</span>
+            </span>
+            <SwapDayControl date={date} />
+          </ZoneRow>
+        </Zone>
       ) : (
-        /* A training day with no session yet → the log CTA + swap */
-        <>
-          <SectionTitle>The Workout</SectionTitle>
-          <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-3" style={{ borderColor: `${CYAN}26` }}>
-            {/* Only for the day you're actually living — a low battery three
-                weeks ago is history, not a decision. */}
-            {date === logicalTodayISO() && schedule !== 'rest' && (
+        /* A training day with no session yet → the log CTA + swap. */
+        <Zone label="Session" accent={CYAN}>
+          {/* Only for the day you're actually living — a low battery three
+              weeks ago is history, not a decision. */}
+          {date === logicalTodayISO() && schedule !== 'rest' && (
+            <ZoneRow divide={false}>
               <RestSuggestion date={date} dayLabel={schedule.label} />
-            )}
+            </ZoneRow>
+          )}
+          <ZoneRow divide={false} className="space-y-2.5">
             <p className="text-fluid-sm text-text font-medium">
               No session logged for {schedule !== 'rest' ? schedule.label : 'today'} yet.
             </p>
             {/* ── ONE ROW OF ACTIONS ──
-                Three full-width stacked buttons — Log, Rest day, Swap — read as
-                three decisions of equal weight, and pushed the rest of the day
-                below the fold on a phone. Logging is the primary action and
-                keeps its size; rescheduling is the alternative and sits beside
-                it, which is also what it IS: the same decision made the other
-                way. */}
+                Logging is the primary action and keeps its size; rescheduling
+                sits beside it, which is also what it IS: the same decision made
+                the other way. Swap keeps its own width — the control expands
+                into a consequence panel when armed, and a flex child that grows
+                would squash that panel's text into a column. */}
             <div className="flex items-start gap-2">
               {schedule !== 'rest' && schedule.dayKey && (
                 <Link href={`/session?template=${schedule.dayKey}&date=${date}`}
@@ -552,19 +500,18 @@ export default function DailyNexusPage() {
                   <Dumbbell className="w-4 h-4" aria-hidden="true" /> Log {schedule.label}
                 </Link>
               )}
-              {/* Swap sits BESIDE the log button because it is the same decision
-                  made the other way, and it keeps its own width: the control
-                  expands into a consequence panel when armed, and a flex child
-                  that grows would squash that panel's text into a column. */}
               <SwapDayControl date={date} className="shrink-0" />
             </div>
             <RestTodayButton date={date} label="Rest day" />
-          </section>
-        </>
+          </ZoneRow>
+        </Zone>
       )}
 
-      {isLoading && <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 h-20 animate-pulse" aria-hidden="true" />}
-      </div>
+      {isLoading && (
+        <Zone label="Session" accent={CYAN}>
+          <ZoneRow divide={false}><div className="h-16 rounded-xl bg-white/[0.03] animate-pulse" aria-hidden="true" /></ZoneRow>
+        </Zone>
+      )}
     </div>
   )
 }

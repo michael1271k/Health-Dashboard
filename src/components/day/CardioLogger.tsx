@@ -50,6 +50,8 @@ export function CardioLogger({ date, hkActiveEnergy }: { date: string; hkActiveE
   const del = useDeleteCardio()
 
   const [open, setOpen] = useState(false)
+  /** Which logged entry has its detail line open. One value, so two never are. */
+  const [openEntry, setOpenEntry] = useState<string | null>(null)
   const [kind, setKind] = useState<'walk' | 'run'>('walk')
   const [more, setMore] = useState(false)
   const [km, setKm] = useState('')
@@ -116,7 +118,11 @@ export function CardioLogger({ date, hkActiveEnergy }: { date: string; hkActiveE
             <span key={i} className="w-2 h-2 rounded-full"
               style={{ background: (zone2 ?? 0) > i ? SAPPHIRE : 'transparent', border: `1.5px solid ${SAPPHIRE}${(zone2 ?? 0) > i ? '' : '66'}` }} />
           ))}
-          <span className="helix-num text-[10px] font-bold tabular-nums ml-0.5" style={{ color: SAPPHIRE }}>Z2</span>
+          {/* The dots say how many; the count says how many OF how many, which
+              is the part you cannot get by counting four pips at a glance. */}
+          <span className="helix-num text-[10px] font-bold tabular-nums ml-0.5" style={{ color: SAPPHIRE }}>
+            Z2 {zone2 ?? 0}/{ZONE2_WEEKLY_TARGET}
+          </span>
         </span>
         <button onClick={() => setOpen(true)} className="btn-glass min-h-[32px] px-2 text-fluid-xs"
           aria-label="Log cardio">
@@ -130,35 +136,67 @@ export function CardioLogger({ date, hkActiveEnergy }: { date: string; hkActiveE
           {entries.map((c) => {
             const held = axesHeldBy(history ?? [], c.id)
             const c2 = KINDS.find((k) => k.key === c.kind)?.color ?? EMERALD
+            const pace = paceMinPerKm(c.distance_m, c.duration_min)
+            const active = activeKcalOf(c)
+            const expanded = openEntry === c.id
             return (
               <div key={c.id} className="rounded-lg bg-white/[0.02] border border-white/[0.05] px-2.5 py-1.5">
-                <div className="flex items-center gap-2">
+                {/* ── THE ROW IS TWO FACTS AND A VERDICT ──────────────────────
+                    It used to print distance, duration, pace, active kcal,
+                    total kcal, average HR and RPE as one unbroken `·`-joined
+                    run in 11px muted grey — seven numbers of wildly different
+                    importance, rendered identically, wrapping to three lines on
+                    a phone. What you want at a glance is what you did and how
+                    fast; everything else is the detail of a walk you already
+                    know you took, and it opens on a tap. */}
+                <button type="button" onClick={() => setOpenEntry(expanded ? null : c.id)}
+                  className="w-full flex items-center gap-2 text-left"
+                  aria-expanded={expanded}
+                  aria-label={`${c.kind} details`}>
                   <span className="w-6 h-6 rounded-full flex items-center justify-center shrink-0"
                     style={{ background: `${c2}1a`, color: c2 }}>
                     {c.kind === 'run' ? <Zap className="w-3 h-3" /> : <Footprints className="w-3 h-3" />}
                   </span>
-                  <span className="text-fluid-xs font-medium text-text capitalize w-10 shrink-0">{c.kind}</span>
-                  <span className="helix-num text-[11px] text-muted flex-1 leading-snug">
-                    {c.distance_m != null && <>{(c.distance_m / 1000).toFixed(2)} km</>}
-                    {c.duration_min != null && <> · {c.duration_min} min</>}
-                    {(() => { const p = paceMinPerKm(c.distance_m, c.duration_min); return p != null ? <> · {formatPace(p)}</> : null })()}
-                    {activeKcalOf(c) != null && <> · {Math.round(activeKcalOf(c) as number)} active</>}
-                    {c.total_kcal != null && <> · {Math.round(c.total_kcal)} total</>}
-                    {c.avg_hr != null && <> · {Math.round(c.avg_hr)} bpm</>}
-                    {c.effort != null && <> · <span style={{ color: cr10Color(c.effort) }}>RPE {c.effort}</span></>}
+                  <span className="min-w-0 flex-1 flex items-baseline gap-1.5">
+                    <span className="text-fluid-xs font-medium text-text capitalize shrink-0">{c.kind}</span>
+                    <span className="helix-num text-[11px] text-muted truncate">
+                      {c.distance_m != null && <>{(c.distance_m / 1000).toFixed(2)} km</>}
+                      {c.distance_m != null && c.duration_min != null && <> · </>}
+                      {c.duration_min != null && <>{c.duration_min} min</>}
+                    </span>
                   </span>
-                  <button onClick={() => del.mutate(c.id)} className="p-1 text-muted hover:text-danger shrink-0" aria-label="Delete">
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+                  {pace != null && (
+                    <span className="helix-num text-[11px] font-bold shrink-0" style={{ color: c2 }}>{formatPace(pace)}</span>
+                  )}
+                  <ChevronDown className={`w-3.5 h-3.5 text-muted shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`} aria-hidden="true" />
+                </button>
+
                 {/* Standing records only — a walk since beaten shows nothing,
-                    the same rule the lifting ledger follows. */}
+                    the same rule the lifting ledger follows. Stays on the
+                    collapsed row: a record is not a detail. */}
                 {held.length > 0 && (
                   <div className="flex items-center gap-1 flex-wrap mt-1 pl-8">
                     <Trophy className="w-3 h-3 shrink-0" style={{ color: GOLD }} aria-hidden="true" />
                     <span className="text-[9px] font-bold uppercase tracking-wide" style={{ color: GOLD }}>
                       Best {c.kind} · {held.map((a) => CARDIO_AXIS_LABEL[a]).join(' · ')}
                     </span>
+                  </div>
+                )}
+
+                {expanded && (
+                  <div className="mt-1.5 pt-1.5 pl-8 border-t border-white/[0.06] flex items-center gap-2">
+                    <span className="helix-num text-[11px] text-muted flex-1 min-w-0 leading-snug">
+                      {active != null && <>{Math.round(active)} active</>}
+                      {c.total_kcal != null && <>{active != null ? ' · ' : ''}{Math.round(c.total_kcal)} total</>}
+                      {c.avg_hr != null && <> · {Math.round(c.avg_hr)} bpm</>}
+                      {c.effort != null && <> · <span style={{ color: cr10Color(c.effort) }}>RPE {c.effort}</span></>}
+                      {active == null && c.total_kcal == null && c.avg_hr == null && c.effort == null && <>No heart rate or energy recorded.</>}
+                    </span>
+                    {/* Delete lives behind the disclosure, not on the row a
+                        thumb brushes while scrolling. */}
+                    <button onClick={() => del.mutate(c.id)} className="p-1 text-muted hover:text-danger shrink-0" aria-label="Delete">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 )}
               </div>
@@ -169,10 +207,14 @@ export function CardioLogger({ date, hkActiveEnergy }: { date: string; hkActiveE
         <p className="text-[11px] text-muted">No cardio logged — tap + to add a walk or run.</p>
       )}
 
+      {/* The double-count note. It was a two-line paragraph under every day with
+          both a walk and a watch; the fact it carries never changes, so it is a
+          tag with the sentence in its tooltip. */}
       {hkActiveEnergy != null && entries.length > 0 && (
-        <p className="text-[10px] text-muted flex items-start gap-1 leading-snug">
-          <Info className="w-3 h-3 mt-0.5 shrink-0" aria-hidden="true" />
-          Apple Active Energy ({Math.round(hkActiveEnergy)} kcal) already includes this — logged here for detail, never added on top.
+        <p className="text-[10px] text-muted flex items-center gap-1 leading-snug"
+          title={`Apple Active Energy (${Math.round(hkActiveEnergy)} kcal) already includes this — logged here for detail, never added on top.`}>
+          <Info className="w-3 h-3 shrink-0" aria-hidden="true" />
+          Already counted in Apple Active Energy
         </p>
       )}
       </div>

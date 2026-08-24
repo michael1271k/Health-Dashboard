@@ -38,15 +38,15 @@ import './globals.css'
 export const metadata: Metadata = {
   metadataBase: new URL('https://helix-health-fitness.netlify.app'),
   title: {
-    default: 'Dashboard — HELIX',
-    template: '%s — HELIX',
+    default: 'Dashboard — Helix',
+    template: '%s — Helix',
   },
   description: 'Human Performance Systems — Sleep · Load · Nutrition · Adaptation',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'HELIX',
+    title: 'Helix',
   },
   icons: {
     icon: [

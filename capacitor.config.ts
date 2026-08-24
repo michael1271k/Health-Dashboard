@@ -8,7 +8,7 @@ import type { CapacitorConfig } from '@capacitor/cli'
  */
 const config: CapacitorConfig = {
   appId: 'app.helix.health.michael',
-  appName: 'HELIX',
+  appName: 'Helix',
   webDir: 'public', // only used for a bundled fallback; primary content is server.url
   server: {
     url: 'https://helix-health-fitness.netlify.app',

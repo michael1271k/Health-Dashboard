@@ -8,7 +8,7 @@ import { useQuery } from '@tanstack/react-query'
 import { m, AnimatePresence } from 'framer-motion'
 import {
   Dumbbell, Trophy, Sparkles, Loader2, ChevronRight, BatteryMedium, Moon,
-  ClipboardCopy, Check, BookOpen,
+  ClipboardCopy, Check, BookOpen, Lock,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { useTimelineWeeks, type TimelineWeekNode } from '@/lib/hooks/useTimelineWeeks'
@@ -430,6 +430,35 @@ function WeekActions({ node }: { node: TimelineWeekNode }) {
 
   const stored = summaries?.find((s) => s.weekStart === node.weekStart)
   const storedSentinel = sentinelReports?.find((s) => s.weekStart === node.weekStart)
+
+  /**
+   * ── EXPORT IS A CLOSING RITUAL, NOT A LIVE ONE ───────────────────────────
+   * Both controls were offered on the running week, where they cannot mean
+   * what they say: "Copy raw data" copies a week that has days left to log,
+   * and any report pasted against it is a verdict on a partial record that
+   * then sits in the ledger looking final.
+   *
+   * `isWeekComplete` is the calendar rule, and `weekStartOf` behind these
+   * nodes already honours the "Week starts on" preference — so with a Sunday
+   * start these appear at 00:00 the following Sunday, not on Saturday night.
+   * Deliberately NOT `isWeekReady`, which is about having done the work and
+   * fires mid-week on purpose.
+   *
+   * The absence is stated rather than silent: a control that vanishes with no
+   * explanation reads as a bug, and the answer to "where did the button go" is
+   * a date.
+   */
+  const closed = isWeekComplete(node.weekStart, logicalTodayISO())
+  if (!closed) {
+    const closesOn = new Date(`${isoAddDays(node.weekStart, 7)}T12:00:00Z`)
+      .toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'UTC' })
+    return (
+      <p className="text-fluid-xs text-muted flex items-center gap-1.5">
+        <Lock className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+        Export and report open when the week closes · {closesOn}
+      </p>
+    )
+  }
 
   const copy = async () => {
     // Cached from a previous click → the write stays inside the user gesture.

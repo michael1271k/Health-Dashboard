@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Activity, Dumbbell } from 'lucide-react'
+import { Activity, Dumbbell, ChevronRight } from 'lucide-react'
 import { useDoms, useLogDoms, useDomsSources, DOMS_MUSCLES, DOMS_LEVELS, type DomsMuscle } from '@/lib/hooks/useRecovery'
 import { EMBER, MUTED, HAIRLINE } from '@/lib/theme/palette'
 import { Sheet } from '@/components/ui/Sheet'
@@ -168,12 +168,16 @@ export function DomsTracker({ date }: { date: string }) {
                   style={{ background: SEVERITY_COLOR[severity] }} />
               ))}
             </span>
+            <ChevronRight className="w-3.5 h-3.5 text-muted shrink-0" aria-hidden="true" />
           </>
         ) : (
           <>
             <Activity className="w-3.5 h-3.5 shrink-0 text-muted" aria-hidden="true" />
             <span className="text-fluid-xs text-text/80">No soreness logged</span>
-            <span className="text-[11px] text-muted ml-auto shrink-0">Rate</span>
+            {/* The word "Rate" was doing a chevron's job. Every other tappable
+                row on this page ends in one, and a row that ends in a verb
+                instead reads as a different kind of control. */}
+            <ChevronRight className="w-3.5 h-3.5 text-muted ml-auto shrink-0" aria-hidden="true" />
           </>
         )}
       </ZoneRow>

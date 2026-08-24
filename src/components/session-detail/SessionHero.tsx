@@ -7,10 +7,11 @@ import type { SessionDetail } from '@/lib/hooks/useSessionDetail'
 import { useEditSession } from '@/lib/hooks/useEditSession'
 import { useDeleteSession } from '@/lib/hooks/useDayVault'
 import { useSessionIntel, type IntelMetric } from '@/lib/hooks/useSessionIntel'
-import { dayColor, STEEL, EMBER, OXIDE, GOLD, EMERALD, MACRO } from '@/lib/theme/palette'
+import { dayColor, STEEL, EMBER, OXIDE, GOLD, MACRO } from '@/lib/theme/palette'
 import { displayWeight, weightUnit, fmtVolume } from '@/lib/utils/units'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
 import { Surface } from '@/components/ui/Zone'
+import { Head, Sub } from '@/components/session-detail/MetricGrid'
 import { setComposition } from '@/lib/training/setTags'
 
 /*
@@ -47,119 +48,12 @@ import { setComposition } from '@/lib/training/setTags'
  * here, deltas appear ONLY as the ▲/▼ attached to the number they modify. That
  * is what stops the duplication coming back — there is no longer a second place
  * for an absolute to live.
- */
-
-/** Percent change for a metric, in the direction that metric considers good. */
-function pctOf(m: IntelMetric | undefined): { pct: number; good: boolean } | null {
-  if (!m || m.value == null || m.previous == null || m.previous === 0) return null
-  const pct = Math.round(((m.value - m.previous) / m.previous) * 100)
-  if (pct === 0) return null
-  return { pct, good: pct > 0 === m.higherIsBetter }
-}
-
-/**
- * The ▲6% / ▼4% that qualifies a headline number.
  *
- * ── IT USED TO RIDE ON THE VALUE'S OWN LINE, AND IT COLLIDED ─────────────────
- * This was an inline `<span>` sharing a `text-fluid-xl` line box with the value
- * and its unit, inside a `grid-cols-3` that had no `gap` and cells with no
- * `min-w-0`. A grid item's default `min-width: auto` means a cell does not
- * shrink to its track — so "12,480 kg ▲14%" simply grew past its column and
- * landed on top of the duration beside it. With no `whitespace-nowrap` it could
- * also wrap instead, which broke the `leading-none` alignment across all three
- * cells.
- *
- * A delta is a second statement about a number, not part of it. It belongs on
- * the line below, in the slot `Head` already reserves — which costs nothing,
- * because that slot was being rendered empty on two cells out of three anyway.
+ * The cells themselves (`Head`, `Sub`, `Delta`) now live in `MetricGrid.tsx`,
+ * because this shape stopped being one page's answer: the Workout tab and the
+ * Daily View render the same two grids at snippet size, and the point of that
+ * is that they are literally the same components, not a copy that drifts.
  */
-function Delta({ metric }: { metric: IntelMetric | undefined }) {
-  const d = pctOf(metric)
-  if (!d) return null
-  return (
-    <span
-      className="helix-num font-bold whitespace-nowrap"
-      style={{ color: d.good ? EMERALD : OXIDE }}
-    >
-      {d.pct > 0 ? '▲' : '▼'}{Math.abs(d.pct)}%
-    </span>
-  )
-}
-
-/**
- * One of the three headline cells. Hairline on the left for every cell but the
- * first — the same recipe as the exercise record strip, so the two pages read
- * as one system.
- */
-function Head({ label, value, unit, sub, metric, first }: {
-  label: string
-  value: string | null
-  unit?: string
-  /** Rendered beside the delta. A node, not a string — the set cell puts
-   *  coloured chips here and a sentence would not fit. */
-  sub?: React.ReactNode
-  metric?: IntelMetric
-  first?: boolean
-}) {
-  return (
-    // `min-w-0` is the load-bearing class here — without it a grid item refuses
-    // to shrink below its content and overruns the cell beside it.
-    <div className={`min-w-0 ${first ? '' : 'pl-3 border-l border-white/[0.07]'}`}>
-      <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-muted leading-tight truncate">
-        {label}
-      </span>
-      <div className="helix-num font-bold text-fluid-xl leading-none mt-1.5 text-text whitespace-nowrap">
-        {value ?? '—'}
-        {unit && value != null && <span className="text-[10px] text-muted font-normal ml-1">{unit}</span>}
-      </div>
-      {/* The qualifier line. Reserved whether or not it is filled: a sub-line
-          that appears only on some sessions makes the three cells different
-          heights. It now carries the delta FIRST — the delta is the thing this
-          line exists for — then whatever else the metric has to add. */}
-      <span className="flex items-baseline gap-1.5 text-[9px] text-muted mt-1 leading-tight min-h-[1em] min-w-0">
-        {value != null && <Delta metric={metric} />}
-        {sub}
-      </span>
-    </div>
-  )
-}
-
-/**
- * One of the four context cells. Same anatomy at label size — deliberately not
- * a different component shape, so the eye reads the second row as a quieter
- * version of the first rather than as a different kind of thing.
- */
-function Sub({ label, value, unit, color, estimated }: {
-  label: string
-  value: string | null
-  unit?: string
-  color: string
-  /** Derived by formula rather than measured — see `sessions/estimates.ts`. */
-  estimated?: boolean
-}) {
-  return (
-    <div className="min-w-0">
-      <span className="block text-[9px] font-bold uppercase tracking-[0.12em] truncate" style={{ color }}>
-        {label}
-      </span>
-      <div className="helix-num font-bold text-[13px] tabular-nums leading-none mt-1 text-text truncate">
-        {value ?? '—'}
-        {unit && value != null && <span className="text-[9px] text-muted font-normal ml-0.5">{unit}</span>}
-        {/* The value keeps its own colour — an estimate is still your best figure
-            and is counted at full weight everywhere. What it must not do is pass
-            for a measurement, so the provenance is stated rather than implied. */}
-        {estimated && value != null && (
-          <span
-            className="text-[8px] uppercase tracking-wide text-muted font-normal ml-1"
-            title="Calculated by formula — no watch data for this session"
-          >
-            calc
-          </span>
-        )}
-      </div>
-    </div>
-  )
-}
 
 /**
  * Deep-dive header: session identity ("Session #N" · date), every session

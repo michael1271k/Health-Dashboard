@@ -1,15 +1,9 @@
 'use client'
 
 import { memo, useEffect, useState } from 'react'
-import { LeverTag } from '@/components/nutrition/LeverTag'
-import { STEEL, PLAN_CHIP } from '@/lib/theme/palette'
+import { PlanPhaseTags } from '@/components/PlanPhaseTags'
 import { useLastUpdated } from '@/lib/hooks/useDashboard'
 import { useMyProfile } from '@/lib/hooks/useMyProfile'
-import { activeProgram, activePhase } from '@/lib/programs'
-import { PHASE_COLORS, PHASE_META, type Phase } from '@/lib/nutrition/phase'
-import { programWeekNumber } from '@/lib/reports/weekNumber'
-import { useLogicalDate } from '@/lib/hooks/useLogicalDate'
-import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 
 /*
  * `programDay()` lived here and is GONE.
@@ -88,29 +82,6 @@ export function BrandHeader() {
   const { data: lastUpdated } = useLastUpdated()
   const { data: profile } = useMyProfile()
 
-  // Plan + phase tags read localStorage (activeProgram/activePhase), so resolve
-  // them AFTER mount to avoid an SSR/client hydration mismatch.
-  // Version in the deps, not `[]`: reading once post-mount fixes the hydration
-  // mismatch but unsubscribes forever, so the chip froze on the plan that
-  // happened to be in localStorage at mount.
-  const planVersion = useScheduleVersion()
-  const [tags, setTags] = useState<{ planLabel: string; planColor: string; phase: Phase } | null>(null)
-  useEffect(() => {
-    const p = activeProgram()
-    setTags({ planLabel: p.label, planColor: PLAN_CHIP[p.id] ?? STEEL, phase: activePhase() as Phase })
-  }, [planVersion])
-
-  // THE program week — the same counter Momentum labels its capsules with, not a
-  // second one derived here. See `programWeekNumber`: the block opened mid-week,
-  // so Week 0 is a real half week and any 1-based count of its own runs one
-  // ahead of the timeline forever.
-  //
-  // `useLogicalDate` rather than a bare `logicalTodayISO()` call: the badge has
-  // to advance the instant the configured week boundary passes, and a value read
-  // during render only updates when something else happens to re-render.
-  const today = useLogicalDate()
-  const planWeek = programWeekNumber(today)
-
   const firstName = profile?.firstName ?? null
   const greeting = now ? greetingFor(now) : ''
   const dateStr = now ? new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }).format(now) : ''
@@ -150,37 +121,7 @@ export function BrandHeader() {
         <h1 className="text-fluid-3xl leading-none shrink-0">
           <span className="helix-wordmark font-heading font-extrabold tracking-[0.22em] leading-none">HELIX</span>
         </h1>
-        <div className="flex items-center gap-x-1.5 shrink-0">
-          {tags && (
-            <span
-              className="px-2 py-1 rounded-md text-[9px] font-bold uppercase tracking-wider shrink-0"
-              style={{ color: tags.planColor, background: `${tags.planColor}1f`, border: `1px solid ${tags.planColor}55` }}
-            >
-              {tags.planLabel}
-            </span>
-          )}
-          {/* Phase AND week, one badge. "Cut" alone says what the block is but
-              not where you are inside it; the week number is the part that
-              changes, and it was only ever visible on the analytics page. The
-              divider keeps it one object rather than two chips that could drift
-              apart. */}
-          {tags && (
-            <span
-              className="px-2 py-1 rounded-md text-[9px] font-bold uppercase tracking-wider shrink-0 inline-flex items-center gap-1.5"
-              style={{ color: PHASE_COLORS[tags.phase], background: `${PHASE_COLORS[tags.phase]}1f`, border: `1px solid ${PHASE_COLORS[tags.phase]}55` }}
-            >
-              {PHASE_META[tags.phase].label}
-              <span className="w-px h-2.5 opacity-40" style={{ background: 'currentColor' }} aria-hidden="true" />
-              <span className="helix-num tabular-nums">Wk {planWeek}</span>
-            </span>
-          )}
-          {/* Which rung of the cut is in force. It sits with the phase because
-              it IS a phase fact — "Cut" says what the block is, the lever says
-              how tight it is set — and because the calorie target moving by 70
-              overnight with nothing on the dashboard naming the cause is how a
-              deliberate change reads as a bug. */}
-          <LeverTag compact />
-        </div>
+        <PlanPhaseTags />
       </div>
     </header>
   )
