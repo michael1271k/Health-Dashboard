@@ -104,8 +104,12 @@ for (const vp of VIEWPORTS) {
     expect(bar.title).toBe('Legs & Core B')
     expect(bar.titleLines, 'the collapsed title wraps').toBe(1)
     expect(bar.stacked, 'the collapsed bar is not two lines').toBe(true)
-    // Back and the muscle figure. Nothing else earns a permanent target here.
-    expect(bar.buttons).toBe(2)
+    // Back, the muscle figure, and Finish — which moved up here deliberately
+    // (see the "Finish at the top" change) because ending a session from the
+    // bottom of a long deck meant scrolling past every set to stop. This
+    // assertion said 2 and has been red since that move; three is the intent.
+    // Nothing else earns a permanent target here.
+    expect(bar.buttons).toBe(3)
 
     // And it never pushes the page sideways.
     const overflow = await page.evaluate(() => ({

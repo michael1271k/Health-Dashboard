@@ -14,7 +14,9 @@ test('root page redirects to auth or renders dashboard', async ({ page }) => {
   await page.goto('/')
   await expect(page).not.toHaveURL(/error/)
   const title = await page.title()
-  expect(title).toContain('HELIX')
+  // "Helix", not "HELIX": the display name was lowercased across the app, the
+  // manifest and both iOS targets on 2026-08-24.
+  expect(title).toContain('Helix')
 })
 
 test('unauthenticated / never renders a blank dashboard — AuthGate redirects to /auth', async ({ page }) => {
