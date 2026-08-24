@@ -2515,7 +2515,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/set-rows.html": {
-    "mtime": 1787576400.6580722,
+    "mtime": 1787576927.5947511,
     "ast_hash": "86569f2f098580e6a062f0ce9f52fa2b",
     "semantic_hash": ""
   },
@@ -2545,7 +2545,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-ledger.html": {
-    "mtime": 1787562439.9564652,
+    "mtime": 1787576848.8450763,
     "ast_hash": "6f50fa4f2aeaf92cc98b2ce5890d0d48",
     "semantic_hash": ""
   },
@@ -2580,7 +2580,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/live-header.html": {
-    "mtime": 1787576680.731721,
+    "mtime": 1787576927.777633,
     "ast_hash": "27a12ba43b60a759107973174594ff32",
     "semantic_hash": ""
   },
@@ -2650,7 +2650,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-summary-header.html": {
-    "mtime": 1787562440.2601304,
+    "mtime": 1787576849.7212074,
     "ast_hash": "bdbbab0641faf576b6e46b58cbc1ceaa",
     "semantic_hash": ""
   },
@@ -2695,8 +2695,8 @@
     "semantic_hash": ""
   },
   "src/components/session-detail/SessionSnippet.tsx": {
-    "mtime": 1787559960.3979266,
-    "ast_hash": "4d4e827df6d1f39e287250e38108f189",
+    "mtime": 1787576828.8665931,
+    "ast_hash": "538b086147f3b7e00d718e0def1b3850",
     "semantic_hash": ""
   },
   "src/components/PlanPhaseTags.tsx": {
@@ -2755,8 +2755,8 @@
     "semantic_hash": ""
   },
   "src/lib/sessions/restClock.ts": {
-    "mtime": 1787576588.6184084,
-    "ast_hash": "2affa052d89a73fda119ce331267e4b3",
+    "mtime": 1787576732.3121326,
+    "ast_hash": "7f6258b6e3d2b6abcbff8031dce6ae97",
     "semantic_hash": ""
   },
   "src/components/command-center/RestTimer.tsx": {

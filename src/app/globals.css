@@ -434,7 +434,8 @@ html[data-bottom-nav='false'] { --nav-height: 0rem; }
    the bottom chrome budget too — otherwise the last element on every page
    scrolls to a stop underneath it. Set by `LiveSessionPill`, the same way
    `data-bottom-nav` is set by `BottomNav`: an attribute rather than :has(), so
-   it is deterministic and togglable in devtools. */
+   it is deterministic and togglable in devtools.
+
    The value is the pill's own min-height plus the 0.375rem it floats above the
    tab bar — 62px + 6px. It moves when that min-height does. */
 html[data-live-pill='true'] { --pill-height: 4.25rem; }
