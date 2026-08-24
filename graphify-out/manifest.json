@@ -20,8 +20,8 @@
     "semantic_hash": "ed886e8602e8a042f8f9f4180d4ab8e9"
   },
   "e2e/smoke.test.ts": {
-    "mtime": 1786543865.154019,
-    "ast_hash": "5b26ad6157d42645d22c5ca5d50ef9a7",
+    "mtime": 1787562533.7503493,
+    "ast_hash": "d7c5cbe95420af5e0bdc8e79c25ad68d",
     "semantic_hash": ""
   },
   "eslint.config.mjs": {
@@ -190,8 +190,8 @@
     "semantic_hash": ""
   },
   "src/app/(dashboard)/settings/page.tsx": {
-    "mtime": 1787561033.5903842,
-    "ast_hash": "24c58813680b3ead844daba75414bb29",
+    "mtime": 1787562366.1342978,
+    "ast_hash": "8998cbe1e7eafb41127f4c42478fd713",
     "semantic_hash": ""
   },
   "src/app/(dashboard)/workout/page.tsx": {
@@ -235,8 +235,8 @@
     "semantic_hash": ""
   },
   "src/app/day/[date]/page.tsx": {
-    "mtime": 1787560063.052163,
-    "ast_hash": "d029e6e87aee81ab56366f615cc9462d",
+    "mtime": 1787562234.6311243,
+    "ast_hash": "3b7303dba79f7ba18fb6a21b3f29d510",
     "semantic_hash": ""
   },
   "src/app/global-error.tsx": {
@@ -415,8 +415,8 @@
     "semantic_hash": ""
   },
   "src/components/day/CardioLogger.tsx": {
-    "mtime": 1787560287.7359765,
-    "ast_hash": "afb97dff76659275b48bebb7a294bd77",
+    "mtime": 1787562222.933708,
+    "ast_hash": "4ac7be20353a9cf771934faf1a11d358",
     "semantic_hash": ""
   },
   "src/components/day/CompletenessArc.tsx": {
@@ -425,8 +425,8 @@
     "semantic_hash": "b9c83460809c2c7f5aa4f4da9fbc2b31"
   },
   "src/components/day/RecoveryTrackers.tsx": {
-    "mtime": 1787560320.096751,
-    "ast_hash": "b81de081b38285796c47cceeccefd5e2",
+    "mtime": 1787562262.3010437,
+    "ast_hash": "670f2799f30925afc687a3b6313eff80",
     "semantic_hash": ""
   },
   "src/components/day/ScheduleShortcut.tsx": {
@@ -1770,8 +1770,8 @@
     "semantic_hash": ""
   },
   "src/tests/query-key-coverage.test.ts": {
-    "mtime": 1786698213.9238718,
-    "ast_hash": "05c71adc45a4d3f5a5b6bfef02646dc2",
+    "mtime": 1787562438.140704,
+    "ast_hash": "1494399a1c586424f80262e9b406a1c0",
     "semantic_hash": ""
   },
   "src/tests/goal-autoheal.test.ts": {
@@ -2420,8 +2420,8 @@
     "semantic_hash": ""
   },
   "src/components/command-center/LiveSessionBar.tsx": {
-    "mtime": 1787490682.026973,
-    "ast_hash": "b32f7bfafd2dec1ae286b3adef594969",
+    "mtime": 1787562136.4896708,
+    "ast_hash": "ea38b6141804ae5340f0d1cd49fa571d",
     "semantic_hash": ""
   },
   "src/components/exercises/ExerciseLedger.tsx": {
@@ -2520,7 +2520,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/set-rows.html": {
-    "mtime": 1787561383.8206987,
+    "mtime": 1787562441.4488807,
     "ast_hash": "86569f2f098580e6a062f0ce9f52fa2b",
     "semantic_hash": ""
   },
@@ -2550,7 +2550,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-ledger.html": {
-    "mtime": 1787561382.1242633,
+    "mtime": 1787562439.9564652,
     "ast_hash": "6f50fa4f2aeaf92cc98b2ce5890d0d48",
     "semantic_hash": ""
   },
@@ -2580,13 +2580,13 @@
     "semantic_hash": ""
   },
   "e2e/live-header.spec.ts": {
-    "mtime": 1787319445.682477,
-    "ast_hash": "0bb49322bd14e5bfeae29218e6922346",
+    "mtime": 1787561754.7696266,
+    "ast_hash": "1b27fa2b0be2d74bfdbeae345686120a",
     "semantic_hash": ""
   },
   "e2e/__fixtures__/live-header.html": {
-    "mtime": 1787561382.1254635,
-    "ast_hash": "9a21908c845da7f88c47733ff0a81ed3",
+    "mtime": 1787562439.8961523,
+    "ast_hash": "fbb8350d01403759be6f8f34fbe8f84a",
     "semantic_hash": ""
   },
   "src/tests/hevy-parity.test.ts": {
@@ -2655,7 +2655,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-summary-header.html": {
-    "mtime": 1787561382.8167114,
+    "mtime": 1787562440.2601304,
     "ast_hash": "bdbbab0641faf576b6e46b58cbc1ceaa",
     "semantic_hash": ""
   },
@@ -2720,8 +2720,8 @@
     "semantic_hash": ""
   },
   "src/components/settings/RoutineList.tsx": {
-    "mtime": 1787561017.8251665,
-    "ast_hash": "7888ebfa780c82fd979f1fa1587b43a5",
+    "mtime": 1787562366.1344376,
+    "ast_hash": "8f0a94842dcc354027e180bafa56b444",
     "semantic_hash": ""
   },
   "src/components/settings/SettingsRows.tsx": {
@@ -2747,6 +2747,11 @@
   "src/tests/dashboard-layout.test.ts": {
     "mtime": 1787561371.6629846,
     "ast_hash": "c55d1da32238ed12c0e577fea5114e42",
+    "semantic_hash": ""
+  },
+  "src/lib/hooks/useSettingsGoals.ts": {
+    "mtime": 1787562394.0008774,
+    "ast_hash": "1b7d5b0eb67d8246b153aa1c6da1e22c",
     "semantic_hash": ""
   }
 }

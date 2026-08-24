@@ -25,7 +25,11 @@ test('unauthenticated / never renders a blank dashboard — AuthGate redirects t
   await page.context().clearCookies()
   await page.goto('/')
   await page.waitForURL(/\/auth/, { timeout: 30_000 })
-  await expect(page.getByRole('button', { name: /continue as/i })).toBeVisible()
+  // The dev server compiles /auth on first request, and under the full parallel
+  // run several specs ask for it at once — so the redirect lands before the
+  // button's chunk does. Playwright's default 5s assertion timeout is a bet on
+  // compile speed, not on the app; this waits for the page to actually be there.
+  await expect(page.getByRole('button', { name: /continue as/i })).toBeVisible({ timeout: 30_000 })
 })
 
 test('/api/version serves the deploy heartbeat with no-store', async ({ request }) => {

@@ -97,12 +97,22 @@ export const LiveSessionBar = memo(function LiveSessionBar({
           </h1>
           {/* Line two: everything that moves while you lift. Inline rather than
               in columns — at this size three stacked label/value pairs is six
-              lines of type in a 34px strip. */}
+              lines of type in a 34px strip.
+
+              ── AND THE INTERPUNCTS ARE GONE ──
+              At 360px the worst realistic line — a five-figure tonnage, a
+              two-digit set count and a PR count — needed 191px in a 168px box,
+              so `truncate` ate the end of it: the PR count, which is the one
+              figure on this line you would stop lifting to look at.
+
+              Two dots and their four flanking gaps were 24px of that. Each
+              Stat already ends in its own unit ("kg", "sets", "PRs"), which is
+              a stronger boundary than a 4px glyph — the separator was
+              decorating a distinction the type already made. What is left fits,
+              with room for a six-figure tonnage. */}
           <p className="flex items-center gap-2 text-[12px] leading-tight text-muted truncate">
             <Stat value={fmtVolume(volumeKg)} unit="kg" color={EMBER} />
-            <Dot />
             <Stat value={String(sets)} unit={sets === 1 ? 'set' : 'sets'} color={STEEL} />
-            <Dot />
             <Stat
               value={recordCount > 0 ? String(recordCount) : '—'}
               unit={recordCount === 1 ? 'PR' : 'PRs'}
@@ -126,8 +136,4 @@ function Stat({ value, unit, color }: { value: string; unit: string; color: stri
       {value}<span className="font-normal opacity-70 ml-0.5">{unit}</span>
     </span>
   )
-}
-
-function Dot() {
-  return <span className="opacity-30" aria-hidden="true">·</span>
 }

@@ -42,7 +42,20 @@ const KINDS = [
  * personal_records — that table is the lifting ledger with an asserted history,
  * and cardio's axes don't belong to its vocabulary.
  */
-export function CardioLogger({ date, hkActiveEnergy }: { date: string; hkActiveEnergy?: number | null }) {
+export function CardioLogger({ date, hkActiveEnergy, bare }: {
+  date: string
+  hkActiveEnergy?: number | null
+  /**
+   * Render the rows WITHOUT the surrounding Zone.
+   *
+   * Cardio and soreness are one section now — "Recovery" — because they are two
+   * readings of the same thing and two consecutive bands each 44px tall, each
+   * with its own uppercase label, spent more of the strip announcing themselves
+   * than reporting. The band belongs to the caller in that arrangement, so this
+   * draws its own compact header line instead of the Zone's.
+   */
+  bare?: boolean
+}) {
   const { data: logs } = useCardioLogs(date)
   const { data: history } = useCardioHistory()
   const { data: zone2 } = useZone2Week(date)
@@ -102,12 +115,13 @@ export function CardioLogger({ date, hkActiveEnergy }: { date: string; hkActiveE
   const accent = kind === 'run' ? EMBER : EMERALD
   const lastKm = last?.distance_m != null ? Math.round((last.distance_m / 1000) * 100) / 100 : null
 
-  return (
-    /* The Zone lives HERE, not at the call site, because the `+` belongs in its
-       header: an action that opens the form is a property of the section, and a
-       button floating inside the content to open a form below itself was a
-       control describing its own container. */
-    <Zone label="Cardio" accent={EMERALD} action={
+  /**
+   * The section's two controls: the week's Zone-2 progress, and the `+` that
+   * opens the form. They belong in a header rather than loose in the content —
+   * an action that opens a form is a property of the section, and a button
+   * floating above the form it opens is a control describing its own container.
+   */
+  const controls = (
       <span className="flex items-center gap-2.5">
         {/* Zone 2, inline. This was a tinted, bordered, full-width block with a
             heart icon, a title, a subtitle and a fraction — a card to say "1 of
@@ -129,7 +143,19 @@ export function CardioLogger({ date, hkActiveEnergy }: { date: string; hkActiveE
           <Plus className="w-3.5 h-3.5" />
         </button>
       </span>
-    }>
+  )
+
+  const body = (
+    <>
+      {/* In `bare` mode the section header the Zone would have drawn is drawn
+          here instead, because the band above now belongs to Recovery as a
+          whole and Cardio is one of the two things in it. */}
+      {bare && (
+        <div className="flex items-center gap-2 px-3 pt-2">
+          <span className="text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: EMERALD }}>Cardio</span>
+          <span className="ml-auto">{controls}</span>
+        </div>
+      )}
       <div className="px-3 py-2 space-y-2">
       {entries.length > 0 ? (
         <div className="space-y-1.5">
@@ -218,6 +244,12 @@ export function CardioLogger({ date, hkActiveEnergy }: { date: string; hkActiveE
         </p>
       )}
       </div>
+    </>
+  )
+
+  return (
+    <>
+      {bare ? body : <Zone label="Cardio" accent={EMERALD} action={controls}>{body}</Zone>}
 
       {/* THE FORM IS A DRAWER. Inline, it pushed the day's own entries — the
           thing you came to read — below a five-field form that is open on the
@@ -318,6 +350,6 @@ export function CardioLogger({ date, hkActiveEnergy }: { date: string; hkActiveE
           {add.isError && <p className="text-danger text-[11px]">{add.error instanceof Error && /relation|does not exist|schema cache/i.test(add.error.message) ? 'Run the cardio_logs paste-SQL first.' : 'Could not log.'}</p>}
         </div>
       </Sheet>
-    </Zone>
+    </>
   )
 }

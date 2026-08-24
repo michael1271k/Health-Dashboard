@@ -378,14 +378,19 @@ export default function DailyNexusPage() {
         <BodyBand log={log ?? null} onOpen={() => setSheet('body')} />
       </Zone>
 
-      {/* Cardio ABOVE soreness, because it is a thing you LOG and soreness is a
-          thing you report. The logging surfaces belong together and near the
-          top of the ones you scroll to; DOMS is a 24–72h retrospective and is
-          the last thing you touch on the day it applies to. */}
-      <CardioLogger date={date} hkActiveEnergy={log?.active_energy ?? null} />
+      {/* ── RECOVERY · one band, two readings ──
+          Cardio and soreness were two consecutive bands, each 44px tall, each
+          spending its first line on an uppercase label announcing itself. They
+          are two readings of the same question — what state is the body in
+          today — so they are one section, and the rows inside say what they
+          are without a heading each.
 
-      {/* Recovery inputs — soreness 24–72h post-session, on the body map */}
-      <Zone label="Soreness" accent={EMBER}>
+          Cardio stays ABOVE soreness within it, because it is a thing you LOG
+          and soreness is a thing you REPORT: the logging surface belongs where
+          you scroll to first, and DOMS is a 24–72h retrospective you touch last
+          on the day it applies to. */}
+      <Zone label="Recovery" accent={EMERALD}>
+        <CardioLogger date={date} hkActiveEnergy={log?.active_energy ?? null} bare />
         <DomsTracker date={date} />
       </Zone>
 

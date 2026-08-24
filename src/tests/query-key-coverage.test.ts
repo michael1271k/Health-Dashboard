@@ -100,7 +100,8 @@ describe('every invalidated key prefix has a consumer', () => {
     for (const [path, name] of [
       ['src/lib/hooks/useMacroOverride.ts', 'const CASCADE_KEYS'],
       ['src/lib/hooks/useWaterOverride.ts', 'const CASCADE_KEYS'],
-      ['src/app/(dashboard)/settings/page.tsx', 'const PLAN_PHASE_CASCADE_KEYS'],
+      // Moved out of the page with the rest of the settings write paths.
+      ['src/lib/hooks/useSettingsGoals.ts', 'const PLAN_PHASE_CASCADE_KEYS'],
     ] as const) {
       const roots = declaredList(path, name)
       expect(roots.length).toBeGreaterThan(3)

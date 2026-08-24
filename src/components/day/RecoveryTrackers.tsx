@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Activity, Dumbbell, ChevronRight } from 'lucide-react'
+import { Dumbbell, ChevronRight } from 'lucide-react'
 import { useDoms, useLogDoms, useDomsSources, DOMS_MUSCLES, DOMS_LEVELS, type DomsMuscle } from '@/lib/hooks/useRecovery'
 import { EMBER, MUTED, HAIRLINE } from '@/lib/theme/palette'
 import { Sheet } from '@/components/ui/Sheet'
@@ -151,9 +151,13 @@ export function DomsTracker({ date }: { date: string }) {
       <ZoneRow divide={false} asButton onClick={() => setOpen(true)}
         title="Rate today's soreness"
         className="min-h-[44px] flex items-center gap-2">
+        {/* The label the Zone used to draw. Soreness shares its band with cardio
+            now — see the Recovery band on the day page — so the row says what it
+            is, in the same 10px uppercase the band labels use. The severity
+            colour moved onto the count, which is the thing being graded. */}
+        <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted shrink-0">Soreness</span>
         {sore.length > 0 ? (
           <>
-            <Activity className="w-3.5 h-3.5 shrink-0" style={{ color: SEVERITY_COLOR[peak] }} aria-hidden="true" />
             <span className="text-fluid-xs font-semibold shrink-0" style={{ color: SEVERITY_COLOR[peak] }}>
               {sore.length} sore
             </span>
@@ -172,7 +176,6 @@ export function DomsTracker({ date }: { date: string }) {
           </>
         ) : (
           <>
-            <Activity className="w-3.5 h-3.5 shrink-0 text-muted" aria-hidden="true" />
             <span className="text-fluid-xs text-text/80">No soreness logged</span>
             {/* The word "Rate" was doing a chevron's job. Every other tappable
                 row on this page ends in one, and a row that ends in a verb

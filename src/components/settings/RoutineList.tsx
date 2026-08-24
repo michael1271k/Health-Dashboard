@@ -21,12 +21,14 @@ const WD_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
  * The rep window still comes from the programme: it is the TARGET, and a
  * template records what happened, not what to aim for.
  */
-export function RoutineList({ planId, phase, templates, isActive }: {
+export function RoutineList({ planId, phase, isActive }: {
   planId: string
   phase: NutritionMode
-  templates: ReturnType<typeof useRoutineTemplates>['data']
   isActive: boolean
 }) {
+  // Read here rather than handed down: the page was fetching this only to pass
+  // it through, which put a query in the page for a component that could ask.
+  const { data: templates } = useRoutineTemplates()
   const phaseDays = activeProgram(planId, phase).days
   const routineSig = (d: (typeof phaseDays)[number]) =>
     d.exercises.map((e) => `${e.name}·${e.sets}×${e.reps}`).join('|')
