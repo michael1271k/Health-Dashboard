@@ -789,13 +789,17 @@ export function Heatmap({ days, weeks, cell = 7, gap = 2 }: {
                 style={{
                   width: cell,
                   height: cell,
+                  // A rest day is the SAME hue at a lower opacity rather than a
+                  // hex with an alpha suffix: the two states have to be visibly
+                  // the same colour to read as "both kept", and `opacity` says
+                  // that in one property instead of a second colour value that
+                  // has to be kept in step with the first.
                   background: !d || d.state === 'future'
                     ? 'rgba(255,255,255,0.04)'
-                    : d.state === 'trained'
-                      ? (d.color ?? EMERALD)
-                      : d.state === 'rest'
-                        ? `${d.color ?? EMERALD}42`
-                        : 'transparent',
+                    : d.state === 'missed'
+                      ? 'transparent'
+                      : (d.color ?? EMERALD),
+                  opacity: d?.state === 'rest' ? 0.26 : 1,
                   border: d && d.state === 'missed' ? '1px solid rgba(255,255,255,0.16)' : undefined,
                 }}
               />
