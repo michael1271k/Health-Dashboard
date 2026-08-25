@@ -79,6 +79,22 @@ export function WidgetGrid({ children }: {
 
   const [editing, setEditing] = useState(false)
   const [dragging, setDragging] = useState<string | null>(null)
+  /**
+   * Which face each stack is currently showing, by slot id.
+   *
+   * It lives up here rather than inside the tile because the DRAG OVERLAY needs
+   * it: the overlay is a second render of the tile you are holding, mounted
+   * outside the grid, and without this it would draw face one while the tile
+   * under your finger was showing face three. Slots that have never been turned
+   * simply have no entry.
+   */
+  const [faces, setFaces] = useState<Record<string, number>>({})
+  const setFace = useCallback((slotId: string, next: number | ((f: number) => number)) => {
+    setFaces((prev) => {
+      const at = prev[slotId] ?? 0
+      return { ...prev, [slotId]: typeof next === 'function' ? next(at) : next }
+    })
+  }, [])
   const [mergeTarget, setMergeTarget] = useState<string | null>(null)
   const reduced = useHelixReducedMotion()
 
@@ -222,6 +238,8 @@ export function WidgetGrid({ children }: {
                 editing={editing}
                 reduced={reduced}
                 merging={mergeTarget === slot.id}
+                face={Math.min(faces[slot.id] ?? 0, slot.items.length - 1)}
+                onFace={setFace}
                 onResize={() => resize(slot.id)}
                 onDropFace={(i) => drop(slot.id, i)}
                 onSplitFace={(i) => split(slot.id, i)}
@@ -237,7 +255,10 @@ export function WidgetGrid({ children }: {
         <DragOverlay dropAnimation={{ duration: 220, easing: 'cubic-bezier(0.2, 0, 0, 1)' }}>
           {draggedSlot ? (
             <div className="h-full opacity-95 rounded-2xl shadow-[0_12px_32px_rgba(0,0,0,0.5)]">
-              {children(draggedSlot.items[0], draggedSlot.size)}
+              {children(
+                draggedSlot.items[Math.min(faces[draggedSlot.id] ?? 0, draggedSlot.items.length - 1)],
+                draggedSlot.size,
+              )}
             </div>
           ) : null}
         </DragOverlay>
@@ -296,25 +317,29 @@ export function WidgetGrid({ children }: {
 
 const SIZE_WORD: Record<WidgetSize, string> = { s: 'S', m: 'M', l: 'L' }
 
-function SortableSlot({ slot, editing, reduced, merging, onResize, onDropFace, onSplitFace, children }: {
+function SortableSlot({ slot, editing, reduced, merging, face, onFace, onResize, onDropFace, onSplitFace, children }: {
   slot: StackSlot
   editing: boolean
   reduced: boolean
   /** This tile is the one a held drag is offering to stack onto. */
   merging: boolean
+  /** Which face is up. Owned by the grid so the drag overlay can read it too. */
+  face: number
+  onFace: (slotId: string, next: number | ((f: number) => number)) => void
   onResize: () => void
   onDropFace: (index: number) => void
   onSplitFace: (index: number) => void
   children: (id: WidgetId, size: WidgetSize) => React.ReactNode
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: slot.id })
-  const [face, setFace] = useState(0)
-  const stacked = slot.items.length > 1
   const canResize = sizesFor(slot.items).length > 1
-
   // A stack that lost a face must not keep pointing past the end of itself.
   const at = Math.min(face, slot.items.length - 1)
-  useEffect(() => { setFace((f) => Math.min(f, slot.items.length - 1)) }, [slot.items.length])
+  const setFace = useCallback(
+    (next: number | ((f: number) => number)) => onFace(slot.id, next),
+    [onFace, slot.id],
+  )
+  const stacked = slot.items.length > 1
 
   return (
     <m.div
