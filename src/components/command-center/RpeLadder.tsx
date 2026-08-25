@@ -49,8 +49,27 @@ import { EMBER } from '@/lib/theme/palette'
  * The stored number did not move — see `RPE_LADDER` in `lib/training/effort`
  * for why that relabel is the whole of the change to existing data.
  */
-export function RpeLadder({ value, stale, seeded, onPick, setLabel }: {
+export function RpeLadder({ value, seedValue, stale, seeded, onPick, setLabel }: {
   value: number | null | undefined
+  /**
+   * The remembered rating, when memory has withdrawn it from `value`.
+   *
+   * ── A WITHDRAWN RATING IS STILL A NUMBER ON THE SCREEN ─────────────────────
+   * `resolveSeededRpe` clears `rpe` the moment the work gets harder, which is
+   * correct for what gets SAVED — an inherited rating must never claim a
+   * heavier set felt identical. It was catastrophic for what gets DRAWN. The
+   * readout fell to "Not rated", the pips went dark, and the ± steppers — gated
+   * on a rating existing — unmounted entirely. Adding one rep to a set showing
+   * "10 · Failure" made the number, the word and both controls that could put
+   * them back disappear in the same frame.
+   *
+   * So the value stays rendered, as a GHOST: dim, marked `confirm`, one tap or
+   * one nudge from being yours. Nothing is saved from it — `value` is still
+   * undefined until you answer — but the question is asked with the answer it
+   * expects already in the box, which is the difference between prompting
+   * someone and deleting their work.
+   */
+  seedValue?: number | null
   /** Cleared because the load or the reps went up — this set wants a fresh rating. */
   stale?: boolean
   /** The value came from memory and has not been confirmed. Rendered dimmer. */
@@ -64,9 +83,14 @@ export function RpeLadder({ value, stale, seeded, onPick, setLabel }: {
   setLabel: string
 }) {
   const reduce = useHelixReducedMotion()
-  const lit = rpeStopIndex(value)
   const rated = value != null
-  const color = rpeColor(value)
+  /** The number the control is ABOUT: yours if you gave one, memory's if not. */
+  const ghost = !rated && seedValue != null ? seedValue : null
+  const shown = rated ? value : ghost
+  const lit = rpeStopIndex(shown)
+  const color = rpeColor(shown)
+  /** Dim whenever the number on screen has not been affirmed by a tap. */
+  const dim = seeded || ghost != null
 
   return (
     /**
@@ -86,11 +110,19 @@ export function RpeLadder({ value, stale, seeded, onPick, setLabel }: {
             to someone who has not memorised the ladder, and the label is the
             whole point of having one. No `truncate`: it is on its own line now
             and there is nothing for it to lose a fight with. */}
-        <span
-          className="text-[10px] font-bold uppercase tracking-wide text-right"
-          style={{ color: rated ? color : 'var(--color-muted)', opacity: seeded ? 0.65 : 1 }}
-        >
-          {rated ? `${value} · ${rpeLabel(value)}` : stale ? 'Rate this' : 'Not rated'}
+        <span className="text-[10px] font-bold uppercase tracking-wide text-right">
+          {shown != null ? (
+            <>
+              <span style={{ color, opacity: dim ? 0.65 : 1 }}>{`${shown} · ${rpeLabel(shown)}`}</span>
+              {/* The ghost says what it is. Without this the dim treatment alone
+                  reads as "rated, slightly greyed" rather than as a question,
+                  and the whole point of keeping the number is that the reader
+                  knows it is waiting on them. */}
+              {ghost != null && <span style={{ color: EMBER }}>{' · confirm'}</span>}
+            </>
+          ) : (
+            <span style={{ color: 'var(--color-muted)' }}>{stale ? 'Rate this' : 'Not rated'}</span>
+          )}
         </span>
       </div>
 
@@ -144,7 +176,7 @@ export function RpeLadder({ value, stale, seeded, onPick, setLabel }: {
                   width: active ? 9 : 5,
                   height: active ? 9 : 5,
                   background: filled ? rpeColor(stop.value) : 'rgba(255,255,255,0.16)',
-                  opacity: filled && seeded && !active ? 0.5 : 1,
+                  opacity: filled && dim && !active ? 0.5 : 1,
                   boxShadow: active ? `0 0 8px ${rpeColor(stop.value)}99` : undefined,
                 }}
               />
@@ -155,7 +187,7 @@ export function RpeLadder({ value, stale, seeded, onPick, setLabel }: {
 
       {/* The load went up and the inherited rating went with it. One dot, no
           banner — enough to say this set wants an answer without interrupting. */}
-      {stale && !rated && (
+      {stale && shown == null && (
         <span
           className="w-1.5 h-1.5 rounded-full shrink-0"
           style={{ background: EMBER }}
@@ -163,9 +195,14 @@ export function RpeLadder({ value, stale, seeded, onPick, setLabel }: {
         />
       )}
 
-      {/* Half-step steppers. Only once a rating exists — they adjust a value,
-          they do not invent one. */}
-      {rated && (
+      {/* ── Half-step steppers ──
+          They render whenever there is a NUMBER to adjust, not only when that
+          number is a saved rating. Gating them on `rated` is what made them
+          vanish at the exact moment they were needed: memory withdrew the
+          rating, and the two controls that could restore it went with it.
+          Nudging a ghost commits it — `onPick` releases the seed, so the value
+          becomes yours the instant you touch it. */}
+      {shown != null && (
         <span className="flex items-center gap-0.5 ml-auto shrink-0">
           {([-1, 1] as const).map((dir) => (
             <button
@@ -173,7 +210,7 @@ export function RpeLadder({ value, stale, seeded, onPick, setLabel }: {
               type="button"
               onPointerDown={() => { void tapLight() }}
               onClick={() => {
-                const next = nudgeRpe(value, dir)
+                const next = nudgeRpe(shown, dir)
                 if (next != null && next !== value) onPick({ rpe: next })
               }}
               aria-label={`${dir > 0 ? 'Increase' : 'Decrease'} effort for ${setLabel} by half a point`}

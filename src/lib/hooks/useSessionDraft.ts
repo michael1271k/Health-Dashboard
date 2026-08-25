@@ -253,9 +253,16 @@ export function useSessionDraft() {
         // The tick used to also stamp `doneAt`, which fed the live rest
         // stopwatch and, on commit, `workout_sets.rest_sec`. Both are gone —
         // rest is a TARGET the plan prescribes now, not a gap this app times.
+        // ── THE TICK GOES THROUGH `applySetPatch` LIKE EVERY OTHER EDIT ──
+        // It was a bare spread, and `applySetPatch`'s own header says every
+        // path that edits a set calls it — this was the path that did not. The
+        // rule it was skipping is the one that makes a committed rating yours:
+        // without it, a set you had ticked green at "10 · Failure" still held
+        // last session's seed, so the next rep added to it withdrew the rating
+        // from a set already declared finished.
         const sets = ex.sets.map((s, i) => {
-          if (i === setIdx) return { ...s, done: next }
-          if (target.pairId && s.pairId === target.pairId) return { ...s, done: next }
+          if (i === setIdx) return applySetPatch(s, { done: next })
+          if (target.pairId && s.pairId === target.pairId) return applySetPatch(s, { done: next })
           return s
         })
         return { ...ex, sets }

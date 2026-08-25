@@ -241,6 +241,28 @@ export function applySetPatch(set: DraftSet, patch: Partial<DraftSet>): DraftSet
    * never overwritten — those are separate declarations about the set, not
    * statements about effort.
    */
+  /**
+   * ── A TICKED SET IS A REPORT, NOT A PROPOSAL ───────────────────────────────
+   * The tick is the single assertion this app makes about what happened on the
+   * gym floor. Until now it changed nothing about the rating's STANDING: a set
+   * you had ticked green at "10 · Failure" was still holding last session's
+   * seed, so the next rep you added to it re-ran `applyRpeMemory`, found the
+   * work harder than the seed was earned against, and withdrew the rating from
+   * a set you had already declared finished.
+   *
+   * Committing the set therefore takes ownership of the rating on it, exactly
+   * as tapping a stop does. From then on the number is yours and memory has no
+   * further say.
+   *
+   * Guarded on there BEING a rating. A set ticked while its proposal is
+   * unconfirmed (`rpeStale`) must keep both the seed and the staleness — the
+   * ladder still shows the remembered value as a ghost you can confirm in one
+   * tap, and the set still commits unrated until you do. Releasing the seed
+   * there would destroy the only copy of the number and silently answer a
+   * question the user has not answered.
+   */
+  if (patch.done === true && next.rpe != null) next = releaseRpeSeed(next)
+
   if ('rpe' in patch && !('setType' in patch)) {
     if (next.rpe === FAILURE_RPE && next.setType === undefined) next = { ...next, setType: 'failure' }
     else if (next.rpe !== FAILURE_RPE && next.setType === 'failure') {

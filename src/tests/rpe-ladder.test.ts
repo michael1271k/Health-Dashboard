@@ -565,3 +565,82 @@ describe('applySetPatch — the rules a split set must get too', () => {
     expect(out.setType).toBe('failure')
   })
 })
+
+/**
+ * ── THE VANISHING FAILURE TAG, ROUND THREE ──────────────────────────────────
+ *
+ * Reported against Lateral Raise Cable, set 3: 3.75 kg × 16 @ 10 (Failure).
+ * Add one rep and the readout, the word and both ± steppers left the screen in
+ * the same frame.
+ *
+ * The first fix made TAPPING a seeded stop take ownership. It was correct and
+ * it was not the reported gesture — the reported gesture is the rep stepper,
+ * which never touches the rating at all. What actually happened is that
+ * `resolveSeededRpe` withdrew the inherited value the moment 17 > 16, which is
+ * right for the SAVE and was catastrophic for the SCREEN: the number was the
+ * only copy of itself, and the control that could restore it was gated on the
+ * number existing.
+ *
+ * Two rules now stand between the user and that:
+ *   1. A set you have TICKED owns its rating — memory has no further say.
+ *   2. A withdrawn rating is still drawn, as an unconfirmed ghost, and its
+ *      controls stay mounted. `rpe` stays undefined until it is affirmed, so
+ *      nothing dishonest is ever saved.
+ */
+describe('a rating never disappears from a set you are logging', () => {
+  const lateralRaise = (): DraftSet => ({
+    weightKg: 3.75, reps: 16, rpe: 10, setType: 'failure',
+    rpeSeed: 10, rpeSeedWeightKg: 3.75, rpeSeedReps: 16, done: false,
+  })
+
+  it('keeps the remembered value reachable when a rep bump withdraws it', () => {
+    const out = cascadeSetEdit([lateralRaise()], 0, { reps: 17 })[0]
+    // Withdrawn from the save, exactly as before — an inherited 10 must never
+    // claim that 17 reps felt like 16 did.
+    expect(out.rpe).toBeUndefined()
+    expect(out.rpeStale).toBe(true)
+    // But still on the set, which is what the ladder draws its ghost from. This
+    // is the assertion the old build could not make: the number survived only
+    // inside `rpeSeed`, and nothing rendered `rpeSeed`.
+    expect(out.rpeSeed).toBe(10)
+  })
+
+  it('lets one tap on the ghost make it the user’s own', () => {
+    const stale = cascadeSetEdit([lateralRaise()], 0, { reps: 17 })[0]
+    const confirmed = cascadeSetEdit([stale], 0, { rpe: 10 })[0]
+    expect(confirmed.rpe).toBe(10)
+    expect(confirmed.rpeSeed).toBeUndefined()
+    expect(confirmed.rpeStale).toBeUndefined()
+    expect(confirmed.setType).toBe('failure')
+    // And now it is immovable: more reps cannot take it back off.
+    expect(cascadeSetEdit([confirmed], 0, { reps: 18 })[0].rpe).toBe(10)
+  })
+
+  it('freezes the rating the moment the set is ticked green', () => {
+    // The gesture that used to leave it exposed. `toggleSetDone` sent a bare
+    // spread, so none of the per-set rules ran and the seed stayed in charge of
+    // a set the user had already declared finished.
+    const ticked = applySetPatch(lateralRaise(), { done: true })
+    expect(ticked.rpeSeed).toBeUndefined()
+    const after = cascadeSetEdit([ticked], 0, { reps: 17 })[0]
+    expect(after.rpe).toBe(10)
+    expect(after.setType).toBe('failure')
+    expect(after.rpeStale).toBeUndefined()
+  })
+
+  it('does not answer the question for you when the ghost is still unconfirmed', () => {
+    // Ticking a set whose proposal has already been withdrawn must NOT adopt
+    // the proposal — that is the lie the whole memory system exists to prevent.
+    // The seed stays so the ghost stays offerable; the rating stays absent.
+    const stale = cascadeSetEdit([lateralRaise()], 0, { reps: 17 })[0]
+    const ticked = applySetPatch(stale, { done: true })
+    expect(ticked.rpe).toBeUndefined()
+    expect(ticked.rpeSeed).toBe(10)
+    expect(ticked.rpeStale).toBe(true)
+  })
+
+  it('leaves an unrated set unrated when it is ticked', () => {
+    const plain: DraftSet = { weightKg: 40, reps: 12, done: false }
+    expect(applySetPatch(plain, { done: true })).toEqual({ weightKg: 40, reps: 12, done: true })
+  })
+})

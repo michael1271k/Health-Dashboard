@@ -393,6 +393,22 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
                 >
                   {set.rpe}
                 </span>
+              ) : set.rpeStale && set.rpeSeed != null ? (
+                /* ── THE WITHDRAWN RATING, STILL LEGIBLE ──
+                   This was a bare 1.5px dot: a set reading "10" lost its number
+                   the moment you added a rep, and the replacement said only
+                   that SOMETHING wanted answering, not what it had been. The
+                   number stays, dim and dashed — the dash is what tells the two
+                   states apart in a 28px column, where a second glyph will not
+                   fit and a colour change alone would read as a different
+                   rating rather than an unconfirmed one. */
+                <span
+                  style={{ color: rpeColor(set.rpeSeed), opacity: 0.45, borderBottom: `1px dashed ${ORANGE}` }}
+                  title={`${rpeLabel(set.rpeSeed)} — carried from last session and no longer matches this set. Tap the set to confirm or change it.`}
+                  aria-label={`Effort ${rpeLabel(set.rpeSeed)}, unconfirmed — this set got harder`}
+                >
+                  {set.rpeSeed}
+                </span>
               ) : set.rpeStale ? (
                 <span className="inline-block w-1.5 h-1.5 rounded-full align-middle" style={{ background: ORANGE }}
                   title="Heavier than last time — rate this set" aria-label="Needs an effort rating" />
@@ -512,6 +528,11 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
           {trackRpe && (
             <RpeLadder
               value={set.rpe}
+              // The remembered value memory has withdrawn from `rpe`. The ladder
+              // keeps drawing it — and keeps its steppers — so the one gesture
+              // that made the rating disappear no longer takes the controls
+              // that restore it. See RpeLadder's `seedValue`.
+              seedValue={set.rpe == null ? set.rpeSeed : undefined}
               stale={set.rpeStale}
               seeded={set.rpeSeed != null}
               setLabel={`set ${ordinal}`}
