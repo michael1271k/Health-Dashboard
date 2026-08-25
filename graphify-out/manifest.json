@@ -90,8 +90,8 @@
     "semantic_hash": "9deb2ada1cc834bbebf8bbad9c8978a1"
   },
   "ios/App/HelixWatch Watch App/ContentView.swift": {
-    "mtime": 1786698213.9078093,
-    "ast_hash": "971b3a8ab5c43a94965d8c249943ed56",
+    "mtime": 1787598427.7388437,
+    "ast_hash": "796e219b6a719162207a6c8d32672ff6",
     "semantic_hash": ""
   },
   "ios/App/HelixWatch Watch App/HelixWatchApp.swift": {
@@ -255,8 +255,8 @@
     "semantic_hash": ""
   },
   "src/app/page.tsx": {
-    "mtime": 1787561308.4828434,
-    "ast_hash": "d1f3b02ea0a3e16c75bbd1315232f7f5",
+    "mtime": 1787646062.8481631,
+    "ast_hash": "b59c12650dc0d65719abfa2f816ff5c7",
     "semantic_hash": ""
   },
   "src/app/session/[id]/page.tsx": {
@@ -2515,7 +2515,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/set-rows.html": {
-    "mtime": 1787577227.260478,
+    "mtime": 1787646591.6162531,
     "ast_hash": "86569f2f098580e6a062f0ce9f52fa2b",
     "semantic_hash": ""
   },
@@ -2545,7 +2545,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-ledger.html": {
-    "mtime": 1787577223.6999893,
+    "mtime": 1787646590.5125947,
     "ast_hash": "6f50fa4f2aeaf92cc98b2ce5890d0d48",
     "semantic_hash": ""
   },
@@ -2580,7 +2580,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/live-header.html": {
-    "mtime": 1787577224.8160408,
+    "mtime": 1787646590.522664,
     "ast_hash": "27a12ba43b60a759107973174594ff32",
     "semantic_hash": ""
   },
@@ -2650,7 +2650,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-summary-header.html": {
-    "mtime": 1787577224.2218113,
+    "mtime": 1787646591.5389125,
     "ast_hash": "bdbbab0641faf576b6e46b58cbc1ceaa",
     "semantic_hash": ""
   },
@@ -2705,8 +2705,8 @@
     "semantic_hash": ""
   },
   "src/components/body/CompositionLedger.tsx": {
-    "mtime": 1787560582.9428158,
-    "ast_hash": "d04ab8f35853ecc0458cc6194bdda9ae",
+    "mtime": 1787645786.3454208,
+    "ast_hash": "c51108c8d39bdc1d13926b7183f0d383",
     "semantic_hash": ""
   },
   "src/components/settings/CrashRecorderRow.tsx": {
@@ -2725,18 +2725,13 @@
     "semantic_hash": ""
   },
   "src/lib/dashboard/layout.ts": {
-    "mtime": 1787561090.0003536,
-    "ast_hash": "e9926fa01f31f5c43b514eb82ef7897e",
-    "semantic_hash": ""
-  },
-  "src/components/dashboard/DashboardWidget.tsx": {
-    "mtime": 1787561120.583709,
-    "ast_hash": "cae449e57e2b04afd001ac03d5f87132",
+    "mtime": 1787645387.5160284,
+    "ast_hash": "7db418db3925a4b61bd7ab99a6802eb3",
     "semantic_hash": ""
   },
   "src/components/dashboard/WidgetGrid.tsx": {
-    "mtime": 1787561162.4747128,
-    "ast_hash": "31746a265ee5c315463b71766e3a498e",
+    "mtime": 1787646314.3261461,
+    "ast_hash": "9fca7bbe5f2db2b717c547184fe4abf5",
     "semantic_hash": ""
   },
   "src/tests/dashboard-layout.test.ts": {
@@ -2767,6 +2762,56 @@
   "src/tests/rest-clock.test.ts": {
     "mtime": 1787576701.980525,
     "ast_hash": "4801208a4be196f08b7a363aecf1842c",
+    "semantic_hash": ""
+  },
+  "src/components/dashboard/WidgetFrame.tsx": {
+    "mtime": 1787645434.506984,
+    "ast_hash": "cd771e7781df129e6de5e9fc6a070ad9",
+    "semantic_hash": ""
+  },
+  "src/components/dashboard/widgets/parts.tsx": {
+    "mtime": 1787645486.809604,
+    "ast_hash": "7a6f4a181d9808bb0f5625a3d0e0cfba",
+    "semantic_hash": ""
+  },
+  "src/components/dashboard/widgets/VitalsWidget.tsx": {
+    "mtime": 1787645521.2431552,
+    "ast_hash": "80d3d7bbb1c20a58666eb32ea2ec7d21",
+    "semantic_hash": ""
+  },
+  "src/components/dashboard/widgets/FuelWidget.tsx": {
+    "mtime": 1787645641.6485295,
+    "ast_hash": "36356562eb593f5253286e3d4e82d5dd",
+    "semantic_hash": ""
+  },
+  "src/components/dashboard/widgets/BodyWidget.tsx": {
+    "mtime": 1787645786.3455632,
+    "ast_hash": "759ef3e2a5cb14f99ba52b8d2f309fda",
+    "semantic_hash": ""
+  },
+  "src/components/dashboard/widgets/TrainingWidgets.tsx": {
+    "mtime": 1787646555.983365,
+    "ast_hash": "205afc94fd82a4c49c528a406a9dc22b",
+    "semantic_hash": ""
+  },
+  "src/lib/hooks/useLatestPr.ts": {
+    "mtime": 1787645767.6738646,
+    "ast_hash": "e5716abf1b2eccd3c0630218b6830654",
+    "semantic_hash": ""
+  },
+  "src/components/dashboard/widgets/DailyWidgets.tsx": {
+    "mtime": 1787645998.3308754,
+    "ast_hash": "392ab8192447746f5d3c986f8552c46b",
+    "semantic_hash": ""
+  },
+  "src/tests/widget-parts.test.tsx": {
+    "mtime": 1787646579.045763,
+    "ast_hash": "60b7020f80ade28488a6179259b8d666",
+    "semantic_hash": ""
+  },
+  "src/tests/widget-bodies.test.tsx": {
+    "mtime": 1787646168.5768435,
+    "ast_hash": "93583d379848614a13d7f8358672ff50",
     "semantic_hash": ""
   }
 }

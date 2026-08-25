@@ -99,8 +99,16 @@ function BodyDelta({ metric, value, previous, unit }: {
   )
 }
 
-/** One constituent: its share of bodyweight, its mass, and where the band sits. */
-function LedgerRow({ label, color, pct, mass, lo, hi, unit }: {
+/**
+ * One constituent: its share of bodyweight, its mass, and where the band sits.
+ *
+ * Exported because the dashboard's Body widget renders the SAME rows in a tile.
+ * A second implementation would be a second set of band edges to keep in step
+ * with these ones, and the bands are the whole point of the row. `compact`
+ * drops the fixed label/value columns — a 2-column tile has no room for a
+ * 92px label — and nothing else about the row changes.
+ */
+export function LedgerRow({ label, color, pct, mass, lo, hi, unit, compact }: {
   label: string
   color: string
   pct: number | null
@@ -108,12 +116,14 @@ function LedgerRow({ label, color, pct, mass, lo, hi, unit }: {
   lo: number
   hi: number
   unit: string
+  /** Tile-sized: shorter label column, mass dropped, percentage kept. */
+  compact?: boolean
 }) {
   const fill = pct != null ? Math.max(0, Math.min(100, pct)) : 0
   const inBand = pct != null && pct >= lo && pct <= hi
   return (
-    <div className="flex items-center gap-2.5">
-      <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-muted w-[92px] shrink-0 truncate">
+    <div className={`flex items-center ${compact ? 'gap-1.5' : 'gap-2.5'}`}>
+      <span className={`text-[9px] font-bold uppercase tracking-[0.12em] text-muted shrink-0 truncate ${compact ? 'w-[58px]' : 'w-[92px]'}`}>
         {label}
       </span>
 
@@ -129,12 +139,14 @@ function LedgerRow({ label, color, pct, mass, lo, hi, unit }: {
         ))}
       </span>
 
-      <span className="helix-num text-[11px] tabular-nums text-text w-[62px] shrink-0 text-right">
-        {mass != null ? `${r1(displayWeight(mass) ?? 0)}` : '—'}
-        <span className="text-[9px] text-muted font-normal ml-0.5">{unit}</span>
-      </span>
+      {!compact && (
+        <span className="helix-num text-[11px] tabular-nums text-text w-[62px] shrink-0 text-right">
+          {mass != null ? `${r1(displayWeight(mass) ?? 0)}` : '—'}
+          <span className="text-[9px] text-muted font-normal ml-0.5">{unit}</span>
+        </span>
+      )}
       <span
-        className="helix-num text-[11px] font-bold tabular-nums w-[46px] shrink-0 text-right"
+        className={`helix-num text-[11px] font-bold tabular-nums shrink-0 text-right ${compact ? 'w-[38px]' : 'w-[46px]'}`}
         style={{ color: inBand ? color : 'var(--color-muted)' }}
         title={`Normal ${lo}–${hi}%`}
       >
@@ -142,6 +154,48 @@ function LedgerRow({ label, color, pct, mass, lo, hi, unit }: {
       </span>
     </div>
   )
+}
+
+/**
+ * The ledger's rows, computed once and shared.
+ *
+ * The Body WIDGET on the dashboard shows a subset of these in a tile. It must
+ * not recompute them: `deriveBodyComp` fills in what the scale did not send,
+ * and two call sites deriving separately is how the same body ends up with two
+ * different fat masses on two screens. Skeletal muscle is ENTERED and never
+ * derived, so its row is absent rather than guessed whenever the reading was
+ * not taken (see `lib/body/composition.ts`).
+ */
+export function compositionRows(log: Record<string, unknown> | null | undefined): {
+  weight: number | undefined
+  bodyFatPct: number | undefined
+  skeletalKg: number | undefined
+  rows: Array<{ key: string; label: string; color: string; lo: number; hi: number; mass: number | null; pct: number | null }>
+} {
+  const rec = (log ?? null) as Record<string, number | null> | null
+  const weight = num(rec?.weight_kg)
+  const d = deriveBodyComp({
+    weight_kg: num(rec?.weight_kg), body_fat_pct: num(rec?.body_fat_pct),
+    muscle_percent: num(rec?.muscle_percent), water_percent: num(rec?.water_percent),
+    bone_mineral: num(rec?.bone_mineral), protein_percent: num(rec?.protein_percent),
+  })
+  const mass: Record<string, number | undefined> = {
+    skeletal: num(rec?.skeletal_muscle_mass_kg),
+    muscle: num(rec?.muscle_mass_kg) ?? d.muscle_mass_kg,
+    water: num(rec?.water_mass_kg) ?? d.water_mass_kg,
+    protein: num(rec?.protein_mass_kg) ?? d.protein_mass_kg,
+    mineral: num(rec?.bone_mineral_kg) ?? d.bone_mineral_kg,
+    fat: num(rec?.fat_mass_kg) ?? d.fat_mass_kg,
+  }
+  const pct = (m?: number) => (m != null && weight ? (m / weight) * 100 : null)
+  return {
+    weight,
+    bodyFatPct: num(rec?.body_fat_pct) ?? pct(mass.fat) ?? undefined,
+    skeletalKg: mass.skeletal,
+    rows: BARS
+      .filter((b) => b.key !== 'skeletal' || mass.skeletal != null)
+      .map((b) => ({ ...b, mass: mass[b.key] ?? null, pct: pct(mass[b.key]) })),
+  }
 }
 
 export function CompositionLedger({ log, date }: { log: DayVaultData['log']; date: string }) {

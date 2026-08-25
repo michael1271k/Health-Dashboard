@@ -116,6 +116,18 @@ export function WidgetGrid({ children }: {
         onDragCancel={() => setDragging(null)}
       >
         <SortableContext items={visible} strategy={rectSortingStrategy}>
+          {/* ── NO `grid-auto-flow: dense`, DELIBERATELY ──
+              Dense backfills a hole left by a wide tile with a later small one,
+              which means a widget can appear ABOVE something it was arranged
+              below. On a surface whose whole promise is that the tile you reach
+              for is where you left it, that is the browser rearranging your
+              dashboard for you. The default sizes pair evenly on two columns so
+              no hole exists to backfill, and if an arrangement makes one, moving
+              a tile is the user's call.
+
+              `auto-rows-[minmax(104px,auto)]`: 104px is the FLOOR, so a medium
+              tile is two of those plus the gap and can still grow if a body
+              needs the room rather than clipping it. */}
           <div className="grid grid-cols-2 xl:grid-cols-4 gap-2.5 auto-rows-[minmax(104px,auto)]">
             {visible.map((id) => (
               <SortableWidget

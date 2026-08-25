@@ -577,3 +577,41 @@ body.helix-overlay-open .app-chrome {
   }
   .app-chrome--top::after { display: none; }
 }
+
+/* ── THE WAITING WIDGET ───────────────────────────────────────────────────────
+   A dashboard widget with no data yet keeps its shape and its position — hiding
+   it would move every tile below it and cost the muscle memory the grid exists
+   to build. What it must not do is sit there as a flat grey rectangle, because
+   at 7am that is most of the screen and the morning dashboard reads as broken
+   rather than as early.
+
+   So the placeholder breathes: a slow highlight travelling across the tile's own
+   accent, at an amplitude well under the perception threshold for distraction.
+   4.5s, not the 1s of `animate-pulse` — this is ambient, and anything faster
+   reads as a spinner, which would promise that something is loading when
+   nothing is.
+
+   `background-size` is 200% so the gradient has somewhere to travel; the
+   element paints only inside its parent's radius. */
+@keyframes helix-shimmer {
+  0%   { background-position: 180% 0; }
+  100% { background-position: -80% 0; }
+}
+.helix-shimmer {
+  background-image: linear-gradient(
+    100deg,
+    transparent 0%,
+    transparent 38%,
+    rgba(255, 255, 255, 0.07) 50%,
+    transparent 62%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  animation: helix-shimmer 4.5s linear infinite;
+}
+/* Reduced motion keeps the placeholder and drops the travel — the micro-copy is
+   what carries the meaning, and the shimmer was only ever the invitation. */
+@media (prefers-reduced-motion: reduce) {
+  .helix-shimmer { animation: none; background-image: none; }
+}

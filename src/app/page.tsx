@@ -3,11 +3,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
-import { Moon, Flame, Dumbbell, Scale, Footprints, Pill, Activity, HeartPulse, BatteryMedium } from 'lucide-react'
 import { Sheet } from '@/components/ui/Sheet'
 import { ReadinessOrb } from '@/components/dashboard/ReadinessOrb'
 import { WidgetGrid } from '@/components/dashboard/WidgetGrid'
-import { DashboardWidget, type DashboardWidgetProps } from '@/components/dashboard/DashboardWidget'
+import { VitalsWidget } from '@/components/dashboard/widgets/VitalsWidget'
+import { FuelWidget } from '@/components/dashboard/widgets/FuelWidget'
+import { BodyWidget } from '@/components/dashboard/widgets/BodyWidget'
+import {
+  SleepWidget, StepsWidget, BatteryWidget, CardioWidget, StackWidget, TrainWidget,
+} from '@/components/dashboard/widgets/DailyWidgets'
+import {
+  MuscleWidget, VolumeWidget, PrWidget, NextSessionWidget,
+} from '@/components/dashboard/widgets/TrainingWidgets'
 import type { WidgetId, WidgetSize } from '@/lib/dashboard/layout'
 import { MacroCards } from '@/components/nutrition/MacroCards'
 import { Surface, Tile } from '@/components/ui/Zone'
@@ -19,7 +26,7 @@ import { WidgetBoundary } from '@/components/fx/WidgetBoundary'
 import { BrandHeader } from '@/components/dashboard/BrandHeader'
 import { DeferredMount } from '@/components/fx/DeferredMount'
 import { formatSleep } from '@/lib/utils/format'
-import { displayWeight, weightUnit, validWeight, fmtVolume } from '@/lib/utils/units'
+import { displayWeight, weightUnit, fmtVolume } from '@/lib/utils/units'
 import { phaseDisplay } from '@/lib/nutrition/phase'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { tdeeKcal } from '@/lib/nutrition/energy'
@@ -29,7 +36,7 @@ import { useSingleOrDoubleTap } from '@/lib/utils/doubleTap'
 import { scheduleDayFor, eraForDate, isTrainingDay, type ScheduleDay } from '@/lib/programs'
 import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { useSupplements } from '@/lib/hooks/useSupplements'
-import { supplementCountForDate } from '@/lib/supplements'
+import { stackForDate } from '@/lib/supplements'
 import { useCustomSupplements, customSlotsForDate } from '@/lib/hooks/useCustomSupplements'
 import { useBioSeries, useLastWeighIn, useLatestBodyMetrics, type BodyMetricField } from '@/lib/hooks/useBioStrips'
 import { SleepStages } from '@/components/dashboard/SleepStages'
@@ -76,7 +83,6 @@ function SheetSkeleton() {
 import { StepsJourney } from '@/components/dashboard/StepsJourney'
 import { ProgressionAlerts } from '@/components/command-center/ProgressionAlerts'
 import { useDailyLogs } from '@/lib/hooks/useNutrition'
-import { useCardioLogs, useZone2Week, ZONE2_WEEKLY_TARGET } from '@/lib/hooks/useCardio'
 import {
   useTodayScore,
   useEnsureTodayScore,
@@ -107,11 +113,10 @@ const TrendStrip = dynamic(
 // Domain accents — all from the single palette source of truth.
 const VIOLET = AMETHYST        // Sleep / recovery
 const CYAN = STEEL             // data / drivers
-const TEAL = EMBER             // Body
-const AQUA = SAPPHIRE          // HRV / data
-const GOLD_ACCENT = GOLD       // Stack
-const TRAIN_GREEN = EMERALD    // Training
-const STEPS_INDIGO = PLATINUM  // Steps
+
+/** One shared empty Set — `taken ?? new Set()` would be a fresh identity every
+ *  render and would defeat the Stack widget's memo for no benefit. */
+const EMPTY_TAKEN: ReadonlySet<string> = new Set<string>()
 
 const n0 = (v: number | null | undefined) => (v == null ? null : Math.round(v))
 const n1 = (v: number | null | undefined) => (v == null ? null : Math.round(v * 10) / 10)
@@ -185,11 +190,6 @@ export default function DashboardPage() {
   const { data: weighIn } = useLastWeighIn()
   const { data: bodyMetrics } = useLatestBodyMetrics()
   const { data: fuelLogs } = useDailyLogs(8)
-  // Cardio: today's logged walks/runs and the week's Zone-2 count. Two small
-  // queries, and the only ones the widget grid added — every other widget is
-  // fed by data this page already had on screen.
-  const { data: cardioToday } = useCardioLogs(logicalTodayISO())
-  const { data: zone2 } = useZone2Week(logicalTodayISO())
 
   const [open, setOpen] = useState<SheetKey>(null)
   // Body strip: single tap → composition popup · double tap → Nexus InBody entry.
@@ -239,17 +239,47 @@ export default function DashboardPage() {
   // BMR + active + TEF — one shared formula, see nutrition/energy.ts.
   const tdeeToday = tdeeKcal(log?.bmr, log?.active_energy, nutrition?.calories)
   const phase = fuelLogs?.[0]?.date === logicalTodayISO() ? fuelLogs[0].phase : null
-  const suppCount = taken?.size ?? 0
-  // The denominator has to be the USER's stack, not the seed constant, or the
-  // tile reads 9/11 forever the moment two supplements are added.
-  const suppTotal = supplementCountForDate(
-    isTrainingDay(logicalTodayISO()),
-    customSlotsForDate(
-      customSupps ?? [],
-      new Date(`${logicalTodayISO()}T12:00:00`).getDay(),
-      isTrainingDay(logicalTodayISO()),
-    ),
-  )
+  /**
+   * Today's stack, flattened to the ITEMS the log is keyed by.
+   *
+   * `taken` is a Set of item keys, not slot keys — so a widget that reasoned in
+   * slots would report a whole slot outstanding because one of its three tablets
+   * was unticked. The slot's TIME rides along on each item, because that is what
+   * makes "next" answerable.
+   *
+   * `stackForDate` prefers the user's own stack and falls back to the seed, which
+   * is why the denominator cannot be the seed constant: the tile read 9/11
+   * forever the moment two supplements were added.
+   */
+  const stackItems = useMemo(() => {
+    const today = logicalTodayISO()
+    const training = isTrainingDay(today)
+    const weekday = new Date(`${today}T12:00:00`).getDay()
+    const slots = stackForDate(customSlotsForDate(customSupps ?? [], weekday, training), training, weekday)
+    return slots.flatMap((slot) => slot.items.map((it) => ({ key: it.key, name: it.name, time: slot.time })))
+  }, [customSupps])
+  /**
+   * Minutes since local midnight, for the Stack's "next dose".
+   *
+   * A state value ticked once a minute rather than `Date.now()` read during
+   * render: a value read in the body would be a different number on every
+   * render, which defeats the memo the widget switch exists for, and a 1 Hz
+   * interval would redraw the whole grid sixty times for a figure that changes
+   * once. The interval is cleared on unmount and nothing else on this page
+   * depends on it.
+   */
+  const [nowMinutes, setNowMinutes] = useState(() => {
+    const d = new Date()
+    return d.getHours() * 60 + d.getMinutes()
+  })
+  useEffect(() => {
+    const id = setInterval(() => {
+      const d = new Date()
+      setNowMinutes(d.getHours() * 60 + d.getMinutes())
+    }, 60_000)
+    return () => clearInterval(id)
+  }, [])
+
   const unit = weightUnit()
   // Already-logged-today: hide the "+ Log session" CTA once a workout exists.
   const loggedToday = sessions?.some((s) => s.started_at.slice(0, 10) === logicalTodayISO()) ?? false
@@ -284,12 +314,6 @@ export default function DashboardPage() {
     }
   }, [weighIn])
 
-  /** Today's logged cardio distance, in km, or null when nothing was logged. */
-  const cardioKm = useMemo(() => {
-    const m = (cardioToday ?? []).reduce((sum, c) => sum + (c.distance_m ?? 0), 0)
-    return m > 0 ? Math.round((m / 1000) * 10) / 10 : null
-  }, [cardioToday])
-
   /**
    * The drivers BEHIND the recovery number — the extra desktop width beside the
    * hero shows the "why" instead of dead space, and the Energy widget's large
@@ -301,131 +325,105 @@ export default function DashboardPage() {
   const drivers: Array<{ label: string; value: string; color: string }> = useMemo(() => [
     { label: 'Sleep', value: log?.sleep_minutes != null ? formatSleep(log.sleep_minutes) : '—', color: VIOLET },
     { label: 'Resting HR', value: log?.avg_rest_heart_rate != null ? `${log.avg_rest_heart_rate} bpm` : '—', color: OXIDE },
-    { label: 'HRV', value: log?.hrv_ms != null ? `${Math.round(log.hrv_ms)} ms` : '—', color: AQUA },
+    { label: 'HRV', value: log?.hrv_ms != null ? `${Math.round(log.hrv_ms)} ms` : '—', color: SAPPHIRE },
     { label: 'Energy left', value: score?.battery_pct != null ? `${score.battery_pct}%` : '—', color: CYAN },
   ], [log, score])
 
   /**
-   * ── THIS OBJECT IS WHY THE WIDGET `memo` HITS ───────────────────────────────
-   * Nine objects, several `.map()` chains over `bioSeries`, and a handful of JSX
-   * nodes, all rebuilt on every render of a page that re-renders whenever any of
-   * its queries settles. `DashboardWidget` is `memo`-wrapped and would be handed
-   * fresh props each time, so the wrapper would cost a comparison and buy
-   * nothing.
+   * ── ONE SWITCH, THIRTEEN BODIES ─────────────────────────────────────────────
+   * This was a `Record<WidgetId, DashboardWidgetProps>` — thirteen objects
+   * memoised together and fed to one generic shell. That shape is what made
+   * every widget look like every other: a props bag of `value / status /
+   * series / detail` can only ever express one number, so Vitals showed one of
+   * its four readings and Fuel showed one of its five ratios.
    *
-   * Keyed by `WidgetId`, not an array: the ORDER lives in the saved layout now,
-   * and a list whose position carries meaning cannot also be user-arrangeable.
+   * Each domain owns its body now and decides what its three sizes mean, so
+   * this is a switch rather than a table. Most bodies also fetch their own data
+   * (`useWeeklyVolume`, `useLatestPr`, `useVitalsDays`, `useCardioLogs`) instead
+   * of being handed it, which is what stops this page growing a query per
+   * widget; the ones below take props only because the value is already on this
+   * page for the hero or another card.
+   *
+   * It is a function, not a memo: `WidgetGrid` calls it per tile with that
+   * tile's size, and the components underneath are memoised where it pays.
    */
-  const widgets: Record<WidgetId, Omit<DashboardWidgetProps, 'size'>> = useMemo(() => ({
-    battery: {
-      icon: BatteryMedium, label: 'Energy', accent: CYAN,
-      value: score?.battery_pct ?? null, unit: '%',
-      status: score?.score != null ? `recovery ${Math.round(score.score)}` : 'charge left today',
-      detail: (
-        <span className="grid grid-cols-2 gap-1.5">
-          {drivers.map((d) => (
-            <span key={d.label} className="flex items-baseline justify-between gap-1 min-w-0">
-              <span className="text-[9px] uppercase tracking-wide text-muted truncate">{d.label}</span>
-              <span className="helix-num text-[11px] font-bold shrink-0" style={{ color: d.color }}>{d.value}</span>
-            </span>
-          ))}
-        </span>
-      ),
-    },
-    vitals: {
-      icon: HeartPulse, label: 'Vitals', accent: AQUA,
-      value: log?.hrv_ms != null ? Math.round(log.hrv_ms) : null, unit: 'ms HRV',
-      status: log?.avg_rest_heart_rate != null
-        ? `RHR ${log.avg_rest_heart_rate} bpm${log.blood_oxygen != null ? ` · SpO₂ ${Math.round(log.blood_oxygen)}%` : ''}`
-        : 'no reading today',
-      detail: (
-        <span className="grid grid-cols-2 gap-1.5">
-          {[
-            ['Resting HR', log?.avg_rest_heart_rate != null ? `${log.avg_rest_heart_rate}` : '—'],
-            ['SpO₂', log?.blood_oxygen != null ? `${Math.round(log.blood_oxygen)}%` : '—'],
-            ['Respiratory', log?.respiratory_rate != null ? log.respiratory_rate.toFixed(1) : '—'],
-            ['Stand', log?.stand_hours != null ? `${log.stand_hours}h` : '—'],
-          ].map(([k, v]) => (
-            <span key={k} className="flex items-baseline justify-between gap-1 min-w-0">
-              <span className="text-[9px] uppercase tracking-wide text-muted truncate">{k}</span>
-              <span className="helix-num text-[11px] font-bold text-text shrink-0">{v}</span>
-            </span>
-          ))}
-        </span>
-      ),
-    },
-    cardio: {
-      icon: Activity, label: 'Cardio', accent: EMERALD,
-      value: cardioKm, unit: 'km',
-      status: `Zone 2 · ${zone2 ?? 0}/${ZONE2_WEEKLY_TARGET} this week`,
-      decimals: 1,
-    },
-    sleep: {
-      icon: Moon, label: 'Sleep', accent: VIOLET,
-      value: log?.sleep_minutes != null ? formatSleep(log.sleep_minutes) : null,
-      status: log?.avg_rest_heart_rate != null ? `RHR ${log.avg_rest_heart_rate} bpm` : 'recovery',
-      series: (bioSeries ?? []).map((d) => d.sleepMin),
-    },
-    fuel: {
-      icon: Flame, label: 'Fuel', accent: MACRO_COLORS.calories,
-      value: calToday, unit: 'kcal',
-      status: phase
-        ? <span style={{ color: phaseDisplay(phase, logicalTodayISO()).color }}>{phaseDisplay(phase, logicalTodayISO()).label} day{calGoal ? ` · goal ${calGoal.toLocaleString()}` : ''}</span>
-        : calGoal ? `goal ${calGoal.toLocaleString()}` : 'no log yet',
-      series: kcalSeries,
-    },
-    train: {
-      icon: Dumbbell, label: 'Train', accent: TRAIN_GREEN,
-      value: todayDay === 'rest' ? 'Zone-2 / Rest' : todayDay.label,
-      // Once logged, the strip reflects the completed session rather than still
-      // prompting for it (the card behind it shows the full completed hero).
-      status: loggedToday && todaySession?.total_volume_kg != null
-        ? <span style={{ color: EMERALD }}>done ✓ · {fmtVolume(displayWeight(todaySession.total_volume_kg))} {unit}</span>
-        : todayDay !== 'rest' && todayDay.sub
-          ? todayDay.sub
-          : lastSession?.total_volume_kg != null
-            ? `last: ${lastSplit?.label ?? ''} · ${fmtVolume(displayWeight(lastSession.total_volume_kg))} ${unit}`
-            : todayEra === 'axis' ? 'no HELIX sessions yet — fresh slate' : 'no sessions yet',
-    },
-    body: {
-      // Weight carries forward from the last valid reading (never `— — —` at
-      // midnight), never integer-rounded (64.9 stays 64.9), tinted by drop/gain.
-      icon: Scale, label: 'Body', accent: lastWeigh?.deltaColor ?? TEAL,
-      value: displayWeight(lastWeigh?.kg ?? validWeight(log?.weight_kg)), unit, decimals: 1,
-      status: lastWeigh
-        ? <span style={{ color: lastWeigh.recencyColor }}>
-            {lastWeigh.label}
-            {lastWeigh.delta !== 0 && (
-              <span style={{ color: lastWeigh.deltaColor ?? undefined }}>
-                {' · '}{lastWeigh.delta < 0 ? '▼' : '▲'}{displayWeight(Math.abs(lastWeigh.delta))}{unit}
-              </span>
-            )}
-          </span>
-        : log?.body_fat_pct != null ? `${n1(log.body_fat_pct)}% body fat` : 'composition',
-      series: (bioSeries ?? []).map((d) => displayWeight(d.weightKg)),
-    },
-    steps: {
-      icon: Footprints, label: 'Steps', accent: STEPS_INDIGO,
-      value: steps,
-      // TDEE, not just the watch's active burn. `active kcal` alone is the half
-      // of expenditure the watch happens to measure; the day's real cost is
-      // BMR + active + TEF, and showing only the active term is what made the
-      // deficit read ~200 kcal small every day. Falls back to the active figure
-      // when BMR or intake is missing, because a partial TDEE is not a TDEE.
-      status: tdeeToday != null
-        ? `${n0(tdeeToday)} kcal TDEE · BMR + active + TEF`
-        : log?.active_energy != null ? `${n0(log.active_energy)} active kcal` : 'movement',
-      series: (bioSeries ?? []).map((d) => d.steps),
-    },
-    stack: {
-      icon: Pill, label: 'Stack', accent: GOLD_ACCENT,
-      value: `${suppCount}/${suppTotal}`,
-      status: suppCount >= suppTotal ? 'protocol complete' : 'tap to check off',
-    },
-  }), [
-    log, bioSeries, lastWeigh, suppCount, suppTotal, todayDay, kcalSeries,
-    calGoal, calToday, lastSession, lastSplit, loggedToday, phase, steps, tdeeToday,
-    todayEra, todaySession, unit, score, drivers, cardioKm, zone2,
+  const renderWidget = useCallback((id: WidgetId, size: WidgetSize) => {
+    switch (id) {
+      case 'battery':
+        return <BatteryWidget size={size} onOpen={onOpen('readiness')}
+          batteryPct={score?.battery_pct ?? null} score={score?.score ?? null} drivers={drivers} />
+
+      case 'vitals':
+        return <VitalsWidget size={size} onOpen={onOpen('vitals')} />
+
+      case 'sleep':
+        return <SleepWidget size={size} onOpen={onOpen('sleep')}
+          sleep={sleep ?? null} sleepMin={log?.sleep_minutes ?? null}
+          goalHours={goals?.sleep_goal_hours ?? null}
+          nightly={(bioSeries ?? []).map((d) => d.sleepMin)} />
+
+      case 'fuel':
+        return <FuelWidget size={size} onOpen={onOpen('fuel')}
+          kcal={calToday} kcalGoal={calGoal}
+          protein={nutrition?.protein_g ?? null} carbs={nutrition?.carbs_g ?? null} fat={nutrition?.fat_g ?? null}
+          goals={{ protein: goals?.protein_goal_g ?? null, carbs: goals?.carbs_goal_g ?? null, fat: goals?.fat_goal_g ?? null }}
+          waterMl={log?.water_ml ?? null} waterGoalMl={goals?.water_goal_ml ?? 3000}
+          series={kcalSeries}
+          phaseLabel={phase ? phaseDisplay(phase, logicalTodayISO()).label : null}
+          phaseColor={phase ? phaseDisplay(phase, logicalTodayISO()).color : null} />
+
+      case 'next':
+        return <NextSessionWidget size={size} day={todayDay} logged={loggedToday} onOpen={onOpen('train')} />
+
+      case 'train':
+        return <TrainWidget size={size} onOpen={onOpen('train')}
+          title={todayDay === 'rest' ? 'Zone-2 / Rest' : todayDay.label}
+          status={loggedToday && todaySession?.total_volume_kg != null
+            ? 'done ✓'
+            : todayDay !== 'rest' && todayDay.sub
+              ? todayDay.sub
+              : lastSession?.total_volume_kg != null
+                ? `last: ${lastSplit?.label ?? ''}`
+                : todayEra === 'axis' ? 'no HELIX sessions yet' : 'no sessions yet'}
+          volumeKg={(loggedToday ? todaySession?.total_volume_kg : lastSession?.total_volume_kg) != null
+            ? Number(fmtVolume(displayWeight((loggedToday ? todaySession : lastSession)!.total_volume_kg as number)))
+            : null}
+          unit={unit} done={loggedToday} />
+
+      case 'body':
+        return <BodyWidget size={size} onOpen={onBodyTap}
+          weightSeries={(bioSeries ?? []).map((d) => displayWeight(d.weightKg))} />
+
+      case 'muscle':
+        return <MuscleWidget size={size} onOpen={goToday} />
+
+      case 'volume':
+        return <VolumeWidget size={size} onOpen={onOpen('train')} />
+
+      case 'pr':
+        return <PrWidget size={size} onOpen={onOpen('train')} />
+
+      case 'steps':
+        return <StepsWidget size={size} onOpen={onOpen('steps')}
+          steps={steps} goal={goals?.steps_goal ?? 10_000}
+          tdee={tdeeToday} activeKcal={log?.active_energy ?? null}
+          series={(bioSeries ?? []).map((d) => d.steps)} />
+
+      // Cardio has no sheet of its own: logging one belongs on the day it
+      // happened, beside the walk's own entry form. The widget's own repeat
+      // button is the shortcut; the tile still routes there.
+      case 'cardio':
+        return <CardioWidget size={size} onOpen={goToday} />
+
+      case 'stack':
+        return <StackWidget size={size} onOpen={onOpen('stack')}
+          slots={stackItems} taken={taken ?? EMPTY_TAKEN} nowMinutes={nowMinutes} />
+    }
+  }, [
+    score, drivers, sleep, log, goals, bioSeries, calToday, calGoal, nutrition,
+    kcalSeries, phase, todayDay, loggedToday, todaySession, lastSession, lastSplit,
+    todayEra, unit, steps, tdeeToday, stackItems, taken, nowMinutes,
+    onOpen, onBodyTap, goToday,
   ])
 
   const sheetTitle: Record<Exclude<SheetKey, null>, string> = {
@@ -494,22 +492,7 @@ export default function DashboardPage() {
           The Body widget stays dual-action: tap opens the composition popup,
           double-tap jumps to today's Nexus InBody entry. */}
       <Surface measure="grid" pad="snug" variant="band">
-        <WidgetGrid>
-          {(id: WidgetId, size: WidgetSize) => (
-            <DashboardWidget
-              {...widgets[id]}
-              size={size}
-              onOpen={
-                id === 'body' ? onBodyTap
-                  : id === 'battery' ? onOpen('readiness')
-                    // Cardio has no sheet of its own: logging one belongs on the
-                    // day it happened, beside the walk's own entry form.
-                    : id === 'cardio' ? goToday
-                      : onOpen(id as Exclude<SheetKey, null>)
-              }
-            />
-          )}
-        </WidgetGrid>
+        <WidgetGrid>{renderWidget}</WidgetGrid>
       </Surface>
 
       {/* Smart Coach — lifts due a load bump next session (renders nothing when empty).

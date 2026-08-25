@@ -27,10 +27,19 @@ export type WidgetSize = 's' | 'm' | 'l'
 export type WidgetId =
   | 'sleep' | 'fuel' | 'train' | 'body' | 'steps'
   | 'cardio' | 'stack' | 'vitals' | 'battery'
+  | 'muscle' | 'pr' | 'volume' | 'next'
 
-/** Every widget the dashboard knows how to render, in first-run order. */
+/**
+ * Every widget the dashboard knows how to render, in first-run order.
+ *
+ * The order reads as the day does: what you have left (energy), what happened
+ * to you (sleep), what you are deciding (fuel, what is next), then the record —
+ * body, where the week's work landed, how much of it there has been, and the
+ * last thing you beat. Steps, vitals, cardio and the stack are the ledger.
+ */
 export const WIDGET_IDS: readonly WidgetId[] = [
-  'battery', 'sleep', 'fuel', 'train', 'body', 'steps', 'vitals', 'cardio', 'stack',
+  'battery', 'sleep', 'fuel', 'next', 'train', 'body', 'muscle',
+  'volume', 'pr', 'steps', 'vitals', 'cardio', 'stack',
 ] as const
 
 /**
@@ -42,8 +51,8 @@ export const WIDGET_IDS: readonly WidgetId[] = [
  * at medium; the rest start small and can be grown.
  */
 const DEFAULT_SIZE: Record<WidgetId, WidgetSize> = {
-  battery: 'm', sleep: 's', fuel: 'm', train: 'm', body: 's',
-  steps: 's', vitals: 's', cardio: 's', stack: 's',
+  battery: 'm', sleep: 'm', fuel: 'm', next: 's', train: 's', body: 'm',
+  muscle: 's', volume: 's', pr: 's', steps: 's', vitals: 'm', cardio: 's', stack: 's',
 }
 
 export interface DashboardLayout {
@@ -117,11 +126,24 @@ export function writeLayout(layout: DashboardLayout): void {
  *
  * Literal class strings, never assembled: Tailwind scans source TEXT, so a
  * class built from a template at runtime is never generated into the stylesheet.
+ *
+ * ── THE THREE SIZES ARE THREE ANSWERS, NOT THREE AREAS ───────────────────────
+ * Small is one number. Medium is the domain's SHAPE — a 2×2 of vitals, a set of
+ * macro rings, three ledger bars — which is the whole reason a grid beats a
+ * list here: nine domains of genuinely different density stop pretending to be
+ * equal. Large adds history and, where one exists, an action.
+ *
+ * Medium is `row-span-2`, so on a phone (two columns) it is a square. It was
+ * `row-span-1`, which made it a 2:1 letterbox — enough room for a number and a
+ * sparkline and not enough for any shape at all, which is exactly why every
+ * widget looked like the same widget. The base row stays 104px and the grid
+ * simply gets longer; the alternative was making every SMALL widget taller to
+ * buy medium its height, which taxes the eleven tiles that did not need it.
  */
 export const SIZE_SPAN: Record<WidgetSize, string> = {
   s: 'col-span-1 row-span-1',
-  m: 'col-span-2 row-span-1',
-  l: 'col-span-2 row-span-2',
+  m: 'col-span-2 row-span-2',
+  l: 'col-span-2 row-span-3',
 }
 
 /** The next size in the cycle, for a tap on the size control. */
