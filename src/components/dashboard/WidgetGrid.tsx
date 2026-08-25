@@ -15,7 +15,8 @@ import { STANDARD, SNAPPY } from '@/lib/motion/springs'
 import { useHelixReducedMotion } from '@/lib/motion/useHelixReducedMotion'
 import { tapLight } from '@/lib/native/haptics'
 import {
-  readLayout, writeLayout, defaultLayout, SIZE_SPAN, SIZE_CYCLE, WIDGET_META,
+  readLayout, writeLayout, defaultLayout, SIZE_SPAN, WIDGET_META,
+  visibleWidgets, hiddenWidgets, hideWidget, showWidget, resizeWidget,
   type DashboardLayout, type WidgetId, type WidgetSize,
 } from '@/lib/dashboard/layout'
 
@@ -85,8 +86,8 @@ export function WidgetGrid({ children }: {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
 
-  const visible = layout.order.filter((id) => !layout.hidden.includes(id))
-  const hidden = layout.order.filter((id) => layout.hidden.includes(id))
+  const visible = visibleWidgets(layout)
+  const hidden = hiddenWidgets(layout)
 
   const onDragStart = (e: DragStartEvent) => {
     setDragging(e.active.id as WidgetId)
@@ -104,22 +105,11 @@ export function WidgetGrid({ children }: {
     commit({ ...layout, order: arrayMove(layout.order, from, to) })
   }
 
-  const resize = (id: WidgetId) => {
-    void tapLight()
-    commit({ ...layout, size: { ...layout.size, [id]: SIZE_CYCLE[layout.size[id]] } })
-  }
-
-  const hide = (id: WidgetId) => {
-    void tapLight()
-    commit({ ...layout, hidden: [...layout.hidden, id] })
-  }
-
-  /** Restore a hidden widget. It comes back where it was, not at the end — the
-   *  order array never lost it, only the `hidden` set did. */
-  const show = (id: WidgetId) => {
-    void tapLight()
-    commit({ ...layout, hidden: layout.hidden.filter((h) => h !== id) })
-  }
+  // The rules themselves live in `layout.ts` and are tested there; these are
+  // the gestures that reach for them.
+  const resize = (id: WidgetId) => { void tapLight(); commit(resizeWidget(layout, id)) }
+  const hide = (id: WidgetId) => { void tapLight(); commit(hideWidget(layout, id)) }
+  const show = (id: WidgetId) => { void tapLight(); commit(showWidget(layout, id)) }
 
   return (
     <div className="space-y-2">

@@ -216,6 +216,50 @@ export function bodyHeightPx(size: WidgetSize): number {
 /** The next size in the cycle, for a tap on the size control. */
 export const SIZE_CYCLE: Record<WidgetSize, WidgetSize> = { s: 'm', m: 'l', l: 's' }
 
+/* ────────────────────────────────────────────────────────────────────────────
+ * THE ARRANGEMENT RULES
+ *
+ * Pure, and out here rather than inside `WidgetGrid`, because they are the part
+ * with rules to get wrong — the component's job is gestures. Hiding twice must
+ * not push a duplicate; unhiding must restore a widget where it WAS, not at the
+ * end of the grid; the order array is the arrangement and `hidden` is only a
+ * mask over it. All three of those are assertions, and none is reachable from a
+ * jsdom long-press.
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+/** In arranged order, hidden ones removed. */
+export function visibleWidgets(layout: DashboardLayout): WidgetId[] {
+  return layout.order.filter((id) => !layout.hidden.includes(id))
+}
+
+/** In arranged order, only the hidden ones — the tray's contents. */
+export function hiddenWidgets(layout: DashboardLayout): WidgetId[] {
+  return layout.order.filter((id) => layout.hidden.includes(id))
+}
+
+/**
+ * Take a widget off the grid.
+ *
+ * It stays in `order`, which is what lets it come back to its own place rather
+ * than to the end. Hiding something already hidden is a no-op, not a second
+ * entry — a duplicate would render the tray twice and make one `+` dead.
+ */
+export function hideWidget(layout: DashboardLayout, id: WidgetId): DashboardLayout {
+  if (layout.hidden.includes(id)) return layout
+  return { ...layout, hidden: [...layout.hidden, id] }
+}
+
+/** Put it back where it was. */
+export function showWidget(layout: DashboardLayout, id: WidgetId): DashboardLayout {
+  if (!layout.hidden.includes(id)) return layout
+  return { ...layout, hidden: layout.hidden.filter((h) => h !== id) }
+}
+
+/** Advance one step round the S → M → L → S cycle. */
+export function resizeWidget(layout: DashboardLayout, id: WidgetId): DashboardLayout {
+  return { ...layout, size: { ...layout.size, [id]: SIZE_CYCLE[layout.size[id]] } }
+}
+
 
 /**
  * The catalogue, for anything that has to name a widget it is not rendering.
