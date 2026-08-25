@@ -63,12 +63,24 @@ export function VitalsWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () =
     const win = rows.slice(-8)
     return METRICS.map((m) => {
       const series = win.map((d) => d[m.key] as number | null)
+      // ── THE READING AND ITS BASELINE MUST BE THE SAME DAY ──
       // The LAST reading there is, not necessarily today's: VO₂ max updates
       // every few days and wrist temperature needs a full night, so reading
       // position 8 blindly would print a dash on a metric that has a perfectly
       // good current value from yesterday.
-      const latest = [...series].reverse().find((v) => v != null) ?? null
-      return { ...m, series, value: latest, delta: vsBaseline(series, series[series.length - 1] ?? null) }
+      //
+      // Which means the DELTA has to move with it. Handing `vsBaseline` the
+      // final slot while displaying an earlier one breaks it in both directions:
+      // on a metric whose today is null the arrow silently disappears (the very
+      // case this lookback exists to cover), and when it does resolve, the
+      // displayed value is inside the mean it is being compared against —
+      // exactly the self-comparison this widget's own header forbids. So the
+      // window is cut AT the reading being shown, and everything before it is
+      // the baseline.
+      let at = series.length - 1
+      while (at >= 0 && series[at] == null) at -= 1
+      const latest = at >= 0 ? series[at] : null
+      return { ...m, series, value: latest, delta: vsBaseline(series.slice(0, at + 1), latest) }
     })
   }, [days])
 

@@ -14,6 +14,9 @@ vi.mock('@/lib/hooks/useEnergyBalance', async (orig) => ({
 const sessions = vi.hoisted(() => ({ rows: [] as Array<{ date: string; dayKey: string | null; splitDay: string }> }))
 vi.mock('@/lib/hooks/useSessionHistory', () => ({ useSessionHistory: () => ({ data: sessions.rows }) }))
 
+const vitals = vi.hoisted(() => ({ rows: [] as Array<Record<string, unknown>> }))
+vi.mock('@/lib/hooks/useVitals', () => ({ useVitalsDays: () => ({ data: vitals.rows }) }))
+
 const schedule = vi.hoisted(() => ({ restOn: new Set<string>() }))
 vi.mock('@/lib/programs', async (orig) => {
   const real = await orig<typeof import('@/lib/programs')>()
@@ -27,12 +30,14 @@ vi.mock('@/lib/hooks/useScheduleVersion', () => ({ useScheduleVersion: () => 0 }
 
 const { DeficitWidget, ConsistencyWidget } = await import('@/components/dashboard/widgets/PlanWidgets')
 const { useNextTraining } = await import('@/lib/hooks/useNextTraining')
+const { VitalsWidget } = await import('@/components/dashboard/widgets/VitalsWidget')
 const { programDayByKey } = await import('@/lib/programs')
 
 afterEach(() => {
   cleanup()
   energy.rows = []
   sessions.rows = []
+  vitals.rows = []
   schedule.restOn = new Set()
 })
 
@@ -320,5 +325,57 @@ describe('useNextTraining', () => {
     // Same relative order, with the lifts a cut drops removed rather than
     // reshuffled — the deck will present them in exactly this sequence.
     expect(got).toEqual(authored.filter((n) => got.includes(n)))
+  })
+})
+
+
+/**
+ * ── THE READING AND ITS BASELINE MUST BE THE SAME DAY ────────────────────────
+ *
+ * The tile shows the LAST reading there is, not necessarily today's — VO₂ max
+ * updates every few days and wrist temperature needs a full night. The delta has
+ * to move with it. Handing `vsBaseline` the final slot while displaying an
+ * earlier one breaks it in both directions: on a metric whose today is null the
+ * arrow disappears (the very case the lookback exists for), and when it does
+ * resolve, the displayed value sits inside the mean it is compared against —
+ * the self-comparison this widget's header forbids.
+ */
+describe('VitalsWidget — the trend belongs to the reading on screen', () => {
+  const day = (date: string, hrv: number | null) => ({
+    date,
+    hrv_ms: hrv,
+    avg_rest_heart_rate: null,
+    blood_oxygen: null,
+    respiratory_rate: null,
+    wrist_temp_delta: null,
+    vo2max: null,
+  })
+
+  it('still shows a trend when the newest reading is not today', () => {
+    // Six mornings at 50, then a 70 two days ago, then nothing.
+    vitals.rows = [
+      ...['01', '02', '03', '04', '05', '06'].map((d) => day(`2026-08-${d}`, 50)),
+      day('2026-08-07', 70),
+      day('2026-08-08', null),
+    ]
+    render(<VitalsWidget size="s" />)
+    expect(screen.getByText('70')).toBeTruthy()
+    // 70 against a mean of 50 is +20 — and it renders, rather than the dash the
+    // old window produced by asking about a day with no reading.
+    expect(screen.getByText(/▲20/)).toBeTruthy()
+  })
+
+  it('never folds the displayed reading into its own baseline', () => {
+    // The last slot is empty, so the displayed value is the 60 before it. If
+    // that 60 were inside the mean it is measured against, the arrow would read
+    // +8 instead of the true +10.
+    vitals.rows = [
+      ...['01', '02', '03', '04'].map((d) => day(`2026-08-${d}`, 50)),
+      day('2026-08-05', 60),
+      day('2026-08-06', null),
+    ]
+    render(<VitalsWidget size="s" />)
+    expect(screen.getByText('60')).toBeTruthy()
+    expect(screen.getByText(/▲10/)).toBeTruthy()
   })
 })
