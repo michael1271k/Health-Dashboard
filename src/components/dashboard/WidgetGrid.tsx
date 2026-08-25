@@ -1,24 +1,30 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   DndContext, DragOverlay, closestCenter, PointerSensor, KeyboardSensor,
   useSensor, useSensors, MeasuringStrategy,
-  type DragEndEvent, type DragStartEvent,
+  type DragEndEvent, type DragOverEvent, type DragStartEvent,
 } from '@dnd-kit/core'
-import { SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, arrayMove, useSortable } from '@dnd-kit/sortable'
+import { SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { restrictToParentElement } from '@dnd-kit/modifiers'
 import { CSS } from '@dnd-kit/utilities'
 import { AnimatePresence, m } from 'framer-motion'
-import { Check, Minus, Plus } from 'lucide-react'
-import { STANDARD, SNAPPY } from '@/lib/motion/springs'
+import { Check, Layers, Minus, Plus, Unlink } from 'lucide-react'
+import { STANDARD, SNAPPY, CROSSFADE } from '@/lib/motion/springs'
 import { useHelixReducedMotion } from '@/lib/motion/useHelixReducedMotion'
-import { tapLight } from '@/lib/native/haptics'
+import { tapLight, tapSuccess } from '@/lib/native/haptics'
 import {
   readLayout, writeLayout, defaultLayout, SIZE_SPAN, WIDGET_META,
-  visibleWidgets, hiddenWidgets, hideWidget, showWidget, resizeWidget,
-  type DashboardLayout, type WidgetId, type WidgetSize,
+  hiddenWidgets, removeFace, addWidget, resizeSlot, moveSlot, canStack,
+  stackSlots, unstackFace, slotAt, sizesFor,
+  type DashboardLayout, type StackSlot, type WidgetId, type WidgetSize,
 } from '@/lib/dashboard/layout'
+
+/** How long a face stays up before a stack turns itself over. */
+const ROTATE_MS = 12_000
+/** How long you must hover a same-size tile mid-drag before it offers to stack. */
+const MERGE_HOLD_MS = 600
 
 /**
  * The arrangeable dashboard.
@@ -48,14 +54,22 @@ import {
  * into edit mode while the user was trying to read their sleep. 450 is roughly
  * what iOS itself waits for, and is comfortably past the slowest ordinary tap.
  *
- * dnd-kit's delay constraint activates the drag once the delay elapses even if
- * the pointer never moved, so the press alone lifts the tile and opens the
- * mode; `tolerance: 8` means a scroll that starts on a tile aborts it instead.
+ * `tolerance: 8` is also what keeps the stack's swipe gesture reachable: a
+ * flick past 8px inside the delay window aborts the lift, so a vertical swipe
+ * on a stack turns its faces over instead of picking the tile up.
+ *
+ * ── STACKING IS A HOVER-HOLD, THE WAY A FOLDER IS ────────────────────────────
+ * A sortable grid reorders the instant you hover a neighbour, so "dropped ON"
+ * and "dropped BETWEEN" are the same event and cannot be told apart by position
+ * alone. iOS resolves exactly this ambiguity with time: drag an app over another
+ * and hold, and after a beat the target opens into a folder. Same rule here —
+ * hold over a tile OF THE SAME SIZE for 600ms and it lights up as a stack
+ * target; release anywhere else and it is an ordinary reorder.
  *
  * Exit is `Done`, or Escape on a keyboard. Both restore taps immediately.
  */
 export function WidgetGrid({ children }: {
-  /** Render one widget for an id, given the size it is currently set to. */
+  /** Render one widget for an id, given the size its slot is currently set to. */
   children: (id: WidgetId, size: WidgetSize) => React.ReactNode
 }) {
   // Read AFTER mount. `readLayout` touches localStorage, so seeding state from
@@ -64,8 +78,17 @@ export function WidgetGrid({ children }: {
   useEffect(() => { setLayout(readLayout()) }, [])
 
   const [editing, setEditing] = useState(false)
-  const [dragging, setDragging] = useState<WidgetId | null>(null)
+  const [dragging, setDragging] = useState<string | null>(null)
+  const [mergeTarget, setMergeTarget] = useState<string | null>(null)
   const reduced = useHelixReducedMotion()
+
+  // The hover clock. A ref, not state: it is written on every drag-over and
+  // reading it must never schedule a render.
+  const hover = useRef<{ id: string | null; timer: number | null }>({ id: null, timer: null })
+  const clearHover = useCallback(() => {
+    if (hover.current.timer != null) window.clearTimeout(hover.current.timer)
+    hover.current = { id: null, timer: null }
+  }, [])
 
   const commit = useCallback((next: DashboardLayout) => {
     setLayout(next)
@@ -81,41 +104,66 @@ export function WidgetGrid({ children }: {
     return () => window.removeEventListener('keydown', onKey)
   }, [editing])
 
+  useEffect(() => clearHover, [clearHover])
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { delay: 450, tolerance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
 
-  const visible = visibleWidgets(layout)
   const hidden = hiddenWidgets(layout)
+  const slotIds = layout.slots.map((s) => s.id)
 
   const onDragStart = (e: DragStartEvent) => {
-    setDragging(e.active.id as WidgetId)
+    setDragging(String(e.active.id))
     setEditing(true)
     void tapLight()
   }
 
+  const onDragOver = (e: DragOverEvent) => {
+    const overId = e.over ? String(e.over.id) : null
+    if (overId === hover.current.id) return
+    clearHover()
+    setMergeTarget(null)
+    if (!overId || overId === String(e.active.id)) return
+    if (!canStack(slotAt(layout, String(e.active.id)), slotAt(layout, overId))) return
+    hover.current.id = overId
+    hover.current.timer = window.setTimeout(() => {
+      setMergeTarget(overId)
+      void tapLight()
+    }, MERGE_HOLD_MS)
+  }
+
   const onDragEnd = (e: DragEndEvent) => {
+    const activeId = String(e.active.id)
+    const overId = e.over ? String(e.over.id) : null
+    const merging = mergeTarget
+    clearHover()
     setDragging(null)
-    const { active, over } = e
-    if (!over || active.id === over.id) return
-    const from = layout.order.indexOf(active.id as WidgetId)
-    const to = layout.order.indexOf(over.id as WidgetId)
-    if (from < 0 || to < 0) return
-    commit({ ...layout, order: arrayMove(layout.order, from, to) })
+    setMergeTarget(null)
+    if (!overId || overId === activeId) return
+    if (merging === overId) {
+      void tapSuccess()
+      commit(stackSlots(layout, activeId, overId))
+      return
+    }
+    commit(moveSlot(layout, activeId, overId))
   }
 
   // The rules themselves live in `layout.ts` and are tested there; these are
   // the gestures that reach for them.
-  const resize = (id: WidgetId) => { void tapLight(); commit(resizeWidget(layout, id)) }
-  const hide = (id: WidgetId) => { void tapLight(); commit(hideWidget(layout, id)) }
-  const show = (id: WidgetId) => { void tapLight(); commit(showWidget(layout, id)) }
+  const resize = (slotId: string) => { void tapLight(); commit(resizeSlot(layout, slotId)) }
+  const drop = (slotId: string, index: number) => { void tapLight(); commit(removeFace(layout, slotId, index)) }
+  const split = (slotId: string, index: number) => { void tapLight(); commit(unstackFace(layout, slotId, index)) }
+  const add = (id: WidgetId) => { void tapLight(); commit(addWidget(layout, id)) }
+
+  const draggedSlot = dragging ? slotAt(layout, dragging) : null
 
   return (
     <div className="space-y-2">
       {/* The mode's only permanent chrome, and it exists only while the mode
           does. Sticky so Done is reachable without scrolling back up from the
-          bottom of a twelve-tile grid. */}
+          bottom of a fifteen-tile grid. */}
       <AnimatePresence initial={false}>
         {editing && (
           <m.div
@@ -126,7 +174,7 @@ export function WidgetGrid({ children }: {
             className="sticky top-1 z-20 flex items-center gap-2 px-1"
           >
             <span className="text-[10px] text-muted leading-tight">
-              Drag to reorder · tap the badge to resize
+              Drag to reorder · hold over a tile to stack
             </span>
             <button
               type="button"
@@ -149,10 +197,11 @@ export function WidgetGrid({ children }: {
         // measurements to follow it.
         measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
         onDragStart={onDragStart}
+        onDragOver={onDragOver}
         onDragEnd={onDragEnd}
-        onDragCancel={() => setDragging(null)}
+        onDragCancel={() => { clearHover(); setDragging(null); setMergeTarget(null) }}
       >
-        <SortableContext items={visible} strategy={rectSortingStrategy}>
+        <SortableContext items={slotIds} strategy={rectSortingStrategy}>
           {/* ── NO `grid-auto-flow: dense`, DELIBERATELY ──
               Dense backfills a hole left by a wide tile with a later small one,
               which means a widget can appear ABOVE something it was arranged
@@ -164,41 +213,41 @@ export function WidgetGrid({ children }: {
               `auto-rows-[minmax(52px,auto)]` with 2/3/5-row spans: the unit is
               half a tile, which is what lets medium be 172px (iOS's own medium
               proportion at this width) WITHOUT dragging small down with it —
-              see the note on `SIZE_SPAN`. 52px is a floor, not a fixed height,
-              so a row can still grow if a body genuinely needs it. */}
+              see the note on `SIZE_SPAN`. */}
           <div className="grid grid-cols-2 xl:grid-cols-4 gap-2 auto-rows-[minmax(52px,auto)]">
-            {visible.map((id) => (
-              <SortableWidget
-                key={id}
-                id={id}
-                size={layout.size[id]}
+            {layout.slots.map((slot) => (
+              <SortableSlot
+                key={slot.id}
+                slot={slot}
                 editing={editing}
                 reduced={reduced}
-                onResize={() => resize(id)}
-                onHide={() => hide(id)}
+                merging={mergeTarget === slot.id}
+                onResize={() => resize(slot.id)}
+                onDropFace={(i) => drop(slot.id, i)}
+                onSplitFace={(i) => split(slot.id, i)}
               >
-                {children(id, layout.size[id])}
-              </SortableWidget>
+                {children}
+              </SortableSlot>
             ))}
           </div>
         </SortableContext>
 
-        {/* The lifted widget follows the finger above the reflow, so the grid
-            can settle underneath without the thing you are holding jumping. */}
+        {/* The lifted tile follows the finger above the reflow, so the grid can
+            settle underneath without the thing you are holding jumping. */}
         <DragOverlay dropAnimation={{ duration: 220, easing: 'cubic-bezier(0.2, 0, 0, 1)' }}>
-          {dragging ? (
+          {draggedSlot ? (
             <div className="h-full opacity-95 rounded-2xl shadow-[0_12px_32px_rgba(0,0,0,0.5)]">
-              {children(dragging, layout.size[dragging])}
+              {children(draggedSlot.items[0], draggedSlot.size)}
             </div>
           ) : null}
         </DragOverlay>
       </DndContext>
 
       {/* ── THE TRAY ──
-          Hiding a widget has to be reversible somewhere the user can find, and
-          a hidden widget is by definition not on the grid to tap. It renders
-          only in edit mode and only when something is actually hidden, so the
-          dashboard carries no permanent "0 hidden" row. */}
+          Taking a widget off the grid has to be reversible somewhere the user
+          can find, and a widget that is off the grid is by definition not on it
+          to tap. It renders only in edit mode and only when something is
+          missing, so the dashboard carries no permanent "0 hidden" row. */}
       <AnimatePresence initial={false}>
         {editing && hidden.length > 0 && (
           <m.div
@@ -210,7 +259,7 @@ export function WidgetGrid({ children }: {
           >
             <div className="pt-1">
               <span className="block text-[9px] font-bold uppercase tracking-[0.14em] text-muted px-1 pb-1.5">
-                Hidden · {hidden.length}
+                Not on the grid · {hidden.length}
               </span>
               <div className="flex flex-wrap gap-1.5">
                 {hidden.map((id) => {
@@ -220,7 +269,7 @@ export function WidgetGrid({ children }: {
                     <button
                       key={id}
                       type="button"
-                      onClick={() => show(id)}
+                      onClick={() => add(id)}
                       className="inline-flex items-center gap-1.5 min-h-[34px] pl-2 pr-2.5 rounded-xl
                                  text-[11px] font-bold border active:scale-95 transition-transform"
                       style={{
@@ -247,16 +296,25 @@ export function WidgetGrid({ children }: {
 
 const SIZE_WORD: Record<WidgetSize, string> = { s: 'S', m: 'M', l: 'L' }
 
-function SortableWidget({ id, size, editing, reduced, onResize, onHide, children }: {
-  id: WidgetId
-  size: WidgetSize
+function SortableSlot({ slot, editing, reduced, merging, onResize, onDropFace, onSplitFace, children }: {
+  slot: StackSlot
   editing: boolean
   reduced: boolean
+  /** This tile is the one a held drag is offering to stack onto. */
+  merging: boolean
   onResize: () => void
-  onHide: () => void
-  children: React.ReactNode
+  onDropFace: (index: number) => void
+  onSplitFace: (index: number) => void
+  children: (id: WidgetId, size: WidgetSize) => React.ReactNode
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: slot.id })
+  const [face, setFace] = useState(0)
+  const stacked = slot.items.length > 1
+  const canResize = sizesFor(slot.items).length > 1
+
+  // A stack that lost a face must not keep pointing past the end of itself.
+  const at = Math.min(face, slot.items.length - 1)
+  useEffect(() => { setFace((f) => Math.min(f, slot.items.length - 1)) }, [slot.items.length])
 
   return (
     <m.div
@@ -265,19 +323,53 @@ function SortableWidget({ id, size, editing, reduced, onResize, onHide, children
       // of everything else. `STANDARD` is critically damped — the tiles that
       // move to make room were not thrown, so they must not overshoot.
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      animate={editing && !isDragging && !reduced ? { scale: 1.02 } : { scale: 1 }}
+      animate={
+        merging ? { scale: 1.06 }
+          : editing && !isDragging && !reduced ? { scale: 1.02 }
+            : { scale: 1 }
+      }
       transition={reduced ? { duration: 0 } : STANDARD}
-      className={`${SIZE_SPAN[size]} relative min-w-0 ${isDragging ? 'opacity-30' : ''}`}
+      className={`${SIZE_SPAN[slot.size]} relative min-w-0 ${isDragging ? 'opacity-30' : ''}`}
       {...attributes}
       {...listeners}
     >
-      {children}
+      <StackFaces
+        slot={slot}
+        face={at}
+        setFace={setFace}
+        editing={editing}
+        reduced={reduced}
+      >
+        {children}
+      </StackFaces>
+
+      {/* ── THE MERGE HALO ──
+          The one thing a hover-hold needs is to SAY that it has armed, before
+          the finger lifts. A ring in the target's own accent plus the layers
+          glyph is the whole affordance — iOS does the same with a widening
+          plate under the app you are hovering. */}
+      {merging && (
+        <m.span
+          initial={reduced ? false : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={reduced ? { duration: 0 } : SNAPPY}
+          className="absolute inset-0 z-[3] rounded-2xl pointer-events-none grid place-items-center"
+          style={{
+            border: `2px solid ${WIDGET_META[slot.items[at]].accent}`,
+            background: `${WIDGET_META[slot.items[at]].accent}1f`,
+          }}
+        >
+          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-black/70 text-[10px] font-bold text-text">
+            <Layers className="w-3 h-3" aria-hidden="true" /> Stack
+          </span>
+        </m.span>
+      )}
 
       {/* ── THE TAP SHIELD ──
           In edit mode a tap must arrange, never navigate. Without this, tapping
           a tile to nudge it opens the Sleep sheet over the grid you are editing.
           It is a transparent sibling rather than `pointer-events-none` on the
-          body, because the body's OWN controls (Cardio's repeat, Train's log
+          body, because the body's OWN controls (Cardio's repeat, Workout's log
           link) must be blocked too — and because the drag listeners live on this
           parent, so swallowing the click here does not cost the gesture. */}
       {editing && (
@@ -288,43 +380,193 @@ function SortableWidget({ id, size, editing, reduced, onResize, onHide, children
         />
       )}
 
-      {/* Arrange mode's two controls. No jiggle: a 1.02 lift and a brightened
-          edge say "these are movable" without turning the dashboard into a
-          cartoon, and the drag itself is the real affordance.
+      {/* Arrange mode's controls. No jiggle: a 1.02 lift and a brightened edge
+          say "these are movable" without turning the dashboard into a cartoon,
+          and the drag itself is the real affordance.
 
-          `−` and not `×`: this removes the tile from the grid, it does not
+          `−` and not `×`: this removes the face from the grid, it does not
           delete anything, and the tray one scroll below puts it back. */}
       {editing && (
         <>
           <m.button
             type="button"
-            onClick={(e) => { e.stopPropagation(); onHide() }}
+            onClick={(e) => { e.stopPropagation(); onDropFace(at) }}
             onPointerDown={(e) => e.stopPropagation()}
             initial={reduced ? false : { opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={reduced ? { duration: 0 } : SNAPPY}
             className="absolute top-1.5 left-1.5 z-[2] h-6 w-6 grid place-items-center rounded-full
                        bg-black/70 border border-white/20 text-text backdrop-blur-sm"
-            aria-label={`Hide the ${WIDGET_META[id].label} widget`}
+            aria-label={`Remove the ${WIDGET_META[slot.items[at]].label} widget from the grid`}
           >
             <Minus className="w-3.5 h-3.5" strokeWidth={3} aria-hidden="true" />
           </m.button>
 
-          <m.button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onResize() }}
-            onPointerDown={(e) => e.stopPropagation()}
-            initial={reduced ? false : { opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={reduced ? { duration: 0 } : SNAPPY}
-            className="absolute top-1.5 right-1.5 z-[2] h-6 min-w-[24px] px-1.5 rounded-lg text-[10px] font-bold
-                       bg-black/70 border border-white/20 text-text backdrop-blur-sm"
-            aria-label={`Resize ${WIDGET_META[id].label} — currently ${SIZE_WORD[size]}`}
-          >
-            {SIZE_WORD[size]}
-          </m.button>
+          <span className="absolute top-1.5 right-1.5 z-[2] flex items-center gap-1">
+            {/* Unstacking is only offered when there is a stack to leave, and it
+                lifts the face you are LOOKING AT — which is the only one the
+                user has any way to name. */}
+            {stacked && (
+              <m.button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onSplitFace(at) }}
+                onPointerDown={(e) => e.stopPropagation()}
+                initial={reduced ? false : { opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={reduced ? { duration: 0 } : SNAPPY}
+                className="h-6 w-6 grid place-items-center rounded-full
+                           bg-black/70 border border-white/20 text-text backdrop-blur-sm"
+                aria-label={`Take ${WIDGET_META[slot.items[at]].label} out of this stack`}
+              >
+                <Unlink className="w-3 h-3" strokeWidth={2.5} aria-hidden="true" />
+              </m.button>
+            )}
+            {canResize && (
+              <m.button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onResize() }}
+                onPointerDown={(e) => e.stopPropagation()}
+                initial={reduced ? false : { opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={reduced ? { duration: 0 } : SNAPPY}
+                className="h-6 min-w-[24px] px-1.5 rounded-lg text-[10px] font-bold
+                           bg-black/70 border border-white/20 text-text backdrop-blur-sm"
+                aria-label={`Resize this tile — currently ${SIZE_WORD[slot.size]}`}
+              >
+                {SIZE_WORD[slot.size]}
+              </m.button>
+            )}
+          </span>
         </>
       )}
     </m.div>
+  )
+}
+
+/**
+ * The faces of one tile, and the two ways they turn over.
+ *
+ * ── A STACK ROTATES, AND IT ALSO OBEYS A FINGER ──────────────────────────────
+ * iOS Smart Stacks do both: they turn themselves over on their own schedule, and
+ * a vertical swipe takes you through them by hand. Only doing the first makes
+ * the tile feel like it is hiding things from you; only doing the second makes
+ * the whole feature invisible to anyone who never tries the gesture.
+ *
+ * The auto-rotation is deliberately slow (12s) and stops dead whenever the
+ * dashboard is being edited, whenever the tab is in the background, and for a
+ * while after any manual swipe — a tile that flips out from under a finger that
+ * just chose a face is a tile that has overruled its user.
+ *
+ * ── AND WHY THE SWIPE IS HAND-ROLLED ─────────────────────────────────────────
+ * A framer `drag="y"` here would fight dnd-kit for the same pointer, and the
+ * loser is whichever one binds second. The sensor's own `tolerance: 8` already
+ * cancels the long-press the moment a finger travels, so all this has to do is
+ * measure the travel it was handed.
+ *
+ * The one thing it must not do is flip on a PAGE SCROLL that happened to start
+ * on a stack, which is the common case on a phone: hence the scroll-position
+ * check, which is a fact rather than a heuristic.
+ */
+function StackFaces({ slot, face, setFace, editing, reduced, children }: {
+  slot: StackSlot
+  face: number
+  setFace: (updater: number | ((f: number) => number)) => void
+  editing: boolean
+  reduced: boolean
+  children: (id: WidgetId, size: WidgetSize) => React.ReactNode
+}) {
+  const stacked = slot.items.length > 1
+  const [dir, setDir] = useState(1)
+  // Set on a manual flip, so the timer does not immediately overrule the hand.
+  const touchedAt = useRef(0)
+  const gesture = useRef<{ y: number; x: number; at: number; scroll: number } | null>(null)
+
+  const go = useCallback((delta: number) => {
+    touchedAt.current = Date.now()
+    setDir(delta > 0 ? 1 : -1)
+    setFace((f) => (f + delta + slot.items.length) % slot.items.length)
+    void tapLight()
+  }, [setFace, slot.items.length])
+
+  useEffect(() => {
+    if (!stacked || editing) return
+    const tick = window.setInterval(() => {
+      if (document.hidden) return
+      if (Date.now() - touchedAt.current < ROTATE_MS) return
+      setDir(1)
+      setFace((f) => (f + 1) % slot.items.length)
+    }, ROTATE_MS)
+    return () => window.clearInterval(tick)
+  }, [stacked, editing, slot.items.length, setFace])
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (!stacked) return
+    gesture.current = { y: e.clientY, x: e.clientX, at: Date.now(), scroll: window.scrollY }
+  }
+
+  const onPointerUp = (e: React.PointerEvent) => {
+    const g = gesture.current
+    gesture.current = null
+    if (!g || !stacked) return
+    const dy = e.clientY - g.y
+    const dx = e.clientX - g.x
+    // The page moved under the finger: this was a scroll that began on a tile,
+    // not a swipe of the tile.
+    if (Math.abs(window.scrollY - g.scroll) > 2) return
+    if (Date.now() - g.at > 500) return
+    if (Math.abs(dy) < 44 || Math.abs(dx) > 30) return
+    go(dy < 0 ? 1 : -1)
+  }
+
+  const id = slot.items[face]
+
+  if (!stacked) {
+    return <div className="h-full">{children(id, slot.size)}</div>
+  }
+
+  return (
+    <div
+      className="relative h-full overflow-hidden rounded-2xl"
+      onPointerDown={onPointerDown}
+      onPointerUp={onPointerUp}
+      onPointerCancel={() => { gesture.current = null }}
+    >
+      <AnimatePresence initial={false} mode="popLayout" custom={dir}>
+        <m.div
+          key={`${slot.id}:${face}:${id}`}
+          custom={dir}
+          initial={reduced ? { opacity: 0 } : { opacity: 0, y: dir > 0 ? '24%' : '-24%' }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={reduced ? { opacity: 0 } : { opacity: 0, y: dir > 0 ? '-24%' : '24%' }}
+          transition={reduced ? CROSSFADE : STANDARD}
+          className="h-full"
+        >
+          {children(id, slot.size)}
+        </m.div>
+      </AnimatePresence>
+
+      {/* ── THE PAGE CONTROL ──
+          Dots, on the trailing edge, exactly where iOS puts them. They are real
+          buttons rather than decoration so the stack is reachable by keyboard
+          and by VoiceOver — a gesture-only control is a control that does not
+          exist for anybody who cannot make the gesture. */}
+      <span className="absolute right-1 top-1/2 -translate-y-1/2 z-[2] flex flex-col gap-1">
+        {slot.items.map((w, i) => (
+          <button
+            key={`${w}:${i}`}
+            type="button"
+            onClick={(e) => { e.stopPropagation(); touchedAt.current = Date.now(); setDir(i > face ? 1 : -1); setFace(i) }}
+            onPointerDown={(e) => e.stopPropagation()}
+            className="h-1.5 w-1.5 rounded-full transition-opacity"
+            style={{
+              background: i === face ? WIDGET_META[w].accent : 'rgba(255,255,255,0.28)',
+              opacity: i === face ? 1 : 0.7,
+            }}
+            aria-label={`Show ${WIDGET_META[w].label}`}
+            aria-current={i === face}
+          />
+        ))}
+      </span>
+    </div>
   )
 }

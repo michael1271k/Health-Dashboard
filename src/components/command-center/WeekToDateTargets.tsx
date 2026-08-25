@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Target } from 'lucide-react'
 import { useWeeklyVolume } from '@/lib/hooks/useWeeklyVolume'
 import { useCardioHistory } from '@/lib/hooks/useCardio'
@@ -11,6 +11,7 @@ import { logicalTodayISO } from '@/lib/utils/day'
 import { EMBER } from '@/lib/theme/palette'
 import { MuscleAtlas } from '@/components/body/MuscleAtlas'
 import { setsToWorked } from '@/lib/body/atlas'
+import { WeeklyMuscleSheet } from '@/components/body/WeeklyMuscleSheet'
 
 /**
  * Week-to-date sets per muscle against the active program's target — the single
@@ -34,6 +35,7 @@ import { setsToWorked } from '@/lib/body/atlas'
  * have.
  */
 export function WeekToDateTargets() {
+  const [open, setOpen] = useState(false)
   const today = logicalTodayISO()
   const weekStart = weekStartOf(today)
   const { data: week } = useWeeklyVolume(weekStart, today)
@@ -92,7 +94,17 @@ export function WeekToDateTargets() {
           took its width first and the names took what was left. On a phone the
           list now gets the whole measure. */}
       <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
-        <div className="h-36 w-[124px] shrink-0">
+        {/* ── THE FIGURE IS A BUTTON ──
+            It was a picture, sitting directly above the list a reader would
+            want it to enlarge, on a tab where every other figure opens
+            something. Same sheet the dashboard's Muscle Focus tile opens, so
+            the atlas means the same thing wherever it is touched. */}
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label="Open this week's muscle focus"
+          className="h-36 w-[124px] shrink-0 rounded-xl active:scale-95 transition-transform"
+        >
           <MuscleAtlas
             view="both"
             worked={worked}
@@ -102,7 +114,7 @@ export function WeekToDateTargets() {
             colorFor={landmarkColor}
             label="Muscles trained this week"
           />
-        </div>
+        </button>
 
         <div className="w-full sm:flex-1 min-w-0 space-y-2.5">
           {rows.map((m) => (
@@ -117,6 +129,8 @@ export function WeekToDateTargets() {
           week, counted nowhere above — cardio carries no muscle attribution.
         </p>
       )}
+
+      <WeeklyMuscleSheet open={open} onClose={() => setOpen(false)} />
     </section>
   )
 }

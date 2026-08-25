@@ -1,15 +1,16 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { RotateCw, Check, Loader2 } from 'lucide-react'
+import { RotateCw, Check, Loader2, Timer, HeartPulse, Flame, Ruler } from 'lucide-react'
 import { WidgetFrame, WidgetEmpty } from '@/components/dashboard/WidgetFrame'
-import { Bar, HalfArc, Hero, MiniBars, Milestones, Ring, StatTile, Trend, vsBaseline } from './parts'
+import { Bar, HalfArc, Hero, MiniBars, Milestones, StatTile, Trend, vsBaseline } from './parts'
 import { useAddCardio, useLastCardio, useCardioLogs, useZone2Week, ZONE2_WEEKLY_TARGET } from '@/lib/hooks/useCardio'
+import { activeKcalOf, distanceKm, formatPace, paceMinPerKm } from '@/lib/cardio/metrics'
 import { tapLight, tapSuccess } from '@/lib/native/haptics'
 import { formatSleep } from '@/lib/utils/format'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { WIDGET_META, type WidgetSize } from '@/lib/dashboard/layout'
-import { SLEEP, AMETHYST, PLATINUM, STEEL, EMERALD, GOLD, OXIDE, SAPPHIRE } from '@/lib/theme/palette'
+import { SLEEP, AMETHYST, PLATINUM, STEEL, EMERALD, GOLD, OXIDE, SAPPHIRE, MUTED } from '@/lib/theme/palette'
 import type { Tables } from '@/lib/supabase/types'
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -24,26 +25,39 @@ const STAGES = [
   { key: 'awake_min', label: 'Awake', color: SLEEP.awake },
 ] as const
 
+/** `2026-08-25T23:42:00Z` → `23:42`, in the reader's own clock. */
+function clockOf(iso: string | null | undefined): string | null {
+  if (!iso) return null
+  const d = new Date(iso)
+  return Number.isNaN(d.getTime())
+    ? null
+    : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+}
+
 /**
  * Last night, as its stages.
  *
- * ── THE HALF-ARC, AND WHY IT REPLACED THE FULL RING ──────────────────────────
- * The tile drew a full circle, which costs a square. In a 358×172 medium tile a
- * square dial takes 172 of the 358 available px and leaves a column too narrow
- * for the four legend rows that were then squeezed into it — the shape was
- * fighting the tile, and the tile lost.
- *
- * A semicircle carries the identical "fraction of the goal" reading in half the
- * height, and the bowl underneath it is exactly where the number wants to be.
- * It is also the shape Apple's own sleep summary uses, for the same reason, so
- * the tile now reads as a sleep widget before a single label is parsed.
+ * ── THE HALF-ARC AT EVERY SIZE ───────────────────────────────────────────────
+ * Small used to be a duration and a bar, which is the one shape that says
+ * nothing a sleep tile is for: it graded the night against the goal and threw
+ * away the composition, which is the whole reason the stages are recorded. The
+ * arc costs the same 70px of body and carries both — the sweep is the grade, the
+ * segments are the night — so all three sizes now read as the same widget rather
+ * than as a bar that grows into a dial.
  *
  * The arc's SWEEP is the night against the goal; its SEGMENTS divide that sweep
  * by stage. See `HalfArc` for why it is that way round.
  *
+ * ── AND WHY THE BOTTOM STRIP EXISTS ──────────────────────────────────────────
+ * A 100:56 arc beside four legend rows leaves a band of nothing under the last
+ * row at medium — the shape is 66px tall in a 130px body, and centring the
+ * legend in the slack is what made the tile read as airy. The strip fills it
+ * with the three facts the stages cannot state: when you went down, when you
+ * got up, and how much of that time was actually asleep. Efficiency is
+ * `(duration − awake) ÷ duration`, the same definition the sleep drawer uses.
+ *
  * It does NOT mount `SleepStages`: that component's smallest variant still
  * draws a histogram of recent nights and assumes a full-width surface.
- * Rendering it in a tile would be a scaled-down drawer, not a widget.
  */
 export function SleepWidget({ size, onOpen, sleep, sleepMin, goalHours, nightly }: {
   size: WidgetSize
@@ -68,22 +82,59 @@ export function SleepWidget({ size, onOpen, sleep, sleepMin, goalHours, nightly 
     ? parts.map((p) => ({ key: p.key, value: p.min, color: p.color }))
     : [{ key: 'total', value: 1, color: AMETHYST }]
 
+  const down = clockOf(sleep?.start_time)
+  const up = clockOf(sleep?.end_time)
+  const awake = sleep?.awake_min ?? null
+  const efficiency = total && total > 0 && awake != null
+    ? Math.round(((total - awake) / total) * 100)
+    : null
+
+  const strip = (down || efficiency != null || sleep?.sleep_score != null) && (
+    <span className="flex items-baseline gap-2 min-w-0 pt-1 mt-auto border-t border-white/[0.06]">
+      {down && up && (
+        <span className="helix-num text-[10px] tabular-nums text-text truncate">
+          {down} <span className="text-muted">→</span> {up}
+        </span>
+      )}
+      {efficiency != null && (
+        <span className="helix-num text-[10px] font-bold tabular-nums ml-auto shrink-0" style={{ color: AMETHYST }}>
+          {efficiency}<span className="text-[8px] font-normal text-muted ml-0.5">% asleep</span>
+        </span>
+      )}
+      {sleep?.sleep_score != null && (
+        <span className="helix-num text-[10px] font-bold tabular-nums shrink-0" style={{ color: SLEEP.rem }}>
+          {sleep.sleep_score}<span className="text-[8px] font-normal text-muted ml-0.5">score</span>
+        </span>
+      )}
+    </span>
+  )
+
   return (
     <WidgetFrame {...WIDGET_META.sleep} size={size} onOpen={onOpen}>
       {total == null ? (
         <WidgetEmpty accent={AMETHYST} size={size} message="Last night is still syncing" hint="Your Watch reports it on first unlock" />
       ) : size === 's' ? (
-        <span className="flex-1 min-h-0 flex flex-col justify-end gap-1.5">
-          <Hero value={formatSleep(total)} color={AMETHYST} />
-          <Bar value={total} target={goalMin} color={AMETHYST} />
+        /* The arc is width-driven at 100:56, so it is given the widest box that
+           still fits the 70px body rather than being allowed to stretch. */
+        <span className="flex-1 min-h-0 flex items-center justify-center">
+          <span className="w-[112px]">
+            <HalfArc pct={pct} segments={segments} width={9}>
+              <span className="text-center leading-none">
+                <span className="helix-num block font-bold text-[16px] tabular-nums" style={{ color: AMETHYST }}>
+                  {formatSleep(total)}
+                </span>
+                {goalMin && <span className="block text-[7px] text-muted mt-px">of {Math.round(goalMin / 60)}h</span>}
+              </span>
+            </HalfArc>
+          </span>
         </span>
       ) : (
-        <span className="flex-1 min-h-0 flex flex-col gap-1.5">
+        <span className="flex-1 min-h-0 flex flex-col gap-1">
           <span className="flex items-center gap-2 min-w-0">
             {/* Fixed width, not `flex-1`: the arc's height follows its width at
                 a 100:56 ratio, so letting it stretch would make it 190px tall in
                 a 130px box. */}
-            <span className={`shrink-0 ${size === 'l' ? 'w-[146px]' : 'w-[124px]'}`}>
+            <span className={`shrink-0 ${size === 'l' ? 'w-[136px]' : 'w-[118px]'}`}>
               <HalfArc pct={pct} segments={segments} width={10}>
                 <span className="text-center leading-none">
                   <span className="helix-num block font-bold text-[17px] tabular-nums" style={{ color: AMETHYST }}>
@@ -113,9 +164,11 @@ export function SleepWidget({ size, onOpen, sleep, sleepMin, goalHours, nightly 
 
           {/* Large adds the month, as bars: a night either cleared the goal or
               did not, and thirty separate verdicts are countable as bars and not
-              as a line. Deliberately short — the drawer owns the big chart. */}
+              as a line. It sits DIRECTLY under the arc row — it used to be
+              pushed to the bottom with `mt-auto`, which opened the gap it was
+              supposed to be filling. */}
           {size === 'l' && (
-            <span className="block mt-auto pt-1.5 border-t border-white/[0.06]">
+            <span className="block pt-1 border-t border-white/[0.06]">
               <span className="flex items-baseline gap-1.5">
                 <span className="text-[8px] font-bold uppercase tracking-[0.1em] text-muted">Nightly · 30</span>
                 {goalMin && (
@@ -124,9 +177,11 @@ export function SleepWidget({ size, onOpen, sleep, sleepMin, goalHours, nightly 
                   </span>
                 )}
               </span>
-              <span className="block mt-1"><MiniBars series={nightly} color={AMETHYST} goal={goalMin} height={34} /></span>
+              <span className="block mt-1"><MiniBars series={nightly} color={AMETHYST} goal={goalMin} height={70} /></span>
             </span>
           )}
+
+          {strip}
         </span>
       )}
     </WidgetFrame>
@@ -160,6 +215,12 @@ export function stepMarks(goal: number): number[] {
  *
  * The milestone track is the bar the tile already had, made countable. "62 % of
  * goal" is not a figure anybody walks to; "past six thousand" is.
+ *
+ * ── SMALL CARRIES TWO FACTS, NOT ONE AND A GAP ───────────────────────────────
+ * It was a step count pinned to the bottom of the tile with a third of the body
+ * empty above it. The active burn goes in that space: it is the one number that
+ * turns a step count into a decision, because 9,000 steps that cost 300 kcal and
+ * 9,000 that cost 600 are different days.
  */
 export function StepsWidget({ size, onOpen, steps, goal, tdee, activeKcal, series }: {
   size: WidgetSize
@@ -184,18 +245,26 @@ export function StepsWidget({ size, onOpen, steps, goal, tdee, activeKcal, serie
   const marks = useMemo(() => stepMarks(goal), [goal])
   const hit = series.filter((v) => v != null && v >= goal).length
   const logged = series.filter((v) => v != null).length
+  const best = series.reduce<number | null>((m, v) => (v != null && (m == null || v > m) ? v : m), null)
 
   return (
     <WidgetFrame {...WIDGET_META.steps} size={size} onOpen={onOpen}>
       {steps == null ? (
         <WidgetEmpty accent={PLATINUM} size={size} message="Awaiting your first step" hint={`${goal.toLocaleString()} is today's target`} />
       ) : size === 's' ? (
-        <span className="flex-1 min-h-0 flex flex-col justify-end gap-1.5">
+        <span className="flex-1 min-h-0 flex flex-col justify-between gap-0.5">
+          <span className="flex items-baseline gap-1 min-w-0">
+            <span className="helix-num text-[10px] font-bold tabular-nums" style={{ color: SAPPHIRE }}>
+              {activeKcal != null ? Math.round(activeKcal) : '—'}
+              <span className="text-[8px] font-normal text-muted ml-0.5">kcal</span>
+            </span>
+            <span className="ml-auto shrink-0"><Trend delta={delta != null ? Math.round(delta) : null} /></span>
+          </span>
           <Hero value={steps} color={PLATINUM} />
           <Bar value={steps} target={goal} color={PLATINUM} />
         </span>
       ) : (
-        <span className="flex-1 min-h-0 flex flex-col gap-1.5">
+        <span className="flex-1 min-h-0 flex flex-col gap-1">
           <span className="flex items-baseline gap-2 min-w-0">
             <Hero value={steps} color={PLATINUM} tight />
             <span className="ml-auto shrink-0 flex items-baseline gap-1">
@@ -206,73 +275,27 @@ export function StepsWidget({ size, onOpen, steps, goal, tdee, activeKcal, serie
 
           <Milestones value={steps} marks={marks} color={PLATINUM} />
 
-          <span className="grid grid-cols-3 gap-1.5 pt-0.5">
+          <span className="grid grid-cols-3 gap-1.5">
             <StatTile label="TDEE" value={tdee != null ? Math.round(tdee) : null} unit="kcal" color={STEEL} />
             <StatTile label="Active" value={activeKcal != null ? Math.round(activeKcal) : null} unit="kcal" color={SAPPHIRE} />
             <StatTile label="On target" value={logged ? `${hit}/${logged}` : null} color={hit > 0 ? EMERALD : PLATINUM} />
           </span>
 
-          <span className="block mt-auto pt-1 border-t border-white/[0.06]">
-            <span className="text-[8px] font-bold uppercase tracking-[0.1em] text-muted">Daily · 30</span>
-            <span className="block mt-1">
-              <MiniBars series={series} color={PLATINUM} goal={goal} height={size === 'l' ? 46 : 26} />
-            </span>
-          </span>
-        </span>
-      )}
-    </WidgetFrame>
-  )
-}
-
-/* ────────────────────────────────────────────────────────────────────────────
- * ENERGY / BATTERY
- * ──────────────────────────────────────────────────────────────────────────── */
-
-/** How much charge the day has left, and the four readings that decided it. */
-export function BatteryWidget({ size, onOpen, batteryPct, score, drivers }: {
-  size: WidgetSize
-  onOpen?: () => void
-  batteryPct: number | null
-  score: number | null
-  drivers: Array<{ label: string; value: string; color: string }>
-}) {
-  const color = batteryPct == null ? STEEL : batteryPct >= 60 ? EMERALD : batteryPct >= 30 ? GOLD : OXIDE
-  return (
-    <WidgetFrame {...WIDGET_META.battery} size={size} onOpen={onOpen}>
-      {batteryPct == null ? (
-        <WidgetEmpty accent={STEEL} size={size} message="Scoring today" hint="Sleep and vitals set the charge" />
-      ) : size === 's' ? (
-        <span className="flex-1 min-h-0 flex flex-col justify-end gap-1.5">
-          <Hero value={batteryPct} unit="%" color={color} />
-          <Bar value={batteryPct} target={100} color={color} />
-        </span>
-      ) : (
-        <span className="flex-1 min-h-0 flex items-center gap-2.5">
-          <span className="relative shrink-0 h-full aspect-square max-h-[118px] grid place-items-center">
-            <svg viewBox="0 0 100 100" className="w-full h-full" aria-hidden="true">
-              <Ring pct={batteryPct} color={color} r={42} width={10} />
-            </svg>
-            <span className="absolute inset-0 grid place-items-center pointer-events-none">
-              <span className="text-center leading-none">
-                <span className="helix-num block font-bold text-[19px] tabular-nums" style={{ color }}>{batteryPct}</span>
-                <span className="block text-[8px] text-muted mt-0.5">% left</span>
-              </span>
-            </span>
-          </span>
-          <span className="flex-1 min-w-0 flex flex-col justify-center gap-1">
-            {score != null && (
-              <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-muted">
-                Recovery {Math.round(score)}
-              </span>
-            )}
-            {drivers.map((d) => (
-              <span key={d.label} className="flex items-baseline gap-1.5 min-w-0">
-                <span className="text-[9px] uppercase tracking-wide text-muted truncate">{d.label}</span>
-                <span className="helix-num text-[11px] font-bold tabular-nums ml-auto shrink-0" style={{ color: d.color }}>
-                  {d.value}
+          {/* No `mt-auto`: pushing the chart to the floor is what opened the gap
+              between it and the tiles above. It sits directly under them and
+              takes the slack as HEIGHT instead. */}
+          <span className="block pt-1 border-t border-white/[0.06]">
+            <span className="flex items-baseline gap-1.5">
+              <span className="text-[8px] font-bold uppercase tracking-[0.1em] text-muted">Daily · 30</span>
+              {best != null && (
+                <span className="helix-num text-[8px] tabular-nums text-muted ml-auto">
+                  best {best.toLocaleString()}
                 </span>
-              </span>
-            ))}
+              )}
+            </span>
+            <span className="block mt-1">
+              <MiniBars series={series} color={PLATINUM} goal={goal} height={size === 'l' ? 96 : 24} />
+            </span>
           </span>
         </span>
       )}
@@ -305,15 +328,24 @@ export function daysAgo(iso: string, today = logicalTodayISO()): string {
  * and the argument for fixing it. So an unlogged day reports the last session,
  * dated, in the muted hue that keeps it from being mistaken for today's.
  *
+ * ── FOUR FACTS, EACH WITH ITS OWN GLYPH ──────────────────────────────────────
+ * Distance, time, heart rate, energy. They came as one `·`-joined run of text
+ * that the eye had to parse left to right; they are four independent
+ * measurements from four different places, so each gets a tile and an icon, the
+ * way Health draws them. The icons are doing real work here rather than
+ * decorating: at 8px a label is barely legible and a glyph is instant.
+ *
  * ── WHY REPEAT-LAST AND NOT A FORM ───────────────────────────────────────────
  * The walk is the same walk. `useLastCardio` already exists to prefill the day
  * view's form with it — this skips the form entirely. It states the distance and
- * duration ON the control, so it is never a mystery write, and it only appears
- * when there IS a last walk to repeat.
+ * duration ON the control, so it is never a mystery write.
  *
  * Effort and heart rate are deliberately NOT copied forward. Distance and time
  * are properties of the route; how hard it felt and what your heart did are
  * properties of the day, and inventing those would be fabricating a reading.
+ *
+ * There is no large. Everything this widget knows fits a medium tile, and a
+ * large was the same content over 120px of nothing — see `WIDGET_SIZES`.
  */
 export function CardioWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () => void }) {
   const today = logicalTodayISO()
@@ -323,15 +355,28 @@ export function CardioWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () =
   const add = useAddCardio(today)
   const [done, setDone] = useState(false)
 
-  const km = useMemo(() => {
-    const m = (logs ?? []).reduce((sum, c) => sum + (c.distance_m ?? 0), 0)
-    return m > 0 ? Math.round((m / 1000) * 10) / 10 : null
+  /** Today, folded into one session: distance and time add, heart rate means. */
+  const now = useMemo(() => {
+    const rows = logs ?? []
+    if (!rows.length) return null
+    const meters = rows.reduce((n, c) => n + (c.distance_m ?? 0), 0)
+    const minutes = rows.reduce((n, c) => n + (c.duration_min ?? 0), 0)
+    const kcal = rows.reduce((n, c) => n + (activeKcalOf(c) ?? 0), 0)
+    const hrs = rows.map((c) => c.avg_hr).filter((v): v is number => v != null)
+    return {
+      km: meters > 0 ? Math.round((meters / 1000) * 10) / 10 : null,
+      minutes: minutes > 0 ? Math.round(minutes) : null,
+      kcal: kcal > 0 ? Math.round(kcal) : null,
+      hr: hrs.length ? Math.round(hrs.reduce((a, b) => a + b, 0) / hrs.length) : null,
+      pace: formatPace(paceMinPerKm(meters, minutes)),
+      kinds: [...new Set(rows.map((r) => KIND_LABEL[r.kind] ?? r.kind))].join(' · '),
+    }
   }, [logs])
 
   const canRepeat = !!last && (last.distance_m != null || last.duration_min != null)
   const repeatLabel = last
     ? [
-      last.distance_m != null ? `${Math.round((last.distance_m / 1000) * 10) / 10} km` : null,
+      last.distance_m != null ? `${distanceKm(last.distance_m)} km` : null,
       last.duration_min != null ? `${Math.round(last.duration_min)} min` : null,
     ].filter(Boolean).join(' · ')
     : ''
@@ -371,58 +416,106 @@ export function CardioWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () =
     </span>
   )
 
+  /** One measurement, its glyph and its unit. */
+  const fact = (Icon: typeof Timer, value: string | number | null, unit: string, color: string) => (
+    <span className="min-w-0 flex flex-col gap-0.5 rounded-lg px-1.5 py-1"
+      style={{ background: `${color}12`, border: `1px solid ${color}24` }}>
+      <Icon className="w-3 h-3 shrink-0" style={{ color }} aria-hidden="true" />
+      <span className="helix-num text-[13px] font-bold leading-none tabular-nums truncate"
+        style={{ color: value == null ? MUTED : color }}>
+        {value ?? '—'}
+        {value != null && <span className="text-[8px] font-normal text-muted ml-0.5">{unit}</span>}
+      </span>
+    </span>
+  )
+
   return (
     <WidgetFrame {...WIDGET_META.cardio} size={size} onOpen={onOpen}>
-      <span className="flex-1 min-h-0 flex flex-col justify-end gap-1.5">
-        {km != null ? (
-          <>
-            <Hero value={km} unit="km" color={EMERALD} decimals={1} tight={size !== 's'} />
-            {zonePips}
-          </>
-        ) : last ? (
-          <>
-            <span className="text-[8px] font-bold uppercase tracking-[0.12em] text-muted">
-              Last · {daysAgo(last.date)}
+      {now ? (
+        size === 's' ? (
+          <span className="flex-1 min-h-0 flex flex-col justify-between gap-0.5">
+            <span className="flex items-baseline gap-1.5 min-w-0">
+              <span className="helix-num text-[10px] font-bold tabular-nums" style={{ color: OXIDE }}>
+                {now.hr ?? '—'}<span className="text-[8px] font-normal text-muted ml-0.5">bpm</span>
+              </span>
+              <span className="helix-num text-[10px] font-bold tabular-nums ml-auto" style={{ color: SAPPHIRE }}>
+                {now.kcal ?? '—'}<span className="text-[8px] font-normal text-muted ml-0.5">kcal</span>
+              </span>
             </span>
-            <span className="helix-num font-bold text-fluid-lg leading-none tabular-nums truncate text-muted">
-              {last.distance_m != null
-                ? <>{Math.round((last.distance_m / 1000) * 10) / 10}<span className="text-[10px] font-normal ml-0.5">km</span></>
-                : last.duration_min != null
-                  ? <>{Math.round(last.duration_min)}<span className="text-[10px] font-normal ml-0.5">min</span></>
-                  : '—'}
+            <Hero value={now.km} unit="km" color={EMERALD} decimals={1} />
+            <span className="helix-num text-[9px] tabular-nums text-muted truncate">
+              {now.minutes != null ? `${now.minutes}′` : '—'} · {now.pace}
             </span>
+          </span>
+        ) : (
+          <span className="flex-1 min-h-0 flex flex-col gap-1.5">
+            <span className="flex items-baseline gap-2 min-w-0">
+              <Hero value={now.km} unit="km" color={EMERALD} decimals={1} tight />
+              <span className="text-[9px] text-muted truncate ml-auto">{now.kinds} · {now.pace}</span>
+            </span>
+            <span className="grid grid-cols-4 gap-1.5">
+              {fact(Ruler, now.km, 'km', EMERALD)}
+              {fact(Timer, now.minutes, 'min', PLATINUM)}
+              {fact(HeartPulse, now.hr, 'bpm', OXIDE)}
+              {fact(Flame, now.kcal, 'kcal', SAPPHIRE)}
+            </span>
+            <span className="mt-auto">{zonePips}</span>
+          </span>
+        )
+      ) : last ? (
+        <span className="flex-1 min-h-0 flex flex-col gap-1">
+          <span className="text-[8px] font-bold uppercase tracking-[0.12em] text-muted">
+            Last · {daysAgo(last.date)}
+          </span>
+          <span className="helix-num font-bold text-fluid-lg leading-none tabular-nums truncate text-muted">
+            {last.distance_m != null
+              ? <>{distanceKm(last.distance_m)}<span className="text-[10px] font-normal ml-0.5">km</span></>
+              : last.duration_min != null
+                ? <>{Math.round(last.duration_min)}<span className="text-[10px] font-normal ml-0.5">min</span></>
+                : '—'}
+          </span>
+          {size === 's' ? (
             <span className="text-[9px] text-muted truncate">
               {[
                 KIND_LABEL[last.kind] ?? last.kind,
-                last.duration_min != null && last.distance_m != null ? `${Math.round(last.duration_min)}′` : null,
-                last.active_kcal != null ? `${Math.round(last.active_kcal)} kcal` : null,
+                last.duration_min != null ? `${Math.round(last.duration_min)}′` : null,
+                activeKcalOf(last) != null ? `${Math.round(activeKcalOf(last) as number)} kcal` : null,
               ].filter(Boolean).join(' · ')}
             </span>
-            {size !== 's' && zonePips}
-          </>
-        ) : (
-          <WidgetEmpty accent={EMERALD} size={size} message="No walk logged yet" hint="Log one on the day it happened" />
-        )}
+          ) : (
+            <>
+              <span className="grid grid-cols-4 gap-1.5">
+                {fact(Ruler, last.distance_m != null ? distanceKm(last.distance_m) : null, 'km', MUTED)}
+                {fact(Timer, last.duration_min != null ? Math.round(last.duration_min) : null, 'min', MUTED)}
+                {fact(HeartPulse, last.avg_hr, 'bpm', MUTED)}
+                {fact(Flame, activeKcalOf(last) != null ? Math.round(activeKcalOf(last) as number) : null, 'kcal', MUTED)}
+              </span>
+              {zonePips}
+            </>
+          )}
 
-        {size !== 's' && canRepeat && (
-          <button
-            type="button"
-            onClick={repeat}
-            onPointerDown={(e) => e.stopPropagation()}
-            disabled={add.isPending}
-            aria-label={`Log another walk — ${repeatLabel}`}
-            className="mt-auto inline-flex items-center justify-center gap-1.5 min-h-[34px] rounded-xl
-                       text-[11px] font-bold active:scale-95 transition-transform disabled:opacity-50"
-            style={{ background: `${EMERALD}24`, border: `1px solid ${EMERALD}59`, color: EMERALD }}
-          >
-            {add.isPending
-              ? <><Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" /> Logging…</>
-              : done
-                ? <><Check className="w-3.5 h-3.5" strokeWidth={3} aria-hidden="true" /> Logged</>
-                : <><RotateCw className="w-3.5 h-3.5" aria-hidden="true" /> Walk {repeatLabel}</>}
-          </button>
-        )}
-      </span>
+          {size !== 's' && canRepeat && (
+            <button
+              type="button"
+              onClick={repeat}
+              onPointerDown={(e) => e.stopPropagation()}
+              disabled={add.isPending}
+              aria-label={`Log another walk — ${repeatLabel}`}
+              className="mt-auto inline-flex items-center justify-center gap-1.5 min-h-[32px] rounded-xl
+                         text-[11px] font-bold active:scale-95 transition-transform disabled:opacity-50"
+              style={{ background: `${EMERALD}24`, border: `1px solid ${EMERALD}59`, color: EMERALD }}
+            >
+              {add.isPending
+                ? <><Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" /> Logging…</>
+                : done
+                  ? <><Check className="w-3.5 h-3.5" strokeWidth={3} aria-hidden="true" /> Logged</>
+                  : <><RotateCw className="w-3.5 h-3.5" aria-hidden="true" /> Walk {repeatLabel}</>}
+            </button>
+          )}
+        </span>
+      ) : (
+        <WidgetEmpty accent={EMERALD} size={size} message="No walk logged yet" hint="Log one on the day it happened" />
+      )}
     </WidgetFrame>
   )
 }
@@ -457,9 +550,14 @@ function parseMin(t: string): number {
  * whole block is named at once. The count underneath stays per-ITEM, because
  * that is what you tick and what the log stores.
  *
- * `slots` arrives already resolved for the day (training vs rest doses, custom
- * supplements folded in) — this component ranks and renders, it does not decide
- * what is in the stack.
+ * ── MEDIUM SHOWS THE DAY, NOT JUST WHAT IS LEFT ──────────────────────────────
+ * The forward list alone left a band of nothing under it by mid-afternoon, when
+ * most of the protocol is behind you — the tile was emptiest exactly when the
+ * day was going best. What fills it is the part already taken, struck through in
+ * emerald: it is a genuine reading (did I take the morning block, or do I only
+ * think I did) and it is the half of the protocol that was invisible.
+ *
+ * There is no large: one dose block and a day's ticks is a medium tile's worth.
  */
 export function StackWidget({ size, onOpen, slots, taken, nowMinutes }: {
   size: WidgetSize
@@ -484,13 +582,22 @@ export function StackWidget({ size, onOpen, slots, taken, nowMinutes }: {
       .sort((a, b) => a.at - b.at)
   }, [slots, taken])
 
+  /** What is already behind you, most recent first. */
+  const done = useMemo(
+    () => slots.filter((s) => taken.has(s.key)).sort((a, b) => parseMin(b.time) - parseMin(a.time)),
+    [slots, taken],
+  )
+
   const pendingCount = blocks.reduce((n, b) => n + b.items.length, 0)
   // The next block DUE, not the next on the clock: something already overdue
   // outranks something scheduled for this evening.
   const next = blocks[0] ?? null
   const overdue = next != null && next.at < nowMinutes
   const inMin = next != null ? next.at - nowMinutes : null
-  const shown = size === 's' ? 2 : 3
+  // Small shows THREE, not two: a morning block is routinely three tablets and
+  // a tile that named two of them plus "+1 more" was making the reader open it
+  // to learn a word it had room for.
+  const shown = size === 's' ? 3 : 4
 
   const due = (mins: number): string => {
     if (mins < 0) return `${Math.abs(mins) < 60 ? `${Math.abs(mins)} min` : `${Math.floor(Math.abs(mins) / 60)}h`} overdue`
@@ -511,8 +618,13 @@ export function StackWidget({ size, onOpen, slots, taken, nowMinutes }: {
           <span className="text-[9px] truncate" style={{ color: EMERALD }}>protocol complete</span>
         </span>
       ) : (
-        <span className="flex-1 min-h-0 flex flex-col justify-end gap-0.5">
-          <span className="text-[8px] font-bold uppercase tracking-[0.12em] text-muted">Next</span>
+        <span className="flex-1 min-h-0 flex flex-col gap-0.5">
+          <span className="flex items-baseline gap-1.5">
+            <span className="text-[8px] font-bold uppercase tracking-[0.12em] text-muted">Next</span>
+            <span className="text-[9px] truncate ml-auto" style={{ color: overdue ? OXIDE : 'var(--color-muted)' }}>
+              {next.time} · {due(inMin ?? 0)}
+            </span>
+          </span>
           {/* The whole block, named. One line each, so two things due at 11:45
               read as two things to swallow rather than one truncated string. */}
           {next.items.slice(0, shown).map((it) => (
@@ -523,18 +635,25 @@ export function StackWidget({ size, onOpen, slots, taken, nowMinutes }: {
           {next.items.length > shown && (
             <span className="text-[9px] text-muted">+{next.items.length - shown} more in this dose</span>
           )}
-          <span className="text-[10px] truncate pt-0.5" style={{ color: overdue ? OXIDE : 'var(--color-muted)' }}>
-            {next.time} · {due(inMin ?? 0)}
-          </span>
 
-          {size !== 's' && blocks.length > 1 && (
-            <span className="block space-y-0.5 pt-1.5 mt-0.5 border-t border-white/[0.06]">
-              {blocks.slice(1, size === 'l' ? 5 : 3).map((b) => (
+          {size !== 's' && (
+            <span className="block space-y-0.5 pt-1 mt-0.5 border-t border-white/[0.06]">
+              {blocks.slice(1, 3).map((b) => (
                 <span key={b.time} className="flex items-baseline gap-2 min-w-0">
+                  <span className="w-1 h-1 rounded-full shrink-0" style={{ background: `${GOLD}80` }} aria-hidden="true" />
                   <span className="text-[9px] text-muted truncate flex-1">
                     {b.items.map((i) => i.name).join(' · ')}
                   </span>
                   <span className="helix-num text-[9px] tabular-nums text-muted shrink-0">{b.time}</span>
+                </span>
+              ))}
+              {done.slice(0, 3).map((d) => (
+                <span key={d.key} className="flex items-baseline gap-2 min-w-0">
+                  <Check className="w-2.5 h-2.5 shrink-0" strokeWidth={3} style={{ color: EMERALD }} aria-hidden="true" />
+                  <span className="text-[9px] truncate flex-1 line-through" style={{ color: `${EMERALD}b0` }}>
+                    {d.name}
+                  </span>
+                  <span className="helix-num text-[9px] tabular-nums text-muted shrink-0">{d.time}</span>
                 </span>
               ))}
             </span>

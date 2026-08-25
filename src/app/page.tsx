@@ -7,10 +7,14 @@ import { Sheet } from '@/components/ui/Sheet'
 import { ReadinessOrb } from '@/components/dashboard/ReadinessOrb'
 import { WidgetGrid } from '@/components/dashboard/WidgetGrid'
 import { VitalsWidget } from '@/components/dashboard/widgets/VitalsWidget'
-import { FuelWidget } from '@/components/dashboard/widgets/FuelWidget'
+import { FuelWidget, MicrosWidget } from '@/components/dashboard/widgets/FuelWidget'
+import {
+  DeficitWidget, BarToBeatWidget, ConsistencyWidget,
+} from '@/components/dashboard/widgets/PlanWidgets'
+import { WeeklyMuscleSheet } from '@/components/body/WeeklyMuscleSheet'
 import { BodyWidget } from '@/components/dashboard/widgets/BodyWidget'
 import {
-  SleepWidget, StepsWidget, BatteryWidget, CardioWidget, StackWidget,
+  SleepWidget, StepsWidget, CardioWidget, StackWidget,
 } from '@/components/dashboard/widgets/DailyWidgets'
 import {
   MuscleWidget, VolumeWidget, PrWidget, TrainWidget,
@@ -187,7 +191,10 @@ export default function DashboardPage() {
   const { data: bioSeries } = useBioSeries()
   const { data: weighIn } = useLastWeighIn()
   const { data: bodyMetrics } = useLatestBodyMetrics()
-  const { data: fuelLogs } = useDailyLogs(8)
+  // FIFTEEN, not eight: the Fuel tile's large size draws a fortnight of
+  // intake against target, and a fourteen-day chart cannot be built from an
+  // eight-day window. One row is the current day, so the window is n+1.
+  const { data: fuelLogs } = useDailyLogs(15)
 
   const [open, setOpen] = useState<SheetKey>(null)
   // Body strip: single tap → composition popup · double tap → Nexus InBody entry.
@@ -203,6 +210,17 @@ export default function DashboardPage() {
 
   /** Cardio is logged on the day it happened, not in a dashboard drawer. */
   const goToday = useCallback(() => router.push(`/day/${logicalTodayISO()}`), [router])
+  /** The micro table has a page of its own; the tile is its glance. */
+  const goMicros = useCallback(() => router.push('/nutrition/micros'), [router])
+  /** A year of adherence reads next to the week-by-week timeline. */
+  const goTimeline = useCallback(() => router.push('/pathfinder'), [router])
+
+  // The weekly muscle sheet is its own component rather than another `SheetKey`
+  // case: it owns its query and is mounted by two different surfaces (here and
+  // the Workout tab), so folding it into this page's drawer would make the
+  // Workout tab's copy a second implementation.
+  const [muscleOpen, setMuscleOpen] = useState(false)
+  const openMuscle = useCallback(() => setMuscleOpen(true), [])
 
   const onBodyTap = useSingleOrDoubleTap(
     () => setOpen('body'),
@@ -361,10 +379,6 @@ export default function DashboardPage() {
    */
   const renderWidget = useCallback((id: WidgetId, size: WidgetSize) => {
     switch (id) {
-      case 'battery':
-        return <BatteryWidget size={size} onOpen={onOpen('readiness')}
-          batteryPct={score?.battery_pct ?? null} score={score?.score ?? null} drivers={drivers} />
-
       case 'vitals':
         return <VitalsWidget size={size} onOpen={onOpen('vitals')} />
 
@@ -391,24 +405,52 @@ export default function DashboardPage() {
         return <TrainWidget size={size} onOpen={onOpen('train')}
           day={todayDay} logged={loggedToday}
           today={loggedToday && todaySession ? {
+            sessionId: todaySession.id,
             volumeKg: todaySession.total_volume_kg,
             setCount: todaySession.set_count,
             prCount: todaySession.pr_count,
             durationMin: todaySession.duration_min,
+            avgBpm: todaySession.avg_bpm,
+            calories: todaySession.calories_burned,
           } : null} />
 
       case 'body':
         return <BodyWidget size={size} onOpen={onBodyTap}
-          weightSeries={(bioSeries ?? []).map((d) => displayWeight(d.weightKg))} />
+          weightSeries={(bioSeries ?? []).map((d) => ({ date: d.date, value: displayWeight(d.weightKg) }))} />
 
+      // ── THE TAP THAT WENT TO THE WRONG SCREEN ──
+      // This routed to `/day/<today>`, which carries a DOMS map and the day's
+      // session and contains no weekly muscle breakdown anywhere on it. A
+      // widget whose tap lands somewhere that cannot answer its own question is
+      // worse than one that does nothing. It opens the week's focus now — the
+      // same sheet the Workout tab's atlas opens.
       case 'muscle':
-        return <MuscleWidget size={size} onOpen={goToday} />
+        return <MuscleWidget size={size} onOpen={openMuscle} />
 
       case 'volume':
         return <VolumeWidget size={size} onOpen={onOpen('train')} />
 
       case 'pr':
         return <PrWidget size={size} onOpen={onOpen('train')} />
+
+      // Energy balance is a fuel question, so it opens the fuel drawer where
+      // the calorie history and the override live.
+      case 'deficit':
+        return <DeficitWidget size={size} onOpen={onOpen('fuel')} />
+
+      // The micro table is genuinely a PAGE — twenty nutrients in four bands,
+      // each with its evidence — so this is the one tile that routes rather
+      // than opening a drawer. A sheet would be a page in a smaller box.
+      case 'micros':
+        return <MicrosWidget size={size} onOpen={goMicros} />
+
+      case 'bar':
+        return <BarToBeatWidget size={size} onOpen={onOpen('train')} />
+
+      // A year of adherence belongs beside the weekly timeline, which is the
+      // surface that explains any individual gap in it.
+      case 'consistency':
+        return <ConsistencyWidget size={size} onOpen={goTimeline} />
 
       case 'steps':
         return <StepsWidget size={size} onOpen={onOpen('steps')}
@@ -427,10 +469,10 @@ export default function DashboardPage() {
           slots={stackItems} taken={taken ?? EMPTY_TAKEN} nowMinutes={nowMinutes} />
     }
   }, [
-    score, drivers, sleep, log, goals, bioSeries, calToday, calGoal, nutrition,
+    sleep, log, goals, bioSeries, calToday, calGoal, nutrition,
     kcalSeries, phase, todayDay, loggedToday, todaySession,
     steps, tdeeToday, stackItems, taken, nowMinutes,
-    onOpen, onBodyTap, goToday,
+    onOpen, onBodyTap, goToday, openMuscle, goMicros, goTimeline,
   ])
 
   const sheetTitle: Record<Exclude<SheetKey, null>, string> = {
@@ -635,6 +677,8 @@ export default function DashboardPage() {
             attention a third option gets. */}
         {open === 'vitals' && <VitalsGroups />}
       </Sheet>
+
+      <WeeklyMuscleSheet open={muscleOpen} onClose={() => setMuscleOpen(false)} />
     </div>
   )
 }

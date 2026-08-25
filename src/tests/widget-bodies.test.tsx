@@ -1,7 +1,8 @@
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import { render, cleanup, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { SleepWidget, StepsWidget, StackWidget, BatteryWidget } from '@/components/dashboard/widgets/DailyWidgets'
+import { SleepWidget, StepsWidget, StackWidget } from '@/components/dashboard/widgets/DailyWidgets'
+import { FuelWidget } from '@/components/dashboard/widgets/FuelWidget'
 import { TrainWidget, tonnage } from '@/components/dashboard/widgets/TrainingWidgets'
 import type { Tables } from '@/lib/supabase/types'
 
@@ -11,6 +12,10 @@ vi.mock('@/lib/native/haptics', () => ({ tapLight: () => Promise.resolve(), tapS
  *  is which of its three faces renders, not the query. */
 const lastOfDay = vi.hoisted(() => ({ data: null as unknown }))
 vi.mock('@/lib/hooks/useLastSessionOfDay', () => ({ useLastSessionOfDay: () => lastOfDay }))
+
+/** Large's per-exercise breakdown is a query; the state under test is which
+ *  face renders, so the query is stubbed rather than provided. */
+vi.mock('@/lib/hooks/useSessionDetail', () => ({ useSessionDetail: () => ({ data: null }) }))
 
 afterEach(cleanup)
 
@@ -59,15 +64,43 @@ describe('a size is an answer, not an area', () => {
     expect(screen.getByText('Active')).toBeTruthy()
   })
 
-  it('Energy: medium adds the drivers that decided the charge', () => {
-    const drivers = [{ label: 'Sleep', value: '7h 36m', color: '#fff' }]
-    const { unmount } = render(<BatteryWidget size="s" batteryPct={62} score={71} drivers={drivers} />)
-    expect(screen.queryByText('Sleep')).toBeNull()
+  /**
+   * Fuel's small used to be a calorie count and one bar, which is the reading a
+   * cut does NOT turn on: 1,900 kcal at 90 g of protein and 1,900 at 190 g are
+   * opposite days. Small carries the macros as compact bars; medium names them
+   * in full words with their targets.
+   */
+  it('Fuel: small carries the macros too; medium names them in full', () => {
+    const props = {
+      kcal: 1900, kcalGoal: 2100, protein: 168, carbs: 190, fat: 62,
+      goals: { protein: 190, carbs: 200, fat: 70 },
+      waterMl: 2400, waterGoalMl: 3000, series: [], phaseLabel: null, phaseColor: null,
+    }
+    const { unmount } = render(<FuelWidget size="s" {...props} />)
+    expect(screen.getByText(/168/)).toBeTruthy()
+    expect(screen.queryByText('Protein')).toBeNull()
     unmount()
 
-    render(<BatteryWidget size="m" batteryPct={62} score={71} drivers={drivers} />)
-    expect(screen.getByText('Sleep')).toBeTruthy()
-    expect(screen.getByText(/Recovery 71/)).toBeTruthy()
+    render(<FuelWidget size="m" {...props} />)
+    for (const macro of ['Calories', 'Protein', 'Carbs', 'Fat', 'Water']) {
+      expect(screen.getByText(macro), macro).toBeTruthy()
+    }
+  })
+
+  /**
+   * The micros left this tile deliberately — five budgets you spend down and
+   * three thresholds you pass or fail have no business in one column with
+   * nothing to tell them apart. They are `MicrosWidget` now.
+   */
+  it('Fuel no longer carries the micronutrient checks at any size', () => {
+    const props = {
+      kcal: 1900, kcalGoal: 2100, protein: 168, carbs: 190, fat: 62,
+      goals: { protein: 190, carbs: 200, fat: 70 },
+      waterMl: 2400, waterGoalMl: 3000, series: [], phaseLabel: null, phaseColor: null,
+    }
+    render(<FuelWidget size="l" {...props} />)
+    expect(screen.queryByText('Fiber')).toBeNull()
+    expect(screen.queryByText('Sodium')).toBeNull()
   })
 })
 

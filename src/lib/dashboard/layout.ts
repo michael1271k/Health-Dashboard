@@ -1,7 +1,8 @@
 'use client'
 
 /**
- * The dashboard's arrangement — which widgets, in what order, at what size.
+ * The dashboard's arrangement — which widgets, in what order, at what size, and
+ * which of them are stacked on top of each other.
  *
  * ── WHY THIS IS DEVICE-LOCAL ─────────────────────────────────────────────────
  * Every other preference in HELIX syncs through `user_goals`, because a calorie
@@ -10,22 +11,37 @@
  * screen at the gym is not the one you want first on a monitor. It is stored in
  * localStorage, read synchronously during render, and never leaves the device.
  *
- * ── AND WHY THE READ IS A MERGE, NOT A PARSE ─────────────────────────────────
- * A stored layout names widgets by id. Ship a tenth widget and every existing
- * layout is missing it; remove one and every layout names something that no
- * longer exists. If the read simply trusted the stored array, the first case
- * would hide the new widget forever and the second would crash the grid.
+ * ── THE UNIT OF ARRANGEMENT IS A SLOT, NOT A WIDGET ──────────────────────────
+ * It used to be `order: WidgetId[]` plus `size: Record<WidgetId, WidgetSize>`,
+ * which encodes two assumptions that Smart Stacks break: that a widget appears
+ * at most once, and that a grid position holds exactly one widget. Both are now
+ * false — you can stack Sleep on Workout, and you can keep Fuel at small in one
+ * place and at large in another.
  *
- * So the read reconciles against the CURRENT catalogue: unknown ids are
- * dropped, known ids missing from the stored order are appended at their
- * default size, and the result is always a complete, valid layout. That is what
- * makes a new widget a one-line change with no migration to write.
+ * So the grid is a list of SLOTS. A slot owns a position, a size, and one or
+ * more widgets; a slot with two or more widgets is a stack, which rotates. Size
+ * belongs to the slot because a stack has ONE size — that is what makes the flip
+ * a flip rather than a reflow, and it is why two widgets may only be stacked
+ * when they are already the same size.
+ *
+ * ── AND WHY THE READ IS A MERGE, NOT A PARSE ─────────────────────────────────
+ * A stored layout names widgets by id. Ship a new widget and every existing
+ * layout is missing it; remove one and every layout names something that no
+ * longer exists; take `l` away from a widget and a stored layout still asks for
+ * it. If the read simply trusted what was stored, the first case would hide the
+ * new widget forever, the second would render a hole, and the third would draw
+ * a size the body no longer has a layout for.
+ *
+ * So the read reconciles against the CURRENT catalogue — unknown ids dropped,
+ * sizes clamped to what the widget actually offers, missing widgets appended —
+ * and it also upgrades a v1 layout in place rather than throwing the user's
+ * arrangement away. That is what makes shipping a widget a one-line change.
  */
 
 import type { LucideIcon } from 'lucide-react'
 import {
-  Activity, BarChart3, BatteryMedium, Dumbbell, Flame, Footprints,
-  HeartPulse, Moon, Pill, Scale, Target, Trophy,
+  Activity, BarChart3, CalendarCheck, Dumbbell, Flame, Footprints,
+  HeartPulse, Moon, Pill, Scale, Sparkles, Target, TrendingDown, Trophy,
 } from 'lucide-react'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import {
@@ -35,71 +51,155 @@ import {
 export type WidgetSize = 's' | 'm' | 'l'
 
 export type WidgetId =
-  | 'sleep' | 'fuel' | 'train' | 'body' | 'steps'
-  | 'cardio' | 'stack' | 'vitals' | 'battery'
+  | 'sleep' | 'fuel' | 'micros' | 'train' | 'body' | 'steps'
+  | 'cardio' | 'stack' | 'vitals'
   | 'muscle' | 'pr' | 'volume'
+  | 'deficit' | 'bar' | 'consistency'
 
 /**
  * Every widget the dashboard knows how to render, in first-run order.
  *
- * The order reads as the day does: what you have left (energy), what happened
- * to you (sleep), what you are deciding (fuel), what you are about to do
- * (train), then the record — body, where the week's work landed, how much of it
- * there has been, and the last thing you beat. Steps, vitals, cardio and the
- * stack are the ledger.
+ * The order reads as the day does: what happened to you (sleep, vitals), what
+ * you are deciding (fuel, micros, deficit), what you are about to do (workout,
+ * the bar to beat), then the record — body, where the week's work landed, how
+ * much of it there has been, what you last beat, and how consistently you have
+ * shown up. Steps, cardio and the stack are the ledger.
  *
- * ── `next` IS GONE, FOLDED INTO `train` ──────────────────────────────────────
+ * ── `battery` IS GONE ────────────────────────────────────────────────────────
+ * The Energy tile restated the Readiness orb, which is the fixed hero directly
+ * above the grid and is not arrangeable precisely because it is the one question
+ * the dashboard exists to answer. A second tile printing the same percentage and
+ * the same four drivers was a duplicate of the most prominent thing on screen.
+ *
+ * ── `next` IS GONE TOO, FOLDED INTO `train` ──────────────────────────────────
  * They were two tiles answering one question at two points in the same day, and
- * on a phone that is two tiles of which exactly one is ever useful. Worse, they
- * disagreed: Next said "Legs & Core A" while Train said "NaN kg", because Train
- * printed a volume for a session that had not happened yet. One tile now, three
- * states — before (the plan, and what you did last time you ran it), after
- * (today's real numbers), and rest.
+ * on a phone that is two tiles of which exactly one is ever useful. One tile
+ * now, three states — before, after, rest.
  *
- * A stored layout naming `next` simply drops it on read; nothing to migrate.
+ * A stored layout naming either simply drops it on read; nothing to migrate.
  */
 export const WIDGET_IDS: readonly WidgetId[] = [
-  'battery', 'sleep', 'fuel', 'train', 'body', 'muscle',
-  'volume', 'pr', 'steps', 'vitals', 'cardio', 'stack',
+  'sleep', 'vitals', 'fuel', 'micros', 'deficit', 'train', 'bar',
+  'body', 'muscle', 'volume', 'pr', 'consistency', 'steps', 'cardio', 'stack',
 ] as const
+
+/**
+ * The sizes each widget actually has a body for.
+ *
+ * ── A SIZE IS A DIFFERENT ANSWER, NOT A BIGGER BOX ───────────────────────────
+ * Three of these widgets have no large: Cardio, the Stack and the Latest PR.
+ * Each of them says everything it knows in a medium tile — one walk, one dose
+ * block, one record — and a large was the same content with 120px of nothing
+ * under it. A stretched medium is worse than no large at all, because it
+ * teaches the reader that growing a tile does not give them more, and after
+ * that they stop trying.
+ *
+ * `nextSize` cycles inside this list, so the resize badge on a Cardio tile goes
+ * S → M → S and the size that has no body is simply unreachable.
+ */
+export const WIDGET_SIZES: Record<WidgetId, readonly WidgetSize[]> = {
+  sleep: ['s', 'm', 'l'],
+  vitals: ['s', 'm', 'l'],
+  fuel: ['s', 'm', 'l'],
+  micros: ['s', 'm', 'l'],
+  deficit: ['s', 'm', 'l'],
+  train: ['s', 'm', 'l'],
+  bar: ['s', 'm', 'l'],
+  body: ['s', 'm', 'l'],
+  muscle: ['s', 'm', 'l'],
+  volume: ['s', 'm', 'l'],
+  pr: ['s', 'm'],
+  consistency: ['s', 'm', 'l'],
+  steps: ['s', 'm', 'l'],
+  cardio: ['s', 'm'],
+  stack: ['s', 'm'],
+}
 
 /**
  * First-run sizes.
  *
  * Not all medium: a grid where everything is the same size is a list with extra
  * steps, and the point of three sizes is that importance is visible before a
- * single number is read. Fuel and Train carry the day's two decisions and open
+ * single number is read. Fuel and Workout carry the day's two decisions and open
  * at medium; the rest start small and can be grown.
  */
 const DEFAULT_SIZE: Record<WidgetId, WidgetSize> = {
-  battery: 'm', sleep: 'm', fuel: 'm', train: 'm', body: 'm',
-  muscle: 's', volume: 's', pr: 's', steps: 's', vitals: 'm', cardio: 's', stack: 's',
+  sleep: 'm', vitals: 'm', fuel: 'm', micros: 's', deficit: 'm',
+  train: 'm', bar: 's', body: 'm', muscle: 's', volume: 's',
+  pr: 's', consistency: 's', steps: 's', cardio: 's', stack: 's',
+}
+
+/** The default size a widget lands at when it is added back from the tray. */
+export function defaultSizeFor(id: WidgetId): WidgetSize {
+  return DEFAULT_SIZE[id]
+}
+
+/**
+ * One position on the grid.
+ *
+ * `items` is ordered and MAY REPEAT a widget: two Fuel faces in one stack is a
+ * legitimate arrangement (one small-form glance, one detail), and forbidding it
+ * would be the layout model asserting something about intent it cannot know.
+ * Position in the array is the identity of a face, which is why nothing here
+ * carries a per-face id — there is nothing a face has that its slot and index
+ * do not already say.
+ */
+export interface StackSlot {
+  id: string
+  size: WidgetSize
+  items: WidgetId[]
 }
 
 export interface DashboardLayout {
-  order: WidgetId[]
-  size: Record<WidgetId, WidgetSize>
-  hidden: WidgetId[]
+  slots: StackSlot[]
 }
 
 const KEY = 'helix_dashboard_layout'
-const VERSION = 1
-
-export function defaultLayout(): DashboardLayout {
-  return { order: [...WIDGET_IDS], size: { ...DEFAULT_SIZE }, hidden: [] }
-}
-
-interface StoredLayout {
-  v?: number
-  order?: unknown
-  size?: unknown
-  hidden?: unknown
-}
+const VERSION = 2
 
 const isWidgetId = (v: unknown): v is WidgetId =>
   typeof v === 'string' && (WIDGET_IDS as readonly string[]).includes(v)
 
 const isSize = (v: unknown): v is WidgetSize => v === 's' || v === 'm' || v === 'l'
+
+/** Slot ids only have to be unique within one layout, and stable across writes. */
+let slotSeq = 0
+export function newSlotId(): string {
+  slotSeq += 1
+  return `sl${Date.now().toString(36)}${slotSeq.toString(36)}`
+}
+
+export function defaultLayout(): DashboardLayout {
+  return {
+    slots: WIDGET_IDS.map((id) => ({ id: `sl-${id}`, size: DEFAULT_SIZE[id], items: [id] })),
+  }
+}
+
+/**
+ * The largest size a slot may take: what every widget in it can draw.
+ *
+ * A stack is one tile, so a Cardio face inside it cannot be given a large just
+ * because the Sleep face beside it has one — the flip would change the tile's
+ * height, which is the one thing a flip must never do.
+ */
+export function sizesFor(items: readonly WidgetId[]): WidgetSize[] {
+  const all: WidgetSize[] = ['s', 'm', 'l']
+  return all.filter((s) => items.every((id) => WIDGET_SIZES[id].includes(s)))
+}
+
+/** The nearest size a slot can actually draw, preferring not to grow. */
+export function clampSize(items: readonly WidgetId[], want: WidgetSize): WidgetSize {
+  const ok = sizesFor(items)
+  if (!ok.length) return 's'
+  if (ok.includes(want)) return want
+  const rank: Record<WidgetSize, number> = { s: 0, m: 1, l: 2 }
+  // Step DOWN first — a widget that lost its large should not silently become
+  // small when medium exists.
+  return [...ok].sort((a, b) => Math.abs(rank[a] - rank[want]) - Math.abs(rank[b] - rank[want]))[0]
+}
+
+interface StoredV1 { v?: number; order?: unknown; size?: unknown; hidden?: unknown }
+interface StoredV2 { v?: number; slots?: unknown }
 
 /**
  * The stored layout, reconciled against the current catalogue.
@@ -110,35 +210,87 @@ const isSize = (v: unknown): v is WidgetSize => v === 's' || v === 'm' || v === 
  */
 export function readLayout(): DashboardLayout {
   if (typeof window === 'undefined') return defaultLayout()
-  let stored: StoredLayout | null = null
+  let stored: (StoredV1 & StoredV2) | null = null
   try {
     const raw = window.localStorage.getItem(KEY)
-    if (raw) stored = JSON.parse(raw) as StoredLayout
+    if (raw) stored = JSON.parse(raw) as StoredV1 & StoredV2
   } catch { /* unreadable or not JSON — defaults stand */ }
-  if (!stored || stored.v !== VERSION) return defaultLayout()
+  if (!stored) return defaultLayout()
 
-  const storedOrder = Array.isArray(stored.order) ? stored.order.filter(isWidgetId) : []
-  const seen = new Set(storedOrder)
-  // Anything the catalogue has gained since this layout was written goes on the
-  // end, rather than being silently invisible.
-  const order = [...storedOrder, ...WIDGET_IDS.filter((id) => !seen.has(id))]
+  const slots = stored.v === VERSION
+    ? parseSlots(stored.slots)
+    // A v1 layout is an arrangement the user made; upgrading it costs eight
+    // lines and throwing it away costs them their dashboard.
+    : stored.v === 1 ? fromV1(stored) : []
 
-  const size = { ...DEFAULT_SIZE }
+  return { slots: reconcile(slots) }
+}
+
+function parseSlots(raw: unknown): StackSlot[] {
+  if (!Array.isArray(raw)) return []
+  const out: StackSlot[] = []
+  for (const s of raw) {
+    if (!s || typeof s !== 'object') continue
+    const row = s as { id?: unknown; size?: unknown; items?: unknown }
+    const items = Array.isArray(row.items) ? row.items.filter(isWidgetId) : []
+    if (!items.length) continue
+    out.push({
+      id: typeof row.id === 'string' && row.id ? row.id : newSlotId(),
+      size: clampSize(items, isSize(row.size) ? row.size : DEFAULT_SIZE[items[0]]),
+      items,
+    })
+  }
+  return out
+}
+
+/** `{ order, size, hidden }` → one slot per visible widget, sizes preserved. */
+function fromV1(stored: StoredV1): StackSlot[] {
+  const order = Array.isArray(stored.order) ? stored.order.filter(isWidgetId) : []
+  const hidden = new Set(Array.isArray(stored.hidden) ? stored.hidden.filter(isWidgetId) : [])
+  const sizes = new Map<WidgetId, WidgetSize>()
   if (stored.size && typeof stored.size === 'object') {
     for (const [id, v] of Object.entries(stored.size as Record<string, unknown>)) {
-      if (isWidgetId(id) && isSize(v)) size[id] = v
+      if (isWidgetId(id) && isSize(v)) sizes.set(id, v)
     }
   }
+  return order
+    .filter((id) => !hidden.has(id))
+    .map((id) => ({
+      id: `sl-${id}`,
+      size: clampSize([id], sizes.get(id) ?? DEFAULT_SIZE[id]),
+      items: [id],
+    }))
+}
 
-  const hidden = Array.isArray(stored.hidden) ? stored.hidden.filter(isWidgetId) : []
-  return { order, size, hidden }
+/**
+ * Guarantee the invariants the grid renders against: unique slot ids, and every
+ * widget in the catalogue reachable.
+ *
+ * A widget shipped since this layout was written is APPENDED rather than left
+ * out, because a widget nobody can find is a widget that does not exist. One
+ * that has been placed twice is left alone — that is a stack the user built.
+ */
+function reconcile(slots: StackSlot[]): StackSlot[] {
+  const seenIds = new Set<string>()
+  const out = slots.map((s) => {
+    let id = s.id
+    while (seenIds.has(id)) id = newSlotId()
+    seenIds.add(id)
+    return { ...s, id }
+  })
+  const placed = new Set(out.flatMap((s) => s.items))
+  for (const id of WIDGET_IDS) {
+    if (placed.has(id)) continue
+    out.push({ id: `sl-${id}`, size: DEFAULT_SIZE[id], items: [id] })
+  }
+  return out
 }
 
 /** Persist. A failure here is a lost arrangement, never a broken dashboard. */
 export function writeLayout(layout: DashboardLayout): void {
   if (typeof window === 'undefined') return
   try {
-    window.localStorage.setItem(KEY, JSON.stringify({ v: VERSION, ...layout }))
+    window.localStorage.setItem(KEY, JSON.stringify({ v: VERSION, slots: layout.slots }))
   } catch { /* quota, private mode, blocked site data — the session still works */ }
 }
 
@@ -149,9 +301,9 @@ export function writeLayout(layout: DashboardLayout): void {
  * class built from a template at runtime is never generated into the stylesheet.
  *
  * ── THE THREE SIZES ARE THREE ANSWERS, NOT THREE AREAS ───────────────────────
- * Small is one number. Medium is the domain's SHAPE — a 2×2 of vitals, a set of
- * macro rings, three ledger bars — which is the whole reason a grid beats a
- * list here: nine domains of genuinely different density stop pretending to be
+ * Small is one number. Medium is the domain's SHAPE — a 2×2 of vitals, five
+ * macro bars, three ledger bars — which is the whole reason a grid beats a list
+ * here: fifteen domains of genuinely different density stop pretending to be
  * equal. Large adds history and, where one exists, an action.
  *
  * ── THE ROW UNIT IS 52px, AND NO SIZE IS ONE ROW ────────────────────────────
@@ -168,11 +320,6 @@ export function writeLayout(layout: DashboardLayout): void {
  *   S  2 rows  = 112px   — 175×112, a quarter tile, one number and its bar
  *   M  3 rows  = 172px   — 358×172, within a hair of iOS's medium proportion
  *   L  5 rows  = 292px   — 358×292, room for a shape AND its history
- *
- * So small got ROOMIER (104 → 112) while medium lost 46px. `auto-rows` keeps
- * `auto` as the maximum so a row can still grow if a body genuinely needs it,
- * but every body here is now written to its budget rather than to fill whatever
- * it was handed.
  */
 export const SIZE_SPAN: Record<WidgetSize, string> = {
   s: 'col-span-1 row-span-2',
@@ -213,68 +360,142 @@ export function bodyHeightPx(size: WidgetSize): number {
   return tileHeightPx(size) - 18 - 18 - 6
 }
 
-/** The next size in the cycle, for a tap on the size control. */
-export const SIZE_CYCLE: Record<WidgetSize, WidgetSize> = { s: 'm', m: 'l', l: 's' }
-
 /* ────────────────────────────────────────────────────────────────────────────
  * THE ARRANGEMENT RULES
  *
  * Pure, and out here rather than inside `WidgetGrid`, because they are the part
- * with rules to get wrong — the component's job is gestures. Hiding twice must
- * not push a duplicate; unhiding must restore a widget where it WAS, not at the
- * end of the grid; the order array is the arrangement and `hidden` is only a
- * mask over it. All three of those are assertions, and none is reachable from a
- * jsdom long-press.
+ * with rules to get wrong — the component's job is gestures. Merging two slots
+ * must refuse mismatched sizes; removing the last face of a stack must remove
+ * the slot rather than leave an empty tile; a widget removed from the grid must
+ * still be reachable from the tray. None of those is reachable from a jsdom
+ * long-press, and all three are assertions.
  * ──────────────────────────────────────────────────────────────────────────── */
 
-/** In arranged order, hidden ones removed. */
-export function visibleWidgets(layout: DashboardLayout): WidgetId[] {
-  return layout.order.filter((id) => !layout.hidden.includes(id))
-}
-
-/** In arranged order, only the hidden ones — the tray's contents. */
-export function hiddenWidgets(layout: DashboardLayout): WidgetId[] {
-  return layout.order.filter((id) => layout.hidden.includes(id))
+/** Every widget currently placed, in grid order, duplicates included. */
+export function placedWidgets(layout: DashboardLayout): WidgetId[] {
+  return layout.slots.flatMap((s) => s.items)
 }
 
 /**
- * Take a widget off the grid.
+ * The tray's contents: catalogue entries with no face anywhere on the grid.
  *
- * It stays in `order`, which is what lets it come back to its own place rather
- * than to the end. Hiding something already hidden is a no-op, not a second
- * entry — a duplicate would render the tray twice and make one `+` dead.
+ * Derived rather than stored. A separate `hidden` array is a second statement
+ * of the same fact, and once a widget can appear twice the two statements can
+ * disagree — at which point the tray offers to add something that is already on
+ * screen, or a tile exists that the tray also claims is hidden.
  */
-export function hideWidget(layout: DashboardLayout, id: WidgetId): DashboardLayout {
-  if (layout.hidden.includes(id)) return layout
-  return { ...layout, hidden: [...layout.hidden, id] }
+export function hiddenWidgets(layout: DashboardLayout): WidgetId[] {
+  const placed = new Set(placedWidgets(layout))
+  return WIDGET_IDS.filter((id) => !placed.has(id))
 }
 
-/** Put it back where it was. */
-export function showWidget(layout: DashboardLayout, id: WidgetId): DashboardLayout {
-  if (!layout.hidden.includes(id)) return layout
-  return { ...layout, hidden: layout.hidden.filter((h) => h !== id) }
+export function slotAt(layout: DashboardLayout, slotId: string): StackSlot | null {
+  return layout.slots.find((s) => s.id === slotId) ?? null
 }
 
-/** Advance one step round the S → M → L → S cycle. */
-export function resizeWidget(layout: DashboardLayout, id: WidgetId): DashboardLayout {
-  return { ...layout, size: { ...layout.size, [id]: SIZE_CYCLE[layout.size[id]] } }
+/**
+ * Take one face off the grid.
+ *
+ * Removing a face from a stack leaves the stack; removing the last face removes
+ * the slot, because an empty tile is a hole the user cannot fill or delete.
+ */
+export function removeFace(layout: DashboardLayout, slotId: string, index: number): DashboardLayout {
+  const slots: StackSlot[] = []
+  for (const s of layout.slots) {
+    if (s.id !== slotId) { slots.push(s); continue }
+    const items = s.items.filter((_, i) => i !== index)
+    if (!items.length) continue
+    slots.push({ ...s, items, size: clampSize(items, s.size) })
+  }
+  return { slots }
 }
 
+/** Put a widget back on the grid, at the end, at its default size. */
+export function addWidget(layout: DashboardLayout, id: WidgetId): DashboardLayout {
+  return { slots: [...layout.slots, { id: newSlotId(), size: DEFAULT_SIZE[id], items: [id] }] }
+}
+
+/** Advance one step round the sizes this slot's widgets can all draw. */
+export function resizeSlot(layout: DashboardLayout, slotId: string): DashboardLayout {
+  return {
+    slots: layout.slots.map((s) => {
+      if (s.id !== slotId) return s
+      const ok = sizesFor(s.items)
+      if (ok.length < 2) return s
+      const at = ok.indexOf(s.size)
+      return { ...s, size: ok[(at + 1) % ok.length] }
+    }),
+  }
+}
+
+/** Move a slot to another slot's position, everything else closing up behind it. */
+export function moveSlot(layout: DashboardLayout, fromId: string, toId: string): DashboardLayout {
+  const from = layout.slots.findIndex((s) => s.id === fromId)
+  const to = layout.slots.findIndex((s) => s.id === toId)
+  if (from < 0 || to < 0 || from === to) return layout
+  const slots = [...layout.slots]
+  const [moved] = slots.splice(from, 1)
+  slots.splice(to, 0, moved)
+  return { slots }
+}
+
+/**
+ * Whether two slots may become one.
+ *
+ * SAME SIZE ONLY, exactly as iOS requires. A stack is a single tile whose faces
+ * swap in place; combining a small with a medium would mean the grid changing
+ * height every time the stack turned over, which is not a flip, it is a reflow —
+ * and it would move every tile below it on a timer the user did not ask for.
+ */
+export function canStack(a: StackSlot | null, b: StackSlot | null): boolean {
+  if (!a || !b || a.id === b.id) return false
+  return a.size === b.size
+}
+
+/**
+ * Drop one slot onto another. The dragged slot's faces go UNDER the target's,
+ * in order, so the tile the user was looking at is still the face on top.
+ */
+export function stackSlots(layout: DashboardLayout, fromId: string, ontoId: string): DashboardLayout {
+  const from = slotAt(layout, fromId)
+  const onto = slotAt(layout, ontoId)
+  if (!canStack(from, onto) || !from || !onto) return layout
+  const items = [...onto.items, ...from.items]
+  return {
+    slots: layout.slots
+      .filter((s) => s.id !== fromId)
+      .map((s) => (s.id === ontoId ? { ...s, items, size: clampSize(items, s.size) } : s)),
+  }
+}
+
+/** Lift one face out of a stack into its own slot, directly after it. */
+export function unstackFace(layout: DashboardLayout, slotId: string, index: number): DashboardLayout {
+  const slot = slotAt(layout, slotId)
+  if (!slot || slot.items.length < 2) return layout
+  const id = slot.items[index]
+  if (!id) return layout
+  const rest = slot.items.filter((_, i) => i !== index)
+  const at = layout.slots.findIndex((s) => s.id === slotId)
+  const slots = [...layout.slots]
+  slots[at] = { ...slot, items: rest, size: clampSize(rest, slot.size) }
+  slots.splice(at + 1, 0, { id: newSlotId(), size: clampSize([id], slot.size), items: [id] })
+  return { slots }
+}
 
 /**
  * The catalogue, for anything that has to name a widget it is not rendering.
  *
  * ── ONE PLACE THE LABEL IS WRITTEN ───────────────────────────────────────────
- * Edit mode's tray lists the widgets you have hidden, which means it has to
- * print "Sleep" and a moon for a component that is not on screen. The obvious
- * shortcut is to retype the strings there; then a rename touches two files and
- * the tray quietly disagrees with the tile for a release. Each body spreads its
- * own row of this table into `WidgetFrame`, so the tray and the tile are
- * literally the same string and the same icon.
+ * Edit mode's tray lists the widgets you have taken off the grid, which means it
+ * has to print "Sleep" and a moon for a component that is not on screen. The
+ * obvious shortcut is to retype the strings there; then a rename touches two
+ * files and the tray quietly disagrees with the tile for a release. Each body
+ * spreads its own row of this table into `WidgetFrame`, so the tray and the tile
+ * are literally the same string and the same icon.
  *
  * The accent is the domain's own colour and is the one thing a body may
- * override — Train swaps to amethyst on a rest day, because a rest day is not a
- * failed training day and should not wear the training hue.
+ * override — Workout swaps to amethyst on a rest day, because a rest day is not
+ * a failed training day and should not wear the training hue.
  */
 export interface WidgetMeta {
   label: string
@@ -283,16 +504,22 @@ export interface WidgetMeta {
 }
 
 export const WIDGET_META: Record<WidgetId, WidgetMeta> = {
-  battery: { label: 'Energy', icon: BatteryMedium, accent: STEEL },
   sleep: { label: 'Sleep', icon: Moon, accent: AMETHYST },
+  vitals: { label: 'Vitals', icon: HeartPulse, accent: SAPPHIRE },
   fuel: { label: 'Fuel', icon: Flame, accent: MACRO_COLORS.calories },
-  train: { label: 'Train', icon: Dumbbell, accent: EMERALD },
+  micros: { label: 'Micros', icon: Sparkles, accent: EMERALD },
+  deficit: { label: 'Deficit Ledger', icon: TrendingDown, accent: MACRO_COLORS.calories },
+  // "Workout", not "Train" — the tab it belongs to is called Workout, the
+  // session it opens is called a workout, and the tile was the only surface in
+  // the app still calling the same thing by a different name.
+  train: { label: 'Workout', icon: Dumbbell, accent: EMERALD },
+  bar: { label: 'Bar to Beat', icon: Target, accent: GOLD },
   body: { label: 'Body', icon: Scale, accent: EMBER },
   muscle: { label: 'Muscle Focus', icon: Target, accent: AMETHYST },
-  volume: { label: 'Weekly Volume', icon: BarChart3, accent: STEEL },
+  volume: { label: 'Tonnage', icon: BarChart3, accent: STEEL },
   pr: { label: 'Latest PR', icon: Trophy, accent: GOLD },
+  consistency: { label: 'Consistency', icon: CalendarCheck, accent: EMERALD },
   steps: { label: 'Steps', icon: Footprints, accent: PLATINUM },
-  vitals: { label: 'Vitals', icon: HeartPulse, accent: SAPPHIRE },
   cardio: { label: 'Cardio', icon: Activity, accent: EMERALD },
   stack: { label: 'Stack', icon: Pill, accent: GOLD },
 }

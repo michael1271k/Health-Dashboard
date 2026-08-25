@@ -11,6 +11,9 @@ export interface LastSessionOfDay {
   setCount: number | null
   prCount: number | null
   durationMin: number | null
+  /** Both may be null on a session logged without a watch. */
+  avgBpm: number | null
+  calories: number | null
 }
 
 /**
@@ -44,7 +47,7 @@ export function useLastSessionOfDay(dayKey: string | null | undefined) {
     queryFn: async (): Promise<LastSessionOfDay | null> => {
       const { data, error } = await supabase
         .from('workout_sessions')
-        .select('id, started_at, total_volume_kg, set_count, pr_count, duration_min, notes')
+        .select('id, started_at, total_volume_kg, set_count, pr_count, duration_min, avg_bpm, calories_burned, notes')
         .eq('day_key', dayKey as string)
         .lt('started_at', `${today}T00:00:00`)
         .order('started_at', { ascending: false })
@@ -54,6 +57,7 @@ export function useLastSessionOfDay(dayKey: string | null | undefined) {
       const rows = (data ?? []) as Array<{
         id: string; started_at: string; total_volume_kg: number | null
         set_count: number | null; pr_count: number | null; duration_min: number | null
+        avg_bpm: number | null; calories_burned: number | null
         notes: string | null
       }>
       const row = rows.find((r) => !r.notes?.startsWith('__seed_'))
@@ -65,6 +69,8 @@ export function useLastSessionOfDay(dayKey: string | null | undefined) {
         setCount: row.set_count,
         prCount: row.pr_count,
         durationMin: row.duration_min,
+        avgBpm: row.avg_bpm,
+        calories: row.calories_burned,
       }
     },
   })

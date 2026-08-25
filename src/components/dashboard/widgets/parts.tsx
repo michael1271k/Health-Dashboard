@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { KineticNumber } from '@/components/fx/KineticNumber'
 import { EMERALD, OXIDE, MUTED } from '@/lib/theme/palette'
 
@@ -507,6 +508,300 @@ export function Milestones({ value, marks, color, unit = 'k' }: {
             </span>
           )
         })}
+      </span>
+    </span>
+  )
+}
+
+/**
+ * A continuous trend line with dated ticks and points you can touch.
+ *
+ * ── WHY THIS ONE BRIDGES GAPS AND `Spark` REFUSES TO ─────────────────────────
+ * `Spark` breaks its path on a missing day, deliberately: a straight line drawn
+ * through a day with no steps is a claim about a day that has no data.
+ *
+ * Body weight is the opposite kind of quantity. You do not stop having a weight
+ * on the mornings you skip the scale — the reading is missing, the VALUE is not
+ * — so a broken line said "your weight ceased to exist on Tuesday", which is
+ * how the 30-day weight chart came to look shattered on a body that had simply
+ * been weighed sixteen times in thirty days. Here the line is drawn through the
+ * days that were measured, in order, and the days between them carry no MARK.
+ * The line is an interpolation and the dots are the evidence, which is exactly
+ * the distinction the chart needs to make.
+ *
+ * ── AND WHY THE POINTS ARE TAPPABLE ──────────────────────────────────────────
+ * A 30-day line answers "which way" and cannot answer "what was I on the 12th",
+ * which is the follow-up question every trend provokes. Each measured day is a
+ * real hit target; tapping it names the day and the number above the line. No
+ * hover: a phone has no hover, and a chart whose detail is hover-only has no
+ * detail on the device it is mostly read on.
+ */
+export function LineChart({ series, color, height = 64, decimals = 1, unit, formatX }: {
+  /** Dated readings, oldest first. `value: null` = not measured that day. */
+  series: Array<{ date: string; value: number | null }>
+  color: string
+  height?: number
+  decimals?: number
+  unit?: string
+  /** `2026-08-25` → the axis label. Defaults to `25 Aug`. */
+  formatX?: (iso: string) => string
+}) {
+  const [picked, setPicked] = useState<number | null>(null)
+
+  const pts = series
+    .map((d, i) => ({ ...d, i }))
+    .filter((d): d is { date: string; value: number; i: number } => d.value != null)
+
+  if (pts.length < 2) return <div style={{ height }} aria-hidden="true" />
+
+  const W = 100
+  const H = 40
+  const PAD_Y = 5
+  const min = Math.min(...pts.map((p) => p.value))
+  const max = Math.max(...pts.map((p) => p.value))
+  const span = max - min || 1
+  const n = Math.max(1, series.length - 1)
+  const x = (i: number) => (i / n) * W
+  const y = (v: number) => H - PAD_Y - ((v - min) / span) * (H - PAD_Y * 2)
+
+  const d = pts.map((p, k) => `${k ? 'L' : 'M'}${x(p.i).toFixed(2)} ${y(p.value).toFixed(2)}`).join(' ')
+  // The fill is the same path closed to the floor — it is what makes a
+  // three-kilo range over a month read as a slope rather than as a wobble.
+  const area = `${d} L${x(pts[pts.length - 1].i).toFixed(2)} ${H} L${x(pts[0].i).toFixed(2)} ${H} Z`
+
+  const fmtX = formatX ?? ((iso: string) =>
+    new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }))
+
+  const at = picked != null ? pts.find((p) => p.i === picked) ?? null : null
+  const gid = `lc-${color.replace('#', '')}`
+
+  return (
+    <span className="block w-full">
+      <span className="relative block w-full" style={{ height }}>
+        <svg
+          viewBox={`0 0 ${W} ${H}`}
+          preserveAspectRatio="none"
+          className="w-full h-full block"
+          role="img"
+          aria-label={`Trend from ${pts[0].value.toFixed(decimals)} to ${pts[pts.length - 1].value.toFixed(decimals)}`}
+        >
+          <defs>
+            <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity="0.28" />
+              <stop offset="100%" stopColor={color} stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <path d={area} fill={`url(#${gid})`} />
+          <path
+            d={d} fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round"
+            strokeLinejoin="round" vectorEffect="non-scaling-stroke"
+          />
+          {pts.map((p) => (
+            <circle
+              key={p.i}
+              cx={x(p.i)} cy={y(p.value)}
+              // `preserveAspectRatio="none"` stretches the box, which would
+              // squash a circle into an ellipse — the marks are drawn as tiny
+              // rects for that reason, sized in the stretched space.
+              r={0}
+              fill={color}
+            />
+          ))}
+        </svg>
+
+        {/* The hit targets sit in HTML above the SVG rather than inside it: a
+            44px tap target cannot be expressed in a viewBox that is 100 units
+            wide, and shrinking the target to the dot's size would make the
+            chart untappable in practice. */}
+        {pts.map((p) => (
+          <button
+            key={p.i}
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setPicked(picked === p.i ? null : p.i) }}
+            onPointerDown={(e) => e.stopPropagation()}
+            className="absolute -translate-x-1/2 -translate-y-1/2 grid place-items-center"
+            style={{ left: `${x(p.i)}%`, top: `${(y(p.value) / H) * 100}%`, width: 22, height: 22 }}
+            aria-label={`${fmtX(p.date)}: ${p.value.toFixed(decimals)}${unit ?? ''}`}
+          >
+            <span
+              className="block rounded-full transition-transform"
+              style={{
+                width: picked === p.i ? 7 : 4,
+                height: picked === p.i ? 7 : 4,
+                background: color,
+                boxShadow: picked === p.i ? `0 0 6px ${color}` : undefined,
+              }}
+            />
+          </button>
+        ))}
+
+        {at && (
+          <span
+            className="absolute z-[2] -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-md px-1.5 py-0.5
+                       text-[9px] font-bold bg-black/80 border border-white/15 text-text pointer-events-none"
+            style={{ left: `${Math.min(88, Math.max(12, x(at.i)))}%`, top: `${(y(at.value) / H) * 100 - 6}%` }}
+          >
+            <span className="helix-num tabular-nums" style={{ color }}>
+              {at.value.toFixed(decimals)}{unit}
+            </span>
+            <span className="text-muted ml-1">{fmtX(at.date)}</span>
+          </span>
+        )}
+      </span>
+
+      {/* Three ticks, not thirty. The axis is there to say WHEN the line starts
+          and ends, which two labels and a midpoint answer completely; a label
+          per day at this width is a grey smear. */}
+      <span className="flex items-baseline justify-between pt-0.5 text-[8px] text-muted tabular-nums">
+        <span>{fmtX(series[0].date)}</span>
+        <span>{fmtX(series[Math.floor(series.length / 2)].date)}</span>
+        <span>{fmtX(series[series.length - 1].date)}</span>
+      </span>
+    </span>
+  )
+}
+
+/**
+ * Days as columns above and below a baseline.
+ *
+ * ── A CALORIE HISTORY IS NOT A LINE, IT IS A VERDICT PER DAY ─────────────────
+ * The Fuel tile used to draw seven days of intake as a sparkline, which is the
+ * wrong shape twice: it implies a value between Tuesday and Wednesday, and it
+ * plots the intake ALONE, so a 2,100 kcal day looked identical whether the
+ * target was 1,900 or 2,400. What the reader wants is the only thing that
+ * matters on a cut — did this day come in under, and by how much.
+ *
+ * So the baseline IS the target, each day is a column from it, under is the
+ * metric's own hue and over is oxide, and the eye reads the week as a row of
+ * verdicts. The same shape serves the energy ledger, where the quantity really
+ * is signed.
+ */
+export function BalanceBars({ values, under, over, height = 44, zeroLabel }: {
+  /** Signed, oldest first. Negative = below the line. `null` = no data. */
+  values: Array<number | null>
+  under: string
+  over: string
+  height?: number
+  /** Printed against the baseline, e.g. the target itself. */
+  zeroLabel?: string
+}) {
+  const real = values.filter((v): v is number => v != null && Number.isFinite(v))
+  if (!real.length) return <div style={{ height }} aria-hidden="true" />
+  const scale = Math.max(...real.map((v) => Math.abs(v))) || 1
+
+  return (
+    <span className="block w-full">
+      <span className="relative block w-full" style={{ height }} aria-hidden="true">
+        {/* The baseline, and the two halves it divides. */}
+        <span className="absolute inset-x-0 top-1/2 h-px" style={{ background: 'rgba(255,255,255,0.18)' }} />
+        <span className="absolute inset-0 flex items-center gap-[2px]">
+          {values.map((v, i) => {
+            const h = v == null ? 0 : (Math.abs(v) / scale) * 50
+            return (
+              <span key={i} className="relative flex-1 min-w-0 h-full">
+                {v == null ? (
+                  <span className="absolute left-0 right-0 top-1/2 h-px -translate-y-1/2"
+                    style={{ background: 'rgba(255,255,255,0.08)' }} />
+                ) : (
+                  <span
+                    className="absolute left-0 right-0 rounded-[1px]"
+                    style={{
+                      height: `${Math.max(2, h)}%`,
+                      background: v <= 0 ? under : over,
+                      ...(v <= 0 ? { top: '50%' } : { bottom: '50%' }),
+                    }}
+                  />
+                )}
+              </span>
+            )
+          })}
+        </span>
+      </span>
+      {zeroLabel && (
+        <span className="block text-[8px] text-muted tabular-nums pt-0.5">{zeroLabel}</span>
+      )}
+    </span>
+  )
+}
+
+/** One day of the consistency grid. */
+export interface ConsistencyDay {
+  date: string
+  /** `trained` = a scheduled session was logged · `rest` = a prescribed rest day
+   *  · `missed` = a scheduled session that never happened · `future` = not yet. */
+  state: 'trained' | 'rest' | 'missed' | 'future'
+  color?: string
+}
+
+/**
+ * A year of showing up, one cell per day.
+ *
+ * ── A PRESCRIBED REST DAY IS A FILLED CELL ───────────────────────────────────
+ * This is the decision the whole chart turns on. A calendar that only lights up
+ * on training days grades a five-day program as 71 % forever, and worse, it
+ * teaches the reader that Wednesday is a hole — which is the exact belief that
+ * makes people train on the day the program told them to recover. Rest that the
+ * plan ASKED FOR is adherence, so it fills, at a lower opacity so the shape of
+ * the training week is still legible through it. Only a scheduled session that
+ * never happened leaves an empty cell.
+ *
+ * Columns are weeks and rows are weekdays, the orientation every contribution
+ * grid uses, because it makes a missed Tuesday sit in the same row as every
+ * other Tuesday — a broken habit shows up as a horizontal streak.
+ */
+export function Heatmap({ days, weeks, cell = 7, gap = 2 }: {
+  /** Ascending. Padded internally so the first column starts on a Sunday. */
+  days: ConsistencyDay[]
+  /** How many trailing weeks to draw. */
+  weeks: number
+  cell?: number
+  gap?: number
+}) {
+  if (!days.length) return null
+  const byDate = new Map(days.map((d) => [d.date, d]))
+  const last = days[days.length - 1]
+  const end = new Date(`${last.date}T12:00:00Z`)
+  // Wind back to the Sunday that starts the earliest column, so every column is
+  // a whole week and the weekday rows line up.
+  const startOffset = end.getUTCDay() + (weeks - 1) * 7
+  const cols: Array<Array<ConsistencyDay | null>> = []
+  for (let w = 0; w < weeks; w += 1) {
+    const col: Array<ConsistencyDay | null> = []
+    for (let dow = 0; dow < 7; dow += 1) {
+      const back = startOffset - (w * 7 + dow)
+      const at = new Date(end)
+      at.setUTCDate(end.getUTCDate() - back)
+      const iso = at.toISOString().slice(0, 10)
+      col.push(byDate.get(iso) ?? null)
+    }
+    cols.push(col)
+  }
+
+  return (
+    <span className="block overflow-hidden" aria-hidden="true">
+      <span className="flex" style={{ gap }}>
+        {cols.map((col, w) => (
+          <span key={w} className="flex flex-col" style={{ gap }}>
+            {col.map((d, i) => (
+              <span
+                key={i}
+                className="block rounded-[1.5px]"
+                style={{
+                  width: cell,
+                  height: cell,
+                  background: !d || d.state === 'future'
+                    ? 'rgba(255,255,255,0.04)'
+                    : d.state === 'trained'
+                      ? (d.color ?? EMERALD)
+                      : d.state === 'rest'
+                        ? `${d.color ?? EMERALD}42`
+                        : 'transparent',
+                  border: d && d.state === 'missed' ? '1px solid rgba(255,255,255,0.16)' : undefined,
+                }}
+              />
+            ))}
+          </span>
+        ))}
       </span>
     </span>
   )

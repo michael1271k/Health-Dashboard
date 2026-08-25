@@ -2,7 +2,8 @@ import { describe, it, expect, afterEach, beforeEach } from 'vitest'
 import { render, cleanup, screen } from '@testing-library/react'
 import {
   defaultLayout, readLayout, writeLayout,
-  hideWidget, showWidget, resizeWidget, visibleWidgets, hiddenWidgets,
+  removeFace, addWidget, resizeSlot, moveSlot, canStack, stackSlots, unstackFace,
+  hiddenWidgets, placedWidgets, slotAt,
   WIDGET_IDS, type DashboardLayout,
 } from '@/lib/dashboard/layout'
 import { HalfArc, MiniBars, Milestones, vsBaseline } from '@/components/dashboard/widgets/parts'
@@ -23,52 +24,165 @@ afterEach(cleanup)
  */
 describe('the arrangement', () => {
   const L = (): DashboardLayout => defaultLayout()
+  const slotOf = (l: DashboardLayout, id: string) =>
+    l.slots.find((s) => s.items.includes(id as never))!
 
-  it('hiding removes it from the grid without losing where it lived', () => {
+  it('taking a face off the grid removes its slot and puts it in the tray', () => {
     const base = L()
-    const at = base.order.indexOf('steps')
-    const next = hideWidget(base, 'steps')
-    expect(visibleWidgets(next)).not.toContain('steps')
+    const slot = slotOf(base, 'steps')
+    const next = removeFace(base, slot.id, 0)
+    expect(placedWidgets(next)).not.toContain('steps')
     expect(hiddenWidgets(next)).toEqual(['steps'])
-    // Still in `order`, at the same index. That IS the restore path.
-    expect(next.order.indexOf('steps')).toBe(at)
+    expect(slotAt(next, slot.id)).toBeNull()
   })
 
-  it('unhiding puts it back where it was, not at the end', () => {
+  it('adding it back puts it on the grid exactly once', () => {
     const base = L()
-    const at = base.order.indexOf('sleep')
-    const back = showWidget(hideWidget(base, 'sleep'), 'sleep')
-    expect(visibleWidgets(back).indexOf('sleep')).toBe(at)
-    expect(visibleWidgets(back)).toEqual(visibleWidgets(base))
+    const gone = removeFace(base, slotOf(base, 'sleep').id, 0)
+    const back = addWidget(gone, 'sleep')
+    expect(placedWidgets(back).filter((id) => id === 'sleep')).toHaveLength(1)
+    expect(hiddenWidgets(back)).toEqual([])
   })
 
-  it('hiding twice does not push a duplicate into the tray', () => {
-    const twice = hideWidget(hideWidget(L(), 'pr'), 'pr')
-    expect(twice.hidden).toEqual(['pr'])
-    expect(hiddenWidgets(twice)).toHaveLength(1)
-  })
-
-  it('unhiding something that is not hidden changes nothing', () => {
+  it('the tray is derived, so it can never disagree with the grid', () => {
     const base = L()
-    expect(showWidget(base, 'fuel')).toBe(base)
+    expect(hiddenWidgets(base)).toEqual([])
+    const gone = removeFace(base, slotOf(base, 'pr').id, 0)
+    expect(hiddenWidgets(gone)).toEqual(['pr'])
+    // Placed twice is a stack the user built, not a duplicate to clean up.
+    const twice = addWidget(gone, 'fuel')
+    expect(hiddenWidgets(twice)).toEqual(['pr'])
+    expect(placedWidgets(twice).filter((id) => id === 'fuel')).toHaveLength(2)
   })
 
   it('resize walks the cycle and returns home', () => {
-    let l = L()
-    const start = l.size.steps
-    l = resizeWidget(l, 'steps')
-    expect(l.size.steps).not.toBe(start)
-    l = resizeWidget(resizeWidget(l, 'steps'), 'steps')
-    expect(l.size.steps).toBe(start)
+    const base = L()
+    const id = slotOf(base, 'steps').id
+    const start = slotAt(base, id)!.size
+    let l = resizeSlot(base, id)
+    expect(slotAt(l, id)!.size).not.toBe(start)
+    l = resizeSlot(resizeSlot(l, id), id)
+    expect(slotAt(l, id)!.size).toBe(start)
     // And it touched nothing else.
-    expect(l.size.sleep).toBe(L().size.sleep)
+    expect(slotOf(l, 'sleep').size).toBe(slotOf(base, 'sleep').size)
   })
 
-  it('hiding every widget is a valid layout, not a crash', () => {
+  it('resize skips the size a widget has no body for', () => {
+    // Cardio is S/M only — the cycle must never land on `l`.
+    const base = L()
+    let l = base
+    const id = slotOf(base, 'cardio').id
+    const seen = new Set<string>()
+    for (let i = 0; i < 6; i += 1) {
+      seen.add(slotAt(l, id)!.size)
+      l = resizeSlot(l, id)
+    }
+    expect([...seen].sort()).toEqual(['m', 's'])
+  })
+
+  it('moving a slot reorders without losing or duplicating anything', () => {
+    const base = L()
+    const from = base.slots[5].id
+    const to = base.slots[1].id
+    const moved = moveSlot(base, from, to)
+    expect(moved.slots[1].id).toBe(from)
+    expect(moved.slots).toHaveLength(base.slots.length)
+    expect([...placedWidgets(moved)].sort()).toEqual([...placedWidgets(base)].sort())
+  })
+
+  it('taking every widget off the grid is a valid layout, not a crash', () => {
     let l = L()
-    for (const id of WIDGET_IDS) l = hideWidget(l, id)
-    expect(visibleWidgets(l)).toEqual([])
+    while (l.slots.length) l = removeFace(l, l.slots[0].id, 0)
+    expect(l.slots).toEqual([])
     expect(hiddenWidgets(l)).toHaveLength(WIDGET_IDS.length)
+  })
+})
+
+/**
+ * ── STACKING IS THE RULE, NOT THE GESTURE ────────────────────────────────────
+ *
+ * The hover-hold that arms a merge is a dnd-kit drag with a real 600ms clock,
+ * and jsdom has neither. What it DOES have is the rule the gesture then calls,
+ * and the rule is where the damage would be: a stack is ONE tile, so combining
+ * two different sizes would mean a tile that changes height on a timer, moving
+ * everything below it without being asked.
+ */
+describe('smart stacks', () => {
+  const L = (): DashboardLayout => defaultLayout()
+  const slotOf = (l: DashboardLayout, id: string) =>
+    l.slots.find((s) => s.items.includes(id as never))!
+
+  it('refuses two tiles that are not the same size', () => {
+    const l = L()
+    const small = slotOf(l, 'muscle')      // defaults to `s`
+    const medium = slotOf(l, 'fuel')       // defaults to `m`
+    expect(small.size).not.toBe(medium.size)
+    expect(canStack(small, medium)).toBe(false)
+    expect(stackSlots(l, small.id, medium.id)).toBe(l)
+  })
+
+  it('refuses to stack a tile onto itself', () => {
+    const l = L()
+    const one = l.slots[0]
+    expect(canStack(one, one)).toBe(false)
+  })
+
+  it('combines two same-size tiles into one, target face on top', () => {
+    const l = L()
+    const from = slotOf(l, 'muscle')
+    const onto = slotOf(l, 'steps')
+    expect(from.size).toBe(onto.size)
+    const next = stackSlots(l, from.id, onto.id)
+    expect(next.slots).toHaveLength(l.slots.length - 1)
+    expect(slotAt(next, onto.id)!.items).toEqual(['steps', 'muscle'])
+    expect(slotAt(next, from.id)).toBeNull()
+    // Nothing left the dashboard — a stack is a move, not a delete.
+    expect([...placedWidgets(next)].sort()).toEqual([...placedWidgets(l)].sort())
+  })
+
+  it('stacks without limit, and a duplicate face is allowed', () => {
+    let l = L()
+    const onto = slotOf(l, 'steps').id
+    for (const id of ['muscle', 'volume', 'pr', 'cardio'] as const) {
+      l = stackSlots(l, slotOf(l, id).id, onto)
+    }
+    l = stackSlots(l, addWidget(l, 'steps').slots.at(-1)!.id, onto)
+    expect(slotAt(l, onto)!.items.length).toBeGreaterThanOrEqual(5)
+  })
+
+  it('a stack clamps to a size every face can draw', () => {
+    const l = L()
+    // Cardio is S/M only. Stacked with a small Muscle tile the slot stays small;
+    // it can never be grown to a large the cardio face has no body for.
+    const next = stackSlots(l, slotOf(l, 'cardio').id, slotOf(l, 'muscle').id)
+    const slot = slotAt(next, slotOf(l, 'muscle').id)!
+    let grown = next
+    for (let i = 0; i < 4; i += 1) grown = resizeSlot(grown, slot.id)
+    expect(slotAt(grown, slot.id)!.size).not.toBe('l')
+  })
+
+  it('unstacking lifts the named face out, next to the stack it came from', () => {
+    const l = L()
+    const onto = slotOf(l, 'steps').id
+    const stacked = stackSlots(l, slotOf(l, 'muscle').id, onto)
+    const at = stacked.slots.findIndex((s) => s.id === onto)
+    const split = unstackFace(stacked, onto, 1)
+    expect(slotAt(split, onto)!.items).toEqual(['steps'])
+    expect(split.slots[at + 1].items).toEqual(['muscle'])
+  })
+
+  it('unstacking a tile that is not a stack changes nothing', () => {
+    const l = L()
+    expect(unstackFace(l, l.slots[0].id, 0)).toBe(l)
+  })
+
+  it('removing the last face of a stack leaves the stack, not a hole', () => {
+    const l = L()
+    const onto = slotOf(l, 'steps').id
+    const stacked = stackSlots(l, slotOf(l, 'muscle').id, onto)
+    const dropped = removeFace(stacked, onto, 1)
+    expect(slotAt(dropped, onto)!.items).toEqual(['steps'])
+    expect(hiddenWidgets(dropped)).toEqual(['muscle'])
   })
 })
 
@@ -79,23 +193,40 @@ describe('the arrangement', () => {
 describe('persistence', () => {
   beforeEach(() => window.localStorage.clear())
 
-  it('round-trips a hidden set and a resize', () => {
-    writeLayout(resizeWidget(hideWidget(defaultLayout(), 'cardio'), 'body'))
+  const slotOf = (l: DashboardLayout, id: string) =>
+    l.slots.find((s) => s.items.includes(id as never))!
+
+  it('round-trips a tile taken off the grid and a resize', () => {
+    const base = defaultLayout()
+    const gone = removeFace(base, slotOf(base, 'cardio').id, 0)
+    writeLayout(resizeSlot(gone, slotOf(gone, 'body').id))
     const back = readLayout()
-    expect(back.hidden).toContain('cardio')
-    expect(back.size.body).toBe('l')
+    // `cardio` is off the grid, so the reconcile appends it at the END rather
+    // than at its old index — reachable, which is the invariant that matters.
+    expect(back.slots.at(-1)!.items).toEqual(['cardio'])
+    expect(slotOf(back, 'body').size).toBe('l')
+  })
+
+  it('a stack survives a reload', () => {
+    const base = defaultLayout()
+    const onto = slotOf(base, 'steps').id
+    writeLayout(stackSlots(base, slotOf(base, 'muscle').id, onto))
+    expect(slotAt(readLayout(), onto)!.items).toEqual(['steps', 'muscle'])
   })
 
   /** A stored layout naming `next` predates the Train merge. */
   it('drops a widget the catalogue no longer has', () => {
     window.localStorage.setItem('helix_dashboard_layout', JSON.stringify({
-      v: 1, order: ['next', 'sleep', 'fuel'], size: { next: 'm' }, hidden: ['next'],
+      v: 2,
+      slots: [
+        { id: 'a', size: 'm', items: ['next'] },
+        { id: 'b', size: 'm', items: ['sleep', 'fuel'] },
+      ],
     }))
     const back = readLayout()
-    expect(back.order).not.toContain('next' as never)
-    expect(back.hidden).not.toContain('next' as never)
+    expect(placedWidgets(back)).not.toContain('next' as never)
     // And everything the catalogue has gained is appended rather than lost.
-    expect(new Set(back.order)).toEqual(new Set(WIDGET_IDS))
+    expect(new Set(placedWidgets(back))).toEqual(new Set(WIDGET_IDS))
   })
 })
 
@@ -273,7 +404,17 @@ describe('StackWidget — one trip to the cupboard', () => {
   it('the count underneath stays per ITEM, because that is what you tick', () => {
     render(<StackWidget size="m" slots={SLOTS} taken={new Set(['citrulline'])} nowMinutes={11 * 60} />)
     expect(screen.getByText('1/3')).toBeTruthy()
-    // Half the block is ticked, so only the outstanding half is named.
+    // Half the block is ticked, so only the outstanding half is the instruction.
+    expect(screen.getByText('Caffeine')).toBeTruthy()
+    // The ticked half is still on the tile at medium — struck through, in the
+    // "already behind you" list, which is what fills the band that used to be
+    // empty by mid-afternoon. It must never be in the NEXT block.
+    const taken = screen.getByText('L-Citrulline')
+    expect(taken.className).toContain('line-through')
+  })
+
+  it('small carries only the instruction, never the ticked items', () => {
+    render(<StackWidget size="s" slots={SLOTS} taken={new Set(['citrulline'])} nowMinutes={11 * 60} />)
     expect(screen.getByText('Caffeine')).toBeTruthy()
     expect(screen.queryByText('L-Citrulline')).toBeNull()
   })

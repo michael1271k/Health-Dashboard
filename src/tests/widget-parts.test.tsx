@@ -2,7 +2,7 @@ import { describe, it, expect, afterEach } from 'vitest'
 import { render, cleanup } from '@testing-library/react'
 import { Spark, Bar, Ring, mean, vsBaseline } from '@/components/dashboard/widgets/parts'
 import {
-  SIZE_SPAN, SIZE_CYCLE, WIDGET_IDS, WIDGET_META,
+  SIZE_SPAN, WIDGET_IDS, WIDGET_META, WIDGET_SIZES, sizesFor,
   tileHeightPx, bodyHeightPx, ROW_UNIT_PX, GRID_GAP_PX,
 } from '@/lib/dashboard/layout'
 
@@ -185,9 +185,31 @@ describe('the size contract', () => {
     }
   })
 
-  it('cycles through every size and returns home', () => {
-    expect(SIZE_CYCLE[SIZE_CYCLE[SIZE_CYCLE.s]]).toBe('s')
-    expect(new Set(Object.values(SIZE_CYCLE)).size).toBe(3)
+  /**
+   * Every widget declares the sizes it has a BODY for, and three of them have
+   * no large on purpose — a large that is a stretched medium teaches the reader
+   * that growing a tile buys nothing, and after that they stop trying.
+   *
+   * The rule that has to hold is that a declared size is a real size, in the
+   * canonical order, and that small always exists: every tile must be able to
+   * shrink to a quarter, or a phone dashboard is fifteen half-width tiles.
+   */
+  it('every widget declares a real, ordered set of sizes including small', () => {
+    for (const id of WIDGET_IDS) {
+      const sizes = WIDGET_SIZES[id]
+      expect(sizes.length, id).toBeGreaterThan(0)
+      expect(sizes, id).toContain('s')
+      expect([...sizes], id).toEqual(['s', 'm', 'l'].filter((v) => sizes.includes(v as never)))
+      for (const v of sizes) expect(SIZE_SPAN[v], id).toBeTruthy()
+    }
+  })
+
+  it('a stack offers only the sizes every one of its faces can draw', () => {
+    for (const id of WIDGET_IDS) {
+      expect(sizesFor([id])).toEqual([...WIDGET_SIZES[id]])
+    }
+    // The intersection, never the union — a stack is one tile with one height.
+    expect(sizesFor(['sleep', 'cardio'])).toEqual(['s', 'm'])
   })
 
   it('names every widget exactly once', () => {

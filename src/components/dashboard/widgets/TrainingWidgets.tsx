@@ -4,24 +4,27 @@ import { useMemo } from 'react'
 import Link from 'next/link'
 import { Dumbbell, Moon } from 'lucide-react'
 import { WidgetFrame, WidgetEmpty } from '@/components/dashboard/WidgetFrame'
-import { Bar, Hero, StatTile } from './parts'
+import { Bar, Hero, MiniBars, StatTile, Trend } from './parts'
 import { daysAgo } from './DailyWidgets'
 import { MuscleAtlas } from '@/components/body/MuscleAtlas'
 import { ATLAS_VIEWBOX, setsToWorked } from '@/lib/body/atlas'
 import { landmarkColor } from '@/lib/theme/muscleHue'
 import { useWeeklyVolume } from '@/lib/hooks/useWeeklyVolume'
 import { useWeekSessions } from '@/lib/hooks/useWeekSessions'
+import { useSessionHistory } from '@/lib/hooks/useSessionHistory'
+import { useSessionDetail } from '@/lib/hooks/useSessionDetail'
 import { useLastSessionOfDay } from '@/lib/hooks/useLastSessionOfDay'
 import { useStreak } from '@/lib/hooks/useStreak'
-import { weekStartOf } from '@/lib/utils/week'
+import { weekStartOf, isoAddDays } from '@/lib/utils/week'
 import { useLatestPr } from '@/lib/hooks/useLatestPr'
 import { prAxisLabel } from '@/lib/training/prEngine'
+import { epley1RM } from '@/lib/utils/epley'
 import { displayWeight, weightUnit } from '@/lib/utils/units'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
 import { logicalTodayISO } from '@/lib/utils/day'
 import type { LandmarkMuscle, MuscleVolume } from '@/lib/training/landmarks'
 import type { ScheduleDay } from '@/lib/programs'
-import { EMERALD, GOLD, STEEL, MUTED, AMETHYST } from '@/lib/theme/palette'
+import { EMERALD, GOLD, STEEL, MUTED, AMETHYST, OXIDE, SAPPHIRE } from '@/lib/theme/palette'
 import { WIDGET_META, bodyHeightPx, type WidgetSize } from '@/lib/dashboard/layout'
 
 /**
@@ -68,6 +71,12 @@ export function tonnage(value: number | null | undefined): string | null {
  *
  * Small is the figure alone — at 1×1 the shape IS the information, and a number
  * beside it would crowd out the one thing that cannot be said any other way.
+ *
+ * ── AND LARGE LISTS EVERY MUSCLE, NOT THE TOP SEVEN ──────────────────────────
+ * A truncated list is the wrong answer for the one question this widget exists
+ * to answer. "Where has the week landed" includes the muscles it has NOT landed
+ * on, and those sort to the bottom — which is exactly where a `slice(0, 7)` was
+ * cutting them off. Large now runs the whole landmark set in two columns.
  */
 const NO_MUSCLES: MuscleVolume[] = []
 
@@ -93,6 +102,11 @@ export function MuscleWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () =
     () => [...muscles].filter((m) => m.sets > 0).sort((a, b) => b.sets - a.sets),
     [muscles],
   )
+  /** Everything the program grades, worked first, untouched last. */
+  const all = useMemo(
+    () => [...muscles].sort((a, b) => (b.sets - a.sets) || a.muscle.localeCompare(b.muscle)),
+    [muscles],
+  )
   // What is furthest BEHIND its target — the answer the figure is being asked
   // for. Not the biggest number, which is just "what you like training".
   const behind = useMemo(
@@ -105,10 +119,46 @@ export function MuscleWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () =
   const h = atlasHeight(size)
   const w = Math.round(h * (ATLAS_VIEWBOX.width / ATLAS_VIEWBOX.height))
 
+  const row = (m: MuscleVolume) => (
+    <span key={m.muscle} className="block min-w-0">
+      <span className="flex items-baseline gap-1 min-w-0">
+        <span className="text-[9px] uppercase tracking-wide text-muted truncate">{m.muscle}</span>
+        <span className="helix-num text-[10px] font-bold tabular-nums ml-auto shrink-0"
+          style={{ color: m.sets > 0 ? m.color : MUTED }}>
+          {m.sets}<span className="text-muted font-normal">/{m.target || '—'}</span>
+        </span>
+      </span>
+      <span className="block mt-0.5"><Bar value={m.sets} target={m.target || null} color={m.color} /></span>
+    </span>
+  )
+
   return (
     <WidgetFrame {...WIDGET_META.muscle} size={size} onOpen={onOpen}>
       {!trained.length ? (
         <WidgetEmpty accent={AMETHYST} size={size} message="Nothing trained yet this week" hint="Your first session lights the map" />
+      ) : size === 'l' ? (
+        /* Large is the whole landmark set beside the figure — two columns, so
+           sixteen muscles fit without either shrinking the body to a thumbnail
+           or cutting the list at seven. */
+        <span className="flex-1 min-h-0 flex flex-col gap-1">
+          <span className="flex items-start gap-2 min-w-0 flex-1 min-h-0">
+            <span className="block shrink-0" style={{ height: h, width: w }}>
+              <MuscleAtlas view="front" worked={worked} colorFor={landmarkColor} />
+            </span>
+            <span className="flex-1 min-w-0 grid grid-cols-2 gap-x-2 gap-y-1 content-start">
+              {all.map(row)}
+            </span>
+          </span>
+          {behind && (
+            <span className="flex items-baseline gap-1.5 pt-1 border-t border-white/[0.06] min-w-0">
+              <span className="text-[8px] font-bold uppercase tracking-[0.12em] text-muted shrink-0">Furthest behind</span>
+              <span className="text-[11px] font-bold truncate ml-auto" style={{ color: behind.color }}>{behind.muscle}</span>
+              <span className="helix-num text-[10px] font-bold tabular-nums shrink-0" style={{ color: behind.color }}>
+                {behind.sets}/{behind.target}
+              </span>
+            </span>
+          )}
+        </span>
       ) : (
         <span className="flex-1 min-h-0 flex flex-col">
           <span className="flex items-start gap-2.5 min-w-0">
@@ -127,32 +177,10 @@ export function MuscleWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () =
                     {trained.length} worked
                   </span>
                 </span>
-                {trained.slice(0, size === 'l' ? 7 : 4).map((m) => (
-                  <span key={m.muscle} className="block min-w-0">
-                    <span className="flex items-baseline gap-1 min-w-0">
-                      <span className="text-[9px] uppercase tracking-wide text-muted truncate">{m.muscle}</span>
-                      <span className="helix-num text-[10px] font-bold tabular-nums ml-auto shrink-0" style={{ color: m.color }}>
-                        {m.sets}<span className="text-muted font-normal">/{m.target}</span>
-                      </span>
-                    </span>
-                    <span className="block mt-0.5"><Bar value={m.sets} target={m.target} color={m.color} /></span>
-                  </span>
-                ))}
+                {trained.slice(0, 4).map(row)}
               </span>
             )}
           </span>
-
-          {size === 'l' && behind && (
-            <span className="block mt-auto pt-1.5 border-t border-white/[0.06]">
-              <span className="text-[8px] font-bold uppercase tracking-[0.12em] text-muted">Furthest behind</span>
-              <span className="flex items-baseline gap-1.5 mt-0.5 min-w-0">
-                <span className="text-[12px] font-bold truncate" style={{ color: behind.color }}>{behind.muscle}</span>
-                <span className="helix-num text-[11px] font-bold tabular-nums ml-auto shrink-0" style={{ color: behind.color }}>
-                  {behind.sets}/{behind.target}
-                </span>
-              </span>
-            </span>
-          )}
         </span>
       )}
     </WidgetFrame>
@@ -160,94 +188,109 @@ export function MuscleWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () =
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
- * WEEKLY VOLUME
+ * TONNAGE — the week's total work, against the week before
  * ──────────────────────────────────────────────────────────────────────────── */
 
 /**
- * The week, as the three numbers it actually produced.
+ * How much you actually moved, this week against last, with a month behind it.
  *
- * ── WHY THE COVERAGE FIGURE IS LANDMARKS, NOT A SET TOTAL ────────────────────
- * The headline was once `Σ sets / Σ target` across the landmark rows, and that
- * sum is not a quantity. `weeklyVolumeByMuscle` credits one PHYSICAL set to
- * every distinct landmark the movement names — in full to each primary, at
- * `SECONDARY_SET_CREDIT` to each secondary — because that is the only way a
- * per-muscle figure is comparable between a leg extension and a squat. Adding
- * the rows back up therefore counts the same physical set once per muscle it
- * touched, so a compound-heavy week inflates far more per set than an isolation
- * one and the "total" is an artifact of the exercise mix rather than of the
- * work. `landmarks.ts` states this outright for the tonnage column, which is
- * built on the identical attribution rule: "adding the rows up over-counts".
+ * ── IT WAS THE MUSCLE-FOCUS TILE WITH DIFFERENT WORDS ────────────────────────
+ * "Weekly Volume" led with landmark coverage and then listed the muscles
+ * furthest behind their targets — which is the exact question `Muscle Focus`
+ * exists for, answered less well, without the figure that makes it legible. Two
+ * tiles for one reading is one tile too many, and the reader had no way to know
+ * which of them to believe.
  *
- * That sum was also drawn from two different muscle sets — the numerator counted
- * sets from muscles whose target is 0 (`zone: 'na'`, e.g. Adductors on a cut)
- * while the denominator, correctly, did not.
+ * So this one keeps the number the other cannot show: TONNAGE. Kilograms moved
+ * is the only whole-body measure of a week's work that survives a change in the
+ * exercise mix, and it is the one figure that answers "was this a bigger week
+ * than last week" — a question the per-muscle grid genuinely cannot answer,
+ * because those rows do not add up (see `landmarks.ts`: one physical set is
+ * credited to every muscle it trains, so summing the rows counts it several
+ * times).
  *
- * So coverage is the fraction that IS well-defined — how many prescribed
- * landmarks have reached their target — and the TONNAGE and SET COUNT beside it
- * come from `useWeekSessions`, which sums `workout_sessions.total_volume_kg`
- * and `.set_count`: one row per session, no attribution, nothing counted twice.
- * Three honest numbers instead of one fabricated one.
+ * ── WHY THE COMPARISON IS THE WEEK BEFORE, NOT THE AVERAGE ───────────────────
+ * A block progresses week to week, so the week before is the thing the current
+ * one is supposed to beat. A four-week mean would flatter a deload and punish
+ * the week after it, and both of those are the program working as intended.
+ *
+ * The month of bars underneath is per SESSION, not per day — a rest day has no
+ * tonnage and drawing it as a zero would say the opposite.
  */
 export function VolumeWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () => void }) {
-  const { data: weekly } = useWeeklyVolume()
-  const { data: week } = useWeekSessions(weekStartOf(logicalTodayISO()))
+  const today = logicalTodayISO()
+  const thisWeek = weekStartOf(today)
+  const lastWeek = isoAddDays(thisWeek, -7)
+  const { data: week } = useWeekSessions(thisWeek)
+  const { data: prior } = useWeekSessions(lastWeek)
+  const { data: history } = useSessionHistory()
   const { current: streak } = useStreak()
   const unit = weightUnit()
-  const muscles = weekly?.muscles ?? NO_MUSCLES
 
-  // Only landmarks the program actually prescribes. A muscle at `target: 0` is
-  // not "unmet", it is not asked for this phase.
-  const graded = useMemo(() => muscles.filter((m) => m.target > 0), [muscles])
-  const met = graded.filter((m) => m.zone !== 'under').length
-  /** Physical sets logged this week — NOT the per-muscle rows added up. */
-  const physicalSets = week?.totals.sets ?? 0
   const kg = displayWeight(week?.totals.volumeKg ?? null)
+  const priorKg = displayWeight(prior?.totals.volumeKg ?? null)
+  const sets = week?.totals.sets ?? 0
   const prs = week?.totals.prs ?? 0
+  const sessions = week?.sessions.length ?? 0
+
+  // Percent, not kilos: a 900 kg swing means something different on a 6-tonne
+  // week and a 14-tonne one, and the tile has room for one number.
+  const deltaPct = kg != null && priorKg ? Math.round(((kg - priorKg) / priorKg) * 100) : null
+
+  /** The last thirty days of sessions, each one's tonnage, in display units. */
+  const recent = useMemo(() => {
+    const from = isoAddDays(today, -29)
+    return (history ?? [])
+      .filter((s) => s.date >= from)
+      .map((s) => displayWeight(s.volumeKg))
+  }, [history, today])
+
+  const best = recent.reduce<number | null>((m, v) => (v != null && (m == null || v > m) ? v : m), null)
 
   return (
     <WidgetFrame {...WIDGET_META.volume} size={size} onOpen={onOpen}>
-      {!graded.length || physicalSets <= 0 ? (
-        <WidgetEmpty accent={STEEL} size={size} message="The week is a blank page" hint={graded.length ? `${graded.length} landmarks to cover` : undefined} />
+      {!sessions ? (
+        <WidgetEmpty accent={STEEL} size={size} message="The week is a blank page" hint="Every set you log adds to the tonnage" />
       ) : size === 's' ? (
-        <span className="flex-1 min-h-0 flex flex-col justify-end gap-1.5">
+        <span className="flex-1 min-h-0 flex flex-col justify-between gap-1">
+          <span className="flex items-baseline gap-1">
+            <span className="text-[8px] font-bold uppercase tracking-[0.12em] text-muted">This week</span>
+            <span className="ml-auto shrink-0"><Trend delta={deltaPct} unit="%" /></span>
+          </span>
           <Hero value={tonnage(kg)} unit={unit} color={STEEL} />
-          <Bar value={met} target={graded.length} color={STEEL} />
           <span className="helix-num text-[9px] tabular-nums text-muted truncate">
-            {physicalSets} sets · {met}/{graded.length} covered
+            {sets} sets · {sessions} session{sessions === 1 ? '' : 's'}
           </span>
         </span>
       ) : (
         <span className="flex-1 min-h-0 flex flex-col gap-1.5">
+          <span className="flex items-baseline gap-2 min-w-0">
+            <Hero value={tonnage(kg)} unit={unit} color={STEEL} tight />
+            <span className="ml-auto shrink-0 flex items-baseline gap-1">
+              <Trend delta={deltaPct} unit="%" />
+              <span className="text-[8px] text-muted">vs last week</span>
+            </span>
+          </span>
+
           <span className="grid grid-cols-4 gap-1.5">
-            <StatTile label="Tonnage" value={tonnage(kg)} unit={unit} color={STEEL} />
-            <StatTile label="Sets" value={physicalSets} color={STEEL} />
+            <StatTile label="Sets" value={sets} color={STEEL} />
+            <StatTile label="Sessions" value={sessions} color={STEEL} />
             <StatTile label="Records" value={prs} color={prs > 0 ? GOLD : STEEL} />
             <StatTile label="Day" value={streak} color={GOLD} />
           </span>
 
-          <span className="block">
+          <span className="block mt-auto">
             <span className="flex items-baseline gap-1.5">
-              <span className="text-[8px] font-bold uppercase tracking-[0.12em] text-muted">Landmarks covered</span>
-              <span className="helix-num text-[10px] font-bold tabular-nums ml-auto" style={{ color: STEEL }}>
-                {met}<span className="text-muted font-normal">/{graded.length}</span>
+              <span className="text-[8px] font-bold uppercase tracking-[0.1em] text-muted">
+                Per session · 30 days
+              </span>
+              <span className="helix-num text-[8px] tabular-nums text-muted ml-auto">
+                {priorKg != null ? `last week ${tonnage(priorKg)}${unit}` : 'no prior week'}
               </span>
             </span>
-            <span className="block mt-1"><Bar value={met} target={graded.length} color={STEEL} /></span>
-          </span>
-
-          <span className="flex flex-col gap-1 mt-auto">
-            {[...graded]
-              .sort((a, b) => (a.sets / a.target) - (b.sets / b.target))
-              .slice(0, size === 'l' ? 7 : 3)
-              .map((m) => (
-                <span key={m.muscle} className="flex items-baseline gap-2 min-w-0">
-                  <span className="text-[9px] uppercase tracking-wide text-muted truncate flex-1">{m.muscle}</span>
-                  <span className="w-14 shrink-0"><Bar value={m.sets} target={m.target} color={m.color} /></span>
-                  <span className="helix-num text-[10px] font-bold tabular-nums shrink-0 w-9 text-right" style={{ color: m.color }}>
-                    {m.sets}/{m.target}
-                  </span>
-                </span>
-              ))}
+            <span className="block mt-1">
+              <MiniBars series={recent} color={STEEL} goal={best} height={size === 'l' ? 96 : 34} />
+            </span>
           </span>
         </span>
       )}
@@ -260,7 +303,7 @@ export function VolumeWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () =
  * ──────────────────────────────────────────────────────────────────────────── */
 
 /**
- * The last thing you beat.
+ * The last thing you beat, stated in full.
  *
  * ── WHY THE MOST RECENT AND NOT THE BIGGEST ──────────────────────────────────
  * "Heaviest ever" is a number that changes twice a year and stops being news
@@ -268,51 +311,92 @@ export function VolumeWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () =
  * says the program is working, and it is the one that expires — which is
  * exactly what makes it worth a tile.
  *
- * Gold, and only gold, because gold means a personal record app-wide.
+ * ── FOUR FACTS, BECAUSE A RECORD IS FOUR FACTS ───────────────────────────────
+ * The AXIS is not decoration: `92.5 kg` means one thing under Weight (a load
+ * never handled before) and something quite different under 1RM (an estimate no
+ * set has to have touched). Weight and reps say what was actually done, and the
+ * estimated 1RM says what it is worth against every other set of that lift. The
+ * tile printed the first three at best and the axis only at medium, which left
+ * the small size showing a number whose MEANING was on another size.
+ *
+ * The 1RM is the ledger's own `value` when the record WAS the 1RM axis, and
+ * Epley off the winning set otherwise — never a second stored figure, because a
+ * second figure is a second thing to keep in step. `epley1RM` returns null on
+ * unloaded work rather than 0: a bodyweight set has no one-rep max to estimate.
+ *
+ * There is no large. A record and the book behind it is a medium tile's worth —
+ * see `WIDGET_SIZES`.
  */
 export function PrWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () => void }) {
   const { data: prs } = useLatestPr(8)
   const unit = weightUnit()
   const top = prs?.[0] ?? null
 
+  const est1rm = useMemo(() => {
+    if (!top) return null
+    if (top.axis === 'e1rm' && top.value != null) return top.value
+    return top.weightKg != null && top.reps != null ? epley1RM(top.weightKg, top.reps) : null
+  }, [top])
+
   return (
     <WidgetFrame {...WIDGET_META.pr} size={size} onOpen={onOpen}>
       {!top ? (
         <WidgetEmpty accent={GOLD} size={size} message="Your first record is waiting" hint="Beat any set and it lands here" />
       ) : size === 's' ? (
-        <span className="flex-1 min-h-0 flex flex-col justify-end gap-0.5">
+        <span className="flex-1 min-h-0 flex flex-col justify-between gap-0.5">
+          <span className="flex items-baseline gap-1 min-w-0">
+            <span className="text-[8px] font-bold uppercase tracking-[0.12em] truncate" style={{ color: GOLD }}>
+              {prAxisLabel(top.axis)}
+            </span>
+            <span className="text-[8px] text-muted ml-auto shrink-0">{daysAgo(top.achievedOn)}</span>
+          </span>
           <span className="helix-num font-bold text-fluid-lg leading-none tabular-nums truncate" style={{ color: GOLD }}>
             {top.weightKg != null && top.weightKg > 0
-              ? `${displayWeight(top.weightKg)}${unit}`
-              : top.reps != null ? `${top.reps} reps` : '—'}
+              ? <>{displayWeight(top.weightKg)}<span className="text-[9px] font-normal text-muted ml-0.5">{unit}</span>
+                {top.reps != null && <span className="text-[10px] font-normal text-muted"> ×{top.reps}</span>}</>
+              : top.reps != null ? <>{top.reps}<span className="text-[9px] font-normal text-muted ml-0.5">reps</span></> : '—'}
           </span>
-          <span className="text-[10px] text-text truncate">{top.exercise}</span>
-          <span className="text-[9px] text-muted truncate">{daysAgo(top.achievedOn)}</span>
+          <span className="text-[9px] text-text truncate">{top.exercise}</span>
+          <span className="helix-num text-[9px] tabular-nums text-muted truncate">
+            {est1rm != null ? `${displayWeight(est1rm)}${unit} 1RM` : 'no 1RM — unloaded'}
+          </span>
         </span>
       ) : (
         <span className="flex-1 min-h-0 flex flex-col gap-1.5">
           <span className="block min-w-0">
-            <span className="helix-num block font-bold text-fluid-lg leading-none tabular-nums truncate" style={{ color: GOLD }}>
-              {top.weightKg != null && top.weightKg > 0
-                ? <>{displayWeight(top.weightKg)}<span className="text-[10px] font-normal text-muted ml-0.5">{unit}</span>
-                  {top.reps != null && <span className="text-[11px] font-normal text-muted"> × {top.reps}</span>}</>
-                : top.reps != null ? <>{top.reps}<span className="text-[10px] font-normal text-muted ml-1">reps</span></> : '—'}
-            </span>
-            <span className="block text-[11px] text-text truncate mt-0.5">{top.exercise}</span>
-            <span className="block text-[9px] text-muted truncate">
-              {prAxisLabel(top.axis)} · {daysAgo(top.achievedOn)}
+            <span className="flex items-baseline gap-1.5 min-w-0">
+              <span className="text-[8px] font-bold uppercase tracking-[0.12em]" style={{ color: GOLD }}>
+                {prAxisLabel(top.axis)}
+              </span>
+              <span className="text-[11px] text-text truncate">{top.exercise}</span>
+              <span className="text-[8px] text-muted ml-auto shrink-0">{daysAgo(top.achievedOn)}</span>
             </span>
           </span>
+
+          <span className="grid grid-cols-3 gap-1.5">
+            <StatTile
+              label="Weight"
+              value={top.weightKg != null && top.weightKg > 0 ? displayWeight(top.weightKg) : null}
+              unit={unit} color={GOLD}
+            />
+            <StatTile label="Reps" value={top.reps} color={GOLD} />
+            <StatTile
+              label="Est. 1RM"
+              value={est1rm != null ? displayWeight(est1rm) : null}
+              unit={unit} color={GOLD}
+            />
+          </span>
+
           {/* The rest of the standing book, most recent first. A record is only
               news next to the ones around it. */}
           <span className="block space-y-0.5 mt-auto pt-1 border-t border-white/[0.06]">
-            {(prs ?? []).slice(1, size === 'l' ? 8 : 3).map((p) => (
+            {(prs ?? []).slice(1, 4).map((p) => (
               <span key={`${p.exercise}:${p.axis}`} className="flex items-baseline gap-2 min-w-0">
                 <span className="text-[9px] text-muted truncate flex-1">{p.exercise}</span>
+                <span className="text-[8px] text-muted/70 shrink-0">{prAxisLabel(p.axis)}</span>
                 <span className="helix-num text-[9px] font-bold tabular-nums shrink-0" style={{ color: GOLD }}>
                   {p.weightKg != null && p.weightKg > 0 ? `${displayWeight(p.weightKg)}${unit}` : p.reps != null ? `${p.reps}r` : '—'}
                 </span>
-                <span className="text-[8px] text-muted/70 shrink-0 w-12 text-right">{daysAgo(p.achievedOn)}</span>
               </span>
             ))}
           </span>
@@ -323,14 +407,17 @@ export function PrWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () => vo
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
- * TRAIN — the plan, the last run of it, and today's result
+ * WORKOUT — the plan, the last run of it, and today's result
  * ──────────────────────────────────────────────────────────────────────────── */
 
 export interface TodaySessionStats {
+  sessionId?: string | null
   volumeKg: number | null
   setCount: number | null
   prCount: number | null
   durationMin: number | null
+  avgBpm?: number | null
+  calories?: number | null
 }
 
 /**
@@ -346,10 +433,12 @@ export interface TodaySessionStats {
  * Three states, one tile:
  *
  *   BEFORE  the plan's name, and the LAST time this exact workout was run —
- *           its tonnage, its sets, its records. That is the number to beat, and
- *           it is the only genuinely motivating thing a pre-workout tile can
- *           say. There is no "today" figure to show, so none is invented.
- *   AFTER   today's own tonnage, sets, records and duration.
+ *           its tonnage, its sets, its records, what your heart did. That is the
+ *           bar to clear, and it is the only genuinely motivating thing a
+ *           pre-workout tile can say. There is no "today" figure to show, so
+ *           none is invented.
+ *   AFTER   today's own tonnage, sets, records, duration, heart rate and burn —
+ *           and at large, every lift with its working sets and its top load.
  *   REST    the rest day, said properly, in amethyst rather than the training
  *           hue — a rest day is prescribed work, not a failed training day.
  *
@@ -378,18 +467,38 @@ export function TrainWidget({ size, onOpen, day, logged, today }: {
   // Only asked for while there is no session today — the "last time" line is the
   // thing to beat, and once today exists the tile shows today instead.
   const { data: last } = useLastSessionOfDay(!rest && !logged ? dayKey : null)
+  // The per-exercise breakdown is large-only and post-workout only, so the
+  // query is gated on both rather than fetched for every tile on the grid.
+  const { data: detail } = useSessionDetail(
+    size === 'l' && logged ? (today?.sessionId ?? null) : null,
+  )
   const unit = weightUnit()
 
   const accent = rest ? AMETHYST : EMERALD
   const meta = { ...WIDGET_META.train, accent, icon: rest ? Moon : WIDGET_META.train.icon }
 
-  /** The three-up stat row, for whichever session is being described. */
+  /** The stat grid for whichever session is being described. */
   const stats = (s: TodaySessionStats, color: string) => (
-    <span className="grid grid-cols-3 gap-1.5">
+    <span className={`grid gap-1.5 ${size === 's' ? 'grid-cols-3' : 'grid-cols-5'}`}>
       <StatTile label="Volume" value={tonnage(displayWeight(s.volumeKg))} unit={unit} color={color} />
       <StatTile label="Sets" value={s.setCount ?? null} color={color} />
       <StatTile label="Records" value={s.prCount ?? 0} color={(s.prCount ?? 0) > 0 ? GOLD : color} />
+      {size !== 's' && <StatTile label="Avg HR" value={s.avgBpm ?? null} unit="bpm" color={s.avgBpm != null ? OXIDE : color} />}
+      {size !== 's' && <StatTile label="Burn" value={s.calories ?? null} unit="kcal" color={s.calories != null ? SAPPHIRE : color} />}
     </span>
+  )
+
+  const logLink = dayKey && (
+    <Link
+      href={`/session?template=${dayKey}&date=${logicalTodayISO()}`}
+      onPointerUp={blurOnTap}
+      onClick={(e) => e.stopPropagation()}
+      className="mt-auto inline-flex items-center justify-center gap-1.5 min-h-[32px] rounded-xl
+                 text-[11px] font-bold active:scale-95 transition-transform"
+      style={{ background: `${EMERALD}24`, border: `1px solid ${EMERALD}59`, color: EMERALD }}
+    >
+      <Dumbbell className="w-3.5 h-3.5" aria-hidden="true" /> Log {rest ? 'a session' : day.label}
+    </Link>
   )
 
   return (
@@ -419,16 +528,32 @@ export function TrainWidget({ size, onOpen, day, logged, today }: {
           )
         ) : logged && today ? (
           <>
-            {size !== 's' && stats(today, EMERALD)}
-            {size === 's' && (
-              <span className="helix-num text-[11px] font-bold tabular-nums mt-auto" style={{ color: EMERALD }}>
-                {tonnage(displayWeight(today.volumeKg)) ?? '—'}
-                <span className="text-[9px] font-normal text-muted ml-0.5">{unit}</span>
-              </span>
-            )}
-            {size === 'l' && today.durationMin != null && (
-              <span className="text-[10px] text-muted mt-auto">
-                {today.durationMin} minutes under the bar.
+            {stats(today, EMERALD)}
+            {/* Large lists what was actually done. `topKg` is the heaviest
+                working load on the lift, which is the figure you compare against
+                next week — not the volume, which mixes load and reps. */}
+            {size === 'l' && (
+              <span className="block flex-1 min-h-0 overflow-hidden mt-0.5">
+                {detail?.exercises.length ? (
+                  <span className="grid grid-cols-2 gap-x-2 gap-y-0.5 content-start">
+                    {detail.exercises.map((e) => (
+                      <span key={e.exerciseId} className="flex items-baseline gap-1.5 min-w-0">
+                        <span className="text-[9px] text-muted truncate flex-1">{e.name}</span>
+                        <span className="helix-num text-[9px] tabular-nums shrink-0 text-text">
+                          {e.workingSets}×
+                        </span>
+                        <span className="helix-num text-[9px] font-bold tabular-nums shrink-0"
+                          style={{ color: e.prAxes.length ? GOLD : EMERALD }}>
+                          {e.topKg > 0 ? `${displayWeight(e.topKg)}${unit}` : 'BW'}
+                        </span>
+                      </span>
+                    ))}
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-muted">
+                    {today.durationMin != null ? `${today.durationMin} minutes under the bar.` : ''}
+                  </span>
+                )}
               </span>
             )}
           </>
@@ -439,45 +564,15 @@ export function TrainWidget({ size, onOpen, day, logged, today }: {
             <span className="text-[8px] font-bold uppercase tracking-[0.12em] text-muted">
               Last time · {daysAgo(last.date)}
             </span>
-            {size !== 's'
-              ? stats(last, MUTED)
-              : (
-                <span className="helix-num text-[11px] font-bold tabular-nums text-muted truncate">
-                  {tonnage(displayWeight(last.volumeKg)) ?? '—'}
-                  <span className="text-[9px] font-normal ml-0.5">{unit}</span>
-                  {last.setCount != null && <span className="font-normal"> · {last.setCount} sets</span>}
-                </span>
-              )}
-            {size !== 's' && (
-              <Link
-                href={`/session?template=${dayKey}&date=${logicalTodayISO()}`}
-                onPointerUp={blurOnTap}
-                onClick={(e) => e.stopPropagation()}
-                className="mt-auto inline-flex items-center justify-center gap-1.5 min-h-[34px] rounded-xl
-                           text-[11px] font-bold active:scale-95 transition-transform"
-                style={{ background: `${EMERALD}24`, border: `1px solid ${EMERALD}59`, color: EMERALD }}
-              >
-                <Dumbbell className="w-3.5 h-3.5" aria-hidden="true" /> Log {day.label}
-              </Link>
-            )}
+            {stats(last, MUTED)}
+            {size !== 's' && logLink}
           </>
         ) : (
           <>
             <span className="text-[10px] text-muted leading-snug">
               First run of this one. Whatever you log becomes the bar.
             </span>
-            {size !== 's' && dayKey && (
-              <Link
-                href={`/session?template=${dayKey}&date=${logicalTodayISO()}`}
-                onPointerUp={blurOnTap}
-                onClick={(e) => e.stopPropagation()}
-                className="mt-auto inline-flex items-center justify-center gap-1.5 min-h-[34px] rounded-xl
-                           text-[11px] font-bold active:scale-95 transition-transform"
-                style={{ background: `${EMERALD}24`, border: `1px solid ${EMERALD}59`, color: EMERALD }}
-              >
-                <Dumbbell className="w-3.5 h-3.5" aria-hidden="true" /> Log {day.label}
-              </Link>
-            )}
+            {size !== 's' && logLink}
           </>
         )}
       </span>
