@@ -31,18 +31,24 @@ test('unauthenticated / never renders a blank dashboard — AuthGate redirects t
    *
    * Raising the individual assertion timeouts did not help, because the timeout
    * being hit is this one. The bet was on compile speed, not on the app.
+   *
+   * The same bet is inside the two waits below, and `waitForURL`'s 30s lost it
+   * once the dashboard's first compile grew — twelve widget bodies where there
+   * used to be one shell. It is a DEV-SERVER compile cost and nothing the built
+   * app pays, so the honest fix is to stop timing the compiler: 60s each, well
+   * inside the 120s the test has.
    */
   test.setTimeout(120_000)
   // PWA storage isolation: an isolated storage container (no session) must land on
   // the sign-in screen, not an empty-but-"working" dashboard.
   await page.context().clearCookies()
   await page.goto('/')
-  await page.waitForURL(/\/auth/, { timeout: 30_000 })
+  await page.waitForURL(/\/auth/, { timeout: 60_000 })
   // The dev server compiles /auth on first request, and under the full parallel
   // run several specs ask for it at once — so the redirect lands before the
   // button's chunk does. Playwright's default 5s assertion timeout is a bet on
   // compile speed, not on the app; this waits for the page to actually be there.
-  await expect(page.getByRole('button', { name: /continue as/i })).toBeVisible({ timeout: 30_000 })
+  await expect(page.getByRole('button', { name: /continue as/i })).toBeVisible({ timeout: 60_000 })
 })
 
 test('/api/version serves the deploy heartbeat with no-store', async ({ request }) => {
