@@ -5,8 +5,8 @@ import {
   hideWidget, showWidget, resizeWidget, visibleWidgets, hiddenWidgets,
   WIDGET_IDS, type DashboardLayout,
 } from '@/lib/dashboard/layout'
-import { HalfArc, MiniBars, Milestones } from '@/components/dashboard/widgets/parts'
-import { StackWidget } from '@/components/dashboard/widgets/DailyWidgets'
+import { HalfArc, MiniBars, Milestones, vsBaseline } from '@/components/dashboard/widgets/parts'
+import { StackWidget, stepMarks } from '@/components/dashboard/widgets/DailyWidgets'
 import { LedgerRow } from '@/components/body/CompositionLedger'
 
 afterEach(cleanup)
@@ -186,13 +186,67 @@ describe('MiniBars', () => {
 })
 
 describe('Milestones', () => {
+  const markAt = (label: string) =>
+    (screen.getByText(label).parentElement as HTMLElement).style.left
+
   it('lights only the marks already passed', () => {
     render(<Milestones value={6200} marks={[2000, 4000, 6000, 8000, 10_000]} color="#00ff00" />)
     for (const label of ['2k', '4k', '6k']) expect(screen.getByText(label)).toBeTruthy()
-    const passed = screen.getByText('6k') as HTMLElement
-    const ahead = screen.getByText('8k') as HTMLElement
-    expect(passed.style.color).toContain('0, 255, 0')
-    expect(ahead.style.color).not.toContain('0, 255, 0')
+    expect((screen.getByText('6k') as HTMLElement).style.color).toContain('0, 255, 0')
+    expect((screen.getByText('8k') as HTMLElement).style.color).not.toContain('0, 255, 0')
+  })
+
+  /**
+   * ── A MARK MUST SIT WHERE IT IS, NOT WHERE ITS TURN COMES ──────────────────
+   * These were `flex-1` cells, which distributes them EVENLY — right only when
+   * the waypoints happen to be evenly spaced. `stepMarks` rounds its interval
+   * to 500, so a 7,000-step goal gives 1500/3000/4500/6000/7000 whose last gap
+   * is two thirds of the others: drawn as equal cells the 6k tick lands at 80 %
+   * of a track where 6k is really 86 %. A mark claiming a position it does not
+   * have, on the one control whose whole job is saying where you are.
+   */
+  it('places each mark at its own fraction of the goal', () => {
+    render(<Milestones value={0} marks={stepMarks(7000)} color="#fff" />)
+    expect(stepMarks(7000)).toEqual([1500, 3000, 4500, 6000, 7000])
+    // 1,500 is "1.5k" and not "2k": `Math.round` used to label a mark with a
+    // number it was not.
+    expect(markAt('1.5k')).toBe(`${(1500 / 7000) * 100}%`)
+    expect(screen.getByText('4.5k')).toBeTruthy()
+    expect(markAt('6k')).toBe(`${(6000 / 7000) * 100}%`)
+    expect(markAt('7k')).toBe('100%')
+    // Even cells would have put 6k at exactly 80%.
+    expect(markAt('6k')).not.toBe('80%')
+  })
+
+  it('the ladder never overshoots the goal, whatever the goal is', () => {
+    for (const goal of [3000, 6000, 7000, 8500, 10_000, 12_000, 20_000]) {
+      const marks = stepMarks(goal)
+      expect(marks[marks.length - 1], String(goal)).toBe(goal)
+      expect(marks.every((m) => m <= goal), String(goal)).toBe(true)
+      // Strictly ascending — a repeated mark would stack two ticks in one place.
+      expect(marks.every((m, i) => i === 0 || m > marks[i - 1]), String(goal)).toBe(true)
+    }
+  })
+})
+
+/**
+ * ── "vs 7-day" HAS TO BE SEVEN DAYS ──────────────────────────────────────────
+ * `vsBaseline` is only as honest as the window handed to it. The Steps tile
+ * passed the whole series, which was 21 entries and is now 30, under a label
+ * saying seven — so a heavy month would flatten today against twenty-nine other
+ * days and report "settled" on a day that was genuinely quiet.
+ */
+describe('the baseline window matches the label', () => {
+  it('a seven-day baseline ignores everything before it', () => {
+    // Twenty-three quiet days, then a normal week, then today.
+    const series = [...Array(22).fill(2000), 8000, 8000, 8000, 8000, 8000, 8000, 8000, 8000]
+    expect(vsBaseline(series.slice(-8), 8000)).toBe(0)
+    // The whole series would have claimed today was a huge day.
+    expect(vsBaseline(series, 8000)).toBeGreaterThan(3000)
+  })
+
+  it('is null rather than wrong when the week has no history', () => {
+    expect(vsBaseline([5000].slice(-8), 5000)).toBeNull()
   })
 })
 

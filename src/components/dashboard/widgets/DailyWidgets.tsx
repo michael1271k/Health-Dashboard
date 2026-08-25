@@ -170,7 +170,17 @@ export function StepsWidget({ size, onOpen, steps, goal, tdee, activeKcal, serie
   activeKcal: number | null
   series: Array<number | null>
 }) {
-  const delta = vsBaseline(series, steps)
+  /**
+   * "vs 7-day" has to be seven days.
+   *
+   * `series` is the full 30-day window the bar chart draws, and handing all of
+   * it to `vsBaseline` made the label a lie by three weeks — a heavy month of
+   * walking would flatten today against twenty-nine other days and report
+   * "settled" on a day that was genuinely quiet. The last EIGHT entries make
+   * today the eighth and the baseline the seven before it, which is what
+   * `VitalsWidget` already does for the identical label.
+   */
+  const delta = vsBaseline(series.slice(-8), steps)
   const marks = useMemo(() => stepMarks(goal), [goal])
   const hit = series.filter((v) => v != null && v >= goal).length
   const logged = series.filter((v) => v != null).length

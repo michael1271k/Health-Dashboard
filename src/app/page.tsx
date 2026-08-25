@@ -286,11 +286,26 @@ export default function DashboardPage() {
     const asc = [...(fuelLogs ?? [])].sort((a, b) => a.date.localeCompare(b.date))
     return asc.map((d) => d.calories)
   }, [fuelLogs])
+  /**
+   * Week-on-week weight drift — and it really is a WEEK on a week.
+   *
+   * It used to halve whatever `useBioSeries` happened to return and diff the two
+   * halves, under a label that says "(7-day avg)". At a 21-day window that was
+   * already a 10-day mean against an 11-day one; at 30 it would be 15 against
+   * 15, which on a cut is half a phase, not a week. A trend line is only a rate
+   * if you know what it is per, so the window is stated here rather than
+   * inherited from whatever the query was widened to.
+   *
+   * The two halves are taken from the last FOURTEEN days by date, not the last
+   * fourteen readings — days without a weigh-in are gaps, and compacting them
+   * away would silently reach further back the more days you skipped.
+   */
   const weightWoW = useMemo(() => {
-    const w = (bioSeries ?? []).map((d) => d.weightKg).filter((v): v is number => v != null)
-    if (w.length < 4) return null
-    const half = Math.floor(w.length / 2)
-    return Math.round((avg(w.slice(half)) - avg(w.slice(0, half))) * 100) / 100
+    const days = (bioSeries ?? []).slice(-14)
+    const older = days.slice(0, 7).map((d) => d.weightKg).filter((v): v is number => v != null)
+    const recent = days.slice(7).map((d) => d.weightKg).filter((v): v is number => v != null)
+    if (!older.length || !recent.length) return null
+    return Math.round((avg(recent) - avg(older)) * 100) / 100
   }, [bioSeries])
   // Last weigh-in. Sourced from the body_composition ledger (a row exists only
   // when a weight was actually entered) and de-duplicated by VALUE, so a

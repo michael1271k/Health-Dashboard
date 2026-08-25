@@ -467,21 +467,42 @@ export function Milestones({ value, marks, color, unit = 'k' }: {
           style={{ width: `${pct}%`, background: color }}
         />
       </span>
-      <span className="relative flex mt-1">
-        {marks.map((mk) => {
+      {/* ── THE MARKS ARE POSITIONED, NOT DISTRIBUTED ──
+          They were `flex-1` cells, which spaces them EVENLY — correct only when
+          the waypoints happen to be evenly spaced. `stepMarks` rounds its
+          interval to 500, so a 7,000-step goal yields 1500/3000/4500/6000/7000,
+          whose last gap is two thirds of the others. Drawn as equal cells, the
+          6k tick would sit at 80 % of a track where 6k is really 86 % — a mark
+          claiming a position it does not have, on the one control whose entire
+          job is saying where you are. Each is placed at its own fraction. */}
+      <span className="relative block h-[13px] mt-0.5">
+        {marks.map((mk, i) => {
           const passed = v >= mk
+          const at = goal > 0 ? (mk / goal) * 100 : 0
+          const last = i === marks.length - 1
           return (
-            <span key={mk} className="flex-1 min-w-0 flex flex-col items-end gap-0.5">
+            <span
+              key={mk}
+              className="absolute top-0 flex flex-col items-center"
+              // The final mark sits ON the right edge, so it is pulled fully
+              // inside rather than centred half outside the track.
+              style={{ left: `${at}%`, transform: last ? 'translateX(-100%)' : 'translateX(-50%)' }}
+            >
               <span
-                className="w-px h-1 -mt-[7px]"
+                className="w-px h-1"
                 style={{ background: passed ? color : 'rgba(255,255,255,0.18)' }}
                 aria-hidden="true"
               />
               <span
-                className="helix-num text-[8px] tabular-nums leading-none"
+                className="helix-num text-[8px] tabular-nums leading-none mt-0.5"
                 style={{ color: passed ? color : 'var(--color-muted)' }}
               >
-                {mk >= 1000 ? `${Math.round(mk / 1000)}${unit}` : mk}
+                {/* `Math.round` printed 1,500 as "2k" and 4,500 as "5k" — a
+                    mark labelled with a number it is not. A half-thousand keeps
+                    its decimal; a whole one never grows a trailing ".0". */}
+                {mk >= 1000
+                  ? `${mk % 1000 === 0 ? mk / 1000 : (mk / 1000).toFixed(1)}${unit}`
+                  : mk}
               </span>
             </span>
           )
