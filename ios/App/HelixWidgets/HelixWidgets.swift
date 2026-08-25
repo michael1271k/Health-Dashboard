@@ -132,6 +132,19 @@ struct HelixWidgetsBundle: WidgetBundle {
     // Same reasoning as the line above: ADDING a kind disturbs nothing that is
     // already on a Home Screen.
     HelixVitalsWidget()
+    // ── The running workout ──
+    // An `ActivityConfiguration`, not a `StaticConfiguration`, so it never
+    // appears in the widget gallery and has no `kind:` string — which is why it
+    // is deliberately absent from `WIDGET_KINDS` and why the parity test does
+    // not know about it. Nothing places it; the app starts it when a session
+    // begins and ends it when the session commits. See `HelixWorkoutActivity`.
+    //
+    // Availability-gated rather than raising the extension's deployment target:
+    // 16.1 is where ActivityKit lands, the rest of the bundle is happy at 16.6,
+    // and a target bump is a change to every widget to enable one.
+    if #available(iOS 16.1, *) {
+      HelixWorkoutActivityWidget()
+    }
     HelixLockWidget()
   }
 }

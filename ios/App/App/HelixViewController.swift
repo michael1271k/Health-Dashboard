@@ -19,6 +19,12 @@ class HelixViewController: CAPBridgeViewController {
     // call would reject silently, which is exactly the failure the comment
     // above this method describes.
     bridge?.registerPluginInstance(HelixWidgetsPlugin())
+    // The running workout on the Lock Screen and in the Dynamic Island. Unlike
+    // the home-screen widgets this one is PUSHED from the app: a Live Activity's
+    // content travels through ActivityKit rather than a shared container, so the
+    // App Group constraint that forces every other widget to fetch for itself
+    // does not apply. See src/lib/native/liveActivity.ts.
+    bridge?.registerPluginInstance(HelixLiveActivityPlugin())
     // SecureStore (Keychain session persistence) was retired: the web app no longer
     // calls it (auth is a one-tap re-login). SecureStore.swift can be removed from the
     // App target in Xcode; leaving it compiled but unregistered is harmless meanwhile.

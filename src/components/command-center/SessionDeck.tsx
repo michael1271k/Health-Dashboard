@@ -16,13 +16,15 @@ import { useProgressionQueue } from '@/lib/hooks/useProgressionQueue'
 import { useDeleteSession } from '@/lib/hooks/useDayVault'
 import { eraForDate } from '@/lib/programs'
 import { dayColor, EMBER, STEEL, GOLD, MUTED } from '@/lib/theme/palette'
-import { draftTotals } from '@/lib/sessions/draft'
+import { cleanSessionTitle, draftTotals } from '@/lib/sessions/draft'
 import { fmtVolume } from '@/lib/utils/units'
 import { tapSuccess } from '@/lib/native/haptics'
 import type { useSessionDraft, CommitResult } from '@/lib/hooks/useSessionDraft'
 import { prAxisLabel } from '@/lib/training/prEngine'
 import { isTimedExercise } from '@/lib/exercises/timed'
 import { useReportTargets } from '@/lib/hooks/useReportTargets'
+import { findNextSet, formatLastRpe, formatLastTime } from '@/lib/sessions/nextSet'
+import { endWorkoutActivity, hexToInt, startWorkoutActivity, updateWorkoutActivity } from '@/lib/native/liveActivity'
 
 /**
  * The Command Center deck — the ONE logging surface. Hosted fullscreen on
@@ -110,6 +112,60 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
   // `memo`, and the hero sits under it) — an inline arrow would change identity
   // on every keystroke in every set field and undo that memo.
   const openFinish = useCallback(() => setFinishOpen(true), [])
+
+  /**
+   * ── THE RUNNING WORKOUT, ON THE LOCK SCREEN ────────────────────────────────
+   * The phone is face-down on the bench. What you need when you pick it up is
+   * not a number you just entered — you entered it — it is the number you are
+   * about to have to beat, for the set you are walking towards. So the card
+   * leads with the NEXT set's history and carries the live totals behind it.
+   *
+   * Keyed on the STRING the card would draw, not on the draft. `draft` is a new
+   * object on every keystroke and ActivityKit budgets updates hard; pushing one
+   * per character would spend the allowance on nothing and then have none left
+   * at the moment a set is ticked. The digest changes exactly when the card's
+   * contents do — the same argument, and the same shape, as `livePrDigest`.
+   */
+  const nextSet = useMemo(() => findNextSet(draft, globalHistory), [draft, globalHistory])
+  const activityState = useMemo(() => ({
+    exercise: nextSet?.exercise ?? '',
+    setLabel: nextSet ? `Set ${nextSet.setNumber} of ${nextSet.setTotal}` : 'Every set logged',
+    lastTime: formatLastTime(nextSet),
+    lastRpe: formatLastRpe(nextSet),
+    volume: fmtVolume(totals.volumeKg),
+    sets: String(totals.sets),
+    records: livePrs.count,
+    accent: hexToInt(dayColor(draft?.dayKey, draft?.splitDay ?? 'upper')),
+  }), [nextSet, totals.volumeKg, totals.sets, livePrs.count, draft?.dayKey, draft?.splitDay])
+  const activityKey = JSON.stringify(activityState)
+
+  const liveTitle = draft ? cleanSessionTitle(draft) : null
+  const startedAt = draft?.startedAt ?? null
+  useEffect(() => {
+    if (!liveTitle || !startedAt) return
+    // Started fresh on every mount rather than resumed. Mount happens again
+    // after each jetsam-and-reload (`black-screen-and-reloads`), and the Swift
+    // side ends whatever is running before requesting — so a reload replaces
+    // the card instead of stacking a second one on the Lock Screen.
+    void startWorkoutActivity({
+      title: liveTitle,
+      startedAt: Date.parse(startedAt) || Date.now(),
+      ...JSON.parse(activityKey) as typeof activityState,
+    })
+    // Deliberately NOT keyed on `activityKey` — that would restart the activity
+    // on every tick. The effect below is the one that pushes changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [liveTitle, startedAt])
+
+  useEffect(() => {
+    if (!liveTitle) return
+    void updateWorkoutActivity(JSON.parse(activityKey) as typeof activityState)
+  }, [activityKey, liveTitle])
+
+  // Taken down on commit AND on discard, immediately — the default dismissal
+  // policy lingers for up to four hours, which would leave a card offering the
+  // next set of a session that no longer exists.
+  useEffect(() => () => { void endWorkoutActivity() }, [])
 
   /**
    * ── THE STICKY BOTTOM BAR IS GONE ──────────────────────────────────────────

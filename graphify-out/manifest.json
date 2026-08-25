@@ -309,19 +309,14 @@
     "ast_hash": "7d053546194b757651dd9c57d1b6b9ed",
     "semantic_hash": ""
   },
-  "src/components/command-center/CommitBar.tsx": {
-    "mtime": 1787490747.7989368,
-    "ast_hash": "1ea5d42ab0cc695aba1d08b4262819f0",
-    "semantic_hash": ""
-  },
   "src/components/command-center/DatePickerPopover.tsx": {
     "mtime": 1786909357.147159,
     "ast_hash": "2c8e13cc3949bcd05f54d8716bc0568e",
     "semantic_hash": ""
   },
   "src/components/command-center/ExerciseCard.tsx": {
-    "mtime": 1787576385.5263531,
-    "ast_hash": "7672e458c219d1ed39deb28536aed149",
+    "mtime": 1787679598.0247908,
+    "ast_hash": "4e65e8e51f509c0cec0672d3d077b77f",
     "semantic_hash": ""
   },
   "src/components/command-center/ExerciseDeckList.tsx": {
@@ -345,13 +340,13 @@
     "semantic_hash": ""
   },
   "src/components/command-center/SessionDeck.tsx": {
-    "mtime": 1787576514.6327724,
-    "ast_hash": "fddd185a1129ac72ac1d0981ecf64585",
+    "mtime": 1787679657.2132652,
+    "ast_hash": "a95d83ec9a08d13e34fa6b483d5c23b1",
     "semantic_hash": ""
   },
   "src/components/command-center/SetEditorRow.tsx": {
-    "mtime": 1787679020.4530895,
-    "ast_hash": "f33ea1b3592811ed2b09867c7408b592",
+    "mtime": 1787679629.8780763,
+    "ast_hash": "3bb9c2389b9128f656fa06eb65061698",
     "semantic_hash": ""
   },
   "src/components/command-center/WeekToDateTargets.tsx": {
@@ -2415,8 +2410,8 @@
     "semantic_hash": ""
   },
   "src/components/command-center/LiveSessionBar.tsx": {
-    "mtime": 1787562136.4896708,
-    "ast_hash": "ea38b6141804ae5340f0d1cd49fa571d",
+    "mtime": 1787679457.6221588,
+    "ast_hash": "e02b2e4bedcd338d9def34642a2a69bd",
     "semantic_hash": ""
   },
   "src/components/exercises/ExerciseLedger.tsx": {
@@ -2495,8 +2490,8 @@
     "semantic_hash": ""
   },
   "src/components/command-center/setGrid.ts": {
-    "mtime": 1787319358.4279954,
-    "ast_hash": "fd2e4f2e681f270946ef52aa75249dac",
+    "mtime": 1787679598.024205,
+    "ast_hash": "34aa0f608c5779e2deb18b1250f57f1c",
     "semantic_hash": ""
   },
   "src/lib/hooks/useWakeLock.ts": {
@@ -2515,8 +2510,8 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/set-rows.html": {
-    "mtime": 1787679027.4190612,
-    "ast_hash": "98ef437d32e0d625d1f892f787829f3e",
+    "mtime": 1787679729.2924469,
+    "ast_hash": "6b7c9d27eff50c2ff3702f41ab16f90a",
     "semantic_hash": ""
   },
   "public/offline.html": {
@@ -2545,7 +2540,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-ledger.html": {
-    "mtime": 1787666813.8858538,
+    "mtime": 1787679726.498977,
     "ast_hash": "6f50fa4f2aeaf92cc98b2ce5890d0d48",
     "semantic_hash": ""
   },
@@ -2555,8 +2550,8 @@
     "semantic_hash": ""
   },
   "src/components/command-center/LiveSessionHero.tsx": {
-    "mtime": 1787576659.9426835,
-    "ast_hash": "4e5735128b983e1750e3bd22eb431444",
+    "mtime": 1787679432.8030117,
+    "ast_hash": "4864651f1a453c7072a38821052bbf6d",
     "semantic_hash": ""
   },
   "src/tests/set-grid-mode.test.ts": {
@@ -2570,8 +2565,8 @@
     "semantic_hash": ""
   },
   "src/tests/live-header.test.tsx": {
-    "mtime": 1787576679.774026,
-    "ast_hash": "e5cb12f3cea68d516b97502106d33eda",
+    "mtime": 1787679557.9497457,
+    "ast_hash": "8a017c436e605b71df85b9e5aea0e233",
     "semantic_hash": ""
   },
   "e2e/live-header.spec.ts": {
@@ -2580,8 +2575,8 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/live-header.html": {
-    "mtime": 1787666813.640144,
-    "ast_hash": "27a12ba43b60a759107973174594ff32",
+    "mtime": 1787679726.4801505,
+    "ast_hash": "4512509a568ab9b1f7b8cef9f79023ef",
     "semantic_hash": ""
   },
   "src/tests/hevy-parity.test.ts": {
@@ -2650,7 +2645,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-summary-header.html": {
-    "mtime": 1787666817.2872953,
+    "mtime": 1787679727.9088514,
     "ast_hash": "bdbbab0641faf576b6e46b58cbc1ceaa",
     "semantic_hash": ""
   },
@@ -2747,21 +2742,6 @@
   "src/tests/__repro.test.ts": {
     "mtime": 1787575900.0440192,
     "ast_hash": "2174b548d12ccb8447fb1e71ab975742",
-    "semantic_hash": ""
-  },
-  "src/lib/sessions/restClock.ts": {
-    "mtime": 1787576732.3121326,
-    "ast_hash": "7f6258b6e3d2b6abcbff8031dce6ae97",
-    "semantic_hash": ""
-  },
-  "src/components/command-center/RestTimer.tsx": {
-    "mtime": 1787576634.9687047,
-    "ast_hash": "ad6f35b624f04b4c06dfc7ef224f4c78",
-    "semantic_hash": ""
-  },
-  "src/tests/rest-clock.test.ts": {
-    "mtime": 1787576701.980525,
-    "ast_hash": "4801208a4be196f08b7a363aecf1842c",
     "semantic_hash": ""
   },
   "src/components/dashboard/WidgetFrame.tsx": {
@@ -2872,6 +2852,31 @@
   "src/tests/resume-ui-purge.test.tsx": {
     "mtime": 1787679158.998701,
     "ast_hash": "d66e4fb4d930647f06a8de126186fcd7",
+    "semantic_hash": ""
+  },
+  "src/components/command-center/SessionClockSheet.tsx": {
+    "mtime": 1787679666.848392,
+    "ast_hash": "b1aebea983ce090e90657669d170caa7",
+    "semantic_hash": ""
+  },
+  "src/components/command-center/SessionMenu.tsx": {
+    "mtime": 1787679406.799643,
+    "ast_hash": "3c5a1b7df5aed888018e751f5adb4e49",
+    "semantic_hash": ""
+  },
+  "src/lib/sessions/sessionClock.ts": {
+    "mtime": 1787679265.1371636,
+    "ast_hash": "e25b26c90d87cc2ad24d566c2611d620",
+    "semantic_hash": ""
+  },
+  "src/tests/logger-chrome.test.tsx": {
+    "mtime": 1787679719.149837,
+    "ast_hash": "454284457cd230dc3e0efd046f5025ea",
+    "semantic_hash": ""
+  },
+  "src/tests/session-clock.test.ts": {
+    "mtime": 1787679532.4533322,
+    "ast_hash": "f900e963f583e6dc05504cd5f3e31f2e",
     "semantic_hash": ""
   }
 }

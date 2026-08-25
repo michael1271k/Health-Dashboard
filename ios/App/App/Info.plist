@@ -28,6 +28,18 @@
 	</array>
 	<key>CFBundleDisplayName</key>
 	<string>Helix</string>
+	<!-- Live Activities. This key is the whole entitlement: ActivityKit needs no
+	     paid capability for LOCAL updates, which is the only kind Helix sends
+	     (see HelixLiveActivityPlugin — `pushType: nil`). Without it
+	     `ActivityAuthorizationInfo().areActivitiesEnabled` is false forever and
+	     `Activity.request` throws, silently, on a device that supports it. -->
+	<key>NSSupportsLiveActivities</key>
+	<true/>
+	<!-- Frequent local updates. Off by default; without it iOS throttles
+	     `activity.update` hard enough that ticking sets in quick succession
+	     stops moving the Lock Screen card. -->
+	<key>NSSupportsLiveActivitiesFrequentUpdates</key>
+	<true/>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
