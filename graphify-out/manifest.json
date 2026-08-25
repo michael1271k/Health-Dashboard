@@ -255,8 +255,8 @@
     "semantic_hash": ""
   },
   "src/app/page.tsx": {
-    "mtime": 1787650499.6812901,
-    "ast_hash": "8c2c276a2e73d63621b77fc31936b587",
+    "mtime": 1787666111.1035805,
+    "ast_hash": "f43254e45e587def569c1493a6eac50e",
     "semantic_hash": ""
   },
   "src/app/session/[id]/page.tsx": {
@@ -355,8 +355,8 @@
     "semantic_hash": ""
   },
   "src/components/command-center/WeekToDateTargets.tsx": {
-    "mtime": 1787394357.0707145,
-    "ast_hash": "5b9738e9f26d575c9f374316f534fc86",
+    "mtime": 1787666048.4823976,
+    "ast_hash": "d64c4544d94a31bd8656ae5f6ea520d8",
     "semantic_hash": ""
   },
   "src/components/dashboard/AnimatedBento.tsx": {
@@ -2515,7 +2515,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/set-rows.html": {
-    "mtime": 1787650595.0262196,
+    "mtime": 1787666634.9290073,
     "ast_hash": "86569f2f098580e6a062f0ce9f52fa2b",
     "semantic_hash": ""
   },
@@ -2545,7 +2545,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-ledger.html": {
-    "mtime": 1787650588.5852814,
+    "mtime": 1787666632.6086264,
     "ast_hash": "6f50fa4f2aeaf92cc98b2ce5890d0d48",
     "semantic_hash": ""
   },
@@ -2580,7 +2580,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/live-header.html": {
-    "mtime": 1787650588.3920507,
+    "mtime": 1787666632.4277966,
     "ast_hash": "27a12ba43b60a759107973174594ff32",
     "semantic_hash": ""
   },
@@ -2650,7 +2650,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-summary-header.html": {
-    "mtime": 1787650591.223348,
+    "mtime": 1787666633.4944625,
     "ast_hash": "bdbbab0641faf576b6e46b58cbc1ceaa",
     "semantic_hash": ""
   },
@@ -2725,18 +2725,18 @@
     "semantic_hash": ""
   },
   "src/lib/dashboard/layout.ts": {
-    "mtime": 1787650170.9532156,
-    "ast_hash": "96afbd9d665207aaf79b4e903f894480",
+    "mtime": 1787665194.903289,
+    "ast_hash": "9270f15034ca824d474e4b5715cca5ab",
     "semantic_hash": ""
   },
   "src/components/dashboard/WidgetGrid.tsx": {
-    "mtime": 1787650170.97256,
-    "ast_hash": "12ccfb62f3bcb789a3b444a1a131ab68",
+    "mtime": 1787666614.4593527,
+    "ast_hash": "34813f64b711c39e5a193410acd047d1",
     "semantic_hash": ""
   },
   "src/tests/dashboard-layout.test.ts": {
-    "mtime": 1787561371.6629846,
-    "ast_hash": "c55d1da32238ed12c0e577fea5114e42",
+    "mtime": 1787666187.5108852,
+    "ast_hash": "6b38a3b2830bd98a71a6d26bf9323fab",
     "semantic_hash": ""
   },
   "src/lib/hooks/useSettingsGoals.ts": {
@@ -2770,28 +2770,28 @@
     "semantic_hash": ""
   },
   "src/components/dashboard/widgets/parts.tsx": {
-    "mtime": 1787650576.373928,
-    "ast_hash": "402863e7155017f1a179235b84c815af",
+    "mtime": 1787666489.1668396,
+    "ast_hash": "5a4b9597555f18ddeb03f2b5e77a17d2",
     "semantic_hash": ""
   },
   "src/components/dashboard/widgets/VitalsWidget.tsx": {
-    "mtime": 1787649784.441068,
-    "ast_hash": "f0ecd11f1480950714a1d0e247eda1e8",
+    "mtime": 1787665758.901598,
+    "ast_hash": "74f1e86b79b1e5c04c42d67220176d3f",
     "semantic_hash": ""
   },
   "src/components/dashboard/widgets/FuelWidget.tsx": {
-    "mtime": 1787649881.8586602,
-    "ast_hash": "233c6643375deda0485c4bb3c85511b6",
+    "mtime": 1787666334.265811,
+    "ast_hash": "d2139acee42d8d90f3828e8efa900768",
     "semantic_hash": ""
   },
   "src/components/dashboard/widgets/BodyWidget.tsx": {
-    "mtime": 1787649957.9780378,
-    "ast_hash": "ef4dd6f0e6f59f819030aab741de6247",
+    "mtime": 1787665999.911991,
+    "ast_hash": "f0c890195f6f15f99a6c6881e9c4b679",
     "semantic_hash": ""
   },
   "src/components/dashboard/widgets/TrainingWidgets.tsx": {
-    "mtime": 1787649748.203006,
-    "ast_hash": "f6973310b7b12f84d98b2342fb9c4d61",
+    "mtime": 1787665979.2603757,
+    "ast_hash": "92cd050debdadf69577894efdaea45d3",
     "semantic_hash": ""
   },
   "src/lib/hooks/useLatestPr.ts": {
@@ -2800,23 +2800,23 @@
     "semantic_hash": ""
   },
   "src/components/dashboard/widgets/DailyWidgets.tsx": {
-    "mtime": 1787650499.7040803,
-    "ast_hash": "af80dc5ea551395fc364e41d7bc7a87b",
+    "mtime": 1787665715.02185,
+    "ast_hash": "1a3864d9ca8ebba8c95a400f1b259831",
     "semantic_hash": ""
   },
   "src/tests/widget-parts.test.tsx": {
-    "mtime": 1787650096.5534737,
-    "ast_hash": "26524b1aee953d5b193769b5e6e30050",
+    "mtime": 1787666266.8652663,
+    "ast_hash": "1dd10c5d231cc2c37d2fa80d92dc3035",
     "semantic_hash": ""
   },
   "src/tests/widget-bodies.test.tsx": {
-    "mtime": 1787650066.6476371,
-    "ast_hash": "2246bc6d171c4b8f19dbfbc3fe84041c",
+    "mtime": 1787666296.4551504,
+    "ast_hash": "bed3a98246567ec29de13d3b804adecf",
     "semantic_hash": ""
   },
   "src/lib/hooks/useLastSessionOfDay.ts": {
-    "mtime": 1787649332.0470693,
-    "ast_hash": "d18237a4177ac7b3cf080451356369d3",
+    "mtime": 1787665869.33157,
+    "ast_hash": "949081b121c255b9b8cac5beef22d2d0",
     "semantic_hash": ""
   },
   "src/lib/hooks/useTodayMicros.ts": {
@@ -2825,8 +2825,38 @@
     "semantic_hash": ""
   },
   "src/tests/widget-arrange.test.tsx": {
-    "mtime": 1787650584.0426095,
-    "ast_hash": "b154f715084e261bf29988207ea45d1a",
+    "mtime": 1787666250.3774948,
+    "ast_hash": "7b086a1554f187e4726d5d72c2bfe8fa",
+    "semantic_hash": ""
+  },
+  "src/components/body/WeeklyMuscleSheet.tsx": {
+    "mtime": 1787666033.2682278,
+    "ast_hash": "4622499fd4dc4e7e9d89a2d2d7bc7dcb",
+    "semantic_hash": ""
+  },
+  "src/components/dashboard/widgets/PlanWidgets.tsx": {
+    "mtime": 1787666334.2656634,
+    "ast_hash": "378eecdbae4b1ea848275433bf705cea",
+    "semantic_hash": ""
+  },
+  "src/lib/hooks/useEnergyBalance.ts": {
+    "mtime": 1787665425.141183,
+    "ast_hash": "a8a2814c45c4c54cb5d1aa204876c048",
+    "semantic_hash": ""
+  },
+  "src/lib/hooks/useNextTraining.ts": {
+    "mtime": 1787665444.8077374,
+    "ast_hash": "0fc29d6a6dc21c1ef1d0e044021870d2",
+    "semantic_hash": ""
+  },
+  "src/lib/hooks/useSessionHistory.ts": {
+    "mtime": 1787665425.139022,
+    "ast_hash": "3b3f79049143ffbe5fd5bc129d9feb52",
+    "semantic_hash": ""
+  },
+  "src/tests/widget-new.test.tsx": {
+    "mtime": 1787666506.5432358,
+    "ast_hash": "2a9fee4a6ace248d1bfea07ee47a60ec",
     "semantic_hash": ""
   }
 }
