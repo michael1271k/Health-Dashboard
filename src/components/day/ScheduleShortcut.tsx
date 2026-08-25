@@ -6,19 +6,30 @@ import { activeProgram, scheduleDayFor } from '@/lib/programs'
 import { useDayVault } from '@/lib/hooks/useDayVault'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
+import { useHasLiveDraft } from '@/lib/hooks/useLiveDraft'
 
 /**
  * Training-day shortcut ("Today's schedule: Upper B — log it") shown on the
  * Nutrition and Journey views. One tap opens the fullscreen deck pre-seeded
  * with the day's template — no intermediate popups. Hidden on rest days and
  * once today's session is committed.
+ *
+ * ── AND HIDDEN WHILE ONE IS RUNNING ──────────────────────────────────────────
+ * `?template=` SEEDS a deck. Tapping it with a draft already live is not a
+ * shortcut to the workout you are in the middle of — it is an invitation to
+ * start the same day again over the top of it. The floating pill is what says
+ * "this is running, tap to go back", on every screen this component appears on,
+ * and it says it with the live totals. Two controls, one of them wrong, is
+ * worse than one.
  */
 export function ScheduleShortcut() {
   const today = logicalTodayISO()
   useScheduleVersion()   // re-render when a swap lands from any device
   const schedule = scheduleDayFor(today)
   const { data } = useDayVault(today)
+  const live = useHasLiveDraft()
 
+  if (live) return null
   if (schedule === 'rest' || !schedule.dayKey) return null
   if ((data?.sessions.length ?? 0) > 0) return null
 

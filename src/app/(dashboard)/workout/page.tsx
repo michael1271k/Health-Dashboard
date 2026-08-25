@@ -9,13 +9,13 @@ import { PostWorkoutSummary } from '@/components/command-center/PostWorkoutSumma
 import { SwapDayControl, RestTodayButton } from '@/components/day/SwapDayControl'
 import { RestSuggestion } from '@/components/day/RestSuggestion'
 import { ProgressionAlerts } from '@/components/command-center/ProgressionAlerts'
-import { peekSessionDraft, type SessionDraft } from '@/lib/sessions/draft'
+import { useLiveDraft } from '@/lib/hooks/useLiveDraft'
 import {
   activeProgram, scheduleDayFor, isTrainingDay, eraForDate, ERA_META, type Program,
 } from '@/lib/programs'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
-import { Plus, Moon, ArrowRight, Flag, FileClock, ChevronRight, BookOpen } from 'lucide-react'
+import { Plus, Moon, Flag, ChevronRight, BookOpen } from 'lucide-react'
 import { WeekScheduler } from '@/components/schedule/WeekScheduler'
 import { Surface } from '@/components/ui/Zone'
 import { STEEL } from '@/lib/theme/palette'
@@ -34,9 +34,18 @@ export default function WorkoutPage() {
   // effect then reads the real active plan (localStorage) after mount.
   const [program, setProgram] = useState<Program>(() => activeProgram('apex51', 'bulk'))
 
-  // Surviving deck draft (autosaved on /session) — offer to resume it.
-  const [resumeDraft, setResumeDraft] = useState<SessionDraft | null>(null)
-  useEffect(() => { setResumeDraft(peekSessionDraft()) }, [])
+  /**
+   * ── A RUNNING WORKOUT IS ANNOUNCED ONCE ────────────────────────────────────
+   * There used to be an orange "Resume session draft" card here, and it was a
+   * second copy of what `LiveSessionPill` says on every screen in the app,
+   * persistently, above the tab bar. Two controls for one fact — and this one
+   * read from a mount-time photo of localStorage, so it went on offering to
+   * resume a draft that had been committed and deleted minutes earlier.
+   *
+   * The pill is the answer. This is the subscription that lets the rest of the
+   * page stop competing with it.
+   */
+  const liveDraft = useLiveDraft()
 
   useEffect(() => { setProgram(activeProgram()) }, [])
 
@@ -85,8 +94,15 @@ export default function WorkoutPage() {
         </div>
       </div>
 
-      {/* ── Today: Post-Workout Summary (if logged) or Log/Rest hero ── */}
-      {loggedToday ? (
+      {/* ── Today: Post-Workout Summary (if logged) or Log/Rest hero ──
+          The hero stands down while a session is running. Its whole offer is
+          "Log Upper A", and tapping that mid-workout opens a SECOND deck over a
+          draft that is already live — not a redundant control, an actively
+          dangerous one. The pill above the tab bar is saying where the workout
+          is, with its live volume and set count, and one tap returns to it —
+          so the slot stays EMPTY rather than growing a second announcement of
+          the same thing. */}
+      {liveDraft ? null : loggedToday ? (
         <PostWorkoutSummary sessions={todaySessions} date={today} />
       ) : (
       <Surface variant="band" measure="grid" pad="snug"
@@ -150,21 +166,6 @@ export default function WorkoutPage() {
 
       {/* Smart Coach — lifts that cleared their ceiling twice, due a load bump. */}
       <ProgressionAlerts />
-
-      {/* Surviving draft (autosaved) — resume where the session left off */}
-      {resumeDraft && (
-        <button onClick={() => router.push('/session')}
-          className="w-full rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 flex items-center gap-3 text-left">
-          <FileClock className="w-4 h-4 text-primary shrink-0" aria-hidden="true" />
-          <span className="flex-1 min-w-0">
-            <span className="block text-sm font-semibold text-text truncate">
-              Resume session draft{resumeDraft.title ? ` — ${resumeDraft.title}` : ''}
-            </span>
-            <span className="block text-[11px] text-muted">Draft autosaved · tap to continue</span>
-          </span>
-          <ArrowRight className="w-4 h-4 text-muted shrink-0" aria-hidden="true" />
-        </button>
-      )}
 
       {/* Active plan chip — selection lives in Settings → Plans & Phases now. */}
       <button onClick={() => router.push('/settings')}
