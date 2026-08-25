@@ -63,7 +63,7 @@ function wrap(ui: React.ReactNode) {
 }
 
 const HERO = (
-  <LiveSessionHero draft={DRAFT} accent={GOLD} volumeKg={12480} sets={18} recordCount={2} onBack={() => {}} onSetDate={() => {}} onFinish={() => {}} />
+  <LiveSessionHero draft={DRAFT} accent={GOLD} volumeKg={12480} sets={18} recordCount={2} onBack={() => {}} onSetDate={() => {}} onFinish={() => {}} onDiscard={() => {}} />
 )
 
 describe('the live session hero', () => {
@@ -111,21 +111,29 @@ describe('the live session hero', () => {
     const composed = { ...DRAFT, dayKey: 'legs_b', title: 'Legs & Core B · Posterior Focus' } as SessionDraft
     const { container } = render(wrap(
       <LiveSessionHero draft={composed} accent={GOLD} volumeKg={0} sets={0} recordCount={0}
-        onBack={() => {}} onSetDate={() => {}} onFinish={() => {}} />,
+        onBack={() => {}} onSetDate={() => {}} onFinish={() => {}} onDiscard={() => {}} />,
     ))
     expect(container.querySelector('h1')?.textContent).toBe('Legs & Core B')
     expect(container.textContent ?? '').not.toContain('Posterior Focus')
   })
 
-  it('carries exactly one back button and one muscle button', () => {
+  it('carries exactly one of each header control', () => {
     // There used to be a second of each in a sticky band above this block whose
     // only visible content at scroll-top was the chevron. The band is gone; the
     // collapsed bar carries the other copy and the two never coexist.
     const { container } = render(wrap(HERO))
     const labelled = (needle: string) => Array.from(container.querySelectorAll('button'))
       .filter((b) => (b.getAttribute('aria-label') ?? '').includes(needle)).length
-    expect(labelled('Back')).toBe(1)
+    // "Minimise", not "Back". The chevron never discarded anything — the draft
+    // has autosaved since the day it was written and the pill above the tab bar
+    // is what you come back to. Naming it Back was the reason leaving the deck
+    // felt like losing the workout.
+    expect(labelled('Minimise')).toBe(1)
     expect(labelled('Muscle distribution')).toBe(1)
+    // The four session-level controls, one each: minimise, overflow, finish,
+    // and the clock that replaced the rest timer.
+    expect(labelled('Session options')).toBe(1)
+    expect(labelled('Timer and stopwatch')).toBe(1)
   })
 
   it('tints the muscle figure by MUSCLE GROUP, not by the workout colour', () => {
@@ -158,7 +166,7 @@ describe('the live session hero', () => {
     // three figures sideways at the moment you are reaching for a tick.
     const cold = { ...DRAFT, exercises: [{ ...DRAFT.exercises[0], sets: [{ weightKg: 60, reps: 8, done: false }] }] } as SessionDraft
     const { container } = render(wrap(
-      <LiveSessionHero draft={cold} accent={GOLD} volumeKg={0} sets={0} recordCount={0} onBack={() => {}} onSetDate={() => {}} onFinish={() => {}} />,
+      <LiveSessionHero draft={cold} accent={GOLD} volumeKg={0} sets={0} recordCount={0} onBack={() => {}} onSetDate={() => {}} onFinish={() => {}} onDiscard={() => {}} />,
     ))
     const btn = Array.from(container.querySelectorAll('button'))
       .find((b) => b.getAttribute('aria-label') === 'Muscle distribution for this session')

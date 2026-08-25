@@ -7,7 +7,6 @@ import { LiveSessionBar } from './LiveSessionBar'
 import { LiveSessionHero } from './LiveSessionHero'
 import { ExerciseDeckList } from './ExerciseDeckList'
 import type { ReadyCue } from './ExerciseCard'
-import { CommitBar } from './CommitBar'
 import { FinishSheet } from './FinishSheet'
 import { useExerciseSetHistory, useGlobalSetHistory } from '@/lib/hooks/useExerciseSetHistory'
 import { useExerciseBaselines } from '@/lib/hooks/useExerciseBaselines'
@@ -111,6 +110,34 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
   // `memo`, and the hero sits under it) — an inline arrow would change identity
   // on every keystroke in every set field and undo that memo.
   const openFinish = useCallback(() => setFinishOpen(true), [])
+
+  /**
+   * ── THE STICKY BOTTOM BAR IS GONE ──────────────────────────────────────────
+   * `CommitBar` held Finish, then it held Finish and discard, then Finish moved
+   * to the header and it held one button — while still paying for a 52px
+   * control, a `pt-2`, a `pb-[max(0.75rem,safe-area)]`, a SECOND bottom padding
+   * from `keyboard-safe`, and a fade gradient tall enough to sell the illusion
+   * that something was pinned there. That band was most of the dead space under
+   * the last exercise, permanently, on every scroll position.
+   *
+   * Its two destructive actions live behind the header's overflow now (see
+   * `SessionMenu`), and its commit error was already duplicated by `FinishSheet`
+   * — which is where you are standing when a commit fails, and the only surface
+   * that can do anything about it.
+   */
+  const discardAndClose = useCallback(() => { discard(); onClose() }, [discard, onClose])
+  const deleteSession = useCallback(() => {
+    // The trash in edit mode ALWAYS deletes the real committed session, then
+    // clears the edit draft and returns to the day.
+    if (!draft?.replaceSessionId) { discard(); onClose(); return }
+    del.mutate(draft.replaceSessionId, {
+      onSuccess: () => {
+        discard()
+        if (onViewDay) onViewDay(draft.date)
+        else onClose()
+      },
+    })
+  }, [draft?.replaceSessionId, draft?.date, del, discard, onClose, onViewDay])
 
   const [prTarget, setPrTarget] = useState<{ localId: string; setIdx: number } | null>(null)
   const handlePrTap = useCallback(
@@ -217,28 +244,6 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
     ? (commit.error instanceof Error ? commit.error.message : 'Save failed')
     : null
 
-  const commitBar = (
-    <CommitBar
-      draft={draft}
-      error={commitError}
-      onDiscard={() => { discard(); onClose() }}
-      onCancelEdit={() => { discard(); onClose() }}
-      deleting={del.isPending}
-      onDelete={() => {
-        // The trash in edit mode ALWAYS deletes the real committed session, then
-        // clears the edit draft and returns to the day.
-        if (!draft.replaceSessionId) { discard(); onClose(); return }
-        del.mutate(draft.replaceSessionId, {
-          onSuccess: () => {
-            discard()
-            if (onViewDay) onViewDay(draft.date)
-            else onClose()
-          },
-        })
-      }}
-    />
-  )
-
   return (
     <>
       {/* The pinned identity + live rail. `draftTotals` runs HERE, once, and the
@@ -260,7 +265,11 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
 
     {/* The route is full-bleed so the bar above can span the viewport; the
         deck keeps its own measure and padding here. */}
-    <div className="mx-auto w-full max-w-[80rem] px-3 sm:px-5 pb-6">
+    {/* The deck ENDS at its last exercise. `pb-6` plus the sticky bar's own
+        stack used to leave a screenful of nothing under the final Add set;
+        what is left is the safe-area inset and one gutter, which is the
+        smallest gap that is still a margin rather than a clipped edge. */}
+    <div className="mx-auto w-full max-w-[80rem] px-3 sm:px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
       {/* The hero spans BOTH desktop columns — it is the document's title, and a
           title indented into a sidebar is a sidebar heading. */}
       <div ref={heroRef}>
@@ -275,6 +284,10 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
           onFinish={openFinish}
           finishBusy={commit.isPending}
           isEdit={!!draft.replaceSessionId}
+          deleting={del.isPending}
+          onDiscard={discardAndClose}
+          onCancelEdit={discardAndClose}
+          onDelete={deleteSession}
         />
       </div>
 
@@ -305,7 +318,6 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
           session went is the report. */}
       <div className="space-y-3 lg:sticky lg:top-4">
         <CoachNotes draft={draft} />
-        <div className="hidden lg:block">{commitBar}</div>
       </div>
 
       {/* ── The deck (single column — required by the vertical sort strategy) ── */}
@@ -329,7 +341,6 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
           onPrTap={handlePrTap}
           onUpdateCardio={updateCardio}
         />
-        <div className="lg:hidden">{commitBar}</div>
       </div>
 
       {prSheet && (

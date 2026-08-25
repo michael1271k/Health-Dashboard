@@ -9,7 +9,7 @@ import { rpeColor, rpeLabel } from '@/lib/training/effort'
 import { useHoldRepeat } from '@/lib/hooks/useHoldRepeat'
 import { RpeLadder } from './RpeLadder'
 import { SetActionSheet, type SetTypeValue } from './SetActionSheet'
-import { setGridFor, SET_BADGE_W, SET_FRAME_GAP, SET_TAIL_W, type SetGridMode } from './setGrid'
+import { setGridFor, SET_BADGE_W, SET_CELL_LEAD, SET_CELL_VALUE, SET_FRAME_GAP, SET_TAIL_W, type SetGridMode } from './setGrid'
 import { EMERALD_DEEP, EMERALD_LIGHT } from '@/lib/theme/palette'
 
 /** Plate step (a tap on ±) and the microload step (a press-and-hold). */
@@ -36,9 +36,17 @@ const GOLD = '#C9A227'   // personal record
  * is a green that has settled, not a green that shouts. The tick keeps full
  * saturation because it is 34px wide and has to survive being read at a glance
  * mid-set.
+ *
+ * ── AND THEN PALER STILL (2026-08-25) ───────────────────────────────────────
+ * `2b` at the leading edge was still loud enough that a card of four ticked
+ * sets read as four green bars rather than as four sets that were finished —
+ * and the deck spends most of a session in that state, so the loudest thing on
+ * the screen was the part you were no longer looking at. The ramp keeps its
+ * shape and drops about a third of its alpha at every stop. A completed set
+ * should recede; the tick beside it is what still says done.
  */
 const DONE_ROW_BG =
-  `linear-gradient(100deg, ${GREEN}2b 0%, ${GREEN}17 42%, ${GREEN}09 100%)`
+  `linear-gradient(100deg, ${GREEN}1c 0%, ${GREEN}0f 42%, ${GREEN}06 100%)`
 const DONE_TICK_BG =
   `linear-gradient(150deg, ${GREEN_LIGHT} 0%, ${GREEN} 55%, ${EMERALD_DEEP} 100%)`
 /** How long the badge is held before it opens set options instead of records. */
@@ -310,14 +318,23 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
           onPointerUp={badgeUp}
           onPointerCancel={clearPress}
           onContextMenu={(e) => e.preventDefault()}
-          className={`${SET_BADGE_W} h-7 shrink-0 rounded-md flex items-center justify-center
+          className={`${SET_BADGE_W} h-7 shrink-0 rounded-lg flex items-center justify-center
                       helix-num text-[12px] font-bold uppercase tabular-nums select-none
                       active:scale-95 transition-transform`}
           style={{
             touchAction: 'none',
+            /* ── THE BADGE IS AN OBJECT, NOT A LABEL ──
+               An untyped set drew a 1px outline around nothing: at 28px, against
+               a near-black row, that is a rectangle you have to look for rather
+               than a control you reach for — and it is the row's primary tap
+               target, holding two gestures. It gets a surface, and both states
+               get the same 1px top highlight and 1px drop, so a plain set and a
+               typed one are lit from the same place and only the HUE tells them
+               apart. */
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.10), 0 1px 2px rgba(0,0,0,0.4)',
             ...(badgeColor
-              ? { color: badgeColor, background: `${badgeColor}1f`, border: `1px solid ${badgeColor}55` }
-              : { color: 'var(--color-text)', border: '1px solid rgba(255,255,255,0.10)' }),
+              ? { color: badgeColor, background: `${badgeColor}26`, border: `1px solid ${badgeColor}5e` }
+              : { color: 'var(--color-text)', background: 'rgba(255,255,255,0.055)', border: '1px solid rgba(255,255,255,0.12)' }),
           }}
           title={hasPr ? 'Personal record — tap for details, hold for set options' : 'Tap or hold for set options'}
           aria-label={showMedal ? `${setLabel} — personal record. Tap for details, hold for set options`
@@ -342,7 +359,7 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
                 carries its UNIT, because a reference costs nothing to read or it
                 is not a reference. Dimmed and never editable: a reference that
                 looks like an input gets typed into. */}
-            <span className="helix-num text-[11px] tabular-nums text-muted/70 truncate"
+            <span className={`helix-num text-[11px] tabular-nums text-muted/70 truncate ${SET_CELL_LEAD}`}
               title={prev ? 'Last time you did this movement' : undefined}>
               {prev
                 ? gridMode === 'time' ? `${prev.reps}s`
@@ -358,14 +375,14 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
               // per row it cost ~17px on the widest real load (`102.25kg`) and
               // pushed it out of its own box at 360px — the same "one statement
               // of one fact" rule that moved the unit out of the tuner's field.
-              <span className={`helix-num text-fluid-base font-bold tabular-nums truncate ${isWarm ? 'text-muted' : 'text-text'}`}
+              <span className={`helix-num text-fluid-base font-bold tabular-nums truncate ${SET_CELL_VALUE} ${isWarm ? 'text-muted' : 'text-text'}`}
                 title={`${weightLabel} kg`}>
                 {weightLabel}
               </span>
             ) : <span aria-hidden="true" />}
 
             {/* REPS (or seconds on a hold). */}
-            <span className={`helix-num text-fluid-base font-bold tabular-nums truncate ${isWarm ? 'text-muted' : 'text-text'}`}
+            <span className={`helix-num text-fluid-base font-bold tabular-nums truncate ${SET_CELL_VALUE} ${isWarm ? 'text-muted' : 'text-text'}`}
               title={timed ? `${set.reps} seconds` : `${set.reps} reps`}>
               {set.reps}
             </span>
@@ -382,7 +399,7 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
                 A value inherited from last session renders dimmer, because it is
                 a proposal until you confirm it. A cleared-but-stale rating shows
                 the dot it always did. */}
-            <span className="helix-num text-[11px] font-bold tabular-nums text-right leading-none">
+            <span className={`helix-num text-[11px] font-bold tabular-nums leading-none ${SET_CELL_VALUE}`}>
               {set.rpe != null ? (
                 <span
                   style={{ color: rpeColor(set.rpe), opacity: set.rpeSeed != null ? 0.6 : 1 }}
@@ -441,7 +458,18 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
                 // row's own green, and an offset shadow there reads as grime.
                 boxShadow: `0 0 12px ${GREEN}59, inset 0 1px 0 rgba(255,255,255,0.22)`,
               }
-              : { color: 'var(--color-muted)', background: 'transparent', border: '1px solid rgba(255,255,255,0.14)' }}
+              : {
+                color: 'var(--color-muted)',
+                // Not `transparent`. An untouched tick is the single most
+                // pressed control on the deck and it was the only one drawn as
+                // an outline around nothing — same surface and same light
+                // direction as the badge and Add set, so the card's raised
+                // things are raised consistently and the one you press thirty
+                // times a session looks pressable before you press it.
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.14)',
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.08), 0 1px 2px rgba(0,0,0,0.4)',
+              }}
           >
             <Check className="w-4 h-4" strokeWidth={3} aria-hidden="true" />
           </button>

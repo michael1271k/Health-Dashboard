@@ -2,7 +2,7 @@
 
 import { memo } from 'react'
 import { BackLink } from '@/components/nav/NavChevron'
-import { MuscleDistribution } from './MuscleDistribution'
+import { SessionClock } from './SessionClockSheet'
 import { FinishButton } from './FinishButton'
 import { fmtVolume } from '@/lib/utils/units'
 import { cleanSessionTitle, type SessionDraft } from '@/lib/sessions/draft'
@@ -35,8 +35,18 @@ import { EMBER, GOLD, MUTED, STEEL } from '@/lib/theme/palette'
  * `SessionDeck` computes `draftTotals` once and hands down three numbers. Given
  * the draft, this bar would re-render on every keystroke in every set field —
  * exactly the cost `src/tests/deck-render.test*` exists to catch — to redraw two
- * figures that only move when a set is ticked. `MuscleDistribution` genuinely
- * needs the draft (it walks every committed set), so it takes it.
+ * figures that only move when a set is ticked. It still takes the draft for the
+ * title, which is one string read once.
+ *
+ * ── THE CLOCK REPLACED THE MUSCLE FIGURE HERE ────────────────────────────────
+ * Both were carried up from the hero on the reasoning that a control worth
+ * having at the top is worth having at every scroll position. That is true of
+ * one of them. "Where is this session landing" is a question you ask when you
+ * open the deck and when you are deciding to finish — both of which are the
+ * hero, on screen, by definition. "How long have I been resting" is a question
+ * you ask THIRTY TIMES, and every one of them happens mid-deck with the hero
+ * scrolled away. So the bar carries the clock, the hero carries both, and
+ * neither of them carries a control nobody reaches for at that scroll position.
  */
 export const LiveSessionBar = memo(function LiveSessionBar({
   draft, accent, volumeKg, sets, recordCount, shown, onBack, onFinish, finishBusy, isEdit,
@@ -87,7 +97,7 @@ export const LiveSessionBar = memo(function LiveSessionBar({
           is sized to be read at arm's length between sets: the name at
           `text-fluid-base`, the numbers at 12px, and the same Focus/Finish pair
           the hero carries. It costs about 8px of height. */}
-      <div className="mx-auto w-full max-w-[80rem] px-2 sm:px-4 py-2 flex items-center gap-2">
+      <div className="mx-auto w-full max-w-[80rem] px-2 sm:px-4 py-2.5 flex items-center gap-2.5">
         <BackLink onClick={onBack} label="Back — the draft autosaves" />
 
         <div className="min-w-0 flex-1">
@@ -110,7 +120,15 @@ export const LiveSessionBar = memo(function LiveSessionBar({
               a stronger boundary than a 4px glyph — the separator was
               decorating a distinction the type already made. What is left fits,
               with room for a six-figure tonnage. */}
-          <p className="flex items-center gap-2 text-[12px] leading-tight text-muted truncate">
+          {/* ── THE FIGURES ARE PILLS NOW ──
+              Three bare coloured numbers 2px under the title read as a subtitle
+              that had been syntax-highlighted: no separation from the name
+              above them, none from each other, and nothing to say they are
+              readings rather than prose. Each one gets its own tinted chip —
+              the treatment the hero's tiles already use, at bar scale — so the
+              line reads as three measurements, and the row gets the breathing
+              space the compression took away. */}
+          <p className="flex items-center gap-1.5 mt-1 text-[12px] leading-none text-muted">
             <Stat value={fmtVolume(volumeKg)} unit="kg" color={EMBER} />
             <Stat value={String(sets)} unit={sets === 1 ? 'set' : 'sets'} color={STEEL} />
             <Stat
@@ -123,7 +141,7 @@ export const LiveSessionBar = memo(function LiveSessionBar({
           </p>
         </div>
 
-        <MuscleDistribution draft={draft} accent={accent} />
+        <SessionClock size="sm" />
         <FinishButton onClick={onFinish} busy={finishBusy} disabled={sets === 0} isEdit={isEdit} size="sm" />
       </div>
     </header>
@@ -132,7 +150,18 @@ export const LiveSessionBar = memo(function LiveSessionBar({
 
 function Stat({ value, unit, color }: { value: string; unit: string; color: string }) {
   return (
-    <span className="helix-num font-bold tabular-nums whitespace-nowrap" style={{ color }}>
+    <span
+      className="helix-num font-bold tabular-nums whitespace-nowrap rounded-md px-1.5 py-1"
+      style={{
+        color,
+        // The same recipe as every other tinted chip in the app (`1f` fill,
+        // `40` hairline), plus a 1px top highlight so the pill catches light
+        // from the same direction the deck's other raised controls do.
+        background: `${color}1f`,
+        border: `1px solid ${color}40`,
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.10)',
+      }}
+    >
       {value}<span className="font-normal opacity-70 ml-0.5">{unit}</span>
     </span>
   )

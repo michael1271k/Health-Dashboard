@@ -12,7 +12,7 @@ import Combine  // ObservableObject / @Published live here; watchOS doesn't re-e
 
 // MARK: - Palette (mirrors the web jewel tokens)
 
-private enum Helix {
+private enum HelixTheme {
     /// TRUE black, not near-black. On an OLED watch a #0C0D11 fill is a
     /// visible grey rectangle inside the bezel; #000000 is the bezel. The web
     /// app's obsidian exists to sit under glass — there is no glass here.
@@ -72,7 +72,7 @@ struct ContentView: View {
                 RetryView { Task { await store.refresh() } }
             }
         }
-        .containerBackground(Helix.obsidian, for: .tabView)
+        .containerBackground(HelixTheme.obsidian, for: .tabView)
         .task { await store.refresh() }
         .refreshable { await store.refresh() }
     }

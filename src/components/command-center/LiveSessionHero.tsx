@@ -5,7 +5,8 @@ import { CalendarDays } from 'lucide-react'
 import { LeverTag } from '@/components/nutrition/LeverTag'
 import { BackLink } from '@/components/nav/NavChevron'
 import { MuscleDistribution } from './MuscleDistribution'
-import { RestTimer } from './RestTimer'
+import { SessionClock } from './SessionClockSheet'
+import { SessionMenu } from './SessionMenu'
 import { FinishButton } from './FinishButton'
 import { DatePickerPopover } from './DatePickerPopover'
 import { useLoggedSessionDates } from '@/lib/hooks/useDayVault'
@@ -42,7 +43,7 @@ import { EMBER, GOLD, MUTED, STEEL } from '@/lib/theme/palette'
  * title now, tinted in the workout's own colour, and the collapsed bar carries
  * the same button once this scrolls off.
  */
-export function LiveSessionHero({ draft, accent, volumeKg, sets, recordCount, onBack, onSetDate, onFinish, finishBusy, isEdit }: {
+export function LiveSessionHero({ draft, accent, volumeKg, sets, recordCount, onBack, onSetDate, onFinish, finishBusy, isEdit, deleting, onDiscard, onCancelEdit, onDelete }: {
   draft: SessionDraft
   /** `dayColor(dayKey, splitDay)` — steel for Upper A, gold for Upper B. */
   accent: string
@@ -70,6 +71,22 @@ export function LiveSessionHero({ draft, accent, volumeKg, sets, recordCount, on
   finishBusy?: boolean
   /** Edit mode says "Save", not "Finish" — it is not ending anything. */
   isEdit?: boolean
+  /**
+   * ── DISCARD MOVED UP HERE TOO, BUT ONE LEVEL DOWN ──────────────────────────
+   * The sticky `CommitBar` at the foot of the deck is gone: once Finish left it
+   * the bar held one button and was still paying for a 52px control, two
+   * stacked bottom paddings and a fade gradient, permanently, at the bottom of
+   * every screen. That was most of the dead space under the last exercise.
+   *
+   * Its contents live behind the header's overflow — near the other session
+   * controls, but not ADJACENT to Finish, because discarding a draft and
+   * deleting a committed workout are the two actions on this screen that
+   * destroy something. See `SessionMenu`.
+   */
+  deleting?: boolean
+  onDiscard: () => void
+  onCancelEdit?: () => void
+  onDelete?: () => void
 }) {
   const [pickerOpen, setPickerOpen] = useState(false)
   const { data: loggedDates } = useLoggedSessionDates()
@@ -105,19 +122,36 @@ export function LiveSessionHero({ draft, accent, volumeKg, sets, recordCount, on
           about 4px at phone widths and the title is still the largest type on
           the screen by a clear margin), and the muscle figure moves down to the
           date row, which was carrying a date and nothing else across the whole
-          right half. Rest takes the 44px it vacated: a timer is a thing you
-          reach for BETWEEN sets, which is exactly when your eye is at the top
-          of the screen, and the collapsed bar keeps the muscle figure so it is
-          never more than one tap away at any scroll position. */}
+          right half.
+
+          ── AND THEN THE ROW WAS SORTED BY WHAT THE CONTROLS ARE ──
+          It held Back, the title, the clock and Finish — a navigation, a title,
+          a tool and a commit, in that order, all at the same weight. Four
+          different KINDS of thing reading as one undifferentiated strip of
+          buttons is what made it look like a toolbar rather than a title.
+
+          Now the row holds only what belongs to the SESSION AS A WHOLE:
+          minimise on the left, the name, then the two session-level controls —
+          overflow (which is where discard and delete went) and Finish, which is
+          the only primary on the screen and therefore the only filled control
+          in the row. The tools you reach for between sets — the clock and the
+          muscle figure — moved down to the metadata line, which is where your
+          eye already is when you look up from a set. */}
       <div className="flex items-center gap-2">
-        <BackLink onClick={onBack} label="Back — the draft autosaves" />
+        <BackLink onClick={onBack} label="Minimise — the draft keeps running" />
         <h1
           className="flex-1 min-w-0 font-heading font-bold text-fluid-xl leading-tight truncate tracking-[-0.01em]"
           style={{ color: accent }}
         >
           {title}
         </h1>
-        <RestTimer />
+        <SessionMenu
+          isEdit={!!isEdit}
+          deleting={deleting}
+          onDiscard={onDiscard}
+          onCancelEdit={onCancelEdit}
+          onDelete={onDelete}
+        />
         <FinishButton onClick={onFinish} busy={finishBusy} disabled={sets === 0} isEdit={isEdit} />
       </div>
 
@@ -156,10 +190,17 @@ export function LiveSessionHero({ draft, accent, volumeKg, sets, recordCount, on
             leaving the session. */}
         <span className="flex mt-1"><LeverTag compact /></span>
         </div>
-        {/* Where this session is landing. It sat in the title row and cost the
-            name 44px; here it fills space the date line never used, stays above
-            the fold, and is still one tap. */}
-        <MuscleDistribution draft={draft} accent={accent} size="lg" />
+        {/* ── THE TWO BETWEEN-SETS TOOLS, TOGETHER ──
+            Where this session is landing, and how long you have been standing
+            still. Both sat in the title row at one point and cost the name
+            44px each; here they fill space the date line never used, stay above
+            the fold, and are still one tap. Grouped because they are the same
+            kind of thing — neither changes the session, both answer a question
+            you have while you are resting. */}
+        <div className="flex items-center gap-2 shrink-0">
+          <SessionClock />
+          <MuscleDistribution draft={draft} accent={accent} size="lg" />
+        </div>
       </div>
 
       {/* The live rail. Only what moves while you lift — duration, average HR

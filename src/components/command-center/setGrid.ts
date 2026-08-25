@@ -56,6 +56,28 @@ export function setGridFor(mode: SetGridMode): string {
   return GRID
 }
 
+/**
+ * ── THE VALUE COLUMNS ARE CENTRED, THE REFERENCE IS NOT ─────────────────────
+ *
+ * Every cell used to be left-aligned inside a track sized in `fr`, which means
+ * each value sat hard against the left edge of a box whose width is a fraction
+ * of the screen. So the load and the reps did not line up with their own
+ * headers, and — worse — a two-character rep count and a six-character load put
+ * their ink in visibly different places within columns of different widths. A
+ * table of numbers whose numbers are not on a shared axis is a list.
+ *
+ * Centred, the ink sits on the track's midline whatever its length, so the
+ * header sits over the value it names and the three readings of a row read as
+ * three columns. `PREVIOUS` keeps its left edge: it is a reference the eye
+ * enters the row on, not one of the three values being compared, and anchoring
+ * it to the row's own left edge is what separates it from them.
+ *
+ * Exported so the header and the row cannot drift — the same reason the grid
+ * template itself lives in this file.
+ */
+export const SET_CELL_LEAD = 'text-left'
+export const SET_CELL_VALUE = 'text-center'
+
 /** Width of the leading SET badge, and of the header's "Set" label above it. */
 export const SET_BADGE_W = 'w-7'
 

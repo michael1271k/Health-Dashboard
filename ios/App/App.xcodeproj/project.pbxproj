@@ -13,7 +13,6 @@
 		4C8EA4163014D04D007CEF26 /* HelixSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C8EA4133014D04D007CEF26 /* HelixSnapshot.swift */; };
 		4C8EA41D3014D149007CEF26 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C8EA41C3014D149007CEF26 /* WidgetKit.framework */; };
 		4C8EA41F3014D149007CEF26 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C8EA41E3014D149007CEF26 /* SwiftUI.framework */; };
-		4C8EA42A3014D14A007CEF26 /* HelixWidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 4C8EA41B3014D149007CEF26 /* HelixWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		4C8EA4303014D24C007CEF26 /* HelixSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C8EA4133014D04D007CEF26 /* HelixSnapshot.swift */; };
 		4CA0FA6A3018E01F00141641 /* SecureStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CA0FA693018E01F00141641 /* SecureStore.swift */; };
 		4CB1A0113100000000000001 /* HelixBackgroundRefresh.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CB1A0013100000000000001 /* HelixBackgroundRefresh.swift */; };
@@ -31,13 +30,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		4C8EA4283014D14A007CEF26 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 4C8EA41A3014D149007CEF26;
-			remoteInfo = HelixWidgetsExtension;
-		};
 		4C90F0493013EFF60096E03F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
@@ -48,17 +40,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		4C8EA42F3014D14A007CEF26 /* Embed Foundation Extensions */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 13;
-			files = (
-				4C8EA42A3014D14A007CEF26 /* HelixWidgetsExtension.appex in Embed Foundation Extensions */,
-			);
-			name = "Embed Foundation Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		4C90F04C3013EFF60096E03F /* Embed Watch Content */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -116,10 +97,17 @@
 			);
 			target = 4C90F0403013EFF50096E03F /* HelixWatch Watch App */;
 		};
+		4CCBBDA4303CB12900B18312 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				HelixPalette.swift,
+			);
+			target = 4C90F0403013EFF50096E03F /* HelixWatch Watch App */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		4C8EA4203014D149007CEF26 /* HelixWidgets */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (4C8EA42B3014D14A007CEF26 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = HelixWidgets; sourceTree = "<group>"; };
+		4C8EA4203014D149007CEF26 /* HelixWidgets */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (4CCBBDA4303CB12900B18312 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, 4C8EA42B3014D14A007CEF26 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = HelixWidgets; sourceTree = "<group>"; };
 		4C90F0423013EFF50096E03F /* HelixWatch Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (4C90F0533013EFF60096E03F /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = "HelixWatch Watch App"; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
@@ -282,13 +270,11 @@
 				504EC3021FED79650016851F /* Resources */,
 				4C90F04C3013EFF60096E03F /* Embed Watch Content */,
 				9592DBEFFC6D2A0C8D5DEB22 /* [CP] Embed Pods Frameworks */,
-				4C8EA42F3014D14A007CEF26 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				4C90F04A3013EFF60096E03F /* PBXTargetDependency */,
-				4C8EA4293014D14A007CEF26 /* PBXTargetDependency */,
 			);
 			name = App;
 			productName = App;
@@ -440,11 +426,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		4C8EA4293014D14A007CEF26 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 4C8EA41A3014D149007CEF26 /* HelixWidgetsExtension */;
-			targetProxy = 4C8EA4283014D14A007CEF26 /* PBXContainerItemProxy */;
-		};
 		4C90F04A3013EFF60096E03F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 4C90F0403013EFF50096E03F /* HelixWatch Watch App */;
@@ -504,7 +485,7 @@
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = app.helix.health.michael.HelixWidgets;
+				PRODUCT_BUNDLE_IDENTIFIER = app.helix.health.michael.helixwidgets;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -548,7 +529,7 @@
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MARKETING_VERSION = 1.0;
 				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = app.helix.health.michael.HelixWidgets;
+				PRODUCT_BUNDLE_IDENTIFIER = app.helix.health.michael.helixwidgets;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -603,7 +584,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+				WATCHOS_DEPLOYMENT_TARGET = 10.6;
 			};
 			name = Debug;
 		};
@@ -648,7 +629,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+				WATCHOS_DEPLOYMENT_TARGET = 10.6;
 			};
 			name = Release;
 		};

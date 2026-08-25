@@ -16,7 +16,7 @@ import { repWindowFor, holdTargetFor, ladderVerdict, levelUpCue } from '@/lib/tr
 import { restTargetFor, hasRestOverride, formatRestTarget } from '@/lib/training/restTargets'
 import { useRestTargets } from '@/lib/hooks/useRestTargets'
 import { RestTargetSheet } from './RestTargetSheet'
-import { setGridFor, setValueLabel, SET_BADGE_W, SET_FRAME_GAP, SET_HEADER_TEXT, SET_TAIL_W, type SetGridMode } from './setGrid'
+import { setGridFor, setValueLabel, SET_BADGE_W, SET_CELL_LEAD, SET_CELL_VALUE, SET_FRAME_GAP, SET_HEADER_TEXT, SET_TAIL_W, type SetGridMode } from './setGrid'
 import { workingSets, type ExerciseHistory } from '@/lib/hooks/useExerciseSetHistory'
 import type { PrAxis } from '@/lib/training/prEngine'
 import type { ReportTargets } from '@/lib/reports/fmtV2'
@@ -869,17 +869,17 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
           <div className={`flex items-center ${SET_FRAME_GAP} px-2 pb-1`}>
             <span className={`${SET_BADGE_W} shrink-0 ${SET_HEADER_TEXT}`}>Set</span>
             <span className={`flex-1 ${setGridFor(gridMode)} ${SET_HEADER_TEXT}`}>
-              <span>Previous</span>
+              <span className={SET_CELL_LEAD}>Previous</span>
               {/* The load track is always in the template so every value in the
                   deck shares an edge; on an unloaded movement it carries no
                   label, because there is nothing under it. */}
               {gridMode === 'loaded' ? (
-                <span className="inline-flex items-center gap-1">
+                <span className={`inline-flex items-center justify-center gap-1 ${SET_CELL_VALUE}`}>
                   <Weight className="w-2.5 h-2.5" aria-hidden="true" />kg
                 </span>
               ) : <span aria-hidden="true" />}
-              <span>{setValueLabel(gridMode)}</span>
-              <span className="text-right" title="Effort — the RPE you rated this set">RPE</span>
+              <span className={SET_CELL_VALUE}>{setValueLabel(gridMode)}</span>
+              <span className={SET_CELL_VALUE} title="Effort — the RPE you rated this set">RPE</span>
             </span>
             <span className={`${SET_TAIL_W} shrink-0 flex items-center justify-center ${SET_HEADER_TEXT}`}
               title="Completed — only ticked sets are recorded">
@@ -1011,8 +1011,23 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
           <button
             type="button"
             onClick={() => onAddSet(localId)}
-            className="w-full min-h-[36px] rounded-xl border border-dashed border-white/[0.12] text-muted
-                       hover:text-text hover:border-white/[0.25] text-xs font-medium flex items-center justify-center gap-1 transition-colors"
+            /* ── IT IS A CONTROL, NOT A DROP ZONE ──
+               A dashed hairline around transparency is the web's convention for
+               a placeholder — somewhere to drop a file, a slot with nothing in
+               it yet. This adds a set, which is the second most common thing
+               you do on this screen, and it read as the least tangible element
+               on the card. A solid surface, a real border and a 1px top
+               highlight put it on the same light source as the badge and the
+               tick, so the card's three raised things look raised in the same
+               direction. */
+            className="w-full min-h-[38px] rounded-xl text-muted hover:text-text text-xs font-semibold
+                       flex items-center justify-center gap-1.5 active:scale-[0.99]
+                       transition-[transform,color,background-color] duration-150"
+            style={{
+              background: 'rgba(255,255,255,0.045)',
+              border: '1px solid rgba(255,255,255,0.10)',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.07), 0 1px 2px rgba(0,0,0,0.35)',
+            }}
           >
             <Plus className="w-3.5 h-3.5" aria-hidden="true" /> Add set
           </button>
