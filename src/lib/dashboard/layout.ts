@@ -22,23 +22,44 @@
  * makes a new widget a one-line change with no migration to write.
  */
 
+import type { LucideIcon } from 'lucide-react'
+import {
+  Activity, BarChart3, BatteryMedium, Dumbbell, Flame, Footprints,
+  HeartPulse, Moon, Pill, Scale, Target, Trophy,
+} from 'lucide-react'
+import { MACRO_COLORS } from '@/lib/nutrition/colors'
+import {
+  AMETHYST, EMBER, EMERALD, GOLD, PLATINUM, SAPPHIRE, STEEL,
+} from '@/lib/theme/palette'
+
 export type WidgetSize = 's' | 'm' | 'l'
 
 export type WidgetId =
   | 'sleep' | 'fuel' | 'train' | 'body' | 'steps'
   | 'cardio' | 'stack' | 'vitals' | 'battery'
-  | 'muscle' | 'pr' | 'volume' | 'next'
+  | 'muscle' | 'pr' | 'volume'
 
 /**
  * Every widget the dashboard knows how to render, in first-run order.
  *
  * The order reads as the day does: what you have left (energy), what happened
- * to you (sleep), what you are deciding (fuel, what is next), then the record —
- * body, where the week's work landed, how much of it there has been, and the
- * last thing you beat. Steps, vitals, cardio and the stack are the ledger.
+ * to you (sleep), what you are deciding (fuel), what you are about to do
+ * (train), then the record — body, where the week's work landed, how much of it
+ * there has been, and the last thing you beat. Steps, vitals, cardio and the
+ * stack are the ledger.
+ *
+ * ── `next` IS GONE, FOLDED INTO `train` ──────────────────────────────────────
+ * They were two tiles answering one question at two points in the same day, and
+ * on a phone that is two tiles of which exactly one is ever useful. Worse, they
+ * disagreed: Next said "Legs & Core A" while Train said "NaN kg", because Train
+ * printed a volume for a session that had not happened yet. One tile now, three
+ * states — before (the plan, and what you did last time you ran it), after
+ * (today's real numbers), and rest.
+ *
+ * A stored layout naming `next` simply drops it on read; nothing to migrate.
  */
 export const WIDGET_IDS: readonly WidgetId[] = [
-  'battery', 'sleep', 'fuel', 'next', 'train', 'body', 'muscle',
+  'battery', 'sleep', 'fuel', 'train', 'body', 'muscle',
   'volume', 'pr', 'steps', 'vitals', 'cardio', 'stack',
 ] as const
 
@@ -51,7 +72,7 @@ export const WIDGET_IDS: readonly WidgetId[] = [
  * at medium; the rest start small and can be grown.
  */
 const DEFAULT_SIZE: Record<WidgetId, WidgetSize> = {
-  battery: 'm', sleep: 'm', fuel: 'm', next: 's', train: 's', body: 'm',
+  battery: 'm', sleep: 'm', fuel: 'm', train: 'm', body: 'm',
   muscle: 's', volume: 's', pr: 's', steps: 's', vitals: 'm', cardio: 's', stack: 's',
 }
 
@@ -133,18 +154,101 @@ export function writeLayout(layout: DashboardLayout): void {
  * list here: nine domains of genuinely different density stop pretending to be
  * equal. Large adds history and, where one exists, an action.
  *
- * Medium is `row-span-2`, so on a phone (two columns) it is a square. It was
- * `row-span-1`, which made it a 2:1 letterbox — enough room for a number and a
- * sparkline and not enough for any shape at all, which is exactly why every
- * widget looked like the same widget. The base row stays 104px and the grid
- * simply gets longer; the alternative was making every SMALL widget taller to
- * buy medium its height, which taxes the eleven tiles that did not need it.
+ * ── THE ROW UNIT IS 52px, AND NO SIZE IS ONE ROW ────────────────────────────
+ * The spans used to be 1 / 2 / 3 rows of a 104px unit, which chains the three
+ * sizes together: medium is exactly twice small plus a gap, and there is no way
+ * to shrink medium without shrinking small by the same proportion. Medium came
+ * out at 218px — on a 390pt phone that is a 358×218 tile, TALLER than iOS's own
+ * medium widget, which is a strict 2:1. The extra height was not carrying
+ * anything; it was the dead space, and every body compensated by centring its
+ * content in it, which is what made the grid read as airy rather than dense.
+ *
+ * Halving the unit to 52px and spanning 2 / 3 / 5 breaks the chain:
+ *
+ *   S  2 rows  = 112px   — 175×112, a quarter tile, one number and its bar
+ *   M  3 rows  = 172px   — 358×172, within a hair of iOS's medium proportion
+ *   L  5 rows  = 292px   — 358×292, room for a shape AND its history
+ *
+ * So small got ROOMIER (104 → 112) while medium lost 46px. `auto-rows` keeps
+ * `auto` as the maximum so a row can still grow if a body genuinely needs it,
+ * but every body here is now written to its budget rather than to fill whatever
+ * it was handed.
  */
 export const SIZE_SPAN: Record<WidgetSize, string> = {
-  s: 'col-span-1 row-span-1',
-  m: 'col-span-2 row-span-2',
-  l: 'col-span-2 row-span-3',
+  s: 'col-span-1 row-span-2',
+  m: 'col-span-2 row-span-3',
+  l: 'col-span-2 row-span-5',
+}
+
+/**
+ * The pixel height each size resolves to, for bodies that must size a shape in
+ * absolute terms rather than by percentage.
+ *
+ * The muscle atlas is the reason this exists. Its viewBox is 120×260, so an
+ * `<svg class="w-full h-full">` in a tile with no definite height resolves its
+ * height from its WIDTH — 175px of tile width became a 380px figure, which is
+ * the "renders massively tall" bug. A figure with a fixed aspect ratio needs a
+ * definite height to letterbox inside, and that height is a property of the
+ * tile, so it is stated once here rather than guessed in each body.
+ *
+ * Kept in step with `SIZE_SPAN` by `widget-parts.test.tsx`, which recomputes it
+ * from the spans and the 52px unit.
+ */
+export const ROW_UNIT_PX = 52
+export const GRID_GAP_PX = 8
+
+const SPAN_ROWS: Record<WidgetSize, number> = { s: 2, m: 3, l: 5 }
+
+/** Total tile height in px, gaps included. */
+export function tileHeightPx(size: WidgetSize): number {
+  const rows = SPAN_ROWS[size]
+  return rows * ROW_UNIT_PX + (rows - 1) * GRID_GAP_PX
+}
+
+/**
+ * The height a body actually has to draw in: the tile minus the frame's own
+ * padding (8 top + 10 bottom), its 18px header and the 6px gap under it.
+ */
+export function bodyHeightPx(size: WidgetSize): number {
+  return tileHeightPx(size) - 18 - 18 - 6
 }
 
 /** The next size in the cycle, for a tap on the size control. */
 export const SIZE_CYCLE: Record<WidgetSize, WidgetSize> = { s: 'm', m: 'l', l: 's' }
+
+
+/**
+ * The catalogue, for anything that has to name a widget it is not rendering.
+ *
+ * ── ONE PLACE THE LABEL IS WRITTEN ───────────────────────────────────────────
+ * Edit mode's tray lists the widgets you have hidden, which means it has to
+ * print "Sleep" and a moon for a component that is not on screen. The obvious
+ * shortcut is to retype the strings there; then a rename touches two files and
+ * the tray quietly disagrees with the tile for a release. Each body spreads its
+ * own row of this table into `WidgetFrame`, so the tray and the tile are
+ * literally the same string and the same icon.
+ *
+ * The accent is the domain's own colour and is the one thing a body may
+ * override — Train swaps to amethyst on a rest day, because a rest day is not a
+ * failed training day and should not wear the training hue.
+ */
+export interface WidgetMeta {
+  label: string
+  icon: LucideIcon
+  accent: string
+}
+
+export const WIDGET_META: Record<WidgetId, WidgetMeta> = {
+  battery: { label: 'Energy', icon: BatteryMedium, accent: STEEL },
+  sleep: { label: 'Sleep', icon: Moon, accent: AMETHYST },
+  fuel: { label: 'Fuel', icon: Flame, accent: MACRO_COLORS.calories },
+  train: { label: 'Train', icon: Dumbbell, accent: EMERALD },
+  body: { label: 'Body', icon: Scale, accent: EMBER },
+  muscle: { label: 'Muscle Focus', icon: Target, accent: AMETHYST },
+  volume: { label: 'Weekly Volume', icon: BarChart3, accent: STEEL },
+  pr: { label: 'Latest PR', icon: Trophy, accent: GOLD },
+  steps: { label: 'Steps', icon: Footprints, accent: PLATINUM },
+  vitals: { label: 'Vitals', icon: HeartPulse, accent: SAPPHIRE },
+  cardio: { label: 'Cardio', icon: Activity, accent: EMERALD },
+  stack: { label: 'Stack', icon: Pill, accent: GOLD },
+}

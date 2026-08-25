@@ -9,13 +9,13 @@ import {
 import { SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, arrayMove, useSortable } from '@dnd-kit/sortable'
 import { restrictToParentElement } from '@dnd-kit/modifiers'
 import { CSS } from '@dnd-kit/utilities'
-import { m } from 'framer-motion'
-import { Check, LayoutGrid } from 'lucide-react'
+import { AnimatePresence, m } from 'framer-motion'
+import { Check, Minus, Plus } from 'lucide-react'
 import { STANDARD, SNAPPY } from '@/lib/motion/springs'
 import { useHelixReducedMotion } from '@/lib/motion/useHelixReducedMotion'
 import { tapLight } from '@/lib/native/haptics'
 import {
-  readLayout, writeLayout, defaultLayout, SIZE_SPAN, SIZE_CYCLE,
+  readLayout, writeLayout, defaultLayout, SIZE_SPAN, SIZE_CYCLE, WIDGET_META,
   type DashboardLayout, type WidgetId, type WidgetSize,
 } from '@/lib/dashboard/layout'
 
@@ -28,18 +28,30 @@ import {
  * interaction model and its own animation system. This app already drags things
  * (`ExerciseDeckList`, `WeekScheduler`) with dnd-kit, using a long-press sensor
  * tuned for thumbs, and a second drag vocabulary in one app is how two surfaces
- * come to feel like two apps. The sensor configuration here is deliberately the
- * same one the exercise deck uses.
+ * come to feel like two apps.
  *
  * `rectSortingStrategy`, not `verticalListSortingStrategy`: this is a 2-D grid,
  * and the vertical strategy assumes one column.
  *
- * ── ARRANGE MODE IS ENTERED BY DOING IT ──────────────────────────────────────
- * A long press starts a drag (250ms, 8px tolerance) and a drag turns arrange
- * mode on — the iOS gesture, where you do not first announce that you intend to
- * rearrange. A short tap is under the delay, so it still opens the widget.
- * There is an explicit Arrange button too, because a gesture nobody performs is
- * a feature nobody has.
+ * ── THERE IS NO "ARRANGE" BUTTON ─────────────────────────────────────────────
+ * There was one, in the header, and it was the wrong shape twice over. It was a
+ * permanent control for a thing done roughly twice a year, and it announced a
+ * mode the platform has taught everybody to enter by *doing* it: on iOS you
+ * press and hold the home screen. So the button is gone and the gesture is the
+ * whole entry point — press and hold any tile.
+ *
+ * `delay: 450`, NOT the exercise deck's 250. The deck's tiles have no tap
+ * action worth protecting, so a short delay there costs nothing. Here a tap is
+ * the PRIMARY action — it opens the domain sheet — and a deliberate, unhurried
+ * tap on a phone routinely lasts 250-350ms. At 250 the dashboard would drop
+ * into edit mode while the user was trying to read their sleep. 450 is roughly
+ * what iOS itself waits for, and is comfortably past the slowest ordinary tap.
+ *
+ * dnd-kit's delay constraint activates the drag once the delay elapses even if
+ * the pointer never moved, so the press alone lifts the tile and opens the
+ * mode; `tolerance: 8` means a scroll that starts on a tile aborts it instead.
+ *
+ * Exit is `Done`, or Escape on a keyboard. Both restore taps immediately.
  */
 export function WidgetGrid({ children }: {
   /** Render one widget for an id, given the size it is currently set to. */
@@ -59,14 +71,22 @@ export function WidgetGrid({ children }: {
     writeLayout(next)
   }, [])
 
+  // Escape is the keyboard's Done. Bound only while the mode is open, so the
+  // dashboard does not hold a global listener for a state it is almost never in.
+  useEffect(() => {
+    if (!editing) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setEditing(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [editing])
+
   const sensors = useSensors(
-    // The exact constraint the exercise deck uses: long enough that a scroll
-    // never lifts a widget, short enough that a deliberate press feels answered.
-    useSensor(PointerSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
+    useSensor(PointerSensor, { activationConstraint: { delay: 450, tolerance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
 
   const visible = layout.order.filter((id) => !layout.hidden.includes(id))
+  const hidden = layout.order.filter((id) => layout.hidden.includes(id))
 
   const onDragStart = (e: DragStartEvent) => {
     setDragging(e.active.id as WidgetId)
@@ -89,19 +109,46 @@ export function WidgetGrid({ children }: {
     commit({ ...layout, size: { ...layout.size, [id]: SIZE_CYCLE[layout.size[id]] } })
   }
 
+  const hide = (id: WidgetId) => {
+    void tapLight()
+    commit({ ...layout, hidden: [...layout.hidden, id] })
+  }
+
+  /** Restore a hidden widget. It comes back where it was, not at the end — the
+   *  order array never lost it, only the `hidden` set did. */
+  const show = (id: WidgetId) => {
+    void tapLight()
+    commit({ ...layout, hidden: layout.hidden.filter((h) => h !== id) })
+  }
+
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-end px-1">
-        <button
-          type="button"
-          onClick={() => setEditing((v) => !v)}
-          className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted hover:text-text flex items-center gap-1.5 min-h-[32px] px-1"
-        >
-          {editing
-            ? <><Check className="w-3.5 h-3.5" aria-hidden="true" /> Done</>
-            : <><LayoutGrid className="w-3.5 h-3.5" aria-hidden="true" /> Arrange</>}
-        </button>
-      </div>
+      {/* The mode's only permanent chrome, and it exists only while the mode
+          does. Sticky so Done is reachable without scrolling back up from the
+          bottom of a twelve-tile grid. */}
+      <AnimatePresence initial={false}>
+        {editing && (
+          <m.div
+            initial={reduced ? false : { opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduced ? { opacity: 0 } : { opacity: 0, y: -6 }}
+            transition={reduced ? { duration: 0 } : SNAPPY}
+            className="sticky top-1 z-20 flex items-center gap-2 px-1"
+          >
+            <span className="text-[10px] text-muted leading-tight">
+              Drag to reorder · tap the badge to resize
+            </span>
+            <button
+              type="button"
+              onClick={() => { void tapLight(); setEditing(false) }}
+              className="ml-auto inline-flex items-center gap-1.5 min-h-[32px] px-3 rounded-full
+                         text-[11px] font-bold bg-white/10 border border-white/20 text-text backdrop-blur-md"
+            >
+              <Check className="w-3.5 h-3.5" strokeWidth={3} aria-hidden="true" /> Done
+            </button>
+          </m.div>
+        )}
+      </AnimatePresence>
 
       <DndContext
         sensors={sensors}
@@ -121,14 +168,15 @@ export function WidgetGrid({ children }: {
               which means a widget can appear ABOVE something it was arranged
               below. On a surface whose whole promise is that the tile you reach
               for is where you left it, that is the browser rearranging your
-              dashboard for you. The default sizes pair evenly on two columns so
-              no hole exists to backfill, and if an arrangement makes one, moving
-              a tile is the user's call.
+              dashboard for you. If an arrangement makes a hole, closing it is
+              the user's call.
 
-              `auto-rows-[minmax(104px,auto)]`: 104px is the FLOOR, so a medium
-              tile is two of those plus the gap and can still grow if a body
-              needs the room rather than clipping it. */}
-          <div className="grid grid-cols-2 xl:grid-cols-4 gap-2.5 auto-rows-[minmax(104px,auto)]">
+              `auto-rows-[minmax(52px,auto)]` with 2/3/5-row spans: the unit is
+              half a tile, which is what lets medium be 172px (iOS's own medium
+              proportion at this width) WITHOUT dragging small down with it —
+              see the note on `SIZE_SPAN`. 52px is a floor, not a fixed height,
+              so a row can still grow if a body genuinely needs it. */}
+          <div className="grid grid-cols-2 xl:grid-cols-4 gap-2 auto-rows-[minmax(52px,auto)]">
             {visible.map((id) => (
               <SortableWidget
                 key={id}
@@ -137,6 +185,7 @@ export function WidgetGrid({ children }: {
                 editing={editing}
                 reduced={reduced}
                 onResize={() => resize(id)}
+                onHide={() => hide(id)}
               >
                 {children(id, layout.size[id])}
               </SortableWidget>
@@ -154,18 +203,67 @@ export function WidgetGrid({ children }: {
           ) : null}
         </DragOverlay>
       </DndContext>
+
+      {/* ── THE TRAY ──
+          Hiding a widget has to be reversible somewhere the user can find, and
+          a hidden widget is by definition not on the grid to tap. It renders
+          only in edit mode and only when something is actually hidden, so the
+          dashboard carries no permanent "0 hidden" row. */}
+      <AnimatePresence initial={false}>
+        {editing && hidden.length > 0 && (
+          <m.div
+            initial={reduced ? false : { opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={reduced ? { opacity: 0 } : { opacity: 0, height: 0 }}
+            transition={reduced ? { duration: 0 } : STANDARD}
+            className="overflow-hidden"
+          >
+            <div className="pt-1">
+              <span className="block text-[9px] font-bold uppercase tracking-[0.14em] text-muted px-1 pb-1.5">
+                Hidden · {hidden.length}
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {hidden.map((id) => {
+                  const meta = WIDGET_META[id]
+                  const Icon = meta.icon
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => show(id)}
+                      className="inline-flex items-center gap-1.5 min-h-[34px] pl-2 pr-2.5 rounded-xl
+                                 text-[11px] font-bold border active:scale-95 transition-transform"
+                      style={{
+                        borderColor: `${meta.accent}3d`,
+                        background: `${meta.accent}12`,
+                        color: meta.accent,
+                      }}
+                      aria-label={`Add ${meta.label} back to the dashboard`}
+                    >
+                      <Icon className="w-3.5 h-3.5" aria-hidden="true" />
+                      {meta.label}
+                      <Plus className="w-3 h-3 opacity-70" strokeWidth={3} aria-hidden="true" />
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          </m.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
 
 const SIZE_WORD: Record<WidgetSize, string> = { s: 'S', m: 'M', l: 'L' }
 
-function SortableWidget({ id, size, editing, reduced, onResize, children }: {
+function SortableWidget({ id, size, editing, reduced, onResize, onHide, children }: {
   id: WidgetId
   size: WidgetSize
   editing: boolean
   reduced: boolean
   onResize: () => void
+  onHide: () => void
   children: React.ReactNode
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
@@ -185,23 +283,57 @@ function SortableWidget({ id, size, editing, reduced, onResize, children }: {
     >
       {children}
 
-      {/* Arrange mode's only added control. No jiggle: a 1.02 lift and a
-          brightened edge say "these are movable" without turning the dashboard
-          into a cartoon, and the drag itself is the real affordance. */}
+      {/* ── THE TAP SHIELD ──
+          In edit mode a tap must arrange, never navigate. Without this, tapping
+          a tile to nudge it opens the Sleep sheet over the grid you are editing.
+          It is a transparent sibling rather than `pointer-events-none` on the
+          body, because the body's OWN controls (Cardio's repeat, Train's log
+          link) must be blocked too — and because the drag listeners live on this
+          parent, so swallowing the click here does not cost the gesture. */}
       {editing && (
-        <m.button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); onResize() }}
-          onPointerDown={(e) => e.stopPropagation()}
-          initial={reduced ? false : { opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={reduced ? { duration: 0 } : SNAPPY}
-          className="absolute top-1.5 right-1.5 h-6 min-w-[24px] px-1.5 rounded-lg text-[10px] font-bold
-                     bg-black/60 border border-white/20 text-text backdrop-blur-sm"
-          aria-label={`Resize ${id} widget — currently ${SIZE_WORD[size]}`}
-        >
-          {SIZE_WORD[size]}
-        </m.button>
+        <span
+          className="absolute inset-0 z-[1] rounded-2xl"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Arrange mode's two controls. No jiggle: a 1.02 lift and a brightened
+          edge say "these are movable" without turning the dashboard into a
+          cartoon, and the drag itself is the real affordance.
+
+          `−` and not `×`: this removes the tile from the grid, it does not
+          delete anything, and the tray one scroll below puts it back. */}
+      {editing && (
+        <>
+          <m.button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onHide() }}
+            onPointerDown={(e) => e.stopPropagation()}
+            initial={reduced ? false : { opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={reduced ? { duration: 0 } : SNAPPY}
+            className="absolute top-1.5 left-1.5 z-[2] h-6 w-6 grid place-items-center rounded-full
+                       bg-black/70 border border-white/20 text-text backdrop-blur-sm"
+            aria-label={`Hide the ${WIDGET_META[id].label} widget`}
+          >
+            <Minus className="w-3.5 h-3.5" strokeWidth={3} aria-hidden="true" />
+          </m.button>
+
+          <m.button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onResize() }}
+            onPointerDown={(e) => e.stopPropagation()}
+            initial={reduced ? false : { opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={reduced ? { duration: 0 } : SNAPPY}
+            className="absolute top-1.5 right-1.5 z-[2] h-6 min-w-[24px] px-1.5 rounded-lg text-[10px] font-bold
+                       bg-black/70 border border-white/20 text-text backdrop-blur-sm"
+            aria-label={`Resize ${WIDGET_META[id].label} — currently ${SIZE_WORD[size]}`}
+          >
+            {SIZE_WORD[size]}
+          </m.button>
+        </>
       )}
     </m.div>
   )

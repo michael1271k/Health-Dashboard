@@ -104,9 +104,18 @@ function BodyDelta({ metric, value, previous, unit }: {
  *
  * Exported because the dashboard's Body widget renders the SAME rows in a tile.
  * A second implementation would be a second set of band edges to keep in step
- * with these ones, and the bands are the whole point of the row. `compact`
- * drops the fixed label/value columns — a 2-column tile has no room for a
- * 92px label — and nothing else about the row changes.
+ * with these ones, and the bands are the whole point of the row.
+ *
+ * ── `compact` STACKS, IT DOES NOT SHRINK ─────────────────────────────────────
+ * It used to keep this row's three-column shape and simply narrow the label
+ * column to 58px, which is not wide enough for any of the labels: "Lean Soft
+ * Tissue" rendered as "Lean S…", "Bone Mineral" as "Bone M…". A truncated label
+ * on a body-composition row is worse than no label, because the reader cannot
+ * tell WHICH of the two muscle figures they are looking at — and those two
+ * differ by about 23 kg (see `body-comp-is-three-metrics`).
+ *
+ * So the compact row puts the label and both figures on one line above a
+ * full-width track. Same data, same bands, no column to run out of.
  */
 export function LedgerRow({ label, color, pct, mass, lo, hi, unit, compact }: {
   label: string
@@ -116,37 +125,67 @@ export function LedgerRow({ label, color, pct, mass, lo, hi, unit, compact }: {
   lo: number
   hi: number
   unit: string
-  /** Tile-sized: shorter label column, mass dropped, percentage kept. */
+  /** Tile-sized: label above a full-width track instead of beside it. */
   compact?: boolean
 }) {
   const fill = pct != null ? Math.max(0, Math.min(100, pct)) : 0
   const inBand = pct != null && pct >= lo && pct <= hi
+
+  /* The track. Square ends and a flat fill on graphite — a rounded, glowing bar
+     reads as a gauge with an opinion, and this one is reporting a share, not
+     scoring it. The verdict lives in the band ticks. */
+  const track = (
+    <span className={`relative block min-w-0 rounded-[1px] bg-white/[0.06] ${compact ? 'h-2' : 'h-1.5'}`} aria-hidden="true">
+      <span
+        className="absolute inset-y-0 left-0 rounded-[1px]"
+        style={{
+          width: `${fill}%`,
+          // A hair of shading along the fill, so six flat blocks of colour read
+          // as six materials rather than as six swatches. Same hue throughout.
+          background: compact ? `linear-gradient(90deg, ${color}cc 0%, ${color} 100%)` : color,
+        }}
+      />
+      {/* Where normal starts and ends, as hairlines rather than a green zone:
+          a coloured region behind the bar turns a reference into a grade. */}
+      {[lo, hi].map((t) => (
+        <span key={t} className="absolute inset-y-[-2px] w-px" style={{ left: `${t}%`, background: 'rgba(255,255,255,0.22)' }} />
+      ))}
+    </span>
+  )
+
+  if (compact) {
+    return (
+      <div className="block min-w-0">
+        <div className="flex items-baseline gap-1.5 min-w-0">
+          <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-muted truncate">{label}</span>
+          <span className="helix-num text-[10px] tabular-nums text-muted ml-auto shrink-0">
+            {mass != null ? `${r1(displayWeight(mass) ?? 0)}${unit}` : ''}
+          </span>
+          <span
+            className="helix-num text-[11px] font-bold tabular-nums shrink-0"
+            style={{ color: inBand ? color : 'var(--color-muted)' }}
+            title={`Normal ${lo}–${hi}%`}
+          >
+            {pct != null ? `${r1(pct)}%` : '—'}
+          </span>
+        </div>
+        <div className="mt-0.5">{track}</div>
+      </div>
+    )
+  }
+
   return (
-    <div className={`flex items-center ${compact ? 'gap-1.5' : 'gap-2.5'}`}>
-      <span className={`text-[9px] font-bold uppercase tracking-[0.12em] text-muted shrink-0 truncate ${compact ? 'w-[58px]' : 'w-[92px]'}`}>
+    <div className="flex items-center gap-2.5">
+      <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-muted shrink-0 truncate w-[92px]">
         {label}
       </span>
-
-      {/* The track. Square ends and a flat fill on graphite — a rounded, glowing
-          bar reads as a gauge with an opinion, and this one is reporting a
-          share, not scoring it. The verdict lives in the band ticks. */}
-      <span className="relative flex-1 min-w-0 h-1.5 rounded-[1px] bg-white/[0.06]" aria-hidden="true">
-        <span className="absolute inset-y-0 left-0 rounded-[1px]" style={{ width: `${fill}%`, background: color }} />
-        {/* Where normal starts and ends, as hairlines rather than a green zone:
-            a coloured region behind the bar turns a reference into a grade. */}
-        {[lo, hi].map((t) => (
-          <span key={t} className="absolute inset-y-[-2px] w-px" style={{ left: `${t}%`, background: 'rgba(255,255,255,0.18)' }} />
-        ))}
+      <span className="flex-1 min-w-0">{track}</span>
+      <span className="helix-num text-[11px] tabular-nums text-text w-[62px] shrink-0 text-right">
+        {mass != null ? `${r1(displayWeight(mass) ?? 0)}` : '—'}
+        <span className="text-[9px] text-muted font-normal ml-0.5">{unit}</span>
       </span>
-
-      {!compact && (
-        <span className="helix-num text-[11px] tabular-nums text-text w-[62px] shrink-0 text-right">
-          {mass != null ? `${r1(displayWeight(mass) ?? 0)}` : '—'}
-          <span className="text-[9px] text-muted font-normal ml-0.5">{unit}</span>
-        </span>
-      )}
       <span
-        className={`helix-num text-[11px] font-bold tabular-nums shrink-0 text-right ${compact ? 'w-[38px]' : 'w-[46px]'}`}
+        className="helix-num text-[11px] font-bold tabular-nums shrink-0 text-right w-[46px]"
         style={{ color: inBand ? color : 'var(--color-muted)' }}
         title={`Normal ${lo}–${hi}%`}
       >

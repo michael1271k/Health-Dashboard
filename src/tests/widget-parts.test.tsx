@@ -1,7 +1,10 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { render, cleanup } from '@testing-library/react'
 import { Spark, Bar, Ring, mean, vsBaseline } from '@/components/dashboard/widgets/parts'
-import { SIZE_SPAN, SIZE_CYCLE, WIDGET_IDS } from '@/lib/dashboard/layout'
+import {
+  SIZE_SPAN, SIZE_CYCLE, WIDGET_IDS, WIDGET_META,
+  tileHeightPx, bodyHeightPx, ROW_UNIT_PX, GRID_GAP_PX,
+} from '@/lib/dashboard/layout'
 
 afterEach(cleanup)
 
@@ -135,11 +138,21 @@ describe('vsBaseline — today against the days BEFORE it', () => {
  * widget would silently render at 1×1 whatever size it was set to.
  */
 describe('the size contract', () => {
-  it('medium is a square, not a letterbox', () => {
-    // 2 columns × 2 rows. It was `row-span-1`, which left no room for a shape
-    // and is why every widget looked like every other.
-    expect(SIZE_SPAN.m).toContain('col-span-2')
-    expect(SIZE_SPAN.m).toContain('row-span-2')
+  /**
+   * ── THE THREE SIZES ARE DECOUPLED, AND THAT IS THE POINT ───────────────────
+   * The spans were 1/2/3 rows of a 104px unit, which chains them together:
+   * medium is exactly twice small plus a gap, so shrinking the medium tile —
+   * which was 218px, taller than iOS's own medium widget — was impossible
+   * without shrinking small by the same proportion. Halving the unit to 52px
+   * and spanning 2/3/5 breaks that: medium lost 46px while small GAINED 8.
+   */
+  it('medium lands on iOS medium\'s proportion, and small got no smaller', () => {
+    expect(tileHeightPx('s')).toBe(112)
+    expect(tileHeightPx('m')).toBe(172)
+    expect(tileHeightPx('l')).toBe(292)
+    // The old geometry, for the record: 104 / 218 / 332.
+    expect(tileHeightPx('m')).toBeLessThan(218)
+    expect(tileHeightPx('s')).toBeGreaterThan(104)
   })
 
   it('every size is taller-or-equal as it grows, and none is assembled at runtime', () => {
@@ -149,6 +162,29 @@ describe('the size contract', () => {
     for (const v of Object.values(SIZE_SPAN)) expect(v).not.toContain('${')
   })
 
+  /**
+   * `tileHeightPx` exists so a body with a FIXED ASPECT RATIO can be given a
+   * definite height. The muscle atlas is why: its viewBox is 120×260, and an
+   * `<svg class="w-full h-full">` inside a `min-h-0` flex column has no definite
+   * height to resolve against, so it sized itself from its WIDTH — 175px of tile
+   * became a 380px figure. If these two ever drift apart the atlas silently
+   * overflows again, so the arithmetic is recomputed here from the spans.
+   */
+  it('the pixel heights agree with the spans they are derived from', () => {
+    const rows = (s: string) => Number(s.match(/row-span-(\d)/)![1])
+    for (const size of ['s', 'm', 'l'] as const) {
+      const n = rows(SIZE_SPAN[size])
+      expect(tileHeightPx(size)).toBe(n * ROW_UNIT_PX + (n - 1) * GRID_GAP_PX)
+    }
+  })
+
+  it('the body height is the tile minus the frame\'s own chrome', () => {
+    for (const size of ['s', 'm', 'l'] as const) {
+      expect(bodyHeightPx(size)).toBe(tileHeightPx(size) - 42)
+      expect(bodyHeightPx(size)).toBeGreaterThan(0)
+    }
+  })
+
   it('cycles through every size and returns home', () => {
     expect(SIZE_CYCLE[SIZE_CYCLE[SIZE_CYCLE.s]]).toBe('s')
     expect(new Set(Object.values(SIZE_CYCLE)).size).toBe(3)
@@ -156,6 +192,27 @@ describe('the size contract', () => {
 
   it('names every widget exactly once', () => {
     expect(new Set(WIDGET_IDS).size).toBe(WIDGET_IDS.length)
+  })
+
+  /**
+   * Edit mode's tray prints a label and an icon for a widget that is, by
+   * definition, not on screen to read them off. Retyping those strings there is
+   * how the tray comes to disagree with the tile for a release, so every id has
+   * exactly one row here and each body spreads its own.
+   */
+  it('every widget has catalogue metadata for the hidden tray', () => {
+    for (const id of WIDGET_IDS) {
+      expect(WIDGET_META[id], id).toBeTruthy()
+      expect(WIDGET_META[id].label.length, id).toBeGreaterThan(0)
+      expect(WIDGET_META[id].icon, id).toBeTruthy()
+      expect(WIDGET_META[id].accent, id).toMatch(/^#/)
+    }
+    expect(Object.keys(WIDGET_META)).toHaveLength(WIDGET_IDS.length)
+  })
+
+  /** `next` merged into `train`; a stored layout naming it must simply drop it. */
+  it('no longer knows a widget called `next`', () => {
+    expect((WIDGET_IDS as readonly string[])).not.toContain('next')
   })
 })
 

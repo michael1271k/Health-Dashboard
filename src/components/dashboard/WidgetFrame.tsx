@@ -60,8 +60,8 @@ export const WidgetFrame = memo(function WidgetFrame({
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen() }
       } : undefined}
       aria-label={onOpen ? `Open ${label}` : undefined}
-      className="relative h-full min-w-0 overflow-hidden rounded-2xl border p-3
-                 flex flex-col gap-2 text-left active:opacity-80 transition-opacity"
+      className="relative h-full min-w-0 overflow-hidden rounded-2xl border px-2.5 pt-2 pb-2.5
+                 flex flex-col gap-1.5 text-left active:opacity-80 transition-opacity"
       style={{ borderColor: `${accent}2e`, backgroundColor: 'rgba(255,255,255,0.025)' }}
     >
       <span
@@ -80,14 +80,19 @@ export const WidgetFrame = memo(function WidgetFrame({
         style={{ background: `linear-gradient(90deg, transparent, ${accent}59, transparent)` }}
       />
 
-      <span className="relative flex items-center gap-1.5 min-w-0">
+      {/* ── THE HEADER IS 18px TALL, NOT 24 ──
+          On an 82px tile the header is 30% of the height, and every pixel it
+          takes is a pixel the number cannot have. The icon tile shrinks to the
+          cap-height of the label beside it, which also stops it reading as a
+          button. */}
+      <span className="relative flex items-center gap-1.5 min-w-0 h-[18px]">
         <span
-          className="flex h-6 w-6 items-center justify-center rounded-lg shrink-0"
+          className="flex h-[18px] w-[18px] items-center justify-center rounded-md shrink-0"
           style={{ background: `${accent}1f`, color: accent }}
         >
-          <Icon className="w-3.5 h-3.5" aria-hidden="true" />
+          <Icon className="w-3 h-3" aria-hidden="true" />
         </span>
-        <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted truncate">
+        <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-muted truncate">
           {label}
         </span>
         {size !== 's' && action && <span className="ml-auto shrink-0">{action}</span>}
@@ -115,21 +120,25 @@ export const WidgetFrame = memo(function WidgetFrame({
  * that something is loading when nothing is), and says what it is waiting for
  * in the app's own voice.
  */
-export function WidgetEmpty({ accent, message, hint }: {
+export function WidgetEmpty({ accent, message, hint, size = 'm' }: {
   accent: string
   /** What the tile is waiting for, in one short phrase. */
   message: string
   hint?: string
+  /** The hint is dropped at small — a 1×1 tile has room for one sentence. */
+  size?: WidgetSize
 }) {
   return (
-    <div className="flex-1 min-h-0 flex flex-col items-center justify-center gap-1 text-center px-1">
+    <div className="flex-1 min-h-0 flex flex-col items-center justify-center gap-1 text-center px-1 overflow-hidden">
       <span
-        className="helix-shimmer w-full max-w-[72px] h-1 rounded-full"
+        className="helix-shimmer w-full max-w-[64px] h-1 rounded-full"
         style={{ backgroundColor: `${accent}26` }}
         aria-hidden="true"
       />
-      <span className="text-[11px] leading-tight text-muted mt-1.5">{message}</span>
-      {hint && <span className="text-[9px] leading-tight text-muted/60">{hint}</span>}
+      <span className={`leading-tight text-muted mt-1 ${size === 's' ? 'text-[10px]' : 'text-[11px]'}`}>
+        {message}
+      </span>
+      {hint && size !== 's' && <span className="text-[9px] leading-tight text-muted/60">{hint}</span>}
     </div>
   )
 }

@@ -243,3 +243,250 @@ export function vsBaseline(series: Array<number | null>, today: number | null): 
   if (base == null) return null
   return Math.round((today - base) * 10) / 10
 }
+
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * SHAPES THE TILES SHARE
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * The half-arc, divided into its constituents.
+ *
+ * ── WHY A SEMICIRCLE AND NOT A FULL RING ─────────────────────────────────────
+ * A full ring costs a square, and a square in a 358×172 tile leaves a column
+ * barely wide enough for the legend beside it — which is exactly how the Sleep
+ * tile ended up with a huge dial and four cramped rows. A half-arc carries the
+ * same "fraction of a target" reading in half the vertical space, and the hole
+ * underneath it is the natural place for the number. It is the shape Apple's
+ * own sleep summary uses, for the same reason.
+ *
+ * ── THE SEGMENTS DIVIDE THE FILL, NOT THE ARC ────────────────────────────────
+ * The swept fraction is `total / goal`, so a short night draws a short arc — the
+ * grade is still legible at a glance. The stage segments then divide THAT sweep
+ * in proportion to each stage's share of the night, so a night that is 20 % deep
+ * shows a fifth of whatever arc it earned in the deep hue. Dividing the whole
+ * semicircle instead would draw every night at full length and throw away the
+ * only reading the arc is there to give.
+ *
+ * Drawn as one path per segment with `stroke-dasharray` offsets along a shared
+ * geometry, so the segments cannot drift apart at different radii.
+ */
+export function HalfArc({ pct, segments, track = 'rgba(255,255,255,0.07)', width = 9, children }: {
+  /** 0-100 of the goal. Clamped for drawing; over-target simply fills. */
+  pct: number | null
+  /** Ordered constituents. `value` is a share, in any unit — they are normalised. */
+  segments: Array<{ key: string; value: number; color: string }>
+  track?: string
+  width?: number
+  /** Rendered in the bowl under the arc. */
+  children?: React.ReactNode
+}) {
+  const R = 42
+  const CX = 50
+  const CY = 50
+  const LEN = Math.PI * R
+  const d = `M ${CX - R} ${CY} A ${R} ${R} 0 0 1 ${CX + R} ${CY}`
+  const filled = Math.max(0, Math.min(1, (pct ?? 0) / 100))
+  const total = segments.reduce((n, s) => n + Math.max(0, s.value), 0)
+
+  let run = 0
+  const drawn = total > 0
+    ? segments
+      .filter((s) => s.value > 0)
+      .map((s) => {
+        const len = (s.value / total) * filled * LEN
+        const at = run
+        run += len
+        return { ...s, len, at }
+      })
+    : []
+
+  return (
+    <span className="relative block w-full">
+      <svg viewBox="0 0 100 56" className="w-full block" aria-hidden="true">
+        <path d={d} fill="none" stroke={track} strokeWidth={width} strokeLinecap="round" />
+        {drawn.map((s) => (
+          <path
+            key={s.key}
+            d={d}
+            fill="none"
+            stroke={s.color}
+            strokeWidth={width}
+            // Butt ends between segments — a rounded cap on an interior segment
+            // would overlap its neighbour and read as a gap.
+            strokeLinecap="butt"
+            strokeDasharray={`${s.len} ${LEN}`}
+            strokeDashoffset={-s.at}
+            style={{ transition: 'stroke-dasharray 600ms cubic-bezier(0.2,0,0,1)' }}
+          />
+        ))}
+        {/* A single continuous arc when there is nothing to divide — a total
+            with no stage breakdown is still a total. */}
+        {!drawn.length && filled > 0 && (
+          <path
+            d={d} fill="none" stroke={segments[0]?.color ?? '#fff'} strokeWidth={width} strokeLinecap="round"
+            strokeDasharray={`${filled * LEN} ${LEN}`}
+          />
+        )}
+      </svg>
+      {children && (
+        <span className="absolute inset-x-0 bottom-0 grid place-items-center pointer-events-none pb-0.5">
+          {children}
+        </span>
+      )}
+    </span>
+  )
+}
+
+/**
+ * One Apple-Health-style reading box.
+ *
+ * ── WHY A BOX AND NOT A ROW ──────────────────────────────────────────────────
+ * Vitals' four readings were four label/number pairs on a bare tile, which made
+ * them read as one list of four lines rather than as four independent
+ * measurements. Health draws each metric on its own card because each one comes
+ * from a different sensor, has a different unit and a different normal range,
+ * and the container is what says so before a single digit is read.
+ *
+ * The tint is the metric's own hue at 8 % over the tile's gradient, so the four
+ * boxes are distinguishable from each other and from the tile without any of
+ * them shouting.
+ */
+export function StatTile({ label, value, unit, color, delta, higherIsBetter, series, decimals = 0 }: {
+  label: string
+  value: number | string | null
+  unit?: string
+  color: string
+  delta?: number | null
+  higherIsBetter?: boolean
+  series?: Array<number | null>
+  decimals?: number
+}) {
+  return (
+    <span
+      className="min-w-0 flex flex-col justify-between rounded-lg px-1.5 py-1 overflow-hidden"
+      style={{ background: `${color}12`, border: `1px solid ${color}24` }}
+    >
+      <span className="flex items-baseline gap-1 min-w-0">
+        <span className="text-[8px] font-bold uppercase tracking-[0.08em] text-muted truncate">{label}</span>
+        {delta !== undefined && (
+          <span className="ml-auto shrink-0">
+            <Trend delta={delta ?? null} higherIsBetter={higherIsBetter} decimals={decimals} />
+          </span>
+        )}
+      </span>
+      <span className="flex items-baseline gap-0.5 min-w-0">
+        <span className="helix-num font-bold text-[15px] leading-none tabular-nums truncate"
+          style={{ color: value == null ? MUTED : color }}>
+          {value == null ? '—' : value}
+        </span>
+        {unit && value != null && <span className="text-[8px] text-muted shrink-0">{unit}</span>}
+      </span>
+      {series && series.filter((v) => v != null).length > 1 && (
+        <Spark series={series} color={color} height={11} />
+      )}
+    </span>
+  )
+}
+
+/**
+ * A month of daily bars.
+ *
+ * ── A BAR CHART, NOT A SPARKLINE, AND THE DIFFERENCE MATTERS ─────────────────
+ * A line implies the quantity between two readings is meaningful — that you
+ * were somewhere between 6,000 and 9,000 steps at four in the morning. Steps
+ * are a daily COUNT: thirty separate answers, each of which either cleared the
+ * goal or did not. Bars say that; a line says the wrong thing about the same
+ * numbers.
+ *
+ * Which is also why the goal is drawn as a hairline across the chart rather than
+ * as a colour: the reading the user wants is "how many bars cross the line", and
+ * a line is the only mark that lets them count it without a legend.
+ */
+export function MiniBars({ series, color, goal, height = 30, dim = 'rgba(255,255,255,0.14)' }: {
+  series: Array<number | null>
+  color: string
+  /** Draws the target hairline and decides which bars are lit. Absent = all lit. */
+  goal?: number | null
+  height?: number
+  dim?: string
+}) {
+  const vals = series.filter((v): v is number => v != null && Number.isFinite(v))
+  if (!vals.length) return <div style={{ height }} aria-hidden="true" />
+  const max = Math.max(...vals, goal ?? 0) || 1
+  const goalPct = goal ? Math.min(100, (goal / max) * 100) : null
+
+  return (
+    <span className="relative flex items-end gap-[1.5px] w-full" style={{ height }} aria-hidden="true">
+      {series.map((v, i) => (
+        <span
+          key={i}
+          className="flex-1 min-w-0 rounded-[1px]"
+          style={{
+            // A missing day is a 1px stub, not a zero-height gap: a gap in a bar
+            // chart reads as a day of no steps, which is a different claim.
+            height: v == null ? '1px' : `${Math.max(2, (v / max) * 100)}%`,
+            background: v == null ? 'rgba(255,255,255,0.08)' : goal != null && v >= goal ? color : dim,
+          }}
+        />
+      ))}
+      {goalPct != null && (
+        <span
+          className="absolute inset-x-0 h-px pointer-events-none"
+          style={{ bottom: `${goalPct}%`, background: `${color}66` }}
+        />
+      )}
+    </span>
+  )
+}
+
+/**
+ * A progress track with named waypoints along it.
+ *
+ * A bar says how far through you are; it does not say what "through" is worth.
+ * On steps the intermediate figures are the ones a person actually reasons in —
+ * "I'm past six" — so the marks are labelled and the ones you have passed are
+ * lit. It is the same information the bar already carried, made countable.
+ */
+export function Milestones({ value, marks, color, unit = 'k' }: {
+  value: number | null
+  /** Ascending. The last is the goal and defines the full width of the track. */
+  marks: number[]
+  color: string
+  unit?: string
+}) {
+  const goal = marks[marks.length - 1] ?? 0
+  const v = value ?? 0
+  const pct = goal > 0 ? Math.max(0, Math.min(100, (v / goal) * 100)) : 0
+
+  return (
+    <span className="block w-full">
+      <span className="relative block h-1.5 rounded-full overflow-hidden bg-white/[0.07]" aria-hidden="true">
+        <span
+          className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-700"
+          style={{ width: `${pct}%`, background: color }}
+        />
+      </span>
+      <span className="relative flex mt-1">
+        {marks.map((mk) => {
+          const passed = v >= mk
+          return (
+            <span key={mk} className="flex-1 min-w-0 flex flex-col items-end gap-0.5">
+              <span
+                className="w-px h-1 -mt-[7px]"
+                style={{ background: passed ? color : 'rgba(255,255,255,0.18)' }}
+                aria-hidden="true"
+              />
+              <span
+                className="helix-num text-[8px] tabular-nums leading-none"
+                style={{ color: passed ? color : 'var(--color-muted)' }}
+              >
+                {mk >= 1000 ? `${Math.round(mk / 1000)}${unit}` : mk}
+              </span>
+            </span>
+          )
+        })}
+      </span>
+    </span>
+  )
+}

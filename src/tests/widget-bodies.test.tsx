@@ -2,10 +2,15 @@ import { describe, it, expect, afterEach, vi } from 'vitest'
 import { render, cleanup, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { SleepWidget, StepsWidget, StackWidget, BatteryWidget } from '@/components/dashboard/widgets/DailyWidgets'
-import { NextSessionWidget } from '@/components/dashboard/widgets/TrainingWidgets'
+import { TrainWidget, tonnage } from '@/components/dashboard/widgets/TrainingWidgets'
 import type { Tables } from '@/lib/supabase/types'
 
 vi.mock('@/lib/native/haptics', () => ({ tapLight: () => Promise.resolve(), tapSuccess: () => Promise.resolve() }))
+
+/** The Train tile asks for the last run of this `day_key`; the state under test
+ *  is which of its three faces renders, not the query. */
+const lastOfDay = vi.hoisted(() => ({ data: null as unknown }))
+vi.mock('@/lib/hooks/useLastSessionOfDay', () => ({ useLastSessionOfDay: () => lastOfDay }))
 
 afterEach(cleanup)
 
@@ -94,33 +99,77 @@ describe('a widget with nothing to show still holds its place', () => {
  * Safari resolves by dropping the inner one, which would silently turn the
  * primary action into a no-op.
  */
-describe('NextSessionWidget', () => {
+/**
+ * ── TRAIN IS THREE STATES, AND NEVER `NaN` ───────────────────────────────────
+ * `Train` and `Next Session` were two tiles answering one question at two
+ * points in the same day. Train printed a volume for a session that had not
+ * happened yet, and `Number(fmtVolume(displayWeight(undefined)))` is `NaN` — a
+ * number computed from nothing and rendered anyway. The merged tile has no
+ * "today" figure to invent before a session exists; it shows the LAST run of the
+ * same workout instead, which is both honest and the thing to beat.
+ *
+ * The frame is a `role="button"` div rather than a `<button>` precisely so the
+ * body can hold the Log link: a button inside a button is invalid HTML that
+ * Safari resolves by dropping the inner one, silently turning the primary
+ * action into a no-op.
+ */
+describe('TrainWidget — one tile, three states', () => {
   const DAY = { key: 'legs_a', label: 'Legs & Core A', dayKey: 'legs_a', sub: 'quads + core', color: '#fff' }
 
-  it('offers the log link at medium, pointing at today', () => {
-    render(<NextSessionWidget size="m" day={DAY as never} logged={false} />)
+  afterEach(() => { lastOfDay.data = null })
+
+  it('before the session: names the plan and offers the log link', () => {
+    render(<TrainWidget size="m" day={DAY as never} logged={false} today={null} />)
     const link = screen.getByRole('link', { name: /Log Legs & Core A/i })
     expect(link.getAttribute('href')).toContain('template=legs_a')
   })
 
-  it('does not offer it once the session exists', () => {
-    render(<NextSessionWidget size="m" day={DAY as never} logged />)
-    expect(screen.queryByRole('link')).toBeNull()
-    expect(screen.getByText(/logged today/i)).toBeTruthy()
+  it('before the session: quotes the LAST run of this same workout as the bar', () => {
+    lastOfDay.data = { id: 'x', date: '2026-08-18', volumeKg: 12_480, setCount: 22, prCount: 1, durationMin: 58 }
+    render(<TrainWidget size="m" day={DAY as never} logged={false} today={null} />)
+    expect(screen.getByText(/Last time/i)).toBeTruthy()
+    expect(screen.getByText('12.5k')).toBeTruthy()
+    expect(screen.getByText('22')).toBeTruthy()
   })
 
-  it('never offers it on a rest day', () => {
-    render(<NextSessionWidget size="m" day="rest" logged={false} />)
+  it('never prints NaN for a session that has not happened', () => {
+    render(<TrainWidget size="m" day={DAY as never} logged={false} today={null} />)
+    expect(document.body.textContent).not.toMatch(/NaN/)
+  })
+
+  it('after the session: today\'s own numbers, and no link', () => {
+    render(
+      <TrainWidget
+        size="m" day={DAY as never} logged
+        today={{ volumeKg: 9800, setCount: 19, prCount: 2, durationMin: 51 }}
+      />,
+    )
     expect(screen.queryByRole('link')).toBeNull()
-    expect(screen.getByText(/Rest · Zone-2/)).toBeTruthy()
+    expect(screen.getByText(/logged today/i)).toBeTruthy()
+    expect(screen.getByText('9.8k')).toBeTruthy()
+    expect(screen.getByText('19')).toBeTruthy()
+  })
+
+  it('a rest day is a rest day, not a failed training day', () => {
+    render(<TrainWidget size="m" day="rest" logged={false} today={null} />)
+    expect(screen.queryByRole('link')).toBeNull()
+    expect(screen.getByText('Rest Day')).toBeTruthy()
   })
 
   /** Tapping the link must not ALSO fire the tile's own open handler. */
   it('the link does not bubble into the frame\'s open', async () => {
     const onOpen = vi.fn()
-    render(<NextSessionWidget size="m" day={DAY as never} logged={false} onOpen={onOpen} />)
+    render(<TrainWidget size="m" day={DAY as never} logged={false} today={null} onOpen={onOpen} />)
     await userEvent.click(screen.getByRole('link'))
     expect(onOpen).not.toHaveBeenCalled()
+  })
+
+  it('tonnage shortens a week of work to something that fits a tile', () => {
+    expect(tonnage(12_480)).toBe('12.5k')
+    expect(tonnage(980)).toBe('980')
+    expect(tonnage(null)).toBeNull()
+    // The old path produced this from `displayWeight(undefined)`.
+    expect(tonnage(Number.NaN)).toBeNull()
   })
 })
 

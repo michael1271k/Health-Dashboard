@@ -10,10 +10,10 @@ import { VitalsWidget } from '@/components/dashboard/widgets/VitalsWidget'
 import { FuelWidget } from '@/components/dashboard/widgets/FuelWidget'
 import { BodyWidget } from '@/components/dashboard/widgets/BodyWidget'
 import {
-  SleepWidget, StepsWidget, BatteryWidget, CardioWidget, StackWidget, TrainWidget,
+  SleepWidget, StepsWidget, BatteryWidget, CardioWidget, StackWidget,
 } from '@/components/dashboard/widgets/DailyWidgets'
 import {
-  MuscleWidget, VolumeWidget, PrWidget, NextSessionWidget,
+  MuscleWidget, VolumeWidget, PrWidget, TrainWidget,
 } from '@/components/dashboard/widgets/TrainingWidgets'
 import type { WidgetId, WidgetSize } from '@/lib/dashboard/layout'
 import { MacroCards } from '@/components/nutrition/MacroCards'
@@ -26,7 +26,7 @@ import { WidgetBoundary } from '@/components/fx/WidgetBoundary'
 import { BrandHeader } from '@/components/dashboard/BrandHeader'
 import { DeferredMount } from '@/components/fx/DeferredMount'
 import { formatSleep } from '@/lib/utils/format'
-import { displayWeight, weightUnit, fmtVolume } from '@/lib/utils/units'
+import { displayWeight, weightUnit } from '@/lib/utils/units'
 import { phaseDisplay } from '@/lib/nutrition/phase'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { tdeeKcal } from '@/lib/nutrition/energy'
@@ -94,8 +94,6 @@ import {
   useRecentSessions,
 } from '@/lib/hooks/useDashboard'
 import { useIsDesktop } from '@/lib/hooks/useBreakpoint'
-import { PPL_SPLITS } from '@/lib/types/workout'
-import type { SplitDay } from '@/lib/types/workout'
 
 // The Vitals sheet body — 56 days of readings and a chart per row. It has no
 // business in the dashboard's first-load bundle: nothing renders it until a
@@ -232,7 +230,6 @@ export default function DashboardPage() {
   // The Train card's "last session" is the most recent PAST one (what to beat);
   // once today is logged the card shows today's completed hero instead.
   const lastSession = eraSessions?.find((s) => s.started_at.slice(0, 10) !== logicalTodayISO()) ?? null
-  const lastSplit = lastSession ? PPL_SPLITS[lastSession.split_day as SplitDay] : null
   const steps = metrics?.steps ?? log?.steps ?? null
   const calToday = nutrition?.calories != null ? Math.round(nutrition.calories) : null
   const calGoal = goals?.calorie_goal ?? null
@@ -372,23 +369,18 @@ export default function DashboardPage() {
           phaseLabel={phase ? phaseDisplay(phase, logicalTodayISO()).label : null}
           phaseColor={phase ? phaseDisplay(phase, logicalTodayISO()).color : null} />
 
-      case 'next':
-        return <NextSessionWidget size={size} day={todayDay} logged={loggedToday} onOpen={onOpen('train')} />
-
+      // `next` and `train` were two tiles for one question — see the note on
+      // `WIDGET_IDS`. Today's totals are passed raw in kg; the tile converts and
+      // shortens them, and fetches the LAST run of this same `day_key` itself.
       case 'train':
         return <TrainWidget size={size} onOpen={onOpen('train')}
-          title={todayDay === 'rest' ? 'Zone-2 / Rest' : todayDay.label}
-          status={loggedToday && todaySession?.total_volume_kg != null
-            ? 'done ✓'
-            : todayDay !== 'rest' && todayDay.sub
-              ? todayDay.sub
-              : lastSession?.total_volume_kg != null
-                ? `last: ${lastSplit?.label ?? ''}`
-                : todayEra === 'axis' ? 'no HELIX sessions yet' : 'no sessions yet'}
-          volumeKg={(loggedToday ? todaySession?.total_volume_kg : lastSession?.total_volume_kg) != null
-            ? Number(fmtVolume(displayWeight((loggedToday ? todaySession : lastSession)!.total_volume_kg as number)))
-            : null}
-          unit={unit} done={loggedToday} />
+          day={todayDay} logged={loggedToday}
+          today={loggedToday && todaySession ? {
+            volumeKg: todaySession.total_volume_kg,
+            setCount: todaySession.set_count,
+            prCount: todaySession.pr_count,
+            durationMin: todaySession.duration_min,
+          } : null} />
 
       case 'body':
         return <BodyWidget size={size} onOpen={onBodyTap}
@@ -421,8 +413,8 @@ export default function DashboardPage() {
     }
   }, [
     score, drivers, sleep, log, goals, bioSeries, calToday, calGoal, nutrition,
-    kcalSeries, phase, todayDay, loggedToday, todaySession, lastSession, lastSplit,
-    todayEra, unit, steps, tdeeToday, stackItems, taken, nowMinutes,
+    kcalSeries, phase, todayDay, loggedToday, todaySession,
+    steps, tdeeToday, stackItems, taken, nowMinutes,
     onOpen, onBodyTap, goToday,
   ])
 

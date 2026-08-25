@@ -3,14 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AlertTriangle, FlaskConical, Pill } from 'lucide-react'
-import { useTodayNutrition } from '@/lib/hooks/useDashboard'
-import { useSupplements } from '@/lib/hooks/useSupplements'
-import { stackForDate } from '@/lib/supplements'
-import { useCustomSupplements, customSlotsForDate, microPayloads } from '@/lib/hooks/useCustomSupplements'
-import { isTrainingDay } from '@/lib/programs'
-import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
-import { logicalTodayISO } from '@/lib/utils/day'
-import { supplementMicros, mergeMicros } from '@/lib/nutrition/supplementMicros'
+import { useTodayMicros, useStackMicros } from '@/lib/hooks/useTodayMicros'
 import { MICRO_TARGETS, MICRO_GROUPS } from '@/lib/nutrition/microTargets'
 import { EMERALD, OXIDE, STEEL, DIM } from '@/lib/theme/palette'
 import { BackLink } from '@/components/nav/NavChevron'
@@ -27,39 +20,15 @@ import { BackLink } from '@/components/nav/NavChevron'
  */
 export default function MicrosPage() {
   const router = useRouter()
-  const { data: nutrition } = useTodayNutrition()
-  const { data: taken } = useSupplements()
-  const { data: customs } = useCustomSupplements()
-  const date = logicalTodayISO()
+  // Food plus whatever the stack has already delivered — see `useTodayMicros`.
+  // It was a memo right here, and it is a hook now because the dashboard's Fuel
+  // tile prints three of these figures: two independent derivations of "how
+  // much sodium today" is exactly how one screen comes to disagree with another.
+  const intake = useTodayMicros()
 
-  // Every supplement ticked off contributes its label dose to today's micros,
-  // exactly like a logged food. The Stack tile used to count adherence and
-  // nothing else, so 470 mg of vitamin C and 5 000 IU of D3 taken every single
-  // morning never reached the targets they exist to hit.
-  // A Train↔Rest swap changes which stack is in force, and so which doses count.
-  const scheduleVersion = useScheduleVersion()
-  const fromStack = useMemo(() => {
-    void scheduleVersion   // isTrainingDay reads the store; this is the read
-    const training = isTrainingDay(date)
-    const weekday = new Date(`${date}T12:00:00`).getDay()
-    // The DOSES and the PAYLOADS both come from the user's own rows, so an edit
-    // in the app moves the micro totals with everything else. Falls back to the
-    // seed protocol when the table is empty.
-    const slots = stackForDate(customSlotsForDate(customs ?? [], weekday, training), training, weekday)
-    const doses = new Map(slots.flatMap((s) => s.items.map((i) => [i.key, i.dose] as const)))
-    return supplementMicros(taken ?? [], doses, microPayloads(customs ?? []))
-  }, [taken, date, scheduleVersion, customs])
-
-  // Fiber + protein have dedicated columns; the rest of the dietary micros ride
-  // in the nutrition `micros` jsonb bundle (populated by the HealthKit sync).
-  const intake = useMemo(() => {
-    const microsBundle = (nutrition as { micros?: Record<string, number> | null } | null)?.micros ?? {}
-    return mergeMicros({
-      fiber: (nutrition as { fiber_g?: number | null } | null)?.fiber_g,
-      protein: nutrition?.protein_g,
-      ...microsBundle,
-    }, fromStack)
-  }, [nutrition, fromStack])
+  // The stack's own contribution, shown separately per row — "you hit 470/90 mg
+  // of vitamin C" means something different when a tablet supplied all of it.
+  const fromStack = useStackMicros()
 
   const [why, setWhy] = useState<string | null>(null)
 

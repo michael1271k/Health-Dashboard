@@ -13,11 +13,18 @@ export interface BioDay {
 }
 
 /**
- * Last 21 logical days of daily_logs (ascending) — powers the strip sparklines.
+ * Last 30 logical days of daily_logs (ascending) — powers the strip sparklines
+ * and the dashboard's history charts.
  *
- * 21 days, not 7: the Body strip carries the last weigh-in forward, and a 7-day
- * window silently dropped an older reading off the end, which made the recency
- * label snap to a more recent row than the real weigh-in.
+ * Not 7: the Body strip carries the last weigh-in forward, and a 7-day window
+ * silently dropped an older reading off the end, which made the recency label
+ * snap to a more recent row than the real weigh-in.
+ *
+ * 30 rather than the 21 it was: the Steps widget draws a month of daily bars,
+ * and a month drawn from three weeks is a month with a week missing. Nine extra
+ * rows of four columns on a query the dashboard already makes — the window is
+ * cheap, and it is one window for every consumer rather than a second query
+ * with a second cache entry sitting next to this one.
  */
 export function useBioSeries() {
   return useQuery({
@@ -27,7 +34,7 @@ export function useBioSeries() {
       const { data, error } = await supabase
         .from('daily_logs')
         .select('date, sleep_minutes, steps, weight_kg')
-        .gte('date', logicalDaysAgoISO(21))
+        .gte('date', logicalDaysAgoISO(30))
         .order('date', { ascending: true })
       if (error) throw error
       return ((data ?? []) as Array<{ date: string; sleep_minutes: number | null; steps: number | null; weight_kg: number | null }>)
