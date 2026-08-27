@@ -394,16 +394,22 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
   /**
    * The PREVIOUS column: what these exact sets looked like last time.
    *
-   * Global, not routine-scoped — "last time I pressed" is a fact about the
-   * movement, and scoping it to this program day empties the column on every
-   * exercise that appears in two splits, which is most of them.
+   * ROUTINE-SCOPED, and it did not used to be. The argument for going global
+   * was that "last time I pressed" is a fact about the movement rather than
+   * about the program day — which is true, and is not the question this column
+   * asks. It sits beside set 3 of THIS session, so what it has to answer is
+   * "what was set 3 last time I did this session"; a routine that runs the same
+   * movement for two sets instead of three has no set 3 to offer, and the
+   * column silently showed the wrong session's numbers for the sets it could
+   * fill and nothing at all for the ones it could not. See the note on
+   * `useGlobalSetHistory` for the 2026-08-27 case.
    *
    * `date` is passed as an EXCLUSIVE bound. Without it the hook answers with the
    * most recent session full stop, so opening a July workout would compare each
    * set against August: a report grading itself against its own future.
    */
   const names = useMemo(() => exercises.map((e) => e.name), [exercises])
-  const { data: globalHistory } = useGlobalSetHistory(names, eraForDate(date), date)
+  const { data: globalHistory } = useGlobalSetHistory(names, eraForDate(date), dayKey ?? undefined, date)
   const [active, setActive] = useState<{ id: string; name: string } | null>(null)
   /**
    * Which medal was tapped. Also the gate on the record query — nothing is

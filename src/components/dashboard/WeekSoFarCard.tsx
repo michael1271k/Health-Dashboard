@@ -2,21 +2,15 @@
 
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
-import { ChevronRight, Quote } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { Surface } from '@/components/ui/Zone'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { weekStartOf } from '@/lib/utils/week'
 import { programWeekNumber } from '@/lib/reports/weekNumber'
-import { firstDirective } from '@/lib/reports/directive'
-import { useReports } from '@/lib/hooks/useReports'
-import { useReportTargets } from '@/lib/hooks/useReportTargets'
-import { useWeekActuals } from '@/lib/hooks/useWeekActuals'
-import { targetRows, type WeekActuals } from '@/lib/reports/targetVerdict'
-import { TargetsVsActual } from '@/components/dashboard/TargetsVsActual'
 import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { clientScheduleContext, sessionTargetIn } from '@/lib/programs'
-import { EMBER, EMERALD, OXIDE, MUTED, GOLD } from '@/lib/theme/palette'
+import { EMBER, EMERALD, OXIDE, MUTED } from '@/lib/theme/palette'
 import { formatSleep } from '@/lib/utils/format'
 
 /**
@@ -181,18 +175,9 @@ export function WeekSoFarCard() {
   const thisWeek = weekStartOf(today, 0)
   const lastWeek = isoMinus(thisWeek, 7)
   const { data, isLoading } = useWeekSoFar(thisWeek, lastWeek, today)
-  const { data: reports } = useReports()
-
-  const { targets, weekStart: reportWeek } = useReportTargets()
-  const { data: actuals } = useWeekActuals(thisWeek, today)
-
   const target = sessionTargetIn(clientScheduleContext())
   const done = data?.cur.sessions ?? 0
   const change = data ? biggestChange(data.cur, data.prev) : null
-  // The newest report is the one that describes THIS week's instructions —
-  // it was written about last week and prescribes the next one.
-  const directive = firstDirective(reports?.[0]?.content_md)
-  const rows = targetRows(targets, actuals ?? EMPTY_ACTUALS, today)
 
   if (isLoading) {
     return <Surface variant="band" measure="grid" pad="snug"><div className="h-16 rounded-xl bg-white/[0.04] animate-pulse" aria-hidden="true" /></Surface>
@@ -234,26 +219,32 @@ export function WeekSoFarCard() {
           )}
         </p>
 
-        {/* RETRIEVED from your last pasted report — never generated.
-            The comparison table wins when the report prescribed numbers; the
-            single directive line remains for reports that only wrote prose, so
-            a text-only week is not silently dropped. */}
-        {rows.length > 0 ? (
-          <TargetsVsActual rows={rows} weekStart={reportWeek} />
-        ) : directive ? (
-          <p className="flex items-start gap-1.5 text-[11px] leading-snug rounded-lg px-2 py-1.5"
-            style={{ background: `${GOLD}0f`, border: `1px solid ${GOLD}2e` }}>
-            <Quote className="w-3 h-3 mt-0.5 shrink-0" style={{ color: GOLD }} aria-hidden="true" />
-            <span className="text-text/90 min-w-0">{directive}</span>
-          </p>
-        ) : null}
+        {/* ── THE PASTED-REPORT NOTE IS GONE ──
+            Two renderers stood here: a target-vs-actual table and, when that
+            found nothing, the report's first directive sentence as a quote.
+            Both took markdown written OUTSIDE the app, by hand, in a format
+            that changes without a release, and put whatever the parser made of
+            it on the dashboard as fact — which is what produced the
+            "fueled upper 3.6 t 2 pr" row.
+
+            That failure is not a parser bug to tighten. `fmtV2` is deliberately
+            tolerant (see `fmt-v2-reader`) because the format is not ours to
+            pin down, and a tolerant parser pointed at free prose will always
+            find something eventually. The mechanism is what was wrong: nothing
+            checked that a matched line MEANT anything, and there was no state
+            in which a bad match could be corrected — you cannot edit a note
+            that was derived, only re-paste the report.
+
+            Everything real that it carried has a first-class home already: the
+            week's numbers are the card above, per-exercise prescriptions still
+            reach the deck through `useReportTargets`, and the report itself is
+            two taps away under Reports. */}
       </div>
     </Surface>
   )
 }
 
 /** No readings yet is not a week of zeros — every field stays null. */
-const EMPTY_ACTUALS: WeekActuals = { waterL: null, steps: null, kcal: null, proteinG: null }
 
 const isoMinus = (iso: string, n: number): string => {
   const d = new Date(`${iso}T12:00:00Z`)

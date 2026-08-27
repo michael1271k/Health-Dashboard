@@ -1,3 +1,10 @@
+// ActivityKit is iPhone-only: there is no Live Activity on watchOS, and no
+// `ActivityConfiguration` in the watch SDK. The extension this file belongs to
+// is an iOS extension, so the guard is never false in a working configuration —
+// it is here so that a stray target membership (or a `--deep` sign that drags
+// the bundle into a watchOS build) fails to *include* this file rather than
+// failing to compile it.
+#if os(iOS)
 import ActivityKit
 import SwiftUI
 import WidgetKit
@@ -23,8 +30,9 @@ import WidgetKit
 //
 // TARGET MEMBERSHIP: nothing to do. `HelixWidgets/` is a
 // `PBXFileSystemSynchronizedRootGroup`, so this file is in the extension by
-// virtue of being in the folder. `Shared/HelixLiveActivity.swift` is the file
-// that needs the manual step, and it needs it in BOTH targets.
+// virtue of being in the folder. `Shared/HelixLiveActivity.swift` needed the
+// manual step and now has it: it is a member of BOTH `App` and
+// `HelixWidgetsExtension` (and of neither watch target).
 
 @available(iOS 16.1, *)
 struct HelixWorkoutActivityWidget: Widget {
@@ -244,3 +252,4 @@ private extension Color {
     )
   }
 }
+#endif  // os(iOS)

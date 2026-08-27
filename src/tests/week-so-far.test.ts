@@ -1,12 +1,15 @@
 import { describe, it, expect } from 'vitest'
 import { biggestChange, type WeekTotals } from '@/components/dashboard/WeekSoFarCard'
-import { firstDirective } from '@/lib/reports/directive'
 
 /**
  * "The Week So Far" replaced a card that listed four weekly means — every one
- * of which the BioStrips above it already showed. Its two claims are that it
- * names ONE change (the largest), and that the directive it prints was
- * retrieved from a report you pasted, never generated.
+ * of which the BioStrips above it already showed. Its one claim is that it
+ * names ONE change: the largest.
+ *
+ * It used to make a second claim — that the directive line it printed was
+ * retrieved from a pasted report rather than generated — and that whole
+ * mechanism is gone. Retrieval was never the problem; putting a tolerant
+ * parser's best guess at hand-written prose on the dashboard as fact was.
  */
 
 const week = (over: Partial<WeekTotals> = {}): WeekTotals => ({
@@ -59,55 +62,5 @@ describe('biggestChange', () => {
 
   it('is null on two identical weeks', () => {
     expect(biggestChange(week(), week())).toBeNull()
-  })
-})
-
-describe('firstDirective', () => {
-  const report = [
-    '⬢ HELIX OS · WEEKLY TELEMETRY & PERFORMANCE AUDIT',
-    '▓ PART 3 — THE WEEK AHEAD',
-    '⚑ DIRECTIVES',
-    '─────────────────────',
-    '• Hold calories at 1,950 and add one Zone-2 walk on Wednesday.',
-    '• Drop the second drop-set on Leg Press.',
-    '',
-  ].join('\n')
-
-  it('retrieves the first instruction from the directive section', () => {
-    expect(firstDirective(report)).toBe('Hold calories at 1,950 and add one Zone-2 walk on Wednesday.')
-  })
-
-  it('skips box-drawing and rule lines', () => {
-    expect(firstDirective(report)).not.toMatch(/─/)
-  })
-
-  it('returns null when the report carries no directive section', () => {
-    const md = ['▓ PART 1 — WEIGHT', '📉 TRAJECTORY', 'Weight fell 0.4 kg across the week.'].join('\n')
-    expect(firstDirective(md)).toBeNull()
-  })
-
-  it('returns null on no report at all — never a fabricated line', () => {
-    // The app calls no model. An absent report means an absent directive.
-    expect(firstDirective(null)).toBeNull()
-    expect(firstDirective('')).toBeNull()
-  })
-
-  it('does not mistake a table row for an instruction', () => {
-    const md = [
-      '▓ PART 3 — ACTIONS',
-      '⚑ NEXT WEEK',
-      'Day | Focus | Load',
-      'Mon | Legs A | +2.5 kg',
-      'Push the top set on Leg Press to 12 before adding load.',
-    ].join('\n')
-    expect(firstDirective(md)).toBe('Push the top set on Leg Press to 12 before adding load.')
-  })
-
-  it('truncates a very long directive rather than breaking the card', () => {
-    const long = 'x'.repeat(400)
-    const md = ['▓ PART 3 — ACTIONS', '⚑ DIRECTIVES', long].join('\n')
-    const out = firstDirective(md)!
-    expect(out.length).toBeLessThanOrEqual(140)
-    expect(out.endsWith('…')).toBe(true)
   })
 })

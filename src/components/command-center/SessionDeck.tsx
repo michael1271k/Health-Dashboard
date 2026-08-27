@@ -49,9 +49,11 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
   // Era-aware previous-session memory for every exercise in the deck.
   const names = draft?.exercises.filter((ex) => ex.kind !== 'cardio').map((ex) => ex.name) ?? []
   const { data: history } = useExerciseSetHistory(names, draft ? eraForDate(draft.date) : undefined, draft?.dayKey)
-  // The PREVIOUS column asks a different question from the coach — see the note
-  // on `useGlobalSetHistory`. Friday's leg curl shows Monday's numbers.
-  const { data: globalHistory } = useGlobalSetHistory(names, draft ? eraForDate(draft.date) : undefined)
+  // The PREVIOUS column is scoped to this routine too — see the note on
+  // `useGlobalSetHistory`. It used to be unscoped, which is what left
+  // 2026-08-27's Chest Press set 3 blank: the lookup landed on a `cb_a` session
+  // with two sets and presented them as this session's "last time".
+  const { data: globalHistory } = useGlobalSetHistory(names, draft ? eraForDate(draft.date) : undefined, draft?.dayKey)
 
   // Live PR detection. All-time baselines strictly BEFORE this session's date,
   // run through the same engine `saveSession` uses — so a badge that appears on

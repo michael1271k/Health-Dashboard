@@ -4,8 +4,8 @@ import ActivityKit
 ///  HELIX Live Activity — the shape of a running workout, on the Lock Screen and
 ///  in the Dynamic Island.
 ///
-///  TARGET MEMBERSHIP: add this file to **App** and to **HelixWidgets**.
-///  Both. This is the one file in the project that MUST be in two targets:
+///  TARGET MEMBERSHIP: this file is a member of **App** and of
+///  **HelixWidgetsExtension**. Both, and not the watch. This is the one file in the project that MUST be in two targets:
 ///  ActivityKit matches the app's `Activity.request` to the extension's
 ///  `ActivityConfiguration` by the ATTRIBUTES TYPE, and two identically-named
 ///  structs compiled into two modules are two different types. Getting this

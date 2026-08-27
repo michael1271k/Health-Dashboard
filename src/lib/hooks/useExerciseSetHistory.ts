@@ -61,6 +61,94 @@ export function workingSets(h: ExerciseHistory | undefined): ExerciseHistory['se
  * seeded from a 2-set day and the coach paced you against the wrong session.
  * Unscoped lookup survives only for a free-form paste deck, which has no routine.
  */
+/**
+ * One `workout_sets` row, joined to its exercise and session.
+ *
+ * Named so the reducer below can be pure and therefore tested — the scoping
+ * rule is the part with a bug in it, and it lived inside a `queryFn` where the
+ * only way to exercise it was a live database.
+ */
+export interface HistoryRow {
+  weight_kg: number
+  reps: number
+  rpe: number | null
+  set_number: number
+  set_type: string | null
+  side: string | null
+  pair_id: string | null
+  exercises: { name: string }
+  workout_sessions: { started_at: string; day_key: string | null }
+}
+
+const TAGS: readonly string[] = ['warmup', 'failure', 'dropset']
+
+/**
+ * Rows → the most recent qualifying session per exercise name.
+ *
+ * ── THE THREE FILTERS, AND WHAT EACH ONE IS FOR ──────────────────────────────
+ * `scopeKey` keeps only sessions of the SAME routine. This is the one that was
+ * missing from the Previous column and produced 2026-08-27's blank set 3 — see
+ * the note on `useGlobalSetHistory`.
+ *
+ * `before` is an EXCLUSIVE upper bound on the session date. Without it
+ * "previous" means "the most recent session, full stop", which is right in a
+ * live deck (today is not saved yet) and wrong everywhere that reads an OLD
+ * session: opening July's workout would compare each set against August, i.e.
+ * against its own future.
+ *
+ * `era` drops sessions from a previous program, whose numbers are not
+ * comparable.
+ *
+ * Rows arrive newest-first (`created_at desc`) so the first date seen for a name
+ * IS its most recent session. But WITHIN a session the working sets are
+ * batch-inserted and share a `created_at`, so their relative order here is
+ * undefined — the old code appended in that arbitrary order and then blindly
+ * reversed, which flipped an already-correct list into `11, 12, 12`. Sorting by
+ * `set_number` is deterministic 1..n regardless of insert timing.
+ */
+export function historyFromRows(
+  rows: readonly HistoryRow[],
+  opts: { scopeKey?: string | null; before?: string | null; era?: Era } = {},
+): Map<string, ExerciseHistory> {
+  const { scopeKey = null, before = null, era } = opts
+  type Row = HistorySet & { setNumber: number }
+  const acc = new Map<string, { date: string; rows: Row[] }>()
+
+  for (const r of rows) {
+    if (scopeKey && r.workout_sessions.day_key !== scopeKey) continue
+    const date = r.workout_sessions.started_at.slice(0, 10)
+    if (before && date >= before) continue
+    if (era && eraForDate(date) !== era) continue
+
+    const name = r.exercises.name
+    // Only a genuine two-sided row carries the pair through — a `pair_id`
+    // with no side, or a side with no `pair_id`, is an ordinary set.
+    const sided = r.pair_id && (r.side === 'L' || r.side === 'R')
+    const row: Row = {
+      weightKg: r.weight_kg, reps: r.reps, setNumber: r.set_number,
+      // Supabase returns numeric(3,1) as a string on some paths; coerce once
+      // here so nothing downstream compares '8.5' to 8.5.
+      ...(r.rpe != null && Number.isFinite(Number(r.rpe)) ? { rpe: Number(r.rpe) } : {}),
+      ...(r.set_type && TAGS.includes(r.set_type) ? { setType: r.set_type as HistorySetType } : {}),
+      ...(sided ? { side: r.side as 'L' | 'R', pairId: r.pair_id as string } : {}),
+    }
+    const existing = acc.get(name)
+    if (!existing) acc.set(name, { date, rows: [row] })
+    else if (existing.date === date) existing.rows.push(row)
+    // a different (older) date for a known name is skipped
+  }
+
+  const out = new Map<string, ExerciseHistory>()
+  for (const [name, { date, rows: setRows }] of acc) {
+    const sets: HistorySet[] = [...setRows]
+      .sort((a, b) => a.setNumber - b.setNumber)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      .map(({ setNumber, ...rest }) => rest)
+    out.set(name, { date, sets })
+  }
+  return out
+}
+
 export function useExerciseSetHistory(names: string[], era?: Era, dayKey?: string, before?: string) {
   const key = [...names].sort().join('|')
   const scopeKey = dayKey ?? null
@@ -79,85 +167,42 @@ export function useExerciseSetHistory(names: string[], era?: Era, dayKey?: strin
         // to the program's cold-start numbers, which read as "arbitrary data".
         .limit(2000)
       if (error) throw error
-
-      // `before` is an EXCLUSIVE upper bound on the session date.
-      //
-      // Without it "previous" means "the most recent session, full stop", which
-      // is right in a live deck (today is not saved yet) and wrong everywhere
-      // that reads an OLD session: opening July's workout would compare each
-      // set against August, i.e. against its own future. The filter is applied
-      // on the date string because that is what the accumulator keys on.
-      const rows = ((data ?? []) as unknown as Array<{
-        weight_kg: number; reps: number; rpe: number | null; set_number: number; set_type: string | null
-        side: string | null; pair_id: string | null
-        exercises: { name: string }
-        workout_sessions: { started_at: string; day_key: string | null }
-      }>)
-        // Only previous sessions of the SAME routine.
-        .filter((r) => !scopeKey || r.workout_sessions.day_key === scopeKey)
-        .filter((r) => !before || r.workout_sessions.started_at.slice(0, 10) < before)
-
-      // Rows arrive newest-first (created_at desc) to pick each exercise's most
-      // recent session. But WITHIN a session the working sets are batch-inserted
-      // and share a created_at, so their relative order here is undefined — the
-      // old code appended in that arbitrary order and then blindly `.reverse()`d,
-      // which flipped an already-correct list into `11, 12, 12`. Sort by
-      // set_number instead: deterministic 1..n regardless of insert timing.
-      type Row = HistorySet & { setNumber: number }
-      const TAGS: readonly string[] = ['warmup', 'failure', 'dropset']
-      const acc = new Map<string, { date: string; rows: Row[] }>()
-      for (const r of rows) {
-        const date = r.workout_sessions.started_at.slice(0, 10)
-        if (era && eraForDate(date) !== era) continue
-        const name = r.exercises.name
-        // Only a genuine two-sided row carries the pair through — a `pair_id`
-        // with no side, or a side with no `pair_id`, is an ordinary set.
-        const sided = r.pair_id && (r.side === 'L' || r.side === 'R')
-        const row: Row = {
-          weightKg: r.weight_kg, reps: r.reps, setNumber: r.set_number,
-          // Supabase returns numeric(3,1) as a string on some paths; coerce once
-          // here so nothing downstream compares '8.5' to 8.5.
-          ...(r.rpe != null && Number.isFinite(Number(r.rpe)) ? { rpe: Number(r.rpe) } : {}),
-          ...(r.set_type && TAGS.includes(r.set_type) ? { setType: r.set_type as HistorySetType } : {}),
-          ...(sided ? { side: r.side as 'L' | 'R', pairId: r.pair_id as string } : {}),
-        }
-        const existing = acc.get(name)
-        if (!existing) acc.set(name, { date, rows: [row] })
-        else if (existing.date === date) existing.rows.push(row)
-        // a different (older) date for a known name is skipped
-      }
-
-      const out = new Map<string, ExerciseHistory>()
-      for (const [name, { date, rows: setRows }] of acc) {
-        const sets: HistorySet[] = [...setRows]
-          .sort((a, b) => a.setNumber - b.setNumber)
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          .map(({ setNumber, ...s }) => s)
-        out.set(name, { date, sets })
-      }
-      return out
+      return historyFromRows((data ?? []) as unknown as HistoryRow[], { scopeKey, before, era })
     },
   })
 }
 
 /**
- * The same memory, UNSCOPED — the last time you did this movement at all.
+ * The same memory, and it is SCOPED TOO — this is now a named alias, not a
+ * second rule.
  *
- * ── WHY BOTH EXIST ───────────────────────────────────────────────────────────
- * The routine-scoped lookup above is right for everything that PACES you: rep
- * windows, the ceiling check and progression are per-routine, and blending
- * Legs A's leg curl with Legs B's is what made the coach argue with itself.
+ * ── WHAT THIS USED TO DO, AND WHY IT WAS WRONG ───────────────────────────────
+ * It dropped the `dayKey` filter, on the argument that the "Previous" column
+ * asks a different question from the coach: what did I lift last time I did
+ * this MOVEMENT, whichever routine that was. That reads well and it does not
+ * survive contact with a five-day split where the same movement is programmed
+ * at different set counts on different days.
  *
- * The "Previous" column on a set row is a different question. It asks what you
- * lifted last time you did this movement, and the honest answer on a Friday is
- * Monday's leg curl even though Monday was a different routine — otherwise the
- * column is empty on every movement that appears in two splits, which is most
- * of them.
+ * 2026-08-27 is the case. Chest Press (Machine) is on both `cb_a` and `cb_b`;
+ * `cb_b` runs three sets and `cb_a` runs two. Logging Upper B that morning, the
+ * unscoped lookup landed on the most recent session containing the movement —
+ * 2026-08-23, a `cb_a` day — and returned its TWO sets. So set 3 had no
+ * previous at all: not a gap in the data, a comparison against the wrong
+ * session that happened to be shorter. The scoped lookup returns 2026-08-20's
+ * `cb_b`, which has three, and set 3 shows 40 kg × 10.
  *
- * It is a second query rather than a second filter over one, deliberately: the
- * scoped hook's `queryKey` carries the routine, and widening it would rebuild
- * the whole cache entry every time a deck opened on a different day.
+ * The failure is worse than an empty cell, because the two sets it DID fill
+ * were also wrong — 40 × 11 and 40 × 10 from a different routine, presented as
+ * "last time" for a session they were not part of. An empty column is legible
+ * as missing; a populated one is not legible as wrong.
+ *
+ * A movement's first outing on a new routine now shows nothing rather than
+ * borrowing another day's numbers, and that is the correct answer: there is no
+ * previous Upper B for it yet, and inventing one is what this fixes.
+ *
+ * Kept as its own export so the call sites still SAY which question they are
+ * asking; it simply no longer answers it differently.
  */
-export function useGlobalSetHistory(names: string[], era?: Era, before?: string) {
-  return useExerciseSetHistory(names, era, undefined, before)
+export function useGlobalSetHistory(names: string[], era?: Era, dayKey?: string, before?: string) {
+  return useExerciseSetHistory(names, era, dayKey, before)
 }

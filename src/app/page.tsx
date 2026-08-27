@@ -99,6 +99,7 @@ import {
   useRecentSessions,
 } from '@/lib/hooks/useDashboard'
 import { useIsDesktop } from '@/lib/hooks/useBreakpoint'
+import { useNutritionGoals } from '@/lib/hooks/useNutritionGoals'
 
 // The Vitals sheet body — 56 days of readings and a chart per row. It has no
 // business in the dashboard's first-load bundle: nothing renders it until a
@@ -251,7 +252,22 @@ export default function DashboardPage() {
   const lastSession = eraSessions?.find((s) => s.started_at.slice(0, 10) !== logicalTodayISO()) ?? null
   const steps = metrics?.steps ?? log?.steps ?? null
   const calToday = nutrition?.calories != null ? Math.round(nutrition.calories) : null
-  const calGoal = goals?.calorie_goal ?? null
+  /**
+   * ── THE FUEL TARGET IS THE RESOLVED ONE, NOT THE STORED ROW ────────────────
+   * This read `user_goals.calorie_goal` directly, which is the CACHE of a
+   * decision rather than the decision: the active Deficit Lever outranks it and
+   * the plan/phase preset outranks it after that. So the dashboard graded the
+   * day against 1,955 while `/nutrition` — which has always gone through
+   * `useNutritionGoals` — graded the same day against 1,999, and the Fuel tile
+   * and its sheet disagreed with the Nutrition page about what the target was.
+   *
+   * `useNutritionGoals` is the one resolver (lever → plan-phase override →
+   * preset → stored row) and is what the server scorer agrees with. Everything
+   * on this page that draws a macro target now comes from it, so there is no
+   * second answer left to drift.
+   */
+  const fuelGoals = useNutritionGoals()
+  const calGoal = fuelGoals.calorie > 0 ? fuelGoals.calorie : null
   // BMR + active + TEF — one shared formula, see nutrition/energy.ts.
   const tdeeToday = tdeeKcal(log?.bmr, log?.active_energy, nutrition?.calories)
   const phase = fuelLogs?.[0]?.date === logicalTodayISO() ? fuelLogs[0].phase : null
@@ -299,6 +315,33 @@ export default function DashboardPage() {
   const unit = weightUnit()
   // Already-logged-today: hide the "+ Log session" CTA once a workout exists.
   const loggedToday = sessions?.some((s) => s.started_at.slice(0, 10) === logicalTodayISO()) ?? false
+
+  /**
+   * ── THE WORKOUT TILE OPENS TODAY, NOT A DRAWER ABOUT TODAY ─────────────────
+   * It opened the Training sheet, whose body leads with `lastSession` — the most
+   * recent PAST session — so tapping the tile that says "Upper B · scheduled
+   * today" landed on last Thursday's numbers. The tile's own Log link went to
+   * the right place, but that link only exists at medium and large, and it is
+   * one 32px target inside a tile whose whole surface reads as tappable.
+   *
+   * A tile that names today's session should open today's session. Three states,
+   * three destinations, and every one of them is about today:
+   *
+   *   LOGGED   the session that exists → its analysis page
+   *   TRAINING the session that does not exist yet → the deck, seeded from
+   *            today's template and dated today
+   *   REST     there is nothing to open, so the drawer is the honest answer —
+   *            it carries the week and the option to log anyway
+   */
+  const openTraining = useCallback(() => {
+    if (loggedToday && todaySession) { router.push(`/session/${todaySession.id}`); return }
+    if (todayDay !== 'rest') {
+      router.push(`/session?template=${todayDay.dayKey}&date=${logicalTodayISO()}`)
+      return
+    }
+    setOpen('train')
+  }, [loggedToday, todaySession, todayDay, router])
+
 
   // Sparkline series (ascending 7d)
   const kcalSeries = useMemo(() => {
@@ -393,7 +436,7 @@ export default function DashboardPage() {
         return <FuelWidget size={size} onOpen={onOpen('fuel')}
           kcal={calToday} kcalGoal={calGoal}
           protein={nutrition?.protein_g ?? null} carbs={nutrition?.carbs_g ?? null} fat={nutrition?.fat_g ?? null}
-          goals={{ protein: goals?.protein_goal_g ?? null, carbs: goals?.carbs_goal_g ?? null, fat: goals?.fat_goal_g ?? null }}
+          goals={{ protein: fuelGoals.protein, carbs: fuelGoals.carbs, fat: fuelGoals.fat }}
           waterMl={log?.water_ml ?? null} waterGoalMl={goals?.water_goal_ml ?? 3000}
           series={kcalSeries}
           phaseLabel={phase ? phaseDisplay(phase, logicalTodayISO()).label : null}
@@ -409,7 +452,7 @@ export default function DashboardPage() {
       // `WIDGET_IDS`. Today's totals are passed raw in kg; the tile converts and
       // shortens them, and fetches the LAST run of this same `day_key` itself.
       case 'train':
-        return <TrainWidget size={size} onOpen={onOpen('train')}
+        return <TrainWidget size={size} onOpen={openTraining}
           day={todayDay} logged={loggedToday}
           today={loggedToday && todaySession ? {
             sessionId: todaySession.id,
@@ -476,10 +519,10 @@ export default function DashboardPage() {
           slots={stackItems} taken={taken ?? EMPTY_TAKEN} nowMinutes={nowMinutes} />
     }
   }, [
-    sleep, log, goals, bioSeries, calToday, calGoal, nutrition,
+    sleep, log, goals, bioSeries, calToday, calGoal, nutrition, fuelGoals,
     kcalSeries, phase, todayDay, loggedToday, todaySession,
     steps, tdeeToday, stackItems, taken, nowMinutes,
-    onOpen, onBodyTap, goToday, openMuscle, goMicros, goTimeline,
+    onOpen, onBodyTap, goToday, openMuscle, goMicros, goTimeline, openTraining,
   ])
 
   const sheetTitle: Record<Exclude<SheetKey, null>, string> = {
@@ -606,14 +649,19 @@ export default function DashboardPage() {
             } : null}
             logs={fuelLogs ?? []}
             goals={{
-              // 0, not a hardcoded 1,955. The bar and the "over" colour are
-              // driven by this number now, so an invented target would paint a
-              // verdict against a goal the user never set. At 0 the bar simply
-              // has no target to draw, which is the truth until goals load.
-              calorie: goals?.calorie_goal ?? 0,
-              protein: goals?.protein_goal_g ?? null,
-              carbs: goals?.carbs_goal_g ?? null,
-              fat: goals?.fat_goal_g ?? null,
+              // The RESOLVED target — the active lever's number when a rung is
+              // pulled — so this sheet says what `/nutrition` says. It used to
+              // read the stored `user_goals` row, which is what made the sheet
+              // show 1,955 against the Nutrition page's 1,999.
+              //
+              // Still 0 rather than a literal when nothing has resolved yet:
+              // the bar and the "over" colour are driven by this number, and an
+              // invented target would paint a verdict against a goal the user
+              // never set. At 0 the bar has no target to draw, which is true.
+              calorie: fuelGoals.calorie,
+              protein: fuelGoals.protein,
+              carbs: fuelGoals.carbs,
+              fat: fuelGoals.fat,
             }}
             date={logicalTodayISO()}
           />

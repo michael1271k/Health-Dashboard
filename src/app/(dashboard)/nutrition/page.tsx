@@ -38,7 +38,6 @@ import { EraFilterPills } from '@/components/era/EraFilterPills'
 import { ExceptionDayBanner } from '@/components/nutrition/ExceptionDayBanner'
 import { isExceptionDay } from '@/lib/nutrition/exceptionDay'
 import { useNutritionGoals } from '@/lib/hooks/useNutritionGoals'
-import { ReportTargetsNote } from '@/components/nutrition/ReportTargetsNote'
 
 export default function NutritionPage() {
   const qc = useQueryClient()
@@ -164,7 +163,6 @@ export default function NutritionPage() {
       {/* What the last pasted report asked for on food and water, against what
           this week actually shows. Retrieved, never generated — and silent when
           no report was pasted. */}
-      <ReportTargetsNote />
 
       {/* A day allowed to miss its target — declared, never inferred. Sits under
           the rings because it is a statement ABOUT today's numbers, and it has

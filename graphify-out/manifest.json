@@ -180,8 +180,8 @@
     "semantic_hash": ""
   },
   "src/app/(dashboard)/nutrition/page.tsx": {
-    "mtime": 1786969310.4129395,
-    "ast_hash": "676bd2250d348af5c629c71809c8ac48",
+    "mtime": 1787854498.6510873,
+    "ast_hash": "81bee42868cb77141a086453211c2c23",
     "semantic_hash": ""
   },
   "src/app/(dashboard)/pathfinder/page.tsx": {
@@ -255,8 +255,8 @@
     "semantic_hash": ""
   },
   "src/app/page.tsx": {
-    "mtime": 1787666111.1035805,
-    "ast_hash": "f43254e45e587def569c1493a6eac50e",
+    "mtime": 1787854614.4670296,
+    "ast_hash": "151a133b9007ea58f2901102f2abea3a",
     "semantic_hash": ""
   },
   "src/app/session/[id]/page.tsx": {
@@ -340,8 +340,8 @@
     "semantic_hash": ""
   },
   "src/components/command-center/SessionDeck.tsx": {
-    "mtime": 1787680104.6341417,
-    "ast_hash": "432027ca548897dd8bc57779c27c5025",
+    "mtime": 1787854556.615669,
+    "ast_hash": "ab963529df7c9ace75a25c6ebcd25f2a",
     "semantic_hash": ""
   },
   "src/components/command-center/SetEditorRow.tsx": {
@@ -570,8 +570,8 @@
     "semantic_hash": ""
   },
   "src/components/session-detail/ExerciseBreakdown.tsx": {
-    "mtime": 1787505612.9432123,
-    "ast_hash": "07550da360fec09f0de7572c1643917d",
+    "mtime": 1787854573.7966056,
+    "ast_hash": "ecbd305b7e4fe50115543b80f227304a",
     "semantic_hash": ""
   },
   "src/components/session-detail/MuscleFocus.tsx": {
@@ -700,8 +700,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useExerciseSetHistory.ts": {
-    "mtime": 1787060127.6570306,
-    "ast_hash": "b0da7ab975b021d023c2ada6ab6f7e61",
+    "mtime": 1787854660.6390824,
+    "ast_hash": "d357b982598ca23f9ba23fba35c6f735",
     "semantic_hash": ""
   },
   "src/lib/hooks/useInsights.ts": {
@@ -2139,19 +2139,14 @@
     "ast_hash": "90e74dd94c618011905ad267636902f6",
     "semantic_hash": ""
   },
-  "src/lib/reports/directive.ts": {
-    "mtime": 1786968519.464638,
-    "ast_hash": "e3f07339b97c656f464690eb9ff8f77a",
-    "semantic_hash": ""
-  },
   "src/components/dashboard/WeekSoFarCard.tsx": {
-    "mtime": 1786968956.2703617,
-    "ast_hash": "09d1769248f0cd56b39e877fb8a95fca",
+    "mtime": 1787854506.2717106,
+    "ast_hash": "d935823ec08a0c9185e6c50bec058a62",
     "semantic_hash": ""
   },
   "src/tests/week-so-far.test.ts": {
-    "mtime": 1786799139.758377,
-    "ast_hash": "0e08d7219a242469618e547ed97debb6",
+    "mtime": 1787854498.6514482,
+    "ast_hash": "e9ea3f82ca4cb9ce8350fd57acab10f4",
     "semantic_hash": ""
   },
   "src/tests/day-color-parity.test.ts": {
@@ -2297,31 +2292,6 @@
   "src/tests/fmt-v2-targets.test.ts": {
     "mtime": 1786968591.1232388,
     "ast_hash": "4df377c075050f96eac095cbc6e2c059",
-    "semantic_hash": ""
-  },
-  "src/lib/reports/targetVerdict.ts": {
-    "mtime": 1786968778.066005,
-    "ast_hash": "0e2a1d371238245f3046af6e08f7ad03",
-    "semantic_hash": ""
-  },
-  "src/lib/hooks/useWeekActuals.ts": {
-    "mtime": 1786968824.44453,
-    "ast_hash": "81c734ce4a253d352102a990bcda4aaa",
-    "semantic_hash": ""
-  },
-  "src/components/dashboard/TargetsVsActual.tsx": {
-    "mtime": 1786968845.8106253,
-    "ast_hash": "451321e8de80d16f40f6b1817551b72d",
-    "semantic_hash": ""
-  },
-  "src/tests/target-verdict.test.ts": {
-    "mtime": 1786968987.935179,
-    "ast_hash": "1ea8ce79a016fa9cdbc35a54a31a2f62",
-    "semantic_hash": ""
-  },
-  "src/components/nutrition/ReportTargetsNote.tsx": {
-    "mtime": 1786969295.0126123,
-    "ast_hash": "3ce9a32a8d6753546ce0af5e192de63b",
     "semantic_hash": ""
   },
   "src/lib/nutrition/levers.ts": {
@@ -2510,7 +2480,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/set-rows.html": {
-    "mtime": 1787680087.2165382,
+    "mtime": 1787854625.14876,
     "ast_hash": "6b7c9d27eff50c2ff3702f41ab16f90a",
     "semantic_hash": ""
   },
@@ -2540,7 +2510,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-ledger.html": {
-    "mtime": 1787680084.267281,
+    "mtime": 1787854622.327494,
     "ast_hash": "6f50fa4f2aeaf92cc98b2ce5890d0d48",
     "semantic_hash": ""
   },
@@ -2575,7 +2545,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/live-header.html": {
-    "mtime": 1787680084.158867,
+    "mtime": 1787854622.252139,
     "ast_hash": "4512509a568ab9b1f7b8cef9f79023ef",
     "semantic_hash": ""
   },
@@ -2645,7 +2615,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-summary-header.html": {
-    "mtime": 1787680086.068328,
+    "mtime": 1787854623.6424832,
     "ast_hash": "bdbbab0641faf576b6e46b58cbc1ceaa",
     "semantic_hash": ""
   },
@@ -2720,18 +2690,18 @@
     "semantic_hash": ""
   },
   "src/lib/dashboard/layout.ts": {
-    "mtime": 1787665194.903289,
-    "ast_hash": "9270f15034ca824d474e4b5715cca5ab",
+    "mtime": 1787854025.9408214,
+    "ast_hash": "9e146c547d506249252b0a93633230a3",
     "semantic_hash": ""
   },
   "src/components/dashboard/WidgetGrid.tsx": {
-    "mtime": 1787666614.4593527,
-    "ast_hash": "34813f64b711c39e5a193410acd047d1",
+    "mtime": 1787854322.5550382,
+    "ast_hash": "b0b2d3f38b688f312fc99e8d4fd37240",
     "semantic_hash": ""
   },
   "src/tests/dashboard-layout.test.ts": {
-    "mtime": 1787666187.5108852,
-    "ast_hash": "6b38a3b2830bd98a71a6d26bf9323fab",
+    "mtime": 1787854072.604902,
+    "ast_hash": "4defe5fe6bed7ae14e0d6ccaa356632b",
     "semantic_hash": ""
   },
   "src/lib/hooks/useSettingsGoals.ts": {
@@ -2805,8 +2775,8 @@
     "semantic_hash": ""
   },
   "src/tests/widget-arrange.test.tsx": {
-    "mtime": 1787666250.3774948,
-    "ast_hash": "7b086a1554f187e4726d5d72c2bfe8fa",
+    "mtime": 1787854082.4889746,
+    "ast_hash": "6c5e809686221df5f36205e983cdb825",
     "semantic_hash": ""
   },
   "src/components/body/WeeklyMuscleSheet.tsx": {
@@ -2885,13 +2855,13 @@
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixWorkoutActivity.swift": {
-    "mtime": 1787679868.827627,
-    "ast_hash": "cdf8920e190631455f74d99c8077da8b",
+    "mtime": 1787741357.898536,
+    "ast_hash": "08687d905cf606069c8807f0880c01c1",
     "semantic_hash": ""
   },
   "ios/App/Shared/HelixLiveActivity.swift": {
-    "mtime": 1787679813.6694238,
-    "ast_hash": "e43b6ff62a0ba0e703b0983a3cb517da",
+    "mtime": 1787741357.8987377,
+    "ast_hash": "f3f79e293bd314141f38c61edc35ea00",
     "semantic_hash": ""
   },
   "src/lib/native/liveActivity.ts": {
@@ -2909,9 +2879,24 @@
     "ast_hash": "e47bd769549329240afcb9b6d077e026",
     "semantic_hash": ""
   },
-  "docs/LIVE_ACTIVITY_XCODE.md": {
-    "mtime": 1787680155.4505157,
-    "ast_hash": "19136083f0a2f4c489455bdad4655ace",
+  "src/lib/dashboard/layoutSync.ts": {
+    "mtime": 1787854114.881722,
+    "ast_hash": "43dd9df4dc12fe4cb833d229f3559fe4",
+    "semantic_hash": ""
+  },
+  "src/components/dashboard/StackSheet.tsx": {
+    "mtime": 1787854194.5342138,
+    "ast_hash": "cb7930ca177c0b610846dbfc79138bd0",
+    "semantic_hash": ""
+  },
+  "src/components/dashboard/widgets/WaterWidget.tsx": {
+    "mtime": 1787854369.9102185,
+    "ast_hash": "00408dbcd363502a5cfa7fefaf85a546",
+    "semantic_hash": ""
+  },
+  "src/tests/previous-scope.test.ts": {
+    "mtime": 1787854691.724218,
+    "ast_hash": "3154a9e2d337b030cf9e90097fee74c5",
     "semantic_hash": ""
   }
 }
