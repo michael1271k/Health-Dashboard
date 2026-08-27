@@ -11,6 +11,7 @@ import { isUnloadedExercise } from '@/lib/exercises/bodyweight'
 import { displayWeight, weightUnit } from '@/lib/utils/units'
 import { shortDate } from '@/lib/utils/day'
 import { STEEL, MUTED } from '@/lib/theme/palette'
+import { niceDomain } from '@/lib/charts/scale'
 
 /**
  * Everything a single exercise has ever done — records, trends, recent work.
@@ -81,6 +82,42 @@ export function ExerciseHistoryBody({ exerciseId, exerciseName, accent = STEEL }
   const hero = unloaded
     ? { data: repsData, label: 'Reps per session', unit: '' }
     : { data: e1rmData, label: `Estimated 1RM · ${unit}`, unit }
+
+  /**
+   * ── THE 1RM CURVE WAS FLAT BECAUSE THE AXIS STARTED AT ZERO ────────────────
+   * Recharts' automatic domain for an area series is zero-based, and an
+   * estimated 1RM is a number that lives between about 40 and 60 and moves by
+   * fractions of a kilo. Zero-based, a genuine four-kilo climb across two
+   * months is a 7% wiggle in the top fifth of the chart with four fifths of
+   * empty axis underneath it — the exact failure `niceDomain` was written for
+   * on the volume chart, on the one chart where the movement is smallest and
+   * therefore matters most.
+   *
+   * `padPct: 0.15` rather than the default 0.1: this series is short (one point
+   * per session) and its extremes are usually the most recent point, so a
+   * little more headroom keeps the newest value off the frame.
+   *
+   * `hardMin: 0` because a negative 1RM is not a thing; on a series that
+   * genuinely sits near zero the padding must not invent one.
+   */
+  const heroDomain = niceDomain(hero.data.map((d) => d.value), { padPct: 0.15, hardMin: 0 })
+
+  /**
+   * The axis is as wide as its widest label.
+   *
+   * `width={34}` with `margin.left: -18` was a net 16px for the numbers, and
+   * `112.5` needs more than that — so the axis clipped, which is what "cuts off
+   * numbers" is. The negative margin was there to claw back the gutter recharts
+   * reserves; it was taking it out of the labels.
+   *
+   * Sized from the actual domain instead: the tick text is 10px, digits at that
+   * size run about 6px, and 14px covers the tick gap and the decimal point.
+   */
+  const axisWidth = (values: number[]) => {
+    const longest = values.reduce((n, v) => Math.max(n, Math.round(v).toString().length), 1)
+    return Math.min(56, longest * 6 + 14)
+  }
+  const heroAxisWidth = axisWidth(heroDomain)
 
   /**
    * ── THE RECORD STRIP ────────────────────────────────────────────────────────
@@ -172,7 +209,7 @@ export function ExerciseHistoryBody({ exerciseId, exerciseName, accent = STEEL }
             <TrendingUp className="w-3.5 h-3.5" style={{ color: accent }} /> {hero.label}
           </p>
           <ResponsiveContainer width="100%" height={170}>
-            <AreaChart data={hero.data} margin={{ top: 4, right: 8, left: -18, bottom: 0 }}>
+            <AreaChart data={hero.data} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id={`heroFill-${uid}`} x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor={accent} stopOpacity={0.35} />
@@ -180,7 +217,15 @@ export function ExerciseHistoryBody({ exerciseId, exerciseName, accent = STEEL }
                 </linearGradient>
               </defs>
               <XAxis dataKey="date" tick={{ fill: MUTED, fontSize: 10 }} axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={24} tickMargin={6} />
-              <YAxis tick={{ fill: MUTED, fontSize: 10 }} axisLine={false} tickLine={false} width={34} />
+              <YAxis
+                tick={{ fill: MUTED, fontSize: 10 }} axisLine={false} tickLine={false}
+                width={heroAxisWidth}
+                domain={heroDomain}
+                // `allowDecimals` off for a rep count, on for a load: reps are
+                // whole and a `10.5` tick on them is a value that cannot occur.
+                allowDecimals={!unloaded}
+                tickFormatter={(v: number) => (Number.isInteger(v) ? String(v) : v.toFixed(1))}
+              />
               <Tooltip content={<ChartTooltip />} />
               <Area isAnimationActive={false} type="monotone" dataKey="value" name={hero.label}
                 unit={hero.unit} stroke={accent} strokeWidth={2} fill={`url(#heroFill-${uid})`} connectNulls />
@@ -198,9 +243,16 @@ export function ExerciseHistoryBody({ exerciseId, exerciseName, accent = STEEL }
             <Activity className="w-3.5 h-3.5" style={{ color: accent }} /> Session volume · {unit}
           </p>
           <ResponsiveContainer width="100%" height={120}>
-            <BarChart data={volumeData} margin={{ top: 4, right: 8, left: -18, bottom: 0 }}>
+            <BarChart data={volumeData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
               <XAxis dataKey="date" tick={{ fill: MUTED, fontSize: 10 }} axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={24} tickMargin={6} />
-              <YAxis tick={{ fill: MUTED, fontSize: 10 }} axisLine={false} tickLine={false} width={34} />
+              {/* Same clipping fix, and deliberately NOT the same domain fix: a
+                  bar encodes its magnitude as a LENGTH, so lifting the baseline
+                  off zero would make a 5% difference look like a doubling. The
+                  line above is free to float because a line encodes SLOPE. */}
+              <YAxis
+                tick={{ fill: MUTED, fontSize: 10 }} axisLine={false} tickLine={false}
+                width={axisWidth(volumeData.map((d) => d.volume))}
+              />
               <Tooltip content={<ChartTooltip />} />
               <Bar isAnimationActive={false} dataKey="volume" name="volume" unit={unit} fill={accent} fillOpacity={0.55} radius={[3, 3, 0, 0]} maxBarSize={22} />
             </BarChart>

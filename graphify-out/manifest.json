@@ -470,8 +470,8 @@
     "semantic_hash": ""
   },
   "src/components/insights/VitalsGroups.tsx": {
-    "mtime": 1786798316.8735633,
-    "ast_hash": "2b357e67d12271e927b4478db90be222",
+    "mtime": 1787855749.2597175,
+    "ast_hash": "1a86c0d66ce2df13f92df845bdb3c554",
     "semantic_hash": ""
   },
   "src/components/nav/BottomNav.tsx": {
@@ -2480,7 +2480,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/set-rows.html": {
-    "mtime": 1787855515.0187926,
+    "mtime": 1787855755.5752819,
     "ast_hash": "6b7c9d27eff50c2ff3702f41ab16f90a",
     "semantic_hash": ""
   },
@@ -2510,7 +2510,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-ledger.html": {
-    "mtime": 1787855513.3224547,
+    "mtime": 1787855754.55615,
     "ast_hash": "6f50fa4f2aeaf92cc98b2ce5890d0d48",
     "semantic_hash": ""
   },
@@ -2545,7 +2545,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/live-header.html": {
-    "mtime": 1787855512.3657148,
+    "mtime": 1787855753.8180027,
     "ast_hash": "9983d254ba2dd74c447fc05867f2890a",
     "semantic_hash": ""
   },
@@ -2615,7 +2615,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-summary-header.html": {
-    "mtime": 1787855513.6849651,
+    "mtime": 1787855754.697277,
     "ast_hash": "bdbbab0641faf576b6e46b58cbc1ceaa",
     "semantic_hash": ""
   },
@@ -2740,18 +2740,18 @@
     "semantic_hash": ""
   },
   "src/components/dashboard/widgets/TrainingWidgets.tsx": {
-    "mtime": 1787665979.2603757,
-    "ast_hash": "92cd050debdadf69577894efdaea45d3",
+    "mtime": 1787855604.0462444,
+    "ast_hash": "8512188de43ef33846184489f10719b7",
     "semantic_hash": ""
   },
   "src/lib/hooks/useLatestPr.ts": {
-    "mtime": 1787645767.6738646,
-    "ast_hash": "e5716abf1b2eccd3c0630218b6830654",
+    "mtime": 1787855577.4935672,
+    "ast_hash": "094ec7700f3beb791e2800dd79413a23",
     "semantic_hash": ""
   },
   "src/components/dashboard/widgets/DailyWidgets.tsx": {
-    "mtime": 1787665715.02185,
-    "ast_hash": "1a3864d9ca8ebba8c95a400f1b259831",
+    "mtime": 1787855671.3535829,
+    "ast_hash": "ba446e34292c58ae07af01c14490e336",
     "semantic_hash": ""
   },
   "src/tests/widget-parts.test.tsx": {

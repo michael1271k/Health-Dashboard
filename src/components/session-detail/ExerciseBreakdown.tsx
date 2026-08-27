@@ -149,12 +149,36 @@ export function toRows(sets: DetailSet[]): Row[] {
 const LEDGER_GRID =
   'grid grid-cols-[26px_minmax(0,1.25fr)_minmax(0,0.95fr)_64px] gap-2 pl-[18px] pr-3'
 
-/** One side's effort, when the two sides of a pair disagree. */
+/**
+ * One side's effort, when the two sides of a pair disagree.
+ *
+ * ── WHY THE TWO ROWS USED TO SIT AT DIFFERENT INDENTS ────────────────────────
+ * This was `flex justify-end gap-1`, so the marker and the label were ONE
+ * right-anchored group and the marker's position was therefore a function of
+ * the label's width. Two sides rated the same put `L` and `R` in the same
+ * place; two sides rated differently did not, and the wider the disagreement
+ * the further apart they drifted — `L VERY HARD` over `R MAX EFFORT` offset the
+ * markers by most of a character, while `L HARD` over `R HARD` lined up
+ * perfectly. That is the "huge gaps on set 1, no gaps on set 3": nothing about
+ * the spacing was random, it was being computed from the text.
+ *
+ * A grid fixes the marker in a column of its own. Both rows now put `L` and `R`
+ * at the same x whatever they are rated, and the labels still end flush against
+ * the column's right edge, which is where every non-split row's rating ends
+ * too — so a split pair and a plain set share one right margin.
+ *
+ * 9px is the em-width of a bold uppercase `L`/`R` at 9px, so the column is
+ * exactly as wide as its contents and adds no gap of its own.
+ */
 function Effort({ side, rpe }: { side: 'L' | 'R'; rpe: number }) {
   return (
-    <span className="flex items-baseline gap-1 justify-end" style={{ color: rpeColor(rpe) }} title={`${side} — effort ${rpe} / 10`}>
-      <span className="opacity-60">{side}</span>
-      {rpeLabel(rpe)}
+    <span
+      className="grid grid-cols-[9px_minmax(0,1fr)] gap-1 items-baseline w-full"
+      style={{ color: rpeColor(rpe) }}
+      title={`${side} — effort ${rpe} / 10`}
+    >
+      <span className="opacity-60 text-left">{side}</span>
+      <span className="text-right truncate">{rpeLabel(rpe)}</span>
     </span>
   )
 }
@@ -715,7 +739,12 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
                       /* Consolidated weight, split effort: the case where the
                          two sides did the same work and one of them was harder,
                          which is the asymmetry actually worth reporting. */
-                      <span className="flex flex-col gap-0.5 items-end text-[9px] font-bold uppercase tracking-wide leading-tight text-right">
+                      /* `items-stretch`, not `items-end`: each Effort is a
+                         full-width grid now, and shrink-wrapping it to its own
+                         content would put the two rows' marker columns back at
+                         two different x positions — the exact bug the grid
+                         inside it exists to remove. */
+                      <span className="flex flex-col gap-0.5 items-stretch text-[9px] font-bold uppercase tracking-wide leading-tight">
                         <Effort side="L" rpe={row.left!.rpe!} />
                         <Effort side="R" rpe={row.right!.rpe!} />
                       </span>
