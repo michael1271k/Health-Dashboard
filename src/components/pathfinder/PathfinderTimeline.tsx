@@ -32,7 +32,7 @@ const MarkdownView = dynamic(() => import('@/components/reports/MarkdownView').t
 import { Sheet } from '@/components/ui/Sheet'
 import { DayCard } from '@/components/timeline/ContinuumTimeline'
 import { SwapDayControl, RestTodayButton } from '@/components/day/SwapDayControl'
-import { EMERALD, SAPPHIRE, WEEK_STATE } from '@/lib/theme/palette'
+import { dayColor, EMERALD, MUTED, REST, SAPPHIRE, WEEK_STATE } from '@/lib/theme/palette'
 
 const label = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 
@@ -114,6 +114,15 @@ export function PathfinderTimeline() {
   }, [liveWeekStart])
   const openDay = useCallback((date: string) => router.push(`/day/${date}`), [router])
 
+  // Last week's tonnage, keyed by the calendar rather than by list position.
+  // `nodes` is a filtered, ordered list — indexing into it for "the week before"
+  // silently compares across a gap the era filter opened, or reverses when the
+  // sort does. `weekStart − 7d` cannot.
+  const volumeByWeek = useMemo(
+    () => new Map(nodes.map((n) => [n.weekStart, n.volumeKg])),
+    [nodes],
+  )
+
   // Every date with a logged session — drives the ready-week aura.
   const loggedDates = useMemo(
     () => new Set((continuumDays ?? []).filter((d) => d.session).map((d) => d.date)),
@@ -167,6 +176,7 @@ export function PathfinderTimeline() {
                 ready={readyWeeks.has(n.weekStart)}
                 complete={completeWeeks.has(n.weekStart)}
                 open={isOpen(n.weekStart)}
+                prevVolumeKg={volumeByWeek.get(isoAddDays(n.weekStart, -7)) ?? null}
                 onToggle={toggle}
                 onOpenDay={openDay}
                 onSwapDay={openSwap}
@@ -192,6 +202,47 @@ export function PathfinderTimeline() {
 }
 
 /**
+ * Seven dots — the week's shape while it is closed.
+ *
+ * Sunday first, matching `weekStartOf` and the consistency heatmap's rows, so a
+ * Tuesday is in the same column everywhere in the app. A trained day is a solid
+ * dot in ITS OWN session colour; a rest day is the REST tone; a day the plan
+ * asked for and never got is a hollow ring; a day still in the future is a faint
+ * one.
+ *
+ * The distinction that matters is hollow vs filled, not colour, because a
+ * prescribed rest day is adherence — the same argument the consistency grid
+ * makes at length. Only a missed session leaves a hole.
+ */
+const WeekDayStrip = memo(function WeekDayStrip({ weekStart, days }: {
+  weekStart: string
+  days: ContinuumDay[]
+}) {
+  const today = logicalTodayISO()
+  const byDate = useMemo(() => new Map(days.map((d) => [d.date, d])), [days])
+
+  return (
+    <span className="flex items-center gap-1 mt-2" aria-hidden="true">
+      {Array.from({ length: 7 }, (_, i) => {
+        const date = isoAddDays(weekStart, i)
+        const day = byDate.get(date)
+        if (day?.session) {
+          const c = dayColor(day.session.dayKey, day.session.split)
+          return <span key={date} className="h-2 w-2 rounded-full shrink-0" style={{ background: c }} />
+        }
+        if (date > today) {
+          return <span key={date} className="h-2 w-2 rounded-full shrink-0" style={{ background: 'rgba(255,255,255,0.07)' }} />
+        }
+        // Past, unlogged: a scheduled day is a hole, a rest day is kept.
+        return isTrainingDay(date)
+          ? <span key={date} className="h-2 w-2 rounded-full shrink-0" style={{ border: '1px solid rgba(255,255,255,0.22)' }} />
+          : <span key={date} className="h-2 w-2 rounded-full shrink-0" style={{ background: REST }} />
+      })}
+    </span>
+  )
+})
+
+/**
  * One week. `memo`'d because the timeline renders every week you have ever
  * trained: without it, expanding a single capsule re-rendered all of them, each
  * one recomputing its dominant split and its readiness. Handlers take the week
@@ -205,12 +256,19 @@ const WeekCapsule = memo(forwardRef<HTMLDivElement, {
   ready: boolean
   complete: boolean
   open: boolean
+  /** The prior calendar week's tonnage, for the trend chip. Null when there is none. */
+  prevVolumeKg: number | null
   onToggle: (weekStart: string) => void
   onOpenDay: (date: string) => void
   onSwapDay: (date: string) => void
-}>(function WeekCapsule({ node, days, unit, ready, complete, open, onToggle, onOpenDay, onSwapDay }, ref) {
+}>(function WeekCapsule({ node, days, unit, ready, complete, open, prevVolumeKg, onToggle, onOpenDay, onSwapDay }, ref) {
   const color = useMemo(() => splitColor(dominantSplit(node.days)), [node.days])
   const hasPRs = node.prs > 0
+  // Percent, not absolute kilos: a 400 kg swing means something different on a
+  // 6 t week than on a 28 t one, and the capsule has room for one number.
+  const volumeTrend = prevVolumeKg && prevVolumeKg > 0 && node.volumeKg > 0
+    ? ((node.volumeKg - prevVolumeKg) / prevVolumeKg) * 100
+    : null
   const handleToggle = useCallback(() => onToggle(node.weekStart), [onToggle, node.weekStart])
   // A week that HAS a report gets a direct link on the capsule itself. It used
   // to live inside WeekActions, below the day rows, the recovery strip and the
@@ -270,6 +328,7 @@ const WeekCapsule = memo(forwardRef<HTMLDivElement, {
           <div className="flex items-center gap-3 mt-1.5 text-fluid-xs text-muted">
             <span className="flex items-center gap-1"><Dumbbell className="w-3 h-3" />{node.sessions}</span>
             {node.volumeKg > 0 && <span className="helix-num">{((displayWeight(node.volumeKg) ?? 0) / 1000).toFixed(1)}t</span>}
+            {node.sets > 0 && <span className="helix-num tabular-nums">{node.sets} sets</span>}
             {/* The only gold left on this capsule, which is the point. */}
             {hasPRs && <span className="flex items-center gap-1" style={{ color: WEEK_STATE.pr }}><Trophy className="w-3 h-3" />{node.prs}</span>}
             {node.weightDelta != null && (
@@ -277,7 +336,21 @@ const WeekCapsule = memo(forwardRef<HTMLDivElement, {
                 {node.weightDelta > 0 ? '+' : ''}{node.weightDelta}{weightUnit()}
               </span>
             )}
+            {volumeTrend != null && (
+              <span className="helix-num tabular-nums ml-auto shrink-0"
+                style={{ color: volumeTrend >= 0 ? WEEK_STATE.ready : MUTED }}
+                title="Tonnage against the previous calendar week">
+                {volumeTrend > 0 ? '+' : ''}{volumeTrend.toFixed(1)}%
+              </span>
+            )}
           </div>
+
+          {/* ── THE WEEK'S SHAPE, CLOSED ──
+              Seven dots, Sunday first, each in its own session's colour. It is
+              the one thing a collapsed capsule could not say: which days you
+              trained and which sessions they were. A closed week is a fixed
+              height, so scanning down the rail compares like with like. */}
+          <WeekDayStrip weekStart={node.weekStart} days={days} />
         </button>
 
         {reportHref && (

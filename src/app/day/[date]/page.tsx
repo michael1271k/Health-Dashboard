@@ -48,21 +48,29 @@ import { BackLink, NavChevron } from '@/components/nav/NavChevron'
 import { EMBER, EMBER_DEEP, SAPPHIRE, STEEL, GOLD, OXIDE, EMERALD, MUTED, SAND, BODY } from '@/lib/theme/palette'
 
 // Local aliases over the real palette. These were six hardcoded hexes whose
-// NAMES disagreed with their values — `TEAL` held ember orange, `EMBER` held
+// NAMES disagreed with their values — `EMBER` held ember orange, `EMBER` held
 // gold — so a colour changed in palette.ts never reached this page.
 const VIOLET = EMBER_DEEP
 const ICE = SAPPHIRE
-const TEAL = EMBER
-const CYAN = STEEL
-const AMBER = GOLD
-const ROSE = OXIDE
-
+/**
+ * The day's score, banded — for the ORB, where a gauge reading is exactly what
+ * the number is. (The timeline row deliberately does NOT band: see
+ * `scoreOpacity` in ContinuumTimeline. A row is scanned by the hundred and a
+ * banded row makes a good day and a bad day both read warm-red.)
+ *
+ * The four bands used to be reached through local aliases — EMBER, STEEL, GOLD,
+ * OXIDE — none of which named its own value: EMBER was EMBER, STEEL was STEEL,
+ * OXIDE was OXIDE. Worst was `GOLD = GOLD`, which shadowed the real palette
+ * GOLD (#E0A03C, the effort ladder's 8.0 rung) with a different colour inside
+ * one file. Anyone reading this reached for the wrong mental picture, and anyone
+ * importing it would have got the wrong hex.
+ */
 function scoreColor(score: number | null | undefined): string {
   if (score == null) return MUTED
-  if (score >= 80) return TEAL
-  if (score >= 60) return CYAN
-  if (score >= 40) return AMBER
-  return ROSE
+  if (score >= 80) return EMBER
+  if (score >= 60) return STEEL
+  if (score >= 40) return GOLD
+  return OXIDE
 }
 
 /**
@@ -358,7 +366,7 @@ export default function DailyNexusPage() {
       </Zone>
 
       {/* ── VITALS · one scrollable line, not a 3×2 grid of bordered boxes ── */}
-      <Zone label="Vitals" accent={CYAN}>
+      <Zone label="Vitals" accent={STEEL}>
         <ZoneRow divide={false}>
           <StatStrip stats={[
             // Weight intentionally NOT here — it owns the Body/InBody card.
@@ -480,7 +488,7 @@ export default function DailyNexusPage() {
         </Zone>
       ) : (
         /* A training day with no session yet → the log CTA + swap. */
-        <Zone label="Session" accent={CYAN}>
+        <Zone label="Session" accent={STEEL}>
           {/* Only for the day you're actually living — a low battery three
               weeks ago is history, not a decision. */}
           {date === logicalTodayISO() && schedule !== 'rest' && (
@@ -501,7 +509,7 @@ export default function DailyNexusPage() {
             <div className="flex items-start gap-2">
               {schedule !== 'rest' && schedule.dayKey && (
                 <Link href={`/session?template=${schedule.dayKey}&date=${date}`}
-                  className="btn-primary flex-1 justify-center min-h-[44px]" style={{ background: CYAN, boxShadow: `0 0 18px ${CYAN}55` }}>
+                  className="btn-primary flex-1 justify-center min-h-[44px]" style={{ background: STEEL, boxShadow: `0 0 18px ${STEEL}55` }}>
                   <Dumbbell className="w-4 h-4" aria-hidden="true" /> Log {schedule.label}
                 </Link>
               )}
@@ -521,7 +529,7 @@ export default function DailyNexusPage() {
       )}
 
       {isLoading && (
-        <Zone label="Session" accent={CYAN}>
+        <Zone label="Session" accent={STEEL}>
           <ZoneRow divide={false}><div className="h-16 rounded-xl bg-white/[0.03] animate-pulse" aria-hidden="true" /></ZoneRow>
         </Zone>
       )}

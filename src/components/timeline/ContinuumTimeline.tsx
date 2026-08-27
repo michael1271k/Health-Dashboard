@@ -1,24 +1,40 @@
 'use client'
 
 import { memo, useCallback, useMemo, useRef, useState } from 'react'
-import { Dumbbell, FolderOpen, Footprints, Moon, Repeat } from 'lucide-react'
+import { Dumbbell, FolderOpen, Footprints, Moon, Repeat, Trophy } from 'lucide-react'
 import { useContinuum, type ContinuumDay } from '@/lib/hooks/useContinuum'
 import { getWeekPhase, phaseRgb, type WeekPhase } from '@/lib/phases'
 import { WeekChipLabel } from '@/components/timeline/WeekChip'
 import { eraForDate, programDayLabel } from '@/lib/programs'
-import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { displayWeight, useUnitSystem, fmtVolume } from '@/lib/utils/units'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
-import { MUTED } from '@/lib/theme/palette'
+import { dayColor, MUTED, REST, WEEK_STATE } from '@/lib/theme/palette'
 
 const STEEL = '#79808C'
 
-function scoreColor(score: number | null): string {
-  if (score == null) return 'rgba(255,255,255,0.12)'
-  if (score >= 80) return '#E0703C'
-  if (score >= 60) return '#8E9AAC'
-  if (score >= 40) return '#D4AF37'
-  return '#C4514E'
+/**
+ * A day's score, as OPACITY — never as a hue.
+ *
+ * ── WHY THE RED BOX HAD TO GO ────────────────────────────────────────────────
+ * `scoreColor` banded the score into four hues and painted the row's background,
+ * its border and its dot with the result. Two things went wrong with that, both
+ * visible on every screen of history.
+ *
+ * The bands were ember ≥80, steel ≥60, gold ≥40, oxide below — so the BEST days
+ * and the WORST days were both warm reds, separated only by how red. A month of
+ * good training and a month of missed sessions scanned identically. And the row
+ * carried no trace of WHICH session it was: every day, whatever you trained, was
+ * the same wash in one of four colours.
+ *
+ * Colour on this row now means identity — `dayColor`, the same hue the session
+ * wears in every chart, the widget and the heatmap. Score moves to the alpha of
+ * a 2px rule, so a weak day RECEDES instead of shouting. Quiet is the correct
+ * visual language for a bad day; alarm is not, and the app has to be scannable
+ * across months.
+ */
+export function scoreOpacity(score: number | null): number {
+  if (score == null) return 0.1
+  return 0.18 + (Math.max(0, Math.min(100, score)) / 100) * 0.72
 }
 
 /** Sunday week-start for a YYYY-MM-DD date. */
@@ -28,21 +44,9 @@ function weekStartOf(dateISO: string): string {
   return d.toISOString().slice(0, 10)
 }
 
-// Rough per-macro reference targets for the row's slider fills (this athlete's
-// cut) — glanceable adherence, not a precise goal read.
-const ROW_MACRO_TARGET = { protein: 170, carbs: 210, fat: 60 }
-
-/** One labelled macro slider inside a day row. */
-function MacroBar({ label, g, target, color }: { label: string; g: number | null; target: number; color: string }) {
-  const pct = g != null ? Math.min(1, g / target) : 0
-  return (
-    <span className="flex-1 min-w-0 flex items-center gap-1">
-      <span className="text-[9px] font-bold shrink-0" style={{ color }}>{label}</span>
-      <span className="flex-1 min-w-0 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-        <span className="block h-full w-full origin-left rounded-full transition-transform duration-500" style={{ transform: `scaleX(${pct})`, background: color }} />
-      </span>
-    </span>
-  )
+/** `9240` → `9.2k`. The row has no room for six digits of steps. */
+function compactSteps(n: number): string {
+  return n >= 10000 ? `${Math.round(n / 1000)}k` : n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(Math.round(n))
 }
 
 /** How long a press has to last before it means "swap", not "open". */
@@ -66,9 +70,12 @@ export const DayCard = memo(function DayCard({ d, unit, active, onOpen, onSwap }
   onSwap?: (date: string) => void
 }) {
   const day = new Date(d.date + 'T00:00:00')
-  const sc = scoreColor(d.score)
+  // IDENTITY, not score. A rest day has no session to identify, so it takes the
+  // one tone that means "no session" rather than borrowing a family's hue.
+  const identity = d.session ? dayColor(d.session.dayKey, d.session.split) : REST
   const workoutLabel = d.session ? programDayLabel(d.session.dayKey, d.session.split) : null
   const vol = d.session?.volumeKg != null ? fmtVolume(displayWeight(d.session.volumeKg)) : null
+  const prs = d.session?.prCount ?? 0
 
   // A hold that fired must swallow the click it is about to produce, or the row
   // opens the Nexus underneath the sheet it just launched.
@@ -91,57 +98,62 @@ export const DayCard = memo(function DayCard({ d, unit, active, onOpen, onSwap }
       onPointerLeave={endHold} onPointerCancel={endHold}
       onContextMenu={(e) => { if (onSwap) e.preventDefault() }}
       aria-current={active ? 'date' : undefined}
-      className={`w-full rounded-xl py-2 pl-3 text-left border transition-colors active:opacity-80 ${onSwap ? 'pr-10' : 'pr-3'}`}
+      className={`relative w-full overflow-hidden rounded-lg py-1.5 pl-3 text-left border transition-colors active:opacity-80 ${onSwap ? 'pr-10' : 'pr-3'}`}
       style={{
-        contentVisibility: 'auto', containIntrinsicSize: 'auto 80px',
+        contentVisibility: 'auto', containIntrinsicSize: 'auto 46px',
         WebkitTouchCallout: 'none',
-        // ── THE WASH ──
-        // A day's own score, at 6% alpha, behind the row. No new rule and no
-        // new threshold: `scoreColor` is the same banding the orb, the calendar
-        // and the widget already use, so a green row here and a green dot there
-        // mean the same thing. At this alpha it reads as temperature rather than
-        // as a highlight — a scanned month shows where the bad weeks were
-        // without any row shouting.
-        background: active ? '#E0703C14' : d.score != null ? `${sc}10` : 'rgba(255,255,255,0.02)',
-        borderColor: active ? '#E0703C66' : d.score != null ? `${sc}2b` : 'rgba(255,255,255,0.06)',
-        boxShadow: active ? '0 0 14px #E0703C33' : undefined,
+        // Near-flat. The row used to carry a score-tinted wash AND a score-tinted
+        // border AND a score-tinted glowing dot — three channels saying one thing,
+        // loudly, on every row at once. The surface is now quiet by default and
+        // only the SELECTED row lifts.
+        background: active ? `${identity}14` : 'rgba(255,255,255,0.02)',
+        borderColor: active ? `${identity}66` : 'rgba(255,255,255,0.06)',
       } as React.CSSProperties}>
-      {/* Top line — score dot · date · calories */}
-      <div className="flex items-center gap-2.5">
-        {/* Fixed box, scaled — animating width AND height re-laid out the whole
-            timeline row on every selection change. */}
+
+      {/* ── THE SCORE RULE ──
+          2px down the leading edge, the day's own colour, alpha set by the
+          score. A weak day recedes; it does not turn red. */}
+      <span aria-hidden="true" className="absolute left-0 inset-y-0 w-[2px] rounded-r"
+        style={{ background: identity, opacity: scoreOpacity(d.score) }} />
+
+      {/* Line 1 — identity dot · date · what it was · records */}
+      <div className="flex items-center gap-2 min-w-0">
         <span className="rounded-full shrink-0 transition-transform duration-200"
-          style={{ width: 11, height: 11, transform: `scale(${active ? 1 : 8 / 11})`, background: sc, boxShadow: d.score != null ? `0 0 8px ${sc}66` : undefined }}
+          style={{ width: 8, height: 8, transform: `scale(${active ? 1.25 : 1})`, background: identity }}
           aria-hidden="true" />
-        <span className="shrink-0 font-heading font-semibold text-[13px]" style={{ color: active ? '#E0703C' : undefined }}>
+        <span className="shrink-0 font-heading font-semibold text-[12px] tabular-nums" style={{ color: active ? identity : undefined }}>
           {day.toLocaleDateString('en-GB', { weekday: 'short' })} {day.getDate()}
           <span className="text-[9px] text-muted uppercase ml-1">{day.toLocaleDateString('en-GB', { month: 'short' })}</span>
         </span>
-        <span className="flex-1" />
-        <span className="helix-num text-fluid-sm font-bold text-text tabular-nums">{d.calories != null ? Math.round(d.calories).toLocaleString() : '—'}</span>
-        <span className="text-[9px] text-muted">kcal</span>
-      </div>
-      {/* Macro sliders — Carbs · Fat · Protein */}
-      <div className="flex items-center gap-3 mt-1.5 pl-[18px]">
-        <MacroBar label="C" g={d.carbsG} target={ROW_MACRO_TARGET.carbs} color={MACRO_COLORS.carbs} />
-        <MacroBar label="F" g={d.fatG} target={ROW_MACRO_TARGET.fat} color={MACRO_COLORS.fat} />
-        <MacroBar label="P" g={d.proteinG} target={ROW_MACRO_TARGET.protein} color={MACRO_COLORS.protein} />
-      </div>
-      {/* Workout / rest line + steps */}
-      <div className="flex items-center gap-1.5 mt-1.5 pl-[18px] text-[11px] min-w-0">
-        <span className="flex items-center gap-1.5 min-w-0 flex-1" style={{ color: d.session ? STEEL : MUTED }}>
-          {d.session ? <Dumbbell className="w-3 h-3 shrink-0" /> : <Moon className="w-3 h-3 shrink-0" />}
-          <span className="truncate">
-            {d.session
-              ? `${workoutLabel}${vol ? ` · ${vol} ${unit}` : ''}${(d.session.prCount ?? 0) > 0 ? ` · ${d.session.prCount} PR` : ''}`
-              : 'Rest'}
+        <span className="flex items-center gap-1.5 min-w-0 flex-1 text-[11px]" style={{ color: d.session ? STEEL : MUTED }}>
+          {d.session ? <Dumbbell className="w-3 h-3 shrink-0" aria-hidden="true" /> : <Moon className="w-3 h-3 shrink-0" aria-hidden="true" />}
+          <span className="truncate">{d.session ? workoutLabel : 'Rest'}</span>
+        </span>
+        {prs > 0 && (
+          <span className="flex items-center gap-0.5 shrink-0 helix-num text-[10px] font-bold tabular-nums"
+            style={{ color: WEEK_STATE.pr }} title={`${prs} personal record${prs === 1 ? '' : 's'}`}>
+            <Trophy className="w-3 h-3" aria-hidden="true" />{prs}
           </span>
+        )}
+      </div>
+
+      {/* Line 2 — the numbers, in one muted run. Three macro sliders used to sit
+          here against targets hardcoded in this file; the day sheet shows macros
+          against the REAL phase goals, which is where that reading belongs. */}
+      <div className="flex items-baseline gap-1.5 mt-0.5 pl-[16px] text-[10px] text-muted min-w-0">
+        {vol && <span className="helix-num tabular-nums shrink-0">{vol} {unit}</span>}
+        {vol && <span className="opacity-40 shrink-0" aria-hidden="true">·</span>}
+        <span className="helix-num tabular-nums shrink-0">
+          {d.calories != null ? `${Math.round(d.calories).toLocaleString()} kcal` : '— kcal'}
         </span>
         {d.steps != null && (
-          <span className="flex items-center gap-1 shrink-0" style={{ color: '#8E9AAC' }}>
-            <Footprints className="w-3 h-3" aria-hidden="true" />
-            <span className="helix-num tabular-nums">{Math.round(d.steps).toLocaleString()}</span>
-          </span>
+          <>
+            <span className="opacity-40 shrink-0" aria-hidden="true">·</span>
+            <span className="flex items-center gap-1 shrink-0">
+              <Footprints className="w-2.5 h-2.5" aria-hidden="true" />
+              <span className="helix-num tabular-nums">{compactSteps(d.steps)}</span>
+            </span>
+          </>
         )}
       </div>
     </button>
