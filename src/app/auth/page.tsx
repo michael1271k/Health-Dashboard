@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 import { Fingerprint } from 'lucide-react'
-import { HelixMark } from '@/components/HelixMark'
+import { LaunchSurface } from '@/components/launch/LaunchSurface'
+import { EMBER } from '@/lib/theme/palette'
 
 /**
  * Sign-in. Single-user app: ONE button. There is no email/password form and no
@@ -62,51 +63,30 @@ export default function AuthPage() {
   }
 
   return (
-    <main className="relative min-h-screen flex items-center justify-center p-6 overflow-hidden bg-[#0C0D11]">
-      {/* Ambient jewel glow — ember from below, sapphire from above. */}
-      <div aria-hidden className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-1/4 left-1/2 -translate-x-1/2 w-[120vw] h-[60vh] rounded-full blur-[120px] opacity-[0.18]"
-          style={{ background: 'radial-gradient(circle, #3D7AB8 0%, transparent 65%)' }} />
-        <div className="absolute -bottom-1/3 left-1/2 -translate-x-1/2 w-[110vw] h-[55vh] rounded-full blur-[120px] opacity-[0.22]"
-          style={{ background: 'radial-gradient(circle, #E0703C 0%, transparent 65%)' }} />
+    <LaunchSurface>
+      <div className="rounded-2xl border border-white/[0.08] bg-white/[0.04] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.55)] space-y-5">
+        <button
+          type="button"
+          onClick={handleContinue}
+          disabled={loading}
+          className="w-full min-h-[52px] rounded-xl font-bold text-sm flex items-center justify-center gap-2
+                     text-white transition-transform active:scale-[0.98] disabled:opacity-60
+                     shadow-[0_10px_30px_rgba(224,112,60,0.35)]"
+          style={{ background: `linear-gradient(135deg, ${EMBER} 0%, #C8542A 100%)` }}
+        >
+          <Fingerprint className="w-4 h-4" aria-hidden="true" />
+          {loading ? 'Signing in…' : 'Continue as Michael'}
+        </button>
+
+        {error && (
+          <p className="text-danger text-sm text-center leading-relaxed" role="alert">{error}</p>
+        )}
+
+        {/* Standalone-PWA reassurance: this container keeps its own session. */}
+        <p className="text-[11px] text-muted/80 text-center leading-relaxed">
+          You stay signed in on this device — one tap and HELIX remembers you here.
+        </p>
       </div>
-
-      <div className="relative w-full max-w-sm">
-        {/* Brand lockup */}
-        <div className="flex flex-col items-center text-center mb-8">
-          <div className="relative mb-4">
-            <div aria-hidden className="absolute inset-0 blur-2xl opacity-60"
-              style={{ background: 'radial-gradient(circle, rgba(224,112,60,0.5), transparent 70%)' }} />
-            <HelixMark className="relative w-16 h-16" />
-          </div>
-          <h1 className="font-heading text-4xl font-black tracking-[0.12em] text-text">HELIX</h1>
-          <p className="text-xs text-muted mt-1.5 tracking-wide">Engineer Your Ascent.</p>
-        </div>
-
-        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.04] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.55)] space-y-5">
-          <button
-            type="button"
-            onClick={handleContinue}
-            disabled={loading}
-            className="w-full min-h-[52px] rounded-xl font-bold text-sm flex items-center justify-center gap-2
-                       text-white transition-transform active:scale-[0.98] disabled:opacity-60
-                       shadow-[0_10px_30px_rgba(224,112,60,0.35)]"
-            style={{ background: 'linear-gradient(135deg, #E0703C 0%, #C8542A 100%)' }}
-          >
-            <Fingerprint className="w-4 h-4" aria-hidden="true" />
-            {loading ? 'Signing in…' : 'Continue as Michael'}
-          </button>
-
-          {error && (
-            <p className="text-danger text-sm text-center leading-relaxed" role="alert">{error}</p>
-          )}
-
-          {/* Standalone-PWA reassurance: this container keeps its own session. */}
-          <p className="text-[11px] text-muted/80 text-center leading-relaxed">
-            You stay signed in on this device — one tap and HELIX remembers you here.
-          </p>
-        </div>
-      </div>
-    </main>
+    </LaunchSurface>
   )
 }

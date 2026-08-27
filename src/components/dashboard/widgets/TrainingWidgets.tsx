@@ -24,7 +24,7 @@ import { blurOnTap } from '@/lib/utils/blurOnTap'
 import { logicalTodayISO } from '@/lib/utils/day'
 import type { LandmarkMuscle, MuscleVolume } from '@/lib/training/landmarks'
 import type { ScheduleDay } from '@/lib/programs'
-import { EMERALD, GOLD, STEEL, MUTED, AMETHYST, OXIDE, SAPPHIRE } from '@/lib/theme/palette'
+import { EMERALD, GOLD, STEEL, MUTED, AMETHYST, OXIDE, REST, SAPPHIRE } from '@/lib/theme/palette'
 import { WIDGET_META, bodyHeightPx, type WidgetSize } from '@/lib/dashboard/layout'
 
 /**
@@ -506,7 +506,9 @@ export function TrainWidget({ size, onOpen, day, logged, today }: {
   )
   const unit = weightUnit()
 
-  const accent = rest ? AMETHYST : EMERALD
+  // AMETHYST is the Shoulders family now, so a rest day tinted with it read as
+  // a Delts & Arms day. REST is the one tone that means "no session".
+  const accent = rest ? REST : EMERALD
   const meta = { ...WIDGET_META.train, accent, icon: rest ? Moon : WIDGET_META.train.icon }
 
   /** The stat grid for whichever session is being described. */

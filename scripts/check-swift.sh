@@ -40,10 +40,17 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # `Shared/` first: it is not in the extension's synchronized group, but it is a
 # target member, and the widget sources are meaningless without it.
+#
+# ALL of Shared, not a named file. This listed `HelixSnapshot.swift` alone, so
+# when `HelixLiveActivity.swift` joined the directory the check started failing
+# on every run with `cannot find type 'HelixWorkoutAttributes' in scope` — a
+# permanent red that says nothing about the code being checked. A glob cannot
+# fall behind the directory the way a hand-kept list does, and `Shared/` is
+# small and wholly a member of this target by definition.
 xcrun swiftc -typecheck \
   -sdk "$SDK" \
   -target arm64-apple-ios17.0 \
-  "$ROOT/ios/App/Shared/HelixSnapshot.swift" \
+  "$ROOT"/ios/App/Shared/*.swift \
   "$ROOT"/ios/App/HelixWidgets/*.swift
 
 echo "✔ Swift widget extension typechecks"

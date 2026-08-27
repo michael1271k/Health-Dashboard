@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
-import { HelixMark } from '@/components/HelixMark'
+import { LaunchSurface } from '@/components/launch/LaunchSurface'
 import { hydratePrefsFromDb } from '@/lib/utils/prefsSync'
 
 type AuthState = 'resolving' | 'authed' | 'anon'
@@ -87,11 +87,11 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   if (pathname.startsWith('/auth')) return <>{children}</>
   if (state === 'authed') return <>{children}</>
 
-  // Resolving (≤ a few hundred ms from localStorage) or redirecting: branded splash.
-  return (
-    <div className="min-h-[60dvh] flex flex-col items-center justify-center gap-3" role="status" aria-label="Loading HELIX">
-      <HelixMark className="w-10 h-10 animate-pulse" />
-      <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-primary/80">HELIX</span>
-    </div>
-  )
+  // Resolving (≤ a few hundred ms from localStorage) or redirecting.
+  //
+  // The SAME surface the sign-in page renders, with no card. The mark, the
+  // wordmark and the backdrop hold their exact position and size across the
+  // handover, so arriving at /auth is the card appearing beneath a lockup that
+  // never moved — not a cut between two screens that share a logo.
+  return <LaunchSurface status="Loading HELIX" />
 }

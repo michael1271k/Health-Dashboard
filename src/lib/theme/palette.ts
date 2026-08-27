@@ -171,44 +171,97 @@ export const SLEEP = {
   awake: '#C98A5E',   // warm sand — an interruption, not a failure
 } as const
 
-/** Training splits — one jewel tone each, no collisions. */
+/**
+ * Training splits — each on the hue of the family it trains.
+ *
+ * These used to be five arbitrary jewel tones chosen for mutual contrast alone,
+ * which put `legs` on AMETHYST (the Shoulders family) and `upper` on GOLD (the
+ * app-wide record colour). A split now wears the hue of the muscles it works,
+ * the same rule `DAY_COLOR` follows below.
+ *
+ * `upper` and `lower` take the DEEP step of the ramp whose base `push` and
+ * `legs` hold — the same rule `DAY_COLOR` uses for an A/B variant. An upper day
+ * and a push day are the same region of the body trained under two schemes, so
+ * they belong to one hue; they are still two different schemes, so they must not
+ * be the same colour. `supabase.test.ts` asserts all five stay distinct, and it
+ * is right to: the Progress tab can filter across eras, so a chart CAN put a PPL
+ * push week and a Helix-4 upper week on one axis.
+ */
 export const SPLIT = {
-  push: EMBER,
-  pull: SAPPHIRE,
-  legs: AMETHYST,
-  upper: GOLD,
-  lower: EMERALD,
+  push: EMBER,             // chest-led
+  pull: EMERALD,           // back-led
+  legs: SAPPHIRE,
+  upper: EMBER_DEEP,       // chest ramp, deep step
+  lower: SAPPHIRE_DEEP,    // legs ramp, deep step
 } as const
+
+/**
+ * A prescribed rest day.
+ *
+ * Rest had FOUR contradictory answers across the app — AMETHYST in the Workout
+ * widget, EMERALD in the consistency grid, EMBER_DEEP in the timeline row, STEEL
+ * in the "Rest kept" tile — and once days took their muscle family's hue, three
+ * of those became the name of a real family. A rest day rendered in the Legs
+ * colour is a rest day that looks like leg day.
+ *
+ * Deliberately desaturated: rest is the ABSENCE of a family hue, so it must not
+ * compete with one. It separates from all six families on saturation alone,
+ * which survives greyscale and colour-blindness both.
+ */
+export const REST = '#3E4757'
 
 /**
  * Workout-day identity — ONE colour per program day key, globally.
  *
  * This is the plan's own `ProgramDay.color` (programs.ts reads it from here, so
- * there is a single definition). It was a local `C` map inside programs.ts where
- * `arms` and `legs_b` were BOTH emerald: a Delts & Arms report and a Legs & Core
- * B report were the same colour, which is precisely the distinction the colour
- * exists to make. Within one plan every day is now distinguishable; a key
- * repeats across plans only where the day means the same thing (Helix-5 `cb_a`
- * and Helix-4 `upper_a` are the same session under two names).
+ * there is a single definition).
+ *
+ * ── A DAY WEARS THE HUE OF WHAT IT TRAINS ────────────────────────────────────
+ * The five days used to be five tones picked for mutual contrast and nothing
+ * else, chosen without reference to the six muscle families twenty lines below.
+ * So Legs & Core B was EMERALD — the BACK family — and a posterior-chain session
+ * read as a pulling day in every chart, every calendar cell and on the widget.
+ * Upper B was GOLD, which `WEEK_STATE.pr` reserves app-wide for a record, and
+ * Upper A was STEEL, the neutral substrate that means "no hue applies".
+ *
+ * A day now takes its dominant family's hue, and the A/B variant is a STEP on
+ * that family's ramp: A on the base, B on the deep. So the family reads at a
+ * glance and the variant reads on inspection, which is the right order — you
+ * always know whether you are looking at a leg day before you care which one.
+ *
+ * The echoes are deliberate, not collisions. `SAPPHIRE_DEEP` is also
+ * `MUSCLE.Glutes`, and Legs & Core B is the posterior-focus day; `EMBER` is also
+ * `MUSCLE.Chest`, and Upper A is chest-led. A day wearing its lead muscle's
+ * exact colour IS the system.
+ *
+ * Freeing `cb_b` and `cb_a` restores two reservations the palette had already
+ * declared but could not keep: GOLD now means a personal record and nothing
+ * else, and STEEL means the neutral / Core substrate and nothing else.
+ *
+ * A key repeats across plans only where the day means the same thing (Helix-5
+ * `cb_a` and Helix-4 `upper_a` are the same session under two names).
+ *
+ * `src/tests/day-color-parity.test.ts` fails unless `Helix.day` in
+ * `ios/App/HelixWidgets/HelixPalette.swift` carries the same keys and values.
  */
 export const DAY_COLOR: Record<string, string> = {
-  // Helix-5 (active)
-  cb_a: STEEL,        // Upper A · Chest + Back
-  legs_a: SAPPHIRE,   // Legs & Core A · Quad focus
-  arms: AMETHYST,     // Delts & Arms
-  cb_b: GOLD,         // Upper B · Chest + Back
-  legs_b: EMERALD,    // Legs & Core B · Posterior focus
+  // Helix-5 (active) — Chest family base/deep, Legs family base/deep, Shoulders
+  cb_a: EMBER,             // Upper A · Chest + Back
+  legs_a: SAPPHIRE,        // Legs & Core A · Quad focus
+  arms: AMETHYST,          // Delts & Arms
+  cb_b: EMBER_DEEP,        // Upper B · Chest + Back
+  legs_b: SAPPHIRE_DEEP,   // Legs & Core B · Posterior focus
   // Helix-4 (drawer) — mirrors its Helix-5 counterpart
-  upper_a: STEEL,
+  upper_a: EMBER,
   lower_a: SAPPHIRE,
-  upper_b: GOLD,
-  lower_b: EMERALD,
+  upper_b: EMBER_DEEP,
+  lower_b: SAPPHIRE_DEEP,
   // PPL legacy — the split colours, since the day IS the split
   ppl_push_sun: EMBER,
   ppl_push_thu: EMBER,
-  ppl_pull_mon: SAPPHIRE,
-  ppl_pull_fri: SAPPHIRE,
-  ppl_legs_tue: AMETHYST,
+  ppl_pull_mon: EMERALD,
+  ppl_pull_fri: EMERALD,
+  ppl_legs_tue: SAPPHIRE,
 }
 
 /**

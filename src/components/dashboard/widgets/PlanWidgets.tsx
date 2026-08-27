@@ -14,7 +14,7 @@ import { logicalTodayISO } from '@/lib/utils/day'
 import { isoAddDays } from '@/lib/utils/week'
 import { displayWeight, weightUnit } from '@/lib/utils/units'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
-import { dayColor, EMERALD, OXIDE, GOLD, MUTED, STEEL } from '@/lib/theme/palette'
+import { dayColor, EMERALD, OXIDE, GOLD, MUTED, REST, STEEL } from '@/lib/theme/palette'
 import { WIDGET_META, type WidgetSize } from '@/lib/dashboard/layout'
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -279,7 +279,7 @@ export function ConsistencyWidget({ size, onOpen }: { size: WidgetSize; onOpen?:
       const plan = scheduleDayFor(date)
       const color = dayColor(hit?.dayKey ?? (plan === 'rest' ? null : plan.dayKey), hit?.splitDay)
       if (hit) out.push({ date, state: 'trained', color })
-      else if (plan === 'rest') out.push({ date, state: 'rest', color: EMERALD })
+      else if (plan === 'rest') out.push({ date, state: 'rest', color: REST })
       else if (date >= today) out.push({ date, state: 'future' })
       else out.push({ date, state: 'missed' })
     }
@@ -325,6 +325,9 @@ export function ConsistencyWidget({ size, onOpen }: { size: WidgetSize; onOpen?:
 
           <span className="grid grid-cols-3 gap-1.5">
             <StatTile label="Trained" value={stats.trained} color={EMERALD} />
+            {/* STEEL, not REST: REST is a FILL tone, deliberately desaturated so a rest
+                cell cannot compete with a family hue. As 11px numerals on obsidian it
+                fails contrast. The grid cell carries the token; the readout stays legible. */}
             <StatTile label="Rest kept" value={stats.rest} color={STEEL} />
             <StatTile label="Missed" value={stats.missed} color={stats.missed > 0 ? OXIDE : EMERALD} />
           </span>

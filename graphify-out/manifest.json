@@ -230,8 +230,8 @@
     "semantic_hash": ""
   },
   "src/app/auth/page.tsx": {
-    "mtime": 1786308698.1303484,
-    "ast_hash": "1da414bd5d2bd614f6a24ee465adea5c",
+    "mtime": 1787859516.9924545,
+    "ast_hash": "dace31608639b8a19ebe4817c7175c6c",
     "semantic_hash": ""
   },
   "src/app/day/[date]/page.tsx": {
@@ -505,9 +505,9 @@
     "semantic_hash": ""
   },
   "src/components/providers/AuthGate.tsx": {
-    "mtime": 1785075304.9377093,
-    "ast_hash": "aa60d0076842de2a4d4fc43ee077e312",
-    "semantic_hash": "aa60d0076842de2a4d4fc43ee077e312"
+    "mtime": 1787859527.5460882,
+    "ast_hash": "049a088349423f9d7dcdc979c8e6d1f6",
+    "semantic_hash": ""
   },
   "src/components/providers/CrashRecorder.tsx": {
     "mtime": 1784897420.21854,
@@ -595,8 +595,8 @@
     "semantic_hash": "334b76641958d8a98b4a6812211f6352"
   },
   "src/components/timeline/ContinuumTimeline.tsx": {
-    "mtime": 1786970780.9230561,
-    "ast_hash": "c7338c8e46dc990471be02b35e1d779d",
+    "mtime": 1787859431.0460846,
+    "ast_hash": "0e15cd629968cadea434259464b862a7",
     "semantic_hash": ""
   },
   "src/components/ui/PullToRefresh.tsx": {
@@ -980,8 +980,8 @@
     "semantic_hash": ""
   },
   "src/lib/theme/palette.ts": {
-    "mtime": 1787504587.0116518,
-    "ast_hash": "b75ed2c072b01f65d3973ac14ecb0851",
+    "mtime": 1787859565.1663609,
+    "ast_hash": "e33ea79b23dd0b1248bed2f70d952fbc",
     "semantic_hash": ""
   },
   "src/lib/training/ceilings.ts": {
@@ -1710,8 +1710,8 @@
     "semantic_hash": ""
   },
   "src/tests/palette-discipline.test.ts": {
-    "mtime": 1787394461.2709177,
-    "ast_hash": "a0531bb7ba57c73649a5dcc46928ee69",
+    "mtime": 1787859462.140562,
+    "ast_hash": "cc9369ce67ca471864ed91dbab90590b",
     "semantic_hash": ""
   },
   "src/lib/hooks/useExerciseCatalog.ts": {
@@ -2025,8 +2025,8 @@
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixPalette.swift": {
-    "mtime": 1786948620.9918573,
-    "ast_hash": "4af043a3ae715bd97ff4e15a41c69039",
+    "mtime": 1787859365.0946712,
+    "ast_hash": "63aa2ffaece4c43a0c0df8141227f26e",
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixPrimitives.swift": {
@@ -2275,8 +2275,8 @@
     "semantic_hash": ""
   },
   "scripts/check-swift.sh": {
-    "mtime": 1786951380.3610182,
-    "ast_hash": "7141179e09f8992884abfa3088089af9",
+    "mtime": 1787859337.8362947,
+    "ast_hash": "d3247d789e8a13d1fbf073ecd94c73ae",
     "semantic_hash": ""
   },
   "src/lib/reports/targetMatch.ts": {
@@ -2480,7 +2480,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/set-rows.html": {
-    "mtime": 1787856260.870474,
+    "mtime": 1787859535.5507665,
     "ast_hash": "6b7c9d27eff50c2ff3702f41ab16f90a",
     "semantic_hash": ""
   },
@@ -2510,7 +2510,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-ledger.html": {
-    "mtime": 1787856259.307626,
+    "mtime": 1787859534.0268223,
     "ast_hash": "3ddb93aca7b5901708c403bfb41afc10",
     "semantic_hash": ""
   },
@@ -2545,7 +2545,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/live-header.html": {
-    "mtime": 1787856258.4819424,
+    "mtime": 1787859533.00969,
     "ast_hash": "9983d254ba2dd74c447fc05867f2890a",
     "semantic_hash": ""
   },
@@ -2615,8 +2615,8 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-summary-header.html": {
-    "mtime": 1787856259.679977,
-    "ast_hash": "bdbbab0641faf576b6e46b58cbc1ceaa",
+    "mtime": 1787859534.3725362,
+    "ast_hash": "b3d75865c62fb30c5cc668930a4b7642",
     "semantic_hash": ""
   },
   "scripts/backfill-notion-sets.mjs": {
@@ -2740,8 +2740,8 @@
     "semantic_hash": ""
   },
   "src/components/dashboard/widgets/TrainingWidgets.tsx": {
-    "mtime": 1787855604.0462444,
-    "ast_hash": "8512188de43ef33846184489f10719b7",
+    "mtime": 1787859409.701566,
+    "ast_hash": "0dcb43fe971473ca7ca3a934979cd3df",
     "semantic_hash": ""
   },
   "src/lib/hooks/useLatestPr.ts": {
@@ -2785,8 +2785,8 @@
     "semantic_hash": ""
   },
   "src/components/dashboard/widgets/PlanWidgets.tsx": {
-    "mtime": 1787666334.2656634,
-    "ast_hash": "378eecdbae4b1ea848275433bf705cea",
+    "mtime": 1787859404.1615908,
+    "ast_hash": "a588feb1adafdec8bcd5f8f0b4e88e1c",
     "semantic_hash": ""
   },
   "src/lib/hooks/useEnergyBalance.ts": {
@@ -2922,6 +2922,11 @@
   "src/components/nutrition/WaterBar.tsx": {
     "mtime": 1787855479.4326649,
     "ast_hash": "3538af8ca2eb8b97b26c6a0ab34b6ba9",
+    "semantic_hash": ""
+  },
+  "src/components/launch/LaunchSurface.tsx": {
+    "mtime": 1787859499.470684,
+    "ast_hash": "bbf2a6fa0d04fa9d2e32cfe54dfaa185",
     "semantic_hash": ""
   }
 }

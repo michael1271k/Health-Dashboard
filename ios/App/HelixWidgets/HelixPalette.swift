@@ -13,6 +13,14 @@ enum Helix {
   static let ember    = Color(hex: 0xE0703C)
   static let sapphire = Color(hex: 0x3D7AB8)
   static let emerald  = Color(hex: 0x3E9E7A)
+  // The deep steps of the ember and sapphire ramps. They exist here because a
+  // routine day's A/B variant is a step on its family's ramp — see `day` below.
+  static let emberDeep    = Color(hex: 0xB4522A)
+  static let sapphireDeep = Color(hex: 0x2E5C8A)
+  /// A prescribed rest day. Mirrors `REST` in palette.ts: deliberately
+  /// desaturated, because rest is the absence of a family hue and must not
+  /// compete with one.
+  static let rest     = Color(hex: 0x3E4757)
   static let gold     = Color(hex: 0xD4AF37)
   static let oxide    = Color(hex: 0xC4514E)
   static let steel    = Color(hex: 0x8E9AAC)
@@ -70,33 +78,43 @@ enum Helix {
 
   /// The colour of a ROUTINE DAY, mirroring `DAY_COLOR` in palette.ts.
   ///
-  /// Every training surface in the app is tinted by which session it is — Upper
-  /// A is always steel, Legs & Core B always emerald — so the widget calendar
-  /// and the Today face have to read from the same table or the two disagree
-  /// about what colour Thursday is.
+  /// Every training surface in the app is tinted by which session it is, so the
+  /// widget calendar and the Today face have to read from the same table or the
+  /// two disagree about what colour Thursday is.
+  ///
+  /// ── A DAY WEARS THE HUE OF WHAT IT TRAINS ─────────────────────────────────
+  /// A day takes its dominant muscle family's colour (see `family` above), and
+  /// its A/B variant is a STEP on that family's ramp: A on the base, B on the
+  /// deep. Upper A and Upper B are the Chest ramp; Legs & Core A and B are the
+  /// Legs ramp; Delts & Arms is Shoulders.
+  ///
+  /// This replaces five tones picked for contrast alone, under which Legs & Core
+  /// B was emerald — the BACK family — and Upper B was gold, the record colour
+  /// this file's `family` comment already says is reserved. Both reservations
+  /// now hold: gold means a personal record, steel means the neutral substrate.
   ///
   /// `src/tests/day-color-parity.test.ts` fails if a key is added on the web
-  /// side without appearing here, which is the only thing keeping two hand-kept
-  /// copies of one table honest.
+  /// side without appearing here, or if a value disagrees — which is the only
+  /// thing keeping two hand-kept copies of one table honest.
   static func day(_ dayKey: String?) -> Color {
     switch dayKey {
     // Helix-5 (active)
-    case "cb_a":         return steel
+    case "cb_a":         return ember
     case "legs_a":       return sapphire
     case "arms":         return amethyst
-    case "cb_b":         return gold
-    case "legs_b":       return emerald
+    case "cb_b":         return emberDeep
+    case "legs_b":       return sapphireDeep
     // Helix-4 (drawer) — mirrors its Helix-5 counterpart
-    case "upper_a":      return steel
+    case "upper_a":      return ember
     case "lower_a":      return sapphire
-    case "upper_b":      return gold
-    case "lower_b":      return emerald
+    case "upper_b":      return emberDeep
+    case "lower_b":      return sapphireDeep
     // PPL legacy — the split colours, since the day IS the split
     case "ppl_push_sun": return ember
     case "ppl_push_thu": return ember
-    case "ppl_pull_mon": return sapphire
-    case "ppl_pull_fri": return sapphire
-    case "ppl_legs_tue": return amethyst
+    case "ppl_pull_mon": return emerald
+    case "ppl_pull_fri": return emerald
+    case "ppl_legs_tue": return sapphire
     default:             return steel
     }
   }

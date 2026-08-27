@@ -9,8 +9,8 @@ import { eraForDate, programDayLabel } from '@/lib/programs'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { displayWeight, useUnitSystem, fmtVolume } from '@/lib/utils/units'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
+import { MUTED } from '@/lib/theme/palette'
 
-const VIOLET = '#B4522A'
 const STEEL = '#79808C'
 
 function scoreColor(score: number | null): string {
@@ -129,7 +129,7 @@ export const DayCard = memo(function DayCard({ d, unit, active, onOpen, onSwap }
       </div>
       {/* Workout / rest line + steps */}
       <div className="flex items-center gap-1.5 mt-1.5 pl-[18px] text-[11px] min-w-0">
-        <span className="flex items-center gap-1.5 min-w-0 flex-1" style={{ color: d.session ? '#8E9AAC' : VIOLET }}>
+        <span className="flex items-center gap-1.5 min-w-0 flex-1" style={{ color: d.session ? STEEL : MUTED }}>
           {d.session ? <Dumbbell className="w-3 h-3 shrink-0" /> : <Moon className="w-3 h-3 shrink-0" />}
           <span className="truncate">
             {d.session
