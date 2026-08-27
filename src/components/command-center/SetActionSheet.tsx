@@ -1,26 +1,52 @@
 'use client'
 
-import { ArrowLeftRight, Trash2 } from 'lucide-react'
+import { ArrowLeftRight, Trash2, Check } from 'lucide-react'
 import { Sheet } from '@/components/ui/Sheet'
-import { Segmented } from '@/components/ui/Segmented'
 import { tapLight } from '@/lib/native/haptics'
+import { MUTED } from '@/lib/theme/palette'
 
-/** The four mutually exclusive things a set can be. Mirrors `DraftSet.setType`. */
-export type SetTypeValue = 'normal' | 'warmup' | 'failure' | 'dropset'
+/** The five mutually exclusive things a set can be. Mirrors `DraftSet.setType`. */
+export type SetTypeValue = 'normal' | 'warmup' | 'failure' | 'dropset' | 'ghost'
 
 const ORANGE = '#E0703C' // warm-up
 const DANGER = '#C4514E' // failure
 const DROP = '#9A6DD7'   // drop set
 
 /**
+ * The five types, with the letter each one wears on the row it came from.
+ *
+ * The badge is the trigger AND the readout (see below), so the sheet showing the
+ * same glyph is what makes the connection between "the thing I tapped" and "the
+ * thing I am choosing" without a sentence explaining it.
+ */
+const TYPES: ReadonlyArray<{ value: SetTypeValue; label: string; badge: string; color: string; hint: string }> = [
+  { value: 'normal', label: 'Normal', badge: '#', color: MUTED, hint: 'Counts as work' },
+  { value: 'warmup', label: 'Warm-up', badge: 'W', color: ORANGE, hint: 'Before the work' },
+  { value: 'failure', label: 'Failure', badge: 'F', color: DANGER, hint: 'Taken to failure' },
+  { value: 'dropset', label: 'Drop', badge: 'D', color: DROP, hint: 'No record from it' },
+  /**
+   * ── GHOST ────────────────────────────────────────────────────────────────
+   * A set that happened and does not count: a rep you restarted, a set on the
+   * wrong machine, a technique run, someone else's plates. Until now the only
+   * way to record one was to call it a warm-up, which is a lie the export then
+   * repeats — and which quietly made it a warm-up in the routine's own memory.
+   *
+   * It is excluded on BOTH sides: never a working set (so it forms no baseline
+   * and the coach never paces you against it) and never PR-eligible. See
+   * `isWorkingSet` and `isPrIneligible`.
+   */
+  { value: 'ghost', label: 'Ghost', badge: 'G', color: MUTED, hint: 'Logged, counts for nothing' },
+]
+
+/**
  * Everything you do to a set that is not its two numbers.
  *
  * ── WHY IT LEFT THE ROW ──────────────────────────────────────────────────────
  * The expanded tuner was about 250px tall for one set. Roughly 90px of that was
- * spent on three controls you touch a handful of times a session: a four-segment
- * set-type picker that is `Normal` on twenty-three sets out of twenty-four, a
- * Split L/R offered on every unilateral row whether or not you intend to split
- * it, and a Remove.
+ * spent on three controls you touch a handful of times a session: a set-type
+ * picker that is `Normal` on twenty-three sets out of twenty-four, a Split L/R
+ * offered on every unilateral row whether or not you intend to split it, and a
+ * Remove.
  *
  * They are not less important — they are less FREQUENT, and a control's
  * permanent height should be paid for by how often it is reached, not by how
@@ -28,12 +54,32 @@ const DROP = '#9A6DD7'   // drop set
  * on screen and had nothing to do: the set's own badge.
  *
  * ── AND WHY THE BADGE IS THE TRIGGER ─────────────────────────────────────────
- * The badge already SHOWS the set's type — `W`, `F`, `D`, or the ordinal. A
+ * The badge already SHOWS the set's type — `W`, `F`, `D`, `G`, or the ordinal. A
  * control that displays a value is the obvious place to change it, and it costs
  * no new pixels because the box was already drawn.
  *
  * The row's other tap target, the trophy on the second line, keeps opening
  * `PrRecordSheet`. Two targets, two jobs, and neither is a long-press.
+ *
+ * ── WHY IT IS NO LONGER A SEGMENTED CONTROL AND A COLUMN OF BUTTONS ──────────
+ * It was a full-width four-segment picker under a section label, then a
+ * full-width Split, then a full-width Remove — three stacked 48px bars and two
+ * headings, about 190px of sheet, for a control reached between sets with one
+ * thumb while out of breath. It read as a settings page.
+ *
+ * The type is a ROW OF CHIPS instead. Five options are exactly what a row of
+ * chips is for: they are visible at once, each is its own object rather than a
+ * slice of one bar, and each can carry its own colour — which the segmented
+ * control could not, so `Warm-up` and `Drop` were the same grey until selected.
+ * A fifth segment would have made each one 66px wide on a 360px phone; a fifth
+ * chip costs nothing.
+ *
+ * Split and Remove then fit on ONE row beside each other, because neither needs
+ * a full width to be legible and putting them side by side is what removes the
+ * third stacked bar. Remove keeps the danger tint and stays on the far side from
+ * the type chips, which are the controls you actually came here for.
+ *
+ * Net: about 190px down to about 110px, and nothing was taken away.
  */
 export function SetActionSheet({
   open, onClose, setLabel, value, onPick, onSplit, onRemove,
@@ -49,71 +95,96 @@ export function SetActionSheet({
   onRemove: () => void
 }) {
   return (
-    <Sheet open={open} onClose={onClose} title={setLabel}>
-      <div className="space-y-3 pb-2">
-        <div>
-          <span className="block mb-1.5 text-[9px] font-bold uppercase tracking-[0.1em] text-muted/60">
-            Set type
-          </span>
-          {/* FOUR SEGMENTS, AND ONE OF THEM IS "NORMAL". These are mutually
-              exclusive and the null state is a real choice — it used to be the
-              absence of three separate toggles, which meant the control could
-              not show you what the set currently IS, only what it is not.
+    <Sheet open={open} onClose={onClose} title={setLabel} maxHeight="52dvh">
+      <div className="space-y-2 pb-1">
+        {/* ── THE TYPE, AS FIVE CHIPS ──
+            No section heading: the sheet's own title already names the set, and
+            a "Set type" label above the only thing in the sheet is a caption on
+            a photograph of itself.
 
-              Picking does NOT close the sheet: changing a set to a warm-up and
-              then wanting to split it is one errand, and a sheet that dismisses
-              on the first tap makes it two. */}
-          <Segmented
-            fluid
-            size="sm"
-            label={`Set type for ${setLabel}`}
-            value={value}
-            onChange={onPick}
-            options={[
-              { value: 'normal', label: 'Normal' },
-              { value: 'warmup', label: 'Warm-up', color: ORANGE },
-              { value: 'failure', label: 'Failure', color: DANGER },
-              { value: 'dropset', label: 'Drop', color: DROP, title: 'Drop set' },
-            ]}
-          />
+            Picking does NOT close the sheet. Changing a set to a warm-up and
+            then wanting to split it is one errand, and a sheet that dismisses on
+            the first tap makes it two. */}
+        <div
+          role="radiogroup"
+          aria-label={`Set type for ${setLabel}`}
+          className="grid grid-cols-5 gap-1"
+        >
+          {TYPES.map((t) => {
+            const on = t.value === value
+            return (
+              <button
+                key={t.value}
+                type="button"
+                role="radio"
+                aria-checked={on}
+                onPointerDown={() => { void tapLight() }}
+                onClick={() => onPick(t.value)}
+                title={t.hint}
+                className="min-h-[52px] rounded-xl flex flex-col items-center justify-center gap-0.5
+                           active:scale-95 transition-transform"
+                style={{
+                  // Selected wears its own colour at full strength; the rest are
+                  // inert. The colour IS the state, so there is no tick to find.
+                  background: on ? `${t.color}24` : 'rgba(255,255,255,0.03)',
+                  border: `1px solid ${on ? `${t.color}8c` : 'rgba(255,255,255,0.08)'}`,
+                  color: on ? t.color : undefined,
+                  boxShadow: on ? 'inset 0 1px 0 rgba(255,255,255,0.10)' : undefined,
+                }}
+              >
+                <span className={`helix-num text-[13px] font-extrabold leading-none ${on ? '' : 'text-muted'}`}>
+                  {t.badge}
+                </span>
+                <span className={`text-[9px] font-bold leading-none ${on ? '' : 'text-muted'}`}>
+                  {t.label}
+                </span>
+              </button>
+            )
+          })}
         </div>
 
-        {/* Unilateral — split into Left/Right. Offered ONLY on a movement
-            trained one side at a time (`isUnilateralExercise`, checked in
-            `ExerciseCard`): splitting a bilateral set is not cosmetic, since a
-            pair is scored at its weaker side and counts as ONE set of work. */}
-        {onSplit && (
+        {/* What the chosen type actually means, in four words, on one line that
+            is always there. A tooltip is not reachable by thumb, and five hints
+            stacked as helper text under five chips would put the height straight
+            back. */}
+        <p className="text-[10px] text-muted leading-none px-0.5 flex items-center gap-1 min-h-[12px]">
+          <Check className="w-2.5 h-2.5 shrink-0" aria-hidden="true" />
+          {TYPES.find((t) => t.value === value)?.hint}
+        </p>
+
+        {/* ── SPLIT AND REMOVE, SIDE BY SIDE ──
+            Remove keeps its distance from the numbers you were editing — it is
+            two taps from the row and it is on the opposite end of this line from
+            the chips. Splitting a bilateral set is not cosmetic (a pair is
+            scored at its weaker side and counts as ONE set of work), so it is
+            offered only on a movement trained one side at a time. */}
+        <div className="flex gap-1.5 pt-0.5">
+          {onSplit && (
+            <button
+              type="button"
+              onPointerDown={() => { void tapLight() }}
+              onClick={() => { onSplit(); onClose() }}
+              className="flex-1 min-h-[44px] px-3 rounded-xl text-[11px] font-bold uppercase tracking-wide
+                         text-text border border-white/10 bg-white/[0.03] active:scale-[0.98] transition-transform
+                         flex items-center justify-center gap-1.5"
+            >
+              <ArrowLeftRight className="w-3.5 h-3.5" aria-hidden="true" />
+              Split L / R
+            </button>
+          )}
           <button
             type="button"
             onPointerDown={() => { void tapLight() }}
-            onClick={() => { onSplit(); onClose() }}
-            className="w-full min-h-[48px] px-3 rounded-xl text-[12px] font-bold uppercase tracking-wide
-                       text-text border border-white/10 bg-white/[0.03] active:scale-[0.98] transition-transform
-                       flex items-center justify-center gap-2"
+            onClick={() => { onRemove(); onClose() }}
+            className={`${onSplit ? 'flex-1' : 'w-full'} min-h-[44px] px-3 rounded-xl text-[11px] font-bold uppercase tracking-wide
+                       text-danger border border-danger/25 bg-danger/[0.06] active:scale-[0.98] transition-transform
+                       flex items-center justify-center gap-1.5`}
+            aria-label={`Remove ${setLabel}`}
           >
-            <ArrowLeftRight className="w-3.5 h-3.5" aria-hidden="true" />
-            Split L / R
+            <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+            Remove
           </button>
-        )}
-
-        {/* ── REMOVE, AS FAR FROM THE TICK AS IT CAN GET ──
-            It was a permanent 32px × on every collapsed row, one thumb-width
-            from the green tick — the two most consequential controls on the
-            deck, adjacent, one of them destructive. Then it was a full-width
-            button in the tuner, which was better but still one tap from the
-            numbers you were editing. Here it takes a deliberate two. */}
-        <button
-          type="button"
-          onPointerDown={() => { void tapLight() }}
-          onClick={() => { onRemove(); onClose() }}
-          className="w-full min-h-[48px] px-3 rounded-xl text-[12px] font-bold uppercase tracking-wide
-                     text-danger border border-danger/25 bg-danger/[0.06] active:scale-[0.98] transition-transform
-                     flex items-center justify-center gap-2"
-          aria-label={`Remove ${setLabel}`}
-        >
-          <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-          Remove set
-        </button>
+        </div>
       </div>
     </Sheet>
   )

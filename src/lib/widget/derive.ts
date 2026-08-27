@@ -4,6 +4,7 @@ import { resolveMovers } from '@/lib/exercises/muscleMap'
 import { toLandmarkMuscle, SECONDARY_SET_CREDIT } from '@/lib/training/landmarks'
 import { familyOf, type MuscleFamily } from '@/lib/theme/muscleHue'
 import type { TrendPoint, WidgetE1rm, WidgetFamilyVolume, WidgetRecord } from '@/lib/widget/snapshot'
+import { isWorkingSet } from '@/lib/training/setTags'
 
 /**
  * The arithmetic behind the widget payload — pure, so it can be tested without
@@ -354,7 +355,7 @@ export function e1rmTrends(
   // exercise → day → best estimate that day
   const byExercise = new Map<string, Map<string, number>>()
   for (const s of sets) {
-    if (s.setType === 'warmup') continue
+    if (!isWorkingSet(s.setType)) continue
     const est = (s.est1rmKg && s.est1rmKg > 0 ? s.est1rmKg : null)
       ?? epley1RM(s.weightKg ?? 0, s.reps ?? 0)
     if (est == null || !(est > 0)) continue

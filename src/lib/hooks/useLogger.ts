@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
+import { isWorkingSet } from '@/lib/training/setTags'
 
 /** exercise NAME → id, so program templates (programs.ts) can resolve DB exercise rows. */
 export function useExerciseMap() {
@@ -55,7 +56,7 @@ export function useRoutineMemory(dayKeys: string[]) {
       // Newest-first, so the first hit per key IS the most recent.
       const seen = new Map<string, RoutineMemoryEntry>()
       for (const r of rows) {
-        if (r.set_type === 'warmup') continue
+        if (!isWorkingSet(r.set_type)) continue
         const dk = r.workout_sessions.day_key
         if (!dk) continue
         const k = `${dk}|${r.exercise_id}`

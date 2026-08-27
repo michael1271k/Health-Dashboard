@@ -47,7 +47,7 @@ export interface TemplateSet {
   /** Last committed rating for this slot. Seeds the next deck; cleared again the
    *  moment the load or the reps go up. Warm-ups never carry one. */
   rpe?: number
-  setType?: 'warmup' | 'failure' | 'dropset'
+  setType?: 'warmup' | 'failure' | 'dropset' | 'ghost'
   /** A unilateral pair is TWO of these sharing `pairId`. Never flattened. */
   side?: 'L' | 'R'
   pairId?: string
@@ -102,7 +102,7 @@ export interface TemplateSourceCardio {
   deckOrder?: number
 }
 
-const TEMPLATE_TAGS: readonly string[] = ['warmup', 'failure', 'dropset']
+const TEMPLATE_TAGS: readonly string[] = ['warmup', 'failure', 'dropset', 'ghost']
 
 /**
  * Build the template from the sets that were just committed.

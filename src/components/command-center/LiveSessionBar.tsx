@@ -128,7 +128,16 @@ export const LiveSessionBar = memo(function LiveSessionBar({
               the treatment the hero's tiles already use, at bar scale — so the
               line reads as three measurements, and the row gets the breathing
               space the compression took away. */}
-          <p className="flex items-center gap-1.5 mt-1 text-[12px] leading-none text-muted">
+          {/* ── AND THE PILLS NEEDED AIR ──
+              `gap-1.5` (6px) put three tinted chips a hairline apart, which at
+              a glance reads as one segmented control rather than as three
+              independent readings — the tonnage and the set count looked like
+              two halves of the same figure. 10px is the smallest gap at which
+              each chip is unambiguously its own object, and it still fits the
+              worst realistic line (a six-figure tonnage, a two-digit set count
+              and a PR count) inside 360px because the interpuncts that used to
+              sit between them are long gone. */}
+          <p className="flex items-center gap-2.5 mt-1 text-[12px] leading-none text-muted">
             <Stat value={fmtVolume(volumeKg)} unit="kg" color={EMBER} />
             <Stat value={String(sets)} unit={sets === 1 ? 'set' : 'sets'} color={STEEL} />
             <Stat

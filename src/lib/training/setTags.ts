@@ -1,4 +1,4 @@
-import { EMBER, OXIDE, DROPSET } from '@/lib/theme/palette'
+import { EMBER, OXIDE, DROPSET, MUTED } from '@/lib/theme/palette'
 
 /**
  * What a set WAS, in one letter — the vocabulary three surfaces share.
@@ -35,6 +35,34 @@ export const SET_TAGS: Record<string, SetTag> = {
   warmup: { label: 'W', full: 'Warm-up', color: EMBER },
   failure: { label: 'F', full: 'Taken to failure', color: OXIDE },
   dropset: { label: 'D', full: 'Drop set', color: DROPSET },
+  ghost: { label: 'G', full: 'Ghost set — logged, not counted', color: MUTED },
+}
+
+/**
+ * Sets that are RECORDED but do not count as work.
+ *
+ * ── WHY GHOST EXISTS BESIDE WARM-UP ──────────────────────────────────────────
+ * A warm-up is a set with a job: it precedes the work and its lightness is the
+ * point. A GHOST is a set that happened and should not be counted — a rep you
+ * restarted, a set on the wrong machine, a technique run, someone else's plates
+ * left on the bar. Both are excluded from the same places, and until now the
+ * only way to record one was to call it a warm-up, which then dragged the
+ * routine's warm-up count and the export's `2W · 1F` composition with it.
+ *
+ * ── AND WHY ONE PREDICATE RATHER THAN A FOURTH LITERAL EVERYWHERE ────────────
+ * "Not a working set" was written as `s.setType !== 'warmup'` in roughly twenty
+ * places — the ledger, the coach, progression, the trends, the score, the
+ * export, the Live Activity's next-set lookup. Adding a second excluded tag by
+ * hand means finding all twenty and getting all twenty right, and the ones that
+ * were missed would fail silently and in the worst direction: a ghost set would
+ * quietly become a baseline, and the coach would pace you against a set you
+ * explicitly said did not count.
+ *
+ * So the question gets a name. Every one of those sites asks it here now, and a
+ * future tag is one line in this function.
+ */
+export function isWorkingSet(setType: string | null | undefined): boolean {
+  return setType !== 'warmup' && setType !== 'ghost'
 }
 
 /** The tag for a stored `set_type`, or undefined for a plain working set. */
@@ -53,7 +81,7 @@ export function setTagFor(setType: string | null | undefined): SetTag | undefine
 export function setComposition(counts: Partial<Record<keyof typeof SET_TAGS | string, number>>):
 Array<SetTag & { count: number }> {
   const out: Array<SetTag & { count: number }> = []
-  for (const key of ['warmup', 'failure', 'dropset']) {
+  for (const key of ['warmup', 'failure', 'dropset', 'ghost']) {
     const count = counts[key] ?? 0
     if (count > 0) out.push({ ...SET_TAGS[key], count })
   }

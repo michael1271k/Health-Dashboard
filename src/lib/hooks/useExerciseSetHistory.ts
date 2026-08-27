@@ -3,9 +3,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { eraForDate, type Era } from '@/lib/programs'
+import { isWorkingSet } from '@/lib/training/setTags'
 
 /** The set tags that round-trip through seeding. Mirrors `DraftSet['setType']`. */
-export type HistorySetType = 'warmup' | 'failure' | 'dropset'
+export type HistorySetType = 'warmup' | 'failure' | 'dropset' | 'ghost'
 
 /** One historical set. A unilateral pair is TWO of these sharing `pairId`. */
 export interface HistorySet {
@@ -47,7 +48,7 @@ export interface ExerciseHistory {
  */
 export function workingSets(h: ExerciseHistory | undefined): ExerciseHistory['sets'] {
   if (!h || !Array.isArray(h.sets)) return []
-  return h.sets.filter((s) => s.setType !== 'warmup')
+  return h.sets.filter((s) => isWorkingSet(s.setType))
 }
 
 /**
@@ -80,7 +81,7 @@ export interface HistoryRow {
   workout_sessions: { started_at: string; day_key: string | null }
 }
 
-const TAGS: readonly string[] = ['warmup', 'failure', 'dropset']
+const TAGS: readonly string[] = ['warmup', 'failure', 'dropset', 'ghost']
 
 /**
  * Rows → the most recent qualifying session per exercise name.

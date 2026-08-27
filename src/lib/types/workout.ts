@@ -13,7 +13,7 @@ export interface WorkoutSet {
   weightKg: number
   reps: number
   rpe?: number
-  setType?: 'normal' | 'warmup' | 'failure' | 'dropset'  // Hevy-style modifier; warmups + drop sets excluded from PR
+  setType?: 'normal' | 'warmup' | 'failure' | 'dropset' | 'ghost'  // Hevy-style modifier; warm-ups, drop sets and ghosts excluded from PR
   exerciseOrder?: number        // deck position of the parent exercise
   // Unilateral (per-side) tracking. A split set persists as TWO rows sharing
   // `pairId`, one side 'L' one 'R'. Absent = a normal bilateral set.

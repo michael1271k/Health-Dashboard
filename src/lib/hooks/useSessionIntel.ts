@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase/client'
 import { eraForDate, programDayFor, programDayByKey, DEFAULT_PROGRAM_ID } from '@/lib/programs'
 import { epley1RM } from '@/lib/utils/epley'
 import { sessionVolumeKg, type VolumeSet } from '@/lib/sessions/volume'
+import { isWorkingSet } from '@/lib/training/setTags'
 
 export interface ExerciseDelta {
   exerciseId: string
@@ -358,7 +359,7 @@ export function useSessionIntel(sessionId: string | null) {
           const bucket = perEx.get(s.exercise_id) ?? []
           bucket.push(toVolumeSet(s))
           perEx.set(s.exercise_id, bucket)
-          if (s.set_type !== 'warmup') {
+          if (isWorkingSet(s.set_type)) {
             const w = workEx.get(s.exercise_id) ?? []
             w.push(s)
             workEx.set(s.exercise_id, w)

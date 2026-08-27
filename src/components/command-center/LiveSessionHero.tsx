@@ -6,6 +6,7 @@ import { LeverTag } from '@/components/nutrition/LeverTag'
 import { BackLink } from '@/components/nav/NavChevron'
 import { MuscleDistribution } from './MuscleDistribution'
 import { SessionClock } from './SessionClockSheet'
+import { SessionElapsed } from './SessionElapsed'
 import { SessionMenu } from './SessionMenu'
 import { FinishButton } from './FinishButton'
 import { DatePickerPopover } from './DatePickerPopover'
@@ -198,6 +199,10 @@ export function LiveSessionHero({ draft, accent, volumeKg, sets, recordCount, on
             kind of thing — neither changes the session, both answer a question
             you have while you are resting. */}
         <div className="flex items-center gap-2 shrink-0">
+          {/* Total session time first: it is the reading, and the two controls
+              beside it are things you DO. It renders nothing on a back-dated or
+              edited deck, where "now minus started" is not a real duration. */}
+          <SessionElapsed startedAt={draft.startedAt} />
           <SessionClock />
           <MuscleDistribution draft={draft} accent={accent} size="lg" />
         </div>

@@ -11,6 +11,7 @@
  * gets harder, in either axis.
  */
 import { normalizeCr10 } from '@/lib/training/effort'
+import { isWorkingSet } from './setTags'
 
 /** What was remembered, and the work it was earned against. */
 export interface RpeSeed {
@@ -97,7 +98,7 @@ export function deriveSessionRpe(sets: readonly RatedSet[]): number | null {
   let totalWeight = 0
 
   for (const s of sets) {
-    if (s.setType === 'warmup') continue
+    if (!isWorkingSet(s.setType)) continue
     if (s.rpe == null || !Number.isFinite(s.rpe)) continue
     const tonnage = s.weightKg * s.reps
     const w = tonnage > 0 ? tonnage : 1

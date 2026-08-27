@@ -33,7 +33,7 @@ export interface ExerciseHistoryEntry {
     reps: number
     /** Last session's rating for this slot — seeds the deck, see `seedFromHistory`. */
     rpe?: number
-    setType?: 'warmup' | 'failure' | 'dropset'
+    setType?: 'warmup' | 'failure' | 'dropset' | 'ghost'
     side?: 'L' | 'R'
     pairId?: string
   }>

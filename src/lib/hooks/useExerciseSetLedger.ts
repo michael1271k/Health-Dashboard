@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase/client'
 import { programDayByKey } from '@/lib/programs'
 import { sessionVolumeKg, type VolumeSet } from '@/lib/sessions/volume'
 import type { HistorySetType } from './useExerciseSetHistory'
+import { isWorkingSet } from '@/lib/training/setTags'
 
 /** One logged set, as the ledger renders it. */
 export interface LedgerSet {
@@ -105,7 +106,7 @@ export interface LedgerRow {
   workout_sessions: { id: string; started_at: string; day_key: string | null; split_day: string | null }
 }
 
-const TAGS: readonly string[] = ['warmup', 'failure', 'dropset']
+const TAGS: readonly string[] = ['warmup', 'failure', 'dropset', 'ghost']
 
 /**
  * Rows → sessions, newest first.
@@ -150,7 +151,7 @@ export function groupLedgerRows(rows: LedgerRow[], sessionLimit = 25): LedgerSes
     let n = 0
     const seenPairs = new Set<string>()
     for (const s of sets) {
-      if (s.setType === 'warmup') continue
+      if (!isWorkingSet(s.setType)) continue
       if (s.pairId) {
         if (!seenPairs.has(s.pairId)) { seenPairs.add(s.pairId); n += 1 }
         s.workingNum = n
@@ -161,7 +162,7 @@ export function groupLedgerRows(rows: LedgerRow[], sessionLimit = 25): LedgerSes
     }
 
     const vs: VolumeSet[] = sets
-      .filter((s) => s.setType !== 'warmup')
+      .filter((s) => isWorkingSet(s.setType))
       .map((s) => ({ weightKg: s.weightKg, reps: s.reps, side: s.side, pairId: s.pairId }))
 
     out.push({

@@ -1,6 +1,7 @@
 import type { SessionDraft } from '@/lib/sessions/draft'
 import { isSetCommitted } from '@/lib/sessions/draft'
 import type { ExerciseHistory } from '@/lib/hooks/useExerciseSetHistory'
+import { isWorkingSet } from '@/lib/training/setTags'
 
 /**
  * The set you are walking towards, and what it cost you last time.
@@ -97,7 +98,7 @@ export function findNextSet(
  */
 function previousFor(h: ExerciseHistory | undefined, setNumber: number) {
   if (!h?.sets) return undefined
-  const working = h.sets.filter((s) => s.setType !== 'warmup')
+  const working = h.sets.filter((s) => isWorkingSet(s.setType))
   // A pair is one set on the history side too — take the first row of each.
   const folded: typeof working = []
   const seen = new Set<string>()

@@ -12,6 +12,7 @@ import {
   type ContextMode,
 } from '@/lib/nutrition/context'
 import { applyLever, activeLeverOf, leverForDate } from '@/lib/nutrition/levers'
+import { isWorkingSet } from '@/lib/training/setTags'
 
 /** The goals a user with no `user_goals` row is graded against. */
 const CUT = phaseGoalsFor(DEFAULT_PROGRAM_ID, 'cut')
@@ -201,7 +202,7 @@ export async function computeForDate(
     const working = new Set<string>()
     for (const r of rows) {
       if (r.is_pr) prCount += 1
-      if ((r.set_type ?? 'normal') === 'warmup') continue
+      if (!isWorkingSet(r.set_type ?? 'normal')) continue
       exercises.add(r.exercise_id)
       // Unilateral L/R sub-sets share a pair_id and are ONE set.
       working.add(r.pair_id ?? r.id)

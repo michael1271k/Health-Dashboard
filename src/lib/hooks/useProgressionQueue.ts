@@ -10,6 +10,7 @@ import {
   repWindowFor, holdTargetFor, progressionVerdict, timedProgressionVerdict, type WorkingSet,
 } from '@/lib/training/ceilings'
 import { useExerciseMap } from '@/lib/hooks/useLogger'
+import { isWorkingSet } from '@/lib/training/setTags'
 
 /** One lift that has cleared its ceiling twice — ready for a load bump NEXT time
  *  it appears (even on a different day this week). */
@@ -55,7 +56,7 @@ export const exerciseDayKey = (dayKey: string, exerciseId: string) => `${dayKey}
 export function bucketByExerciseDay(rows: ProgressionSetRow[]): Map<string, Map<string, WorkingSet[]>> {
   const out = new Map<string, Map<string, WorkingSet[]>>()
   for (const r of rows) {
-    if (r.set_type === 'warmup') continue
+    if (!isWorkingSet(r.set_type)) continue
     const dk = r.workout_sessions.day_key
     if (!dk) continue
     const at = r.workout_sessions.started_at

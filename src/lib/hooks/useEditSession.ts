@@ -85,7 +85,7 @@ export function useEditSession() {
         // All THREE modifiers round-trip. 'dropset' was missing, so editing a
         // session silently promoted every drop set to a normal working set —
         // which then became PR-eligible on the re-commit.
-        if (r.set_type === 'warmup' || r.set_type === 'failure' || r.set_type === 'dropset') set.setType = r.set_type
+        if (r.set_type === 'warmup' || r.set_type === 'failure' || r.set_type === 'dropset' || r.set_type === 'ghost') set.setType = r.set_type
         if (r.side === 'L' || r.side === 'R') { set.side = r.side; set.pairId = r.pair_id ?? undefined }
         ex.sets.push(set)
       }

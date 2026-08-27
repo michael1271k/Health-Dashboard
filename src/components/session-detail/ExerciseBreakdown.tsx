@@ -21,6 +21,7 @@ import { repWindowFor, holdTargetFor } from '@/lib/training/ceilings'
 import { restTargetFor, formatRestTarget } from '@/lib/training/restTargets'
 import { eraForDate } from '@/lib/programs'
 import { GOLD, OXIDE, EMERALD, SAPPHIRE, EMBER, STEEL, MUTED } from '@/lib/theme/palette'
+import { isWorkingSet } from '@/lib/training/setTags'
 
 // recharts lives ONLY in this sheet, which opens on tap. Loading it statically
 // pulled the whole chart library into the Session Report's first-load bundle
@@ -98,7 +99,7 @@ export function toRows(sets: DetailSet[]): Row[] {
   const byPair = new Map<string, Extract<Row, { kind: 'pair' }>>()
   let num = 0
   for (const s of sets) {
-    const counts = s.setType !== 'warmup'
+    const counts = isWorkingSet(s.setType)
     if (s.pairId) {
       let g = byPair.get(s.pairId)
       if (!g) {
@@ -346,7 +347,7 @@ export function exerciseStats(ex: DetailExercise): {
   /** Best single set by reps (or seconds, on a timed hold). Never null. */
   topReps: number
 } {
-  const working = ex.sets.filter((s) => s.setType !== 'warmup')
+  const working = ex.sets.filter((s) => isWorkingSet(s.setType))
   // A unilateral pair is ONE set of work, so its reps count once — the same
   // rule tonnage already uses, and the reason this cannot just sum the rows.
   const seen = new Set<string>()

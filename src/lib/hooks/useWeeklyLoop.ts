@@ -22,6 +22,7 @@ import { type CustomSupplement } from '@/lib/hooks/useCustomSupplements'
 import { normalizeSpO2 } from '@/lib/utils/units'
 import { activeKcalOf } from '@/lib/cardio/metrics'
 import { volumeCredits, type PrAxis } from '@/lib/training/prEngine'
+import { isWorkingSet } from '@/lib/training/setTags'
 
 /**
  * The user's stack, as rows, for the export to render.
@@ -424,7 +425,7 @@ function toSessions(d: RangeData): ExportSession[] {
         pairId: r.pair_id,
       })
       // Warm-ups must not define the top load.
-      if (r.set_type !== 'warmup') e.topKg = Math.max(e.topKg ?? 0, r.weight_kg) || null
+      if (isWorkingSet(r.set_type)) e.topKg = Math.max(e.topKg ?? 0, r.weight_kg) || null
       byName.set(r.exercises.name, e)
     }
     // Per-set volume CREDIT for every row, from the engine that owns the rule.

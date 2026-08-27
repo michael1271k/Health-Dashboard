@@ -291,9 +291,17 @@ export function e1rmEligible(reps: number, floor?: number | null): boolean {
   return reps >= 5
 }
 
-/** Warm-ups and drop sets count toward volume but are never a top-set record. */
+/**
+ * Warm-ups and drop sets count toward volume but are never a top-set record —
+ * and a GHOST counts toward nothing at all.
+ *
+ * Ghost is the one tag that is excluded on both sides of the ledger: it is not a
+ * working set (`isWorkingSet`, so it never forms a baseline) and it is not
+ * PR-eligible here, so it can neither claim a record nor set the bar for one.
+ * That is the whole meaning of the tag — a set that happened and does not count.
+ */
 export function isPrIneligible(setType: string | null | undefined): boolean {
-  return setType === 'warmup' || setType === 'dropset'
+  return setType === 'warmup' || setType === 'dropset' || setType === 'ghost'
 }
 
 /**

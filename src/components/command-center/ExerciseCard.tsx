@@ -24,6 +24,7 @@ import { targetForExercise, formatTarget } from '@/lib/reports/targetMatch'
 import { livePrKey } from '@/lib/sessions/livePrs'
 import { SAPPHIRE, STEEL, MUTED, HAIRLINE } from '@/lib/theme/palette'
 import { exerciseColor } from '@/lib/theme/muscleHue'
+import { isWorkingSet } from '@/lib/training/setTags'
 
 const STATUS_META: Record<NonNullable<DraftExercise['status']>, { label: string; color: string }> = {
   PR:       { label: 'PR',       color: '#D4AF37' },  // gold
@@ -399,7 +400,7 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
   // same verdict whether you went heavy-to-light or light-to-heavy.
   const committedWork = useMemo(
     () => exercise.sets
-      .filter((s) => isSetCommitted(s) && s.setType !== 'warmup')
+      .filter((s) => isSetCommitted(s) && isWorkingSet(s.setType))
       .map((s) => ({ weightKg: s.weightKg, reps: s.reps })),
     [exercise.sets],
   )

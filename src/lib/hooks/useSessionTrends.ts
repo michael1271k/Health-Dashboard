@@ -6,6 +6,7 @@ import { epley1RM } from '@/lib/utils/epley'
 import { eraForDate, HELIX_CUT_START } from '@/lib/programs'
 import { isTimedExercise } from '@/lib/exercises/timed'
 import { sessionVolumeKg } from '@/lib/sessions/volume'
+import { isWorkingSet } from '@/lib/training/setTags'
 import {
   repWindowFor, holdTargetFor, progressionVerdict, timedProgressionVerdict, workLoads,
   LOAD_STEP_KG, type ProgressionVerdict, type WorkingSet,
@@ -131,7 +132,7 @@ export function useSessionTrends(exerciseIds: string[], eraDate: string, dayKey?
       const nameOf = new Map<string, string>()
 
       for (const r of rows) {
-        if (r.set_type === 'warmup') continue
+        if (!isWorkingSet(r.set_type)) continue
         nameOf.set(r.exercise_id, r.exercises.name)
         const at = r.workout_sessions.started_at
         const perEx = byExercise.get(r.exercise_id) ?? new Map<string, SetRow[]>()

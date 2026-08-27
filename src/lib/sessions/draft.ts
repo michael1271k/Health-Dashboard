@@ -33,7 +33,7 @@ export interface DraftSet {
   /** Hevy-style set modifier; absent = a normal working set. Warmups + drop sets
    *  count toward volume + set count but are never PR-eligible. Failure is tracked
    *  PER SIDE for unilateral sets. */
-  setType?: 'warmup' | 'failure' | 'dropset'
+  setType?: 'warmup' | 'failure' | 'dropset' | 'ghost'
   /**
    * Hevy-style completion flag. `false` = the row is NOT ticked green and is
    * EXCLUDED from the commit (template decks seed every set `false`, so nothing
@@ -509,7 +509,7 @@ function sanitizeDraft(value: unknown): SessionDraft | null {
         clean.rpeSeedWeightKg = s.rpeSeedWeightKg
         clean.rpeSeedReps = s.rpeSeedReps
       }
-      if (s.setType === 'warmup' || s.setType === 'failure' || s.setType === 'dropset') clean.setType = s.setType
+      if (s.setType === 'warmup' || s.setType === 'failure' || s.setType === 'dropset' || s.setType === 'ghost') clean.setType = s.setType
       // Preserve the Hevy completion flag across reloads (only an explicit false
       // is meaningful — everything else stays committed).
       if (s.done === false) clean.done = false

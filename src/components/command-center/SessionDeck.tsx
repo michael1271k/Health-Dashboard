@@ -24,6 +24,7 @@ import { prAxisLabel } from '@/lib/training/prEngine'
 import { isTimedExercise } from '@/lib/exercises/timed'
 import { useReportTargets } from '@/lib/hooks/useReportTargets'
 import { findNextSet, formatLastRpe, formatLastTime } from '@/lib/sessions/nextSet'
+import { elapsedDurationMin, sessionElapsedSec } from '@/lib/sessions/sessionElapsed'
 import { endWorkoutActivity, hexToInt, startWorkoutActivity, updateWorkoutActivity } from '@/lib/native/liveActivity'
 
 /**
@@ -110,10 +111,33 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
     return () => io.disconnect()
   }, [])
 
+  /**
+   * ── FINISH READS THE SESSION CLOCK ─────────────────────────────────────────
+   * Duration is the one end-of-session field the app CAN derive, and until now
+   * it did not: the sheet pre-filled it from the last time you ran this routine,
+   * which is a decent guess about a typical session and says nothing about the
+   * one you just did.
+   *
+   * The reading is taken HERE, at the moment Finish is pressed, and not by the
+   * sheet. The sheet is mounted for the whole session; a value it computed
+   * during render would be however long the deck had been open at the last
+   * keystroke, and one it computed in an effect would need the effect to fire on
+   * open. Pressing Finish is the event that fixes the duration, so it is the
+   * event that reads the clock.
+   *
+   * Null on a back-dated or edited deck (`sessionElapsedSec` refuses those), and
+   * the sheet falls back to its historical seed exactly as before.
+   */
+  const [elapsedMin, setElapsedMin] = useState<number | null>(null)
   // Stable, because it is handed to two memoized headers (`LiveSessionBar` is
   // `memo`, and the hero sits under it) — an inline arrow would change identity
   // on every keystroke in every set field and undo that memo.
-  const openFinish = useCallback(() => setFinishOpen(true), [])
+  const startedAtRef = useRef<string | null>(null)
+  startedAtRef.current = draft?.startedAt ?? null
+  const openFinish = useCallback(() => {
+    setElapsedMin(elapsedDurationMin(sessionElapsedSec(startedAtRef.current, Date.now())))
+    setFinishOpen(true)
+  }, [])
 
   /**
    * ── THE RUNNING WORKOUT, ON THE LOCK SCREEN ────────────────────────────────
@@ -359,6 +383,7 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
         totals={totals}
         busy={commit.isPending}
         error={commitError}
+        elapsedMin={elapsedMin}
         onSetStats={setStats}
         onSessionRpe={setSessionRpe}
         onCommit={doCommit}

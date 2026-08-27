@@ -29,7 +29,7 @@ type StatPatch = Partial<NonNullable<SessionDraft['stats']>>
  * knows the answer, and making you retype it would be asking for agreement, not
  * for information.
  */
-export function FinishSheet({ open, onClose, draft, totals, busy, error, onSetStats, onSessionRpe, onCommit }: {
+export function FinishSheet({ open, onClose, draft, totals, busy, error, elapsedMin, onSetStats, onSessionRpe, onCommit }: {
   open: boolean
   onClose: () => void
   draft: SessionDraft
@@ -38,6 +38,12 @@ export function FinishSheet({ open, onClose, draft, totals, busy, error, onSetSt
   totals: { volumeKg: number; sets: number }
   busy: boolean
   error: string | null
+  /**
+   * What the header's session clock read when Finish was pressed, in whole
+   * minutes. Null on a back-dated or edited deck, where there is no live
+   * session to have timed.
+   */
+  elapsedMin: number | null
   onSetStats: (patch: StatPatch) => void
   onSessionRpe: (v: number | null) => void
   onCommit: () => void
@@ -62,17 +68,34 @@ export function FinishSheet({ open, onClose, draft, totals, busy, error, onSetSt
   const seeded = useRef(false)
   useEffect(() => {
     if (!open) { seeded.current = false; return }
-    if (seeded.current || !seed) return
+    // `!seed` no longer bails: the timed duration does not come from the seed
+    // query, so a routine with no history at all — the first ever run of a new
+    // day — must still get its measured duration. Waiting for a query that will
+    // resolve to nothing is how the one number the app actually knows would be
+    // the one it failed to fill in.
+    if (seeded.current || (!seed && elapsedMin == null)) return
     seeded.current = true
     const patch: StatPatch = {}
-    if (s?.duration_min == null && seed.durationMin != null) patch.duration_min = seed.durationMin
-    if (s?.avg_hr_bpm == null && seed.avgBpm != null) patch.avg_hr_bpm = seed.avgBpm
-    if (s?.calories_kcal == null && seed.calories != null) patch.calories_kcal = seed.calories
+    /**
+     * ── THE CLOCK OUTRANKS THE SEED ────────────────────────────────────────
+     * The historical seed is a good guess about a typical run of this routine.
+     * The header's session clock is a MEASUREMENT of the one that just
+     * happened, so when there is one it wins — the seed stays as the fallback
+     * for a back-dated or edited deck, which has nothing to have timed.
+     *
+     * Still only over an EMPTY field, like every other seeded value here: a
+     * duration you typed is a correction, and a correction that gets
+     * overwritten by the thing it was correcting is worse than no pre-fill.
+     */
+    const duration = elapsedMin ?? seed?.durationMin ?? null
+    if (s?.duration_min == null && duration != null) patch.duration_min = duration
+    if (s?.avg_hr_bpm == null && seed?.avgBpm != null) patch.avg_hr_bpm = seed.avgBpm
+    if (s?.calories_kcal == null && seed?.calories != null) patch.calories_kcal = seed.calories
     if (Object.keys(patch).length) onSetStats(patch)
     // `s` is read, not tracked: re-running on every keystroke in these fields is
     // exactly the overwrite the ref exists to prevent.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, seed])
+  }, [open, seed, elapsedMin])
 
   // The same set list the commit payload will carry, so the proposed rating
   // matches the one that gets stored.
@@ -104,9 +127,14 @@ export function FinishSheet({ open, onClose, draft, totals, busy, error, onSetSt
             <Field label="Calories" unit="kcal" icon={Flame} color={GOLD} value={s?.calories_kcal ?? null}
               onChange={(v) => onSetStats({ calories_kcal: v })} />
           </div>
-          {/* Where the pre-filled numbers came from. A proposal you cannot
-              trace is a number you either accept blindly or delete. */}
-          {seed?.lastDate ? (
+          {/* Where the numbers came from, and the duration is now a different
+              answer from the other two — it was TIMED, not guessed, so saying
+              "pre-filled from 20 Aug" about it would be false. */}
+          {elapsedMin != null ? (
+            <p className="text-[10px] text-muted/60 mt-1.5">
+              Duration timed from the session clock{seed?.lastDate ? `; the rest pre-filled from ${shortDate(seed.lastDate)}` : ''} · edit anything that changed.
+            </p>
+          ) : seed?.lastDate ? (
             <p className="text-[10px] text-muted/60 mt-1.5">
               Pre-filled from {shortDate(seed.lastDate)}{seed.averaged ? ' and your recent average' : ''} · edit anything that changed.
             </p>

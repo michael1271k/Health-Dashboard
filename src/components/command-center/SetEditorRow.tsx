@@ -10,7 +10,7 @@ import { useHoldRepeat } from '@/lib/hooks/useHoldRepeat'
 import { RpeLadder } from './RpeLadder'
 import { SetActionSheet, type SetTypeValue } from './SetActionSheet'
 import { setGridFor, SET_BADGE_W, SET_CELL_LEAD, SET_CELL_VALUE, SET_FRAME_GAP, SET_TAIL_W, type SetGridMode } from './setGrid'
-import { EMERALD_DEEP, EMERALD_LIGHT } from '@/lib/theme/palette'
+import { EMERALD_DEEP, EMERALD_LIGHT, MUTED } from '@/lib/theme/palette'
 
 /** Plate step (a tap on ±) and the microload step (a press-and-hold). */
 const PLATE_STEP = 2.5
@@ -178,6 +178,7 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
   const isWarm = set.setType === 'warmup'
   const isFail = set.setType === 'failure'
   const isDrop = set.setType === 'dropset'
+  const isGhost = set.setType === 'ghost'
   // Green = committable = will be recorded on finish.
   const done = isSetCommitted(set)
   const hasPr = prAxes.length > 0
@@ -227,12 +228,16 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
   const typeBadge = isWarm ? { label: 'W', full: 'Warm-up', color: ORANGE }
     : isFail ? { label: 'F', full: 'Taken to failure', color: DANGER }
     : isDrop ? { label: 'D', full: 'Drop set', color: DROP }
+    // Muted, deliberately: a ghost is the one tag that means "ignore this", so
+    // it is the one tag that must not compete for attention with the sets that
+    // count. It reads as struck-through rather than as flagged.
+    : isGhost ? { label: 'G', full: 'Ghost set — logged, not counted', color: MUTED }
     : null
   const showMedal = hasPr && !set.side
   const badge = set.side ?? typeBadge?.label ?? `${displayNum ?? index + 1}`
   const badgeColor = set.side ? sideColor : showMedal ? GOLD : typeBadge?.color ?? null
 
-  const setTypeValue: SetTypeValue = isWarm ? 'warmup' : isFail ? 'failure' : isDrop ? 'dropset' : 'normal'
+  const setTypeValue: SetTypeValue = isWarm ? 'warmup' : isFail ? 'failure' : isDrop ? 'dropset' : isGhost ? 'ghost' : 'normal'
   const ordinal = displayNum ?? index + 1
   const setLabel = `Set ${ordinal}${set.side === 'L' ? ' · Left' : set.side === 'R' ? ' · Right' : ''}`
 
