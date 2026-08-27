@@ -33,6 +33,34 @@ describe('the set you are walking towards', () => {
     expect(next?.setTotal).toBe(2)
   })
 
+  /**
+   * ── AND IT SKIPS GHOSTS, FOR A SHARPER REASON ─────────────────────────────
+   * `previousFor` below strips ghosts from LAST session's list. If the
+   * numbering above still counted them, the two halves of one comparison would
+   * disagree about what a set is: the card would call something "Set 3" that
+   * the history side had never counted, and quote the wrong historical set for
+   * it. Half of this file was converted to `isWorkingSet` and half was not.
+   */
+  it('skips ghost sets — they carry no ordinal either', () => {
+    const d = draftOf([ex('Bench Press', [
+      { weightKg: 80, reps: 6, setType: 'ghost', done: true },
+      { weightKg: 80, reps: 6, done: false },
+      { weightKg: 80, reps: 6, done: false },
+    ])])
+    const next = findNextSet(d, undefined)
+    expect(next?.setNumber).toBe(1)
+    expect(next?.setTotal).toBe(2)
+  })
+
+  it('numbers a ghost exactly as it numbers a warm-up', () => {
+    const of = (setType: 'warmup' | 'ghost') => findNextSet(draftOf([ex('Bench Press', [
+      { weightKg: 20, reps: 12, setType, done: true },
+      { weightKg: 80, reps: 6, done: false },
+    ])]), undefined)
+    expect(of('ghost')?.setNumber).toBe(of('warmup')?.setNumber)
+    expect(of('ghost')?.setTotal).toBe(of('warmup')?.setTotal)
+  })
+
   it('skips warm-ups, because a warm-up is not a number to beat', () => {
     const d = draftOf([ex('Bench Press', [
       { weightKg: 20, reps: 12, setType: 'warmup', done: false },

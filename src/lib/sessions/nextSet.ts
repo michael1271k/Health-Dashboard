@@ -51,11 +51,17 @@ export function findNextSet(
     // L/R pair is one set with one tick. Both rules are the deck's, reproduced
     // here rather than inferred from the index, because an index is not a set
     // number the moment either one is in play.
+    // `isWorkingSet`, not `!== 'warmup'`: `previousFor` below strips ghosts from
+    // LAST session's list, and if the numbering here still counted them this
+    // side would call something "Set 3" that the other side had never counted —
+    // the card would then quote the wrong historical set the moment either
+    // session contained a ghost. Both halves of one comparison have to agree on
+    // what a set is.
     let number = 0
     const seenPairs = new Set<string>()
     let total = 0
     for (const s of ex.sets) {
-      if (s.setType === 'warmup') continue
+      if (!isWorkingSet(s.setType)) continue
       if (s.pairId) { if (seenPairs.has(s.pairId)) continue; seenPairs.add(s.pairId) }
       total += 1
     }
@@ -63,7 +69,7 @@ export function findNextSet(
 
     const counted = new Set<string>()
     for (const s of ex.sets) {
-      if (s.setType === 'warmup') continue
+      if (!isWorkingSet(s.setType)) continue
       if (s.pairId) {
         if (counted.has(s.pairId)) continue
         counted.add(s.pairId)

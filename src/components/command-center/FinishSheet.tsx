@@ -65,35 +65,60 @@ export function FinishSheet({ open, onClose, draft, totals, busy, error, elapsed
    * not re-seeded the moment the query settles.
    */
   const { data: seed } = useSessionMetricsSeed(draft.dayKey, draft.replaceSessionId)
-  const seeded = useRef(false)
+
+  /**
+   * ── TWO LATCHES, BECAUSE THE TWO SOURCES ARRIVE AT DIFFERENT TIMES ─────────
+   * The clock reading is handed in SYNCHRONOUSLY — `SessionDeck` takes it in
+   * the same tick that opens the sheet — while `seed` is a query that settles a
+   * moment later. One latch over both is therefore a race, and it is a race the
+   * clock always wins: the effect ran on the first render with `elapsedMin`
+   * set and `seed` still undefined, filled the duration, latched, and then
+   * bailed when the seed finally arrived. Avg HR and calories silently stopped
+   * being pre-filled on every ordinary session — the one case they exist for.
+   *
+   * So each source latches on its own. `clockFilled` closes when the clock's
+   * reading has been applied; `seedFilled` closes when the query's has. Both
+   * reset when the sheet closes.
+   */
+  const clockFilled = useRef(false)
+  const seedFilled = useRef(false)
+
+  /**
+   * ── THE CLOCK OUTRANKS THE SEED ────────────────────────────────────────────
+   * The historical seed is a good guess about a typical run of this routine.
+   * The header's session clock is a MEASUREMENT of the one that just happened,
+   * so when there is one it wins — and because it lands first, the seed's own
+   * pass below simply finds the field already filled and leaves it. The seed
+   * stays the fallback for a back-dated or edited deck, which has nothing to
+   * have timed.
+   *
+   * Only ever over an EMPTY field, like every other seeded value here: a
+   * duration you typed is a correction, and a correction overwritten by the
+   * thing it was correcting is worse than no pre-fill at all.
+   */
   useEffect(() => {
-    if (!open) { seeded.current = false; return }
-    // `!seed` no longer bails: the timed duration does not come from the seed
-    // query, so a routine with no history at all — the first ever run of a new
-    // day — must still get its measured duration. Waiting for a query that will
-    // resolve to nothing is how the one number the app actually knows would be
-    // the one it failed to fill in.
-    if (seeded.current || (!seed && elapsedMin == null)) return
-    seeded.current = true
-    const patch: StatPatch = {}
-    /**
-     * ── THE CLOCK OUTRANKS THE SEED ────────────────────────────────────────
-     * The historical seed is a good guess about a typical run of this routine.
-     * The header's session clock is a MEASUREMENT of the one that just
-     * happened, so when there is one it wins — the seed stays as the fallback
-     * for a back-dated or edited deck, which has nothing to have timed.
-     *
-     * Still only over an EMPTY field, like every other seeded value here: a
-     * duration you typed is a correction, and a correction that gets
-     * overwritten by the thing it was correcting is worse than no pre-fill.
-     */
-    const duration = elapsedMin ?? seed?.durationMin ?? null
-    if (s?.duration_min == null && duration != null) patch.duration_min = duration
-    if (s?.avg_hr_bpm == null && seed?.avgBpm != null) patch.avg_hr_bpm = seed.avgBpm
-    if (s?.calories_kcal == null && seed?.calories != null) patch.calories_kcal = seed.calories
-    if (Object.keys(patch).length) onSetStats(patch)
+    if (!open) { clockFilled.current = false; return }
+    if (clockFilled.current || elapsedMin == null) return
+    clockFilled.current = true
+    if (s?.duration_min == null) onSetStats({ duration_min: elapsedMin })
     // `s` is read, not tracked: re-running on every keystroke in these fields is
-    // exactly the overwrite the ref exists to prevent.
+    // exactly the overwrite the latch exists to prevent.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, elapsedMin])
+
+  useEffect(() => {
+    if (!open) { seedFilled.current = false; return }
+    if (seedFilled.current || !seed) return
+    seedFilled.current = true
+    const patch: StatPatch = {}
+    // Duration only when the clock had nothing to say — a back-dated or edited
+    // deck. On a live session the effect above has already filled it.
+    if (s?.duration_min == null && elapsedMin == null && seed.durationMin != null) {
+      patch.duration_min = seed.durationMin
+    }
+    if (s?.avg_hr_bpm == null && seed.avgBpm != null) patch.avg_hr_bpm = seed.avgBpm
+    if (s?.calories_kcal == null && seed.calories != null) patch.calories_kcal = seed.calories
+    if (Object.keys(patch).length) onSetStats(patch)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, seed, elapsedMin])
 

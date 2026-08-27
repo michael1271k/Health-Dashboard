@@ -7,6 +7,7 @@ import { resolveMovers } from '@/lib/exercises/muscleMap'
 import { toLandmarkMuscle, LANDMARK_MUSCLES, SECONDARY_SET_CREDIT, type LandmarkMuscle } from '@/lib/training/landmarks'
 import type { PrAxis } from '@/lib/sessions/save'
 import { sessionVolumeKg, type VolumeSet } from '@/lib/sessions/volume'
+import { isWorkingSet } from '@/lib/training/setTags'
 
 export interface DetailSet {
   setNumber: number
@@ -107,6 +108,8 @@ export interface SessionDetail {
   workingSets: number
   failureSets: number
   warmupSets: number
+  /** Sets logged but deliberately uncounted — see `isWorkingSet`. */
+  ghostSets: number
   /** Sets logged as a drop set — the third of the three tags a set can carry. */
   dropsetSets: number
 }
@@ -179,11 +182,26 @@ export function useSessionDetail(sessionId: string | null) {
       let failureSets = 0
       let warmupSets = 0
       let dropsetSets = 0
+      let ghostSets = 0
 
       for (const r of rows) {
         const setType = r.set_type ?? 'normal'
-        const isWarmup = setType === 'warmup'
-        if (isWarmup) warmupSets += 1
+        /**
+         * ── `uncounted`, NOT `isWarmup` ────────────────────────────────────
+         * This flag gates the session's tonnage, its top load, its best e1RM
+         * and its working-set count. It asked whether the row was a warm-up,
+         * which was the whole question until `ghost` existed — a tag whose
+         * entire meaning is that it does not count. A ghost reaching these four
+         * figures would be the tag failing at the one job it has, on the very
+         * screen that reports what the session was.
+         *
+         * The COMPOSITION counters below stay per-tag: `2W · 1G` is a true
+         * statement about what happened, and collapsing the two would lose it.
+         */
+        const uncounted = !isWorkingSet(setType)
+        const isWarmup = uncounted
+        if (setType === 'warmup') warmupSets += 1
+        if (setType === 'ghost') ghostSets += 1
         if (setType === 'failure') failureSets += 1
         if (setType === 'dropset') dropsetSets += 1
 
@@ -340,6 +358,7 @@ export function useSessionDetail(sessionId: string | null) {
         muscleSets,
         failureSets,
         warmupSets,
+        ghostSets,
         dropsetSets,
       }
     },

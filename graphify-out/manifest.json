@@ -570,8 +570,8 @@
     "semantic_hash": ""
   },
   "src/components/session-detail/ExerciseBreakdown.tsx": {
-    "mtime": 1787854965.3209794,
-    "ast_hash": "58991d1e8b3fb9aff6515c02a7cdc830",
+    "mtime": 1787855897.5087385,
+    "ast_hash": "5c91c0842d7e6ac3e257c5c0198da7d8",
     "semantic_hash": ""
   },
   "src/components/session-detail/MuscleFocus.tsx": {
@@ -1720,8 +1720,8 @@
     "semantic_hash": ""
   },
   "src/components/exercises/ExerciseHistoryBody.tsx": {
-    "mtime": 1787073981.3295584,
-    "ast_hash": "4eaa5dd141b07ed2543940eba2a3b42b",
+    "mtime": 1787855848.6153002,
+    "ast_hash": "ea09b7c077c5e4eb3c3f3b92f05c7bb0",
     "semantic_hash": ""
   },
   "src/app/(dashboard)/workout/exercises/page.tsx": {
@@ -2480,7 +2480,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/set-rows.html": {
-    "mtime": 1787855755.5752819,
+    "mtime": 1787855908.4900858,
     "ast_hash": "6b7c9d27eff50c2ff3702f41ab16f90a",
     "semantic_hash": ""
   },
@@ -2510,8 +2510,8 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-ledger.html": {
-    "mtime": 1787855754.55615,
-    "ast_hash": "6f50fa4f2aeaf92cc98b2ce5890d0d48",
+    "mtime": 1787855906.8545468,
+    "ast_hash": "3ddb93aca7b5901708c403bfb41afc10",
     "semantic_hash": ""
   },
   "src/components/command-center/SetActionSheet.tsx": {
@@ -2545,7 +2545,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/live-header.html": {
-    "mtime": 1787855753.8180027,
+    "mtime": 1787855905.7918637,
     "ast_hash": "9983d254ba2dd74c447fc05867f2890a",
     "semantic_hash": ""
   },
@@ -2615,7 +2615,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-summary-header.html": {
-    "mtime": 1787855754.697277,
+    "mtime": 1787855907.1626906,
     "ast_hash": "bdbbab0641faf576b6e46b58cbc1ceaa",
     "semantic_hash": ""
   },
