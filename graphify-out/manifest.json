@@ -760,8 +760,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useSessionDetail.ts": {
-    "mtime": 1787327293.0944035,
-    "ast_hash": "fb3ac703aad65d4be91a89b941aabe7e",
+    "mtime": 1787856176.5900857,
+    "ast_hash": "f1563ec16803da2cdfc70376a6a2065e",
     "semantic_hash": ""
   },
   "src/lib/hooks/useSessionDraft.ts": {
@@ -1995,8 +1995,8 @@
     "semantic_hash": ""
   },
   "src/components/command-center/FinishSheet.tsx": {
-    "mtime": 1787854903.2666392,
-    "ast_hash": "a02f27246d7726d2ecb67976c90a6f89",
+    "mtime": 1787856203.4589245,
+    "ast_hash": "9111b1d7026cb4ea7c1eedaa47b9ef4e",
     "semantic_hash": ""
   },
   "src/tests/schedule-context.test.ts": {
@@ -2480,7 +2480,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/set-rows.html": {
-    "mtime": 1787855908.4900858,
+    "mtime": 1787856260.870474,
     "ast_hash": "6b7c9d27eff50c2ff3702f41ab16f90a",
     "semantic_hash": ""
   },
@@ -2510,7 +2510,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-ledger.html": {
-    "mtime": 1787855906.8545468,
+    "mtime": 1787856259.307626,
     "ast_hash": "3ddb93aca7b5901708c403bfb41afc10",
     "semantic_hash": ""
   },
@@ -2545,7 +2545,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/live-header.html": {
-    "mtime": 1787855905.7918637,
+    "mtime": 1787856258.4819424,
     "ast_hash": "9983d254ba2dd74c447fc05867f2890a",
     "semantic_hash": ""
   },
@@ -2615,7 +2615,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-summary-header.html": {
-    "mtime": 1787855907.1626906,
+    "mtime": 1787856259.679977,
     "ast_hash": "bdbbab0641faf576b6e46b58cbc1ceaa",
     "semantic_hash": ""
   },
@@ -2870,13 +2870,13 @@
     "semantic_hash": ""
   },
   "src/lib/sessions/nextSet.ts": {
-    "mtime": 1787854965.3217456,
-    "ast_hash": "9acd787ef8d12b580e50ae069100ce3e",
+    "mtime": 1787856169.5692077,
+    "ast_hash": "bb2b036dbf970aab65bc00b92dfa565f",
     "semantic_hash": ""
   },
   "src/tests/next-set.test.ts": {
-    "mtime": 1787680104.6148083,
-    "ast_hash": "e47bd769549329240afcb9b6d077e026",
+    "mtime": 1787856247.2564218,
+    "ast_hash": "96481120a1a2f6a2c2dfc0278a7a3b29",
     "semantic_hash": ""
   },
   "src/lib/dashboard/layoutSync.ts": {
@@ -2910,7 +2910,7 @@
     "semantic_hash": ""
   },
   "src/tests/session-elapsed.test.ts": {
-    "mtime": 1787855168.6750956,
+    "mtime": 1787856247.2560766,
     "ast_hash": "90750b4e7466b323095124f1200648b4",
     "semantic_hash": ""
   },
