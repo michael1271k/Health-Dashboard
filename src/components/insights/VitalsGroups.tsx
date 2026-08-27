@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { HeartPulse, Wind, Flame, Sun, type LucideIcon } from 'lucide-react'
 import { useVitalsDays, vitalWindow, vitalWeeklySeries, type VitalsDay, type VitalAgg, type VitalPick } from '@/lib/hooks/useVitals'
 import { formatSleep } from '@/lib/utils/format'
@@ -292,9 +292,8 @@ function VitalDetail({ def, days }: { def: MetricDef; days: VitalsDay[] }) {
         )}
       </div>
 
-      <div className="h-[96px]">
-        <Spark series={series} color={def.color} className="w-full h-full" dots />
-      </div>
+      {/* Measured, not `meet`-fitted — see `Spark`. */}
+      <FittedSpark series={series} color={def.color} height={96} />
 
       {stats ? (
         <div className="grid grid-cols-3 gap-2">
@@ -316,11 +315,93 @@ function VitalDetail({ def, days }: { def: MetricDef; days: VitalsDay[] }) {
 }
 
 /**
+ * The detail chart, drawn in the box's OWN coordinates.
+ *
+ * ── WHY THE SHEET'S CHARTS LOOKED CROOKED AND OFF-CENTRE ─────────────────────
+ * `Spark` draws into a fixed 96×36 viewBox with `xMidYMid meet`, which is
+ * exactly right for the 72px row lane it was designed for and cannot be right
+ * here. `meet` fits the drawing INSIDE the box at a uniform scale and centres
+ * whatever is left over — so in a 340×96 panel it scaled to the height, drew
+ * 256px wide, and left ~42px of nothing down each side. The trace floated in
+ * the middle of a panel whose Low/Average/High tiles underneath ran edge to
+ * edge, and the width of that dead margin changed with the viewport, which is
+ * what made it read as misaligned rather than merely inset.
+ *
+ * The two obvious fixes are both wrong. `preserveAspectRatio="none"` fills the
+ * box but stretches the coordinate system, so every dot becomes an ellipse and
+ * the slope means something different at every width — the objection this
+ * component's own note already makes. Widening the fixed viewBox only moves the
+ * mismatch: it fills at one screen size and leaves a margin at all the others.
+ *
+ * So the viewBox becomes the box. Measuring the element's real width and
+ * plotting in pixels means the drawing fills it exactly at any size, the
+ * aspect ratio is by definition correct, and circles stay circles.
+ *
+ * It renders nothing until the first measurement, which is one frame — a
+ * flash of an empty 96px panel that is already reserving its own height, versus
+ * a chart drawn at the wrong scale and then corrected.
+ */
+function FittedSpark({ series, color, height }: {
+  series: Array<number | null>; color: string; height: number
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [w, setW] = useState(0)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const measure = () => setW(el.clientWidth)
+    measure()
+    if (typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  const pts = series.map((v, i) => ({ v, i })).filter((p): p is { v: number; i: number } => p.v != null)
+  const enough = w > 0 && pts.length >= 2
+
+  let line = ''
+  let area = ''
+  let dots: Array<{ cx: number; cy: number }> = []
+  if (enough) {
+    const min = Math.min(...pts.map((p) => p.v))
+    const max = Math.max(...pts.map((p) => p.v))
+    const span = max - min || 1
+    const PAD = 6
+    const denom = Math.max(1, series.length - 1)
+    const x = (i: number) => (i / denom) * (w - PAD * 2) + PAD
+    const y = (v: number) => height - PAD - ((v - min) / span) * (height - PAD * 2)
+    line = pts.map((p, idx) => `${idx === 0 ? 'M' : 'L'}${x(p.i).toFixed(1)},${y(p.v).toFixed(1)}`).join(' ')
+    area = `${line} L${x(pts[pts.length - 1].i).toFixed(1)},${height - PAD} L${x(pts[0].i).toFixed(1)},${height - PAD} Z`
+    dots = pts.map((p) => ({ cx: x(p.i), cy: y(p.v) }))
+  }
+
+  return (
+    <div ref={ref} style={{ height }} className="w-full">
+      {enough && (
+        <svg viewBox={`0 0 ${w} ${height}`} width={w} height={height} aria-hidden="true" className="block">
+          <path d={area} fill={color} opacity="0.12" />
+          <path d={line} fill="none" stroke={color} strokeWidth="1.75"
+            strokeLinecap="round" strokeLinejoin="round" opacity="0.85" />
+          {dots.map((d, i) => (
+            <circle key={i} cx={d.cx} cy={d.cy} r={i === dots.length - 1 ? 3 : 2} fill={color}
+              opacity={i === dots.length - 1 ? 1 : 0.5} />
+          ))}
+        </svg>
+      )}
+    </div>
+  )
+}
+
+/**
  * The trend line, drawn inside whatever box it is given.
  *
- * `xMidYMid meet` (not `none`) — the row lane and the Sheet lane have very
- * different aspect ratios, and a stretched trace reads as a different signal in
- * each. Full opacity now that it no longer sits under text.
+ * `xMidYMid meet` (not `none`) — a ROW lane is 72px wide and comparative: every
+ * row on the page must draw the same delta at the same slope, and that is
+ * exactly what a fixed viewBox with a uniform fit guarantees. The Sheet's own
+ * chart is not comparative and does have to fill its panel, so it measures
+ * instead — see `FittedSpark`.
  */
 function Spark({ series, color, className = 'w-full h-full', dots = false }: {
   series: Array<number | null>; color: string; className?: string; dots?: boolean

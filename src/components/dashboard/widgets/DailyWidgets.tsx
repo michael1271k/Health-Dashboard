@@ -89,8 +89,20 @@ export function SleepWidget({ size, onOpen, sleep, sleepMin, goalHours, nightly 
     ? Math.round(((total - awake) / total) * 100)
     : null
 
+  /**
+   * ── THE STRIP NO LONGER PUSHES ITSELF TO THE FLOOR ─────────────────────────
+   * It carried `mt-auto`, which is what opened the band of nothing under the
+   * stage legend: the arc row is content-height, the strip pinned itself to the
+   * bottom of the body, and every pixel the tile had spare became the gap
+   * BETWEEN them. That gap is the "dead space under Awake" — it was not
+   * padding, it was a deliberate push.
+   *
+   * Without it the strip sits directly under the legend and the slack falls
+   * below the whole group, where the flex column can absorb it into the shape
+   * rather than into a hole in the middle of the tile.
+   */
   const strip = (down || efficiency != null || sleep?.sleep_score != null) && (
-    <span className="flex items-baseline gap-2 min-w-0 pt-1 mt-auto border-t border-white/[0.06]">
+    <span className="flex items-baseline gap-2 min-w-0 pt-1 border-t border-white/[0.06]">
       {down && up && (
         <span className="helix-num text-[10px] tabular-nums text-text truncate">
           {down} <span className="text-muted">→</span> {up}
@@ -130,7 +142,12 @@ export function SleepWidget({ size, onOpen, sleep, sleepMin, goalHours, nightly 
         </span>
       ) : (
         <span className="flex-1 min-h-0 flex flex-col gap-1">
-          <span className="flex items-center gap-2 min-w-0">
+          {/* `flex-1 min-h-0`, so the arc ROW absorbs the tile's slack and
+              centres in it. Left content-height, every spare pixel fell between
+              this row and whatever came next, which is the gap under "Awake".
+              At large the chart below takes twice the share, because there more
+              height is more information and here it is just a bigger circle. */}
+          <span className="flex-1 min-h-0 flex items-center gap-2 min-w-0">
             {/* Fixed width, not `flex-1`: the arc's height follows its width at
                 a 100:56 ratio, so letting it stretch would make it 190px tall in
                 a 130px box. */}
@@ -145,7 +162,11 @@ export function SleepWidget({ size, onOpen, sleep, sleepMin, goalHours, nightly 
               </HalfArc>
             </span>
 
-            <span className="flex-1 min-w-0 flex flex-col justify-center gap-1">
+            {/* `justify-start`, not `justify-center`: centring four legend rows
+                in a column taller than they are splits the slack above AND
+                below them, so the stages floated in the middle of the tile with
+                a gap at each end instead of sitting against the arc. */}
+            <span className="flex-1 min-w-0 flex flex-col justify-start gap-1">
               {parts.length ? parts.map((p) => (
                 <span key={p.key} className="flex items-baseline gap-1.5 min-w-0">
                   <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: p.color }} aria-hidden="true" />
@@ -167,9 +188,19 @@ export function SleepWidget({ size, onOpen, sleep, sleepMin, goalHours, nightly 
               as a line. It sits DIRECTLY under the arc row — it used to be
               pushed to the bottom with `mt-auto`, which opened the gap it was
               supposed to be filling. */}
+          {/* ── LARGE: THE CHART MOVES UP, AND IT TAKES THE SLACK ──
+              It sat under the strip at the bottom of the tile. Both were
+              content-height in a column with spare room, so the spare room
+              landed between the legend and the chart — a 40px band of nothing
+              across the middle of the largest tile on the grid.
+
+              The chart is now the FLEXIBLE element (`flex-1 min-h-0`) and sits
+              directly under the arc row, above the strip. Slack goes into the
+              bars, where more height is more information, instead of into a
+              gap. */}
           {size === 'l' && (
-            <span className="block pt-1 border-t border-white/[0.06]">
-              <span className="flex items-baseline gap-1.5">
+            <span className="flex-[2] min-h-0 flex flex-col pt-1 border-t border-white/[0.06]">
+              <span className="flex items-baseline gap-1.5 shrink-0">
                 <span className="text-[8px] font-bold uppercase tracking-[0.1em] text-muted">Nightly · 30</span>
                 {goalMin && (
                   <span className="helix-num text-[8px] tabular-nums text-muted ml-auto">
@@ -177,7 +208,9 @@ export function SleepWidget({ size, onOpen, sleep, sleepMin, goalHours, nightly 
                   </span>
                 )}
               </span>
-              <span className="block mt-1"><MiniBars series={nightly} color={AMETHYST} goal={goalMin} height={70} /></span>
+              <span className="flex-1 min-h-0 mt-1 flex items-end">
+                <MiniBars series={nightly} color={AMETHYST} goal={goalMin} height={70} />
+              </span>
             </span>
           )}
 
@@ -264,8 +297,20 @@ export function StepsWidget({ size, onOpen, steps, goal, tdee, activeKcal, serie
           <Bar value={steps} target={goal} color={PLATINUM} />
         </span>
       ) : (
-        <span className="flex-1 min-h-0 flex flex-col gap-1">
-          <span className="flex items-baseline gap-2 min-w-0">
+        /* ── `gap-1` → `gap-0.5`, AND THE CHART IS THE FLEXIBLE ELEMENT ──
+           Medium is a hero, a milestone track, three stat tiles and a 24px
+           chart in a 130px body — five rows, four gaps. At `gap-1` the gaps
+           alone were 16px of it, which is where "too much vertical padding"
+           came from: no single gap is wrong, there are just five of them
+           stacked. Halving the gap gives 8px back to the content.
+
+           The chart block then takes `flex-1` rather than a fixed height, so
+           the tile's remaining slack goes into the BARS. It previously sat at a
+           fixed 24px (medium) or 96px (large) directly under the tiles, leaving
+           whatever was left as a band under the chart — the gap between the bar
+           and the data. Now there is nothing left over to leave. */
+        <span className="flex-1 min-h-0 flex flex-col gap-0.5">
+          <span className="flex items-baseline gap-2 min-w-0 shrink-0">
             <Hero value={steps} color={PLATINUM} tight />
             <span className="ml-auto shrink-0 flex items-baseline gap-1">
               <Trend delta={delta != null ? Math.round(delta) : null} />
@@ -273,19 +318,16 @@ export function StepsWidget({ size, onOpen, steps, goal, tdee, activeKcal, serie
             </span>
           </span>
 
-          <Milestones value={steps} marks={marks} color={PLATINUM} />
+          <span className="shrink-0"><Milestones value={steps} marks={marks} color={PLATINUM} /></span>
 
-          <span className="grid grid-cols-3 gap-1.5">
+          <span className="grid grid-cols-3 gap-1.5 shrink-0">
             <StatTile label="TDEE" value={tdee != null ? Math.round(tdee) : null} unit="kcal" color={STEEL} />
             <StatTile label="Active" value={activeKcal != null ? Math.round(activeKcal) : null} unit="kcal" color={SAPPHIRE} />
             <StatTile label="On target" value={logged ? `${hit}/${logged}` : null} color={hit > 0 ? EMERALD : PLATINUM} />
           </span>
 
-          {/* No `mt-auto`: pushing the chart to the floor is what opened the gap
-              between it and the tiles above. It sits directly under them and
-              takes the slack as HEIGHT instead. */}
-          <span className="block pt-1 border-t border-white/[0.06]">
-            <span className="flex items-baseline gap-1.5">
+          <span className="flex-1 min-h-0 flex flex-col pt-1 border-t border-white/[0.06]">
+            <span className="flex items-baseline gap-1.5 shrink-0">
               <span className="text-[8px] font-bold uppercase tracking-[0.1em] text-muted">Daily · 30</span>
               {best != null && (
                 <span className="helix-num text-[8px] tabular-nums text-muted ml-auto">
@@ -293,7 +335,9 @@ export function StepsWidget({ size, onOpen, steps, goal, tdee, activeKcal, serie
                 </span>
               )}
             </span>
-            <span className="block mt-1">
+            {/* `items-end` so the bars grow from the baseline into the space
+                rather than floating in the middle of it. */}
+            <span className="flex-1 min-h-0 mt-1 flex items-end">
               <MiniBars series={series} color={PLATINUM} goal={goal} height={size === 'l' ? 96 : 24} />
             </span>
           </span>

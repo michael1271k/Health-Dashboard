@@ -180,8 +180,8 @@
     "semantic_hash": ""
   },
   "src/app/(dashboard)/nutrition/page.tsx": {
-    "mtime": 1787854498.6510873,
-    "ast_hash": "81bee42868cb77141a086453211c2c23",
+    "mtime": 1787855499.516564,
+    "ast_hash": "a2e69278530691a3dd134c0185c492d0",
     "semantic_hash": ""
   },
   "src/app/(dashboard)/pathfinder/page.tsx": {
@@ -2480,7 +2480,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/set-rows.html": {
-    "mtime": 1787855406.791815,
+    "mtime": 1787855515.0187926,
     "ast_hash": "6b7c9d27eff50c2ff3702f41ab16f90a",
     "semantic_hash": ""
   },
@@ -2510,7 +2510,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-ledger.html": {
-    "mtime": 1787855405.0345297,
+    "mtime": 1787855513.3224547,
     "ast_hash": "6f50fa4f2aeaf92cc98b2ce5890d0d48",
     "semantic_hash": ""
   },
@@ -2545,7 +2545,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/live-header.html": {
-    "mtime": 1787855404.1241734,
+    "mtime": 1787855512.3657148,
     "ast_hash": "9983d254ba2dd74c447fc05867f2890a",
     "semantic_hash": ""
   },
@@ -2615,7 +2615,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-summary-header.html": {
-    "mtime": 1787855405.2551975,
+    "mtime": 1787855513.6849651,
     "ast_hash": "bdbbab0641faf576b6e46b58cbc1ceaa",
     "semantic_hash": ""
   },

@@ -13,7 +13,22 @@ export interface StandingPr {
   achievedOn: string
 }
 
-const AXES: readonly string[] = ['weight', 'reps', 'volume', 'est1rm']
+/**
+ * The four axes `prEngine` writes. `'e1rm'`, NOT `'est1rm'`.
+ *
+ * This list said `est1rm`, which is not an axis anything has ever stored — the
+ * type is `PrAxis = 'weight' | 'reps' | 'volume' | 'e1rm'` and the rows in
+ * `personal_records` carry `e1rm`. The filter below therefore dropped EVERY
+ * estimated-1RM record on the floor, silently and permanently: the Latest PR
+ * tile could not show one, and because the filter runs after the `limit`, a
+ * recent 1RM record also consumed one of the few rows the query asked for, so
+ * the tile could go blank on a day that had set one.
+ *
+ * The comment on the filter was right about why it exists — an unlabelled axis
+ * renders as a blank qualifier beside a real number — and the guard was simply
+ * spelling one of the four wrong.
+ */
+const AXES: readonly string[] = ['weight', 'reps', 'volume', 'e1rm']
 
 /**
  * The most recently claimed standing records, newest first.

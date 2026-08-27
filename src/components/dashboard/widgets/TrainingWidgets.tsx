@@ -343,6 +343,18 @@ export function PrWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () => vo
       {!top ? (
         <WidgetEmpty accent={GOLD} size={size} message="Your first record is waiting" hint="Beat any set and it lands here" />
       ) : size === 's' ? (
+        /* ── ALL FOUR FACTS, LABELLED ──
+           It read: an axis label, then `40 kg ×10`, then the exercise, then
+           `58.7kg 1RM`. Every number was there and none of them said what it
+           was — the weight and the reps were one glued string whose `×` had to
+           carry the distinction, and the 1RM was a bare figure with a suffix.
+           Four unlabelled numbers in a 112px tile is a tile you have to have
+           learnt before it tells you anything.
+
+           A three-column strip labels them instead. The type stays on its own
+           line above, because it qualifies all three and is the one thing that
+           changes what the others MEAN — `Most reps` and `Heaviest` are
+           different claims about the same row. */
         <span className="flex-1 min-h-0 flex flex-col justify-between gap-0.5">
           <span className="flex items-baseline gap-1 min-w-0">
             <span className="text-[8px] font-bold uppercase tracking-[0.12em] truncate" style={{ color: GOLD }}>
@@ -350,15 +362,16 @@ export function PrWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () => vo
             </span>
             <span className="text-[8px] text-muted ml-auto shrink-0">{daysAgo(top.achievedOn)}</span>
           </span>
-          <span className="helix-num font-bold text-fluid-lg leading-none tabular-nums truncate" style={{ color: GOLD }}>
-            {top.weightKg != null && top.weightKg > 0
-              ? <>{displayWeight(top.weightKg)}<span className="text-[9px] font-normal text-muted ml-0.5">{unit}</span>
-                {top.reps != null && <span className="text-[10px] font-normal text-muted"> ×{top.reps}</span>}</>
-              : top.reps != null ? <>{top.reps}<span className="text-[9px] font-normal text-muted ml-0.5">reps</span></> : '—'}
-          </span>
-          <span className="text-[9px] text-text truncate">{top.exercise}</span>
-          <span className="helix-num text-[9px] tabular-nums text-muted truncate">
-            {est1rm != null ? `${displayWeight(est1rm)}${unit} 1RM` : 'no 1RM — unloaded'}
+
+          <span className="text-[10px] font-semibold text-text truncate leading-none">{top.exercise}</span>
+
+          <span className="grid grid-cols-3 gap-1">
+            <MicroStat label="kg" value={top.weightKg != null && top.weightKg > 0 ? displayWeight(top.weightKg) : null} />
+            <MicroStat label="reps" value={top.reps} />
+            {/* Two places, for the same reason `PrRecordSheet` gives: an e1RM
+                is computed and moves in fractions, so a whole number here is a
+                figure that has been rounded away from the one that was beaten. */}
+            <MicroStat label="1RM" value={est1rm != null ? (displayWeight(est1rm) ?? est1rm).toFixed(2) : null} />
           </span>
         </span>
       ) : (
@@ -382,7 +395,7 @@ export function PrWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () => vo
             <StatTile label="Reps" value={top.reps} color={GOLD} />
             <StatTile
               label="Est. 1RM"
-              value={est1rm != null ? displayWeight(est1rm) : null}
+              value={est1rm != null ? (displayWeight(est1rm) ?? est1rm).toFixed(2) : null}
               unit={unit} color={GOLD}
             />
           </span>
@@ -403,6 +416,25 @@ export function PrWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () => vo
         </span>
       )}
     </WidgetFrame>
+  )
+}
+
+/**
+ * A labelled number for a 112px tile — smaller than `StatTile`, and with no box.
+ *
+ * `StatTile` draws a tinted plate, which is right in a 2×2 of vitals and wrong
+ * three-across in a small tile: three plates at that width is more border than
+ * content. This is the same information with the chrome removed.
+ */
+function MicroStat({ label, value }: { label: string; value: number | string | null }) {
+  return (
+    <span className="min-w-0 flex flex-col gap-px">
+      <span className="helix-num text-[12px] font-bold tabular-nums leading-none truncate"
+        style={{ color: value == null ? MUTED : GOLD }}>
+        {value ?? '—'}
+      </span>
+      <span className="text-[7px] uppercase tracking-[0.08em] text-muted leading-none truncate">{label}</span>
+    </span>
   )
 }
 
