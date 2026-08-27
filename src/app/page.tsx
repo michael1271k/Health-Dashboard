@@ -4,11 +4,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { Sheet } from '@/components/ui/Sheet'
-import { ReadinessOrb } from '@/components/dashboard/ReadinessOrb'
 import { WidgetGrid } from '@/components/dashboard/WidgetGrid'
 import { VitalsWidget } from '@/components/dashboard/widgets/VitalsWidget'
 import { FuelWidget, MicrosWidget } from '@/components/dashboard/widgets/FuelWidget'
 import { WaterWidget } from '@/components/dashboard/widgets/WaterWidget'
+import { RecoveryWidget } from '@/components/dashboard/widgets/RecoveryWidget'
 import {
   DeficitWidget, BarToBeatWidget, ConsistencyWidget,
 } from '@/components/dashboard/widgets/PlanWidgets'
@@ -28,14 +28,12 @@ import { AnimatedCard } from '@/components/dashboard/AnimatedBento'
 import { WeekSoFarCard } from '@/components/dashboard/WeekSoFarCard'
 import { WeeklySummaryCard } from '@/components/dashboard/WeeklySummaryCard'
 import { WidgetBoundary } from '@/components/fx/WidgetBoundary'
-import { BrandHeader } from '@/components/dashboard/BrandHeader'
 import { DeferredMount } from '@/components/fx/DeferredMount'
-import { formatSleep } from '@/lib/utils/format'
 import { displayWeight, weightUnit } from '@/lib/utils/units'
 import { phaseDisplay } from '@/lib/nutrition/phase'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { tdeeKcal } from '@/lib/nutrition/energy'
-import { BODY, visceralColor, EMBER, SAPPHIRE, EMERALD, GOLD, AMETHYST, PLATINUM, STEEL, OXIDE, MUTED } from '@/lib/theme/palette'
+import { BODY, visceralColor, EMBER, SAPPHIRE, EMERALD, GOLD, AMETHYST, PLATINUM, OXIDE, MUTED } from '@/lib/theme/palette'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { useSingleOrDoubleTap } from '@/lib/utils/doubleTap'
 import { scheduleDayFor, eraForDate, isTrainingDay, type ScheduleDay } from '@/lib/programs'
@@ -113,10 +111,6 @@ const TrendStrip = dynamic(
   () => import('@/components/dashboard/TrendStrip').then((m) => ({ default: m.TrendStrip })),
   { ssr: false, loading: () => <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 min-h-[280px] animate-pulse" /> },
 )
-
-// Domain accents — all from the single palette source of truth.
-const VIOLET = AMETHYST        // Sleep / recovery
-const CYAN = STEEL             // data / drivers
 
 /** One shared empty Set — `taken ?? new Set()` would be a fresh identity every
  *  render and would defeat the Stack widget's memo for no benefit. */
@@ -388,20 +382,6 @@ export default function DashboardPage() {
     }
   }, [weighIn])
 
-  /**
-   * The drivers BEHIND the recovery number — the extra desktop width beside the
-   * hero shows the "why" instead of dead space, and the Energy widget's large
-   * face shows the same four. Real HealthKit fields only.
-   *
-   * Memoised because the widget map depends on it: a fresh array every render would
-   * rebuild all nine widget objects and defeat their `memo`.
-   */
-  const drivers: Array<{ label: string; value: string; color: string }> = useMemo(() => [
-    { label: 'Sleep', value: log?.sleep_minutes != null ? formatSleep(log.sleep_minutes) : '—', color: VIOLET },
-    { label: 'Resting HR', value: log?.avg_rest_heart_rate != null ? `${log.avg_rest_heart_rate} bpm` : '—', color: OXIDE },
-    { label: 'HRV', value: log?.hrv_ms != null ? `${Math.round(log.hrv_ms)} ms` : '—', color: SAPPHIRE },
-    { label: 'Energy left', value: score?.battery_pct != null ? `${score.battery_pct}%` : '—', color: CYAN },
-  ], [log, score])
 
   /**
    * ── ONE SWITCH, THIRTEEN BODIES ─────────────────────────────────────────────
@@ -423,6 +403,14 @@ export default function DashboardPage() {
    */
   const renderWidget = useCallback((id: WidgetId, size: WidgetSize) => {
     switch (id) {
+      // The old fixed hero, now first in the grid — see `RecoveryWidget`.
+      case 'recovery':
+        return <RecoveryWidget size={size} onOpen={onOpen('readiness')}
+          score={score ?? null} isLoading={scoreLoading}
+          sleepMin={log?.sleep_minutes ?? null}
+          restingHr={log?.avg_rest_heart_rate ?? null}
+          hrvMs={log?.hrv_ms ?? null} />
+
       case 'vitals':
         return <VitalsWidget size={size} onOpen={onOpen('vitals')} />
 
@@ -520,6 +508,7 @@ export default function DashboardPage() {
     }
   }, [
     sleep, log, goals, bioSeries, calToday, calGoal, nutrition, fuelGoals,
+    score, scoreLoading,
     kcalSeries, phase, todayDay, loggedToday, todaySession,
     steps, tdeeToday, stackItems, taken, nowMinutes,
     onOpen, onBodyTap, goToday, openMuscle, goMicros, goTimeline, openTraining,
@@ -536,43 +525,30 @@ export default function DashboardPage() {
        edges — true edge-to-edge on a phone — while `measure="grid"` keeps the
        CONTENT on the same 80rem column the old `max-w-7xl` gave a desktop. */
     <div className="pb-4">
-      <Surface measure="grid" pad="snug" variant="band">
-        <BrandHeader />
-      </Surface>
+      {/* ── THE DASHBOARD IS THE GRID ──────────────────────────────────────────
+          Two fixed bands used to stand above it. The first was the brand header
+          — wordmark, greeting, live clock, plan/phase chips, an "Updated" stamp
+          — and the second was the Readiness hero: a ~300px orb with a driver
+          panel beside it that only rendered at `md` and up, i.e. never on the
+          phone this app is used on.
 
-      {/* ── Hero: the master Recovery widget — the breathing pulse/ECG orb (recovery
-          + battery merged), spanning both columns on desktop with a driver panel. ── */}
-      <AnimatedCard index={0}>
-        <Surface
-          variant="hero"
-          measure="grid"
-          pad="card"
-          accent={EMBER}
-          as="button"
-          onPress={() => setOpen('readiness')}
-          label="Open recovery details"
-        >
-          <div className="flex flex-col md:flex-row md:items-center gap-5">
-            <div className="flex-1 flex items-center justify-center min-h-[300px]">
-              <ReadinessOrb score={score ?? null} isLoading={scoreLoading} />
-            </div>
-            {/* Driver breakdown — fills the extra 2-col desktop width. */}
-            <div className="md:w-60 md:shrink-0 md:border-l md:border-white/[0.07] md:pl-6">
-              <span className="hidden md:block text-[10px] uppercase tracking-widest text-muted mb-3">What&apos;s driving it</span>
-              <div className="grid grid-cols-2 md:grid-cols-1 gap-2.5">
-                {drivers.map((d) => (
-                  <div key={d.label}
-                    className="flex flex-col md:flex-row md:items-center md:justify-between gap-0.5 rounded-lg md:rounded-none border md:border-0 border-white/[0.05] bg-white/[0.02] md:bg-transparent px-2.5 py-2 md:px-0 md:py-1.5">
-                    <span className="text-[10px] uppercase tracking-wide text-muted">{d.label}</span>
-                    <span className="helix-num text-fluid-sm font-bold" style={{ color: d.color }}>{d.value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </Surface>
-      </AnimatedCard>
+          Between them they took the whole of a 390×844 first screen. Nothing in
+          either was actionable: the greeting and the clock are on the status bar
+          six pixels above them, the plan chips restate a setting, and the orb's
+          own drivers were invisible at that width.
 
+          The grid starts at the top now, and both survive as things you can
+          arrange:
+
+            · Readiness is `RecoveryWidget` — the same orb, the first entry in
+              the catalogue, the only one that opens at LARGE, and its large face
+              finally shows the four drivers on a phone.
+            · Plan and phase are `PlanPhaseTags`, which still renders wherever a
+              reader needs them stated rather than shown.
+
+          What is genuinely gone is the wordmark and the clock, which is the
+          right thing to lose: an app does not need to tell you which app it is,
+          and a phone already knows the time. */}
       {/* Week-complete CTA — the FINAL day of the week, once every training day
           the plan asked for is logged. Renders nothing on every other day, so it
           needs no reserved height. Moved here from the Workout tab: the day it

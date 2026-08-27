@@ -12,7 +12,7 @@ import { NUTRITION_PRESETS, type NutritionMode } from '@/lib/types/workout'
 import { NutritionLogList } from '@/components/nutrition/NutritionLogList'
 import { MacroCards } from '@/components/nutrition/MacroCards'
 import { FuelForceBand } from '@/components/nutrition/FuelForceBand'
-import { WaterHelix } from '@/components/day/WaterHelix'
+import { WaterBar } from '@/components/nutrition/WaterBar'
 import { WaterOverrideSheet } from '@/components/day/WaterOverrideSheet'
 import { ChartRange, DEFAULT_RANGE_DAYS } from '@/components/charts/ChartRange'
 import { useMacroHistory } from '@/lib/hooks/useCharts'
@@ -152,6 +152,17 @@ export default function NutritionPage() {
         <p className="text-muted text-fluid-sm mt-0.5">Macro rings · daily fuel cells · auto-tagged phase</p>
       </div>
 
+      {/* ── HYDRATION, DOCKED ──
+          One line, above the rings. It was a 200px DNA helix two thirds of the
+          way down the page — see `WaterBar` for why a single ratio does not
+          earn the largest element on a page about macros, and why the number is
+          wanted before lunch rather than after four cards of scrolling. */}
+      <WaterBar
+        ml={dailyLog?.water_ml ?? null}
+        goalMl={userGoals?.water_goal_ml ?? 3000}
+        onEdit={() => setWaterEdit(true)}
+      />
+
       {/* Compact fuel hero — calories card + macro card + 7-day phase cells */}
       <MacroCards
         today={todayLog ? { calories: todayLog.calories, proteinG: todayLog.proteinG, carbsG: todayLog.carbsG, fatG: todayLog.fatG } : null}
@@ -159,10 +170,6 @@ export default function NutritionPage() {
         goals={{ calorie: goals.calorie, protein: goals.protein, carbs: goals.carbs, fat: goals.fat }}
         date={todayISO}
       />
-
-      {/* What the last pasted report asked for on food and water, against what
-          this week actually shows. Retrieved, never generated — and silent when
-          no report was pasted. */}
 
       {/* A day allowed to miss its target — declared, never inferred. Sits under
           the rings because it is a statement ABOUT today's numbers, and it has
@@ -179,15 +186,6 @@ export default function NutritionPage() {
       {/* Training-day shortcut → the deck, pre-seeded (hidden once logged) */}
       <ScheduleShortcut />
 
-      {/* Water Intake — the same glowing DNA double-helix as the Nexus gauge.
-          Double-tap to correct the day: this card has no single-tap action, so
-          the gesture costs nothing here (the day page's compact bar does, which
-          is why the editor hangs off the helix inside its sheet instead). */}
-      <div>
-        <div className="text-[10px] uppercase tracking-widest text-muted mb-2">Water intake</div>
-        <WaterHelix ml={dailyLog?.water_ml ?? null} goalMl={userGoals?.water_goal_ml ?? 3000}
-          onOverride={() => setWaterEdit(true)} />
-      </div>
       <WaterOverrideSheet
         open={waterEdit}
         onClose={() => setWaterEdit(false)}

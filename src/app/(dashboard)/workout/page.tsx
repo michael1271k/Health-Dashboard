@@ -89,9 +89,28 @@ export default function WorkoutPage() {
       {/* Header */}
       <div className="flex items-end justify-between gap-3">
         <div>
-          <h1 className="font-heading text-fluid-2xl font-bold text-text">Training</h1>
+          <h1 className="font-heading text-fluid-2xl font-bold text-text">Workout</h1>
           <p className="text-muted text-fluid-sm mt-0.5">Active program · progressive-overload memory · tap a day to log</p>
         </div>
+      </div>
+
+      {/* ── THE PLAN IS THE FIRST THING ON THE PAGE ──
+          It used to sit two thirds of the way down, under today's hero, the
+          coach's alerts, a plan chip and the exercise library — so the question
+          this tab is opened to answer ("which day is it, and when is the rest
+          of the week") was below the fold on every phone.
+
+          It leads now, and today's session sits directly under it, which is the
+          order the two are actually read in: the row tells you where you are in
+          the week, and the block beneath it is what that means today. The other
+          way round, the calendar was context arriving after the thing it was
+          meant to give context to.
+
+          Every cell resolves through `scheduleDayFor`, so per-date overrides,
+          the permanent layout and the era are already correct. */}
+      <div className="space-y-2">
+        <h2 className="font-heading text-fluid-lg font-bold text-text">Plan</h2>
+        <WeekScheduler />
       </div>
 
       {/* ── Today: Post-Workout Summary (if logged) or Log/Rest hero ──
@@ -167,13 +186,17 @@ export default function WorkoutPage() {
       {/* Smart Coach — lifts that cleared their ceiling twice, due a load bump. */}
       <ProgressionAlerts />
 
-      {/* Active plan chip — selection lives in Settings → Plans & Phases now. */}
-      <button onClick={() => router.push('/settings')}
-        className="flex items-center gap-2 text-fluid-xs text-muted hover:text-text transition-colors">
-        <span className="px-2.5 py-1 rounded-xl font-semibold"
-          style={{ color: '#8E9AAC', background: '#8E9AAC14', border: '1px solid #8E9AAC33' }}>{program.label}</span>
-        <span>Change plan &amp; phase in Settings →</span>
-      </button>
+      {/* ── THE PLAN CHIP AND ITS LINK ARE GONE ──
+          A "HELIX-5" pill beside "Change plan & phase in Settings →", floating
+          between two Surfaces with no card of its own. It was a navigation
+          link dressed as a status readout: the chip named the active plan,
+          which the whole page above it already demonstrates, and the sentence
+          pointed at a screen reachable from the tab bar. The one thing it
+          asserted that nothing else did — WHICH plan — is now said by the
+          scheduler at the top, in the days it draws.
+
+          `PlanPhaseTags` still names plan and phase where a reader needs it
+          stated rather than shown. */}
 
       {/* Every lift with history, grouped by what it trains. A sub-route rather
           than a sixth tab — nav-items.ts argues against a sixth, and this is
@@ -189,42 +212,6 @@ export default function WorkoutPage() {
           <ChevronRight className="w-4 h-4 text-muted shrink-0" aria-hidden="true" />
         </span>
       </Surface>
-
-      {/* ── ONE SECTION, TWO QUESTIONS ──
-          These were two stacked `<h2>`s — "This week" over the scheduler, then
-          "Routine" over the plan accordion — argued for as "content vs
-          calendar". They ARE two questions, but they are two questions about
-          the same thing, asked one after the other down a scrolling page, so
-          answering the second meant losing sight of the first. A segmented
-          control is what "two views of one subject" looks like; two headings is
-          what "two subjects" looks like. */}
-      {/* ── ONE VIEW OF THE PLAN, NOT TWO ──
-          There used to be a Week / Routine toggle here. `Routine` listed every
-          programmed day as an accordion of exercise names, prescribed sets, a
-          rest-target stepper per exercise and, once expanded, last time's loads.
-
-          It went for two reasons. The first is that it was the WRONG PLACE to
-          answer its own question: "what am I about to do" is answered by the
-          deck itself, one tap away behind Log — at the loads the logger will
-          actually offer, in the layout you will actually see, with none of the
-          drift a second rendering of the same plan accumulates. The second is
-          the rest steppers, which put a WRITE control on a preview: rest is a
-          prescription, `RestTargetControl` still lives in the logger where the
-          set it governs is, and editing it from a browse screen was a decision
-          made with none of the context that makes it a decision.
-
-          What is left is the calendar, which is the one thing the deck cannot
-          show you: which day falls when, and how to move it. */}
-      <div className="space-y-2">
-        <h2 className="font-heading text-fluid-lg font-bold text-text">Plan</h2>
-        {/* Every cell resolves through `scheduleDayFor`, so per-date overrides,
-            the permanent layout and the era are already correct. */}
-        <WeekScheduler />
-      </div>
-
-      {/* Weekly volume vs target now lives inside MuscleAnalyticsPanel below —
-          it was rendered twice on this page, from the same hook. */}
-      {/* Progression snapshot */}
 
       {/* Gym/muscle-progress graphs — Intensity Calendar · Volume Stream ·
           Muscle Analytics (moved out of Momentum). */}

@@ -1136,7 +1136,10 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
       ? ` (${n(d.proteinG)}P / ${n(d.carbsG)}C / ${n(d.fatG)}F)` : ''
 
     L.push(
-      `- **${d.weekdayLabel} ${d.date}** · ${performed || d.isTrainingDay ? 'Train' : 'Rest'}`
+      // "Workout", not "Train" — the app calls this thing a workout on the tab,
+      // the tile, the session and the deck, and the export was the last surface
+      // still using a different word for it.
+      `- **${d.weekdayLabel} ${d.date}** · ${performed || d.isTrainingDay ? 'Workout' : 'Rest'}`
       + `${offPlan ? ' (off-plan / swapped)' : ''}${workout ? ` · ${workout}` : ''}`,
     )
 

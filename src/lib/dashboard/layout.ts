@@ -48,7 +48,7 @@
 import type { LucideIcon } from 'lucide-react'
 import {
   Activity, BarChart3, CalendarCheck, Droplets, Dumbbell, Flame, Footprints,
-  HeartPulse, Moon, Pill, Scale, Sparkles, Target, TrendingDown, Trophy,
+  Gauge, HeartPulse, Moon, Pill, Scale, Sparkles, Target, TrendingDown, Trophy,
 } from 'lucide-react'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import {
@@ -58,6 +58,7 @@ import {
 export type WidgetSize = 's' | 'm' | 'l'
 
 export type WidgetId =
+  | 'recovery'
   | 'sleep' | 'fuel' | 'micros' | 'train' | 'body' | 'steps'
   | 'cardio' | 'stack' | 'vitals' | 'water'
   | 'muscle' | 'pr' | 'volume'
@@ -72,11 +73,21 @@ export type WidgetId =
  * much of it there has been, what you last beat, and how consistently you have
  * shown up. Steps, cardio and the stack are the ledger.
  *
- * ── `battery` IS GONE ────────────────────────────────────────────────────────
- * The Energy tile restated the Readiness orb, which is the fixed hero directly
- * above the grid and is not arrangeable precisely because it is the one question
- * the dashboard exists to answer. A second tile printing the same percentage and
- * the same four drivers was a duplicate of the most prominent thing on screen.
+ * ── `battery` IS STILL GONE, AND `recovery` IS WHY IT CAN BE ────────────────
+ * The Energy tile was removed because it restated the Readiness orb, which was
+ * a fixed hero above the grid and not arrangeable precisely because it was the
+ * one question the dashboard exists to answer.
+ *
+ * That hero is gone — the dashboard is the grid now, edge to edge — so the
+ * argument has to be re-made rather than inherited. Readiness did not stop
+ * being the headline question when its band was deleted; it stopped having
+ * anywhere to be answered. So it becomes a widget, first in the catalogue, and
+ * it absorbs the drivers panel that stood beside the orb (sleep, resting heart
+ * rate, HRV, energy left) at its large size.
+ *
+ * There is still no separate Energy tile, for the original reason: a second
+ * tile printing the same percentage and the same four drivers would be a
+ * duplicate of this one.
  *
  * ── `next` IS GONE TOO, FOLDED INTO `train` ──────────────────────────────────
  * They were two tiles answering one question at two points in the same day, and
@@ -86,7 +97,7 @@ export type WidgetId =
  * A stored layout naming either simply drops it on read; nothing to migrate.
  */
 export const WIDGET_IDS: readonly WidgetId[] = [
-  'sleep', 'vitals', 'fuel', 'water', 'micros', 'deficit', 'train', 'bar',
+  'recovery', 'sleep', 'vitals', 'fuel', 'water', 'micros', 'deficit', 'train', 'bar',
   'body', 'muscle', 'volume', 'pr', 'consistency', 'steps', 'cardio', 'stack',
 ] as const
 
@@ -105,6 +116,7 @@ export const WIDGET_IDS: readonly WidgetId[] = [
  * S → M → S and the size that has no body is simply unreachable.
  */
 export const WIDGET_SIZES: Record<WidgetId, readonly WidgetSize[]> = {
+  recovery: ['s', 'm', 'l'],
   sleep: ['s', 'm', 'l'],
   vitals: ['s', 'm', 'l'],
   fuel: ['s', 'm', 'l'],
@@ -136,6 +148,10 @@ export const WIDGET_SIZES: Record<WidgetId, readonly WidgetSize[]> = {
  * at medium; the rest start small and can be grown.
  */
 const DEFAULT_SIZE: Record<WidgetId, WidgetSize> = {
+  // The only widget that opens at LARGE. It is the question the dashboard
+  // exists to answer and it used to be a 300px hero; a small tile in its place
+  // would be a demotion dressed as a purge.
+  recovery: 'l',
   sleep: 'm', vitals: 'm', fuel: 'm', water: 's', micros: 's', deficit: 'm',
   train: 'm', bar: 's', body: 'm', muscle: 's', volume: 's',
   pr: 's', consistency: 's', steps: 's', cardio: 's', stack: 's',
@@ -643,6 +659,7 @@ export interface WidgetMeta {
 }
 
 export const WIDGET_META: Record<WidgetId, WidgetMeta> = {
+  recovery: { label: 'Recovery', icon: Gauge, accent: EMBER },
   sleep: { label: 'Sleep', icon: Moon, accent: AMETHYST },
   vitals: { label: 'Vitals', icon: HeartPulse, accent: SAPPHIRE },
   fuel: { label: 'Fuel', icon: Flame, accent: MACRO_COLORS.calories },

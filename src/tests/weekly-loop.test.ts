@@ -326,7 +326,7 @@ describe('buildWeeklyExport', () => {
     // what is under test is the grouping, and four independent `toMatch` calls
     // would pass on four lines scattered through the document.
     expect(dayBlock(out, '2026-07-19')).toEqual([
-      '- **Sun 2026-07-19** · Train · Upper A',
+      '- **Sun 2026-07-19** · Workout · Upper A',
       '    - Sleep & Vitals: Sleep: 9h 11m · HRV: 62 ms · Resting HR: 48 bpm · Wrist Temp: — · Blood O2: —',
       '    - Macros: 1940 kcal (172P / 190C / 54F) · water 3.0 L',
       '    - Activity: 9200 steps · 7.10 km · 68 min training',
@@ -1028,7 +1028,7 @@ describe('weekly aggregates · previous-week reference · disclaimer', () => {
       days: [day({ date: '2026-08-05', weekdayLabel: 'Wed', isTrainingDay: false })],
       sessions: [session({ date: '2026-08-05', label: 'Delts & Arms' })],
     }))
-    expect(out).toMatch(/\*\*Wed 2026-08-05\*\* · Train \(off-plan \/ swapped\)/)
+    expect(out).toMatch(/\*\*Wed 2026-08-05\*\* · Workout \(off-plan \/ swapped\)/)
     expect(out).toMatch(/Delts & Arms/)
     expect(out).not.toMatch(/\*\*Wed 2026-08-05\*\* · Rest/)
   })
@@ -1038,7 +1038,7 @@ describe('weekly aggregates · previous-week reference · disclaimer', () => {
       days: [day({ date: '2026-07-20', weekdayLabel: 'Mon', isTrainingDay: true })],
       sessions: [session({ date: '2026-07-20', label: 'Legs & Core A' })],
     }))
-    expect(out).toMatch(/\*\*Mon 2026-07-20\*\* · Train · /)
+    expect(out).toMatch(/\*\*Mon 2026-07-20\*\* · Workout · /)
     expect(out).not.toMatch(/off-plan/)
   })
 

@@ -1,14 +1,15 @@
 'use client'
 
-import { m } from 'framer-motion'
-import { Check } from 'lucide-react'
+import { useState } from 'react'
+import { AnimatePresence, m } from 'framer-motion'
+import { Check, ChevronDown } from 'lucide-react'
 import { exceptionReason } from '@/lib/nutrition/exceptionDay'
 import { useSetNutritionException } from '@/lib/hooks/useNutritionException'
 import { useSetContext, useContextMode } from '@/lib/hooks/useContextMode'
 import { ContextSelector } from '@/components/nutrition/ContextSelector'
 import { contextFromDayLabel, isRangeMode } from '@/lib/nutrition/context'
 import { useHelixReducedMotion } from '@/lib/motion/useHelixReducedMotion'
-import { SNAPPY, CROSSFADE } from '@/lib/motion/springs'
+import { SNAPPY, CROSSFADE, STANDARD } from '@/lib/motion/springs'
 import { AMETHYST, SAND, MUTED, alpha } from '@/lib/theme/palette'
 
 /**
@@ -47,6 +48,23 @@ import { AMETHYST, SAND, MUTED, alpha } from '@/lib/theme/palette'
  * it appears. Both are documented "away" tones rather than failure tones, which
  * is the point: the day is not a failure.
  *
+ * ── AND WHY IT COLLAPSES ─────────────────────────────────────────────────────
+ * The checkboxes were right and their PERMANENT height was not. This is a
+ * control for the exceptional day — a birthday, a restaurant, a week of
+ * illness — and on the ordinary day, which is nearly all of them, it was a
+ * heading, a five-option selector, a checkbox and a hairline sitting between
+ * today's macro rings and the rest of the page, saying nothing.
+ *
+ * So the summary IS the button. Collapsed, one row states what is declared
+ * ("As planned", or "Off-plan · Estimated") in the colour that fact wears
+ * everywhere else, which is strictly more information than the old expanded
+ * heading gave. Open it and the controls are exactly what they were — nothing
+ * has moved, nothing has become a different affordance, and a declared day is
+ * still legible without opening anything.
+ *
+ * It opens by default when something IS declared, so the state you might want
+ * to correct is never hidden behind a tap.
+ *
  * ── IT IS NOT ABOUT TODAY ────────────────────────────────────────────────────
  * Every string here is date-neutral, because the one thing you reliably know
  * about an exception is that you know it afterwards. The day page passes a past
@@ -69,17 +87,58 @@ export function ExceptionDayBanner({ date, stored, estimated = false }: {
     : isRangeMode(active.mode) ? active.mode : 'normal'
   const transition = reduced ? CROSSFADE : SNAPPY
 
+  const declared = !!reason || estimated
+  const [open, setOpen] = useState(declared)
+
+  /**
+   * The collapsed line, in the day's own words.
+   *
+   * `null` `stored` means "As Planned" — the protocol default, resolved on read
+   * and never written (see `weighin-skip-default` for the same rule on the
+   * scale). So the summary states it rather than leaving the row blank, which
+   * would read as "not answered yet" for a question that has a correct default.
+   */
+  const summary = [reason ?? null, estimated ? 'Estimated' : null].filter(Boolean).join(' · ')
+    || 'As planned'
+
   return (
-    <div className="rounded-xl border px-3 py-2.5 space-y-2"
+    <div className="rounded-xl border overflow-hidden"
       style={{
-        borderColor: reason || estimated ? alpha(AMETHYST, 0.24) : 'rgba(255,255,255,0.08)',
-        background: reason || estimated ? alpha(AMETHYST, 0.05) : 'rgba(255,255,255,0.03)',
+        borderColor: declared ? alpha(AMETHYST, 0.24) : 'rgba(255,255,255,0.08)',
+        background: declared ? alpha(AMETHYST, 0.05) : 'rgba(255,255,255,0.03)',
       }}
     >
-      <div className="space-y-2">
-        <span className="block text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: MUTED }}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="w-full min-h-[40px] px-3 py-2 flex items-center gap-2 text-left"
+      >
+        <span className="text-[10px] font-bold uppercase tracking-[0.14em] shrink-0" style={{ color: MUTED }}>
           Context
         </span>
+        <span className="text-[11px] font-semibold truncate ml-auto"
+          style={{ color: declared ? AMETHYST : MUTED }}>
+          {summary}
+        </span>
+        <ChevronDown
+          className={`w-3.5 h-3.5 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}
+          style={{ color: MUTED }}
+          aria-hidden="true"
+        />
+      </button>
+
+      <AnimatePresence initial={false}>
+        {open && (
+          <m.div
+            initial={reduced ? false : { height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={reduced ? { opacity: 0 } : { height: 0, opacity: 0 }}
+            transition={reduced ? { duration: 0 } : STANDARD}
+            className="overflow-hidden"
+          >
+            <div className="px-3 pb-2.5 space-y-2 border-t border-white/[0.06] pt-2.5">
+      <div className="space-y-2">
         {/* ONE selector, shared with Settings. The five checkboxes that used to
             live here spoke a vocabulary the global context mode did not, so
             declaring illness on the day left the scorer grading you as a
@@ -100,7 +159,7 @@ export function ExceptionDayBanner({ date, stored, estimated = false }: {
         />
       </div>
 
-      {(reason || estimated) && (
+      {declared && (
         <p className="text-[10px] text-muted leading-snug">
           {reason
             ? isRangeMode(mode)
@@ -109,6 +168,10 @@ export function ExceptionDayBanner({ date, stored, estimated = false }: {
             : 'Counted in full. Nothing is forgiven — this only flags the numbers as a guess.'}
         </p>
       )}
+            </div>
+          </m.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
