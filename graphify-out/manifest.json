@@ -1145,8 +1145,8 @@
     "semantic_hash": ""
   },
   "src/tests/session-modifiers.test.ts": {
-    "mtime": 1787129158.2491543,
-    "ast_hash": "736b72f2002aa12f3b5c213740334d73",
+    "mtime": 1787860231.2208765,
+    "ast_hash": "6d417450fcfc058f1ca8399318ef3d26",
     "semantic_hash": ""
   },
   "src/tests/setup.ts": {
@@ -2480,7 +2480,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/set-rows.html": {
-    "mtime": 1787859862.2837172,
+    "mtime": 1787860242.9030938,
     "ast_hash": "6b7c9d27eff50c2ff3702f41ab16f90a",
     "semantic_hash": ""
   },
@@ -2510,7 +2510,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-ledger.html": {
-    "mtime": 1787859860.6718736,
+    "mtime": 1787860241.4139962,
     "ast_hash": "3ddb93aca7b5901708c403bfb41afc10",
     "semantic_hash": ""
   },
@@ -2545,7 +2545,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/live-header.html": {
-    "mtime": 1787859859.643691,
+    "mtime": 1787860241.2777193,
     "ast_hash": "9983d254ba2dd74c447fc05867f2890a",
     "semantic_hash": ""
   },
@@ -2615,7 +2615,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-summary-header.html": {
-    "mtime": 1787859861.1856718,
+    "mtime": 1787860241.5526955,
     "ast_hash": "b3d75865c62fb30c5cc668930a4b7642",
     "semantic_hash": ""
   },
@@ -2855,8 +2855,8 @@
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixWorkoutActivity.swift": {
-    "mtime": 1787860151.741655,
-    "ast_hash": "b2587d221474aaaf7d909b5433c57fb4",
+    "mtime": 1787860186.031332,
+    "ast_hash": "e3d179d1c619f89707f0c843ed850d4d",
     "semantic_hash": ""
   },
   "ios/App/Shared/HelixLiveActivity.swift": {

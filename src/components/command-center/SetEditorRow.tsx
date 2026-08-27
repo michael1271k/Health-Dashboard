@@ -10,7 +10,7 @@ import { useHoldRepeat } from '@/lib/hooks/useHoldRepeat'
 import { RpeLadder } from './RpeLadder'
 import { SetActionSheet, type SetTypeValue } from './SetActionSheet'
 import { setGridFor, SET_BADGE_W, SET_CELL_LEAD, SET_CELL_VALUE, SET_FRAME_GAP, SET_TAIL_W, type SetGridMode } from './setGrid'
-import { EMERALD_DEEP, EMERALD_LIGHT, MUTED } from '@/lib/theme/palette'
+import { EMERALD_DEEP, EMERALD_LIGHT, MUTED, STEEL } from '@/lib/theme/palette'
 
 /** Plate step (a tap on ±) and the microload step (a press-and-hold). */
 const PLATE_STEP = 2.5
@@ -81,8 +81,14 @@ const LONG_PRESS_MS = 500
  * consumer no matter how stable its props are. The rows subscribe to nothing,
  * so this boundary is where the work stops.
  */
-export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subRow = false, set, prev, active, timed = false, loadable = false, gridMode = 'loaded', trackRpe = false, prAxes = [], onActivate, onChange, onRemove, onToggleDone, onSplit, onPrTap }: {
+export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subRow = false, set, prev, active, timed = false, loadable = false, gridMode = 'loaded', trackRpe = false, prAxes = [], sideColor: sideColorProp, onActivate, onChange, onRemove, onToggleDone, onSplit, onPrTap }: {
   index: number
+  /**
+   * The colour the L and R sub-rows share — the EXERCISE's own hue, handed down
+   * by the card. See the note beside `sideColor` below for why both sides take
+   * one colour rather than two.
+   */
+  sideColor?: string
   /**
    * What you did on THIS set number the last time you trained this movement,
    * from any routine — see `useGlobalSetHistory`. Absent when the movement is
@@ -214,7 +220,19 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
   }
 
 
-  const sideColor = set.side === 'L' ? '#8E9AAC' : set.side === 'R' ? '#E0703C' : null
+  /**
+   * ── L/R IS A SYMMETRY AXIS, NOT AN IDENTITY AXIS ───────────────────────────
+   * Left was `#8E9AAC` and right was `#E0703C` — two unrelated hues, which said
+   * the two sides were different KINDS of thing rather than two halves of one
+   * set. Under the muscle DNA those exact hexes now name the Core family and the
+   * Chest family, so a lateral raise's left arm rendered "core" and its right
+   * arm rendered "chest".
+   *
+   * Both sides take the EXERCISE's colour, passed down by the card (which
+   * already computes it for the band). What tells them apart is the letter and
+   * the order — R above L, always — not the hue.
+   */
+  const sideColor = set.side ? sideColorProp ?? STEEL : null
   // The badge box is 28px. "Warmup" and "Dropset" were never going to fit, so
   // the box holds only what is guaranteed to (a digit, a letter, a medal) and
   // the grid stays aligned however the set is typed.

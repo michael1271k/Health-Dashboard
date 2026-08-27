@@ -7,7 +7,7 @@ import { ArrowLeftRight, Check, ChevronDown, Footprints, GripVertical, History, 
 import { tapLight } from '@/lib/native/haptics'
 import { SetEditorRow } from './SetEditorRow'
 import { useTrackRpe } from '@/lib/hooks/useTrackRpe'
-import { cardioSummary, isSetCommitted, type DraftExercise, type DraftSet } from '@/lib/sessions/draft'
+import { cardioSummary, isPairCompactable, isSetCommitted, type DraftExercise, type DraftSet } from '@/lib/sessions/draft'
 import { isTimedExercise } from '@/lib/exercises/timed'
 import { isBodyweightExercise, isLoadableBodyweightExercise } from '@/lib/exercises/bodyweight'
 import { isUnilateralExercise } from '@/lib/exercises/unilateral'
@@ -112,6 +112,27 @@ function groupSets(sets: DraftSet[]): SetGroup[] {
     }
   })
   return groups
+}
+
+/**
+ * One side's effort in a compacted pair — "R 8".
+ *
+ * The letter and the number are one unit, so the pair reads as `R 8 | L 9`
+ * rather than as four floating glyphs. Colour is the EXERCISE's, shared by both
+ * sides on purpose: L/R is a symmetry axis, not an identity axis, and giving
+ * each side its own hue (left was STEEL, right was EMBER) implied the two sides
+ * were different KINDS of thing. Under the muscle DNA those two hexes now read
+ * as "Core" and "Chest", which is nonsense on a limb.
+ */
+function SideRpe({ side, rpe, color }: { side: 'R' | 'L'; rpe: number | null | undefined; color: string }) {
+  return (
+    <span className="inline-flex items-baseline gap-1 shrink-0">
+      <span className="text-[9px] font-bold uppercase" style={{ color }}>{side}</span>
+      <span className="helix-num text-[12px] font-bold tabular-nums" style={{ color: rpe == null ? 'var(--color-muted)' : undefined }}>
+        {rpe ?? '—'}
+      </span>
+    </span>
+  )
 }
 
 /** Weaker-side imbalance for a pair, by per-side volume (weight×reps). We count
@@ -933,14 +954,22 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
             const asym = pairAsymmetry(g.left?.set, g.right?.set)
             const pairIdx = g.left?.idx ?? g.right?.idx
             const pairDone = isSetCommitted(g.left?.set ?? g.right?.set ?? { weightKg: 0, reps: 0, done: false })
+            const compact = isPairCompactable(g.left?.set, g.right?.set)
             return (
               <div key={`p${g.pairId}`}
                 className={`rounded-lg border p-1.5 space-y-1 transition-colors ${
                   pairDone ? 'border-[#3E9E7A]/40 bg-[#3E9E7A]/[0.10]' : 'border-white/[0.07] bg-white/[0.02]'}`}>
                 <div className="flex items-center gap-2 px-1">
                   <span className="text-[10px] font-bold uppercase tracking-wide text-muted">Set {g.num}</span>
+                  {/* R / L, in that order, everywhere — the rows below, the
+                      compact readout and this chip. It was "L / R" here and the
+                      rows were rendered left-then-right, which is the opposite
+                      of how the sides are read out.
+                      EXERCISE colour, not ember. Ember is the Chest family now,
+                      so every unilateral chip in the app claimed to be a chest
+                      movement — including on a lateral raise. */}
                   <span className="text-[9px] font-bold uppercase tracking-wide px-1 py-px rounded"
-                    style={{ color: '#E0703C', background: '#E0703C1f', border: '1px solid #E0703C55' }}>L / R</span>
+                    style={{ color: accent, background: `${accent}1f`, border: `1px solid ${accent}55` }}>R / L</span>
                   {asym && (
                     <span className="text-[9px] font-bold uppercase tracking-wide px-1 py-px rounded"
                       style={{ color: '#C4514E', background: '#C4514E1f', border: '1px solid #C4514E55' }}
@@ -968,31 +997,61 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
                     </button>
                   )}
                 </div>
-                {g.left && (
-                  <SetEditorRow
-                  trackRpe={trackRpe}
-                    key={`l${g.left.idx}`} index={g.left.idx} displayNum={g.num} subRow set={g.left.set}
-                    prev={prevGlobal[g.num - 1] ?? null}
-                    active={activeSet === g.left.idx} timed={timed} gridMode={gridMode} loadable={loadableEx}
-                    prAxes={livePrs?.get(livePrKey(exercise.localId, g.left.idx))}
-                    onActivate={handleActivate}
-                    onChange={handleChange}
-                    onRemove={handleRemove}
-                    onPrTap={handlePrTap}
-                  />
-                )}
-                {g.right && (
-                  <SetEditorRow
-                  trackRpe={trackRpe}
-                    key={`r${g.right.idx}`} index={g.right.idx} displayNum={g.num} subRow set={g.right.set}
-                    prev={prevGlobal[g.num - 1] ?? null}
-                    active={activeSet === g.right.idx} timed={timed} gridMode={gridMode} loadable={loadableEx}
-                    prAxes={livePrs?.get(livePrKey(exercise.localId, g.right.idx))}
-                    onActivate={handleActivate}
-                    onChange={handleChange}
-                    onRemove={handleRemove}
-                    onPrTap={handlePrTap}
-                  />
+                {compact ? (
+                  /* ── ONE ROW ──
+                     Same load, same reps, both ticked: the only thing that
+                     differs is what each side felt like. Stated once, with the
+                     two efforts side by side — which is the one comparison a
+                     matched pair supports. Any divergence in weight, reps or set
+                     type expands it back to two rows on the next render, so this
+                     can never hide an asymmetry. */
+                  <div className={`flex items-center ${SET_FRAME_GAP} px-2 py-1.5 min-w-0`}>
+                    <span className="helix-num font-bold text-fluid-sm tabular-nums text-text whitespace-nowrap">
+                      {fmtKg(g.right!.set.weightKg)}
+                      <span className="text-[10px] font-normal text-muted ml-0.5">kg</span>
+                      <span className="text-muted mx-1.5">×</span>
+                      {g.right!.set.reps}
+                    </span>
+                    <span className="flex-1" />
+                    {trackRpe && (
+                      <span className="flex items-center gap-1.5 shrink-0">
+                        <SideRpe side="R" rpe={g.right!.set.rpe} color={accent} />
+                        <span className="w-px h-3.5 bg-white/15" aria-hidden="true" />
+                        <SideRpe side="L" rpe={g.left!.set.rpe} color={accent} />
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    {g.right && (
+                      <SetEditorRow
+                        trackRpe={trackRpe}
+                        key={`r${g.right.idx}`} index={g.right.idx} displayNum={g.num} subRow set={g.right.set}
+                        prev={prevGlobal[g.num - 1] ?? null}
+                        sideColor={accent}
+                        active={activeSet === g.right.idx} timed={timed} gridMode={gridMode} loadable={loadableEx}
+                        prAxes={livePrs?.get(livePrKey(exercise.localId, g.right.idx))}
+                        onActivate={handleActivate}
+                        onChange={handleChange}
+                        onRemove={handleRemove}
+                        onPrTap={handlePrTap}
+                      />
+                    )}
+                    {g.left && (
+                      <SetEditorRow
+                        trackRpe={trackRpe}
+                        key={`l${g.left.idx}`} index={g.left.idx} displayNum={g.num} subRow set={g.left.set}
+                        prev={prevGlobal[g.num - 1] ?? null}
+                        sideColor={accent}
+                        active={activeSet === g.left.idx} timed={timed} gridMode={gridMode} loadable={loadableEx}
+                        prAxes={livePrs?.get(livePrKey(exercise.localId, g.left.idx))}
+                        onActivate={handleActivate}
+                        onChange={handleChange}
+                        onRemove={handleRemove}
+                        onPrTap={handlePrTap}
+                      />
+                    )}
+                  </>
                 )}
                 {/* Merge collapses the pair back into one bilateral set.
                     The "Linked" toggle is GONE. It mirrored weight and reps

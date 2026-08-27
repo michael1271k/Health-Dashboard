@@ -3,7 +3,7 @@
 import { Gauge } from 'lucide-react'
 import { useNutritionGoals } from '@/lib/hooks/useNutritionGoals'
 import { LEVERS } from '@/lib/nutrition/levers'
-import { GOLD } from '@/lib/theme/palette'
+import { SAND } from '@/lib/theme/palette'
 
 /**
  * Which rung of the cut is in force, said out loud.
@@ -34,7 +34,12 @@ export function LeverTag({ compact = false }: {
   return (
     <span
       className="shrink-0 inline-flex items-center gap-1 px-1.5 py-px rounded-md text-[10px] font-bold uppercase tracking-wide tabular-nums"
-      style={{ color: GOLD, background: `${GOLD}1a`, border: `1px solid ${GOLD}55` }}
+      // SAND, not GOLD. Gold means a personal record app-wide (WEEK_STATE.pr),
+      // and the compact variant of this chip renders in the logger header inches
+      // from the gold Records tile — two golds, two meanings, one glance. SAND is
+      // the palette's dietary-context tone (it already carries the travel/deload
+      // rung), which is exactly what a calorie lever is.
+      style={{ color: SAND, background: `${SAND}1a`, border: `1px solid ${SAND}55` }}
       title={`${rung.label} — ${rung.summary}`}
     >
       <Gauge className="w-2.5 h-2.5" aria-hidden="true" />

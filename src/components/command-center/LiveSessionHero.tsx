@@ -14,7 +14,7 @@ import { useLoggedSessionDates } from '@/lib/hooks/useDayVault'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { fmtVolume } from '@/lib/utils/units'
 import { cleanSessionTitle, type SessionDraft } from '@/lib/sessions/draft'
-import { EMBER, GOLD, MUTED, STEEL } from '@/lib/theme/palette'
+import { GOLD, MUTED, STEEL } from '@/lib/theme/palette'
 
 /**
  * The live session's title block — the workout you are in, at the size it
@@ -102,7 +102,7 @@ export function LiveSessionHero({ draft, accent, volumeKg, sets, recordCount, on
        phone — a tint that stops 12px short of the edge reads as a panel behind
        the title rather than as the session's own colour. `safe-pt` because
        nothing sits above this any more. */
-    <div data-live-hero className="relative -mx-3 sm:-mx-5 px-3 sm:px-5 safe-pt pt-2 pb-3">
+    <div data-live-hero className="relative -mx-3 sm:-mx-5 px-3 sm:px-5 safe-pt pt-2 pb-2">
       {/* The wash, not a band. A solid block of the day's colour would compete
           with the three figures directly beneath it; a gradient that has fully
           dissolved by the time it reaches the first exercise card colours the
@@ -160,7 +160,16 @@ export function LiveSessionHero({ draft, accent, volumeKg, sets, recordCount, on
           the width of three characters of the title to say the same thing the
           line already says. Indented to the title's own left edge, past the
           chevron, so the two read as one block. */}
-      <div className="relative mt-1.5 ml-9 flex items-start gap-2">
+      {/* ── WHERE THE DEAD BAND WAS ──
+          `items-start`. The left column is one 12px line of date plus a lever
+          chip on a SECOND line; the right column is three ~44px controls. The
+          row's height is set by the controls, so aligning the text to the top
+          left roughly 30px of empty space under it, the full width of the
+          screen, on the surface with the least room to spare.
+          Centred, the date sits against the middle of the controls and the
+          chip rides beside it rather than under it — same information, one
+          band instead of two and a half. */}
+      <div className="relative mt-1 ml-9 flex items-center gap-2">
         <div className="min-w-0 flex-1">
         <button
           type="button"
@@ -175,6 +184,10 @@ export function LiveSessionHero({ draft, accent, volumeKg, sets, recordCount, on
             {draft.phase && <span className="text-info font-semibold">{draft.phase === 'CUT' ? 'Cut' : draft.phase} · </span>}
             {dateLabel}
           </span>
+          {/* Which rung of the cut you are training under. Inline with the date
+              rather than on a line of its own: it is one more fact about this
+              session's context, and it was costing a whole row to say so. */}
+          <span className="shrink-0 ml-1"><LeverTag compact /></span>
         </button>
         {pickerOpen && (
           <DatePickerPopover
@@ -189,7 +202,6 @@ export function LiveSessionHero({ draft, accent, volumeKg, sets, recordCount, on
             than only in Settings because the deck is where the day is spent — a
             target that moved by 70 kcal overnight should be readable without
             leaving the session. */}
-        <span className="flex mt-1"><LeverTag compact /></span>
         </div>
         {/* ── THE TWO BETWEEN-SETS TOOLS, TOGETHER ──
             Where this session is landing, and how long you have been standing
@@ -210,8 +222,12 @@ export function LiveSessionHero({ draft, accent, volumeKg, sets, recordCount, on
 
       {/* The live rail. Only what moves while you lift — duration, average HR
           and calories belong to the finish sheet, where you can answer them. */}
-      <div className="grid grid-cols-3 gap-2 mt-3">
-        <Tile label="Volume" value={fmtVolume(volumeKg)} unit="kg" color={EMBER} />
+      <div className="grid grid-cols-3 gap-2 mt-2">
+        {/* Volume wears the SESSION'S colour, not a fixed ember. Ember is the
+            Chest family now, so a hardcoded ember rail said "chest day" on a leg
+            day — and on an Upper A deck it said it twice. The tile that carries
+            the session's headline number should be the session's colour. */}
+        <Tile label="Volume" value={fmtVolume(volumeKg)} unit="kg" color={accent} />
         <Tile label="Sets" value={String(sets)} color={STEEL} />
         <Tile
           label={recordCount === 1 ? 'Record' : 'Records'}
@@ -228,16 +244,40 @@ export function LiveSessionHero({ draft, accent, volumeKg, sets, recordCount, on
 /**
  * One metric tile.
  *
- * Label ABOVE value, matching every other metric grid in the app. Solid surface,
- * no `backdrop-filter`: this sits under the collapsed bar's blur, and stacking
- * one translucent layer on another is the one thing the material rules forbid.
+ * Label ABOVE value, matching every other metric grid in the app.
+ *
+ * ── WHY IT IS LIT AND NOT FLAT ───────────────────────────────────────────────
+ * It was one opaque slab, `rgba(13,18,32,0.55)` with a white hairline, for all
+ * three metrics — the colour appeared only in nine pixels of uppercase label, so
+ * the rail read as three grey boxes on the screen you look at most. It now takes
+ * the same two-layer treatment as `WidgetFrame`: a corner-anchored radial plus a
+ * directional wash in the metric's own colour, and a lit top edge. Same idea as
+ * the dashboard, so the deck and the grid look like one app.
+ *
+ * Still no `backdrop-filter`: this sits under the collapsed bar's blur, and
+ * stacking one translucent layer on another is the one thing the material rules
+ * forbid.
  */
 function Tile({ label, value, unit, color }: { label: string; value: string; unit?: string; color: string }) {
   return (
-    <div className="rounded-xl px-2.5 py-2 min-w-0"
-      style={{ background: 'rgba(13,18,32,0.55)', border: '1px solid rgba(255,255,255,0.07)' }}>
-      <div className="text-[9px] font-bold uppercase tracking-[0.14em] truncate" style={{ color }}>{label}</div>
-      <div className="helix-num font-bold text-fluid-lg tabular-nums leading-none mt-1 text-text whitespace-nowrap">
+    <div className="relative overflow-hidden rounded-xl px-2.5 py-2 min-w-0"
+      style={{ backgroundColor: 'rgba(13,18,32,0.55)', border: `1px solid ${color}2e` }}>
+      <span
+        aria-hidden="true"
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            `radial-gradient(120% 120% at 0% 0%, ${color}24 0%, ${color}0d 44%, transparent 76%),`
+            + `linear-gradient(140deg, ${color}12 0%, ${color}06 55%, transparent 100%)`,
+        }}
+      />
+      <span
+        aria-hidden="true"
+        className="absolute inset-x-0 top-0 h-px pointer-events-none"
+        style={{ background: `linear-gradient(90deg, transparent, ${color}4d, transparent)` }}
+      />
+      <div className="relative text-[9px] font-bold uppercase tracking-[0.14em] truncate" style={{ color }}>{label}</div>
+      <div className="relative helix-num font-bold text-fluid-lg tabular-nums leading-none mt-1 text-text whitespace-nowrap">
         {value}
         {unit && <span className="text-[10px] font-normal text-muted ml-0.5">{unit}</span>}
       </div>

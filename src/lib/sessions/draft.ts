@@ -163,6 +163,40 @@ export function draftTotals(draft: SessionDraft): { volumeKg: number; sets: numb
 }
 
 /**
+ * Can this L/R pair be drawn as ONE row?
+ *
+ * ── THE CASE ─────────────────────────────────────────────────────────────────
+ * The overwhelmingly common unilateral set is the same load for the same reps on
+ * both sides, differing only in what it FELT like — you do not load one dumbbell
+ * to 32.5 kg and the other to 30. Drawing that as two full rows spends two
+ * 36px lines, two badges and two three-column grids to say "32.5 × 10" twice and
+ * one RPE differently, on the screen with the least room in the app.
+ *
+ * Compacted, the load is stated once and the two efforts sit side by side, which
+ * is also the only comparison a matched pair supports.
+ *
+ * ── WHY EVERY CONDITION IS NEEDED ────────────────────────────────────────────
+ * Both sides must be COMMITTED. An un-ticked pair is two rows you are still
+ * typing into, and collapsing them would remove the fields. This is a display of
+ * finished work, never an editor.
+ *
+ * `setType` must match. A warm-up left and a working right are not one set, and
+ * folding them would hide a W badge that changes whether the row counts toward
+ * a record at all.
+ *
+ * Weight AND reps must be exactly equal. Not "close": 32.5 vs 32.4 is a real
+ * asymmetry and `pairAsymmetry` exists to surface exactly that. A row that
+ * silently rounded two different loads into one would erase the imbalance the
+ * card is there to show.
+ */
+export function isPairCompactable(l?: DraftSet, r?: DraftSet): boolean {
+  if (!l || !r) return false
+  if (!isSetCommitted(l) || !isSetCommitted(r)) return false
+  if ((l.setType ?? 'normal') !== (r.setType ?? 'normal')) return false
+  return l.weightKg === r.weightKg && l.reps === r.reps
+}
+
+/**
  * Cumulative session tonnage after each completed set — the Live Activity's
  * sparkline.
  *

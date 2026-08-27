@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  cascadeSetEdit, draftTotals, draftVolumeSeries, buildCommitPayload,
+  cascadeSetEdit, draftTotals, draftVolumeSeries, isPairCompactable, buildCommitPayload,
   type SessionDraft, type DraftSet,
 } from '@/lib/sessions/draft'
 import { SaveWorkoutSchema, countCommittedSets } from '@/lib/sessions/schema'
@@ -158,5 +158,43 @@ describe('draftVolumeSeries — the Live Activity sparkline', () => {
     expect(series.at(-1)).toBe(4000)
     // Monotonic, because cumulative tonnage cannot go down.
     expect([...series].sort((a, b) => a - b)).toEqual(series)
+  })
+})
+
+describe('isPairCompactable — when an L/R pair draws as one row', () => {
+  const side = (s: 'L' | 'R', over: Partial<DraftSet> = {}): DraftSet =>
+    ({ weightKg: 32.5, reps: 10, side: s, pairId: 'p1', rpe: 8, ...over }) as DraftSet
+
+  it('folds the common case: same load, same reps, only the effort differs', () => {
+    expect(isPairCompactable(side('L', { rpe: 9 }), side('R', { rpe: 8 }))).toBe(true)
+  })
+
+  it('folds an identical pair too — nothing to compare is still nothing to repeat', () => {
+    expect(isPairCompactable(side('L'), side('R'))).toBe(true)
+  })
+
+  it('expands the moment the sides diverge', () => {
+    // pairAsymmetry exists to surface exactly this, so a row that folded two
+    // different loads into one would erase the reading the card is there for.
+    expect(isPairCompactable(side('L', { weightKg: 30 }), side('R'))).toBe(false)
+    expect(isPairCompactable(side('L', { reps: 9 }), side('R'))).toBe(false)
+  })
+
+  it('never folds a pair you are still typing into', () => {
+    // Collapsing an un-ticked pair removes the fields. This is a display of
+    // finished work, never an editor.
+    expect(isPairCompactable(side('L', { done: false }), side('R'))).toBe(false)
+    expect(isPairCompactable(side('L'), side('R', { done: false }))).toBe(false)
+  })
+
+  it('never folds across set types', () => {
+    // A warm-up left and a working right are not one set, and folding them
+    // hides a W badge that decides whether the row can set a record at all.
+    expect(isPairCompactable(side('L', { setType: 'warmup' }), side('R'))).toBe(false)
+  })
+
+  it('needs both sides', () => {
+    expect(isPairCompactable(side('L'), undefined)).toBe(false)
+    expect(isPairCompactable(undefined, side('R'))).toBe(false)
   })
 })

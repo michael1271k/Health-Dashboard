@@ -88,7 +88,7 @@ const ALLOWED_ORPHANS: Record<string, string> = {
 // deleted, and between them they carried a five-hex EXERCISE_COLORS array and a
 // zone table of their own. `Front delts` adds one back, in palette.ts where a
 // muscle hue belongs.
-const HEX_CEILING = 176
+const HEX_CEILING = 173
 
 function scan() {
   const files = sourceFiles('src').filter(
