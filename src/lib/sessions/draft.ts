@@ -163,6 +163,49 @@ export function draftTotals(draft: SessionDraft): { volumeKg: number; sets: numb
 }
 
 /**
+ * Cumulative session tonnage after each completed set — the Live Activity's
+ * sparkline.
+ *
+ * ── WHY IT RECOMPUTES THE PREFIX INSTEAD OF ADDING AS IT GOES ────────────────
+ * A running `total += weight * reps` would be a SECOND volume implementation,
+ * and it would be wrong in the one case that matters here: a unilateral L/R pair
+ * is scored at the weaker side and counts once (`sessionVolumeKg`), so adding
+ * each row's own product double-counts every split set. Re-running the real
+ * function over each prefix is O(n²) in the number of sets — which is at most a
+ * few dozen — and cannot drift from the total printed beside it.
+ *
+ * ── AND WHY IT IS SAMPLED, NOT TRUNCATED ─────────────────────────────────────
+ * ActivityKit budgets updates by payload as well as by frequency. Capped at
+ * `cap` points, evenly spaced across the WHOLE session: keeping only the last
+ * twelve would redraw the shape as the session grew, so the chart would appear
+ * to flatten exactly as the work piled up.
+ *
+ * Fewer than two points returns empty. One dot on an axis reads as a rendering
+ * failure, and a single set is not a trend.
+ */
+export function draftVolumeSeries(draft: SessionDraft, cap = 12): number[] {
+  const committed: DraftSet[] = []
+  for (const ex of draft.exercises) {
+    if (ex.kind === 'cardio') continue
+    for (const s of ex.sets) if (isSetCommitted(s)) committed.push(s)
+  }
+  if (committed.length < 2) return []
+
+  const cumulative = committed.map((_, i) =>
+    Math.round(sessionVolumeKg(committed.slice(0, i + 1))),
+  )
+  if (cumulative.length <= cap) return cumulative
+
+  // Evenly spaced, both endpoints kept: the last point is the current total, so
+  // the chart's right edge and the number beside it always agree.
+  const out: number[] = []
+  for (let i = 0; i < cap; i += 1) {
+    out.push(cumulative[Math.round((i * (cumulative.length - 1)) / (cap - 1))])
+  }
+  return out
+}
+
+/**
  * The rating that MEANS failure, and the single definition of it.
  *
  * It lived as a private const in `SetEditorRow` while the write path in this

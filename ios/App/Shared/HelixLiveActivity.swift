@@ -46,12 +46,34 @@ public struct HelixWorkoutAttributes: ActivityAttributes {
     public var lastTime: String
     /// Last time's effort on that set: "RPE 10". Empty when it was never rated.
     public var lastRpe: String
+    /// THIS set's load, pre-formatted: "32.5 kg × 10".
+    ///
+    /// The Lock Screen leads with this. `lastTime` used to be the largest thing
+    /// on the card while the set you were standing in front of went unnamed —
+    /// history is context for a decision, not the decision itself. Empty while
+    /// the row is blank, and weight-only ("32.5 kg") while the reps are still
+    /// being typed, which is the state the card is in during every set.
+    public var load: String
+    /// THIS set's effort: "RPE 8". Empty until it is rated.
+    public var rpe: String
     /// Live session totals, formatted: "12,480 kg", "18".
     public var volume: String
     public var sets: String
     /// Records claimed so far. Zero renders as nothing — a permanent gold zero
     /// is how gold stops meaning a personal record (see `LiveSessionHero`).
     public var records: Int
+    /// Cumulative session tonnage after each completed set, oldest first.
+    ///
+    /// The only non-string, non-scalar field, and the exception earns itself: a
+    /// sparkline is a SHAPE, and a shape cannot be pre-rendered into text the
+    /// way a load can. The producer caps it at 12 points — ActivityKit budgets
+    /// updates by payload size as well as by frequency, and a chart that grew
+    /// without bound would cost more the longer the session ran, which is
+    /// exactly backwards.
+    ///
+    /// Empty until the second completed set: one point is not a trend, and a
+    /// single dot on an axis reads as a rendering failure.
+    public var spark: [Double]
     /// The workout's own colour, as `0xRRGGBB`. Sent rather than derived so the
     /// activity, the deck header and the widget cannot drift: `dayColor()` is
     /// the single source and it lives in TypeScript.

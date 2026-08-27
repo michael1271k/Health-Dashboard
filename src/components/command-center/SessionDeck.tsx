@@ -16,14 +16,14 @@ import { useProgressionQueue } from '@/lib/hooks/useProgressionQueue'
 import { useDeleteSession } from '@/lib/hooks/useDayVault'
 import { eraForDate } from '@/lib/programs'
 import { dayColor, EMBER, STEEL, GOLD, MUTED } from '@/lib/theme/palette'
-import { cleanSessionTitle, draftTotals } from '@/lib/sessions/draft'
+import { cleanSessionTitle, draftTotals, draftVolumeSeries } from '@/lib/sessions/draft'
 import { fmtVolume } from '@/lib/utils/units'
 import { tapSuccess } from '@/lib/native/haptics'
 import type { useSessionDraft, CommitResult } from '@/lib/hooks/useSessionDraft'
 import { prAxisLabel } from '@/lib/training/prEngine'
 import { isTimedExercise } from '@/lib/exercises/timed'
 import { useReportTargets } from '@/lib/hooks/useReportTargets'
-import { findNextSet, formatLastRpe, formatLastTime } from '@/lib/sessions/nextSet'
+import { findNextSet, formatLastRpe, formatLastTime, formatLoad, formatRpe } from '@/lib/sessions/nextSet'
 import { elapsedDurationMin, sessionElapsedSec } from '@/lib/sessions/sessionElapsed'
 import { endWorkoutActivity, hexToInt, startWorkoutActivity, updateWorkoutActivity } from '@/lib/native/liveActivity'
 
@@ -153,16 +153,22 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
    * contents do — the same argument, and the same shape, as `livePrDigest`.
    */
   const nextSet = useMemo(() => findNextSet(draft, globalHistory), [draft, globalHistory])
+  // Its own memo, keyed on the draft: the series only changes when a set is
+  // ticked, whereas `activityState` is rebuilt on every keystroke to be digested.
+  const spark = useMemo(() => (draft ? draftVolumeSeries(draft) : []), [draft])
   const activityState = useMemo(() => ({
     exercise: nextSet?.exercise ?? '',
     setLabel: nextSet ? `Set ${nextSet.setNumber} of ${nextSet.setTotal}` : 'Every set logged',
     lastTime: formatLastTime(nextSet),
     lastRpe: formatLastRpe(nextSet),
+    load: formatLoad(nextSet),
+    rpe: formatRpe(nextSet),
     volume: fmtVolume(totals.volumeKg),
     sets: String(totals.sets),
     records: livePrs.count,
+    spark,
     accent: hexToInt(dayColor(draft?.dayKey, draft?.splitDay ?? 'upper')),
-  }), [nextSet, totals.volumeKg, totals.sets, livePrs.count, draft?.dayKey, draft?.splitDay])
+  }), [nextSet, totals.volumeKg, totals.sets, livePrs.count, spark, draft?.dayKey, draft?.splitDay])
   const activityKey = JSON.stringify(activityState)
 
   const liveTitle = draft ? cleanSessionTitle(draft) : null

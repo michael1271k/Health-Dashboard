@@ -36,6 +36,18 @@ export interface NextSet {
   lastWeightKg: number | null
   lastReps: number | null
   lastRpe: number | null
+  /**
+   * THIS set's own numbers — what is in the row you are standing in front of,
+   * whether it was prefilled from the program or typed just now.
+   *
+   * The Lock Screen leads with these, not with `last*`. "LAST TIME 115 kg × 10"
+   * was the largest thing on the card while the set you were about to do went
+   * unnamed — the history is context for a decision, not the decision. Null
+   * while a field is still blank; the card draws nothing rather than a zero.
+   */
+  weightKg: number | null
+  reps: number | null
+  rpe: number | null
 }
 
 export function findNextSet(
@@ -85,6 +97,9 @@ export function findNextSet(
         lastWeightKg: prev?.weightKg ?? null,
         lastReps: prev?.reps ?? null,
         lastRpe: prev?.rpe ?? null,
+        weightKg: s.weightKg ?? null,
+        reps: s.reps ?? null,
+        rpe: s.rpe ?? null,
       }
     }
   }
@@ -135,4 +150,30 @@ export function formatLastTime(next: NextSet | null): string {
 /** "RPE 10", or "" when last time was never rated. */
 export function formatLastRpe(next: NextSet | null): string {
   return next?.lastRpe == null ? '' : `RPE ${next.lastRpe}`
+}
+
+/**
+ * The load on the set you are ON — "32.5 kg × 10", "10 reps", "32.5 kg" or "".
+ *
+ * Same rounding rule as `formatLastTime`, deliberately: the two sit one line
+ * apart on the Lock Screen and on the expanded Island, so a load that renders
+ * `3.75` above and `3.8` below would be the clearest possible bug.
+ *
+ * Partial rows are real and common — a weight is usually typed before the reps
+ * — so weight-only and reps-only both have a rendering. Neither prints a zero
+ * it does not have.
+ */
+export function formatLoad(next: NextSet | null): string {
+  if (!next) return ''
+  const { weightKg: w, reps } = next
+  const loaded = w != null && w > 0
+  if (!loaded && reps == null) return ''
+  if (!loaded) return `${reps} reps`
+  const load = w % 1 === 0 ? w.toFixed(0) : (w * 10) % 1 === 0 ? w.toFixed(1) : w.toFixed(2)
+  return reps == null ? `${load} kg` : `${load} kg × ${reps}`
+}
+
+/** "RPE 8" for the set you are on, or "" while it is unrated. */
+export function formatRpe(next: NextSet | null): string {
+  return next?.rpe == null ? '' : `RPE ${next.rpe}`
 }

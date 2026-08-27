@@ -37,9 +37,29 @@ export interface WorkoutActivityState {
   lastTime: string
   /** Last time's effort on that set: "RPE 10". Empty when it was never rated. */
   lastRpe: string
+  /**
+   * THIS set's load — "32.5 kg × 10". The Lock Screen leads with it.
+   *
+   * `lastTime` used to be the largest thing on the card while the set you were
+   * standing in front of went unnamed. History is context for a decision, not
+   * the decision.
+   */
+  load: string
+  /** THIS set's effort: "RPE 8". Empty until it is rated. */
+  rpe: string
   volume: string
   sets: string
   records: number
+  /**
+   * Cumulative session tonnage after each completed set, oldest first — the
+   * mini graph on the Lock Screen and the expanded Island.
+   *
+   * Capped at 12 points by the producer. ActivityKit budgets updates by payload
+   * as well as by frequency, and a chart that grows without bound would spend
+   * more of that budget the longer the session ran, which is exactly backwards.
+   * Twelve is enough to show a shape; the number beside it is the real value.
+   */
+  spark: number[]
   /** `dayColor()` as an integer — `0xRRGGBB`. */
   accent: number
 }

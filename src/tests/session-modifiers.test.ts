@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  cascadeSetEdit, draftTotals, buildCommitPayload,
+  cascadeSetEdit, draftTotals, draftVolumeSeries, buildCommitPayload,
   type SessionDraft, type DraftSet,
 } from '@/lib/sessions/draft'
 import { SaveWorkoutSchema, countCommittedSets } from '@/lib/sessions/schema'
@@ -114,5 +114,49 @@ describe('SaveWorkoutSchema — accepts DB round-trip (offset) datetimes [edit-p
   it('still accepts a fresh Z-suffixed instant (the normal-log case)', () => {
     const body = { ...base, startedAt: '2026-07-21T11:00:58.594Z', endedAt: '2026-07-21T12:00:58.594Z' }
     expect(SaveWorkoutSchema.safeParse(body).success).toBe(true)
+  })
+})
+
+describe('draftVolumeSeries — the Live Activity sparkline', () => {
+  it('is cumulative, and its last point IS the total on the card', () => {
+    const draft = draftWith([
+      { weightKg: 40, reps: 10 },
+      { weightKg: 40, reps: 10 },
+      { weightKg: 50, reps: 8 },
+    ])
+    const series = draftVolumeSeries(draft)
+    expect(series).toEqual([400, 800, 1200])
+    // The chart's right edge and the figure printed beside it are the same
+    // number, or the card contradicts itself.
+    expect(series[series.length - 1]).toBe(Math.round(draftTotals(draft).volumeKg))
+  })
+
+  it('collapses an L/R pair the way the total does', () => {
+    // The pair is scored at the WEAKER side and counts once. A running
+    // `total += weight * reps` would count both rows and diverge from the
+    // headline by the stronger side's tonnage — on every split set.
+    const draft = draftWith([
+      { weightKg: 20, reps: 10, side: 'R', pairId: 'p1' },
+      { weightKg: 18, reps: 10, side: 'L', pairId: 'p1' },
+    ])
+    expect(draftVolumeSeries(draft, 12).at(-1)).toBe(Math.round(draftTotals(draft).volumeKg))
+  })
+
+  it('draws nothing below two points', () => {
+    // One dot on an empty rect reads as a failure to render, not as set one.
+    expect(draftVolumeSeries(draftWith([{ weightKg: 40, reps: 10 }]))).toEqual([])
+    expect(draftVolumeSeries(draftWith([]))).toEqual([])
+  })
+
+  it('samples across the WHOLE session rather than keeping the tail', () => {
+    const sets = Array.from({ length: 40 }, () => ({ weightKg: 10, reps: 10 }))
+    const series = draftVolumeSeries(draftWith(sets), 12)
+    expect(series).toHaveLength(12)
+    // Both endpoints kept. Truncating to the last 12 would redraw the shape as
+    // the session grew, so the chart would flatten exactly as work piled up.
+    expect(series[0]).toBe(100)
+    expect(series.at(-1)).toBe(4000)
+    // Monotonic, because cumulative tonnage cannot go down.
+    expect([...series].sort((a, b) => a - b)).toEqual(series)
   })
 })

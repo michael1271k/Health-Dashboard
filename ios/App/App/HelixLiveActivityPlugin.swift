@@ -173,9 +173,14 @@ public class HelixLiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
       setLabel: call.getString("setLabel") ?? "",
       lastTime: call.getString("lastTime") ?? "",
       lastRpe: call.getString("lastRpe") ?? "",
+      load: call.getString("load") ?? "",
+      rpe: call.getString("rpe") ?? "",
       volume: call.getString("volume") ?? "0",
       sets: call.getString("sets") ?? "0",
       records: call.getInt("records") ?? 0,
+      // An absent or malformed series draws no chart, rather than a flat line
+      // at zero — which would claim the session has done no work.
+      spark: (call.getArray("spark") as? [NSNumber])?.map(\.doubleValue) ?? [],
       // EMBER, the app's default accent, when the day has no colour of its own.
       accent: call.getInt("accent") ?? 0xE0703C
     )

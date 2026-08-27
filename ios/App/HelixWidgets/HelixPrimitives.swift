@@ -759,13 +759,25 @@ struct HelixRungs: Shape {
 struct HelixMark: View {
   var size: CGFloat = 16
   var monochrome = false
+  /// Draw the mark in ONE given hue instead of ember-over-steel.
+  ///
+  /// For the Dynamic Island, whose compact regions are ~44pt and shared with
+  /// whatever else is running. The choice there used to be two-colour (mud at
+  /// that size) or `monochrome` grey-on-black (a smudge). A single accent hue
+  /// keeps the strand/rung alpha split — so the mark still reads as interlocking
+  /// — while being legible at 14pt AND saying which session is running, since
+  /// the accent is the workout's own `dayColor`.
+  ///
+  /// `monochrome` wins if both are set: it exists for accented-mode rendering,
+  /// where the system has already decided the colour.
+  var tint: Color? = nil
   /// 0.85, not 0.55. At just over half opacity on a near-black canvas the mark
   /// was a watermark — present enough to occupy the corner, too faint to be the
   /// logo it was there to be.
   var opacity: Double = 0.85
 
-  private var front: Color { monochrome ? .white : Helix.ember }
-  private var back: Color { monochrome ? .white : Helix.steel }
+  private var front: Color { monochrome ? .white : (tint ?? Helix.ember) }
+  private var back: Color { monochrome ? .white : (tint ?? Helix.steel) }
 
   var body: some View {
     ZStack {

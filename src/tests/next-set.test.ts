@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { findNextSet, formatLastRpe, formatLastTime } from '@/lib/sessions/nextSet'
+import { findNextSet, formatLastTime, formatLastRpe, formatLoad, formatRpe } from '@/lib/sessions/nextSet'
 import type { SessionDraft, DraftSet } from '@/lib/sessions/draft'
 import type { ExerciseHistory } from '@/lib/hooks/useExerciseSetHistory'
 
@@ -128,9 +128,44 @@ describe('the set you are walking towards', () => {
   })
 })
 
+describe('the set you are ON', () => {
+  const now = (w: number | null, r: number | null, rpe: number | null = null) => ({
+    exercise: 'X', setNumber: 1, setTotal: 1, lastWeightKg: null, lastReps: null, lastRpe: null,
+    weightKg: w, reps: r, rpe,
+  })
+
+  it('rounds exactly the way last time does', () => {
+    // The two sit one line apart on the Lock Screen. A load that renders 3.75
+    // above and 3.8 below is the clearest possible bug.
+    expect(formatLoad(now(3.75, 16))).toBe('3.75 kg × 16')
+    expect(formatLoad(now(60, 8))).toBe('60 kg × 8')
+    expect(formatLoad(now(77.5, 6))).toBe('77.5 kg × 6')
+  })
+
+  it('never prints a weight an unloaded set does not have', () => {
+    expect(formatLoad(now(0, 17))).toBe('17 reps')
+    expect(formatLoad(now(null, 17))).toBe('17 reps')
+  })
+
+  it('renders a half-typed row without inventing the other half', () => {
+    // A weight is normally typed before the reps, so this state is on screen
+    // during every single set — it must not read "60 kg × null" or "60 kg × 0".
+    expect(formatLoad(now(60, null))).toBe('60 kg')
+    expect(formatLoad(now(null, null))).toBe('')
+    expect(formatLoad(null)).toBe('')
+  })
+
+  it('states effort only once it has been rated', () => {
+    expect(formatRpe(now(60, 8, 8))).toBe('RPE 8')
+    expect(formatRpe(now(60, 8))).toBe('')
+    expect(formatRpe(null)).toBe('')
+  })
+})
+
 describe('what the card says about it', () => {
   const from = (w: number | null, r: number | null, rpe: number | null = null) => ({
     exercise: 'X', setNumber: 1, setTotal: 1, lastWeightKg: w, lastReps: r, lastRpe: rpe,
+    weightKg: null, reps: null, rpe: null,
   })
 
   it('keeps a quarter-plate load exact', () => {
