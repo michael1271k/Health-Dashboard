@@ -201,9 +201,12 @@ describe('persistence', () => {
     const gone = removeFace(base, slotOf(base, 'cardio').id, 0)
     writeLayout(resizeSlot(gone, slotOf(gone, 'body').id))
     const back = readLayout()
-    // `cardio` is off the grid, so the reconcile appends it at the END rather
-    // than at its old index — reachable, which is the invariant that matters.
-    expect(back.slots.at(-1)!.items).toEqual(['cardio'])
+    // `cardio` is off the grid and STAYS off it. This used to assert the
+    // opposite — that the reconcile appended it back at the end — which is the
+    // reappearing-widget bug written down as an invariant. It is reachable from
+    // the tray, which is where a removed widget is supposed to be found.
+    expect(placedWidgets(back)).not.toContain('cardio')
+    expect(hiddenWidgets(back)).toEqual(['cardio'])
     expect(slotOf(back, 'body').size).toBe('l')
   })
 

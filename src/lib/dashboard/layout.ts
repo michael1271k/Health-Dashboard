@@ -4,12 +4,19 @@
  * The dashboard's arrangement — which widgets, in what order, at what size, and
  * which of them are stacked on top of each other.
  *
- * ── WHY THIS IS DEVICE-LOCAL ─────────────────────────────────────────────────
- * Every other preference in HELIX syncs through `user_goals`, because a calorie
- * target means the same thing on every device. A LAYOUT does not: a phone shows
- * two columns and a desktop four, and the widget you want first on a 390px
- * screen at the gym is not the one you want first on a monitor. It is stored in
- * localStorage, read synchronously during render, and never leaves the device.
+ * ── IT IS LOCAL-FIRST, AND IT IS ALSO SYNCED ─────────────────────────────────
+ * It used to be device-local on purpose, and the argument was that a phone shows
+ * two columns and a desktop four so the right arrangement differs per screen.
+ * That argument survives contact with two devices and does not survive contact
+ * with ONE device reinstalled: localStorage goes with the app, so a reinstall
+ * threw away an arrangement that had taken months to settle into, and there was
+ * nowhere to get it back from.
+ *
+ * So localStorage is still the READ — synchronous, during render, no flash of
+ * the default grid — and `dashboard_layouts` is the BACKUP OF RECORD. The merge
+ * is last-write-wins on `updatedAt`, which is the correct rule for a single
+ * user's own preference: there is no concurrent editor to lose work to, only an
+ * older copy of yourself. See `layoutSync.ts`.
  *
  * ── THE UNIT OF ARRANGEMENT IS A SLOT, NOT A WIDGET ──────────────────────────
  * It used to be `order: WidgetId[]` plus `size: Record<WidgetId, WidgetSize>`,
@@ -40,7 +47,7 @@
 
 import type { LucideIcon } from 'lucide-react'
 import {
-  Activity, BarChart3, CalendarCheck, Dumbbell, Flame, Footprints,
+  Activity, BarChart3, CalendarCheck, Droplets, Dumbbell, Flame, Footprints,
   HeartPulse, Moon, Pill, Scale, Sparkles, Target, TrendingDown, Trophy,
 } from 'lucide-react'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
@@ -52,7 +59,7 @@ export type WidgetSize = 's' | 'm' | 'l'
 
 export type WidgetId =
   | 'sleep' | 'fuel' | 'micros' | 'train' | 'body' | 'steps'
-  | 'cardio' | 'stack' | 'vitals'
+  | 'cardio' | 'stack' | 'vitals' | 'water'
   | 'muscle' | 'pr' | 'volume'
   | 'deficit' | 'bar' | 'consistency'
 
@@ -79,7 +86,7 @@ export type WidgetId =
  * A stored layout naming either simply drops it on read; nothing to migrate.
  */
 export const WIDGET_IDS: readonly WidgetId[] = [
-  'sleep', 'vitals', 'fuel', 'micros', 'deficit', 'train', 'bar',
+  'sleep', 'vitals', 'fuel', 'water', 'micros', 'deficit', 'train', 'bar',
   'body', 'muscle', 'volume', 'pr', 'consistency', 'steps', 'cardio', 'stack',
 ] as const
 
@@ -102,6 +109,11 @@ export const WIDGET_SIZES: Record<WidgetId, readonly WidgetSize[]> = {
   vitals: ['s', 'm', 'l'],
   fuel: ['s', 'm', 'l'],
   micros: ['s', 'm', 'l'],
+  // Hydration is one quantity against one target. Small is the ratio, medium is
+  // the ratio plus the fortnight it sits in; there is no third answer, so there
+  // is no large — see the note above on why a stretched medium is worse than
+  // no large at all.
+  water: ['s', 'm'],
   deficit: ['s', 'm', 'l'],
   train: ['s', 'm', 'l'],
   bar: ['s', 'm', 'l'],
@@ -124,7 +136,7 @@ export const WIDGET_SIZES: Record<WidgetId, readonly WidgetSize[]> = {
  * at medium; the rest start small and can be grown.
  */
 const DEFAULT_SIZE: Record<WidgetId, WidgetSize> = {
-  sleep: 'm', vitals: 'm', fuel: 'm', micros: 's', deficit: 'm',
+  sleep: 'm', vitals: 'm', fuel: 'm', water: 's', micros: 's', deficit: 'm',
   train: 'm', bar: 's', body: 'm', muscle: 's', volume: 's',
   pr: 's', consistency: 's', steps: 's', cardio: 's', stack: 's',
 }
@@ -152,10 +164,38 @@ export interface StackSlot {
 
 export interface DashboardLayout {
   slots: StackSlot[]
+  /**
+   * Widgets the user has taken OFF the grid, on purpose.
+   *
+   * ── WHY THIS IS STORED AND NOT DERIVED ─────────────────────────────────────
+   * It used to be derived — "hidden" meant "in the catalogue and not placed" —
+   * and that is exactly the bug where a widget removed with the `−` button came
+   * back on the next load. `reconcile` APPENDS every catalogue entry that has no
+   * face, because that is how a newly shipped widget reaches an existing layout.
+   * With hidden derived, those two rules are the same rule pointed in opposite
+   * directions: the remove wrote a layout without the widget, and the very next
+   * read decided the widget was missing and put it back.
+   *
+   * Nothing in a derived model can tell those two cases apart, because they are
+   * identical on disk: `sleep` is absent because it is new, and `sleep` is absent
+   * because you removed it, are the same absence. So the intent has to be
+   * RECORDED. A widget in here is not appended; a widget in neither `slots` nor
+   * here is new, and is.
+   */
+  hidden: WidgetId[]
+  /**
+   * When this arrangement was last changed, epoch ms.
+   *
+   * The whole conflict-resolution rule for the cloud copy — see `layoutSync.ts`.
+   * A layout that has never been written carries 0, so any stored remote wins
+   * over a fresh install's defaults.
+   */
+  updatedAt: number
 }
 
 const KEY = 'helix_dashboard_layout'
-const VERSION = 2
+/** v3 added `hidden` — see the note on `DashboardLayout.hidden`. */
+const VERSION = 3
 
 const isWidgetId = (v: unknown): v is WidgetId =>
   typeof v === 'string' && (WIDGET_IDS as readonly string[]).includes(v)
@@ -172,6 +212,8 @@ export function newSlotId(): string {
 export function defaultLayout(): DashboardLayout {
   return {
     slots: WIDGET_IDS.map((id) => ({ id: `sl-${id}`, size: DEFAULT_SIZE[id], items: [id] })),
+    hidden: [],
+    updatedAt: 0,
   }
 }
 
@@ -200,6 +242,9 @@ export function clampSize(items: readonly WidgetId[], want: WidgetSize): WidgetS
 
 interface StoredV1 { v?: number; order?: unknown; size?: unknown; hidden?: unknown }
 interface StoredV2 { v?: number; slots?: unknown }
+interface StoredV3 { v?: number; slots?: unknown; hidden?: unknown; updatedAt?: unknown }
+
+type Stored = StoredV1 & StoredV2 & StoredV3
 
 /**
  * The stored layout, reconciled against the current catalogue.
@@ -210,20 +255,43 @@ interface StoredV2 { v?: number; slots?: unknown }
  */
 export function readLayout(): DashboardLayout {
   if (typeof window === 'undefined') return defaultLayout()
-  let stored: (StoredV1 & StoredV2) | null = null
+  let stored: Stored | null = null
   try {
     const raw = window.localStorage.getItem(KEY)
-    if (raw) stored = JSON.parse(raw) as StoredV1 & StoredV2
+    if (raw) stored = JSON.parse(raw) as Stored
   } catch { /* unreadable or not JSON — defaults stand */ }
   if (!stored) return defaultLayout()
+  return fromStored(stored)
+}
 
-  const slots = stored.v === VERSION
+/**
+ * A stored payload — from localStorage or from the cloud row — as a layout.
+ *
+ * Shared so the two sources cannot drift: the remote copy is the same JSON that
+ * was written locally, and it must be upgraded and reconciled by exactly the
+ * same code or a v2 row synced from an old device would come back unreconciled.
+ */
+export function fromStored(stored: Stored): DashboardLayout {
+  const slots = stored.v === VERSION || stored.v === 2
     ? parseSlots(stored.slots)
     // A v1 layout is an arrangement the user made; upgrading it costs eight
     // lines and throwing it away costs them their dashboard.
     : stored.v === 1 ? fromV1(stored) : []
 
-  return { slots: reconcile(slots) }
+  /**
+   * v1 and v3 both carry `hidden`; v2 does not, and cannot.
+   *
+   * v2 is the version that HAD the reappearing-widget bug, so there is nothing
+   * to recover from one — a v2 layout literally does not record which widgets
+   * were removed, which is why they kept coming back. It upgrades to "nothing
+   * hidden", and the first `−` after the upgrade sticks.
+   */
+  const hidden = Array.isArray(stored.hidden) ? stored.hidden.filter(isWidgetId) : []
+  const updatedAt = typeof stored.updatedAt === 'number' && Number.isFinite(stored.updatedAt)
+    ? stored.updatedAt
+    : 0
+
+  return reconcile({ slots, hidden, updatedAt })
 }
 
 function parseSlots(raw: unknown): StackSlot[] {
@@ -264,34 +332,53 @@ function fromV1(stored: StoredV1): StackSlot[] {
 
 /**
  * Guarantee the invariants the grid renders against: unique slot ids, and every
- * widget in the catalogue reachable.
+ * widget in the catalogue either placed or deliberately hidden.
  *
  * A widget shipped since this layout was written is APPENDED rather than left
  * out, because a widget nobody can find is a widget that does not exist. One
  * that has been placed twice is left alone — that is a stack the user built.
+ * And one the user REMOVED is left out, because that is what removing it meant;
+ * distinguishing those last two is the entire reason `hidden` is stored.
+ *
+ * `hidden` is also narrowed here: an id that is somehow both hidden and placed
+ * resolves in favour of what is on screen, since the grid is the thing the user
+ * can actually see and a tray offering to add a tile that is already there is
+ * the contradiction the derived model used to produce.
  */
-function reconcile(slots: StackSlot[]): StackSlot[] {
+function reconcile(layout: DashboardLayout): DashboardLayout {
   const seenIds = new Set<string>()
-  const out = slots.map((s) => {
+  const slots = layout.slots.map((s) => {
     let id = s.id
     while (seenIds.has(id)) id = newSlotId()
     seenIds.add(id)
     return { ...s, id }
   })
-  const placed = new Set(out.flatMap((s) => s.items))
+  const placed = new Set(slots.flatMap((s) => s.items))
+  const hidden = layout.hidden.filter((id) => !placed.has(id))
+  const known = new Set([...placed, ...hidden])
   for (const id of WIDGET_IDS) {
-    if (placed.has(id)) continue
-    out.push({ id: `sl-${id}`, size: DEFAULT_SIZE[id], items: [id] })
+    if (known.has(id)) continue
+    slots.push({ id: `sl-${id}`, size: DEFAULT_SIZE[id], items: [id] })
   }
-  return out
+  return { slots, hidden, updatedAt: layout.updatedAt }
+}
+
+/** The wire form, shared by localStorage and the cloud row. */
+export function serializeLayout(layout: DashboardLayout): Stored {
+  return { v: VERSION, slots: layout.slots, hidden: layout.hidden, updatedAt: layout.updatedAt }
 }
 
 /** Persist. A failure here is a lost arrangement, never a broken dashboard. */
 export function writeLayout(layout: DashboardLayout): void {
   if (typeof window === 'undefined') return
   try {
-    window.localStorage.setItem(KEY, JSON.stringify({ v: VERSION, slots: layout.slots }))
+    window.localStorage.setItem(KEY, JSON.stringify(serializeLayout(layout)))
   } catch { /* quota, private mode, blocked site data — the session still works */ }
+}
+
+/** Stamp an edit. Every mutation goes through this, so `updatedAt` cannot lie. */
+export function touchLayout(layout: DashboardLayout): DashboardLayout {
+  return { ...layout, updatedAt: Date.now() }
 }
 
 /**
@@ -377,16 +464,16 @@ export function placedWidgets(layout: DashboardLayout): WidgetId[] {
 }
 
 /**
- * The tray's contents: catalogue entries with no face anywhere on the grid.
+ * The tray's contents: what the user took off the grid.
  *
- * Derived rather than stored. A separate `hidden` array is a second statement
- * of the same fact, and once a widget can appear twice the two statements can
- * disagree — at which point the tray offers to add something that is already on
- * screen, or a tile exists that the tray also claims is hidden.
+ * Read straight off the stored set, in catalogue order so the tray's order is
+ * stable rather than being the order things happened to be removed in. It used
+ * to be derived from "not placed" — see `DashboardLayout.hidden` for why that
+ * could not survive `reconcile`.
  */
 export function hiddenWidgets(layout: DashboardLayout): WidgetId[] {
-  const placed = new Set(placedWidgets(layout))
-  return WIDGET_IDS.filter((id) => !placed.has(id))
+  const hidden = new Set(layout.hidden)
+  return WIDGET_IDS.filter((id) => hidden.has(id))
 }
 
 export function slotAt(layout: DashboardLayout, slotId: string): StackSlot | null {
@@ -400,6 +487,7 @@ export function slotAt(layout: DashboardLayout, slotId: string): StackSlot | nul
  * the slot, because an empty tile is a hole the user cannot fill or delete.
  */
 export function removeFace(layout: DashboardLayout, slotId: string, index: number): DashboardLayout {
+  const dropped = slotAt(layout, slotId)?.items[index] ?? null
   const slots: StackSlot[] = []
   for (const s of layout.slots) {
     if (s.id !== slotId) { slots.push(s); continue }
@@ -407,17 +495,42 @@ export function removeFace(layout: DashboardLayout, slotId: string, index: numbe
     if (!items.length) continue
     slots.push({ ...s, items, size: clampSize(items, s.size) })
   }
-  return { slots }
+  /**
+   * It goes to the tray only when its LAST face is gone.
+   *
+   * Removing one of two Fuel faces leaves a Fuel on the grid, and a tray that
+   * offered to "add Fuel back" while a Fuel tile was visible would be describing
+   * a dashboard the user is not looking at. Duplicates are the whole reason this
+   * has to be checked against what is left rather than against what was removed.
+   */
+  const stillPlaced = new Set(slots.flatMap((s) => s.items))
+  const hidden = dropped && !stillPlaced.has(dropped) && !layout.hidden.includes(dropped)
+    ? [...layout.hidden, dropped]
+    : layout.hidden
+  return touchLayout({ ...layout, slots, hidden })
 }
 
-/** Put a widget back on the grid, at the end, at its default size. */
+/**
+ * Put a widget on the grid, at the end, at its default size.
+ *
+ * DUPLICATES ARE ALLOWED, and this is the function that allows them: it never
+ * asks whether the widget is already placed. Two Fuel tiles at two sizes, or the
+ * same tile on two stacks, are arrangements the model has always been able to
+ * express (`StackSlot.items` is a list, not a set) and that nothing could reach
+ * while the only way to add one was a tray keyed on absence.
+ */
 export function addWidget(layout: DashboardLayout, id: WidgetId): DashboardLayout {
-  return { slots: [...layout.slots, { id: newSlotId(), size: DEFAULT_SIZE[id], items: [id] }] }
+  return touchLayout({
+    ...layout,
+    slots: [...layout.slots, { id: newSlotId(), size: DEFAULT_SIZE[id], items: [id] }],
+    hidden: layout.hidden.filter((h) => h !== id),
+  })
 }
 
 /** Advance one step round the sizes this slot's widgets can all draw. */
 export function resizeSlot(layout: DashboardLayout, slotId: string): DashboardLayout {
-  return {
+  return touchLayout({
+    ...layout,
     slots: layout.slots.map((s) => {
       if (s.id !== slotId) return s
       const ok = sizesFor(s.items)
@@ -425,7 +538,7 @@ export function resizeSlot(layout: DashboardLayout, slotId: string): DashboardLa
       const at = ok.indexOf(s.size)
       return { ...s, size: ok[(at + 1) % ok.length] }
     }),
-  }
+  })
 }
 
 /** Move a slot to another slot's position, everything else closing up behind it. */
@@ -436,7 +549,7 @@ export function moveSlot(layout: DashboardLayout, fromId: string, toId: string):
   const slots = [...layout.slots]
   const [moved] = slots.splice(from, 1)
   slots.splice(to, 0, moved)
-  return { slots }
+  return touchLayout({ ...layout, slots })
 }
 
 /**
@@ -461,11 +574,12 @@ export function stackSlots(layout: DashboardLayout, fromId: string, ontoId: stri
   const onto = slotAt(layout, ontoId)
   if (!canStack(from, onto) || !from || !onto) return layout
   const items = [...onto.items, ...from.items]
-  return {
+  return touchLayout({
+    ...layout,
     slots: layout.slots
       .filter((s) => s.id !== fromId)
       .map((s) => (s.id === ontoId ? { ...s, items, size: clampSize(items, s.size) } : s)),
-  }
+  })
 }
 
 /** Lift one face out of a stack into its own slot, directly after it. */
@@ -479,7 +593,32 @@ export function unstackFace(layout: DashboardLayout, slotId: string, index: numb
   const slots = [...layout.slots]
   slots[at] = { ...slot, items: rest, size: clampSize(rest, slot.size) }
   slots.splice(at + 1, 0, { id: newSlotId(), size: clampSize([id], slot.size), items: [id] })
-  return { slots }
+  return touchLayout({ ...layout, slots })
+}
+
+/**
+ * Reorder the faces INSIDE one stack.
+ *
+ * The stack sheet's whole job. It is a separate rule from `moveSlot` because the
+ * two move different things — one reorders tiles on the grid, this reorders the
+ * pages of a single tile — and because this one must not be able to change the
+ * slot's size: every face in a stack already draws at the slot's size, so
+ * permuting them cannot make a size unreachable and there is nothing to clamp.
+ */
+export function reorderFace(
+  layout: DashboardLayout, slotId: string, from: number, to: number,
+): DashboardLayout {
+  const slot = slotAt(layout, slotId)
+  if (!slot) return layout
+  const n = slot.items.length
+  if (from === to || from < 0 || to < 0 || from >= n || to >= n) return layout
+  const items = [...slot.items]
+  const [moved] = items.splice(from, 1)
+  items.splice(to, 0, moved)
+  return touchLayout({
+    ...layout,
+    slots: layout.slots.map((s) => (s.id === slotId ? { ...s, items } : s)),
+  })
 }
 
 /**
@@ -507,6 +646,7 @@ export const WIDGET_META: Record<WidgetId, WidgetMeta> = {
   sleep: { label: 'Sleep', icon: Moon, accent: AMETHYST },
   vitals: { label: 'Vitals', icon: HeartPulse, accent: SAPPHIRE },
   fuel: { label: 'Fuel', icon: Flame, accent: MACRO_COLORS.calories },
+  water: { label: 'Water', icon: Droplets, accent: SAPPHIRE },
   micros: { label: 'Micros', icon: Sparkles, accent: EMERALD },
   deficit: { label: 'Deficit Ledger', icon: TrendingDown, accent: MACRO_COLORS.calories },
   // "Workout", not "Train" — the tab it belongs to is called Workout, the

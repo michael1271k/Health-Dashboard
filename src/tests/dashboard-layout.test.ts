@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import {
   readLayout, writeLayout, defaultLayout, clampSize, sizesFor,
   WIDGET_IDS, WIDGET_SIZES, hiddenWidgets, placedWidgets,
+  removeFace, addWidget, reorderFace, stackSlots, slotAt,
 } from '@/lib/dashboard/layout'
 
 /**
@@ -30,6 +31,8 @@ describe('dashboard layout — stored arrangement, current catalogue', () => {
         { id: 'a', size: 'm', items: ['fuel'] },
         { id: 'b', size: 's', items: ['sleep'] },
       ],
+      hidden: [],
+      updatedAt: 1,
     })
     const out = readLayout()
     expect(out.slots.slice(0, 2).map((s) => s.items)).toEqual([['fuel'], ['sleep']])
@@ -82,14 +85,18 @@ describe('dashboard layout — stored arrangement, current catalogue', () => {
       { size: 's', items: ['sleep'] },
     ])
     expect(placedWidgets(out)).not.toContain('battery')
-    // `steps` was hidden, so it is appended at the end by the reconcile rather
-    // than sitting third — being reachable matters more than where it lands.
-    expect(placedWidgets(out)).toContain('steps')
+    // `steps` was hidden, and it STAYS hidden. A v1 layout already recorded the
+    // intent, so the upgrade carries it: this used to append `steps` back onto
+    // the grid, which is the same reappearing-widget bug the v2 format had no
+    // way to avoid at all.
+    expect(placedWidgets(out)).not.toContain('steps')
+    expect(hiddenWidgets(out)).toContain('steps')
   })
 
   it('round-trips an arrangement the user made, stacks included', () => {
     const mine = readLayout()
     const stacked = {
+      ...mine,
       slots: [
         { id: 'x', size: 'm' as const, items: ['sleep' as const, 'train' as const] },
         ...mine.slots.filter((s) => !s.items.includes('sleep') && !s.items.includes('train')),
@@ -111,6 +118,110 @@ describe('dashboard layout — stored arrangement, current catalogue', () => {
     }))
     const ids = readLayout().slots.map((s) => s.id)
     expect(new Set(ids).size).toBe(ids.length)
+  })
+})
+
+/**
+ * ── THE WIDGET THAT CAME BACK ────────────────────────────────────────────────
+ *
+ * Hiding a widget wrote a layout without it and the very next read put it back,
+ * because `reconcile` appends every catalogue entry that has no face — which is
+ * also how a newly shipped widget reaches an existing layout. The two rules were
+ * indistinguishable on disk, so the intent is stored now.
+ *
+ * These go THROUGH localStorage on purpose. The bug was never in `removeFace`,
+ * which always returned the right layout; it was in what survived the trip, so
+ * a test that only called the mutation would have passed against the bug.
+ */
+describe('a removed widget stays removed', () => {
+  beforeEach(() => { localStorage.clear() })
+
+  it('survives a reload', () => {
+    const base = readLayout()
+    const slot = base.slots.find((s) => s.items.includes('steps'))!
+    writeLayout(removeFace(base, slot.id, 0))
+
+    const back = readLayout()
+    expect(placedWidgets(back)).not.toContain('steps')
+    expect(hiddenWidgets(back)).toEqual(['steps'])
+  })
+
+  it('survives a reload a second and a third time', () => {
+    let l = readLayout()
+    for (const id of ['steps', 'cardio', 'micros'] as const) {
+      l = removeFace(l, l.slots.find((s) => s.items.includes(id))!.id, 0)
+      writeLayout(l)
+      l = readLayout()
+    }
+    expect(placedWidgets(l)).not.toContain('steps')
+    expect(placedWidgets(l)).not.toContain('cardio')
+    expect(placedWidgets(l)).not.toContain('micros')
+    expect(hiddenWidgets(l).sort()).toEqual(['cardio', 'micros', 'steps'])
+  })
+
+  it('comes back for good when it is added back', () => {
+    const base = readLayout()
+    writeLayout(removeFace(base, base.slots.find((s) => s.items.includes('pr'))!.id, 0))
+    writeLayout(addWidget(readLayout(), 'pr'))
+    const back = readLayout()
+    expect(placedWidgets(back).filter((id) => id === 'pr')).toHaveLength(1)
+    expect(hiddenWidgets(back)).toEqual([])
+  })
+
+  it('still appends a widget the stored layout has genuinely never seen', () => {
+    // A hidden list is not a licence to drop a NEW widget: `water` is in neither
+    // the slots nor the hidden set here, so it must appear.
+    localStorage.setItem('helix_dashboard_layout', JSON.stringify({
+      v: 3,
+      slots: [{ id: 'a', size: 'm', items: ['fuel'] }],
+      hidden: ['steps'],
+      updatedAt: 1,
+    }))
+    const out = readLayout()
+    expect(placedWidgets(out)).toContain('water')
+    expect(placedWidgets(out)).not.toContain('steps')
+  })
+
+  it('keeps a widget on the grid while any face of it is left', () => {
+    // Two Fuel faces, one removed: Fuel is still on screen, so the tray must not
+    // offer to add it back.
+    const base = readLayout()
+    const twice = addWidget(base, 'fuel')
+    const slot = twice.slots.find((s) => s.items.includes('fuel'))!
+    const next = removeFace(twice, slot.id, 0)
+    expect(placedWidgets(next)).toContain('fuel')
+    expect(hiddenWidgets(next)).not.toContain('fuel')
+  })
+})
+
+/**
+ * Stacks hold DUPLICATES and reorder in place — the two things the sheet does.
+ */
+describe('stack contents', () => {
+  it('stacks the same widget onto itself', () => {
+    const base = defaultLayout()
+    const a = base.slots.find((s) => s.items[0] === 'micros')!
+    const dup = addWidget(base, 'micros')
+    const b = dup.slots[dup.slots.length - 1]
+    const merged = stackSlots(dup, b.id, a.id)
+    expect(slotAt(merged, a.id)!.items).toEqual(['micros', 'micros'])
+  })
+
+  it('reorders faces without touching the slot size', () => {
+    const base = defaultLayout()
+    const a = base.slots.find((s) => s.items[0] === 'micros')!
+    const merged = stackSlots(addWidget(base, 'bar'), base.slots.length === 0 ? '' : addWidget(base, 'bar').slots.at(-1)!.id, a.id)
+    const before = slotAt(merged, a.id)!
+    const after = slotAt(reorderFace(merged, a.id, 0, 1), a.id)!
+    expect(after.items).toEqual([...before.items].reverse())
+    expect(after.size).toBe(before.size)
+  })
+
+  it('ignores an out-of-range reorder rather than dropping a face', () => {
+    const base = defaultLayout()
+    const id = base.slots[0].id
+    expect(reorderFace(base, id, 0, 9)).toBe(base)
+    expect(reorderFace(base, id, -1, 0)).toBe(base)
   })
 })
 

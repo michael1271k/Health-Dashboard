@@ -10,16 +10,18 @@ import { SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, useS
 import { restrictToParentElement } from '@dnd-kit/modifiers'
 import { CSS } from '@dnd-kit/utilities'
 import { AnimatePresence, m } from 'framer-motion'
-import { Check, Layers, Minus, Plus, Unlink } from 'lucide-react'
+import { Check, Layers, Minus, Plus } from 'lucide-react'
+import { StackSheet, StackBadge } from './StackSheet'
 import { STANDARD, SNAPPY, CROSSFADE } from '@/lib/motion/springs'
 import { useHelixReducedMotion } from '@/lib/motion/useHelixReducedMotion'
 import { tapLight, tapSuccess } from '@/lib/native/haptics'
 import {
   readLayout, writeLayout, defaultLayout, SIZE_SPAN, WIDGET_META,
   hiddenWidgets, removeFace, addWidget, resizeSlot, moveSlot, canStack,
-  stackSlots, unstackFace, slotAt, sizesFor,
+  stackSlots, unstackFace, reorderFace, slotAt, sizesFor, WIDGET_IDS,
   type DashboardLayout, type StackSlot, type WidgetId, type WidgetSize,
 } from '@/lib/dashboard/layout'
+import { fetchRemoteLayout, pushRemoteLayout, pickLayout, PUSH_DEBOUNCE_MS } from '@/lib/dashboard/layoutSync'
 
 /** How long a face stays up before a stack turns itself over. */
 const ROTATE_MS = 12_000
@@ -77,6 +79,50 @@ export function WidgetGrid({ children }: {
   const [layout, setLayout] = useState<DashboardLayout>(defaultLayout)
   useEffect(() => { setLayout(readLayout()) }, [])
 
+  /**
+   * ── THE CLOUD COPY ─────────────────────────────────────────────────────────
+   * Local first, always: the effect above has already painted the arrangement
+   * from localStorage before this one's promise resolves, so there is no frame
+   * where the grid shows its defaults waiting for the network. This only ever
+   * REPLACES that with a strictly newer remote — which on a reinstall is every
+   * remote, because a fresh install's local copy carries `updatedAt: 0`.
+   *
+   * `alive` because adopting a layout after unmount is a setState on a dead
+   * component, and on this page an unmount means the user navigated away mid-
+   * flight, which is the common case on a slow connection.
+   */
+  useEffect(() => {
+    let alive = true
+    void fetchRemoteLayout().then((remote) => {
+      if (!alive || !remote) return
+      setLayout((local) => {
+        const winner = pickLayout(local, remote)
+        // Only touch localStorage when the remote actually won. Writing the
+        // local copy back over itself would be a no-op with a side effect.
+        if (winner !== local) writeLayout(winner)
+        return winner
+      })
+    })
+    return () => { alive = false }
+  }, [])
+
+  /**
+   * Push, debounced.
+   *
+   * A resize cycles S → M → L as three separate commits and a drag settles into
+   * one; without the debounce a single afternoon of fiddling is dozens of
+   * upserts of a row whose only reader is the next reinstall. The timer is
+   * cleared on unmount rather than flushed — the local copy is already written
+   * synchronously, so the worst case is that the backup lags by one edit until
+   * the next one, and that is strictly better than a fetch racing a teardown.
+   */
+  const pushTimer = useRef<number | null>(null)
+  useEffect(() => () => { if (pushTimer.current != null) window.clearTimeout(pushTimer.current) }, [])
+  const schedulePush = useCallback((next: DashboardLayout) => {
+    if (pushTimer.current != null) window.clearTimeout(pushTimer.current)
+    pushTimer.current = window.setTimeout(() => { void pushRemoteLayout(next) }, PUSH_DEBOUNCE_MS)
+  }, [])
+
   const [editing, setEditing] = useState(false)
   const [dragging, setDragging] = useState<string | null>(null)
   /**
@@ -109,7 +155,8 @@ export function WidgetGrid({ children }: {
   const commit = useCallback((next: DashboardLayout) => {
     setLayout(next)
     writeLayout(next)
-  }, [])
+    schedulePush(next)
+  }, [schedulePush])
 
   // Escape is the keyboard's Done. Bound only while the mode is open, so the
   // dashboard does not hold a global listener for a state it is almost never in.
@@ -150,14 +197,39 @@ export function WidgetGrid({ children }: {
     }, MERGE_HOLD_MS)
   }
 
+  /**
+   * ── LONG-PRESS A STACK, RELEASE WITHOUT MOVING → EDIT IT ───────────────────
+   *
+   * The obvious implementation — a second long-press timer on the tile — cannot
+   * work, because dnd-kit's PointerSensor is already listening on the same
+   * element with a 450ms clock and there is no way to un-fire the lift it has
+   * begun. Racing it with a 400ms timer of our own would mean a drag that starts
+   * with a modal open over it.
+   *
+   * So the gesture is read from the END of the drag instead of the start, which
+   * dnd-kit reports exactly: press-and-hold a stacked tile and let go WITHOUT
+   * travelling, and `delta` is (near) zero and there is nothing to reorder. That
+   * event is already a no-op today — it is the `overId === activeId` early
+   * return below — so nothing is being taken away to make room for it, and a
+   * press that turns into a real drag is untouched.
+   *
+   * 6px, not 0: a thumb never releases on the pixel it pressed, and the sensor's
+   * own `tolerance` is 8, so anything that survived the lift moved less than
+   * that or it would have been cancelled as a swipe.
+   */
   const onDragEnd = (e: DragEndEvent) => {
     const activeId = String(e.active.id)
     const overId = e.over ? String(e.over.id) : null
     const merging = mergeTarget
+    const still = Math.abs(e.delta.x) < 6 && Math.abs(e.delta.y) < 6
     clearHover()
     setDragging(null)
     setMergeTarget(null)
-    if (!overId || overId === activeId) return
+    if (!overId || overId === activeId) {
+      const slot = slotAt(layout, activeId)
+      if (still && slot && slot.items.length > 1) { void tapLight(); setStackSheet(activeId) }
+      return
+    }
     if (merging === overId) {
       void tapSuccess()
       commit(stackSlots(layout, activeId, overId))
@@ -170,10 +242,25 @@ export function WidgetGrid({ children }: {
   // the gestures that reach for them.
   const resize = (slotId: string) => { void tapLight(); commit(resizeSlot(layout, slotId)) }
   const drop = (slotId: string, index: number) => { void tapLight(); commit(removeFace(layout, slotId, index)) }
-  const split = (slotId: string, index: number) => { void tapLight(); commit(unstackFace(layout, slotId, index)) }
   const add = (id: WidgetId) => { void tapLight(); commit(addWidget(layout, id)) }
 
   const draggedSlot = dragging ? slotAt(layout, dragging) : null
+
+  /* ── THE STACK SHEET ──
+     Held as a slot id rather than as the slot, so the sheet re-reads the live
+     layout on every render: reordering inside it commits a new layout, and a
+     sheet holding a snapshot would keep drawing the order from before the drag
+     it just performed. */
+  const [stackSheet, setStackSheet] = useState<string | null>(null)
+  const sheetSlot = stackSheet ? slotAt(layout, stackSheet) : null
+  // A stack edited down to one face is no longer a stack, so the sheet has
+  // nothing left to be about and closes itself rather than showing a list of one.
+  useEffect(() => {
+    if (stackSheet && (!sheetSlot || sheetSlot.items.length < 2)) setStackSheet(null)
+  }, [stackSheet, sheetSlot])
+
+  /** Whether the "add another" gallery is open. Edit mode only. */
+  const [galleryOpen, setGalleryOpen] = useState(false)
 
   return (
     <div className="space-y-2">
@@ -242,7 +329,7 @@ export function WidgetGrid({ children }: {
                 onFace={setFace}
                 onResize={() => resize(slot.id)}
                 onDropFace={(i) => drop(slot.id, i)}
-                onSplitFace={(i) => split(slot.id, i)}
+                onEditStack={() => setStackSheet(slot.id)}
               >
                 {children}
               </SortableSlot>
@@ -264,11 +351,21 @@ export function WidgetGrid({ children }: {
         </DragOverlay>
       </DndContext>
 
-      {/* ── THE TRAY ──
+      {/* ── THE TRAY, AND THE GALLERY BEHIND IT ──
           Taking a widget off the grid has to be reversible somewhere the user
           can find, and a widget that is off the grid is by definition not on it
-          to tap. It renders only in edit mode and only when something is
-          missing, so the dashboard carries no permanent "0 hidden" row. */}
+          to tap. That is the tray, and it renders only in edit mode and only
+          when something is missing, so the dashboard carries no permanent
+          "0 hidden" row.
+
+          ── AND WHY THERE IS A SECOND LIST UNDER IT ──
+          The tray is keyed on ABSENCE, so it can only ever offer a widget you
+          do not have. `StackSlot.items` has always been a list rather than a
+          set — two Fuel faces in one stack is an arrangement the model can
+          express — but with the tray as the only way to add anything, a second
+          copy of a widget was unreachable: the moment one exists, the tray stops
+          offering it. The gallery is the whole catalogue, always, and adding
+          from it never asks whether the widget is already placed. */}
       <AnimatePresence initial={false}>
         {editing && hidden.length > 0 && (
           <m.div
@@ -311,13 +408,90 @@ export function WidgetGrid({ children }: {
           </m.div>
         )}
       </AnimatePresence>
+
+      {/* ── THE GALLERY ──
+          Collapsed by default: it is the whole catalogue and it is the rarer
+          errand, so it must not push the tray — which answers "where did my
+          Sleep tile go" — below the fold on a phone. */}
+      <AnimatePresence initial={false}>
+        {editing && (
+          <m.div
+            initial={reduced ? false : { opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={reduced ? { opacity: 0 } : { opacity: 0, height: 0 }}
+            transition={reduced ? { duration: 0 } : STANDARD}
+            className="overflow-hidden"
+          >
+            <div className="pt-1.5">
+              <button
+                type="button"
+                onClick={() => { void tapLight(); setGalleryOpen((v) => !v) }}
+                className="inline-flex items-center gap-1.5 min-h-[32px] px-2.5 rounded-full
+                           text-[10px] font-bold uppercase tracking-[0.12em] text-muted
+                           border border-white/10 bg-white/[0.03]"
+                aria-expanded={galleryOpen}
+              >
+                <Plus className={`w-3 h-3 transition-transform ${galleryOpen ? 'rotate-45' : ''}`} strokeWidth={3} aria-hidden="true" />
+                Add a widget
+              </button>
+
+              {galleryOpen && (
+                <div className="flex flex-wrap gap-1.5 pt-2">
+                  {WIDGET_IDS.map((id) => {
+                    const meta = WIDGET_META[id]
+                    const Icon = meta.icon
+                    // How many are already on the grid. Shown rather than
+                    // suppressed: "you have two of these" is the fact that makes
+                    // a second Fuel tile a deliberate choice instead of a
+                    // mistake the user has to notice afterwards.
+                    const count = layout.slots.reduce((n, sl) => n + sl.items.filter((w) => w === id).length, 0)
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => add(id)}
+                        className="inline-flex items-center gap-1.5 min-h-[34px] pl-2 pr-2.5 rounded-xl
+                                   text-[11px] font-bold border active:scale-95 transition-transform"
+                        style={{
+                          borderColor: `${meta.accent}2e`,
+                          background: `${meta.accent}0d`,
+                          color: meta.accent,
+                        }}
+                        aria-label={count > 0
+                          ? `Add another ${meta.label} widget — ${count} already on the dashboard`
+                          : `Add the ${meta.label} widget`}
+                      >
+                        <Icon className="w-3.5 h-3.5" aria-hidden="true" />
+                        {meta.label}
+                        {count > 0 && (
+                          <span className="helix-num text-[9px] tabular-nums opacity-70">×{count}</span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </m.div>
+        )}
+      </AnimatePresence>
+
+      <StackSheet
+        open={!!sheetSlot}
+        onClose={() => setStackSheet(null)}
+        slot={sheetSlot}
+        face={sheetSlot ? Math.min(faces[sheetSlot.id] ?? 0, sheetSlot.items.length - 1) : 0}
+        onReorder={(from, to) => { if (stackSheet) commit(reorderFace(layout, stackSheet, from, to)) }}
+        onUnstack={(i) => { if (stackSheet) commit(unstackFace(layout, stackSheet, i)) }}
+        onRemove={(i) => { if (stackSheet) commit(removeFace(layout, stackSheet, i)) }}
+      />
     </div>
   )
 }
 
 const SIZE_WORD: Record<WidgetSize, string> = { s: 'S', m: 'M', l: 'L' }
 
-function SortableSlot({ slot, editing, reduced, merging, face, onFace, onResize, onDropFace, onSplitFace, children }: {
+function SortableSlot({ slot, editing, reduced, merging, face, onFace, onResize, onDropFace, onEditStack, children }: {
   slot: StackSlot
   editing: boolean
   reduced: boolean
@@ -328,7 +502,8 @@ function SortableSlot({ slot, editing, reduced, merging, face, onFace, onResize,
   onFace: (slotId: string, next: number | ((f: number) => number)) => void
   onResize: () => void
   onDropFace: (index: number) => void
-  onSplitFace: (index: number) => void
+  /** Open the stack sheet. Stacked tiles only. */
+  onEditStack: () => void
   children: (id: WidgetId, size: WidgetSize) => React.ReactNode
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: slot.id })
@@ -428,23 +603,31 @@ function SortableSlot({ slot, editing, reduced, merging, face, onFace, onResize,
           </m.button>
 
           <span className="absolute top-1.5 right-1.5 z-[2] flex items-center gap-1">
-            {/* Unstacking is only offered when there is a stack to leave, and it
-                lifts the face you are LOOKING AT — which is the only one the
-                user has any way to name. */}
+            {/* ── ONE BADGE, NOT TWO BUTTONS ──
+                This used to be a bare Unlink that split off whichever face
+                happened to be up. That is one of the two things you might want
+                to do to a stack and it can only ever name ONE of its members —
+                the visible one — so a five-face stack had no way to reach the
+                other four at all. The badge says how many there are and opens
+                the sheet, which can name every face, reorder them, and offer
+                both unstack and remove per row.
+
+                A tap here is deliberate; a press-and-release on the tile itself
+                reaches the same sheet (see `onDragEnd`), which is the gesture
+                iOS uses. */}
             {stacked && (
-              <m.button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); onSplitFace(at) }}
-                onPointerDown={(e) => e.stopPropagation()}
+              <m.span
                 initial={reduced ? false : { opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={reduced ? { duration: 0 } : SNAPPY}
-                className="h-6 w-6 grid place-items-center rounded-full
-                           bg-black/70 border border-white/20 text-text backdrop-blur-sm"
-                aria-label={`Take ${WIDGET_META[slot.items[at]].label} out of this stack`}
+                className="inline-flex"
               >
-                <Unlink className="w-3 h-3" strokeWidth={2.5} aria-hidden="true" />
-              </m.button>
+                <StackBadge
+                  count={slot.items.length}
+                  accent={WIDGET_META[slot.items[at]].accent}
+                  onOpen={onEditStack}
+                />
+              </m.span>
             )}
             {canResize && (
               <m.button

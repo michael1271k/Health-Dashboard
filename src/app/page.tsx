@@ -8,6 +8,7 @@ import { ReadinessOrb } from '@/components/dashboard/ReadinessOrb'
 import { WidgetGrid } from '@/components/dashboard/WidgetGrid'
 import { VitalsWidget } from '@/components/dashboard/widgets/VitalsWidget'
 import { FuelWidget, MicrosWidget } from '@/components/dashboard/widgets/FuelWidget'
+import { WaterWidget } from '@/components/dashboard/widgets/WaterWidget'
 import {
   DeficitWidget, BarToBeatWidget, ConsistencyWidget,
 } from '@/components/dashboard/widgets/PlanWidgets'
@@ -397,6 +398,12 @@ export default function DashboardPage() {
           series={kcalSeries}
           phaseLabel={phase ? phaseDisplay(phase, logicalTodayISO()).label : null}
           phaseColor={phase ? phaseDisplay(phase, logicalTodayISO()).color : null} />
+
+      // Hydration is a row of the Fuel tile AND a tile of its own — see the
+      // note on `WaterWidget` for why that is not a duplicate.
+      case 'water':
+        return <WaterWidget size={size} onOpen={onOpen('fuel')}
+          waterMl={log?.water_ml ?? null} goalMl={goals?.water_goal_ml ?? 3000} />
 
       // `next` and `train` were two tiles for one question — see the note on
       // `WIDGET_IDS`. Today's totals are passed raw in kg; the tile converts and
