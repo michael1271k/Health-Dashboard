@@ -177,7 +177,27 @@ export function FuelWidget({ size, onOpen, kcal, kcalGoal, protein, carbs, fat, 
  * that is easy to blow through, and one floor that quietly matters for training
  * turnover. Large adds the rest of the table.
  */
-const HEADLINE = ['fiber', 'sodium', 'iron'] as const
+/**
+ * How far off target a nutrient is, as a fraction — 0 when it is fine.
+ *
+ * A floor is missed by its SHORTFALL (18 g of a 30 g fibre target is 0.4 short);
+ * a ceiling is missed by its OVERAGE (4,200 mg against a 3,000 mg sodium ceiling
+ * is 0.4 over). Expressing both as a fraction of their own target is what makes
+ * milligrams of sodium and grams of fibre comparable at all — the alternative
+ * ranks by raw magnitude, which puts sodium first every single day purely
+ * because it is measured in a smaller unit.
+ *
+ * An unmeasured nutrient scores -1 and sorts last. It is not at risk; it is
+ * unknown, and promoting it would push a real shortfall off the tile in favour
+ * of a row reading "—".
+ */
+export function microRisk(have: number | null, target: number, kind: 'floor' | 'ceiling'): number {
+  if (have == null) return -1
+  if (target <= 0) return 0
+  return kind === 'ceiling'
+    ? Math.max(0, have / target - 1)
+    : Math.max(0, 1 - have / target)
+}
 
 /**
  * The micronutrient checklist.
@@ -209,13 +229,16 @@ export function MicrosWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () =
     const graded = MICRO_TARGETS.map((m) => {
       const have = micros[m.key] ?? null
       const ok = have != null && (m.kind === 'ceiling' ? have <= m.target : have >= m.target)
-      return { ...m, have, ok }
+      return { ...m, have, ok, risk: microRisk(have, m.target, m.kind) }
     })
-    const headline = HEADLINE
-      .map((k) => graded.find((g) => g.key === k))
-      .filter((g): g is NonNullable<typeof g> => !!g)
-    const rest = graded.filter((g) => !(HEADLINE as readonly string[]).includes(g.key))
-    return { headline, rest, graded }
+    // ── RANKED BY RISK, NOT BY A FIXED LIST ──────────────────────────────────
+    // The headline was hardcoded to fibre, sodium and iron. Those are reasonable
+    // guesses at what usually goes wrong, and that is the problem: on the day
+    // something else tanks, the tile shows three nutrients that are fine and
+    // says nothing about the one that is not. The order is now the day's own —
+    // worst first, met after, unmeasured last.
+    const ranked = [...graded].sort((a, b) => b.risk - a.risk)
+    return { ranked, graded }
   }, [micros])
 
   const known = rows.graded.filter((r) => r.have != null)
@@ -243,7 +266,7 @@ export function MicrosWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () =
           <span className="flex items-baseline gap-1">
             <Hero value={cleared} unit={`of ${known.length}`} color={cleared === known.length ? EMERALD : OXIDE} tight />
           </span>
-          <span className="grid grid-cols-3 gap-1">{rows.headline.map(cell)}</span>
+          <span className="grid grid-cols-3 gap-1">{rows.ranked.slice(0, 3).map(cell)}</span>
         </span>
       ) : (
         <span className="flex-1 min-h-0 flex flex-col gap-1.5">
@@ -255,13 +278,10 @@ export function MicrosWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () =
               bottom of a 292px tile. Twelve is what fits, and the page behind
               the tap is where the whole table lives. */}
           <span className={`grid gap-x-2 gap-y-1.5 ${size === 'l' ? 'grid-cols-4' : 'grid-cols-3'}`}>
-            {(size === 'l'
-              ? [...rows.headline, ...rows.rest].slice(0, 12)
-              : [...rows.headline, ...rows.rest.slice(0, 3)]
-            ).map(cell)}
+            {rows.ranked.slice(0, size === 'l' ? 12 : 6).map(cell)}
           </span>
           <span className="text-[8px] text-muted/70 mt-auto pt-1 border-t border-white/[0.06]">
-            Floors are met, ceilings are stayed under · food plus the stack
+            Furthest off target first · floors met, ceilings stayed under · food plus the stack
           </span>
         </span>
       )}

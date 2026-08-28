@@ -633,6 +633,8 @@ export function StackWidget({ size, onOpen, slots, taken, nowMinutes }: {
   )
 
   const pendingCount = blocks.reduce((n, b) => n + b.items.length, 0)
+  /** How many distinct time blocks today's protocol was taken in. */
+  const blockCount = useMemo(() => new Set(slots.map((s) => s.time)).size, [slots])
   // The next block DUE, not the next on the clock: something already overdue
   // outranks something scheduled for this evening.
   const next = blocks[0] ?? null
@@ -655,11 +657,24 @@ export function StackWidget({ size, onOpen, slots, taken, nowMinutes }: {
       {!slots.length ? (
         <WidgetEmpty accent={GOLD} size={size} message="No protocol for today" hint="Rest days drop the training-only doses" />
       ) : !next ? (
+        /* ── COMPLETE, WITH SOMETHING TO SAY ──
+           This was `9/9` over the words "protocol complete" and nothing else —
+           a tile that, for the whole back half of every day, occupied a grid
+           slot to report a fact you already knew, since you are the one who
+           ticked it. It now says WHEN you finished and across how many doses,
+           which is the thing you actually go looking for at 9pm ("did I take
+           the evening batch, or am I remembering yesterday?"). */
         <span className="flex-1 min-h-0 flex flex-col justify-end gap-1">
           <span className="helix-num font-bold text-fluid-lg leading-none" style={{ color: EMERALD }}>
             {slots.length}/{slots.length}
           </span>
           <span className="text-[9px] truncate" style={{ color: EMERALD }}>protocol complete</span>
+          {done[0] && (
+            <span className="helix-num text-[9px] tabular-nums text-muted truncate">
+              last batch {done[0].time}
+              {size !== 's' && ` · ${blockCount} dose${blockCount === 1 ? '' : 's'}`}
+            </span>
+          )}
         </span>
       ) : (
         <span className="flex-1 min-h-0 flex flex-col gap-0.5">

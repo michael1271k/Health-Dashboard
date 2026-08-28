@@ -6,7 +6,7 @@ import { Hero, LineChart, Spark, StatTile } from './parts'
 import { LedgerRow, compositionRows } from '@/components/body/CompositionLedger'
 import { useTodayDailyLog } from '@/lib/hooks/useDashboard'
 import { displayWeight, weightUnit } from '@/lib/utils/units'
-import { BODY, EMBER } from '@/lib/theme/palette'
+import { BODY } from '@/lib/theme/palette'
 import { WIDGET_META, type WidgetSize } from '@/lib/dashboard/layout'
 
 /**
@@ -70,7 +70,7 @@ export function BodyWidget({ size, onOpen, weightSeries }: {
   return (
     <WidgetFrame {...WIDGET_META.body} size={size} onOpen={onOpen}>
       {comp.weight == null ? (
-        <WidgetEmpty accent={EMBER} size={size} message="Ready for your first weigh-in" hint="Step on the scale to map your composition" />
+        <WidgetEmpty accent={BODY.weight} size={size} message="Ready for your first weigh-in" hint="Step on the scale to map your composition" />
       ) : size === 's' ? (
         /* ── SMALL CARRIES THE OTHER HALF OF A WEIGH-IN ──
            A weight alone cannot say whether a kilo went the right way; that is
@@ -78,19 +78,19 @@ export function BodyWidget({ size, onOpen, weightSeries }: {
            month behind them, in the 70px the tile has. */
         <span className="flex-1 min-h-0 flex flex-col justify-between gap-0.5">
           <span className="flex items-baseline gap-1.5 min-w-0">
-            <Hero value={kg} unit={unit} color={EMBER} decimals={1} tight />
+            <Hero value={kg} unit={unit} color={BODY.weight} decimals={1} tight />
             <span className="helix-num text-[11px] font-bold tabular-nums ml-auto shrink-0"
               style={{ color: comp.bodyFatPct != null ? BODY.fat : 'var(--color-muted)' }}>
               {comp.bodyFatPct != null ? r1(comp.bodyFatPct) : '—'}
               <span className="text-[8px] font-normal text-muted ml-0.5">% fat</span>
             </span>
           </span>
-          <Spark series={weightSeries.map((d) => d.value)} color={EMBER} height={22} />
+          <Spark series={weightSeries.map((d) => d.value)} color={BODY.weight} height={22} />
         </span>
       ) : (
         <span className="flex-1 min-h-0 flex flex-col gap-1.5">
           <span className="grid grid-cols-3 gap-1.5">
-            <StatTile label="Weight" value={kg} unit={unit} color={EMBER} />
+            <StatTile label="Weight" value={kg} unit={unit} color={BODY.weight} />
             <StatTile
               label="Body Fat"
               value={comp.bodyFatPct != null ? r1(comp.bodyFatPct) : null}
@@ -136,7 +136,10 @@ export function BodyWidget({ size, onOpen, weightSeries }: {
                 <span className="text-[8px] font-bold uppercase tracking-[0.1em] text-muted">Weight · 30 days</span>
                 <span className="text-[8px] text-muted ml-auto">tap a point for its day</span>
               </span>
-              <LineChart series={weightSeries} color={EMBER} height={62} decimals={1} unit={unit} />
+              {/* BODY.weight, not EMBER. Ember is the Chest family now, and the body
+                  domain has had its own per-substance hue since the BODY map landed —
+                  the chart was simply never moved onto it. */}
+              <LineChart series={weightSeries} color={BODY.weight} height={62} decimals={1} unit={unit} />
             </span>
           )}
         </span>

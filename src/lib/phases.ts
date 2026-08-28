@@ -174,6 +174,30 @@ export function enumerateWeeks(kinds: PhaseKind[]): ProgramWeek[] {
 }
 
 /** Returns the phase for a given Sunday week-start (YYYY-MM-DD), or null. */
+/**
+ * The phase a DATE falls in, and how far into it that date is.
+ *
+ * `getWeekPhase` answers the same question for a week start, which is the right
+ * granularity for a timeline chip and the wrong one for anything that counts
+ * days: a ledger asking "how long has this phase been running" needs to know it
+ * is day 3, not that the week began under the previous regime.
+ *
+ * Null between phases. The PPL and HELIX blocks are not contiguous — there is a
+ * real gap around the Thailand trip — and inventing a phase to fill it would put
+ * a deload's eating under a cut's name.
+ */
+export function phaseSpanFor(dateISO: string): { def: PhaseDef; start: string; dayIndex: number } | null {
+  const t = Date.parse(`${dateISO}T00:00:00Z`)
+  if (Number.isNaN(t)) return null
+  for (const def of PHASES) {
+    const start = Date.parse(`${def.start}T00:00:00Z`)
+    const days = def.weeks * 7
+    const idx = Math.floor((t - start) / 86_400_000)
+    if (idx >= 0 && idx < days) return { def, start: def.start, dayIndex: idx }
+  }
+  return null
+}
+
 export function getWeekPhase(weekStartISO: string): WeekPhase | null {
   for (const p of PHASES) {
     const start = new Date(`${p.start}T00:00:00Z`)

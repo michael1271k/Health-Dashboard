@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react'
 import Link from 'next/link'
-import { Dumbbell, Moon } from 'lucide-react'
+import { Dumbbell, Moon, Trophy } from 'lucide-react'
 import { WidgetFrame, WidgetEmpty } from '@/components/dashboard/WidgetFrame'
 import { Bar, Hero, MiniBars, StatTile, Trend } from './parts'
 import { daysAgo } from './DailyWidgets'
@@ -24,7 +24,7 @@ import { blurOnTap } from '@/lib/utils/blurOnTap'
 import { logicalTodayISO } from '@/lib/utils/day'
 import type { LandmarkMuscle, MuscleVolume } from '@/lib/training/landmarks'
 import type { ScheduleDay } from '@/lib/programs'
-import { EMERALD, GOLD, STEEL, MUTED, AMETHYST, OXIDE, REST, SAPPHIRE } from '@/lib/theme/palette'
+import { dayColor, EMERALD, GOLD, STEEL, MUTED, AMETHYST, OXIDE, REST, SAPPHIRE } from '@/lib/theme/palette'
 import { WIDGET_META, bodyHeightPx, type WidgetSize } from '@/lib/dashboard/layout'
 
 /**
@@ -237,15 +237,21 @@ export function VolumeWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () =
   // week and a 14-tonne one, and the tile has room for one number.
   const deltaPct = kg != null && priorKg ? Math.round(((kg - priorKg) / priorKg) * 100) : null
 
-  /** The last thirty days of sessions, each one's tonnage, in display units. */
+  /**
+   * The last thirty days of sessions — tonnage, session colour and whether it
+   * set a record, all read off the same rows so the three can never misalign.
+   */
   const recent = useMemo(() => {
     const from = isoAddDays(today, -29)
-    return (history ?? [])
-      .filter((s) => s.date >= from)
-      .map((s) => displayWeight(s.volumeKg))
+    const rows = (history ?? []).filter((s) => s.date >= from)
+    return {
+      values: rows.map((s) => displayWeight(s.volumeKg)),
+      // Each bar in its own session's hue, so a month of tonnage also shows the
+      // ROTATION: a run of one colour is a split that stopped moving.
+      colors: rows.map((s) => dayColor(s.dayKey, s.splitDay)),
+      prs: rows.map((s) => (s.prCount ?? 0) > 0),
+    }
   }, [history, today])
-
-  const best = recent.reduce<number | null>((m, v) => (v != null && (m == null || v > m) ? v : m), null)
 
   return (
     <WidgetFrame {...WIDGET_META.volume} size={size} onOpen={onOpen}>
@@ -281,15 +287,19 @@ export function VolumeWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () =
 
           <span className="block mt-auto">
             <span className="flex items-baseline gap-1.5">
-              <span className="text-[8px] font-bold uppercase tracking-[0.1em] text-muted">
+              <span className="flex items-center gap-1 text-[8px] font-bold uppercase tracking-[0.1em] text-muted">
                 Per session · 30 days
+                {recent.prs.some(Boolean) && (
+                  <Trophy className="w-2.5 h-2.5" style={{ color: GOLD }} aria-hidden="true" />
+                )}
               </span>
               <span className="helix-num text-[8px] tabular-nums text-muted ml-auto">
                 {priorKg != null ? `last week ${tonnage(priorKg)}${unit}` : 'no prior week'}
               </span>
             </span>
             <span className="block mt-1">
-              <MiniBars series={recent} color={STEEL} goal={best} height={size === 'l' ? 96 : 34} />
+              <MiniBars series={recent.values} color={STEEL} colors={recent.colors} marks={recent.prs}
+                height={size === 'l' ? 96 : 34} />
             </span>
           </span>
         </span>

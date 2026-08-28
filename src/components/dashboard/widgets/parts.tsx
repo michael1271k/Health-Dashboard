@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { KineticNumber } from '@/components/fx/KineticNumber'
-import { EMERALD, OXIDE, MUTED } from '@/lib/theme/palette'
+import { EMERALD, GOLD, OXIDE, MUTED } from '@/lib/theme/palette'
 
 /**
  * The pieces every widget body is built from.
@@ -404,13 +404,26 @@ export function StatTile({ label, value, unit, color, delta, higherIsBetter, ser
  * as a colour: the reading the user wants is "how many bars cross the line", and
  * a line is the only mark that lets them count it without a legend.
  */
-export function MiniBars({ series, color, goal, height = 30, dim = 'rgba(255,255,255,0.14)' }: {
+export function MiniBars({ series, color, goal, height = 30, dim = 'rgba(255,255,255,0.14)', colors, marks }: {
   series: Array<number | null>
   color: string
   /** Draws the target hairline and decides which bars are lit. Absent = all lit. */
   goal?: number | null
   height?: number
   dim?: string
+  /**
+   * Per-bar colour, parallel to `series`. When given it OVERRIDES the goal-lit
+   * rule, because the two say different things and a bar cannot say both: with
+   * colours the bar's hue is its identity (which session this was), and lighting
+   * by goal on top of that would mean the same hue at two brightnesses was two
+   * different facts.
+   */
+  colors?: Array<string | null | undefined>
+  /**
+   * Bars to flag — a record was set that day. Drawn as a notch above the bar
+   * rather than as a colour, since the colour is already spoken for.
+   */
+  marks?: boolean[]
 }) {
   const vals = series.filter((v): v is number => v != null && Number.isFinite(v))
   if (!vals.length) return <div style={{ height }} aria-hidden="true" />
@@ -427,10 +440,23 @@ export function MiniBars({ series, color, goal, height = 30, dim = 'rgba(255,255
             // A missing day is a 1px stub, not a zero-height gap: a gap in a bar
             // chart reads as a day of no steps, which is a different claim.
             height: v == null ? '1px' : `${Math.max(2, (v / max) * 100)}%`,
-            background: v == null ? 'rgba(255,255,255,0.08)' : goal != null && v >= goal ? color : dim,
+            background: v == null
+              ? 'rgba(255,255,255,0.08)'
+              : colors
+                ? (colors[i] ?? dim)
+                : goal != null && v >= goal ? color : dim,
           }}
         />
       ))}
+      {marks?.some(Boolean) && (
+        <span className="absolute inset-0 flex items-start gap-[1.5px] pointer-events-none">
+          {marks.map((m, i) => (
+            <span key={i} className="flex-1 min-w-0 flex justify-center">
+              {m && <span className="block rounded-full" style={{ width: 3, height: 3, background: GOLD }} />}
+            </span>
+          ))}
+        </span>
+      )}
       {goalPct != null && (
         <span
           className="absolute inset-x-0 h-px pointer-events-none"
@@ -676,7 +702,7 @@ export function LineChart({ series, color, height = 64, decimals = 1, unit, form
  * verdicts. The same shape serves the energy ledger, where the quantity really
  * is signed.
  */
-export function BalanceBars({ values, under, over, height = 44, zeroLabel }: {
+export function BalanceBars({ values, under, over, height = 44, zeroLabel, dimBefore = 0 }: {
   /** Signed, oldest first. Negative = below the line. `null` = no data. */
   values: Array<number | null>
   under: string
@@ -684,6 +710,16 @@ export function BalanceBars({ values, under, over, height = 44, zeroLabel }: {
   height?: number
   /** Printed against the baseline, e.g. the target itself. */
   zeroLabel?: string
+  /**
+   * How many leading bars belong to a PREVIOUS regime, drawn at reduced opacity.
+   *
+   * The deficit ledger reaches back past a phase boundary when the current phase
+   * is too young to yield a rate on its own. Those days are in the average, so
+   * they must be in the chart — but a maintenance week's eating rendered
+   * identically to a cut's would make the boundary invisible in the one picture
+   * that exists to show what changed.
+   */
+  dimBefore?: number
 }) {
   const real = values.filter((v): v is number => v != null && Number.isFinite(v))
   if (!real.length) return <div style={{ height }} aria-hidden="true" />
@@ -708,6 +744,7 @@ export function BalanceBars({ values, under, over, height = 44, zeroLabel }: {
                     style={{
                       height: `${Math.max(2, h)}%`,
                       background: v <= 0 ? under : over,
+                      opacity: i < dimBefore ? 0.32 : 1,
                       ...(v <= 0 ? { top: '50%' } : { bottom: '50%' }),
                     }}
                   />
@@ -749,13 +786,21 @@ export interface ConsistencyDay {
  * grid uses, because it makes a missed Tuesday sit in the same row as every
  * other Tuesday — a broken habit shows up as a horizontal streak.
  */
-export function Heatmap({ days, weeks, cell = 7, gap = 2 }: {
+export function Heatmap({ days, weeks, cell = 7, gap = 2, labels = false }: {
   /** Ascending. Padded internally so the first column starts on a Sunday. */
   days: ConsistencyDay[]
   /** How many trailing weeks to draw. */
   weeks: number
   cell?: number
   gap?: number
+  /**
+   * Draw weekday and month guides, and centre the grid in its box.
+   *
+   * Off at size S, where the cells are 5px and a label would be taller than the
+   * chart it labels. On at M and L, where an unlabelled grid means counting rows
+   * with a finger to work out which one is Tuesday.
+   */
+  labels?: boolean
 }) {
   if (!days.length) return null
   const byDate = new Map(days.map((d) => [d.date, d]))
@@ -777,9 +822,33 @@ export function Heatmap({ days, weeks, cell = 7, gap = 2 }: {
     cols.push(col)
   }
 
+  // Month guides: the column where a new month first appears, so the strip below
+  // the grid says WHEN without a per-column label nothing could read.
+  const monthMarks = cols.map((col, w) => {
+    const first = col.find(Boolean)
+    if (!first) return null
+    const m = new Date(`${first.date}T12:00:00Z`).getUTCMonth()
+    const prev = cols[w - 1]?.find(Boolean)
+    const prevM = prev ? new Date(`${prev.date}T12:00:00Z`).getUTCMonth() : -1
+    return m === prevM ? null : new Date(`${first.date}T12:00:00Z`).toLocaleDateString('en-GB', { month: 'short' })
+  })
+
+  // Sunday-first, matching the column build above. Only M/W/F are labelled: at
+  // 4px a cell is shorter than the type, so every row cannot carry one and the
+  // three that do are enough to count from.
+  const DOW = ['', 'M', '', 'W', '', 'F', '']
+
   return (
-    <span className="block overflow-hidden" aria-hidden="true">
+    <span className={`block overflow-hidden ${labels ? 'flex flex-col items-center' : ''}`} aria-hidden="true">
       <span className="flex" style={{ gap }}>
+        {labels && (
+          <span className="flex flex-col shrink-0 mr-1" style={{ gap }}>
+            {DOW.map((d, i) => (
+              <span key={i} className="flex items-center justify-end text-[7px] font-bold text-muted/70 leading-none"
+                style={{ height: cell, width: 7 }}>{d}</span>
+            ))}
+          </span>
+        )}
         {cols.map((col, w) => (
           <span key={w} className="flex flex-col" style={{ gap }}>
             {col.map((d, i) => (
@@ -794,11 +863,18 @@ export function Heatmap({ days, weeks, cell = 7, gap = 2 }: {
                   // the same colour to read as "both kept", and `opacity` says
                   // that in one property instead of a second colour value that
                   // has to be kept in step with the first.
-                  background: !d || d.state === 'future'
-                    ? 'rgba(255,255,255,0.04)'
-                    : d.state === 'missed'
-                      ? 'transparent'
-                      : (d.color ?? EMERALD),
+                  // A cell OUTSIDE the window (`!d`) is padding and reads as
+                  // nothing. A FUTURE day is a day the plan still has an opinion
+                  // about, so it is drawn a step brighter — the two used to be
+                  // the same grey, which made the current week's remainder
+                  // indistinguishable from the void before the grid began.
+                  background: !d
+                    ? 'transparent'
+                    : d.state === 'future'
+                      ? 'rgba(255,255,255,0.07)'
+                      : d.state === 'missed'
+                        ? 'transparent'
+                        : (d.color ?? EMERALD),
                   opacity: d?.state === 'rest' ? 0.26 : 1,
                   border: d && d.state === 'missed' ? '1px solid rgba(255,255,255,0.16)' : undefined,
                 }}
@@ -807,6 +883,19 @@ export function Heatmap({ days, weeks, cell = 7, gap = 2 }: {
           </span>
         ))}
       </span>
+      {labels && (
+        <span className="flex mt-1" style={{ gap, marginLeft: 8 }}>
+          {monthMarks.map((m, w) => (
+            <span key={w} className="text-[7px] font-bold uppercase tracking-wide text-muted/70 leading-none shrink-0"
+              style={{ width: cell }}>
+              {/* Only the first column of a month carries its name; the rest
+                  hold the column's width so the labels stay aligned to the grid
+                  above them rather than to each other. */}
+              {m ? <span className="relative whitespace-nowrap">{m}</span> : null}
+            </span>
+          ))}
+        </span>
+      )}
     </span>
   )
 }

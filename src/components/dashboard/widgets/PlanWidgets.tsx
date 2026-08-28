@@ -15,14 +15,56 @@ import { isoAddDays } from '@/lib/utils/week'
 import { displayWeight, weightUnit } from '@/lib/utils/units'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { dayColor, EMERALD, OXIDE, GOLD, MUTED, REST, STEEL } from '@/lib/theme/palette'
+import { phaseSpanFor } from '@/lib/phases'
+import { exerciseColor } from '@/lib/theme/muscleHue'
 import { WIDGET_META, type WidgetSize } from '@/lib/dashboard/layout'
 
 /* ────────────────────────────────────────────────────────────────────────────
  * DEFICIT LEDGER
  * ──────────────────────────────────────────────────────────────────────────── */
 
-/** How far back the ledger sums. A month is long enough for the noise to cancel. */
-const LEDGER_DAYS = 30
+/**
+ * The shortest window the ledger will report a rate from.
+ *
+ * A rate computed from three days is a rate computed from three days, and on a
+ * cut those three days routinely include a refeed. Below this the arithmetic is
+ * still arithmetic but the answer is noise wearing a decimal point.
+ */
+const LEDGER_FLOOR_DAYS = 14
+
+/** The most it will ever sum. Beyond a month the early days describe a body that
+ *  no longer exists. */
+const LEDGER_MAX_DAYS = 30
+
+/**
+ * How many days this ledger should weigh, and how many of them belong to the
+ * current phase.
+ *
+ * ── WHY A FLAT 30 DAYS WAS WRONG ─────────────────────────────────────────────
+ * The tile summed a rolling month regardless of what had happened in it. On the
+ * day a phase turns — a cut becoming a maintenance week, which happens on
+ * 2026-08-30 — that window is 29 days of one calorie target and 1 of another,
+ * averaged into a single "kg/wk" presented as the slope you are on. It is not:
+ * it is the slope you WERE on, dragged one day toward the new one, and it stays
+ * wrong for a month.
+ *
+ * ── AND WHY IT DOES NOT JUST USE THE PHASE ───────────────────────────────────
+ * Because a phase that started on Tuesday would then report a two-day rate, and
+ * a two-day rate on a cut is mostly water. So the window is phase-to-date, and
+ * when the phase is younger than the floor it reaches BACK past the boundary to
+ * make up the difference — those days are drawn dimmed, so the chart says which
+ * part of the number belongs to the regime you are actually in.
+ */
+export function ledgerWindow(todayISO: string): { days: number; inPhase: number; label: string | null } {
+  const span = phaseSpanFor(todayISO)
+  if (!span) return { days: LEDGER_MAX_DAYS, inPhase: LEDGER_MAX_DAYS, label: null }
+  const inPhase = Math.min(span.dayIndex + 1, LEDGER_MAX_DAYS)
+  return {
+    days: Math.min(LEDGER_MAX_DAYS, Math.max(inPhase, LEDGER_FLOOR_DAYS)),
+    inPhase,
+    label: `${span.def.short ?? span.def.name} · day ${span.dayIndex + 1}`,
+  }
+}
 
 /**
  * What the last month of eating is actually worth, as a rate.
@@ -49,7 +91,9 @@ const LEDGER_DAYS = 30
  * `useEnergyBalance`. The tile says how many days it summed for that reason.
  */
 export function DeficitWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () => void }) {
-  const { data: days } = useEnergyBalance(LEDGER_DAYS)
+  const today = logicalTodayISO()
+  const window = useMemo(() => ledgerWindow(today), [today])
+  const { data: days } = useEnergyBalance(window.days)
   const rows = useMemo(() => days ?? [], [days])
 
   const ledger = useMemo(() => {
@@ -66,7 +110,7 @@ export function DeficitWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () 
   }, [rows])
 
   const scaleRate = useMemo(() => weeklyRateKg(rows), [rows])
-  const today = rows[rows.length - 1] ?? null
+  const today_ = rows[rows.length - 1] ?? null
   const unit = weightUnit()
 
   // A deficit is a NEGATIVE balance, so the good direction is down. Both rates
@@ -84,8 +128,14 @@ export function DeficitWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () 
       ) : size === 's' ? (
         <span className="flex-1 min-h-0 flex flex-col justify-end gap-0.5">
           <Hero value={fmtRate(ledger.kgPerWeek)} unit={`${unit}/wk`} color={rateColor(ledger.kgPerWeek)} />
-          <span className="helix-num text-[9px] tabular-nums text-muted truncate">
-            {ledger.perDay > 0 ? '+' : ''}{ledger.perDay} kcal/day · {ledger.counted}d
+          <span className="helix-num text-[9px] tabular-nums truncate">
+            {/* TODAY, in the verdict colour. The small tile showed only the
+                trailing mean, so the one figure you can still act on before
+                midnight was the one figure it did not carry. */}
+            <span style={{ color: today_?.balance != null ? (today_.balance < 0 ? EMERALD : OXIDE) : MUTED }}>
+              {today_?.balance != null ? `${today_.balance > 0 ? '+' : ''}${today_.balance} today` : '— today'}
+            </span>
+            <span className="text-muted"> · {ledger.perDay > 0 ? '+' : ''}{ledger.perDay}/day · {ledger.counted}d</span>
           </span>
         </span>
       ) : (
@@ -93,13 +143,18 @@ export function DeficitWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () 
           <span className="flex items-baseline gap-2 min-w-0">
             <Hero value={fmtRate(ledger.kgPerWeek)} unit={`${unit}/wk`} color={rateColor(ledger.kgPerWeek)} tight />
             <span className="ml-auto shrink-0 text-[8px] text-muted uppercase tracking-[0.1em]">
-              {ledger.counted} of {LEDGER_DAYS} days
+              {/* The phase AND the count. The count is not decoration: days
+                  with a hole are left OUT of the mean rather than zeroed, and
+                  this is the only place the tile admits how many that was.
+                  Replacing it with the phase name hid a real caveat. */}
+                  {window.label && <>{window.label} · </>}
+                  {ledger.counted} of {window.days} days
             </span>
           </span>
 
           <span className="grid grid-cols-3 gap-1.5">
-            <StatTile label="Today" value={today?.balance ?? null} unit="kcal"
-              color={today?.balance != null && today.balance < 0 ? EMERALD : OXIDE} />
+            <StatTile label="Today" value={today_?.balance ?? null} unit="kcal"
+              color={today_?.balance != null && today_.balance < 0 ? EMERALD : OXIDE} />
             <StatTile label="Per day" value={ledger.perDay} unit="kcal" color={rateColor(ledger.perDay)} />
             <StatTile label="Scale" value={fmtRate(scaleRate)} unit={`${unit}/wk`} color={rateColor(scaleRate)} />
           </span>
@@ -107,7 +162,7 @@ export function DeficitWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () 
           <span className="block mt-auto">
             <span className="flex items-baseline gap-1.5">
               <span className="text-[8px] font-bold uppercase tracking-[0.1em] text-muted">
-                Balance · {size === 'l' ? LEDGER_DAYS : 14} days
+                Balance · {size === 'l' ? window.days : Math.min(14, window.days)} days
               </span>
               <span className="helix-num text-[8px] tabular-nums text-muted ml-auto">
                 {ledger.total > 0 ? '+' : ''}{ledger.total.toLocaleString()} kcal banked
@@ -119,7 +174,12 @@ export function DeficitWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () 
                 under={EMERALD}
                 over={OXIDE}
                 height={size === 'l' ? 62 : 34}
-                zeroLabel="the line is maintenance — under it is a deficit"
+                // Everything before the phase boundary is another regime's
+                // eating, borrowed only to reach the 14-day floor.
+                dimBefore={Math.max(0, (size === 'l' ? balances.length : Math.min(14, balances.length)) - window.inPhase)}
+                zeroLabel={window.label
+                  ? `dimmed bars precede ${window.label.split(' · ')[0]} · the line is maintenance`
+                  : 'the line is maintenance — under it is a deficit'}
               />
             </span>
           </span>
@@ -169,7 +229,6 @@ export function BarToBeatWidget({ size, onOpen }: { size: WidgetSize; onOpen?: (
   }, [next, baselines])
 
   const shown = size === 's' ? 1 : size === 'm' ? 3 : rows.length
-  const withBar = rows.filter((r) => r.weightKg != null).length
 
   return (
     <WidgetFrame {...WIDGET_META.bar} size={size} onOpen={onOpen}>
@@ -183,11 +242,11 @@ export function BarToBeatWidget({ size, onOpen }: { size: WidgetSize; onOpen?: (
               style={{ color: dayColor(next.dayKey) }}>
               {next.isToday ? 'Today' : next.day.label}
             </span>
-            {size !== 's' && (
-              <span className="helix-num text-[8px] tabular-nums text-muted ml-auto shrink-0">
-                {withBar}/{rows.length} have a bar
-              </span>
-            )}
+            {/* "{withBar}/{rows.length} have a bar" lived here. It counted a
+                thing nobody is trying to maximise — how much of your own history
+                exists — and it sat in the tile's most prominent free slot. The
+                lifts with no bar say so themselves, in their own row, with a
+                dash. */}
           </span>
 
           {size === 's' ? (
@@ -204,14 +263,18 @@ export function BarToBeatWidget({ size, onOpen }: { size: WidgetSize; onOpen?: (
           ) : (
             <span className="flex flex-col gap-1 flex-1 min-h-0 overflow-hidden">
               {rows.slice(0, shown).map((r) => (
-                <span key={r.name} className="flex items-baseline gap-2 min-w-0">
-                  <span className="text-[10px] text-text truncate flex-1">{r.name}</span>
-                  <span className="text-[8px] text-muted tabular-nums shrink-0">{r.reps}</span>
-                  <span className="helix-num text-[11px] font-bold tabular-nums shrink-0 w-14 text-right"
+                <span key={r.name} className="grid items-baseline gap-2 min-w-0"
+                  style={{ gridTemplateColumns: 'minmax(0,1fr) 2.6rem 3.5rem 2.75rem' }}>
+                  {/* The lift wears its own primary mover's colour, so the muscle
+                      family reads down the column without a legend — the same
+                      `exerciseColor` the logger's exercise band uses. */}
+                  <span className="text-[10px] truncate" style={{ color: exerciseColor(r.name) }}>{r.name}</span>
+                  <span className="text-[8px] text-muted tabular-nums text-right">{r.reps}</span>
+                  <span className="helix-num text-[11px] font-bold tabular-nums text-right"
                     style={{ color: r.weightKg != null ? GOLD : MUTED }}>
                     {r.weightKg != null ? `${displayWeight(r.weightKg)}${unit}` : '—'}
                   </span>
-                  <span className="helix-num text-[9px] tabular-nums shrink-0 w-12 text-right text-muted">
+                  <span className="helix-num text-[9px] tabular-nums text-right text-muted">
                     {r.e1rm != null ? `${displayWeight(r.e1rm)}` : '—'}
                   </span>
                 </span>
@@ -219,8 +282,13 @@ export function BarToBeatWidget({ size, onOpen }: { size: WidgetSize; onOpen?: (
               {rows.length > shown && (
                 <span className="text-[9px] text-muted">+{rows.length - shown} more lifts</span>
               )}
-              <span className="text-[8px] text-muted/70 mt-auto pt-1 border-t border-white/[0.06]">
-                Load to beat · estimated 1RM to beat
+              <span className="grid items-baseline gap-2 mt-auto pt-1 border-t border-white/[0.06]
+                               text-[7px] font-bold uppercase tracking-[0.1em] text-muted/70"
+                style={{ gridTemplateColumns: 'minmax(0,1fr) 2.6rem 3.5rem 2.75rem' }}>
+                <span className="truncate">Lift</span>
+                <span className="text-right">Reps</span>
+                <span className="text-right">Load</span>
+                <span className="text-right">1RM</span>
               </span>
             </span>
           )}
@@ -239,6 +307,22 @@ const GRID: Record<WidgetSize, { weeks: number; cell: number; gap: number }> = {
   s: { weeks: 12, cell: 5, gap: 1 },
   m: { weeks: 26, cell: 7, gap: 2 },
   l: { weeks: 52, cell: 4, gap: 2 },
+}
+
+/**
+ * How many days `Heatmap` will actually draw for `weeks` columns ending today.
+ *
+ * The grid is week-aligned: its last column is the current, partial week, so it
+ * winds back to the Sunday that opens the earliest column. That is
+ * `(weeks - 1) * 7` whole weeks plus however many days of this week have already
+ * happened — NOT `weeks * 7`, and certainly not `weeks * 7 + 7`.
+ *
+ * Exported so the widget and the chart cannot answer this differently, which is
+ * exactly how they came to disagree.
+ */
+export function consistencyWindow(weeks: number, todayISO: string): number {
+  const dow = new Date(`${todayISO}T12:00:00Z`).getUTCDay()
+  return (weeks - 1) * 7 + dow + 1
 }
 
 /**
@@ -272,7 +356,15 @@ export function ConsistencyWidget({ size, onOpen }: { size: WidgetSize; onOpen?:
     void scheduleVersion   // scheduleDayFor reads the store; this is the read
     const logged = new Map((sessions ?? []).map((s) => [s.date, s]))
     const out: ConsistencyDay[] = []
-    const span = weeks * 7 + 7
+    // ── ONE WINDOW, SCORED AND DRAWN ─────────────────────────────────────────
+    // This was `weeks * 7 + 7`, while `Heatmap` draws exactly `weeks` columns
+    // ending on today — so the headline "% kept" was computed over up to two
+    // weeks of days the grid never showed. The number and the picture described
+    // different windows, and the number was the one nobody could check.
+    //
+    // `consistencyWindow` is now the single answer, and `Heatmap` is handed the
+    // same day list it grades.
+    const span = consistencyWindow(weeks, today)
     for (let back = span - 1; back >= 0; back -= 1) {
       const date = isoAddDays(today, -back)
       const hit = logged.get(date)
@@ -339,7 +431,7 @@ export function ConsistencyWidget({ size, onOpen }: { size: WidgetSize; onOpen?:
               </span>
               <span className="text-[8px] text-muted ml-auto">solid trained · faded rest · empty missed</span>
             </span>
-            <span className="block mt-1"><Heatmap days={days} weeks={weeks} cell={cell} gap={gap} /></span>
+            <span className="block mt-1"><Heatmap days={days} weeks={weeks} cell={cell} gap={gap} labels /></span>
           </span>
         </span>
       )}
