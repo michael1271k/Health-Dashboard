@@ -2,8 +2,9 @@
 
 import { ArrowLeftRight, Trash2, Check } from 'lucide-react'
 import { Sheet } from '@/components/ui/Sheet'
+import { SET_QUALITY, SET_QUALITY_KEYS } from '@/lib/training/setTags'
 import { tapLight } from '@/lib/native/haptics'
-import { MUTED } from '@/lib/theme/palette'
+import { AMBER, MUTED } from '@/lib/theme/palette'
 
 /** The five mutually exclusive things a set can be. Mirrors `DraftSet.setType`. */
 export type SetTypeValue = 'normal' | 'warmup' | 'failure' | 'dropset' | 'ghost'
@@ -82,7 +83,7 @@ const TYPES: ReadonlyArray<{ value: SetTypeValue; label: string; badge: string; 
  * Net: about 190px down to about 110px, and nothing was taken away.
  */
 export function SetActionSheet({
-  open, onClose, setLabel, value, onPick, onSplit, onRemove,
+  open, onClose, setLabel, value, onPick, quality, onQuality, onSplit, onRemove,
 }: {
   open: boolean
   onClose: () => void
@@ -90,6 +91,10 @@ export function SetActionSheet({
   setLabel: string
   value: SetTypeValue
   onPick: (choice: SetTypeValue) => void
+  /** The set's technique note, or null when the question was never asked. */
+  quality?: string | null
+  /** Passing the same value again clears it — a mis-tap costs one more tap. */
+  onQuality: (choice: string | null) => void
   /** Unilateral movements only — absent on a bilateral lift and on a sub-row. */
   onSplit?: () => void
   onRemove: () => void
@@ -150,6 +155,61 @@ export function SetActionSheet({
         <p className="text-[10px] text-muted leading-none px-0.5 flex items-center gap-1 min-h-[12px]">
           <Check className="w-2.5 h-2.5 shrink-0" aria-hidden="true" />
           {TYPES.find((t) => t.value === value)?.hint}
+        </p>
+
+        {/* ── AND HOW IT WENT ──────────────────────────────────────────────
+            A SECOND AXIS below the first, not more type chips. "Warm-up" and
+            "form broke" are both true of the same set, so they cannot share a
+            control — and folding technique into `set_type` would give twenty
+            existing consumers of `isWorkingSet` an opinion about form, which
+            none of them should have.
+
+            It costs nothing until used: no selection is the normal state, the
+            row renders no chip, and the column is not even sent on commit. This
+            heading exists where the type's does not, because unlike the type
+            this axis has no default anyone would infer from the chips alone. */}
+        <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-muted pt-1.5 px-0.5">
+          How it went
+        </p>
+        <div
+          role="radiogroup"
+          aria-label={`Set quality for ${setLabel}`}
+          className="grid grid-cols-3 gap-1"
+        >
+          {SET_QUALITY_KEYS.map((k) => {
+            const q = SET_QUALITY[k]
+            const on = quality === k
+            return (
+              <button
+                key={k}
+                type="button"
+                role="radio"
+                aria-checked={on}
+                onPointerDown={() => { void tapLight() }}
+                // Tapping the selected one clears it. There is no "Clean" chip:
+                // clean is the absence of a claim, and a chip for it would write
+                // a value asserting the set was inspected and passed.
+                onClick={() => onQuality(on ? null : k)}
+                title={q.full}
+                className="min-h-[40px] rounded-xl px-1.5 flex items-center justify-center
+                           active:scale-95 transition-transform"
+                style={{
+                  background: on ? `${AMBER}24` : 'rgba(255,255,255,0.03)',
+                  border: `1px solid ${on ? `${AMBER}8c` : 'rgba(255,255,255,0.08)'}`,
+                  color: on ? AMBER : undefined,
+                }}
+              >
+                <span className={`text-[10px] font-bold leading-tight text-center ${on ? '' : 'text-muted'}`}>
+                  {q.label}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+        <p className="text-[10px] text-muted leading-none px-0.5 flex items-center gap-1 min-h-[12px]">
+          {quality
+            ? <><Check className="w-2.5 h-2.5 shrink-0" aria-hidden="true" />{SET_QUALITY[quality]?.full}</>
+            : 'Clean unless you say otherwise'}
         </p>
 
         {/* ── SPLIT AND REMOVE, SIDE BY SIDE ──

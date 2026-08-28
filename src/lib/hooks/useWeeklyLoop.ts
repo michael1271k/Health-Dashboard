@@ -63,6 +63,8 @@ interface RawSet {
   /** numeric(3,1) — may arrive as a string on some PostgREST paths. */
   rpe: number | string | null
   est_1rm_kg: number | null; set_type: string | null; is_pr: boolean | null
+  /** Technique note, null when the question was never asked. */
+  quality: string | null
   session_id: string
   /** Performance order within the session — the export sorts on these. */
   exercise_order: number | null; set_number: number | null
@@ -104,7 +106,7 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     // is why sets sometimes read bottom-to-top. `useSessionDetail` has always
     // ordered this way, so the UI and the export were built on different rules.
     supabase.from('workout_sets')
-      .select('id, pair_id, side, weight_kg, reps, rpe, est_1rm_kg, set_type, is_pr, session_id, exercise_order, set_number, exercises!inner(name, muscle_groups), workout_sessions!inner(started_at)')
+      .select('id, pair_id, side, weight_kg, reps, rpe, est_1rm_kg, set_type, quality, is_pr, session_id, exercise_order, set_number, exercises!inner(name, muscle_groups), workout_sessions!inner(started_at)')
       .gte('workout_sessions.started_at', startInstant).lt('workout_sessions.started_at', endInstant)
       .order('exercise_order', { ascending: true }).order('set_number', { ascending: true })
       .limit(3000),

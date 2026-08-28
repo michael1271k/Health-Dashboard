@@ -10,7 +10,8 @@ import { useHoldRepeat } from '@/lib/hooks/useHoldRepeat'
 import { RpeLadder } from './RpeLadder'
 import { SetActionSheet, type SetTypeValue } from './SetActionSheet'
 import { setGridFor, SET_BADGE_W, SET_CELL_LEAD, SET_CELL_VALUE, SET_FRAME_GAP, SET_TAIL_W, type SetGridMode } from './setGrid'
-import { EMERALD_DEEP, EMERALD_LIGHT, MUTED, STEEL } from '@/lib/theme/palette'
+import { AMBER, EMERALD_DEEP, EMERALD_LIGHT, MUTED, STEEL } from '@/lib/theme/palette'
+import { setQualityFor } from '@/lib/training/setTags'
 
 /** Plate step (a tap on ±) and the microload step (a press-and-hold). */
 const PLATE_STEP = 2.5
@@ -255,6 +256,9 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
   const badge = set.side ?? typeBadge?.label ?? `${displayNum ?? index + 1}`
   const badgeColor = set.side ? sideColor : showMedal ? GOLD : typeBadge?.color ?? null
 
+  /** Rendered under the numbers; undefined for a clean set, which is most. */
+  const qualityTag = setQualityFor(set.quality)
+
   const setTypeValue: SetTypeValue = isWarm ? 'warmup' : isFail ? 'failure' : isDrop ? 'dropset' : isGhost ? 'ghost' : 'normal'
   const ordinal = displayNum ?? index + 1
   const setLabel = `Set ${ordinal}${set.side === 'L' ? ' · Left' : set.side === 'R' ? ' · Right' : ''}`
@@ -461,6 +465,22 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
               ) : null}
             </span>
           </span>
+
+          {/* ── HOW IT WENT, WHEN IT WENT BADLY ──────────────────────────────
+              Under the numbers, inside the same tap target, so reading it costs
+              nothing and changing it is the long-press that was already there.
+              A clean set renders NOTHING — the overwhelming majority of rows
+              are clean, and a chip saying so on each of them would be the
+              densest screen in the app carrying a column of "fine". */}
+          {qualityTag && (
+            <span
+              className="block text-[9px] font-bold leading-none mt-0.5 truncate"
+              style={{ color: AMBER }}
+              title={qualityTag.full}
+            >
+              {qualityTag.label}
+            </span>
+          )}
         </button>
 
         {onToggleDone && (
@@ -610,6 +630,8 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
         setLabel={setLabel}
         value={setTypeValue}
         onPick={pickType}
+        quality={set.quality ?? null}
+        onQuality={(q) => onChange(index, { quality: q ?? undefined })}
         onSplit={onSplit ? () => onSplit(index) : undefined}
         onRemove={() => onRemove(index)}
       />

@@ -87,3 +87,87 @@ Array<SetTag & { count: number }> {
   }
   return out
 }
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * SET QUALITY — how it went, as opposed to what it was
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * A set's technique, when it was worth recording.
+ *
+ * ── WHY IT IS A SECOND AXIS AND NOT MORE SET TYPES ───────────────────────────
+ * "Warm-up" and "form broke" are not alternatives. A warm-up can be sloppy; a
+ * drop set is where form usually goes first. Folding quality into `set_type`
+ * would force a choice between two facts that are both true, and would make
+ * every existing consumer of `isWorkingSet` — twenty of them — have an opinion
+ * about technique, which none of them should.
+ *
+ * So quality is its own nullable column and changes NO arithmetic anywhere. A
+ * momentum-assisted set still counts its tonnage and can still set a record,
+ * because it happened. What it changes is what you can find later: "how often
+ * does my form break on the third set of rows" is a question the app could not
+ * previously be asked.
+ *
+ * ── WHY NULL IS "CLEAN" ──────────────────────────────────────────────────────
+ * Storing a default would make every set ever logged carry a claim about its
+ * form that nobody made — 2,190 historical rows asserting they were clean when
+ * the question was never put. Absence means "not reported", which is the truth.
+ * Same rule as `weighin_skip_reason`, resolved on read.
+ *
+ * ── AND WHY A CLOSED VOCABULARY ──────────────────────────────────────────────
+ * Free text cannot be counted, and counting is the entire point. A note saying
+ * "swung the last few" and one saying "used a bit of body english" are the same
+ * observation and would never group. Six values, chosen to be mutually
+ * exclusive in practice: the DB CHECK constraint holds the same six.
+ */
+export interface SetQuality {
+  /** Shown on the row, under the numbers. Kept to two words. */
+  label: string
+  /** The whole sentence, for `title` and the sheet's hint line. */
+  full: string
+}
+
+export const SET_QUALITY: Record<string, SetQuality> = {
+  momentum: {
+    label: 'Momentum',
+    full: 'Used body English to move the load',
+  },
+  partial_rom: {
+    label: 'Short ROM',
+    full: 'Cut the range short to finish the set',
+  },
+  form_breakdown: {
+    label: 'Form broke',
+    full: 'The last reps lost position',
+  },
+  needed_warmup: {
+    label: 'Cold',
+    full: 'The first reps were poor — needed a longer warm-up',
+  },
+  assisted: {
+    label: 'Assisted',
+    full: 'A spotter or the other arm helped',
+  },
+  cut_short: {
+    label: 'Cut short',
+    full: 'Stopped before the target for a reason other than failure',
+  },
+}
+
+/** Render order — worst-to-mildest is meaningless here, so it is fixed and
+ *  matches the DB CHECK, which is the list a reader can verify against. */
+export const SET_QUALITY_KEYS = [
+  'momentum', 'partial_rom', 'form_breakdown', 'needed_warmup', 'assisted', 'cut_short',
+] as const
+
+export type SetQualityKey = typeof SET_QUALITY_KEYS[number]
+
+/** The quality for a stored value, or undefined for a clean (null) set. */
+export function setQualityFor(quality: string | null | undefined): SetQuality | undefined {
+  return quality ? SET_QUALITY[quality] : undefined
+}
+
+/** Guards a value arriving from the DB or a draft before it is written back. */
+export function isSetQuality(v: string | null | undefined): v is SetQualityKey {
+  return v != null && (SET_QUALITY_KEYS as readonly string[]).includes(v)
+}

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 import { DRAFT_STORAGE_KEY, type SessionDraft, type DraftExercise, type DraftSet } from '@/lib/sessions/draft'
 import { activeProgram } from '@/lib/programs'
+import { isSetQuality } from '@/lib/training/setTags'
 import type { SplitDay } from '@/lib/types/workout'
 
 interface SessRow {
@@ -17,6 +18,8 @@ interface SessRow {
 interface SetRow {
   exercise_id: string; set_number: number; weight_kg: number; reps: number
   rpe: number | null; set_type: string | null; exercise_order: number | null
+  /** Optional: the fallback select below omits it, as it does side/pair_id. */
+  quality?: string | null
   side: string | null; pair_id: string | null
   exercises: { name: string }
 }
@@ -57,7 +60,7 @@ export function useEditSession() {
       let setsRaw: unknown[] | null = null
       {
         const withSide = await supabase.from('workout_sets')
-          .select('exercise_id, set_number, weight_kg, reps, rpe, set_type, exercise_order, side, pair_id, exercises!inner(name)')
+          .select('exercise_id, set_number, weight_kg, reps, rpe, set_type, quality, exercise_order, side, pair_id, exercises!inner(name)')
           .eq('session_id', sessionId)
           .order('exercise_order', { ascending: true }).order('set_number', { ascending: true })
         if (withSide.error) {
@@ -86,6 +89,11 @@ export function useEditSession() {
         // session silently promoted every drop set to a normal working set —
         // which then became PR-eligible on the re-commit.
         if (r.set_type === 'warmup' || r.set_type === 'failure' || r.set_type === 'dropset' || r.set_type === 'ghost') set.setType = r.set_type
+        // Quality round-trips for the SAME reason 'dropset' had to: an edit
+        // re-commits every row, so a field this hook does not read is a field
+        // the edit silently erases. `isSetQuality` guards the value on the way
+        // back out; guarding it here too means a stale key never enters a draft.
+        if (isSetQuality(r.quality)) set.quality = r.quality
         if (r.side === 'L' || r.side === 'R') { set.side = r.side; set.pairId = r.pair_id ?? undefined }
         ex.sets.push(set)
       }

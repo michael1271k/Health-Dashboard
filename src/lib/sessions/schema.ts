@@ -13,6 +13,11 @@ export const WorkoutSetSchema = z.object({
   rpe: z.number().min(1).max(10).optional(),
   // Hevy-style set modifier. 'warmup' + 'dropset' are excluded from PR server-side.
   setType: z.enum(['normal', 'warmup', 'failure', 'dropset', 'ghost']).optional(),
+  // The same six the DB CHECK holds. `nullable` as well as `optional` because
+  // an edited set clears its quality by sending null, not by omitting the key.
+  quality: z.enum([
+    'momentum', 'partial_rom', 'form_breakdown', 'needed_warmup', 'assisted', 'cut_short',
+  ]).nullable().optional(),
   // Deck position of the parent exercise (all its sets share the value).
   exerciseOrder: z.number().int().nonnegative().optional(),
   // Seeds muscle data when the set's exercise is new to the catalog.

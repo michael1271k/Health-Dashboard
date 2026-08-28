@@ -9,6 +9,7 @@ import type { Database, InsertRow } from '@/lib/supabase/types'
 import type { SaveWorkoutPayload } from '@/lib/types/workout'
 import { countCommittedSets } from '@/lib/sessions/schema'
 import { sessionVolumeKg } from '@/lib/sessions/volume'
+import { isSetQuality } from '@/lib/training/setTags'
 import { payloadToTemplate } from '@/lib/sessions/routineTemplate'
 import { estimateCalories, estimateAvgBpm, KCAL_SAMPLE_WINDOW_DAYS } from '@/lib/sessions/estimates'
 import { isTimedExercise } from '@/lib/exercises/timed'
@@ -345,6 +346,13 @@ export async function saveSession(
       // column never held a single value.
     }
     if (hasUnilateral) { row.side = s.side ?? null; row.pair_id = s.pairId ?? null }
+    // ── QUALITY IS SENT ONLY WHEN THERE IS ONE ────────────────────────────────
+    // Same discipline as side/pair_id above, for the same reason: a session
+    // where nobody flagged a set must not reference the column at all, so
+    // committing does not depend on the migration having run. It also keeps the
+    // absence honest — a row with no quality has the field missing, not null,
+    // which is what "the question was never asked" looks like on the wire.
+    if (isSetQuality(s.quality)) row.quality = s.quality
     return row
   })
 
@@ -353,9 +361,11 @@ export async function saveSession(
   // Self-heal: unilateral used but the side/pair_id columns aren't migrated yet →
   // retry without them so the session still saves (L/R metadata dropped until the
   // migration runs). Mirrors the daily_logs v5.1 column self-heal.
-  if (setsError && hasUnilateral && /column|schema cache|PGRST204|side|pair_id/i.test(setsError.message ?? '')) {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- destructure-to-omit the two unmigrated columns
-    const baseSets = dbSets.map((r) => { const { side: _s, pair_id: _p, ...rest } = r; return rest })
+  const hasQuality = dbSets.some((r) => r.quality != null)
+  if (setsError && (hasUnilateral || hasQuality)
+      && /column|schema cache|PGRST204|side|pair_id|quality/i.test(setsError.message ?? '')) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- destructure-to-omit the unmigrated columns
+    const baseSets = dbSets.map((r) => { const { side: _s, pair_id: _p, quality: _q, ...rest } = r; return rest })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;({ error: setsError } = await supabase.from('workout_sets').insert(baseSets as unknown as any))
   }

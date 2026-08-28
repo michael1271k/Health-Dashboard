@@ -33,6 +33,7 @@
 // actually read in.
 import { paceMinPerKm, formatPace } from '@/lib/cardio/metrics'
 import { isTimedExercise } from '@/lib/exercises/timed'
+import { SET_QUALITY } from '@/lib/training/setTags'
 import { formatSet, isUnloadedSet } from '@/lib/utils/setFormat'
 import { prAxisLabel, type PrAxis } from '@/lib/training/prEngine'
 import { rpeLabel } from '@/lib/training/effort'
@@ -186,6 +187,13 @@ export interface ExportSet {
    * was.
    */
   ghost?: boolean
+  /**
+   * How the set went — one of the closed `SET_QUALITY` values, or absent.
+   *
+   * Absent means the question was never asked, NOT that the set was clean. The
+   * export says nothing rather than asserting a technique nobody reported.
+   */
+  quality?: string | null
   /** Unilateral pairs share a pairId so L and R collapse into one numbered set. */
   pairId: string | null
 }
@@ -582,6 +590,10 @@ export function setDetail(sets: ExportSet[], exerciseName?: string): string[] {
     // fact twice in six words.
     if (s.warmup) bits.push('warm-up')
     else if (s.failure && rpeLabel(s.rpe).toLowerCase() !== 'failure') bits.push('to failure')
+    // Last in the parenthetical, and in the reader's own words rather than the
+    // stored key: the person reading this is a coach, not a database.
+    const q = s.quality ? SET_QUALITY[s.quality] : undefined
+    if (q) bits.push(q.label.toLowerCase())
     return bits.length ? ` (${bits.join(', ')})` : ''
   }
 

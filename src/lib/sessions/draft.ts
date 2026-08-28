@@ -7,6 +7,7 @@
 import type { SplitDay } from '@/lib/types/workout'
 import type { SaveWorkoutInput } from '@/lib/sessions/schema'
 import { sessionVolumeKg } from '@/lib/sessions/volume'
+import { isSetQuality } from '@/lib/training/setTags'
 import { resolveSeededRpe } from '@/lib/training/rpeMemory'
 import { activeProgram } from '@/lib/programs'
 
@@ -34,6 +35,15 @@ export interface DraftSet {
    *  count toward volume + set count but are never PR-eligible. Failure is tracked
    *  PER SIDE for unilateral sets. */
   setType?: 'warmup' | 'failure' | 'dropset' | 'ghost'
+  /**
+   * How the set went, as opposed to what it was — see `SET_QUALITY`.
+   *
+   * A SECOND AXIS, not another set type: a warm-up can be sloppy and a drop set
+   * is where form usually goes first, so the two facts cannot share a field.
+   * Absent means "not reported", never "clean" — the question is only ever
+   * asked, never assumed.
+   */
+  quality?: string
   /**
    * Hevy-style completion flag. `false` = the row is NOT ticked green and is
    * EXCLUDED from the commit (template decks seed every set `false`, so nothing
@@ -510,6 +520,10 @@ export function buildCommitPayload(draft: SessionDraft): SaveWorkoutInput {
         reps: s.reps,
         rpe: s.rpe,
         setType: s.setType,
+        // Only a value from the closed vocabulary survives the trip. A draft is
+        // localStorage — it can hold anything a stale build once wrote — and the
+        // DB CHECK would reject an unknown value by deleting the session.
+        quality: isSetQuality(s.quality) ? s.quality : null,
         exerciseOrder: order,
         side: s.side,
         pairId: s.pairId,
