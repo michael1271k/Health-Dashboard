@@ -6,7 +6,7 @@ import type { Tables } from '@/lib/supabase/types'
 import type { ScheduleDay } from '@/lib/programs'
 import { PPL_SPLITS, type SplitDay } from '@/lib/types/workout'
 import { displayWeight, fmtVolume, weightUnit } from '@/lib/utils/units'
-import { EMERALD, EMBER, SAPPHIRE, GOLD, AMETHYST, OXIDE, MUTED, HAIRLINE } from '@/lib/theme/palette'
+import { dayColor, EMERALD, EMBER, SAPPHIRE, GOLD, AMETHYST, OXIDE, MUTED, REST, HAIRLINE } from '@/lib/theme/palette'
 
 type Session = Tables<'workout_sessions'>
 
@@ -105,12 +105,17 @@ export function TrainingCard({ today, todaySession, lastSession, loggedToday, on
   const [open, setOpen] = useState(false)
   const unit = weightUnit()
   const isRest = today === 'rest'
-  const accent = isRest ? AMETHYST : EMERALD
+  // The DAY'S OWN colour, not a flat emerald for every session — the same hue
+  // the deck header, the timeline dot and the widget calendar give it, so the
+  // card that launches a workout looks like the workout it launches.
+  // Rest takes REST: it was AMETHYST, which is the Shoulders family now, so a
+  // rest day was drawn in the colour of Delts & Arms.
+  const accent = isRest ? REST : dayColor(today.dayKey)
   const lastSplit = lastSession ? PPL_SPLITS[lastSession.split_day as SplitDay] : null
 
   // Logged → the completed hero owns the card, no expand needed.
   if (loggedToday && todaySession) {
-    return <CompletedHero session={todaySession} accent={EMERALD} />
+    return <CompletedHero session={todaySession} accent={dayColor(todaySession.day_key, todaySession.split_day)} />
   }
 
   return (

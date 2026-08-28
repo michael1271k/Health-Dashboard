@@ -22,7 +22,7 @@ import {
 } from '@/components/dashboard/widgets/TrainingWidgets'
 import type { WidgetId, WidgetSize } from '@/lib/dashboard/layout'
 import { MacroCards } from '@/components/nutrition/MacroCards'
-import { Surface, Tile } from '@/components/ui/Zone'
+import { Surface } from '@/components/ui/Zone'
 import { InsightCoach } from '@/components/dashboard/InsightCoach'
 import { AnimatedCard } from '@/components/dashboard/AnimatedBento'
 import { WeekSoFarCard } from '@/components/dashboard/WeekSoFarCard'
@@ -33,7 +33,7 @@ import { displayWeight, weightUnit } from '@/lib/utils/units'
 import { phaseDisplay } from '@/lib/nutrition/phase'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { tdeeKcal } from '@/lib/nutrition/energy'
-import { BODY, visceralColor, EMBER, SAPPHIRE, EMERALD, GOLD, AMETHYST, PLATINUM, OXIDE, MUTED } from '@/lib/theme/palette'
+import { BODY, visceralColor, EMBER, SAPPHIRE, EMERALD, GOLD, AMETHYST, PLATINUM, OXIDE, MUTED, STEEL } from '@/lib/theme/palette'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { useSingleOrDoubleTap } from '@/lib/utils/doubleTap'
 import { scheduleDayFor, eraForDate, isTrainingDay, type ScheduleDay } from '@/lib/programs'
@@ -41,7 +41,8 @@ import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { useSupplements } from '@/lib/hooks/useSupplements'
 import { stackForDate } from '@/lib/supplements'
 import { useCustomSupplements, customSlotsForDate } from '@/lib/hooks/useCustomSupplements'
-import { useBioSeries, useLastWeighIn, useLatestBodyMetrics, type BodyMetricField } from '@/lib/hooks/useBioStrips'
+import { useBioSeries, useLastWeighIn, useLatestBodyMetrics, useBodyMetricRows, bodyMetricSeries, type BodyMetricField } from '@/lib/hooks/useBioStrips'
+import { LineChart } from '@/components/dashboard/widgets/parts'
 import { SleepStages } from '@/components/dashboard/SleepStages'
 
 // Modal-only bodies (522 lines between them) that were in the dashboard's
@@ -119,12 +120,14 @@ const EMPTY_TAKEN: ReadonlySet<string> = new Set<string>()
 const n0 = (v: number | null | undefined) => (v == null ? null : Math.round(v))
 const n1 = (v: number | null | undefined) => (v == null ? null : Math.round(v * 10) / 10)
 
-type SheetKey = 'readiness' | 'sleep' | 'fuel' | 'train' | 'body' | 'steps' | 'stack' | 'vitals' | null
+type SheetKey = 'readiness' | 'sleep' | 'fuel' | 'train' | 'body' | 'steps' | 'stack' | 'vitals'
+  | 'deficit' | 'consistency' | null
 
 /** One accent per sheet — the glass picks up its own domain colour. */
 const SHEET_ACCENT: Record<Exclude<SheetKey, null>, string> = {
   readiness: EMBER, sleep: AMETHYST, fuel: MACRO_COLORS.calories, train: EMERALD,
-  body: EMBER, steps: PLATINUM, stack: GOLD, vitals: SAPPHIRE,
+  body: BODY.weight, steps: PLATINUM, stack: GOLD, vitals: SAPPHIRE,
+  deficit: MACRO_COLORS.calories, consistency: EMERALD,
 }
 
 /**
@@ -187,12 +190,21 @@ export default function DashboardPage() {
   const { data: bioSeries } = useBioSeries()
   const { data: weighIn } = useLastWeighIn()
   const { data: bodyMetrics } = useLatestBodyMetrics()
+  // The same 30-day window, kept whole, so each body tile can draw its trend.
+  const { data: bodyRows } = useBodyMetricRows(30)
   // FIFTEEN, not eight: the Fuel tile's large size draws a fortnight of
   // intake against target, and a fourteen-day chart cannot be built from an
   // eight-day window. One row is the current day, so the window is n+1.
   const { data: fuelLogs } = useDailyLogs(15)
 
   const [open, setOpen] = useState<SheetKey>(null)
+  // Litres, to one decimal: millilitres is a precision nobody drinks in, and
+  // "2.4 / 3 L" is the reading. Goal falls back to the same 3,000 ml default the
+  // water widget uses, so the two cannot disagree about what full means.
+  const waterGoalMl = goals?.water_goal_ml ?? 3000
+  const waterL = log?.water_ml == null ? null : Math.round(log.water_ml / 100) / 10
+  const waterGoalL = Math.round(waterGoalMl / 100) / 10
+  const waterPct = log?.water_ml == null ? 0 : Math.min(1, log.water_ml / waterGoalMl)
   // Body strip: single tap → composition popup · double tap → Nexus InBody entry.
   /** One stable handler per strip key, cached — see the note on `strips`. */
   const openers = useRef(new Map<Exclude<SheetKey, null>, () => void>())
@@ -208,8 +220,6 @@ export default function DashboardPage() {
   const goToday = useCallback(() => router.push(`/day/${logicalTodayISO()}`), [router])
   /** The micro table has a page of its own; the tile is its glance. */
   const goMicros = useCallback(() => router.push('/nutrition/micros'), [router])
-  /** A year of adherence reads next to the week-by-week timeline. */
-  const goTimeline = useCallback(() => router.push('/pathfinder'), [router])
 
   // The weekly muscle sheet is its own component rather than another `SheetKey`
   // case: it owns its query and is mounted by two different surfaces (here and
@@ -474,7 +484,10 @@ export default function DashboardPage() {
       // Energy balance is a fuel question, so it opens the fuel drawer where
       // the calorie history and the override live.
       case 'deficit':
-        return <DeficitWidget size={size} onOpen={onOpen('fuel')} />
+        // Its own sheet, not Fuel's. The ledger asks what the last month of
+        // eating is WORTH as a rate; Fuel asks what is left today. Sending one
+        // to the other answered a question nobody had just asked.
+        return <DeficitWidget size={size} onOpen={onOpen('deficit')} />
 
       // The micro table is genuinely a PAGE — twenty nutrients in four bands,
       // each with its evidence — so this is the one tile that routes rather
@@ -488,7 +501,10 @@ export default function DashboardPage() {
       // A year of adherence belongs beside the weekly timeline, which is the
       // surface that explains any individual gap in it.
       case 'consistency':
-        return <ConsistencyWidget size={size} onOpen={goTimeline} />
+        // A sheet, not a navigation. Tapping it used to leave the dashboard
+        // for the Progress tab — the tile cost you a journey instead of
+        // saving you one, which is the same rule the widget deep links follow.
+        return <ConsistencyWidget size={size} onOpen={onOpen('consistency')} />
 
       case 'steps':
         return <StepsWidget size={size} onOpen={onOpen('steps')}
@@ -511,13 +527,13 @@ export default function DashboardPage() {
     score, scoreLoading,
     kcalSeries, phase, todayDay, loggedToday, todaySession,
     steps, tdeeToday, stackItems, taken, nowMinutes,
-    onOpen, onBodyTap, goToday, openMuscle, goMicros, goTimeline, openTraining,
+    onOpen, onBodyTap, goToday, openMuscle, goMicros, openTraining,
   ])
 
   const sheetTitle: Record<Exclude<SheetKey, null>, string> = {
     readiness: 'Readiness', sleep: 'Sleep & Recovery', fuel: 'Fuel', train: 'Training',
     body: 'Body Composition', steps: 'Activity', stack: 'Supplement Protocol',
-    vitals: 'Vitals',
+    vitals: 'Vitals', deficit: 'Deficit Ledger', consistency: 'Consistency',
   }
 
   return (
@@ -642,6 +658,26 @@ export default function DashboardPage() {
             date={logicalTodayISO()}
           />
         )}
+        {/* ── WATER, WHERE FUEL IS ───────────────────────────────────────────
+            Hydration had no home in this sheet, so the Steps sheet had been
+            carrying it — a reading about intake, reported on the screen about
+            movement. It belongs beside the macros, against its own goal, and it
+            is now stated in exactly one place. */}
+        {open === 'fuel' && (
+          <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] px-4 py-3">
+            <div className="flex items-baseline gap-2 min-w-0">
+              <span className="text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: SAPPHIRE }}>Water</span>
+              <span className="ml-auto shrink-0 helix-num font-bold text-fluid-lg tabular-nums leading-none text-text">
+                {waterL ?? '—'}
+                <span className="text-[10px] font-normal text-muted ml-0.5">/ {waterGoalL} L</span>
+              </span>
+            </div>
+            <span className="mt-2 block h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
+              <span className="block h-full rounded-full origin-left transition-transform duration-500"
+                style={{ transform: `scaleX(${waterPct})`, background: waterPct >= 1 ? EMERALD : SAPPHIRE }} />
+            </span>
+          </div>
+        )}
         {open === 'train' && (
           <TrainingCard
             today={todayDay}
@@ -651,6 +687,13 @@ export default function DashboardPage() {
             onLog={(dayKey) => { setOpen(null); router.push(`/session?template=${dayKey}`) }}
           />
         )}
+        {/* ── AND WHAT YOU ARE WALKING INTO ──────────────────────────────────
+            The loads to beat for that session, from the Targets tile itself
+            rather than a second computation of the same baselines. `prEngine`'s
+            `buildBaselines` is what the live logger judges every set against,
+            and a sheet that re-derived "the number to beat" would eventually
+            promise a record the logger then refused. */}
+        {open === 'train' && <BarToBeatWidget size="l" />}
         {open === 'body' && (
           <div className="space-y-2.5">
             {lastWeigh && (
@@ -662,35 +705,61 @@ export default function DashboardPage() {
                 )}
               </div>
             )}
-            {/* Every metric carries forward from its OWN most recent reading.
-                Reading only today's daily_logs row meant anything entered in the
-                Nexus on another day rendered as "—", so the card looked like it
-                only knew the weight. Metrics with no reading are hidden, not
-                shown as an empty grid. */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
-              {BODY_TILES.filter((t) => t.synced).map(({ field, label, unit: u, decimals, accent }) => {
-                const m = bodyMetrics?.[field]
-                if (!m) return null
-                const v = u === unit ? displayWeight(m.value) : decimals === 0 ? n0(m.value) : n1(m.value)
-                // Visceral fat has no identity colour — it is graded, because it is the
-                // one body metric where a higher number is worse.
-                const tone = field === 'visceral_fat' ? visceralColor(m.value) : accent
-                return <Tile key={field} label={label} value={v} unit={u} accent={tone} />
-              })}
-            </div>
+
+            {/* ── EVERY METRIC, EACH WITH ITS OWN TREND ────────────────────────
+                This showed FOUR tiles — the ones Apple Health exports on a
+                weigh-in — and sent you to a manual-entry screen for the other
+                six. The reasoning was that a fresh weigh-in should not sit
+                beside stale BMR and visceral rows, but `useLatestBodyMetrics`
+                had ALREADY solved that: every field carries forward from its own
+                most recent reading and states its own date. So the sheet was
+                hiding data it held, and offering a button instead of an answer.
+
+                Each metric now also carries its 30-day line, from the rows the
+                same query was already fetching and discarding. A body figure
+                without its direction is the number you have to open something
+                else to interpret, which is what this sheet exists to stop. */}
+            {BODY_TILES.map(({ field, label, unit: u, decimals, accent }) => {
+              const m = bodyMetrics?.[field]
+              if (!m) return null
+              const v = u === unit ? displayWeight(m.value) : decimals === 0 ? n0(m.value) : n1(m.value)
+              // Visceral fat has no identity colour — it is graded, because it is
+              // the one body metric where a higher number is worse.
+              const tone = field === 'visceral_fat' ? visceralColor(m.value) : (accent ?? STEEL)
+              const series = bodyMetricSeries(bodyRows, field)
+              const measured = series.filter((d: { value: number | null }) => d.value != null).length
+              return (
+                <div key={field} className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-3 py-2.5">
+                  <div className="flex items-baseline gap-2 min-w-0">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.12em] truncate" style={{ color: tone }}>
+                      {label}
+                    </span>
+                    <span className="ml-auto shrink-0 helix-num font-bold text-fluid-lg tabular-nums leading-none text-text">
+                      {v ?? '—'}
+                      {u && <span className="text-[10px] font-normal text-muted ml-0.5">{u}</span>}
+                    </span>
+                  </div>
+                  {/* Two readings is a line; one is an artefact. A field measured
+                      once in thirty days states its date instead. */}
+                  {measured >= 2 ? (
+                    <div className="mt-1.5">
+                      <LineChart series={series} color={tone} height={44} decimals={decimals === 0 ? 0 : 1} unit={u} />
+                    </div>
+                  ) : (
+                    <div className="mt-1 text-[9px] text-muted">measured {m.date}</div>
+                  )}
+                </div>
+              )
+            })}
+
             {bodyMetrics && Object.keys(bodyMetrics).length === 0 && (
               <p className="text-fluid-xs text-muted">No body metrics logged yet — add them under Today.</p>
             )}
-            {/* Only the auto-synced four live here; BMR, visceral, muscle % and
-                water % are entered by hand in the Nexus InBody card. */}
-            <button
-              onClick={() => { setOpen(null); router.push(`/day/${logicalTodayISO()}?section=inbody`) }}
-              className="btn-glass w-full justify-between min-h-[40px] text-fluid-xs">
-              <span>InBody &amp; scale metrics →</span>
-              <span className="text-muted">manual entry</span>
-            </button>
           </div>
         )}
+        {/* Water is gone from here. It is not activity; it sat in this sheet
+            because there was a spare cell, and it meant hydration was reported
+            in two places that could disagree — here and Fuel, which owns it. */}
         {open === 'steps' && (
           <StepsJourney
             steps={steps}
@@ -698,10 +767,15 @@ export default function DashboardPage() {
             distanceM={(log as { distance_m?: number | null } | null)?.distance_m ?? null}
             activeKcal={log?.active_energy ?? null}
             trainingMin={log?.training_minutes ?? null}
-            waterMl={log?.water_ml ?? null}
             series={(bioSeries ?? []).map((d) => d.steps)}
           />
         )}
+        {/* The two tiles that used to answer a question by leaving. Each is
+            simply its own widget at large — the tile IS the content, and it has
+            a size that fits a sheet, so a second implementation of the same
+            reading would be a second thing to keep in step. */}
+        {open === 'deficit' && <DeficitWidget size="l" />}
+        {open === 'consistency' && <ConsistencyWidget size="l" />}
         {open === 'stack' && <SupplementChecklist />}
         {/* The whole Vitals panel, unchanged, moved off the Progress tab where
             it was one of three things behind a segmented control and got the

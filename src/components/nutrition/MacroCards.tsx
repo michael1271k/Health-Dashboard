@@ -150,7 +150,9 @@ export const MacroCards = memo(function MacroCards({ today, logs, goals, date }:
 
   return (
     <section className="space-y-2.5">
-      <h2 className="font-heading font-semibold text-text">Fuel</h2>
+      {/* No <h2>Fuel</h2>. `Sheet` draws the title itself, so the drawer opened
+          with the word "Fuel" twice, one line apart, in two different type
+          styles. The page that also mounts this has its own heading. */}
 
       {/* ── Card 1 · Calories ── */}
       <div

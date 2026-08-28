@@ -875,8 +875,8 @@
     "semantic_hash": ""
   },
   "src/lib/phases.ts": {
-    "mtime": 1786543612.2020278,
-    "ast_hash": "e25f6890c35a82cc7553beb7a3c85b07",
+    "mtime": 1787901477.5708122,
+    "ast_hash": "5c3bf802e1796a9ded6f18dcd4f742fa",
     "semantic_hash": ""
   },
   "src/lib/programs.ts": {
@@ -1710,7 +1710,7 @@
     "semantic_hash": ""
   },
   "src/tests/palette-discipline.test.ts": {
-    "mtime": 1787860522.1722016,
+    "mtime": 1787901877.3429203,
     "ast_hash": "34dfab872dc097304d91ece42581f621",
     "semantic_hash": ""
   },
@@ -2480,7 +2480,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/set-rows.html": {
-    "mtime": 1787860529.390769,
+    "mtime": 1787901835.2943776,
     "ast_hash": "6b7c9d27eff50c2ff3702f41ab16f90a",
     "semantic_hash": ""
   },
@@ -2510,7 +2510,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-ledger.html": {
-    "mtime": 1787860527.7149994,
+    "mtime": 1787901834.1503603,
     "ast_hash": "3ddb93aca7b5901708c403bfb41afc10",
     "semantic_hash": ""
   },
@@ -2545,7 +2545,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/live-header.html": {
-    "mtime": 1787860526.5448835,
+    "mtime": 1787901832.736925,
     "ast_hash": "1922065e3007c80d486fcfb5d6f4ea9c",
     "semantic_hash": ""
   },
@@ -2615,7 +2615,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-summary-header.html": {
-    "mtime": 1787860527.643127,
+    "mtime": 1787901834.136212,
     "ast_hash": "b3d75865c62fb30c5cc668930a4b7642",
     "semantic_hash": ""
   },
@@ -2690,7 +2690,7 @@
     "semantic_hash": ""
   },
   "src/lib/dashboard/layout.ts": {
-    "mtime": 1787855324.7948494,
+    "mtime": 1787901732.1353817,
     "ast_hash": "3a6a9ddeb3da7d83c06ebcd0f0e08a05",
     "semantic_hash": ""
   },
@@ -2720,8 +2720,8 @@
     "semantic_hash": ""
   },
   "src/components/dashboard/widgets/parts.tsx": {
-    "mtime": 1787666489.1668396,
-    "ast_hash": "5a4b9597555f18ddeb03f2b5e77a17d2",
+    "mtime": 1787901684.4826744,
+    "ast_hash": "545cd5bf6868a648bceb98153f216029",
     "semantic_hash": ""
   },
   "src/components/dashboard/widgets/VitalsWidget.tsx": {
@@ -2730,18 +2730,18 @@
     "semantic_hash": ""
   },
   "src/components/dashboard/widgets/FuelWidget.tsx": {
-    "mtime": 1787666334.265811,
-    "ast_hash": "d2139acee42d8d90f3828e8efa900768",
+    "mtime": 1787901804.347989,
+    "ast_hash": "ee540817803ec510262c9a0c3714608e",
     "semantic_hash": ""
   },
   "src/components/dashboard/widgets/BodyWidget.tsx": {
-    "mtime": 1787665999.911991,
-    "ast_hash": "f0c890195f6f15f99a6c6881e9c4b679",
+    "mtime": 1787901732.135202,
+    "ast_hash": "59077e172b1007112bdbfd55a0611cb6",
     "semantic_hash": ""
   },
   "src/components/dashboard/widgets/TrainingWidgets.tsx": {
-    "mtime": 1787859409.701566,
-    "ast_hash": "0dcb43fe971473ca7ca3a934979cd3df",
+    "mtime": 1787901684.482947,
+    "ast_hash": "50e1744438ebe8a1f41fc8175263714f",
     "semantic_hash": ""
   },
   "src/lib/hooks/useLatestPr.ts": {
@@ -2750,8 +2750,8 @@
     "semantic_hash": ""
   },
   "src/components/dashboard/widgets/DailyWidgets.tsx": {
-    "mtime": 1787855671.3535829,
-    "ast_hash": "ba446e34292c58ae07af01c14490e336",
+    "mtime": 1787901756.958792,
+    "ast_hash": "b9b9daba3dd1d0d571bb759a351e819e",
     "semantic_hash": ""
   },
   "src/tests/widget-parts.test.tsx": {
@@ -2785,8 +2785,8 @@
     "semantic_hash": ""
   },
   "src/components/dashboard/widgets/PlanWidgets.tsx": {
-    "mtime": 1787859404.1615908,
-    "ast_hash": "a588feb1adafdec8bcd5f8f0b4e88e1c",
+    "mtime": 1787901647.390656,
+    "ast_hash": "68711d65419a1b4c3caa45118c5236d3",
     "semantic_hash": ""
   },
   "src/lib/hooks/useEnergyBalance.ts": {
@@ -2927,6 +2927,21 @@
   "src/components/launch/LaunchSurface.tsx": {
     "mtime": 1787859499.470684,
     "ast_hash": "bbf2a6fa0d04fa9d2e32cfe54dfaa185",
+    "semantic_hash": ""
+  },
+  "src/tests/consistency-window.test.ts": {
+    "mtime": 1787860636.3514817,
+    "ast_hash": "8207bb1f904f0e83ffd3d88c9dd226dc",
+    "semantic_hash": ""
+  },
+  "src/tests/ledger-window.test.ts": {
+    "mtime": 1787901582.1703782,
+    "ast_hash": "991cb888485ac79aac91de10cdfd7054",
+    "semantic_hash": ""
+  },
+  "src/tests/micro-risk.test.ts": {
+    "mtime": 1787901821.2039797,
+    "ast_hash": "02d339a1ccb723df8f03bce232e6452c",
     "semantic_hash": ""
   }
 }

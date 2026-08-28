@@ -166,6 +166,53 @@ export function pickLatestBodyMetrics(
   return out
 }
 
+/**
+ * The same rows `useLatestBodyMetrics` reduces, kept whole.
+ *
+ * That hook already selects every body field over a 60-day window and then
+ * throws the history away to answer "what is the newest reading of each". The
+ * body sheet wants both — the current figure AND its trend — so this returns the
+ * rows ascending and lets the caller slice a series per field. One query shape,
+ * two readings of it, rather than a second round trip for data already fetched.
+ *
+ * A field with fewer than two readings has no trend, and the caller draws no
+ * chart: two dots is a line, one dot is a rendering artefact.
+ */
+export function useBodyMetricRows(days = 30) {
+  return useQuery({
+    queryKey: ['daily_logs', 'body_metric_rows', days],
+    staleTime: 60_000,
+    queryFn: async (): Promise<Array<Record<string, unknown> & { date: string }>> => {
+      const { data, error } = await supabase
+        .from('daily_logs')
+        .select(`date, ${BODY_METRIC_FIELDS.join(', ')}`)
+        .gte('date', logicalDaysAgoISO(days))
+        .order('date', { ascending: true })
+      if (error) throw error
+      return (data ?? []) as unknown as Array<Record<string, unknown> & { date: string }>
+    },
+  })
+}
+
+/**
+ * One field's dated series, for a `LineChart`.
+ *
+ * Weight goes through `validWeight` here as it does everywhere else: a sub-50kg
+ * reading is a scale artefact, and plotting it drags the whole 30-day axis down
+ * to accommodate a number that never happened.
+ */
+export function bodyMetricSeries(
+  rows: Array<Record<string, unknown> & { date: string }> | undefined,
+  field: string,
+): Array<{ date: string; value: number | null }> {
+  return (rows ?? []).map((r) => {
+    const v = r[field]
+    if (typeof v !== 'number' || !Number.isFinite(v)) return { date: r.date, value: null }
+    if (field === 'weight_kg') return { date: r.date, value: validWeight(v) }
+    return { date: r.date, value: v }
+  })
+}
+
 export function useLatestBodyMetrics(days = 60) {
   return useQuery({
     queryKey: ['daily_logs', 'latest_body_metrics', days],

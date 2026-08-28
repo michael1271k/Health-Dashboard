@@ -4,7 +4,7 @@ import { useId } from 'react'
 import { Moon } from 'lucide-react'
 import type { Tables } from '@/lib/supabase/types'
 import { formatSleep } from '@/lib/utils/format'
-import { SLEEP, MUTED, HAIRLINE, EMERALD, GOLD, OXIDE } from '@/lib/theme/palette'
+import { SLEEP, MUTED, EMERALD, GOLD, OXIDE } from '@/lib/theme/palette'
 
 /**
  * Sleep, as architecture rather than four flat squares.
@@ -119,19 +119,29 @@ export function SleepStages({ sleep, log, goalHours, nightly, variant = 'full' }
               ))}
             </div>
           )}
-          <div className="flex flex-wrap gap-x-4 gap-y-1">
+          {/* ── FOUR STAGES, 2×2 ─────────────────────────────────────────────
+              A wrapping inline legend reflowed with the width: at one size the
+              four stages sat 2-and-2, at another 3-and-1, and the row you read
+              first changed with the device. A fixed 2×2 gives each stage the
+              same footprint and puts its duration and its share on their own
+              line, which is the comparison anyone opens this sheet to make. */}
+          <div className="grid grid-cols-2 gap-2">
             {parts.map((p) => (
-              <span key={p.key} className="flex items-center gap-1.5 text-[11px]">
-                <span className="w-2 h-2 rounded-sm shrink-0" style={{ background: p.color }} aria-hidden="true" />
-                <span className="text-muted">{p.label}</span>
-                <span className="helix-num font-bold text-text">{formatSleep(p.min)}</span>
-                <span className="text-muted/70 helix-num">{Math.round((p.min / ribbonTotal) * 100)}%</span>
-              </span>
+              <div key={p.key} className="rounded-xl border px-2.5 py-2 min-w-0"
+                style={{ borderColor: `${p.color}2e`, background: `${p.color}0f` }}>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="w-2 h-2 rounded-sm shrink-0" style={{ background: p.color }} aria-hidden="true" />
+                  <span className="text-[9px] font-bold uppercase tracking-[0.1em] truncate" style={{ color: p.color }}>{p.label}</span>
+                  <span className="ml-auto shrink-0 helix-num text-[10px] text-muted/80">
+                    {Math.round((p.min / ribbonTotal) * 100)}%
+                  </span>
+                </div>
+                <div className="helix-num font-bold text-fluid-base text-text leading-none mt-1">
+                  {formatSleep(p.min)}
+                </div>
+              </div>
             ))}
           </div>
-          <p className="text-[10px] text-muted/80 leading-snug">
-            Stage split by duration — Apple reports totals, not a stage timeline, so segment order is nominal.
-          </p>
         </>
       )}
 
@@ -139,22 +149,11 @@ export function SleepStages({ sleep, log, goalHours, nightly, variant = 'full' }
         <NightlyHistogram nights={nightly} goalMin={goalMin} />
       )}
 
-      {/* Overnight vitals, one thin row */}
-      <div className="grid grid-cols-3 gap-2 pt-2.5 border-t" style={{ borderColor: HAIRLINE }}>
-        {[
-          { label: 'Resting HR', v: log?.avg_rest_heart_rate, unit: 'bpm', d: 0 },
-          { label: 'Blood O₂', v: log?.blood_oxygen, unit: '%', d: 0 },
-          { label: 'Respiratory', v: log?.respiratory_rate, unit: 'br/min', d: 1 },
-        ].map((x) => (
-          <div key={x.label}>
-            <div className="text-[9px] uppercase tracking-wide" style={{ color: MUTED }}>{x.label}</div>
-            <div className="helix-num text-fluid-sm font-bold text-text mt-0.5">
-              {x.v == null ? '—' : (x.d === 0 ? Math.round(x.v) : Math.round(x.v * 10) / 10)}
-              {x.v != null && <span className="text-[10px] font-normal text-muted ml-1">{x.unit}</span>}
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* The overnight vitals row lived here — resting HR, blood O₂,
+          respiratory rate — duplicating three of the readings the Vitals sheet
+          exists to present, in a sheet about sleep stages. Two surfaces showing
+          one set of numbers is two places for them to disagree, and this was the
+          one with no room to explain them. */}
     </div>
   )
 }

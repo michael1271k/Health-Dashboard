@@ -1,7 +1,6 @@
 'use client'
 
 import { Flag, Footprints } from 'lucide-react'
-import { mlToL } from '@/lib/utils/format'
 import { PLATINUM, EMBER, SAPPHIRE, EMERALD, GOLD, MUTED, HAIRLINE, OXIDE } from '@/lib/theme/palette'
 
 /**
@@ -16,13 +15,12 @@ import { PLATINUM, EMBER, SAPPHIRE, EMERALD, GOLD, MUTED, HAIRLINE, OXIDE } from
 
 const PIPS = [0.25, 0.5, 0.75] as const
 
-export function StepsJourney({ steps, goal, distanceM, activeKcal, trainingMin, waterMl, series }: {
+export function StepsJourney({ steps, goal, distanceM, activeKcal, trainingMin, series }: {
   steps: number | null
   goal: number | null
   distanceM: number | null
   activeKcal: number | null
   trainingMin: number | null
-  waterMl: number | null
   /** Trailing daily step counts, oldest → newest. */
   series: Array<number | null>
 }) {
@@ -34,6 +32,22 @@ export function StepsJourney({ steps, goal, distanceM, activeKcal, trainingMin, 
 
   const days = series.filter((v): v is number => v != null)
   const peak = days.length ? Math.max(...days, 1) : 1
+
+  /**
+   * Today against the trailing mean of the days before it, as a percentage.
+   *
+   * The mean EXCLUDES today: comparing a value against an average it is itself
+   * part of drags the baseline toward the number being judged, so a huge day
+   * would under-report and a dead day would over-report. Needs three prior days
+   * to say anything — two is a coin toss with a decimal point.
+   */
+  const vsAvg = (() => {
+    const prior = days.slice(0, -1)
+    if (steps == null || prior.length < 3) return null
+    const mean = prior.reduce((a, b) => a + b, 0) / prior.length
+    if (mean <= 0) return null
+    return Math.round(((steps - mean) / mean) * 100)
+  })()
 
   return (
     <div className="space-y-4">
@@ -88,16 +102,28 @@ export function StepsJourney({ steps, goal, distanceM, activeKcal, trainingMin, 
         </div>
       </div>
 
-      {/* Supporting movement stats */}
-      <div className="grid grid-cols-3 gap-2 pt-2.5 border-t" style={{ borderColor: HAIRLINE }}>
+      {/* ── SUPPORTING MOVEMENT STATS ────────────────────────────────────────
+          Water is gone: it is not activity, it sat here because there was a
+          spare cell, and it meant hydration was reported by two surfaces that
+          could disagree — this one and Fuel, which owns it.
+          In its place, the readings that ARE this sheet's subject and were
+          previously only implied by the step count. Each carries a verdict
+          against its own target where one exists, since a bare figure on a
+          screen about a goal is the one thing this sheet should never show. */}
+      <div className="grid grid-cols-4 gap-2 pt-2.5 border-t" style={{ borderColor: HAIRLINE }}>
         {[
-          { label: 'Active', v: activeKcal == null ? null : `${Math.round(activeKcal)}`, unit: 'kcal', c: OXIDE },
-          { label: 'Training', v: trainingMin == null ? null : `${Math.round(trainingMin)}`, unit: 'min', c: EMERALD },
-          { label: 'Water', v: waterMl == null ? null : mlToL(waterMl), unit: 'L', c: SAPPHIRE },
+          { label: 'Distance', v: km == null ? null : km.toFixed(1), unit: 'km', c: PLATINUM, ok: null },
+          { label: 'Active', v: activeKcal == null ? null : `${Math.round(activeKcal)}`, unit: 'kcal', c: OXIDE, ok: null },
+          { label: 'Training', v: trainingMin == null ? null : `${Math.round(trainingMin)}`, unit: 'min', c: EMERALD, ok: null },
+          // Today against your OWN trailing norm — the only target here that is
+          // measured rather than invented. A fixed "active kcal goal" would be a
+          // number nobody set, graded green or red as though they had.
+          { label: 'vs avg', v: vsAvg == null ? null : `${vsAvg > 0 ? '+' : ''}${vsAvg}`, unit: '%', c: SAPPHIRE, ok: vsAvg == null ? null : vsAvg >= 0 },
         ].map((x) => (
           <div key={x.label}>
             <div className="text-[9px] uppercase tracking-wide" style={{ color: MUTED }}>{x.label}</div>
-            <div className="helix-num text-fluid-sm font-bold mt-0.5" style={{ color: x.v == null ? MUTED : x.c }}>
+            <div className="helix-num text-fluid-sm font-bold mt-0.5"
+              style={{ color: x.v == null ? MUTED : x.ok == null ? x.c : x.ok ? EMERALD : OXIDE }}>
               {x.v ?? '—'}
               {x.v != null && <span className="text-[10px] font-normal text-muted ml-1">{x.unit}</span>}
             </div>
