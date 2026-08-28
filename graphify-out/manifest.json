@@ -235,8 +235,8 @@
     "semantic_hash": ""
   },
   "src/app/day/[date]/page.tsx": {
-    "mtime": 1787859850.0413628,
-    "ast_hash": "94c4242d509cd8c80553db13a231831e",
+    "mtime": 1787904869.57094,
+    "ast_hash": "1be47a2882406084045e73a5577a196a",
     "semantic_hash": ""
   },
   "src/app/global-error.tsx": {
@@ -255,8 +255,8 @@
     "semantic_hash": ""
   },
   "src/app/page.tsx": {
-    "mtime": 1787903681.7114882,
-    "ast_hash": "1fb1c7b20cb4aecc19ec3719241e5697",
+    "mtime": 1787904953.0986629,
+    "ast_hash": "aef167ec758f1a21b3ce2e2d21192d15",
     "semantic_hash": ""
   },
   "src/app/session/[id]/page.tsx": {
@@ -815,8 +815,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useWeeklyLoop.ts": {
-    "mtime": 1787904456.8841388,
-    "ast_hash": "572767808f7a00b99d1d080ec28111f8",
+    "mtime": 1787905134.596786,
+    "ast_hash": "f2e8ced3e9b83031b30416934b1ecdbc",
     "semantic_hash": ""
   },
   "src/lib/hooks/useWeeklyVolume.ts": {
@@ -895,8 +895,8 @@
     "semantic_hash": ""
   },
   "src/lib/reports/weeklyExport.ts": {
-    "mtime": 1787904446.7696762,
-    "ast_hash": "aebff7c1f50497f6dba38029cffcbf59",
+    "mtime": 1787905022.2868896,
+    "ast_hash": "3b998ba6cb42b15aabfeb7da4a49468f",
     "semantic_hash": ""
   },
   "src/lib/schedule/overrides.ts": {
@@ -2480,7 +2480,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/set-rows.html": {
-    "mtime": 1787904763.8523026,
+    "mtime": 1787905196.0488055,
     "ast_hash": "4337ad6af8491d18f2242f7a5d77be6f",
     "semantic_hash": ""
   },
@@ -2510,7 +2510,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-ledger.html": {
-    "mtime": 1787904762.799838,
+    "mtime": 1787905191.420152,
     "ast_hash": "3ddb93aca7b5901708c403bfb41afc10",
     "semantic_hash": ""
   },
@@ -2545,7 +2545,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/live-header.html": {
-    "mtime": 1787904761.594024,
+    "mtime": 1787905191.5240738,
     "ast_hash": "1922065e3007c80d486fcfb5d6f4ea9c",
     "semantic_hash": ""
   },
@@ -2615,7 +2615,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-summary-header.html": {
-    "mtime": 1787904763.051205,
+    "mtime": 1787905197.9145753,
     "ast_hash": "b3d75865c62fb30c5cc668930a4b7642",
     "semantic_hash": ""
   },
@@ -2690,8 +2690,8 @@
     "semantic_hash": ""
   },
   "src/lib/dashboard/layout.ts": {
-    "mtime": 1787901732.1353817,
-    "ast_hash": "3a6a9ddeb3da7d83c06ebcd0f0e08a05",
+    "mtime": 1787904912.605397,
+    "ast_hash": "44538c04a629c68f14f11573546d94b9",
     "semantic_hash": ""
   },
   "src/components/dashboard/WidgetGrid.tsx": {
@@ -2750,8 +2750,8 @@
     "semantic_hash": ""
   },
   "src/components/dashboard/widgets/DailyWidgets.tsx": {
-    "mtime": 1787901756.958792,
-    "ast_hash": "b9b9daba3dd1d0d571bb759a351e819e",
+    "mtime": 1787904938.2692027,
+    "ast_hash": "c165257575f6d3f5c4581604e816a16a",
     "semantic_hash": ""
   },
   "src/tests/widget-parts.test.tsx": {
@@ -2972,6 +2972,11 @@
   "src/components/day/FatigueTracker.tsx": {
     "mtime": 1787904839.8930857,
     "ast_hash": "0ac6c1572c40cb58c2bfcecc7bfe064e",
+    "semantic_hash": ""
+  },
+  "src/tests/fatigue.test.ts": {
+    "mtime": 1787905180.9983816,
+    "ast_hash": "c6a7bbbe1a9ea322a4857009507a786a",
     "semantic_hash": ""
   }
 }
