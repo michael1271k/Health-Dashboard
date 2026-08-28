@@ -77,3 +77,24 @@ export function startTimeLabel(iso: string | null | undefined): string {
     hour: 'numeric', minute: '2-digit', hour12: true,
   })
 }
+
+/**
+ * A date as a person would say it relative to today — "Today", "Yesterday", or
+ * "25 Aug".
+ *
+ * Used wherever a carried-forward reading is shown: a body composition from
+ * three days ago is only honest if the tile says which day it came from, and
+ * "25 Aug" is the shortest form that is unambiguous a week later. The relative
+ * words stop at yesterday on purpose — "6 days ago" is arithmetic the reader has
+ * to redo against a calendar, whereas a date is not.
+ */
+export function relativeDayLabel(dateISO: string | null | undefined, todayISO = logicalTodayISO()): string {
+  if (!dateISO) return ''
+  if (dateISO === todayISO) return 'Today'
+  const d = new Date(`${dateISO}T12:00:00Z`)
+  if (Number.isNaN(d.getTime())) return ''
+  const yesterday = new Date(`${todayISO}T12:00:00Z`)
+  yesterday.setUTCDate(yesterday.getUTCDate() - 1)
+  if (dateISO === yesterday.toISOString().slice(0, 10)) return 'Yesterday'
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+}

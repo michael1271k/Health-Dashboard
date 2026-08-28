@@ -5,6 +5,8 @@ import { WidgetFrame, WidgetEmpty } from '@/components/dashboard/WidgetFrame'
 import { Hero, LineChart, Spark, StatTile } from './parts'
 import { LedgerRow, compositionRows } from '@/components/body/CompositionLedger'
 import { useTodayDailyLog } from '@/lib/hooks/useDashboard'
+import { useLatestBodyReading } from '@/lib/hooks/useLatestBodyReading'
+import { logicalTodayISO, relativeDayLabel } from '@/lib/utils/day'
 import { displayWeight, weightUnit } from '@/lib/utils/units'
 import { BODY } from '@/lib/theme/palette'
 import { WIDGET_META, type WidgetSize } from '@/lib/dashboard/layout'
@@ -42,9 +44,39 @@ export function BodyWidget({ size, onOpen, weightSeries }: {
 }) {
   const { data: log } = useTodayDailyLog()
   const unit = weightUnit()
+  const today = logicalTodayISO()
+
+  /**
+   * ── THE TILE REMEMBERS THE LAST WEIGH-IN ───────────────────────────────────
+   * It read today's `daily_logs` row and nothing else, so on any morning you had
+   * not yet stepped on the scale — which is most of them, and every morning
+   * before about 8am — the whole tile collapsed to "Ready for your first
+   * weigh-in". A body composition does not cease to exist on the days it is not
+   * re-measured; the app had a perfectly good reading from Tuesday and refused
+   * to say so.
+   *
+   * `useLatestBodyReading` is the same carry-forward the Nexus already uses to
+   * offer placeholders, and it is field-by-field: 07-17 has a weight and a body
+   * fat but no muscle %, so the newest muscle % genuinely lives on an older row
+   * than the newest weight, and taking one whole row would lose it.
+   *
+   * The date is not optional. A carried reading shown without saying when it was
+   * taken is indistinguishable from one taken this morning, which is the one
+   * thing this must never be — hence `asOf` on every face.
+   */
+  const { data: carried } = useLatestBodyReading(today)
+
   // A loose record on purpose — the ledger's derivation cares about the body
   // columns, not about which query shape they arrived in.
-  const comp = useMemo(() => compositionRows(log as unknown as Record<string, unknown> | null), [log])
+  const live = useMemo(() => compositionRows(log as unknown as Record<string, unknown> | null), [log])
+  const memory = useMemo(() => compositionRows(carried?.values ?? null), [carried])
+  // Today wins whenever today has a weight; nothing is ever blended, because a
+  // weight from this morning beside a body fat from last week is a composition
+  // that never existed.
+  const fresh = live.weight != null
+  const comp = fresh ? live : memory
+  const asOf = fresh ? today : (carried?.dates.weight_kg ?? carried?.latestDate ?? null)
+  const asOfLabel = relativeDayLabel(asOf, today)
 
   /** The three that move, heaviest share first — or everything, at large. */
   const shown = useMemo(() => {
@@ -85,10 +117,20 @@ export function BodyWidget({ size, onOpen, weightSeries }: {
               <span className="text-[8px] font-normal text-muted ml-0.5">% fat</span>
             </span>
           </span>
+          {asOfLabel && (
+            <span className="text-[8px] font-bold uppercase tracking-[0.1em] text-muted truncate">{asOfLabel}</span>
+          )}
           <Spark series={weightSeries.map((d) => d.value)} color={BODY.weight} height={22} />
         </span>
       ) : (
         <span className="flex-1 min-h-0 flex flex-col gap-1.5">
+          {asOfLabel && (
+            <span className="flex items-baseline gap-1.5 min-w-0">
+              <span className="text-[8px] font-bold uppercase tracking-[0.1em] text-muted truncate">
+                {fresh ? 'Weighed today' : `Last weighed · ${asOfLabel}`}
+              </span>
+            </span>
+          )}
           <span className="grid grid-cols-3 gap-1.5">
             <StatTile label="Weight" value={kg} unit={unit} color={BODY.weight} />
             <StatTile

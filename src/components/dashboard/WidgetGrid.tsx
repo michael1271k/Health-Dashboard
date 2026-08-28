@@ -23,8 +23,31 @@ import {
 } from '@/lib/dashboard/layout'
 import { fetchRemoteLayout, pushRemoteLayout, pickLayout, PUSH_DEBOUNCE_MS } from '@/lib/dashboard/layoutSync'
 
-/** How long a face stays up before a stack turns itself over. */
-const ROTATE_MS = 12_000
+/**
+ * How long a face stays up before a stack turns itself over.
+ *
+ * 12s was slow enough that a stack read as static — you had to sit and watch a
+ * tile to discover it had another side. 9s is a beat quicker without ever
+ * flipping while a number is being read.
+ */
+const ROTATE_MS = 9_000
+
+/**
+ * ── AND WHY EVERY STACK GETS ITS OWN PHASE ──────────────────────────────────
+ * Every `StackFaces` mounted in the same frame and took the same interval, so
+ * the whole dashboard turned over on the same millisecond: three tiles snapping
+ * in unison reads as a page refresh, not as a set of tiles each minding its own
+ * business. A deterministic offset per slot — the id's hash, so it survives a
+ * remount and does not shuffle on every render — spreads them across a window
+ * just under one full period.
+ */
+const STAGGER_WINDOW_MS = 7_000
+
+export function staggerFor(slotId: string): number {
+  let h = 0
+  for (let i = 0; i < slotId.length; i += 1) h = (h * 31 + slotId.charCodeAt(i)) | 0
+  return Math.abs(h) % STAGGER_WINDOW_MS
+}
 /** How long you must hover a same-size tile mid-drag before it offers to stack. */
 const MERGE_HOLD_MS = 600
 
@@ -688,6 +711,8 @@ function StackFaces({ slot, face, setFace, editing, reduced, children }: {
   // Set on a manual flip, so the timer does not immediately overrule the hand.
   const touchedAt = useRef(0)
   const gesture = useRef<{ y: number; x: number; at: number; scroll: number } | null>(null)
+  // Set by a swipe that fired, cleared by the click it eats.
+  const swallow = useRef(false)
 
   const go = useCallback((delta: number) => {
     touchedAt.current = Date.now()
@@ -698,20 +723,47 @@ function StackFaces({ slot, face, setFace, editing, reduced, children }: {
 
   useEffect(() => {
     if (!stacked || editing) return
-    const tick = window.setInterval(() => {
+    let tick: number | null = null
+    const advance = () => {
       if (document.hidden) return
       if (Date.now() - touchedAt.current < ROTATE_MS) return
       setDir(1)
       setFace((f) => (f + 1) % slot.items.length)
-    }, ROTATE_MS)
-    return () => window.clearInterval(tick)
-  }, [stacked, editing, slot.items.length, setFace])
+    }
+    // The first turn is delayed by this slot's own phase; every one after it is
+    // on the plain period, so the offsets hold for the life of the page.
+    const first = window.setTimeout(() => {
+      advance()
+      tick = window.setInterval(advance, ROTATE_MS)
+    }, ROTATE_MS + staggerFor(slot.id))
+    return () => {
+      window.clearTimeout(first)
+      if (tick != null) window.clearInterval(tick)
+    }
+  }, [stacked, editing, slot.id, slot.items.length, setFace])
 
   const onPointerDown = (e: React.PointerEvent) => {
     if (!stacked) return
     gesture.current = { y: e.clientY, x: e.clientX, at: Date.now(), scroll: window.scrollY }
   }
 
+  /**
+   * ── THE SWIPE HAD THREE WAYS TO MISS, AND ONE WAY TO BE UNDONE ────────────
+   * It asked for 44px of travel inside 500ms with no more than 30px sideways.
+   * An ordinary, deliberate thumb swipe on a 175px tile is shorter than that,
+   * takes longer than that, and drifts more than that — so the gesture existed
+   * and mostly did not fire.
+   *
+   * 24px is past any tap jitter and is roughly a third of a small tile's
+   * height. 900ms allows a swipe that is placed rather than flicked. And the
+   * horizontal test is now RELATIVE — what disqualifies a swipe is that it was
+   * mostly sideways, not that it moved sideways at all.
+   *
+   * The fourth problem is the one that made it look broken even when it did
+   * fire: the tile underneath opens a domain sheet on click, so a successful
+   * swipe turned the face over AND opened a sheet on top of it. `swallow`
+   * eats exactly one click, in the capture phase, before it can reach the body.
+   */
   const onPointerUp = (e: React.PointerEvent) => {
     const g = gesture.current
     gesture.current = null
@@ -721,8 +773,9 @@ function StackFaces({ slot, face, setFace, editing, reduced, children }: {
     // The page moved under the finger: this was a scroll that began on a tile,
     // not a swipe of the tile.
     if (Math.abs(window.scrollY - g.scroll) > 2) return
-    if (Date.now() - g.at > 500) return
-    if (Math.abs(dy) < 44 || Math.abs(dx) > 30) return
+    if (Date.now() - g.at > 900) return
+    if (Math.abs(dy) < 24 || Math.abs(dx) > Math.abs(dy) * 0.8) return
+    swallow.current = true
     go(dy < 0 ? 1 : -1)
   }
 
@@ -738,6 +791,12 @@ function StackFaces({ slot, face, setFace, editing, reduced, children }: {
       onPointerDown={onPointerDown}
       onPointerUp={onPointerUp}
       onPointerCancel={() => { gesture.current = null }}
+      onClickCapture={(e) => {
+        if (!swallow.current) return
+        swallow.current = false
+        e.stopPropagation()
+        e.preventDefault()
+      }}
     >
       <AnimatePresence initial={false} mode="popLayout" custom={dir}>
         <m.div

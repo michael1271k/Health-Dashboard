@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { KineticNumber } from '@/components/fx/KineticNumber'
-import { EMERALD, GOLD, OXIDE, MUTED } from '@/lib/theme/palette'
+import { EMERALD, OXIDE, MUTED } from '@/lib/theme/palette'
 
 /**
  * The pieces every widget body is built from.
@@ -64,21 +64,52 @@ export function Trend({ delta, higherIsBetter = true, unit, decimals = 0 }: {
 }
 
 /**
+ * The width a `Spark` is actually being drawn at, in CSS pixels.
+ *
+ * ── WHY IT HAS TO BE MEASURED ────────────────────────────────────────────────
+ * A sparkline is one drawing in two different coordinate systems, and every way
+ * of reconciling them without knowing the real width is wrong somewhere:
+ *
+ *   · `preserveAspectRatio="none"` stretches a fixed viewBox to fill the box, so
+ *     the SAME series comes out at two different slants in a small tile and a
+ *     medium one, and any slope steep enough to matter is exaggerated in one and
+ *     flattened in the other.
+ *   · `xMidYMid meet` fixes the slant by LETTERBOXING: a 100×32 viewBox inside
+ *     an 80×11 stat tile scales to the height and draws 34px of line centred in
+ *     80px of box, with empty space either side. That is the "graphs are crooked
+ *     and uncentered inside their boxes" report — the line was neither wrong nor
+ *     centred on anything the eye could see, it was a short mark adrift in a
+ *     wide container.
+ *
+ * With the real width in hand the viewBox is the pixel box, `preserveAspectRatio`
+ * stops mattering because the two ratios are identical, and the drawing fills
+ * its container at 1:1 with no distortion at all.
+ *
+ * `ResizeObserver` rather than a one-off measurement: these tiles resize when the
+ * dashboard is rearranged and when the window is. Absent (jsdom, very old
+ * Safari) it falls back to the nominal 100 and behaves exactly as before.
+ */
+function useMeasuredWidth(): [React.RefObject<HTMLSpanElement | null>, number] {
+  const ref = useRef<HTMLSpanElement | null>(null)
+  const [w, setW] = useState(0)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const read = () => setW(el.getBoundingClientRect().width)
+    read()
+    if (typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(read)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+  return [ref, w]
+}
+
+/**
  * The inline sparkline.
  *
- * ── WHY THE CHARTS LOOKED CROOKED ────────────────────────────────────────────
- * The old one drew into `viewBox="0 0 80 32"` with `preserveAspectRatio="none"`,
- * which tells the browser to stretch the drawing to whatever box it lands in.
- * A 1×1 tile and a 2×2 tile have different aspect ratios, so the SAME series
- * came out at two different slants — and any slope steep enough to matter came
- * out exaggerated in one and flattened in the other. `vectorEffect` kept the
- * STROKE even, which is why it read as "distorted" rather than as obviously
- * broken.
- *
- * `preserveAspectRatio="none"` is correct for a bar that must fill its box. It
- * is never correct for a LINE, whose whole meaning is its angle. This one keeps
- * the aspect (`xMidYMid meet`) and lets the viewBox itself be the tile's shape,
- * so a rise of 4% looks like a rise of 4% at every size.
+ * Drawn in real pixels (see `useMeasuredWidth`), so it fills its box, sits
+ * square in it, and reports the same slope at every tile size.
  *
  * Gaps are gaps: a day with no reading breaks the path rather than being
  * interpolated across, because a straight line through a missing day is a claim
@@ -89,11 +120,17 @@ export function Spark({ series, color, height = 28 }: {
   color: string
   height?: number
 }) {
+  const [box, width] = useMeasuredWidth()
   const pts = series.map((v, i) => ({ v, i })).filter((p): p is { v: number; i: number } => p.v != null)
-  if (pts.length < 2) return <div style={{ height }} aria-hidden="true" />
+  // The wrapper renders even when there is nothing to draw: it is what the
+  // observer measures, and a span that only appears once there is data could
+  // never report the width the data needs.
+  if (pts.length < 2) return <span ref={box} className="block w-full" style={{ height }} aria-hidden="true" />
 
-  const W = 100
-  const H = 32
+  const W = Math.max(24, Math.round(width) || 100)
+  const H = height
+  // The dot at the head is 2px in radius, so the drawing is inset by 3 on every
+  // side or it clips against the viewBox at both ends of the series.
   const PAD = 3
   const min = Math.min(...pts.map((p) => p.v))
   const max = Math.max(...pts.map((p) => p.v))
@@ -113,18 +150,21 @@ export function Spark({ series, color, height = 28 }: {
   const last = pts[pts.length - 1]
 
   return (
-    <svg
-      viewBox={`0 0 ${W} ${H}`}
-      preserveAspectRatio="xMidYMid meet"
-      className="w-full"
-      style={{ height }}
-      aria-hidden="true"
-    >
-      <path d={d.trim()} fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round"
-        strokeLinejoin="round" opacity="0.9" vectorEffect="non-scaling-stroke" />
-      <circle cx={x(last.i)} cy={y(last.v)} r="2" fill={color}
-        style={{ filter: `drop-shadow(0 0 3px ${color})` }} />
-    </svg>
+    <span ref={box} className="block w-full" style={{ height }} aria-hidden="true">
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        // The viewBox IS the pixel box, so there is no aspect to preserve and
+        // nothing to letterbox. `none` states that rather than relying on the
+        // two ratios happening to agree.
+        preserveAspectRatio="none"
+        className="block w-full h-full"
+      >
+        <path d={d.trim()} fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round"
+          strokeLinejoin="round" opacity="0.9" vectorEffect="non-scaling-stroke" />
+        <circle cx={x(last.i)} cy={y(last.v)} r="2" fill={color}
+          style={{ filter: `drop-shadow(0 0 3px ${color})` }} />
+      </svg>
+    </span>
   )
 }
 
@@ -404,7 +444,7 @@ export function StatTile({ label, value, unit, color, delta, higherIsBetter, ser
  * as a colour: the reading the user wants is "how many bars cross the line", and
  * a line is the only mark that lets them count it without a legend.
  */
-export function MiniBars({ series, color, goal, height = 30, dim = 'rgba(255,255,255,0.14)', colors, marks }: {
+export function MiniBars({ series, color, goal, height = 30, dim = 'rgba(255,255,255,0.14)', colors }: {
   series: Array<number | null>
   color: string
   /** Draws the target hairline and decides which bars are lit. Absent = all lit. */
@@ -419,11 +459,20 @@ export function MiniBars({ series, color, goal, height = 30, dim = 'rgba(255,255
    * different facts.
    */
   colors?: Array<string | null | undefined>
-  /**
-   * Bars to flag — a record was set that day. Drawn as a notch above the bar
-   * rather than as a colour, since the colour is already spoken for.
+  /*
+   * ── THERE IS NO `marks` ANY MORE ──────────────────────────────────────────
+   * It took a parallel boolean array and drew a 3px gold dot per flagged bar,
+   * pinned to the TOP of the container rather than to the bar's own head. On a
+   * 34px medium chart that put a row of gold dots along the ceiling, unattached
+   * to anything — they read as a rendering fault, not as "a record was set on
+   * this session", which is what they meant.
+   *
+   * Anchoring them to each bar's head was the obvious repair and is the wrong
+   * one: bar heights are tonnage, so the dots would then trace a second copy of
+   * the line they sit on, and on a 34px chart a 3px dot on a 6px bar covers
+   * half of it. The fact is already stated where it is legible — the trophy
+   * beside the chart's own caption, and the gold Records tile above it.
    */
-  marks?: boolean[]
 }) {
   const vals = series.filter((v): v is number => v != null && Number.isFinite(v))
   if (!vals.length) return <div style={{ height }} aria-hidden="true" />
@@ -448,15 +497,6 @@ export function MiniBars({ series, color, goal, height = 30, dim = 'rgba(255,255
           }}
         />
       ))}
-      {marks?.some(Boolean) && (
-        <span className="absolute inset-0 flex items-start gap-[1.5px] pointer-events-none">
-          {marks.map((m, i) => (
-            <span key={i} className="flex-1 min-w-0 flex justify-center">
-              {m && <span className="block rounded-full" style={{ width: 3, height: 3, background: GOLD }} />}
-            </span>
-          ))}
-        </span>
-      )}
       {goalPct != null && (
         <span
           className="absolute inset-x-0 h-px pointer-events-none"

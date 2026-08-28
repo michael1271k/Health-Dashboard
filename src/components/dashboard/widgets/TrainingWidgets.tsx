@@ -298,7 +298,7 @@ export function VolumeWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () =
               </span>
             </span>
             <span className="block mt-1">
-              <MiniBars series={recent.values} color={STEEL} colors={recent.colors} marks={recent.prs}
+              <MiniBars series={recent.values} color={STEEL} colors={recent.colors}
                 height={size === 'l' ? 96 : 34} />
             </span>
           </span>
@@ -572,7 +572,24 @@ export function TrainWidget({ size, onOpen, day, logged, today }: {
           )
         ) : logged && today ? (
           <>
-            {stats(today, EMERALD)}
+            {/* ── MEDIUM USED TO END IN A BAND OF NOTHING ──
+                Title, then five stat tiles, then ~60px of empty tile — the
+                body is a flex column and the only fixed-height child was the
+                grid, so every pixel of slack piled up under it.
+
+                Two changes, and both are information rather than padding. The
+                session's duration takes the line under the title (it is the one
+                figure the grid has no room for, and the tile is describing a
+                workout that is over, so it exists). And the grid is anchored to
+                the BOTTOM: the remaining slack becomes the gap between the
+                identity and the numbers, which is the shape every other tile on
+                the grid already has, instead of a hole beneath them. */}
+            {size !== 's' && today.durationMin != null && (
+              <span className="text-[8px] font-bold uppercase tracking-[0.12em] text-muted">
+                {today.durationMin} min under the bar
+              </span>
+            )}
+            <span className={size === 'm' ? 'block mt-auto' : 'block'}>{stats(today, EMERALD)}</span>
             {/* Large lists what was actually done. `topKg` is the heaviest
                 working load on the lift, which is the figure you compare against
                 next week — not the volume, which mixes load and reps. */}

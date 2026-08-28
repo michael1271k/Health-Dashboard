@@ -116,7 +116,16 @@ export const WIDGET_IDS: readonly WidgetId[] = [
  * S → M → S and the size that has no body is simply unreachable.
  */
 export const WIDGET_SIZES: Record<WidgetId, readonly WidgetSize[]> = {
-  recovery: ['s', 'm', 'l'],
+  /**
+   * ── NO SMALL ────────────────────────────────────────────────────────────
+   * The body is `ReadinessOrb` — a breathing pulse with an ECG trace, drawn at
+   * whatever height the tile gives it. At small that is about 70px, which
+   * reduces the orb to a smudge with a number in it and leaves the four drivers
+   * (which only appear at large) unreachable from either of the other faces.
+   * The score is the dashboard's headline reading; a face that cannot draw it
+   * legibly is not a smaller version of it.
+   */
+  recovery: ['m', 'l'],
   sleep: ['s', 'm', 'l'],
   vitals: ['s', 'm', 'l'],
   fuel: ['s', 'm', 'l'],

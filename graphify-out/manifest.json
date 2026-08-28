@@ -235,8 +235,8 @@
     "semantic_hash": ""
   },
   "src/app/day/[date]/page.tsx": {
-    "mtime": 1787904869.57094,
-    "ast_hash": "1be47a2882406084045e73a5577a196a",
+    "mtime": 1787924578.5671377,
+    "ast_hash": "a71a05963eca5ec13a3a5f9228345466",
     "semantic_hash": ""
   },
   "src/app/global-error.tsx": {
@@ -434,11 +434,6 @@
     "ast_hash": "815373fa88484df705593defef999b1e",
     "semantic_hash": ""
   },
-  "src/components/day/WaterHelix.tsx": {
-    "mtime": 1786698213.9151893,
-    "ast_hash": "111ce5a2187ede8bb575f015149e1ef5",
-    "semantic_hash": ""
-  },
   "src/components/era/EraFilterPills.tsx": {
     "mtime": 1786289116.191956,
     "ast_hash": "6f01031cfe37667c281f3d939c94aa76",
@@ -595,8 +590,8 @@
     "semantic_hash": "334b76641958d8a98b4a6812211f6352"
   },
   "src/components/timeline/ContinuumTimeline.tsx": {
-    "mtime": 1787859707.5912344,
-    "ast_hash": "951aa54818696694af9dc4e97f40cfb2",
+    "mtime": 1787924024.6482422,
+    "ast_hash": "5db815a51dca6473aca594ec9cdfc346",
     "semantic_hash": ""
   },
   "src/components/ui/PullToRefresh.tsx": {
@@ -1010,8 +1005,8 @@
     "semantic_hash": "367bffd435e0e80a0645aab7f1a642f3"
   },
   "src/lib/utils/day.ts": {
-    "mtime": 1787923636.3179576,
-    "ast_hash": "6d5881607d2d5571583ca103624b2e48",
+    "mtime": 1787924446.1337688,
+    "ast_hash": "9d46a0aeeaf9f5bf404896dcb3facfad",
     "semantic_hash": ""
   },
   "src/lib/utils/doubleTap.ts": {
@@ -1950,8 +1945,8 @@
     "semantic_hash": ""
   },
   "src/components/schedule/WeekScheduler.tsx": {
-    "mtime": 1787394619.3981302,
-    "ast_hash": "97c6115eb5ae9caa090179c562af7fc7",
+    "mtime": 1787924091.839878,
+    "ast_hash": "c98c6e4263c35ca28a44a85a1728cddb",
     "semantic_hash": ""
   },
   "src/tests/program-layout.test.ts": {
@@ -2480,7 +2475,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/set-rows.html": {
-    "mtime": 1787923696.864095,
+    "mtime": 1787924103.7460678,
     "ast_hash": "4337ad6af8491d18f2242f7a5d77be6f",
     "semantic_hash": ""
   },
@@ -2510,7 +2505,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-ledger.html": {
-    "mtime": 1787923694.0877447,
+    "mtime": 1787924103.016661,
     "ast_hash": "3ddb93aca7b5901708c403bfb41afc10",
     "semantic_hash": ""
   },
@@ -2545,7 +2540,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/live-header.html": {
-    "mtime": 1787923694.155331,
+    "mtime": 1787924101.6314464,
     "ast_hash": "1922065e3007c80d486fcfb5d6f4ea9c",
     "semantic_hash": ""
   },
@@ -2615,7 +2610,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-summary-header.html": {
-    "mtime": 1787923695.4748576,
+    "mtime": 1787924103.0322359,
     "ast_hash": "b3d75865c62fb30c5cc668930a4b7642",
     "semantic_hash": ""
   },
@@ -2690,13 +2685,13 @@
     "semantic_hash": ""
   },
   "src/lib/dashboard/layout.ts": {
-    "mtime": 1787904912.605397,
-    "ast_hash": "44538c04a629c68f14f11573546d94b9",
+    "mtime": 1787924293.6501806,
+    "ast_hash": "aac8a3751a3bd8da5183f14b1e265720",
     "semantic_hash": ""
   },
   "src/components/dashboard/WidgetGrid.tsx": {
-    "mtime": 1787854322.5550382,
-    "ast_hash": "b0b2d3f38b688f312fc99e8d4fd37240",
+    "mtime": 1787924189.5226135,
+    "ast_hash": "fab1e1633040ac78b65f71eb849fb29f",
     "semantic_hash": ""
   },
   "src/tests/dashboard-layout.test.ts": {
@@ -2720,8 +2715,8 @@
     "semantic_hash": ""
   },
   "src/components/dashboard/widgets/parts.tsx": {
-    "mtime": 1787901684.4826744,
-    "ast_hash": "545cd5bf6868a648bceb98153f216029",
+    "mtime": 1787924403.0202317,
+    "ast_hash": "b6fda3bbd70c50e2c3c0fe3b96285e52",
     "semantic_hash": ""
   },
   "src/components/dashboard/widgets/VitalsWidget.tsx": {
@@ -2730,18 +2725,18 @@
     "semantic_hash": ""
   },
   "src/components/dashboard/widgets/FuelWidget.tsx": {
-    "mtime": 1787901804.347989,
-    "ast_hash": "ee540817803ec510262c9a0c3714608e",
+    "mtime": 1787924277.846741,
+    "ast_hash": "96d35ce8e5a0a82d58843e2651b5f4fb",
     "semantic_hash": ""
   },
   "src/components/dashboard/widgets/BodyWidget.tsx": {
-    "mtime": 1787901732.135202,
-    "ast_hash": "59077e172b1007112bdbfd55a0611cb6",
+    "mtime": 1787924471.0153527,
+    "ast_hash": "468366c3a95c5f04aa1d10f482404107",
     "semantic_hash": ""
   },
   "src/components/dashboard/widgets/TrainingWidgets.tsx": {
-    "mtime": 1787901684.482947,
-    "ast_hash": "50e1744438ebe8a1f41fc8175263714f",
+    "mtime": 1787924434.0373852,
+    "ast_hash": "e3f0ebc7c91f287137285d5466c6b007",
     "semantic_hash": ""
   },
   "src/lib/hooks/useLatestPr.ts": {
@@ -2997,6 +2992,16 @@
   "src/tests/prev-align.test.ts": {
     "mtime": 1787923963.381972,
     "ast_hash": "c6dd5309535b01f253eec8d4cf8852cd",
+    "semantic_hash": ""
+  },
+  "src/components/day/WaterArcPanel.tsx": {
+    "mtime": 1787924602.8528533,
+    "ast_hash": "13c35733e959425720b234e1b003a935",
+    "semantic_hash": ""
+  },
+  "src/components/dashboard/CardioSheet.tsx": {
+    "mtime": 1787924668.641953,
+    "ast_hash": "848314afc925b56438b93aa49303b4be",
     "semantic_hash": ""
   }
 }

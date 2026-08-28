@@ -262,11 +262,22 @@ export function MicrosWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () =
       {!known.length ? (
         <WidgetEmpty accent={EMERALD} size={size} message="No micronutrients logged today" hint="Food and the stack both count" />
       ) : size === 's' ? (
-        <span className="flex-1 min-h-0 flex flex-col justify-between gap-1">
-          <span className="flex items-baseline gap-1">
-            <Hero value={cleared} unit={`of ${known.length}`} color={cleared === known.length ? EMERALD : OXIDE} tight />
-          </span>
-          <span className="grid grid-cols-3 gap-1">{rows.ranked.slice(0, 3).map(cell)}</span>
+        /* ── SMALL IS FOUR NUTRIENTS, NOT A SCORE AND THREE ─────────────────
+           It led with `12 of 18` at hero size and then squeezed three micros
+           into a 3-column grid under it, in ~70px. Two things were wrong.
+
+           "12 of 18" is not a reading. It counts how many of an arbitrary
+           twenty-nutrient table happened to be both measured and met today, so
+           it moves when your logging changes rather than when your diet does —
+           and there is no action attached to it at any value.
+
+           And it was taking the room the actual nutrients needed. Three cells
+           across a small tile leaves roughly 50px per label, which is where
+           "Vitamin C" and "Magnesium" started clipping. Dropping the score buys
+           a 2×2 of the four furthest off target, at the size the medium face
+           uses, with labels that fit. */
+        <span className="flex-1 min-h-0 grid grid-cols-2 grid-rows-2 gap-x-2 gap-y-1 content-center">
+          {rows.ranked.slice(0, 4).map(cell)}
         </span>
       ) : (
         <span className="flex-1 min-h-0 flex flex-col gap-1.5">

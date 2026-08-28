@@ -11,36 +11,57 @@ afterEach(cleanup)
 /**
  * ── THE CROOKED CHART, PINNED ────────────────────────────────────────────────
  *
- * The old sparkline drew into `viewBox="0 0 80 32"` with
- * `preserveAspectRatio="none"`, which tells the browser to stretch the drawing
- * to whatever box it lands in. A 1×1 tile and a 2×2 tile have different aspect
- * ratios, so the SAME series came out at two different slants — a 4% rise
- * exaggerated in one and flattened in the other. `vectorEffect` kept the STROKE
- * even, which is exactly why it read as "distorted" rather than as broken.
+ * The sparkline has been wrong twice, in opposite directions.
  *
- * jsdom computes no layout, so this cannot measure the rendered angle. What it
- * CAN do is pin the two attributes that decide whether an angle is preserved at
- * all, and the path geometry that follows from them — which is the whole of the
- * bug and is invisible in a screenshot until you compare two sizes side by side.
+ * First it drew into a fixed `viewBox` with `preserveAspectRatio="none"`, which
+ * stretches the drawing to whatever box it lands in: a 1×1 tile and a 2×2 tile
+ * have different aspect ratios, so the SAME series came out at two different
+ * slants. `vectorEffect` kept the stroke even, which is why it read as
+ * "distorted" rather than as obviously broken.
+ *
+ * The fix for that was `xMidYMid meet`, which preserves the angle by
+ * LETTERBOXING — and a 100×32 viewBox inside an 80×11 stat tile then drew 34px
+ * of line adrift in the middle of an 80px box. That is the second report:
+ * "the graphs are crooked and uncentered within their bounding boxes".
+ *
+ * The answer to both is to stop reconciling two coordinate systems and only
+ * have one: the viewBox IS the measured pixel box, so nothing is stretched and
+ * nothing is letterboxed. jsdom computes no layout, so the width falls back to
+ * the nominal 100 — which is exactly the case these assertions can pin.
  */
 describe('Spark — a line whose meaning is its angle', () => {
   const svg = () => document.querySelector('svg')!
 
-  it('never stretches: the aspect ratio is preserved, not discarded', () => {
-    render(<Spark series={[1, 2, 3, 4]} color="#fff" />)
-    expect(svg().getAttribute('preserveAspectRatio')).toBe('xMidYMid meet')
-    expect(svg().getAttribute('preserveAspectRatio')).not.toBe('none')
+  it('draws into the pixel box, so there is no aspect to stretch or letterbox', () => {
+    render(<Spark series={[1, 2, 3, 4]} color="#fff" height={20} />)
+    // Height is the viewBox height, not just a CSS box: the two agree, so the
+    // ratio the browser would have to correct for is 1:1.
+    expect(svg().getAttribute('viewBox')).toBe('0 0 100 20')
+    expect(svg().getAttribute('preserveAspectRatio')).toBe('none')
   })
 
-  it('draws the same geometry whatever height it is given', () => {
-    // Height is a CSS property here, not a viewBox change — so the path is
-    // identical and the browser scales it uniformly. Under the old component
-    // the box changed shape and the path with it.
+  it('fills the width of its box rather than floating in the middle of it', () => {
+    render(<Spark series={[10, 12, 11, 15]} color="#fff" height={12} />)
+    const d = document.querySelector('path')!.getAttribute('d') ?? ''
+    const xs = [...d.matchAll(/[ML]([\d.]+) /g)].map((m) => Number(m[1]))
+    // 3px of inset either side — the head's dot is 2px in radius and would
+    // otherwise clip — and nothing beyond that. A letterboxed line would start
+    // and end well inside these.
+    expect(xs[0]).toBe(3)
+    expect(xs[xs.length - 1]).toBe(97)
+  })
+
+  it('scales its geometry with the height it is given', () => {
+    // The viewBox height IS the pixel height now, so a taller Spark draws a
+    // taller path rather than a stretched copy of a short one. Under the
+    // letterboxed version the path was identical and the box did the work,
+    // which is what left the drawing adrift inside it.
     const { unmount } = render(<Spark series={[10, 12, 11, 15]} color="#fff" height={12} />)
     const small = document.querySelector('path')!.getAttribute('d')
     unmount()
     render(<Spark series={[10, 12, 11, 15]} color="#fff" height={34} />)
-    expect(document.querySelector('path')!.getAttribute('d')).toBe(small)
+    expect(document.querySelector('path')!.getAttribute('d')).not.toBe(small)
+    expect(svg().getAttribute('viewBox')).toBe('0 0 100 34')
   })
 
   /**
@@ -186,21 +207,37 @@ describe('the size contract', () => {
   })
 
   /**
-   * Every widget declares the sizes it has a BODY for, and three of them have
-   * no large on purpose — a large that is a stretched medium teaches the reader
+   * Every widget declares the sizes it has a BODY for, and several have no
+   * large on purpose — a large that is a stretched medium teaches the reader
    * that growing a tile buys nothing, and after that they stop trying.
    *
-   * The rule that has to hold is that a declared size is a real size, in the
-   * canonical order, and that small always exists: every tile must be able to
-   * shrink to a quarter, or a phone dashboard is fifteen half-width tiles.
+   * Small used to be required of everything, on the argument that a phone
+   * dashboard of fifteen half-width tiles is unusable. That still holds as a
+   * default and it is not absolute: `recovery` is `ReadinessOrb`, a breathing
+   * pulse with an ECG trace drawn at the tile's own height, and at ~70px it is
+   * a smudge with a number in it. A face that cannot draw its reading legibly
+   * is not a smaller version of it.
+   *
+   * So the exception is declared HERE, by name, rather than the rule being
+   * dropped: a widget that quietly loses its small is a bug, and a widget that
+   * loses it on purpose is a line in this list.
    */
-  it('every widget declares a real, ordered set of sizes including small', () => {
+  const NO_SMALL = new Set(['recovery'])
+
+  it('every widget declares a real, ordered set of sizes', () => {
     for (const id of WIDGET_IDS) {
       const sizes = WIDGET_SIZES[id]
       expect(sizes.length, id).toBeGreaterThan(0)
-      expect(sizes, id).toContain('s')
+      if (!NO_SMALL.has(id)) expect(sizes, id).toContain('s')
       expect([...sizes], id).toEqual(['s', 'm', 'l'].filter((v) => sizes.includes(v as never)))
       for (const v of sizes) expect(SIZE_SPAN[v], id).toBeTruthy()
+    }
+  })
+
+  it('a widget without a small still has somewhere to go', () => {
+    for (const id of NO_SMALL) {
+      const sizes = WIDGET_SIZES[id as (typeof WIDGET_IDS)[number]]
+      expect(sizes.length, id).toBeGreaterThan(1)
     }
   })
 

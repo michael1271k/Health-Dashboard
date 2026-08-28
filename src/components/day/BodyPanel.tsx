@@ -7,6 +7,7 @@ import { hasScaleMetrics } from '@/components/day/InBody'
 import { useSaveBodyMetrics, type DayVaultData } from '@/lib/hooks/useDayVault'
 import { WEIGH_IN_SKIP_REASONS, DEFAULT_WEIGH_IN_SKIP_REASON, weighInSkipReason } from '@/lib/body/weighIn'
 import { EMBER } from '@/lib/theme/palette'
+import { relativeDayLabel } from '@/lib/utils/day'
 
 // Was `const ACCENT = '#E0703C'` — a name that lied about its value in two
 // separate files. The Body domain's accent is the signature ember.
@@ -152,6 +153,16 @@ export function BodyPanel({ date, log, onEdit }: {
       <section className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-3" style={{ borderColor: `${ACCENT}26` }}>
         {has ? (
           <>
+            {/* ── WHEN IT WAS RECORDED ──
+                This panel is now the body sheet on the dashboard as well as in
+                the Nexus, and the dashboard opens it on TODAY — a composition
+                shown with no date there is indistinguishable from one measured
+                this morning. `relativeDayLabel` says "Today", "Yesterday" or
+                "25 Aug", which is the shortest form still unambiguous a week
+                later. */}
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted">
+              Recorded · {relativeDayLabel(date)}
+            </p>
             <CompositionLedger log={log} date={date} />
             <button
               type="button"

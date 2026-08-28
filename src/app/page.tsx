@@ -30,11 +30,11 @@ import { WeekSoFarCard } from '@/components/dashboard/WeekSoFarCard'
 import { WeeklySummaryCard } from '@/components/dashboard/WeeklySummaryCard'
 import { WidgetBoundary } from '@/components/fx/WidgetBoundary'
 import { DeferredMount } from '@/components/fx/DeferredMount'
-import { displayWeight, weightUnit } from '@/lib/utils/units'
+import { displayWeight } from '@/lib/utils/units'
 import { phaseDisplay } from '@/lib/nutrition/phase'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { tdeeKcal } from '@/lib/nutrition/energy'
-import { BODY, visceralColor, EMBER, SAPPHIRE, EMERALD, GOLD, AMETHYST, PLATINUM, OXIDE, MUTED, STEEL } from '@/lib/theme/palette'
+import { BODY, EMBER, SAPPHIRE, EMERALD, GOLD, AMETHYST, PLATINUM } from '@/lib/theme/palette'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { useSingleOrDoubleTap } from '@/lib/utils/doubleTap'
 import { scheduleDayFor, eraForDate, isTrainingDay, type ScheduleDay } from '@/lib/programs'
@@ -42,8 +42,7 @@ import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { useSupplements } from '@/lib/hooks/useSupplements'
 import { stackForDate } from '@/lib/supplements'
 import { useCustomSupplements, customSlotsForDate } from '@/lib/hooks/useCustomSupplements'
-import { useBioSeries, useLastWeighIn, useLatestBodyMetrics, useBodyMetricRows, bodyMetricSeries, type BodyMetricField } from '@/lib/hooks/useBioStrips'
-import { LineChart } from '@/components/dashboard/widgets/parts'
+import { useBioSeries } from '@/lib/hooks/useBioStrips'
 import { SleepStages } from '@/components/dashboard/SleepStages'
 
 // Modal-only bodies (522 lines between them) that were in the dashboard's
@@ -86,6 +85,9 @@ function SheetSkeleton() {
   )
 }
 import { StepsJourney } from '@/components/dashboard/StepsJourney'
+import { BodyPanel } from '@/components/day/BodyPanel'
+import type { DayVaultData } from '@/lib/hooks/useDayVault'
+import { CardioSheet } from '@/components/dashboard/CardioSheet'
 import { ProgressionAlerts } from '@/components/command-center/ProgressionAlerts'
 import { useDailyLogs } from '@/lib/hooks/useNutrition'
 import {
@@ -118,45 +120,25 @@ const TrendStrip = dynamic(
  *  render and would defeat the Stack widget's memo for no benefit. */
 const EMPTY_TAKEN: ReadonlySet<string> = new Set<string>()
 
-const n0 = (v: number | null | undefined) => (v == null ? null : Math.round(v))
-const n1 = (v: number | null | undefined) => (v == null ? null : Math.round(v * 10) / 10)
-
 type SheetKey = 'readiness' | 'sleep' | 'fuel' | 'train' | 'body' | 'steps' | 'stack' | 'vitals'
-  | 'deficit' | 'consistency' | null
+  | 'deficit' | 'consistency' | 'cardio' | null
 
 /** One accent per sheet — the glass picks up its own domain colour. */
 const SHEET_ACCENT: Record<Exclude<SheetKey, null>, string> = {
   readiness: EMBER, sleep: AMETHYST, fuel: MACRO_COLORS.calories, train: EMERALD,
   body: BODY.weight, steps: PLATINUM, stack: GOLD, vitals: SAPPHIRE,
-  deficit: MACRO_COLORS.calories, consistency: EMERALD,
+  deficit: MACRO_COLORS.calories, consistency: EMERALD, cardio: EMERALD,
 }
 
-/**
- * Body-sheet tiles, in display order. `unit: 'kg'` marks a weight to convert.
- * `synced` marks the four metrics Apple Health actually exports on a weigh-in
- * (Weight, BMI, Body-Fat %, Fat-Free Mass) — the dashboard popup shows ONLY those, so
- * a fresh weigh-in never sits next to stale BMR/visceral/muscle%/water% rows that
- * only refresh on a manual InBody entry. The manual metrics live in the Nexus.
+/*
+ * ── `BODY_TILES` IS GONE ─────────────────────────────────────────────────────
+ * Ten hand-declared tiles, each with its own 30-day `LineChart`, made up the
+ * old body sheet — roughly 900px of drawer that existed nowhere else in the
+ * app. The sheet is `BodyPanel` now, the same one the Nexus opens, so the
+ * composition ledger and its healthy bands have exactly one implementation.
+ * The per-metric charts were the one thing this had that the panel does not,
+ * and they are two taps away on each metric's own page.
  */
-const BODY_TILES: Array<{
-  field: BodyMetricField; label: string; unit?: string; decimals?: 0 | 1; accent?: string; synced?: boolean
-}> = [
-  // Every tile carries its substance's colour. Nine of these ten had NO accent
-  // at all — a grid of identical grey numbers where the chart two taps away
-  // colour-codes the same quantities. Same hues here as there, so a reading
-  // means the same thing wherever you meet it.
-  { field: 'weight_kg', label: 'Weight', unit: 'kg', decimals: 1, accent: BODY.weight, synced: true },
-  { field: 'bmi', label: 'BMI', decimals: 1, accent: BODY.bmi, synced: true },
-  { field: 'fat_free_mass_kg', label: 'Fat-Free Mass', unit: 'kg', decimals: 1, accent: BODY.lean, synced: true },
-  { field: 'body_fat_pct', label: 'Body Fat', unit: '%', decimals: 1, accent: BODY.fat, synced: true },
-  { field: 'muscle_mass_kg', label: 'Muscle Mass', unit: 'kg', decimals: 1, accent: BODY.muscle },
-  { field: 'muscle_percent', label: 'Muscle', unit: '%', decimals: 1, accent: BODY.muscle },
-  { field: 'water_percent', label: 'Water', unit: '%', decimals: 1, accent: BODY.water },
-  // Visceral fat is graded, not identified — see visceralColor().
-  { field: 'visceral_fat', label: 'Visceral Fat', decimals: 1 },
-  { field: 'bone_mineral', label: 'Bone Mineral', decimals: 1, accent: BODY.mineral },
-  { field: 'bmr', label: 'BMR', unit: 'kcal', decimals: 0, accent: BODY.bmr },
-]
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -189,10 +171,6 @@ export default function DashboardPage() {
   const { data: taken } = useSupplements()
   const { data: customSupps } = useCustomSupplements()
   const { data: bioSeries } = useBioSeries()
-  const { data: weighIn } = useLastWeighIn()
-  const { data: bodyMetrics } = useLatestBodyMetrics()
-  // The same 30-day window, kept whole, so each body tile can draw its trend.
-  const { data: bodyRows } = useBodyMetricRows(30)
   // FIFTEEN, not eight: the Fuel tile's large size draws a fortnight of
   // intake against target, and a fourteen-day chart cannot be built from an
   // eight-day window. One row is the current day, so the window is n+1.
@@ -317,7 +295,6 @@ export default function DashboardPage() {
     return () => clearInterval(id)
   }, [])
 
-  const unit = weightUnit()
   // Already-logged-today: hide the "+ Log session" CTA once a workout exists.
   const loggedToday = sessions?.some((s) => s.started_at.slice(0, 10) === logicalTodayISO()) ?? false
 
@@ -353,45 +330,13 @@ export default function DashboardPage() {
     const asc = [...(fuelLogs ?? [])].sort((a, b) => a.date.localeCompare(b.date))
     return asc.map((d) => d.calories)
   }, [fuelLogs])
-  /**
-   * Week-on-week weight drift — and it really is a WEEK on a week.
-   *
-   * It used to halve whatever `useBioSeries` happened to return and diff the two
-   * halves, under a label that says "(7-day avg)". At a 21-day window that was
-   * already a 10-day mean against an 11-day one; at 30 it would be 15 against
-   * 15, which on a cut is half a phase, not a week. A trend line is only a rate
-   * if you know what it is per, so the window is stated here rather than
-   * inherited from whatever the query was widened to.
-   *
-   * The two halves are taken from the last FOURTEEN days by date, not the last
-   * fourteen readings — days without a weigh-in are gaps, and compacting them
-   * away would silently reach further back the more days you skipped.
+  /*
+   * `weightWoW` and `lastWeigh` lived here to feed the old body sheet's header
+   * line — a week-over-week delta and a "Weighed 3d ago" recency chip. Both
+   * facts survive inside `BodyPanel`, which states the date the reading was
+   * actually recorded, so the two queries behind them (`useLastWeighIn`,
+   * `useLatestBodyMetrics`) are no longer fetched on every dashboard load.
    */
-  const weightWoW = useMemo(() => {
-    const days = (bioSeries ?? []).slice(-14)
-    const older = days.slice(0, 7).map((d) => d.weightKg).filter((v): v is number => v != null)
-    const recent = days.slice(7).map((d) => d.weightKg).filter((v): v is number => v != null)
-    if (!older.length || !recent.length) return null
-    return Math.round((avg(recent) - avg(older)) * 100) / 100
-  }, [bioSeries])
-  // Last weigh-in. Sourced from the body_composition ledger (a row exists only
-  // when a weight was actually entered) and de-duplicated by VALUE, so a
-  // re-synced or carried-forward reading can't reset the clock to "today" — the
-  // old label read `daily_logs` and said "Weighed yesterday" two days after the
-  // real weigh-in. It still CARRIES FORWARD for display: at 00:00 today's row is
-  // empty, so the Body tile shows the last real reading rather than `— — —`.
-  const lastWeigh = useMemo(() => {
-    if (!weighIn) return null
-    const { delta, ageDays } = weighIn
-    return {
-      kg: weighIn.kg,
-      delta,
-      // Green when the scale dropped, red when it rose (recomp direction).
-      deltaColor: delta < -0.005 ? EMERALD : delta > 0.005 ? OXIDE : null,
-      recencyColor: ageDays <= 0 ? EMERALD : ageDays <= 3 ? GOLD : MUTED,
-      label: ageDays <= 0 ? 'Weighed today' : ageDays === 1 ? 'Weighed yesterday' : `Weighed ${ageDays}d ago`,
-    }
-  }, [weighIn])
 
 
   /**
@@ -513,11 +458,15 @@ export default function DashboardPage() {
           tdee={tdeeToday} activeKcal={log?.active_energy ?? null}
           series={(bioSeries ?? []).map((d) => d.steps)} />
 
-      // Cardio has no sheet of its own: logging one belongs on the day it
-      // happened, beside the walk's own entry form. The widget's own repeat
-      // button is the shortcut; the tile still routes there.
+      // ── CARDIO ANSWERS ITSELF NOW ──
+      // It used to NAVIGATE to `/day/<today>`, on the reasoning that logging a
+      // walk belongs on the day it happened. True of logging, and the wrong
+      // price for LOOKING: every other tile on this grid opens a sheet in
+      // place, so cardio was the only one that charged a page transition and a
+      // scroll to answer "what was my pace". The sheet states the reading and
+      // still routes to the day for the form. See `CardioSheet`.
       case 'cardio':
-        return <CardioWidget size={size} onOpen={goToday} />
+        return <CardioWidget size={size} onOpen={onOpen('cardio')} />
 
       case 'fatigue':
         // Straight to the day page's Recovery band, where the tracker lives —
@@ -537,9 +486,15 @@ export default function DashboardPage() {
   ])
 
   const sheetTitle: Record<Exclude<SheetKey, null>, string> = {
-    readiness: 'Readiness', sleep: 'Sleep & Recovery', fuel: 'Fuel', train: 'Training',
+    // "Workout", not "Training" — `WIDGET_META.train` has said Workout since the
+    // catalogue was written, so the tile you tapped and the sheet it opened
+    // disagreed about the name of the same thing.
+    readiness: 'Readiness', sleep: 'Sleep & Recovery', fuel: 'Fuel', train: 'Workout',
     body: 'Body Composition', steps: 'Activity', stack: 'Supplement Protocol',
     vitals: 'Vitals', deficit: 'Deficit Ledger', consistency: 'Consistency',
+    // Cardio draws its own Sheet (`CardioSheet`) rather than living in the
+    // shared drawer, so this entry only exists to keep the record total.
+    cardio: 'Cardio',
   }
 
   return (
@@ -621,7 +576,9 @@ export default function DashboardPage() {
           full supplement stack, and a sheet that hugs its content is the
           better default at both ends. */}
       <Sheet
-        open={!!open}
+        // Not `!!open`: `cardio` draws its own Sheet below, and two Sheets open
+        // on one key is an empty drawer behind a full one.
+        open={!!open && open !== 'cardio'}
         onClose={() => setOpen(null)}
         title={open ? sheetTitle[open] : undefined}
         accent={open ? SHEET_ACCENT[open] : undefined}
@@ -690,75 +647,45 @@ export default function DashboardPage() {
             onLog={(dayKey) => { setOpen(null); router.push(`/session?template=${dayKey}`) }}
           />
         )}
-        {/* ── AND WHAT YOU ARE WALKING INTO ──────────────────────────────────
-            The loads to beat for that session, from the Targets tile itself
-            rather than a second computation of the same baselines. `prEngine`'s
-            `buildBaselines` is what the live logger judges every set against,
-            and a sheet that re-derived "the number to beat" would eventually
-            promise a record the logger then refused. */}
-        {open === 'train' && <BarToBeatWidget size="l" />}
+        {/* ── THE SECOND "BAR TO BEAT" IS GONE ───────────────────────────────
+            A whole `BarToBeatWidget` was mounted inside this sheet — chrome,
+            header, accent and all. `bar` is its own tile on the grid AND its
+            tap target opens this same sheet, so the common way to arrive here
+            was: tap Bar to Beat, watch a sheet open, find Bar to Beat inside
+            it. A widget frame nested in the drawer its own tile opened reads as
+            a rendering fault, and it was one.
+
+            The targets have a home already: they are a tile you can place, and
+            the live logger judges every set against the same baselines. This
+            sheet is about the SESSION — today's, or the last run of it. */}
+        {/* ── THE BODY SHEET IS THE NEXUS'S BODY PANEL NOW ───────────────────
+            It used to be its own thing: ten bordered tiles, each with a 44px
+            `LineChart` under it, stacked — roughly 900px of drawer for a
+            question the Nexus answers in a third of the space with the ledger
+            everybody else reads. Two implementations of one domain, and the
+            charts were the reason to keep this one, except the same charts are
+            two taps away on the metric's own page.
+
+            `BodyPanel` is the sheet the Progress/Day view opens, whole: the
+            composition ledger with its healthy bands, and the Edit measurements
+            row. Same component, so the two can no longer drift — and it already
+            carries the "recorded on" date, which this sheet never did.
+
+            Edit routes to the Nexus rather than opening a form here: the
+            drawer's own form (`InBodyForm`) belongs to the day it edits, and a
+            dashboard cannot say which day that is any better than "today". */}
         {open === 'body' && (
-          <div className="space-y-2.5">
-            {lastWeigh && (
-              <div className="flex items-center gap-2 text-fluid-xs">
-                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: lastWeigh.recencyColor }} aria-hidden="true" />
-                <span style={{ color: lastWeigh.recencyColor }} className="font-medium">{lastWeigh.label}</span>
-                {weightWoW != null && (
-                  <span className="text-muted">· {weightWoW > 0 ? '+' : ''}{weightWoW} {unit}/wk (7-day avg)</span>
-                )}
-              </div>
-            )}
-
-            {/* ── EVERY METRIC, EACH WITH ITS OWN TREND ────────────────────────
-                This showed FOUR tiles — the ones Apple Health exports on a
-                weigh-in — and sent you to a manual-entry screen for the other
-                six. The reasoning was that a fresh weigh-in should not sit
-                beside stale BMR and visceral rows, but `useLatestBodyMetrics`
-                had ALREADY solved that: every field carries forward from its own
-                most recent reading and states its own date. So the sheet was
-                hiding data it held, and offering a button instead of an answer.
-
-                Each metric now also carries its 30-day line, from the rows the
-                same query was already fetching and discarding. A body figure
-                without its direction is the number you have to open something
-                else to interpret, which is what this sheet exists to stop. */}
-            {BODY_TILES.map(({ field, label, unit: u, decimals, accent }) => {
-              const m = bodyMetrics?.[field]
-              if (!m) return null
-              const v = u === unit ? displayWeight(m.value) : decimals === 0 ? n0(m.value) : n1(m.value)
-              // Visceral fat has no identity colour — it is graded, because it is
-              // the one body metric where a higher number is worse.
-              const tone = field === 'visceral_fat' ? visceralColor(m.value) : (accent ?? STEEL)
-              const series = bodyMetricSeries(bodyRows, field)
-              const measured = series.filter((d: { value: number | null }) => d.value != null).length
-              return (
-                <div key={field} className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-3 py-2.5">
-                  <div className="flex items-baseline gap-2 min-w-0">
-                    <span className="text-[10px] font-bold uppercase tracking-[0.12em] truncate" style={{ color: tone }}>
-                      {label}
-                    </span>
-                    <span className="ml-auto shrink-0 helix-num font-bold text-fluid-lg tabular-nums leading-none text-text">
-                      {v ?? '—'}
-                      {u && <span className="text-[10px] font-normal text-muted ml-0.5">{u}</span>}
-                    </span>
-                  </div>
-                  {/* Two readings is a line; one is an artefact. A field measured
-                      once in thirty days states its date instead. */}
-                  {measured >= 2 ? (
-                    <div className="mt-1.5">
-                      <LineChart series={series} color={tone} height={44} decimals={decimals === 0 ? 0 : 1} unit={u} />
-                    </div>
-                  ) : (
-                    <div className="mt-1 text-[9px] text-muted">measured {m.date}</div>
-                  )}
-                </div>
-              )
-            })}
-
-            {bodyMetrics && Object.keys(bodyMetrics).length === 0 && (
-              <p className="text-fluid-xs text-muted">No body metrics logged yet — add them under Today.</p>
-            )}
-          </div>
+          <BodyPanel
+            date={logicalTodayISO()}
+            /* `types.ts` drifts (see `reports-table-schema`): `Tables<'daily_logs'>`
+               is missing the derived mass columns that `DayVaultData['log']`
+               declares, while `/api/today` fetches the row with `select('*')` and
+               therefore returns them. The cast states what the runtime already
+               has; `compositionRows` reads every field defensively, so a genuinely
+               absent column is a missing row, never a crash. */
+            log={(log ?? null) as unknown as DayVaultData['log']}
+            onEdit={() => { setOpen(null); router.push(`/day/${logicalTodayISO()}?section=inbody`) }}
+          />
         )}
         {/* Water is gone from here. It is not activity; it sat in this sheet
             because there was a spare cell, and it meant hydration was reported
@@ -787,10 +714,11 @@ export default function DashboardPage() {
       </Sheet>
 
       <WeeklyMuscleSheet open={muscleOpen} onClose={() => setMuscleOpen(false)} />
+
+      {/* Its own Sheet, not a case in the shared drawer: it owns the two cardio
+          queries and would otherwise run them for every tap of every other
+          tile. Same argument as `WeeklyMuscleSheet` directly above. */}
+      <CardioSheet open={open === 'cardio'} onClose={() => setOpen(null)} />
     </div>
   )
-}
-
-function avg(xs: number[]): number {
-  return xs.reduce((a, b) => a + b, 0) / xs.length
 }

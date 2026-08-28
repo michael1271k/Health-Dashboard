@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { ChevronDown, Dumbbell, Plus, Clock, Flame, HeartPulse, Layers, Trophy, Check } from 'lucide-react'
 import type { Tables } from '@/lib/supabase/types'
-import type { ScheduleDay } from '@/lib/programs'
+import { programDayLabel, type ScheduleDay } from '@/lib/programs'
+import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { PPL_SPLITS, type SplitDay } from '@/lib/types/workout'
 import { displayWeight, fmtVolume, weightUnit } from '@/lib/utils/units'
 import { dayColor, EMERALD, EMBER, SAPPHIRE, GOLD, AMETHYST, OXIDE, MUTED, REST, HAIRLINE } from '@/lib/theme/palette'
@@ -34,8 +35,25 @@ function Vital({ icon: Icon, value, unit, color }: {
  * behind a chevron — you had to tap to see that you'd trained at all.
  */
 function CompletedHero({ session, accent }: { session: Session; accent: string }) {
+  // `programDayLabel` resolves through `activeProgram()`, a module cache React
+  // cannot observe: without this the header prints the DEFAULT plan's label for
+  // the day_key until something unrelated re-renders. See `sync-external-stores`.
+  void useScheduleVersion()
   const unit = weightUnit()
-  const split = PPL_SPLITS[session.split_day as SplitDay]
+  /**
+   * ── THE NAME COMES FROM THE day_key, NOT THE SPLIT ─────────────────────────
+   * This read `PPL_SPLITS[session.split_day]`, a five-entry table of the PPL
+   * era's coarse names — upper, legs, push, pull, arms. So a Friday "Legs &
+   * Core B" rendered as "Legs", and the header said "Completed today · Legs"
+   * about a session whose real identity was sitting in `day_key` untouched.
+   *
+   * `programDayLabel` is the app's one resolver for that: it takes the day_key
+   * first and falls back to the split only when there is none (a PPL-era row,
+   * where the coarse name IS the name). Same function the timeline, the
+   * snippet and the deck header use, so the session is called one thing
+   * everywhere.
+   */
+  const title = programDayLabel(session.day_key, session.split_day)
   const volume = session.total_volume_kg != null ? fmtVolume(displayWeight(session.total_volume_kg)) : null
   const prCount = session.pr_count ?? 0
 
@@ -51,7 +69,7 @@ function CompletedHero({ session, accent }: { session: Session; accent: string }
           <div className="min-w-0 flex-1">
             <span className="block text-[10px] uppercase tracking-wide" style={{ color: accent }}>Completed today</span>
             <span className="split-label block font-bold text-fluid-base truncate text-text">
-              {split?.label ?? session.split_day}
+              {title}
             </span>
           </div>
           {prCount > 0 && (
@@ -111,7 +129,11 @@ export function TrainingCard({ today, todaySession, lastSession, loggedToday, on
   // Rest takes REST: it was AMETHYST, which is the Shoulders family now, so a
   // rest day was drawn in the colour of Delts & Arms.
   const accent = isRest ? REST : dayColor(today.dayKey)
+  // Same rule for the "last session" line — it named a split where it meant a
+  // routine. The colour still comes from `PPL_SPLITS` when it has one, because
+  // that table is where the era's hues live.
   const lastSplit = lastSession ? PPL_SPLITS[lastSession.split_day as SplitDay] : null
+  const lastTitle = lastSession ? programDayLabel(lastSession.day_key, lastSession.split_day) : null
 
   // Logged → the completed hero owns the card, no expand needed.
   if (loggedToday && todaySession) {
@@ -156,7 +178,7 @@ export function TrainingCard({ today, todaySession, lastSession, loggedToday, on
           >
             <span className="text-[10px] uppercase tracking-wide text-muted">Last session</span>
             <span className="text-fluid-xs font-semibold truncate" style={{ color: lastSplit?.color ?? MUTED }}>
-              {lastSplit?.label ?? lastSession.split_day}
+              {lastTitle ?? lastSession.split_day}
             </span>
             <span className="ml-auto text-[10px] text-muted shrink-0">
               {new Date(lastSession.started_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}

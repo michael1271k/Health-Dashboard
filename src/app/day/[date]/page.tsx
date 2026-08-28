@@ -12,7 +12,7 @@ import { RestSuggestion } from '@/components/day/RestSuggestion'
 import { DomsTracker } from '@/components/day/RecoveryTrackers'
 import { FatigueTracker } from '@/components/day/FatigueTracker'
 import { CardioLogger } from '@/components/day/CardioLogger'
-import { WaterHelix } from '@/components/day/WaterHelix'
+import { WaterArcPanel } from '@/components/day/WaterArcPanel'
 import { WaterOverrideSheet } from '@/components/day/WaterOverrideSheet'
 import { useDayVault, dayCompleteness } from '@/lib/hooks/useDayVault'
 import { useUserGoals, useDaySleep } from '@/lib/hooks/useDashboard'
@@ -238,8 +238,11 @@ export default function DailyNexusPage() {
         </ZoneRow>
       </Zone>
 
-      {/* ── FUEL & FLUIDS · macros and hydration share one container ── */}
-      <Zone label="Fuel &amp; Fluids" accent={MACRO_COLORS.calories}>
+      {/* ── FUEL · the day's intake, and what it is measured against ──
+          "Fuel & Fluids" was a container named after its two halves, which is
+          how a section ends up sounding like a filing cabinet. The rows say
+          what they are; the band only has to say which domain they belong to. */}
+      <Zone label="Fuel" accent={MACRO_COLORS.calories}>
         <ZoneRow divide={false} className="cursor-pointer" onClick={tapFuel} title="Double-tap to edit macros">
           <div className="flex items-center gap-3">
             <span className="flex items-baseline gap-1 shrink-0">
@@ -266,6 +269,37 @@ export default function DailyNexusPage() {
             ) : <span className="text-[11px] text-muted ml-auto">Double-tap to add</span>}
           </div>
         </ZoneRow>
+        {/* ── WATER SITS WITH THE MACROS, NOT UNDER THE FOOTNOTES ──
+            It was the LAST row of this band, below the energy balance and the
+            day's context — so a page about what you put in your body listed
+            hydration after two pieces of commentary about the food. It is an
+            intake, it has a target, and it belongs beside the four bars that
+            are the same kind of statement.
+
+            The bar's SINGLE tap opens the sheet. Correcting the day is a second
+            step inside it — adding a second gesture here would mean delaying
+            this tap ~300ms to disambiguate, i.e. making the common action
+            slower to reach the rare one. */}
+        <ZoneRow
+          asButton
+          className="flex items-center gap-2 w-full text-left min-h-[36px] active:opacity-70 transition-opacity"
+          onClick={() => setSheet('water')}
+          title="Open hydration"
+        >
+          <span className="text-[10px] text-muted shrink-0">Water</span>
+          <span className="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+            <span className="block h-full rounded-full"
+              style={{
+                width: `${Math.min(100, ((log?.water_ml ?? 0) / (goals?.water_goal_ml ?? 3000)) * 100)}%`,
+                background: ICE, boxShadow: `0 0 8px ${ICE}66`,
+              }} />
+          </span>
+          <span className="helix-num text-[11px] font-bold shrink-0" style={{ color: ICE }}>
+            {((log?.water_ml ?? 0) / 1000).toFixed(1)} / {((goals?.water_goal_ml ?? 3000) / 1000).toFixed(1)} L
+          </span>
+          <ChevronRight className="w-3.5 h-3.5 shrink-0 text-muted" aria-hidden="true" />
+        </ZoneRow>
+
         {/* Energy balance — intake against the day's REAL cost.
             TDEE = BMR + active + TEF. The thermic effect of food used to be
             missing everywhere, which understated the deficit by ~200 kcal every
@@ -317,35 +351,6 @@ export default function DailyNexusPage() {
           <ChevronRight className="w-3.5 h-3.5 text-muted ml-auto shrink-0" aria-hidden="true" />
         </ZoneRow>
 
-        {/* Water — the at-a-glance readout AND the way to the full helix.
-            This bar and WaterHelix print the identical number, so one of them
-            was pure duplication. Making the bar navigate turns the duplication
-            into a route: the glance stays here, the visual stays in the pager,
-            and there is exactly one place to go for more.
-
-            The bar's SINGLE tap keeps opening the sheet. Correcting the day is a
-            double-tap on the helix inside it — adding a second gesture here
-            would mean delaying this tap ~300ms to disambiguate, i.e. making the
-            common action slower to reach the rare one. */}
-        <ZoneRow
-          asButton
-          className="flex items-center gap-2 w-full text-left min-h-[36px] active:opacity-70 transition-opacity"
-          onClick={() => setSheet('water')}
-          title="Open the hydration helix"
-        >
-          <span className="text-[10px] text-muted shrink-0">Water</span>
-          <span className="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-            <span className="block h-full rounded-full"
-              style={{
-                width: `${Math.min(100, ((log?.water_ml ?? 0) / (goals?.water_goal_ml ?? 3000)) * 100)}%`,
-                background: ICE, boxShadow: `0 0 8px ${ICE}66`,
-              }} />
-          </span>
-          <span className="helix-num text-[11px] font-bold shrink-0" style={{ color: ICE }}>
-            {((log?.water_ml ?? 0) / 1000).toFixed(1)} / {((goals?.water_goal_ml ?? 3000) / 1000).toFixed(1)} L
-          </span>
-          <ChevronRight className="w-3.5 h-3.5 shrink-0 text-muted" aria-hidden="true" />
-        </ZoneRow>
       </Zone>
 
       {/* Portalled, so its position in the band stack doesn't matter. */}
@@ -387,23 +392,24 @@ export default function DailyNexusPage() {
         <BodyBand log={log ?? null} onOpen={() => setSheet('body')} />
       </Zone>
 
-      {/* ── RECOVERY · one band, two readings ──
-          Cardio and soreness were two consecutive bands, each 44px tall, each
-          spending its first line on an uppercase label announcing itself. They
-          are two readings of the same question — what state is the body in
-          today — so they are one section, and the rows inside say what they
-          are without a heading each.
+      {/* ── CARDIO HAS ITS OWN BAND AGAIN ──
+          It was folded into Recovery on the argument that cardio and soreness
+          are two readings of the same question. They are not two readings of
+          anything: soreness and fatigue are things you REPORT about a body,
+          and a walk is work you DID and LOG, with a form, a week's Zone-2
+          target and its own records. Sharing a band made the one thing on this
+          page with a primary action look like a third row of self-assessment,
+          and buried its `+` inside a section labelled Recovery.
 
-          Cardio stays ABOVE soreness within it, because it is a thing you LOG
-          and soreness is a thing you REPORT: the logging surface belongs where
-          you scroll to first, and DOMS is a 24–72h retrospective you touch last
-          on the day it applies to. */}
+          Its own Zone also restores its header controls — the Zone-2 pips and
+          the add button — as the band's own, which is what they are. */}
+      <CardioLogger date={date} hkActiveEnergy={log?.active_energy ?? null} />
+
+      {/* ── RECOVERY · the two subjective readings, and only those ──
+          Fatigue above soreness: it is asked four times a day and soreness
+          once, so the row you are most often here to touch is the one you
+          reach first. */}
       <Zone label="Recovery" accent={EMERALD}>
-        <CardioLogger date={date} hkActiveEnergy={log?.active_energy ?? null} bare />
-        {/* Fatigue above soreness: it is asked four times a day and soreness
-            once, so the row you are most often here to touch is the one you
-            reach first. Both are subjective recovery readings, which is why
-            they share the band rather than claiming one each. */}
         <FatigueTracker date={date} />
         <DomsTracker date={date} />
       </Zone>
@@ -431,11 +437,23 @@ export default function DailyNexusPage() {
         <ExceptionDayBanner date={date} stored={dayException} estimated={dayEstimated} />
       </Sheet>
 
+      {/* ── THE DNA SPIRAL IS GONE ──
+          `WaterHelix` drew hydration as a glowing 2D double helix about 200px
+          tall: a beautiful drawing of a molecule that has nothing to do with
+          water, in a sheet whose only job is to state one ratio and let you
+          correct it. It was also the app's ONE bespoke gauge — every other
+          "how much of a daily target" reading in the product is the half arc
+          (`HalfArc`), and a domain drawing its own shape for the same question
+          is how a grid stops reading as one system.
+
+          The arc is the widget's, at sheet scale, so the tile you tapped and
+          the sheet it opened are visibly the same object. */}
       <Sheet open={sheet === 'water'} onClose={() => setSheet(null)} title="Hydration" accent={ICE}>
-        <div className="flex justify-center py-2">
-          <WaterHelix ml={log?.water_ml ?? null} goalMl={goals?.water_goal_ml ?? 3000}
-            onOverride={() => setSheet('water-edit')} />
-        </div>
+        <WaterArcPanel
+          ml={log?.water_ml ?? null}
+          goalMl={goals?.water_goal_ml ?? 3000}
+          onEdit={() => setSheet('water-edit')}
+        />
       </Sheet>
 
       {/* Replaces the Hydration sheet rather than stacking on it — a form is a
