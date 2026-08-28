@@ -35,6 +35,19 @@
  * A side logged with no partner (only L committed) is scored on its own — it is
  * real work, just not a pair. Bilateral sets are plain weight × reps.
  *
+ * ── AND A GHOST WEIGHS NOTHING (fixed 2026-08-28) ────────────────────────────
+ * This function took no set type at all, so a GHOST — a set deliberately marked
+ * as not performed — contributed its full tonnage to `total_volume_kg`, which
+ * the scorer reads and the battery drains against. `setTags.ts` has described a
+ * ghost as "logged, not counted" since it was introduced; every other consumer
+ * honoured that through `isWorkingSet`, and the one function that defines what
+ * tonnage IS did not.
+ *
+ * A WARM-UP still counts, and that asymmetry is deliberate: a warm-up is work
+ * you performed, and the app has counted it everywhere since the Hevy parity
+ * pass. A ghost is work you did NOT perform. `isWorkingSet` draws the line in
+ * the wrong place for volume, so the test here is explicit rather than borrowed.
+ *
  * Pure + framework-free: unit-testable and safe on the server.
  */
 
@@ -43,7 +56,15 @@ export interface VolumeSet {
   reps: number
   side?: 'L' | 'R' | null
   pairId?: string | null
+  /**
+   * Only `'ghost'` changes the answer. Absent (the overwhelming majority of
+   * call sites, and every historical row) behaves exactly as before.
+   */
+  setType?: string | null
 }
+
+/** A set that was deliberately not performed contributes no tonnage. */
+const isGhost = (s: VolumeSet): boolean => s.setType === 'ghost'
 
 /** Σ volume in kg, collapsing unilateral pairs to their weaker side. */
 export function sessionVolumeKg(sets: readonly VolumeSet[]): number {
@@ -52,6 +73,7 @@ export function sessionVolumeKg(sets: readonly VolumeSet[]): number {
   let total = 0
 
   for (const s of sets) {
+    if (isGhost(s)) continue
     const w = Number.isFinite(s.weightKg) ? s.weightKg : 0
     const r = Number.isFinite(s.reps) ? s.reps : 0
     // Only a genuine two-sided pair collapses; a pairId without a side (or a

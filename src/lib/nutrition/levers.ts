@@ -217,6 +217,18 @@ export const LEVER_SCHEDULE: readonly LeverPeriod[] = [
   // Released — back to hand-set numbers (1,955 kcal · 170/195/55) while keeping
   // Lever 1's 10k step floor. Timestamped by `user_goals.updated_at`.
   { from: '2026-08-20', leverId: 'custom' },
+  // ── THE SCHEDULED MAINTENANCE WEEK, AND ITS END ──────────────────────────
+  // `PHASES` in phases.ts opens this week on the same date; this row is what
+  // makes the two agree. Without it the timeline showed a maintenance week
+  // while the goals, the score and the export all still ran the cut's numbers.
+  //
+  // The SECOND row is not optional. `scheduledLeverOn` returns the last rung on
+  // or before a date, so a release with no successor is not a week — it is a
+  // permanent 2,445 kcal, and the cut that resumes on 6 Sep (PHASES, Cut W7–12)
+  // would be graded against maintenance targets for the rest of the block.
+  // A release must always be followed by the rung that resumes.
+  { from: '2026-08-30', leverId: 'maintenance-week' },
+  { from: '2026-09-06', leverId: 'custom' },
 ]
 
 /** The rung the SCHEDULE puts on a date, or null before the cut opened. */

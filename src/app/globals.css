@@ -176,6 +176,18 @@ html[data-theme='travel'] {
     letter-spacing: -0.010em;
   }
 
+  /* A set that was deliberately not performed.
+     The strikethrough lands on the NUMBERS, never on the row: a line drawn
+     across a 44px tick or a badge reads as "disabled", and a ghost row is still
+     editable — you can un-ghost it. Paired with `opacity-40` at the call site,
+     which is the part that makes it recede. */
+  .helix-ghost .helix-num,
+  .helix-ghost input {
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+    text-decoration-color: currentColor;
+  }
+
   /* A form control that has to READ dense.
      Replaces the sub-16px text utilities that used to sit on these fields and
      did nothing but zoom the page (see the unlayered floor further down). Type

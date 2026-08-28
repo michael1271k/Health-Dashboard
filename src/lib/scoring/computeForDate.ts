@@ -12,6 +12,7 @@ import {
   type ContextMode,
 } from '@/lib/nutrition/context'
 import { applyLever, activeLeverOf, leverForDate } from '@/lib/nutrition/levers'
+import type { ProgramPhase } from '@/lib/training/landmarks'
 import { isWorkingSet } from '@/lib/training/setTags'
 
 /** The goals a user with no `user_goals` row is graded against. */
@@ -190,6 +191,8 @@ export async function computeForDate(
   let prCount = 0
   let loggedExercises = 0
   let sessionSets = 0
+  /** Sets the plan asked for that were deliberately marked not-performed. */
+  let ghostSets = 0
   let failureSets = 0
   if (sessionIds.length) {
     const { data: setRows } = await supabase
@@ -200,9 +203,28 @@ export async function computeForDate(
     }>
     const exercises = new Set<string>()
     const working = new Set<string>()
+    // ── GHOSTS LEAVE BOTH SIDES OF THE RATIO ─────────────────────────────────
+    // A ghost is a set the plan asked for that you deliberately did not do —
+    // a maintenance week, a lift a niggle ruled out. It was already excluded
+    // from `sessionSets` (the numerator) while `plannedSets` still came from
+    // the full prescription, so the effort component graded a deliberate
+    // decision as an incomplete session and docked up to 12 points for it.
+    //
+    // Counted here and subtracted from the prescription below, so the ratio is
+    // "of what you meant to do, how much did you do". Exactly the argument the
+    // consistency grid already makes for a prescribed rest day: neither
+    // numerator nor denominator, because a day the plan did not ask for work on
+    // cannot be work you skipped.
+    const ghosts = new Set<string>()
     for (const r of rows) {
+      // Before the guard, `is_pr` was counted for every row including ghosts.
+      // Harmless — `prEngine` can never mark a ghost — but a guard in the wrong
+      // order is a guard waiting to be wrong.
+      if (!isWorkingSet(r.set_type ?? 'normal')) {
+        if (r.set_type === 'ghost') ghosts.add(r.pair_id ?? r.id)
+        continue
+      }
       if (r.is_pr) prCount += 1
-      if (!isWorkingSet(r.set_type ?? 'normal')) continue
       exercises.add(r.exercise_id)
       // Unilateral L/R sub-sets share a pair_id and are ONE set.
       working.add(r.pair_id ?? r.id)
@@ -210,6 +232,7 @@ export async function computeForDate(
     }
     loggedExercises = exercises.size
     sessionSets = working.size
+    ghostSets = ghosts.size
   }
 
   // isToday comes from the caller (the client knows its own timezone); derive the
@@ -274,9 +297,10 @@ export async function computeForDate(
   // today onward to your current selection — see `LEVER_SCHEDULE`.
   //
   // Absent column, absent selection and `custom` all leave `g` untouched.
+  const leverId = leverForDate(date, activeLeverOf(goals), todayISO)
   const levered = applyLever(
     { calorie: g.calorie_goal, protein: g.protein_goal_g, carbs: g.carbs_goal_g, fat: g.fat_goal_g, steps: g.steps_goal },
-    leverForDate(date, activeLeverOf(goals), todayISO),
+    leverId,
   )
   g.calorie_goal = levered.calorie
   g.protein_goal_g = levered.protein ?? 0
@@ -287,7 +311,19 @@ export async function computeForDate(
   // What the program prescribed for this day, per phase (cut uses each lift's
   // cutSets; bulk-only lifts drop out). null when the day isn't a known program
   // day — the scorer then drops the coverage component rather than inventing a plan.
-  const programMode: 'cut' | 'bulk' = (g.calorie_goal ?? 0) >= 2450 ? 'bulk' : 'cut'
+  // ── THE PHASE COMES FROM THE LEVER, NOT FROM A CALORIE THRESHOLD ──────────
+  // This read `calorie_goal >= 2450 ? 'bulk' : 'cut'`. The maintenance-week
+  // lever sets 2445 — five kcal under — so a maintenance week was graded
+  // against full CUT prescribed sets, which is the one week where the
+  // prescription is deliberately not what you are going to do.
+  //
+  // `leverForDate` is already the single source of truth for which rung a date
+  // was eaten under, and the same calorie-sniffing bug is documented as fixed
+  // in `landmarks.ts` and `useWeeklyVolume.ts`. This was the last copy.
+  const programMode: ProgramPhase =
+    leverId === 'maintenance-week' ? 'maintenance'
+    : (g.calorie_goal ?? 0) >= 2450 ? 'bulk'
+    : 'cut'
   const prescribed = dayKey ? prescribedFor(dayKey, programMode) : null
 
   const totalWaterMl = (water ?? []).reduce((s, r) => s + r.amount_ml, 0)
@@ -335,7 +371,10 @@ export async function computeForDate(
     sessionRpe: hardestSession?.session_rpe ?? null,
     sessionDayKey: hardestSession?.day_key ?? dayKey,
     plannedExercises: prescribed?.exercises,
-    plannedSets: prescribed?.sets,
+    // The prescription MINUS what you deliberately ghosted, floored at zero.
+    // See the note beside `ghostSets`: a set you marked as skipped on purpose
+    // is neither numerator nor denominator.
+    plannedSets: prescribed?.sets != null ? Math.max(0, prescribed.sets - ghostSets) : undefined,
     loggedExercises,
     sessionSets: sessionSets || (daySessions ?? []).reduce((s, r) => s + (r.set_count ?? 0), 0),
     failureSets,

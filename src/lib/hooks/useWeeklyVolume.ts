@@ -59,7 +59,7 @@ export function useWeeklyVolume(
       const [{ data: setsData, error }] = await Promise.all([
         supabase
           .from('workout_sets')
-          .select('id, pair_id, exercises!inner(name, muscle_groups), workout_sessions!inner(started_at)')
+          .select('id, pair_id, set_type, exercises!inner(name, muscle_groups), workout_sessions!inner(started_at)')
           .gte('workout_sessions.started_at', weekStartInstant)
           .lt('workout_sessions.started_at', weekEndInstant)
           // ── WARM-UPS ARE SETS HERE ────────────────────────────────────────
@@ -76,6 +76,12 @@ export function useWeeklyVolume(
           // decimal. PROGRAM_TARGETS were written on working sets and have NOT
           // been retuned, so a grade now runs marginally generous; that is a
           // deliberate trade against a number that could not be checked at all.
+          //
+          // ── A GHOST IS NOT A SET, THOUGH ──────────────────────────────────
+          // The column was not even SELECTED here, so a set marked as
+          // deliberately not performed was credited to its muscles in full —
+          // the one counter where the warm-up argument does not transfer. A
+          // warm-up is work you did; a ghost is work you did not.
           .limit(2000),
       ])
       if (error) throw error
@@ -83,9 +89,13 @@ export function useWeeklyVolume(
       const rows = ((setsData ?? []) as unknown as Array<{
         id: string
         pair_id: string | null
+        set_type: string | null
         exercises: { name: string; muscle_groups: string[] | null }
         workout_sessions: { started_at: string }
       }>)
+        // A ghost is a set the plan asked for and you deliberately did not do.
+        // Warm-ups stay (see the note on the select); this is the one exclusion.
+        .filter((r) => r.set_type !== 'ghost')
         // Stay within the week's own era (a week is one era, but the boundary
         // week would otherwise mix PPL-legacy sets into a HELIX total).
         .filter((r) => eraForDate(r.workout_sessions.started_at.slice(0, 10)) === eraForDate(weekStart))

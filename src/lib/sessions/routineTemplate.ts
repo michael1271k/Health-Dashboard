@@ -102,7 +102,11 @@ export interface TemplateSourceCardio {
   deckOrder?: number
 }
 
-const TEMPLATE_TAGS: readonly string[] = ['warmup', 'failure', 'dropset', 'ghost']
+/**
+ * Tags a template may carry forward. `ghost` is deliberately NOT among them —
+ * see `payloadToTemplate`, which drops the rows entirely.
+ */
+const TEMPLATE_TAGS: readonly string[] = ['warmup', 'failure', 'dropset']
 
 /**
  * Build the template from the sets that were just committed.
@@ -114,6 +118,25 @@ const TEMPLATE_TAGS: readonly string[] = ['warmup', 'failure', 'dropset', 'ghost
  *
  * Returns null when nothing was committed, so a failed or empty session cannot
  * blank a good template.
+ *
+ * ── AND A GHOST IS NOT COMMITTED WORK EITHER ─────────────────────────────────
+ * `ghost` used to be in TEMPLATE_TAGS, so a set marked as deliberately skipped
+ * was written into the template WITH its weight, its reps and its RPE — and
+ * `templateToDraft` re-emitted it, so next week's deck reopened carrying the row
+ * you had just told the app you did not do, still tagged G, still holding last
+ * week's numbers.
+ *
+ * That is the same failure this function's own doc block already guards against
+ * one paragraph up: an unchecked row must not reach next week. A ghost is a
+ * ticked row that says the same thing more explicitly, so it gets the same
+ * answer. The template is what you intend to do next time; a ghost is a record
+ * of what you chose not to do this time.
+ *
+ * An exercise whose sets were ALL ghosted therefore contributes nothing and
+ * drops out of the template entirely — correct: you skipped the lift, and next
+ * week's deck seeds it from the program instead (see `templateDraft`'s priority
+ * ladder), which is the plan's own prescription rather than a memory of a
+ * session that did not happen.
  */
 export function payloadToTemplate(
   sets: readonly TemplateSourceSet[],
@@ -123,6 +146,8 @@ export function payloadToTemplate(
 
   const byName = new Map<string, TemplateExercise>()
   for (const s of sets) {
+    // Work that was marked as not performed shapes nothing about next week.
+    if (s.setType === 'ghost') continue
     let ex = byName.get(s.exerciseName)
     if (!ex) {
       ex = { name: s.exerciseName, order: s.exerciseOrder ?? byName.size, sets: [] }
@@ -131,7 +156,9 @@ export function payloadToTemplate(
     const set: TemplateSet = { weightKg: s.weightKg, reps: s.reps }
     // 'normal' is the absence of a modifier; storing it would make every
     // ordinary set carry a tag the deck then has to strip again. Anything
-    // outside the known three is dropped rather than trusted into the payload.
+    // outside the known three is dropped rather than trusted into the payload —
+    // and 'ghost' is now deliberately outside them, though the guard above means
+    // no ghost ever reaches this line.
     if (s.setType && TEMPLATE_TAGS.includes(s.setType)) {
       set.setType = s.setType as TemplateSet['setType']
     }
@@ -148,6 +175,17 @@ export function payloadToTemplate(
   }
 
   const exercises = [...byName.values()].sort((a, b) => a.order - b.order)
+
+  // ── AN ALL-GHOSTED SESSION IS AN EMPTY ONE ─────────────────────────────────
+  // The `!sets.length` guard at the top catches a session with no rows. It does
+  // NOT catch a session whose every row was ghosted, which passes that check and
+  // then falls through to `{ version, exercises: [] }` — an empty template that
+  // OVERWRITES a good one, blanking next week's deck. That is precisely the
+  // failure the early return exists to prevent, arriving by a different door.
+  //
+  // Cardio is checked too: a session that was only a Zone-2 block is a real
+  // template and must still be stored.
+  if (!exercises.length && !cardio.length) return null
 
   // Cardio slots back in at its real deck position. `exerciseOrder` counts
   // STRENGTH exercises only, so the two orders are not comparable — `deckOrder`

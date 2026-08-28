@@ -310,7 +310,13 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
       // the one state the tick exists to show disappeared exactly when you were
       // editing the set it belonged to. Green stays; the active row is
       // distinguished by its ring instead.
-      className={`rounded-lg transition-colors ${
+      // ── AND A GHOST RECEDES ──
+      // 40% opacity and a struck-through readout: it is on the card because you
+      // logged the decision, not because it is work. `line-through` is applied
+      // to the numbers via `helix-ghost` rather than to the row, so the badge,
+      // the tick and the tap targets stay legible — a strikethrough across a
+      // 44px control reads as "disabled", and the row is still editable.
+      className={`rounded-lg transition-colors ${isGhost ? 'opacity-40 helix-ghost' : ''} ${
         done ? ''
         : active ? 'bg-white/[0.045]'
         : isWarm ? 'bg-[#E0703C]/[0.06]' : ''}`}

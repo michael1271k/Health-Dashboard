@@ -361,8 +361,14 @@ export function programDayByKey(dayKey: string): ProgramDay | null {
  * exercise's `cutSets` (bulk-only lifts drop to 0 and fall out). The scorer
  * grades a session's coverage against this, so it has to reflect the plan the
  * athlete is really running, not the bulk template.
+ *
+ * MAINTENANCE takes the full prescription, exactly as bulk does — `setsForPhase`
+ * has always read it that way and only the signature here said otherwise. That
+ * is deliberate: a maintenance week does not rewrite the plan, it is a week you
+ * choose to do less of it. What you skip is marked as a ghost, and the scorer
+ * subtracts those from this figure — see `computeForDate`.
  */
-export function prescribedFor(dayKey: string, phase: 'cut' | 'bulk'): { exercises: number; sets: number } | null {
+export function prescribedFor(dayKey: string, phase: ProgramPhase): { exercises: number; sets: number } | null {
   const d = programDayByKey(dayKey)
   if (!d) return null
   const kept = d.exercises.filter((e) => setsForPhase(e, phase) > 0)

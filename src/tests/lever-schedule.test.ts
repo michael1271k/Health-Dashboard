@@ -39,10 +39,30 @@ describe('the schedule', () => {
    */
   it('records the release, not just the pull', () => {
     expect(scheduledLeverOn('2026-08-20')).toBe('custom')
-    expect(scheduledLeverOn('2026-09-01')).toBe('custom')
+    expect(scheduledLeverOn('2026-08-29')).toBe('custom')
     // The last Lever 1 day and the first custom day are adjacent — no gap, no
     // overlap. A schedule with either would make one date ungradeable.
     expect(scheduledLeverOn('2026-08-19')).not.toBe(scheduledLeverOn('2026-08-20'))
+  })
+
+  /**
+   * A RELEASE IS A WEEK, AND A WEEK HAS AN END.
+   *
+   * `scheduledLeverOn` answers with the last rung on or before the date, so a
+   * `maintenance-week` row with no successor is not a week at all — it is
+   * 2,445 kcal forever, and the cut that resumes on 6 Sep (PHASES, Cut W7–12)
+   * would be graded against maintenance targets for the rest of the block.
+   *
+   * This is the shape of the bug the test above already caught once for
+   * `lever-1`: the pull was recorded and the release was not. The same mistake
+   * inverted — a release recorded with no resumption — costs six weeks instead
+   * of four days.
+   */
+  it('closes the maintenance week rather than leaving it running', () => {
+    expect(scheduledLeverOn('2026-08-30')).toBe('maintenance-week')   // opens
+    expect(scheduledLeverOn('2026-09-05')).toBe('maintenance-week')   // last day
+    expect(scheduledLeverOn('2026-09-06')).toBe('custom')             // cut resumes
+    expect(scheduledLeverOn('2026-12-01')).toBe('custom')             // and stays resumed
   })
 
   /**

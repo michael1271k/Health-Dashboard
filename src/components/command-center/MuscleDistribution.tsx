@@ -54,7 +54,10 @@ export function draftMuscleSets(draft: SessionDraft | null): Partial<Record<Land
   for (const ex of draft.exercises) {
     if (ex.kind === 'cardio') continue
     // Every committed set, WARM-UPS INCLUDED — see the note above the export.
-    const sets = ex.sets.filter(isSetCommitted)
+    // A GHOST is excluded, and it is the only exclusion: a warm-up is work you
+    // performed, a ghost is work you marked as skipped. Without this the sheet
+    // credits muscles for sets you told it you did not do.
+    const sets = ex.sets.filter((s) => isSetCommitted(s) && s.setType !== 'ghost')
     if (!sets.length) continue
     // A unilateral pair is ONE set of work, exactly as it is for tonnage.
     const seen = new Set<string>()

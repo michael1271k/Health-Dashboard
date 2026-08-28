@@ -81,10 +81,14 @@ type SetRow = {
 }
 
 /** PostgREST hands `side` back as a bare string; only a real limb collapses. */
-const toVolumeSet = (s: Pick<SetRow, 'weight_kg' | 'reps' | 'side' | 'pair_id'>): VolumeSet => ({
+const toVolumeSet = (s: Pick<SetRow, 'weight_kg' | 'reps' | 'side' | 'pair_id' | 'set_type'>): VolumeSet => ({
   weightKg: s.weight_kg, reps: s.reps,
   side: s.side === 'L' || s.side === 'R' ? s.side : null,
   pairId: s.pair_id ?? null,
+  // Carried so a ghost weighs nothing here too. `perEx` below is deliberately
+  // NOT gated on `isWorkingSet` (warm-ups belong in a tonnage comparison), so
+  // without this the one set type that must not count would.
+  setType: s.set_type ?? null,
 })
 
 /**

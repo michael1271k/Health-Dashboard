@@ -447,6 +447,10 @@ function toSessions(d: RangeData): ExportSession[] {
           weightKg: r.weight_kg, reps: r.reps,
           side: r.side === 'L' || r.side === 'R' ? r.side : null,
           pairId: r.pair_id,
+          // Warm-ups still count here, as the comment above says. A GHOST does
+          // not: it is a set that was not performed, and `sessionVolumeKg` is
+          // now the place that knows the difference.
+          setType: r.set_type,
         })))
       : s.total_volume_kg
     return {
@@ -598,6 +602,7 @@ function tonnageRows(sets: RangeData['sets']): Array<MoverTokens & { volumeKg: n
       weightKg: r.weight_kg, reps: r.reps,
       side: r.side === 'L' || r.side === 'R' ? r.side : null,
       pairId: r.pair_id,
+      setType: r.set_type,
     }))),
   }))
 }

@@ -180,8 +180,8 @@
     "semantic_hash": ""
   },
   "src/app/(dashboard)/nutrition/page.tsx": {
-    "mtime": 1787855499.516564,
-    "ast_hash": "a2e69278530691a3dd134c0185c492d0",
+    "mtime": 1787903706.5473256,
+    "ast_hash": "006e06b7a6c77ee206c0ecdc9e45a764",
     "semantic_hash": ""
   },
   "src/app/(dashboard)/pathfinder/page.tsx": {
@@ -195,8 +195,8 @@
     "semantic_hash": ""
   },
   "src/app/(dashboard)/workout/page.tsx": {
-    "mtime": 1787855277.2411487,
-    "ast_hash": "0f1132c652bba07a6ace82a330184352",
+    "mtime": 1787903750.4547365,
+    "ast_hash": "6998662843214efb8d70f1c7f8789e53",
     "semantic_hash": ""
   },
   "src/app/api/compute-score/route.ts": {
@@ -255,8 +255,8 @@
     "semantic_hash": ""
   },
   "src/app/page.tsx": {
-    "mtime": 1787902153.0937588,
-    "ast_hash": "7fe0d0bc0352652c309fc99f9a3681c2",
+    "mtime": 1787903681.7114882,
+    "ast_hash": "1fb1c7b20cb4aecc19ec3719241e5697",
     "semantic_hash": ""
   },
   "src/app/session/[id]/page.tsx": {
@@ -485,8 +485,8 @@
     "semantic_hash": ""
   },
   "src/components/nutrition/FuelForceBand.tsx": {
-    "mtime": 1786288406.318704,
-    "ast_hash": "1380012c665c09e62d5ce8c0c7a536ef",
+    "mtime": 1787903731.0945802,
+    "ast_hash": "253aeb67332a217c754a8100d60a7dad",
     "semantic_hash": ""
   },
   "src/components/nutrition/MacroOverrideSheet.tsx": {
@@ -2480,7 +2480,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/set-rows.html": {
-    "mtime": 1787902247.5514772,
+    "mtime": 1787903758.4363503,
     "ast_hash": "6b7c9d27eff50c2ff3702f41ab16f90a",
     "semantic_hash": ""
   },
@@ -2510,7 +2510,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-ledger.html": {
-    "mtime": 1787902246.6986327,
+    "mtime": 1787903756.1356018,
     "ast_hash": "3ddb93aca7b5901708c403bfb41afc10",
     "semantic_hash": ""
   },
@@ -2545,7 +2545,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/live-header.html": {
-    "mtime": 1787902245.5073547,
+    "mtime": 1787903755.4835927,
     "ast_hash": "1922065e3007c80d486fcfb5d6f4ea9c",
     "semantic_hash": ""
   },
@@ -2615,7 +2615,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-summary-header.html": {
-    "mtime": 1787902246.8680425,
+    "mtime": 1787903756.856484,
     "ast_hash": "b3d75865c62fb30c5cc668930a4b7642",
     "semantic_hash": ""
   },

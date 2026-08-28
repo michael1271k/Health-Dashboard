@@ -179,6 +179,13 @@ export interface ExportSet {
   failure: boolean
   /** Ramp-up set. Exported and tagged, never silently dropped. */
   warmup?: boolean
+  /**
+   * Deliberately not performed. The export had no field for this at all, so a
+   * ghost took a numbered `Set N:` line and its full tonnage — indistinguishable
+   * from work, in the one document that exists to say what the week actually
+   * was.
+   */
+  ghost?: boolean
   /** Unilateral pairs share a pairId so L and R collapse into one numbered set. */
   pairId: string | null
 }
@@ -554,8 +561,8 @@ export function setDetail(sets: ExportSet[], exerciseName?: string): string[] {
    * exercise says so once at the end instead, because a note on every line is a
    * note nobody reads.
    */
-  const anyRated = sets.some((s) => !s.warmup && s.rpe != null)
-  const noneRated = !anyRated && sets.some((s) => !s.warmup)
+  const anyRated = sets.some((s) => !s.warmup && !s.ghost && s.rpe != null)
+  const noneRated = !anyRated && sets.some((s) => !s.warmup && !s.ghost)
   const NOT_REPORTED = 'RPE not reported'
 
   const timed = isTimedExercise(exerciseName)
@@ -569,7 +576,7 @@ export function setDetail(sets: ExportSet[], exerciseName?: string): string[] {
   const notes = (s: ExportSet): string => {
     const bits: string[] = []
     if (s.rpe != null) bits.push(rpeText(s.rpe))
-    else if (anyRated && !s.warmup) bits.push(NOT_REPORTED)
+    else if (anyRated && !s.warmup && !s.ghost) bits.push(NOT_REPORTED)
     // "to failure" is suppressed when the rating already says Failure — RPE 10
     // IS the top of the ladder, and `(RPE 10 — Failure, to failure)` states one
     // fact twice in six words.
@@ -582,10 +589,12 @@ export function setDetail(sets: ExportSet[], exerciseName?: string): string[] {
 
   // Warm-ups do NOT consume a set number — "Set 1" is the first WORKING set,
   // which is what the program prescribes and what the app's own ledger counts.
+  // Neither does a ghost, for a different reason: it did not happen.
   let num = 0
   const lines = rows.map((row) => {
     if (row.single) {
       const s = row.single
+      if (s.ghost) return `Skipped: ${value(s.weightKg, s.reps)} (planned)`
       if (s.warmup) return `Warm-up: ${value(s.weightKg, s.reps)}${notes(s)}`
       num += 1
       return `Set ${num}: ${value(s.weightKg, s.reps)}${notes(s)}`
@@ -597,6 +606,8 @@ export function setDetail(sets: ExportSet[], exerciseName?: string): string[] {
       row.left ? `L ${value(row.left.weightKg, row.left.reps)}${notes(row.left)}` : null,
       row.right ? `R ${value(row.right.weightKg, row.right.reps)}${notes(row.right)}` : null,
     ].filter(Boolean)
+    const ghosted = (row.left ?? row.right)?.ghost
+    if (ghosted) return `Skipped: ${halves.join(' · ')} (planned)`
     const warm = (row.left ?? row.right)?.warmup
     if (warm) return `Warm-up: ${halves.join(' · ')}`
     num += 1
@@ -684,7 +695,10 @@ export function weeklySummary(input: WeeklyExportInput): WeeklySummary {
       let ratedSets = 0
       let workingSets = 0
       for (const s of input.sessions) for (const ex of s.exercises) for (const set of ex.sets) {
-        if (set.warmup) continue
+        // A ghost is not an unrated working set — it is a set that did not
+        // happen, and counting it here would drag the RPE-coverage figure down
+        // for doing exactly what a maintenance week asks.
+        if (set.warmup || set.ghost) continue
         workingSets += 1
         if (set.rpe != null && Number.isFinite(set.rpe)) ratedSets += 1
       }
