@@ -10,6 +10,7 @@ import { SleepDebtGauge } from '@/components/day/SleepDebtGauge'
 import { SwapDayControl } from '@/components/day/SwapDayControl'
 import { RestSuggestion } from '@/components/day/RestSuggestion'
 import { DomsTracker } from '@/components/day/RecoveryTrackers'
+import { FatigueTracker } from '@/components/day/FatigueTracker'
 import { CardioLogger } from '@/components/day/CardioLogger'
 import { WaterHelix } from '@/components/day/WaterHelix'
 import { WaterOverrideSheet } from '@/components/day/WaterOverrideSheet'
@@ -399,6 +400,11 @@ export default function DailyNexusPage() {
           on the day it applies to. */}
       <Zone label="Recovery" accent={EMERALD}>
         <CardioLogger date={date} hkActiveEnergy={log?.active_energy ?? null} bare />
+        {/* Fatigue above soreness: it is asked four times a day and soreness
+            once, so the row you are most often here to touch is the one you
+            reach first. Both are subjective recovery readings, which is why
+            they share the band rather than claiming one each. */}
+        <FatigueTracker date={date} />
         <DomsTracker date={date} />
       </Zone>
 

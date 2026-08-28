@@ -156,3 +156,122 @@ export function nudgeRpe(v: number | null | undefined, dir: 1 | -1): number | nu
   if (v == null || !Number.isFinite(v)) return null
   return normalizeCr10(v + dir * 0.5)
 }
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * SESSION EFFORT, IN WORDS
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * How hard the SESSION was, as five words.
+ *
+ * ── WHY WORDS, AND WHY THIS IS NOT A SCALE CONVERSION ────────────────────────
+ * Per-set RPE is reps-in-reserve: `RPE_LADDER` starts at 5 and, by design,
+ * clusters at 8–9.5 on a hypertrophy block. Session CR10 asks a different
+ * question — how hard was the WHOLE session — and its own anchors call 9
+ * "Extremely hard" and 10 "Maximal". Averaging one into the other is a category
+ * error, and the numbers say so: across this athlete's logged sets the mean
+ * per-set rating is 8.86, while across the sessions he actually rated by hand
+ * the mean is 7.16 and the maximum is 8. The suggestion proposed roughly 8.9
+ * against an answer of roughly 7.2, every single session.
+ *
+ * A number invites that comparison. A word does not: nobody reads "Hard" and
+ * asks why it is not 8.9.
+ *
+ * ── THE NUMBER IS STILL STORED ───────────────────────────────────────────────
+ * Each word carries a canonical `cr10`, written to `session_rpe` exactly as
+ * before. `battery.ts`, `computeForDate`, the weekly export, the widget
+ * snapshot and `SessionHero` all keep reading one numeric column, the 19
+ * historical rows stay comparable, and there is no second source of truth for
+ * one fact. The word is what you pick; the number is the index.
+ */
+export interface EffortWord {
+  key: string
+  label: string
+  /** What lands in `session_rpe`. */
+  cr10: number
+  hint: string
+}
+
+export const EFFORT_WORDS: readonly EffortWord[] = [
+  { key: 'easy',       label: 'Easy',       cr10: 5,   hint: 'lighter than usual — plenty left' },
+  { key: 'solid',      label: 'Solid',      cr10: 6.5, hint: 'a normal working session' },
+  { key: 'hard',       label: 'Hard',       cr10: 8,   hint: 'the session you planned, in full' },
+  { key: 'brutal',     label: 'Brutal',     cr10: 9,   hint: 'harder than this day usually is' },
+  { key: 'everything', label: 'Everything', cr10: 10,  hint: 'nothing left in the tank' },
+] as const
+
+/** The stored number for a word. */
+export function effortCr10(key: string | null | undefined): number | null {
+  return EFFORT_WORDS.find((w) => w.key === key)?.cr10 ?? null
+}
+
+/**
+ * The word a stored `session_rpe` reads back as — nearest rung, never a range.
+ *
+ * Historical rows are 6, 7 and 8, which land on Solid, Solid and Hard — 7 is
+ * nearer 6.5 than 8, and the nearest rung is the only defensible reading of a
+ * number recorded on a different control. It is not worth inventing a sixth
+ * word to preserve a distinction the athlete was not reliably drawing: 6, 7 and
+ * 8 were the only three values ever used, out of ten available.
+ */
+export function effortWordFor(cr10: number | null | undefined): EffortWord | null {
+  if (cr10 == null || !Number.isFinite(cr10)) return null
+  return EFFORT_WORDS.reduce((best, w) =>
+    Math.abs(w.cr10 - cr10) < Math.abs(best.cr10 - cr10) ? w : best)
+}
+
+/**
+ * The baseline used when a day type has no history yet.
+ *
+ * 8.8 — this athlete's own trailing mean per-set rating, so a first session of
+ * a new split lands on "Hard" rather than being graded against an absolute
+ * ladder it was never calibrated to.
+ */
+export const EFFORT_COLD_BASELINE = 8.8
+
+/** Below three prior sessions of the same type, a median is a coin toss. */
+export const EFFORT_MIN_HISTORY = 3
+
+/**
+ * Suggest a word from this session's mean per-set rating, RELATIVE to what this
+ * day type usually costs you.
+ *
+ * ── WHY RELATIVE ─────────────────────────────────────────────────────────────
+ * An absolute map is what made the old suggestion harsh: rating sets at 8.5–9
+ * is what a hypertrophy block LOOKS like, so an absolute reading calls every
+ * ordinary Tuesday "Extremely hard" and leaves no room to say when a session
+ * was genuinely worse than usual. Measured against your own recent sessions of
+ * the same day, a typical one sits at delta ≈ 0 and reads "Hard" — the top of
+ * the range you actually use — and the words above and below it become
+ * available again for the days that earn them.
+ *
+ * `mean` comes from `deriveSessionRpe`, which is unchanged and still tested.
+ * This function only decides what that number MEANS.
+ */
+export function suggestEffortWord(
+  mean: number | null,
+  /** Means of recent sessions of the same day type, any order. */
+  history: readonly number[] = [],
+): EffortWord | null {
+  if (mean == null || !Number.isFinite(mean)) return null
+
+  const usable = history.filter((v) => Number.isFinite(v))
+  const baseline = usable.length >= EFFORT_MIN_HISTORY ? median(usable) : EFFORT_COLD_BASELINE
+  const delta = mean - baseline
+
+  // Quarter-point bands. Per-set ratings move on a 0.5 grid, so a session mean
+  // rarely shifts by less than ~0.25 without something real changing.
+  if (delta <= -0.75) return EFFORT_WORDS[0]
+  if (delta <= -0.25) return EFFORT_WORDS[1]
+  if (delta < 0.25) return EFFORT_WORDS[2]
+  if (delta < 0.75) return EFFORT_WORDS[3]
+  return EFFORT_WORDS[4]
+}
+
+/** Median, not mean: one savage session must not move the baseline it is
+ *  about to be judged against. */
+function median(xs: readonly number[]): number {
+  const sorted = [...xs].sort((a, b) => a - b)
+  const mid = sorted.length >> 1
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2
+}

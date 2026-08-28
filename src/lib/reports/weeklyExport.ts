@@ -201,6 +201,22 @@ export interface ExportSet {
 export interface ExportExercise {
   name: string
   sets: ExportSet[]
+  /**
+   * The rest target in force for this exercise, in seconds, and whether it was
+   * changed from the plan's own figure.
+   *
+   * ── WHY A TARGET AND NOT A MEASUREMENT ───────────────────────────────────
+   * `workout_sets.rest_sec` is dead — it stopped being written on 2026-08-19
+   * and across the whole database it never held a value. Rest in this app is a
+   * PRESCRIPTION (`ProgramExercise.restSec`, overridable per exercise), so what
+   * the export can honestly report is what you were aiming for, and whether you
+   * moved it mid-block. Reporting it as elapsed rest would be a fabrication.
+   *
+   * The override lives in localStorage, which is why this is assembled
+   * client-side in `useWeeklyLoop` and needs no column.
+   */
+  restTargetSec?: number | null
+  restPlanSec?: number | null
   topKg: number | null
   /** Programmed rep window, when the exercise is in the active program. */
   repWindow: string | null
@@ -260,6 +276,14 @@ export interface ExportSession {
      */
     e1rmKg: number | null
   }>
+}
+
+/** One fatigue reading: a day, a slot, and the word. */
+export interface ExportFatigue {
+  date: string
+  slot: string
+  level: number
+  label: string
 }
 
 export interface ExportDoms {
@@ -350,6 +374,15 @@ export interface WeeklyExportInput {
    */
   tonnageByMuscle?: Array<{ muscle: string; volumeKg: number; directKg?: number }>
   doms: ExportDoms[]
+  /**
+   * Subjective fatigue, up to four readings a day.
+   *
+   * Reported, never scored — see `useFatigue`. It sits in the export because a
+   * coach reading a week wants to know that Thursday's session followed three
+   * days that ended "Heavy"; it stays out of `daily_scores` because a number
+   * you can talk yourself into is not a measurement.
+   */
+  fatigue?: ExportFatigue[]
   /** Full body-composition readings for the week's weigh-in days (optional). */
   bodyComp?: ExportBodyComp[]
   /** Walks / runs from the cardio ledger, nested under their day. */
@@ -1245,7 +1278,14 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
         + ` · PRs: ${s.prs.length}`
         + ` · Effort: ${s.sessionRpe != null ? `${n(s.sessionRpe, 1)}/10 CR10` : 'Not reported'}`)
       for (const e of s.exercises) {
-        L.push(`        - **${e.name}**${e.repWindow ? ` _(target ${e.repWindow})_` : ''}:`)
+        // Rest is stated only when it was CHANGED from the plan. The plan's
+        // own figure is already in the program the reader has; repeating it on
+        // every exercise would be noise on the busiest lines in the document,
+        // and the interesting fact is the adjustment.
+        const restNote = e.restTargetSec != null && e.restPlanSec != null && e.restTargetSec !== e.restPlanSec
+          ? ` · rest ${e.restTargetSec}s (adjusted from ${e.restPlanSec}s)`
+          : ''
+        L.push(`        - **${e.name}**${e.repWindow ? ` _(target ${e.repWindow})_` : ''}${restNote}:`)
         // One set per line. The old single-line form packed a whole exercise
         // into a bespoke notation (`60kg × 12,11,10`, `11@8.5`) a reader had to
         // decode before they could read it.
@@ -1341,6 +1381,27 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
     L.push('')
     for (const d of doms) {
       L.push(`- ${d.date} · ${d.muscle}: ${d.severity} (${label[d.severity] ?? d.severity})`)
+    }
+    L.push('')
+  }
+
+  // ── Fatigue ──
+  // Grouped by DAY rather than one line per reading: four rows per day would
+  // make this the longest section in the document to carry the least, and the
+  // shape of a day — where it started and where it ended — is the whole reading.
+  const fatigue = input.fatigue ?? []
+  if (fatigue.length) {
+    L.push('## Fatigue (self-reported, not scored)')
+    L.push('')
+    const byDate = new Map<string, ExportFatigue[]>()
+    for (const f of fatigue) {
+      const bucket = byDate.get(f.date) ?? []
+      bucket.push(f)
+      byDate.set(f.date, bucket)
+    }
+    for (const [date, rows] of [...byDate.entries()].sort(([a], [b]) => a.localeCompare(b))) {
+      const parts = rows.map((r) => `${r.slot} ${r.label.toLowerCase()}`)
+      L.push(`- ${date}: ${parts.join(' · ')}`)
     }
     L.push('')
   }

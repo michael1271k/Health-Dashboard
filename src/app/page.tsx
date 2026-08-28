@@ -15,7 +15,7 @@ import {
 import { WeeklyMuscleSheet } from '@/components/body/WeeklyMuscleSheet'
 import { BodyWidget } from '@/components/dashboard/widgets/BodyWidget'
 import {
-  SleepWidget, StepsWidget, CardioWidget, StackWidget,
+  SleepWidget, StepsWidget, CardioWidget, StackWidget, FatigueWidget,
 } from '@/components/dashboard/widgets/DailyWidgets'
 import {
   MuscleWidget, VolumeWidget, PrWidget, TrainWidget,
@@ -519,6 +519,11 @@ export default function DashboardPage() {
       case 'cardio':
         return <CardioWidget size={size} onOpen={goToday} />
 
+      case 'fatigue':
+        // Straight to the day page's Recovery band, where the tracker lives —
+        // a widget that opened a sheet duplicating its own input would be two
+        // places to log the same thing.
+        return <FatigueWidget size={size} onOpen={goToday} />
       case 'stack':
         return <StackWidget size={size} onOpen={onOpen('stack')}
           slots={stackItems} taken={taken ?? EMPTY_TAKEN} nowMinutes={nowMinutes} />

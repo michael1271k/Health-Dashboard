@@ -48,7 +48,7 @@
 import type { LucideIcon } from 'lucide-react'
 import {
   Activity, BarChart3, CalendarCheck, Droplets, Dumbbell, Flame, Footprints,
-  Gauge, HeartPulse, Moon, Pill, Scale, Sparkles, Target, TrendingDown, Trophy,
+  BatteryLow, Gauge, HeartPulse, Moon, Pill, Scale, Sparkles, Target, TrendingDown, Trophy,
 } from 'lucide-react'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import {
@@ -62,7 +62,7 @@ export type WidgetId =
   | 'sleep' | 'fuel' | 'micros' | 'train' | 'body' | 'steps'
   | 'cardio' | 'stack' | 'vitals' | 'water'
   | 'muscle' | 'pr' | 'volume'
-  | 'deficit' | 'bar' | 'consistency'
+  | 'deficit' | 'bar' | 'consistency' | 'fatigue'
 
 /**
  * Every widget the dashboard knows how to render, in first-run order.
@@ -98,7 +98,7 @@ export type WidgetId =
  */
 export const WIDGET_IDS: readonly WidgetId[] = [
   'recovery', 'sleep', 'vitals', 'fuel', 'water', 'micros', 'deficit', 'train', 'bar',
-  'body', 'muscle', 'volume', 'pr', 'consistency', 'steps', 'cardio', 'stack',
+  'body', 'muscle', 'volume', 'pr', 'consistency', 'steps', 'cardio', 'stack', 'fatigue',
 ] as const
 
 /**
@@ -137,6 +137,10 @@ export const WIDGET_SIZES: Record<WidgetId, readonly WidgetSize[]> = {
   steps: ['s', 'm', 'l'],
   cardio: ['s', 'm'],
   stack: ['s', 'm'],
+  // Four readings and a fortnight of them. There is no large: the day is four
+  // values and the trend is one strip, and a large would be that with 120px of
+  // nothing under it — see the note above.
+  fatigue: ['s', 'm'],
 }
 
 /**
@@ -155,6 +159,9 @@ const DEFAULT_SIZE: Record<WidgetId, WidgetSize> = {
   sleep: 'm', vitals: 'm', fuel: 'm', water: 's', micros: 's', deficit: 'm',
   train: 'm', bar: 's', body: 'm', muscle: 's', volume: 's',
   pr: 's', consistency: 's', steps: 's', cardio: 's', stack: 's',
+  // Small by default: four readings a day is a glance, not a study. The medium
+  // face exists for when the week's drift is the question.
+  fatigue: 's',
 }
 
 /** The default size a widget lands at when it is added back from the tray. */
@@ -679,4 +686,8 @@ export const WIDGET_META: Record<WidgetId, WidgetMeta> = {
   steps: { label: 'Steps', icon: Footprints, accent: PLATINUM },
   cardio: { label: 'Cardio', icon: Activity, accent: EMERALD },
   stack: { label: 'Stack', icon: Pill, accent: GOLD },
+  // AMETHYST, matching the tracker's own sheet on the day page and the Sleep
+  // tile it sits nearest in meaning. Not EMERALD, which the Recovery band uses
+  // for the things that are SCORED — fatigue deliberately is not.
+  fatigue: { label: 'Fatigue', icon: BatteryLow, accent: AMETHYST },
 }

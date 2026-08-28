@@ -6,11 +6,13 @@ import { weekStartOf, isoAddDays } from '@/lib/utils/week'
 import { logicalTodayISO } from '@/lib/utils/day'
 import {
   buildWeeklyExport, trendTotals,
-  type ExportDay, type ExportSession, type ExportExercise, type ExportDoms, type ExportBodyComp,
+  type ExportDay, type ExportSession, type ExportExercise, type ExportDoms, type ExportFatigue, type ExportBodyComp,
   type ExportCardio, type WeeklyExportInput, type LedgerWeek, type ExportSupplement,
 } from '@/lib/reports/weeklyExport'
 import { weekLabelOf, WEEK0_START } from '@/lib/reports/weekNumber'
 import { sessionVolumeKg } from '@/lib/sessions/volume'
+import { restTargetFor, programRestSec } from '@/lib/training/restTargets'
+import { FATIGUE_SLOTS, SLOT_LABEL, fatigueLevel, type FatigueSlot } from '@/lib/hooks/useFatigue'
 import { epley1RM } from '@/lib/utils/epley'
 import { activeProgram, activePhase, eraForDate, isTrainingDay } from '@/lib/programs'
 import { repWindowFor } from '@/lib/training/ceilings'
@@ -84,7 +86,7 @@ async function fetchRange(weekStart: string, weekEnd: string) {
 
   // Active Energy, Day Score and Battery are deliberately NOT fetched — none of
   // the three appears in the export any more (see weeklyExport.ts).
-  const [logs, nutrition, sessions, sets, water, supps, doms, bodyComp, cardio, rpe, bodyLedger, skips, prAxes, whr, exceptions, priorCount] = await Promise.all([
+  const [logs, nutrition, sessions, sets, water, supps, doms, fatigue, bodyComp, cardio, rpe, bodyLedger, skips, prAxes, whr, exceptions, priorCount] = await Promise.all([
     // `active_energy` and `bmr` join the main select rather than getting their
     // own isolated slot: both are long-standing columns (verified live), and the
     // isolation convention exists for columns whose paste-SQL may not have run.
@@ -113,6 +115,7 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     supabase.from('water_intake').select('date, amount_ml').gte('date', weekStart).lte('date', weekEnd),
     supabase.from('supplement_log').select('date, item_key').eq('taken', true).gte('date', weekStart).lte('date', weekEnd),
     supabase.from('doms_logs').select('date, muscle_group, severity').gte('date', weekStart).lte('date', weekEnd),
+    supabase.from('fatigue_logs').select('date, slot, level').gte('date', weekStart).lte('date', weekEnd),
     // Body composition — its own query so an un-migrated column can't take down
     // the daily-logs fetch above; on error it's simply omitted.
     supabase.from('daily_logs')
@@ -177,6 +180,9 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     supps: (supps.data ?? []) as Array<{ date: string; item_key: string }>,
     // doms_logs may not be migrated yet — an error just means no soreness rows.
     doms: (doms.error ? [] : (doms.data ?? [])) as Array<{ date: string; muscle_group: string; severity: number }>,
+    // Same courtesy as doms_logs: an un-migrated table means no readings, not a
+    // failed export.
+    fatigue: (fatigue.error ? [] : (fatigue.data ?? [])) as Array<{ date: string; slot: string; level: number }>,
     bodyComp: (bodyComp.error ? [] : (bodyComp.data ?? [])) as Array<Record<string, number | string | null>>,
     bodyLedger: (bodyLedger.error ? [] : (bodyLedger.data ?? [])) as Array<Record<string, number | string | null>>,
     // cardio_logs may not be migrated yet — an error just means no walks.
@@ -415,6 +421,12 @@ function toSessions(d: RangeData): ExportSession[] {
           const w = repWindowFor(r.exercises.name, s.day_key)
           return w ? `${w.floor}–${w.ceiling}` : null
         })(),
+        // Rest is a target, and the override that changes it lives in
+        // localStorage — never in the database. This hook runs client-side, so
+        // it can read both without a column or a migration. The export prints
+        // the pair only when they disagree.
+        restTargetSec: restTargetFor(r.exercises.name, s.day_key),
+        restPlanSec: programRestSec(r.exercises.name, s.day_key),
       }
       e.sets.push({
         weightKg: r.weight_kg, reps: r.reps,
@@ -683,6 +695,26 @@ export function weekPayload(
     .map((r) => ({ date: r.date, muscle: r.muscle_group, severity: r.severity }))
     .sort((a, b) => a.date.localeCompare(b.date) || a.muscle.localeCompare(b.muscle))
 
+  // Sorted by date, then by SLOT ORDER rather than alphabetically — "eod,
+  // evening, morning, noon" is the order a string sort gives and the reverse of
+  // the day it describes.
+  // `?? []` because a caller may predate the field — the ten export-payload
+  // fixtures do, and a payload builder that throws on an absent optional array
+  // is more fragile than the data it is defending against.
+  const fatigue: ExportFatigue[] = (range.fatigue ?? [])
+    .filter((r) => (FATIGUE_SLOTS as readonly string[]).includes(r.slot))
+    // Sorted on the KEY before the label is applied. Sorting the rendered label
+    // gives "End of day, Evening, Morning, Noon" — alphabetical, and very nearly
+    // the reverse of the day it describes.
+    .sort((a, b) => a.date.localeCompare(b.date)
+      || FATIGUE_SLOTS.indexOf(a.slot as FatigueSlot) - FATIGUE_SLOTS.indexOf(b.slot as FatigueSlot))
+    .map((r) => ({
+      date: r.date,
+      slot: SLOT_LABEL[r.slot as FatigueSlot],
+      level: r.level,
+      label: fatigueLevel(r.level)?.label ?? String(r.level),
+    }))
+
   return {
     weekStart, weekEnd: isoAddDays(weekStart, 6),
     // The SAME counter the dashboard badge and the Momentum timeline use —
@@ -722,7 +754,7 @@ export function weekPayload(
         steps: goals?.steps_goal ?? null,
       },
     ),
-    days, sessions, volumeByMuscle, doms,
+    days, sessions, volumeByMuscle, doms, fatigue,
     tonnageByMuscle: weeklyTonnageByMuscle(tonnageRows(range.sets))
       .map((t) => ({ muscle: t.muscle, volumeKg: t.volumeKg })),
     bodyComp: toBodyComp(range),

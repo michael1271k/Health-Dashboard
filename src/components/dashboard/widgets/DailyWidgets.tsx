@@ -9,6 +9,9 @@ import { activeKcalOf, distanceKm, formatPace, paceMinPerKm } from '@/lib/cardio
 import { tapLight, tapSuccess } from '@/lib/native/haptics'
 import { formatSleep } from '@/lib/utils/format'
 import { logicalTodayISO } from '@/lib/utils/day'
+import {
+  FATIGUE_SLOTS, SLOT_LABEL, fatigueLevel, latestFatigue, useFatigue, type FatigueDay,
+} from '@/lib/hooks/useFatigue'
 import { WIDGET_META, type WidgetSize } from '@/lib/dashboard/layout'
 import { SLEEP, AMETHYST, PLATINUM, STEEL, EMERALD, GOLD, OXIDE, SAPPHIRE, MUTED } from '@/lib/theme/palette'
 import type { Tables } from '@/lib/supabase/types'
@@ -731,3 +734,103 @@ export function StackWidget({ size, onOpen, slots, taken, nowMinutes }: {
 }
 
 export { Trend }
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * FATIGUE
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * How today has gone, four times over.
+ *
+ * ── THE HERO IS THE LATEST SLOT, NOT THE MEAN ────────────────────────────────
+ * A mean of "Fresh at 7am, Empty at 9pm" is "Worn" — a reading that describes
+ * neither moment and was true at no point in the day. The figure that stands
+ * for a day is where the day ended up, and the four dots beside it carry the
+ * shape the single word cannot.
+ *
+ * ── AND IT IS NEVER GRADED ───────────────────────────────────────────────────
+ * No target, no percentage, no colour that means "bad". Heavy is not a failure,
+ * it is Thursday of a cut — and a tile that scolded you for it would teach you
+ * to stop logging honestly, which costs the whole record. The colours are the
+ * scale's own, running emerald → oxide because that is the direction fatigue
+ * runs, not because the far end is a verdict.
+ */
+export function FatigueWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () => void }) {
+  const today = logicalTodayISO()
+  const { data: day } = useFatigue(today)
+  const readings = useMemo(() => day ?? {}, [day])
+  const latest = latestFatigue(readings)
+  const level = latest ? fatigueLevel(latest.level) : null
+  const logged = FATIGUE_SLOTS.filter((s) => readings[s] != null).length
+
+  return (
+    <WidgetFrame {...WIDGET_META.fatigue} size={size} onOpen={onOpen}>
+      {!level ? (
+        <WidgetEmpty accent={AMETHYST} size={size} message="Nothing logged today"
+          hint="Morning, noon, evening, end of day" />
+      ) : size === 's' ? (
+        <span className="flex-1 min-h-0 flex flex-col justify-end gap-1">
+          <span className="helix-num font-bold text-fluid-lg leading-none" style={{ color: level.color }}>
+            {level.label}
+          </span>
+          <span className="text-[9px] text-muted truncate">
+            {SLOT_LABEL[latest!.slot].toLowerCase()} · {logged}/4
+          </span>
+          <SlotDots readings={readings} />
+        </span>
+      ) : (
+        <span className="flex-1 min-h-0 flex flex-col gap-1.5">
+          <span className="flex items-baseline gap-2 min-w-0">
+            <span className="helix-num font-bold text-fluid-xl leading-none" style={{ color: level.color }}>
+              {level.label}
+            </span>
+            <span className="text-[9px] text-muted ml-auto shrink-0 uppercase tracking-[0.1em]">
+              {logged} of 4 logged
+            </span>
+          </span>
+          {/* Every slot named, because at medium the QUESTION is how the day
+              moved — and a row of dots cannot say which one is the evening. */}
+          <span className="grid grid-cols-4 gap-1.5">
+            {FATIGUE_SLOTS.map((s) => {
+              const l = fatigueLevel(readings[s])
+              return (
+                <span key={s} className="min-w-0 flex flex-col gap-0.5">
+                  <span className="text-[8px] font-bold uppercase tracking-[0.08em] text-muted truncate">
+                    {SLOT_LABEL[s]}
+                  </span>
+                  <span className="text-[11px] font-bold leading-none truncate"
+                    style={{ color: l?.color ?? MUTED }}>
+                    {l?.label ?? '—'}
+                  </span>
+                </span>
+              )
+            })}
+          </span>
+          <span className="block mt-auto">
+            <span className="text-[8px] font-bold uppercase tracking-[0.1em] text-muted">Today</span>
+            <span className="block mt-1"><SlotDots readings={readings} big /></span>
+          </span>
+        </span>
+      )}
+    </WidgetFrame>
+  )
+}
+
+/** One dot per slot, in its own level. Unlogged is a hollow ring, not a gap, so
+ *  the row keeps its width as the day fills in. */
+function SlotDots({ readings, big = false }: { readings: FatigueDay; big?: boolean }) {
+  const d = big ? 8 : 6
+  return (
+    <span className="flex items-center gap-1" aria-hidden="true">
+      {FATIGUE_SLOTS.map((s) => {
+        const l = fatigueLevel(readings[s])
+        return (
+          <span key={s} className="rounded-full shrink-0"
+            style={l
+              ? { width: d, height: d, background: l.color }
+              : { width: d, height: d, border: '1px solid rgba(255,255,255,0.22)' }} />
+        )
+      })}
+    </span>
+  )
+}

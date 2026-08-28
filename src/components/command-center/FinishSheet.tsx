@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { Check, Loader2, Timer, HeartPulse, Flame, Layers, Dumbbell } from 'lucide-react'
 import { Sheet } from '@/components/ui/Sheet'
-import { EffortScale } from '@/components/ui/EffortScale'
 import { isSetCommitted, type SessionDraft } from '@/lib/sessions/draft'
 import { deriveSessionRpe } from '@/lib/training/rpeMemory'
+import { EFFORT_WORDS, cr10Color, effortWordFor, suggestEffortWord } from '@/lib/training/effort'
+import { useEffortBaseline } from '@/lib/hooks/useEffortBaseline'
 import { fmtVolume } from '@/lib/utils/units'
 import { parseDurationMin } from '@/lib/utils/duration'
 import { useSessionMetricsSeed } from '@/lib/hooks/useSessionMetricsSeed'
@@ -128,6 +129,11 @@ export function FinishSheet({ open, onClose, draft, totals, busy, error, elapsed
     .filter((e) => e.kind !== 'cardio')
     .flatMap((e) => e.sets.filter(isSetCommitted))
   const derivedRpe = deriveSessionRpe(committed)
+  // What this day type usually costs — the same quantity, so the comparison is
+  // like with like. See `useEffortBaseline` for why it is not `session_rpe`.
+  const { data: baseline } = useEffortBaseline(draft.dayKey)
+  const suggested = suggestEffortWord(derivedRpe, baseline ?? [])
+  const picked = effortWordFor(draft.sessionRpe) ?? suggested
 
   return (
     <Sheet open={open} onClose={onClose} title={isEdit ? 'Save edits' : 'Finish session'} accent={EMBER}>
@@ -170,15 +176,65 @@ export function FinishSheet({ open, onClose, draft, totals, busy, error, elapsed
 
         {totals.sets > 0 && (
           <div>
+            {/* ── OVERALL EFFORT, IN WORDS ─────────────────────────────────────
+                This was a 10-pip numeric scale under the line "proposed 9.5
+                from your per-set ratings". Two things were wrong with it.
+
+                The proposal was a volume-weighted mean of per-set RPE, and
+                per-set RPE is reps-in-reserve — it clusters at 8.5–9.5 on any
+                hypertrophy block. So it proposed ~8.9 against an answer that
+                has never once exceeded 8, every session, and `battery.ts` reads
+                the result as `sessionRpe / 10`, making the over-proposal a
+                measurably larger drain.
+
+                And the control could not express its own suggestion: it built
+                ten INTEGER steps, so a proposed 9.5 was displayed and could not
+                be picked. Five words have no such gap, and nobody reads "Hard"
+                and asks why it is not 8.9. The chosen word still writes a
+                number to `session_rpe`, so every existing reader is untouched. */}
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted mb-2">
               Overall effort
-              {derivedRpe != null && draft.sessionRpe == null && (
+              {suggested && draft.sessionRpe == null && (
                 <span className="ml-2 font-normal tracking-normal normal-case text-muted/70">
-                  proposed {derivedRpe} from your per-set ratings
+                  suggested from your recent {draft.title ?? 'sessions'}
                 </span>
               )}
             </p>
-            <EffortScale value={draft.sessionRpe ?? derivedRpe} onChange={onSessionRpe} compact />
+            <div role="radiogroup" aria-label="Overall session effort" className="grid grid-cols-5 gap-1">
+              {EFFORT_WORDS.map((w) => {
+                const on = picked?.key === w.key
+                const chosen = effortWordFor(draft.sessionRpe)?.key === w.key
+                return (
+                  <button
+                    key={w.key}
+                    type="button"
+                    role="radio"
+                    aria-checked={on}
+                    title={w.hint}
+                    // Tapping the chosen one clears it back to the suggestion.
+                    onClick={() => onSessionRpe(chosen ? null : w.cr10)}
+                    className="min-h-[52px] rounded-xl px-1 flex items-center justify-center
+                               active:scale-95 transition-transform"
+                    style={{
+                      background: on ? `${cr10Color(w.cr10)}24` : 'rgba(255,255,255,0.03)',
+                      border: `1px solid ${on ? `${cr10Color(w.cr10)}8c` : 'rgba(255,255,255,0.08)'}`,
+                      color: on ? cr10Color(w.cr10) : undefined,
+                      // The suggestion is shown selected but dimmed until you
+                      // confirm it, so "what the app thinks" and "what you said"
+                      // are never the same mark.
+                      opacity: on && !chosen ? 0.7 : 1,
+                    }}
+                  >
+                    <span className={`text-[11px] font-bold leading-tight text-center ${on ? '' : 'text-muted'}`}>
+                      {w.label}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+            <p className="text-[10px] text-muted/70 mt-1.5 min-h-[12px]">
+              {picked ? picked.hint : 'Rate the session, or leave it unrated.'}
+            </p>
           </div>
         )}
 
