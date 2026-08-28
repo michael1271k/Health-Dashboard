@@ -152,23 +152,26 @@ export default function NutritionPage() {
         <p className="text-muted text-fluid-sm mt-0.5">Macro rings · daily fuel cells · auto-tagged phase</p>
       </div>
 
-      {/* ── HYDRATION, DOCKED ──
-          One line, above the rings. It was a 200px DNA helix two thirds of the
-          way down the page — see `WaterBar` for why a single ratio does not
-          earn the largest element on a page about macros, and why the number is
-          wanted before lunch rather than after four cards of scrolling. */}
-      <WaterBar
-        ml={dailyLog?.water_ml ?? null}
-        goalMl={userGoals?.water_goal_ml ?? 3000}
-        onEdit={() => setWaterEdit(true)}
-      />
-
       {/* Compact fuel hero — calories card + macro card + 7-day phase cells */}
       <MacroCards
         today={todayLog ? { calories: todayLog.calories, proteinG: todayLog.proteinG, carbsG: todayLog.carbsG, fatG: todayLog.fatG } : null}
         logs={logs ?? []}
         goals={{ calorie: goals.calorie, protein: goals.protein, carbs: goals.carbs, fat: goals.fat }}
         date={todayISO}
+      />
+
+      {/* ── HYDRATION, UNDER THE MACROS ──
+          One line, directly beneath the bars it belongs with. It used to sit
+          ABOVE the rings, so the first thing a page about eating showed you was
+          how much you had drunk — and the calorie figure, which is the reason
+          the page is opened, started below the fold on a phone.
+          Still one line, not the 200px DNA helix it was before that: a single
+          ratio does not earn the largest element on a page about macros. See
+          `WaterBar`. */}
+      <WaterBar
+        ml={dailyLog?.water_ml ?? null}
+        goalMl={userGoals?.water_goal_ml ?? 3000}
+        onEdit={() => setWaterEdit(true)}
       />
 
       {/* A day allowed to miss its target — declared, never inferred. Sits under

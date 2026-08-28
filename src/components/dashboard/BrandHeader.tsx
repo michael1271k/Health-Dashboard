@@ -1,9 +1,6 @@
 'use client'
 
-import { memo, useEffect, useState } from 'react'
 import { PlanPhaseTags } from '@/components/PlanPhaseTags'
-import { useLastUpdated } from '@/lib/hooks/useDashboard'
-import { useMyProfile } from '@/lib/hooks/useMyProfile'
 
 /*
  * `programDay()` lived here and is GONE.
@@ -22,107 +19,39 @@ import { useMyProfile } from '@/lib/hooks/useMyProfile'
  */
 
 /**
- * Ticking clock (client-only to avoid hydration mismatch).
+ * The dashboard's title: the wordmark, and where you are in the plan.
  *
- * Pauses while the tab is hidden — a backgrounded PWA has no reason to keep
- * scheduling work, and it resyncs immediately on return.
- */
-function useClock(intervalMs: number) {
-  const [now, setNow] = useState<Date | null>(null)
-  useEffect(() => {
-    let id: ReturnType<typeof setInterval> | null = null
-    const stop = () => { if (id) { clearInterval(id); id = null } }
-    const start = () => {
-      stop()
-      setNow(new Date())
-      id = setInterval(() => setNow(new Date()), intervalMs)
-    }
-    const onVisibility = () => (document.visibilityState === 'visible' ? start() : stop())
-    start()
-    document.addEventListener('visibilitychange', onVisibility)
-    return () => { stop(); document.removeEventListener('visibilitychange', onVisibility) }
-  }, [intervalMs])
-  return now
-}
-
-/**
- * The seconds hand, isolated.
+ * ── WHAT CAME BACK, AND WHAT DID NOT ─────────────────────────────────────────
+ * This header was deleted wholesale in `3a42351` and the component left
+ * orphaned. Two of the things it carried are genuinely wanted at the top of the
+ * screen — the HELIX wordmark and the plan/phase tags — so those return.
  *
- * This used to live in `BrandHeader`, which meant the whole header — profile
- * query, plan/phase tags, greeting, brand line — re-rendered once per second
- * for as long as the dashboard was open. Only this span changes that often, so
- * only this span subscribes to a 1Hz tick.
- */
-const LiveTime = memo(function LiveTime() {
-  const now = useClock(1000)
-  if (!now) return null
-  return (
-    <> · <span className="helix-num text-text/80">
-      {new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(now)}
-    </span></>
-  )
-})
-
-/** Time-of-day greeting from the device-local hour. */
-function greetingFor(now: Date): string {
-  const h = now.getHours()
-  if (h < 12) return 'Good morning'
-  if (h < 18) return 'Good afternoon'
-  return 'Good evening'
-}
-
-/**
- * HELIX header — one clean brand line (mark optically centered with the cap
- * height) + a live device-local date/clock line and a 24h "Updated" stamp.
- * No hardcoded timezone: everything renders in the user's actual local time.
+ * Three do not, and they are the three that commit was right about:
+ *
+ *   · a live clock, six pixels below the one in the status bar
+ *   · a "Good evening, Michael" greeting, on a single-user app
+ *   · an "Updated HH:MM" stamp, which needed its own query to say a thing that
+ *     changes nothing about what you would do next
+ *
+ * Between them they cost a `useMyProfile` query, a `useLastUpdated` query and a
+ * 1 Hz interval, at the top of a screen whose entire job is the widget grid
+ * directly beneath. What is left is static, queryless, and one line tall:
+ * `PlanPhaseTags` does its own data fetching and already renders in the
+ * Pathfinder header, so this adds no request the app was not already making.
+ *
+ * The band is deliberately NOT a `<header>` landmark. The dashboard's heading
+ * is this h1; a landmark wrapping one heading and one chip row adds a stop for
+ * a screen reader without adding a region worth navigating to.
  */
 export function BrandHeader() {
-  // Minute resolution: everything here derives from the DATE and the HOUR.
-  const now = useClock(60_000)
-  const { data: lastUpdated } = useLastUpdated()
-  const { data: profile } = useMyProfile()
-
-  const firstName = profile?.firstName ?? null
-  const greeting = now ? greetingFor(now) : ''
-  const dateStr = now ? new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }).format(now) : ''
-  const lu = lastUpdated ? new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(lastUpdated)) : null
-
   return (
-    <header className="space-y-2">
-      {/* Dedicated device-local date + live clock line */}
-      <div className="flex items-center justify-between gap-3 text-fluid-xs min-h-[16px]">
-        <span className="text-muted tracking-wide">
-          {dateStr}<LiveTime />
-        </span>
-        {lu && (
-          <span className="text-muted/70 flex items-center gap-1 shrink-0">
-            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" aria-hidden="true" />
-            Updated <span className="helix-num">{lu}</span>
-          </span>
-        )}
-      </div>
-
-      {/* Dynamic time-of-day greeting (device-local). Name is the first token of
-          the signed-in user's profile display_name. */}
-      {greeting && firstName && (
-        <p className="text-fluid-sm text-muted">
-          {greeting}, <span className="text-text font-semibold">{firstName}</span>
-        </p>
-      )}
-
-      {/* Brand line — the HELIX wordmark anchors the FAR LEFT; the data-driven
-          plan + phase tags sit flush against the FAR RIGHT, so the eye reads
-          identity → context across the full width instead of a left-huddled
-          cluster. Cut/Bulk/Maint colours are standardized globally (PHASE_COLORS).
-          `items-baseline` hangs the chips off the wordmark's baseline; the tags
-          get a hairline top rule on desktop so they read as a considered
-          right-hand block rather than floating pills. */}
-      <div className="flex items-baseline justify-between gap-3">
-        <h1 className="text-fluid-3xl leading-none shrink-0">
-          <span className="helix-wordmark font-heading font-extrabold tracking-[0.22em] leading-none">HELIX</span>
-        </h1>
-        <PlanPhaseTags />
-      </div>
-    </header>
+    /* `items-baseline`, so the chips hang off the wordmark's baseline rather
+       than centring against a 3xl cap height and floating high. */
+    <div className="flex items-baseline justify-between gap-3 flex-wrap">
+      <h1 className="text-fluid-3xl leading-none shrink-0">
+        <span className="helix-wordmark font-heading font-extrabold tracking-[0.22em] leading-none">HELIX</span>
+      </h1>
+      <PlanPhaseTags />
+    </div>
   )
 }

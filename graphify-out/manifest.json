@@ -360,8 +360,8 @@
     "semantic_hash": ""
   },
   "src/components/dashboard/BrandHeader.tsx": {
-    "mtime": 1787560152.3062842,
-    "ast_hash": "7d06d9adfb204ab801c30d4eb1ae084f",
+    "mtime": 1787903658.775352,
+    "ast_hash": "d90e2d37ab9b4f9781400f6860aac7ec",
     "semantic_hash": ""
   },
   "src/components/dashboard/InsightCoach.tsx": {
@@ -2480,7 +2480,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/set-rows.html": {
-    "mtime": 1787902191.8312979,
+    "mtime": 1787902247.5514772,
     "ast_hash": "6b7c9d27eff50c2ff3702f41ab16f90a",
     "semantic_hash": ""
   },
@@ -2510,7 +2510,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-ledger.html": {
-    "mtime": 1787902189.7633212,
+    "mtime": 1787902246.6986327,
     "ast_hash": "3ddb93aca7b5901708c403bfb41afc10",
     "semantic_hash": ""
   },
@@ -2545,7 +2545,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/live-header.html": {
-    "mtime": 1787902189.5407646,
+    "mtime": 1787902245.5073547,
     "ast_hash": "1922065e3007c80d486fcfb5d6f4ea9c",
     "semantic_hash": ""
   },
@@ -2615,7 +2615,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-summary-header.html": {
-    "mtime": 1787902190.9421175,
+    "mtime": 1787902246.8680425,
     "ast_hash": "b3d75865c62fb30c5cc668930a4b7642",
     "semantic_hash": ""
   },

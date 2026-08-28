@@ -22,6 +22,7 @@ import {
 } from '@/components/dashboard/widgets/TrainingWidgets'
 import type { WidgetId, WidgetSize } from '@/lib/dashboard/layout'
 import { MacroCards } from '@/components/nutrition/MacroCards'
+import { BrandHeader } from '@/components/dashboard/BrandHeader'
 import { Surface } from '@/components/ui/Zone'
 import { InsightCoach } from '@/components/dashboard/InsightCoach'
 import { AnimatedCard } from '@/components/dashboard/AnimatedBento'
@@ -541,30 +542,27 @@ export default function DashboardPage() {
        edges — true edge-to-edge on a phone — while `measure="grid"` keeps the
        CONTENT on the same 80rem column the old `max-w-7xl` gave a desktop. */
     <div className="pb-4">
-      {/* ── THE DASHBOARD IS THE GRID ──────────────────────────────────────────
-          Two fixed bands used to stand above it. The first was the brand header
-          — wordmark, greeting, live clock, plan/phase chips, an "Updated" stamp
-          — and the second was the Readiness hero: a ~300px orb with a driver
-          panel beside it that only rendered at `md` and up, i.e. never on the
-          phone this app is used on.
+      {/* ── THE TITLE, AND THEN THE GRID ───────────────────────────────────────
+          Two fixed bands used to stand above the grid. The second was the
+          Readiness hero — a ~300px orb with a driver panel that only rendered at
+          `md` and up, i.e. never on the phone this app is used on — and it is
+          gone for good: it is `RecoveryWidget` now, the first entry in the
+          catalogue and the only one that opens at LARGE, where its four drivers
+          finally fit on a phone.
 
-          Between them they took the whole of a 390×844 first screen. Nothing in
-          either was actionable: the greeting and the clock are on the status bar
-          six pixels above them, the plan chips restate a setting, and the orb's
-          own drivers were invisible at that width.
+          The first was the brand header, and deleting ALL of it went too far.
+          A screen with no title is not minimal, it is unlabelled — and the
+          plan/phase chips are the one piece of context on this screen that the
+          widgets underneath deliberately never restate. Both are back, in a
+          one-line band that makes no queries of its own.
 
-          The grid starts at the top now, and both survive as things you can
-          arrange:
+          What stayed deleted is the part that earned deletion: the live clock
+          six pixels under the system one, the greeting on a single-user app,
+          and an "Updated HH:MM" stamp with a query behind it. See BrandHeader. */}
+      <Surface measure="grid" pad="snug" variant="band">
+        <BrandHeader />
+      </Surface>
 
-            · Readiness is `RecoveryWidget` — the same orb, the first entry in
-              the catalogue, the only one that opens at LARGE, and its large face
-              finally shows the four drivers on a phone.
-            · Plan and phase are `PlanPhaseTags`, which still renders wherever a
-              reader needs them stated rather than shown.
-
-          What is genuinely gone is the wordmark and the clock, which is the
-          right thing to lose: an app does not need to tell you which app it is,
-          and a phone already knows the time. */}
       {/* Week-complete CTA — the FINAL day of the week, once every training day
           the plan asked for is logged. Renders nothing on every other day, so it
           needs no reserved height. Moved here from the Workout tab: the day it

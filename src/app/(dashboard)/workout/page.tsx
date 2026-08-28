@@ -86,12 +86,21 @@ export default function WorkoutPage() {
 
   return (
     <div data-boxed className="space-y-6">
-      {/* Header */}
-      <div className="flex items-end justify-between gap-3">
-        <div>
-          <h1 className="font-heading text-fluid-2xl font-bold text-text">Workout</h1>
-          <p className="text-muted text-fluid-sm mt-0.5">Active program · progressive-overload memory · tap a day to log</p>
-        </div>
+      {/* ── HEADER ──
+          Not a two-column `justify-between` row any more. It became one when a
+          plan chip lived on the right; that chip was deleted (see the tombstone
+          further down) and the flex row stayed, so the layout was still
+          reserving a column for something that no longer existed.
+
+          The subtitle lost its middle clause. "Active program ·
+          progressive-overload memory · tap a day to log" is three clauses and
+          wrapped to two lines on a phone, and the one that wrapped described an
+          implementation detail — the memory is a thing the app does, not a
+          thing you do on this screen. Two clauses fit one line: what this is,
+          and what to do with it. */}
+      <div>
+        <h1 className="font-heading text-fluid-2xl font-bold text-text">Workout</h1>
+        <p className="text-muted text-fluid-sm mt-0.5">Active program · tap a day to log</p>
       </div>
 
       {/* ── THE PLAN IS THE FIRST THING ON THE PAGE ──
@@ -109,7 +118,11 @@ export default function WorkoutPage() {
           Every cell resolves through `scheduleDayFor`, so per-date overrides,
           the permanent layout and the era are already correct. */}
       <div className="space-y-2">
-        <h2 className="font-heading text-fluid-lg font-bold text-text">Plan</h2>
+        {/* "This Week", not "Plan". The heading sits directly on top of a
+            seven-day row of the CURRENT week — "Plan" named the abstraction
+            behind it rather than the thing being shown, and the page already
+            says "Active program" one heading above. */}
+        <h2 className="font-heading text-fluid-lg font-bold text-text">This Week</h2>
         <WeekScheduler />
       </div>
 
