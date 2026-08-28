@@ -920,8 +920,8 @@
     "semantic_hash": ""
   },
   "src/lib/sessions/draft.ts": {
-    "mtime": 1787923357.4164784,
-    "ast_hash": "fd8551f73cdd3932a0628aca3d86250f",
+    "mtime": 1787925442.2024128,
+    "ast_hash": "fec3c4db59ea0ef6a4ecbb420f694e56",
     "semantic_hash": ""
   },
   "src/lib/sessions/resolveExercises.ts": {
@@ -2475,7 +2475,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/set-rows.html": {
-    "mtime": 1787925018.046101,
+    "mtime": 1787925328.0788531,
     "ast_hash": "4337ad6af8491d18f2242f7a5d77be6f",
     "semantic_hash": ""
   },
@@ -2505,7 +2505,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-ledger.html": {
-    "mtime": 1787925016.9208493,
+    "mtime": 1787925326.9913816,
     "ast_hash": "3ddb93aca7b5901708c403bfb41afc10",
     "semantic_hash": ""
   },
@@ -2540,7 +2540,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/live-header.html": {
-    "mtime": 1787925015.6109478,
+    "mtime": 1787925326.4317791,
     "ast_hash": "1922065e3007c80d486fcfb5d6f4ea9c",
     "semantic_hash": ""
   },
@@ -2610,7 +2610,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-summary-header.html": {
-    "mtime": 1787925017.0958033,
+    "mtime": 1787925327.6594353,
     "ast_hash": "b3d75865c62fb30c5cc668930a4b7642",
     "semantic_hash": ""
   },
@@ -3002,6 +3002,21 @@
   "src/components/dashboard/CardioSheet.tsx": {
     "mtime": 1787924668.641953,
     "ast_hash": "848314afc925b56438b93aa49303b4be",
+    "semantic_hash": ""
+  },
+  "src/tests/session-pause.test.ts": {
+    "mtime": 1787925475.159924,
+    "ast_hash": "4082e2275c0ce3e6999e56f2531f0b11",
+    "semantic_hash": ""
+  },
+  "src/tests/pair-asymmetry.test.ts": {
+    "mtime": 1787925519.6694798,
+    "ast_hash": "09c9f976b5ee73b6e30db026c9f09cd1",
+    "semantic_hash": ""
+  },
+  "src/tests/duration-freeze.test.tsx": {
+    "mtime": 1787925570.1375744,
+    "ast_hash": "eec5ec0be94a572e794cb3c5cf7be144",
     "semantic_hash": ""
   }
 }

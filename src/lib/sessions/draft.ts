@@ -10,6 +10,7 @@ import { sessionVolumeKg } from '@/lib/sessions/volume'
 import { isSetQuality } from '@/lib/training/setTags'
 import { resolveSeededRpe } from '@/lib/training/rpeMemory'
 import { activeProgram } from '@/lib/programs'
+import { pausedMsAt } from '@/lib/sessions/sessionElapsed'
 
 export interface DraftSet {
   weightKg: number
@@ -575,11 +576,28 @@ export function buildCommitPayload(draft: SessionDraft): SaveWorkoutInput {
     order += 1
   })
 
-  // endedAt derives from startedAt + duration. Passing wall-clock "now" here
-  // would blow duration_min up into DAYS whenever a session is logged after
-  // the fact (the date picker exists precisely for that).
+  /**
+   * ── endedAt IS WALL CLOCK; duration_min IS WORK ────────────────────────────
+   * It derives from `startedAt` + duration rather than from "now", because
+   * passing wall-clock now would blow `duration_min` up into DAYS whenever a
+   * session is logged after the fact — the date picker exists precisely for
+   * that.
+   *
+   * The PAUSE has to be added back on. `duration_min` is the time the workout
+   * was RUNNING (`sessionActiveSec` subtracts every paused second, which is the
+   * whole point of the pause), so a session paused for twenty minutes would
+   * otherwise be recorded as having ended twenty minutes before it did. The two
+   * columns answer different questions — "how long did you train" and "when did
+   * you walk out" — and only the first one is allowed to ignore the pause.
+   *
+   * Zero for every draft that was never paused, and for every back-dated or
+   * edited deck, so nothing outside a live paused session changes.
+   */
   const durationMin = draft.stats?.duration_min ?? 60
-  const endedAt = new Date(new Date(draft.startedAt).getTime() + durationMin * 60_000).toISOString()
+  const pausedMin = Math.round(pausedMsAt(draft, Date.now()) / 60_000)
+  const endedAt = new Date(
+    new Date(draft.startedAt).getTime() + (durationMin + pausedMin) * 60_000,
+  ).toISOString()
 
   return {
     splitDay: draft.splitDay,
