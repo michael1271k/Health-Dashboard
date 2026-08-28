@@ -54,3 +54,26 @@ export function hoursAwakeToday(wakeHour = 7): number {
   const h = new Date().getHours()
   return Math.max(0, Math.min(18, h - wakeHour))
 }
+
+/**
+ * When a session actually began — "28 Aug 2026, 12:36 pm".
+ *
+ * ── ONE SPELLING, THREE SURFACES ─────────────────────────────────────────────
+ * The live deck's Duration sheet, the post-workout summary and the deep-dive
+ * header all state the same instant, and a start time that reads differently
+ * depending on which screen you met it on is the same class of drift the metric
+ * cells were pulled into `MetricGrid` to stop. `en-GB` with `hour12` because
+ * that is how the rest of the app prints a clock time.
+ *
+ * Empty string (never a fake time) for an unparseable or absent timestamp: the
+ * callers render nothing at all rather than a row saying "—".
+ */
+export function startTimeLabel(iso: string | null | undefined): string {
+  if (!iso) return ''
+  const t = Date.parse(iso)
+  if (!Number.isFinite(t)) return ''
+  return new Date(t).toLocaleString('en-GB', {
+    day: 'numeric', month: 'short', year: 'numeric',
+    hour: 'numeric', minute: '2-digit', hour12: true,
+  })
+}

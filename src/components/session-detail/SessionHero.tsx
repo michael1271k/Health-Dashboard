@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Pencil, Trash2, Loader2 } from 'lucide-react'
+import { Clock3, Pencil, Trash2, Loader2 } from 'lucide-react'
 import type { SessionDetail } from '@/lib/hooks/useSessionDetail'
 import { useEditSession } from '@/lib/hooks/useEditSession'
 import { useDeleteSession } from '@/lib/hooks/useDayVault'
@@ -13,6 +13,7 @@ import { blurOnTap } from '@/lib/utils/blurOnTap'
 import { Surface } from '@/components/ui/Zone'
 import { Head, Sub } from '@/components/session-detail/MetricGrid'
 import { setComposition } from '@/lib/training/setTags'
+import { startTimeLabel } from '@/lib/utils/day'
 
 /*
  * This file used to open with six local constants, four of which named a colour
@@ -77,6 +78,10 @@ export function SessionHero({ detail }: { detail: SessionDetail }) {
   // only the ACCENT is still read here, to tint the band's rule and border.
   const accent = dayColor(detail.dayKey, detail.splitDay)
   const unit = weightUnit()
+
+  // When the session began, in the same words the live deck's Duration sheet
+  // uses. Empty string when the timestamp is unparseable.
+  const startedAt = startTimeLabel(detail.startedAt)
 
   /**
    * ── THE SET COMPOSITION, AS CHIPS ────────────────────────────────────────
@@ -165,6 +170,21 @@ export function SessionHero({ detail }: { detail: SessionDetail }) {
         {/* Calories take the app-wide calorie hue, not the record hue. */}
         <Sub label="Calories" value={detail.calories != null ? `${detail.calories}` : null} unit="kcal" color={MACRO.calories} estimated={detail.caloriesEstimated} />
       </div>
+
+      {/* ── THE TIME OF DAY, WHICH THE DATE ALONE NEVER SAID ──
+          `SessionTitle` prints the date above; the grids print how long and how
+          much. When it began was recorded on every session and rendered on
+          none, and it is the fact that separates a 7am session from an 8pm one
+          — which is most of why a duration or an average HR reads the way it
+          does. Same words as the live deck's Duration sheet, through
+          `startTimeLabel`. */}
+      {startedAt && (
+        <p className="flex items-center gap-1.5 pt-2.5 border-t border-white/[0.06] text-fluid-xs text-muted">
+          <Clock3 className="w-3 h-3 shrink-0" aria-hidden="true" />
+          <span className="text-[10px] font-bold uppercase tracking-[0.14em]">Start Time</span>
+          <span className="helix-num tabular-nums ml-auto text-text">{startedAt}</span>
+        </p>
+      )}
 
       {confirm ? (
         <div className="flex items-center gap-2 flex-wrap pt-1">

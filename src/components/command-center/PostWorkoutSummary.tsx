@@ -14,7 +14,7 @@ import type { GymReportRow } from '@/lib/hooks/useWeekly'
  */
 function toReportRow(s: WeekSessionRow): GymReportRow {
   return {
-    id: s.id, date: s.date, split: s.splitDay, reportMd: '',
+    id: s.id, date: s.date, startedAt: s.startedAt, split: s.splitDay, reportMd: '',
     durationMin: s.durationMin, avgBpm: s.avgBpm, volumeKg: s.volumeKg,
     setCount: s.setCount, prCount: s.prCount, dayKey: s.dayKey, calories: s.calories,
   }

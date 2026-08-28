@@ -18,6 +18,9 @@ export interface GymReportRow {
   prCount: number | null
   dayKey?: string | null
   calories?: number | null
+  /** Full `started_at`. Optional: the callers that build this row from a
+   *  markdown report have a date and no clock. */
+  startedAt?: string
 }
 
 /** Gym session reports (workout_sessions that have an AI-generated report). */
@@ -39,7 +42,7 @@ export function useGymReports(limit = 30) {
       }>)
         .filter((r) => r.report_md)
         .map((r) => ({
-          id: r.id, date: r.started_at.slice(0, 10), split: r.split_day, reportMd: r.report_md as string,
+          id: r.id, date: r.started_at.slice(0, 10), startedAt: r.started_at, split: r.split_day, reportMd: r.report_md as string,
           durationMin: r.duration_min, avgBpm: r.avg_bpm, volumeKg: r.total_volume_kg,
           setCount: r.set_count, prCount: r.pr_count,
         }))

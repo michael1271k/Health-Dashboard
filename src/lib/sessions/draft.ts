@@ -146,6 +146,22 @@ export interface SessionDraft {
    */
   notes: string
   startedAt: string             // ISO
+  /**
+   * ── THE DURATION HAS BEEN TYPED, SO STOP DERIVING IT ───────────────────────
+   * The finish sheet fills Duration from the session clock. It must be able to
+   * do that EVERY time the sheet opens and once more at commit — otherwise
+   * opening the sheet at 42 minutes to look at it froze the number, and the
+   * session that actually ran 70 was stored as 42 (2026-08-28).
+   *
+   * Overwriting on every open is only safe if a number you typed is
+   * distinguishable from a number the clock wrote, which is what this flag is.
+   * Set by `setStats`, never by the clock's own writer.
+   */
+  durationEdited?: boolean
+  /** Banked milliseconds from completed pauses — see `SessionPause`. */
+  pausedMs?: number
+  /** ISO start of the pause in progress, null/absent while running. */
+  pausedAt?: string | null
   exercises: DraftExercise[]
 }
 
@@ -204,6 +220,32 @@ export function isPairCompactable(l?: DraftSet, r?: DraftSet): boolean {
   if (!isSetCommitted(l) || !isSetCommitted(r)) return false
   if ((l.setType ?? 'normal') !== (r.setType ?? 'normal')) return false
   return l.weightKg === r.weightKg && l.reps === r.reps
+}
+
+/**
+ * A pair's imbalance, by the work each side actually did.
+ *
+ * ── IT USED TO BE BLIND ON HALF THE MOVEMENTS IT EXISTS FOR ─────────────────
+ * The measure was `weightKg × reps`, so on an UNLOADED unilateral movement —
+ * a side plank, a single-leg glute bridge, a suitcase carry — both sides scored
+ * zero, `hi` was zero, and the function returned null. A 65 s right side against
+ * a 40 s left one, which is exactly the asymmetry this badge is for, reported
+ * nothing at all.
+ *
+ * When there is no load the value column IS the work (seconds for a hold, reps
+ * for bodyweight), so that is what gets compared. Same rule as
+ * `unloaded-work-blind-spot`: a zero in the weight column is a movement without
+ * load, never a movement without effort.
+ */
+export function pairAsymmetry(l?: DraftSet, r?: DraftSet): { pct: number; weak: 'L' | 'R' } | null {
+  if (!l || !r) return null
+  const work = (s: DraftSet) => (s.weightKg > 0 ? s.weightKg * s.reps : s.reps)
+  const lv = work(l), rv = work(r)
+  const hi = Math.max(lv, rv)
+  if (hi <= 0) return null
+  const pct = Math.round((1 - Math.min(lv, rv) / hi) * 100)
+  if (pct < 3) return null // ignore trivial (<3%) imbalance / rounding
+  return { pct, weak: lv < rv ? 'L' : 'R' }
 }
 
 /**

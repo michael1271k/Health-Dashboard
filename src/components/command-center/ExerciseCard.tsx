@@ -7,7 +7,7 @@ import { ArrowLeftRight, Check, ChevronDown, Footprints, GripVertical, History, 
 import { tapLight } from '@/lib/native/haptics'
 import { SetEditorRow } from './SetEditorRow'
 import { useTrackRpe } from '@/lib/hooks/useTrackRpe'
-import { cardioSummary, isPairCompactable, isSetCommitted, type DraftExercise, type DraftSet } from '@/lib/sessions/draft'
+import { cardioSummary, isPairCompactable, isSetCommitted, pairAsymmetry, type DraftExercise, type DraftSet } from '@/lib/sessions/draft'
 import { isTimedExercise } from '@/lib/exercises/timed'
 import { isBodyweightExercise, isLoadableBodyweightExercise } from '@/lib/exercises/bodyweight'
 import { isUnilateralExercise } from '@/lib/exercises/unilateral'
@@ -18,6 +18,7 @@ import { useRestTargets } from '@/lib/hooks/useRestTargets'
 import { RestTargetSheet } from './RestTargetSheet'
 import { setGridFor, setValueLabel, SET_BADGE_W, SET_CELL_LEAD, SET_CELL_VALUE, SET_FRAME_GAP, SET_HEADER_TEXT, SET_TAIL_W, type SetGridMode } from './setGrid'
 import { workingSets, type ExerciseHistory } from '@/lib/hooks/useExerciseSetHistory'
+import { alignPreviousSets } from '@/lib/sessions/prevAlign'
 import type { PrAxis } from '@/lib/training/prEngine'
 import type { ReportTargets } from '@/lib/reports/fmtV2'
 import { targetForExercise, formatTarget } from '@/lib/reports/targetMatch'
@@ -133,18 +134,6 @@ function SideRpe({ side, rpe, color }: { side: 'R' | 'L'; rpe: number | null | u
       </span>
     </span>
   )
-}
-
-/** Weaker-side imbalance for a pair, by per-side volume (weight×reps). We count
- *  the FULL real work of both sides (sum) — this badge just surfaces the gap. */
-function pairAsymmetry(l?: DraftSet, r?: DraftSet): { pct: number; weak: 'L' | 'R' } | null {
-  if (!l || !r) return null
-  const lv = l.weightKg * l.reps, rv = r.weightKg * r.reps
-  const hi = Math.max(lv, rv)
-  if (hi <= 0) return null
-  const pct = Math.round((1 - Math.min(lv, rv) / hi) * 100)
-  if (pct < 3) return null // ignore trivial (<3%) imbalance / rounding
-  return { pct, weak: lv < rv ? 'L' : 'R' }
 }
 
 // Show the real load: 3.75 must never display as "3.8" (quarter-step plates).
@@ -306,6 +295,28 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
     [exercise.kind, exercise.name, exercise.muscleGroups],
   )
 
+  /**
+   * ── A COMPACTED PAIR CAN BE PRISED BACK OPEN ───────────────────────────────
+   * `isPairCompactable` folds a matched L/R pair into one read-only line, which
+   * is right for the common case and was a dead end for every other one: a Side
+   * Plank split into Left and Right compacted the instant both sides were
+   * ticked (identical zero load, identical seconds), and there was then no way
+   * to give one side a different hold or either side an effort rating. The only
+   * escape was to un-tick, which also withdraws the set.
+   *
+   * Held per pairId, and it survives the pair diverging — once you have asked
+   * for the editor you keep it for the rest of the session.
+   */
+  const [openPairs, setOpenPairs] = useState<Set<string>>(() => new Set())
+  const togglePair = useCallback((pairId: string) => {
+    void tapLight()
+    setOpenPairs((cur) => {
+      const next = new Set(cur)
+      if (next.has(pairId)) next.delete(pairId); else next.add(pairId)
+      return next
+    })
+  }, [])
+
   const handleActivate = useCallback((i: number) => setActiveSet((cur) => (cur === i ? null : i)), [])
   const handleChange = useCallback((i: number, patch: Partial<DraftSet>) => onUpdateSet(localId, i, patch), [onUpdateSet, localId])
   const handleRemove = useCallback((i: number) => { setActiveSet(null); onRemoveSet(localId, i) }, [onRemoveSet, localId])
@@ -367,11 +378,20 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
   // Declared ABOVE the cardio early-return: hooks must run in the same order on
   // every render, and a cardio card returns before this point.
   const prevWork = useMemo(() => workingSets(history ?? undefined), [history])
-  // Indexed by working-set position, which is what the row's "Previous" means:
-  // set 2 against set 2. A session with fewer sets than today simply runs out,
-  // and the later rows show nothing rather than repeating the last one.
-  const prevGlobal = useMemo(
-    () => workingSets(globalHistory ?? history ?? undefined),
+  /**
+   * The previous session's FULL set list — warm-ups included, deliberately.
+   *
+   * It used to be `workingSets(...)`, which strips them, and the rows then
+   * indexed into it by DISPLAY number, which counts them. See `prevAlign.ts`:
+   * that mismatch is what showed a working set beside today's warm-up, shifted
+   * every other row by one, and left the last working set of any exercise with
+   * a warm-up showing no previous at all.
+   *
+   * Alignment is `alignPreviousSets`'s job now, and it needs both kinds to do
+   * it — a warm-up is compared with a warm-up.
+   */
+  const prevAll = useMemo(
+    () => (globalHistory ?? history)?.sets ?? [],
     [globalHistory, history],
   )
   const timedEx = useMemo(() => isTimedExercise(exercise.name), [exercise.name])
@@ -646,6 +666,18 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
 
   const status = exercise.status ? STATUS_META[exercise.status] : null
   const groups = groupSets(exercise.sets)
+  /**
+   * One previous set per GROUP, in group order — a pair counts once on both
+   * sides of the comparison. Warm-ups line up with warm-ups and working sets
+   * with working sets; see `alignPreviousSets` for the off-by-one this replaced.
+   */
+  const prevByGroup = alignPreviousSets(
+    groups.map((g) => {
+      const set = g.kind === 'single' ? g.set : (g.right?.set ?? g.left?.set)
+      return !isWorkingSet(set?.setType)
+    }),
+    prevAll,
+  )
   // A pair contributes one "L|R" token so the header doesn't double-count sides.
   const summary = groups.map((g) => g.kind === 'single' ? g.set.reps : `${g.left?.set.reps ?? '–'}|${g.right?.set.reps ?? '–'}`).join('/')
   const topWeight = Math.max(...exercise.sets.map((s) => s.weightKg), 0)
@@ -909,7 +941,7 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
               <span className="sr-only">Completed</span>
             </span>
           </div>
-          {groups.map((g) => {
+          {groups.map((g, gi) => {
             const timed = timedEx
             if (g.kind === 'single') {
               const i = g.idx
@@ -920,7 +952,7 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
                   index={i}
                   displayNum={g.num}
                   set={g.set}
-                  prev={prevGlobal[g.num - 1] ?? null}
+                  prev={prevByGroup[gi] ?? null}
                   active={activeSet === i}
                   timed={timed} gridMode={gridMode}
                   loadable={loadableEx}
@@ -954,7 +986,7 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
             const asym = pairAsymmetry(g.left?.set, g.right?.set)
             const pairIdx = g.left?.idx ?? g.right?.idx
             const pairDone = isSetCommitted(g.left?.set ?? g.right?.set ?? { weightKg: 0, reps: 0, done: false })
-            const compact = isPairCompactable(g.left?.set, g.right?.set)
+            const compact = isPairCompactable(g.left?.set, g.right?.set) && !openPairs.has(g.pairId)
             return (
               <div key={`p${g.pairId}`}
                 className={`rounded-lg border p-1.5 space-y-1 transition-colors ${
@@ -1005,12 +1037,37 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
                      matched pair supports. Any divergence in weight, reps or set
                      type expands it back to two rows on the next render, so this
                      can never hide an asymmetry. */
-                  <div className={`flex items-center ${SET_FRAME_GAP} px-2 py-1.5 min-w-0`}>
+                  <button
+                    type="button"
+                    onClick={() => togglePair(g.pairId)}
+                    aria-expanded={false}
+                    aria-label={`Set ${g.num} — both sides matched. Tap to edit each side`}
+                    className={`w-full flex items-center ${SET_FRAME_GAP} px-2 py-1.5 min-w-0 rounded-lg
+                                text-left active:scale-[0.99] transition-transform`}
+                  >
+                    {/* ── THE UNIT FOLLOWS THE COLUMN, NOT THE HABIT ──
+                        This printed `0kg × 65` for a Side Plank: a hold stated
+                        as a load it does not carry, times a rep count it does
+                        not have. The card already resolved `gridMode` for the
+                        rows above; the compacted line reads the same answer, so
+                        a timed pair says "65 sec" and a bodyweight pair "12
+                        reps" — and only a loaded pair prints kilos. */}
                     <span className="helix-num font-bold text-fluid-sm tabular-nums text-text whitespace-nowrap">
-                      {fmtKg(g.right!.set.weightKg)}
-                      <span className="text-[10px] font-normal text-muted ml-0.5">kg</span>
-                      <span className="text-muted mx-1.5">×</span>
-                      {g.right!.set.reps}
+                      {gridMode === 'loaded' ? (
+                        <>
+                          {fmtKg(g.right!.set.weightKg)}
+                          <span className="text-[10px] font-normal text-muted ml-0.5">kg</span>
+                          <span className="text-muted mx-1.5">×</span>
+                          {g.right!.set.reps}
+                        </>
+                      ) : (
+                        <>
+                          {g.right!.set.reps}
+                          <span className="text-[10px] font-normal text-muted ml-1">
+                            {gridMode === 'time' ? 'sec' : 'reps'}
+                          </span>
+                        </>
+                      )}
                     </span>
                     <span className="flex-1" />
                     {trackRpe && (
@@ -1020,14 +1077,19 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
                         <SideRpe side="L" rpe={g.left!.set.rpe} color={accent} />
                       </span>
                     )}
-                  </div>
+                    {/* The way back into the editor. Without it the compacted
+                        line is a statement with no affordance, and the two
+                        things it hides — a per-side hold and a per-side effort
+                        — are unreachable without withdrawing the set. */}
+                    <ChevronDown className="w-3.5 h-3.5 shrink-0 ml-1.5 text-muted" aria-hidden="true" />
+                  </button>
                 ) : (
                   <>
                     {g.right && (
                       <SetEditorRow
                         trackRpe={trackRpe}
                         key={`r${g.right.idx}`} index={g.right.idx} displayNum={g.num} subRow set={g.right.set}
-                        prev={prevGlobal[g.num - 1] ?? null}
+                        prev={prevByGroup[gi] ?? null}
                         sideColor={accent}
                         active={activeSet === g.right.idx} timed={timed} gridMode={gridMode} loadable={loadableEx}
                         prAxes={livePrs?.get(livePrKey(exercise.localId, g.right.idx))}
@@ -1041,7 +1103,7 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
                       <SetEditorRow
                         trackRpe={trackRpe}
                         key={`l${g.left.idx}`} index={g.left.idx} displayNum={g.num} subRow set={g.left.set}
-                        prev={prevGlobal[g.num - 1] ?? null}
+                        prev={prevByGroup[gi] ?? null}
                         sideColor={accent}
                         active={activeSet === g.left.idx} timed={timed} gridMode={gridMode} loadable={loadableEx}
                         prAxes={livePrs?.get(livePrKey(exercise.localId, g.left.idx))}

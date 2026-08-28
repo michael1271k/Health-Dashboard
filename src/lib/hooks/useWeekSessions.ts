@@ -14,6 +14,9 @@ import { isoAddDays } from '@/lib/utils/week'
 export interface WeekSessionRow {
   id: string
   date: string
+  /** The full `started_at` timestamp, not just its date half — the post-workout
+   *  summary prints the time of day the session actually began. */
+  startedAt: string
   dayKey: string | null
   splitDay: string
   volumeKg: number | null
@@ -63,6 +66,7 @@ export function useWeekSessions(weekStart: string | null) {
         .map((r) => ({
           id: r.id,
           date: r.started_at.slice(0, 10),
+          startedAt: r.started_at,
           dayKey: r.day_key,
           splitDay: r.split_day,
           volumeKg: r.total_volume_kg,

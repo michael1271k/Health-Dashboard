@@ -30,7 +30,7 @@ type StatPatch = Partial<NonNullable<SessionDraft['stats']>>
  * knows the answer, and making you retype it would be asking for agreement, not
  * for information.
  */
-export function FinishSheet({ open, onClose, draft, totals, busy, error, elapsedMin, onSetStats, onSessionRpe, onCommit }: {
+export function FinishSheet({ open, onClose, draft, totals, busy, error, elapsedMin, onSetStats, onClockDuration, onSessionRpe, onCommit }: {
   open: boolean
   onClose: () => void
   draft: SessionDraft
@@ -46,6 +46,12 @@ export function FinishSheet({ open, onClose, draft, totals, busy, error, elapsed
    */
   elapsedMin: number | null
   onSetStats: (patch: StatPatch) => void
+  /**
+   * The clock's own writer. Distinct from `onSetStats` on purpose: this one
+   * overwrites the duration and does NOT mark it as edited, so the next reading
+   * replaces it too. See `useSessionDraft.setClockDuration`.
+   */
+  onClockDuration: (min: number | null) => void
   onSessionRpe: (v: number | null) => void
   onCommit: () => void
 }) {
@@ -68,24 +74,21 @@ export function FinishSheet({ open, onClose, draft, totals, busy, error, elapsed
   const { data: seed } = useSessionMetricsSeed(draft.dayKey, draft.replaceSessionId)
 
   /**
-   * ── TWO LATCHES, BECAUSE THE TWO SOURCES ARRIVE AT DIFFERENT TIMES ─────────
+   * ── THE SEED LATCHES; THE CLOCK DELIBERATELY DOES NOT ──────────────────────
    * The clock reading is handed in SYNCHRONOUSLY — `SessionDeck` takes it in
    * the same tick that opens the sheet — while `seed` is a query that settles a
-   * moment later. One latch over both is therefore a race, and it is a race the
-   * clock always wins: the effect ran on the first render with `elapsedMin`
-   * set and `seed` still undefined, filled the duration, latched, and then
-   * bailed when the seed finally arrived. Avg HR and calories silently stopped
-   * being pre-filled on every ordinary session — the one case they exist for.
+   * moment later, so one latch over both was a race the clock always won: the
+   * effect ran on the first render with `elapsedMin` set and `seed` still
+   * undefined, filled the duration, latched, and bailed when the seed arrived.
    *
-   * So each source latches on its own. `clockFilled` closes when the clock's
-   * reading has been applied; `seedFilled` closes when the query's has. Both
-   * reset when the sheet closes.
+   * `seedFilled` still closes once the query's values have been applied, and
+   * reopens when the sheet closes. The clock has no latch at all any more — see
+   * the effect below.
    */
-  const clockFilled = useRef(false)
   const seedFilled = useRef(false)
 
   /**
-   * ── THE CLOCK OUTRANKS THE SEED ────────────────────────────────────────────
+   * ── THE CLOCK OUTRANKS THE SEED, AND OUTRANKS ITS OWN LAST READING ─────────
    * The historical seed is a good guess about a typical run of this routine.
    * The header's session clock is a MEASUREMENT of the one that just happened,
    * so when there is one it wins — and because it lands first, the seed's own
@@ -93,17 +96,22 @@ export function FinishSheet({ open, onClose, draft, totals, busy, error, elapsed
    * stays the fallback for a back-dated or edited deck, which has nothing to
    * have timed.
    *
-   * Only ever over an EMPTY field, like every other seeded value here: a
-   * duration you typed is a correction, and a correction overwritten by the
-   * thing it was correcting is worse than no pre-fill at all.
+   * ── WHY THIS NO LONGER SKIPS A FILLED FIELD (2026-08-28) ───────────────────
+   * It used to fill only an EMPTY duration, and latch. Both guards had the same
+   * consequence: pressing Finish at 42 minutes to LOOK at this sheet, closing
+   * it, and pressing Finish again at 70 stored 42. The first reading had filled
+   * the field, and every reading after it found the field full and declined.
+   *
+   * So the clock now writes on every open, through `onClockDuration` — which
+   * refuses only when `durationEdited` says a human typed the number. That is
+   * the distinction the old `== null` test was reaching for and could not make:
+   * "empty" is not the same as "not yours". `SessionDeck` takes one final
+   * reading at commit, because the seconds between opening this sheet and
+   * pressing Complete are still part of the session.
    */
   useEffect(() => {
-    if (!open) { clockFilled.current = false; return }
-    if (clockFilled.current || elapsedMin == null) return
-    clockFilled.current = true
-    if (s?.duration_min == null) onSetStats({ duration_min: elapsedMin })
-    // `s` is read, not tracked: re-running on every keystroke in these fields is
-    // exactly the overwrite the latch exists to prevent.
+    if (!open || elapsedMin == null) return
+    onClockDuration(elapsedMin)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, elapsedMin])
 

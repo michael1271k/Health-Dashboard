@@ -112,17 +112,32 @@ export function WeekScheduler() {
               <button
                 key={date}
                 type="button"
-                // A rest day has nothing to move. Tapping a logged day opens the
-                // sheet anyway — it will explain why it can't move, which is more
-                // useful than a control that does nothing.
-                disabled={!day}
-                onClick={() => day && setMoving(day)}
+                /**
+                 * ── A DAY THAT HAS ALREADY GONE IS NOT A DAY YOU CAN MOVE ──
+                 * A rest day has nothing to move, and neither does yesterday.
+                 * This used to disable only the rest days, so tapping Thursday
+                 * on a Friday opened "Move Upper B — currently Thursday" and
+                 * offered to reschedule a session that had already been trained
+                 * (2026-08-28). The sheet would eventually refuse it — a logged
+                 * session blocks the placement — but by then it has asked a
+                 * question about the past, and the week strip's job is what is
+                 * still ahead of you.
+                 *
+                 * Today and the days after it stay live. A past day keeps its
+                 * marks (the filled ring, the split's colour) — it is still
+                 * information, it is simply no longer a decision.
+                 */
+                disabled={!day || isPast}
+                onClick={() => day && !isPast && setMoving(day)}
                 onPointerUp={blurOnTap}
                 aria-label={`${WD_LONG[weekday]} ${date.slice(8)} — ${day?.label ?? 'Rest'}${
                   done ? ', logged' : missed ? ', missed' : ''
-                }${isToday ? ', today' : ''}`}
+                }${isToday ? ', today' : ''}${isPast ? ', already past' : ''}`}
+                // `disabled:opacity-100` on purpose: a past day is not
+                // dimmed, it is simply inert. Fading half the strip every
+                // Saturday would make the week look like it had failed.
                 className="flex flex-col items-center gap-1 py-1.5 min-h-[64px] rounded-lg
-                           disabled:cursor-default transition-colors"
+                           disabled:cursor-default disabled:opacity-100 transition-colors"
                 style={{ background: isToday ? `${hue}14` : undefined }}
               >
                 <span
@@ -243,11 +258,15 @@ function MoveDaySheet({ day, onClose, logged, today }: {
               const there = scheduleDayFor(date)
               const occupant = there === 'rest' ? null : program.days.find((d) => d.key === there.dayKey)
               const isCurrent = date === sourceDate
+              // The same rule as the strip: this week's days that have already
+              // passed are not places a session can be moved TO. Offering them
+              // was offering to rewrite a day you had already lived.
+              const gone = date < today
               return (
                 <button
                   key={wd}
                   type="button"
-                  disabled={isCurrent || busy}
+                  disabled={isCurrent || gone || busy}
                   onClick={() => setWeekday(wd)}
                   onPointerUp={blurOnTap}
                   className="w-full flex items-center gap-2 rounded-xl border border-white/[0.07] bg-white/[0.02] px-3 py-2.5 text-left min-h-[48px] hover:bg-white/[0.05] disabled:opacity-40 transition-colors"
@@ -259,7 +278,8 @@ function MoveDaySheet({ day, onClose, logged, today }: {
                     <span className="text-[11px]" style={{ color: EMBER_DEEP }}>Rest</span>
                   )}
                   {isCurrent && <span className="ml-auto text-[10px] shrink-0" style={{ color: MUTED }}>current</span>}
-                  {!isCurrent && <ArrowRight className="w-3.5 h-3.5 ml-auto shrink-0" style={{ color: MUTED }} aria-hidden="true" />}
+                  {!isCurrent && gone && <span className="ml-auto text-[10px] shrink-0" style={{ color: MUTED }}>passed</span>}
+                  {!isCurrent && !gone && <ArrowRight className="w-3.5 h-3.5 ml-auto shrink-0" style={{ color: MUTED }} aria-hidden="true" />}
                 </button>
               )
             })}

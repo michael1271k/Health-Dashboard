@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, Clock3 } from 'lucide-react'
 import type { GymReportRow } from '@/lib/hooks/useWeekly'
 import { useSessionIntel, type IntelMetric } from '@/lib/hooks/useSessionIntel'
 import { useGlobalSessionNumber } from '@/lib/hooks/useDayVault'
@@ -12,6 +12,7 @@ import { displayWeight, weightUnit, fmtVolume } from '@/lib/utils/units'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
 import { Surface, type Measure } from '@/components/ui/Zone'
 import { Head, Sub } from '@/components/session-detail/MetricGrid'
+import { startTimeLabel } from '@/lib/utils/day'
 
 /**
  * The session, at a glance — the Workout tab's "logged today" widget and the
@@ -61,6 +62,10 @@ export function SessionSnippet({ session, date, measure = 'read' }: {
   const accent = dayColor(session.dayKey, session.split)
   const unit = weightUnit()
   const m = (key: IntelMetric['key']) => intel?.metrics.find((x) => x.key === key)
+
+  // When the session began, in the same words the live deck's Duration sheet
+  // uses. Empty string when the row carries no timestamp.
+  const startedAt = startTimeLabel(session.startedAt)
 
   // Volume and sets fall back to the figures computed from the set rows: a
   // session committed offline can reach here before its totals are written.
@@ -142,6 +147,23 @@ export function SessionSnippet({ session, date, measure = 'read' }: {
         <Sub label="Avg HR" value={session.avgBpm != null ? `${session.avgBpm}` : null} unit="bpm" color={OXIDE} />
         <Sub label="Calories" value={session.calories != null ? `${session.calories}` : null} unit="kcal" color={MACRO.calories} />
       </div>
+
+      {/* ── WHEN IT ACTUALLY STARTED ──
+          Duration says how long; nothing said WHEN, and the two together are
+          what let you place a session in the day ("that was the lunchtime one")
+          without opening it. It is one line at label size under the metric
+          grids rather than a fourth cell in them: it is context about the
+          session, not one of the numbers being compared week to week, and the
+          grids' whole contract is that they hold comparable absolutes.
+          Rendered only when the row carries a timestamp — a session rebuilt
+          from a markdown report has a date and no clock. */}
+      {startedAt && (
+        <p className="flex items-center gap-1.5 pt-2.5 border-t border-white/[0.06] text-fluid-xs text-muted">
+          <Clock3 className="w-3 h-3 shrink-0" aria-hidden="true" />
+          <span className="text-[10px] font-bold uppercase tracking-[0.14em]">Start Time</span>
+          <span className="helix-num tabular-nums ml-auto text-text">{startedAt}</span>
+        </p>
+      )}
 
       {/* The whole per-exercise table, as one sentence and a destination.
 

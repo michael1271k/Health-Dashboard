@@ -8,6 +8,7 @@ import { LiveSessionHero } from './LiveSessionHero'
 import { ExerciseDeckList } from './ExerciseDeckList'
 import type { ReadyCue } from './ExerciseCard'
 import { FinishSheet } from './FinishSheet'
+import { DurationSheet } from './DurationSheet'
 import { useExerciseSetHistory, useGlobalSetHistory } from '@/lib/hooks/useExerciseSetHistory'
 import { useExerciseBaselines } from '@/lib/hooks/useExerciseBaselines'
 import { computeLivePrs, livePrDigest, livePrKey } from '@/lib/sessions/livePrs'
@@ -24,7 +25,7 @@ import { prAxisLabel } from '@/lib/training/prEngine'
 import { isTimedExercise } from '@/lib/exercises/timed'
 import { useReportTargets } from '@/lib/hooks/useReportTargets'
 import { findNextSet, formatLastRpe, formatLastTime, formatLoad, formatRpe } from '@/lib/sessions/nextSet'
-import { elapsedDurationMin, sessionElapsedSec } from '@/lib/sessions/sessionElapsed'
+import { elapsedDurationMin, sessionActiveSec } from '@/lib/sessions/sessionElapsed'
 import { endWorkoutActivity, hexToInt, startWorkoutActivity, updateWorkoutActivity } from '@/lib/native/liveActivity'
 
 /**
@@ -40,9 +41,10 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
   /** Post-finish destination: the just-committed session's analysis page. */
   onViewSession?: (sessionId: string) => void
 }) {
-  const { draft, updateSet, splitSet, mergeSet, updateCardio, addSet, removeSet, toggleSetDone, removeExercise, reorder, setExerciseNote, setStats, setSessionRpe, setDate, discard, commit } = store
+  const { draft, updateSet, splitSet, mergeSet, updateCardio, addSet, removeSet, toggleSetDone, removeExercise, reorder, setExerciseNote, setStats, setClockDuration, togglePause, setSessionRpe, setDate, discard, commit } = store
   const [result, setResult] = useState<CommitResult | null>(null)
   const [finishOpen, setFinishOpen] = useState(false)
+  const [durationOpen, setDurationOpen] = useState(false)
   const [committedDate, setCommittedDate] = useState<string | null>(null)
   // Delete the ACTUAL committed session (edit mode's trash), keyed to its date.
   const del = useDeleteSession(draft?.date ?? '')
@@ -134,10 +136,20 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
   // on every keystroke in every set field and undo that memo.
   const startedAtRef = useRef<string | null>(null)
   startedAtRef.current = draft?.startedAt ?? null
+  // The pause travels with it: `sessionActiveSec` needs both halves, and reading
+  // them off `draft` inside the callback would put the draft in its dependency
+  // list — a new `openFinish` identity on every keystroke, through two memos.
+  const pauseRef = useRef<{ pausedMs?: number; pausedAt?: string | null }>({})
+  pauseRef.current = { pausedMs: draft?.pausedMs, pausedAt: draft?.pausedAt }
+  const readClockMin = useCallback(
+    () => elapsedDurationMin(sessionActiveSec(startedAtRef.current, Date.now(), pauseRef.current)),
+    [],
+  )
   const openFinish = useCallback(() => {
-    setElapsedMin(elapsedDurationMin(sessionElapsedSec(startedAtRef.current, Date.now())))
+    setElapsedMin(readClockMin())
     setFinishOpen(true)
-  }, [])
+  }, [readClockMin])
+  const openDuration = useCallback(() => setDurationOpen(true), [])
 
   /**
    * ── THE RUNNING WORKOUT, ON THE LOCK SCREEN ────────────────────────────────
@@ -314,7 +326,19 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
   const doCommit = () => {
     const date = draft.date
     setCommittedDate(date)
-    commit.mutate(undefined, {
+    /**
+     * ── THE CLOCK IS READ ONE LAST TIME, HERE ────────────────────────────────
+     * Not when the sheet opened — that is the reading that got frozen. Opening
+     * Finish at 42 minutes to look at it and completing at 70 must store 70, and
+     * the only moment that is knowable is this one. `setClockDuration` has
+     * already kept the field honest for the sheet's own display; this hands the
+     * same reading to the payload, because a `setDraft` in this tick would not
+     * be visible to the mutation's closure.
+     *
+     * A duration you typed wins over both — `durationEdited` is checked inside
+     * the mutation, not here, so the rule lives with the write.
+     */
+    commit.mutate({ durationMin: readClockMin() }, {
       onSuccess: (r) => {
         if (!r.duplicate) void tapSuccess()
         setFinishOpen(false)
@@ -370,6 +394,7 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
           onBack={onClose}
           onSetDate={setDate}
           onFinish={openFinish}
+          onOpenDuration={openDuration}
           finishBusy={commit.isPending}
           isEdit={!!draft.replaceSessionId}
           deleting={del.isPending}
@@ -391,8 +416,21 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
         error={commitError}
         elapsedMin={elapsedMin}
         onSetStats={setStats}
+        onClockDuration={setClockDuration}
         onSessionRpe={setSessionRpe}
         onCommit={doCommit}
+      />
+      {/* The header stopwatch's own sheet: start time, and the pause. Mounted
+          beside the finish sheet for the same reason — one dialog, at the deck
+          level, rather than one per header that renders it. */}
+      <DurationSheet
+        open={durationOpen}
+        onClose={() => setDurationOpen(false)}
+        startedAt={draft.startedAt}
+        pausedMs={draft.pausedMs}
+        pausedAt={draft.pausedAt}
+        accent={dayColor(draft.dayKey, draft.splitDay)}
+        onTogglePause={togglePause}
       />
       {/* ── Left rail (sticky on desktop): insight, commit ──
           Identity and the live rail left for `LiveSessionBar`: they were the

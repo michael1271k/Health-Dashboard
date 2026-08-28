@@ -66,3 +66,63 @@ export function elapsedDurationMin(sec: number | null): number | null {
   const min = Math.round(sec / 60)
   return min > 0 ? min : null
 }
+
+/**
+ * ── THE WORKOUT CAN BE PAUSED, AND THE PAUSE IS TWO NUMBERS ──────────────────
+ * A stopwatch that can stop needs to know how long it has been stopped FOR, and
+ * whether it is stopped right now. Both are stored on the draft — the same
+ * argument `startedAt` makes: a timestamp survives the jetsam-and-reload that
+ * iOS performs on a backgrounded WKWebView, an in-memory counter does not.
+ *
+ *   · `pausedMs` — total time already spent paused, closed pauses only.
+ *   · `pausedAt` — when the CURRENT pause began, or null when running.
+ *
+ * Pausing therefore never touches `startedAt`. The session still began when it
+ * began; what changes is how much of the wall clock since then counts. Rewriting
+ * `startedAt` on resume would have been the shorter patch and it would have lied
+ * to `save.ts`, `eraForDate` and the re-entry PR gate, all of which read that
+ * field as the moment the workout started.
+ */
+export interface SessionPause {
+  /** Milliseconds already banked from completed pauses. */
+  pausedMs?: number
+  /** ISO timestamp of the pause in progress, or null/undefined when running. */
+  pausedAt?: string | null
+}
+
+/**
+ * Milliseconds of `now` that must NOT be counted — banked pauses plus the one
+ * currently open. Never negative, and never more than the session itself (a
+ * clock change mid-pause must not produce a negative duration).
+ */
+export function pausedMsAt(pause: SessionPause | null | undefined, now: number): number {
+  if (!pause) return 0
+  const banked = Number.isFinite(pause.pausedMs) ? Math.max(0, pause.pausedMs as number) : 0
+  if (!pause.pausedAt) return banked
+  const since = Date.parse(pause.pausedAt)
+  if (!Number.isFinite(since)) return banked
+  return banked + Math.max(0, now - since)
+}
+
+/**
+ * Seconds since the session began, MINUS any time it was paused.
+ *
+ * Same refusals as `sessionElapsedSec` — it is that function with the pause
+ * subtracted before the bound is applied, so a six-hour deck that was paused for
+ * five of them still answers.
+ */
+export function sessionActiveSec(
+  startedAt: string | null | undefined,
+  now: number,
+  pause?: SessionPause | null,
+): number | null {
+  if (!startedAt) return null
+  const began = Date.parse(startedAt)
+  if (!Number.isFinite(began)) return null
+  const raw = now - began
+  // The mis-dated-draft guard applies to the WALL clock, before the pause is
+  // taken off: a deck opened three days ago is not rescued by having been
+  // "paused" for most of it.
+  if (raw < 0 || raw / 1000 > MAX_SESSION_SEC) return null
+  return Math.max(0, Math.floor((raw - pausedMsAt(pause, now)) / 1000))
+}

@@ -1,11 +1,12 @@
 'use client'
 
 import { memo, useCallback, useMemo, useRef, useState } from 'react'
-import { Dumbbell, FolderOpen, Footprints, Moon, Repeat, Trophy } from 'lucide-react'
+import { CalendarClock, Dumbbell, FolderOpen, Footprints, Moon, Repeat, Trophy } from 'lucide-react'
 import { useContinuum, type ContinuumDay } from '@/lib/hooks/useContinuum'
 import { getWeekPhase, phaseRgb, type WeekPhase } from '@/lib/phases'
 import { WeekChipLabel } from '@/components/timeline/WeekChip'
-import { eraForDate, programDayLabel } from '@/lib/programs'
+import { eraForDate, programDayLabel, scheduleDayFor } from '@/lib/programs'
+import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { displayWeight, useUnitSystem, fmtVolume } from '@/lib/utils/units'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
 import { dayColor, MUTED, REST, WEEK_STATE } from '@/lib/theme/palette'
@@ -70,10 +71,44 @@ export const DayCard = memo(function DayCard({ d, unit, active, onOpen, onSwap }
   onSwap?: (date: string) => void
 }) {
   const day = new Date(d.date + 'T00:00:00')
+
+  /**
+   * ── AN UNLOGGED DAY IS NOT AUTOMATICALLY A REST DAY ────────────────────────
+   * This row read `d.session ? label : 'Rest'`. `d.session` is what has been
+   * LOGGED, so every training day announced itself as Rest right up until the
+   * moment the session was committed and then changed its mind — reported on
+   * 2026-08-28, where Friday read "Rest" all morning and became "Legs & Core B"
+   * only after the workout was saved. The timeline is the surface you check to
+   * find out what today IS; answering from the log means it can only ever
+   * describe the past.
+   *
+   * So when nothing is logged the row falls through to the PLAN.
+   * `scheduleDayFor` is the app's one schedule rule and it already resolves
+   * per-date swaps, so a moved session shows on the day it moved to.
+   * `useScheduleVersion` is not optional: the plan, the phase and the overrides
+   * all live behind synchronous caches React cannot observe, and without the
+   * subscription this row would keep yesterday's answer forever (see
+   * `sync-external-stores`).
+   */
+  void useScheduleVersion()
+  const planned = useMemo(
+    () => (d.session ? null : scheduleDayFor(d.date)),
+    [d.session, d.date],
+  )
+  const plannedDay = planned && planned !== 'rest' ? planned : null
+
   // IDENTITY, not score. A rest day has no session to identify, so it takes the
-  // one tone that means "no session" rather than borrowing a family's hue.
-  const identity = d.session ? dayColor(d.session.dayKey, d.session.split) : REST
-  const workoutLabel = d.session ? programDayLabel(d.session.dayKey, d.session.split) : null
+  // one tone that means "no session" rather than borrowing a family's hue. A
+  // PLANNED day takes its family's hue too — it is the same session, just not
+  // done yet — and the row states it in muted type rather than in steel.
+  const identity = d.session
+    ? dayColor(d.session.dayKey, d.session.split)
+    : plannedDay
+      ? dayColor(plannedDay.dayKey, null)
+      : REST
+  const workoutLabel = d.session
+    ? programDayLabel(d.session.dayKey, d.session.split)
+    : plannedDay?.label ?? null
   const vol = d.session?.volumeKg != null ? fmtVolume(displayWeight(d.session.volumeKg)) : null
   const prs = d.session?.prCount ?? 0
 
@@ -125,9 +160,18 @@ export const DayCard = memo(function DayCard({ d, unit, active, onOpen, onSwap }
           {day.toLocaleDateString('en-GB', { weekday: 'short' })} {day.getDate()}
           <span className="text-[9px] text-muted uppercase ml-1">{day.toLocaleDateString('en-GB', { month: 'short' })}</span>
         </span>
+        {/* Three states, and the icon carries which one it is: a dumbbell for
+            work that HAPPENED, a calendar clock for work that is scheduled and
+            not logged, a moon for a genuine rest day. The planned name is muted
+            so a scan still separates done from due at a glance — the label is
+            not a claim that you trained. */}
         <span className="flex items-center gap-1.5 min-w-0 flex-1 text-[11px]" style={{ color: d.session ? STEEL : MUTED }}>
-          {d.session ? <Dumbbell className="w-3 h-3 shrink-0" aria-hidden="true" /> : <Moon className="w-3 h-3 shrink-0" aria-hidden="true" />}
-          <span className="truncate">{d.session ? workoutLabel : 'Rest'}</span>
+          {d.session
+            ? <Dumbbell className="w-3 h-3 shrink-0" aria-hidden="true" />
+            : plannedDay
+              ? <CalendarClock className="w-3 h-3 shrink-0" aria-hidden="true" />
+              : <Moon className="w-3 h-3 shrink-0" aria-hidden="true" />}
+          <span className="truncate">{workoutLabel ?? 'Rest'}</span>
         </span>
         {prs > 0 && (
           <span className="flex items-center gap-0.5 shrink-0 helix-num text-[10px] font-bold tabular-nums"

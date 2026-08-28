@@ -174,7 +174,15 @@ export function useSessionDraft() {
         const base = ex.sets[setIdx]
         if (!base || base.pairId) return ex // absent or already split
         const pairId = `pair_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`
-        const mk = (side: 'L' | 'R'): DraftSet => ({ weightKg: base.weightKg, reps: base.reps, rpe: base.rpe, done: base.done, side, pairId })
+        // `setType` comes across too. It did not, so splitting a warm-up or a
+        // failure set produced two `normal` sides: the W/F badge vanished and
+        // `save.ts` stored work that had been tagged as a warm-up as a working
+        // set — which is a set the PR engine then judges.
+        const mk = (side: 'L' | 'R'): DraftSet => ({
+          weightKg: base.weightKg, reps: base.reps, rpe: base.rpe, done: base.done,
+          ...(base.setType ? { setType: base.setType } : {}),
+          side, pairId,
+        })
         return { ...ex, sets: [...ex.sets.slice(0, setIdx), mk('L'), mk('R'), ...ex.sets.slice(setIdx + 1)] }
       }),
     }))
@@ -304,15 +312,75 @@ export function useSessionDraft() {
     })
   }, [])
 
-  /** Manually edit session metadata (duration / avg HR / calories) pre-commit. */
+  const EMPTY_STATS = {
+    duration_min: null, volume_kg: null, sets_completed: null, prs: null,
+    avg_hr_bpm: null, calories_kcal: null,
+  } as NonNullable<SessionDraft['stats']>
+
+  /**
+   * Manually edit session metadata (duration / avg HR / calories) pre-commit.
+   *
+   * A duration that arrives through HERE is a number a human typed, so it
+   * latches `durationEdited` and the session clock stops overwriting it. The
+   * clock's own writer is `setClockDuration`, below.
+   */
   const setStats = useCallback((patch: Partial<NonNullable<SessionDraft['stats']>>) => {
     setDraft((d) => {
       if (!d) return d
-      const base = d.stats ?? {
-        duration_min: null, volume_kg: null, sets_completed: null, prs: null,
-        avg_hr_bpm: null, calories_kcal: null,
+      const base = d.stats ?? EMPTY_STATS
+      const next = { ...d, stats: { ...base, ...patch } }
+      if ('duration_min' in patch) next.durationEdited = true
+      return next
+    })
+    // EMPTY_STATS is a fresh literal each render but is only ever spread from,
+    // never compared — depending on it would give `setStats` a new identity per
+    // render and undo the memo on every header that takes it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  /**
+   * ── THE CLOCK'S WRITE, WHICH IS NOT AN EDIT ────────────────────────────────
+   * Same field, different provenance. This one overwrites freely — every time
+   * the finish sheet opens, and once more at commit — and it deliberately does
+   * NOT set `durationEdited`, so the next reading replaces it too.
+   *
+   * That is the whole fix for the frozen duration: pressing Finish at 42 minutes
+   * to look at the sheet, closing it, and pressing Finish again at 70 used to
+   * store 42, because the sheet only ever filled a field that was still empty.
+   * A number you typed is still safe — it comes through `setStats`, which
+   * latches the flag, and this then refuses.
+   */
+  const setClockDuration = useCallback((min: number | null) => {
+    setDraft((d) => {
+      if (!d || d.durationEdited) return d
+      const base = d.stats ?? EMPTY_STATS
+      if (base.duration_min === min) return d // no-op: never churn the draft
+      return { ...d, stats: { ...base, duration_min: min } }
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  /**
+   * Pause / resume the session clock.
+   *
+   * Stored as a timestamp plus a bank of already-elapsed pause time (see
+   * `SessionPause`), never as a mutated `startedAt`: that field is read by
+   * `save.ts`, `eraForDate` and the re-entry PR gate as the moment the workout
+   * began, and it is still true while you are standing still.
+   *
+   * Background tracking is untouched — the Live Activity, the draft autosave and
+   * the rest clock all keep running. The only thing a pause changes is which
+   * seconds count toward `duration_min`.
+   */
+  const togglePause = useCallback(() => {
+    setDraft((d) => {
+      if (!d) return d
+      if (d.pausedAt) {
+        const since = Date.parse(d.pausedAt)
+        const banked = (d.pausedMs ?? 0) + (Number.isFinite(since) ? Math.max(0, Date.now() - since) : 0)
+        return { ...d, pausedAt: null, pausedMs: banked }
       }
-      return { ...d, stats: { ...base, ...patch } }
+      return { ...d, pausedAt: new Date().toISOString() }
     })
   }, [])
 
@@ -338,9 +406,21 @@ export function useSessionDraft() {
   }, [])
 
   const commit = useMutation({
-    mutationFn: async (): Promise<CommitResult> => {
+    /**
+     * ── THE DURATION IS RE-READ AT THE MOMENT OF COMMIT ────────────────────
+     * `vars.durationMin` is what the header's stopwatch says as Complete is
+     * pressed. It is applied to a COPY of the draft rather than through
+     * `setClockDuration`, because a `setDraft` in the same tick as `mutate` is
+     * not visible to this closure — which is precisely how a stale reading got
+     * stored in the first place. Undefined (an edited duration, or a back-dated
+     * deck with no clock) leaves the draft's own value alone.
+     */
+    mutationFn: async (vars?: { durationMin?: number | null }): Promise<CommitResult> => {
       if (!draft) throw new Error('No draft to commit')
-      const body = buildCommitPayload(draft)
+      const timed = vars?.durationMin != null && !draft.durationEdited
+        ? { ...draft, stats: { ...(draft.stats ?? EMPTY_STATS), duration_min: vars.durationMin } }
+        : draft
+      const body = buildCommitPayload(timed)
       // Only checked (green) sets are recorded — zero checked means nothing happened.
       if (!body.sets.length) throw new Error('Check at least one set to finish')
       // Hard timeout so a stalled serverless response can never hang the deck
@@ -418,5 +498,5 @@ export function useSessionDraft() {
     },
   })
 
-  return { draft, hydrated, start, discard, updateSet, splitSet, mergeSet, addCardio, updateCardio, addSet, removeSet, toggleSetDone, removeExercise, reorder, setExerciseNote, setStats, setSessionRpe, setDate, commit }
+  return { draft, hydrated, start, discard, updateSet, splitSet, mergeSet, addCardio, updateCardio, addSet, removeSet, toggleSetDone, removeExercise, reorder, setExerciseNote, setStats, setClockDuration, togglePause, setSessionRpe, setDate, commit }
 }

@@ -44,7 +44,7 @@ import { GOLD, MUTED, STEEL } from '@/lib/theme/palette'
  * title now, tinted in the workout's own colour, and the collapsed bar carries
  * the same button once this scrolls off.
  */
-export function LiveSessionHero({ draft, accent, volumeKg, sets, recordCount, onBack, onSetDate, onFinish, finishBusy, isEdit, deleting, onDiscard, onCancelEdit, onDelete }: {
+export function LiveSessionHero({ draft, accent, volumeKg, sets, recordCount, onBack, onSetDate, onFinish, onOpenDuration, finishBusy, isEdit, deleting, onDiscard, onCancelEdit, onDelete }: {
   draft: SessionDraft
   /** `dayColor(dayKey, splitDay)` — steel for Upper A, gold for Upper B. */
   accent: string
@@ -69,6 +69,9 @@ export function LiveSessionHero({ draft, accent, volumeKg, sets, recordCount, on
    * should have to travel to.
    */
   onFinish: () => void
+  /** Opens `DurationSheet` — start time, and the pause. Owned by the deck, which
+   *  is the only place that can also read the clock at commit. */
+  onOpenDuration: () => void
   finishBusy?: boolean
   /** Edit mode says "Save", not "Finish" — it is not ending anything. */
   isEdit?: boolean
@@ -214,7 +217,13 @@ export function LiveSessionHero({ draft, accent, volumeKg, sets, recordCount, on
           {/* Total session time first: it is the reading, and the two controls
               beside it are things you DO. It renders nothing on a back-dated or
               edited deck, where "now minus started" is not a real duration. */}
-          <SessionElapsed startedAt={draft.startedAt} />
+          <SessionElapsed
+            startedAt={draft.startedAt}
+            pausedMs={draft.pausedMs}
+            pausedAt={draft.pausedAt}
+            accent={accent}
+            onOpen={onOpenDuration}
+          />
           <SessionClock />
           <MuscleDistribution draft={draft} accent={accent} size="lg" />
         </div>
