@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import type { WorkoutSet } from '@/lib/types/workout'
 
 export const WorkoutSetSchema = z.object({
   // Optional: the Command Center commits by name; the route resolves UUIDs
@@ -108,4 +109,34 @@ export function countCommittedSets(sets: Array<{ pairId?: string }>): number {
     else solo++
   }
   return solo + paired.size
+}
+
+/**
+ * One VALIDATED set row → the domain `WorkoutSet` the writer takes.
+ *
+ * ── WHY THIS IS A SPREAD, AND WHY IT IS A FUNCTION AT ALL ────────────────────
+ * It used to be a hand-written object literal inside `POST /api/sessions`,
+ * naming ten fields — and `quality` was the eleventh. So a technique flag set
+ * in the logger passed the schema, rode the commit payload, and was dropped one
+ * line before `saveSession`, which had known how to write it all along. Every
+ * commit and every edit reached the database with `quality: null`, silently,
+ * and the column stood empty across the whole history.
+ *
+ * An explicit list buys nothing here: zod has already stripped every unknown
+ * key, so the row is exactly the fields the schema admits. What the list DID
+ * buy was a second place to remember, and a new field going missing the next
+ * time one is added. Spreading the validated row removes that failure entirely.
+ *
+ * `muscleGroups` is destructured off because it is not part of a set: it seeds
+ * the exercise catalog when a movement is new, is consumed by
+ * `resolveExercises` before this runs, and would otherwise ride into the writer
+ * as a field no column matches.
+ */
+export function toWorkoutSet(
+  row: z.infer<typeof WorkoutSetSchema>,
+  exerciseId: string,
+): WorkoutSet {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- destructure-to-omit the catalog seed
+  const { muscleGroups: _seed, ...rest } = row
+  return { ...rest, exerciseId }
 }

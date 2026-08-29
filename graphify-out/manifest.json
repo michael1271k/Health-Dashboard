@@ -210,8 +210,8 @@
     "semantic_hash": "91163c0be7614c8eabb340dd910d5ac8"
   },
   "src/app/api/sessions/route.ts": {
-    "mtime": 1787505046.2035353,
-    "ast_hash": "ac8235eb54c147ff3d844b5cfef24925",
+    "mtime": 1788031946.2992632,
+    "ast_hash": "a806742f79548d3cd977cbccfad6eefa",
     "semantic_hash": ""
   },
   "src/app/api/today/route.ts": {
@@ -935,8 +935,8 @@
     "semantic_hash": ""
   },
   "src/lib/sessions/schema.ts": {
-    "mtime": 1787904300.57437,
-    "ast_hash": "06db240e15b0d30a1e61939c36c205c7",
+    "mtime": 1788031991.6113021,
+    "ast_hash": "5abb9628f6d76b5bc0454bff1af7fafe",
     "semantic_hash": ""
   },
   "src/lib/sessions/seedTemplates.ts": {
@@ -2475,7 +2475,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/set-rows.html": {
-    "mtime": 1788031119.513084,
+    "mtime": 1788032005.4987679,
     "ast_hash": "4337ad6af8491d18f2242f7a5d77be6f",
     "semantic_hash": ""
   },
@@ -2505,7 +2505,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-ledger.html": {
-    "mtime": 1788031116.861816,
+    "mtime": 1788032004.8652008,
     "ast_hash": "3ddb93aca7b5901708c403bfb41afc10",
     "semantic_hash": ""
   },
@@ -2540,7 +2540,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/live-header.html": {
-    "mtime": 1788031117.019131,
+    "mtime": 1788032003.2494574,
     "ast_hash": "1922065e3007c80d486fcfb5d6f4ea9c",
     "semantic_hash": ""
   },
@@ -2610,7 +2610,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-summary-header.html": {
-    "mtime": 1788031118.2766168,
+    "mtime": 1788032004.7129662,
     "ast_hash": "b3d75865c62fb30c5cc668930a4b7642",
     "semantic_hash": ""
   },
@@ -3032,6 +3032,11 @@
   "src/tests/export-completeness.test.ts": {
     "mtime": 1788030979.5294878,
     "ast_hash": "737ec67685ec46b9e60f3423d1e10f1c",
+    "semantic_hash": ""
+  },
+  "src/tests/save-set-fields.test.ts": {
+    "mtime": 1788032023.203271,
+    "ast_hash": "e78e08e261e63d203956be8b16de1cb0",
     "semantic_hash": ""
   }
 }

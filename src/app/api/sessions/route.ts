@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { SaveWorkoutSchema } from '@/lib/sessions/schema'
+import { SaveWorkoutSchema, toWorkoutSet } from '@/lib/sessions/schema'
 import { saveSession } from '@/lib/sessions/save'
 import { resolveExercises } from '@/lib/sessions/resolveExercises'
 import { getServerSupabaseClient } from '@/lib/supabase/server'
@@ -42,19 +42,11 @@ export async function POST(req: Request) {
       }])).values()]
       idByName = await resolveExercises(supabase, userId, input.splitDay, uniqueNames)
     }
-    const sets: WorkoutSet[] = input.sets.map((s) => ({
-      exerciseId: s.exerciseId ?? idByName.get(s.exerciseName) ?? '',
-      exerciseName: s.exerciseName,
-      exerciseNameHe: s.exerciseNameHe,
-      setNumber: s.setNumber,
-      weightKg: s.weightKg,
-      reps: s.reps,
-      rpe: s.rpe,
-      setType: s.setType,
-      exerciseOrder: s.exerciseOrder,
-      side: s.side,
-      pairId: s.pairId,
-    }))
+    // ONE adapter, spreading the validated row — see `toWorkoutSet`. The hand
+    // written literal that used to sit here named ten fields and silently ate
+    // the eleventh (`quality`) on every commit the app has ever made.
+    const sets: WorkoutSet[] = input.sets.map((s) =>
+      toWorkoutSet(s, s.exerciseId ?? idByName.get(s.exerciseName) ?? ''))
     const missing = sets.filter((s) => !s.exerciseId).map((s) => s.exerciseName)
     if (missing.length) {
       return NextResponse.json({ error: `Could not resolve exercises: ${[...new Set(missing)].join(', ')}` }, { status: 422 })
