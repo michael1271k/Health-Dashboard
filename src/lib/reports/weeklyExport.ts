@@ -798,10 +798,19 @@ export function setDetail(sets: ExportSet[], exerciseName?: string): string[] {
     // reads as one — two of them in sequence look exactly like a load being
     // outgrown across two sets rather than one set extended twice.
     if (s.dropset) bits.push('drop set')
-    // Last in the parenthetical, and in the reader's own words rather than the
-    // stored key: the person reading this is a coach, not a database.
+    /* Last in the parenthetical, and in the reader's own words rather than the
+       stored key: the person reading this is a coach, not a database.
+
+       It is LABELLED rather than dropped in bare. "(RPE 9.5 — Max Effort,
+       momentum)" leaves a reader to work out what the third item is and how it
+       relates to the second — and on a value like "Cold" or "Assisted" the
+       guess goes wrong, because either could be read as a comment on the
+       effort. Naming the axis costs twelve characters and removes the question.
+
+       The label keeps its own capitalisation, which is what makes it read as a
+       named value rather than a word in a sentence. */
     const q = s.quality ? SET_QUALITY[s.quality] : undefined
-    if (q) bits.push(q.label.toLowerCase())
+    if (q) bits.push(`Set Quality: ${q.label}`)
     return bits.length ? ` (${bits.join(', ')})` : ''
   }
 

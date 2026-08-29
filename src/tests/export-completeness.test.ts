@@ -78,7 +78,7 @@ describe('set metadata the payload used to drop on the floor', () => {
         }],
       })],
     })
-    expect(out).toMatch(/Set 2: 49\.5 kg × 11 \(RPE 9\.5 — .*momentum\)/)
+    expect(out).toMatch(/Set 2: 49\.5 kg × 11 \(RPE 9\.5 — Max Effort, Set Quality: Momentum\)/)
     // The stored key never reaches the page — a coach reads this, not a database.
     expect(md(out)).not.toMatch(/partial_rom|form_breakdown|needed_warmup/)
   })
@@ -95,7 +95,7 @@ describe('set metadata the payload used to drop on the floor', () => {
     })
     // Absent means the question was never asked, NOT that the set was clean.
     expect(out).toMatch(/Set 1: 40 kg × 12 \(RPE 9 — [^)]*\)/)
-    expect(md(out)).not.toMatch(/momentum|Short ROM|Assisted/)
+    expect(md(out)).not.toMatch(/Set Quality:/)
   })
 
   /**

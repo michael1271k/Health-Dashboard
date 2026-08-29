@@ -890,8 +890,8 @@
     "semantic_hash": ""
   },
   "src/lib/reports/weeklyExport.ts": {
-    "mtime": 1788031110.319355,
-    "ast_hash": "2af88daaae9653016a5ba82400c1e766",
+    "mtime": 1788032500.9498246,
+    "ast_hash": "41b010574d9ede3c01159cc35efecd14",
     "semantic_hash": ""
   },
   "src/lib/schedule/overrides.ts": {
@@ -2475,7 +2475,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/set-rows.html": {
-    "mtime": 1788032005.4987679,
+    "mtime": 1788032558.1791294,
     "ast_hash": "4337ad6af8491d18f2242f7a5d77be6f",
     "semantic_hash": ""
   },
@@ -2505,7 +2505,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-ledger.html": {
-    "mtime": 1788032004.8652008,
+    "mtime": 1788032555.996074,
     "ast_hash": "3ddb93aca7b5901708c403bfb41afc10",
     "semantic_hash": ""
   },
@@ -2540,7 +2540,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/live-header.html": {
-    "mtime": 1788032003.2494574,
+    "mtime": 1788032554.8112626,
     "ast_hash": "1922065e3007c80d486fcfb5d6f4ea9c",
     "semantic_hash": ""
   },
@@ -2610,7 +2610,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-summary-header.html": {
-    "mtime": 1788032004.7129662,
+    "mtime": 1788032556.4308164,
     "ast_hash": "b3d75865c62fb30c5cc668930a4b7642",
     "semantic_hash": ""
   },
@@ -2945,8 +2945,8 @@
     "semantic_hash": ""
   },
   "src/tests/set-quality.test.ts": {
-    "mtime": 1787904531.818113,
-    "ast_hash": "71acec753feded0c6a774498c483935f",
+    "mtime": 1788032552.638775,
+    "ast_hash": "239c64f9deac5550474cdfbf5ed7105b",
     "semantic_hash": ""
   },
   "src/lib/hooks/useEffortBaseline.ts": {
@@ -3030,8 +3030,8 @@
     "semantic_hash": ""
   },
   "src/tests/export-completeness.test.ts": {
-    "mtime": 1788030979.5294878,
-    "ast_hash": "737ec67685ec46b9e60f3423d1e10f1c",
+    "mtime": 1788032500.9630253,
+    "ast_hash": "b01a0c79d9ffe8e5e58443923e87d1c7",
     "semantic_hash": ""
   },
   "src/tests/save-set-fields.test.ts": {

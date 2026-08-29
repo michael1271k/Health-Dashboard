@@ -88,9 +88,14 @@ describe('the export', () => {
   const s = (over: Partial<ExportSet>): ExportSet =>
     ({ weightKg: 40, reps: 10, rpe: 8, side: null, failure: false, pairId: null, ...over })
 
-  it('states it in the reader’s words, after the effort', () => {
+  it('states it in the reader’s words, after the effort, and NAMES the axis', () => {
+    // The label used to be dropped in bare — "(RPE 8 — Challenging, form
+    // broke)" — which leaves a reader to work out what the third item is and
+    // how it relates to the second. On a value like "Cold" or "Assisted" that
+    // guess goes wrong: either reads as a comment on the effort rather than on
+    // the technique. Naming the axis costs twelve characters.
     expect(setDetail([s({ quality: 'form_breakdown' })]))
-      .toEqual(['Set 1: 40 kg × 10 (RPE 8 — Challenging, form broke)'])
+      .toEqual(['Set 1: 40 kg × 10 (RPE 8 — Challenging, Set Quality: Form broke)'])
   })
 
   it('says nothing at all for a clean set', () => {
@@ -101,6 +106,6 @@ describe('the export', () => {
   it('sits alongside a set tag rather than replacing it', () => {
     // A warm-up CAN be sloppy — that is the reason for two axes.
     expect(setDetail([s({ warmup: true, rpe: null, quality: 'needed_warmup' })]))
-      .toEqual(['Warm-up: 40 kg × 10 (warm-up, cold)'])
+      .toEqual(['Warm-up: 40 kg × 10 (warm-up, Set Quality: Cold)'])
   })
 })
