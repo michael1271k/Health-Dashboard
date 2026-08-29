@@ -22,9 +22,13 @@ import { leverPeriods, activeLeverOf } from '@/lib/nutrition/levers'
 import { SUPPLEMENT_PROTOCOL } from '@/lib/supplements'
 import { type CustomSupplement } from '@/lib/hooks/useCustomSupplements'
 import { normalizeSpO2 } from '@/lib/utils/units'
+import { nightOf } from '@/lib/sleep/nightWindow'
+import { supplementMicros } from '@/lib/nutrition/supplementMicros'
+import { customSlotsForDate, microPayloads } from '@/lib/hooks/useCustomSupplements'
+import { stackForDate, supplementCountForDate } from '@/lib/supplements'
 import { activeKcalOf } from '@/lib/cardio/metrics'
 import { volumeCredits, type PrAxis } from '@/lib/training/prEngine'
-import { isWorkingSet } from '@/lib/training/setTags'
+import { isWorkingSet, isSetQuality } from '@/lib/training/setTags'
 
 /**
  * The user's stack, as rows, for the export to render.
@@ -86,16 +90,24 @@ async function fetchRange(weekStart: string, weekEnd: string) {
 
   // Active Energy, Day Score and Battery are deliberately NOT fetched — none of
   // the three appears in the export any more (see weeklyExport.ts).
-  const [logs, nutrition, sessions, sets, water, supps, doms, fatigue, bodyComp, cardio, rpe, bodyLedger, skips, prAxes, whr, exceptions, priorCount] = await Promise.all([
+  const [logs, nutrition, sessions, sets, water, supps, doms, fatigue, bodyComp, cardio, rpe, bodyLedger, skips, prAxes, whr, exceptions, priorCount, sleepStages] = await Promise.all([
     // `active_energy` and `bmr` join the main select rather than getting their
     // own isolated slot: both are long-standing columns (verified live), and the
     // isolation convention exists for columns whose paste-SQL may not have run.
     // Neither is printed on a daily line — they are the two sides of the weekly
     // energy-balance estimate. See weeklyExport's header.
     supabase.from('daily_logs')
-      .select('date, weight_kg, steps, distance_m, training_minutes, sleep_minutes, water_ml, avg_rest_heart_rate, hrv_ms, blood_oxygen, wrist_temp_delta, active_energy, bmr')
+      // `avg_heart_rate`, `respiratory_rate`, `vo2max`, `time_in_daylight_min`,
+      // `exercise_minutes`, `stand_hours` and `standing_minutes` join here: all
+      // seven are long-standing columns, populated every day, and none of them
+      // had ever been fetched — the export's vitals line named five readings
+      // out of twelve the app was already holding.
+      .select('date, weight_kg, steps, distance_m, training_minutes, sleep_minutes, water_ml, avg_rest_heart_rate, hrv_ms, blood_oxygen, wrist_temp_delta, active_energy, bmr, avg_heart_rate, respiratory_rate, vo2max, time_in_daylight_min, exercise_minutes, stand_hours, standing_minutes')
       .gte('date', weekStart).lte('date', weekEnd),
-    supabase.from('nutrition_entries').select('date, calories, protein_g, carbs_g, fat_g')
+    // `fiber_g` is a real column and every other dietary micro rides in the
+    // `micros` jsonb the HealthKit sync writes — the same two facts
+    // `useTodayMicros` folds together for the dashboard.
+    supabase.from('nutrition_entries').select('date, calories, protein_g, carbs_g, fat_g, fiber_g, micros')
       .eq('meal_type', 'daily').gte('date', weekStart).lte('date', weekEnd),
     supabase.from('workout_sessions')
       .select('id, started_at, split_day, day_key, total_volume_kg, set_count, duration_min, avg_bpm, calories_burned, calories_estimated, avg_bpm_estimated')
@@ -113,8 +125,8 @@ async function fetchRange(weekStart: string, weekEnd: string) {
       .order('exercise_order', { ascending: true }).order('set_number', { ascending: true })
       .limit(3000),
     supabase.from('water_intake').select('date, amount_ml').gte('date', weekStart).lte('date', weekEnd),
-    supabase.from('supplement_log').select('date, item_key').eq('taken', true).gte('date', weekStart).lte('date', weekEnd),
-    supabase.from('doms_logs').select('date, muscle_group, severity').gte('date', weekStart).lte('date', weekEnd),
+    supabase.from('supplement_log').select('date, item_key, taken_at').eq('taken', true).gte('date', weekStart).lte('date', weekEnd),
+    supabase.from('doms_logs').select('date, muscle_group, severity, source_session_id, source_day_key').gte('date', weekStart).lte('date', weekEnd),
     supabase.from('fatigue_logs').select('date, slot, level').gte('date', weekStart).lte('date', weekEnd),
     // Body composition — its own query so an un-migrated column can't take down
     // the daily-logs fetch above; on error it's simply omitted.
@@ -169,6 +181,18 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     // data to compute an integer. `head: true` sends no rows at all.
     supabase.from('workout_sessions').select('id', { count: 'exact', head: true })
       .lt('started_at', startInstant),
+    /* ── SLEEP ARCHITECTURE ────────────────────────────────────────────────────
+       Keyed on `start_time`, which is BEDTIME — the previous evening — so the
+       range is widened by a day at the front and the rows are bucketed with
+       `nightOf`, the inverse of the window every other reader uses. Slicing
+       `start_time` for the date instead would file every pre-midnight bedtime
+       under the evening it began rather than the morning it ended, putting half
+       the week's nights on the wrong day (and only the half you went to bed
+       early on). */
+    supabase.from('sleep_sessions')
+      .select('start_time, end_time, duration_min, deep_min, rem_min, core_min, awake_min')
+      .gte('start_time', `${isoAddDays(weekStart, -1)}T12:00:00Z`)
+      .lt('start_time', `${isoAddDays(weekEnd, 1)}T12:00:00Z`),
   ])
 
   return {
@@ -177,9 +201,19 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     sessions: (sessions.data ?? []) as unknown as RawSession[],
     sets: (sets.data ?? []) as unknown as RawSet[],
     water: (water.data ?? []) as Array<{ date: string; amount_ml: number }>,
-    supps: (supps.data ?? []) as Array<{ date: string; item_key: string }>,
+    supps: (supps.data ?? []) as Array<{ date: string; item_key: string; taken_at: string | null }>,
     // doms_logs may not be migrated yet — an error just means no soreness rows.
-    doms: (doms.error ? [] : (doms.data ?? [])) as Array<{ date: string; muscle_group: string; severity: number }>,
+    doms: (doms.error ? [] : (doms.data ?? [])) as Array<{
+      date: string; muscle_group: string; severity: number
+      source_session_id?: string | null; source_day_key?: string | null
+    }>,
+    // sleep_sessions may hold nothing for a week the watch was not worn — an
+    // empty list means the stage lines print em-dashes, not that sleep is absent
+    // (the DURATION lives on daily_logs and is fetched separately above).
+    sleepStages: (sleepStages.error ? [] : (sleepStages.data ?? [])) as Array<{
+      start_time: string; end_time: string | null; duration_min: number | null
+      deep_min: number | null; rem_min: number | null; core_min: number | null; awake_min: number | null
+    }>,
     // Same courtesy as doms_logs: an un-migrated table means no readings, not a
     // failed export.
     fatigue: (fatigue.error ? [] : (fatigue.data ?? [])) as Array<{ date: string; slot: string; level: number }>,
@@ -308,6 +342,22 @@ function toDays(weekStart: string, d: RangeData): ExportDay[] {
   for (const w of d.water) waterByDate.set(w.date, (waterByDate.get(w.date) ?? 0) + w.amount_ml)
   const suppsByDate = new Map<string, number>()
   for (const s of d.supps) suppsByDate.set(s.date, (suppsByDate.get(s.date) ?? 0) + 1)
+  // The ticks themselves, in the order they were taken. `taken_at` is the CLOCK
+  // TIME, which is the half of adherence a count cannot carry — nine of nine
+  // says the protocol was met, and 08:45 says the pre-workout was pre-workout.
+  const suppLogByDate = new Map<string, Array<{ key: string; time: string | null }>>()
+  for (const s of [...(d.supps ?? [])].sort((a, b) => (a.taken_at ?? '').localeCompare(b.taken_at ?? ''))) {
+    const bucket = suppLogByDate.get(s.date) ?? []
+    bucket.push({ key: s.item_key, time: s.taken_at })
+    suppLogByDate.set(s.date, bucket)
+  }
+  // Bucketed by the night they BELONG to, never by the evening they began.
+  const sleepByDate = new Map<string, RangeData['sleepStages'][number]>()
+  // `?? []` for the same reason `range.fatigue` carries one: a caller building
+  // a range by hand (every export-payload fixture does) predates this field,
+  // and a builder that throws on an absent optional array is more fragile than
+  // the data it is defending against.
+  for (const r of d.sleepStages ?? []) sleepByDate.set(nightOf(r.start_time), r)
   const skipByDate = new Map<string, string>()
   for (const s of d.skips) if (s.weighin_skip_reason) skipByDate.set(s.date, s.weighin_skip_reason)
   const exceptionByDate = new Map<string, string>()
@@ -330,14 +380,31 @@ function toDays(weekStart: string, d: RangeData): ExportDay[] {
       distanceM: l?.distance_m ?? null,
       trainingMin: l?.training_minutes ?? null,
       sleepMin: l?.sleep_minutes ?? null,
-      deepMin: null,   // stage split lives in sleep_sessions; totals suffice here
-      remMin: null,
+      // They do NOT suffice — see ExportDay. `sleep_sessions` is now fetched and
+      // these two stop being the only declared fields in this payload that no
+      // builder ever filled.
+      deepMin: sleepByDate.get(date)?.deep_min ?? null,
+      remMin: sleepByDate.get(date)?.rem_min ?? null,
       restingHr: l?.avg_rest_heart_rate ?? null,
       hrvMs: l?.hrv_ms ?? null,
       wristTempDeltaC: l?.wrist_temp_delta ?? null,
       bloodOxygenPct: l?.blood_oxygen ?? null,
+      // The seven vitals the app has always held and the export never named.
+      avgHr: l?.avg_heart_rate ?? null,
+      respiratoryRate: l?.respiratory_rate ?? null,
+      vo2max: l?.vo2max ?? null,
+      daylightMin: l?.time_in_daylight_min ?? null,
+      exerciseMin: l?.exercise_minutes ?? null,
+      standHours: l?.stand_hours ?? null,
+      standMin: l?.standing_minutes ?? null,
+      // The stage split, from the table that has carried it all along.
+      coreMin: sleepByDate.get(date)?.core_min ?? null,
+      awakeMin: sleepByDate.get(date)?.awake_min ?? null,
+      bedTime: sleepByDate.get(date)?.start_time ?? null,
+      wakeTime: sleepByDate.get(date)?.end_time ?? null,
       waterMl: waterByDate.get(date) ?? l?.water_ml ?? null,
       supplementsTaken: suppsByDate.get(date) ?? null,
+      supplementsLog: suppLogByDate.get(date) ?? [],
       // Estimate inputs only — neither reaches a daily line.
       activeKcal: l?.active_energy ?? null,
       bmrKcal: l?.bmr ?? null,
@@ -436,6 +503,22 @@ function toSessions(d: RangeData): ExportSession[] {
         side: r.side === 'L' || r.side === 'R' ? r.side : null,
         failure: r.set_type === 'failure',
         warmup: r.set_type === 'warmup',
+        /* ── THE THREE FIELDS THAT WERE SELECTED AND THEN DROPPED ─────────────
+           `quality` has been in the SELECT and on `RawSet` since set tagging
+           shipped, and it stopped here: the renderer reads `s.quality` through
+           `SET_QUALITY` and prints "(RPE 9.5 — Very hard, momentum)" perfectly,
+           and never once received one. Identical in shape to the `blood_oxygen`
+           bug the export's own header documents — the column, the query and the
+           reader all existed, and only the assignment was missing.
+
+           `ghost` and `dropset` were never mapped either. Both are latent
+           rather than live (no row carries either tag yet), and both fail in
+           the direction that matters: a ghost is a set that did NOT happen and
+           would have taken a numbered `Set N:` line as work, which is precisely
+           what `ExportSet.ghost` was added to prevent. */
+        ghost: r.set_type === 'ghost',
+        dropset: r.set_type === 'dropset',
+        quality: isSetQuality(r.quality) ? r.quality : null,
         pairId: r.pair_id,
       })
       // Warm-ups must not define the top load.
@@ -657,6 +740,71 @@ interface VolumeTargetRow {
  * landmarks. Nothing in the type system could see it (the parameter is
  * optional) and no test could reach it (this function was private).
  */
+/**
+ * Fold the day's MICRONUTRIENTS and its supplement denominator onto each day.
+ *
+ * ── WHY IT IS NOT IN `toDays` ────────────────────────────────────────────────
+ * Both figures need the user's own supplement rows, which `toDays` has no
+ * access to and should not: it turns one fetched range into day rows, and the
+ * stack is a second source with its own resolution rules (a dose depends on the
+ * weekday AND on whether the day trains).
+ *
+ * ── WHY FOOD AND STACK STAY APART ────────────────────────────────────────────
+ * `useTodayMicros` merges them because the dashboard asks "how much vitamin C
+ * today". A raw-data export asks a different question, and 594 mg is not an
+ * answer to it when 470 of those milligrams came out of a tablet. The renderer
+ * prints the split; this only has to keep it.
+ */
+function withMicros(
+  days: ExportDay[],
+  range: RangeData,
+  customs: CustomSupplement[],
+): ExportDay[] {
+  const nutriByDate = new Map(
+    (range.nutrition ?? []).map((r) => [r.date as string, r as Record<string, unknown>]),
+  )
+  const takenByDate = new Map<string, string[]>()
+  for (const s of range.supps ?? []) {
+    const bucket = takenByDate.get(s.date) ?? []
+    bucket.push(s.item_key)
+    takenByDate.set(s.date, bucket)
+  }
+  const payloads = microPayloads(customs)
+
+  return days.map((d) => {
+    const nt = nutriByDate.get(d.date)
+    // `fiber_g` is a column; every other dietary micro rides in the jsonb.
+    const bundle = (nt?.micros ?? {}) as Record<string, number | undefined>
+    const microsFood: Record<string, number | undefined> = {
+      ...bundle,
+      fiber: numOrUndefined(nt?.fiber_g),
+      protein: numOrUndefined(nt?.protein_g),
+    }
+
+    // WHICH DOSES WERE IN FORCE on that day, not today's. A Train↔Rest swap
+    // changes the protocol, so a rest day must not be credited a training-only
+    // item — which is also why this resolves per date rather than once.
+    const training = d.isTrainingDay
+    const weekday = new Date(`${d.date}T12:00:00`).getDay()
+    const slots = stackForDate(customSlotsForDate(customs, weekday, training), training, weekday)
+    const doses = new Map(slots.flatMap((sl) => sl.items.map((i) => [i.key, i.dose] as const)))
+    const microsStack = supplementMicros(takenByDate.get(d.date) ?? [], doses, payloads)
+
+    return {
+      ...d,
+      microsFood,
+      microsStack,
+      supplementsPlanned: supplementCountForDate(training, customSlotsForDate(customs, weekday, training)),
+    }
+  })
+}
+
+/** A numeric column that PostgREST may hand back as a string. */
+function numOrUndefined(v: unknown): number | undefined {
+  const n = typeof v === 'string' ? Number(v) : v
+  return typeof n === 'number' && Number.isFinite(n) ? n : undefined
+}
+
 export function weekPayload(
   weekStart: string,
   range: RangeData,
@@ -666,7 +814,7 @@ export function weekPayload(
   /** Per-muscle set targets the user has overridden — see `plan_phase_volume`. */
   volumeOverrides: Partial<Record<LandmarkMuscle, number>> = {},
 ): WeeklyExportInput {
-  const days = toDays(weekStart, range)
+  const days = withMicros(toDays(weekStart, range), range, customs)
   const sessions = toSessions(range)
 
   // Weekly volume, same rule as the Weekly Volume card: a full set to the
@@ -691,8 +839,22 @@ export function weekPayload(
     directSets: m.directSets, indirectSets: m.indirectSets,
   }))
 
+  /* ── SORENESS, WITH THE SESSION THAT CAUSED IT ──────────────────────────────
+     `source_day_key` names the split ("legs_b"); the program turns it into the
+     label a person uses ("Legs B"). The DATE comes from the source session
+     where that session is inside this week — which is the common case, soreness
+     being a two-to-three day signal — and is simply absent otherwise, so the
+     line names the workout without claiming a day it cannot see. */
+  const sessionDateById = new Map(range.sessions.map((r) => [r.id, r.started_at.slice(0, 10)]))
+  const domsProgram = activeProgram()
   const doms: ExportDoms[] = range.doms
-    .map((r) => ({ date: r.date, muscle: r.muscle_group, severity: r.severity }))
+    .map((r) => ({
+      date: r.date, muscle: r.muscle_group, severity: r.severity,
+      sourceLabel: r.source_day_key
+        ? domsProgram.days.find((x) => x.key === r.source_day_key)?.label ?? r.source_day_key
+        : null,
+      sourceDate: r.source_session_id ? sessionDateById.get(r.source_session_id) ?? null : null,
+    }))
     .sort((a, b) => a.date.localeCompare(b.date) || a.muscle.localeCompare(b.muscle))
 
   // Sorted by date, then by SLOT ORDER rather than alphabetically — "eod,

@@ -810,8 +810,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useWeeklyLoop.ts": {
-    "mtime": 1787905134.596786,
-    "ast_hash": "f2e8ced3e9b83031b30416934b1ecdbc",
+    "mtime": 1788030836.6795907,
+    "ast_hash": "bb129e2f25aef578ed54569ff5331309",
     "semantic_hash": ""
   },
   "src/lib/hooks/useWeeklyVolume.ts": {
@@ -890,8 +890,8 @@
     "semantic_hash": ""
   },
   "src/lib/reports/weeklyExport.ts": {
-    "mtime": 1787905022.2868896,
-    "ast_hash": "3b998ba6cb42b15aabfeb7da4a49468f",
+    "mtime": 1788031110.319355,
+    "ast_hash": "2af88daaae9653016a5ba82400c1e766",
     "semantic_hash": ""
   },
   "src/lib/schedule/overrides.ts": {
@@ -1175,8 +1175,8 @@
     "semantic_hash": "5dcb592b6e235d90eaffe401278184bd"
   },
   "src/tests/weekly-loop.test.ts": {
-    "mtime": 1787855300.1680403,
-    "ast_hash": "6f6040b8f300cebb2a936fd4eaff9809",
+    "mtime": 1788030909.6491828,
+    "ast_hash": "f70997a64074355ab3bb9433dc0fecfb",
     "semantic_hash": ""
   },
   "src/tests/weigh-in.test.ts": {
@@ -2475,7 +2475,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/set-rows.html": {
-    "mtime": 1787925328.0788531,
+    "mtime": 1788031119.513084,
     "ast_hash": "4337ad6af8491d18f2242f7a5d77be6f",
     "semantic_hash": ""
   },
@@ -2505,7 +2505,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-ledger.html": {
-    "mtime": 1787925326.9913816,
+    "mtime": 1788031116.861816,
     "ast_hash": "3ddb93aca7b5901708c403bfb41afc10",
     "semantic_hash": ""
   },
@@ -2540,7 +2540,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/live-header.html": {
-    "mtime": 1787925326.4317791,
+    "mtime": 1788031117.019131,
     "ast_hash": "1922065e3007c80d486fcfb5d6f4ea9c",
     "semantic_hash": ""
   },
@@ -2610,7 +2610,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-summary-header.html": {
-    "mtime": 1787925327.6594353,
+    "mtime": 1788031118.2766168,
     "ast_hash": "b3d75865c62fb30c5cc668930a4b7642",
     "semantic_hash": ""
   },
@@ -3017,6 +3017,21 @@
   "src/tests/duration-freeze.test.tsx": {
     "mtime": 1787925570.1375744,
     "ast_hash": "eec5ec0be94a572e794cb3c5cf7be144",
+    "semantic_hash": ""
+  },
+  "src/lib/reports/derived.ts": {
+    "mtime": 1788031044.3599262,
+    "ast_hash": "61ff2eb7bb60249c30e029e3b7de5c06",
+    "semantic_hash": ""
+  },
+  "src/lib/reports/weekJson.ts": {
+    "mtime": 1788030747.6754498,
+    "ast_hash": "baea77c0b3d1edd8c62a951c80350a8f",
+    "semantic_hash": ""
+  },
+  "src/tests/export-completeness.test.ts": {
+    "mtime": 1788030979.5294878,
+    "ast_hash": "737ec67685ec46b9e60f3423d1e10f1c",
     "semantic_hash": ""
   }
 }

@@ -77,6 +77,39 @@ describe('stallProtocol — one lever, never a list', () => {
  * one — which turns a "this day has no skip marker" assertion into "some later
  * day has none", and those pass for the wrong reason.
  */
+/**
+ * The HUMAN half of the document — everything above the machine-readable block.
+ *
+ * The export now closes with a JSON serialisation of the same payload, which is
+ * the point of it: a spreadsheet should not have to parse "Sleep: 9h 11m". But
+ * it means every string in the week appears TWICE in the output, and a
+ * whole-document assertion like "Creatine appears once" or "these two exports
+ * are identical" is really an assertion about the rendered prose. Scope those
+ * here rather than weakening them.
+ */
+function mdOnly(out: string): string {
+  const i = out.indexOf('## Machine-readable week')
+  return i < 0 ? out : out.slice(0, i)
+}
+
+/**
+ * ONE `## `-headed section, by name.
+ *
+ * Needed because the vocabularies now overlap on purpose: the daily Micros line
+ * names L-Citrulline, creatine and caffeine as micronutrient targets, and the
+ * Supplements protocol names them as products. A document-wide `indexOf` for
+ * "L-Citrulline" finds Sunday's micros line, which is a true fact about a
+ * different section.
+ */
+function section(out: string, heading: string): string {
+  const lines = out.split('\n')
+  const start = lines.findIndex((l) => l.startsWith(`## ${heading}`))
+  if (start < 0) return ''
+  const rest = lines.slice(start + 1)
+  const end = rest.findIndex((l) => l.startsWith('## '))
+  return [lines[start], ...(end < 0 ? rest : rest.slice(0, end))].join('\n')
+}
+
 function dayBlock(out: string, date: string): string[] {
   const lines = out.split('\n')
   const start = lines.findIndex((l) => l.includes(`**`) && l.includes(date))
@@ -261,7 +294,10 @@ describe('buildWeeklyExport', () => {
   it('marks a set taken to failure and NEVER emits an estimated 1RM', () => {
     const out = buildWeeklyExport(input)
     expect(out).toMatch(/Set 3: 57\.5 kg × 10 \(to failure\)/)   // spelled out, not (F)
-    expect(out).not.toMatch(/e1RM/i)            // no derived 1RM anywhere
+    // No derived 1RM anywhere in the PROSE. The machine block carries the
+    // payload's own `e1rmKg` field, which is a serialisation of a value the PR
+    // line already prints in words — not a set line growing an estimate.
+    expect(mdOnly(out)).not.toMatch(/e1RM/i)
   })
 
   it('splits unilateral work per side (L/R weight · reps · failure)', () => {
@@ -319,17 +355,45 @@ describe('buildWeeklyExport', () => {
    * The order is fixed and the groups are: identity → what was eaten → what was
    * moved → what the body reported.
    */
-  it('renders each day as four grouped lines, in a fixed order', () => {
+  it('renders each day as EIGHT grouped lines, in a fixed order', () => {
     const out = buildWeeklyExport(input)
     expect(out).toMatch(/## Days/)
-    // The four lines IN ORDER and adjacent — asserted as one block, because
-    // what is under test is the grouping, and four independent `toMatch` calls
-    // would pass on four lines scattered through the document.
+    // The eight lines IN ORDER and adjacent — asserted as one block, because
+    // what is under test is the grouping, and eight independent `toMatch` calls
+    // would pass on eight lines scattered through the document.
+    //
+    // It was four, then five, and the three that joined are each a group the
+    // old shape had no room for: the night's ARCHITECTURE (distinct from its
+    // duration), the day's MICROS (which the export omitted entirely while the
+    // app measured eight of them daily) and supplement COMPLIANCE (distinct
+    // from the protocol at the foot of the document, which is a prescription).
+    //
+    // Every original line keeps its exact position and its exact wording, with
+    // the new vitals APPENDED to the ends of the two that grew — so a reader or
+    // a parser built against the old shape still finds every field where it
+    // left it.
     expect(dayBlock(out, '2026-07-19')).toEqual([
       '- **Sun 2026-07-19** · Workout · Upper A',
-      '    - Sleep & Vitals: Sleep: 9h 11m · HRV: 62 ms · Resting HR: 48 bpm · Wrist Temp: — · Blood O2: —',
+      '    - Sleep & Vitals: Sleep: 9h 11m · HRV: 62 ms · Resting HR: 48 bpm · Wrist Temp: —'
+        + ' · Blood O2: — · Avg HR (daytime): — · Respiratory Rate: — · VO2 Max: —',
+      '    - Sleep Stages: Deep: — · REM: — · Core: — · Awake: — · Bed: — · Wake: —',
       '    - Macros: 1940 kcal (172P / 190C / 54F) · water 3.0 L',
-      '    - Activity: 9200 steps · 7.10 km · 68 min training',
+      // Every target, every day, `—/target` where nothing was measured. A
+      // nutrient that vanishes on the days it was not logged teaches the reader
+      // it is not tracked, which is the opposite of true.
+      '    - Micros: Fiber: —/30 g · Protein: —/170 g · Sodium: —/3000 mg (ceiling)'
+        + ' · Potassium: —/3400 mg · Calcium: —/1000 mg · Iron: —/10 mg · Magnesium: —/400 mg'
+        + ' · Vitamin C: —/90 mg · Vitamin D: —/2000 IU · Saturated Fat: —/20 g (ceiling)'
+        + ' · Added Sugar: —/40 g (ceiling) · Vitamin B12: —/2.4 mcg (stack)'
+        + ' · Folate: —/400 mcg (stack) · EPA: —/500 mg (stack) · DHA: —/250 mg (stack)'
+        + ' · Creatine: —/5000 mg (stack) · L-Citrulline: —/3000 mg (stack)'
+        + ' · Caffeine: —/400 mg (ceiling, stack) · L-Theanine: —/200 mg (stack)'
+        + ' · Glycine: —/3000 mg (stack)',
+      '    - Activity: 9200 steps · 7.10 km · 68 min training · Exercise: — · Stand: — · Daylight: —',
+      // The denominator is em-dashed rather than assumed: this fixture states
+      // that three were taken and never says how many were asked for, and "3 of
+      // 3" would be an invented claim of perfect adherence.
+      '    - Supplements: 3 of — taken',
       '    - Weight Data: weight 65.3 kg',
     ])
   })
@@ -373,7 +437,11 @@ describe('buildWeeklyExport', () => {
 
     // THE INVARIANT: forgiving the grade must not move a single aggregate. The
     // only differences between these two exports are the two annotations.
-    expect(tagged.replace(' [Exception: Event]', '').replace(' _(under Event)_', '')).toBe(raw)
+    // Scoped to the prose: the JSON block genuinely differs, because the day
+    // genuinely carries a declared exception. What must not move is a single
+    // rendered aggregate.
+    expect(mdOnly(tagged).replace(' [Exception: Event]', '').replace(' _(under Event)_', ''))
+      .toBe(mdOnly(raw))
   })
 
   it('names WHICH axis each PR was set on, in a fixed order', () => {
@@ -419,7 +487,8 @@ describe('buildWeeklyExport', () => {
     expect(withProtocol).not.toMatch(/\*\*Training days\*\*/)
     expect(withProtocol).not.toMatch(/\*\*Rest days\*\*/)
     expect(withProtocol).toMatch(/- 11:45 · L-Citrulline — 3 g/)
-    expect(withProtocol.indexOf('Vitamin D3')).toBeLessThan(withProtocol.indexOf('L-Citrulline'))
+    const list = section(withProtocol, 'Supplements protocol')
+    expect(list.indexOf('Vitamin D3')).toBeLessThan(list.indexOf('L-Citrulline'))
   })
 
   it('prints the dose it is GIVEN, with nothing memorised about any supplement', () => {
@@ -460,7 +529,7 @@ describe('buildWeeklyExport', () => {
       ],
     })
     expect(out).toMatch(/- 09:00 · Multivitamin — 2 tabs on training days \/ 1 tab on rest days/)
-    expect(out.match(/Multivitamin/g)).toHaveLength(1)
+    expect(section(out, 'Supplements protocol').match(/Multivitamin/g)).toHaveLength(1)
   })
 
   it('marks a training-only item as one, and nothing else', () => {
@@ -486,7 +555,7 @@ describe('buildWeeklyExport', () => {
         { time: '11:45', name: 'L-Citrulline', dose: '6 g' },
       ],
     })
-    expect(out.match(/reatine/g)).toHaveLength(1)
+    expect(section(out, 'Supplements protocol').match(/reatine/g)).toHaveLength(1)
     expect(out).toMatch(/- 11:45 · L-Citrulline — 6 g/)
   })
 
