@@ -40,12 +40,14 @@ describe('the rungs themselves', () => {
     // Above every deficit rung, by construction — that is what it is for.
     for (const d of DEFICIT_LEVERS) expect(wk.calorieGoal).toBeGreaterThan(d.calorieGoal)
     // And it obeys the one rule the whole ladder obeys: the macros are the
-    // instruction and the calorie figure is their sum. 2,445, not the round
-    // 2,450 the week was sketched with.
-    expect(atwaterKcal(wk.proteinGoalG, wk.carbsGoalG, wk.fatGoalG)).toBe(2445)
-    expect(wk.calorieGoal).toBe(2445)
-    // It releases the food, not the movement.
-    expect(wk.stepsGoal).toBe(10000)
+    // instruction and the calorie figure is their sum. 2,151, not the round
+    // 2,150 the week was re-specified with on the morning it opened.
+    expect(atwaterKcal(wk.proteinGoalG, wk.carbsGoalG, wk.fatGoalG)).toBe(2151)
+    expect(wk.calorieGoal).toBe(2151)
+    // And the steps DO come down. The first version of this rung held the cut's
+    // 10k floor on the reasoning that the week releases food and not movement;
+    // in practice that graded most of a rest-focused week as a miss.
+    expect(wk.stepsGoal).toBe(7500)
   })
 
   it('is selectable and resolvable like any other rung', () => {
@@ -54,7 +56,7 @@ describe('the rungs themselves', () => {
     expect(applyLever(
       { calorie: 1955, protein: 170, carbs: 195, fat: 55, steps: 10000 },
       'maintenance-week',
-    )).toEqual({ calorie: 2445, protein: 170, carbs: 295, fat: 65, steps: 10000 })
+    )).toEqual({ calorie: 2151, protein: 170, carbs: 244, fat: 55, steps: 7500 })
   })
 
   /**

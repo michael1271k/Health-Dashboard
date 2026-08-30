@@ -2,6 +2,8 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/lib/supabase/types'
 import { DEFAULT_PROGRAM_ID, normalizePlanId, type ProgramPhase, type ScheduleContext } from '@/lib/programs'
 import { parseLayout } from '@/lib/schedule/layout'
+import { activeLeverOf } from '@/lib/nutrition/levers'
+import { isMaintenanceDate } from '@/lib/nutrition/maintenance'
 
 /**
  * The schedule context a ROUTE is running, read from the database.
@@ -45,11 +47,26 @@ export async function serverScheduleContext(
   supabase: DB,
   userId: string,
   goals?: Record<string, unknown> | null,
+  /**
+   * The date being resolved, when the caller has one.
+   *
+   * Only a maintenance week needs it, and only because a maintenance week is the
+   * one phase this column cannot express: it is pulled as a LEVER, on a date, so
+   * that selecting it neither restates the body goals nor reseeds the training
+   * deck (see the long note in `levers.ts`). `active_phase` therefore still says
+   * `cut` all through it, and every server surface reading only this row —
+   * the widget's prescription among them — ran the cut's session on a week that
+   * was deliberately not going to do it.
+   *
+   * Omitted, nothing changes and the stored phase answers alone.
+   */
+  dateISO?: string,
 ): Promise<ScheduleContext> {
   let row = goals ?? null
   if (row == null) {
     const { data } = await supabase
-      .from('user_goals').select('active_plan, active_program, active_phase, goal_preset')
+      .from('user_goals')
+      .select('active_plan, active_program, active_phase, goal_preset, active_lever, maintenance_until')
       .eq('user_id', userId).maybeSingle()
     row = (data ?? null) as Record<string, unknown> | null
   }
@@ -64,7 +81,14 @@ export async function serverScheduleContext(
     DEFAULT_PROGRAM_ID
 
   // `active_phase` is the field; `goal_preset` is the older tag it replaced.
-  const phase = toPhase(row?.active_phase ?? row?.goal_preset)
+  // A maintenance week outranks both — see `dateISO` above.
+  const stored = toPhase(row?.active_phase ?? row?.goal_preset)
+  const phase: ProgramPhase = dateISO && isMaintenanceDate(
+    dateISO,
+    activeLeverOf(row),
+    (row?.maintenance_until as string | null | undefined) ?? null,
+    dateISO,
+  ) ? 'maintenance' : stored
 
   const [overrides, layout] = await Promise.all([
     loadOverrides(supabase, userId),

@@ -116,8 +116,31 @@ export const WORKOUT_MAX_BY_DAY: Readonly<Record<string, number>> = {
  */
 export const WORKOUT_MAX_DEFAULT = 24
 
-export function workoutMaxFor(dayKey?: string | null): number {
-  return (dayKey ? WORKOUT_MAX_BY_DAY[dayKey] : undefined) ?? WORKOUT_MAX_DEFAULT
+/**
+ * What a maintenance/deload day may spend of its day's workout ceiling.
+ *
+ * ── WHY THE CEILING AND NOT THE DRAIN ────────────────────────────────────────
+ * The relative term in `workoutDrain` already handles the volume: a session at
+ * 68% of its own trailing average drains roughly 68% as much, so a deload week
+ * costs less battery WITHOUT anything here. That part needs no help and gets
+ * none — `battery.test.ts` pins it.
+ *
+ * What the relative term cannot express is that the ceiling itself has moved. A
+ * deload legs day compared only against other legs days can still come out at
+ * `relative = 1.4` on the one day of the week you pushed, and be charged the
+ * full 30 for it, because "typical" was recomputed from six deloaded sessions.
+ * The week's whole point is that its hardest day is not a hard day.
+ *
+ * A factor strictly below 1 is also the only shape that is safe here:
+ * `MAX_TOTAL_DRAIN` is 77 against a 100 charge budget, and v6 broke precisely by
+ * letting the worst case reach 104.2. This can only ever lower the worst case,
+ * never raise it — `battery.test.ts` asserts that too.
+ */
+export const MAINTENANCE_DRAIN_FACTOR = 0.75
+
+export function workoutMaxFor(dayKey?: string | null, maintenance = false): number {
+  const base = (dayKey ? WORKOUT_MAX_BY_DAY[dayKey] : undefined) ?? WORKOUT_MAX_DEFAULT
+  return maintenance ? base * MAINTENANCE_DRAIN_FACTOR : base
 }
 
 /** Wake charge from sleep quality (0..1): 55 + 45·q, rounded. */
@@ -173,11 +196,12 @@ export function workoutDrain(
   trailingAvgVolumeKg: number,
   sessionRpe?: number | null,
   dayKey?: string | null,
+  maintenance = false,
 ): number {
   if (!(sessionVolumeKg > 0)) return 0
   const relative = trailingAvgVolumeKg > 0 ? sessionVolumeKg / trailingAvgVolumeKg : 1
   const intensity = sessionRpe != null && sessionRpe > 0 ? clamp(sessionRpe / 10, 0, 1) : BATTERY.defaultRpe
-  return workoutMaxFor(dayKey) * intensity * clamp(relative, BATTERY.relMin, BATTERY.relMax) / BATTERY.relMax
+  return workoutMaxFor(dayKey, maintenance) * intensity * clamp(relative, BATTERY.relMin, BATTERY.relMax) / BATTERY.relMax
 }
 
 /**
@@ -195,6 +219,7 @@ export function computeBattery(inputs: ScoringInputs, hoursAwake?: number): Batt
   const activity = Math.min(BATTERY.activityCap, 0.004 * inputs.activeCal + 0.5 * (inputs.steps / 1000))
   const workout = workoutDrain(
     inputs.sessionVolumeKg, inputs.trailingAvgVolumeKg, inputs.sessionRpe, inputs.sessionDayKey,
+    inputs.isMaintenance,
   )
 
   const currentPct = clamp(wakeCharge - time - activity - workout, BATTERY.floor, 100)

@@ -4,6 +4,7 @@ import { useId, useState } from 'react'
 import { TrendingUp } from 'lucide-react'
 import { useSessionIntel } from '@/lib/hooks/useSessionIntel'
 import { sessionVerdict } from '@/lib/training/sessionVerdict'
+import { maintenanceSpanFor } from '@/lib/nutrition/maintenance'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 import { tightDomain, axisBound } from '@/lib/charts/scale'
 // Imported under their real names. EMBER/EMERALD/OXIDE were aliased on import
@@ -37,9 +38,14 @@ export function ProgressionTrail({ sessionId }: { sessionId: string }) {
   if (isLoading) return <div className="h-24 rounded-xl bg-white/[0.03] animate-pulse" aria-hidden="true" />
   if (!intel) return null
 
-  const verdict = sessionVerdict(intel.volumeDeltaPct, intel.deltas.map((d) => ({
-    name: d.name, topKg: d.topKg, prevKg: d.prevKg, unloaded: d.unloaded,
-  })))
+  // `volumes` is this session plus its predecessors, ascending, so the last
+  // entry is this session's own date — the only date this component has.
+  const ownDate = intel.volumes[intel.volumes.length - 1]?.date
+  const verdict = sessionVerdict(
+    intel.volumeDeltaPct,
+    intel.deltas.map((d) => ({ name: d.name, topKg: d.topKg, prevKg: d.prevKg, unloaded: d.unloaded })),
+    ownDate != null && maintenanceSpanFor(ownDate) != null,
+  )
 
   return (
     /* NO CARD OF ITS OWN. The page composes three bands and this is the middle

@@ -63,6 +63,19 @@ export interface ScoringInputs {
    * Absent on legacy rows; `workoutMaxFor` falls back to the upper-day figure.
    */
   sessionDayKey?: string | null
+  /**
+   * Is this date inside a planned maintenance / deload week?
+   *
+   * Resolved by `isMaintenanceDate` — the lever selection first, the phase as a
+   * fallback — and passed in rather than derived here so the scorer, the export
+   * and the tests all get the same answer for the same day.
+   *
+   * It lowers the workout drain CEILING (`MAINTENANCE_DRAIN_FACTOR`) and nothing
+   * else. Recovery is deliberately untouched: it is sleep, resting HR and HRV,
+   * all of which a real deload improves on their own, and a bonus on top would
+   * be inventing a number the sensors are already reporting honestly.
+   */
+  isMaintenance?: boolean
   /** Exercises the program prescribes for the day (0/undefined = unknown). */
   plannedExercises?: number
   /** Distinct exercises actually logged. */

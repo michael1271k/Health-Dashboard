@@ -8,6 +8,8 @@ import { phaseGoalsFor, type NutritionMode, type NutritionPreset } from '@/lib/t
 import type { Tables } from '@/lib/supabase/types'
 import { leverById, activeLeverOf, leverForDate, type LeverId } from '@/lib/nutrition/levers'
 import { logicalTodayISO } from '@/lib/utils/day'
+import { applyDailyTarget, hasDailyTarget, type DailyTarget } from '@/lib/nutrition/dailyTargets'
+import { useDailyTarget } from '@/lib/hooks/useDailyTargets'
 
 /**
  * The ONE answer to "what are today's nutrition goals?".
@@ -51,12 +53,31 @@ export interface ActiveNutritionGoals {
   fat: number | null
   fiberMin: number | null
   fiberMax: number | null
+  /**
+   * The day's step target, resolved through the same chain as the food.
+   *
+   * It lives here because it is a LEVER field — a rung is one named combination
+   * of eat-less and move-more, and the maintenance week moves both. The
+   * dashboard and the widget were reading `user_goals.steps_goal` raw while the
+   * scorer graded against the rung, so the tile said 10,000 and the score said
+   * 7,500 about the same afternoon.
+   */
+  steps: number | null
   /** Null only when no phase has ever been chosen. */
   mode: NutritionMode | null
   /** Which source won — surfaced so the UI can explain a number if it has to. */
-  source: 'lever' | 'plan-phase' | 'user-row' | 'default'
+  source: 'daily' | 'lever' | 'plan-phase' | 'user-row' | 'default'
   /** The rung in force, when one is. Null means no lever was selected. */
   lever: LeverId | null
+  /**
+   * Did a per-day override contribute any of these figures?
+   *
+   * Separate from `source` on purpose: an override is partial by design (raise
+   * the calories, leave protein alone), so "the day had an override" and "the
+   * override supplied every number" are different claims and the UI needs the
+   * first one to show its badge.
+   */
+  dayOverride: boolean
 }
 
 type GoalsRow = Pick<Tables<'user_goals'>, 'calorie_goal' | 'protein_goal_g' | 'carbs_goal_g' | 'fat_goal_g' | 'goal_preset'> & {
@@ -66,6 +87,8 @@ type GoalsRow = Pick<Tables<'user_goals'>, 'calorie_goal' | 'protein_goal_g' | '
    * everything downstream then behaves exactly as it did before levers existed.
    */
   active_lever?: string | null
+  /** Optional for the same reason a caller may hold a partial row: absent → the preset answers. */
+  steps_goal?: number | null
 }
 
 /**
@@ -78,7 +101,36 @@ export function resolveNutritionGoals(
   mode: NutritionMode | null,
   /** The active phase lever, when one is selected. Outranks everything below. */
   leverId?: string | null,
+  /**
+   * This DAY's own override — the one layer above the rung, and the only one
+   * allowed to speak for a finished day. See `dailyTargets.ts`.
+   */
+  dayTarget?: DailyTarget | null,
 ): ActiveNutritionGoals {
+  const base = resolveBaseGoals(row, preset, mode, leverId)
+  if (!hasDailyTarget(dayTarget)) return { ...base, dayOverride: false }
+  const merged = applyDailyTarget(
+    { calorie: base.calorie, protein: base.protein, carbs: base.carbs, fat: base.fat, steps: base.steps },
+    dayTarget,
+  )
+  return {
+    ...base,
+    calorie: merged.calorie,
+    protein: merged.protein,
+    carbs: merged.carbs,
+    fat: merged.fat,
+    steps: merged.steps,
+    source: 'daily',
+    dayOverride: true,
+  }
+}
+
+function resolveBaseGoals(
+  row: GoalsRow | null | undefined,
+  preset: NutritionPreset,
+  mode: NutritionMode | null,
+  leverId?: string | null,
+): Omit<ActiveNutritionGoals, 'dayOverride'> {
   // ── THE LEVER IS THE TOP LAYER ─────────────────────────────────────────────
   // Not because it is the most authoritative source of nutrition science, but
   // because it is the only layer BOTH sides can resolve identically: the server
@@ -94,6 +146,7 @@ export function resolveNutritionGoals(
       fat: lever.fatGoalG,
       fiberMin: preset.fiberMin ?? null,
       fiberMax: preset.fiberMax ?? null,
+      steps: lever.stepsGoal,
       mode,
       source: 'lever',
       lever: lever.id,
@@ -108,6 +161,7 @@ export function resolveNutritionGoals(
       fat: preset.fatGoalG,
       fiberMin: preset.fiberMin ?? null,
       fiberMax: preset.fiberMax ?? null,
+      steps: preset.stepsGoal ?? row?.steps_goal ?? null,
       mode,
       source: 'plan-phase',
       lever: null,
@@ -123,6 +177,7 @@ export function resolveNutritionGoals(
       fat: row.fat_goal_g ?? null,
       fiberMin: preset.fiberMin ?? null,
       fiberMax: preset.fiberMax ?? null,
+      steps: row.steps_goal ?? preset.stepsGoal ?? null,
       mode: null,
       source: 'user-row',
       lever: null,
@@ -136,6 +191,7 @@ export function resolveNutritionGoals(
     fat: preset.fatGoalG,
     fiberMin: preset.fiberMin ?? null,
     fiberMax: preset.fiberMax ?? null,
+    steps: preset.stepsGoal ?? null,
     mode: null,
     source: 'default',
     lever: null,
@@ -162,5 +218,11 @@ export function useNutritionGoals(): ActiveNutritionGoals {
   // from 16 Aug, and it is the same resolution the server scorer performs, so
   // the goal displayed and the goal graded cannot diverge.
   const today = logicalTodayISO()
-  return resolveNutritionGoals(row ?? null, preset, mode, leverForDate(today, activeLeverOf(row), today))
+  const maintenanceUntil = (row as { maintenance_until?: string | null } | null)?.maintenance_until ?? null
+  const { data: dayTarget } = useDailyTarget(today)
+  return resolveNutritionGoals(
+    row ?? null, preset, mode,
+    leverForDate(today, activeLeverOf(row), today, maintenanceUntil),
+    dayTarget ?? null,
+  )
 }

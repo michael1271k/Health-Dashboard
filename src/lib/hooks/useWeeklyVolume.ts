@@ -8,6 +8,10 @@ import { eraForDate, activePhase, getActiveProgramId } from '@/lib/programs'
 import { resolveMovers } from '@/lib/exercises/muscleMap'
 import { weeklyVolumeByMuscle, type MuscleVolume, type ProgramPhase } from '@/lib/training/landmarks'
 import { usePlanPhaseGoals } from '@/lib/hooks/usePlanPhaseGoals'
+import { useUserGoals } from '@/lib/hooks/useDashboard'
+import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
+import { activeLeverOf } from '@/lib/nutrition/levers'
+import { isMaintenanceDate } from '@/lib/nutrition/maintenance'
 
 export interface WeeklyVolume {
   weekStart: string
@@ -37,8 +41,27 @@ export function useWeeklyVolume(
   // The phase comes from the ACTIVE PLAN. It used to be sniffed from
   // calorie_goal (>= 2450 meant bulk), which had no way to express maintenance —
   // a maintenance block silently trained to cut volume.
+  //
+  // ── AND A MAINTENANCE WEEK OVERRIDES IT ───────────────────────────────────
+  // `activePhase()` reads localStorage, which knows nothing about the lever and
+  // which React cannot see change. `PROGRAM_TARGETS` has carried a full
+  // `maintenance` row all along and nothing could ever select it, so a deload
+  // week was graded against the CUT's set targets — the single reason a planned
+  // 32% volume drop read as a failure on every landmark at once.
+  //
+  // `useScheduleVersion` is the subscription that makes the localStorage half
+  // re-render at all; without it a plan switch leaves this card on the old
+  // targets until a full reload.
+  void useScheduleVersion()
   const { resolveVolume } = usePlanPhaseGoals()
-  const phase = activePhase() as ProgramPhase
+  const { data: goalsRow } = useUserGoals()
+  const maintenance = isMaintenanceDate(
+    weekStart,
+    activeLeverOf(goalsRow),
+    (goalsRow as { maintenance_until?: string | null } | null)?.maintenance_until ?? null,
+    logicalTodayISO(),
+  )
+  const phase: ProgramPhase = maintenance ? 'maintenance' : (activePhase() as ProgramPhase)
   const planId = getActiveProgramId()
   const volumeTargets = resolveVolume(planId, phase)
 

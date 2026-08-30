@@ -2,14 +2,15 @@
 
 import { useId, useMemo, useState } from 'react'
 import {
-  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceArea,
 } from 'recharts'
 import { ChartTooltip } from './ChartTooltip'
 import type { VolumePoint } from '@/lib/hooks/useCharts'
 import type { SplitDay } from '@/lib/types/workout'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 import { niceDomain, compactKg } from '@/lib/charts/scale'
-import { dayColor } from '@/lib/theme/palette'
+import { dayColor, SAND } from '@/lib/theme/palette'
+import { maintenanceSpanFor } from '@/lib/nutrition/maintenance'
 
 const GRID = 'rgba(255,255,255,0.06)'
 const TEXT = '#79808C'
@@ -119,6 +120,24 @@ function formatDate(dateStr: string): string {
   return new Intl.DateTimeFormat('en-IL', { month: 'short', day: 'numeric' }).format(new Date(dateStr + 'T12:00:00Z'))
 }
 
+/**
+ * One point on the volume line. Hollow when the day belongs to a planned deload.
+ *
+ * Recharts hands a dot renderer the whole datum on `payload`, which is why the
+ * `maintenance` flag rides along on the point rather than being recomputed here.
+ */
+function VolumeDot(props: {
+  cx?: number; cy?: number; color?: string
+  payload?: { maintenance?: boolean }
+}) {
+  const { cx, cy, color, payload } = props
+  if (cx == null || cy == null) return null
+  if (payload?.maintenance) {
+    return <circle cx={cx} cy={cy} r={3.5} fill="var(--color-surface-2)" stroke={SAND} strokeWidth={2} />
+  }
+  return <circle cx={cx} cy={cy} r={2} fill={color} />
+}
+
 export function VolumeChart({ data, isLoading, era = 'all' }: { data: VolumePoint[]; isLoading?: boolean; era?: 'all' | 'ppl' | 'axis' }) {
   const [split, setSplit] = useState<ChartSplit>('legs')
   const unit = useUnitSystem()
@@ -136,9 +155,35 @@ export function VolumeChart({ data, isLoading, era = 'all' }: { data: VolumePoin
   const chartData = useMemo(
     () => data
       .filter((d) => resolveChartSplit(d.date, d.split, era, d.dayKey) === activeSplit)
-      .map((d) => ({ date: formatDate(d.date), volume: displayWeight(d.volume) })),
+      .map((d) => ({
+        date: formatDate(d.date),
+        volume: displayWeight(d.volume),
+        // Carried onto the point so both the band and the dot renderer read one
+        // answer. `maintenanceSpanFor` is the phase axis, which is the only one
+        // with a declared LENGTH — see the note in `maintenance.ts`.
+        maintenance: maintenanceSpanFor(d.date) != null,
+      })),
     [data, era, activeSplit],
   )
+
+  // ── THE PLANNED-DELOAD BAND ────────────────────────────────────────────────
+  // A maintenance week's volume drops because the plan asked it to, and a line
+  // chart has no way of saying so — the point just goes down, in the same colour
+  // a bad week goes down. The band is the context the number was missing.
+  //
+  // Bounds are LABELS, not dates: a `ReferenceArea` on a categorical axis is
+  // matched against the tick values, so a raw ISO date lands nowhere.
+  const bands = useMemo(() => {
+    const out: Array<{ x1: string; x2: string }> = []
+    let open = false
+    for (const d of chartData) {
+      if (!d.maintenance) { open = false; continue }
+      if (open) { out[out.length - 1].x2 = d.date; continue }
+      out.push({ x1: d.date, x2: d.date })
+      open = true
+    }
+    return out
+  }, [chartData])
   // hardMin 0: volume is a non-negative quantity, so padding must never push
   // the axis below the origin even when the series is tightly clustered.
   const volumeDomain = useMemo(
@@ -189,8 +234,15 @@ export function VolumeChart({ data, isLoading, era = 'all' }: { data: VolumePoin
                   every real change into a few pixels. */}
               <YAxis tick={{ fill: TEXT, fontSize: 11, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} width={48}
                 domain={volumeDomain} allowDataOverflow={false} tickFormatter={compactKg} />
+              {bands.map((b) => (
+                <ReferenceArea key={`${b.x1}-${b.x2}`} x1={b.x1} x2={b.x2} ifOverflow="extendDomain"
+                  fill={SAND} fillOpacity={0.09} stroke={SAND} strokeOpacity={0.22} strokeDasharray="3 3" />
+              ))}
               <Tooltip content={<ChartTooltip />} cursor={{ stroke: GRID, strokeWidth: 1 }} />
-              <Area isAnimationActive={false} type="monotone" dataKey="volume" name={`Volume (${unit})`} stroke={color} fill={`url(#${volFill})`} strokeWidth={2} dot={{ r: 2, fill: color }} activeDot={{ r: 4 }} />
+              {/* A deload point is HOLLOW — filled with the card's own ground and
+                  ringed in SAND. Solid-vs-hollow survives both themes and reads
+                  at a glance without asking the reader to decode a second hue. */}
+              <Area isAnimationActive={false} type="monotone" dataKey="volume" name={`Volume (${unit})`} stroke={color} fill={`url(#${volFill})`} strokeWidth={2} dot={<VolumeDot color={color} />} activeDot={{ r: 4 }} />
             </AreaChart>
           </ResponsiveContainer>
         </div>

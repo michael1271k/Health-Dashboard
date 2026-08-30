@@ -51,6 +51,21 @@ const pctText = (pct: number) => `${Math.abs(Math.round(pct))}%`
 export function sessionVerdict(
   volumeDeltaPct: number | null,
   exercises: readonly VerdictExercise[],
+  /**
+   * Was this session inside a planned maintenance / deload week?
+   *
+   * ── WHY THE SAME NUMBER NEEDS A DIFFERENT VERDICT ──────────────────────────
+   * "Less tonnage, and no load increase to explain it" is the right sentence on
+   * a cut week and the wrong one on a deload, where the tonnage came down
+   * because the programme took it down. The session did exactly what it was
+   * asked to do, and calling that a caution teaches the reader to distrust the
+   * verdict on the weeks it is actually earned.
+   *
+   * It changes the TONE and the words, never the arithmetic: the percentage
+   * printed is the real one, and a genuine load gain inside a deload is still
+   * praised as a load gain.
+   */
+  maintenance = false,
 ): SessionVerdict | null {
   if (volumeDeltaPct == null) return null
 
@@ -82,6 +97,14 @@ export function sessionVerdict(
 
   if (volumeDeltaPct > 0) {
     return { tone: 'praise', headline: `${pctText(volumeDeltaPct)} more tonnage than last time.`, loadGains: [] }
+  }
+
+  if (volumeDeltaPct < 0 && maintenance) {
+    return {
+      tone: 'neutral',
+      headline: `${pctText(volumeDeltaPct)} less tonnage — on plan for the maintenance week.`,
+      loadGains: [],
+    }
   }
 
   if (volumeDeltaPct < 0) {

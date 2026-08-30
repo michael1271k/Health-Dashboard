@@ -12,6 +12,8 @@ import {
   type ContextMode,
 } from '@/lib/nutrition/context'
 import { applyLever, activeLeverOf, leverForDate } from '@/lib/nutrition/levers'
+import { applyDailyTarget, DAILY_TARGET_COLUMNS, type DailyTarget } from '@/lib/nutrition/dailyTargets'
+import { isMaintenanceDate } from '@/lib/nutrition/maintenance'
 import type { ProgramPhase } from '@/lib/training/landmarks'
 import { isWorkingSet } from '@/lib/training/setTags'
 
@@ -297,16 +299,32 @@ export async function computeForDate(
   // today onward to your current selection — see `LEVER_SCHEDULE`.
   //
   // Absent column, absent selection and `custom` all leave `g` untouched.
-  const leverId = leverForDate(date, activeLeverOf(goals), todayISO)
+  const maintenanceUntil = (goals as { maintenance_until?: string | null } | null)?.maintenance_until ?? null
+  const leverId = leverForDate(date, activeLeverOf(goals), todayISO, maintenanceUntil)
   const levered = applyLever(
     { calorie: g.calorie_goal, protein: g.protein_goal_g, carbs: g.carbs_goal_g, fat: g.fat_goal_g, steps: g.steps_goal },
     leverId,
   )
-  g.calorie_goal = levered.calorie
-  g.protein_goal_g = levered.protein ?? 0
-  g.carbs_goal_g = levered.carbs ?? 0
-  g.fat_goal_g = levered.fat ?? 0
-  g.steps_goal = levered.steps ?? g.steps_goal
+
+  // ── AND THE DAY'S OWN OVERRIDE ON TOP ─────────────────────────────────────
+  // The one layer above the rung, and the one that is allowed to reach into a
+  // finished day — see `dailyTargets.ts` for why that relaxation is deliberate
+  // here and forbidden everywhere else. A missing table reads as no override, so
+  // this is inert until the DDL lands.
+  const dayTarget = await supabase
+    .from('daily_targets')
+    .select(DAILY_TARGET_COLUMNS)
+    .eq('user_id', userId)
+    .eq('date', date)
+    .maybeSingle()
+    .then((r) => r.data as DailyTarget | null, () => null)
+
+  const resolved = applyDailyTarget(levered, dayTarget)
+  g.calorie_goal = resolved.calorie
+  g.protein_goal_g = resolved.protein ?? 0
+  g.carbs_goal_g = resolved.carbs ?? 0
+  g.fat_goal_g = resolved.fat ?? 0
+  g.steps_goal = resolved.steps ?? g.steps_goal
 
   // What the program prescribed for this day, per phase (cut uses each lift's
   // cutSets; bulk-only lifts drop out). null when the day isn't a known program
@@ -320,8 +338,15 @@ export async function computeForDate(
   // `leverForDate` is already the single source of truth for which rung a date
   // was eaten under, and the same calorie-sniffing bug is documented as fixed
   // in `landmarks.ts` and `useWeeklyVolume.ts`. This was the last copy.
+  //
+  // It now asks `isMaintenanceDate` rather than comparing the lever id here.
+  // The lever is still what answers first, but a deload that predates levers
+  // (the Thailand trip, the Transition block — real `PHASES` entries with no
+  // schedule rows) used to fall through to `'cut'` and be graded against a
+  // prescription nobody intended to follow.
+  const maintenance = isMaintenanceDate(date, activeLeverOf(goals), maintenanceUntil, todayISO)
   const programMode: ProgramPhase =
-    leverId === 'maintenance-week' ? 'maintenance'
+    maintenance ? 'maintenance'
     : (g.calorie_goal ?? 0) >= 2450 ? 'bulk'
     : 'cut'
   const prescribed = dayKey ? prescribedFor(dayKey, programMode) : null
@@ -370,6 +395,7 @@ export async function computeForDate(
     trailingAvgVolumeKg: trailingAvg,
     sessionRpe: hardestSession?.session_rpe ?? null,
     sessionDayKey: hardestSession?.day_key ?? dayKey,
+    isMaintenance: maintenance,
     plannedExercises: prescribed?.exercises,
     // The prescription MINUS what you deliberately ghosted, floored at zero.
     // See the note beside `ghostSets`: a set you marked as skipped on purpose

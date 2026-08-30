@@ -454,7 +454,7 @@ export default function DashboardPage() {
 
       case 'steps':
         return <StepsWidget size={size} onOpen={onOpen('steps')}
-          steps={steps} goal={goals?.steps_goal ?? 10_000}
+          steps={steps} goal={fuelGoals.steps ?? goals?.steps_goal ?? 10_000}
           tdee={tdeeToday} activeKcal={log?.active_energy ?? null}
           series={(bioSeries ?? []).map((d) => d.steps)} />
 
@@ -693,7 +693,7 @@ export default function DashboardPage() {
         {open === 'steps' && (
           <StepsJourney
             steps={steps}
-            goal={goals?.steps_goal ?? null}
+            goal={fuelGoals.steps ?? goals?.steps_goal ?? null}
             distanceM={(log as { distance_m?: number | null } | null)?.distance_m ?? null}
             activeKcal={log?.active_energy ?? null}
             trainingMin={log?.training_minutes ?? null}

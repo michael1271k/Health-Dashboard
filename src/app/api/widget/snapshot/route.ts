@@ -9,6 +9,8 @@ import { scheduleDayIn, isTrainingDayIn, sessionTargetIn, prescribedFor } from '
 import { paceMinPerKm } from '@/lib/cardio/metrics'
 import { ZONE2_WEEKLY_TARGET, ZONE2_MIN_MINUTES } from '@/lib/cardio/zone2'
 import { serverScheduleContext } from '@/lib/schedule/serverContext'
+import { applyLever, activeLeverOf, leverForDate } from '@/lib/nutrition/levers'
+import { applyDailyTarget, DAILY_TARGET_COLUMNS, type DailyTarget } from '@/lib/nutrition/dailyTargets'
 import { computeForDate } from '@/lib/scoring/computeForDate'
 import { BATTERY } from '@/lib/scoring/battery'
 // `utils/units` is a `'use client'` module — importing validWeight from THERE
@@ -184,7 +186,40 @@ export async function GET(req: Request) {
   // therefore answered with the DEFAULT plan, the bulk phase and an empty
   // override map on a server. The widget announced the wrong session for any
   // other plan and ignored every swap in `schedule_overrides`.
-  const schedule = await serverScheduleContext(supabase, userId, goals)
+  // `date` is passed so a maintenance week resolves as one here too: the lever
+  // is date-bound and `user_goals.active_phase` still reads `cut` all through it.
+  const schedule = await serverScheduleContext(supabase, userId, goals, date)
+
+  // ── THE TARGETS THIS DAY IS ACTUALLY GRADED AGAINST ───────────────────────
+  // The raw `user_goals` row is a cache of a decision, not the decision. Read
+  // straight, it showed the cut's 10,000 steps and 1,955 kcal on a maintenance
+  // day the scorer was grading at 7,500 and 2,151 — the widget and the score
+  // disagreeing about the same day, which is the exact bug `serverScheduleContext`
+  // exists to prevent, one column over.
+  const dayTargetRow = await supabase
+    .from('daily_targets')
+    .select(DAILY_TARGET_COLUMNS)
+    .eq('user_id', userId)
+    .eq('date', date)
+    .maybeSingle()
+    .then((r) => r.data as DailyTarget | null, () => null)
+
+  // Local coercion: `num` below is declared with the response builder, and the
+  // targets have to resolve before the score recompute that follows this.
+  const g0 = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null)
+  const resolvedGoals = applyDailyTarget(
+    applyLever(
+      {
+        calorie: g0(goals.calorie_goal) ?? 0,
+        protein: g0(goals.protein_goal_g),
+        carbs: g0(goals.carbs_goal_g),
+        fat: g0(goals.fat_goal_g),
+        steps: g0(goals.steps_goal),
+      },
+      leverForDate(date, activeLeverOf(goals), date, (goals.maintenance_until as string | null) ?? null),
+    ),
+    dayTargetRow,
+  )
 
   // ── Keep the score honest before answering ─────────────────────────────────
   // `battery_pct` decays with hours awake, so the stored row is wrong within an
@@ -299,7 +334,7 @@ export async function GET(req: Request) {
   // and maintenance runs the bulk prescription.
   const prescribed = day === 'rest' || !day.dayKey
     ? null
-    : prescribedFor(day.dayKey, schedule.phase === 'cut' ? 'cut' : 'bulk')
+    : prescribedFor(day.dayKey, schedule.phase)
 
   // The last time THIS split was trained — the number that answers "what am I
   // chasing". Off `allSessions`, already read for the week aggregates, so it
@@ -399,13 +434,13 @@ export async function GET(req: Request) {
     },
     macros: {
       kcal: nutri?.calories ?? null,
-      kcalGoal: num(goals.calorie_goal),
+      kcalGoal: resolvedGoals.calorie || null,
       proteinG: nutri?.protein_g ?? null,
-      proteinGoalG: num(goals.protein_goal_g),
+      proteinGoalG: resolvedGoals.protein,
       carbsG: nutri?.carbs_g ?? null,
-      carbsGoalG: num(goals.carbs_goal_g),
+      carbsGoalG: resolvedGoals.carbs,
       fatG: nutri?.fat_g ?? null,
-      fatGoalG: num(goals.fat_goal_g),
+      fatGoalG: resolvedGoals.fat,
     },
     water: {
       ml: water.length ? water.reduce((s, r) => s + r.amount_ml, 0) : log?.water_ml ?? null,
@@ -413,7 +448,7 @@ export async function GET(req: Request) {
     },
     steps: {
       count: metrics?.steps ?? log?.steps ?? null,
-      goal: num(goals.steps_goal),
+      goal: resolvedGoals.steps,
       distanceM: log?.distance_m ?? null,
       activeKcal: metrics?.active_cal ?? log?.active_energy ?? null,
     },

@@ -137,24 +137,37 @@ export const LEVERS: NutritionLever[] = [
      * above; a rung being RELEASED is an event, and this one is guaranteed to
      * be released.
      *
-     * ── 2,445 AND NOT 2,450 ───────────────────────────────────────────────────
-     * The week was specified as "2450 kcal (170P / 295C / 65F)". Those macros
-     * are Atwater-exactly 170·4 + 295·4 + 65·9 = 2,445. The 2,450 is the round
-     * number the plan was written with, and this file has already been burned
-     * once by a calorie literal sitting beside macros that summed to something
-     * else — that is the whole story of `1950` vs `1955` in the header. The
-     * macros are the instruction; the calorie figure is their sum. Five kcal is
-     * nothing, and a target that disagrees with its own arithmetic is not.
+     * ── 2,151 AND NOT 2,150, AND NOT THE OLD 2,445 ────────────────────────────
+     * This rung was first written as "2450 kcal (170P / 295C / 65F)", which is
+     * Atwater-exactly 2,445 — the round number in the plan against macros that
+     * summed to something else, the same trap as `1950` vs `1955` in the header.
      *
-     * Steps stay at the cut's 10k floor. This week releases the FOOD; nothing
-     * about it says walk less.
+     * It was re-specified on 2026-08-30, the first day it ever came into force,
+     * as 2150 kcal (170P / 55F / 244C). Those macros are Atwater-exactly
+     * 170·4 + 244·4 + 55·9 = 2,151, so 2,151 is what is written here. The rule
+     * has not changed and is the reason both numbers moved: THE MACROS ARE THE
+     * INSTRUCTION AND THE CALORIE FIGURE IS THEIR SUM. `levers.test.ts` asserts
+     * it for every rung, so this cannot drift again.
+     *
+     * The new triple is the `plan_phase_goals` cut row exactly (2151 / 170 /
+     * 244 / 55). That is not a coincidence to be tidied away — it says the
+     * release lands on the phase's own untightened numbers rather than on a
+     * separate figure that would then need its own maintenance.
+     *
+     * ── AND STEPS DO COME DOWN ────────────────────────────────────────────────
+     * The first version of this comment said "steps stay at the cut's 10k floor.
+     * This week releases the FOOD; nothing about it says walk less." That was
+     * wrong in practice: the week's whole purpose is shedding accumulated
+     * fatigue, a 10k floor on a rest-focused week is graded as a miss on most of
+     * its days, and a target you are expected to fail is not a target. 7,500 —
+     * the middle of the 7–8k the week was actually planned around.
      */
     id: 'maintenance-week',
     kind: 'release',
     label: 'Maintenance Week',
-    summary: 'A planned week at maintenance — full food, steps unchanged. Still cutting.',
-    calorieGoal: 2445, proteinGoalG: 170, carbsGoalG: 295, fatGoalG: 65,
-    stepsGoal: 10000,
+    summary: 'A planned week at maintenance — full food, lighter steps. Still cutting.',
+    calorieGoal: 2151, proteinGoalG: 170, carbsGoalG: 244, fatGoalG: 55,
+    stepsGoal: 7500,
   },
 ]
 
@@ -259,13 +272,32 @@ export function scheduledLeverOn(dateISO: string): LeverId | null {
  *
  * Pure and server-safe. `todayISO` is passed in rather than read from a clock so
  * the scorer, the export and the tests all agree about where "today" is.
+ *
+ * ── WHY A RELEASE CARRIES AN END DATE ────────────────────────────────────────
+ * `LEVER_SCHEDULE` closes a release with a second row, and the comment on that
+ * array is blunt about what happens when someone forgets to write it: a release
+ * with no successor is not a week, it is a permanent 2,151 kcal. That works when
+ * the week was planned far enough ahead to be committed to source. It does not
+ * work when the week is pulled from the Settings toggle, which writes
+ * `user_goals.active_lever` and cannot add a row to a compiled constant.
+ *
+ * `releaseEndsOn` (`user_goals.maintenance_until`) is that missing row, as data.
+ * Past it, the SELECTION stops being honoured and the date falls back to the
+ * schedule — so a release closes itself whether or not anyone remembered to.
+ * Absent, nothing changes and the old behaviour stands exactly as it was.
  */
 export function leverForDate(
   dateISO: string,
   storedLeverId: string | null | undefined,
   todayISO: string,
+  releaseEndsOn?: string | null,
 ): LeverId | null {
-  if (dateISO >= todayISO && isLeverId(storedLeverId)) return storedLeverId
+  if (dateISO >= todayISO && isLeverId(storedLeverId)) {
+    const expired = releaseEndsOn != null && releaseEndsOn !== ''
+      && leverById(storedLeverId)?.kind === 'release'
+      && dateISO > releaseEndsOn
+    if (!expired) return storedLeverId
+  }
   return scheduledLeverOn(dateISO)
 }
 

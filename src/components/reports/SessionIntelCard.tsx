@@ -7,6 +7,9 @@ import { useSessionIntel, type DeltaAxis, type ExerciseDelta } from '@/lib/hooks
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 import { formatSet } from '@/lib/utils/setFormat'
 import { MarkdownView } from './MarkdownView'
+import { sessionVerdict } from '@/lib/training/sessionVerdict'
+import { maintenanceSpanFor } from '@/lib/nutrition/maintenance'
+import { SAND, MUTED } from '@/lib/theme/palette'
 
 function Chip({ label, value, accent = '#E0703C' }: { label: string; value: string; accent?: string }) {
   return (
@@ -20,6 +23,8 @@ function Chip({ label, value, accent = '#E0703C' }: { label: string; value: stri
 const GOLD = '#D4AF37'
 const UP = '#3E9E7A'
 const DOWN = '#C4514E'
+/** Neither a win nor a failure: the tone a planned week is reported in. */
+const LEVEL = MUTED
 
 /**
  * Direction of travel for one exercise, this session vs the last of its type.
@@ -87,7 +92,23 @@ function trend(d: {
  * sessions, and the markdown prose demoted to a collapsible "Coach Notes".
  */
 export function SessionIntelCard({ session }: { session: GymReportRow }) {
+  // The phase axis, which is the one with a declared length — see `maintenance.ts`.
+  const isMaintenance = maintenanceSpanFor(session.date) != null
   const { data: intel, isLoading } = useSessionIntel(session.id)
+
+  // One verdict, three consumers: the colour of the delta, the deload chip and
+  // (via `ProgressionTrail`) the sentence. Computing it here rather than reading
+  // the sign is the whole fix — see the note beside the delta row below.
+  const verdict = intel
+    ? sessionVerdict(
+        intel.volumeDeltaPct,
+        intel.deltas.map((d) => ({ name: d.name, topKg: d.topKg, prevKg: d.prevKg, unloaded: d.unloaded })),
+        isMaintenance,
+      )
+    : null
+  const deltaColor = verdict
+    ? (verdict.tone === 'praise' ? UP : verdict.tone === 'caution' ? DOWN : LEVEL)
+    : (intel?.volumeDeltaPct ?? 0) >= 0 ? UP : DOWN
   // Session Report starts EXPANDED (Command Center wants the full debrief open,
   // not a tap-to-reveal). The chevron still collapses it if the user wants.
   const [notesOpen, setNotesOpen] = useState(true)
@@ -137,11 +158,25 @@ export function SessionIntelCard({ session }: { session: GymReportRow }) {
 
       {/* Δ vs the previous session of this EXACT type (Upper A vs last Upper A) */}
       {intel?.volumeDeltaPct != null && (
-        <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-3 py-2 flex items-center gap-2 text-fluid-xs">
+        <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-3 py-2 flex items-center gap-2 text-fluid-xs flex-wrap">
           <span className="text-muted">vs last <span className="text-text font-medium">{intel.typeLabel}</span>:</span>
-          <span className="helix-num font-bold" style={{ color: intel.volumeDeltaPct >= 0 ? '#3E9E7A' : '#C4514E' }}>
+          {/* ── THE COLOUR COMES FROM THE VERDICT, NOT FROM THE SIGN ──────────
+              This read `volumeDeltaPct >= 0 ? green : red` straight off the
+              arithmetic, which is the one thing `sessionVerdict` exists to stop:
+              a session that went heavier on three lifts and shed a back-off set
+              is a good session that reports negative tonnage, and a planned
+              deload is a whole WEEK of them. `ProgressionTrail` has routed
+              through the verdict since it was written; this card never did, and
+              it is the red arrow you actually see on the report. */}
+          <span className="helix-num font-bold" style={{ color: deltaColor }}>
             volume {intel.volumeDeltaPct >= 0 ? '+' : ''}{intel.volumeDeltaPct}%
           </span>
+          {isMaintenance && (
+            <span className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+              style={{ color: SAND, background: `${SAND}1a`, border: `1px solid ${SAND}40` }}>
+              Planned deload
+            </span>
+          )}
           {intel.setsDelta != null && (
             <span className="helix-num text-muted">· sets {intel.setsDelta > 0 ? `+${intel.setsDelta}` : intel.setsDelta === 0 ? '=' : intel.setsDelta}</span>
           )}

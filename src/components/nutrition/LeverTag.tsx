@@ -1,6 +1,6 @@
 'use client'
 
-import { Gauge } from 'lucide-react'
+import { Gauge, Leaf } from 'lucide-react'
 import { useNutritionGoals } from '@/lib/hooks/useNutritionGoals'
 import { LEVERS } from '@/lib/nutrition/levers'
 import { SAND } from '@/lib/theme/palette'
@@ -31,6 +31,17 @@ export function LeverTag({ compact = false }: {
   const rung = LEVERS.find((l) => l.id === goals.lever)
   if (!rung) return null
 
+  // ── A RELEASE IS NOT A NOTCH ON THE LADDER ────────────────────────────────
+  // Every deficit rung is "one tighter than the last", and the gauge glyph says
+  // so. A maintenance week is the opposite move — planned, bounded, taken on
+  // purpose — and it is the one rung a reader most needs to recognise without
+  // reading, because it is the week their volume, steps and calories all move
+  // at once. Its own glyph, and its short name: "Maintenance Week · 2151 kcal"
+  // in a header row is a sentence, not a chip.
+  const release = rung.kind === 'release'
+  const Icon = release ? Leaf : Gauge
+  const label = release ? 'Maintenance' : rung.label
+
   return (
     <span
       className="shrink-0 inline-flex items-center gap-1 px-1.5 py-px rounded-md text-[10px] font-bold uppercase tracking-wide tabular-nums"
@@ -42,8 +53,8 @@ export function LeverTag({ compact = false }: {
       style={{ color: SAND, background: `${SAND}1a`, border: `1px solid ${SAND}55` }}
       title={`${rung.label} — ${rung.summary}`}
     >
-      <Gauge className="w-2.5 h-2.5" aria-hidden="true" />
-      {rung.label}
+      <Icon className="w-2.5 h-2.5" aria-hidden="true" />
+      {label}
       {!compact && (
         <span className="helix-num font-normal opacity-80">· {rung.calorieGoal} kcal</span>
       )}
