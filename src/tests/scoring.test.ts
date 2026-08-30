@@ -26,7 +26,7 @@ const PERFECT: ScoringInputs = {
   steps: 10000, activeCal: 500, stepsGoal: 10000, activeCalGoal: 500,
   workoutLogged: true, isRestDay: false,
   newPRsToday: 2, sessionVolumeKg: 4000, trailingAvgVolumeKg: 3500,
-  waterMl: 3000, waterGoalMl: 3000, supplementsTaken: 3, supplementsGoal: 3,
+  waterMl: 3000, waterGoalMl: 3000,
   contextMode: 'normal',
 }
 
@@ -43,7 +43,7 @@ const ZERO: ScoringInputs = {
   steps: 0, activeCal: 0, stepsGoal: 10000, activeCalGoal: 500,
   workoutLogged: false, isRestDay: false,
   newPRsToday: 0, sessionVolumeKg: 0, trailingAvgVolumeKg: 0,
-  waterMl: 0, waterGoalMl: 3000, supplementsTaken: 0, supplementsGoal: 3,
+  waterMl: 0, waterGoalMl: 3000,
   contextMode: 'normal',
 }
 

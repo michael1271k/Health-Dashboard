@@ -90,8 +90,6 @@ export interface ScoringInputs {
   // Recovery
   waterMl: number
   waterGoalMl: number         // default 3000
-  supplementsTaken: number    // count taken today
-  supplementsGoal: number     // default 3
 
   // HR (optional)
   restingHR?: number          // today's resting HR in bpm

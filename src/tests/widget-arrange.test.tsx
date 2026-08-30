@@ -398,38 +398,41 @@ describe('StackWidget — one trip to the cupboard', () => {
   ]
 
   it('names every item in the block due at the same minute', () => {
-    render(<StackWidget size="m" slots={SLOTS} taken={new Set()} nowMinutes={11 * 60} />)
+    render(<StackWidget size="m" slots={SLOTS} skipped={new Set()} nowMinutes={11 * 60} />)
     expect(screen.getByText('L-Citrulline')).toBeTruthy()
     expect(screen.getByText('Caffeine')).toBeTruthy()
     expect(screen.getByText(/11:45/)).toBeTruthy()
   })
 
-  it('the count underneath stays per ITEM, because that is what you tick', () => {
-    render(<StackWidget size="m" slots={SLOTS} taken={new Set(['citrulline'])} nowMinutes={11 * 60} />)
-    expect(screen.getByText('1/3')).toBeTruthy()
-    // Half the block is ticked, so only the outstanding half is the instruction.
+  it('counts what was TAKEN over what was scheduled, so a skip is not progress', () => {
+    // 11:00: nothing is behind you yet, and the citrulline was dropped. The old
+    // count was `slots − pending`, which made dropping a dose read identically
+    // to swallowing one.
+    render(<StackWidget size="m" slots={SLOTS} skipped={new Set(['citrulline'])} nowMinutes={11 * 60} />)
+    expect(screen.getByText('0/3')).toBeTruthy()
+    // Only the half still ahead of you is the instruction.
     expect(screen.getByText('Caffeine')).toBeTruthy()
-    // The ticked half is still on the tile at medium — struck through, in the
-    // "already behind you" list, which is what fills the band that used to be
-    // empty by mid-afternoon. It must never be in the NEXT block.
-    const taken = screen.getByText('L-Citrulline')
-    expect(taken.className).toContain('line-through')
+    // The dropped half stays ON the tile at medium, struck through — "did I skip
+    // the citrulline?" is exactly what this tile gets opened to answer. It must
+    // never be in the NEXT block.
+    const dropped = screen.getByText('L-Citrulline')
+    expect(dropped.className).toContain('line-through')
   })
 
-  it('small carries only the instruction, never the ticked items', () => {
-    render(<StackWidget size="s" slots={SLOTS} taken={new Set(['citrulline'])} nowMinutes={11 * 60} />)
+  it('small carries only the instruction, never what is behind you', () => {
+    render(<StackWidget size="s" slots={SLOTS} skipped={new Set(['citrulline'])} nowMinutes={11 * 60} />)
     expect(screen.getByText('Caffeine')).toBeTruthy()
     expect(screen.queryByText('L-Citrulline')).toBeNull()
   })
 
-  it('an overdue block outranks one scheduled for later', () => {
-    render(<StackWidget size="m" slots={SLOTS} taken={new Set()} nowMinutes={15 * 60} />)
-    expect(screen.getByText(/overdue/)).toBeTruthy()
-    expect(screen.getByText('Caffeine')).toBeTruthy()
+  it('a block whose time has passed is behind you, not overdue', () => {
+    render(<StackWidget size="m" slots={SLOTS} skipped={new Set()} nowMinutes={15 * 60} />)
+    expect(screen.queryByText(/overdue/)).toBeNull()
+    expect(screen.getByText('Magnesium')).toBeTruthy()
   })
 
   it('says the protocol is complete rather than naming a next that does not exist', () => {
-    render(<StackWidget size="s" slots={SLOTS} taken={new Set(SLOTS.map((s) => s.key))} nowMinutes={600} />)
+    render(<StackWidget size="s" slots={SLOTS} skipped={new Set()} nowMinutes={23 * 60} />)
     expect(screen.getByText(/protocol complete/i)).toBeTruthy()
     expect(screen.getByText('3/3')).toBeTruthy()
   })

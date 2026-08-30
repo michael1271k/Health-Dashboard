@@ -606,20 +606,35 @@ function parseMin(t: string): number {
  *
  * There is no large: one dose block and a day's ticks is a medium tile's worth.
  */
-export function StackWidget({ size, onOpen, slots, taken, nowMinutes }: {
+export function StackWidget({ size, onOpen, slots, skipped, nowMinutes }: {
   size: WidgetSize
   onOpen?: () => void
   /** Today's doses — `key`, display name, and `HH:MM` due time. */
   slots: StackSlot[]
-  taken: ReadonlySet<string>
+  /**
+   * Only the doses explicitly SKIPPED today.
+   *
+   * ── WHAT THE CLOCK NOW DECIDES ─────────────────────────────────────────────
+   * This was the set of TICKED items, and "next" meant the first one without a
+   * tick. That question stopped having an answer when the protocol became
+   * default-taken: nothing is ticked, so every dose read as pending and the tile
+   * showed the 10:30 block at 11pm.
+   *
+   * The clock answers it instead, which is what the reader meant all along —
+   * a dose whose time has passed is behind you, one whose time has not is ahead,
+   * and a skip removes it from both. That also makes the tile honest on the
+   * nights this app is never opened, which is the whole reason the default
+   * flipped.
+   */
+  skipped: ReadonlySet<string>
   /** Minutes since local midnight, so "next" is decided by the caller's clock. */
   nowMinutes: number
 }) {
-  /** Untaken items, collapsed into the time blocks they are actually taken in. */
+  /** Still ahead of you, collapsed into the time blocks they are taken in. */
   const blocks = useMemo(() => {
     const byTime = new Map<string, StackSlot[]>()
     for (const s of slots) {
-      if (taken.has(s.key)) continue
+      if (skipped.has(s.key) || parseMin(s.time) <= nowMinutes) continue
       const list = byTime.get(s.time)
       if (list) list.push(s)
       else byTime.set(s.time, [s])
@@ -627,21 +642,28 @@ export function StackWidget({ size, onOpen, slots, taken, nowMinutes }: {
     return [...byTime.entries()]
       .map(([time, items]) => ({ time, items, at: parseMin(time) }))
       .sort((a, b) => a.at - b.at)
-  }, [slots, taken])
+  }, [slots, skipped, nowMinutes])
 
   /** What is already behind you, most recent first. */
-  const done = useMemo(
-    () => slots.filter((s) => taken.has(s.key)).sort((a, b) => parseMin(b.time) - parseMin(a.time)),
-    [slots, taken],
+  const behind = useMemo(
+    () => slots
+      .filter((s) => skipped.has(s.key) || parseMin(s.time) <= nowMinutes)
+      .map((s) => ({ ...s, wasSkipped: skipped.has(s.key) }))
+      .sort((a, b) => parseMin(b.time) - parseMin(a.time)),
+    [slots, skipped, nowMinutes],
   )
+  const done = useMemo(() => behind.filter((b) => !b.wasSkipped), [behind])
 
-  const pendingCount = blocks.reduce((n, b) => n + b.items.length, 0)
+  /** The protocol minus what was deliberately dropped — the honest denominator. */
+  const onProtocol = useMemo(() => slots.filter((s) => !skipped.has(s.key)), [slots, skipped])
+
   /** How many distinct time blocks today's protocol was taken in. */
-  const blockCount = useMemo(() => new Set(slots.map((s) => s.time)).size, [slots])
+  const blockCount = useMemo(() => new Set(onProtocol.map((s) => s.time)).size, [onProtocol])
   // The next block DUE, not the next on the clock: something already overdue
   // outranks something scheduled for this evening.
   const next = blocks[0] ?? null
-  const overdue = next != null && next.at < nowMinutes
+  // Nothing is overdue any more: a block whose time has passed has BEEN taken
+  // unless it was skipped, so the only blocks left are genuinely still ahead.
   const inMin = next != null ? next.at - nowMinutes : null
   // Small shows THREE, not two: a morning block is routinely three tablets and
   // a tile that named two of them plus "+1 more" was making the reader open it
@@ -669,7 +691,7 @@ export function StackWidget({ size, onOpen, slots, taken, nowMinutes }: {
            the evening batch, or am I remembering yesterday?"). */
         <span className="flex-1 min-h-0 flex flex-col justify-end gap-1">
           <span className="helix-num font-bold text-fluid-lg leading-none" style={{ color: EMERALD }}>
-            {slots.length}/{slots.length}
+            {onProtocol.length}/{slots.length}
           </span>
           <span className="text-[9px] truncate" style={{ color: EMERALD }}>protocol complete</span>
           {done[0] && (
@@ -683,7 +705,7 @@ export function StackWidget({ size, onOpen, slots, taken, nowMinutes }: {
         <span className="flex-1 min-h-0 flex flex-col gap-0.5">
           <span className="flex items-baseline gap-1.5">
             <span className="text-[8px] font-bold uppercase tracking-[0.12em] text-muted">Next</span>
-            <span className="text-[9px] truncate ml-auto" style={{ color: overdue ? OXIDE : 'var(--color-muted)' }}>
+            <span className="text-[9px] truncate ml-auto" style={{ color: 'var(--color-muted)' }}>
               {next.time} · {due(inMin ?? 0)}
             </span>
           </span>
@@ -709,10 +731,12 @@ export function StackWidget({ size, onOpen, slots, taken, nowMinutes }: {
                   <span className="helix-num text-[9px] tabular-nums text-muted shrink-0">{b.time}</span>
                 </span>
               ))}
-              {done.slice(0, 3).map((d) => (
+              {behind.slice(0, 3).map((d) => (
                 <span key={d.key} className="flex items-baseline gap-2 min-w-0">
-                  <Check className="w-2.5 h-2.5 shrink-0" strokeWidth={3} style={{ color: EMERALD }} aria-hidden="true" />
-                  <span className="text-[9px] truncate flex-1 line-through" style={{ color: `${EMERALD}b0` }}>
+                  <Check className="w-2.5 h-2.5 shrink-0" strokeWidth={3}
+                    style={{ color: d.wasSkipped ? 'var(--color-muted)' : EMERALD }} aria-hidden="true" />
+                  <span className="text-[9px] truncate flex-1 line-through"
+                    style={{ color: d.wasSkipped ? 'var(--color-muted)' : `${EMERALD}b0` }}>
                     {d.name}
                   </span>
                   <span className="helix-num text-[9px] tabular-nums text-muted shrink-0">{d.time}</span>
@@ -722,9 +746,12 @@ export function StackWidget({ size, onOpen, slots, taken, nowMinutes }: {
           )}
 
           <span className="flex items-center gap-1.5 pt-1 mt-auto">
-            <span className="flex-1"><Bar value={slots.length - pendingCount} target={slots.length} color={GOLD} /></span>
+            {/* Taken over SCHEDULED, not over what is left. Counting a skip as
+                progress ("slots − pending") made dropping a dose look identical
+                to swallowing one. */}
+            <span className="flex-1"><Bar value={done.length} target={slots.length} color={GOLD} /></span>
             <span className="helix-num text-[9px] font-bold tabular-nums shrink-0" style={{ color: GOLD }}>
-              {slots.length - pendingCount}/{slots.length}
+              {done.length}/{slots.length}
             </span>
           </span>
         </span>

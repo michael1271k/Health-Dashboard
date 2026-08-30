@@ -78,7 +78,6 @@ interface Goals {
   goal_preset: string | null
   unit_system: 'kg' | 'lb'
   reduce_motion: boolean
-  auto_log_supplements: boolean
 }
 
 /**
@@ -104,7 +103,6 @@ const DEFAULTS: Goals = {
   goal_preset: null,
   unit_system: 'kg',
   reduce_motion: false,
-  auto_log_supplements: false,
 }
 
 
@@ -180,7 +178,6 @@ export function useSettingsGoals() {
           goal_preset: data.goal_preset ?? null,
           unit_system: (data.unit_system ?? 'kg') as 'kg' | 'lb',
           reduce_motion: data.reduce_motion ?? false,
-          auto_log_supplements: data.auto_log_supplements ?? false,
         })
         applyPrefsToDevice((data.unit_system ?? 'kg') as 'kg' | 'lb', data.reduce_motion ?? false)
         const we = (data as { week_end_day?: number | null }).week_end_day

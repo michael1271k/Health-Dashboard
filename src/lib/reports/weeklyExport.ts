@@ -152,12 +152,24 @@ export interface ExportDay {
    */
   supplementsPlanned?: number | null
   /**
-   * What was actually swallowed, and when. `time` is the CLOCK TIME the item was
-   * ticked (`supplement_log.taken_at`), not the scheduled slot — which is the
-   * whole point: a pre-workout taken at 19:00 is a different day from one taken
-   * at 08:45.
+   * What was taken, and when it was DUE.
+   *
+   * `time` used to be the clock time the item was ticked
+   * (`supplement_log.taken_at`), on the reasoning that a pre-workout taken at
+   * 19:00 was not taken pre-workout. The reasoning was sound and the data never
+   * supported it: half those stamps were written by the auto-log pass using the
+   * slot's own scheduled time, so the column mixed the two meanings and the
+   * export printed every value as though it were an observation. The scheduled
+   * time is the one that is always true, and it is what the protocol is judged
+   * against.
    */
   supplementsLog?: Array<{ key: string; time: string | null }>
+  /**
+   * Doses deliberately dropped — the only thing that now counts as a miss.
+   *
+   * Names, not keys, because this line is read by a human and `d3k2` is not one.
+   */
+  supplementsSkipped?: string[]
   /**
    * The day's micronutrients, food and stack kept APART.
    *
@@ -1446,17 +1458,41 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
        and 4 of 9 on Wednesday is the single most likely explanation for a week
        that otherwise looks identical to the one before it.
 
-       The times are the ticks themselves (`supplement_log.taken_at`), not the
-       scheduled slots: a pre-workout taken at 19:00 was not taken pre-workout. */
+       The times are the SCHEDULED slots. They used to be the ticks themselves
+       (`supplement_log.taken_at`), on the reasoning that a pre-workout taken at
+       19:00 was not taken pre-workout — true, and unsupported by the column,
+       which was written by the auto-log pass with the slot's own time as often
+       as by a tap. A stamp that means two things is worse than one that means
+       one, and the schedule is the half that is always true.
+
+       And a MISS is now explicit. Absence of a row used to read as a skip, so a
+       night the app was never opened after 22:00 reported three doses missed
+       that were swallowed on time — eight days in August 2026 alone. Only a
+       deliberate skip writes anything now, and only that reaches this line. */
     {
       const log = d.supplementsLog ?? []
       const taken = d.supplementsTaken ?? (log.length || null)
       const planned = d.supplementsPlanned
       const count = `${taken != null ? n(taken) : DASH} of ${planned != null ? n(planned) : DASH} taken`
-      const items = log.length
-        ? ` · ${log.map((i) => `${i.key} ${clock(i.time)}`).join(' · ')}`
+      // Grouped by the time they are DUE, because that is how they are actually
+      // swallowed: citrulline and caffeine are both 11:45 items because they are
+      // one act, and listing them separately described two trips to the cupboard
+      // that never happened.
+      const byTime = new Map<string, string[]>()
+      for (const i of log) {
+        const t = i.time ?? '—'
+        const bucket = byTime.get(t) ?? []
+        bucket.push(i.key)
+        byTime.set(t, bucket)
+      }
+      const items = byTime.size
+        ? ` · ${[...byTime.entries()].sort(([a], [b]) => a.localeCompare(b))
+            .map(([t, keys]) => `${t} ${keys.join(', ')}`).join(' · ')}`
         : ''
-      L.push(`    - Supplements: ${count}${items}`)
+      const skipped = d.supplementsSkipped?.length
+        ? ` · SKIPPED: ${d.supplementsSkipped.join(', ')}`
+        : ''
+      L.push(`    - Supplements: ${count}${items}${skipped}`)
     }
 
     // ── The scale ──

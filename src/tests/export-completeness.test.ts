@@ -270,19 +270,44 @@ describe('measurements the export never asked for', () => {
   })
 
   it('reports supplement COMPLIANCE, which the protocol list cannot', () => {
+    // The times are the SCHEDULED slots now, and items due together are named
+    // together: citrulline and caffeine are both 11:45 items because they are
+    // one trip to the cupboard.
     const out = buildWeeklyExport({
       ...base,
       days: days.map((d) => (d.date === '2026-08-27'
         ? {
             ...d, supplementsTaken: 9, supplementsPlanned: 9,
             supplementsLog: [
-              { key: 'multivitamin', time: '2026-08-27T07:30:00+00:00' },
-              { key: 'caffeine', time: '2026-08-27T08:45:00+00:00' },
+              { key: 'multivitamin', time: '10:30' },
+              { key: 'citrulline', time: '11:45' },
+              { key: 'caffeine', time: '11:45' },
             ],
           }
         : d)),
     })
-    expect(out).toMatch(/- Supplements: 9 of 9 taken · multivitamin 07:30 · caffeine 08:45/)
+    expect(out).toMatch(/- Supplements: 9 of 9 taken · 10:30 multivitamin · 11:45 citrulline, caffeine/)
+  })
+
+  /**
+   * A miss has to be SAID. Absence of a row used to read as a skip, which made
+   * the line a record of when the app was open rather than of what was taken —
+   * eight days in August 2026 reported three bedtime doses missed that were
+   * swallowed on time. Now only a deliberate skip writes anything, so the export
+   * has to name it or the miss disappears entirely.
+   */
+  it('names a deliberately skipped dose rather than leaving it to be inferred', () => {
+    const out = buildWeeklyExport({
+      ...base,
+      days: days.map((d) => (d.date === '2026-08-27'
+        ? {
+            ...d, supplementsTaken: 8, supplementsPlanned: 9,
+            supplementsLog: [{ key: 'multivitamin', time: '10:30' }],
+            supplementsSkipped: ['Caffeine'],
+          }
+        : d)),
+    })
+    expect(out).toMatch(/- Supplements: 8 of 9 taken · 10:30 multivitamin · SKIPPED: Caffeine/)
   })
 })
 

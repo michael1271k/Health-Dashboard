@@ -106,9 +106,13 @@ export async function computeForDate(
     supabase.from('nutrition_entries').select('*').eq('user_id', userId)
       .eq('date', date).eq('meal_type', 'daily').maybeSingle(),
     supabase.from('water_intake').select('amount_ml').eq('user_id', userId).eq('date', date),
-    // Supplements taken today live in supplement_log (the `supplements` table is
-    // empty/legacy) — count only the ones actually ticked off.
-    supabase.from('supplement_log').select('item_key').eq('user_id', userId).eq('date', date).eq('taken', true),
+    // ── SUPPLEMENTS: THE EXCEPTIONS, NOT THE TICKS ────────────────────────
+    // This selected `taken = true` and counted the rows, which made the score a
+    // measure of how often the app was OPEN after 22:00 rather than of what was
+    // swallowed — eight days in August 2026 carry no bedtime rows at all, none
+    // of them a dose actually missed. Absence now means taken, so the query
+    // reads the whole day and the count below subtracts the explicit skips.
+    supabase.from('supplement_log').select('item_key, taken').eq('user_id', userId).eq('date', date),
     supabase.from('user_goals').select('*').eq('user_id', userId).maybeSingle(),
     supabase.from('workout_sessions').select('id, total_volume_kg, split_day, day_key, set_count, session_rpe').eq('user_id', userId)
       .gte('started_at', `${date}T00:00:00Z`).lt('started_at', `${end}T00:00:00Z`),
@@ -406,8 +410,6 @@ export async function computeForDate(
     failureSets,
     waterMl: totalWaterMl,
     waterGoalMl: g.water_goal_ml,
-    supplementsTaken: supplements?.length ?? 0,
-    supplementsGoal: 3,
     restingHR: metrics?.rest_hr ?? todayDl?.avg_rest_heart_rate ?? undefined,
     baselineHR: rhrBaseline ?? undefined,
     hrvMs: todayDl?.hrv_ms ?? undefined,

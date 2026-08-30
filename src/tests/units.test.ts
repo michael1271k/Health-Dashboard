@@ -30,7 +30,7 @@ describe('battery wake charge — "woke up to 55%" regression', () => {
     steps: 0, activeCal: 0, stepsGoal: 10000, activeCalGoal: 500,
     workoutLogged: false, isRestDay: false, newPRsToday: 0,
     sessionVolumeKg: 0, trailingAvgVolumeKg: 0,
-    waterMl: 0, waterGoalMl: 3000, supplementsTaken: 0, supplementsGoal: 3,
+    waterMl: 0, waterGoalMl: 3000,
     contextMode: 'normal',
   })
 

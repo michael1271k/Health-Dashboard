@@ -136,7 +136,7 @@ describe('v6 battery lift drain (drain-only)', () => {
     steps: 0, activeCal: 0, stepsGoal: 10000, activeCalGoal: 500,
     workoutLogged: true, isRestDay: false, newPRsToday: 0,
     sessionVolumeKg: 0, trailingAvgVolumeKg: 0,
-    waterMl: 0, waterGoalMl: 3000, supplementsTaken: 0, supplementsGoal: 3,
+    waterMl: 0, waterGoalMl: 3000,
     contextMode: 'normal',
   }
   it('a ~4,000 kg session drains ≈12–16%', () => {

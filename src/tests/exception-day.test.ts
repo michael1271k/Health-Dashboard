@@ -166,7 +166,7 @@ describe('the flag reaches the composite and stops there', () => {
     steps: 10000, activeCal: 500, stepsGoal: 10000, activeCalGoal: 500,
     workoutLogged: false, isRestDay: true, newPRsToday: 0,
     sessionVolumeKg: 0, trailingAvgVolumeKg: 0,
-    waterMl: 3000, waterGoalMl: 3000, supplementsTaken: 3, supplementsGoal: 3,
+    waterMl: 3000, waterGoalMl: 3000,
   }
 
   it('lifts the day score without touching any other component', () => {

@@ -125,7 +125,13 @@ async function fetchRange(weekStart: string, weekEnd: string) {
       .order('exercise_order', { ascending: true }).order('set_number', { ascending: true })
       .limit(3000),
     supabase.from('water_intake').select('date, amount_ml').gte('date', weekStart).lte('date', weekEnd),
-    supabase.from('supplement_log').select('date, item_key, taken_at').eq('taken', true).gte('date', weekStart).lte('date', weekEnd),
+    // ── THE WHOLE DAY, NOT ONLY THE TICKS ─────────────────────────────────
+    // `.eq('taken', true)` made the export a record of when this app happened to
+    // be open: the bedtime slot is 22:00, and eight days in August 2026 carry no
+    // rows for it at all — every one of them reported as three skipped doses
+    // that were actually swallowed. Absence now means TAKEN, so the only thing
+    // worth reading is the exception, and `taken` has to come back to find it.
+    supabase.from('supplement_log').select('date, item_key, taken, taken_at').gte('date', weekStart).lte('date', weekEnd),
     supabase.from('doms_logs').select('date, muscle_group, severity, source_session_id, source_day_key').gte('date', weekStart).lte('date', weekEnd),
     supabase.from('fatigue_logs').select('date, slot, level').gte('date', weekStart).lte('date', weekEnd),
     // Body composition — its own query so an un-migrated column can't take down
@@ -201,7 +207,7 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     sessions: (sessions.data ?? []) as unknown as RawSession[],
     sets: (sets.data ?? []) as unknown as RawSet[],
     water: (water.data ?? []) as Array<{ date: string; amount_ml: number }>,
-    supps: (supps.data ?? []) as Array<{ date: string; item_key: string; taken_at: string | null }>,
+    supps: (supps.data ?? []) as Array<{ date: string; item_key: string; taken: boolean; taken_at: string | null }>,
     // doms_logs may not be migrated yet — an error just means no soreness rows.
     doms: (doms.error ? [] : (doms.data ?? [])) as Array<{
       date: string; muscle_group: string; severity: number
@@ -763,11 +769,14 @@ function withMicros(
   const nutriByDate = new Map(
     (range.nutrition ?? []).map((r) => [r.date as string, r as Record<string, unknown>]),
   )
-  const takenByDate = new Map<string, string[]>()
+  // Only the EXCEPTIONS are stored now. Everything the protocol asked for and
+  // this map does not name was taken.
+  const skippedByDate = new Map<string, Set<string>>()
   for (const s of range.supps ?? []) {
-    const bucket = takenByDate.get(s.date) ?? []
-    bucket.push(s.item_key)
-    takenByDate.set(s.date, bucket)
+    if (s.taken !== false) continue
+    const bucket = skippedByDate.get(s.date) ?? new Set<string>()
+    bucket.add(s.item_key)
+    skippedByDate.set(s.date, bucket)
   }
   const payloads = microPayloads(customs)
 
@@ -788,12 +797,26 @@ function withMicros(
     const weekday = new Date(`${d.date}T12:00:00`).getDay()
     const slots = stackForDate(customSlotsForDate(customs, weekday, training), training, weekday)
     const doses = new Map(slots.flatMap((sl) => sl.items.map((i) => [i.key, i.dose] as const)))
-    const microsStack = supplementMicros(takenByDate.get(d.date) ?? [], doses, payloads)
+
+    // ── ADHERENCE, DERIVED FROM THE SCHEDULE ──────────────────────────────
+    // The numerator used to be a row count, so it measured logging rather than
+    // dosing. It is now the protocol minus what was explicitly dropped, and the
+    // times printed are the SCHEDULED ones: half the old `taken_at` stamps were
+    // auto-log writes already carrying the slot's own clock time, so the column
+    // mixed "when it was swallowed" with "when it was due" and the export
+    // printed both as though they were the first.
+    const skippedKeys = skippedByDate.get(d.date) ?? new Set<string>()
+    const scheduled = slots.flatMap((sl) => sl.items.map((i) => ({ key: i.key, name: i.name, time: sl.time })))
+    const takenItems = scheduled.filter((i) => !skippedKeys.has(i.key))
+    const microsStack = supplementMicros(takenItems.map((i) => i.key), doses, payloads)
 
     return {
       ...d,
       microsFood,
       microsStack,
+      supplementsTaken: scheduled.length ? takenItems.length : null,
+      supplementsLog: takenItems.map((i) => ({ key: i.key, time: i.time })),
+      supplementsSkipped: scheduled.filter((i) => skippedKeys.has(i.key)).map((i) => i.name),
       supplementsPlanned: supplementCountForDate(training, customSlotsForDate(customs, weekday, training)),
     }
   })

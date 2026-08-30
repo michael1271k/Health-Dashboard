@@ -126,24 +126,28 @@ async function applyWrites(userId: string, writes: ScheduleWrite[]): Promise<voi
  * then scored as if the user had skipped two supplements they were never asked
  * about. One writer, both directions.
  *
+ * ── WHAT IT DOES NOW THAT ABSENCE MEANS TAKEN ────────────────────────────────
+ * Both directions collapse to the same thing: DELETE the rows.
+ *
+ *   · Train→Rest — a training-only stimulant is not scheduled on a rest day at
+ *     all, so `customSlotsForDate` drops it from the denominator. Deleting the
+ *     rows leaves nothing claiming it was either taken or skipped, which is
+ *     right. Crucially it also clears any explicit `taken = false`, which under
+ *     the new rule is the ONE row that would otherwise keep reporting a skip for
+ *     a dose that stopped being asked for.
+ *   · Rest→Train — the item is scheduled again, and absence now means taken. The
+ *     row that used to have to be written for it to count is exactly what is no
+ *     longer needed, so the auto-tick is gone with the rest of the auto-log.
+ *
  * `keys` is passed in rather than read here so a multi-date swap resolves the
  * user's stack ONCE instead of per date — and so the two directions provably
  * operate on the same list.
  */
 async function syncPreWorkoutSupps(
-  userId: string, date: string, training: boolean, keys: string[],
+  userId: string, date: string, _training: boolean, keys: string[],
 ): Promise<void> {
   if (!keys.length) return
-  if (!training) {
-    await supabase.from('supplement_log').delete().eq('user_id', userId).eq('date', date).in('item_key', keys)
-    return
-  }
-  // Only auto-tick when it's today and the 11:45 slot has passed; otherwise the
-  // items simply show unchecked in the tracker.
-  if (date !== logicalTodayISO() || !PRE_SLOT || !slotTimePassed(PRE_SLOT.time)) return
-  const nowIso = new Date().toISOString()
-  const supRows = keys.map((item_key) => ({ user_id: userId, date, item_key, taken: true, taken_at: nowIso }))
-  await supabase.from('supplement_log').upsert(supRows as never, { onConflict: 'user_id,date,item_key' })
+  await supabase.from('supplement_log').delete().eq('user_id', userId).eq('date', date).in('item_key', keys)
 }
 
 /**

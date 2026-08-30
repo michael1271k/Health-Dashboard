@@ -116,9 +116,9 @@ const TrendStrip = dynamic(
   { ssr: false, loading: () => <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 min-h-[280px] animate-pulse" /> },
 )
 
-/** One shared empty Set — `taken ?? new Set()` would be a fresh identity every
+/** One shared empty Set — `skipped ?? new Set()` would be a fresh identity every
  *  render and would defeat the Stack widget's memo for no benefit. */
-const EMPTY_TAKEN: ReadonlySet<string> = new Set<string>()
+const EMPTY_SKIPPED: ReadonlySet<string> = new Set<string>()
 
 type SheetKey = 'readiness' | 'sleep' | 'fuel' | 'train' | 'body' | 'steps' | 'stack' | 'vitals'
   | 'deficit' | 'consistency' | 'cardio' | null
@@ -168,7 +168,7 @@ export default function DashboardPage() {
   const { data: sleep } = useTodaySleep()
   const { data: goals } = useUserGoals()
   const { data: sessions } = useRecentSessions(3)
-  const { data: taken } = useSupplements()
+  const { data: skipped } = useSupplements()
   const { data: customSupps } = useCustomSupplements()
   const { data: bioSeries } = useBioSeries()
   // FIFTEEN, not eight: the Fuel tile's large size draws a fortnight of
@@ -257,10 +257,10 @@ export default function DashboardPage() {
   /**
    * Today's stack, flattened to the ITEMS the log is keyed by.
    *
-   * `taken` is a Set of item keys, not slot keys — so a widget that reasoned in
-   * slots would report a whole slot outstanding because one of its three tablets
-   * was unticked. The slot's TIME rides along on each item, because that is what
-   * makes "next" answerable.
+   * `skipped` is a Set of item keys, not slot keys — so a widget that reasoned
+   * in slots would drop a whole slot because one of its three tablets was
+   * skipped. The slot's TIME rides along on each item, because that is what
+   * makes "next" answerable now that the clock, not a tick, decides it.
    *
    * `stackForDate` prefers the user's own stack and falls back to the seed, which
    * is why the denominator cannot be the seed constant: the tile read 9/11
@@ -475,13 +475,13 @@ export default function DashboardPage() {
         return <FatigueWidget size={size} onOpen={goToday} />
       case 'stack':
         return <StackWidget size={size} onOpen={onOpen('stack')}
-          slots={stackItems} taken={taken ?? EMPTY_TAKEN} nowMinutes={nowMinutes} />
+          slots={stackItems} skipped={skipped ?? EMPTY_SKIPPED} nowMinutes={nowMinutes} />
     }
   }, [
     sleep, log, goals, bioSeries, calToday, calGoal, nutrition, fuelGoals,
     score, scoreLoading,
     kcalSeries, phase, todayDay, loggedToday, todaySession,
-    steps, tdeeToday, stackItems, taken, nowMinutes,
+    steps, tdeeToday, stackItems, skipped, nowMinutes,
     onOpen, onBodyTap, goToday, openMuscle, goMicros, openTraining,
   ])
 

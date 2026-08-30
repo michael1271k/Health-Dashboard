@@ -219,27 +219,42 @@ describe('StackWidget — the next dose, not a score', () => {
     { key: 'magnesium', name: 'Magnesium', time: '22:00' },
   ]
 
-  it('names the earliest unticked item as next', () => {
-    render(<StackWidget size="s" slots={SLOTS} taken={new Set(['multivitamin'])} nowMinutes={13 * 60} />)
+  it('names the earliest dose still ahead as next', () => {
+    // 13:00. The 10:30 multivitamin is behind you and therefore taken; creatine
+    // at 14:00 is the next thing to swallow.
+    render(<StackWidget size="s" slots={SLOTS} skipped={new Set()} nowMinutes={13 * 60} />)
     expect(screen.getByText('Creatine')).toBeTruthy()
     expect(screen.getByText(/in 1h/)).toBeTruthy()
   })
 
-  it('an overdue dose outranks one scheduled for later', () => {
-    // 15:00. Creatine was due at 14:00 and is not ticked; magnesium is at 22:00.
-    render(<StackWidget size="s" slots={SLOTS} taken={new Set(['multivitamin'])} nowMinutes={15 * 60} />)
-    expect(screen.getByText('Creatine')).toBeTruthy()
-    expect(screen.getByText(/overdue/)).toBeTruthy()
+  /**
+   * The tile used to read a dose whose time had passed as OUTSTANDING, and the
+   * clock told it how overdue. That was only ever true because a tick was
+   * required; with the protocol default-taken, a passed time means taken and the
+   * next dose is the next one due.
+   */
+  it('treats a passed dose as taken rather than overdue', () => {
+    render(<StackWidget size="s" slots={SLOTS} skipped={new Set()} nowMinutes={15 * 60} />)
+    expect(screen.getByText('Magnesium')).toBeTruthy()
+    expect(screen.queryByText(/overdue/)).toBeNull()
+  })
+
+  it('a skipped dose is neither ahead of you nor counted against you', () => {
+    // 15:00, magnesium skipped: nothing is left, and the denominator drops to
+    // the two doses actually on protocol.
+    render(<StackWidget size="s" slots={SLOTS} skipped={new Set(['magnesium'])} nowMinutes={15 * 60} />)
+    expect(screen.getByText(/protocol complete/i)).toBeTruthy()
+    expect(screen.getByText('2/3')).toBeTruthy()
   })
 
   it('says the protocol is complete rather than naming a next that does not exist', () => {
-    render(<StackWidget size="s" slots={SLOTS} taken={new Set(SLOTS.map((s) => s.key))} nowMinutes={600} />)
+    render(<StackWidget size="s" slots={SLOTS} skipped={new Set()} nowMinutes={23 * 60} />)
     expect(screen.getByText(/protocol complete/i)).toBeTruthy()
     expect(screen.getByText('3/3')).toBeTruthy()
   })
 
   it('holds its shape on a day with no protocol at all', () => {
-    render(<StackWidget size="s" slots={[]} taken={new Set()} nowMinutes={600} />)
+    render(<StackWidget size="s" slots={[]} skipped={new Set()} nowMinutes={600} />)
     expect(screen.getByText('Stack')).toBeTruthy()
     expect(screen.getByText(/No protocol for today/i)).toBeTruthy()
   })

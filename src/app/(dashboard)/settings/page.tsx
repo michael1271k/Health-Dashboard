@@ -146,15 +146,14 @@ export default function SettingsPage() {
         />
       </Zone>
 
-      {/* ── PROTOCOL ── */}
-      <Zone label="Protocol" accent={STEEL}>
-        <ToggleRow
-          label="Auto-log scheduled supplements"
-          hint="Mark each supplement taken once its scheduled time passes"
-          on={goals.auto_log_supplements}
-          onToggle={() => save({ auto_log_supplements: !goals.auto_log_supplements })}
-        />
-      </Zone>
+      {/* ── PROTOCOL ──
+          The "Auto-log scheduled supplements" toggle lived here. It existed to
+          paper over a default that was backwards: a dose only counted once a row
+          was written, and nothing wrote one unless the app happened to be open
+          after the slot's clock time. The stack is a protocol — what is written
+          down is what happens by default — so the default flipped and the
+          setting had nothing left to switch. `user_goals.auto_log_supplements`
+          is left in place and unread. */}
 
       {/* Renders nothing at all when there is no crash to report. */}
       <CrashRecorderRow />
