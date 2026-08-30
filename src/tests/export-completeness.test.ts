@@ -22,6 +22,7 @@ import {
   buildWeeklyExport, microLine, FATIGUE_SLOT_LABELS,
   type WeeklyExportInput, type ExportDay, type ExportSession,
 } from '@/lib/reports/weeklyExport'
+import { weekJsonBlock } from '@/lib/reports/weekJson'
 import { SLOT_LABEL, FATIGUE_SLOTS } from '@/lib/hooks/useFatigue'
 
 const emptyDay = (date: string, weekdayLabel: string): ExportDay => ({
@@ -342,23 +343,70 @@ describe('the derived section is fenced off from the measurements', () => {
     expect(out).toMatch(/Total volume: 24180 → 26340 kg \(\+2160, \+8\.9%\)/)
   })
 
-  it('emits the machine-readable week last, and versioned', () => {
-    const out = buildWeeklyExport(base)
-    expect(out.indexOf('## Derived')).toBeLessThan(out.indexOf('## Machine-readable week'))
-    expect(out).toMatch(/"schema": "helix\.week\/1"/)
-    // A parser must be able to find the fence.
-    expect(out).toMatch(/```json/)
+  /**
+   * `nutrition_entries.micros.calcium` on this account is bimodal: ~155–290 mg on
+   * most days, ~3,070–3,383 mg on seventeen of them, with calories, sodium and
+   * potassium normal throughout. The export was right every time — 3,074 is what
+   * the column holds — but the column stores a daily AGGREGATE with no item
+   * breakdown, so the contributor cannot be identified downstream. The document
+   * can at least stop stating an impossible number in the same voice as a
+   * measured one.
+   */
+  it('flags a micronutrient reading that cannot be true, and says why once', () => {
+    const out = buildWeeklyExport({
+      ...base,
+      days: days.map((d) => (d.date === '2026-08-27'
+        ? { ...d, microsFood: { calcium: 3074 } }
+        : d)),
+    })
+    expect(out).toMatch(/Calcium: ⚠ 3074\/1000 mg/)
+    expect(out).toMatch(/Implausible micronutrient readings this week:\*\* Calcium 3074 mg on 2026-08-27/)
+    expect(out).toMatch(/the duplicate is upstream, in the Health source/)
   })
 
-  it('serialises a week a consumer can actually parse', () => {
-    const out = buildWeeklyExport({ ...base, sessions: [session({ volumeKg: 1234.5 })] })
-    const json = out.slice(out.indexOf('```json') + 7)
-    const parsed = JSON.parse(json.slice(0, json.indexOf('```')))
+  it('leaves an ordinary reading, and an exceeded CEILING, unflagged', () => {
+    const out = buildWeeklyExport({
+      ...base,
+      days: days.map((d) => (d.date === '2026-08-27'
+        // 274 mg of calcium is a normal day here; sodium is a ceiling, and
+        // exceeding a ceiling is the ordinary thing it exists to report.
+        ? { ...d, microsFood: { calcium: 274, sodium: 4000 } }
+        : d)),
+    })
+    expect(out).toMatch(/Calcium: 274\/1000 mg/)
+    expect(out).not.toMatch(/⚠/)
+    expect(out).not.toMatch(/Implausible micronutrient readings/)
+  })
+
+  /**
+   * The document used to end with the whole payload serialised into a json
+   * fence. Nothing ever read it: this export has one consumer and it is a person
+   * pasting into a chat window, so the fence was a verbatim second copy of every
+   * number already stated above it, several times longer than the prose.
+   */
+  it('does not append a second copy of itself as raw JSON', () => {
+    const out = buildWeeklyExport(base)
+    expect(out).not.toMatch(/## Machine-readable week/)
+    expect(out).not.toMatch(/```json/)
+    expect(out).not.toMatch(/"schema": "helix\.week\/1"/)
+  })
+
+  /**
+   * The BUILDER survives, and is still the right shape for a tool that wants it.
+   * Deleting it because today's document does not print it would throw away the
+   * part that was correct, so it is tested directly rather than through the
+   * rendered string.
+   */
+  it('still serialises a week a consumer could parse, on demand', () => {
+    const block = weekJsonBlock({ ...base, sessions: [session({ volumeKg: 1234.5 })] })
+    expect(block[0]).toBe('```json')
+    const parsed = JSON.parse(block.slice(1, -1).join('\n'))
+    expect(parsed.schema).toBe('helix.week/1')
     expect(parsed.week.start).toBe('2026-08-23')
     expect(parsed.days).toHaveLength(7)
-    // `null` means "not recorded" here exactly as `—` does above. A missing key
-    // would let a consumer infer zero, which is the one failure mode this whole
-    // document is built to prevent.
+    // `null` means "not recorded" here exactly as `—` does in the document. A
+    // missing key would let a consumer infer zero, which is the one failure mode
+    // this whole export is built to prevent.
     expect(parsed.days[0].calories).toBeNull()
     expect(parsed.derived).toBeDefined()
   })

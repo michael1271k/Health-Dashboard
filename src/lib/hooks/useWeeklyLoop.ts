@@ -77,7 +77,7 @@ interface RawSet {
   exercises: { name: string; muscle_groups: string[] | null }
 }
 interface RawSession {
-  id: string; started_at: string; split_day: string; day_key: string | null
+  id: string; started_at: string; ended_at?: string | null; split_day: string; day_key: string | null
   total_volume_kg: number | null; set_count: number | null
   duration_min: number | null; avg_bpm: number | null; calories_burned: number | null
   calories_estimated?: boolean | null; avg_bpm_estimated?: boolean | null
@@ -110,7 +110,7 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     supabase.from('nutrition_entries').select('date, calories, protein_g, carbs_g, fat_g, fiber_g, micros')
       .eq('meal_type', 'daily').gte('date', weekStart).lte('date', weekEnd),
     supabase.from('workout_sessions')
-      .select('id, started_at, split_day, day_key, total_volume_kg, set_count, duration_min, avg_bpm, calories_burned, calories_estimated, avg_bpm_estimated')
+      .select('id, started_at, ended_at, split_day, day_key, total_volume_kg, set_count, duration_min, avg_bpm, calories_burned, calories_estimated, avg_bpm_estimated')
       .gte('started_at', startInstant).lt('started_at', endInstant).order('started_at', { ascending: true }),
     // Sets are scoped by their PARENT SESSION's started_at, not their own
     // created_at — a session logged days later (back-dated) has created_at
@@ -558,6 +558,8 @@ function toSessions(d: RangeData): ExportSession[] {
       : s.total_volume_kg
     return {
       date: s.started_at.slice(0, 10),
+      startedAt: s.started_at,
+      endedAt: s.ended_at ?? null,
       sessionNumber: priorSessions == null ? null : priorSessions + sessionIndex + 1,
       label: (s.day_key && program.days.find((x) => x.key === s.day_key)?.label) ?? s.split_day,
       volumeKg, setCount: s.set_count,

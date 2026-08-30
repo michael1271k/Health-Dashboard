@@ -810,8 +810,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useWeeklyLoop.ts": {
-    "mtime": 1788097771.4564319,
-    "ast_hash": "fee7502c0acc93e3c6285550b52591fc",
+    "mtime": 1788098167.1529183,
+    "ast_hash": "dd8b1eabf975e1fd609e1ff48472cddc",
     "semantic_hash": ""
   },
   "src/lib/hooks/useWeeklyVolume.ts": {
@@ -890,8 +890,8 @@
     "semantic_hash": ""
   },
   "src/lib/reports/weeklyExport.ts": {
-    "mtime": 1788097801.4439235,
-    "ast_hash": "2b8a15e67aff38934beecf5ef130c4a4",
+    "mtime": 1788098273.5241525,
+    "ast_hash": "be7913e7657d1599158cddc2575dfb1e",
     "semantic_hash": ""
   },
   "src/lib/schedule/overrides.ts": {
@@ -2475,7 +2475,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/set-rows.html": {
-    "mtime": 1788097825.2863607,
+    "mtime": 1788098025.2364297,
     "ast_hash": "4337ad6af8491d18f2242f7a5d77be6f",
     "semantic_hash": ""
   },
@@ -2505,7 +2505,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-ledger.html": {
-    "mtime": 1788097812.7751532,
+    "mtime": 1788098021.0534384,
     "ast_hash": "3ddb93aca7b5901708c403bfb41afc10",
     "semantic_hash": ""
   },
@@ -2540,7 +2540,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/live-header.html": {
-    "mtime": 1788097809.0376508,
+    "mtime": 1788098018.5428154,
     "ast_hash": "1922065e3007c80d486fcfb5d6f4ea9c",
     "semantic_hash": ""
   },
@@ -2610,7 +2610,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-summary-header.html": {
-    "mtime": 1788097813.955234,
+    "mtime": 1788098022.7057235,
     "ast_hash": "b3d75865c62fb30c5cc668930a4b7642",
     "semantic_hash": ""
   },
@@ -3030,8 +3030,8 @@
     "semantic_hash": ""
   },
   "src/tests/export-completeness.test.ts": {
-    "mtime": 1788097880.8253639,
-    "ast_hash": "cc1c838762d33d1c69bb9f6f7c85539b",
+    "mtime": 1788098323.0427706,
+    "ast_hash": "6513224c4c35d98f03764b8be430cdca",
     "semantic_hash": ""
   },
   "src/tests/save-set-fields.test.ts": {
@@ -3057,6 +3057,11 @@
   "scripts/backfill-supplement-log.mjs": {
     "mtime": 1788097977.8733246,
     "ast_hash": "3dc4096a633186aa1296afa7bc1b9c1b",
+    "semantic_hash": ""
+  },
+  "scripts/repair-calcium.mjs": {
+    "mtime": 1788098353.9780846,
+    "ast_hash": "bf4fe6f075f446baa770ed97716c016d",
     "semantic_hash": ""
   }
 }

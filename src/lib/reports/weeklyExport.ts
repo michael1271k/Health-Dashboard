@@ -44,7 +44,6 @@ import { TEF_FACTOR, tefKcal, tdeeBreakdown } from '@/lib/nutrition/energy'
 import { volumeZone, type VolumeZone } from '@/lib/training/landmarks'
 import { MICRO_TARGETS } from '@/lib/nutrition/microTargets'
 import { derivedWeek, type WeekDelta } from '@/lib/reports/derived'
-import { weekJsonBlock } from '@/lib/reports/weekJson'
 import type { TargetPeriod } from '@/lib/nutrition/levers'
 
 /** The export's wording for each zone. `na` never reaches here (target 0 → "—"). */
@@ -314,6 +313,23 @@ export interface ExportExercise {
 
 export interface ExportSession {
   date: string
+  /**
+   * When the session started and ended, as full timestamps.
+   *
+   * ── WHY A DURATION WAS NOT ENOUGH ──────────────────────────────────────────
+   * The line carried "87 Minutes" and nothing else, so two sessions of identical
+   * length were indistinguishable — and they are not the same session. A leg day
+   * at 07:30 is trained on an empty stomach against a night's recovery; the same
+   * 87 minutes at 21:00 is trained on a day's fatigue, four hours before the
+   * sleep it will be scored against. Every other timed thing in this document
+   * (sleep, the supplement slots) already states its clock time.
+   *
+   * `started_at` was being read and then truncated to a date; `ended_at` was
+   * never selected at all. Optional because a session rebuilt from a markdown
+   * report has a date and no clock.
+   */
+  startedAt?: string | null
+  endedAt?: string | null
   /**
    * The session's ordinal across the WHOLE history, 1-based — "Session #15".
    * Counted from every session that precedes it, not from the week, so the
@@ -687,9 +703,63 @@ export function microLine(
     const suffix = tags ? ` (${tags})` : ''
     if (!hasF && !hasK) return `${t.label}: ${DASH}/${exact(t.target)} ${t.unit}${suffix}`
     const split = hasF && hasK ? ` (${exact(f)} food + ${exact(k)} stack)` : ''
-    return `${t.label}: ${exact(total)}/${exact(t.target)} ${t.unit}${suffix}${split}`
+    const flag = implausibleMicro(t, hasF ? f : 0, hasK ? k : 0) ? '⚠ ' : ''
+    return `${t.label}: ${flag}${exact(total)}/${exact(t.target)} ${t.unit}${suffix}${split}`
   })
   return parts.join(' · ')
+}
+
+/**
+ * How far past a FLOOR target a value has to sit before the document doubts it.
+ *
+ * ── THE READING THAT PROMPTED THIS ───────────────────────────────────────────
+ * `nutrition_entries.micros.calcium` is bimodal on this account: about 155–290 mg
+ * on most days, and about 3,070–3,383 mg on seventeen of them. Calories, sodium
+ * and potassium are normal on the high days, so it is one ~3,100 mg contributor
+ * rather than a duplicated day — and both populations come from the same writer,
+ * the HealthKit daily ingest.
+ *
+ * The export was right every time: 3,074 is what the column holds. But
+ * `nutrition_entries` stores a `meal_type = 'daily'` AGGREGATE with no item
+ * breakdown, so nothing downstream — this document included — can identify the
+ * contributor or correct it. What it can do is stop printing an obviously
+ * impossible number in the same voice as a measured one.
+ *
+ * 2.5× is deliberately loose. A genuine 2,500 mg calcium day is possible if
+ * unusual; three times the target on a 1,943 kcal day is not, and a threshold
+ * tight enough to catch a merely-high day would flag real food.
+ *
+ * FLOORS only. A ceiling target (sodium, caffeine) is a limit rather than a
+ * goal, and exceeding one is the ordinary thing it exists to report — flagging
+ * that as implausible would put a warning on the document's most useful line.
+ *
+ * FOOD only, and only when the stack contributed nothing. A tablet is entitled
+ * to overshoot enormously — the multivitamin here supplies 470 mg of vitamin C
+ * against a 90 mg target, which is five times over and completely correct. The
+ * calcium readings have no stack source at all (no item in this protocol carries
+ * calcium), so "large, and nothing was taken that could explain it" is the shape
+ * that separates the real problem from every legitimate overshoot.
+ */
+const IMPLAUSIBLE_FLOOR_MULTIPLE = 2.5
+
+function implausibleMicro(t: { kind?: string; target: number }, food: number, stack: number): boolean {
+  if (t.kind === 'ceiling') return false
+  if (stack > 0) return false
+  return t.target > 0 && food > t.target * IMPLAUSIBLE_FLOOR_MULTIPLE
+}
+
+/** Every "<Micro> on <date>" the week flagged, for the note at the foot. */
+export function flaggedMicros(days: readonly ExportDay[]): string[] {
+  const out: string[] = []
+  for (const d of days) {
+    for (const t of MICRO_TARGETS) {
+      const f = d.microsFood?.[t.key], k = d.microsStack?.[t.key]
+      const food = typeof f === 'number' && f > 0 ? f : 0
+      const stack = typeof k === 'number' && k > 0 ? k : 0
+      if (implausibleMicro(t, food, stack)) out.push(`${t.label} ${exact(food)} ${t.unit} on ${d.date}`)
+    }
+  }
+  return out
 }
 
 /**
@@ -1542,7 +1612,11 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
       // Volume · sets · failures · time · kcal · avg HR · PRs · effort, in one
       // labelled run. Every segment is printed even when empty: a missing one is
       // indistinguishable from a session logged at zero.
-      L.push(`        - Session Metadata: Duration: ${n(s.durationMin)} Minutes`
+      // Clock times lead: they are the fact the duration cannot carry.
+      const window = s.startedAt
+        ? `Started: ${clock(s.startedAt)}${s.endedAt ? ` · Ended: ${clock(s.endedAt)}` : ''} · `
+        : ''
+      L.push(`        - Session Metadata: ${window}Duration: ${n(s.durationMin)} Minutes`
         + ` · Volume: ${exact(s.volumeKg)} kg`
         + ` · Sets: ${n(s.setCount)}${s.failureSets ? ` (${n(s.failureSets)} to failure)` : ''}`
         + ` · Calories: ${n(s.caloriesBurned)} kcal${s.caloriesEstimated ? ' [Estimated]' : ''}`
@@ -2020,20 +2094,40 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
     }
   }
 
-  /* ── THE MACHINE-READABLE WEEK ──────────────────────────────────────────────
-     The same payload the document above was rendered from, serialised. It sits
-     between the derived block and the provenance notes so a human reading in
-     order meets it after everything it duplicates, and a tool looking for the
-     fence finds it without parsing a word of prose. See `weekJson.ts`. */
-  L.push('## Machine-readable week')
-  L.push('')
-  L.push('_The same week as structured data — for spreadsheets and tools, not for'
-    + ' reading. It is a serialisation of the payload this document was rendered'
-    + ' from, so the two cannot disagree. `null` means "not recorded", exactly as'
-    + ' `—` does above._')
-  L.push('')
-  L.push(...weekJsonBlock(input))
-  L.push('')
+  /* ── THE MACHINE-READABLE WEEK IS GONE ─────────────────────────────────────
+     A `## Machine-readable week` section used to sit here: the whole
+     `WeeklyExportInput` serialised into a json fence, on the reasoning that a
+     tool could read it without parsing prose.
+
+     Nothing ever did. This export has exactly one consumer — it is copied into a
+     chat window by hand — and the fence was a verbatim second copy of every
+     number already stated above it, several times the length of the document it
+     was appended to. It cost the reader the end of the report and cost the model
+     its context window, to say nothing that the prose had not.
+
+     `weekJson.ts` survives and is still exercised by the tests: the payload it
+     serialises is the right shape for a future tool, and deleting the builder
+     because today's document does not print it would be throwing away the part
+     that was actually correct. */
+
+  // ── The doubt, stated once ──
+  // A ⚠ on a micro line is not an adherence finding and must not be read as one,
+  // so it gets a sentence rather than being left to look like a bad day. Printed
+  // only when something was actually flagged: a standing caveat about a problem
+  // the week does not have is noise.
+  const flagged = flaggedMicros(input.days)
+  if (flagged.length) {
+    L.push('---')
+    L.push('')
+    L.push(`⚠ **Implausible micronutrient readings this week:** ${flagged.join(' · ')}.`)
+    L.push('')
+    L.push('_These are printed exactly as stored. `nutrition_entries` keeps one'
+      + ' aggregate row per day with no item breakdown, so neither this document nor'
+      + ' the app can identify what contributed them — the duplicate is upstream, in'
+      + ' the Health source. Treat a flagged figure as unmeasured rather than as a'
+      + ' day that went badly._')
+    L.push('')
+  }
 
   // ── Provenance ──
   // The absolute last lines, so they govern everything above them. Verbatim and
