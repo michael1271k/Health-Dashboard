@@ -190,8 +190,8 @@
     "semantic_hash": ""
   },
   "src/app/(dashboard)/settings/page.tsx": {
-    "mtime": 1788097907.54272,
-    "ast_hash": "d6242c3bbbd305e7165d83145c475ad8",
+    "mtime": 1788098798.8619437,
+    "ast_hash": "c24aa65dbaf8eca9a0f0c915a1a8d202",
     "semantic_hash": ""
   },
   "src/app/(dashboard)/workout/page.tsx": {
@@ -255,8 +255,8 @@
     "semantic_hash": ""
   },
   "src/app/page.tsx": {
-    "mtime": 1788097581.4073243,
-    "ast_hash": "8a1643349208f05d5d9221a840175e47",
+    "mtime": 1788098880.4645214,
+    "ast_hash": "758b8cbf79fbb8406d41bd5b7d8ea8ad",
     "semantic_hash": ""
   },
   "src/app/session/[id]/page.tsx": {
@@ -750,8 +750,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useScheduleOverrides.ts": {
-    "mtime": 1788097688.4111998,
-    "ast_hash": "0d048dba8a84ecafca6faa81be6da99d",
+    "mtime": 1788098921.6354492,
+    "ast_hash": "62cb8940dd6530a2a27a3a8d50fae808",
     "semantic_hash": ""
   },
   "src/lib/hooks/useSessionDetail.ts": {
@@ -2294,11 +2294,6 @@
     "ast_hash": "8733f7ca8d470593f4d89bb7b7cb6279",
     "semantic_hash": ""
   },
-  "src/components/settings/EditPlanCard.tsx": {
-    "mtime": 1787560791.8685086,
-    "ast_hash": "097bab6bf20871a5619fd391aacfa2e8",
-    "semantic_hash": ""
-  },
   "src/tests/levers.test.ts": {
     "mtime": 1788097357.9840503,
     "ast_hash": "5832cead4d0d4d29efa5dd438ff9c84f",
@@ -2475,7 +2470,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/set-rows.html": {
-    "mtime": 1788098025.2364297,
+    "mtime": 1788098412.7759078,
     "ast_hash": "4337ad6af8491d18f2242f7a5d77be6f",
     "semantic_hash": ""
   },
@@ -2505,7 +2500,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-ledger.html": {
-    "mtime": 1788098021.0534384,
+    "mtime": 1788098402.544721,
     "ast_hash": "3ddb93aca7b5901708c403bfb41afc10",
     "semantic_hash": ""
   },
@@ -2540,7 +2535,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/live-header.html": {
-    "mtime": 1788098018.5428154,
+    "mtime": 1788098402.9663515,
     "ast_hash": "1922065e3007c80d486fcfb5d6f4ea9c",
     "semantic_hash": ""
   },
@@ -2610,7 +2605,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-summary-header.html": {
-    "mtime": 1788098022.7057235,
+    "mtime": 1788098407.5328712,
     "ast_hash": "b3d75865c62fb30c5cc668930a4b7642",
     "semantic_hash": ""
   },
@@ -2680,8 +2675,8 @@
     "semantic_hash": ""
   },
   "src/components/settings/SettingsRows.tsx": {
-    "mtime": 1787561017.8250337,
-    "ast_hash": "4fe12cb1b3deda064e2a2106cc5b8d6b",
+    "mtime": 1788098730.931123,
+    "ast_hash": "f7b0fdf62e3cc4b4f91cae9974aa74fc",
     "semantic_hash": ""
   },
   "src/lib/dashboard/layout.ts": {
@@ -2700,8 +2695,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useSettingsGoals.ts": {
-    "mtime": 1788097895.2274325,
-    "ast_hash": "df776be428dc38ade4c67251d757b888",
+    "mtime": 1788098809.7484539,
+    "ast_hash": "176eaee4ba4681580395dee2220305de",
     "semantic_hash": ""
   },
   "src/tests/__repro.test.ts": {
@@ -3062,6 +3057,46 @@
   "scripts/repair-calcium.mjs": {
     "mtime": 1788098353.9780846,
     "ast_hash": "bf4fe6f075f446baa770ed97716c016d",
+    "semantic_hash": ""
+  },
+  "src/components/settings/NumberRow.tsx": {
+    "mtime": 1788098544.046021,
+    "ast_hash": "9d2fde0c40b934649a4331005d8487b5",
+    "semantic_hash": ""
+  },
+  "src/app/(dashboard)/settings/targets/page.tsx": {
+    "mtime": 1788098622.4762428,
+    "ast_hash": "482e8f236db2105bb7fcbfb5c5d54305",
+    "semantic_hash": ""
+  },
+  "src/app/(dashboard)/settings/lever/page.tsx": {
+    "mtime": 1788098659.0299602,
+    "ast_hash": "d867ffda728bb67169347f8bb0095fe5",
+    "semantic_hash": ""
+  },
+  "src/app/(dashboard)/settings/maintenance/page.tsx": {
+    "mtime": 1788098688.5688107,
+    "ast_hash": "e2b483d83481599af7888db1b23d1d85",
+    "semantic_hash": ""
+  },
+  "src/app/(dashboard)/settings/body/page.tsx": {
+    "mtime": 1788098829.6699743,
+    "ast_hash": "a27b6f76665e10c4a0dc437d2afb4808",
+    "semantic_hash": ""
+  },
+  "src/components/nutrition/DayTargetCard.tsx": {
+    "mtime": 1788098860.5901768,
+    "ast_hash": "e20e3ecbe70bbf592c29d825dd273d5d",
+    "semantic_hash": ""
+  },
+  "src/components/settings/planNumbers.ts": {
+    "mtime": 1788098809.7300813,
+    "ast_hash": "cb1933b6cba5baf7c31a06205c3a8398",
+    "semantic_hash": ""
+  },
+  "src/tests/maintenance.test.ts": {
+    "mtime": 1788098981.074437,
+    "ast_hash": "190404076c0576692c55edc4087f902a",
     "semantic_hash": ""
   }
 }

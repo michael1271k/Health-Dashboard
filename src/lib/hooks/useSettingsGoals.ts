@@ -12,7 +12,7 @@ import {
 import { usePlanPhaseGoals } from '@/lib/hooks/usePlanPhaseGoals'
 import { setTrackRpeMirror } from '@/lib/hooks/useTrackRpe'
 import { isLeverId, leverForDate, type LeverId } from '@/lib/nutrition/levers'
-import type { PlanNumbers, RecoveryNumbers, BodyTargets } from '@/components/settings/EditPlanCard'
+import type { PlanNumbers, RecoveryNumbers, BodyTargets } from '@/components/settings/planNumbers'
 import type { Tables } from '@/lib/supabase/types'
 
 /**
@@ -137,6 +137,18 @@ export function useSettingsGoals() {
   // would make EVERY settings save fail on a database that has not run the one
   // line of DDL. Own state, own self-healing writer.
   const [activeLever, setActiveLever] = useState<LeverId | null>(null)
+  /**
+   * The last day the maintenance week applies to (`user_goals.maintenance_until`).
+   *
+   * A release rung is the one kind that MUST end. `LEVER_SCHEDULE` closes one
+   * with a second hand-written row, and its own comment is blunt about what
+   * happens when someone forgets: a release with no successor is not a week, it
+   * is a permanent 2,151 kcal. A toggle cannot add a row to a compiled constant,
+   * so the end date is data. Own state and own self-healing writer, for the same
+   * reason `active_lever` has them — folding a fresh column into the `Goals`
+   * object would make EVERY settings save fail on a database without the DDL.
+   */
+  const [maintenanceUntil, setMaintenanceUntil] = useState<string | null>(null)
   /** The training plan in force. The drawer that PREVIEWS one is the page's. */
   const [activePlanId, setActivePlanId] = useState<string>(DEFAULT_PROGRAM_ID)
   // User-edited per-plan+phase macro overrides (plan_phase_goals). `resolve` merges
@@ -150,7 +162,8 @@ export function useSettingsGoals() {
   // Reading `activeLever` alone made this card disagree with every macro ring
   // in the app on a database that has never had the column.
   const todayISO = logicalTodayISO()
-  const leverInForce = leverForDate(todayISO, activeLever, todayISO)
+  const leverInForce = leverForDate(todayISO, activeLever, todayISO, maintenanceUntil)
+  const maintenanceOn = leverInForce === 'maintenance-week'
 
   useEffect(() => {
     async function load() {
@@ -186,6 +199,7 @@ export function useSettingsGoals() {
         try { localStorage.setItem('helix_week_start', String(ws)) } catch { /* ignore */ }
         const lv = (data as { active_lever?: string | null }).active_lever
         setActiveLever(isLeverId(lv) ? lv : null)
+        setMaintenanceUntil((data as { maintenance_until?: string | null }).maintenance_until ?? null)
         const tr = (data as { track_rpe?: boolean | null }).track_rpe ?? false
         setTrackRpe(tr)
         setTrackRpeMirror(tr)
@@ -254,7 +268,7 @@ export function useSettingsGoals() {
    * written alongside as the DECISION, which is what lets a later phase switch
    * know whether these figures were chosen or merely inherited.
    */
-  async function savePlanNumbers(next: PlanNumbers, rec: RecoveryNumbers, lever: LeverId, body: BodyTargets) {
+  async function savePlanNumbers(next: PlanNumbers, rec: RecoveryNumbers, lever: LeverId, body?: BodyTargets) {
     // One upsert for both groups. Sleep, active calories and water are ordinary
     // `user_goals` columns that no lever governs, so they ride along with the
     // five the rung does — but they are NOT sent to `plan_phase_goals` below,
@@ -300,9 +314,16 @@ export function useSettingsGoals() {
           // one statement about one plan's phase. They used to be edited in the
           // drawer, on blur, into this same table — same destination, different
           // moment, which is how the two copies drifted.
-          targetWeightKg: body.target_weight_kg,
-          targetBodyFatPct: body.target_body_fat_pct,
-          targetMuscleMassKg: body.target_muscle_mass_kg,
+          //
+          // Spread rather than listed, so a caller that omits `body` leaves the
+          // stored destination alone. Sending `undefined` keys would be the same
+          // as sending nulls once they reach the patch, and "I am not editing
+          // these" must not read as "there is no target".
+          ...(body ? {
+            targetWeightKg: body.target_weight_kg,
+            targetBodyFatPct: body.target_body_fat_pct,
+            targetMuscleMassKg: body.target_muscle_mass_kg,
+          } : {}),
         },
       })
     } catch (e) {
@@ -313,8 +334,14 @@ export function useSettingsGoals() {
     if (!session) return
     // `user_goals` carries the body targets as well, because the scorer and the
     // widget snapshot read that row and know nothing about plan_phase_goals.
-    await saveTargetWeight(body.target_weight_kg)
-    await saveBodyTargetNumbers(body.target_body_fat_pct, body.target_muscle_mass_kg)
+    // Optional, and skipped rather than nulled when absent. The Targets page
+    // edits food and movement and has no opinion about where the phase is
+    // steering; passing `{ …: null }` to say "I am not editing these" would
+    // CLEAR them, which is the same value as "there is no target".
+    if (body) {
+      await saveTargetWeight(body.target_weight_kg)
+      await saveBodyTargetNumbers(body.target_body_fat_pct, body.target_muscle_mass_kg)
+    }
     const { error } = await supabase.from('user_goals').upsert(
       { user_id: session.user.id, active_lever: lever } as unknown as never, { onConflict: 'user_id' },
     )
@@ -446,9 +473,52 @@ export function useSettingsGoals() {
   }
 
 
+  /**
+   * Turn the maintenance week on or off.
+   *
+   * ── WHY IT CLEARS `custom` ────────────────────────────────────────────────
+   * `leverForDate` gives today and everything after it to the STORED selection,
+   * so a stored `custom` shadows a scheduled rung completely. On the morning of
+   * 2026-08-30 that is exactly what happened: `LEVER_SCHEDULE` opened the
+   * maintenance week and the app resolved 1,955 kcal anyway, because `custom`
+   * was sitting in the column from a hand-edit ten days earlier. Selecting the
+   * week has to REPLACE that selection, not sit underneath it.
+   *
+   * Off writes `custom` rather than null, which is the same thing the numeric
+   * editor does: your own numbers are a real selection, not an absence.
+   */
+  async function setMaintenance(on: boolean, until: string | null) {
+    const lever: LeverId = on ? 'maintenance-week' : 'custom'
+    setActiveLever(lever)
+    setMaintenanceUntil(on ? until : null)
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return
+    const { error } = await supabase.from('user_goals').upsert(
+      { user_id: session.user.id, active_lever: lever, maintenance_until: on ? until : null } as unknown as never,
+      { onConflict: 'user_id' },
+    )
+    if (error) {
+      // `maintenance_until` is newer than `active_lever`. If only the end date is
+      // missing, the rung still applies — it just has to be switched off by hand.
+      if (/maintenance_until|column|schema cache|PGRST204/i.test(error.message)) {
+        const { error: retry } = await supabase.from('user_goals').upsert(
+          { user_id: session.user.id, active_lever: lever } as unknown as never, { onConflict: 'user_id' },
+        )
+        if (retry && !/column|active_lever|schema cache|PGRST204/i.test(retry.message)) {
+          setStatus({ type: 'error', msg: retry.message }); return
+        }
+      } else {
+        setStatus({ type: 'error', msg: error.message }); return
+      }
+    }
+    setStatus({ type: 'success', msg: 'Saved.' })
+    for (const key of PLAN_PHASE_CASCADE_KEYS) queryClient.invalidateQueries({ queryKey: key })
+  }
+
   return {
     goals, loading, saving, status, setStatus,
     weekStart, trackRpe, activeLever, activePlanId, livePhase, leverInForce,
+    maintenanceUntil, maintenanceOn, setMaintenance,
     save, saveWeekStart, saveTrackRpe, savePlanNumbers, applyPlanPhase,
     // The plan+phase resolvers travel with the writers that use them, so the
     // page never has to know that two different tables answer "what are my

@@ -102,6 +102,7 @@ import {
 } from '@/lib/hooks/useDashboard'
 import { useIsDesktop } from '@/lib/hooks/useBreakpoint'
 import { useNutritionGoals } from '@/lib/hooks/useNutritionGoals'
+import { DayTargetCard } from '@/components/nutrition/DayTargetCard'
 
 // The Vitals sheet body — 56 days of readings and a chart per row. It has no
 // business in the dashboard's first-load bundle: nothing renders it until a
@@ -594,6 +595,13 @@ export default function DashboardPage() {
           // Calories card + macro card (double-tap either to override the day).
           // Compact matters more here than anywhere: this is inside a sheet, so
           // the taller the content the more of it starts below the fold.
+          <>
+          {/* ── THE DAY'S OWN TARGET, WHERE THE DAY IS READ ──────────────────
+              A restaurant day is decided at 6pm, not in Settings, so the place
+              to change today's number is the screen you are already looking at
+              when you decide. See `dailyTargets.ts` for why this layer is the
+              only one allowed to speak for a single date. */}
+          <DayTargetCard date={logicalTodayISO()} goals={fuelGoals} />
           <MacroCards
             today={nutrition ? {
               calories: nutrition.calories, proteinG: nutrition.protein_g,
@@ -617,6 +625,7 @@ export default function DashboardPage() {
             }}
             date={logicalTodayISO()}
           />
+          </>
         )}
         {/* ── WATER, WHERE FUEL IS ───────────────────────────────────────────
             Hydration had no home in this sheet, so the Steps sheet had been

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { derivePhase, phaseDisplay, PHASE_META } from '@/lib/nutrition/phase'
+import { PHASE_META } from '@/lib/nutrition/phase'
 import { logicalTodayISO } from '@/lib/utils/day'
 import type { NutritionMode } from '@/lib/types/workout'
 import { phaseBadgeStyle } from '@/lib/phases'
@@ -14,8 +14,8 @@ import { Zone } from '@/components/ui/Zone'
 import { SettingRow, ChoiceRow, ToggleRow } from '@/components/settings/SettingsRows'
 import { RoutineList } from '@/components/settings/RoutineList'
 import { CrashRecorderRow } from '@/components/settings/CrashRecorderRow'
-import { EditPlanCard } from '@/components/settings/EditPlanCard'
-import { LEVERS, type LeverId } from '@/lib/nutrition/levers'
+import { LEVERS, leverById, type LeverId } from '@/lib/nutrition/levers'
+import { maintenanceSpanFor } from '@/lib/nutrition/maintenance'
 import { useSettingsGoals, applyPrefsToDevice } from '@/lib/hooks/useSettingsGoals'
 
 /** Live plans first, legacy (PPL) last — the order of the Settings plan cards. */
@@ -26,13 +26,30 @@ function planList(): Program[] {
 /** Nutrition mode → the timeline phase kind, so the picker reuses the glow palette. */
 const MODE_TO_PHASE = { cut: 'cut', maintenance: 'maintenance', bulk: 'bulk' } as const
 
-type SettingsSheet = 'targets' | 'plan' | 'volume' | 'routines' | null
+type SettingsSheet = 'plan' | 'volume' | 'routines' | null
+
+/**
+ * The last day of the week the maintenance switch is being flipped ON during.
+ *
+ * A release rung MUST have an end — `LEVER_SCHEDULE` says so, and admits that
+ * "forgetting is the default outcome". The Saturday of the current week is what
+ * a maintenance WEEK means by default; the sub-page can move it.
+ */
+function defaultMaintenanceEnd(): string {
+  const today = logicalTodayISO()
+  const span = maintenanceSpanFor(today)
+  if (span) return span.end
+  const d = new Date(`${today}T12:00:00Z`)
+  d.setUTCDate(d.getUTCDate() + (6 - d.getUTCDay()))
+  return d.toISOString().slice(0, 10)
+}
 
 export default function SettingsPage() {
   const {
     goals, loading, saving, status,
     weekStart, trackRpe, activePlanId, livePhase, leverInForce,
-    save, saveWeekStart, saveTrackRpe, savePlanNumbers, applyPlanPhase,
+    maintenanceUntil, maintenanceOn, setMaintenance,
+    save, saveWeekStart, saveTrackRpe, applyPlanPhase,
     resolvePhaseGoals, resolveVolume, saveVolumeTarget,
   } = useSettingsGoals()
 
@@ -51,6 +68,10 @@ export default function SettingsPage() {
   const volTargets = resolveVolume(activePlanId, livePhase)
   const planLabel = PROGRAMS[activePlanId]?.label ?? activePlanId
   const phaseLabel = PHASE_META[livePhase]?.label ?? livePhase
+  const maintRung = leverById('maintenance-week')
+  const maintenanceValue = maintenanceUntil
+    ? `until ${new Date(`${maintenanceUntil}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`
+    : maintRung ? `${maintRung.calorieGoal.toLocaleString()} kcal` : ''
 
   return (
     /**
@@ -90,19 +111,48 @@ export default function SettingsPage() {
         />
       </Zone>
 
-      {/* ── TARGETS · the only editor ── */}
+      {/* ── TARGETS ──
+          One 485-line drawer used to hold all of this, and BOTH rows below
+          opened it — which is the tell: they were two names for one
+          undifferentiated pile. Choosing a rung and typing a number are
+          different acts on the same five figures, so they are different pages.
+
+          The maintenance week is neither. It is a release, not a notch on the
+          ladder, and it is either on or off — so it is a switch, sitting in the
+          band it belongs to rather than as a full-width emerald button carrying
+          three lines of prose inside a grid of things it is not one of. */}
       <Zone label="Targets" accent={EMBER}>
         <SettingRow
           label="Daily targets"
-          hint="Calories, macros, steps, sleep, water and where the phase is going"
+          hint="Calories, macros, steps, sleep and water"
           value={`${goals.calorie_goal.toLocaleString()} kcal · ${goals.protein_goal_g}P`}
-          onOpen={() => setSheet('targets')}
+          href="/settings/targets"
         />
         <SettingRow
           label="Deficit lever"
           hint="Which rung of the cut is in force today"
           value={LEVER_LABEL(leverInForce)}
-          onOpen={() => setSheet('targets')}
+          href="/settings/lever"
+        />
+        <ToggleRow
+          label="Maintenance week"
+          hint="Full food, lighter steps. Ends on its own date."
+          on={maintenanceOn}
+          onToggle={() => void setMaintenance(!maintenanceOn, defaultMaintenanceEnd())}
+        />
+        {maintenanceOn && (
+          <SettingRow
+            label="Maintenance targets"
+            hint="What the week asks for, and the day it ends"
+            value={maintenanceValue}
+            href="/settings/maintenance"
+          />
+        )}
+        <SettingRow
+          label="Body targets"
+          hint="Where this plan's phase is steering"
+          value={pp.targetWeightKg != null ? `${pp.targetWeightKg} kg` : '—'}
+          href="/settings/body"
         />
       </Zone>
 
@@ -162,49 +212,6 @@ export default function SettingsPage() {
         <p className={`text-sm px-1 ${status.type === 'success' ? 'text-success' : 'text-danger'}`}>{status.msg}</p>
       )}
       {saving && <p className="text-xs text-muted px-1">Saving…</p>}
-
-      {/* ── Targets — the ONE editor, in the row that owns it ── */}
-      <Sheet open={sheet === 'targets'} onClose={() => setSheet(null)} title="Targets" accent={EMBER}>
-        <EditPlanCard
-          current={{
-            calorie_goal: goals.calorie_goal,
-            protein_goal_g: goals.protein_goal_g,
-            carbs_goal_g: goals.carbs_goal_g,
-            fat_goal_g: goals.fat_goal_g,
-            steps_goal: goals.steps_goal,
-          }}
-          recovery={{
-            sleep_goal_hours: goals.sleep_goal_hours,
-            active_cal_goal: goals.active_cal_goal,
-            water_goal_ml: goals.water_goal_ml,
-          }}
-          body={{
-            target_weight_kg: pp.targetWeightKg ?? null,
-            target_body_fat_pct: pp.targetBodyFatPct ?? null,
-            target_muscle_mass_kg: pp.targetMuscleMassKg ?? null,
-          }}
-          activeLever={leverInForce}
-          phaseBadge={(() => {
-            // Reads the phase OFF the calorie target, so it belongs beside the
-            // field that sets it. There used to be a SECOND copy of this exact
-            // derivation on the Plans card, labelled "Active:" instead of
-            // "Auto:" — the same value, computed twice, shown twice.
-            const p = derivePhase(goals.calorie_goal)
-            if (!p) return null
-            const m = phaseDisplay(p, logicalTodayISO())
-            return (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wide shrink-0"
-                style={{ color: m.color, background: `${m.color}1f`, border: `1px solid ${m.color}55`, boxShadow: `0 0 10px ${m.color}44` }}>
-                Auto: {m.label}
-              </span>
-            )
-          })()}
-          planLabel={planLabel}
-          phaseLabel={phaseLabel}
-          saving={saving}
-          onSave={savePlanNumbers}
-        />
-      </Sheet>
 
       {/* ── Weekly set volume — moved OUT of the plan drawer ──
           It was a `max-h-52 overflow-y-auto` grid nested inside a height-capped

@@ -8,8 +8,7 @@ import {
   planRestDay, planDaySwap, dateForWeekday,
   type ScheduleWrite, type RestDayPlan,
 } from '@/lib/schedule/swap'
-import { SUPPLEMENT_PROTOCOL, slotTimePassed } from '@/lib/supplements'
-import { logicalTodayISO } from '@/lib/utils/day'
+import { SUPPLEMENT_PROTOCOL } from '@/lib/supplements'
 
 interface OverrideRow { date: string; day_key: string }
 

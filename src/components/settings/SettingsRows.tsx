@@ -21,14 +21,27 @@ import { ZoneRow } from '@/components/ui/Zone'
  * open every one of them to find the setting you meant — which is exactly what
  * the old page's cards did at card scale.
  */
-export function SettingRow({ label, hint, value, onOpen }: {
+export function SettingRow({ label, hint, value, onOpen, href }: {
   label: string
   hint?: string
   value?: string
-  onOpen: () => void
+  /** Opens a drawer. Ignored when `href` is set. */
+  onOpen?: () => void
+  /**
+   * Navigate instead of opening a sheet.
+   *
+   * A settings detail that is a PAGE gets a real link: the back gesture works,
+   * the URL survives a reload, and the row reads as a link rather than as a
+   * button that mysteriously reveals a screen. `ZoneRow` has supported this all
+   * along and nothing here used it.
+   */
+  href?: string
 }) {
   return (
-    <ZoneRow asButton onClick={onOpen} className="flex items-center gap-3 min-h-[52px]">
+    <ZoneRow
+      {...(href ? { href } : { asButton: true as const, onClick: onOpen })}
+      className="flex items-center gap-3 min-h-[52px]"
+    >
       <span className="min-w-0 flex-1">
         <span className="block text-fluid-sm text-text font-medium">{label}</span>
         {hint && <span className="block text-[11px] text-muted leading-snug">{hint}</span>}
