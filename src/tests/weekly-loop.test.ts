@@ -381,7 +381,7 @@ describe('buildWeeklyExport', () => {
       // Every target, every day, `—/target` where nothing was measured. A
       // nutrient that vanishes on the days it was not logged teaches the reader
       // it is not tracked, which is the opposite of true.
-      '    - Micros: Fiber: —/30 g · Protein: —/170 g · Sodium: —/3000 mg (ceiling)'
+      '    - Nutrients: Fiber: —/30 g · Protein: —/170 g · Sodium: —/3000 mg (ceiling)'
         + ' · Potassium: —/3400 mg · Calcium: —/1000 mg · Iron: —/10 mg · Magnesium: —/400 mg'
         + ' · Vitamin C: —/90 mg · Vitamin D: —/2000 IU · Saturated Fat: —/20 g (ceiling)'
         + ' · Added Sugar: —/40 g (ceiling) · Vitamin B12: —/2.4 mcg (stack)'

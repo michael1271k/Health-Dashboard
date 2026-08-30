@@ -32,9 +32,18 @@ describe('weekChip', () => {
   })
 
   it('omits the week number on an unnumbered phase', () => {
-    const chip = weekChip('2026-08-30', 'Helix-5')!   // Maintenance Week
-    expect(chip.phase).toBe('Maintenance Week')
+    const chip = weekChip('2026-07-12', 'Helix-5')!   // Week 0 · Transition
+    expect(chip.phase).toBe('Week 0 · Transition')
     expect(chip.week).toBeNull()
+  })
+
+  /**
+   * 30 Aug used to be its own one-week `Maintenance Week` phase. It is a
+   * nutrition LEVER now and nothing else — the training block runs straight
+   * through it, so the chip says what is being trained.
+   */
+  it('keeps the cut unbroken through the maintenance week', () => {
+    expect(weekChip('2026-08-30', 'Helix-5')?.phase).toBe('Cut')
   })
 
   it('returns null for a week outside every phase', () => {
@@ -48,7 +57,7 @@ describe('phase palette is one source', () => {
   })
 
   it('keeps the Thailand deload warm rather than PPL grey', () => {
-    expect(phaseRgb('maintenance', 'ppl')).not.toBe(phaseRgb('cut', 'ppl'))
+    expect(phaseRgb('deload', 'ppl')).not.toBe(phaseRgb('cut', 'ppl'))
   })
 
   it('phaseBadgeStyle draws from the same table it always did', () => {
@@ -64,7 +73,7 @@ describe('phase palette is one source', () => {
    * possibility rather than re-checking for it.
    */
   it('derives every triple from the hex, so the two can never disagree', () => {
-    for (const kind of ['cut', 'peak', 'bulk', 'maintenance'] as const) {
+    for (const kind of ['cut', 'peak', 'bulk', 'deload'] as const) {
       expect(PHASE_RGB[kind]).toBe(rgbTriple(PHASE_HEX[kind]))
     }
     expect(PHASE_HEX.cut).toBe(EMBER)
@@ -74,7 +83,7 @@ describe('phase palette is one source', () => {
   it('gives a hex to consumers that append an alpha rather than wrap in rgba()', () => {
     // JourneyTimeline builds `${color}30`; an rgb() triple there is garbage.
     expect(phaseHex('cut', 'helix')).toMatch(/^#[0-9A-Fa-f]{6}$/)
-    expect(phaseHex('maintenance', 'ppl')).toBe(SAND)
+    expect(phaseHex('deload', 'ppl')).toBe(SAND)
     expect(phaseHex('cut', 'ppl')).toBe(MUTED)
   })
 

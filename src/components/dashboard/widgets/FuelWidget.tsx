@@ -4,8 +4,8 @@ import { useMemo } from 'react'
 import { WidgetFrame, WidgetEmpty } from '@/components/dashboard/WidgetFrame'
 import { BalanceBars, Hero } from './parts'
 import { Bar } from '@/components/nutrition/MacroCards'
-import { useTodayMicros } from '@/lib/hooks/useTodayMicros'
-import { MICRO_TARGETS } from '@/lib/nutrition/microTargets'
+import { useTodayNutrients } from '@/lib/hooks/useTodayNutrients'
+import { NUTRIENT_TARGETS } from '@/lib/nutrition/nutrientTargets'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { OXIDE, SAPPHIRE, EMERALD, MUTED } from '@/lib/theme/palette'
 import { WIDGET_META, type WidgetSize } from '@/lib/dashboard/layout'
@@ -37,7 +37,7 @@ import { WIDGET_META, type WidgetSize } from '@/lib/dashboard/layout'
  * three checks you either pass or fail. Nothing in a widget's anatomy said which
  * was which, so the tile read as a wall and medium had to be tall to hold it.
  *
- * They are their own widget now (`MicrosWidget`). That is the Apple answer to
+ * They are their own widget now (`NutrientsWidget`). That is the Apple answer to
  * this and not a dodge: Health does not put micronutrients on the Activity card,
  * it gives them their own place, because "did I clear 30 g of fiber" is a
  * different question asked at a different time from "how many calories are
@@ -191,7 +191,7 @@ export function FuelWidget({ size, onOpen, kcal, kcalGoal, protein, carbs, fat, 
  * unknown, and promoting it would push a real shortfall off the tile in favour
  * of a row reading "—".
  */
-export function microRisk(have: number | null, target: number, kind: 'floor' | 'ceiling'): number {
+export function nutrientRisk(have: number | null, target: number, kind: 'floor' | 'ceiling'): number {
   if (have == null) return -1
   if (target <= 0) return 0
   return kind === 'ceiling'
@@ -216,20 +216,20 @@ export function microRisk(have: number | null, target: number, kind: 'floor' | '
  * mg` for a ceiling. Painting both the same colour would congratulate a day that
  * ate 4,200 mg of sodium.
  *
- * The targets are not invented here — they come from `MICRO_TARGETS`, the same
- * evidence-based table the Micros page grades against, including whether each is
- * a floor or a ceiling. The INTAKE likewise comes from `useTodayMicros`, which
+ * The targets are not invented here — they come from `NUTRIENT_TARGETS`, the same
+ * evidence-based table the Nutrients page grades against, including whether each is
+ * a floor or a ceiling. The INTAKE likewise comes from `useTodayNutrients`, which
  * folds the supplement stack's label doses in with food; a tile that counted
  * only food would report a shortfall the multivitamin had already covered.
  */
-export function MicrosWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () => void }) {
-  const micros = useTodayMicros()
+export function NutrientsWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () => void }) {
+  const micros = useTodayNutrients()
 
   const rows = useMemo(() => {
-    const graded = MICRO_TARGETS.map((m) => {
+    const graded = NUTRIENT_TARGETS.map((m) => {
       const have = micros[m.key] ?? null
       const ok = have != null && (m.kind === 'ceiling' ? have <= m.target : have >= m.target)
-      return { ...m, have, ok, risk: microRisk(have, m.target, m.kind) }
+      return { ...m, have, ok, risk: nutrientRisk(have, m.target, m.kind) }
     })
     // ── RANKED BY RISK, NOT BY A FIXED LIST ──────────────────────────────────
     // The headline was hardcoded to fibre, sodium and iron. Those are reasonable
@@ -284,7 +284,7 @@ export function MicrosWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () =
           <span className="flex items-baseline gap-2">
             <Hero value={cleared} unit={`of ${known.length} cleared`} color={cleared === known.length ? EMERALD : OXIDE} tight />
           </span>
-          {/* Four columns at large, not three: `MICRO_TARGETS` carries twenty
+          {/* Four columns at large, not three: `NUTRIENT_TARGETS` carries twenty
               nutrients and a three-wide grid would run seven rows deep, past the
               bottom of a 292px tile. Twelve is what fits, and the page behind
               the tap is where the whole table lives. */}

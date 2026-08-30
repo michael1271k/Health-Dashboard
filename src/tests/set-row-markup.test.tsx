@@ -39,23 +39,33 @@ const FIXTURE = resolve(__dirname, '../../e2e/__fixtures__/set-rows.html')
 
 const noop = () => {}
 
-/** A card's worth of rows: warm-up, a heavy load, an open tuner, a ticked set. */
+/**
+ * A card's worth of rows: warm-up, a heavy load, an open tuner, a ticked set.
+ *
+ * ── AND ONE OF THEM IS FLAGGED ───────────────────────────────────────────────
+ * None of these fixtures carried a `quality` until now, which is precisely why
+ * `e2e/set-row-grid.spec.ts` never caught the bug it exists to catch: the
+ * quality label was rendered as a flex SIBLING of the grid, so its width came
+ * out of `w-full` and every one of the four tracks narrowed — on that row and
+ * on no other. A guard that measures column drift and is only ever given
+ * unflagged rows measures nothing.
+ */
 const LOADED: DraftSet[] = [
   { weightKg: 17.5, reps: 12, setType: 'warmup', done: false },
-  { weightKg: 102.25, reps: 8, done: false },
+  { weightKg: 102.25, reps: 8, quality: 'momentum', done: false },
   { weightKg: 8.75, reps: 14, rpe: 9, done: false },   // "Very Hard", tuner open
-  { weightKg: 60, reps: 10, rpe: 9.5, done: true },    // "Max Effort", ticked
+  { weightKg: 60, reps: 10, rpe: 9.5, quality: 'form_breakdown', done: true },
 ]
 
 /** Bodyweight: reps only, no load anywhere, so no KG column. */
 const REPS: DraftSet[] = [
-  { weightKg: 0, reps: 15, done: false },
+  { weightKg: 0, reps: 15, quality: 'partial_rom', done: false },
   { weightKg: 0, reps: 12, rpe: 9, done: true },
 ]
 
 /** A hold: the reps field carries seconds, and there is nothing else. */
 const TIME: DraftSet[] = [
-  { weightKg: 0, reps: 45, done: false },
+  { weightKg: 0, reps: 45, quality: 'cut_short', done: false },
   { weightKg: 0, reps: 90, rpe: 9.5, done: true },
 ]
 

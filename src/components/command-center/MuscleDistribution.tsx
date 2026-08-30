@@ -11,6 +11,8 @@ import {
   type LandmarkMuscle,
 } from '@/lib/training/landmarks'
 import { isSetCommitted, type SessionDraft } from '@/lib/sessions/draft'
+import { Activity } from 'lucide-react'
+import { SheetMenuRow } from './SheetMenuRow'
 
 /**
  * Where the session you are logging is actually going.
@@ -127,7 +129,7 @@ export function draftPhysicalSets(draft: SessionDraft | null): number {
  * landed. The soreness map is deliberately NOT converted: its colour encodes
  * severity, not identity.
  */
-export function MuscleDistribution({ draft, accent, size = 'sm' }: {
+export function MuscleDistribution({ draft, accent, size = 'sm', variant = 'button' }: {
   draft: SessionDraft | null
   /**
    * The workout's own colour — `dayColor(dayKey, splitDay)`.
@@ -140,6 +142,16 @@ export function MuscleDistribution({ draft, accent, size = 'sm' }: {
   accent?: string
   /** `lg` is the hero's 44px target; `sm` the 36px one in the collapsed bar. */
   size?: 'sm' | 'lg'
+  /**
+   * `button` is the icon control; `row` is a labelled row inside the session
+   * menu.
+   *
+   * The figure left the header for a cost reason as much as a layout one: it is
+   * ~60 `<path>` elements plus gradient defs, re-rendered on every header paint
+   * at 32 CSS px, to answer a question you ask between exercises rather than
+   * between reps. In `row` form nothing is drawn until the sheet is opened.
+   */
+  variant?: 'button' | 'row'
 }) {
   const [open, setOpen] = useState(false)
   const sets = useMemo(() => draftMuscleSets(draft), [draft])
@@ -164,6 +176,28 @@ export function MuscleDistribution({ draft, accent, size = 'sm' }: {
   const empty = !entries.length
   const box = size === 'lg' ? 'h-11 w-11' : 'h-9 w-9'
   const fig = size === 'lg' ? 'h-8 w-8' : 'h-6 w-6'
+
+  if (variant === 'row') {
+    return (
+      <>
+        <SheetMenuRow
+          icon={<Activity className="w-4 h-4" aria-hidden="true" />}
+          label="Muscle focus"
+          hint={empty
+            ? 'Tick a set to see where this session is landing'
+            : `Where this session is landing · ${physical} set${physical === 1 ? '' : 's'}`}
+          accent={accent}
+          disabled={empty}
+          onClick={() => setOpen(true)}
+        />
+        <MuscleDistributionSheet
+          open={open} onClose={() => setOpen(false)}
+          entries={entries} physical={physical} weighted={weighted} accent={accent}
+          layer="stacked"
+        />
+      </>
+    )
+  }
 
   return (
     <>

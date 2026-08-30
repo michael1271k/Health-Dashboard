@@ -13,13 +13,13 @@
  * an item contributes only what its label states, so a nutrient a product
  * doesn't declare simply isn't credited.
  *
- * Keys match `MICRO_TARGETS[].key` so the two merge without a translation layer.
+ * Keys match `NUTRIENT_TARGETS[].key` so the two merge without a translation layer.
  */
 
 /** Micronutrient payload of ONE unit of a supplement, keyed by micro target. */
-export type MicroPayload = Readonly<Record<string, number>>
+export type NutrientPayload = Readonly<Record<string, number>>
 
-export const SUPPLEMENT_MICROS: Readonly<Record<string, MicroPayload>> = {
+export const SUPPLEMENT_NUTRIENTS: Readonly<Record<string, NutrientPayload>> = {
   // Morning
   multivitamin: { vitaminB12: 300, folate: 680, vitaminC: 470 },   // per tab
   d3k2: { vitaminD: 5000 },                                        // 125 mcg = 5000 IU
@@ -41,7 +41,7 @@ export const SUPPLEMENT_MICROS: Readonly<Record<string, MicroPayload>> = {
 /**
  * How many UNITS of an item a dose string represents ("2 caps" → 2).
  *
- * The payloads in SUPPLEMENT_MICROS are PER PHYSICAL UNIT (one tab / cap / pill /
+ * The payloads in SUPPLEMENT_NUTRIENTS are PER PHYSICAL UNIT (one tab / cap / pill /
  * scoop), so a dose that names a *count* of those units genuinely delivers that
  * multiple — the multivitamin's 2-tab days AND the Omega-3's 2 caps both scale.
  *
@@ -64,9 +64,21 @@ export function doseUnits(_itemKey: string, dose: string | undefined): number {
  *
  * `doses` is optional and only matters for the multivitamin; pass the day's
  * resolved protocol (from `protocolForDate`) to honour its 2-tab days.
+ *
+ * ── THE ARGUMENT IS TAKEN KEYS, AND IT HAS BEEN GIVEN THE OTHER SET ──────────
+ * `useSupplements()` returns the keys you SKIPPED — the protocol is what
+ * happens unless you say otherwise, so a row only exists to record a refusal.
+ * `useStackNutrients` bound that result to a variable called `taken` and passed it
+ * straight in here, which inverted the whole thing twice over: the stack
+ * contributed nothing on a normal day (no rows ⇒ empty set), and skipping an
+ * item credited its micronutrients.
+ *
+ * Hence `takenKeys` — a name a skipped set cannot be bound to by accident.
+ * Callers hold the schedule; resolve `scheduled.filter(i => !skipped.has(i))`
+ * on their side, the way the weekly export always has.
  */
-export function supplementMicros(
-  taken: Iterable<string>,
+export function supplementNutrients(
+  takenKeys: Iterable<string>,
   doses?: ReadonlyMap<string, string>,
   /**
    * Per-supplement payloads, overriding the built-in table.
@@ -77,11 +89,11 @@ export function supplementMicros(
    * this file was written against — the one place a stale number would be
    * completely invisible.
    */
-  payloads: Readonly<Record<string, MicroPayload>> = SUPPLEMENT_MICROS,
+  payloads: Readonly<Record<string, NutrientPayload>> = SUPPLEMENT_NUTRIENTS,
 ): Record<string, number> {
   const out: Record<string, number> = {}
-  for (const key of taken) {
-    const payload = payloads[key] ?? SUPPLEMENT_MICROS[key]
+  for (const key of takenKeys) {
+    const payload = payloads[key] ?? SUPPLEMENT_NUTRIENTS[key]
     if (!payload) continue
     const units = doseUnits(key, doses?.get(key))
     for (const [micro, amount] of Object.entries(payload)) {
@@ -94,11 +106,11 @@ export function supplementMicros(
 /**
  * Merge food-derived micros with supplement-derived ones.
  *
- * Kept separate from `supplementMicros` so a UI can show the split — "470 / 90 mg
+ * Kept separate from `supplementNutrients` so a UI can show the split — "470 / 90 mg
  * vitamin C, 470 of it from the stack" is a more useful statement than a single
  * total, and it makes it obvious when a target is only being met by a pill.
  */
-export function mergeMicros(
+export function mergeNutrients(
   food: Readonly<Record<string, number | null | undefined>>,
   supps: Readonly<Record<string, number>>,
 ): Record<string, number> {

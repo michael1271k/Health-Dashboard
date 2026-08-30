@@ -7,14 +7,22 @@
  *
  *   · the LEVER axis — `leverForDate(date, …) === 'maintenance-week'`, which is
  *     what the nutrition targets, the scorer and the export all resolve against;
- *   · the PHASE axis — `phaseSpanFor(date).def.kind === 'maintenance'`, which is
+ *   · the PHASE axis — `phaseSpanFor(date).def.kind === 'deload'`, which is
  *     what the timeline chips, the era filter and the body-composition dead band
  *     read.
  *
- * `LEVER_SCHEDULE` carries a comment asking whoever edits it to keep a row in
- * sync with `PHASES` by hand, which is a rule enforced by nobody. The two axes
- * had already disagreed once — the timeline showed a maintenance week while the
- * goals, the score and the export still ran the cut's numbers.
+ * `LEVER_SCHEDULE` used to carry a comment asking whoever edited it to keep a
+ * row in sync with `PHASES` by hand, which is a rule enforced by nobody. The two
+ * axes had already disagreed once — the timeline showed a maintenance week while
+ * the goals, the score and the export still ran the cut's numbers.
+ *
+ * ── AND THE DUPLICATE IS NOW DELETED (2026-08-30) ────────────────────────────
+ * The one-week `Maintenance Week` row in `PHASES` is gone: the lever owns that
+ * week outright, and the phase kind it used has been renamed `deload` to say
+ * what the axis actually holds. So the two axes can no longer describe the SAME
+ * week in two places. What remains here is a genuine union of two different
+ * things — a nutrition rung you pull, and the historical training deloads (the
+ * Thailand trip, the Transition block) that predate levers entirely.
  *
  * Every surface that wants to soften a grade, tint a chart band or print a tag
  * asks THIS function instead of picking an axis and hoping.
@@ -60,7 +68,7 @@ export function isMaintenanceDate(
   todayISO: string,
 ): boolean {
   if (maintenanceLeverOn(dateISO, storedLeverId, maintenanceUntil, todayISO)) return true
-  return phaseSpanFor(dateISO)?.def.kind === 'maintenance'
+  return phaseSpanFor(dateISO)?.def.kind === 'deload'
 }
 
 /**
@@ -77,7 +85,7 @@ export function isMaintenanceDate(
  */
 export function maintenanceSpanFor(dateISO: string): { start: string; end: string } | null {
   const span = phaseSpanFor(dateISO)
-  if (!span || span.def.kind !== 'maintenance') return null
+  if (!span || span.def.kind !== 'deload') return null
   return { start: span.start, end: isoAddDays(span.start, span.def.weeks * 7 - 1) }
 }
 

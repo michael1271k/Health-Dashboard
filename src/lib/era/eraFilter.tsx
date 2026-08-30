@@ -32,16 +32,18 @@ export const ERA_FILTER_META: Record<EraFilter, { label: string; color: string }
 /** Pill display order — "All" far-left; the default selection stays 'axis'. */
 export const ERA_FILTER_ORDER: EraFilter[] = ['all', 'axis', 'ppl']
 
-// ── Sub-phase (nested under the Helix 5.1 era): Cut / Maintenance / Bulk ──
-export type SubPhase = 'cut' | 'maintenance' | 'bulk'
+// ── Sub-phase (nested under the Helix 5.1 era): Cut / Deload / Bulk ──
+// `maintenance` was renamed with the phase kind it mirrors — see `PhaseKind`.
+// A maintenance WEEK is a nutrition lever and never reaches this axis.
+export type SubPhase = 'cut' | 'deload' | 'bulk'
 export type SubPhaseSel = 'auto' | SubPhase
 
 export const SUB_PHASE_META: Record<SubPhase, { label: string; color: string }> = {
-  cut:         { label: 'Cut',   color: '#8E9AAC' },
-  maintenance: { label: 'Maint', color: '#3E9E7A' },
-  bulk:        { label: 'Bulk',  color: '#D4AF37' },
+  cut:    { label: 'Cut',    color: '#8E9AAC' },
+  deload: { label: 'Deload', color: '#3E9E7A' },
+  bulk:   { label: 'Bulk',   color: '#D4AF37' },
 }
-export const SUB_PHASE_ORDER: SubPhase[] = ['cut', 'maintenance', 'bulk']
+export const SUB_PHASE_ORDER: SubPhase[] = ['cut', 'deload', 'bulk']
 
 function weekStartSundayISO(dateISO: string): string {
   const d = new Date(`${dateISO}T12:00:00Z`)
@@ -53,7 +55,7 @@ function weekStartSundayISO(dateISO: string): string {
 export function currentAutoPhase(): SubPhase {
   const kind = getWeekPhase(weekStartSundayISO(logicalTodayISO()))?.kind
   if (kind === 'bulk') return 'bulk'
-  if (kind === 'maintenance') return 'maintenance'
+  if (kind === 'deload') return 'deload'
   return 'cut' // cut / peak / unknown all read as the active Cut block
 }
 

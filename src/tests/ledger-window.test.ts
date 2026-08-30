@@ -9,18 +9,21 @@ import { phaseSpanFor } from '@/lib/phases'
  * as the slope you are on. It is not — it is the slope you WERE on, dragged one
  * day toward the new one, and it stays wrong for a month.
  *
- * The Maintenance Week opening 2026-08-30 is the case this was written for.
+ * The Maintenance Week opening 2026-08-30 was the case this was written for.
+ * That week is a nutrition LEVER now, not a phase — the cut trains straight
+ * through it — so the boundary these exercise is the Transition deload opening
+ * 2026-10-18, which is a real short phase and the same shape of problem.
  */
 describe('phaseSpanFor', () => {
   it('locates a date inside its phase and counts the days in', () => {
-    const s = phaseSpanFor('2026-08-30')
-    expect(s?.def.name).toBe('Maintenance Week')
+    const s = phaseSpanFor('2026-10-18')
+    expect(s?.def.name).toBe('Transition')
     expect(s?.dayIndex).toBe(0)     // day 1 of the phase
   })
 
   it('counts from the phase start, not from the week start', () => {
     // The distinction the week-granular getWeekPhase cannot make.
-    expect(phaseSpanFor('2026-09-01')?.dayIndex).toBe(2)
+    expect(phaseSpanFor('2026-10-20')?.dayIndex).toBe(2)
   })
 
   it('is null outside the programme rather than inventing a phase', () => {
@@ -34,11 +37,11 @@ describe('phaseSpanFor', () => {
 
 describe('ledgerWindow', () => {
   it('reaches back past the boundary when the phase is too young to speak', () => {
-    // Day 1 of the maintenance week: one day of data is not a rate.
-    const w = ledgerWindow('2026-08-30')
+    // Day 1 of the Transition block: one day of data is not a rate.
+    const w = ledgerWindow('2026-10-18')
     expect(w.inPhase).toBe(1)
     expect(w.days).toBe(14)          // the floor, borrowed from the cut before it
-    expect(w.label).toBe('Maint · day 1')
+    expect(w.label).toBe('Trans · day 1')
   })
 
   it('narrows to the phase itself once the phase is old enough', () => {

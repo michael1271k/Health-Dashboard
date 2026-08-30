@@ -14,7 +14,7 @@
  * will eventually be wrong and stay wrong.
  *
  * `key` is the identity that must survive everything: `supplement_log.item_key`
- * and `SUPPLEMENT_MICROS` are both keyed by it, so the seeded rows carry these
+ * and `SUPPLEMENT_NUTRIENTS` are both keyed by it, so the seeded rows carry these
  * exact strings in `schedule.key` and months of ticked history keeps resolving.
  */
 import { EMERALD, STEEL, SAPPHIRE, AMETHYST } from '@/lib/theme/palette'
@@ -34,7 +34,7 @@ export interface SupplementSlot { key: string; time: string; label: string; acce
 
 /**
  * The seed stack, with the doses this athlete started from. Each item's
- * micronutrient payload lives in `nutrition/supplementMicros.ts`, keyed by the
+ * micronutrient payload lives in `nutrition/supplementNutrients.ts`, keyed by the
  * SAME `key` — so ticking one off credits the day's micros immediately.
  *
  * EDITING THIS FILE NO LONGER CHANGES THE APP for a seeded database. It changes
@@ -51,7 +51,7 @@ export const SUPPLEMENT_PROTOCOL: SupplementSlot[] = [
   ] },
   { key: 'post', time: '15:00', label: 'Lunch / Post-Workout', accent: SAPPHIRE, items: [
     { key: 'creatine', name: 'Creatine Monohydrate', dose: '5 g' },
-    // Two caps — the SUPPLEMENT_MICROS payload (EPA 500 / DHA 250) is PER cap,
+    // Two caps — the SUPPLEMENT_NUTRIENTS payload (EPA 500 / DHA 250) is PER cap,
     // and doseUnits multiplies count-units, so this delivers EPA 1000 / DHA 500.
     { key: 'omega3', name: 'Omega-3 Fish Oil', dose: '2 caps' },
   ] },

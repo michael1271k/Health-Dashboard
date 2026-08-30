@@ -23,7 +23,7 @@ export interface MuscleEntry { muscle: LandmarkMuscle; sets: number }
  * derives them from the live draft, the report reads them off `SessionDetail`.
  * So the shared piece takes the numbers, not the source.
  */
-export function MuscleDistributionSheet({ open, onClose, entries, physical, weighted, accent }: {
+export function MuscleDistributionSheet({ open, onClose, entries, physical, weighted, accent, layer }: {
   open: boolean
   onClose: () => void
   /** Weighted sets per muscle, already filtered to the ones that were worked. */
@@ -34,11 +34,13 @@ export function MuscleDistributionSheet({ open, onClose, entries, physical, weig
   weighted: number
   /** The session's own colour — the day's on both the report and the live deck. */
   accent?: string
+  /** `stacked` when opened from a row inside the session menu's own sheet. */
+  layer?: 'base' | 'stacked'
 }) {
   const tint = accent ?? ATLAS_BLUE
   const worked = setsToWorked(Object.fromEntries(entries.map((e) => [e.muscle, e.sets])))
   return (
-    <Sheet open={open} onClose={onClose} title="Muscle distribution" accent={tint}>
+    <Sheet open={open} onClose={onClose} title="Muscle distribution" accent={tint} layer={layer}>
       <div className="space-y-3 pb-2">
         {/* The two counts, named, before the figures that use them. The deck's
             own set count is the physical one; everything in the list below is

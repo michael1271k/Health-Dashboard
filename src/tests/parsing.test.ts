@@ -3,10 +3,12 @@ import { parseDurationMin } from '@/lib/utils/duration'
 import { NUTRITION_PRESETS } from '@/lib/types/workout'
 
 describe('Nutrition modes', () => {
-  it('defines Cut / Bulk / Maintenance with correct calories', () => {
+  it('defines Cut / Bulk with correct calories, and nothing else', () => {
     expect(NUTRITION_PRESETS.cut.calorieGoal).toBe(1955)     // Helix cut — 170·4 + 195·4 + 55·9
     expect(NUTRITION_PRESETS.bulk.calorieGoal).toBe(2600)   // Lean Bulk
-    expect(NUTRITION_PRESETS.maintenance.calorieGoal).toBe(2375)
+    // A programme runs in one of two directions. A week at maintenance is a
+    // LEVER on top of one of them, not a third preset — see `NutritionMode`.
+    expect(Object.keys(NUTRITION_PRESETS).sort()).toEqual(['bulk', 'cut'])
   })
 
   it('AXIS macro anchors carry full macro + fiber targets', () => {

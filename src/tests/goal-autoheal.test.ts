@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
-import { MICRO_SIGNALS } from '@/lib/nutrition/microTargets'
+import { NUTRIENT_SIGNALS } from '@/lib/nutrition/nutrientTargets'
 
 /**
  * The Nutrition page's auto-heal effect is keyed on `userGoals` and its body
@@ -57,7 +57,7 @@ describe('the goal auto-heal cannot loop', () => {
 })
 
 describe('wrist temperature is described as what it holds', () => {
-  const wrist = MICRO_SIGNALS.find((s) => s.key === 'wrist_temp_delta')!
+  const wrist = NUTRIENT_SIGNALS.find((s) => s.key === 'wrist_temp_delta')!
 
   /**
    * The column is named `wrist_temp_delta` and holds the night's ABSOLUTE

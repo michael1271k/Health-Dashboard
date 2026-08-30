@@ -19,7 +19,7 @@
  */
 import { describe, it, expect } from 'vitest'
 import {
-  buildWeeklyExport, microLine, FATIGUE_SLOT_LABELS,
+  buildWeeklyExport, nutrientLine, FATIGUE_SLOT_LABELS,
   type WeeklyExportInput, type ExportDay, type ExportSession,
 } from '@/lib/reports/weeklyExport'
 import { weekJsonBlock } from '@/lib/reports/weekJson'
@@ -217,7 +217,7 @@ describe('measurements the export never asked for', () => {
     const out = buildWeeklyExport({
       ...base,
       days: days.map((d) => (d.date === '2026-08-27'
-        ? { ...d, calories: 1943, microsFood: { fiber: 18, vitaminC: 124 }, microsStack: { vitaminC: 470 } }
+        ? { ...d, calories: 1943, nutrientsFood: { fiber: 18, vitaminC: 124 }, nutrientsStack: { vitaminC: 470 } }
         : d)),
     })
     // The split is the reading: 594 mg of vitamin C is a different fact about a
@@ -225,14 +225,14 @@ describe('measurements the export never asked for', () => {
     expect(out).toMatch(/Vitamin C: 594\/90 mg \(124 food \+ 470 stack\)/)
     expect(out).toMatch(/Fiber: 18\/30 g/)
     // A day with no reading still names the nutrient rather than dropping it.
-    expect(out).toMatch(/- Micros: Fiber: —\/30 g/)
+    expect(out).toMatch(/- Nutrients: Fiber: —\/30 g/)
   })
 
   it('marks a ceiling as one, because it inverts the reading of the same numbers', () => {
     // 200/400 mg of caffeine is on protocol; 200/400 mg of magnesium is half a
     // dose. Without the tag the two lines are indistinguishable.
-    expect(microLine({}, { caffeine: 200 })).toMatch(/Caffeine: 200\/400 mg \(ceiling, stack\)/)
-    expect(microLine({}, { magnesium: 200 })).toMatch(/Magnesium: 200\/400 mg(?! \(ceiling)/)
+    expect(nutrientLine({}, { caffeine: 200 })).toMatch(/Caffeine: 200\/400 mg \(ceiling, stack\)/)
+    expect(nutrientLine({}, { magnesium: 200 })).toMatch(/Magnesium: 200\/400 mg(?! \(ceiling)/)
   })
 
   it('carries the vitals the app measured daily and the export never printed', () => {
@@ -356,7 +356,7 @@ describe('the derived section is fenced off from the measurements', () => {
     const out = buildWeeklyExport({
       ...base,
       days: days.map((d) => (d.date === '2026-08-27'
-        ? { ...d, microsFood: { calcium: 3074 } }
+        ? { ...d, nutrientsFood: { calcium: 3074 } }
         : d)),
     })
     expect(out).toMatch(/Calcium: ⚠ 3074\/1000 mg/)
@@ -370,7 +370,7 @@ describe('the derived section is fenced off from the measurements', () => {
       days: days.map((d) => (d.date === '2026-08-27'
         // 274 mg of calcium is a normal day here; sodium is a ceiling, and
         // exceeding a ceiling is the ordinary thing it exists to report.
-        ? { ...d, microsFood: { calcium: 274, sodium: 4000 } }
+        ? { ...d, nutrientsFood: { calcium: 274, sodium: 4000 } }
         : d)),
     })
     expect(out).toMatch(/Calcium: 274\/1000 mg/)

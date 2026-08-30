@@ -91,10 +91,20 @@ export interface ProgramDay {
   weekday: number        // 0=Sun … 6=Sat
   exercises: ProgramExercise[]
 }
-/** A phase is a variation INSIDE a plan. Its nutrition/target numbers live in
- *  NUTRITION_PRESETS + PLAN_PHASES (types/workout); a plan bends its TRAINING per
- *  phase via each exercise's `sets` (bulk) vs `cutSets` (cut). */
-export type ProgramPhase = 'cut' | 'maintenance' | 'bulk'
+/**
+ * A phase is a variation INSIDE a plan. Its nutrition/target numbers live in
+ * NUTRITION_PRESETS + PLAN_PHASES (types/workout); a plan bends its TRAINING per
+ * phase via each exercise's `sets` (bulk) vs `cutSets` (cut).
+ *
+ * ── TWO VALUES, AND `maintenance` WAS NEVER A THIRD ──────────────────────────
+ * It resolved to the bulk deck: `forPhase` returns the program untouched for
+ * anything that is not a cut, so selecting it changed no exercise, no set count
+ * and no rep window. The only thing it moved was the calorie target — which is
+ * the LEVER's axis (`LEVERS['maintenance-week']`), applied on top of whichever
+ * direction the block is running. Deleted here so the picker cannot offer a
+ * training decision that does not train anything.
+ */
+export type ProgramPhase = 'cut' | 'bulk'
 
 export interface Program {
   id: string
@@ -280,9 +290,9 @@ export const DEFAULT_PROGRAM_ID = APEX51.id
 
 /**
  * Resolve a plan template to a specific PHASE: on a cut, each exercise's `sets`
- * becomes its `cutSets` and the cut-dropped lifts (`cutSets: 0`) fall out; bulk /
- * maintenance keep the base `sets`. Pure — the rep windows are authored per
- * exercise and never rewritten. */
+ * becomes its `cutSets` and the cut-dropped lifts (`cutSets: 0`) fall out; a
+ * bulk keeps the base `sets`. Pure — the rep windows are authored per exercise
+ * and never rewritten. */
 function forPhase(program: Program, phase: ProgramPhase): Program {
   if (phase !== 'cut') return program
   return {
@@ -606,7 +616,10 @@ export function setActiveProgramId(id: string): void {
 export function activePhase(): ProgramPhase {
   if (typeof window === 'undefined') return 'cut'
   const v = window.localStorage.getItem(PHASE_KEY)
-  return v === 'bulk' || v === 'maintenance' ? v : 'cut'
+  // A device that last synced before `maintenance` was deleted still has the
+  // string in this key. It resolved to the bulk deck by accident of
+  // `forPhase`; it resolves to the cut now, which is the block being run.
+  return v === 'bulk' ? 'bulk' : 'cut'
 }
 export function setActivePhase(phase: ProgramPhase): void {
   if (typeof window === 'undefined') return

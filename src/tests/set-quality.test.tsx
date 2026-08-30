@@ -1,4 +1,6 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, afterEach } from 'vitest'
+import { render, cleanup } from '@testing-library/react'
+import { SetEditorRow } from '@/components/command-center/SetEditorRow'
 import { SET_QUALITY, SET_QUALITY_KEYS, isSetQuality, setQualityFor } from '@/lib/training/setTags'
 import { buildCommitPayload, type SessionDraft, type DraftSet } from '@/lib/sessions/draft'
 import { SaveWorkoutSchema } from '@/lib/sessions/schema'
@@ -107,5 +109,56 @@ describe('the export', () => {
     // A warm-up CAN be sloppy — that is the reason for two axes.
     expect(setDetail([s({ warmup: true, rpe: null, quality: 'needed_warmup' })]))
       .toEqual(['Warm-up: 40 kg × 10 (warm-up, Set Quality: Cold)'])
+  })
+})
+
+/**
+ * ── THE FLAG DOES NOT LIVE IN THE ROW ────────────────────────────────────────
+ *
+ * It used to. `SetEditorRow` rendered the quality LABEL as a `<span>` sibling of
+ * the set grid, inside a `flex items-center` button — so `block` and `mt-0.5`
+ * were inert, and the label's width came straight out of the grid's `w-full`.
+ * All four tracks narrowed on a flagged row and on no other, which is why the
+ * weight, reps and RPE stopped lining up with the header and with every row
+ * above them the moment you tagged a set "Momentum".
+ *
+ * The dot is on the SET BADGE — a fixed `w-7` flex child outside the grid — so
+ * it cannot move a column by construction. These pin both halves.
+ */
+describe('a flagged set does not disturb the row', () => {
+  const flagged: DraftSet = { weightKg: 60, reps: 10, rpe: 9, quality: 'momentum', done: false }
+  const clean: DraftSet = { weightKg: 60, reps: 10, rpe: 9, done: false }
+
+  const row = (set: DraftSet) => render(
+    <SetEditorRow index={0} displayNum={1} set={set} active={false} trackRpe
+      onActivate={() => {}} onChange={() => {}} onRemove={() => {}} />,
+  ).container
+
+  afterEach(cleanup)
+
+  it('renders the same grid, cell for cell, flagged or not', () => {
+    const a = row(flagged).querySelector('[class*="grid-cols-["]')!
+    cleanup()
+    const b = row(clean).querySelector('[class*="grid-cols-["]')!
+    expect(a.children.length).toBe(b.children.length)
+    expect(a.className).toBe(b.className)
+  })
+
+  it('puts nothing beside the grid inside the data button', () => {
+    // One child, and it is the grid. A second child is the bug.
+    const btn = Array.from(row(flagged).querySelectorAll('button'))
+      .find((b) => (b.getAttribute('aria-label') ?? '').startsWith('Edit'))!
+    expect(btn.children.length).toBe(1)
+    expect(btn.children[0].className).toMatch(/grid-cols-\[/)
+  })
+
+  it('never prints the quality LABEL in the row', () => {
+    expect(row(flagged).textContent ?? '').not.toContain('Momentum')
+  })
+
+  it('says which flag it is in the badge label, for the reader who cannot see a dot', () => {
+    const badge = Array.from(row(flagged).querySelectorAll('button'))
+      .find((b) => (b.getAttribute('aria-label') ?? '').includes('Hold for set options'))!
+    expect(badge.getAttribute('aria-label')).toContain(SET_QUALITY.momentum.full)
   })
 })

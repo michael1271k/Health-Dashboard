@@ -390,6 +390,13 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
    * Alignment is `alignPreviousSets`'s job now, and it needs both kinds to do
    * it — a warm-up is compared with a warm-up.
    */
+  /**
+   * The reference came from the OTHER kind of week — a deficit session standing
+   * in for a maintenance one, or the reverse. `historyFromRows` only falls back
+   * like this when no comparable week exists at all, which is the ordinary state
+   * on the first day of the first release week.
+   */
+  const prevCrossKind = (globalHistory ?? history)?.crossKind ?? false
   const prevAll = useMemo(
     () => (globalHistory ?? history)?.sets ?? [],
     [globalHistory, history],
@@ -953,6 +960,7 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
                   displayNum={g.num}
                   set={g.set}
                   prev={prevByGroup[gi] ?? null}
+                  prevCrossKind={prevCrossKind}
                   active={activeSet === i}
                   timed={timed} gridMode={gridMode}
                   loadable={loadableEx}
@@ -1089,7 +1097,7 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
                       <SetEditorRow
                         trackRpe={trackRpe}
                         key={`r${g.right.idx}`} index={g.right.idx} displayNum={g.num} subRow set={g.right.set}
-                        prev={prevByGroup[gi] ?? null}
+                        prev={prevByGroup[gi] ?? null} prevCrossKind={prevCrossKind}
                         sideColor={accent}
                         active={activeSet === g.right.idx} timed={timed} gridMode={gridMode} loadable={loadableEx}
                         prAxes={livePrs?.get(livePrKey(exercise.localId, g.right.idx))}
@@ -1103,7 +1111,7 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
                       <SetEditorRow
                         trackRpe={trackRpe}
                         key={`l${g.left.idx}`} index={g.left.idx} displayNum={g.num} subRow set={g.left.set}
-                        prev={prevByGroup[gi] ?? null}
+                        prev={prevByGroup[gi] ?? null} prevCrossKind={prevCrossKind}
                         sideColor={accent}
                         active={activeSet === g.left.idx} timed={timed} gridMode={gridMode} loadable={loadableEx}
                         prAxes={livePrs?.get(livePrKey(exercise.localId, g.left.idx))}

@@ -4,6 +4,9 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { eraForDate, type Era } from '@/lib/programs'
 import { isWorkingSet } from '@/lib/training/setTags'
+import { activeLeverOf, leverKindOn, type NutritionLever } from '@/lib/nutrition/levers'
+import { useUserGoals } from '@/lib/hooks/useDashboard'
+import { logicalTodayISO } from '@/lib/utils/day'
 
 /** The set tags that round-trip through seeding. Mirrors `DraftSet['setType']`. */
 export type HistorySetType = 'warmup' | 'failure' | 'dropset' | 'ghost'
@@ -35,6 +38,15 @@ export interface ExerciseHistory {
    *  included. The tag is carried so seeding reproduces last time exactly;
    *  callers that need a working-set baseline use `workingSets()`. */
   sets: HistorySet[]
+  /**
+   * This entry comes from the OTHER kind of week — see the `lever` option below.
+   *
+   * Set only when no session of the wanted kind exists at all, which is the
+   * normal state on the first day of the first maintenance week. A blank
+   * Previous column is a worse answer than a labelled cross-kind one, so the
+   * deck shows the number and says where it came from.
+   */
+  crossKind?: boolean
 }
 
 /**
@@ -109,17 +121,59 @@ const TAGS: readonly string[] = ['warmup', 'failure', 'dropset', 'ghost']
  */
 export function historyFromRows(
   rows: readonly HistoryRow[],
-  opts: { scopeKey?: string | null; before?: string | null; era?: Era } = {},
+  opts: {
+    scopeKey?: string | null
+    before?: string | null
+    era?: Era
+    /**
+     * ── AND THE WEEK HAS A KIND, WHICH IS THE FOURTH FILTER ────────────────
+     * A maintenance week is deliberately lighter. Seeding week 8 from week 7's
+     * release loads hands you a target below what you were lifting a fortnight
+     * ago and calls it "Previous" — and grading a release week against
+     * full-effort numbers marks a week that went exactly to plan as a decline.
+     *
+     * So a deficit week only looks at deficit sessions and a release week only
+     * at release ones. Nothing on `workout_sessions` records which it was —
+     * see `save.ts` — so it is DERIVED from the session's own date by
+     * `leverKindOn`, the same resolution the scorer, the widget and the export
+     * already run. Passing the lever context in (rather than reading it here)
+     * keeps this function pure and lets the tests drive it from a date.
+     *
+     * Omit to disable the filter entirely — which is what every caller that
+     * does not know the date should do.
+     */
+    lever?: {
+      /** `user_goals.active_lever`. */
+      storedLeverId: string | null | undefined
+      todayISO: string
+      /** `user_goals.maintenance_until`. */
+      releaseEndsOn?: string | null
+      /** The kind of week the ANSWER is for — resolved from the target date. */
+      wantKind: NutritionLever['kind']
+    }
+  } = {},
 ): Map<string, ExerciseHistory> {
-  const { scopeKey = null, before = null, era } = opts
+  const { scopeKey = null, before = null, era, lever } = opts
   type Row = HistorySet & { setNumber: number }
   const acc = new Map<string, { date: string; rows: Row[] }>()
+  /**
+   * The same accumulation, ignoring the kind filter.
+   *
+   * Only consulted for a name that the kind filter left with NOTHING — the
+   * first maintenance week has no prior maintenance week to look at, and a
+   * blank column there is a regression, not a safeguard. Built unconditionally
+   * because it costs one map on a loop that is already running.
+   */
+  const anyKind = new Map<string, { date: string; rows: Row[] }>()
 
   for (const r of rows) {
     if (scopeKey && r.workout_sessions.day_key !== scopeKey) continue
     const date = r.workout_sessions.started_at.slice(0, 10)
     if (before && date >= before) continue
     if (era && eraForDate(date) !== era) continue
+    const kindMatches = !lever || leverKindOn(
+      date, lever.storedLeverId, lever.todayISO, lever.releaseEndsOn,
+    ) === lever.wantKind
 
     const name = r.exercises.name
     // Only a genuine two-sided row carries the pair through — a `pair_id`
@@ -133,19 +187,29 @@ export function historyFromRows(
       ...(r.set_type && TAGS.includes(r.set_type) ? { setType: r.set_type as HistorySetType } : {}),
       ...(sided ? { side: r.side as 'L' | 'R', pairId: r.pair_id as string } : {}),
     }
-    const existing = acc.get(name)
-    if (!existing) acc.set(name, { date, rows: [row] })
-    else if (existing.date === date) existing.rows.push(row)
-    // a different (older) date for a known name is skipped
+    // Rows arrive newest-first, so the first date seen for a name is its most
+    // recent session; a different (older) date for a known name is skipped.
+    const keep = (into: Map<string, { date: string; rows: Row[] }>) => {
+      const existing = into.get(name)
+      if (!existing) into.set(name, { date, rows: [row] })
+      else if (existing.date === date) existing.rows.push(row)
+    }
+    keep(anyKind)
+    if (kindMatches) keep(acc)
   }
 
-  const out = new Map<string, ExerciseHistory>()
-  for (const [name, { date, rows: setRows }] of acc) {
-    const sets: HistorySet[] = [...setRows]
+  const collapse = ({ date, rows: setRows }: { date: string; rows: Row[] }): ExerciseHistory => ({
+    date,
+    sets: [...setRows]
       .sort((a, b) => a.setNumber - b.setNumber)
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      .map(({ setNumber, ...rest }) => rest)
-    out.set(name, { date, sets })
+      .map(({ setNumber, ...rest }) => rest),
+  })
+
+  const out = new Map<string, ExerciseHistory>()
+  for (const [name, entry] of anyKind) {
+    const matched = acc.get(name)
+    out.set(name, matched ? collapse(matched) : { ...collapse(entry), crossKind: true })
   }
   return out
 }
@@ -153,8 +217,25 @@ export function historyFromRows(
 export function useExerciseSetHistory(names: string[], era?: Era, dayKey?: string, before?: string) {
   const key = [...names].sort().join('|')
   const scopeKey = dayKey ?? null
+  /**
+   * The lever context, from the row the dashboard already has cached.
+   *
+   * ── AND THE KIND IS RESOLVED FROM THE TARGET DATE, NOT FROM TODAY ──────────
+   * `before` is what a PAST session's view passes ("what came before this
+   * one"), and that session's own week decides which history is comparable to
+   * it. Resolving against today would make opening a July workout compare it
+   * against whichever kind of week happens to be running now.
+   */
+  const { data: goalsRow } = useUserGoals()
+  const todayISO = logicalTodayISO()
+  const storedLeverId = activeLeverOf(goalsRow)
+  const releaseEndsOn = (goalsRow as { maintenance_until?: string | null } | null)?.maintenance_until ?? null
+  const wantKind = leverKindOn(before ?? todayISO, storedLeverId, todayISO, releaseEndsOn)
   return useQuery({
-    queryKey: ['workout_sets', 'deck_history', key, era ?? 'all', scopeKey ?? 'any', before ?? 'latest'],
+    queryKey: [
+      'workout_sets', 'deck_history', key, era ?? 'all',
+      scopeKey ?? 'any', before ?? 'latest', wantKind,
+    ],
     enabled: names.length > 0,
     staleTime: 60_000,
     queryFn: async (): Promise<Map<string, ExerciseHistory>> => {
@@ -168,7 +249,10 @@ export function useExerciseSetHistory(names: string[], era?: Era, dayKey?: strin
         // to the program's cold-start numbers, which read as "arbitrary data".
         .limit(2000)
       if (error) throw error
-      return historyFromRows((data ?? []) as unknown as HistoryRow[], { scopeKey, before, era })
+      return historyFromRows((data ?? []) as unknown as HistoryRow[], {
+        scopeKey, before, era,
+        lever: { storedLeverId, todayISO, releaseEndsOn, wantKind },
+      })
     },
   })
 }

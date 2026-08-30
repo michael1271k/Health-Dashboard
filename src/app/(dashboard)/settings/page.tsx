@@ -2,76 +2,37 @@
 
 import { useState } from 'react'
 import { PHASE_META } from '@/lib/nutrition/phase'
-import { logicalTodayISO } from '@/lib/utils/day'
-import type { NutritionMode } from '@/lib/types/workout'
-import { phaseBadgeStyle } from '@/lib/phases'
 import { Sheet } from '@/components/ui/Sheet'
 import { EMBER, STEEL } from '@/lib/theme/palette'
-import { PROGRAMS, activeProgram, type Program } from '@/lib/programs'
+import { PROGRAMS } from '@/lib/programs'
 import { LANDMARK_MUSCLES } from '@/lib/training/landmarks'
-import { AlertTriangle, Dumbbell } from 'lucide-react'
 import { Zone } from '@/components/ui/Zone'
 import { SettingRow, ChoiceRow, ToggleRow } from '@/components/settings/SettingsRows'
-import { RoutineList } from '@/components/settings/RoutineList'
 import { CrashRecorderRow } from '@/components/settings/CrashRecorderRow'
-import { LEVERS, leverById, type LeverId } from '@/lib/nutrition/levers'
-import { maintenanceSpanFor } from '@/lib/nutrition/maintenance'
+import { LEVERS, type LeverId } from '@/lib/nutrition/levers'
 import { useSettingsGoals, applyPrefsToDevice } from '@/lib/hooks/useSettingsGoals'
 
-/** Live plans first, legacy (PPL) last — the order of the Settings plan cards. */
-function planList(): Program[] {
-  return Object.values(PROGRAMS).sort((a, b) => Number(a.legacy ?? false) - Number(b.legacy ?? false))
-}
-
-/** Nutrition mode → the timeline phase kind, so the picker reuses the glow palette. */
-const MODE_TO_PHASE = { cut: 'cut', maintenance: 'maintenance', bulk: 'bulk' } as const
-
-type SettingsSheet = 'plan' | 'volume' | 'routines' | null
-
-/**
- * The last day of the week the maintenance switch is being flipped ON during.
- *
- * A release rung MUST have an end — `LEVER_SCHEDULE` says so, and admits that
- * "forgetting is the default outcome". The Saturday of the current week is what
- * a maintenance WEEK means by default; the sub-page can move it.
- */
-function defaultMaintenanceEnd(): string {
-  const today = logicalTodayISO()
-  const span = maintenanceSpanFor(today)
-  if (span) return span.end
-  const d = new Date(`${today}T12:00:00Z`)
-  d.setUTCDate(d.getUTCDate() + (6 - d.getUTCDay()))
-  return d.toISOString().slice(0, 10)
-}
+type SettingsSheet = 'volume' | null
 
 export default function SettingsPage() {
   const {
     goals, loading, saving, status,
-    weekStart, trackRpe, activePlanId, livePhase, leverInForce,
-    maintenanceUntil, maintenanceOn, setMaintenance,
-    save, saveWeekStart, saveTrackRpe, applyPlanPhase,
+    weekStart, trackRpe, activePlanId, livePhase, leverInForce, maintenanceOn,
+    save, saveWeekStart, saveTrackRpe,
     resolvePhaseGoals, resolveVolume, saveVolumeTarget,
   } = useSettingsGoals()
 
   // ── Presentation state, and only presentation state ──
-  // Which drawer is open, which plan it is showing, which phase is being
-  // previewed inside it, and whether the switch has been armed. None of it is
-  // persisted and none of it means anything once the sheet closes, which is
-  // exactly why it did not travel into the hook with the writers.
+  // One drawer is left on this page — the set-volume grid. The plan picker and
+  // the routine preview moved to `/settings/plan`, which is where the decision
+  // and its consequences now sit together.
   const [sheet, setSheet] = useState<SettingsSheet>(null)
-  const [previewPlan, setPreviewPlan] = useState<Program | null>(null)
-  const [drawerPhase, setDrawerPhase] = useState<NutritionMode>('cut')
-  const [confirmSwitch, setConfirmSwitch] = useState(false)
   if (loading) return <p className="text-muted text-sm">Loading…</p>
 
   const pp = resolvePhaseGoals(activePlanId, livePhase)
   const volTargets = resolveVolume(activePlanId, livePhase)
   const planLabel = PROGRAMS[activePlanId]?.label ?? activePlanId
   const phaseLabel = PHASE_META[livePhase]?.label ?? livePhase
-  const maintRung = leverById('maintenance-week')
-  const maintenanceValue = maintenanceUntil
-    ? `until ${new Date(`${maintenanceUntil}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`
-    : maintRung ? `${maintRung.calorieGoal.toLocaleString()} kcal` : ''
 
   return (
     /**
@@ -99,55 +60,37 @@ export default function SettingsPage() {
       <Zone label="Plan" accent={STEEL}>
         <SettingRow
           label="Training plan"
-          hint="Split, phase and everything the phase dictates"
+          hint="The split, the phase, and what you do each day"
           value={`${planLabel} · ${phaseLabel}`}
-          onOpen={() => { setConfirmSwitch(false); setDrawerPhase(livePhase); setPreviewPlan(PROGRAMS[activePlanId] ?? planList()[0]); setSheet('plan') }}
+          href="/settings/plan"
         />
         <SettingRow
           label="Weekly set volume"
-          hint={`${LANDMARK_MUSCLES.length} landmarks · ${livePhase === 'cut' ? 'MEV+' : livePhase === 'bulk' ? 'MAV' : 'MEV+→MAV'}`}
+          hint={`${LANDMARK_MUSCLES.length} landmarks · ${livePhase === 'cut' ? 'MEV+' : 'MAV'}`}
           value={`${LANDMARK_MUSCLES.reduce((n, m) => n + (volTargets[m] ?? 0), 0)} sets`}
           onOpen={() => setSheet('volume')}
         />
       </Zone>
 
       {/* ── TARGETS ──
-          One 485-line drawer used to hold all of this, and BOTH rows below
-          opened it — which is the tell: they were two names for one
-          undifferentiated pile. Choosing a rung and typing a number are
-          different acts on the same five figures, so they are different pages.
+          This was four rows and a conditional fifth: Daily targets, Deficit
+          lever, a Maintenance week switch, the extra Maintenance targets row
+          that switch SPROUTED when it was on, and Body targets. Four ways in to
+          one question — what am I eating today — and the first two showed
+          numbers the third was overriding without saying so.
 
-          The maintenance week is neither. It is a release, not a notch on the
-          ladder, and it is either on or off — so it is a switch, sitting in the
-          band it belongs to rather than as a full-width emerald button carrying
-          three lines of prose inside a grid of things it is not one of. */}
+          One row now. `/settings/levers` holds the rungs, the release and the
+          five figures they replace, in that order, and shows which of them is
+          actually in force. */}
       <Zone label="Targets" accent={EMBER}>
         <SettingRow
-          label="Daily targets"
-          hint="Calories, macros, steps, sleep and water"
-          value={`${goals.calorie_goal.toLocaleString()} kcal · ${goals.protein_goal_g}P`}
-          href="/settings/targets"
+          label="Levers"
+          hint="What you are eating, and what decided it"
+          value={maintenanceOn
+            ? `Maintenance · ${goals.calorie_goal.toLocaleString()} kcal`
+            : `${LEVER_LABEL(leverInForce)} · ${goals.calorie_goal.toLocaleString()} kcal`}
+          href="/settings/levers"
         />
-        <SettingRow
-          label="Deficit lever"
-          hint="Which rung of the cut is in force today"
-          value={LEVER_LABEL(leverInForce)}
-          href="/settings/lever"
-        />
-        <ToggleRow
-          label="Maintenance week"
-          hint="Full food, lighter steps. Ends on its own date."
-          on={maintenanceOn}
-          onToggle={() => void setMaintenance(!maintenanceOn, defaultMaintenanceEnd())}
-        />
-        {maintenanceOn && (
-          <SettingRow
-            label="Maintenance targets"
-            hint="What the week asks for, and the day it ends"
-            value={maintenanceValue}
-            href="/settings/maintenance"
-          />
-        )}
         <SettingRow
           label="Body targets"
           hint="Where this plan's phase is steering"
@@ -187,12 +130,6 @@ export default function SettingsPage() {
           hint="Rate each exercise Easy / Hard / Failure when you log a session"
           on={trackRpe}
           onToggle={() => saveTrackRpe(!trackRpe)}
-        />
-        <SettingRow
-          label="Routines"
-          hint="What each programmed day actually runs"
-          value={`${activeProgram(activePlanId, livePhase).days.length} days`}
-          onOpen={() => setSheet('routines')}
         />
       </Zone>
 
@@ -245,132 +182,6 @@ export default function SettingsPage() {
         </div>
       </Sheet>
 
-      {/* ── Routines — also moved out of the drawer, for the same reason ── */}
-      <Sheet open={sheet === 'routines'} onClose={() => setSheet(null)}
-        title={`Routines · ${phaseLabel}`} accent={EMBER}>
-        <RoutineList planId={activePlanId} phase={livePhase} isActive />
-      </Sheet>
-
-      {/* ── Plan — the picker, and nothing that is not about picking ──
-          This drawer used to also carry eight editable goal fields, a read-only
-          grid restating them, a 7-day schedule the Workout tab already owns,
-          the set-volume scroller and the routine list. What is left is the
-          decision it exists for. */}
-      <Sheet size="wide" maxHeight="92dvh"
-        open={sheet === 'plan'} onClose={() => { setSheet(null); setPreviewPlan(null); setConfirmSwitch(false) }}
-        title="Training plan" accent={STEEL}>
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-            {planList().map((plan) => {
-              const on = previewPlan?.id === plan.id
-              const active = plan.id === activePlanId
-              return (
-                <button key={plan.id} onClick={() => { setConfirmSwitch(false); setDrawerPhase(active ? livePhase : 'cut'); setPreviewPlan(plan) }}
-                  aria-pressed={on}
-                  className="rounded-2xl border p-3 text-left transition-[border-color,background-color,box-shadow] duration-200"
-                  style={on
-                    ? { borderColor: `${STEEL}66`, background: `${STEEL}14`, boxShadow: `0 0 16px ${STEEL}33` }
-                    : { borderColor: 'rgba(255,255,255,0.08)' }}>
-                  <div className="flex items-center gap-1.5">
-                    <Dumbbell className="w-3.5 h-3.5 shrink-0" style={{ color: on ? STEEL : '#79808C' }} aria-hidden="true" />
-                    <span className="font-heading font-bold text-sm text-text">{plan.label}</span>
-                    {plan.legacy && <span className="text-[9px] uppercase tracking-wide text-muted ml-auto">legacy</span>}
-                    {active && !plan.legacy && <span className="text-[9px] uppercase tracking-wide ml-auto" style={{ color: STEEL }}>active</span>}
-                  </div>
-                  <p className="text-[10px] text-muted mt-1 leading-snug line-clamp-2">{plan.blurb ?? `${plan.days.length}-day split`}</p>
-                </button>
-              )
-            })}
-          </div>
-
-          {previewPlan && (() => {
-            const isActive = previewPlan.id === activePlanId && livePhase === drawerPhase
-            return (
-              <>
-                {/* ── Phase — nested INSIDE the plan, because a phase is not a
-                       global mood: it is the set of numbers a specific plan
-                       runs on. ── */}
-                <div>
-                  <div className="text-[10px] uppercase tracking-widest text-muted mb-2">Phase</div>
-                  <div className="flex rounded-xl border border-white/[0.08] overflow-hidden">
-                    {(['cut', 'maintenance', 'bulk'] as NutritionMode[]).map((m) => {
-                      const on = drawerPhase === m
-                      return (
-                        <button key={m} onClick={() => setDrawerPhase(m)} aria-pressed={on}
-                          className="flex-1 py-2 text-fluid-xs font-semibold capitalize min-h-[44px]"
-                          style={on ? phaseBadgeStyle(MODE_TO_PHASE[m], true) : { color: 'var(--color-muted)' }}>
-                          {m}
-                          {previewPlan.id === activePlanId && livePhase === m && (
-                            <span className="block text-[8px] uppercase tracking-wide opacity-70">active</span>
-                          )}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-
-                <p className="text-[11px] text-muted leading-snug">
-                  Switching rewrites calories, macros, step goal, body targets and weekly set volume to this
-                  phase&apos;s numbers. Edit them afterwards under Targets, which is the only place they are edited.
-                </p>
-
-                <div className="pt-1 border-t border-white/[0.06]">
-                  {isActive ? (
-                    <p className="text-fluid-xs text-muted text-center py-2">
-                      {previewPlan.label} · {drawerPhase} is active.
-                    </p>
-                  ) : (
-                    <button onClick={() => setConfirmSwitch(true)} disabled={saving}
-                      className="btn-primary w-full justify-center min-h-[46px] disabled:opacity-60"
-                      style={{ background: STEEL, boxShadow: `0 0 16px ${STEEL}44` }}>
-                      Make {previewPlan.label} · {drawerPhase} active
-                    </button>
-                  )}
-                </div>
-              </>
-            )
-          })()}
-        </div>
-      </Sheet>
-
-      {/* The only destructive action in the app. A confirmation rising from the
-          bottom edge over the thing it is about is the platform idiom for
-          exactly this, and it cannot be reached without the prose arriving with
-          it. */}
-      <Sheet
-        open={confirmSwitch && !!previewPlan}
-        onClose={() => setConfirmSwitch(false)}
-        title="Switch plan?"
-        accent={EMBER}
-        layer="stacked"
-      >
-        {previewPlan && (
-          <div className="space-y-4 pb-2">
-            <div className="flex items-start gap-2.5">
-              <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" style={{ color: EMBER }} aria-hidden="true" />
-              <p className="text-sm text-muted leading-relaxed">
-                Run <span className="text-text font-semibold">{previewPlan.label}</span> on its{' '}
-                <span className="text-text font-semibold">{drawerPhase}</span> phase? Calories, macros, step goal,
-                body targets and weekly set volume all move to this phase&apos;s numbers, the training schedule
-                changes, and analytics re-anchor from today. Your logged history is preserved.
-              </p>
-            </div>
-            <div className="flex gap-2 justify-end">
-              <button onClick={() => setConfirmSwitch(false)} className="btn-glass min-h-[44px] px-4">Cancel</button>
-              <button
-                onClick={async () => {
-                  const id = previewPlan.id, m = drawerPhase
-                  setPreviewPlan(null); setConfirmSwitch(false); setSheet(null)
-                  await applyPlanPhase(id, m)
-                }}
-                disabled={saving}
-                className="btn-primary min-h-[44px] px-4 disabled:opacity-60">
-                Confirm
-              </button>
-            </div>
-          </div>
-        )}
-      </Sheet>
     </div>
   )
 }

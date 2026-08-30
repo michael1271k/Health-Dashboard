@@ -6,7 +6,25 @@
 
 import { EMBER, PLATINUM, EMERALD, STEEL, MUTED, SAND, rgbTriple } from '@/lib/theme/palette'
 
-export type PhaseKind = 'cut' | 'peak' | 'bulk' | 'maintenance'
+/**
+ * ── `deload`, NOT `maintenance` (renamed 2026-08-30) ─────────────────────────
+ * "Maintenance" named two different things on two different axes, and they
+ * disagreed. On THIS axis it is a block of the programme with a start date and
+ * a length — the Thailand vacation, the Transition weeks — and what those have
+ * in common is that they are DELOADS: the training eases off for a bounded
+ * stretch and then the block resumes.
+ *
+ * On the other axis, `LEVERS`, "maintenance week" is a NUTRITION rung: a
+ * planned week at maintenance calories, taken on purpose inside a cut, with the
+ * training programme unchanged. The one-week `Maintenance Week` phase that used
+ * to sit in `PHASES` at 2026-08-30 was the same week described twice, badly —
+ * `maintenance.ts` exists entirely because the two copies had already drifted
+ * apart once. That row is DELETED; the lever owns the week, alone.
+ *
+ * So a programme phase is a direction (`cut` / `bulk`), a polished end state
+ * (`peak`), or a bounded easing-off (`deload`). It is never a diet.
+ */
+export type PhaseKind = 'cut' | 'peak' | 'bulk' | 'deload'
 
 export interface WeekPhase {
   kind: PhaseKind
@@ -28,7 +46,7 @@ export interface WeekPhase {
  * either hardcoded a hex or fell back to steel. The Momentum week headers were
  * grey regardless of phase for exactly that reason.
  *
- * Cut is the signature ember, bulk is growth-green, maintenance is sleek steel,
+ * Cut is the signature ember, bulk is growth-green, a deload is sleek steel,
  * and peak is platinum — the refined state rather than a direction of travel.
  *
  * Peak is not a direction like cut/bulk, it is the polished end state, so it
@@ -46,20 +64,20 @@ export const PHASE_HEX: Record<PhaseKind, string> = {
   cut: EMBER,
   peak: PLATINUM,
   bulk: EMERALD,
-  maintenance: STEEL,
+  deload: STEEL,
 }
 
 export const PHASE_RGB: Record<PhaseKind, string> = {
   cut: rgbTriple(PHASE_HEX.cut),
   peak: rgbTriple(PHASE_HEX.peak),
   bulk: rgbTriple(PHASE_HEX.bulk),
-  maintenance: rgbTriple(PHASE_HEX.maintenance),
+  deload: rgbTriple(PHASE_HEX.deload),
 }
 
 /** The desaturated PPL-legacy variants, so two Cut eras can never be confused. */
 const PPL_HEX = {
   default: MUTED,      // was a fourth grey nobody named
-  maintenance: SAND,   // the Thailand deload reads as a vacation, not a phase
+  deload: SAND,        // the Thailand deload reads as a vacation, not a phase
 } as const
 
 /**
@@ -68,9 +86,9 @@ const PPL_HEX = {
  */
 export function phaseHex(kind: PhaseKind, era: 'ppl' | 'helix' = 'helix'): string {
   if (era !== 'ppl') return PHASE_HEX[kind]
-  // The Thailand deload is the sole PPL 'maintenance' phase and gets a warm
-  // sand tone so the vacation reads distinctly in the timeline.
-  return kind === 'maintenance' ? PPL_HEX.maintenance : PPL_HEX.default
+  // The Thailand deload is the sole PPL 'deload' phase and gets a warm sand
+  // tone so the vacation reads distinctly in the timeline.
+  return kind === 'deload' ? PPL_HEX.deload : PPL_HEX.default
 }
 
 /** Phase colour as an `rgb()` triple, era-aware. */
@@ -134,18 +152,33 @@ export const PHASES: PhaseDef[] = [
   // Thailand trip deload — the Jun 28–Jul 11 gap between Peak Week and the HELIX
   // ramp. Real personal history; the only PPL-era 'maintenance' phase (its badge
   // keys off that to render warm sand rather than the muted PPL gray).
-  { kind: 'maintenance', name: 'Thailand Vacation', start: '2026-06-28', weeks: 2, short: 'Thailand', era: 'ppl', eraTag: 'Thailand Vacation (Deload)' },
+  { kind: 'deload', name: 'Thailand Vacation', start: '2026-06-28', weeks: 2, short: 'Thailand', era: 'ppl', eraTag: 'Thailand Vacation (Deload)' },
   // ── HELIX era ──
   // Week 0 = the transitional Axis-5 ramp (Wed/Thu/Fri 15–17 Jul) in the calendar
-  // week starting 12 Jul; Helix Cut 5.1 (1935 kcal) opens 15 Jul. Cut W1–6 anchors
-  // on 19 Jul (unchanged), scheduled maintenance week, Cut W7–12, Transition, then
-  // Lean Bulk → 2027-01-16.
-  { kind: 'peak',        name: 'Week 0 · Transition', start: '2026-07-12', weeks: 1, short: 'W0', era: 'helix', eraTag: 'HELIX · Week 0' },
-  { kind: 'cut',         name: 'Cut',         start: '2026-07-19', weeks: 6,  numbered: true, era: 'helix', eraTag: 'Helix Cut' },
-  { kind: 'maintenance', name: 'Maintenance Week', start: '2026-08-30', weeks: 1, short: 'Maint', era: 'helix', eraTag: 'HELIX Maintenance' },
-  { kind: 'cut',         name: 'Cut',         start: '2026-09-06', weeks: 6,  numbered: true, firstWeek: 7, era: 'helix', eraTag: 'Helix Cut' },
-  { kind: 'maintenance', name: 'Transition',  start: '2026-10-18', weeks: 2,  numbered: true, short: 'Trans', era: 'helix', eraTag: 'HELIX Transition' },
-  { kind: 'bulk',        name: 'Lean Bulk',   start: '2026-11-01', weeks: 11, numbered: true, era: 'helix', eraTag: 'HELIX Lean Bulk' },
+  // week starting 12 Jul; Helix Cut 5.1 (1935 kcal) opens 15 Jul. The cut then
+  // runs unbroken to the Transition, and Lean Bulk closes the block → 2027-01-16.
+  //
+  // ── ONE CUT, NOT TWO WITH A WEEK WEDGED BETWEEN THEM (2026-08-30) ──────────
+  // This was `Cut W1–6`, then a one-week `Maintenance Week` phase, then
+  // `Cut W7–12` restarting its own count at 7. That middle row was a NUTRITION
+  // decision wearing a training phase's clothes — the deck it seeds is
+  // identical either side of it (`forPhase` only branches on `cut`), so the
+  // only thing it ever changed was the calorie target, which is the lever's
+  // job and is recorded in `LEVER_SCHEDULE` as a `maintenance-week` rung.
+  //
+  // Keeping both meant keeping them in sync by hand, and they had already come
+  // apart once: the timeline painted a maintenance week while the goals, the
+  // score and the export all still ran the cut's numbers.
+  //
+  // Deleting it also settles a numbering disagreement it had caused. Skipping
+  // the week in the cut's own count made 6 Sep "Cut Week 7" while
+  // `programWeekNumber` — the counter the dashboard badge and the export use —
+  // called it week 8. One unbroken 13-week cut, and the two agree again: a week
+  // eaten at maintenance is still a week of the cut, and it is still trained.
+  { kind: 'peak', name: 'Week 0 · Transition', start: '2026-07-12', weeks: 1, short: 'W0', era: 'helix', eraTag: 'HELIX · Week 0' },
+  { kind: 'cut',    name: 'Cut',         start: '2026-07-19', weeks: 13, numbered: true, era: 'helix', eraTag: 'Helix Cut' },
+  { kind: 'deload', name: 'Transition',  start: '2026-10-18', weeks: 2,  numbered: true, short: 'Trans', era: 'helix', eraTag: 'HELIX Transition' },
+  { kind: 'bulk',   name: 'Lean Bulk',   start: '2026-11-01', weeks: 11, numbered: true, era: 'helix', eraTag: 'HELIX Lean Bulk' },
 ]
 
 

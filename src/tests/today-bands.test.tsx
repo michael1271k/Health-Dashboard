@@ -2,9 +2,20 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { render, screen, cleanup } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { SleepBand, BodyBand } from '@/components/day/SummaryBands'
 
 afterEach(cleanup)
+
+/**
+ * `BodyBand` reads the lever context to know whether the day it is drawing sits
+ * inside a maintenance week — the delta chip judges inside a dead band there.
+ * It is a cache read in the app (the dashboard has already fetched the row);
+ * here it needs a client to read from.
+ */
+const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+const withQuery = (ui: React.ReactNode) =>
+  render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>)
 
 const sleep = (over: Record<string, unknown> = {}) => ({
   duration_min: 432, start_time: '2026-08-09T23:40:00Z', end_time: '2026-08-10T06:52:00Z',
@@ -58,19 +69,19 @@ describe('summary bands hold their shape', () => {
   })
 
   it('keeps the Body band whole on a day with no weigh-in', () => {
-    render(<BodyBand log={null} onOpen={() => {}} />)
+    withQuery(<BodyBand log={null} onOpen={() => {}} />)
     expect(screen.getByText('—')).toBeInTheDocument()
     expect(screen.getByText('No weigh-in today')).toBeInTheDocument()
   })
 
   it('draws the composition bar only when every component is real', () => {
-    const { container: partial } = render(
+    const { container: partial } = withQuery(
       <BodyBand log={{ weight_kg: 64.2, body_fat_pct: null, muscle_mass_kg: null } as never} onOpen={() => {}} />,
     )
     expect(partial.querySelectorAll('[aria-hidden="true"] > span').length).toBe(0)
     cleanup()
 
-    const { container: full } = render(
+    const { container: full } = withQuery(
       <BodyBand log={{ weight_kg: 64.2, body_fat_pct: 17.3, muscle_mass_kg: 31.1 } as never} onOpen={() => {}} />,
     )
     expect(full.querySelectorAll('[aria-hidden="true"] > span').length).toBe(3)
@@ -78,7 +89,7 @@ describe('summary bands hold their shape', () => {
 
   it('opens its drawer rather than navigating', async () => {
     const onOpen = vi.fn()
-    render(<BodyBand log={null} onOpen={onOpen} />)
+    withQuery(<BodyBand log={null} onOpen={onOpen} />)
     await userEvent.click(screen.getByRole('button'))
     expect(onOpen).toHaveBeenCalledOnce()
   })

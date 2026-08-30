@@ -349,10 +349,23 @@ export async function computeForDate(
   // schedule rows) used to fall through to `'cut'` and be graded against a
   // prescription nobody intended to follow.
   const maintenance = isMaintenanceDate(date, activeLeverOf(goals), maintenanceUntil, todayISO)
-  const programMode: ProgramPhase =
-    maintenance ? 'maintenance'
-    : (g.calorie_goal ?? 0) >= 2450 ? 'bulk'
-    : 'cut'
+  /**
+   * ── AND THE LAST CALORIE SNIFF GOES WITH IT ────────────────────────────────
+   * This was `maintenance ? 'maintenance' : kcal >= 2450 ? 'bulk' : 'cut'`, and
+   * both halves were wrong for the same reason: a PHASE is which deck you train,
+   * and neither a maintenance week nor a calorie figure decides that. The 2,450
+   * threshold in particular graded a bulk as a cut for every day the target sat
+   * below it, and would have called the 2,151 release week a cut anyway.
+   *
+   * `active_phase` is the field that actually knows, on the row this function
+   * has already loaded, and it is the same one `serverScheduleContext` reads —
+   * so the day is graded against the deck it was seeded from. `maintenance`
+   * stays as its own boolean on `ScoringInputs`: it softens the drain budget
+   * and the session verdict, which is what a release week genuinely changes.
+   */
+  const storedPhase = (goals as { active_phase?: string | null; goal_preset?: string | null } | null)
+  const phaseTag = storedPhase?.active_phase ?? storedPhase?.goal_preset
+  const programMode: ProgramPhase = phaseTag === 'bulk' ? 'bulk' : 'cut'
   const prescribed = dayKey ? prescribedFor(dayKey, programMode) : null
 
   const totalWaterMl = (water ?? []).reduce((s, r) => s + r.amount_ml, 0)

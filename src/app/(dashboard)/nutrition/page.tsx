@@ -198,12 +198,12 @@ export default function NutritionPage() {
       />
 
       {/* Deep-dive into micronutrients + advanced HealthKit signals */}
-      <Link href="/nutrition/micros" className="rounded-xl border border-white/[0.08] bg-white/[0.04] w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/[0.03] transition-colors">
+      <Link href="/nutrition/nutrients" className="rounded-xl border border-white/[0.08] bg-white/[0.04] w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/[0.03] transition-colors">
         <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: 'rgba(138,111,168,0.16)', color: '#E0703C' }}>
           <FlaskConical className="w-4 h-4" aria-hidden="true" />
         </span>
         <span className="flex-1 min-w-0">
-          <span className="block text-sm font-semibold text-text">Nutrition &amp; Micros</span>
+          <span className="block text-sm font-semibold text-text">Nutrition &amp; Nutrients</span>
           <span className="block text-[11px] text-muted">Fiber, iron, vitamins &amp; advanced signals — with your cut targets</span>
         </span>
         <ChevronRight className="w-4 h-4 text-muted shrink-0" aria-hidden="true" />

@@ -132,16 +132,23 @@ describe('the battery on a deload', () => {
 describe('the chart band', () => {
   it('clamps to dates that are actually on the axis', () => {
     // A band drawn to a phase boundary outside the plotted points lands nowhere.
-    const dates = ['2026-08-28', '2026-08-30', '2026-09-01']
-    expect(maintenanceBands(dates)).toEqual([{ start: '2026-08-30', end: '2026-09-01' }])
+    // Transition — a real `deload` phase — runs 2026-10-18 for two weeks.
+    const dates = ['2026-10-16', '2026-10-18', '2026-10-20']
+    expect(maintenanceBands(dates)).toEqual([{ start: '2026-10-18', end: '2026-10-20' }])
   })
 
+  /**
+   * The band is drawn from `PHASES` only, and 30 Aug is no longer one: the
+   * maintenance WEEK is a lever, which knows when it started and at best when
+   * it means to stop — drawing a band out to a date the user may still move
+   * would paint the future as though it had happened.
+   */
   it('does not merge two blocks separated by a cut', () => {
-    // The Thailand deload and the scheduled maintenance week are months apart.
-    const dates = ['2026-07-01', '2026-08-01', '2026-08-30']
+    // The Thailand deload and the Transition block are months apart.
+    const dates = ['2026-07-01', '2026-08-01', '2026-10-18']
     expect(maintenanceBands(dates)).toEqual([
       { start: '2026-07-01', end: '2026-07-01' },
-      { start: '2026-08-30', end: '2026-08-30' },
+      { start: '2026-10-18', end: '2026-10-18' },
     ])
   })
 

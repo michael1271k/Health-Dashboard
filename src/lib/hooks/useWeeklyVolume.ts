@@ -8,10 +8,7 @@ import { eraForDate, activePhase, getActiveProgramId } from '@/lib/programs'
 import { resolveMovers } from '@/lib/exercises/muscleMap'
 import { weeklyVolumeByMuscle, type MuscleVolume, type ProgramPhase } from '@/lib/training/landmarks'
 import { usePlanPhaseGoals } from '@/lib/hooks/usePlanPhaseGoals'
-import { useUserGoals } from '@/lib/hooks/useDashboard'
 import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
-import { activeLeverOf } from '@/lib/nutrition/levers'
-import { isMaintenanceDate } from '@/lib/nutrition/maintenance'
 
 export interface WeeklyVolume {
   weekStart: string
@@ -54,14 +51,12 @@ export function useWeeklyVolume(
   // targets until a full reload.
   void useScheduleVersion()
   const { resolveVolume } = usePlanPhaseGoals()
-  const { data: goalsRow } = useUserGoals()
-  const maintenance = isMaintenanceDate(
-    weekStart,
-    activeLeverOf(goalsRow),
-    (goalsRow as { maintenance_until?: string | null } | null)?.maintenance_until ?? null,
-    logicalTodayISO(),
-  )
-  const phase: ProgramPhase = maintenance ? 'maintenance' : (activePhase() as ProgramPhase)
+  // ── THE WEEK'S VOLUME TARGET IS THE PHASE'S, MAINTENANCE OR NOT ──────────
+  // This swapped in a `maintenance` landmark set on a release week. That row
+  // is deleted: a maintenance week releases the FOOD and leaves the programme
+  // exactly as authored, so grading its volume against anything but the phase's
+  // own landmarks marked an unchanged week as a different one.
+  const phase: ProgramPhase = activePhase()
   const planId = getActiveProgramId()
   const volumeTargets = resolveVolume(planId, phase)
 

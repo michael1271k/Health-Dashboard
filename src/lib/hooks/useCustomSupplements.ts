@@ -14,7 +14,7 @@ export interface CustomSchedule {
   trainingDose?: string  // dose on training days (falls back to `dose`)
   restDose?: string      // dose on rest days (falls back to `dose`)
   /**
-   * Stable log key. `supplement_log.item_key` and `SUPPLEMENT_MICROS` are both
+   * Stable log key. `supplement_log.item_key` and `SUPPLEMENT_NUTRIENTS` are both
    * keyed by this string, and there are months of ticked history behind the nine
    * seeded ones ('creatine', 'citrulline', …). A row without it falls back to
    * `custom:<id>`, which is what user-added supplements have always used.
@@ -74,8 +74,8 @@ export function supplementKeyOf(c: CustomSupplement): string {
   return c.schedule?.key || `custom:${c.id}`
 }
 
-/** Every row's micronutrient payload, keyed for `supplementMicros`. */
-export function microPayloads(customs: CustomSupplement[]): Record<string, Record<string, number>> {
+/** Every row's micronutrient payload, keyed for `supplementNutrients`. */
+export function nutrientPayloads(customs: CustomSupplement[]): Record<string, Record<string, number>> {
   const out: Record<string, Record<string, number>> = {}
   for (const c of customs) if (c.micros) out[supplementKeyOf(c)] = c.micros
   return out

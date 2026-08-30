@@ -10,7 +10,7 @@ import { safePath } from '@/lib/native/deepLink'
 describe('safePath', () => {
   it('extracts the path a widget asked for', () => {
     expect(safePath('helix://open?path=/nutrition')).toBe('/nutrition')
-    expect(safePath('helix://open?path=/nutrition/micros')).toBe('/nutrition/micros')
+    expect(safePath('helix://open?path=/nutrition/nutrients')).toBe('/nutrition/nutrients')
     expect(safePath('helix://open?path=/')).toBe('/')
   })
 

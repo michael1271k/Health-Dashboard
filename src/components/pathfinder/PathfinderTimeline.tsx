@@ -33,6 +33,7 @@ import { Sheet } from '@/components/ui/Sheet'
 import { DayCard } from '@/components/timeline/ContinuumTimeline'
 import { SwapDayControl, RestTodayButton } from '@/components/day/SwapDayControl'
 import { dayColor, EMERALD, MUTED, REST, SAPPHIRE, WEEK_STATE } from '@/lib/theme/palette'
+import { useIsMaintenanceDate } from '@/lib/hooks/useMaintenance'
 
 const label = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 
@@ -262,6 +263,9 @@ const WeekCapsule = memo(forwardRef<HTMLDivElement, {
   onOpenDay: (date: string) => void
   onSwapDay: (date: string) => void
 }>(function WeekCapsule({ node, days, unit, ready, complete, open, prevVolumeKg, onToggle, onOpenDay, onSwapDay }, ref) {
+  // The capsule is a statement about ITS week, so the dead band is resolved for
+  // that week and not for today — see `deltaVerdict`.
+  const maintenance = useIsMaintenanceDate(node.weekStart)
   const color = useMemo(() => splitColor(dominantSplit(node.days)), [node.days])
   const hasPRs = node.prs > 0
   // Percent, not absolute kilos: a 400 kg swing means something different on a
@@ -332,7 +336,7 @@ const WeekCapsule = memo(forwardRef<HTMLDivElement, {
             {/* The only gold left on this capsule, which is the point. */}
             {hasPRs && <span className="flex items-center gap-1" style={{ color: WEEK_STATE.pr }}><Trophy className="w-3 h-3" />{node.prs}</span>}
             {node.weightDelta != null && (
-              <span className="helix-num" style={{ color: deltaColor('weight', node.weightDelta, activePhase() as ProgramPhase) }}>
+              <span className="helix-num" style={{ color: deltaColor('weight', node.weightDelta, activePhase(), maintenance) }}>
                 {node.weightDelta > 0 ? '+' : ''}{node.weightDelta}{weightUnit()}
               </span>
             )}
@@ -415,6 +419,7 @@ const WeekCapsule = memo(forwardRef<HTMLDivElement, {
  * it was written, and nine surfaces were quietly not using it.
  */
 function WeekVitalsRow({ node }: { node: TimelineWeekNode }) {
+  const maintenance = useIsMaintenanceDate(node.weekStart)
   const end = isoAddDays(node.weekStart, 6)
   const phase = activePhase() as ProgramPhase
   const { data } = useQuery({
@@ -437,14 +442,14 @@ function WeekVitalsRow({ node }: { node: TimelineWeekNode }) {
     cells.push({
       key: 'weight', label: 'Weight Δ',
       value: `${node.weightDelta > 0 ? '+' : ''}${node.weightDelta} ${weightUnit()}`,
-      color: deltaColor('weight', node.weightDelta, phase),
+      color: deltaColor('weight', node.weightDelta, phase, maintenance),
     })
   }
   if (node.fatDelta != null) {
     cells.push({
       key: 'fat', label: 'Fat Δ',
       value: `${node.fatDelta > 0 ? '+' : ''}${node.fatDelta}%`,
-      color: deltaColor('fat', node.fatDelta, phase),
+      color: deltaColor('fat', node.fatDelta, phase, maintenance),
     })
   }
   if (data?.battery != null) {

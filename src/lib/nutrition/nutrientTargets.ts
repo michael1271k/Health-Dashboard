@@ -19,14 +19,14 @@
  * ceiling. That is the one thing the label cannot tell you at a glance, and it
  * is the reason you opened the page.
  */
-export type MicroGroup = 'Fuel' | 'Electrolytes' | 'Vitamins & minerals' | 'Performance stack'
+export type NutrientGroup = 'Fuel' | 'Electrolytes' | 'Vitamins & minerals' | 'Performance stack'
 
 /** Render order of the bands. */
-export const MICRO_GROUPS: readonly MicroGroup[] = [
+export const NUTRIENT_GROUPS: readonly NutrientGroup[] = [
   'Fuel', 'Electrolytes', 'Vitamins & minerals', 'Performance stack',
 ] as const
 
-export interface MicroTarget {
+export interface NutrientTarget {
   key: string
   label: string
   target: number
@@ -36,7 +36,7 @@ export interface MicroTarget {
    * Which band this nutrient renders under. Twenty nutrients in one flat grid
    * is a wall; four named bands is a page you can skim for the one you came for.
    */
-  group: MicroGroup
+  group: NutrientGroup
   why: string
   hkType?: string
   /**
@@ -47,7 +47,7 @@ export interface MicroTarget {
   fromStack?: boolean
 }
 
-export const MICRO_TARGETS: MicroTarget[] = [
+export const NUTRIENT_TARGETS: NutrientTarget[] = [
   { key: 'fiber', label: 'Fiber', target: 30, unit: 'g', kind: 'floor', group: 'Fuel',
     why: '~14 g per 1000 kcal (~27 g at 1955 kcal), rounded up for satiety + gut health on a cut.',
     hkType: 'HKQuantityTypeIdentifierDietaryFiber' },
@@ -84,7 +84,7 @@ export const MICRO_TARGETS: MicroTarget[] = [
 
   // ── Delivered by the supplement stack ──────────────────────────────────────
   // These light up the instant the matching item is ticked off in the Stack —
-  // see nutrition/supplementMicros.ts for each product's label dose.
+  // see nutrition/supplementNutrients.ts for each product's label dose.
   { key: 'vitaminB12', label: 'Vitamin B12', target: 2.4, unit: 'mcg', kind: 'floor', group: 'Vitamins & minerals',
     why: 'RDA 2.4 mcg. The multivitamin supplies 300 mcg — far above the floor, which is normal for B12 (no toxicity ceiling).',
     fromStack: true },
@@ -118,14 +118,14 @@ export const MICRO_TARGETS: MicroTarget[] = [
  * Passive HealthKit signals (not diet) — already modelled on `daily_logs`, so
  * they carry a value as soon as data exists.
  *
- * These used to render on the Micros deep-dive AND in Vitals. Vitals is now the
+ * These used to render on the Nutrients deep-dive AND in Vitals. Vitals is now the
  * only place they appear: nothing on a nutrition page acts on HRV, and a number
  * shown twice is a number you have to reconcile. What survives here is the
  * REFERENCE COPY — the one-line "what counts as normal" for each signal, which
  * Vitals reads. That copy is the reason this list is not simply deleted: the
  * wrist-temp entry below encodes a correction that was expensive to find.
  */
-export interface MicroSignal {
+export interface NutrientSignal {
   key: string
   label: string
   unit: string
@@ -133,7 +133,7 @@ export interface MicroSignal {
   color: string
 }
 
-export const MICRO_SIGNALS: MicroSignal[] = [
+export const NUTRIENT_SIGNALS: NutrientSignal[] = [
   // The column is named `wrist_temp_delta` but holds the night's ABSOLUTE
   // average in °C — ingest writes HealthKit's AppleSleepingWristTemperature
   // straight through (see lib/ingest/dailyLog.ts:192). The label and the

@@ -36,13 +36,21 @@ import { GOLD, MUTED, STEEL } from '@/lib/theme/palette'
  * title-row control now and the band is gone; the collapsed bar carries its own
  * copy, and the two are never on screen at the same time.
  *
- * ── AND WHY THE BODY IS UP HERE ──────────────────────────────────────────────
- * The muscle-distribution button used to sit in `CommitBar`, at the bottom of a
- * deck that is taller than the viewport by the third exercise — so the one
- * control that answers "where is this session actually landing" was reachable
- * only by scrolling past every set you had not done yet. It sits beside the
- * title now, tinted in the workout's own colour, and the collapsed bar carries
- * the same button once this scrolls off.
+ * ── AND WHAT IS *NOT* UP HERE ANY MORE ───────────────────────────────────────
+ * The rest timer and the muscle figure. Both were 44px controls in a row that
+ * also held a chevron, the workout's name, an overflow menu and Finish, and the
+ * name — the one thing on this screen that cannot be recovered from anything
+ * else on it — was ellipsizing at 390px before the first set was logged.
+ *
+ * Neither is used mid-set. You reach for a rest timer between exercises, and
+ * the body figure answers "where did this land", which is a review question;
+ * drawing its ~60 SVG paths at 32 CSS px on every header paint to have it
+ * permanently visible was paying for a glance nobody takes. They are rows in
+ * the session menu now — labelled, one tap, and the figure is not rendered at
+ * all until the sheet asks for it.
+ *
+ * What is left is what the header is FOR: which workout, how long you have been
+ * here, and the button that ends it.
  */
 export function LiveSessionHero({ draft, accent, volumeKg, sets, recordCount, onBack, onSetDate, onFinish, onOpenDuration, finishBusy, isEdit, deleting, onDiscard, onCancelEdit, onDelete }: {
   draft: SessionDraft
@@ -62,11 +70,11 @@ export function LiveSessionHero({ draft, accent, volumeKg, sets, recordCount, on
    * ticking sets, and put it at the far end of the document from the title,
    * the date and the totals it is a decision about.
    *
-   * Up here it sits beside the muscle figure — the two controls that answer
-   * "where is this landing" and "am I done" — and the collapsed bar carries the
-   * same pair once this scrolls off, so both are one tap away at any scroll
-   * position. The bottom bar keeps discard/delete, which are the actions you
-   * should have to travel to.
+   * Up here it closes the title row — the name, how long you have been at it,
+   * the overflow, and the commit — and the collapsed bar carries its own copy
+   * once this scrolls off, so it is one tap away at any scroll position. The
+   * menu keeps discard/delete, which are the actions you should have to travel
+   * to.
    */
   onFinish: () => void
   /** Opens `DurationSheet` — start time, and the pause. Owned by the deck, which
@@ -124,23 +132,20 @@ export function LiveSessionHero({ draft, accent, volumeKg, sets, recordCount, on
 
           Two changes buy it back. `text-fluid-xl` instead of `2xl` (the step is
           about 4px at phone widths and the title is still the largest type on
-          the screen by a clear margin), and the muscle figure moves down to the
-          date row, which was carrying a date and nothing else across the whole
-          right half.
+          the screen by a clear margin), and the two between-sets tools left the
+          header entirely — see the note at the top of this file.
 
-          ── AND THEN THE ROW WAS SORTED BY WHAT THE CONTROLS ARE ──
+          ── AND THE ROW IS SORTED BY WHAT THE CONTROLS ARE ──
           It held Back, the title, the clock and Finish — a navigation, a title,
           a tool and a commit, in that order, all at the same weight. Four
           different KINDS of thing reading as one undifferentiated strip of
           buttons is what made it look like a toolbar rather than a title.
 
-          Now the row holds only what belongs to the SESSION AS A WHOLE:
-          minimise on the left, the name, then the two session-level controls —
-          overflow (which is where discard and delete went) and Finish, which is
-          the only primary on the screen and therefore the only filled control
-          in the row. The tools you reach for between sets — the clock and the
-          muscle figure — moved down to the metadata line, which is where your
-          eye already is when you look up from a set. */}
+          Now: minimise, the name, the elapsed READING, then the two decisions —
+          overflow (where discard, delete and the two tools live) and Finish,
+          which is the only primary on the screen and therefore the only filled
+          control in the row. Nothing between the name and the commit that you
+          press during a set. */}
       <div className="flex items-center gap-2">
         <BackLink onClick={onBack} label="Minimise — the draft keeps running" />
         <h1
@@ -149,9 +154,36 @@ export function LiveSessionHero({ draft, accent, volumeKg, sets, recordCount, on
         >
           {title}
         </h1>
+        {/* ── THE READING SITS WITH THE COMMIT ──
+            How long you have been here is the one number in this header you
+            glance at without deciding anything, and Finish is the decision it
+            informs. It reads as a bare figure rather than a tile: the tinted
+            box, the border and the "DURATION" caps label were 44px of chrome
+            around four characters, on the row with the least width in the app.
+            Still the same tap target, still opens the same sheet. */}
+        <SessionElapsed
+          startedAt={draft.startedAt}
+          pausedMs={draft.pausedMs}
+          pausedAt={draft.pausedAt}
+          accent={accent}
+          onOpen={onOpenDuration}
+        />
+        {/* ── AND THE TOOLS WENT IN HERE ──
+            The clock and the muscle figure were two more 44px controls in a
+            header that already held five things. Neither is used mid-set: you
+            reach for a rest timer between exercises, and the body figure is a
+            review artefact (~60 SVG paths, redrawn at 32px on every header
+            paint) answering "where did this land". One level deeper, labelled,
+            and the figure is not drawn at all until it is asked for. */}
         <SessionMenu
           isEdit={!!isEdit}
           deleting={deleting}
+          tools={(
+            <>
+              <SessionClock variant="row" />
+              <MuscleDistribution draft={draft} accent={accent} variant="row" />
+            </>
+          )}
           onDiscard={onDiscard}
           onCancelEdit={onCancelEdit}
           onDelete={onDelete}
@@ -163,70 +195,40 @@ export function LiveSessionHero({ draft, accent, volumeKg, sets, recordCount, on
           the width of three characters of the title to say the same thing the
           line already says. Indented to the title's own left edge, past the
           chevron, so the two read as one block. */}
-      {/* ── WHERE THE DEAD BAND WAS ──
-          `items-start`. The left column is one 12px line of date plus a lever
-          chip on a SECOND line; the right column is three ~44px controls. The
-          row's height is set by the controls, so aligning the text to the top
-          left roughly 30px of empty space under it, the full width of the
-          screen, on the surface with the least room to spare.
-          Centred, the date sits against the middle of the controls and the
-          chip rides beside it rather than under it — same information, one
-          band instead of two and a half. */}
-      <div className="relative mt-1 ml-9 flex items-center gap-2">
-        <div className="min-w-0 flex-1">
-        <button
-          type="button"
-          onClick={() => setPickerOpen((v) => !v)}
-          className="flex items-center gap-1 text-fluid-xs text-muted leading-tight active:opacity-70 transition-opacity max-w-full"
-          aria-label={`Session date: ${dateLabel}. Tap to change`}
-          aria-expanded={pickerOpen}
-        >
-          <CalendarDays className="w-3 h-3 text-primary shrink-0" aria-hidden="true" />
-          <span className="truncate">
-            {draft.week != null && <>Week {draft.week} · </>}
-            {draft.phase && <span className="text-info font-semibold">{draft.phase === 'CUT' ? 'Cut' : draft.phase} · </span>}
-            {dateLabel}
-          </span>
-          {/* Which rung of the cut you are training under. Inline with the date
-              rather than on a line of its own: it is one more fact about this
-              session's context, and it was costing a whole row to say so. */}
-          <span className="shrink-0 ml-1"><LeverTag compact /></span>
-        </button>
-        {pickerOpen && (
-          <DatePickerPopover
-            value={draft.date}
-            max={logicalTodayISO()}
-            disabledDates={loggedDates ?? new Set()}
-            onSelect={onSetDate}
-            onClose={() => setPickerOpen(false)}
-          />
-        )}
-        {/* Which rung of the cut you are training under. It lives here rather
-            than only in Settings because the deck is where the day is spent — a
-            target that moved by 70 kcal overnight should be readable without
-            leaving the session. */}
-        </div>
-        {/* ── THE TWO BETWEEN-SETS TOOLS, TOGETHER ──
-            Where this session is landing, and how long you have been standing
-            still. Both sat in the title row at one point and cost the name
-            44px each; here they fill space the date line never used, stay above
-            the fold, and are still one tap. Grouped because they are the same
-            kind of thing — neither changes the session, both answer a question
-            you have while you are resting. */}
-        <div className="flex items-center gap-2 shrink-0">
-          {/* Total session time first: it is the reading, and the two controls
-              beside it are things you DO. It renders nothing on a back-dated or
-              edited deck, where "now minus started" is not a real duration. */}
-          <SessionElapsed
-            startedAt={draft.startedAt}
-            pausedMs={draft.pausedMs}
-            pausedAt={draft.pausedAt}
-            accent={accent}
-            onOpen={onOpenDuration}
-          />
-          <SessionClock />
-          <MuscleDistribution draft={draft} accent={accent} size="lg" />
-        </div>
+      {/* ── AND THE LINE CARRIES ONLY CONTEXT NOW ──
+          It used to be a two-column row: the date on the left, and on the right
+          three ~44px controls whose height set the row's. With the tools moved
+          into the menu the second column is gone, so this is one line of text
+          about which session this is — week, phase, date, rung — and nothing
+          you have to aim at except the date itself. */}
+      <div className="relative mt-1 ml-9">
+      <button
+        type="button"
+        onClick={() => setPickerOpen((v) => !v)}
+        className="flex items-center gap-1 text-fluid-xs text-muted leading-tight active:opacity-70 transition-opacity max-w-full"
+        aria-label={`Session date: ${dateLabel}. Tap to change`}
+        aria-expanded={pickerOpen}
+      >
+        <CalendarDays className="w-3 h-3 text-primary shrink-0" aria-hidden="true" />
+        <span className="truncate">
+          {draft.week != null && <>Week {draft.week} · </>}
+          {draft.phase && <span className="text-info font-semibold">{draft.phase === 'CUT' ? 'Cut' : draft.phase} · </span>}
+          {dateLabel}
+        </span>
+        {/* Which rung of the cut you are training under. Inline with the date
+            rather than on a line of its own: it is one more fact about this
+            session's context, and it was costing a whole row to say so. */}
+        <span className="shrink-0 ml-1"><LeverTag compact /></span>
+      </button>
+      {pickerOpen && (
+        <DatePickerPopover
+          value={draft.date}
+          max={logicalTodayISO()}
+          disabledDates={loggedDates ?? new Set()}
+          onSelect={onSetDate}
+          onClose={() => setPickerOpen(false)}
+        />
+      )}
       </div>
 
       {/* The live rail. Only what moves while you lift — duration, average HR

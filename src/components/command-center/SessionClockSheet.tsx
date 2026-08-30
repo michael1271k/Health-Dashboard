@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { m } from 'framer-motion'
 import { Timer as TimerIcon, Play, Pause, Square, RotateCcw, Minus, Plus } from 'lucide-react'
+import { SheetMenuRow } from './SheetMenuRow'
 import { Sheet } from '@/components/ui/Sheet'
 import { tapLight, tapSuccess } from '@/lib/native/haptics'
 import { SNAPPY } from '@/lib/motion/springs'
@@ -48,9 +49,20 @@ import {
  * one screen in the app whose exact equivalent is already on every phone that
  * runs it.
  */
-export function SessionClock({ size = 'lg' }: {
+export function SessionClock({ size = 'lg', variant = 'button' }: {
   /** `lg` matches the hero's 44px targets, `sm` the collapsed bar's 38px ones. */
   size?: 'sm' | 'lg'
+  /**
+   * `button` is the 44px icon control; `row` is a labelled row inside the
+   * session menu.
+   *
+   * The clock left the header when it was carrying five things at once — a
+   * title, an overflow menu, a stopwatch, an elapsed tile and a muscle figure —
+   * and the two it kept are the two you read rather than the two you press. A
+   * `row` renders its own sheet as a STACKED layer, so opening it leaves the
+   * menu standing underneath and closing it returns you there.
+   */
+  variant?: 'button' | 'row'
 }) {
   const clock = useSyncExternalStore(subscribeSessionClock, getSessionClock, getSessionClockServerSnapshot)
   const [open, setOpen] = useState(false)
@@ -92,6 +104,25 @@ export function SessionClock({ size = 'lg' }: {
     : done ? EMBER : running ? EMERALD : STEEL
   const box = size === 'lg' ? 'min-h-[44px]' : 'min-h-[38px]'
   const showDigits = live
+
+  if (variant === 'row') {
+    return (
+      <>
+        <SheetMenuRow
+          icon={<TimerIcon className="w-4 h-4" aria-hidden="true" />}
+          label="Rest timer"
+          hint={live
+            ? `${clock.mode === 'timer' ? 'Timer' : 'Stopwatch'} running · ${formatClock(reading)}`
+            : 'Count a rest down, or a hold up'}
+          accent={color}
+          onClick={() => setOpen(true)}
+        />
+        <Sheet open={open} onClose={() => setOpen(false)} title="Clock" accent={color} layer="stacked">
+          <ClockBody clock={clock} now={now} color={color} done={done} />
+        </Sheet>
+      </>
+    )
+  }
 
   return (
     <>

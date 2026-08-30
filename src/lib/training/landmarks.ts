@@ -15,7 +15,7 @@ import { MUSCLE } from '@/lib/theme/palette'
 /** Legacy alias: this module used to know only cut/bulk. Kept so existing
  *  importers compile while the codebase converges on `ProgramPhase`. */
 export type Program = ProgramPhase
-export type ProgramPhase = 'cut' | 'maintenance' | 'bulk'
+export type ProgramPhase = 'cut' | 'bulk'
 
 /**
  * The 16 tracked muscles (display order).
@@ -56,13 +56,12 @@ export const PROGRAM_TARGETS: Record<ProgramPhase, Record<LandmarkMuscle, number
     'Front delts': 4, 'Side delts': 7, 'Rear delts': 2, Biceps: 8, Triceps: 6,
     Forearms: 4, Quads: 10, Hamstrings: 8, Glutes: 6, Adductors: 0, Calves: 6, 'Abs/core': 10,
   },
-  // Maintenance — between MEV+ and MAV: enough to keep progressing without the
-  // recovery cost of a full bulk block.
-  maintenance: {
-    Chest: 12, Lats: 7, 'Upper back': 4, 'Lower back': 1,
-    'Front delts': 5, 'Side delts': 8, 'Rear delts': 3, Biceps: 8, Triceps: 7,
-    Forearms: 5, Quads: 11, Hamstrings: 8, Glutes: 6, Adductors: 1, Calves: 7, 'Abs/core': 10,
-  },
+  // ── THE MAINTENANCE ROW IS DELETED (2026-08-30) ──
+  // It described volume for a phase that no longer exists: a maintenance week
+  // is a nutrition lever, and it does not change the deck (`forPhase` only
+  // branches on `cut`). Landing on the CUT's landmarks — which is what
+  // `programTargets` now does for that week — is the correct answer: the
+  // training prescription genuinely has not changed.
   // Helix Bulk — MAV (productive ceiling)
   bulk: {
     Chest: 13, Lats: 8, 'Upper back': 5, 'Lower back': 1,

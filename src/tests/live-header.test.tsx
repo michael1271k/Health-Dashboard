@@ -1,7 +1,8 @@
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import { writeFileSync, mkdirSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
-import { render, cleanup } from '@testing-library/react'
+import { render, screen, cleanup } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { LazyMotion, domMax } from 'framer-motion'
@@ -117,7 +118,7 @@ describe('the live session hero', () => {
     expect(container.textContent ?? '').not.toContain('Posterior Focus')
   })
 
-  it('carries exactly one of each header control', () => {
+  it('carries exactly one of each header control, and no tools', () => {
     // There used to be a second of each in a sticky band above this block whose
     // only visible content at scroll-top was the chevron. The band is gone; the
     // collapsed bar carries the other copy and the two never coexist.
@@ -129,22 +130,48 @@ describe('the live session hero', () => {
     // is what you come back to. Naming it Back was the reason leaving the deck
     // felt like losing the workout.
     expect(labelled('Minimise')).toBe(1)
-    expect(labelled('Muscle distribution')).toBe(1)
-    // The four session-level controls, one each: minimise, overflow, finish,
-    // and the clock that replaced the rest timer.
     expect(labelled('Session options')).toBe(1)
-    expect(labelled('Timer and stopwatch')).toBe(1)
+    // ── AND THE TWO BETWEEN-SETS TOOLS ARE NOT UP HERE ──
+    // The rest timer and the muscle figure were two more 44px controls in a row
+    // that already held four things, and the workout name — the one fact this
+    // screen cannot recover from anywhere else — was ellipsizing because of it.
+    // Neither is used mid-set. Both are rows in the session menu now.
+    expect(labelled('Muscle distribution'), 'the figure is back in the header').toBe(0)
+    expect(labelled('Timer and stopwatch'), 'the clock is back in the header').toBe(0)
   })
 
-  it('tints the muscle figure by MUSCLE GROUP, not by the workout colour', () => {
+  it('keeps the elapsed reading beside Finish, as a figure and not a tile', () => {
+    // It is the one number in this header you read without deciding anything,
+    // and Finish is the decision it informs. The tinted box, the border and the
+    // "DURATION" caps label were 44px of chrome around four characters.
+    // The fixture has no `startedAt`; the reading renders nothing without one,
+    // which is correct on a back-dated or edited deck ("now minus started" is
+    // not a duration there) and is why it has to be supplied here.
+    const live = { ...DRAFT, startedAt: new Date(Date.now() - 12 * 60_000).toISOString() } as SessionDraft
+    const { container } = render(wrap(
+      <LiveSessionHero draft={live} accent={GOLD} volumeKg={0} sets={0} recordCount={0}
+        onBack={() => {}} onSetDate={() => {}} onFinish={() => {}} onOpenDuration={() => {}} onDiscard={() => {}} />,
+    ))
+    const btn = Array.from(container.querySelectorAll('button'))
+      .find((b) => (b.getAttribute('aria-label') ?? '').startsWith('Duration'))
+    expect(btn, 'the elapsed reading is gone').toBeTruthy()
+    expect(btn?.textContent ?? '', 'the caps label came back').not.toMatch(/Duration/)
+  })
+
+  it('tints the muscle figure by MUSCLE GROUP, not by the workout colour', async () => {
     // This asserted the opposite — that the figure carried the day's accent.
     // The accent still owns the header's chrome, but on the body it answered a
     // question the title had already answered ("which session is this") while
     // leaving the only question the figure can answer — where did the work land
     // — with no colour at all. Each muscle now wears its group's hue.
-    const { container } = render(wrap(HERO))
-    const svg = container.querySelector('button[aria-label="Muscle distribution for this session"] svg')
-    const html = svg?.innerHTML ?? ''
+    //
+    // Reached through the menu, which is where the figure lives now.
+    render(wrap(HERO))
+    await userEvent.click(screen.getByLabelText('Session options'))
+    await userEvent.click(screen.getByText('Muscle focus'))
+    // Every svg on the page, joined: the menu row carries a lucide glyph of its
+    // own, and the atlas is the one further down.
+    const html = Array.from(document.querySelectorAll('svg')).map((n) => n.innerHTML).join('')
     expect(html).not.toContain(GOLD)
     const hues = new Set(Object.values(MUSCLE).map((h) => h.toLowerCase()))
     const painted = [...hues].filter((h) => html.toLowerCase().includes(h))
@@ -160,27 +187,32 @@ describe('the live session hero', () => {
     expect(btn, 'the date is a label, not the control it used to be').toBeTruthy()
   })
 
-  it('draws the muscle button even before a set is ticked', () => {
-    // It used to `return null` until there was something to show. In the header
-    // that means a control materialising mid-session and shifting the title and
-    // three figures sideways at the moment you are reaching for a tick.
+  /** The row that reaches a tool, inside the opened session menu. */
+  const menuRow = (label: string) => Array.from(document.querySelectorAll('button'))
+    .find((b) => b.textContent?.startsWith(label))
+
+  it('offers both tools as menu rows, inert before a set is ticked', async () => {
+    // The muscle row used to `return null` until there was something to show.
+    // A control that materialises mid-session is worse than an inert one: in
+    // the header it shifted the title sideways at the moment you were reaching
+    // for a tick, and in a menu it makes the feature look absent.
     const cold = { ...DRAFT, exercises: [{ ...DRAFT.exercises[0], sets: [{ weightKg: 60, reps: 8, done: false }] }] } as SessionDraft
-    const { container } = render(wrap(
+    render(wrap(
       <LiveSessionHero draft={cold} accent={GOLD} volumeKg={0} sets={0} recordCount={0} onBack={() => {}} onSetDate={() => {}} onFinish={() => {}} onOpenDuration={() => {}} onDiscard={() => {}} />,
     ))
-    const btn = Array.from(container.querySelectorAll('button'))
-      .find((b) => b.getAttribute('aria-label') === 'Muscle distribution for this session')
-    expect(btn, 'the muscle button is missing before the first tick').toBeTruthy()
-    expect(btn?.hasAttribute('disabled'), 'it should be inert, not absent').toBe(true)
+    await userEvent.click(screen.getByLabelText('Session options'))
+    expect(menuRow('Rest timer'), 'the rest timer is unreachable').toBeTruthy()
+    const muscle = menuRow('Muscle focus')
+    expect(muscle, 'the muscle row is missing before the first tick').toBeTruthy()
+    expect(muscle?.hasAttribute('disabled'), 'it should be inert, not absent').toBe(true)
   })
 
-  it('enables the muscle button the moment there is an answer', () => {
+  it('enables the muscle row the moment there is an answer', async () => {
     // The other half of the claim above. A control that is always inert is
     // worse than one that is absent: it looks like the feature is broken.
-    const { container } = render(wrap(HERO))
-    const btn = Array.from(container.querySelectorAll('button'))
-      .find((b) => b.getAttribute('aria-label') === 'Muscle distribution for this session')
-    expect(btn?.hasAttribute('disabled'), 'a ticked set did not wake the button').toBe(false)
+    render(wrap(HERO))
+    await userEvent.click(screen.getByLabelText('Session options'))
+    expect(menuRow('Muscle focus')?.hasAttribute('disabled'), 'a ticked set did not wake the row').toBe(false)
   })
 
   it('emits the fixture the browser test measures', () => {

@@ -42,11 +42,13 @@ import { startTimeLabel } from '@/lib/utils/day'
  * do not render either — a glance surface should not carry an action you cannot
  * undo.
  */
-export function SessionSnippet({ session, date, measure = 'read' }: {
+export function SessionSnippet({ session, date, measure = 'read', showStartTime = true }: {
   session: GymReportRow
   date: string
   /** `read` for the Daily View's band flow; `grid` for the Workout tab. */
   measure?: Measure
+  /** See the Start Time block below — off on the Workout tab's today card. */
+  showStartTime?: boolean
 }) {
   const { data: intel } = useSessionIntel(session.id)
   const { data: globalNum } = useGlobalSessionNumber(date)
@@ -156,8 +158,15 @@ export function SessionSnippet({ session, date, measure = 'read' }: {
           session, not one of the numbers being compared week to week, and the
           grids' whole contract is that they hold comparable absolutes.
           Rendered only when the row carries a timestamp — a session rebuilt
-          from a markdown report has a date and no clock. */}
-      {startedAt && (
+          from a markdown report has a date and no clock.
+
+          ── AND NOT ON TODAY'S CARD ──
+          `showStartTime` is off for the "Session logged today" card on the
+          Workout tab. There the clock is the least useful fact on the screen:
+          you were there, you know when you started, and it is the one line that
+          is not about what you lifted. It stays in Inspect and in the weekly
+          export, which are the two places the question is ever actually asked. */}
+      {showStartTime && startedAt && (
         <p className="flex items-center gap-1.5 pt-2.5 border-t border-white/[0.06] text-fluid-xs text-muted">
           <Clock3 className="w-3 h-3 shrink-0" aria-hidden="true" />
           <span className="text-[10px] font-bold uppercase tracking-[0.14em]">Start Time</span>

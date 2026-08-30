@@ -109,7 +109,7 @@ export const IngestPayloadSchema = z.object({
   // ── Environmental & cardiac metrics ──
   wrist_temp:          floatField(),                 // night's AVERAGE wrist temp, °C (stored in wrist_temp_delta)
   time_in_daylight:    intField(),                   // total minutes of daylight exposure
-  // ── Dietary micro-nutrients (Micros page) — fiber → nutrition_entries.fiber_g,
+  // ── Dietary micronutrients (Nutrients page) — fiber → nutrition_entries.fiber_g,
   //    the rest → nutrition_entries.micros jsonb. Keys match the micro-target keys.
   fiber:               floatField(),                 // g
   sugar:               floatField(),                 // g

@@ -59,6 +59,10 @@ export type WidgetSize = 's' | 'm' | 'l'
 
 export type WidgetId =
   | 'recovery'
+  // `micros` keeps its id. It is a KEY inside `dashboard_layouts.layout` jsonb
+  // on every device that has ever arranged a dashboard, so renaming it would
+  // silently drop the widget from each saved layout. Only its label moved to
+  // "Nutrients".
   | 'sleep' | 'fuel' | 'micros' | 'train' | 'body' | 'steps'
   | 'cardio' | 'stack' | 'vitals' | 'water'
   | 'muscle' | 'pr' | 'volume'
@@ -680,7 +684,7 @@ export const WIDGET_META: Record<WidgetId, WidgetMeta> = {
   vitals: { label: 'Vitals', icon: HeartPulse, accent: SAPPHIRE },
   fuel: { label: 'Fuel', icon: Flame, accent: MACRO_COLORS.calories },
   water: { label: 'Water', icon: Droplets, accent: SAPPHIRE },
-  micros: { label: 'Micros', icon: Sparkles, accent: EMERALD },
+  micros: { label: 'Nutrients', icon: Sparkles, accent: EMERALD },
   deficit: { label: 'Deficit Ledger', icon: TrendingDown, accent: MACRO_COLORS.calories },
   // "Workout", not "Train" — the tab it belongs to is called Workout, the
   // session it opens is called a workout, and the tile was the only surface in

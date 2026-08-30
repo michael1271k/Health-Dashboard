@@ -100,7 +100,36 @@ export const PPL_SPLITS: Record<SplitDay, { label: string; labelHe: string; colo
 export { splitColor } from '@/lib/theme/palette'
 
 // ─── Nutrition modes / presets ───────────────────────────────────────────────
-export type NutritionMode = 'cut' | 'bulk' | 'maintenance'
+/**
+ * A programme runs in ONE of two directions. There is no third.
+ *
+ * ── `maintenance` DELETED (2026-08-30) ───────────────────────────────────────
+ * A week at maintenance calories is a LEVER — `LEVERS['maintenance-week']`, a
+ * `release` rung with a start date and an end date, applied on top of whichever
+ * direction you are running. Modelling it as a third mode meant it also carried
+ * its own body targets (64 kg, 13.5% body fat) and its own step goal, so
+ * selecting it silently restated the destination of the whole block; and it had
+ * no end, so it had to be switched back by hand.
+ *
+ * The preset that backed it was never even the rung's numbers — 2,375 kcal here
+ * against the rung's 2,151 — which is the shape of every bug this codebase has
+ * had about maintenance: two sources, no rule about which wins.
+ *
+ * `active_phase` / `goal_preset` may still hold the old string on a device that
+ * has not synced; `asNutritionMode` below narrows it to `cut`.
+ */
+export type NutritionMode = 'cut' | 'bulk'
+
+/**
+ * Read a stored phase string, tolerating the deleted `maintenance` value.
+ *
+ * `user_goals.active_phase`, `user_goals.goal_preset` and the localStorage
+ * mirror are all free text as far as the app is concerned, and a row written
+ * before the value was removed must not crash a picker or resolve to `bulk`.
+ */
+export function asNutritionMode(v: unknown): NutritionMode {
+  return v === 'bulk' ? 'bulk' : 'cut'
+}
 
 export interface NutritionPreset {
   mode: NutritionMode
@@ -175,20 +204,6 @@ export const NUTRITION_PRESETS: Record<NutritionMode, NutritionPreset> = {
     bodyFatCeilingPct: 16.0,  // 15–16% BIA ceiling
     targetMuscleMassKg: 37.0,
     rateMinKgWk: 0.20, rateMaxKgWk: 0.25,
-  },
-  maintenance: {
-    mode: 'maintenance',
-    label: 'Maintenance',
-    calorieGoal: 2375,    // 2,350–2,400 band
-    proteinGoalG: 160,    // ≥ 160 g
-    carbsGoalG: 270,
-    fatGoalG: 75,
-    fiberGoalG: 30,
-    fiberMin: 28, fiberMax: 35,
-    stepsGoal: 9000,
-    targetWeightKg: 64,
-    targetBodyFatPct: 13.5,
-    targetMuscleMassKg: 35.0,
   },
 }
 

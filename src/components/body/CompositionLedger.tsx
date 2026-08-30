@@ -9,6 +9,7 @@ import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { BODY, MACRO, visceralColor } from '@/lib/theme/palette'
 import { displayWeight, weightUnit } from '@/lib/utils/units'
 import { Head, Sub } from '@/components/session-detail/MetricGrid'
+import { useIsMaintenanceDate } from '@/lib/hooks/useMaintenance'
 
 /**
  * Body composition, as numbers and a ledger.
@@ -89,11 +90,14 @@ function BodyDelta({ metric, value, previous, unit }: {
   unit: string
 }) {
   void useScheduleVersion()   // activePhase() is a module read React cannot see
+  // A maintenance week judges inside a dead band — see `deltaVerdict`. Hooks
+  // run before the early return; React does not allow one after it.
+  const maintenance = useIsMaintenanceDate()
   if (value == null || previous == null) return null
   const delta = Math.round((value - previous) * 100) / 100
   if (delta === 0) return null
   return (
-    <span className="helix-num font-bold whitespace-nowrap" style={{ color: verdictColor(deltaVerdict(metric, delta, activePhase())) }}>
+    <span className="helix-num font-bold whitespace-nowrap" style={{ color: verdictColor(deltaVerdict(metric, delta, activePhase(), maintenance)) }}>
       {delta > 0 ? '▲' : '▼'}{Math.abs(delta)}{unit}
     </span>
   )

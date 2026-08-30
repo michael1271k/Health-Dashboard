@@ -24,31 +24,29 @@ describe('phaseGoalsFor — plan-specific numbers layer over the phase preset', 
     expect(ppl.stepsGoal).toBe(NUTRITION_PRESETS.cut.stepsGoal)
   })
 
-  it('covers all three phases for every plan', () => {
+  it('covers both directions for every plan', () => {
     for (const planId of ['apex51', 'axis4', 'ppl']) {
-      for (const phase of ['cut', 'maintenance', 'bulk'] as const) {
+      for (const phase of ['cut', 'bulk'] as const) {
         expect(phaseGoalsFor(planId, phase).calorieGoal).toBeGreaterThan(0)
       }
     }
   })
 })
 
-describe('set-volume targets are phase-keyed, and maintenance finally exists', () => {
-  it('has a distinct target table for all THREE phases', () => {
-    expect(Object.keys(PROGRAM_TARGETS).sort()).toEqual(['bulk', 'cut', 'maintenance'])
+describe('set-volume targets are phase-keyed, and there are two phases', () => {
+  it('has a target table for each direction and no third', () => {
+    expect(Object.keys(PROGRAM_TARGETS).sort()).toEqual(['bulk', 'cut'])
   })
 
-  it('no longer collapses maintenance into cut', () => {
-    // The old programFromGoal() returned 'bulk' only at >= 2450 kcal, so a
-    // maintenance block silently trained to CUT volume.
-    expect(PROGRAM_TARGETS.maintenance).not.toEqual(PROGRAM_TARGETS.cut)
-    expect(PROGRAM_TARGETS.maintenance).not.toEqual(PROGRAM_TARGETS.bulk)
-  })
-
-  it('sits maintenance between MEV+ and MAV for every muscle', () => {
+  /**
+   * The maintenance row described volume for a phase that no longer exists. A
+   * maintenance WEEK is a nutrition lever and does not change the deck —
+   * `forPhase` only branches on `cut` — so the week trains the cut's landmarks,
+   * which is the honest answer rather than a softened one.
+   */
+  it('keeps the cut strictly below the bulk on every muscle', () => {
     for (const m of LANDMARK_MUSCLES) {
-      expect(PROGRAM_TARGETS.maintenance[m]).toBeGreaterThanOrEqual(PROGRAM_TARGETS.cut[m])
-      expect(PROGRAM_TARGETS.maintenance[m]).toBeLessThanOrEqual(PROGRAM_TARGETS.bulk[m])
+      expect(PROGRAM_TARGETS.cut[m]).toBeLessThanOrEqual(PROGRAM_TARGETS.bulk[m])
     }
   })
 

@@ -68,7 +68,7 @@ const METRIC_MAP: Array<{ hk: string; key: string; reduce: Reduce; scale?: numbe
   // in a column the manual InBody card filled with weight × muscle%, ~2.6 kg
   // lower, and the trend line stepped whenever the source changed.
   { hk: 'HKQuantityTypeIdentifierLeanBodyMass', key: 'fat_free_mass', reduce: 'latest' },
-  // ── Advanced signals (Micros "Advanced" grid) — these were authorized but
+  // ── Advanced signals (Nutrients "Advanced" grid) — these were authorized but
   // never actually QUERIED, so they always read 0. Now pulled every sync. ──
   { hk: 'HKQuantityTypeIdentifierTimeInDaylight', key: 'time_in_daylight', reduce: 'sum' },
   { hk: 'HKQuantityTypeIdentifierAppleSleepingWristTemperature', key: 'wrist_temp', reduce: 'avg' },
@@ -79,7 +79,7 @@ const METRIC_MAP: Array<{ hk: string; key: string; reduce: Reduce; scale?: numbe
   { hk: 'HKQuantityTypeIdentifierDietaryCarbohydrates', key: 'carbs', reduce: 'sum' },
   { hk: 'HKQuantityTypeIdentifierDietaryFatTotal', key: 'fats', reduce: 'sum' },
   { hk: 'HKQuantityTypeIdentifierDietaryWater', key: 'water', reduce: 'sum' },
-  // ── Dietary micro-nutrients (Micros "Daily Targets" grid) — also authorized
+  // ── Dietary micronutrients (Nutrients "Daily Targets" grid) — also authorized
   // but never queried. Keys match the micro-target keys so the payload maps
   // straight into the nutrition micros bundle. ──
   { hk: 'HKQuantityTypeIdentifierDietaryFiber', key: 'fiber', reduce: 'sum' },
@@ -106,14 +106,14 @@ const EXTRA_READ_TYPES = [
   'HKQuantityTypeIdentifierTimeInDaylight',
   'HKQuantityTypeIdentifierHeartRate',
   'HKQuantityTypeIdentifierVO2Max',
-  // ── Activity / body signals (Micros page + richer readiness) ──
+  // ── Activity / body signals (Nutrients page + richer readiness) ──
   'HKQuantityTypeIdentifierFlightsClimbed',
   'HKQuantityTypeIdentifierBasalEnergyBurned',       // resting energy
   'HKQuantityTypeIdentifierAppleMoveTime',           // move minutes
   'HKQuantityTypeIdentifierWalkingHeartRateAverage',
   'HKQuantityTypeIdentifierHeight',
   'HKQuantityTypeIdentifierUVExposure',
-  // ── Dietary micro-nutrients (the Nutrition & Micros surface) ──
+  // ── Dietary micronutrients (the Nutrition & Nutrients surface) ──
   'HKQuantityTypeIdentifierDietaryCholesterol',
   'HKQuantityTypeIdentifierDietarySugar',
   'HKQuantityTypeIdentifierDietaryFiber',

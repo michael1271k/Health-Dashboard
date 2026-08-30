@@ -52,7 +52,7 @@ export function PostWorkoutSummary({ sessions, date }: {
       </div>
 
       {sessions.map((s) => (
-        <SessionSnippet key={s.id} session={toReportRow(s)} date={date} measure="grid" />
+        <SessionSnippet key={s.id} session={toReportRow(s)} date={date} measure="grid" showStartTime={false} />
       ))}
     </section>
   )

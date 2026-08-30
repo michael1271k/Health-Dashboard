@@ -2,7 +2,6 @@
 
 import { deltaColor, type Metric } from '@/lib/body/deltaVerdict'
 import { activePhase } from '@/lib/programs'
-import type { ProgramPhase } from '@/lib/training/landmarks'
 import { useMemo } from 'react'
 import {
   parseFmtV2, bodyCompSeries, parseTdeeAnchors, parseAsymmetry,
@@ -12,6 +11,7 @@ import {
 import { MarkdownView } from './MarkdownView'
 import { splitSmartBlocks } from '@/lib/reports/smartBlocks'
 import { GOLD, OXIDE, SAPPHIRE, EMBER, PLATINUM, MUTED } from '@/lib/theme/palette'
+import { useIsMaintenanceDate } from '@/lib/hooks/useMaintenance'
 
 /**
  * A pasted FMT v2 audit, drawn rather than dumped.
@@ -216,6 +216,9 @@ function TdeeLadder({ anchors }: { anchors: TdeeAnchor[] }) {
  */
 function BodyCompTrajectory({ table }: { table: ParsedTable }) {
   const series = useMemo(() => bodyCompSeries(table), [table])
+  // Resolved for the report's own first datapoint, not for today — a finished
+  // week is judged by the rules that were in force while it ran.
+  const maintenance = useIsMaintenanceDate(series[0]?.points[0]?.date)
   if (!series.length) return null
 
   return (
@@ -235,7 +238,7 @@ function BodyCompTrajectory({ table }: { table: ParsedTable }) {
           const metric = metricOf(s.label)
           const color = delta == null || delta === 0 || !metric
             ? MUTED
-            : deltaColor(metric, delta, activePhase() as ProgramPhase)
+            : deltaColor(metric, delta, activePhase(), maintenance)
           return (
             <div key={s.label} className="rounded-xl border border-white/[0.06] bg-white/[0.015] px-2.5 py-2">
               <div className="flex items-baseline justify-between gap-1">

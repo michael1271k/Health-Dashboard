@@ -82,7 +82,7 @@ const LONG_PRESS_MS = 500
  * consumer no matter how stable its props are. The rows subscribe to nothing,
  * so this boundary is where the work stops.
  */
-export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subRow = false, set, prev, active, timed = false, loadable = false, gridMode = 'loaded', trackRpe = false, prAxes = [], sideColor: sideColorProp, onActivate, onChange, onRemove, onToggleDone, onSplit, onPrTap }: {
+export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subRow = false, set, prev, prevCrossKind = false, active, timed = false, loadable = false, gridMode = 'loaded', trackRpe = false, prAxes = [], sideColor: sideColorProp, onActivate, onChange, onRemove, onToggleDone, onSplit, onPrTap }: {
   index: number
   /**
    * The colour the L and R sub-rows share — the EXERCISE's own hue, handed down
@@ -96,6 +96,8 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
    * new, or when last time had fewer sets than this one does.
    */
   prev?: { weightKg: number; reps: number } | null
+  /** The `prev` value came from the other kind of week — see `historyFromRows`. */
+  prevCrossKind?: boolean
   /**
    * `user_goals.track_rpe`. Off = the ladder never mounts and no rating is ever
    * written; the column simply stays null, which is what "not reported" means
@@ -351,7 +353,7 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
           onPointerUp={badgeUp}
           onPointerCancel={clearPress}
           onContextMenu={(e) => e.preventDefault()}
-          className={`${SET_BADGE_W} h-7 shrink-0 rounded-lg flex items-center justify-center
+          className={`${SET_BADGE_W} relative h-7 shrink-0 rounded-lg flex items-center justify-center
                       helix-num text-[12px] font-bold uppercase tabular-nums select-none
                       active:scale-95 transition-transform`}
           style={{
@@ -369,12 +371,50 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
               ? { color: badgeColor, background: `${badgeColor}26`, border: `1px solid ${badgeColor}5e` }
               : { color: 'var(--color-text)', background: 'rgba(255,255,255,0.055)', border: '1px solid rgba(255,255,255,0.12)' }),
           }}
-          title={hasPr ? 'Personal record — tap for details, hold for set options' : 'Tap or hold for set options'}
-          aria-label={showMedal ? `${setLabel} — personal record. Tap for details, hold for set options`
-            : typeBadge ? `${typeBadge.full}, ${setLabel}. Hold for set options`
-            : `${setLabel}. Hold for set options`}
+          // The dot is decoration; the flag it stands for is spelled out in the
+          // tooltip and the label, which is the only place a screen reader or a
+          // hover can find it now that the row itself carries no text.
+          title={[
+            qualityTag?.full,
+            hasPr ? 'Personal record — tap for details, hold for set options' : 'Tap or hold for set options',
+          ].filter(Boolean).join(' · ')}
+          aria-label={[
+            showMedal ? `${setLabel} — personal record. Tap for details`
+              : typeBadge ? `${typeBadge.full}, ${setLabel}`
+              : setLabel,
+            qualityTag?.full,
+            'Hold for set options',
+          ].filter(Boolean).join('. ')}
         >
           {showMedal ? <Medal className="w-3.5 h-3.5" aria-hidden="true" /> : badge}
+          {/* ── HOW IT WENT, WHEN IT WENT BADLY ──────────────────────────────
+              A DOT ON THE BADGE, AND EMPHATICALLY NOT TEXT IN THE ROW.
+
+              This was a label rendered as a sibling of the set grid inside a
+              `flex items-center` button — so `block` and `mt-0.5` did nothing,
+              and its width came straight out of the grid's `w-full`. Every one
+              of the four tracks narrowed on a flagged row and on no other, so a
+              single Momentum flag knocked that row's weight, reps and RPE out
+              of line with the header and with every row above it.
+
+              The badge is a fixed-width flex child OUTSIDE the grid, so an
+              absolutely-positioned dot on it cannot move a column by
+              construction. It is also already the long-press target that opens
+              the sheet where the flag is set, which is exactly where a reader
+              who sees the dot wants to go next.
+
+              ONE COLOUR, not one per quality. The badge's own background is
+              already the set TYPE's hue (warm-up / failure / drop set / ghost),
+              so a second colour code on the same 28px object would be read as
+              the first one; and six hues at 4px are six shades of "something".
+              The dot says flagged, the sheet says which. */}
+          {qualityTag && (
+            <span
+              aria-hidden="true"
+              className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full"
+              style={{ background: AMBER, boxShadow: '0 0 0 1.5px rgba(0,0,0,0.55)' }}
+            />
+          )}
         </button>
 
         <button
@@ -392,8 +432,18 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
                 carries its UNIT, because a reference costs nothing to read or it
                 is not a reference. Dimmed and never editable: a reference that
                 looks like an input gets typed into. */}
-            <span className={`helix-num text-[11px] tabular-nums text-muted/70 truncate ${SET_CELL_LEAD}`}
-              title={prev ? 'Last time you did this movement' : undefined}>
+            <span
+              className={'helix-num text-[11px] tabular-nums truncate '
+                // ── A CROSS-KIND REFERENCE IS DIMMER STILL ──
+                // It is the right number from the wrong sort of week — see
+                // `historyFromRows`. Worth showing, not worth reading as
+                // "what you lifted last time in a comparable week".
+                + `${prevCrossKind ? 'text-muted/40 italic' : 'text-muted/70'} ${SET_CELL_LEAD}`}
+              title={prev
+                ? prevCrossKind
+                  ? 'Last time you did this movement — from a different kind of week'
+                  : 'Last time you did this movement'
+                : undefined}>
               {prev
                 ? gridMode === 'time' ? `${prev.reps}s`
                   : prev.weightKg > 0 ? `${prev.weightKg}kg × ${prev.reps}`
@@ -466,21 +516,6 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
             </span>
           </span>
 
-          {/* ── HOW IT WENT, WHEN IT WENT BADLY ──────────────────────────────
-              Under the numbers, inside the same tap target, so reading it costs
-              nothing and changing it is the long-press that was already there.
-              A clean set renders NOTHING — the overwhelming majority of rows
-              are clean, and a chip saying so on each of them would be the
-              densest screen in the app carrying a column of "fine". */}
-          {qualityTag && (
-            <span
-              className="block text-[9px] font-bold leading-none mt-0.5 truncate"
-              style={{ color: AMBER }}
-              title={qualityTag.full}
-            >
-              {qualityTag.label}
-            </span>
-          )}
         </button>
 
         {onToggleDone && (

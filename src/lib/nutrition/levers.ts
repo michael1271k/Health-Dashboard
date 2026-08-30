@@ -29,6 +29,10 @@
  * answer, whichever side asks.
  */
 
+// `dailyTargets` imports `LeverGoals` from here, but TYPE-only — that side is
+// erased at build, so this is a one-way runtime edge and not a cycle.
+import { applyDailyTarget, type DailyTarget } from './dailyTargets'
+
 export type LeverId = 'baseline' | 'lever-1' | 'lever-2' | 'maintenance-week' | 'custom'
 
 export interface NutritionLever {
@@ -222,14 +226,44 @@ export interface LeverPeriod {
   /** First date this rung applies to, inclusive (YYYY-MM-DD). */
   from: string
   leverId: LeverId
+  /**
+   * ── WHAT `custom` MEANT, ON THE DAYS IT MEANT IT ───────────────────────────
+   * A rung carries its own numbers; `custom` carries none, so `applyLever`
+   * hands back whatever it was given — and every caller gives it the CURRENT
+   * `user_goals` row. That is right for today and a lie about any finished day,
+   * because the row is one mutable record of five numbers with no date axis.
+   *
+   * It printed one: the Week 6 export (23–29 Aug) said `Custom — 1955 kcal`
+   * for seven days that were eaten at 1,999, because the carbohydrate figure
+   * had been retyped from 206 to 195 on 30 Aug and the export read it back as
+   * though it had always said so. The rung id was date-resolved; the numbers
+   * beside it were not.
+   *
+   * So a `custom` row may pin the numbers that were in force from `from` until
+   * the next row. Present ⇒ that stretch is history and answers with these.
+   * Absent ⇒ the stretch is still open and answers with the live row, which is
+   * what `custom` means while you are living in it.
+   *
+   * Only ever set on a `custom` row: every other rung already has its figures
+   * in `LEVERS`, and a second copy here is a second thing to drift.
+   */
+  goals?: LeverGoals
 }
 
 export const LEVER_SCHEDULE: readonly LeverPeriod[] = [
   { from: '2026-07-15', leverId: 'baseline' },
   { from: '2026-08-16', leverId: 'lever-1' },
-  // Released — back to hand-set numbers (1,955 kcal · 170/195/55) while keeping
-  // Lever 1's 10k step floor. Timestamped by `user_goals.updated_at`.
-  { from: '2026-08-20', leverId: 'custom' },
+  // Released — back to hand-set numbers while keeping Lever 1's 10k step floor.
+  // Timestamped by `user_goals.updated_at`.
+  //
+  // The stretch is CLOSED (the maintenance week opens on 30 Aug), so it pins
+  // what it meant: 170·4 + 206·4 + 55·9 = 1,999, Atwater-exact like every rung.
+  // `levers.test.ts` asserts that sum here too.
+  {
+    from: '2026-08-20',
+    leverId: 'custom',
+    goals: { calorie: 1999, protein: 170, carbs: 206, fat: 55, steps: 10000 },
+  },
   // ── THE SCHEDULED MAINTENANCE WEEK, AND ITS END ──────────────────────────
   // `PHASES` in phases.ts opens this week on the same date; this row is what
   // makes the two agree. Without it the timeline showed a maintenance week
@@ -241,17 +275,23 @@ export const LEVER_SCHEDULE: readonly LeverPeriod[] = [
   // would be graded against maintenance targets for the rest of the block.
   // A release must always be followed by the rung that resumes.
   { from: '2026-08-30', leverId: 'maintenance-week' },
+  // Open stretch — no `goals`, so it answers with the live `user_goals` row.
   { from: '2026-09-06', leverId: 'custom' },
 ]
 
-/** The rung the SCHEDULE puts on a date, or null before the cut opened. */
-export function scheduledLeverOn(dateISO: string): LeverId | null {
-  let found: LeverId | null = null
+/** The schedule row covering a date, or null before the cut opened. */
+export function scheduledPeriodOn(dateISO: string): LeverPeriod | null {
+  let found: LeverPeriod | null = null
   for (const p of LEVER_SCHEDULE) {
-    if (dateISO >= p.from) found = p.leverId
+    if (dateISO >= p.from) found = p
     else break
   }
   return found
+}
+
+/** The rung the SCHEDULE puts on a date, or null before the cut opened. */
+export function scheduledLeverOn(dateISO: string): LeverId | null {
+  return scheduledPeriodOn(dateISO)?.leverId ?? null
 }
 
 /**
@@ -345,6 +385,59 @@ export function applyLever(goals: LeverGoals, leverId: string | null | undefined
 }
 
 /**
+ * The targets that were in force on a date — rung, pinned history, or your row.
+ *
+ * `applyLever` answers "what does THIS rung ask for", which is all a caller
+ * needs when it already knows the rung. This answers the question a REPORT asks
+ * — "what was asked for on that Tuesday" — and it is the only entry point that
+ * can honour a closed `custom` stretch, because it is the only one that has the
+ * date and can therefore find the schedule row.
+ *
+ * Order: a real rung wins (its figures live in `LEVERS`); otherwise a `custom`
+ * row's pinned `goals` win (that stretch is finished and said what it meant);
+ * otherwise the fallback, which is the live `user_goals` row and correct only
+ * for the stretch you are currently inside.
+ */
+export function goalsForDate(
+  dateISO: string,
+  storedLeverId: string | null | undefined,
+  todayISO: string,
+  fallback: LeverGoals,
+  releaseEndsOn?: string | null,
+): LeverGoals {
+  const id = leverForDate(dateISO, storedLeverId, todayISO, releaseEndsOn) ?? DEFAULT_LEVER
+  const rung = leverById(id)
+  if (rung) return applyLever(fallback, id)
+  // `custom` — the schedule's own record of what your numbers WERE across that
+  // stretch, when it has one. A pin is only ever written on a CLOSED stretch
+  // (a later row follows it), so it cannot shadow the numbers you are living
+  // in: the open stretch carries no `goals` and falls through to the live row.
+  return scheduledPeriodOn(dateISO)?.goals ?? fallback
+}
+
+/**
+ * Which KIND of week a date belongs to.
+ *
+ * The deck's "Previous" column asks this: a normal week must not seed itself
+ * from a maintenance week's lighter loads, and a maintenance week must not be
+ * measured against full-effort ones. Nothing on `workout_sessions` records it —
+ * see `useExerciseSetHistory` — so it is derived from the session's own date,
+ * by the same function every grader already uses.
+ *
+ * `custom` and any date before the cut opened are `deficit`: they are full
+ * -effort weeks, and only a `release` rung is the other thing.
+ */
+export function leverKindOn(
+  dateISO: string,
+  storedLeverId: string | null | undefined,
+  todayISO: string,
+  releaseEndsOn?: string | null,
+): NutritionLever['kind'] {
+  const id = leverForDate(dateISO, storedLeverId, todayISO, releaseEndsOn)
+  return leverById(id)?.kind ?? 'deficit'
+}
+
+/**
  * The lever a `user_goals` row names, tolerant of the column not existing yet.
  *
  * `select('*')` omits an absent column rather than failing, so this reads null
@@ -406,17 +499,36 @@ export function leverPeriods(
   dates: readonly string[],
   storedLeverId: string | null | undefined,
   todayISO: string,
-  /** The user's own numbers — what `custom` (and an unknown rung) resolves to. */
+  /** The user's own numbers — what an OPEN `custom` stretch resolves to. */
   fallback: LeverGoals,
+  opts?: {
+    /**
+     * `user_goals.maintenance_until`. Every other `leverForDate` caller passes
+     * it and this one did not, so an export covering today never saw the
+     * release expire and printed maintenance targets past the week's own end.
+     */
+    releaseEndsOn?: string | null
+    /**
+     * The week's `daily_targets` rows. The layer ABOVE the rung, and the export
+     * was the one resolver that skipped it — so a per-day target set on the Day
+     * screen was graded by the scorer, shown by the app, and then contradicted
+     * by the report on the same numbers.
+     */
+    dailyTargets?: readonly DailyTarget[]
+  },
 ): TargetPeriod[] {
   const out: TargetPeriod[] = []
   const same = (a: LeverGoals, b: LeverGoals) =>
     a.calorie === b.calorie && a.protein === b.protein
     && a.carbs === b.carbs && a.fat === b.fat && a.steps === b.steps
+  const overrides = new Map((opts?.dailyTargets ?? []).map((t) => [t.date, t]))
 
   for (const date of dates) {
-    const id = leverForDate(date, storedLeverId, todayISO) ?? DEFAULT_LEVER
-    const goals = applyLever(fallback, id)
+    const id = leverForDate(date, storedLeverId, todayISO, opts?.releaseEndsOn) ?? DEFAULT_LEVER
+    const goals = applyDailyTarget(
+      goalsForDate(date, storedLeverId, todayISO, fallback, opts?.releaseEndsOn),
+      overrides.get(date),
+    )
     const last = out[out.length - 1]
     if (last && same(last.goals, goals)) { last.dates.push(date); continue }
     out.push({

@@ -6,11 +6,11 @@ import type { DayVaultData } from '@/lib/hooks/useDayVault'
 import { ZoneRow } from '@/components/ui/Zone'
 import { deltaColor } from '@/lib/body/deltaVerdict'
 import { activePhase } from '@/lib/programs'
-import type { ProgramPhase } from '@/lib/training/landmarks'
 import { displayWeight, weightUnit } from '@/lib/utils/units'
 import { formatSleep } from '@/lib/utils/format'
 import { AMETHYST, SAPPHIRE, STEEL, OXIDE, MUTED, SAND, BODY } from '@/lib/theme/palette'
 import { bodyCompGapLabel, bodyCompGapShort } from '@/lib/body/compGap'
+import { useIsMaintenanceDate } from '@/lib/hooks/useMaintenance'
 
 /**
  * The one-line summaries that replaced the paged carousel.
@@ -119,6 +119,8 @@ export function BodyBand({ log, previousWeightKg = null, onOpen }: {
   onOpen: () => void
 }) {
   const unit = weightUnit()
+  // The band belongs to the day it renders, so the dead band is that day's.
+  const maintenance = useIsMaintenanceDate((log as { date?: string } | null)?.date)
   const w = log?.weight_kg ?? null
   const fat = log?.body_fat_pct ?? null
   const muscle = log?.muscle_mass_kg ?? null
@@ -153,7 +155,7 @@ export function BodyBand({ log, previousWeightKg = null, onOpen }: {
             // Phase-aware, not `delta < 0 ? green : red` — that is the cut rule
             // hardcoded, and it painted a bulk doing exactly what it was asked
             // to in the same red it uses for a failure.
-            style={{ color: deltaColor('weight', delta, activePhase() as ProgramPhase) }}>
+            style={{ color: deltaColor('weight', delta, activePhase(), maintenance) }}>
             {delta < 0 ? '▼' : '▲'}{Math.abs(displayWeight(delta) ?? 0).toFixed(1)}
           </span>
         )}

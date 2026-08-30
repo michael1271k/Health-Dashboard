@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Sheet } from '@/components/ui/Sheet'
 import { WidgetGrid } from '@/components/dashboard/WidgetGrid'
 import { VitalsWidget } from '@/components/dashboard/widgets/VitalsWidget'
-import { FuelWidget, MicrosWidget } from '@/components/dashboard/widgets/FuelWidget'
+import { FuelWidget, NutrientsWidget } from '@/components/dashboard/widgets/FuelWidget'
 import { WaterWidget } from '@/components/dashboard/widgets/WaterWidget'
 import { RecoveryWidget } from '@/components/dashboard/widgets/RecoveryWidget'
 import {
@@ -199,7 +199,7 @@ export default function DashboardPage() {
   /** Cardio is logged on the day it happened, not in a dashboard drawer. */
   const goToday = useCallback(() => router.push(`/day/${logicalTodayISO()}`), [router])
   /** The micro table has a page of its own; the tile is its glance. */
-  const goMicros = useCallback(() => router.push('/nutrition/micros'), [router])
+  const goNutrients = useCallback(() => router.push('/nutrition/nutrients'), [router])
 
   // The weekly muscle sheet is its own component rather than another `SheetKey`
   // case: it owns its query and is mounted by two different surfaces (here and
@@ -440,7 +440,7 @@ export default function DashboardPage() {
       // each with its evidence — so this is the one tile that routes rather
       // than opening a drawer. A sheet would be a page in a smaller box.
       case 'micros':
-        return <MicrosWidget size={size} onOpen={goMicros} />
+        return <NutrientsWidget size={size} onOpen={goNutrients} />
 
       case 'bar':
         return <BarToBeatWidget size={size} onOpen={onOpen('train')} />
@@ -483,7 +483,7 @@ export default function DashboardPage() {
     score, scoreLoading,
     kcalSeries, phase, todayDay, loggedToday, todaySession,
     steps, tdeeToday, stackItems, skipped, nowMinutes,
-    onOpen, onBodyTap, goToday, openMuscle, goMicros, openTraining,
+    onOpen, onBodyTap, goToday, openMuscle, goNutrients, openTraining,
   ])
 
   const sheetTitle: Record<Exclude<SheetKey, null>, string> = {

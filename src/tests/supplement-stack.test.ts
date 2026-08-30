@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import { stackForDate, protocolForDate, supplementCountForDate, SUPPLEMENT_PROTOCOL } from '@/lib/supplements'
 import {
-  customSlotsForDate, customDoseFor, supplementKeyOf, microPayloads,
+  customSlotsForDate, customDoseFor, supplementKeyOf, nutrientPayloads,
   type CustomSupplement,
 } from '@/lib/hooks/useCustomSupplements'
-import { supplementMicros } from '@/lib/nutrition/supplementMicros'
+import { supplementNutrients } from '@/lib/nutrition/supplementNutrients'
 
 const row = (over: Partial<CustomSupplement> = {}): CustomSupplement => ({
   id: 'row-1', name: 'L-Citrulline', dose: '6 g', color: '#8E9AAC', form: null,
@@ -16,7 +16,7 @@ const row = (over: Partial<CustomSupplement> = {}): CustomSupplement => ({
 /**
  * The stack moved out of a constant and into `custom_supplements`. What must
  * survive that move is the LOG KEY: `supplement_log.item_key` holds months of
- * ticks against 'creatine', 'citrulline', … and SUPPLEMENT_MICROS is keyed the
+ * ticks against 'creatine', 'citrulline', … and SUPPLEMENT_NUTRIENTS is keyed the
  * same way.
  */
 describe('supplement identity', () => {
@@ -32,12 +32,12 @@ describe('supplement identity', () => {
     // The dose was corrected from 3 g to 6 g in the app. A mass dose is not a
     // unit count, so `doseUnits` leaves it at x1 — the payload itself has to
     // carry the real total, and the built-in table still says 3000.
-    const out = supplementMicros(['citrulline'], new Map([['citrulline', '6 g']]), microPayloads([row()]))
+    const out = supplementNutrients(['citrulline'], new Map([['citrulline', '6 g']]), nutrientPayloads([row()]))
     expect(out.citrulline).toBe(6000)
   })
 
   it('still credits a supplement whose row carries no payload', () => {
-    const out = supplementMicros(['creatine'], undefined, microPayloads([row()]))
+    const out = supplementNutrients(['creatine'], undefined, nutrientPayloads([row()]))
     expect(out.creatine).toBe(5000)
   })
 })

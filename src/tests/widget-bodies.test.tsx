@@ -90,7 +90,7 @@ describe('a size is an answer, not an area', () => {
   /**
    * The micros left this tile deliberately — five budgets you spend down and
    * three thresholds you pass or fail have no business in one column with
-   * nothing to tell them apart. They are `MicrosWidget` now.
+   * nothing to tell them apart. They are `NutrientsWidget` now.
    */
   it('Fuel no longer carries the micronutrient checks at any size', () => {
     const props = {

@@ -30,7 +30,7 @@ export const JourneyTimeline = memo(function JourneyTimeline({ reports, gymRepor
   onOpenWeek: (w: ProgramWeek) => void
 }) {
   const unit = useUnitSystem()
-  const weeks = enumerateWeeks(['cut', 'bulk', 'maintenance', 'peak'])
+  const weeks = enumerateWeeks(['cut', 'bulk', 'deload', 'peak'])
     .filter((w) => era === 'all' || (era === 'axis' ? w.era === 'helix' : w.era === 'ppl'))
 
   const statsFor = (w: ProgramWeek) => {

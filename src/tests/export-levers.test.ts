@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { leverPeriods, LEVER_SCHEDULE } from '@/lib/nutrition/levers'
+import { leverPeriods, atwaterKcal, LEVER_SCHEDULE } from '@/lib/nutrition/levers'
 import { buildWeeklyExport, type WeeklyExportInput, type ExportDay } from '@/lib/reports/weeklyExport'
 
 /**
@@ -13,7 +13,17 @@ import { buildWeeklyExport, type WeeklyExportInput, type ExportDay } from '@/lib
  * The live week this was found on is the fixture: Lever 1 in force from
  * 2026-08-16, released back to hand-set numbers on Thursday 2026-08-20 (which
  * `user_goals.updated_at` timestamps at 08:47 that morning). Four days at
- * 1,885 and three at 1,955, in one Sunday-start week.
+ * 1,885 and three at the hand-set figures, in one Sunday-start week.
+ *
+ * ── AND "HAND-SET" IS 1,999, NOT WHATEVER THE ROW SAYS TODAY ─────────────────
+ * `custom` used to carry no numbers, so every custom day fell through to the
+ * CURRENT `user_goals` row — and that row is one mutable record with no date
+ * axis. Week 6 (23–29 Aug) printed `Custom — 1955 kcal` for seven days eaten at
+ * 1,999, because the carbohydrate figure was retyped from 206 to 195 on 30 Aug
+ * and the export read it back as though it had always said so.
+ *
+ * The `LEVER_SCHEDULE` row opening that stretch pins what it meant, so these
+ * expect 1,999 (170·4 + 206·4 + 55·9) and not the fallback.
  */
 
 const WEEK = [
@@ -34,7 +44,8 @@ describe('the rung in force, day by day', () => {
     expect(periods[0].dates).toEqual(['2026-08-16', '2026-08-17', '2026-08-18', '2026-08-19'])
 
     expect(periods[1].label).toBe('Custom')
-    expect(periods[1].goals.calorie).toBe(1955)
+    // The stretch's own pinned figure, NOT the `OWN` fallback below.
+    expect(periods[1].goals.calorie).toBe(1999)
     expect(periods[1].dates).toEqual(['2026-08-20', '2026-08-21', '2026-08-22'])
   })
 
@@ -107,7 +118,7 @@ describe('the Targets & Levers section', () => {
     expect(out).toContain('## Targets & Levers')
     expect(out).toContain('- **Lever 1** — 1885 kcal · 170P / 182C / 53F · 10000 steps')
     expect(out).toContain('    - **Lever 1 was active on Sun 16, Mon 17, Tue 18 & Wed 19 Aug** — 4 days.')
-    expect(out).toContain('- **Custom** — 1955 kcal · 170P / 195C / 55F · 10000 steps')
+    expect(out).toContain('- **Custom** — 1999 kcal · 170P / 206C / 55F · 10000 steps')
     expect(out).toContain('    - **Custom was active on Thu 20, Fri 21 & Sat 22 Aug** — 3 days.')
   })
 
@@ -115,7 +126,7 @@ describe('the Targets & Levers section', () => {
     // A reader scanning the daily rows needs to know the target moved under
     // them, and the direction. "+70 kcal" is the whole story of that Thursday.
     expect(buildWeeklyExport(input()))
-      .toContain('    - Changed from **Lever 1** on Thu 2026-08-20 (+70 kcal, 0 steps)')
+      .toContain('    - Changed from **Lever 1** on Thu 2026-08-20 (+114 kcal, 0 steps)')
   })
 
   it('says so plainly when nothing moved', () => {
@@ -144,5 +155,54 @@ describe('the Targets & Levers section', () => {
 
   it('keeps the sleep target, which no lever touches', () => {
     expect(buildWeeklyExport(input())).toContain('- Sleep target: 7.5 h')
+  })
+})
+
+/**
+ * ── THE WEEK 6 REGRESSION ────────────────────────────────────────────────────
+ * 23–29 Aug 2026 sits wholly inside the `custom` stretch that opened on the
+ * 20th. The export printed `Custom — 1955 kcal (7 days)`; the week was eaten at
+ * 1,999 (170P / 206C / 55F). This is that week, and that figure.
+ */
+describe('a finished custom stretch answers with what it MEANT', () => {
+  const W6 = [
+    '2026-08-23', '2026-08-24', '2026-08-25', '2026-08-26',
+    '2026-08-27', '2026-08-28', '2026-08-29',
+  ]
+
+  it('prints 1999, not whatever the goal row holds now', () => {
+    const periods = leverPeriods(W6, 'custom', '2026-08-30', OWN)
+    expect(periods).toHaveLength(1)
+    expect(periods[0].label).toBe('Custom')
+    expect(periods[0].goals).toEqual({
+      calorie: 1999, protein: 170, carbs: 206, fat: 55, steps: 10000,
+    })
+    expect(periods[0].dates).toHaveLength(7)
+  })
+
+  it('is Atwater-exact, like every rung', () => {
+    const [p] = leverPeriods(W6, 'custom', '2026-08-30', OWN)
+    expect(atwaterKcal(p.goals.protein!, p.goals.carbs!, p.goals.fat!)).toBe(p.goals.calorie)
+  })
+
+  /**
+   * The layer ABOVE the rung, which the export was the one resolver to skip —
+   * so a restaurant Tuesday was graded at 2,400 by the scorer and reported at
+   * 1,999 by the week that contained it.
+   */
+  it('splits on a per-day target, the way the scorer already did', () => {
+    const periods = leverPeriods(W6, 'custom', '2026-08-30', OWN, {
+      dailyTargets: [{ date: '2026-08-26', kcal: 2400 }],
+    })
+    expect(periods.map((p) => p.goals.calorie)).toEqual([1999, 2400, 1999])
+    expect(periods[1].dates).toEqual(['2026-08-26'])
+  })
+
+  /** Every other caller passes it; this one silently did not. */
+  it('honours the release end date, so a maintenance week stops', () => {
+    const after = leverPeriods(['2026-09-06'], 'maintenance-week', '2026-08-30', OWN, {
+      releaseEndsOn: '2026-09-05',
+    })
+    expect(after[0].leverId).not.toBe('maintenance-week')
   })
 })

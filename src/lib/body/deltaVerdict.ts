@@ -44,7 +44,22 @@ export const MAINTENANCE_BAND: Record<Metric, number> = {
 /** Anything smaller than this is measurement noise in any phase. */
 const EPSILON = 0.01
 
-export function deltaVerdict(metric: Metric, delta: number, phase: ProgramPhase): Verdict {
+export function deltaVerdict(
+  metric: Metric,
+  delta: number,
+  phase: ProgramPhase,
+  /**
+   * Is the period being judged a maintenance / deload week?
+   *
+   * ── THIS USED TO BE A THIRD `phase` VALUE ──────────────────────────────────
+   * `phase === 'maintenance'` — which meant the dead band only ever applied if
+   * the user had switched their whole PROGRAMME to a maintenance phase, and a
+   * maintenance week pulled from the lever (the only way it is ever taken) did
+   * not reach it at all. The phase is a direction now, `cut` or `bulk`, and
+   * this is the separate fact it always was: ask `isMaintenanceDate`.
+   */
+  maintenance = false,
+): Verdict {
   if (!Number.isFinite(delta) || Math.abs(delta) < EPSILON) return 'neutral'
 
   // Body water tracks hydration, sodium and glycogen — it is information, not an
@@ -54,7 +69,7 @@ export function deltaVerdict(metric: Metric, delta: number, phase: ProgramPhase)
   // Muscle: unconditional. The one metric no phase gets to reinterpret.
   if (metric === 'muscle') return delta > 0 ? 'good' : 'bad'
 
-  if (phase === 'maintenance') {
+  if (maintenance) {
     return Math.abs(delta) < MAINTENANCE_BAND[metric]
       ? 'neutral'
       // Outside the band, maintenance judges like a cut: holding weight is the
@@ -95,7 +110,13 @@ export function verdictColor(verdict: Verdict): string {
 }
 
 /** The one call a surface should make: metric + delta + phase → a colour. */
-export function deltaColor(metric: Metric, delta: number | null | undefined, phase: ProgramPhase): string {
+export function deltaColor(
+  metric: Metric,
+  delta: number | null | undefined,
+  phase: ProgramPhase,
+  /** See `deltaVerdict` — a maintenance/deload period judges inside a dead band. */
+  maintenance = false,
+): string {
   if (delta == null) return MUTED
-  return verdictColor(deltaVerdict(metric, delta, phase))
+  return verdictColor(deltaVerdict(metric, delta, phase, maintenance))
 }

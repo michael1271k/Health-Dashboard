@@ -22,24 +22,26 @@ describe('deltaVerdict', () => {
     it('is bad to lose even on a cut, where the excuse would be easiest', () => {
       expect(deltaVerdict('muscle', -0.2, 'cut')).toBe('bad')
       expect(deltaVerdict('muscle', -0.2, 'bulk')).toBe('bad')
-      expect(deltaVerdict('muscle', -0.2, 'maintenance')).toBe('bad')
+      expect(deltaVerdict('muscle', -0.2, 'cut', true)).toBe('bad')
     })
 
-    it('is good to gain in every phase', () => {
-      for (const p of ['cut', 'bulk', 'maintenance'] as const) {
+    it('is good to gain in every phase, maintenance week or not', () => {
+      for (const p of ['cut', 'bulk'] as const) {
         expect(deltaVerdict('muscle', +0.2, p)).toBe('good')
+        expect(deltaVerdict('muscle', +0.2, p, true)).toBe('good')
       }
     })
 
     it('ignores the maintenance dead band — muscle movement is never noise', () => {
-      expect(deltaVerdict('muscle', -0.1, 'maintenance')).toBe('bad')
+      expect(deltaVerdict('muscle', -0.1, 'cut', true)).toBe('bad')
     })
   })
 
   describe('fat', () => {
     it('is good to lose in every phase, bulk included', () => {
-      for (const p of ['cut', 'bulk', 'maintenance'] as const) {
+      for (const p of ['cut', 'bulk'] as const) {
         expect(deltaVerdict('fat', -0.4, p)).toBe('good')
+        expect(deltaVerdict('fat', -0.4, p, true)).toBe('good')
       }
     })
 
@@ -54,27 +56,43 @@ describe('deltaVerdict', () => {
 
   describe('water — information, not an outcome', () => {
     it('is neutral whichever way it moves, in every phase', () => {
-      for (const p of ['cut', 'bulk', 'maintenance'] as const) {
+      for (const p of ['cut', 'bulk'] as const) {
         expect(deltaVerdict('water', +1.2, p)).toBe('neutral')
         expect(deltaVerdict('water', -1.2, p)).toBe('neutral')
       }
     })
   })
 
+  /**
+   * The band used to be reachable only through `phase === 'maintenance'` — a
+   * PROGRAMME phase nobody selects for a diet week — so a maintenance week
+   * pulled from the lever never got it, and the one week whose whole point is
+   * that the scale stops moving was graded as though it should still be
+   * falling. It is its own argument now; `useIsMaintenanceDate` supplies it.
+   */
   describe('maintenance dead band', () => {
+    it('is OFF unless the week is actually a maintenance one', () => {
+      expect(deltaVerdict('weight', +0.4, 'cut')).toBe('bad')
+      expect(deltaVerdict('weight', +0.4, 'cut', true)).toBe('neutral')
+    })
+
     it('calls small weight movement neutral so a flat week stops flickering', () => {
-      expect(deltaVerdict('weight', +0.4, 'maintenance')).toBe('neutral')
-      expect(deltaVerdict('weight', -0.4, 'maintenance')).toBe('neutral')
+      expect(deltaVerdict('weight', +0.4, 'cut', true)).toBe('neutral')
+      expect(deltaVerdict('weight', -0.4, 'cut', true)).toBe('neutral')
     })
 
     it('judges outside the band — drifting up is how maintenance fails', () => {
-      expect(deltaVerdict('weight', +0.6, 'maintenance')).toBe('bad')
-      expect(deltaVerdict('weight', -0.6, 'maintenance')).toBe('good')
+      expect(deltaVerdict('weight', +0.6, 'cut', true)).toBe('bad')
+      expect(deltaVerdict('weight', -0.6, 'cut', true)).toBe('good')
     })
 
     it('uses a tighter band for fat than for weight', () => {
-      expect(deltaVerdict('fat', +0.2, 'maintenance')).toBe('neutral')
-      expect(deltaVerdict('fat', +0.4, 'maintenance')).toBe('bad')
+      expect(deltaVerdict('fat', +0.2, 'cut', true)).toBe('neutral')
+      expect(deltaVerdict('fat', +0.4, 'cut', true)).toBe('bad')
+    })
+
+    it('applies on a bulk week too — the band is about the WEEK, not the phase', () => {
+      expect(deltaVerdict('weight', +0.4, 'bulk', true)).toBe('neutral')
     })
   })
 

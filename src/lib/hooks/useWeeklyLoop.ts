@@ -14,17 +14,19 @@ import { sessionVolumeKg } from '@/lib/sessions/volume'
 import { restTargetFor, programRestSec } from '@/lib/training/restTargets'
 import { FATIGUE_SLOTS, SLOT_LABEL, fatigueLevel, type FatigueSlot } from '@/lib/hooks/useFatigue'
 import { epley1RM } from '@/lib/utils/epley'
-import { activeProgram, activePhase, eraForDate, isTrainingDay } from '@/lib/programs'
+import { activeProgram, eraForDate, isTrainingDay } from '@/lib/programs'
+import { getWeekPhase } from '@/lib/phases'
 import { repWindowFor } from '@/lib/training/ceilings'
 import { resolveMovers } from '@/lib/exercises/muscleMap'
 import { weeklyVolumeByMuscle, weeklyTonnageByMuscle, type MoverTokens, type ProgramPhase, type LandmarkMuscle } from '@/lib/training/landmarks'
 import { leverPeriods, activeLeverOf } from '@/lib/nutrition/levers'
+import { DAILY_TARGET_COLUMNS, type DailyTarget } from '@/lib/nutrition/dailyTargets'
 import { SUPPLEMENT_PROTOCOL } from '@/lib/supplements'
 import { type CustomSupplement } from '@/lib/hooks/useCustomSupplements'
 import { normalizeSpO2 } from '@/lib/utils/units'
 import { nightOf } from '@/lib/sleep/nightWindow'
-import { supplementMicros } from '@/lib/nutrition/supplementMicros'
-import { customSlotsForDate, microPayloads } from '@/lib/hooks/useCustomSupplements'
+import { supplementNutrients } from '@/lib/nutrition/supplementNutrients'
+import { customSlotsForDate, nutrientPayloads } from '@/lib/hooks/useCustomSupplements'
 import { stackForDate, supplementCountForDate } from '@/lib/supplements'
 import { activeKcalOf } from '@/lib/cardio/metrics'
 import { volumeCredits, type PrAxis } from '@/lib/training/prEngine'
@@ -106,7 +108,7 @@ async function fetchRange(weekStart: string, weekEnd: string) {
       .gte('date', weekStart).lte('date', weekEnd),
     // `fiber_g` is a real column and every other dietary micro rides in the
     // `micros` jsonb the HealthKit sync writes — the same two facts
-    // `useTodayMicros` folds together for the dashboard.
+    // `useTodayNutrients` folds together for the dashboard.
     supabase.from('nutrition_entries').select('date, calories, protein_g, carbs_g, fat_g, fiber_g, micros')
       .eq('meal_type', 'daily').gte('date', weekStart).lte('date', weekEnd),
     supabase.from('workout_sessions')
@@ -729,6 +731,8 @@ export interface GoalRow {
   water_goal_ml?: number
   /** The rung currently selected — `'custom'` when the numbers are hand-set. */
   active_lever?: string | null
+  /** The last day a `release` rung applies to. Inert for every other rung. */
+  maintenance_until?: string | null
 }
 
 /** A user-set weekly landmark for one muscle, on one plan, in one phase. */
@@ -758,12 +762,12 @@ interface VolumeTargetRow {
  * weekday AND on whether the day trains).
  *
  * ── WHY FOOD AND STACK STAY APART ────────────────────────────────────────────
- * `useTodayMicros` merges them because the dashboard asks "how much vitamin C
+ * `useTodayNutrients` merges them because the dashboard asks "how much vitamin C
  * today". A raw-data export asks a different question, and 594 mg is not an
  * answer to it when 470 of those milligrams came out of a tablet. The renderer
  * prints the split; this only has to keep it.
  */
-function withMicros(
+function withNutrients(
   days: ExportDay[],
   range: RangeData,
   customs: CustomSupplement[],
@@ -780,13 +784,13 @@ function withMicros(
     bucket.add(s.item_key)
     skippedByDate.set(s.date, bucket)
   }
-  const payloads = microPayloads(customs)
+  const payloads = nutrientPayloads(customs)
 
   return days.map((d) => {
     const nt = nutriByDate.get(d.date)
     // `fiber_g` is a column; every other dietary micro rides in the jsonb.
     const bundle = (nt?.micros ?? {}) as Record<string, number | undefined>
-    const microsFood: Record<string, number | undefined> = {
+    const nutrientsFood: Record<string, number | undefined> = {
       ...bundle,
       fiber: numOrUndefined(nt?.fiber_g),
       protein: numOrUndefined(nt?.protein_g),
@@ -810,12 +814,12 @@ function withMicros(
     const skippedKeys = skippedByDate.get(d.date) ?? new Set<string>()
     const scheduled = slots.flatMap((sl) => sl.items.map((i) => ({ key: i.key, name: i.name, time: sl.time })))
     const takenItems = scheduled.filter((i) => !skippedKeys.has(i.key))
-    const microsStack = supplementMicros(takenItems.map((i) => i.key), doses, payloads)
+    const nutrientsStack = supplementNutrients(takenItems.map((i) => i.key), doses, payloads)
 
     return {
       ...d,
-      microsFood,
-      microsStack,
+      nutrientsFood,
+      nutrientsStack,
       supplementsTaken: scheduled.length ? takenItems.length : null,
       supplementsLog: takenItems.map((i) => ({ key: i.key, time: i.time })),
       supplementsSkipped: scheduled.filter((i) => skippedKeys.has(i.key)).map((i) => i.name),
@@ -838,8 +842,10 @@ export function weekPayload(
   phase: ProgramPhase,
   /** Per-muscle set targets the user has overridden — see `plan_phase_volume`. */
   volumeOverrides: Partial<Record<LandmarkMuscle, number>> = {},
+  /** This week's `daily_targets` rows — the layer above the rung. */
+  dailyTargets: readonly DailyTarget[] = [],
 ): WeeklyExportInput {
-  const days = withMicros(toDays(weekStart, range), range, customs)
+  const days = withNutrients(toDays(weekStart, range), range, customs)
   const sessions = toSessions(range)
 
   // Weekly volume, same rule as the Weekly Volume card: a full set to the
@@ -914,9 +920,12 @@ export function weekPayload(
     sleepGoalHours: goals?.sleep_goal_hours ?? null,
     waterGoalMl: goals?.water_goal_ml ?? null,
     // The phase the week was RUN in, named. `programLabel` above already bakes
-    // it into a title ("Helix Cut"), which is a name rather than a statement —
-    // and it collapses maintenance into "Bulk", so it cannot be read as one.
-    phaseLabel: phase === 'cut' ? 'Cut' : phase === 'bulk' ? 'Bulk' : 'Maintenance',
+    // it into a title ("Helix Cut"), which is a name rather than a statement.
+    //
+    // A maintenance week is NOT a phase and never appears here — it is a lever,
+    // and `targetPeriods` below is where it shows up, which is the axis it
+    // actually moves. See `levers.ts`.
+    phaseLabel: phase === 'bulk' ? 'Bulk' : 'Cut',
     /**
      * WHICH TARGETS WERE IN FORCE, DAY BY DAY.
      *
@@ -928,6 +937,14 @@ export function weekPayload(
      * `leverForDate` has always known better — the past belongs to
      * `LEVER_SCHEDULE`, today onward to the current selection — and nothing in
      * the export had ever asked it.
+     *
+     * ── AND THE FALLBACK IS ONLY GOOD FOR THE OPEN STRETCH ────────────────────
+     * Resolving the RUNG per day was half the job. `custom` carries no numbers,
+     * so every `custom` day fell through to the goal row as it stands now —
+     * which is how Week 6 (23–29 Aug) printed `Custom — 1955 kcal` for seven
+     * days eaten at 1,999. `goalsForDate`, inside `leverPeriods`, now answers a
+     * closed `custom` stretch from `LEVER_SCHEDULE` and reaches this fallback
+     * only for the stretch still being lived in.
      */
     targetPeriods: leverPeriods(
       days.map((d) => d.date),
@@ -940,6 +957,7 @@ export function weekPayload(
         fat: goals?.fat_goal_g ?? null,
         steps: goals?.steps_goal ?? null,
       },
+      { releaseEndsOn: goals?.maintenance_until ?? null, dailyTargets },
     ),
     days, sessions, volumeByMuscle, doms, fatigue,
     tonnageByMuscle: weeklyTonnageByMuscle(tonnageRows(range.sets))
@@ -972,7 +990,7 @@ export function useWeeklyExport(weekStart = weekStartOf(logicalTodayISO()), enab
     enabled,
     staleTime: 60_000,
     queryFn: async (): Promise<string> => {
-      const [cur, ledger, goalsRes, customsRes, volRes] = await Promise.all([
+      const [cur, ledger, goalsRes, customsRes, volRes, dailyRes] = await Promise.all([
         fetchRange(weekStart, weekEnd),
         // Week 0 to the exported week — the whole programme, five selects. THIS
         // is where the direction lives now that the previous week is not
@@ -983,18 +1001,37 @@ export function useWeeklyExport(weekStart = weekStartOf(logicalTodayISO()), enab
         // the export could not say which RUNG a week was eaten against, only
         // what the goal row happens to hold today — see `leverPeriods`.
         supabase.from('user_goals')
-          .select('calorie_goal, protein_goal_g, carbs_goal_g, fat_goal_g, steps_goal, sleep_goal_hours, water_goal_ml, active_lever')
+          .select('calorie_goal, protein_goal_g, carbs_goal_g, fat_goal_g, steps_goal, sleep_goal_hours, water_goal_ml, active_lever, maintenance_until')
           .maybeSingle(),
         supabase.from('custom_supplements').select('id, name, dose, color, form, time, schedule, micros'),
         // The user's OWN per-muscle set targets. The Command Center has applied
         // these since they shipped; the export did not, so the two graded the
         // same week against different landmarks the moment one was set.
         supabase.from('plan_phase_volume').select('plan_id, phase, muscle, target_sets'),
+        // Per-day target overrides. The scorer and the widget have resolved
+        // through this layer since it shipped and the export did not, so a
+        // restaurant Tuesday was graded at 2,400 and reported at 1,955.
+        supabase.from('daily_targets').select(DAILY_TARGET_COLUMNS)
+          .gte('date', weekStart).lte('date', weekEnd),
       ])
       const customs = (customsRes.error ? [] : (customsRes.data ?? [])) as CustomSupplement[]
       const goals = goalsRes.data as GoalRow | null
-      // The ACTIVE phase, not a calorie guess — maintenance used to collapse to cut.
-      const phase: ProgramPhase = activePhase() as ProgramPhase
+      // A missing table is not an error — no rows means no day was overridden.
+      const dailyTargets = (dailyRes.error ? [] : (dailyRes.data ?? [])) as unknown as DailyTarget[]
+      /**
+       * THE PHASE THE WEEK WAS RUN IN, not the one selected today.
+       *
+       * This read `activePhase()` — a localStorage mirror of the CURRENT
+       * selection — and stamped it onto whatever week you exported, so
+       * re-exporting a finished cut week after switching to a bulk labelled it
+       * "Helix Bulk" and graded its volume against bulk landmarks. Same bug
+       * class as the target line above, on the other axis.
+       *
+       * `PHASES` is the dated record, so ask it. `peak` and `deload` blocks are
+       * not training prescriptions — they run the cut's deck (`forPhase` only
+       * branches on `cut`), so they resolve to `cut` here.
+       */
+      const phase: ProgramPhase = getWeekPhase(weekStart)?.kind === 'bulk' ? 'bulk' : 'cut'
 
       // Overrides for THIS plan and phase only. A missing table is not an
       // error here: no rows simply means the program's own landmarks stand.
@@ -1008,7 +1045,7 @@ export function useWeeklyExport(weekStart = weekStartOf(logicalTodayISO()), enab
       }
 
       return buildWeeklyExport({
-        ...weekPayload(weekStart, cur, goals, customs, phase, volumeOverrides),
+        ...weekPayload(weekStart, cur, goals, customs, phase, volumeOverrides, dailyTargets),
         ledger,
       })
     },

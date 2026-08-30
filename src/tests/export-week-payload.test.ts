@@ -62,11 +62,16 @@ describe('weekPayload · the rung in force', () => {
     expect(out.targetPeriods?.[0].goals.calorie).toBe(1885)
   })
 
-  it('falls back to the goal row for a period with no rung', () => {
-    // `custom` means "these are my numbers" — `applyLever` must leave them.
+  /**
+   * `custom` means "these are my numbers", and it used to mean "whatever they
+   * are RIGHT NOW" — one mutable row with no date axis, read back over finished
+   * weeks. A closed stretch pins what it meant; only the open one still asks
+   * the goal row.
+   */
+  it('answers a closed custom stretch from the schedule, not the goal row', () => {
     const out = weekPayload('2026-08-16', range(), goals, [], 'cut')
     const own = out.targetPeriods?.find((p) => p.label === 'Custom')
-    expect(own?.goals).toEqual({ calorie: 1955, protein: 170, carbs: 195, fat: 55, steps: 10000 })
+    expect(own?.goals).toEqual({ calorie: 1999, protein: 170, carbs: 206, fat: 55, steps: 10000 })
   })
 
   it('still produces periods when the goal row is missing entirely', () => {

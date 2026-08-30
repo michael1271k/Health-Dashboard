@@ -39,7 +39,7 @@ export interface TimelineWeekNode {
 // is 'helix' here even though its Sunday precedes HELIX_CUT_START — so it counts
 // as a Helix week under the 'axis' filter (eraForDate alone would misclass it).
 const WEEK_ERA = new Map(
-  enumerateWeeks(['cut', 'peak', 'bulk', 'maintenance']).map((w) => [w.weekStart, w.era]),
+  enumerateWeeks(['cut', 'peak', 'bulk', 'deload']).map((w) => [w.weekStart, w.era]),
 )
 function weekEra(weekStart: string): 'ppl' | 'helix' {
   return WEEK_ERA.get(weekStart) ?? (eraForDate(weekStart) === 'axis' ? 'helix' : 'ppl')

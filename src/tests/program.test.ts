@@ -107,11 +107,21 @@ describe('v5.1 phase engine', () => {
     expect(eraForDate('2026-07-15')).toBe('axis')
     expect(eraForDate('2026-07-19')).toBe('axis')
   })
-  it('maintenance week 2026-08-30 is MAINTENANCE, not a cut failure', () => {
-    expect(getWeekPhase('2026-08-30')?.kind).toBe('maintenance')
+  /**
+   * The one-week `Maintenance Week` phase is deleted. It described a NUTRITION
+   * decision — `forPhase` only branches on `cut`, so it changed no exercise and
+   * no set count — and keeping a copy of it on the phase axis meant keeping the
+   * two axes in sync by hand, which they had already failed at once.
+   *
+   * The cut is one unbroken 13-week block. That also settles the numbering: it
+   * used to restart at 7 on 6 Sep while `programWeekNumber` called that week 8.
+   */
+  it('trains straight through the maintenance week — it is a lever, not a phase', () => {
+    expect(getWeekPhase('2026-08-30')?.kind).toBe('cut')
+    expect(getWeekPhase('2026-08-30')?.label).toBe('Helix Cut · Week 7')
   })
-  it('cut resumes at Week 7 after the maintenance week (era-tagged label)', () => {
-    expect(getWeekPhase('2026-09-06')?.label).toBe('Helix Cut · Week 7')
+  it('carries on counting after it, rather than restarting at 7', () => {
+    expect(getWeekPhase('2026-09-06')?.label).toBe('Helix Cut · Week 8')
   })
   it('the two Cut eras carry distinct tags (never mixed)', () => {
     expect(getWeekPhase('2026-05-10')?.eraTag).toBe('PPL Cut')

@@ -67,25 +67,27 @@ export const SessionElapsed = memo(function SessionElapsed({ startedAt, pausedMs
   if (sec == null) return null
 
   const tint = accent ?? STEEL
-  const box = size === 'lg' ? 'min-h-[44px] px-2.5' : 'min-h-[38px] px-2'
+  const box = size === 'lg' ? 'min-h-[44px] px-1' : 'min-h-[38px] px-0.5'
   const label = `Duration ${formatClock(sec)}${paused ? ', paused' : ''}`
 
-  /* ── THE WORD "DURATION" SITS OVER IT ──
-     The reading was a bare clock face beside a second bare clock face (the rest
-     timer), in the header of a screen you look at between sets, and the only
-     thing separating them was their icons. Two characters of context cost a
-     9px line and remove the guess. Stacked rather than inline: at 360px the row
-     already holds three controls, and a horizontal label would take the width
-     out of the title. */
+  /* ── AND THEN THE WORD CAME OFF AGAIN ─────────────────────────────────────
+     "DURATION" over the figure was two characters of context bought with a 9px
+     line, and it was worth it while this stood beside a second bare clock face
+     in the same row. The rest timer has moved into the session menu, so there
+     is nothing left to confuse it with — and what remains is the one number in
+     the header you read without deciding anything, sitting directly beside the
+     decision it informs.
+
+     No tile either. The tinted box and its border were 44px of chrome around
+     four characters, on the narrowest row in the app, competing with the
+     workout title for exactly the width the title had already run out of. The
+     hourglass carries the meaning; a pause icon replaces it when the clock has
+     stopped, which is the only state the figure alone cannot express. */
   const body = (
     <>
-      <span className="flex items-center gap-1 text-[8px] font-bold uppercase tracking-[0.14em] leading-none"
-        style={{ color: tint }}>
-        {paused
-          ? <Pause className="w-2.5 h-2.5" aria-hidden="true" />
-          : <Hourglass className={size === 'lg' ? 'w-2.5 h-2.5' : 'w-2 h-2'} aria-hidden="true" />}
-        Duration
-      </span>
+      {paused
+        ? <Pause className="w-3 h-3 shrink-0" style={{ color: 'var(--color-muted)' }} aria-hidden="true" />
+        : <Hourglass className="w-3 h-3 shrink-0" style={{ color: tint }} aria-hidden="true" />}
       <span
         className={`helix-num font-bold tabular-nums leading-none ${size === 'lg' ? 'text-[13px]' : 'text-[12px]'}`}
         // Paused, the number recedes to muted: it is no longer telling you
@@ -97,11 +99,8 @@ export const SessionElapsed = memo(function SessionElapsed({ startedAt, pausedMs
     </>
   )
 
-  const shell = `inline-flex flex-col items-center justify-center gap-0.5 rounded-xl ${box} shrink-0`
-  const skin = {
-    background: `${tint}14`,
-    border: `1px solid ${tint}33`,
-  }
+  const shell = `inline-flex items-center justify-center gap-1 ${box} shrink-0`
+  const skin = undefined
 
   if (!onOpen) {
     return (

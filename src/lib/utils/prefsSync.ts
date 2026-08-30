@@ -59,7 +59,9 @@ export async function hydratePrefsFromDb(): Promise<void> {
     // Phase: `active_phase` is the field; `goal_preset` is the older tag the
     // macro presets still write, and is a correct fallback for the same value.
     const phase = g.active_phase ?? g.goal_preset
-    if (phase === 'cut' || phase === 'bulk' || phase === 'maintenance') setActivePhase(phase)
+    // `maintenance` was deleted as a phase; an unsynced row holding it falls
+    // through to the mirror's own default rather than being written back.
+    if (phase === 'cut' || phase === 'bulk') setActivePhase(phase)
 
     // Effort logging — the deck reads the mirror synchronously during render.
     if (g.track_rpe != null) setTrackRpeMirror(g.track_rpe)

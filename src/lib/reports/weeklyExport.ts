@@ -42,7 +42,7 @@ import { exceptionTag, estimatedTag } from '@/lib/nutrition/exceptionDay'
 import { contextRangesIn, contextRangeLabel, contextFromDayLabel, CONTEXT_META } from '@/lib/nutrition/context'
 import { TEF_FACTOR, tefKcal, tdeeBreakdown } from '@/lib/nutrition/energy'
 import { volumeZone, type VolumeZone } from '@/lib/training/landmarks'
-import { MICRO_TARGETS } from '@/lib/nutrition/microTargets'
+import { NUTRIENT_TARGETS } from '@/lib/nutrition/nutrientTargets'
 import { derivedWeek, type WeekDelta } from '@/lib/reports/derived'
 import type { TargetPeriod } from '@/lib/nutrition/levers'
 
@@ -173,12 +173,12 @@ export interface ExportDay {
    * The day's micronutrients, food and stack kept APART.
    *
    * Not merged into one figure, because "594 mg of vitamin C" means something
-   * different when a tablet supplied 470 of it — the Micros page has always
+   * different when a tablet supplied 470 of it — the Nutrients page has always
    * drawn that line and the export now draws it too. Keys match
-   * `MICRO_TARGETS[].key`, so the renderer needs no translation layer.
+   * `NUTRIENT_TARGETS[].key`, so the renderer needs no translation layer.
    */
-  microsFood?: Record<string, number | undefined>
-  microsStack?: Record<string, number | undefined>
+  nutrientsFood?: Record<string, number | undefined>
+  nutrientsStack?: Record<string, number | undefined>
   /**
    * Apple Watch active energy. NOT printed on the daily line — see the file
    * header. Carried solely so the weekly energy-balance estimate has an
@@ -668,7 +668,7 @@ function daysBetween(from: string | null | undefined, to: string): number | null
 /**
  * ONE MICRONUTRIENT, said in full: what was taken, out of what, from where.
  *
- * Every target in `MICRO_TARGETS` prints on every day, in the table's own
+ * Every target in `NUTRIENT_TARGETS` prints on every day, in the table's own
  * order, `—` where nothing was measured — the same rule the rest of this
  * document runs on. A nutrient that silently vanishes on the days it was not
  * logged is a nutrient the reader concludes was never tracked.
@@ -685,11 +685,11 @@ function daysBetween(from: string | null | undefined, to: string): number | null
  * 200/400 mg of caffeine is on protocol, while 200/400 mg of magnesium is half
  * a dose.
  */
-export function microLine(
+export function nutrientLine(
   food: Record<string, number | undefined> | undefined,
   stack: Record<string, number | undefined> | undefined,
 ): string {
-  const parts = MICRO_TARGETS.map((t) => {
+  const parts = NUTRIENT_TARGETS.map((t) => {
     const f = food?.[t.key], k = stack?.[t.key]
     const hasF = f != null && Number.isFinite(f) && f > 0
     const hasK = k != null && Number.isFinite(k) && k > 0
@@ -703,7 +703,7 @@ export function microLine(
     const suffix = tags ? ` (${tags})` : ''
     if (!hasF && !hasK) return `${t.label}: ${DASH}/${exact(t.target)} ${t.unit}${suffix}`
     const split = hasF && hasK ? ` (${exact(f)} food + ${exact(k)} stack)` : ''
-    const flag = implausibleMicro(t, hasF ? f : 0, hasK ? k : 0) ? '⚠ ' : ''
+    const flag = implausibleNutrient(t, hasF ? f : 0, hasK ? k : 0) ? '⚠ ' : ''
     return `${t.label}: ${flag}${exact(total)}/${exact(t.target)} ${t.unit}${suffix}${split}`
   })
   return parts.join(' · ')
@@ -742,21 +742,21 @@ export function microLine(
  */
 const IMPLAUSIBLE_FLOOR_MULTIPLE = 2.5
 
-function implausibleMicro(t: { kind?: string; target: number }, food: number, stack: number): boolean {
+function implausibleNutrient(t: { kind?: string; target: number }, food: number, stack: number): boolean {
   if (t.kind === 'ceiling') return false
   if (stack > 0) return false
   return t.target > 0 && food > t.target * IMPLAUSIBLE_FLOOR_MULTIPLE
 }
 
 /** Every "<Micro> on <date>" the week flagged, for the note at the foot. */
-export function flaggedMicros(days: readonly ExportDay[]): string[] {
+export function flaggedNutrients(days: readonly ExportDay[]): string[] {
   const out: string[] = []
   for (const d of days) {
-    for (const t of MICRO_TARGETS) {
-      const f = d.microsFood?.[t.key], k = d.microsStack?.[t.key]
+    for (const t of NUTRIENT_TARGETS) {
+      const f = d.nutrientsFood?.[t.key], k = d.nutrientsStack?.[t.key]
       const food = typeof f === 'number' && f > 0 ? f : 0
       const stack = typeof k === 'number' && k > 0 ? k : 0
-      if (implausibleMicro(t, food, stack)) out.push(`${t.label} ${exact(food)} ${t.unit} on ${d.date}`)
+      if (implausibleNutrient(t, food, stack)) out.push(`${t.label} ${exact(food)} ${t.unit} on ${d.date}`)
     }
   }
   return out
@@ -1510,7 +1510,7 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
        that were never measured, which print `—/target` rather than vanishing.
        A nutrient that only appears on the days it was logged teaches the reader
        that it is not tracked, which is the opposite of true. */
-    L.push(`    - Micros: ${microLine(d.microsFood, d.microsStack)}`)
+    L.push(`    - Nutrients: ${nutrientLine(d.nutrientsFood, d.nutrientsStack)}`)
     // Steps, distance and training minutes keep their original conditional
     // form; the three ring metrics are appended and ALWAYS named, because a
     // dropped field and a zero-minute stand day are not the same day.
@@ -2115,7 +2115,7 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
   // so it gets a sentence rather than being left to look like a bad day. Printed
   // only when something was actually flagged: a standing caveat about a problem
   // the week does not have is noise.
-  const flagged = flaggedMicros(input.days)
+  const flagged = flaggedNutrients(input.days)
   if (flagged.length) {
     L.push('---')
     L.push('')

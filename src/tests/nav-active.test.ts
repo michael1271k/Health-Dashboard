@@ -18,7 +18,7 @@ describe('isNavActive', () => {
   })
 
   it('keeps Nutrition lit inside micros', () => {
-    expect(isNavActive('/nutrition', '/nutrition/micros')).toBe(true)
+    expect(isNavActive('/nutrition', '/nutrition/nutrients')).toBe(true)
   })
 
   it('matches on a segment boundary, so a sibling route cannot borrow a tab', () => {
@@ -46,7 +46,7 @@ describe('isNavActive', () => {
 
   it('never lights two tabs for one route', () => {
     const routes = [
-      '/', '/nutrition', '/nutrition/micros', '/workout', '/workout/exercises',
+      '/', '/nutrition', '/nutrition/nutrients', '/workout', '/workout/exercises',
       '/workout/exercises/x', '/pathfinder', '/settings', '/day/2026-08-15', '/session/x',
     ]
     for (const r of routes) {

@@ -2,8 +2,6 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/lib/supabase/types'
 import { DEFAULT_PROGRAM_ID, normalizePlanId, type ProgramPhase, type ScheduleContext } from '@/lib/programs'
 import { parseLayout } from '@/lib/schedule/layout'
-import { activeLeverOf } from '@/lib/nutrition/levers'
-import { isMaintenanceDate } from '@/lib/nutrition/maintenance'
 
 /**
  * The schedule context a ROUTE is running, read from the database.
@@ -31,9 +29,15 @@ import { isMaintenanceDate } from '@/lib/nutrition/maintenance'
 
 type DB = SupabaseClient<Database>
 
-/** `active_phase` is free text in the column; only three values mean anything. */
+/**
+ * `active_phase` is free text in the column; only two values mean anything.
+ *
+ * A row written before `maintenance` was deleted still carries the string. It
+ * used to resolve to the bulk deck; it narrows to the cut now, which is the
+ * block being run either way — `forPhase` only branches on `cut`.
+ */
 function toPhase(raw: unknown): ProgramPhase {
-  return raw === 'bulk' || raw === 'maintenance' ? raw : 'cut'
+  return raw === 'bulk' ? 'bulk' : 'cut'
 }
 
 /**
@@ -50,18 +54,19 @@ export async function serverScheduleContext(
   /**
    * The date being resolved, when the caller has one.
    *
-   * Only a maintenance week needs it, and only because a maintenance week is the
-   * one phase this column cannot express: it is pulled as a LEVER, on a date, so
-   * that selecting it neither restates the body goals nor reseeds the training
-   * deck (see the long note in `levers.ts`). `active_phase` therefore still says
-   * `cut` all through it, and every server surface reading only this row —
-   * the widget's prescription among them — ran the cut's session on a week that
-   * was deliberately not going to do it.
+   * ── AND IT NO LONGER CHANGES THE ANSWER ────────────────────────────────────
+   * It existed for one reason: a maintenance week used to override the phase to
+   * `'maintenance'` here. That was the duplication this codebase has now removed
+   * — a maintenance week is a NUTRITION lever and leaves the training deck
+   * exactly as authored, so forcing a phase made the server resolve a different
+   * programme from the one the client had seeded.
    *
-   * Omitted, nothing changes and the stored phase answers alone.
+   * Kept in the signature because both callers pass it and a date is the right
+   * thing for this resolver to accept if anything here ever becomes dated again.
    */
   dateISO?: string,
 ): Promise<ScheduleContext> {
+  void dateISO
   let row = goals ?? null
   if (row == null) {
     const { data } = await supabase
@@ -80,15 +85,18 @@ export async function serverScheduleContext(
     normalizePlanId(row?.active_program as string | null) ??
     DEFAULT_PROGRAM_ID
 
-  // `active_phase` is the field; `goal_preset` is the older tag it replaced.
-  // A maintenance week outranks both — see `dateISO` above.
-  const stored = toPhase(row?.active_phase ?? row?.goal_preset)
-  const phase: ProgramPhase = dateISO && isMaintenanceDate(
-    dateISO,
-    activeLeverOf(row),
-    (row?.maintenance_until as string | null | undefined) ?? null,
-    dateISO,
-  ) ? 'maintenance' : stored
+  /**
+   * `active_phase` is the field; `goal_preset` is the older tag it replaced.
+   *
+   * ── AND A MAINTENANCE WEEK NO LONGER OVERRIDES IT ──────────────────────────
+   * This used to force the phase to `'maintenance'` on a maintenance date,
+   * which is the duplication the whole axis has now been rid of: the phase
+   * decides which DECK you train, a maintenance week does not change the deck,
+   * and forcing it here made the server resolve a different programme from the
+   * one the client seeded. The week lives on the lever axis, and every consumer
+   * that needs to soften a grade for it asks `isMaintenanceDate` directly.
+   */
+  const phase: ProgramPhase = toPhase(row?.active_phase ?? row?.goal_preset)
 
   const [overrides, layout] = await Promise.all([
     loadOverrides(supabase, userId),
