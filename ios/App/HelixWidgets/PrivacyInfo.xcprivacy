@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  PRIVACY MANIFEST — HelixWidgetsExtension.
+
+  A separate binary needs its own manifest; the app's does not cover it. This one
+  earns its place: `Shared/HelixSnapshot.swift` caches each scope's response in
+  `UserDefaults.standard` (see `cacheKey`), which is a required-reason API, and
+  the extension is the target that actually runs that code on a timeline refresh.
+
+  NOTHING IS DECLARED AS COLLECTED. The extension makes exactly one network
+  call — a GET to this app's own /api/widget/snapshot, authenticated with the
+  widget token — and it sends no user data anywhere. It reads. Declaring the
+  health figures it DISPLAYS as "collected" here would be describing the app's
+  ingest pipeline in the wrong binary's manifest.
+
+  This folder is a PBXFileSystemSynchronizedRootGroup in the Xcode project
+  (Xcode 16 synchronized folder), so this file is picked up by the extension
+  target automatically — unlike the App target's copy, which needed explicit
+  pbxproj entries.
+-->
+<plist version="1.0">
+<dict>
+	<key>NSPrivacyTracking</key>
+	<false/>
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array/>
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array>
+		<dict>
+			<!-- The snapshot cache in HelixSnapshot.swift. Own container, own
+			     data, read back by the same extension that wrote it. -->
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>CA92.1</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>
