@@ -16,6 +16,11 @@ import { fmtVolume } from '@/lib/utils/units'
 import { cleanSessionTitle, type SessionDraft } from '@/lib/sessions/draft'
 import { GOLD, MUTED, STEEL } from '@/lib/theme/palette'
 
+/** The phase/week chip's hue. Steel — the deck's own neutral; the phase's real
+ *  colour lives on the dashboard, and a second saturated chip beside the
+ *  session's accent title would be a third colour competing in one header. */
+const PHASE_CHIP = STEEL
+
 /**
  * The live session's title block — the workout you are in, at the size it
  * deserves, washed in its own colour.
@@ -124,111 +129,143 @@ export function LiveSessionHero({ draft, accent, volumeKg, sets, recordCount, on
         style={{ background: `linear-gradient(180deg, ${accent}26 0%, ${accent}0a 45%, transparent 100%)` }}
       />
 
-      {/* ── THE TITLE ROW HOLDS THE TITLE AND THE TWO LIVE ACTIONS ──
-          It used to hold three controls, and "Legs & Core A" — a real workout
-          name, not a pathological one — ellipsized at 390px before the first
-          set was logged. The name is the one thing on this screen that cannot
-          be recovered from anywhere else on it, so it wins the width.
+      {/* ── ONE CONTROL BESIDE THE TITLE, AND IT IS THE COMMIT ──────────────
+          The row held five things: minimise, the name, the elapsed reading, the
+          overflow menu and Finish. The name was the only flexible one, so on a
+          390px screen it took whatever the other four left — about 178px against
+          roughly 180px of controls — and "Legs & Core A", a real workout name,
+          rendered as "Legs & C…" before a single set was logged. Shrinking the
+          type was tried (`2xl` → `xl`) and bought one word.
 
-          Two changes buy it back. `text-fluid-xl` instead of `2xl` (the step is
-          about 4px at phone widths and the title is still the largest type on
-          the screen by a clear margin), and the two between-sets tools left the
-          header entirely — see the note at the top of this file.
+          The fix is not narrower type, it is FEWER NEIGHBOURS. The title's row
+          now carries the chevron and Finish and nothing else, and the two things
+          that left are the two that were never decisions:
 
-          ── AND THE ROW IS SORTED BY WHAT THE CONTROLS ARE ──
-          It held Back, the title, the clock and Finish — a navigation, a title,
-          a tool and a commit, in that order, all at the same weight. Four
-          different KINDS of thing reading as one undifferentiated strip of
-          buttons is what made it look like a toolbar rather than a title.
+            · the elapsed figure is a READING — its own component says so — and
+              it belongs on the line with the other readings;
+            · the ⋯ menu holds discard, delete and the between-sets tools, none
+              of which is touched mid-set.
 
-          Now: minimise, the name, the elapsed READING, then the two decisions —
-          overflow (where discard, delete and the two tools live) and Finish,
-          which is the only primary on the screen and therefore the only filled
-          control in the row. Nothing between the name and the commit that you
-          press during a set. */}
-      <div className="flex items-center gap-2">
+          Both move down one line, where there is width to spare, and the title
+          gets the whole row minus a 32px chevron and the Finish button.
+
+          ── AND IT MAY TAKE TWO LINES ────────────────────────────────────────
+          `line-clamp-2`, not `truncate`. An ellipsis on this element destroys
+          the one fact on the screen that cannot be recovered from anything else
+          on it, and the header scrolls away within seconds of the first set —
+          `LiveSessionBar` takes over from there. A second line costs about 24px
+          for a few seconds; an elided name costs the name. `text-balance` keeps
+          a two-line title from breaking after one word. */}
+      <div className="flex items-start gap-2">
         <BackLink onClick={onBack} label="Minimise — the draft keeps running" />
         <h1
-          className="flex-1 min-w-0 font-heading font-bold text-fluid-xl leading-tight truncate tracking-[-0.01em]"
+          className="flex-1 min-w-0 font-heading font-bold text-fluid-xl leading-tight tracking-[-0.01em]
+                     [text-wrap:balance] line-clamp-2"
           style={{ color: accent }}
+          title={title}
         >
           {title}
         </h1>
-        {/* ── THE READING SITS WITH THE COMMIT ──
-            How long you have been here is the one number in this header you
-            glance at without deciding anything, and Finish is the decision it
-            informs. It reads as a bare figure rather than a tile: the tinted
-            box, the border and the "DURATION" caps label were 44px of chrome
-            around four characters, on the row with the least width in the app.
-            Still the same tap target, still opens the same sheet. */}
-        <SessionElapsed
-          startedAt={draft.startedAt}
-          pausedMs={draft.pausedMs}
-          pausedAt={draft.pausedAt}
-          accent={accent}
-          onOpen={onOpenDuration}
-        />
-        {/* ── AND THE TOOLS WENT IN HERE ──
-            The clock and the muscle figure were two more 44px controls in a
-            header that already held five things. Neither is used mid-set: you
-            reach for a rest timer between exercises, and the body figure is a
-            review artefact (~60 SVG paths, redrawn at 32px on every header
-            paint) answering "where did this land". One level deeper, labelled,
-            and the figure is not drawn at all until it is asked for. */}
-        <SessionMenu
-          isEdit={!!isEdit}
-          deleting={deleting}
-          tools={(
-            <>
-              <SessionClock variant="row" />
-              <MuscleDistribution draft={draft} accent={accent} variant="row" />
-            </>
-          )}
-          onDiscard={onDiscard}
-          onCancelEdit={onCancelEdit}
-          onDelete={onDelete}
-        />
         <FinishButton onClick={onFinish} busy={finishBusy} disabled={sets === 0} isEdit={isEdit} />
       </div>
 
-      {/* The date is the CONTROL, not a label beside one — a separate chip cost
-          the width of three characters of the title to say the same thing the
-          line already says. Indented to the title's own left edge, past the
-          chevron, so the two read as one block. */}
-      {/* ── AND THE LINE CARRIES ONLY CONTEXT NOW ──
-          It used to be a two-column row: the date on the left, and on the right
-          three ~44px controls whose height set the row's. With the tools moved
-          into the menu the second column is gone, so this is one line of text
-          about which session this is — week, phase, date, rung — and nothing
-          you have to aim at except the date itself. */}
-      <div className="relative mt-1 ml-9">
-      <button
-        type="button"
-        onClick={() => setPickerOpen((v) => !v)}
-        className="flex items-center gap-1 text-fluid-xs text-muted leading-tight active:opacity-70 transition-opacity max-w-full"
-        aria-label={`Session date: ${dateLabel}. Tap to change`}
-        aria-expanded={pickerOpen}
-      >
-        <CalendarDays className="w-3 h-3 text-primary shrink-0" aria-hidden="true" />
-        <span className="truncate">
-          {draft.week != null && <>Week {draft.week} · </>}
-          {draft.phase && <span className="text-info font-semibold">{draft.phase === 'CUT' ? 'Cut' : draft.phase} · </span>}
-          {dateLabel}
+      {/* ── THE CONTEXT LINE, AND EVERYTHING IT ABSORBED ────────────────────
+          Was: the date, alone, with the rung chip trailing it inside the same
+          sentence. Now it is the header's whole second tier — where you are
+          (date, week, phase, rung), how long you have been here, and the way
+          into everything you are not doing right now.
+
+          ── THE PHASE IS A CHIP, NOT A WORD IN A SENTENCE ────────────────────
+          It read `Week 7 · Cut · Sun 31 Aug` — a phase set as prose between two
+          other facts, in a colour, with no boundary of its own, so the eye had
+          to parse a sentence to find a category. And a maintenance week said
+          nothing at all beyond the rung chip trailing the line, which is the
+          single most consequential fact about the week (volume, steps and
+          calories all moved) arriving as its last word.
+
+          Phase and week are chips now, in the phase's own colour, with the week
+          behind a hairline — the treatment `PlanPhaseTags` uses everywhere else
+          in the app, at deck scale.
+
+          ── AND THEY COME FROM THE DRAFT, NOT FROM TODAY ─────────────────────
+          `PlanPhaseTags` itself is deliberately NOT reused here, close as it
+          looks. It resolves against `useLogicalDate()` — the wall clock — which
+          is right on a dashboard and wrong on this screen, because this screen
+          back-dates: `onSetDate` exists, and opening a finished Tuesday to edit
+          it would show Friday's phase and Friday's week over Tuesday's sets.
+          The draft carries `week` and `phase` for exactly this reason, so the
+          header states the SESSION's block rather than the calendar's.
+
+          `LeverTag` is the one exception and is genuinely today's — a rung is a
+          nutrition fact about the day you are eating, not about the sets.
+
+          The date keeps its own button because it is the only CONTROL on this
+          line: tapping it opens the picker that back-dates the session. */}
+      <div className="relative mt-1.5 ml-9 flex items-center gap-x-2 gap-y-1 flex-wrap">
+        <button
+          type="button"
+          onClick={() => setPickerOpen((v) => !v)}
+          className="flex items-center gap-1 text-fluid-xs text-muted leading-tight active:opacity-70
+                     transition-opacity min-w-0 shrink"
+          aria-label={`Session date: ${dateLabel}. Tap to change`}
+          aria-expanded={pickerOpen}
+        >
+          <CalendarDays className="w-3 h-3 text-primary shrink-0" aria-hidden="true" />
+          <span className="truncate">{dateLabel}</span>
+        </button>
+
+        {(draft.phase || draft.week != null) && (
+          <span
+            className="shrink-0 inline-flex items-center gap-1.5 px-1.5 py-px rounded-md
+                       text-[10px] font-bold uppercase tracking-wide"
+            style={{ color: PHASE_CHIP, background: `${PHASE_CHIP}1a`, border: `1px solid ${PHASE_CHIP}55` }}
+          >
+            {draft.phase && <span>{draft.phase === 'CUT' ? 'Cut' : draft.phase}</span>}
+            {draft.phase && draft.week != null && (
+              <span className="w-px h-2.5 opacity-40" style={{ background: 'currentColor' }} aria-hidden="true" />
+            )}
+            {draft.week != null && <span className="helix-num tabular-nums">Wk {draft.week}</span>}
+          </span>
+        )}
+        {/* The rung, and on a deload week the leaf chip that names it. */}
+        <LeverTag compact />
+
+        {/* The readings, hard right. Elapsed is still a tap target — it opens
+            the Duration sheet, which is where the start time and the pause
+            live — it simply is not competing with the title any more. */}
+        <span className="ml-auto flex items-center gap-1 shrink-0">
+          <SessionElapsed
+            startedAt={draft.startedAt}
+            pausedMs={draft.pausedMs}
+            pausedAt={draft.pausedAt}
+            accent={accent}
+            size="sm"
+            onOpen={onOpenDuration}
+          />
+          <SessionMenu
+            isEdit={!!isEdit}
+            deleting={deleting}
+            tools={(
+              <>
+                <SessionClock variant="row" />
+                <MuscleDistribution draft={draft} accent={accent} variant="row" />
+              </>
+            )}
+            onDiscard={onDiscard}
+            onCancelEdit={onCancelEdit}
+            onDelete={onDelete}
+          />
         </span>
-        {/* Which rung of the cut you are training under. Inline with the date
-            rather than on a line of its own: it is one more fact about this
-            session's context, and it was costing a whole row to say so. */}
-        <span className="shrink-0 ml-1"><LeverTag compact /></span>
-      </button>
-      {pickerOpen && (
-        <DatePickerPopover
-          value={draft.date}
-          max={logicalTodayISO()}
-          disabledDates={loggedDates ?? new Set()}
-          onSelect={onSetDate}
-          onClose={() => setPickerOpen(false)}
-        />
-      )}
+
+        {pickerOpen && (
+          <DatePickerPopover
+            value={draft.date}
+            max={logicalTodayISO()}
+            disabledDates={loggedDates ?? new Set()}
+            onSelect={onSetDate}
+            onClose={() => setPickerOpen(false)}
+          />
+        )}
       </div>
 
       {/* The live rail. Only what moves while you lift — duration, average HR

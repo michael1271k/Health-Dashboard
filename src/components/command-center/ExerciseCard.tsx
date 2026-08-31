@@ -198,7 +198,7 @@ const fmtKg = (w: number) => (w % 1 === 0 ? w.toFixed(0) : (w * 10) % 1 === 0 ? 
  * means lifting `useSortable` into a shell component and moving the grip out of
  * this header — a real refactor, deliberately not done here.
  */
-export const ExerciseCard = memo(function ExerciseCard({ exercise, history, globalHistory, livePrs, dayKey, ready, reportTargets, reducedMotion = false, dragCollapsed = false, onUpdateSet, onSplitSet, onMergeSet, onAddSet, onRemoveSet, onToggleDone, onRemoveExercise, onSetNote, onPrTap, onUpdateCardio }: {
+export const ExerciseCard = memo(function ExerciseCard({ exercise, history, globalHistory, livePrs, dayKey, dateISO, ready, reportTargets, reducedMotion = false, dragCollapsed = false, onUpdateSet, onSplitSet, onMergeSet, onAddSet, onRemoveSet, onToggleDone, onRemoveExercise, onSetNote, onPrTap, onUpdateCardio }: {
   exercise: DraftExercise
   history: ExerciseHistory | null
   /**
@@ -214,6 +214,13 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
    *  has a different ceiling than on Legs A — so this must be threaded through
    *  or the card silently falls back to the strictest window in the program. */
   dayKey?: string | null
+  /**
+   * The session's date — its identity for anything scoped to one session.
+   * Rest targets edited from the deck are session-scoped (see
+   * `RestTargetSheet`), and without this they would be block-wide and
+   * retroactive across every past export of this movement.
+   */
+  dateISO?: string | null
   /** Forward-carried progression cue for this lift (cleared its ceiling twice). */
   ready?: ReadyCue | null
   /**
@@ -316,8 +323,8 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
   // unrelated re-render. Same contract as `useScheduleVersion`.
   const restVersion = useRestTargets()
   const restEdited = useMemo(
-    () => { void restVersion; return hasRestOverride(exercise.name, dayKey) },
-    [restVersion, exercise.name, dayKey],
+    () => { void restVersion; return hasRestOverride(exercise.name, dayKey, undefined, dateISO) },
+    [restVersion, exercise.name, dayKey, dateISO],
   )
 
   // The band's rule. Cardio keeps its violet — it is not a muscle, and giving it
@@ -328,14 +335,17 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
   )
 
   /**
-   * ── THE MOVEMENT'S OWN GLYPH ───────────────────────────────────────────────
-   * Derived from the name, tinted with the card's accent, so a long deck is
-   * scannable by shape as well as by the left rule's colour. See
-   * `exercises/icons.ts` for why it is a stroke icon rather than an emoji and
-   * why it is derived rather than stored.
+   * ── THE CARDIO BLOCK'S AVATAR, AND ONLY THAT ───────────────────────────────
+   * The per-movement glyph on STRENGTH cards is gone (see the note beside the
+   * exercise name for why a name-derived icon printed beside the name is either
+   * redundant or empty). What survives is the cardio card's 32px violet disc,
+   * which is a different object doing a different job: it is the block's
+   * identity marker in the deck — a filled, coloured avatar that says "this row
+   * is not a lift" at a glance — rather than a 14px monochrome stroke annotating
+   * a string. Its rule is also the one branch of the heuristic that never
+   * misses: `\btreadmill|walk|run\b` matches a cardio block by construction.
    */
-  const glyph = useMemo(() => exerciseIconFor(exercise.name), [exercise.name])
-  const CardioIcon = glyph.icon
+  const CardioIcon = useMemo(() => exerciseIconFor(exercise.name).icon, [exercise.name])
 
   /**
    * The treadmill's reference, scoped to THIS DAY.
@@ -563,8 +573,8 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
    * stopwatch existed are real data — but nothing writes it any more.
    */
   const restTarget = useMemo(
-    () => { void restVersion; return restTargetFor(exercise.name, dayKey) },
-    [restVersion, exercise.name, dayKey],
+    () => { void restVersion; return restTargetFor(exercise.name, dayKey, undefined, dateISO) },
+    [restVersion, exercise.name, dayKey, dateISO],
   )
   /**
    * The target, readable from `handleToggleDone` without becoming one of its
@@ -884,15 +894,26 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
                 line, so the NAME lost — truncated to an ellipsis while the chips
                 kept their width. Now the chips drop to a second line instead. */}
             <div className="flex items-center gap-x-2 gap-y-1 min-w-0 flex-wrap">
-              {/* ── THE MOVEMENT'S GLYPH, IN ITS OWN HUE ──
-                  Tinted with the card's accent — the same colour as the 3px
-                  rule down its left edge — so the icon and the rule are one
-                  signal rather than two. `aria-hidden`: the name is right
-                  beside it, and a screen reader announcing "Cable, Cable
-                  Lateral Raise" is noise. */}
-              <span className="shrink-0 inline-flex" title={glyph.label}>
-                <glyph.icon className="w-3.5 h-3.5" style={{ color: accent }} aria-hidden="true" />
-              </span>
+              {/* ── THE MOVEMENT'S GLYPH IS GONE, AND THE NAME TOOK ITS ROOM ──
+                  It was `exerciseIconFor(name)` tinted with the card's accent,
+                  and the trouble is what that function is: a heuristic over the
+                  NAME, which is the string printed 6px to its right. On a match
+                  it restated a suffix the reader had already read — a cable
+                  glyph beside "Seated Cable Row" — and roughly half the deck
+                  matched nothing specific, landing on `CircleDot` or the
+                  `MoveVertical` fallback. A dot and an arrow, in the accent, on
+                  every card.
+
+                  So the row carried a column of monochrome shapes that were
+                  either redundant or empty, and never a fact you could act on.
+                  The card already says which movement this is twice over: the
+                  name, and the 3px rule down its left edge in the exercise's own
+                  hue. That rule is the signal the glyph was diluting.
+
+                  `icons.ts` STAYS. The exercise catalogue is a browsing surface
+                  where a glyph earns its place — you are scanning for a movement
+                  rather than reading the one in front of you — and it is the
+                  only remaining caller. Nothing about the heuristic changed. */}
               <span className="font-semibold text-text leading-snug truncate" style={{ fontSize: 'var(--text-exercise-title)' }}>{exercise.name}</span>
               {/* Everything from here to the rep window is about the set in
                   front of you. While a drag is live there is no set in front of
@@ -1047,6 +1068,7 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
         onClose={() => setRestSheet(false)}
         exerciseName={exercise.name}
         dayKey={dayKey}
+        dateISO={dateISO}
       />
 
       {/* ── Note (editable) + next-target ── */}

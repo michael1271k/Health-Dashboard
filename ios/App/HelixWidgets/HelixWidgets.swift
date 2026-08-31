@@ -142,7 +142,29 @@ struct HelixWidgetsBundle: WidgetBundle {
     // Availability-gated rather than raising the extension's deployment target:
     // 16.1 is where ActivityKit lands, the rest of the bundle is happy at 16.6,
     // and a target bump is a change to every widget to enable one.
-    if #available(iOS 16.1, *) {
+    //
+    // ── THE GATE IS 18.0, NOT 16.1, AND THAT IS A DECISION ──────────────────
+    // The activity declares `supplementalActivityFamilies([.small])`, which is
+    // what makes the Apple Watch draw a real card instead of mirroring the
+    // Dynamic Island's two 44pt compact slots ("Helix 1/2 75x13"). That
+    // modifier is `@available(iOS 18.0, *)` and returns a different opaque
+    // type, so it cannot be applied conditionally inside a `body` — and there
+    // is no `AnyWidgetConfiguration` to erase it with.
+    //
+    // The obvious alternative — two structs, one with the modifier, chosen by
+    // availability here — does not compile either: `WidgetBundleBuilder` has
+    // `buildOptional`/`buildLimitedAvailability` but NO `buildEither`, so a
+    // bare `if #available` is legal and `else` is not. Two sibling `if`s would
+    // register two configurations for the same `ActivityAttributes` on iOS 18,
+    // which is worse than either branch.
+    //
+    // So the Live Activity requires iOS 18. On 16.1–17 there is simply no
+    // activity: the deck, the widgets and the watch app are untouched, and
+    // `HelixLiveActivityPlugin.start` already wraps `Activity.request` in a
+    // do/catch that resolves `{ started: false }` rather than throwing, which
+    // is exactly the path a missing configuration takes. Accepted deliberately
+    // in exchange for a Watch face that says what you are lifting.
+    if #available(iOS 18.0, *) {
       HelixWorkoutActivityWidget()
     }
     HelixLockWidget()

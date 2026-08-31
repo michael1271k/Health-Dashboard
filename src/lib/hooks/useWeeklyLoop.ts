@@ -559,7 +559,11 @@ function toSessions(d: RangeData): ExportSession[] {
         // localStorage — never in the database. This hook runs client-side, so
         // it can read both without a column or a migration. The export prints
         // the pair only when they disagree.
-        restTargetSec: restTargetFor(r.exercises.name, s.day_key),
+        // Scoped to THIS session's date. The override store used to have no
+        // date in it and was resolved here at read time, so nudging a rest in
+        // tonight's logger silently rewrote what last month's export claimed
+        // you rested for on every session of that day. See `restTargets.ts`.
+        restTargetSec: restTargetFor(r.exercises.name, s.day_key, undefined, s.started_at.slice(0, 10)),
         restPlanSec: programRestSec(r.exercises.name, s.day_key),
       }
       e.sets.push({

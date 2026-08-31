@@ -482,7 +482,11 @@ export function ExerciseBreakdown({ sessionId, exercises, date, dayKey }: {
         const window = timed
           ? (holdTargetFor(ex.name, dayKey) != null ? `${holdTargetFor(ex.name, dayKey)}s` : null)
           : (() => { const w = repWindowFor(ex.name, dayKey); return w ? `${w.floor}–${w.ceiling}` : null })()
-        const restTarget = restTargetFor(ex.name, dayKey)
+        // `date` is the SESSION's, so a rest changed inside that workout is
+        // what this report prints — and a rest changed inside a LATER workout
+        // is not. Without it this line resolved a block-wide store at read
+        // time, so one edit rewrote what every past session says it rested for.
+        const restTarget = restTargetFor(ex.name, dayKey, undefined, date)
         // What the PROGRAM asked for. It used to append a measured median rest
         // here as well, which meant the line could print two different rest
         // figures — one prescribed, one measured — and the measured one was

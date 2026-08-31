@@ -39,6 +39,36 @@ export const REST_MAX_SEC = 300
 
 const KEY = 'helix_rest_targets:v1'
 
+/**
+ * ── AND THE SECOND STORE: ONE SESSION, NOT THE BLOCK ─────────────────────────
+ *
+ * `KEY` above is the PLAN layer. Its key is `program|day|exercise`, which is a
+ * statement about how you train this block — and every reader resolves it at
+ * READ TIME. That is fine for the deck (you are training now) and quietly wrong
+ * everywhere else: `useWeeklyLoop` prints the rest target for a session by
+ * asking this store today, so nudging Calf Press from 1:30 to 1:45 in the
+ * logger rewrote what LAST month's export says you rested for. One edit,
+ * retroactive across every session of that exercise on that day — the same
+ * shape of bug as grading a finished day against today's calorie target.
+ *
+ * A rest you change mid-workout is almost never a revision of the plan. It is
+ * "the gym is busy", "my knee is complaining", "I have twenty minutes" — a fact
+ * about TODAY. So it gets a date in the key and a store of its own, and the
+ * plan layer is left to the one screen that is actually about the plan (the
+ * routine layout, through `RestTargetControl`).
+ *
+ * ── WHY THE DATE IS THE SESSION ID ───────────────────────────────────────────
+ * `save.ts` enforces strictly one session per calendar date, so a date IS a
+ * session — and unlike a session id it exists before the commit, which is the
+ * whole point: the override is made mid-draft and has to survive being written
+ * before the row it belongs to.
+ *
+ * Local-only, like the plan layer, and for the same reason `useWeeklyLoop`
+ * already documents: rest is a target, the export runs client-side, and this
+ * needs no column and no migration.
+ */
+const SESSION_KEY = 'helix_rest_session:v1'
+
 type Store = Record<string, number>
 let cache: Store | null = null
 let version = 0
@@ -60,12 +90,29 @@ export function restTargetsVersion(): number {
   return version
 }
 
+let sessionCache: Store | null = null
+
+function readStore(key: string): Store {
+  if (typeof window === 'undefined') return {}
+  try { return (JSON.parse(window.localStorage.getItem(key) ?? '{}') ?? {}) as Store }
+  catch { return {} }
+}
+
+function writeStore(key: string, store: Store): void {
+  if (typeof window === 'undefined') return
+  try { window.localStorage.setItem(key, JSON.stringify(store)) } catch { /* ignore */ }
+}
+
 function load(): Store {
   if (cache) return cache
-  if (typeof window === 'undefined') { cache = {}; return cache }
-  try { cache = (JSON.parse(window.localStorage.getItem(KEY) ?? '{}') ?? {}) as Store }
-  catch { cache = {} }
+  cache = readStore(KEY)
   return cache
+}
+
+function loadSession(): Store {
+  if (sessionCache) return sessionCache
+  sessionCache = readStore(SESSION_KEY)
+  return sessionCache
 }
 
 function normalize(name: string): string {
@@ -119,10 +166,84 @@ export function programRestSec(
 }
 
 /**
- * The rest target in force: your edit if you made one, else the plan's, else
- * null for a movement the plan says nothing about.
+ * The key a SESSION override is stored under — the plan key with a date on it.
+ *
+ * The date leads, so a future "forget everything before X" sweep is a prefix
+ * scan rather than a parse of every key.
  */
-export function restTargetFor(
+export function sessionRestKey(
+  dateISO: string,
+  exerciseName: string,
+  dayKey?: string | null,
+  programId?: string,
+): string {
+  return `${dateISO}|${restTargetKey(exerciseName, dayKey, programId)}`
+}
+
+/** This session's own rest target for a movement, or null when it has none. */
+export function sessionRestTarget(
+  dateISO: string,
+  exerciseName: string,
+  dayKey?: string | null,
+  programId: string = getActiveProgramId(),
+): number | null {
+  const v = loadSession()[sessionRestKey(dateISO, exerciseName, dayKey, programId)]
+  return typeof v === 'number' && v > 0 ? v : null
+}
+
+/** Was this movement's rest changed for this one session? */
+export function hasSessionRestOverride(
+  dateISO: string,
+  exerciseName: string,
+  dayKey?: string | null,
+  programId: string = getActiveProgramId(),
+): boolean {
+  return sessionRestTarget(dateISO, exerciseName, dayKey, programId) != null
+}
+
+/**
+ * Set (or clear, with `null`) the rest target for ONE session.
+ *
+ * Never touches the plan store, so the routine template is exactly as it was
+ * before the edit — that is the entire distinction this layer exists to draw.
+ * Writing the value that was already in force stores nothing: an override
+ * identical to what it overrides is not an override, and keeping it would pin
+ * this session to today's number if the plan is revised before the export runs.
+ */
+export function setSessionRestTarget(
+  dateISO: string,
+  exerciseName: string,
+  sec: number | null,
+  dayKey?: string | null,
+  programId: string = getActiveProgramId(),
+): void {
+  const key = sessionRestKey(dateISO, exerciseName, dayKey, programId)
+  const store = loadSession()
+  const before = store[key]
+  // The layer BELOW this one — the plan override if there is one, else the
+  // program. Matching it means "no opinion of my own", which is a delete.
+  const beneath = planRestTargetFor(exerciseName, dayKey, programId)
+  if (sec == null || clampRestSec(sec) === beneath) {
+    if (before === undefined) return
+    delete store[key]
+  } else {
+    const next = clampRestSec(sec)
+    if (before === next) return
+    store[key] = next
+  }
+  writeStore(SESSION_KEY, store)
+  emit()
+}
+
+/**
+ * The rest target the PLAN is on — your standing edit if you made one, else the
+ * program's prescription. Knows nothing about any single session.
+ *
+ * This is what `restTargetFor` used to be, and it keeps that behaviour under a
+ * name that says which layer it is, so the routine-layout screen (the one
+ * surface that edits the block) can ask for it explicitly.
+ */
+export function planRestTargetFor(
   exerciseName: string,
   dayKey?: string | null,
   programId: string = getActiveProgramId(),
@@ -132,12 +253,45 @@ export function restTargetFor(
   return programRestSec(exerciseName, dayKey, programId)
 }
 
-/** Did the user move this one off the plan's number? */
+/**
+ * The rest target in force: this session's own if a date is given and it has
+ * one, else the plan's edit, else the program's, else null for a movement the
+ * plan says nothing about.
+ *
+ * ── THE DATE IS OPTIONAL, AND THAT IS THE MIGRATION ──────────────────────────
+ * Every existing caller passes three arguments and keeps exactly the behaviour
+ * it had. A caller that knows WHICH SESSION it is talking about passes a fourth
+ * and gets the honest answer for that session — the deck (the draft's date),
+ * the session report (the session's date) and the export (`started_at`). A
+ * caller that genuinely means "the plan", like the routine layout, passes none
+ * and is right to.
+ */
+export function restTargetFor(
+  exerciseName: string,
+  dayKey?: string | null,
+  programId: string = getActiveProgramId(),
+  dateISO?: string | null,
+): number | null {
+  if (dateISO) {
+    const own = sessionRestTarget(dateISO, exerciseName, dayKey, programId)
+    if (own != null) return own
+  }
+  return planRestTargetFor(exerciseName, dayKey, programId)
+}
+
+/**
+ * Did the user move this one off the plan's number?
+ *
+ * With a date, it answers about THIS SESSION — which is what the logger's chip
+ * needs to know before it marks itself as edited.
+ */
 export function hasRestOverride(
   exerciseName: string,
   dayKey?: string | null,
   programId: string = getActiveProgramId(),
+  dateISO?: string | null,
 ): boolean {
+  if (dateISO && hasSessionRestOverride(dateISO, exerciseName, dayKey, programId)) return true
   return typeof load()[restTargetKey(exerciseName, dayKey, programId)] === 'number'
 }
 
@@ -165,9 +319,7 @@ export function setRestTarget(
     if (before === next) return
     store[key] = next
   }
-  if (typeof window !== 'undefined') {
-    try { window.localStorage.setItem(KEY, JSON.stringify(store)) } catch { /* ignore */ }
-  }
+  writeStore(KEY, store)
   emit()
 }
 
@@ -181,9 +333,12 @@ export function formatRestTarget(sec: number): string {
 // which is exactly right: the writing tab has already emitted.
 if (typeof window !== 'undefined') {
   window.addEventListener('storage', (e) => {
-    if (e.key !== KEY) return
-    try { cache = (JSON.parse(e.newValue ?? '{}') ?? {}) as Store }
-    catch { cache = {} }
+    if (e.key !== KEY && e.key !== SESSION_KEY) return
+    let next: Store
+    try { next = (JSON.parse(e.newValue ?? '{}') ?? {}) as Store }
+    catch { next = {} }
+    if (e.key === KEY) cache = next
+    else sessionCache = next
     emit()
   })
 }

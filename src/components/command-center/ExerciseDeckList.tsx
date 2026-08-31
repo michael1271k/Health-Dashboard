@@ -196,6 +196,10 @@ export function ExerciseDeckList({ draft, history, globalHistory, livePrs, ready
               globalHistory={globalHistory?.get(ex.name) ?? null}
               livePrs={livePrs}
               dayKey={draft.dayKey}
+              // The session's own date. A rest target edited in the logger belongs
+              // to THIS session, and `save.ts` allows one session per date, so
+              // the date is the session id this layer can have before commit.
+              dateISO={draft.date}
               ready={readyByName?.get(ex.name) ?? null}
               reportTargets={reportTargets}
               reducedMotion={reduced}

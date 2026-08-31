@@ -40,10 +40,37 @@ import WidgetKit
 // manual step and now has it: it is a member of BOTH `App` and
 // `HelixWidgetsExtension` (and of neither watch target).
 
-@available(iOS 16.1, *)
-struct HelixWorkoutActivityWidget: Widget {
-  var body: some WidgetConfiguration {
-    ActivityConfiguration(for: HelixWorkoutAttributes.self) { context in
+// ── ONE CONFIGURATION, TWO REGISTRATIONS ─────────────────────────────────────
+//
+// ── WHY THE WATCH SAID "Helix 1/2 75x13" ─────────────────────────────────────
+// That was not a Watch layout. watchOS has no `ActivityConfiguration` at all —
+// this whole file is `#if os(iOS)` for exactly that reason — so before
+// watchOS 11 the Smart Stack mirrored an iPhone Live Activity by rendering its
+// DYNAMIC ISLAND COMPACT regions: `HelixMark`, `shortSet("Set 1 of 2")` → "1/2",
+// and `shortLoad("75 kg × 13")` → "75×13". Two ~44pt slots flanking a camera
+// cutout, drawn on a watch face that has room for four lines. The abbreviations
+// were correct for the surface they were written for and nonsense on the wrist.
+//
+// watchOS 11 / iOS 18 added a real one: declare `supplementalActivityFamilies`
+// and the system asks for `ActivityFamily.small`, a Watch-shaped card, through
+// the SAME content closure — which is why the branch below is in the VIEW
+// (`@Environment(\.activityFamily)`) rather than in a second configuration.
+//
+// ── AND WHY THERE ARE TWO WIDGET STRUCTS ─────────────────────────────────────
+// `supplementalActivityFamilies` is `@available(iOS 18.0, *)` and returns a
+// different opaque type, so it cannot be applied conditionally inside one
+// `body` — and WidgetKit ships no `AnyWidgetConfiguration` to erase it with.
+// What CAN branch on availability is the bundle: `WidgetBundleBuilder` has
+// `buildLimitedAvailability`, which `HelixWidgets.swift` already uses to gate
+// ActivityKit itself at 16.1.
+//
+// So the configuration is a single shared value and the two structs differ by
+// one modifier. Nothing is duplicated — in particular not the Dynamic Island
+// layout, which is the part with a long comment explaining why each fact is in
+// the region it is in, and therefore the part that must not exist twice.
+@available(iOS 18.0, *)
+private var workoutActivityConfiguration: some WidgetConfiguration {
+  ActivityConfiguration(for: HelixWorkoutAttributes.self) { context in
       LockScreenWorkout(context: context)
         // The Lock Screen presentation is drawn on the system's own material.
         // A solid Helix obsidian panel here reads as a black rectangle stuck to
@@ -162,24 +189,42 @@ struct HelixWorkoutActivityWidget: Widget {
       .widgetURL(URL(string: "helix://session"))
       .keylineTint(Color(rgb: context.state.accent))
     }
-  }
+}
 
-  /// "32.5 kg × 10" → "32.5×10". The compact trailing region is about 44pt, and
-  /// dropping the unit buys the rep count — which is the half that changes
-  /// within an exercise, and therefore the half worth showing.
-  private func shortLoad(_ load: String) -> String {
-    load
-      .replacingOccurrences(of: " kg", with: "")
-      .replacingOccurrences(of: " × ", with: "×")
+/// The registration.
+///
+/// `supplementalActivityFamilies([.small])` is what stops the Watch's Smart
+/// Stack falling back to the Dynamic Island's compact regions — see the note at
+/// the top of this file. The system then renders the same content closure again
+/// with `activityFamily == .small`, which `LockScreenWorkout` branches on.
+@available(iOS 18.0, *)
+struct HelixWorkoutActivityWidget: Widget {
+  var body: some WidgetConfiguration {
+    workoutActivityConfiguration.supplementalActivityFamilies([.small])
   }
+}
 
-  /// "Set 3 of 4" → "3/4". Same region, same reason. A label that says "Every
-  /// set logged" has no ordinal in it and collapses to a tick.
-  private func shortSet(_ label: String) -> String {
-    let parts = label.split(separator: " ")
-    guard parts.count == 4, parts[0] == "Set" else { return "✓" }
-    return "\(parts[1])/\(parts[3])"
-  }
+/// "32.5 kg × 10" → "32.5×10". The compact trailing region is about 44pt, and
+/// dropping the unit buys the rep count — which is the half that changes
+/// within an exercise, and therefore the half worth showing.
+///
+/// A free function now rather than a method: the configuration it is called
+/// from is no longer inside a struct, and the abbreviation belongs to the
+/// COMPACT ISLAND rather than to any one registration of it. It is deliberately
+/// not used by the Watch face, which has room for the whole string — using it
+/// there is what produced "75x13" on a wrist.
+private func shortLoad(_ load: String) -> String {
+  load
+    .replacingOccurrences(of: " kg", with: "")
+    .replacingOccurrences(of: " × ", with: "×")
+}
+
+/// "Set 3 of 4" → "3/4". Same region, same reason. A label that says "Every
+/// set logged" has no ordinal in it and collapses to a tick.
+private func shortSet(_ label: String) -> String {
+  let parts = label.split(separator: " ")
+  guard parts.count == 4, parts[0] == "Set" else { return "✓" }
+  return "\(parts[1])/\(parts[3])"
 }
 
 // MARK: - Lock Screen
@@ -308,7 +353,108 @@ private struct CurrentSet: View {
   }
 }
 
-/// The Lock Screen card.
+/// What the system asked for — a Lock Screen card, or the Watch's Smart Stack.
+///
+/// Both arrive through the SAME content closure. The only thing that
+/// distinguishes them is `EnvironmentValues.activityFamily`, and reading it here
+/// rather than declaring a second configuration is what keeps the Dynamic
+/// Island layout, the totals row and the spark in exactly one place.
+///
+/// `.small` is the Watch. Everything else — `.medium`, and any family Apple adds
+/// later — is the phone's Lock Screen, which is the right default: an unknown
+/// family is far more likely to be phone-shaped than wrist-shaped, and the phone
+/// card degrades gracefully where the Watch card's tighter type does not.
+@available(iOS 18.0, *)
+private struct LockScreenWorkout: View {
+  @Environment(\.activityFamily) private var family
+  let context: ActivityViewContext<HelixWorkoutAttributes>
+
+  var body: some View {
+    if family == .small {
+      WatchWorkout(context: context)
+    } else {
+      PhoneLockScreenWorkout(context: context)
+    }
+  }
+}
+
+/// The running workout, on the wrist.
+///
+/// ── WHAT WAS WRONG WITH "Helix 1/2 75x13" ────────────────────────────────────
+/// It was the Dynamic Island's compact pair, mirrored: a 44pt slot's worth of
+/// abbreviation shown on a surface with four lines of room. Nothing on it named
+/// the exercise, and both figures had been squeezed by a constraint that does
+/// not apply here — `shortSet` exists because "Set 1 of 2" does not fit beside a
+/// camera cutout, and on a watch face it fits easily.
+///
+/// ── SO THE WATCH GETS THE FACTS, UNABBREVIATED ───────────────────────────────
+/// Three lines, in the order you need them mid-set:
+///
+///   1. which session, and how long you have been in it;
+///   2. the EXERCISE, by name — the one thing the mirrored card never said;
+///   3. the set you are on and what is on the bar, with the load in the
+///      session's accent because it is the number you are checking.
+///
+/// The volume spark does not come along. It is a shape whose whole value is
+/// being read at a glance from across a bench; at 30pt tall on a wrist it is
+/// texture, and the room it would take is the room the exercise name needs.
+@available(iOS 18.0, *)
+private struct WatchWorkout: View {
+  let context: ActivityViewContext<HelixWorkoutAttributes>
+
+  var body: some View {
+    let accent = Color(rgb: context.state.accent)
+
+    VStack(alignment: .leading, spacing: 3) {
+      HStack(spacing: 4) {
+        HelixMark(size: 11, tint: accent)
+        Text(context.attributes.title)
+          .font(.system(size: 11, weight: .bold, design: .rounded))
+          .foregroundStyle(accent)
+          .lineLimit(1)
+        Spacer(minLength: 2)
+        Text(context.attributes.startedAt, style: .timer)
+          .font(.system(size: 11, weight: .semibold, design: .rounded))
+          .monospacedDigit()
+          .foregroundStyle(Helix.muted)
+          .frame(maxWidth: 44, alignment: .trailing)
+      }
+
+      // The subject. `minimumScaleFactor` rather than truncation: a watch is
+      // narrow enough that "Chest Press (Machine)" would lose the part in
+      // brackets, which is the part that says which machine.
+      Text(context.state.exercise)
+        .font(.system(size: 15, weight: .bold, design: .rounded))
+        .foregroundStyle(.white)
+        .lineLimit(1)
+        .minimumScaleFactor(0.7)
+
+      HStack(alignment: .firstTextBaseline, spacing: 6) {
+        // The FULL label — "Set 1 of 2", not "1/2". This is the surface the
+        // abbreviation was never written for.
+        Text(context.state.setLabel)
+          .font(.system(size: 11, weight: .semibold))
+          .foregroundStyle(Helix.muted)
+          .lineLimit(1)
+        Spacer(minLength: 4)
+        if !context.state.load.isEmpty {
+          // Likewise unabbreviated: "75 kg × 13" reads as a set, "75x13" reads
+          // as a serial number.
+          Text(context.state.load)
+            .font(.system(size: 14, weight: .bold, design: .rounded))
+            .monospacedDigit()
+            .foregroundStyle(accent)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+        }
+      }
+    }
+    .padding(.horizontal, 8)
+    .padding(.vertical, 6)
+  }
+}
+
+/// The phone's Lock Screen card.
 ///
 /// ── THE ORDER IS THE ARGUMENT ────────────────────────────────────────────────
 /// Brand and session, then what the session has accumulated, then the set you
@@ -318,8 +464,8 @@ private struct CurrentSet: View {
 ///
 /// The right column was empty. It now carries the session's volume curve, which
 /// is the one fact that benefits from a shape rather than a figure.
-@available(iOS 16.1, *)
-private struct LockScreenWorkout: View {
+@available(iOS 18.0, *)
+private struct PhoneLockScreenWorkout: View {
   let context: ActivityViewContext<HelixWorkoutAttributes>
 
   var body: some View {

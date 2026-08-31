@@ -140,15 +140,48 @@ export async function computeForDate(
   // split_day fallback for legacy rows compares like with like.
   const dayKey = daySessions?.find((s) => s.day_key)?.day_key ?? null
   const splitDayForBaseline = daySessions?.[0]?.split_day ?? null
+  /**
+   * ── "TYPICAL" HAS TO MEAN A FULL-EFFORT TYPICAL ────────────────────────────
+   *
+   * `workoutDrain` divides this session's tonnage by this average, so the
+   * average is the definition of normal — and it was the last six sessions of
+   * this programme day with no filter on what KIND of week each was.
+   *
+   * One deload week survives that: six sessions back covers roughly six weeks
+   * of a given day, so a single light week is a small minority of the window
+   * and `relative` still reads low, which is exactly the behaviour that means a
+   * deload costs less battery. A deload BLOCK does not survive it. As the light
+   * sessions fill the window the average walks down to meet them, `relative`
+   * climbs back to 1.0, and the discount evaporates precisely as the fatigue it
+   * is modelling accumulates — the athlete looks progressively more drained by
+   * training progressively less.
+   *
+   * So the window is the last six FULL-EFFORT sessions of this day.
+   * `isMaintenanceDate` is the same lever-first union every other surface asks,
+   * so a week released by the Settings toggle counts immediately.
+   *
+   * ── AND THE FALLBACK MATTERS MORE THAN THE FILTER ──────────────────────────
+   * If every candidate is a maintenance session, the filter would leave nothing
+   * and `trailingAvg` would be 0 — which `workoutDrain` reads as "no history,
+   * assume typical", i.e. `relative = 1`, the FULL charge. Refusing to answer
+   * would be worse than the imprecision it is avoiding, so an empty filtered
+   * window falls back to the unfiltered one.
+   */
   let trailingAvg = 0
   if (daySessions?.length) {
     let tq = supabase
-      .from('workout_sessions').select('total_volume_kg, day_key, split_day').eq('user_id', userId)
+      .from('workout_sessions').select('total_volume_kg, day_key, split_day, started_at').eq('user_id', userId)
       .lt('started_at', `${date}T00:00:00Z`).order('started_at', { ascending: false }).limit(6)
     tq = dayKey ? tq.eq('day_key', dayKey) : splitDayForBaseline ? tq.eq('split_day', splitDayForBaseline) : tq
     const { data: trailingRaw } = await tq
-    const trailing = ((trailingRaw ?? []) as Array<{ total_volume_kg: number | null }>)
-      .map((r) => r.total_volume_kg).filter((v): v is number => v != null && v > 0)
+    const rows = ((trailingRaw ?? []) as Array<{ total_volume_kg: number | null; started_at: string }>)
+      .filter((r) => r.total_volume_kg != null && r.total_volume_kg > 0)
+    const storedLever = activeLeverOf(goals)
+    const untilForTrailing = (goals as { maintenance_until?: string | null } | null)?.maintenance_until ?? null
+    const fullEffort = rows.filter(
+      (r) => !isMaintenanceDate(r.started_at.slice(0, 10), storedLever, untilForTrailing, todayISO),
+    )
+    const trailing = (fullEffort.length ? fullEffort : rows).map((r) => r.total_volume_kg as number)
     trailingAvg = trailing.length ? trailing.reduce((s, v) => s + v, 0) / trailing.length : 0
   }
 

@@ -143,6 +143,40 @@ export function workoutMaxFor(dayKey?: string | null, maintenance = false): numb
   return maintenance ? base * MAINTENANCE_DRAIN_FACTOR : base
 }
 
+/**
+ * The floor of the relative term, on a maintenance day.
+ *
+ * ── WHY THE NORMAL FLOOR IS WRONG ON A DELOAD ────────────────────────────────
+ * `relMin` is 0.6, and its own comment says why: "a session at ≤60% of normal
+ * still costs something". That is a statement about a NORMAL week, where a
+ * short session usually means a session that was cut off — you still warmed up,
+ * still travelled, still worked. The floor stops the model claiming a half
+ * session was free.
+ *
+ * On a deload the same floor argues the opposite of the week's instruction. A
+ * maintenance session at 45% of its own trailing average is charged as though
+ * it were 60%, because the clamp will not go lower: the multiplier bottoms out
+ * at `0.6/1.4 = 0.43` however light the week actually was, so the one variable
+ * that is supposed to fall cannot fall past a point.
+ *
+ * 0.35 is the floor for those days. It is still a floor — a maintenance session
+ * is not free either, and the fixed costs are the same ones — it simply sits
+ * below the range a real deload occupies instead of inside it. On the worked
+ * case (a legs day at 45% of normal, RPE 6) the drain goes 6.1 → 4.4.
+ *
+ * ── AND IT IS SAFE BY CONSTRUCTION ───────────────────────────────────────────
+ * A LOWER floor can only ever lower a drain, so `MAX_TOTAL_DRAIN` is untouched
+ * and the invariant v6 broke — the drain budget staying strictly under the
+ * charge budget — still holds without needing to be rechecked. That is the same
+ * argument `MAINTENANCE_DRAIN_FACTOR` makes for being a factor below 1.
+ */
+export const MAINTENANCE_REL_MIN = 0.35
+
+/** The floor of the relative term for this kind of day. */
+export function relMinFor(maintenance: boolean): number {
+  return maintenance ? MAINTENANCE_REL_MIN : BATTERY.relMin
+}
+
 /** Wake charge from sleep quality (0..1): 55 + 45·q, rounded. */
 export function computeMorningCharge(sleepQuality: number): number {
   return Math.round(BATTERY.wakeMin + BATTERY.wakeRange * clamp(sleepQuality, 0, 1))
@@ -190,6 +224,14 @@ export function timeDrain(hoursAwake: number): number {
  * `sessionRpe` is the CR-10 the session was logged with. Absent, it defaults to
  * 0.7 — a normal hard-ish session — rather than to 0, because a session you
  * forgot to rate still happened.
+ *
+ * ── RPE IS NOT DISCOUNTED ON A DELOAD, AND THAT IS DELIBERATE ────────────────
+ * `maintenance` lowers the ceiling (`workoutMaxFor`) and the relative floor
+ * (`relMinFor`) and touches nothing else. It must never scale the effort term:
+ * if you logged RPE 9 on a maintenance day then it WAS a nine, and a model that
+ * quietly halved the one honest input the athlete supplies would be telling you
+ * you are fresh on the day you are not. The week's lightness is expressed by
+ * the two terms that describe the PLAN; the RPE describes what happened.
  */
 export function workoutDrain(
   sessionVolumeKg: number,
@@ -201,7 +243,8 @@ export function workoutDrain(
   if (!(sessionVolumeKg > 0)) return 0
   const relative = trailingAvgVolumeKg > 0 ? sessionVolumeKg / trailingAvgVolumeKg : 1
   const intensity = sessionRpe != null && sessionRpe > 0 ? clamp(sessionRpe / 10, 0, 1) : BATTERY.defaultRpe
-  return workoutMaxFor(dayKey, maintenance) * intensity * clamp(relative, BATTERY.relMin, BATTERY.relMax) / BATTERY.relMax
+  return workoutMaxFor(dayKey, maintenance) * intensity
+    * clamp(relative, relMinFor(maintenance), BATTERY.relMax) / BATTERY.relMax
 }
 
 /**
@@ -209,7 +252,8 @@ export function workoutDrain(
  *   currentPct = clamp(wakeCharge − timeDrain − activityDrain − workoutDrain, floor, 100)
  *   timeDrain     = timeMax × (1 − cos(π · awake/maxAwake)) / 2
  *   activityDrain = min(cap, 0.004×activeCal + 0.5×(steps/1000))
- *   workoutDrain  = workoutMax × (rpe/10) × clamp(vol/trailingAvg, 0.6, 1.4) / 1.4
+ *   workoutDrain  = workoutMax × (rpe/10) × clamp(vol/trailingAvg, relMin, 1.4) / 1.4
+ *                   relMin = 0.6, or 0.35 on a maintenance day
  */
 export function computeBattery(inputs: ScoringInputs, hoursAwake?: number): BatteryState {
   const wakeCharge = computeMorningCharge(computeSleepQuality(inputs))

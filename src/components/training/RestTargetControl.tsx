@@ -10,14 +10,21 @@ import {
 } from '@/lib/training/restTargets'
 
 /**
- * The rest-target dial — ONE implementation, used wherever a target is editable.
+ * The rest-target dial for the PLAN.
  *
- * It appears on two surfaces that look nothing alike (the live logger's open
- * card, the routine layout's plan row) and must behave identically on both:
- * same step, same bounds, same reset, same haptic on `pointerDown` rather than
- * on click. Two hand-rolled copies of a ± pair is two chances for those to
- * drift apart, and the drift is invisible until someone notices the logger
- * moving in fifteens and the plan in tens.
+ * ── ⚠️ THIS WRITES THE BLOCK, NOT A SESSION ─────────────────────────────────
+ * `setRestTarget` stores under `program|day|exercise` — no date — and every
+ * reader resolves that store at READ TIME, including `useWeeklyLoop`. So an
+ * edit made through this control changes what EVERY past export says you
+ * rested for on that movement. That is correct for a surface about the routine
+ * and wrong for one about today, which is why the logger no longer uses it:
+ * `RestTargetSheet` writes the session tier (`setSessionRestTarget`) and offers
+ * promoting a value to the plan as a separate, named act.
+ *
+ * Do not mount this inside the logger. If a routine-layout screen ever wants a
+ * dial, this is the one it should use — same step, same bounds, same reset,
+ * same haptic on `pointerDown` rather than on click, so the two surfaces cannot
+ * drift into moving in fifteens and tens.
  *
  * Renders nothing when the plan prescribes no rest for the movement — a dial
  * with no prescription behind it invents one.
