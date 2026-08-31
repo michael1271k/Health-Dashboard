@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Check, History, Loader2 } from 'lucide-react'
 import { useSaveBodyMetrics, type BodyMetricsPatch, type DayVaultData } from '@/lib/hooks/useDayVault'
 import { useLatestBodyReading, type CarryField } from '@/lib/hooks/useLatestBodyReading'
+import { useFlash } from '@/lib/hooks/useFlash'
 import { deriveBodyComp, whrBand, visceralBand, type BodyCompInput, type BodyCompDerived, type WhrBand, type VisceralBand } from '@/lib/body/composition'
 import { EMBER, EMERALD, GOLD, OXIDE } from '@/lib/theme/palette'
 
@@ -103,7 +104,7 @@ export function InBodyForm({ date, log, onSaved }: {
   onSaved?: () => void
 }) {
   const [edits, setEdits] = useState<Record<string, string>>({})
-  const [saved, setSaved] = useState(false)
+  const [saved, flashSaved] = useFlash(2500)
   const save = useSaveBodyMetrics(date)
   const { data: last } = useLatestBodyReading(date)
 
@@ -158,8 +159,7 @@ export function InBodyForm({ date, log, onSaved }: {
     save.mutate(patch, {
       onSuccess: () => {
         setEdits({})
-        setSaved(true)
-        setTimeout(() => setSaved(false), 2500)
+        flashSaved()
         onSaved?.()
       },
     })

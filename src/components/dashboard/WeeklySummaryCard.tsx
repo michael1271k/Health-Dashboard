@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { ChevronRight, Trophy } from 'lucide-react'
 import { useWeekSessions, weekStartOf } from '@/lib/hooks/useWeekSessions'
-import { isWeekReady } from '@/components/pathfinder/PathfinderTimeline'
+import { isWeekReady } from '@/lib/training/weekReady'
 import { isoAddDays, isWeekComplete } from '@/lib/utils/week'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { fmtVolume } from '@/lib/utils/units'

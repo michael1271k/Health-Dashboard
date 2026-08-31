@@ -8,6 +8,7 @@ import { initDeepLinks } from '@/lib/native/deepLink'
 import { reloadWidgets } from '@/lib/native/widgets'
 import { invalidateHealthData } from '@/lib/query/workoutKeys'
 import { hydratePrefsFromDb } from '@/lib/utils/prefsSync'
+import { warmHaptics } from '@/lib/native/haptics'
 
 /**
  * Boots native-only behaviour (HealthKit permission + resume/foreground sync,
@@ -24,6 +25,11 @@ export function NativeBoot() {
   // handled the instant it arrives, and the sync effect deliberately waits out
   // a paint frame and a permission sheet before it does anything.
   useEffect(() => initDeepLinks((path) => router.push(path)), [router])
+
+  // Resolve the haptics plugin before the first tap needs it, so the very first
+  // gesture of a launch lands on the same frame as its animation rather than a
+  // microtask later. No-op off-native and idempotent — see `haptics.ts`.
+  useEffect(() => { warmHaptics() }, [])
 
   useEffect(() => {
     const stopSync = initNativeSync(() => {

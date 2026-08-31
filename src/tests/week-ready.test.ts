@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { isWeekReady } from '@/components/pathfinder/PathfinderTimeline'
+import { isWeekReady } from '@/lib/training/weekReady'
 
 /**
  * The gold "ready week" aura. HELIX-5 trains Sun/Mon/Tue/Thu/Fri; Wed and Sat

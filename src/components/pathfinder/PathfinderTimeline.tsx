@@ -34,6 +34,8 @@ import { DayCard } from '@/components/timeline/ContinuumTimeline'
 import { SwapDayControl, RestTodayButton } from '@/components/day/SwapDayControl'
 import { dayColor, EMERALD, MUTED, REST, SAPPHIRE, WEEK_STATE } from '@/lib/theme/palette'
 import { useIsMaintenanceDate } from '@/lib/hooks/useMaintenance'
+import { isWeekReady } from '@/lib/training/weekReady'
+import { useFlash } from '@/lib/hooks/useFlash'
 
 const label = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 
@@ -45,21 +47,16 @@ function dominantSplit(days: TimelineWeekNode['days']): string | undefined {
   return best
 }
 
-/**
- * A week is READY when every scheduled training day in it that has already
- * passed carries a logged session — i.e. you did the work the program asked for.
- * Ready weeks get the gold aura: the visual reward for a complete week, and the
- * cue that it's worth exporting for review.
+/*
+ * `isWeekReady` moved to `lib/training/weekReady.ts`.
  *
- * `today` bounds it so the live week can be ready on its last training day
- * rather than only after Saturday midnight.
+ * `WeeklySummaryCard` renders on the DASHBOARD and imported it from here. That
+ * one value import pulled this module in, which pulls `useWeeklyLoop`, which
+ * pulls `lib/reports/weeklyExport.ts` — 115 KB of report-prose generation, in
+ * the home route's first-load JS, for a single boolean. Re-exported so this
+ * file's own importers are unaffected.
  */
-export function isWeekReady(weekStart: string, loggedDates: Set<string>, today: string): boolean {
-  const due = Array.from({ length: 7 }, (_, i) => isoAddDays(weekStart, i))
-    .filter((d) => d <= today && isTrainingDay(d))
-  if (!due.length) return false
-  return due.every((d) => loggedDates.has(d))
-}
+export { isWeekReady }
 
 // `isWeekComplete` moved to lib/utils/week.ts. It lived here, where the
 // dashboard could not reach it, and the dashboard duly grew a second and looser
@@ -502,7 +499,7 @@ function WeekActions({ node }: { node: TimelineWeekNode }) {
   const { data: summaries } = useWeeklyAiSummaries()
   const { data: sentinelReports } = useSentinelReports()
   const saveSentinel = useSaveSentinelReport()
-  const [copied, setCopied] = useState(false)
+  const [copied, flashCopied] = useFlash()
   const [pasteOpen, setPasteOpen] = useState(false)
   const [draft, setDraft] = useState('')
 
@@ -547,8 +544,7 @@ function WeekActions({ node }: { node: TimelineWeekNode }) {
     if (!text) return
     try {
       await navigator.clipboard.writeText(text)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2200)
+      flashCopied()
     } catch {
       // Clipboard blocked (insecure context / permissions / lost gesture) —
       // drop the payload into the textarea so it's never unreachable.

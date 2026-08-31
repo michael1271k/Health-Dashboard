@@ -3,6 +3,30 @@
 import { LazyMotion, MotionConfig, domMax } from 'framer-motion'
 import { STANDARD, useHelixReducedMotion } from '@/lib/motion'
 
+/*
+ * ── `features={domMax}` IS DELIBERATE. THE ASYNC FORM WAS TRIED AND REVERTED ─
+ *
+ * framer documents a loader form — `features={() => import('./features')
+ * .then(m => m.domMax)}` — and on the face of it this file is doing the thing
+ * that form exists to prevent: handing `LazyMotion` a resolved value, so
+ * webpack has framer's whole DOM feature set at module scope and it lands in
+ * the root layout chunk.
+ *
+ * MEASURED, on this app's build (2026-08-31): splitting it out — via a
+ * dedicated one-export module, because a dynamic `import('framer-motion')` from
+ * a file that also imports `LazyMotion` statically splits nothing — moved
+ * 7 KB raw / 2 KB gzipped, and produced no new async chunk at all. Next groups
+ * framer into a deterministic shared vendor chunk (`4bd1b696`, 169 KB) that
+ * every route needs anyway for `m`, `AnimatePresence` and `MotionConfig`, and
+ * the feature bundle rides along regardless of how it is referenced.
+ *
+ * What the loader form DOES cost is real: until the features resolve, every
+ * `m.*` in the tree renders as static DOM, so the first frame after hydration
+ * skips its animation. Paying a visible regression for two kilobytes is the
+ * wrong trade, so this stays as it is. Revisit only if the vendor chunking
+ * changes.
+ */
+
 /**
  * Loads framer-motion's DOM features lazily (LazyMotion) so the initial bundle
  * stays small while every `m.*` element animates at 60fps. `domMax` adds drag

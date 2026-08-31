@@ -93,6 +93,23 @@ const MERGE_HOLD_MS = 600
  * target; release anywhere else and it is an ordinary reorder.
  *
  * Exit is `Done`, or Escape on a keyboard. Both restore taps immediately.
+ *
+ * ── dnd-kit STAYS IN THE FIRST LOAD. MEASURED, NOT ASSUMED ───────────────────
+ * Four `@dnd-kit` packages sit in the dashboard's critical path for a gesture
+ * used roughly twice a year, which reads like an obvious `next/dynamic`
+ * candidate. It is not, for two reasons found by measuring rather than reading:
+ *
+ *   · SIZE. The whole of dnd-kit is one 55 KB raw / 18 KB gzipped chunk, shared
+ *     with `/session`, against a 1,123 KB / 335 KB dashboard. Five percent.
+ *   · GESTURE. `useSortable` is a hook inside every tile and the long-press that
+ *     ENTERS edit mode is the TouchSensor's own `delay: 450` — so deferring the
+ *     library defers the tiles too. Either the press that opens arrange mode
+ *     stops being the press that starts the drag (an iOS behaviour this
+ *     deliberately copies), or the whole grid remounts on an idle callback a
+ *     beat after first paint, flashing every widget.
+ *
+ * Five percent is not worth either. Revisit if dnd-kit grows or if the arrange
+ * gesture stops being press-and-drag.
  */
 export function WidgetGrid({ children }: {
   /** Render one widget for an id, given the size its slot is currently set to. */

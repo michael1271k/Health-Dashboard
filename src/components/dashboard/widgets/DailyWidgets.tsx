@@ -2,6 +2,7 @@
 
 import { memo, useMemo, useState } from 'react'
 import { useVisibleInterval } from '@/lib/hooks/useVisibleInterval'
+import { useFlash } from '@/lib/hooks/useFlash'
 import { RotateCw, Check, Loader2, Timer, HeartPulse, Flame, Ruler } from 'lucide-react'
 import { WidgetFrame, WidgetEmpty } from '@/components/dashboard/WidgetFrame'
 import { Bar, HalfArc, Hero, MiniBars, Milestones, StatTile, Trend, vsBaseline } from './parts'
@@ -445,7 +446,7 @@ function CardioWidgetImpl({ size, onOpen }: { size: WidgetSize; onOpen?: () => v
   const { data: zone2 } = useZone2Week(today)
   const last = useLastCardio('walk')
   const add = useAddCardio(today)
-  const [done, setDone] = useState(false)
+  const [done, flashDone] = useFlash()
 
   /** Today, folded into one session: distance and time add, heart rate means. */
   const now = useMemo(() => {
@@ -489,7 +490,7 @@ function CardioWidgetImpl({ size, onOpen }: { size: WidgetSize; onOpen?: () => v
       avg_hr: null,
       effort: null,
     }, {
-      onSuccess: () => { setDone(true); void tapSuccess(); setTimeout(() => setDone(false), 2200) },
+      onSuccess: () => { flashDone(); void tapSuccess() },
     })
   }
 

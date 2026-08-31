@@ -50,9 +50,78 @@ function isJsonSafe(data: unknown, depth = 3): boolean {
  */
 const MAX_PERSISTED_BYTES = 96 * 1024
 
-function isSmallEnough(data: unknown): boolean {
-  try { return JSON.stringify(data).length <= MAX_PERSISTED_BYTES } catch { return false }
+/**
+ * ── AND A BUDGET FOR THE WHOLE BLOB ──────────────────────────────────────────
+ *
+ * The per-query cap above bounds the biggest entry and nothing else. There are
+ * ~140 distinct `queryKey` declarations in `lib/`, `gcTime` is 30 minutes, and
+ * the cache accretes every query touched inside that window — so the ceiling
+ * was 140 × 96 KB against WebKit's ~5 MB ORIGIN quota, which this blob shares
+ * with nineteen other `helix_*` keys including the live session draft.
+ *
+ * Two things go wrong at the top of that range, and the second is worse than
+ * the first. The restore is a synchronous `JSON.parse` before children render,
+ * so growth is paid on every cold start whether or not the route that wrote it
+ * is the one being opened. And an over-quota origin makes EVERY
+ * `localStorage.setItem` throw — including the draft autosave, which is the one
+ * write in this app that must never fail.
+ *
+ * So dehydration takes a budget. Queries are admitted newest-first, which is
+ * the right order for a cache whose purpose is to paint the last screen you
+ * looked at, and admission stops once the budget is spent. The counter resets
+ * on each dehydrate pass; `shouldDehydrateQuery` is called once per query per
+ * pass, in the order the cache holds them, so `dataUpdatedAt` has to be
+ * compared against the pass rather than assumed sorted — hence the two-stage
+ * check rather than a running total alone.
+ */
+const MAX_TOTAL_PERSISTED_BYTES = 1.5 * 1024 * 1024
+
+function sizeOf(data: unknown): number {
+  try { return JSON.stringify(data).length } catch { return Number.POSITIVE_INFINITY }
 }
+
+function isSmallEnough(data: unknown): boolean {
+  return sizeOf(data) <= MAX_PERSISTED_BYTES
+}
+
+type PersistableQuery = Parameters<typeof defaultShouldDehydrateQuery>[0]
+
+/** Everything the per-query rules already allow, before the budget applies. */
+function isEligible(q: PersistableQuery): boolean {
+  return defaultShouldDehydrateQuery(q) && isJsonSafe(q.state.data) && isSmallEnough(q.state.data)
+}
+
+/**
+ * Which query hashes fit inside the budget, newest data first.
+ *
+ * Newest-first because the point of this cache is to paint the screen you were
+ * last on. A cache that dropped the freshest rows to keep an hour-old one would
+ * be paying the whole restore cost for the wrong screen.
+ */
+function admitNewestFirst(cache: { getAll: () => PersistableQuery[] }): Set<string> {
+  const candidates = cache.getAll()
+    .filter(isEligible)
+    .sort((a, b) => b.state.dataUpdatedAt - a.state.dataUpdatedAt)
+
+  const keep = new Set<string>()
+  let used = 0
+  for (const q of candidates) {
+    const bytes = sizeOf(q.state.data)
+    if (used + bytes > MAX_TOTAL_PERSISTED_BYTES) break
+    used += bytes
+    keep.add(q.queryHash)
+  }
+  return keep
+}
+
+/**
+ * `shouldDehydrateQuery` is asked one query at a time and cannot see the pass it
+ * belongs to, so the admission set is computed once and reused for the rest of
+ * it. Dehydration is throttled to 2s (see `throttleTime` below), so a 500 ms
+ * window is comfortably inside one pass and comfortably outside the next.
+ */
+const admission = { at: 0, keep: new Set<string>() }
+const PASS_WINDOW_MS = 500
 
 export function QueryProvider({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -126,8 +195,15 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
         // a cache written before it crashed the report on `prAxes.length`.
         buster: 'v21',
         dehydrateOptions: {
-          shouldDehydrateQuery: (q) =>
-            defaultShouldDehydrateQuery(q) && isJsonSafe(q.state.data) && isSmallEnough(q.state.data),
+          shouldDehydrateQuery: (q) => {
+            if (!isEligible(q)) return false
+            const now = Date.now()
+            if (now - admission.at > PASS_WINDOW_MS) {
+              admission.at = now
+              admission.keep = admitNewestFirst(queryClient.getQueryCache())
+            }
+            return admission.keep.has(q.queryHash)
+          },
         },
       }}
     >

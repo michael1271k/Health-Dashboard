@@ -41,10 +41,19 @@ type OnSynced = () => void
 function documentReady(): Promise<void> {
   if (typeof document === 'undefined' || document.readyState === 'complete') return Promise.resolve()
   return new Promise((resolve) => {
-    const done = () => { window.removeEventListener('load', done); resolve() }
+    // The safety net below must be cancelled by the normal path, or every boot
+    // leaves a 4s timer running past the moment it could matter — harmless in
+    // isolation, and exactly the kind of thing that keeps a backgrounding
+    // webview awake for no reason.
+    let net: ReturnType<typeof setTimeout> | null = null
+    const done = () => {
+      if (net) { clearTimeout(net); net = null }
+      window.removeEventListener('load', done)
+      resolve()
+    }
     window.addEventListener('load', done, { once: true })
     // Safety net: never block the sync chain forever on a stalled load event.
-    setTimeout(done, 4000)
+    net = setTimeout(done, 4000)
   })
 }
 
