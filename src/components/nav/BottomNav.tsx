@@ -39,8 +39,14 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Mobile navigation"
+      /* `max()` on the bottom inset, matching the `.safe-pb` convention in
+         globals.css. The raw variable is 0 on a device with no home indicator —
+         an iPhone SE, or the desktop PWA at a narrow width — which sat the tab
+         row flush against the physical edge of the screen with nothing under
+         the labels. The sides stay raw: a zero side inset genuinely wants zero
+         padding, because the nav is already full-bleed by design. */
       className="app-chrome fixed bottom-0 left-0 right-0 z-50 md:hidden
-                 border-t border-white/[0.08] pb-[var(--safe-bottom)]
+                 border-t border-white/[0.08] pb-[max(0.375rem,var(--safe-bottom))]
                  pl-[var(--safe-left)] pr-[var(--safe-right)]"
     >
       <ul className="flex items-stretch justify-around h-[var(--nav-height)]" role="list">

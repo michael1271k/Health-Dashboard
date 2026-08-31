@@ -139,7 +139,7 @@ export function SessionHighlights({ sessionId, exercises }: { sessionId: string;
         <button
           type="button"
           onClick={() => setExpanded(true)}
-          className="inline-flex items-center gap-1 px-2 min-h-[28px] rounded-lg text-[10px] font-semibold
+          className="hit-44-y inline-flex items-center gap-1 px-2 min-h-[28px] rounded-lg text-[10px] font-semibold
                      text-muted border border-white/[0.12] hover:text-text active:scale-95 transition-transform"
         >
           <Plus className="w-3 h-3" aria-hidden="true" />{hidden} more

@@ -741,7 +741,16 @@ function TunerBlock({ label, children }: { label: string; children: React.ReactN
       <span className="block mb-1 text-[9px] font-bold uppercase tracking-[0.1em] text-muted/60">{label}</span>
       {/* One pill, hairline-divided. A single bordered container rather than
           separate bordered buttons: three outlines in a 38px row reads as three
-          objects, and they are one control. */}
+          objects, and they are one control.
+
+          ── AND NO `hit-44` SLOP IN THIS FILE ──
+          These controls are 34–38pt, under Apple's 44, and deliberately left
+          that way. A set row's whole pitch is about 40pt, so a 44pt slop
+          rectangle on any control here would extend over the row above and the
+          row below — and the last one painted takes the tap. The slop utility
+          only helps a control with clear space around it (see `globals.css`);
+          inside a packed list the honest fix is the row height itself, which is
+          the density this deck exists for. */}
       <div className="flex items-stretch rounded-xl border border-border bg-surface-2 overflow-hidden min-h-[38px]">
         {children}
       </div>

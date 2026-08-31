@@ -232,7 +232,7 @@ const WeekHeader = memo(function WeekHeader({ weekStart, phase, onOpenWeek }: {
         style={{ borderColor: color, boxShadow: rgb ? `0 0 8px rgba(${rgb},0.45)` : undefined }} aria-hidden="true" />
       <WeekChipLabel weekStart={weekStart} className="min-w-0" />
       <span className="h-px flex-1" style={{ background: rgb ? `rgba(${rgb},0.22)` : `${STEEL}30` }} />
-      <button onClick={() => onOpenWeek(weekStart)} onPointerUp={blurOnTap} className="p-1.5 rounded-lg hover:bg-white/[0.06] min-h-[32px]" style={{ color }}
+      <button onClick={() => onOpenWeek(weekStart)} onPointerUp={blurOnTap} className="hit-44 p-1.5 rounded-lg hover:bg-white/[0.06] min-h-[32px]" style={{ color }}
         aria-label={`Open files for ${label}`}>
         <FolderOpen className="w-3.5 h-3.5" />
       </button>

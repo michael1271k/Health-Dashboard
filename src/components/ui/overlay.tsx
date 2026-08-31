@@ -15,20 +15,64 @@ export function Portal({ children }: { children: React.ReactNode }) {
   return createPortal(children, document.body)
 }
 
+/**
+ * ── `overflow: hidden` IS NOT A SCROLL LOCK ON iOS ───────────────────────────
+ *
+ * It stops the body from scrolling further and does nothing about the two
+ * things that actually matter behind an open sheet: the page still RUBBER-BANDS
+ * when a drag reaches the end of the sheet's own scroller, and Safari is free
+ * to forget where the page was — so closing a sheet could land you somewhere
+ * other than where you opened it.
+ *
+ * The fix is the standard one, and the only one WebKit honours: take the page
+ * out of flow at its current offset (`position: fixed; top: -scrollY`), then put
+ * it back and restore the offset on release. The scroll position is captured
+ * ONCE, on the outermost acquire, because a stacked sheet opening on top must
+ * not re-read a body that is already frozen at `top: -1200px` and record zero.
+ *
+ * `resetOverlayLock` unwinds exactly the same state — see its note on why a
+ * navigation is the right amnesty.
+ */
+let overlayCount = 0
+let lockedScrollY = 0
+
+function applyLock(): void {
+  const { body } = document
+  body.style.position = 'fixed'
+  body.style.top = `${-lockedScrollY}px`
+  body.style.left = '0'
+  body.style.right = '0'
+  body.style.width = '100%'
+  body.style.overflow = 'hidden'
+}
+
+function clearLock(restore: boolean): void {
+  const { body } = document
+  body.style.position = ''
+  body.style.top = ''
+  body.style.left = ''
+  body.style.right = ''
+  body.style.width = ''
+  body.style.overflow = ''
+  body.classList.remove('helix-overlay-open')
+  // `auto` behaviour, not smooth: this is putting the page back where it was,
+  // not travelling to it, and a smooth scroll here reads as the page sliding
+  // away underneath a sheet that has only just closed.
+  if (restore) window.scrollTo({ top: lockedScrollY, behavior: 'instant' as ScrollBehavior })
+  lockedScrollY = 0
+}
+
 // Ref-counted so stacked overlays (a Sheet under a stacked Sheet) don't have the
 // inner one's cleanup strip the body state while the outer is still open.
-let overlayCount = 0
 function acquireOverlay() {
+  if (overlayCount === 0) lockedScrollY = window.scrollY
   overlayCount += 1
-  document.body.style.overflow = 'hidden'
+  applyLock()
   document.body.classList.add('helix-overlay-open')
 }
 function releaseOverlay() {
   overlayCount = Math.max(0, overlayCount - 1)
-  if (overlayCount === 0) {
-    document.body.style.overflow = ''
-    document.body.classList.remove('helix-overlay-open')
-  }
+  if (overlayCount === 0) clearLock(true)
 }
 
 /**
@@ -43,8 +87,10 @@ function releaseOverlay() {
  */
 export function resetOverlayLock() {
   overlayCount = 0
-  document.body.style.overflow = ''
-  document.body.classList.remove('helix-overlay-open')
+  // No scroll restore. A navigation has already given the new route its own
+  // scroll position, and putting the OLD one back would drop the user partway
+  // down a page they have not seen yet.
+  clearLock(false)
 }
 
 /**

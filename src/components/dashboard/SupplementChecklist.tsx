@@ -307,10 +307,13 @@ export function SupplementChecklist() {
               </label>
               <div className="flex flex-col justify-end">
                 <span className="text-[10px] uppercase tracking-wide text-muted mb-1">Colour</span>
-                <div className="flex items-center gap-1.5">
+                {/* gap-4 rather than gap-1.5: the `.hit-44` slop is 44pt wide and
+                    a tighter row would let each swatch's target cover its
+                    neighbour's, so the one painted last would take both taps. */}
+                <div className="flex items-center gap-4">
                   {COLORS.map((c) => (
                     <button key={c} onClick={() => setEditing((s) => (s ? { ...s, color: c } : s))} aria-label={`Colour ${c}`}
-                      className="w-5 h-5 rounded-full border-2 transition-transform active:scale-90"
+                      className="hit-44 w-5 h-5 rounded-full border-2 transition-transform active:scale-90"
                       style={{ background: c, borderColor: editing.color === c ? '#fff' : 'transparent' }} />
                   ))}
                 </div>
@@ -324,11 +327,15 @@ export function SupplementChecklist() {
                 className="mt-1 w-full rounded-lg bg-surface-2 border border-border px-3 py-2 field-compact text-text" />
             </label>
 
+            {/* `hit-44-y` below, not `hit-44`: seven toggles across a phone
+                means a 44pt-WIDE target would overlap its neighbours and the
+                one painted last would take both taps. Height is the axis a
+                thumb actually misses on. */}
             <div className="flex items-center gap-1.5">
               <span className="text-[10px] uppercase tracking-wide text-muted mr-1">Days</span>
               {WD.map((d, i) => (
                 <button key={i} onClick={() => toggleEditDay(i)}
-                  className="w-7 h-7 rounded-full text-[11px] font-bold transition-colors"
+                  className="hit-44-y w-7 h-7 rounded-full text-[11px] font-bold transition-colors"
                   style={editing.days.includes(i)
                     ? { background: `${editing.color}22`, color: editing.color, border: `1px solid ${editing.color}66` }
                     : { color: '#79808C', border: '1px solid rgba(255,255,255,0.08)' }}>
@@ -395,11 +402,11 @@ export function SupplementChecklist() {
               className="w-full rounded-lg bg-surface-2 border border-border px-3 py-2 field-compact text-text" />
 
             {/* Colour */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-4">
               <span className="text-[10px] uppercase tracking-wide text-muted">Colour</span>
               {COLORS.map((c) => (
                 <button key={c} onClick={() => setForm((f) => ({ ...f, color: c }))} aria-label={`Colour ${c}`}
-                  className="w-6 h-6 rounded-full border-2 transition-transform active:scale-90"
+                  className="hit-44 w-6 h-6 rounded-full border-2 transition-transform active:scale-90"
                   style={{ background: c, borderColor: form.color === c ? '#fff' : 'transparent' }} />
               ))}
             </div>
@@ -409,7 +416,7 @@ export function SupplementChecklist() {
               <span className="text-[10px] uppercase tracking-wide text-muted mr-1">Days</span>
               {WD.map((d, i) => (
                 <button key={i} onClick={() => toggleDay(i)}
-                  className="w-7 h-7 rounded-full text-[11px] font-bold transition-colors"
+                  className="hit-44-y w-7 h-7 rounded-full text-[11px] font-bold transition-colors"
                   style={form.days.includes(i)
                     ? { background: `${form.color}22`, color: form.color, border: `1px solid ${form.color}66` }
                     : { color: '#79808C', border: '1px solid rgba(255,255,255,0.08)' }}>

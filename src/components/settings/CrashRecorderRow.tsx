@@ -20,7 +20,7 @@ export function CrashRecorderRow() {
         <div className="flex items-center justify-between gap-2">
           <span className="text-fluid-sm text-text font-medium">Last recorded crash</span>
           <button onClick={() => { try { localStorage.removeItem('helix_last_crash') } catch { /* ignore */ } setCrash(null) }}
-            className="text-fluid-xs text-muted hover:text-text min-h-[32px]">clear</button>
+            className="hit-44 text-fluid-xs text-muted hover:text-text min-h-[32px]">clear</button>
         </div>
         <p className="text-[11px] font-mono text-muted break-words">
           {new Date(crash.at).toLocaleString('en-GB')} · build {crash.buildId.slice(0, 10)}<br />{crash.message}

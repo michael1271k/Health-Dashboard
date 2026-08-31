@@ -41,7 +41,21 @@ export function DatePickerPopover({ value, max, disabledDates, onSelect, onClose
 
   return (
     <Portal>
-    <div className="fixed inset-0 z-[90] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Pick session date">
+    {/* The safe-area padding is not decoration: this is the one overlay in the
+        app not built on `Sheet` (which handles its own insets), and `p-4` alone
+        put it under the sensor housing in landscape and under the home
+        indicator on a short screen. `max()` keeps the 1rem it already had
+        wherever the inset is zero. */}
+    <div
+      className="fixed inset-0 z-[90] flex items-center justify-center"
+      style={{
+        paddingTop: 'max(1rem, var(--safe-top))',
+        paddingBottom: 'max(1rem, var(--safe-bottom))',
+        paddingLeft: 'max(1rem, var(--safe-left))',
+        paddingRight: 'max(1rem, var(--safe-right))',
+      }}
+      role="dialog" aria-modal="true" aria-label="Pick session date"
+    >
       <button type="button" aria-label="Close" onClick={onClose}
         className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       <div className="relative w-[19rem] max-w-full rounded-2xl border p-4 shadow-2xl"

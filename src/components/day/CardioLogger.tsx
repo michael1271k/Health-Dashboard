@@ -220,7 +220,7 @@ export function CardioLogger({ date, hkActiveEnergy, bare }: {
                     </span>
                     {/* Delete lives behind the disclosure, not on the row a
                         thumb brushes while scrolling. */}
-                    <button onClick={() => del.mutate(c.id)} className="p-1 text-muted hover:text-danger shrink-0" aria-label="Delete">
+                    <button onClick={() => del.mutate(c.id)} className="hit-44 p-1 text-muted hover:text-danger shrink-0" aria-label="Delete">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>

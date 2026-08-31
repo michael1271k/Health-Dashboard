@@ -29,4 +29,33 @@ class HelixViewController: CAPBridgeViewController {
     // calls it (auth is a one-tap re-login). SecureStore.swift can be removed from the
     // App target in Xcode; leaving it compiled but unregistered is harmless meanwhile.
   }
+
+  /// ── SWIPE BACK ─────────────────────────────────────────────────────────────
+  ///
+  /// The app had no back gesture at all. Not a broken one — none: a search of
+  /// `ios/` for `allowsBackForwardNavigationGestures` and of `src/` for any edge
+  /// handler both returned nothing. Every screen you opened had to be left by
+  /// finding a button, which on iOS is the deepest possible "this is a website"
+  /// tell, because the edge swipe is muscle memory in every other app on the
+  /// phone.
+  ///
+  /// `WKWebView` implements it properly when asked — snapshot-backed,
+  /// interactive, and cancellable half way through, which is the part no
+  /// in-page reimplementation gets right. It works against the history stack,
+  /// and Next's App Router navigations are `pushState` entries, so a swipe pops
+  /// exactly one client-side route.
+  ///
+  /// Set here rather than in `AppDelegate`: the web view does not exist until
+  /// `super.viewDidLoad()` has built the bridge.
+  ///
+  /// ── ON GESTURE CONFLICTS ───────────────────────────────────────────────────
+  /// The system's recogniser only arms within ~20pt of the leading edge, so it
+  /// does not compete with the two horizontal gestures the app owns — the
+  /// supplement row's swipe and the widget grid's long-press drag, both of which
+  /// begin under a finger placed on the control itself. The bottom sheet drags
+  /// vertically and is unaffected.
+  override func viewDidLoad() {
+    super.viewDidLoad()
+    webView?.allowsBackForwardNavigationGestures = true
+  }
 }

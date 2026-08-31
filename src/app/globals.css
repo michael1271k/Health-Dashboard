@@ -143,6 +143,68 @@ html[data-theme='travel'] {
     -webkit-text-size-adjust: 100%;
   }
 
+  /* ── iOS TOUCH HYGIENE ────────────────────────────────────────────────────
+     Four rules, each of which was simply absent, and each of which is a thing
+     you can feel rather than see in a screenshot. This app runs in a WKWebView
+     that is meant to read as native, so the browser's defaults for a document
+     are the wrong defaults.
+
+     1. THE GREY BOX. WebKit paints a translucent highlight over every tapped
+        link and button. On a tab bar and a grid of dark tiles it reads as a
+        rendering artefact, not as feedback — and the app already answers every
+        press with `active:scale`, on pointer-DOWN, which is the feedback Apple
+        asks for. Two responses to one tap is one too many. */
+  a, button, [role='button'], summary, label, input, select, textarea {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* 2. THE 300ms WAIT. `touch-action: manipulation` tells WebKit this element
+        has no double-tap-to-zoom, so it can dispatch the click immediately
+        instead of holding it back to see whether a second tap arrives. The
+        viewport is `width=device-width` so the delay is mostly gone already —
+        but "mostly" is per-element, and Apple's first rule of fluid interfaces
+        is that every latency on the input path is a regression.
+
+        Deliberately NOT on `html`: pinch-zoom is an accessibility feature and
+        the viewport meta was left unlocked on purpose (see `layout.tsx`). This
+        only ever covers controls. */
+  a, button, [role='button'], summary, label {
+    touch-action: manipulation;
+  }
+
+  /* 3. THE SELECTION CALLOUT. A press-and-hold anywhere near a number raises
+        iOS's text-selection loupe and the Copy bubble — over a score, a set
+        row, or the widget grid whose long-press is its ARRANGE gesture, where
+        the two fight each other directly. Text the user might genuinely want to
+        copy (a report, a note, an input) is exempted below.
+
+        `-webkit-touch-callout` is the other half: `user-select` stops the
+        selection, the callout stops the sheet that offers to copy the link. */
+  button, [role='button'], nav, [data-no-select] {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  input, textarea, [contenteditable], .prose, [data-selectable] {
+    -webkit-user-select: auto;
+    user-select: auto;
+    -webkit-touch-callout: default;
+  }
+
+  /* 4. SCROLL CHAINING. Reaching the end of a sheet, a chart's horizontal
+        scroller or the exercise picker used to hand the remaining momentum to
+        the DOCUMENT, which then rubber-banded the whole app behind an open
+        overlay. `contain` keeps the gesture in the box the finger started in —
+        the behaviour a native scroll view has by default and a div does not.
+
+        Scoped to elements that actually scroll, so a stray `overflow-hidden`
+        wrapper does not pick up a rule about scrolling. */
+  [class*='overflow-y-auto'], [class*='overflow-x-auto'],
+  [class*='overflow-auto'], [class*='overflow-y-scroll'], [class*='overflow-x-scroll'] {
+    overscroll-behavior: contain;
+  }
+
   /* The 16px form-control floor MOVED OUT OF THIS LAYER. See the block near
      `main#main-content` — inside @layer base it lost to every Tailwind text-size
      utility, which is exactly the case that needed it. */
@@ -228,6 +290,51 @@ html[data-theme='travel'] {
            cursor-pointer transition-[transform,border-color,box-shadow] duration-150
            hover:border-primary/45 active:scale-[0.98]
            focus-visible:ring-2 focus-visible:ring-primary/60;
+  }
+
+  /* ── 44pt, WITHOUT GROWING THE CONTROL ────────────────────────
+     Apple's minimum target is 44×44pt. Roughly twenty controls here are 20–38:
+     the supplement swatches, the stack grip, the set editor's ± buttons, the
+     cardio delete. They are that size on purpose — this is a dense,
+     single-user data app and growing them all would reflow the screens the
+     density is FOR.
+
+     So the painted size is left exactly as designed and only the hit rectangle
+     grows. A centred, absolutely-positioned pseudo-element is invisible,
+     costs no layout, and cannot change the parent's box.
+
+     Two rules when applying it:
+       · it must not overlap a SIBLING's target. A row of 28pt toggles at
+         `gap-1.5` would have overlapping 44pt boxes, and the one on top wins —
+         respace the row or use `.hit-44-y` there instead;
+       · never inside a dnd-kit drag activator, where it swallows the pointer
+         the sensor is waiting for.
+
+     The parent needs a positioning context; `relative` is applied here so the
+     utility is self-contained rather than a rule you have to remember. */
+  .hit-44 { position: relative; }
+  .hit-44::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
+  }
+
+  /* Vertical-only slop, for controls packed side by side. Widens the target to
+     44pt of HEIGHT while leaving the horizontal extent alone, so neighbours in
+     a tight row do not steal each other's taps. */
+  .hit-44-y { position: relative; }
+  .hit-44-y::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 44px;
+    transform: translateY(-50%);
   }
 
   /* ── Mobile / safe-area utilities ───────────────────────────── */
