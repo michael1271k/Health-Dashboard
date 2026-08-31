@@ -24,7 +24,7 @@
  * Resolved ONCE PER EXERCISE in `ExerciseCard`, never per row: rows of one card
  * that disagreed about their columns would not be a table.
  */
-export type SetGridMode = 'loaded' | 'reps' | 'time'
+export type SetGridMode = 'loaded' | 'reps' | 'time' | 'cardio'
 
 /**
  * ── EVERY MODE SHARES ONE TEMPLATE ──────────────────────────────────────────
@@ -39,6 +39,19 @@ export type SetGridMode = 'loaded' | 'reps' | 'time'
  * cell in it. That is not a column charging rent — nothing is labelled above it
  * and nothing is drawn in it. It is alignment: every value in the deck shares
  * an edge with every other value, whatever the movement.
+ *
+ * ── AND `cardio` USES IT TOO, WHICH IS THE POINT ───────────────────────────
+ *
+ * A treadmill block has three readings, not four: PREVIOUS · KM · MIN, with the
+ * RPE track empty. It could have had a template of its own — three columns
+ * sized to three values — and that is exactly what would make it look like a
+ * different kind of thing from the ten rows beneath it. It is not: it is work
+ * you did, with a number to beat, and a tick.
+ *
+ * Sharing the template means the treadmill's distance sits on the same vertical
+ * axis as every load in the session and its `Previous` starts at the same left
+ * edge as every other reference. That alignment is most of what "treat it like
+ * a real exercise" actually means on screen.
  *
  * Four tracks: PREVIOUS · KG · VALUE · RPE.
  */
@@ -105,5 +118,10 @@ export const SET_HEADER_TEXT = 'text-[9px] font-bold uppercase tracking-[0.1em] 
  * in the app, is what pushed `102.25kg` past its box at 360px.
  */
 export function setValueLabel(mode: SetGridMode): string {
-  return mode === 'time' ? 'Sec' : 'Reps'
+  if (mode === 'time') return 'Sec'
+  // Cardio labels its own two columns inline (km / min) rather than through
+  // this one — it has two values where every other mode has one, and there is
+  // no single word that names both.
+  if (mode === 'cardio') return 'Min'
+  return 'Reps'
 }

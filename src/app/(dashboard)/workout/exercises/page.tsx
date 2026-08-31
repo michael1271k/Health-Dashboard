@@ -11,6 +11,7 @@ import { exerciseHistoryQuery } from '@/lib/hooks/useExerciseHistory'
 import { EMBER, MUTED } from '@/lib/theme/palette'
 import { groupColor } from '@/lib/theme/muscleHue'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
+import { exerciseIconFor } from '@/lib/exercises/icons'
 import { BackLink } from '@/components/nav/NavChevron'
 
 
@@ -107,10 +108,20 @@ function Row({ exercise, divide, accent, onPrefetch }: {
   accent: string
   onPrefetch: () => void
 }) {
+  /* ── THE SAME GLYPH THE DECK PUTS ON THE CARD ─────────────────────────────
+     Derived from the name, so the list and the logger cannot disagree about
+     what a movement is done with — and so a lift you added five minutes ago has
+     an icon here without anything being seeded. See `exercises/icons.ts`. */
+  const glyph = exerciseIconFor(exercise.name)
   return (
     <ZoneRow href={`/workout/exercises/${exercise.id}`} divide={divide} className="flex items-center gap-2.5">
       <span aria-hidden="true" className="w-[3px] h-7 rounded-full shrink-0" style={{ background: accent }}
         onPointerDown={onPrefetch} />
+      {/* The rule already carries the muscle's colour; the glyph takes it too,
+          so the pair reads as one mark rather than as a stripe and an icon. */}
+      <span className="shrink-0 inline-flex" title={glyph.label} onPointerDown={onPrefetch}>
+        <glyph.icon className="w-4 h-4" style={{ color: accent }} aria-hidden="true" />
+      </span>
       <span className="min-w-0 flex-1" onPointerDown={onPrefetch}>
         <span className="block text-fluid-sm text-text truncate">{exercise.name}</span>
         <span className="block text-[10px] text-muted">

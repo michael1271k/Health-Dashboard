@@ -1,9 +1,9 @@
 'use client'
 
-import { memo, useCallback, useMemo, useState } from 'react'
+import { memo, useCallback, useMemo, useRef, useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { ArrowLeftRight, Check, ChevronDown, Footprints, GripVertical, History, NotebookPen, Plus, Target, Timer, Weight, X } from 'lucide-react'
+import { ArrowLeftRight, Check, ChevronDown, GripVertical, History, NotebookPen, Plus, Target, Timer, Weight, X } from 'lucide-react'
 import { tapLight } from '@/lib/native/haptics'
 import { SetEditorRow } from './SetEditorRow'
 import { useTrackRpe } from '@/lib/hooks/useTrackRpe'
@@ -16,6 +16,7 @@ import { repWindowFor, holdTargetFor, ladderVerdict, levelUpCue } from '@/lib/tr
 import { restTargetFor, hasRestOverride, formatRestTarget } from '@/lib/training/restTargets'
 import { useRestTargets } from '@/lib/hooks/useRestTargets'
 import { RestTargetSheet } from './RestTargetSheet'
+import { RestCountdown } from './RestCountdown'
 import { setGridFor, setValueLabel, SET_BADGE_W, SET_CELL_LEAD, SET_CELL_VALUE, SET_FRAME_GAP, SET_HEADER_TEXT, SET_TAIL_W, type SetGridMode } from './setGrid'
 import { workingSets, type ExerciseHistory } from '@/lib/hooks/useExerciseSetHistory'
 import { alignPreviousSets } from '@/lib/sessions/prevAlign'
@@ -25,6 +26,9 @@ import { targetForExercise, formatTarget } from '@/lib/reports/targetMatch'
 import { livePrKey } from '@/lib/sessions/livePrs'
 import { SAPPHIRE, STEEL, MUTED, HAIRLINE } from '@/lib/theme/palette'
 import { exerciseColor } from '@/lib/theme/muscleHue'
+import { exerciseIconFor } from '@/lib/exercises/icons'
+import { usePreviousCardio, formatPreviousCardio } from '@/lib/hooks/usePreviousCardio'
+import { activeProgram } from '@/lib/programs'
 import { isWorkingSet } from '@/lib/training/setTags'
 
 const STATUS_META: Record<NonNullable<DraftExercise['status']>, { label: string; color: string }> = {
@@ -256,7 +260,7 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
   /** Tapping a set's trophy strip — opens the record sheet for that set. */
   onPrTap?: (localId: string, setIdx: number) => void
   /** Cardio blocks only: edit distance / duration / incline. */
-  onUpdateCardio?: (localId: string, patch: { distanceKm?: number; durationSec?: number; inclinePct?: number }) => void
+  onUpdateCardio?: (localId: string, patch: { distanceKm?: number; durationSec?: number; inclinePct?: number; done?: boolean }) => void
 }) {
   const localId = exercise.localId
 
@@ -296,6 +300,35 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
   )
 
   /**
+   * ── THE MOVEMENT'S OWN GLYPH ───────────────────────────────────────────────
+   * Derived from the name, tinted with the card's accent, so a long deck is
+   * scannable by shape as well as by the left rule's colour. See
+   * `exercises/icons.ts` for why it is a stroke icon rather than an emoji and
+   * why it is derived rather than stored.
+   */
+  const glyph = useMemo(() => exerciseIconFor(exercise.name), [exercise.name])
+  const CardioIcon = glyph.icon
+
+  /**
+   * The treadmill's reference, scoped to THIS DAY.
+   *
+   * Only fetched for a cardio card — the hook is disabled without a `dayKey`,
+   * and a strength card never reaches this value. See `usePreviousCardio` for
+   * why the same machine's 0.37 km opener and 2 km finisher must not stand in
+   * for each other.
+   */
+  const { data: prevCardio } = usePreviousCardio(
+    exercise.kind === 'cardio' ? dayKey : null,
+  )
+  // `activeProgram` reads the schedule store, which React cannot see change —
+  // the same subscription `repWindowFor` below already holds.
+  const dayVersion = useScheduleVersion()
+  const dayLabelForTitle = useMemo(() => {
+    void dayVersion
+    return (dayKey && activeProgram().days.find((d) => d.key === dayKey)?.label) || 'session'
+  }, [dayKey, dayVersion])
+
+  /**
    * ── A COMPACTED PAIR CAN BE PRISED BACK OPEN ───────────────────────────────
    * `isPairCompactable` folds a matched L/R pair into one read-only line, which
    * is right for the common case and was a dead end for every other one: a Side
@@ -320,7 +353,28 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
   const handleActivate = useCallback((i: number) => setActiveSet((cur) => (cur === i ? null : i)), [])
   const handleChange = useCallback((i: number, patch: Partial<DraftSet>) => onUpdateSet(localId, i, patch), [onUpdateSet, localId])
   const handleRemove = useCallback((i: number) => { setActiveSet(null); onRemoveSet(localId, i) }, [onRemoveSet, localId])
-  const handleToggleDone = useCallback((i: number) => onToggleDone(localId, i), [onToggleDone, localId])
+  /**
+   * ── TICKING A SET STARTS THE REST ──────────────────────────────────────────
+   * A deadline, not a counter — see `RestCountdown`. It is set only on the
+   * transition INTO done: un-ticking a set is a correction, and a correction
+   * that started a rest timer would be the control nagging at exactly the
+   * moment you were fixing a mistake.
+   *
+   * Held as an epoch, so a card that re-renders (or remounts on a reorder) does
+   * not restart the clock, and so a phone that locked mid-rest comes back to
+   * the right number rather than to where its interval froze.
+   */
+  const [restUntil, setRestUntil] = useState<number | null>(null)
+  const handleToggleDone = useCallback((i: number) => {
+    const before = exercise.sets[i]
+    const wasDone = before ? isSetCommitted(before) : false
+    onToggleDone(localId, i)
+    if (!wasDone && restTargetRef.current != null) {
+      setRestUntil(Date.now() + restTargetRef.current * 1000)
+    } else if (wasDone) {
+      setRestUntil(null)
+    }
+  }, [onToggleDone, localId, exercise.sets])
   const handleSplit = useCallback((i: number) => onSplitSet(localId, i), [onSplitSet, localId])
   const handleMerge = useCallback((pairId: string) => onMergeSet(localId, pairId), [onMergeSet, localId])
   // Undefined when the parent supplies no handler, so the row renders the
@@ -484,6 +538,19 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
     () => { void restVersion; return restTargetFor(exercise.name, dayKey) },
     [restVersion, exercise.name, dayKey],
   )
+  /**
+   * The target, readable from `handleToggleDone` without becoming one of its
+   * dependencies.
+   *
+   * `memo(SetEditorRow)` holds only while its handler props keep their
+   * identity, and `handleToggleDone` is passed to every row on the card. Adding
+   * `restTarget` to its deps would rebuild it whenever the target changed —
+   * which is rare — but more importantly it is the kind of dependency that
+   * accretes until the memo never holds at all, which is the failure this file
+   * already documents at length.
+   */
+  const restTargetRef = useRef<number | null>(restTarget)
+  restTargetRef.current = restTarget
 
   const reportTarget = useMemo(
     () => targetForExercise(reportTargets, exercise.name),
@@ -592,29 +659,47 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
     return null
   }, [ladder, levelUp, readyNow, shortOfCeiling, repWindow, exercise.targetNext, unilateral])
 
-  // ── Cardio variant: slim card, distance/duration, no set rows ──
-  //
-  // INTERACTIVE. The two figures used to be display-only chips, so the treadmill
-  // card could be read and never corrected — and since commit flattened cardio
-  // into the notes string, an edit of the session brought it back as prose with
-  // no inputs at all. Both are editable here, and the block commits to
-  // `cardio_logs` keyed on the session.
+  /**
+   * ── CARDIO IS A ROW OF THE SAME TABLE NOW ──────────────────────────────────
+   *
+   * It used to be a bespoke card: a violet pill for the distance, another for
+   * the duration, no `Previous`, and no tick. Three consequences, all of which
+   * were felt as "the treadmill is not a real exercise".
+   *
+   *   · Nothing said what it was last time. Every lift on the deck opens with
+   *     the number to beat in the leftmost column; the one movement whose whole
+   *     purpose is repeatability had no reference at all.
+   *   · It could not be marked done, so "did I walk it" was a question the
+   *     session could not answer — a block with numbers might have been
+   *     performed or might have been the template's untouched opener.
+   *   · It did not line up with anything. Two pills floating right of a name,
+   *     above ten rows of a table with four columns.
+   *
+   * So it renders the deck's own grid (`setGridFor('cardio')`) — one row,
+   * `Previous · KM · MIN · ✓` — sharing the badge width, the column template
+   * and the tail with every set row beneath it. Incline stays out of the
+   * template and rides underneath as a chip: it modifies the work, it is not a
+   * fourth measurement of it.
+   *
+   * The tick is REQUIRED. `buildCommitPayload` drops an unticked block, because
+   * a treadmill that was not walked is not a 0.37 km walk and must not enter the
+   * Zone-2 count or the cardio records as one.
+   */
   if (exercise.kind === 'cardio') {
-    const chip = (label: string, value: string) => (
-      <span className="helix-num text-fluid-sm font-bold tabular-nums px-2 py-1 rounded-lg"
-        style={{ color: CARDIO_VIOLET, background: `${CARDIO_VIOLET}14`, border: `1px solid ${CARDIO_VIOLET}33` }}>
-        {value}<span className="text-[10px] font-normal ml-0.5">{label}</span>
-      </span>
-    )
+    const done = exercise.done === true
+    const prevLine = formatPreviousCardio(prevCardio ?? null)
+    const fmtNum = (v: number | null | undefined, digits = 2) =>
+      v == null ? '—' : v.toFixed(digits).replace(/\.?0+$/, '') || '0'
     return (
       <div ref={setNodeRef} style={sortableStyle}
-        className={`rounded-2xl border border-white/[0.07] bg-white/[0.03] p-2.5 !rounded-2xl shadow-[0_4px_22px_rgba(0,0,0,0.26)] ${dragClass}`}
+        className={`rounded-2xl border bg-white/[0.03] p-2.5 !rounded-2xl shadow-[0_4px_22px_rgba(0,0,0,0.26)] ${dragClass} ${
+          done ? 'border-[#3E9E7A]/40' : 'border-white/[0.07]'}`}
       >
         <div className="flex items-center gap-2">
           {grip}
           <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
             style={{ background: `${CARDIO_VIOLET}1c`, color: CARDIO_VIOLET }}>
-            <Footprints className="w-4 h-4" aria-hidden="true" />
+            <CardioIcon className="w-4 h-4" aria-hidden="true" />
           </span>
           <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open}
             className="flex-1 min-w-0 text-left">
@@ -626,18 +711,83 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
             </span>
           </button>
           <div className="flex items-center gap-1.5 shrink-0">
-            {!open && exercise.distanceKm != null && chip('km', String(exercise.distanceKm))}
-            {!open && exercise.durationSec != null && chip('min', String(Math.round(exercise.durationSec / 60)))}
-            {!open && exercise.inclinePct != null && exercise.inclinePct > 0 && chip('%', String(exercise.inclinePct))}
-            {!open && exercise.distanceKm == null && exercise.durationSec == null && (
-              <span className="text-[10px] text-muted">Tap to log</span>
-            )}
             <button type="button" onClick={() => onRemoveExercise(localId)}
               className="min-h-[32px] min-w-[32px] rounded-lg flex items-center justify-center text-muted hover:text-danger"
               aria-label={`Remove ${cardioSummary(exercise)}`}>
               <X className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
           </div>
+        </div>
+
+        {/* ── THE ROW ──
+            Headers and one line, in the deck's grid. It is always visible — a
+            treadmill has one row, and hiding the only row behind a chevron was
+            what made the block feel like a label rather than like work. */}
+        <div className="mt-2 border-t border-white/[0.06] pt-1.5">
+          <div className={`flex items-center ${SET_FRAME_GAP} px-2 pb-1`}>
+            <span className={`${SET_BADGE_W} shrink-0 ${SET_HEADER_TEXT}`}>Set</span>
+            <span className={`flex-1 ${setGridFor('cardio')} ${SET_HEADER_TEXT}`}>
+              <span className={SET_CELL_LEAD}>Previous</span>
+              <span className={SET_CELL_VALUE}>km</span>
+              <span className={SET_CELL_VALUE}>min</span>
+              <span aria-hidden="true" />
+            </span>
+            <span className={`${SET_TAIL_W} shrink-0 flex items-center justify-center ${SET_HEADER_TEXT}`}
+              title="Completed — an unticked block counts as skipped">
+              <Check className="w-2.5 h-2.5" strokeWidth={3} aria-hidden="true" />
+              <span className="sr-only">Completed</span>
+            </span>
+          </div>
+
+          <div className={`flex items-center ${SET_FRAME_GAP} rounded-lg px-2 py-1.5 transition-colors ${
+            done ? 'bg-[#3E9E7A]/[0.10]' : 'bg-white/[0.02]'}`}>
+            <span className={`${SET_BADGE_W} shrink-0 text-[10px] font-bold text-muted`}>1</span>
+            <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open}
+              className={`flex-1 min-w-0 ${setGridFor('cardio')} text-left`}
+              aria-label="Edit the treadmill block">
+              {/* Same treatment as a set row's reference: dimmed, unit-carrying,
+                  never editable. It is the LAST TIME THIS DAY came round, not
+                  the last treadmill block of any kind — see
+                  `usePreviousCardio` for why those are different questions. */}
+              <span className={`helix-num text-[11px] tabular-nums truncate text-muted/70 ${SET_CELL_LEAD}`}
+                title={prevCardio ? `Last ${dayLabelForTitle} · ${prevCardio.date}` : undefined}>
+                {prevLine ?? '—'}
+              </span>
+              <span className={`helix-num text-fluid-base font-bold tabular-nums truncate ${SET_CELL_VALUE} ${
+                exercise.distanceKm != null ? 'text-text' : 'text-muted'}`}>
+                {fmtNum(exercise.distanceKm)}
+              </span>
+              <span className={`helix-num text-fluid-base font-bold tabular-nums truncate ${SET_CELL_VALUE} ${
+                exercise.durationSec != null ? 'text-text' : 'text-muted'}`}>
+                {exercise.durationSec != null
+                  ? fmtNum(Math.round((exercise.durationSec / 60) * 10) / 10, 1)
+                  : '—'}
+              </span>
+              <span aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onPointerDown={() => { void tapLight() }}
+              onClick={() => onUpdateCardio?.(localId, { done: !done })}
+              disabled={!onUpdateCardio}
+              className={`${SET_TAIL_W} shrink-0 min-h-[36px] rounded-lg flex items-center justify-center
+                          transition-colors disabled:opacity-30`}
+              style={done
+                ? { background: '#3E9E7A24', border: '1px solid #3E9E7A8c', color: '#3E9E7A' }
+                : { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.10)' }}
+              aria-pressed={done}
+              aria-label={done ? 'Mark the treadmill not done' : 'Mark the treadmill done'}
+            >
+              <Check className={`w-3.5 h-3.5 ${done ? '' : 'text-muted'}`} strokeWidth={3} aria-hidden="true" />
+            </button>
+          </div>
+
+          {exercise.inclinePct != null && exercise.inclinePct > 0 && !open && (
+            <span className="ml-2 mt-1 inline-flex items-center px-1.5 py-px rounded-md text-[9px] font-bold uppercase tracking-wide tabular-nums"
+              style={{ color: CARDIO_VIOLET, background: `${CARDIO_VIOLET}14`, border: `1px solid ${CARDIO_VIOLET}33` }}>
+              {exercise.inclinePct}% incline
+            </span>
+          )}
         </div>
 
         {open && onUpdateCardio && (
@@ -720,6 +870,15 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
                 line, so the NAME lost — truncated to an ellipsis while the chips
                 kept their width. Now the chips drop to a second line instead. */}
             <div className="flex items-center gap-x-2 gap-y-1 min-w-0 flex-wrap">
+              {/* ── THE MOVEMENT'S GLYPH, IN ITS OWN HUE ──
+                  Tinted with the card's accent — the same colour as the 3px
+                  rule down its left edge — so the icon and the rule are one
+                  signal rather than two. `aria-hidden`: the name is right
+                  beside it, and a screen reader announcing "Cable, Cable
+                  Lateral Raise" is noise. */}
+              <span className="shrink-0 inline-flex" title={glyph.label}>
+                <glyph.icon className="w-3.5 h-3.5" style={{ color: accent }} aria-hidden="true" />
+              </span>
               <span className="font-semibold text-text leading-snug truncate" style={{ fontSize: 'var(--text-exercise-title)' }}>{exercise.name}</span>
               {/* Everything from here to the rep window is about the set in
                   front of you. While a drag is live there is no set in front of
@@ -843,7 +1002,15 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
             contain a button (the PR trophy strip learned this the hard way in
             `SetEditorRow`), so this lives outside and the header's tap target
             stops at the chevron. */}
-        {!dragCollapsed && restTarget != null && (
+        {/* ── ONE CHIP, TWO STATES ────────────────────────────────────────
+            The countdown takes the target chip's place rather than sitting
+            beside it. They are the same fact — how long you rest on this lift —
+            and showing "1:30" next to "0:47" would be two numbers about one
+            thing, which is precisely what the deleted stopwatch did wrong. */}
+        {!dragCollapsed && restUntil != null && (
+          <RestCountdown until={restUntil} onDismiss={() => setRestUntil(null)} />
+        )}
+        {!dragCollapsed && restUntil == null && restTarget != null && (
           <button
             type="button"
             onPointerDown={() => { void tapLight() }}

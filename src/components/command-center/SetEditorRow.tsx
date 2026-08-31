@@ -190,6 +190,35 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
   const isGhost = set.setType === 'ghost'
   // Green = committable = will be recorded on finish.
   const done = isSetCommitted(set)
+
+  /**
+   * ── THE GHOST ROW ──────────────────────────────────────────────────────────
+   *
+   * An EMPTY set, showing last session's numbers where its own would go, at
+   * 35% — the way a form field shows a placeholder.
+   *
+   * The `Previous` column has always carried the same figures, and it is the
+   * wrong place for this job on its own: it sits at the far left, in a
+   * different type size, and reading "40kg × 10" over there and then deciding
+   * what to type over here is exactly the small arithmetic that makes a blank
+   * row feel like work. Putting the numbers IN the cells they would go in makes
+   * "the same again" a thing you can see rather than compute.
+   *
+   * It only ever appears on a set with nothing in it — a template's prescribed
+   * numbers are a real proposal and must not be greyed out as if they were not
+   * there — and it is not shown on a done set, which by definition has numbers.
+   *
+   * Tapping such a row TAKES them, then opens the tuner on the result. That is
+   * the whole point: the common case (repeat last session) becomes one tap
+   * instead of two dial spins, and the uncommon case is the tuner you were
+   * going to open anyway, now seeded with the number you are about to beat.
+   */
+  const isEmptySet = !done && set.reps === 0 && (!showLoad || set.weightKg === 0)
+  const ghostable = isEmptySet && !!prev && (prev.reps > 0 || prev.weightKg > 0)
+  const ghostWeight = ghostable && showLoad && prev!.weightKg > 0
+    ? String(prev!.weightKg)
+    : null
+  const ghostReps = ghostable && prev!.reps > 0 ? String(prev!.reps) : null
   const hasPr = prAxes.length > 0
 
   const nudgeWeight = useCallback((delta: number) => {
@@ -419,10 +448,22 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
 
         <button
           type="button"
-          onClick={() => onActivate(index)}
+          onClick={() => {
+            // Take the ghost, then open the tuner on it — see the note on
+            // `ghostable`. One `onChange`, so the draft records one edit rather
+            // than two and undo behaves the way the user experienced it.
+            if (ghostable) {
+              onChange(index, showLoad
+                ? { weightKg: prev!.weightKg, reps: prev!.reps }
+                : { reps: prev!.reps })
+            }
+            onActivate(index)
+          }}
           className="flex-1 min-w-0 text-left min-h-[36px] flex items-center"
           aria-expanded={active}
-          aria-label={`Edit ${setLabel}`}
+          aria-label={ghostable
+            ? `Edit ${setLabel} — tap to take last session's numbers`
+            : `Edit ${setLabel}`}
         >
           <span className={`w-full ${setGridFor(gridMode)}`}>
             {/* ── PREVIOUS ──
@@ -458,16 +499,22 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
               // per row it cost ~17px on the widest real load (`102.25kg`) and
               // pushed it out of its own box at 360px — the same "one statement
               // of one fact" rule that moved the unit out of the tuner's field.
-              <span className={`helix-num text-fluid-base font-bold tabular-nums truncate ${SET_CELL_VALUE} ${isWarm ? 'text-muted' : 'text-text'}`}
-                title={`${weightLabel} kg`}>
-                {weightLabel}
+              <span className={`helix-num text-fluid-base font-bold tabular-nums truncate ${SET_CELL_VALUE} ${
+                ghostWeight != null ? 'text-muted/35' : isWarm ? 'text-muted' : 'text-text'}`}
+                title={ghostWeight != null
+                  ? `${ghostWeight} kg last time — tap to take it`
+                  : `${weightLabel} kg`}>
+                {ghostWeight ?? weightLabel}
               </span>
             ) : <span aria-hidden="true" />}
 
             {/* REPS (or seconds on a hold). */}
-            <span className={`helix-num text-fluid-base font-bold tabular-nums truncate ${SET_CELL_VALUE} ${isWarm ? 'text-muted' : 'text-text'}`}
-              title={timed ? `${set.reps} seconds` : `${set.reps} reps`}>
-              {set.reps}
+            <span className={`helix-num text-fluid-base font-bold tabular-nums truncate ${SET_CELL_VALUE} ${
+              ghostReps != null ? 'text-muted/35' : isWarm ? 'text-muted' : 'text-text'}`}
+              title={ghostReps != null
+                ? `${ghostReps} last time — tap to take it`
+                : timed ? `${set.reps} seconds` : `${set.reps} reps`}>
+              {ghostReps ?? set.reps}
             </span>
 
             {/* ── EFFORT ──

@@ -1,11 +1,31 @@
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import type { ComponentProps } from 'react'
-import { render, cleanup, act } from '@testing-library/react'
+import { render as rtlRender, cleanup, act } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ExerciseDeckList } from '@/components/command-center/ExerciseDeckList'
 import { SetEditorRow } from '@/components/command-center/SetEditorRow'
 import { livePrDigest, computeLivePrs } from '@/lib/sessions/livePrs'
 import { EMPTY_BASELINES } from '@/lib/training/prEngine'
 import type { SessionDraft, DraftSet } from '@/lib/sessions/draft'
+
+/**
+ * ── THE DECK NEEDS A QUERY CLIENT NOW ────────────────────────────────────────
+ * `ExerciseCard` resolves the treadmill's `Previous` through `usePreviousCardio`
+ * — a React Query hook, disabled on every strength card, but a hook all the
+ * same, so it needs a client in scope even when it never fetches.
+ *
+ * `retry: false` and no `gc`, because nothing in this file awaits a query: the
+ * assertions are all about what is RENDERED, and a client that retried would
+ * keep timers alive past `cleanup`.
+ */
+function render(ui: Parameters<typeof rtlRender>[0]) {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  const wrap = (node: Parameters<typeof rtlRender>[0]) => (
+    <QueryClientProvider client={qc}>{node}</QueryClientProvider>
+  )
+  const out = rtlRender(wrap(ui))
+  return { ...out, rerender: (next: Parameters<typeof rtlRender>[0]) => out.rerender(wrap(next)) }
+}
 
 /**
  * `isSetCommitted` is called exactly once in `SetEditorRow`'s render body, so

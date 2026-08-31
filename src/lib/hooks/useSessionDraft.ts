@@ -229,7 +229,7 @@ export function useSessionDraft() {
   }, [])
 
   /** Edit a cardio block's distance / duration / note. */
-  const updateCardio = useCallback((localId: string, patch: Partial<Pick<DraftExercise, 'distanceKm' | 'durationSec' | 'inclinePct' | 'note' | 'name'>>) => {
+  const updateCardio = useCallback((localId: string, patch: Partial<Pick<DraftExercise, 'distanceKm' | 'durationSec' | 'inclinePct' | 'note' | 'name' | 'done'>>) => {
     setDraft((d) => d && ({
       ...d,
       exercises: d.exercises.map((ex) => (ex.localId === localId ? { ...ex, ...patch } : ex)),

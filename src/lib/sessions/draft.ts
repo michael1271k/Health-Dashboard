@@ -91,6 +91,24 @@ export interface DraftExercise {
    * happened — this is the number that does.
    */
   inclinePct?: number
+  /**
+   * ── A CARDIO BLOCK IS TICKED, LIKE EVERY OTHER PIECE OF WORK ───────────────
+   * It was the one thing on the deck that could not be marked done, which made
+   * "did I do the treadmill" a question the session could not answer: a block
+   * with numbers in it might have been performed or might have been the
+   * template's own opener, untouched.
+   *
+   * Unticked means SKIPPED, silently — the same rule a set row follows
+   * (`isSetCommitted`), and the reason `toPayload` drops an unticked block
+   * rather than writing it to `cardio_logs`. A treadmill that was not walked is
+   * not a 0.37 km walk, and it must not enter the Zone-2 count or the cardio
+   * records as one.
+   *
+   * Undefined on every draft written before this existed. Those are read as
+   * FALSE — see `cardioDone` — which is the conservative direction: a block
+   * nobody could tick is a block nobody ticked.
+   */
+  done?: boolean
   status?: 'PR' | 'PROGRESS' | 'HOLD' | 'REGRESS' | 'NEW'
   note?: string
   targetNext?: string
@@ -529,6 +547,12 @@ export function buildCommitPayload(draft: SessionDraft): SaveWorkoutInput {
       // the edit deck rebuilds from the database, and `notes` is not a place a
       // distance and a duration can be read back out of. A block with neither
       // figure is dropped — an empty treadmill card is a card you did not use.
+      // Unticked is skipped — see `DraftExercise.done`. Checked BEFORE the
+      // figures, because a block with numbers and no tick is exactly the case
+      // this guard exists for: the template's own opener, never walked.
+      // `return`, not `continue` — this is a forEach callback, and a `continue`
+      // here would not compile.
+      if (!ex.done) return
       if (ex.distanceKm != null || ex.durationSec != null) {
         cardio.push({
           name: ex.name,

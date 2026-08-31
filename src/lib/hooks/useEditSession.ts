@@ -124,6 +124,11 @@ export function useEditSession() {
             kind: 'cardio',
             distanceKm: c.distance_m != null ? c.distance_m / 1000 : undefined,
             durationSec: c.duration_min != null ? Math.round(c.duration_min * 60) : undefined,
+            // Ticked, because it is IN `cardio_logs` — `buildCommitPayload` only
+            // writes a block that was ticked, so a row that exists is a walk
+            // that happened. Rebuilding it unticked would make re-saving an
+            // edited session silently drop the treadmill.
+            done: true,
             sets: [],
           })
         }
