@@ -4,7 +4,7 @@ import { useId, useState } from 'react'
 import { TrendingUp } from 'lucide-react'
 import { useSessionIntel } from '@/lib/hooks/useSessionIntel'
 import { sessionVerdict } from '@/lib/training/sessionVerdict'
-import { maintenanceSpanFor } from '@/lib/nutrition/maintenance'
+import { useIsMaintenanceDate } from '@/lib/hooks/useMaintenance'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 import { tightDomain, axisBound } from '@/lib/charts/scale'
 // Imported under their real names. EMBER/EMERALD/OXIDE were aliased on import
@@ -35,16 +35,31 @@ export function ProgressionTrail({ sessionId }: { sessionId: string }) {
   const { data: intel, isLoading } = useSessionIntel(sessionId)
   const unit = useUnitSystem()
 
+  // `volumes` is this session plus its predecessors, ascending, so the last
+  // entry is this session's own date — the only date this component has.
+  //
+  // Derived ABOVE the early returns: `useIsMaintenanceDate` is a hook and its
+  // call cannot be conditional on the fetch having landed. It tolerates a null
+  // date (it falls back to today, and nothing reads the answer until `intel`
+  // exists anyway).
+  const ownDate = intel?.volumes[intel.volumes.length - 1]?.date ?? null
+  /**
+   * ── THE LEVER AXIS, NOT THE PHASE AXIS ─────────────────────────────────────
+   * This asked `maintenanceSpanFor`, which reads `PHASES` alone — and the
+   * one-week `Maintenance Week` phase row was deleted on 2026-08-30 when the
+   * lever took the week over (see `maintenance.ts`). So the flag went false for
+   * every session of the very week it exists to describe, and the sentence
+   * below reverted to the caution wording on a deload.
+   */
+  const maintenance = useIsMaintenanceDate(ownDate)
+
   if (isLoading) return <div className="h-24 rounded-xl bg-white/[0.03] animate-pulse" aria-hidden="true" />
   if (!intel) return null
 
-  // `volumes` is this session plus its predecessors, ascending, so the last
-  // entry is this session's own date — the only date this component has.
-  const ownDate = intel.volumes[intel.volumes.length - 1]?.date
   const verdict = sessionVerdict(
     intel.volumeDeltaPct,
     intel.deltas.map((d) => ({ name: d.name, topKg: d.topKg, prevKg: d.prevKg, unloaded: d.unloaded })),
-    ownDate != null && maintenanceSpanFor(ownDate) != null,
+    ownDate != null && maintenance,
   )
 
   return (

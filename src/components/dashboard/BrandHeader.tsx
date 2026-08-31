@@ -98,7 +98,7 @@ function TodayLink() {
  * `PlanPhaseTags` does its own data fetching and already renders in the
  * Pathfinder header, so this adds no request the app was not already making.
  *
- * ── AND WHY "TODAY" LIVES BESIDE THE WORDMARK ────────────────────────────────
+ * ── AND WHY "TODAY" LIVES AT THE END OF THE TAG ROW ──────────────────────────
  * Every route into `/day/<today>` was until now the SIDE of some other gesture:
  * a double-tap on the Body tile, the Cardio tile's own opinion about where
  * cardio is logged, the Fatigue widget. All of them are discoverable only by
@@ -106,6 +106,15 @@ function TodayLink() {
  * single day and the dashboard is its summary, so the summary should say plainly
  * where the detail is — on the title row, which is the one band on this screen
  * that is about WHERE YOU ARE rather than what the numbers say.
+ *
+ * It sat immediately right of the wordmark, which is where a SECOND title would
+ * go: two pieces of type on the same baseline, at the left edge, with nothing
+ * between them saying that one names the screen and the other leaves it. The
+ * plan chips already occupy the other end of the band, and a chevron is a
+ * trailing affordance everywhere else in this app — every row, every sheet. So
+ * it moves to the far right of the tag row and becomes the row's terminator:
+ * the band now reads title · context · way out, left to right, and the "Today"
+ * chevron lines up with the disclosure chevron of every list beneath it.
  *
  * The band is deliberately NOT a `<header>` landmark. The dashboard's heading
  * is this h1; a landmark wrapping one heading and one chip row adds a stop for
@@ -116,16 +125,17 @@ export function BrandHeader() {
     /* `items-baseline`, so the chips hang off the wordmark's baseline rather
        than centring against a 3xl cap height and floating high. */
     <div className="flex items-baseline justify-between gap-3 flex-wrap">
-      {/* Wordmark and shortcut travel together: when the chips wrap to a second
-          line on a narrow phone, "Today" must stay on the title's line rather
-          than being carried down with them. */}
-      <div className="flex items-baseline gap-2.5 shrink-0">
-        <h1 className="text-fluid-3xl leading-none shrink-0">
-          <span className="helix-wordmark font-heading font-extrabold tracking-[0.22em] leading-none">HELIX</span>
-        </h1>
+      <h1 className="text-fluid-3xl leading-none shrink-0">
+        <span className="helix-wordmark font-heading font-extrabold tracking-[0.22em] leading-none">HELIX</span>
+      </h1>
+      {/* Chips and shortcut travel together: when the row wraps to a second line
+          on a narrow phone, "Today" must stay at the END of the chips rather
+          than being left behind on the wordmark's line. `ml-auto` keeps the
+          group hard right at every width, wrapped or not. */}
+      <div className="flex items-baseline gap-2 ml-auto min-w-0">
+        <PlanPhaseTags />
         <TodayLink />
       </div>
-      <PlanPhaseTags />
     </div>
   )
 }

@@ -44,10 +44,29 @@ import type { ActiveNutritionGoals } from '@/lib/hooks/useNutritionGoals'
  * no longer 2,400, and a chip claiming otherwise would be showing a selection
  * that is not true. It dims instead — the stamp survives, the claim does not.
  */
-export function DayTargetCard({ date, goals }: {
+export function DayTargetCard({ date, goals, compact = false }: {
   date: string
   /** The resolved targets, override already applied — see `useNutritionGoals`. */
   goals: ActiveNutritionGoals
+  /**
+   * ── THE SUMMARY IS OPTIONAL, BECAUSE SOMETIMES IT IS ALREADY ON SCREEN ─────
+   *
+   * The card's face states the day's figures — "Today's target · 2,151 kcal ·
+   * 170P · 55F · 244C". That is the whole point of it on `/day/<date>`, where
+   * the Nutrition-context sheet has no bars and this is the only thing naming
+   * what the day was asked for.
+   *
+   * In the dashboard's Fuel sheet it is the same three facts twice: `MacroCards`
+   * renders directly beneath with `2,131 / 2,151` under a calorie bar and a
+   * bar per macro, each against its own goal. Two statements of one target, six
+   * pixels apart, in different type at different sizes — and the top one is the
+   * weaker of the two, because it prints the goal with no intake beside it.
+   *
+   * `compact` drops the readout and keeps the CONTROL: the day's shape, its
+   * name, and the pencil that opens the sheet where it is changed. Nothing is
+   * removed from the product, and the number is stated exactly once per screen.
+   */
+  compact?: boolean
 }) {
   const [open, setOpen] = useState(false)
   const { data: target } = useDailyTarget(date)
@@ -89,7 +108,12 @@ export function DayTargetCard({ date, goals }: {
       >
         <span className="min-w-0 flex-1">
           <span className="flex items-baseline gap-1.5">
-            <span className="text-[10px] uppercase tracking-wide text-muted">Today&apos;s target</span>
+            <span className="text-[10px] uppercase tracking-wide text-muted">
+              {/* Compact says what the row DOES, since it no longer says what
+                  the target is: "Day shape" is the name of the decision behind
+                  the pencil, and it is the heading the sheet itself uses. */}
+              {compact ? 'Day shape' : "Today's target"}
+            </span>
             {/* The profile's NAME where the generic badge used to be: "Restaurant"
                 says everything "set for today" said and also says which shape. */}
             {(active || stampedLabel || goals.dayOverride) && (
@@ -98,25 +122,37 @@ export function DayTargetCard({ date, goals }: {
               </span>
             )}
           </span>
-          <span className="helix-num block text-fluid-sm font-bold text-text tabular-nums">
-            {goals.calorie > 0 ? `${goals.calorie.toLocaleString()} kcal` : '—'}
-          </span>
+          {compact ? (
+            <span className="block text-[11px] text-muted leading-snug truncate">
+              {active?.label ?? (goals.dayOverride ? 'Custom for today' : "The rung's numbers")}
+            </span>
+          ) : (
+            <span className="helix-num block text-fluid-sm font-bold text-text tabular-nums">
+              {goals.calorie > 0 ? `${goals.calorie.toLocaleString()} kcal` : '—'}
+            </span>
+          )}
           {/* ── AN UNTRACKED MACRO IS NOT A MISSING ONE ─────────────────────
               An em-dash here would read as "we do not know your fat target",
               which is the opposite of what a restaurant day means: there IS no
               fat target, deliberately, and nothing is being graded against it.
-              "off" says that in three characters. */}
-          <span className="helix-num block text-[10px] text-muted tabular-nums">
-            {goals.protein ?? '—'}P
-            {' · '}
-            <span style={{ color: goals.trackFat ? undefined : MUTED, opacity: goals.trackFat ? 1 : 0.65 }}>
-              {goals.trackFat ? `${goals.fat ?? '—'}F` : 'F off'}
+              "off" says that in three characters.
+
+              Compact drops the FIGURES (the bars below restate all three) but
+              keeps this line whenever a macro is off, because that is the one
+              thing a bar cannot say: an untracked macro and a macro you have
+              not eaten yet both draw an empty bar. */}
+          {(!compact || !goals.trackFat || !goals.trackCarbs) && (
+            <span className="helix-num block text-[10px] text-muted tabular-nums">
+              {!compact && <>{goals.protein ?? '—'}P{' · '}</>}
+              <span style={{ color: goals.trackFat ? undefined : MUTED, opacity: goals.trackFat ? 1 : 0.65 }}>
+                {goals.trackFat ? `${goals.fat ?? '—'}F` : 'F off'}
+              </span>
+              {' · '}
+              <span style={{ color: goals.trackCarbs ? undefined : MUTED, opacity: goals.trackCarbs ? 1 : 0.65 }}>
+                {goals.trackCarbs ? `${goals.carbs ?? '—'}C` : 'C off'}
+              </span>
             </span>
-            {' · '}
-            <span style={{ color: goals.trackCarbs ? undefined : MUTED, opacity: goals.trackCarbs ? 1 : 0.65 }}>
-              {goals.trackCarbs ? `${goals.carbs ?? '—'}C` : 'C off'}
-            </span>
-          </span>
+          )}
         </span>
         <Pencil className="w-4 h-4 text-muted shrink-0" aria-hidden="true" />
       </button>

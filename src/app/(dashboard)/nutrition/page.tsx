@@ -38,6 +38,7 @@ import { EraFilterPills } from '@/components/era/EraFilterPills'
 import { ExceptionDayBanner } from '@/components/nutrition/ExceptionDayBanner'
 import { isExceptionDay } from '@/lib/nutrition/exceptionDay'
 import { useNutritionGoals } from '@/lib/hooks/useNutritionGoals'
+import { useHistoricalGoals } from '@/lib/hooks/useHistoricalGoals'
 
 export default function NutritionPage() {
   const qc = useQueryClient()
@@ -133,6 +134,29 @@ export default function NutritionPage() {
     [logs, era, resolvedPhase],
   )
 
+  /**
+   * ── EVERY DAY ON THIS PAGE IS GRADED BY ITS OWN TARGET ─────────────────────
+   *
+   * The chart, the adherence read and the history list all used `goals`, which
+   * is TODAY's resolved target. That works until the target moves, and moving it
+   * is what a lever is for: the maintenance rung raised carbohydrate from 206 g
+   * to 244 g on 30 Aug and instantly re-marked a month of finished days against
+   * a number that did not exist when they were eaten. Green days went yellow,
+   * and the 7-day adherence read — the same single figure, ±100 kcal of a
+   * calorie goal that had just jumped by ~150 — collapsed to 14%.
+   *
+   * `goalFor` resolves the whole ladder per date (`useHistoricalGoals`). The
+   * dates handed to it are exactly the days these three surfaces draw, so the
+   * one `daily_targets` query it makes is as wide as the screen and no wider.
+   */
+  const historyDates = useMemo(() => {
+    const seen = new Set<string>()
+    for (const l of logs ?? []) seen.add(l.date)
+    for (const m of macroHistory ?? []) seen.add(m.date)
+    return Array.from(seen)
+  }, [logs, macroHistory])
+  const goalFor = useHistoricalGoals(historyDates)
+
   // Whole-history scans that ran on every render, including every keystroke in
   // any child input.
   // Declared exceptions leave BOTH sides of the fraction — they are not misses,
@@ -141,9 +165,14 @@ export default function NutritionPage() {
   const adherence = useMemo(() => {
     const last7 = (logs ?? []).slice(0, 7).filter((l) => !isExceptionDay(l.exception))
     if (!last7.length) return null
-    const inRange = last7.filter((l) => l.calories !== null && Math.abs(l.calories - goals.calorie) <= 100).length
+    const inRange = last7.filter((l) => {
+      if (l.calories === null) return false
+      // That Monday's target, not this Friday's. A day you hit is a day you hit.
+      const target = goalFor(l.date).calorie
+      return target > 0 && Math.abs(l.calories - target) <= 100
+    }).length
     return Math.round((inRange / last7.length) * 100)
-  }, [logs, goals.calorie])
+  }, [logs, goalFor])
 
   return (
     <div data-boxed className="space-y-6">
@@ -216,7 +245,7 @@ export default function NutritionPage() {
           phase on 'All', and a 200-day bar chart is a smear. */}
       <div className="space-y-3">
         <ChartRange value={macroDays} onChange={setMacroDays} />
-        <MacroProgressChart data={macroHistory ?? []} goals={goals} isLoading={macroLoading} />
+        <MacroProgressChart data={macroHistory ?? []} goals={goals} goalFor={goalFor} isLoading={macroLoading} />
       </div>
 
       {/* ── History, collapsed ──
@@ -239,6 +268,7 @@ export default function NutritionPage() {
           <NutritionLogList
             logs={filteredLogs}
             goals={goals}
+            goalFor={goalFor}
             isLoading={isLoading}
             emptyMessage={era === 'axis'
               ? `No ${SUB_PHASE_META[resolvedPhase].label} days yet in Helix 5.1.`

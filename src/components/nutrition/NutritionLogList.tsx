@@ -63,10 +63,22 @@ function MacroBar({ label, value, goal }: { label: 'P' | 'C' | 'F'; value: numbe
   )
 }
 
-/** Dense daily-nutrition cards — one tight row per day, optimized for mobile. */
-export function NutritionLogList({ logs, goals, isLoading, emptyMessage, onDayClick }: {
+/**
+ * Dense daily-nutrition cards — one tight row per day, optimized for mobile.
+ *
+ * ── EACH ROW IS GRADED BY THE TARGET THAT DAY HAD ────────────────────────────
+ * The calorie colour and the three macro bars used one `goals` object for the
+ * whole list, which is today's. A history list is the surface where that is
+ * most obviously wrong: pulling the maintenance rung repainted a month of rows
+ * against a target that came into force after every one of them. `goalFor`
+ * resolves per date — see `useHistoricalGoals`.
+ */
+export function NutritionLogList({ logs, goals, goalFor, isLoading, emptyMessage, onDayClick }: {
   logs: DailyLog[]
+  /** Today's targets — the fallback when no per-date resolver is supplied. */
   goals: Goals
+  /** What each day was actually asked for. Optional; every caller passes one. */
+  goalFor?: (dateISO: string) => Goals
   isLoading?: boolean
   emptyMessage: string
   onDayClick?: (date: string) => void
@@ -87,10 +99,11 @@ export function NutritionLogList({ logs, goals, isLoading, emptyMessage, onDayCl
         // danger colour, the same one an unravelled week gets — which is
         // precisely the verdict the flag exists to withdraw.
         const flagged = isExceptionDay(l.exception)
+        const dayGoals = goalFor ? goalFor(l.date) : goals
         const calColor = flagged ? AMETHYST
           : l.calories == null ? '#79808C'
-          : Math.abs(l.calories - goals.calorie) <= 150 ? '#3E9E7A'
-          : Math.abs(l.calories - goals.calorie) <= 350 ? '#D4AF37' : '#C4514E'
+          : Math.abs(l.calories - dayGoals.calorie) <= 150 ? '#3E9E7A'
+          : Math.abs(l.calories - dayGoals.calorie) <= 350 ? '#D4AF37' : '#C4514E'
         return (
           <div key={l.date} role={onDayClick ? 'button' : undefined} tabIndex={onDayClick ? 0 : undefined}
             onClick={onDayClick ? () => onDayClick(l.date) : undefined}
@@ -122,9 +135,9 @@ export function NutritionLogList({ logs, goals, isLoading, emptyMessage, onDayCl
                 {l.estimated && <ContextChip label="Est" color={SAND} />}
               </div>
               <div className="flex items-center gap-2 mt-1.5">
-                <MacroBar label="P" value={l.proteinG} goal={goals.protein} />
-                <MacroBar label="C" value={l.carbsG} goal={goals.carbs} />
-                <MacroBar label="F" value={l.fatG} goal={goals.fat} />
+                <MacroBar label="P" value={l.proteinG} goal={dayGoals.protein} />
+                <MacroBar label="C" value={l.carbsG} goal={dayGoals.carbs} />
+                <MacroBar label="F" value={l.fatG} goal={dayGoals.fat} />
               </div>
             </div>
 

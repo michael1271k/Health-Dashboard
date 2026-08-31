@@ -8,7 +8,7 @@ import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 import { formatSet } from '@/lib/utils/setFormat'
 import { MarkdownView } from './MarkdownView'
 import { sessionVerdict } from '@/lib/training/sessionVerdict'
-import { maintenanceSpanFor } from '@/lib/nutrition/maintenance'
+import { useIsMaintenanceDate } from '@/lib/hooks/useMaintenance'
 import { SAND, MUTED } from '@/lib/theme/palette'
 
 function Chip({ label, value, accent = '#E0703C' }: { label: string; value: string; accent?: string }) {
@@ -92,8 +92,20 @@ function trend(d: {
  * sessions, and the markdown prose demoted to a collapsible "Coach Notes".
  */
 export function SessionIntelCard({ session }: { session: GymReportRow }) {
-  // The phase axis, which is the one with a declared length — see `maintenance.ts`.
-  const isMaintenance = maintenanceSpanFor(session.date) != null
+  /**
+   * ── THE LEVER AXIS, NOT THE PHASE AXIS ─────────────────────────────────────
+   * This read `maintenanceSpanFor(session.date) != null`, which asks `PHASES`
+   * alone. The one-week `Maintenance Week` phase row was deleted on 2026-08-30
+   * — the lever owns that week outright now (see `maintenance.ts`) — so from
+   * that day on the phase axis answered "no" about every maintenance session,
+   * and the verdict below printed "37% less tonnage, and no load increase to
+   * explain it" about a week that was PROGRAMMED to drop tonnage.
+   *
+   * `useIsMaintenanceDate` is the union: the lever when it has an opinion, the
+   * phase as the fallback for the historical deloads that predate levers. It is
+   * a cache read — the goal row is already in flight for the dashboard.
+   */
+  const isMaintenance = useIsMaintenanceDate(session.date)
   const { data: intel, isLoading } = useSessionIntel(session.id)
 
   // One verdict, three consumers: the colour of the delta, the deload chip and

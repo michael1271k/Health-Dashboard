@@ -3,6 +3,7 @@
 import { memo } from 'react'
 import { BackLink } from '@/components/nav/NavChevron'
 import { SessionClock } from './SessionClockSheet'
+import { SessionElapsed } from './SessionElapsed'
 import { FinishButton } from './FinishButton'
 import { fmtVolume } from '@/lib/utils/units'
 import { cleanSessionTitle, type SessionDraft } from '@/lib/sessions/draft'
@@ -147,6 +148,31 @@ export const LiveSessionBar = memo(function LiveSessionBar({
               // permanent gold zero is how gold stops meaning a record.
               color={recordCount > 0 ? GOLD : MUTED}
             />
+            {/* ── AND THE CLOCK CLOSES THE LINE ──
+                The hero states how long you have been in the session and the
+                bar did not, so the one figure that moves on its own vanished at
+                exactly the scroll position you spend the workout at — the
+                reading you glance at between sets, gone the moment the hero
+                went. It is a READING, not a control: same line as the other
+                three, no box, no tap target, hard right so the three totals
+                keep their left-to-right order and the thing that ticks is the
+                last thing on the line.
+
+                `SessionElapsed` and not a fourth `Stat`, because it owns the
+                one behaviour that matters here — it subtracts paused time and
+                swaps the hourglass for a pause glyph, so the bar and the
+                Duration sheet cannot disagree about whether the clock is
+                running. It also holds its own 1 Hz tick behind `memo`, which is
+                why putting it here does not re-render the bar every second. */}
+            <span className="ml-auto shrink-0">
+              <SessionElapsed
+                startedAt={draft.startedAt}
+                pausedMs={draft.pausedMs}
+                pausedAt={draft.pausedAt}
+                accent={accent}
+                size="inline"
+              />
+            </span>
           </p>
         </div>
 

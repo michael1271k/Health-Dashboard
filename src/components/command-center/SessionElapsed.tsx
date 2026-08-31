@@ -47,8 +47,15 @@ export const SessionElapsed = memo(function SessionElapsed({ startedAt, pausedMs
    * a caller without a palette still renders.
    */
   accent?: string
-  /** `lg` matches the hero's 44px targets, `sm` the collapsed bar's 38px ones. */
-  size?: 'sm' | 'lg'
+  /**
+   * `lg` matches the hero's 44px targets, `sm` the collapsed bar's 38px ones.
+   *
+   * `inline` is neither: no box at all, for the collapsed bar's STATS LINE,
+   * where the duration sits as a fourth reading beside tonnage, sets and PRs
+   * rather than as a control beside Finish. A 38px target on a 34px line would
+   * set the height of the whole strip to hold four characters.
+   */
+  size?: 'sm' | 'lg' | 'inline'
   /** Opens the Duration sheet. Without it the readout stays a plain span. */
   onOpen?: () => void
 }) {
@@ -67,7 +74,9 @@ export const SessionElapsed = memo(function SessionElapsed({ startedAt, pausedMs
   if (sec == null) return null
 
   const tint = accent ?? STEEL
-  const box = size === 'lg' ? 'min-h-[44px] px-1' : 'min-h-[38px] px-0.5'
+  const box = size === 'lg' ? 'min-h-[44px] px-1'
+    : size === 'sm' ? 'min-h-[38px] px-0.5'
+      : 'min-h-0 leading-none'
   const label = `Duration ${formatClock(sec)}${paused ? ', paused' : ''}`
 
   /* ── AND THEN THE WORD CAME OFF AGAIN ─────────────────────────────────────

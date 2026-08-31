@@ -608,7 +608,11 @@ export default function DashboardPage() {
               to change today's number is the screen you are already looking at
               when you decide. See `dailyTargets.ts` for why this layer is the
               only one allowed to speak for a single date. */}
-          <DayTargetCard date={logicalTodayISO()} goals={fuelGoals} />
+          {/* `compact`: the bars directly below already state `2,131 / 2,151`
+              and one per macro, so the card keeps the CONTROL — the day's shape
+              and the pencil — and drops the readout that said the same target a
+              second time in weaker form. See `DayTargetCard`'s own note. */}
+          <DayTargetCard date={logicalTodayISO()} goals={fuelGoals} compact />
           <MacroCards
             today={nutrition ? {
               calories: nutrition.calories, proteinG: nutrition.protein_g,

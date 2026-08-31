@@ -44,45 +44,73 @@ const READY_GOLD = '#D4AF37'
 const AMBER = '#E0A03C'   // one-more-session: earned, not yet due
 
 /**
- * One numeric field of a cardio block.
+ * One editable cell of the cardio row — a number, living IN the table.
+ *
+ * ── WHAT THIS REPLACED, AND WHY IT HAD TO GO ─────────────────────────────────
+ * Cardio used to render the table AND, permanently below it, three bordered
+ * boxes captioned DISTANCE / DURATION / INCLINE. Two of those three restated
+ * the numbers already printed a centimetre above them, in a different type
+ * size, in a different shape, under different words for the same quantity
+ * ("Distance" over a column headed `km`). One block of work, stated twice, with
+ * the second statement the only one you could actually edit — so the table read
+ * as a label for the controls rather than as the log.
+ *
+ * The cells ARE the controls now. A cardio row is one row of the deck's own
+ * four-track table, every track editable in place, and there is nothing under
+ * it. That is what makes it match a set row: a set row's value is not restated
+ * in a box below the card either.
  *
  * Keeps a local text buffer while focused, for the same reason `NumberField`
  * does in `SetEditorRow`: committing on every keystroke means typing "0.4"
  * commits 0 on the first character, and a value-derived input fights the user
  * mid-word. An empty field commits `null` — clearing a distance is a real edit,
  * not a zero.
+ *
+ * `onPointerDown` is stopped: the row sits inside a sortable card, and a press
+ * that lands on a field must place a caret rather than begin a reorder.
  */
-function CardioField({ label, unit, step, value, onCommit }: {
+function CardioCell({ label, unit, step, value, digits = 2, readOnly = false, onCommit }: {
   label: string
   unit: string
   step: number
   value: number | null | undefined
+  /** Decimal places when the value is NOT being edited. */
+  digits?: number
+  /** No `onUpdateCardio` — a read-only deck. The figures still show. */
+  readOnly?: boolean
   onCommit: (v: number | null) => void
 }) {
   const [text, setText] = useState<string | null>(null)
-  const shown = text ?? (value != null ? String(value) : '')
+  const shown = text ?? (value != null ? trimNum(value, digits) : '')
   return (
-    <label className="flex-1 min-w-0">
-      <span className="block text-[9px] font-bold uppercase tracking-widest text-muted mb-1">{label}</span>
-      <span className="flex items-center gap-1 rounded-xl border border-white/[0.08] bg-white/[0.04] px-2 min-h-[38px]">
-        <input
-          type="number" inputMode="decimal" step={step} min={0}
-          value={shown}
-          onChange={(e) => {
-            setText(e.target.value)
-            const t = e.target.value.trim()
-            if (t === '') { onCommit(null); return }
-            const n = Number(t)
-            if (Number.isFinite(n) && n >= 0) onCommit(n)
-          }}
-          onBlur={() => setText(null)}
-          className="helix-num w-full bg-transparent field-compact font-bold text-text tabular-nums outline-none min-w-0"
-          aria-label={`${label} in ${unit}`}
-        />
-        <span className="text-[10px] text-muted shrink-0">{unit}</span>
-      </span>
-    </label>
+    <input
+      type="text"
+      inputMode="decimal"
+      step={step}
+      min={0}
+      value={shown}
+      placeholder="—"
+      readOnly={readOnly}
+      onPointerDown={(e) => e.stopPropagation()}
+      onFocus={(e) => { setText(shown); e.currentTarget.select() }}
+      onChange={(e) => {
+        setText(e.target.value)
+        const t = e.target.value.trim()
+        if (t === '') { onCommit(null); return }
+        const n = Number(t)
+        if (Number.isFinite(n) && n >= 0) onCommit(n)
+      }}
+      onBlur={() => setText(null)}
+      className="helix-num w-full min-w-0 bg-transparent field-compact text-center font-bold
+                 tabular-nums text-text outline-none placeholder:text-muted placeholder:font-normal"
+      aria-label={`${label} in ${unit}`}
+    />
   )
+}
+
+/** `0.37`, `5`, `12.5` — a fixed-point value with its dead zeros taken off. */
+function trimNum(v: number, digits: number): string {
+  return v.toFixed(digits).replace(/\.?0+$/, '') || '0'
 }
 
 /** Smart-Coach cue for this lift. `ready` = earned the bump (two clean sessions
@@ -676,10 +704,22 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
    *     above ten rows of a table with four columns.
    *
    * So it renders the deck's own grid (`setGridFor('cardio')`) — one row,
-   * `Previous · KM · MIN · ✓` — sharing the badge width, the column template
-   * and the tail with every set row beneath it. Incline stays out of the
-   * template and rides underneath as a chip: it modifies the work, it is not a
-   * fourth measurement of it.
+   * `Previous · KM · MIN · % · ✓` — sharing the badge width, the column
+   * template and the tail with every set row beneath it.
+   *
+   * ── AND INCLINE IS THE FOURTH TRACK, NOT A CHIP UNDERNEATH ─────────────────
+   * It used to sit out of the template and ride below the row as a violet chip,
+   * on the reasoning that incline MODIFIES the work rather than measuring it.
+   * That distinction does not survive contact with the table it was excluded
+   * from: a loaded set row's fourth track is RPE, which is also a qualifier
+   * rather than a measurement, and it is a column. A 5 km walk at 0% and the
+   * same walk at 12% differ exactly the way a set at RPE 6 and the same set at
+   * RPE 10 do, and the deck has one place for that kind of fact — the track
+   * after the value.
+   *
+   * So the treadmill fills all four tracks the template already had, the chip
+   * is gone, and the row is a row of the same table rather than a row of the
+   * same table plus an annotation.
    *
    * The tick is REQUIRED. `buildCommitPayload` drops an unticked block, because
    * a treadmill that was not walked is not a 0.37 km walk and must not enter the
@@ -688,8 +728,6 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
   if (exercise.kind === 'cardio') {
     const done = exercise.done === true
     const prevLine = formatPreviousCardio(prevCardio ?? null)
-    const fmtNum = (v: number | null | undefined, digits = 2) =>
-      v == null ? '—' : v.toFixed(digits).replace(/\.?0+$/, '') || '0'
     return (
       <div ref={setNodeRef} style={sortableStyle}
         className={`rounded-2xl border bg-white/[0.03] p-2.5 !rounded-2xl shadow-[0_4px_22px_rgba(0,0,0,0.26)] ${dragClass} ${
@@ -701,15 +739,17 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
             style={{ background: `${CARDIO_VIOLET}1c`, color: CARDIO_VIOLET }}>
             <CardioIcon className="w-4 h-4" aria-hidden="true" />
           </span>
-          <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open}
-            className="flex-1 min-w-0 text-left">
+          {/* Not a button any more. It used to toggle the editor panel below,
+              and there is no panel below — the row edits itself. A name that
+              still looked pressable would be a control with nothing behind it. */}
+          <span className="flex-1 min-w-0">
             <span className="font-semibold text-text leading-snug truncate block" style={{ fontSize: 'var(--text-exercise-title)' }}>{exercise.name}</span>
             {/* No longer hardcoded "warm-up": a block added mid-session is a
                 finisher, and calling it a warm-up misdescribes it. */}
             <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: CARDIO_VIOLET }}>
               {exercise.note?.trim() || 'Cardio'}
             </span>
-          </button>
+          </span>
           <div className="flex items-center gap-1.5 shrink-0">
             <button type="button" onClick={() => onRemoveExercise(localId)}
               className="min-h-[32px] min-w-[32px] rounded-lg flex items-center justify-center text-muted hover:text-danger"
@@ -730,7 +770,10 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
               <span className={SET_CELL_LEAD}>Previous</span>
               <span className={SET_CELL_VALUE}>km</span>
               <span className={SET_CELL_VALUE}>min</span>
-              <span aria-hidden="true" />
+              {/* The RPE track's width, carrying the RPE track's kind of fact.
+                  `%` rather than "Incline": the column is 28px and the unit is
+                  the shorter, more precise of the two words. */}
+              <span className={SET_CELL_VALUE} title="Incline, in percent">%</span>
             </span>
             <span className={`${SET_TAIL_W} shrink-0 flex items-center justify-center ${SET_HEADER_TEXT}`}
               title="Completed — an unticked block counts as skipped">
@@ -742,9 +785,7 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
           <div className={`flex items-center ${SET_FRAME_GAP} rounded-lg px-2 py-1.5 transition-colors ${
             done ? 'bg-[#3E9E7A]/[0.10]' : 'bg-white/[0.02]'}`}>
             <span className={`${SET_BADGE_W} shrink-0 text-[10px] font-bold text-muted`}>1</span>
-            <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open}
-              className={`flex-1 min-w-0 ${setGridFor('cardio')} text-left`}
-              aria-label="Edit the treadmill block">
+            <div className={`flex-1 min-w-0 ${setGridFor('cardio')} text-left`}>
               {/* Same treatment as a set row's reference: dimmed, unit-carrying,
                   never editable. It is the LAST TIME THIS DAY came round, not
                   the last treadmill block of any kind — see
@@ -753,18 +794,26 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
                 title={prevCardio ? `Last ${dayLabelForTitle} · ${prevCardio.date}` : undefined}>
                 {prevLine ?? '—'}
               </span>
-              <span className={`helix-num text-fluid-base font-bold tabular-nums truncate ${SET_CELL_VALUE} ${
-                exercise.distanceKm != null ? 'text-text' : 'text-muted'}`}>
-                {fmtNum(exercise.distanceKm)}
-              </span>
-              <span className={`helix-num text-fluid-base font-bold tabular-nums truncate ${SET_CELL_VALUE} ${
-                exercise.durationSec != null ? 'text-text' : 'text-muted'}`}>
-                {exercise.durationSec != null
-                  ? fmtNum(Math.round((exercise.durationSec / 60) * 10) / 10, 1)
-                  : '—'}
-              </span>
-              <span aria-hidden="true" />
-            </button>
+              <CardioCell
+                label="Distance" unit="km" step={0.1} value={exercise.distanceKm ?? null} readOnly={!onUpdateCardio}
+                onCommit={(v) => onUpdateCardio?.(localId, { distanceKm: v ?? undefined })}
+              />
+              <CardioCell
+                label="Duration" unit="minutes" step={1} digits={1} readOnly={!onUpdateCardio}
+                value={exercise.durationSec != null ? Math.round((exercise.durationSec / 60) * 10) / 10 : null}
+                // Stored in SECONDS — the deck's own unit is minutes because that
+                // is how a treadmill is set, but a 4:30 warm-up must survive.
+                onCommit={(v) => onUpdateCardio?.(localId, { durationSec: v == null ? undefined : Math.round(v * 60) })}
+              />
+              {/* Half-percent steps, because that is the grid a treadmill's own
+                  buttons move on. One decimal place shown, and `trimNum` takes
+                  the zero back off — a 6% walk reads `6`, not `6.0`, in a track
+                  28px wide. */}
+              <CardioCell
+                label="Incline" unit="percent" step={0.5} digits={1} value={exercise.inclinePct ?? null} readOnly={!onUpdateCardio}
+                onCommit={(v) => onUpdateCardio?.(localId, { inclinePct: v ?? undefined })}
+              />
+            </div>
             <button
               type="button"
               onPointerDown={() => { void tapLight() }}
@@ -781,42 +830,7 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
               <Check className={`w-3.5 h-3.5 ${done ? '' : 'text-muted'}`} strokeWidth={3} aria-hidden="true" />
             </button>
           </div>
-
-          {exercise.inclinePct != null && exercise.inclinePct > 0 && !open && (
-            <span className="ml-2 mt-1 inline-flex items-center px-1.5 py-px rounded-md text-[9px] font-bold uppercase tracking-wide tabular-nums"
-              style={{ color: CARDIO_VIOLET, background: `${CARDIO_VIOLET}14`, border: `1px solid ${CARDIO_VIOLET}33` }}>
-              {exercise.inclinePct}% incline
-            </span>
-          )}
         </div>
-
-        {open && onUpdateCardio && (
-          <div className="mt-2 border-t border-white/[0.06] pt-2 flex items-end gap-2">
-            <CardioField
-              label="Distance" unit="km" step={0.1} value={exercise.distanceKm}
-              onCommit={(v) => onUpdateCardio(localId, { distanceKm: v ?? undefined })}
-            />
-            <CardioField
-              label="Duration" unit="min" step={1}
-              value={exercise.durationSec != null ? Math.round((exercise.durationSec / 60) * 10) / 10 : null}
-              // Stored in SECONDS — the deck's own unit is minutes because that
-              // is how a treadmill is set, but a 4:30 warm-up must survive.
-              onCommit={(v) => onUpdateCardio(localId, { durationSec: v == null ? undefined : Math.round(v * 60) })}
-            />
-            {/* ── INCLINE ──
-                A treadmill walk at 0% and the same walk at 12% are not the same
-                session, and until now the deck had nowhere to say which one
-                happened — the two figures beside this one describe how far and
-                how long, and neither is the reason a 5 km/h walk was hard.
-
-                Half-percent steps, because that is the grid a treadmill's own
-                buttons move on. */}
-            <CardioField
-              label="Incline" unit="%" step={0.5} value={exercise.inclinePct}
-              onCommit={(v) => onUpdateCardio(localId, { inclinePct: v ?? undefined })}
-            />
-          </div>
-        )}
       </div>
     )
   }

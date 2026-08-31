@@ -10,7 +10,7 @@ import type { SplitDay } from '@/lib/types/workout'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 import { niceDomain, compactKg } from '@/lib/charts/scale'
 import { dayColor, SAND } from '@/lib/theme/palette'
-import { maintenanceSpanFor } from '@/lib/nutrition/maintenance'
+import { useMaintenancePredicate } from '@/lib/hooks/useMaintenance'
 
 const GRID = 'rgba(255,255,255,0.06)'
 const TEXT = '#79808C'
@@ -150,6 +150,21 @@ export function VolumeChart({ data, isLoading, era = 'all' }: { data: VolumePoin
   const pills = SPLITS_FOR_ERA[era]
   const activeSplit = pills.includes(split) ? split : pills[0]
 
+  /**
+   * ── THE BAND IS ON THE LEVER AXIS NOW ──────────────────────────────────────
+   * This asked `maintenanceSpanFor`, the PHASE axis, on the reasoning that a
+   * phase is the thing with a declared length and a band needs an end. True
+   * then; the phase row for the maintenance week was deleted on 2026-08-30 when
+   * the lever took that week over, so the axis stopped having an opinion and
+   * the band silently vanished from the one week it was drawn for — leaving the
+   * volume drop that the plan asked for looking exactly like a bad week.
+   *
+   * It does not need a declared length: the band below is built by WALKING the
+   * points and extending while the predicate holds, so it ends where the data
+   * ends. A per-date predicate is all it ever needed.
+   */
+  const isMaintenance = useMaintenancePredicate()
+
   // Hooks run before the loading early-return — their order must not depend on
   // whether data has arrived.
   const chartData = useMemo(
@@ -159,11 +174,10 @@ export function VolumeChart({ data, isLoading, era = 'all' }: { data: VolumePoin
         date: formatDate(d.date),
         volume: displayWeight(d.volume),
         // Carried onto the point so both the band and the dot renderer read one
-        // answer. `maintenanceSpanFor` is the phase axis, which is the only one
-        // with a declared LENGTH — see the note in `maintenance.ts`.
-        maintenance: maintenanceSpanFor(d.date) != null,
+        // answer.
+        maintenance: isMaintenance(d.date),
       })),
-    [data, era, activeSplit],
+    [data, era, activeSplit, isMaintenance],
   )
 
   // ── THE PLANNED-DELOAD BAND ────────────────────────────────────────────────

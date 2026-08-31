@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
-  DndContext, DragOverlay, closestCenter, PointerSensor, KeyboardSensor,
+  DndContext, DragOverlay, closestCenter, MouseSensor, TouchSensor, KeyboardSensor,
   useSensor, useSensors, MeasuringStrategy,
   type DragEndEvent, type DragOverEvent, type DragStartEvent,
 } from '@dnd-kit/core'
@@ -202,8 +202,35 @@ export function WidgetGrid({ children }: {
 
   useEffect(() => clearHover, [clearHover])
 
+  /**
+   * ── A MOUSE AND A THUMB DO NOT LIFT A TILE THE SAME WAY ────────────────────
+   *
+   * This was one `PointerSensor` with `{ delay: 450, tolerance: 8 }`, and that
+   * pair is a TOUCH contract: press and hold, because a finger that starts
+   * moving immediately is scrolling the page and must not be stealing a widget.
+   *
+   * Handed to a mouse it is simply a grid that does not drag. Nobody presses a
+   * mouse button and waits half a second on a dashboard — you press and pull —
+   * and pulling is precisely what `tolerance: 8` cancels the lift for. Every
+   * desktop attempt therefore travelled 8px, was cancelled as a scroll that was
+   * never a scroll, and the tile stayed put. The grid looked frozen on desktop
+   * and worked on a phone, which is the shape of the report.
+   *
+   * Two sensors, one per input, each with its own idea of "you meant this":
+   *
+   *   · Mouse — 8px of TRAVEL. A cursor has no ambiguity to resolve: the page
+   *     does not scroll under a held button, so distance alone separates a drag
+   *     from a click, and the lift happens the instant you have clearly moved.
+   *   · Touch — the same 450ms hold as before, unchanged. The ambiguity is real
+   *     there and the long press is how iOS resolves it too.
+   *
+   * `PointerSensor` cannot express both, because it is one sensor with one
+   * constraint and it cannot know which device is on the other end of the
+   * event. dnd-kit ships the split for exactly this reason.
+   */
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { delay: 450, tolerance: 8 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 450, tolerance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
 
@@ -234,7 +261,7 @@ export function WidgetGrid({ children }: {
    * ── LONG-PRESS A STACK, RELEASE WITHOUT MOVING → EDIT IT ───────────────────
    *
    * The obvious implementation — a second long-press timer on the tile — cannot
-   * work, because dnd-kit's PointerSensor is already listening on the same
+   * work, because dnd-kit's TouchSensor is already listening on the same
    * element with a 450ms clock and there is no way to un-fire the lift it has
    * begun. Racing it with a 400ms timer of our own would mean a drag that starts
    * with a modal open over it.
@@ -715,10 +742,39 @@ function SortableSlot({ slot, editing, reduced, merging, surface, face, onFace, 
  * cancels the long-press the moment a finger travels, so all this has to do is
  * measure the travel it was handed.
  *
- * The one thing it must not do is flip on a PAGE SCROLL that happened to start
- * on a stack, which is the common case on a phone: hence the scroll-position
- * check, which is a fact rather than a heuristic.
+ * ── WHY IT DID NOT FIRE, AND THE ONE LINE THAT FIXES IT ──────────────────────
+ * It was measured on `pointerup` and disqualified by `window.scrollY` having
+ * moved. Both are right in isolation and together they made the gesture
+ * impossible on the device it exists for.
+ *
+ * A stacked tile is 112px tall inside a page that scrolls vertically, and the
+ * element had `touch-action: auto`. So the browser owned the vertical axis: a
+ * thumb dragging down on a tile scrolled the DASHBOARD, which (a) moved
+ * `scrollY`, tripping the guard, and (b) sent `pointercancel` rather than
+ * `pointerup` the moment the scroll took over — so the handler that would have
+ * flipped the face usually never ran at all, and on the occasions it did, the
+ * guard vetoed it. The gesture was not slightly too strict. It could not win.
+ *
+ * `touch-action: pan-x` on the stacked tile is the fix, and it is what iOS
+ * itself does: a Smart Stack owns the vertical swipe and hands the other axis
+ * back to the Home Screen. The page still scrolls from every other pixel of the
+ * dashboard — including every UNstacked tile, which keeps `auto` — and a
+ * vertical drag that begins on a stack now belongs to the stack. With the axis
+ * actually owned, `scrollY` cannot move under the finger, so the guard that was
+ * standing in for that ownership is gone with it.
+ *
+ * It also fires on `pointermove`, the instant the threshold is crossed, rather
+ * than waiting for a release: that is what makes it feel like the widget
+ * responded to the swipe instead of to the end of it.
+ *
+ * ── AND IT IS A TOUCH GESTURE ONLY ───────────────────────────────────────────
+ * `pointerType === 'mouse'` is excluded outright. A mouse drag of 24px is also
+ * a drag dnd-kit's `MouseSensor` claims at 8px, so on desktop the two would fire
+ * on the same gesture — the tile would flip AND lift. Desktop has the dots,
+ * which are real buttons and were always the keyboard's route through a stack.
  */
+/** Vertical travel that means "next face". Past any tap jitter, a third of a small tile. */
+const SWIPE_MIN_PX = 24
 function StackFaces({ slot, face, setFace, editing, reduced, children }: {
   slot: StackSlot
   face: number
@@ -731,7 +787,7 @@ function StackFaces({ slot, face, setFace, editing, reduced, children }: {
   const [dir, setDir] = useState(1)
   // Set on a manual flip, so the timer does not immediately overrule the hand.
   const touchedAt = useRef(0)
-  const gesture = useRef<{ y: number; x: number; at: number; scroll: number } | null>(null)
+  const gesture = useRef<{ y: number; x: number; fired: boolean } | null>(null)
   // Set by a swipe that fired, cleared by the click it eats.
   const swallow = useRef(false)
 
@@ -764,40 +820,43 @@ function StackFaces({ slot, face, setFace, editing, reduced, children }: {
   }, [stacked, editing, slot.id, slot.items.length, setFace])
 
   const onPointerDown = (e: React.PointerEvent) => {
-    if (!stacked) return
-    gesture.current = { y: e.clientY, x: e.clientX, at: Date.now(), scroll: window.scrollY }
+    if (!stacked || e.pointerType === 'mouse') return
+    gesture.current = { y: e.clientY, x: e.clientX, fired: false }
   }
 
   /**
-   * ── THE SWIPE HAD THREE WAYS TO MISS, AND ONE WAY TO BE UNDONE ────────────
-   * It asked for 44px of travel inside 500ms with no more than 30px sideways.
-   * An ordinary, deliberate thumb swipe on a 175px tile is shorter than that,
-   * takes longer than that, and drifts more than that — so the gesture existed
-   * and mostly did not fire.
+   * ── IT RESOLVES MID-GESTURE, AND IT RESOLVES ONCE ─────────────────────────
    *
-   * 24px is past any tap jitter and is roughly a third of a small tile's
-   * height. 900ms allows a swipe that is placed rather than flicked. And the
-   * horizontal test is now RELATIVE — what disqualifies a swipe is that it was
-   * mostly sideways, not that it moved sideways at all.
+   * Three outcomes, decided as the finger travels rather than when it lands:
    *
-   * The fourth problem is the one that made it look broken even when it did
-   * fire: the tile underneath opens a domain sheet on click, so a successful
-   * swipe turned the face over AND opened a sheet on top of it. `swallow`
-   * eats exactly one click, in the capture phase, before it can reach the body.
+   *   · past `SWIPE_MIN_PX` and mostly vertical → flip, and mark the gesture
+   *     spent so a long drag steps one face rather than five;
+   *   · past it and mostly SIDEWAYS → abandon the gesture outright. What
+   *     disqualifies a swipe is that it was horizontal, not that it drifted;
+   *   · short of it → keep waiting. A tap never crosses 24px, so a tap still
+   *     reaches the tile's own click and opens its sheet.
+   *
+   * ── AND DOWN IS FORWARD ───────────────────────────────────────────────────
+   * A downward swipe brings the NEXT face in from above, the way a page you
+   * pull down brings the one behind it into view. The face animation follows
+   * the finger for the same reason: `dir > 0` enters from the top, so what
+   * arrives moves in the direction the thumb pushed.
+   *
+   * `swallow` is unchanged and still load-bearing: the tile underneath opens a
+   * domain sheet on click, so without it a successful swipe would turn the face
+   * over AND open a sheet on top of it. It eats exactly one click, in the
+   * capture phase, before it can reach the body.
    */
-  const onPointerUp = (e: React.PointerEvent) => {
+  const onPointerMove = (e: React.PointerEvent) => {
     const g = gesture.current
-    gesture.current = null
-    if (!g || !stacked) return
+    if (!g || g.fired || !stacked) return
     const dy = e.clientY - g.y
     const dx = e.clientX - g.x
-    // The page moved under the finger: this was a scroll that began on a tile,
-    // not a swipe of the tile.
-    if (Math.abs(window.scrollY - g.scroll) > 2) return
-    if (Date.now() - g.at > 900) return
-    if (Math.abs(dy) < 24 || Math.abs(dx) > Math.abs(dy) * 0.8) return
+    if (Math.abs(dx) > Math.abs(dy) * 0.8 && Math.abs(dx) >= SWIPE_MIN_PX) { gesture.current = null; return }
+    if (Math.abs(dy) < SWIPE_MIN_PX) return
+    g.fired = true
     swallow.current = true
-    go(dy < 0 ? 1 : -1)
+    go(dy > 0 ? 1 : -1)
   }
 
   const id = slot.items[face]
@@ -809,8 +868,13 @@ function StackFaces({ slot, face, setFace, editing, reduced, children }: {
   return (
     <div
       className="relative h-full overflow-hidden rounded-2xl"
+      // The vertical axis belongs to the stack, the horizontal one to the page.
+      // Without this the browser scrolls instead, and the swipe below never gets
+      // a `pointermove` it is allowed to act on — see the note above.
+      style={{ touchAction: 'pan-x' }}
       onPointerDown={onPointerDown}
-      onPointerUp={onPointerUp}
+      onPointerMove={onPointerMove}
+      onPointerUp={() => { gesture.current = null }}
       onPointerCancel={() => { gesture.current = null }}
       onClickCapture={(e) => {
         if (!swallow.current) return
@@ -823,9 +887,12 @@ function StackFaces({ slot, face, setFace, editing, reduced, children }: {
         <m.div
           key={`${slot.id}:${face}:${id}`}
           custom={dir}
-          initial={reduced ? { opacity: 0 } : { opacity: 0, y: dir > 0 ? '24%' : '-24%' }}
+          // Forward (`dir > 0`) enters from ABOVE and pushes the old face down,
+          // because forward is what a downward swipe asks for — the motion has
+          // to travel the way the thumb did or the tile reads as fighting it.
+          initial={reduced ? { opacity: 0 } : { opacity: 0, y: dir > 0 ? '-24%' : '24%' }}
           animate={{ opacity: 1, y: 0 }}
-          exit={reduced ? { opacity: 0 } : { opacity: 0, y: dir > 0 ? '-24%' : '24%' }}
+          exit={reduced ? { opacity: 0 } : { opacity: 0, y: dir > 0 ? '24%' : '-24%' }}
           transition={reduced ? CROSSFADE : STANDARD}
           className="h-full"
         >
