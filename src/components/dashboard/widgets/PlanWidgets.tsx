@@ -307,6 +307,12 @@ const GRID: Record<WidgetSize, { weeks: number; cell: number; gap: number }> = {
   s: { weeks: 12, cell: 5, gap: 1 },
   m: { weeks: 26, cell: 7, gap: 2 },
   l: { weeks: 52, cell: 4, gap: 2 },
+  // Consistency has no wide body — `WIDGET_SIZES` does not offer it either size,
+  // so neither entry is reachable. They exist because the map is exhaustive over
+  // `WidgetSize` and an exhaustive map is what makes adding a size a compile
+  // error in every place that has to answer for it, which is the point.
+  w: { weeks: 52, cell: 4, gap: 2 },
+  xl: { weeks: 52, cell: 4, gap: 2 },
 }
 
 /**

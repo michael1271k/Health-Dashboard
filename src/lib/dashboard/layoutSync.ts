@@ -33,7 +33,10 @@
  */
 
 import { supabase } from '@/lib/supabase/client'
-import { fromStored, serializeLayout, type DashboardLayout } from './layout'
+import {
+  fromStored, serializeLayout, storedPayload,
+  type DashboardLayout, type DashboardSurface,
+} from './layout'
 
 /** How long the grid waits after the last edit before pushing. */
 export const PUSH_DEBOUNCE_MS = 1200
@@ -46,7 +49,7 @@ interface LayoutRow { layout: unknown }
  * Null covers everything: no session, no row, no table, no network. The caller
  * has a perfectly good local layout in hand and null means "keep it".
  */
-export async function fetchRemoteLayout(): Promise<DashboardLayout | null> {
+export async function fetchRemoteLayout(surface: DashboardSurface = 'phone'): Promise<DashboardLayout | null> {
   try {
     const { data: auth } = await supabase.auth.getUser()
     if (!auth.user) return null
@@ -62,14 +65,20 @@ export async function fetchRemoteLayout(): Promise<DashboardLayout | null> {
     // written by an older build is a v2 payload and has to be migrated, and a
     // row naming a widget this build deleted has to be cleaned — doing that in
     // one place is the only way the two sources cannot drift.
-    return fromStored(row as Parameters<typeof fromStored>[0])
+    // The row carries BOTH arrangements — see `serializeLayout`. Only the one
+    // for this screen is returned; the other rides along untouched and is
+    // written back on the next push.
+    return fromStored(row as Parameters<typeof fromStored>[0], surface)
   } catch {
     return null
   }
 }
 
 /** Write the arrangement up. Resolves either way; the caller has nothing to do. */
-export async function pushRemoteLayout(layout: DashboardLayout): Promise<void> {
+export async function pushRemoteLayout(
+  layout: DashboardLayout,
+  surface: DashboardSurface = 'phone',
+): Promise<void> {
   try {
     const { data: auth } = await supabase.auth.getUser()
     if (!auth.user) return
@@ -78,7 +87,11 @@ export async function pushRemoteLayout(layout: DashboardLayout): Promise<void> {
       .upsert(
         {
           user_id: auth.user.id,
-          layout: serializeLayout(layout),
+          // The other surface's side comes from the LOCAL payload, which is the
+          // only copy this device has of a screen it is not currently rendering.
+          // Pushing without it would let a desktop edit delete the phone's
+          // arrangement from the backup — the row is one jsonb blob.
+          layout: serializeLayout(layout, surface, storedPayload()),
           updated_at: new Date(layout.updatedAt || Date.now()).toISOString(),
         } as never,
         { onConflict: 'user_id' },

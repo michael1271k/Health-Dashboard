@@ -19,8 +19,9 @@ import {
   readLayout, writeLayout, defaultLayout, SIZE_SPAN, WIDGET_META,
   hiddenWidgets, removeFace, addWidget, resizeSlot, moveSlot, canStack,
   stackSlots, unstackFace, reorderFace, slotAt, sizesFor, WIDGET_IDS,
-  type DashboardLayout, type StackSlot, type WidgetId, type WidgetSize,
+  type DashboardLayout, type DashboardSurface, type StackSlot, type WidgetId, type WidgetSize,
 } from '@/lib/dashboard/layout'
+import { useDashboardSurface } from '@/lib/hooks/useDashboardSurface'
 import { fetchRemoteLayout, pushRemoteLayout, pickLayout, PUSH_DEBOUNCE_MS } from '@/lib/dashboard/layoutSync'
 
 /**
@@ -97,10 +98,19 @@ export function WidgetGrid({ children }: {
   /** Render one widget for an id, given the size its slot is currently set to. */
   children: (id: WidgetId, size: WidgetSize) => React.ReactNode
 }) {
+  /**
+   * ── WHICH SCREEN THIS IS, AND THEREFORE WHICH ARRANGEMENT ─────────────────
+   * The phone and the desktop keep SEPARATE layouts — see `DashboardSurface`.
+   * `surface` is a dependency of every read and every write below, so dragging a
+   * window across 1280px swaps the whole arrangement rather than reflowing one
+   * built for the other screen.
+   */
+  const surface = useDashboardSurface()
+
   // Read AFTER mount. `readLayout` touches localStorage, so seeding state from
   // it directly would render different markup on the server and hydrate wrong.
-  const [layout, setLayout] = useState<DashboardLayout>(defaultLayout)
-  useEffect(() => { setLayout(readLayout()) }, [])
+  const [layout, setLayout] = useState<DashboardLayout>(() => defaultLayout())
+  useEffect(() => { setLayout(readLayout(surface)) }, [surface])
 
   /**
    * ── THE CLOUD COPY ─────────────────────────────────────────────────────────
@@ -116,18 +126,18 @@ export function WidgetGrid({ children }: {
    */
   useEffect(() => {
     let alive = true
-    void fetchRemoteLayout().then((remote) => {
+    void fetchRemoteLayout(surface).then((remote) => {
       if (!alive || !remote) return
       setLayout((local) => {
         const winner = pickLayout(local, remote)
         // Only touch localStorage when the remote actually won. Writing the
         // local copy back over itself would be a no-op with a side effect.
-        if (winner !== local) writeLayout(winner)
+        if (winner !== local) writeLayout(winner, surface)
         return winner
       })
     })
     return () => { alive = false }
-  }, [])
+  }, [surface])
 
   /**
    * Push, debounced.
@@ -143,8 +153,8 @@ export function WidgetGrid({ children }: {
   useEffect(() => () => { if (pushTimer.current != null) window.clearTimeout(pushTimer.current) }, [])
   const schedulePush = useCallback((next: DashboardLayout) => {
     if (pushTimer.current != null) window.clearTimeout(pushTimer.current)
-    pushTimer.current = window.setTimeout(() => { void pushRemoteLayout(next) }, PUSH_DEBOUNCE_MS)
-  }, [])
+    pushTimer.current = window.setTimeout(() => { void pushRemoteLayout(next, surface) }, PUSH_DEBOUNCE_MS)
+  }, [surface])
 
   const [editing, setEditing] = useState(false)
   const [dragging, setDragging] = useState<string | null>(null)
@@ -177,9 +187,9 @@ export function WidgetGrid({ children }: {
 
   const commit = useCallback((next: DashboardLayout) => {
     setLayout(next)
-    writeLayout(next)
+    writeLayout(next, surface)
     schedulePush(next)
-  }, [schedulePush])
+  }, [schedulePush, surface])
 
   // Escape is the keyboard's Done. Bound only while the mode is open, so the
   // dashboard does not hold a global listener for a state it is almost never in.
@@ -212,7 +222,7 @@ export function WidgetGrid({ children }: {
     clearHover()
     setMergeTarget(null)
     if (!overId || overId === String(e.active.id)) return
-    if (!canStack(slotAt(layout, String(e.active.id)), slotAt(layout, overId))) return
+    if (!canStack(slotAt(layout, String(e.active.id)), slotAt(layout, overId), surface)) return
     hover.current.id = overId
     hover.current.timer = window.setTimeout(() => {
       setMergeTarget(overId)
@@ -255,7 +265,7 @@ export function WidgetGrid({ children }: {
     }
     if (merging === overId) {
       void tapSuccess()
-      commit(stackSlots(layout, activeId, overId))
+      commit(stackSlots(layout, activeId, overId, surface))
       return
     }
     commit(moveSlot(layout, activeId, overId))
@@ -263,9 +273,9 @@ export function WidgetGrid({ children }: {
 
   // The rules themselves live in `layout.ts` and are tested there; these are
   // the gestures that reach for them.
-  const resize = (slotId: string) => { void tapLight(); commit(resizeSlot(layout, slotId)) }
+  const resize = (slotId: string) => { void tapLight(); commit(resizeSlot(layout, slotId, surface)) }
   const drop = (slotId: string, index: number) => { void tapLight(); commit(removeFace(layout, slotId, index)) }
-  const add = (id: WidgetId) => { void tapLight(); commit(addWidget(layout, id)) }
+  const add = (id: WidgetId) => { void tapLight(); commit(addWidget(layout, id, surface)) }
 
   const draggedSlot = dragging ? slotAt(layout, dragging) : null
 
@@ -348,6 +358,7 @@ export function WidgetGrid({ children }: {
                 editing={editing}
                 reduced={reduced}
                 merging={mergeTarget === slot.id}
+                surface={surface}
                 face={Math.min(faces[slot.id] ?? 0, slot.items.length - 1)}
                 onFace={setFace}
                 onResize={() => resize(slot.id)}
@@ -512,14 +523,24 @@ export function WidgetGrid({ children }: {
   )
 }
 
-const SIZE_WORD: Record<WidgetSize, string> = { s: 'S', m: 'M', l: 'L' }
+/**
+ * The badge's letter for each size.
+ *
+ * The two wide ones read "W" and "XL" rather than continuing the single-letter
+ * run: they are not a fourth and fifth step of the same ladder, they are the
+ * desktop's own pair, and a badge saying "XL" is the one place the arrangement
+ * tells you that this tile spans the whole window.
+ */
+const SIZE_WORD: Record<WidgetSize, string> = { s: 'S', m: 'M', l: 'L', w: 'W', xl: 'XL' }
 
-function SortableSlot({ slot, editing, reduced, merging, face, onFace, onResize, onDropFace, onEditStack, children }: {
+function SortableSlot({ slot, editing, reduced, merging, surface, face, onFace, onResize, onDropFace, onEditStack, children }: {
   slot: StackSlot
   editing: boolean
   reduced: boolean
   /** This tile is the one a held drag is offering to stack onto. */
   merging: boolean
+  /** Which grid this is — the size ladder the resize badge steps through. */
+  surface: DashboardSurface
   /** Which face is up. Owned by the grid so the drag overlay can read it too. */
   face: number
   onFace: (slotId: string, next: number | ((f: number) => number)) => void
@@ -530,7 +551,7 @@ function SortableSlot({ slot, editing, reduced, merging, face, onFace, onResize,
   children: (id: WidgetId, size: WidgetSize) => React.ReactNode
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: slot.id })
-  const canResize = sizesFor(slot.items).length > 1
+  const canResize = sizesFor(slot.items, surface).length > 1
   // A stack that lost a face must not keep pointing past the end of itself.
   const at = Math.min(face, slot.items.length - 1)
   const setFace = useCallback(

@@ -243,3 +243,86 @@ describe('a stack can only be as big as its smallest widget', () => {
     expect(clampSize(['sleep'], 'l')).toBe('l')
   })
 })
+
+/**
+ * ── TWO ARRANGEMENTS, ONE KEY ────────────────────────────────────────────────
+ *
+ * The phone and the desktop keep separate layouts and share one localStorage
+ * entry and one cloud row. That is the whole feature and it has exactly one way
+ * to go wrong: a write for one surface that drops the other's side. Nothing on
+ * screen would show it — the phone would simply be back to its defaults the next
+ * time it was opened, after an afternoon of arranging a desktop.
+ */
+describe('the phone and the desktop keep separate arrangements', () => {
+  beforeEach(() => { localStorage.clear() })
+
+  it('does not let one surface’s write erase the other’s', () => {
+    writeLayout({
+      slots: [{ id: 'p', size: 's', items: ['sleep'] }], hidden: [], updatedAt: 10,
+    }, 'phone')
+    writeLayout({
+      slots: [{ id: 'd', size: 'xl', items: ['sleep'] }], hidden: [], updatedAt: 20,
+    }, 'desktop')
+
+    expect(readLayout('phone').slots[0]).toMatchObject({ items: ['sleep'], size: 's' })
+    expect(readLayout('desktop').slots[0]).toMatchObject({ items: ['sleep'], size: 'xl' })
+  })
+
+  it('keeps their edit stamps apart, so neither can win the other’s sync', () => {
+    writeLayout({ slots: [{ id: 'p', size: 's', items: ['sleep'] }], hidden: [], updatedAt: 10 }, 'phone')
+    writeLayout({ slots: [{ id: 'd', size: 'w', items: ['sleep'] }], hidden: [], updatedAt: 99 }, 'desktop')
+    expect(readLayout('phone').updatedAt).toBe(10)
+    expect(readLayout('desktop').updatedAt).toBe(99)
+  })
+
+  it('keeps what each surface hid, separately', () => {
+    writeLayout({ slots: [{ id: 'p', size: 's', items: ['sleep'] }], hidden: ['cardio'], updatedAt: 1 }, 'phone')
+    writeLayout({ slots: [{ id: 'd', size: 'm', items: ['sleep'] }], hidden: ['pr'], updatedAt: 1 }, 'desktop')
+    expect(hiddenWidgets(readLayout('phone'))).toEqual(['cardio'])
+    expect(hiddenWidgets(readLayout('desktop'))).toEqual(['pr'])
+  })
+
+  it('seeds BOTH surfaces from a layout written before they split', () => {
+    // A v3 payload is one arrangement, made when there was only one. It must
+    // reach the desktop as that same arrangement rather than as the defaults —
+    // losing an arrangement to a feature that adds one is the worst outcome
+    // available here.
+    localStorage.setItem('helix_dashboard_layout', JSON.stringify({
+      v: 3,
+      slots: [{ id: 'a', size: 'l', items: ['sleep'] }, { id: 'b', size: 's', items: ['fuel'] }],
+      hidden: ['cardio'],
+      updatedAt: 7,
+    }))
+    for (const surface of ['phone', 'desktop'] as const) {
+      const out = readLayout(surface)
+      expect(out.slots.slice(0, 2).map((s) => s.items), surface).toEqual([['sleep'], ['fuel']])
+      expect(hiddenWidgets(out), surface).toEqual(['cardio'])
+      expect(out.updatedAt, surface).toBe(7)
+    }
+  })
+
+  it('clamps a desktop-only size out of the phone’s side of the payload', () => {
+    // Reachable exactly once: a `w`/`xl` can only be written by a desktop, and
+    // the phone can only meet one through a pre-split payload or a hand-edited
+    // store. Either way a two-column grid must not be handed a four-column tile.
+    localStorage.setItem('helix_dashboard_layout', JSON.stringify({
+      v: 3, slots: [{ id: 'a', size: 'xl', items: ['sleep'] }], hidden: [], updatedAt: 3,
+    }))
+    expect(readLayout('phone').slots[0].size).toBe('l')
+    expect(readLayout('desktop').slots[0].size).toBe('xl')
+  })
+
+  it('gives a fresh desktop a wide arrangement rather than the phone’s', () => {
+    // Shipping the defaults is the difference between "you can build a desktop
+    // layout" and "here is one".
+    const phone = defaultLayout('phone')
+    const desktop = defaultLayout('desktop')
+    const sizeOf = (l: typeof phone, id: string) =>
+      l.slots.find((s) => s.items[0] === id)?.size
+    expect(sizeOf(phone, 'sleep')).toBe('m')
+    expect(sizeOf(desktop, 'sleep')).toBe('w')
+    expect(sizeOf(desktop, 'recovery')).toBe('xl')
+    // And nothing on a phone is ever wide.
+    for (const s of phone.slots) expect(['s', 'm', 'l']).toContain(s.size)
+  })
+})

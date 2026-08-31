@@ -3,7 +3,7 @@
 import { WidgetFrame, WidgetEmpty } from '@/components/dashboard/WidgetFrame'
 import { ReadinessOrb } from '@/components/dashboard/ReadinessOrb'
 import { StatTile } from './parts'
-import { WIDGET_META, type WidgetSize } from '@/lib/dashboard/layout'
+import { WIDGET_META, heightTier, type WidgetSize } from '@/lib/dashboard/layout'
 import { formatSleep } from '@/lib/utils/format'
 import { EMBER, AMETHYST, OXIDE, SAPPHIRE, STEEL } from '@/lib/theme/palette'
 import type { Tables } from '@/lib/supabase/types'
@@ -47,6 +47,10 @@ export function RecoveryWidget({ size, onOpen, score, isLoading, sleepMin, resti
   restingHr: number | null
   hrvMs: number | null
 }) {
+  // The vertical room this size stands for — see `heightTier`. `w` is a
+  // medium's height and `xl` is a large's; what makes them different is WIDTH,
+  // and width is answered by the container queries below.
+  const tier = heightTier(size)
   const value = score?.score ?? null
 
   return (
@@ -59,26 +63,38 @@ export function RecoveryWidget({ size, onOpen, score, isLoading, sleepMin, resti
           hint="It lands once your Watch reports the night"
         />
       ) : (
-        <span className="flex-1 min-h-0 flex flex-col gap-1.5">
+        /* ── AT WIDTH, THE DRIVERS MOVE BESIDE THE ORB ────────────────────
+           This is the panel the deleted 300px hero used to carry, and it never
+           worked as a row under the orb on a wide tile: four stat tiles across
+           1,200px are four numbers with a hand's width of nothing between them,
+           and the orb above them is a circle in a landscape box.
+
+           Beside it, the orb keeps the tile's full height — which is what it is
+           for, a shape read at a glance — and the drivers become a column of
+           four rows that the eye reads down. Same four readings, the shape a
+           wide tile actually has room for. */
+        <span className="flex-1 min-h-0 flex flex-col gap-1.5 @[560px]:flex-row @[560px]:items-stretch @[560px]:gap-4">
           {/* The orb takes the slack at every size; the drivers below it are
               fixed-height, so growing the tile grows the shape rather than
               opening a band of nothing under it. */}
-          <span className="flex-1 min-h-0 flex items-center justify-center overflow-hidden">
+          <span className="flex-1 min-h-0 flex items-center justify-center overflow-hidden @[560px]:flex-[0_0_46%]">
             <ReadinessOrb score={score} isLoading={isLoading} />
           </span>
 
-          {/* ── LARGE ADDS THE WHY ──
-              Four readings, the same four the desktop-only panel carried. Not
-              at medium: at 358×172 the orb already fills the body, and a row of
-              stat tiles under it would squeeze the shape rather than add to it. */}
-          {size === 'l' && (
-            <span className="grid grid-cols-4 gap-1.5 shrink-0">
-              <StatTile label="Sleep" value={sleepMin != null ? formatSleep(sleepMin) : null} color={AMETHYST} />
-              <StatTile label="Rest HR" value={restingHr} unit="bpm" color={OXIDE} />
-              <StatTile label="HRV" value={hrvMs != null ? Math.round(hrvMs) : null} unit="ms" color={SAPPHIRE} />
-              <StatTile label="Energy" value={score?.battery_pct ?? null} unit="%" color={STEEL} />
-            </span>
-          )}
+          {/* ── LARGE ADDS THE WHY, AND SO DOES WIDTH ──
+              Four readings, the same four the desktop-only panel carried. Not at
+              a narrow medium: at 358×172 the orb already fills the body, and a
+              row of stat tiles under it would squeeze the shape rather than add
+              to it. A WIDE medium has the room beside the orb, so the container
+              query lets it in where the height alone would not. */}
+          <span className={`shrink-0 grid grid-cols-4 gap-1.5
+                            @[560px]:flex @[560px]:flex-1 @[560px]:flex-col @[560px]:justify-center @[560px]:gap-2
+                            ${tier === 'l' ? 'grid' : 'hidden @[560px]:flex'}`}>
+            <StatTile label="Sleep" value={sleepMin != null ? formatSleep(sleepMin) : null} color={AMETHYST} />
+            <StatTile label="Rest HR" value={restingHr} unit="bpm" color={OXIDE} />
+            <StatTile label="HRV" value={hrvMs != null ? Math.round(hrvMs) : null} unit="ms" color={SAPPHIRE} />
+            <StatTile label="Energy" value={score?.battery_pct ?? null} unit="%" color={STEEL} />
+          </span>
         </span>
       )}
     </WidgetFrame>

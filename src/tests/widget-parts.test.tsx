@@ -2,8 +2,8 @@ import { describe, it, expect, afterEach } from 'vitest'
 import { render, cleanup } from '@testing-library/react'
 import { Spark, Bar, Ring, mean, vsBaseline } from '@/components/dashboard/widgets/parts'
 import {
-  SIZE_SPAN, WIDGET_IDS, WIDGET_META, WIDGET_SIZES, sizesFor,
-  tileHeightPx, bodyHeightPx, ROW_UNIT_PX, GRID_GAP_PX,
+  SIZE_SPAN, WIDGET_IDS, WIDGET_META, WIDGET_SIZES, sizesFor, clampSize, canStack,
+  ALL_SIZES, WIDE_SIZES, tileHeightPx, bodyHeightPx, ROW_UNIT_PX, GRID_GAP_PX,
 } from '@/lib/dashboard/layout'
 
 afterEach(cleanup)
@@ -229,7 +229,7 @@ describe('the size contract', () => {
       const sizes = WIDGET_SIZES[id]
       expect(sizes.length, id).toBeGreaterThan(0)
       if (!NO_SMALL.has(id)) expect(sizes, id).toContain('s')
-      expect([...sizes], id).toEqual(['s', 'm', 'l'].filter((v) => sizes.includes(v as never)))
+      expect([...sizes], id).toEqual(ALL_SIZES.filter((v) => sizes.includes(v)))
       for (const v of sizes) expect(SIZE_SPAN[v], id).toBeTruthy()
     }
   })
@@ -243,10 +243,42 @@ describe('the size contract', () => {
 
   it('a stack offers only the sizes every one of its faces can draw', () => {
     for (const id of WIDGET_IDS) {
-      expect(sizesFor([id])).toEqual([...WIDGET_SIZES[id]])
+      expect(sizesFor([id], 'desktop')).toEqual([...WIDGET_SIZES[id]])
     }
     // The intersection, never the union — a stack is one tile with one height.
-    expect(sizesFor(['sleep', 'cardio'])).toEqual(['s', 'm'])
+    expect(sizesFor(['sleep', 'cardio'], 'desktop')).toEqual(['s', 'm'])
+  })
+
+  it('never offers a four-column size to a two-column grid', () => {
+    // A phone renders `grid-cols-2`. A `w` tile in a phone layout would ask that
+    // grid for four columns, and CSS grid answers by OVERFLOWING rather than by
+    // clamping — so the wide sizes have to be unreachable, not merely unusual.
+    for (const id of WIDGET_IDS) {
+      for (const size of sizesFor([id], 'phone')) {
+        expect(WIDE_SIZES, `${id} @ ${size}`).not.toContain(size)
+      }
+    }
+    expect(sizesFor(['sleep'], 'phone')).toEqual(['s', 'm', 'l'])
+    expect(sizesFor(['sleep'], 'desktop')).toEqual(['s', 'm', 'l', 'w', 'xl'])
+  })
+
+  it('lands a desktop-only size on the nearest one a phone can draw', () => {
+    // The two arrangements are separate, but a v3 payload written before the
+    // split seeds BOTH — so a phone can be handed an `xl` exactly once, and it
+    // must step DOWN to large rather than collapsing to small.
+    expect(clampSize(['sleep'], 'xl', 'phone')).toBe('l')
+    expect(clampSize(['sleep'], 'w', 'phone')).toBe('l')
+    // And a widget with no wide body keeps its ceiling on either screen.
+    expect(clampSize(['cardio'], 'xl', 'desktop')).toBe('m')
+  })
+
+  it('refuses to stack anything on a desktop', () => {
+    // Four columns have room for every widget at once, so a stack there hides a
+    // tile behind a timer to save space that was not short.
+    const a = { id: 'a', size: 'm' as const, items: ['sleep' as const] }
+    const b = { id: 'b', size: 'm' as const, items: ['cardio' as const] }
+    expect(canStack(a, b, 'phone')).toBe(true)
+    expect(canStack(a, b, 'desktop')).toBe(false)
   })
 
   it('names every widget exactly once', () => {

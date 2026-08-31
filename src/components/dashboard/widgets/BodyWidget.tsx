@@ -9,7 +9,7 @@ import { useLatestBodyReading } from '@/lib/hooks/useLatestBodyReading'
 import { logicalTodayISO, relativeDayLabel } from '@/lib/utils/day'
 import { displayWeight, weightUnit } from '@/lib/utils/units'
 import { BODY } from '@/lib/theme/palette'
-import { WIDGET_META, type WidgetSize } from '@/lib/dashboard/layout'
+import { WIDGET_META, heightTier, type WidgetSize } from '@/lib/dashboard/layout'
 
 /**
  * What you are made of, in the tile.
@@ -42,6 +42,10 @@ export function BodyWidget({ size, onOpen, weightSeries }: {
   /** Weight history in DISPLAY units, dated, oldest first. */
   weightSeries: Array<{ date: string; value: number | null }>
 }) {
+  // The vertical room this size stands for — see `heightTier`. `w` is a
+  // medium's height and `xl` is a large's; what makes them different is WIDTH,
+  // and width is answered by the container queries below.
+  const tier = heightTier(size)
   const { data: log } = useTodayDailyLog()
   const unit = weightUnit()
   const today = logicalTodayISO()
@@ -80,13 +84,13 @@ export function BodyWidget({ size, onOpen, weightSeries }: {
 
   /** The three that move, heaviest share first — or everything, at large. */
   const shown = useMemo(() => {
-    const wanted = size === 'l'
+    const wanted = tier === 'l'
       ? ['skeletal', 'muscle', 'water', 'protein', 'mineral', 'fat']
       : ['muscle', 'water', 'fat']
     return wanted
       .map((k) => comp.rows.find((r) => r.key === k))
       .filter((r): r is NonNullable<typeof r> => !!r)
-  }, [comp.rows, size])
+  }, [comp.rows, tier])
 
   /** Skeletal when measured, lean soft tissue otherwise — never conflated. */
   const musclePct = useMemo(() => {
@@ -103,7 +107,7 @@ export function BodyWidget({ size, onOpen, weightSeries }: {
     <WidgetFrame {...WIDGET_META.body} size={size} onOpen={onOpen}>
       {comp.weight == null ? (
         <WidgetEmpty accent={BODY.weight} size={size} message="Ready for your first weigh-in" hint="Step on the scale to map your composition" />
-      ) : size === 's' ? (
+      ) : tier === 's' ? (
         /* ── SMALL CARRIES THE OTHER HALF OF A WEIGH-IN ──
            A weight alone cannot say whether a kilo went the right way; that is
            the whole reason the scale reports body fat. Both numbers, then the
@@ -123,7 +127,16 @@ export function BodyWidget({ size, onOpen, weightSeries }: {
           <Spark series={weightSeries.map((d) => d.value)} color={BODY.weight} height={22} />
         </span>
       ) : (
-        <span className="flex-1 min-h-0 flex flex-col gap-1.5">
+        /* ── AT WIDTH: THE COMPOSITION BESIDE THE TREND, NOT ABOVE IT ───────
+           Stacked, the three stat tiles and the ledger rows take the top of the
+           tile and the thirty-day line gets whatever is left — which on a
+           full-width tile is a 62px chart under 900px of half-empty rows.
+
+           Side by side, the readings keep a readable column width and the chart
+           gets the height it needs for a slope to be a slope. The two halves are
+           also two questions: what the body is NOW, and where it is going. */
+        <span className="flex-1 min-h-0 flex flex-col gap-1.5 @[560px]:flex-row @[560px]:gap-4">
+        <span className="flex-1 min-h-0 flex flex-col gap-1.5 @[560px]:flex-[0_0_46%]">
           {asOfLabel && (
             <span className="flex items-baseline gap-1.5 min-w-0">
               <span className="text-[8px] font-bold uppercase tracking-[0.1em] text-muted truncate">
@@ -163,6 +176,8 @@ export function BodyWidget({ size, onOpen, weightSeries }: {
             ))}
           </span>
 
+        </span>
+
           {/* ── THE 30-DAY CHART IS A LINE NOW, NOT A BROKEN SPARK ──
               `Spark` breaks its path on every unmeasured day, deliberately — a
               line through a day with no steps is a claim about a day with no
@@ -171,19 +186,27 @@ export function BodyWidget({ size, onOpen, weightSeries }: {
               sixteen times in thirty days came out as a shattered chart of a
               perfectly continuous trend. `LineChart` draws through the
               measurements, marks only the days that were actually weighed, and
-              dates the axis so the slope is readable as a rate. */}
-          {size === 'l' && (
-            <span className="block mt-auto pt-1.5 border-t border-white/[0.06]">
-              <span className="flex items-baseline gap-1.5">
-                <span className="text-[8px] font-bold uppercase tracking-[0.1em] text-muted">Weight · 30 days</span>
-                <span className="text-[8px] text-muted ml-auto">tap a point for its day</span>
-              </span>
-              {/* BODY.weight, not EMBER. Ember is the Chest family now, and the body
-                  domain has had its own per-substance hue since the BODY map landed —
-                  the chart was simply never moved onto it. */}
-              <LineChart series={weightSeries} color={BODY.weight} height={62} decimals={1} unit={unit} />
+              dates the axis so the slope is readable as a rate.
+
+              The chart comes with the WIDTH as well as the height: a wide
+              a wide medium has room for it beside the readings where a narrow
+              one has none. `mt-auto` only while it is stacked — in a row it is
+              a sibling column and pushing it down would drop it off the
+              bottom. */}
+          <span className={`pt-1.5 border-t border-white/[0.06]
+                            @[560px]:block @[560px]:flex-1 @[560px]:min-w-0 @[560px]:mt-0
+                            @[560px]:border-t-0 @[560px]:pt-0 @[560px]:border-l
+                            @[560px]:border-white/[0.06] @[560px]:pl-4
+                            ${tier === 'l' ? 'block mt-auto' : 'hidden'}`}>
+            <span className="flex items-baseline gap-1.5">
+              <span className="text-[8px] font-bold uppercase tracking-[0.1em] text-muted">Weight · 30 days</span>
+              <span className="text-[8px] text-muted ml-auto">tap a point for its day</span>
             </span>
-          )}
+            {/* BODY.weight, not EMBER. Ember is the Chest family now, and the body
+                domain has had its own per-substance hue since the BODY map landed —
+                the chart was simply never moved onto it. */}
+            <LineChart series={weightSeries} color={BODY.weight} height={62} decimals={1} unit={unit} />
+          </span>
         </span>
       )}
     </WidgetFrame>

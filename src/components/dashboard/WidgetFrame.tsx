@@ -2,7 +2,7 @@
 
 import { memo } from 'react'
 import type { LucideIcon } from 'lucide-react'
-import type { WidgetSize } from '@/lib/dashboard/layout'
+import { heightTier, type WidgetSize } from '@/lib/dashboard/layout'
 
 /**
  * The chrome every dashboard widget wears, and nothing else.
@@ -60,7 +60,25 @@ export const WidgetFrame = memo(function WidgetFrame({
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen() }
       } : undefined}
       aria-label={onOpen ? `Open ${label}` : undefined}
-      className="relative h-full min-w-0 overflow-hidden rounded-2xl border px-2.5 pt-2 pb-2.5
+      /**
+       * ── `@container`, AND WHY THAT RATHER THAN A TRANSFORM ────────────────
+       * A tile is 175px wide on a phone and can be 1,200 on a desktop. The
+       * tempting fix is `transform: scale()`, and it is the wrong one twice
+       * over: it scales stroke widths and border radii along with the type (so
+       * a 1px hairline becomes 3px and the tile stops matching its neighbours),
+       * and it scales the hit areas, so a 44pt target silently becomes
+       * something else. Text laid out at one size and painted at another also
+       * loses its hinting.
+       *
+       * A size container costs nothing and is real layout: the body asks how
+       * wide IT is — not how wide the window is — so the same widget reflows
+       * correctly in a half-width desktop tile and in a full-width one, and
+       * every glyph is rendered at its final size.
+       *
+       * `@container` (not `@container inline-size`) so bodies can ask about
+       * height too; the tile's height is definite, set by its grid rows.
+       */
+      className="@container relative h-full min-w-0 overflow-hidden rounded-2xl border px-2.5 pt-2 pb-2.5
                  flex flex-col gap-1.5 text-left active:opacity-80 transition-opacity"
       style={{ borderColor: `${accent}2e`, backgroundColor: 'rgba(255,255,255,0.025)' }}
     >
@@ -95,7 +113,7 @@ export const WidgetFrame = memo(function WidgetFrame({
         <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-muted truncate">
           {label}
         </span>
-        {size !== 's' && action && <span className="ml-auto shrink-0">{action}</span>}
+        {heightTier(size) !== 's' && action && <span className="ml-auto shrink-0">{action}</span>}
       </span>
 
       {/* `min-h-0` so a body that scrolls or truncates does so inside the tile
@@ -135,10 +153,10 @@ export function WidgetEmpty({ accent, message, hint, size = 'm' }: {
         style={{ backgroundColor: `${accent}26` }}
         aria-hidden="true"
       />
-      <span className={`leading-tight text-muted mt-1 ${size === 's' ? 'text-[10px]' : 'text-[11px]'}`}>
+      <span className={`leading-tight text-muted mt-1 ${heightTier(size) === 's' ? 'text-[10px]' : 'text-[11px]'}`}>
         {message}
       </span>
-      {hint && size !== 's' && <span className="text-[9px] leading-tight text-muted/60">{hint}</span>}
+      {hint && heightTier(size) !== 's' && <span className="text-[9px] leading-tight text-muted/60">{hint}</span>}
     </div>
   )
 }

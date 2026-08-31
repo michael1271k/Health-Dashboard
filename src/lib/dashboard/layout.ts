@@ -55,7 +55,44 @@ import {
   AMETHYST, EMBER, EMERALD, GOLD, PLATINUM, SAPPHIRE, STEEL,
 } from '@/lib/theme/palette'
 
-export type WidgetSize = 's' | 'm' | 'l'
+/**
+ * ── FIVE PRESETS, NOT A FREE RESIZE ──────────────────────────────────────────
+ * `w` and `xl` are the desktop's own two sizes: full grid width, at medium and
+ * large height. They exist because on a four-column desktop the largest size a
+ * tile could reach was `l` — `col-span-2`, i.e. HALF the screen, forever. There
+ * was no arrangement in which anything filled a wide window, which is why the
+ * sleep ring sat in a 600px tile drawing itself at phone scale.
+ *
+ * They are presets rather than a free drag-to-any-size for the reason every
+ * other size here is one: a size is a different ANSWER, not a bigger box. Five
+ * shapes is five bodies that can each be designed; an arbitrary w×h is an
+ * infinite set of shapes of which most have no body worth drawing, and the tile
+ * then does the thing this file has argued against since it was written —
+ * centring phone content in a room-sized box.
+ */
+export type WidgetSize = 's' | 'm' | 'l' | 'w' | 'xl'
+
+/**
+ * Which screen an arrangement belongs to.
+ *
+ * ── THE TWO LAYOUTS ARE SEPARATE, AND DO NOT SYNC TO EACH OTHER ──────────────
+ * They used to be one, on the reasoning that a dashboard is a dashboard. They
+ * are not: a phone shows two columns of 175px and a desktop shows four of 300,
+ * and the arrangement that is right for a thumb at arm's length — dense, small,
+ * scrolled — is not the arrangement that is right for a window you glance at
+ * across a desk. One layout meant every desktop edit rearranged the phone, and
+ * the wide sizes could not exist at all because a phone has nowhere to put them.
+ *
+ * Both still ride in ONE stored payload and ONE cloud row, keyed by surface, so
+ * a reinstall restores both and nothing needed a new column.
+ */
+export type DashboardSurface = 'phone' | 'desktop'
+
+/** Sizes only a desktop layout may hold — they span the full four columns. */
+export const WIDE_SIZES: readonly WidgetSize[] = ['w', 'xl']
+
+/** Every size, in growing order. The order `clampSize` steps through. */
+export const ALL_SIZES: readonly WidgetSize[] = ['s', 'm', 'l', 'w', 'xl']
 
 export type WidgetId =
   | 'recovery'
@@ -129,8 +166,8 @@ export const WIDGET_SIZES: Record<WidgetId, readonly WidgetSize[]> = {
    * The score is the dashboard's headline reading; a face that cannot draw it
    * legibly is not a smaller version of it.
    */
-  recovery: ['m', 'l'],
-  sleep: ['s', 'm', 'l'],
+  recovery: ['m', 'l', 'w', 'xl'],
+  sleep: ['s', 'm', 'l', 'w', 'xl'],
   vitals: ['s', 'm', 'l'],
   fuel: ['s', 'm', 'l'],
   micros: ['s', 'm', 'l'],
@@ -142,7 +179,7 @@ export const WIDGET_SIZES: Record<WidgetId, readonly WidgetSize[]> = {
   deficit: ['s', 'm', 'l'],
   train: ['s', 'm', 'l'],
   bar: ['s', 'm', 'l'],
-  body: ['s', 'm', 'l'],
+  body: ['s', 'm', 'l', 'w', 'xl'],
   muscle: ['s', 'm', 'l'],
   volume: ['s', 'm', 'l'],
   pr: ['s', 'm'],
@@ -155,6 +192,19 @@ export const WIDGET_SIZES: Record<WidgetId, readonly WidgetSize[]> = {
   // nothing under it — see the note above.
   fatigue: ['s', 'm'],
 }
+
+/**
+ * ── ONLY THREE WIDGETS HAVE A WIDE BODY, ON PURPOSE ─────────────────────────
+ * Recovery, Sleep and Body. Each of them has something a full-width tile can
+ * actually SHOW that a half-width one cannot: Recovery's four drivers beside its
+ * orb rather than under it, Sleep's hypnogram at a legible time scale, Body's
+ * composition bar beside the atlas instead of stacked with it.
+ *
+ * Every other widget stops at `l`, which on a desktop is half the window — and
+ * that is the right answer for a tile whose content is one number and a bar. A
+ * size a widget cannot fill is the "stretched medium" this file warns about,
+ * except four times as wide, and the resize control simply will not offer it.
+ */
 
 /**
  * First-run sizes.
@@ -177,9 +227,30 @@ const DEFAULT_SIZE: Record<WidgetId, WidgetSize> = {
   fatigue: 's',
 }
 
+/**
+ * First-run sizes on a DESKTOP.
+ *
+ * Not the phone's sizes with more columns. A four-column grid at 1,400px gives
+ * a `s` tile 340×112 — a quarter of the window spent on one number — so the
+ * floor rises to medium and the three widgets with wide bodies take them. This
+ * is the arrangement the desktop was missing, and shipping it as the default is
+ * the difference between "you can now build a desktop layout" and "here is one".
+ */
+const DEFAULT_SIZE_DESKTOP: Record<WidgetId, WidgetSize> = {
+  ...DEFAULT_SIZE,
+  recovery: 'xl',
+  sleep: 'w',
+  body: 'w',
+  // Everything else that has a large gets one; a four-column row of mediums
+  // reads as a toolbar, and these are the domains with history worth drawing.
+  vitals: 'l', fuel: 'l', deficit: 'l', train: 'l', muscle: 'l', volume: 'l',
+  micros: 'm', bar: 'm', consistency: 'm', steps: 'm',
+  water: 'm', pr: 'm', cardio: 'm', stack: 'm', fatigue: 'm',
+}
+
 /** The default size a widget lands at when it is added back from the tray. */
-export function defaultSizeFor(id: WidgetId): WidgetSize {
-  return DEFAULT_SIZE[id]
+export function defaultSizeFor(id: WidgetId, surface: DashboardSurface = 'phone'): WidgetSize {
+  return (surface === 'desktop' ? DEFAULT_SIZE_DESKTOP : DEFAULT_SIZE)[id]
 }
 
 /**
@@ -230,13 +301,17 @@ export interface DashboardLayout {
 }
 
 const KEY = 'helix_dashboard_layout'
-/** v3 added `hidden` — see the note on `DashboardLayout.hidden`. */
-const VERSION = 3
+/**
+ * v3 added `hidden` — see the note on `DashboardLayout.hidden`.
+ * v4 split one arrangement into two, keyed by surface — see `DashboardSurface`.
+ */
+const VERSION = 4
 
 const isWidgetId = (v: unknown): v is WidgetId =>
   typeof v === 'string' && (WIDGET_IDS as readonly string[]).includes(v)
 
-const isSize = (v: unknown): v is WidgetSize => v === 's' || v === 'm' || v === 'l'
+const isSize = (v: unknown): v is WidgetSize =>
+  typeof v === 'string' && (ALL_SIZES as readonly string[]).includes(v)
 
 /** Slot ids only have to be unique within one layout, and stable across writes. */
 let slotSeq = 0
@@ -245,9 +320,11 @@ export function newSlotId(): string {
   return `sl${Date.now().toString(36)}${slotSeq.toString(36)}`
 }
 
-export function defaultLayout(): DashboardLayout {
+export function defaultLayout(surface: DashboardSurface = 'phone'): DashboardLayout {
   return {
-    slots: WIDGET_IDS.map((id) => ({ id: `sl-${id}`, size: DEFAULT_SIZE[id], items: [id] })),
+    slots: WIDGET_IDS.map((id) => ({
+      id: `sl-${id}`, size: defaultSizeFor(id, surface), items: [id],
+    })),
     hidden: [],
     updatedAt: 0,
   }
@@ -260,27 +337,41 @@ export function defaultLayout(): DashboardLayout {
  * because the Sleep face beside it has one — the flip would change the tile's
  * height, which is the one thing a flip must never do.
  */
-export function sizesFor(items: readonly WidgetId[]): WidgetSize[] {
-  const all: WidgetSize[] = ['s', 'm', 'l']
+export function sizesFor(items: readonly WidgetId[], surface: DashboardSurface = 'phone'): WidgetSize[] {
+  // A phone grid is two columns wide, so a four-column size is not a size it can
+  // hold — the filter is what makes the resize badge on a phone cycle S → M → L
+  // → S even for a widget that has wide bodies.
+  const all = surface === 'desktop'
+    ? ALL_SIZES
+    : ALL_SIZES.filter((s) => !WIDE_SIZES.includes(s))
   return all.filter((s) => items.every((id) => WIDGET_SIZES[id].includes(s)))
 }
 
+const SIZE_RANK: Record<WidgetSize, number> = { s: 0, m: 1, l: 2, w: 3, xl: 4 }
+
 /** The nearest size a slot can actually draw, preferring not to grow. */
-export function clampSize(items: readonly WidgetId[], want: WidgetSize): WidgetSize {
-  const ok = sizesFor(items)
+export function clampSize(
+  items: readonly WidgetId[],
+  want: WidgetSize,
+  surface: DashboardSurface = 'phone',
+): WidgetSize {
+  const ok = sizesFor(items, surface)
   if (!ok.length) return 's'
   if (ok.includes(want)) return want
-  const rank: Record<WidgetSize, number> = { s: 0, m: 1, l: 2 }
   // Step DOWN first — a widget that lost its large should not silently become
-  // small when medium exists.
-  return [...ok].sort((a, b) => Math.abs(rank[a] - rank[want]) - Math.abs(rank[b] - rank[want]))[0]
+  // small when medium exists. This is also what lands a desktop-only `xl` on
+  // `l` rather than on `s` when the same arrangement is read as a phone layout.
+  return [...ok].sort((a, b) =>
+    Math.abs(SIZE_RANK[a] - SIZE_RANK[want]) - Math.abs(SIZE_RANK[b] - SIZE_RANK[want]))[0]
 }
 
 interface StoredV1 { v?: number; order?: unknown; size?: unknown; hidden?: unknown }
 interface StoredV2 { v?: number; slots?: unknown }
 interface StoredV3 { v?: number; slots?: unknown; hidden?: unknown; updatedAt?: unknown }
+/** v4: one payload, two arrangements. Neither key is required — see `surfaceOf`. */
+interface StoredV4 { v?: number; phone?: unknown; desktop?: unknown }
 
-type Stored = StoredV1 & StoredV2 & StoredV3
+export type Stored = StoredV1 & StoredV2 & StoredV3 & StoredV4
 
 /**
  * The stored layout, reconciled against the current catalogue.
@@ -289,15 +380,19 @@ type Stored = StoredV1 & StoredV2 & StoredV3
  * window, a browser with site data blocked and a first run all produce the
  * defaults.
  */
-export function readLayout(): DashboardLayout {
-  if (typeof window === 'undefined') return defaultLayout()
-  let stored: Stored | null = null
+export function readLayout(surface: DashboardSurface = 'phone'): DashboardLayout {
+  const stored = readStored()
+  if (!stored) return defaultLayout(surface)
+  return fromStored(stored, surface)
+}
+
+/** The raw payload, or null. Shared by the read and by the read-modify-write. */
+function readStored(): Stored | null {
+  if (typeof window === 'undefined') return null
   try {
     const raw = window.localStorage.getItem(KEY)
-    if (raw) stored = JSON.parse(raw) as Stored
-  } catch { /* unreadable or not JSON — defaults stand */ }
-  if (!stored) return defaultLayout()
-  return fromStored(stored)
+    return raw ? (JSON.parse(raw) as Stored) : null
+  } catch { return null }   // unreadable or not JSON — defaults stand
 }
 
 /**
@@ -307,12 +402,28 @@ export function readLayout(): DashboardLayout {
  * was written locally, and it must be upgraded and reconciled by exactly the
  * same code or a v2 row synced from an old device would come back unreconciled.
  */
-export function fromStored(stored: Stored): DashboardLayout {
-  const slots = stored.v === VERSION || stored.v === 2
-    ? parseSlots(stored.slots)
-    // A v1 layout is an arrangement the user made; upgrading it costs eight
-    // lines and throwing it away costs them their dashboard.
-    : stored.v === 1 ? fromV1(stored) : []
+export function fromStored(stored: Stored, surface: DashboardSurface = 'phone'): DashboardLayout {
+  /**
+   * ── A v4 PAYLOAD CARRIES BOTH; EVERY OLDER ONE SEEDS BOTH ─────────────────
+   * A v1–v3 payload is ONE arrangement, made before the surfaces split. It
+   * upgrades into whichever surface is asking, so a phone keeps its dashboard
+   * exactly as it was and a desktop starts from the same arrangement rather
+   * than from the defaults — with every size re-clamped through
+   * `clampSize(…, surface)`, which is what stops a phone reading back a `w` the
+   * desktop wrote and what lets the desktop keep an `l` it inherited.
+   */
+  const side = stored.v === VERSION
+    ? (stored[surface] as StoredV3 | undefined) ?? null
+    : null
+  if (stored.v === VERSION && !side) return defaultLayout(surface)
+  const from = side ?? stored
+
+  // v2 and v3 both store `slots` at the top level; v4 stores it inside a side.
+  // A v1 layout is an arrangement the user made; upgrading it costs eight lines
+  // and throwing it away costs them their dashboard.
+  const slots = side || stored.v === 2 || stored.v === 3
+    ? parseSlots(from.slots, surface)
+    : stored.v === 1 ? fromV1(stored, surface) : []
 
   /**
    * v1 and v3 both carry `hidden`; v2 does not, and cannot.
@@ -322,15 +433,15 @@ export function fromStored(stored: Stored): DashboardLayout {
    * were removed, which is why they kept coming back. It upgrades to "nothing
    * hidden", and the first `−` after the upgrade sticks.
    */
-  const hidden = Array.isArray(stored.hidden) ? stored.hidden.filter(isWidgetId) : []
-  const updatedAt = typeof stored.updatedAt === 'number' && Number.isFinite(stored.updatedAt)
-    ? stored.updatedAt
+  const hidden = Array.isArray(from.hidden) ? from.hidden.filter(isWidgetId) : []
+  const updatedAt = typeof from.updatedAt === 'number' && Number.isFinite(from.updatedAt)
+    ? from.updatedAt
     : 0
 
-  return reconcile({ slots, hidden, updatedAt })
+  return reconcile({ slots, hidden, updatedAt }, surface)
 }
 
-function parseSlots(raw: unknown): StackSlot[] {
+function parseSlots(raw: unknown, surface: DashboardSurface): StackSlot[] {
   if (!Array.isArray(raw)) return []
   const out: StackSlot[] = []
   for (const s of raw) {
@@ -340,7 +451,7 @@ function parseSlots(raw: unknown): StackSlot[] {
     if (!items.length) continue
     out.push({
       id: typeof row.id === 'string' && row.id ? row.id : newSlotId(),
-      size: clampSize(items, isSize(row.size) ? row.size : DEFAULT_SIZE[items[0]]),
+      size: clampSize(items, isSize(row.size) ? row.size : defaultSizeFor(items[0], surface), surface),
       items,
     })
   }
@@ -348,7 +459,7 @@ function parseSlots(raw: unknown): StackSlot[] {
 }
 
 /** `{ order, size, hidden }` → one slot per visible widget, sizes preserved. */
-function fromV1(stored: StoredV1): StackSlot[] {
+function fromV1(stored: StoredV1, surface: DashboardSurface): StackSlot[] {
   const order = Array.isArray(stored.order) ? stored.order.filter(isWidgetId) : []
   const hidden = new Set(Array.isArray(stored.hidden) ? stored.hidden.filter(isWidgetId) : [])
   const sizes = new Map<WidgetId, WidgetSize>()
@@ -361,7 +472,7 @@ function fromV1(stored: StoredV1): StackSlot[] {
     .filter((id) => !hidden.has(id))
     .map((id) => ({
       id: `sl-${id}`,
-      size: clampSize([id], sizes.get(id) ?? DEFAULT_SIZE[id]),
+      size: clampSize([id], sizes.get(id) ?? defaultSizeFor(id, surface), surface),
       items: [id],
     }))
 }
@@ -381,7 +492,7 @@ function fromV1(stored: StoredV1): StackSlot[] {
  * can actually see and a tray offering to add a tile that is already there is
  * the contradiction the derived model used to produce.
  */
-function reconcile(layout: DashboardLayout): DashboardLayout {
+function reconcile(layout: DashboardLayout, surface: DashboardSurface): DashboardLayout {
   const seenIds = new Set<string>()
   const slots = layout.slots.map((s) => {
     let id = s.id
@@ -394,22 +505,65 @@ function reconcile(layout: DashboardLayout): DashboardLayout {
   const known = new Set([...placed, ...hidden])
   for (const id of WIDGET_IDS) {
     if (known.has(id)) continue
-    slots.push({ id: `sl-${id}`, size: DEFAULT_SIZE[id], items: [id] })
+    slots.push({ id: `sl-${id}`, size: defaultSizeFor(id, surface), items: [id] })
   }
   return { slots, hidden, updatedAt: layout.updatedAt }
 }
 
-/** The wire form, shared by localStorage and the cloud row. */
-export function serializeLayout(layout: DashboardLayout): Stored {
-  return { v: VERSION, slots: layout.slots, hidden: layout.hidden, updatedAt: layout.updatedAt }
+/**
+ * The wire form, shared by localStorage and the cloud row.
+ *
+ * Both surfaces travel together in one payload, so a reinstall restores the
+ * phone AND the desktop from a single row — and so this needed no new column.
+ * The side that is not being written is carried through UNPARSED: it belongs to
+ * a screen this session may never render, and re-serialising it through
+ * `reconcile` here would let a desktop write quietly re-clamp the phone.
+ */
+export function serializeLayout(
+  layout: DashboardLayout,
+  surface: DashboardSurface,
+  other?: unknown,
+): Stored {
+  const side = { slots: layout.slots, hidden: layout.hidden, updatedAt: layout.updatedAt }
+  const kept = otherSideOf(other, surface)
+  return surface === 'desktop'
+    ? { v: VERSION, desktop: side, phone: kept }
+    : { v: VERSION, phone: side, desktop: kept }
 }
 
-/** Persist. A failure here is a lost arrangement, never a broken dashboard. */
-export function writeLayout(layout: DashboardLayout): void {
+/**
+ * The OTHER surface's stored arrangement, from whatever payload is on disk.
+ *
+ * A v1–v3 payload has no sides, so the whole of it stands in for the other
+ * surface — which is right: it was that screen's arrangement too, until this
+ * write split them.
+ */
+function otherSideOf(stored: unknown, surface: DashboardSurface): unknown {
+  const s = stored as Stored | null | undefined
+  if (!s || typeof s !== 'object') return undefined
+  const key = surface === 'desktop' ? 'phone' : 'desktop'
+  if (s.v === VERSION) return s[key]
+  return { slots: s.slots, hidden: s.hidden, updatedAt: s.updatedAt }
+}
+
+/**
+ * Persist one surface, keeping the other.
+ *
+ * Read-modify-write rather than a straight `setItem`: the two arrangements share
+ * a key, and a desktop that wrote only its own side would delete the phone's.
+ * A failure here is a lost arrangement, never a broken dashboard.
+ */
+export function writeLayout(layout: DashboardLayout, surface: DashboardSurface = 'phone'): void {
   if (typeof window === 'undefined') return
   try {
-    window.localStorage.setItem(KEY, JSON.stringify(serializeLayout(layout)))
+    const payload = serializeLayout(layout, surface, readStored())
+    window.localStorage.setItem(KEY, JSON.stringify(payload))
   } catch { /* quota, private mode, blocked site data — the session still works */ }
+}
+
+/** The payload currently on disk, for a caller that has to merge into it. */
+export function storedPayload(): Stored | null {
+  return readStored()
 }
 
 /** Stamp an edit. Every mutation goes through this, so `updatedAt` cannot lie. */
@@ -443,11 +597,21 @@ export function touchLayout(layout: DashboardLayout): DashboardLayout {
  *   S  2 rows  = 112px   — 175×112, a quarter tile, one number and its bar
  *   M  3 rows  = 172px   — 358×172, within a hair of iOS's medium proportion
  *   L  5 rows  = 292px   — 358×292, room for a shape AND its history
+ *   W  3 rows, 4 cols   — the desktop's medium: full width, same height as M
+ *   XL 5 rows, 4 cols   — full width and full height, the only tile that fills
+ *
+ * The two wide spans carry `col-span-2` as their sub-`xl` fallback. A desktop
+ * layout is only ever RENDERED at `xl` and above, so that value should never be
+ * read — but a browser resized below 1280px mid-session would otherwise ask a
+ * two-column grid for a four-column tile, and CSS grid answers that by
+ * overflowing the container rather than by clamping.
  */
 export const SIZE_SPAN: Record<WidgetSize, string> = {
   s: 'col-span-1 row-span-2',
   m: 'col-span-2 row-span-3',
   l: 'col-span-2 row-span-5',
+  w: 'col-span-2 xl:col-span-4 row-span-3',
+  xl: 'col-span-2 xl:col-span-4 row-span-5',
 }
 
 /**
@@ -467,12 +631,32 @@ export const SIZE_SPAN: Record<WidgetSize, string> = {
 export const ROW_UNIT_PX = 52
 export const GRID_GAP_PX = 8
 
-const SPAN_ROWS: Record<WidgetSize, number> = { s: 2, m: 3, l: 5 }
+const SPAN_ROWS: Record<WidgetSize, number> = { s: 2, m: 3, l: 5, w: 3, xl: 5 }
 
 /** Total tile height in px, gaps included. */
 export function tileHeightPx(size: WidgetSize): number {
   const rows = SPAN_ROWS[size]
   return rows * ROW_UNIT_PX + (rows - 1) * GRID_GAP_PX
+}
+
+/**
+ * ── THE HEIGHT A SIZE STANDS FOR, WHICH IS NOT THE SIZE ─────────────────────
+ *
+ * `w` is a medium's height at four columns; `xl` is a large's height at four
+ * columns. So a body asking "how much VERTICAL room do I have" has three
+ * answers, not five, and every `size === 'l'` branch written before the desktop
+ * existed is still correct — it just has to be asked in the right currency.
+ *
+ * This is what stops the wide sizes needing a parallel set of bodies. What makes
+ * them different from their narrow twins is WIDTH, and width is answered by the
+ * container queries in the bodies themselves (`WidgetFrame` is a size container)
+ * rather than by another branch on an enum. A tile that got wider should reflow;
+ * only a tile that got TALLER has a different amount to say.
+ */
+export function heightTier(size: WidgetSize): 's' | 'm' | 'l' {
+  if (size === 'xl') return 'l'
+  if (size === 'w') return 'm'
+  return size
 }
 
 /**
@@ -555,21 +739,32 @@ export function removeFace(layout: DashboardLayout, slotId: string, index: numbe
  * express (`StackSlot.items` is a list, not a set) and that nothing could reach
  * while the only way to add one was a tray keyed on absence.
  */
-export function addWidget(layout: DashboardLayout, id: WidgetId): DashboardLayout {
+export function addWidget(
+  layout: DashboardLayout,
+  id: WidgetId,
+  surface: DashboardSurface = 'phone',
+): DashboardLayout {
   return touchLayout({
     ...layout,
-    slots: [...layout.slots, { id: newSlotId(), size: DEFAULT_SIZE[id], items: [id] }],
+    slots: [...layout.slots, { id: newSlotId(), size: defaultSizeFor(id, surface), items: [id] }],
     hidden: layout.hidden.filter((h) => h !== id),
   })
 }
 
 /** Advance one step round the sizes this slot's widgets can all draw. */
-export function resizeSlot(layout: DashboardLayout, slotId: string): DashboardLayout {
+export function resizeSlot(
+  layout: DashboardLayout,
+  slotId: string,
+  surface: DashboardSurface = 'phone',
+): DashboardLayout {
   return touchLayout({
     ...layout,
     slots: layout.slots.map((s) => {
       if (s.id !== slotId) return s
-      const ok = sizesFor(s.items)
+      // The ladder is the surface's own: a phone cycles S → M → L and a desktop
+      // continues into W → XL for the three widgets that have those bodies. A
+      // size the current screen cannot lay out is never reachable by tapping.
+      const ok = sizesFor(s.items, surface)
       if (ok.length < 2) return s
       const at = ok.indexOf(s.size)
       return { ...s, size: ok[(at + 1) % ok.length] }
@@ -596,7 +791,25 @@ export function moveSlot(layout: DashboardLayout, fromId: string, toId: string):
  * height every time the stack turned over, which is not a flip, it is a reflow —
  * and it would move every tile below it on a timer the user did not ask for.
  */
-export function canStack(a: StackSlot | null, b: StackSlot | null): boolean {
+export function canStack(
+  a: StackSlot | null,
+  b: StackSlot | null,
+  surface: DashboardSurface = 'phone',
+): boolean {
+  /**
+   * ── THERE ARE NO STACKS ON A DESKTOP ───────────────────────────────────────
+   * A Smart Stack exists because a phone has two columns and fifteen domains
+   * want them: stacking is how you keep Sleep and Workout both reachable when
+   * only one of them fits. A four-column window has room for every widget at
+   * once, so a stack there hides a tile behind a nine-second timer to save space
+   * that was not short — and it makes the one tile that rotates the only thing
+   * moving on an otherwise still screen.
+   *
+   * Refusing here rather than in the component is what makes it total: the
+   * hover-hold cannot arm, `stackSlots` cannot merge, and a desktop layout
+   * therefore cannot acquire a stack by any path.
+   */
+  if (surface === 'desktop') return false
   if (!a || !b || a.id === b.id) return false
   return a.size === b.size
 }
@@ -605,16 +818,21 @@ export function canStack(a: StackSlot | null, b: StackSlot | null): boolean {
  * Drop one slot onto another. The dragged slot's faces go UNDER the target's,
  * in order, so the tile the user was looking at is still the face on top.
  */
-export function stackSlots(layout: DashboardLayout, fromId: string, ontoId: string): DashboardLayout {
+export function stackSlots(
+  layout: DashboardLayout,
+  fromId: string,
+  ontoId: string,
+  surface: DashboardSurface = 'phone',
+): DashboardLayout {
   const from = slotAt(layout, fromId)
   const onto = slotAt(layout, ontoId)
-  if (!canStack(from, onto) || !from || !onto) return layout
+  if (!canStack(from, onto, surface) || !from || !onto) return layout
   const items = [...onto.items, ...from.items]
   return touchLayout({
     ...layout,
     slots: layout.slots
       .filter((s) => s.id !== fromId)
-      .map((s) => (s.id === ontoId ? { ...s, items, size: clampSize(items, s.size) } : s)),
+      .map((s) => (s.id === ontoId ? { ...s, items, size: clampSize(items, s.size, surface) } : s)),
   })
 }
 

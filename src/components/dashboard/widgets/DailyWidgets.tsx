@@ -15,7 +15,7 @@ import {
   SLOT_LABEL, fatigueDelta, fatigueLevel, latestFatigue, slotsForDay, useFatigue,
   type FatigueDay, type FatigueSlot,
 } from '@/lib/hooks/useFatigue'
-import { WIDGET_META, type WidgetSize } from '@/lib/dashboard/layout'
+import { WIDGET_META, heightTier, type WidgetSize } from '@/lib/dashboard/layout'
 import { SLEEP, AMETHYST, PLATINUM, STEEL, EMERALD, GOLD, OXIDE, SAPPHIRE, MUTED } from '@/lib/theme/palette'
 import type { Tables } from '@/lib/supabase/types'
 
@@ -75,6 +75,10 @@ export function SleepWidget({ size, onOpen, sleep, sleepMin, goalHours, nightly 
   /** Recent nightly totals in minutes, oldest first. */
   nightly: Array<number | null>
 }) {
+  // The vertical room this size stands for — see `heightTier`. `w` is a
+  // medium's height and `xl` is a large's; what makes them different is WIDTH,
+  // and width is answered by the container queries below.
+  const tier = heightTier(size)
   const total = sleep?.duration_min ?? sleepMin ?? null
   const goalMin = goalHours != null ? goalHours * 60 : null
   const parts = STAGES
@@ -131,7 +135,7 @@ export function SleepWidget({ size, onOpen, sleep, sleepMin, goalHours, nightly 
     <WidgetFrame {...WIDGET_META.sleep} size={size} onOpen={onOpen}>
       {total == null ? (
         <WidgetEmpty accent={AMETHYST} size={size} message="Last night is still syncing" hint="Your Watch reports it on first unlock" />
-      ) : size === 's' ? (
+      ) : tier === 's' ? (
         /* The arc is width-driven at 100:56, so it is given the widest box that
            still fits the 70px body rather than being allowed to stretch. */
         <span className="flex-1 min-h-0 flex items-center justify-center">
@@ -147,23 +151,39 @@ export function SleepWidget({ size, onOpen, sleep, sleepMin, goalHours, nightly 
           </span>
         </span>
       ) : (
-        <span className="flex-1 min-h-0 flex flex-col gap-1">
+        /* ── AT WIDTH, THE COLUMN BECOMES A ROW ─────────────────────────────
+           `@[560px]` is a CONTAINER query on the tile, not a viewport one — so
+           it fires for a four-column desktop tile and stays quiet for a
+           half-width one at the same window size, which is the distinction a
+           `xl:` breakpoint could not draw.
+
+           Stacked, the month's bars sit UNDER the arc and each gets a third of
+           the height. Side by side they get the tile's full height and half its
+           width, which is the shape a thirty-bar chart actually wants — and the
+           arc stops being a small circle with 700px of nothing beside it. */
+        <span className="flex-1 min-h-0 flex flex-col gap-1 @[560px]:flex-row @[560px]:gap-4">
           {/* `flex-1 min-h-0`, so the arc ROW absorbs the tile's slack and
               centres in it. Left content-height, every spare pixel fell between
               this row and whatever came next, which is the gap under "Awake".
               At large the chart below takes twice the share, because there more
               height is more information and here it is just a bigger circle. */}
-          <span className="flex-1 min-h-0 flex items-center gap-2 min-w-0">
+          <span className="flex-1 min-h-0 flex items-center gap-2 min-w-0 @[560px]:flex-[0_0_46%]">
             {/* Fixed width, not `flex-1`: the arc's height follows its width at
                 a 100:56 ratio, so letting it stretch would make it 190px tall in
-                a 130px box. */}
-            <span className={`shrink-0 ${size === 'l' ? 'w-[136px]' : 'w-[118px]'}`}>
+                a 130px box.
+
+                It grows with the tile in two steps rather than continuously —
+                `clamp()` on a `cqw` would scale the ring's stroke and its type
+                by different amounts and stop it matching the tiles beside it. */}
+            <span className={`shrink-0 @[560px]:w-[190px] @[900px]:w-[230px] ${tier === 'l' ? 'w-[136px]' : 'w-[118px]'}`}>
               <HalfArc pct={pct} segments={segments} width={10}>
                 <span className="text-center leading-none">
-                  <span className="helix-num block font-bold text-[17px] tabular-nums" style={{ color: AMETHYST }}>
+                  {/* Two steps, matching the arc's own two widths. Type set at
+                      its final size, never scaled — see `WidgetFrame`. */}
+                  <span className="helix-num block font-bold text-[17px] @[560px]:text-[26px] @[900px]:text-[32px] tabular-nums" style={{ color: AMETHYST }}>
                     {formatSleep(total)}
                   </span>
-                  {goalMin && <span className="block text-[8px] text-muted mt-0.5">of {Math.round(goalMin / 60)}h</span>}
+                  {goalMin && <span className="block text-[8px] @[560px]:text-[11px] text-muted mt-0.5">of {Math.round(goalMin / 60)}h</span>}
                 </span>
               </HalfArc>
             </span>
@@ -186,6 +206,11 @@ export function SleepWidget({ size, onOpen, sleep, sleepMin, goalHours, nightly 
                   A total only — no stage breakdown was pushed for this night.
                 </span>
               )}
+              {/* When the body is a ROW the strip cannot span it — the month's
+                  chart is where the full width goes — so it settles at the foot
+                  of the legend column instead, which is where the arc's own
+                  numbers already are. */}
+              <span className="hidden @[560px]:block mt-auto">{strip}</span>
             </span>
           </span>
 
@@ -204,23 +229,32 @@ export function SleepWidget({ size, onOpen, sleep, sleepMin, goalHours, nightly 
               directly under the arc row, above the strip. Slack goes into the
               bars, where more height is more information, instead of into a
               gap. */}
-          {size === 'l' && (
-            <span className="flex-[2] min-h-0 flex flex-col pt-1 border-t border-white/[0.06]">
-              <span className="flex items-baseline gap-1.5 shrink-0">
-                <span className="text-[8px] font-bold uppercase tracking-[0.1em] text-muted">Nightly · 30</span>
-                {goalMin && (
-                  <span className="helix-num text-[8px] tabular-nums text-muted ml-auto">
-                    {nightly.filter((n) => n != null && n >= goalMin).length} on target
-                  </span>
-                )}
-              </span>
-              <span className="flex-1 min-h-0 mt-1 flex items-end">
-                <MiniBars series={nightly} color={AMETHYST} goal={goalMin} height={70} />
-              </span>
+          {/* The month comes with the WIDTH now, not only with the height: a
+              full-width tile has room for it beside the arc even at `w`, where
+              the equivalent narrow size (`m`) has none. */}
+          <span className={`min-h-0 flex-col pt-1 border-t border-white/[0.06]
+                            @[560px]:flex @[560px]:flex-1 @[560px]:border-t-0 @[560px]:pt-0
+                            @[560px]:border-l @[560px]:border-white/[0.06] @[560px]:pl-4
+                            ${tier === 'l' ? 'flex flex-[2]' : 'hidden'}`}>
+            <span className="flex items-baseline gap-1.5 shrink-0">
+              <span className="text-[8px] font-bold uppercase tracking-[0.1em] text-muted">Nightly · 30</span>
+              {goalMin && (
+                <span className="helix-num text-[8px] tabular-nums text-muted ml-auto">
+                  {nightly.filter((n) => n != null && n >= goalMin).length} on target
+                </span>
+              )}
             </span>
-          )}
+            {/* `h-full` rather than a fixed 70: the bars are the flexible
+                element, so a taller tile buys taller bars — which is more
+                information — instead of a taller gap. */}
+            <span className="flex-1 min-h-0 mt-1 flex items-end">
+              <MiniBars series={nightly} color={AMETHYST} goal={goalMin} height={70} />
+            </span>
+          </span>
 
-          {strip}
+          {/* Bed → wake, efficiency, score. It spans the whole tile when the
+              body is a column and rides under the arc when it is a row. */}
+          <span className="@[560px]:hidden">{strip}</span>
         </span>
       )}
     </WidgetFrame>
@@ -270,6 +304,10 @@ export function StepsWidget({ size, onOpen, steps, goal, tdee, activeKcal, serie
   activeKcal: number | null
   series: Array<number | null>
 }) {
+  // The vertical room this size stands for — see `heightTier`. `w` is a
+  // medium's height and `xl` is a large's; what makes them different is WIDTH,
+  // and width is answered by the container queries below.
+  const tier = heightTier(size)
   /**
    * "vs 7-day" has to be seven days.
    *
@@ -290,7 +328,7 @@ export function StepsWidget({ size, onOpen, steps, goal, tdee, activeKcal, serie
     <WidgetFrame {...WIDGET_META.steps} size={size} onOpen={onOpen}>
       {steps == null ? (
         <WidgetEmpty accent={PLATINUM} size={size} message="Awaiting your first step" hint={`${goal.toLocaleString()} is today's target`} />
-      ) : size === 's' ? (
+      ) : tier === 's' ? (
         <span className="flex-1 min-h-0 flex flex-col justify-between gap-0.5">
           <span className="flex items-baseline gap-1 min-w-0">
             <span className="helix-num text-[10px] font-bold tabular-nums" style={{ color: SAPPHIRE }}>
@@ -344,7 +382,7 @@ export function StepsWidget({ size, onOpen, steps, goal, tdee, activeKcal, serie
             {/* `items-end` so the bars grow from the baseline into the space
                 rather than floating in the middle of it. */}
             <span className="flex-1 min-h-0 mt-1 flex items-end">
-              <MiniBars series={series} color={PLATINUM} goal={goal} height={size === 'l' ? 96 : 24} />
+              <MiniBars series={series} color={PLATINUM} goal={goal} height={tier === 'l' ? 96 : 24} />
             </span>
           </span>
         </span>
@@ -398,6 +436,9 @@ export function daysAgo(iso: string, today = logicalTodayISO()): string {
  * large was the same content over 120px of nothing — see `WIDGET_SIZES`.
  */
 export function CardioWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () => void }) {
+  // The vertical room this size stands for — see `heightTier`. `w` is a
+  // medium's height and `xl` is a large's; what makes them different is WIDTH.
+  const tier = heightTier(size)
   const today = logicalTodayISO()
   const { data: logs } = useCardioLogs(today)
   const { data: zone2 } = useZone2Week(today)
@@ -482,7 +523,7 @@ export function CardioWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () =
   return (
     <WidgetFrame {...WIDGET_META.cardio} size={size} onOpen={onOpen}>
       {now ? (
-        size === 's' ? (
+        tier === 's' ? (
           <span className="flex-1 min-h-0 flex flex-col justify-between gap-0.5">
             <span className="flex items-baseline gap-1.5 min-w-0">
               <span className="helix-num text-[10px] font-bold tabular-nums" style={{ color: OXIDE }}>
@@ -524,7 +565,7 @@ export function CardioWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () =
                 ? <>{Math.round(last.duration_min)}<span className="text-[10px] font-normal ml-0.5">min</span></>
                 : '—'}
           </span>
-          {size === 's' ? (
+          {tier === 's' ? (
             <span className="text-[9px] text-muted truncate">
               {[
                 KIND_LABEL[last.kind] ?? last.kind,
@@ -544,7 +585,7 @@ export function CardioWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () =
             </>
           )}
 
-          {size !== 's' && canRepeat && (
+          {tier !== 's' && canRepeat && (
             <button
               type="button"
               onClick={repeat}
@@ -633,6 +674,10 @@ export function StackWidget({ size, onOpen, slots, skipped, nowMinutes }: {
   /** Minutes since local midnight, so "next" is decided by the caller's clock. */
   nowMinutes: number
 }) {
+  // The vertical room this size stands for — see `heightTier`. `w` is a
+  // medium's height and `xl` is a large's; what makes them different is WIDTH,
+  // and width is answered by the container queries below.
+  const tier = heightTier(size)
   /** Still ahead of you, collapsed into the time blocks they are taken in. */
   const blocks = useMemo(() => {
     const byTime = new Map<string, StackSlot[]>()
@@ -671,7 +716,7 @@ export function StackWidget({ size, onOpen, slots, skipped, nowMinutes }: {
   // Small shows THREE, not two: a morning block is routinely three tablets and
   // a tile that named two of them plus "+1 more" was making the reader open it
   // to learn a word it had room for.
-  const shown = size === 's' ? 3 : 4
+  const shown = tier === 's' ? 3 : 4
 
   const due = (mins: number): string => {
     if (mins < 0) return `${Math.abs(mins) < 60 ? `${Math.abs(mins)} min` : `${Math.floor(Math.abs(mins) / 60)}h`} overdue`
@@ -700,7 +745,7 @@ export function StackWidget({ size, onOpen, slots, skipped, nowMinutes }: {
           {done[0] && (
             <span className="helix-num text-[9px] tabular-nums text-muted truncate">
               last batch {done[0].time}
-              {size !== 's' && ` · ${blockCount} dose${blockCount === 1 ? '' : 's'}`}
+              {tier !== 's' && ` · ${blockCount} dose${blockCount === 1 ? '' : 's'}`}
             </span>
           )}
         </span>
@@ -723,7 +768,7 @@ export function StackWidget({ size, onOpen, slots, skipped, nowMinutes }: {
             <span className="text-[9px] text-muted">+{next.items.length - shown} more in this dose</span>
           )}
 
-          {size !== 's' && (
+          {tier !== 's' && (
             <span className="block space-y-0.5 pt-1 mt-0.5 border-t border-white/[0.06]">
               {blocks.slice(1, 3).map((b) => (
                 <span key={b.time} className="flex items-baseline gap-2 min-w-0">
@@ -786,6 +831,9 @@ export { Trend }
  * runs, not because the far end is a verdict.
  */
 export function FatigueWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () => void }) {
+  // The vertical room this size stands for — see `heightTier`. `w` is a
+  // medium's height and `xl` is a large's; what makes them different is WIDTH.
+  const tier = heightTier(size)
   const today = logicalTodayISO()
   // The slots a day asks for depend on whether it is a training day, and
   // `isTrainingDay` reads a store React cannot see — `useScheduleVersion` is the
@@ -808,7 +856,7 @@ export function FatigueWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () 
       {!level ? (
         <WidgetEmpty accent={AMETHYST} size={size} message="Nothing logged today"
           hint={slots.map((s) => SLOT_LABEL[s]).join(', ')} />
-      ) : size === 's' ? (
+      ) : tier === 's' ? (
         <span className="flex-1 min-h-0 flex flex-col justify-end gap-1">
           <span className="helix-num font-bold text-fluid-lg leading-none" style={{ color: level.color }}>
             {level.label}
