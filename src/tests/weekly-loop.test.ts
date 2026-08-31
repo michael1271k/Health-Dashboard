@@ -376,7 +376,7 @@ describe('buildWeeklyExport', () => {
       '- **Sun 2026-07-19** · Workout · Upper A',
       '    - Sleep & Vitals: Sleep: 9h 11m · HRV: 62 ms · Resting HR: 48 bpm · Wrist Temp: —'
         + ' · Blood O2: — · Avg HR (daytime): — · Respiratory Rate: — · VO2 Max: —',
-      '    - Sleep Stages: Deep: — · REM: — · Core: — · Awake: — · Bed: — · Wake: —',
+      '    - Sleep Stages: Deep: — · REM: — · Core: — · Awake: — · Bed: — · Wake: — · Onset: —',
       '    - Macros: 1940 kcal (172P / 190C / 54F) · water 3.0 L',
       // Every target, every day, `—/target` where nothing was measured. A
       // nutrient that vanishes on the days it was not logged teaches the reader

@@ -7,6 +7,7 @@ import { Dumbbell, Moon, Flame, ChevronRight } from 'lucide-react'
 import { CompletenessArc } from '@/components/day/CompletenessArc'
 import { BodyPanel } from '@/components/day/BodyPanel'
 import { SleepDebtGauge } from '@/components/day/SleepDebtGauge'
+import { SleepOnsetToggle } from '@/components/day/SleepOnsetToggle'
 import { SwapDayControl } from '@/components/day/SwapDayControl'
 import { RestSuggestion } from '@/components/day/RestSuggestion'
 import { DomsTracker } from '@/components/day/RecoveryTrackers'
@@ -426,6 +427,10 @@ export default function DailyNexusPage() {
           nightly={(bioSeries ?? []).slice(-7).map((b) => ({ date: b.date, minutes: b.sleepMin }))}
           variant="full"
         />
+        {/* The one thing about a night the watch cannot measure — how long you
+            lay there — and the reason this drawer is the retroactive surface:
+            it is the same component bound to whatever date the page is on. */}
+        <div className="mt-3"><SleepOnsetToggle date={date} /></div>
         <div className="mt-3"><SleepDebtGauge /></div>
       </Sheet>
 

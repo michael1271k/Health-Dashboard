@@ -44,6 +44,7 @@ import { stackForDate } from '@/lib/supplements'
 import { useCustomSupplements, customSlotsForDate } from '@/lib/hooks/useCustomSupplements'
 import { useBioSeries } from '@/lib/hooks/useBioStrips'
 import { SleepStages } from '@/components/dashboard/SleepStages'
+import { SleepOnsetToggle } from '@/components/day/SleepOnsetToggle'
 
 // Modal-only bodies (522 lines between them) that were in the dashboard's
 // first-load bundle even though they render only once the domain sheet opens.
@@ -589,7 +590,13 @@ export default function DashboardPage() {
             pushed the actual breakdown below the fold. */}
         {open === 'readiness' && <ScoreCard score={score ?? null} />}
         {open === 'sleep' && (
-          <SleepStages sleep={sleep ?? null} log={log ?? null} goalHours={goals?.sleep_goal_hours ?? null} />
+          <>
+            <SleepStages sleep={sleep ?? null} log={log ?? null} goalHours={goals?.sleep_goal_hours ?? null} />
+            {/* The same switch the day page's Sleep drawer carries, bound to
+                today. One component, so the two surfaces cannot drift into
+                disagreeing about what the flag means or where it is written. */}
+            <div className="mt-3"><SleepOnsetToggle date={logicalTodayISO()} /></div>
+          </>
         )}
         {open === 'fuel' && (
           // Calories card + macro card (double-tap either to override the day).

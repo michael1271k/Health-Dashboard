@@ -140,6 +140,17 @@ export interface ExportDay {
   /** Bed and wake CLOCK times, "HH:MM" local. The timing, not just the amount. */
   bedTime?: string | null
   wakeTime?: string | null
+  /**
+   * Self-reported: it took a long time to fall asleep that night.
+   *
+   * The one sleep fact on this line that is not a measurement. HealthKit reports
+   * when the wearer WAS asleep and has no reading at all for the hour spent
+   * trying — so a 6h10 night that took twenty minutes to start and a 6h10 night
+   * that took two hours are the same row everywhere else in this document, and
+   * they are not the same night. Absent (undefined) on a range built before the
+   * column existed; `false` means the question was asked and answered no.
+   */
+  sleepOnsetTrouble?: boolean | null
   waterMl: number | null
   supplementsTaken: number | null
   /**
@@ -1495,7 +1506,14 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
        long it lasted, and the only one that shows a drifting schedule. */
     L.push(`    - Sleep Stages: Deep: ${sleepLong(d.deepMin)} · REM: ${sleepLong(d.remMin)}`
       + ` · Core: ${sleepLong(d.coreMin)} · Awake: ${sleepLong(d.awakeMin)}`
-      + ` · Bed: ${clock(d.bedTime)} · Wake: ${clock(d.wakeTime)}`)
+      + ` · Bed: ${clock(d.bedTime)} · Wake: ${clock(d.wakeTime)}`
+      /* APPENDED, like every field added to a daily line before it, so a reader
+         or a parser built against the old wording still finds the six stage
+         readings where it left them. Named on EVERY night rather than only the
+         bad ones: a flag that appears seven times in fifty tells the reader it
+         is rarely true, where a flag that appears only when set tells them
+         nothing about the nights it is missing from. */
+      + ` · Onset: ${d.sleepOnsetTrouble == null ? DASH : d.sleepOnsetTrouble ? 'hard to fall asleep' : 'normal'}`)
 
     // The exception tag sits ON the intake it explains, not at the end of the
     // block — a reader meeting "3210 kcal" needs the reason in the same breath.

@@ -92,7 +92,7 @@ async function fetchRange(weekStart: string, weekEnd: string) {
 
   // Active Energy, Day Score and Battery are deliberately NOT fetched — none of
   // the three appears in the export any more (see weeklyExport.ts).
-  const [logs, nutrition, sessions, sets, water, supps, doms, fatigue, bodyComp, cardio, rpe, bodyLedger, skips, prAxes, whr, exceptions, priorCount, sleepStages] = await Promise.all([
+  const [logs, nutrition, sessions, sets, water, supps, doms, fatigue, bodyComp, cardio, rpe, bodyLedger, skips, prAxes, whr, exceptions, priorCount, sleepStages, onset] = await Promise.all([
     // `active_energy` and `bmr` join the main select rather than getting their
     // own isolated slot: both are long-standing columns (verified live), and the
     // isolation convention exists for columns whose paste-SQL may not have run.
@@ -201,6 +201,13 @@ async function fetchRange(weekStart: string, weekEnd: string) {
       .select('start_time, end_time, duration_min, deep_min, rem_min, core_min, awake_min')
       .gte('start_time', `${isoAddDays(weekStart, -1)}T12:00:00Z`)
       .lt('start_time', `${isoAddDays(weekEnd, 1)}T12:00:00Z`),
+    /* "Trouble falling asleep" — ALONE, and for the same reason the weigh-in
+       reason and the waist-to-hip ratio are: it is the newest column on
+       daily_logs, and a select that named it beside twenty live ones would cost
+       the export every vital on the day its paste-SQL had not been run. On
+       error the flag is simply unknown and the line prints an em-dash. */
+    supabase.from('daily_logs').select('date, sleep_onset_trouble')
+      .gte('date', weekStart).lte('date', weekEnd),
   ])
 
   return {
@@ -249,6 +256,12 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     exceptions: (exceptions.error ? [] : (exceptions.data ?? [])) as unknown as Array<{
       date: string; nutrition_exception: string | null; nutrition_estimated: boolean | null
     }>,
+    // Null (not []) when the column is absent, so `toDays` can tell "no night
+    // was hard" from "the question has never been askable" — the export prints
+    // `normal` for the first and an em-dash for the second.
+    onset: (onset.error ? null : (onset.data ?? [])) as Array<{
+      date: string; sleep_onset_trouble: boolean | null
+    }> | null,
     // Sessions logged before this week. Null (not 0) when the count fails, so a
     // failed query prints no ordinal rather than restarting the numbering at 1.
     priorSessions: priorCount.error ? null : (priorCount.count ?? null),
@@ -372,6 +385,13 @@ function toDays(weekStart: string, d: RangeData): ExportDay[] {
   for (const e of d.exceptions) if (e.nutrition_exception) exceptionByDate.set(e.date, e.nutrition_exception)
   const estimatedByDate = new Set<string>()
   for (const e of d.exceptions) if (e.nutrition_estimated) estimatedByDate.add(e.date)
+  // `null` when the column could not be read at all — see `fetchRange`. A Map
+  // rather than a Set, because `false` here is a real answer ("the night was
+  // normal") and a Set could only ever say "not true", which is the one thing
+  // the export must not confuse with "not asked".
+  const onsetByDate = d.onset === undefined || d.onset === null
+    ? null
+    : new Map(d.onset.map((r) => [r.date, r.sleep_onset_trouble === true]))
 
   return Array.from({ length: 7 }, (_, i) => {
     const date = isoAddDays(weekStart, i)
@@ -410,6 +430,10 @@ function toDays(weekStart: string, d: RangeData): ExportDay[] {
       awakeMin: sleepByDate.get(date)?.awake_min ?? null,
       bedTime: sleepByDate.get(date)?.start_time ?? null,
       wakeTime: sleepByDate.get(date)?.end_time ?? null,
+      // A day with no `daily_logs` row has never been reported on, so it reads
+      // `false` — the column is NOT NULL DEFAULT false and a missing row is the
+      // same statement as an unticked one. Only an unreadable column is `null`.
+      sleepOnsetTrouble: onsetByDate === null ? null : (onsetByDate.get(date) ?? false),
       waterMl: waterByDate.get(date) ?? l?.water_ml ?? null,
       supplementsTaken: suppsByDate.get(date) ?? null,
       supplementsLog: suppLogByDate.get(date) ?? [],
