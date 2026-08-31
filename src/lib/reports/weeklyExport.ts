@@ -238,6 +238,31 @@ export interface ExportDay {
    * their CONFIDENCE in a single day's number without the arithmetic moving.
    */
   nutritionEstimated: boolean
+  /**
+   * ── WHAT THE DAY WAS ASKED FOR, AND WHAT IT WAS NOT GRADED ON ──────────────
+   * The named shape the day was given — "Home", "Restaurant" — or null for a day
+   * that took the rung's numbers unchanged.
+   *
+   * It reads like a second exception tag and is the opposite of one. An
+   * exception explains an intake that MISSED its target; a shape says the target
+   * itself was different, chosen in advance, and met or missed on its own terms.
+   * A reader meeting "2,380 kcal" inside a 1,999 rung needs to know which of the
+   * two they are looking at, and until now the document could only say the first.
+   */
+  targetProfile?: string | null
+  /**
+   * Was this macro graded on this day?
+   *
+   * `false` on a restaurant day, where the split is not knowable at a table and
+   * a target inherited from the rung would invent a miss out of nothing. The
+   * export must not print `54/55 F` for a day that had no fat target: the ratio
+   * would be read as adherence to something nobody was aiming at.
+   *
+   * Absent (undefined) on a payload built before shapes existed, which is the
+   * same as tracked — every day before this was.
+   */
+  trackCarbs?: boolean | null
+  trackFat?: boolean | null
 }
 
 /**
@@ -1485,8 +1510,18 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
     const performed = labelsByDate.get(d.date)
     const offPlan = performed != null && !d.isTrainingDay
     const workout = performed?.join(' + ') ?? (d.isTrainingDay ? 'not logged' : null)
+    /* An untracked macro still prints its INTAKE — what was eaten is a fact
+       either way — but is marked so the figure is never read as adherence. "88C
+       (untracked)" says both things a reader needs: how much, and that nobody
+       was aiming at a number. */
+    const carbsCell = d.trackCarbs === false ? `${n(d.carbsG)}C (untracked)` : `${n(d.carbsG)}C`
+    const fatCell = d.trackFat === false ? `${n(d.fatG)}F (untracked)` : `${n(d.fatG)}F`
     const macros = [d.proteinG, d.carbsG, d.fatG].some((v) => v != null)
-      ? ` (${n(d.proteinG)}P / ${n(d.carbsG)}C / ${n(d.fatG)}F)` : ''
+      ? ` (${n(d.proteinG)}P / ${carbsCell} / ${fatCell})` : ''
+    /* The shape sits ON the intake it explains, ahead of the exception tag: the
+       shape says what was asked for and the exception says why it was missed, and
+       that is the order a reader needs them in. */
+    const shapeTag = d.targetProfile ? ` [${d.targetProfile}]` : ''
 
     L.push(
       // "Workout", not "Train" — the app calls this thing a workout on the tab,
@@ -1535,7 +1570,7 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
     // The exception tag sits ON the intake it explains, not at the end of the
     // block — a reader meeting "3210 kcal" needs the reason in the same breath.
     L.push(
-      `    - Macros: ${n(d.calories)} kcal${macros}`
+      `    - Macros: ${n(d.calories)} kcal${macros}${shapeTag}`
       + `${exceptionTag(d.nutritionException)}${estimatedTag(d.nutritionEstimated)}`
       + ` · water ${n(d.waterMl == null ? null : d.waterMl / 1000, 1)} L`,
     )

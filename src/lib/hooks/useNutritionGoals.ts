@@ -8,7 +8,9 @@ import { phaseGoalsFor, type NutritionMode, type NutritionPreset } from '@/lib/t
 import type { Tables } from '@/lib/supabase/types'
 import { leverById, activeLeverOf, leverForDate, type LeverId } from '@/lib/nutrition/levers'
 import { logicalTodayISO } from '@/lib/utils/day'
-import { applyDailyTarget, hasDailyTarget, type DailyTarget } from '@/lib/nutrition/dailyTargets'
+import {
+  applyDailyTarget, hasDailyTarget, tracksCarbs, tracksFat, type DailyTarget,
+} from '@/lib/nutrition/dailyTargets'
 import { useDailyTarget } from '@/lib/hooks/useDailyTargets'
 
 /**
@@ -78,6 +80,26 @@ export interface ActiveNutritionGoals {
    * first one to show its badge.
    */
   dayOverride: boolean
+  /**
+   * Which named profile the day was given — "home", "restaurant" — or null.
+   *
+   * A label the UI can show, never a rule: the figures above are the SNAPSHOT
+   * taken when the profile was applied, so this cannot be used to re-derive
+   * them. See `profiles.ts`.
+   */
+  profileKey: string | null
+  /**
+   * Is this macro graded today?
+   *
+   * `false` only on a day that explicitly untracked it — a restaurant day, where
+   * the split is not knowable and grading it against an inherited figure would
+   * invent a miss out of nothing. The corresponding target above is `null` on
+   * such a day, which is what actually makes the scorer skip it; these two exist
+   * so a SURFACE can tell "no target was set" from "no target should exist", and
+   * print "not tracked" rather than an em-dash.
+   */
+  trackCarbs: boolean
+  trackFat: boolean
 }
 
 type GoalsRow = Pick<Tables<'user_goals'>, 'calorie_goal' | 'protein_goal_g' | 'carbs_goal_g' | 'fat_goal_g' | 'goal_preset'> & {
@@ -108,7 +130,9 @@ export function resolveNutritionGoals(
   dayTarget?: DailyTarget | null,
 ): ActiveNutritionGoals {
   const base = resolveBaseGoals(row, preset, mode, leverId)
-  if (!hasDailyTarget(dayTarget)) return { ...base, dayOverride: false }
+  if (!hasDailyTarget(dayTarget)) {
+    return { ...base, dayOverride: false, profileKey: null, trackCarbs: true, trackFat: true }
+  }
   const merged = applyDailyTarget(
     { calorie: base.calorie, protein: base.protein, carbs: base.carbs, fat: base.fat, steps: base.steps },
     dayTarget,
@@ -122,6 +146,9 @@ export function resolveNutritionGoals(
     steps: merged.steps,
     source: 'daily',
     dayOverride: true,
+    profileKey: dayTarget?.profile_key ?? null,
+    trackCarbs: tracksCarbs(dayTarget),
+    trackFat: tracksFat(dayTarget),
   }
 }
 
@@ -130,7 +157,10 @@ function resolveBaseGoals(
   preset: NutritionPreset,
   mode: NutritionMode | null,
   leverId?: string | null,
-): Omit<ActiveNutritionGoals, 'dayOverride'> {
+// All four omitted fields are facts about the DAY's own override, not about
+// the rung underneath it — a lever has no profile and grades every macro — so
+// the base resolver never has an opinion on them.
+): Omit<ActiveNutritionGoals, 'dayOverride' | 'profileKey' | 'trackCarbs' | 'trackFat'> {
   // ── THE LEVER IS THE TOP LAYER ─────────────────────────────────────────────
   // Not because it is the most authoritative source of nutrition science, but
   // because it is the only layer BOTH sides can resolve identically: the server
@@ -199,6 +229,25 @@ function resolveBaseGoals(
 }
 
 export function useNutritionGoals(): ActiveNutritionGoals {
+  return useNutritionGoalsFor(logicalTodayISO())
+}
+
+/**
+ * The same answer, for ANY date.
+ *
+ * ── WHY A DATE PARAMETER AND NOT A SECOND RESOLVER ───────────────────────────
+ * `/day/[date]` is the app's retroactive surface: it is where a finished day's
+ * nutrition context is tagged, and now where a finished day is given its shape.
+ * It cannot use the today-only hook — a Tuesday opened on a Friday would show
+ * Friday's rung and Friday's override, and applying "Restaurant" from it would
+ * appear to do nothing.
+ *
+ * `leverForDate` already takes the date and today SEPARATELY for exactly this
+ * reason: the rung a past day was eaten under comes from the schedule, never
+ * from the selection sitting in `user_goals` now. This passes both, so a past
+ * day resolves against what was actually in force.
+ */
+export function useNutritionGoalsFor(date: string): ActiveNutritionGoals {
   // The plan id lives in localStorage, which React cannot see change. Without
   // this subscription, switching plans in Settings leaves every macro ring in
   // the app grading against the OLD plan until a full reload.
@@ -219,10 +268,10 @@ export function useNutritionGoals(): ActiveNutritionGoals {
   // the goal displayed and the goal graded cannot diverge.
   const today = logicalTodayISO()
   const maintenanceUntil = (row as { maintenance_until?: string | null } | null)?.maintenance_until ?? null
-  const { data: dayTarget } = useDailyTarget(today)
+  const { data: dayTarget } = useDailyTarget(date)
   return resolveNutritionGoals(
     row ?? null, preset, mode,
-    leverForDate(today, activeLeverOf(row), today, maintenanceUntil),
+    leverForDate(date, activeLeverOf(row), today, maintenanceUntil),
     dayTarget ?? null,
   )
 }

@@ -42,14 +42,73 @@ export interface DailyTarget {
   fat_g?: number | null
   steps_goal?: number | null
   note?: string | null
+  /**
+   * Which named profile this day was given — "home", "restaurant" — or null.
+   *
+   * A LABEL, not a foreign key. The figures beside it are a SNAPSHOT taken when
+   * the profile was applied, so editing that profile later cannot re-grade a day
+   * that is already finished. See `profiles.ts`. Absent (undefined) on a
+   * database whose paste-SQL has not run.
+   */
+  profile_key?: string | null
+  /**
+   * ── THE THIRD STATE ────────────────────────────────────────────────────────
+   * A macro used to have two: a number ("this is the target") and null ("no
+   * opinion, ask the rung below"). A restaurant day needs a third — "there is no
+   * target for this, do not grade it" — because at a table the carbohydrate and
+   * fat split is not knowable, and grading it against a figure inherited from
+   * the rung invents a miss out of nothing.
+   *
+   * A sentinel zero cannot say it: a stored zero is a broken row here on
+   * purpose, and a 0 g fat goal would grade the day 0/0 and call it perfect. So
+   * tracking is its own boolean, `false` means untracked, and `undefined`/`true`
+   * both mean tracked — which is what every row written before this existed
+   * meant, and what an un-migrated database keeps meaning.
+   *
+   * Calories and protein have no such flag on purpose. They are what a night out
+   * is actually judged on, and a day that grades neither is not a target.
+   */
+  track_carbs?: boolean | null
+  track_fat?: boolean | null
 }
 
 /** The columns the app reads. Kept here so the two query sites cannot drift. */
-export const DAILY_TARGET_COLUMNS = 'date, kcal, protein_g, carbs_g, fat_g, steps_goal, note'
+export const DAILY_TARGET_COLUMNS =
+  'date, kcal, protein_g, carbs_g, fat_g, steps_goal, note, profile_key, track_carbs, track_fat'
 
-/** Is there anything in this row at all? An all-null row is not an override. */
+/**
+ * The columns this layer had BEFORE profiles, for the retry when the three new
+ * ones are not there yet.
+ *
+ * Every other newest-column read in this codebase is isolated in its own query
+ * so an un-migrated column costs only itself. That trick does not work here:
+ * these three belong to the same row as the figures they qualify, and fetching
+ * them separately would let a day resolve its targets from one read and its
+ * tracking flags from another that failed — a restaurant day silently graded on
+ * carbohydrate. So the read asks for everything and falls back to exactly this
+ * list, which is the shape the table is known to have had.
+ */
+export const DAILY_TARGET_COLUMNS_LEGACY = 'date, kcal, protein_g, carbs_g, fat_g, steps_goal, note'
+
+/** Is this macro graded on this day? Absent flag and `true` both mean yes. */
+export function tracksCarbs(t: DailyTarget | null | undefined): boolean {
+  return t?.track_carbs !== false
+}
+export function tracksFat(t: DailyTarget | null | undefined): boolean {
+  return t?.track_fat !== false
+}
+
+/**
+ * Is there anything in this row at all? An all-null row is not an override.
+ *
+ * Untracking counts. "Restaurant, 2,400, protein only" carries a calorie figure
+ * so it would pass on the numbers alone — but a row that ONLY says "stop grading
+ * fat" is still a deliberate statement about the day, and returning false for it
+ * would drop the flag on the floor and grade the fat anyway.
+ */
 export function hasDailyTarget(t: DailyTarget | null | undefined): boolean {
   if (!t) return false
+  if (t.track_carbs === false || t.track_fat === false) return true
   return [t.kcal, t.protein_g, t.carbs_g, t.fat_g, t.steps_goal]
     .some((v) => typeof v === 'number' && Number.isFinite(v) && v > 0)
 }
@@ -68,8 +127,15 @@ export function applyDailyTarget(goals: LeverGoals, t: DailyTarget | null | unde
   return {
     calorie: pick(t!.kcal, goals.calorie) ?? goals.calorie,
     protein: pick(t!.protein_g, goals.protein),
-    carbs: pick(t!.carbs_g, goals.carbs),
-    fat: pick(t!.fat_g, goals.fat),
+    /* ── UNTRACKED RESOLVES TO NULL, AND THAT IS THE WHOLE MECHANISM ─────────
+       Not to zero, and emphatically not to the rung's figure. `null` is what
+       every consumer already treats as "this day sets no target here": the bars
+       draw empty rather than red, the day line prints the intake with no
+       denominator, and `computeNutritionScore` skips the macro entirely because it
+       only grades a goal that is `> 0`. So "sits out of the aggregate" needed no
+       change in the scorer at all — it needed this line. */
+    carbs: tracksCarbs(t) ? pick(t!.carbs_g, goals.carbs) : null,
+    fat: tracksFat(t) ? pick(t!.fat_g, goals.fat) : null,
     steps: pick(t!.steps_goal, goals.steps),
   }
 }

@@ -15,6 +15,8 @@ import {
 } from '@/lib/nutrition/levers'
 import { maintenanceSpanFor } from '@/lib/nutrition/maintenance'
 import { logicalTodayISO } from '@/lib/utils/day'
+import { useTargetProfiles, useSaveTargetProfile } from '@/lib/hooks/useTargetProfiles'
+import type { TargetProfile } from '@/lib/nutrition/profiles'
 
 /**
  * Every lever, and the five numbers they replace, on one page.
@@ -266,6 +268,17 @@ export default function LeversPage() {
         </p>
       )}
 
+      {/* ── DAY SHAPES ───────────────────────────────────────────────────────
+          Below the rungs and deliberately not among them. A rung is a decision
+          about a WEEK — ordered, in force from a date, recorded when pulled. A
+          profile is a shape a single day can take, neither harder nor easier
+          than the other, and two of them happen inside the same week under the
+          same rung. See `profiles.ts`.
+
+          They are also not gated on the phase: a restaurant day is a restaurant
+          day in a cut, in a bulk and at maintenance alike. */}
+      <ProfilesZone />
+
       {/* Everything no lever governs. It stays editable in both states, because
           a rung has never had an opinion about how much you sleep. */}
       <Zone label="Recovery & activity" accent={STEEL}>
@@ -345,4 +358,63 @@ function longDate(iso: string): string {
   const d = new Date(`${iso}T12:00:00Z`)
   if (Number.isNaN(d.getTime())) return iso
   return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' })
+}
+
+/**
+ * The named day shapes, editable.
+ *
+ * ── EDITING ONE DOES NOT REACH BACKWARDS ─────────────────────────────────────
+ * Applying a profile to a day SNAPSHOTS its figures into that day's row, so a
+ * change here governs the days you tag from now on and leaves every day already
+ * eaten exactly as it was asked. That is the same invariant `leverForDate`
+ * protects one layer down, and it is the reason `daily_targets.profile_key` is a
+ * stamp rather than a foreign key.
+ *
+ * ── AND AN EMPTY MACRO FIELD IS A REAL SETTING HERE ──────────────────────────
+ * Clearing Carbohydrate on "Restaurant" is not "no opinion, ask the rung" — at
+ * this layer it is "this profile does not grade carbohydrate", which is what
+ * makes a restaurant day a restaurant day. The row says so rather than leaving
+ * a blank box to be read either way.
+ */
+function ProfilesZone() {
+  const { data: profiles } = useTargetProfiles()
+  const saveProfile = useSaveTargetProfile()
+  const patch = (p: TargetProfile, next: Partial<TargetProfile>) =>
+    saveProfile.mutate({ ...p, ...next })
+
+  return (
+    <Zone label="Day shapes" accent={SAND}>
+      {(profiles ?? []).map((p) => (
+        <div key={p.key} className="py-1">
+          <ZoneRow className="flex items-baseline gap-2 min-h-[36px]">
+            <span className="text-fluid-sm font-semibold text-text shrink-0">{p.label}</span>
+            <span className="text-[11px] text-muted truncate min-w-0">{p.summary}</span>
+          </ZoneRow>
+          <NumberRow label="Calories" unit="kcal" step={5} value={p.kcal}
+            onCommit={(v) => v != null && patch(p, { kcal: v })} />
+          <NumberRow label="Protein" unit="g" value={p.proteinG}
+            onCommit={(v) => v != null && patch(p, { proteinG: v })} />
+          {/* `null` is a legitimate commit for these two — it is how a macro is
+              turned OFF for this shape, and the placeholder says so. */}
+          <NumberRow label="Fat" unit="g" value={p.fatG}
+            onCommit={(v) => patch(p, { fatG: v })} />
+          <NumberRow label="Carbohydrate" unit="g" value={p.carbsG}
+            onCommit={(v) => patch(p, { carbsG: v })} />
+          {(p.carbsG == null || p.fatG == null) && (
+            <p className="px-1 pb-1 text-[10px] text-muted leading-snug">
+              {[p.fatG == null && 'Fat', p.carbsG == null && 'Carbohydrate'].filter(Boolean).join(' and ')}
+              {' '}left empty, so a day given this shape is not graded on
+              {p.carbsG == null && p.fatG == null ? ' either' : ' it'} — it counts as
+              neither a hit nor a miss, and stays out of the week&apos;s balance.
+            </p>
+          )}
+        </div>
+      ))}
+      <p className="px-1 py-1 text-[11px] text-muted leading-snug">
+        Changing a figure here applies to days you tag from now on. Days already
+        tagged keep the numbers they were given, because that is what they were
+        eaten against.
+      </p>
+    </Zone>
+  )
 }

@@ -13,6 +13,7 @@ import { weekLabelOf, WEEK0_START } from '@/lib/reports/weekNumber'
 import { sessionVolumeKg } from '@/lib/sessions/volume'
 import { restTargetFor, programRestSec } from '@/lib/training/restTargets'
 import { FATIGUE_SLOTS, SLOT_LABEL, fatigueLevel, normalizeSlot, type FatigueSlot } from '@/lib/hooks/useFatigue'
+import { BUILTIN_PROFILES } from '@/lib/nutrition/profiles'
 import { epley1RM } from '@/lib/utils/epley'
 import { activeProgram, eraForDate, isTrainingDay } from '@/lib/programs'
 import { getWeekPhase } from '@/lib/phases'
@@ -92,7 +93,7 @@ async function fetchRange(weekStart: string, weekEnd: string) {
 
   // Active Energy, Day Score and Battery are deliberately NOT fetched — none of
   // the three appears in the export any more (see weeklyExport.ts).
-  const [logs, nutrition, sessions, sets, water, supps, doms, fatigue, bodyComp, cardio, rpe, bodyLedger, skips, prAxes, whr, exceptions, priorCount, sleepStages, onset] = await Promise.all([
+  const [logs, nutrition, sessions, sets, water, supps, doms, fatigue, bodyComp, cardio, rpe, bodyLedger, skips, prAxes, whr, exceptions, priorCount, sleepStages, onset, shapes] = await Promise.all([
     // `active_energy` and `bmr` join the main select rather than getting their
     // own isolated slot: both are long-standing columns (verified live), and the
     // isolation convention exists for columns whose paste-SQL may not have run.
@@ -208,6 +209,13 @@ async function fetchRange(weekStart: string, weekEnd: string) {
        error the flag is simply unknown and the line prints an em-dash. */
     supabase.from('daily_logs').select('date, sleep_onset_trouble')
       .gte('date', weekStart).lte('date', weekEnd),
+    /* ── THE DAY'S NAMED SHAPE ────────────────────────────────────────────────
+       `profile_key`, `track_carbs` and `track_fat` on `daily_targets`. Its own
+       select for the usual reason, and here the isolation is FREE: nothing else
+       in this export reads that table, so an un-migrated column costs the shape
+       tag and the untracked marks and nothing else at all. */
+    supabase.from('daily_targets').select('date, profile_key, track_carbs, track_fat')
+      .gte('date', weekStart).lte('date', weekEnd),
   ])
 
   return {
@@ -261,6 +269,13 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     // `normal` for the first and an em-dash for the second.
     onset: (onset.error ? null : (onset.data ?? [])) as Array<{
       date: string; sleep_onset_trouble: boolean | null
+    }> | null,
+    // Null (not []) when the three profile columns are not there yet, so
+    // `toDays` can leave the shape unstated rather than asserting every day was
+    // an ordinary one — the same distinction `onset` above draws.
+    shapes: (shapes.error ? null : (shapes.data ?? [])) as Array<{
+      date: string; profile_key: string | null
+      track_carbs: boolean | null; track_fat: boolean | null
     }> | null,
     // Sessions logged before this week. Null (not 0) when the count fails, so a
     // failed query prints no ordinal rather than restarting the numbering at 1.
@@ -392,6 +407,19 @@ function toDays(weekStart: string, d: RangeData): ExportDay[] {
   const onsetByDate = d.onset === undefined || d.onset === null
     ? null
     : new Map(d.onset.map((r) => [r.date, r.sleep_onset_trouble === true]))
+  /* The stored key is turned into the profile's LABEL here, from the same
+     builtin list the picker falls back to. The export is read by a person, and
+     `restaurant` is a database key where "Restaurant" is a word — but a key that
+     names no known profile still prints, capitalised, rather than vanishing: a
+     day tagged with a profile since deleted was still eaten against something. */
+  const shapeByDate = d.shapes == null ? null : new Map(d.shapes.map((r) => [r.date, {
+    label: r.profile_key
+      ? BUILTIN_PROFILES.find((p) => p.key === r.profile_key)?.label
+        ?? r.profile_key.charAt(0).toUpperCase() + r.profile_key.slice(1)
+      : null,
+    carbs: r.track_carbs !== false,
+    fat: r.track_fat !== false,
+  }]))
 
   return Array.from({ length: 7 }, (_, i) => {
     const date = isoAddDays(weekStart, i)
@@ -443,6 +471,13 @@ function toDays(weekStart: string, d: RangeData): ExportDay[] {
       weighInSkipReason: skipByDate.get(date) ?? null,
       nutritionException: exceptionByDate.get(date) ?? null,
       nutritionEstimated: estimatedByDate.has(date),
+      // The day's named shape and what it was graded on. Null / undefined where
+      // the override query could not read the three newest columns — the same
+      // one-known-fallback the client and the scorer use, and the export then
+      // prints the day without a shape rather than without its macros.
+      targetProfile: shapeByDate?.get(date)?.label ?? null,
+      trackCarbs: shapeByDate?.get(date)?.carbs ?? true,
+      trackFat: shapeByDate?.get(date)?.fat ?? true,
     }
   })
 }

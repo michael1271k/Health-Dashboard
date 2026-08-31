@@ -17,7 +17,7 @@ import { WaterArcPanel } from '@/components/day/WaterArcPanel'
 import { WaterOverrideSheet } from '@/components/day/WaterOverrideSheet'
 import { useDayVault, dayCompleteness } from '@/lib/hooks/useDayVault'
 import { useUserGoals, useDaySleep } from '@/lib/hooks/useDashboard'
-import { useNutritionGoals } from '@/lib/hooks/useNutritionGoals'
+import { useNutritionGoalsFor } from '@/lib/hooks/useNutritionGoals'
 import { useBioSeries } from '@/lib/hooks/useBioStrips'
 import { SleepStages } from '@/components/dashboard/SleepStages'
 import { InBodyForm } from '@/components/day/InBody'
@@ -26,6 +26,7 @@ import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { useDoubleTap } from '@/lib/utils/doubleTap'
 import { MacroOverrideSheet } from '@/components/nutrition/MacroOverrideSheet'
 import { ExceptionDayBanner } from '@/components/nutrition/ExceptionDayBanner'
+import { DayTargetCard } from '@/components/nutrition/DayTargetCard'
 import { phaseDisplay } from '@/lib/nutrition/phase'
 import { tdeeKcal, tefKcal, tdeeBreakdown } from '@/lib/nutrition/energy'
 import { ERA_META, eraForDate, scheduleDayFor } from '@/lib/programs'
@@ -115,7 +116,12 @@ export default function DailyNexusPage() {
   const { data, isLoading } = useDayVault(date)
   const { data: goals } = useUserGoals()
   // The plan+phase macro targets — one resolver, shared with /nutrition.
-  const macroGoals = useNutritionGoals()
+  //
+  // Resolved FOR THIS DATE, not for today. This page is the retroactive
+  // surface: a Tuesday opened on a Friday must be graded against the rung and
+  // the override that were in force on the Tuesday, or the rings on it are
+  // drawn against a target the day never had.
+  const macroGoals = useNutritionGoalsFor(date)
   const { data: daySleep } = useDaySleep(date)
   // Already fetched for the dashboard strip and never shown on this page —
   // one night in isolation cannot tell you if it was a bad night or a bad week.
@@ -439,7 +445,19 @@ export default function DailyNexusPage() {
           of it. The nutrition page renders the identical component with today's
           date. */}
       <Sheet open={sheet === 'nutrition'} onClose={() => setSheet(null)} title="Nutrition context" accent={SAND}>
-        <ExceptionDayBanner date={date} stored={dayException} estimated={dayEstimated} />
+        {/* ── WHAT THE DAY WAS ASKED FOR, ABOVE WHY IT MISSED ────────────────
+            Two different statements about the same day, in the order they are
+            decided. The profile is the TARGET — a home day or a restaurant day,
+            chosen in advance or corrected after — and the exception is the
+            EXPLANATION for an intake that did not meet it.
+
+            The same component the dashboard's Fuel sheet renders, bound to this
+            page's date instead of today's. That is the whole of "retroactive":
+            there is no past-day variant, because there did not need to be. */}
+        <DayTargetCard date={date} goals={macroGoals} />
+        <div className="mt-3">
+          <ExceptionDayBanner date={date} stored={dayException} estimated={dayEstimated} />
+        </div>
       </Sheet>
 
       {/* ── THE DNA SPIRAL IS GONE ──

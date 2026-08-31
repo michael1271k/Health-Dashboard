@@ -12,7 +12,9 @@ import {
   type ContextMode,
 } from '@/lib/nutrition/context'
 import { applyLever, activeLeverOf, leverForDate } from '@/lib/nutrition/levers'
-import { applyDailyTarget, DAILY_TARGET_COLUMNS, type DailyTarget } from '@/lib/nutrition/dailyTargets'
+import {
+  applyDailyTarget, DAILY_TARGET_COLUMNS, DAILY_TARGET_COLUMNS_LEGACY, type DailyTarget,
+} from '@/lib/nutrition/dailyTargets'
 import { isMaintenanceDate } from '@/lib/nutrition/maintenance'
 import type { ProgramPhase } from '@/lib/training/landmarks'
 import { isWorkingSet } from '@/lib/training/setTags'
@@ -315,13 +317,25 @@ export async function computeForDate(
   // finished day — see `dailyTargets.ts` for why that relaxation is deliberate
   // here and forbidden everywhere else. A missing table reads as no override, so
   // this is inert until the DDL lands.
-  const dayTarget = await supabase
+  //
+  // Read twice at most: `profile_key`, `track_carbs` and `track_fat` are the
+  // newest columns in that table and a select naming an absent column fails the
+  // whole statement, which would cost this day every target it has rather than
+  // just its tracking flags. The retry asks for the column list the table is
+  // known to have had — see `selectTargets` in `useDailyTargets` for the same
+  // fallback on the client, and the note in `dailyTargets.ts` for why these
+  // three cannot be isolated into a query of their own.
+  const readTarget = (columns: string) => supabase
     .from('daily_targets')
-    .select(DAILY_TARGET_COLUMNS)
+    .select(columns)
     .eq('user_id', userId)
     .eq('date', date)
     .maybeSingle()
-    .then((r) => r.data as DailyTarget | null, () => null)
+    .then((r) => (r.error ? undefined : (r.data as DailyTarget | null)), () => undefined)
+
+  const dayTarget = (await readTarget(DAILY_TARGET_COLUMNS))
+    ?? (await readTarget(DAILY_TARGET_COLUMNS_LEGACY))
+    ?? null
 
   const resolved = applyDailyTarget(levered, dayTarget)
   g.calorie_goal = resolved.calorie
