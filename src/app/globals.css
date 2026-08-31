@@ -263,10 +263,18 @@ html[data-theme='travel'] {
   }
 }
 
-/* Pause every ambient animation while the tab is hidden (iOS battery + resume jank). */
+/* Pause every ambient animation while the tab is hidden (iOS battery + resume jank).
+   EVERY infinite animation in this file must be listed here. Two were not:
+   `.sync-breathe` and `.helix-shimmer`, the second of which animates
+   `background-position` — a PAINT property — on every loading placeholder, so
+   a backgrounded app with a widget still resolving repainted 4.5s forever.
+   The rule is now the whole set; adding an infinite animation below without
+   adding it here is the regression this comment exists to stop. */
 html[data-hidden='true'] .ecg-sweep,
 html[data-hidden='true'] .orb-breathe::after,
-html[data-hidden='true'] .aura-breathe::after { animation-play-state: paused; }
+html[data-hidden='true'] .aura-breathe::after,
+html[data-hidden='true'] .sync-breathe,
+html[data-hidden='true'] .helix-shimmer { animation-play-state: paused; }
 
 /* ── HELIX animation suite ─────────────────────────────────────── */
 /* ECG sweep under the Daily Score */

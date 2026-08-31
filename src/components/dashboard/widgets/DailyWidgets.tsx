@@ -1,6 +1,7 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { memo, useMemo, useState } from 'react'
+import { useVisibleInterval } from '@/lib/hooks/useVisibleInterval'
 import { RotateCw, Check, Loader2, Timer, HeartPulse, Flame, Ruler } from 'lucide-react'
 import { WidgetFrame, WidgetEmpty } from '@/components/dashboard/WidgetFrame'
 import { Bar, HalfArc, Hero, MiniBars, Milestones, StatTile, Trend, vsBaseline } from './parts'
@@ -65,7 +66,7 @@ function clockOf(iso: string | null | undefined): string | null {
  * It does NOT mount `SleepStages`: that component's smallest variant still
  * draws a histogram of recent nights and assumes a full-width surface.
  */
-export function SleepWidget({ size, onOpen, sleep, sleepMin, goalHours, nightly }: {
+function SleepWidgetImpl({ size, onOpen, sleep, sleepMin, goalHours, nightly }: {
   size: WidgetSize
   onOpen?: () => void
   sleep: Tables<'sleep_sessions'> | null
@@ -295,7 +296,7 @@ export function stepMarks(goal: number): number[] {
  * turns a step count into a decision, because 9,000 steps that cost 300 kcal and
  * 9,000 that cost 600 are different days.
  */
-export function StepsWidget({ size, onOpen, steps, goal, tdee, activeKcal, series }: {
+function StepsWidgetImpl({ size, onOpen, steps, goal, tdee, activeKcal, series }: {
   size: WidgetSize
   onOpen?: () => void
   steps: number | null
@@ -435,7 +436,7 @@ export function daysAgo(iso: string, today = logicalTodayISO()): string {
  * There is no large. Everything this widget knows fits a medium tile, and a
  * large was the same content over 120px of nothing — see `WIDGET_SIZES`.
  */
-export function CardioWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () => void }) {
+function CardioWidgetImpl({ size, onOpen }: { size: WidgetSize; onOpen?: () => void }) {
   // The vertical room this size stands for — see `heightTier`. `w` is a
   // medium's height and `xl` is a large's; what makes them different is WIDTH.
   const tier = heightTier(size)
@@ -650,7 +651,29 @@ function parseMin(t: string): number {
  *
  * There is no large: one dose block and a day's ticks is a medium tile's worth.
  */
-export function StackWidget({ size, onOpen, slots, skipped, nowMinutes }: {
+/** Minutes since local midnight. */
+function minutesNow(): number {
+  const d = new Date()
+  return d.getHours() * 60 + d.getMinutes()
+}
+
+/**
+ * ── THE MINUTE HAND LIVES HERE NOW, NOT ON THE DASHBOARD ─────────────────────
+ * `page.tsx` used to hold this in state and pass it down. It was also a
+ * dependency of `renderWidget` — the render prop the WHOLE grid is keyed on —
+ * so the once-a-minute tick reconciled every widget on the dashboard, including
+ * the ~99-path muscle atlas, to move one label inside this tile.
+ *
+ * Owning it here means the minute costs exactly this component. Gated on
+ * visibility, because a number nobody can read does not need to be right.
+ */
+function useMinutesNow(enabled: boolean): number {
+  const [mins, setMins] = useState(minutesNow)
+  useVisibleInterval(() => setMins(minutesNow()), 60_000, enabled)
+  return mins
+}
+
+function StackWidgetImpl({ size, onOpen, slots, skipped, nowMinutes }: {
   size: WidgetSize
   onOpen?: () => void
   /** Today's doses — `key`, display name, and `HH:MM` due time. */
@@ -671,9 +694,16 @@ export function StackWidget({ size, onOpen, slots, skipped, nowMinutes }: {
    * flipped.
    */
   skipped: ReadonlySet<string>
-  /** Minutes since local midnight, so "next" is decided by the caller's clock. */
-  nowMinutes: number
+  /**
+   * Minutes since local midnight. OPTIONAL: omit it and the tile runs its own
+   * visibility-gated minute clock (`useMinutesNow`), which is what the
+   * dashboard does. Pass a number to pin the clock — tests do, so "next dose"
+   * is deterministic instead of depending on when the suite runs.
+   */
+  nowMinutes?: number
 }) {
+  const selfMinutes = useMinutesNow(nowMinutes == null)
+  const minutes = nowMinutes ?? selfMinutes
   // The vertical room this size stands for — see `heightTier`. `w` is a
   // medium's height and `xl` is a large's; what makes them different is WIDTH,
   // and width is answered by the container queries below.
@@ -682,7 +712,7 @@ export function StackWidget({ size, onOpen, slots, skipped, nowMinutes }: {
   const blocks = useMemo(() => {
     const byTime = new Map<string, StackSlot[]>()
     for (const s of slots) {
-      if (skipped.has(s.key) || parseMin(s.time) <= nowMinutes) continue
+      if (skipped.has(s.key) || parseMin(s.time) <= minutes) continue
       const list = byTime.get(s.time)
       if (list) list.push(s)
       else byTime.set(s.time, [s])
@@ -690,15 +720,15 @@ export function StackWidget({ size, onOpen, slots, skipped, nowMinutes }: {
     return [...byTime.entries()]
       .map(([time, items]) => ({ time, items, at: parseMin(time) }))
       .sort((a, b) => a.at - b.at)
-  }, [slots, skipped, nowMinutes])
+  }, [slots, skipped, minutes])
 
   /** What is already behind you, most recent first. */
   const behind = useMemo(
     () => slots
-      .filter((s) => skipped.has(s.key) || parseMin(s.time) <= nowMinutes)
+      .filter((s) => skipped.has(s.key) || parseMin(s.time) <= minutes)
       .map((s) => ({ ...s, wasSkipped: skipped.has(s.key) }))
       .sort((a, b) => parseMin(b.time) - parseMin(a.time)),
-    [slots, skipped, nowMinutes],
+    [slots, skipped, minutes],
   )
   const done = useMemo(() => behind.filter((b) => !b.wasSkipped), [behind])
 
@@ -712,7 +742,7 @@ export function StackWidget({ size, onOpen, slots, skipped, nowMinutes }: {
   const next = blocks[0] ?? null
   // Nothing is overdue any more: a block whose time has passed has BEEN taken
   // unless it was skipped, so the only blocks left are genuinely still ahead.
-  const inMin = next != null ? next.at - nowMinutes : null
+  const inMin = next != null ? next.at - minutes : null
   // Small shows THREE, not two: a morning block is routinely three tablets and
   // a tile that named two of them plus "+1 more" was making the reader open it
   // to learn a word it had room for.
@@ -830,7 +860,7 @@ export { Trend }
  * scale's own, running emerald → oxide because that is the direction fatigue
  * runs, not because the far end is a verdict.
  */
-export function FatigueWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () => void }) {
+function FatigueWidgetImpl({ size, onOpen }: { size: WidgetSize; onOpen?: () => void }) {
   // The vertical room this size stands for — see `heightTier`. `w` is a
   // medium's height and `xl` is a large's; what makes them different is WIDTH.
   const tier = heightTier(size)
@@ -937,3 +967,23 @@ function SlotDots({ readings, slots, big = false }: {
     </span>
   )
 }
+
+/*
+ * ── EVERY WIDGET BODY IS MEMOIZED ────────────────────────────────────────────
+ * The dashboard's render prop (`renderWidget` in `app/page.tsx`) is rebuilt
+ * whenever any of the page's ~20 data hooks resolves, which walks the grid and
+ * calls this file's components again. Before these wrappers, that meant every
+ * tile re-ran its layout maths and its charts on every unrelated data change —
+ * and the comment on the dashboard claiming the widgets were "memoised where it
+ * pays" described something that did not exist anywhere in this directory.
+ *
+ * Shallow comparison is the whole contract, so it only holds while callers pass
+ * stable props: see the hoisted constants and `useMemo`s in `app/page.tsx`,
+ * which exist for this reason. A fresh `.map()` or object literal at the call
+ * site silently turns these back into plain components.
+ */
+export const SleepWidget = memo(SleepWidgetImpl)
+export const StepsWidget = memo(StepsWidgetImpl)
+export const CardioWidget = memo(CardioWidgetImpl)
+export const StackWidget = memo(StackWidgetImpl)
+export const FatigueWidget = memo(FatigueWidgetImpl)

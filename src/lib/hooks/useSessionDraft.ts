@@ -59,19 +59,44 @@ export function useSessionDraft() {
   const [draft, setDraft] = useState<SessionDraft | null>(null)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  /**
+   * ── THE LAST CONTENT CHANGE, NOT THE LAST WRITE ─────────────────────────────
+   * `SessionDraft.touchedAt` bounds the screen wake lock, so it must move only
+   * when the workout actually moves. Two writes must NOT touch it:
+   *
+   *   · the `pagehide` / visibility flush below — locking the phone between
+   *     sets would otherwise refresh the stamp every single time, and the idle
+   *     bound could never be reached;
+   *   · hydration — opening the app on an abandoned draft must not revive it.
+   *
+   * A ref rather than part of `draft`, because stamping through `setDraft`
+   * would make every save a state change and re-render the deck.
+   */
+  const touchedAtRef = useRef<string | null>(null)
+  const hydrationPassed = useRef(false)
+
   // Hydrate a surviving draft once on mount (SSR-safe; migrates v1 drafts).
   const [hydrated, setHydrated] = useState(false)
   useEffect(() => {
     const stored = peekSessionDraft()
-    if (stored) setDraft(stored)
+    if (stored) {
+      setDraft(stored)
+      // Carry the stored stamp forward. Older drafts have none; `startedAt` is
+      // never newer, so falling back to it can only shorten the lock.
+      touchedAtRef.current = stored.touchedAt ?? stored.startedAt ?? null
+    }
     setHydrated(true)
   }, [])
 
   // Debounced autosave on every draft change.
   const writeDraft = useCallback((d: SessionDraft | null) => {
     try {
-      if (d) localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(d))
-      else localStorage.removeItem(DRAFT_STORAGE_KEY)
+      if (d) {
+        const stamped = touchedAtRef.current ? { ...d, touchedAt: touchedAtRef.current } : d
+        localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(stamped))
+      } else {
+        localStorage.removeItem(DRAFT_STORAGE_KEY)
+      }
     } catch { /* storage full/unavailable — non-fatal */ }
     // The app shell reads the draft through `draftStore`, not through this
     // hook — a second `useSessionDraft()` would be a second copy of the state,
@@ -82,6 +107,9 @@ export function useSessionDraft() {
 
   useEffect(() => {
     if (!hydrated) return
+    // The first run after hydration is the hydration itself — not a touch.
+    if (!hydrationPassed.current) hydrationPassed.current = true
+    else if (draft) touchedAtRef.current = new Date().toISOString()
     if (saveTimer.current) clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(() => writeDraft(draft), 500)
     return () => { if (saveTimer.current) clearTimeout(saveTimer.current) }
@@ -120,11 +148,17 @@ export function useSessionDraft() {
   // either lose the new draft or resurrect the discarded one.
   const start = useCallback((d: SessionDraft) => {
     setDraft(d)
-    try { localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(d)) } catch { /* ignore */ }
+    // Starting a deck IS a touch — this is the one synchronous write that has
+    // to stamp, because the debounced path it bypasses is where stamping
+    // normally happens.
+    touchedAtRef.current = new Date().toISOString()
+    const stamped = { ...d, touchedAt: touchedAtRef.current }
+    try { localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(stamped)) } catch { /* ignore */ }
     notifyDraftChanged()
   }, [])
   const discard = useCallback(() => {
     setDraft(null)
+    touchedAtRef.current = null
     try { localStorage.removeItem(DRAFT_STORAGE_KEY) } catch { /* ignore */ }
     notifyDraftChanged()
   }, [])

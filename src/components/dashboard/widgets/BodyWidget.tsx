@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { memo, useMemo } from 'react'
 import { WidgetFrame, WidgetEmpty } from '@/components/dashboard/WidgetFrame'
 import { Hero, LineChart, Spark, StatTile } from './parts'
 import { LedgerRow, compositionRows } from '@/components/body/CompositionLedger'
@@ -36,7 +36,7 @@ import { WIDGET_META, heightTier, type WidgetSize } from '@/lib/dashboard/layout
  * move week to week; protein and bone mineral are near-constants that belong in
  * the full ledger a tap away. Large shows everything the reading carried.
  */
-export function BodyWidget({ size, onOpen, weightSeries }: {
+function BodyWidgetImpl({ size, onOpen, weightSeries }: {
   size: WidgetSize
   onOpen?: () => void
   /** Weight history in DISPLAY units, dated, oldest first. */
@@ -212,3 +212,19 @@ export function BodyWidget({ size, onOpen, weightSeries }: {
     </WidgetFrame>
   )
 }
+
+/*
+ * ── EVERY WIDGET BODY IS MEMOIZED ────────────────────────────────────────────
+ * The dashboard's render prop (`renderWidget` in `app/page.tsx`) is rebuilt
+ * whenever any of the page's ~20 data hooks resolves, which walks the grid and
+ * calls this file's components again. Before these wrappers, that meant every
+ * tile re-ran its layout maths and its charts on every unrelated data change —
+ * and the comment on the dashboard claiming the widgets were "memoised where it
+ * pays" described something that did not exist anywhere in this directory.
+ *
+ * Shallow comparison is the whole contract, so it only holds while callers pass
+ * stable props: see the hoisted constants and `useMemo`s in `app/page.tsx`,
+ * which exist for this reason. A fresh `.map()` or object literal at the call
+ * site silently turns these back into plain components.
+ */
+export const BodyWidget = memo(BodyWidgetImpl)

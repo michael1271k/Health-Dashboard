@@ -1,7 +1,8 @@
 'use client'
 
-import { memo, useEffect, useState } from 'react'
+import { memo, useState } from 'react'
 import { Hourglass, Pause } from 'lucide-react'
+import { useVisibleInterval } from '@/lib/hooks/useVisibleInterval'
 import { formatClock } from '@/lib/sessions/sessionClock'
 import { sessionActiveSec } from '@/lib/sessions/sessionElapsed'
 import { STEEL } from '@/lib/theme/palette'
@@ -61,12 +62,11 @@ export const SessionElapsed = memo(function SessionElapsed({ startedAt, pausedMs
 }) {
   const paused = !!pausedAt
   const [now, setNow] = useState(() => Date.now())
-  useEffect(() => {
-    if (paused) return
-    setNow(Date.now())
-    const id = setInterval(() => setNow(Date.now()), 1000)
-    return () => clearInterval(id)
-  }, [paused])
+  // Visible-only: this is rendered by BOTH `LiveSessionBar` and
+  // `LiveSessionHero`, so an ungated 1 Hz tick was two intervals running in a
+  // pocket. `sessionActiveSec` is derived from `startedAt`, so the resync on
+  // foreground is all the accuracy a backgrounded gap needs.
+  useVisibleInterval(() => setNow(Date.now()), 1000, !paused)
 
   const sec = sessionActiveSec(startedAt, now, { pausedMs, pausedAt })
   // Nothing at all on a back-dated or edited deck — see `sessionElapsedSec` for

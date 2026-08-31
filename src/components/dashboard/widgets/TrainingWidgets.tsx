@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { memo, useMemo } from 'react'
 import Link from 'next/link'
 import { Dumbbell, Moon, Trophy } from 'lucide-react'
 import { WidgetFrame, WidgetEmpty } from '@/components/dashboard/WidgetFrame'
@@ -86,7 +86,7 @@ function atlasHeight(size: WidgetSize): number {
   return bodyHeightPx(size)
 }
 
-export function MuscleWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () => void }) {
+function MuscleWidgetImpl({ size, onOpen }: { size: WidgetSize; onOpen?: () => void }) {
   const { data: weekly } = useWeeklyVolume()
   // `?? []` inline would be a NEW array on every render while the query is
   // pending, so every memo below it would recompute forever.
@@ -217,7 +217,7 @@ export function MuscleWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () =
  * The month of bars underneath is per SESSION, not per day — a rest day has no
  * tonnage and drawing it as a zero would say the opposite.
  */
-export function VolumeWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () => void }) {
+function VolumeWidgetImpl({ size, onOpen }: { size: WidgetSize; onOpen?: () => void }) {
   const today = logicalTodayISO()
   const thisWeek = weekStartOf(today)
   const lastWeek = isoAddDays(thisWeek, -7)
@@ -337,7 +337,7 @@ export function VolumeWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () =
  * There is no large. A record and the book behind it is a medium tile's worth —
  * see `WIDGET_SIZES`.
  */
-export function PrWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () => void }) {
+function PrWidgetImpl({ size, onOpen }: { size: WidgetSize; onOpen?: () => void }) {
   const { data: prs } = useLatestPr(8)
   const unit = weightUnit()
   const top = prs?.[0] ?? null
@@ -495,7 +495,7 @@ export interface TodaySessionStats {
  * `WidgetFrame`'s `role="button"` div, and `stopPropagation` here so tapping Log
  * does not ALSO fire the tile's own open.
  */
-export function TrainWidget({ size, onOpen, day, logged, today }: {
+function TrainWidgetImpl({ size, onOpen, day, logged, today }: {
   size: WidgetSize
   onOpen?: () => void
   day: ScheduleDay | 'rest'
@@ -643,3 +643,22 @@ export function TrainWidget({ size, onOpen, day, logged, today }: {
 
 /** Shared muted colour for a tile with a value but nothing to say about it. */
 export const NEUTRAL = MUTED
+
+/*
+ * ── EVERY WIDGET BODY IS MEMOIZED ────────────────────────────────────────────
+ * The dashboard's render prop (`renderWidget` in `app/page.tsx`) is rebuilt
+ * whenever any of the page's ~20 data hooks resolves, which walks the grid and
+ * calls this file's components again. Before these wrappers, that meant every
+ * tile re-ran its layout maths and its charts on every unrelated data change —
+ * and the comment on the dashboard claiming the widgets were "memoised where it
+ * pays" described something that did not exist anywhere in this directory.
+ *
+ * Shallow comparison is the whole contract, so it only holds while callers pass
+ * stable props: see the hoisted constants and `useMemo`s in `app/page.tsx`,
+ * which exist for this reason. A fresh `.map()` or object literal at the call
+ * site silently turns these back into plain components.
+ */
+export const MuscleWidget = memo(MuscleWidgetImpl)
+export const VolumeWidget = memo(VolumeWidgetImpl)
+export const PrWidget = memo(PrWidgetImpl)
+export const TrainWidget = memo(TrainWidgetImpl)

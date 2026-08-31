@@ -1,5 +1,7 @@
 'use client'
 
+import { memo } from 'react'
+
 import { WidgetFrame, WidgetEmpty } from '@/components/dashboard/WidgetFrame'
 import { ReadinessOrb } from '@/components/dashboard/ReadinessOrb'
 import { StatTile } from './parts'
@@ -38,7 +40,7 @@ import type { Tables } from '@/lib/supabase/types'
  * It is given a definite height to letterbox into — the same reason the muscle
  * atlas takes one (see `bodyHeightPx`).
  */
-export function RecoveryWidget({ size, onOpen, score, isLoading, sleepMin, restingHr, hrvMs }: {
+function RecoveryWidgetImpl({ size, onOpen, score, isLoading, sleepMin, restingHr, hrvMs }: {
   size: WidgetSize
   onOpen?: () => void
   score: Tables<'daily_scores'> | null
@@ -100,3 +102,19 @@ export function RecoveryWidget({ size, onOpen, score, isLoading, sleepMin, resti
     </WidgetFrame>
   )
 }
+
+/*
+ * ── EVERY WIDGET BODY IS MEMOIZED ────────────────────────────────────────────
+ * The dashboard's render prop (`renderWidget` in `app/page.tsx`) is rebuilt
+ * whenever any of the page's ~20 data hooks resolves, which walks the grid and
+ * calls this file's components again. Before these wrappers, that meant every
+ * tile re-ran its layout maths and its charts on every unrelated data change —
+ * and the comment on the dashboard claiming the widgets were "memoised where it
+ * pays" described something that did not exist anywhere in this directory.
+ *
+ * Shallow comparison is the whole contract, so it only holds while callers pass
+ * stable props: see the hoisted constants and `useMemo`s in `app/page.tsx`,
+ * which exist for this reason. A fresh `.map()` or object literal at the call
+ * site silently turns these back into plain components.
+ */
+export const RecoveryWidget = memo(RecoveryWidgetImpl)

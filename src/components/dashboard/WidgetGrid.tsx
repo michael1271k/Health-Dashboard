@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import {
   DndContext, DragOverlay, closestCenter, MouseSensor, TouchSensor, KeyboardSensor,
   useSensor, useSensors, MeasuringStrategy,
@@ -161,18 +161,28 @@ export function WidgetGrid({ children }: {
   /**
    * Which face each stack is currently showing, by slot id.
    *
-   * It lives up here rather than inside the tile because the DRAG OVERLAY needs
-   * it: the overlay is a second render of the tile you are holding, mounted
-   * outside the grid, and without this it would draw face one while the tile
-   * under your finger was showing face three. Slots that have never been turned
-   * simply have no entry.
+   * ── IT USED TO BE STATE, AND THAT WAS THE MOST EXPENSIVE LINE ON THE PAGE ──
+   *
+   * The reason it lived up here was real: the DRAG OVERLAY is a second render of
+   * the tile you are holding, mounted outside the grid, and it has to draw the
+   * face that is actually up rather than face one.
+   *
+   * But `useState` here meant every automatic rotation — each stacked slot runs
+   * its own `ROTATE_MS` timer, staggered — called `setFaces` at the GRID ROOT.
+   * With three stacks phase-offset inside a 7s window, the entire dashboard and
+   * every widget in it reconciled roughly every three seconds, forever, while
+   * the dashboard was open. The muscle atlas alone is ~99 SVG paths, diffed for
+   * a tile turning over two cards away.
+   *
+   * The face is now owned by `SortableSlot`, so a rotation re-renders one tile.
+   * This ref is the overlay's window onto it and nothing else: slots report
+   * their current face into it, and it is READ only in the overlay branch below,
+   * which is reached only after `setDragging` has already scheduled a render —
+   * so a ref is sufficient and a second copy of the state is not needed.
    */
-  const [faces, setFaces] = useState<Record<string, number>>({})
-  const setFace = useCallback((slotId: string, next: number | ((f: number) => number)) => {
-    setFaces((prev) => {
-      const at = prev[slotId] ?? 0
-      return { ...prev, [slotId]: typeof next === 'function' ? next(at) : next }
-    })
+  const facesRef = useRef<Record<string, number>>({})
+  const reportFace = useCallback((slotId: string, at: number) => {
+    facesRef.current[slotId] = at
   }, [])
   const [mergeTarget, setMergeTarget] = useState<string | null>(null)
   const reduced = useHelixReducedMotion()
@@ -300,8 +310,16 @@ export function WidgetGrid({ children }: {
 
   // The rules themselves live in `layout.ts` and are tested there; these are
   // the gestures that reach for them.
-  const resize = (slotId: string) => { void tapLight(); commit(resizeSlot(layout, slotId, surface)) }
-  const drop = (slotId: string, index: number) => { void tapLight(); commit(removeFace(layout, slotId, index)) }
+  //
+  // `resize` and `drop` are `useCallback` because they are passed to the
+  // memoized `SortableSlot`. Their identity changes when the layout does, which
+  // is precisely when every tile has to re-render anyway.
+  const resize = useCallback((slotId: string) => {
+    void tapLight(); commit(resizeSlot(layout, slotId, surface))
+  }, [commit, layout, surface])
+  const drop = useCallback((slotId: string, index: number) => {
+    void tapLight(); commit(removeFace(layout, slotId, index))
+  }, [commit, layout])
   const add = (id: WidgetId) => { void tapLight(); commit(addWidget(layout, id, surface)) }
 
   const draggedSlot = dragging ? slotAt(layout, dragging) : null
@@ -378,6 +396,11 @@ export function WidgetGrid({ children }: {
               proportion at this width) WITHOUT dragging small down with it —
               see the note on `SIZE_SPAN`. */}
           <div className="grid grid-cols-2 xl:grid-cols-4 gap-2 auto-rows-[minmax(52px,auto)]">
+            {/* Every prop below is either a primitive or a stable identity —
+                the three inline arrows that used to live on `onResize`,
+                `onDropFace` and `onEditStack` were rebuilt on every grid render
+                and defeated the memo before it could bail out. The slot id
+                travels as an argument instead. */}
             {layout.slots.map((slot) => (
               <SortableSlot
                 key={slot.id}
@@ -386,11 +409,10 @@ export function WidgetGrid({ children }: {
                 reduced={reduced}
                 merging={mergeTarget === slot.id}
                 surface={surface}
-                face={Math.min(faces[slot.id] ?? 0, slot.items.length - 1)}
-                onFace={setFace}
-                onResize={() => resize(slot.id)}
-                onDropFace={(i) => drop(slot.id, i)}
-                onEditStack={() => setStackSheet(slot.id)}
+                onFaceChange={reportFace}
+                onResize={resize}
+                onDropFace={drop}
+                onEditStack={setStackSheet}
               >
                 {children}
               </SortableSlot>
@@ -404,7 +426,7 @@ export function WidgetGrid({ children }: {
           {draggedSlot ? (
             <div className="h-full opacity-95 rounded-2xl shadow-[0_12px_32px_rgba(0,0,0,0.5)]">
               {children(
-                draggedSlot.items[Math.min(faces[draggedSlot.id] ?? 0, draggedSlot.items.length - 1)],
+                draggedSlot.items[Math.min(facesRef.current[draggedSlot.id] ?? 0, draggedSlot.items.length - 1)],
                 draggedSlot.size,
               )}
             </div>
@@ -537,11 +559,14 @@ export function WidgetGrid({ children }: {
         )}
       </AnimatePresence>
 
+      {/* `face` reads the ref for the same reason the drag overlay does: the
+          sheet only opens once `setStackSheet` has scheduled a render, so the
+          ref is current by the time this is evaluated. */}
       <StackSheet
         open={!!sheetSlot}
         onClose={() => setStackSheet(null)}
         slot={sheetSlot}
-        face={sheetSlot ? Math.min(faces[sheetSlot.id] ?? 0, sheetSlot.items.length - 1) : 0}
+        face={sheetSlot ? Math.min(facesRef.current[sheetSlot.id] ?? 0, sheetSlot.items.length - 1) : 0}
         onReorder={(from, to) => { if (stackSheet) commit(reorderFace(layout, stackSheet, from, to)) }}
         onUnstack={(i) => { if (stackSheet) commit(unstackFace(layout, stackSheet, i)) }}
         onRemove={(i) => { if (stackSheet) commit(removeFace(layout, stackSheet, i)) }}
@@ -560,7 +585,17 @@ export function WidgetGrid({ children }: {
  */
 const SIZE_WORD: Record<WidgetSize, string> = { s: 'S', m: 'M', l: 'L', w: 'W', xl: 'XL' }
 
-function SortableSlot({ slot, editing, reduced, merging, surface, face, onFace, onResize, onDropFace, onEditStack, children }: {
+/**
+ * One tile in the grid.
+ *
+ * `memo` because this is the boundary a stack rotation must not cross. The face
+ * is state HERE now (see `facesRef` in `WidgetGrid`), so a slot turning over
+ * re-renders itself and nothing else. The memo is the second half of that: it
+ * also stops an unrelated grid render — a drag starting, a merge target
+ * changing — from walking every tile, provided the `children` render prop the
+ * dashboard passes is stable.
+ */
+const SortableSlot = memo(function SortableSlot({ slot, editing, reduced, merging, surface, onFaceChange, onResize, onDropFace, onEditStack, children }: {
   slot: StackSlot
   editing: boolean
   reduced: boolean
@@ -568,23 +603,22 @@ function SortableSlot({ slot, editing, reduced, merging, surface, face, onFace, 
   merging: boolean
   /** Which grid this is — the size ladder the resize badge steps through. */
   surface: DashboardSurface
-  /** Which face is up. Owned by the grid so the drag overlay can read it too. */
-  face: number
-  onFace: (slotId: string, next: number | ((f: number) => number)) => void
-  onResize: () => void
-  onDropFace: (index: number) => void
+  /** Report the face that is up, so the grid's drag overlay can draw it. */
+  onFaceChange: (slotId: string, at: number) => void
+  onResize: (slotId: string) => void
+  onDropFace: (slotId: string, index: number) => void
   /** Open the stack sheet. Stacked tiles only. */
-  onEditStack: () => void
+  onEditStack: (slotId: string) => void
   children: (id: WidgetId, size: WidgetSize) => React.ReactNode
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: slot.id })
   const canResize = sizesFor(slot.items, surface).length > 1
+  const [face, setFace] = useState(0)
   // A stack that lost a face must not keep pointing past the end of itself.
   const at = Math.min(face, slot.items.length - 1)
-  const setFace = useCallback(
-    (next: number | ((f: number) => number)) => onFace(slot.id, next),
-    [onFace, slot.id],
-  )
+  // The overlay reads this out of a ref at drag start; keeping it in an effect
+  // rather than writing during render keeps the render pure.
+  useEffect(() => { onFaceChange(slot.id, at) }, [onFaceChange, slot.id, at])
   const stacked = slot.items.length > 1
 
   return (
@@ -661,7 +695,7 @@ function SortableSlot({ slot, editing, reduced, merging, surface, face, onFace, 
         <>
           <m.button
             type="button"
-            onClick={(e) => { e.stopPropagation(); onDropFace(at) }}
+            onClick={(e) => { e.stopPropagation(); onDropFace(slot.id, at) }}
             onPointerDown={(e) => e.stopPropagation()}
             initial={reduced ? false : { opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -696,14 +730,14 @@ function SortableSlot({ slot, editing, reduced, merging, surface, face, onFace, 
                 <StackBadge
                   count={slot.items.length}
                   accent={WIDGET_META[slot.items[at]].accent}
-                  onOpen={onEditStack}
+                  onOpen={() => onEditStack(slot.id)}
                 />
               </m.span>
             )}
             {canResize && (
               <m.button
                 type="button"
-                onClick={(e) => { e.stopPropagation(); onResize() }}
+                onClick={(e) => { e.stopPropagation(); onResize(slot.id) }}
                 onPointerDown={(e) => e.stopPropagation()}
                 initial={reduced ? false : { opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -720,7 +754,7 @@ function SortableSlot({ slot, editing, reduced, merging, surface, face, onFace, 
       )}
     </m.div>
   )
-}
+})
 
 /**
  * The faces of one tile, and the two ways they turn over.
@@ -775,7 +809,7 @@ function SortableSlot({ slot, editing, reduced, merging, surface, face, onFace, 
  */
 /** Vertical travel that means "next face". Past any tap jitter, a third of a small tile. */
 const SWIPE_MIN_PX = 24
-function StackFaces({ slot, face, setFace, editing, reduced, children }: {
+const StackFaces = memo(function StackFaces({ slot, face, setFace, editing, reduced, children }: {
   slot: StackSlot
   face: number
   setFace: (updater: number | ((f: number) => number)) => void
@@ -798,24 +832,46 @@ function StackFaces({ slot, face, setFace, editing, reduced, children }: {
     void tapLight()
   }, [setFace, slot.items.length])
 
+  /**
+   * ── THE ROTATOR STOPS DEAD WHEN THE APP IS BACKGROUNDED ────────────────────
+   * `advance` used to early-return on `document.hidden`, which stopped the FACE
+   * from turning but left the interval firing every nine seconds in a pocket,
+   * per stacked slot, forever. Suspending the timer itself is the same
+   * behaviour for no wake-ups; the phase is re-taken on the way back, which is
+   * cosmetic — a stack that turns over shortly after you look at it again is
+   * indistinguishable from one that kept counting.
+   */
   useEffect(() => {
     if (!stacked || editing) return
+    let first: number | null = null
     let tick: number | null = null
+
     const advance = () => {
-      if (document.hidden) return
       if (Date.now() - touchedAt.current < ROTATE_MS) return
       setDir(1)
       setFace((f) => (f + 1) % slot.items.length)
     }
+    const stop = () => {
+      if (first != null) { window.clearTimeout(first); first = null }
+      if (tick != null) { window.clearInterval(tick); tick = null }
+    }
     // The first turn is delayed by this slot's own phase; every one after it is
-    // on the plain period, so the offsets hold for the life of the page.
-    const first = window.setTimeout(() => {
-      advance()
-      tick = window.setInterval(advance, ROTATE_MS)
-    }, ROTATE_MS + staggerFor(slot.id))
+    // on the plain period, so the offsets hold for as long as the page is up.
+    const start = () => {
+      if (first != null || tick != null) return
+      first = window.setTimeout(() => {
+        first = null
+        advance()
+        tick = window.setInterval(advance, ROTATE_MS)
+      }, ROTATE_MS + staggerFor(slot.id))
+    }
+
+    const sync = () => { if (document.visibilityState === 'visible') start(); else stop() }
+    sync()
+    document.addEventListener('visibilitychange', sync)
     return () => {
-      window.clearTimeout(first)
-      if (tick != null) window.clearInterval(tick)
+      document.removeEventListener('visibilitychange', sync)
+      stop()
     }
   }, [stacked, editing, slot.id, slot.items.length, setFace])
 
@@ -924,4 +980,4 @@ function StackFaces({ slot, face, setFace, editing, reduced, children }: {
       </span>
     </div>
   )
-}
+})

@@ -275,27 +275,23 @@ export default function DashboardPage() {
     const slots = stackForDate(customSlotsForDate(customSupps ?? [], weekday, training), training, weekday)
     return slots.flatMap((slot) => slot.items.map((it) => ({ key: it.key, name: it.name, time: slot.time })))
   }, [customSupps])
-  /**
-   * Minutes since local midnight, for the Stack's "next dose".
+  /*
+   * ── THE MINUTE HAND MOVED INTO THE TILE THAT READS IT ──────────────────────
+   * This page used to hold `nowMinutes` in state and tick it once a minute, on
+   * the reasoning that a `Date.now()` read during render would be a different
+   * number every render "and defeat the memo the widget switch exists for".
    *
-   * A state value ticked once a minute rather than `Date.now()` read during
-   * render: a value read in the body would be a different number on every
-   * render, which defeats the memo the widget switch exists for, and a 1 Hz
-   * interval would redraw the whole grid sixty times for a figure that changes
-   * once. The interval is cleared on unmount and nothing else on this page
-   * depends on it.
+   * The reasoning was right and the placement was wrong. `nowMinutes` was a
+   * dependency of `renderWidget` — the render prop `WidgetGrid` keys its whole
+   * children identity on — so once a minute EVERY widget on the dashboard
+   * reconciled, muscle atlas included, to move one "next dose" label inside the
+   * Stack tile. And the memo it was protecting did not exist: not one widget
+   * body was wrapped in `React.memo` until this commit.
+   *
+   * `StackWidget` now owns the clock (`useMinutesNow`), gated on visibility.
+   * The minute costs one tile. The prop survives as an optional override so the
+   * widget tests can still pin the hour.
    */
-  const [nowMinutes, setNowMinutes] = useState(() => {
-    const d = new Date()
-    return d.getHours() * 60 + d.getMinutes()
-  })
-  useEffect(() => {
-    const id = setInterval(() => {
-      const d = new Date()
-      setNowMinutes(d.getHours() * 60 + d.getMinutes())
-    }, 60_000)
-    return () => clearInterval(id)
-  }, [])
 
   // Already-logged-today: hide the "+ Log session" CTA once a workout exists.
   const loggedToday = sessions?.some((s) => s.started_at.slice(0, 10) === logicalTodayISO()) ?? false
@@ -357,8 +353,40 @@ export default function DashboardPage() {
    * page for the hero or another card.
    *
    * It is a function, not a memo: `WidgetGrid` calls it per tile with that
-   * tile's size, and the components underneath are memoised where it pays.
+   * tile's size, and the components underneath are `React.memo` (see the note
+   * at the foot of every file in `widgets/`).
+   *
+   * ── AND MEMO ONLY WORKS IF THE PROPS HOLD STILL ────────────────────────────
+   * Five props below used to be built inline — three `.map()`s over `bioSeries`
+   * and two object literals. Every one of them was a fresh identity on every
+   * call, so the widgets' shallow comparison could never bail out and the memo
+   * boundaries downstream were decorative. They are derived once here instead.
+   * The rule for anything added to this switch: no `.map`, no `{}`, no `[]`
+   * inline in a widget prop.
    */
+  const nightlySleep = useMemo(() => (bioSeries ?? []).map((d) => d.sleepMin), [bioSeries])
+  const stepsSeries = useMemo(() => (bioSeries ?? []).map((d) => d.steps), [bioSeries])
+  const weightSeries = useMemo(
+    () => (bioSeries ?? []).map((d) => ({ date: d.date, value: displayWeight(d.weightKg) })),
+    [bioSeries],
+  )
+  const macroGoals = useMemo(
+    () => ({ protein: fuelGoals.protein, carbs: fuelGoals.carbs, fat: fuelGoals.fat }),
+    [fuelGoals.protein, fuelGoals.carbs, fuelGoals.fat],
+  )
+  const todayTrained = useMemo(
+    () => (loggedToday && todaySession ? {
+      sessionId: todaySession.id,
+      volumeKg: todaySession.total_volume_kg,
+      setCount: todaySession.set_count,
+      prCount: todaySession.pr_count,
+      durationMin: todaySession.duration_min,
+      avgBpm: todaySession.avg_bpm,
+      calories: todaySession.calories_burned,
+    } : null),
+    [loggedToday, todaySession],
+  )
+
   const renderWidget = useCallback((id: WidgetId, size: WidgetSize) => {
     switch (id) {
       // The old fixed hero, now first in the grid — see `RecoveryWidget`.
@@ -376,13 +404,13 @@ export default function DashboardPage() {
         return <SleepWidget size={size} onOpen={onOpen('sleep')}
           sleep={sleep ?? null} sleepMin={log?.sleep_minutes ?? null}
           goalHours={goals?.sleep_goal_hours ?? null}
-          nightly={(bioSeries ?? []).map((d) => d.sleepMin)} />
+          nightly={nightlySleep} />
 
       case 'fuel':
         return <FuelWidget size={size} onOpen={onOpen('fuel')}
           kcal={calToday} kcalGoal={calGoal}
           protein={nutrition?.protein_g ?? null} carbs={nutrition?.carbs_g ?? null} fat={nutrition?.fat_g ?? null}
-          goals={{ protein: fuelGoals.protein, carbs: fuelGoals.carbs, fat: fuelGoals.fat }}
+          goals={macroGoals}
           waterMl={log?.water_ml ?? null} waterGoalMl={goals?.water_goal_ml ?? 3000}
           series={kcalSeries}
           phaseLabel={phase ? phaseDisplay(phase, logicalTodayISO()).label : null}
@@ -400,19 +428,11 @@ export default function DashboardPage() {
       case 'train':
         return <TrainWidget size={size} onOpen={openTraining}
           day={todayDay} logged={loggedToday}
-          today={loggedToday && todaySession ? {
-            sessionId: todaySession.id,
-            volumeKg: todaySession.total_volume_kg,
-            setCount: todaySession.set_count,
-            prCount: todaySession.pr_count,
-            durationMin: todaySession.duration_min,
-            avgBpm: todaySession.avg_bpm,
-            calories: todaySession.calories_burned,
-          } : null} />
+          today={todayTrained} />
 
       case 'body':
         return <BodyWidget size={size} onOpen={onBodyTap}
-          weightSeries={(bioSeries ?? []).map((d) => ({ date: d.date, value: displayWeight(d.weightKg) }))} />
+          weightSeries={weightSeries} />
 
       // ── THE TAP THAT WENT TO THE WRONG SCREEN ──
       // This routed to `/day/<today>`, which carries a DOMS map and the day's
@@ -458,7 +478,7 @@ export default function DashboardPage() {
         return <StepsWidget size={size} onOpen={onOpen('steps')}
           steps={steps} goal={fuelGoals.steps ?? goals?.steps_goal ?? 10_000}
           tdee={tdeeToday} activeKcal={log?.active_energy ?? null}
-          series={(bioSeries ?? []).map((d) => d.steps)} />
+          series={stepsSeries} />
 
       // ── CARDIO ANSWERS ITSELF NOW ──
       // It used to NAVIGATE to `/day/<today>`, on the reasoning that logging a
@@ -477,13 +497,14 @@ export default function DashboardPage() {
         return <FatigueWidget size={size} onOpen={goToday} />
       case 'stack':
         return <StackWidget size={size} onOpen={onOpen('stack')}
-          slots={stackItems} skipped={skipped ?? EMPTY_SKIPPED} nowMinutes={nowMinutes} />
+          slots={stackItems} skipped={skipped ?? EMPTY_SKIPPED} />
     }
   }, [
-    sleep, log, goals, bioSeries, calToday, calGoal, nutrition, fuelGoals,
+    sleep, log, goals, calToday, calGoal, nutrition, fuelGoals,
     score, scoreLoading,
-    kcalSeries, phase, todayDay, loggedToday, todaySession,
-    steps, tdeeToday, stackItems, skipped, nowMinutes,
+    kcalSeries, phase, todayDay, loggedToday,
+    steps, tdeeToday, stackItems, skipped,
+    nightlySleep, stepsSeries, weightSeries, macroGoals, todayTrained,
     onOpen, onBodyTap, goToday, openMuscle, goNutrients, openTraining,
   ])
 

@@ -84,7 +84,10 @@ export function LiveSessionPill() {
   const draft = useSyncExternalStore(subscribeDraft, getDraftSnapshot, getDraftServerSnapshot)
 
   // Above the early return, deliberately — see the wake-lock note above.
-  useWakeLock(!!draft)
+  // The second argument is what stops an abandoned draft from holding the
+  // screen awake forever; `touchedAt` moves only on a real edit, so a phone
+  // locked between sets does not keep extending it. See `useWakeLock`.
+  useWakeLock(!!draft, draft?.touchedAt ?? draft?.startedAt ?? null)
 
   // `/session` is the deck AND `/session/[id]` is the finished-session report.
   // Neither wants a "return to your workout" bar: on the first it is where you

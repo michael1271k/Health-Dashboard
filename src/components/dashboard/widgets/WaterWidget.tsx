@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { memo, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { WidgetFrame, WidgetEmpty } from '@/components/dashboard/WidgetFrame'
 import { HalfArc, MiniBars, StatTile } from './parts'
@@ -67,7 +67,7 @@ function useWaterDays(days = 30) {
  * with the month stretched taller, which teaches the reader that growing a tile
  * buys nothing. See the note on `WIDGET_SIZES`.
  */
-export function WaterWidget({ size, onOpen, waterMl, goalMl }: {
+function WaterWidgetImpl({ size, onOpen, waterMl, goalMl }: {
   size: WidgetSize
   onOpen?: () => void
   waterMl: number | null
@@ -163,3 +163,19 @@ export function WaterWidget({ size, onOpen, waterMl, goalMl }: {
     </WidgetFrame>
   )
 }
+
+/*
+ * ── EVERY WIDGET BODY IS MEMOIZED ────────────────────────────────────────────
+ * The dashboard's render prop (`renderWidget` in `app/page.tsx`) is rebuilt
+ * whenever any of the page's ~20 data hooks resolves, which walks the grid and
+ * calls this file's components again. Before these wrappers, that meant every
+ * tile re-ran its layout maths and its charts on every unrelated data change —
+ * and the comment on the dashboard claiming the widgets were "memoised where it
+ * pays" described something that did not exist anywhere in this directory.
+ *
+ * Shallow comparison is the whole contract, so it only holds while callers pass
+ * stable props: see the hoisted constants and `useMemo`s in `app/page.tsx`,
+ * which exist for this reason. A fresh `.map()` or object literal at the call
+ * site silently turns these back into plain components.
+ */
+export const WaterWidget = memo(WaterWidgetImpl)

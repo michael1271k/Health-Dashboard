@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { memo, useMemo } from 'react'
 import { WidgetFrame, WidgetEmpty } from '@/components/dashboard/WidgetFrame'
 import { BalanceBars, Hero } from './parts'
 import { Bar } from '@/components/nutrition/MacroCards'
@@ -55,7 +55,7 @@ import { WIDGET_META, type WidgetSize } from '@/lib/dashboard/layout'
  * lever pulled mid-window moved the real line, and drawing one line while
  * implying fourteen would be the more misleading of the two options.
  */
-export function FuelWidget({ size, onOpen, kcal, kcalGoal, protein, carbs, fat, goals, waterMl, waterGoalMl, series, phaseLabel, phaseColor }: {
+function FuelWidgetImpl({ size, onOpen, kcal, kcalGoal, protein, carbs, fat, goals, waterMl, waterGoalMl, series, phaseLabel, phaseColor }: {
   size: WidgetSize
   onOpen?: () => void
   kcal: number | null
@@ -222,7 +222,7 @@ export function nutrientRisk(have: number | null, target: number, kind: 'floor' 
  * folds the supplement stack's label doses in with food; a tile that counted
  * only food would report a shortfall the multivitamin had already covered.
  */
-export function NutrientsWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () => void }) {
+function NutrientsWidgetImpl({ size, onOpen }: { size: WidgetSize; onOpen?: () => void }) {
   const micros = useTodayNutrients()
 
   const rows = useMemo(() => {
@@ -299,3 +299,20 @@ export function NutrientsWidget({ size, onOpen }: { size: WidgetSize; onOpen?: (
     </WidgetFrame>
   )
 }
+
+/*
+ * ── EVERY WIDGET BODY IS MEMOIZED ────────────────────────────────────────────
+ * The dashboard's render prop (`renderWidget` in `app/page.tsx`) is rebuilt
+ * whenever any of the page's ~20 data hooks resolves, which walks the grid and
+ * calls this file's components again. Before these wrappers, that meant every
+ * tile re-ran its layout maths and its charts on every unrelated data change —
+ * and the comment on the dashboard claiming the widgets were "memoised where it
+ * pays" described something that did not exist anywhere in this directory.
+ *
+ * Shallow comparison is the whole contract, so it only holds while callers pass
+ * stable props: see the hoisted constants and `useMemo`s in `app/page.tsx`,
+ * which exist for this reason. A fresh `.map()` or object literal at the call
+ * site silently turns these back into plain components.
+ */
+export const FuelWidget = memo(FuelWidgetImpl)
+export const NutrientsWidget = memo(NutrientsWidgetImpl)

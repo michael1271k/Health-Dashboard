@@ -166,6 +166,22 @@ export interface SessionDraft {
   notes: string
   startedAt: string             // ISO
   /**
+   * ISO of the last time the draft's CONTENT changed — a set edited, an
+   * exercise added, the deck started. Written by `useSessionDraft`, never by
+   * the app: a flush on background must NOT count as a touch, or locking the
+   * phone would refresh it every time and the idle bound below would never
+   * trigger.
+   *
+   * Its one consumer is `useWakeLock` (see `LiveSessionPill`). The screen wake
+   * lock is keyed on "a draft exists", and a workout abandoned without tapping
+   * Finish leaves one in localStorage indefinitely — which held the screen
+   * awake on EVERY route, forever. This is the clock that ends that.
+   *
+   * Absent on drafts written before it existed; callers fall back to
+   * `startedAt`, which is never newer and therefore never extends the lock.
+   */
+  touchedAt?: string
+  /**
    * ── THE DURATION HAS BEEN TYPED, SO STOP DERIVING IT ───────────────────────
    * The finish sheet fills Duration from the session clock. It must be able to
    * do that EVERY time the sheet opens and once more at commit — otherwise

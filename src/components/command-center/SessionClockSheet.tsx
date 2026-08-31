@@ -8,6 +8,7 @@ import { Sheet } from '@/components/ui/Sheet'
 import { tapLight, tapSuccess } from '@/lib/native/haptics'
 import { SNAPPY } from '@/lib/motion/springs'
 import { useHelixReducedMotion } from '@/lib/motion/useHelixReducedMotion'
+import { useVisibleInterval } from '@/lib/hooks/useVisibleInterval'
 import { STEEL, EMERALD, EMERALD_DEEP, EMBER, OXIDE, MUTED } from '@/lib/theme/palette'
 import {
   DURATION_STEP_SEC, MAX_DURATION_SEC, MIN_DURATION_SEC,
@@ -68,14 +69,19 @@ export function SessionClock({ size = 'lg', variant = 'button' }: {
   const [open, setOpen] = useState(false)
   const running = clock.startedAt != null
 
-  // One second, and only while something is being counted.
+  /**
+   * One second, only while something is being counted, and only while the app
+   * is on screen.
+   *
+   * It was 250 ms with no visibility gate. The readout is `mm:ss`, so three of
+   * every four ticks changed nothing and re-rendered this header anyway — and
+   * because `LiveSessionBar` and `LiveSessionHero` keep it mounted for the
+   * whole workout, that ran at 4 Hz for the whole workout, pocket included.
+   * `useVisibleInterval` resyncs on the way back, so a throttled or dropped
+   * background timer cannot leave the number behind.
+   */
   const [now, setNow] = useState(() => Date.now())
-  useEffect(() => {
-    if (!running) return
-    setNow(Date.now())
-    const id = setInterval(() => setNow(Date.now()), 250)
-    return () => clearInterval(id)
-  }, [running, clock.startedAt])
+  useVisibleInterval(() => setNow(Date.now()), 1000, running)
 
   const done = isTimerDone(clock, now)
   const live = clockIsLive(clock)

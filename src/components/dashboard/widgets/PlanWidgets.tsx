@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { memo, useMemo } from 'react'
 import { WidgetFrame, WidgetEmpty } from '@/components/dashboard/WidgetFrame'
 import { BalanceBars, Hero, Heatmap, StatTile, type ConsistencyDay } from './parts'
 import { useEnergyBalance, weeklyRateKg, KCAL_PER_KG } from '@/lib/hooks/useEnergyBalance'
@@ -90,7 +90,7 @@ export function ledgerWindow(todayISO: string): { days: number; inPhase: number;
  * Days with a hole in them are counted OUT, not counted as zero — see
  * `useEnergyBalance`. The tile says how many days it summed for that reason.
  */
-export function DeficitWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () => void }) {
+function DeficitWidgetImpl({ size, onOpen }: { size: WidgetSize; onOpen?: () => void }) {
   const today = logicalTodayISO()
   const window = useMemo(() => ledgerWindow(today), [today])
   const { data: days } = useEnergyBalance(window.days)
@@ -209,7 +209,7 @@ export function DeficitWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () 
  * `beforeDate` is today, exclusive: a session logged this morning must not
  * become the bar for the session you are about to do this evening.
  */
-export function BarToBeatWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () => void }) {
+function BarToBeatWidgetImpl({ size, onOpen }: { size: WidgetSize; onOpen?: () => void }) {
   const next = useNextTraining()
   const names = useMemo(() => (next?.exercises ?? []).map((e) => e.name), [next])
   const { data: baselines } = useExerciseBaselines(names, logicalTodayISO())
@@ -352,7 +352,7 @@ export function consistencyWindow(weeks: number, todayISO: string): number {
  * where the split moved, which is a thing you would otherwise have to go and
  * look up.
  */
-export function ConsistencyWidget({ size, onOpen }: { size: WidgetSize; onOpen?: () => void }) {
+function ConsistencyWidgetImpl({ size, onOpen }: { size: WidgetSize; onOpen?: () => void }) {
   const { data: sessions } = useSessionHistory()
   const scheduleVersion = useScheduleVersion()
   const today = logicalTodayISO()
@@ -444,3 +444,21 @@ export function ConsistencyWidget({ size, onOpen }: { size: WidgetSize; onOpen?:
     </WidgetFrame>
   )
 }
+
+/*
+ * ── EVERY WIDGET BODY IS MEMOIZED ────────────────────────────────────────────
+ * The dashboard's render prop (`renderWidget` in `app/page.tsx`) is rebuilt
+ * whenever any of the page's ~20 data hooks resolves, which walks the grid and
+ * calls this file's components again. Before these wrappers, that meant every
+ * tile re-ran its layout maths and its charts on every unrelated data change —
+ * and the comment on the dashboard claiming the widgets were "memoised where it
+ * pays" described something that did not exist anywhere in this directory.
+ *
+ * Shallow comparison is the whole contract, so it only holds while callers pass
+ * stable props: see the hoisted constants and `useMemo`s in `app/page.tsx`,
+ * which exist for this reason. A fresh `.map()` or object literal at the call
+ * site silently turns these back into plain components.
+ */
+export const DeficitWidget = memo(DeficitWidgetImpl)
+export const BarToBeatWidget = memo(BarToBeatWidgetImpl)
+export const ConsistencyWidget = memo(ConsistencyWidgetImpl)
