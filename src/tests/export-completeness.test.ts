@@ -148,20 +148,52 @@ describe('gaps that used to be invisible because the row was simply omitted', ()
    * rated once in the morning printed a single cheerful "Morning fresh" that
    * read as the whole day.
    */
-  it('prints seven days and four slots regardless of what was answered', () => {
+  it('prints seven days and three slots regardless of what was answered', () => {
+    // Every fixture day is a REST day (`emptyDay` sets isTrainingDay: false),
+    // so every line asks Waking / Midday / Night.
     const out = buildWeeklyExport({
       ...base,
       fatigue: [
-        { date: '2026-08-28', slot: 'Morning', level: 2, label: 'Fine' },
-        { date: '2026-08-28', slot: 'Noon', level: 3, label: 'Moderate' },
-        { date: '2026-08-29', slot: 'Morning', level: 1, label: 'Fresh' },
+        { date: '2026-08-28', slot: 'Waking', level: 2, label: 'Fine' },
+        { date: '2026-08-28', slot: 'Midday', level: 3, label: 'Worn' },
+        { date: '2026-08-29', slot: 'Waking', level: 1, label: 'Fresh' },
       ],
     })
-    expect(out).toMatch(/- Fri 2026-08-28: Morning fine · Noon moderate · Evening — · End of day —/)
+    expect(out).toMatch(/- Fri 2026-08-28: Waking fine · Midday worn · Night —/)
     // The Saturday that used to print as one confident reading.
-    expect(out).toMatch(/- Sat 2026-08-29: Morning fresh · Noon — · Evening — · End of day —/)
-    // And the four days nobody answered at all, which used to print nothing.
-    expect(out).toMatch(/- Sun 2026-08-23: Morning — · Noon — · Evening — · End of day —/)
+    expect(out).toMatch(/- Sat 2026-08-29: Waking fresh · Midday — · Night —/)
+    // And the days nobody answered at all, which used to print nothing.
+    expect(out).toMatch(/- Sun 2026-08-23: Waking — · Midday — · Night —/)
+    // A rest day has no before/after pair, so it can never carry a cost.
+    expect(out).not.toMatch(/- Fri 2026-08-28:.*cost/)
+  })
+
+  it('asks a training day the training slots, and prints the session’s cost', () => {
+    const out = buildWeeklyExport({
+      ...base,
+      days: days.map((d) => (d.date === '2026-08-26' ? { ...d, isTrainingDay: true } : d)),
+      fatigue: [
+        { date: '2026-08-26', slot: 'Waking', level: 1, label: 'Fresh' },
+        { date: '2026-08-26', slot: 'Before training', level: 2, label: 'Fine' },
+        { date: '2026-08-26', slot: 'After training', level: 4, label: 'Heavy' },
+      ],
+    })
+    expect(out).toMatch(
+      /- Wed 2026-08-26: Waking fresh · Before training fine · After training heavy · cost \+2/)
+    // The rest days around it keep the rest vocabulary — the grid is per DAY,
+    // not per week.
+    expect(out).toMatch(/- Thu 2026-08-27: Waking — · Midday — · Night —/)
+  })
+
+  it('prints no cost when either end of the pair is missing', () => {
+    // A delta computed against an absent reading looks like a measurement and
+    // is not one.
+    const out = buildWeeklyExport({
+      ...base,
+      days: days.map((d) => (d.date === '2026-08-26' ? { ...d, isTrainingDay: true } : d)),
+      fatigue: [{ date: '2026-08-26', slot: 'Before training', level: 2, label: 'Fine' }],
+    })
+    expect(out).toMatch(/- Wed 2026-08-26: Waking — · Before training fine · After training —$/m)
   })
 
   it('groups soreness by day, like fatigue, and says when a day was not logged', () => {

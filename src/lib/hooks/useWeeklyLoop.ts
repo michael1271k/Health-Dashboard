@@ -12,7 +12,7 @@ import {
 import { weekLabelOf, WEEK0_START } from '@/lib/reports/weekNumber'
 import { sessionVolumeKg } from '@/lib/sessions/volume'
 import { restTargetFor, programRestSec } from '@/lib/training/restTargets'
-import { FATIGUE_SLOTS, SLOT_LABEL, fatigueLevel, type FatigueSlot } from '@/lib/hooks/useFatigue'
+import { FATIGUE_SLOTS, SLOT_LABEL, fatigueLevel, normalizeSlot, type FatigueSlot } from '@/lib/hooks/useFatigue'
 import { epley1RM } from '@/lib/utils/epley'
 import { activeProgram, eraForDate, isTrainingDay } from '@/lib/programs'
 import { getWeekPhase } from '@/lib/phases'
@@ -918,16 +918,22 @@ export function weekPayload(
   // `?? []` because a caller may predate the field — the ten export-payload
   // fixtures do, and a payload builder that throws on an absent optional array
   // is more fragile than the data it is defending against.
+  // A stored key is resolved against ITS OWN DAY, not against a global rule: the
+  // same 13:00 reading is "before training" on a leg day and "midday" on a rest
+  // day, and a row written under the old four-slot vocabulary carries no way to
+  // tell them apart. `normalizeSlot` returns null for a key that names nothing,
+  // which drops it rather than printing an invented slot.
   const fatigue: ExportFatigue[] = (range.fatigue ?? [])
-    .filter((r) => (FATIGUE_SLOTS as readonly string[]).includes(r.slot))
+    .map((r) => ({ ...r, key: normalizeSlot(r.slot, isTrainingDay(r.date)) }))
+    .filter((r): r is typeof r & { key: FatigueSlot } => r.key != null)
     // Sorted on the KEY before the label is applied. Sorting the rendered label
-    // gives "End of day, Evening, Morning, Noon" — alphabetical, and very nearly
-    // the reverse of the day it describes.
+    // gives "After training, Before training, Midday, Night, Waking" —
+    // alphabetical, and very nearly the reverse of the day it describes.
     .sort((a, b) => a.date.localeCompare(b.date)
-      || FATIGUE_SLOTS.indexOf(a.slot as FatigueSlot) - FATIGUE_SLOTS.indexOf(b.slot as FatigueSlot))
+      || FATIGUE_SLOTS.indexOf(a.key) - FATIGUE_SLOTS.indexOf(b.key))
     .map((r) => ({
       date: r.date,
-      slot: SLOT_LABEL[r.slot as FatigueSlot],
+      slot: SLOT_LABEL[r.key],
       level: r.level,
       label: fatigueLevel(r.level)?.label ?? String(r.level),
     }))

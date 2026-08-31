@@ -507,7 +507,7 @@ export interface WeeklyExportInput {
   tonnageByMuscle?: Array<{ muscle: string; volumeKg: number; directKg?: number }>
   doms: ExportDoms[]
   /**
-   * Subjective fatigue, up to four readings a day.
+   * Subjective fatigue, up to three readings a day.
    *
    * Reported, never scored — see `useFatigue`. It sits in the export because a
    * coach reading a week wants to know that Thursday's session followed three
@@ -642,20 +642,37 @@ const sleep = (min: number | null | undefined): string =>
   min == null ? '—' : `${Math.floor(min / 60)}h${String(Math.round(min % 60)).padStart(2, '0')}`
 
 /**
- * The four fatigue slots, IN THE ORDER THE DAY HAPPENS, as the export names
- * them.
+ * The fatigue slot labels, IN THE ORDER A DAY HAPPENS, as the export names them.
  *
  * ── WHY THE LABELS ARE REPEATED HERE ─────────────────────────────────────────
  * `SLOT_LABEL` lives in `useFatigue`, which is a client hook: importing it here
  * would drag React Query into a module whose entire contract is that it is pure
- * and deterministic. The labels are four short strings, so the copy is cheap —
- * and `fatigue-slots.test.ts` asserts the two lists stay identical, which is
- * what actually keeps them honest.
+ * and deterministic. The labels are five short strings, so the copy is cheap —
+ * and `export-completeness.test.ts` asserts the two lists stay identical, which
+ * is what actually keeps them honest.
  *
- * The order matters more than it looks. A string sort gives "End of day,
- * Evening, Morning, Noon" — very nearly the reverse of the day it describes.
+ * The order matters more than it looks. A string sort gives "After training,
+ * Before training, Midday, Night, Waking" — alphabetical, and very nearly the
+ * reverse of the day it describes.
+ *
+ * ── AND WHY A DAY ONLY EVER PRINTS THREE OF THEM ─────────────────────────────
+ * The vocabulary is five; a day asks three. The middle and last slots depend on
+ * whether the day trained — "Evening" on a leg day and "Evening" on a rest day
+ * were the same question in the old four-slot scheme, and the reader could not
+ * tell which one had been answered. `fatigueLabelsFor` picks the triple, from
+ * `ExportDay.isTrainingDay`, which this payload has always carried.
  */
-export const FATIGUE_SLOT_LABELS = ['Morning', 'Noon', 'Evening', 'End of day'] as const
+export const FATIGUE_SLOT_LABELS = ['Waking', 'Midday', 'Before training', 'After training', 'Night'] as const
+
+/** What a training day asks, in order. */
+export const FATIGUE_LABELS_TRAINING = ['Waking', 'Before training', 'After training'] as const
+/** What a rest day asks, in order. */
+export const FATIGUE_LABELS_REST = ['Waking', 'Midday', 'Night'] as const
+
+/** The three slot labels a day of this kind asks for. */
+export function fatigueLabelsFor(isTrainingDay: boolean): readonly string[] {
+  return isTrainingDay ? FATIGUE_LABELS_TRAINING : FATIGUE_LABELS_REST
+}
 
 /** "21:27" from a timestamp, in the log's own local wall clock. */
 const clock = (ts: string | null | undefined): string => {
@@ -1820,15 +1837,33 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
        person stops logging fatigue are rarely the easy days. */
     for (const day of days) {
       const rows = byDate.get(day.date)
-      const parts = FATIGUE_SLOT_LABELS.map((slot) => {
+      const labels = fatigueLabelsFor(day.isTrainingDay)
+      const parts = labels.map((slot) => {
         const r = rows?.get(slot)
         return `${slot} ${r ? r.label.toLowerCase() : DASH}`
       })
-      L.push(`- ${day.weekdayLabel} ${day.date}: ${parts.join(' · ')}`)
+      /* ── THE SESSION'S COST ────────────────────────────────────────────────
+         After minus before, in scale steps. It is the one number this tracker
+         produces that is not a self-report on its own: both ends are, but the
+         DIFFERENCE between two readings taken hours apart on the same scale is
+         a measurement of what happened in between.
+
+         Only on a training day, and only when both ends exist — a delta against
+         a missing reading looks like a measurement and is not one. Signed
+         explicitly, because "2" and "−2" are opposite weeks. */
+      const pre = rows?.get('Before training')?.level
+      const post = rows?.get('After training')?.level
+      const cost = day.isTrainingDay && pre != null && post != null
+        ? ` · cost ${post - pre > 0 ? '+' : post - pre < 0 ? '−' : '±'}${Math.abs(post - pre)}`
+        : ''
+      L.push(`- ${day.weekdayLabel} ${day.date}: ${parts.join(' · ')}${cost}`)
     }
     L.push('')
-    L.push('_Four slots a day, every day. `—` means the question was not answered,'
-      + ' which is a fact about the week and not a neutral reading._')
+    L.push('_Three slots a day, every day. A training day asks Waking / Before training /'
+      + ' After training; a rest day asks Waking / Midday / Night._')
+    L.push('_`cost` is the after-training level minus the before-training one — how much the'
+      + ' session took, in scale steps. `—` means the question was not answered, which is a'
+      + ' fact about the week and not a neutral reading._')
     L.push('')
   }
 

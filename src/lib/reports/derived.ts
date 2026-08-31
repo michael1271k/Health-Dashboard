@@ -252,7 +252,10 @@ export function derivedWeek(input: WeeklyExportInput): DerivedWeek {
     fatigueReadings: (input.fatigue ?? []).length,
     // Seven days, four slots. The denominator is fixed rather than counted, so
     // a week with no readings at all still reports 0 of 28 instead of 0 of 0.
-    fatigueSlots: days.length * 4,
+    // Three slots a day, whichever kind of day it is — a training day asks
+    // Waking / Before / After and a rest day asks Waking / Midday / Night, so
+    // the denominator does not depend on the week's shape.
+    fatigueSlots: days.length * 3,
     domsDaysLogged: new Set(input.doms.map((d) => d.date)).size,
     intakeDaysLogged: days.filter((d) => d.calories != null).length,
     weighInDays: days.filter((d) => d.weightKg != null).length,
