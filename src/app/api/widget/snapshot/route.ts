@@ -188,21 +188,29 @@ export async function GET(req: Request) {
   // other plan and ignored every swap in `schedule_overrides`.
   // `date` is passed so a maintenance week resolves as one here too: the lever
   // is date-bound and `user_goals.active_phase` still reads `cut` all through it.
-  const schedule = await serverScheduleContext(supabase, userId, goals, date)
-
+  //
+  // ── AND IT RUNS BESIDE THE DAY'S TARGETS, NOT BEFORE THEM ─────────────────
+  // These two were awaited one after the other. Neither needs the other's
+  // answer — both need `userId` and `date` and nothing else — so the second
+  // round trip was bought for nothing, on the route whose latency IS the
+  // widget's radio time and therefore the widget's battery cost.
+  //
   // ── THE TARGETS THIS DAY IS ACTUALLY GRADED AGAINST ───────────────────────
   // The raw `user_goals` row is a cache of a decision, not the decision. Read
   // straight, it showed the cut's 10,000 steps and 1,955 kcal on a maintenance
   // day the scorer was grading at 7,500 and 2,151 — the widget and the score
   // disagreeing about the same day, which is the exact bug `serverScheduleContext`
   // exists to prevent, one column over.
-  const dayTargetRow = await supabase
-    .from('daily_targets')
-    .select(DAILY_TARGET_COLUMNS)
-    .eq('user_id', userId)
-    .eq('date', date)
-    .maybeSingle()
-    .then((r) => r.data as DailyTarget | null, () => null)
+  const [schedule, dayTargetRow] = await Promise.all([
+    serverScheduleContext(supabase, userId, goals, date),
+    supabase
+      .from('daily_targets')
+      .select(DAILY_TARGET_COLUMNS)
+      .eq('user_id', userId)
+      .eq('date', date)
+      .maybeSingle()
+      .then((r) => r.data as DailyTarget | null, () => null),
+  ])
 
   // Local coercion: `num` below is declared with the response builder, and the
   // targets have to resolve before the score recompute that follows this.
@@ -496,8 +504,33 @@ export async function GET(req: Request) {
     streak: { current: programDayCount(date), best: programDayCount(date) },
   }
 
+  /*
+   * ── THE TAIL STARTS TOGETHER AND IS AWAITED APART ─────────────────────────
+   * Four more reads follow, each inside its own scope branch, and each used to
+   * be `await`ed where it was used — so `scope=full` (which is what the Large
+   * faces and the Live Activity ask for) ran them one after another after the
+   * eight-way batch above had already finished. That is three round trips of
+   * pure serialisation on the route the widget's radio time is measured in.
+   *
+   * Started here, awaited below. Each promise is created ONLY when its branch
+   * will run, so nothing produces an unhandled rejection for a scope that never
+   * reads it — and `soft()`/the slice helpers already swallow their own errors.
+   */
+  const stepsTrendPending = wantsLifestyle ? stepsTrend(supabase, userId, date) : null
+  const vitalsPending = wantsLifestyle ? vitalsSlice(supabase, userId, date) : null
+  const performancePending = wantsPerformance
+    ? performanceSlice(supabase, userId, date, weekStart, weekEndExclusive)
+    : null
+  const cardioPending = wantsTraining
+    ? soft(supabase.from('cardio_logs')
+      .select('date, kind, distance_m, duration_min')
+      .eq('user_id', userId)
+      .gte('date', isoAddDays(date, -13)).lte('date', date)
+      .order('created_at', { ascending: true })) as Promise<CardioRow[] | null>
+    : null
+
   if (wantsLifestyle) {
-    snapshot.steps.trend = await stepsTrend(supabase, userId, date)
+    snapshot.steps.trend = await stepsTrendPending!
     // Both off rows already fetched — the queries went from one day wide to
     // seven, not from one query to three.
     snapshot.water.trend = dailySeries(
@@ -506,10 +539,10 @@ export async function GET(req: Request) {
     snapshot.macros.kcalTrend = dailySeries(
       (nutriRows ?? []).map((r) => ({ date: r.date, value: r.calories })),
       { limit: TREND_DAYS })
-    snapshot.vitals = await vitalsSlice(supabase, userId, date)
+    snapshot.vitals = await vitalsPending!
   }
   if (wantsPerformance) {
-    Object.assign(snapshot, await performanceSlice(supabase, userId, date, weekStart, weekEndExclusive))
+    Object.assign(snapshot, await performancePending!)
   }
   // ── volumeTrend belongs to BOTH training and performance ───────────────────
   // The Volume faces need the per-family split for their third register, and
@@ -535,11 +568,7 @@ export async function GET(req: Request) {
     // Two weeks wide so the seven-day trend has a full window and "the last
     // session" survives a quiet week. `date` bounds it above — a widget must
     // never announce a session logged into tomorrow.
-    const cardioRows = await soft(supabase.from('cardio_logs')
-      .select('date, kind, distance_m, duration_min')
-      .eq('user_id', userId)
-      .gte('date', isoAddDays(date, -13)).lte('date', date)
-      .order('created_at', { ascending: true })) as CardioRow[] | null
+    const cardioRows = await cardioPending!
 
     snapshot.cardio = cardioBlock(cardioRows ?? [], {
       today: date,
@@ -714,7 +743,12 @@ async function performanceSlice(
   const setRows = sessionDay.size
     ? (await soft((supabase as any).from('workout_sets')
       .select('session_id, exercise_id, weight_kg, reps, est_1rm_kg, set_type')
-      .eq('user_id', userId).in('session_id', [...sessionDay.keys()])) as Array<{
+      .eq('user_id', userId).in('session_id', [...sessionDay.keys()])
+      // A rail, not a window. Thirty-five days is ~20 sessions and ~500 sets, so
+      // this never binds today — but the query had no bound at all, and an
+      // extension with a hard memory cap must not be one backfill away from
+      // being handed every set it ever logged.
+      .limit(4000)) as Array<{
         session_id: string; exercise_id: string; weight_kg: number | null
         reps: number | null; est_1rm_kg: number | null; set_type: string | null
       }> | null) ?? []

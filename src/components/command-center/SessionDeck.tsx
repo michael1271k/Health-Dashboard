@@ -41,7 +41,7 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
   /** Post-finish destination: the just-committed session's analysis page. */
   onViewSession?: (sessionId: string) => void
 }) {
-  const { draft, updateSet, splitSet, mergeSet, updateCardio, addSet, removeSet, toggleSetDone, removeExercise, reorder, setExerciseNote, setStats, setClockDuration, togglePause, setSessionRpe, setDate, discard, commit } = store
+  const { draft, updateSet, splitSet, mergeSet, updateCardio, addSet, removeSet, toggleSetDone, removeExercise, reorder, setExerciseNote, setStats, setClockDuration, togglePause, setSessionRpe, setDate, discard, commit, finish } = store
   const [result, setResult] = useState<CommitResult | null>(null)
   const [finishOpen, setFinishOpen] = useState(false)
   const [durationOpen, setDurationOpen] = useState(false)
@@ -338,7 +338,7 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
      * A duration you typed wins over both — `durationEdited` is checked inside
      * the mutation, not here, so the rule lives with the write.
      */
-    commit.mutate({ durationMin: readClockMin() }, {
+    finish(readClockMin(), {
       onSuccess: (r) => {
         if (!r.duplicate) void tapSuccess()
         setFinishOpen(false)
@@ -352,9 +352,18 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
     })
   }
 
+  /*
+   * ── A QUEUED FINISH IS NOT A FAILED ONE ──────────────────────────────────
+   * With the commit persisted as a resumable mutation, tapping Finish offline
+   * PAUSES it rather than rejecting: the write is stored, survives the app
+   * being killed, and runs on the next reconnect or native foreground. Saying
+   * "Save failed" there would be a lie about work that is not lost, and the
+   * user would log the session again.
+   */
   const commitError = commit.isError
     ? (commit.error instanceof Error ? commit.error.message : 'Save failed')
     : null
+  const commitQueued = commit.isPaused
 
   return (
     <>
@@ -414,6 +423,7 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
         totals={totals}
         busy={commit.isPending}
         error={commitError}
+        queued={commitQueued}
         elapsedMin={elapsedMin}
         onSetStats={setStats}
         onClockDuration={setClockDuration}

@@ -1,9 +1,10 @@
 'use client'
 
-import { QueryClient, defaultShouldDehydrateQuery } from '@tanstack/react-query'
+import { QueryClient, defaultShouldDehydrateQuery, onlineManager } from '@tanstack/react-query'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { COMMIT_SESSION_KEY, registerCommitMutation } from '@/lib/sessions/commit'
 
 /**
  * Map/Set query data does NOT survive the JSON round-trip of persistence —
@@ -125,8 +126,8 @@ const PASS_WINDOW_MS = 500
 
 export function QueryProvider({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
-    () =>
-      new QueryClient({
+    () => {
+      const client = new QueryClient({
         defaultOptions: {
           queries: {
             // App-open paradigm: the app pushes fresh HealthKit data exactly when
@@ -157,7 +158,20 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
             retry: 1,
           },
         },
-      }),
+      })
+      /*
+       * ── THE OUTBOX IS ARMED BEFORE THE CACHE IS RESTORED ─────────────────
+       * A persisted mutation carries only its key and its variables, so it can
+       * only run again if a `mutationFn` is already registered under that key
+       * when the restore happens. Registering it in an effect would be too
+       * late: the rehydration runs on the provider's first render, finds no
+       * function for `['commitSession']`, and drops a finished workout on the
+       * floor without a word. It is registered HERE, inside the factory, which
+       * is the only point guaranteed to precede it.
+       */
+      registerCommitMutation(client)
+      return client
+    },
   )
 
   // Zero-latency cold open: the query cache persists to localStorage, so the
@@ -174,6 +188,35 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
       },
     }),
   )
+
+  /*
+   * ── AND SOMETHING HAS TO WAKE THE OUTBOX ──────────────────────────────────
+   *
+   * A paused mutation does not retry on its own. TanStack resumes them when the
+   * `onlineManager` flips back to online, which covers a laptop's wifi dropping
+   * — but not the case this exists for: an iOS app whose WKWebView was
+   * suspended in a basement and is now in the user's hand outdoors. The webview
+   * never observed the transition, so `online` never changed.
+   *
+   * Hence both signals. `visibilitychange` is the one that actually fires on a
+   * native foreground; the online listener is the browser's own path and costs
+   * nothing to keep. `resumePausedMutations` is a no-op when there is nothing
+   * paused, so firing it eagerly is free.
+   */
+  useEffect(() => {
+    const resume = () => {
+      if (!onlineManager.isOnline()) return
+      void queryClient.resumePausedMutations()
+    }
+    const onVisible = () => { if (document.visibilityState === 'visible') resume() }
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('online', resume)
+    resume()
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('online', resume)
+    }
+  }, [queryClient])
 
   return (
     <PersistQueryClientProvider
@@ -193,8 +236,29 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
         //
         // v20 was the previous bump: `session-detail` sets gained `prAxes`, and
         // a cache written before it crashed the report on `prAxes.length`.
-        buster: 'v21',
+        //
+        // v22: MUST bump. The persisted blob now carries MUTATIONS as well as
+        // queries (the session-commit outbox below), and a cache written before
+        // this rehydrates into a client whose mutation defaults it does not
+        // know about.
+        buster: 'v22',
         dehydrateOptions: {
+          /*
+           * ── THE OUTBOX ────────────────────────────────────────────────────
+           * Only the session commit. Everything else in this app either writes
+           * something the user can simply do again (a supplement tick, a water
+           * correction) or is derived — replaying those from a cold start would
+           * be re-running yesterday's taps against today's data.
+           *
+           * A workout is different. It is an hour of work that exists in one
+           * place until the POST lands, and the write is idempotent by
+           * `clientSessionId`, so a resumed attempt for a session that already
+           * landed comes back 409/`duplicate` rather than logging it twice.
+           * That property is what makes persisting it safe. See
+           * `lib/sessions/commit.ts`.
+           */
+          shouldDehydrateMutation: (m) =>
+            m.options.mutationKey?.[0] === COMMIT_SESSION_KEY[0] && m.state.status !== 'success',
           shouldDehydrateQuery: (q) => {
             if (!isEligible(q)) return false
             const now = Date.now()

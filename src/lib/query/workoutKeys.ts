@@ -47,6 +47,23 @@ export const WORKOUT_QUERY_KEYS: string[][] = [
   ['fuel_force_session'],
   ['session_global_number'],
   ['week_recovery'],
+  /*
+   * ── ADDED 2026-08-31, ALL FOUND BY THE INVERSE GUARD ──────────────────────
+   * `query-key-coverage.test.ts` asserted list -> consumer and never consumer ->
+   * list, so a query could read `workout_sessions` and simply not be here. Four
+   * did. The visible one: `['week_so_far']` backs the dashboard's week card at
+   * a 5-minute staleTime, so finishing a session left the card showing
+   * PRE-COMMIT tonnage for five minutes on the screen you land on immediately
+   * after finishing it.
+   */
+  ['week_so_far'],          // workout_sessions + daily_scores + sleep_sessions
+  ['effort_baseline'],      // workout_sessions + workout_sets — the RPE ladder's floor
+  ['session_pr_records'],   // workout_sets
+  ['session_metrics_seed'], // workout_sessions — seeds the finish sheet's numbers
+  ['doms_sources'],         // doms_logs, attributed BY session (see doms-source-columns)
+  ['personal_records'],     // a commit CREATES rows here (prEngine.recordSets)
+  ['progression_queue'],    // workout_sets — next-session load suggestions
+  ['doms_logs'],            // the entry itself, not just its session attribution
 ]
 
 /** Invalidate every workout-derived query so all dependent UI refetches at once. */
@@ -80,6 +97,14 @@ export const HEALTH_QUERY_KEYS: string[][] = [
   ['day_vault'],
   ['month_activity'],
   ['last_updated'],
+  // Same inverse-guard sweep as the workout list above.
+  ['week_so_far'],          // reads daily_scores + sleep_sessions as well as sessions
+  ['energy_balance'],       // daily_logs + nutrition_entries — had NO invalidation path
+  ['steps_trend'],          // daily_metrics + daily_logs
+  ['latest_body_reading'],  // daily_logs — the carry-forward source for InBody
+  ['previous_cardio'],      // cardio_logs
+  ['cardio_logs'],          // the log list itself
+  ['sleep_onset'],          // daily_logs.sleep_onset_trouble
 ]
 
 /** Revalidate only Apple-Health-derived surfaces (pull-to-refresh). */

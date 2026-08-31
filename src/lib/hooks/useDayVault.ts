@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
+import { useOptimisticMutation } from '@/lib/hooks/useOptimisticMutation'
 import { normalizeSpO2 } from '@/lib/utils/units'
 import { authedFetch } from '@/lib/utils/authedFetch'
 import { invalidateWorkoutData } from '@/lib/query/workoutKeys'
@@ -308,8 +309,31 @@ const BODY_MIRROR: Array<[keyof BodyMetricsPatch, string]> = [
  * whatever order the fields were entered in.
  */
 export function useSaveBodyMetrics(date: string) {
-  const qc = useQueryClient()
-  return useMutation({
+  return useOptimisticMutation<BodyMetricsPatch, void>({
+    /*
+     * ── THE WEIGH-IN SHOWS THE NUMBER YOU TYPED, IMMEDIATELY ────────────────
+     * This was invalidate-on-success over a mutationFn that made six sequential
+     * round trips — auth, two upserts, a readback, a ledger lookup, then an
+     * update or insert. The InBody card sat on its old figure through all of
+     * them, which is the single longest wait between a tap and a number moving
+     * anywhere in this app.
+     *
+     * Only `['day_vault', date]` is patched. The ledger surfaces
+     * (`body_composition`, the trends) are DERIVED — the mirror below decides
+     * what actually lands in them, including the rule that a weightless day
+     * opens no ledger row at all — and guessing at that here would be inventing
+     * a reading rather than showing one. They refresh on settle.
+     */
+    patches: (patch) => [{
+      key: ['day_vault', date],
+      apply: (prev) => {
+        const v = prev as { log?: Record<string, unknown> } | undefined
+        if (!v?.log) return undefined
+        const next: Record<string, unknown> = { ...v.log }
+        for (const [k, val] of Object.entries(patch)) next[k] = val
+        return { ...v, log: next }
+      },
+    }],
     mutationFn: async (patch: BodyMetricsPatch) => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not signed in')
@@ -335,10 +359,18 @@ export function useSaveBodyMetrics(date: string) {
         if (error && !/column|schema cache|PGRST204/i.test(error.message)) throw new Error(error.message)
       }
 
-      // Read back the reconciled day rather than trusting the patch.
-      const { data: dayRow } = await supabase.from('daily_logs')
-        .select(BODY_MIRROR.map(([col]) => col).join(', '))
-        .eq('user_id', user.id).eq('date', date).maybeSingle()
+      // Read back the reconciled day rather than trusting the patch — and read
+      // the ledger row's existence BESIDE it rather than after it. The two ask
+      // different tables and neither needs the other's answer; awaiting them in
+      // sequence was one of six round trips this save used to make in a row,
+      // with the number the user just typed sitting still for all of them.
+      const [{ data: dayRow }, { data: existing }] = await Promise.all([
+        supabase.from('daily_logs')
+          .select(BODY_MIRROR.map(([col]) => col).join(', '))
+          .eq('user_id', user.id).eq('date', date).maybeSingle(),
+        supabase.from('body_composition')
+          .select('id').eq('user_id', user.id).eq('date', date).limit(1).maybeSingle(),
+      ])
       const day = (dayRow ?? {}) as Record<string, number | null>
 
       const mirror: Record<string, number> = {}
@@ -348,8 +380,6 @@ export function useSaveBodyMetrics(date: string) {
       }
       if (!Object.keys(mirror).length) return
 
-      const { data: existing } = await supabase.from('body_composition')
-        .select('id').eq('user_id', user.id).eq('date', date).limit(1).maybeSingle()
       if (existing) {
         const { error: e2 } = await supabase.from('body_composition')
           .update(mirror as unknown as never).eq('id', (existing as { id: string }).id)
@@ -363,17 +393,15 @@ export function useSaveBodyMetrics(date: string) {
         if (e3) throw new Error(e3.message)
       }
     },
-    onSuccess: () => {
-      // Every reader of this data, not just the two obvious ones. The Analytics
-      // weight graph, the dashboard Body card, the Pathfinder week deltas and the
-      // Nexus all derive from these tables; missing one leaves a surface showing
-      // a number the DB no longer holds.
-      for (const key of [
-        ['day_vault', date], ['daily_logs'], ['body_composition'],
-        ['weigh_in'], ['continuum'],
-        // Today's entry is tomorrow's carry-forward.
-        ['latest_body_reading'],
-      ]) qc.invalidateQueries({ queryKey: key })
-    },
+    // Every reader of this data, not just the two obvious ones. The Analytics
+    // weight graph, the dashboard Body card, the Pathfinder week deltas and the
+    // Nexus all derive from these tables; missing one leaves a surface showing a
+    // number the DB no longer holds.
+    invalidate: [
+      ['day_vault', date], ['daily_logs'], ['body_composition'],
+      ['weigh_in'], ['continuum'],
+      // Today's entry is tomorrow's carry-forward.
+      ['latest_body_reading'],
+    ],
   })
 }

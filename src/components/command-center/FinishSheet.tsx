@@ -30,7 +30,7 @@ type StatPatch = Partial<NonNullable<SessionDraft['stats']>>
  * knows the answer, and making you retype it would be asking for agreement, not
  * for information.
  */
-export function FinishSheet({ open, onClose, draft, totals, busy, error, elapsedMin, onSetStats, onClockDuration, onSessionRpe, onCommit }: {
+export function FinishSheet({ open, onClose, draft, totals, busy, error, queued = false, elapsedMin, onSetStats, onClockDuration, onSessionRpe, onCommit }: {
   open: boolean
   onClose: () => void
   draft: SessionDraft
@@ -39,6 +39,14 @@ export function FinishSheet({ open, onClose, draft, totals, busy, error, elapsed
   totals: { volumeKg: number; sets: number }
   busy: boolean
   error: string | null
+  /**
+   * The write is stored and waiting for a connection, not failed. Offline is
+   * the ordinary case in a basement gym, and the commit is a persisted,
+   * resumable mutation (see `lib/sessions/commit.ts`) — so the honest message
+   * is "queued", and saying "Save failed" here would make the user log the
+   * session a second time.
+   */
+  queued?: boolean
   /**
    * What the header's session clock read when Finish was pressed, in whole
    * minutes. Null on a back-dated or edited deck, where there is no live
@@ -246,7 +254,12 @@ export function FinishSheet({ open, onClose, draft, totals, busy, error, elapsed
           </div>
         )}
 
-        {error && <p className="text-danger text-fluid-sm" dir="auto">{error}</p>}
+        {queued && (
+          <p className="text-fluid-sm" dir="auto" style={{ color: OXIDE }}>
+            Saved on this phone — it will upload when you are back online.
+          </p>
+        )}
+        {error && !queued && <p className="text-danger text-fluid-sm" dir="auto">{error}</p>}
 
         <button
           type="button"
@@ -254,7 +267,9 @@ export function FinishSheet({ open, onClose, draft, totals, busy, error, elapsed
           disabled={busy || totals.sets === 0}
           className="btn-primary w-full justify-center disabled:opacity-50 min-h-[52px] text-fluid-base"
         >
-          {busy
+          {queued
+            ? <><Check className="w-4 h-4" aria-hidden="true" /> Queued</>
+            : busy
             ? <><Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> {isEdit ? 'Saving…' : 'Completing…'}</>
             : <><Check className="w-4 h-4" aria-hidden="true" /> {isEdit ? 'Save Changes' : 'Complete Session'}</>}
         </button>

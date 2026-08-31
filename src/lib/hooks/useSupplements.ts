@@ -106,7 +106,12 @@ export function useSkipSupplement() {
     onSettled: () => {
       qc.invalidateQueries({ queryKey: key })
       qc.invalidateQueries({ queryKey: ['weekly_export'] })
-      qc.invalidateQueries({ queryKey: ['micros'] })
+      // `['micros']` used to be invalidated here and matched nothing: there is
+      // no query keyed on it anywhere. The micro totals are DERIVED at render
+      // by `useStackNutrients` from this hook's own data plus
+      // `useTodayNutrition`, so invalidating `key` above already moves them.
+      // An invalidation that matches nothing is worse than a missing one,
+      // because it reads like coverage.
     },
   })
 }

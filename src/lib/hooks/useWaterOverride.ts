@@ -7,6 +7,8 @@ import { logicalTodayISO } from '@/lib/utils/day'
 import { recomputeAndPaint } from '@/lib/scoring/applyComputedScore'
 import { DAY_KINDS } from '@/lib/native/widgetKinds'
 import { manualWaterHkUuid, isManualWaterHkUuid } from '@/lib/nutrition/manualWater'
+import { useOptimisticMutation } from '@/lib/hooks/useOptimisticMutation'
+import { todayBundleKey } from '@/lib/hooks/useToday'
 
 /**
  * The smallest override worth storing, in ml.
@@ -83,10 +85,42 @@ export function useHasWaterOverride(date: string) {
  *
  * The score is then recomputed and PAINTED from the returned row, so the battery
  * and the daily score move on the same frame as the litres — no refetch, no lag.
+ *
+ * ── AND THE LITRES THEMSELVES MOVE FIRST ─────────────────────────────────────
+ * The score was painted optimistically and the NUMBER was not: the figure the
+ * user just typed sat unchanged through `auth.getUser()`, an upsert, a delete,
+ * an insert and a recompute before it caught up. Four round trips is not a
+ * spinner, it is a control that appears not to have registered the tap.
+ *
+ * Both caches that render it are patched up front — the `['today', date]`
+ * bundle and `['day_vault', date]` — and rolled back together if the write
+ * fails. See `useOptimisticMutation` for why cancelling first is the step that
+ * matters.
  */
 export function useWaterOverride(date: string) {
   const qc = useQueryClient()
-  return useMutation({
+  return useOptimisticMutation<number, void>({
+    patches: (ml) => {
+      const amount = Math.max(MIN_WATER_ML, Math.round(ml))
+      return [
+        {
+          key: todayBundleKey(date),
+          apply: (prev) => {
+            const b = prev as { dailyLog?: { water_ml?: number | null } | null } | undefined
+            if (!b?.dailyLog) return undefined
+            return { ...b, dailyLog: { ...b.dailyLog, water_ml: amount } }
+          },
+        },
+        {
+          key: ['day_vault', date],
+          apply: (prev) => {
+            const v = prev as { log?: { water_ml?: number | null } } | undefined
+            if (!v?.log) return undefined
+            return { ...v, log: { ...v.log, water_ml: amount } }
+          },
+        },
+      ]
+    },
     mutationFn: async (ml: number) => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not signed in')

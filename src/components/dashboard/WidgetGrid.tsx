@@ -161,16 +161,52 @@ export function WidgetGrid({ children }: {
    *
    * A resize cycles S → M → L as three separate commits and a drag settles into
    * one; without the debounce a single afternoon of fiddling is dozens of
-   * upserts of a row whose only reader is the next reinstall. The timer is
-   * cleared on unmount rather than flushed — the local copy is already written
-   * synchronously, so the worst case is that the backup lags by one edit until
-   * the next one, and that is strictly better than a fetch racing a teardown.
+   * upserts of a row whose only reader is the next reinstall.
+   *
+   * ── IT FLUSHES ON THE WAY OUT. IT USED TO DROP. ────────────────────────────
+   * The timer was CLEARED on unmount, reasoned as "the local copy is already
+   * written synchronously, so the worst case is that the backup lags by one
+   * edit until the next one". The flaw is in "until the next one": the last
+   * arrange of a session is, by definition, never followed by another. Tapping
+   * Done and leaving the tab inside 1.2s — which is the ordinary way to finish
+   * arranging — meant that edit never reached the server at all, and the empty
+   * catch in `pushRemoteLayout` meant nothing said so. On a reinstall the cloud
+   * copy would restore the arrangement from before the last change you made.
+   *
+   * `pagehide` matters as much as unmount here: iOS kills a backgrounded
+   * WKWebView's content process without running React cleanup, so the tab
+   * closing is not the only way this component stops existing.
    */
   const pushTimer = useRef<number | null>(null)
-  useEffect(() => () => { if (pushTimer.current != null) window.clearTimeout(pushTimer.current) }, [])
+  const pendingPush = useRef<DashboardLayout | null>(null)
+
+  const flushPush = useCallback(() => {
+    if (pushTimer.current != null) { window.clearTimeout(pushTimer.current); pushTimer.current = null }
+    const next = pendingPush.current
+    pendingPush.current = null
+    if (next) void pushRemoteLayout(next, surface)
+  }, [surface])
+
+  useEffect(() => {
+    const onHide = () => { if (document.visibilityState === 'hidden') flushPush() }
+    document.addEventListener('visibilitychange', onHide)
+    window.addEventListener('pagehide', flushPush)
+    return () => {
+      document.removeEventListener('visibilitychange', onHide)
+      window.removeEventListener('pagehide', flushPush)
+      flushPush()
+    }
+  }, [flushPush])
+
   const schedulePush = useCallback((next: DashboardLayout) => {
+    pendingPush.current = next
     if (pushTimer.current != null) window.clearTimeout(pushTimer.current)
-    pushTimer.current = window.setTimeout(() => { void pushRemoteLayout(next, surface) }, PUSH_DEBOUNCE_MS)
+    pushTimer.current = window.setTimeout(() => {
+      pushTimer.current = null
+      const layout = pendingPush.current
+      pendingPush.current = null
+      if (layout) void pushRemoteLayout(layout, surface)
+    }, PUSH_DEBOUNCE_MS)
   }, [surface])
 
   const [editing, setEditing] = useState(false)

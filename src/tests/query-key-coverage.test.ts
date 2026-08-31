@@ -110,6 +110,108 @@ describe('every invalidated key prefix has a consumer', () => {
   })
 })
 
+/**
+ * ── AND THE SAME QUESTION ASKED BACKWARDS ────────────────────────────────────
+ *
+ * Everything above asserts LIST → CONSUMER: no invalidation prefix may match
+ * nothing. It never asserted CONSUMER → LIST, and that is the direction the
+ * expensive bugs come from — a query that reads `workout_sessions` and is in
+ * neither invalidation list is not a dead entry anybody trips over, it is a
+ * screen that quietly shows yesterday's number.
+ *
+ * Five were missing when this was added. The visible one: `['week_so_far']`,
+ * which backs the dashboard's week card at a 5-minute staleTime and reads
+ * `workout_sessions` — so finishing a session left the card showing PRE-COMMIT
+ * tonnage for five minutes, on the screen you land on immediately after
+ * finishing it.
+ *
+ * The scan is deliberately blunt: for each `queryKey: ['root'` it takes the text
+ * up to the next `queryKey:` OR the next top-level declaration — whichever comes
+ * first — and collects the `.from('table')` calls in it. The declaration bound
+ * matters: without it, `['session_global_number']` (which reads only
+ * `workout_sessions`) absorbed the `daily_logs` writes of the MUTATION declared
+ * after it in the same file, and reported a health dependency it does not have.
+ *
+ * It still under-attributes when a queryFn is defined far from its key, so a
+ * MISS here is a real gap. A false positive is fixed by listing the key — which
+ * costs one extra invalidation — rather than by loosening the test.
+ */
+const WORKOUT_TABLES = new Set(['workout_sessions', 'workout_sets', 'personal_records', 'doms_logs'])
+const HEALTH_TABLES = new Set([
+  'daily_logs', 'daily_metrics', 'nutrition_entries', 'sleep_sessions',
+  'body_composition', 'cardio_logs', 'daily_scores',
+])
+
+/** Root key → the tables its queryFn reads. */
+const TABLES_BY_ROOT = new Map<string, Set<string>>()
+for (const { code } of SOURCES) {
+  const marks = [...code.matchAll(/queryKey:\s*\[\s*'([^']+)'/g)]
+  const decls = [...code.matchAll(/^export (?:async )?(?:function|const) /gm)].map((d) => d.index ?? 0)
+  marks.forEach((m, i) => {
+    const start = m.index ?? 0
+    const nextKey = i + 1 < marks.length ? (marks[i + 1].index ?? code.length) : code.length
+    const nextDecl = decls.find((d) => d > start) ?? code.length
+    const block = code.slice(start, Math.min(nextKey, nextDecl))
+    const tables = TABLES_BY_ROOT.get(m[1]) ?? new Set<string>()
+    for (const t of block.matchAll(/\.from\(\s*'([a-z_]+)'\s*\)/g)) tables.add(t[1])
+    TABLES_BY_ROOT.set(m[1], tables)
+  })
+}
+
+/** Every root the realtime socket fans a table change out to. */
+function realtimeRoots(): Set<string> {
+  const code = SOURCES.find((s) => s.path.endsWith('RealtimeProvider.tsx'))!.code
+  const map = code.slice(code.indexOf('const TABLE_KEYS'), code.indexOf('const TABLES'))
+  return new Set([...map.matchAll(/\[\s*'([^']+)'\s*\]/g)].map((m) => m[1]))
+}
+
+describe('every query that reads a mutable table is invalidated by something', () => {
+  /*
+   * Three mechanisms fan an invalidation out, and a key reached by ANY of them
+   * is invalidated by something: the two canonical prefix lists, and the
+   * realtime socket's own per-table map. `['coach']`, `['sleep_debt']` and
+   * `['water_intake']` are only in the third, which is correct — nothing writes
+   * them locally, they change when another device does.
+   */
+  const covered = realtimeRoots()
+  const workoutRoots = new Set([...WORKOUT_QUERY_KEYS.map(([r]) => r), ...covered])
+  const healthRoots = new Set([...HEALTH_QUERY_KEYS.map(([r]) => r), ...covered])
+
+  /**
+   * Keys whose staleness is genuinely nobody's problem. Each one needs a reason,
+   * not a shrug — an entry added here to make the suite green is the whole
+   * failure mode this test exists to prevent.
+   */
+  const EXEMPT = new Set([
+    // Read once at boot to decide whether the historical backfill has run.
+    'backfill_state',
+  ])
+
+  it('finds tables at all (guards the scanner itself)', () => {
+    const withTables = [...TABLES_BY_ROOT.values()].filter((t) => t.size > 0)
+    expect(withTables.length).toBeGreaterThan(20)
+    expect(TABLES_BY_ROOT.get('week_so_far')?.has('workout_sessions')).toBe(true)
+  })
+
+  it('workout-derived queries are in WORKOUT_QUERY_KEYS', () => {
+    const missing = [...TABLES_BY_ROOT]
+      .filter(([root, tables]) => !EXEMPT.has(root)
+        && [...tables].some((t) => WORKOUT_TABLES.has(t))
+        && !workoutRoots.has(root))
+      .map(([root]) => root)
+    expect(missing).toEqual([])
+  })
+
+  it('health-derived queries are in HEALTH_QUERY_KEYS', () => {
+    const missing = [...TABLES_BY_ROOT]
+      .filter(([root, tables]) => !EXEMPT.has(root)
+        && [...tables].some((t) => HEALTH_TABLES.has(t))
+        && !healthRoots.has(root))
+      .map(([root]) => root)
+    expect(missing).toEqual([])
+  })
+})
+
 describe('the surfaces a score recompute has to reach', () => {
   /**
    * `['today', date]` is a BUNDLE — one request carrying score + daily_log +

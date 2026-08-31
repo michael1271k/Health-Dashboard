@@ -1,7 +1,9 @@
 'use client'
 
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
+import { useOptimisticMutation } from '@/lib/hooks/useOptimisticMutation'
+import { todayBundleKey } from '@/lib/hooks/useToday'
 import { authedFetch } from '@/lib/utils/authedFetch'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { recomputeAndPaint } from '@/lib/scoring/applyComputedScore'
@@ -47,7 +49,34 @@ const CASCADE_KEYS: string[][] = [
  */
 export function useMacroOverride(date: string) {
   const qc = useQueryClient()
-  return useMutation({
+  return useOptimisticMutation<MacroValues, void>({
+    /*
+     * ── THE RINGS MOVE ON THE SAVE, NOT ON THE ROUND TRIP ──────────────────
+     * The write below is four round trips deep — auth, a flags read, the
+     * upsert, then a forced score recompute — and the macro rings held their
+     * old numbers through all of it. They are patched here instead.
+     *
+     * `phase` is deliberately NOT guessed: `resolveDayPhase` needs the day's
+     * exception/estimated flags, which are read inside the mutation, and a
+     * wrong band flashing before the right one is worse than a band that
+     * arrives a moment late. It settles with the invalidation.
+     */
+    patches: (vals) => {
+      const macros = {
+        calories: Math.max(0, Math.round(vals.calories)),
+        protein_g: Math.max(0, vals.protein_g),
+        carbs_g: Math.max(0, vals.carbs_g),
+        fat_g: Math.max(0, vals.fat_g),
+      }
+      return [{
+        key: todayBundleKey(date),
+        apply: (prev) => {
+          const b = prev as { nutrition?: Record<string, unknown> | null } | undefined
+          if (!b?.nutrition) return undefined
+          return { ...b, nutrition: { ...b.nutrition, ...macros } }
+        },
+      }]
+    },
     mutationFn: async (vals: MacroValues) => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not signed in')

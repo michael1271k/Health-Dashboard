@@ -1,52 +1,33 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { authedFetch } from '@/lib/utils/authedFetch'
-import { supabase } from '@/lib/supabase/client'
-import { invalidateWorkoutData } from '@/lib/query/workoutKeys'
-import { recomputeAndPaint } from '@/lib/scoring/applyComputedScore'
-import { logicalTodayISO, hoursAwakeToday } from '@/lib/utils/day'
+import { useMutation } from '@tanstack/react-query'
+import { COMMIT_SESSION_KEY, type CommitResult, type CommitVars } from '@/lib/sessions/commit'
 import { DRAFT_STORAGE_KEY, applySetPatch, buildCommitPayload, cascadeSetEdit, isSetCommitted, peekSessionDraft, type SessionDraft, type DraftSet, type DraftExercise } from '@/lib/sessions/draft'
 import { notifyDraftChanged } from '@/lib/sessions/draftStore'
-import type { PrAxis } from '@/lib/sessions/save'
 
-const COMMIT_TIMEOUT_MS = 25_000
+/*
+ * The commit's write, its stall recovery and its post-success cascade all moved
+ * to `lib/sessions/commit.ts`. They had to: a mutation that survives a reload
+ * cannot close over `draft`, and its success cascade cannot live in a component
+ * that is no longer mounted. See that file's header.
+ */
+export type { CommitResult } from '@/lib/sessions/commit'
 
 /**
- * A commit's POST may write the session server-side but stall before its
- * response reaches the client (the "saved but stuck loading" hang). After a
- * timeout/network error we check whether the session actually landed — keyed by
- * the idempotency id, else the logged date — and proceed if it did.
+ * A stats block with nothing in it.
+ *
+ * MODULE scope, not per render. It was a literal inside the hook and only ever
+ * spread from, so `setStats` carried an eslint-disable to keep its identity
+ * stable — and `finish` then needed the same exemption for the same reason. One
+ * frozen constant is cheaper than two suppressions, and it makes both callbacks
+ * honest about their dependencies.
  */
-async function verifyCommitted(clientSessionId: string | undefined, dateISO: string): Promise<CommitResult | null> {
-  try {
-    let q = supabase.from('workout_sessions').select('id, total_volume_kg, set_count, pr_count')
-    if (clientSessionId) {
-      q = q.eq('client_session_id', clientSessionId)
-    } else {
-      const end = new Date(`${dateISO}T00:00:00Z`); end.setUTCDate(end.getUTCDate() + 1)
-      q = q.gte('started_at', `${dateISO}T00:00:00Z`).lt('started_at', `${end.toISOString().slice(0, 10)}T00:00:00Z`)
-    }
-    const { data } = await q.order('started_at', { ascending: false }).limit(1).maybeSingle()
-    const row = data as { id: string; total_volume_kg: number | null; set_count: number | null; pr_count: number | null } | null
-    if (!row) return null
-    // duplicate:false so onSuccess re-invalidates — a recovered write is uncertain
-    // (may carry fresh edited totals); always refresh the UI rather than skip it.
-    return { sessionId: row.id, totalVolumeKg: row.total_volume_kg ?? 0, setCount: row.set_count ?? 0, prCount: row.pr_count ?? 0, newPRs: [], duplicate: false }
-  } catch {
-    return null
-  }
-}
+const EMPTY_STATS = Object.freeze({
+  duration_min: null, volume_kg: null, sets_completed: null, prs: null,
+  avg_hr_bpm: null, calories_kcal: null,
+}) as NonNullable<SessionDraft['stats']>
 
-export interface CommitResult {
-  sessionId: string
-  totalVolumeKg: number
-  setCount: number
-  prCount: number
-  newPRs: Array<{ exerciseName: string; est1rm: number; axes: PrAxis[] }>
-  duplicate?: boolean
-}
 
 /**
  * The Command Center's draft store: one editable SessionDraft with
@@ -55,7 +36,6 @@ export interface CommitResult {
  * successful commit or explicit discard.
  */
 export function useSessionDraft() {
-  const qc = useQueryClient()
   const [draft, setDraft] = useState<SessionDraft | null>(null)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -346,11 +326,6 @@ export function useSessionDraft() {
     })
   }, [])
 
-  const EMPTY_STATS = {
-    duration_min: null, volume_kg: null, sets_completed: null, prs: null,
-    avg_hr_bpm: null, calories_kcal: null,
-  } as NonNullable<SessionDraft['stats']>
-
   /**
    * Manually edit session metadata (duration / avg HR / calories) pre-commit.
    *
@@ -366,10 +341,6 @@ export function useSessionDraft() {
       if ('duration_min' in patch) next.durationEdited = true
       return next
     })
-    // EMPTY_STATS is a fresh literal each render but is only ever spread from,
-    // never compared — depending on it would give `setStats` a new identity per
-    // render and undo the memo on every header that takes it.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   /**
@@ -391,7 +362,6 @@ export function useSessionDraft() {
       if (base.duration_min === min) return d // no-op: never churn the draft
       return { ...d, stats: { ...base, duration_min: min } }
     })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   /**
@@ -439,98 +409,59 @@ export function useSessionDraft() {
     setDraft((d) => d && ({ ...d, date: dateISO, startedAt: `${dateISO}T${d.startedAt.slice(11)}` }))
   }, [])
 
-  const commit = useMutation({
-    /**
-     * ── THE DURATION IS RE-READ AT THE MOMENT OF COMMIT ────────────────────
-     * `vars.durationMin` is what the header's stopwatch says as Complete is
-     * pressed. It is applied to a COPY of the draft rather than through
-     * `setClockDuration`, because a `setDraft` in the same tick as `mutate` is
-     * not visible to this closure — which is precisely how a stale reading got
-     * stored in the first place. Undefined (an edited duration, or a back-dated
-     * deck with no clock) leaves the draft's own value alone.
-     */
-    mutationFn: async (vars?: { durationMin?: number | null }): Promise<CommitResult> => {
-      if (!draft) throw new Error('No draft to commit')
-      const timed = vars?.durationMin != null && !draft.durationEdited
-        ? { ...draft, stats: { ...(draft.stats ?? EMPTY_STATS), duration_min: vars.durationMin } }
-        : draft
-      const body = buildCommitPayload(timed)
-      // Only checked (green) sets are recorded — zero checked means nothing happened.
-      if (!body.sets.length) throw new Error('Check at least one set to finish')
-      // Hard timeout so a stalled serverless response can never hang the deck
-      // for minutes; on abort/network failure we verify the write landed.
-      const ctrl = new AbortController()
-      const timer = setTimeout(() => ctrl.abort(), COMMIT_TIMEOUT_MS)
-      try {
-        const res = await authedFetch('/api/sessions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-          signal: ctrl.signal,
-        })
-        const json = await res.json().catch(() => ({}))
-        if (res.status === 409) return { ...(json as CommitResult), duplicate: true }
-        if (!res.ok) {
-          const err = (json as { error?: unknown }).error
-          const rejection = new Error(typeof err === 'string' ? err : 'Save failed')
-          // Flag definitive server rejections (422 validation, 500, …) so the
-          // catch below does NOT run stall-recovery on them. A rejected edit
-          // leaves the old session in place; recovering it by the reused
-          // client_session_id reported a false "duplicate" and silently dropped
-          // the edit — the root of the edit-persist bug.
-          ;(rejection as { serverRejected?: boolean }).serverRejected = true
-          throw rejection
-        }
-        return json as CommitResult
-      } catch (e) {
-        // A definitive server rejection must surface — never mask it as recovered.
-        if ((e as { serverRejected?: boolean } | null)?.serverRejected) throw e
-        // Genuine network stall/abort: the write may have landed. Verify, and if
-        // found treat it as a real (non-duplicate) result so onSuccess refreshes.
-        const recovered = await verifyCommitted(body.clientSessionId, draft.date)
-        if (recovered) return recovered
-        throw e instanceof Error ? e : new Error('Save failed')
-      } finally {
-        clearTimeout(timer)
-      }
-    },
-    onSuccess: (result) => {
-      const committedDate = draft?.date
-      if (!result.duplicate) {
-        // One cascade: refresh EVERY workout-derived surface (charts, muscle map,
-        // PRs, projected weights, session #, timeline) — not just these four.
-        invalidateWorkoutData(qc)
-        // Readiness/Daily-Score reflect the workout — recompute that day now
-        // (force bypasses the finalized freeze for a back-dated log/edit).
-        //
-        // The recompute's own result is painted straight into the cache, so the
-        // battery moves the moment the POST returns rather than after a refetch
-        // that used to race it and lose. The invalidations below still run, for
-        // everything derived from the score — but nothing visible waits on them.
-        if (committedDate) {
-          // EVERY kind. A commit is the one write that reaches all of them:
-          // today's session, the calendar ring, the streak, the week's tonnage,
-          // the score and the battery. This is the moment Training's reload
-          // budget is FOR — which is why the day-to-day writes above spend
-          // DAY_KINDS and leave it alone.
-          void recomputeAndPaint(qc, committedDate, {
-            force: true, isToday: committedDate === logicalTodayISO(),
-            backfillDays: 0, hoursAwake: hoursAwakeToday(),
-          }, authedFetch).then(() => {
-            qc.invalidateQueries({ queryKey: ['today'] })
-            qc.invalidateQueries({ queryKey: ['readiness_today'] })
-            qc.invalidateQueries({ queryKey: ['day_vault', committedDate] })
-          })
-        }
-      }
+  /**
+   * ── FINISH IS AN OUTBOX ENTRY, NOT A FETCH ────────────────────────────────
+   *
+   * The write, its stall recovery and its whole post-success cascade live in
+   * `lib/sessions/commit.ts` and are registered as a MUTATION DEFAULT by
+   * `QueryProvider`. That indirection is the entire point: a mutation that can
+   * survive a reload cannot close over `draft`, and TanStack can only re-run a
+   * rehydrated one if a function is registered under its key.
+   *
+   * What that buys: tapping Finish with no signal no longer ends in an error
+   * string and a stranded draft. The mutation PAUSES (TanStack's default
+   * network mode), is persisted alongside the query cache, survives the app
+   * being killed, and runs on the next `resumePausedMutations()` — fired on
+   * reconnect and on every native foreground. Safe unattended because the write
+   * is idempotent by `clientSessionId`: a retry of a session that landed comes
+   * back 409/`duplicate`, not as a second workout.
+   *
+   * `commit.isPaused` is what the deck renders as "queued".
+   */
+  const commit = useMutation<CommitResult, unknown, CommitVars>({
+    mutationKey: COMMIT_SESSION_KEY,
+    onSuccess: () => {
+      // The cascade, the widget reloads and the localStorage clear all happen in
+      // `afterCommit`, which runs for a resumed commit too. This is the part
+      // that needs React: the deck's own copy of the draft.
       setDraft(null)
-      try { localStorage.removeItem(DRAFT_STORAGE_KEY) } catch { /* ignore */ }
-      // The session is committed and the draft is gone — the pill in the app
-      // shell has to hear that, or a finished workout keeps floating above the
-      // tab bar until the next navigation.
-      notifyDraftChanged()
+      touchedAtRef.current = null
     },
   })
 
-  return { draft, hydrated, start, discard, updateSet, splitSet, mergeSet, addCardio, updateCardio, addSet, removeSet, toggleSetDone, removeExercise, reorder, setExerciseNote, setStats, setClockDuration, togglePause, setSessionRpe, setDate, commit }
+  /**
+   * ── THE DURATION IS RE-READ AT THE MOMENT OF COMMIT ──────────────────────
+   * `durationMin` is what the header's stopwatch says as Complete is pressed. It
+   * is applied to a COPY of the draft rather than through `setClockDuration`,
+   * because a `setDraft` in the same tick as `mutate` is not visible to the
+   * mutation — which is precisely how a stale reading got stored in the first
+   * place. Undefined (an edited duration, or a back-dated deck with no clock)
+   * leaves the draft's own value alone.
+   *
+   * The payload is built HERE rather than inside the mutation, because the
+   * mutation's variables are what get persisted: they have to be a plain,
+   * self-contained, JSON-safe description of the write.
+   */
+  const finish = useCallback((
+    durationMin: number | null | undefined,
+    opts?: Parameters<typeof commit.mutate>[1],
+  ) => {
+    if (!draft) return
+    const timed = durationMin != null && !draft.durationEdited
+      ? { ...draft, stats: { ...(draft.stats ?? EMPTY_STATS), duration_min: durationMin } }
+      : draft
+    commit.mutate({ body: buildCommitPayload(timed), date: draft.date }, opts)
+  }, [draft, commit])
+
+  return { draft, hydrated, start, discard, finish, updateSet, splitSet, mergeSet, addCardio, updateCardio, addSet, removeSet, toggleSetDone, removeExercise, reorder, setExerciseNote, setStats, setClockDuration, togglePause, setSessionRpe, setDate, commit }
 }

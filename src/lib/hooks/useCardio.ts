@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
+import { useOptimisticMutation } from '@/lib/hooks/useOptimisticMutation'
 import { weekStartOf, isoAddDays } from '@/lib/utils/week'
 import { isZone2 } from '@/lib/cardio/zone2'
 
@@ -102,9 +103,44 @@ export function useLastCardio(kind: 'walk' | 'run') {
   return (data ?? []).find((r) => r.kind === kind) ?? null
 }
 
+/**
+ * ── THE ROW APPEARS ON THE TAP, NOT ON THE ROUND TRIP ────────────────────────
+ * This was invalidate-on-success, so logging a walk left the day's list
+ * unchanged through `auth.getSession()`, an insert, a possible column-fallback
+ * retry, and a refetch. The optimistic row carries a temporary id — the real one
+ * is assigned by the database — which is fine because nothing addresses a cardio
+ * row by id until the invalidation below has replaced it with the server's copy.
+ * `useDeleteCardio` is the only id consumer, and a row you have not seen come
+ * back yet is a row you have not had time to delete.
+ */
+const OPTIMISTIC_ID_PREFIX = 'pending:'
+
 export function useAddCardio(date: string) {
-  const qc = useQueryClient()
-  return useMutation({
+  return useOptimisticMutation<NewCardio, void>({
+    patches: (c) => [{
+      key: ['cardio_logs', date],
+      apply: (prev) => {
+        const rows = prev as CardioLog[] | undefined
+        if (!rows) return undefined
+        const pending: CardioLog = {
+          id: `${OPTIMISTIC_ID_PREFIX}${Date.now()}`,
+          kind: c.kind,
+          distance_m: c.distance_m ?? null,
+          duration_min: c.duration_min ?? null,
+          kcal: c.active_kcal ?? null,
+          active_kcal: c.active_kcal ?? null,
+          total_kcal: c.total_kcal ?? null,
+          avg_hr: c.avg_hr ?? null,
+          effort: c.effort ?? null,
+          from_healthkit: false,
+        }
+        // Appended, because the query orders by `created_at` ascending and this
+        // is the newest row.
+        return [...rows, pending]
+      },
+    }],
+    // The day's list AND the history the records + prefill derive from.
+    invalidate: [['cardio_logs']],
     mutationFn: async (c: NewCardio) => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('Not signed in')
@@ -124,10 +160,6 @@ export function useAddCardio(date: string) {
         ;({ error } = await supabase.from('cardio_logs').insert(row as unknown as never))
       }
       if (error) throw error
-    },
-    onSuccess: () => {
-      // The day's list AND the history the records + prefill derive from.
-      qc.invalidateQueries({ queryKey: ['cardio_logs'] })
     },
   })
 }
