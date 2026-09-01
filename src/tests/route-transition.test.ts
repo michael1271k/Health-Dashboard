@@ -1,6 +1,5 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { routeTransition } from '@/lib/nav/transition'
-import { rememberScroll } from '@/lib/nav/scrollMemory'
 import { isNavActive } from '@/lib/nav-items'
 
 /**
@@ -51,27 +50,10 @@ describe('routeTransition', () => {
   })
 })
 
-describe('scroll memory', () => {
-  beforeEach(() => { window.scrollY = 0 })
-  afterEach(() => { vi.restoreAllMocks() })
-
-  /**
-   * The map is a module singleton on purpose: the component that would
-   * otherwise hold it (`app/template.tsx`) is exactly the one App Router
-   * remounts on every navigation, so a ref or state there is destroyed at the
-   * moment the value is needed.
-   */
-  it('remembering a route does not throw with no window scroll', () => {
-    expect(() => rememberScroll('/pathfinder')).not.toThrow()
-  })
-
-  it('captures the CURRENT offset, so two routes can hold different ones', () => {
-    Object.defineProperty(window, 'scrollY', { value: 1200, configurable: true })
-    rememberScroll('/pathfinder')
-    Object.defineProperty(window, 'scrollY', { value: 0, configurable: true })
-    rememberScroll('/nutrition')
-    // Nothing is exported to read them back — the restore is a layout effect —
-    // so this asserts the capture path is total rather than the stored values.
-    expect(() => { rememberScroll('/pathfinder'); rememberScroll('/nutrition') }).not.toThrow()
-  })
-})
+/**
+ * Scroll memory moved to `nav-scroll-memory.test.ts`. What used to live here
+ * asserted that `rememberScroll` did not throw, which the broken implementation
+ * also satisfied — the value it stored was wrong, not absent. The replacement
+ * asserts the navigation SEQUENCE instead, which is the only shape that can
+ * tell the two apart.
+ */

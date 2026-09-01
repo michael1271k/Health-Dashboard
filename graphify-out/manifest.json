@@ -65,8 +65,8 @@
     "semantic_hash": "173952037e15718553035256a6b0f56a"
   },
   "ios/App/App/HelixViewController.swift": {
-    "mtime": 1788202182.9230926,
-    "ast_hash": "f148fe9e0f41cbaca559563d554737a6",
+    "mtime": 1788248537.9566216,
+    "ast_hash": "e4d947fa2e9edc425adf4672b39bd51e",
     "semantic_hash": ""
   },
   "ios/App/App/SecureStore.swift": {
@@ -180,8 +180,8 @@
     "semantic_hash": ""
   },
   "src/app/(dashboard)/nutrition/page.tsx": {
-    "mtime": 1788181592.7672033,
-    "ast_hash": "98b5dac5f36be7be868058bfaea4950f",
+    "mtime": 1788248407.7387414,
+    "ast_hash": "9a515ea01c4604b6e539a4906490c7a8",
     "semantic_hash": ""
   },
   "src/app/(dashboard)/pathfinder/page.tsx": {
@@ -270,8 +270,8 @@
     "semantic_hash": ""
   },
   "src/app/template.tsx": {
-    "mtime": 1788202158.4080575,
-    "ast_hash": "71cc696bd902d0344cce31bd30452960",
+    "mtime": 1788248507.5649962,
+    "ast_hash": "eee9625061f98beae26986a1ce387006",
     "semantic_hash": ""
   },
   "src/components/HelixMark.tsx": {
@@ -360,8 +360,8 @@
     "semantic_hash": ""
   },
   "src/components/dashboard/BrandHeader.tsx": {
-    "mtime": 1788180866.317075,
-    "ast_hash": "fe9304ff457b719d1b3880ebc9693b37",
+    "mtime": 1788248295.3806207,
+    "ast_hash": "4e4fa6ac125d1ca82596e261ec1e284c",
     "semantic_hash": ""
   },
   "src/components/dashboard/InsightCoach.tsx": {
@@ -479,11 +479,6 @@
     "ast_hash": "ab64b2bc8580b34fdb0a228b895181b1",
     "semantic_hash": ""
   },
-  "src/components/nutrition/FuelForceBand.tsx": {
-    "mtime": 1787903731.0945802,
-    "ast_hash": "253aeb67332a217c754a8100d60a7dad",
-    "semantic_hash": ""
-  },
   "src/components/nutrition/MacroOverrideSheet.tsx": {
     "mtime": 1784897420.229653,
     "ast_hash": "4bf40ad4e456ceec7dc8822c6eabe8d9",
@@ -525,8 +520,8 @@
     "semantic_hash": ""
   },
   "src/components/providers/RealtimeProvider.tsx": {
-    "mtime": 1786698213.9159203,
-    "ast_hash": "e2c6a41fbb52bb9f214f1bb18a64e256",
+    "mtime": 1788248583.4151523,
+    "ast_hash": "6d111bfd939b518467944fe828180ca3",
     "semantic_hash": ""
   },
   "src/components/providers/ReloadHome.tsx": {
@@ -605,8 +600,8 @@
     "semantic_hash": ""
   },
   "src/components/ui/overlay.tsx": {
-    "mtime": 1788202046.5579913,
-    "ast_hash": "891e9e756eb4b46f84a35e1c53a8d617",
+    "mtime": 1788248242.558408,
+    "ast_hash": "b8edecbeeed031e3a618638ba9dcbbc1",
     "semantic_hash": ""
   },
   "src/lib/auth/guard.ts": {
@@ -710,8 +705,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useMacroOverride.ts": {
-    "mtime": 1788201393.795246,
-    "ast_hash": "bddcb40922d301d26a17b0254f8066c1",
+    "mtime": 1788248583.417565,
+    "ast_hash": "9a6e3494da94510fbbf41faefc0db098",
     "semantic_hash": ""
   },
   "src/lib/hooks/useMuscleAnalytics.ts": {
@@ -870,8 +865,8 @@
     "semantic_hash": ""
   },
   "src/lib/query/workoutKeys.ts": {
-    "mtime": 1788200926.4057372,
-    "ast_hash": "c2a4481204e75d4a5634425fac1d1ae6",
+    "mtime": 1788248587.276291,
+    "ast_hash": "d16922e6c7b4aabf09b25efbe42da5ce",
     "semantic_hash": ""
   },
   "src/lib/reports/weekNumber.ts": {
@@ -2455,7 +2450,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/set-rows.html": {
-    "mtime": 1788202270.9556332,
+    "mtime": 1788248770.4841957,
     "ast_hash": "d94cffed264ff2c846a5f4abd603c06f",
     "semantic_hash": ""
   },
@@ -2485,7 +2480,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-ledger.html": {
-    "mtime": 1788202268.5912614,
+    "mtime": 1788248767.6468432,
     "ast_hash": "3ddb93aca7b5901708c403bfb41afc10",
     "semantic_hash": ""
   },
@@ -2520,7 +2515,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/live-header.html": {
-    "mtime": 1788202267.4958198,
+    "mtime": 1788248767.778845,
     "ast_hash": "58ce43eef99c40c6f362d4f28eeaa419",
     "semantic_hash": ""
   },
@@ -2590,7 +2585,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-summary-header.html": {
-    "mtime": 1788202269.5668058,
+    "mtime": 1788248769.0863616,
     "ast_hash": "b3d75865c62fb30c5cc668930a4b7642",
     "semantic_hash": ""
   },
@@ -2670,8 +2665,8 @@
     "semantic_hash": ""
   },
   "src/components/dashboard/WidgetGrid.tsx": {
-    "mtime": 1788201123.1779041,
-    "ast_hash": "7dfc551473a813cdd3e74ed13e8390bd",
+    "mtime": 1788248330.3361306,
+    "ast_hash": "a43283571b975300f0e166fbdedc7ab6",
     "semantic_hash": ""
   },
   "src/tests/dashboard-layout.test.ts": {
@@ -3355,13 +3350,28 @@
     "semantic_hash": ""
   },
   "src/lib/nav/scrollMemory.ts": {
-    "mtime": 1788202132.1429288,
-    "ast_hash": "5e26f540e8df9afbb3f77c8e8b40b17d",
+    "mtime": 1788248758.1263855,
+    "ast_hash": "6334780586ceb0eee9bb8efef6e1598a",
     "semantic_hash": ""
   },
   "src/tests/route-transition.test.ts": {
-    "mtime": 1788202243.1165693,
-    "ast_hash": "6d49ce27b1e2b2d5d9d81a0d39e048c9",
+    "mtime": 1788248758.1149116,
+    "ast_hash": "b83c23bb61d32f5995e3857c7ccce1ee",
+    "semantic_hash": ""
+  },
+  "src/lib/nav/useEdgeSwipeBack.ts": {
+    "mtime": 1788248467.9189446,
+    "ast_hash": "97481aee32e52b83043e13976ea1fed1",
+    "semantic_hash": ""
+  },
+  "src/tests/nav-scroll-memory.test.tsx": {
+    "mtime": 1788248653.6532156,
+    "ast_hash": "dd276e3b154f05c1c294ab3a62bec376",
+    "semantic_hash": ""
+  },
+  "src/tests/stack-swipe.test.tsx": {
+    "mtime": 1788248746.4702446,
+    "ast_hash": "3a37cc615e5a58dbaf17deda2add0a87",
     "semantic_hash": ""
   }
 }

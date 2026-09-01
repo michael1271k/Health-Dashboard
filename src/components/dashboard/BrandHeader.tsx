@@ -123,19 +123,33 @@ function TodayLink() {
 export function BrandHeader() {
   return (
     /* `items-baseline`, so the chips hang off the wordmark's baseline rather
-       than centring against a 3xl cap height and floating high. */
-    <div className="flex items-baseline justify-between gap-3 flex-wrap">
+       than centring against a 3xl cap height and floating high.
+
+       ── THREE SIBLINGS, NOT TWO ─────────────────────────────────────────────
+       The chips and "Today" used to share one `ml-auto` wrapper, so pushing the
+       shortcut to the far right — which is where it belongs, as the row's
+       terminator — dragged the plan and phase chips right along with it. The
+       band then read as title · <gap> · context+way-out, with the context
+       stranded against the right edge instead of following the title.
+
+       They are separate items now: the chip group takes the free space
+       (`flex-1`), so it starts immediately after the wordmark and stays flush
+       LEFT, and `TodayLink` is the last item on the same row, hard right. No
+       `ml-auto` and no `justify-between` — one growing item in the middle
+       positions all three by itself.
+
+       No `flex-wrap` either. With `flex-1 min-w-0` the chip group's flex BASE
+       size is zero, so it can never push the row onto a second line; on a
+       narrow phone it squeezes and clips instead, which keeps "Today" on the
+       title row where the eye already is. */
+    <div className="flex items-baseline gap-3">
       <h1 className="text-fluid-3xl leading-none shrink-0">
         <span className="helix-wordmark font-heading font-extrabold tracking-[0.22em] leading-none">HELIX</span>
       </h1>
-      {/* Chips and shortcut travel together: when the row wraps to a second line
-          on a narrow phone, "Today" must stay at the END of the chips rather
-          than being left behind on the wordmark's line. `ml-auto` keeps the
-          group hard right at every width, wrapped or not. */}
-      <div className="flex items-baseline gap-2 ml-auto min-w-0">
+      <div className="flex items-baseline min-w-0 flex-1 overflow-hidden">
         <PlanPhaseTags />
-        <TodayLink />
       </div>
+      <TodayLink />
     </div>
   )
 }

@@ -199,9 +199,25 @@ html[data-theme='travel'] {
         the behaviour a native scroll view has by default and a div does not.
 
         Scoped to elements that actually scroll, so a stray `overflow-hidden`
-        wrapper does not pick up a rule about scrolling. */
-  [class*='overflow-y-auto'], [class*='overflow-x-auto'],
-  [class*='overflow-auto'], [class*='overflow-y-scroll'], [class*='overflow-x-scroll'] {
+        wrapper does not pick up a rule about scrolling.
+
+        ── WHY THESE ARE CLASS SELECTORS AND NOT [class*='…'] ──────────────────
+        They were substring attribute selectors, which is the single worst shape
+        a rule can have. Selector matching is bucketed by the rightmost simple
+        selector: a class selector is only ever tested against elements carrying
+        that class, while `[class*=…]` has no id, class or tag key, so it lands
+        in the universal bucket and is tested against EVERY element in the
+        document on every style recalculation. There were five of them, over a
+        dashboard of a couple of thousand nodes, and a recalc happens on every
+        navigation.
+
+        The substring form bought exactly one thing — matching variant-prefixed
+        utilities like `md:overflow-y-auto`, which compile to `.md\:overflow-y-auto`.
+        `grep -rE "[a-z]+:overflow-(y-|x-)?(auto|scroll)" src/` returns nothing:
+        all 22 uses in this app are unprefixed. If a variant is ever added, add
+        its escaped class here. */
+  .overflow-y-auto, .overflow-x-auto,
+  .overflow-auto, .overflow-y-scroll, .overflow-x-scroll {
     overscroll-behavior: contain;
   }
 
@@ -653,11 +669,20 @@ html {
    Same reason the old rule existed for cards: on iOS a translucent surface
    sampling a dim veil composites as solid black. The quirk belongs to the
    OVERLAY, not to the card, so the rule survives the card and follows it here. */
-body.helix-overlay-open .app-chrome {
+body.helix-overlay-open .app-chrome,
+body.helix-swiping .app-chrome {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   background: var(--color-bg);
 }
+
+/* `helix-swiping` is the back gesture (see lib/nav/useEdgeSwipeBack.ts). While
+   the finger is down the page surface carries a transform, which makes it the
+   containing block for everything inside it — and on iOS a backdrop-filter
+   under a transformed ancestor samples the wrong buffer and composites solid
+   black. Same quirk as an open overlay, same answer: go opaque for the length
+   of the gesture. It is set and removed by the gesture itself, so nothing
+   outside a live swipe pays for it. */
 
 /* Scroll edge, not a divider.
    A permanent 1px line under a sticky bar draws itself even when there is

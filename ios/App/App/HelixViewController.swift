@@ -30,32 +30,34 @@ class HelixViewController: CAPBridgeViewController {
     // App target in Xcode; leaving it compiled but unregistered is harmless meanwhile.
   }
 
-  /// ── SWIPE BACK ─────────────────────────────────────────────────────────────
+  /// ── SWIPE BACK IS OWNED BY THE WEB LAYER, AND HAS TO BE ────────────────────
   ///
-  /// The app had no back gesture at all. Not a broken one — none: a search of
-  /// `ios/` for `allowsBackForwardNavigationGestures` and of `src/` for any edge
-  /// handler both returned nothing. Every screen you opened had to be left by
-  /// finding a button, which on iOS is the deepest possible "this is a website"
-  /// tell, because the edge swipe is muscle memory in every other app on the
-  /// phone.
+  /// This was `allowsBackForwardNavigationGestures = true`, which is the
+  /// documented way to get the system's interactive pop and which, in this app,
+  /// did nothing whatsoever. The flag was not the problem.
   ///
-  /// `WKWebView` implements it properly when asked — snapshot-backed,
-  /// interactive, and cancellable half way through, which is the part no
-  /// in-page reimplementation gets right. It works against the history stack,
-  /// and Next's App Router navigations are `pushState` entries, so a swipe pops
-  /// exactly one client-side route.
+  /// WebKit's swipe is SNAPSHOT-BACKED: `_ViewGestureController` needs a
+  /// rendered image of the destination to slide in under the thumb, and it only
+  /// captures one for a real page load. Every navigation in a Next App Router
+  /// app is `history.pushState` — a SAME-DOCUMENT entry, no snapshot — so the
+  /// recogniser has nothing to show, never arms, and the edge swipe is silently
+  /// inert. No amount of configuration changes that.
+  ///
+  /// Worse, leaving it on is not free. The recogniser still installs itself on
+  /// the web view's scroll view and still delays touches along the leading edge
+  /// while it decides, which is precisely the strip the replacement gesture
+  /// needs to see cleanly. Turning it OFF is what makes the in-page gesture
+  /// possible, so this line is load-bearing rather than a tidy-up.
+  ///
+  /// The real gesture now lives in `src/lib/nav/useEdgeSwipeBack.ts`: 1:1
+  /// tracking, a projected release, interruptible mid-flight, and it pops an
+  /// App Router route rather than a WebKit history entry — which are not the
+  /// same list, and only one of them can walk off the front of the app.
   ///
   /// Set here rather than in `AppDelegate`: the web view does not exist until
   /// `super.viewDidLoad()` has built the bridge.
-  ///
-  /// ── ON GESTURE CONFLICTS ───────────────────────────────────────────────────
-  /// The system's recogniser only arms within ~20pt of the leading edge, so it
-  /// does not compete with the two horizontal gestures the app owns — the
-  /// supplement row's swipe and the widget grid's long-press drag, both of which
-  /// begin under a finger placed on the control itself. The bottom sheet drags
-  /// vertically and is unaffected.
   override func viewDidLoad() {
     super.viewDidLoad()
-    webView?.allowsBackForwardNavigationGestures = true
+    webView?.allowsBackForwardNavigationGestures = false
   }
 }

@@ -11,7 +11,6 @@ import { useDailyLogs } from '@/lib/hooks/useNutrition'
 import { NUTRITION_PRESETS, type NutritionMode } from '@/lib/types/workout'
 import { NutritionLogList } from '@/components/nutrition/NutritionLogList'
 import { MacroCards } from '@/components/nutrition/MacroCards'
-import { FuelForceBand } from '@/components/nutrition/FuelForceBand'
 import { WaterBar } from '@/components/nutrition/WaterBar'
 import { WaterOverrideSheet } from '@/components/day/WaterOverrideSheet'
 import { ChartRange, DEFAULT_RANGE_DAYS } from '@/components/charts/ChartRange'
@@ -48,7 +47,7 @@ export default function NutritionPage() {
   // tracked phase so the full Notion-imported history renders.
   const { data: logs, isLoading } = useDailyLogs(eraDateRange(era))
 
-  // The rings + Fuel→Force hero ALWAYS show TODAY's live macros, independent of
+  // The rings ALWAYS show TODAY's live macros, independent of
   // the era/history filter — a 'PPL Legacy' selection (whose window ends before
   // today) must never blank them out.
   const todayISO = logicalTodayISO()
@@ -212,8 +211,12 @@ export default function NutritionPage() {
         estimated={(dailyLog as { nutrition_estimated?: boolean | null } | null)?.nutrition_estimated ?? false}
       />
 
-      {/* Fuel → Force: links today's fuel to today's session (renders only if trained) */}
-      <FuelForceBand date={todayISO} proteinG={todayLog?.proteinG ?? null} proteinGoal={goals.protein} />
+      {/* FuelForceBand is gone. It rendered "<Split> session logged" over
+          "protein target hit for this session" — a sentence that restated the
+          split name the Workout tab owns and the protein figure the ring
+          directly above this already draws, and it cost a `workout_sessions`
+          query per visit to say it. `ScheduleShortcut` below is the affordance
+          that band was standing next to; it survives. */}
 
       {/* Training-day shortcut → the deck, pre-seeded (hidden once logged) */}
       <ScheduleShortcut />

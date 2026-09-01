@@ -945,11 +945,18 @@ const StackFaces = memo(function StackFaces({ slot, face, setFace, editing, redu
    *   · short of it → keep waiting. A tap never crosses 24px, so a tap still
    *     reaches the tile's own click and opens its sheet.
    *
-   * ── AND DOWN IS FORWARD ───────────────────────────────────────────────────
-   * A downward swipe brings the NEXT face in from above, the way a page you
-   * pull down brings the one behind it into view. The face animation follows
-   * the finger for the same reason: `dir > 0` enters from the top, so what
-   * arrives moves in the direction the thumb pushed.
+   * ── UP IS FORWARD ─────────────────────────────────────────────────────────
+   * It was down, and down is wrong. A stack is a deck of cards lying on the
+   * screen: swiping UP pushes the top card away and uncovers the NEXT one, the
+   * same way every vertical feed and every iOS Smart Stack reads — you flick
+   * the current thing off the top of the pile to get to what is under it.
+   * Downward-is-forward inverted that, so an upward flick moved the stack
+   * bodily upward while going BACKWARDS through it, which is the one
+   * combination that feels like the tile is arguing with the thumb.
+   *
+   * The face animation carries the same sign, and has to: `dir > 0` now exits
+   * UPWARD and enters from below, so what leaves travels the way the finger
+   * pushed it and what arrives comes from where the finger came from.
    *
    * `swallow` is unchanged and still load-bearing: the tile underneath opens a
    * domain sheet on click, so without it a successful swipe would turn the face
@@ -965,7 +972,8 @@ const StackFaces = memo(function StackFaces({ slot, face, setFace, editing, redu
     if (Math.abs(dy) < SWIPE_MIN_PX) return
     g.fired = true
     swallow.current = true
-    go(dy > 0 ? 1 : -1)
+    // Up (negative dy) is forward. See "UP IS FORWARD" above.
+    go(dy < 0 ? 1 : -1)
   }
 
   const id = slot.items[face]
@@ -996,12 +1004,12 @@ const StackFaces = memo(function StackFaces({ slot, face, setFace, editing, redu
         <m.div
           key={`${slot.id}:${face}:${id}`}
           custom={dir}
-          // Forward (`dir > 0`) enters from ABOVE and pushes the old face down,
-          // because forward is what a downward swipe asks for — the motion has
+          // Forward (`dir > 0`) enters from BELOW and pushes the old face UP,
+          // because forward is what an upward swipe asks for — the motion has
           // to travel the way the thumb did or the tile reads as fighting it.
-          initial={reduced ? { opacity: 0 } : { opacity: 0, y: dir > 0 ? '-24%' : '24%' }}
+          initial={reduced ? { opacity: 0 } : { opacity: 0, y: dir > 0 ? '24%' : '-24%' }}
           animate={{ opacity: 1, y: 0 }}
-          exit={reduced ? { opacity: 0 } : { opacity: 0, y: dir > 0 ? '24%' : '-24%' }}
+          exit={reduced ? { opacity: 0 } : { opacity: 0, y: dir > 0 ? '-24%' : '24%' }}
           transition={reduced ? CROSSFADE : STANDARD}
           className="h-full"
         >

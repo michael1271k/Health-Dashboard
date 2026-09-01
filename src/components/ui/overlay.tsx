@@ -87,6 +87,19 @@ function releaseOverlay() {
  */
 export function resetOverlayLock() {
   overlayCount = 0
+  // ── THE GUARD IS NOT A MICRO-OPTIMISATION ──────────────────────────────────
+  // This runs on EVERY route change, and the amnesty it performs is needed on
+  // approximately none of them: an unpaired acquire is a bug, not a routine.
+  // Writing six inline styles and a classList to <body> unconditionally
+  // invalidates style on the document's root container — and one of the rules
+  // keyed off `body.helix-overlay-open` toggles `backdrop-filter` on the app
+  // chrome, so the browser re-resolves a blur surface too. Paid at the single
+  // most expensive moment there is, the new route's first mount.
+  //
+  // Reading two properties to find out there is nothing to undo costs nothing
+  // and is the answer on every navigation that did not leak.
+  const { body } = document
+  if (body.style.position !== 'fixed' && !body.classList.contains('helix-overlay-open')) return
   // No scroll restore. A navigation has already given the new route its own
   // scroll position, and putting the OLD one back would drop the user partway
   // down a page they have not seen yet.

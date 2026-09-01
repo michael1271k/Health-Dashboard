@@ -44,7 +44,6 @@ export const WORKOUT_QUERY_KEYS: string[][] = [
   ['trends'],
   ['weekly_review'],
   ['coach'],
-  ['fuel_force_session'],
   ['session_global_number'],
   ['week_recovery'],
   /*

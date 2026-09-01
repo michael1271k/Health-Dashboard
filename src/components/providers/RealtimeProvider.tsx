@@ -48,7 +48,7 @@ const TABLE_KEYS: Record<string, string[][]> = {
   daily_metrics: [['daily_logs'], ['today'], ['readiness_today'], ['day_vault']],
   // Intake moves the day score, not readiness — battery drains on activity and
   // volume, never on calories.
-  nutrition_entries: [['nutrition_entries'], ['daily_logs'], ['today'], ['coach'], ['continuum'], ['day_vault'], ['fuel_force_session']],
+  nutrition_entries: [['nutrition_entries'], ['daily_logs'], ['today'], ['coach'], ['continuum'], ['day_vault']],
   body_composition: [['body_composition'], ['trends'], ['coach']],
   // Sleep is 40% of readiness directly, plus the wake-charge term in battery.
   sleep_sessions: [['sleep_sessions'], ['today'], ['readiness_today'], ['trends'], ['weekly_review'], ['sleep_debt']],
