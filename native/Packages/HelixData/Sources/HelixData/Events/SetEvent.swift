@@ -1,0 +1,212 @@
+import Foundation
+
+/// A single, immutable fact about a set.
+///
+/// ── WHY SETS ARE EVENTS AND NOT ROWS ────────────────────────────────────────
+/// The Watch is becoming a logging client, which means two devices can both be
+/// editing one live session while either of them is offline. Two writers that
+/// both UPDATE a row and reconcile later will drop one of the writes, and they
+/// will do it silently: the row is well-formed afterwards, so nothing detects
+/// it and the set is simply gone from the training history.
+///
+/// A log cannot do that. Every device appends its own facts, the log is merged
+/// by union, and the set list on screen is a *fold* over it (`foldSets`). The
+/// worst failure available to this design is a set reappearing that you meant
+/// to delete — visible on screen, fixable in one tap. For a training log that is
+/// the correct direction to fail in.
+///
+/// Events are never mutated and never deleted. An edit appends an `.amend`; a
+/// deletion appends a `.void` tombstone.
+public struct SetEvent: Codable, Identifiable, Sendable, Equatable {
+
+    /// What this event does to the set it names.
+    ///
+    /// The payload is *inside* the case, so an `.append` cannot be constructed
+    /// without a complete set and a `.void` cannot carry one at all. The
+    /// alternative — a `kind` string beside an optional payload — makes both of
+    /// those illegal states representable and then relies on every call site to
+    /// avoid them.
+    public enum Body: Codable, Sendable, Equatable {
+        /// The set came into existence, with everything about it.
+        case append(SetSnapshot)
+        /// Some fields of an existing set changed. Fields left `nil` are
+        /// untouched — see `SetPatch` for what that cannot express.
+        case amend(SetPatch)
+        /// The set was deleted. Terminal: nothing resurrects a voided set.
+        case void
+    }
+
+    /// A stable, short discriminator for the persisted row.
+    ///
+    /// `Body` is what the code reasons about; this is what SQL can index and
+    /// filter on without decoding a blob for every row.
+    public enum Kind: String, Codable, Sendable, CaseIterable {
+        case append
+        case amend
+        case void
+    }
+
+    /// This event's own identity. Two devices never generate the same one, so
+    /// the union of two logs is just a union — no de-duplication pass, and a
+    /// replayed delivery is idempotent by construction.
+    public var id: String
+
+    public var sessionId: String
+
+    /// The set this event is *about*. `.append` brings it into being; `.amend`
+    /// and `.void` refer back to it. Not the event's own id — many events share
+    /// one `setId` over the life of a set.
+    public var setId: String
+
+    /// Which device produced this. Also the deterministic tiebreaker in the
+    /// total order, so both devices fold an identical log into an identical
+    /// list.
+    public var deviceId: String
+
+    /// A **Lamport clock**, not a timestamp.
+    ///
+    /// Wall clocks are the obvious choice and the wrong one: a watch and a phone
+    /// disagree by seconds, and NTP can step either of them backwards. Ordering
+    /// by wall time therefore lets a set that was logged second sort first, and
+    /// the two devices can disagree about which. A Lamport clock only ever
+    /// advances — locally on each event, and to `max(local, seen) + 1` whenever
+    /// a remote event arrives — so it encodes causality exactly and never needs
+    /// the two devices' clocks to agree about anything.
+    public var seq: Int64
+
+    /// Wall-clock time. **For display only.** Never sort by this.
+    public var createdAt: Date
+
+    public var body: Body
+
+    public var kind: Kind {
+        switch body {
+        case .append: .append
+        case .amend: .amend
+        case .void: .void
+        }
+    }
+
+    public init(
+        id: String = UUID().uuidString,
+        sessionId: String,
+        setId: String,
+        deviceId: String,
+        seq: Int64,
+        createdAt: Date = Date(),
+        body: Body
+    ) {
+        self.id = id
+        self.sessionId = sessionId
+        self.setId = setId
+        self.deviceId = deviceId
+        self.seq = seq
+        self.createdAt = createdAt
+        self.body = body
+    }
+}
+
+// MARK: - Payloads
+
+/// Everything about a set, at the moment it was logged.
+///
+/// Mirrors `WorkoutSet` minus the identity and sync columns, which the event
+/// header already carries. Field-for-field with Postgres, so the projection is
+/// an assignment rather than a translation.
+public struct SetSnapshot: Codable, Sendable, Equatable {
+    public var exerciseId: String
+    public var setIndex: Int
+    /// Kilograms. **Zero is a real, valid load** — a bodyweight set. Never
+    /// coerce it to nil and never filter it out; `Epley.oneRepMax` is the thing
+    /// that decides an unloaded set has no 1RM, and it says so by returning nil.
+    public var weightKg: Double
+    public var reps: Int
+    /// `normal` | `warmup` | `failure` | `dropset` | `ghost`.
+    public var setType: String
+    /// `left` | `right` on a unilateral movement, else nil.
+    public var side: String?
+    /// The two sides of one split set share this.
+    public var pairId: String?
+    public var est1rmKg: Double?
+
+    public init(
+        exerciseId: String,
+        setIndex: Int,
+        weightKg: Double,
+        reps: Int,
+        setType: String = "normal",
+        side: String? = nil,
+        pairId: String? = nil,
+        est1rmKg: Double? = nil
+    ) {
+        self.exerciseId = exerciseId
+        self.setIndex = setIndex
+        self.weightKg = weightKg
+        self.reps = reps
+        self.setType = setType
+        self.side = side
+        self.pairId = pairId
+        self.est1rmKg = est1rmKg
+    }
+}
+
+/// A partial change to an existing set. `nil` means **unchanged**.
+///
+/// ── WHAT THIS DELIBERATELY CANNOT EXPRESS ───────────────────────────────────
+/// It cannot set a nullable field back to null. `side: nil` means "leave the
+/// side alone", never "clear the side", and there is no second flag to say
+/// otherwise.
+///
+/// That is a real limitation and it is the right one here. Clearing `side` or
+/// `pairId` means un-splitting a unilateral set, which is not an edit to one
+/// set — it is two rows becoming one, with a different `setIndex` and a
+/// different set count. Expressing it as a patch would produce a half-split set
+/// that no other part of the system has a name for. Void the pair and append the
+/// replacement instead: two events, one honest history.
+public struct SetPatch: Codable, Sendable, Equatable {
+    public var setIndex: Int?
+    public var weightKg: Double?
+    public var reps: Int?
+    public var setType: String?
+    public var side: String?
+    public var pairId: String?
+    public var est1rmKg: Double?
+
+    public init(
+        setIndex: Int? = nil,
+        weightKg: Double? = nil,
+        reps: Int? = nil,
+        setType: String? = nil,
+        side: String? = nil,
+        pairId: String? = nil,
+        est1rmKg: Double? = nil
+    ) {
+        self.setIndex = setIndex
+        self.weightKg = weightKg
+        self.reps = reps
+        self.setType = setType
+        self.side = side
+        self.pairId = pairId
+        self.est1rmKg = est1rmKg
+    }
+
+    /// True when the patch would change nothing. Used to reject empty amends
+    /// before they become permanent noise in the log.
+    public var isEmpty: Bool {
+        setIndex == nil && weightKg == nil && reps == nil && setType == nil
+            && side == nil && pairId == nil && est1rmKg == nil
+    }
+
+    /// Apply to a snapshot, leaving `nil` fields alone.
+    public func applied(to snapshot: SetSnapshot) -> SetSnapshot {
+        var next = snapshot
+        if let setIndex { next.setIndex = setIndex }
+        if let weightKg { next.weightKg = weightKg }
+        if let reps { next.reps = reps }
+        if let setType { next.setType = setType }
+        if let side { next.side = side }
+        if let pairId { next.pairId = pairId }
+        if let est1rmKg { next.est1rmKg = est1rmKg }
+        return next
+    }
+}
