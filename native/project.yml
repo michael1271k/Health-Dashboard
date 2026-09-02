@@ -1,0 +1,113 @@
+# XcodeGen spec for the parallel native app.
+#
+# ── WHY THE PROJECT FILE IS GENERATED ────────────────────────────────────────
+# `ios/App/App.xcodeproj/project.pbxproj` in the Capacitor app is hand-edited,
+# and the `native` skill documents what that costs: a new .swift file that is not
+# ticked into a target fails at LINK time with an error naming a symbol, not a
+# file. That is a bad failure mode with two targets. The native app will have
+# more, so the project file is a build artefact here — regenerate it, never edit
+# it, and never commit it.
+#
+#     brew install xcodegen
+#     cd native && xcodegen generate && open HelixNative.xcodeproj
+#
+# ── AND WHY IT IS A SECOND BUNDLE ID ─────────────────────────────────────────
+# `app.helix.health.michael.native` installs ALONGSIDE the Capacitor app rather
+# than over it. Both read the same Supabase, so the old app stays your daily
+# driver — and your reference implementation — for as long as this one takes.
+# Nothing about this migration requires a day where neither app works.
+
+name: HelixNative
+
+options:
+  bundleIdPrefix: app.helix.health.michael
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+packages:
+  HelixCore:
+    path: Packages/HelixCore
+  HelixData:
+    path: Packages/HelixData
+
+targets:
+  HelixNative:
+    type: application
+    platform: iOS
+
+    sources:
+      - path: HelixNative
+        excludes:
+          # The example is documentation. The real one is gitignored and is
+          # attached below as a config file, not compiled as a source.
+          - "Support/Secrets.example.xcconfig"
+          - "Support/Secrets.xcconfig"
+
+    dependencies:
+      - package: HelixCore
+        product: HelixCore
+      - package: HelixData
+        product: HelixData
+
+    # Secrets arrive as build settings and are surfaced through Info.plist, the
+    # same convention the widget extension already uses for HELIX_SNAPSHOT_URL.
+    configFiles:
+      Debug: HelixNative/Support/Secrets.xcconfig
+      Release: HelixNative/Support/Secrets.xcconfig
+
+    info:
+      path: HelixNative/Support/Info.plist
+      properties:
+        CFBundleDisplayName: Helix Native
+        CFBundleShortVersionString: "0.1"
+        CFBundleVersion: "1"
+        UILaunchScreen: {}
+        # Dark only, matching the web app — which pins `defaultTheme="dark"` and
+        # ships no toggle anywhere. A light palette is not a port, it is a design
+        # project, and it is not in Wave 1.
+        UIUserInterfaceStyle: Dark
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        # Substituted from Secrets.xcconfig at build time.
+        HELIX_SUPABASE_URL: $(HELIX_SUPABASE_URL)
+        HELIX_SUPABASE_ANON_KEY: $(HELIX_SUPABASE_ANON_KEY)
+        # Required-reason API declaration lives in the privacy manifest, not
+        # here — see PrivacyInfo.xcprivacy. The Capacitor app was rejected-ready
+        # without one for months; this target starts with it.
+
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.helix.health.michael.native
+        MARKETING_VERSION: "0.1"
+        CURRENT_PROJECT_VERSION: "1"
+        # Automatic signing with the free personal team. The 7-day provisioning
+        # expiry is a property of that team, not of this setting.
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: W9UMPV973P
+        SWIFT_VERSION: "6.0"
+        # Strict concurrency from day one. Retrofitting it later is the thing
+        # that makes people abandon it.
+        SWIFT_STRICT_CONCURRENCY: complete
+        ENABLE_USER_SCRIPT_SANDBOXING: YES
+        GENERATE_INFOPLIST_FILE: NO
+        # No App Groups, no Keychain sharing group, no push. All three need the
+        # paid programme; the app is built to work without them and to gain them
+        # by adding an entitlement, not by being restructured.
+
+schemes:
+  HelixNative:
+    build:
+      targets:
+        HelixNative: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      # The domain and store suites run from the command line with `swift test`
+      # and do not need the app scheme. They are listed here so ⌘U in Xcode runs
+      # everything, which is what a person actually expects it to do.
+      targets:
+        - package: HelixCore/HelixCoreTests
+        - package: HelixData/HelixDataTests

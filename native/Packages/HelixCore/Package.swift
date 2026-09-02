@@ -1,0 +1,49 @@
+// swift-tools-version: 6.0
+import PackageDescription
+
+/// HelixCore — the domain arithmetic, and nothing else.
+///
+/// ── WHY THIS IS A PACKAGE AND NOT A FOLDER IN THE APP ────────────────────────
+/// Two reasons, both practical.
+///
+/// 1. It imports Foundation and NOTHING ELSE — no SwiftUI, no UIKit, no GRDB,
+///    no Supabase. That is enforced by being a separate module: an accidental
+///    `import SwiftUI` in a scoring file fails the build instead of quietly
+///    tying the formulas to a view layer. The web codebase earned this rule the
+///    hard way (`src/lib/scoring/computeForDate.ts` carries a "SERVER-SAFE by
+///    construction: no React" header for the same reason), and the Swift port
+///    keeps it.
+///
+/// 2. It builds and tests for **macOS**, so `swift test` runs the whole domain
+///    suite from the command line in seconds with no simulator, no signing and
+///    no Xcode. On a free Apple team where the app itself expires every seven
+///    days, having the arithmetic verifiable without a device is not a
+///    convenience — it is the only continuously trustworthy signal there is.
+let package = Package(
+    name: "HelixCore",
+    platforms: [
+        // iOS 18 is the app's floor. macOS is here purely so the test suite runs
+        // on the command line; no product ships for it.
+        .iOS(.v18),
+        .macOS(.v14),
+    ],
+    products: [
+        .library(name: "HelixCore", targets: ["HelixCore"]),
+    ],
+    targets: [
+        .target(
+            name: "HelixCore",
+            swiftSettings: [.swiftLanguageMode(.v6)]
+        ),
+        .testTarget(
+            name: "HelixCoreTests",
+            dependencies: ["HelixCore"],
+            // The golden vectors, exported from the TypeScript implementation by
+            // `npm run golden`. They are checked into git deliberately: they are
+            // the acceptance spec for this port, and a spec you have to
+            // regenerate before you can read it is not a spec.
+            resources: [.copy("Fixtures")],
+            swiftSettings: [.swiftLanguageMode(.v6)]
+        ),
+    ]
+)

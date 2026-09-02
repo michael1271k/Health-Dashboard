@@ -1,0 +1,119 @@
+{
+  "module": "scoring/battery",
+  "fn": "workoutMaxFor",
+  "note": "Keyed on day_key (the programme day), never on split_day — splitDay does not drain.",
+  "cases": [
+    {
+      "name": "day=null maintenance=false",
+      "input": {
+        "dayKey": null,
+        "maintenance": false
+      },
+      "expected": 24
+    },
+    {
+      "name": "day=null maintenance=true",
+      "input": {
+        "dayKey": null,
+        "maintenance": true
+      },
+      "expected": 18
+    },
+    {
+      "name": "day=legs_a maintenance=false",
+      "input": {
+        "dayKey": "legs_a",
+        "maintenance": false
+      },
+      "expected": 30
+    },
+    {
+      "name": "day=legs_a maintenance=true",
+      "input": {
+        "dayKey": "legs_a",
+        "maintenance": true
+      },
+      "expected": 22.5
+    },
+    {
+      "name": "day=legs_b maintenance=false",
+      "input": {
+        "dayKey": "legs_b",
+        "maintenance": false
+      },
+      "expected": 30
+    },
+    {
+      "name": "day=legs_b maintenance=true",
+      "input": {
+        "dayKey": "legs_b",
+        "maintenance": true
+      },
+      "expected": 22.5
+    },
+    {
+      "name": "day=cb_a maintenance=false",
+      "input": {
+        "dayKey": "cb_a",
+        "maintenance": false
+      },
+      "expected": 24
+    },
+    {
+      "name": "day=cb_a maintenance=true",
+      "input": {
+        "dayKey": "cb_a",
+        "maintenance": true
+      },
+      "expected": 18
+    },
+    {
+      "name": "day=cb_b maintenance=false",
+      "input": {
+        "dayKey": "cb_b",
+        "maintenance": false
+      },
+      "expected": 24
+    },
+    {
+      "name": "day=cb_b maintenance=true",
+      "input": {
+        "dayKey": "cb_b",
+        "maintenance": true
+      },
+      "expected": 18
+    },
+    {
+      "name": "day=arms maintenance=false",
+      "input": {
+        "dayKey": "arms",
+        "maintenance": false
+      },
+      "expected": 18
+    },
+    {
+      "name": "day=arms maintenance=true",
+      "input": {
+        "dayKey": "arms",
+        "maintenance": true
+      },
+      "expected": 13.5
+    },
+    {
+      "name": "day=unknown_day maintenance=false",
+      "input": {
+        "dayKey": "unknown_day",
+        "maintenance": false
+      },
+      "expected": 24
+    },
+    {
+      "name": "day=unknown_day maintenance=true",
+      "input": {
+        "dayKey": "unknown_day",
+        "maintenance": true
+      },
+      "expected": 18
+    }
+  ]
+}

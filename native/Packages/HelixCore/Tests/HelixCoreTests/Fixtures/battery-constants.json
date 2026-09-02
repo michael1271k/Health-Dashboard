@@ -1,0 +1,26 @@
+{
+  "module": "scoring/battery",
+  "fn": "BATTERY",
+  "note": "The drain budget must stay strictly under the charge budget. v6 broke exactly this (104.2 against 100) and a leg day floored before bedtime.",
+  "cases": [
+    {
+      "name": "constants",
+      "input": {},
+      "expected": {
+        "floor": 5,
+        "wakeMin": 55,
+        "wakeRange": 45,
+        "timeMax": 35,
+        "activityCap": 12,
+        "workoutMax": 30,
+        "defaultRpe": 0.7,
+        "relMin": 0.6,
+        "relMax": 1.4,
+        "maxAwake": 18,
+        "maxTotalDrain": 77,
+        "maintenanceDrainFactor": 0.75,
+        "maintenanceRelMin": 0.35
+      }
+    }
+  ]
+}

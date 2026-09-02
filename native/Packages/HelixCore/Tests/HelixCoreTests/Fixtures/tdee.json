@@ -1,0 +1,448 @@
+{
+  "module": "nutrition/energy",
+  "fn": "tdeeKcal",
+  "note": "TDEE = BMR + active + TEF. All three required; a null propagates, a zero lies.",
+  "cases": [
+    {
+      "name": "bmr=null active=null intake=null",
+      "input": {
+        "bmr": null,
+        "active": null,
+        "intakeKcal": null
+      },
+      "expected": null
+    },
+    {
+      "name": "bmr=null active=null intake=0",
+      "input": {
+        "bmr": null,
+        "active": null,
+        "intakeKcal": 0
+      },
+      "expected": null
+    },
+    {
+      "name": "bmr=null active=null intake=1900",
+      "input": {
+        "bmr": null,
+        "active": null,
+        "intakeKcal": 1900
+      },
+      "expected": null
+    },
+    {
+      "name": "bmr=null active=null intake=2445",
+      "input": {
+        "bmr": null,
+        "active": null,
+        "intakeKcal": 2445
+      },
+      "expected": null
+    },
+    {
+      "name": "bmr=null active=0 intake=null",
+      "input": {
+        "bmr": null,
+        "active": 0,
+        "intakeKcal": null
+      },
+      "expected": null
+    },
+    {
+      "name": "bmr=null active=0 intake=0",
+      "input": {
+        "bmr": null,
+        "active": 0,
+        "intakeKcal": 0
+      },
+      "expected": null
+    },
+    {
+      "name": "bmr=null active=0 intake=1900",
+      "input": {
+        "bmr": null,
+        "active": 0,
+        "intakeKcal": 1900
+      },
+      "expected": null
+    },
+    {
+      "name": "bmr=null active=0 intake=2445",
+      "input": {
+        "bmr": null,
+        "active": 0,
+        "intakeKcal": 2445
+      },
+      "expected": null
+    },
+    {
+      "name": "bmr=null active=400 intake=null",
+      "input": {
+        "bmr": null,
+        "active": 400,
+        "intakeKcal": null
+      },
+      "expected": null
+    },
+    {
+      "name": "bmr=null active=400 intake=0",
+      "input": {
+        "bmr": null,
+        "active": 400,
+        "intakeKcal": 0
+      },
+      "expected": null
+    },
+    {
+      "name": "bmr=null active=400 intake=1900",
+      "input": {
+        "bmr": null,
+        "active": 400,
+        "intakeKcal": 1900
+      },
+      "expected": null
+    },
+    {
+      "name": "bmr=null active=400 intake=2445",
+      "input": {
+        "bmr": null,
+        "active": 400,
+        "intakeKcal": 2445
+      },
+      "expected": null
+    },
+    {
+      "name": "bmr=null active=890 intake=null",
+      "input": {
+        "bmr": null,
+        "active": 890,
+        "intakeKcal": null
+      },
+      "expected": null
+    },
+    {
+      "name": "bmr=null active=890 intake=0",
+      "input": {
+        "bmr": null,
+        "active": 890,
+        "intakeKcal": 0
+      },
+      "expected": null
+    },
+    {
+      "name": "bmr=null active=890 intake=1900",
+      "input": {
+        "bmr": null,
+        "active": 890,
+        "intakeKcal": 1900
+      },
+      "expected": null
+    },
+    {
+      "name": "bmr=null active=890 intake=2445",
+      "input": {
+        "bmr": null,
+        "active": 890,
+        "intakeKcal": 2445
+      },
+      "expected": null
+    },
+    {
+      "name": "bmr=1500 active=null intake=null",
+      "input": {
+        "bmr": 1500,
+        "active": null,
+        "intakeKcal": null
+      },
+      "expected": null
+    },
+    {
+      "name": "bmr=1500 active=null intake=0",
+      "input": {
+        "bmr": 1500,
+        "active": null,
+        "intakeKcal": 0
+      },
+      "expected": null
+    },
+    {
+      "name": "bmr=1500 active=null intake=1900",
+      "input": {
+        "bmr": 1500,
+        "active": null,
+        "intakeKcal": 1900
+      },
+      "expected": null
+    },
+    {
+      "name": "bmr=1500 active=null intake=2445",
+      "input": {
+        "bmr": 1500,
+        "active": null,
+        "intakeKcal": 2445
+      },
+      "expected": null
+    },
+    {
+      "name": "bmr=1500 active=0 intake=null",
+      "input": {
+        "bmr": 1500,
+        "active": 0,
+        "intakeKcal": null
+      },
+      "expected": null
+    },
+    {
+      "name": "bmr=1500 active=0 intake=0",
+      "input": {
+        "bmr": 1500,
+        "active": 0,
+        "intakeKcal": 0
+      },
+      "expected": 1500
+    },
+    {
+      "name": "bmr=1500 active=0 intake=1900",
+      "input": {
+        "bmr": 1500,
+        "active": 0,
+        "intakeKcal": 1900
+      },
+      "expected": 1699.5
+    },
+    {
+      "name": "bmr=1500 active=0 intake=2445",
+      "input": {
+        "bmr": 1500,
+        "active": 0,
+        "intakeKcal": 2445
+      },
+      "expected": 1756.725
+    },
+    {
+      "name": "bmr=1500 active=400 intake=null",
+      "input": {
+        "bmr": 1500,
+        "active": 400,
+        "intakeKcal": null
+      },
+      "expected": null
+    },
+    {
+      "name": "bmr=1500 active=400 intake=0",
+      "input": {
+        "bmr": 1500,
+        "active": 400,
+        "intakeKcal": 0
+      },
+      "expected": 1900
+    },
+    {
+      "name": "bmr=1500 active=400 intake=1900",
+      "input": {
+        "bmr": 1500,
+        "active": 400,
+        "intakeKcal": 1900
+      },
+      "expected": 2099.5
+    },
+    {
+      "name": "bmr=1500 active=400 intake=2445",
+      "input": {
+        "bmr": 1500,
+        "active": 400,
+        "intakeKcal": 2445
+      },
+      "expected": 2156.725
+    },
+    {
+      "name": "bmr=1500 active=890 intake=null",
+      "input": {
+        "bmr": 1500,
+        "active": 890,
+        "intakeKcal": null
+      },
+      "expected": null
+    },
+    {
+      "name": "bmr=1500 active=890 intake=0",
+      "input": {
+        "bmr": 1500,
+        "active": 890,
+        "intakeKcal": 0
+      },
+      "expected": 2390
+    },
+    {
+      "name": "bmr=1500 active=890 intake=1900",
+      "input": {
+        "bmr": 1500,
+        "active": 890,
+        "intakeKcal": 1900
+      },
+      "expected": 2589.5
+    },
+    {
+      "name": "bmr=1500 active=890 intake=2445",
+      "input": {
+        "bmr": 1500,
+        "active": 890,
+        "intakeKcal": 2445
+      },
+      "expected": 2646.725
+    },
+    {
+      "name": "bmr=1720 active=null intake=null",
+      "input": {
+        "bmr": 1720,
+        "active": null,
+        "intakeKcal": null
+      },
+      "expected": null
+    },
+    {
+      "name": "bmr=1720 active=null intake=0",
+      "input": {
+        "bmr": 1720,
+        "active": null,
+        "intakeKcal": 0
+      },
+      "expected": null
+    },
+    {
+      "name": "bmr=1720 active=null intake=1900",
+      "input": {
+        "bmr": 1720,
+        "active": null,
+        "intakeKcal": 1900
+      },
+      "expected": null
+    },
+    {
+      "name": "bmr=1720 active=null intake=2445",
+      "input": {
+        "bmr": 1720,
+        "active": null,
+        "intakeKcal": 2445
+      },
+      "expected": null
+    },
+    {
+      "name": "bmr=1720 active=0 intake=null",
+      "input": {
+        "bmr": 1720,
+        "active": 0,
+        "intakeKcal": null
+      },
+      "expected": null
+    },
+    {
+      "name": "bmr=1720 active=0 intake=0",
+      "input": {
+        "bmr": 1720,
+        "active": 0,
+        "intakeKcal": 0
+      },
+      "expected": 1720
+    },
+    {
+      "name": "bmr=1720 active=0 intake=1900",
+      "input": {
+        "bmr": 1720,
+        "active": 0,
+        "intakeKcal": 1900
+      },
+      "expected": 1919.5
+    },
+    {
+      "name": "bmr=1720 active=0 intake=2445",
+      "input": {
+        "bmr": 1720,
+        "active": 0,
+        "intakeKcal": 2445
+      },
+      "expected": 1976.725
+    },
+    {
+      "name": "bmr=1720 active=400 intake=null",
+      "input": {
+        "bmr": 1720,
+        "active": 400,
+        "intakeKcal": null
+      },
+      "expected": null
+    },
+    {
+      "name": "bmr=1720 active=400 intake=0",
+      "input": {
+        "bmr": 1720,
+        "active": 400,
+        "intakeKcal": 0
+      },
+      "expected": 2120
+    },
+    {
+      "name": "bmr=1720 active=400 intake=1900",
+      "input": {
+        "bmr": 1720,
+        "active": 400,
+        "intakeKcal": 1900
+      },
+      "expected": 2319.5
+    },
+    {
+      "name": "bmr=1720 active=400 intake=2445",
+      "input": {
+        "bmr": 1720,
+        "active": 400,
+        "intakeKcal": 2445
+      },
+      "expected": 2376.725
+    },
+    {
+      "name": "bmr=1720 active=890 intake=null",
+      "input": {
+        "bmr": 1720,
+        "active": 890,
+        "intakeKcal": null
+      },
+      "expected": null
+    },
+    {
+      "name": "bmr=1720 active=890 intake=0",
+      "input": {
+        "bmr": 1720,
+        "active": 890,
+        "intakeKcal": 0
+      },
+      "expected": 2610
+    },
+    {
+      "name": "bmr=1720 active=890 intake=1900",
+      "input": {
+        "bmr": 1720,
+        "active": 890,
+        "intakeKcal": 1900
+      },
+      "expected": 2809.5
+    },
+    {
+      "name": "bmr=1720 active=890 intake=2445",
+      "input": {
+        "bmr": 1720,
+        "active": 890,
+        "intakeKcal": 2445
+      },
+      "expected": 2866.725
+    },
+    {
+      "name": "regression: a missing component yields null, not a partial total",
+      "input": {
+        "bmr": 1500,
+        "active": null,
+        "intakeKcal": 1900
+      },
+      "expected": null
+    }
+  ]
+}

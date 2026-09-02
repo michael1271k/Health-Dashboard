@@ -1,0 +1,63 @@
+{
+  "module": "nutrition/energy",
+  "fn": "tefKcal",
+  "note": "TEF_FACTOR is 0.105. Null intake gives null — never 0.",
+  "cases": [
+    {
+      "name": "intake=null",
+      "input": {
+        "intakeKcal": null
+      },
+      "expected": null
+    },
+    {
+      "name": "intake=0",
+      "input": {
+        "intakeKcal": 0
+      },
+      "expected": 0
+    },
+    {
+      "name": "intake=1",
+      "input": {
+        "intakeKcal": 1
+      },
+      "expected": 0.105
+    },
+    {
+      "name": "intake=1200",
+      "input": {
+        "intakeKcal": 1200
+      },
+      "expected": 126
+    },
+    {
+      "name": "intake=1900",
+      "input": {
+        "intakeKcal": 1900
+      },
+      "expected": 199.5
+    },
+    {
+      "name": "intake=2445",
+      "input": {
+        "intakeKcal": 2445
+      },
+      "expected": 256.72499999999997
+    },
+    {
+      "name": "intake=3000",
+      "input": {
+        "intakeKcal": 3000
+      },
+      "expected": 315
+    },
+    {
+      "name": "intake=5000.5",
+      "input": {
+        "intakeKcal": 5000.5
+      },
+      "expected": 525.0525
+    }
+  ]
+}
