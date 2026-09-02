@@ -89,11 +89,24 @@ way to lose data silently. Two rules prevent it.
 **1. Sets are events, not rows.**
 
 ```
-set_events(id, session_id, device_id, seq, kind, payload_json, created_at)
+set_events(id, session_id, set_id, device_id, seq, kind, body, created_at, is_synced)
+live_sessions(session_id, owner_device_id, owner_since, claim_seq)
+device_state(row_id, device_id, lamport)
 ```
 
-`kind` is `append` / `amend` / `void`. The set list on screen is a **fold over the
-log**, not a table. An edit appends; a delete appends a tombstone.
+`kind` is `append` / `amend` / `void`, denormalised beside the JSON `body` so SQL
+can filter without decoding a blob. `set_id` is the set an event is *about* —
+many events share one over the life of a set, and it is distinct from the event's
+own id.
+
+The set list on screen is a **fold over the log**, not a table: `workout_sets` is
+a projection, rebuilt by `SetEventFold` inside the same transaction as every
+append, with exactly one writer. An edit appends; a delete appends a tombstone.
+
+`seq` is a Lamport value, stored in `device_state` so it survives relaunch — a
+counter that reset to zero would stamp new events below existing ones and reorder
+the session under the user. The same clock stamps `claim_seq`, so a contested
+pencil resolves by the same total order the fold uses.
 
 Two devices that both UPDATE the same row and merge later drop one write with no
 trace. A fold over a device-scoped append-only log cannot lose a set: its worst
