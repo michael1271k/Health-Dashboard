@@ -1,13 +1,44 @@
 import { test, expect } from '@playwright/test'
 
-// `/auth` has ONE button and no input at all — auth/page.tsx states it outright:
-// "Single-user app: ONE button. There is no email/password form". These tests
-// asserted `getByLabel(/email/i)` against a form that has not existed for a long
-// time, which means the suite was describing an app nobody has shipped.
-test('auth page loads with the single sign-in button', async ({ page }) => {
+// `/auth` is a real email + password form again — and this time it is the form
+// the app ships, not one the suite wished for. The previous "ONE button" flow
+// signed in with NEXT_PUBLIC_DEV_EMAIL / NEXT_PUBLIC_DEV_PASSWORD, which Next
+// inlines into the client bundle, so the account password was readable by anyone
+// who opened the deploy URL. The fields carry the autocomplete tokens iOS
+// Password AutoFill looks for, which is what keeps sign-in one tap.
+test('auth page loads with the sign-in form', async ({ page }) => {
   await page.goto('/auth')
   await expect(page.getByRole('heading', { name: /helix/i })).toBeVisible()
-  await expect(page.getByRole('button', { name: /continue as/i })).toBeVisible()
+  await expect(page.getByLabel(/email/i)).toBeVisible()
+  await expect(page.getByLabel(/password/i)).toBeVisible()
+  await expect(page.getByRole('button', { name: /sign in/i })).toBeVisible()
+})
+
+test('auth fields carry the autofill tokens iOS needs', async ({ page }) => {
+  // Without these exact values the saved credential is never offered, and the
+  // form stops being a one-tap sign-in.
+  await page.goto('/auth')
+  await expect(page.getByLabel(/email/i)).toHaveAttribute('autocomplete', 'username')
+  await expect(page.getByLabel(/password/i)).toHaveAttribute('autocomplete', 'current-password')
+})
+
+test('no credential is baked into the served bundle', async ({ page }) => {
+  /**
+   * The regression that matters. `NEXT_PUBLIC_*` is inlined at build time, so a
+   * reintroduced auto-login would ship the password to every visitor. Assert on
+   * the SERVED JavaScript, not on the source: only the build can prove this.
+   */
+  const scripts: string[] = []
+  page.on('response', async (res) => {
+    if (/\.js(\?|$)/.test(res.url()) && res.status() === 200) {
+      try { scripts.push(await res.text()) } catch { /* streamed away */ }
+    }
+  })
+  await page.goto('/auth')
+  await page.waitForLoadState('networkidle')
+  const all = scripts.join('\n')
+  expect(all).not.toMatch(/NEXT_PUBLIC_DEV_PASSWORD|NEXT_PUBLIC_BYPASS_PASSWORD/)
+  expect(all).not.toMatch(/signInWithPassword\s*\(\s*\{\s*email\s*:\s*["']/)
 })
 
 test('root page redirects to auth or renders dashboard', async ({ page }) => {
@@ -46,9 +77,9 @@ test('unauthenticated / never renders a blank dashboard — AuthGate redirects t
   await page.waitForURL(/\/auth/, { timeout: 60_000 })
   // The dev server compiles /auth on first request, and under the full parallel
   // run several specs ask for it at once — so the redirect lands before the
-  // button's chunk does. Playwright's default 5s assertion timeout is a bet on
+  // form's chunk does. Playwright's default 5s assertion timeout is a bet on
   // compile speed, not on the app; this waits for the page to actually be there.
-  await expect(page.getByRole('button', { name: /continue as/i })).toBeVisible({ timeout: 60_000 })
+  await expect(page.getByRole('button', { name: /sign in/i })).toBeVisible({ timeout: 60_000 })
 })
 
 test('/api/version serves the deploy heartbeat with no-store', async ({ request }) => {

@@ -3,79 +3,126 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
-import { Fingerprint } from 'lucide-react'
+import { Fingerprint, Loader2 } from 'lucide-react'
 import { LaunchSurface } from '@/components/launch/LaunchSurface'
 import { EMBER } from '@/lib/theme/palette'
 
 /**
- * Sign-in. Single-user app: ONE button. There is no email/password form and no
- * password-recovery flow — "Continue as Michael" signs in with the credentials
- * baked into the build and Supabase persists the session in localStorage (+ the
- * native Preferences mirror), so it is only ever needed once per install.
+ * Sign-in. Single-user app, so this is still a one-screen, one-submit flow —
+ * but the credentials now come from the person, not from the build.
  *
- * CREDENTIAL SOURCE — this was the "invalid login credentials" bug. `.env.local`
- * and `.env.example` both document NEXT_PUBLIC_DEV_EMAIL / NEXT_PUBLIC_DEV_PASSWORD,
- * but this page used to read NEXT_PUBLIC_BYPASS_* — a name that exists nowhere in
- * the env files. Locally that resolved to '' (button fell through to the manual
- * form); on Netlify it picked up a stale BYPASS_* pair left over from before the
- * Supabase password was rotated, hence the 400. Both names are read now, DEV_*
- * first, so whichever pair is set in the environment is the one used.
+ * ── WHY THE BAKED-IN PASSWORD HAD TO GO ──────────────────────────────────────
+ * This page used to read NEXT_PUBLIC_DEV_EMAIL / NEXT_PUBLIC_DEV_PASSWORD and
+ * sign in with them behind a single "Continue as Michael" button. `NEXT_PUBLIC_*`
+ * is INLINED INTO THE CLIENT BUNDLE at build time — so the account password was
+ * served, in plain text, to anyone who opened the deploy URL and read the JS.
+ * The browser client uses the anon key and leans on RLS for isolation, which
+ * means those two strings were not a convenience, they were the account.
  *
- * NOTE: the password ships in the client bundle (NEXT_PUBLIC_*), so it is readable
- * by anyone with the deploy URL — treat the URL as sensitive.
+ * A form is not a downgrade in UX here. The app already ships
+ * `/.well-known/apple-app-site-association` with `webcredentials`, and the two
+ * fields below carry the autocomplete tokens iOS looks for, so Password AutoFill
+ * offers the saved credential as a single tap — the same one-tap sign-in, with
+ * nothing secret in the bundle. Supabase then persists the session (localStorage
+ * plus the native Preferences mirror), so this screen is only ever seen once per
+ * install anyway.
  *
- * Both literals must be written out in full: Next.js only inlines
- * `process.env.NEXT_PUBLIC_X` as a static member expression, never a computed one.
+ * Nothing here reads `process.env`. That is the point; keep it that way.
  */
-const AUTO_EMAIL =
-  process.env.NEXT_PUBLIC_DEV_EMAIL || process.env.NEXT_PUBLIC_BYPASS_EMAIL || ''
-const AUTO_PASSWORD =
-  process.env.NEXT_PUBLIC_DEV_PASSWORD || process.env.NEXT_PUBLIC_BYPASS_PASSWORD || ''
-const HAS_AUTO = Boolean(AUTO_EMAIL && AUTO_PASSWORD)
-
 export default function AuthPage() {
   const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function handleContinue() {
-    if (!HAS_AUTO) {
-      setError('No credentials in this build — set NEXT_PUBLIC_DEV_EMAIL and NEXT_PUBLIC_DEV_PASSWORD, then redeploy.')
-      return
-    }
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    if (!email || !password || loading) return
+
     setLoading(true)
     setError(null)
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email: AUTO_EMAIL,
-      password: AUTO_PASSWORD,
-    })
+
+    const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+
     if (authError) {
-      // The one failure that is always a config problem, not a code one: the
-      // Supabase password was rotated but the env var still holds the old value.
       setError(/invalid login credentials/i.test(authError.message)
-        ? 'Supabase rejected the baked-in password — update NEXT_PUBLIC_DEV_PASSWORD to the current one and redeploy.'
+        ? 'That email and password did not match.'
         : authError.message)
       setLoading(false)
       return
     }
+
     router.push('/')
     router.refresh()
   }
 
+  const canSubmit = Boolean(email && password) && !loading
+
   return (
     <LaunchSurface>
-      <div className="rounded-2xl border border-white/[0.08] bg-white/[0.04] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.55)] space-y-5">
+      {/* A real <form> with a submit button: this is what lets iOS offer to SAVE
+          the credential after a successful sign-in, and to AutoFill it next
+          time. A div with an onClick gets neither. */}
+      <form
+        onSubmit={handleSubmit}
+        className="rounded-2xl border border-white/[0.08] bg-white/[0.04] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.55)] space-y-4"
+      >
+        <div className="space-y-3">
+          <label className="block">
+            <span className="sr-only">Email</span>
+            <input
+              type="email"
+              name="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="username"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              inputMode="email"
+              required
+              placeholder="Email"
+              aria-label="Email"
+              /* No text-size utility: `globals.css` sets an unlayered 16px floor
+                 on form controls, and anything under it makes iOS zoom the page
+                 on focus and never zoom back. See src/tests/no-input-zoom.test.ts. */
+              className="w-full min-h-[52px] rounded-xl px-4 text-text placeholder:text-muted/70
+                         border border-white/[0.08] bg-white/[0.03]
+                         focus:outline-none focus:border-white/20 focus:bg-white/[0.05]"
+            />
+          </label>
+
+          <label className="block">
+            <span className="sr-only">Password</span>
+            <input
+              type="password"
+              name="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+              required
+              placeholder="Password"
+              aria-label="Password"
+              className="w-full min-h-[52px] rounded-xl px-4 text-text placeholder:text-muted/70
+                         border border-white/[0.08] bg-white/[0.03]
+                         focus:outline-none focus:border-white/20 focus:bg-white/[0.05]"
+            />
+          </label>
+        </div>
+
         <button
-          type="button"
-          onClick={handleContinue}
-          disabled={loading}
+          type="submit"
+          disabled={!canSubmit}
           className="w-full min-h-[52px] rounded-xl font-bold text-sm flex items-center justify-center gap-2
                      text-white transition-transform active:scale-[0.98] disabled:opacity-60
                      shadow-[0_10px_30px_rgba(224,112,60,0.35)]"
           style={{ background: `linear-gradient(135deg, ${EMBER} 0%, #C8542A 100%)` }}
         >
-          <Fingerprint className="w-4 h-4" aria-hidden="true" />
-          {loading ? 'Signing in…' : 'Continue as Michael'}
+          {loading
+            ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+            : <Fingerprint className="w-4 h-4" aria-hidden="true" />}
+          {loading ? 'Signing in…' : 'Sign in'}
         </button>
 
         {error && (
@@ -84,9 +131,9 @@ export default function AuthPage() {
 
         {/* Standalone-PWA reassurance: this container keeps its own session. */}
         <p className="text-[11px] text-muted/80 text-center leading-relaxed">
-          You stay signed in on this device — one tap and HELIX remembers you here.
+          You stay signed in on this device — sign in once and HELIX remembers you here.
         </p>
-      </div>
+      </form>
     </LaunchSurface>
   )
 }
