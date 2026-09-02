@@ -22,7 +22,7 @@ extension AppDatabase {
         ) {
             return existing
         }
-        let fresh = UUID().uuidString
+        let fresh = newHelixID()
         try db.execute(
             sql: "INSERT INTO device_state (row_id, device_id, lamport) VALUES ('local', ?, 0)",
             arguments: [fresh]
@@ -40,9 +40,16 @@ extension AppDatabase {
     static func tickClock(_ db: Database) throws -> Int64 {
         _ = try deviceId(db)   // ensures the row exists
         try db.execute(sql: "UPDATE device_state SET lamport = lamport + 1 WHERE row_id = 'local'")
-        return try Int64.fetchOne(
+        guard let stamp = try Int64.fetchOne(
             db, sql: "SELECT lamport FROM device_state WHERE row_id = 'local'"
-        ) ?? 1
+        ) else {
+            // Defaulting to 1 here would hand out a stamp that has almost
+            // certainly been used already, silently collapsing two causally
+            // ordered events onto the fold's tiebreak. A missing device_state
+            // row is not a recoverable condition; it is a corrupt store.
+            throw EventStoreError.clockUnavailable
+        }
+        return stamp
     }
 
     /// Take account of an event produced elsewhere. Never decreases.
@@ -76,7 +83,7 @@ extension AppDatabase {
     @discardableResult
     public func appendSet(
         sessionId: String,
-        setId: String = UUID().uuidString,
+        setId: String = newHelixID(),
         _ snapshot: SetSnapshot
     ) throws -> SetEvent {
         try record(sessionId: sessionId, setId: setId, body: .append(snapshot))
@@ -138,7 +145,7 @@ extension AppDatabase {
 
         var item = OutboxItem(
             kind: "set_event.\(event.kind.rawValue)",
-            payload: try JSONEncoder().encode(event),
+            payload: try HelixJSON.encoder.encode(event),
             // Events are immutable and uniquely identified, so the key is the
             // event itself. That makes a retry a true no-op — unlike the
             // row-upsert scheme it replaces, where a retry had to guess whether
@@ -165,7 +172,7 @@ extension AppDatabase {
         guard !events.isEmpty else { return }
         try writer.write { db in
             var touched: Set<String> = []
-            for event in events {
+            for event in events.map(\.normalisedIdentity) {
                 try Self.observeClock(db, event.seq)
                 let known = try SetEvent
                     .filter(SetEvent.Columns.id == event.id)
@@ -240,8 +247,11 @@ extension AppDatabase {
             arguments: [sessionId]
         )
 
-        for var set in SetEventFold.sets(from: events, sessionId: sessionId) {
+        for (order, var set) in SetEventFold.sets(from: events, sessionId: sessionId).enumerated() {
             set.isPendingSync = unsyncedSetIds.contains(set.id)
+            // The fold's own position, carried into the table so `observeSets`
+            // can reproduce its order rather than leaning on rowid.
+            set.foldOrder = order
             try set.insert(db)
         }
     }
@@ -261,6 +271,37 @@ extension AppDatabase {
 public enum EventStoreError: Error, Equatable, Sendable {
     /// An amend that changes nothing. Rejected so the log stays meaningful.
     case emptyPatch
+    /// `device_state` is missing or unreadable. The store cannot stamp an event
+    /// without it, and guessing a stamp reorders history.
+    case clockUnavailable
+    /// An outbox acknowledgement whose event this store cannot resolve. Deleting
+    /// the queue row anyway would strand the set as permanently "pending".
+    case unresolvableAck(String)
     /// Another device holds the pencil for this session.
     case notSessionOwner(owner: String)
+}
+
+
+// MARK: - Identity normalisation
+
+extension SetEvent {
+    /// Lowercase the ids, at the one boundary where a foreign id enters.
+    ///
+    /// Postgres renders `uuid` lowercase and `UUID().uuidString` is uppercase,
+    /// so an event that has been to the server and back arrives under a
+    /// different string. `ingest`'s de-duplication is a case-sensitive compare,
+    /// so without this the event inserts a second time, the fold sees two
+    /// appends with different `setId`s, and the set appears twice — with a
+    /// tombstone for one casing failing to suppress the other.
+    var normalisedIdentity: SetEvent {
+        SetEvent(
+            id: id.lowercased(),
+            sessionId: sessionId.lowercased(),
+            setId: setId.lowercased(),
+            deviceId: deviceId,
+            seq: seq,
+            createdAt: createdAt,
+            body: body
+        )
+    }
 }

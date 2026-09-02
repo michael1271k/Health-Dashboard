@@ -34,6 +34,42 @@ public struct SetEvent: Codable, Identifiable, Sendable, Equatable {
         case amend(SetPatch)
         /// The set was deleted. Terminal: nothing resurrects a voided set.
         case void
+
+        // ── THE WIRE SHAPE IS OURS, NOT THE COMPILER'S ──────────────────────
+        // Synthesised `Codable` on an enum with associated values emits
+        // `{"append":{"_0":{...}}}` — a private encoding keyed by declaration
+        // order. Rename a case or reorder an associated value and every row
+        // already on disk fails to decode. These rows outlive the build that
+        // wrote them, and on a phone-plus-watch system one side routinely runs
+        // an older build, so the format has to be something we control.
+        private enum CodingKeys: String, CodingKey {
+            case kind
+            case payload
+        }
+
+        public init(from decoder: any Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            let kind = try container.decode(Kind.self, forKey: .kind)
+            switch kind {
+            case .append: self = .append(try container.decode(SetSnapshot.self, forKey: .payload))
+            case .amend: self = .amend(try container.decode(SetPatch.self, forKey: .payload))
+            case .void: self = .void
+            }
+        }
+
+        public func encode(to encoder: any Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            switch self {
+            case .append(let snapshot):
+                try container.encode(Kind.append, forKey: .kind)
+                try container.encode(snapshot, forKey: .payload)
+            case .amend(let patch):
+                try container.encode(Kind.amend, forKey: .kind)
+                try container.encode(patch, forKey: .payload)
+            case .void:
+                try container.encode(Kind.void, forKey: .kind)
+            }
+        }
     }
 
     /// A stable, short discriminator for the persisted row.
@@ -49,19 +85,19 @@ public struct SetEvent: Codable, Identifiable, Sendable, Equatable {
     /// This event's own identity. Two devices never generate the same one, so
     /// the union of two logs is just a union — no de-duplication pass, and a
     /// replayed delivery is idempotent by construction.
-    public var id: String
+    public let id: String
 
-    public var sessionId: String
+    public let sessionId: String
 
     /// The set this event is *about*. `.append` brings it into being; `.amend`
     /// and `.void` refer back to it. Not the event's own id — many events share
     /// one `setId` over the life of a set.
-    public var setId: String
+    public let setId: String
 
     /// Which device produced this. Also the deterministic tiebreaker in the
     /// total order, so both devices fold an identical log into an identical
     /// list.
-    public var deviceId: String
+    public let deviceId: String
 
     /// A **Lamport clock**, not a timestamp.
     ///
@@ -72,12 +108,12 @@ public struct SetEvent: Codable, Identifiable, Sendable, Equatable {
     /// advances — locally on each event, and to `max(local, seen) + 1` whenever
     /// a remote event arrives — so it encodes causality exactly and never needs
     /// the two devices' clocks to agree about anything.
-    public var seq: Int64
+    public let seq: Int64
 
     /// Wall-clock time. **For display only.** Never sort by this.
-    public var createdAt: Date
+    public let createdAt: Date
 
-    public var body: Body
+    public let body: Body
 
     public var kind: Kind {
         switch body {
@@ -87,8 +123,18 @@ public struct SetEvent: Codable, Identifiable, Sendable, Equatable {
         }
     }
 
+    public enum CodingKeys: String, CodingKey {
+        case id
+        case sessionId = "session_id"
+        case setId = "set_id"
+        case deviceId = "device_id"
+        case seq
+        case createdAt = "created_at"
+        case body
+    }
+
     public init(
-        id: String = UUID().uuidString,
+        id: String = newHelixID(),
         sessionId: String,
         setId: String,
         deviceId: String,
@@ -114,6 +160,17 @@ public struct SetEvent: Codable, Identifiable, Sendable, Equatable {
 /// header already carries. Field-for-field with Postgres, so the projection is
 /// an assignment rather than a translation.
 public struct SetSnapshot: Codable, Sendable, Equatable {
+    public enum CodingKeys: String, CodingKey {
+        case exerciseId = "exercise_id"
+        case setIndex = "set_index"
+        case weightKg = "weight_kg"
+        case reps
+        case setType = "set_type"
+        case side
+        case pairId = "pair_id"
+        case est1rmKg = "est_1rm_kg"
+    }
+
     public var exerciseId: String
     public var setIndex: Int
     /// Kilograms. **Zero is a real, valid load** — a bodyweight set. Never
@@ -164,6 +221,16 @@ public struct SetSnapshot: Codable, Sendable, Equatable {
 /// that no other part of the system has a name for. Void the pair and append the
 /// replacement instead: two events, one honest history.
 public struct SetPatch: Codable, Sendable, Equatable {
+    public enum CodingKeys: String, CodingKey {
+        case setIndex = "set_index"
+        case weightKg = "weight_kg"
+        case reps
+        case setType = "set_type"
+        case side
+        case pairId = "pair_id"
+        case est1rmKg = "est_1rm_kg"
+    }
+
     public var setIndex: Int?
     public var weightKg: Double?
     public var reps: Int?

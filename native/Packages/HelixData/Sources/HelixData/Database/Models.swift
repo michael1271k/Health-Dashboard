@@ -3,12 +3,30 @@ import GRDB
 
 /// The Wave 1 local schema — only what the Live Logger needs.
 ///
-/// ── THESE MIRROR SUPABASE, THEY DO NOT REDEFINE IT ──────────────────────────
-/// Supabase remains the schema-of-record. Column names here match the Postgres
-/// ones exactly (snake_case, via `CodingKeys`) so a row can be decoded straight
-/// from PostgREST and inserted locally without a translation layer in between —
-/// a translation layer being one more place for `day_key` to quietly become
-/// `dayKey` and then `splitDay`.
+/// ── THESE DO NOT YET MATCH SUPABASE. READ THIS BEFORE WRITING THE SYNC. ─────
+/// An earlier version of this comment claimed the columns matched Postgres
+/// exactly and that a PostgREST row could be inserted here with no translation.
+/// That was never true. Introspected against the live database on 2026-09-02:
+///
+///   · `workout_sets` — ours says `set_index`, Postgres says **`set_number`**.
+///     Postgres also has `user_id` (NOT NULL), `created_at` (NOT NULL),
+///     `exercise_order`, `rpe`, `is_pr` and `quality`, none of which are here.
+///   · `workout_sessions` — our `date` column **does not exist** server-side
+///     (there is `started_at` and `day_key`). Postgres requires `split_day`,
+///     `status` and `migrated_from_notion`, all NOT NULL and all absent here.
+///   · `exercises` — shares only `id` and `name`. Ours invents
+///     `primary_muscle`, `secondary_muscles`, `equipment`, `is_unilateral` and
+///     `is_bodyweight`; Postgres has `user_id`, `split_day`, `muscle_groups`
+///     (a text array) and `is_compound`.
+///   · `set_events`, `live_sessions` and `device_state` are **local only** and
+///     have no server-side counterpart yet.
+///
+/// So a translation layer IS required, and writing it is the first task of the
+/// sync work. Until then nothing in this package talks to PostgREST, and the
+/// outbox accumulates `set_event.*` items that currently have no destination.
+///
+/// Supabase remains the schema-of-record. Where a name here does match, it
+/// matches deliberately and must not drift.
 ///
 /// Every field that is nullable in Postgres is `Optional` here. Nothing is
 /// defaulted to zero on the way in: the domain distinguishes "absent" from
@@ -137,6 +155,10 @@ public struct WorkoutSet: Codable, FetchableRecord, PersistableRecord, Identifia
     /// unloaded set is a legacy artefact and not an estimate.
     public var est1rmKg: Double?
     public var isPendingSync: Bool
+    /// The fold's arrival position, so a read can reproduce the fold's order
+    /// even when two devices claim the same `setIndex`. Local only — derived
+    /// data, never sent to Postgres.
+    public var foldOrder: Int
 
     public enum CodingKeys: String, CodingKey {
         case id
@@ -150,13 +172,14 @@ public struct WorkoutSet: Codable, FetchableRecord, PersistableRecord, Identifia
         case pairId = "pair_id"
         case est1rmKg = "est_1rm_kg"
         case isPendingSync = "is_pending_sync"
+        case foldOrder = "fold_order"
     }
 
     public init(
         id: String, sessionId: String, exerciseId: String, setIndex: Int,
         weightKg: Double, reps: Int, setType: String = "normal",
         side: String? = nil, pairId: String? = nil, est1rmKg: Double? = nil,
-        isPendingSync: Bool = false
+        isPendingSync: Bool = false, foldOrder: Int = 0
     ) {
         self.id = id
         self.sessionId = sessionId
@@ -169,6 +192,7 @@ public struct WorkoutSet: Codable, FetchableRecord, PersistableRecord, Identifia
         self.pairId = pairId
         self.est1rmKg = est1rmKg
         self.isPendingSync = isPendingSync
+        self.foldOrder = foldOrder
     }
 }
 

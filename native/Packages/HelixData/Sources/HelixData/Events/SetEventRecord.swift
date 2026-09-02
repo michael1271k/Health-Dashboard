@@ -26,7 +26,10 @@ extension SetEvent: FetchableRecord, PersistableRecord {
     }
 
     public init(row: Row) throws {
-        let blob: Data = row["body"]
+        // Stored as TEXT, not BLOB: `json_extract` cannot read a BLOB, so a
+        // repair query or a look at the row in a SQLite browser becomes
+        // impossible for no gain.
+        let blob = Data((row["body"] as String).utf8)
         self.init(
             id: row["id"],
             sessionId: row["session_id"],
@@ -34,7 +37,7 @@ extension SetEvent: FetchableRecord, PersistableRecord {
             deviceId: row["device_id"],
             seq: row["seq"],
             createdAt: row["created_at"],
-            body: try JSONDecoder().decode(Body.self, from: blob)
+            body: try HelixJSON.decoder.decode(Body.self, from: blob)
         )
     }
 
@@ -45,7 +48,7 @@ extension SetEvent: FetchableRecord, PersistableRecord {
         container["device_id"] = deviceId
         container["seq"] = seq
         container["kind"] = kind.rawValue
-        container["body"] = try JSONEncoder().encode(body)
+        container["body"] = String(decoding: try HelixJSON.encoder.encode(body), as: UTF8.self)
         container["created_at"] = createdAt
         // `is_synced` is deliberately absent. It is this device's bookkeeping —
         // whether the fact has reached the server — not something the fact

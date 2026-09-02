@@ -142,11 +142,18 @@ struct AppDatabaseTests {
         #expect(remaining == 0, "foreign keys must be on, or orphan sets accumulate")
     }
 
-    @Test("column names match Postgres exactly")
-    func columnNamesMatchPostgres() throws {
-        // A row decoded from PostgREST is inserted here without translation, so
-        // a camelCase slip does not fail loudly — it fails as a NULL column and
-        // a missing number on a screen.
+    @Test("the local schema is snake_case throughout")
+    func localSchemaIsSnakeCase() throws {
+        // ── THIS DOES NOT CHECK POSTGRES, AND ITS OLD NAME SAID IT DID ──────
+        // It was called `columnNamesMatchPostgres` and asserted that the local
+        // schema contains `set_index` and does not contain `weightKg` — a
+        // comparison of the local schema with itself, which passes forever
+        // regardless of server-side drift. Postgres actually calls that column
+        // `set_number`; see the header of `Models.swift` for the full diff.
+        //
+        // A real parity test has to fetch the PostgREST OpenAPI definition (or
+        // diff a checked-in snapshot of it), and it belongs with the sync layer.
+        // This one now claims only what it can prove.
         let db = try AppDatabase.inMemory()
         let columns = try db.writer.read { conn in
             try conn.columns(in: "workout_sets").map(\.name)

@@ -111,6 +111,7 @@ struct LiveSessionOwnerTests {
         let claim = try watch.claimPencil(sessionId: "s1", force: true)
         #expect(claim.ownerDeviceId == "watch")
         #expect(claim.claimSeq > 5, "a takeover must supersede what it replaces")
+        #expect(claim.isTakeover, "someone pressed a button; the wire must say so")
 
         try watch.appendSet(sessionId: "s1", setId: "w1", snapshot(1))
         #expect(try watch.setEvents(sessionId: "s1").count == 1)
@@ -196,10 +197,65 @@ struct LiveSessionOwnerTests {
         #expect(try db.sessionOwner(sessionId: "s1") == nil)
     }
 
+    @Test("an implicit remote claim cannot take the pencil off a device mid-set")
+    func implicitClaimCannotStealFromAnActiveDevice() throws {
+        // The phone is logging. The watch is out of range, its Lamport clock has
+        // run ahead, and its own first append auto-claims at a higher stamp.
+        // That claim must NOT yank the pencil out of the phone's hand.
+        let phone = try seeded(deviceId: "phone")
+        try phone.appendSet(sessionId: "s1", setId: "a", snapshot(1))
+        let mine = try #require(try phone.sessionOwner(sessionId: "s1"))
+
+        try phone.ingestOwnership(LiveSessionOwner(
+            sessionId: "s1", ownerDeviceId: "watch",
+            claimSeq: mine.claimSeq + 20, isTakeover: false
+        ))
+
+        #expect(try phone.sessionOwner(sessionId: "s1")?.ownerDeviceId == "phone")
+        // And the phone can still log, which is the whole point.
+        try phone.appendSet(sessionId: "s1", setId: "b", snapshot(2))
+        #expect(try phone.setEvents(sessionId: "s1").count == 2)
+    }
+
+    @Test("a deliberate takeover wins even against an actively logging device")
+    func explicitTakeoverAlwaysWins() throws {
+        // Someone pressed Log here. That is an instruction, not a race.
+        let phone = try seeded(deviceId: "phone")
+        try phone.appendSet(sessionId: "s1", setId: "a", snapshot(1))
+        let mine = try #require(try phone.sessionOwner(sessionId: "s1"))
+
+        try phone.ingestOwnership(LiveSessionOwner(
+            sessionId: "s1", ownerDeviceId: "watch",
+            claimSeq: mine.claimSeq + 1, isTakeover: true
+        ))
+
+        #expect(try phone.sessionOwner(sessionId: "s1")?.ownerDeviceId == "watch")
+        #expect(throws: EventStoreError.notSessionOwner(owner: "watch")) {
+            try phone.appendSet(sessionId: "s1", setId: "b", snapshot(2))
+        }
+    }
+
+    @Test("an implicit claim DOES apply when this device has nothing unsynced")
+    func implicitClaimAppliesWhenIdle() throws {
+        // The guard is about protecting work in progress, not about pinning the
+        // pencil forever. A device with no pending events is not mid-set.
+        let phone = try seeded(deviceId: "phone")
+        try phone.claimPencil(sessionId: "s1")
+        let mine = try #require(try phone.sessionOwner(sessionId: "s1"))
+
+        try phone.ingestOwnership(LiveSessionOwner(
+            sessionId: "s1", ownerDeviceId: "watch",
+            claimSeq: mine.claimSeq + 1, isTakeover: false
+        ))
+        #expect(try phone.sessionOwner(sessionId: "s1")?.ownerDeviceId == "watch")
+    }
+
     @Test("pencil columns are snake_case")
     func columnNames() throws {
         let db = try AppDatabase.inMemory()
         let columns = try db.writer.read { try $0.columns(in: "live_sessions").map(\.name) }
-        #expect(columns == ["session_id", "owner_device_id", "owner_since", "claim_seq"])
+        #expect(columns == [
+            "session_id", "owner_device_id", "owner_since", "claim_seq", "is_takeover",
+        ])
     }
 }

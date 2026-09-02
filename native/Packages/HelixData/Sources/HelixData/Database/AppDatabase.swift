@@ -16,7 +16,15 @@ import GRDB
 /// serialising, and the 24 `localStorage` keys. None of that is architecture; it
 /// is all working around the browser not having a database.
 public final class AppDatabase: Sendable {
-    public let writer: any DatabaseWriter
+    /// Deliberately not `public`.
+    ///
+    /// A caller holding the writer can insert straight into `workout_sets`. It
+    /// compiles, it looks right, and the next append deletes it — `reproject`
+    /// rebuilds the table from the log. Exposing it would make the whole
+    /// event-sourcing discipline a convention with no enforcement, on the one
+    /// property every new target reaches for first. `@testable import` gives
+    /// the tests what they need without it.
+    let writer: any DatabaseWriter
 
     public init(_ writer: any DatabaseWriter) throws {
         self.writer = writer
@@ -81,9 +89,16 @@ public final class AppDatabase: Sendable {
     static var migrator: DatabaseMigrator {
         var migrator = DatabaseMigrator()
 
-        #if DEBUG
-        // In development a schema change wipes and rebuilds rather than
-        // requiring a new migration for every experiment. Never in release.
+        #if DEBUG && targetEnvironment(simulator)
+        // In the simulator a schema change wipes and rebuilds rather than
+        // requiring a new migration for every experiment.
+        //
+        // ── SIMULATOR, NOT `DEBUG` ──────────────────────────────────────────
+        // This project signs with a free Apple team, so the build running on
+        // the phone IS a Debug build. Gated on `DEBUG` alone, adding a column
+        // would wipe SQLite on the device — including the `outbox`, whose own
+        // doc comment says finishing a workout is the one action that must
+        // never be lost. It would take every unsynced set with it, silently.
         migrator.eraseDatabaseOnSchemaChange = true
         #endif
 
@@ -225,6 +240,71 @@ public final class AppDatabase: Sendable {
             }
         }
 
+        // ── v4 ──────────────────────────────────────────────────────────────
+        // Three corrections, all found by review before any real data existed.
+        migrator.registerMigration("v4.projectionCannotVetoTheLog") { db in
+            // (a) `workout_sets.exercise_id` had a foreign key to `exercises`.
+            //     That let a DERIVED table reject a fact: a set logged on the
+            //     watch against an exercise this device has not synced would
+            //     fail the projection insert, roll back the transaction, and
+            //     take the whole ingest batch with it. The log is the source of
+            //     truth and nothing downstream of it may refuse it.
+            //
+            // (b) `fold_order` carries the fold's arrival tiebreak. Without it
+            //     `ORDER BY set_index` relied on rowid order matching insertion
+            //     order — true today, but unspecified, and the one case the
+            //     fold deliberately allows (two devices claiming the same
+            //     set_index) is exactly where it would diverge between phone
+            //     and watch.
+            try db.create(table: "workout_sets_new") { t in
+                t.primaryKey("id", .text)
+                t.column("session_id", .text).notNull()
+                    .references("workout_sessions", onDelete: .cascade)
+                t.column("exercise_id", .text).notNull()
+                t.column("set_index", .integer).notNull()
+                t.column("weight_kg", .double).notNull()
+                t.column("reps", .integer).notNull()
+                t.column("set_type", .text).notNull().defaults(to: "normal")
+                t.column("side", .text)
+                t.column("pair_id", .text)
+                t.column("est_1rm_kg", .double)
+                t.column("is_pending_sync", .boolean).notNull().defaults(to: false)
+                t.column("fold_order", .integer).notNull().defaults(to: 0)
+            }
+            try db.execute(sql: """
+                INSERT INTO workout_sets_new
+                    (id, session_id, exercise_id, set_index, weight_kg, reps,
+                     set_type, side, pair_id, est_1rm_kg, is_pending_sync, fold_order)
+                SELECT id, session_id, exercise_id, set_index, weight_kg, reps,
+                       set_type, side, pair_id, est_1rm_kg, is_pending_sync, 0
+                FROM workout_sets
+                """)
+            try db.drop(table: "workout_sets")
+            try db.rename(table: "workout_sets_new", to: "workout_sets")
+            try db.create(
+                index: "idx_sets_session_order",
+                on: "workout_sets",
+                columns: ["session_id", "set_index", "fold_order"]
+            )
+
+            // (c) `idx_events_set` indexed `set_id` alone and no query used it —
+            //     write cost on every append for nothing.
+            try db.drop(index: "idx_events_set")
+        }
+
+        // ── v5 ──────────────────────────────────────────────────────────────
+        // A claim now records whether it was a deliberate takeover or the
+        // implicit one that happens when a device starts logging. Without the
+        // distinction, `ingestOwnership` applied any superseding claim — so a
+        // watch whose Lamport clock had run ahead could silently take the
+        // pencil off a phone mid-set, purely by starting to log while out of
+        // range. See `LiveSessionOwner.ingestOwnership`.
+        migrator.registerMigration("v5.explicitTakeover") { db in
+            try db.alter(table: "live_sessions") { t in
+                t.add(column: "is_takeover", .boolean).notNull().defaults(to: false)
+            }
+        }
+
         return migrator
     }
 }
@@ -251,7 +331,11 @@ extension AppDatabase {
         ValueObservation.tracking { db in
             try WorkoutSet
                 .filter(Column("session_id") == sessionId)
-                .order(Column("set_index"))
+                // `fold_order` is the fold's arrival tiebreak, carried into the
+                // table so two devices render a duplicated set_index in the
+                // same order. Sorting on set_index alone leaned on rowid order,
+                // which SQLite does not promise.
+                .order(Column("set_index"), Column("fold_order"))
                 .fetchAll(db)
         }
     }
@@ -266,15 +350,59 @@ extension AppDatabase {
 // MARK: - Writes
 
 extension AppDatabase {
-    /// The queue, oldest first. `inFlight` items are excluded so two workers
-    /// cannot pick up the same write.
+    /// The queue, oldest first. Read-only — it does NOT reserve anything, so two
+    /// workers calling this both get the same rows. Use `claimOutbox` to drain.
+    ///
+    /// Ordered by `rowid`, not `created_at`. `SetEvent` spends a dozen lines
+    /// explaining that wall clocks step backwards under NTP and must never be
+    /// sorted by, and then this queue — which decides the order facts reach the
+    /// server — was sorting by `Date()`. `rowid` is insertion order and cannot
+    /// invert among rows that both still exist.
     public func pendingOutbox(limit: Int = 50) throws -> [OutboxItem] {
         try writer.read { db in
             try OutboxItem
                 .filter(Column("status") != OutboxItem.Status.inFlight.rawValue)
-                .order(Column("created_at"))
+                .order(Column("rowid"))
                 .limit(limit)
                 .fetchAll(db)
+        }
+    }
+
+    /// Reserve a batch for one worker, marking it `inFlight` in the same
+    /// transaction as the read.
+    ///
+    /// `inFlight` existed as an enum case and a filter, and nothing ever set it
+    /// — so the "two workers cannot pick up the same write" the old comment
+    /// promised was not implemented. A foreground flush and a background task
+    /// firing together both got the same 50 rows and both uploaded them.
+    public func claimOutbox(limit: Int = 50) throws -> [OutboxItem] {
+        try writer.write { db in
+            let batch = try OutboxItem
+                .filter(Column("status") != OutboxItem.Status.inFlight.rawValue)
+                .order(Column("rowid"))
+                .limit(limit)
+                .fetchAll(db)
+            for var item in batch {
+                item.status = .inFlight
+                try item.update(db)
+            }
+            return batch
+        }
+    }
+
+    /// Return abandoned reservations to the queue.
+    ///
+    /// Call at launch. A process killed mid-flight — which iOS does routinely —
+    /// leaves rows marked `inFlight` with no worker, and without this sweep they
+    /// are stranded forever: excluded from every future batch, never retried,
+    /// never surfaced.
+    @discardableResult
+    public func resetInFlight() throws -> Int {
+        try writer.write { db in
+            try db.execute(
+                sql: "UPDATE outbox SET status = 'pending' WHERE status = 'in_flight'"
+            )
+            return db.changesCount
         }
     }
 
@@ -288,19 +416,29 @@ extension AppDatabase {
         try writer.write { db in
             guard let item = try OutboxItem.fetchOne(db, key: id) else { return }
 
-            if item.kind.hasPrefix("set_event."),
-               let eventId = item.idempotencyKey.split(separator: ":", maxSplits: 1).last {
-                try db.execute(
-                    sql: "UPDATE set_events SET is_synced = 1 WHERE id = ?",
-                    arguments: [String(eventId)]
-                )
-                if let sessionId = try String.fetchOne(
+            if item.kind.hasPrefix("set_event.") {
+                let parts = item.idempotencyKey.split(separator: ":", maxSplits: 1)
+                guard parts.count == 2 else { throw EventStoreError.unresolvableAck(item.idempotencyKey) }
+                let eventId = String(parts[1])
+
+                guard let sessionId = try String.fetchOne(
                     db,
                     sql: "SELECT session_id FROM set_events WHERE id = ?",
-                    arguments: [String(eventId)]
-                ) {
-                    try Self.reproject(sessionId: sessionId, in: db)
+                    arguments: [eventId]
+                ) else {
+                    // The ack names an event this store does not have. Deleting
+                    // the queue row anyway would strand the set: `is_synced`
+                    // stays 0, the projection keeps reporting it pending, and
+                    // nothing is left in the queue to ever clear it — a
+                    // permanent "queued" badge on a set that is on the server.
+                    throw EventStoreError.unresolvableAck(item.idempotencyKey)
                 }
+
+                try db.execute(
+                    sql: "UPDATE set_events SET is_synced = 1 WHERE id = ?",
+                    arguments: [eventId]
+                )
+                try Self.reproject(sessionId: sessionId, in: db)
             }
 
             _ = try OutboxItem.deleteOne(db, key: id)

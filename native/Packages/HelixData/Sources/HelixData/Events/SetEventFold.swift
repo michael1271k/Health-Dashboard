@@ -123,38 +123,11 @@ public enum SetEventFold {
     }
 }
 
-// MARK: - The Lamport clock
-
-/// A logical clock. Monotone, skew-free, and the reason the fold is
-/// deterministic across two devices.
-///
-/// It answers one question — "did A happen before B, or were they concurrent?" —
-/// which is the only question the merge needs and the one a wall clock cannot
-/// answer between a watch and a phone. `tick()` stamps a local event;
-/// `observe(_:)` folds in what a remote event knew, so a device that has seen
-/// the other's work always stamps higher than it.
-///
-/// Not thread-safe by itself. `AppDatabase` advances it inside the same write
-/// transaction as the event it stamps, which is what makes the pair atomic.
-public struct LamportClock: Sendable, Equatable {
-    public private(set) var value: Int64
-
-    public init(value: Int64 = 0) {
-        self.value = value
-    }
-
-    /// Stamp a locally-produced event.
-    public mutating func tick() -> Int64 {
-        value += 1
-        return value
-    }
-
-    /// Take account of an event produced elsewhere.
-    ///
-    /// `max(local, remote)` — never a decrease. A clock that could go backwards
-    /// would let a device re-stamp an old event above a newer one and reorder
-    /// history under the user.
-    public mutating func observe(_ remote: Int64) {
-        value = max(value, remote)
-    }
-}
+// The Lamport clock deliberately has no Swift type.
+//
+// There was a `LamportClock` struct here. It was never called: `AppDatabase`
+// implements tick/observe in SQL so the stamp and the event it stamps land in
+// one transaction, and a second implementation in Swift is exactly what
+// `reproject`'s own comment argues against — two plausible copies of one rule,
+// drifting apart the first time either is touched. Four tests were covering a
+// struct that production never ran. See `AppDatabase.tickClock`.

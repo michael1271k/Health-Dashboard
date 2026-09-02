@@ -40,6 +40,10 @@ public struct LiveSessionOwner: Codable, FetchableRecord, PersistableRecord, Ide
     /// tie. Identical rule to the fold's total order, so there is one ordering
     /// concept in this store rather than two.
     public var claimSeq: Int64
+    /// True for the *Log here* button; false for the implicit claim a device
+    /// makes by starting to log. The wire cannot tell them apart otherwise, and
+    /// they must not be treated the same — see `ingestOwnership`.
+    public var isTakeover: Bool
 
     public var id: String { sessionId }
 
@@ -48,13 +52,18 @@ public struct LiveSessionOwner: Codable, FetchableRecord, PersistableRecord, Ide
         case ownerDeviceId = "owner_device_id"
         case ownerSince = "owner_since"
         case claimSeq = "claim_seq"
+        case isTakeover = "is_takeover"
     }
 
-    public init(sessionId: String, ownerDeviceId: String, ownerSince: Date = Date(), claimSeq: Int64) {
+    public init(
+        sessionId: String, ownerDeviceId: String, ownerSince: Date = Date(),
+        claimSeq: Int64, isTakeover: Bool = false
+    ) {
         self.sessionId = sessionId
         self.ownerDeviceId = ownerDeviceId
         self.ownerSince = ownerSince
         self.claimSeq = claimSeq
+        self.isTakeover = isTakeover
     }
 
     /// Does `other` supersede this claim? Highest stamp wins; device id breaks a
@@ -121,7 +130,8 @@ extension AppDatabase {
         let claim = LiveSessionOwner(
             sessionId: sessionId,
             ownerDeviceId: me,
-            claimSeq: try tickClock(db)
+            claimSeq: try tickClock(db),
+            isTakeover: force
         )
         try claim.upsert(db)
         return claim
@@ -141,13 +151,39 @@ extension AppDatabase {
 
     /// A claim made on another device, arriving over the link.
     ///
-    /// Applied only if it supersedes what we hold, so a late-delivered old claim
-    /// cannot hand the pencil backwards.
+    /// Two guards, and the second is the interesting one:
+    ///
+    /// 1. It must supersede what we hold, so a late-delivered old claim cannot
+    ///    hand the pencil backwards.
+    /// 2. **An implicit claim cannot take the pencil off a device that is
+    ///    actively logging.** Every first write auto-claims, and that claim is
+    ///    indistinguishable on the wire from the *Log here* button unless it
+    ///    says so. Without this guard: you are mid-set on the phone (owner,
+    ///    stamp 40); the watch, out of range and with a clock that ran ahead,
+    ///    auto-claims at stamp 55 on its own first append; the claim reaches the
+    ///    phone, 40 < 55, and the phone in your hand loses the pencil and starts
+    ///    throwing `notSessionOwner`. Nothing is lost from the log — but the
+    ///    mechanism has inverted itself, mid-workout, with no one asking for it.
+    ///
+    /// A deliberate takeover always wins. Someone pressed a button.
     public func ingestOwnership(_ claim: LiveSessionOwner) throws {
         try writer.write { db in
             try Self.observeClock(db, claim.claimSeq)
+
             if let current = try LiveSessionOwner.fetchOne(db, key: claim.sessionId) {
                 guard current.isSuperseded(by: claim) else { return }
+
+                let unsyncedHere = try Int.fetchOne(
+                    db,
+                    sql: """
+                        SELECT COUNT(*) FROM set_events
+                        WHERE session_id = ? AND device_id = ? AND is_synced = 0
+                        """,
+                    arguments: [claim.sessionId, current.ownerDeviceId]
+                ) ?? 0
+                let meActive = try current.ownerDeviceId == Self.deviceId(db) && unsyncedHere > 0
+
+                if meActive && !claim.isTakeover { return }
             }
             try claim.upsert(db)
         }

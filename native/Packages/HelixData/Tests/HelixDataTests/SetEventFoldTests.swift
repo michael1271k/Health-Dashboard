@@ -326,43 +326,10 @@ struct SetEventFoldTests {
     }
 }
 
-@Suite("Lamport clock")
-struct LamportClockTests {
-
-    @Test("tick advances by one and returns the new value")
-    func tickAdvances() {
-        var clock = LamportClock()
-        #expect(clock.tick() == 1)
-        #expect(clock.tick() == 2)
-        #expect(clock.value == 2)
-    }
-
-    @Test("observing a higher remote value pulls the clock up")
-    func observePullsUp() {
-        var clock = LamportClock(value: 3)
-        clock.observe(10)
-        #expect(clock.value == 10)
-        #expect(clock.tick() == 11)   // strictly after the event it saw
-    }
-
-    @Test("observing a lower value never moves the clock backwards")
-    func observeNeverGoesBack() {
-        // A clock that could decrease would let this device re-stamp a new
-        // event below an old one and reorder history under the user.
-        var clock = LamportClock(value: 9)
-        clock.observe(2)
-        #expect(clock.value == 9)
-    }
-
-    @Test("causality: a device that has seen an event always stamps above it")
-    func causalityHolds() {
-        var watch = LamportClock()
-        var phone = LamportClock()
-
-        let watchSet = watch.tick()          // watch logs a set
-        phone.observe(watchSet)              // phone receives it
-        let phoneEdit = phone.tick()         // phone edits that set
-
-        #expect(phoneEdit > watchSet)
-    }
-}
+// The `LamportClock` suite that stood here tested a struct nothing in
+// production called: `AppDatabase.tickClock` implements the clock in SQL so the
+// stamp and the event it stamps land in one transaction. Four passing tests
+// gave a dead duplicate of the ordering rule confidence it had not earned.
+// The clock's real behaviour is covered by `EventStoreTests.clockAdvances`,
+// `clockPersists` and `ingestAdvancesClock`, against the implementation that
+// actually runs.
