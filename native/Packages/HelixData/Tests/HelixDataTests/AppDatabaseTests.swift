@@ -34,11 +34,9 @@ struct AppDatabaseTests {
         // 1RM is `Epley`'s decision, made by returning nil — never the store's,
         // made by dropping the row.
         let db = try seededDatabase()
-        let set = WorkoutSet(
-            id: "set-1", sessionId: "s1", exerciseId: "ex-crunch",
-            setIndex: 0, weightKg: 0, reps: 17
-        )
-        try db.saveSet(set)
+        try db.appendSet(sessionId: "s1", setId: "set-1", SetSnapshot(
+            exerciseId: "ex-crunch", setIndex: 0, weightKg: 0, reps: 17
+        ))
 
         let stored = try db.writer.read { try WorkoutSet.fetchOne($0, key: "set-1") }
         let unwrapped = try #require(stored)
@@ -47,49 +45,65 @@ struct AppDatabaseTests {
         #expect(unwrapped.est1rmKg == nil, "an unloaded set has no estimate to store")
     }
 
-    @Test("saving a set enqueues exactly one outbox item, in the same transaction")
+    @Test("logging a set enqueues exactly one outbox item, in the same transaction")
     func saveEnqueues() throws {
         let db = try seededDatabase()
-        try db.saveSet(WorkoutSet(
-            id: "set-1", sessionId: "s1", exerciseId: "ex-squat",
-            setIndex: 0, weightKg: 100, reps: 5
+        let event = try db.appendSet(sessionId: "s1", setId: "set-1", SetSnapshot(
+            exerciseId: "ex-squat", setIndex: 0, weightKg: 100, reps: 5
         ))
 
         let queue = try db.pendingOutbox()
         #expect(queue.count == 1)
-        #expect(queue[0].kind == "set.upsert")
-        #expect(queue[0].idempotencyKey == "set.upsert:set-1")
+        #expect(queue[0].kind == "set_event.append")
+        // The event's own id is the key. Events are immutable, so a retry is a
+        // true no-op — unlike a row upsert, which has to guess whether the
+        // payload it is holding is still current.
+        #expect(queue[0].idempotencyKey == "set_event:\(event.id)")
         #expect(queue[0].status == .pending)
 
-        // And the row itself is flagged until the server confirms.
+        // And the projected row is flagged until the server confirms.
         let stored = try db.writer.read { try WorkoutSet.fetchOne($0, key: "set-1") }
         #expect(stored?.isPendingSync == true)
     }
 
-    @Test("editing a queued set replaces its payload rather than queuing twice")
-    func editCollapsesToOneWrite() throws {
+    @Test("an edit appends a second fact rather than overwriting the first")
+    func editAppendsRatherThanReplaces() throws {
+        // This REVERSES the pre-event behaviour, where a second save replaced
+        // the queued payload. It has to: with two devices, "replace the queued
+        // write" is exactly the operation that loses the other device's edit.
+        // Two events cost two tiny idempotent rows and can never disagree.
         let db = try seededDatabase()
-        var set = WorkoutSet(
-            id: "set-1", sessionId: "s1", exerciseId: "ex-squat",
-            setIndex: 0, weightKg: 100, reps: 5
-        )
-        try db.saveSet(set)
-        set.reps = 6
-        try db.saveSet(set)
+        try db.appendSet(sessionId: "s1", setId: "set-1", SetSnapshot(
+            exerciseId: "ex-squat", setIndex: 0, weightKg: 100, reps: 5
+        ))
+        try db.amendSet(sessionId: "s1", setId: "set-1", SetPatch(reps: 6))
 
         let queue = try db.pendingOutbox()
-        #expect(queue.count == 1, "a corrected set must not sync twice")
+        #expect(queue.count == 2)
+        #expect(queue.map(\.kind) == ["set_event.append", "set_event.amend"])
 
-        let payload = try JSONDecoder().decode(WorkoutSet.self, from: queue[0].payload)
-        #expect(payload.reps == 6, "the queue carries the latest value, not the first")
+        // The projection shows the corrected value.
+        let stored = try db.writer.read { try WorkoutSet.fetchOne($0, key: "set-1") }
+        #expect(stored?.reps == 6)
+    }
+
+    @Test("an amend that changes nothing is refused")
+    func emptyAmendRefused() throws {
+        let db = try seededDatabase()
+        try db.appendSet(sessionId: "s1", setId: "set-1", SetSnapshot(
+            exerciseId: "ex-squat", setIndex: 0, weightKg: 100, reps: 5
+        ))
+        #expect(throws: EventStoreError.emptyPatch) {
+            try db.amendSet(sessionId: "s1", setId: "set-1", SetPatch())
+        }
+        #expect(try db.setEvents(sessionId: "s1").count == 1)
     }
 
     @Test("a failed write is kept and counted, never dropped")
     func failuresAreKept() throws {
         let db = try seededDatabase()
-        try db.saveSet(WorkoutSet(
-            id: "set-1", sessionId: "s1", exerciseId: "ex-squat",
-            setIndex: 0, weightKg: 100, reps: 5
+        try db.appendSet(sessionId: "s1", setId: "set-1", SetSnapshot(
+            exerciseId: "ex-squat", setIndex: 0, weightKg: 100, reps: 5
         ))
         let item = try #require(try db.pendingOutbox().first)
 
@@ -107,9 +121,8 @@ struct AppDatabaseTests {
     @Test("a confirmed write leaves the queue")
     func successClearsTheQueue() throws {
         let db = try seededDatabase()
-        try db.saveSet(WorkoutSet(
-            id: "set-1", sessionId: "s1", exerciseId: "ex-squat",
-            setIndex: 0, weightKg: 100, reps: 5
+        try db.appendSet(sessionId: "s1", setId: "set-1", SetSnapshot(
+            exerciseId: "ex-squat", setIndex: 0, weightKg: 100, reps: 5
         ))
         let item = try #require(try db.pendingOutbox().first)
 
@@ -120,9 +133,8 @@ struct AppDatabaseTests {
     @Test("deleting a session takes its sets with it")
     func cascadeDelete() throws {
         let db = try seededDatabase()
-        try db.saveSet(WorkoutSet(
-            id: "set-1", sessionId: "s1", exerciseId: "ex-squat",
-            setIndex: 0, weightKg: 100, reps: 5
+        try db.appendSet(sessionId: "s1", setId: "set-1", SetSnapshot(
+            exerciseId: "ex-squat", setIndex: 0, weightKg: 100, reps: 5
         ))
 
         _ = try db.writer.write { try WorkoutSession.deleteOne($0, key: "s1") }

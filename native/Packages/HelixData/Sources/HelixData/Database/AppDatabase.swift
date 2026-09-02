@@ -53,10 +53,23 @@ public final class AppDatabase: Sendable {
     }
 
     /// An in-memory store, for tests.
-    public static func inMemory() throws -> AppDatabase {
+    ///
+    /// `deviceId` is injectable so a test can play two devices against each
+    /// other with a predictable fold tiebreak. In the app it is always nil and
+    /// the store generates one on first use.
+    public static func inMemory(deviceId: String? = nil) throws -> AppDatabase {
         var config = Configuration()
         config.foreignKeysEnabled = true
-        return try AppDatabase(DatabaseQueue(configuration: config))
+        let db = try AppDatabase(DatabaseQueue(configuration: config))
+        if let deviceId {
+            try db.writer.write { conn in
+                try conn.execute(
+                    sql: "INSERT INTO device_state (row_id, device_id, lamport) VALUES ('local', ?, 0)",
+                    arguments: [deviceId]
+                )
+            }
+        }
+        return db
     }
 
     // MARK: - Migrations
@@ -143,6 +156,58 @@ public final class AppDatabase: Sendable {
             )
         }
 
+        // ── v2 ──────────────────────────────────────────────────────────────
+        // Sets stop being rows you edit and become a log you append to. See
+        // `SetEvent` for why: two devices editing one live session cannot both
+        // UPDATE a row without one of the writes vanishing silently.
+        //
+        // `workout_sets` survives untouched, but its meaning changes: from here
+        // on it is a **projection** of `set_events`, rebuilt by the fold inside
+        // the same transaction as every append. Views keep reading it, so the
+        // `ValueObservation` in `observeSets` needs no change at all.
+        migrator.registerMigration("v2.setEvents") { db in
+            try db.create(table: "set_events") { t in
+                t.primaryKey("id", .text)
+                t.column("session_id", .text).notNull()
+                    .references("workout_sessions", onDelete: .cascade)
+                // NOT a foreign key to `workout_sets`. The event log is the
+                // source of truth and the sets table is derived from it, so the
+                // dependency runs the other way — and an amend may legitimately
+                // arrive before the append that creates the row it names.
+                t.column("set_id", .text).notNull()
+                t.column("device_id", .text).notNull()
+                // The Lamport value. Indexed with device_id because that pair is
+                // exactly the sort key the fold uses.
+                t.column("seq", .integer).notNull()
+                t.column("kind", .text).notNull()
+                t.column("body", .blob).notNull()
+                t.column("created_at", .datetime).notNull()
+                t.column("is_synced", .boolean).notNull().defaults(to: false)
+            }
+            try db.create(
+                index: "idx_events_session_order",
+                on: "set_events",
+                columns: ["session_id", "seq", "device_id"]
+            )
+            try db.create(
+                index: "idx_events_set",
+                on: "set_events",
+                columns: ["set_id"]
+            )
+
+            // One row, always. This device's identity and its logical clock.
+            //
+            // The clock lives in the database rather than in memory because it
+            // must survive the app being killed: a counter that resets to zero
+            // on relaunch would stamp new events *below* ones already written
+            // and reorder the session under the user.
+            try db.create(table: "device_state") { t in
+                t.primaryKey("row_id", .text)
+                t.column("device_id", .text).notNull()
+                t.column("lamport", .integer).notNull().defaults(to: 0)
+            }
+        }
+
         return migrator
     }
 }
@@ -184,30 +249,6 @@ extension AppDatabase {
 // MARK: - Writes
 
 extension AppDatabase {
-    /// Save a set and enqueue its sync in **one transaction**.
-    ///
-    /// Atomicity is the point. If the row landed but the queue entry did not,
-    /// the set would exist on the phone and never on the server, and nothing
-    /// would ever notice — the app would look correct while silently dropping
-    /// training history.
-    public func saveSet(_ set: WorkoutSet, enqueueAs kind: String = "set.upsert") throws {
-        try writer.write { db in
-            var stored = set
-            stored.isPendingSync = true
-            try stored.save(db)
-
-            var item = OutboxItem(
-                kind: kind,
-                payload: try JSONEncoder().encode(stored),
-                idempotencyKey: "\(kind):\(stored.id)"
-            )
-            // An edit to a set already queued replaces the queued payload rather
-            // than adding a second write for the same row — last write wins, and
-            // the unique index on `idempotency_key` is what enforces it.
-            try item.upsert(db)
-        }
-    }
-
     /// The queue, oldest first. `inFlight` items are excluded so two workers
     /// cannot pick up the same write.
     public func pendingOutbox(limit: Int = 50) throws -> [OutboxItem] {
@@ -221,9 +262,31 @@ extension AppDatabase {
     }
 
     /// The server accepted it. Clear the pending flag on whatever it described.
+    ///
+    /// For a set event that means marking the event synced and rebuilding the
+    /// session's projection, so `is_pending_sync` on the affected sets stops
+    /// being true and the "queued" badge disappears from the UI on its own —
+    /// the `ValueObservation` on `workout_sets` sees the rewrite and pushes it.
     public func outboxSucceeded(_ id: String) throws {
-        _ = try writer.write { db in
-            try OutboxItem.deleteOne(db, key: id)
+        try writer.write { db in
+            guard let item = try OutboxItem.fetchOne(db, key: id) else { return }
+
+            if item.kind.hasPrefix("set_event."),
+               let eventId = item.idempotencyKey.split(separator: ":", maxSplits: 1).last {
+                try db.execute(
+                    sql: "UPDATE set_events SET is_synced = 1 WHERE id = ?",
+                    arguments: [String(eventId)]
+                )
+                if let sessionId = try String.fetchOne(
+                    db,
+                    sql: "SELECT session_id FROM set_events WHERE id = ?",
+                    arguments: [String(eventId)]
+                ) {
+                    try Self.reproject(sessionId: sessionId, in: db)
+                }
+            }
+
+            _ = try OutboxItem.deleteOne(db, key: id)
         }
     }
 
