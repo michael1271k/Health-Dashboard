@@ -57,6 +57,13 @@ npm run golden         # regenerate the golden vectors from the TypeScript
 npm test               # includes the golden-vector staleness check
 ```
 
+> **Use the npm scripts, not a bare `swift test`.** They pass `--scratch-path`
+> into `~/Library/Caches/helix-swift/`, which keeps SwiftPM's `.build` directory
+> out of the repository. Left in place it is ~2 GB of vendored dependency source
+> that `graphify update .` walks and indexes: it once made **74 % of the code
+> graph** GRDB and supabase-swift internals, and a query for the workout logger
+> answered with a Supabase example project.
+
 ## The golden vectors
 
 This is the risk control that makes the whole migration safe, and it is the
