@@ -208,6 +208,23 @@ public final class AppDatabase: Sendable {
             }
         }
 
+        // ── v3 ──────────────────────────────────────────────────────────────
+        // The pencil: which device is currently the writer for a live session.
+        // See `LiveSessionOwner` — this is a user-experience mechanism, not a
+        // correctness one. The log already tolerates two writers; this stops the
+        // phone and the watch from both offering a keyboard for the same set.
+        migrator.registerMigration("v3.livePencil") { db in
+            try db.create(table: "live_sessions") { t in
+                t.primaryKey("session_id", .text)
+                    .references("workout_sessions", onDelete: .cascade)
+                t.column("owner_device_id", .text).notNull()
+                t.column("owner_since", .datetime).notNull()
+                // Lamport-stamped from the same clock as the events, so a
+                // contested claim resolves by the same total order the fold uses.
+                t.column("claim_seq", .integer).notNull()
+            }
+        }
+
         return migrator
     }
 }

@@ -112,6 +112,12 @@ extension AppDatabase {
         body: SetEvent.Body
     ) throws -> SetEvent {
         try writer.write { db in
+            // Starting to log claims the pencil; logging while another device
+            // holds it is refused. `ingest` is deliberately NOT guarded — a
+            // remote event is a fact that already happened, and refusing it
+            // would lose a set to enforce a UI rule.
+            try Self.claimPencil(db, sessionId: sessionId, force: false)
+
             let device = try Self.deviceId(db)
             let event = SetEvent(
                 sessionId: sessionId,

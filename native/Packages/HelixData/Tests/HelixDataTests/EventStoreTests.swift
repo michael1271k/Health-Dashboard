@@ -91,14 +91,18 @@ struct EventStoreTests {
 
     // ── The clock ─────────────────────────────────────────────────────────
 
-    @Test("each local event advances the clock by one")
+    @Test("each local event stamps strictly above the last")
     func clockAdvances() throws {
         let db = try seeded()
         let first = try db.appendSet(sessionId: "s1", setId: "a", snapshot(1, 100, 5))
         let second = try db.appendSet(sessionId: "s1", setId: "b", snapshot(2, 100, 5))
-        #expect(first.seq == 1)
-        #expect(second.seq == 2)
-        #expect(try db.clockValue() == 2)
+
+        // The absolute values are not the invariant and must not be asserted:
+        // the first write also claims the pencil, and that claim takes a stamp
+        // of its own because it is a real ordered fact. Strict increase is what
+        // the merge depends on.
+        #expect(second.seq == first.seq + 1)
+        #expect(try db.clockValue() == second.seq)
     }
 
     @Test("the clock survives the store being reopened")
@@ -110,9 +114,10 @@ struct EventStoreTests {
         try db.appendSet(sessionId: "s1", setId: "a", snapshot(1, 100, 5))
         try db.appendSet(sessionId: "s1", setId: "b", snapshot(2, 100, 5))
 
+        let before = try db.clockValue()
         let reopened = try AppDatabase(db.writer)   // same file, fresh instance
         let next = try reopened.appendSet(sessionId: "s1", setId: "c", snapshot(3, 100, 5))
-        #expect(next.seq == 3)
+        #expect(next.seq == before + 1, "a reopened store must not restart the clock")
     }
 
     @Test("the device id is stable across reopens")
@@ -236,7 +241,7 @@ struct EventStoreTests {
 
         // The phone's next event must sort strictly after the one it just saw.
         let reply = try phone.appendSet(sessionId: "s1", setId: "p1", snapshot(2, 60, 10))
-        #expect(reply.seq == 41)
+        #expect(reply.seq > 40)
     }
 
     @Test("a remote event is not echoed back to the server")
