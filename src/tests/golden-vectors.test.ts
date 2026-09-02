@@ -11,6 +11,8 @@ import {
   timeDrain, workoutDrain, computeBattery,
 } from '@/lib/scoring/battery'
 import type { ScoringInputs } from '@/lib/scoring/types'
+import { derivePhase, resolveDayPhase, type Phase } from '@/lib/nutrition/phase'
+import { exceptionReason, isExceptionDay, exceptionTag, estimatedTag } from '@/lib/nutrition/exceptionDay'
 
 /**
  * THE GOLDEN VECTORS — the acceptance spec for the Swift port.
@@ -536,6 +538,180 @@ describe('golden vectors — readiness', () => {
       module: 'scoring/readiness',
       fn: 'computeReadiness',
       note: 'Sleep 40%, battery 40%, recovery 20%. >=70 train hard, >=45 train light.',
+      cases,
+    })
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Nutrition phase — the calorie bands, and the flag that suspends them
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('golden vectors — nutrition phase', () => {
+  it('exports the derived-phase vectors', () => {
+    const cases: Case<{ calories: number | null }, Phase | null>[] = []
+
+    // Every band, and every boundary of every band. The thresholds are `<=` and
+    // `<`, which is the kind of asymmetry a port silently normalizes.
+    const calories = [
+      null, 0, -1, -2400, 0.5, 1, 1200, 1900, 2049, 2049.9, 2050, 2050.1,
+      2051, 2200, 2449, 2449.9, 2450, 2450.1, 3200, 10000,
+    ]
+    for (const c of calories) {
+      cases.push({ name: `kcal=${c}`, input: { calories: c }, expected: derivePhase(c) })
+    }
+
+    cases.push({
+      // Untracked is not a cut. A row with no intake recorded says nothing
+      // about the block you are in, and calling it `cut` would put an empty
+      // day on the cut curve.
+      name: 'regression: zero calories is untracked, not a cut day',
+      input: { calories: 0 },
+      expected: derivePhase(0),
+    })
+
+    emit('nutrition-phase-derive.json', {
+      module: 'nutrition/phase',
+      fn: 'derivePhase',
+      note: 'cut <= 2050 < maintenance < 2450 <= bulk. null means untracked.',
+      cases,
+    })
+  })
+
+  it('exports the resolved-phase vectors', () => {
+    interface In {
+      calories: number | null
+      exception: string | null
+      estimated: boolean | null
+      activePhase: Phase | null
+      stored: Phase | null
+    }
+    const cases: Case<In, Phase | null>[] = []
+
+    const run = (name: string, i: In) => cases.push({
+      name,
+      input: i,
+      expected: resolveDayPhase({
+        calories: i.calories, exception: i.exception, estimated: i.estimated,
+        activePhase: i.activePhase, stored: i.stored,
+      }),
+    })
+
+    // The grid. Five axes, kept to the values that can change the answer.
+    for (const calories of [null, 1800, 2150, 2600]) {
+      for (const exception of [null, '', 'Social']) {
+        for (const estimated of [null, false, true]) {
+          for (const activePhase of [null, 'cut', 'bulk'] as (Phase | null)[]) {
+            for (const stored of [null, 'maintenance'] as (Phase | null)[]) {
+              run(
+                `kcal=${calories} exc=${JSON.stringify(exception)} est=${estimated} active=${activePhase} stored=${stored}`,
+                { calories, exception, estimated, activePhase, stored },
+              )
+            }
+          }
+        }
+      }
+    }
+
+    // ── Named regressions ────────────────────────────────────────────────────
+    run(
+      // The incident in the module header. 2,150 kcal on a declared date night
+      // in week four of a strict cut was banded `maintenance` by the threshold,
+      // filing a cut day under a phase that had not started.
+      'regression: 2026-08-11 date night keeps the cut it was eaten in',
+      { calories: 2150, exception: 'Social', estimated: true, activePhase: 'cut', stored: null },
+    )
+    run(
+      // A stored value is a cache of this function's own answer, so it wins for
+      // an ordinary day — but never for a flagged one, because the rows written
+      // before this rule existed carry the misclassification being corrected.
+      'regression: a flagged day ignores the stored phase it was written with',
+      { calories: 2150, exception: 'Refeed', estimated: null, activePhase: 'cut', stored: 'maintenance' },
+    )
+    run(
+      // Estimated alone qualifies. Reclassifying the block on a guess is the
+      // worse of the two directions.
+      'regression: estimated alone is enough to hold the phase',
+      { calories: 2600, exception: null, estimated: true, activePhase: 'cut', stored: null },
+    )
+    run(
+      // Whitespace is not a reason, so this day is ordinary and bands normally.
+      'regression: a whitespace exception does not flag the day',
+      { calories: 2600, exception: '   ', estimated: false, activePhase: 'cut', stored: null },
+    )
+    run(
+      // No active phase to hold, so a flagged day is no worse off than before.
+      'regression: a flagged day with no active phase falls back to the band',
+      { calories: 2600, exception: 'Travel', estimated: null, activePhase: null, stored: null },
+    )
+
+    emit('nutrition-phase-resolve.json', {
+      module: 'nutrition/phase',
+      fn: 'resolveDayPhase',
+      note: 'A flagged day (exception OR estimated) keeps the active phase. Labels only — never a term in any score.',
+      cases,
+    })
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Exception day — the declaration, and what it does and does not forgive
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('golden vectors — exception day', () => {
+  it('exports the declaration vectors', () => {
+    interface Out {
+      reason: string | null
+      isException: boolean
+      tag: string
+    }
+    const cases: Case<{ stored: string | null }, Out>[] = []
+
+    const stored = [
+      null, '', ' ', '   ', '\n', ' \n\t ', 'Event', 'Refeed', 'Travel',
+      'Illness', 'Social', ' Social ', 'social', 'Wedding', '0',
+    ]
+    for (const s of stored) {
+      cases.push({
+        name: `stored=${JSON.stringify(s)}`,
+        input: { stored: s },
+        expected: { reason: exceptionReason(s), isException: isExceptionDay(s), tag: exceptionTag(s) },
+      })
+    }
+
+    cases.push({
+      // `stored?.trim() || null` — the falsy-or, not a length check. A day
+      // whose reason is the string "0" is a real declaration, and an
+      // implementation that reaches for truthiness drops it.
+      name: 'regression: the string "0" is a reason, not an absence',
+      input: { stored: '0' },
+      expected: { reason: exceptionReason('0'), isException: isExceptionDay('0'), tag: exceptionTag('0') },
+    })
+    cases.push({
+      // Anything non-empty is honoured even if it is not a preset: a value
+      // written before the list changed must never silently stop counting.
+      name: 'regression: an unlisted reason still counts',
+      input: { stored: 'Wedding' },
+      expected: { reason: exceptionReason('Wedding'), isException: isExceptionDay('Wedding'), tag: exceptionTag('Wedding') },
+    })
+
+    emit('exception-day.json', {
+      module: 'nutrition/exceptionDay',
+      fn: 'exceptionReason / isExceptionDay / exceptionTag',
+      note: 'null means an ORDINARY day — the inverse of weighIn.ts, whose absent value means "As Planned".',
+      cases,
+    })
+  })
+
+  it('exports the estimated-tag vectors', () => {
+    const cases: Case<{ estimated: boolean | null }, string>[] = []
+    for (const e of [null, false, true]) {
+      cases.push({ name: `estimated=${e}`, input: { estimated: e }, expected: estimatedTag(e) })
+    }
+    emit('estimated-tag.json', {
+      module: 'nutrition/exceptionDay',
+      fn: 'estimatedTag',
+      note: 'Orthogonal to the exception. It forgives nothing — uncertainty is reported, never rewarded.',
       cases,
     })
   })

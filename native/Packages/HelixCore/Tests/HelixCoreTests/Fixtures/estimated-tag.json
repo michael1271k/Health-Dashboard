@@ -1,0 +1,28 @@
+{
+  "module": "nutrition/exceptionDay",
+  "fn": "estimatedTag",
+  "note": "Orthogonal to the exception. It forgives nothing — uncertainty is reported, never rewarded.",
+  "cases": [
+    {
+      "name": "estimated=null",
+      "input": {
+        "estimated": null
+      },
+      "expected": ""
+    },
+    {
+      "name": "estimated=false",
+      "input": {
+        "estimated": false
+      },
+      "expected": ""
+    },
+    {
+      "name": "estimated=true",
+      "input": {
+        "estimated": true
+      },
+      "expected": " [Estimated]"
+    }
+  ]
+}

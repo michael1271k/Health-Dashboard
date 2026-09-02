@@ -219,3 +219,97 @@ struct ReadinessGoldenTests {
         }
     }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Nutrition phase
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Suite("Nutrition phase")
+struct NutritionPhaseGoldenTests {
+    struct DeriveInput: Decodable { let calories: Double? }
+    struct ResolveInput: Decodable {
+        let calories: Double?
+        let exception: String?
+        let estimated: Bool?
+        let activePhase: NutritionPhase?
+        let stored: NutritionPhase?
+    }
+
+    @Test("the calorie bands match, boundary for boundary")
+    func deriveMatches() throws {
+        let fixture = try GoldenFixture<DeriveInput, NutritionPhase?>.load("nutrition-phase-derive")
+        #expect(!fixture.cases.isEmpty)
+        for c in fixture.cases {
+            let actual = NutritionPhase.derive(calories: c.input.calories)
+            #expect(actual == c.expected, "derivePhase — \(c.name)")
+        }
+    }
+
+    @Test("a flagged day holds the phase it was eaten in")
+    func resolveMatches() throws {
+        let fixture = try GoldenFixture<ResolveInput, NutritionPhase?>.load("nutrition-phase-resolve")
+        #expect(!fixture.cases.isEmpty)
+        for c in fixture.cases {
+            let actual = NutritionPhase.resolve(.init(
+                calories: c.input.calories,
+                exception: c.input.exception,
+                estimated: c.input.estimated,
+                activePhase: c.input.activePhase,
+                stored: c.input.stored
+            ))
+            #expect(actual == c.expected, "resolveDayPhase — \(c.name)")
+        }
+    }
+
+    @Test("the chip labels are the ones the web app draws")
+    func labels() {
+        // Not a golden vector: `phaseDisplay(phase, dateISO)` in the TypeScript
+        // is a no-op wrapper — its one special case returns the same string
+        // `PHASE_META` already holds — so there is nothing there to diff against.
+        // These are pinned here so a rename of the enum cannot silently rename
+        // the chip.
+        #expect(NutritionPhase.cut.label == "Cut")
+        #expect(NutritionPhase.maintenance.label == "Maint")
+        #expect(NutritionPhase.bulk.label == "Bulk")
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Exception day
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Suite("Exception day")
+struct ExceptionDayGoldenTests {
+    struct Input: Decodable { let stored: String? }
+    struct Expected: Decodable, Equatable {
+        let reason: String?
+        let isException: Bool
+        let tag: String
+    }
+    struct EstimatedInput: Decodable { let estimated: Bool? }
+
+    @Test("the declaration, its tag and its truthiness all match")
+    func matchesGoldenVectors() throws {
+        let fixture = try GoldenFixture<Input, Expected>.load("exception-day")
+        #expect(!fixture.cases.isEmpty)
+        for c in fixture.cases {
+            let actual = Expected(
+                reason: ExceptionDay.reason(c.input.stored),
+                isException: ExceptionDay.isException(c.input.stored),
+                tag: ExceptionDay.tag(c.input.stored)
+            )
+            #expect(actual == c.expected, "exceptionDay — \(c.name)")
+        }
+    }
+
+    @Test("estimated tags match")
+    func estimatedMatches() throws {
+        let fixture = try GoldenFixture<EstimatedInput, String>.load("estimated-tag")
+        for c in fixture.cases {
+            #expect(
+                ExceptionDay.estimatedTag(c.input.estimated) == c.expected,
+                "estimatedTag — \(c.name)"
+            )
+        }
+    }
+}
