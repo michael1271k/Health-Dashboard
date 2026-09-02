@@ -302,12 +302,31 @@ export function useSessionDraft() {
    * at makes that claim cheap. Sets are ticked one at a time, as they are done.
    */
 
+  /**
+   * Drop one set — and the exercise with it, once its last set has gone.
+   *
+   * ── THE FILTER USED TO EAT THE TREADMILL ───────────────────────────────────
+   * It was `.filter((ex) => ex.sets.length > 0)`, unqualified. A cardio block
+   * has NO sets by construction (`addCardio` seeds `sets: []`; the distance,
+   * duration and incline live on the exercise itself), so every cardio card in
+   * the deck matched that predicate — and removing a set from ANY exercise
+   * silently deleted EVERY cardio block in the session.
+   *
+   * It was invisible at the moment it happened, because the card that vanished
+   * was usually scrolled off above the one being edited. What you saw was a
+   * treadmill that had been there when you started and was gone when you came
+   * back to the deck.
+   *
+   * The empty-exercise sweep is still right for a strength card — an exercise
+   * with no rows is nothing at all — so the guard names the one kind that is
+   * allowed to be empty rather than removing the sweep.
+   */
   const removeSet = useCallback((localId: string, setIdx: number) => {
     setDraft((d) => d && ({
       ...d,
       exercises: d.exercises
         .map((ex) => ex.localId !== localId ? ex : { ...ex, sets: ex.sets.filter((_, i) => i !== setIdx) })
-        .filter((ex) => ex.sets.length > 0),
+        .filter((ex) => ex.kind === 'cardio' || ex.sets.length > 0),
     }))
   }, [])
 

@@ -6,6 +6,7 @@ import { ArrowLeft } from 'lucide-react'
 import { useSessionDetail } from '@/lib/hooks/useSessionDetail'
 import { SessionHero } from '@/components/session-detail/SessionHero'
 import { SessionTitle } from '@/components/session-detail/SessionTitle'
+import { SessionCardio } from '@/components/session-detail/SessionCardio'
 import { AppBar } from '@/components/nav/AppBar'
 import { ExerciseBreakdown } from '@/components/session-detail/ExerciseBreakdown'
 import { SessionHighlights } from '@/components/session-detail/SessionHighlights'
@@ -131,7 +132,7 @@ export default function SessionAnalysisPage() {
             {/* The observer's target. `SessionTitle` bleeds its wash past the
                 measure, so the wrapper — not the heading — is what is watched. */}
             <div ref={titleRef}>
-              <SessionTitle label={label} accent={accent} date={data.date} onBack={() => router.back()} />
+              <SessionTitle label={label} accent={accent} date={data.date} startedAt={data.startedAt} onBack={() => router.back()} />
             </div>
 
             <SessionHero detail={data} />
@@ -155,6 +156,10 @@ export default function SessionAnalysisPage() {
             <Surface variant="band" accent={accent} pad="snug">
               <MuscleFocus detail={data} accent={accent} />
             </Surface>
+
+            {/* The treadmill warm-up, which the report used to lose entirely —
+                see `SessionCardio`. Nothing renders when the session had none. */}
+            <SessionCardio cardio={data.cardio} accent={accent} />
 
             <ExerciseBreakdown sessionId={data.id} exercises={data.exercises} date={data.date} dayKey={data.dayKey} />
           </>

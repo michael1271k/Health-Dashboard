@@ -1,7 +1,8 @@
 'use client'
 
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Gauge } from 'lucide-react'
+import { Gauge, Pencil } from 'lucide-react'
 import { m, AnimatePresence } from 'framer-motion'
 import { BackLink } from '@/components/nav/NavChevron'
 import { Zone, ZoneRow } from '@/components/ui/Zone'
@@ -15,8 +16,10 @@ import {
 } from '@/lib/nutrition/levers'
 import { maintenanceSpanFor } from '@/lib/nutrition/maintenance'
 import { logicalTodayISO } from '@/lib/utils/day'
-import { useTargetProfiles, useSaveTargetProfile } from '@/lib/hooks/useTargetProfiles'
-import type { TargetProfile } from '@/lib/nutrition/profiles'
+import { useTargetProfiles, useSaveTargetProfile, useApplyProfile } from '@/lib/hooks/useTargetProfiles'
+import { useDailyTarget, useClearDailyTarget } from '@/lib/hooks/useDailyTargets'
+import { matchesProfile, type TargetProfile } from '@/lib/nutrition/profiles'
+import { tapLight } from '@/lib/native/haptics'
 
 /**
  * Every lever, and the five numbers they replace, on one page.
@@ -361,60 +364,164 @@ function longDate(iso: string): string {
 }
 
 /**
- * The named day shapes, editable.
+ * The named day shapes: which one today is, and what each one asks for.
  *
- * ── EDITING ONE DOES NOT REACH BACKWARDS ─────────────────────────────────────
- * Applying a profile to a day SNAPSHOTS its figures into that day's row, so a
- * change here governs the days you tag from now on and leaves every day already
- * eaten exactly as it was asked. That is the same invariant `leverForDate`
- * protects one layer down, and it is the reason `daily_targets.profile_key` is a
- * stamp rather than a foreign key.
+ * ── IT WAS AN EDITOR WITH NO SWITCH ─────────────────────────────────────────
+ * This zone rendered four `NumberRow`s per profile — calories, protein, fat,
+ * carbohydrate — plus a conditional paragraph under each explaining what an
+ * empty macro means, plus a closing paragraph about snapshotting. Two profiles
+ * is eight number fields and up to three blocks of prose: roughly 500px of
+ * settings for a screen whose actual job here is a choice between two words.
  *
- * ── AND AN EMPTY MACRO FIELD IS A REAL SETTING HERE ──────────────────────────
- * Clearing Carbohydrate on "Restaurant" is not "no opinion, ask the rung" — at
- * this layer it is "this profile does not grade carbohydrate", which is what
- * makes a restaurant day a restaurant day. The row says so rather than leaving
- * a blank box to be read either way.
+ * And there was nothing to choose. The only control that APPLIES a shape to a
+ * day lives in `DayTargetCard`'s sheet, three taps away on another tab, so
+ * tapping anything in this zone edited the template and nothing tapped it into
+ * force. "I can't select them" was exactly right: there was no selection here.
+ *
+ * So the zone leads with the switch. One row per shape, radio semantics, the
+ * figures stated inline as a summary rather than as eight editable boxes, and
+ * tapping one applies it to TODAY through the same `useApplyProfile` the
+ * nutrition sheet uses — one mutation, one meaning, two surfaces. Tapping the
+ * live one again clears it, the same "tap the chosen one to undo it" rule the
+ * fatigue and DOMS scales use, so no row is a trap.
+ *
+ * ── EDITING IS BEHIND A DISCLOSURE, BECAUSE IT IS THE RARE HALF ─────────────
+ * The numbers still live here — this is where a profile is defined — but they
+ * are opened per profile rather than all laid out at once. Changing what
+ * "Restaurant" means happens once a training block; saying today is one happens
+ * twice a week.
+ *
+ * ── AND EDITING ONE STILL DOES NOT REACH BACKWARDS ──────────────────────────
+ * Applying a profile SNAPSHOTS its figures into that day's row, so a change here
+ * governs the days you tag from now on and leaves every day already eaten
+ * exactly as it was asked. Same invariant `leverForDate` protects one layer
+ * down, and the reason `daily_targets.profile_key` is a stamp rather than a
+ * foreign key. An empty macro field is a real setting: it means this shape does
+ * not grade that macro, which is what makes a restaurant day a restaurant day.
  */
 function ProfilesZone() {
+  const today = logicalTodayISO()
   const { data: profiles } = useTargetProfiles()
+  const { data: target } = useDailyTarget(today)
   const saveProfile = useSaveTargetProfile()
+  const applyProfile = useApplyProfile()
+  const clearTarget = useClearDailyTarget()
+  const [editing, setEditing] = useState<string | null>(null)
+
+  // The LIVE shape, judged on the day's actual figures rather than on its
+  // stamp: a restaurant day nudged from 2,400 to 2,650 is still stamped
+  // "restaurant" and is no longer it, and a row claiming otherwise would be
+  // showing a selection that is not true. See `matchesProfile`.
+  const active = (profiles ?? []).find((p) => matchesProfile(target, p)) ?? null
+  const custom = !!target && !active
+
   const patch = (p: TargetProfile, next: Partial<TargetProfile>) =>
     saveProfile.mutate({ ...p, ...next })
 
   return (
     <Zone label="Day shapes" accent={SAND}>
-      {(profiles ?? []).map((p) => (
-        <div key={p.key} className="py-1">
-          <ZoneRow className="flex items-baseline gap-2 min-h-[36px]">
-            <span className="text-fluid-sm font-semibold text-text shrink-0">{p.label}</span>
-            <span className="text-[11px] text-muted truncate min-w-0">{p.summary}</span>
-          </ZoneRow>
-          <NumberRow label="Calories" unit="kcal" step={5} value={p.kcal}
-            onCommit={(v) => v != null && patch(p, { kcal: v })} />
-          <NumberRow label="Protein" unit="g" value={p.proteinG}
-            onCommit={(v) => v != null && patch(p, { proteinG: v })} />
-          {/* `null` is a legitimate commit for these two — it is how a macro is
-              turned OFF for this shape, and the placeholder says so. */}
-          <NumberRow label="Fat" unit="g" value={p.fatG}
-            onCommit={(v) => patch(p, { fatG: v })} />
-          <NumberRow label="Carbohydrate" unit="g" value={p.carbsG}
-            onCommit={(v) => patch(p, { carbsG: v })} />
-          {(p.carbsG == null || p.fatG == null) && (
-            <p className="px-1 pb-1 text-[10px] text-muted leading-snug">
-              {[p.fatG == null && 'Fat', p.carbsG == null && 'Carbohydrate'].filter(Boolean).join(' and ')}
-              {' '}left empty, so a day given this shape is not graded on
-              {p.carbsG == null && p.fatG == null ? ' either' : ' it'} — it counts as
-              neither a hit nor a miss, and stays out of the week&apos;s balance.
-            </p>
-          )}
-        </div>
-      ))}
-      <p className="px-1 py-1 text-[11px] text-muted leading-snug">
-        Changing a figure here applies to days you tag from now on. Days already
-        tagged keep the numbers they were given, because that is what they were
-        eaten against.
-      </p>
+      {(profiles ?? []).map((p) => {
+        const on = active?.key === p.key
+        const open = editing === p.key
+        return (
+          <div key={p.key}>
+            <ZoneRow className="flex items-center gap-2 min-h-[48px]">
+              {/* The row IS the radio. A separate control beside a label the
+                  same size is two targets for one decision on a 390px line. */}
+              <button
+                type="button"
+                role="radio"
+                aria-checked={on}
+                onClick={() => {
+                  void tapLight()
+                  applyProfile.mutate({ date: today, profile: on ? null : p })
+                }}
+                className="flex items-center gap-2.5 min-w-0 flex-1 text-left active:opacity-70 transition-opacity"
+                aria-label={`${p.label} — ${p.summary}. ${on ? 'Today. Tap to clear' : 'Tap to make today this shape'}`}
+                title={p.summary}
+              >
+                {/* A ring that fills, not a tick that appears — the shape says
+                    "one of these" whether or not it is the chosen one. */}
+                <span
+                  aria-hidden="true"
+                  className="w-[18px] h-[18px] rounded-full shrink-0 grid place-items-center"
+                  style={{ border: `1.5px solid ${on ? SAND : 'rgba(255,255,255,0.22)'}` }}
+                >
+                  {on && <span className="w-2.5 h-2.5 rounded-full" style={{ background: SAND }} />}
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-fluid-sm font-semibold truncate"
+                    style={{ color: on ? SAND : 'var(--color-text)' }}>{p.label}</span>
+                  {/* The figures as a SUMMARY, not as fields. An untracked macro
+                      says "off" rather than showing a dash: there is no target,
+                      deliberately, and nothing is graded against it. */}
+                  <span className="helix-num block text-[10px] text-muted tabular-nums truncate">
+                    {p.kcal.toLocaleString()} kcal · {p.proteinG}P
+                    {' · '}{p.fatG != null ? `${p.fatG}F` : 'F off'}
+                    {' · '}{p.carbsG != null ? `${p.carbsG}C` : 'C off'}
+                  </span>
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => { void tapLight(); setEditing(open ? null : p.key) }}
+                aria-expanded={open}
+                aria-label={`${open ? 'Close' : 'Edit'} the ${p.label} figures`}
+                className="shrink-0 min-h-[44px] min-w-[44px] grid place-items-center rounded-xl
+                           text-muted hover:text-text active:scale-95 transition-transform"
+              >
+                <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
+              </button>
+            </ZoneRow>
+
+            {open && (
+              <div className="pb-1">
+                <NumberRow label="Calories" unit="kcal" step={5} value={p.kcal}
+                  onCommit={(v) => v != null && patch(p, { kcal: v })} />
+                <NumberRow label="Protein" unit="g" value={p.proteinG}
+                  onCommit={(v) => v != null && patch(p, { proteinG: v })} />
+                {/* `null` is a legitimate commit for these two — it is how a
+                    macro is turned OFF for this shape. */}
+                <NumberRow label="Fat" unit="g" value={p.fatG}
+                  onCommit={(v) => patch(p, { fatG: v })} />
+                <NumberRow label="Carbohydrate" unit="g" value={p.carbsG}
+                  onCommit={(v) => patch(p, { carbsG: v })} />
+              </div>
+            )}
+          </div>
+        )
+      })}
+
+      {/* Not a shape — the absence of one. Highlighted exactly when today
+          carries figures matching no profile, which is what "Custom" honestly
+          means, and otherwise the way back to whatever rung is in force. */}
+      <ZoneRow className="flex items-center gap-2.5 min-h-[48px]">
+        <button
+          type="button"
+          role="radio"
+          aria-checked={!active}
+          onClick={() => { void tapLight(); if (target) clearTarget.mutate(today) }}
+          className="flex items-center gap-2.5 min-w-0 flex-1 text-left active:opacity-70 transition-opacity"
+          aria-label={custom ? "Today has its own figures. Tap to reset to the rung's numbers" : "Today follows the rung in force"}
+        >
+          <span
+            aria-hidden="true"
+            className="w-[18px] h-[18px] rounded-full shrink-0 grid place-items-center"
+            style={{ border: `1.5px solid ${!active ? STEEL : 'rgba(255,255,255,0.22)'}` }}
+          >
+            {!active && <span className="w-2.5 h-2.5 rounded-full" style={{ background: STEEL }} />}
+          </span>
+          <span className="min-w-0">
+            <span className="block text-fluid-sm font-semibold truncate"
+              style={{ color: !active ? STEEL : 'var(--color-text)' }}>
+              {custom ? 'Custom' : 'The plan'}
+            </span>
+            <span className="block text-[10px] text-muted truncate">
+              {custom ? 'Today has its own figures — tap to reset' : "The rung's numbers, ungraded by any shape"}
+            </span>
+          </span>
+        </button>
+      </ZoneRow>
     </Zone>
   )
 }

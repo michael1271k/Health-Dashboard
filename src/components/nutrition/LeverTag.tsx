@@ -2,7 +2,8 @@
 
 import { Gauge, Leaf } from 'lucide-react'
 import { useNutritionGoals } from '@/lib/hooks/useNutritionGoals'
-import { LEVERS } from '@/lib/nutrition/levers'
+import { LEVERS, scheduledLeverOn } from '@/lib/nutrition/levers'
+import { logicalTodayISO } from '@/lib/utils/day'
 import { SAND } from '@/lib/theme/palette'
 
 /**
@@ -22,13 +23,47 @@ import { SAND } from '@/lib/theme/palette'
  *
  * Renders nothing when no rung is in force (custom numbers, or a date before
  * the cut opened): a chip saying "Custom" would be chrome, not information.
+ *
+ * ── AND IT CAN BE ASKED ABOUT A DAY THAT IS NOT TODAY ────────────────────────
+ * `useNutritionGoals()` resolves the rung for the wall clock, which is right on
+ * a dashboard and wrong on a finished session's report: opening Sunday's
+ * workout on Wednesday would badge it with Wednesday's rung. A completed
+ * session is a fact about the day it happened on — and the maintenance week is
+ * exactly the rung a report most needs to name, because it is why the volume,
+ * the steps and the food all moved that week.
+ *
+ * `date` switches the resolution to `scheduledLeverOn`, which is the same
+ * answer `leverForDate` gives for any past date: the past belongs to the
+ * schedule, and nothing selected later may re-mark it. Today and the future
+ * still come from the live selection, so passing today's date changes nothing.
  */
-export function LeverTag({ compact = false }: {
+export function LeverTag({ compact = false, date }: {
   /** Header variant — name only, for a row that is already carrying numbers. */
   compact?: boolean
+  /** Resolve the rung for THIS day rather than for now. */
+  date?: string
 }) {
+  // A PAST day is answered by the schedule alone, so it needs no query at all —
+  // and must not open one. `TodayLeverTag` is a separate component rather than
+  // a branch inside this body precisely so the hook is not called on a path
+  // that has no use for it: a finished session's report renders this chip and
+  // would otherwise have to stand inside a QueryClientProvider to name a fact
+  // that is a compiled constant.
+  if (date !== undefined && date < logicalTodayISO()) {
+    return <Rung id={scheduledLeverOn(date)} compact={compact} />
+  }
+  return <TodayLeverTag compact={compact} />
+}
+
+/** Today and later: the live selection, through the goals the app is grading. */
+function TodayLeverTag({ compact }: { compact: boolean }) {
   const goals = useNutritionGoals()
-  const rung = LEVERS.find((l) => l.id === goals.lever)
+  return <Rung id={goals.lever} compact={compact} />
+}
+
+/** One rung, drawn. Nothing at all when the id names none. */
+function Rung({ id, compact }: { id: string | null; compact: boolean }) {
+  const rung = LEVERS.find((l) => l.id === id)
   if (!rung) return null
 
   // ── A RELEASE IS NOT A NOTCH ON THE LADDER ────────────────────────────────

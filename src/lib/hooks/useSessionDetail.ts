@@ -60,6 +60,35 @@ export interface DetailExercise {
   prAxes: PrAxis[]
 }
 
+/**
+ * One `cardio_logs` row belonging to this session — a treadmill warm-up, a bike
+ * finisher.
+ *
+ * ── WHY THE REPORT HAD TO GO AND FETCH THIS SEPARATELY ───────────────────────
+ * A cardio block is deliberately NOT a `workout_sets` row: `save.ts` writes it
+ * to `cardio_logs` so a treadmill walk cannot enter the tonnage, the set count,
+ * the muscle credit or the record book. That is right, and it had one
+ * consequence nobody chose — this report reads `workout_sets`, so the treadmill
+ * you logged simply was not in the session you were reading about. The block was
+ * in the deck while you walked it and gone from the record of the session
+ * forever after.
+ *
+ * It is carried here as its OWN list rather than folded in as a `DetailExercise`
+ * on purpose: every consumer of `exercises` counts sets, sums volume or resolves
+ * movers from it, and a zero-set, zero-load entry in that array would have to be
+ * excluded again at each one. A separate field cannot be counted by accident.
+ */
+export interface DetailCardio {
+  id: string
+  /** `treadmill` for a block logged in the deck; walk/run for the daily ledger. */
+  kind: string
+  distanceM: number | null
+  durationMin: number | null
+  inclinePct: number | null
+  kcal: number | null
+  avgBpm: number | null
+}
+
 export interface SessionDetail {
   id: string
   date: string
@@ -112,6 +141,11 @@ export interface SessionDetail {
   ghostSets: number
   /** Sets logged as a drop set — the third of the three tags a set can carry. */
   dropsetSets: number
+  /**
+   * Cardio blocks committed with this session. Empty on almost every session,
+   * and NEVER counted as sets — see `DetailCardio`.
+   */
+  cardio: DetailCardio[]
 }
 
 type RawSet = {
@@ -338,6 +372,33 @@ export function useSessionDetail(sessionId: string | null) {
       const computedVolume = Math.round(exercises.reduce((n, e) => n + e.volumeKg, 0))
       const workingSetCount = exercises.reduce((n, e) => n + e.workingSets, 0)
 
+      /**
+       * The session's cardio, from its own table.
+       *
+       * `incline_pct` is newer than the rest of the row and `save.ts` already
+       * carries a strip-and-retry for writing it, so the read takes the same
+       * shape: name it, and fall back to the columns that have always existed
+       * rather than letting one unknown column fail the whole select and lose
+       * the distance and duration with it. A missing TABLE resolves to no cardio
+       * at all, which is the honest answer for a database that never had one.
+       */
+      const cardioSel = (cols: string) => supabase.from('cardio_logs').select(cols)
+        .eq('session_id', sessionId as string)
+        .order('created_at', { ascending: true })
+      let cardioRes = await cardioSel('id, kind, distance_m, duration_min, incline_pct, kcal, avg_hr')
+      if (cardioRes.error) cardioRes = await cardioSel('id, kind, distance_m, duration_min, kcal')
+      const cardio: DetailCardio[] = cardioRes.error
+        ? []
+        : ((cardioRes.data ?? []) as unknown as Array<Record<string, unknown>>).map((r) => ({
+          id: String(r.id),
+          kind: String(r.kind ?? 'cardio'),
+          distanceM: (r.distance_m as number | null) ?? null,
+          durationMin: (r.duration_min as number | null) ?? null,
+          inclinePct: (r.incline_pct as number | null) ?? null,
+          kcal: (r.kcal as number | null) ?? null,
+          avgBpm: (r.avg_hr as number | null) ?? null,
+        }))
+
       return {
         id: s.id,
         date: s.started_at.slice(0, 10),
@@ -360,6 +421,7 @@ export function useSessionDetail(sessionId: string | null) {
         warmupSets,
         ghostSets,
         dropsetSets,
+        cardio,
       }
     },
   })

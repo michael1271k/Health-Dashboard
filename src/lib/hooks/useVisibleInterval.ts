@@ -38,14 +38,38 @@ export function useVisibleInterval(tick: () => void, ms: number, enabled = true)
   useEffect(() => {
     if (!enabled) return
 
-    let id: ReturnType<typeof setInterval> | null = null
+    let id: ReturnType<typeof setTimeout> | null = null
 
     const stop = () => {
-      if (id != null) { clearInterval(id) ; id = null }
+      if (id != null) { clearTimeout(id) ; id = null }
     }
+    /**
+     * ── IT SCHEDULES TO THE BOUNDARY, NOT `ms` FROM WHENEVER IT STARTED ──────
+     *
+     * This was `setInterval(tick, ms)`, and at ms = 1000 that is a clock whose
+     * phase is wherever the component happened to mount. Every caller here
+     * derives its reading from `Date.now()`, so the VALUE was always right —
+     * but it was only redrawn on this interval's own phase, which meant the
+     * seconds figure could sit up to 999 ms stale before flipping. Against the
+     * phone's own clock beside it, that reads exactly as the workout timer
+     * "running slightly slow": it is not losing time, it is announcing each
+     * second late, by an amount that never changes.
+     *
+     * A chained `setTimeout` aimed at the next exact multiple of `ms` since the
+     * epoch fixes the phase AND the drift: every tick re-derives its own delay
+     * from the wall clock, so a late callback (a busy frame, a throttled
+     * background timer, a jetsam-and-restore) is corrected on the next hop
+     * rather than accumulating. The floor of 16 ms stops a tick that arrives a
+     * hair early from scheduling a zero-delay spin.
+     */
     const start = () => {
       if (id != null) return
-      id = setInterval(() => cb.current(), ms)
+      const step = () => {
+        cb.current()
+        const now = Date.now()
+        id = setTimeout(step, Math.max(16, ms - (now % ms)))
+      }
+      id = setTimeout(step, Math.max(16, ms - (Date.now() % ms)))
     }
 
     const sync = () => {

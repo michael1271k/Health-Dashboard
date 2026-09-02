@@ -13,8 +13,18 @@ import {
   REST_STEP_SEC, REST_MIN_SEC, REST_MAX_SEC,
 } from '@/lib/training/restTargets'
 
-/** The four rests a program actually prescribes. Anything else is the dial's job. */
-const PRESETS = [60, 90, 120, 180] as const
+/**
+ * The rests worth one tap. Anything off this grid is the dial's job.
+ *
+ * ── 0:30 AND 2:30 ARE NOT DECORATION ─────────────────────────────────────────
+ * The row was 1:00 / 1:30 / 2:00 / 3:00 — four chips with a hole in the middle
+ * and nothing at all below a minute. A half-minute is the real rest on a
+ * warm-up, a cable finisher or the second half of a drop set, and 2:30 is the
+ * gap between 2:00 and 3:00 that a heavy compound actually lands in; both were
+ * reachable only by tapping the dial three or five times. Six chips still fit
+ * one line at 390px because each is four characters wide.
+ */
+const PRESETS = [30, 60, 90, 120, 150, 180] as const
 
 /**
  * Adjust the rest target for one movement, for THIS session.
@@ -99,8 +109,12 @@ export function RestTargetSheet({ open, onClose, exerciseName, dayKey, dateISO }
   }
 
   return (
-    <Sheet open={open} onClose={onClose} title="Rest target" accent={STEEL}>
-      <div className="space-y-2.5 pb-1">
+    /* `compact`: this sheet cannot overflow — a label row, a dial, one row of
+       chips and a scope line — so the scroller's `pb-5` was stacking on the
+       panel's own `safe-pb` and leaving a band of nothing under the last
+       control taller than the control itself. */
+    <Sheet open={open} onClose={onClose} title="Rest target" accent={STEEL} compact>
+      <div className="space-y-2">
         {/* Label row: which movement, and the way back — a ghost link, not a
             button. Resetting is rare and reversible; it does not earn 44px of
             filled surface at the foot of the sheet. */}
@@ -126,7 +140,7 @@ export function RestTargetSheet({ open, onClose, exerciseName, dayKey, dateISO }
             One pill, hairline-divided, exactly like the deck's set tuner — so
             the two number controls in the logger are visibly the same kind of
             object. The figure is the widest element because it is the subject. */}
-        <div className="flex items-stretch rounded-xl border border-border bg-surface-2 overflow-hidden min-h-[46px]">
+        <div className="flex items-stretch rounded-xl border border-border bg-surface-2 overflow-hidden min-h-[44px]">
           <Step
             dir={-1}
             disabled={target == null || target <= REST_MIN_SEC}
@@ -147,14 +161,21 @@ export function RestTargetSheet({ open, onClose, exerciseName, dayKey, dateISO }
         {/* Four taps cover almost every prescription. `value` simply fails to
             match when the target is off-grid, which is the honest rendering —
             no segment is selected because none of them is it. */}
-        <Segmented
-          label="Common rest targets"
-          accent={STEEL}
-          size="sm"
-          value={target != null ? String(target) : ''}
-          onChange={(v) => commit(Number(v))}
-          options={PRESETS.map((p) => ({ value: String(p), label: formatRestTarget(p) }))}
-        />
+        {/* Centred, not left-aligned. `Segmented` sizes itself to its content
+            (`w-fit`), so a six-chip row hung off the left edge with the leftover
+            width pooling on the right — a control that is visibly narrower than
+            its container should be centred in it or filled to it, and filling it
+            would stretch six four-character chips into six buttons. */}
+        <div className="flex justify-center">
+          <Segmented
+            label="Common rest targets"
+            accent={STEEL}
+            size="sm"
+            value={target != null ? String(target) : ''}
+            onChange={(v) => commit(Number(v))}
+            options={PRESETS.map((p) => ({ value: String(p), label: formatRestTarget(p) }))}
+          />
+        </div>
 
         {/* ── THE SCOPE, STATED, AND THE ONE WAY OUT OF IT ──
             The line is not decoration: an edit that looks permanent and is not

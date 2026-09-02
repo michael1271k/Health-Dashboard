@@ -104,6 +104,12 @@ export const HEALTH_QUERY_KEYS: string[][] = [
   ['previous_cardio'],      // cardio_logs
   ['cardio_logs'],          // the log list itself
   ['sleep_onset'],          // daily_logs.sleep_onset_trouble
+  // The session report reads `cardio_logs` as well as `workout_sets` now — the
+  // treadmill warm-up used to vanish from a session the moment it was committed
+  // (see `SessionCardio`). It is already a WORKOUT key; it needs to be a health
+  // one too, because a cardio row edited from the daily ledger changes what the
+  // report shows and nothing else on this list covers it.
+  ['session_detail'],
 ]
 
 /** Revalidate only Apple-Health-derived surfaces (pull-to-refresh). */

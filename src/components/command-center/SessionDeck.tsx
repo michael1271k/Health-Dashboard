@@ -26,7 +26,7 @@ import { isTimedExercise } from '@/lib/exercises/timed'
 import { useReportTargets } from '@/lib/hooks/useReportTargets'
 import { findNextSet, formatLastRpe, formatLastTime, formatLoad, formatRpe } from '@/lib/sessions/nextSet'
 import { elapsedDurationMin, sessionActiveSec } from '@/lib/sessions/sessionElapsed'
-import { endWorkoutActivity, hexToInt, startWorkoutActivity, updateWorkoutActivity } from '@/lib/native/liveActivity'
+import { hexToInt, startWorkoutActivity, updateWorkoutActivity } from '@/lib/native/liveActivity'
 
 /**
  * The Command Center deck — the ONE logging surface. Hosted fullscreen on
@@ -206,10 +206,23 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
     void updateWorkoutActivity(JSON.parse(activityKey) as typeof activityState)
   }, [activityKey, liveTitle])
 
-  // Taken down on commit AND on discard, immediately — the default dismissal
-  // policy lingers for up to four hours, which would leave a card offering the
-  // next set of a session that no longer exists.
-  useEffect(() => () => { void endWorkoutActivity() }, [])
+  /**
+   * ── THE ACTIVITY IS NOT ENDED HERE, AND THAT IS THE BUG THAT WAS ───────────
+   *
+   * This file used to carry `useEffect(() => () => endWorkoutActivity(), [])` —
+   * take the card down when the deck unmounts. Which sounds like the commit and
+   * the discard, and is neither: the deck ALSO unmounts every time you minimise
+   * the session to the pill, which is the exact moment a Lock Screen card starts
+   * being the only place the workout is visible. Put the phone in your pocket
+   * between sets and you had already destroyed the activity by leaving the deck
+   * — and `/session` unmounts on any navigation, so glancing at yesterday's
+   * numbers killed it too.
+   *
+   * A Live Activity's lifetime is the DRAFT's, not this screen's — the same
+   * argument, for the same reason, as the wake lock that moved to
+   * `LiveSessionPill` (see that file's header). So the end lives there, driven
+   * by the draft disappearing, and the deck only ever starts and updates.
+   */
 
   /**
    * ── THE STICKY BOTTOM BAR IS GONE ──────────────────────────────────────────

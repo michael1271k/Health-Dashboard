@@ -3,7 +3,7 @@
 import { memo, useCallback, useMemo, useRef, useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { ArrowLeftRight, Check, ChevronDown, GripVertical, History, NotebookPen, Plus, Target, Timer, Weight, X } from 'lucide-react'
+import { ArrowLeftRight, Check, ChevronDown, ChevronUp, GripVertical, History, Link2, NotebookPen, Plus, Target, Timer, Weight, X } from 'lucide-react'
 import { tapLight } from '@/lib/native/haptics'
 import { SetEditorRow } from './SetEditorRow'
 import { useTrackRpe } from '@/lib/hooks/useTrackRpe'
@@ -1198,12 +1198,55 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
             const pairIdx = g.left?.idx ?? g.right?.idx
             const pairDone = isSetCommitted(g.left?.set ?? g.right?.set ?? { weightKg: 0, reps: 0, done: false })
             const compact = isPairCompactable(g.left?.set, g.right?.set) && !openPairs.has(g.pairId)
+            /**
+             * ── THE PAIR CAN BE FOLDED BACK UP, AND IT COULD NOT BEFORE ──────
+             * `compact` was `isPairCompactable(...) && !openPairs.has(pairId)`,
+             * and the ONLY control that wrote to `openPairs` was the compacted
+             * row itself. So expanding was a one-way door: once you opened a
+             * matched pair to give the left side its own effort rating, the two
+             * full editor rows stayed for the rest of the session, and the only
+             * button offering to make it one row again was Merge — which is not
+             * a fold, it is a DESTRUCTIVE collapse that overwrites both sides
+             * with one set of numbers, i.e. exactly the independent values you
+             * opened the pair to enter.
+             *
+             * The header row is the toggle now. It is where the chevron on the
+             * compacted row already pointed, it is a target the whole width of
+             * the block, and it toggles a VIEW: `openPairs` has never touched
+             * the draft, so folding and unfolding cannot lose a rep, a load or a
+             * rating. Merge keeps its own button and its own meaning.
+             *
+             * `foldable` is `isPairCompactable`, unqualified by `openPairs` —
+             * the question "could these two be shown as one line" is about the
+             * SETS, and it stays false while the sides genuinely differ in load,
+             * reps or type. A pair that cannot be folded shows no chevron and
+             * its header does nothing, which is honest: there is no single row
+             * that could state two different sets.
+             */
+            const foldable = isPairCompactable(g.left?.set, g.right?.set)
             return (
               <div key={`p${g.pairId}`}
-                className={`rounded-lg border p-1.5 space-y-1 transition-colors ${
+                className={`rounded-lg border p-1 space-y-0.5 transition-colors ${
                   pairDone ? 'border-[#3E9E7A]/40 bg-[#3E9E7A]/[0.10]' : 'border-white/[0.07] bg-white/[0.02]'}`}>
-                <div className="flex items-center gap-2 px-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wide text-muted">Set {g.num}</span>
+                <div className="flex items-center gap-1.5 px-1">
+                  {/* The whole label run is the fold control — a button, so it
+                      keeps a real hit area, with the tick and Merge as SIBLINGS
+                      rather than children (a button may not contain a button;
+                      the PR trophy strip learned this the hard way). */}
+                  <button
+                    type="button"
+                    onClick={() => foldable && togglePair(g.pairId)}
+                    disabled={!foldable}
+                    aria-expanded={!compact}
+                    aria-label={foldable
+                      ? compact
+                        ? `Set ${g.num} — both sides matched. Tap to edit each side`
+                        : `Set ${g.num} — tap to fold both sides back into one row`
+                      : `Set ${g.num} — the two sides differ, so they stay on separate rows`}
+                    className="flex items-center gap-1.5 min-w-0 flex-1 min-h-[28px] text-left
+                               disabled:cursor-default active:opacity-70 transition-opacity"
+                  >
+                    <span className="text-[10px] font-bold uppercase tracking-wide text-muted shrink-0">Set {g.num}</span>
                   {/* R / L, in that order, everywhere — the rows below, the
                       compact readout and this chip. It was "L / R" here and the
                       rows were rendered left-then-right, which is the opposite
@@ -1211,15 +1254,40 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
                       EXERCISE colour, not ember. Ember is the Chest family now,
                       so every unilateral chip in the app claimed to be a chest
                       movement — including on a lateral raise. */}
-                  <span className="text-[9px] font-bold uppercase tracking-wide px-1 py-px rounded"
+                  <span className="text-[9px] font-bold uppercase tracking-wide px-1 py-px rounded shrink-0"
                     style={{ color: accent, background: `${accent}1f`, border: `1px solid ${accent}55` }}>R / L</span>
                   {asym && (
-                    <span className="text-[9px] font-bold uppercase tracking-wide px-1 py-px rounded"
+                    <span className="text-[9px] font-bold uppercase tracking-wide px-1 py-px rounded shrink-0"
                       style={{ color: '#C4514E', background: '#C4514E1f', border: '1px solid #C4514E55' }}
                       title={`${asym.weak === 'L' ? 'Left' : 'Right'} side ${asym.pct}% weaker (by volume)`}>
                       −{asym.pct}% {asym.weak}
                     </span>
                   )}
+                    {foldable && (compact
+                      ? <ChevronDown className="w-3 h-3 shrink-0 text-muted" aria-hidden="true" />
+                      : <ChevronUp className="w-3 h-3 shrink-0 text-muted" aria-hidden="true" />)}
+                  </button>
+                  {/* ── MERGE IS A HEADER CONTROL, NOT A ROW OF ITS OWN ──
+                      It sat under the pair in its own `pt-0.5` strip: a 30px
+                      button, alone, on a line whose only other content was air —
+                      about 36px of block height, permanently, on every split set
+                      in the deck, for the rarest action a pair offers. Up here it
+                      is a glyph beside the fold control, in the row that already
+                      exists, and the collapsed pair loses a whole line.
+
+                      Merge collapses the pair back into ONE BILATERAL set. It is
+                      not the fold: folding is a view, merging rewrites the draft.
+                      The "Linked" toggle is gone for the same reason — it
+                      mirrored weight and reps between the sides, which defeats
+                      the only purpose of splitting one. Asymmetry is the
+                      measurement, not a mistake. */}
+                  <button type="button" onClick={() => handleMerge(g.pairId)}
+                    aria-label={`Merge set ${g.num} back into one set — both sides take the same numbers`}
+                    title="Merge — one set again, both sides identical"
+                    className="shrink-0 min-h-[28px] px-1.5 rounded-lg text-muted hover:text-danger
+                               active:scale-95 transition-colors">
+                    <Link2 className="w-3.5 h-3.5" aria-hidden="true" />
+                  </button>
                   {pairIdx != null && (
                     <button
                       type="button"
@@ -1230,7 +1298,7 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
                       onClick={() => handleToggleDone(pairIdx)}
                       aria-pressed={pairDone}
                       aria-label={pairDone ? `Mark set ${g.num} not done` : `Mark set ${g.num} done — both sides`}
-                      className={`ml-auto ${SET_TAIL_W} min-h-[34px] rounded-lg flex items-center justify-center shrink-0
+                      className={`${SET_TAIL_W} min-h-[32px] rounded-lg flex items-center justify-center shrink-0
                                  active:scale-95 transition-[color,background-color,border-color,transform] duration-150`}
                       style={pairDone
                         ? { color: '#fff', background: '#3E9E7A', border: '1px solid #3E9E7A' }
@@ -1253,7 +1321,7 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
                     onClick={() => togglePair(g.pairId)}
                     aria-expanded={false}
                     aria-label={`Set ${g.num} — both sides matched. Tap to edit each side`}
-                    className={`w-full flex items-center ${SET_FRAME_GAP} px-2 py-1.5 min-w-0 rounded-lg
+                    className={`w-full flex items-center ${SET_FRAME_GAP} px-2 py-0.5 min-h-[30px] min-w-0 rounded-lg
                                 text-left active:scale-[0.99] transition-transform`}
                   >
                     {/* ── THE UNIT FOLLOWS THE COLUMN, NOT THE HABIT ──
@@ -1326,18 +1394,6 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, history, glob
                     )}
                   </>
                 )}
-                {/* Merge collapses the pair back into one bilateral set.
-                    The "Linked" toggle is GONE. It mirrored weight and reps
-                    between the two sides, which defeats the only reason to split
-                    a set in the first place: an arm that is genuinely weaker
-                    cannot be recorded if editing one side silently rewrites the
-                    other. Asymmetry is the measurement, not a mistake. */}
-                <div className="flex items-center gap-1.5 px-1 pt-0.5">
-                  <button type="button" onClick={() => handleMerge(g.pairId)}
-                    className="min-h-[30px] px-2.5 rounded-lg text-[10px] font-bold uppercase tracking-wide text-muted border border-white/10 hover:text-danger active:scale-95 transition-colors">
-                    Merge
-                  </button>
-                </div>
               </div>
             )
           })}

@@ -33,6 +33,19 @@ interface SheetProps {
    * and at one z-index the child painted behind its parent.
    */
   layer?: 'base' | 'stacked'
+  /**
+   * Trim the bottom padding under the content.
+   *
+   * The default `pb-5` is right for a sheet you scroll — it keeps the last row
+   * clear of the home indicator and gives the scroll an end. It is wrong for a
+   * short sheet that fits in one screen, where the panel already carries
+   * `safe-pb`: the two stack, and a three-row sheet ends in 40-odd pixels of
+   * nothing under its last control, which reads as a sheet that failed to
+   * shrink to its contents.
+   *
+   * Only for sheets whose content genuinely cannot overflow.
+   */
+  compact?: boolean
   children: React.ReactNode
 }
 
@@ -65,7 +78,8 @@ interface SheetProps {
  * disabled during a transition, and no `pointer-events: none`.
  */
 export function Sheet({
-  open, onClose, title, maxHeight = '90dvh', size = 'default', accent, layer = 'base', children,
+  open, onClose, title, maxHeight = '90dvh', size = 'default', accent, layer = 'base',
+  compact = false, children,
 }: SheetProps) {
   const controls = useDragControls()
   const panel = useRef<HTMLDivElement>(null)
@@ -299,7 +313,7 @@ export function Sheet({
             </div>
 
             {/* Scrollable content */}
-            <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar px-5 pb-5">
+            <div className={`flex-1 min-h-0 overflow-y-auto no-scrollbar px-5 ${compact ? 'pb-1' : 'pb-5'}`}>
               {children}
             </div>
           </m.div>

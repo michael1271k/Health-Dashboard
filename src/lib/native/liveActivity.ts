@@ -103,6 +103,32 @@ export async function liveActivitySupported(): Promise<boolean> {
 }
 
 /**
+ * The last thing `start` was told, in words.
+ *
+ * ── WHY A BREADCRUMB EXISTS FOR A FEATURE THAT SWALLOWS ITS ERRORS ───────────
+ * Every entry point here is deliberately silent: a rejected promise mid-workout
+ * that surfaced as a console error — or worse, an error boundary — would cost
+ * more than a Lock Screen card is worth. The cost of that decision is that a
+ * card which never appears is indistinguishable, from the outside, from a card
+ * that was never asked for.
+ *
+ * There are five real reasons `start` resolves without a card, and they need
+ * completely different fixes: the build on the phone predates the plugin, the OS
+ * is below 18 (the `ActivityConfiguration` is gated — see `HelixWidgets.swift`),
+ * Live Activities are switched off for Helix in Settings, ActivityKit refused
+ * the request, or the web layer never called at all. This writes which, exactly
+ * where `helix_last_crash` already lives, so the question is answerable from the
+ * device without a cable.
+ */
+const DIAGNOSTIC_KEY = 'helix_live_activity'
+
+function note(reason: string): void {
+  try {
+    localStorage.setItem(DIAGNOSTIC_KEY, JSON.stringify({ reason, at: new Date().toISOString() }))
+  } catch { /* storage full or unavailable — the card matters more than the note */ }
+}
+
+/**
  * Begin (or restart) the activity for a session.
  *
  * Starting while one is already running is a RESTART on the Swift side, not a
@@ -111,11 +137,19 @@ export async function liveActivitySupported(): Promise<boolean> {
  *
  * Every function here swallows its own errors. A Lock Screen card is a courtesy;
  * a rejected promise mid-workout that surfaced as a console error, or worse an
- * error boundary, would cost more than the card is worth.
+ * error boundary, would cost more than the card is worth. What it does NOT
+ * swallow any more is the REASON — see `note`.
  */
 export async function startWorkoutActivity(opts: StartOptions): Promise<void> {
-  if (!Capacitor.isNativePlatform()) return
-  try { await Native.start(opts) } catch { /* a card is a courtesy */ }
+  if (!Capacitor.isNativePlatform()) { note('web'); return }
+  try {
+    const r = await Native.start(opts)
+    note(r?.started ? 'started' : `refused: ${r?.reason ?? 'unknown'}`)
+  } catch (e) {
+    // The plugin is not on the bridge at all — an install that predates
+    // `HelixLiveActivityPlugin`, which no amount of web deploying can fix.
+    note(`unavailable: ${e instanceof Error ? e.message : String(e)}`)
+  }
 }
 
 export async function updateWorkoutActivity(state: WorkoutActivityState): Promise<void> {

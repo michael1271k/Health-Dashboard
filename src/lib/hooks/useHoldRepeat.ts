@@ -13,6 +13,27 @@ const SLOP = 8
 /**
  * Tap for the coarse step, hold for the fine one.
  *
+ * ── THE COARSE STEP FIRES ON PRESS, NOT ON RELEASE ───────────────────────────
+ * It used to fire in `pointerup`. Nothing was slow about the handler — the
+ * whole cost is that the value could not move until the finger came off, so
+ * five taps on `+` were five press-hold-release cycles before the number had
+ * caught up, and any press that lingered past `HOLD_MS` turned into microloads
+ * instead of the plate you asked for. Both read as the button sticking.
+ *
+ * A stepper is the one control Apple explicitly fires on touch-DOWN and repeats
+ * while held, for exactly this reason (`apple-design` §1: the moment lag appears
+ * the feeling of directness falls off a cliff), and the sibling controls in this
+ * app already acknowledge the press rather than the release — `Segmented`,
+ * `SetActionSheet`, the pair tick. So the step lands on the frame the finger
+ * touches the glass, the haptic goes with it, and the hold still takes over at
+ * 400 ms with the fine step.
+ *
+ * A drag off the button no longer un-does the step it already applied, which is
+ * how a real stepper behaves; and the button carries `touch-action: none`, so a
+ * press that starts here was never going to scroll the deck anyway. The slop
+ * check survives to cancel the HOLD — a finger that wanders is not asking for
+ * thirty microloads.
+ *
  * ── WHY THE MICROLOADS BECAME A GESTURE ──────────────────────────────────────
  * The weight tuner used to carry five segments — `−2.5 │ −0.25 │ value │ +0.25
  * │ +2.5` — across a full-width row, and the reps tuner another row under it.
@@ -64,6 +85,9 @@ export function useHoldRepeat({ onTap, onHold, disabled = false }: {
     try { e.currentTarget.setPointerCapture(e.pointerId) } catch { /* not fatal */ }
     start.current = { x: e.clientX, y: e.clientY }
     held.current = false
+    // The step, on the frame of the press. See the header.
+    void tapLight()
+    tapRef.current()
     delay.current = setTimeout(() => {
       held.current = true
       holdRef.current()
@@ -82,15 +106,12 @@ export function useHoldRepeat({ onTap, onHold, disabled = false }: {
     }
   }, [stop])
 
+  // Release does nothing but tidy up: the coarse step was applied on press and
+  // any fine steps were applied while held.
   const onPointerUp = useCallback(() => {
-    const wasPressed = start.current !== null
-    const wasHeld = held.current
     stop()
     start.current = null
     held.current = false
-    // A hold has already delivered its work through `onHold`; firing the tap as
-    // well would add one coarse step on top of every fine one.
-    if (wasPressed && !wasHeld) { void tapLight(); tapRef.current() }
   }, [stop])
 
   const onPointerCancel = useCallback(() => {

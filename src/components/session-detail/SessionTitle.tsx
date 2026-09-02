@@ -3,7 +3,9 @@
 import { useGlobalSessionNumber } from '@/lib/hooks/useDayVault'
 import { BackLink } from '@/components/nav/NavChevron'
 import { PhaseTags } from '@/components/timeline/PhaseTags'
+import { LeverTag } from '@/components/nutrition/LeverTag'
 import { weekStartOf } from '@/lib/utils/week'
+import { startTimeLabel } from '@/lib/utils/day'
 import { blurOnTap } from '@/lib/utils/blurOnTap'
 
 /**
@@ -48,19 +50,26 @@ import { blurOnTap } from '@/lib/utils/blurOnTap'
  * `PhaseTags` is the dashboard's own pair, resolved from this session's DATE so
  * a PPL-era report keeps saying PPL.
  */
-export function SessionTitle({ label, accent, date, onBack }: {
+export function SessionTitle({ label, accent, date, startedAt, onBack }: {
   /** The program day's own label — "Upper B", "Legs & Core A". */
   label: string
   /** `dayColor(dayKey, splitDay)` — steel for Upper A, gold for Upper B, and so on. */
   accent: string
   /** ISO date of the session. */
   date: string
+  /**
+   * `workout_sessions.started_at`. Rendered beside the date — see the note on
+   * the metadata line below.
+   */
+  startedAt?: string | null
   /** The way out. Rendered in the title row — see the note above. */
   onBack?: () => void
 }) {
   const { data: globalNum } = useGlobalSessionNumber(date)
   const pretty = new Date(`${date}T00:00:00`)
     .toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'long' })
+  // Same words as the live deck's Duration sheet. Empty when unparseable.
+  const started = startTimeLabel(startedAt ?? null)
 
   return (
     /* Bleeds past the reading measure's gutters so the wash reaches the screen
@@ -101,12 +110,28 @@ export function SessionTitle({ label, accent, date, onBack }: {
           {label}
         </h1>
       </div>
-      {/* ── THE ONLY DATE ON THE PAGE ──
-          It was rendered twice: once under the bar's title and once, computed
-          from scratch with byte-identical options, on the right of the metadata
-          box. Both are gone; this line is what replaced them, and it carries the
-          session's number with it because "which session was this" and "when"
-          are one question. */}
+      {/* ── THE ONLY DATE ON THE PAGE, AND NOW THE TIME WITH IT ──
+          The date was once rendered twice — under the bar's title and again,
+          computed from scratch with byte-identical options, on the right of the
+          metadata box. Both are gone; this line replaced them, and it carries
+          the session's number because "which session was this" and "when" are
+          one question.
+
+          The start time used to be a row of its own at the FOOT of the metric
+          band, under Difficulty / Records / Avg HR / Calories, behind a
+          horizontal rule, with an uppercase "START TIME" label and the figure in
+          full-strength `text-text` — brighter than the date, brighter than the
+          session number, and the last thing on a block of numbers it is not one
+          of. It is not a metric. It is the second half of "when": a 7am session
+          and an 8pm one are different sessions, which is most of why a duration
+          or an average heart rate reads the way it does.
+
+          So it joins the date, in the same muted type, separated by the same
+          interpunct the session number already uses — one line that answers
+          which session, what day, what time, and nothing else. `helix-num` and
+          `tabular-nums` on the figure alone, so it sits on the same numeral grid
+          as every other number on the page without claiming the emphasis a
+          brighter colour would give it. */}
       <p className="mt-1.5 text-fluid-xs text-muted">
         {globalNum ? (
           <>
@@ -115,13 +140,31 @@ export function SessionTitle({ label, accent, date, onBack }: {
           </>
         ) : null}
         {pretty}
+        {started && (
+          <>
+            <span className="mx-1.5 opacity-50">·</span>
+            <span className="helix-num tabular-nums tracking-[0.01em]">{started}</span>
+          </>
+        )}
       </p>
       {/* Which programme, which phase, how far in — the three facts the single
           "Helix Cut" badge in the pinned bar was compressing into two words.
           They wrap rather than truncate: a week number cut in half is worse than
           a second line. */}
+      {/* ── AND THE RUNG THE WEEK WAS RUN UNDER ──
+          Plan, phase and week said which BLOCK this session belongs to and
+          nothing about the week's own instruction. A maintenance week is the one
+          rung that changes what the session itself was — the volume, the steps
+          and the food all move together — and a report of a session logged
+          inside one that does not say so is a report missing its most
+          consequential fact.
+
+          Resolved from THIS session's date, not from today: see `LeverTag`. The
+          same chip the dashboard and the live deck already wear, so a
+          maintenance day looks the same wherever it is read. */}
       <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
         <PhaseTags weekStart={weekStartOf(date)} />
+        <LeverTag date={date} compact />
       </div>
     </div>
   )

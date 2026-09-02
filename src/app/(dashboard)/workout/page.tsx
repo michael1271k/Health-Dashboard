@@ -173,17 +173,30 @@ export default function WorkoutPage() {
             </div>
           </>
         ) : (
-          <div className="flex items-center gap-4">
-            <span className="w-12 h-12 rounded-full flex items-center justify-center shrink-0"
-              style={{ background: `${REST_VIOLET}1c`, color: REST_VIOLET, boxShadow: `0 0 18px ${REST_VIOLET}55` }}>
-              <Moon className="w-6 h-6" />
+          /* ── A REST DAY IS ONE LINE, NOT A MONUMENT ────────────────────────
+             This was the training day's own layout with nothing in it: a 48px
+             glowing disc, `text-fluid-2xl` (24–30px) type — the largest heading
+             on the tab — and a full sentence of prose, all to say the thing the
+             screen says by having no session to log. A training day earns that
+             size because it is an instruction with an exercise count, a colour
+             and a primary button under it. A rest day is a FACT, and it was
+             being announced twice as loudly as the workouts around it.
+
+             One row: the glyph at chip size, the name at the size of a label,
+             and Swap — which is the only decision available here and was
+             previously the smallest thing in the block. The sentence is gone;
+             "Swap" is the affordance the last half of it was describing. */
+          <div className="flex items-center gap-2.5">
+            <span className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+              style={{ background: `${REST_VIOLET}1c`, color: REST_VIOLET }}>
+              <Moon className="w-3.5 h-3.5" />
             </span>
-            <div className="flex-1 min-w-0">
-              <h2 className="split-label font-bold text-fluid-2xl leading-tight" style={{ color: REST_VIOLET }}>Rest · Zone-2 Recovery</h2>
-              <p className="text-fluid-sm text-muted">Adaptation happens now — no lifting scheduled. Swap a day in if plans change.</p>
-            </div>
+            <h2 className="split-label font-bold text-fluid-base leading-tight min-w-0 truncate"
+              style={{ color: REST_VIOLET }}>
+              Rest · Zone-2
+            </h2>
             {/* No Log/Paste button on rest days — routine changes go through Swap. */}
-            <SwapDayControl date={today} className="shrink-0" />
+            <SwapDayControl date={today} className="shrink-0 ml-auto" />
           </div>
         )}
         {/* Coach's action item from the last committed session */}

@@ -118,7 +118,7 @@ export function LiveSessionHero({ draft, accent, volumeKg, sets, recordCount, on
        phone — a tint that stops 12px short of the edge reads as a panel behind
        the title rather than as the session's own colour. `safe-pt` because
        nothing sits above this any more. */
-    <div data-live-hero className="relative -mx-3 sm:-mx-5 px-3 sm:px-5 safe-pt pt-2 pb-2">
+    <div data-live-hero className="relative -mx-3 sm:-mx-5 px-3 sm:px-5 safe-pt pt-3 pb-2">
       {/* The wash, not a band. A solid block of the day's colour would compete
           with the three figures directly beneath it; a gradient that has fully
           dissolved by the time it reaches the first exercise card colours the
@@ -156,16 +156,42 @@ export function LiveSessionHero({ draft, accent, volumeKg, sets, recordCount, on
           `LiveSessionBar` takes over from there. A second line costs about 24px
           for a few seconds; an elided name costs the name. `text-balance` keeps
           a two-line title from breaking after one word. */}
-      <div className="flex items-start gap-2">
+      {/* ── THE TITLE SITS IN A TWO-LINE BOX, WHETHER OR NOT IT USES BOTH ────
+          `items-start` on a row whose tallest child is a 44px button pinned the
+          name to the very top of the header, a couple of pixels under the status
+          bar, with all of the block's air pooled underneath it — so a one-line
+          title (which is most of them: "Delts & Arms", "Upper A") read as
+          something that had been pushed up out of the way rather than as the
+          subject of the screen.
+
+          The row reserves the height of TWO lines and centres in it. A long name
+          still wraps to two and fills the box exactly as before; a short one is
+          optically centred in the same space, so the header does not change
+          height between workouts and the title has the room its size implies.
+
+          The reservation is on the title's own wrapper, NOT on the row: the
+          chevron and Finish centre against it rather than being stretched by it,
+          and — the part that matters — the context line below is a SIBLING of
+          this row, so nothing here can push it, crowd it or wrap it. The phase,
+          the maintenance chip and the date keep exactly the line they had.
+
+          `line-clamp-2`, not `truncate`. An ellipsis destroys the one fact on
+          this screen that cannot be recovered from anything else on it, and the
+          header scrolls away within seconds of the first set — `LiveSessionBar`
+          takes over from there. `text-balance` keeps a two-line title from
+          breaking after one word. */}
+      <div className="flex items-center gap-2">
         <BackLink onClick={onBack} label="Minimise — the draft keeps running" />
-        <h1
-          className="flex-1 min-w-0 font-heading font-bold text-fluid-xl leading-tight tracking-[-0.01em]
-                     [text-wrap:balance] line-clamp-2"
-          style={{ color: accent }}
-          title={title}
-        >
-          {title}
-        </h1>
+        <div className="flex-1 min-w-0 flex items-center min-h-[3.4rem]">
+          <h1
+            className="w-full font-heading font-bold text-fluid-xl leading-tight tracking-[-0.01em]
+                       [text-wrap:balance] line-clamp-2"
+            style={{ color: accent }}
+            title={title}
+          >
+            {title}
+          </h1>
+        </div>
         <FinishButton onClick={onFinish} busy={finishBusy} disabled={sets === 0} isEdit={isEdit} />
       </div>
 

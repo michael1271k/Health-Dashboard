@@ -27,6 +27,20 @@ import ActivityKit
 /// Registration is explicit in `HelixViewController.capacitorDidLoad()` —
 /// Capacitor ≥6 does not auto-discover app-local plugins, and a plugin that
 /// compiles but is never attached to the bridge rejects every call silently.
+///
+/// ── EVERY ActivityKit CALL IS HOPPED TO THE MAIN QUEUE ───────────────────────
+/// Capacitor dispatches plugin methods onto a BACKGROUND queue by default, and
+/// ActivityKit is a UI-lifecycle framework: `Activity.request`, `.update` and
+/// `.end` all drive a system-hosted view. Called off the main thread they do not
+/// throw and they do not log — `request` returns an `Activity` handle, the
+/// promise resolves `{ started: true }`, and no card is ever presented. That is
+/// the exact failure this fixes, and it is invisible from the web layer, which
+/// is why `startWorkoutActivity` now also leaves a breadcrumb.
+///
+/// The hop is at the top of each `@objc` method rather than around the
+/// `Activity` line, so the availability check, the authorization read and the
+/// request all happen on the same thread and cannot disagree about whether
+/// activities were enabled a microsecond ago.
 @objc(HelixLiveActivityPlugin)
 public class HelixLiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
   // CAPBridgedPlugin conformance in Swift rather than through the ObjC
@@ -56,16 +70,22 @@ public class HelixLiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
   /// or the user has switched them off for Helix in Settings. The web layer
   /// treats all three as "do not try", which is correct for all three.
   @objc func isSupported(_ call: CAPPluginCall) {
-    if #available(iOS 16.1, *) {
-      call.resolve(["supported": ActivityAuthorizationInfo().areActivitiesEnabled])
-    } else {
-      call.resolve(["supported": false])
+    DispatchQueue.main.async {
+      if #available(iOS 16.1, *) {
+        call.resolve(["supported": ActivityAuthorizationInfo().areActivitiesEnabled])
+      } else {
+        call.resolve(["supported": false])
+      }
     }
   }
 
   // MARK: - Lifecycle
 
   @objc func start(_ call: CAPPluginCall) {
+    DispatchQueue.main.async { self.startOnMain(call) }
+  }
+
+  private func startOnMain(_ call: CAPPluginCall) {
     guard #available(iOS 16.1, *) else {
       // Not an error. An older phone has no Lock Screen surface for this, and a
       // rejected promise on every session start would be a red herring in every
@@ -114,6 +134,10 @@ public class HelixLiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
   }
 
   @objc func update(_ call: CAPPluginCall) {
+    DispatchQueue.main.async { self.updateOnMain(call) }
+  }
+
+  private func updateOnMain(_ call: CAPPluginCall) {
     guard #available(iOS 16.1, *), let activity = current as? Activity<HelixWorkoutAttributes> else {
       call.resolve(["updated": false])
       return
@@ -134,6 +158,10 @@ public class HelixLiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
   }
 
   @objc func end(_ call: CAPPluginCall) {
+    DispatchQueue.main.async { self.endOnMain(call) }
+  }
+
+  private func endOnMain(_ call: CAPPluginCall) {
     guard #available(iOS 16.1, *) else {
       call.resolve(["ended": false])
       return

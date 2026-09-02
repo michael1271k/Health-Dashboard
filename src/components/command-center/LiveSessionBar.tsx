@@ -98,47 +98,49 @@ export const LiveSessionBar = memo(function LiveSessionBar({
           is sized to be read at arm's length between sets: the name at
           `text-fluid-base`, the numbers at 12px, and the same Focus/Finish pair
           the hero carries. It costs about 8px of height. */}
-      <div className="mx-auto w-full max-w-[80rem] px-2 sm:px-4 py-2.5 flex items-center gap-2.5">
-        <BackLink onClick={onBack} label="Back — the draft autosaves" />
+      {/* ── TWO FULL-WIDTH ROWS, NOT ONE ROW WITH A COLUMN IN IT ──
+          This was `[chevron] [title + stats] [clock] [Finish]` on a single
+          flex line, and it broke in the one way a flex line breaks: the stats
+          were `whitespace-nowrap` spans inside a `min-w-0` column with no
+          `overflow` of its own, so once the tonnage gained a digit the line
+          overflowed its own box and painted UNDER the two controls to its
+          right. That is what "the rest timer is rendering on top of the
+          stopwatch" was — the elapsed reading, pushed out of its column, landing
+          on the clock button. And because `SessionElapsed` was `ml-auto` inside
+          that column while `SessionClock` and `FinishButton` sat immediately
+          after it, the stopwatch and the commit had no gap between them even
+          when nothing overflowed.
 
-        <div className="min-w-0 flex-1">
-          {/* Line one: the name, and only the name. */}
-          <h1 className="font-heading font-bold text-fluid-base leading-tight truncate" style={{ color: accent }}>
+          Splitting it into two rows removes the failure mode rather than
+          budgeting around it. Nothing on row one can push anything on row two,
+          the three readings get a line they cannot outgrow, and the two clocks
+          and Finish get one with real space in it. It costs about 10px of
+          height, which is what "give it breathing room" is spelled in.
+
+          ── AND THE TITLE IS STILL FIRST ──
+          The bar IS the title once the hero has gone, so the name keeps the top
+          line with only the chevron beside it — the same arrangement the hero
+          uses, at bar scale. */}
+      <div className="mx-auto w-full max-w-[80rem] px-2 sm:px-4 py-2 flex flex-col gap-1.5">
+        {/* Row 1 — who, and how it is going. */}
+        <div className="flex items-center gap-2.5 min-w-0">
+          <BackLink onClick={onBack} label="Back — the draft autosaves" />
+          <h1 className="min-w-0 flex-1 font-heading font-bold text-fluid-base leading-tight truncate"
+            style={{ color: accent }}>
             {cleanSessionTitle(draft)}
           </h1>
-          {/* Line two: everything that moves while you lift. Inline rather than
-              in columns — at this size three stacked label/value pairs is six
-              lines of type in a 34px strip.
+          {/* ── THE FIGURES ARE PILLS ──
+              Three bare coloured numbers under the title read as a subtitle that
+              had been syntax-highlighted: no separation from the name, none from
+              each other, and nothing to say they are readings rather than prose.
+              Each gets its own tinted chip — the treatment the hero's tiles
+              already use, at bar scale.
 
-              ── AND THE INTERPUNCTS ARE GONE ──
-              At 360px the worst realistic line — a five-figure tonnage, a
-              two-digit set count and a PR count — needed 191px in a 168px box,
-              so `truncate` ate the end of it: the PR count, which is the one
-              figure on this line you would stop lifting to look at.
-
-              Two dots and their four flanking gaps were 24px of that. Each
-              Stat already ends in its own unit ("kg", "sets", "PRs"), which is
-              a stronger boundary than a 4px glyph — the separator was
-              decorating a distinction the type already made. What is left fits,
-              with room for a six-figure tonnage. */}
-          {/* ── THE FIGURES ARE PILLS NOW ──
-              Three bare coloured numbers 2px under the title read as a subtitle
-              that had been syntax-highlighted: no separation from the name
-              above them, none from each other, and nothing to say they are
-              readings rather than prose. Each one gets its own tinted chip —
-              the treatment the hero's tiles already use, at bar scale — so the
-              line reads as three measurements, and the row gets the breathing
-              space the compression took away. */}
-          {/* ── AND THE PILLS NEEDED AIR ──
-              `gap-1.5` (6px) put three tinted chips a hairline apart, which at
-              a glance reads as one segmented control rather than as three
-              independent readings — the tonnage and the set count looked like
-              two halves of the same figure. 10px is the smallest gap at which
-              each chip is unambiguously its own object, and it still fits the
-              worst realistic line (a six-figure tonnage, a two-digit set count
-              and a PR count) inside 360px because the interpuncts that used to
-              sit between them are long gone. */}
-          <p className="flex items-center gap-2.5 mt-1 text-[12px] leading-none text-muted">
+              `shrink-0` on the group and `min-w-0 truncate` on the title: when
+              the line runs out it is the NAME that gives way, because the bar is
+              also carrying a compact copy of it and the numbers have nowhere
+              else on screen to be. */}
+          <div className="flex items-center gap-1.5 shrink-0">
             <Stat value={fmtVolume(volumeKg)} unit="kg" color={EMBER} />
             <Stat value={String(sets)} unit={sets === 1 ? 'set' : 'sets'} color={STEEL} />
             <Stat
@@ -148,36 +150,32 @@ export const LiveSessionBar = memo(function LiveSessionBar({
               // permanent gold zero is how gold stops meaning a record.
               color={recordCount > 0 ? GOLD : MUTED}
             />
-            {/* ── AND THE CLOCK CLOSES THE LINE ──
-                The hero states how long you have been in the session and the
-                bar did not, so the one figure that moves on its own vanished at
-                exactly the scroll position you spend the workout at — the
-                reading you glance at between sets, gone the moment the hero
-                went. It is a READING, not a control: same line as the other
-                three, no box, no tap target, hard right so the three totals
-                keep their left-to-right order and the thing that ticks is the
-                last thing on the line.
-
-                `SessionElapsed` and not a fourth `Stat`, because it owns the
-                one behaviour that matters here — it subtracts paused time and
-                swaps the hourglass for a pause glyph, so the bar and the
-                Duration sheet cannot disagree about whether the clock is
-                running. It also holds its own 1 Hz tick behind `memo`, which is
-                why putting it here does not re-render the bar every second. */}
-            <span className="ml-auto shrink-0">
-              <SessionElapsed
-                startedAt={draft.startedAt}
-                pausedMs={draft.pausedMs}
-                pausedAt={draft.pausedAt}
-                accent={accent}
-                size="inline"
-              />
-            </span>
-          </p>
+          </div>
         </div>
 
-        <SessionClock size="sm" />
-        <FinishButton onClick={onFinish} busy={finishBusy} disabled={sets === 0} isEdit={isEdit} size="sm" />
+        {/* Row 2 — the two clocks, and the way out.
+
+            The session clock is a READING (`SessionElapsed`, no box, no tap
+            target beyond the Duration sheet) and the rest clock is a CONTROL
+            (`SessionClock`, a 38px button). They sit together on the left
+            because they are the two time facts, in the order you ask them —
+            how long have I been here, how long until the next set — and Finish
+            takes the far right with the whole rest of the line between them, so
+            the control that ENDS the session is never a thumb-width from the
+            control that starts a rest. */}
+        <div className="flex items-center gap-2 pl-9">
+          <SessionElapsed
+            startedAt={draft.startedAt}
+            pausedMs={draft.pausedMs}
+            pausedAt={draft.pausedAt}
+            accent={accent}
+            size="inline"
+          />
+          <SessionClock size="sm" />
+          <span className="ml-auto shrink-0">
+            <FinishButton onClick={onFinish} busy={finishBusy} disabled={sets === 0} isEdit={isEdit} size="sm" />
+          </span>
+        </div>
       </div>
     </header>
   )
