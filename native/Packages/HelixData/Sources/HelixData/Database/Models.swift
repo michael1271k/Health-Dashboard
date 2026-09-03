@@ -3,28 +3,33 @@ import GRDB
 
 /// The Wave 1 local schema — only what the Live Logger needs.
 ///
-/// ── THESE DO NOT YET MATCH SUPABASE. READ THIS BEFORE WRITING THE SYNC. ─────
+/// ── THESE DO NOT MATCH SUPABASE, AND THAT IS HANDLED NOW ────────────────────
 /// An earlier version of this comment claimed the columns matched Postgres
 /// exactly and that a PostgREST row could be inserted here with no translation.
-/// That was never true. Introspected against the live database on 2026-09-02:
+/// That was never true. The differences, introspected against the live database
+/// (2026-09-02, re-confirmed 2026-09-03):
 ///
 ///   · `workout_sets` — ours says `set_index`, Postgres says **`set_number`**.
 ///     Postgres also has `user_id` (NOT NULL), `created_at` (NOT NULL),
 ///     `exercise_order`, `is_pr` and `quality`, none of which are here.
-///     (`rpe` WAS in that list; `v7.setRpe` added it locally.)
+///     (`rpe` WAS in that list; `v7.setRpe` added it locally.) Its
+///     `exercise_id` is a uuid with a live foreign key; ours is a slug.
 ///   · `workout_sessions` — our `date` column **does not exist** server-side
-///     (there is `started_at` and `day_key`). Postgres requires `split_day`,
-///     `status` and `migrated_from_notion`, all NOT NULL and all absent here.
+///     (there is `started_at` and `day_key`). Postgres requires `split_day`
+///     (NOT NULL, CHECK-constrained); `status` and `migrated_from_notion` are
+///     NOT NULL but carry defaults.
 ///   · `exercises` — shares only `id` and `name`. Ours invents
 ///     `primary_muscle`, `secondary_muscles`, `equipment`, `is_unilateral` and
 ///     `is_bodyweight`; Postgres has `user_id`, `split_day`, `muscle_groups`
 ///     (a text array) and `is_compound`.
-///   · `set_events`, `live_sessions` and `device_state` are **local only** and
-///     have no server-side counterpart yet.
+///   · `set_events`, `live_sessions`, `device_state` and `outbox` are **local
+///     only** and have no server-side counterpart. Confirmed, not assumed —
+///     which is why the drainer reconciles rows rather than shipping events.
 ///
-/// So a translation layer IS required, and writing it is the first task of the
-/// sync work. Until then nothing in this package talks to PostgREST, and the
-/// outbox accumulates `set_event.*` items that currently have no destination.
+/// **`Sync/SyncTranslation.swift` is where every one of those is bridged.** Do
+/// not add a translation here: these types mirror the local store, the
+/// `Remote*Row` types mirror Postgres, and the whole reason there are two sets
+/// is that one type trying to be both is a bad fit for either.
 ///
 /// Supabase remains the schema-of-record. Where a name here does match, it
 /// matches deliberately and must not drift.
@@ -236,6 +241,12 @@ public struct OutboxItem: Codable, FetchableRecord, MutablePersistableRecord, Id
     public var attempts: Int
     public var lastError: String?
     public var status: Status
+    /// The earliest moment this item may be tried again. `nil` means now.
+    ///
+    /// Written by `outboxFailed` from `SyncBackoff`, read by `claimOutbox`. It
+    /// is what stops a write the server will never accept from being retried at
+    /// full speed on every drain for the life of the install.
+    public var nextAttemptAt: Date?
 
     /// Snake_case like every other table here. The outbox is local-only, so the
     /// names are a free choice — but a store where some tables are snake_case
@@ -249,6 +260,7 @@ public struct OutboxItem: Codable, FetchableRecord, MutablePersistableRecord, Id
         case attempts
         case lastError = "last_error"
         case status
+        case nextAttemptAt = "next_attempt_at"
     }
 
     public init(
@@ -259,7 +271,8 @@ public struct OutboxItem: Codable, FetchableRecord, MutablePersistableRecord, Id
         createdAt: Date = Date(),
         attempts: Int = 0,
         lastError: String? = nil,
-        status: Status = .pending
+        status: Status = .pending,
+        nextAttemptAt: Date? = nil
     ) {
         self.id = id
         self.kind = kind
@@ -269,5 +282,6 @@ public struct OutboxItem: Codable, FetchableRecord, MutablePersistableRecord, Id
         self.attempts = attempts
         self.lastError = lastError
         self.status = status
+        self.nextAttemptAt = nextAttemptAt
     }
 }
