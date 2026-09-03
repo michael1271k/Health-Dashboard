@@ -48,6 +48,17 @@ public enum ISODate {
         dayNumber(iso).map { self.iso(dayNumber: $0 + n) }
     }
 
+    /// `new Date(`${iso}T12:00:00Z`).getUTCDay()` — 0 = Sunday … 6 = Saturday,
+    /// nil where the web reads NaN. 1970-01-01 was a Thursday (4).
+    public static func weekday(_ iso: String) -> Int? {
+        dayNumber(iso).map(weekday(dayNumber:))
+    }
+
+    /// The weekday of an epoch day number, 0 = Sunday.
+    public static func weekday(dayNumber n: Int) -> Int {
+        (((n % 7) + 7) % 7 + 4) % 7
+    }
+
     private static let instantPattern = try! NSRegularExpression(
         pattern: #"^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?(Z|[+-]\d{2}:\d{2})$"#
     )

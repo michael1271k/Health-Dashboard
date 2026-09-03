@@ -1,0 +1,1521 @@
+{
+  "module": "hooks/useFatigue",
+  "fn": "FATIGUE_SLOTS / slotsForDay / SLOT_LABEL / normalizeSlot / foldFatigueRows / FATIGUE_LEVELS / fatigueLevel / fatigueDelta / latestFatigue",
+  "note": "noon and evening resolve DIFFERENTLY on a training day (pre/post) vs rest (midday/night). The fold ranks morning<noon<evening<eod<modern; a higher rank replaces, an equal one does not (first of two identical modern keys wins). latest walks the vocabulary backwards, which is correct for both day types. Colours are dropped.",
+  "cases": [
+    {
+      "name": "tables",
+      "input": {
+        "fn": "tables"
+      },
+      "expected": {
+        "tables": {
+          "slots": [
+            "waking",
+            "midday",
+            "pre",
+            "post",
+            "night"
+          ],
+          "rest": [
+            "waking",
+            "midday",
+            "night"
+          ],
+          "training": [
+            "waking",
+            "pre",
+            "post"
+          ],
+          "labels": {
+            "waking": "Waking",
+            "midday": "Midday",
+            "pre": "Before training",
+            "post": "After training",
+            "night": "Night"
+          },
+          "levels": [
+            {
+              "value": 1,
+              "label": "Fresh",
+              "hint": "could add a rep",
+              "detail": "Could add a rep to everything today."
+            },
+            {
+              "value": 2,
+              "label": "Fine",
+              "hint": "nothing would stop a session",
+              "detail": "Normal. Nothing here would stop a planned session."
+            },
+            {
+              "value": 3,
+              "label": "Worn",
+              "hint": "the plan, not a PR",
+              "detail": "Could train the plan, would not chase a record."
+            },
+            {
+              "value": 4,
+              "label": "Heavy",
+              "hint": "stairs register",
+              "detail": "Stairs register. The warm-up would decide whether to train."
+            },
+            {
+              "value": 5,
+              "label": "Empty",
+              "hint": "would cancel",
+              "detail": "Would cancel."
+            }
+          ],
+          "forTraining": [
+            "waking",
+            "pre",
+            "post"
+          ],
+          "forRest": [
+            "waking",
+            "midday",
+            "night"
+          ]
+        }
+      }
+    },
+    {
+      "name": "normalizeSlot · \"waking\" · training",
+      "input": {
+        "fn": "normalizeSlot",
+        "raw": "waking",
+        "isTraining": true
+      },
+      "expected": {
+        "slot": "waking"
+      }
+    },
+    {
+      "name": "normalizeSlot · \"waking\" · rest",
+      "input": {
+        "fn": "normalizeSlot",
+        "raw": "waking",
+        "isTraining": false
+      },
+      "expected": {
+        "slot": "waking"
+      }
+    },
+    {
+      "name": "normalizeSlot · \"midday\" · training",
+      "input": {
+        "fn": "normalizeSlot",
+        "raw": "midday",
+        "isTraining": true
+      },
+      "expected": {
+        "slot": "midday"
+      }
+    },
+    {
+      "name": "normalizeSlot · \"midday\" · rest",
+      "input": {
+        "fn": "normalizeSlot",
+        "raw": "midday",
+        "isTraining": false
+      },
+      "expected": {
+        "slot": "midday"
+      }
+    },
+    {
+      "name": "normalizeSlot · \"pre\" · training",
+      "input": {
+        "fn": "normalizeSlot",
+        "raw": "pre",
+        "isTraining": true
+      },
+      "expected": {
+        "slot": "pre"
+      }
+    },
+    {
+      "name": "normalizeSlot · \"pre\" · rest",
+      "input": {
+        "fn": "normalizeSlot",
+        "raw": "pre",
+        "isTraining": false
+      },
+      "expected": {
+        "slot": "pre"
+      }
+    },
+    {
+      "name": "normalizeSlot · \"post\" · training",
+      "input": {
+        "fn": "normalizeSlot",
+        "raw": "post",
+        "isTraining": true
+      },
+      "expected": {
+        "slot": "post"
+      }
+    },
+    {
+      "name": "normalizeSlot · \"post\" · rest",
+      "input": {
+        "fn": "normalizeSlot",
+        "raw": "post",
+        "isTraining": false
+      },
+      "expected": {
+        "slot": "post"
+      }
+    },
+    {
+      "name": "normalizeSlot · \"night\" · training",
+      "input": {
+        "fn": "normalizeSlot",
+        "raw": "night",
+        "isTraining": true
+      },
+      "expected": {
+        "slot": "night"
+      }
+    },
+    {
+      "name": "normalizeSlot · \"night\" · rest",
+      "input": {
+        "fn": "normalizeSlot",
+        "raw": "night",
+        "isTraining": false
+      },
+      "expected": {
+        "slot": "night"
+      }
+    },
+    {
+      "name": "normalizeSlot · \"morning\" · training",
+      "input": {
+        "fn": "normalizeSlot",
+        "raw": "morning",
+        "isTraining": true
+      },
+      "expected": {
+        "slot": "waking"
+      }
+    },
+    {
+      "name": "normalizeSlot · \"morning\" · rest",
+      "input": {
+        "fn": "normalizeSlot",
+        "raw": "morning",
+        "isTraining": false
+      },
+      "expected": {
+        "slot": "waking"
+      }
+    },
+    {
+      "name": "normalizeSlot · \"noon\" · training",
+      "input": {
+        "fn": "normalizeSlot",
+        "raw": "noon",
+        "isTraining": true
+      },
+      "expected": {
+        "slot": "pre"
+      }
+    },
+    {
+      "name": "normalizeSlot · \"noon\" · rest",
+      "input": {
+        "fn": "normalizeSlot",
+        "raw": "noon",
+        "isTraining": false
+      },
+      "expected": {
+        "slot": "midday"
+      }
+    },
+    {
+      "name": "normalizeSlot · \"evening\" · training",
+      "input": {
+        "fn": "normalizeSlot",
+        "raw": "evening",
+        "isTraining": true
+      },
+      "expected": {
+        "slot": "post"
+      }
+    },
+    {
+      "name": "normalizeSlot · \"evening\" · rest",
+      "input": {
+        "fn": "normalizeSlot",
+        "raw": "evening",
+        "isTraining": false
+      },
+      "expected": {
+        "slot": "night"
+      }
+    },
+    {
+      "name": "normalizeSlot · \"eod\" · training",
+      "input": {
+        "fn": "normalizeSlot",
+        "raw": "eod",
+        "isTraining": true
+      },
+      "expected": {
+        "slot": "post"
+      }
+    },
+    {
+      "name": "normalizeSlot · \"eod\" · rest",
+      "input": {
+        "fn": "normalizeSlot",
+        "raw": "eod",
+        "isTraining": false
+      },
+      "expected": {
+        "slot": "night"
+      }
+    },
+    {
+      "name": "normalizeSlot · \"\" · training",
+      "input": {
+        "fn": "normalizeSlot",
+        "raw": "",
+        "isTraining": true
+      },
+      "expected": {
+        "slot": null
+      }
+    },
+    {
+      "name": "normalizeSlot · \"\" · rest",
+      "input": {
+        "fn": "normalizeSlot",
+        "raw": "",
+        "isTraining": false
+      },
+      "expected": {
+        "slot": null
+      }
+    },
+    {
+      "name": "normalizeSlot · \"Waking\" · training",
+      "input": {
+        "fn": "normalizeSlot",
+        "raw": "Waking",
+        "isTraining": true
+      },
+      "expected": {
+        "slot": null
+      }
+    },
+    {
+      "name": "normalizeSlot · \"Waking\" · rest",
+      "input": {
+        "fn": "normalizeSlot",
+        "raw": "Waking",
+        "isTraining": false
+      },
+      "expected": {
+        "slot": null
+      }
+    },
+    {
+      "name": "normalizeSlot · \"WAKING\" · training",
+      "input": {
+        "fn": "normalizeSlot",
+        "raw": "WAKING",
+        "isTraining": true
+      },
+      "expected": {
+        "slot": null
+      }
+    },
+    {
+      "name": "normalizeSlot · \"WAKING\" · rest",
+      "input": {
+        "fn": "normalizeSlot",
+        "raw": "WAKING",
+        "isTraining": false
+      },
+      "expected": {
+        "slot": null
+      }
+    },
+    {
+      "name": "normalizeSlot · \" pre\" · training",
+      "input": {
+        "fn": "normalizeSlot",
+        "raw": " pre",
+        "isTraining": true
+      },
+      "expected": {
+        "slot": null
+      }
+    },
+    {
+      "name": "normalizeSlot · \" pre\" · rest",
+      "input": {
+        "fn": "normalizeSlot",
+        "raw": " pre",
+        "isTraining": false
+      },
+      "expected": {
+        "slot": null
+      }
+    },
+    {
+      "name": "normalizeSlot · \"afternoon\" · training",
+      "input": {
+        "fn": "normalizeSlot",
+        "raw": "afternoon",
+        "isTraining": true
+      },
+      "expected": {
+        "slot": null
+      }
+    },
+    {
+      "name": "normalizeSlot · \"afternoon\" · rest",
+      "input": {
+        "fn": "normalizeSlot",
+        "raw": "afternoon",
+        "isTraining": false
+      },
+      "expected": {
+        "slot": null
+      }
+    },
+    {
+      "name": "normalizeSlot · \"constructor\" · training",
+      "input": {
+        "fn": "normalizeSlot",
+        "raw": "constructor",
+        "isTraining": true
+      },
+      "expected": {
+        "slot": null
+      }
+    },
+    {
+      "name": "normalizeSlot · \"constructor\" · rest",
+      "input": {
+        "fn": "normalizeSlot",
+        "raw": "constructor",
+        "isTraining": false
+      },
+      "expected": {
+        "slot": null
+      }
+    },
+    {
+      "name": "normalizeSlot · \"toString\" · training",
+      "input": {
+        "fn": "normalizeSlot",
+        "raw": "toString",
+        "isTraining": true
+      },
+      "expected": {
+        "slot": null
+      }
+    },
+    {
+      "name": "normalizeSlot · \"toString\" · rest",
+      "input": {
+        "fn": "normalizeSlot",
+        "raw": "toString",
+        "isTraining": false
+      },
+      "expected": {
+        "slot": null
+      }
+    },
+    {
+      "name": "fold · modern keys · training",
+      "input": {
+        "fn": "fold",
+        "rows": [
+          {
+            "slot": "waking",
+            "level": 2
+          },
+          {
+            "slot": "pre",
+            "level": 3
+          },
+          {
+            "slot": "post",
+            "level": 4
+          }
+        ],
+        "isTraining": true
+      },
+      "expected": {
+        "day": {
+          "waking": 2,
+          "pre": 3,
+          "post": 4
+        }
+      }
+    },
+    {
+      "name": "fold · modern rest keys · training",
+      "input": {
+        "fn": "fold",
+        "rows": [
+          {
+            "slot": "waking",
+            "level": 2
+          },
+          {
+            "slot": "midday",
+            "level": 3
+          },
+          {
+            "slot": "night",
+            "level": 4
+          }
+        ],
+        "isTraining": true
+      },
+      "expected": {
+        "day": {
+          "waking": 2,
+          "midday": 3,
+          "night": 4
+        }
+      }
+    },
+    {
+      "name": "fold · three legacy keys · training",
+      "input": {
+        "fn": "fold",
+        "rows": [
+          {
+            "slot": "morning",
+            "level": 1
+          },
+          {
+            "slot": "noon",
+            "level": 2
+          },
+          {
+            "slot": "evening",
+            "level": 4
+          }
+        ],
+        "isTraining": true
+      },
+      "expected": {
+        "day": {
+          "waking": 1,
+          "pre": 2,
+          "post": 4
+        }
+      }
+    },
+    {
+      "name": "fold · all four legacy keys · training",
+      "input": {
+        "fn": "fold",
+        "rows": [
+          {
+            "slot": "morning",
+            "level": 1
+          },
+          {
+            "slot": "noon",
+            "level": 2
+          },
+          {
+            "slot": "evening",
+            "level": 3
+          },
+          {
+            "slot": "eod",
+            "level": 4
+          }
+        ],
+        "isTraining": true
+      },
+      "expected": {
+        "day": {
+          "waking": 1,
+          "pre": 2,
+          "post": 4
+        }
+      }
+    },
+    {
+      "name": "fold · evening then eod — eod wins · training",
+      "input": {
+        "fn": "fold",
+        "rows": [
+          {
+            "slot": "evening",
+            "level": 3
+          },
+          {
+            "slot": "eod",
+            "level": 5
+          }
+        ],
+        "isTraining": true
+      },
+      "expected": {
+        "day": {
+          "post": 5
+        }
+      }
+    },
+    {
+      "name": "fold · eod then evening — eod still wins · training",
+      "input": {
+        "fn": "fold",
+        "rows": [
+          {
+            "slot": "eod",
+            "level": 5
+          },
+          {
+            "slot": "evening",
+            "level": 3
+          }
+        ],
+        "isTraining": true
+      },
+      "expected": {
+        "day": {
+          "post": 5
+        }
+      }
+    },
+    {
+      "name": "fold · modern then legacy on one slot — modern wins · training",
+      "input": {
+        "fn": "fold",
+        "rows": [
+          {
+            "slot": "post",
+            "level": 4
+          },
+          {
+            "slot": "evening",
+            "level": 2
+          }
+        ],
+        "isTraining": true
+      },
+      "expected": {
+        "day": {
+          "post": 4
+        }
+      }
+    },
+    {
+      "name": "fold · legacy then modern on one slot — modern wins · training",
+      "input": {
+        "fn": "fold",
+        "rows": [
+          {
+            "slot": "evening",
+            "level": 2
+          },
+          {
+            "slot": "post",
+            "level": 4
+          }
+        ],
+        "isTraining": true
+      },
+      "expected": {
+        "day": {
+          "post": 4
+        }
+      }
+    },
+    {
+      "name": "fold · morning then waking — waking wins · training",
+      "input": {
+        "fn": "fold",
+        "rows": [
+          {
+            "slot": "morning",
+            "level": 1
+          },
+          {
+            "slot": "waking",
+            "level": 3
+          }
+        ],
+        "isTraining": true
+      },
+      "expected": {
+        "day": {
+          "waking": 3
+        }
+      }
+    },
+    {
+      "name": "fold · waking then morning — waking still wins · training",
+      "input": {
+        "fn": "fold",
+        "rows": [
+          {
+            "slot": "waking",
+            "level": 3
+          },
+          {
+            "slot": "morning",
+            "level": 1
+          }
+        ],
+        "isTraining": true
+      },
+      "expected": {
+        "day": {
+          "waking": 3
+        }
+      }
+    },
+    {
+      "name": "fold · a duplicate modern key — the FIRST wins (equal rank does not displace) · training",
+      "input": {
+        "fn": "fold",
+        "rows": [
+          {
+            "slot": "post",
+            "level": 4
+          },
+          {
+            "slot": "post",
+            "level": 2
+          }
+        ],
+        "isTraining": true
+      },
+      "expected": {
+        "day": {
+          "post": 4
+        }
+      }
+    },
+    {
+      "name": "fold · unknown and prototype keys drop · training",
+      "input": {
+        "fn": "fold",
+        "rows": [
+          {
+            "slot": "afternoon",
+            "level": 3
+          },
+          {
+            "slot": "constructor",
+            "level": 3
+          },
+          {
+            "slot": "waking",
+            "level": 2
+          }
+        ],
+        "isTraining": true
+      },
+      "expected": {
+        "day": {
+          "waking": 2
+        }
+      }
+    },
+    {
+      "name": "fold · empty · training",
+      "input": {
+        "fn": "fold",
+        "rows": [],
+        "isTraining": true
+      },
+      "expected": {
+        "day": {}
+      }
+    },
+    {
+      "name": "fold · modern keys · rest",
+      "input": {
+        "fn": "fold",
+        "rows": [
+          {
+            "slot": "waking",
+            "level": 2
+          },
+          {
+            "slot": "pre",
+            "level": 3
+          },
+          {
+            "slot": "post",
+            "level": 4
+          }
+        ],
+        "isTraining": false
+      },
+      "expected": {
+        "day": {
+          "waking": 2,
+          "pre": 3,
+          "post": 4
+        }
+      }
+    },
+    {
+      "name": "fold · modern rest keys · rest",
+      "input": {
+        "fn": "fold",
+        "rows": [
+          {
+            "slot": "waking",
+            "level": 2
+          },
+          {
+            "slot": "midday",
+            "level": 3
+          },
+          {
+            "slot": "night",
+            "level": 4
+          }
+        ],
+        "isTraining": false
+      },
+      "expected": {
+        "day": {
+          "waking": 2,
+          "midday": 3,
+          "night": 4
+        }
+      }
+    },
+    {
+      "name": "fold · three legacy keys · rest",
+      "input": {
+        "fn": "fold",
+        "rows": [
+          {
+            "slot": "morning",
+            "level": 1
+          },
+          {
+            "slot": "noon",
+            "level": 2
+          },
+          {
+            "slot": "evening",
+            "level": 4
+          }
+        ],
+        "isTraining": false
+      },
+      "expected": {
+        "day": {
+          "waking": 1,
+          "midday": 2,
+          "night": 4
+        }
+      }
+    },
+    {
+      "name": "fold · all four legacy keys · rest",
+      "input": {
+        "fn": "fold",
+        "rows": [
+          {
+            "slot": "morning",
+            "level": 1
+          },
+          {
+            "slot": "noon",
+            "level": 2
+          },
+          {
+            "slot": "evening",
+            "level": 3
+          },
+          {
+            "slot": "eod",
+            "level": 4
+          }
+        ],
+        "isTraining": false
+      },
+      "expected": {
+        "day": {
+          "waking": 1,
+          "midday": 2,
+          "night": 4
+        }
+      }
+    },
+    {
+      "name": "fold · evening then eod — eod wins · rest",
+      "input": {
+        "fn": "fold",
+        "rows": [
+          {
+            "slot": "evening",
+            "level": 3
+          },
+          {
+            "slot": "eod",
+            "level": 5
+          }
+        ],
+        "isTraining": false
+      },
+      "expected": {
+        "day": {
+          "night": 5
+        }
+      }
+    },
+    {
+      "name": "fold · eod then evening — eod still wins · rest",
+      "input": {
+        "fn": "fold",
+        "rows": [
+          {
+            "slot": "eod",
+            "level": 5
+          },
+          {
+            "slot": "evening",
+            "level": 3
+          }
+        ],
+        "isTraining": false
+      },
+      "expected": {
+        "day": {
+          "night": 5
+        }
+      }
+    },
+    {
+      "name": "fold · modern then legacy on one slot — modern wins · rest",
+      "input": {
+        "fn": "fold",
+        "rows": [
+          {
+            "slot": "post",
+            "level": 4
+          },
+          {
+            "slot": "evening",
+            "level": 2
+          }
+        ],
+        "isTraining": false
+      },
+      "expected": {
+        "day": {
+          "post": 4,
+          "night": 2
+        }
+      }
+    },
+    {
+      "name": "fold · legacy then modern on one slot — modern wins · rest",
+      "input": {
+        "fn": "fold",
+        "rows": [
+          {
+            "slot": "evening",
+            "level": 2
+          },
+          {
+            "slot": "post",
+            "level": 4
+          }
+        ],
+        "isTraining": false
+      },
+      "expected": {
+        "day": {
+          "night": 2,
+          "post": 4
+        }
+      }
+    },
+    {
+      "name": "fold · morning then waking — waking wins · rest",
+      "input": {
+        "fn": "fold",
+        "rows": [
+          {
+            "slot": "morning",
+            "level": 1
+          },
+          {
+            "slot": "waking",
+            "level": 3
+          }
+        ],
+        "isTraining": false
+      },
+      "expected": {
+        "day": {
+          "waking": 3
+        }
+      }
+    },
+    {
+      "name": "fold · waking then morning — waking still wins · rest",
+      "input": {
+        "fn": "fold",
+        "rows": [
+          {
+            "slot": "waking",
+            "level": 3
+          },
+          {
+            "slot": "morning",
+            "level": 1
+          }
+        ],
+        "isTraining": false
+      },
+      "expected": {
+        "day": {
+          "waking": 3
+        }
+      }
+    },
+    {
+      "name": "fold · a duplicate modern key — the FIRST wins (equal rank does not displace) · rest",
+      "input": {
+        "fn": "fold",
+        "rows": [
+          {
+            "slot": "post",
+            "level": 4
+          },
+          {
+            "slot": "post",
+            "level": 2
+          }
+        ],
+        "isTraining": false
+      },
+      "expected": {
+        "day": {
+          "post": 4
+        }
+      }
+    },
+    {
+      "name": "fold · unknown and prototype keys drop · rest",
+      "input": {
+        "fn": "fold",
+        "rows": [
+          {
+            "slot": "afternoon",
+            "level": 3
+          },
+          {
+            "slot": "constructor",
+            "level": 3
+          },
+          {
+            "slot": "waking",
+            "level": 2
+          }
+        ],
+        "isTraining": false
+      },
+      "expected": {
+        "day": {
+          "waking": 2
+        }
+      }
+    },
+    {
+      "name": "fold · empty · rest",
+      "input": {
+        "fn": "fold",
+        "rows": [],
+        "isTraining": false
+      },
+      "expected": {
+        "day": {}
+      }
+    },
+    {
+      "name": "fatigueDelta · empty",
+      "input": {
+        "fn": "delta",
+        "day": {}
+      },
+      "expected": {
+        "delta": null
+      }
+    },
+    {
+      "name": "latestFatigue · empty",
+      "input": {
+        "fn": "latest",
+        "day": {}
+      },
+      "expected": {
+        "latest": null
+      }
+    },
+    {
+      "name": "fatigueDelta · waking only",
+      "input": {
+        "fn": "delta",
+        "day": {
+          "waking": 2
+        }
+      },
+      "expected": {
+        "delta": null
+      }
+    },
+    {
+      "name": "latestFatigue · waking only",
+      "input": {
+        "fn": "latest",
+        "day": {
+          "waking": 2
+        }
+      },
+      "expected": {
+        "latest": {
+          "slot": "waking",
+          "level": 2
+        }
+      }
+    },
+    {
+      "name": "fatigueDelta · training day complete",
+      "input": {
+        "fn": "delta",
+        "day": {
+          "waking": 1,
+          "pre": 2,
+          "post": 4
+        }
+      },
+      "expected": {
+        "delta": 2
+      }
+    },
+    {
+      "name": "latestFatigue · training day complete",
+      "input": {
+        "fn": "latest",
+        "day": {
+          "waking": 1,
+          "pre": 2,
+          "post": 4
+        }
+      },
+      "expected": {
+        "latest": {
+          "slot": "post",
+          "level": 4
+        }
+      }
+    },
+    {
+      "name": "fatigueDelta · rest day complete",
+      "input": {
+        "fn": "delta",
+        "day": {
+          "waking": 1,
+          "midday": 2,
+          "night": 5
+        }
+      },
+      "expected": {
+        "delta": null
+      }
+    },
+    {
+      "name": "latestFatigue · rest day complete",
+      "input": {
+        "fn": "latest",
+        "day": {
+          "waking": 1,
+          "midday": 2,
+          "night": 5
+        }
+      },
+      "expected": {
+        "latest": {
+          "slot": "night",
+          "level": 5
+        }
+      }
+    },
+    {
+      "name": "fatigueDelta · pre and post equal",
+      "input": {
+        "fn": "delta",
+        "day": {
+          "pre": 3,
+          "post": 3
+        }
+      },
+      "expected": {
+        "delta": 0
+      }
+    },
+    {
+      "name": "latestFatigue · pre and post equal",
+      "input": {
+        "fn": "latest",
+        "day": {
+          "pre": 3,
+          "post": 3
+        }
+      },
+      "expected": {
+        "latest": {
+          "slot": "post",
+          "level": 3
+        }
+      }
+    },
+    {
+      "name": "fatigueDelta · post below pre",
+      "input": {
+        "fn": "delta",
+        "day": {
+          "pre": 4,
+          "post": 2
+        }
+      },
+      "expected": {
+        "delta": -2
+      }
+    },
+    {
+      "name": "latestFatigue · post below pre",
+      "input": {
+        "fn": "latest",
+        "day": {
+          "pre": 4,
+          "post": 2
+        }
+      },
+      "expected": {
+        "latest": {
+          "slot": "post",
+          "level": 2
+        }
+      }
+    },
+    {
+      "name": "fatigueDelta · pre only",
+      "input": {
+        "fn": "delta",
+        "day": {
+          "pre": 3
+        }
+      },
+      "expected": {
+        "delta": null
+      }
+    },
+    {
+      "name": "latestFatigue · pre only",
+      "input": {
+        "fn": "latest",
+        "day": {
+          "pre": 3
+        }
+      },
+      "expected": {
+        "latest": {
+          "slot": "pre",
+          "level": 3
+        }
+      }
+    },
+    {
+      "name": "fatigueDelta · post only",
+      "input": {
+        "fn": "delta",
+        "day": {
+          "post": 3
+        }
+      },
+      "expected": {
+        "delta": null
+      }
+    },
+    {
+      "name": "latestFatigue · post only",
+      "input": {
+        "fn": "latest",
+        "day": {
+          "post": 3
+        }
+      },
+      "expected": {
+        "latest": {
+          "slot": "post",
+          "level": 3
+        }
+      }
+    },
+    {
+      "name": "fatigueDelta · midday and pre",
+      "input": {
+        "fn": "delta",
+        "day": {
+          "midday": 2,
+          "pre": 3
+        }
+      },
+      "expected": {
+        "delta": null
+      }
+    },
+    {
+      "name": "latestFatigue · midday and pre",
+      "input": {
+        "fn": "latest",
+        "day": {
+          "midday": 2,
+          "pre": 3
+        }
+      },
+      "expected": {
+        "latest": {
+          "slot": "pre",
+          "level": 3
+        }
+      }
+    },
+    {
+      "name": "fatigueDelta · night outranks pre in the vocabulary",
+      "input": {
+        "fn": "delta",
+        "day": {
+          "waking": 2,
+          "night": 3,
+          "pre": 4
+        }
+      },
+      "expected": {
+        "delta": null
+      }
+    },
+    {
+      "name": "latestFatigue · night outranks pre in the vocabulary",
+      "input": {
+        "fn": "latest",
+        "day": {
+          "waking": 2,
+          "night": 3,
+          "pre": 4
+        }
+      },
+      "expected": {
+        "latest": {
+          "slot": "night",
+          "level": 3
+        }
+      }
+    },
+    {
+      "name": "fatigueDelta · post and night",
+      "input": {
+        "fn": "delta",
+        "day": {
+          "post": 4,
+          "night": 1
+        }
+      },
+      "expected": {
+        "delta": null
+      }
+    },
+    {
+      "name": "latestFatigue · post and night",
+      "input": {
+        "fn": "latest",
+        "day": {
+          "post": 4,
+          "night": 1
+        }
+      },
+      "expected": {
+        "latest": {
+          "slot": "night",
+          "level": 1
+        }
+      }
+    },
+    {
+      "name": "fatigueDelta · all five",
+      "input": {
+        "fn": "delta",
+        "day": {
+          "waking": 1,
+          "midday": 2,
+          "pre": 3,
+          "post": 4,
+          "night": 5
+        }
+      },
+      "expected": {
+        "delta": 1
+      }
+    },
+    {
+      "name": "latestFatigue · all five",
+      "input": {
+        "fn": "latest",
+        "day": {
+          "waking": 1,
+          "midday": 2,
+          "pre": 3,
+          "post": 4,
+          "night": 5
+        }
+      },
+      "expected": {
+        "latest": {
+          "slot": "night",
+          "level": 5
+        }
+      }
+    },
+    {
+      "name": "fatigueLevel · null",
+      "input": {
+        "fn": "level",
+        "value": null
+      },
+      "expected": {
+        "level": null
+      }
+    },
+    {
+      "name": "fatigueLevel · 0",
+      "input": {
+        "fn": "level",
+        "value": 0
+      },
+      "expected": {
+        "level": null
+      }
+    },
+    {
+      "name": "fatigueLevel · 1",
+      "input": {
+        "fn": "level",
+        "value": 1
+      },
+      "expected": {
+        "level": {
+          "value": 1,
+          "label": "Fresh",
+          "hint": "could add a rep",
+          "detail": "Could add a rep to everything today."
+        }
+      }
+    },
+    {
+      "name": "fatigueLevel · 2",
+      "input": {
+        "fn": "level",
+        "value": 2
+      },
+      "expected": {
+        "level": {
+          "value": 2,
+          "label": "Fine",
+          "hint": "nothing would stop a session",
+          "detail": "Normal. Nothing here would stop a planned session."
+        }
+      }
+    },
+    {
+      "name": "fatigueLevel · 3",
+      "input": {
+        "fn": "level",
+        "value": 3
+      },
+      "expected": {
+        "level": {
+          "value": 3,
+          "label": "Worn",
+          "hint": "the plan, not a PR",
+          "detail": "Could train the plan, would not chase a record."
+        }
+      }
+    },
+    {
+      "name": "fatigueLevel · 4",
+      "input": {
+        "fn": "level",
+        "value": 4
+      },
+      "expected": {
+        "level": {
+          "value": 4,
+          "label": "Heavy",
+          "hint": "stairs register",
+          "detail": "Stairs register. The warm-up would decide whether to train."
+        }
+      }
+    },
+    {
+      "name": "fatigueLevel · 5",
+      "input": {
+        "fn": "level",
+        "value": 5
+      },
+      "expected": {
+        "level": {
+          "value": 5,
+          "label": "Empty",
+          "hint": "would cancel",
+          "detail": "Would cancel."
+        }
+      }
+    },
+    {
+      "name": "fatigueLevel · 6",
+      "input": {
+        "fn": "level",
+        "value": 6
+      },
+      "expected": {
+        "level": null
+      }
+    },
+    {
+      "name": "fatigueLevel · 9",
+      "input": {
+        "fn": "level",
+        "value": 9
+      },
+      "expected": {
+        "level": null
+      }
+    },
+    {
+      "name": "fatigueLevel · -1",
+      "input": {
+        "fn": "level",
+        "value": -1
+      },
+      "expected": {
+        "level": null
+      }
+    }
+  ]
+}

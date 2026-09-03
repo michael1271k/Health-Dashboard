@@ -22,11 +22,11 @@ export const SLEEP_DEBT_WEEKLY_DECAY = 0.75  // last week's debt keeps 75% weigh
 export function computeSleepDebt(
   nights: Array<{ date: string; sleepMinutes: number | null }>,
   goalHours: number,
+  weekAgo: string = logicalDaysAgoISO(7),
 ): SleepDebt {
   const withData = nights.filter((n) => n.sleepMinutes != null && n.sleepMinutes > 0)
   // Oldest → newest so decay applies chronologically.
   const asc = [...withData].sort((a, b) => a.date.localeCompare(b.date))
-  const weekAgo = logicalDaysAgoISO(7)
   let debt = 0
   let worst: number | null = null
   for (const n of asc) {

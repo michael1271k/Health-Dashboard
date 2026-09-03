@@ -52,7 +52,31 @@ import {
 } from '@/lib/nutrition/context'
 import { BUILTIN_PROFILES, profileByKey, profileToDailyTarget, matchesProfile, type TargetProfile } from '@/lib/nutrition/profiles'
 import { tracksCarbs, tracksFat, hasDailyTarget, applyDailyTarget, type DailyTarget } from '@/lib/nutrition/dailyTargets'
-import { activeProgram, activePhase, normalizePlanId, PROGRAMS, DEFAULT_PROGRAM_ID, type Program, type ProgramPhase } from '@/lib/programs'
+import {
+  activeProgram, activePhase, normalizePlanId, PROGRAMS, DEFAULT_PROGRAM_ID, APEX51, HELIX4, PPL_LEGACY,
+  programDayIn, scheduleDayIn, isTrainingDayIn, sessionTargetIn, eraForDate,
+  type Program, type ProgramPhase, type ScheduleContext, type ScheduleDay,
+} from '@/lib/programs'
+import {
+  parseLayout, effectiveWeekday, dayKeyForWeekday, fullLayout, moveDay, isAuthoredLayout, canonicalLayout,
+  type DayLayout,
+} from '@/lib/schedule/layout'
+import {
+  SWAP_HORIZON_DAYS, dateForWeekday, weekDatesOf, planRestDay, planDaySwap, blockForPlacement, describeBlock,
+  planPermanentMove, shortDayLabel, describeRestPlan, type LoggedDay, type ScheduleWrite, type SwapBlock,
+} from '@/lib/schedule/swap'
+import { REST_OVERRIDE } from '@/lib/schedule/overrides'
+import { stepMarks } from '@/components/dashboard/widgets/DailyWidgets'
+import {
+  FATIGUE_SLOTS, REST_SLOTS, TRAINING_SLOTS, SLOT_LABEL, FATIGUE_LEVELS, slotsForDay, normalizeSlot, foldFatigueRows,
+  fatigueLevel, fatigueDelta, latestFatigue, type FatigueDay,
+} from '@/lib/hooks/useFatigue'
+import {
+  SUPPLEMENT_PROTOCOL, ALL_SUPPLEMENT_KEYS, protocolForDate, stackForDate, supplementCountForDate, slotTimePassed,
+  type SupplementSlot,
+} from '@/lib/supplements'
+import { customSlotsForDate, customDoseFor, supplementKeyOf, type CustomSupplement, type CustomSchedule } from '@/lib/hooks/useCustomSupplements'
+import { SLEEP_DEBT_WINDOW_DAYS, SLEEP_DEBT_WEEKLY_DECAY, computeSleepDebt } from '@/lib/hooks/useSleepDebt'
 import {
   parseRepWindow, repWindowFor, holdTargetFor, clearedCeiling, loadLadder, workLoads, ladderVerdict,
   topLoadCleared, levelUpCue, progressionVerdict, timedProgressionVerdict,
@@ -4907,6 +4931,520 @@ describe('report targets', () => {
       module: 'reports/fmtV2 + reports/targetMatch',
       fn: 'parseTargets / hasTargets / targetForExercise / formatTarget',
       note: 'Every field is independently optional; nil is never zero. `matched` is targetForExercise for the given lookup name, `formatted` its display string. The matcher is exact after alias canonicalisation — it must never merge two catalogue rows that were split on purpose.',
+      cases,
+    })
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 4 — swap day & schedule. `schedule/layout.ts`, the pure schedule core in
+// `programs.ts`, `schedule/swap.ts`, and the day page's small pure modules.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** The three decks by id — `PROGRAMS`, spelled out so a vector names its plan. */
+const DECKS: Record<string, Program> = { apex51: APEX51, axis4: HELIX4, ppl: PPL_LEGACY }
+
+/**
+ * Re-key an object in jsonb order: shorter keys first, then bytewise. The ONLY
+ * object `parseLayout` ever reads at runtime is a `program_day_layout.layout`
+ * jsonb value, and Postgres hands that back in exactly this order — so it is
+ * the order the "first key wins" rule is really evaluated in, and the order the
+ * Swift port walks a Dictionary in.
+ */
+function jsonb<T>(obj: Record<string, T>): Record<string, T> {
+  const enc = new TextEncoder()
+  const keys = Object.keys(obj).sort((a, b) => {
+    const [x, y] = [enc.encode(a), enc.encode(b)]
+    if (x.length !== y.length) return x.length - y.length
+    for (let i = 0; i < x.length; i += 1) if (x[i] !== y[i]) return x[i] - y[i]
+    return 0
+  })
+  return Object.fromEntries(keys.map((k) => [k, obj[k]]))
+}
+
+const dayOut = (d: ScheduleDay | 'rest') =>
+  d === 'rest' ? null : { label: d.label, sub: d.sub ?? null, dayKey: d.dayKey ?? null }
+
+describe('golden vectors — schedule layout', () => {
+  it('exports the layout algebra', () => {
+    interface In { fn: string; raw?: unknown; program?: string; dayKey?: string; layout?: DayLayout; weekday?: number }
+    interface Out {
+      layout?: DayLayout; weekday?: number; dayKey?: string | null; flag?: boolean; text?: string
+      day?: { key: string; label: string; sub: string | null; weekday: number } | null
+    }
+    const cases: Case<In, Out>[] = []
+    const push = (name: string, input: In, expected: Out) => cases.push({ name, input, expected })
+
+    const parse = (name: string, raw: unknown) => {
+      const fed = raw && typeof raw === 'object' && !Array.isArray(raw) ? jsonb(raw as Record<string, unknown>) : raw
+      push(`parseLayout · ${name}`, { fn: 'parseLayout', raw: fed }, { layout: parseLayout(fed) })
+    }
+    parse('well-formed', { arms: 3, cb_a: 0 })
+    parse('out-of-range, non-integer, string, null, bool, nested all dropped',
+      { a: 7, b: -1, c: 2.5, d: '3', e: null, f: true, g: false, h: [3], i: { n: 3 }, arms: 3 })
+    parse('null', null)
+    parse('a string', 'nope')
+    parse('an array', [1, 2])
+    parse('a number', 3)
+    parse('empty object', {})
+    parse('an empty key is dropped', { '': 3, arms: 4 })
+    parse('duplicate weekday — the jsonb-first key wins (same length, bytewise)', { arms: 3, cb_b: 3 })
+    parse('duplicate weekday — the shorter key is jsonb-first', { legs_a: 5, cb_b: 5 })
+    parse('6 and 0 are both weekdays', { legs_b: 6, cb_a: 0 })
+    parse('a key of another plan is kept — the layout does not know the plan', { upper_a: 3 })
+    parse('the full five-day layout', fullLayout(APEX51, {}))
+
+    for (const [pid, p] of Object.entries(DECKS)) {
+      const remap: DayLayout = { [p.days[0].key]: 3 }
+      for (const d of p.days) {
+        push(`effectiveWeekday · ${pid}/${d.key} · silent`, { fn: 'effectiveWeekday', program: pid, dayKey: d.key, layout: {} }, { weekday: effectiveWeekday(d, {}) })
+        push(`effectiveWeekday · ${pid}/${d.key} · first day remapped to 3`, { fn: 'effectiveWeekday', program: pid, dayKey: d.key, layout: remap }, { weekday: effectiveWeekday(d, remap) })
+      }
+      for (const layout of [{}, remap]) {
+        const tag = Object.keys(layout).length ? 'remapped' : 'authored'
+        for (let wd = 0; wd <= 6; wd += 1) {
+          push(`dayKeyForWeekday · ${pid} · ${tag} · ${wd}`, { fn: 'dayKeyForWeekday', program: pid, layout, weekday: wd }, { dayKey: dayKeyForWeekday(p, layout, wd) })
+          const day = programDayIn(p, layout, wd)
+          push(`programDayIn · ${pid} · ${tag} · ${wd}`, { fn: 'programDayIn', program: pid, layout, weekday: wd },
+            { day: day === 'rest' ? null : { key: day.key, label: day.label, sub: day.sub ?? null, weekday: day.weekday } })
+        }
+        push(`fullLayout · ${pid} · ${tag}`, { fn: 'fullLayout', program: pid, layout }, { layout: fullLayout(p, layout) })
+        push(`isAuthoredLayout · ${pid} · ${tag}`, { fn: 'isAuthoredLayout', program: pid, layout }, { flag: isAuthoredLayout(p, layout) })
+      }
+    }
+    const arms = APEX51.days.find((d) => d.key === 'arms')!
+    push('effectiveWeekday · an invalid mapped value falls back to the authored weekday', { fn: 'effectiveWeekday', program: 'apex51', dayKey: 'arms', layout: { arms: 9 } }, { weekday: effectiveWeekday(arms, { arms: 9 }) })
+    push('dayKeyForWeekday · weekday 7 is nobody', { fn: 'dayKeyForWeekday', program: 'apex51', layout: {}, weekday: 7 }, { dayKey: dayKeyForWeekday(APEX51, {}, 7) })
+
+    const move = (name: string, program: string, layout: DayLayout, dayKey: string, weekday: number) =>
+      push(`moveDay · ${name}`, { fn: 'moveDay', program, layout, dayKey, weekday }, { layout: moveDay(DECKS[program], layout, dayKey, weekday) })
+    move('arms → Thu exchanges with cb_b', 'apex51', {}, 'arms', 4)
+    move('arms → Wed just moves; Tue becomes rest', 'apex51', {}, 'arms', 3)
+    move('arms → its own Tue is a no-op (full layout back)', 'apex51', {}, 'arms', 2)
+    move('a day of another plan is a no-op', 'apex51', {}, 'upper_a', 3)
+    move('weekday 7 is invalid — full layout back', 'apex51', {}, 'arms', 7)
+    move('weekday -1 is invalid — full layout back', 'apex51', {}, 'arms', -1)
+    move('from a sparse layout {arms:3}, cb_b → Wed exchanges with arms (arms takes Thu)', 'apex51', { arms: 3 }, 'cb_b', 3)
+    move('from a sparse layout {arms:3}, arms → Tue goes home (Wed rests again)', 'apex51', { arms: 3 }, 'arms', 2)
+    move('helix4 upper_a → Sun (free)', 'axis4', {}, 'upper_a', 0)
+    move('helix4 lower_b → Mon exchanges with upper_a', 'axis4', {}, 'lower_b', 1)
+    move('ppl push_sun → Wed (free)', 'ppl', {}, 'ppl_push_sun', 3)
+    move('ppl push_sun → Thu exchanges with push_thu', 'ppl', {}, 'ppl_push_sun', 4)
+    let chain: DayLayout = {}
+    for (const [key, wd] of [['arms', 4], ['cb_a', 5], ['legs_b', 0], ['arms', 3]] as const) {
+      const before = chain
+      chain = moveDay(APEX51, chain, key, wd)
+      push(`moveDay · chain · ${key} → ${wd}`, { fn: 'moveDay', program: 'apex51', layout: before, dayKey: key, weekday: wd }, { layout: chain })
+    }
+
+    push('isAuthoredLayout · a key of another plan says nothing', { fn: 'isAuthoredLayout', program: 'apex51', layout: { upper_a: 3 } }, { flag: isAuthoredLayout(APEX51, { upper_a: 3 }) })
+    push('isAuthoredLayout · an authored value spelled out is still authored', { fn: 'isAuthoredLayout', program: 'apex51', layout: { arms: 2 } }, { flag: isAuthoredLayout(APEX51, { arms: 2 }) })
+    push('isAuthoredLayout · an invalid value falls back and is authored', { fn: 'isAuthoredLayout', program: 'apex51', layout: { arms: 9 } }, { flag: isAuthoredLayout(APEX51, { arms: 9 }) })
+
+    const canon = (name: string, layout: DayLayout) => push(`canonicalLayout · ${name}`, { fn: 'canonicalLayout', layout }, { text: canonicalLayout(layout) })
+    canon('one key order', { cb_a: 0, legs_a: 1, arms: 2 })
+    canon('the other key order — same string', { arms: 2, cb_a: 0, legs_a: 1 })
+    canon('empty', {})
+    canon('the full five', fullLayout(APEX51, {}))
+    canon('sort is code-unit order: uppercase before underscore before lowercase', { b: 1, B: 2, _a: 3, a: 4 })
+    canon('a key with a quote is escaped', { 'we"ird': 1, plain: 2 })
+
+    emit('schedule-layout.json', {
+      module: 'schedule/layout + programs',
+      fn: 'parseLayout / effectiveWeekday / dayKeyForWeekday / fullLayout / moveDay / isAuthoredLayout / canonicalLayout / programDayIn',
+      note: 'parseLayout is TOTAL: malformed values drop, a duplicate weekday keeps the FIRST key in jsonb order (length, then bytewise — the only order the web ever reads). moveDay is an EXCHANGE: an occupied target trades slots, a free one just moves. canonicalLayout is the exact JSON.stringify of key-sorted [key, weekday] pairs. programDayIn: null = rest; `weekday` in the answer is the AUTHORED one.',
+      cases,
+    })
+  })
+})
+
+describe('golden vectors — schedule context', () => {
+  it('exports the pure schedule core', () => {
+    interface In { ctx: ScheduleContext; date: string }
+    interface Out { day: ReturnType<typeof dayOut>; training: boolean; sessionTarget: number; era: 'ppl' | 'axis' }
+    const cases: Case<In, Out>[] = []
+    const run = (name: string, ctx: ScheduleContext, date: string) => cases.push({
+      name, input: { ctx, date },
+      expected: { day: dayOut(scheduleDayIn(ctx, date)), training: isTrainingDayIn(ctx, date), sessionTarget: sessionTargetIn(ctx), era: eraForDate(date) },
+    })
+    const ctx = (over: Partial<ScheduleContext> = {}): ScheduleContext => ({ programId: 'apex51', phase: 'cut', overrides: {}, layout: {}, ...over })
+
+    const week = weekDatesOf('2026-08-12')   // Sun 09 … Sat 15
+    for (const d of week) run(`helix5 · ${d}`, ctx(), d)
+    for (const d of week) run(`helix4 · ${d}`, ctx({ programId: 'axis4' }), d)
+    for (const d of week) run(`ppl selected in the Helix era · ${d}`, ctx({ programId: 'ppl' }), d)
+    for (const d of weekDatesOf('2026-06-03')) run(`PPL era, helix4 selected + a layout, both ignored · ${d}`, ctx({ programId: 'axis4', layout: { upper_a: 0 } }), d)
+
+    run('bulk phase changes nothing', ctx({ phase: 'bulk' }), '2026-08-09')
+    run('unknown plan falls back to Helix-5', ctx({ programId: 'bogus' }), '2026-08-10')
+    run('a legacy alias is NOT normalised here — Helix-5', ctx({ programId: 'axis4_builder' }), '2026-08-10')
+    run('override places another day on Sunday', ctx({ overrides: { '2026-08-09': 'legs_b' } }), '2026-08-09')
+    run('override places a session on a rest day', ctx({ overrides: { '2026-08-12': 'cb_a' } }), '2026-08-12')
+    run("the literal 'rest' clears a training day", ctx({ overrides: { '2026-08-09': REST_OVERRIDE } }), '2026-08-09')
+    run('a stale override key on a training day falls through to the weekday', ctx({ overrides: { '2026-08-09': 'upper_a' } }), '2026-08-09')
+    run('a stale override key on a REST day — the day says rest, training says true', ctx({ overrides: { '2026-08-12': 'upper_a' } }), '2026-08-12')
+    run('an override on another date does not leak', ctx({ overrides: { '2026-08-09': REST_OVERRIDE } }), '2026-08-10')
+    run('layout arms→Wed — Wednesday trains', ctx({ layout: { arms: 3 } }), '2026-08-12')
+    run('layout arms→Wed — Tuesday rests', ctx({ layout: { arms: 3 } }), '2026-08-11')
+    run('override beats layout', ctx({ layout: { arms: 3 }, overrides: { '2026-08-12': REST_OVERRIDE } }), '2026-08-12')
+    run('a layout naming another plan\'s day is inert', ctx({ layout: { upper_a: 3 } }), '2026-08-12')
+    run('helix4 with a layout', ctx({ programId: 'axis4', layout: { upper_a: 0 } }), '2026-08-09')
+    run('the PPL era ignores the layout even for the PPL plan', ctx({ programId: 'ppl', layout: { ppl_push_sun: 3 } }), '2026-06-03')
+    run('a PPL-era override naming a PPL key applies', ctx({ overrides: { '2026-06-03': 'ppl_legs_tue' } }), '2026-06-03')
+    run('a PPL-era override naming a Helix key is stale', ctx({ overrides: { '2026-06-03': 'arms' } }), '2026-06-03')
+    run('a PPL-era rest override', ctx({ overrides: { '2026-06-01': REST_OVERRIDE } }), '2026-06-01')
+    run('the day before the cut opened is PPL (Tue Legs)', ctx(), '2026-07-14')
+    run('the cut opens on a Wednesday — Helix rest', ctx(), '2026-07-15')
+    run('Week 0 Saturday', ctx(), '2026-07-18')
+    run('Week 1 Sunday — the axis anchor', ctx(), '2026-07-19')
+    run('an unparseable date rests', ctx(), 'nope')
+    run('an unparseable date with an override still honours it', ctx({ overrides: { nope: 'arms' } }), 'nope')
+    run('an empty date rests and is PPL', ctx(), '')
+
+    emit('schedule-context.json', {
+      module: 'programs',
+      fn: 'scheduleDayIn / isTrainingDayIn / sessionTargetIn / eraForDate',
+      note: 'day: null = rest. A per-date override wins; a stale key falls through in scheduleDayIn but counts as TRAINING in isTrainingDayIn (the two disagree on purpose — web behaviour). Dates before 2026-07-15 resolve against PPL with an EMPTY layout whatever is selected. sessionTarget is the untrimmed plan\'s day count and is not era-aware. era is a plain string compare.',
+      cases,
+    })
+  })
+})
+
+describe('golden vectors — swap', () => {
+  it('exports the swap planner', () => {
+    interface Resolver { ctx: ScheduleContext; pinned?: Record<string, ScheduleDay | null> }
+    const resolveOf = (r: Resolver) => (d: string): ScheduleDay | 'rest' => {
+      if (r.pinned && d in r.pinned) return r.pinned[d] ?? 'rest'
+      return scheduleDayIn(r.ctx, d)
+    }
+    const resolveWithOf = (r: Resolver) => (d: string, layout: DayLayout) => scheduleDayIn({ ...r.ctx, layout }, d)
+    const helix = (overrides: Record<string, string> = {}, layout: DayLayout = {}, programId = 'apex51'): Resolver =>
+      ({ ctx: { programId, phase: 'cut', overrides, layout } })
+
+    interface In {
+      fn: string; date?: string; resolver?: Resolver; horizon?: number; dayKey?: string; naturalDate?: string | null
+      logged?: LoggedDay[]; sourceDate?: string | null; labels?: Record<string, string>
+      program?: string; layout?: DayLayout; weekday?: number; today?: string
+    }
+    interface Out {
+      rest?: { writes: ScheduleWrite[]; moved: ScheduleDay | null; movedTo: string | null; sameWeek: boolean; outcome: string; description: string }
+      writes?: ScheduleWrite[]
+      block?: SwapBlock | null; description?: string | null
+      permanent?: { layout: DayLayout | null; writes: ScheduleWrite[]; pinned: string[]; block: SwapBlock | null }
+      date?: string; dates?: string[]; text?: string
+    }
+    const cases: Case<In, Out>[] = []
+    const push = (name: string, input: In, expected: Out) => cases.push({ name, input, expected })
+
+    // ── planRestDay ──
+    const rest = (name: string, date: string, resolver: Resolver = helix(), horizon?: number) => {
+      const plan = horizon == null ? planRestDay(date, resolveOf(resolver)) : planRestDay(date, resolveOf(resolver), horizon)
+      push(`planRestDay · ${name}`, { fn: 'planRestDay', date, resolver, ...(horizon == null ? {} : { horizon }) },
+        { rest: { ...plan, description: describeRestPlan(plan) } })
+    }
+    rest('Tue arms → Wed', '2026-08-04')
+    rest('Fri legs_b → Sat', '2026-08-07')
+    rest('Wed is already rest', '2026-08-05')
+    rest('Sat is already rest', '2026-08-08')
+    rest('Sun cb_a skips Mon and Tue → Wed', '2026-08-02')
+    rest('chain: arms already sits on Wed, resting Wed pushes it to Sat', '2026-08-05', helix({ '2026-08-04': REST_OVERRIDE, '2026-08-05': 'arms' }))
+    rest('both rest slots taken → next Wednesday, not the same week', '2026-08-07', helix({ '2026-08-05': 'cb_a', '2026-08-08': 'cb_b' }))
+    const packed: Record<string, string> = {}
+    for (let i = 0; i <= SWAP_HORIZON_DAYS + 1; i += 1) packed[isoAddDays('2026-08-04', i)] = 'cb_a'
+    rest('no-slot: fourteen days of cb_a', '2026-08-04', helix(packed))
+    rest('unscheduled: a bare label with no key', '2026-06-01', { ctx: helix().ctx, pinned: { '2026-06-01': { label: 'Push' } } })
+    rest('unscheduled: an empty-string key is no key', '2026-06-01', { ctx: helix().ctx, pinned: { '2026-06-01': { label: 'Push', dayKey: '' } } })
+    rest('a pinned rest', '2026-08-04', { ctx: helix().ctx, pinned: { '2026-08-04': null } })
+    rest('horizon 1 from Tuesday finds Wednesday', '2026-08-04', helix(), 1)
+    rest('horizon 1 from Thursday finds nothing', '2026-08-06', helix(), 1)
+    rest('horizon 0 never searches', '2026-08-04', helix(), 0)
+    rest('PPL era: Mon Pull → Wed', '2026-06-01')
+    rest('layout arms→Wed: resting Tuesday is already rest', '2026-08-04', helix({}, { arms: 3 }))
+    rest('layout arms→Wed: resting Wednesday sends arms to Sat', '2026-08-05', helix({}, { arms: 3 }))
+    rest('helix4 Mon upper_a → Wed', '2026-08-10', helix({}, {}, 'axis4'))
+    rest('helix4 Fri lower_b → Sat', '2026-08-14', helix({}, {}, 'axis4'))
+    rest('across a month end — Mon 31 Aug → Wed 2 Sept', '2026-08-31')
+    rest('across a year end — Thu 31 Dec → Sat 2 Jan, same week', '2026-12-31')
+
+    // ── planDaySwap ──
+    const swap = (name: string, date: string, dayKey: string, naturalDate: string | null, resolver: Resolver = helix()) =>
+      push(`planDaySwap · ${name}`, { fn: 'planDaySwap', date, dayKey, naturalDate, resolver },
+        { writes: planDaySwap(date, dayKey, resolveOf(resolver), naturalDate) })
+    swap('legs_b onto Tue exchanges with arms', '2026-08-04', 'legs_b', dateForWeekday('2026-08-04', 5))
+    swap('legs_b onto Wed (rest) rests Friday', '2026-08-05', 'legs_b', dateForWeekday('2026-08-05', 5))
+    swap('follows a day already moved to Saturday', '2026-08-04', 'legs_b', dateForWeekday('2026-08-04', 5), helix({ '2026-08-07': REST_OVERRIDE, '2026-08-08': 'legs_b' }))
+    swap('arms onto its own Tuesday — one write', '2026-08-04', 'arms', dateForWeekday('2026-08-04', 2))
+    swap('a key not in the week and no natural date — one write', '2026-08-05', 'upper_a', null)
+    swap('natural date null but the day is in the week — the week finds it', '2026-08-05', 'legs_b', null)
+    swap('natural date given but the day sits elsewhere — the week wins', '2026-08-05', 'legs_b', '2026-08-01', helix({ '2026-08-07': REST_OVERRIDE, '2026-08-08': 'legs_b' }))
+    swap('an empty natural date is no date', '2026-08-05', 'upper_a', '')
+    swap('the target holds an override of another day — that day is displaced', '2026-08-05', 'legs_b', '2026-08-07', helix({ '2026-08-05': 'cb_a' }))
+    swap('PPL era: pull_fri onto Wed rests Friday', '2026-06-03', 'ppl_pull_fri', '2026-06-05')
+    swap('natural date in another week is still honoured', '2026-08-05', 'upper_a', '2026-07-29')
+
+    // ── blockForPlacement + describeBlock ──
+    const labels = { arms: 'Delts & Arms', legs_a: 'Legs & Core A', cb_b: 'Upper B' }
+    const labelFor = (k: string | null) => (k && labels[k as keyof typeof labels]) || 'Session'
+    const block = (name: string, date: string, dayKey: string, logged: LoggedDay[], sourceDate: string | null) => {
+      const b = blockForPlacement(date, dayKey, logged, sourceDate)
+      push(`blockForPlacement · ${name}`, { fn: 'blockForPlacement', date, dayKey, logged, sourceDate, labels },
+        { block: b, description: b ? describeBlock(b, labelFor) : null })
+    }
+    const armsTue: LoggedDay[] = [{ date: '2026-08-11', dayKey: 'arms' }]
+    block('target logged a DIFFERENT day', '2026-08-11', 'legs_a', armsTue, null)
+    block('the no-op — placing what is already there', '2026-08-11', 'arms', armsTue, null)
+    block('moving a day OFF a committed date', '2026-08-13', 'arms', armsTue, '2026-08-11')
+    block('source and target both untouched', '2026-08-13', 'legs_a', armsTue, '2026-08-10')
+    block('target check comes first', '2026-08-11', 'legs_a', armsTue, '2026-08-11')
+    block('a source equal to the target is ignored', '2026-08-13', 'arms', armsTue, '2026-08-13')
+    block('an empty source is no source', '2026-08-13', 'arms', armsTue, '')
+    block('nothing logged', '2026-08-11', 'legs_a', [], '2026-08-10')
+    const keyless: LoggedDay[] = [{ date: '2026-08-11', dayKey: null }]
+    block('target logged a keyless session', '2026-08-11', 'legs_a', keyless, null)
+    block('source logged a keyless session', '2026-08-13', 'legs_a', keyless, '2026-08-11')
+    block('two rows on the target date — the first is the one named', '2026-08-11', 'cb_b', [{ date: '2026-08-11', dayKey: 'arms' }, { date: '2026-08-11', dayKey: 'cb_b' }], null)
+
+    // ── planPermanentMove ──
+    const perm = (name: string, o: { program?: string; layout?: DayLayout; dayKey: string; weekday: number; today?: string; logged?: LoggedDay[] }) => {
+      const program = o.program ?? 'apex51'
+      const layout = o.layout ?? {}
+      const today = o.today ?? '2026-08-13'
+      const logged = o.logged ?? []
+      const resolver = helix({}, layout, program)
+      const plan = planPermanentMove({ program: DECKS[program], layout, dayKey: o.dayKey, weekday: o.weekday, todayISO: today, logged, resolveWith: resolveWithOf(resolver) })
+      push(`planPermanentMove · ${name}`, { fn: 'planPermanentMove', program, layout, dayKey: o.dayKey, weekday: o.weekday, today, logged, resolver }, { permanent: plan })
+    }
+    perm('cb_b → Sat: nothing behind today changes', { dayKey: 'cb_b', weekday: 6 })
+    perm('arms → Wed: pins Tue arms and Wed rest', { dayKey: 'arms', weekday: 3 })
+    perm('cb_a ↔ legs_a both in the past: pins Sun and Mon', { dayKey: 'cb_a', weekday: 1 })
+    perm('today logged cb_b — legs_b → Thu refused (target)', { dayKey: 'legs_b', weekday: 4, logged: [{ date: '2026-08-13', dayKey: 'cb_b' }] })
+    perm('today logged cb_b — cb_b → Sat refused (source)', { dayKey: 'cb_b', weekday: 6, logged: [{ date: '2026-08-13', dayKey: 'cb_b' }] })
+    perm('today logged cb_b — cb_a → Sat allowed, today untouched', { dayKey: 'cb_a', weekday: 6, logged: [{ date: '2026-08-13', dayKey: 'cb_b' }] })
+    perm('Tuesday logged arms — legs_a → Tue refused', { dayKey: 'legs_a', weekday: 2, logged: [{ date: '2026-08-11', dayKey: 'arms' }] })
+    perm('from {arms:3}, arms back → Tue: pins Tue rest and Wed arms', { layout: { arms: 3 }, dayKey: 'arms', weekday: 2 })
+    perm('weekday 7: no move, no pins, the full layout back', { dayKey: 'arms', weekday: 7 })
+    perm('an unknown dayKey: the full layout back, nothing pinned', { dayKey: 'upper_a', weekday: 3 })
+    perm('today is Sunday: nothing is spent', { dayKey: 'arms', weekday: 3, today: '2026-08-09' })
+    perm('today is Saturday: cb_a → Sat pins only Sunday', { dayKey: 'cb_a', weekday: 6, today: '2026-08-15' })
+    perm('helix4 lower_b → Sun, today Wed: pins Sunday rest', { program: 'axis4', dayKey: 'lower_b', weekday: 0, today: '2026-08-12' })
+    perm('helix4 upper_a ↔ lower_b, today Sat: pins Mon and Fri', { program: 'axis4', dayKey: 'upper_a', weekday: 5, today: '2026-08-15' })
+    perm('ppl selected in the Helix era: push_sun → Wed pins Sun and Wed', { program: 'ppl', dayKey: 'ppl_push_sun', weekday: 3 })
+    perm('a PPL-era today: the layout is inert there, so nothing is pinned', { program: 'ppl', dayKey: 'ppl_push_sun', weekday: 3, today: '2026-06-03' })
+
+    // ── dates and labels ──
+    for (let wd = -1; wd <= 7; wd += 1) push(`dateForWeekday · 2026-08-13 · ${wd}`, { fn: 'dateForWeekday', date: '2026-08-13', weekday: wd }, { date: dateForWeekday('2026-08-13', wd) })
+    for (const [d, wd] of [['2026-08-31', 6], ['2026-12-31', 6], ['2026-01-01', 0], ['2028-02-29', 6], ['2026-08-02', 0], ['2026-08-08', 0]] as const) {
+      push(`dateForWeekday · ${d} · ${wd}`, { fn: 'dateForWeekday', date: d, weekday: wd }, { date: dateForWeekday(d, wd) })
+    }
+    for (const d of [...weekDatesOf('2026-08-05'), '2026-08-31', '2026-12-31', '2028-02-29']) push(`weekDatesOf · ${d}`, { fn: 'weekDatesOf', date: d }, { dates: weekDatesOf(d) })
+    for (const d of ['2026-08-05', '2026-09-03', '2026-09-30', '2026-01-01', '2026-12-25', '2026-03-01', '2026-06-21', '2026-11-11', '2026-02-28', '2026-04-10', '2026-05-09', '2026-07-19', '2026-10-31', '2028-02-29']) {
+      push(`shortDayLabel · ${d}`, { fn: 'shortDayLabel', date: d }, { text: shortDayLabel(d) })
+    }
+
+    emit('swap.json', {
+      module: 'schedule/swap',
+      fn: 'planRestDay / describeRestPlan / planDaySwap / blockForPlacement / describeBlock / planPermanentMove / dateForWeekday / weekDatesOf / shortDayLabel',
+      note: 'The resolver is scheduleDayIn over `resolver.ctx`, with `resolver.pinned` (date → day | null=rest) taking precedence. planRestDay searches FORWARD only and re-homes onto the next effective rest inside the horizon; undo clears BOTH dates. planDaySwap is an exchange. planPermanentMove pins spent days (strictly before today) whose meaning would change. shortDayLabel is en-GB, UTC: "Wed 5 Aug", and September is "Sept".',
+      cases,
+    })
+  })
+})
+
+describe('golden vectors — step marks', () => {
+  it('exports stepMarks', () => {
+    const goals = [6000, 8000, 10000, 12500, 2000, 0, 1, 499, 500, 501, 1250, 1500, 2499, 2500, 3000, 7000, 7499, 7500, 11250, 15000, 20000, 100000, -1000]
+    emit('step-marks.json', {
+      module: 'components/dashboard/widgets/DailyWidgets',
+      fn: 'stepMarks',
+      note: 'A fifth of the goal snapped to 500 by Math.round (half up), never below 500; the first four multiples strictly under the goal, then the goal itself. Always ends with the goal and is strictly increasing.',
+      cases: goals.map((goal) => ({ name: `${goal}`, input: { goal }, expected: stepMarks(goal) })),
+    })
+  })
+})
+
+describe('golden vectors — fatigue slots', () => {
+  it('exports the slot vocabulary, the legacy fold and the readings', () => {
+    interface Row { slot: string; level: number }
+    interface In { fn: string; raw?: string; isTraining?: boolean; rows?: Row[]; day?: FatigueDay; value?: number | null }
+    interface Out {
+      slot?: string | null; day?: FatigueDay; delta?: number | null
+      latest?: { slot: string; level: number } | null
+      level?: { value: number; label: string; hint: string; detail: string } | null
+      tables?: { slots: string[]; rest: string[]; training: string[]; labels: Record<string, string>; levels: Out['level'][]; forTraining: string[]; forRest: string[] }
+    }
+    const cases: Case<In, Out>[] = []
+    const push = (name: string, input: In, expected: Out) => cases.push({ name, input, expected })
+
+    push('tables', { fn: 'tables' }, { tables: {
+      slots: [...FATIGUE_SLOTS], rest: [...REST_SLOTS], training: [...TRAINING_SLOTS], labels: SLOT_LABEL,
+      // The colour is HelixUI's; the Swift carries value/label/hint/detail.
+      levels: FATIGUE_LEVELS.map(({ value, label, hint, detail }) => ({ value, label, hint, detail })),
+      forTraining: [...slotsForDay(true)], forRest: [...slotsForDay(false)],
+    } })
+
+    const raws = [...FATIGUE_SLOTS, 'morning', 'noon', 'evening', 'eod', '', 'Waking', 'WAKING', ' pre', 'afternoon', 'constructor', 'toString']
+    for (const raw of raws) for (const isTraining of [true, false]) {
+      // `?? null`: the web answers `undefined` for 'constructor' (a prototype hit with no `.training`), which is the same absence.
+      push(`normalizeSlot · ${JSON.stringify(raw)} · ${isTraining ? 'training' : 'rest'}`, { fn: 'normalizeSlot', raw, isTraining }, { slot: normalizeSlot(raw, isTraining) ?? null })
+    }
+
+    const fold = (name: string, rows: Row[], isTraining: boolean) =>
+      push(`fold · ${name} · ${isTraining ? 'training' : 'rest'}`, { fn: 'fold', rows, isTraining }, { day: foldFatigueRows(rows, isTraining) })
+    for (const t of [true, false]) {
+      fold('modern keys', [{ slot: 'waking', level: 2 }, { slot: 'pre', level: 3 }, { slot: 'post', level: 4 }], t)
+      fold('modern rest keys', [{ slot: 'waking', level: 2 }, { slot: 'midday', level: 3 }, { slot: 'night', level: 4 }], t)
+      fold('three legacy keys', [{ slot: 'morning', level: 1 }, { slot: 'noon', level: 2 }, { slot: 'evening', level: 4 }], t)
+      fold('all four legacy keys', [{ slot: 'morning', level: 1 }, { slot: 'noon', level: 2 }, { slot: 'evening', level: 3 }, { slot: 'eod', level: 4 }], t)
+      fold('evening then eod — eod wins', [{ slot: 'evening', level: 3 }, { slot: 'eod', level: 5 }], t)
+      fold('eod then evening — eod still wins', [{ slot: 'eod', level: 5 }, { slot: 'evening', level: 3 }], t)
+      fold('modern then legacy on one slot — modern wins', [{ slot: 'post', level: 4 }, { slot: 'evening', level: 2 }], t)
+      fold('legacy then modern on one slot — modern wins', [{ slot: 'evening', level: 2 }, { slot: 'post', level: 4 }], t)
+      fold('morning then waking — waking wins', [{ slot: 'morning', level: 1 }, { slot: 'waking', level: 3 }], t)
+      fold('waking then morning — waking still wins', [{ slot: 'waking', level: 3 }, { slot: 'morning', level: 1 }], t)
+      fold('a duplicate modern key — the FIRST wins (equal rank does not displace)', [{ slot: 'post', level: 4 }, { slot: 'post', level: 2 }], t)
+      fold('unknown and prototype keys drop', [{ slot: 'afternoon', level: 3 }, { slot: 'constructor', level: 3 }, { slot: 'waking', level: 2 }], t)
+      fold('empty', [], t)
+    }
+
+    const days: Array<[string, FatigueDay]> = [
+      ['empty', {}], ['waking only', { waking: 2 }], ['training day complete', { waking: 1, pre: 2, post: 4 }],
+      ['rest day complete', { waking: 1, midday: 2, night: 5 }], ['pre and post equal', { pre: 3, post: 3 }],
+      ['post below pre', { pre: 4, post: 2 }], ['pre only', { pre: 3 }], ['post only', { post: 3 }],
+      ['midday and pre', { midday: 2, pre: 3 }], ['night outranks pre in the vocabulary', { waking: 2, night: 3, pre: 4 }],
+      ['post and night', { post: 4, night: 1 }], ['all five', { waking: 1, midday: 2, pre: 3, post: 4, night: 5 }],
+    ]
+    for (const [name, day] of days) {
+      push(`fatigueDelta · ${name}`, { fn: 'delta', day }, { delta: fatigueDelta(day) })
+      push(`latestFatigue · ${name}`, { fn: 'latest', day }, { latest: latestFatigue(day) })
+    }
+    for (const value of [null, 0, 1, 2, 3, 4, 5, 6, 9, -1]) {
+      const l = fatigueLevel(value)
+      push(`fatigueLevel · ${value}`, { fn: 'level', value }, { level: l ? { value: l.value, label: l.label, hint: l.hint, detail: l.detail } : null })
+    }
+
+    emit('fatigue-slots.json', {
+      module: 'hooks/useFatigue',
+      fn: 'FATIGUE_SLOTS / slotsForDay / SLOT_LABEL / normalizeSlot / foldFatigueRows / FATIGUE_LEVELS / fatigueLevel / fatigueDelta / latestFatigue',
+      note: 'noon and evening resolve DIFFERENTLY on a training day (pre/post) vs rest (midday/night). The fold ranks morning<noon<evening<eod<modern; a higher rank replaces, an equal one does not (first of two identical modern keys wins). latest walks the vocabulary backwards, which is correct for both day types. Colours are dropped.',
+      cases,
+    })
+  })
+})
+
+describe('golden vectors — supplement stack', () => {
+  it('exports the seed protocol, the DB grouping and the clock rules', () => {
+    interface In {
+      fn: string; isTraining?: boolean; weekday?: number; dbSlots?: SupplementSlot[]; hhmm?: string; nowMinutes?: number
+      customs?: CustomSupplement[]; custom?: CustomSupplement
+    }
+    interface Out { slots?: SupplementSlot[]; count?: number; passed?: boolean; text?: string; tables?: { seed: SupplementSlot[]; allKeys: string[] } }
+    const cases: Case<In, Out>[] = []
+    const push = (name: string, input: In, expected: Out) => cases.push({ name, input, expected })
+
+    push('tables', { fn: 'tables' }, { tables: { seed: SUPPLEMENT_PROTOCOL, allKeys: ALL_SUPPLEMENT_KEYS } })
+    for (let wd = 0; wd <= 6; wd += 1) for (const t of [true, false]) {
+      push(`protocolForDate · ${wd} · ${t ? 'training' : 'rest'}`, { fn: 'protocolForDate', isTraining: t, weekday: wd }, { slots: protocolForDate(t, wd) })
+    }
+
+    const row = (id: string, name: string, dose: string, color: string | null, form: string | null, time: string | null, schedule: CustomSchedule | null): CustomSupplement =>
+      ({ id, name, dose, color, form, time, schedule, micros: null })
+    const rows: CustomSupplement[] = [
+      row('r-multi', 'Two Per Day Multivitamin', '1 tab', '#3E9E7A', 'tablet', '10:30', { key: 'multivitamin', slot: 'Morning', trainingDose: '2 tabs', restDose: '1 tab', notes: '2 tabs on Monday & Friday (Leg Days)' }),
+      row('r-d3', 'Vitamin D3 + K2', '125 mcg', '#3E9E7A', 'capsule', '10:30', { key: 'd3k2', slot: 'Morning' }),
+      row('r-cit', 'L-Citrulline', '6 g', '#8E9AAC', 'powder', '11:45', { key: 'citrulline', slot: 'Pre-Workout', trainingOnly: true }),
+      row('r-caf', 'Nutricost Caffeine', '200 mg', '#8E9AAC', 'pill', '11:45', { key: 'caffeine', slot: 'Pre-Workout', trainingOnly: true }),
+      row('r-cre', 'Creatine Monohydrate', '5 g', '#3D7AB8', 'powder', '15:00', { key: 'creatine', slot: 'Lunch / Post-Workout' }),
+      row('r-mag', 'Magnesium Glycinate', '300 mg', '#8A6FA8', 'tablet', '22:00', { key: 'magnesium', slot: 'Before Bed' }),
+      // User-added rows, each exercising one fallback.
+      row('r-zinc', 'Zinc', '15 mg', null, null, null, { days: [1, 5] }),                                   // no time → "—"; no key → custom:<id>; no slot; no colour
+      row('r-ash', 'Ashwagandha', '600 mg', '', 'capsule', '', { key: '', slot: '', restDose: '300 mg' }), // empty strings are absences
+      row('r-b12', 'B12', '1000 mcg', '#D4AF37', 'tablet', '9:00', null),                                  // no schedule at all; "9:00" sorts AFTER "22:00"
+      row('r-fish', 'Fish oil', '2 caps', '#3D7AB8', 'capsule', '07:00', { days: [], trainingOnly: false, notes: 'with food' }),  // [] = every day; explicit false
+      row('r-mon', 'Monday only', '1 scoop', '#111111', null, '15:00', { days: [1], slot: 'Post' }),        // joins creatine's bucket; the FIRST member names it
+      row('r-sat', 'Saturday only', '1', null, null, '15:00', { days: [6], slot: 'Weekend' }),
+    ]
+    const stack = (name: string, customs: CustomSupplement[], weekday: number, isTraining: boolean) =>
+      push(`customSlotsForDate · ${name}`, { fn: 'customSlotsForDate', customs, weekday, isTraining }, { slots: customSlotsForDate(customs, weekday, isTraining) })
+    stack('Monday training', rows, 1, true)
+    stack('Monday rest', rows, 1, false)
+    stack('Tuesday training', rows, 2, true)
+    stack('Tuesday rest', rows, 2, false)
+    stack('Friday training', rows, 5, true)
+    stack('Saturday rest', rows, 6, false)
+    stack('Sunday training', rows, 0, true)
+    stack('empty table', [], 1, true)
+    stack('only training-only rows on a rest day', [rows[2], rows[3]], 3, false)
+    stack('a lone row with no schedule', [rows[8]], 3, true)
+    stack('a lone row with no time', [rows[6]], 1, true)
+    stack('slot label comes from the first member WITH a slot', [rows[6], rows[11]], 6, true)
+    stack('accent comes from the first member, blank or not', [rows[7], rows[6]], 5, true)
+
+    push('stackForDate · empty db → seed', { fn: 'stackForDate', dbSlots: [], isTraining: true, weekday: 1 }, { slots: stackForDate([], true, 1) })
+    push('stackForDate · empty db → seed, rest Sunday', { fn: 'stackForDate', dbSlots: [], isTraining: false, weekday: 0 }, { slots: stackForDate([], false, 0) })
+    const db = customSlotsForDate(rows, 2, true)
+    push('stackForDate · db rows win untouched', { fn: 'stackForDate', dbSlots: db, isTraining: false, weekday: 1 }, { slots: stackForDate(db, false, 1) })
+    push('count · seed training', { fn: 'count', isTraining: true, dbSlots: [] }, { count: supplementCountForDate(true, []) })
+    push('count · seed rest', { fn: 'count', isTraining: false, dbSlots: [] }, { count: supplementCountForDate(false) })
+    push('count · db rows', { fn: 'count', isTraining: false, dbSlots: db }, { count: supplementCountForDate(false, db) })
+
+    const passed = (hhmm: string, nowMinutes: number) => {
+      const now = new Date(2026, 0, 1, Math.floor(nowMinutes / 60), nowMinutes % 60)
+      push(`slotTimePassed · ${JSON.stringify(hhmm)} @ ${nowMinutes}`, { fn: 'slotTimePassed', hhmm, nowMinutes }, { passed: slotTimePassed(hhmm, now) })
+    }
+    for (const [h, n] of [['10:30', 629], ['10:30', 630], ['10:30', 631], ['22:00', 1439], ['22:00', 1319], ['00:00', 0], ['', 600], ['10', 600], ['10:', 600], [' 10:30', 630], ['10:30:00', 630], ['ab:cd', 600], ['10:3x', 600], ['9:5', 545], ['9:5', 544], ['24:00', 1439], ['10:30', 1439]] as const) passed(h, n)
+
+    const dose = (name: string, custom: CustomSupplement) => {
+      for (const t of [true, false]) push(`customDoseFor · ${name} · ${t ? 'training' : 'rest'}`, { fn: 'customDoseFor', custom, isTraining: t }, { text: customDoseFor(custom, t) })
+      push(`supplementKeyOf · ${name}`, { fn: 'supplementKeyOf', custom }, { text: supplementKeyOf(custom) })
+    }
+    dose('both per-day doses', rows[0])
+    dose('rest dose only', rows[7])
+    dose('no schedule', rows[8])
+    dose('training dose empty', row('r-x', 'X', '1', null, null, null, { trainingDose: '', restDose: '2' }))
+    dose('seeded key', rows[2])
+    dose('no key', rows[6])
+
+    emit('supplement-stack.json', {
+      module: 'supplements + hooks/useCustomSupplements',
+      fn: 'SUPPLEMENT_PROTOCOL / protocolForDate / stackForDate / supplementCountForDate / slotTimePassed / customSlotsForDate / customDoseFor / supplementKeyOf',
+      note: 'The seed drops trainingOnly items on rest days and removes empty slots; the multivitamin is 2 tabs on Mon/Fri. DB rows group by time (empty/null → "—"), sorted as localeCompare sorts them: "—" first, then bytewise ("9:00" after "22:00"). `||` fallbacks: an empty dose/key/colour/time is an absence. supplementCountForDate ignores the weekday — it only changes a dose string. slotTimePassed parses like Number(): trimmed, empty part = 0, junk = NaN = false.',
+      cases,
+    })
+  })
+})
+
+describe('golden vectors — sleep debt', () => {
+  it('exports computeSleepDebt with the clock pinned', () => {
+    interface Night { date: string; sleepMinutes: number | null }
+    interface In { nights: Night[]; goalHours: number; weekAgo: string }
+    const cases: Case<In, ReturnType<typeof computeSleepDebt>>[] = []
+    const push = (name: string, nights: Night[], goalHours = 8, weekAgo = '2026-08-27') =>
+      cases.push({ name, input: { nights, goalHours, weekAgo }, expected: computeSleepDebt(nights, goalHours, weekAgo) })
+    const n = (date: string, sleepMinutes: number | null): Night => ({ date, sleepMinutes })
+
+    push('empty', [])
+    push('three recent 7h nights → 3h', [n('2026-08-31', 420), n('2026-09-01', 420), n('2026-09-02', 420)])
+    push('surplus repays', [n('2026-08-31', 420), n('2026-09-01', 600), n('2026-09-02', 480)])
+    push('surplus never banks credit — a long night then a short one', [n('2026-08-31', 600), n('2026-09-01', 420)])
+    push('a week-old 6h night decays to 1.5h', [n('2026-08-24', 360)])
+    push('the night ON weekAgo is full weight; the night before decays', [n('2026-08-27', 360), n('2026-08-26', 360)])
+    push('only the older night decays', [n('2026-08-26', 360)])
+    push('unsorted input is folded oldest → newest', [n('2026-09-02', 600), n('2026-08-31', 300), n('2026-09-01', 420)])
+    push('nulls, zeros and negatives are not nights', [n('2026-09-01', null), n('2026-09-02', 0), n('2026-08-31', -30), n('2026-09-03', 480)])
+    push('duplicate dates keep input order — long then short', [n('2026-09-01', 600), n('2026-09-01', 420)])
+    push('duplicate dates keep input order — short then long', [n('2026-09-01', 420), n('2026-09-01', 600)])
+    push('a 7.5h goal', [n('2026-09-01', 420), n('2026-09-02', 450)], 7.5)
+    push('rounding to one decimal', [n('2026-09-01', 411)])
+    push('worst night is the minimum, not the last', [n('2026-08-30', 300), n('2026-08-31', 200), n('2026-09-01', 480)])
+    push('a full 14-night window', Array.from({ length: 14 }, (_, i) => n(isoAddDays('2026-08-20', i), [300, 420, 480, 540, 360, 600, 450][i % 7])))
+    push('weekAgo in the future decays everything', [n('2026-09-01', 360), n('2026-09-02', 360)], 8, '2026-12-01')
+    push('weekAgo in the past decays nothing', [n('2026-08-01', 360), n('2026-08-02', 360)], 8, '2026-01-01')
+    push('a zero goal — every night is surplus', [n('2026-09-01', 420)], 0)
+
+    emit('sleep-debt.json', {
+      module: 'hooks/useSleepDebt',
+      fn: 'computeSleepDebt',
+      note: `Window ${SLEEP_DEBT_WINDOW_DAYS} nights, weekly decay ${SLEEP_DEBT_WEEKLY_DECAY}. Nights are sorted by date (stable) and folded oldest → newest; shortfall adds, surplus repays, the total never drops below zero; a night strictly before weekAgo carries ${SLEEP_DEBT_WEEKLY_DECAY} weight. debtHours is Math.round(x*10)/10. Nights with null/zero/negative minutes are not counted.`,
       cases,
     })
   })

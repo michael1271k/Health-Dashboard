@@ -1,0 +1,2493 @@
+{
+  "module": "schedule/swap",
+  "fn": "planRestDay / describeRestPlan / planDaySwap / blockForPlacement / describeBlock / planPermanentMove / dateForWeekday / weekDatesOf / shortDayLabel",
+  "note": "The resolver is scheduleDayIn over `resolver.ctx`, with `resolver.pinned` (date → day | null=rest) taking precedence. planRestDay searches FORWARD only and re-homes onto the next effective rest inside the horizon; undo clears BOTH dates. planDaySwap is an exchange. planPermanentMove pins spent days (strictly before today) whose meaning would change. shortDayLabel is en-GB, UTC: \"Wed 5 Aug\", and September is \"Sept\".",
+  "cases": [
+    {
+      "name": "planRestDay · Tue arms → Wed",
+      "input": {
+        "fn": "planRestDay",
+        "date": "2026-08-04",
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "rest": {
+          "writes": [
+            {
+              "date": "2026-08-04",
+              "dayKey": "rest"
+            },
+            {
+              "date": "2026-08-05",
+              "dayKey": "arms"
+            }
+          ],
+          "moved": {
+            "label": "Delts & Arms",
+            "dayKey": "arms"
+          },
+          "movedTo": "2026-08-05",
+          "sameWeek": true,
+          "outcome": "swapped",
+          "description": "Delts & Arms moved to Wed 5 Aug."
+        }
+      }
+    },
+    {
+      "name": "planRestDay · Fri legs_b → Sat",
+      "input": {
+        "fn": "planRestDay",
+        "date": "2026-08-07",
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "rest": {
+          "writes": [
+            {
+              "date": "2026-08-07",
+              "dayKey": "rest"
+            },
+            {
+              "date": "2026-08-08",
+              "dayKey": "legs_b"
+            }
+          ],
+          "moved": {
+            "label": "Legs & Core B",
+            "sub": "Posterior Focus",
+            "dayKey": "legs_b"
+          },
+          "movedTo": "2026-08-08",
+          "sameWeek": true,
+          "outcome": "swapped",
+          "description": "Legs & Core B moved to Sat 8 Aug."
+        }
+      }
+    },
+    {
+      "name": "planRestDay · Wed is already rest",
+      "input": {
+        "fn": "planRestDay",
+        "date": "2026-08-05",
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "rest": {
+          "writes": [],
+          "moved": null,
+          "movedTo": null,
+          "sameWeek": true,
+          "outcome": "already-rest",
+          "description": "Already a rest day."
+        }
+      }
+    },
+    {
+      "name": "planRestDay · Sat is already rest",
+      "input": {
+        "fn": "planRestDay",
+        "date": "2026-08-08",
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "rest": {
+          "writes": [],
+          "moved": null,
+          "movedTo": null,
+          "sameWeek": true,
+          "outcome": "already-rest",
+          "description": "Already a rest day."
+        }
+      }
+    },
+    {
+      "name": "planRestDay · Sun cb_a skips Mon and Tue → Wed",
+      "input": {
+        "fn": "planRestDay",
+        "date": "2026-08-02",
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "rest": {
+          "writes": [
+            {
+              "date": "2026-08-02",
+              "dayKey": "rest"
+            },
+            {
+              "date": "2026-08-05",
+              "dayKey": "cb_a"
+            }
+          ],
+          "moved": {
+            "label": "Upper A",
+            "sub": "Chest + Back",
+            "dayKey": "cb_a"
+          },
+          "movedTo": "2026-08-05",
+          "sameWeek": true,
+          "outcome": "swapped",
+          "description": "Upper A moved to Wed 5 Aug."
+        }
+      }
+    },
+    {
+      "name": "planRestDay · chain: arms already sits on Wed, resting Wed pushes it to Sat",
+      "input": {
+        "fn": "planRestDay",
+        "date": "2026-08-05",
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {
+              "2026-08-04": "rest",
+              "2026-08-05": "arms"
+            },
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "rest": {
+          "writes": [
+            {
+              "date": "2026-08-05",
+              "dayKey": "rest"
+            },
+            {
+              "date": "2026-08-08",
+              "dayKey": "arms"
+            }
+          ],
+          "moved": {
+            "label": "Delts & Arms",
+            "dayKey": "arms"
+          },
+          "movedTo": "2026-08-08",
+          "sameWeek": true,
+          "outcome": "swapped",
+          "description": "Delts & Arms moved to Sat 8 Aug."
+        }
+      }
+    },
+    {
+      "name": "planRestDay · both rest slots taken → next Wednesday, not the same week",
+      "input": {
+        "fn": "planRestDay",
+        "date": "2026-08-07",
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {
+              "2026-08-05": "cb_a",
+              "2026-08-08": "cb_b"
+            },
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "rest": {
+          "writes": [
+            {
+              "date": "2026-08-07",
+              "dayKey": "rest"
+            },
+            {
+              "date": "2026-08-12",
+              "dayKey": "legs_b"
+            }
+          ],
+          "moved": {
+            "label": "Legs & Core B",
+            "sub": "Posterior Focus",
+            "dayKey": "legs_b"
+          },
+          "movedTo": "2026-08-12",
+          "sameWeek": false,
+          "outcome": "swapped",
+          "description": "Legs & Core B moved to Wed 12 Aug — next week."
+        }
+      }
+    },
+    {
+      "name": "planRestDay · no-slot: fourteen days of cb_a",
+      "input": {
+        "fn": "planRestDay",
+        "date": "2026-08-04",
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {
+              "2026-08-04": "cb_a",
+              "2026-08-05": "cb_a",
+              "2026-08-06": "cb_a",
+              "2026-08-07": "cb_a",
+              "2026-08-08": "cb_a",
+              "2026-08-09": "cb_a",
+              "2026-08-10": "cb_a",
+              "2026-08-11": "cb_a",
+              "2026-08-12": "cb_a",
+              "2026-08-13": "cb_a",
+              "2026-08-14": "cb_a",
+              "2026-08-15": "cb_a",
+              "2026-08-16": "cb_a",
+              "2026-08-17": "cb_a",
+              "2026-08-18": "cb_a"
+            },
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "rest": {
+          "writes": [
+            {
+              "date": "2026-08-04",
+              "dayKey": "rest"
+            }
+          ],
+          "moved": {
+            "label": "Upper A",
+            "sub": "Chest + Back",
+            "dayKey": "cb_a"
+          },
+          "movedTo": null,
+          "sameWeek": true,
+          "outcome": "no-slot",
+          "description": "Rest day set. No free rest slot in the next 13 days, so Upper A was dropped."
+        }
+      }
+    },
+    {
+      "name": "planRestDay · unscheduled: a bare label with no key",
+      "input": {
+        "fn": "planRestDay",
+        "date": "2026-06-01",
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          },
+          "pinned": {
+            "2026-06-01": {
+              "label": "Push"
+            }
+          }
+        }
+      },
+      "expected": {
+        "rest": {
+          "writes": [
+            {
+              "date": "2026-06-01",
+              "dayKey": "rest"
+            }
+          ],
+          "moved": {
+            "label": "Push"
+          },
+          "movedTo": null,
+          "sameWeek": true,
+          "outcome": "unscheduled",
+          "description": "Rest day set."
+        }
+      }
+    },
+    {
+      "name": "planRestDay · unscheduled: an empty-string key is no key",
+      "input": {
+        "fn": "planRestDay",
+        "date": "2026-06-01",
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          },
+          "pinned": {
+            "2026-06-01": {
+              "label": "Push",
+              "dayKey": ""
+            }
+          }
+        }
+      },
+      "expected": {
+        "rest": {
+          "writes": [
+            {
+              "date": "2026-06-01",
+              "dayKey": "rest"
+            }
+          ],
+          "moved": {
+            "label": "Push",
+            "dayKey": ""
+          },
+          "movedTo": null,
+          "sameWeek": true,
+          "outcome": "unscheduled",
+          "description": "Rest day set."
+        }
+      }
+    },
+    {
+      "name": "planRestDay · a pinned rest",
+      "input": {
+        "fn": "planRestDay",
+        "date": "2026-08-04",
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          },
+          "pinned": {
+            "2026-08-04": null
+          }
+        }
+      },
+      "expected": {
+        "rest": {
+          "writes": [],
+          "moved": null,
+          "movedTo": null,
+          "sameWeek": true,
+          "outcome": "already-rest",
+          "description": "Already a rest day."
+        }
+      }
+    },
+    {
+      "name": "planRestDay · horizon 1 from Tuesday finds Wednesday",
+      "input": {
+        "fn": "planRestDay",
+        "date": "2026-08-04",
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          }
+        },
+        "horizon": 1
+      },
+      "expected": {
+        "rest": {
+          "writes": [
+            {
+              "date": "2026-08-04",
+              "dayKey": "rest"
+            },
+            {
+              "date": "2026-08-05",
+              "dayKey": "arms"
+            }
+          ],
+          "moved": {
+            "label": "Delts & Arms",
+            "dayKey": "arms"
+          },
+          "movedTo": "2026-08-05",
+          "sameWeek": true,
+          "outcome": "swapped",
+          "description": "Delts & Arms moved to Wed 5 Aug."
+        }
+      }
+    },
+    {
+      "name": "planRestDay · horizon 1 from Thursday finds nothing",
+      "input": {
+        "fn": "planRestDay",
+        "date": "2026-08-06",
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          }
+        },
+        "horizon": 1
+      },
+      "expected": {
+        "rest": {
+          "writes": [
+            {
+              "date": "2026-08-06",
+              "dayKey": "rest"
+            }
+          ],
+          "moved": {
+            "label": "Upper B",
+            "sub": "Chest + Back",
+            "dayKey": "cb_b"
+          },
+          "movedTo": null,
+          "sameWeek": true,
+          "outcome": "no-slot",
+          "description": "Rest day set. No free rest slot in the next 13 days, so Upper B was dropped."
+        }
+      }
+    },
+    {
+      "name": "planRestDay · horizon 0 never searches",
+      "input": {
+        "fn": "planRestDay",
+        "date": "2026-08-04",
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          }
+        },
+        "horizon": 0
+      },
+      "expected": {
+        "rest": {
+          "writes": [
+            {
+              "date": "2026-08-04",
+              "dayKey": "rest"
+            }
+          ],
+          "moved": {
+            "label": "Delts & Arms",
+            "dayKey": "arms"
+          },
+          "movedTo": null,
+          "sameWeek": true,
+          "outcome": "no-slot",
+          "description": "Rest day set. No free rest slot in the next 13 days, so Delts & Arms was dropped."
+        }
+      }
+    },
+    {
+      "name": "planRestDay · PPL era: Mon Pull → Wed",
+      "input": {
+        "fn": "planRestDay",
+        "date": "2026-06-01",
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "rest": {
+          "writes": [
+            {
+              "date": "2026-06-01",
+              "dayKey": "rest"
+            },
+            {
+              "date": "2026-06-03",
+              "dayKey": "ppl_pull_mon"
+            }
+          ],
+          "moved": {
+            "label": "Pull",
+            "dayKey": "ppl_pull_mon"
+          },
+          "movedTo": "2026-06-03",
+          "sameWeek": true,
+          "outcome": "swapped",
+          "description": "Pull moved to Wed 3 Jun."
+        }
+      }
+    },
+    {
+      "name": "planRestDay · layout arms→Wed: resting Tuesday is already rest",
+      "input": {
+        "fn": "planRestDay",
+        "date": "2026-08-04",
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {
+              "arms": 3
+            }
+          }
+        }
+      },
+      "expected": {
+        "rest": {
+          "writes": [],
+          "moved": null,
+          "movedTo": null,
+          "sameWeek": true,
+          "outcome": "already-rest",
+          "description": "Already a rest day."
+        }
+      }
+    },
+    {
+      "name": "planRestDay · layout arms→Wed: resting Wednesday sends arms to Sat",
+      "input": {
+        "fn": "planRestDay",
+        "date": "2026-08-05",
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {
+              "arms": 3
+            }
+          }
+        }
+      },
+      "expected": {
+        "rest": {
+          "writes": [
+            {
+              "date": "2026-08-05",
+              "dayKey": "rest"
+            },
+            {
+              "date": "2026-08-08",
+              "dayKey": "arms"
+            }
+          ],
+          "moved": {
+            "label": "Delts & Arms",
+            "dayKey": "arms"
+          },
+          "movedTo": "2026-08-08",
+          "sameWeek": true,
+          "outcome": "swapped",
+          "description": "Delts & Arms moved to Sat 8 Aug."
+        }
+      }
+    },
+    {
+      "name": "planRestDay · helix4 Mon upper_a → Wed",
+      "input": {
+        "fn": "planRestDay",
+        "date": "2026-08-10",
+        "resolver": {
+          "ctx": {
+            "programId": "axis4",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "rest": {
+          "writes": [
+            {
+              "date": "2026-08-10",
+              "dayKey": "rest"
+            },
+            {
+              "date": "2026-08-12",
+              "dayKey": "upper_a"
+            }
+          ],
+          "moved": {
+            "label": "Upper A",
+            "dayKey": "upper_a"
+          },
+          "movedTo": "2026-08-12",
+          "sameWeek": true,
+          "outcome": "swapped",
+          "description": "Upper A moved to Wed 12 Aug."
+        }
+      }
+    },
+    {
+      "name": "planRestDay · helix4 Fri lower_b → Sat",
+      "input": {
+        "fn": "planRestDay",
+        "date": "2026-08-14",
+        "resolver": {
+          "ctx": {
+            "programId": "axis4",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "rest": {
+          "writes": [
+            {
+              "date": "2026-08-14",
+              "dayKey": "rest"
+            },
+            {
+              "date": "2026-08-15",
+              "dayKey": "lower_b"
+            }
+          ],
+          "moved": {
+            "label": "Lower B",
+            "dayKey": "lower_b"
+          },
+          "movedTo": "2026-08-15",
+          "sameWeek": true,
+          "outcome": "swapped",
+          "description": "Lower B moved to Sat 15 Aug."
+        }
+      }
+    },
+    {
+      "name": "planRestDay · across a month end — Mon 31 Aug → Wed 2 Sept",
+      "input": {
+        "fn": "planRestDay",
+        "date": "2026-08-31",
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "rest": {
+          "writes": [
+            {
+              "date": "2026-08-31",
+              "dayKey": "rest"
+            },
+            {
+              "date": "2026-09-02",
+              "dayKey": "legs_a"
+            }
+          ],
+          "moved": {
+            "label": "Legs & Core A",
+            "sub": "Quad Focus",
+            "dayKey": "legs_a"
+          },
+          "movedTo": "2026-09-02",
+          "sameWeek": true,
+          "outcome": "swapped",
+          "description": "Legs & Core A moved to Wed 2 Sept."
+        }
+      }
+    },
+    {
+      "name": "planRestDay · across a year end — Thu 31 Dec → Sat 2 Jan, same week",
+      "input": {
+        "fn": "planRestDay",
+        "date": "2026-12-31",
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "rest": {
+          "writes": [
+            {
+              "date": "2026-12-31",
+              "dayKey": "rest"
+            },
+            {
+              "date": "2027-01-02",
+              "dayKey": "cb_b"
+            }
+          ],
+          "moved": {
+            "label": "Upper B",
+            "sub": "Chest + Back",
+            "dayKey": "cb_b"
+          },
+          "movedTo": "2027-01-02",
+          "sameWeek": true,
+          "outcome": "swapped",
+          "description": "Upper B moved to Sat 2 Jan."
+        }
+      }
+    },
+    {
+      "name": "planDaySwap · legs_b onto Tue exchanges with arms",
+      "input": {
+        "fn": "planDaySwap",
+        "date": "2026-08-04",
+        "dayKey": "legs_b",
+        "naturalDate": "2026-08-07",
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "writes": [
+          {
+            "date": "2026-08-04",
+            "dayKey": "legs_b"
+          },
+          {
+            "date": "2026-08-07",
+            "dayKey": "arms"
+          }
+        ]
+      }
+    },
+    {
+      "name": "planDaySwap · legs_b onto Wed (rest) rests Friday",
+      "input": {
+        "fn": "planDaySwap",
+        "date": "2026-08-05",
+        "dayKey": "legs_b",
+        "naturalDate": "2026-08-07",
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "writes": [
+          {
+            "date": "2026-08-05",
+            "dayKey": "legs_b"
+          },
+          {
+            "date": "2026-08-07",
+            "dayKey": "rest"
+          }
+        ]
+      }
+    },
+    {
+      "name": "planDaySwap · follows a day already moved to Saturday",
+      "input": {
+        "fn": "planDaySwap",
+        "date": "2026-08-04",
+        "dayKey": "legs_b",
+        "naturalDate": "2026-08-07",
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {
+              "2026-08-07": "rest",
+              "2026-08-08": "legs_b"
+            },
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "writes": [
+          {
+            "date": "2026-08-04",
+            "dayKey": "legs_b"
+          },
+          {
+            "date": "2026-08-08",
+            "dayKey": "arms"
+          }
+        ]
+      }
+    },
+    {
+      "name": "planDaySwap · arms onto its own Tuesday — one write",
+      "input": {
+        "fn": "planDaySwap",
+        "date": "2026-08-04",
+        "dayKey": "arms",
+        "naturalDate": "2026-08-04",
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "writes": [
+          {
+            "date": "2026-08-04",
+            "dayKey": "arms"
+          }
+        ]
+      }
+    },
+    {
+      "name": "planDaySwap · a key not in the week and no natural date — one write",
+      "input": {
+        "fn": "planDaySwap",
+        "date": "2026-08-05",
+        "dayKey": "upper_a",
+        "naturalDate": null,
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "writes": [
+          {
+            "date": "2026-08-05",
+            "dayKey": "upper_a"
+          }
+        ]
+      }
+    },
+    {
+      "name": "planDaySwap · natural date null but the day is in the week — the week finds it",
+      "input": {
+        "fn": "planDaySwap",
+        "date": "2026-08-05",
+        "dayKey": "legs_b",
+        "naturalDate": null,
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "writes": [
+          {
+            "date": "2026-08-05",
+            "dayKey": "legs_b"
+          },
+          {
+            "date": "2026-08-07",
+            "dayKey": "rest"
+          }
+        ]
+      }
+    },
+    {
+      "name": "planDaySwap · natural date given but the day sits elsewhere — the week wins",
+      "input": {
+        "fn": "planDaySwap",
+        "date": "2026-08-05",
+        "dayKey": "legs_b",
+        "naturalDate": "2026-08-01",
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {
+              "2026-08-07": "rest",
+              "2026-08-08": "legs_b"
+            },
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "writes": [
+          {
+            "date": "2026-08-05",
+            "dayKey": "legs_b"
+          },
+          {
+            "date": "2026-08-08",
+            "dayKey": "rest"
+          }
+        ]
+      }
+    },
+    {
+      "name": "planDaySwap · an empty natural date is no date",
+      "input": {
+        "fn": "planDaySwap",
+        "date": "2026-08-05",
+        "dayKey": "upper_a",
+        "naturalDate": "",
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "writes": [
+          {
+            "date": "2026-08-05",
+            "dayKey": "upper_a"
+          }
+        ]
+      }
+    },
+    {
+      "name": "planDaySwap · the target holds an override of another day — that day is displaced",
+      "input": {
+        "fn": "planDaySwap",
+        "date": "2026-08-05",
+        "dayKey": "legs_b",
+        "naturalDate": "2026-08-07",
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {
+              "2026-08-05": "cb_a"
+            },
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "writes": [
+          {
+            "date": "2026-08-05",
+            "dayKey": "legs_b"
+          },
+          {
+            "date": "2026-08-07",
+            "dayKey": "cb_a"
+          }
+        ]
+      }
+    },
+    {
+      "name": "planDaySwap · PPL era: pull_fri onto Wed rests Friday",
+      "input": {
+        "fn": "planDaySwap",
+        "date": "2026-06-03",
+        "dayKey": "ppl_pull_fri",
+        "naturalDate": "2026-06-05",
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "writes": [
+          {
+            "date": "2026-06-03",
+            "dayKey": "ppl_pull_fri"
+          },
+          {
+            "date": "2026-06-05",
+            "dayKey": "rest"
+          }
+        ]
+      }
+    },
+    {
+      "name": "planDaySwap · natural date in another week is still honoured",
+      "input": {
+        "fn": "planDaySwap",
+        "date": "2026-08-05",
+        "dayKey": "upper_a",
+        "naturalDate": "2026-07-29",
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "writes": [
+          {
+            "date": "2026-08-05",
+            "dayKey": "upper_a"
+          },
+          {
+            "date": "2026-07-29",
+            "dayKey": "rest"
+          }
+        ]
+      }
+    },
+    {
+      "name": "blockForPlacement · target logged a DIFFERENT day",
+      "input": {
+        "fn": "blockForPlacement",
+        "date": "2026-08-11",
+        "dayKey": "legs_a",
+        "logged": [
+          {
+            "date": "2026-08-11",
+            "dayKey": "arms"
+          }
+        ],
+        "sourceDate": null,
+        "labels": {
+          "arms": "Delts & Arms",
+          "legs_a": "Legs & Core A",
+          "cb_b": "Upper B"
+        }
+      },
+      "expected": {
+        "block": {
+          "kind": "target-logged",
+          "date": "2026-08-11",
+          "dayKey": "arms"
+        },
+        "description": "Tue 11 Aug already has Delts & Arms logged."
+      }
+    },
+    {
+      "name": "blockForPlacement · the no-op — placing what is already there",
+      "input": {
+        "fn": "blockForPlacement",
+        "date": "2026-08-11",
+        "dayKey": "arms",
+        "logged": [
+          {
+            "date": "2026-08-11",
+            "dayKey": "arms"
+          }
+        ],
+        "sourceDate": null,
+        "labels": {
+          "arms": "Delts & Arms",
+          "legs_a": "Legs & Core A",
+          "cb_b": "Upper B"
+        }
+      },
+      "expected": {
+        "block": null,
+        "description": null
+      }
+    },
+    {
+      "name": "blockForPlacement · moving a day OFF a committed date",
+      "input": {
+        "fn": "blockForPlacement",
+        "date": "2026-08-13",
+        "dayKey": "arms",
+        "logged": [
+          {
+            "date": "2026-08-11",
+            "dayKey": "arms"
+          }
+        ],
+        "sourceDate": "2026-08-11",
+        "labels": {
+          "arms": "Delts & Arms",
+          "legs_a": "Legs & Core A",
+          "cb_b": "Upper B"
+        }
+      },
+      "expected": {
+        "block": {
+          "kind": "source-logged",
+          "date": "2026-08-11",
+          "dayKey": "arms"
+        },
+        "description": "Delts & Arms is already logged on Tue 11 Aug — it can't move."
+      }
+    },
+    {
+      "name": "blockForPlacement · source and target both untouched",
+      "input": {
+        "fn": "blockForPlacement",
+        "date": "2026-08-13",
+        "dayKey": "legs_a",
+        "logged": [
+          {
+            "date": "2026-08-11",
+            "dayKey": "arms"
+          }
+        ],
+        "sourceDate": "2026-08-10",
+        "labels": {
+          "arms": "Delts & Arms",
+          "legs_a": "Legs & Core A",
+          "cb_b": "Upper B"
+        }
+      },
+      "expected": {
+        "block": null,
+        "description": null
+      }
+    },
+    {
+      "name": "blockForPlacement · target check comes first",
+      "input": {
+        "fn": "blockForPlacement",
+        "date": "2026-08-11",
+        "dayKey": "legs_a",
+        "logged": [
+          {
+            "date": "2026-08-11",
+            "dayKey": "arms"
+          }
+        ],
+        "sourceDate": "2026-08-11",
+        "labels": {
+          "arms": "Delts & Arms",
+          "legs_a": "Legs & Core A",
+          "cb_b": "Upper B"
+        }
+      },
+      "expected": {
+        "block": {
+          "kind": "target-logged",
+          "date": "2026-08-11",
+          "dayKey": "arms"
+        },
+        "description": "Tue 11 Aug already has Delts & Arms logged."
+      }
+    },
+    {
+      "name": "blockForPlacement · a source equal to the target is ignored",
+      "input": {
+        "fn": "blockForPlacement",
+        "date": "2026-08-13",
+        "dayKey": "arms",
+        "logged": [
+          {
+            "date": "2026-08-11",
+            "dayKey": "arms"
+          }
+        ],
+        "sourceDate": "2026-08-13",
+        "labels": {
+          "arms": "Delts & Arms",
+          "legs_a": "Legs & Core A",
+          "cb_b": "Upper B"
+        }
+      },
+      "expected": {
+        "block": null,
+        "description": null
+      }
+    },
+    {
+      "name": "blockForPlacement · an empty source is no source",
+      "input": {
+        "fn": "blockForPlacement",
+        "date": "2026-08-13",
+        "dayKey": "arms",
+        "logged": [
+          {
+            "date": "2026-08-11",
+            "dayKey": "arms"
+          }
+        ],
+        "sourceDate": "",
+        "labels": {
+          "arms": "Delts & Arms",
+          "legs_a": "Legs & Core A",
+          "cb_b": "Upper B"
+        }
+      },
+      "expected": {
+        "block": null,
+        "description": null
+      }
+    },
+    {
+      "name": "blockForPlacement · nothing logged",
+      "input": {
+        "fn": "blockForPlacement",
+        "date": "2026-08-11",
+        "dayKey": "legs_a",
+        "logged": [],
+        "sourceDate": "2026-08-10",
+        "labels": {
+          "arms": "Delts & Arms",
+          "legs_a": "Legs & Core A",
+          "cb_b": "Upper B"
+        }
+      },
+      "expected": {
+        "block": null,
+        "description": null
+      }
+    },
+    {
+      "name": "blockForPlacement · target logged a keyless session",
+      "input": {
+        "fn": "blockForPlacement",
+        "date": "2026-08-11",
+        "dayKey": "legs_a",
+        "logged": [
+          {
+            "date": "2026-08-11",
+            "dayKey": null
+          }
+        ],
+        "sourceDate": null,
+        "labels": {
+          "arms": "Delts & Arms",
+          "legs_a": "Legs & Core A",
+          "cb_b": "Upper B"
+        }
+      },
+      "expected": {
+        "block": {
+          "kind": "target-logged",
+          "date": "2026-08-11",
+          "dayKey": null
+        },
+        "description": "Tue 11 Aug already has Session logged."
+      }
+    },
+    {
+      "name": "blockForPlacement · source logged a keyless session",
+      "input": {
+        "fn": "blockForPlacement",
+        "date": "2026-08-13",
+        "dayKey": "legs_a",
+        "logged": [
+          {
+            "date": "2026-08-11",
+            "dayKey": null
+          }
+        ],
+        "sourceDate": "2026-08-11",
+        "labels": {
+          "arms": "Delts & Arms",
+          "legs_a": "Legs & Core A",
+          "cb_b": "Upper B"
+        }
+      },
+      "expected": {
+        "block": {
+          "kind": "source-logged",
+          "date": "2026-08-11",
+          "dayKey": null
+        },
+        "description": "Session is already logged on Tue 11 Aug — it can't move."
+      }
+    },
+    {
+      "name": "blockForPlacement · two rows on the target date — the first is the one named",
+      "input": {
+        "fn": "blockForPlacement",
+        "date": "2026-08-11",
+        "dayKey": "cb_b",
+        "logged": [
+          {
+            "date": "2026-08-11",
+            "dayKey": "arms"
+          },
+          {
+            "date": "2026-08-11",
+            "dayKey": "cb_b"
+          }
+        ],
+        "sourceDate": null,
+        "labels": {
+          "arms": "Delts & Arms",
+          "legs_a": "Legs & Core A",
+          "cb_b": "Upper B"
+        }
+      },
+      "expected": {
+        "block": {
+          "kind": "target-logged",
+          "date": "2026-08-11",
+          "dayKey": "arms"
+        },
+        "description": "Tue 11 Aug already has Delts & Arms logged."
+      }
+    },
+    {
+      "name": "planPermanentMove · cb_b → Sat: nothing behind today changes",
+      "input": {
+        "fn": "planPermanentMove",
+        "program": "apex51",
+        "layout": {},
+        "dayKey": "cb_b",
+        "weekday": 6,
+        "today": "2026-08-13",
+        "logged": [],
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "permanent": {
+          "layout": {
+            "cb_a": 0,
+            "legs_a": 1,
+            "arms": 2,
+            "cb_b": 6,
+            "legs_b": 5
+          },
+          "writes": [],
+          "pinned": [],
+          "block": null
+        }
+      }
+    },
+    {
+      "name": "planPermanentMove · arms → Wed: pins Tue arms and Wed rest",
+      "input": {
+        "fn": "planPermanentMove",
+        "program": "apex51",
+        "layout": {},
+        "dayKey": "arms",
+        "weekday": 3,
+        "today": "2026-08-13",
+        "logged": [],
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "permanent": {
+          "layout": {
+            "cb_a": 0,
+            "legs_a": 1,
+            "arms": 3,
+            "cb_b": 4,
+            "legs_b": 5
+          },
+          "writes": [
+            {
+              "date": "2026-08-11",
+              "dayKey": "arms"
+            },
+            {
+              "date": "2026-08-12",
+              "dayKey": "rest"
+            }
+          ],
+          "pinned": [
+            "2026-08-11",
+            "2026-08-12"
+          ],
+          "block": null
+        }
+      }
+    },
+    {
+      "name": "planPermanentMove · cb_a ↔ legs_a both in the past: pins Sun and Mon",
+      "input": {
+        "fn": "planPermanentMove",
+        "program": "apex51",
+        "layout": {},
+        "dayKey": "cb_a",
+        "weekday": 1,
+        "today": "2026-08-13",
+        "logged": [],
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "permanent": {
+          "layout": {
+            "cb_a": 1,
+            "legs_a": 0,
+            "arms": 2,
+            "cb_b": 4,
+            "legs_b": 5
+          },
+          "writes": [
+            {
+              "date": "2026-08-09",
+              "dayKey": "cb_a"
+            },
+            {
+              "date": "2026-08-10",
+              "dayKey": "legs_a"
+            }
+          ],
+          "pinned": [
+            "2026-08-09",
+            "2026-08-10"
+          ],
+          "block": null
+        }
+      }
+    },
+    {
+      "name": "planPermanentMove · today logged cb_b — legs_b → Thu refused (target)",
+      "input": {
+        "fn": "planPermanentMove",
+        "program": "apex51",
+        "layout": {},
+        "dayKey": "legs_b",
+        "weekday": 4,
+        "today": "2026-08-13",
+        "logged": [
+          {
+            "date": "2026-08-13",
+            "dayKey": "cb_b"
+          }
+        ],
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "permanent": {
+          "layout": null,
+          "writes": [],
+          "pinned": [],
+          "block": {
+            "kind": "target-logged",
+            "date": "2026-08-13",
+            "dayKey": "cb_b"
+          }
+        }
+      }
+    },
+    {
+      "name": "planPermanentMove · today logged cb_b — cb_b → Sat refused (source)",
+      "input": {
+        "fn": "planPermanentMove",
+        "program": "apex51",
+        "layout": {},
+        "dayKey": "cb_b",
+        "weekday": 6,
+        "today": "2026-08-13",
+        "logged": [
+          {
+            "date": "2026-08-13",
+            "dayKey": "cb_b"
+          }
+        ],
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "permanent": {
+          "layout": null,
+          "writes": [],
+          "pinned": [],
+          "block": {
+            "kind": "source-logged",
+            "date": "2026-08-13",
+            "dayKey": "cb_b"
+          }
+        }
+      }
+    },
+    {
+      "name": "planPermanentMove · today logged cb_b — cb_a → Sat allowed, today untouched",
+      "input": {
+        "fn": "planPermanentMove",
+        "program": "apex51",
+        "layout": {},
+        "dayKey": "cb_a",
+        "weekday": 6,
+        "today": "2026-08-13",
+        "logged": [
+          {
+            "date": "2026-08-13",
+            "dayKey": "cb_b"
+          }
+        ],
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "permanent": {
+          "layout": {
+            "cb_a": 6,
+            "legs_a": 1,
+            "arms": 2,
+            "cb_b": 4,
+            "legs_b": 5
+          },
+          "writes": [
+            {
+              "date": "2026-08-09",
+              "dayKey": "cb_a"
+            }
+          ],
+          "pinned": [
+            "2026-08-09"
+          ],
+          "block": null
+        }
+      }
+    },
+    {
+      "name": "planPermanentMove · Tuesday logged arms — legs_a → Tue refused",
+      "input": {
+        "fn": "planPermanentMove",
+        "program": "apex51",
+        "layout": {},
+        "dayKey": "legs_a",
+        "weekday": 2,
+        "today": "2026-08-13",
+        "logged": [
+          {
+            "date": "2026-08-11",
+            "dayKey": "arms"
+          }
+        ],
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "permanent": {
+          "layout": null,
+          "writes": [],
+          "pinned": [],
+          "block": {
+            "kind": "target-logged",
+            "date": "2026-08-11",
+            "dayKey": "arms"
+          }
+        }
+      }
+    },
+    {
+      "name": "planPermanentMove · from {arms:3}, arms back → Tue: pins Tue rest and Wed arms",
+      "input": {
+        "fn": "planPermanentMove",
+        "program": "apex51",
+        "layout": {
+          "arms": 3
+        },
+        "dayKey": "arms",
+        "weekday": 2,
+        "today": "2026-08-13",
+        "logged": [],
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {
+              "arms": 3
+            }
+          }
+        }
+      },
+      "expected": {
+        "permanent": {
+          "layout": {
+            "cb_a": 0,
+            "legs_a": 1,
+            "arms": 2,
+            "cb_b": 4,
+            "legs_b": 5
+          },
+          "writes": [
+            {
+              "date": "2026-08-11",
+              "dayKey": "rest"
+            },
+            {
+              "date": "2026-08-12",
+              "dayKey": "arms"
+            }
+          ],
+          "pinned": [
+            "2026-08-11",
+            "2026-08-12"
+          ],
+          "block": null
+        }
+      }
+    },
+    {
+      "name": "planPermanentMove · weekday 7: no move, no pins, the full layout back",
+      "input": {
+        "fn": "planPermanentMove",
+        "program": "apex51",
+        "layout": {},
+        "dayKey": "arms",
+        "weekday": 7,
+        "today": "2026-08-13",
+        "logged": [],
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "permanent": {
+          "layout": {
+            "cb_a": 0,
+            "legs_a": 1,
+            "arms": 2,
+            "cb_b": 4,
+            "legs_b": 5
+          },
+          "writes": [],
+          "pinned": [],
+          "block": null
+        }
+      }
+    },
+    {
+      "name": "planPermanentMove · an unknown dayKey: the full layout back, nothing pinned",
+      "input": {
+        "fn": "planPermanentMove",
+        "program": "apex51",
+        "layout": {},
+        "dayKey": "upper_a",
+        "weekday": 3,
+        "today": "2026-08-13",
+        "logged": [],
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "permanent": {
+          "layout": {
+            "cb_a": 0,
+            "legs_a": 1,
+            "arms": 2,
+            "cb_b": 4,
+            "legs_b": 5
+          },
+          "writes": [],
+          "pinned": [],
+          "block": null
+        }
+      }
+    },
+    {
+      "name": "planPermanentMove · today is Sunday: nothing is spent",
+      "input": {
+        "fn": "planPermanentMove",
+        "program": "apex51",
+        "layout": {},
+        "dayKey": "arms",
+        "weekday": 3,
+        "today": "2026-08-09",
+        "logged": [],
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "permanent": {
+          "layout": {
+            "cb_a": 0,
+            "legs_a": 1,
+            "arms": 3,
+            "cb_b": 4,
+            "legs_b": 5
+          },
+          "writes": [],
+          "pinned": [],
+          "block": null
+        }
+      }
+    },
+    {
+      "name": "planPermanentMove · today is Saturday: cb_a → Sat pins only Sunday",
+      "input": {
+        "fn": "planPermanentMove",
+        "program": "apex51",
+        "layout": {},
+        "dayKey": "cb_a",
+        "weekday": 6,
+        "today": "2026-08-15",
+        "logged": [],
+        "resolver": {
+          "ctx": {
+            "programId": "apex51",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "permanent": {
+          "layout": {
+            "cb_a": 6,
+            "legs_a": 1,
+            "arms": 2,
+            "cb_b": 4,
+            "legs_b": 5
+          },
+          "writes": [
+            {
+              "date": "2026-08-09",
+              "dayKey": "cb_a"
+            }
+          ],
+          "pinned": [
+            "2026-08-09"
+          ],
+          "block": null
+        }
+      }
+    },
+    {
+      "name": "planPermanentMove · helix4 lower_b → Sun, today Wed: pins Sunday rest",
+      "input": {
+        "fn": "planPermanentMove",
+        "program": "axis4",
+        "layout": {},
+        "dayKey": "lower_b",
+        "weekday": 0,
+        "today": "2026-08-12",
+        "logged": [],
+        "resolver": {
+          "ctx": {
+            "programId": "axis4",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "permanent": {
+          "layout": {
+            "upper_a": 1,
+            "lower_a": 2,
+            "upper_b": 4,
+            "lower_b": 0
+          },
+          "writes": [
+            {
+              "date": "2026-08-09",
+              "dayKey": "rest"
+            }
+          ],
+          "pinned": [
+            "2026-08-09"
+          ],
+          "block": null
+        }
+      }
+    },
+    {
+      "name": "planPermanentMove · helix4 upper_a ↔ lower_b, today Sat: pins Mon and Fri",
+      "input": {
+        "fn": "planPermanentMove",
+        "program": "axis4",
+        "layout": {},
+        "dayKey": "upper_a",
+        "weekday": 5,
+        "today": "2026-08-15",
+        "logged": [],
+        "resolver": {
+          "ctx": {
+            "programId": "axis4",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "permanent": {
+          "layout": {
+            "upper_a": 5,
+            "lower_a": 2,
+            "upper_b": 4,
+            "lower_b": 1
+          },
+          "writes": [
+            {
+              "date": "2026-08-10",
+              "dayKey": "upper_a"
+            },
+            {
+              "date": "2026-08-14",
+              "dayKey": "lower_b"
+            }
+          ],
+          "pinned": [
+            "2026-08-10",
+            "2026-08-14"
+          ],
+          "block": null
+        }
+      }
+    },
+    {
+      "name": "planPermanentMove · ppl selected in the Helix era: push_sun → Wed pins Sun and Wed",
+      "input": {
+        "fn": "planPermanentMove",
+        "program": "ppl",
+        "layout": {},
+        "dayKey": "ppl_push_sun",
+        "weekday": 3,
+        "today": "2026-08-13",
+        "logged": [],
+        "resolver": {
+          "ctx": {
+            "programId": "ppl",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "permanent": {
+          "layout": {
+            "ppl_push_sun": 3,
+            "ppl_pull_mon": 1,
+            "ppl_legs_tue": 2,
+            "ppl_push_thu": 4,
+            "ppl_pull_fri": 5
+          },
+          "writes": [
+            {
+              "date": "2026-08-09",
+              "dayKey": "ppl_push_sun"
+            },
+            {
+              "date": "2026-08-12",
+              "dayKey": "rest"
+            }
+          ],
+          "pinned": [
+            "2026-08-09",
+            "2026-08-12"
+          ],
+          "block": null
+        }
+      }
+    },
+    {
+      "name": "planPermanentMove · a PPL-era today: the layout is inert there, so nothing is pinned",
+      "input": {
+        "fn": "planPermanentMove",
+        "program": "ppl",
+        "layout": {},
+        "dayKey": "ppl_push_sun",
+        "weekday": 3,
+        "today": "2026-06-03",
+        "logged": [],
+        "resolver": {
+          "ctx": {
+            "programId": "ppl",
+            "phase": "cut",
+            "overrides": {},
+            "layout": {}
+          }
+        }
+      },
+      "expected": {
+        "permanent": {
+          "layout": {
+            "ppl_push_sun": 3,
+            "ppl_pull_mon": 1,
+            "ppl_legs_tue": 2,
+            "ppl_push_thu": 4,
+            "ppl_pull_fri": 5
+          },
+          "writes": [],
+          "pinned": [],
+          "block": null
+        }
+      }
+    },
+    {
+      "name": "dateForWeekday · 2026-08-13 · -1",
+      "input": {
+        "fn": "dateForWeekday",
+        "date": "2026-08-13",
+        "weekday": -1
+      },
+      "expected": {
+        "date": "2026-08-08"
+      }
+    },
+    {
+      "name": "dateForWeekday · 2026-08-13 · 0",
+      "input": {
+        "fn": "dateForWeekday",
+        "date": "2026-08-13",
+        "weekday": 0
+      },
+      "expected": {
+        "date": "2026-08-09"
+      }
+    },
+    {
+      "name": "dateForWeekday · 2026-08-13 · 1",
+      "input": {
+        "fn": "dateForWeekday",
+        "date": "2026-08-13",
+        "weekday": 1
+      },
+      "expected": {
+        "date": "2026-08-10"
+      }
+    },
+    {
+      "name": "dateForWeekday · 2026-08-13 · 2",
+      "input": {
+        "fn": "dateForWeekday",
+        "date": "2026-08-13",
+        "weekday": 2
+      },
+      "expected": {
+        "date": "2026-08-11"
+      }
+    },
+    {
+      "name": "dateForWeekday · 2026-08-13 · 3",
+      "input": {
+        "fn": "dateForWeekday",
+        "date": "2026-08-13",
+        "weekday": 3
+      },
+      "expected": {
+        "date": "2026-08-12"
+      }
+    },
+    {
+      "name": "dateForWeekday · 2026-08-13 · 4",
+      "input": {
+        "fn": "dateForWeekday",
+        "date": "2026-08-13",
+        "weekday": 4
+      },
+      "expected": {
+        "date": "2026-08-13"
+      }
+    },
+    {
+      "name": "dateForWeekday · 2026-08-13 · 5",
+      "input": {
+        "fn": "dateForWeekday",
+        "date": "2026-08-13",
+        "weekday": 5
+      },
+      "expected": {
+        "date": "2026-08-14"
+      }
+    },
+    {
+      "name": "dateForWeekday · 2026-08-13 · 6",
+      "input": {
+        "fn": "dateForWeekday",
+        "date": "2026-08-13",
+        "weekday": 6
+      },
+      "expected": {
+        "date": "2026-08-15"
+      }
+    },
+    {
+      "name": "dateForWeekday · 2026-08-13 · 7",
+      "input": {
+        "fn": "dateForWeekday",
+        "date": "2026-08-13",
+        "weekday": 7
+      },
+      "expected": {
+        "date": "2026-08-16"
+      }
+    },
+    {
+      "name": "dateForWeekday · 2026-08-31 · 6",
+      "input": {
+        "fn": "dateForWeekday",
+        "date": "2026-08-31",
+        "weekday": 6
+      },
+      "expected": {
+        "date": "2026-09-05"
+      }
+    },
+    {
+      "name": "dateForWeekday · 2026-12-31 · 6",
+      "input": {
+        "fn": "dateForWeekday",
+        "date": "2026-12-31",
+        "weekday": 6
+      },
+      "expected": {
+        "date": "2027-01-02"
+      }
+    },
+    {
+      "name": "dateForWeekday · 2026-01-01 · 0",
+      "input": {
+        "fn": "dateForWeekday",
+        "date": "2026-01-01",
+        "weekday": 0
+      },
+      "expected": {
+        "date": "2025-12-28"
+      }
+    },
+    {
+      "name": "dateForWeekday · 2028-02-29 · 6",
+      "input": {
+        "fn": "dateForWeekday",
+        "date": "2028-02-29",
+        "weekday": 6
+      },
+      "expected": {
+        "date": "2028-03-04"
+      }
+    },
+    {
+      "name": "dateForWeekday · 2026-08-02 · 0",
+      "input": {
+        "fn": "dateForWeekday",
+        "date": "2026-08-02",
+        "weekday": 0
+      },
+      "expected": {
+        "date": "2026-08-02"
+      }
+    },
+    {
+      "name": "dateForWeekday · 2026-08-08 · 0",
+      "input": {
+        "fn": "dateForWeekday",
+        "date": "2026-08-08",
+        "weekday": 0
+      },
+      "expected": {
+        "date": "2026-08-02"
+      }
+    },
+    {
+      "name": "weekDatesOf · 2026-08-02",
+      "input": {
+        "fn": "weekDatesOf",
+        "date": "2026-08-02"
+      },
+      "expected": {
+        "dates": [
+          "2026-08-02",
+          "2026-08-03",
+          "2026-08-04",
+          "2026-08-05",
+          "2026-08-06",
+          "2026-08-07",
+          "2026-08-08"
+        ]
+      }
+    },
+    {
+      "name": "weekDatesOf · 2026-08-03",
+      "input": {
+        "fn": "weekDatesOf",
+        "date": "2026-08-03"
+      },
+      "expected": {
+        "dates": [
+          "2026-08-02",
+          "2026-08-03",
+          "2026-08-04",
+          "2026-08-05",
+          "2026-08-06",
+          "2026-08-07",
+          "2026-08-08"
+        ]
+      }
+    },
+    {
+      "name": "weekDatesOf · 2026-08-04",
+      "input": {
+        "fn": "weekDatesOf",
+        "date": "2026-08-04"
+      },
+      "expected": {
+        "dates": [
+          "2026-08-02",
+          "2026-08-03",
+          "2026-08-04",
+          "2026-08-05",
+          "2026-08-06",
+          "2026-08-07",
+          "2026-08-08"
+        ]
+      }
+    },
+    {
+      "name": "weekDatesOf · 2026-08-05",
+      "input": {
+        "fn": "weekDatesOf",
+        "date": "2026-08-05"
+      },
+      "expected": {
+        "dates": [
+          "2026-08-02",
+          "2026-08-03",
+          "2026-08-04",
+          "2026-08-05",
+          "2026-08-06",
+          "2026-08-07",
+          "2026-08-08"
+        ]
+      }
+    },
+    {
+      "name": "weekDatesOf · 2026-08-06",
+      "input": {
+        "fn": "weekDatesOf",
+        "date": "2026-08-06"
+      },
+      "expected": {
+        "dates": [
+          "2026-08-02",
+          "2026-08-03",
+          "2026-08-04",
+          "2026-08-05",
+          "2026-08-06",
+          "2026-08-07",
+          "2026-08-08"
+        ]
+      }
+    },
+    {
+      "name": "weekDatesOf · 2026-08-07",
+      "input": {
+        "fn": "weekDatesOf",
+        "date": "2026-08-07"
+      },
+      "expected": {
+        "dates": [
+          "2026-08-02",
+          "2026-08-03",
+          "2026-08-04",
+          "2026-08-05",
+          "2026-08-06",
+          "2026-08-07",
+          "2026-08-08"
+        ]
+      }
+    },
+    {
+      "name": "weekDatesOf · 2026-08-08",
+      "input": {
+        "fn": "weekDatesOf",
+        "date": "2026-08-08"
+      },
+      "expected": {
+        "dates": [
+          "2026-08-02",
+          "2026-08-03",
+          "2026-08-04",
+          "2026-08-05",
+          "2026-08-06",
+          "2026-08-07",
+          "2026-08-08"
+        ]
+      }
+    },
+    {
+      "name": "weekDatesOf · 2026-08-31",
+      "input": {
+        "fn": "weekDatesOf",
+        "date": "2026-08-31"
+      },
+      "expected": {
+        "dates": [
+          "2026-08-30",
+          "2026-08-31",
+          "2026-09-01",
+          "2026-09-02",
+          "2026-09-03",
+          "2026-09-04",
+          "2026-09-05"
+        ]
+      }
+    },
+    {
+      "name": "weekDatesOf · 2026-12-31",
+      "input": {
+        "fn": "weekDatesOf",
+        "date": "2026-12-31"
+      },
+      "expected": {
+        "dates": [
+          "2026-12-27",
+          "2026-12-28",
+          "2026-12-29",
+          "2026-12-30",
+          "2026-12-31",
+          "2027-01-01",
+          "2027-01-02"
+        ]
+      }
+    },
+    {
+      "name": "weekDatesOf · 2028-02-29",
+      "input": {
+        "fn": "weekDatesOf",
+        "date": "2028-02-29"
+      },
+      "expected": {
+        "dates": [
+          "2028-02-27",
+          "2028-02-28",
+          "2028-02-29",
+          "2028-03-01",
+          "2028-03-02",
+          "2028-03-03",
+          "2028-03-04"
+        ]
+      }
+    },
+    {
+      "name": "shortDayLabel · 2026-08-05",
+      "input": {
+        "fn": "shortDayLabel",
+        "date": "2026-08-05"
+      },
+      "expected": {
+        "text": "Wed 5 Aug"
+      }
+    },
+    {
+      "name": "shortDayLabel · 2026-09-03",
+      "input": {
+        "fn": "shortDayLabel",
+        "date": "2026-09-03"
+      },
+      "expected": {
+        "text": "Thu 3 Sept"
+      }
+    },
+    {
+      "name": "shortDayLabel · 2026-09-30",
+      "input": {
+        "fn": "shortDayLabel",
+        "date": "2026-09-30"
+      },
+      "expected": {
+        "text": "Wed 30 Sept"
+      }
+    },
+    {
+      "name": "shortDayLabel · 2026-01-01",
+      "input": {
+        "fn": "shortDayLabel",
+        "date": "2026-01-01"
+      },
+      "expected": {
+        "text": "Thu 1 Jan"
+      }
+    },
+    {
+      "name": "shortDayLabel · 2026-12-25",
+      "input": {
+        "fn": "shortDayLabel",
+        "date": "2026-12-25"
+      },
+      "expected": {
+        "text": "Fri 25 Dec"
+      }
+    },
+    {
+      "name": "shortDayLabel · 2026-03-01",
+      "input": {
+        "fn": "shortDayLabel",
+        "date": "2026-03-01"
+      },
+      "expected": {
+        "text": "Sun 1 Mar"
+      }
+    },
+    {
+      "name": "shortDayLabel · 2026-06-21",
+      "input": {
+        "fn": "shortDayLabel",
+        "date": "2026-06-21"
+      },
+      "expected": {
+        "text": "Sun 21 Jun"
+      }
+    },
+    {
+      "name": "shortDayLabel · 2026-11-11",
+      "input": {
+        "fn": "shortDayLabel",
+        "date": "2026-11-11"
+      },
+      "expected": {
+        "text": "Wed 11 Nov"
+      }
+    },
+    {
+      "name": "shortDayLabel · 2026-02-28",
+      "input": {
+        "fn": "shortDayLabel",
+        "date": "2026-02-28"
+      },
+      "expected": {
+        "text": "Sat 28 Feb"
+      }
+    },
+    {
+      "name": "shortDayLabel · 2026-04-10",
+      "input": {
+        "fn": "shortDayLabel",
+        "date": "2026-04-10"
+      },
+      "expected": {
+        "text": "Fri 10 Apr"
+      }
+    },
+    {
+      "name": "shortDayLabel · 2026-05-09",
+      "input": {
+        "fn": "shortDayLabel",
+        "date": "2026-05-09"
+      },
+      "expected": {
+        "text": "Sat 9 May"
+      }
+    },
+    {
+      "name": "shortDayLabel · 2026-07-19",
+      "input": {
+        "fn": "shortDayLabel",
+        "date": "2026-07-19"
+      },
+      "expected": {
+        "text": "Sun 19 Jul"
+      }
+    },
+    {
+      "name": "shortDayLabel · 2026-10-31",
+      "input": {
+        "fn": "shortDayLabel",
+        "date": "2026-10-31"
+      },
+      "expected": {
+        "text": "Sat 31 Oct"
+      }
+    },
+    {
+      "name": "shortDayLabel · 2028-02-29",
+      "input": {
+        "fn": "shortDayLabel",
+        "date": "2028-02-29"
+      },
+      "expected": {
+        "text": "Tue 29 Feb"
+      }
+    }
+  ]
+}

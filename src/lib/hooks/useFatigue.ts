@@ -208,22 +208,30 @@ export function useFatigue(date = logicalTodayISO(), isTraining = false) {
       // `useDoms` extends, for the same reason: a tracker that throws takes the
       // whole day page down with it.
       if (error) return {}
-      const out: FatigueDay = {}
-      // Which stored key won each slot, so a fold (`evening` + `eod` → `night`)
-      // resolves to the LATER reading rather than to whichever row Postgres
-      // happened to hand back second.
-      const wonBy: Partial<Record<FatigueSlot, number>> = {}
-      for (const r of (data ?? []) as Array<{ slot: string; level: number }>) {
-        const slot = normalizeSlot(r.slot, isTraining)
-        if (!slot) continue
-        const rank = LEGACY_RANK[r.slot] ?? 99   // a modern key always outranks a legacy one
-        if (wonBy[slot] != null && wonBy[slot]! >= rank) continue
-        wonBy[slot] = rank
-        out[slot] = r.level
-      }
-      return out
+      return foldFatigueRows((data ?? []) as Array<{ slot: string; level: number }>, isTraining)
     },
   })
+}
+
+/**
+ * A day's stored rows → one reading per slot.
+ *
+ * Pure, and exported so the rule can be vectored: which stored key won each
+ * slot is tracked, so a fold (`evening` + `eod` → `night`) resolves to the LATER
+ * reading rather than to whichever row Postgres happened to hand back second.
+ */
+export function foldFatigueRows(rows: ReadonlyArray<{ slot: string; level: number }>, isTraining: boolean): FatigueDay {
+  const out: FatigueDay = {}
+  const wonBy: Partial<Record<FatigueSlot, number>> = {}
+  for (const r of rows) {
+    const slot = normalizeSlot(r.slot, isTraining)
+    if (!slot) continue
+    const rank = LEGACY_RANK[r.slot] ?? 99   // a modern key always outranks a legacy one
+    if (wonBy[slot] != null && wonBy[slot]! >= rank) continue
+    wonBy[slot] = rank
+    out[slot] = r.level
+  }
+  return out
 }
 
 export function useLogFatigue(date = logicalTodayISO()) {

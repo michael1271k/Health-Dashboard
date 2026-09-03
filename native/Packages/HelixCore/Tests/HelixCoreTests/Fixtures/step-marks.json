@@ -1,0 +1,278 @@
+{
+  "module": "components/dashboard/widgets/DailyWidgets",
+  "fn": "stepMarks",
+  "note": "A fifth of the goal snapped to 500 by Math.round (half up), never below 500; the first four multiples strictly under the goal, then the goal itself. Always ends with the goal and is strictly increasing.",
+  "cases": [
+    {
+      "name": "6000",
+      "input": {
+        "goal": 6000
+      },
+      "expected": [
+        1000,
+        2000,
+        3000,
+        4000,
+        6000
+      ]
+    },
+    {
+      "name": "8000",
+      "input": {
+        "goal": 8000
+      },
+      "expected": [
+        1500,
+        3000,
+        4500,
+        6000,
+        8000
+      ]
+    },
+    {
+      "name": "10000",
+      "input": {
+        "goal": 10000
+      },
+      "expected": [
+        2000,
+        4000,
+        6000,
+        8000,
+        10000
+      ]
+    },
+    {
+      "name": "12500",
+      "input": {
+        "goal": 12500
+      },
+      "expected": [
+        2500,
+        5000,
+        7500,
+        10000,
+        12500
+      ]
+    },
+    {
+      "name": "2000",
+      "input": {
+        "goal": 2000
+      },
+      "expected": [
+        500,
+        1000,
+        1500,
+        2000
+      ]
+    },
+    {
+      "name": "0",
+      "input": {
+        "goal": 0
+      },
+      "expected": [
+        0
+      ]
+    },
+    {
+      "name": "1",
+      "input": {
+        "goal": 1
+      },
+      "expected": [
+        1
+      ]
+    },
+    {
+      "name": "499",
+      "input": {
+        "goal": 499
+      },
+      "expected": [
+        499
+      ]
+    },
+    {
+      "name": "500",
+      "input": {
+        "goal": 500
+      },
+      "expected": [
+        500
+      ]
+    },
+    {
+      "name": "501",
+      "input": {
+        "goal": 501
+      },
+      "expected": [
+        500,
+        501
+      ]
+    },
+    {
+      "name": "1250",
+      "input": {
+        "goal": 1250
+      },
+      "expected": [
+        500,
+        1000,
+        1250
+      ]
+    },
+    {
+      "name": "1500",
+      "input": {
+        "goal": 1500
+      },
+      "expected": [
+        500,
+        1000,
+        1500
+      ]
+    },
+    {
+      "name": "2499",
+      "input": {
+        "goal": 2499
+      },
+      "expected": [
+        500,
+        1000,
+        1500,
+        2000,
+        2499
+      ]
+    },
+    {
+      "name": "2500",
+      "input": {
+        "goal": 2500
+      },
+      "expected": [
+        500,
+        1000,
+        1500,
+        2000,
+        2500
+      ]
+    },
+    {
+      "name": "3000",
+      "input": {
+        "goal": 3000
+      },
+      "expected": [
+        500,
+        1000,
+        1500,
+        2000,
+        3000
+      ]
+    },
+    {
+      "name": "7000",
+      "input": {
+        "goal": 7000
+      },
+      "expected": [
+        1500,
+        3000,
+        4500,
+        6000,
+        7000
+      ]
+    },
+    {
+      "name": "7499",
+      "input": {
+        "goal": 7499
+      },
+      "expected": [
+        1500,
+        3000,
+        4500,
+        6000,
+        7499
+      ]
+    },
+    {
+      "name": "7500",
+      "input": {
+        "goal": 7500
+      },
+      "expected": [
+        1500,
+        3000,
+        4500,
+        6000,
+        7500
+      ]
+    },
+    {
+      "name": "11250",
+      "input": {
+        "goal": 11250
+      },
+      "expected": [
+        2500,
+        5000,
+        7500,
+        10000,
+        11250
+      ]
+    },
+    {
+      "name": "15000",
+      "input": {
+        "goal": 15000
+      },
+      "expected": [
+        3000,
+        6000,
+        9000,
+        12000,
+        15000
+      ]
+    },
+    {
+      "name": "20000",
+      "input": {
+        "goal": 20000
+      },
+      "expected": [
+        4000,
+        8000,
+        12000,
+        16000,
+        20000
+      ]
+    },
+    {
+      "name": "100000",
+      "input": {
+        "goal": 100000
+      },
+      "expected": [
+        20000,
+        40000,
+        60000,
+        80000,
+        100000
+      ]
+    },
+    {
+      "name": "-1000",
+      "input": {
+        "goal": -1000
+      },
+      "expected": [
+        -1000
+      ]
+    }
+  ]
+}
