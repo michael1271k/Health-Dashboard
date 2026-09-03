@@ -97,9 +97,54 @@ public extension AppDatabase {
 
 public extension AppDatabase {
 
-    /// One mirrored row by primary key.
+    /// The separator inside a composite row id.
+    ///
+    /// ASCII 31, UNIT SEPARATOR — the character the encoding has had since 1963
+    /// for exactly this. `|` and `:` are both real content here: an exercise key
+    /// carries punctuation and a `day_key` is already colon-shaped, so either
+    /// would eventually split one id in the wrong place and push the wrong row.
+    static let rowKeySeparator = "\u{1F}"
+
+    /// The id of a row whose primary key is several columns.
+    ///
+    /// Values in the table's own primary-key ORDER — the order is what the
+    /// lookup zips back together, so a caller that passes phase before plan
+    /// silently addresses nothing.
+    static func rowID(_ parts: [String]) -> String {
+        parts.joined(separator: rowKeySeparator)
+    }
+
+    /// One mirrored row by primary key, composite or not.
+    ///
+    /// ── TEN OF THE TWENTY-SIX MIRRORED TABLES HAVE COMPOSITE KEYS ───────────
+    /// `plan_phase_goals`, `plan_phase_volume`, `target_profiles`,
+    /// `daily_targets`, `supplement_log`, `supplement_dose_overrides`,
+    /// `personal_records`, `routine_templates`, `program_day_layout` and
+    /// `schedule_overrides` are all keyed locally on the natural key the
+    /// catalogue upserts on, because a mirrored row must be findable by the same
+    /// key the server resolves it by.
+    ///
+    /// `filter(key:)` with a single value is not merely wrong for those: GRDB
+    /// answers it with `GRDBPrecondition(primaryKey.columns.count == 1)`, which
+    /// is a `precondition` — a CRASH, in release too, on the drain path. Nothing
+    /// had tripped it because every table written so far (`daily_logs`,
+    /// `daily_metrics`, `daily_scores`, `user_goals`) happens to be keyed on
+    /// `id`. Wave 3 is the first wave that writes a composite one.
+    ///
+    /// So the primary key is read from the schema rather than assumed, and a
+    /// composite id is split back into its columns. A row id whose part count
+    /// does not match the table is `nil` — the same answer as a row that is gone,
+    /// which the caller already handles as "queued for something deleted".
     func mirrorRow<T: MirrorRow>(_ type: T.Type, id: String) throws -> T? {
-        try writer.read { db in try T.filter(key: id).fetchOne(db) }
+        try writer.read { db in
+            let columns = try db.primaryKey(T.databaseTableName).columns
+            guard columns.count > 1 else { return try T.filter(key: id).fetchOne(db) }
+
+            let parts = id.components(separatedBy: Self.rowKeySeparator)
+            guard parts.count == columns.count else { return nil }
+            let key = Dictionary(uniqueKeysWithValues: zip(columns, parts.map { $0 as (any DatabaseValueConvertible)? }))
+            return try T.filter(key: key).fetchOne(db)
+        }
     }
 
     /// Queue a mirrored row for upload.
