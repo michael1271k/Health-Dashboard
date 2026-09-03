@@ -9,6 +9,21 @@ struct HelixNativeApp: App {
     var body: some Scene {
         WindowGroup {
             Group {
+                #if DEBUG
+                // The screenshot loop's door. Checked before anything else so a
+                // shot never waits on a database or a Keychain read.
+                if let screen = PreviewHarness.requestedScreen {
+                    PreviewHarness.view(screen)
+                } else if let environment {
+                    RootView()
+                        .environment(environment)
+                        .task { environment.start() }
+                } else if let startupError {
+                    StartupErrorView(message: startupError)
+                } else {
+                    ProgressView().controlSize(.large)
+                }
+                #else
                 if let environment {
                     RootView()
                         .environment(environment)
@@ -22,6 +37,7 @@ struct HelixNativeApp: App {
                     // frame of the wrong screen from being drawn.
                     ProgressView().controlSize(.large)
                 }
+                #endif
             }
             .preferredColorScheme(.dark)
             .task {
