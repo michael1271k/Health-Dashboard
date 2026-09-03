@@ -117,6 +117,7 @@ public enum SetEventFold {
                     side: snapshot.side,
                     pairId: snapshot.pairId,
                     est1rmKg: snapshot.est1rmKg,
+                    rpe: snapshot.rpe,
                     isPendingSync: isPendingSync
                 )
             }

@@ -169,6 +169,7 @@ public struct SetSnapshot: Codable, Sendable, Equatable {
         case side
         case pairId = "pair_id"
         case est1rmKg = "est_1rm_kg"
+        case rpe
     }
 
     public var exerciseId: String
@@ -185,6 +186,16 @@ public struct SetSnapshot: Codable, Sendable, Equatable {
     /// The two sides of one split set share this.
     public var pairId: String?
     public var est1rmKg: Double?
+    /// Rated Perceived Exertion, CR-10, in half-point steps.
+    ///
+    /// **`nil` is not zero.** An unrated set is a set nobody judged, and the
+    /// progression rule ("increase load only when ALL work sets hit the ceiling
+    /// at RPE <= 8.5") has to be able to tell that apart from a set rated easy,
+    /// or an unrated session reads as a session you sailed through.
+    ///
+    /// Postgres has carried `workout_sets.rpe` all along; the local store did
+    /// not, which is why it is added in `v7` rather than in `v1`.
+    public var rpe: Double?
 
     public init(
         exerciseId: String,
@@ -194,7 +205,8 @@ public struct SetSnapshot: Codable, Sendable, Equatable {
         setType: String = "normal",
         side: String? = nil,
         pairId: String? = nil,
-        est1rmKg: Double? = nil
+        est1rmKg: Double? = nil,
+        rpe: Double? = nil
     ) {
         self.exerciseId = exerciseId
         self.setIndex = setIndex
@@ -204,6 +216,7 @@ public struct SetSnapshot: Codable, Sendable, Equatable {
         self.side = side
         self.pairId = pairId
         self.est1rmKg = est1rmKg
+        self.rpe = rpe
     }
 }
 
@@ -229,6 +242,7 @@ public struct SetPatch: Codable, Sendable, Equatable {
         case side
         case pairId = "pair_id"
         case est1rmKg = "est_1rm_kg"
+        case rpe
     }
 
     public var setIndex: Int?
@@ -238,6 +252,11 @@ public struct SetPatch: Codable, Sendable, Equatable {
     public var side: String?
     public var pairId: String?
     public var est1rmKg: Double?
+    /// Like every other field here, `nil` means UNCHANGED — it cannot clear a
+    /// rating back to unrated. Rating a set is a one-way door in this patch
+    /// type, for the same reason `side` is: void and re-append is the honest
+    /// way to say "that never happened".
+    public var rpe: Double?
 
     public init(
         setIndex: Int? = nil,
@@ -246,7 +265,8 @@ public struct SetPatch: Codable, Sendable, Equatable {
         setType: String? = nil,
         side: String? = nil,
         pairId: String? = nil,
-        est1rmKg: Double? = nil
+        est1rmKg: Double? = nil,
+        rpe: Double? = nil
     ) {
         self.setIndex = setIndex
         self.weightKg = weightKg
@@ -255,13 +275,14 @@ public struct SetPatch: Codable, Sendable, Equatable {
         self.side = side
         self.pairId = pairId
         self.est1rmKg = est1rmKg
+        self.rpe = rpe
     }
 
     /// True when the patch would change nothing. Used to reject empty amends
     /// before they become permanent noise in the log.
     public var isEmpty: Bool {
         setIndex == nil && weightKg == nil && reps == nil && setType == nil
-            && side == nil && pairId == nil && est1rmKg == nil
+            && side == nil && pairId == nil && est1rmKg == nil && rpe == nil
     }
 
     /// Apply to a snapshot, leaving `nil` fields alone.
@@ -274,6 +295,7 @@ public struct SetPatch: Codable, Sendable, Equatable {
         if let side { next.side = side }
         if let pairId { next.pairId = pairId }
         if let est1rmKg { next.est1rmKg = est1rmKg }
+        if let rpe { next.rpe = rpe }
         return next
     }
 }

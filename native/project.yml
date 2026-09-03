@@ -44,12 +44,22 @@ targets:
           # attached below as a config file, not compiled as a source.
           - "Support/Secrets.example.xcconfig"
           - "Support/Secrets.xcconfig"
+      # `Shared/` is in BOTH targets, and it has to be: ActivityKit matches the
+      # app's `Activity.request` to the extension's `ActivityConfiguration` by
+      # the ATTRIBUTES TYPE, and two identically-named structs compiled into two
+      # modules are two different types. That failure does not break the build —
+      # the activity starts and nothing draws.
+      - path: Shared
 
     dependencies:
       - package: HelixCore
         product: HelixCore
       - package: HelixData
         product: HelixData
+      # Embedding the extension is what puts its `ActivityConfiguration` in the
+      # app bundle. Without this the app can request an activity and the system
+      # has nothing to draw it with.
+      - target: HelixNativeWidgets
 
     # Secrets arrive as build settings and are surfaced through Info.plist, the
     # same convention the widget extension already uses for HELIX_SNAPSHOT_URL.
@@ -70,6 +80,14 @@ targets:
         UIUserInterfaceStyle: Dark
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
+        # Live Activities are opt-in per app and this is the opt-in. Without it
+        # `ActivityAuthorizationInfo().areActivitiesEnabled` is false forever
+        # and the controller silently does nothing.
+        NSSupportsLiveActivities: true
+        # The rest clock keeps counting on the Lock Screen without the app being
+        # woken, so no background mode is needed for it. `workout-processing`
+        # arrives with the Watch in Wave 5.
+        NSSupportsLiveActivitiesFrequentUpdates: false
         # Substituted from Secrets.xcconfig at build time.
         HELIX_SUPABASE_URL: $(HELIX_SUPABASE_URL)
         HELIX_SUPABASE_ANON_KEY: $(HELIX_SUPABASE_ANON_KEY)
@@ -96,11 +114,85 @@ targets:
         # paid programme; the app is built to work without them and to gain them
         # by adding an entitlement, not by being restructured.
 
+  # ── The widget extension ─────────────────────────────────────────────────
+  #
+  # ONE face in Wave 1b: the running workout. Every other HELIX widget lives in
+  # the Capacitor app and fetches its own data over HTTP, because App Groups are
+  # a PAID capability and an extension can read nothing the app wrote. A Live
+  # Activity is the one face exempt — its content arrives through ActivityKit
+  # from `Activity.update`, with no shared container in between — so it is the
+  # one face that can ship before the Developer Program is bought.
+  HelixNativeWidgets:
+    type: app-extension
+    platform: iOS
+
+    sources:
+      - path: HelixNativeWidgets
+        excludes:
+          - "Support/Info.plist"
+      - path: Shared
+      # The palette, and only the palette. An extension that imported the whole
+      # design system would pull `HelixSurface` and `HelixType` — Dynamic-Type
+      # machinery for a surface that has no Dynamic Type — into a target with a
+      # hard memory budget.
+      - path: HelixNative/DesignSystem/HelixPalette.swift
+
+    dependencies:
+      # For `LandmarkMuscle`, which `HelixPalette.muscle(_:)` switches over.
+      - package: HelixCore
+        product: HelixCore
+
+    info:
+      path: HelixNativeWidgets/Support/Info.plist
+      properties:
+        CFBundleDisplayName: Helix Activity
+        CFBundleShortVersionString: "0.1"
+        CFBundleVersion: "1"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.helix.health.michael.native.widgets
+        MARKETING_VERSION: "0.1"
+        CURRENT_PROJECT_VERSION: "1"
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: W9UMPV973P
+        SWIFT_VERSION: "6.0"
+        SWIFT_STRICT_CONCURRENCY: complete
+        GENERATE_INFOPLIST_FILE: NO
+        SKIP_INSTALL: YES
+
+  # ── The app's own tests ──────────────────────────────────────────────────
+  #
+  # Almost everything provable lives in HelixCore and HelixData, which test on
+  # the command line in seconds with no simulator, no signing and no Xcode. This
+  # target is for what genuinely cannot: `LoggerModel` is @MainActor, holds
+  # @Observable view state, and enforces one rule with no home in the domain —
+  # what happens to sets already logged when the prescription changes under them.
+  HelixNativeTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: HelixNativeTests
+    dependencies:
+      - target: HelixNative
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.helix.health.michael.native.tests
+        SWIFT_VERSION: "6.0"
+        SWIFT_STRICT_CONCURRENCY: complete
+        GENERATE_INFOPLIST_FILE: YES
+        # Hosted by the app, so `@testable import HelixNative` can see it.
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/HelixNative.app/HelixNative"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+
 schemes:
   HelixNative:
     build:
       targets:
         HelixNative: all
+        HelixNativeWidgets: all
     run:
       config: Debug
     test:
@@ -109,5 +201,6 @@ schemes:
       # and do not need the app scheme. They are listed here so ⌘U in Xcode runs
       # everything, which is what a person actually expects it to do.
       targets:
+        - HelixNativeTests
         - package: HelixCore/HelixCoreTests
         - package: HelixData/HelixDataTests

@@ -84,6 +84,18 @@ public final class AppEnvironment {
         auth = .signedOut
     }
 
+    /// The signed-in user's id as the store spells it.
+    ///
+    /// `workout_sessions.user_id` is NOT NULL in Postgres, so a session row has
+    /// to carry one from the moment it is created — before any sync exists to
+    /// supply it. Signed out, there is no session to open and nothing calls
+    /// this; the empty string is the honest answer rather than a placeholder
+    /// uuid that would later have to be found and corrected.
+    public var userIdString: String {
+        if case .signedIn(let userID) = auth { return userID.uuidString }
+        return ""
+    }
+
     public func reportStartupError(_ message: String) {
         startupError = message
     }

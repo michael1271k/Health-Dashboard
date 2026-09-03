@@ -29,7 +29,20 @@ import { fileURLToPath } from 'node:url'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const SOURCE = join(ROOT, 'src/lib/body/atlas.ts')
-const TARGET = join(ROOT, 'ios/App/HelixWidgets/HelixAtlas.swift')
+
+/**
+ * Every Swift copy of the atlas. Byte-identical, all of them — the generator
+ * emits one string and writes it to each.
+ *
+ * There are two because there are two apps: the Capacitor widget extension
+ * (`ios/`) and the native SwiftUI app (`native/`), and they do not share a
+ * module. A THIRD hand-drawn body is exactly what this generator exists to
+ * prevent, so a new consumer belongs in this list rather than in a copy-paste.
+ */
+export const TARGETS = [
+  join(ROOT, 'ios/App/HelixWidgets/HelixAtlas.swift'),
+  join(ROOT, 'native/HelixNative/Features/Logger/HelixAtlas.swift'),
+]
 
 /**
  * Pull the literal arrays out of the TypeScript without importing it.
@@ -136,27 +149,34 @@ enum HelixAtlasView: String {
 
 /// A definition line — stroked, never filled, never tinted, never a hit target.
 ///
+/// Sendable, and so are the closures. These are pure geometry: they capture
+/// nothing and mutate nothing outside the Path handed to them. The native app
+/// builds with SWIFT_STRICT_CONCURRENCY = complete, where a global let of a
+/// non-Sendable function type is an error rather than a warning — and saying
+/// Sendable here is the truthful annotation, where nonisolated(unsafe) would
+/// be a suppression of a question that has a real answer.
+///
 /// Several of these are OPEN paths (a brow, the linea alba). SwiftUI closes an
 /// open path implicitly when it fills one, so filling this layer would turn
 /// every line into a wedge. \`HelixAtlasFigure\` strokes it and only strokes it.
-struct HelixAtlasDetail {
+struct HelixAtlasDetail: Sendable {
   let view: HelixAtlasView
-  let build: (CGRect, inout Path) -> Void
+  let build: @Sendable (CGRect, inout Path) -> Void
 
-  init(view: HelixAtlasView, _ build: @escaping (CGRect, inout Path) -> Void) {
+  init(view: HelixAtlasView, _ build: @escaping @Sendable (CGRect, inout Path) -> Void) {
     self.view = view
     self.build = build
   }
 }
 
-struct HelixAtlasPath: Identifiable {
+struct HelixAtlasPath: Identifiable, Sendable {
   let muscle: String
   let view: HelixAtlasView
-  let build: (CGRect, inout Path) -> Void
+  let build: @Sendable (CGRect, inout Path) -> Void
 
   var id: String { "\\(muscle)-\\(view.rawValue)-\\(String(describing: build))" }
 
-  init(muscle: String, view: HelixAtlasView, _ build: @escaping (CGRect, inout Path) -> Void) {
+  init(muscle: String, view: HelixAtlasView, _ build: @escaping @Sendable (CGRect, inout Path) -> Void) {
     self.muscle = muscle
     self.view = view
     self.build = build
@@ -168,7 +188,7 @@ enum HelixAtlas {
 
   /// The silhouette — head, hair, neck, torso, arms, fists, legs, feet.
   /// Anatomy, never data, never tinted.
-  static let base: [(CGRect, inout Path) -> Void] = [
+  static let base: [@Sendable (CGRect, inout Path) -> Void] = [
 ${base.map((d) => '  { rect, p in\n' + swiftPath(d).split('\n').map((l) => '  ' + l).join('\n') + '\n  },').join('\n')}
   ]
 
@@ -205,14 +225,17 @@ if (process.argv[1] && process.argv[1].endsWith('gen-atlas-swift.mjs')) {
   const ts = readFileSync(SOURCE, 'utf8')
   const out = generate(ts)
   if (process.argv.includes('--check')) {
-    const current = readFileSync(TARGET, 'utf8')
-    if (current !== out) {
-      console.error('HelixAtlas.swift is stale — run: node scripts/gen-atlas-swift.mjs')
-      process.exit(1)
+    for (const target of TARGETS) {
+      if (readFileSync(target, 'utf8') !== out) {
+        console.error(`${target} is stale — re-run this generator`)
+        process.exit(1)
+      }
     }
-    console.log('✔ HelixAtlas.swift matches atlas.ts')
+    console.log(`✔ ${TARGETS.length} HelixAtlas.swift copies match atlas.ts`)
   } else {
-    writeFileSync(TARGET, out)
-    console.log(`✔ wrote ${TARGET}`)
+    for (const target of TARGETS) {
+      writeFileSync(target, out)
+      console.log(`✔ wrote ${target}`)
+    }
   }
 }

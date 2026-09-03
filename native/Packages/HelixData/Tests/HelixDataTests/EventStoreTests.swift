@@ -29,6 +29,90 @@ struct EventStoreTests {
         }
     }
 
+    // ── Opening and closing a session ─────────────────────────────────────
+
+    @Test("opening twice rejoins the same session rather than starting a second")
+    func openSessionIsIdempotentPerDay() throws {
+        let db = try AppDatabase.inMemory()
+        let first = try db.openSession(userId: "u1", dayKey: "cb_b", date: "2026-09-03")
+        let again = try db.openSession(userId: "u1", dayKey: "cb_b", date: "2026-09-03")
+        #expect(first.id == again.id)
+
+        // A DIFFERENT split on the same day is a different session — a swap can
+        // land two decks on one date.
+        let other = try db.openSession(userId: "u1", dayKey: "legs_a", date: "2026-09-03")
+        #expect(other.id != first.id)
+        #expect(try db.sessions(on: "2026-09-03").count == 2)
+    }
+
+    @Test("a FINISHED session is never rejoined — the second Upper A is its own")
+    func openSessionSkipsClosedSessions() throws {
+        let db = try AppDatabase.inMemory()
+        let morning = try db.openSession(userId: "u1", dayKey: "cb_a", date: "2026-09-03")
+        try db.closeSession(id: morning.id)
+
+        // Without the `ended_at IS NULL` predicate this returns `morning`, and
+        // an evening session on the same split is appended to the morning's row:
+        // two workouts merged into one, with a duration spanning the gap.
+        let evening = try db.openSession(userId: "u1", dayKey: "cb_a", date: "2026-09-03")
+        #expect(evening.id != morning.id)
+        #expect(try db.sessions(on: "2026-09-03").count == 2)
+
+        // And `liveSession` sees only the unfinished one.
+        #expect(try db.liveSession(dayKey: "cb_a", date: "2026-09-03")?.id == evening.id)
+        try db.closeSession(id: evening.id)
+        #expect(try db.liveSession(dayKey: "cb_a", date: "2026-09-03") == nil)
+    }
+
+    @Test("closing derives the duration and leaves an unrated session unrated")
+    func closeSessionStampsTheEnd() throws {
+        let db = try AppDatabase.inMemory()
+        let started = Date(timeIntervalSince1970: 1_756_000_000)
+        let opened = try db.openSession(
+            userId: "u1", dayKey: "cb_b", date: "2026-09-03", startedAt: started
+        )
+
+        let closed = try db.closeSession(id: opened.id, endedAt: started.addingTimeInterval(48 * 60))
+        #expect(closed?.durationMin == 48)
+        // nil is UNRATED, not zero. The battery falls back to its own default
+        // rather than reading the session as effortless.
+        #expect(closed?.sessionRpe == nil)
+
+        let rated = try db.closeSession(
+            id: opened.id, endedAt: started.addingTimeInterval(50 * 60), sessionRpe: 7.5
+        )
+        #expect(rated?.sessionRpe == 7.5)
+
+        // Closing a session that is not there is nil, not a throw: the caller is
+        // a Finish button, and there is nothing it could do with an error.
+        #expect(try db.closeSession(id: "no-such-session") == nil)
+    }
+
+    // ── RPE (v7) ──────────────────────────────────────────────────────────
+
+    @Test("an unrated set stays unrated, and rating it later is an amend not a rewrite")
+    func rpeRoundTrips() throws {
+        let db = try seeded()
+        try db.appendSet(sessionId: "s1", setId: "a", snapshot(1, 100, 5))
+        // nil, not 0. A set nobody judged is not a set judged easy.
+        #expect(try sets(db)[0].rpe == nil)
+
+        try db.amendSet(sessionId: "s1", setId: "a", SetPatch(rpe: 8.5))
+        #expect(try sets(db)[0].rpe == 8.5)
+        // The load is untouched: a patch field left nil means UNCHANGED.
+        #expect(try sets(db)[0].weightKg == 100)
+
+        // And the original fact is still in the log — two events, not one
+        // overwritten row.
+        #expect(try db.setEvents(sessionId: "s1").count == 2)
+    }
+
+    @Test("a patch carrying only an RPE is not an empty patch")
+    func rpeOnlyPatchIsAccepted() throws {
+        #expect(SetPatch(rpe: 7).isEmpty == false)
+        #expect(SetPatch().isEmpty)
+    }
+
     // ── The projection ────────────────────────────────────────────────────
 
     @Test("appending projects a row into workout_sets")

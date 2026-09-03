@@ -10,7 +10,8 @@ import GRDB
 ///
 ///   · `workout_sets` — ours says `set_index`, Postgres says **`set_number`**.
 ///     Postgres also has `user_id` (NOT NULL), `created_at` (NOT NULL),
-///     `exercise_order`, `rpe`, `is_pr` and `quality`, none of which are here.
+///     `exercise_order`, `is_pr` and `quality`, none of which are here.
+///     (`rpe` WAS in that list; `v7.setRpe` added it locally.)
 ///   · `workout_sessions` — our `date` column **does not exist** server-side
 ///     (there is `started_at` and `day_key`). Postgres requires `split_day`,
 ///     `status` and `migrated_from_notion`, all NOT NULL and all absent here.
@@ -154,6 +155,9 @@ public struct WorkoutSet: Codable, FetchableRecord, PersistableRecord, Identifia
     /// read the stored value with `||`, not `??`, because a stored 0 on an
     /// unloaded set is a legacy artefact and not an estimate.
     public var est1rmKg: Double?
+    /// CR-10, half-point steps. `nil` is UNRATED, never "easy" — see the same
+    /// note on `SetSnapshot.rpe`.
+    public var rpe: Double?
     public var isPendingSync: Bool
     /// The fold's arrival position, so a read can reproduce the fold's order
     /// even when two devices claim the same `setIndex`. Local only — derived
@@ -171,6 +175,7 @@ public struct WorkoutSet: Codable, FetchableRecord, PersistableRecord, Identifia
         case side
         case pairId = "pair_id"
         case est1rmKg = "est_1rm_kg"
+        case rpe
         case isPendingSync = "is_pending_sync"
         case foldOrder = "fold_order"
     }
@@ -179,7 +184,7 @@ public struct WorkoutSet: Codable, FetchableRecord, PersistableRecord, Identifia
         id: String, sessionId: String, exerciseId: String, setIndex: Int,
         weightKg: Double, reps: Int, setType: String = "normal",
         side: String? = nil, pairId: String? = nil, est1rmKg: Double? = nil,
-        isPendingSync: Bool = false, foldOrder: Int = 0
+        rpe: Double? = nil, isPendingSync: Bool = false, foldOrder: Int = 0
     ) {
         self.id = id
         self.sessionId = sessionId
@@ -191,6 +196,7 @@ public struct WorkoutSet: Codable, FetchableRecord, PersistableRecord, Identifia
         self.side = side
         self.pairId = pairId
         self.est1rmKg = est1rmKg
+        self.rpe = rpe
         self.isPendingSync = isPendingSync
         self.foldOrder = foldOrder
     }

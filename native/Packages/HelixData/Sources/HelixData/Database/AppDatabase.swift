@@ -305,6 +305,84 @@ public final class AppDatabase: Sendable {
             }
         }
 
+        // ── v6 ── The Nutrition screen's read cache.
+        //
+        // Two tables that hold NOTHING this device produced. Every field arrives
+        // from Postgres and Postgres stays the source of truth for all of it, so
+        // both can be dropped and refetched without losing a fact. They are in
+        // the same database as `set_events` only because a screen that reads
+        // from two stores has two places to be stale.
+        //
+        // Note what is absent: no `is_pending_sync`, no outbox kind, no write
+        // path at all. A read cache that can be written locally is a write path
+        // with no conflict rule, which is the thing the event log exists to
+        // avoid. Editing a macro is a Wave 3 item and it will go through the
+        // same append-only route the logger does.
+        migrator.registerMigration("v6.nutritionReadCache") { db in
+            try db.create(table: "nutrition_days") { t in
+                // The logical day, `yyyy-MM-dd`. Text, like every other date in
+                // this store — SQLite has no date type, and a string that sorts
+                // correctly is worth more here than an epoch nobody can read in
+                // a query.
+                t.primaryKey("date", .text)
+                // Every macro is nullable. Nil is "never tracked", which is not
+                // zero: a day with no intake recorded says nothing about
+                // adherence, and defaulting it to 0 would grade an untracked
+                // day as a perfect deficit.
+                t.column("calories", .double)
+                t.column("protein_g", .double)
+                t.column("carbs_g", .double)
+                t.column("fat_g", .double)
+                t.column("phase", .text)
+                t.column("steps", .double)
+                t.column("active_cal", .double)
+                t.column("water_ml", .double)
+                t.column("nutrition_exception", .text)
+                // NOT NULL with a default, matching Postgres, where this column
+                // is `boolean NOT NULL`. The flag is a statement about
+                // confidence and "unknown" is not one of its values.
+                t.column("nutrition_estimated", .boolean).notNull().defaults(to: false)
+            }
+
+            try db.create(table: "user_goals") { t in
+                t.primaryKey("user_id", .text)
+                // All nullable, as in Postgres. A missing calorie goal renders
+                // the bar ungraded rather than graded against a guess — see the
+                // `1955` incident in `useNutritionGoals`, where local state
+                // seeded with a literal nobody chose was worse than no goal.
+                t.column("calorie_goal", .integer)
+                t.column("protein_goal_g", .integer)
+                t.column("carbs_goal_g", .integer)
+                t.column("fat_goal_g", .integer)
+                t.column("water_goal_ml", .integer)
+                t.column("steps_goal", .integer)
+                t.column("goal_preset", .text)
+            }
+        }
+
+        // ── v7 ── RPE lands in the projection.
+        //
+        // `workout_sets.rpe` has existed in Postgres since the beginning and
+        // was simply never carried locally — the logger could store how heavy
+        // a set was and not how hard it felt, which is half of the double
+        // progression rule ("all work sets at the ceiling at RPE <= 8.5").
+        //
+        // Nullable, with no default. An unrated set must stay distinguishable
+        // from a set rated zero; defaulting it would grade an untracked session
+        // as effortless, which is the same class of mistake as defaulting a
+        // missing calorie goal.
+        //
+        // `SetSnapshot` gains the field at the same time. That is a wire-format
+        // change and it is a SAFE one in this direction only: a new build
+        // decoding an old row sees the key absent and gets `nil`, which is the
+        // correct answer for a set logged before ratings were stored. An old
+        // build decoding a new row ignores the key. Neither loses a set.
+        migrator.registerMigration("v7.setRpe") { db in
+            try db.alter(table: "workout_sets") { t in
+                t.add(column: "rpe", .double)
+            }
+        }
+
         return migrator
     }
 }
@@ -343,6 +421,119 @@ extension AppDatabase {
     public func exercises() throws -> [Exercise] {
         try writer.read { db in
             try Exercise.order(Column("name")).fetchAll(db)
+        }
+    }
+
+    /// The projected sets for a session, in the fold's own order.
+    ///
+    /// The non-observing twin of `observeSets`. The logger needs it exactly
+    /// once — at attach, to fold what is already logged back onto the deck —
+    /// and a `ValueObservation` for a single read is a subscription to cancel
+    /// for no benefit.
+    public func sets(sessionId: String) throws -> [WorkoutSet] {
+        try writer.read { db in
+            try WorkoutSet
+                .filter(Column("session_id") == sessionId)
+                .order(Column("set_index"), Column("fold_order"))
+                .fetchAll(db)
+        }
+    }
+
+    /// The session for a split that is still being logged, if there is one.
+    ///
+    /// ── UNFINISHED IS THE WHOLE PREDICATE ───────────────────────────────────
+    /// `ended_at IS NULL`. Without it, opening the logger after finishing a
+    /// morning Upper A rejoins THAT session, and an evening Upper A hours later
+    /// is appended to the morning's row — two workouts silently merged into one,
+    /// with a duration spanning the gap between them. Two-a-days are real, and
+    /// so is finishing a session and going back in to correct a set.
+    ///
+    /// Keyed on `(date, day_key)` and never on the weekday: a swap moves a
+    /// workout to another date, and a Wednesday "Delts & Arms" landed in the
+    /// Upper A curve exactly that way.
+    public func liveSession(dayKey: String, date: String) throws -> WorkoutSession? {
+        try writer.read { db in
+            try WorkoutSession
+                .filter(Column("date") == date
+                        && Column("day_key") == dayKey
+                        && Column("ended_at") == nil)
+                .order(Column("started_at"))
+                .fetchOne(db)
+        }
+    }
+
+    /// Find the unfinished session for a split, or open one.
+    ///
+    /// ── WHY IT IS LOOK-UP-OR-CREATE AND NOT CREATE ──────────────────────────
+    /// `set_events.session_id` has a foreign key to `workout_sessions`, so a
+    /// row must exist before the first append. A logger that created one on
+    /// every launch would start a second session beside the one you are halfway
+    /// through, and every set logged after the relaunch would be attributed to
+    /// it — a split silently torn in two, with both halves well-formed.
+    ///
+    /// The caller should reach this on the FIRST WRITE and not on appearing.
+    /// Called from `onAppear`, it leaves an empty session row behind every time
+    /// the tab is opened and closed again.
+    @discardableResult
+    public func openSession(
+        userId: String,
+        dayKey: String,
+        date: String,
+        startedAt: Date = Date()
+    ) throws -> WorkoutSession {
+        if let live = try liveSession(dayKey: dayKey, date: date) { return live }
+        return try writer.write { db in
+            // Re-checked inside the transaction: the read above is not part of
+            // it, and two writers (the phone and, at Wave 5, the watch) racing
+            // on the same split would otherwise each create a row.
+            if let live = try WorkoutSession
+                .filter(Column("date") == date
+                        && Column("day_key") == dayKey
+                        && Column("ended_at") == nil)
+                .order(Column("started_at"))
+                .fetchOne(db) {
+                return live
+            }
+            let session = WorkoutSession(
+                id: newHelixID(), userId: userId, dayKey: dayKey, date: date,
+                startedAt: startedAt, isPendingSync: true
+            )
+            try session.insert(db)
+            return session
+        }
+    }
+
+    /// Stamp a session finished.
+    ///
+    /// ── WHAT THIS IS NOT ────────────────────────────────────────────────────
+    /// It is not the commit. Reaching Supabase means a translation layer that
+    /// does not exist yet (`workout_sets.set_index` is `set_number` server-side,
+    /// `workout_sessions.date` has no counterpart at all — see the header of
+    /// `Models.swift`), and until it does the row stays `is_pending_sync` and
+    /// the outbox holds `set_event.*` items with no destination.
+    ///
+    /// So this writes the two facts that are ours to write and nothing else.
+    /// `duration_min` is derived here rather than by the caller because a
+    /// duration computed from a clock the row does not carry is a duration
+    /// nobody can check.
+    @discardableResult
+    public func closeSession(
+        id: String,
+        endedAt: Date = Date(),
+        sessionRpe: Double? = nil
+    ) throws -> WorkoutSession? {
+        try writer.write { db in
+            guard var session = try WorkoutSession.fetchOne(db, key: id) else { return nil }
+            session.endedAt = endedAt
+            if let startedAt = session.startedAt {
+                session.durationMin = max(0, endedAt.timeIntervalSince(startedAt) / 60)
+            }
+            // `nil` leaves the existing rating alone rather than clearing it —
+            // an unrated session is not a session rated zero, and the battery
+            // falls back to its own default rather than treating it as easy.
+            if let sessionRpe { session.sessionRpe = sessionRpe }
+            try session.update(db)
+            return session
         }
     }
 }

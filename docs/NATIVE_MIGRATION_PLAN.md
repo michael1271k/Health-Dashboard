@@ -165,6 +165,8 @@ native/
 │   ├── HelixCore/         pure domain. Foundation only. Builds + tests on macOS.
 │   │   └── Fixtures/      1,849 golden vectors exported from the TypeScript
 │   └── HelixData/         GRDB store + outbox + Keychain + Supabase
+├── Shared/                in BOTH app and extension — ActivityKit attributes
+├── HelixNativeWidgets/    widget extension. One face: the Live Activity.
 └── HelixNative/           the SwiftUI app target (views only)
 ```
 
@@ -219,7 +221,7 @@ The `swift:core` / `swift:data` npm scripts therefore pass `--scratch-path` into
 | Wave | Scope | Estimate |
 |---|---|---|
 | **1a** ✅ | Foundation: packages, GRDB, Keychain, Supabase, golden vectors, app shell | done |
-| **1b** | Multi-writer store (event log + pencil), then the **Live Logger** on iPhone | 3–4 wks |
+| **1b** | Multi-writer store (event log + pencil) ✅, **Live Logger** UI ✅, sync ⏳ | 3–4 wks |
 | **2** | Dashboard + **Smart Stacks**, native redesign. Prototype the interaction in week 1 | 3 wks |
 | **3** | `/day/[date]`, nutrition, macros, water, fatigue slots, supplements, DOMS, cardio | 2 wks |
 | **4** | Swift Charts port, exercise library, session analysis, progression trail | 2 wks |
@@ -229,6 +231,66 @@ The `swift:core` / `swift:data` npm scripts therefore pass `--scratch-path` into
 
 **Total: 13–18 weeks.** Up from the original 11–16: the Watch adds 3–4, the
 `WKWebView` reports decision gives back roughly 1.5.
+
+### Wave 1b, as shipped so far
+
+The event log, the pencil and the Live Logger UI are in. What is **not** in is
+the sync, and it is the rest of the wave.
+
+**The deck is domain, not a fixture.** `HelixCore/Training/Program.swift` holds
+HELIX-5 — five days, 37 movements, both phases' set counts, the rep windows and
+the prescribed rest. `Landmarks.swift` holds the sixteen tracked muscles and the
+one credit rule (direct 1.0, assistance 0.5, an overlap taking the maximum and
+never the sum). Both are in `HelixCore` because all three consumers — the
+logger, the muscle sheet, the phase toggle — have to agree, and the way they
+agree is by reading one value.
+
+The credit rule's headline test is a REAL vector, read off the shipping app's
+own sheet mid-session: one set of Neutral-Grip Lat Pulldown plus one of
+Seated Cable Row (Wide Grip) is 2 physical sets and 5 weighted — Lats 1.5,
+Upper back 1.5, Biceps 1, Forearms 1.
+
+**`muscleMap.ts` is not ported.** Every line of that dictionary was bought by
+reconciling a real week against Hevy — the fly that is not a triceps movement,
+the row that is not rear-delt work, the press that pays the triceps and not the
+side delt. Porting it belongs with the exercise library in Wave 4. Until then
+each lift in `Program.swift` carries its own resolved answer, **copied** from
+that file rather than re-derived.
+
+**`rpe` reached the local store (`v7`).** Postgres has carried
+`workout_sets.rpe` all along and the local schema simply never did, so the
+logger could record how heavy a set was and not how hard it felt — half of the
+double-progression rule. `SetSnapshot` gained the field at the same time, which
+is a wire-format change and a safe one in this direction: a new build decoding
+an old row sees the key absent and gets `nil`, which is the right answer for a
+set logged before ratings existed.
+
+**The atlas is generated twice now.** `gen-atlas-swift.mjs` writes into both
+`ios/App/HelixWidgets/` and `native/HelixNative/Features/Logger/`, and
+`atlas-parity.test.ts` asserts the copies are byte-identical. Two apps draw the
+body and neither can import the other's module; checking only the first copy
+would let the second drift silently, which is the exact failure the generator
+exists to prevent. The generated types are now `Sendable` — they are pure
+geometry, and the native target builds with strict concurrency complete.
+
+**One widget face ships: the Live Activity.** `native/Shared/` is in BOTH the
+app and the `HelixNativeWidgets` targets, because ActivityKit matches
+`Activity.request` to `ActivityConfiguration` by the attributes TYPE and two
+identically-named structs in two modules are two different types — a failure
+that builds fine and draws nothing. The iOS 18 floor deletes the Capacitor
+app's two-widget-struct `buildLimitedAvailability` dance: `supplementalActivity-
+Families` can just be called. Every other face still needs the App Group and
+waits for Wave 7.
+
+**What the logger deliberately does not do yet**, so nobody goes looking:
+
+| Not there | Why | Lands in |
+|---|---|---|
+| Upload to Supabase | `workout_sets.set_index` is `set_number` server-side and `workout_sessions.date` has no counterpart at all. The translation layer is the rest of 1b. | 1b |
+| Real PR detection | `prEngine.ts` is 600 loc: per-set tonnage collapsing L/R pairs, a reps axis only when weight is 0, baselines carrying `set_type` and `side`. The logger flags a set that beats the program's own `wk1Kg` seed and writes nothing to `personal_records`. | 4 |
+| Real "last time" | Needs synced history. The seed load stands in. | 1b |
+| Cardio rows | A different column set (km / min / %) on a different data path. | 3 |
+| Swaps and overrides | The plan's weekday layout resolves the day; dated swaps are their own subsystem. | 6 |
 
 ### Two hard gates
 
@@ -336,8 +398,16 @@ open HelixNative.xcodeproj                     # select iPhone, Product ▸ Run
 npm run swift:core     # domain: 1,849 golden vectors + invariants
 npm run swift:data     # store: migrations, outbox, Keychain
 npm run golden         # regenerate the vectors after a TypeScript formula change
-npm test               # includes the golden-vector staleness check
+npm test               # includes the golden-vector + atlas staleness checks
+
+# the app and its extension, without a device or a signing certificate
+cd native && xcodegen generate
+xcodebuild -project HelixNative.xcodeproj -scheme HelixNative \
+  -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO build
 ```
+
+Never pass `-sdk iphoneos` to that build: it drags a watch AppIcon check into an
+iPhone-only project and fails on an asset that does not exist.
 
 The URL in `Secrets.xcconfig` carries **no `https://`** — an xcconfig treats `//`
 as the start of a comment and truncates the value. `SupabaseConfig.fromBundle`

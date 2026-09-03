@@ -1,4 +1,5 @@
 import SwiftUI
+import HelixCore
 
 /// HELIX palette — "Obsidian & Ember, Refined".
 ///
@@ -97,6 +98,40 @@ enum HelixPalette {
         static let cut         = HelixPalette.ember
         static let maintenance = HelixPalette.steel
         static let bulk        = HelixPalette.emerald
+    }
+
+    /// The sixteen landmark muscles, ported from `MUSCLE` in `palette.ts`.
+    ///
+    /// ── THREE CHANNELS, NOT ONE ─────────────────────────────────────────────
+    /// Hue says the FAMILY (chest ember, back emerald, shoulders amethyst, arms
+    /// copper, legs sapphire, core steel); the step within that family's ramp
+    /// says WHICH muscle; opacity says HOW MUCH work landed there. A single
+    /// day-accent tint — which is what the atlas used to draw — answered the
+    /// one question you already knew the answer to (which session am I in) and
+    /// said nothing about where the work went.
+    ///
+    /// A family with one landmark sits on its base hue. A family with several
+    /// ramps light → dark, deepest for the biggest muscle, so the ORDER carries
+    /// meaning rather than merely separating the cells.
+    static func muscle(_ muscle: LandmarkMuscle) -> Color {
+        switch muscle {
+        case .chest:      ember
+        case .lats:       emerald
+        case .upperBack:  Color(hex: 0x5FBF9B)
+        case .lowerBack:  emeraldDeep
+        case .frontDelts: Color(hex: 0xBFA6D4)
+        case .sideDelts:  Color(hex: 0xA085BC)
+        case .rearDelts:  Color(hex: 0x6E5589)
+        case .biceps:     copper
+        case .triceps:    Color(hex: 0xA6602F)
+        case .forearms:   Color(hex: 0xDB9A6E)
+        case .quads:      Color(hex: 0x5B93CC)
+        case .hamstrings: sapphire
+        case .glutes:     sapphireDeep
+        case .adductors:  Color(hex: 0x7FA9D4)
+        case .calves:     Color(hex: 0x24486B)
+        case .absCore:    steel
+        }
     }
 }
 

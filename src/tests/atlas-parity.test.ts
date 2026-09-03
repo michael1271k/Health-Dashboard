@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
-import { generate, tokenize, swiftPath, readAtlas } from '../../scripts/gen-atlas-swift.mjs'
+import { generate, tokenize, swiftPath, readAtlas, TARGETS } from '../../scripts/gen-atlas-swift.mjs'
 import { MUSCLE_PATHS, BASE_SHAPES, ATLAS_VIEWBOX, musclesOnView } from '@/lib/body/atlas'
 import { LANDMARK_MUSCLES } from '@/lib/training/landmarks'
 
@@ -18,6 +18,17 @@ const SOURCE = readFileSync('src/lib/body/atlas.ts', 'utf8')
 const SWIFT = readFileSync('ios/App/HelixWidgets/HelixAtlas.swift', 'utf8')
 
 describe('the generated Swift atlas', () => {
+  it('is the same body in every app that draws it', () => {
+    // Two apps ship a Swift atlas — the Capacitor widget extension and the
+    // native SwiftUI app — and neither can import the other's module. Checking
+    // only the first copy would let the second drift silently, which is the
+    // exact failure this generator exists to make impossible.
+    expect(TARGETS.length).toBeGreaterThan(1)
+    for (const target of TARGETS) {
+      expect(readFileSync(target, 'utf8'), target).toBe(SWIFT)
+    }
+  })
+
   it('is exactly what the generator produces from the current atlas', () => {
     // The whole contract. If this fails: node scripts/gen-atlas-swift.mjs
     expect(SWIFT).toBe(generate(SOURCE))
