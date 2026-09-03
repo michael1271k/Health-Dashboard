@@ -383,6 +383,59 @@ public final class AppDatabase: Sendable {
             }
         }
 
+        // ── v8 ── The queue learns to wait.
+        //
+        // `outboxFailed` recorded `attempts` and `last_error` and nothing ever
+        // read them, so a write the server will never accept — a CHECK
+        // violation, an exercise that cannot be resolved — was retried at full
+        // speed on every single drain, forever. On a phone that is radio time
+        // and battery spent to earn the same 400.
+        //
+        // A timestamp rather than a counter-and-a-formula-at-read-time: the
+        // drain query has to be able to skip an item with an index-friendly
+        // comparison, and "when may this be tried again" is a fact about the
+        // row, not something every reader should re-derive. NULL means "now" —
+        // which is what every row queued before this migration means, and what
+        // a fresh append means.
+        migrator.registerMigration("v8.outboxBackoff") { db in
+            try db.alter(table: "outbox") { t in
+                t.add(column: "next_attempt_at", .datetime)
+            }
+        }
+
+        // ── v9 ── The mirror. Twenty-six tables, generated, plus its cursors.
+        //
+        // ── AND THE TWO IT REPLACES ─────────────────────────────────────────
+        // `v6.nutritionReadCache` created `nutrition_days` and `user_goals` for
+        // one screen: a hand-joined view of three server tables, filled by four
+        // hand-written queries in `NutritionSync`. The mirror pulls all three of
+        // those tables — plus the other twenty-three — from a generated
+        // catalogue, so keeping v6's pair would mean two pull paths writing
+        // overlapping facts, and one of them would go stale the first time
+        // nobody noticed.
+        //
+        // `user_goals` in particular COLLIDES: the mirror's version of that
+        // table is the real one, all thirty-one columns of it, keyed on `id`
+        // rather than on `user_id`. Only one of the two can exist.
+        //
+        // Dropping them loses nothing. Neither table ever held a fact this
+        // device produced — v6's own comment says so — and both are refetched
+        // on the first refresh.
+        migrator.registerMigration("v9.mirror") { db in
+            try db.drop(table: "nutrition_days")
+            try db.drop(table: "user_goals")
+
+            try Self.migrateMirrorV1(db)
+
+            // How far each table has been pulled. One row per table, written
+            // only by `setMirrorCursor`, which moves it forward and never back.
+            try db.create(table: "sync_cursors") { t in
+                t.primaryKey("table_name", .text)
+                t.column("cursor_at", .datetime).notNull()
+                t.column("pulled_at", .datetime).notNull()
+            }
+        }
+
         return migrator
     }
 }
@@ -416,6 +469,12 @@ extension AppDatabase {
                 .order(Column("set_index"), Column("fold_order"))
                 .fetchAll(db)
         }
+    }
+
+    /// One session by id. The drainer's read: it pushes the row as it stands
+    /// now, never a copy captured when the queue item was written.
+    public func session(id: String) throws -> WorkoutSession? {
+        try writer.read { db in try WorkoutSession.fetchOne(db, key: id) }
     }
 
     public func exercises() throws -> [Exercise] {
@@ -503,19 +562,16 @@ extension AppDatabase {
         }
     }
 
-    /// Stamp a session finished.
+    /// Stamp a session finished, and queue the finished row for upload.
     ///
-    /// ── WHAT THIS IS NOT ────────────────────────────────────────────────────
-    /// It is not the commit. Reaching Supabase means a translation layer that
-    /// does not exist yet (`workout_sets.set_index` is `set_number` server-side,
-    /// `workout_sessions.date` has no counterpart at all — see the header of
-    /// `Models.swift`), and until it does the row stays `is_pending_sync` and
-    /// the outbox holds `set_event.*` items with no destination.
-    ///
-    /// So this writes the two facts that are ours to write and nothing else.
     /// `duration_min` is derived here rather than by the caller because a
     /// duration computed from a clock the row does not carry is a duration
     /// nobody can check.
+    ///
+    /// The enqueue is in the same transaction as the stamp, for the same reason
+    /// `EventStore.commit` puts the append and its queue row in one: a session
+    /// that is finished locally and absent from the queue is a workout that
+    /// stops syncing with no symptom.
     @discardableResult
     public func closeSession(
         id: String,
@@ -533,6 +589,7 @@ extension AppDatabase {
             // falls back to its own default rather than treating it as easy.
             if let sessionRpe { session.sessionRpe = sessionRpe }
             try session.update(db)
+            try Self.enqueueSessionUpsert(sessionId: id, in: db)
             return session
         }
     }
@@ -566,10 +623,16 @@ extension AppDatabase {
     /// — so the "two workers cannot pick up the same write" the old comment
     /// promised was not implemented. A foreground flush and a background task
     /// firing together both got the same 50 rows and both uploaded them.
-    public func claimOutbox(limit: Int = 50) throws -> [OutboxItem] {
+    ///
+    /// `now` is injectable so a test can prove the backoff without sleeping.
+    public func claimOutbox(limit: Int = 50, now: Date = Date()) throws -> [OutboxItem] {
         try writer.write { db in
             let batch = try OutboxItem
                 .filter(Column("status") != OutboxItem.Status.inFlight.rawValue)
+                // NULL means "now" — every row queued before v8, and every
+                // fresh append. `Column(...) == nil` renders `IS NULL`, which
+                // is the only comparison NULL answers truthfully.
+                .filter(Column("next_attempt_at") == nil || Column("next_attempt_at") <= now)
                 .order(Column("rowid"))
                 .limit(limit)
                 .fetchAll(db)
@@ -592,6 +655,33 @@ extension AppDatabase {
         try writer.write { db in
             try db.execute(
                 sql: "UPDATE outbox SET status = 'pending' WHERE status = 'in_flight'"
+            )
+            return db.changesCount
+        }
+    }
+
+    /// Return THESE reservations to the queue, if they are still reserved.
+    ///
+    /// The narrow twin of `resetInFlight`, for a drain to clean up after
+    /// itself. Blanket-resetting at the end of a drain would also release rows
+    /// a *concurrent* drain is still uploading — harmless for correctness,
+    /// since every write here is idempotent, but it opens a window where the
+    /// same batch is uploaded twice for no reason.
+    ///
+    /// The `status = 'in_flight'` guard is what makes it safe to call on every
+    /// path: a row already acknowledged is gone, and a row already failed keeps
+    /// its `failed` status and its backoff.
+    @discardableResult
+    public func returnToQueue(ids: [String]) throws -> Int {
+        guard !ids.isEmpty else { return 0 }
+        return try writer.write { db in
+            let placeholders = databaseQuestionMarks(count: ids.count)
+            try db.execute(
+                sql: """
+                    UPDATE outbox SET status = 'pending'
+                    WHERE status = 'in_flight' AND id IN (\(placeholders))
+                    """,
+                arguments: StatementArguments(ids)
             )
             return db.changesCount
         }
@@ -642,13 +732,63 @@ extension AppDatabase {
     /// workout you still did, and a queue that gives up is a queue that loses
     /// data quietly — the failure belongs in front of the user, not in a
     /// discarded row.
-    public func outboxFailed(_ id: String, error: String) throws {
+    ///
+    /// It does get slower, though. `SyncBackoff` decides when it may next be
+    /// tried, from the attempt count this call just raised — computed here
+    /// rather than by the caller so there is no path that records a failure and
+    /// forgets to space out its retry.
+    public func outboxFailed(_ id: String, error: String, now: Date = Date()) throws {
         try writer.write { db in
             guard var item = try OutboxItem.fetchOne(db, key: id) else { return }
             item.attempts += 1
             item.lastError = error
             item.status = .failed
+            item.nextAttemptAt = now.addingTimeInterval(SyncBackoff.delay(attempts: item.attempts))
             try item.update(db)
         }
+    }
+
+    /// The server has this session row.
+    ///
+    /// `openSession` stamps `is_pending_sync` and, until the drainer existed,
+    /// nothing ever cleared it — so every session the logger opened stayed
+    /// flagged for the life of the install, whatever the server actually had.
+    /// The sets clear themselves through `reproject`; the session row needs
+    /// this, because it is not a projection of anything.
+    public func markSessionSynced(id: String) throws {
+        try writer.write { db in
+            try db.execute(
+                sql: "UPDATE workout_sessions SET is_pending_sync = 0 WHERE id = ?",
+                arguments: [id]
+            )
+        }
+    }
+
+    /// Queue the session row itself for upload.
+    ///
+    /// ── WHY THIS IS NOT COVERED BY THE SET EVENTS ───────────────────────────
+    /// Every append queues an item, and the drainer pushes the session row
+    /// alongside the sets it names — so a session in progress reaches Postgres
+    /// for free. Finishing one does not: `closeSession` writes `ended_at`,
+    /// `duration_min` and `session_rpe` and there is no set event afterwards to
+    /// carry them. Without this call the last thing every workout does never
+    /// syncs, and the server keeps the session open forever.
+    ///
+    /// The payload is the session id and nothing else. The drainer reads the
+    /// current row when it runs, so a queued item can never carry a stale copy
+    /// of a session that was edited after it was queued.
+    static func enqueueSessionUpsert(sessionId: String, in db: Database) throws {
+        let key = "session:\(sessionId)"
+        // Replace rather than accumulate. `idempotency_key` is UNIQUE, so a
+        // second close (rating a session after finishing it) would throw; and
+        // even without the constraint, N identical "push this session" items
+        // are N round trips that all do the same thing.
+        try db.execute(sql: "DELETE FROM outbox WHERE idempotency_key = ?", arguments: [key])
+        var item = OutboxItem(
+            kind: SyncKind.sessionUpsert,
+            payload: try HelixJSON.encoder.encode(SessionRef(sessionId: sessionId)),
+            idempotencyKey: key
+        )
+        try item.insert(db)
     }
 }

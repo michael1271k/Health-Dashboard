@@ -1,0 +1,143 @@
+import Foundation
+import Supabase
+
+/// `SyncRemote` over supabase-swift's PostgREST client.
+///
+/// Thin on purpose: every rule about WHAT to send lives in `SyncTranslation`
+/// and every rule about WHEN lives in `SyncEngine`. What is left here is the
+/// three HTTP shapes and the two things that are genuinely PostgREST-specific:
+/// the conflict target, and `returning: .minimal`.
+///
+/// `.minimal` matters more than it looks. The default is `.representation`,
+/// which makes the server re-SELECT every affected row THROUGH RLS and send
+/// all of it back — thirty full rows on the return leg of a thirty-set upload,
+/// over cellular, inside a background task, and then discarded unread.
+public struct PostgRESTRemote: SyncRemote {
+
+    private let client: SupabaseClient
+    private let userId: String
+
+    /// `userId` scopes the catalogue read. RLS already restricts every table to
+    /// `user_id = auth.uid()`, so this is belt and braces — but the filter also
+    /// keeps the request honest if the policy is ever widened for an admin.
+    public init(client: SupabaseClient, userId: String) {
+        self.client = client
+        self.userId = userId
+    }
+
+    public func exerciseCatalogue() async throws -> [RemoteExercise] {
+        try await client
+            .from("exercises")
+            .select("id,name")
+            .eq("user_id", value: userId)
+            .execute()
+            .value
+    }
+
+    public func upsertSessions(_ rows: [RemoteSessionRow], ignoreDuplicates: Bool) async throws {
+        guard !rows.isEmpty else { return }
+        // `onConflict: "id"` is not a preference, it is the only legal target:
+        // `workout_sessions` has exactly one unique constraint, its primary
+        // key. There is no unique index on `client_session_id` — the web app's
+        // idempotency token is enforced by a SELECT, not by the database.
+        try await client
+            .from("workout_sessions")
+            .upsert(rows, onConflict: "id", returning: .minimal, ignoreDuplicates: ignoreDuplicates)
+            .execute()
+    }
+
+    public func upsertSets(_ rows: [RemoteSetRow]) async throws {
+        guard !rows.isEmpty else { return }
+        try await client
+            .from("workout_sets")
+            .upsert(rows, onConflict: "id", returning: .minimal)
+            .execute()
+    }
+
+    public func deleteSets(ids: [String]) async throws {
+        guard !ids.isEmpty else { return }
+        try await client
+            .from("workout_sets")
+            .delete(returning: .minimal)
+            .in("id", values: ids)
+            .execute()
+    }
+}
+
+/// `MirrorRemote` over the same client — the READ half of sync.
+///
+/// Every mirrored table carries a `user_id`, so one filter serves all of them,
+/// which is what lets the generated catalogue treat twenty-six tables
+/// identically. RLS already restricts each to `user_id = auth.uid()`; sending
+/// the filter anyway keeps the request honest if a policy is ever widened for
+/// an admin.
+public struct PostgRESTMirrorRemote: MirrorRemote, MirrorPushRemote {
+
+    private let client: SupabaseClient
+    private let userId: String
+
+    public init(client: SupabaseClient, userId: String) {
+        self.client = client
+        self.userId = userId
+    }
+
+    /// The write half. `conflict` comes from the generated catalogue and is the
+    /// table's NATURAL key wherever Postgres has one — see `MirrorTable`.
+    ///
+    /// RLS supplies the `user_id` guard on the way in; the row carries its own
+    /// `user_id` because these tables are `NOT NULL` on it.
+    ///
+    /// ── THE SERVER OWNS ITS OWN TIMESTAMPS ──────────────────────────────────
+    /// `created_at` and `updated_at` are stripped from the body. Both default to
+    /// `now()` on every one of these tables and a `BEFORE UPDATE` trigger
+    /// maintains `updated_at`, so sending them can only ever be worse than not:
+    ///
+    ///   · `updated_at` is the DELTA CURSOR. On an INSERT no trigger fires, so a
+    ///     phone whose clock is three minutes slow would stamp a brand-new row
+    ///     in the past — where every other device's `>= cursor` filter would
+    ///     step straight over it and never see the row again.
+    ///   · `created_at` on a row this device is updating is the server's own
+    ///     record of when the row first appeared. Echoing our mirrored copy back
+    ///     is at best a no-op and at worst overwrites it with a value that has
+    ///     been through two clocks and a decode.
+    ///
+    /// Done here rather than in the row types because it is a fact about
+    /// PostgREST, not about the schema — and the mirror needs both columns on
+    /// the way IN.
+    public func upsertRow<T: Encodable & Sendable>(
+        _ row: T, table: String, conflict: String
+    ) async throws {
+        var body = try JSONDecoder().decode([String: AnyJSON].self, from: HelixJSON.encoder.encode(row))
+        body.removeValue(forKey: "created_at")
+        body.removeValue(forKey: "updated_at")
+        try await client
+            .from(table)
+            .upsert(body, onConflict: conflict, returning: .minimal)
+            .execute()
+    }
+
+    public func select<T: Decodable & Sendable>(
+        _ type: T.Type, request: MirrorRequest
+    ) async throws -> [T] {
+        var query = client.from(request.table).select().eq("user_id", value: userId)
+        if let since = request.since {
+            // `gte`, not `gt`: the boundary row is re-read and upserted, which
+            // is a no-op, and two rows sharing a millisecond cannot lose one.
+            query = query.gte(since.column, value: since.value)
+        }
+        return try await query.execute().value
+    }
+
+    public func selectIn<T: Decodable & Sendable>(
+        _ type: T.Type, table: String, column: String, values: [String]
+    ) async throws -> [T] {
+        guard !values.isEmpty else { return [] }
+        return try await client
+            .from(table)
+            .select()
+            .eq("user_id", value: userId)
+            .in(column, values: values)
+            .execute()
+            .value
+    }
+}
