@@ -1,0 +1,296 @@
+{
+  "module": "training/prTruth",
+  "fn": "prFloorFor",
+  "note": "Only the EXCESS of the book over PR_LOGGED floors. e1rm = max(Epley on the asserted set, Hevy's figure only where weight also floors), then excess. Never a sessionVolume floor. Lookup is by the exact canonical name — no aliasing, no case folding. null = nothing to raise.",
+  "cases": [
+    {
+      "name": "Incline DB Press",
+      "input": {
+        "name": "Incline DB Press"
+      },
+      "expected": {
+        "volume": 432
+      }
+    },
+    {
+      "name": "Chest Press (Machine)",
+      "input": {
+        "name": "Chest Press (Machine)"
+      },
+      "expected": null
+    },
+    {
+      "name": "Pec Deck",
+      "input": {
+        "name": "Pec Deck"
+      },
+      "expected": {
+        "weight": 55,
+        "e1rm": 75.34
+      }
+    },
+    {
+      "name": "Single Arm Cable Crossover",
+      "input": {
+        "name": "Single Arm Cable Crossover"
+      },
+      "expected": null
+    },
+    {
+      "name": "DB Shoulder Press",
+      "input": {
+        "name": "DB Shoulder Press"
+      },
+      "expected": {
+        "weight": 31,
+        "e1rm": 42.25
+      }
+    },
+    {
+      "name": "Single Arm Lateral Raise (Cable)",
+      "input": {
+        "name": "Single Arm Lateral Raise (Cable)"
+      },
+      "expected": null
+    },
+    {
+      "name": "Cable Overhead Extension",
+      "input": {
+        "name": "Cable Overhead Extension"
+      },
+      "expected": {
+        "weight": 12.5
+      }
+    },
+    {
+      "name": "Rope Triceps Pushdown",
+      "input": {
+        "name": "Rope Triceps Pushdown"
+      },
+      "expected": {
+        "e1rm": 22.5,
+        "volume": 225
+      }
+    },
+    {
+      "name": "Single Arm Triceps Pushdown (Cable)",
+      "input": {
+        "name": "Single Arm Triceps Pushdown (Cable)"
+      },
+      "expected": null
+    },
+    {
+      "name": "Lat Pulldown",
+      "input": {
+        "name": "Lat Pulldown"
+      },
+      "expected": {
+        "weight": 49.5,
+        "e1rm": 67.81,
+        "volume": 585
+      }
+    },
+    {
+      "name": "Neutral-Grip Lat Pulldown",
+      "input": {
+        "name": "Neutral-Grip Lat Pulldown"
+      },
+      "expected": null
+    },
+    {
+      "name": "Seated Cable Row (V-Grip)",
+      "input": {
+        "name": "Seated Cable Row (V-Grip)"
+      },
+      "expected": {
+        "e1rm": 62.3,
+        "volume": 595
+      }
+    },
+    {
+      "name": "Seated Cable Row (Wide Grip)",
+      "input": {
+        "name": "Seated Cable Row (Wide Grip)"
+      },
+      "expected": null
+    },
+    {
+      "name": "Straight-Arm Pulldown",
+      "input": {
+        "name": "Straight-Arm Pulldown"
+      },
+      "expected": {
+        "weight": 17.5,
+        "e1rm": 24.65
+      }
+    },
+    {
+      "name": "Face Pull",
+      "input": {
+        "name": "Face Pull"
+      },
+      "expected": null
+    },
+    {
+      "name": "Seated Incline DB Curl",
+      "input": {
+        "name": "Seated Incline DB Curl"
+      },
+      "expected": null
+    },
+    {
+      "name": "DB Hammer Curl",
+      "input": {
+        "name": "DB Hammer Curl"
+      },
+      "expected": null
+    },
+    {
+      "name": "Reverse EZ-Bar Curl",
+      "input": {
+        "name": "Reverse EZ-Bar Curl"
+      },
+      "expected": null
+    },
+    {
+      "name": "Preacher Curl (Machine)",
+      "input": {
+        "name": "Preacher Curl (Machine)"
+      },
+      "expected": null
+    },
+    {
+      "name": "Leg Press",
+      "input": {
+        "name": "Leg Press"
+      },
+      "expected": {
+        "weight": 80,
+        "e1rm": 109.59,
+        "volume": 980
+      }
+    },
+    {
+      "name": "Hack Squat",
+      "input": {
+        "name": "Hack Squat"
+      },
+      "expected": null
+    },
+    {
+      "name": "Leg Extension",
+      "input": {
+        "name": "Leg Extension"
+      },
+      "expected": {
+        "weight": 42.5,
+        "e1rm": 59.86,
+        "volume": 600
+      }
+    },
+    {
+      "name": "Seated Leg Curl",
+      "input": {
+        "name": "Seated Leg Curl"
+      },
+      "expected": {
+        "weight": 50,
+        "e1rm": 73.53,
+        "volume": 712.5
+      }
+    },
+    {
+      "name": "Romanian Deadlift (DB)",
+      "input": {
+        "name": "Romanian Deadlift (DB)"
+      },
+      "expected": null
+    },
+    {
+      "name": "Hip Thrust (Machine)",
+      "input": {
+        "name": "Hip Thrust (Machine)"
+      },
+      "expected": null
+    },
+    {
+      "name": "Calf Press",
+      "input": {
+        "name": "Calf Press"
+      },
+      "expected": {
+        "weight": 72.5
+      }
+    },
+    {
+      "name": "Crunch Machine",
+      "input": {
+        "name": "Crunch Machine"
+      },
+      "expected": null
+    },
+    {
+      "name": "Reverse Crunch",
+      "input": {
+        "name": "Reverse Crunch"
+      },
+      "expected": null
+    },
+    {
+      "name": "Hanging Knee Raise",
+      "input": {
+        "name": "Hanging Knee Raise"
+      },
+      "expected": null
+    },
+    {
+      "name": "Side Plank",
+      "input": {
+        "name": "Side Plank"
+      },
+      "expected": null
+    },
+    {
+      "name": "Zercher Squat",
+      "input": {
+        "name": "Zercher Squat"
+      },
+      "expected": null
+    },
+    {
+      "name": "",
+      "input": {
+        "name": ""
+      },
+      "expected": null
+    },
+    {
+      "name": "calf press",
+      "input": {
+        "name": "calf press"
+      },
+      "expected": null
+    },
+    {
+      "name": "Cable Lateral Raise",
+      "input": {
+        "name": "Cable Lateral Raise"
+      },
+      "expected": null
+    },
+    {
+      "name": "Leg Press Horizontal (Machine)",
+      "input": {
+        "name": "Leg Press Horizontal (Machine)"
+      },
+      "expected": null
+    },
+    {
+      "name": "null",
+      "input": {
+        "name": null
+      },
+      "expected": null
+    }
+  ]
+}

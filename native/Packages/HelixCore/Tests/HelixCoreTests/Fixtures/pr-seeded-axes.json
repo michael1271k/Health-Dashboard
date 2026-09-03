@@ -1,0 +1,2329 @@
+{
+  "module": "training/prSeed",
+  "fn": "seededAxesFor",
+  "note": "Strict: date, canonical name (lower-cased), set number, load within 0.001 AND exact reps must all agree, or [].",
+  "cases": [
+    {
+      "name": "2026-07-16 Preacher Curl (Machine) S2 — exact",
+      "input": {
+        "date": "2026-07-16",
+        "exercise": "Preacher Curl (Machine)",
+        "setNumber": 2,
+        "weightKg": 17.5,
+        "reps": 12
+      },
+      "expected": [
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-16 Preacher Curl (Machine) S2 — load +0.0005, inside near()",
+      "input": {
+        "date": "2026-07-16",
+        "exercise": "Preacher Curl (Machine)",
+        "setNumber": 2,
+        "weightKg": 17.5005,
+        "reps": 12
+      },
+      "expected": [
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-16 Preacher Curl (Machine) S2 — load +0.01, outside near()",
+      "input": {
+        "date": "2026-07-16",
+        "exercise": "Preacher Curl (Machine)",
+        "setNumber": 2,
+        "weightKg": 17.51,
+        "reps": 12
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-16 Preacher Curl (Machine) S2 — one more rep",
+      "input": {
+        "date": "2026-07-16",
+        "exercise": "Preacher Curl (Machine)",
+        "setNumber": 2,
+        "weightKg": 17.5,
+        "reps": 13
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-16 Preacher Curl (Machine) S2 — next set number",
+      "input": {
+        "date": "2026-07-16",
+        "exercise": "Preacher Curl (Machine)",
+        "setNumber": 3,
+        "weightKg": 17.5,
+        "reps": 12
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-16 Preacher Curl (Machine) S2 — another date",
+      "input": {
+        "date": "2026-08-04",
+        "exercise": "Preacher Curl (Machine)",
+        "setNumber": 2,
+        "weightKg": 17.5,
+        "reps": 12
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-16 Preacher Curl (Machine) S2 — upper-cased name still matches (index is lower-cased)",
+      "input": {
+        "date": "2026-07-16",
+        "exercise": "PREACHER CURL (MACHINE)",
+        "setNumber": 2,
+        "weightKg": 17.5,
+        "reps": 12
+      },
+      "expected": [
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-16 Preacher Curl (Machine) S2 — padded name does not (only aliases are trimmed)",
+      "input": {
+        "date": "2026-07-16",
+        "exercise": "  Preacher Curl (Machine) ",
+        "setNumber": 2,
+        "weightKg": 17.5,
+        "reps": 12
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-17 Hip Thrust (Machine) S1 — exact",
+      "input": {
+        "date": "2026-07-17",
+        "exercise": "Hip Thrust (Machine)",
+        "setNumber": 1,
+        "weightKg": 25,
+        "reps": 14
+      },
+      "expected": [
+        "volume"
+      ]
+    },
+    {
+      "name": "2026-07-17 Hip Thrust (Machine) S1 — load +0.0005, inside near()",
+      "input": {
+        "date": "2026-07-17",
+        "exercise": "Hip Thrust (Machine)",
+        "setNumber": 1,
+        "weightKg": 25.0005,
+        "reps": 14
+      },
+      "expected": [
+        "volume"
+      ]
+    },
+    {
+      "name": "2026-07-17 Hip Thrust (Machine) S1 — load +0.01, outside near()",
+      "input": {
+        "date": "2026-07-17",
+        "exercise": "Hip Thrust (Machine)",
+        "setNumber": 1,
+        "weightKg": 25.01,
+        "reps": 14
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-17 Hip Thrust (Machine) S1 — one more rep",
+      "input": {
+        "date": "2026-07-17",
+        "exercise": "Hip Thrust (Machine)",
+        "setNumber": 1,
+        "weightKg": 25,
+        "reps": 15
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-17 Hip Thrust (Machine) S1 — next set number",
+      "input": {
+        "date": "2026-07-17",
+        "exercise": "Hip Thrust (Machine)",
+        "setNumber": 2,
+        "weightKg": 25,
+        "reps": 14
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-17 Hip Thrust (Machine) S1 — another date",
+      "input": {
+        "date": "2026-08-04",
+        "exercise": "Hip Thrust (Machine)",
+        "setNumber": 1,
+        "weightKg": 25,
+        "reps": 14
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-17 Hip Thrust (Machine) S1 — upper-cased name still matches (index is lower-cased)",
+      "input": {
+        "date": "2026-07-17",
+        "exercise": "HIP THRUST (MACHINE)",
+        "setNumber": 1,
+        "weightKg": 25,
+        "reps": 14
+      },
+      "expected": [
+        "volume"
+      ]
+    },
+    {
+      "name": "2026-07-17 Hip Thrust (Machine) S1 — padded name does not (only aliases are trimmed)",
+      "input": {
+        "date": "2026-07-17",
+        "exercise": "  Hip Thrust (Machine) ",
+        "setNumber": 1,
+        "weightKg": 25,
+        "reps": 14
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-19 Face Pull S1 — exact",
+      "input": {
+        "date": "2026-07-19",
+        "exercise": "Face Pull",
+        "setNumber": 1,
+        "weightKg": 16.25,
+        "reps": 15
+      },
+      "expected": [
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-19 Face Pull S1 — load +0.0005, inside near()",
+      "input": {
+        "date": "2026-07-19",
+        "exercise": "Face Pull",
+        "setNumber": 1,
+        "weightKg": 16.2505,
+        "reps": 15
+      },
+      "expected": [
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-19 Face Pull S1 — load +0.01, outside near()",
+      "input": {
+        "date": "2026-07-19",
+        "exercise": "Face Pull",
+        "setNumber": 1,
+        "weightKg": 16.26,
+        "reps": 15
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-19 Face Pull S1 — one more rep",
+      "input": {
+        "date": "2026-07-19",
+        "exercise": "Face Pull",
+        "setNumber": 1,
+        "weightKg": 16.25,
+        "reps": 16
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-19 Face Pull S1 — next set number",
+      "input": {
+        "date": "2026-07-19",
+        "exercise": "Face Pull",
+        "setNumber": 2,
+        "weightKg": 16.25,
+        "reps": 15
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-19 Face Pull S1 — another date",
+      "input": {
+        "date": "2026-08-04",
+        "exercise": "Face Pull",
+        "setNumber": 1,
+        "weightKg": 16.25,
+        "reps": 15
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-19 Face Pull S1 — upper-cased name still matches (index is lower-cased)",
+      "input": {
+        "date": "2026-07-19",
+        "exercise": "FACE PULL",
+        "setNumber": 1,
+        "weightKg": 16.25,
+        "reps": 15
+      },
+      "expected": [
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-19 Face Pull S1 — padded name does not (only aliases are trimmed)",
+      "input": {
+        "date": "2026-07-19",
+        "exercise": "  Face Pull ",
+        "setNumber": 1,
+        "weightKg": 16.25,
+        "reps": 15
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-20 Calf Press S1 — exact",
+      "input": {
+        "date": "2026-07-20",
+        "exercise": "Calf Press",
+        "setNumber": 1,
+        "weightKg": 67.5,
+        "reps": 15
+      },
+      "expected": [
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-20 Calf Press S1 — load +0.0005, inside near()",
+      "input": {
+        "date": "2026-07-20",
+        "exercise": "Calf Press",
+        "setNumber": 1,
+        "weightKg": 67.5005,
+        "reps": 15
+      },
+      "expected": [
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-20 Calf Press S1 — load +0.01, outside near()",
+      "input": {
+        "date": "2026-07-20",
+        "exercise": "Calf Press",
+        "setNumber": 1,
+        "weightKg": 67.51,
+        "reps": 15
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-20 Calf Press S1 — one more rep",
+      "input": {
+        "date": "2026-07-20",
+        "exercise": "Calf Press",
+        "setNumber": 1,
+        "weightKg": 67.5,
+        "reps": 16
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-20 Calf Press S1 — next set number",
+      "input": {
+        "date": "2026-07-20",
+        "exercise": "Calf Press",
+        "setNumber": 2,
+        "weightKg": 67.5,
+        "reps": 15
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-20 Calf Press S1 — another date",
+      "input": {
+        "date": "2026-08-04",
+        "exercise": "Calf Press",
+        "setNumber": 1,
+        "weightKg": 67.5,
+        "reps": 15
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-20 Calf Press S1 — upper-cased name still matches (index is lower-cased)",
+      "input": {
+        "date": "2026-07-20",
+        "exercise": "CALF PRESS",
+        "setNumber": 1,
+        "weightKg": 67.5,
+        "reps": 15
+      },
+      "expected": [
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-20 Calf Press S1 — padded name does not (only aliases are trimmed)",
+      "input": {
+        "date": "2026-07-20",
+        "exercise": "  Calf Press ",
+        "setNumber": 1,
+        "weightKg": 67.5,
+        "reps": 15
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-21 DB Shoulder Press S2 — exact",
+      "input": {
+        "date": "2026-07-21",
+        "exercise": "DB Shoulder Press",
+        "setNumber": 2,
+        "weightKg": 30,
+        "reps": 11
+      },
+      "expected": [
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-21 DB Shoulder Press S2 — load +0.0005, inside near()",
+      "input": {
+        "date": "2026-07-21",
+        "exercise": "DB Shoulder Press",
+        "setNumber": 2,
+        "weightKg": 30.0005,
+        "reps": 11
+      },
+      "expected": [
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-21 DB Shoulder Press S2 — load +0.01, outside near()",
+      "input": {
+        "date": "2026-07-21",
+        "exercise": "DB Shoulder Press",
+        "setNumber": 2,
+        "weightKg": 30.01,
+        "reps": 11
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-21 DB Shoulder Press S2 — one more rep",
+      "input": {
+        "date": "2026-07-21",
+        "exercise": "DB Shoulder Press",
+        "setNumber": 2,
+        "weightKg": 30,
+        "reps": 12
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-21 DB Shoulder Press S2 — next set number",
+      "input": {
+        "date": "2026-07-21",
+        "exercise": "DB Shoulder Press",
+        "setNumber": 3,
+        "weightKg": 30,
+        "reps": 11
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-21 DB Shoulder Press S2 — another date",
+      "input": {
+        "date": "2026-08-04",
+        "exercise": "DB Shoulder Press",
+        "setNumber": 2,
+        "weightKg": 30,
+        "reps": 11
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-21 DB Shoulder Press S2 — upper-cased name still matches (index is lower-cased)",
+      "input": {
+        "date": "2026-07-21",
+        "exercise": "DB SHOULDER PRESS",
+        "setNumber": 2,
+        "weightKg": 30,
+        "reps": 11
+      },
+      "expected": [
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-21 DB Shoulder Press S2 — padded name does not (only aliases are trimmed)",
+      "input": {
+        "date": "2026-07-21",
+        "exercise": "  DB Shoulder Press ",
+        "setNumber": 2,
+        "weightKg": 30,
+        "reps": 11
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-21 Single Arm Lateral Raise (Cable) S3 — exact",
+      "input": {
+        "date": "2026-07-21",
+        "exercise": "Single Arm Lateral Raise (Cable)",
+        "setNumber": 3,
+        "weightKg": 5,
+        "reps": 10
+      },
+      "expected": [
+        "weight",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-21 Single Arm Lateral Raise (Cable) S3 — load +0.0005, inside near()",
+      "input": {
+        "date": "2026-07-21",
+        "exercise": "Single Arm Lateral Raise (Cable)",
+        "setNumber": 3,
+        "weightKg": 5.0005,
+        "reps": 10
+      },
+      "expected": [
+        "weight",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-21 Single Arm Lateral Raise (Cable) S3 — load +0.01, outside near()",
+      "input": {
+        "date": "2026-07-21",
+        "exercise": "Single Arm Lateral Raise (Cable)",
+        "setNumber": 3,
+        "weightKg": 5.01,
+        "reps": 10
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-21 Single Arm Lateral Raise (Cable) S3 — one more rep",
+      "input": {
+        "date": "2026-07-21",
+        "exercise": "Single Arm Lateral Raise (Cable)",
+        "setNumber": 3,
+        "weightKg": 5,
+        "reps": 11
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-21 Single Arm Lateral Raise (Cable) S3 — next set number",
+      "input": {
+        "date": "2026-07-21",
+        "exercise": "Single Arm Lateral Raise (Cable)",
+        "setNumber": 4,
+        "weightKg": 5,
+        "reps": 10
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-21 Single Arm Lateral Raise (Cable) S3 — another date",
+      "input": {
+        "date": "2026-08-04",
+        "exercise": "Single Arm Lateral Raise (Cable)",
+        "setNumber": 3,
+        "weightKg": 5,
+        "reps": 10
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-21 Single Arm Lateral Raise (Cable) S3 — upper-cased name still matches (index is lower-cased)",
+      "input": {
+        "date": "2026-07-21",
+        "exercise": "SINGLE ARM LATERAL RAISE (CABLE)",
+        "setNumber": 3,
+        "weightKg": 5,
+        "reps": 10
+      },
+      "expected": [
+        "weight",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-21 Single Arm Lateral Raise (Cable) S3 — padded name does not (only aliases are trimmed)",
+      "input": {
+        "date": "2026-07-21",
+        "exercise": "  Single Arm Lateral Raise (Cable) ",
+        "setNumber": 3,
+        "weightKg": 5,
+        "reps": 10
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-21 Cable Overhead Extension S1 — exact",
+      "input": {
+        "date": "2026-07-21",
+        "exercise": "Cable Overhead Extension",
+        "setNumber": 1,
+        "weightKg": 10,
+        "reps": 15
+      },
+      "expected": [
+        "volume"
+      ]
+    },
+    {
+      "name": "2026-07-21 Cable Overhead Extension S1 — load +0.0005, inside near()",
+      "input": {
+        "date": "2026-07-21",
+        "exercise": "Cable Overhead Extension",
+        "setNumber": 1,
+        "weightKg": 10.0005,
+        "reps": 15
+      },
+      "expected": [
+        "volume"
+      ]
+    },
+    {
+      "name": "2026-07-21 Cable Overhead Extension S1 — load +0.01, outside near()",
+      "input": {
+        "date": "2026-07-21",
+        "exercise": "Cable Overhead Extension",
+        "setNumber": 1,
+        "weightKg": 10.01,
+        "reps": 15
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-21 Cable Overhead Extension S1 — one more rep",
+      "input": {
+        "date": "2026-07-21",
+        "exercise": "Cable Overhead Extension",
+        "setNumber": 1,
+        "weightKg": 10,
+        "reps": 16
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-21 Cable Overhead Extension S1 — next set number",
+      "input": {
+        "date": "2026-07-21",
+        "exercise": "Cable Overhead Extension",
+        "setNumber": 2,
+        "weightKg": 10,
+        "reps": 15
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-21 Cable Overhead Extension S1 — another date",
+      "input": {
+        "date": "2026-08-04",
+        "exercise": "Cable Overhead Extension",
+        "setNumber": 1,
+        "weightKg": 10,
+        "reps": 15
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-21 Cable Overhead Extension S1 — upper-cased name still matches (index is lower-cased)",
+      "input": {
+        "date": "2026-07-21",
+        "exercise": "CABLE OVERHEAD EXTENSION",
+        "setNumber": 1,
+        "weightKg": 10,
+        "reps": 15
+      },
+      "expected": [
+        "volume"
+      ]
+    },
+    {
+      "name": "2026-07-21 Cable Overhead Extension S1 — padded name does not (only aliases are trimmed)",
+      "input": {
+        "date": "2026-07-21",
+        "exercise": "  Cable Overhead Extension ",
+        "setNumber": 1,
+        "weightKg": 10,
+        "reps": 15
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-21 Cable Overhead Extension S2 — exact",
+      "input": {
+        "date": "2026-07-21",
+        "exercise": "Cable Overhead Extension",
+        "setNumber": 2,
+        "weightKg": 11.25,
+        "reps": 13
+      },
+      "expected": [
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-21 Cable Overhead Extension S2 — load +0.0005, inside near()",
+      "input": {
+        "date": "2026-07-21",
+        "exercise": "Cable Overhead Extension",
+        "setNumber": 2,
+        "weightKg": 11.2505,
+        "reps": 13
+      },
+      "expected": [
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-21 Cable Overhead Extension S2 — load +0.01, outside near()",
+      "input": {
+        "date": "2026-07-21",
+        "exercise": "Cable Overhead Extension",
+        "setNumber": 2,
+        "weightKg": 11.26,
+        "reps": 13
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-21 Cable Overhead Extension S2 — one more rep",
+      "input": {
+        "date": "2026-07-21",
+        "exercise": "Cable Overhead Extension",
+        "setNumber": 2,
+        "weightKg": 11.25,
+        "reps": 14
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-21 Cable Overhead Extension S2 — next set number",
+      "input": {
+        "date": "2026-07-21",
+        "exercise": "Cable Overhead Extension",
+        "setNumber": 3,
+        "weightKg": 11.25,
+        "reps": 13
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-21 Cable Overhead Extension S2 — another date",
+      "input": {
+        "date": "2026-08-04",
+        "exercise": "Cable Overhead Extension",
+        "setNumber": 2,
+        "weightKg": 11.25,
+        "reps": 13
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-21 Cable Overhead Extension S2 — upper-cased name still matches (index is lower-cased)",
+      "input": {
+        "date": "2026-07-21",
+        "exercise": "CABLE OVERHEAD EXTENSION",
+        "setNumber": 2,
+        "weightKg": 11.25,
+        "reps": 13
+      },
+      "expected": [
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-21 Cable Overhead Extension S2 — padded name does not (only aliases are trimmed)",
+      "input": {
+        "date": "2026-07-21",
+        "exercise": "  Cable Overhead Extension ",
+        "setNumber": 2,
+        "weightKg": 11.25,
+        "reps": 13
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-21 DB Hammer Curl S1 — exact",
+      "input": {
+        "date": "2026-07-21",
+        "exercise": "DB Hammer Curl",
+        "setNumber": 1,
+        "weightKg": 20,
+        "reps": 12
+      },
+      "expected": [
+        "weight",
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-21 DB Hammer Curl S1 — load +0.0005, inside near()",
+      "input": {
+        "date": "2026-07-21",
+        "exercise": "DB Hammer Curl",
+        "setNumber": 1,
+        "weightKg": 20.0005,
+        "reps": 12
+      },
+      "expected": [
+        "weight",
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-21 DB Hammer Curl S1 — load +0.01, outside near()",
+      "input": {
+        "date": "2026-07-21",
+        "exercise": "DB Hammer Curl",
+        "setNumber": 1,
+        "weightKg": 20.01,
+        "reps": 12
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-21 DB Hammer Curl S1 — one more rep",
+      "input": {
+        "date": "2026-07-21",
+        "exercise": "DB Hammer Curl",
+        "setNumber": 1,
+        "weightKg": 20,
+        "reps": 13
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-21 DB Hammer Curl S1 — next set number",
+      "input": {
+        "date": "2026-07-21",
+        "exercise": "DB Hammer Curl",
+        "setNumber": 2,
+        "weightKg": 20,
+        "reps": 12
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-21 DB Hammer Curl S1 — another date",
+      "input": {
+        "date": "2026-08-04",
+        "exercise": "DB Hammer Curl",
+        "setNumber": 1,
+        "weightKg": 20,
+        "reps": 12
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-21 DB Hammer Curl S1 — upper-cased name still matches (index is lower-cased)",
+      "input": {
+        "date": "2026-07-21",
+        "exercise": "DB HAMMER CURL",
+        "setNumber": 1,
+        "weightKg": 20,
+        "reps": 12
+      },
+      "expected": [
+        "weight",
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-21 DB Hammer Curl S1 — padded name does not (only aliases are trimmed)",
+      "input": {
+        "date": "2026-07-21",
+        "exercise": "  DB Hammer Curl ",
+        "setNumber": 1,
+        "weightKg": 20,
+        "reps": 12
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-23 Neutral-Grip Lat Pulldown S2 — exact",
+      "input": {
+        "date": "2026-07-23",
+        "exercise": "Neutral-Grip Lat Pulldown",
+        "setNumber": 2,
+        "weightKg": 47,
+        "reps": 9
+      },
+      "expected": [
+        "weight"
+      ]
+    },
+    {
+      "name": "2026-07-23 Neutral-Grip Lat Pulldown S2 — load +0.0005, inside near()",
+      "input": {
+        "date": "2026-07-23",
+        "exercise": "Neutral-Grip Lat Pulldown",
+        "setNumber": 2,
+        "weightKg": 47.0005,
+        "reps": 9
+      },
+      "expected": [
+        "weight"
+      ]
+    },
+    {
+      "name": "2026-07-23 Neutral-Grip Lat Pulldown S2 — load +0.01, outside near()",
+      "input": {
+        "date": "2026-07-23",
+        "exercise": "Neutral-Grip Lat Pulldown",
+        "setNumber": 2,
+        "weightKg": 47.01,
+        "reps": 9
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-23 Neutral-Grip Lat Pulldown S2 — one more rep",
+      "input": {
+        "date": "2026-07-23",
+        "exercise": "Neutral-Grip Lat Pulldown",
+        "setNumber": 2,
+        "weightKg": 47,
+        "reps": 10
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-23 Neutral-Grip Lat Pulldown S2 — next set number",
+      "input": {
+        "date": "2026-07-23",
+        "exercise": "Neutral-Grip Lat Pulldown",
+        "setNumber": 3,
+        "weightKg": 47,
+        "reps": 9
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-23 Neutral-Grip Lat Pulldown S2 — another date",
+      "input": {
+        "date": "2026-08-04",
+        "exercise": "Neutral-Grip Lat Pulldown",
+        "setNumber": 2,
+        "weightKg": 47,
+        "reps": 9
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-23 Neutral-Grip Lat Pulldown S2 — upper-cased name still matches (index is lower-cased)",
+      "input": {
+        "date": "2026-07-23",
+        "exercise": "NEUTRAL-GRIP LAT PULLDOWN",
+        "setNumber": 2,
+        "weightKg": 47,
+        "reps": 9
+      },
+      "expected": [
+        "weight"
+      ]
+    },
+    {
+      "name": "2026-07-23 Neutral-Grip Lat Pulldown S2 — padded name does not (only aliases are trimmed)",
+      "input": {
+        "date": "2026-07-23",
+        "exercise": "  Neutral-Grip Lat Pulldown ",
+        "setNumber": 2,
+        "weightKg": 47,
+        "reps": 9
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-23 Single Arm Cable Crossover S2 — exact",
+      "input": {
+        "date": "2026-07-23",
+        "exercise": "Single Arm Cable Crossover",
+        "setNumber": 2,
+        "weightKg": 8.75,
+        "reps": 12
+      },
+      "expected": [
+        "weight",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-23 Single Arm Cable Crossover S2 — load +0.0005, inside near()",
+      "input": {
+        "date": "2026-07-23",
+        "exercise": "Single Arm Cable Crossover",
+        "setNumber": 2,
+        "weightKg": 8.7505,
+        "reps": 12
+      },
+      "expected": [
+        "weight",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-23 Single Arm Cable Crossover S2 — load +0.01, outside near()",
+      "input": {
+        "date": "2026-07-23",
+        "exercise": "Single Arm Cable Crossover",
+        "setNumber": 2,
+        "weightKg": 8.76,
+        "reps": 12
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-23 Single Arm Cable Crossover S2 — one more rep",
+      "input": {
+        "date": "2026-07-23",
+        "exercise": "Single Arm Cable Crossover",
+        "setNumber": 2,
+        "weightKg": 8.75,
+        "reps": 13
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-23 Single Arm Cable Crossover S2 — next set number",
+      "input": {
+        "date": "2026-07-23",
+        "exercise": "Single Arm Cable Crossover",
+        "setNumber": 3,
+        "weightKg": 8.75,
+        "reps": 12
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-23 Single Arm Cable Crossover S2 — another date",
+      "input": {
+        "date": "2026-08-04",
+        "exercise": "Single Arm Cable Crossover",
+        "setNumber": 2,
+        "weightKg": 8.75,
+        "reps": 12
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-23 Single Arm Cable Crossover S2 — upper-cased name still matches (index is lower-cased)",
+      "input": {
+        "date": "2026-07-23",
+        "exercise": "SINGLE ARM CABLE CROSSOVER",
+        "setNumber": 2,
+        "weightKg": 8.75,
+        "reps": 12
+      },
+      "expected": [
+        "weight",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-23 Single Arm Cable Crossover S2 — padded name does not (only aliases are trimmed)",
+      "input": {
+        "date": "2026-07-23",
+        "exercise": "  Single Arm Cable Crossover ",
+        "setNumber": 2,
+        "weightKg": 8.75,
+        "reps": 12
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-23 Single Arm Lateral Raise (Cable) S2 — exact",
+      "input": {
+        "date": "2026-07-23",
+        "exercise": "Single Arm Lateral Raise (Cable)",
+        "setNumber": 2,
+        "weightKg": 5,
+        "reps": 13
+      },
+      "expected": [
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-23 Single Arm Lateral Raise (Cable) S2 — load +0.0005, inside near()",
+      "input": {
+        "date": "2026-07-23",
+        "exercise": "Single Arm Lateral Raise (Cable)",
+        "setNumber": 2,
+        "weightKg": 5.0005,
+        "reps": 13
+      },
+      "expected": [
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-23 Single Arm Lateral Raise (Cable) S2 — load +0.01, outside near()",
+      "input": {
+        "date": "2026-07-23",
+        "exercise": "Single Arm Lateral Raise (Cable)",
+        "setNumber": 2,
+        "weightKg": 5.01,
+        "reps": 13
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-23 Single Arm Lateral Raise (Cable) S2 — one more rep",
+      "input": {
+        "date": "2026-07-23",
+        "exercise": "Single Arm Lateral Raise (Cable)",
+        "setNumber": 2,
+        "weightKg": 5,
+        "reps": 14
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-23 Single Arm Lateral Raise (Cable) S2 — next set number",
+      "input": {
+        "date": "2026-07-23",
+        "exercise": "Single Arm Lateral Raise (Cable)",
+        "setNumber": 3,
+        "weightKg": 5,
+        "reps": 13
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-23 Single Arm Lateral Raise (Cable) S2 — another date",
+      "input": {
+        "date": "2026-08-04",
+        "exercise": "Single Arm Lateral Raise (Cable)",
+        "setNumber": 2,
+        "weightKg": 5,
+        "reps": 13
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-23 Single Arm Lateral Raise (Cable) S2 — upper-cased name still matches (index is lower-cased)",
+      "input": {
+        "date": "2026-07-23",
+        "exercise": "SINGLE ARM LATERAL RAISE (CABLE)",
+        "setNumber": 2,
+        "weightKg": 5,
+        "reps": 13
+      },
+      "expected": [
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-23 Single Arm Lateral Raise (Cable) S2 — padded name does not (only aliases are trimmed)",
+      "input": {
+        "date": "2026-07-23",
+        "exercise": "  Single Arm Lateral Raise (Cable) ",
+        "setNumber": 2,
+        "weightKg": 5,
+        "reps": 13
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-24 Romanian Deadlift (DB) S1 — exact",
+      "input": {
+        "date": "2026-07-24",
+        "exercise": "Romanian Deadlift (DB)",
+        "setNumber": 1,
+        "weightKg": 35,
+        "reps": 12
+      },
+      "expected": [
+        "weight",
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-24 Romanian Deadlift (DB) S1 — load +0.0005, inside near()",
+      "input": {
+        "date": "2026-07-24",
+        "exercise": "Romanian Deadlift (DB)",
+        "setNumber": 1,
+        "weightKg": 35.0005,
+        "reps": 12
+      },
+      "expected": [
+        "weight",
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-24 Romanian Deadlift (DB) S1 — load +0.01, outside near()",
+      "input": {
+        "date": "2026-07-24",
+        "exercise": "Romanian Deadlift (DB)",
+        "setNumber": 1,
+        "weightKg": 35.01,
+        "reps": 12
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-24 Romanian Deadlift (DB) S1 — one more rep",
+      "input": {
+        "date": "2026-07-24",
+        "exercise": "Romanian Deadlift (DB)",
+        "setNumber": 1,
+        "weightKg": 35,
+        "reps": 13
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-24 Romanian Deadlift (DB) S1 — next set number",
+      "input": {
+        "date": "2026-07-24",
+        "exercise": "Romanian Deadlift (DB)",
+        "setNumber": 2,
+        "weightKg": 35,
+        "reps": 12
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-24 Romanian Deadlift (DB) S1 — another date",
+      "input": {
+        "date": "2026-08-04",
+        "exercise": "Romanian Deadlift (DB)",
+        "setNumber": 1,
+        "weightKg": 35,
+        "reps": 12
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-24 Romanian Deadlift (DB) S1 — upper-cased name still matches (index is lower-cased)",
+      "input": {
+        "date": "2026-07-24",
+        "exercise": "ROMANIAN DEADLIFT (DB)",
+        "setNumber": 1,
+        "weightKg": 35,
+        "reps": 12
+      },
+      "expected": [
+        "weight",
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-24 Romanian Deadlift (DB) S1 — padded name does not (only aliases are trimmed)",
+      "input": {
+        "date": "2026-07-24",
+        "exercise": "  Romanian Deadlift (DB) ",
+        "setNumber": 1,
+        "weightKg": 35,
+        "reps": 12
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-24 Hip Thrust (Machine) S2 — exact",
+      "input": {
+        "date": "2026-07-24",
+        "exercise": "Hip Thrust (Machine)",
+        "setNumber": 2,
+        "weightKg": 27.5,
+        "reps": 12
+      },
+      "expected": [
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-24 Hip Thrust (Machine) S2 — load +0.0005, inside near()",
+      "input": {
+        "date": "2026-07-24",
+        "exercise": "Hip Thrust (Machine)",
+        "setNumber": 2,
+        "weightKg": 27.5005,
+        "reps": 12
+      },
+      "expected": [
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-24 Hip Thrust (Machine) S2 — load +0.01, outside near()",
+      "input": {
+        "date": "2026-07-24",
+        "exercise": "Hip Thrust (Machine)",
+        "setNumber": 2,
+        "weightKg": 27.51,
+        "reps": 12
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-24 Hip Thrust (Machine) S2 — one more rep",
+      "input": {
+        "date": "2026-07-24",
+        "exercise": "Hip Thrust (Machine)",
+        "setNumber": 2,
+        "weightKg": 27.5,
+        "reps": 13
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-24 Hip Thrust (Machine) S2 — next set number",
+      "input": {
+        "date": "2026-07-24",
+        "exercise": "Hip Thrust (Machine)",
+        "setNumber": 3,
+        "weightKg": 27.5,
+        "reps": 12
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-24 Hip Thrust (Machine) S2 — another date",
+      "input": {
+        "date": "2026-08-04",
+        "exercise": "Hip Thrust (Machine)",
+        "setNumber": 2,
+        "weightKg": 27.5,
+        "reps": 12
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-24 Hip Thrust (Machine) S2 — upper-cased name still matches (index is lower-cased)",
+      "input": {
+        "date": "2026-07-24",
+        "exercise": "HIP THRUST (MACHINE)",
+        "setNumber": 2,
+        "weightKg": 27.5,
+        "reps": 12
+      },
+      "expected": [
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-24 Hip Thrust (Machine) S2 — padded name does not (only aliases are trimmed)",
+      "input": {
+        "date": "2026-07-24",
+        "exercise": "  Hip Thrust (Machine) ",
+        "setNumber": 2,
+        "weightKg": 27.5,
+        "reps": 12
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-24 Side Plank S1 — exact",
+      "input": {
+        "date": "2026-07-24",
+        "exercise": "Side Plank",
+        "setNumber": 1,
+        "weightKg": 0,
+        "reps": 57
+      },
+      "expected": [
+        "reps"
+      ]
+    },
+    {
+      "name": "2026-07-24 Side Plank S1 — load +0.0005, inside near()",
+      "input": {
+        "date": "2026-07-24",
+        "exercise": "Side Plank",
+        "setNumber": 1,
+        "weightKg": 0.0005,
+        "reps": 57
+      },
+      "expected": [
+        "reps"
+      ]
+    },
+    {
+      "name": "2026-07-24 Side Plank S1 — load +0.01, outside near()",
+      "input": {
+        "date": "2026-07-24",
+        "exercise": "Side Plank",
+        "setNumber": 1,
+        "weightKg": 0.01,
+        "reps": 57
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-24 Side Plank S1 — one more rep",
+      "input": {
+        "date": "2026-07-24",
+        "exercise": "Side Plank",
+        "setNumber": 1,
+        "weightKg": 0,
+        "reps": 58
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-24 Side Plank S1 — next set number",
+      "input": {
+        "date": "2026-07-24",
+        "exercise": "Side Plank",
+        "setNumber": 2,
+        "weightKg": 0,
+        "reps": 57
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-24 Side Plank S1 — another date",
+      "input": {
+        "date": "2026-08-04",
+        "exercise": "Side Plank",
+        "setNumber": 1,
+        "weightKg": 0,
+        "reps": 57
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-24 Side Plank S1 — upper-cased name still matches (index is lower-cased)",
+      "input": {
+        "date": "2026-07-24",
+        "exercise": "SIDE PLANK",
+        "setNumber": 1,
+        "weightKg": 0,
+        "reps": 57
+      },
+      "expected": [
+        "reps"
+      ]
+    },
+    {
+      "name": "2026-07-24 Side Plank S1 — padded name does not (only aliases are trimmed)",
+      "input": {
+        "date": "2026-07-24",
+        "exercise": "  Side Plank ",
+        "setNumber": 1,
+        "weightKg": 0,
+        "reps": 57
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-27 Hack Squat S2 — exact",
+      "input": {
+        "date": "2026-07-27",
+        "exercise": "Hack Squat",
+        "setNumber": 2,
+        "weightKg": 55,
+        "reps": 11
+      },
+      "expected": [
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-27 Hack Squat S2 — load +0.0005, inside near()",
+      "input": {
+        "date": "2026-07-27",
+        "exercise": "Hack Squat",
+        "setNumber": 2,
+        "weightKg": 55.0005,
+        "reps": 11
+      },
+      "expected": [
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-27 Hack Squat S2 — load +0.01, outside near()",
+      "input": {
+        "date": "2026-07-27",
+        "exercise": "Hack Squat",
+        "setNumber": 2,
+        "weightKg": 55.01,
+        "reps": 11
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-27 Hack Squat S2 — one more rep",
+      "input": {
+        "date": "2026-07-27",
+        "exercise": "Hack Squat",
+        "setNumber": 2,
+        "weightKg": 55,
+        "reps": 12
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-27 Hack Squat S2 — next set number",
+      "input": {
+        "date": "2026-07-27",
+        "exercise": "Hack Squat",
+        "setNumber": 3,
+        "weightKg": 55,
+        "reps": 11
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-27 Hack Squat S2 — another date",
+      "input": {
+        "date": "2026-08-04",
+        "exercise": "Hack Squat",
+        "setNumber": 2,
+        "weightKg": 55,
+        "reps": 11
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-27 Hack Squat S2 — upper-cased name still matches (index is lower-cased)",
+      "input": {
+        "date": "2026-07-27",
+        "exercise": "HACK SQUAT",
+        "setNumber": 2,
+        "weightKg": 55,
+        "reps": 11
+      },
+      "expected": [
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-27 Hack Squat S2 — padded name does not (only aliases are trimmed)",
+      "input": {
+        "date": "2026-07-27",
+        "exercise": "  Hack Squat ",
+        "setNumber": 2,
+        "weightKg": 55,
+        "reps": 11
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-28 Single Arm Lateral Raise (Cable) S1 — exact",
+      "input": {
+        "date": "2026-07-28",
+        "exercise": "Single Arm Lateral Raise (Cable)",
+        "setNumber": 1,
+        "weightKg": 5,
+        "reps": 15
+      },
+      "expected": [
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-28 Single Arm Lateral Raise (Cable) S1 — load +0.0005, inside near()",
+      "input": {
+        "date": "2026-07-28",
+        "exercise": "Single Arm Lateral Raise (Cable)",
+        "setNumber": 1,
+        "weightKg": 5.0005,
+        "reps": 15
+      },
+      "expected": [
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-28 Single Arm Lateral Raise (Cable) S1 — load +0.01, outside near()",
+      "input": {
+        "date": "2026-07-28",
+        "exercise": "Single Arm Lateral Raise (Cable)",
+        "setNumber": 1,
+        "weightKg": 5.01,
+        "reps": 15
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-28 Single Arm Lateral Raise (Cable) S1 — one more rep",
+      "input": {
+        "date": "2026-07-28",
+        "exercise": "Single Arm Lateral Raise (Cable)",
+        "setNumber": 1,
+        "weightKg": 5,
+        "reps": 16
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-28 Single Arm Lateral Raise (Cable) S1 — next set number",
+      "input": {
+        "date": "2026-07-28",
+        "exercise": "Single Arm Lateral Raise (Cable)",
+        "setNumber": 2,
+        "weightKg": 5,
+        "reps": 15
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-28 Single Arm Lateral Raise (Cable) S1 — another date",
+      "input": {
+        "date": "2026-08-04",
+        "exercise": "Single Arm Lateral Raise (Cable)",
+        "setNumber": 1,
+        "weightKg": 5,
+        "reps": 15
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-28 Single Arm Lateral Raise (Cable) S1 — upper-cased name still matches (index is lower-cased)",
+      "input": {
+        "date": "2026-07-28",
+        "exercise": "SINGLE ARM LATERAL RAISE (CABLE)",
+        "setNumber": 1,
+        "weightKg": 5,
+        "reps": 15
+      },
+      "expected": [
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-28 Single Arm Lateral Raise (Cable) S1 — padded name does not (only aliases are trimmed)",
+      "input": {
+        "date": "2026-07-28",
+        "exercise": "  Single Arm Lateral Raise (Cable) ",
+        "setNumber": 1,
+        "weightKg": 5,
+        "reps": 15
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-28 Cable Overhead Extension S1 — exact",
+      "input": {
+        "date": "2026-07-28",
+        "exercise": "Cable Overhead Extension",
+        "setNumber": 1,
+        "weightKg": 11.25,
+        "reps": 15
+      },
+      "expected": [
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-28 Cable Overhead Extension S1 — load +0.0005, inside near()",
+      "input": {
+        "date": "2026-07-28",
+        "exercise": "Cable Overhead Extension",
+        "setNumber": 1,
+        "weightKg": 11.2505,
+        "reps": 15
+      },
+      "expected": [
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-28 Cable Overhead Extension S1 — load +0.01, outside near()",
+      "input": {
+        "date": "2026-07-28",
+        "exercise": "Cable Overhead Extension",
+        "setNumber": 1,
+        "weightKg": 11.26,
+        "reps": 15
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-28 Cable Overhead Extension S1 — one more rep",
+      "input": {
+        "date": "2026-07-28",
+        "exercise": "Cable Overhead Extension",
+        "setNumber": 1,
+        "weightKg": 11.25,
+        "reps": 16
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-28 Cable Overhead Extension S1 — next set number",
+      "input": {
+        "date": "2026-07-28",
+        "exercise": "Cable Overhead Extension",
+        "setNumber": 2,
+        "weightKg": 11.25,
+        "reps": 15
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-28 Cable Overhead Extension S1 — another date",
+      "input": {
+        "date": "2026-08-04",
+        "exercise": "Cable Overhead Extension",
+        "setNumber": 1,
+        "weightKg": 11.25,
+        "reps": 15
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-28 Cable Overhead Extension S1 — upper-cased name still matches (index is lower-cased)",
+      "input": {
+        "date": "2026-07-28",
+        "exercise": "CABLE OVERHEAD EXTENSION",
+        "setNumber": 1,
+        "weightKg": 11.25,
+        "reps": 15
+      },
+      "expected": [
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-28 Cable Overhead Extension S1 — padded name does not (only aliases are trimmed)",
+      "input": {
+        "date": "2026-07-28",
+        "exercise": "  Cable Overhead Extension ",
+        "setNumber": 1,
+        "weightKg": 11.25,
+        "reps": 15
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-30 Seated Cable Row (Wide Grip) S2 — exact",
+      "input": {
+        "date": "2026-07-30",
+        "exercise": "Seated Cable Row (Wide Grip)",
+        "setNumber": 2,
+        "weightKg": 42.5,
+        "reps": 10
+      },
+      "expected": [
+        "weight",
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-30 Seated Cable Row (Wide Grip) S2 — load +0.0005, inside near()",
+      "input": {
+        "date": "2026-07-30",
+        "exercise": "Seated Cable Row (Wide Grip)",
+        "setNumber": 2,
+        "weightKg": 42.5005,
+        "reps": 10
+      },
+      "expected": [
+        "weight",
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-30 Seated Cable Row (Wide Grip) S2 — load +0.01, outside near()",
+      "input": {
+        "date": "2026-07-30",
+        "exercise": "Seated Cable Row (Wide Grip)",
+        "setNumber": 2,
+        "weightKg": 42.51,
+        "reps": 10
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-30 Seated Cable Row (Wide Grip) S2 — one more rep",
+      "input": {
+        "date": "2026-07-30",
+        "exercise": "Seated Cable Row (Wide Grip)",
+        "setNumber": 2,
+        "weightKg": 42.5,
+        "reps": 11
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-30 Seated Cable Row (Wide Grip) S2 — next set number",
+      "input": {
+        "date": "2026-07-30",
+        "exercise": "Seated Cable Row (Wide Grip)",
+        "setNumber": 3,
+        "weightKg": 42.5,
+        "reps": 10
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-30 Seated Cable Row (Wide Grip) S2 — another date",
+      "input": {
+        "date": "2026-08-04",
+        "exercise": "Seated Cable Row (Wide Grip)",
+        "setNumber": 2,
+        "weightKg": 42.5,
+        "reps": 10
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-30 Seated Cable Row (Wide Grip) S2 — upper-cased name still matches (index is lower-cased)",
+      "input": {
+        "date": "2026-07-30",
+        "exercise": "SEATED CABLE ROW (WIDE GRIP)",
+        "setNumber": 2,
+        "weightKg": 42.5,
+        "reps": 10
+      },
+      "expected": [
+        "weight",
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-30 Seated Cable Row (Wide Grip) S2 — padded name does not (only aliases are trimmed)",
+      "input": {
+        "date": "2026-07-30",
+        "exercise": "  Seated Cable Row (Wide Grip) ",
+        "setNumber": 2,
+        "weightKg": 42.5,
+        "reps": 10
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-31 Hip Thrust (Machine) S2 — exact",
+      "input": {
+        "date": "2026-07-31",
+        "exercise": "Hip Thrust (Machine)",
+        "setNumber": 2,
+        "weightKg": 27.5,
+        "reps": 13
+      },
+      "expected": [
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-31 Hip Thrust (Machine) S2 — load +0.0005, inside near()",
+      "input": {
+        "date": "2026-07-31",
+        "exercise": "Hip Thrust (Machine)",
+        "setNumber": 2,
+        "weightKg": 27.5005,
+        "reps": 13
+      },
+      "expected": [
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-31 Hip Thrust (Machine) S2 — load +0.01, outside near()",
+      "input": {
+        "date": "2026-07-31",
+        "exercise": "Hip Thrust (Machine)",
+        "setNumber": 2,
+        "weightKg": 27.51,
+        "reps": 13
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-31 Hip Thrust (Machine) S2 — one more rep",
+      "input": {
+        "date": "2026-07-31",
+        "exercise": "Hip Thrust (Machine)",
+        "setNumber": 2,
+        "weightKg": 27.5,
+        "reps": 14
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-31 Hip Thrust (Machine) S2 — next set number",
+      "input": {
+        "date": "2026-07-31",
+        "exercise": "Hip Thrust (Machine)",
+        "setNumber": 3,
+        "weightKg": 27.5,
+        "reps": 13
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-31 Hip Thrust (Machine) S2 — another date",
+      "input": {
+        "date": "2026-08-04",
+        "exercise": "Hip Thrust (Machine)",
+        "setNumber": 2,
+        "weightKg": 27.5,
+        "reps": 13
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-31 Hip Thrust (Machine) S2 — upper-cased name still matches (index is lower-cased)",
+      "input": {
+        "date": "2026-07-31",
+        "exercise": "HIP THRUST (MACHINE)",
+        "setNumber": 2,
+        "weightKg": 27.5,
+        "reps": 13
+      },
+      "expected": [
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-07-31 Hip Thrust (Machine) S2 — padded name does not (only aliases are trimmed)",
+      "input": {
+        "date": "2026-07-31",
+        "exercise": "  Hip Thrust (Machine) ",
+        "setNumber": 2,
+        "weightKg": 27.5,
+        "reps": 13
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-31 Side Plank S1 — exact",
+      "input": {
+        "date": "2026-07-31",
+        "exercise": "Side Plank",
+        "setNumber": 1,
+        "weightKg": 0,
+        "reps": 58
+      },
+      "expected": [
+        "reps"
+      ]
+    },
+    {
+      "name": "2026-07-31 Side Plank S1 — load +0.0005, inside near()",
+      "input": {
+        "date": "2026-07-31",
+        "exercise": "Side Plank",
+        "setNumber": 1,
+        "weightKg": 0.0005,
+        "reps": 58
+      },
+      "expected": [
+        "reps"
+      ]
+    },
+    {
+      "name": "2026-07-31 Side Plank S1 — load +0.01, outside near()",
+      "input": {
+        "date": "2026-07-31",
+        "exercise": "Side Plank",
+        "setNumber": 1,
+        "weightKg": 0.01,
+        "reps": 58
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-31 Side Plank S1 — one more rep",
+      "input": {
+        "date": "2026-07-31",
+        "exercise": "Side Plank",
+        "setNumber": 1,
+        "weightKg": 0,
+        "reps": 59
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-31 Side Plank S1 — next set number",
+      "input": {
+        "date": "2026-07-31",
+        "exercise": "Side Plank",
+        "setNumber": 2,
+        "weightKg": 0,
+        "reps": 58
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-31 Side Plank S1 — another date",
+      "input": {
+        "date": "2026-08-04",
+        "exercise": "Side Plank",
+        "setNumber": 1,
+        "weightKg": 0,
+        "reps": 58
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-07-31 Side Plank S1 — upper-cased name still matches (index is lower-cased)",
+      "input": {
+        "date": "2026-07-31",
+        "exercise": "SIDE PLANK",
+        "setNumber": 1,
+        "weightKg": 0,
+        "reps": 58
+      },
+      "expected": [
+        "reps"
+      ]
+    },
+    {
+      "name": "2026-07-31 Side Plank S1 — padded name does not (only aliases are trimmed)",
+      "input": {
+        "date": "2026-07-31",
+        "exercise": "  Side Plank ",
+        "setNumber": 1,
+        "weightKg": 0,
+        "reps": 58
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-08-02 Incline DB Press S2 — exact",
+      "input": {
+        "date": "2026-08-02",
+        "exercise": "Incline DB Press",
+        "setNumber": 2,
+        "weightKg": 40,
+        "reps": 10
+      },
+      "expected": [
+        "weight",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-08-02 Incline DB Press S2 — load +0.0005, inside near()",
+      "input": {
+        "date": "2026-08-02",
+        "exercise": "Incline DB Press",
+        "setNumber": 2,
+        "weightKg": 40.0005,
+        "reps": 10
+      },
+      "expected": [
+        "weight",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-08-02 Incline DB Press S2 — load +0.01, outside near()",
+      "input": {
+        "date": "2026-08-02",
+        "exercise": "Incline DB Press",
+        "setNumber": 2,
+        "weightKg": 40.01,
+        "reps": 10
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-08-02 Incline DB Press S2 — one more rep",
+      "input": {
+        "date": "2026-08-02",
+        "exercise": "Incline DB Press",
+        "setNumber": 2,
+        "weightKg": 40,
+        "reps": 11
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-08-02 Incline DB Press S2 — next set number",
+      "input": {
+        "date": "2026-08-02",
+        "exercise": "Incline DB Press",
+        "setNumber": 3,
+        "weightKg": 40,
+        "reps": 10
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-08-02 Incline DB Press S2 — another date",
+      "input": {
+        "date": "2026-08-04",
+        "exercise": "Incline DB Press",
+        "setNumber": 2,
+        "weightKg": 40,
+        "reps": 10
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-08-02 Incline DB Press S2 — upper-cased name still matches (index is lower-cased)",
+      "input": {
+        "date": "2026-08-02",
+        "exercise": "INCLINE DB PRESS",
+        "setNumber": 2,
+        "weightKg": 40,
+        "reps": 10
+      },
+      "expected": [
+        "weight",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "2026-08-02 Incline DB Press S2 — padded name does not (only aliases are trimmed)",
+      "input": {
+        "date": "2026-08-02",
+        "exercise": "  Incline DB Press ",
+        "setNumber": 2,
+        "weightKg": 40,
+        "reps": 10
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-08-02 Chest Press (Machine) S2 — exact",
+      "input": {
+        "date": "2026-08-02",
+        "exercise": "Chest Press (Machine)",
+        "setNumber": 2,
+        "weightKg": 40,
+        "reps": 8
+      },
+      "expected": [
+        "weight"
+      ]
+    },
+    {
+      "name": "2026-08-02 Chest Press (Machine) S2 — load +0.0005, inside near()",
+      "input": {
+        "date": "2026-08-02",
+        "exercise": "Chest Press (Machine)",
+        "setNumber": 2,
+        "weightKg": 40.0005,
+        "reps": 8
+      },
+      "expected": [
+        "weight"
+      ]
+    },
+    {
+      "name": "2026-08-02 Chest Press (Machine) S2 — load +0.01, outside near()",
+      "input": {
+        "date": "2026-08-02",
+        "exercise": "Chest Press (Machine)",
+        "setNumber": 2,
+        "weightKg": 40.01,
+        "reps": 8
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-08-02 Chest Press (Machine) S2 — one more rep",
+      "input": {
+        "date": "2026-08-02",
+        "exercise": "Chest Press (Machine)",
+        "setNumber": 2,
+        "weightKg": 40,
+        "reps": 9
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-08-02 Chest Press (Machine) S2 — next set number",
+      "input": {
+        "date": "2026-08-02",
+        "exercise": "Chest Press (Machine)",
+        "setNumber": 3,
+        "weightKg": 40,
+        "reps": 8
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-08-02 Chest Press (Machine) S2 — another date",
+      "input": {
+        "date": "2026-08-04",
+        "exercise": "Chest Press (Machine)",
+        "setNumber": 2,
+        "weightKg": 40,
+        "reps": 8
+      },
+      "expected": []
+    },
+    {
+      "name": "2026-08-02 Chest Press (Machine) S2 — upper-cased name still matches (index is lower-cased)",
+      "input": {
+        "date": "2026-08-02",
+        "exercise": "CHEST PRESS (MACHINE)",
+        "setNumber": 2,
+        "weightKg": 40,
+        "reps": 8
+      },
+      "expected": [
+        "weight"
+      ]
+    },
+    {
+      "name": "2026-08-02 Chest Press (Machine) S2 — padded name does not (only aliases are trimmed)",
+      "input": {
+        "date": "2026-08-02",
+        "exercise": "  Chest Press (Machine) ",
+        "setNumber": 2,
+        "weightKg": 40,
+        "reps": 8
+      },
+      "expected": []
+    },
+    {
+      "name": "07-21 lateral raise via the merged alias",
+      "input": {
+        "date": "2026-07-21",
+        "exercise": "Cable Lateral Raise",
+        "setNumber": 3,
+        "weightKg": 5,
+        "reps": 10
+      },
+      "expected": [
+        "weight",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "07-30 row via the wide-grip alias",
+      "input": {
+        "date": "2026-07-30",
+        "exercise": "seated cable row - bar wide grip",
+        "setNumber": 2,
+        "weightKg": 42.5,
+        "reps": 10
+      },
+      "expected": [
+        "weight",
+        "volume",
+        "e1rm"
+      ]
+    },
+    {
+      "name": "07-30 bare Seated Cable Row is a third identity and does not match",
+      "input": {
+        "date": "2026-07-30",
+        "exercise": "Seated Cable Row",
+        "setNumber": 2,
+        "weightKg": 42.5,
+        "reps": 10
+      },
+      "expected": []
+    },
+    {
+      "name": "null date",
+      "input": {
+        "date": null,
+        "exercise": "Hip Thrust (Machine)",
+        "setNumber": 2,
+        "weightKg": 27.5,
+        "reps": 13
+      },
+      "expected": []
+    },
+    {
+      "name": "empty date",
+      "input": {
+        "date": "",
+        "exercise": "Hip Thrust (Machine)",
+        "setNumber": 2,
+        "weightKg": 27.5,
+        "reps": 13
+      },
+      "expected": []
+    },
+    {
+      "name": "null exercise",
+      "input": {
+        "date": "2026-07-31",
+        "exercise": null,
+        "setNumber": 2,
+        "weightKg": 27.5,
+        "reps": 13
+      },
+      "expected": []
+    },
+    {
+      "name": "empty exercise",
+      "input": {
+        "date": "2026-07-31",
+        "exercise": "",
+        "setNumber": 2,
+        "weightKg": 27.5,
+        "reps": 13
+      },
+      "expected": []
+    },
+    {
+      "name": "null set number",
+      "input": {
+        "date": "2026-07-31",
+        "exercise": "Hip Thrust (Machine)",
+        "setNumber": null,
+        "weightKg": 27.5,
+        "reps": 13
+      },
+      "expected": []
+    },
+    {
+      "name": "set number 0",
+      "input": {
+        "date": "2026-07-31",
+        "exercise": "Hip Thrust (Machine)",
+        "setNumber": 0,
+        "weightKg": 27.5,
+        "reps": 13
+      },
+      "expected": []
+    }
+  ]
+}

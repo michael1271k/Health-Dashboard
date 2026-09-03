@@ -27,6 +27,14 @@ import {
   canStack, stackSlots, unstackFace, reorderFace,
   type DashboardLayout, type DashboardSurface, type WidgetId, type WidgetSize, type StackSlot,
 } from '@/lib/dashboard/layout'
+import {
+  volumeCredits, buildBaselines, detectSessionPrs, recordSets,
+  e1rmEligible, isPrIneligible, repsAxisEligible, prAxisLabel, EMPTY_BASELINES,
+  type BaselineSetRow, type PrCandidateSet, type PrBaselines, type PrAxis,
+} from '@/lib/training/prEngine'
+import { PR_TRUTH, PR_LOGGED, PR_TRUTH_AS_OF, prFloorFor, truthAxisValue } from '@/lib/training/prTruth'
+import { SEEDED_PRS, SEED_CUTOFF, ASSERTED_DATES, seededAxesFor, isAssertedSession } from '@/lib/training/prSeed'
+import { EXERCISE_ALIASES, canonicalExerciseName } from '@/lib/exercises/aliases'
 
 /**
  * THE GOLDEN VECTORS — the acceptance spec for the Swift port.
@@ -1697,6 +1705,543 @@ describe('golden vectors — dashboard layout', () => {
       fn: 'serializeLayout',
       note: 'v4 wire form: the written side from the layout, the other side carried through UNPARSED from whatever was stored (a pre-split payload stands in whole). `other: null` in the input means nothing stored.',
       cases: ser,
+    })
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Exercise aliases — `src/lib/exercises/aliases.ts`
+//
+// Exported here because `prSeed` keys its record book on the canonical name:
+// a Swift port of the seed that does not resolve `Cable Lateral Raise` to
+// `Single Arm Lateral Raise (Cable)` drops two asserted records on the floor.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('golden vectors — exercise aliases', () => {
+  it('exports the alias table and canonicalExerciseName', () => {
+    emit('exercise-aliases.json', {
+      module: 'exercises/aliases',
+      fn: 'EXERCISE_ALIASES',
+      note: 'Data, not arithmetic. Keys are lower-case + trimmed, values are canonical catalogue names; the Swift table must equal this one.',
+      cases: [{ name: 'the table', input: {}, expected: EXERCISE_ALIASES }],
+    })
+
+    const keys = Object.keys(EXERCISE_ALIASES)
+    const raws = [
+      ...keys,
+      ...keys.map((k) => k.toUpperCase()),
+      ...keys.map((k) => `  ${k}\t`),
+      ...new Set(Object.values(EXERCISE_ALIASES)),
+      ...Object.keys(PR_TRUTH),
+      'Zercher Squat', '', '   ', 'hack squat', 'HACK SQUAT', 'Leg Press Horizontal (Machine)', ' Hip Thrust (Machine) ',
+    ]
+    emit('exercise-canonical-name.json', {
+      module: 'exercises/aliases',
+      fn: 'canonicalExerciseName',
+      note: 'Lower-case + trim, look up, else hand the RAW name back unchanged — case and padding included.',
+      cases: raws.map((raw) => ({ name: JSON.stringify(raw), input: { raw }, expected: canonicalExerciseName(raw) })),
+    })
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PR truth — `src/lib/training/prTruth.ts`
+// ─────────────────────────────────────────────────────────────────────────────
+
+const AXES: PrAxis[] = ['weight', 'reps', 'volume', 'e1rm']
+
+describe('golden vectors — PR truth', () => {
+  it('exports the record book, the excess floor and the axis reader', () => {
+    emit('pr-truth-book.json', {
+      module: 'training/prTruth',
+      fn: 'PR_TRUTH / PR_LOGGED / PR_TRUTH_AS_OF',
+      note: 'The asserted book and what Helix\'s own sets produce. Data, not arithmetic — the Swift constants must equal these, field for field.',
+      cases: [{ name: 'the book', input: {}, expected: { asOf: PR_TRUTH_AS_OF, truth: PR_TRUTH, logged: PR_LOGGED } }],
+    })
+
+    const names: Array<string | null> = [
+      ...Object.keys(PR_TRUTH),
+      'Zercher Squat', '', 'calf press', 'Cable Lateral Raise', 'Leg Press Horizontal (Machine)', null,
+    ]
+    emit('pr-floor.json', {
+      module: 'training/prTruth',
+      fn: 'prFloorFor',
+      note: 'Only the EXCESS of the book over PR_LOGGED floors. e1rm = max(Epley on the asserted set, Hevy\'s figure only where weight also floors), then excess. Never a sessionVolume floor. Lookup is by the exact canonical name — no aliasing, no case folding. null = nothing to raise.',
+      cases: names.map((name) => ({ name: name ?? 'null', input: { name }, expected: prFloorFor(name) ?? null })),
+    })
+
+    const axisCases: Case<{ name: string; axis: PrAxis }, number | null>[] = []
+    for (const name of [...Object.keys(PR_TRUTH), 'Zercher Squat']) {
+      for (const axis of AXES) {
+        axisCases.push({ name: `${name} · ${axis}`, input: { name, axis }, expected: truthAxisValue(PR_TRUTH[name], axis) ?? null })
+      }
+    }
+    emit('pr-truth-axis-value.json', {
+      module: 'training/prTruth',
+      fn: 'truthAxisValue',
+      note: 'volume resolves the stored set to kg × reps; reps is seconds ?? reps; an unknown name (no record) reads null on every axis.',
+      cases: axisCases,
+    })
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PR seed — `src/lib/training/prSeed.ts`
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('golden vectors — PR seed', () => {
+  it('exports the seeded book, the strict match and the era boundary', () => {
+    emit('pr-seed-book.json', {
+      module: 'training/prSeed',
+      fn: 'SEEDED_PRS / SEED_CUTOFF / ASSERTED_DATES',
+      note: 'Data, not arithmetic. 23 asserted records across 12 sessions; the Swift constants must equal these.',
+      cases: [{ name: 'the seed', input: {}, expected: { cutoff: SEED_CUTOFF, assertedDates: ASSERTED_DATES, seeded: SEEDED_PRS } }],
+    })
+
+    interface SeedIn { date: string | null; exercise: string | null; setNumber: number | null; weightKg: number; reps: number }
+    const seedCases: Case<SeedIn, PrAxis[]>[] = []
+    const push = (name: string, i: SeedIn) =>
+      seedCases.push({ name, input: i, expected: seededAxesFor(i.date, i.exercise, i.setNumber, i.weightKg, i.reps) })
+
+    for (const p of SEEDED_PRS) {
+      const base: SeedIn = { date: p.date, exercise: p.exercise, setNumber: p.setNumber, weightKg: p.weightKg, reps: p.reps }
+      const tag = `${p.date} ${p.exercise} S${p.setNumber}`
+      push(`${tag} — exact`, base)
+      push(`${tag} — load +0.0005, inside near()`, { ...base, weightKg: p.weightKg + 0.0005 })
+      push(`${tag} — load +0.01, outside near()`, { ...base, weightKg: p.weightKg + 0.01 })
+      push(`${tag} — one more rep`, { ...base, reps: p.reps + 1 })
+      push(`${tag} — next set number`, { ...base, setNumber: p.setNumber + 1 })
+      push(`${tag} — another date`, { ...base, date: '2026-08-04' })
+      push(`${tag} — upper-cased name still matches (index is lower-cased)`, { ...base, exercise: p.exercise.toUpperCase() })
+      push(`${tag} — padded name does not (only aliases are trimmed)`, { ...base, exercise: `  ${p.exercise} ` })
+    }
+    push('07-21 lateral raise via the merged alias', { date: '2026-07-21', exercise: 'Cable Lateral Raise', setNumber: 3, weightKg: 5, reps: 10 })
+    push('07-30 row via the wide-grip alias', { date: '2026-07-30', exercise: 'seated cable row - bar wide grip', setNumber: 2, weightKg: 42.5, reps: 10 })
+    push('07-30 bare Seated Cable Row is a third identity and does not match', { date: '2026-07-30', exercise: 'Seated Cable Row', setNumber: 2, weightKg: 42.5, reps: 10 })
+    push('null date', { date: null, exercise: 'Hip Thrust (Machine)', setNumber: 2, weightKg: 27.5, reps: 13 })
+    push('empty date', { date: '', exercise: 'Hip Thrust (Machine)', setNumber: 2, weightKg: 27.5, reps: 13 })
+    push('null exercise', { date: '2026-07-31', exercise: null, setNumber: 2, weightKg: 27.5, reps: 13 })
+    push('empty exercise', { date: '2026-07-31', exercise: '', setNumber: 2, weightKg: 27.5, reps: 13 })
+    push('null set number', { date: '2026-07-31', exercise: 'Hip Thrust (Machine)', setNumber: null, weightKg: 27.5, reps: 13 })
+    push('set number 0', { date: '2026-07-31', exercise: 'Hip Thrust (Machine)', setNumber: 0, weightKg: 27.5, reps: 13 })
+    emit('pr-seeded-axes.json', {
+      module: 'training/prSeed',
+      fn: 'seededAxesFor',
+      note: 'Strict: date, canonical name (lower-cased), set number, load within 0.001 AND exact reps must all agree, or [].',
+      cases: seedCases,
+    })
+
+    const dates: Array<string | null> = [
+      null, '', '2025-12-31', '2026-03-10', '2026-05-20', '2026-07-30', '2026-07-31',
+      '2026-08-01', '2026-08-02', '2026-08-03', '2026-08-09', '2026-12-31', '2027-01-01',
+    ]
+    emit('pr-asserted-session.json', {
+      module: 'training/prSeed',
+      fn: 'isAssertedSession',
+      note: 'Everything ≤ SEED_CUTOFF (string order) plus the individually listed dates. A dateless session is LIVE, never asserted.',
+      cases: dates.map((date) => ({ name: date ?? 'null', input: { date }, expected: isAssertedSession(date) })),
+    })
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PR engine — `src/lib/training/prEngine.ts`
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('golden vectors — PR engine', () => {
+  const HIP = 'Hip Thrust (Machine)'
+  const PLANK = 'Side Plank'
+  const CRUNCH = 'Reverse Crunch'
+  const HACK = 'Hack Squat'
+  const SA = 'Single Arm Lateral Raise (Cable)'
+  const CHEST = 'Chest Press (Machine)'
+  const LEGEXT = 'Leg Extension'
+  const HAMMER = 'DB Hammer Curl'
+
+  const cand = (key: string, weightKg: number, reps: number, extra: Partial<PrCandidateSet> = {}): PrCandidateSet =>
+    ({ key, weightKg, reps, timed: key === PLANK, setType: null, ...extra })
+
+  /** The July 2026 Hip Thrust / Side Plank history the engine tests are built on. */
+  const HISTORY: BaselineSetRow[] = [
+    { key: HIP, weightKg: 25, reps: 14 }, { key: HIP, weightKg: 25, reps: 13 }, { key: HIP, weightKg: 25, reps: 12 },
+    { key: PLANK, weightKg: 0, reps: 55 }, { key: PLANK, weightKg: 0, reps: 52 },
+    { key: HIP, weightKg: 25, reps: 13 }, { key: HIP, weightKg: 27.5, reps: 12 }, { key: HIP, weightKg: 27.5, reps: 12 },
+    { key: PLANK, weightKg: 0, reps: 57 }, { key: PLANK, weightKg: 0, reps: 54 },
+  ]
+
+  it('exports the eligibility rules and the axis labels', () => {
+    const e1rm: Case<{ reps: number; floor: number | null }, boolean>[] = []
+    for (const floor of [null, 5, 8, 10, 12, 15]) {
+      for (let reps = 1; reps <= 20; reps++) e1rm.push({ name: `${reps} reps, floor ${floor ?? 'none'}`, input: { reps, floor }, expected: e1rmEligible(reps, floor) })
+    }
+    emit('pr-e1rm-eligible.json', {
+      module: 'training/prEngine',
+      fn: 'e1rmEligible',
+      note: 'One-sided: reps ≥ the programmed floor; with no window, reps ≥ 5. Never gated above the ceiling.',
+      cases: e1rm,
+    })
+
+    const setTypes: Array<string | null> = [null, '', 'warmup', 'dropset', 'ghost', 'failure', 'working', 'Warmup', 'WARMUP', 'drop', 'top']
+    emit('pr-ineligible.json', {
+      module: 'training/prEngine',
+      fn: 'isPrIneligible',
+      note: 'Exactly warmup, dropset and ghost — case-sensitive. Everything else can win and can set a bar.',
+      cases: setTypes.map((setType) => ({ name: setType ?? 'null', input: { setType }, expected: isPrIneligible(setType) })),
+    })
+
+    emit('pr-reps-eligible.json', {
+      module: 'training/prEngine',
+      fn: 'repsAxisEligible',
+      note: 'The reps axis exists only at exactly 0 kg.',
+      cases: [0, 0.25, 2.5, 5, -1, 100].map((weightKg) => ({ name: `${weightKg} kg`, input: { weightKg }, expected: repsAxisEligible(weightKg) })),
+    })
+
+    const labels: Case<{ axis: PrAxis; timed: boolean }, string>[] = []
+    for (const axis of AXES) for (const timed of [false, true]) labels.push({ name: `${axis}${timed ? ' timed' : ''}`, input: { axis, timed }, expected: prAxisLabel(axis, timed) })
+    emit('pr-axis-label.json', {
+      module: 'training/prEngine',
+      fn: 'prAxisLabel',
+      note: 'Whole words, no "PR " prefix; reps reads Duration on a timed hold.',
+      cases: labels,
+    })
+  })
+
+  it('exports the unilateral volume credits', () => {
+    interface CreditRow { weightKg: number | null; reps: number | null; pairId?: string | null; side?: string | null }
+    const r = (weightKg: number | null, reps: number | null, side?: string | null, pairId?: string | null): CreditRow =>
+      ({ weightKg, reps, ...(side !== undefined ? { side } : {}), ...(pairId !== undefined ? { pairId } : {}) })
+    const cases: Array<[string, CreditRow[]]> = [
+      ['empty', []],
+      ['bilateral rows score as logged', [r(5, 10), r(7.5, 8)]],
+      ['null weight or reps read as 0', [r(null, 10), r(5, null), r(null, null)]],
+      ['clean pair, L then R — weaker side once, on R', [r(5, 10, 'L', 'p1'), r(5, 14, 'R', 'p1')]],
+      ['clean pair, R then L — lands on L', [r(5, 14, 'R', 'p1'), r(5, 10, 'L', 'p1')]],
+      ['asymmetric loads — min weight × min reps', [r(4, 12, 'L', 'p1'), r(5, 10, 'R', 'p1')]],
+      ['lone L scores on its own', [r(5, 12, 'L', 'solo')]],
+      ['two Ls in one pair are malformed — as logged', [r(5, 10, 'L', 'p'), r(5, 12, 'L', 'p')]],
+      ['three rows in one pair are malformed', [r(5, 10, 'L', 'p'), r(5, 12, 'R', 'p'), r(5, 11, 'L', 'p')]],
+      ['a sideless row is not part of the pair', [r(5, 10, 'L', 'p'), r(5, 12, null, 'p')]],
+      ['sides without a pairId are bilateral', [r(5, 10, 'L', null), r(5, 12, 'R', null)]],
+      ['empty pairId is no pairId', [r(5, 10, 'L', ''), r(5, 12, 'R', '')]],
+      ['lower-case l/r are not sides', [r(5, 10, 'l', 'p'), r(5, 12, 'r', 'p')]],
+      ['two pairs interleaved', [r(5, 10, 'L', 'p1'), r(6, 9, 'L', 'p2'), r(5, 14, 'R', 'p1'), r(6, 8, 'R', 'p2')]],
+      ['a pair split around a bilateral row', [r(5, 10, 'L', 'p1'), r(10, 10), r(5, 12, 'R', 'p1')]],
+      ['pair with null reps on one side', [r(5, null, 'L', 'p'), r(5, 12, 'R', 'p')]],
+      ['pair with null weight on one side', [r(null, 10, 'L', 'p'), r(5, 12, 'R', 'p')]],
+    ]
+    emit('pr-volume-credits.json', {
+      module: 'training/prEngine',
+      fn: 'volumeCredits',
+      note: 'Per-row tonnage with L/R pairs collapsed to ONE credit (min w × min reps) on the row that completes the pair; null on the other side. Anything but exactly one L and one R per pairId is scored as logged.',
+      cases: cases.map(([name, rows]) => ({ name, input: { rows }, expected: volumeCredits(rows) })),
+    })
+  })
+
+  interface BaseIn { rows: BaselineSetRow[]; timedKeys: string[]; floor: boolean }
+  const build = (i: BaseIn): PrBaselines =>
+    buildBaselines(i.rows, (k) => i.timedKeys.includes(k), i.floor ? prFloorFor : undefined)
+
+  it('exports buildBaselines', () => {
+    const cases: Case<BaseIn, PrBaselines>[] = []
+    const push = (name: string, rows: BaselineSetRow[], timedKeys: string[] = [PLANK], floor = false) => {
+      const input = { rows, timedKeys, floor }
+      cases.push({ name, input, expected: build(input) })
+    }
+    const win = { repFloor: 10 }
+
+    push('empty', [])
+    push('the July history — max per axis, plank on seconds only', HISTORY)
+    push('warm-ups, drop sets and ghosts raise no bar', [
+      { key: HIP, weightKg: 25, reps: 12 },
+      { key: HIP, weightKg: 60, reps: 30, setType: 'warmup' },
+      { key: HIP, weightKg: 55, reps: 30, setType: 'dropset' },
+      { key: HIP, weightKg: 70, reps: 30, setType: 'ghost' },
+    ])
+    push('failure sets do', [{ key: HIP, weightKg: 25, reps: 12 }, { key: HIP, weightKg: 30, reps: 8, setType: 'failure' }])
+    push('a sub-floor set sets weight and tonnage but not e1RM', [{ key: HACK, weightKg: 60, reps: 8, ...win }, { key: HACK, weightKg: 40, reps: 14, ...win }])
+    push('no window: 4 reps sets no e1RM bar, 5 does', [{ key: HACK, weightKg: 60, reps: 4 }, { key: HACK, weightKg: 50, reps: 5 }])
+    push('a stored est1rm of 0 is not an estimate — Epley is recomputed', [{ key: CRUNCH, weightKg: 0, reps: 15 }, { key: CRUNCH, weightKg: 0, reps: 12, est1rm: 0 }])
+    push('a stored est1rm wins over Epley (|| not ??)', [{ key: HIP, weightKg: 25, reps: 12, est1rm: 99.9 }])
+    push('a stored null est1rm falls back to Epley', [{ key: HIP, weightKg: 25, reps: 12, est1rm: null }])
+    push('null weight sets nothing; null reps sets weight only', [{ key: HIP, weightKg: null, reps: 12 }, { key: HIP, weightKg: 30, reps: null }])
+    push('a timed hold with null reps sets nothing', [{ key: PLANK, weightKg: 0, reps: null }])
+    push('a timed key ignores its weight', [{ key: PLANK, weightKg: 20, reps: 40 }])
+    push('the same exercise timed vs not is a different world', [{ key: PLANK, weightKg: 0, reps: 40 }], [])
+    push('reps@weight keys print the load the JS way (27.5, 25, 0)', [{ key: HIP, weightKg: 27.5, reps: 12 }, { key: HIP, weightKg: 25, reps: 14 }, { key: CRUNCH, weightKg: 0, reps: 15 }, { key: HIP, weightKg: 22.5, reps: 12 }])
+    push('insertion order is first-seen, per map', [{ key: 'B', weightKg: 10, reps: 10 }, { key: 'A', weightKg: 10, reps: 10 }, { key: 'B', weightKg: 12, reps: 10 }, { key: 'C', weightKg: 0, reps: 10 }])
+    push('a clean pair sets ONE tonnage at the weaker side', [{ key: SA, weightKg: 5, reps: 12, side: 'L', pairId: 'h1' }, { key: SA, weightKg: 5, reps: 12, side: 'R', pairId: 'h1' }])
+    push('paired and unsided rows of one movement share a scale', [
+      { key: SA, weightKg: 5, reps: 13, side: 'L', pairId: 'jul23' }, { key: SA, weightKg: 5, reps: 15, side: 'R', pairId: 'jul23' },
+      { key: SA, weightKg: 5, reps: 15 },
+    ])
+    push('a warm-up inside a pair still credits the pair to the other row', [
+      { key: SA, weightKg: 5, reps: 13, side: 'L', pairId: 'p', setType: 'warmup' }, { key: SA, weightKg: 5, reps: 15, side: 'R', pairId: 'p' },
+    ])
+
+    // The floor. Calf Press exactly as Helix held it on 2026-08-10.
+    const CALF_HISTORY: BaselineSetRow[] = [
+      { key: 'Calf Press', weightKg: 65, reps: 15 }, { key: 'Calf Press', weightKg: 67.5, reps: 14 }, { key: 'Calf Press', weightKg: 67.5, reps: 13 },
+      { key: 'Calf Press', weightKg: 67.5, reps: 15 }, { key: 'Calf Press', weightKg: 67.5, reps: 13 }, { key: 'Calf Press', weightKg: 67.5, reps: 12 },
+    ]
+    push('Calf Press without the floor', CALF_HISTORY)
+    push('Calf Press with the floor — 72.5 / 1012.5 asserted', CALF_HISTORY, [PLANK], true)
+    for (const name of Object.keys(PR_TRUTH)) {
+      const timed = name === PLANK
+      push(`floor over one small row — ${name}`, [{ key: name, weightKg: timed ? 0 : 1, reps: 1 }], [PLANK], true)
+    }
+    push('floor visits keys in the union order weight, seconds, volume, e1rm', [
+      { key: 'Leg Press', weightKg: 72.5, reps: null },
+      { key: PLANK, weightKg: 0, reps: 30 },
+      { key: CRUNCH, weightKg: 0, reps: 10 },
+      { key: 'Calf Press', weightKg: 65, reps: null },
+      { key: 'Hanging Knee Raise', weightKg: 0, reps: 5 },
+    ], [PLANK], true)
+    push('floor is a max — a logged best above the book stands', [{ key: 'Leg Press', weightKg: 90, reps: 10 }], [PLANK], true)
+    push('floor on a name the book has never heard of is a no-op', [{ key: 'Zercher Squat', weightKg: 90, reps: 10 }], [PLANK], true)
+    push('floor never visits a key that only has reps@weight', [{ key: 'Leg Press', weightKg: null, reps: 10 }], [PLANK], true)
+    for (const c of [
+      { name: 'Leg Press', logged: 72.5 }, { name: 'Leg Extension', logged: 37.5 }, { name: 'Seated Leg Curl', logged: 45 },
+      { name: 'Pec Deck', logged: 52.5 }, { name: 'Lat Pulldown', logged: 47 }, { name: 'Straight-Arm Pulldown', logged: 16.25 },
+      { name: 'Cable Overhead Extension', logged: 11.25 }, { name: 'DB Shoulder Press', logged: 30 },
+    ]) {
+      push(`floor over the logged best — ${c.name}`, [{ key: c.name, weightKg: c.logged, reps: 12 }], [], true)
+    }
+
+    // A grid: every single row and every ordered pair of rows from a pool that
+    // covers each branch of the fold.
+    const pool: Array<[string, BaselineSetRow]> = [
+      ['40×12', { key: 'X', weightKg: 40, reps: 12 }],
+      ['45×10', { key: 'X', weightKg: 45, reps: 10 }],
+      ['45×10 warmup', { key: 'X', weightKg: 45, reps: 10, setType: 'warmup' }],
+      ['50×8 floor 10', { key: 'X', weightKg: 50, reps: 8, repFloor: 10 }],
+      ['50×8 floor 8', { key: 'X', weightKg: 50, reps: 8, repFloor: 8 }],
+      ['0×15', { key: 'X', weightKg: 0, reps: 15 }],
+      ['0×12 est 0', { key: 'X', weightKg: 0, reps: 12, est1rm: 0 }],
+      ['40×12 est 57', { key: 'X', weightKg: 40, reps: 12, est1rm: 57 }],
+      ['null×12', { key: 'X', weightKg: null, reps: 12 }],
+      ['40×null', { key: 'X', weightKg: 40, reps: null }],
+      ['45×3', { key: 'X', weightKg: 45, reps: 3 }],
+      ['42.5×11 failure', { key: 'X', weightKg: 42.5, reps: 11, setType: 'failure' }],
+      ['45×10 ghost', { key: 'X', weightKg: 45, reps: 10, setType: 'ghost' }],
+      ['45×10 dropset', { key: 'X', weightKg: 45, reps: 10, setType: 'dropset' }],
+      ['5×10 L p', { key: 'X', weightKg: 5, reps: 10, side: 'L', pairId: 'p' }],
+      ['5×12 R p', { key: 'X', weightKg: 5, reps: 12, side: 'R', pairId: 'p' }],
+    ]
+    for (const [a, ra] of pool) push(`grid ${a}`, [ra], [])
+    for (const [a, ra] of pool) for (const [b, rb] of pool) push(`grid ${a} + ${b}`, [ra, rb], [])
+
+    emit('pr-baselines.json', {
+      module: 'training/prEngine',
+      fn: 'buildBaselines',
+      note: 'Per-axis maxima as insertion-ordered [key, value] tuples. Ineligible set types set no bar; a timed key scores seconds only; e1RM is gated on the rep floor and read from a stored est1rm with || (0 recomputes); the unilateral collapse applies; `floor: true` folds prFloorFor(key) in last as a max. Order of tuples matters — the Swift port must preserve first-seen order.',
+      cases,
+    })
+  })
+
+  it('exports whole sessions — detection, deltas, counts and the ledger', () => {
+    interface SessIn { sets: PrCandidateSet[]; baselines: PrBaselines }
+    interface RecOut { axis: PrAxis; weightKg: number; reps: number; value: number }
+    interface SessOut {
+      perSet: Array<{ axes: PrAxis[]; est1rm: number | null; records: Partial<Record<PrAxis, { value: number; previous: number }>> }>
+      axesByKey: Array<{ key: string; axes: PrAxis[] }>
+      prCount: number
+      recordSets: Array<{ key: string; records: RecOut[] }>
+    }
+    const run = (i: SessIn): SessOut => {
+      const r = detectSessionPrs(i.sets, i.baselines)
+      const rec = recordSets(i.sets, r)
+      return {
+        perSet: r.perSet,
+        axesByKey: [...r.axesByKey].map(([key, axes]) => ({ key, axes: [...axes] })),
+        prCount: r.prCount,
+        recordSets: [...rec].map(([key, m]) => ({ key, records: [...m].map(([axis, s]) => ({ axis, ...s })) })),
+      }
+    }
+    const cases: Case<SessIn, SessOut>[] = []
+    const push = (name: string, sets: PrCandidateSet[], baselines: PrBaselines) => {
+      const input = { sets, baselines }
+      cases.push({ name, input, expected: run(input) })
+    }
+    const bl = (rows: BaselineSetRow[], timedKeys: string[] = [PLANK], floor = false) => build({ rows, timedKeys, floor })
+    const win = { repFloor: 10 }
+
+    // ── The July 31 session ──
+    const july = bl(HISTORY)
+    push('July 31 — volume + e1RM on the 27.5 × 13, duration on the 58 s plank, pr_count 3',
+      [cand(HIP, 25, 14), cand(HIP, 27.5, 13), cand(HIP, 27.5, 13), cand(PLANK, 0, 58), cand(PLANK, 0, 55)], july)
+    push('no baseline at all — a first-ever log is not a record', [cand('Brand New Lift', 100, 20)], EMPTY_BASELINES)
+    push('warm-up, drop set and ghost win nothing', [cand(HIP, 40, 20, { setType: 'warmup' }), cand(HIP, 40, 20, { setType: 'dropset' }), cand(HIP, 40, 20, { setType: 'ghost' })], july)
+    push('a failure set can win', [cand(HIP, 40, 20, { setType: 'failure' })], july)
+    push('weight axis with its delta — 30 beat 27.5', [cand(HIP, 30, 8)], july)
+    push('30 × 10 — weight, volume and e1RM, each with what it beat', [cand(HIP, 30, 10)], july)
+    push('a tie on every axis is not a record', [cand(HIP, 27.5, 12)], july)
+    push('a plank that only ties', [cand(PLANK, 0, 57)], july)
+    push('a plank with weight is still only seconds', [cand(PLANK, 20, 58)], july)
+
+    // ── Reps only at 0 kg ──
+    const crunch = bl([{ key: CRUNCH, weightKg: 0, reps: 15 }, { key: CRUNCH, weightKg: 0, reps: 15 }], [])
+    push('bodyweight reps — 17 wins, 16 loses to the 17 just logged, est1rm null', [cand(CRUNCH, 0, 17), cand(CRUNCH, 0, 16), cand(CRUNCH, 0, 15)], crunch)
+    push('a 0 kg set can never win e1RM', [cand(CRUNCH, 0, 40)], crunch)
+    push('loaded lift adding a rep at the same load — tonnage and e1RM, never reps',
+      [cand(HACK, 55, 12, win)], bl([{ key: HACK, weightKg: 55, reps: 11, ...win }, { key: HACK, weightKg: 50, reps: 12, ...win }], []))
+    push('reps@weight bar exists only at the exact load — 0.25 kg has no bar', [cand(CRUNCH, 0.25, 40)], crunch)
+
+    // ── The e1RM gate ──
+    const hackGate = bl([{ key: HACK, weightKg: 60, reps: 8, ...win }, { key: HACK, weightKg: 40, reps: 14, ...win }], [])
+    push('e1RM gate — 50×12 then 55×11 in the window; only the second keeps volume + e1RM', [cand(HACK, 50, 12, win), cand(HACK, 55, 11, win)], hackGate)
+    push('a sub-floor candidate wins weight but is never judged on e1RM', [cand(HACK, 62.5, 6, win)], hackGate)
+    push('above the ceiling is not gated — 72.5 × 13 after 72.5 × 12',
+      [cand('Leg Press Horizontal (Machine)', 72.5, 13, { repFloor: 8 })], bl([{ key: 'Leg Press Horizontal (Machine)', weightKg: 72.5, reps: 12, repFloor: 8 }], []))
+    push('no window — 4 reps is excluded, 5 is not', [cand(HACK, 70, 4), cand(HACK, 61, 5)], bl([{ key: HACK, weightKg: 60, reps: 10 }], []))
+
+    // ── Volume is a per-set axis ──
+    const legext = bl([{ key: LEGEXT, weightKg: 60, reps: 5 }], [])
+    push('volume lands on the heaviest set, not the last', [cand(LEGEXT, 30, 12), cand(LEGEXT, 30, 11)], legext)
+    push('three identical sets are no record', [cand('Romanian Deadlift (DB)', 35, 12), cand('Romanian Deadlift (DB)', 35, 12), cand('Romanian Deadlift (DB)', 35, 12)],
+      bl([{ key: 'Romanian Deadlift (DB)', weightKg: 35, reps: 12 }, { key: 'Romanian Deadlift (DB)', weightKg: 35, reps: 12 }], []))
+    push('Leg Extension 2026-08-03 — one extra rep on one set of three is nothing',
+      [cand(LEGEXT, 37.5, 13), cand(LEGEXT, 37.5, 13), cand(LEGEXT, 37.5, 12, { setType: 'failure' })],
+      bl([
+        { key: LEGEXT, weightKg: 37.5, reps: 12 }, { key: LEGEXT, weightKg: 35, reps: 15 }, { key: LEGEXT, weightKg: 37.5, reps: 11, setType: 'failure' },
+        { key: LEGEXT, weightKg: 37.5, reps: 13 }, { key: LEGEXT, weightKg: 37.5, reps: 12, setType: 'failure' }, { key: LEGEXT, weightKg: 37.5, reps: 12 },
+      ], []))
+
+    // ── Raw axes ──
+    push('raw axes — implied e1RM counted beside the tonnage record', [cand(CHEST, 37.5, 12)], bl([{ key: CHEST, weightKg: 37.5, reps: 10 }], []))
+    push('raw axes — all three', [cand(CHEST, 37.5, 12)], bl([{ key: CHEST, weightKg: 35, reps: 12 }], []))
+    push('raw axes — a lone e1RM for a better load/rep trade', [cand(CHEST, 55, 8)], bl([{ key: CHEST, weightKg: 100, reps: 3 }, { key: CHEST, weightKg: 45, reps: 10 }], []))
+
+    // ── Two sets, same axis; the ledger ──
+    const hackSets = [cand(HACK, 50, 12, win), cand(HACK, 55, 11, win)]
+    push('ledger files the BEST e1RM (75.2), not the first claimed (70.0)', hackSets, bl([{ key: HACK, weightKg: 70, reps: 4, ...win }, { key: HACK, weightKg: 45, reps: 10, ...win }], []))
+    push('ledger files the heaviest load and its tonnage', hackSets, bl([{ key: HACK, weightKg: 40, reps: 14, ...win }], []))
+    push('ledger keeps the LAST reps claimant — per-load record', [cand(CRUNCH, 0, 16), cand(CRUNCH, 0, 17), cand(CRUNCH, 0, 18)], crunch)
+
+    // ── Unilateral ──
+    const pair = (n: string, side: 'L' | 'R', w: number, reps: number, extra: Partial<PrCandidateSet> = {}): PrCandidateSet =>
+      cand(SA, w, reps, { side, pairId: n, ...extra })
+    push('pair scored at the WEAKER side — asymmetric session is not a record', [pair('t1', 'L', 5, 10), pair('t1', 'R', 5, 14)],
+      bl([{ key: SA, weightKg: 5, reps: 12, side: 'L', pairId: 'h1' }, { key: SA, weightKg: 5, reps: 12, side: 'R', pairId: 'h1' }], []))
+    const pair50 = bl([{ key: SA, weightKg: 5, reps: 10, side: 'L', pairId: 'h1' }, { key: SA, weightKg: 5, reps: 10, side: 'R', pairId: 'h1' }], [])
+    push('pair record filed ONCE, on the completing row, at one side\'s tonnage', [pair('t1', 'L', 5, 12), pair('t1', 'R', 5, 12)], pair50)
+    push('pair logged R first — the credit lands on L', [pair('t1', 'R', 5, 12), pair('t1', 'L', 5, 12)], pair50)
+    push('the 2026-08-05 bug — paired and unsided rows on one scale, 5 × 17 wins volume AND e1RM', [cand(SA, 5, 17)],
+      bl([{ key: SA, weightKg: 5, reps: 13, side: 'L', pairId: 'jul23' }, { key: SA, weightKg: 5, reps: 15, side: 'R', pairId: 'jul23' }, { key: SA, weightKg: 5, reps: 15 }], []))
+    push('a lone side scores on its own', [cand(SA, 5, 12, { side: 'L', pairId: 'solo' })], bl([{ key: SA, weightKg: 5, reps: 10 }], []))
+    push('a pair is one group — L wins weight, R only ties, volume completes on R',
+      [pair('p1', 'L', 5, 13, { repFloor: 12 }), pair('p1', 'R', 5, 15, { repFloor: 12 })], bl([{ key: SA, weightKg: 4, reps: 12 }, { key: SA, weightKg: 4, reps: 10 }], []))
+    push('a pair whose two halves both beat the bar keep the axis on BOTH rows (weight)',
+      [pair('p1', 'L', 6, 12), pair('p1', 'R', 6, 12)], bl([{ key: SA, weightKg: 5, reps: 12 }], []))
+    push('a malformed pair (two Ls) is scored as logged', [pair('p', 'L', 5, 12), pair('p', 'L', 5, 13)], pair50)
+    push('empty pairId — no credit collapse, but `??` makes one supersession group of every empty id, so the beaten set keeps its axes (unreachable from real callers; pinned as-is)',
+      [cand(HIP, 25, 15, { pairId: '' }), cand(HIP, 27.5, 14, { pairId: '' })], bl([{ key: HIP, weightKg: 25, reps: 14 }]))
+
+    // ── Supersession ──
+    const win8 = { repFloor: 8 }
+    push('supersession — 2026-08-07 Hip Thrust: the 385 kg set keeps volume, the 375 kg set loses it',
+      [cand(HIP, 25, 15, win8), cand(HIP, 27.5, 14, win8), cand(HIP, 27.5, 13, win8)],
+      bl([{ key: HIP, weightKg: 25, reps: 14, ...win8 }, { key: HIP, weightKg: 27.5, reps: 13, ...win8 }]))
+    push('supersession — ledger files the set the flags point at', [cand(HIP, 25, 15, win8), cand(HIP, 27.5, 14, win8)], bl([{ key: HIP, weightKg: 25, reps: 14, ...win8 }]))
+    push('supersession — a tying set never takes the axis', [cand(HIP, 25, 14, win8), cand(HIP, 25, 14, win8)], bl([{ key: HIP, weightKg: 25, reps: 12, ...win8 }]))
+    push('supersession — each axis independently (weight on set 1, volume on set 2)', [cand(HIP, 30, 10, win8), cand(HIP, 25, 15, win8)], bl([{ key: HIP, weightKg: 25, reps: 12, ...win8 }]))
+    push('supersession across two exercises does not cross keys', [cand(HIP, 30, 10), cand(CHEST, 45, 10), cand(HIP, 32.5, 8)],
+      bl([{ key: HIP, weightKg: 25, reps: 12 }, { key: CHEST, weightKg: 40, reps: 10 }]))
+
+    // ── The seeded era ──
+    const dated = (key: string, w: number, reps: number, date: string | null, setNumber: number, extra: Partial<PrCandidateSet> = {}) =>
+      cand(key, w, reps, { date, exerciseName: key, setNumber, ...extra })
+    push('seed — a first-ever set the engine could never derive (records empty: nothing to beat)', [dated(HAMMER, 20, 12, '2026-07-21', 1)], EMPTY_BASELINES)
+    push('seed — SUPPRESSES a record detection would have found', [dated(HAMMER, 22.5, 12, '2026-07-21', 3)], bl([{ key: HAMMER, weightKg: 16, reps: 10 }], []))
+    push('seed — an edited set stops matching', [dated(HAMMER, 20, 11, '2026-07-21', 1)], EMPTY_BASELINES)
+    push('seed — live again after the cutoff', [dated(HAMMER, 22.5, 12, '2026-08-04', 1)], bl([{ key: HAMMER, weightKg: 16, reps: 10 }], []))
+    push('seed — not replayed on a later date', [dated(HAMMER, 20, 12, '2026-08-04', 1)], EMPTY_BASELINES)
+    push('seed — the date is read off the FIRST dated set', [cand(HAMMER, 22.5, 12), dated(HAMMER, 20, 12, '2026-07-21', 1)], bl([{ key: HAMMER, weightKg: 16, reps: 10 }], []))
+    push('seed — an empty-string date is no date', [dated(HAMMER, 22.5, 12, '', 1)], bl([{ key: HAMMER, weightKg: 16, reps: 10 }], []))
+    push('seed — the key is the alias, exerciseName canonicalises', [dated('Cable Lateral Raise', 5, 10, '2026-07-21', 3)], EMPTY_BASELINES)
+    push('seed — exerciseName absent falls back to the key', [cand(HAMMER, 20, 12, { date: '2026-07-21', setNumber: 1 })], EMPTY_BASELINES)
+    push('seed — an asserted axis with a baseline still reports the delta', [dated(HAMMER, 20, 12, '2026-07-21', 1)], bl([{ key: HAMMER, weightKg: 16, reps: 10 }], []))
+    push('seed — a seeded session still advances the index for later sets', [dated(HAMMER, 20, 12, '2026-07-21', 1), dated(HAMMER, 22.5, 12, '2026-07-21', 2)], EMPTY_BASELINES)
+    push('seed — a warm-up on a seeded set still carries its asserted axes (the list is authority)', [dated(HAMMER, 20, 12, '2026-07-21', 1, { setType: 'warmup' })], EMPTY_BASELINES)
+
+    // ── 2026-08-02, end to end ──
+    const D = '2026-08-02'
+    const c2 = (name: string, setNumber: number, weightKg: number, reps: number, setType: string | null = null): PrCandidateSet =>
+      ({ key: name, exerciseName: name, setNumber, weightKg, reps, setType, timed: false, date: D })
+    const SETS = [
+      c2('Incline DB Press', 1, 35, 12), c2('Incline DB Press', 2, 40, 10), c2('Incline DB Press', 3, 40, 8),
+      c2('Lat Pulldown', 1, 47, 12), c2('Lat Pulldown', 2, 47, 12), c2('Lat Pulldown', 3, 47, 10),
+      c2(CHEST, 1, 37.5, 12), c2(CHEST, 2, 40, 8, 'failure'),
+      c2('Seated Cable Row (V-Grip)', 1, 42.5, 12), c2('Seated Cable Row (V-Grip)', 2, 42.5, 13),
+      c2('Pec Deck', 1, 50, 15), c2('Pec Deck', 2, 50, 11),
+      c2('Straight-Arm Pulldown', 1, 16.25, 15), c2('Straight-Arm Pulldown', 2, 16.25, 12), c2('Straight-Arm Pulldown', 3, 15, 11),
+      c2('Face Pull', 1, 16.25, 15), c2('Face Pull', 2, 15, 16), c2('Face Pull', 3, 15, 15),
+    ]
+    const REST: BaselineSetRow[] = [
+      ...[[37.5, 12], [37.5, 12], [35, 12]].map(([w, r]) => ({ key: CHEST, weightKg: w, reps: r })),
+      ...[[42.5, 12], [42.5, 12]].map(([w, r]) => ({ key: 'Seated Cable Row (V-Grip)', weightKg: w, reps: r })),
+      ...[[50, 15], [52.5, 9]].map(([w, r]) => ({ key: 'Pec Deck', weightKg: w, reps: r })),
+      ...[[16.25, 15], [16.25, 11], [15, 11]].map(([w, r]) => ({ key: 'Straight-Arm Pulldown', weightKg: w, reps: r })),
+      ...[[15, 14], [16.25, 15], [15, 15]].map(([w, r]) => ({ key: 'Face Pull', weightKg: w, reps: r })),
+      ...[[47, 12], [47, 12], [47, 10]].map(([w, r]) => ({ key: 'Lat Pulldown', weightKg: w, reps: r })),
+    ]
+    const incline = (rows: number[][]): BaselineSetRow[] => rows.map(([w, r]) => ({ key: 'Incline DB Press', weightKg: w, reps: r }))
+    const JUL_19 = incline([[35, 11], [35, 12], [35, 12]])
+    const history = bl([...JUL_19, ...incline([[35, 12], [35, 12], [35, 12]]), ...REST], [])
+    const poisoned = bl([...JUL_19, ...incline([[63.75, 12], [63.75, 12], [63.75, 12]]), ...REST], [])
+    const bare = SETS.map((s) => ({ ...s, date: null }))
+    push('2026-08-02 asserted — exactly the three records', SETS, history)
+    push('2026-08-02 asserted — the same three against the poisoned history', SETS, poisoned)
+    push('2026-08-02 derived against the poisoned history — Incline never found, 3 wrong axes', bare, poisoned)
+    push('2026-08-02 derived against the repaired history — 5 axes, both Incline records', bare, history)
+
+    // ── The floor, through detection ──
+    const CALF = 'Calf Press'
+    const calfRows: BaselineSetRow[] = [
+      { key: CALF, weightKg: 65, reps: 15 }, { key: CALF, weightKg: 67.5, reps: 14 }, { key: CALF, weightKg: 67.5, reps: 13 },
+      { key: CALF, weightKg: 67.5, reps: 15 }, { key: CALF, weightKg: 67.5, reps: 13 }, { key: CALF, weightKg: 67.5, reps: 12 },
+    ]
+    const calfSet = (w: number, reps: number) => cand(CALF, w, reps, { date: '2026-08-10' })
+    push('Calf Press 2026-08-10 WITHOUT the floor — 70 kg flags weight', [calfSet(70, 12), calfSet(70, 13), calfSet(70, 13)], bl(calfRows, [], false))
+    push('Calf Press 2026-08-10 WITH the floor — 70 < 72.5, no weight axis', [calfSet(70, 12), calfSet(70, 13), calfSet(70, 13)], bl(calfRows, [], true))
+    push('Calf Press — 75 kg beats the asserted best', [calfSet(75, 12)], bl(calfRows, [], true))
+    push('Calf Press — 70 × 14: weight no, volume no, e1RM 102.7 > 100.75 YES', [calfSet(70, 14)], bl(calfRows, [], true))
+    for (const c of [
+      { name: 'Leg Press', logged: 72.5, asserted: 80, comeback: 75 }, { name: LEGEXT, logged: 37.5, asserted: 42.5, comeback: 40 },
+      { name: 'Seated Leg Curl', logged: 45, asserted: 50, comeback: 47.5 }, { name: 'Pec Deck', logged: 52.5, asserted: 55, comeback: 55 },
+      { name: 'Lat Pulldown', logged: 47, asserted: 49.5, comeback: 49.5 }, { name: 'Straight-Arm Pulldown', logged: 16.25, asserted: 17.5, comeback: 17.5 },
+      { name: 'Cable Overhead Extension', logged: 11.25, asserted: 12.5, comeback: 12.5 }, { name: 'DB Shoulder Press', logged: 30, asserted: 31, comeback: 31 },
+    ]) {
+      const b = bl([{ key: c.name, weightKg: c.logged, reps: 12 }], [], true)
+      push(`floor — ${c.name}: returning to ${c.comeback} kg is not a record`, [cand(c.name, c.comeback, 10, { date: '2026-08-12' })], b)
+      push(`floor — ${c.name}: ${c.asserted + 2.5} kg still is`, [cand(c.name, c.asserted + 2.5, 10, { date: '2026-08-12' })], b)
+    }
+    push('floor — Side Plank keeps its in-window 60 s record (no seconds floor); 61 wins', [cand(PLANK, 0, 61)], bl([{ key: PLANK, weightKg: 0, reps: 60 }], [PLANK], true))
+    push('floor — Reverse Crunch reps@0 floor from the book', [cand(CRUNCH, 0, 19)], bl([{ key: CRUNCH, weightKg: 0, reps: 15 }], [], true))
+
+    // ── Grids ──
+    const X = 'X'
+    const xb = bl([{ key: X, weightKg: 40, reps: 12, ...win }, { key: X, weightKg: 45, reps: 10, ...win }, { key: X, weightKg: 42.5, reps: 11, setType: 'failure', ...win }], [])
+    const setTypes: Array<string | null> = [null, 'failure', 'warmup']
+    for (const w of [40, 42.5, 45, 47.5]) for (const reps of [4, 9, 10, 12, 14]) for (const setType of setTypes) {
+      push(`grid single ${w}×${reps}${setType ? ` ${setType}` : ''}`, [cand(X, w, reps, { setType, ...win })], xb)
+    }
+    const doubles: Array<[number, number]> = [[45, 10], [45, 12], [47.5, 8], [47.5, 10], [42.5, 14], [40, 15]]
+    for (const [w1, r1] of doubles) for (const [w2, r2] of doubles) {
+      push(`grid double ${w1}×${r1} then ${w2}×${r2}`, [cand(X, w1, r1, win), cand(X, w2, r2, win)], xb)
+    }
+    const sab = bl([{ key: SA, weightKg: 5, reps: 12, side: 'L', pairId: 'h' }, { key: SA, weightKg: 5, reps: 12, side: 'R', pairId: 'h' }], [])
+    for (const wL of [5, 6]) for (const rL of [10, 12, 13]) for (const rR of [10, 12, 13]) {
+      push(`grid pair L ${wL}×${rL} / R 5×${rR}`, [pair('g', 'L', wL, rL), pair('g', 'R', 5, rR)], sab)
+    }
+    const plank = bl([{ key: PLANK, weightKg: 0, reps: 57 }])
+    for (const s of [50, 57, 58, 60]) push(`grid plank ${s} s`, [cand(PLANK, 0, s)], plank)
+    for (const [a, b] of [[58, 60], [60, 58], [60, 60]]) push(`grid plank ${a} s then ${b} s`, [cand(PLANK, 0, a), cand(PLANK, 0, b)], plank)
+
+    emit('pr-session.json', {
+      module: 'training/prEngine',
+      fn: 'detectSessionPrs + recordSets',
+      note: 'Whole sessions in performed order against baselines built by the TypeScript. perSet is parallel to sets (axes in detection order weight, reps, volume, e1rm; est1rm null for holds and 0 kg; records = per axis the set beat a bar on AT DETECTION TIME, the new value and the beaten one, omitted where there was no bar — captured BEFORE supersession, so an axis later stripped from `axes` keeps its record; consumers index records through axes, as livePrs.ts does). axesByKey and recordSets are insertion-ordered. An asserted session (≤ 2026-07-31 or 2026-08-02, read off the first dated set) takes its axes from the seed and skips supersession.',
+      cases,
     })
   })
 })

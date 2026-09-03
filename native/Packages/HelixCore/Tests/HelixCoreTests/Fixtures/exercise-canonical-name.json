@@ -1,0 +1,784 @@
+{
+  "module": "exercises/aliases",
+  "fn": "canonicalExerciseName",
+  "note": "Lower-case + trim, look up, else hand the RAW name back unchanged — case and padding included.",
+  "cases": [
+    {
+      "name": "\"lat pulldown - close grip (cable)\"",
+      "input": {
+        "raw": "lat pulldown - close grip (cable)"
+      },
+      "expected": "Neutral-Grip Lat Pulldown"
+    },
+    {
+      "name": "\"lat pulldown close grip (cable)\"",
+      "input": {
+        "raw": "lat pulldown close grip (cable)"
+      },
+      "expected": "Neutral-Grip Lat Pulldown"
+    },
+    {
+      "name": "\"close grip lat pulldown (cable)\"",
+      "input": {
+        "raw": "close grip lat pulldown (cable)"
+      },
+      "expected": "Neutral-Grip Lat Pulldown"
+    },
+    {
+      "name": "\"hack/smith squat\"",
+      "input": {
+        "raw": "hack/smith squat"
+      },
+      "expected": "Hack Squat"
+    },
+    {
+      "name": "\"smith squat\"",
+      "input": {
+        "raw": "smith squat"
+      },
+      "expected": "Hack Squat"
+    },
+    {
+      "name": "\"chest press machine\"",
+      "input": {
+        "raw": "chest press machine"
+      },
+      "expected": "Chest Press (Machine)"
+    },
+    {
+      "name": "\"machine chest press\"",
+      "input": {
+        "raw": "machine chest press"
+      },
+      "expected": "Chest Press (Machine)"
+    },
+    {
+      "name": "\"leg press horizontal\"",
+      "input": {
+        "raw": "leg press horizontal"
+      },
+      "expected": "Leg Press"
+    },
+    {
+      "name": "\"leg press horizontal (machine)\"",
+      "input": {
+        "raw": "leg press horizontal (machine)"
+      },
+      "expected": "Leg Press"
+    },
+    {
+      "name": "\"seated cable row (v grip)\"",
+      "input": {
+        "raw": "seated cable row (v grip)"
+      },
+      "expected": "Seated Cable Row (V-Grip)"
+    },
+    {
+      "name": "\"seated cable row v-grip\"",
+      "input": {
+        "raw": "seated cable row v-grip"
+      },
+      "expected": "Seated Cable Row (V-Grip)"
+    },
+    {
+      "name": "\"seated cable row - v-bar\"",
+      "input": {
+        "raw": "seated cable row - v-bar"
+      },
+      "expected": "Seated Cable Row (V-Grip)"
+    },
+    {
+      "name": "\"seated cable row - bar wide grip\"",
+      "input": {
+        "raw": "seated cable row - bar wide grip"
+      },
+      "expected": "Seated Cable Row (Wide Grip)"
+    },
+    {
+      "name": "\"seated cable row (wide bar)\"",
+      "input": {
+        "raw": "seated cable row (wide bar)"
+      },
+      "expected": "Seated Cable Row (Wide Grip)"
+    },
+    {
+      "name": "\"wide-grip cable row\"",
+      "input": {
+        "raw": "wide-grip cable row"
+      },
+      "expected": "Seated Cable Row (Wide Grip)"
+    },
+    {
+      "name": "\"cable lateral raise\"",
+      "input": {
+        "raw": "cable lateral raise"
+      },
+      "expected": "Single Arm Lateral Raise (Cable)"
+    },
+    {
+      "name": "\"single arm cable lateral raise\"",
+      "input": {
+        "raw": "single arm cable lateral raise"
+      },
+      "expected": "Single Arm Lateral Raise (Cable)"
+    },
+    {
+      "name": "\"sa lateral raise (cable)\"",
+      "input": {
+        "raw": "sa lateral raise (cable)"
+      },
+      "expected": "Single Arm Lateral Raise (Cable)"
+    },
+    {
+      "name": "\"sa lateral raise\"",
+      "input": {
+        "raw": "sa lateral raise"
+      },
+      "expected": "Single Arm Lateral Raise (Cable)"
+    },
+    {
+      "name": "\"incline db bench press\"",
+      "input": {
+        "raw": "incline db bench press"
+      },
+      "expected": "Incline DB Press"
+    },
+    {
+      "name": "\"incline dumbbell bench press\"",
+      "input": {
+        "raw": "incline dumbbell bench press"
+      },
+      "expected": "Incline DB Press"
+    },
+    {
+      "name": "\"incline dumbbell press\"",
+      "input": {
+        "raw": "incline dumbbell press"
+      },
+      "expected": "Incline DB Press"
+    },
+    {
+      "name": "\"LAT PULLDOWN - CLOSE GRIP (CABLE)\"",
+      "input": {
+        "raw": "LAT PULLDOWN - CLOSE GRIP (CABLE)"
+      },
+      "expected": "Neutral-Grip Lat Pulldown"
+    },
+    {
+      "name": "\"LAT PULLDOWN CLOSE GRIP (CABLE)\"",
+      "input": {
+        "raw": "LAT PULLDOWN CLOSE GRIP (CABLE)"
+      },
+      "expected": "Neutral-Grip Lat Pulldown"
+    },
+    {
+      "name": "\"CLOSE GRIP LAT PULLDOWN (CABLE)\"",
+      "input": {
+        "raw": "CLOSE GRIP LAT PULLDOWN (CABLE)"
+      },
+      "expected": "Neutral-Grip Lat Pulldown"
+    },
+    {
+      "name": "\"HACK/SMITH SQUAT\"",
+      "input": {
+        "raw": "HACK/SMITH SQUAT"
+      },
+      "expected": "Hack Squat"
+    },
+    {
+      "name": "\"SMITH SQUAT\"",
+      "input": {
+        "raw": "SMITH SQUAT"
+      },
+      "expected": "Hack Squat"
+    },
+    {
+      "name": "\"CHEST PRESS MACHINE\"",
+      "input": {
+        "raw": "CHEST PRESS MACHINE"
+      },
+      "expected": "Chest Press (Machine)"
+    },
+    {
+      "name": "\"MACHINE CHEST PRESS\"",
+      "input": {
+        "raw": "MACHINE CHEST PRESS"
+      },
+      "expected": "Chest Press (Machine)"
+    },
+    {
+      "name": "\"LEG PRESS HORIZONTAL\"",
+      "input": {
+        "raw": "LEG PRESS HORIZONTAL"
+      },
+      "expected": "Leg Press"
+    },
+    {
+      "name": "\"LEG PRESS HORIZONTAL (MACHINE)\"",
+      "input": {
+        "raw": "LEG PRESS HORIZONTAL (MACHINE)"
+      },
+      "expected": "Leg Press"
+    },
+    {
+      "name": "\"SEATED CABLE ROW (V GRIP)\"",
+      "input": {
+        "raw": "SEATED CABLE ROW (V GRIP)"
+      },
+      "expected": "Seated Cable Row (V-Grip)"
+    },
+    {
+      "name": "\"SEATED CABLE ROW V-GRIP\"",
+      "input": {
+        "raw": "SEATED CABLE ROW V-GRIP"
+      },
+      "expected": "Seated Cable Row (V-Grip)"
+    },
+    {
+      "name": "\"SEATED CABLE ROW - V-BAR\"",
+      "input": {
+        "raw": "SEATED CABLE ROW - V-BAR"
+      },
+      "expected": "Seated Cable Row (V-Grip)"
+    },
+    {
+      "name": "\"SEATED CABLE ROW - BAR WIDE GRIP\"",
+      "input": {
+        "raw": "SEATED CABLE ROW - BAR WIDE GRIP"
+      },
+      "expected": "Seated Cable Row (Wide Grip)"
+    },
+    {
+      "name": "\"SEATED CABLE ROW (WIDE BAR)\"",
+      "input": {
+        "raw": "SEATED CABLE ROW (WIDE BAR)"
+      },
+      "expected": "Seated Cable Row (Wide Grip)"
+    },
+    {
+      "name": "\"WIDE-GRIP CABLE ROW\"",
+      "input": {
+        "raw": "WIDE-GRIP CABLE ROW"
+      },
+      "expected": "Seated Cable Row (Wide Grip)"
+    },
+    {
+      "name": "\"CABLE LATERAL RAISE\"",
+      "input": {
+        "raw": "CABLE LATERAL RAISE"
+      },
+      "expected": "Single Arm Lateral Raise (Cable)"
+    },
+    {
+      "name": "\"SINGLE ARM CABLE LATERAL RAISE\"",
+      "input": {
+        "raw": "SINGLE ARM CABLE LATERAL RAISE"
+      },
+      "expected": "Single Arm Lateral Raise (Cable)"
+    },
+    {
+      "name": "\"SA LATERAL RAISE (CABLE)\"",
+      "input": {
+        "raw": "SA LATERAL RAISE (CABLE)"
+      },
+      "expected": "Single Arm Lateral Raise (Cable)"
+    },
+    {
+      "name": "\"SA LATERAL RAISE\"",
+      "input": {
+        "raw": "SA LATERAL RAISE"
+      },
+      "expected": "Single Arm Lateral Raise (Cable)"
+    },
+    {
+      "name": "\"INCLINE DB BENCH PRESS\"",
+      "input": {
+        "raw": "INCLINE DB BENCH PRESS"
+      },
+      "expected": "Incline DB Press"
+    },
+    {
+      "name": "\"INCLINE DUMBBELL BENCH PRESS\"",
+      "input": {
+        "raw": "INCLINE DUMBBELL BENCH PRESS"
+      },
+      "expected": "Incline DB Press"
+    },
+    {
+      "name": "\"INCLINE DUMBBELL PRESS\"",
+      "input": {
+        "raw": "INCLINE DUMBBELL PRESS"
+      },
+      "expected": "Incline DB Press"
+    },
+    {
+      "name": "\"  lat pulldown - close grip (cable)\\t\"",
+      "input": {
+        "raw": "  lat pulldown - close grip (cable)\t"
+      },
+      "expected": "Neutral-Grip Lat Pulldown"
+    },
+    {
+      "name": "\"  lat pulldown close grip (cable)\\t\"",
+      "input": {
+        "raw": "  lat pulldown close grip (cable)\t"
+      },
+      "expected": "Neutral-Grip Lat Pulldown"
+    },
+    {
+      "name": "\"  close grip lat pulldown (cable)\\t\"",
+      "input": {
+        "raw": "  close grip lat pulldown (cable)\t"
+      },
+      "expected": "Neutral-Grip Lat Pulldown"
+    },
+    {
+      "name": "\"  hack/smith squat\\t\"",
+      "input": {
+        "raw": "  hack/smith squat\t"
+      },
+      "expected": "Hack Squat"
+    },
+    {
+      "name": "\"  smith squat\\t\"",
+      "input": {
+        "raw": "  smith squat\t"
+      },
+      "expected": "Hack Squat"
+    },
+    {
+      "name": "\"  chest press machine\\t\"",
+      "input": {
+        "raw": "  chest press machine\t"
+      },
+      "expected": "Chest Press (Machine)"
+    },
+    {
+      "name": "\"  machine chest press\\t\"",
+      "input": {
+        "raw": "  machine chest press\t"
+      },
+      "expected": "Chest Press (Machine)"
+    },
+    {
+      "name": "\"  leg press horizontal\\t\"",
+      "input": {
+        "raw": "  leg press horizontal\t"
+      },
+      "expected": "Leg Press"
+    },
+    {
+      "name": "\"  leg press horizontal (machine)\\t\"",
+      "input": {
+        "raw": "  leg press horizontal (machine)\t"
+      },
+      "expected": "Leg Press"
+    },
+    {
+      "name": "\"  seated cable row (v grip)\\t\"",
+      "input": {
+        "raw": "  seated cable row (v grip)\t"
+      },
+      "expected": "Seated Cable Row (V-Grip)"
+    },
+    {
+      "name": "\"  seated cable row v-grip\\t\"",
+      "input": {
+        "raw": "  seated cable row v-grip\t"
+      },
+      "expected": "Seated Cable Row (V-Grip)"
+    },
+    {
+      "name": "\"  seated cable row - v-bar\\t\"",
+      "input": {
+        "raw": "  seated cable row - v-bar\t"
+      },
+      "expected": "Seated Cable Row (V-Grip)"
+    },
+    {
+      "name": "\"  seated cable row - bar wide grip\\t\"",
+      "input": {
+        "raw": "  seated cable row - bar wide grip\t"
+      },
+      "expected": "Seated Cable Row (Wide Grip)"
+    },
+    {
+      "name": "\"  seated cable row (wide bar)\\t\"",
+      "input": {
+        "raw": "  seated cable row (wide bar)\t"
+      },
+      "expected": "Seated Cable Row (Wide Grip)"
+    },
+    {
+      "name": "\"  wide-grip cable row\\t\"",
+      "input": {
+        "raw": "  wide-grip cable row\t"
+      },
+      "expected": "Seated Cable Row (Wide Grip)"
+    },
+    {
+      "name": "\"  cable lateral raise\\t\"",
+      "input": {
+        "raw": "  cable lateral raise\t"
+      },
+      "expected": "Single Arm Lateral Raise (Cable)"
+    },
+    {
+      "name": "\"  single arm cable lateral raise\\t\"",
+      "input": {
+        "raw": "  single arm cable lateral raise\t"
+      },
+      "expected": "Single Arm Lateral Raise (Cable)"
+    },
+    {
+      "name": "\"  sa lateral raise (cable)\\t\"",
+      "input": {
+        "raw": "  sa lateral raise (cable)\t"
+      },
+      "expected": "Single Arm Lateral Raise (Cable)"
+    },
+    {
+      "name": "\"  sa lateral raise\\t\"",
+      "input": {
+        "raw": "  sa lateral raise\t"
+      },
+      "expected": "Single Arm Lateral Raise (Cable)"
+    },
+    {
+      "name": "\"  incline db bench press\\t\"",
+      "input": {
+        "raw": "  incline db bench press\t"
+      },
+      "expected": "Incline DB Press"
+    },
+    {
+      "name": "\"  incline dumbbell bench press\\t\"",
+      "input": {
+        "raw": "  incline dumbbell bench press\t"
+      },
+      "expected": "Incline DB Press"
+    },
+    {
+      "name": "\"  incline dumbbell press\\t\"",
+      "input": {
+        "raw": "  incline dumbbell press\t"
+      },
+      "expected": "Incline DB Press"
+    },
+    {
+      "name": "\"Neutral-Grip Lat Pulldown\"",
+      "input": {
+        "raw": "Neutral-Grip Lat Pulldown"
+      },
+      "expected": "Neutral-Grip Lat Pulldown"
+    },
+    {
+      "name": "\"Hack Squat\"",
+      "input": {
+        "raw": "Hack Squat"
+      },
+      "expected": "Hack Squat"
+    },
+    {
+      "name": "\"Chest Press (Machine)\"",
+      "input": {
+        "raw": "Chest Press (Machine)"
+      },
+      "expected": "Chest Press (Machine)"
+    },
+    {
+      "name": "\"Leg Press\"",
+      "input": {
+        "raw": "Leg Press"
+      },
+      "expected": "Leg Press"
+    },
+    {
+      "name": "\"Seated Cable Row (V-Grip)\"",
+      "input": {
+        "raw": "Seated Cable Row (V-Grip)"
+      },
+      "expected": "Seated Cable Row (V-Grip)"
+    },
+    {
+      "name": "\"Seated Cable Row (Wide Grip)\"",
+      "input": {
+        "raw": "Seated Cable Row (Wide Grip)"
+      },
+      "expected": "Seated Cable Row (Wide Grip)"
+    },
+    {
+      "name": "\"Single Arm Lateral Raise (Cable)\"",
+      "input": {
+        "raw": "Single Arm Lateral Raise (Cable)"
+      },
+      "expected": "Single Arm Lateral Raise (Cable)"
+    },
+    {
+      "name": "\"Incline DB Press\"",
+      "input": {
+        "raw": "Incline DB Press"
+      },
+      "expected": "Incline DB Press"
+    },
+    {
+      "name": "\"Incline DB Press\"",
+      "input": {
+        "raw": "Incline DB Press"
+      },
+      "expected": "Incline DB Press"
+    },
+    {
+      "name": "\"Chest Press (Machine)\"",
+      "input": {
+        "raw": "Chest Press (Machine)"
+      },
+      "expected": "Chest Press (Machine)"
+    },
+    {
+      "name": "\"Pec Deck\"",
+      "input": {
+        "raw": "Pec Deck"
+      },
+      "expected": "Pec Deck"
+    },
+    {
+      "name": "\"Single Arm Cable Crossover\"",
+      "input": {
+        "raw": "Single Arm Cable Crossover"
+      },
+      "expected": "Single Arm Cable Crossover"
+    },
+    {
+      "name": "\"DB Shoulder Press\"",
+      "input": {
+        "raw": "DB Shoulder Press"
+      },
+      "expected": "DB Shoulder Press"
+    },
+    {
+      "name": "\"Single Arm Lateral Raise (Cable)\"",
+      "input": {
+        "raw": "Single Arm Lateral Raise (Cable)"
+      },
+      "expected": "Single Arm Lateral Raise (Cable)"
+    },
+    {
+      "name": "\"Cable Overhead Extension\"",
+      "input": {
+        "raw": "Cable Overhead Extension"
+      },
+      "expected": "Cable Overhead Extension"
+    },
+    {
+      "name": "\"Rope Triceps Pushdown\"",
+      "input": {
+        "raw": "Rope Triceps Pushdown"
+      },
+      "expected": "Rope Triceps Pushdown"
+    },
+    {
+      "name": "\"Single Arm Triceps Pushdown (Cable)\"",
+      "input": {
+        "raw": "Single Arm Triceps Pushdown (Cable)"
+      },
+      "expected": "Single Arm Triceps Pushdown (Cable)"
+    },
+    {
+      "name": "\"Lat Pulldown\"",
+      "input": {
+        "raw": "Lat Pulldown"
+      },
+      "expected": "Lat Pulldown"
+    },
+    {
+      "name": "\"Neutral-Grip Lat Pulldown\"",
+      "input": {
+        "raw": "Neutral-Grip Lat Pulldown"
+      },
+      "expected": "Neutral-Grip Lat Pulldown"
+    },
+    {
+      "name": "\"Seated Cable Row (V-Grip)\"",
+      "input": {
+        "raw": "Seated Cable Row (V-Grip)"
+      },
+      "expected": "Seated Cable Row (V-Grip)"
+    },
+    {
+      "name": "\"Seated Cable Row (Wide Grip)\"",
+      "input": {
+        "raw": "Seated Cable Row (Wide Grip)"
+      },
+      "expected": "Seated Cable Row (Wide Grip)"
+    },
+    {
+      "name": "\"Straight-Arm Pulldown\"",
+      "input": {
+        "raw": "Straight-Arm Pulldown"
+      },
+      "expected": "Straight-Arm Pulldown"
+    },
+    {
+      "name": "\"Face Pull\"",
+      "input": {
+        "raw": "Face Pull"
+      },
+      "expected": "Face Pull"
+    },
+    {
+      "name": "\"Seated Incline DB Curl\"",
+      "input": {
+        "raw": "Seated Incline DB Curl"
+      },
+      "expected": "Seated Incline DB Curl"
+    },
+    {
+      "name": "\"DB Hammer Curl\"",
+      "input": {
+        "raw": "DB Hammer Curl"
+      },
+      "expected": "DB Hammer Curl"
+    },
+    {
+      "name": "\"Reverse EZ-Bar Curl\"",
+      "input": {
+        "raw": "Reverse EZ-Bar Curl"
+      },
+      "expected": "Reverse EZ-Bar Curl"
+    },
+    {
+      "name": "\"Preacher Curl (Machine)\"",
+      "input": {
+        "raw": "Preacher Curl (Machine)"
+      },
+      "expected": "Preacher Curl (Machine)"
+    },
+    {
+      "name": "\"Leg Press\"",
+      "input": {
+        "raw": "Leg Press"
+      },
+      "expected": "Leg Press"
+    },
+    {
+      "name": "\"Hack Squat\"",
+      "input": {
+        "raw": "Hack Squat"
+      },
+      "expected": "Hack Squat"
+    },
+    {
+      "name": "\"Leg Extension\"",
+      "input": {
+        "raw": "Leg Extension"
+      },
+      "expected": "Leg Extension"
+    },
+    {
+      "name": "\"Seated Leg Curl\"",
+      "input": {
+        "raw": "Seated Leg Curl"
+      },
+      "expected": "Seated Leg Curl"
+    },
+    {
+      "name": "\"Romanian Deadlift (DB)\"",
+      "input": {
+        "raw": "Romanian Deadlift (DB)"
+      },
+      "expected": "Romanian Deadlift (DB)"
+    },
+    {
+      "name": "\"Hip Thrust (Machine)\"",
+      "input": {
+        "raw": "Hip Thrust (Machine)"
+      },
+      "expected": "Hip Thrust (Machine)"
+    },
+    {
+      "name": "\"Calf Press\"",
+      "input": {
+        "raw": "Calf Press"
+      },
+      "expected": "Calf Press"
+    },
+    {
+      "name": "\"Crunch Machine\"",
+      "input": {
+        "raw": "Crunch Machine"
+      },
+      "expected": "Crunch Machine"
+    },
+    {
+      "name": "\"Reverse Crunch\"",
+      "input": {
+        "raw": "Reverse Crunch"
+      },
+      "expected": "Reverse Crunch"
+    },
+    {
+      "name": "\"Hanging Knee Raise\"",
+      "input": {
+        "raw": "Hanging Knee Raise"
+      },
+      "expected": "Hanging Knee Raise"
+    },
+    {
+      "name": "\"Side Plank\"",
+      "input": {
+        "raw": "Side Plank"
+      },
+      "expected": "Side Plank"
+    },
+    {
+      "name": "\"Zercher Squat\"",
+      "input": {
+        "raw": "Zercher Squat"
+      },
+      "expected": "Zercher Squat"
+    },
+    {
+      "name": "\"\"",
+      "input": {
+        "raw": ""
+      },
+      "expected": ""
+    },
+    {
+      "name": "\"   \"",
+      "input": {
+        "raw": "   "
+      },
+      "expected": "   "
+    },
+    {
+      "name": "\"hack squat\"",
+      "input": {
+        "raw": "hack squat"
+      },
+      "expected": "hack squat"
+    },
+    {
+      "name": "\"HACK SQUAT\"",
+      "input": {
+        "raw": "HACK SQUAT"
+      },
+      "expected": "HACK SQUAT"
+    },
+    {
+      "name": "\"Leg Press Horizontal (Machine)\"",
+      "input": {
+        "raw": "Leg Press Horizontal (Machine)"
+      },
+      "expected": "Leg Press"
+    },
+    {
+      "name": "\" Hip Thrust (Machine) \"",
+      "input": {
+        "raw": " Hip Thrust (Machine) "
+      },
+      "expected": " Hip Thrust (Machine) "
+    }
+  ]
+}
