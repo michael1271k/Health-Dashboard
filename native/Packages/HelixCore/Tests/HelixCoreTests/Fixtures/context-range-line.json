@@ -1,0 +1,385 @@
+{
+  "module": "nutrition/context",
+  "fn": "contextRangeLine",
+  "note": "The export header line, exact string; null for normal; \"(active)\" with no start; singular \"day\" at exactly one.",
+  "cases": [
+    {
+      "name": "normal since none",
+      "input": {
+        "mode": "normal",
+        "since": null,
+        "today": "2026-08-16"
+      },
+      "expected": null
+    },
+    {
+      "name": "normal since none",
+      "input": {
+        "mode": "normal",
+        "since": "",
+        "today": "2026-08-16"
+      },
+      "expected": null
+    },
+    {
+      "name": "normal since 2026-08-14",
+      "input": {
+        "mode": "normal",
+        "since": "2026-08-14",
+        "today": "2026-08-16"
+      },
+      "expected": null
+    },
+    {
+      "name": "normal since 2026-08-16",
+      "input": {
+        "mode": "normal",
+        "since": "2026-08-16",
+        "today": "2026-08-16"
+      },
+      "expected": null
+    },
+    {
+      "name": "normal since 2026-08-17",
+      "input": {
+        "mode": "normal",
+        "since": "2026-08-17",
+        "today": "2026-08-16"
+      },
+      "expected": null
+    },
+    {
+      "name": "normal since 2026-07-01",
+      "input": {
+        "mode": "normal",
+        "since": "2026-07-01",
+        "today": "2026-08-16"
+      },
+      "expected": null
+    },
+    {
+      "name": "event since none",
+      "input": {
+        "mode": "event",
+        "since": null,
+        "today": "2026-08-16"
+      },
+      "expected": "Context: Event (active)"
+    },
+    {
+      "name": "event since none",
+      "input": {
+        "mode": "event",
+        "since": "",
+        "today": "2026-08-16"
+      },
+      "expected": "Context: Event (active)"
+    },
+    {
+      "name": "event since 2026-08-14",
+      "input": {
+        "mode": "event",
+        "since": "2026-08-14",
+        "today": "2026-08-16"
+      },
+      "expected": "Context: Event since 2026-08-14 (3 days)"
+    },
+    {
+      "name": "event since 2026-08-16",
+      "input": {
+        "mode": "event",
+        "since": "2026-08-16",
+        "today": "2026-08-16"
+      },
+      "expected": "Context: Event since 2026-08-16 (1 day)"
+    },
+    {
+      "name": "event since 2026-08-17",
+      "input": {
+        "mode": "event",
+        "since": "2026-08-17",
+        "today": "2026-08-16"
+      },
+      "expected": "Context: Event since 2026-08-17 (1 day)"
+    },
+    {
+      "name": "event since 2026-07-01",
+      "input": {
+        "mode": "event",
+        "since": "2026-07-01",
+        "today": "2026-08-16"
+      },
+      "expected": "Context: Event since 2026-07-01 (47 days)"
+    },
+    {
+      "name": "refeed since none",
+      "input": {
+        "mode": "refeed",
+        "since": null,
+        "today": "2026-08-16"
+      },
+      "expected": "Context: Refeed (active)"
+    },
+    {
+      "name": "refeed since none",
+      "input": {
+        "mode": "refeed",
+        "since": "",
+        "today": "2026-08-16"
+      },
+      "expected": "Context: Refeed (active)"
+    },
+    {
+      "name": "refeed since 2026-08-14",
+      "input": {
+        "mode": "refeed",
+        "since": "2026-08-14",
+        "today": "2026-08-16"
+      },
+      "expected": "Context: Refeed since 2026-08-14 (3 days)"
+    },
+    {
+      "name": "refeed since 2026-08-16",
+      "input": {
+        "mode": "refeed",
+        "since": "2026-08-16",
+        "today": "2026-08-16"
+      },
+      "expected": "Context: Refeed since 2026-08-16 (1 day)"
+    },
+    {
+      "name": "refeed since 2026-08-17",
+      "input": {
+        "mode": "refeed",
+        "since": "2026-08-17",
+        "today": "2026-08-16"
+      },
+      "expected": "Context: Refeed since 2026-08-17 (1 day)"
+    },
+    {
+      "name": "refeed since 2026-07-01",
+      "input": {
+        "mode": "refeed",
+        "since": "2026-07-01",
+        "today": "2026-08-16"
+      },
+      "expected": "Context: Refeed since 2026-07-01 (47 days)"
+    },
+    {
+      "name": "social since none",
+      "input": {
+        "mode": "social",
+        "since": null,
+        "today": "2026-08-16"
+      },
+      "expected": "Context: Social (active)"
+    },
+    {
+      "name": "social since none",
+      "input": {
+        "mode": "social",
+        "since": "",
+        "today": "2026-08-16"
+      },
+      "expected": "Context: Social (active)"
+    },
+    {
+      "name": "social since 2026-08-14",
+      "input": {
+        "mode": "social",
+        "since": "2026-08-14",
+        "today": "2026-08-16"
+      },
+      "expected": "Context: Social since 2026-08-14 (3 days)"
+    },
+    {
+      "name": "social since 2026-08-16",
+      "input": {
+        "mode": "social",
+        "since": "2026-08-16",
+        "today": "2026-08-16"
+      },
+      "expected": "Context: Social since 2026-08-16 (1 day)"
+    },
+    {
+      "name": "social since 2026-08-17",
+      "input": {
+        "mode": "social",
+        "since": "2026-08-17",
+        "today": "2026-08-16"
+      },
+      "expected": "Context: Social since 2026-08-17 (1 day)"
+    },
+    {
+      "name": "social since 2026-07-01",
+      "input": {
+        "mode": "social",
+        "since": "2026-07-01",
+        "today": "2026-08-16"
+      },
+      "expected": "Context: Social since 2026-07-01 (47 days)"
+    },
+    {
+      "name": "travel since none",
+      "input": {
+        "mode": "travel",
+        "since": null,
+        "today": "2026-08-16"
+      },
+      "expected": "Context: Travel (active)"
+    },
+    {
+      "name": "travel since none",
+      "input": {
+        "mode": "travel",
+        "since": "",
+        "today": "2026-08-16"
+      },
+      "expected": "Context: Travel (active)"
+    },
+    {
+      "name": "travel since 2026-08-14",
+      "input": {
+        "mode": "travel",
+        "since": "2026-08-14",
+        "today": "2026-08-16"
+      },
+      "expected": "Context: Travel since 2026-08-14 (3 days)"
+    },
+    {
+      "name": "travel since 2026-08-16",
+      "input": {
+        "mode": "travel",
+        "since": "2026-08-16",
+        "today": "2026-08-16"
+      },
+      "expected": "Context: Travel since 2026-08-16 (1 day)"
+    },
+    {
+      "name": "travel since 2026-08-17",
+      "input": {
+        "mode": "travel",
+        "since": "2026-08-17",
+        "today": "2026-08-16"
+      },
+      "expected": "Context: Travel since 2026-08-17 (1 day)"
+    },
+    {
+      "name": "travel since 2026-07-01",
+      "input": {
+        "mode": "travel",
+        "since": "2026-07-01",
+        "today": "2026-08-16"
+      },
+      "expected": "Context: Travel since 2026-07-01 (47 days)"
+    },
+    {
+      "name": "illness since none",
+      "input": {
+        "mode": "illness",
+        "since": null,
+        "today": "2026-08-16"
+      },
+      "expected": "Context: Illness (active)"
+    },
+    {
+      "name": "illness since none",
+      "input": {
+        "mode": "illness",
+        "since": "",
+        "today": "2026-08-16"
+      },
+      "expected": "Context: Illness (active)"
+    },
+    {
+      "name": "illness since 2026-08-14",
+      "input": {
+        "mode": "illness",
+        "since": "2026-08-14",
+        "today": "2026-08-16"
+      },
+      "expected": "Context: Illness since 2026-08-14 (3 days)"
+    },
+    {
+      "name": "illness since 2026-08-16",
+      "input": {
+        "mode": "illness",
+        "since": "2026-08-16",
+        "today": "2026-08-16"
+      },
+      "expected": "Context: Illness since 2026-08-16 (1 day)"
+    },
+    {
+      "name": "illness since 2026-08-17",
+      "input": {
+        "mode": "illness",
+        "since": "2026-08-17",
+        "today": "2026-08-16"
+      },
+      "expected": "Context: Illness since 2026-08-17 (1 day)"
+    },
+    {
+      "name": "illness since 2026-07-01",
+      "input": {
+        "mode": "illness",
+        "since": "2026-07-01",
+        "today": "2026-08-16"
+      },
+      "expected": "Context: Illness since 2026-07-01 (47 days)"
+    },
+    {
+      "name": "emergency since none",
+      "input": {
+        "mode": "emergency",
+        "since": null,
+        "today": "2026-08-16"
+      },
+      "expected": "Context: Emergency (active)"
+    },
+    {
+      "name": "emergency since none",
+      "input": {
+        "mode": "emergency",
+        "since": "",
+        "today": "2026-08-16"
+      },
+      "expected": "Context: Emergency (active)"
+    },
+    {
+      "name": "emergency since 2026-08-14",
+      "input": {
+        "mode": "emergency",
+        "since": "2026-08-14",
+        "today": "2026-08-16"
+      },
+      "expected": "Context: Emergency since 2026-08-14 (3 days)"
+    },
+    {
+      "name": "emergency since 2026-08-16",
+      "input": {
+        "mode": "emergency",
+        "since": "2026-08-16",
+        "today": "2026-08-16"
+      },
+      "expected": "Context: Emergency since 2026-08-16 (1 day)"
+    },
+    {
+      "name": "emergency since 2026-08-17",
+      "input": {
+        "mode": "emergency",
+        "since": "2026-08-17",
+        "today": "2026-08-16"
+      },
+      "expected": "Context: Emergency since 2026-08-17 (1 day)"
+    },
+    {
+      "name": "emergency since 2026-07-01",
+      "input": {
+        "mode": "emergency",
+        "since": "2026-07-01",
+        "today": "2026-08-16"
+      },
+      "expected": "Context: Emergency since 2026-07-01 (47 days)"
+    }
+  ]
+}

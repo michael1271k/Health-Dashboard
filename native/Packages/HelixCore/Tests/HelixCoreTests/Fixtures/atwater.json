@@ -1,0 +1,70 @@
+{
+  "module": "nutrition/levers",
+  "fn": "atwaterKcal",
+  "note": "4·P + 4·C + 9·F.",
+  "cases": [
+    {
+      "name": "baseline",
+      "input": {
+        "proteinG": 170,
+        "carbsG": 195,
+        "fatG": 55
+      },
+      "expected": 1955
+    },
+    {
+      "name": "lever-1",
+      "input": {
+        "proteinG": 170,
+        "carbsG": 182,
+        "fatG": 53
+      },
+      "expected": 1885
+    },
+    {
+      "name": "lever-2",
+      "input": {
+        "proteinG": 170,
+        "carbsG": 182,
+        "fatG": 53
+      },
+      "expected": 1885
+    },
+    {
+      "name": "maintenance-week",
+      "input": {
+        "proteinG": 170,
+        "carbsG": 244,
+        "fatG": 55
+      },
+      "expected": 2151
+    },
+    {
+      "name": "the 1999 pin",
+      "input": {
+        "proteinG": 170,
+        "carbsG": 206,
+        "fatG": 55
+      },
+      "expected": 1999
+    },
+    {
+      "name": "zero",
+      "input": {
+        "proteinG": 0,
+        "carbsG": 0,
+        "fatG": 0
+      },
+      "expected": 0
+    },
+    {
+      "name": "fractional",
+      "input": {
+        "proteinG": 12.5,
+        "carbsG": 0.25,
+        "fatG": 1.1
+      },
+      "expected": 60.9
+    }
+  ]
+}

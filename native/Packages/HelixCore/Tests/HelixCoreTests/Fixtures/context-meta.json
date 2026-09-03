@@ -1,0 +1,119 @@
+{
+  "module": "nutrition/context",
+  "fn": "CONTEXT_META / isRangeMode / scoringContextFor / suspendsStepGoal",
+  "note": "Per mode: its labels, whether it persists, what the scorer applies, and whether the step goal is suspended.",
+  "cases": [
+    {
+      "name": "normal",
+      "input": {
+        "mode": "normal"
+      },
+      "expected": {
+        "meta": {
+          "label": "Normal",
+          "desc": "Standard scoring and targets",
+          "dayLabel": null
+        },
+        "isRange": false,
+        "scoring": "normal",
+        "suspendsSteps": false
+      }
+    },
+    {
+      "name": "event",
+      "input": {
+        "mode": "event"
+      },
+      "expected": {
+        "meta": {
+          "label": "Event",
+          "desc": "A planned meal out — graded on protein",
+          "dayLabel": "Event"
+        },
+        "isRange": false,
+        "scoring": "normal",
+        "suspendsSteps": false
+      }
+    },
+    {
+      "name": "refeed",
+      "input": {
+        "mode": "refeed"
+      },
+      "expected": {
+        "meta": {
+          "label": "Refeed",
+          "desc": "A deliberate surplus day",
+          "dayLabel": "Refeed"
+        },
+        "isRange": false,
+        "scoring": "normal",
+        "suspendsSteps": false
+      }
+    },
+    {
+      "name": "social",
+      "input": {
+        "mode": "social"
+      },
+      "expected": {
+        "meta": {
+          "label": "Social",
+          "desc": "Unplanned, and not a lapse",
+          "dayLabel": "Social"
+        },
+        "isRange": false,
+        "scoring": "normal",
+        "suspendsSteps": false
+      }
+    },
+    {
+      "name": "travel",
+      "input": {
+        "mode": "travel"
+      },
+      "expected": {
+        "meta": {
+          "label": "Travel",
+          "desc": "Relaxed penalties until you end it",
+          "dayLabel": "Travel"
+        },
+        "isRange": true,
+        "scoring": "travel",
+        "suspendsSteps": false
+      }
+    },
+    {
+      "name": "illness",
+      "input": {
+        "mode": "illness"
+      },
+      "expected": {
+        "meta": {
+          "label": "Illness",
+          "desc": "Penalties relaxed, step goal suspended",
+          "dayLabel": "Illness"
+        },
+        "isRange": true,
+        "scoring": "illness",
+        "suspendsSteps": true
+      }
+    },
+    {
+      "name": "emergency",
+      "input": {
+        "mode": "emergency"
+      },
+      "expected": {
+        "meta": {
+          "label": "Emergency",
+          "desc": "Everything relaxed, step goal suspended",
+          "dayLabel": "Emergency"
+        },
+        "isRange": true,
+        "scoring": "emergency",
+        "suspendsSteps": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "module": "phases",
+  "fn": "PHASES",
+  "note": "Data, not arithmetic. Every start is a Sunday; the Swift table must equal this one.",
+  "cases": [
+    {
+      "name": "the timeline",
+      "input": {},
+      "expected": [
+        {
+          "kind": "bulk",
+          "name": "Bulk",
+          "start": "2026-03-08",
+          "weeks": 9,
+          "numbered": true,
+          "era": "ppl",
+          "eraTag": "PPL Bulk"
+        },
+        {
+          "kind": "cut",
+          "name": "Cut",
+          "start": "2026-05-10",
+          "weeks": 6,
+          "numbered": true,
+          "era": "ppl",
+          "eraTag": "PPL Cut"
+        },
+        {
+          "kind": "peak",
+          "name": "Peak Week (Maintenance)",
+          "start": "2026-06-21",
+          "weeks": 1,
+          "short": "Peak",
+          "era": "ppl",
+          "eraTag": "PPL Peak"
+        },
+        {
+          "kind": "deload",
+          "name": "Thailand Vacation",
+          "start": "2026-06-28",
+          "weeks": 2,
+          "short": "Thailand",
+          "era": "ppl",
+          "eraTag": "Thailand Vacation (Deload)"
+        },
+        {
+          "kind": "peak",
+          "name": "Week 0 · Transition",
+          "start": "2026-07-12",
+          "weeks": 1,
+          "short": "W0",
+          "era": "helix",
+          "eraTag": "HELIX · Week 0"
+        },
+        {
+          "kind": "cut",
+          "name": "Cut",
+          "start": "2026-07-19",
+          "weeks": 13,
+          "numbered": true,
+          "era": "helix",
+          "eraTag": "Helix Cut"
+        },
+        {
+          "kind": "deload",
+          "name": "Transition",
+          "start": "2026-10-18",
+          "weeks": 2,
+          "numbered": true,
+          "short": "Trans",
+          "era": "helix",
+          "eraTag": "HELIX Transition"
+        },
+        {
+          "kind": "bulk",
+          "name": "Lean Bulk",
+          "start": "2026-11-01",
+          "weeks": 11,
+          "numbered": true,
+          "era": "helix",
+          "eraTag": "HELIX Lean Bulk"
+        }
+      ]
+    }
+  ]
+}

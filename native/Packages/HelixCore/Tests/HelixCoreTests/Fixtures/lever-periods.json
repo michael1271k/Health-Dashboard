@@ -1,0 +1,1119 @@
+{
+  "module": "nutrition/levers",
+  "fn": "leverPeriods",
+  "note": "Resolve every day (rung ⊂ pinned custom ⊂ fallback, then the day's own daily_targets row on top) and glue equal NEIGHBOURS — compared on the resolved goals, not the label. leverId/label come from the first day of the run; a run under no rung is labelled Custom.",
+  "cases": [
+    {
+      "name": "week of 16 Aug — one rung the whole way",
+      "input": {
+        "stored": "custom",
+        "today": "2026-09-03",
+        "fallback": {
+          "calorie": 2400,
+          "protein": 100,
+          "carbs": 300,
+          "fat": 80,
+          "steps": 6000
+        },
+        "releaseEndsOn": null,
+        "dailyTargets": null,
+        "dates": [
+          "2026-08-16",
+          "2026-08-17",
+          "2026-08-18",
+          "2026-08-19",
+          "2026-08-20",
+          "2026-08-21",
+          "2026-08-22"
+        ]
+      },
+      "expected": [
+        {
+          "leverId": "lever-1",
+          "label": "Lever 1",
+          "goals": {
+            "calorie": 1885,
+            "protein": 170,
+            "carbs": 182,
+            "fat": 53,
+            "steps": 10000
+          },
+          "dates": [
+            "2026-08-16",
+            "2026-08-17",
+            "2026-08-18",
+            "2026-08-19"
+          ]
+        },
+        {
+          "leverId": "custom",
+          "label": "Custom",
+          "goals": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "dates": [
+            "2026-08-20",
+            "2026-08-21",
+            "2026-08-22"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "week of 23 Aug — the closed custom stretch pins 1,999",
+      "input": {
+        "stored": "custom",
+        "today": "2026-09-03",
+        "fallback": {
+          "calorie": 2400,
+          "protein": 100,
+          "carbs": 300,
+          "fat": 80,
+          "steps": 6000
+        },
+        "releaseEndsOn": null,
+        "dailyTargets": null,
+        "dates": [
+          "2026-08-23",
+          "2026-08-24",
+          "2026-08-25",
+          "2026-08-26",
+          "2026-08-27",
+          "2026-08-28",
+          "2026-08-29"
+        ]
+      },
+      "expected": [
+        {
+          "leverId": "custom",
+          "label": "Custom",
+          "goals": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "dates": [
+            "2026-08-23",
+            "2026-08-24",
+            "2026-08-25",
+            "2026-08-26",
+            "2026-08-27",
+            "2026-08-28",
+            "2026-08-29"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "week straddling 19/20 Aug — Lever 1 then the pinned custom",
+      "input": {
+        "stored": "custom",
+        "today": "2026-09-03",
+        "fallback": {
+          "calorie": 2400,
+          "protein": 100,
+          "carbs": 300,
+          "fat": 80,
+          "steps": 6000
+        },
+        "releaseEndsOn": null,
+        "dailyTargets": null,
+        "dates": [
+          "2026-08-16",
+          "2026-08-17",
+          "2026-08-18",
+          "2026-08-19",
+          "2026-08-20",
+          "2026-08-21",
+          "2026-08-22",
+          "2026-08-23",
+          "2026-08-24",
+          "2026-08-25",
+          "2026-08-26",
+          "2026-08-27",
+          "2026-08-28",
+          "2026-08-29"
+        ]
+      },
+      "expected": [
+        {
+          "leverId": "lever-1",
+          "label": "Lever 1",
+          "goals": {
+            "calorie": 1885,
+            "protein": 170,
+            "carbs": 182,
+            "fat": 53,
+            "steps": 10000
+          },
+          "dates": [
+            "2026-08-16",
+            "2026-08-17",
+            "2026-08-18",
+            "2026-08-19"
+          ]
+        },
+        {
+          "leverId": "custom",
+          "label": "Custom",
+          "goals": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "dates": [
+            "2026-08-20",
+            "2026-08-21",
+            "2026-08-22",
+            "2026-08-23",
+            "2026-08-24",
+            "2026-08-25",
+            "2026-08-26",
+            "2026-08-27",
+            "2026-08-28",
+            "2026-08-29"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "week of 30 Aug, today inside it, holding the release with an end date",
+      "input": {
+        "stored": "maintenance-week",
+        "today": "2026-09-03",
+        "fallback": {
+          "calorie": 2400,
+          "protein": 100,
+          "carbs": 300,
+          "fat": 80,
+          "steps": 6000
+        },
+        "releaseEndsOn": "2026-09-05",
+        "dailyTargets": null,
+        "dates": [
+          "2026-08-30",
+          "2026-08-31",
+          "2026-09-01",
+          "2026-09-02",
+          "2026-09-03",
+          "2026-09-04",
+          "2026-09-05"
+        ]
+      },
+      "expected": [
+        {
+          "leverId": "maintenance-week",
+          "label": "Maintenance Week",
+          "goals": {
+            "calorie": 2151,
+            "protein": 170,
+            "carbs": 244,
+            "fat": 55,
+            "steps": 7500
+          },
+          "dates": [
+            "2026-08-30",
+            "2026-08-31",
+            "2026-09-01",
+            "2026-09-02",
+            "2026-09-03",
+            "2026-09-04",
+            "2026-09-05"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "week of 30 Aug, today inside it, holding custom — the release ends on today",
+      "input": {
+        "stored": "custom",
+        "today": "2026-09-03",
+        "fallback": {
+          "calorie": 2400,
+          "protein": 100,
+          "carbs": 300,
+          "fat": 80,
+          "steps": 6000
+        },
+        "releaseEndsOn": null,
+        "dailyTargets": null,
+        "dates": [
+          "2026-08-30",
+          "2026-08-31",
+          "2026-09-01",
+          "2026-09-02",
+          "2026-09-03",
+          "2026-09-04",
+          "2026-09-05"
+        ]
+      },
+      "expected": [
+        {
+          "leverId": "maintenance-week",
+          "label": "Maintenance Week",
+          "goals": {
+            "calorie": 2151,
+            "protein": 170,
+            "carbs": 244,
+            "fat": 55,
+            "steps": 7500
+          },
+          "dates": [
+            "2026-08-30",
+            "2026-08-31",
+            "2026-09-01",
+            "2026-09-02"
+          ]
+        },
+        {
+          "leverId": "custom",
+          "label": "Custom",
+          "goals": {
+            "calorie": 2400,
+            "protein": 100,
+            "carbs": 300,
+            "fat": 80,
+            "steps": 6000
+          },
+          "dates": [
+            "2026-09-03",
+            "2026-09-04",
+            "2026-09-05"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "week of 30 Aug, holding lever-2 from today",
+      "input": {
+        "stored": "lever-2",
+        "today": "2026-09-03",
+        "fallback": {
+          "calorie": 2400,
+          "protein": 100,
+          "carbs": 300,
+          "fat": 80,
+          "steps": 6000
+        },
+        "releaseEndsOn": null,
+        "dailyTargets": null,
+        "dates": [
+          "2026-08-30",
+          "2026-08-31",
+          "2026-09-01",
+          "2026-09-02",
+          "2026-09-03",
+          "2026-09-04",
+          "2026-09-05"
+        ]
+      },
+      "expected": [
+        {
+          "leverId": "maintenance-week",
+          "label": "Maintenance Week",
+          "goals": {
+            "calorie": 2151,
+            "protein": 170,
+            "carbs": 244,
+            "fat": 55,
+            "steps": 7500
+          },
+          "dates": [
+            "2026-08-30",
+            "2026-08-31",
+            "2026-09-01",
+            "2026-09-02"
+          ]
+        },
+        {
+          "leverId": "lever-2",
+          "label": "Lever 2",
+          "goals": {
+            "calorie": 1885,
+            "protein": 170,
+            "carbs": 182,
+            "fat": 53,
+            "steps": 12000
+          },
+          "dates": [
+            "2026-09-03",
+            "2026-09-04",
+            "2026-09-05"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "week of 6 Sep, lever-2 selected",
+      "input": {
+        "stored": "lever-2",
+        "today": "2026-09-03",
+        "fallback": {
+          "calorie": 2400,
+          "protein": 100,
+          "carbs": 300,
+          "fat": 80,
+          "steps": 6000
+        },
+        "releaseEndsOn": null,
+        "dailyTargets": null,
+        "dates": [
+          "2026-09-06",
+          "2026-09-07",
+          "2026-09-08",
+          "2026-09-09",
+          "2026-09-10",
+          "2026-09-11",
+          "2026-09-12"
+        ]
+      },
+      "expected": [
+        {
+          "leverId": "lever-2",
+          "label": "Lever 2",
+          "goals": {
+            "calorie": 1885,
+            "protein": 170,
+            "carbs": 182,
+            "fat": 53,
+            "steps": 12000
+          },
+          "dates": [
+            "2026-09-06",
+            "2026-09-07",
+            "2026-09-08",
+            "2026-09-09",
+            "2026-09-10",
+            "2026-09-11",
+            "2026-09-12"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "week of 6 Sep, nothing stored — open custom, the live row",
+      "input": {
+        "stored": null,
+        "today": "2026-09-03",
+        "fallback": {
+          "calorie": 2400,
+          "protein": 100,
+          "carbs": 300,
+          "fat": 80,
+          "steps": 6000
+        },
+        "releaseEndsOn": null,
+        "dailyTargets": null,
+        "dates": [
+          "2026-09-06",
+          "2026-09-07",
+          "2026-09-08",
+          "2026-09-09",
+          "2026-09-10",
+          "2026-09-11",
+          "2026-09-12"
+        ]
+      },
+      "expected": [
+        {
+          "leverId": "custom",
+          "label": "Custom",
+          "goals": {
+            "calorie": 2400,
+            "protein": 100,
+            "carbs": 300,
+            "fat": 80,
+            "steps": 6000
+          },
+          "dates": [
+            "2026-09-06",
+            "2026-09-07",
+            "2026-09-08",
+            "2026-09-09",
+            "2026-09-10",
+            "2026-09-11",
+            "2026-09-12"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "before the cut opened — DEFAULT_LEVER",
+      "input": {
+        "stored": "custom",
+        "today": "2026-09-03",
+        "fallback": {
+          "calorie": 2400,
+          "protein": 100,
+          "carbs": 300,
+          "fat": 80,
+          "steps": 6000
+        },
+        "releaseEndsOn": null,
+        "dailyTargets": null,
+        "dates": [
+          "2026-07-08",
+          "2026-07-09",
+          "2026-07-10",
+          "2026-07-11",
+          "2026-07-12",
+          "2026-07-13",
+          "2026-07-14"
+        ]
+      },
+      "expected": [
+        {
+          "leverId": "baseline",
+          "label": "Baseline",
+          "goals": {
+            "calorie": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55,
+            "steps": 10000
+          },
+          "dates": [
+            "2026-07-08",
+            "2026-07-09",
+            "2026-07-10",
+            "2026-07-11",
+            "2026-07-12",
+            "2026-07-13",
+            "2026-07-14"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "empty",
+      "input": {
+        "stored": "custom",
+        "today": "2026-09-03",
+        "fallback": {
+          "calorie": 2400,
+          "protein": 100,
+          "carbs": 300,
+          "fat": 80,
+          "steps": 6000
+        },
+        "releaseEndsOn": null,
+        "dailyTargets": null,
+        "dates": []
+      },
+      "expected": []
+    },
+    {
+      "name": "one day",
+      "input": {
+        "stored": "custom",
+        "today": "2026-09-03",
+        "fallback": {
+          "calorie": 2400,
+          "protein": 100,
+          "carbs": 300,
+          "fat": 80,
+          "steps": 6000
+        },
+        "releaseEndsOn": null,
+        "dailyTargets": null,
+        "dates": [
+          "2026-08-18"
+        ]
+      },
+      "expected": [
+        {
+          "leverId": "lever-1",
+          "label": "Lever 1",
+          "goals": {
+            "calorie": 1885,
+            "protein": 170,
+            "carbs": 182,
+            "fat": 53,
+            "steps": 10000
+          },
+          "dates": [
+            "2026-08-18"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "identical goals under two labels merge — baseline then lever-1 selected on 16 Aug",
+      "input": {
+        "stored": "lever-1",
+        "today": "2026-08-16",
+        "fallback": {
+          "calorie": 2400,
+          "protein": 100,
+          "carbs": 300,
+          "fat": 80,
+          "steps": 6000
+        },
+        "releaseEndsOn": null,
+        "dailyTargets": null,
+        "dates": [
+          "2026-08-14",
+          "2026-08-15",
+          "2026-08-16",
+          "2026-08-17",
+          "2026-08-18",
+          "2026-08-19",
+          "2026-08-20"
+        ]
+      },
+      "expected": [
+        {
+          "leverId": "baseline",
+          "label": "Baseline",
+          "goals": {
+            "calorie": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55,
+            "steps": 10000
+          },
+          "dates": [
+            "2026-08-14",
+            "2026-08-15"
+          ]
+        },
+        {
+          "leverId": "lever-1",
+          "label": "Lever 1",
+          "goals": {
+            "calorie": 1885,
+            "protein": 170,
+            "carbs": 182,
+            "fat": 53,
+            "steps": 10000
+          },
+          "dates": [
+            "2026-08-16",
+            "2026-08-17",
+            "2026-08-18",
+            "2026-08-19",
+            "2026-08-20"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "daily targets split a week — kcal Tue, untracked fat Wed, zero row Thu, steps Fri",
+      "input": {
+        "stored": "custom",
+        "today": "2026-09-03",
+        "fallback": {
+          "calorie": 2400,
+          "protein": 100,
+          "carbs": 300,
+          "fat": 80,
+          "steps": 6000
+        },
+        "releaseEndsOn": null,
+        "dailyTargets": [
+          {
+            "date": "2026-08-25",
+            "kcal": 2400
+          },
+          {
+            "date": "2026-08-26",
+            "track_fat": false
+          },
+          {
+            "date": "2026-08-27",
+            "kcal": 0
+          },
+          {
+            "date": "2026-08-28",
+            "steps_goal": 12000
+          }
+        ],
+        "dates": [
+          "2026-08-23",
+          "2026-08-24",
+          "2026-08-25",
+          "2026-08-26",
+          "2026-08-27",
+          "2026-08-28",
+          "2026-08-29"
+        ]
+      },
+      "expected": [
+        {
+          "leverId": "custom",
+          "label": "Custom",
+          "goals": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "dates": [
+            "2026-08-23",
+            "2026-08-24"
+          ]
+        },
+        {
+          "leverId": "custom",
+          "label": "Custom",
+          "goals": {
+            "calorie": 2400,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "dates": [
+            "2026-08-25"
+          ]
+        },
+        {
+          "leverId": "custom",
+          "label": "Custom",
+          "goals": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": null,
+            "steps": 10000
+          },
+          "dates": [
+            "2026-08-26"
+          ]
+        },
+        {
+          "leverId": "custom",
+          "label": "Custom",
+          "goals": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "dates": [
+            "2026-08-27"
+          ]
+        },
+        {
+          "leverId": "custom",
+          "label": "Custom",
+          "goals": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 12000
+          },
+          "dates": [
+            "2026-08-28"
+          ]
+        },
+        {
+          "leverId": "custom",
+          "label": "Custom",
+          "goals": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "dates": [
+            "2026-08-29"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "two identical daily targets on adjacent days merge into one run",
+      "input": {
+        "stored": "custom",
+        "today": "2026-09-03",
+        "fallback": {
+          "calorie": 2400,
+          "protein": 100,
+          "carbs": 300,
+          "fat": 80,
+          "steps": 6000
+        },
+        "releaseEndsOn": null,
+        "dailyTargets": [
+          {
+            "date": "2026-08-25",
+            "kcal": 2400
+          },
+          {
+            "date": "2026-08-26",
+            "kcal": 2400
+          }
+        ],
+        "dates": [
+          "2026-08-23",
+          "2026-08-24",
+          "2026-08-25",
+          "2026-08-26",
+          "2026-08-27",
+          "2026-08-28",
+          "2026-08-29"
+        ]
+      },
+      "expected": [
+        {
+          "leverId": "custom",
+          "label": "Custom",
+          "goals": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "dates": [
+            "2026-08-23",
+            "2026-08-24"
+          ]
+        },
+        {
+          "leverId": "custom",
+          "label": "Custom",
+          "goals": {
+            "calorie": 2400,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "dates": [
+            "2026-08-25",
+            "2026-08-26"
+          ]
+        },
+        {
+          "leverId": "custom",
+          "label": "Custom",
+          "goals": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "dates": [
+            "2026-08-27",
+            "2026-08-28",
+            "2026-08-29"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "a duplicate date in dailyTargets — the last row wins",
+      "input": {
+        "stored": "custom",
+        "today": "2026-09-03",
+        "fallback": {
+          "calorie": 2400,
+          "protein": 100,
+          "carbs": 300,
+          "fat": 80,
+          "steps": 6000
+        },
+        "releaseEndsOn": null,
+        "dailyTargets": [
+          {
+            "date": "2026-08-25",
+            "kcal": 2400
+          },
+          {
+            "date": "2026-08-25",
+            "kcal": 2600
+          }
+        ],
+        "dates": [
+          "2026-08-23",
+          "2026-08-24",
+          "2026-08-25",
+          "2026-08-26",
+          "2026-08-27",
+          "2026-08-28",
+          "2026-08-29"
+        ]
+      },
+      "expected": [
+        {
+          "leverId": "custom",
+          "label": "Custom",
+          "goals": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "dates": [
+            "2026-08-23",
+            "2026-08-24"
+          ]
+        },
+        {
+          "leverId": "custom",
+          "label": "Custom",
+          "goals": {
+            "calorie": 2600,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "dates": [
+            "2026-08-25"
+          ]
+        },
+        {
+          "leverId": "custom",
+          "label": "Custom",
+          "goals": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "dates": [
+            "2026-08-26",
+            "2026-08-27",
+            "2026-08-28",
+            "2026-08-29"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "a restaurant profile row inside the maintenance week",
+      "input": {
+        "stored": "maintenance-week",
+        "today": "2026-09-03",
+        "fallback": {
+          "calorie": 2400,
+          "protein": 100,
+          "carbs": 300,
+          "fat": 80,
+          "steps": 6000
+        },
+        "releaseEndsOn": "2026-09-05",
+        "dailyTargets": [
+          {
+            "date": "2026-09-04",
+            "kcal": 2400,
+            "protein_g": 170,
+            "carbs_g": null,
+            "fat_g": null,
+            "steps_goal": null,
+            "profile_key": "restaurant",
+            "track_carbs": false,
+            "track_fat": false,
+            "note": null
+          }
+        ],
+        "dates": [
+          "2026-08-30",
+          "2026-08-31",
+          "2026-09-01",
+          "2026-09-02",
+          "2026-09-03",
+          "2026-09-04",
+          "2026-09-05"
+        ]
+      },
+      "expected": [
+        {
+          "leverId": "maintenance-week",
+          "label": "Maintenance Week",
+          "goals": {
+            "calorie": 2151,
+            "protein": 170,
+            "carbs": 244,
+            "fat": 55,
+            "steps": 7500
+          },
+          "dates": [
+            "2026-08-30",
+            "2026-08-31",
+            "2026-09-01",
+            "2026-09-02",
+            "2026-09-03"
+          ]
+        },
+        {
+          "leverId": "maintenance-week",
+          "label": "Maintenance Week",
+          "goals": {
+            "calorie": 2400,
+            "protein": 170,
+            "carbs": null,
+            "fat": null,
+            "steps": 7500
+          },
+          "dates": [
+            "2026-09-04"
+          ]
+        },
+        {
+          "leverId": "maintenance-week",
+          "label": "Maintenance Week",
+          "goals": {
+            "calorie": 2151,
+            "protein": 170,
+            "carbs": 244,
+            "fat": 55,
+            "steps": 7500
+          },
+          "dates": [
+            "2026-09-05"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "a daily target on the open custom stretch overrides the live row",
+      "input": {
+        "stored": null,
+        "today": "2026-09-03",
+        "fallback": {
+          "calorie": 2400,
+          "protein": 100,
+          "carbs": 300,
+          "fat": 80,
+          "steps": 6000
+        },
+        "releaseEndsOn": null,
+        "dailyTargets": [
+          {
+            "date": "2026-09-08",
+            "kcal": 2200,
+            "protein_g": 180
+          }
+        ],
+        "dates": [
+          "2026-09-06",
+          "2026-09-07",
+          "2026-09-08",
+          "2026-09-09",
+          "2026-09-10",
+          "2026-09-11",
+          "2026-09-12"
+        ]
+      },
+      "expected": [
+        {
+          "leverId": "custom",
+          "label": "Custom",
+          "goals": {
+            "calorie": 2400,
+            "protein": 100,
+            "carbs": 300,
+            "fat": 80,
+            "steps": 6000
+          },
+          "dates": [
+            "2026-09-06",
+            "2026-09-07"
+          ]
+        },
+        {
+          "leverId": "custom",
+          "label": "Custom",
+          "goals": {
+            "calorie": 2200,
+            "protein": 180,
+            "carbs": 300,
+            "fat": 80,
+            "steps": 6000
+          },
+          "dates": [
+            "2026-09-08"
+          ]
+        },
+        {
+          "leverId": "custom",
+          "label": "Custom",
+          "goals": {
+            "calorie": 2400,
+            "protein": 100,
+            "carbs": 300,
+            "fat": 80,
+            "steps": 6000
+          },
+          "dates": [
+            "2026-09-09",
+            "2026-09-10",
+            "2026-09-11",
+            "2026-09-12"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "dates out of order are not re-sorted",
+      "input": {
+        "stored": "custom",
+        "today": "2026-09-03",
+        "fallback": {
+          "calorie": 2400,
+          "protein": 100,
+          "carbs": 300,
+          "fat": 80,
+          "steps": 6000
+        },
+        "releaseEndsOn": null,
+        "dailyTargets": null,
+        "dates": [
+          "2026-08-20",
+          "2026-08-18",
+          "2026-08-19"
+        ]
+      },
+      "expected": [
+        {
+          "leverId": "custom",
+          "label": "Custom",
+          "goals": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "dates": [
+            "2026-08-20"
+          ]
+        },
+        {
+          "leverId": "lever-1",
+          "label": "Lever 1",
+          "goals": {
+            "calorie": 1885,
+            "protein": 170,
+            "carbs": 182,
+            "fat": 53,
+            "steps": 10000
+          },
+          "dates": [
+            "2026-08-18",
+            "2026-08-19"
+          ]
+        }
+      ]
+    }
+  ]
+}

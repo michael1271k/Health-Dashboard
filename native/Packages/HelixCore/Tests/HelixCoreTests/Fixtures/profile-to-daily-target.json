@@ -1,0 +1,152 @@
+{
+  "module": "nutrition/profiles",
+  "fn": "profileToDailyTarget",
+  "note": "Every field stated (the row REPLACES the day); track flags follow the macro being non-null; steps only when the profile names one; note null.",
+  "cases": [
+    {
+      "name": "home on 2026-09-01",
+      "input": {
+        "profile": {
+          "key": "home",
+          "label": "Home",
+          "summary": "Cooked and weighed — every macro is a real target.",
+          "sort": 0,
+          "kcal": 2150,
+          "proteinG": 170,
+          "carbsG": 244,
+          "fatG": 55,
+          "stepsGoal": null
+        },
+        "date": "2026-09-01"
+      },
+      "expected": {
+        "date": "2026-09-01",
+        "kcal": 2150,
+        "protein_g": 170,
+        "carbs_g": 244,
+        "fat_g": 55,
+        "steps_goal": null,
+        "profile_key": "home",
+        "track_carbs": true,
+        "track_fat": true,
+        "note": null
+      }
+    },
+    {
+      "name": "home on 2026-09-04",
+      "input": {
+        "profile": {
+          "key": "home",
+          "label": "Home",
+          "summary": "Cooked and weighed — every macro is a real target.",
+          "sort": 0,
+          "kcal": 2150,
+          "proteinG": 170,
+          "carbsG": 244,
+          "fatG": 55,
+          "stepsGoal": null
+        },
+        "date": "2026-09-04"
+      },
+      "expected": {
+        "date": "2026-09-04",
+        "kcal": 2150,
+        "protein_g": 170,
+        "carbs_g": 244,
+        "fat_g": 55,
+        "steps_goal": null,
+        "profile_key": "home",
+        "track_carbs": true,
+        "track_fat": true,
+        "note": null
+      }
+    },
+    {
+      "name": "restaurant on 2026-09-01",
+      "input": {
+        "profile": {
+          "key": "restaurant",
+          "label": "Restaurant",
+          "summary": "Eating out — hit the protein, let the split go.",
+          "sort": 1,
+          "kcal": 2400,
+          "proteinG": 170,
+          "carbsG": null,
+          "fatG": null,
+          "stepsGoal": null
+        },
+        "date": "2026-09-01"
+      },
+      "expected": {
+        "date": "2026-09-01",
+        "kcal": 2400,
+        "protein_g": 170,
+        "carbs_g": null,
+        "fat_g": null,
+        "steps_goal": null,
+        "profile_key": "restaurant",
+        "track_carbs": false,
+        "track_fat": false,
+        "note": null
+      }
+    },
+    {
+      "name": "restaurant on 2026-09-04",
+      "input": {
+        "profile": {
+          "key": "restaurant",
+          "label": "Restaurant",
+          "summary": "Eating out — hit the protein, let the split go.",
+          "sort": 1,
+          "kcal": 2400,
+          "proteinG": 170,
+          "carbsG": null,
+          "fatG": null,
+          "stepsGoal": null
+        },
+        "date": "2026-09-04"
+      },
+      "expected": {
+        "date": "2026-09-04",
+        "kcal": 2400,
+        "protein_g": 170,
+        "carbs_g": null,
+        "fat_g": null,
+        "steps_goal": null,
+        "profile_key": "restaurant",
+        "track_carbs": false,
+        "track_fat": false,
+        "note": null
+      }
+    },
+    {
+      "name": "a profile with a step opinion",
+      "input": {
+        "profile": {
+          "key": "hike",
+          "label": "Hike",
+          "summary": "",
+          "sort": 2,
+          "kcal": 2600,
+          "proteinG": 170,
+          "carbsG": 300,
+          "fatG": null,
+          "stepsGoal": 20000
+        },
+        "date": "2026-09-04"
+      },
+      "expected": {
+        "date": "2026-09-04",
+        "kcal": 2600,
+        "protein_g": 170,
+        "carbs_g": 300,
+        "fat_g": null,
+        "steps_goal": 20000,
+        "profile_key": "hike",
+        "track_carbs": true,
+        "track_fat": false,
+        "note": null
+      }
+    }
+  ]
+}

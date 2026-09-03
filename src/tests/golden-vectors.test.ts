@@ -35,6 +35,20 @@ import {
 import { PR_TRUTH, PR_LOGGED, PR_TRUTH_AS_OF, prFloorFor, truthAxisValue } from '@/lib/training/prTruth'
 import { SEEDED_PRS, SEED_CUTOFF, ASSERTED_DATES, seededAxesFor, isAssertedSession } from '@/lib/training/prSeed'
 import { EXERCISE_ALIASES, canonicalExerciseName } from '@/lib/exercises/aliases'
+import { isoAddDays } from '@/lib/utils/week'
+import { PHASES, phaseSpanFor, getWeekPhase, enumerateWeeks, type PhaseKind } from '@/lib/phases'
+import {
+  LEVERS, DEFICIT_LEVERS, DEFAULT_LEVER, LEVER_SCHEDULE, scheduledLeverOn, leverForDate, leverById, isLeverId,
+  atwaterKcal, applyLever, goalsForDate, leverKindOn, leverPeriods,
+  type LeverGoals, type LeverId, type NutritionLever, type TargetPeriod,
+} from '@/lib/nutrition/levers'
+import { maintenanceLeverOn, isMaintenanceDate, maintenanceSpanFor, maintenanceBands } from '@/lib/nutrition/maintenance'
+import {
+  CONTEXT_MODES, CONTEXT_META, isRangeMode, contextFromDayLabel, contextFromSetting, scoringContextFor,
+  suspendsStepGoal, contextRangeLine, daysBetween, rangeCovers, contextRangesIn, contextRangeLabel, type ContextMode,
+} from '@/lib/nutrition/context'
+import { BUILTIN_PROFILES, profileByKey, profileToDailyTarget, matchesProfile, type TargetProfile } from '@/lib/nutrition/profiles'
+import { tracksCarbs, tracksFat, hasDailyTarget, applyDailyTarget, type DailyTarget } from '@/lib/nutrition/dailyTargets'
 
 /**
  * THE GOLDEN VECTORS — the acceptance spec for the Swift port.
@@ -2242,6 +2256,457 @@ describe('golden vectors — PR engine', () => {
       fn: 'detectSessionPrs + recordSets',
       note: 'Whole sessions in performed order against baselines built by the TypeScript. perSet is parallel to sets (axes in detection order weight, reps, volume, e1rm; est1rm null for holds and 0 kg; records = per axis the set beat a bar on AT DETECTION TIME, the new value and the beaten one, omitted where there was no bar — captured BEFORE supersession, so an axis later stripped from `axes` keeps its record; consumers index records through axes, as livePrs.ts does). axesByKey and recordSets are insertion-ordered. An asserted session (≤ 2026-07-31 or 2026-08-02, read off the first dated set) takes its axes from the seed and skips supersession.',
       cases,
+    })
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Phases — `src/lib/phases.ts` (the timeline, not the palette)
+//
+// Exported ahead of its place in the list because `maintenance.ts` falls back
+// to `phaseSpanFor` for the deloads that predate levers. Colours stay out: a hex
+// is a HelixUI token, not domain arithmetic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const daysFrom = (start: string, count: number, step = 1): string[] =>
+  Array.from({ length: count }, (_, i) => isoAddDays(start, i * step))
+
+describe('golden vectors — phases', () => {
+  it('exports the phase table, the day resolver and the week resolver', () => {
+    emit('phases-table.json', {
+      module: 'phases',
+      fn: 'PHASES',
+      note: 'Data, not arithmetic. Every start is a Sunday; the Swift table must equal this one.',
+      cases: [{ name: 'the timeline', input: {}, expected: PHASES }],
+    })
+
+    const spanDates = [
+      ...daysFrom('2026-03-01', 110, 3),
+      '2026-03-07', '2026-03-08', '2026-05-09', '2026-05-10', '2026-06-20', '2026-06-21', '2026-06-27', '2026-06-28',
+      '2026-07-11', '2026-07-12', '2026-07-18', '2026-07-19', '2026-10-17', '2026-10-18', '2026-10-31', '2026-11-01',
+      '2027-01-16', '2027-01-17', '2025-12-31', 'garbage', '',
+    ]
+    emit('phase-span.json', {
+      module: 'phases',
+      fn: 'phaseSpanFor',
+      note: 'The phase a DATE falls in and how far into it that date is. First match in table order; null between phases and for an unparseable date.',
+      cases: spanDates.map((date) => {
+        const s = phaseSpanFor(date)
+        return { name: date || 'empty', input: { date }, expected: s ? { kind: s.def.kind, name: s.def.name, start: s.start, dayIndex: s.dayIndex } : null }
+      }),
+    })
+
+    const sundays = daysFrom('2026-03-01', 48, 7)
+    emit('week-phase.json', {
+      module: 'phases',
+      fn: 'getWeekPhase',
+      note: 'The phase for a SUNDAY week start — label, short and eraTag strings exactly. A date that is not a week start of any phase is null.',
+      cases: [...sundays, '2026-07-20', '2026-07-15', 'garbage', ''].map((weekStart) => ({
+        name: weekStart || 'empty', input: { weekStart }, expected: getWeekPhase(weekStart),
+      })),
+    })
+
+    const kindSets: PhaseKind[][] = [['cut'], ['bulk'], ['peak'], ['deload'], ['deload', 'peak'], ['cut', 'bulk', 'peak', 'deload'], []]
+    emit('enumerate-weeks.json', {
+      module: 'phases',
+      fn: 'enumerateWeeks',
+      note: 'Every week of the given kinds as a folder, NEWEST FIRST.',
+      cases: kindSets.map((kinds) => ({ name: kinds.join('+') || 'none', input: { kinds }, expected: enumerateWeeks(kinds) })),
+    })
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Nutrition levers — `src/lib/nutrition/levers.ts` + `maintenance.ts`
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('golden vectors — nutrition levers', () => {
+  const FB: LeverGoals = { calorie: 2400, protein: 100, carbs: 300, fat: 80, steps: 6000 }
+
+  it('exports the ladder, the schedule and the id rules', () => {
+    emit('levers-table.json', {
+      module: 'nutrition/levers',
+      fn: 'LEVERS / DEFICIT_LEVERS / DEFAULT_LEVER / LEVER_SCHEDULE',
+      note: 'Data, not arithmetic. Every rung is Atwater-exact (4/4/9); the deficit ladder is ordered; the schedule is oldest first and a `custom` row may pin the goals of a CLOSED stretch.',
+      cases: [{
+        name: 'the ladder',
+        input: {},
+        expected: { levers: LEVERS, deficitIds: DEFICIT_LEVERS.map((l) => l.id), defaultLever: DEFAULT_LEVER, schedule: LEVER_SCHEDULE },
+      }],
+    })
+
+    const ids: Array<string | null> = [...LEVERS.map((l) => l.id), 'custom', 'lever-3', 'lever-9', '', null, 'Baseline', ' baseline']
+    emit('lever-by-id.json', {
+      module: 'nutrition/levers',
+      fn: 'leverById / isLeverId / applyLever',
+      note: 'Exact id match. `custom` is a valid id that names NO rung; applyLever hands the goals back untouched for custom, unknown and absent.',
+      cases: ids.map((id) => ({
+        name: id === null ? 'null' : id === '' ? 'empty' : id,
+        input: { id, goals: FB },
+        expected: { lever: leverById(id), isLeverId: isLeverId(id), applied: applyLever(FB, id) },
+      })),
+    })
+
+    const triples = [
+      ...LEVERS.map((l) => ({ name: l.id, proteinG: l.proteinGoalG, carbsG: l.carbsGoalG, fatG: l.fatGoalG })),
+      { name: 'the 1999 pin', proteinG: 170, carbsG: 206, fatG: 55 },
+      { name: 'zero', proteinG: 0, carbsG: 0, fatG: 0 },
+      { name: 'fractional', proteinG: 12.5, carbsG: 0.25, fatG: 1.1 },
+    ]
+    emit('atwater.json', {
+      module: 'nutrition/levers',
+      fn: 'atwaterKcal',
+      note: '4·P + 4·C + 9·F.',
+      cases: triples.map(({ name, ...t }) => ({ name, input: t, expected: atwaterKcal(t.proteinG, t.carbsG, t.fatG) })),
+    })
+  })
+
+  it('exports leverForDate and everything that hangs off it', () => {
+    interface In { date: string; stored: string | null; today: string; releaseEndsOn: string | null }
+    interface Out {
+      scheduled: LeverId | null
+      lever: LeverId | null
+      kind: NutritionLever['kind']
+      goals: LeverGoals
+      maintenanceLever: boolean
+      maintenanceDate: boolean
+    }
+    const run = (i: In): Out => ({
+      scheduled: scheduledLeverOn(i.date),
+      lever: leverForDate(i.date, i.stored, i.today, i.releaseEndsOn),
+      kind: leverKindOn(i.date, i.stored, i.today, i.releaseEndsOn),
+      goals: goalsForDate(i.date, i.stored, i.today, FB, i.releaseEndsOn),
+      maintenanceLever: maintenanceLeverOn(i.date, i.stored, i.releaseEndsOn, i.today),
+      maintenanceDate: isMaintenanceDate(i.date, i.stored, i.releaseEndsOn, i.today),
+    })
+    const cases: Case<In, Out>[] = []
+    const push = (name: string, i: In) => cases.push({ name, input: i, expected: run(i) })
+
+    const dates = [
+      '2026-06-27', '2026-06-28', '2026-07-01', '2026-07-11', '2026-07-12', '2026-07-14', '2026-07-15', '2026-07-20',
+      '2026-08-15', '2026-08-16', '2026-08-19', '2026-08-20', '2026-08-29', '2026-08-30', '2026-09-03', '2026-09-05',
+      '2026-09-06', '2026-09-10', '2026-10-18', '2026-10-31', '2026-11-01', '2026-12-01', '2027-01-01',
+    ]
+    const storeds: Array<string | null> = [null, 'baseline', 'lever-1', 'lever-2', 'maintenance-week', 'custom', 'lever-9']
+    const todays = ['2026-08-19', '2026-09-03']
+    const ends: Array<string | null> = [null, '2026-09-05']
+    for (const today of todays) for (const releaseEndsOn of ends) for (const stored of storeds) for (const date of dates) {
+      push(`${date} · stored ${stored ?? 'null'} · today ${today} · until ${releaseEndsOn ?? 'none'}`, { date, stored, today, releaseEndsOn })
+    }
+    push('empty releaseEndsOn is no end date', { date: '2026-09-10', stored: 'maintenance-week', today: '2026-08-30', releaseEndsOn: '' })
+    push('an empty stored id is no selection', { date: '2026-09-03', stored: '', today: '2026-09-03', releaseEndsOn: null })
+    push('a deleted rung id (lever-3) is unknown', { date: '2026-09-03', stored: 'lever-3', today: '2026-09-03', releaseEndsOn: null })
+    push('today itself, release held on its opening day', { date: '2026-08-30', stored: 'maintenance-week', today: '2026-08-30', releaseEndsOn: null })
+    push('an end date never truncates a deficit rung', { date: '2026-12-01', stored: 'lever-1', today: '2026-08-30', releaseEndsOn: '2026-09-05' })
+    push('release ends on the end date itself — the last day still counts', { date: '2026-09-05', stored: 'maintenance-week', today: '2026-08-30', releaseEndsOn: '2026-09-05' })
+    push('release the day after its end falls to the schedule', { date: '2026-09-06', stored: 'maintenance-week', today: '2026-08-30', releaseEndsOn: '2026-09-05' })
+
+    emit('lever-for-date.json', {
+      module: 'nutrition/levers + nutrition/maintenance',
+      fn: 'scheduledLeverOn / leverForDate / leverKindOn / goalsForDate / maintenanceLeverOn / isMaintenanceDate',
+      note: 'The past belongs to the schedule; today and after belong to the stored selection when it is a valid id — except a release past `releaseEndsOn`. goalsForDate: rung figures, else a closed custom stretch\'s pinned goals, else the fallback (2400/100/300/80/6000 here). isMaintenanceDate falls back to a `deload` PHASE.',
+      cases,
+    })
+  })
+
+  it('exports leverPeriods', () => {
+    interface In {
+      dates: string[]; stored: string | null; today: string; fallback: LeverGoals
+      releaseEndsOn: string | null; dailyTargets: DailyTarget[] | null
+    }
+    const run = (i: In) => leverPeriods(i.dates, i.stored, i.today, i.fallback, {
+      releaseEndsOn: i.releaseEndsOn, dailyTargets: i.dailyTargets ?? undefined,
+    })
+    const cases: Case<In, TargetPeriod[]>[] = []
+    const push = (name: string, i: Partial<In> & { dates: string[] }) => {
+      const input: In = { stored: 'custom', today: '2026-09-03', fallback: FB, releaseEndsOn: null, dailyTargets: null, ...i }
+      cases.push({ name, input, expected: run(input) })
+    }
+    const week = (start: string) => daysFrom(start, 7)
+
+    push('week of 16 Aug — one rung the whole way', { dates: week('2026-08-16') })
+    push('week of 23 Aug — the closed custom stretch pins 1,999', { dates: week('2026-08-23') })
+    push('week straddling 19/20 Aug — Lever 1 then the pinned custom', { dates: week('2026-08-16').concat(week('2026-08-23')) })
+    push('week of 30 Aug, today inside it, holding the release with an end date', { dates: week('2026-08-30'), stored: 'maintenance-week', releaseEndsOn: '2026-09-05' })
+    push('week of 30 Aug, today inside it, holding custom — the release ends on today', { dates: week('2026-08-30'), stored: 'custom' })
+    push('week of 30 Aug, holding lever-2 from today', { dates: week('2026-08-30'), stored: 'lever-2' })
+    push('week of 6 Sep, lever-2 selected', { dates: week('2026-09-06'), stored: 'lever-2' })
+    push('week of 6 Sep, nothing stored — open custom, the live row', { dates: week('2026-09-06'), stored: null })
+    push('before the cut opened — DEFAULT_LEVER', { dates: week('2026-07-08') })
+    push('empty', { dates: [] })
+    push('one day', { dates: ['2026-08-18'] })
+    push('identical goals under two labels merge — baseline then lever-1 selected on 16 Aug', {
+      dates: daysFrom('2026-08-14', 7), stored: 'lever-1', today: '2026-08-16',
+    })
+    push('daily targets split a week — kcal Tue, untracked fat Wed, zero row Thu, steps Fri', {
+      dates: week('2026-08-23'),
+      dailyTargets: [
+        { date: '2026-08-25', kcal: 2400 },
+        { date: '2026-08-26', track_fat: false },
+        { date: '2026-08-27', kcal: 0 },
+        { date: '2026-08-28', steps_goal: 12000 },
+      ],
+    })
+    push('two identical daily targets on adjacent days merge into one run', {
+      dates: week('2026-08-23'),
+      dailyTargets: [{ date: '2026-08-25', kcal: 2400 }, { date: '2026-08-26', kcal: 2400 }],
+    })
+    push('a duplicate date in dailyTargets — the last row wins', {
+      dates: week('2026-08-23'),
+      dailyTargets: [{ date: '2026-08-25', kcal: 2400 }, { date: '2026-08-25', kcal: 2600 }],
+    })
+    push('a restaurant profile row inside the maintenance week', {
+      dates: week('2026-08-30'), stored: 'maintenance-week', releaseEndsOn: '2026-09-05',
+      dailyTargets: [profileToDailyTarget(BUILTIN_PROFILES[1], '2026-09-04')],
+    })
+    push('a daily target on the open custom stretch overrides the live row', {
+      dates: week('2026-09-06'), stored: null, dailyTargets: [{ date: '2026-09-08', kcal: 2200, protein_g: 180 }],
+    })
+    push('dates out of order are not re-sorted', { dates: ['2026-08-20', '2026-08-18', '2026-08-19'] })
+
+    emit('lever-periods.json', {
+      module: 'nutrition/levers',
+      fn: 'leverPeriods',
+      note: 'Resolve every day (rung ⊂ pinned custom ⊂ fallback, then the day\'s own daily_targets row on top) and glue equal NEIGHBOURS — compared on the resolved goals, not the label. leverId/label come from the first day of the run; a run under no rung is labelled Custom.',
+      cases,
+    })
+  })
+
+  it('exports the maintenance spans and bands', () => {
+    const spanDates = [...daysFrom('2026-06-20', 50, 3), '2026-06-27', '2026-06-28', '2026-07-11', '2026-07-12', '2026-08-30', '2026-10-17', '2026-10-18', '2026-10-31', '2026-11-01', 'garbage']
+    emit('maintenance-span.json', {
+      module: 'nutrition/maintenance',
+      fn: 'maintenanceSpanFor',
+      note: 'The inclusive span of the DELOAD PHASE containing the date — from PHASES only, never the lever. null elsewhere.',
+      cases: spanDates.map((date) => ({ name: date, input: { date }, expected: maintenanceSpanFor(date) })),
+    })
+    const bands: Array<[string, string[]]> = [
+      ['clamps to the axis', ['2026-10-16', '2026-10-18', '2026-10-20']],
+      ['two blocks apart stay apart', ['2026-07-01', '2026-08-01', '2026-10-18']],
+      ['no deload', ['2026-08-24', '2026-08-26', '2026-08-28']],
+      ['30 Aug is a lever, not a phase', daysFrom('2026-08-30', 7)],
+      ['the whole Thailand trip', daysFrom('2026-06-25', 20)],
+      ['every day from June to November', daysFrom('2026-06-20', 140)],
+      ['a gap inside one block does not split the band', ['2026-06-28', '2026-07-05', '2026-07-11']],
+      ['empty', []],
+      ['duplicates', ['2026-07-01', '2026-07-01', '2026-07-02']],
+    ]
+    emit('maintenance-bands.json', {
+      module: 'nutrition/maintenance',
+      fn: 'maintenanceBands',
+      note: 'Inclusive [start, end] pairs of deload dates present in the input, keyed on the span\'s own start so two blocks never merge.',
+      cases: bands.map(([name, dates]) => ({ name, input: { dates }, expected: maintenanceBands(dates) })),
+    })
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Context — `src/lib/nutrition/context.ts`
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('golden vectors — context', () => {
+  it('exports the vocabulary and every reader of it', () => {
+    emit('context-meta.json', {
+      module: 'nutrition/context',
+      fn: 'CONTEXT_META / isRangeMode / scoringContextFor / suspendsStepGoal',
+      note: 'Per mode: its labels, whether it persists, what the scorer applies, and whether the step goal is suspended.',
+      cases: CONTEXT_MODES.map((mode) => ({
+        name: mode,
+        input: { mode },
+        expected: { meta: CONTEXT_META[mode], isRange: isRangeMode(mode), scoring: scoringContextFor(mode), suspendsSteps: suspendsStepGoal(mode) },
+      })),
+    })
+
+    const stored: Array<string | null> = [
+      null, '', '   ', 'Illness', ' refeed ', 'REFEED', 'Wedding', 'normal', 'Normal', 'travel', 'Emergency', 'event',
+      'social', 'nonsense', 'illness ', 'Travel\t', 'EVENT', 'ILLNESS', 'Social ', 'x',
+    ]
+    emit('context-from-label.json', {
+      module: 'nutrition/context',
+      fn: 'contextFromDayLabel',
+      note: 'Trim + lower-case; a known mode folds in; anything else non-empty is an EXCEPTION day and maps to event, never to normal.',
+      cases: stored.map((s) => ({ name: JSON.stringify(s), input: { stored: s }, expected: contextFromDayLabel(s) })),
+    })
+    emit('context-from-setting.json', {
+      module: 'nutrition/context',
+      fn: 'contextFromSetting',
+      note: 'Trim + lower-case; a known mode folds in; anything else is normal.',
+      cases: stored.map((s) => ({ name: JSON.stringify(s), input: { stored: s }, expected: contextFromSetting(s) })),
+    })
+
+    const pairs: Array<[string, string]> = [
+      ['2026-08-12', '2026-08-16'], ['2026-08-16', '2026-08-12'], ['2026-08-16', '2026-08-16'], ['2026-08-31', '2026-09-01'],
+      ['2026-02-28', '2026-03-01'], ['2028-02-28', '2028-03-01'], ['2026-03-01', '2026-11-30'], ['2025-12-31', '2027-01-01'],
+      ['2026-10-31', '2026-11-01'], ['2026-03-28', '2026-03-30'], ['garbage', '2026-08-16'], ['2026-08-16', ''], ['', ''],
+    ]
+    emit('days-between.json', {
+      module: 'nutrition/context',
+      fn: 'daysBetween',
+      note: 'Whole days from a to b, never negative; 0 when either date does not parse.',
+      cases: pairs.map(([a, b]) => ({ name: `${a || 'empty'} → ${b || 'empty'}`, input: { a, b }, expected: daysBetween(a, b) })),
+    })
+
+    const coverCases: Case<{ mode: ContextMode; since: string | null; date: string; today: string }, boolean>[] = []
+    for (const mode of CONTEXT_MODES) for (const since of [null, '', '2026-08-12']) for (const date of ['2026-08-11', '2026-08-12', '2026-08-14', '2026-08-16', '2026-08-17']) {
+      const today = '2026-08-16'
+      coverCases.push({ name: `${mode} since ${since || 'none'} on ${date}`, input: { mode, since, date, today }, expected: rangeCovers(mode, since, date, today) })
+    }
+    emit('context-range-covers.json', {
+      module: 'nutrition/context',
+      fn: 'rangeCovers',
+      note: 'Range modes only, never the future; with no start date only TODAY is inside.',
+      cases: coverCases,
+    })
+
+    const lineCases: Case<{ mode: ContextMode; since: string | null; today: string }, string | null>[] = []
+    for (const mode of CONTEXT_MODES) for (const since of [null, '', '2026-08-14', '2026-08-16', '2026-08-17', '2026-07-01']) {
+      lineCases.push({ name: `${mode} since ${since || 'none'}`, input: { mode, since, today: '2026-08-16' }, expected: contextRangeLine(mode, since, '2026-08-16') })
+    }
+    emit('context-range-line.json', {
+      module: 'nutrition/context',
+      fn: 'contextRangeLine',
+      note: 'The export header line, exact string; null for normal; "(active)" with no start; singular "day" at exactly one.',
+      cases: lineCases,
+    })
+
+    type Day = { date: string; exception?: string | null }
+    const week: Day[] = [
+      { date: '2026-08-10', exception: null }, { date: '2026-08-11', exception: 'Illness' }, { date: '2026-08-12', exception: 'Illness' },
+      { date: '2026-08-13', exception: 'Illness' }, { date: '2026-08-14', exception: null }, { date: '2026-08-15', exception: 'Refeed' },
+      { date: '2026-08-16', exception: 'Illness' },
+    ]
+    const rangeInputs: Array<[string, Day[]]> = [
+      ['the test week', week],
+      ['unsorted input is sorted first', [...week].reverse()],
+      ['all normal', week.map((d) => ({ date: d.date, exception: null }))],
+      ['adjacent different range modes are two ranges', [{ date: '2026-08-10', exception: 'Illness' }, { date: '2026-08-11', exception: 'Travel' }, { date: '2026-08-12', exception: 'travel' }]],
+      ['a one-day mode between two illness days breaks the range', [{ date: '2026-08-10', exception: 'Illness' }, { date: '2026-08-11', exception: 'Event' }, { date: '2026-08-12', exception: 'Illness' }]],
+      ['a missing day between two illness days breaks the range', [{ date: '2026-08-10', exception: 'Illness' }, { date: '2026-08-12', exception: 'Illness' }]],
+      ['an unknown label is an event and never a range', [{ date: '2026-08-10', exception: 'Wedding' }, { date: '2026-08-11', exception: 'Wedding' }]],
+      ['the exception field absent', [{ date: '2026-08-10' }, { date: '2026-08-11', exception: 'emergency' }]],
+      ['a duplicate date extends nothing', [{ date: '2026-08-10', exception: 'Illness' }, { date: '2026-08-10', exception: 'Illness' }, { date: '2026-08-11', exception: 'Illness' }]],
+      ['same date, two labels — the sort is stable, input order decides', [{ date: '2026-08-10', exception: 'Illness' }, { date: '2026-08-10', exception: 'Travel' }, { date: '2026-08-11', exception: 'Illness' }, { date: '2026-08-11', exception: 'Travel' }]],
+      ['across a month end', [{ date: '2026-08-31', exception: 'Travel' }, { date: '2026-09-01', exception: 'Travel' }, { date: '2026-09-02', exception: 'Travel' }]],
+      ['empty', []],
+    ]
+    emit('context-ranges-in.json', {
+      module: 'nutrition/context',
+      fn: 'contextRangesIn + contextRangeLabel',
+      note: 'Contiguous RANGE contexts across stamped days, oldest first; gaps and mode changes break a range. labels are contextRangeLabel of each range, exact strings.',
+      cases: rangeInputs.map(([name, days]) => {
+        const ranges = contextRangesIn(days)
+        return { name, input: { days }, expected: { ranges, labels: ranges.map(contextRangeLabel) } }
+      }),
+    })
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Daily targets and profiles — `dailyTargets.ts` + `profiles.ts`
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('golden vectors — daily targets and profiles', () => {
+  const RUNG: LeverGoals = { calorie: 1999, protein: 170, carbs: 206, fat: 55, steps: 10000 }
+  const BARE: LeverGoals = { calorie: 1999, protein: null, carbs: null, fat: null, steps: null }
+  const D = '2026-09-04'
+  const home = BUILTIN_PROFILES[0]
+  const restaurant = BUILTIN_PROFILES[1]
+
+  it('exports the daily-target layer', () => {
+    const targets: Array<[string, DailyTarget | null]> = [
+      ['null', null],
+      ['date only', { date: D }],
+      ['kcal only', { date: D, kcal: 2400 }],
+      ['zero kcal is a broken row', { date: D, kcal: 0 }],
+      ['negative kcal is a broken row', { date: D, kcal: -5 }],
+      ['all null', { date: D, kcal: null, protein_g: null, carbs_g: null, fat_g: null, steps_goal: null }],
+      ['every figure', { date: D, kcal: 2400, protein_g: 180, carbs_g: 250, fat_g: 60, steps_goal: 8000 }],
+      ['untrack fat only', { date: D, track_fat: false }],
+      ['untrack carbs with a carbs figure — the flag wins', { date: D, track_carbs: false, carbs_g: 300 }],
+      ['tracked flags true, nothing else', { date: D, track_carbs: true, track_fat: true }],
+      ['tracked flags null', { date: D, track_carbs: null, track_fat: null }],
+      ['zero macros', { date: D, carbs_g: 0, fat_g: 0 }],
+      ['steps only', { date: D, steps_goal: 12000 }],
+      ['half a gram of protein counts', { date: D, protein_g: 0.5 }],
+      ['a note alone is not an override', { date: D, note: 'x' }],
+      ['a profile key alone is not an override', { date: D, profile_key: 'restaurant' }],
+      ['home profile row', profileToDailyTarget(home, D)],
+      ['restaurant profile row', profileToDailyTarget(restaurant, D)],
+      ['restaurant hand-edited', { ...profileToDailyTarget(restaurant, D), kcal: 2650 }],
+      ['fat untracked, carbs stated', { date: D, carbs_g: 180, track_fat: false }],
+    ]
+    const cases: Case<{ goals: LeverGoals; target: DailyTarget | null }, { has: boolean; tracksCarbs: boolean; tracksFat: boolean; applied: LeverGoals }>[] = []
+    for (const [goalsName, goals] of [['rung', RUNG], ['bare', BARE]] as const) {
+      for (const [name, target] of targets) {
+        cases.push({
+          name: `${name} over ${goalsName}`,
+          input: { goals, target },
+          expected: { has: hasDailyTarget(target), tracksCarbs: tracksCarbs(target), tracksFat: tracksFat(target), applied: applyDailyTarget(goals, target) },
+        })
+      }
+    }
+    emit('daily-target.json', {
+      module: 'nutrition/dailyTargets',
+      fn: 'hasDailyTarget / tracksCarbs / tracksFat / applyDailyTarget',
+      note: 'Field by field, > 0 (a stored zero is a broken row); an untracked macro resolves to NULL, not zero and not the rung; an absent flag means tracked; an all-null row is not an override but an untrack flag alone is.',
+      cases,
+    })
+  })
+
+  it('exports the profiles', () => {
+    emit('profiles-table.json', {
+      module: 'nutrition/profiles',
+      fn: 'BUILTIN_PROFILES',
+      note: 'Data. The fallback when target_profiles cannot be read; null macros are UNTRACKED, never zero.',
+      cases: [{ name: 'the shipped shapes', input: {}, expected: BUILTIN_PROFILES }],
+    })
+    const keys: Array<string | null> = ['home', 'restaurant', 'brunch', '', null, 'Home', ' home']
+    emit('profile-by-key.json', {
+      module: 'nutrition/profiles',
+      fn: 'profileByKey',
+      note: 'Exact key match against the given list; nothing resolves to the first profile by default.',
+      cases: keys.map((key) => ({ name: key === null ? 'null' : key || 'empty', input: { profiles: BUILTIN_PROFILES, key }, expected: profileByKey(BUILTIN_PROFILES, key) })),
+    })
+    const toRow: Case<{ profile: TargetProfile; date: string }, DailyTarget>[] = []
+    for (const profile of BUILTIN_PROFILES) for (const date of ['2026-09-01', '2026-09-04']) {
+      toRow.push({ name: `${profile.key} on ${date}`, input: { profile, date }, expected: profileToDailyTarget(profile, date) })
+    }
+    toRow.push({
+      name: 'a profile with a step opinion',
+      input: { profile: { key: 'hike', label: 'Hike', summary: '', sort: 2, kcal: 2600, proteinG: 170, carbsG: 300, fatG: null, stepsGoal: 20000 }, date: D },
+      expected: profileToDailyTarget({ key: 'hike', label: 'Hike', summary: '', sort: 2, kcal: 2600, proteinG: 170, carbsG: 300, fatG: null, stepsGoal: 20000 }, D),
+    })
+    emit('profile-to-daily-target.json', {
+      module: 'nutrition/profiles',
+      fn: 'profileToDailyTarget',
+      note: 'Every field stated (the row REPLACES the day); track flags follow the macro being non-null; steps only when the profile names one; note null.',
+      cases: toRow,
+    })
+
+    const rows: Array<[string, DailyTarget | null]> = [
+      ['null', null],
+      ['home row', profileToDailyTarget(home, D)],
+      ['restaurant row', profileToDailyTarget(restaurant, D)],
+      ['restaurant edited kcal', { ...profileToDailyTarget(restaurant, D), kcal: 2650 }],
+      ['restaurant figures but tracked flags', { date: D, kcal: 2400, protein_g: 170, track_carbs: true, track_fat: true }],
+      ['restaurant figures, flags absent', { date: D, kcal: 2400, protein_g: 170 }],
+      ['home figures, flags absent', { date: D, kcal: 2150, protein_g: 170, carbs_g: 244, fat_g: 55 }],
+      ['home figures with a different fat', { date: D, kcal: 2150, protein_g: 170, carbs_g: 244, fat_g: 60 }],
+      ['home figures, fat untracked', { date: D, kcal: 2150, protein_g: 170, carbs_g: 244, fat_g: 55, track_fat: false }],
+      ['home with a step goal — steps are excluded', { ...profileToDailyTarget(home, D), steps_goal: 12000 }],
+      ['home figures under a restaurant stamp — the stamp is not consulted', { ...profileToDailyTarget(home, D), profile_key: 'restaurant' }],
+      ['restaurant figures under a home stamp', { ...profileToDailyTarget(restaurant, D), profile_key: 'home' }],
+      ['empty day', { date: D }],
+    ]
+    const matches: Case<{ target: DailyTarget | null; profile: TargetProfile }, boolean>[] = []
+    for (const profile of BUILTIN_PROFILES) for (const [name, target] of rows) {
+      matches.push({ name: `${name} vs ${profile.key}`, input: { target, profile }, expected: matchesProfile(target, profile) })
+    }
+    emit('profile-matches.json', {
+      module: 'nutrition/profiles',
+      fn: 'matchesProfile',
+      note: 'Compared on the four food figures and both tracking flags (absent = tracked); steps excluded; the stamp is NOT consulted.',
+      cases: matches,
     })
   })
 })

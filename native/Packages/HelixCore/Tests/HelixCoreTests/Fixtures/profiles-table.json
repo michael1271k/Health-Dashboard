@@ -1,0 +1,35 @@
+{
+  "module": "nutrition/profiles",
+  "fn": "BUILTIN_PROFILES",
+  "note": "Data. The fallback when target_profiles cannot be read; null macros are UNTRACKED, never zero.",
+  "cases": [
+    {
+      "name": "the shipped shapes",
+      "input": {},
+      "expected": [
+        {
+          "key": "home",
+          "label": "Home",
+          "summary": "Cooked and weighed — every macro is a real target.",
+          "sort": 0,
+          "kcal": 2150,
+          "proteinG": 170,
+          "carbsG": 244,
+          "fatG": 55,
+          "stepsGoal": null
+        },
+        {
+          "key": "restaurant",
+          "label": "Restaurant",
+          "summary": "Eating out — hit the protein, let the split go.",
+          "sort": 1,
+          "kcal": 2400,
+          "proteinG": 170,
+          "carbsG": null,
+          "fatG": null,
+          "stepsGoal": null
+        }
+      ]
+    }
+  ]
+}
